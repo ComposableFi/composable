@@ -40,11 +40,9 @@ pub use pallet::*;
 pub mod pallet {
 	use composable_traits::{
 		financial_nft::{DefaultFinancialNFTProtocol, FinancialNFTProtocol},
-		oracle::Oracle,
-		protocol_rewards::{
-			ProtocolReward, ProtocolStaking, ProtocolStakingConfig, ProtocolStakingNFT,
-		},
-		time::Timestamp,
+		math::{SafeDiv, SafeMul},
+		staking_rewards::{Staking, StakingConfig, StakingNFT, StakingReward},
+		time::{DurationSeconds, Timestamp},
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -63,7 +61,7 @@ pub mod pallet {
 	use sp_core::U256;
 	use sp_runtime::{
 		traits::{AccountIdConversion, Zero},
-		ArithmeticError, SaturatedConversion,
+		ArithmeticError, Perbill, SaturatedConversion,
 	};
 	use sp_std::collections::btree_map::BTreeMap;
 
@@ -76,11 +74,11 @@ pub mod pallet {
 	pub(crate) type MaxStakingPresetsOf<T> = <T as Config>::MaxStakingPresets;
 	pub(crate) type ProtocolRewardStateOf<T> =
 		BoundedBTreeMap<AssetIdOf<T>, RewardIndex, MaxRewardAssetsOf<T>>;
-	pub(crate) type ProtocolStakingNFTOf<T> =
-		ProtocolStakingNFT<AssetIdOf<T>, BalanceOf<T>, ProtocolRewardStateOf<T>>;
-	pub(crate) type ProtocolStakingConfigOf<T> = ProtocolStakingConfig<
+	pub(crate) type StakingNFTOf<T> =
+		StakingNFT<AssetIdOf<T>, BalanceOf<T>, ProtocolRewardStateOf<T>>;
+	pub(crate) type StakingConfigOf<T> = StakingConfig<
 		AccountIdOf<T>,
-		BoundedBTreeSet<Timestamp, MaxStakingPresetsOf<T>>,
+		BoundedBTreeMap<DurationSeconds, Perbill, MaxStakingPresetsOf<T>>,
 		BoundedBTreeSet<AssetIdOf<T>, MaxRewardAssetsOf<T>>,
 	>;
 
@@ -88,7 +86,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// An asset has been configured for staking.
-		Configured { asset: AssetIdOf<T>, configuration: ProtocolStakingConfigOf<T> },
+		Configured { asset: AssetIdOf<T>, configuration: StakingConfigOf<T> },
 		/// A user staked his protocol asset. Yield a NFT represeting his position.
 		Staked { who: AccountIdOf<T>, stake: BalanceOf<T>, nft: InstanceIdOf<T> },
 		/// A user unstaked his protocol asset.
@@ -98,6 +96,9 @@ pub mod pallet {
 			penalty: BalanceOf<T>,
 			nft: InstanceIdOf<T>,
 		},
+		/// A new reward has been submitted, rewarding `rewarded_asset` with an `amount` of
+		/// `reward_asset`.
+		NewReward { rewarded_asset: AssetIdOf<T>, reward_asset: AssetIdOf<T>, amount: BalanceOf<T> },
 	}
 
 	#[pallet::error]
@@ -118,7 +119,7 @@ pub mod pallet {
 		/// The ID that uniquely identify an asset.
 		type AssetId: AssetId + Ord;
 
-		type Balance: Balance + TryFrom<U256>;
+		type Balance: Balance + TryFrom<u128>;
 
 		/// The underlying currency system.
 		type Assets: FungiblesInspect<
@@ -130,9 +131,6 @@ pub mod pallet {
 
 		/// The time provider.
 		type Time: UnixTime;
-
-		/// The oracle implementation to check for priceable assets.
-		type Oracle: Oracle<AssetId = AssetIdOf<Self>, Balance = BalanceOf<Self>>;
 
 		/// The admin origin, allowed to update sensitive values such as the unlock penalty.
 		type AdminOrigin: EnsureOrigin<Self::Origin>;
@@ -151,14 +149,14 @@ pub mod pallet {
 	}
 
 	#[pallet::type_value]
-	pub fn TotalSharesOnEmpty<T: Config>() -> U256 {
-		U256::zero()
+	pub fn TotalSharesOnEmpty<T: Config>() -> u128 {
+		u128::zero()
 	}
 
 	#[pallet::storage]
 	#[pallet::getter(fn total_shares)]
 	pub type TotalShares<T: Config> =
-		StorageMap<_, Blake2_128Concat, AssetIdOf<T>, U256, ValueQuery, TotalSharesOnEmpty<T>>;
+		StorageMap<_, Blake2_128Concat, AssetIdOf<T>, u128, ValueQuery, TotalSharesOnEmpty<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn reward_indexes)]
@@ -175,7 +173,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn staking_configurations)]
 	pub type StakingConfigurations<T: Config> =
-		StorageMap<_, Blake2_128Concat, AssetIdOf<T>, ProtocolStakingConfigOf<T>, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, AssetIdOf<T>, StakingConfigOf<T>, OptionQuery>;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -194,10 +192,11 @@ pub mod pallet {
 		pub fn configure(
 			origin: OriginFor<T>,
 			asset: AssetIdOf<T>,
-			config: ProtocolStakingConfigOf<T>,
+			configuration: StakingConfigOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::AdminOrigin::ensure_origin(origin)?;
-			StakingConfigurations::<T>::insert(asset, config);
+			StakingConfigurations::<T>::insert(asset, configuration.clone());
+			Self::deposit_event(Event::<T>::Configured { asset, configuration });
 			Ok(().into())
 		}
 
@@ -220,7 +219,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let from = ensure_signed(origin)?;
-			<Self as ProtocolStaking>::stake(&asset, &from, amount, duration, keep_alive)?;
+			<Self as Staking>::stake(&asset, &from, amount, duration, keep_alive)?;
 			Ok(().into())
 		}
 
@@ -240,8 +239,8 @@ pub mod pallet {
 			to: AccountIdOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let owner = ensure_signed(origin)?;
-			T::ensure_protocol_nft_owner::<ProtocolStakingNFTOf<T>>(&owner, &instance_id)?;
-			<Self as ProtocolStaking>::unstake(&instance_id, &to)?;
+			T::ensure_protocol_nft_owner::<StakingNFTOf<T>>(&owner, &instance_id)?;
+			<Self as Staking>::unstake(&instance_id, &to)?;
 			Ok(().into())
 		}
 
@@ -261,8 +260,8 @@ pub mod pallet {
 			to: AccountIdOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let owner = ensure_signed(origin)?;
-			T::ensure_protocol_nft_owner::<ProtocolStakingNFTOf<T>>(&owner, &instance_id)?;
-			<Self as ProtocolStaking>::claim(&instance_id, &to)?;
+			T::ensure_protocol_nft_owner::<StakingNFTOf<T>>(&owner, &instance_id)?;
+			<Self as Staking>::claim(&instance_id, &to)?;
 			Ok(().into())
 		}
 	}
@@ -275,14 +274,14 @@ pub mod pallet {
 
 		pub(crate) fn get_config(
 			asset: &AssetIdOf<T>,
-		) -> Result<ProtocolStakingConfigOf<T>, DispatchError> {
+		) -> Result<StakingConfigOf<T>, DispatchError> {
 			StakingConfigurations::<T>::get(asset).ok_or(Error::<T>::NotConfigured.into())
 		}
 
 		/// Current reward indexes.
 		pub(crate) fn current_reward_indexes(
 			asset: &AssetIdOf<T>,
-			config: &ProtocolStakingConfigOf<T>,
+			config: &StakingConfigOf<T>,
 		) -> ProtocolRewardStateOf<T> {
 			config
 				.rewards
@@ -295,7 +294,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> ProtocolReward for Pallet<T> {
+	impl<T: Config> StakingReward for Pallet<T> {
 		type AccountId = AccountIdOf<T>;
 		type AssetId = AssetIdOf<T>;
 		type Balance = BalanceOf<T>;
@@ -317,23 +316,31 @@ pub mod pallet {
 			T::Assets::transfer(*reward_asset, from, &protocol_account, amount, keep_alive)?;
 
 			// Increment the reward index, used to compute user rewards.
-			RewardIndexes::<T>::try_mutate(asset, reward_asset, |x| {
+			RewardIndexes::<T>::try_mutate(asset, reward_asset, |entry| -> DispatchResult {
 				let lifted_amount = RewardIndex::from(amount.saturated_into::<u128>());
-				match x {
+				match entry {
 					Some(index) => {
 						*index =
 							(*index).checked_add(lifted_amount).ok_or(ArithmeticError::Overflow)?;
 					},
 					None => {
-						*x = Some(lifted_amount);
+						*entry = Some(lifted_amount);
 					},
 				}
 				Ok(())
-			})
+			})?;
+
+			Self::deposit_event(Event::<T>::NewReward {
+				rewarded_asset: *asset,
+				reward_asset: *reward_asset,
+				amount,
+			});
+
+			Ok(())
 		}
 	}
 
-	impl<T: Config> ProtocolStaking for Pallet<T> {
+	impl<T: Config> Staking for Pallet<T> {
 		type AccountId = AccountIdOf<T>;
 		type AssetId = AssetIdOf<T>;
 		type Balance = BalanceOf<T>;
@@ -348,8 +355,10 @@ pub mod pallet {
 		) -> Result<Self::InstanceId, DispatchError> {
 			let config = Self::get_config(asset)?;
 
-			// Make sure the duration is a valid preset.
-			ensure!(config.duration_presets.contains(&duration), Error::<T>::InvalidDurationPreset);
+			let reward_multiplier = *config
+				.duration_presets
+				.get(&duration)
+				.ok_or(Error::<T>::InvalidDurationPreset)?;
 
 			// Acquire protocol asset from user.
 			let protocol_account = Self::account_id(asset);
@@ -358,12 +367,13 @@ pub mod pallet {
 			// Actually create the NFT representing the user position.
 			let reward_indexes = Self::current_reward_indexes(asset, &config);
 			let now = T::Time::now();
-			let nft = ProtocolStakingNFT {
+			let nft = StakingNFT {
 				asset,
 				stake: amount,
-				reward_indexes,
 				lock_date: now.as_secs(),
 				lock_duration: duration,
+				reward_indexes,
+				reward_multiplier,
 			};
 			let instance_id = T::mint_protocol_nft(from, &nft)?;
 
@@ -385,9 +395,9 @@ pub mod pallet {
 
 		fn unstake(instance_id: &Self::InstanceId, to: &Self::AccountId) -> DispatchResult {
 			// Make sure we execute a final claim before unstaking.
-			<Self as ProtocolStaking>::claim(instance_id, to)?;
+			<Self as Staking>::claim(instance_id, to)?;
 
-			let nft = T::get_protocol_nft::<ProtocolStakingNFTOf<T>>(instance_id)?;
+			let nft = T::get_protocol_nft::<StakingNFTOf<T>>(instance_id)?;
 
 			let now = T::Time::now();
 
@@ -418,7 +428,7 @@ pub mod pallet {
 			})?;
 
 			// Actually burn the NFT from the storage.
-			T::burn_protocol_nft::<ProtocolStakingNFTOf<T>>(instance_id)?;
+			T::burn_protocol_nft::<StakingNFTOf<T>>(instance_id)?;
 
 			// Trigger event
 			Self::deposit_event(Event::<T>::Unstaked {
@@ -432,26 +442,27 @@ pub mod pallet {
 		}
 
 		fn claim(instance_id: &Self::InstanceId, to: &Self::AccountId) -> DispatchResult {
-			T::try_mutate_protocol_nft(instance_id, |nft: &mut ProtocolStakingNFTOf<T>| {
+			T::try_mutate_protocol_nft(instance_id, |nft: &mut StakingNFTOf<T>| {
 				let config = Self::get_config(&nft.asset)?;
 
 				// NOTE(hussein-aitlahcen): user is still able to claim even if his position
 				// 'expired', do we allow that?
 
-				let share = U256::from(nft.stake.saturated_into::<u128>());
+				let share = nft.stake.saturated_into::<u128>();
 				let total_shares = TotalShares::<T>::get(nft.asset);
 
 				// TODO(hussein-aitlahcen): extract pure maths to their own functions
-				let compute_reward = |delta_index: U256| -> Result<BalanceOf<T>, DispatchError> {
-					delta_index
-						.checked_mul(share)
-						.and_then(|x| x.checked_div(total_shares))
-						.ok_or(ArithmeticError::Overflow.into())
-						.and_then(|x| {
-							TryFrom::<U256>::try_from(x)
-								.map_err(|_| ArithmeticError::Overflow.into())
-						})
-				};
+				let compute_reward =
+					|delta_reward_index: U256| -> Result<BalanceOf<T>, DispatchError> {
+						// Index always increment but diff can't be > max supply = u128.
+						let normalized_delta = u128::try_from(delta_reward_index)?;
+						let final_reward = nft.reward_multiplier.mul_floor(normalized_delta);
+						final_reward
+							.safe_mul(&share)?
+							.safe_div(&total_shares)?
+							.try_into()
+							.map_err(|_| ArithmeticError::Overflow.into())
+					};
 
 				let rewards = nft
 					.reward_indexes
@@ -459,8 +470,8 @@ pub mod pallet {
 					.map(|(reward_asset, index)| -> Result<(AssetIdOf<T>, BalanceOf<T>), DispatchError> {
 						match RewardIndexes::<T>::get(nft.asset, &reward_asset) {
 							Some(current_index) => {
-								let delta_index = current_index.saturating_sub(*index);
-								let reward = compute_reward(delta_index)?;
+								let delta_reward_index = current_index.saturating_sub(*index);
+								let reward = compute_reward(delta_reward_index)?;
 								Ok((*reward_asset, reward))
 							},
 							None => Ok((*reward_asset, Zero::zero())),

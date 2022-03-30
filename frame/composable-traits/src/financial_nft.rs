@@ -161,7 +161,7 @@ pub trait FinancialNFTProtocol {
 pub struct NFTClass(u8);
 
 impl NFTClass {
-	pub const PROTOCOL_STAKING: NFTClass = NFTClass(1);
+	pub const STAKING: NFTClass = NFTClass(1);
 }
 
 /// Default Version type used for NFTs.

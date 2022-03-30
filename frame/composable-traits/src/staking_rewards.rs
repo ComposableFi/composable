@@ -10,7 +10,7 @@ use scale_info::TypeInfo;
 use sp_runtime::{traits::AtLeast32BitUnsigned, DispatchError, Perbill};
 
 #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-pub struct ProtocolStakingConfig<AccountId, DurationPresets, Rewards> {
+pub struct StakingConfig<AccountId, DurationPresets, Rewards> {
 	pub duration_presets: DurationPresets,
 	pub rewards: Rewards,
 	pub early_unstake_penalty: Perbill,
@@ -18,22 +18,22 @@ pub struct ProtocolStakingConfig<AccountId, DurationPresets, Rewards> {
 }
 
 #[derive(Debug, Encode, Decode, TypeInfo)]
-pub struct ProtocolStakingNFT<AssetId, Balance, Indexes> {
+pub struct StakingNFT<AssetId, Balance, Indexes> {
 	/// The staked asset.
 	pub asset: AssetId,
 	/// The stake this NFT was minted for.
 	pub stake: Balance,
-	/// The indexes at which this NFT was minted, used to compute the rewards.
-	pub reward_indexes: Indexes,
 	/// The date at which this NFT was minted.
 	pub lock_date: Timestamp,
 	/// The duration for which this NFT stake was locked.
 	pub lock_duration: DurationSeconds,
+	/// The indexes at which this NFT was minted, used to compute the rewards.
+	pub reward_indexes: Indexes,
+	/// The reward multiplier.
+	pub reward_multiplier: Perbill,
 }
 
-impl<AssetId, Balance: AtLeast32BitUnsigned + Copy, Indexes>
-	ProtocolStakingNFT<AssetId, Balance, Indexes>
-{
+impl<AssetId, Balance: AtLeast32BitUnsigned + Copy, Indexes> StakingNFT<AssetId, Balance, Indexes> {
 	pub fn penalize_early_unstake_amount(
 		&self,
 		now: Timestamp,
@@ -49,20 +49,20 @@ impl<AssetId, Balance: AtLeast32BitUnsigned + Copy, Indexes>
 	}
 }
 
-impl<AssetId, Balance, Indexes> Get<NFTClass> for ProtocolStakingNFT<AssetId, Balance, Indexes> {
+impl<AssetId, Balance, Indexes> Get<NFTClass> for StakingNFT<AssetId, Balance, Indexes> {
 	fn get() -> NFTClass {
-		NFTClass::PROTOCOL_STAKING
+		NFTClass::STAKING
 	}
 }
 
-impl<AssetId, Balance, Indexes> Get<NFTVersion> for ProtocolStakingNFT<AssetId, Balance, Indexes> {
+impl<AssetId, Balance, Indexes> Get<NFTVersion> for StakingNFT<AssetId, Balance, Indexes> {
 	fn get() -> NFTVersion {
 		NFTVersion::VERSION_1
 	}
 }
 
 /// Interface for protocol staking.
-pub trait ProtocolStaking {
+pub trait Staking {
 	type AccountId;
 	type AssetId;
 	type Balance;
@@ -106,7 +106,7 @@ pub trait ProtocolStaking {
 	fn claim(instance_id: &Self::InstanceId, to: &Self::AccountId) -> DispatchResult;
 }
 
-pub trait ProtocolReward {
+pub trait StakingReward {
 	type AccountId;
 	type AssetId;
 	type Balance;
