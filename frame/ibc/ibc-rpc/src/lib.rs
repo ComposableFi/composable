@@ -25,7 +25,7 @@ use ibc::core::{
 };
 use std::{str::FromStr, sync::Arc};
 
-use ibc_primitives::{ConnectionHandshakeProof, Proof};
+use ibc_primitives::{ConnectionHandshakeProof, Proof as PrimitivesProof};
 use ibc_proto::{
 	cosmos::base::v1beta1::Coin,
 	ibc::{
@@ -70,6 +70,15 @@ pub struct ConnHandshakeProof {
 	pub height: ibc_proto::ibc::core::client::v1::Height,
 }
 
+/// Proof for a set of keys
+#[derive(Serialize, Deserialize)]
+pub struct Proof {
+	/// Trie proof
+	pub proof: Vec<u8>,
+	/// Height at which proof was recovered
+	pub height: ibc_proto::ibc::core::client::v1::Height,
+}
+
 /// IBC RPC methods.
 #[rpc]
 pub trait IbcApi<BlockNumber> {
@@ -83,7 +92,7 @@ pub trait IbcApi<BlockNumber> {
 	) -> Result<Vec<Packet>>;
 	/// Generate proof for given key
 	#[rpc(name = "ibc_queryProof")]
-	fn query_proof(&self, height: u32, key: Vec<Vec<u8>>) -> Result<Proof>;
+	fn query_proof(&self, height: u32, keys: Vec<Vec<u8>>) -> Result<Proof>;
 
 	/// Query latest height
 	#[rpc(name = "ibc_queryLatestHeight")]
@@ -360,10 +369,18 @@ where
 			.flatten()
 			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
 		let at = BlockId::Hash(block_hash);
-		api.generate_proof(&at, keys)
+		let proof: PrimitivesProof = api
+			.generate_proof(&at, keys)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error generating proof"))
+			.ok_or(runtime_error_into_rpc_error("Error generating proof"))?;
+		Ok(Proof {
+			proof: proof.proof,
+			height: ibc_proto::ibc::core::client::v1::Height {
+				revision_number: 0,
+				revision_height: proof.height,
+			},
+		})
 	}
 
 	fn query_latest_height(&self) -> Result<<<Block as BlockT>::Header as HeaderT>::Number> {
