@@ -72,9 +72,9 @@ impl CurrencyId {
 		Self::unit::<T>() / T::from(1000_u64)
 	}
 	
-	#[cfg(feature="std")]
-	pub fn list_assets() -> Vec<Asset> {
-	   vec![
+	// #[cfg(feature="std")]
+	pub fn list_assets() ->[Asset;5] {
+	   [
 			Asset{
                id: CurrencyId::PICA.0,
 			   name: "PICA".to_string(),

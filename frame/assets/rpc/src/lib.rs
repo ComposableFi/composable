@@ -1,19 +1,20 @@
 use assets_runtime_api::{AssetsRuntimeApi};
 use codec::Codec;
 use composable_support::rpc_helpers::{SafeRpcWrapper, SafeRpcWrapperType};
-use composable_traits::assets::Asset;
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result as RpcResult};
 use jsonrpc_derive::rpc;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use sp_std::sync::Arc;
+use sp_std::vec::Vec;
 
 #[rpc]
-pub trait AssetsApi<BlockHash, AssetId, AccountId, Balance>
+pub trait AssetsApi<BlockHash, AssetId, AccountId, Balance, Asset>
 where
 	AssetId: SafeRpcWrapperType,
 	Balance: SafeRpcWrapperType,
+	
 {
 	#[rpc(name = "assets_balanceOf")]
 	fn balance_of(
@@ -23,7 +24,8 @@ where
 		at: Option<BlockHash>,
 	) -> RpcResult<SafeRpcWrapper<Balance>>;
 
-	fn list_assets(&self, at: Option<BlockHash>) -> RpcResult<[Asset; 5]>;
+	#[rpc(name="assets_listAssets")]
+	fn list_assets(&self, at: Option<BlockHash>) -> RpcResult<Vec<Asset>>;
 }
 
 pub struct Assets<C, Block> {
@@ -37,18 +39,19 @@ impl<C, M> Assets<C, M> {
 	}
 }
 
-impl<C, Block, AssetId, AccountId, Balance>
-	AssetsApi<<Block as BlockT>::Hash, AssetId, AccountId, Balance>
-	for Assets<C, (Block, AssetId, AccountId, Balance)>
+impl<C, Block, AssetId, AccountId, Balance, Asset>
+	AssetsApi<<Block as BlockT>::Hash, AssetId, AccountId, Balance, Asset>
+	for Assets<C, (Block, AssetId, AccountId, Balance, Asset)>
 where
 	Block: BlockT,
 	AssetId: Codec + Send + Sync + 'static + SafeRpcWrapperType,
 	AccountId: Codec + Send + Sync + 'static,
 	Balance: Send + Sync + 'static + SafeRpcWrapperType,
+	Asset: Codec + Send + Sync + 'static,
 	C: Send + Sync + 'static,
 	C: ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block>,
-	C::Api: AssetsRuntimeApi<Block, AssetId, AccountId, Balance>,
+	C::Api: AssetsRuntimeApi<Block, AssetId, AccountId, Balance, Asset>,
 {
 	fn balance_of(
 		&self,
@@ -74,7 +77,7 @@ where
 		})
 	}
 
-	fn list_assets(&self, at: Option<<Block as BlockT>::Hash>) -> RpcResult<[Asset;5]> {
+	fn list_assets(&self, at: Option<<Block as BlockT>::Hash>) -> RpcResult<Vec<Asset>> {
 		let api = self.client.runtime_api();
 
 		let at = BlockId::hash(at.unwrap_or_else(||{
