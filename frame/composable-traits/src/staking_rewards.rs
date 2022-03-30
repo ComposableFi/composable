@@ -17,7 +17,7 @@ pub struct StakingConfig<AccountId, DurationPresets, Rewards> {
 	pub penalty_beneficiary: AccountId,
 }
 
-#[derive(Debug, Encode, Decode, TypeInfo)]
+#[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
 pub struct StakingNFT<AssetId, Balance, CollectedRewards> {
 	/// The staked asset.
 	pub asset: AssetId,

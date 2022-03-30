@@ -187,6 +187,7 @@ pub mod pallet {
 				Error::<T>::InstanceAlreadyExists
 			);
 			InstanceOwner::<T>::insert((class, instance), who);
+			Instance::<T>::insert((class, instance), BTreeMap::<Vec<u8>, Vec<u8>>::new());
 			Ok(())
 		}
 
@@ -202,11 +203,13 @@ pub mod pallet {
 			key: &[u8],
 			value: &[u8],
 		) -> DispatchResult {
-			Self::ensure_instance_exists(class, instance)?;
-			Instance::<T>::mutate((class, instance), |entry| {
-				entry.as_mut().map(|nft_instance| nft_instance.insert(key.into(), value.into()));
-			});
-			Ok(())
+			Instance::<T>::try_mutate((class, instance), |entry| match entry {
+				Some(nft) => {
+					nft.insert(key.into(), value.into());
+					Ok(())
+				},
+				None => Err(Error::<T>::InstanceNotFound.into()),
+			})
 		}
 
 		fn set_typed_attribute<K: Encode, V: Encode>(

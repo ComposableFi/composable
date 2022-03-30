@@ -46,7 +46,7 @@ mod mock;
 pub mod pallet {
 	use composable_traits::{
 		financial_nft::{FinancialNFTProtocol, NFTClass, NFTVersion},
-		math::{SafeDiv, SafeMul},
+		math::{SafeAdd, SafeDiv, SafeMul, SafeSub},
 		staking_rewards::{Staking, StakingConfig, StakingNFT, StakingReward},
 		time::{DurationSeconds, Timestamp},
 	};
@@ -386,9 +386,9 @@ pub mod pallet {
 			let instance_id = T::mint_protocol_nft(from, &nft)?;
 
 			// Increment total shares.
-			TotalShares::<T>::try_mutate(asset, |x| {
-				x.checked_add(amount.saturated_into::<u128>().into())
-					.ok_or(ArithmeticError::Overflow)
+			TotalShares::<T>::try_mutate(asset, |x| -> DispatchResult {
+				*x = x.safe_add(&amount.saturated_into::<u128>())?;
+				Ok(())
 			})?;
 
 			// Trigger event
@@ -431,9 +431,9 @@ pub mod pallet {
 			)?;
 
 			// Decrement total shares.
-			TotalShares::<T>::try_mutate(nft.asset, |x| {
-				x.checked_sub(nft.stake.saturated_into::<u128>().into())
-					.ok_or(ArithmeticError::Underflow)
+			TotalShares::<T>::try_mutate(nft.asset, |x| -> DispatchResult {
+				*x = x.safe_sub(&nft.stake.saturated_into::<u128>())?;
+				Ok(())
 			})?;
 
 			// Actually burn the NFT from the storage.
