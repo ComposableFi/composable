@@ -72,10 +72,9 @@ pub mod pallet {
 	pub(crate) type InstanceIdOf<T> = <T as FinancialNFTProtocol>::InstanceId;
 	pub(crate) type MaxRewardAssetsOf<T> = <T as Config>::MaxRewardAssets;
 	pub(crate) type MaxStakingPresetsOf<T> = <T as Config>::MaxStakingPresets;
-	pub(crate) type ProtocolRewardStateOf<T> =
+	pub(crate) type CollectedRewardsOf<T> =
 		BoundedBTreeMap<AssetIdOf<T>, CollectedReward, MaxRewardAssetsOf<T>>;
-	pub(crate) type StakingNFTOf<T> =
-		StakingNFT<AssetIdOf<T>, BalanceOf<T>, ProtocolRewardStateOf<T>>;
+	pub(crate) type StakingNFTOf<T> = StakingNFT<AssetIdOf<T>, BalanceOf<T>, CollectedRewardsOf<T>>;
 	pub(crate) type StakingConfigOf<T> = StakingConfig<
 		AccountIdOf<T>,
 		BoundedBTreeMap<DurationSeconds, Perbill, MaxStakingPresetsOf<T>>,
@@ -282,7 +281,7 @@ pub mod pallet {
 		pub(crate) fn current_collected_rewards(
 			asset: &AssetIdOf<T>,
 			config: &StakingConfigOf<T>,
-		) -> ProtocolRewardStateOf<T> {
+		) -> CollectedRewardsOf<T> {
 			config
 				.rewards
 				.iter()
@@ -467,10 +466,10 @@ pub mod pallet {
 				let rewards = nft
 					.collected_rewards
 					.iter()
-					.map(|(reward_asset, collected)| -> Result<(AssetIdOf<T>, BalanceOf<T>), DispatchError> {
+					.map(|(reward_asset, previously_collected)| -> Result<(AssetIdOf<T>, BalanceOf<T>), DispatchError> {
 						match CollectedRewards::<T>::get(nft.asset, &reward_asset) {
 							Some(current_collected) => {
-								let delta_collected = current_collected.saturating_sub(*collected);
+								let delta_collected = current_collected.saturating_sub(*previously_collected);
 								let reward = compute_reward(delta_collected)?;
 								Ok((*reward_asset, reward))
 							},
