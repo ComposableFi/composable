@@ -50,3 +50,27 @@ pub trait ClearingHouse {
 		margin_ratio_maintenance: Self::Decimal,
 	) -> Result<Self::MarketId, DispatchError>;
 }
+
+/// Exposes functionality for querying funding-related quantities of synthetic instruments
+///
+/// Provides functions for:
+/// * querying the current funding rate for a market
+/// * computing the funding payments owed by a position
+/// * updating the cumulative funding rate of a market
+pub trait Instruments {
+	/// Data relating to a derivatives market
+	type Market;
+	/// Signed fixed point number implementation
+	type Decimal: FixedPointNumber;
+
+	/// Computes the funding rate for a derivatives market
+	///
+	/// The funding rate is a function of the open interest and the index to mark price divergence.
+	///
+	/// ## Parameters
+	/// * `market`: the derivatives [Market](Self::Market) data
+	///
+	/// ## Returns
+	/// The current funding rate as a fixed point number
+	fn funding_rate(market: Self::Market) -> Result<Self::Decimal, DispatchError>;
+}

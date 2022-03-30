@@ -29,6 +29,8 @@
 //!
 //! - [`ClearingHouse`](composable_traits::clearing_house::ClearingHouse): Exposes functionality for
 //!   trading of perpetual contracts
+//! - [`Instruments`](composable_traits::clearing_house::Instruments): Exposes functionality for
+//!   querying funding-related quantities of synthetic instruments
 //!
 //! ## Interface
 //!
@@ -75,7 +77,10 @@ pub mod pallet {
 	use crate::weights::WeightInfo;
 	use codec::FullCodec;
 	use composable_traits::{
-		clearing_house::ClearingHouse, defi::DeFiComposableConfig, oracle::Oracle, vamm::VirtualAMM,
+		clearing_house::{ClearingHouse, Instruments},
+		defi::DeFiComposableConfig,
+		oracle::Oracle,
+		vamm::VirtualAMM,
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -448,6 +453,17 @@ pub mod pallet {
 			})
 		}
 	}
+
+	impl<T: Config> Instruments for Pallet<T> {
+		type Market = MarketOf<T>;
+		type Decimal = T::Decimal;
+
+		fn funding_rate(market: Self::Market) -> Result<Self::Decimal, DispatchError> {
+			let unnormalized_oracle_twap = T::Oracle::get_twap(market.asset_id, vec![])?;
+			todo!()
+		}
+	}
+
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Helper Functions
 	// ----------------------------------------------------------------------------------------------------
