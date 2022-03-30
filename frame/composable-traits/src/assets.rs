@@ -4,7 +4,6 @@ use frame_support::dispatch::DispatchResult;
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "std")]
 use sp_std::vec::Vec;
 use xcm::latest::MultiLocation;
 
@@ -281,10 +280,10 @@ pub enum BodyPartDef {
 	/// More than than the given proportion of members of the body.
 	MoreThanProportion { nom: u32, denom: u32 },
 }
-
-#[derive(Encode, Decode, Clone)]
-#[cfg(feature = "std")]
+ 
+#[derive(Decode,Encode, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Serialize,Deserialize))]
 pub struct Asset {
-	pub name: String,
-	pub id: u128
-}
+	pub name: Vec<u8>,
+	pub id: u64
+} 
