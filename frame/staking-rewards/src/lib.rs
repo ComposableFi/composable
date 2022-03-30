@@ -39,7 +39,7 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use composable_traits::{
-		financial_nft::{DefaultFinancialNFTProtocol, FinancialNFTProtocol},
+		financial_nft::{FinancialNFTProtocol, NFTClass, NFTVersion},
 		math::{SafeDiv, SafeMul},
 		staking_rewards::{Staking, StakingConfig, StakingNFT, StakingReward},
 		time::{DurationSeconds, Timestamp},
@@ -69,7 +69,7 @@ pub mod pallet {
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
 	pub(crate) type BalanceOf<T> = <T as Config>::Balance;
-	pub(crate) type InstanceIdOf<T> = <T as FinancialNFTProtocol>::InstanceId;
+	pub(crate) type InstanceIdOf<T> = <T as FinancialNFTProtocol<AccountIdOf<T>>>::InstanceId;
 	pub(crate) type MaxRewardAssetsOf<T> = <T as Config>::MaxRewardAssets;
 	pub(crate) type MaxStakingPresetsOf<T> = <T as Config>::MaxStakingPresets;
 	pub(crate) type CollectedRewardsOf<T> =
@@ -110,7 +110,8 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config + DefaultFinancialNFTProtocol<AccountId = AccountIdOf<Self>>
+		frame_system::Config
+		+ FinancialNFTProtocol<AccountIdOf<Self>, ClassId = NFTClass, Version = NFTVersion>
 	{
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;

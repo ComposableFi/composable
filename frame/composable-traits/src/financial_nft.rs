@@ -1,4 +1,4 @@
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use core::fmt::Debug;
 use frame_support::{
 	dispatch::DispatchResult,
@@ -36,10 +36,7 @@ pub trait FinancialNFTProvider<AccountId>: Create<AccountId> + Mutate<AccountId>
 ///
 /// The interface will always fully serialize/deserialize the NFT type with the NFT::Version as
 /// single attribute key.
-pub trait FinancialNFTProtocol {
-	/// Abstract type of an account id.
-	type AccountId: Copy + Eq;
-
+pub trait FinancialNFTProtocol<AccountId: Eq> {
 	/// Abstract type of a class id.
 	type ClassId: Encode + Decode + TypeInfo;
 
@@ -52,7 +49,7 @@ pub trait FinancialNFTProtocol {
 
 	/// NFT provider from which we load/store NFT's.
 	type NFTProvider: FinancialNFTProvider<
-		Self::AccountId,
+		AccountId,
 		ClassId = Self::ClassId,
 		InstanceId = Self::InstanceId,
 	>;
@@ -66,7 +63,7 @@ pub trait FinancialNFTProtocol {
 	///
 	/// Return the NFT instance id if successfull, otherwise the underlying NFT provider error.
 	fn mint_protocol_nft<NFT>(
-		owner: &Self::AccountId,
+		owner: &AccountId,
 		nft: &NFT,
 	) -> Result<Self::InstanceId, DispatchError>
 	where
@@ -84,7 +81,7 @@ pub trait FinancialNFTProtocol {
 	///
 	/// Returns `Ok(())` if `owner` is the owner of the NFT identified by `instance_id`.
 	fn ensure_protocol_nft_owner<NFT>(
-		owner: &Self::AccountId,
+		owner: &AccountId,
 		instance_id: &Self::InstanceId,
 	) -> Result<(), DispatchError>
 	where
@@ -157,6 +154,7 @@ pub trait FinancialNFTProtocol {
 }
 
 /// Default ClassId type used for NFTs.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 #[repr(transparent)]
 pub struct NFTClass(u8);
 
@@ -165,14 +163,10 @@ impl NFTClass {
 }
 
 /// Default Version type used for NFTs.
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 #[repr(transparent)]
 pub struct NFTVersion(u8);
 
 impl NFTVersion {
 	pub const VERSION_1: NFTVersion = NFTVersion(1);
-}
-
-pub trait DefaultFinancialNFTProtocol:
-	FinancialNFTProtocol<ClassId = NFTClass, Version = NFTVersion>
-{
 }
