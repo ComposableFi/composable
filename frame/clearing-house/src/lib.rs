@@ -276,7 +276,7 @@ pub mod pallet {
 		/// and can be liquidated if its margin ratio falls bellow maintenance. Deposited collateral
 		/// backs all the positions of an account across multiple markets (cross-margining).
 		///
-		/// ![](http://www.plantuml.com/plantuml/svg/JOuzoiCm44JxxnHV3c1ldyeGo3tMqbWII2kpF-JwCIb2gc4UhtYREQl7w7-t9gb7HcZ_h-wdtOcKNsjfNcCFWwOf3l4rpK6FESvfl7Sy6wNl8LYgqEK0UoY8Sru6Qsb2X_80fGxM9cMfCmoK6vUBsu-udftbKxH1yhLl)
+		/// ![](http://www.plantuml.com/plantuml/svg/FSrD2W8n343XlQVG0ynaxsf0y1wPDhQ592tvmUihBbmztkexFD0YXI-teOMpKXfVUyJoEu3XUsyZUfxfP6LgaCPUfi1ZofgE9zDpGFaFa9TE1Yz38IXCQ4FRrcSwGHtO3CK1Qzq4hGtT5wF--8EqVli1)
 		///
 		/// ## Parameters:
 		/// - `asset`: The identifier of the asset type being deposited

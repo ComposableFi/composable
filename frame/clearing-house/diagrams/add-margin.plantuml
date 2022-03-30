@@ -1,4 +1,6 @@
 @startuml Add margin
+!theme mars
+
 actor Trader
 participant "Clearing\nHouse" as CH
 database "AccountsMargin" as CHS
