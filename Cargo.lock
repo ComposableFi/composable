@@ -1587,6 +1587,7 @@ dependencies = [
  "is_sorted",
  "parity-scale-codec",
  "proptest",
+ "rustc-hex",
  "scale-info",
  "serde",
  "serde_json",
@@ -6807,6 +6808,7 @@ dependencies = [
 name = "pallet-crowdloan-rewards"
 version = "0.0.1"
 dependencies = [
+ "composable-support",
  "composable-traits",
  "frame-support",
  "frame-system",
