@@ -13,7 +13,7 @@ use std::ops::{Div, Mul};
 
 use crate::{
 	self as pallet_lending, accrue_interest_internal, currency::*, mocks::*, models::BorrowerData,
-	setup::assert_last_event, Error, MarketIndex,
+	setup::assert_last_event, AccrueInterest, Error, MarketIndex,
 };
 use codec::{Decode, Encode};
 use composable_support::validation::{TryIntoValidated, Validated};
@@ -54,25 +54,27 @@ fn accrue_interest_base_cases() {
 	let total_issued = 100_000_000_000_000_000_000;
 	let accrued_debt = 0;
 	let total_borrows = total_issued - accrued_debt;
-	let (accrued_increase, _) = accrue_interest_internal::<Runtime, InterestRateModel>(
-		optimal,
-		interest_rate_model,
-		borrow_index,
-		delta_time,
-		total_borrows,
-	)
-	.unwrap();
+	let AccrueInterest { accrued_increment: accrued_increase, .. } =
+		accrue_interest_internal::<Runtime, InterestRateModel>(
+			optimal,
+			interest_rate_model,
+			borrow_index,
+			delta_time,
+			total_borrows,
+		)
+		.unwrap();
 	assert_eq!(accrued_increase, 10_000_000_000_000_000_000);
 
 	let delta_time = MILLISECS_PER_BLOCK;
-	let (accrued_increase, _) = accrue_interest_internal::<Runtime, InterestRateModel>(
-		optimal,
-		interest_rate_model,
-		borrow_index,
-		delta_time,
-		total_borrows,
-	)
-	.unwrap();
+	let AccrueInterest { accrued_increment: accrued_increase, .. } =
+		accrue_interest_internal::<Runtime, InterestRateModel>(
+			optimal,
+			interest_rate_model,
+			borrow_index,
+			delta_time,
+			total_borrows,
+		)
+		.unwrap();
 	// small increments instead one year lead to some loss by design (until we lift calculation to
 	// 256 bit)
 	let error = 25;
@@ -89,14 +91,15 @@ fn apr_for_zero() {
 	let utilization = Percent::from_percent(100);
 	let borrow_index = Rate::saturating_from_integer(1_u128);
 
-	let (accrued_increase, _) = accrue_interest_internal::<Runtime, InterestRateModel>(
-		utilization,
-		interest_rate_model,
-		borrow_index,
-		SECONDS_PER_YEAR_NAIVE,
-		0,
-	)
-	.unwrap();
+	let AccrueInterest { accrued_increment: accrued_increase, .. } =
+		accrue_interest_internal::<Runtime, InterestRateModel>(
+			utilization,
+			interest_rate_model,
+			borrow_index,
+			SECONDS_PER_YEAR_NAIVE,
+			0,
+		)
+		.unwrap();
 	assert_eq!(accrued_increase, 0);
 }
 
@@ -130,24 +133,30 @@ fn accrue_interest_induction() {
 			),
 			|(slot, total_issued)| {
 				let (optimal, ref mut interest_rate_model) = new_jump_model();
-				let (accrued_increase_1, borrow_index_1) =
-					accrue_interest_internal::<Runtime, InterestRateModel>(
-						optimal,
-						interest_rate_model,
-						borrow_index,
-						slot * MILLISECS_PER_BLOCK,
-						total_issued - accrued_debt,
-					)
-					.unwrap();
-				let (accrued_increase_2, borrow_index_2) =
-					accrue_interest_internal::<Runtime, InterestRateModel>(
-						optimal,
-						interest_rate_model,
-						borrow_index,
-						(slot + 1) * MILLISECS_PER_BLOCK,
-						total_issued - accrued_debt,
-					)
-					.unwrap();
+
+				let AccrueInterest {
+					accrued_increment: accrued_increase_1,
+					new_borrow_index: borrow_index_1,
+				} = accrue_interest_internal::<Runtime, InterestRateModel>(
+					optimal,
+					interest_rate_model,
+					borrow_index,
+					slot * MILLISECS_PER_BLOCK,
+					total_issued - accrued_debt,
+				)
+				.unwrap();
+
+				let AccrueInterest {
+					accrued_increment: accrued_increase_2,
+					new_borrow_index: borrow_index_2,
+				} = accrue_interest_internal::<Runtime, InterestRateModel>(
+					optimal,
+					interest_rate_model,
+					borrow_index,
+					(slot + 1) * MILLISECS_PER_BLOCK,
+					total_issued - accrued_debt,
+				)
+				.unwrap();
 				prop_assert!(accrued_increase_1 < accrued_increase_2);
 				prop_assert!(borrow_index_1 < borrow_index_2);
 				Ok(())
@@ -168,27 +177,29 @@ fn accrue_interest_plotter() {
 	const TOTAL_BLOCKS: u64 = 1000;
 	let _data: Vec<_> = (0..TOTAL_BLOCKS)
 		.map(|x| {
-			let (accrue_increment, _) = accrue_interest_internal::<Runtime, InterestRateModel>(
-				optimal,
-				interest_rate_model,
-				borrow_index,
-				MILLISECS_PER_BLOCK,
-				total_borrows,
-			)
-			.unwrap();
-			previous += accrue_increment;
+			let AccrueInterest { accrued_increment, .. } =
+				accrue_interest_internal::<Runtime, InterestRateModel>(
+					optimal,
+					interest_rate_model,
+					borrow_index,
+					MILLISECS_PER_BLOCK,
+					total_borrows,
+				)
+				.unwrap();
+			previous += accrued_increment;
 			(x, previous)
 		})
 		.collect();
 
-	let (total_accrued, _) = accrue_interest_internal::<Runtime, InterestRateModel>(
-		optimal,
-		interest_rate_model,
-		Rate::checked_from_integer(1).unwrap(),
-		TOTAL_BLOCKS * MILLISECS_PER_BLOCK,
-		total_borrows,
-	)
-	.unwrap();
+	let AccrueInterest { accrued_increment: total_accrued, .. } =
+		accrue_interest_internal::<Runtime, InterestRateModel>(
+			optimal,
+			interest_rate_model,
+			Rate::checked_from_integer(1).unwrap(),
+			TOTAL_BLOCKS * MILLISECS_PER_BLOCK,
+			total_borrows,
+		)
+		.unwrap();
 	assert_eq_error_rate!(previous, total_accrued, 1_000);
 
 	#[cfg(feature = "visualization")]
@@ -555,6 +566,8 @@ fn test_repay_partial_amount() {
 			COLLATERAL::ID,
 		);
 
+		let debt_asset = crate::DebtMarkets::<Runtime>::get(market_index).unwrap();
+
 		let borrow_asset_deposit = BORROW::units(1_000_000);
 		assert_ok!(Tokens::mint_into(BORROW::ID, &CHARLIE, borrow_asset_deposit));
 		assert_extrinsic::<Runtime>(
@@ -601,6 +614,15 @@ fn test_repay_partial_amount() {
 		// 100000000
 		//    948441
 		// pay off a small amount
+		#[allow(unused_must_use)]
+		dbg!(
+			Lending::total_debt_with_interest(&market_index, &*ALICE),
+			<Runtime as crate::Config>::MultiCurrency::balance(
+				debt_asset,
+				&Lending::account_id(&market_index),
+			)
+		);
+
 		assert_ok!(Lending::repay_borrow(
 			Origin::signed(*ALICE),
 			market_index,
@@ -609,7 +631,23 @@ fn test_repay_partial_amount() {
 			                                                         * RepayStrategy::TotalDebt */
 		));
 
-		(1_001..1_002).for_each(process_block);
+		#[allow(unused_must_use)]
+		dbg!(
+			Lending::total_debt_with_interest(&market_index, &*ALICE),
+			<Runtime as crate::Config>::MultiCurrency::balance(
+				debt_asset,
+				&Lending::account_id(&market_index),
+			)
+		);
+		(1_001..1_003).for_each(process_block);
+		#[allow(unused_must_use)]
+		dbg!(
+			Lending::total_debt_with_interest(&market_index, &*ALICE),
+			<Runtime as crate::Config>::MultiCurrency::balance(
+				debt_asset,
+				&Lending::account_id(&market_index),
+			)
+		);
 
 		assert_ok!(Lending::repay_borrow(
 			Origin::signed(*ALICE),

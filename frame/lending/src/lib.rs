@@ -462,7 +462,7 @@ pub mod pallet {
 
 	/// Lending instances counter
 	#[pallet::storage]
-	#[pallet::getter(fn lending_count)]
+	// #[pallet::getter(fn lending_count)]
 	#[allow(clippy::disallowed_type)] // MarketIndex implements Default, so ValueQuery is ok here. REVIEW: Should it?
 	pub type LendingCount<T: Config> = StorageValue<_, MarketIndex, ValueQuery>;
 
@@ -785,6 +785,8 @@ pub mod pallet {
 			T::Oracle::get_price_inverse(borrow_asset, T::OracleMarketCreationStake::get())
 		}
 
+		// REVIEW: Remove this function? Another function with the exact same functionality already
+		// exists.
 		pub fn total_interest_accurate(
 			market_id: &<Self as Lending>::MarketId,
 		) -> Result<T::Balance, DispatchError> {
@@ -942,10 +944,10 @@ pub mod pallet {
 					errors.iter().for_each(|e| {
 						if let Err(e) = e {
 							log::error!(
-							"This should never happen, could not initialize block!!! {:#?} {:#?}",
-							block_number,
-							e
-						)
+								"This should never happen, could not initialize block!!! {:#?} {:#?}",
+								block_number,
+								e
+							)
 						}
 					});
 					TransactionOutcome::Rollback(0)
@@ -1032,9 +1034,9 @@ pub mod pallet {
 			Markets::<T>::get(market_id).ok_or_else(|| Error::<T>::MarketDoesNotExist.into())
 		}
 
-		fn get_borrow_index(market_id: &MarketIndex) -> Result<FixedU128, DispatchError> {
-			BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist.into())
-		}
+		// fn get_borrow_index(market_id: &MarketIndex) -> Result<FixedU128, DispatchError> {
+		// 	BorrowIndex::<T>::try_get(market_id).map_err(|_| Error::<T>::MarketDoesNotExist.into())
+		// }
 
 		fn get_price(
 			asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
@@ -1045,29 +1047,29 @@ pub mod pallet {
 				.map_err(|_| Error::<T>::AssetPriceNotFound.into())
 		}
 
-		fn updated_account_interest_index(
-			market_id: &MarketIndex,
-			debt_owner: &T::AccountId,
-			amount_to_borrow: T::Balance,
-			debt_asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
-		) -> Result<FixedU128, DispatchError> {
-			let market_index =
-				BorrowIndex::<T>::get(market_id).ok_or(Error::<T>::MarketDoesNotExist)?;
+		// fn updated_account_interest_index(
+		// 	market_id: &MarketIndex,
+		// 	debt_owner: &T::AccountId,
+		// 	amount_to_borrow: T::Balance,
+		// 	debt_asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
+		// ) -> Result<FixedU128, DispatchError> {
+		// 	let market_index =
+		// 		BorrowIndex::<T>::get(market_id).ok_or(Error::<T>::MarketDoesNotExist)?;
 
-			let account_interest_index =
-				DebtIndex::<T>::get(market_id, debt_owner).unwrap_or_else(ZeroToOneFixedU128::zero);
+		// 	let account_interest_index =
+		// 		DebtIndex::<T>::get(market_id, debt_owner).unwrap_or_else(ZeroToOneFixedU128::zero);
 
-			let existing_borrow_amount =
-				<T as Config>::MultiCurrency::balance(debt_asset_id, debt_owner);
+		// 	let existing_borrow_amount =
+		// 		<T as Config>::MultiCurrency::balance(debt_asset_id, debt_owner);
 
-			let total_borrow_amount = existing_borrow_amount.safe_add(&amount_to_borrow)?;
-			let existing_borrow_share =
-				Percent::from_rational(existing_borrow_amount, total_borrow_amount);
-			let new_borrow_share = Percent::from_rational(amount_to_borrow, total_borrow_amount);
-			Ok(market_index
-				.safe_mul(&new_borrow_share.into())?
-				.safe_add(&account_interest_index.safe_mul(&existing_borrow_share.into())?)?)
-		}
+		// 	let total_borrow_amount = existing_borrow_amount.safe_add(&amount_to_borrow)?;
+		// 	let existing_borrow_share =
+		// 		Percent::from_rational(existing_borrow_amount, total_borrow_amount);
+		// 	let new_borrow_share = Percent::from_rational(amount_to_borrow, total_borrow_amount);
+		// 	Ok(market_index
+		// 		.safe_mul(&new_borrow_share.into())?
+		// 		.safe_add(&account_interest_index.safe_mul(&existing_borrow_share.into())?)?)
+		// }
 
 		// REVIEW: Remove? Was only used in the above function, inlining it makes more sense
 		// (inlined currently).
@@ -1240,7 +1242,7 @@ pub mod pallet {
 
 				DebtMarkets::<T>::insert(market_id, debt_token_id);
 				Markets::<T>::insert(market_id, market_config);
-				BorrowIndex::<T>::insert(market_id, ZeroToOneFixedU128::one());
+				BorrowIndex::<T>::insert(market_id, FixedU128::one());
 
 				Ok((market_id, borrow_asset_vault))
 			})
@@ -1470,6 +1472,8 @@ pub mod pallet {
 					true,
 				)?;
 				BorrowRent::<T>::insert(market_id, borrowing_account, deposit);
+			} else {
+				// REVIEW
 			}
 
 			Ok(())
@@ -1587,14 +1591,18 @@ pub mod pallet {
 
 				// attempt to repay a partial amount of the debt, paying off interest first.
 				RepayStrategy::PartialAmount(partial_repay_amount) => {
+					#[cfg(feature = "std")]
 					dbg!(&partial_repay_amount);
 					ensure!(
 						partial_repay_amount < beneficiary_total_debt_with_interest,
 						Error::<T>::PartialRepayMustBeLessThanTotalDebt
 					);
 
+					#[cfg(feature = "std")]
+					dbg!(beneficiary_interest_on_market);
+
 					// enough balance was provided to pay off the interest & part of the debt.
-					if partial_repay_amount > dbg!(beneficiary_interest_on_market) {
+					if partial_repay_amount > beneficiary_interest_on_market {
 						// pay off all of the interest
 
 						// pay interest, from -> market
@@ -1707,7 +1715,7 @@ pub mod pallet {
 			let debt_asset_id =
 				DebtMarkets::<T>::get(market_id).ok_or(Error::<T>::MarketDoesNotExist)?;
 
-			let (accrued, borrow_index_new) = Markets::<T>::try_mutate/* ::<_, _, DispatchError, _> */(market_id, |market_config| {
+			let accrued_interest_result = Markets::<T>::try_mutate/* ::<_, _, DispatchError, _> */(market_id, |market_config| {
 					let market_config =
 						market_config.as_mut().ok_or(Error::<T>::MarketDoesNotExist)?;
 
@@ -1721,11 +1729,11 @@ pub mod pallet {
 				})?;
 
 			// overwrites
-			BorrowIndex::<T>::insert(market_id, borrow_index_new);
+			BorrowIndex::<T>::insert(market_id, accrued_interest_result.new_borrow_index);
 			<T as Config>::MultiCurrency::mint_into(
 				debt_asset_id,
 				&Self::account_id(market_id),
-				accrued,
+				accrued_interest_result.accrued_increment,
 			)?;
 
 			Ok(())
@@ -1763,12 +1771,16 @@ pub mod pallet {
 					let market_interest_index =
 						BorrowIndex::<T>::get(market_id).ok_or(Error::<T>::MarketDoesNotExist)?;
 
-					dbg!(&market_interest_index);
-					dbg!(&account_interest_index);
+					#[cfg(feature = "std")]
+					{
+						dbg!(&market_interest_index);
+						dbg!(&account_interest_index);
+					}
 
 					let account_principal =
 						<T as Config>::MultiCurrency::balance_on_hold(debt_token, account);
 
+					#[cfg(feature = "std")]
 					dbg!(&account_principal);
 					if account_principal.is_zero() {
 						Ok(TotalDebtWithInterest::NoDebt)
@@ -1777,10 +1789,11 @@ pub mod pallet {
 						let account_principal =
 							LiftedFixedBalance::saturating_from_integer(account_principal.into());
 						// principal * (market index / debt index)
-						let t = market_interest_index.safe_div(&account_interest_index)?;
+						let index_ratio =
+							market_interest_index.safe_div(&account_interest_index)?;
 
 						let balance = account_principal
-							.safe_mul(&t)?
+							.safe_mul(&index_ratio)?
 							// TODO: Balance should be u128 eventually
 							.checked_mul_int(1_u64)
 							.ok_or(ArithmeticError::Overflow)?;
@@ -1856,36 +1869,42 @@ pub mod pallet {
 	/// new_accrued_debt = accrued_debt + debt_delta
 	/// total_debt = debt_principal + new_accrued_debt
 	/// ```
-	pub fn accrue_interest_internal<T: Config, I: InterestRate>(
+	pub(crate) fn accrue_interest_internal<T: Config, I: InterestRate>(
 		utilization_ratio: Percent,
 		interest_rate_model: &mut I,
 		borrow_index: OneOrMoreFixedU128,
 		delta_time: DurationSeconds,
 		total_borrows: T::Balance,
-	) -> Result<(T::Balance, FixedU128), DispatchError> {
-		let borrow_rate = interest_rate_model
-			.get_borrow_rate(utilization_ratio)
-			.ok_or(Error::<T>::BorrowRateDoesNotExist)?;
-
-		let borrow_index_new = increment_index(borrow_rate, borrow_index, delta_time)?;
-		// let delta_interest_rate = borrow_rate
-		// 	.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
-		// 	.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR_NAIVE))?;
+	) -> Result<AccrueInterest<T>, DispatchError> {
 		let total_borrows: FixedU128 =
 			FixedU128::checked_from_integer(Into::<u128>::into(total_borrows))
 				.ok_or(ArithmeticError::Overflow)?;
 
-		let accrue_increment = total_borrows
-			.safe_mul(&borrow_rate)?
-			.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
-			.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR_NAIVE))?
-			.checked_mul_int(1_u64)
-			.ok_or(ArithmeticError::Overflow)?; /* .into_inner() / LiftedFixedBalance::DIV */
-		// let accrue_increment =
-		// 	accrue_increment.try_into().map_err(|_| ArithmeticError::Overflow)?;
+		let borrow_rate = interest_rate_model
+			.get_borrow_rate(utilization_ratio)
+			.ok_or(Error::<T>::BorrowRateDoesNotExist)?;
 
-		// TODO: Use a named struct for the return type
-		Ok((accrue_increment.into(), borrow_index_new))
+		// borrow_rate * index * delta_time / SECONDS_PER_YEAR_NAIVE + index
+		let borrow_rate_delta = borrow_rate
+			.safe_mul(&FixedU128::saturating_from_integer(delta_time))?
+			.safe_div(&FixedU128::saturating_from_integer(SECONDS_PER_YEAR_NAIVE))?;
+
+		let new_borrow_index =
+			borrow_rate_delta.safe_mul(&borrow_index)?.safe_add(&borrow_index)?;
+
+		let accrued_increment = total_borrows
+			.safe_mul(&borrow_rate_delta)?
+			.checked_mul_int(1_u64)
+			.ok_or(ArithmeticError::Overflow)?
+			.into();
+
+		Ok(AccrueInterest { accrued_increment, new_borrow_index })
+	}
+
+	#[derive(Debug, PartialEqNoBound)]
+	pub(crate) struct AccrueInterest<T: Config> {
+		pub(crate) accrued_increment: T::Balance,
+		pub(crate) new_borrow_index: FixedU128,
 	}
 }
 
@@ -2008,12 +2027,13 @@ mod repay_borrow {
 
 			let market_debt_asset_balance =
 				<T as Config>::MultiCurrency::balance(self.debt_asset, self.market_account);
+			#[cfg(feature = "std")]
 			dbg!(market_debt_asset_balance);
 
 			<T as Config>::MultiCurrency::burn_from(
 				self.debt_asset,
 				self.market_account,
-				dbg!(self.amount_of_interest_to_repay),
+				self.amount_of_interest_to_repay,
 			)?;
 
 			Ok(())
