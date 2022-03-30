@@ -6769,23 +6769,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-chaos"
-version = "0.0.1"
-dependencies = [
- "composable-traits",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
- "sp-arithmetic",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-collator-selection"
 version = "3.0.0"
 source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.17#db11baacc325537be74ad34517fcb28ed9ded6c6"
@@ -7477,6 +7460,23 @@ version = "0.0.1"
 dependencies = [
  "bitflags",
  "composable-traits",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-arithmetic",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-protocol-rewards"
+version = "0.0.1"
+dependencies = [
+ "composable-traits",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "parity-scale-codec",

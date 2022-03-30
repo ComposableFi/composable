@@ -2,7 +2,7 @@
 authors = ["Composable Developers"]
 edition = "2021"
 homepage = "https://composable.finance"
-name = "pallet-chaos"
+name = "pallet-protocol-rewards"
 version = "0.0.1"
 
 
