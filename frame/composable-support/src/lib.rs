@@ -14,4 +14,5 @@
 
 pub mod collections;
 pub mod rpc_helpers;
+pub mod types;
 pub mod validation;
