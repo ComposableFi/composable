@@ -91,6 +91,7 @@ export class RpcAssetsTests {
         expect(result).to.have.lengthOf(5); 
         result.every((i) => expect(i).to.have.all.keys('id','name'))
         expect(result.map(e=>(e.id.toNumber()))).to.include.members([ 1, 2, 3, 4, 129 ]);
+        expect(result.map(e=>(hex_to_ascii(e.name.toString())))).to.include.members([ 'PICA', 'LAYR', 'CROWD_LOAN', 'KSM', 'kUSD' ]);
     });
 });
 

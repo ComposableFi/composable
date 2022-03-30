@@ -77,7 +77,15 @@ fn preimage_deposit_should_be_reapable_earlier_by_owner() {
 	new_test_ext_execute_with_cond(|operational| {
 		PREIMAGE_BYTE_DEPOSIT.with(|v| *v.borrow_mut() = 1);
 		assert_ok!(if operational {
+<<<<<<< HEAD
 			Democracy::note_preimage_operational(Origin::signed(6), set_balance_proposal(2))
+=======
+			Democracy::note_preimage_operational(
+				Origin::signed(6),
+				set_balance_proposal(2),
+				DEFAULT_ASSET,
+			)
+>>>>>>> 14a330e0 (resolved coflicts)
 		} else {
 			Democracy::note_preimage(Origin::signed(6), set_balance_proposal(2))
 		});

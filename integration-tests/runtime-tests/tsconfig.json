@@ -12,8 +12,6 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "sourceMap": true,
-    "sourceRoot": "ts",
     "baseUrl": "./",
     "paths":{
       "@composable/*": [
@@ -36,7 +34,7 @@
     "test",
     "test/**/*.ts",
     "@types/**/*.d.ts"
-  ],
+, "../keep/bondedFinance"  ],
   "exclude": [
     "node_modules",
     "test/**/*.d.ts",

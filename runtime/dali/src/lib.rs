@@ -79,8 +79,6 @@ use system::{
 	EnsureRoot,
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
-pub use xcmp::XcmConfig;
-
 use crate::xcmp::XcmRouter;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
@@ -1165,8 +1163,8 @@ mod benches {
 
 impl_runtime_apis! {
 	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
-		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
-			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
+		fn balance_of(asset_id: SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
+			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id.0, &account_id))
 		}
 
 		fn list_assets() -> Vec<Asset> {
