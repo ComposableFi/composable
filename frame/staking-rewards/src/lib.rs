@@ -36,6 +36,12 @@
 
 pub use pallet::*;
 
+#[cfg(test)]
+mod tests;
+
+#[cfg(test)]
+mod mock;
+
 #[frame_support::pallet]
 pub mod pallet {
 	use composable_traits::{

@@ -7645,10 +7645,15 @@ dependencies = [
 name = "pallet-staking-rewards"
 version = "0.0.1"
 dependencies = [
+ "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-nft",
+ "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
  "sp-arithmetic",

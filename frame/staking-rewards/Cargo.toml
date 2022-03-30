@@ -31,6 +31,14 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 
 composable-traits = { path = "../composable-traits", default-features = false }
 
+[dev-dependencies]
+composable-tests-helpers = { path = "../composable-tests-helpers" }
+composable-traits = { path = "../../frame/composable-traits" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb", default-features = false }
+pallet-nft = { path = "../../frame/nft" }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+
 [features]
 default = ["std"]
 std = [
