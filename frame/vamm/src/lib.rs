@@ -38,7 +38,7 @@
 //!
 //! ### Implemented Functions
 //!
-//! * [create](pallet::create)
+//! * [create_market](pallet::create_market)
 //!
 //! TODO
 //!
@@ -105,14 +105,18 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::event]
-	pub enum Event<T: Config> {}
+	pub enum Event<T: Config> {
+		MarketCreated,
+	}
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Runtime  Errors
 	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		MarketAlreadyExists,
+	}
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Runtime  Storage
@@ -133,7 +137,41 @@ pub mod pallet {
 	//                              Trait Implementations
 	// ----------------------------------------------------------------------------------------------------
 
-	pub fn create(
+	/// Creates a new virtual market.
+	///
+	/// # Overview
+	/// In order for the caller to create new markets, it has to request it to
+	/// the VAMM, which is responsible to keep track of all active markets. The
+	/// VAMM creates the market, inserts it in storage, deposits an
+	/// `MarketCreated` event on the blockchain and returns the new market ID to
+	/// the caller.
+	///
+	/// In the diagram below the Clearing House is depicted as the caller.
+	///
+	/// ![](https://www.plantuml.com/plantuml/svg/TP7TQi9048Nlzod6LAWY0OjtOWL_eEs5tlW4ayqaMKnsqfrDVFrcDR4ecAl0-RupS5REnjRei097KhCLEf08vhIbaYyRv_W2tZMalF4bGRiv7A12ToOFsX5wmnPYE3LQTnfadQFUiV6CsfiMFG5RDV85LHGqKQFQiQQqSGJZ34tP_Kp6bUHJ1R3As7QrNBBxZDwqddTVj5ubwm2e4TdqBZ_qoEtwYvxvOhFxMBpgKJKwRxIfiLEYNKdeZCtXcnkX25105uz8ME0Qj5XLAaMF2Gf1TFBiC2UO161w9UG9sPQipxf0OwznefNI1SHh2DnijeHTM9I6VHtzDYHUXJHGCc1Vv7j6oItiE-9u2KVsa75ZqqVlgLmD7aEYbx2dciNqJqff3m6rPF_HRefmu3vtTAJBGFxiewdw0m00)
+	///
+	/// ## Parameters:
+	/// - `base_asset_amount`: The amount of base asset
+	/// - `quote_asset_amount`: The amount of quote asset
+	/// - `peg_multiplier`: The constant multiplier responsible to balance quote and base asset
+	///
+	/// ## Assumptions or Requirements
+	/// TODO
+	///
+	/// ## Emits
+	/// * [`MarketCreated`](Event::<T>::MarketCreated)
+	///
+	/// ## State Changes
+	/// Updates the [`AccountsMargin`] storage map. If an account does not exist in
+	/// [`AccountsMargin`], it is created and initialized with 0 margin.
+	///
+	/// ## Errors
+	/// * [`MarketAlreadyExists`](Error::<T>::MarketAlreadyExists)
+	///
+	/// # Weight/Runtime
+	/// `O(1)`
+
+	pub fn create_market(
 		_base_asset_amount: u128,
 		_quote_asset_amount: u128,
 		_peg_multiplier: u128,
