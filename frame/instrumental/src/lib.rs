@@ -249,7 +249,7 @@ pub mod pallet {
 		/// # Overview
 		/// 
 		/// ## Parameters
-		/// - `origin`: 
+		/// - `origin`: Origin type representing the origin of this dispatch.
 		/// - `config`: the `VaultConfig` of the underlying vault to create.
 		/// 
 		/// ## Requirements
