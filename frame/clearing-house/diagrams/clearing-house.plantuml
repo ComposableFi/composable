@@ -46,7 +46,6 @@ package "pallet-clearing-house" {
     interface "Instruments" as ITrait <<trait>> {
         ~ funding_owed(Position)
         ~ funding_rate(MarketId)
-        ~ update_funding(MarketId)
     }
 
     interface "FeeModel" as FTrait <<trait>> {
@@ -123,11 +122,11 @@ hide circle
 
 '================== Storage relationships
 Markets ..down> Market : maps
-Market::vamm_id ..> vAmms : references
+Market::vamm_id ..> vAmm : used in
 Market::asset_id ..> Oracle : used in
 
 Positions ..down> Position: maps
-Position ..left> Markets : references
+Position ..right> Markets : references
 
 '================== Control flow relationships             
 ClearingHouse -> CH : wraps
@@ -156,18 +155,18 @@ CH -[#blue]right> FTrait : calls
 CH -[#blue]-> vAmm : calls
 
 'update_funding
-ITrait -[#red]-> Markets : write
+ITrait -[#green]-> Markets : read
 ITrait -[#blue]-> Oracle : calls
 ITrait -[#blue]-> vAmm : calls
 
 'get_margin_ratio
 RETrait -[#green]-> MarginAccounts : read
 RETrait -[#green]-> Positions : read
-RETrait -[#blue]-> ITrait : calls
+RETrait -left[#blue]> ITrait : calls
 RETrait -[#blue]-> vAmm : calls
 
 'vAMM
-vAmm -[#red]-> vAmms : write
-vAmms ..> vAmmState : maps
+vAmm -down[#red]-> vAmms : write
+vAmms ..right> vAmmState : maps
 
 @enduml

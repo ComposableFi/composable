@@ -6,7 +6,7 @@ repos:
     ########## Clearing House ##########
   - id: clearing-house::cargo-fmt
     name: clearing-house::cargo-fmt
-    entry: cargo +nightly fmt --check -p clearing-house
+    entry: cargo +nightly fmt --check -p pallet-clearing-house
     language: system
     pass_filenames: false
     stages: [commit, push]
@@ -14,7 +14,7 @@ repos:
     types: [rust]
   - id: clearing-house::cargo-clippy
     name: clearing-house::cargo-clippy
-    entry: cargo +nightly clippy --all-targets --no-deps -p clearing-house
+    entry: cargo +nightly clippy --all-targets --no-deps -p pallet-clearing-house
     language: system
     pass_filenames: false
     stages: [push]
