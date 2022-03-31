@@ -41,7 +41,7 @@
 //!
 //! ### Implemented Functions
 //!
-//! * [`pallet::Pallet::create`]
+//! * [`create`](<Pallet as Vamm>::create)
 //!
 //! TODO
 //!
@@ -75,14 +75,13 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 
-	use codec::FullCodec;
+	use codec::{Codec, FullCodec};
 	use composable_traits::vamm::Vamm;
-	use frame_support::{pallet_prelude::*, transactional, Blake2_128Concat};
+	use frame_support::{pallet_prelude::*, sp_std::fmt::Debug, transactional, Blake2_128Concat};
 	use sp_runtime::{
-		traits::{CheckedAdd, One},
+		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Zero},
 		ArithmeticError,
 	};
-	use std::fmt::Debug;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                    Declaration Of The Pallet Type
@@ -104,24 +103,41 @@ pub mod pallet {
 
 		/// The vamm id type for this pallet.
 		type VammId: CheckedAdd
-			+ One
+			+ Clone
+			+ Debug
 			+ Default
 			+ FullCodec
 			+ MaxEncodedLen
-			+ TypeInfo
-			+ Clone
+			+ One
+			+ Parameter
 			+ PartialEq
-			+ Debug;
+			+ TypeInfo
+			+ Zero;
 
 		/// Timestamp to be used for twap calculations and market deprecation.
 		type Timestamp: Default
-			+ FullCodec
-			+ MaxEncodedLen
-			+ TypeInfo
 			+ Clone
 			+ Copy
+			+ Debug
+			+ FullCodec
+			+ MaxEncodedLen
 			+ PartialEq
-			+ Debug;
+			+ TypeInfo;
+
+		/// The Balance type used by the pallet for bookkeeping. `Config::Convert` is used for
+		/// conversions to `u128`, which are used in the computations.
+		type Balance: Default
+			+ AtLeast32BitUnsigned
+			+ CheckedAdd
+			+ CheckedDiv
+			+ CheckedMul
+			+ CheckedSub
+			+ Codec
+			+ Copy
+			+ MaxEncodedLen
+			+ Ord
+			+ Parameter
+			+ Zero;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -137,15 +153,15 @@ pub mod pallet {
 
 	/// Data relating to the state of a virtual market.
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug)]
-	pub struct VammState<Timestamp> {
+	pub struct VammState<Balance, Timestamp> {
 		/// The total amount of base asset present in the virtual market.
-		base_asset_reserves: u128,
+		base_asset_reserves: Balance,
 
 		/// The total amount of quote asset present in the virtual market.
-		quote_asset_reserves: u128,
+		quote_asset_reserves: Balance,
 
 		/// The magnitude of the quote asset reserve.
-		peg_multiplier: u128,
+		peg_multiplier: Balance,
 
 		/// Whether this market is deprecated or not.
 		///
@@ -158,8 +174,10 @@ pub mod pallet {
 		deprecated: Option<Timestamp>,
 	}
 
+	type BalanceOf<T> = <T as Config>::Balance;
 	type TimestampOf<T> = <T as Config>::Timestamp;
-	type VammStateOf<T> = VammState<TimestampOf<T>>;
+	type VammIdOf<T> = <T as Config>::VammId;
+	type VammStateOf<T> = VammState<BalanceOf<T>, TimestampOf<T>>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Runtime  Storage
@@ -174,12 +192,13 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn vamm_count)]
 	#[allow(clippy::disallowed_types)]
-	pub type VammsCount<T: Config> = StorageValue<_, T::VammId, ValueQuery>;
+	pub type VammCounter<T: Config> = StorageValue<_, T::VammId, ValueQuery>;
 
-	/// Maps [VammId](Config::VammId) to the corresponding virtual [VammState] specs
+	/// Maps [VammId](Config::VammId) to the corresponding virtual
+	/// [VammState] specs
 	#[pallet::storage]
 	#[pallet::getter(fn get_vamm)]
-	pub type Vamms<T: Config> = StorageMap<_, Blake2_128Concat, T::VammId, VammStateOf<T>>;
+	pub type VammMap<T: Config> = StorageMap<_, Blake2_128Concat, VammIdOf<T>, VammStateOf<T>>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                            Runtime Events
@@ -189,8 +208,8 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// New vamm successfully created
-		VammCreated(VammStateOf<T>),
+		/// Emitted after a successful call to the [`create`](Pallet::create) function.
+		Created { vamm_id: VammIdOf<T>, state: VammStateOf<T> },
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -200,8 +219,11 @@ pub mod pallet {
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
+		/// This error is thrown when the caller tries to set `base_asset_reserves` to zero.
 		BaseAssetReserveIsZero,
+		/// This error is thrown when the caller tries to set `quote_asset_reserves` to zero.
 		QuoteAssetReserveIsZero,
+		/// This error is thrown when the caller tries to set `peg_multiplier` to zero.
 		PegMultiplierIsZero,
 	}
 
@@ -217,11 +239,12 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	// ----------------------------------------------------------------------------------------------------
-	//                                           Trait Implementations
+	//                                           Vamm Trait
 	// ----------------------------------------------------------------------------------------------------
 
 	impl<T: Config> Vamm for Pallet<T> {
-		type VammId = T::VammId;
+		type VammId = VammIdOf<T>;
+		type Balance = BalanceOf<T>;
 
 		/// Creates a new virtual market.
 		///
@@ -229,7 +252,7 @@ pub mod pallet {
 		/// In order for the caller to create new markets, it has to request it
 		/// to the VAMM, which is responsible to keep track of all active
 		/// markets. The VAMM creates the market, inserts it in storage,
-		/// deposits a [`VammCreated`](Event::<T>::VammCreated) event on the
+		/// deposits a [`Created`](Event::<T>::Created) event on the
 		/// blockchain and returns the new market ID to the caller.
 		///
 		/// In the diagram below the Clearing House is depicted as the caller.
@@ -248,7 +271,7 @@ pub mod pallet {
 		/// TODO
 		///
 		/// ## Emits
-		/// * [`VammCreated`](Event::<T>::VammCreated)
+		/// * [`Created`](Event::<T>::Created)
 		///
 		/// ## State Changes
 		/// Updates [`Vamms`] storage map and [`VammsCount`] storage value.
@@ -261,26 +284,31 @@ pub mod pallet {
 
 		#[transactional]
 		fn create(
-			base_asset_reserves: u128,
-			quote_asset_reserves: u128,
-			peg_multiplier: u128,
+			base_asset_reserves: Self::Balance,
+			quote_asset_reserves: Self::Balance,
+			peg_multiplier: Self::Balance,
 		) -> Result<Self::VammId, DispatchError> {
-			ensure!(base_asset_reserves != 0, Error::<T>::BaseAssetReserveIsZero);
-			ensure!(quote_asset_reserves != 0, Error::<T>::QuoteAssetReserveIsZero);
-			ensure!(peg_multiplier != 0, Error::<T>::PegMultiplierIsZero);
+			ensure!(!base_asset_reserves.is_zero(), Error::<T>::BaseAssetReserveIsZero);
+			ensure!(!quote_asset_reserves.is_zero(), Error::<T>::QuoteAssetReserveIsZero);
+			ensure!(!peg_multiplier.is_zero(), Error::<T>::PegMultiplierIsZero);
 
-			VammsCount::<T>::try_mutate(|id| {
+			VammCounter::<T>::try_mutate(|id| {
 				let old_id = id.clone();
-				let vamm_state = VammState {
+				let vamm_state = VammStateOf::<T> {
 					base_asset_reserves,
 					quote_asset_reserves,
 					peg_multiplier,
 					deprecated: Default::default(),
 				};
 
-				Vamms::<T>::insert(&old_id, vamm_state);
+				VammMap::<T>::insert(&old_id, vamm_state);
 				*id = id.checked_add(&One::one()).ok_or(ArithmeticError::Overflow)?;
-				Self::deposit_event(Event::<T>::VammCreated(vamm_state));
+
+				Self::deposit_event(Event::<T>::Created {
+					vamm_id: old_id.clone(),
+					state: vamm_state,
+				});
+
 				Ok(old_id)
 			})
 		}
