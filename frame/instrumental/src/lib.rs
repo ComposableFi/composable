@@ -249,7 +249,7 @@ pub mod pallet {
 		/// # Overview
 		/// 
 		/// ## Parameters
-		/// - `origin`: Origin type representing the origin of this dispatch.
+		/// - `origin`: `Origin` type representing the origin of this dispatch.
 		/// - `config`: the `VaultConfig` of the underlying vault to create.
 		/// 
 		/// ## Requirements
@@ -264,7 +264,7 @@ pub mod pallet {
 		///     `VaultId` is stored.
 		/// 
 		/// ## Errors
-		/// - `VaultAlreadyExists`: their already exists an underlying vault for `asset`.
+		/// - `VaultAlreadyExists`: there already exists an underlying vault for `asset`.
 		/// 
 		/// # Examples
 		/// 
