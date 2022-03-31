@@ -6,6 +6,10 @@
 //! markets. To use it in your runtime, you must provide compatible implementations of virtual AMMs
 //! and price oracles.
 //!
+//! - [`Config`]
+//! - [`Call`]
+//! - [`Pallet`]
+//!
 //! ### Terminology
 //!
 //! * **Trader**: Primary user of the public extrinsics of the pallet
