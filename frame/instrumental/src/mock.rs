@@ -295,8 +295,6 @@ impl ExtBuilder {
 		self.vault_count += 1;
 		let vault_id = self.vault_count;
 
-		// self.asset_vaults.push((asset, vault_id));
-
 		let vault_account = VAULT_PALLET_ID.into_sub_account(&vault_id);
 		if asset == NATIVE_ASSET {
 			self.native_balances.push((vault_account, balance));

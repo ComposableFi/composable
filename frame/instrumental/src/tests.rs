@@ -297,7 +297,7 @@ proptest! {
         assets in generate_assets(),
         deposits in generate_deposits()
     ) {         
-        ExtBuilder::default().initialize_balances(deposits.clone()).build().execute_with(|| {        
+        ExtBuilder::default().initialize_balances(deposits.clone()).build().execute_with(|| {                    
             // Create a vault for each randomly chosen asset
             VaultBuilder::new().group_add(
                 assets.iter().map(|&asset| { VaultConfigBuilder::default().asset_id(asset).build() }
@@ -399,16 +399,16 @@ proptest! {
 // ----------------------------------------------------------------------------------------------------
 
 #[test]
-fn initialize_vault() {
+fn ext_builder_initialize_vault() {
     let vault_id = 1u64;
-    let (asset_id, balance) = (USDC::ID, USDC::units(100));
+    let (asset, balance) = (USDC::ID, USDC::units(100));
 
-    ExtBuilder::default().initialize_vault(asset_id, balance).build().execute_with(|| {
-        let config = VaultConfigBuilder::default().asset_id(asset_id).build();
+    ExtBuilder::default().initialize_vault(asset, balance).build().execute_with(|| {
+        let config = VaultConfigBuilder::default().asset_id(asset).build();
         assert_ok!(Instrumental::create(Origin::signed(ADMIN), config));
         
         // Requirement 1) The Instrumental Pallet saves a reference to each created Vault
-        assert!(AssetVault::<MockRuntime>::contains_key(asset_id));
+        assert!(AssetVault::<MockRuntime>::contains_key(asset));
 
         assert!(VaultInfoStorage::<MockRuntime>::contains_key(vault_id));
 
@@ -416,4 +416,48 @@ fn initialize_vault() {
             <Vault as composable_traits::vault::Vault>::account_id(&vault_id);
         assert_eq!(Assets::balance(USDC::ID, &vault_account), balance);
     });
+}
+
+#[test]
+fn ext_builder_initalize_balance() {
+    let user = ADMIN;
+    let (asset, balance) = (USDC::ID, USDC::units(100));
+
+    ExtBuilder::default().initialize_balance(user, asset, balance).build().execute_with(|| {                    
+        assert_eq!(Assets::balance(asset, &user), balance);
+    });
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(NUMBER_OF_PROPTEST_CASES))]
+
+    #[test]
+    fn ext_builder_initialize_vaults(
+        reserves in generate_reserves()
+    ) {
+        ExtBuilder::default().initialize_vaults(reserves.clone()).build().execute_with(|| {
+            VaultBuilder::new().group_add(
+                reserves.iter().map(|(asset, _balance)| { VaultConfigBuilder::default().asset_id(*asset).build() }
+            ).collect()).build();
+            
+            reserves.into_iter().for_each(|(asset, balance)| {
+                let vault_id = AssetVault::<MockRuntime>::get(asset).unwrap();
+                let vault_account = 
+                    <Vault as composable_traits::vault::Vault>::account_id(&vault_id);
+
+                assert_eq!(Assets::balance(asset, &vault_account), balance);
+            });
+        });
+    }
+
+    #[test]
+    fn ext_builder_initalize_balances(
+        deposits in generate_deposits()
+    ) {         
+        ExtBuilder::default().initialize_balances(deposits.clone()).build().execute_with(|| {                    
+            deposits.into_iter().for_each(|(user, asset, balance)| {
+                assert_eq!(Assets::balance(asset, &user), balance);
+            });
+        });
+    }
 }
