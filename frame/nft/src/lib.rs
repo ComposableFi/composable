@@ -108,21 +108,6 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-	impl<T: Config> Pallet<T> {
-		fn ensure_instance_exists(
-			class: &NFTClass,
-			instance: &NFTInstanceId,
-		) -> Result<(), DispatchError> {
-			ensure!(Instance::<T>::contains_key((class, instance)), Error::<T>::InstanceNotFound);
-			Ok(())
-		}
-
-		fn ensure_class_exists(class: &NFTClass) -> Result<(), DispatchError> {
-			ensure!(Class::<T>::contains_key(class), Error::<T>::ClassNotFound);
-			Ok(())
-		}
-	}
-
 	impl<T: Config> Inspect<AccountIdOf<T>> for Pallet<T> {
 		type ClassId = NFTClass;
 		type InstanceId = NFTInstanceId;
@@ -162,11 +147,13 @@ pub mod pallet {
 			instance: &Self::InstanceId,
 			destination: &AccountIdOf<T>,
 		) -> DispatchResult {
-			Self::ensure_instance_exists(class, instance)?;
-			Instance::<T>::mutate((class, instance), |entry| {
-				entry.as_mut().map(|(owner, _)| *owner = destination.clone())
-			});
-			Ok(())
+			Instance::<T>::try_mutate((class, instance), |entry| match entry {
+				Some((owner, _)) => {
+					*owner = destination.clone();
+					Ok(())
+				},
+				None => Err(Error::<T>::InstanceNotFound.into()),
+			})
 		}
 	}
 
@@ -182,9 +169,13 @@ pub mod pallet {
 		}
 
 		fn burn_from(class: &Self::ClassId, instance: &Self::InstanceId) -> DispatchResult {
-			Self::ensure_instance_exists(class, instance)?;
-			Instance::<T>::remove((class, instance));
-			Ok(())
+			Instance::<T>::try_mutate_exists((class, instance), |entry| match entry {
+				Some(_) => {
+					*entry = None;
+					Ok(())
+				},
+				None => Err(Error::<T>::InstanceNotFound.into()),
+			})
 		}
 
 		fn set_attribute(
@@ -214,11 +205,13 @@ pub mod pallet {
 		}
 
 		fn set_class_attribute(class: &Self::ClassId, key: &[u8], value: &[u8]) -> DispatchResult {
-			Self::ensure_class_exists(class)?;
-			Class::<T>::mutate(class, |entry| {
-				entry.as_mut().map(|(_, _, class)| class.insert(key.into(), value.into()));
-			});
-			Ok(())
+			Class::<T>::try_mutate(class, |entry| match entry {
+				Some((_, _, class)) => {
+					class.insert(key.into(), value.into());
+					Ok(())
+				},
+				None => Err(Error::<T>::ClassNotFound.into()),
+			})
 		}
 
 		fn set_typed_class_attribute<K: Encode, V: Encode>(
