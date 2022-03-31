@@ -94,7 +94,7 @@ pub mod pallet {
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::{
-		traits::{AccountIdConversion, CheckedAdd, One, Zero},
+		traits::{AccountIdConversion, CheckedAdd, CheckedMul, CheckedSub, One, Zero},
 		ArithmeticError, FixedPointNumber,
 	};
 
@@ -132,9 +132,9 @@ pub mod pallet {
 		// TODO(0xangelo): uncomment this and set mocks
 		// type UnixTime: UnixTime;
 		/// Virtual Automated Market Maker pallet implementation
-		type VirtualAMM: VirtualAMM;
+		type VirtualAMM: VirtualAMM<Decimal = Self::Decimal>;
 		/// Price feed (in USDT) Oracle pallet implementation
-		type Oracle: Oracle<AssetId = Self::MayBeAssetId>;
+		type Oracle: Oracle<AssetId = Self::MayBeAssetId, Balance = Self::Balance>;
 		/// Pallet implementation of asset transfers.
 		type Assets: Transfer<
 			Self::AccountId,
@@ -480,9 +480,24 @@ pub mod pallet {
 		type Market = MarketOf<T>;
 		type Decimal = T::Decimal;
 
-		fn funding_rate(market: Self::Market) -> Result<Self::Decimal, DispatchError> {
+		fn funding_rate(market: &Self::Market) -> Result<Self::Decimal, DispatchError> {
+			// Oracle returns prices in USDT cents
 			let unnormalized_oracle_twap = T::Oracle::get_twap(market.asset_id, vec![])?;
-			todo!()
+			let oracle_twap = Self::Decimal::checked_from_rational(unnormalized_oracle_twap, 10u32)
+				.ok_or(ArithmeticError::Overflow)?;
+
+			let vamm_twap = T::VirtualAMM::get_twap(&market.vamm_id)?;
+
+			let price_spread =
+				vamm_twap.checked_sub(&oracle_twap).ok_or(ArithmeticError::Underflow)?;
+			let period_adjustment = Self::Decimal::checked_from_rational(
+				market.funding_frequency,
+				market.funding_period,
+			)
+			.ok_or(ArithmeticError::Underflow)?;
+			let rate =
+				price_spread.checked_mul(&period_adjustment).ok_or(ArithmeticError::Underflow)?;
+			Ok(rate)
 		}
 	}
 

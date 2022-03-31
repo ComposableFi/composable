@@ -95,7 +95,8 @@ pub mod pallet {
 			}
 		}
 
-		fn get_twap(vamm: Self::VammId) -> Result<Self::Decimal, DispatchError> {
+		#[allow(unused_variables)]
+		fn get_twap(vamm: &Self::VammId) -> Result<Self::Decimal, DispatchError> {
 			Ok(Self::Decimal::checked_from_rational(10000u32, 100u32)
 				.ok_or(Error::<T>::FailedToCalculateTwap)?)
 		}

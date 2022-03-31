@@ -18,5 +18,5 @@ pub trait VirtualAMM {
 	fn create(info: Self::VammParams) -> Result<Self::VammId, DispatchError>;
 
 	/// Compute the time-weighted average price of a virtual AMM
-	fn get_twap(vamm: Self::VammId) -> Result<Self::Decimal, DispatchError>;
+	fn get_twap(vamm: &Self::VammId) -> Result<Self::Decimal, DispatchError>;
 }

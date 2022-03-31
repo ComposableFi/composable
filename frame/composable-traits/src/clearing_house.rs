@@ -76,5 +76,5 @@ pub trait Instruments {
 	///
 	/// ## Returns
 	/// The current funding rate as a fixed point number
-	fn funding_rate(market: Self::Market) -> Result<Self::Decimal, DispatchError>;
+	fn funding_rate(market: &Self::Market) -> Result<Self::Decimal, DispatchError>;
 }
