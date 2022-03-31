@@ -1,11 +1,27 @@
 //! # Virtual Automated Market Maker
 //!
 //! Common traits for vamm implementation
-use frame_support::pallet_prelude::DispatchError;
+use codec::Codec;
+use frame_support::{pallet_prelude::*, sp_std::fmt::Debug};
+use sp_runtime::traits::{
+	AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Zero,
+};
 
 pub trait Vamm {
-	/// The identifier type for each market
-	type VammId;
+	type Balance: Default
+		+ AtLeast32BitUnsigned
+		+ CheckedAdd
+		+ CheckedDiv
+		+ CheckedMul
+		+ CheckedSub
+		+ Codec
+		+ Copy
+		+ MaxEncodedLen
+		+ Ord
+		+ Parameter
+		+ Zero;
+
+	type VammId: Default + Clone + Codec + Debug + Parameter + PartialEq;
 
 	/// Create a new virtual market.
 	///
@@ -17,8 +33,8 @@ pub trait Vamm {
 	/// ## Returns
 	/// The new virtual market id, if successful.
 	fn create(
-		base_asset_reserves: u128,
-		quote_asset_reserves: u128,
-		peg_multiplier: u128,
+		base_asset_reserves: Self::Balance,
+		quote_asset_reserves: Self::Balance,
+		peg_multiplier: Self::Balance,
 	) -> Result<Self::VammId, DispatchError>;
 }
