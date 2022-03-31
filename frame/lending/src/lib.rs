@@ -153,33 +153,25 @@ pub mod pallet {
 
 	pub mod crypto {
 		use super::KEY_TYPE;
-		use sp_core::sr25519::Signature as Sr25519Signature;
-		use sp_runtime::{
-			app_crypto::{app_crypto, sr25519},
-			traits::Verify,
-			MultiSignature, MultiSigner,
-		};
+		use frame_system::offchain;
+		use sp_core::sr25519::{self, Signature as Sr25519Signature};
+		use sp_runtime::{app_crypto::app_crypto, traits::Verify, MultiSignature, MultiSigner};
 		app_crypto!(sr25519, KEY_TYPE);
 
 		pub struct TestAuthId;
 
 		// implementation for runtime
-		impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for TestAuthId {
+		impl offchain::AppCrypto<MultiSigner, MultiSignature> for TestAuthId {
 			type RuntimeAppPublic = Public;
-			type GenericSignature = sp_core::sr25519::Signature;
-			type GenericPublic = sp_core::sr25519::Public;
+			type GenericSignature = sr25519::Signature;
+			type GenericPublic = sr25519::Public;
 		}
 
 		// implementation for mock runtime in test
-		impl
-			frame_system::offchain::AppCrypto<
-				<Sr25519Signature as Verify>::Signer,
-				Sr25519Signature,
-			> for TestAuthId
-		{
+		impl offchain::AppCrypto<<Sr25519Signature as Verify>::Signer, Sr25519Signature> for TestAuthId {
 			type RuntimeAppPublic = Public;
-			type GenericSignature = sp_core::sr25519::Signature;
-			type GenericPublic = sp_core::sr25519::Public;
+			type GenericSignature = sr25519::Signature;
+			type GenericPublic = sr25519::Public;
 		}
 	}
 
@@ -253,7 +245,7 @@ pub mod pallet {
 		///
 		/// We depend on Oracle to price in Lending. So we know price anyway.
 		/// We normalized price over all markets and protect from spam all possible pairs equally.
-		/// Locking borrow amount ensures manager can create market wit borrow assets, and we force
+		/// Locking borrow amount ensures manager can create market with borrow assets, and we force
 		/// him to really create it.
 		///
 		/// This solution forces to have amount before creating market.
@@ -462,7 +454,6 @@ pub mod pallet {
 
 	/// Lending instances counter
 	#[pallet::storage]
-	// #[pallet::getter(fn lending_count)]
 	#[allow(clippy::disallowed_type)] // MarketIndex implements Default, so ValueQuery is ok here. REVIEW: Should it?
 	pub type LendingCount<T: Config> = StorageValue<_, MarketIndex, ValueQuery>;
 
@@ -470,7 +461,6 @@ pub mod pallet {
 	///
 	/// Market -> MarketConfig
 	#[pallet::storage]
-	#[pallet::getter(fn markets)]
 	pub type Markets<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
@@ -490,7 +480,6 @@ pub mod pallet {
 	///
 	/// Maps markets to their corresponding debt token.
 	#[pallet::storage]
-	// #[pallet::getter(fn debt_currencies)]
 	pub type DebtMarkets<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
@@ -576,6 +565,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			let now = T::UnixTime::now().as_secs();
+			// INVARIANT: Don't remove this, required to use `ValueQuery` in LastBlockTimestamp.
 			LastBlockTimestamp::<T>::put(now);
 		}
 	}
@@ -893,29 +883,33 @@ pub mod pallet {
 			with_transaction(|| {
 				let now = Self::now();
 				call_counters.now += 1;
-				let results = Markets::<T>::iter()
+				dbg!(now);
+
+				let mut errors = Markets::<T>::iter()
 					.map(|(market_id, config)| {
 						call_counters.read_markets += 1;
 						Self::accrue_interest(&market_id, now)?;
 						call_counters.accrue_interest += 1;
 						let market_account = Self::account_id(&market_id);
-						/* NOTE(hussein-aitlahcen):
-						 It would probably be more perfomant to handle theses
-						 case while borrowing/repaying.
-
-						 I don't know whether we would face any issue by doing that.
-
-						 borrow:
-						   - withdrawable = transfer(vault->market) + transfer(market->user)
-						   - depositable = error(not enough borrow asset) // vault asking for reserve to be fullfilled
-						   - mustliquidate = error(market is closing)
-						 repay:
-							- (withdrawable || depositable || mustliquidate)
-							  = transfer(user->market) + transfer(market->vault)
-
-						 The intermediate transfer(vault->market) while borrowing would
-						 allow the vault to update the strategy balance (market = borrow vault strategy).
-						*/
+						call_counters.account_id += 1;
+						// NOTE(hussein-aitlahcen):
+						// It would probably be more perfomant to handle theses
+						// case while borrowing/repaying.
+						//
+						// I don't know whether we would face any issue by doing that.
+						//
+						// borrow:
+						//  - withdrawable = transfer(vault->market) + transfer(market->user)
+						//  - depositable = error(not enough borrow asset) // vault asking for
+						//    reserve to be fullfilled
+						//  - mustliquidate = error(market is closing)
+						// repay:
+						// 	- (withdrawable || depositable || mustliquidate) =
+						//    transfer(user->market) + transfer(market->vault)
+						//
+						// The intermediate transfer(vault->market) while borrowing would
+						// allow the vault to update the strategy balance (market = borrow vault
+						// strategy).
 						match Self::available_funds(&config, &market_account)? {
 							FundsAvailability::Withdrawable(balance) => {
 								Self::handle_withdrawable(&config, &market_account, balance)?;
@@ -933,22 +927,24 @@ pub mod pallet {
 
 						call_counters.available_funds += 1;
 
-						Ok(())
+						Result::<(), DispatchError>::Ok(())
 					})
-					.collect::<Vec<Result<(), DispatchError>>>();
-				let (_oks, errors): (Vec<_>, Vec<_>) = results.iter().partition(|r| r.is_ok());
-				if errors.is_empty() {
+					.filter_map(|r| match r {
+						Ok(_) => None,
+						Err(err) => Some(err),
+					})
+					.peekable();
+
+				if errors.peek().is_none() {
 					LastBlockTimestamp::<T>::put(now);
 					TransactionOutcome::Commit(1000)
 				} else {
-					errors.iter().for_each(|e| {
-						if let Err(e) = e {
-							log::error!(
-								"This should never happen, could not initialize block!!! {:#?} {:#?}",
-								block_number,
-								e
-							)
-						}
+					errors.for_each(|e| {
+						log::error!(
+							"This should never happen, could not initialize block!!! {:#?} {:#?}",
+							block_number,
+							e
+						)
 					});
 					TransactionOutcome::Rollback(0)
 				}
@@ -1567,6 +1563,7 @@ pub mod pallet {
 						keep_alive: true,
 					}
 					.run()?;
+
 					// borrow no longer exists as it has been repaid in entirety, remove the
 					// timestamp
 					BorrowTimestamp::<T>::remove(market_id, beneficiary);
@@ -1757,8 +1754,8 @@ pub mod pallet {
 			)?)
 		}
 
+		// previously 'borrow_balance_current'
 		fn total_debt_with_interest(
-			// borrow_balance_current
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
 		) -> Result<TotalDebtWithInterest<BorrowAmountOf<Self>>, DispatchError> {

@@ -607,7 +607,7 @@ fn test_repay_partial_amount() {
 		);
 		dbg!(alice_limit);
 
-		(1_000..1_001).for_each(process_block);
+		(1_000..2_000).for_each(process_block);
 		// (2_000..3_000).for_each(process_block);
 
 		dbg!(BORROW::units(1) / 10_000);
@@ -615,13 +615,15 @@ fn test_repay_partial_amount() {
 		//    948441
 		// pay off a small amount
 		#[allow(unused_must_use)]
-		dbg!(
-			Lending::total_debt_with_interest(&market_index, &*ALICE),
-			<Runtime as crate::Config>::MultiCurrency::balance(
-				debt_asset,
-				&Lending::account_id(&market_index),
-			)
-		);
+		{
+			dbg!(
+				Lending::total_debt_with_interest(&market_index, &*ALICE),
+				<Runtime as crate::Config>::MultiCurrency::balance(
+					debt_asset,
+					&Lending::account_id(&market_index),
+				)
+			);
+		}
 
 		assert_ok!(Lending::repay_borrow(
 			Origin::signed(*ALICE),
@@ -632,22 +634,28 @@ fn test_repay_partial_amount() {
 		));
 
 		#[allow(unused_must_use)]
-		dbg!(
-			Lending::total_debt_with_interest(&market_index, &*ALICE),
-			<Runtime as crate::Config>::MultiCurrency::balance(
-				debt_asset,
-				&Lending::account_id(&market_index),
-			)
-		);
-		(1_001..1_003).for_each(process_block);
+		{
+			dbg!(
+				Lending::total_debt_with_interest(&market_index, &*ALICE),
+				<Runtime as crate::Config>::MultiCurrency::balance(
+					debt_asset,
+					&Lending::account_id(&market_index),
+				)
+			);
+		}
+
+		(2_000..2_003).for_each(process_block);
+
 		#[allow(unused_must_use)]
-		dbg!(
-			Lending::total_debt_with_interest(&market_index, &*ALICE),
-			<Runtime as crate::Config>::MultiCurrency::balance(
-				debt_asset,
-				&Lending::account_id(&market_index),
-			)
-		);
+		{
+			dbg!(
+				Lending::total_debt_with_interest(&market_index, &*ALICE),
+				<Runtime as crate::Config>::MultiCurrency::balance(
+					debt_asset,
+					&Lending::account_id(&market_index),
+				)
+			);
+		}
 
 		assert_ok!(Lending::repay_borrow(
 			Origin::signed(*ALICE),
@@ -657,7 +665,7 @@ fn test_repay_partial_amount() {
 			                                                         * RepayStrategy::TotalDebt */
 		));
 
-		(1_002..1_003).for_each(process_block);
+		// (1_002..1_003).for_each(process_block);
 
 		let alice_total_debt_with_interest =
 			Lending::total_debt_with_interest(&market_index, &ALICE)
