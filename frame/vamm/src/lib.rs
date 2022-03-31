@@ -24,7 +24,10 @@
 //!
 //! ### Implementations
 //!
-//! TODO
+//! The VAMM pallet provides implementations for the following traits:
+//!
+//! - [`Vamm`](composable_traits::vamm::Vamm): Exposes functionality for
+//! creating, managing and deprecating virtual automated market makers.
 //!
 //! ## Interface
 //!
@@ -38,7 +41,7 @@
 //!
 //! ### Implemented Functions
 //!
-//! * [create_market](pallet::create_market)
+//! * [`pallet::Pallet::create`]
 //!
 //! TODO
 //!
