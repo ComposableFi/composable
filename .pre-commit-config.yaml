@@ -54,6 +54,14 @@ repos:
     files: ^frame/vamm/
     types: [rust]
     stages: [push]
+  - id: vamm::cargo-doc
+    name: vamm::cargo-doc
+    entry: cargo +nightly doc --no-deps -p pallet-vamm
+    language: system
+    pass_filenames: false
+    files: ^frame/vamm/
+    types: [rust]
+    stages: [push]
 
 - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
   rev: v8.0.0
