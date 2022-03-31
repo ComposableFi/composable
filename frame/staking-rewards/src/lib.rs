@@ -1,5 +1,3 @@
-//! Overview
-//! Allows to add new assets internally. User facing mutating API is provided by other pallets.
 #![cfg_attr(
 	not(test),
 	warn(

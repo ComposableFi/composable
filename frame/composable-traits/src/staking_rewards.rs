@@ -11,9 +11,13 @@ use sp_runtime::{traits::AtLeast32BitUnsigned, DispatchError, Perbill, Saturated
 
 #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
 pub struct StakingConfig<AccountId, DurationPresets, Rewards> {
+  /// The possible locking duration.
 	pub duration_presets: DurationPresets,
+  /// The assets we can reward stakers with.
 	pub rewards: Rewards,
+  /// The penalty applied if a staker unstake before the end date.
 	pub early_unstake_penalty: Perbill,
+  /// The beneficiary of the penalty.
 	pub penalty_beneficiary: AccountId,
 }
 
@@ -51,7 +55,7 @@ impl<AssetId, Balance: AtLeast32BitUnsigned + Copy, CollectedRewards>
 	}
 
 	pub fn shares(&self) -> u128 {
-		self.reward_multiplier.mul_ceil(self.stake.saturated_into::<u128>())
+		self.reward_multiplier.mul_floor(self.stake.saturated_into::<u128>())
 	}
 }
 
