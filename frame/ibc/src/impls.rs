@@ -65,9 +65,9 @@ where
 			let mut client_state_key = prefix.clone();
 			client_state_key.extend_from_slice(client_state_path.as_bytes());
 			client_type_key.extend_from_slice(client_type_path.as_bytes());
-			trie.insert(&client_state_key, &client_state)
+			trie.insert(client_state_key.encode().as_slice(), &client_state)
 				.map_err(|_| Error::<T>::TrieInsertError)?;
-			trie.insert(&client_type_key, &client_type)
+			trie.insert(client_type_key.encode().as_slice(), &client_type)
 				.map_err(|_| Error::<T>::TrieInsertError)?;
 		}
 
@@ -94,7 +94,8 @@ where
 			let mut key = prefix.clone();
 			let path = format!("{}", consensus_path);
 			key.extend_from_slice(&path.as_bytes());
-			trie.insert(&key, &consensus_state).map_err(|_| Error::<T>::TrieInsertError)?;
+			trie.insert(key.encode().as_slice(), &consensus_state)
+				.map_err(|_| Error::<T>::TrieInsertError)?;
 		}
 
 		// Insert connection ends in trie
@@ -106,7 +107,8 @@ where
 			.map_err(|_| Error::<T>::DecodingError)?;
 			let path = format!("{}", ConnectionsPath(connection_id));
 			key.extend_from_slice(path.as_bytes());
-			trie.insert(&key, &connection_end).map_err(|_| Error::<T>::TrieInsertError)?;
+			trie.insert(key.encode().as_slice(), &connection_end)
+				.map_err(|_| Error::<T>::TrieInsertError)?;
 		}
 
 		// Insert channel ends and sequences in trie
@@ -131,14 +133,14 @@ where
 			next_seq_ack_key.extend_from_slice(next_seq_ack_path.as_bytes());
 
 			channel_key.extend_from_slice(channel_path.as_bytes());
-			trie.insert(&channel_key, &channel_end)
+			trie.insert(channel_key.encode().as_slice(), &channel_end)
 				.map_err(|_| Error::<T>::TrieInsertError)?;
 
-			trie.insert(&next_seq_ack_key, &next_seq_ack)
+			trie.insert(next_seq_ack_key.encode().as_slice(), &next_seq_ack)
 				.map_err(|_| Error::<T>::TrieInsertError)?;
-			trie.insert(&next_seq_send_key, &next_seq_send)
+			trie.insert(next_seq_send_key.encode().as_slice(), &next_seq_send)
 				.map_err(|_| Error::<T>::TrieInsertError)?;
-			trie.insert(&next_seq_recv_key, &next_seq_recv)
+			trie.insert(next_seq_recv_key.encode().as_slice(), &next_seq_recv)
 				.map_err(|_| Error::<T>::TrieInsertError)?;
 		}
 
@@ -156,7 +158,7 @@ where
 			let commitment_path_str = format!("{}", commitment_path);
 			commitment_key.extend_from_slice(commitment_path_str.as_bytes());
 
-			trie.insert(&commitment_key, &commitment)
+			trie.insert(commitment_key.encode().as_slice(), &commitment)
 				.map_err(|_| Error::<T>::TrieInsertError)?;
 		}
 
@@ -174,7 +176,8 @@ where
 			let ack_path_str = format!("{}", ack_path);
 			ack_key.extend_from_slice(ack_path_str.as_bytes());
 
-			trie.insert(&ack_key, &ack).map_err(|_| Error::<T>::TrieInsertError)?;
+			trie.insert(ack_key.encode().as_slice(), &ack)
+				.map_err(|_| Error::<T>::TrieInsertError)?;
 		}
 
 		// Insert packet receipts in trie
@@ -191,7 +194,8 @@ where
 			let receipt_path_str = format!("{}", receipt_path);
 			receipt_key.extend_from_slice(receipt_path_str.as_bytes());
 
-			trie.insert(&receipt_key, &receipt).map_err(|_| Error::<T>::TrieInsertError)?;
+			trie.insert(receipt_key.encode().as_slice(), &receipt)
+				.map_err(|_| Error::<T>::TrieInsertError)?;
 		}
 
 		Ok(trie)

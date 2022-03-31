@@ -37,7 +37,7 @@ impl From<ibc_proto::google::protobuf::Any> for Any {
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct IbcConsensusState {
 	/// Timestamp at which this state root was generated in nanoseconds
-	pub timestamp: u128,
+	pub timestamp: u64,
 	/// IBC Commitment root
 	pub root: Vec<u8>,
 }
@@ -66,7 +66,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 
-	use sp_runtime::generic::DigestItem;
+	use sp_runtime::{generic::DigestItem, SaturatedConversion};
 	use tendermint_proto::Protobuf;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
@@ -268,10 +268,10 @@ pub mod pallet {
 				let height = crate::impls::host_height::<T>();
 				let height = ibc::Height::new(0, height);
 				let height = height.encode_vec().unwrap_or_default();
-				let timestamp = T::TimeProvider::now().as_nanos();
-				let ibc_cs = IbcConsensusState { timestamp, root };
+				let timestamp = T::TimeProvider::now().as_nanos().saturated_into::<u64>();
+				let ibc_cs = IbcConsensusState { timestamp, root: root.clone() };
 				CommitmentRoot::<T>::insert(height, ibc_cs.clone());
-				let log = DigestItem::Consensus(IBC_DIGEST_ID, ibc_cs.encode());
+				let log = DigestItem::Consensus(IBC_DIGEST_ID, root);
 				<frame_system::Pallet<T>>::deposit_log(log);
 			}
 		}
