@@ -1,5 +1,5 @@
 [package]
-name = "clearing-house"
+name = "pallet-clearing-house"
 version = "0.1.0"
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"
@@ -20,14 +20,10 @@ sp-io = { default-features = false, git = "https://github.com/paritytech/substra
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
-codec = { default-features = false, features = [
-    "derive",
-], package = "parity-scale-codec", version = "2.0.0" }
+codec = { default-features = false, features = ["derive"], package = "parity-scale-codec", version = "2.0.0" }
 composable-traits = { version = "0.0.1", path = "../composable-traits", default-features = false }
 log = { version = "0.4.14", default-features = false }
-scale-info = { version = "1.0", default-features = false, features = [
-    "derive",
-] }
+scale-info = { version = "1.0", default-features = false, features = ["derive"] }
 serde = { version = '1', optional = true }
 
 [dev-dependencies]
@@ -54,8 +50,4 @@ std = [
     "scale-info/std",
     "serde/std",
 ]
-runtime-benchmarks = [
-    "frame-benchmarking",
-    "frame-support/runtime-benchmarks",
-    "frame-system/runtime-benchmarks",
-]
+runtime-benchmarks = ["frame-benchmarking", "frame-support/runtime-benchmarks", "frame-system/runtime-benchmarks"]
