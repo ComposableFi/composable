@@ -1317,32 +1317,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "clearing-house"
-version = "0.1.0"
-dependencies = [
- "composable-traits",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log 0.4.14",
- "orml-tokens",
- "orml-traits",
- "pallet-assets",
- "pallet-balances",
- "pallet-currency-factory",
- "pallet-governance-registry",
- "parity-scale-codec",
- "proptest",
- "scale-info",
- "serde",
- "sp-arithmetic",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "cloudabi"
 version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6751,6 +6725,32 @@ dependencies = [
  "scale-info",
  "serde",
  "smallvec 1.8.0",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-clearing-house"
+version = "0.1.0"
+dependencies = [
+ "composable-traits",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log 0.4.14",
+ "orml-tokens",
+ "orml-traits",
+ "pallet-assets",
+ "pallet-balances",
+ "pallet-currency-factory",
+ "pallet-governance-registry",
+ "parity-scale-codec",
+ "proptest",
+ "scale-info",
+ "serde",
+ "sp-arithmetic",
  "sp-core",
  "sp-io",
  "sp-runtime",

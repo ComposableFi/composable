@@ -1,5 +1,5 @@
 [package]
-name = "clearing-house"
+name = "pallet-clearing-house"
 version = "0.1.0"
 authors = ["Composable Developers"]
 homepage = "https://composable.finance"
