@@ -24,8 +24,8 @@ scale-info = { version = "1.0", default-features = false, features = [
 ] }
 
 is_sorted = { version = "0.1.1", default-features = false }
-serde = { version = "1.0.130", features = ["derive"], optional = true }
 rustc-hex = { version = "2.1.0", default-features = false }
+serde = { version = "1.0.130", features = ["derive"], optional = true }
 
 [dev-dependencies]
 proptest = { version = "1.0" }

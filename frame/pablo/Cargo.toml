@@ -16,8 +16,13 @@ package = "parity-scale-codec"
 version = "2.0.0"
 
 [dependencies]
+composable-maths = { path = "../composable-maths", default-features = false }
+composable-support = { path = "../composable-support", default-features = false }
+composable-traits = { path = "../composable-traits", default-features = false }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+log = { version = "0.4.14", default-features = false }
+rust_decimal = { version = "1", default-features = false, features = ["maths"] }
 scale-info = { version = "1.0", default-features = false, features = [
   "derive",
 ] }
@@ -27,17 +32,12 @@ sp-io = { default-features = false, git = "https://github.com/paritytech/substra
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
-rust_decimal = { version = "1", default-features = false, features = ["maths"] }
-
-composable-maths = { path = "../composable-maths", default-features = false }
-composable-support = { path = "../composable-support", default-features = false }
-composable-traits = { path = "../composable-traits", default-features = false }
-
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb" }
 pallet-currency-factory = { path = "../currency-factory" }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 proptest = { version = "1.0" }
 
 [features]
