@@ -34,6 +34,20 @@ impl From<ibc_proto::google::protobuf::Any> for Any {
 	}
 }
 
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
+pub struct IbcConsensusState {
+	/// Timestamp at which this state root was generated in nanoseconds
+	pub timestamp: u128,
+	/// IBC Commitment root
+	pub root: Vec<u8>,
+}
+
+impl Default for IbcConsensusState {
+	fn default() -> Self {
+		Self { timestamp: 0, root: vec![] }
+	}
+}
+
 #[cfg(test)]
 mod mock;
 
@@ -210,9 +224,9 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
-	/// height => (timestamp, hash)
+	/// height => IbcConsensusState
 	pub type CommitmentRoot<T: Config> =
-		StorageMap<_, Blake2_128Concat, Vec<u8>, (u128, Vec<u8>), ValueQuery>;
+		StorageMap<_, Blake2_128Concat, Vec<u8>, IbcConsensusState, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -255,8 +269,9 @@ pub mod pallet {
 				let height = ibc::Height::new(0, height);
 				let height = height.encode_vec().unwrap_or_default();
 				let timestamp = T::TimeProvider::now().as_nanos();
-				CommitmentRoot::<T>::insert(height, (timestamp, root.clone()));
-				let log = DigestItem::Consensus(IBC_DIGEST_ID, root);
+				let ibc_cs = IbcConsensusState { timestamp, root };
+				CommitmentRoot::<T>::insert(height, ibc_cs.clone());
+				let log = DigestItem::Consensus(IBC_DIGEST_ID, ibc_cs.encode());
 				<frame_system::Pallet<T>>::deposit_log(log);
 			}
 		}
