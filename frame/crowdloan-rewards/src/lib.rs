@@ -64,9 +64,10 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::models::{EcdsaSignature, EthereumAddress, Proof, RemoteAccount, Reward};
+	use super::models::{EcdsaSignature, Proof, RemoteAccount, Reward};
 	use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
+	use composable_support::types::EthereumAddress;
 	use composable_traits::math::SafeAdd;
 	use frame_support::{
 		dispatch::PostDispatchInfo,
