@@ -89,44 +89,36 @@ pub mod pallet {
 	pub type NFTCount<T: Config> = StorageValue<_, NFTInstanceId, ValueQuery, NFTCountOnEmpty<T>>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn instance_owner)]
-	pub type InstanceOwner<T: Config> =
-		StorageMap<_, Blake2_128Concat, (NFTClass, NFTInstanceId), AccountIdOf<T>, OptionQuery>;
-
-	#[pallet::storage]
 	#[pallet::getter(fn instance)]
 	pub type Instance<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
 		(NFTClass, NFTInstanceId),
-		BTreeMap<Vec<u8>, Vec<u8>>,
+		(AccountIdOf<T>, BTreeMap<Vec<u8>, Vec<u8>>),
 		OptionQuery,
 	>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn class_owners)]
-	pub type ClassOwners<T: Config> =
-		StorageMap<_, Blake2_128Concat, NFTClass, (AccountIdOf<T>, AccountIdOf<T>), OptionQuery>;
-
-	#[pallet::storage]
 	#[pallet::getter(fn class)]
-	pub type Class<T: Config> =
-		StorageMap<_, Blake2_128Concat, NFTClass, BTreeMap<Vec<u8>, Vec<u8>>, OptionQuery>;
+	pub type Class<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		NFTClass,
+		(AccountIdOf<T>, AccountIdOf<T>, BTreeMap<Vec<u8>, Vec<u8>>),
+		OptionQuery,
+	>;
 
 	impl<T: Config> Pallet<T> {
 		fn ensure_instance_exists(
 			class: &NFTClass,
 			instance: &NFTInstanceId,
 		) -> Result<(), DispatchError> {
-			ensure!(
-				InstanceOwner::<T>::contains_key((class, instance)),
-				Error::<T>::InstanceNotFound
-			);
+			ensure!(Instance::<T>::contains_key((class, instance)), Error::<T>::InstanceNotFound);
 			Ok(())
 		}
 
 		fn ensure_class_exists(class: &NFTClass) -> Result<(), DispatchError> {
-			ensure!(ClassOwners::<T>::contains_key(class), Error::<T>::ClassNotFound);
+			ensure!(Class::<T>::contains_key(class), Error::<T>::ClassNotFound);
 			Ok(())
 		}
 	}
@@ -136,7 +128,7 @@ pub mod pallet {
 		type InstanceId = NFTInstanceId;
 
 		fn owner(class: &Self::ClassId, instance: &Self::InstanceId) -> Option<AccountIdOf<T>> {
-			Self::instance_owner((class, instance))
+			Self::instance((class, instance)).map(|(owner, _)| owner)
 		}
 
 		fn attribute(
@@ -144,11 +136,11 @@ pub mod pallet {
 			instance: &Self::InstanceId,
 			key: &[u8],
 		) -> Option<Vec<u8>> {
-			Instance::<T>::get((class, instance)).and_then(|x| x.get(key).cloned())
+			Instance::<T>::get((class, instance)).and_then(|(_, nft)| nft.get(key).cloned())
 		}
 
 		fn class_attribute(class: &Self::ClassId, key: &[u8]) -> Option<Vec<u8>> {
-			Class::<T>::get(class).and_then(|x| x.get(key).cloned())
+			Class::<T>::get(class).and_then(|(_, _, class)| class.get(key).cloned())
 		}
 	}
 
@@ -158,9 +150,8 @@ pub mod pallet {
 			who: &AccountIdOf<T>,
 			admin: &AccountIdOf<T>,
 		) -> DispatchResult {
-			ensure!(Self::class_owners(class).is_none(), Error::<T>::ClassAlreadyExists);
-			ClassOwners::<T>::insert(class, (who, admin));
-			Class::<T>::insert(class, BTreeMap::<Vec<u8>, Vec<u8>>::new());
+			ensure!(Self::class(class).is_none(), Error::<T>::ClassAlreadyExists);
+			Class::<T>::insert(class, (who, admin, BTreeMap::<Vec<u8>, Vec<u8>>::new()));
 			Ok(())
 		}
 	}
@@ -172,7 +163,9 @@ pub mod pallet {
 			destination: &AccountIdOf<T>,
 		) -> DispatchResult {
 			Self::ensure_instance_exists(class, instance)?;
-			InstanceOwner::<T>::insert((class, instance), destination);
+			Instance::<T>::mutate((class, instance), |entry| {
+				entry.as_mut().map(|(owner, _)| *owner = destination.clone())
+			});
 			Ok(())
 		}
 	}
@@ -183,18 +176,13 @@ pub mod pallet {
 			instance: &Self::InstanceId,
 			who: &AccountIdOf<T>,
 		) -> DispatchResult {
-			ensure!(
-				Self::instance_owner((class, instance)).is_none(),
-				Error::<T>::InstanceAlreadyExists
-			);
-			InstanceOwner::<T>::insert((class, instance), who);
-			Instance::<T>::insert((class, instance), BTreeMap::<Vec<u8>, Vec<u8>>::new());
+			ensure!(Self::instance((class, instance)).is_none(), Error::<T>::InstanceAlreadyExists);
+			Instance::<T>::insert((class, instance), (who, BTreeMap::<Vec<u8>, Vec<u8>>::new()));
 			Ok(())
 		}
 
 		fn burn_from(class: &Self::ClassId, instance: &Self::InstanceId) -> DispatchResult {
 			Self::ensure_instance_exists(class, instance)?;
-			InstanceOwner::<T>::remove((class, instance));
 			Instance::<T>::remove((class, instance));
 			Ok(())
 		}
@@ -206,7 +194,7 @@ pub mod pallet {
 			value: &[u8],
 		) -> DispatchResult {
 			Instance::<T>::try_mutate((class, instance), |entry| match entry {
-				Some(nft) => {
+				Some((_, nft)) => {
 					nft.insert(key.into(), value.into());
 					Ok(())
 				},
@@ -228,7 +216,7 @@ pub mod pallet {
 		fn set_class_attribute(class: &Self::ClassId, key: &[u8], value: &[u8]) -> DispatchResult {
 			Self::ensure_class_exists(class)?;
 			Class::<T>::mutate(class, |entry| {
-				entry.as_mut().map(|nft_class| nft_class.insert(key.into(), value.into()));
+				entry.as_mut().map(|(_, _, class)| class.insert(key.into(), value.into()));
 			});
 			Ok(())
 		}
