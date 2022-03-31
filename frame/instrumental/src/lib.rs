@@ -292,7 +292,7 @@ pub mod pallet {
 		/// # Overview
 		/// 
 		/// ## Parameters
-		/// - `origin`: 
+		/// - `origin`: `Origin` type representing the origin of this dispatch.
 		/// - `asset`: the `AssetId` of the asset to deposit.
 		/// - `amount`: the amount of `asset` to deposit.
 		/// 
@@ -330,7 +330,7 @@ pub mod pallet {
 		/// # Overview
 		/// 
 		/// ## Parameters
-		/// - `origin`: 
+		/// - `origin`: `Origin` type representing the origin of this dispatch.
 		/// - `asset`: the `AssetId` of the asset to withdraw.
 		/// - `amount`: the amount of `asset` to withdraw.
 		/// 
