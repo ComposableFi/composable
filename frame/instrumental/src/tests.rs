@@ -329,16 +329,17 @@ proptest! {
 
             // Have each account try to deposit an asset balance into an Instrumental vault
             deposits.into_iter().for_each(|(account, asset, balance)| {
+                let vault_id = Instrumental::asset_vault(asset).unwrap();
+                let vault_account = Vault::account_id(&vault_id);
+                let vault_balance_before_deposit = Assets::balance(asset, &vault_account);
+
                 assert_ok!(Instrumental::add_liquidity(Origin::signed(account), asset, balance));
 
                 // Requirement 1: user transferred their balance
                 assert_eq!(Assets::balance(asset, &account), 0);
 
                 // Requirement 2: the vault holds the transferred balance
-                let vault_id = Instrumental::asset_vault(asset).unwrap();
-                let vault_account = Vault::account_id(&vault_id);
-                // TODO: Check exact deposit amounts are being deposited 
-                assert!(Assets::balance(asset, &vault_account) >= balance);
+                assert_eq!(Assets::balance(asset, &vault_account), vault_balance_before_deposit + balance);
             });
         });
     }
@@ -415,6 +416,40 @@ proptest! {
                         );
                     }
                 }
+            });
+        });
+    }
+
+    #[test]
+    fn remove_liquidity_extrinsic_transfers_liquidity(
+        deposits in generate_deposits()
+    ) {
+        ExtBuilder::default().initialize_balances(deposits.clone()).build().execute_with(|| {                    
+            // Create a vault for each randomly chosen asset
+            VaultBuilder::new().group_add(
+                deposits.iter().map(|(_, asset, _)| { VaultConfigBuilder::default().asset_id(*asset).build() }
+            ).collect()).build();
+
+            // Have each account try to deposit an asset balance into an Instrumental vault
+            deposits.iter().for_each(|(account, asset, balance)| {
+                assert_ok!(Instrumental::add_liquidity(Origin::signed(*account), *asset, *balance));
+            });
+
+            deposits.into_iter().for_each(|(account, asset, balance)| {
+                // Requirement 1: user has no balance of the asset
+                assert_eq!(Assets::balance(asset, &account), 0);
+
+                let vault_id = Instrumental::asset_vault(asset).unwrap();
+                let vault_account = Vault::account_id(&vault_id);
+                let vault_balance_before_withdraw = Assets::balance(asset, &vault_account);
+
+                assert_ok!(Instrumental::remove_liquidity(Origin::signed(account), asset, balance));
+
+                // Requirement 2: user has some balance of the asset
+                assert_eq!(Assets::balance(asset, &account), balance);
+
+                // Requirement 3: the vault holds the transferred balance
+                assert_eq!(Assets::balance(asset, &vault_account), vault_balance_before_withdraw - balance);
             });
         });
     }
