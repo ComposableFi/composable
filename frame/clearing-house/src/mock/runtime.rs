@@ -50,7 +50,6 @@ frame_support::construct_runtime!(
 
 pub type Balance = u128;
 pub type Amount = i64;
-pub type Timestamp = u64;
 pub type VammId = u64;
 pub type Decimal = FixedI128;
 
@@ -193,7 +192,7 @@ parameter_types! {
 impl mock_oracle::Config for Runtime {
 	type AssetId = AssetId;
 	type Balance = Balance;
-	type Timestamp = Timestamp;
+	type Timestamp = u64;
 	type LocalAssets = ();
 	type MaxAnswerBound = MaxAnswerBound;
 }
@@ -216,8 +215,6 @@ impl clearing_house::Config for Runtime {
 	type WeightInfo = ();
 	type MarketId = u64;
 	type Decimal = Decimal;
-	type Timestamp = Timestamp;
-	type Duration = u64;
 	type VirtualAMM = Vamm;
 	type Oracle = Oracle;
 	type Assets = Assets;

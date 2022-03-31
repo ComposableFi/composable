@@ -11,7 +11,7 @@ pub use crate::{
 	},
 	pallet::*,
 };
-use composable_traits::{oracle::Oracle as OracleTrait, vamm::VirtualAMM};
+use composable_traits::{oracle::Oracle as OracleTrait, time::ONE_HOUR, vamm::VirtualAMM};
 use frame_support::{assert_err, assert_noop, assert_ok};
 use orml_tokens::Error as TokenError;
 use proptest::prelude::*;
@@ -124,15 +124,14 @@ fn create_first_market_succeeds() {
 		let old_count = ClearingHouse::market_count();
 
 		let asset = DOT;
-		let vamm_params = VammParams {};
-		let margin_ratio_initial = FixedI128::from_float(0.1); // 10x max leverage to open a position
-		let margin_ratio_maintenance = FixedI128::from_float(0.02); // liquidate when above 50x leverage
 		assert_ok!(ClearingHouse::create_market(
 			Origin::signed(ALICE),
 			asset,
-			vamm_params,
-			margin_ratio_initial,
-			margin_ratio_maintenance,
+			VammParams {},
+			FixedI128::from_float(0.1),  // 10x max leverage to open a position
+			FixedI128::from_float(0.02), // liquidate when above 50x leverage
+			ONE_HOUR,
+			ONE_HOUR * 24,
 		));
 
 		// Ensure first market id is 0 (we know its type since it's defined in the mock runtime)
@@ -155,7 +154,9 @@ fn fails_to_create_market_for_unsupported_asset_by_oracle() {
 					DOT,
 					VammParams {},
 					FixedI128::from_float(0.1),
-					FixedI128::from_float(0.02)
+					FixedI128::from_float(0.02),
+					ONE_HOUR,
+					ONE_HOUR * 24,
 				),
 				Error::<Runtime>::NoPriceFeedForAsset
 			);
@@ -171,7 +172,9 @@ fn fails_to_create_market_if_fails_to_create_vamm() {
 				DOT,
 				VammParams {},
 				FixedI128::from_float(0.1),
-				FixedI128::from_float(0.02)
+				FixedI128::from_float(0.02),
+				ONE_HOUR,
+				ONE_HOUR * 24,
 			),
 			mock_vamm::Error::<Runtime>::FailedToCreateVamm
 		);

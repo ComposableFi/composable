@@ -18,6 +18,8 @@ pub trait ClearingHouse {
 	type Balance;
 	/// Signed fixed point number implementation
 	type Decimal: FixedPointNumber;
+	/// Time span in seconds (unsigned)
+	type DurationSeconds;
 	/// The identifier type for each market
 	type MarketId;
 	/// Parameters for creating and initializing a new vAMM instance.
@@ -48,6 +50,8 @@ pub trait ClearingHouse {
 		vamm_params: Self::VammParams,
 		margin_ratio_initial: Self::Decimal,
 		margin_ratio_maintenance: Self::Decimal,
+		funding_frequency: Self::DurationSeconds,
+		funding_period: Self::DurationSeconds,
 	) -> Result<Self::MarketId, DispatchError>;
 }
 

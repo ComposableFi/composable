@@ -80,6 +80,7 @@ pub mod pallet {
 		clearing_house::{ClearingHouse, Instruments},
 		defi::DeFiComposableConfig,
 		oracle::Oracle,
+		time::DurationSeconds,
 		vamm::VirtualAMM,
 	};
 	use frame_support::{
@@ -123,10 +124,9 @@ pub mod pallet {
 			+ Debug;
 		/// Signed decimal fixed point number.
 		type Decimal: FullCodec + MaxEncodedLen + TypeInfo + FixedPointNumber;
-		/// Timestamp to be used for funding rate updates
-		type Timestamp: Default + FullCodec + MaxEncodedLen + TypeInfo;
-		/// Duration type for funding rate periodicity
-		type Duration: Default + FullCodec + MaxEncodedLen + TypeInfo;
+		/// Implementation for querying the current Unix timestamp
+		// TODO(0xangelo): uncomment this and set mocks
+		// type UnixTime: UnixTime;
 		/// Virtual Automated Market Maker pallet implementation
 		type VirtualAMM: VirtualAMM;
 		/// Price feed (in USDT) Oracle pallet implementation
@@ -167,34 +167,42 @@ pub mod pallet {
 
 	/// Data relating to a perpetual contracts market
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
-	pub struct Market<AssetId, Decimal, Duration, Timestamp, VammId> {
+	pub struct Market<AssetId, Decimal, VammId> {
 		/// The Id of the vAMM used for price discovery in the virtual market
 		vamm_id: VammId,
 		/// The Id of the underlying asset (base-quote pair). A price feed from one or more oracles
 		/// must be available for this symbol
 		asset_id: AssetId,
-		/// The latest cumulative funding rate of this market. Must be updated periodically.
-		cum_funding_rate: Decimal,
-		/// The timestamp for the latest funding rate update.
-		funding_rate_ts: Timestamp,
-		/// The time span between each funding rate update.
-		periodicity: Duration,
 		/// Minimum margin ratio for opening a new position
 		margin_ratio_initial: Decimal,
 		/// Margin ratio below which liquidations can occur
 		margin_ratio_maintenance: Decimal,
+		/// The latest cumulative funding rate of this market. Must be updated periodically.
+		cum_funding_rate: Decimal,
+		/// The timestamp for the latest funding rate update.
+		funding_rate_ts: DurationSeconds,
+		/// The time span between each funding rate update.
+		funding_frequency: DurationSeconds,
+		/// Period of time over what funding (the difference between mark and index prices) gets
+		/// paid.
+		///
+		/// Setting the funding period too long may cause the perpetual to start trading at a
+		/// very dislocated price to the index because there’s less of an incentive for basis
+		/// arbitrageurs to push the prices back in line since they would have to carry the basis
+		/// risk for a longer period of time.
+		///
+		/// Setting the funding period too short may cause nobody to trade the perpetual because
+		/// there’s too punitive of a price to pay in the case the funding rate flips sign.
+		funding_period: DurationSeconds,
 	}
 
 	type AssetIdOf<T> = <T as DeFiComposableConfig>::MayBeAssetId;
 	type MarketIdOf<T> = <T as Config>::MarketId;
 	type DecimalOf<T> = <T as Config>::Decimal;
-	type TimestampOf<T> = <T as Config>::Timestamp;
-	type DurationOf<T> = <T as Config>::Duration;
 	type VammParamsOf<T> = <<T as Config>::VirtualAMM as VirtualAMM>::VammParams;
 	type VammIdOf<T> = <<T as Config>::VirtualAMM as VirtualAMM>::VammId;
 	type PositionOf<T> = Position<MarketIdOf<T>, DecimalOf<T>>;
-	type MarketOf<T> =
-		Market<AssetIdOf<T>, DecimalOf<T>, DurationOf<T>, TimestampOf<T>, VammIdOf<T>>;
+	type MarketOf<T> = Market<AssetIdOf<T>, DecimalOf<T>, VammIdOf<T>>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Runtime Storage
@@ -380,6 +388,8 @@ pub mod pallet {
 			vamm_params: VammParamsOf<T>,
 			margin_ratio_initial: T::Decimal,
 			margin_ratio_maintenance: T::Decimal,
+			funding_frequency: DurationSeconds,
+			funding_period: DurationSeconds,
 		) -> DispatchResult {
 			ensure_signed(origin)?;
 			let market = <Self as ClearingHouse>::create_market(
@@ -387,6 +397,8 @@ pub mod pallet {
 				vamm_params,
 				margin_ratio_initial,
 				margin_ratio_maintenance,
+				funding_frequency,
+				funding_period,
 			)?;
 			Self::deposit_event(Event::MarketCreated { market, asset });
 			Ok(())
@@ -402,6 +414,7 @@ pub mod pallet {
 		type AssetId = AssetIdOf<T>;
 		type Balance = T::Balance;
 		type Decimal = T::Decimal;
+		type DurationSeconds = DurationSeconds;
 		type MarketId = T::MarketId;
 		type VammParams = VammParamsOf<T>;
 
@@ -431,19 +444,24 @@ pub mod pallet {
 			vamm_params: Self::VammParams,
 			margin_ratio_initial: Self::Decimal,
 			margin_ratio_maintenance: Self::Decimal,
+			funding_frequency: Self::DurationSeconds,
+			funding_period: Self::DurationSeconds,
 		) -> Result<Self::MarketId, DispatchError> {
 			MarketCount::<T>::try_mutate(|id| {
 				ensure!(T::Oracle::is_supported(asset)?, Error::<T>::NoPriceFeedForAsset);
+				// TODO(0xangelo): ensure funding_period is multiple of funding_frequency
 
 				let market_id = id.clone();
 				let market = Market {
 					asset_id: asset,
+					vamm_id: T::VirtualAMM::create(vamm_params)?,
 					margin_ratio_initial,
 					margin_ratio_maintenance,
+					funding_frequency,
+					funding_period,
 					cum_funding_rate: Default::default(),
+					// TODO(0xangelo): set ts to UnixTime::now()
 					funding_rate_ts: Default::default(),
-					periodicity: Default::default(),
-					vamm_id: T::VirtualAMM::create(vamm_params)?,
 				};
 				Markets::<T>::insert(&market_id, market);
 
