@@ -18,6 +18,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 pub const TREASURY: AccountId = 0;
 pub const ALICE: AccountId = 1;
+pub const BOB: AccountId = 2;
 
 pub const BTC: AssetId = 1;
 pub const LTC: AssetId = 2;
@@ -194,6 +195,23 @@ mod unstake {
 			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
 				.expect("impossible; qed;");
 			assert_ok!(<StakingRewards as Staking>::unstake(&instance_id, &ALICE));
+		});
+	}
+
+	#[test]
+	fn non_owner_cant_unstake() {
+		new_test_ext().execute_with(|| {
+			let penalty = Perbill::from_float(0.5);
+			configure_pica(penalty);
+			let stake = 1_000_000_000_000;
+			assert_ok!(Tokens::mint_into(PICA, &ALICE, stake));
+			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
+				.expect("impossible; qed;");
+
+			assert_noop!(
+				StakingRewards::unstake(Origin::signed(BOB), instance_id, ALICE),
+				DispatchError::BadOrigin
+			);
 		});
 	}
 
