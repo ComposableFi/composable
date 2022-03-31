@@ -215,7 +215,7 @@ impl clearing_house::Config for Runtime {
 	type WeightInfo = ();
 	type MarketId = u64;
 	type Decimal = Decimal;
-	type VirtualAMM = Vamm;
+	type Vamm = Vamm;
 	type Oracle = Oracle;
 	type Assets = Assets;
 	type PalletId = ClearingHouseId;

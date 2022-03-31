@@ -5,7 +5,7 @@ use frame_support::dispatch::DispatchError;
 use scale_info::TypeInfo;
 use sp_runtime::FixedPointNumber;
 
-pub trait VirtualAMM {
+pub trait Vamm {
 	/// The unique identifier for a vAMM instance
 	type VammId: FullCodec + MaxEncodedLen + TypeInfo;
 	/// Parameters for creating and initializing a new vAMM instance. May be used in extrinsic

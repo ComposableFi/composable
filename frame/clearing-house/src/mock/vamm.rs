@@ -7,7 +7,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
-	use composable_traits::vamm::VirtualAMM;
+	use composable_traits::vamm::Vamm;
 	use frame_support::pallet_prelude::*;
 	use scale_info::TypeInfo;
 	use sp_runtime::FixedPointNumber;
@@ -81,7 +81,7 @@ pub mod pallet {
 	//                                           Trait Implementations
 	// ----------------------------------------------------------------------------------------------------
 
-	impl<T: Config> VirtualAMM for Pallet<T> {
+	impl<T: Config> Vamm for Pallet<T> {
 		type VammId = T::VammId;
 		type VammParams = VammParams;
 		type Decimal = T::Decimal;

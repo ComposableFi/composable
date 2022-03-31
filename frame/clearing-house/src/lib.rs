@@ -85,7 +85,7 @@ pub mod pallet {
 		defi::DeFiComposableConfig,
 		oracle::Oracle,
 		time::DurationSeconds,
-		vamm::VirtualAMM,
+		vamm::Vamm,
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -132,7 +132,7 @@ pub mod pallet {
 		// TODO(0xangelo): uncomment this and set mocks
 		// type UnixTime: UnixTime;
 		/// Virtual Automated Market Maker pallet implementation
-		type VirtualAMM: VirtualAMM<Decimal = Self::Decimal>;
+		type Vamm: Vamm<Decimal = Self::Decimal>;
 		/// Price feed (in USDT) Oracle pallet implementation
 		type Oracle: Oracle<AssetId = Self::MayBeAssetId, Balance = Self::Balance>;
 		/// Pallet implementation of asset transfers.
@@ -203,8 +203,8 @@ pub mod pallet {
 	type AssetIdOf<T> = <T as DeFiComposableConfig>::MayBeAssetId;
 	type MarketIdOf<T> = <T as Config>::MarketId;
 	type DecimalOf<T> = <T as Config>::Decimal;
-	type VammParamsOf<T> = <<T as Config>::VirtualAMM as VirtualAMM>::VammParams;
-	type VammIdOf<T> = <<T as Config>::VirtualAMM as VirtualAMM>::VammId;
+	type VammParamsOf<T> = <<T as Config>::Vamm as Vamm>::VammParams;
+	type VammIdOf<T> = <<T as Config>::Vamm as Vamm>::VammId;
 	type PositionOf<T> = Position<MarketIdOf<T>, DecimalOf<T>>;
 	type MarketOf<T> = Market<AssetIdOf<T>, DecimalOf<T>, VammIdOf<T>>;
 
@@ -458,7 +458,7 @@ pub mod pallet {
 				let market_id = id.clone();
 				let market = Market {
 					asset_id: asset,
-					vamm_id: T::VirtualAMM::create(vamm_params)?,
+					vamm_id: T::Vamm::create(vamm_params)?,
 					margin_ratio_initial,
 					margin_ratio_maintenance,
 					funding_frequency,
@@ -486,7 +486,7 @@ pub mod pallet {
 			let oracle_twap = Self::Decimal::checked_from_rational(unnormalized_oracle_twap, 10u32)
 				.ok_or(ArithmeticError::Overflow)?;
 
-			let vamm_twap = T::VirtualAMM::get_twap(&market.vamm_id)?;
+			let vamm_twap = T::Vamm::get_twap(&market.vamm_id)?;
 
 			let price_spread =
 				vamm_twap.checked_sub(&oracle_twap).ok_or(ArithmeticError::Underflow)?;

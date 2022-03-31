@@ -4,14 +4,12 @@ pub use crate::{
 		accounts::{AccountId, ALICE},
 		assets::{AssetId, DOT, PICA, USDC},
 		oracle as mock_oracle,
-		runtime::{
-			Balance, ClearingHouse, ExtBuilder, Oracle, Origin, Runtime, System, Tokens, Vamm,
-		},
+		runtime::{Balance, ClearingHouse, ExtBuilder, Origin, Runtime, System},
 		vamm as mock_vamm,
 	},
 	pallet::*,
 };
-use composable_traits::{oracle::Oracle as OracleTrait, time::ONE_HOUR, vamm::VirtualAMM};
+use composable_traits::{oracle::Oracle, time::ONE_HOUR, vamm::Vamm};
 use frame_support::{assert_err, assert_noop, assert_ok};
 use orml_tokens::Error as TokenError;
 use proptest::prelude::*;
@@ -46,7 +44,7 @@ proptest! {
 		ExtBuilder { oracle_asset_support: asset_support, ..Default::default() }
 		.build()
 		.execute_with(|| {
-			let is_supported = <Oracle as OracleTrait>::is_supported(DOT);
+			let is_supported = <Runtime as Config>::Oracle::is_supported(DOT);
 			match asset_support {
 				Some(support) => assert_ok!(is_supported, support),
 				None => {
@@ -62,7 +60,7 @@ proptest! {
 	#[test]
 	fn mock_vamm_created_id_reflects_genesis_config(vamm_id in any::<Option<VammId>>()) {
 		ExtBuilder { vamm_id , ..Default::default() }.build().execute_with(|| {
-			let created = <Vamm as VirtualAMM>::create(VammParams {});
+			let created = <Runtime as Config>::Vamm::create(VammParams {});
 			match vamm_id {
 				Some(id) => assert_ok!(created, id),
 				None => assert_err!(created, mock_vamm::Error::<Runtime>::FailedToCreateVamm),
