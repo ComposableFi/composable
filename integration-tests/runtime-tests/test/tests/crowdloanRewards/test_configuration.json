@@ -47,6 +47,12 @@
       "claim_success": {
         "enabled": true,
         "claim1": true
+      },
+      "failure_tests": {
+        "enabled": false,
+        "associate_failure": {
+          "associate1": true
+        }
       }
     },
     "rpc": {
