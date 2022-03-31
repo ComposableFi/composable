@@ -1,7 +1,7 @@
 use frame_support::weights::Weight;
 use sp_std::marker::PhantomData;
 
-const I_HAVENT_CALCULATED_YET: i32 = 1_000;
+const I_HAVENT_CALCULATED_YET: i32 = 10_000;
 
 pub trait WeightInfo {
 	fn create() -> Weight;
