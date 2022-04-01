@@ -31,7 +31,7 @@ rewards should we win the auction. These processes are fully detailed below.*
 USDC, USDT, and DAI. The cap will be $15 million for the first week. Afterwards, 
 we will raise the cap to $50 million.*
 
-*Our vault will be available at 0x4adA5227e164a37a0183eC6Ce93222232f6A00F1. To 
+*Our vault will be available at `0x4adA5227e164a37a0183eC6Ce93222232f6A00F1`. To 
 participate in the vault, click on the option to contribute and you will be 
 directed to the following page:*
 
@@ -101,8 +101,8 @@ slot for Composable’s Picasso parachain.*
 provider for making these KSM purchases. This nearly decade-old hedge fund 
 manager focuses on investments into the blockchain space, particularly in crypto 
 and DeFi. The Composable and Three Arrows Capital teams will be on a multisig 
-wallet on Ethereum at 0xAD44c5bb2c726Fcecf67D66Baa6cD8cC447A1637 and on Kusama at
-FxLmDZbMB7sZfR6MJbuUzRmrb535nKcT2CxyGwWF6LLieud. The purchase log can be found 
+wallet on Ethereum at `0xAD44c5bb2c726Fcecf67D66Baa6cD8cC447A1637` and on Kusama at
+`FxLmDZbMB7sZfR6MJbuUzRmrb535nKcT2CxyGwWF6LLieud`. The purchase log can be found 
 [here](./ksm-purchase-log.md).*
 
 *In the event we win a parachain slot at auction, the KSM that users have 

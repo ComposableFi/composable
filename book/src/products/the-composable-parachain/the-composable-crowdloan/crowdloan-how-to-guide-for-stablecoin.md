@@ -13,7 +13,7 @@ thus opening up the Dotsama ecosystem to a broader audience.*
 *Below is a walk-through on how to participate using the ERC-20 stablecoins: 
 **USDT**, **DAI** and **USDC**.*
 
-## Enter into the Polkadot Ecosystem
+## *Enter into the Polkadot Ecosystem*
 
 *The primary aim for enabling participation using Ethereum-based stablecoins is 
 to foster exposure to the Polkadot ecosystem across the board, ensuring a 
@@ -43,12 +43,12 @@ follows:*
 LAYR token distribution](https://composablefi.medium.com/announcing-the-composable-polkadot-parachain-procurement-plans-a4e8dd82c4fe) 
 in case you missed it.*
 
-## Be a part of Composable’s Polkadot parachain journey
+## *Be a part of Composable’s Polkadot parachain journey*
 
 *To join in and contribute towards the procurement of our Polkadot parachain 
 visit crowdloan.composable.finance, and follow the simple steps below.*
 
-*Our vault will be available at 0x4adA5227e164a37a0183eC6Ce93222232f6A00F1, and 
+*Our vault will be available at `0x4adA5227e164a37a0183eC6Ce93222232f6A00F1`, and 
 upon clicking the above link, you will be directed to the page as seen below.*
 
 ![cl-sc-1](./cl-sc-1.png)

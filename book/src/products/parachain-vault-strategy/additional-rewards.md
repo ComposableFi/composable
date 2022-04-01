@@ -1,5 +1,7 @@
 # Vault Boosts
 
+--- 
+
 **For transparency, we are continuing to publicize the parachain vault approach 
 we took when bidding for a Kusama parachain. This strategy is no longer being 
 implemented to support Kusama parachian procurement, as this milestone has 

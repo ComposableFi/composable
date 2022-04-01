@@ -54,7 +54,7 @@ Additionally, similar to inflation in Polkadot, there will be an inflation curve
 
 ***The treasury, which will be used to incentivize the initial 5-6 projects that deploy on the Picasso network, along with pallet creation grants, will be allocated 15% (1,500,000,000 tokens)***. Furthermore, as mentioned previously, a certain percentage of transaction fees will go towards the treasury.
 
-## Vesting Distribution
+### Vesting Distribution
 
 The crowdloan stakers will earn 50% of their PICA upon TGE, with the remainder being released linearly within 48 weeks. The full balance can be used to participate in governance and other activities besides transferring.
 

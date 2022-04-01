@@ -28,4 +28,4 @@ Components include:
 
 
 ![IBC-Substrate Bridge](./ibc-substrate-bridge.png)
-*The IBC-Substrate Bridge. Note that the relayer is just a process to pass messages, and does not perform signing, etc*
+*The IBC-Substrate Bridge. Note that the relayer is just a process to pass messages, and does not perform signing, etc.*

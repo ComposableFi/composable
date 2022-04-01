@@ -2,7 +2,7 @@
 
 **For transparency, we are continuing to publicize the parachain vault approach 
 we took when bidding for a Kusama parachain. This strategy is no longer being 
-implemented to support Kusama parachian procurement, as this milestone has 
+implemented to support Kusama parachain procurement, as this milestone has 
 already been achieved. Please note that the information in italicized text below 
 is outdated for this reason:**
 

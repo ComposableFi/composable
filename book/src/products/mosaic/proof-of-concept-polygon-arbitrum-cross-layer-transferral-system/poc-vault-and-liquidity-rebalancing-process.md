@@ -1,4 +1,4 @@
-# PoC vault and liquidity rebalancing process
+# PoC Vault and Liquidity Rebalancing Process
 
 ---
 

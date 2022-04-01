@@ -17,6 +17,7 @@ Please take note of the following risks associated with our solution:*
 
 *Even though smart contracts are known for being a stable and a secure way of 
 processing data, bugs can still be discovered.*
+
 *Attempted remediation for this risk includes the following:*
 
 * *Trail of Bits audited our solution and changes have been reviewed by Stela 

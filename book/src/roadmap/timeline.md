@@ -8,4 +8,4 @@ The next phase for Composable is to integrate Picasso with the [inter-blockchain
 
 To do this, we will be utilizing Substrate to create the bridge infrastructure to connect our parachain to IBC. Beyond this, we will work to improve Mosaic’s cross-layer communication so that our transferal system can connect with our IBC-Picasso bridge. With this integration, we will look to generalize Mosaic to be a liquidity model that will extend across ecosystems.
 
-From there, we will begin drawing on the ink! VM model to develop the Composable Cross-Chain VM, which will spring forth the ability f
+From there, we will begin drawing on the *ink!* VM model to develop the Composable Cross-Chain VM, which will spring forth the ability f

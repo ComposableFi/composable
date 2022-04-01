@@ -42,7 +42,7 @@ Composable’s LAYR token will govern the Composable parachain. The total supply
 
 ### Crowdloans
 
-15% (or 12,000,000 LAYR) of the total token supply will be allocated for the purposes of securing a parachain slot every two years. 12% is being utilized for the current batches of Polkadot auctions, with a 25% vesting on TGE, and the remainder vesting over two years.
+15% (or 15,000,000 LAYR) of the total token supply will be allocated for the purposes of securing a parachain slot every two years. 15% is being utilized for the current batches of Polkadot auctions, with a 25% vesting on TGE, and the remainder vesting over two years.
 
 ### Treasury
 

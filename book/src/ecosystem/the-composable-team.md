@@ -18,7 +18,7 @@ Karel is a long-term crypto user and developer, passionate about decentralizatio
 
 ### Zain | CMO 
 
-Zain is a seasoned art, brand and marketing director who has worked between the intersection of tech and development. Previously head of brand and communications at Biconomy, marketing head at Muzmatch (Y Culimantor), Zain has built award-winning campaigns and marketing strategies for his innovative organizations and businesses. He brings a wealth of industry and related experience to the role. 
+Zain is a seasoned art, brand and marketing director who has worked between the intersection of tech and development. Previously head of brand and communications at Biconomy, marketing head at Muzmatch (Y Combinator), Zain has built award-winning campaigns and marketing strategies for his innovative organizations and businesses. He brings a wealth of industry and related experience to the role. 
 
 ### Nanni Sackmann | Head of People and Operations 
 

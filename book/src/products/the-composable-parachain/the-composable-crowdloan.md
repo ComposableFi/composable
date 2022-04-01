@@ -7,7 +7,7 @@ total of 6,075,485 DOT (a value of over $163 million).
 
 **For transparency, we are continuing to publicize the crowdloan approach we took 
 when bidding for a Polkadot parachain. Please note that the information in 
-italicized text below is outdated for this reason**:
+italicized text below is outdated for this reason:**
 
 *Our crowdloan strategy improved upon existing crowdloans by offering augmented 
 flexibility and earning opportunities for users, such as the [depositing of 
@@ -22,9 +22,9 @@ support the ever-growing Composable ecosystem. Our Polkadot crowdloan went live
 within a few days of its announcement, allowing users to bid in the second 
 batch.*
 
-## Rewards
+## *Rewards*
 
-***We initially offered offering 12% of LAYR supply to crowdloan contributors, 
+***We initially offered 12% of LAYR supply to crowdloan contributors, 
 with 25% vesting on TGE, and the remainder vesting over 1.5 years. As the amount 
 staked in our crowdloan continues to accumulate, we have designated additional 
 awards to be unlocked according to the same vesting schedule, amounting to a 

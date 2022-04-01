@@ -9,7 +9,7 @@ is outdated for this reason:**
 ## *General Platform/Site Access*
 
 *To access the Composable Finance platform and its features, visit its webpage 
-at https://www.composable.finance/:*
+at [composable.finance](https://composable.finance/):*
 
 ![walkthroughs-01](./walkthrough-01.png)
 

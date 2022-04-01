@@ -33,7 +33,7 @@ Leading this round were [Advanced Blockchain AG](https://en.advancedblockchain.c
 
 Through its subsidiaries, [Advanced Blockchain AG](https://en.advancedblockchain.com/) incubated Composable Finance on the technical side and provided the intellectual property for Composable. During this period, Cosmin Grigore was the Lead Developer on the project. This incubation was completed alongside top-tier Web 3.0-focused venture capital firm [Rarestone Capital](https://rarestone.capital/), which assisted with product strategy and rollout for Composable Finance. Subsequently, Composable Finance was spun out, retaining Cosmin as its CEO. Advanced Blockchain also reinvested into Composable. 
 
-Are there any socials I can follow for any additional questions and get more updates and information?
+### Are there any socials I can follow for any additional questions and get more updates and information?
 
 To find more information, stay up to date, and communicate with other users and our team, make sure to follow/join us at:
 

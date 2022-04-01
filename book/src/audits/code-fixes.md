@@ -33,7 +33,9 @@ It would take roughly 53 years for our chain to start producing blocks.
 
 With the chain unable to produce blocks, it became clear we had only two options:
 
-**1. Reset our Parachain runtime WASM on the relay chain with a WASM file that reverts the changes to the MinimumPeriod. Then, create a new chain-spec with that same WASM blob specified as a WASM override, then update our collators so they can resume producing blocks.**
+---
+
+#### 1. Reset our Parachain runtime WASM on the relay chain with a WASM file that reverts the changes to the MinimumPeriod. Then, create a new chain-spec with that same WASM blob specified as a WASM override, then update our collators so they can resume producing blocks.
 
 **Pros**
 - None whatsoever
@@ -41,13 +43,17 @@ With the chain unable to produce blocks, it became clear we had only two options
 **Cons**
 - We still haven’t fixed the spotty block production issue, which causes collators to miss their slots and would need to do a more complicated runtime upgrade in the future to address this issue.
 
-**2. We can call paras.force_set_current_head and paras.force_set_current_wasm in order to reset the chain with a new wasm/header with the correct MinimumPeriod**
+---
+
+#### 2. We can call paras.force_set_current_head and paras.force_set_current_wasm in order to reset the chain with a new wasm/header with the correct MinimumPeriod
 
 **Pros**
 - We don’t have to plan a more complicated runtime upgrade in the future in order to fix block production times on Picasso as the new chain would be properly configured from the get-go.
 
 **Cons**
 - We lose our chain state, but technically it is still a PoA chain and nothing critical yet has been stored on it.
+
+---
 
 After careful consideration, we decided to go with the second approach, primarily because it’s the faster route to solving all our problems (un-bricking the chain and 30s block production). Otherwise, we would have to first modify the aura pallet to support slot offsets allowing us to upgrade our chain and successfully change the MinimumPeriod value, then test this new functionality efficiently. But luckily, because Picasso is also still a PoA (proof of authority) chain, therefore, it can afford to be restarted. Starting from scratch with the right configuration will prevent us from having any more troubles with potentially bricking Picasso, even after it becomes community-run.
 

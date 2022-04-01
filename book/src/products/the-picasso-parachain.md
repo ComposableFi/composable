@@ -50,7 +50,7 @@ they add an additional layer of logic on top of an existing blockchain’s core
 logic, which creates some inflexibility. While smart contracts do an excellent 
 job at triggering specific trustless agreements and subsequent automated 
 actions, developers prefer greater flexibility — which pallets provide. 
-Moreover, palettes provide a more robust and powerful framework to help propel 
+Moreover, pallets provide a more robust and powerful framework to help propel 
 more creativity from developers looking to build the future of DeFi’s primitive, 
 core and application functions.
 
