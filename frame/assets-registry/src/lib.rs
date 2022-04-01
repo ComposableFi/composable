@@ -22,14 +22,20 @@
 
 pub use pallet::*;
 
+#[cfg(any(feature = "runtime-benchmarks", test))]
+mod benchmarking;
+
 #[cfg(test)]
 mod mock;
 
 #[cfg(test)]
 mod tests;
 
+pub mod weights;
+
 #[frame_support::pallet]
 pub mod pallet {
+	pub use crate::weights::WeightInfo;
 	use codec::{EncodeLike, FullCodec};
 	use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
 	use frame_support::{
@@ -75,6 +81,7 @@ pub mod pallet {
 		type UpdateAdminOrigin: EnsureOrigin<Self::Origin>;
 		type LocalAdminOrigin: EnsureOrigin<Self::Origin>;
 		type ForeignAdminOrigin: EnsureOrigin<Self::Origin>;
+		type WeightInfo: WeightInfo;
 	}
 
 	#[derive(Debug, Clone, Copy, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
@@ -209,8 +216,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		// TODO: bench this
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_local_admin())]
 		pub fn set_local_admin(
 			origin: OriginFor<T>,
 			local_admin: T::AccountId,
@@ -221,7 +227,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_foreign_admin())]
 		pub fn set_foreign_admin(
 			origin: OriginFor<T>,
 			foreign_admin: T::AccountId,
@@ -232,7 +238,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::approve_assets_mapping_candidate())]
 		pub fn approve_assets_mapping_candidate(
 			origin: OriginFor<T>,
 			local_asset_id: T::LocalAssetId,
@@ -258,7 +264,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_metadata())]
 		pub fn set_metadata(
 			origin: OriginFor<T>,
 			local_asset_id: T::LocalAssetId,

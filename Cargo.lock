@@ -6485,6 +6485,7 @@ name = "pallet-assets-registry"
 version = "0.1.0"
 dependencies = [
  "composable-traits",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log 0.4.16",
