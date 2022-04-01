@@ -91,6 +91,41 @@ proptest! {
 }
 
 // ----------------------------------------------------------------------------------------------------
+//                                             Prop Compose
+// ----------------------------------------------------------------------------------------------------
+
+prop_compose! {
+	fn float_ge_one()(float in ZERO | POSITIVE) -> f64 {
+		1.0 + float
+	}
+}
+
+prop_compose! {
+	fn float_le_zero()(float in ZERO | NEGATIVE) -> f64 {
+		float
+	}
+}
+
+prop_compose! {
+	fn invalid_margin_ratio_req()(
+		float in prop_oneof![float_le_zero(), float_ge_one()]
+	) -> FixedI128 {
+		FixedI128::from_float(float)
+	}
+}
+
+prop_compose! {
+	fn valid_margin_ratio_req()(
+		float in (0.0..1.0f64).prop_filter(
+			"Valid margin ratio requirements lie in (0, 1)",
+			|num| num > &0.0
+		)
+	) -> FixedI128 {
+		FixedI128::from_float(float)
+	}
+}
+
+// ----------------------------------------------------------------------------------------------------
 //                                             Pallet Tests
 // ----------------------------------------------------------------------------------------------------
 
@@ -264,37 +299,6 @@ proptest! {
 				Error::<Runtime>::ZeroLengthFundingPeriodOrFrequency
 			);
 		})
-	}
-}
-
-prop_compose! {
-	fn float_ge_one()(float in ZERO | POSITIVE) -> f64 {
-		1.0 + float
-	}
-}
-
-prop_compose! {
-	fn float_le_zero()(float in ZERO | NEGATIVE) -> f64 {
-		float
-	}
-}
-
-prop_compose! {
-	fn invalid_margin_ratio_req()(
-		float in prop_oneof![float_le_zero(), float_ge_one()]
-	) -> FixedI128 {
-		FixedI128::from_float(float)
-	}
-}
-
-prop_compose! {
-	fn valid_margin_ratio_req()(
-		float in (0.0..1.0f64).prop_filter(
-			"Valid margin ratio requirements lie in (0, 1)",
-			|num| num > &0.0
-		)
-	) -> FixedI128 {
-		FixedI128::from_float(float)
 	}
 }
 

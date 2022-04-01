@@ -468,6 +468,13 @@ pub mod pallet {
 					funding_period.rem_euclid(funding_frequency) == 0,
 					Error::<T>::FundingPeriodNotMultipleOfFrequency
 				);
+				ensure!(
+					margin_ratio_initial > T::Decimal::zero() &&
+						margin_ratio_initial < T::Decimal::one() &&
+						margin_ratio_maintenance > T::Decimal::zero() &&
+						margin_ratio_maintenance < T::Decimal::one(),
+					Error::<T>::InvalidMarginRatioRequirement
+				);
 
 				let market_id = id.clone();
 				let market = Market {
