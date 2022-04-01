@@ -458,6 +458,10 @@ pub mod pallet {
 			MarketCount::<T>::try_mutate(|id| {
 				ensure!(T::Oracle::is_supported(asset)?, Error::<T>::NoPriceFeedForAsset);
 				ensure!(
+					funding_period > 0 && funding_frequency > 0,
+					Error::<T>::ZeroLengthFundingPeriodOrFrequency
+				);
+				ensure!(
 					funding_period.rem_euclid(funding_frequency) == 0,
 					Error::<T>::FundingPeriodNotMultipleOfFrequency
 				);
