@@ -122,14 +122,20 @@ fn create_first_market_succeeds() {
 		let old_count = ClearingHouse::market_count();
 
 		let asset = DOT;
+		// 10x max leverage to open a position
+		let margin_ratio_initial = FixedI128::from_float(0.1);
+		// liquidate when above 50x leverage
+		let margin_ratio_maintenance = FixedI128::from_float(0.02);
+		let funding_frequency = ONE_HOUR;
+		let funding_period = ONE_HOUR * 24;
 		assert_ok!(ClearingHouse::create_market(
 			Origin::signed(ALICE),
 			asset,
 			VammParams {},
-			FixedI128::from_float(0.1),  // 10x max leverage to open a position
-			FixedI128::from_float(0.02), // liquidate when above 50x leverage
-			ONE_HOUR,
-			ONE_HOUR * 24,
+			margin_ratio_initial,
+			margin_ratio_maintenance,
+			funding_frequency,
+			funding_period
 		));
 
 		// Ensure first market id is 0 (we know its type since it's defined in the mock runtime)
@@ -138,6 +144,14 @@ fn create_first_market_succeeds() {
 
 		// Ensure market count is increased by 1
 		assert_eq!(ClearingHouse::market_count(), old_count + 1);
+
+		// Ensure new market matches creation parameters
+		let market = ClearingHouse::get_market(0u64).unwrap();
+		assert_eq!(market.asset_id, asset);
+		assert_eq!(market.margin_ratio_initial, margin_ratio_initial);
+		assert_eq!(market.margin_ratio_maintenance, margin_ratio_maintenance);
+		assert_eq!(market.funding_frequency, funding_frequency);
+		assert_eq!(market.funding_period, funding_period);
 	})
 }
 

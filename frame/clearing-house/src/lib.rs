@@ -172,20 +172,20 @@ pub mod pallet {
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
 	pub struct Market<AssetId, Decimal, VammId> {
 		/// The Id of the vAMM used for price discovery in the virtual market
-		vamm_id: VammId,
+		pub vamm_id: VammId,
 		/// The Id of the underlying asset (base-quote pair). A price feed from one or more oracles
 		/// must be available for this symbol
-		asset_id: AssetId,
+		pub asset_id: AssetId,
 		/// Minimum margin ratio for opening a new position
-		margin_ratio_initial: Decimal,
+		pub margin_ratio_initial: Decimal,
 		/// Margin ratio below which liquidations can occur
-		margin_ratio_maintenance: Decimal,
+		pub margin_ratio_maintenance: Decimal,
 		/// The latest cumulative funding rate of this market. Must be updated periodically.
-		cum_funding_rate: Decimal,
+		pub cum_funding_rate: Decimal,
 		/// The timestamp for the latest funding rate update.
-		funding_rate_ts: DurationSeconds,
+		pub funding_rate_ts: DurationSeconds,
 		/// The time span between each funding rate update.
-		funding_frequency: DurationSeconds,
+		pub funding_frequency: DurationSeconds,
 		/// Period of time over what funding (the difference between mark and index prices) gets
 		/// paid.
 		///
@@ -196,7 +196,7 @@ pub mod pallet {
 		///
 		/// Setting the funding period too short may cause nobody to trade the perpetual because
 		/// there’s too punitive of a price to pay in the case the funding rate flips sign.
-		funding_period: DurationSeconds,
+		pub funding_period: DurationSeconds,
 	}
 
 	type AssetIdOf<T> = <T as DeFiComposableConfig>::MayBeAssetId;
