@@ -9,7 +9,7 @@ use crate::{
 use composable_traits::defi::DeFiComposableConfig;
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{ConstU16, ConstU64, Everything, GenesisBuild},
+	traits::{ConstU16, ConstU32, ConstU64, Everything, GenesisBuild},
 	PalletId,
 };
 use frame_system as system;
@@ -39,6 +39,7 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Assets: pallet_assets::{Pallet, Call, Storage},
@@ -81,7 +82,7 @@ impl system::Config for Runtime {
 	type SystemWeightInfo = ();
 	type SS58Prefix = ConstU16<42>;
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -112,6 +113,21 @@ impl governance_registry::Config for Runtime {
 	type AssetId = AssetId;
 	type WeightInfo = ();
 	type Event = Event;
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                                 Timestamp
+// ----------------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const MinimumPeriod: u64 = 5;
+}
+
+impl pallet_timestamp::Config for Runtime {
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -215,6 +231,7 @@ impl clearing_house::Config for Runtime {
 	type WeightInfo = ();
 	type MarketId = u64;
 	type Decimal = Decimal;
+	type UnixTime = Timestamp;
 	type Vamm = Vamm;
 	type Oracle = Oracle;
 	type Assets = Assets;

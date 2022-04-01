@@ -89,7 +89,7 @@ pub mod pallet {
 	};
 	use frame_support::{
 		pallet_prelude::*,
-		traits::{tokens::fungibles::Transfer, GenesisBuild},
+		traits::{tokens::fungibles::Transfer, GenesisBuild, UnixTime},
 		Blake2_128Concat, PalletId, Twox64Concat,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
@@ -129,8 +129,7 @@ pub mod pallet {
 		/// Signed decimal fixed point number.
 		type Decimal: FullCodec + MaxEncodedLen + TypeInfo + FixedPointNumber;
 		/// Implementation for querying the current Unix timestamp
-		// TODO(0xangelo): uncomment this and set mocks
-		// type UnixTime: UnixTime;
+		type UnixTime: UnixTime;
 		/// Virtual Automated Market Maker pallet implementation
 		type Vamm: Vamm<Decimal = Self::Decimal>;
 		/// Price feed (in USDT) Oracle pallet implementation
