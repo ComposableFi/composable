@@ -1,5 +1,7 @@
 # Timeline
 
+---
+
 Our near term goals are to complete development and drive usage of each layer of the Composable stack. Currently, we have Mosaic live, and with the Composable software development kit (SDK), we will be able to begin educating users about this cross-layer/cross-chain arbitrage opportunity, which can then lend itself to the understanding of our broader vision. Furthermore, we are continuously building more pallets to strengthen the foundational layer of our tech stack, that is our parachain.
 
 The next phase for Composable is to integrate Picasso with the [inter-blockchain communication protocol](https://ibcprotocol.org/) (IBC). Through this step, we will enable cross-chain communication with every blockchain that uses IBC.

@@ -411,7 +411,8 @@ ul#searchresults span.teaser em {
 .chapter li > a.toggle {
     font-size: 10px;
     cursor: pointer;
-    display: block;
+    display: flex;
+    justify-content: center;
     margin-left: auto;
     padding: 0 10px;
     user-select: none;
@@ -433,14 +434,39 @@ ul#searchresults span.teaser em {
 
 .chapter li.expanded + li > ol > li > a {
     color: rgba(136,153,168,1.00);
+    border-left: none !important;
 }
 
 .chapter li.chapter-item {
     line-height: 22px;
     font-size: 14px;
-    padding: 0 16px;
-    padding-bottom: 8px;
-    padding-top: 8px;
+    padding: 0;
+    display: flex;
+    align-items: stretch;
+}
+
+.chapter a.toggle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.chapter li.chapter-item a:not(.toggle) {
+    flex: 1;
+    padding: 8px 16px;
+    border-width: 1px;
+}
+
+.chapter li.chapter-item a.active:not(.toggle) {
+    background-color: #fff;
+    border: 1px solid rgb(211, 220, 228);
+    border-right: none;
+}
+
+.chapter li.chapter-item a.active:not(.toggle) + a.toggle {
+    background-color: #fff;
+    border: 1px solid rgb(211, 220, 228);
+    border-left: none;
 }
 
 .chapter li.chapter-item:hover {
