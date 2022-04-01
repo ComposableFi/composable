@@ -403,7 +403,7 @@ pub mod pallet {
 			funding_period: DurationSeconds,
 		) -> DispatchResult {
 			ensure_signed(origin)?;
-			let market = <Self as ClearingHouse>::create_market(
+			let _ = <Self as ClearingHouse>::create_market(
 				asset,
 				vamm_params,
 				margin_ratio_initial,
@@ -411,7 +411,6 @@ pub mod pallet {
 				funding_frequency,
 				funding_period,
 			)?;
-			Self::deposit_event(Event::MarketCreated { market, asset });
 			Ok(())
 		}
 	}
@@ -491,6 +490,8 @@ pub mod pallet {
 
 				// Change the market count at the end
 				*id = id.checked_add(&One::one()).ok_or(ArithmeticError::Overflow)?;
+
+				Self::deposit_event(Event::MarketCreated { market: market_id.clone(), asset });
 				Ok(market_id)
 			})
 		}
