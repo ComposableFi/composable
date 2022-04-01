@@ -3,7 +3,7 @@
 
 :root {
     --sidebar-width: 300px;
-    --page-padding: 32px;
+    --page-padding: 8px;
     --content-max-width: 750px;
     --menu-bar-height: 50px;
 }

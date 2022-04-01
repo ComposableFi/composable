@@ -193,6 +193,12 @@ h1 {
     margin: 0;
 }
 
+@media screen and (max-width: 768px) {
+    h1 {
+        font-size: 32px;
+    }   
+}
+
 /* subtitles */
 h1 + p em {
     font-style: normal;
@@ -208,9 +214,39 @@ h1 strong {
 
 h2 {
     font-size: 32px;
-    margin: 0;
+    margin: 64px 0 0 0;
 }
 
+@media screen and (max-width: 768px) {
+    h2 {
+        font-size: 24px;
+    }   
+}
+
+h3 {
+    font-size: 20px;
+    margin: 32px 0 0 0;
+}
+
+@media screen and (max-width: 768px) {
+    h3 {
+        font-size: 16px;
+    }   
+}
+
+p {
+    margin: 4px 0 0 0;
+}
+
+p + p {
+    margin: 8px 0 0 0;
+}
+
+h4 {
+    font-weight: bold;
+    font-size: 18px;
+    margin: 12px 0 0 0;
+}
 
 /* img caption */
 img + em {
