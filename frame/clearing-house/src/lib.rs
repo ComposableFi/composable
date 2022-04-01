@@ -455,7 +455,10 @@ pub mod pallet {
 		) -> Result<Self::MarketId, DispatchError> {
 			MarketCount::<T>::try_mutate(|id| {
 				ensure!(T::Oracle::is_supported(asset)?, Error::<T>::NoPriceFeedForAsset);
-				// TODO(0xangelo): ensure funding_period is multiple of funding_frequency
+				ensure!(
+					funding_period.rem_euclid(funding_frequency) == 0,
+					Error::<T>::FundingPeriodNotMultipleOfFrequency
+				);
 
 				let market_id = id.clone();
 				let market = Market {
