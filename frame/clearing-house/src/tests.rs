@@ -9,7 +9,11 @@ pub use crate::{
 	},
 	pallet::*,
 };
-use composable_traits::{oracle::Oracle, time::ONE_HOUR, vamm::Vamm};
+use composable_traits::{
+	oracle::Oracle,
+	time::{DurationSeconds, ONE_HOUR},
+	vamm::Vamm,
+};
 use frame_support::{assert_err, assert_noop, assert_ok, pallet_prelude::Hooks, traits::UnixTime};
 use orml_tokens::Error as TokenError;
 use proptest::prelude::*;
@@ -229,6 +233,32 @@ proptest! {
 					ONE_HOUR * 2 + rem
 				),
 				Error::<Runtime>::FundingPeriodNotMultipleOfFrequency
+			);
+		})
+	}
+}
+
+proptest! {
+	#[test]
+	fn fails_to_create_market_if_either_funding_period_or_frequency_are_zero(
+		(period, freq) in prop_oneof![
+			(Just(0), any::<DurationSeconds>()),
+			(any::<DurationSeconds>(), Just(0)),
+			Just((0, 0))
+		]
+	) {
+		ExtBuilder::default().build().execute_with(|| {
+			assert_noop!(
+				ClearingHouse::create_market(
+					Origin::signed(ALICE),
+					DOT,
+					VammParams {},
+					FixedI128::from_float(0.1),
+					FixedI128::from_float(0.02),
+					freq,
+					period
+				),
+				Error::<Runtime>::ZeroLengthFundingPeriodOrFrequency
 			);
 		})
 	}

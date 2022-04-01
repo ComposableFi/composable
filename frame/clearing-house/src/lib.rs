@@ -316,6 +316,8 @@ pub mod pallet {
 		/// Attempted to create a new market but the funding period is not a multiple of the
 		/// funding frequency
 		FundingPeriodNotMultipleOfFrequency,
+		/// Attempted to create a new market but the funding period or frequency is 0 seconds long
+		ZeroLengthFundingPeriodOrFrequency,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
