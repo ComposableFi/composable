@@ -463,8 +463,7 @@ pub mod pallet {
 					funding_frequency,
 					funding_period,
 					cum_funding_rate: Default::default(),
-					// TODO(0xangelo): set ts to UnixTime::now()
-					funding_rate_ts: Default::default(),
+					funding_rate_ts: T::UnixTime::now().as_secs(),
 				};
 				Markets::<T>::insert(&market_id, market);
 

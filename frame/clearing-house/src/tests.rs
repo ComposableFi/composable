@@ -4,20 +4,16 @@ pub use crate::{
 		accounts::{AccountId, ALICE},
 		assets::{AssetId, DOT, PICA, USDC},
 		oracle as mock_oracle,
-		runtime::{Balance, ClearingHouse, ExtBuilder, Origin, Runtime, System},
+		runtime::{Balance, ClearingHouse, ExtBuilder, Origin, Runtime, System, Timestamp},
 		vamm as mock_vamm,
 	},
 	pallet::*,
 };
-use composable_traits::{
-	oracle::Oracle,
-	time::{DurationSeconds, ONE_HOUR},
-	vamm::Vamm,
-};
-use frame_support::{assert_err, assert_noop, assert_ok};
+use composable_traits::{oracle::Oracle, time::ONE_HOUR, vamm::Vamm};
+use frame_support::{assert_err, assert_noop, assert_ok, pallet_prelude::Hooks, traits::UnixTime};
 use orml_tokens::Error as TokenError;
 use proptest::prelude::*;
-use sp_runtime::{traits::Zero, FixedI128};
+use sp_runtime::FixedI128;
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Setup
@@ -34,6 +30,20 @@ impl Default for ExtBuilder {
 			vamm_id: Some(0u64),
 			oracle_asset_support: Some(true),
 		}
+	}
+}
+
+fn run_to_block(n: u64) {
+	while System::block_number() < n {
+		if System::block_number() > 0 {
+			Timestamp::on_finalize(System::block_number());
+			System::on_finalize(System::block_number());
+		}
+		System::set_block_number(System::block_number() + 1);
+		// Time is set in milliseconds, so at each block we increment the timestamp by 1000ms = 1s
+		let _ = Timestamp::set(Origin::none(), System::block_number() * 1000);
+		System::on_initialize(System::block_number());
+		Timestamp::on_initialize(System::block_number());
 	}
 }
 
@@ -106,6 +116,7 @@ fn deposit_supported_collateral_succeeds() {
 	ExtBuilder { balances: vec![(ALICE, USDC, 1_000_000)], ..Default::default() }
 		.build()
 		.execute_with(|| {
+			run_to_block(1);
 			let account = ALICE;
 			let asset = USDC;
 			let amount: Balance = 1_000u32.into();
@@ -124,7 +135,9 @@ fn deposit_supported_collateral_succeeds() {
 #[test]
 fn create_first_market_succeeds() {
 	ExtBuilder::default().build().execute_with(|| {
+		run_to_block(10); // Timestamp unix time does not work properly at genesis
 		let old_count = ClearingHouse::market_count();
+		let block_time_now = <Timestamp as UnixTime>::now().as_secs();
 
 		let asset = DOT;
 		// 10x max leverage to open a position
@@ -158,8 +171,8 @@ fn create_first_market_succeeds() {
 		assert_eq!(market.funding_frequency, funding_frequency);
 		assert_eq!(market.funding_period, funding_period);
 
-		// Ensure last funding rate timestamp is not 0
-		assert_ne!(market.funding_rate_ts, DurationSeconds::zero());
+		// Ensure last funding rate timestamp is the same as this block's time
+		assert_eq!(market.funding_rate_ts, block_time_now);
 	})
 }
 

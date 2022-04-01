@@ -276,8 +276,6 @@ impl ExtBuilder {
 			mock_oracle::GenesisConfig { supports_assets: self.oracle_asset_support };
 		GenesisBuild::<Runtime>::assimilate_storage(&oracle_genesis, &mut storage).unwrap();
 
-		let mut ext: sp_io::TestExternalities = storage.into();
-		ext.execute_with(|| System::set_block_number(1));
-		ext
+		storage.into()
 	}
 }
