@@ -213,3 +213,23 @@ fn fails_to_create_market_if_fails_to_create_vamm() {
 		);
 	})
 }
+
+proptest! {
+	#[test]
+	fn fails_to_create_market_if_funding_period_is_not_multiple_of_frequency(rem in 1..ONE_HOUR) {
+		ExtBuilder::default().build().execute_with(|| {
+			assert_noop!(
+				ClearingHouse::create_market(
+					Origin::signed(ALICE),
+					DOT,
+					VammParams {},
+					FixedI128::from_float(0.1),
+					FixedI128::from_float(0.02),
+					ONE_HOUR,
+					ONE_HOUR * 2 + rem
+				),
+				Error::<Runtime>::FundingPeriodNotMultipleOfFrequency
+			);
+		})
+	}
+}

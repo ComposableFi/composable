@@ -313,6 +313,9 @@ pub mod pallet {
 		/// Attempted to create a new market but the underlying asset is not supported by the
 		/// oracle
 		NoPriceFeedForAsset,
+		/// Attempted to create a new market but the funding period is not a multiple of the
+		/// funding frequency
+		FundingPeriodNotMultipleOfFrequency,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
