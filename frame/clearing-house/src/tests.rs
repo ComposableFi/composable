@@ -107,6 +107,14 @@ prop_compose! {
 }
 
 prop_compose! {
+	fn zero_to_one_open_interval()(
+		float in (0.0..1.0f64).prop_filter("Zero not included in (0, 1)", |num| num > &0.0)
+	) -> f64 {
+		float
+	}
+}
+
+prop_compose! {
 	fn invalid_margin_ratio_req()(
 		float in prop_oneof![float_le_zero(), float_ge_one()]
 	) -> FixedI128 {
@@ -115,13 +123,17 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn valid_margin_ratio_req()(
-		float in (0.0..1.0f64).prop_filter(
-			"Valid margin ratio requirements lie in (0, 1)",
-			|num| num > &0.0
-		)
-	) -> FixedI128 {
+	fn valid_margin_ratio_req()(float in zero_to_one_open_interval()) -> FixedI128 {
 		FixedI128::from_float(float)
+	}
+}
+
+prop_compose! {
+	fn initial_le_maintenance_margin_ratio()(
+		(maintenance, decrement) in zero_to_one_open_interval()
+			.prop_flat_map(|num| (Just(num), 0.0..num))
+	) -> (FixedI128, FixedI128) {
+		(FixedI128::from_float(maintenance - decrement), FixedI128::from_float(maintenance))
 	}
 }
 
@@ -327,6 +339,28 @@ proptest! {
 					ONE_HOUR * 24
 				),
 				Error::<Runtime>::InvalidMarginRatioRequirement
+			);
+		})
+	}
+}
+
+proptest! {
+	#[test]
+	fn fails_to_create_market_if_initial_margin_ratio_le_maintenance(
+		(initial, maintenance) in initial_le_maintenance_margin_ratio()
+	) {
+		ExtBuilder::default().build().execute_with(|| {
+			assert_noop!(
+				ClearingHouse::create_market(
+					Origin::signed(ALICE),
+					DOT,
+					VammParams {},
+					initial,
+					maintenance,
+					ONE_HOUR,
+					ONE_HOUR * 24
+				),
+				Error::<Runtime>::InitialMarginRatioLessThanMaintenance
 			);
 		})
 	}

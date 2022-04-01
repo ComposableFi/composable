@@ -321,6 +321,9 @@ pub mod pallet {
 		/// Attempted to create a new market but either initial or maintenance margin ratios are
 		/// outside the interval (0, 1)
 		InvalidMarginRatioRequirement,
+		/// Attempted to create a new market but the initial margin ratio is less or equal than/to
+		/// the maintenance one
+		InitialMarginRatioLessThanMaintenance,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
