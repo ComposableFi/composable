@@ -9,11 +9,15 @@ pub use crate::{
 	},
 	pallet::*,
 };
-use composable_traits::{oracle::Oracle, time::ONE_HOUR, vamm::Vamm};
+use composable_traits::{
+	oracle::Oracle,
+	time::{DurationSeconds, ONE_HOUR},
+	vamm::Vamm,
+};
 use frame_support::{assert_err, assert_noop, assert_ok};
 use orml_tokens::Error as TokenError;
 use proptest::prelude::*;
-use sp_runtime::FixedI128;
+use sp_runtime::{traits::Zero, FixedI128};
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Setup
@@ -116,6 +120,7 @@ fn deposit_supported_collateral_succeeds() {
 		})
 }
 
+#[allow(clippy::disallowed_methods)]
 #[test]
 fn create_first_market_succeeds() {
 	ExtBuilder::default().build().execute_with(|| {
@@ -152,6 +157,9 @@ fn create_first_market_succeeds() {
 		assert_eq!(market.margin_ratio_maintenance, margin_ratio_maintenance);
 		assert_eq!(market.funding_frequency, funding_frequency);
 		assert_eq!(market.funding_period, funding_period);
+
+		// Ensure last funding rate timestamp is not 0
+		assert_ne!(market.funding_rate_ts, DurationSeconds::zero());
 	})
 }
 
