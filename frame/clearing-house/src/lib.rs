@@ -477,6 +477,10 @@ pub mod pallet {
 						margin_ratio_maintenance < T::Decimal::one(),
 					Error::<T>::InvalidMarginRatioRequirement
 				);
+				ensure!(
+					margin_ratio_initial > margin_ratio_maintenance,
+					Error::<T>::InitialMarginRatioLessThanMaintenance
+				);
 
 				let market_id = id.clone();
 				let market = Market {
