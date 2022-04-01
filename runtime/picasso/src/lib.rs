@@ -30,6 +30,7 @@ use common::{
 	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 
+use cumulus_primitives_core::ParaId;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -446,6 +447,37 @@ where
 	type Extrinsic = UncheckedExtrinsic;
 }
 
+//TODO set
+parameter_types! {
+	pub const StakeLock: BlockNumber = 50;
+	pub const StalePrice: BlockNumber = 5;
+
+	/// TODO: discuss with omar/cosmin
+	pub MinStake: Balance = 1000 * CurrencyId::unit::<Balance>();
+	pub const MaxAnswerBound: u32 = 25;
+	pub const MaxAssetsCount: u32 = 100_000;
+	pub const MaxHistory: u32 = 20;
+	pub const MaxPrePrices: u32 = 40;
+}
+
+impl oracle::Config for Runtime {
+	type Currency = Balances;
+	type Event = Event;
+	type AuthorityId = oracle::crypto::BathurstStId;
+	type AssetId = CurrencyId;
+	type PriceValue = Balance;
+	type StakeLock = StakeLock;
+	type MinStake = MinStake;
+	type StalePrice = StalePrice;
+	type AddOracle = EnsureRootOrHalfCouncil;
+	type MaxAnswerBound = MaxAnswerBound;
+	type MaxAssetsCount = MaxAssetsCount;
+	type MaxHistory = MaxHistory;
+	type MaxPrePrices = MaxPrePrices;
+	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
+	type LocalAssets = CurrencyFactory;
+}
+
 // Parachain stuff.
 // See https://github.com/paritytech/cumulus/blob/polkadot-v0.9.8/polkadot-parachains/rococo/src/lib.rs for details.
 parameter_types! {
@@ -707,6 +739,37 @@ impl democracy::Config for Runtime {
 	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
 }
 
+parameter_types! {
+	pub const MaxStrategies: usize = 255;
+	pub CreationDeposit: Balance = 10 * CurrencyId::unit::<Balance>();
+	pub VaultExistentialDeposit: Balance = 1000 * CurrencyId::unit::<Balance>();
+	pub RentPerBlock: Balance = CurrencyId::milli();
+	pub const VaultMinimumDeposit: Balance = 10_000;
+	pub const VaultMinimumWithdrawal: Balance = 10_000;
+	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
+	pub const TombstoneDuration: BlockNumber = DAYS * 7;
+}
+
+impl vault::Config for Runtime {
+	type Event = Event;
+	type Balance = Balance;
+	type CurrencyFactory = CurrencyFactory;
+	type AssetId = CurrencyId;
+	type Currency = Assets;
+	type Convert = sp_runtime::traits::ConvertInto;
+	type PalletId = VaultPalletId;
+	type MaxStrategies = MaxStrategies;
+	type CreationDeposit = CreationDeposit;
+	type ExistentialDeposit = VaultExistentialDeposit;
+	type RentPerBlock = RentPerBlock;
+	type NativeCurrency = Balances;
+	type MinimumDeposit = VaultMinimumDeposit;
+	type MinimumWithdrawal = VaultMinimumWithdrawal;
+	type TombstoneDuration = TombstoneDuration;
+	type VaultId = u64;
+	type WeightInfo = weights::vault::WeightInfo<Runtime>;
+}
+
 impl currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
@@ -774,6 +837,69 @@ impl bonded_finance::Config for Runtime {
 	type WeightInfo = weights::bonded_finance::WeightInfo<Runtime>;
 }
 
+parameter_types! {
+	pub const DutchAuctionId: PalletId = PalletId(*b"dtch_ctn");
+}
+
+impl composable_traits::defi::DeFiComposableConfig for Runtime {
+	type MayBeAssetId = CurrencyId;
+	type Balance = Balance;
+}
+
+impl dutch_auction::Config for Runtime {
+	type NativeCurrency = Balances;
+	type Event = Event;
+	type MultiCurrency = Assets;
+	type PalletId = DutchAuctionId;
+	type OrderId = u128;
+	type UnixTime = Timestamp;
+	type WeightInfo = weights::dutch_auction::WeightInfo<Runtime>;
+	type PositionExistentialDeposit = NativeExistentialDeposit;
+}
+
+pub type LiquidationStrategyId = u32;
+pub type OrderId = u128;
+
+parameter_types! {
+	pub const LiquidationsPalletId: PalletId = PalletId(*b"liqdatns");
+}
+
+impl liquidations::Config for Runtime {
+	type Event = Event;
+	type UnixTime = Timestamp;
+	type DutchAuction = DutchAuction;
+	type LiquidationStrategyId = LiquidationStrategyId;
+	type OrderId = OrderId;
+	type WeightInfo = weights::liquidations::WeightInfo<Runtime>;
+	type ParachainId = ParaId;
+	type PalletId = LiquidationsPalletId;
+}
+
+parameter_types! {
+	pub const MaxLendingCount: u32 = 10;
+	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
+	pub OracleMarketCreationStake : Balance = 300;
+}
+
+impl lending::Config for Runtime {
+	type Event = Event;
+	type Oracle = Oracle;
+	type VaultId = u64;
+	type Vault = Vault;
+	type CurrencyFactory = CurrencyFactory;
+	type MultiCurrency = Assets;
+	type Liquidation = Liquidations;
+	type UnixTime = Timestamp;
+	type MaxLendingCount = MaxLendingCount;
+	type AuthorityId = oracle::crypto::BathurstStId;
+	type WeightInfo = weights::lending::WeightInfo<Runtime>;
+	type LiquidationStrategyId = u32;
+	type OracleMarketCreationStake = OracleMarketCreationStake;
+	type PalletId = LendingPalletId;
+	type NativeCurrency = Balances;
+	type WeightToFee = WeightToFee;
+}
+
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -836,6 +962,11 @@ construct_runtime!(
 		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 57,
 		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 58,
 		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 59,
+		DutchAuction: dutch_auction::{Pallet, Call, Storage, Event<T>} = 60,
+		Oracle: oracle::{Pallet, Call, Storage, Event<T>} = 61,
+		Liquidations: liquidations::{Pallet, Call, Storage, Event<T>} = 62,
+		Lending: lending::{Pallet, Call, Storage, Event<T>} = 63,
+		Vault: vault::{Pallet, Call, Storage, Event<T>} = 64,
 	}
 );
 
@@ -902,6 +1033,10 @@ mod benches {
 		[currency_factory, CurrencyFactory]
 		[bonded_finance, BondedFinance]
 		[vesting, Vesting]
+		[dutch_auction, DutchAuction]
+		[oracle, Oracle]
+		[liquidations, Liquidations]
+		[vault, Vault]
 	);
 }
 
