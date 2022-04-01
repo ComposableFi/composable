@@ -16,7 +16,10 @@ use composable_traits::{
 };
 use frame_support::{assert_err, assert_noop, assert_ok, pallet_prelude::Hooks, traits::UnixTime};
 use orml_tokens::Error as TokenError;
-use proptest::prelude::*;
+use proptest::{
+	num::f64::{NEGATIVE, POSITIVE, ZERO},
+	prelude::*,
+};
 use sp_runtime::FixedI128;
 
 // ----------------------------------------------------------------------------------------------------
@@ -259,6 +262,63 @@ proptest! {
 					period
 				),
 				Error::<Runtime>::ZeroLengthFundingPeriodOrFrequency
+			);
+		})
+	}
+}
+
+prop_compose! {
+	fn float_ge_one()(float in ZERO | POSITIVE) -> f64 {
+		1.0 + float
+	}
+}
+
+prop_compose! {
+	fn float_le_zero()(float in ZERO | NEGATIVE) -> f64 {
+		float
+	}
+}
+
+prop_compose! {
+	fn invalid_margin_ratio_req()(
+		float in prop_oneof![float_le_zero(), float_ge_one()]
+	) -> FixedI128 {
+		FixedI128::from_float(float)
+	}
+}
+
+prop_compose! {
+	fn valid_margin_ratio_req()(
+		float in (0.0..1.0f64).prop_filter(
+			"Valid margin ratio requirements lie in (0, 1)",
+			|num| num > &0.0
+		)
+	) -> FixedI128 {
+		FixedI128::from_float(float)
+	}
+}
+
+proptest! {
+	#[test]
+	fn fails_to_create_market_if_margin_ratios_not_between_zero_and_one(
+		(initial, maintenance) in prop_oneof![
+			(valid_margin_ratio_req(), invalid_margin_ratio_req()),
+			(invalid_margin_ratio_req(), valid_margin_ratio_req()),
+			(invalid_margin_ratio_req(), invalid_margin_ratio_req())
+		]
+	) {
+		ExtBuilder::default().build().execute_with(|| {
+			assert_noop!(
+				ClearingHouse::create_market(
+					Origin::signed(ALICE),
+					DOT,
+					VammParams {},
+					initial,
+					maintenance,
+					ONE_HOUR,
+					ONE_HOUR * 24
+				),
+				Error::<Runtime>::InvalidMarginRatioRequirement
 			);
 		})
 	}

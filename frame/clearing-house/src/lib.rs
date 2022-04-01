@@ -318,6 +318,9 @@ pub mod pallet {
 		FundingPeriodNotMultipleOfFrequency,
 		/// Attempted to create a new market but the funding period or frequency is 0 seconds long
 		ZeroLengthFundingPeriodOrFrequency,
+		/// Attempted to create a new market but either initial or maintenance margin ratios are
+		/// outside the interval (0, 1)
+		InvalidMarginRatioRequirement,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
