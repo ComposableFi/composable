@@ -2,7 +2,7 @@
 
 use crate::mock::{
     Assets, Balance, Event, ExtBuilder, Instrumental, 
-    MockRuntime, Origin, System, Vault,
+    MockRuntime, Origin, System, Vault
 };
 use crate::{pallet, pallet::AssetVault, pallet::Error};
 use crate::currency::{
@@ -109,6 +109,60 @@ impl VaultBuilder {
             .for_each(|config| {
                Instrumental::create(Origin::signed(ADMIN), config.clone()).ok();
             })
+    }
+}
+
+pub trait VaultInitializer {
+	fn initialize_vault(self: Self, config: VaultConfig<AccountId, CurrencyId>) -> Self;
+    fn initialize_vaults(self: Self, configs: Vec<VaultConfig<AccountId, CurrencyId>>) -> Self;
+
+    fn initialize_reserves(self: Self, reserves: Vec<(CurrencyId, Balance)>) -> Self;
+
+    fn initialize_vaults_with_reserves(
+        self: Self, 
+        configs: Vec<VaultConfig<AccountId, CurrencyId>>,
+        reserves: Vec<(CurrencyId, Balance)>
+    ) -> Self ;
+}
+
+impl VaultInitializer for sp_io::TestExternalities {
+	fn initialize_vault(mut self: Self, config: VaultConfig<AccountId, CurrencyId>) -> Self {
+		self.execute_with(|| Instrumental::create(Origin::signed(ADMIN), config.clone()).ok()).unwrap();
+        
+        self
+    }
+
+    fn initialize_vaults(mut self: Self, configs: Vec<VaultConfig<AccountId, CurrencyId>>) -> Self {
+		self.execute_with(|| {
+            configs.iter().for_each(|config| {
+                Instrumental::create(Origin::signed(ADMIN), config.clone()).ok();
+                println!("created vault for asset {:?}", config.asset_id);
+            });
+        });
+        
+        self
+    }
+
+    // TODO: (Nevin)
+    //  - mint balances into ADMIN account first
+    fn initialize_reserves(mut self: Self, reserves: Vec<(CurrencyId, Balance)>) -> Self {
+        self.execute_with(|| {
+            reserves.iter().for_each(|(asset, balance)| {
+                println!("trying to deposit asset {:?}", asset);
+                assert_ok!(Instrumental::add_liquidity(Origin::signed(ADMIN), *asset, *balance));
+                println!("deposited asset {:?}", asset);
+            });
+        });
+
+        self
+    }
+
+    fn initialize_vaults_with_reserves(
+        self: Self, 
+        configs: Vec<VaultConfig<AccountId, CurrencyId>>,
+        reserves: Vec<(CurrencyId, Balance)>
+    ) -> Self {
+        self.initialize_vaults(configs).initialize_reserves(reserves)
     }
 }
 
@@ -518,6 +572,58 @@ proptest! {
         ExtBuilder::default().initialize_balances(deposits.clone()).build().execute_with(|| {                    
             deposits.into_iter().for_each(|(user, asset, balance)| {
                 assert_eq!(Assets::balance(asset, &user), balance);
+            });
+        });
+    }
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                       spi_io::TestExternalities                                     
+// ----------------------------------------------------------------------------------------------------
+
+#[test]
+fn test_externalities_initalize_vault() {
+    let asset = USDC::ID;
+    let config = VaultConfigBuilder::default().asset_id(asset).build();
+    
+    ExtBuilder::default().build().initialize_vault(config).execute_with(|| {                    
+            assert!(AssetVault::<MockRuntime>::contains_key(asset));
+    });
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(NUMBER_OF_PROPTEST_CASES))]
+
+    #[test]
+    fn test_externalities_initalize_vaults(
+        assets in generate_assets()
+    ) {
+        let configs = assets.iter().map(|&asset| {
+            VaultConfigBuilder::default().asset_id(asset).build()
+        }).collect();
+
+        ExtBuilder::default().build().initialize_vaults(configs).execute_with(|| {                    
+            assets.iter().for_each(|&asset| assert!(AssetVault::<MockRuntime>::contains_key(asset)));
+        });
+    }
+
+    #[test]
+    fn test_externalities_initalize_vaults_with_reserves(
+        reserves in generate_reserves()
+    ) {
+        let configs = reserves.iter().map(|&(asset, _)| {
+            VaultConfigBuilder::default().asset_id(asset).build()
+        }).collect();
+
+        let balances = reserves.iter().map(|&(asset, balance)| (ADMIN, asset, balance)).collect();
+
+        ExtBuilder::default().initialize_balances(balances).build().initialize_vaults(configs).initialize_reserves(reserves.clone()).execute_with(|| {                    
+            reserves.iter().for_each(|&(asset, balance)| {
+                assert!(AssetVault::<MockRuntime>::contains_key(asset));
+                
+                let vault_id = Instrumental::asset_vault(asset).unwrap();
+                let vault_account = Vault::account_id(&vault_id);
+                assert_eq!(Assets::balance(asset, &vault_account), balance);
             });
         });
     }
