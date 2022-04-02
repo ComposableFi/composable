@@ -273,7 +273,7 @@ pub mod pallet {
 		/// * [`Created`](Event::<T>::Created)
 		///
 		/// ## State Changes
-		/// Updates [`Vamms`] storage map and [`VammsCount`] storage value.
+		/// Updates [`VammMap`] storage map and [`VammCounter`] storage value.
 		///
 		/// ## Errors
 		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)

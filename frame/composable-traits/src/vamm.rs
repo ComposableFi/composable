@@ -70,11 +70,10 @@ pub struct VammState<Balance, Timestamp> {
 
 	/// Whether this market is deprecated or not.
 	///
-	/// This variable function as a signal to allow pallets who uses the
-	/// VAMM to set a market as "operating as normal" or "not to be used
-	/// anymore".  If the value is `None` it means the market is operating
-	/// as normal, but if the value is `Some(timestamp)` it means the market
-	/// is deprecated and the deprecation will take effect at the time
-	/// `timestamp`.
+	/// This variable function as a signal to allow pallets who uses the Vamm to
+	/// set a market as "operating as normal" or "not to be used anymore".  If
+	/// the value is `None` it means the market is operating as normal, but if
+	/// the value is `Some(timestamp)` it means the market is deprecated and the
+	/// deprecation will take (or took) effect at the time `timestamp`.
 	pub deprecated: Option<Timestamp>,
 }
