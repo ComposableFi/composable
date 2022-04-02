@@ -9,6 +9,14 @@ use frame_support::{dispatch::DispatchResult, traits::Get};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::AtLeast32BitUnsigned, DispatchError, Perbill, SaturatedConversion};
 
+pub enum PositionState {
+	/// The position is not being rewarded yet and waiting for the next epoch.
+	Pending,
+	/// The position is currently locked and being rewarded.
+	LockedRewarding,
+	/// The position expired but still being rewarded.
+	Expired,
+}
 #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
 pub struct StakingConfig<AccountId, DurationPresets, Rewards> {
 	/// The possible locking duration.
