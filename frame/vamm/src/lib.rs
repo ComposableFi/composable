@@ -101,13 +101,15 @@ pub mod pallet {
 		/// Event type emitted by this pallet. Depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
-		/// The vamm id type for this pallet.
-		type VammId: CheckedAdd
+		/// The `VammId` used by the pallet. Corresponds to the Ids used by the Vamm pallet.
+		type VammId: Default
+			+ CheckedAdd
 			+ Clone
+			+ Copy
 			+ Debug
-			+ Default
 			+ FullCodec
 			+ MaxEncodedLen
+			+ MaybeSerializeDeserialize
 			+ One
 			+ Parameter
 			+ PartialEq
@@ -237,6 +239,25 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 	//                                         Genesis Configuration
 	// ----------------------------------------------------------------------------------------------------
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T: Config> {
+		pub vamm_count: VammIdOf<T>,
+	}
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self { vamm_count: Default::default() }
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			VammCounter::<T>::put(self.vamm_count);
+		}
+	}
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Vamm Trait
