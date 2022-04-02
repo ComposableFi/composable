@@ -1,6 +1,13 @@
 use crate::*;
-use composable_traits::financial_nft::{FinancialNFTProtocol, NFTClass, NFTVersion};
-use frame_support::{parameter_types, traits::Everything, PalletId};
+use composable_traits::{
+	financial_nft::{FinancialNFTProtocol, NFTClass, NFTVersion},
+	time::DurationSeconds,
+};
+use frame_support::{
+	parameter_types,
+	traits::{Everything, Hooks},
+	PalletId,
+};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
 use sp_core::H256;
@@ -22,6 +29,9 @@ pub type InstanceId = u128;
 pub type BlockNumber = u64;
 
 pub const MILLISECS_PER_BLOCK: Moment = 12_000;
+
+/// One minute in term of block
+pub const REWARD_EPOCH_DURATION_BLOCK: BlockNumber = 60_000 / MILLISECS_PER_BLOCK;
 
 frame_support::construct_runtime!(
 	pub enum Test where
@@ -78,6 +88,7 @@ parameter_types! {
 	pub const StakingRewardPalletId: PalletId = PalletId(*b"pal_stkr");
   pub const MaxStakingPresets: u32 = 10;
   pub const MaxRewardAssets: u32 = 10;
+  pub const EpochDuration: DurationSeconds = MILLISECS_PER_BLOCK * REWARD_EPOCH_DURATION_BLOCK / 1000;
 }
 
 impl Config for Test {
@@ -90,6 +101,7 @@ impl Config for Test {
 	type PalletId = StakingRewardPalletId;
 	type MaxStakingPresets = MaxStakingPresets;
 	type MaxRewardAssets = MaxRewardAssets;
+	type EpochDuration = EpochDuration;
 }
 
 impl FinancialNFTProtocol<AccountId> for Test {
@@ -135,4 +147,26 @@ impl system::Config for Test {
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	t.into()
+}
+
+#[allow(dead_code)]
+pub fn run_to_block(n: BlockNumber) {
+	StakingRewards::on_finalize(System::block_number());
+	for b in (System::block_number() + 1)..=n {
+		next_block(b);
+		if b != n {
+			StakingRewards::on_finalize(System::block_number());
+		}
+	}
+}
+
+pub fn process_block(n: BlockNumber) {
+	next_block(n);
+	StakingRewards::on_finalize(n);
+}
+
+pub fn next_block(n: u64) {
+	System::set_block_number(n);
+	Timestamp::set_timestamp(MILLISECS_PER_BLOCK * n);
+	StakingRewards::on_initialize(n);
 }

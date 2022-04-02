@@ -1,6 +1,6 @@
 use crate::{
 	financial_nft::{NFTClass, NFTVersion},
-	math::{SafeAdd, SafeSub},
+	math::SafeSub,
 	time::{DurationSeconds, Timestamp},
 };
 use codec::{Decode, Encode};
@@ -57,18 +57,10 @@ pub struct StakingNFT<AssetId, Balance, CollectedRewards> {
 impl<AssetId, Balance: AtLeast32BitUnsigned + Copy, CollectedRewards>
 	StakingNFT<AssetId, Balance, CollectedRewards>
 {
-	pub fn penalize_early_unstake_amount(
-		&self,
-		now: Timestamp,
-		penalty: Perbill,
-	) -> Result<(Balance, Balance), DispatchError> {
-		if self.lock_date.safe_add(&self.lock_duration)? <= now {
-			Ok((self.stake, Balance::zero()))
-		} else {
-			let penalty_amount = penalty.mul_floor(self.stake);
-			let penalized_amount = self.stake.safe_sub(&penalty_amount)?;
-			Ok((penalized_amount, penalty_amount))
-		}
+	pub fn penalize(&self, penalty: Perbill) -> Result<(Balance, Balance), DispatchError> {
+		let penalty_amount = penalty.mul_floor(self.stake);
+		let penalized_amount = self.stake.safe_sub(&penalty_amount)?;
+		Ok((penalized_amount, penalty_amount))
 	}
 
 	pub fn shares(&self) -> u128 {
@@ -144,7 +136,12 @@ pub trait Staking {
 	/// * `instance_id` the ID uniquely identifiying the NFT from which we will compute the
 	///   available rewards.
 	/// * `to` the account to transfer the rewards to.
-	fn claim(instance_id: &Self::InstanceId, to: &Self::AccountId) -> DispatchResult;
+	/// * `strategy` the strategy used to claim the rewards.
+	fn claim(
+		instance_id: &Self::InstanceId,
+		to: &Self::AccountId,
+		strategy: ClaimStrategy,
+	) -> DispatchResult;
 }
 
 pub trait StakingReward {

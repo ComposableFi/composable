@@ -45,7 +45,9 @@ pub mod pallet {
 	use composable_traits::{
 		financial_nft::{FinancialNFTProtocol, NFTClass, NFTVersion},
 		math::{safe_multiply_by_rational, SafeAdd, SafeSub},
-		staking_rewards::{Staking, StakingConfig, StakingNFT, StakingReward},
+		staking_rewards::{
+			ClaimStrategy, PositionState, Staking, StakingConfig, StakingNFT, StakingReward,
+		},
 		time::{DurationSeconds, Timestamp},
 	};
 	use frame_support::{
@@ -84,6 +86,7 @@ pub mod pallet {
 		BoundedBTreeMap<DurationSeconds, Perbill, MaxStakingPresetsOf<T>>,
 		BoundedBTreeSet<AssetIdOf<T>, MaxRewardAssetsOf<T>>,
 	>;
+	pub(crate) type EpochDurationOf<T> = <T as Config>::EpochDuration;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -110,6 +113,8 @@ pub mod pallet {
 		InvalidDurationPreset,
 		TooManyRewardAssets,
 		RewardAssetDisabled,
+		CannotClaimIfPending,
+		ClaimRequireRestake,
 	}
 
 	#[pallet::config]
@@ -150,17 +155,30 @@ pub mod pallet {
 		/// The maximum number of reward assets protocol asset can handle.
 		#[pallet::constant]
 		type MaxRewardAssets: Get<u32>;
+
+		/// The duration of an epoch
+		#[pallet::constant]
+		type EpochDuration: Get<DurationSeconds>;
 	}
 
+	#[pallet::storage]
+	#[pallet::getter(fn current_epoch_start)]
+	pub type EpochStart<T: Config> = StorageValue<_, Timestamp, OptionQuery>;
+
 	#[pallet::type_value]
-	pub fn TotalSharesOnEmpty<T: Config>() -> u128 {
+	pub fn SharesOnEmpty<T: Config>() -> u128 {
 		u128::zero()
 	}
 
 	#[pallet::storage]
 	#[pallet::getter(fn total_shares)]
 	pub type TotalShares<T: Config> =
-		StorageMap<_, Blake2_128Concat, AssetIdOf<T>, u128, ValueQuery, TotalSharesOnEmpty<T>>;
+		StorageMap<_, Blake2_128Concat, AssetIdOf<T>, u128, ValueQuery, SharesOnEmpty<T>>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn total_shares_pending)]
+	pub type TotalSharesPending<T: Config> =
+		StorageMap<_, Blake2_128Concat, AssetIdOf<T>, u128, ValueQuery, SharesOnEmpty<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn collected_rewards)]
@@ -262,15 +280,60 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			instance_id: InstanceIdOf<T>,
 			to: AccountIdOf<T>,
+			strategy: ClaimStrategy,
 		) -> DispatchResultWithPostInfo {
 			let owner = ensure_signed(origin)?;
 			T::ensure_protocol_nft_owner::<StakingNFTOf<T>>(&owner, &instance_id)?;
-			<Self as Staking>::claim(&instance_id, &to)?;
+			<Self as Staking>::claim(&instance_id, &to, strategy)?;
 			Ok(().into())
 		}
 	}
 
+	#[pallet::hooks]
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
+		fn on_initialize(_: T::BlockNumber) -> Weight {
+			Self::update_epoch();
+			0
+		}
+	}
+
 	impl<T: Config> Pallet<T> {
+		pub(crate) fn update_epoch() {
+			let now = T::Time::now().as_secs();
+			EpochStart::<T>::mutate(|entry| match entry {
+				Some(epoch_start) => {
+					let delta = now.checked_sub(*epoch_start).expect("back to the future; qed;");
+					if delta > EpochDurationOf::<T>::get() {
+						*epoch_start = now;
+						Self::on_new_epoch();
+					}
+				},
+				None => {
+					*entry = Some(now);
+					// NOTE(hussein-aitlahcen): on pallet initialization, new epoch is directly
+					// started.
+					Self::on_new_epoch();
+				},
+			});
+		}
+
+		pub(crate) fn on_new_epoch() {
+			TotalSharesPending::<T>::iter().for_each(|(pk, pv)| {
+				TotalShares::<T>::mutate(pk, |v| {
+					*v = v.checked_add(pv).expect("impossible; qed");
+				});
+				TotalSharesPending::<T>::insert(pk, 0);
+			});
+		}
+
+		pub(crate) fn now() -> Timestamp {
+			T::Time::now().as_secs()
+		}
+
+		pub(crate) fn epoch_start() -> Timestamp {
+			EpochStart::<T>::get().unwrap_or(0)
+		}
+
 		/// The chaos protocol account. Derived from the chaos pallet id.
 		pub(crate) fn account_id(asset: &AssetIdOf<T>) -> AccountIdOf<T> {
 			T::PalletId::get().into_sub_account(asset)
@@ -313,14 +376,11 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let config = Self::get_config(asset)?;
-
 			// Make sure the asset has been registered as reward, otherwise we don't track it.
 			ensure!(config.rewards.contains(&reward_asset), Error::<T>::RewardAssetDisabled);
-
 			// Transfer the reward locally.
 			let protocol_account = Self::account_id(asset);
 			T::Assets::transfer(*reward_asset, from, &protocol_account, amount, keep_alive)?;
-
 			// Increment the reward index, used to compute user rewards.
 			CollectedRewards::<T>::try_mutate(asset, reward_asset, |entry| -> DispatchResult {
 				let lifted_amount = CollectedReward::from(amount.saturated_into::<u128>());
@@ -336,13 +396,11 @@ pub mod pallet {
 				}
 				Ok(())
 			})?;
-
 			Self::deposit_event(Event::<T>::NewReward {
 				rewarded_asset: *asset,
 				reward_asset: *reward_asset,
 				amount,
 			});
-
 			Ok(())
 		}
 	}
@@ -357,105 +415,123 @@ pub mod pallet {
 			asset: &Self::AssetId,
 			from: &Self::AccountId,
 			amount: Self::Balance,
-			duration: Timestamp,
+			duration: DurationSeconds,
 			keep_alive: bool,
 		) -> Result<Self::InstanceId, DispatchError> {
 			let config = Self::get_config(asset)?;
-
 			let reward_multiplier = *config
 				.duration_presets
 				.get(&duration)
 				.ok_or(Error::<T>::InvalidDurationPreset)?;
-
 			// Acquire protocol asset from user.
 			let protocol_account = Self::account_id(asset);
 			T::Assets::transfer(*asset, from, &protocol_account, amount, keep_alive)?;
-
 			// Actually create the NFT representing the user position.
 			let collected_rewards = Self::current_collected_rewards(asset, &config);
-			let now = T::Time::now();
+			let now = Self::now();
 			let nft = StakingNFT {
 				asset,
 				stake: amount,
-				lock_date: now.as_secs(),
+				lock_date: now,
 				lock_duration: duration,
 				collected_rewards,
 				reward_multiplier,
 			};
 			let instance_id = T::mint_protocol_nft(from, &nft)?;
-
-			// Increment total shares.
-			TotalShares::<T>::try_mutate(asset, |total_shares| -> DispatchResult {
+			// Increment pending shares.
+			TotalSharesPending::<T>::try_mutate(asset, |total_shares| -> DispatchResult {
 				*total_shares = total_shares.safe_add(&nft.shares())?;
 				Ok(())
 			})?;
-
 			// Trigger event
 			Self::deposit_event(Event::<T>::Staked {
 				who: from.clone(),
 				stake: amount,
 				nft: instance_id,
 			});
-
 			Ok(instance_id)
 		}
 
 		fn unstake(instance_id: &Self::InstanceId, to: &Self::AccountId) -> DispatchResult {
-			// Make sure we execute a final claim before unstaking.
-			<Self as Staking>::claim(instance_id, to)?;
-
 			let nft = T::get_protocol_nft::<StakingNFTOf<T>>(instance_id)?;
-
-			let now = T::Time::now();
-
 			let config = Self::get_config(&nft.asset)?;
-
-			// Possibly penalize the staked asset, protocol asset in this case.
-			let (penalized_stake, penalty_amount) =
-				nft.penalize_early_unstake_amount(now.as_secs(), config.early_unstake_penalty)?;
-
-			// Transfer back the (possibly penalized) staked amount.
-			let pallet_account = Self::account_id(&nft.asset);
-			// NOTE(hussein-aitlahcen): no need to keep pallet account alive.
-			T::Assets::transfer(nft.asset, &pallet_account, &to, penalized_stake, false)?;
-
-			// Move penalty to configured beneficiary
-			// NOTE(hussein-aitlahcen): no need to keep pallet account alive.
-			T::Assets::transfer(
-				nft.asset,
-				&pallet_account,
-				&config.penalty_beneficiary,
-				penalty_amount,
-				false,
-			)?;
-
-			// Decrement total shares.
-			TotalShares::<T>::try_mutate(nft.asset, |total_shares| -> DispatchResult {
-				*total_shares = total_shares.safe_sub(&nft.shares())?;
-				Ok(())
-			})?;
-
+			let protocol_account = Self::account_id(&nft.asset);
+			let (stake, penalty) = match nft.state(Self::now(), Self::epoch_start()) {
+				PositionState::Pending => {
+					// When the position is not being rewarded yet, remove from the pending
+					// amount.
+					TotalSharesPending::<T>::try_mutate(
+						nft.asset,
+						|total_shares| -> DispatchResult {
+							*total_shares = total_shares.safe_sub(&nft.shares())?;
+							Ok(())
+						},
+					)?;
+					Ok((nft.stake, BalanceOf::<T>::zero()))
+				},
+				PositionState::LockedRewarding => {
+					// Decrement total shares.
+					TotalShares::<T>::try_mutate(nft.asset, |total_shares| -> DispatchResult {
+						*total_shares = total_shares.safe_sub(&nft.shares())?;
+						Ok(())
+					})?;
+					nft.penalize(config.early_unstake_penalty)
+				},
+				PositionState::Expired => {
+					// Decrement total shares.
+					TotalShares::<T>::try_mutate(nft.asset, |total_shares| -> DispatchResult {
+						*total_shares = total_shares.safe_sub(&nft.shares())?;
+						Ok(())
+					})?;
+					Ok((nft.stake, BalanceOf::<T>::zero()))
+				},
+			}?;
+			// NOTE(hussein-aitlahcen): no need to keep protocol account alive.
+			T::Assets::transfer(nft.asset, &protocol_account, &to, stake, false)?;
+			if penalty > BalanceOf::<T>::zero() {
+				// Move penalty to configured beneficiary
+				T::Assets::transfer(
+					nft.asset,
+					&protocol_account,
+					&config.penalty_beneficiary,
+					penalty,
+					false,
+				)?;
+			}
 			// Actually burn the NFT from the storage.
 			T::burn_protocol_nft::<StakingNFTOf<T>>(instance_id)?;
-
 			// Trigger event
 			Self::deposit_event(Event::<T>::Unstaked {
 				to: to.clone(),
 				stake: nft.stake,
-				penalty: penalty_amount,
+				penalty,
 				nft: *instance_id,
 			});
-
 			Ok(())
 		}
 
-		fn claim(instance_id: &Self::InstanceId, to: &Self::AccountId) -> DispatchResult {
-			T::try_mutate_protocol_nft(instance_id, |nft: &mut StakingNFTOf<T>| {
+		fn claim(
+			instance_id: &Self::InstanceId,
+			to: &Self::AccountId,
+			strategy: ClaimStrategy,
+		) -> DispatchResult {
+			T::try_mutate_protocol_nft(instance_id, |nft: &mut StakingNFTOf<T>| -> DispatchResult {
+				let now = Self::now();
+				let epoch_start = Self::epoch_start();
+				match (nft.state(now, epoch_start), strategy) {
+					(PositionState::Pending, _) => Err(Error::<T>::CannotClaimIfPending),
+					(PositionState::Expired, ClaimStrategy::RestakeIfExpired) => {
+						// NOTE(hussein-aitlahcen): make sure the position transition from Expired
+						// to Rewarding by making the new lock date started at the previous epoch.
+						nft.lock_date = epoch_start - 1;
+						Ok(())
+					},
+					(PositionState::Expired, _) => Err(Error::<T>::ClaimRequireRestake),
+					(PositionState::LockedRewarding, _) => Ok(()),
+				}?;
 				let config = Self::get_config(&nft.asset)?;
-
 				let shares = nft.shares();
 				let total_shares = TotalShares::<T>::get(nft.asset);
-
 				// TODO(hussein-aitlahcen): extract pure maths to their own functions
 				let compute_reward =
 					|delta_collected: CollectedReward| -> Result<BalanceOf<T>, DispatchError> {
@@ -465,31 +541,30 @@ pub mod pallet {
 							.try_into()
 							.map_err(|_| ArithmeticError::Overflow.into())
 					};
-
 				let rewards = nft
-					.collected_rewards
-					.iter()
-					.map(|(reward_asset, previously_collected)| -> Result<(AssetIdOf<T>, BalanceOf<T>), DispatchError> {
-						match CollectedRewards::<T>::get(nft.asset, &reward_asset) {
-							Some(current_collected) => {
-								let delta_collected = current_collected.saturating_sub(*previously_collected);
-								let reward = compute_reward(delta_collected)?;
-								Ok((*reward_asset, reward))
-							},
-							None => Ok((*reward_asset, Zero::zero())),
-						}
-					})
-					.collect::<Result<Vec<_>, _>>()?;
-
-				let pallet_account = Self::account_id(&nft.asset);
-				for (reward_asset, reward) in rewards {
-					T::Assets::transfer(reward_asset, &pallet_account, to, reward, false)?;
+					    .collected_rewards
+					    .iter()
+					    .map(|(reward_asset, previously_collected)| -> Result<(AssetIdOf<T>, BalanceOf<T>), DispatchError> {
+						    match CollectedRewards::<T>::get(nft.asset, &reward_asset) {
+							    Some(current_collected) => {
+								    let delta_collected = current_collected.saturating_sub(*previously_collected);
+								    let reward = compute_reward(delta_collected)?;
+								    Ok((*reward_asset, reward))
+							    },
+							    None => Ok((*reward_asset, Zero::zero())),
+						    }
+					    })
+					    .collect::<Result<Vec<_>, _>>()?;
+				let protocol_account = Self::account_id(&nft.asset);
+				for (reward_asset, reward) in
+					rewards.into_iter().filter(|(_, reward)| !reward.is_zero())
+				{
+					T::Assets::transfer(reward_asset, &protocol_account, to, reward, false)?;
 				}
-
-				// NOTE(hussein-aitahcen): the reward computation is based on the collected delta,
-				// hence we need to update the indexes after having claimed the rewards.
+				// NOTE(hussein-aitahcen): the reward computation is based on the
+				// collected delta, hence we need to update the indexes after having
+				// claimed the rewards.
 				nft.collected_rewards = Self::current_collected_rewards(&nft.asset, &config);
-
 				Ok(())
 			})
 		}
