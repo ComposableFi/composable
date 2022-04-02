@@ -74,6 +74,9 @@ mod tests;
 
 #[cfg(test)]
 mod mock;
+
+pub use pallet::*;
+
 #[frame_support::pallet]
 pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
@@ -81,7 +84,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	use codec::{Codec, FullCodec};
-	use composable_traits::vamm::Vamm;
+	use composable_traits::vamm::*;
 	use frame_support::{pallet_prelude::*, sp_std::fmt::Debug, transactional, Blake2_128Concat};
 	use sp_runtime::{
 		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Zero},
