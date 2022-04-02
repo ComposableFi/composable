@@ -74,6 +74,16 @@ impl<AssetId, Balance: AtLeast32BitUnsigned + Copy, CollectedRewards>
 	pub fn shares(&self) -> u128 {
 		self.reward_multiplier.mul_floor(self.stake.saturated_into::<u128>())
 	}
+
+	pub fn state(&self, now: Timestamp, epoch_start: Timestamp) -> PositionState {
+		if self.lock_date.saturating_add(self.lock_duration) < now {
+			PositionState::Expired
+		} else if self.lock_date < epoch_start {
+			PositionState::LockedRewarding
+		} else {
+			PositionState::Pending
+		}
+	}
 }
 
 impl<AssetId, Balance, CollectedRewards> Get<NFTClass>
