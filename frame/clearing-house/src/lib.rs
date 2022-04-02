@@ -383,6 +383,10 @@ pub mod pallet {
 		///
 		/// ## Assumptions or Requirements
 		/// * The underlying must have a stable price feed via another pallet
+		/// * The funding period must be a multiple of its frequency
+		/// * Both funding period and frequency must be nonzero
+		/// * Initial and Maintenance margin ratios must be in the (0, 1) open interval
+		/// * Initial margin ratio must be greater than maintenance
 		///
 		/// ## Emits
 		/// * [`MarketCreated`](Event::<T>::MarketCreated)
@@ -392,6 +396,12 @@ pub mod pallet {
 		///
 		/// ## Errors
 		/// - [`NoPriceFeedForAsset`](Error::<T>::NoPriceFeedForAsset)
+		/// - [`FundingPeriodNotMultipleOfFrequency`](Error::<T>::
+		///   FundingPeriodNotMultipleOfFrequency)
+		/// - [`ZeroLengthFundingPeriodOrFrequency`](Error::<T>::ZeroLengthFundingPeriodOrFrequency)
+		/// - [`InvalidMarginRatioRequirement`](Error::<T>::InvalidMarginRatioRequirement)
+		/// - [`InitialMarginRatioLessThanMaintenance`](Error::<T>::
+		///   InitialMarginRatioLessThanMaintenance)
 		///
 		/// # Weight/Runtime
 		/// `O(1)`
