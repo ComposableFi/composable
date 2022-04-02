@@ -1,10 +1,10 @@
 //! # Virtual Automated Market Maker
 //!
 //! Common traits for vamm implementation
-use codec::Codec;
+use codec::{Codec, FullCodec};
 use frame_support::{pallet_prelude::*, sp_std::fmt::Debug};
 use sp_runtime::traits::{
-	AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Zero,
+	AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Zero,
 };
 
 pub trait Vamm {
@@ -21,7 +21,17 @@ pub trait Vamm {
 		+ Parameter
 		+ Zero;
 
-	type VammId: Default + Clone + Codec + Debug + Parameter + PartialEq;
+	type VammId: Default
+		+ CheckedAdd
+		+ Clone
+		+ Debug
+		+ FullCodec
+		+ MaxEncodedLen
+		+ One
+		+ Parameter
+		+ PartialEq
+		+ TypeInfo
+		+ Zero;
 
 	/// Create a new virtual market.
 	///
