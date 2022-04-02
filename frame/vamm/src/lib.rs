@@ -172,7 +172,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn vamm_count)]
 	#[allow(clippy::disallowed_types)]
-	pub type VammCounter<T: Config> = StorageValue<_, T::VammId, ValueQuery>;
+	pub type VammCounter<T: Config> = StorageValue<_, VammIdOf<T>, ValueQuery>;
 
 	/// Maps [VammId](Config::VammId) to the corresponding virtual
 	/// [VammState] specs
