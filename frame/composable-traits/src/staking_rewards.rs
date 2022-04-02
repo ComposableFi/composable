@@ -17,6 +17,15 @@ pub enum PositionState {
 	/// The position expired but still being rewarded.
 	Expired,
 }
+
+#[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
+pub enum ClaimStrategy {
+	/// Basic, canonical claiming.
+	Canonical,
+	/// Force claiming the reward by restaking if the position expired.
+	RestakeIfExpired,
+}
+
 #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
 pub struct StakingConfig<AccountId, DurationPresets, Rewards> {
 	/// The possible locking duration.
