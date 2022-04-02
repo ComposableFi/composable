@@ -287,12 +287,15 @@ pub mod pallet {
 			quote_asset_reserves: Self::Balance,
 			peg_multiplier: Self::Balance,
 		) -> Result<Self::VammId, DispatchError> {
+			// TODO: (Matheus)
+			// How to ensure that the caller has the right privileges?
+			// (eg. How to ensure the caller is the Clearing House, and not anyone else?)
 			ensure!(!base_asset_reserves.is_zero(), Error::<T>::BaseAssetReserveIsZero);
 			ensure!(!quote_asset_reserves.is_zero(), Error::<T>::QuoteAssetReserveIsZero);
 			ensure!(!peg_multiplier.is_zero(), Error::<T>::PegMultiplierIsZero);
 
 			VammCounter::<T>::try_mutate(|id| {
-				let old_id = id.clone();
+				let old_id = *id;
 				let vamm_state = VammStateOf::<T> {
 					base_asset_reserves,
 					quote_asset_reserves,
@@ -303,10 +306,7 @@ pub mod pallet {
 				VammMap::<T>::insert(&old_id, vamm_state);
 				*id = id.checked_add(&One::one()).ok_or(ArithmeticError::Overflow)?;
 
-				Self::deposit_event(Event::<T>::Created {
-					vamm_id: old_id.clone(),
-					state: vamm_state,
-				});
+				Self::deposit_event(Event::<T>::Created { vamm_id: old_id, state: vamm_state });
 
 				Ok(old_id)
 			})
