@@ -1,17 +1,21 @@
-use super::currency_factory::MockCurrencyId;
-use frame_support::{parameter_types, traits::Everything, traits::GenesisBuild, PalletId};
-use num_traits::Zero;
-use orml_traits::parameter_type_with_key;
-use sp_core::H256;
-use sp_runtime::{testing::Header, traits::IdentityLookup, traits::IdentityLookup};
-
 use crate as pallet_vamm;
 
-pub type BlockNumber = u64;
-pub type AccountId = u128;
-pub type Balance = u128;
+use frame_support::{
+	parameter_types,
+	traits::{Everything, GenesisBuild},
+	PalletId,
+};
+// use frame_system::{EnsureRoot, EnsureSignedBy};
+use sp_core::{sr25519::Signature, H256};
+use sp_runtime::{
+	testing::Header,
+	traits::{IdentifyAccount, IdentityLookup, Verify},
+};
 
-pub const ALICE: AccountId = 0;
+pub type Balance = u128;
+pub type BlockNumber = u64;
+pub type VammId = u128;
+// type VammState = crate::Config::VammState<Balance, Timestamp>;
 
 // ----------------------------------------------------------------------------------------------------
 //                                                FRAME System
@@ -21,14 +25,14 @@ parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 }
 
-impl frame_system::Config for Test {
+impl frame_system::Config for MockRuntime {
 	type Origin = Origin;
-	type Index = u64;
+	type Index = u128;
 	type BlockNumber = BlockNumber;
 	type Call = Call;
 	type Hash = H256;
 	type Hashing = ::sp_runtime::traits::BlakeTwo256;
-	type AccountId = AccountId;
+	type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
@@ -56,7 +60,7 @@ parameter_types! {
 	pub const BalanceExistentialDeposit: u64 = 1;
 }
 
-impl pallet_balances::Config for Test {
+impl pallet_balances::Config for MockRuntime {
 	type Balance = Balance;
 	type Event = Event;
 	type DustRemoval = ();
@@ -72,39 +76,54 @@ impl pallet_balances::Config for Test {
 //                                             VAMM
 // ----------------------------------------------------------------------------------------------------
 
-impl pallet_vamm::Config for Test {
-	type Event = Event;
-	type WeightInfo = ();
+parameter_types! {
+	pub const VammPalletId: PalletId = PalletId(*b"vamm____");
 }
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
+impl pallet_vamm::Config for MockRuntime {
+	type Balance = Balance;
+	type Event = Event;
+	type Timestamp = i64;
+	type VammId = VammId;
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                           Construct Runtime
+// ----------------------------------------------------------------------------------------------------
+
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
+type Block = frame_system::mocking::MockBlock<MockRuntime>;
 
 frame_support::construct_runtime!(
-	pub enum Test where
+	pub enum MockRuntime where
 		Block = Block,
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
-		Vamm: pallet_vamm::{Pallet, Call, Storage, Event<T>},
+		Vamm: pallet_vamm::{Pallet, Storage, Event<T>},
 	}
 );
 
 #[derive(Default)]
 pub struct ExtBuilder {
-	// balances: Vec<(AccountId, MockCurrencyId, Balance)>,
+	vamm_count: VammId,
+	//  - Should `vamm_map` be implemented as a Vec<(VammId, State)>?
+	// vamm_map: Vec<(VammId, VammState)>,
 }
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+		let mut storage =
+			frame_system::GenesisConfig::default().build_storage::<MockRuntime>().unwrap();
 
-		// pallet_balances::GenesisConfig::<Test> { balances: vec![(ALICE, 1_000_000)] }
-		// 	.assimilate_storage(&mut t)
-		// 	.unwrap();
+		pallet_vamm::GenesisConfig::<MockRuntime> { vamm_count: self.vamm_count }
+			.assimilate_storage(&mut storage)
+			.unwrap();
 
-		t.into()
+		storage.into()
 	}
+
+	// pub fn initialize_vamm(mut self, )
 }
