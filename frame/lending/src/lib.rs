@@ -1528,6 +1528,9 @@ pub mod pallet {
 			let beneficiary_interest_on_market = beneficiary_total_debt_with_interest
 				.safe_sub(&beneficiary_borrow_asset_principal)?;
 
+			#[cfg(feature = "std")]
+			dbg!(beneficiary_interest_on_market);
+
 			ensure!(
 				!beneficiary_total_debt_with_interest.is_zero(),
 				Error::<T>::CannotRepayZeroBalance

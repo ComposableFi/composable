@@ -619,8 +619,7 @@ fn test_repay_partial_amount() {
 			Origin::signed(*ALICE),
 			market_index,
 			*ALICE,
-			RepayStrategy::PartialAmount(BORROW::units(1) / 10_000) /* BORROW::units(1) / 10_000
-			                                                         * RepayStrategy::TotalDebt */
+			RepayStrategy::TotalDebt // RepayStrategy::PartialAmount(BORROW::units(1) / 10_000) /* BORROW::units(1) / 10_000 */
 		));
 
 		(2_000..2_003).for_each(process_block);
