@@ -598,6 +598,7 @@ pub mod pallet {
 			let pool_id =
 				PoolCount::<T>::try_mutate(|pool_count| -> Result<T::PoolId, DispatchError> {
 					let pool_id = *pool_count;
+					// REVIEW: Pull this out of the closure?
 					Pools::<T>::insert(
 						pool_id,
 						ConstantProductPoolInfo {

@@ -1080,6 +1080,7 @@ pub mod pallet {
 		use sp_runtime::traits::Hash;
 
 		let nonce = Nonce::<T>::mutate(|nonce| {
+			// TODO: Use WrappingNext here
 			*nonce = nonce.wrapping_add(1);
 			*nonce
 		});

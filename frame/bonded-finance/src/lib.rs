@@ -45,7 +45,11 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
-	use composable_support::{math::safe::SafeAdd, validation::Validated};
+	use composable_support::{
+		math::safe::SafeAdd,
+		storage::nonce::{StartAtZero, StorageNonce},
+		validation::Validated,
+	};
 	use composable_traits::{
 		bonded_finance::{BondDuration, BondOffer, BondedFinance, ValidBondOffer},
 		vesting::{VestedTransfer, VestingSchedule, VestingWindow::BlockNumberBased},
@@ -181,7 +185,7 @@ pub mod pallet {
 	// allowed.
 	#[allow(clippy::disallowed_types)]
 	pub type BondOfferCount<T: Config> =
-		StorageValue<_, T::BondOfferId, ValueQuery, BondOfferOnEmpty<T>>;
+		StorageValue<_, T::BondOfferId, ValueQuery, StartAtZero<T::BondOfferId>>;
 
 	/// A mapping from offer ID to the pair: (issuer, offer)
 	#[pallet::storage]
@@ -296,12 +300,7 @@ pub mod pallet {
 			offer: BondOfferOf<T>,
 			keep_alive: bool,
 		) -> Result<T::BondOfferId, DispatchError> {
-			let offer_id = BondOfferCount::<T>::try_mutate(
-				|offer_id| -> Result<T::BondOfferId, DispatchError> {
-					*offer_id = offer_id.safe_add(&T::BondOfferId::one())?;
-					Ok(*offer_id)
-				},
-			)?;
+			let offer_id = BondOfferCount::<T>::try_increment()?;
 			let offer_account = Self::account_id(offer_id);
 			T::NativeCurrency::transfer(from, &offer_account, T::Stake::get(), keep_alive)?;
 			T::Currency::transfer(

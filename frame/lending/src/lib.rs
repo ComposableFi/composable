@@ -1155,6 +1155,7 @@ pub mod pallet {
 			LendingCount::<T>::try_mutate(|MarketIndex(previous_market_index)| {
 				let market_id = {
 					*previous_market_index += 1;
+					// REVIEW: Pull this out of the closure?
 					ensure!(
 						*previous_market_index <= T::MaxLendingCount::get(),
 						Error::<T>::ExceedLendingCount

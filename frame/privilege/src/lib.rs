@@ -227,6 +227,8 @@ pub mod pallet {
 				let group_id = previous_group_id.next();
 				*previous_group_id = group_id;
 
+				// REVIEW: Pull this out of the closure?
+
 				GroupCount::<T>::mutate(|x| *x += 1);
 				GroupPrivileges::<T>::insert(group_id, privilege);
 				// NOTE(hussein-aitlahcen): we don't know if it's correctly sorted at creation,

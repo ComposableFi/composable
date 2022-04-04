@@ -1,5 +1,6 @@
 use crate::{Config, Error, PoolConfiguration, PoolCount, Pools};
 use composable_maths::dex::stable_swap::{compute_base, compute_d};
+use composable_support::math::safe::SafeAdd;
 use composable_traits::{
 	currency::{CurrencyFactory, RangeId},
 	defi::CurrencyPair,
@@ -38,6 +39,7 @@ impl<T: Config> StableSwap<T> {
 			PoolCount::<T>::try_mutate(|pool_count| -> Result<T::PoolId, DispatchError> {
 				let pool_id = *pool_count;
 
+				// REVIEW: Pull this out of the closure?
 				Pools::<T>::insert(
 					pool_id,
 					PoolConfiguration::StableSwap(StableSwapPoolInfo {

@@ -32,7 +32,9 @@ where
 	}
 }
 
+/// Nonce starts at `<T as Zero>::zero`.
 pub type StartAtZero<T> = StartAt<start_at::ZeroStart, T>;
+/// Nonce starts at `<T as One>::one`.
 pub type StartAtOne<T> = StartAt<start_at::OneStart, T>;
 
 mod start_at {
@@ -49,7 +51,7 @@ mod start_at {
 	///
 	/// ```rust,skip
 	/// #[pallet::storage]
-	/// pub type SomeNonce<T: Config> = StorageValue<_, T::Something, ValueQuery, StartAt<ZeroStart>;
+	/// pub type SomeNonce<T: Config> = StorageValue<_, T::Something, ValueQuery, StartAtZero<T>;
 	/// ```
 	///
 	/// Increment the nonce in an extrinsic:
@@ -79,7 +81,7 @@ mod start_at {
 		fn value() -> T;
 	}
 
-	/// Storage starts at `0`.
+	/// Marker for nonces that should start at `<T as Zero>::zero`.
 	pub struct ZeroStart;
 
 	impl<T: Zero> StartAtValue<T> for ZeroStart {
@@ -88,7 +90,7 @@ mod start_at {
 		}
 	}
 
-	/// Storage starts at `1`.
+	/// Marker for nonces that should start at `<T as One>::one`.
 	pub struct OneStart;
 
 	impl<T: One> StartAtValue<T> for OneStart {

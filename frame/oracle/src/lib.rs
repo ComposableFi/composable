@@ -32,7 +32,11 @@ pub mod pallet {
 	use crate::validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
 	pub use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
-	use composable_support::{math::safe::SafeDiv, validation::Validated};
+	use composable_support::{
+		math::safe::SafeDiv,
+		storage::nonce::{StartAtZero, StorageNonce},
+		validation::Validated,
+	};
 	use composable_traits::{
 		currency::LocalAssets,
 		oracle::{Oracle, Price},
@@ -192,7 +196,7 @@ pub mod pallet {
 	#[pallet::getter(fn assets_count)]
 	#[allow(clippy::disallowed_types)] // Default asset count of 0 is valid in this context
 	/// Total amount of assets
-	pub type AssetsCount<T: Config> = StorageValue<_, u32, ValueQuery>;
+	pub type AssetsCount<T: Config> = StorageValue<_, u32, ValueQuery, StartAtZero<u32>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn signer_to_controller)]
@@ -264,9 +268,6 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn asset_info)]
-	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
-	// use OptionQuery instead
-	#[allow(clippy::disallowed_types)]
 	/// Information about asset, including precision threshold and max/min answers
 	pub type AssetsInfo<T: Config> = StorageMap<
 		_,
@@ -487,7 +488,7 @@ pub mod pallet {
 
 			let current_asset_info = Self::asset_info(asset_id);
 			if current_asset_info.is_none() {
-				AssetsCount::<T>::mutate(|a| *a += 1);
+				AssetsCount::<T>::try_increment()?;
 			}
 
 			AssetsInfo::<T>::insert(asset_id, asset_info);

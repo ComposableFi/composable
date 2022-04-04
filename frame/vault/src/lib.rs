@@ -714,6 +714,8 @@ pub mod pallet {
 					*id
 				};
 
+				// REVIEW: Pull everything else out of the closure?
+
 				// Perhaps later on, we'll make this configurable per creator account id, if we want
 				// to allow special projects to create more complex vaults.
 				let config = config.value();
