@@ -614,16 +614,6 @@ fn test_repay_partial_amount() {
 		// 100000000
 		//    948441
 		// pay off a small amount
-		#[allow(unused_must_use)]
-		{
-			dbg!(
-				Lending::total_debt_with_interest(&market_index, &*ALICE),
-				<Runtime as crate::Config>::MultiCurrency::balance(
-					debt_asset,
-					&Lending::account_id(&market_index),
-				)
-			);
-		}
 
 		assert_ok!(Lending::repay_borrow(
 			Origin::signed(*ALICE),
@@ -633,29 +623,7 @@ fn test_repay_partial_amount() {
 			                                                         * RepayStrategy::TotalDebt */
 		));
 
-		#[allow(unused_must_use)]
-		{
-			dbg!(
-				Lending::total_debt_with_interest(&market_index, &*ALICE),
-				<Runtime as crate::Config>::MultiCurrency::balance(
-					debt_asset,
-					&Lending::account_id(&market_index),
-				)
-			);
-		}
-
 		(2_000..2_003).for_each(process_block);
-
-		#[allow(unused_must_use)]
-		{
-			dbg!(
-				Lending::total_debt_with_interest(&market_index, &*ALICE),
-				<Runtime as crate::Config>::MultiCurrency::balance(
-					debt_asset,
-					&Lending::account_id(&market_index),
-				)
-			);
-		}
 
 		assert_ok!(Lending::repay_borrow(
 			Origin::signed(*ALICE),
