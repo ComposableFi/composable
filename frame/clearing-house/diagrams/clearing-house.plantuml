@@ -77,9 +77,10 @@ package "pallet-clearing-house" {
             VammId vamm_id
             Decimal margin_ratio_initial
             Decimal margin_ratio_maintenance
-            Duration periodicity
             Decimal cum_funding_rate
-            Timestamp funding_rate_ts
+            Duration funding_rate_ts
+            Duration funding_frequency
+            Duration funding_period
         }
     }
 }
