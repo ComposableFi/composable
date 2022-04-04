@@ -27,7 +27,6 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
-
 	use crate::{
 		decay::Decayer,
 		relayer::{RelayerConfig, StaleRelayer},
@@ -35,11 +34,10 @@ pub mod pallet {
 		weights::WeightInfo,
 	};
 	use codec::FullCodec;
-	use composable_support::{types::EthereumAddress, validation::Validated};
 	use composable_traits::{
-		math::SafeAdd,
 		mosaic::{Claim, RelayerInterface, TransferTo},
 	};
+	use composable_support::{math::safe::SafeAdd, types::EthereumAddress, validation::Validated};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,

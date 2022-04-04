@@ -45,10 +45,9 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
-	use composable_support::validation::Validated;
+	use composable_support::{math::safe::SafeAdd, validation::Validated};
 	use composable_traits::{
 		bonded_finance::{BondDuration, BondOffer, BondedFinance, ValidBondOffer},
-		math::SafeAdd,
 		vesting::{VestedTransfer, VestingSchedule, VestingWindow::BlockNumberBased},
 	};
 	use frame_support::{

@@ -51,11 +51,11 @@ pub mod pallet {
 	use composable_maths::dex::constant_product::{
 		compute_deposit_lp, compute_in_given_out, compute_out_given_in,
 	};
+	use composable_support::math::safe::{safe_multiply_by_rational, SafeAdd, SafeSub};
 	use composable_traits::{
 		currency::{CurrencyFactory, RangeId},
 		defi::CurrencyPair,
 		dex::{Amm, ConstantProductPoolInfo},
-		math::{safe_multiply_by_rational, SafeAdd, SafeSub},
 	};
 	use frame_support::{
 		pallet_prelude::*,

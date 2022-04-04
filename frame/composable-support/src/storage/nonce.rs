@@ -10,7 +10,7 @@ use sp_runtime::{
 	ArithmeticError,
 };
 
-use start_at::{StartAt, StartAtValue, ZeroStart};
+use start_at::{StartAt, StartAtValue};
 
 /// Extension trait for storage nonces.
 pub trait StorageNonce<T, S: StartAtValue<T>> {

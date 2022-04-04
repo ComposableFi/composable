@@ -1,7 +1,7 @@
+use composable_support::math::safe::{SafeAdd, SafeDiv, SafeMul};
 use composable_traits::{
 	currency::MathBalance,
 	defi::{LiftedFixedBalance, MoreThanOneFixedU128, Rate},
-	math::{SafeAdd, SafeDiv, SafeMul},
 };
 use sp_runtime::{traits::Saturating, ArithmeticError, FixedPointNumber, Percent};
 

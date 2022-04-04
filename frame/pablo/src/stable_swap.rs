@@ -4,7 +4,7 @@ use composable_traits::{
 	currency::{CurrencyFactory, RangeId},
 	defi::CurrencyPair,
 	dex::StableSwapPoolInfo,
-	math::{safe_multiply_by_rational, SafeAdd, SafeSub},
+	math::safe::{safe_multiply_by_rational, SafeAdd, SafeSub},
 };
 use frame_support::{
 	pallet_prelude::*,

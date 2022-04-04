@@ -1410,6 +1410,7 @@ dependencies = [
 name = "composable-maths"
 version = "0.0.1"
 dependencies = [
+ "composable-support",
  "composable-traits",
  "frame-support",
  "frame-system",
@@ -6910,6 +6911,7 @@ dependencies = [
 name = "pallet-curve-amm"
 version = "0.0.1"
 dependencies = [
+ "composable-support",
  "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",
@@ -7000,6 +7002,7 @@ dependencies = [
 name = "pallet-dutch-auction"
 version = "0.0.1"
 dependencies = [
+ "composable-support",
  "composable-tests-helpers",
  "composable-traits",
  "cumulus-pallet-xcm",
@@ -7222,6 +7225,7 @@ dependencies = [
 name = "pallet-liquidations"
 version = "0.0.1"
 dependencies = [
+ "composable-support",
  "composable-tests-helpers",
  "composable-traits",
  "cumulus-pallet-xcm",
@@ -7849,6 +7853,7 @@ name = "pallet-uniswap-v2"
 version = "0.0.1"
 dependencies = [
  "composable-maths",
+ "composable-support",
  "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",

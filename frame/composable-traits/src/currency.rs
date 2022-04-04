@@ -4,7 +4,7 @@ use scale_info::TypeInfo;
 use sp_runtime::traits::{AtLeast32BitUnsigned, Zero};
 use sp_std::fmt::Debug;
 
-use crate::math::{SafeAdd, SafeDiv, SafeMul, SafeSub};
+use composable_support::math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub};
 
 /// really u8, but easy to do math operations
 pub type Exponent = u32;

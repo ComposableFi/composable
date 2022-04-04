@@ -62,7 +62,10 @@ pub use crate::weights::WeightInfo;
 pub mod pallet {
 	use crate::{models::BorrowerData, weights::WeightInfo};
 	use codec::Codec;
-	use composable_support::validation::Validated;
+	use composable_support::{
+		math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub},
+		validation::Validated,
+	};
 	use composable_traits::{
 		currency::CurrencyFactory,
 		defi::*,
@@ -72,7 +75,6 @@ pub mod pallet {
 			MarketConfig, MarketModelValid, UpdateInput,
 		},
 		liquidation::Liquidation,
-		math::{SafeAdd, SafeDiv, SafeMul, SafeSub},
 		oracle::Oracle,
 		time::{DurationSeconds, Timestamp, SECONDS_PER_YEAR_NAIVE},
 		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},

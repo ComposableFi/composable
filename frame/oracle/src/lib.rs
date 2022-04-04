@@ -32,10 +32,9 @@ pub mod pallet {
 	use crate::validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
 	pub use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
-	use composable_support::validation::Validated;
+	use composable_support::{math::safe::SafeDiv, validation::Validated};
 	use composable_traits::{
 		currency::LocalAssets,
-		math::SafeDiv,
 		oracle::{Oracle, Price},
 	};
 	use core::ops::{Div, Mul};

@@ -47,12 +47,11 @@ pub use pallet::*;
 /// TODO: add here backward mapping registry assets interface
 #[frame_support::pallet]
 pub mod pallet {
-
 	use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
+	use composable_support::math::wrapping_next::WrappingNext;
 	use composable_traits::{
 		defi::{DeFiComposableConfig, DeFiEngine, Sell, SellEngine},
 		liquidation::Liquidation,
-		math::WrappingNext,
 		time::{LinearDecrease, StairstepExponentialDecrease, TimeReleaseFunction},
 	};
 	use frame_support::{
@@ -72,6 +71,9 @@ pub mod pallet {
 	use scale_info::TypeInfo;
 	use sp_runtime::{DispatchError, Permill, Perquintill};
 	use sp_std::vec::Vec;
+
+	#[cfg(feature = "std")]
+	use frame_support::traits::GenesisBuild;
 
 	use crate::weights::WeightInfo;
 
