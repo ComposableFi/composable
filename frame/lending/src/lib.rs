@@ -883,7 +883,7 @@ pub mod pallet {
 			with_transaction(|| {
 				let now = Self::now();
 				call_counters.now += 1;
-				dbg!(now);
+				// dbg!(now);
 
 				let mut errors = Markets::<T>::iter()
 					.map(|(market_id, config)| {
