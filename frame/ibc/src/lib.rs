@@ -62,12 +62,12 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::DispatchResult,
 		pallet_prelude::*,
+		storage::bounded_btree_map::BoundedBTreeMap,
 		traits::{Currency, UnixTime},
 	};
 	use frame_system::pallet_prelude::*;
 
 	use sp_runtime::{generic::DigestItem, SaturatedConversion};
-	use tendermint_proto::Protobuf;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -226,7 +226,7 @@ pub mod pallet {
 	#[pallet::storage]
 	/// height => IbcConsensusState
 	pub type CommitmentRoot<T: Config> =
-		StorageMap<_, Blake2_128Concat, Vec<u8>, IbcConsensusState, ValueQuery>;
+		StorageValue<_, BoundedBTreeMap<u64, IbcConsensusState, ConstU32<250>>, ValueQuery>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -266,11 +266,18 @@ pub mod pallet {
 			let root = Pallet::<T>::extract_ibc_state_root();
 			if let Ok(root) = root {
 				let height = crate::impls::host_height::<T>();
-				let height = ibc::Height::new(0, height);
-				let height = height.encode_vec().unwrap_or_default();
 				let timestamp = T::TimeProvider::now().as_nanos().saturated_into::<u64>();
 				let ibc_cs = IbcConsensusState { timestamp, root: root.clone() };
-				CommitmentRoot::<T>::insert(height, ibc_cs.clone());
+				let _ = CommitmentRoot::<T>::try_mutate::<_, (), _>(|val| {
+					if let Err((height, ibc_cs)) = val.try_insert(height, ibc_cs) {
+						let first_key = val.keys().cloned().next();
+						if let Some(key) = first_key {
+							val.remove(&key).ok_or(())?;
+							val.try_insert(height, ibc_cs).map_err(|_| ())?;
+						}
+					}
+					Ok(())
+				});
 				let log = DigestItem::Consensus(IBC_DIGEST_ID, root);
 				<frame_system::Pallet<T>>::deposit_log(log);
 			}
