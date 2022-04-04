@@ -140,19 +140,32 @@ where
 		Ok(None)
 	}
 
+	fn host_timestamp(&self) -> Timestamp {
+		use frame_support::traits::UnixTime;
+		use sp_runtime::traits::SaturatedConversion;
+		let time = T::TimeProvider::now();
+		let ts = Timestamp::from_nanoseconds(time.as_nanos().saturated_into::<u64>())
+			.map_err(|e| panic!("{:?}, caused by {:?} from pallet timestamp_pallet", e, time));
+		ts.unwrap()
+	}
+
 	fn host_height(&self) -> Height {
 		log::trace!("in client: [host_height]");
 		let current_height = host_height::<T>();
 		Height::new(0, current_height)
 	}
 
-	// TODO: Revisit after consensus state for beefy light client is defined in chains is defined in
-	// ibc-rs
-	fn host_consensus_state(&self, _height: Height) -> Result<AnyConsensusState, ICS02Error> {
+	fn host_consensus_state(&self, height: Height) -> Result<AnyConsensusState, ICS02Error> {
+		let root = CommitmentRoot::<T>::get();
+		let block_number = height.revision_height;
+		let _ibc_cs = root.get(&block_number).ok_or(ICS02Error::empty_consensus_state_response())?;
+		// TODO: Revisit after consensus state for beefy light client is defined in chains is
+		// defined in ibc-rs
 		Err(ICS02Error::implementation_specific())
 	}
 
 	fn pending_host_consensus_state(&self) -> Result<AnyConsensusState, ICS02Error> {
+		// Not needed since host timestamp implemented already
 		Err(ICS02Error::implementation_specific())
 	}
 

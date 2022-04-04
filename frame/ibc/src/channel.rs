@@ -317,20 +317,24 @@ where
 	/// Returns the current timestamp of the local chain.
 	fn host_timestamp(&self) -> Timestamp {
 		use frame_support::traits::UnixTime;
+		use sp_runtime::traits::SaturatedConversion;
 		let time = T::TimeProvider::now();
-		let ts = Timestamp::from_nanoseconds(time.as_nanos() as u64)
+		let ts = Timestamp::from_nanoseconds(time.as_nanos().saturated_into::<u64>())
 			.map_err(|e| panic!("{:?}, caused by {:?} from pallet timestamp_pallet", e, time));
-		log::trace!("in channel: [host_timestamp] >> host_timestamp = {:?}", ts.clone().unwrap());
 		ts.unwrap()
 	}
 
-	// TODO: Revisit after consensus state for substrate chains is defined in ibc-rs
-	fn host_consensus_state(&self, _height: Height) -> Result<AnyConsensusState, ICS04Error> {
+	fn host_consensus_state(&self, height: Height) -> Result<AnyConsensusState, ICS04Error> {
+		let root = CommitmentRoot::<T>::get();
+		let block_number = height.revision_height;
+		let _ibc_cs = root.get(&block_number).ok_or(ICS04Error::implementation_specific())?;
+		// TODO: Revisit after consensus state for beefy light client is defined in chains is
+		// defined in ibc-rs
 		Err(ICS04Error::implementation_specific())
 	}
 
-	// TODO: Revisit after consensus state for substrate chains is defined in ibc-rs
 	fn pending_host_consensus_state(&self) -> Result<AnyConsensusState, ICS04Error> {
+		// Not needed since host timestamp implemented already
 		Err(ICS04Error::implementation_specific())
 	}
 
