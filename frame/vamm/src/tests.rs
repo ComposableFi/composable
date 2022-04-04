@@ -24,6 +24,28 @@ use sp_runtime::{
 	FixedI128,
 };
 
+// ----------------------------------------------------------------------------------------------------
+//                                             Setup
+// ----------------------------------------------------------------------------------------------------
+
+impl Default for ExtBuilder {
+	fn default() -> Self {
+		Self { vamm_count: 0u128 }
+	}
+}
+
+fn run_to_block(n: u64) {
+	while System::block_number() < n {
+		if System::block_number() > 0 {
+			Timestamp::on_finalize(System::block_number());
+			System::on_finalize(System::block_number());
+		}
+		System::set_block_number(System::block_number() + 1);
+		// Time is set in milliseconds, so at each block we increment the timestamp by 1000ms = 1s
+		let _ = Timestamp::set(Origin::none(), System::block_number() * 1000);
+		System::on_initialize(System::block_number());
+		Timestamp::on_initialize(System::block_number());
+	}
 }
 
 // #[test]
