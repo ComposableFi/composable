@@ -32,8 +32,7 @@ use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
 use beefy_primitives::mmr::MmrLeaf;
 use codec::Encode;
 use sp_core::{ByteArray, H256};
-use sp_core_hashing::keccak_256;
-use sp_io::crypto;
+use sp_io::{crypto, hashing::keccak_256};
 use sp_runtime::traits::Convert;
 
 use sp_std::prelude::*;
