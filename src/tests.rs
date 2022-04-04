@@ -476,7 +476,7 @@ async fn verify_parachain_headers() {
                 parachain_heads_proof: proof,
                 heads_leaf_index: index.unwrap() as u32,
                 heads_total_count: parachain_leaves.len() as u32,
-                extrinsic_proof: vec![]
+                extrinsic_proof: vec![],
             };
 
             parachain_headers.push(header);

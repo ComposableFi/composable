@@ -52,7 +52,7 @@ pub struct ParachainHeader {
     pub heads_total_count: u32,
     /// Trie merkle proof of inclusion of the set timestamp extrinsic in header.extrinsic_root
     /// this already encodes the actual extrinsic
-    pub extrinsic_proof: Vec<Vec<u8>>
+    pub extrinsic_proof: Vec<Vec<u8>>,
 }
 
 #[derive(sp_std::fmt::Debug, Clone, Encode, Decode)]
