@@ -215,6 +215,7 @@ impl assets_registry::Config for Runtime {
 	type UpdateAdminOrigin = EnsureRootOrHalfCouncil;
 	type LocalAdminOrigin = assets_registry::EnsureLocalAdmin<Runtime>;
 	type ForeignAdminOrigin = assets_registry::EnsureForeignAdmin<Runtime>;
+	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 }
 
 impl assets::Config for Runtime {
@@ -1037,6 +1038,7 @@ mod benches {
 		[oracle, Oracle]
 		[liquidations, Liquidations]
 		[vault, Vault]
+		[assets_registry, AssetsRegistry]
 	);
 }
 

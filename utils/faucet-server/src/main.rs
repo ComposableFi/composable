@@ -59,7 +59,7 @@ async fn main() -> tide::Result<()> {
 async fn init() -> Arc<State> {
 	let env = envy::from_env::<Env>().expect("Missing env vars");
 
-	const RPC_WS_URL: &'static str = "wss://rpc.composablefinance.ninja";
+	const RPC_WS_URL: &'static str = "wss://rpc.composablefinance.ninja:443";
 	// create the signer
 	let signer = sr25519::Pair::from_string(&env.root_key, None).unwrap();
 
