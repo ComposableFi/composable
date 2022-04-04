@@ -12,10 +12,29 @@ use sp_runtime::{
 	traits::{IdentifyAccount, IdentityLookup, Verify},
 };
 
+// ----------------------------------------------------------------------------------------------------
+//                                           Construct Runtime
+// ----------------------------------------------------------------------------------------------------
+
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
+type Block = frame_system::mocking::MockBlock<MockRuntime>;
+
+frame_support::construct_runtime!(
+	pub enum MockRuntime where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic,
+	{
+		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
+		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
+		Vamm: pallet_vamm::{Pallet, Storage, Event<T>},
+	}
+);
+
 pub type Balance = u128;
 pub type BlockNumber = u64;
 pub type VammId = u128;
-// type VammState = crate::Config::VammState<Balance, Timestamp>;
 
 // ----------------------------------------------------------------------------------------------------
 //                                                FRAME System
@@ -73,6 +92,21 @@ impl pallet_balances::Config for MockRuntime {
 }
 
 // ----------------------------------------------------------------------------------------------------
+//                                                 Timestamp
+// ----------------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const MinimumPeriod: u64 = 5;
+}
+
+impl pallet_timestamp::Config for MockRuntime {
+	type MinimumPeriod = MinimumPeriod;
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type WeightInfo = ();
+}
+
+// ----------------------------------------------------------------------------------------------------
 //                                             VAMM
 // ----------------------------------------------------------------------------------------------------
 
@@ -88,29 +122,11 @@ impl pallet_vamm::Config for MockRuntime {
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                           Construct Runtime
+//                                             Externalities Builder
 // ----------------------------------------------------------------------------------------------------
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
-type Block = frame_system::mocking::MockBlock<MockRuntime>;
-
-frame_support::construct_runtime!(
-	pub enum MockRuntime where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
-	{
-		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
-		Vamm: pallet_vamm::{Pallet, Storage, Event<T>},
-	}
-);
-
-#[derive(Default)]
 pub struct ExtBuilder {
-	vamm_count: VammId,
-	//  - Should `vamm_map` be implemented as a Vec<(VammId, State)>?
-	// vamm_map: Vec<(VammId, VammState)>,
+	pub vamm_count: VammId,
 }
 
 impl ExtBuilder {
