@@ -125,6 +125,7 @@ impl pallet_vamm::Config for MockRuntime {
 //                                             Externalities Builder
 // ----------------------------------------------------------------------------------------------------
 
+#[derive(Default)]
 pub struct ExtBuilder {
 	pub vamm_count: VammId,
 }

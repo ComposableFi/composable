@@ -14,12 +14,6 @@ use frame_support::{assert_noop, assert_ok, pallet_prelude::Hooks};
 //                                             Setup
 // ----------------------------------------------------------------------------------------------------
 
-impl Default for ExtBuilder {
-	fn default() -> Self {
-		Self { vamm_count: 0u128 }
-	}
-}
-
 fn run_to_block(n: u64) {
 	while System::block_number() < n {
 		if System::block_number() > 0 {
