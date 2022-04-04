@@ -186,7 +186,7 @@ pub mod pallet {
 		pub funding_rate_ts: DurationSeconds,
 		/// The time span between each funding rate update.
 		pub funding_frequency: DurationSeconds,
-		/// Period of time over what funding (the difference between mark and index prices) gets
+		/// Period of time over which funding (the difference between mark and index prices) gets
 		/// paid.
 		///
 		/// Setting the funding period too long may cause the perpetual to start trading at a
@@ -380,6 +380,9 @@ pub mod pallet {
 		/// - `vamm_params`: Parameters for creating and initializing the vAMM for price discovery
 		/// - `margin_ratio_initial`: Minimum margin ratio for opening a new position
 		/// - `margin_ratio_maintenance`: Margin ratio below which liquidations can occur
+		/// - `funding_frequency`: Time span between each funding rate update
+		/// - `funding_period`: Period of time over which funding (the difference between mark and
+		///   index prices) gets paid.
 		///
 		/// ## Assumptions or Requirements
 		/// * The underlying must have a stable price feed via another pallet

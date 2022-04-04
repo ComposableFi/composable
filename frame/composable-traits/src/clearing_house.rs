@@ -42,6 +42,9 @@ pub trait ClearingHouse {
 	/// - `vamm_params`: Parameters for creating and initializing the vAMM for price discovery
 	/// - `margin_ratio_initial`: Minimum margin ratio for opening a new position
 	/// - `margin_ratio_maintenance`: Margin ratio below which liquidations can occur
+	/// - `funding_frequency`: Time span between each funding rate update
+	/// - `funding_period`: Period of time over which funding (the difference between mark and
+	///   index prices) gets paid.
 	///
 	/// ## Returns
 	/// The new market id, if successful
