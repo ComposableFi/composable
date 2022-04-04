@@ -93,7 +93,7 @@ async fn test_ingest_mmr_with_proof() {
         .await
         .unwrap();
 
-    while let Some(Ok(commitment)) =  subscription.next().await {
+    while let Some(Ok(commitment)) = subscription.next().await {
         let recv_commitment: sp_core::Bytes =
             serde_json::from_value(JsonValue::String(commitment)).unwrap();
         let signed_commitment: beefy_primitives::SignedCommitment<
@@ -101,7 +101,10 @@ async fn test_ingest_mmr_with_proof() {
             beefy_primitives::crypto::Signature,
         > = codec::Decode::decode(&mut &*recv_commitment).unwrap();
 
-        println!("Received signed commitmment for: {:?}", signed_commitment.commitment.block_number);
+        println!(
+            "Received signed commitmment for: {:?}",
+            signed_commitment.commitment.block_number
+        );
 
         let subxt_block_number: subxt::BlockNumber =
             signed_commitment.commitment.block_number.into();
@@ -206,7 +209,11 @@ async fn test_ingest_mmr_with_proof() {
             latest_leaf.beefy_next_authority_set
         );
 
-        println!("\nblock number: {}\nmmr_root_hash: {}\n", mmr_state.latest_beefy_height, to_hex(&mmr_state.mmr_root_hash[..], false))
+        println!(
+            "\nblock number: {}\nmmr_root_hash: {}\n",
+            mmr_state.latest_beefy_height,
+            to_hex(&mmr_state.mmr_root_hash[..], false)
+        )
     }
 }
 
