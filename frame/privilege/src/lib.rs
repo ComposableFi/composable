@@ -37,12 +37,10 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
-	use composable_traits::{
-		math::WrappingNext,
-		privilege::{
-			InspectPrivilege, InspectPrivilegeGroup, MutatePrivilege, MutatePrivilegeGroup,
-			Privilege, PrivilegedGroupOf,
-		},
+	use composable_support::math::wrapping_next::WrappingNext;
+	use composable_traits::privilege::{
+		InspectPrivilege, InspectPrivilegeGroup, MutatePrivilege, MutatePrivilegeGroup, Privilege,
+		PrivilegedGroupOf,
 	};
 	use frame_support::pallet_prelude::*;
 	use sp_runtime::traits::MaybeDisplay;
