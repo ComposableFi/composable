@@ -1,8 +1,7 @@
-name: CI Check
+name: Cargo Check
 
 on:
-  push:
-    workflow_dispatch:
+  pull_request:
     branches:
       - '*'
 
@@ -10,21 +9,20 @@ jobs:
   checker:
     strategy:
       matrix:
-        go-version: [1.17]
         os: [ubuntu-latest]
+    concurrency:
+      group: lint-${{ github.ref }}
+      cancel-in-progress: true
+    container:
+      image: paritytech/ci-linux:production
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
-    
-    - name: ToolChain Selector
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-
-    - name: Install srtool
+  
+    - name: Rustup show
       run: |
-        cargo install --git https://github.com/chevdor/srtool-cli
-        cargo install --locked --git https://github.com/chevdor/subwasm --tag v0.16.1
+        rustup show
+
     - name: Checker
       run: |
-        cargo check --no-default-features --target=wasm32-unknown-unknown
+        cargo check --no-default-features
