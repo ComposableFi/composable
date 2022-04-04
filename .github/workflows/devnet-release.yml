@@ -3,7 +3,7 @@ name: "Devnet Community Release"
 on:
   push:
     branches:
-      - main
+      - devnet-update
 
 jobs:
   deploy-devnet:
