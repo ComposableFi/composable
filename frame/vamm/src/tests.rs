@@ -14,6 +14,7 @@ use frame_support::{assert_noop, assert_ok, pallet_prelude::Hooks};
 //                                             Setup
 // ----------------------------------------------------------------------------------------------------
 
+#[allow(dead_code)]
 fn run_to_block(n: u64) {
 	while System::block_number() < n {
 		if System::block_number() > 0 {
@@ -51,6 +52,7 @@ const RUN_CASES: u32 = 100;
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
+	#[allow(clippy::disallowed_methods)]
 	fn create_vamm(base_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE, quote_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE, peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE) {
 		ExtBuilder::default().build().execute_with(|| {
 			let vamm_counter = Vamm::vamm_count();
@@ -132,6 +134,7 @@ proptest! {
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
+	#[allow(clippy::disallowed_methods)]
 	fn create_vamm_emits_event_succeeds(base_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE, quote_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE, peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE) {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
