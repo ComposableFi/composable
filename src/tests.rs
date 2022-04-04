@@ -167,6 +167,7 @@ async fn test_ingest_mmr_with_proof() {
         .build::<subxt::DefaultConfig>()
         .await
         .unwrap();
+
     let mut subscription: Subscription<String> = client
         .rpc()
         .client
