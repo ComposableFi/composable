@@ -1588,6 +1588,7 @@ version = "0.0.1"
 dependencies = [
  "frame-support",
  "is_sorted",
+ "num-traits",
  "parity-scale-codec",
  "proptest",
  "rustc-hex",
