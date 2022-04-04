@@ -6,6 +6,10 @@
 //! markets. To use it in your runtime, you must provide compatible implementations of virtual AMMs
 //! and price oracles.
 //!
+//! - [`Config`]
+//! - [`Call`]
+//! - [`Pallet`]
+//!
 //! ### Terminology
 //!
 //! * **Trader**: Primary user of the public extrinsics of the pallet
@@ -25,10 +29,19 @@
 //!
 //! ### Implementations
 //!
+//! The Clearing House pallet provides implementations for the following traits:
+//!
+//! - [`ClearingHouse`](composable_traits::clearing_house::ClearingHouse): Exposes functionality for
+//!   trading of perpetual contracts
+//! - [`Instruments`](composable_traits::clearing_house::Instruments): Exposes functionality for
+//!   querying funding-related quantities of synthetic instruments
+//!
 //! ## Interface
 //!
 //! ### Extrinsics
+//!
 //! - [`add_margin`](Call::add_margin)
+//! - [`create_market`](Call::create_market)
 //!
 //! ### Implemented Functions
 //!
@@ -37,6 +50,9 @@
 //! ### Example
 //!
 //! ## Related Modules
+//!
+//! - `pallet-vamm`
+//! - `pallet-oracle`
 //!
 //! <!-- Original author: @0xangelo -->
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -60,22 +76,30 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 
+	use std::fmt::Debug;
+
 	use crate::weights::WeightInfo;
 	use codec::FullCodec;
-	use composable_traits::{clearing_house::MarginTrading, defi::DeFiComposableConfig};
+	use composable_traits::{
+		clearing_house::{ClearingHouse, Instruments},
+		defi::DeFiComposableConfig,
+		oracle::Oracle,
+		time::DurationSeconds,
+		vamm::Vamm,
+	};
 	use frame_support::{
 		pallet_prelude::*,
-		traits::{tokens::fungibles::Transfer, GenesisBuild},
+		traits::{tokens::fungibles::Transfer, GenesisBuild, UnixTime},
 		Blake2_128Concat, PalletId, Twox64Concat,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::{
-		traits::{AccountIdConversion, CheckedAdd, Zero},
+		traits::{AccountIdConversion, CheckedAdd, CheckedMul, CheckedSub, One, Zero},
 		ArithmeticError, FixedPointNumber,
 	};
 
 	// ----------------------------------------------------------------------------------------------------
-	//                                    Declaration Of The Pallet Type
+	//                                       Declaration Of The Pallet Type
 	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::pallet]
@@ -93,16 +117,23 @@ pub mod pallet {
 		/// Weight information for this pallet's extrinsics
 		type WeightInfo: WeightInfo;
 		/// The market ID type for this pallet.
-		type MarketId: FullCodec + MaxEncodedLen + TypeInfo;
+		type MarketId: CheckedAdd
+			+ One
+			+ Default
+			+ FullCodec
+			+ MaxEncodedLen
+			+ TypeInfo
+			+ Clone
+			+ PartialEq
+			+ Debug;
 		/// Signed decimal fixed point number.
 		type Decimal: FullCodec + MaxEncodedLen + TypeInfo + FixedPointNumber;
-		/// Timestamp to be used for funding rate updates
-		type Timestamp: FullCodec + MaxEncodedLen + TypeInfo;
-		/// Duration type for funding rate periodicity
-		type Duration: FullCodec + MaxEncodedLen + TypeInfo;
-		/// The virtual AMM ID type for this pallet. `pallet-virtual-amm` should implement a trait
-		/// VAMM with an associated type 'VAMMId' compatible with this one.
-		type VAMMId: FullCodec + MaxEncodedLen + TypeInfo;
+		/// Implementation for querying the current Unix timestamp
+		type UnixTime: UnixTime;
+		/// Virtual Automated Market Maker pallet implementation
+		type Vamm: Vamm<Decimal = Self::Decimal>;
+		/// Price feed (in USDT) Oracle pallet implementation
+		type Oracle: Oracle<AssetId = Self::MayBeAssetId, Balance = Self::Balance>;
 		/// Pallet implementation of asset transfers.
 		type Assets: Transfer<
 			Self::AccountId,
@@ -116,7 +147,7 @@ pub mod pallet {
 	}
 
 	// ----------------------------------------------------------------------------------------------------
-	//                                             Pallet Types
+	//                                           Pallet Types
 	// ----------------------------------------------------------------------------------------------------
 
 	/// Stores the user's position in a particular market
@@ -139,60 +170,61 @@ pub mod pallet {
 
 	/// Data relating to a perpetual contracts market
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
-	pub struct Market<AssetId, Decimal, Duration, Timestamp, VAMMId> {
+	pub struct Market<AssetId, Decimal, VammId> {
 		/// The Id of the vAMM used for price discovery in the virtual market
-		vamm_id: VAMMId,
+		pub vamm_id: VammId,
 		/// The Id of the underlying asset (base-quote pair). A price feed from one or more oracles
 		/// must be available for this symbol
-		asset_id: AssetId,
+		pub asset_id: AssetId,
+		/// Minimum margin ratio for opening a new position
+		pub margin_ratio_initial: Decimal,
+		/// Margin ratio below which liquidations can occur
+		pub margin_ratio_maintenance: Decimal,
 		/// The latest cumulative funding rate of this market. Must be updated periodically.
-		cum_funding_rate: Decimal,
+		pub cum_funding_rate: Decimal,
 		/// The timestamp for the latest funding rate update.
-		funding_rate_ts: Timestamp,
+		pub funding_rate_ts: DurationSeconds,
 		/// The time span between each funding rate update.
-		periodicity: Duration,
+		pub funding_frequency: DurationSeconds,
+		/// Period of time over which funding (the difference between mark and index prices) gets
+		/// paid.
+		///
+		/// Setting the funding period too long may cause the perpetual to start trading at a
+		/// very dislocated price to the index because there’s less of an incentive for basis
+		/// arbitrageurs to push the prices back in line since they would have to carry the basis
+		/// risk for a longer period of time.
+		///
+		/// Setting the funding period too short may cause nobody to trade the perpetual because
+		/// there’s too punitive of a price to pay in the case the funding rate flips sign.
+		pub funding_period: DurationSeconds,
 	}
 
 	type AssetIdOf<T> = <T as DeFiComposableConfig>::MayBeAssetId;
 	type MarketIdOf<T> = <T as Config>::MarketId;
 	type DecimalOf<T> = <T as Config>::Decimal;
-	type TimestampOf<T> = <T as Config>::Timestamp;
-	type DurationOf<T> = <T as Config>::Duration;
-	type VAMMIdOf<T> = <T as Config>::VAMMId;
+	type VammParamsOf<T> = <<T as Config>::Vamm as Vamm>::VammParams;
+	type VammIdOf<T> = <<T as Config>::Vamm as Vamm>::VammId;
 	type PositionOf<T> = Position<MarketIdOf<T>, DecimalOf<T>>;
-	type MarketOf<T> =
-		Market<AssetIdOf<T>, DecimalOf<T>, DurationOf<T>, TimestampOf<T>, VAMMIdOf<T>>;
+	type MarketOf<T> = Market<AssetIdOf<T>, DecimalOf<T>, VammIdOf<T>>;
 
 	// ----------------------------------------------------------------------------------------------------
-	//                                           Runtime  Storage
+	//                                           Runtime Storage
 	// ----------------------------------------------------------------------------------------------------
 
-	#[pallet::storage]
-	#[pallet::getter(fn get_initial_margin_ratio)]
-	#[allow(clippy::disallowed_types)]
-	/// Minimum margin ratio for opening a new position
-	type InitialMarginRatio<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn get_maintenance_margin_ratio)]
-	#[allow(clippy::disallowed_types)]
-	/// Minimum margin ratio, below which liquidations can occur
-	type MaintenanceMarginRatio<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
-
-	#[pallet::storage]
 	/// Supported collateral asset ids
+	#[pallet::storage]
 	pub type CollateralTypes<T: Config> = StorageMap<_, Twox64Concat, AssetIdOf<T>, ()>;
 
-	#[pallet::storage]
-	#[pallet::getter(fn get_margin)]
 	/// Maps [AccountId](frame_system::Config::AccountId) to its collateral
 	/// [Balance](DeFiComposableConfig::Balance), if set.
+	#[pallet::storage]
+	#[pallet::getter(fn get_margin)]
 	pub type AccountsMargin<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, T::Balance>;
 
-	#[pallet::storage]
-	#[pallet::getter(fn get_position)]
 	/// Maps [AccountId](frame_system::Config::AccountId) and [MarketId](Config::MarketId) to its
 	/// respective [Position](Position), if it exists.
+	#[pallet::storage]
+	#[pallet::getter(fn get_position)]
 	pub type Positions<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -202,13 +234,23 @@ pub mod pallet {
 		PositionOf<T>,
 	>;
 
+	/// The number of markets, also used to generate the next market identifier.
+	///
+	/// # Note
+	///
+	/// Frozen markets do not decrement the counter.
+	#[pallet::storage]
+	#[pallet::getter(fn market_count)]
+	#[allow(clippy::disallowed_types)]
+	pub type MarketCount<T: Config> = StorageValue<_, T::MarketId, ValueQuery>;
+
+	/// Maps [MarketId](Config::MarketId) to the corresponding virtual [Market] specs
 	#[pallet::storage]
 	#[pallet::getter(fn get_market)]
-	/// Maps [MarketId](Config::MarketId) to the corresponding virtual [Market] specs
-	pub type Markets<T: Config> = StorageMap<_, Twox64Concat, T::MarketId, MarketOf<T>>;
+	pub type Markets<T: Config> = StorageMap<_, Blake2_128Concat, T::MarketId, MarketOf<T>>;
 
 	// ----------------------------------------------------------------------------------------------------
-	//                                            Genesis Configuration
+	//                                         Genesis Configuration
 	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::genesis_config]
@@ -234,7 +276,7 @@ pub mod pallet {
 	}
 
 	// ----------------------------------------------------------------------------------------------------
-	//                                            Runtime Events
+	//                                             Runtime Events
 	// ----------------------------------------------------------------------------------------------------
 
 	// Pallets use events to inform users when important changes are made.
@@ -250,10 +292,17 @@ pub mod pallet {
 			/// Amount of asset deposited
 			amount: T::Balance,
 		},
+		/// New virtual market successfully created
+		MarketCreated {
+			/// Id for the newly created market
+			market: T::MarketId,
+			/// Id of the underlying asset
+			asset: AssetIdOf<T>,
+		},
 	}
 
 	// ----------------------------------------------------------------------------------------------------
-	//                                           Runtime  Errors
+	//                                             Runtime Errors
 	// ----------------------------------------------------------------------------------------------------
 
 	// Errors inform users that something went wrong.
@@ -261,10 +310,24 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// User attempted to deposit unsupported asset type as collateral in its margin account
 		UnsupportedCollateralType,
+		/// Attempted to create a new market but the underlying asset is not supported by the
+		/// oracle
+		NoPriceFeedForAsset,
+		/// Attempted to create a new market but the funding period is not a multiple of the
+		/// funding frequency
+		FundingPeriodNotMultipleOfFrequency,
+		/// Attempted to create a new market but the funding period or frequency is 0 seconds long
+		ZeroLengthFundingPeriodOrFrequency,
+		/// Attempted to create a new market but either initial or maintenance margin ratios are
+		/// outside the interval (0, 1)
+		InvalidMarginRatioRequirement,
+		/// Attempted to create a new market but the initial margin ratio is less or equal than/to
+		/// the maintenance one
+		InitialMarginRatioLessThanMaintenance,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
-	//                              Extrinsics
+	//                                             Extrinsics
 	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::call]
@@ -305,19 +368,81 @@ pub mod pallet {
 			amount: T::Balance,
 		) -> DispatchResult {
 			let acc = ensure_signed(origin)?;
-			<Self as MarginTrading>::add_margin(&acc, asset, amount)?;
+			<Self as ClearingHouse>::add_margin(&acc, asset, amount)?;
+			Ok(())
+		}
+
+		/// # Overview
+		/// Creates a new perpetuals market with the desired parameters.
+		///
+		/// ## Parameters
+		/// - `asset`: Asset id of the underlying for the derivatives market
+		/// - `vamm_params`: Parameters for creating and initializing the vAMM for price discovery
+		/// - `margin_ratio_initial`: Minimum margin ratio for opening a new position
+		/// - `margin_ratio_maintenance`: Margin ratio below which liquidations can occur
+		/// - `funding_frequency`: Time span between each funding rate update
+		/// - `funding_period`: Period of time over which funding (the difference between mark and
+		///   index prices) gets paid.
+		///
+		/// ## Assumptions or Requirements
+		/// * The underlying must have a stable price feed via another pallet
+		/// * The funding period must be a multiple of its frequency
+		/// * Both funding period and frequency must be nonzero
+		/// * Initial and Maintenance margin ratios must be in the (0, 1) open interval
+		/// * Initial margin ratio must be greater than maintenance
+		///
+		/// ## Emits
+		/// * [`MarketCreated`](Event::<T>::MarketCreated)
+		///
+		/// ## State Changes
+		/// Adds an entry to the [`Markets`] storage map.
+		///
+		/// ## Errors
+		/// - [`NoPriceFeedForAsset`](Error::<T>::NoPriceFeedForAsset)
+		/// - [`FundingPeriodNotMultipleOfFrequency`](Error::<T>::
+		///   FundingPeriodNotMultipleOfFrequency)
+		/// - [`ZeroLengthFundingPeriodOrFrequency`](Error::<T>::ZeroLengthFundingPeriodOrFrequency)
+		/// - [`InvalidMarginRatioRequirement`](Error::<T>::InvalidMarginRatioRequirement)
+		/// - [`InitialMarginRatioLessThanMaintenance`](Error::<T>::
+		///   InitialMarginRatioLessThanMaintenance)
+		///
+		/// # Weight/Runtime
+		/// `O(1)`
+		#[pallet::weight(<T as Config>::WeightInfo::create_market())]
+		pub fn create_market(
+			origin: OriginFor<T>,
+			asset: AssetIdOf<T>,
+			vamm_params: VammParamsOf<T>,
+			margin_ratio_initial: T::Decimal,
+			margin_ratio_maintenance: T::Decimal,
+			funding_frequency: DurationSeconds,
+			funding_period: DurationSeconds,
+		) -> DispatchResult {
+			ensure_signed(origin)?;
+			let _ = <Self as ClearingHouse>::create_market(
+				asset,
+				vamm_params,
+				margin_ratio_initial,
+				margin_ratio_maintenance,
+				funding_frequency,
+				funding_period,
+			)?;
 			Ok(())
 		}
 	}
 
 	// ----------------------------------------------------------------------------------------------------
-	//                              Trait Implementations
+	//                                           Trait Implementations
 	// ----------------------------------------------------------------------------------------------------
 
-	impl<T: Config> MarginTrading for Pallet<T> {
+	impl<T: Config> ClearingHouse for Pallet<T> {
 		type AccountId = T::AccountId;
 		type AssetId = AssetIdOf<T>;
 		type Balance = T::Balance;
+		type Decimal = T::Decimal;
+		type DurationSeconds = DurationSeconds;
+		type MarketId = T::MarketId;
+		type VammParams = VammParamsOf<T>;
 
 		fn add_margin(
 			account: &Self::AccountId,
@@ -339,9 +464,86 @@ pub mod pallet {
 			Self::deposit_event(Event::MarginAdded { account: account.clone(), asset, amount });
 			Ok(())
 		}
+
+		fn create_market(
+			asset: Self::AssetId,
+			vamm_params: Self::VammParams,
+			margin_ratio_initial: Self::Decimal,
+			margin_ratio_maintenance: Self::Decimal,
+			funding_frequency: Self::DurationSeconds,
+			funding_period: Self::DurationSeconds,
+		) -> Result<Self::MarketId, DispatchError> {
+			MarketCount::<T>::try_mutate(|id| {
+				ensure!(T::Oracle::is_supported(asset)?, Error::<T>::NoPriceFeedForAsset);
+				ensure!(
+					funding_period > 0 && funding_frequency > 0,
+					Error::<T>::ZeroLengthFundingPeriodOrFrequency
+				);
+				ensure!(
+					funding_period.rem_euclid(funding_frequency) == 0,
+					Error::<T>::FundingPeriodNotMultipleOfFrequency
+				);
+				ensure!(
+					margin_ratio_initial > T::Decimal::zero() &&
+						margin_ratio_initial < T::Decimal::one() &&
+						margin_ratio_maintenance > T::Decimal::zero() &&
+						margin_ratio_maintenance < T::Decimal::one(),
+					Error::<T>::InvalidMarginRatioRequirement
+				);
+				ensure!(
+					margin_ratio_initial > margin_ratio_maintenance,
+					Error::<T>::InitialMarginRatioLessThanMaintenance
+				);
+
+				let market_id = id.clone();
+				let market = Market {
+					asset_id: asset,
+					vamm_id: T::Vamm::create(vamm_params)?,
+					margin_ratio_initial,
+					margin_ratio_maintenance,
+					funding_frequency,
+					funding_period,
+					cum_funding_rate: Default::default(),
+					funding_rate_ts: T::UnixTime::now().as_secs(),
+				};
+				Markets::<T>::insert(&market_id, market);
+
+				// Change the market count at the end
+				*id = id.checked_add(&One::one()).ok_or(ArithmeticError::Overflow)?;
+
+				Self::deposit_event(Event::MarketCreated { market: market_id.clone(), asset });
+				Ok(market_id)
+			})
+		}
 	}
+
+	impl<T: Config> Instruments for Pallet<T> {
+		type Market = MarketOf<T>;
+		type Decimal = T::Decimal;
+
+		fn funding_rate(market: &Self::Market) -> Result<Self::Decimal, DispatchError> {
+			// Oracle returns prices in USDT cents
+			let unnormalized_oracle_twap = T::Oracle::get_twap(market.asset_id, vec![])?;
+			let oracle_twap = Self::Decimal::checked_from_rational(unnormalized_oracle_twap, 10u32)
+				.ok_or(ArithmeticError::Overflow)?;
+
+			let vamm_twap = T::Vamm::get_twap(&market.vamm_id)?;
+
+			let price_spread =
+				vamm_twap.checked_sub(&oracle_twap).ok_or(ArithmeticError::Underflow)?;
+			let period_adjustment = Self::Decimal::checked_from_rational(
+				market.funding_frequency,
+				market.funding_period,
+			)
+			.ok_or(ArithmeticError::Underflow)?;
+			let rate =
+				price_spread.checked_mul(&period_adjustment).ok_or(ArithmeticError::Underflow)?;
+			Ok(rate)
+		}
+	}
+
 	// ----------------------------------------------------------------------------------------------------
-	//                              Helper Functions
+	//                                           Helper Functions
 	// ----------------------------------------------------------------------------------------------------
 
 	// Helper functions - core functionality

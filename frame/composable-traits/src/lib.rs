@@ -27,5 +27,6 @@ pub mod math;
 pub mod oracle;
 pub mod privilege;
 pub mod time;
+pub mod vamm;
 pub mod vault;
 pub mod vesting;
