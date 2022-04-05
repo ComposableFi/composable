@@ -8,30 +8,9 @@ use sp_runtime::traits::{
 };
 
 pub trait Vamm {
-	type Balance: Default
-		+ AtLeast32BitUnsigned
-		+ CheckedAdd
-		+ CheckedDiv
-		+ CheckedMul
-		+ CheckedSub
-		+ Codec
-		+ Copy
-		+ MaxEncodedLen
-		+ Ord
-		+ Parameter
-		+ Zero;
+	type Balance;
 
-	type VammId: Default
-		+ CheckedAdd
-		+ Clone
-		+ Debug
-		+ FullCodec
-		+ MaxEncodedLen
-		+ One
-		+ Parameter
-		+ PartialEq
-		+ TypeInfo
-		+ Zero;
+	type VammId;
 
 	/// Create a new virtual market.
 	///
