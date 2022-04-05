@@ -14,6 +14,9 @@
 // limitations under the License.
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(test)]
+use std::println as debug;
+
 pub mod error;
 pub mod primitives;
 #[cfg(test)]
@@ -100,11 +103,15 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
         };
 
         let mmr_root_hash = H256::from_slice(&*mmr_root_vec);
+        #[cfg(test)]
+        debug!("Extracted mmr root hash: {:?}", mmr_root_hash);
 
         // Beefy validators sign the keccak_256 hash of the scale encoded commitment
         let encoded_commitment = mmr_update.signed_commitment.commitment.encode();
         let commitment_hash = keccak_256(&*encoded_commitment);
 
+        #[cfg(test)]
+        debug!("Recovering authority keys from signatures");
         let mut authority_indices = Vec::new();
         let authority_leaves = mmr_update
             .signed_commitment
@@ -161,12 +168,19 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
         let latest_beefy_height = self.store.mmr_state()?.latest_beefy_height;
 
         if mmr_update.signed_commitment.commitment.block_number <= latest_beefy_height {
+            #[cfg(test)]
+            debug!(
+                "Invalid update, block_number {:?} <= latest_beefy_height {:?}",
+                mmr_update.signed_commitment.commitment.block_number, latest_beefy_height
+            );
             return Err(BeefyClientError::InvalidMmrUpdate);
         }
 
         // Move on to verify mmr_proof
         let node = pallet_mmr_primitives::DataOrHash::Data(mmr_update.latest_mmr_leaf.clone());
 
+        #[cfg(test)]
+        debug!("Verifying leaf proof {:?}", mmr_update.mmr_proof.clone());
         pallet_mmr::verify_leaf_proof::<sp_runtime::traits::Keccak256, _>(
             mmr_root_hash.into(),
             node,
@@ -226,6 +240,13 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
             .store
             .mmr_state()
             .map_err(|_| BeefyClientError::StorageReadError)?;
+
+        #[cfg(test)]
+        debug!(
+            "Verifying leaves proof {:?}, root hash {:?}",
+            parachain_update.mmr_proof.clone(),
+            mmr_state.mmr_root_hash
+        );
 
         pallet_mmr::verify_leaves_proof::<sp_runtime::traits::Keccak256, _>(
             mmr_state.mmr_root_hash.into(),

@@ -160,6 +160,7 @@ async fn get_mmr_update(
 
 #[tokio::test]
 async fn test_ingest_mmr_with_proof() {
+    //let _ = env_logger::init();
     let store = StorageMock::new();
     let mut beef_light_client = BeefyLightClient::new(store);
     let client = subxt::ClientBuilder::new()
@@ -178,8 +179,11 @@ async fn test_ingest_mmr_with_proof() {
         )
         .await
         .unwrap();
-
+    let mut count = 0;
     while let Some(Ok(commitment)) = subscription.next().await {
+        if count == 100 {
+            break;
+        }
         let recv_commitment: sp_core::Bytes =
             serde_json::from_value(JsonValue::String(commitment)).unwrap();
         let signed_commitment: beefy_primitives::SignedCommitment<
@@ -224,7 +228,8 @@ async fn test_ingest_mmr_with_proof() {
             "\nSuccessfully ingested mmr for block number: {}\nmmr_root_hash: {}\n",
             mmr_state.latest_beefy_height,
             to_hex(&mmr_state.mmr_root_hash[..], false)
-        )
+        );
+        count += 1;
     }
 }
 
@@ -317,6 +322,7 @@ fn should_fail_with_invalid_validator_set_id() {
 
 #[tokio::test]
 async fn verify_parachain_headers() {
+    //let _ = env_logger::init();
     let store = StorageMock::new();
     let mut beef_light_client = BeefyLightClient::new(store);
     let client = subxt::ClientBuilder::new()
@@ -339,8 +345,11 @@ async fn verify_parachain_headers() {
         )
         .await
         .unwrap();
-
+    let mut count = 0;
     while let Some(Ok(commitment)) = subscription.next().await {
+        if count == 100 {
+            break;
+        }
         let recv_commitment: sp_core::Bytes =
             serde_json::from_value(JsonValue::String(commitment)).unwrap();
         let signed_commitment: beefy_primitives::SignedCommitment<
@@ -500,5 +509,7 @@ async fn verify_parachain_headers() {
             mmr_state.latest_beefy_height,
             to_hex(&mmr_state.mmr_root_hash[..], false)
         );
+
+        count += 1;
     }
 }
