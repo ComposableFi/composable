@@ -56,6 +56,23 @@ fn run_to_block(n: u64) {
 	}
 }
 
+fn valid_vamm_params() -> VammParams {
+	VammParams {}
+}
+
+fn valid_market_config() -> MarketConfig {
+	MarketConfig {
+		asset: DOT,
+		vamm_params: valid_vamm_params(),
+		// 10x max leverage to open a position
+		margin_ratio_initial: FixedI128::from_float(0.1),
+		// liquidate when above 50x leverage
+		margin_ratio_maintenance: FixedI128::from_float(0.02),
+		funding_frequency: ONE_HOUR,
+		funding_period: ONE_HOUR * 24,
+	}
+}
+
 // ----------------------------------------------------------------------------------------------------
 //                                           Mocked Pallets Tests
 // ----------------------------------------------------------------------------------------------------
@@ -81,7 +98,7 @@ proptest! {
 	#[test]
 	fn mock_vamm_created_id_reflects_genesis_config(vamm_id in any::<Option<VammId>>()) {
 		ExtBuilder { vamm_id , ..Default::default() }.build().execute_with(|| {
-			let created = <Runtime as Config>::Vamm::create(&VammParams {});
+			let created = <Runtime as Config>::Vamm::create(&valid_vamm_params());
 			match vamm_id {
 				Some(id) => assert_ok!(created, id),
 				None => assert_err!(created, mock_vamm::Error::<Runtime>::FailedToCreateVamm),
@@ -197,16 +214,7 @@ fn create_first_market_succeeds() {
 		let old_count = TestPallet::market_count();
 		let block_time_now = <Timestamp as UnixTime>::now().as_secs();
 
-		let config = MarketConfig {
-			asset: DOT,
-			vamm_params: VammParams {},
-			// 10x max leverage to open a position
-			margin_ratio_initial: FixedI128::from_float(0.1),
-			// liquidate when above 50x leverage
-			margin_ratio_maintenance: FixedI128::from_float(0.02),
-			funding_frequency: ONE_HOUR,
-			funding_period: ONE_HOUR * 24,
-		};
+		let config = valid_market_config();
 		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config.clone()));
 
 		// Ensure first market id is 0 (we know its type since it's defined in the mock runtime)
@@ -237,17 +245,7 @@ fn fails_to_create_market_for_unsupported_asset_by_oracle() {
 		.build()
 		.execute_with(|| {
 			assert_noop!(
-				TestPallet::create_market(
-					Origin::signed(ALICE),
-					MarketConfig {
-						asset: DOT,
-						vamm_params: VammParams {},
-						margin_ratio_initial: FixedI128::from_float(0.1),
-						margin_ratio_maintenance: FixedI128::from_float(0.02),
-						funding_frequency: ONE_HOUR,
-						funding_period: ONE_HOUR * 24
-					},
-				),
+				TestPallet::create_market(Origin::signed(ALICE), valid_market_config()),
 				Error::<Runtime>::NoPriceFeedForAsset
 			);
 		})
@@ -257,17 +255,7 @@ fn fails_to_create_market_for_unsupported_asset_by_oracle() {
 fn fails_to_create_market_if_fails_to_create_vamm() {
 	ExtBuilder { vamm_id: None, ..Default::default() }.build().execute_with(|| {
 		assert_noop!(
-			TestPallet::create_market(
-				Origin::signed(ALICE),
-				MarketConfig {
-					asset: DOT,
-					vamm_params: VammParams {},
-					margin_ratio_initial: FixedI128::from_float(0.1),
-					margin_ratio_maintenance: FixedI128::from_float(0.02),
-					funding_frequency: ONE_HOUR,
-					funding_period: ONE_HOUR * 24,
-				}
-			),
+			TestPallet::create_market(Origin::signed(ALICE), valid_market_config()),
 			mock_vamm::Error::<Runtime>::FailedToCreateVamm
 		);
 	})
@@ -277,18 +265,11 @@ proptest! {
 	#[test]
 	fn fails_to_create_market_if_funding_period_is_not_multiple_of_frequency(rem in 1..ONE_HOUR) {
 		ExtBuilder::default().build().execute_with(|| {
+			let mut config = valid_market_config();
+			config.funding_frequency = ONE_HOUR;
+			config.funding_period = ONE_HOUR * 2 + rem;
 			assert_noop!(
-				TestPallet::create_market(
-					Origin::signed(ALICE),
-					MarketConfig {
-						asset: DOT,
-						vamm_params: VammParams {},
-						margin_ratio_initial: FixedI128::from_float(0.1),
-						margin_ratio_maintenance: FixedI128::from_float(0.02),
-						funding_frequency: ONE_HOUR,
-						funding_period: ONE_HOUR * 2 + rem
-					}
-				),
+				TestPallet::create_market(Origin::signed(ALICE), config),
 				Error::<Runtime>::FundingPeriodNotMultipleOfFrequency
 			);
 		})
@@ -305,18 +286,11 @@ proptest! {
 		]
 	) {
 		ExtBuilder::default().build().execute_with(|| {
+			let mut config = valid_market_config();
+			config.funding_frequency = funding_frequency;
+			config.funding_period = funding_period;
 			assert_noop!(
-				TestPallet::create_market(
-					Origin::signed(ALICE),
-					MarketConfig {
-						asset: DOT,
-						vamm_params: VammParams {},
-						margin_ratio_initial: FixedI128::from_float(0.1),
-						margin_ratio_maintenance: FixedI128::from_float(0.02),
-						funding_frequency,
-						funding_period
-					}
-				),
+				TestPallet::create_market(Origin::signed(ALICE), config),
 				Error::<Runtime>::ZeroLengthFundingPeriodOrFrequency
 			);
 		})
@@ -333,18 +307,11 @@ proptest! {
 		]
 	) {
 		ExtBuilder::default().build().execute_with(|| {
+			let mut config = valid_market_config();
+			config.margin_ratio_initial = margin_ratio_initial;
+			config.margin_ratio_maintenance = margin_ratio_maintenance;
 			assert_noop!(
-				TestPallet::create_market(
-					Origin::signed(ALICE),
-					MarketConfig {
-						asset: DOT,
-						vamm_params: VammParams {},
-						margin_ratio_initial,
-						margin_ratio_maintenance,
-						funding_frequency: ONE_HOUR,
-						funding_period: ONE_HOUR * 24
-					}
-				),
+				TestPallet::create_market(Origin::signed(ALICE), config),
 				Error::<Runtime>::InvalidMarginRatioRequirement
 			);
 		})
@@ -357,18 +324,11 @@ proptest! {
 		(margin_ratio_initial, margin_ratio_maintenance) in initial_le_maintenance_margin_ratio()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
+			let mut config = valid_market_config();
+			config.margin_ratio_initial = margin_ratio_initial;
+			config.margin_ratio_maintenance = margin_ratio_maintenance;
 			assert_noop!(
-				TestPallet::create_market(
-					Origin::signed(ALICE),
-					MarketConfig {
-						asset: DOT,
-						vamm_params: VammParams {},
-						margin_ratio_initial,
-						margin_ratio_maintenance,
-						funding_frequency: ONE_HOUR,
-						funding_period: ONE_HOUR * 24
-					}
-				),
+				TestPallet::create_market(Origin::signed(ALICE), config),
 				Error::<Runtime>::InitialMarginRatioLessThanMaintenance
 			);
 		})
