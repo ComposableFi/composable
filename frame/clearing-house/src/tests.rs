@@ -4,12 +4,13 @@ pub use crate::{
 		accounts::{AccountId, ALICE},
 		assets::{AssetId, DOT, PICA, USDC},
 		oracle as mock_oracle,
-		runtime::{Balance, ClearingHouse, ExtBuilder, Origin, Runtime, System, Timestamp},
+		runtime::{Balance, ExtBuilder, Origin, Runtime, System, TestPallet, Timestamp},
 		vamm as mock_vamm,
 	},
 	pallet::*,
 };
 use composable_traits::{
+	clearing_house::ClearingHouse,
 	oracle::Oracle,
 	time::{DurationSeconds, ONE_HOUR},
 	vamm::Vamm,
@@ -26,6 +27,7 @@ use sp_runtime::FixedI128;
 //                                             Setup
 // ----------------------------------------------------------------------------------------------------
 
+type MarketConfig = <TestPallet as ClearingHouse>::MarketConfig;
 type VammParams = mock_vamm::VammParams;
 
 impl Default for ExtBuilder {
@@ -63,16 +65,16 @@ proptest! {
 	#[test]
 	fn mock_oracle_asset_support_reflects_genesis_config(asset_support in any::<Option<bool>>()) {
 		ExtBuilder { oracle_asset_support: asset_support, ..Default::default() }
-		.build()
-		.execute_with(|| {
-			let is_supported = <Runtime as Config>::Oracle::is_supported(DOT);
-			match asset_support {
-				Some(support) => assert_ok!(is_supported, support),
-				None => {
-					assert_err!(is_supported, mock_oracle::Error::<Runtime>::CantCheckAssetSupport)
-				},
-			}
-		})
+			.build()
+			.execute_with(|| {
+				let is_supported = <Runtime as Config>::Oracle::is_supported(DOT);
+				match asset_support {
+					Some(support) => assert_ok!(is_supported, support),
+					None => {
+						assert_err!(is_supported, mock_oracle::Error::<Runtime>::CantCheckAssetSupport)
+					},
+				}
+			})
 	}
 }
 
@@ -81,7 +83,7 @@ proptest! {
 	#[test]
 	fn mock_vamm_created_id_reflects_genesis_config(vamm_id in any::<Option<VammId>>()) {
 		ExtBuilder { vamm_id , ..Default::default() }.build().execute_with(|| {
-			let created = <Runtime as Config>::Vamm::create(VammParams {});
+			let created = <Runtime as Config>::Vamm::create(&VammParams {});
 			match vamm_id {
 				Some(id) => assert_ok!(created, id),
 				None => assert_err!(created, mock_vamm::Error::<Runtime>::FailedToCreateVamm),
@@ -146,7 +148,7 @@ fn add_margin_returns_transfer_error() {
 	ExtBuilder::default().build().execute_with(|| {
 		let origin = Origin::signed(ALICE);
 		assert_noop!(
-			ClearingHouse::add_margin(origin, USDC, 1_000u32.into()),
+			TestPallet::add_margin(origin, USDC, 1_000u32.into()),
 			TokenError::<Runtime>::BalanceTooLow
 		);
 	});
@@ -159,7 +161,7 @@ fn deposit_unsupported_collateral_returns_error() {
 		.execute_with(|| {
 			let origin = Origin::signed(ALICE);
 			assert_noop!(
-				ClearingHouse::add_margin(origin, PICA, 1_000u32.into()),
+				TestPallet::add_margin(origin, PICA, 1_000u32.into()),
 				Error::<Runtime>::UnsupportedCollateralType
 			);
 		});
@@ -176,7 +178,7 @@ fn deposit_supported_collateral_succeeds() {
 			let amount: Balance = 1_000u32.into();
 
 			let before = AccountsMargin::<Runtime>::get(&account).unwrap_or_default();
-			assert_ok!(ClearingHouse::add_margin(Origin::signed(account), asset, amount));
+			assert_ok!(TestPallet::add_margin(Origin::signed(account), asset, amount));
 
 			System::assert_last_event(Event::MarginAdded { account, asset, amount }.into());
 
@@ -194,40 +196,37 @@ fn deposit_supported_collateral_succeeds() {
 fn create_first_market_succeeds() {
 	ExtBuilder::default().build().execute_with(|| {
 		run_to_block(10); // Timestamp unix time does not work properly at genesis
-		let old_count = ClearingHouse::market_count();
+		let old_count = TestPallet::market_count();
 		let block_time_now = <Timestamp as UnixTime>::now().as_secs();
 
-		let asset = DOT;
-		// 10x max leverage to open a position
-		let margin_ratio_initial = FixedI128::from_float(0.1);
-		// liquidate when above 50x leverage
-		let margin_ratio_maintenance = FixedI128::from_float(0.02);
-		let funding_frequency = ONE_HOUR;
-		let funding_period = ONE_HOUR * 24;
-		assert_ok!(ClearingHouse::create_market(
-			Origin::signed(ALICE),
-			asset,
-			VammParams {},
-			margin_ratio_initial,
-			margin_ratio_maintenance,
-			funding_frequency,
-			funding_period
-		));
+		let config = MarketConfig {
+			asset: DOT,
+			vamm_params: VammParams {},
+			// 10x max leverage to open a position
+			margin_ratio_initial: FixedI128::from_float(0.1),
+			// liquidate when above 50x leverage
+			margin_ratio_maintenance: FixedI128::from_float(0.02),
+			funding_frequency: ONE_HOUR,
+			funding_period: ONE_HOUR * 24,
+		};
+		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config.clone()));
 
 		// Ensure first market id is 0 (we know its type since it's defined in the mock runtime)
-		System::assert_last_event(Event::MarketCreated { market: 0u64, asset }.into());
+		System::assert_last_event(
+			Event::MarketCreated { market: 0u64, asset: config.asset }.into(),
+		);
 		assert!(Markets::<Runtime>::contains_key(0u64));
 
 		// Ensure market count is increased by 1
-		assert_eq!(ClearingHouse::market_count(), old_count + 1);
+		assert_eq!(TestPallet::market_count(), old_count + 1);
 
 		// Ensure new market matches creation parameters
-		let market = ClearingHouse::get_market(0u64).unwrap();
-		assert_eq!(market.asset_id, asset);
-		assert_eq!(market.margin_ratio_initial, margin_ratio_initial);
-		assert_eq!(market.margin_ratio_maintenance, margin_ratio_maintenance);
-		assert_eq!(market.funding_frequency, funding_frequency);
-		assert_eq!(market.funding_period, funding_period);
+		let market = TestPallet::get_market(0u64).unwrap();
+		assert_eq!(market.asset_id, config.asset);
+		assert_eq!(market.margin_ratio_initial, config.margin_ratio_initial);
+		assert_eq!(market.margin_ratio_maintenance, config.margin_ratio_maintenance);
+		assert_eq!(market.funding_frequency, config.funding_frequency);
+		assert_eq!(market.funding_period, config.funding_period);
 
 		// Ensure last funding rate timestamp is the same as this block's time
 		assert_eq!(market.funding_rate_ts, block_time_now);
@@ -240,14 +239,16 @@ fn fails_to_create_market_for_unsupported_asset_by_oracle() {
 		.build()
 		.execute_with(|| {
 			assert_noop!(
-				ClearingHouse::create_market(
+				TestPallet::create_market(
 					Origin::signed(ALICE),
-					DOT,
-					VammParams {},
-					FixedI128::from_float(0.1),
-					FixedI128::from_float(0.02),
-					ONE_HOUR,
-					ONE_HOUR * 24,
+					MarketConfig {
+						asset: DOT,
+						vamm_params: VammParams {},
+						margin_ratio_initial: FixedI128::from_float(0.1),
+						margin_ratio_maintenance: FixedI128::from_float(0.02),
+						funding_frequency: ONE_HOUR,
+						funding_period: ONE_HOUR * 24
+					},
 				),
 				Error::<Runtime>::NoPriceFeedForAsset
 			);
@@ -258,14 +259,16 @@ fn fails_to_create_market_for_unsupported_asset_by_oracle() {
 fn fails_to_create_market_if_fails_to_create_vamm() {
 	ExtBuilder { vamm_id: None, ..Default::default() }.build().execute_with(|| {
 		assert_noop!(
-			ClearingHouse::create_market(
+			TestPallet::create_market(
 				Origin::signed(ALICE),
-				DOT,
-				VammParams {},
-				FixedI128::from_float(0.1),
-				FixedI128::from_float(0.02),
-				ONE_HOUR,
-				ONE_HOUR * 24,
+				MarketConfig {
+					asset: DOT,
+					vamm_params: VammParams {},
+					margin_ratio_initial: FixedI128::from_float(0.1),
+					margin_ratio_maintenance: FixedI128::from_float(0.02),
+					funding_frequency: ONE_HOUR,
+					funding_period: ONE_HOUR * 24,
+				}
 			),
 			mock_vamm::Error::<Runtime>::FailedToCreateVamm
 		);
@@ -277,14 +280,16 @@ proptest! {
 	fn fails_to_create_market_if_funding_period_is_not_multiple_of_frequency(rem in 1..ONE_HOUR) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_noop!(
-				ClearingHouse::create_market(
+				TestPallet::create_market(
 					Origin::signed(ALICE),
-					DOT,
-					VammParams {},
-					FixedI128::from_float(0.1),
-					FixedI128::from_float(0.02),
-					ONE_HOUR,
-					ONE_HOUR * 2 + rem
+					MarketConfig {
+						asset: DOT,
+						vamm_params: VammParams {},
+						margin_ratio_initial: FixedI128::from_float(0.1),
+						margin_ratio_maintenance: FixedI128::from_float(0.02),
+						funding_frequency: ONE_HOUR,
+						funding_period: ONE_HOUR * 2 + rem
+					}
 				),
 				Error::<Runtime>::FundingPeriodNotMultipleOfFrequency
 			);
@@ -295,7 +300,7 @@ proptest! {
 proptest! {
 	#[test]
 	fn fails_to_create_market_if_either_funding_period_or_frequency_are_zero(
-		(period, freq) in prop_oneof![
+		(funding_period, funding_frequency) in prop_oneof![
 			(Just(0), any::<DurationSeconds>()),
 			(any::<DurationSeconds>(), Just(0)),
 			Just((0, 0))
@@ -303,14 +308,16 @@ proptest! {
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_noop!(
-				ClearingHouse::create_market(
+				TestPallet::create_market(
 					Origin::signed(ALICE),
-					DOT,
-					VammParams {},
-					FixedI128::from_float(0.1),
-					FixedI128::from_float(0.02),
-					freq,
-					period
+					MarketConfig {
+						asset: DOT,
+						vamm_params: VammParams {},
+						margin_ratio_initial: FixedI128::from_float(0.1),
+						margin_ratio_maintenance: FixedI128::from_float(0.02),
+						funding_frequency,
+						funding_period
+					}
 				),
 				Error::<Runtime>::ZeroLengthFundingPeriodOrFrequency
 			);
@@ -321,7 +328,7 @@ proptest! {
 proptest! {
 	#[test]
 	fn fails_to_create_market_if_margin_ratios_not_between_zero_and_one(
-		(initial, maintenance) in prop_oneof![
+		(margin_ratio_initial, margin_ratio_maintenance) in prop_oneof![
 			(valid_margin_ratio_req(), invalid_margin_ratio_req()),
 			(invalid_margin_ratio_req(), valid_margin_ratio_req()),
 			(invalid_margin_ratio_req(), invalid_margin_ratio_req())
@@ -329,14 +336,16 @@ proptest! {
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_noop!(
-				ClearingHouse::create_market(
+				TestPallet::create_market(
 					Origin::signed(ALICE),
-					DOT,
-					VammParams {},
-					initial,
-					maintenance,
-					ONE_HOUR,
-					ONE_HOUR * 24
+					MarketConfig {
+						asset: DOT,
+						vamm_params: VammParams {},
+						margin_ratio_initial,
+						margin_ratio_maintenance,
+						funding_frequency: ONE_HOUR,
+						funding_period: ONE_HOUR * 24
+					}
 				),
 				Error::<Runtime>::InvalidMarginRatioRequirement
 			);
@@ -347,18 +356,20 @@ proptest! {
 proptest! {
 	#[test]
 	fn fails_to_create_market_if_initial_margin_ratio_le_maintenance(
-		(initial, maintenance) in initial_le_maintenance_margin_ratio()
+		(margin_ratio_initial, margin_ratio_maintenance) in initial_le_maintenance_margin_ratio()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_noop!(
-				ClearingHouse::create_market(
+				TestPallet::create_market(
 					Origin::signed(ALICE),
-					DOT,
-					VammParams {},
-					initial,
-					maintenance,
-					ONE_HOUR,
-					ONE_HOUR * 24
+					MarketConfig {
+						asset: DOT,
+						vamm_params: VammParams {},
+						margin_ratio_initial,
+						margin_ratio_maintenance,
+						funding_frequency: ONE_HOUR,
+						funding_period: ONE_HOUR * 24
+					}
 				),
 				Error::<Runtime>::InitialMarginRatioLessThanMaintenance
 			);

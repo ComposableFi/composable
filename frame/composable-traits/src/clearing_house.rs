@@ -15,14 +15,10 @@ pub trait ClearingHouse {
 	type AssetId;
 	/// The balance type for an account
 	type Balance;
-	/// Signed decimal number implementation
-	type Decimal;
-	/// Time span in seconds (unsigned)
-	type DurationSeconds;
 	/// The identifier type for each market
 	type MarketId;
-	/// Parameters for creating and initializing a new vAMM instance.
-	type VammParams;
+	/// Specification for market creation
+	type MarketConfig;
 
 	/// Add margin to a user's account
 	///
@@ -47,14 +43,7 @@ pub trait ClearingHouse {
 	///
 	/// ## Returns
 	/// The new market id, if successful
-	fn create_market(
-		asset: Self::AssetId,
-		vamm_params: Self::VammParams,
-		margin_ratio_initial: Self::Decimal,
-		margin_ratio_maintenance: Self::Decimal,
-		funding_frequency: Self::DurationSeconds,
-		funding_period: Self::DurationSeconds,
-	) -> Result<Self::MarketId, DispatchError>;
+	fn create_market(config: &Self::MarketConfig) -> Result<Self::MarketId, DispatchError>;
 }
 
 /// Exposes functionality for querying funding-related quantities of synthetic instruments

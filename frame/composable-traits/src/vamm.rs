@@ -15,7 +15,7 @@ pub trait Vamm {
 	type Decimal: FixedPointNumber;
 
 	/// Create a new virtual AMM and return its id
-	fn create(info: Self::VammParams) -> Result<Self::VammId, DispatchError>;
+	fn create(info: &Self::VammParams) -> Result<Self::VammId, DispatchError>;
 
 	/// Compute the time-weighted average price of a virtual AMM
 	fn get_twap(vamm: &Self::VammId) -> Result<Self::Decimal, DispatchError>;

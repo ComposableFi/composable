@@ -87,7 +87,7 @@ pub mod pallet {
 		type Decimal = T::Decimal;
 
 		#[allow(unused_variables)]
-		fn create(info: Self::VammParams) -> Result<Self::VammId, DispatchError> {
+		fn create(info: &Self::VammParams) -> Result<Self::VammId, DispatchError> {
 			if let Some(id) = Self::vamm_id() {
 				Ok(id)
 			} else {

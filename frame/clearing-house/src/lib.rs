@@ -168,6 +168,23 @@ pub mod pallet {
 		last_cum_funding: Decimal,
 	}
 
+	/// Specifications for market creation
+	#[derive(Encode, Decode, PartialEq, Clone, Debug, TypeInfo)]
+	pub struct MarketConfig<AssetId, VammParams, Decimal> {
+		/// Asset id of the underlying for the derivatives market
+		pub asset: AssetId,
+		/// Parameters for creating and initializing the vAMM for price discovery
+		pub vamm_params: VammParams,
+		/// Minimum margin ratio for opening a new position
+		pub margin_ratio_initial: Decimal,
+		/// Margin ratio below which liquidations can occur
+		pub margin_ratio_maintenance: Decimal,
+		/// Time span between each funding rate update
+		pub funding_frequency: DurationSeconds,
+		/// Period of time over which funding (the difference between mark and
+		pub funding_period: DurationSeconds,
+	}
+
 	/// Data relating to a perpetual contracts market
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
 	pub struct Market<AssetId, Decimal, VammId> {
@@ -205,6 +222,7 @@ pub mod pallet {
 	type VammParamsOf<T> = <<T as Config>::Vamm as Vamm>::VammParams;
 	type VammIdOf<T> = <<T as Config>::Vamm as Vamm>::VammId;
 	type PositionOf<T> = Position<MarketIdOf<T>, DecimalOf<T>>;
+	type MarketConfigOf<T> = MarketConfig<AssetIdOf<T>, VammParamsOf<T>, DecimalOf<T>>;
 	type MarketOf<T> = Market<AssetIdOf<T>, DecimalOf<T>, VammIdOf<T>>;
 
 	// ----------------------------------------------------------------------------------------------------
@@ -409,24 +427,9 @@ pub mod pallet {
 		/// # Weight/Runtime
 		/// `O(1)`
 		#[pallet::weight(<T as Config>::WeightInfo::create_market())]
-		pub fn create_market(
-			origin: OriginFor<T>,
-			asset: AssetIdOf<T>,
-			vamm_params: VammParamsOf<T>,
-			margin_ratio_initial: T::Decimal,
-			margin_ratio_maintenance: T::Decimal,
-			funding_frequency: DurationSeconds,
-			funding_period: DurationSeconds,
-		) -> DispatchResult {
+		pub fn create_market(origin: OriginFor<T>, config: MarketConfigOf<T>) -> DispatchResult {
 			ensure_signed(origin)?;
-			let _ = <Self as ClearingHouse>::create_market(
-				asset,
-				vamm_params,
-				margin_ratio_initial,
-				margin_ratio_maintenance,
-				funding_frequency,
-				funding_period,
-			)?;
+			let _ = <Self as ClearingHouse>::create_market(&config)?;
 			Ok(())
 		}
 	}
@@ -439,10 +442,8 @@ pub mod pallet {
 		type AccountId = T::AccountId;
 		type AssetId = AssetIdOf<T>;
 		type Balance = T::Balance;
-		type Decimal = T::Decimal;
-		type DurationSeconds = DurationSeconds;
 		type MarketId = T::MarketId;
-		type VammParams = VammParamsOf<T>;
+		type MarketConfig = MarketConfigOf<T>;
 
 		fn add_margin(
 			account: &Self::AccountId,
@@ -465,44 +466,37 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn create_market(
-			asset: Self::AssetId,
-			vamm_params: Self::VammParams,
-			margin_ratio_initial: Self::Decimal,
-			margin_ratio_maintenance: Self::Decimal,
-			funding_frequency: Self::DurationSeconds,
-			funding_period: Self::DurationSeconds,
-		) -> Result<Self::MarketId, DispatchError> {
+		fn create_market(config: &Self::MarketConfig) -> Result<Self::MarketId, DispatchError> {
 			MarketCount::<T>::try_mutate(|id| {
-				ensure!(T::Oracle::is_supported(asset)?, Error::<T>::NoPriceFeedForAsset);
+				ensure!(T::Oracle::is_supported(config.asset)?, Error::<T>::NoPriceFeedForAsset);
 				ensure!(
-					funding_period > 0 && funding_frequency > 0,
+					config.funding_period > 0 && config.funding_frequency > 0,
 					Error::<T>::ZeroLengthFundingPeriodOrFrequency
 				);
 				ensure!(
-					funding_period.rem_euclid(funding_frequency) == 0,
+					config.funding_period.rem_euclid(config.funding_frequency) == 0,
 					Error::<T>::FundingPeriodNotMultipleOfFrequency
 				);
 				ensure!(
-					margin_ratio_initial > T::Decimal::zero() &&
-						margin_ratio_initial < T::Decimal::one() &&
-						margin_ratio_maintenance > T::Decimal::zero() &&
-						margin_ratio_maintenance < T::Decimal::one(),
+					config.margin_ratio_initial > T::Decimal::zero() &&
+						config.margin_ratio_initial < T::Decimal::one() &&
+						config.margin_ratio_maintenance > T::Decimal::zero() &&
+						config.margin_ratio_maintenance < T::Decimal::one(),
 					Error::<T>::InvalidMarginRatioRequirement
 				);
 				ensure!(
-					margin_ratio_initial > margin_ratio_maintenance,
+					config.margin_ratio_initial > config.margin_ratio_maintenance,
 					Error::<T>::InitialMarginRatioLessThanMaintenance
 				);
 
 				let market_id = id.clone();
 				let market = Market {
-					asset_id: asset,
-					vamm_id: T::Vamm::create(vamm_params)?,
-					margin_ratio_initial,
-					margin_ratio_maintenance,
-					funding_frequency,
-					funding_period,
+					asset_id: config.asset,
+					vamm_id: T::Vamm::create(&config.vamm_params)?,
+					margin_ratio_initial: config.margin_ratio_initial,
+					margin_ratio_maintenance: config.margin_ratio_maintenance,
+					funding_frequency: config.funding_frequency,
+					funding_period: config.funding_period,
 					cum_funding_rate: Default::default(),
 					funding_rate_ts: T::UnixTime::now().as_secs(),
 				};
@@ -511,7 +505,10 @@ pub mod pallet {
 				// Change the market count at the end
 				*id = id.checked_add(&One::one()).ok_or(ArithmeticError::Overflow)?;
 
-				Self::deposit_event(Event::MarketCreated { market: market_id.clone(), asset });
+				Self::deposit_event(Event::MarketCreated {
+					market: market_id.clone(),
+					asset: config.asset,
+				});
 				Ok(market_id)
 			})
 		}

@@ -45,7 +45,7 @@ frame_support::construct_runtime!(
 		Assets: pallet_assets::{Pallet, Call, Storage},
 		Vamm: mock_vamm::{Pallet, Storage},
 		Oracle: mock_oracle::{Pallet, Storage},
-		ClearingHouse: clearing_house::{Pallet, Call, Storage, Event<T>},
+		TestPallet: clearing_house::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -223,7 +223,7 @@ impl DeFiComposableConfig for Runtime {
 }
 
 parameter_types! {
-	pub const ClearingHouseId: PalletId = PalletId(*b"test_pid");
+	pub const TestPalletId: PalletId = PalletId(*b"test_pid");
 }
 
 impl clearing_house::Config for Runtime {
@@ -235,7 +235,7 @@ impl clearing_house::Config for Runtime {
 	type Vamm = Vamm;
 	type Oracle = Oracle;
 	type Assets = Assets;
-	type PalletId = ClearingHouseId;
+	type PalletId = TestPalletId;
 }
 
 // ----------------------------------------------------------------------------------------------------
