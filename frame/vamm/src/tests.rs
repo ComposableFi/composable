@@ -81,21 +81,24 @@ proptest! {
 		});
 	}
 
-	fn create_vamm_zero_base_asset_reserves_error(base_asset_reserves in ZERO_RESERVE..=ZERO_RESERVE, quote_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE, peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE) {
+
+	fn create_vamm_zero_base_asset_reserves_error(quote_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE, peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE) {
 		ExtBuilder::default().build().execute_with(|| {
-			assert_noop!(Vamm::create(base_asset_reserves, quote_asset_reserves, peg_multiplier), Error::<MockRuntime>::BaseAssetReserveIsZero);
+			assert_noop!(Vamm::create(ZERO_RESERVE, quote_asset_reserves, peg_multiplier), Error::<MockRuntime>::BaseAssetReserveIsZero);
 		})
 	}
 
-	fn create_vamm_zero_quote_asset_reserves_error(base_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE, quote_asset_reserves in ZERO_RESERVE..=ZERO_RESERVE, peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE) {
+
+	fn create_vamm_zero_quote_asset_reserves_error(base_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE, peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE) {
 		ExtBuilder::default().build().execute_with(|| {
-			assert_noop!(Vamm::create(base_asset_reserves, quote_asset_reserves, peg_multiplier), Error::<MockRuntime>::QuoteAssetReserveIsZero);
+			assert_noop!(Vamm::create(base_asset_reserves, ZERO_RESERVE, peg_multiplier), Error::<MockRuntime>::QuoteAssetReserveIsZero);
 		})
 	}
 
-	fn create_vamm_zero_peg_multiplier_error(base_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE, quote_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE, peg_multiplier in  ZERO_RESERVE..=ZERO_RESERVE) {
+
+	fn create_vamm_zero_peg_multiplier_error(base_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE, quote_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE ) {
 		ExtBuilder::default().build().execute_with(|| {
-			assert_noop!(Vamm::create(base_asset_reserves, quote_asset_reserves, peg_multiplier), Error::<MockRuntime>::PegMultiplierIsZero);
+			assert_noop!(Vamm::create(base_asset_reserves, quote_asset_reserves, ZERO_RESERVE), Error::<MockRuntime>::PegMultiplierIsZero);
 		})
 	}
 
