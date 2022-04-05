@@ -1,10 +1,10 @@
 use crate::{
 	mock::{Balance, Event, ExtBuilder, MockRuntime, Origin, System, Timestamp, Vamm},
 	pallet,
-	pallet::{Error, VammMap},
+	pallet::{Error, VammMap, VammState},
 };
 
-use composable_traits::vamm::{Vamm as VammTrait, VammState};
+use composable_traits::vamm::Vamm as VammTrait;
 
 use proptest::prelude::*;
 
