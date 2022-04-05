@@ -228,11 +228,11 @@ pub mod pallet {
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
-		/// This error is thrown when the caller tries to set `base_asset_reserves` to zero.
+		/// Tried to set `base_asset_reserves` to zero.
 		BaseAssetReserveIsZero,
-		/// This error is thrown when the caller tries to set `quote_asset_reserves` to zero.
+		/// Tried to set `quote_asset_reserves` to zero.
 		QuoteAssetReserveIsZero,
-		/// This error is thrown when the caller tries to set `peg_multiplier` to zero.
+		/// Tried to set `peg_multiplier` to zero.
 		PegMultiplierIsZero,
 	}
 
