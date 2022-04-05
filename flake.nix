@@ -1,14 +1,19 @@
 {
   description = "Composable Finance";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    rust-overlay.url = "github:oxalica/rust-overlay/2af4f775282ff9cb458c3ef6f30c0a8f689d202b";
+    rust-overlay.inputs.nixpkgs.follows = "nixpkgs";
+  };
 
-  outputs = { self, nixpkgs }:
+  outputs = { self, nixpkgs, rust-overlay }:
     let
+      overlays = [ (import rust-overlay) ];
       supportedSystems =
         [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin" ];
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-      nixpkgsFor = forAllSystems (system: import nixpkgs { inherit system; });
+      nixpkgsFor = forAllSystems (system: import nixpkgs { inherit system overlays; });
     in {
       nixopsConfigurations.default =
         let pkgs = import nixpkgs {};
@@ -49,22 +54,30 @@
               llvmPackages_latest.llvm
               llvmPackages_latest.bintools
               zlib.out
-              rustup
               xorriso
               grub2
               qemu
               llvmPackages_latest.lld
               python3
+              openssl.dev
+              pkg-config
+              # rustup
+              # (rust-bin.stable.latest.default.override {
+              #   extensions = [ "rust-src" ];
+              # })
+              (rust-bin.nightly."2022-02-01".default.override {
+                targets = [ "wasm32-unknown-unknown" ];
+              })
             ];
-            RUSTC_VERSION = "stable";
+            # RUSTC_VERSION = "stable";
             # https://github.com/rust-lang/rust-bindgen#environment-variables
             LIBCLANG_PATH= pkgs.lib.makeLibraryPath [ pkgs.llvmPackages_latest.libclang.lib ];
             HISTFILE=toString ./.history;
-            shellHook = ''
-              export PATH=$PATH:~/.cargo/bin
-              export PATH=$PATH:~/.rustup/toolchains/$RUSTC_VERSION-aarch64-unknown-linux-gnu/bin/
-              rustup target add wasm32-unknown-unknown --toolchain nightly-2022-02-01
-              '';
+            # shellHook = ''
+            #   export PATH=$PATH:~/.cargo/bin
+            #   export PATH=$PATH:~/.rustup/toolchains/$RUSTC_VERSION-aarch64-unknown-linux-gnu/bin/
+            #   rustup target add wasm32-unknown-unknown --toolchain nightly-2022-02-01
+            #   '';
 
 
             # Disabled because no aarch64 support:
