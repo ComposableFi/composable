@@ -2,7 +2,6 @@
 //!
 //! Common traits for clearing house implementations
 use frame_support::pallet_prelude::DispatchError;
-use sp_runtime::FixedPointNumber;
 
 /// Exposes functionality for trading of perpetual contracts
 ///
@@ -16,8 +15,8 @@ pub trait ClearingHouse {
 	type AssetId;
 	/// The balance type for an account
 	type Balance;
-	/// Signed fixed point number implementation
-	type Decimal: FixedPointNumber;
+	/// Signed decimal number implementation
+	type Decimal;
 	/// Time span in seconds (unsigned)
 	type DurationSeconds;
 	/// The identifier type for each market
@@ -43,8 +42,8 @@ pub trait ClearingHouse {
 	/// - `margin_ratio_initial`: Minimum margin ratio for opening a new position
 	/// - `margin_ratio_maintenance`: Margin ratio below which liquidations can occur
 	/// - `funding_frequency`: Time span between each funding rate update
-	/// - `funding_period`: Period of time over which funding (the difference between mark and
-	///   index prices) gets paid.
+	/// - `funding_period`: Period of time over which funding (the difference between mark and index
+	///   prices) gets paid.
 	///
 	/// ## Returns
 	/// The new market id, if successful
@@ -67,8 +66,8 @@ pub trait ClearingHouse {
 pub trait Instruments {
 	/// Data relating to a derivatives market
 	type Market;
-	/// Signed fixed point number implementation
-	type Decimal: FixedPointNumber;
+	/// Signed decimal number implementation
+	type Decimal;
 
 	/// Computes the funding rate for a derivatives market
 	///
@@ -78,6 +77,6 @@ pub trait Instruments {
 	/// * `market`: the derivatives [Market](Self::Market) data
 	///
 	/// ## Returns
-	/// The current funding rate as a fixed point number
+	/// The current funding rate as a signed decimal number
 	fn funding_rate(market: &Self::Market) -> Result<Self::Decimal, DispatchError>;
 }
