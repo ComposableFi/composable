@@ -274,14 +274,15 @@ pub mod pallet {
 		type VammId = VammIdOf<T>;
 		type Balance = BalanceOf<T>;
 
-		/// Creates a new virtual market.
+		/// Creates a new virtual automated market maker.
 		///
 		/// # Overview
-		/// In order for the caller to create new markets, it has to request it
-		/// to the VAMM, which is responsible to keep track of all active
-		/// markets. The VAMM creates the market, inserts it in storage,
-		/// deposits a [`Created`](Event::<T>::Created) event on the
-		/// blockchain and returns the new market ID to the caller.
+		/// In order for the caller to create new vamms, it has to request it to
+		/// the Vamms Pallet, which is responsible to keep track of and update
+		/// when requested all active virtual automated market makers. The Vamms
+		/// Pallet creates a new vamm, inserts it into storage, deposits a
+		/// [`Created`](Event::<T>::Created) event on the blockchain and returns
+		/// the new [`VammId`](Config::VammId) to the caller.
 		///
 		/// In the diagram below the Clearing House is depicted as the caller.
 		///
