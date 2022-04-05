@@ -86,7 +86,8 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn nft_count)]
 	#[allow(clippy::disallowed_type)]
-	pub type NFTCount<T: Config> = StorageValue<_, NFTInstanceId, ValueQuery, NFTCountOnEmpty<T>>;
+	pub type NFTCount<T: Config> =
+		StorageMap<_, Blake2_128Concat, NFTClass, NFTInstanceId, ValueQuery, NFTCountOnEmpty<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn instance)]
@@ -230,7 +231,7 @@ pub mod pallet {
 			key: &K,
 			value: &V,
 		) -> Result<Self::InstanceId, DispatchError> {
-			let instance = NFTCount::<T>::try_mutate(|x| -> Result<u128, DispatchError> {
+			let instance = NFTCount::<T>::try_mutate(class, |x| -> Result<u128, DispatchError> {
 				let id = *x;
 				*x = x.safe_add(&1)?;
 				Ok(id)
