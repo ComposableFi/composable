@@ -15,6 +15,15 @@ bounds to increase their share of the reward. Depending on the offer, buyers
 may or may not get their initial investment on the bond back. If there is a 
 reward for the bond, buyers will always get their share of the reward.
 
+## Use cases
+
+- Staking. User locks amount for some period of time, gets reward in the end or vested. Stake
+  returns to user in the end.
+- Vesting. User offers amount and ensure that recepients has 'ticket' tokens to bond to get
+  reward.
+- Sell/Exchange/Trade. User makes bond offer, other users takes offer in exchange for other
+  amount..
+
 ## Sample Use Case
 
 Alice creates a new bound offer with some number of bounds each priced at the 
@@ -30,6 +39,12 @@ initial invested amount.
 Alice may cancel the offer and prevent new bonds on the offer. Once canceled she 
 gets her native tokens back. All existing maturity periods continue to be
 executed.
+
+## Concerns
+
+Protocol is not protected from sniper bots, whales and other attackers.
+Could lock amounts after into time locked fNFTs, vested, or offer to depend on time and already
+taken amount.
 
 ## Bond Offer Workflow
 
