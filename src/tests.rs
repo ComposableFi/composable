@@ -160,7 +160,6 @@ async fn get_mmr_update(
 
 #[tokio::test]
 async fn test_ingest_mmr_with_proof() {
-    //let _ = env_logger::init();
     let store = StorageMock::new();
     let mut beef_light_client = BeefyLightClient::new(store);
     let client = subxt::ClientBuilder::new()
@@ -322,7 +321,6 @@ fn should_fail_with_invalid_validator_set_id() {
 
 #[tokio::test]
 async fn verify_parachain_headers() {
-    //let _ = env_logger::init();
     let store = StorageMock::new();
     let mut beef_light_client = BeefyLightClient::new(store);
     let client = subxt::ClientBuilder::new()
