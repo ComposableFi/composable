@@ -142,16 +142,4 @@ proptest! {
 			assert!(VammMap::<MockRuntime>::contains_key(0u128));
 		});
 	}
-
-
-	fn create_vamm_updates_storage_counter(base_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE, quote_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE, peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE) {
-		ExtBuilder::default().build().execute_with(|| {
-			assert_eq!(Vamm::vamm_count(), 0u128);
-
-			let vamm_created_ok = Vamm::create(base_asset_reserves, quote_asset_reserves, peg_multiplier);
-			assert_ok!(vamm_created_ok);
-
-			assert_eq!(Vamm::vamm_count(), 1u128);
-		});
-	}
 }
