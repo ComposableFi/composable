@@ -10,12 +10,15 @@ pub use crate::{
 	pallet::*,
 };
 use composable_traits::{
-	clearing_house::ClearingHouse,
+	clearing_house::{ClearingHouse, Instruments},
 	oracle::Oracle,
 	time::{DurationSeconds, ONE_HOUR},
 	vamm::Vamm,
 };
-use frame_support::{assert_err, assert_noop, assert_ok, pallet_prelude::Hooks, traits::UnixTime};
+use frame_support::{
+	assert_err, assert_noop, assert_ok, assert_storage_noop, pallet_prelude::Hooks,
+	traits::UnixTime,
+};
 use orml_tokens::Error as TokenError;
 use proptest::{
 	num::f64::{NEGATIVE, POSITIVE, ZERO},
@@ -333,4 +336,19 @@ proptest! {
 			);
 		})
 	}
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                          Instruments trait
+// ----------------------------------------------------------------------------------------------------
+
+#[test]
+fn funding_rate_query_leaves_storage_intact() {
+	ExtBuilder::default().build().execute_with(|| {
+		let market_id =
+			<TestPallet as ClearingHouse>::create_market(&valid_market_config()).unwrap();
+		let market = TestPallet::get_market(market_id).unwrap();
+
+		assert_storage_noop!(assert_ok!(<TestPallet as Instruments>::funding_rate(&market)));
+	})
 }
