@@ -349,7 +349,7 @@ fn add_liquidity_does_not_update_storage_if_user_does_not_have_balance() {
     ExtBuilder::default().build().execute_with(|| {
         let config = VaultConfigBuilder::default().build();
         assert_ok!(Instrumental::create(Origin::signed(ADMIN), config));
-
+        
         assert_storage_noop!(
             Instrumental::add_liquidity(Origin::signed(ADMIN), USDC::ID, USDC::units(100))
         );
