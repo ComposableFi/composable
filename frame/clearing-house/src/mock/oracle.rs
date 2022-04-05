@@ -6,6 +6,7 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 
+	use codec::FullCodec;
 	use composable_traits::{
 		currency::LocalAssets,
 		defi::{CurrencyPair, Ratio},
@@ -28,7 +29,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type AssetId: Copy;
-		type Balance: From<u64>;
+		type Balance: From<u64> + FullCodec + MaxEncodedLen + TypeInfo;
 		type Timestamp;
 		type LocalAssets: LocalAssets<Self::AssetId>;
 		type MaxAnswerBound: Get<u32>;
@@ -42,12 +43,16 @@ pub mod pallet {
 	#[derive(Default)]
 	pub struct GenesisConfig {
 		pub supports_assets: Option<bool>,
+		pub twap: Option<u64>,
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			SupportsAssets::<T>::set(self.supports_assets)
+			SupportsAssets::<T>::set(self.supports_assets);
+			if let Some(twap) = self.twap {
+				Twap::<T>::set(Some(twap.into()));
+			}
 		}
 	}
 
@@ -58,6 +63,7 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		CantCheckAssetSupport,
+		CantComputeTwap,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -67,6 +73,10 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn supports_assets)]
 	pub type SupportsAssets<T: Config> = StorageValue<_, bool, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn hardcoded_twap)]
+	pub type Twap<T: Config> = StorageValue<_, T::Balance, OptionQuery>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Trait Implementations
@@ -99,7 +109,11 @@ pub mod pallet {
 			of: Self::AssetId,
 			weighting: Vec<Self::Balance>,
 		) -> Result<Self::Balance, DispatchError> {
-			unimplemented!()
+			if let Some(twap) = Self::hardcoded_twap() {
+				Ok(twap)
+			} else {
+				Err(Error::<T>::CantComputeTwap.into())
+			}
 		}
 
 		fn get_ratio(pair: CurrencyPair<Self::AssetId>) -> Result<Ratio, DispatchError> {

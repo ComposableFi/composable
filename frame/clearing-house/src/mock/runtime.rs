@@ -247,7 +247,9 @@ pub struct ExtBuilder {
 	pub balances: Vec<(AccountId, AssetId, Balance)>,
 	pub collateral_types: Vec<AssetId>,
 	pub vamm_id: Option<VammId>,
+	pub vamm_twap: Option<Decimal>,
 	pub oracle_asset_support: Option<bool>,
+	pub oracle_twap: Option<u64>,
 }
 
 impl ExtBuilder {
@@ -268,12 +270,14 @@ impl ExtBuilder {
 			.assimilate_storage(&mut storage)
 			.unwrap();
 
-		mock_vamm::GenesisConfig::<Runtime> { vamm_id: self.vamm_id }
+		mock_vamm::GenesisConfig::<Runtime> { vamm_id: self.vamm_id, twap: self.vamm_twap }
 			.assimilate_storage(&mut storage)
 			.unwrap();
 
-		let oracle_genesis =
-			mock_oracle::GenesisConfig { supports_assets: self.oracle_asset_support };
+		let oracle_genesis = mock_oracle::GenesisConfig {
+			supports_assets: self.oracle_asset_support,
+			twap: self.oracle_twap,
+		};
 		GenesisBuild::<Runtime>::assimilate_storage(&oracle_genesis, &mut storage).unwrap();
 
 		storage.into()

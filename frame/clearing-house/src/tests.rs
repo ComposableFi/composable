@@ -40,7 +40,9 @@ impl Default for ExtBuilder {
 			balances: vec![],
 			collateral_types: vec![USDC],
 			vamm_id: Some(0u64),
+			vamm_twap: Some(FixedI128::from_float(100.0)),
 			oracle_asset_support: Some(true),
+			oracle_twap: Some(10_000u64),
 		}
 	}
 }
