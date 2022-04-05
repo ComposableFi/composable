@@ -47,6 +47,7 @@ pub mod pallet {
 		math::{safe_multiply_by_rational, SafeAdd, SafeSub},
 		staking_rewards::{
 			ClaimStrategy, PositionState, Staking, StakingConfig, StakingNFT, StakingReward,
+			StakingTag,
 		},
 		time::{DurationSeconds, Timestamp},
 	};
@@ -80,7 +81,9 @@ pub mod pallet {
 	pub(crate) type MaxStakingPresetsOf<T> = <T as Config>::MaxStakingPresets;
 	pub(crate) type CollectedRewardsOf<T> =
 		BoundedBTreeMap<AssetIdOf<T>, CollectedReward, MaxRewardAssetsOf<T>>;
-	pub(crate) type StakingNFTOf<T> = StakingNFT<AssetIdOf<T>, BalanceOf<T>, CollectedRewardsOf<T>>;
+	pub(crate) type StakingNFTOf<T> =
+		StakingNFT<AccountIdOf<T>, AssetIdOf<T>, BalanceOf<T>, CollectedRewardsOf<T>>;
+	pub(crate) type StakingTagOf<T> = StakingTag<AccountIdOf<T>, CollectedRewardsOf<T>>;
 	pub(crate) type StakingConfigOf<T> = StakingConfig<
 		AccountIdOf<T>,
 		BoundedBTreeMap<DurationSeconds, Perbill, MaxStakingPresetsOf<T>>,
@@ -105,6 +108,8 @@ pub mod pallet {
 		/// A new reward has been submitted, rewarding `rewarded_asset` with an `amount` of
 		/// `reward_asset`.
 		NewReward { rewarded_asset: AssetIdOf<T>, reward_asset: AssetIdOf<T>, amount: BalanceOf<T> },
+		/// A nft has been tagged after expiry.
+		Tagged { who: AccountIdOf<T>, beneficiary: AccountIdOf<T> },
 	}
 
 	#[pallet::error]
@@ -115,6 +120,7 @@ pub mod pallet {
 		RewardAssetDisabled,
 		CannotClaimIfPending,
 		ClaimRequireRestake,
+		AlreadyTagged,
 	}
 
 	#[pallet::config]
@@ -159,6 +165,10 @@ pub mod pallet {
 		/// The duration of an epoch
 		#[pallet::constant]
 		type EpochDuration: Get<DurationSeconds>;
+
+		/// The penalty applied to the reward transfered to the tagger.
+		#[pallet::constant]
+		type TagRewardPenatly: Get<Perbill>;
 	}
 
 	#[pallet::storage]
@@ -282,9 +292,34 @@ pub mod pallet {
 			to: AccountIdOf<T>,
 			strategy: ClaimStrategy,
 		) -> DispatchResultWithPostInfo {
-			let owner = ensure_signed(origin)?;
-			T::ensure_protocol_nft_owner::<StakingNFTOf<T>>(&owner, &instance_id)?;
+			let who = ensure_signed(origin)?;
+			// Tagger and Owner are able to claim.
+			match Self::nft_tag(&instance_id)? {
+				Some(tag) if tag.tagger == who => {},
+				_ => {
+					T::ensure_protocol_nft_owner::<StakingNFTOf<T>>(&who, &instance_id)?;
+				},
+			}
 			<Self as Staking>::claim(&instance_id, &to, strategy)?;
+			Ok(().into())
+		}
+
+		/// Tag the given NFT.
+		///
+		/// Arguments
+		///
+		/// * `origin` the origin that signed this extrinsic. Can be anyone.
+		/// * `instance_id` the ID of the NFT we want to tag.
+		/// * `beneficiary` the beneficiary of the reward when claiming.
+		#[pallet::weight(10_000)]
+		#[transactional]
+		pub fn tag(
+			origin: OriginFor<T>,
+			instance_id: InstanceIdOf<T>,
+			beneficiary: AccountIdOf<T>,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			Self::do_tag(&who, &instance_id, &beneficiary)?;
 			Ok(().into())
 		}
 	}
@@ -361,6 +396,77 @@ pub mod pallet {
 				.try_into()
 				.expect("map does not alter the length; qed;")
 		}
+
+		pub(crate) fn nft_tag(
+			instance_id: &InstanceIdOf<T>,
+		) -> Result<Option<StakingTagOf<T>>, DispatchError> {
+			T::get_protocol_nft::<StakingNFTOf<T>>(instance_id).map(|nft| nft.tag)
+		}
+
+		pub(crate) fn do_tag(
+			tagger: &AccountIdOf<T>,
+			instance_id: &InstanceIdOf<T>,
+			beneficiary: &AccountIdOf<T>,
+		) -> DispatchResult {
+			T::try_mutate_protocol_nft(instance_id, |nft: &mut StakingNFTOf<T>| -> DispatchResult {
+				let now = Self::now();
+				let epoch_start = Self::epoch_start();
+				match (nft.state(now, epoch_start), &nft.tag) {
+					(PositionState::Expired, None) => {
+						let config = Self::get_config(&nft.asset)?;
+						nft.tag = Some(StakingTag {
+							tagger: tagger.clone(),
+							beneficiary: beneficiary.clone(),
+							collected_rewards: Self::current_collected_rewards(&nft.asset, &config),
+						});
+						Ok(())
+					},
+					_ => Err(Error::<T>::AlreadyTagged.into()),
+				}
+			})
+		}
+
+		pub(crate) fn collect_rewards(
+			asset: &AssetIdOf<T>,
+			shares: u128,
+			total_shares: u128,
+			previously_collected_rewards: &CollectedRewardsOf<T>,
+			current_collected_rewards: impl Fn(&AssetIdOf<T>) -> Option<CollectedReward>,
+			to: &AccountIdOf<T>,
+			penalty: Option<Perbill>,
+		) -> DispatchResult {
+			let compute_reward =
+				|delta_collected: CollectedReward| -> Result<BalanceOf<T>, DispatchError> {
+					// Always increment but delta can't be > max supply <= u128.
+					let normalized_delta = u128::try_from(delta_collected)?;
+					let reward = safe_multiply_by_rational(normalized_delta, shares, total_shares)?;
+					penalty
+						.map(|p| p.mul_floor(reward))
+						.unwrap_or(reward)
+						.try_into()
+						.map_err(|_| ArithmeticError::Overflow.into())
+				};
+			let rewards = previously_collected_rewards
+				.iter()
+				.map(|(reward_asset, previously_collected)| -> Result<(AssetIdOf<T>, BalanceOf<T>), DispatchError> {
+					match current_collected_rewards(reward_asset) {
+						Some(current_collected) => {
+							let delta_collected = current_collected.saturating_sub(*previously_collected);
+							let reward = compute_reward(delta_collected)?;
+							Ok((*reward_asset, reward))
+						},
+						None => Ok((*reward_asset, Zero::zero())),
+					}
+				})
+				.collect::<Result<Vec<_>, _>>()?;
+			let protocol_account = Self::account_id(asset);
+			for (reward_asset, reward) in
+				rewards.into_iter().filter(|(_, reward)| !reward.is_zero())
+			{
+				T::Assets::transfer(reward_asset, &protocol_account, to, reward, false)?;
+			}
+			Ok(())
+		}
 	}
 
 	impl<T: Config> StakingReward for Pallet<T> {
@@ -429,13 +535,14 @@ pub mod pallet {
 			// Actually create the NFT representing the user position.
 			let collected_rewards = Self::current_collected_rewards(asset, &config);
 			let now = Self::now();
-			let nft = StakingNFT {
-				asset,
+			let nft: StakingNFTOf<T> = StakingNFT {
+				asset: *asset,
 				stake: amount,
 				lock_date: now,
 				lock_duration: duration,
 				collected_rewards,
 				reward_multiplier,
+				tag: None,
 			};
 			let instance_id = T::mint_protocol_nft(from, &nft)?;
 			// Increment pending shares.
@@ -518,53 +625,110 @@ pub mod pallet {
 			T::try_mutate_protocol_nft(instance_id, |nft: &mut StakingNFTOf<T>| -> DispatchResult {
 				let now = Self::now();
 				let epoch_start = Self::epoch_start();
-				match (nft.state(now, epoch_start), strategy) {
-					(PositionState::Pending, _) => Err(Error::<T>::CannotClaimIfPending),
-					(PositionState::Expired, ClaimStrategy::RestakeIfExpired) => {
-						// NOTE(hussein-aitlahcen): make sure the position transition from Expired
-						// to Rewarding by making the new lock date started at the previous epoch.
+				let shares = nft.shares();
+				let total_shares = Self::total_shares(nft.asset);
+				let config = Self::get_config(&nft.asset)?;
+				match (nft.state(now, epoch_start), strategy, &mut nft.tag) {
+					// The position will start to be rewarded after the current epoch ended.
+					(PositionState::Pending, _, _) => Err(Error::<T>::CannotClaimIfPending),
+					// The user is claiming on an expired, tagged nft.
+					// Move the apppropriate reward to the tagger.
+					(PositionState::Expired, ClaimStrategy::RestakeOnExpiry, Some(tag)) => {
+						// NOTE(hussein-aitlahcen): make sure the position transition from
+						// Expired to Rewarding by making the new lock date started at the
+						// previous epoch.
 						nft.lock_date = epoch_start - 1;
+						Self::collect_rewards(
+							&nft.asset,
+							shares,
+							total_shares,
+							&nft.collected_rewards,
+							|x| tag.collected_rewards.get(x).copied(),
+							to,
+							None,
+						)?;
+						Self::collect_rewards(
+							&nft.asset,
+							shares,
+							total_shares,
+							&tag.collected_rewards,
+							|x| Self::collected_rewards(&nft.asset, x),
+							&tag.beneficiary,
+							Some(T::TagRewardPenatly::get()),
+						)?;
+						tag.collected_rewards =
+							Self::current_collected_rewards(&nft.asset, &config);
+						nft.collected_rewards = tag.collected_rewards.clone();
 						Ok(())
 					},
-					(PositionState::Expired, _) => Err(Error::<T>::ClaimRequireRestake),
-					(PositionState::LockedRewarding, _) => Ok(()),
+					// The user is claiming and asking for a lock refresh.
+					(PositionState::Expired, ClaimStrategy::RestakeOnExpiry, None) => {
+						// NOTE(hussein-aitlahcen): make sure the position transition from
+						// Expired to Rewarding by making the new lock date started at the
+						// previous epoch.
+						nft.lock_date = epoch_start - 1;
+						Self::collect_rewards(
+							&nft.asset,
+							shares,
+							total_shares,
+							&nft.collected_rewards,
+							|x| Self::collected_rewards(&nft.asset, x),
+							to,
+							None,
+						)?;
+						nft.collected_rewards =
+							Self::current_collected_rewards(&nft.asset, &config);
+						Ok(())
+					},
+					// Regardless of the claiming strategy, the user need to unstake. Otherwise
+					// extended rewards will go to the tagger.
+					(PositionState::Expired, ClaimStrategy::Canonical, Some(tag)) => {
+						// On first claim between expiry and tag, the user is able to claim this
+						// portion of reward.
+						Self::collect_rewards(
+							&nft.asset,
+							shares,
+							total_shares,
+							&nft.collected_rewards,
+							|x| tag.collected_rewards.get(x).copied(),
+							to,
+							None,
+						)?;
+						Self::collect_rewards(
+							&nft.asset,
+							shares,
+							total_shares,
+							&tag.collected_rewards,
+							|x| Self::collected_rewards(&nft.asset, x),
+							&tag.beneficiary,
+							Some(T::TagRewardPenatly::get()),
+						)?;
+						// Adjust the cursors such that any reward coming after the first tag will
+						// always go to the tagger.
+						tag.collected_rewards =
+							Self::current_collected_rewards(&nft.asset, &config);
+						nft.collected_rewards = tag.collected_rewards.clone();
+						Ok(())
+					},
+					// The user is trying ot claim on an expired nft, without refreshing the lock.
+					(PositionState::Expired, ClaimStrategy::Canonical, None) =>
+						Err(Error::<T>::ClaimRequireRestake),
+					// The user is claiming rewards on a rewarding state nft.
+					(PositionState::LockedRewarding, _, _) => {
+						Self::collect_rewards(
+							&nft.asset,
+							shares,
+							total_shares,
+							&nft.collected_rewards,
+							|x| Self::collected_rewards(&nft.asset, x),
+							to,
+							None,
+						)?;
+						nft.collected_rewards =
+							Self::current_collected_rewards(&nft.asset, &config);
+						Ok(())
+					},
 				}?;
-				let config = Self::get_config(&nft.asset)?;
-				let shares = nft.shares();
-				let total_shares = TotalShares::<T>::get(nft.asset);
-				// TODO(hussein-aitlahcen): extract pure maths to their own functions
-				let compute_reward =
-					|delta_collected: CollectedReward| -> Result<BalanceOf<T>, DispatchError> {
-						// Always increment but delta can't be > max supply <= u128.
-						let normalized_delta = u128::try_from(delta_collected)?;
-						safe_multiply_by_rational(normalized_delta, shares, total_shares)?
-							.try_into()
-							.map_err(|_| ArithmeticError::Overflow.into())
-					};
-				let rewards = nft
-					    .collected_rewards
-					    .iter()
-					    .map(|(reward_asset, previously_collected)| -> Result<(AssetIdOf<T>, BalanceOf<T>), DispatchError> {
-						    match CollectedRewards::<T>::get(nft.asset, &reward_asset) {
-							    Some(current_collected) => {
-								    let delta_collected = current_collected.saturating_sub(*previously_collected);
-								    let reward = compute_reward(delta_collected)?;
-								    Ok((*reward_asset, reward))
-							    },
-							    None => Ok((*reward_asset, Zero::zero())),
-						    }
-					    })
-					    .collect::<Result<Vec<_>, _>>()?;
-				let protocol_account = Self::account_id(&nft.asset);
-				for (reward_asset, reward) in
-					rewards.into_iter().filter(|(_, reward)| !reward.is_zero())
-				{
-					T::Assets::transfer(reward_asset, &protocol_account, to, reward, false)?;
-				}
-				// NOTE(hussein-aitahcen): the reward computation is based on the
-				// collected delta, hence we need to update the indexes after having
-				// claimed the rewards.
-				nft.collected_rewards = Self::current_collected_rewards(&nft.asset, &config);
 				Ok(())
 			})
 		}

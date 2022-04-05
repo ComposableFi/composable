@@ -1,7 +1,7 @@
 use crate::{
 	mock::{
 		new_test_ext, process_block, AccountId, AssetId, BlockNumber, Event, Origin,
-		StakingRewards, System, Test, Tokens, MILLISECS_PER_BLOCK,
+		StakingRewards, System, Test, Tokens, MILLISECS_PER_BLOCK, REWARD_EPOCH_DURATION_BLOCK,
 	},
 	Error, StakingConfigOf,
 };
@@ -511,6 +511,86 @@ mod claim {
 					ClaimStrategy::Canonical
 				),
 				DispatchError::Token(TokenError::UnknownAsset)
+			);
+		});
+	}
+
+	#[test]
+	fn just_works() {
+		new_test_ext().execute_with(|| {
+			configure_default_pica();
+			let stake = 1_000_000_000_000;
+			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
+			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
+				.expect("impossible; qed;");
+			process_block(REWARD_EPOCH_DURATION_BLOCK);
+			assert_ok!(StakingRewards::claim(
+				Origin::signed(ALICE),
+				instance_id,
+				ALICE,
+				ClaimStrategy::Canonical
+			));
+		});
+	}
+
+	#[test]
+	fn tagger_and_owner_can_claim() {
+		new_test_ext().execute_with(|| {
+			process_block(1);
+			configure_default_pica();
+			let stake = 1_000_000_000_000;
+			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
+			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
+				.expect("impossible; qed;");
+			process_block(duration_to_block(WEEK + MINUTE));
+			assert_ok!(StakingRewards::tag(Origin::signed(TREASURY), instance_id, TREASURY));
+			assert_ok!(StakingRewards::claim(
+				Origin::signed(TREASURY),
+				instance_id,
+				TREASURY,
+				ClaimStrategy::Canonical
+			));
+			assert_ok!(StakingRewards::claim(
+				Origin::signed(ALICE),
+				instance_id,
+				ALICE,
+				ClaimStrategy::Canonical
+			));
+		});
+	}
+}
+
+mod tag {
+	use super::*;
+
+	#[test]
+	fn can_tag_if_expired() {
+		new_test_ext().execute_with(|| {
+			process_block(1);
+			configure_default_pica();
+			let stake = 1_000_000_000_000;
+			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
+			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
+				.expect("impossible; qed;");
+			process_block(duration_to_block(WEEK + MINUTE));
+			assert_ok!(StakingRewards::tag(Origin::signed(TREASURY), instance_id, TREASURY));
+		});
+	}
+
+	#[test]
+	fn cannot_tag_already_tagged() {
+		new_test_ext().execute_with(|| {
+			process_block(1);
+			configure_default_pica();
+			let stake = 1_000_000_000_000;
+			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
+			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
+				.expect("impossible; qed;");
+			process_block(duration_to_block(WEEK + MINUTE));
+			assert_ok!(StakingRewards::tag(Origin::signed(TREASURY), instance_id, TREASURY));
+			assert_noop!(
+				StakingRewards::tag(Origin::signed(TREASURY), instance_id, TREASURY),
+				Error::<Test>::AlreadyTagged
 			);
 		});
 	}

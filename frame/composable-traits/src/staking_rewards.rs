@@ -23,7 +23,7 @@ pub enum ClaimStrategy {
 	/// Basic, canonical claiming.
 	Canonical,
 	/// Force claiming the reward by restaking if the position expired.
-	RestakeIfExpired,
+	RestakeOnExpiry,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
@@ -39,7 +39,18 @@ pub struct StakingConfig<AccountId, DurationPresets, Rewards> {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-pub struct StakingNFT<AssetId, Balance, CollectedRewards> {
+pub struct StakingTag<AccountId, CollectedRewards> {
+	/// The account that actually tagged the nft.
+	pub tagger: AccountId,
+	/// The beneficiary of the rewards distributed after tagging the position.
+	pub beneficiary: AccountId,
+	/// The rewards collected so far, rewards collected after this point will be distributed to the
+	/// `beneficiary`.
+	pub collected_rewards: CollectedRewards,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
+pub struct StakingNFT<AccountId, AssetId, Balance, CollectedRewards> {
 	/// The staked asset.
 	pub asset: AssetId,
 	/// The stake this NFT was minted for.
@@ -52,10 +63,12 @@ pub struct StakingNFT<AssetId, Balance, CollectedRewards> {
 	pub collected_rewards: CollectedRewards,
 	/// The reward multiplier.
 	pub reward_multiplier: Perbill,
+	/// A liquidator tagged the staking position.
+	pub tag: Option<StakingTag<AccountId, CollectedRewards>>,
 }
 
-impl<AssetId, Balance: AtLeast32BitUnsigned + Copy, CollectedRewards>
-	StakingNFT<AssetId, Balance, CollectedRewards>
+impl<AccountId, AssetId, Balance: AtLeast32BitUnsigned + Copy, CollectedRewards>
+	StakingNFT<AccountId, AssetId, Balance, CollectedRewards>
 {
 	pub fn penalize(&self, penalty: Perbill) -> Result<(Balance, Balance), DispatchError> {
 		let penalty_amount = penalty.mul_floor(self.stake);
@@ -78,16 +91,16 @@ impl<AssetId, Balance: AtLeast32BitUnsigned + Copy, CollectedRewards>
 	}
 }
 
-impl<AssetId, Balance, CollectedRewards> Get<NFTClass>
-	for StakingNFT<AssetId, Balance, CollectedRewards>
+impl<AccountId, AssetId, Balance, CollectedRewards> Get<NFTClass>
+	for StakingNFT<AccountId, AssetId, Balance, CollectedRewards>
 {
 	fn get() -> NFTClass {
 		NFTClass::STAKING
 	}
 }
 
-impl<AssetId, Balance, CollectedRewards> Get<NFTVersion>
-	for StakingNFT<AssetId, Balance, CollectedRewards>
+impl<AccountId, AssetId, Balance, CollectedRewards> Get<NFTVersion>
+	for StakingNFT<AccountId, AssetId, Balance, CollectedRewards>
 {
 	fn get() -> NFTVersion {
 		NFTVersion::VERSION_1
@@ -133,6 +146,7 @@ pub trait Staking {
 	///
 	/// Arguments
 	///
+	/// * `who` the actual account triggering this claim.
 	/// * `instance_id` the ID uniquely identifiying the NFT from which we will compute the
 	///   available rewards.
 	/// * `to` the account to transfer the rewards to.
