@@ -8,7 +8,7 @@
 //!
 //! ### Terminology
 //!
-//! * **VAAM**: Acronym for Virtual Automated Market Maker. (TODO: expand definition)
+//! * **VAMM**: Acronym for Virtual Automated Market Maker. (TODO: expand definition)
 //!
 //! TODO
 //!
