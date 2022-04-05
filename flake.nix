@@ -61,6 +61,7 @@
               python3
               openssl.dev
               pkg-config
+              rust-analyzer
               # rustup
               # (rust-bin.stable.latest.default.override {
               #   extensions = [ "rust-src" ];
