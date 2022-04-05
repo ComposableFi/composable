@@ -24,7 +24,7 @@ repos:
     ########## VAMM ##########
   - id: vamm::cargo-fmt
     name: vamm::cargo-fmt
-    entry: cargo +nightly fmt --check -p pallet-vamm
+    entry: cargo +nightly fmt --check -p pallet-vamms
     language: system
     pass_filenames: false
     files: ^frame/vamm/
@@ -32,7 +32,7 @@ repos:
     stages: [push, manual]
   - id: vamm::cargo-check
     name: vamm::cargo-check
-    entry: cargo +nightly check --all-targets -p pallet-vamm
+    entry: cargo +nightly check --all-targets -p pallet-vamms
     language: system
     pass_filenames: false
     files: ^frame/vamm/
@@ -40,7 +40,7 @@ repos:
     stages: [push, manual]
   - id: vamm::cargo-test
     name: vamm::cargo-test
-    entry: cargo +nightly test --all-features --tests -p pallet-vamm
+    entry: cargo +nightly test --all-features --tests -p pallet-vamms
     language: system
     pass_filenames: false
     files: ^frame/vamm/
@@ -48,7 +48,7 @@ repos:
     stages: [push, manual]
   - id: vamm::cargo-clippy
     name: vamm::cargo-clippy
-    entry: cargo +nightly clippy --all-targets --no-deps -p pallet-vamm -- -D warnings -D clippy::all
+    entry: cargo +nightly clippy --all-targets --no-deps -p pallet-vamms -- -D warnings -D clippy::all
     language: system
     pass_filenames: false
     files: ^frame/vamm/
@@ -56,7 +56,7 @@ repos:
     stages: [manual]
   - id: vamm::cargo-doc
     name: vamm::cargo-doc
-    entry: cargo +nightly doc --no-deps -p pallet-vamm
+    entry: cargo +nightly doc --no-deps -p pallet-vamms
     language: system
     pass_filenames: false
     files: ^frame/vamm/
