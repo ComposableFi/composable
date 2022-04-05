@@ -63,18 +63,16 @@ fn run_to_block(n: u64) {
 proptest! {
 	// Can we guarantee that any::<Option<Value>> will generate at least one of `Some` and `None`?
 	#[test]
-	fn mock_oracle_asset_support_reflects_genesis_config(asset_support in any::<Option<bool>>()) {
-		ExtBuilder { oracle_asset_support: asset_support, ..Default::default() }
-			.build()
-			.execute_with(|| {
-				let is_supported = <Runtime as Config>::Oracle::is_supported(DOT);
-				match asset_support {
-					Some(support) => assert_ok!(is_supported, support),
-					None => {
-						assert_err!(is_supported, mock_oracle::Error::<Runtime>::CantCheckAssetSupport)
-					},
-				}
-			})
+	fn mock_oracle_asset_support_reflects_genesis_config(oracle_asset_support in any::<Option<bool>>()) {
+		ExtBuilder { oracle_asset_support, ..Default::default() }.build().execute_with(|| {
+			let is_supported = <Runtime as Config>::Oracle::is_supported(DOT);
+			match oracle_asset_support {
+				Some(support) => assert_ok!(is_supported, support),
+				None => {
+					assert_err!(is_supported, mock_oracle::Error::<Runtime>::CantCheckAssetSupport)
+				},
+			}
+		})
 	}
 }
 
