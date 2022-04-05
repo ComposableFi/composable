@@ -1,13 +1,13 @@
 //! # Instrumental Pallet
 //! 
-//! This pallet will house the logic required by [`Intrumental Finance`](https://www.instrumental.finance/);
+//! This pallet will house the logic required by [`Instrumental Finance`](https://www.instrumental.finance/);
 //! Instrumental will speak to this pallet through the Mosaic Pallet. This pallet will be responsible
 //! for sending assets into their associated vaults and specifying which strategies should be set for each
 //! vault.
 //! 
 //! ## Overview
 //! 
-//! The following API functions will be exposed thorugh this pallet:
+//! The following API functions will be exposed through this pallet:
 //! 
 //! - [`create`](Pallet::create)
 //! - [`add_liquidity`](Pallet::add_liquidity)
@@ -20,16 +20,16 @@
 //! ### Actors
 //! 
 //! - users: Instrumentals users lie in the Ethereum ecosystem and interact (indirectly) with this
-//!     pallet through the [`Intrumental Finance`](https://www.instrumental.finance/) frontend.
+//!     pallet through the [`Instrumental Finance`](https://www.instrumental.finance/) frontend.
 //! 
-//! - Instrumental: The Ethereum-native smart sontracts provide the core funcitoanlity for Instrumental.
+//! - Instrumental: The Ethereum-native smart contracts provide the core functionality for Instrumental.
 //! 
 //! - Mosaic Pallet: Instrumental speaks to the Mosaic pallet which then redirects calls to the 
 //!     Instrumental pallet.
 //! 
 //! - [`Vault Pallet`](../pallet_vault/index.html): Each asset supported by this pallet will have an underlying vault.
-//!     Each vault will an associated stratgey that will dictate where those assets will go in 
-//!     order to earn yeild.
+//!     Each vault will an associated strategy that will dictate where those assets will go in 
+//!     order to earn yield.
 //! 
 //! ### Implementations
 //! 
@@ -275,7 +275,7 @@ pub mod pallet {
 			config: VaultConfig<T::AccountId, T::AssetId>,
 		) -> DispatchResultWithPostInfo {
 			// TODO: (Nevin)
-			//  - (potentially) enforce that the issuer must have priviledged rights
+			//  - (potentially) enforce that the issuer must have privileged rights
 
 			// Requirement 1) This extrinsic must be signed 
 			let _from = ensure_signed(origin)?;
@@ -488,7 +488,7 @@ pub mod pallet {
 			let account_id = Self::account_id(&asset);
 
 			// TODO: (Nevin)
-			//  - decide a better way to input VaultConfig fields (maybe as seperate inputs)
+			//  - decide a better way to input VaultConfig fields (maybe as separate inputs)
 			//  - VaultConfig.manager should be set to account_id
 			let vault_id: T::VaultId = T::Vault::create(
 				Duration::Existential,
