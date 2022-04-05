@@ -321,7 +321,7 @@ pub mod pallet {
 		/// Attempted to create a new market but either initial or maintenance margin ratios are
 		/// outside the interval (0, 1)
 		InvalidMarginRatioRequirement,
-		/// Attempted to create a new market but the initial margin ratio is less or equal than/to
+		/// Attempted to create a new market but the initial margin ratio is less than or equal to
 		/// the maintenance one
 		InitialMarginRatioLessThanMaintenance,
 	}
@@ -399,12 +399,12 @@ pub mod pallet {
 		///
 		/// ## Errors
 		/// - [`NoPriceFeedForAsset`](Error::<T>::NoPriceFeedForAsset)
-		/// - [`FundingPeriodNotMultipleOfFrequency`](Error::<T>::
-		///   FundingPeriodNotMultipleOfFrequency)
+		/// - [`FundingPeriodNotMultipleOfFrequency`](
+		///   Error::<T>::FundingPeriodNotMultipleOfFrequency)
 		/// - [`ZeroLengthFundingPeriodOrFrequency`](Error::<T>::ZeroLengthFundingPeriodOrFrequency)
 		/// - [`InvalidMarginRatioRequirement`](Error::<T>::InvalidMarginRatioRequirement)
-		/// - [`InitialMarginRatioLessThanMaintenance`](Error::<T>::
-		///   InitialMarginRatioLessThanMaintenance)
+		/// - [`InitialMarginRatioLessThanMaintenance`](
+		///   Error::<T>::InitialMarginRatioLessThanMaintenance)
 		///
 		/// # Weight/Runtime
 		/// `O(1)`
