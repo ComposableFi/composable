@@ -56,14 +56,14 @@
               llvmPackages_latest.lld
               python3
             ];
-            RUSTC_VERSION = pkgs.lib.readFile ./rust-toolchain;
+            RUSTC_VERSION = "stable";
             # https://github.com/rust-lang/rust-bindgen#environment-variables
             LIBCLANG_PATH= pkgs.lib.makeLibraryPath [ pkgs.llvmPackages_latest.libclang.lib ];
             HISTFILE=toString ./.history;
             shellHook = ''
               export PATH=$PATH:~/.cargo/bin
               export PATH=$PATH:~/.rustup/toolchains/$RUSTC_VERSION-aarch64-unknown-linux-gnu/bin/
-              rustup target add wasm32-unknown-unknown --toolchain $RUSTC_VERSION
+              rustup target add wasm32-unknown-unknown --toolchain nightly-2022-02-01
               '';
 
 
