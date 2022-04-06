@@ -1,0 +1,28 @@
+@startuml remove_margin
+!theme mars
+
+actor "Trader" as user
+participant "Clearing\nHouse" as ch
+participant "Risk\nEngine" as risk
+database "Positions" as positions
+database "AccountsMargin" as accs
+collections "Pallet assets\naccount" as vault
+
+user -> ch : ""remove_margin""
+
+ch -> risk ++: ""risk_free_collateral""
+risk -> accs : fetch
+risk -> positions ++: fetch all
+return
+risk -> risk : compute\nmargin ratio
+return free collateral
+
+ch -> ch: ensure requested amount <\nfree collateral
+
+ch -> ch ++: return collateral
+ch -> vault : transfer to acc id
+vault -> user : quote asset
+return
+
+?<-o ch : emit event
+@enduml
