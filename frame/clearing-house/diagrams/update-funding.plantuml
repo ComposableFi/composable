@@ -13,13 +13,23 @@ user -> ch : ""update_funding""
 ch -> mkts : get market
 return ""Market""
 
+note right ch
+ensure time since last update
+  "">= funding_frequency""
+end note
+
 ch -> inst ++: ""funding_rate""
+note right inst
+ensure valid oracle?
+ensure mark/oracle spread low
+end note
 inst -> oracle : get TWAP
+note right inst
+normalize oracle TWAP?
+end note
 inst -> vamm : get TWAP
 note right inst
-check oracle-mark
-price spread/
-normalize prices
+cap funding rate?
 end note
 return current funding rate
 
