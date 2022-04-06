@@ -17,10 +17,6 @@ LABEL description="Precompiled Docker image for Composable" \
       image.source="https://github.com/ComposableFi/composable/blob/main/docker/Dockerfile" \
       image.documentation="https://github.com/ComposableFi/composable#readme"
 
-<<<<<<< HEAD
-=======
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
->>>>>>> 0b2dad0a (Updating dockerfile (#818))
 RUN wget "https://github.com/ComposableFi/composable/releases/download/${VERSION}/composable"  
     
 RUN mv composable /usr/local/bin && chmod +x /usr/local/bin/composable  

@@ -10,20 +10,17 @@ use polkadot_service::{ConstructRuntimeApi, NativeExecutionDispatch};
 use sc_client_api::StateBackendFor;
 use std::sync::Arc;
 
-use common::OpaqueBlock;
+use assets_rpc::{Assets, AssetsApi};
+use common::{AccountId, AccountIndex, Balance, PoolId};
+use composable_traits::assets::Asset;
+use crowdloan_rewards_rpc::{CrowdloanRewards, CrowdloanRewardsApi};
+use pablo_rpc::{Pablo, PabloApi};
 pub use sc_rpc_api::DenyUnsafe;
-use sc_transaction_pool::FullPool;
-use sp_api::{ProvideRuntimeApi, StateBackend};
-use sp_blockchain::{HeaderBackend, HeaderMetadata};
-use sp_runtime::traits::BlakeTwo256;
-
-use crate::{
-	client::{FullBackend, FullClient},
-	runtime::{
-		assets::ExtendWithAssetsApi, crowdloan_rewards::ExtendWithCrowdloanRewardsApi,
-		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi, BaseHostRuntimeApis,
-	},
-};
+use sc_transaction_pool_api::TransactionPool;
+use sp_api::ProvideRuntimeApi;
+use sp_block_builder::BlockBuilder;
+use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
+use sp_runtime::traits::Block;
 
 /// Full client dependencies.
 #[derive(CloneNoBound)]
@@ -44,25 +41,17 @@ pub fn create<RuntimeApi, Executor>(
 	>,
 ) -> jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>
 where
-	RuntimeApi:
-		ConstructRuntimeApi<OpaqueBlock, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
-	RuntimeApi::RuntimeApi:
-		BaseHostRuntimeApis<StateBackend = StateBackendFor<FullBackend, OpaqueBlock>>,
-	StateBackendFor<FullBackend, OpaqueBlock>: StateBackend<BlakeTwo256>,
-	Executor: NativeExecutionDispatch + 'static,
-	FullClient<RuntimeApi, Executor>: ProvideRuntimeApi<OpaqueBlock>
-		+ HeaderBackend<OpaqueBlock>
-		+ HeaderMetadata<OpaqueBlock, Error = sp_blockchain::Error>
-		+ 'static
-		+ Send
-		+ Sync
-		+ Sized,
-	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api:
-		BaseHostRuntimeApis<StateBackend = StateBackendFor<FullBackend, OpaqueBlock>>
-			+ ExtendWithAssetsApi<RuntimeApi, Executor>
-			+ ExtendWithCrowdloanRewardsApi<RuntimeApi, Executor>
-			+ ExtendWithPabloApi<RuntimeApi, Executor>
-			+ ExtendWithLendingApi<RuntimeApi, Executor>,
+	B: Block,
+	C: ProvideRuntimeApi<B>,
+	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
+	C: Send + Sync + 'static,
+	C::Api: substrate_frame_rpc_system::AccountNonceApi<B, AccountId, AccountIndex>,
+	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<B, Balance>,
+	C::Api: assets_runtime_api::AssetsRuntimeApi<B, CurrencyId, AccountId, Balance>,
+	C::Api: crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<B, AccountId, Balance>,
+	C::Api: pablo_runtime_api::PabloRuntimeApi<B, PoolId, CurrencyId, Balance>,
+	C::Api: BlockBuilder<B>,
+	P: TransactionPool + 'static,
 {
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};

@@ -1,31 +1,26 @@
-use assets_rpc::{Assets, AssetsApi};
-use common::{AccountId, Balance, Index, OpaqueBlock};
-use crowdloan_rewards_rpc::{CrowdloanRewards, CrowdloanRewardsApi};
-use cumulus_primitives_core::CollectCollationInfo;
-use lending_rpc::{Lending, LendingApi};
-use pablo_rpc::{Pablo, PabloApi};
-use pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi;
-use sp_api::{ApiExt, Metadata, StateBackend};
-use sp_block_builder::BlockBuilder;
-use sp_consensus_aura::{sr25519, AuraApi};
-use sp_offchain::OffchainWorkerApi;
+use common::{AccountId, Balance, Index, OpaqueBlock as Block, PoolId};
+use primitives::currency::CurrencyId;
 use sp_runtime::traits::BlakeTwo256;
 use sp_session::SessionKeys;
 use sp_transaction_pool::runtime_api::TaggedTransactionQueue;
 use substrate_frame_rpc_system::AccountNonceApi;
 
 /// Consider this a trait alias.
-pub trait BaseHostRuntimeApis:
-	TaggedTransactionQueue<OpaqueBlock>
-	+ ApiExt<OpaqueBlock>
-	+ BlockBuilder<OpaqueBlock>
-	+ AccountNonceApi<OpaqueBlock, AccountId, Index>
-	+ Metadata<OpaqueBlock>
-	+ AuraApi<OpaqueBlock, sr25519::AuthorityId>
-	+ OffchainWorkerApi<OpaqueBlock>
-	+ SessionKeys<OpaqueBlock>
-	+ CollectCollationInfo<OpaqueBlock>
-	+ TransactionPaymentRuntimeApi<OpaqueBlock, Balance>
+pub trait HostRuntimeApis:
+	sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
+	+ sp_api::ApiExt<Block>
+	+ sp_block_builder::BlockBuilder<Block>
+	+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
+	+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
+	+ assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance>
+	+ crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance>
+	+ pablo_runtime_api::PabloRuntimeApi<Block, PoolId, CurrencyId, Balance>
+	+ sp_api::Metadata<Block>
+	+ sp_consensus_aura::AuraApi<Block, sp_consensus_aura::sr25519::AuthorityId>
+	+ sp_offchain::OffchainWorkerApi<Block>
+	+ sp_session::SessionKeys<Block>
+	+ cumulus_primitives_core::CollectCollationInfo<Block>
+	+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>
 where
 	<Self as ApiExt<OpaqueBlock>>::StateBackend: StateBackend<BlakeTwo256>,
 {
@@ -33,17 +28,21 @@ where
 
 impl<Api> BaseHostRuntimeApis for Api
 where
-	Api: TaggedTransactionQueue<OpaqueBlock>
-		+ ApiExt<OpaqueBlock>
-		+ BlockBuilder<OpaqueBlock>
-		+ AccountNonceApi<OpaqueBlock, AccountId, Index>
-		+ Metadata<OpaqueBlock>
-		+ AuraApi<OpaqueBlock, sr25519::AuthorityId>
-		+ OffchainWorkerApi<OpaqueBlock>
-		+ SessionKeys<OpaqueBlock>
-		+ CollectCollationInfo<OpaqueBlock>
-		+ TransactionPaymentRuntimeApi<OpaqueBlock, Balance>,
-	<Self as ApiExt<OpaqueBlock>>::StateBackend: StateBackend<BlakeTwo256>,
+	Api: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
+		+ sp_api::ApiExt<Block>
+		+ sp_block_builder::BlockBuilder<Block>
+		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
+		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
+		+ assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance>
+		+ crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance>
+		+ pablo_runtime_api::PabloRuntimeApi<Block, PoolId, CurrencyId, Balance>
+		+ sp_api::Metadata<Block>
+		+ sp_consensus_aura::AuraApi<Block, sp_consensus_aura::sr25519::AuthorityId>
+		+ sp_offchain::OffchainWorkerApi<Block>
+		+ sp_session::SessionKeys<Block>
+		+ cumulus_primitives_core::CollectCollationInfo<Block>
+		+ pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
+	<Self as sp_api::ApiExt<Block>>::StateBackend: sp_api::StateBackend<BlakeTwo256>,
 {
 }
 

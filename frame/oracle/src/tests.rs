@@ -582,7 +582,6 @@ mod reclaim_stake {
 				System::set_block_number(start_block);
 				// Remove the stake from setting the signer
 				prop_assert_ok!(Oracle::remove_stake(Origin::signed(controller_account)));
-
 				// Can't remove anymore because we did not stake anything else
 				prop_assert_noop!(
 					Oracle::remove_stake(Origin::signed(controller_account)),
