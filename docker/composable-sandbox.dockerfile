@@ -1,28 +1,16 @@
-FROM debian:11-slim as builder
-LABEL description="Docker image with Composable" 
-
-ARG NIGHTLY_VERSION=nightly
-
-ENV DEBIAN_FRONTEND=noninteractive
+FROM composablefi/ci-linux:production as builder
 
 COPY . /build
 WORKDIR /build
 
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN apt-get update && apt-get install -y --no-install-recommends apt-utils ca-certificates clang curl git libssl-dev llvm libudev-dev && \
-	curl https://sh.rustup.rs -sSf | sh -s -- -y && \
-	export PATH="$PATH:$HOME/.cargo/bin" && \
-	rustup default stable && \
-	rustup update && \
-	rustup update ${NIGHTLY_VERSION} && \
-	rustup target add wasm32-unknown-unknown --toolchain ${NIGHTLY_VERSION} && \
-	cargo build --release
+RUN cargo build --release
 
 # ===== SECOND STAGE ======
 
 FROM composablefi/mmr-polkadot:latest as mmr-polkadot
 
 FROM debian:11-slim
+LABEL description="Docker image with Composable"
 
 ENV DEBIAN_FRONTEND=noninteractive
 
