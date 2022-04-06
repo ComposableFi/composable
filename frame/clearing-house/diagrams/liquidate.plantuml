@@ -1,0 +1,40 @@
+@startuml liquidate
+!theme mars
+
+participant "User/bot" as user
+participant "Clearing\nHouse" as ch
+participant "RiskEngine" as risk
+database "Positions" as positions
+database "AccountsMargin" as accs
+participant "vAMM" as vamm
+collections "Pallet assets\naccount" as vault
+
+user -> ch: ""liquidate""
+
+ch -> risk ++: ensure below MMR
+risk -> accs : fetch
+risk -> positions ++: fetch all
+return
+risk -> risk : compute\nmargin ratio
+return
+
+note right ch
+check oracle-mark
+price spread?
+end note
+
+ch -> accs : reduce/remove margin
+
+ch -> ch ++ : unwind/close all positions
+ch -> positions : fetch all
+ch -> vamm : swap base for quote asset
+ch -> positions : reduce/remove
+return
+
+ch -> ch ++: pay liquidation fee
+ch -> vault : transfer to acc id
+vault -> user : quote asset
+return
+
+?<-o ch : emit event
+@enduml
