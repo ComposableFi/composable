@@ -1,0 +1,32 @@
+@startuml update_funding
+!theme mars
+
+participant "User/Bot" as user
+participant "Clearing\nHouse" as ch
+participant "Instruments" as inst
+database "Markets" as mkts
+participant "Oracle" as oracle
+participant "Vamm" as vamm
+
+user -> ch : ""update_funding""
+
+ch -> mkts : get market
+return ""Market""
+
+ch -> inst ++: ""funding_rate""
+inst -> oracle : get TWAP
+inst -> vamm : get TWAP
+note right inst
+check oracle-mark
+price spread/
+normalize prices
+end note
+return current funding rate
+
+ch -> ch : add funding rate\nto market cumulative
+
+ch -> mkts : update
+
+?<-o ch : emit event
+
+@enduml
