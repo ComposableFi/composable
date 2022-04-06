@@ -245,12 +245,8 @@ frame_support::construct_runtime!(
 pub struct ExtBuilder {
 	native_balances: Vec<(AccountId, Balance)>,
 	balances: Vec<(AccountId, CurrencyId, Balance)>,
-	// TODO: (Nevin)
-	//  - add genesis config for Vault pallet 
+	
 	vault_count: u64,
-	// TODO: (Nevin)
-	//  - add genesis config for Instrumental pallet 
-	// asset_vaults: Vec<(CurrencyId, VaultId)>,
 }
 
 impl ExtBuilder {
