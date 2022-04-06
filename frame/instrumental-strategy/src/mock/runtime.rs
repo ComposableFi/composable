@@ -73,13 +73,17 @@ impl pallet_balances::Config for Test {
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                             Instrumental                                            
+//                                         Instrumental Strategy                                       
 // ----------------------------------------------------------------------------------------------------
 
 impl pallet_instrumental_strategy::Config for Test {
 	type Event = Event;
 	type WeightInfo = ();
 }
+
+// ----------------------------------------------------------------------------------------------------
+//                                           Construct Runtime                                         
+// ----------------------------------------------------------------------------------------------------
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -95,6 +99,10 @@ frame_support::construct_runtime!(
 		InstrumentalStrategy: pallet_instrumental_strategy::{Pallet, Call, Storage, Event<T>},
 	}
 );
+
+// ----------------------------------------------------------------------------------------------------
+//                                         Externalities Builder                                       
+// ----------------------------------------------------------------------------------------------------
 
 #[derive(Default)]
 pub struct ExtBuilder {
