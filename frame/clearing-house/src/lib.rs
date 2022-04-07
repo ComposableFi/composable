@@ -187,7 +187,7 @@ pub mod pallet {
 	}
 
 	/// Data relating to a perpetual contracts market
-	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
+	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug)]
 	pub struct Market<AssetId, Decimal, VammId> {
 		/// The Id of the vAMM used for price discovery in the virtual market
 		pub vamm_id: VammId,

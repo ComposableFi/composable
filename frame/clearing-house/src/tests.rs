@@ -1,10 +1,9 @@
-use crate::mock::runtime::VammId;
-pub use crate::{
+use crate::{
 	mock::{
-		accounts::{AccountId, ALICE},
+		accounts::ALICE,
 		assets::{AssetId, DOT, PICA, USDC},
 		oracle as mock_oracle,
-		runtime::{Balance, ExtBuilder, Origin, Runtime, System, TestPallet, Timestamp},
+		runtime::{Balance, ExtBuilder, Origin, Runtime, System, TestPallet, Timestamp, VammId},
 		vamm as mock_vamm,
 	},
 	pallet::*,
@@ -31,6 +30,7 @@ use sp_runtime::FixedI128;
 // ----------------------------------------------------------------------------------------------------
 
 type MarketConfig = <TestPallet as ClearingHouse>::MarketConfig;
+type Market = <TestPallet as Instruments>::Market;
 type Position = <TestPallet as Instruments>::Position;
 type VammParams = mock_vamm::VammParams;
 
@@ -149,8 +149,67 @@ prop_compose! {
 }
 
 prop_compose! {
+	fn initial_gt_maintenance_margin_ratio()(
+		(initial, maintenance) in zero_to_one_open_interval()
+			.prop_flat_map(|num|
+				(Just(num), (0.0..num).prop_filter("Zero MMR not allowed", |n| n > &0.0))
+			)
+	) -> (FixedI128, FixedI128) {
+		(FixedI128::from_float(initial), FixedI128::from_float(maintenance))
+	}
+}
+
+prop_compose! {
 	fn any_decimal()(float in any::<f64>()) -> FixedI128 {
 		FixedI128::from_float(float)
+	}
+}
+
+prop_compose! {
+	fn any_duration()(duration in any::<DurationSeconds>()) -> DurationSeconds {
+		duration
+	}
+}
+
+prop_compose! {
+	fn nonzero_duration()(
+		duration in any_duration().prop_filter("Zero duration not allowed", |n| n > &0)
+	) -> DurationSeconds {
+		duration
+	}
+}
+
+prop_compose! {
+	fn funding_params()(
+		(funding_frequency, funding_freq_mul) in nonzero_duration()
+			.prop_flat_map(|n| (Just(n), 1..=DurationSeconds::MAX.div_euclid(n)))
+	) -> (DurationSeconds, DurationSeconds) {
+		(funding_frequency, funding_frequency * funding_freq_mul)
+	}
+}
+
+prop_compose! {
+	fn any_market()(
+		vamm_id in any::<VammId>(),
+		asset_id in any::<AssetId>(),
+		(
+			margin_ratio_initial,
+			margin_ratio_maintenance
+		) in initial_gt_maintenance_margin_ratio(),
+		cum_funding_rate in any_decimal(),
+		funding_rate_ts in any_duration(),
+		(funding_frequency, funding_period) in funding_params()
+	) -> Market {
+		Market {
+			vamm_id,
+			asset_id,
+			margin_ratio_initial,
+			margin_ratio_maintenance,
+			cum_funding_rate,
+			funding_rate_ts,
+			funding_frequency,
+			funding_period,
+		}
 	}
 }
 
@@ -373,54 +432,50 @@ proptest! {
 //                                          Instruments trait
 // ----------------------------------------------------------------------------------------------------
 
-#[test]
-fn funding_rate_query_leaves_storage_intact() {
-	ExtBuilder::default().build().init_market().execute_with(|| {
-		let market = TestPallet::get_market(0).unwrap();
-
-		assert_storage_noop!(assert_ok!(<TestPallet as Instruments>::funding_rate(&market)));
-	})
+proptest! {
+	#[test]
+	fn funding_rate_query_leaves_storage_intact(market in any_market()) {
+		ExtBuilder::default().build().execute_with(|| {
+			assert_storage_noop!(
+				assert_ok!(<TestPallet as Instruments>::funding_rate(&market))
+			);
+		})
+	}
 }
 
-#[test]
-fn funding_rate_query_fails_if_oracle_twap_fails() {
-	ExtBuilder { oracle_twap: None, ..Default::default() }
-		.build()
-		.init_market()
-		.execute_with(|| {
-			let market = TestPallet::get_market(0).unwrap();
-
+proptest! {
+	#[test]
+	fn funding_rate_query_fails_if_oracle_twap_fails(market in any_market()) {
+		ExtBuilder { oracle_twap: None, ..Default::default() }.build().execute_with(|| {
 			assert_noop!(
 				<TestPallet as Instruments>::funding_rate(&market),
 				mock_oracle::Error::<Runtime>::CantComputeTwap
 			);
 		})
+	}
 }
 
-#[test]
-fn funding_rate_query_fails_if_vamm_twap_fails() {
-	ExtBuilder { vamm_twap: None, ..Default::default() }
-		.build()
-		.init_market()
-		.execute_with(|| {
-			let market = TestPallet::get_market(0).unwrap();
-
+proptest! {
+	#[test]
+	fn funding_rate_query_fails_if_vamm_twap_fails(market in any_market()) {
+		ExtBuilder { vamm_twap: None, ..Default::default() }.build().execute_with(|| {
 			assert_noop!(
 				<TestPallet as Instruments>::funding_rate(&market),
 				mock_vamm::Error::<Runtime>::FailedToCalculateTwap
 			);
 		})
+	}
 }
 
 proptest! {
 	#[test]
 	fn funding_owed_query_leaves_storage_intact(
+		market in any_market(),
 		base_asset_amount in any_decimal(),
 		quote_asset_notional_amount in any_decimal(),
 		last_cum_funding in any_decimal()
 	) {
-		ExtBuilder::default().build().init_market().execute_with(|| {
-			let market = TestPallet::get_market(0).unwrap();
+		ExtBuilder::default().build().execute_with(|| {
 			let position = Position {
 				market_id: 0,
 				base_asset_amount,
