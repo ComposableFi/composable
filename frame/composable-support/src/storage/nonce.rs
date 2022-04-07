@@ -49,14 +49,14 @@ mod start_at {
 	///
 	/// A nonce that starts at zero:
 	///
-	/// ```rust,skip
+	/// ```rust,ignore
 	/// #[pallet::storage]
-	/// pub type SomeNonce<T: Config> = StorageValue<_, T::Something, ValueQuery, StartAtZero<T>;
+	/// pub type SomeNonce<T: Config> = StorageValue<_, T::Something, ValueQuery, StartAtZero<T>>;
 	/// ```
 	///
 	/// Increment the nonce in an extrinsic:
 	///
-	/// ```rust,skip
+	/// ```rust,ignore
 	/// #[pallet::call]
 	/// impl<T: Config> Pallet<T> {
 	/// 	pub fn extrinsic(
