@@ -61,6 +61,10 @@ fn run_to_block(n: u64) {
 	}
 }
 
+// ----------------------------------------------------------------------------------------------------
+//                                          Valid Inputs
+// ----------------------------------------------------------------------------------------------------
+
 fn valid_vamm_params() -> VammParams {
 	VammParams {}
 }
@@ -75,6 +79,24 @@ fn valid_market_config() -> MarketConfig {
 		margin_ratio_maintenance: FixedI128::from_float(0.02),
 		funding_frequency: ONE_HOUR,
 		funding_period: ONE_HOUR * 24,
+	}
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                           Initializers
+// ----------------------------------------------------------------------------------------------------
+
+trait MarketInitializer {
+	fn init_market(self) -> Self;
+}
+
+impl MarketInitializer for sp_io::TestExternalities {
+	fn init_market(mut self) -> Self {
+		self.execute_with(|| {
+			<TestPallet as ClearingHouse>::create_market(&valid_market_config()).unwrap();
+		});
+
+		self
 	}
 }
 
@@ -346,11 +368,39 @@ proptest! {
 
 #[test]
 fn funding_rate_query_leaves_storage_intact() {
-	ExtBuilder::default().build().execute_with(|| {
-		let market_id =
-			<TestPallet as ClearingHouse>::create_market(&valid_market_config()).unwrap();
-		let market = TestPallet::get_market(market_id).unwrap();
+	ExtBuilder::default().build().init_market().execute_with(|| {
+		let market = TestPallet::get_market(0).unwrap();
 
 		assert_storage_noop!(assert_ok!(<TestPallet as Instruments>::funding_rate(&market)));
 	})
+}
+
+#[test]
+fn funding_rate_query_fails_if_oracle_twap_fails() {
+	ExtBuilder { oracle_twap: None, ..Default::default() }
+		.build()
+		.init_market()
+		.execute_with(|| {
+			let market = TestPallet::get_market(0).unwrap();
+
+			assert_noop!(
+				<TestPallet as Instruments>::funding_rate(&market),
+				mock_oracle::Error::<Runtime>::CantComputeTwap
+			);
+		})
+}
+
+#[test]
+fn funding_rate_query_fails_if_vamm_twap_fails() {
+	ExtBuilder { vamm_twap: None, ..Default::default() }
+		.build()
+		.init_market()
+		.execute_with(|| {
+			let market = TestPallet::get_market(0).unwrap();
+
+			assert_noop!(
+				<TestPallet as Instruments>::funding_rate(&market),
+				mock_vamm::Error::<Runtime>::FailedToCalculateTwap
+			);
+		})
 }
