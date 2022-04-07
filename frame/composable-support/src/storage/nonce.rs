@@ -1,10 +1,10 @@
 use crate::math::safe::SafeAdd;
 
 use codec::FullCodec;
-use frame_support::{
-	pallet_prelude::{StorageValue, ValueQuery},
-	traits::StorageInstance,
-};
+// #[allow(clippy::disallowed_types)]
+// ValueQuery for nonces is OK. Default/ starting value is provided with StartAt<S, T>.
+// use frame_support::pallet_prelude::ValueQuery;
+use frame_support::{pallet_prelude::StorageValue, traits::StorageInstance};
 use sp_runtime::{
 	traits::{One, Zero},
 	ArithmeticError,
@@ -18,8 +18,9 @@ pub trait StorageNonce<T, S: StartAtValue<T>> {
 	fn try_increment() -> Result<T, ArithmeticError>;
 }
 
+#[allow(clippy::disallowed_types)] // ValueQuery for nonces is OK. Default/ starting value is provided with StartAt<S, T>.
 impl<Prefix, T, S: StartAtValue<T>> StorageNonce<T, S>
-	for StorageValue<Prefix, T, ValueQuery, start_at::StartAt<S, T>>
+	for StorageValue<Prefix, T, frame_support::pallet_prelude::ValueQuery, start_at::StartAt<S, T>>
 where
 	Prefix: StorageInstance,
 	T: FullCodec + SafeAdd + Copy + 'static + Zero + One,
@@ -59,11 +60,11 @@ mod start_at {
 	/// ```rust,ignore
 	/// #[pallet::call]
 	/// impl<T: Config> Pallet<T> {
-	/// 	pub fn extrinsic(
-	/// 		origin: OriginFor<T>,
-	/// 	) -> DispatchResultWithPostInfo {
-	/// 		let nonce_next = SomeNonce::try_increment()?;
-	/// 	}
+	///     pub fn extrinsic(
+	///         origin: OriginFor<T>,
+	///     ) -> DispatchResultWithPostInfo {
+	///         let nonce_next = SomeNonce::try_increment()?;
+	///     }
 	/// }
 	/// ```
 	pub struct StartAt<S: StartAtValue<T>, T> {
