@@ -8,15 +8,12 @@ on:
 jobs:
   tests:
     name: Composable Test
-    concurrency:
-      group: lint-${{ github.ref }}
-      cancel-in-progress: true
     #container:
     #  image: composablefi/composable-sandbox:latest
     runs-on: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v2
 
-    - name: Run Test
-      run: |
-        cargo test
+    #- name: Run Test
+    #  run: |
+    #    cargo test
