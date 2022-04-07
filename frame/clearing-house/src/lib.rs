@@ -181,7 +181,8 @@ pub mod pallet {
 		pub margin_ratio_maintenance: Decimal,
 		/// Time span between each funding rate update
 		pub funding_frequency: DurationSeconds,
-		/// Period of time over which funding (the difference between mark and
+		/// Period of time over which funding (the difference between mark and index prices) gets
+		/// paid.
 		pub funding_period: DurationSeconds,
 	}
 
