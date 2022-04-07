@@ -96,5 +96,5 @@ However, this will not cancel currently vested rewards.
 
 ## Technical Notes
 
-* This pallet implements the `composable_traits::bonded_finance::BondedFinance`.
+* This pallet implements the `composable_traits::bonded_finance::BondedFinance` trait.
 
