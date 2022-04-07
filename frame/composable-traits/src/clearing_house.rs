@@ -33,16 +33,10 @@ pub trait ClearingHouse {
 	/// Create a new perpetuals market
 	///
 	/// ## Parameters
-	/// - `asset`: Asset id of the underlying for the derivatives market
-	/// - `vamm_params`: Parameters for creating and initializing the vAMM for price discovery
-	/// - `margin_ratio_initial`: Minimum margin ratio for opening a new position
-	/// - `margin_ratio_maintenance`: Margin ratio below which liquidations can occur
-	/// - `funding_frequency`: Time span between each funding rate update
-	/// - `funding_period`: Period of time over which funding (the difference between mark and index
-	///   prices) gets paid.
+	/// - `config`: specification for market creation
 	///
 	/// ## Returns
-	/// The new market id, if successful
+	/// The new market's id, if successful
 	fn create_market(config: &Self::MarketConfig) -> Result<Self::MarketId, DispatchError>;
 }
 
