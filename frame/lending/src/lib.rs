@@ -2030,10 +2030,16 @@ mod repay_borrow {
 			#[cfg(feature = "std")]
 			dbg!(market_debt_asset_balance);
 
+			let amount_of_interest_to_repay = if self.amount_of_interest_to_repay < market_debt_asset_balance {
+				self.amount_of_interest_to_repay
+			} else {
+				market_debt_asset_balance
+			};
+
 			<T as Config>::MultiCurrency::burn_from(
 				self.debt_asset,
 				self.market_account,
-				self.amount_of_interest_to_repay,
+				amount_of_interest_to_repay,
 			)?;
 
 			Ok(())
