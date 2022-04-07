@@ -191,6 +191,12 @@ prop_compose! {
 }
 
 prop_compose! {
+	fn bounded_decimal()(float in -1e9..1e9f64) -> FixedI128 {
+		FixedI128::from_float(float)
+	}
+}
+
+prop_compose! {
 	fn any_market()(
 		vamm_id in any::<VammId>(),
 		asset_id in any::<AssetId>(),
@@ -198,7 +204,7 @@ prop_compose! {
 			margin_ratio_initial,
 			margin_ratio_maintenance
 		) in initial_gt_maintenance_margin_ratio(),
-		cum_funding_rate in any_decimal(),
+		cum_funding_rate in bounded_decimal(),
 		funding_rate_ts in any_duration(),
 		(funding_frequency, funding_period) in funding_params()
 	) -> Market {
@@ -218,9 +224,9 @@ prop_compose! {
 prop_compose! {
 	fn any_position()(
 		market_id in any::<MarketId>(),
-		base_asset_amount in any_decimal(),
-		quote_asset_notional_amount in any_decimal(),
-		last_cum_funding in any_decimal(),
+		base_asset_amount in bounded_decimal(),
+		quote_asset_notional_amount in bounded_decimal(),
+		last_cum_funding in bounded_decimal(),
 	) -> Position {
 		Position {
 			market_id,
@@ -503,9 +509,9 @@ proptest! {
 	fn funding_owed_is_nonzero_iff_cum_rates_not_equal(
 		market in any_market(),
 		market_id in any::<MarketId>(),
-		base_asset_amount in any_decimal(),
-		quote_asset_notional_amount in any_decimal(),
-		cum_funding_delta in any_decimal(),
+		base_asset_amount in bounded_decimal(),
+		quote_asset_notional_amount in bounded_decimal(),
+		cum_funding_delta in bounded_decimal(),
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			let position = Position {

@@ -544,7 +544,14 @@ pub mod pallet {
 			market: &Self::Market,
 			position: &Self::Position,
 		) -> Result<Self::Decimal, DispatchError> {
-			Ok(Self::Decimal::zero())
+			let cum_funding_delta = market
+				.cum_funding_rate
+				.checked_sub(&position.last_cum_funding)
+				.ok_or(ArithmeticError::Underflow)?;
+			let payment = cum_funding_delta
+				.checked_mul(&position.base_asset_amount)
+				.ok_or(ArithmeticError::Overflow)?;
+			Ok(payment)
 		}
 	}
 
