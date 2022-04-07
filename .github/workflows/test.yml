@@ -16,6 +16,6 @@ jobs:
 
     - name: Run Test
       uses: docker://composablefi/composable-sandbox
-      with: 
-        args: cargo test
+      #with: 
+      # args: cargo test
     
