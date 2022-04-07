@@ -280,7 +280,7 @@ pub mod pallet {
 		///
 		/// Arguments
 		///
-		/// * `origin` the origin that signed this extrinsic. Must be the owner of the NFT targeted
+		/// * `origin` the origin that signed this extrinsic. Can be anyone.
 		///   by `instance_id`.
 		/// * `instance_id` the ID of the NFT that represent our staked position.
 		/// * `to` the account in which the rewards will be transferred.
@@ -293,13 +293,9 @@ pub mod pallet {
 			strategy: ClaimStrategy,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			// Tagger and Owner are able to claim.
-			match Self::nft_tag(&instance_id)? {
-				Some(tag) if tag.tagger == who => {},
-				_ => {
-					T::ensure_protocol_nft_owner::<StakingNFTOf<T>>(&who, &instance_id)?;
-				},
-			}
+      // Only the owner is able to select an arbitrary `to` account.
+			let nft_owner = T::get_protocol_nft_owner::<StakingNFTOf<T>>(&instance_id)?;
+			let to = if nft_owner == who { to } else { nft_owner };
 			<Self as Staking>::claim(&instance_id, &to, strategy)?;
 			Ok(().into())
 		}
@@ -311,6 +307,8 @@ pub mod pallet {
 		/// * `origin` the origin that signed this extrinsic. Can be anyone.
 		/// * `instance_id` the ID of the NFT we want to tag.
 		/// * `beneficiary` the beneficiary of the reward when claiming.
+    ///
+    /// NOTE: if logic gate pass, no fee applied.
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn tag(
@@ -320,7 +318,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			Self::do_tag(&who, &instance_id, &beneficiary)?;
-			Ok(().into())
+			Ok(Pays::No.into())
 		}
 	}
 

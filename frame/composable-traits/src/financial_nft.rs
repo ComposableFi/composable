@@ -2,6 +2,7 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use core::fmt::Debug;
 use frame_support::{
 	dispatch::DispatchResult,
+	ensure,
 	traits::{
 		tokens::nonfungibles::{Create, Inspect, Mutate},
 		Get,
@@ -72,6 +73,20 @@ pub trait FinancialNFTProtocol<AccountId: Eq> {
 		Self::NFTProvider::mint_nft(&NFT::get(), owner, &<NFT as Get<Self::Version>>::get(), &nft)
 	}
 
+	/// Retrieve the _possible_ owner of the NFT identified by `instance_id`.
+	///
+	/// Arguments
+	///
+	/// * `instance_id` the ID that uniquely identify the NFT.
+	fn get_protocol_nft_owner<NFT>(
+		instance_id: &Self::InstanceId,
+	) -> Result<AccountId, DispatchError>
+	where
+		NFT: Get<Self::ClassId>,
+	{
+		Self::NFTProvider::owner(&NFT::get(), instance_id).ok_or(DispatchError::CannotLookup)
+	}
+
 	/// Ensure that the owner of the identifier NFT is `account_id`.
 	///
 	/// Arguments
@@ -87,10 +102,9 @@ pub trait FinancialNFTProtocol<AccountId: Eq> {
 	where
 		NFT: Get<Self::ClassId>,
 	{
-		match Self::NFTProvider::owner(&NFT::get(), instance_id) {
-			Some(nft_owner) if nft_owner == *owner => Ok(()),
-			_ => Err(DispatchError::BadOrigin),
-		}
+		let nft_owner = Self::get_protocol_nft_owner::<NFT>(instance_id)?;
+		ensure!(nft_owner == *owner, DispatchError::BadOrigin);
+		Ok(())
 	}
 
 	/// Return an NFT identified by its instance id.
