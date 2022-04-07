@@ -31,6 +31,7 @@ use sp_runtime::FixedI128;
 // ----------------------------------------------------------------------------------------------------
 
 type MarketConfig = <TestPallet as ClearingHouse>::MarketConfig;
+type Position = <TestPallet as Instruments>::Position;
 type VammParams = mock_vamm::VammParams;
 
 impl Default for ExtBuilder {
@@ -178,6 +179,12 @@ prop_compose! {
 			.prop_flat_map(|num| (Just(num), 0.0..num))
 	) -> (FixedI128, FixedI128) {
 		(FixedI128::from_float(maintenance - decrement), FixedI128::from_float(maintenance))
+	}
+}
+
+prop_compose! {
+	fn any_decimal()(float in any::<f64>()) -> FixedI128 {
+		FixedI128::from_float(float)
 	}
 }
 
@@ -403,4 +410,27 @@ fn funding_rate_query_fails_if_vamm_twap_fails() {
 				mock_vamm::Error::<Runtime>::FailedToCalculateTwap
 			);
 		})
+}
+
+proptest! {
+	#[test]
+	fn funding_owed_query_leaves_storage_intact(
+		base_asset_amount in any_decimal(),
+		quote_asset_notional_amount in any_decimal(),
+		last_cum_funding in any_decimal()
+	) {
+		ExtBuilder::default().build().init_market().execute_with(|| {
+			let market = TestPallet::get_market(0).unwrap();
+			let position = Position {
+				market_id: 0,
+				base_asset_amount,
+				quote_asset_notional_amount,
+				last_cum_funding,
+			};
+
+			assert_storage_noop!(
+				assert_ok!(<TestPallet as Instruments>::funding_owed(&market, &position))
+			);
+		})
+	}
 }

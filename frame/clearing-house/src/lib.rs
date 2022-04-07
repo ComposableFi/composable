@@ -154,18 +154,18 @@ pub mod pallet {
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
 	pub struct Position<MarketId, Decimal> {
 		/// The Id of the virtual market
-		market_id: MarketId,
+		pub market_id: MarketId,
 		/// Virtual base asset amount. Positive implies long position and negative, short.
-		base_asset_amount: Decimal,
+		pub base_asset_amount: Decimal,
 		/// Virtual quote asset notional amount (margin * leverage * direction) used to open the
 		/// position
-		quote_asset_notional_amount: Decimal,
+		pub quote_asset_notional_amount: Decimal,
 		/// Last cumulative funding rate used to update this position. The market's latest
 		/// cumulative funding rate minus this gives the funding rate this position must pay. This
 		/// rate multiplied by this position's size (base asset amount * amm price) gives the total
 		/// funding owed, which is deducted from the trader account's margin. This debt is
 		/// accounted for in margin ratio calculations, which may lead to liquidation.
-		last_cum_funding: Decimal,
+		pub last_cum_funding: Decimal,
 	}
 
 	/// Specifications for market creation
@@ -517,6 +517,7 @@ pub mod pallet {
 
 	impl<T: Config> Instruments for Pallet<T> {
 		type Market = MarketOf<T>;
+		type Position = PositionOf<T>;
 		type Decimal = T::Decimal;
 
 		fn funding_rate(market: &Self::Market) -> Result<Self::Decimal, DispatchError> {
@@ -537,6 +538,13 @@ pub mod pallet {
 			let rate =
 				price_spread.checked_mul(&period_adjustment).ok_or(ArithmeticError::Underflow)?;
 			Ok(rate)
+		}
+
+		fn funding_owed(
+			market: &Self::Market,
+			position: &Self::Position,
+		) -> Result<Self::Decimal, DispatchError> {
+			todo!()
 		}
 	}
 

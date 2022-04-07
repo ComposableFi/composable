@@ -49,6 +49,8 @@ pub trait ClearingHouse {
 pub trait Instruments {
 	/// Data relating to a derivatives market
 	type Market;
+	/// Data relating to a trader's position in a market
+	type Position;
 	/// Signed decimal number implementation
 	type Decimal;
 
@@ -57,9 +59,26 @@ pub trait Instruments {
 	/// The funding rate is a function of the open interest and the index to mark price divergence.
 	///
 	/// ## Parameters
-	/// * `market`: the derivatives [Market](Self::Market) data
+	/// * `market`: the derivatives market data
 	///
 	/// ## Returns
 	/// The current funding rate as a signed decimal number
 	fn funding_rate(market: &Self::Market) -> Result<Self::Decimal, DispatchError>;
+
+	/// Computes the funding owed due to a particular position in a market
+	///
+	/// The funding owed may be positive or negative. In the former case, the position's owner has a
+	/// debt to its counterparty (e.g., the derivative writer, the protocol, or automated market
+	/// maker). The reverse is true in the latter case.
+	///
+	/// ## Parameters
+	/// * `market`: the derivatives market data
+	/// * `position`: the position in said market
+	///
+	/// ## Returns
+	/// The funding owed by the position's owner as a signed decimal number
+	fn funding_owed(
+		market: &Self::Market,
+		position: &Self::Position,
+	) -> Result<Self::Decimal, DispatchError>;
 }
