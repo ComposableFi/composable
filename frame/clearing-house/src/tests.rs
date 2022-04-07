@@ -523,10 +523,7 @@ proptest! {
 
 			let result = <TestPallet as Instruments>::funding_owed(&market, &position).unwrap();
 
-			match cum_funding_delta.is_zero() {
-				true => assert_eq!(result, FixedI128::zero()),
-				false => assert_ne!(result, FixedI128::zero())
-			};
+			assert_eq!(cum_funding_delta.is_zero(), result.is_zero());
 		})
 	}
 }
