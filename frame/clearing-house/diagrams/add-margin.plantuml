@@ -1,21 +1,23 @@
 @startuml Add margin
 !theme mars
 
-actor Trader
+actor "Trader" as user
 participant "Clearing\nHouse" as CH
 database "AccountsMargin" as CHS
-collections "Pallet assets\naccount" as Acc
+collections "Collateral\naccount" as Acc
 
-Trader -> CH : add margin
+user -> CH : add margin
 
-CH -> CH : assert collateral is supported
+CH -> CH : ensure collateral is supported
 
-CH -> Acc : transfer collateral to pallet account
+CH -> CH ++: Deposit collateral
+    CH -> user : transfer to\nClearing House
+    user -> Acc : collateral
+return
 
 CH -> CHS : get/create margin account
-return
 
 CH -> CHS : update margin amount
 
-CH ->o? : emit event
+?<-o CH : emit event
 @enduml

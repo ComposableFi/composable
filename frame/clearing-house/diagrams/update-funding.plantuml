@@ -1,17 +1,19 @@
 @startuml update_funding
 !theme mars
 
-participant "User/Bot" as user
+actor "User/Bot" as user
 participant "Clearing\nHouse" as ch
 participant "Instruments" as inst
 database "Markets" as mkts
 participant "Oracle" as oracle
-participant "Vamm" as vamm
+participant "vAMM" as vamm
+collections "Collateral\naccount" as vault
+collections "Insurance\naccount" as insurance
+collections "Fees\naccount" as fees
 
 user -> ch : ""update_funding""
 
-ch -> mkts : get market
-return ""Market""
+ch -> mkts : get ""Market""
 
 note right ch
 ensure time since last update
@@ -33,9 +35,25 @@ cap funding rate?
 end note
 return current funding rate
 
-ch -> ch : add funding rate\nto market cumulative
+== Storage updates ==
 
+note over ch, mkts
+add funding rate to market cumulative
+set funding timestamp to current time
+end note
 ch -> mkts : update
+
+== Asset transfers ==
+
+alt Clearing House receives funding
+    ch -> vault : users pay from margin
+    vault -> insurance : collateral
+else Clearing House pays funding
+    ch -> fees : rebate from Fee Pool
+    fees -> vault : fees
+end
+
+====
 
 ?<-o ch : emit event
 
