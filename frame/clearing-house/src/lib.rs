@@ -544,7 +544,7 @@ pub mod pallet {
 			market: &Self::Market,
 			position: &Self::Position,
 		) -> Result<Self::Decimal, DispatchError> {
-			todo!()
+			Ok(Self::Decimal::zero())
 		}
 	}
 
