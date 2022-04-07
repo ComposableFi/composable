@@ -28,7 +28,7 @@
 //!     Instrumental pallet.
 //! 
 //! - [`Vault Pallet`](../pallet_vault/index.html): Each asset supported by this pallet will have an underlying vault.
-//!     Each vault will an associated strategy that will dictate where those assets will go in 
+//!     Each vault will have an associated strategy that will dictate where those assets will go in 
 //!     order to earn yield.
 //! 
 //! ### Implementations
