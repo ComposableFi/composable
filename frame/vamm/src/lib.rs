@@ -1,71 +1,64 @@
-//! # VAMMs Pallet
+//! # VAMM Pallet
+//!
+//! The VAMM Pallet provides functionality to manage virtual automated market makers.
+//!
+//! - [`Config`]
+//! - [`Call`]
+//! - [`Pallet`]
 //!
 //! ## Overview
 //!
-//! ![](http://www.plantuml.com/plantuml/svg/NSqz2W91343XtbFe0TpqLWk2zyXcuyv09XdoWzTNB2oi7b_rraZqh26dIrUIshbSpYrpnWt0yRKSFLjj5Unacgova0susvWMk0a_Ej0Fm46D7PwEWu64qRiUrsOL_roce7xFA-l-wHi0)
+//! The VAMM Pallet allows other Pallets to leverage it's functions in order to
+//! manage virtual automated market makers, abstracting away complexity. It's
+//! important to note that currently just one type of constant function market
+//! maker is supported, namely the `x * y = k`.
 //!
-//! TODO
+//! Below is a diagram showing how the trait and runtime storage looks like and
+//! interact with each other:
+//!
+//! ![](https://www.plantuml.com/plantuml/svg/hLD1pzCm3BtdLvXT0EdR9y49LQNI92uS9Wv3N2kJcYvQisQssnxG-EqqxIZjEWaXVJbKYUtt4Z-_lj8ZUGAFBCO4j2Si2JO1gufqsphM1gijUh-1dmRwvSvA_0DjN_Hj2AD0k_CUqbGPdMRPhJ2kNs2PKEdDTnJAKOGqHrytPqsWUVV-mnDScbeVPmALkMygTQ5on6FqxOoveC1a8tcBtYSGN_EvU8BkIES4lZfFekZ375AIve6TlOSCru_7NTpUOxJ3i83C2wHFvd_xkwDUzbGu9gkkxXzuw66V_XnNV56MboBqTKiFs_xleQnOjNv8hCYJr7FaTVWMg1YlXasxs-_Xe3LZIPkPRJo6qLqosKiWJM-LUmmBayKrtWmViobwdNQsGXb93efAFP4eDrPN9F6XSr6OXBWbMHT5WVvT9HVM_BIEBvszpdlaq-2vHUfBY8DD9sDdu2IVVe9YqNZyNeqnhwF29hOEswBkpjli9cO27JibCvwUdzcLHyrc8YLn2F8R)
 //!
 //! ### Terminology
 //!
-//! * **VAMM**: Acronym for Virtual Automated Market Maker. (TODO: expand definition)
-//!
-//! TODO
+//! * **VAMM:** Acronym for Virtual Automated Market Maker.
+//! * **CFMM:** Acronym for Constant Function Market Maker.
 //!
 //! ### Goals
 //!
-//! TODO
-//!
 //! ### Actors
-//!
-//! TODO
-//!
-//! (clearing house)
 //!
 //! ### Implementations
 //!
-//! The VAMMs Pallet provides implementations for the following traits:
+//! The VAMM Pallet provides implementations for the following traits:
 //!
 //! - [`Vamm`](composable_traits::vamm::Vamm): Exposes functionality for
 //! creating, managing and deprecating virtual automated market makers.
 //!
 //! ## Interface
 //!
-//! TODO
-//!
 //! ### Extrinsics
 //!
-//! TODO
-//!
-//! not applicable
-//!
-//! ### Implemented Functions
-//!
-//! * [`create`](<Pallet as Vamm>::create)
-//!
-//! TODO
+//! The current implementation doesn't deal with external calls to the pallet,
+//! so there is no extrisic defined.
 //!
 //! ### Public Functions
 //!
-//! TODO
+//! * [`create`](pallet/struct.Pallet.html#method.create): Creates a new vamm,
+//! returning it's Id.
 //!
-//! ### Public Storage Objects
+//! ### Runtime Storage Objects
 //!
-//! TODO
+//! - [`VammCounter`](VammCounter): The number of created vamms.
+//! - [`VammMap`](VammMap): Mapping of a [VammId](Config::VammId) to it's
+//! corresponding [VammState].
 //!
 //! ## Usage
 //!
-//! TODO
-//!
 //! ### Example
-//!
-//! TODO
 //!
 //! ## Related Modules
 //!
-//! TODO
-//!
-//! (clearing house)
+//! - [`Clearing House Pallet`](../clearing_house/index.html)
 //!
 //! <!-- Original author: @Cardosaum -->
 
@@ -109,7 +102,7 @@ pub mod pallet {
 		/// Event type emitted by this pallet. Depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
-		/// The `VammId` used by the pallet. Corresponds to the Ids used by the Vamm pallet.
+		/// The Ids used by the pallet to index each virtual automated market maker created.
 		type VammId: Default
 			+ CheckedAdd
 			+ Clone
@@ -169,10 +162,10 @@ pub mod pallet {
 	/// Data relating to the state of a virtual market.
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug)]
 	pub struct VammState<Balance, Timestamp> {
-		/// The total amount of base asset present in the virtual market.
+		/// The total amount of base asset present in the vamm.
 		pub base_asset_reserves: Balance,
 
-		/// The total amount of quote asset present in the virtual market.
+		/// The total amount of quote asset present in the vamm.
 		pub quote_asset_reserves: Balance,
 
 		/// The magnitude of the quote asset reserve.
@@ -192,7 +185,7 @@ pub mod pallet {
 	//                                           Runtime  Storage
 	// ----------------------------------------------------------------------------------------------------
 
-	/// The number of virtual markets, also used to generate the next market
+	/// The number of created vamms, also used to generate the next market
 	/// identifier.
 	///
 	/// # Note
@@ -278,13 +271,13 @@ pub mod pallet {
 		///
 		/// # Overview
 		/// In order for the caller to create new vamms, it has to request it to
-		/// the Vamms Pallet, which is responsible to keep track of and update
-		/// when requested all active virtual automated market makers. The Vamms
+		/// the Vamm Pallet, which is responsible to keep track of and update
+		/// when requested all active virtual automated market makers. The Vamm
 		/// Pallet creates a new vamm, inserts it into storage, deposits a
 		/// [`Created`](Event::<T>::Created) event on the blockchain and returns
 		/// the new [`VammId`](Config::VammId) to the caller.
 		///
-		/// In the diagram below the Clearing House is depicted as the caller.
+		/// In the diagram below the `Clearing House` is depicted as the caller.
 		///
 		/// ![](https://www.plantuml.com/plantuml/svg/TP3FQi904CRl-nHZAbIHWCMRs81_3kt1Ndo2SJ8cYybEkZk9hzziIYeMtDF2z_j-0r-uMjUWnneyXqPSu2E7W0Nlk9BRrdkvWVgMZLgj6BhjyGWr-Yiha6TKAmvIEBL4VGqkVSUyOgk2fBP3PH1d9bfopR4MpAJnGfotdc5wGLlrdzcq3iNS06mkudgjLEBVanUYPV-IR7FE8c0cxFA_yeCd_5v_ubckjlktrJEFQT2h9TjWNqds5QEthe0FQGCdW06eV4JY0aFGOLsR71NF61YIauh7Wc4MWVb0X7_8hXAwKedM3V6PZA4IqcnGBHPhsCT5UTpNytVBGKrC8pNe7g4nJ3FfTMiuS2F1Aj30vAE9EtPt5AXCq_LzjkIBRoFvUKZcvWS0)
 		///
@@ -294,10 +287,12 @@ pub mod pallet {
 		/// - `peg_multiplier`: The constant multiplier responsible to balance quote and base asset
 		///
 		/// ## Returns
-		/// The new virtual market id, if successful.
+		/// The new vamm's id, if successful.
 		///
 		/// ## Assumptions or Requirements
-		/// TODO
+		/// In order to create a valid vamm, we need to ensure that both base and quote asset
+		/// reserves, as well as the peg_multiplier, are non-zero. Every parameter must be greater
+		/// than zero.
 		///
 		/// ## Emits
 		/// * [`Created`](Event::<T>::Created)

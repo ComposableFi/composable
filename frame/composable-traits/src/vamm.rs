@@ -1,22 +1,24 @@
 //! # Virtual Automated Market Maker
 //!
-//! Common traits for vamm implementation
+//! Common traits and data structures for vamm implementation.
 use frame_support::pallet_prelude::DispatchError;
 
+/// Exposes functionality for creation and management of virtual automated market makers.
+///
+/// Provides functionality for:
+/// - creating and closing vamms
+/// - updating vamm's parameters
 pub trait Vamm {
+	/// The balance type for an account.
 	type Balance;
 
+	/// The identifier type for each virtual automated market maker.
 	type VammId;
 
-	/// Create a new virtual market.
-	///
-	/// ## Parameters:
-	/// - `base_asset_reserves`: The amount of base asset
-	/// - `quote_asset_reserves`: The amount of quote asset
-	/// - `peg_multiplier`: The constant multiplier responsible to balance quote and base asset
+	/// Create a new virtual automated market maker.
 	///
 	/// ## Returns
-	/// The new virtual market id, if successful.
+	/// The identifier of the newly created vamm.
 	fn create(params: VammParams<Self::Balance>) -> Result<Self::VammId, DispatchError>;
 }
 
