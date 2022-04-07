@@ -322,8 +322,8 @@ pub mod pallet {
 			ensure!(!params.quote_asset_reserves.is_zero(), Error::<T>::QuoteAssetReserveIsZero);
 			ensure!(!params.peg_multiplier.is_zero(), Error::<T>::PegMultiplierIsZero);
 
-			VammCounter::<T>::try_mutate(|id| {
-				let old_id = *id;
+			VammCounter::<T>::try_mutate(|next_id| {
+				let id = *next_id;
 				let vamm_state = VammStateOf::<T> {
 					base_asset_reserves: params.base_asset_reserves,
 					quote_asset_reserves: params.quote_asset_reserves,
@@ -331,12 +331,12 @@ pub mod pallet {
 					deprecated: Default::default(),
 				};
 
-				VammMap::<T>::insert(&old_id, vamm_state);
-				*id = id.checked_add(&One::one()).ok_or(ArithmeticError::Overflow)?;
+				VammMap::<T>::insert(&id, vamm_state);
+				*next_id = id.checked_add(&One::one()).ok_or(ArithmeticError::Overflow)?;
 
-				Self::deposit_event(Event::<T>::Created { vamm_id: old_id, state: vamm_state });
+				Self::deposit_event(Event::<T>::Created { vamm_id: id, state: vamm_state });
 
-				Ok(old_id)
+				Ok(id)
 			})
 		}
 	}
