@@ -4,7 +4,7 @@ use crate::{
 	pallet::{Error, VammMap, VammState},
 };
 
-use composable_traits::vamm::Vamm as VammTrait;
+use composable_traits::vamm::{Vamm as VammTrait, VammParams};
 
 use proptest::prelude::*;
 
@@ -64,7 +64,10 @@ proptest! {
 					deprecated: Default::default(),
 			};
 
-			let vamm_created_ok = Vamm::create(base_asset_reserves, quote_asset_reserves, peg_multiplier);
+			let vamm_created_ok = Vamm::create(
+				VammParams{base_asset_reserves,
+						   quote_asset_reserves,
+						   peg_multiplier});
 			let vamm_created_some = Vamm::get_vamm(vamm_created_ok.unwrap());
 
 			assert_ok!(vamm_created_ok);
@@ -77,28 +80,46 @@ proptest! {
 
 	fn create_vamm_succeeds(base_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE, quote_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE, peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE) {
 		ExtBuilder::default().build().execute_with(|| {
-			assert_ok!(Vamm::create(base_asset_reserves, quote_asset_reserves, peg_multiplier));
+			assert_ok!(Vamm::create(
+				VammParams{base_asset_reserves,
+						   quote_asset_reserves,
+						   peg_multiplier}));
 		});
 	}
 
 
 	fn create_vamm_zero_base_asset_reserves_error(quote_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE, peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE) {
 		ExtBuilder::default().build().execute_with(|| {
-			assert_noop!(Vamm::create(ZERO_RESERVE, quote_asset_reserves, peg_multiplier), Error::<MockRuntime>::BaseAssetReserveIsZero);
+			assert_noop!(
+				Vamm::create(
+					VammParams{base_asset_reserves: ZERO_RESERVE,
+							   quote_asset_reserves,
+							   peg_multiplier}),
+				Error::<MockRuntime>::BaseAssetReserveIsZero);
 		})
 	}
 
 
 	fn create_vamm_zero_quote_asset_reserves_error(base_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE, peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE) {
 		ExtBuilder::default().build().execute_with(|| {
-			assert_noop!(Vamm::create(base_asset_reserves, ZERO_RESERVE, peg_multiplier), Error::<MockRuntime>::QuoteAssetReserveIsZero);
+			assert_noop!(
+				Vamm::create(
+					VammParams{base_asset_reserves,
+							quote_asset_reserves: ZERO_RESERVE,
+							peg_multiplier}),
+				Error::<MockRuntime>::QuoteAssetReserveIsZero);
 		})
 	}
 
 
 	fn create_vamm_zero_peg_multiplier_error(base_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE, quote_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE ) {
 		ExtBuilder::default().build().execute_with(|| {
-			assert_noop!(Vamm::create(base_asset_reserves, quote_asset_reserves, ZERO_RESERVE), Error::<MockRuntime>::PegMultiplierIsZero);
+			assert_noop!(
+				Vamm::create(
+					VammParams{base_asset_reserves,
+							   quote_asset_reserves,
+							   peg_multiplier: ZERO_RESERVE}),
+				Error::<MockRuntime>::PegMultiplierIsZero);
 		})
 	}
 
@@ -108,7 +129,10 @@ proptest! {
 			let markets = Vamm::vamm_count();
 
 			for _ in 0..loop_times {
-				assert_ok!(Vamm::create(base_asset_reserves, quote_asset_reserves, peg_multiplier));
+				assert_ok!(Vamm::create(
+					VammParams{base_asset_reserves,
+							   quote_asset_reserves,
+							   peg_multiplier}));
 			}
 
 			assert_eq!(Vamm::vamm_count(), markets + loop_times);
@@ -121,7 +145,7 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
 
-			let vamm_created_ok = Vamm::create(base_asset_reserves, quote_asset_reserves, peg_multiplier);
+			let vamm_created_ok = Vamm::create(VammParams{base_asset_reserves, quote_asset_reserves, peg_multiplier});
 			let vamm_created = Vamm::get_vamm(vamm_created_ok.unwrap()).unwrap();
 			assert_ok!(vamm_created_ok);
 
@@ -136,7 +160,7 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			assert!(!VammMap::<MockRuntime>::contains_key(0u128));
 
-			let vamm_created_ok = Vamm::create(base_asset_reserves, quote_asset_reserves, peg_multiplier);
+			let vamm_created_ok = Vamm::create(VammParams{base_asset_reserves, quote_asset_reserves, peg_multiplier});
 			assert_ok!(vamm_created_ok);
 
 			assert!(VammMap::<MockRuntime>::contains_key(0u128));
