@@ -17,7 +17,7 @@ type PalletInstance = u8;
 type AssetId = u128;
 /// as of now it is what is handled by XCM decoders of all networks, so let try it for now
 pub type Balance = u128;
-pub type ConfiguraitonId = u128;
+pub type ConfigurationId = u128;
 pub type OrderId = QueryId;
 
 /// Strongly typed sibling location to `Transact` via XCM.
@@ -52,7 +52,7 @@ pub struct XcmSellRequestTransactConfiguration {
 	/// Some preconfigured way of sell on other chain.
 	/// Example, some specific slippage or amount limits, or number of blocks it should take before
 	/// cancelation. Must be set by owners of engine and chose by thoose who governs caller side
-	pub configuraition_id: u128,
+	pub configuration_id: u128,
 	/// native token fee to pay on `engine` chain
 	pub fee: Balance,
 }
@@ -92,18 +92,19 @@ pub struct XcmSellRequest {
 	/// If order cannot be  filled to some amount,  the description of that is sent in
 	/// `XcmSellResponseTransact`
 	pub order: Sell<AssetId, Balance>,
-	pub configuration: ConfiguraitonId,
+	pub configuration: ConfigurationId,
 }
 
 /// Optional response if engine did not sold all on first requests
 #[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct XcmSellInitialResponseTransact {
-	/// Amount of `base` token which was taken by engine to be sold..
+	/// Amount of `base` token which was taken by engine to be sold.
 	/// Amount remaining was transfered with `xcm::latest::Instruction::TransferReserveAsset` in
 	/// same XCM message. Must be more than `Balance::zero()`
 	pub total_amount_taken: Balance,
 	/// Minimal price in `quote` amount  of `amount_taken`
 	pub minimal_price: Balance,
+	pub order_id: OrderId,
 }
 
 /// Response from enigne, either be first and final, or can be after

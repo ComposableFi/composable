@@ -33,7 +33,7 @@
 
 #![cfg_attr(
 	not(test),
-	warn(
+	deny(
 		clippy::disallowed_method,
 		clippy::disallowed_type,
 		clippy::indexing_slicing,
@@ -82,28 +82,20 @@ pub mod weights;
 pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use crate::{prelude::*, types::*};
-	use xcm::{
-		latest::{prelude::*, Instruction, MultiAsset, WeightLimit::Unlimited},
-		v0::Junction::PalletInstance,
-	};
+	use xcm::latest::{prelude::*, MultiAsset, WeightLimit::Unlimited};
 
+	use crate::{math::*, support::DefiMultiReservableCurrency};
 	use composable_traits::{
 		defi::{DeFiComposableConfig, DeFiEngine, OrderIdLike, Sell, SellEngine, Take},
 		math::WrappingNext,
-		time::{TimeReleaseFunction, Timestamp},
-		xcm::{ConfiguraitonId, CumulusMethodId, XcmSellInitialResponseTransact},
+		time::TimeReleaseFunction,
+		xcm::{ConfigurationId, CumulusMethodId, XcmSellInitialResponseTransact, XcmSellRequest},
 	};
-	use frame_support::dispatch::DispatchResultWithPostInfo;
-
-	use crate::{math::*, support::DefiMultiReservableCurrency};
-	use composable_traits::xcm::{XcmSellFinalResponseTransact, XcmSellRequest};
 	use cumulus_pallet_xcm::{ensure_sibling_para, Origin as CumulusOrigin};
 	use frame_support::{
-		pallet_prelude::*,
-		traits::{
-			tokens::fungible::Transfer as NativeTransfer, Currency, EnsureOrigin, IsType, UnixTime,
-		},
-		transactional, PalletId, Twox128, Twox64Concat,
+		dispatch::DispatchResultWithPostInfo,
+		traits::{tokens::fungible::Transfer as NativeTransfer, EnsureOrigin, IsType, UnixTime},
+		transactional, PalletId, Twox64Concat,
 	};
 	use frame_system::{
 		ensure_signed,
@@ -163,13 +155,17 @@ pub mod pallet {
 			order_id: OrderIdOf<T>,
 			order: SellOf<T>,
 		},
-		/// raised
+		/// raised when part or whole order was taken with mentioned balance
 		OrderTaken {
 			order_id: OrderIdOf<T>,
 			taken: T::Balance,
 		},
 		OrderRemoved {
 			order_id: OrderIdOf<T>,
+		},
+		CofigurationAdded {
+			configuration_id: ConfigurationId,
+			configuration: TimeReleaseFunction,
 		},
 	}
 
@@ -180,9 +176,10 @@ pub mod pallet {
 		TakeParametersIsInvalid,
 		TakeLimitDoesNotSatisfiesOrder,
 		OrderNotFound,
+		TakeOrderDidNotHappen,
 		NotEnoughNativeCurrentyToPayForAuction,
 		/// errors trying to decode and parse XCM input
-		XcmCannotDecodeRemotParametersToLocalRepresentations,
+		XcmCannotDecodeRemoteParametersToLocalRepresentations,
 		XcmCannotFindLocalIdentifiersAsDecodedFromRemote,
 		XcmNotFoundConfigurationById,
 	}
@@ -241,7 +238,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn configuraitons)]
 	pub type Configurations<T: Config> =
-		StorageMap<_, Twox64Concat, ConfiguraitonId, TimeReleaseFunction, OptionQuery>;
+		StorageMap<_, Twox64Concat, ConfigurationId, TimeReleaseFunction, OptionQuery>;
 
 	/// one block storage, users payed N * WEIGHT for this Vec, so will not put bound here (neither
 	/// HydraDX does)
@@ -269,11 +266,12 @@ pub mod pallet {
 		/// already running acutions are not updated
 		pub fn add_configuration(
 			origin: OriginFor<T>,
-			configuration_id: ConfiguraitonId,
-			configuraiton: TimeReleaseFunction,
+			configuration_id: ConfigurationId,
+			configuration: TimeReleaseFunction,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::AdminOrigin::ensure_origin(origin)?;
-			Configurations::<T>::insert(configuration_id, configuraiton);
+			Configurations::<T>::insert(configuration_id, configuration.clone());
+			Self::deposit_event(Event::CofigurationAdded { configuration_id, configuration });
 			Ok(().into())
 		}
 
@@ -345,21 +343,20 @@ pub mod pallet {
 			// TODO: make events/logs from all failed liqudations
 
 			// incoming message is generic in representations, so need to map it back to local,
-			let parachain_id =
-				cumulus_pallet_xcm::ensure_sibling_para(<T as Config>::XcmOrigin::from(origin))?;
+			let parachain_id = ensure_sibling_para(<T as Config>::XcmOrigin::from(origin))?;
 			let base = T::MayBeAssetId::decode(&mut &request.order.pair.base.encode()[..])
-				.map_err(|_| Error::<T>::XcmCannotDecodeRemotParametersToLocalRepresentations)?;
+				.map_err(|_| Error::<T>::XcmCannotDecodeRemoteParametersToLocalRepresentations)?;
 			let quote = T::MayBeAssetId::decode(&mut &request.order.pair.quote.encode()[..])
-				.map_err(|_| Error::<T>::XcmCannotDecodeRemotParametersToLocalRepresentations)?;
+				.map_err(|_| Error::<T>::XcmCannotDecodeRemoteParametersToLocalRepresentations)?;
 			let amount: T::Balance =
 				request.order.take.amount.try_into().map_err(|_| {
-					Error::<T>::XcmCannotDecodeRemotParametersToLocalRepresentations
+					Error::<T>::XcmCannotDecodeRemoteParametersToLocalRepresentations
 				})?;
 			let order = Sell::new(base, quote, amount, request.order.take.limit);
 			let configuration = Configurations::<T>::get(request.configuration)
 				.ok_or(Error::<T>::XcmNotFoundConfigurationById)?;
 			let who = T::AccountId::decode(&mut &request.from_to[..])
-				.map_err(|_| Error::<T>::XcmCannotDecodeRemotParametersToLocalRepresentations)?;
+				.map_err(|_| Error::<T>::XcmCannotDecodeRemoteParametersToLocalRepresentations)?;
 
 			let order_id =
 				<Self as SellEngine<TimeReleaseFunction>>::ask(&who, order, configuration)?;
@@ -399,6 +396,7 @@ pub mod pallet {
 				configuration,
 				order,
 				context: EDContext::<Self::Balance> { added_at: now, deposit },
+				total_amount_received: Self::Balance::zero(),
 			};
 
 			T::MultiCurrency::reserve(order.order.pair.base, from_to, order.order.take.amount)?;
@@ -438,13 +436,32 @@ pub mod pallet {
 		// this cleanups all takes added into block, so we never store takes
 		// so we stay fast and prevent attack
 		fn on_finalize(_n: T::BlockNumber) {
-			for (order_id, mut takes) in <Takes<T>>::iter() {
+			for (order_id, takes) in <Takes<T>>::drain() {
+				if let Err(err) = Self::take_order(order_id, takes) {
+					log::error!("failed to take order {:?} with {:?}", order_id, err);
+				}
+			}
+		}
+
+		fn on_initialize(_n: T::BlockNumber) -> Weight {
+			T::WeightInfo::known_overhead_for_on_finalize()
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		#[transactional]
+		pub fn take_order(
+			order_id: <T as Config>::OrderId,
+			mut takes: Vec<TakeOf<T>>,
+		) -> Result<(), DispatchError> {
+			<SellOrders<T>>::try_mutate_exists(order_id, |order_item| {
 				if let Some(crate::types::SellOrder {
-					mut order,
+					order,
 					context: _,
 					from_to: ref seller,
 					configuration: _,
-				}) = <SellOrders<T>>::get(order_id)
+					total_amount_received,
+				}) = order_item
 				{
 					let mut amount_received = T::Balance::zero();
 					// users payed N * WEIGHT before, we here pay N * (log N - 1) * Weight. We can
@@ -452,8 +469,7 @@ pub mod pallet {
 					takes.sort_by(|a, b| b.take.limit.cmp(&a.take.limit));
 					// calculate real price
 					for take in takes {
-						let quote_amount =
-							take.take.quote_limit_amount().expect("was checked in take call");
+						let quote_amount = take.take.quote_limit_amount()?;
 						// TODO: what to do with orders which nobody ever takes? some kind of dust
 						// orders
 						if order.take.amount == T::Balance::zero() {
@@ -466,8 +482,7 @@ pub mod pallet {
 						} else {
 							let take_amount = take.take.amount.min(order.take.amount);
 							order.take.amount -= take_amount;
-							let real_quote_amount =
-								take.take.quote_amount(take_amount).expect("was taken via min");
+							let real_quote_amount = take.take.quote_amount(take_amount)?;
 
 							T::MultiCurrency::exchange_reserved(
 								order.pair.base,
@@ -476,112 +491,122 @@ pub mod pallet {
 								order.pair.quote,
 								&take.from_to,
 								real_quote_amount,
-							)
-							.expect("we forced locks beforehand");
+							)?;
 							if real_quote_amount < quote_amount {
 								T::MultiCurrency::unreserve(
 									order.pair.quote,
 									&take.from_to,
 									quote_amount - real_quote_amount,
 								);
-
-								amount_received += real_quote_amount;
 							}
+							amount_received += real_quote_amount;
 						}
 					}
+
+					*total_amount_received += amount_received;
 
 					if order.take.amount == T::Balance::zero() {
-						<SellOrders<T>>::remove(order_id);
-						if let Some((parachain_id, xcm_order_id)) =
-							LocalOrderIdToRemote::<T>::take(&order_id)
-						{
-							let received_amount =
-								T::MultiCurrency::free_balance(order.pair.quote, seller);
-							let mut account = vec![0u8; 32];
-							seller.encode_to(&mut account);
-							let account: [u8; 32] = account
-								.try_into()
-								.expect("cumulus runtime has no account with 33 bytes");
-							// as of now we do only final sell
-
-							// setting up XCM message
-							let asset_id = MultiLocation {
-								parents: 1,
-								interior: X2(
-									AccountId32 { network: Any, id: account },
-									GeneralKey(order.pair.encode()),
-								),
-							};
-							let asset_id = AssetId::Concrete(asset_id);
-							let assets =
-								MultiAsset { fun: Fungible(received_amount.into()), id: asset_id };
-							let callback = composable_traits::xcm::SellResponse::Final(
-								XcmSellInitialResponseTransact {
-									total_amount_taken: received_amount.into(),
-									minimal_price: composable_traits::xcm::Balance::one(), /* auction goes to mimimal price, can thin about better later */
-								},
-							);
-							if let Some(method) =
-								ParachainXcmCallbackLocation::<T>::get(parachain_id)
-							{
-								let callback = composable_traits::xcm::XcmCumulusDispatch::new(
-									method.pallet_instance,
-									method.method_id,
-									callback,
-								);
-								let callback = vec![
-									WithdrawAsset(assets.clone().into()),
-									BuyExecution { fees: assets.clone(), weight_limit: Unlimited },
-									TransferReserveAsset {
-										assets: assets.into(),
-										dest: (
-											Parent,
-											X3(
-												Parachain(parachain_id.into()),
-												AccountId32 { network: Any, id: account.clone() },
-												GeneralKey(order.pair.encode()),
-											),
-										)
-											.into(),
-										xcm: Xcm(vec![Transact {
-											origin_type: OriginKind::Native,
-											require_weight_at_most: 0, /* TODO: make sure that
-											                            * callbacks are free (if
-											                            * correct) or specify
-											                            * price */
-											call: callback.encode().into(),
-										}]),
-									},
-								];
-								let msg = Xcm(callback);
-								let result = T::XcmSender::send_xcm(
-									(Parent, Junction::Parachain(parachain_id.into())),
-									msg,
-								);
-								match result {
-									Ok(_) => {
-										// TODO: decide if need to send event about sent XCM
-									},
-									Err(_) => {
-										// TODO: insert here event to allow to act on failure
-										LocalOrderIdToRemote::<T>::insert(
-											order_id,
-											(parachain_id, xcm_order_id),
-										);
-									},
-								}
-							}
-						}
-
+						Self::callback_xcm(order, seller, order_id, *total_amount_received)?;
+						*order_item = None;
 						Self::deposit_event(Event::OrderRemoved { order_id });
 					}
+
+					if amount_received > T::Balance::zero() {
+						return Ok(())
+					}
 				}
-			}
-			<Takes<T>>::remove_all(None);
+				Err(Error::<T>::TakeOrderDidNotHappen.into())
+			})
 		}
 
-		fn on_initialize(_n: T::BlockNumber) -> Weight {
-			T::WeightInfo::known_overhead_for_on_finalize()
+		pub fn callback_xcm(
+			order: &Sell<
+				<T as DeFiComposableConfig>::MayBeAssetId,
+				<T as DeFiComposableConfig>::Balance,
+			>,
+			seller: &<T as frame_system::Config>::AccountId,
+			order_id: <T as Config>::OrderId,
+			received_amount: <T as DeFiComposableConfig>::Balance,
+		) -> Result<(), DispatchError> {
+			LocalOrderIdToRemote::<T>::try_mutate_exists(order_id, |xcm_order_item| {
+				if let Some((parachain_id, xcm_order_id)) = xcm_order_item {
+					let parachain_id = *parachain_id;
+					let xcm_order_id = *xcm_order_id;
+					let mut account = vec![0_u8; 32];
+					seller.encode_to(&mut account);
+					let account: [u8; 32] =
+						account.try_into().expect("cumulus runtime has no account with 33 bytes");
+					// as of now we do only final sell
+					// setting up XCM message
+					let asset_id = MultiLocation {
+						parents: 1,
+						interior: X2(
+							AccountId32 { network: Any, id: account },
+							GeneralKey(order.pair.encode()),
+						),
+					};
+					let asset_id = AssetId::Concrete(asset_id);
+					let assets = MultiAsset { fun: Fungible(received_amount.into()), id: asset_id };
+					let callback = composable_traits::xcm::SellResponse::Final(
+						XcmSellInitialResponseTransact {
+							total_amount_taken: received_amount.into(),
+							minimal_price: composable_traits::xcm::Balance::one(), /* auction goes to
+							                                                        * mimimal price, can
+							                                                        * thin about
+							                                                        * better
+							                                                        * later */
+							order_id: xcm_order_id,
+						},
+					);
+					if let Some(method) = ParachainXcmCallbackLocation::<T>::get(parachain_id) {
+						let callback = composable_traits::xcm::XcmCumulusDispatch::new(
+							method.pallet_instance,
+							method.method_id,
+							callback,
+						);
+						let callback = vec![
+							WithdrawAsset(assets.clone().into()),
+							BuyExecution { fees: assets.clone(), weight_limit: Unlimited },
+							TransferReserveAsset {
+								assets: assets.into(),
+								dest: (
+									Parent,
+									X3(
+										Parachain(parachain_id.into()),
+										AccountId32 { network: Any, id: account },
+										GeneralKey(order.pair.encode()),
+									),
+								)
+									.into(),
+								xcm: Xcm(vec![Transact {
+									origin_type: OriginKind::Native,
+									require_weight_at_most: 0, /* TODO: make sure that
+									                            * callbacks are free (if
+									                            * correct) or specify
+									                            * price */
+									call: callback.encode().into(),
+								}]),
+							},
+						];
+						let msg = Xcm(callback);
+						let result = T::XcmSender::send_xcm(
+							(Parent, Junction::Parachain(parachain_id.into())),
+							msg,
+						);
+						match result {
+							Ok(_) => {
+								// TODO: decide if need to send event about sent XCM
+								*xcm_order_item = None;
+							},
+							Err(_) => {
+								// TODO: insert here event to allow to act on failure
+								return Err(Error::<T>::TakeOrderDidNotHappen.into())
+							},
+						}
+					}
+				}
+				Ok(())
+			})
 		}
 	}
 }

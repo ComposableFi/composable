@@ -13,6 +13,8 @@ pub struct SellOrder<AssetId, Balance, AccountId, Context, Configuration> {
 	pub configuration: Configuration,
 	/// context captured when sell started, example current timestamp or ED captured
 	pub context: Context,
+	/// amount of `quote` received up to now
+	pub total_amount_received: Balance,
 }
 
 /// existential deposit context with date of creation

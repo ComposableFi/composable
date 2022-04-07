@@ -1,4 +1,4 @@
-use orml_traits::{MultiCurrency, MultiReservableCurrency};
+use orml_traits::MultiReservableCurrency;
 use sp_runtime::DispatchError;
 
 /// feesless exchange of reserved currencies

@@ -65,6 +65,7 @@ std = [
   "scale-info/std",
   "cumulus-primitives-core/std",
   "xcm/std",
+  "cumulus-pallet-xcm/std",
 ]
 
 runtime-benchmarks = [

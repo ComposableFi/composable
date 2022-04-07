@@ -199,8 +199,8 @@ impl From<Origin> for XcmFake {
 }
 impl SendXcm for XcmFake {
 	fn send_xcm(
-		destination: impl Into<xcm::latest::MultiLocation>,
-		message: xcm::latest::Xcm<()>,
+		_destination: impl Into<xcm::latest::MultiLocation>,
+		_message: xcm::latest::Xcm<()>,
 	) -> xcm::latest::SendResult {
 		todo!("please test via local-integration-tests")
 	}

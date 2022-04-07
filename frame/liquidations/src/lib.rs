@@ -55,7 +55,6 @@ pub mod pallet {
 		math::WrappingNext,
 		time::{LinearDecrease, StairstepExponentialDecrease, TimeReleaseFunction},
 	};
-	use cumulus_primitives_core::ParaId;
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::{OptionQuery, StorageMap, StorageValue},
