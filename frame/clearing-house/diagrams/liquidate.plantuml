@@ -1,0 +1,59 @@
+@startuml liquidate
+!theme mars
+
+actor "User/Bot" as user
+participant "Clearing\nHouse" as ch
+participant "RiskEngine" as risk
+database "Positions" as positions
+database "AccountsMargin" as accs
+database "Markets" as mkts
+participant "vAMM" as vamm
+collections "Collateral\naccount" as vault
+collections "Insurance\naccount" as insurance
+
+user -> ch: ""liquidate""
+
+== Validy checks ==
+
+note right ch
+check oracle
+guard rails?
+end note
+
+ch -> risk ++: ensure below MMR
+    risk -> risk ++: compute\nmargin ratio
+        risk -> accs : get margin
+        risk -> positions : get all user positions
+        risk -> mkts : get all markets\ninvested
+        risk -> vamm : get prices
+    return
+return
+
+== Unwind/close all positions ==
+
+    ch -> positions : get all user positions
+    ch -> vamm : swap base for quote asset
+    ch -> positions : reduce/remove
+    ch -> accs : reduce/remove margin
+    ch -> mkts : update open interest
+
+== Asset transfers ==
+
+alt Bad debt
+    ch -> insurance : reimburse Clearing House
+    insurance -> vault : collateral
+else Seize collateral
+    ch -> vault : transfer to Insurance Fund
+    vault -> insurance : collateral
+end
+
+group Pay liquidation fee
+    ch -> vault : transfer to caller's ""AccountId""
+    vault -> user : collateral
+end
+
+
+====
+
+?<-o ch : emit event
+@enduml

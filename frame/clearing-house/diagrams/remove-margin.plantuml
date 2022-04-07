@@ -1,0 +1,40 @@
+@startuml remove_margin
+!theme mars
+
+actor "Trader" as user
+participant "Clearing\nHouse" as ch
+participant "Risk\nEngine" as risk
+database "AccountsMargin" as accs
+database "Positions" as positions
+database "Markets" as mkts
+participant "vAMM/\nOracle" as price
+collections "Collateral\naccount" as vault
+
+user -> ch : ""remove_margin""
+
+== Validity checks ==
+
+ch -> risk ++: ""risk_free_collateral""
+    risk -> accs : get margin
+    risk -> positions : get all user positions
+    risk -> mkts : get all markets invested
+    risk -> price : get prices
+return free collateral
+
+ch -> ch: ensure requested amount <\nfree collateral
+
+== Storage updates ==
+
+ch -> accs : reduce margin by requested amount
+
+== Asset transfers ==
+
+group return collateral
+ch -> vault : transfer to caller's ""AccountId""
+vault -> user : collateral
+end
+
+====
+
+?<-o ch : emit event
+@enduml

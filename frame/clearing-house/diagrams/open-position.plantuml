@@ -4,32 +4,55 @@ skinparam responseMessageBelowArrow true
 
 title Opening a Position
 
-actor Trader
-participant "Clearing\nHouse" as CH
-database "Positions" as Storage
-participant "trait\nRiskEngine" as RE
-participant vAMM
+actor "Trader" as user
+participant "Clearing\nHouse" as ch
+participant "vAMM" as vamm
+participant "Risk\nEngine" as risk
+database "Markets" as mkts
+database "Positions" as positions
+database "AccountsMargin" as accs
+collections "Collateral\naccount" as vault
+collections "Fees\naccount" as fees
 
-Trader -> CH : open position
+user -> ch : open position
 
-CH -> Storage : get/create position
-return
+== Storage updates ==
+
+ch -> mkts : get ""Market""
+ch -> positions : get/create position
 'note right CH: compute quote asset\nnotional amount
 
-CH -> vAMM ++ : swap quote for base asset
+ch -> vamm ++ : swap quote for base asset
 return base asset amount
 
-CH -> CH : realize PnL?
+ch -> ch : realize PnL?
 
-CH -> Storage : update position
+ch -> positions : update position
+ch -> mkts : update open interest
+
+== Validity checks ==
 
 'RiskEngine
-CH -> RE : ensure ""above_initial_margin_ratio""
-'note right CH : ensure margin ratio\nabove MMR
+ch -> risk ++: ensure\n""above_initial_margin_ratio""
+    risk -> risk ++: compute\nmargin ratio
+        risk -> accs : get margin
+        risk -> positions : get all user positions
+        risk -> mkts : get all markets\ninvested
+        risk -> vamm : get prices
+    return
+return
+'note right ch : ensure margin ratio\nabove MMR
 
-CH -> CH: check oracle-mark\nprice divergence
+note right ch : check oracle\nguard rails?
 
-note right CH: charge and transfer fees
+== Asset transfers ==
 
-?<-o CH : emit event
+group charge fee
+ch -> vault : transfer to Fee Pool
+vault -> fees : quote asset
+end
+
+====
+
+?<-o ch : emit event
 @enduml

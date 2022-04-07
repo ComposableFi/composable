@@ -1,7 +1,7 @@
 @startuml create_market
 !theme mars
 
-actor "authority" as g
+actor "Authority" as g
 participant "Clearing\nHouse" as ch
 database "Markets" as markets
 participant "vAMM" as vamm
@@ -11,16 +11,16 @@ g -> ch : ""create_market""
 
 ch -> oracle : check has price feed for ""AssetId""
 
-ch -> vamm : ""create""
+ch -> vamm ++: ""create""
 return ""VammId""
 
 ch -> ch : get new market id
 
-ch -> ch ++: initialize ""Market"" struct
+ch -> ch ++: initialize ""Market""
 ch -> ch: get current timestamp
 return
 
-ch -> markets : store ""Market"" struct
+ch -> markets : store ""Market""
 
 ?<-o ch : emit event
 @enduml

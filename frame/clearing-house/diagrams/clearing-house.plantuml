@@ -21,7 +21,7 @@ package "pallet-clearing-house" {
         + liquidate()
         + update_funding()
         # create_market()
-        # stop_market()
+        # close_market()
     }
 
     interface "ClearingHouse" as CH <<trait>> {
@@ -31,7 +31,7 @@ package "pallet-clearing-house" {
         ~ close_position()
         ~ liquidate()
         ~ create_market()
-        ~ stop_market()
+        ~ close_market()
         ~ update_funding()
     }
     
@@ -139,7 +139,7 @@ CH -[#blue]-> ITrait : calls
 CH -[#red]-> MarginAccounts : write
 
 'create_market
-'stop_market
+'close_market
 CH -[#red]-> Markets : write
 
 'remove_margin
