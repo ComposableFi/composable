@@ -313,23 +313,21 @@ pub mod pallet {
 
 		#[transactional]
 		fn create(
-			base_asset_reserves: Self::Balance,
-			quote_asset_reserves: Self::Balance,
-			peg_multiplier: Self::Balance,
+			params: composable_traits::vamm::VammParams<BalanceOf<T>>,
 		) -> Result<Self::VammId, DispatchError> {
 			// TODO: (Matheus)
 			// How to ensure that the caller has the right privileges?
 			// (eg. How to ensure the caller is the Clearing House, and not anyone else?)
-			ensure!(!base_asset_reserves.is_zero(), Error::<T>::BaseAssetReserveIsZero);
-			ensure!(!quote_asset_reserves.is_zero(), Error::<T>::QuoteAssetReserveIsZero);
-			ensure!(!peg_multiplier.is_zero(), Error::<T>::PegMultiplierIsZero);
+			ensure!(!params.base_asset_reserves.is_zero(), Error::<T>::BaseAssetReserveIsZero);
+			ensure!(!params.quote_asset_reserves.is_zero(), Error::<T>::QuoteAssetReserveIsZero);
+			ensure!(!params.peg_multiplier.is_zero(), Error::<T>::PegMultiplierIsZero);
 
 			VammCounter::<T>::try_mutate(|id| {
 				let old_id = *id;
 				let vamm_state = VammStateOf::<T> {
-					base_asset_reserves,
-					quote_asset_reserves,
-					peg_multiplier,
+					base_asset_reserves: params.base_asset_reserves,
+					quote_asset_reserves: params.quote_asset_reserves,
+					peg_multiplier: params.peg_multiplier,
 					deprecated: Default::default(),
 				};
 
