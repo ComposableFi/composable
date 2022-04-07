@@ -57,7 +57,7 @@
 //! ## Related Modules
 //!
 //! - `pallet-vamm`
-//! - `pallet-oracle`
+//! - [`pallet-oracle`](../oracle/index.html)
 //!
 //! <!-- Original author: @0xangelo -->
 #![cfg_attr(not(feature = "std"), no_std)]
