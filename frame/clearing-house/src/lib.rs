@@ -398,8 +398,11 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// # Overview
 		/// Creates a new perpetuals market with the desired parameters.
+		///
+		/// # Overview
+		///
+		/// ![](http://www.plantuml.com/plantuml/svg/FOux3i8m40LxJW47IBQdYeJ4FJQRHsnXhwFzYEiJKL2DPgfPFDWYUxlSgahB3MdjMY8ElnCPV-QzHiar7IP30ngpZ4wFqO_Xl3OyAybV22u5HY_Z3f86jghxL4OwQAkydzr931oOEjiRCH-DzNUmGBUJNm00)
 		///
 		/// ## Parameters
 		/// - `asset`: Asset id of the underlying for the derivatives market
