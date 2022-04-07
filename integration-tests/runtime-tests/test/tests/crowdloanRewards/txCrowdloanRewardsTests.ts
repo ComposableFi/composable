@@ -13,7 +13,7 @@ import {mintAssetsToWallet} from "@composable/utils/mintingHelper";
  *  4. Associate a picassso account (which also claims)
  *  5. Claiming more rewards.
  */
-describe.only('CrowdloanRewards Tests', function() {
+describe('CrowdloanRewards Tests', function() {
   if (!testConfiguration.enabledTests.tx.enabled)
     return;
 
