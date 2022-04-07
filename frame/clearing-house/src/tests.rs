@@ -25,7 +25,7 @@ use proptest::{
 	num::f64::{NEGATIVE, POSITIVE, ZERO},
 	prelude::*,
 };
-use sp_runtime::FixedI128;
+use sp_runtime::{traits::Zero, FixedI128};
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Setup
@@ -494,6 +494,33 @@ proptest! {
 			assert_storage_noop!(
 				assert_ok!(<TestPallet as Instruments>::funding_owed(&market, &position))
 			);
+		})
+	}
+}
+
+proptest! {
+	#[test]
+	fn funding_owed_is_nonzero_iff_cum_rates_not_equal(
+		market in any_market(),
+		market_id in any::<MarketId>(),
+		base_asset_amount in any_decimal(),
+		quote_asset_notional_amount in any_decimal(),
+		cum_funding_delta in any_decimal(),
+	) {
+		ExtBuilder::default().build().execute_with(|| {
+			let position = Position {
+				market_id,
+				base_asset_amount,
+				quote_asset_notional_amount,
+				last_cum_funding: market.cum_funding_rate + cum_funding_delta
+			};
+
+			let result = <TestPallet as Instruments>::funding_owed(&market, &position).unwrap();
+
+			match cum_funding_delta.is_zero() {
+				true => assert_eq!(result, FixedI128::zero()),
+				false => assert_ne!(result, FixedI128::zero())
+			};
 		})
 	}
 }
