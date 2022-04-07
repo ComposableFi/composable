@@ -11,6 +11,8 @@ use sp_runtime::{
 	ArithmeticError, DispatchError, Permill,
 };
 use sp_std::vec::Vec;
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 
 /// Trait for automated market maker.
 pub trait Amm {
@@ -282,4 +284,15 @@ pub trait DexRouter<AccountId, AssetId, PoolId, Balance, MaxHops> {
 		asset_pair: CurrencyPair<AssetId>,
 		amount: Balance,
 	) -> Result<Balance, DispatchError>;
+}
+
+/// Aggregated prices for a given base/quote currency pair in a pool.
+#[derive(Encode, Decode, Default, Clone, PartialEq, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct PriceAggregate<PoolId, AssetId, Balance> {
+	pub pool_id: PoolId,
+	pub base_asset_id: AssetId,
+	pub quote_asset_id: AssetId,
+	pub spot_price: Balance
+	// prices based on any other stat such as TWAP goes here..
 }
