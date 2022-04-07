@@ -29,7 +29,6 @@
 	trivial_casts,
 	unused_extern_crates
 )]
-
 #![doc = include_str!("../README.md")]
 
 #[cfg(feature = "runtime-benchmarks")]
