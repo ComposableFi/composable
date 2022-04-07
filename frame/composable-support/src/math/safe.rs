@@ -72,4 +72,4 @@ impl<T: CheckedSub + Zero> SafeSub for T {
 	}
 }
 
-impl<T: SafeArithmetic> SafeArithmetic for T {}
+impl<T: Sized + SafeAdd + SafeDiv + SafeMul + SafeSub> SafeArithmetic for T {}
