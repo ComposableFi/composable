@@ -35,7 +35,7 @@ pub mod pallet {
 		weights::WeightInfo,
 	};
 	use codec::FullCodec;
-	use composable_support::validation::Validated;
+	use composable_support::{types::EthereumAddress, validation::Validated};
 	use composable_traits::math::SafeAdd;
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
@@ -107,9 +107,6 @@ pub mod pallet {
 
 	/// Convenience identifiers emitted by the pallet for relayer bookkeeping.
 	pub type Id = H256;
-
-	/// Raw ethereum addresses.
-	pub type EthereumAddress = [u8; 20];
 
 	/// Transaction type.
 	pub enum TransactionType {

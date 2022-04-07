@@ -51,6 +51,21 @@
 //! Alice may cancel offer and prevent new bonds on offer, she gets her native tokens back.
 //! All existing vesting periods continue to be executed.
 //!
+//! ## Use cases
+//!
+//! - Staking. User locks amount for some period of time, gets reward in the end or vested. Stake
+//!   returns to user in the end.
+//! - Vesting. User offers amount and ensure that recepients has 'ticket' tokens to bond to get
+//!   reward.
+//! - Sell/Exchange/Trade. User makes bond offer, other users takes offer in exchange for other
+//!   amount..
+//!
+//! ## Concerns
+//!
+//! Protocol is not protected from sniper bots, whales and other attackers.
+//! Could lock amounts after into time locked fNFTs, vested, or offer to depend on time and already
+//! taken amount.
+//!
 //! ## Interface
 //!
 //! This pallet implements the `composable_traits::bonded_finance::BondedFinance`.
@@ -176,6 +191,9 @@ pub mod pallet {
 		/// The minimum reward for an offer.
 		///
 		/// Must be > T::Vesting::MinVestedTransfer.
+		// NOTE: can be zero for low amount tokens. either define normalzied (e.g. to stable or
+		// native token), or better have min per bond setup (if min == total will make Sell type
+		// setup)
 		#[pallet::constant]
 		type MinReward: Get<BalanceOf<Self>>;
 

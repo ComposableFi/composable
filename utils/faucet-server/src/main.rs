@@ -46,7 +46,6 @@ struct Env {
 #[tokio::main]
 async fn main() -> tide::Result<()> {
 	env_logger::init();
-	dotenv::dotenv().expect("couldn't load env vars");
 	let args = Main::from_args();
 
 	let state = init().await;
@@ -60,7 +59,7 @@ async fn main() -> tide::Result<()> {
 async fn init() -> Arc<State> {
 	let env = envy::from_env::<Env>().expect("Missing env vars");
 
-	const RPC_WS_URL: &'static str = "wss://rpc.composablefinance.ninja";
+	const RPC_WS_URL: &'static str = "wss://rpc.composablefinance.ninja:443";
 	// create the signer
 	let signer = sr25519::Pair::from_string(&env.root_key, None).unwrap();
 

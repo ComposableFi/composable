@@ -10,7 +10,7 @@ version = "0.0.1"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [package.metadata.cargo-udeps.ignore]
-normal = ["pallet-vault"]
+normal = ["pallet-vault", "plotters"]
 
 [dependencies.codec]
 default-features = false
@@ -29,7 +29,6 @@ sp-io = { default-features = false, git = "https://github.com/paritytech/substra
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
-pallet-oracle = { default-features = false, optional = true, version = "1.0.0", path = "../oracle" }
 pallet-vault = { default-features = false, version = "0.0.1", path = "../vault", optional = true }
 
 composable-traits = { default-features = false, version = "0.0.1", path = "../composable-traits" }
@@ -69,7 +68,6 @@ runtime-benchmarks = [
   "frame-benchmarking",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
-  "pallet-oracle/runtime-benchmarks",
 ]
 
 visualization = ["plotters"]

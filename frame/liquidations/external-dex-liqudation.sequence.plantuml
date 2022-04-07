@@ -3,6 +3,7 @@
 box Composable #LightYellow
   participant "Assets" as pallet_assets
   participant "Lending" as pallet_lending
+  participant "Dutch Auction" as pallet_dutch_action
   control "OCW Liquidation" as ocw_liquidation
 end box
 
@@ -12,7 +13,6 @@ box HydraDx #SkyBlue
 end box
 
 ocw_liquidation -> pallet_lending: Detect liquidate condition
-
 ocw_liquidation -> pallet_lending: Liquidate
 
 alt OB
@@ -24,11 +24,10 @@ alt OB
     pah --> pallet_assets: XCM: `Transfer' + `ReportError`
   end
 else Dutch Auction
-  pallet_lending --> dauh: XCM sell via 'Transfer' + 'Transact'
+  pallet_lending --> pallet_dutch_action: XCM sell via 'Transfer' + 'Transact'
   note over pah
     - will share `Dispatchable` `Call` `Extrinsic` contract
   end note
 end
-
 
 @enduml

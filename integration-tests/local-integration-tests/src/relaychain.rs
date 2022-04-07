@@ -6,7 +6,7 @@ use common::Balance;
 
 use support::RuntimeDebug;
 use xcm::latest::{
-	prelude::*, Junction::Parachain, Junctions::X1, MultiAsset, MultiLocation, OriginKind,
+	Junction::Parachain, Junctions::X1, MultiAsset, MultiLocation, OriginKind,
 	WeightLimit::Unlimited, Xcm,
 };
 

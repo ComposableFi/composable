@@ -11,7 +11,6 @@ balances = { package = "pallet-balances", git = "https://github.com/paritytech/s
 common = { path = "../../runtime/common" }
 composable-runtime = { path = "../../runtime/composable" }
 dali-runtime = { path = "../../runtime/dali" }
-dotenv = "0.15.0"
 env_logger = "0.8.4"
 envy = "0.4"
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }

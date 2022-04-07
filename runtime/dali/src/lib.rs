@@ -27,8 +27,8 @@ pub use xcmp::{MaxInstructions, UnitWeightCost};
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
 	BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, MosaicRemoteAssetId,
-	MultiExistentialDeposits, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
-	MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	MultiExistentialDeposits, NativeExistentialDeposit, Signature, AVERAGE_ON_INITIALIZE_RATIO,
+	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use cumulus_primitives_core::ParaId;
@@ -769,6 +769,7 @@ impl assets_registry::Config for Runtime {
 	type UpdateAdminOrigin = EnsureRootOrHalfCouncil;
 	type LocalAdminOrigin = assets_registry::EnsureLocalAdmin<Runtime>;
 	type ForeignAdminOrigin = assets_registry::EnsureForeignAdmin<Runtime>;
+	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 }
 
 impl governance_registry::Config for Runtime {
@@ -887,10 +888,10 @@ impl dutch_auction::Config for Runtime {
 	type Event = Event;
 	type MultiCurrency = Assets;
 	type PalletId = DutchAuctionId;
-	type WeightToFee = WeightToFee;
 	type OrderId = u128;
 	type UnixTime = Timestamp;
 	type WeightInfo = weights::dutch_auction::WeightInfo<Runtime>;
+	type PositionExistentialDeposit = NativeExistentialDeposit;
 }
 
 parameter_types! {
@@ -1145,9 +1146,10 @@ mod benches {
 		[liquidations, Liquidations]
 		[bonded_finance, BondedFinance]
 		//FIXME: broken with dali [lending, Lending]
-	  [uniswap_v2, ConstantProductDex]
-	  [curve_amm, StableSwapDex]
-	  [liquidity_bootstrapping, LiquidityBootstrapping]
+		[uniswap_v2, ConstantProductDex]
+		[curve_amm, StableSwapDex]
+		[liquidity_bootstrapping, LiquidityBootstrapping]
+		[assets_registry, AssetsRegistry]
 	);
 }
 
