@@ -83,7 +83,6 @@ pub mod pallet {
 		BoundedBTreeMap<AssetIdOf<T>, CollectedReward, MaxRewardAssetsOf<T>>;
 	pub(crate) type StakingNFTOf<T> =
 		StakingNFT<AccountIdOf<T>, AssetIdOf<T>, BalanceOf<T>, CollectedRewardsOf<T>>;
-	pub(crate) type StakingTagOf<T> = StakingTag<AccountIdOf<T>, CollectedRewardsOf<T>>;
 	pub(crate) type StakingConfigOf<T> = StakingConfig<
 		AccountIdOf<T>,
 		BoundedBTreeMap<DurationSeconds, Perbill, MaxStakingPresetsOf<T>>,
@@ -280,8 +279,7 @@ pub mod pallet {
 		///
 		/// Arguments
 		///
-		/// * `origin` the origin that signed this extrinsic. Can be anyone.
-		///   by `instance_id`.
+		/// * `origin` the origin that signed this extrinsic. Can be anyone. by `instance_id`.
 		/// * `instance_id` the ID of the NFT that represent our staked position.
 		/// * `to` the account in which the rewards will be transferred.
 		#[pallet::weight(10_000)]
@@ -293,7 +291,7 @@ pub mod pallet {
 			strategy: ClaimStrategy,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-      // Only the owner is able to select an arbitrary `to` account.
+			// Only the owner is able to select an arbitrary `to` account.
 			let nft_owner = T::get_protocol_nft_owner::<StakingNFTOf<T>>(&instance_id)?;
 			let to = if nft_owner == who { to } else { nft_owner };
 			<Self as Staking>::claim(&instance_id, &to, strategy)?;
@@ -307,8 +305,8 @@ pub mod pallet {
 		/// * `origin` the origin that signed this extrinsic. Can be anyone.
 		/// * `instance_id` the ID of the NFT we want to tag.
 		/// * `beneficiary` the beneficiary of the reward when claiming.
-    ///
-    /// NOTE: if logic gate pass, no fee applied.
+		///
+		/// NOTE: if logic gate pass, no fee applied.
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn tag(
@@ -395,12 +393,6 @@ pub mod pallet {
 				.expect("map does not alter the length; qed;")
 		}
 
-		pub(crate) fn nft_tag(
-			instance_id: &InstanceIdOf<T>,
-		) -> Result<Option<StakingTagOf<T>>, DispatchError> {
-			T::get_protocol_nft::<StakingNFTOf<T>>(instance_id).map(|nft| nft.tag)
-		}
-
 		pub(crate) fn do_tag(
 			tagger: &AccountIdOf<T>,
 			instance_id: &InstanceIdOf<T>,
@@ -416,6 +408,10 @@ pub mod pallet {
 							tagger: tagger.clone(),
 							beneficiary: beneficiary.clone(),
 							collected_rewards: Self::current_collected_rewards(&nft.asset, &config),
+						});
+						Self::deposit_event(Event::<T>::Tagged {
+							who: tagger.clone(),
+							beneficiary: beneficiary.clone(),
 						});
 						Ok(())
 					},

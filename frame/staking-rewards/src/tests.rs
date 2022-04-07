@@ -534,16 +534,14 @@ mod claim {
 	}
 
 	#[test]
-	fn tagger_and_owner_can_claim() {
+	fn anyone_can_claim() {
 		new_test_ext().execute_with(|| {
-			process_block(1);
 			configure_default_pica();
 			let stake = 1_000_000_000_000;
 			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
 			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
 				.expect("impossible; qed;");
-			process_block(duration_to_block(WEEK + MINUTE));
-			assert_ok!(StakingRewards::tag(Origin::signed(TREASURY), instance_id, TREASURY));
+			process_block(REWARD_EPOCH_DURATION_BLOCK);
 			assert_ok!(StakingRewards::claim(
 				Origin::signed(TREASURY),
 				instance_id,
@@ -592,6 +590,24 @@ mod tag {
 				StakingRewards::tag(Origin::signed(TREASURY), instance_id, TREASURY),
 				Error::<Test>::AlreadyTagged
 			);
+		});
+	}
+
+	#[test]
+	fn generate_event() {
+		new_test_ext().execute_with(|| {
+			process_block(1);
+			configure_default_pica();
+			let stake = 1_000_000_000_000;
+			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
+			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
+				.expect("impossible; qed;");
+			process_block(duration_to_block(WEEK + MINUTE));
+			assert_ok!(StakingRewards::tag(Origin::signed(TREASURY), instance_id, BOB));
+			System::assert_last_event(Event::StakingRewards(crate::Event::Tagged {
+				who: TREASURY,
+				beneficiary: BOB,
+			}));
 		});
 	}
 }
