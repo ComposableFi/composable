@@ -1,11 +1,7 @@
 //! # Virtual Automated Market Maker
 //!
 //! Common traits for vamm implementation
-use codec::{Codec, FullCodec};
-use frame_support::{pallet_prelude::*, sp_std::fmt::Debug};
-use sp_runtime::traits::{
-	AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Zero,
-};
+use frame_support::pallet_prelude::DispatchError;
 
 pub trait Vamm {
 	type Balance;
