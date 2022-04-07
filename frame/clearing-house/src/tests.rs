@@ -102,40 +102,6 @@ impl MarketInitializer for sp_io::TestExternalities {
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                           Mocked Pallets Tests
-// ----------------------------------------------------------------------------------------------------
-
-proptest! {
-	// Can we guarantee that any::<Option<Value>> will generate at least one of `Some` and `None`?
-	#[test]
-	fn mock_oracle_asset_support_reflects_genesis_config(oracle_asset_support in any::<Option<bool>>()) {
-		ExtBuilder { oracle_asset_support, ..Default::default() }.build().execute_with(|| {
-			let is_supported = <Runtime as Config>::Oracle::is_supported(DOT);
-			match oracle_asset_support {
-				Some(support) => assert_ok!(is_supported, support),
-				None => {
-					assert_err!(is_supported, mock_oracle::Error::<Runtime>::CantCheckAssetSupport)
-				},
-			}
-		})
-	}
-}
-
-proptest! {
-	// Can we guarantee that any::<Option<Value>> will generate at least one of `Some` and `None`?
-	#[test]
-	fn mock_vamm_created_id_reflects_genesis_config(vamm_id in any::<Option<VammId>>()) {
-		ExtBuilder { vamm_id , ..Default::default() }.build().execute_with(|| {
-			let created = <Runtime as Config>::Vamm::create(&valid_vamm_params());
-			match vamm_id {
-				Some(id) => assert_ok!(created, id),
-				None => assert_err!(created, mock_vamm::Error::<Runtime>::FailedToCreateVamm),
-			}
-		})
-	}
-}
-
-// ----------------------------------------------------------------------------------------------------
 //                                             Prop Compose
 // ----------------------------------------------------------------------------------------------------
 
@@ -185,6 +151,40 @@ prop_compose! {
 prop_compose! {
 	fn any_decimal()(float in any::<f64>()) -> FixedI128 {
 		FixedI128::from_float(float)
+	}
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                           Mocked Pallets Tests
+// ----------------------------------------------------------------------------------------------------
+
+proptest! {
+	// Can we guarantee that any::<Option<Value>> will generate at least one of `Some` and `None`?
+	#[test]
+	fn mock_oracle_asset_support_reflects_genesis_config(oracle_asset_support in any::<Option<bool>>()) {
+		ExtBuilder { oracle_asset_support, ..Default::default() }.build().execute_with(|| {
+			let is_supported = <Runtime as Config>::Oracle::is_supported(DOT);
+			match oracle_asset_support {
+				Some(support) => assert_ok!(is_supported, support),
+				None => {
+					assert_err!(is_supported, mock_oracle::Error::<Runtime>::CantCheckAssetSupport)
+				},
+			}
+		})
+	}
+}
+
+proptest! {
+	// Can we guarantee that any::<Option<Value>> will generate at least one of `Some` and `None`?
+	#[test]
+	fn mock_vamm_created_id_reflects_genesis_config(vamm_id in any::<Option<VammId>>()) {
+		ExtBuilder { vamm_id , ..Default::default() }.build().execute_with(|| {
+			let created = <Runtime as Config>::Vamm::create(&valid_vamm_params());
+			match vamm_id {
+				Some(id) => assert_ok!(created, id),
+				None => assert_err!(created, mock_vamm::Error::<Runtime>::FailedToCreateVamm),
+			}
+		})
 	}
 }
 
