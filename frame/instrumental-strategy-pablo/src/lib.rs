@@ -15,11 +15,18 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 	use crate::weights::WeightInfo;
 
-	use frame_support::pallet_prelude::*;
+	use frame_support::{
+		pallet_prelude::*,
+		storage::bounded_btree_set::BoundedBTreeSet,
+		transactional
+	};
 	use frame_system::{
 		ensure_signed,
 		pallet_prelude::*,
 	};
+
+	use sp_std::fmt::Debug;
+	use codec::FullCodec;
 
 	// -------------------------------------------------------------------------------------------
 	//                                Declaration Of The Pallet Type                              
@@ -40,6 +47,22 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		type WeightInfo: WeightInfo;
+
+		/// The `VaultId` used by the pallet. Corresponds to the Ids used by the Vault pallet.
+		type VaultId: FullCodec
+			+ MaxEncodedLen
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ Default
+			+ Ord
+			+ TypeInfo
+			+ Into<u128>;
+
+		/// The maximum number of vaults that can be associated with this strategy.
+		type MaxAssociatedVaults: Get<u32>;
 	}
 
 	// -------------------------------------------------------------------------------------------
@@ -49,6 +72,12 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
     //                                       Runtime  Storage                                     
 	// -------------------------------------------------------------------------------------------
+
+	#[pallet::storage]
+	#[pallet::getter(fn associated_vaults)]
+	pub type AssociatedVaults<T: Config> =
+		// TODO: consider the tradeoff of using BoundedBTreeSet
+		StorageValue<_, BoundedBTreeSet<T::VaultId,T::MaxAssociatedVaults>, ValueQuery>;
 
 	// -------------------------------------------------------------------------------------------
     //                                        Runtime Events                                      
@@ -68,6 +97,9 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
+		VaultAlreadyAssociated,
+
+		TooManyAssociatedStrategies,
 	}
 
 	// -------------------------------------------------------------------------------------------
@@ -104,7 +136,20 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 
 	impl<T: Config> Pallet<T> {
+		
+		#[transactional]
+		pub fn associate_vault(vault_id: &T::VaultId) -> DispatchResult {
+			AssociatedVaults::<T>::try_mutate(|vaults| -> Result<(), DispatchError> {
+				ensure!(!vaults.contains(&vault_id), Error::<T>::VaultAlreadyAssociated);
 
+				vaults.try_insert(*vault_id)
+					.map_err(|_| Error::<T>::TooManyAssociatedStrategies)?;
+
+				Ok(())
+			})?;
+
+			Ok(())
+		}
 	}
 }
 
