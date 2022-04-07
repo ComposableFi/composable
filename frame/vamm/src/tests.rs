@@ -65,7 +65,7 @@ proptest! {
 					base_asset_reserves,
 					quote_asset_reserves,
 					peg_multiplier,
-					deprecated: Default::default(),
+					closed: Default::default(),
 			};
 
 			let vamm_created_ok = Vamm::create(

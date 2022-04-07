@@ -32,7 +32,7 @@
 //! The VAMM Pallet provides implementations for the following traits:
 //!
 //! - [`Vamm`](composable_traits::vamm::Vamm): Exposes functionality for
-//! creating, managing and deprecating virtual automated market makers.
+//! creating, managing and closing virtual automated market makers.
 //!
 //! ## Interface
 //!
@@ -117,7 +117,7 @@ pub mod pallet {
 			+ TypeInfo
 			+ Zero;
 
-		/// Timestamp to be used for twap calculations and market deprecation.
+		/// Timestamp to be used for twap calculations and market closing.
 		type Timestamp: Default
 			+ Clone
 			+ Copy
@@ -171,14 +171,15 @@ pub mod pallet {
 		/// The magnitude of the quote asset reserve.
 		pub peg_multiplier: Balance,
 
-		/// Whether this market is deprecated or not.
+		/// Whether this market is closed or not.
 		///
-		/// This variable function as a signal to allow pallets who uses the Vamm to
-		/// set a market as "operating as normal" or "not to be used anymore".  If
-		/// the value is `None` it means the market is operating as normal, but if
-		/// the value is `Some(timestamp)` it means the market is deprecated and the
-		/// deprecation will take (or took) effect at the time `timestamp`.
-		pub deprecated: Option<Timestamp>,
+		/// This variable function as a signal to allow pallets who uses the
+		/// Vamm to set a market as "operating as normal" or "not to be used
+		/// anymore".  If the value is `None` it means the market is operating
+		/// as normal, but if the value is `Some(timestamp)` it means the market
+		/// is flaged to be closed and the closing action will take (or took)
+		/// effect at the time `timestamp`.
+		pub closed: Option<Timestamp>,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -323,7 +324,7 @@ pub mod pallet {
 					base_asset_reserves: params.base_asset_reserves,
 					quote_asset_reserves: params.quote_asset_reserves,
 					peg_multiplier: params.peg_multiplier,
-					deprecated: Default::default(),
+					closed: Default::default(),
 				};
 
 				VammMap::<T>::insert(&id, vamm_state);
