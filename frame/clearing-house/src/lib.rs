@@ -45,6 +45,11 @@
 //!
 //! ### Implemented Functions
 //!
+//! - [`add_margin`](pallet/struct.Pallet.html#method.add_margin-1)
+//! - [`create_market`](pallet/struct.Pallet.html#method.create_market-1)
+//! - [`funding_rate`](Pallet::funding_rate)
+//! - [`funding_owed`](Pallet::funding_owed)
+//!
 //! ## Usage
 //!
 //! ### Example
@@ -58,6 +63,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
+// Bring to scope so that 'Implemented Functions' hyperlinks work
+use composable_traits::clearing_house::Instruments;
 
 #[cfg(test)]
 mod mock;
