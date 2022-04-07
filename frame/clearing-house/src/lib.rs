@@ -467,28 +467,28 @@ pub mod pallet {
 		}
 
 		fn create_market(config: &Self::MarketConfig) -> Result<Self::MarketId, DispatchError> {
-			MarketCount::<T>::try_mutate(|id| {
-				ensure!(T::Oracle::is_supported(config.asset)?, Error::<T>::NoPriceFeedForAsset);
-				ensure!(
-					config.funding_period > 0 && config.funding_frequency > 0,
-					Error::<T>::ZeroLengthFundingPeriodOrFrequency
-				);
-				ensure!(
-					config.funding_period.rem_euclid(config.funding_frequency) == 0,
-					Error::<T>::FundingPeriodNotMultipleOfFrequency
-				);
-				ensure!(
-					config.margin_ratio_initial > T::Decimal::zero() &&
-						config.margin_ratio_initial < T::Decimal::one() &&
-						config.margin_ratio_maintenance > T::Decimal::zero() &&
-						config.margin_ratio_maintenance < T::Decimal::one(),
-					Error::<T>::InvalidMarginRatioRequirement
-				);
-				ensure!(
-					config.margin_ratio_initial > config.margin_ratio_maintenance,
-					Error::<T>::InitialMarginRatioLessThanMaintenance
-				);
+			ensure!(T::Oracle::is_supported(config.asset)?, Error::<T>::NoPriceFeedForAsset);
+			ensure!(
+				config.funding_period > 0 && config.funding_frequency > 0,
+				Error::<T>::ZeroLengthFundingPeriodOrFrequency
+			);
+			ensure!(
+				config.funding_period.rem_euclid(config.funding_frequency) == 0,
+				Error::<T>::FundingPeriodNotMultipleOfFrequency
+			);
+			ensure!(
+				config.margin_ratio_initial > T::Decimal::zero() &&
+					config.margin_ratio_initial < T::Decimal::one() &&
+					config.margin_ratio_maintenance > T::Decimal::zero() &&
+					config.margin_ratio_maintenance < T::Decimal::one(),
+				Error::<T>::InvalidMarginRatioRequirement
+			);
+			ensure!(
+				config.margin_ratio_initial > config.margin_ratio_maintenance,
+				Error::<T>::InitialMarginRatioLessThanMaintenance
+			);
 
+			MarketCount::<T>::try_mutate(|id| {
 				let market_id = id.clone();
 				let market = Market {
 					asset_id: config.asset,
