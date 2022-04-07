@@ -3,7 +3,9 @@ use crate::{
 		accounts::ALICE,
 		assets::{AssetId, DOT, PICA, USDC},
 		oracle as mock_oracle,
-		runtime::{Balance, ExtBuilder, Origin, Runtime, System, TestPallet, Timestamp, VammId},
+		runtime::{
+			Balance, ExtBuilder, MarketId, Origin, Runtime, System, TestPallet, Timestamp, VammId,
+		},
 		vamm as mock_vamm,
 	},
 	pallet::*,
@@ -209,6 +211,22 @@ prop_compose! {
 			funding_rate_ts,
 			funding_frequency,
 			funding_period,
+		}
+	}
+}
+
+prop_compose! {
+	fn any_position()(
+		market_id in any::<MarketId>(),
+		base_asset_amount in any_decimal(),
+		quote_asset_notional_amount in any_decimal(),
+		last_cum_funding in any_decimal(),
+	) -> Position {
+		Position {
+			market_id,
+			base_asset_amount,
+			quote_asset_notional_amount,
+			last_cum_funding
 		}
 	}
 }
@@ -470,19 +488,9 @@ proptest! {
 proptest! {
 	#[test]
 	fn funding_owed_query_leaves_storage_intact(
-		market in any_market(),
-		base_asset_amount in any_decimal(),
-		quote_asset_notional_amount in any_decimal(),
-		last_cum_funding in any_decimal()
+		market in any_market(), position in any_position()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
-			let position = Position {
-				market_id: 0,
-				base_asset_amount,
-				quote_asset_notional_amount,
-				last_cum_funding,
-			};
-
 			assert_storage_noop!(
 				assert_ok!(<TestPallet as Instruments>::funding_owed(&market, &position))
 			);

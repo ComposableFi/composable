@@ -53,6 +53,7 @@ pub type Balance = u128;
 pub type Amount = i64;
 pub type VammId = u64;
 pub type Decimal = FixedI128;
+pub type MarketId = u64;
 
 // ----------------------------------------------------------------------------------------------------
 //                                                FRAME System
@@ -229,7 +230,7 @@ parameter_types! {
 impl clearing_house::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
-	type MarketId = u64;
+	type MarketId = MarketId;
 	type Decimal = Decimal;
 	type UnixTime = Timestamp;
 	type Vamm = Vamm;

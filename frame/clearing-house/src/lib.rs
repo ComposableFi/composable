@@ -151,7 +151,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	/// Stores the user's position in a particular market
-	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
+	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug)]
 	pub struct Position<MarketId, Decimal> {
 		/// The Id of the virtual market
 		pub market_id: MarketId,
