@@ -171,7 +171,10 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
 
-			let vamm_created_ok = Vamm::create(VammParams{base_asset_reserves, quote_asset_reserves, peg_multiplier});
+			let vamm_created_ok = Vamm::create(
+				VammParams{base_asset_reserves,
+						   quote_asset_reserves,
+						   peg_multiplier});
 			let vamm_created = Vamm::get_vamm(vamm_created_ok.unwrap()).unwrap();
 			assert_ok!(vamm_created_ok);
 
@@ -190,7 +193,10 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			assert!(!VammMap::<MockRuntime>::contains_key(0u128));
 
-			let vamm_created_ok = Vamm::create(VammParams{base_asset_reserves, quote_asset_reserves, peg_multiplier});
+			let vamm_created_ok = Vamm::create(
+				VammParams{base_asset_reserves,
+						   quote_asset_reserves,
+						   peg_multiplier});
 			assert_ok!(vamm_created_ok);
 
 			assert!(VammMap::<MockRuntime>::contains_key(0u128));
