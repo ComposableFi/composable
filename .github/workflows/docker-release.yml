@@ -54,10 +54,6 @@ jobs:
     - name: Build Docker image
       run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make containerize
     
-<<<<<<< HEAD
-    - name:  Docker push
-      run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make push
-=======
     - name: Image Tag Version
       id: imagetag
       run: |
@@ -76,7 +72,6 @@ jobs:
 
     #- name:  Docker push
     #  run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make push
->>>>>>> 2d886f65 (multi arch build test)
 
     - uses: 8398a7/action-slack@v3
       with:
