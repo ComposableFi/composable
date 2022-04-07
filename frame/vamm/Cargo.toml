@@ -1,5 +1,5 @@
 [package]
-name = "pallet-vamms"
+name = "pallet-vamm"
 version = "0.1.0"
 authors = ["matheus@composable.finance", "Composable Finance Developers"]
 homepage = "https://composable.finance"
