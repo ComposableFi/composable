@@ -7772,7 +7772,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-vamms"
+name = "pallet-vamm"
 version = "0.1.0"
 dependencies = [
  "composable-traits",
