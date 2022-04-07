@@ -1,9 +1,6 @@
 use crate::math::safe::SafeAdd;
 
 use codec::FullCodec;
-// #[allow(clippy::disallowed_types)]
-// ValueQuery for nonces is OK. Default/ starting value is provided with StartAt<S, T>.
-// use frame_support::pallet_prelude::ValueQuery;
 use frame_support::{pallet_prelude::StorageValue, traits::StorageInstance};
 use sp_runtime::{
 	traits::{One, Zero},
@@ -18,7 +15,7 @@ pub trait StorageNonce<T, S: StartAtValue<T>> {
 	fn try_increment() -> Result<T, ArithmeticError>;
 }
 
-#[allow(clippy::disallowed_types)] // ValueQuery for nonces is OK. Default/ starting value is provided with StartAt<S, T>.
+#[allow(clippy::disallowed_type)] // ValueQuery for nonces is OK. Default/ starting value is provided with StartAt<S, T>.
 impl<Prefix, T, S: StartAtValue<T>> StorageNonce<T, S>
 	for StorageValue<Prefix, T, frame_support::pallet_prelude::ValueQuery, start_at::StartAt<S, T>>
 where
