@@ -22,20 +22,20 @@ end note
 
 ch -> risk ++: ensure below MMR
     risk -> risk ++: compute\nmargin ratio
-        risk -> accs : get margin
-        risk -> positions : get all user positions
-        risk -> mkts : get all markets\ninvested
+        risk -[#green]> accs : get margin
+        risk -[#green]> positions : get all user positions
+        risk -[#green]> mkts : get all markets\ninvested
         risk -> vamm : get prices
     return
 return
 
-== Unwind/close all positions ==
+== Storage updates ==
 
-    ch -> positions : get all user positions
+    ch -[#green]> positions : get all user positions
     ch -> vamm : swap base for quote asset
-    ch -> positions : reduce/remove
-    ch -> accs : reduce/remove margin
-    ch -> mkts : update open interest
+    ch -[#red]> positions : reduce/remove
+    ch -[#red]> accs : realize PnL
+    ch -[#red]> mkts : update open interest
 
 == Asset transfers ==
 

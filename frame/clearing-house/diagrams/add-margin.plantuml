@@ -15,9 +15,13 @@ CH -> CH ++: Deposit collateral
     user -> Acc : collateral
 return
 
-CH -> CHS : get/create margin account
+CH -[#green]> CHS : get/create margin account
 
-CH -> CHS : update margin amount
+note right CH
+settle funding payments?
+end note
+
+CH -[#red]> CHS : update margin amount
 
 ?<-o CH : emit event
 @enduml
