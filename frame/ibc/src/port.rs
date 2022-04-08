@@ -3,11 +3,12 @@ use super::*;
 use crate::routing::Context;
 use ibc::core::{
 	ics05_port::{
-		capabilities::{Capability, CapabilityName},
+		capabilities::{Capability, CapabilityName, PortCapability},
 		context::{CapabilityKeeper, CapabilityReader, PortKeeper, PortReader},
 		error::Error as ICS05Error,
 	},
 	ics24_host::identifier::PortId,
+	ics26_routing::context::ModuleId,
 };
 use scale_info::prelude::string::ToString;
 
@@ -36,16 +37,14 @@ impl<T: Config> CapabilityReader for Context<T> {
 }
 
 impl<T: Config> PortReader for Context<T> {
-	type ModuleId = ();
-
 	// TODO: Revisit when port binding and routing is implemented
 	fn lookup_module_by_port(
 		&self,
 		_port_id: &PortId,
-	) -> Result<(Self::ModuleId, Capability), ICS05Error> {
+	) -> Result<(ModuleId, PortCapability), ICS05Error> {
 		log::trace!("in port: [look_module_by_port]");
 
-		Ok(((), Capability::default()))
+		Ok((ModuleId::new("hello".into()).unwrap(), PortCapability::from(Capability::default())))
 	}
 }
 

@@ -23,33 +23,20 @@ where
 	fn connection_end(&self, conn_id: &ConnectionId) -> Result<ConnectionEnd, ICS03Error> {
 		log::trace!("in connection : [connection_end] >> connection_id = {:?}", conn_id);
 
-		if <Connections<T>>::contains_key(conn_id.as_bytes()) {
-			let data = <Connections<T>>::get(conn_id.as_bytes());
-			let ret = ConnectionEnd::decode_vec(&*data)
-				.map_err(|_| ICS03Error::implementation_specific())?;
-			log::trace!("in connection : [connection_end] >>  connection_end = {:?}", ret);
-			Ok(ret)
-		} else {
-			log::trace!("in connection : [connection_end] >> read connection end returns None");
-			Err(ICS03Error::connection_mismatch(conn_id.clone()))
-		}
+		let data = <Connections<T>>::get(conn_id.as_bytes());
+		let ret = ConnectionEnd::decode_vec(&*data)
+			.map_err(|_| ICS03Error::connection_mismatch(conn_id.clone()))?;
+		log::trace!("in connection : [connection_end] >>  connection_end = {:?}", ret);
+		Ok(ret)
 	}
 
 	fn client_state(&self, client_id: &ClientId) -> Result<AnyClientState, ICS03Error> {
 		log::trace!("in connection : [client_state] >> client_id = {:?}", client_id);
-
-		// ClientReader::client_state(self, client_id)
-		if <ClientStates<T>>::contains_key(client_id.as_bytes()) {
-			let data = <ClientStates<T>>::get(client_id.as_bytes());
-			let state = AnyClientState::decode_vec(&*data)
-				.map_err(|_| ICS03Error::implementation_specific())?;
-			log::trace!("in connection : [client_state] >> client_state: {:?}", state);
-			Ok(state)
-		} else {
-			log::trace!("in connection : [client_state] >> read client_state is None");
-
-			Err(ICS03Error::frozen_client(client_id.clone()))
-		}
+		let data = <ClientStates<T>>::get(client_id.as_bytes());
+		let state = AnyClientState::decode_vec(&*data)
+			.map_err(|_| ICS03Error::frozen_client(client_id.clone()))?;
+		log::trace!("in connection : [client_state] >> client_state: {:?}", state);
+		Ok(state)
 	}
 
 	fn host_current_height(&self) -> Height {

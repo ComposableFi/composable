@@ -1,6 +1,7 @@
 use super::*;
-use core::{str::FromStr, time::Duration};
+use core::{ops::Deref, str::FromStr, time::Duration};
 use frame_support::traits::Get;
+use scale_info::prelude::string::ToString;
 
 use crate::{impls::host_height, routing::Context};
 use ibc::{
@@ -13,8 +14,11 @@ use ibc::{
 			error::Error as ICS04Error,
 			packet::{Receipt, Sequence},
 		},
-		ics05_port::{capabilities::Capability, context::PortReader, error::Error as Ics05Error},
+		ics05_port::{
+			capabilities::ChannelCapability, context::PortReader, error::Error as Ics05Error,
+		},
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
+		ics26_routing::context::ModuleId,
 	},
 	timestamp::Timestamp,
 	Height,
@@ -32,18 +36,15 @@ where
 			port_channel_id.0,
 			port_channel_id.1
 		);
-
-		if <Channels<T>>::contains_key(port_channel_id.0.as_bytes(), port_channel_id.1.as_bytes()) {
-			let data =
-				<Channels<T>>::get(port_channel_id.0.as_bytes(), port_channel_id.1.as_bytes());
-			let channel_end = ChannelEnd::decode_vec(&*data)
-				.map_err(|_| ICS04Error::implementation_specific())?;
-			log::trace!("in channel : [channel_end] >> channel_end = {:?}", channel_end);
-			Ok(channel_end)
-		} else {
-			log::trace!("in channel : [channel_end] >> read channel_end return None");
-			Err(ICS04Error::channel_not_found(port_channel_id.clone().0, port_channel_id.clone().1))
-		}
+		let data = <Channels<T>>::get(
+			port_channel_id.0.as_bytes(),
+			port_channel_id.1.to_string().as_bytes(),
+		);
+		let channel_end = ChannelEnd::decode_vec(&*data).map_err(|_| {
+			ICS04Error::channel_not_found(port_channel_id.clone().0, port_channel_id.clone().1)
+		})?;
+		log::trace!("in channel : [channel_end] >> channel_end = {:?}", channel_end);
+		Ok(channel_end)
 	}
 
 	/// Returns the ConnectionState for the given identifier `connection_id`.
@@ -64,7 +65,7 @@ where
 		&self,
 		conn_id: &ConnectionId,
 	) -> Result<Vec<(PortId, ChannelId)>, ICS04Error> {
-		return if <ChannelsConnection<T>>::contains_key(conn_id.as_bytes()) {
+		if <ChannelsConnection<T>>::contains_key(conn_id.as_bytes()) {
 			let port_and_channel_id = <ChannelsConnection<T>>::get(conn_id.as_bytes());
 
 			let mut result = vec![];
@@ -87,7 +88,7 @@ where
 				"in channel : [connection_channels] >> Vector<(PortId, ChannelId)> =  {:?}",
 				result
 			);
-			Ok(result)
+			return Ok(result)
 		} else {
 			Err(ICS04Error::connection_not_open(conn_id.clone()))
 		}
@@ -96,17 +97,11 @@ where
 	/// Returns the ClientState for the given identifier `client_id`. Necessary dependency towards
 	/// proof verification.
 	fn client_state(&self, client_id: &ClientId) -> Result<AnyClientState, ICS04Error> {
-		if <ClientStates<T>>::contains_key(client_id.as_bytes()) {
-			let data = <ClientStates<T>>::get(client_id.as_bytes());
-			let state = AnyClientState::decode_vec(&*data)
-				.map_err(|_| ICS04Error::implementation_specific())?;
-			log::trace!("in channel : [client_state] >> Any client state: {:?}", state);
-			Ok(state)
-		} else {
-			log::trace!("In client : [client_state] >> read client_state is None");
-
-			Err(ICS04Error::frozen_client(client_id.clone()))
-		}
+		let data = <ClientStates<T>>::get(client_id.as_bytes());
+		let state = AnyClientState::decode_vec(&*data)
+			.map_err(|_| ICS04Error::implementation_specific())?;
+		log::trace!("in channel : [client_state] >> Any client state: {:?}", state);
+		Ok(state)
 	}
 
 	fn client_consensus_state(
@@ -126,13 +121,14 @@ where
 		Ok(any_consensus_state)
 	}
 
-	fn authenticated_capability(&self, port_id: &PortId) -> Result<Capability, ICS04Error> {
+	fn authenticated_capability(&self, port_id: &PortId) -> Result<ChannelCapability, ICS04Error> {
 		match PortReader::lookup_module_by_port(self, port_id) {
 			Ok((.., key)) =>
 				if !PortReader::authenticate(self, port_id.clone(), &key) {
 					Err(ICS04Error::invalid_port_capability())
 				} else {
-					Ok(key)
+					let key = key.deref().clone();
+					Ok(key.into())
 				},
 			Err(e) if e.detail() == Ics05Error::unknown_port(port_id.clone()).detail() =>
 				Err(ICS04Error::no_port_capability(port_id.clone())),
@@ -146,11 +142,11 @@ where
 	) -> Result<Sequence, ICS04Error> {
 		if <NextSequenceSend<T>>::contains_key(
 			port_channel_id.0.as_bytes(),
-			port_channel_id.1.as_bytes(),
+			port_channel_id.1.to_string().as_bytes(),
 		) {
 			let data = <NextSequenceSend<T>>::get(
 				port_channel_id.0.as_bytes(),
-				port_channel_id.1.as_bytes(),
+				port_channel_id.1.to_string().as_bytes(),
 			);
 			let mut data: &[u8] = &data;
 			let seq = u64::decode(&mut data).map_err(|_| ICS04Error::implementation_specific())?;
@@ -168,48 +164,30 @@ where
 		&self,
 		port_channel_id: &(PortId, ChannelId),
 	) -> Result<Sequence, ICS04Error> {
-		if <NextSequenceRecv<T>>::contains_key(
+		let data = <NextSequenceRecv<T>>::get(
 			port_channel_id.0.as_bytes(),
-			port_channel_id.1.as_bytes(),
-		) {
-			let data = <NextSequenceRecv<T>>::get(
-				port_channel_id.0.as_bytes(),
-				port_channel_id.1.as_bytes(),
-			);
-			let mut data: &[u8] = &data;
-			let seq = u64::decode(&mut data).map_err(|_| ICS04Error::implementation_specific())?;
-			log::trace!("in channel : [get_next_sequence_recv] >> sequence = {:?}", seq);
-			Ok(Sequence::from(seq))
-		} else {
-			log::trace!(
-				"in channel : [get_next_sequence_recv] >> read get next sequence recv return None"
-			);
-			Err(ICS04Error::missing_next_recv_seq(port_channel_id.clone()))
-		}
+			port_channel_id.1.to_string().as_bytes(),
+		);
+		let mut data: &[u8] = &data;
+		let seq = u64::decode(&mut data)
+			.map_err(|_| ICS04Error::missing_next_recv_seq(port_channel_id.clone()))?;
+		log::trace!("in channel : [get_next_sequence_recv] >> sequence = {:?}", seq);
+		Ok(Sequence::from(seq))
 	}
 
 	fn get_next_sequence_ack(
 		&self,
 		port_channel_id: &(PortId, ChannelId),
 	) -> Result<Sequence, ICS04Error> {
-		if <NextSequenceAck<T>>::contains_key(
+		let data = <NextSequenceAck<T>>::get(
 			port_channel_id.0.as_bytes(),
-			port_channel_id.1.as_bytes(),
-		) {
-			let data = <NextSequenceAck<T>>::get(
-				port_channel_id.0.as_bytes(),
-				port_channel_id.1.as_bytes(),
-			);
-			let mut data: &[u8] = &data;
-			let seq = u64::decode(&mut data).map_err(|_| ICS04Error::implementation_specific())?;
-			log::trace!("in channel : [get_next_sequence_ack] >> sequence = {:?}", seq);
-			Ok(Sequence::from(seq))
-		} else {
-			log::trace!(
-				"in channel : [get_next_sequence_ack] >> read get next sequence ack return None"
-			);
-			Err(ICS04Error::missing_next_ack_seq(port_channel_id.clone()))
-		}
+			port_channel_id.1.to_string().as_bytes(),
+		);
+		let mut data: &[u8] = &data;
+		let seq = u64::decode(&mut data)
+			.map_err(|_| ICS04Error::missing_next_ack_seq(port_channel_id.clone()))?;
+		log::trace!("in channel : [get_next_sequence_ack] >> sequence = {:?}", seq);
+		Ok(Sequence::from(seq))
 	}
 
 	fn get_packet_commitment(
@@ -219,16 +197,17 @@ where
 		let seq = u64::from(key.2);
 		let seq = seq.encode();
 
-		if <PacketCommitment<T>>::contains_key((key.0.as_bytes(), key.1.as_bytes(), seq.clone())) {
-			let data = <PacketCommitment<T>>::get((key.0.as_bytes(), key.1.as_bytes(), seq));
-			let mut data: &[u8] = &data;
+		if <PacketCommitment<T>>::contains_key((
+			key.0.as_bytes(),
+			key.1.to_string().as_bytes(),
+			seq.clone(),
+		)) {
 			let data =
-				Vec::<u8>::decode(&mut data).map_err(|_| ICS04Error::implementation_specific())?;
-			log::trace!(
-				"in channel : [get_packet_commitment] >> packet_commitment = {:?}",
-				String::from_utf8(data.clone()).unwrap()
-			);
-			Ok(String::from_utf8(data).map_err(|_| ICS04Error::implementation_specific())?)
+				<PacketCommitment<T>>::get((key.0.as_bytes(), key.1.to_string().as_bytes(), seq));
+			let data =
+				String::from_utf8(data).map_err(|_| ICS04Error::implementation_specific())?;
+			log::trace!("in channel : [get_packet_commitment] >> packet_commitment = {:?}", data);
+			Ok(data)
 		} else {
 			log::trace!(
 				"in channel : [get_packet_commitment] >> read get packet commitment return None"
@@ -244,12 +223,13 @@ where
 		let seq = u64::from(key.2);
 		let seq = seq.encode();
 
-		if <PacketReceipt<T>>::contains_key((key.0.as_bytes(), key.1.as_bytes(), seq.clone())) {
-			let data = <PacketReceipt<T>>::get((key.0.as_bytes(), key.1.as_bytes(), seq));
-			let mut data: &[u8] = &data;
-			// let data = String::decode(&mut data).unwrap();
+		if <PacketReceipt<T>>::contains_key((
+			key.0.as_bytes(),
+			key.1.to_string().as_bytes(),
+			seq.clone(),
+		)) {
 			let data =
-				Vec::<u8>::decode(&mut data).map_err(|_| ICS04Error::implementation_specific())?;
+				<PacketReceipt<T>>::get((key.0.as_bytes(), key.1.to_string().as_bytes(), seq));
 			let data =
 				String::from_utf8(data).map_err(|_| ICS04Error::implementation_specific())?;
 
@@ -272,13 +252,14 @@ where
 		let seq = u64::from(key.2);
 		let seq = seq.encode();
 
-		if <Acknowledgements<T>>::contains_key((key.0.as_bytes(), key.1.as_bytes(), seq.clone())) {
-			let data = <Acknowledgements<T>>::get((key.0.as_bytes(), key.1.as_bytes(), seq));
-			let mut data: &[u8] = &data;
+		if <Acknowledgements<T>>::contains_key((
+			key.0.as_bytes(),
+			key.1.to_string().as_bytes(),
+			seq.clone(),
+		)) {
 			let data =
-				Vec::<u8>::decode(&mut data).map_err(|_| ICS04Error::implementation_specific())?;
-			let ack = String::from_utf8(data.clone())
-				.map_err(|_| ICS04Error::implementation_specific())?;
+				<Acknowledgements<T>>::get((key.0.as_bytes(), key.1.to_string().as_bytes(), seq));
+			let ack = String::from_utf8(data).map_err(|_| ICS04Error::implementation_specific())?;
 			log::trace!(
 				"in channel : [get_packet_acknowledgement] >> packet_acknowledgement = {:?}",
 				ack
@@ -378,6 +359,14 @@ where
 		let expected = T::ExpectedBlockTime::get();
 		Duration::from_nanos(expected)
 	}
+
+	fn lookup_module_by_channel(
+		&self,
+		channel_id: &ChannelId,
+		port_id: &PortId,
+	) -> Result<(ModuleId, ChannelCapability), ICS04Error> {
+		todo!()
+	}
 }
 
 impl<T: Config> ChannelKeeper for Context<T>
@@ -395,9 +384,9 @@ where
 		let seq = u64::from(key.2);
 		let seq = seq.encode();
 
-		// inser packet commitment key-value
+		// insert packet commitment key-value
 		<PacketCommitment<T>>::insert(
-			(key.0.as_bytes().to_vec(), key.1.as_bytes().to_vec(), seq.clone()),
+			(key.0.as_bytes().to_vec(), key.1.to_string().as_bytes().to_vec(), seq.clone()),
 			ChannelReader::hash(self, input).encode(),
 		);
 
@@ -414,7 +403,7 @@ where
 		// delete packet commitment
 		<PacketCommitment<T>>::remove((
 			key.0.as_bytes().to_vec(),
-			key.1.as_bytes().to_vec(),
+			key.1.to_string().as_bytes().to_vec(),
 			seq.clone(),
 		));
 
@@ -434,7 +423,7 @@ where
 		let seq = seq.encode();
 
 		<PacketReceipt<T>>::insert(
-			(key.0.as_bytes().to_vec(), key.1.as_bytes().to_vec(), seq),
+			(key.0.as_bytes().to_vec(), key.1.to_string().as_bytes().to_vec(), seq),
 			receipt,
 		);
 
@@ -452,7 +441,7 @@ where
 
 		// store packet acknowledgement key-value
 		<Acknowledgements<T>>::insert(
-			(key.0.as_bytes().to_vec(), key.1.as_bytes().to_vec(), seq.clone()),
+			(key.0.as_bytes().to_vec(), key.1.to_string().as_bytes().to_vec(), seq.clone()),
 			ChannelReader::hash(self, ack).encode(),
 		);
 
@@ -469,7 +458,7 @@ where
 		// remove acknowledgements
 		<Acknowledgements<T>>::remove((
 			key.0.as_bytes().to_vec(),
-			key.1.as_bytes().to_vec(),
+			key.1.to_string().as_bytes().to_vec(),
 			seq.clone(),
 		));
 
@@ -483,19 +472,19 @@ where
 	) -> Result<(), ICS04Error> {
 		let conn_id = conn_id.as_bytes().to_vec();
 
-		let port_channel_id =
-			(port_channel_id.0.as_bytes().to_vec(), port_channel_id.1.as_bytes().to_vec());
+		let port_channel_id = (
+			port_channel_id.0.as_bytes().to_vec(),
+			port_channel_id.1.to_string().as_bytes().to_vec(),
+		);
 
 		if <ChannelsConnection<T>>::contains_key(conn_id.clone()) {
 			log::trace!("in channel: [store_connection_channels] >> insert port_channel_id");
-			// if connection_identifier exist
 			<ChannelsConnection<T>>::try_mutate(conn_id, |val| -> Result<(), &'static str> {
 				val.push(port_channel_id);
 				Ok(())
 			})
 			.expect("store connection channels error");
 		} else {
-			// if connection_identifier no exist
 			log::trace!("in channel: [store_connection_channels] >> init ChannelsConnection");
 			let temp_connection_channels = vec![port_channel_id];
 			<ChannelsConnection<T>>::insert(conn_id, temp_connection_channels);
@@ -516,7 +505,7 @@ where
 		// store channels key-value
 		<Channels<T>>::insert(
 			port_channel_id.0.as_bytes().to_vec(),
-			port_channel_id.1.as_bytes().to_vec(),
+			port_channel_id.1.to_string().as_bytes().to_vec(),
 			channel_end,
 		);
 
@@ -533,7 +522,7 @@ where
 
 		<NextSequenceSend<T>>::insert(
 			port_channel_id.0.as_bytes().to_vec(),
-			port_channel_id.1.as_bytes().to_vec(),
+			port_channel_id.1.to_string().as_bytes().to_vec(),
 			seq,
 		);
 
@@ -550,7 +539,7 @@ where
 
 		<NextSequenceRecv<T>>::insert(
 			port_channel_id.0.as_bytes().to_vec(),
-			port_channel_id.1.as_bytes().to_vec(),
+			port_channel_id.1.to_string().as_bytes().to_vec(),
 			seq,
 		);
 
@@ -567,7 +556,7 @@ where
 
 		<NextSequenceAck<T>>::insert(
 			port_channel_id.0.as_bytes().to_vec(),
-			port_channel_id.1.as_bytes().to_vec(),
+			port_channel_id.1.to_string().as_bytes().to_vec(),
 			seq,
 		);
 

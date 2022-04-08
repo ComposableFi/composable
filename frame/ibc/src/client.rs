@@ -27,9 +27,6 @@ where
 
 		if <Clients<T>>::contains_key(client_id.as_bytes()) {
 			let data = <Clients<T>>::get(client_id.as_bytes());
-			let mut data: &[u8] = &data;
-			let data =
-				Vec::<u8>::decode(&mut data).map_err(|_| ICS02Error::implementation_specific())?;
 			let data =
 				String::from_utf8(data).map_err(|_| ICS02Error::implementation_specific())?;
 			match ClientType::from_str(&data) {
@@ -47,17 +44,11 @@ where
 
 	fn client_state(&self, client_id: &ClientId) -> Result<AnyClientState, ICS02Error> {
 		log::trace!("in client : [client_state] >> client_id = {:?}", client_id);
-
-		if <ClientStates<T>>::contains_key(client_id.as_bytes()) {
-			let data = <ClientStates<T>>::get(client_id.as_bytes());
-			let state = AnyClientState::decode_vec(&*data)
-				.map_err(|_| ICS02Error::implementation_specific())?;
-			log::trace!("in client : [client_state] >> any client_state: {:?}", state);
-			Ok(state)
-		} else {
-			log::trace!("in client : [client_state] >> read any client state is None");
-			Err(ICS02Error::client_not_found(client_id.clone()))
-		}
+		let data = <ClientStates<T>>::get(client_id.as_bytes());
+		let state = AnyClientState::decode_vec(&*data)
+			.map_err(|_| ICS02Error::client_not_found(client_id.clone()))?;
+		log::trace!("in client : [client_state] >> any client_state: {:?}", state);
+		Ok(state)
 	}
 
 	fn consensus_state(

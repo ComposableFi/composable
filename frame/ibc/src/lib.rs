@@ -310,7 +310,10 @@ pub mod pallet {
 				})
 				.collect::<Result<Vec<ibc_proto::google::protobuf::Any>, Error<T>>>()?;
 
-			let result = ibc::core::ics26_routing::handler::deliver(&mut ctx, messages)
+			let result = messages
+				.into_iter()
+				.map(|msg| ibc::core::ics26_routing::handler::deliver(&mut ctx, msg))
+				.collect::<Result<Vec<_>, _>>()
 				.map_err(|_| Error::<T>::ProcessingError)?;
 
 			log::trace!("result: {:?}", result);
