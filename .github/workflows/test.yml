@@ -14,8 +14,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Run Test
-      uses: docker://composablefi/composable-sandbox
+    - name: Download Docker-CompooseFile
+      run: wget https://github.com/ComposableFi/composable/blob/main/integration-tests/runtime-tests/docker-compose.yml
+    
+    - name: Build the stack
+      run: docker-compose up -d
+    
+    #- name: Run Test
+    #  uses: docker://composablefi/composable-sandbox
       #with: 
       # args: cargo test
-    
