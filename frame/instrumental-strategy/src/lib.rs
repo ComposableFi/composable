@@ -24,11 +24,6 @@ pub mod pallet {
 		pallet_prelude::*,
 	};
 
-	use sp_runtime::traits::{CheckedAdd, One};
-	use std::ops::AddAssign;
-
-	use codec::FullCodec;
-
 	// -------------------------------------------------------------------------------------------
 	//                                Declaration Of The Pallet Type                              
 	// -------------------------------------------------------------------------------------------
@@ -144,7 +139,7 @@ pub mod pallet {
 
 				Ok(())
 			})
-			
+
 			// StrategyCount::<T>::mutate(|strategy_id| {
 			// 	let strategy_id = {
 			// 		*strategy_id += One::one();

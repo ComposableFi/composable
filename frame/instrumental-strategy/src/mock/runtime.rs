@@ -5,8 +5,6 @@ use frame_support::{
 	traits::Everything,
 };
 
-use composable_traits::instrumental::StrategyId;
-
 use sp_runtime::{
 	testing::Header,
 	traits::IdentityLookup
