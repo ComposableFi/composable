@@ -13,7 +13,7 @@ collections "Fees\naccount" as fees
 
 user -> ch : ""update_funding""
 
-ch -> mkts : get ""Market""
+ch -[#green]> mkts : get ""Market""
 
 note right ch
 ensure time since last update
@@ -41,7 +41,7 @@ note over ch, mkts
 add funding rate to market cumulative
 set funding timestamp to current time
 end note
-ch -> mkts : update
+ch -[#red]> mkts : update
 
 == Asset transfers ==
 

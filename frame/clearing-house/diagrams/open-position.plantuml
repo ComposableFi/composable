@@ -18,12 +18,12 @@ user -> ch : open position
 
 == Storage updates ==
 
-ch -> mkts : get ""Market""
-ch -> positions : get/create position
+ch -[#green]> mkts : get ""Market""
+ch -[#green]> positions : get/create position
 'note right CH: compute quote asset\nnotional amount
 
 group settle funding payments?
-ch -> accs : update collateral
+ch -[#red]> accs : update collateral
 end
 
 note right ch
@@ -33,16 +33,16 @@ end note
 ch -> vamm ++ : swap quote for base asset
 return base asset amount
 
-ch -> positions : update position
-ch -> mkts : update open interest
+ch -[#red]> positions : update position
+ch -[#red]> mkts : update open interest
 
 
 opt decreased/reversed position
-ch -> accs : update user collateral
+ch -[#red]> accs : realize PnL
 end
 
 group charge fee
-ch -> accs : subtract fee from user's collateral
+ch -[#red]> accs : subtract fee from user's collateral
 end
 
 note right ch
@@ -61,9 +61,9 @@ end note
 'RiskEngine
 ch -> risk ++: ""above_initial_margin_ratio""
     risk -> risk ++: compute\nmargin ratio
-        risk -> accs : get margin
-        risk -> positions : get all user positions
-        risk -> mkts : get all markets\ninvested
+        risk -[#green]> accs : get margin
+        risk -[#green]> positions : get all user positions
+        risk -[#green]> mkts : get all markets\ninvested
         risk -> vamm : get prices
     return
 return ""meets_imr""

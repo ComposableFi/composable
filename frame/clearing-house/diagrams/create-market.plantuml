@@ -20,7 +20,7 @@ ch -> ch ++: initialize ""Market""
 ch -> ch: get current timestamp
 return
 
-ch -> markets : store ""Market""
+ch -[#red]> markets : store ""Market""
 
 ?<-o ch : emit event
 @enduml

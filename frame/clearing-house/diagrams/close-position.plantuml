@@ -17,24 +17,24 @@ user -> ch : ""close_position""
 
 == Storage updates ==
 
-ch -> mkts : get ""Market""
-ch -> positions : get position
+ch -[#green]> mkts : get ""Market""
+ch -[#green]> positions : get position
 'note right CH: compute quote asset\nnotional amount
 
 group settle funding payments?
-ch -> accs : update collateral
+ch -[#red]> accs : update collateral
 end
 
 ch -> vamm ++ : swap base for quote asset
 return quote asset amount
 
-ch -> accs : update user collateral
+ch -[#red]> accs : realize PnL
 
-ch -> positions : delete position
-ch -> mkts : update open interest
+ch -[#red]> positions : delete position
+ch -[#red]> mkts : update open interest
 
 group charge fee
-ch -> accs : subtract fee from user's collateral
+ch -[#red]> accs : subtract fee from user's collateral
 end
 
 note right ch
