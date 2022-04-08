@@ -559,9 +559,14 @@ pub mod pallet {
 				.cum_funding_rate
 				.checked_sub(&position.last_cum_funding)
 				.ok_or(ArithmeticError::Underflow)?;
-			let payment = cum_funding_delta
-				.checked_mul(&position.base_asset_amount)
-				.ok_or(ArithmeticError::Overflow)?;
+			let payment =
+				cum_funding_delta.checked_mul(&position.base_asset_amount).ok_or_else(|| {
+					match cum_funding_delta.is_negative() ^ position.base_asset_amount.is_negative()
+					{
+						true => ArithmeticError::Underflow,
+						false => ArithmeticError::Overflow,
+					}
+				})?;
 			Ok(payment)
 		}
 	}
