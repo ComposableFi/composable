@@ -54,7 +54,7 @@ Parachain.
 
 ## Tech stack overview
 
-![tech-stack-overview]
+![tech-stack-overview](./tech-stack-overview.png)
 
 Composable’s technical stack is composed of novel reinventions of the virtual 
 machine, routing layer, bridge, and application layer.
