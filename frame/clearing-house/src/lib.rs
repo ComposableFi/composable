@@ -533,8 +533,8 @@ pub mod pallet {
 
 		fn funding_rate(market: &Self::Market) -> Result<Self::Decimal, DispatchError> {
 			// Oracle returns prices in USDT cents
-			let unnormalized_oracle_twap = T::Oracle::get_twap(market.asset_id, vec![])?;
-			let oracle_twap = Self::Decimal::checked_from_rational(unnormalized_oracle_twap, 100)
+			let nonnormalized_oracle_twap = T::Oracle::get_twap(market.asset_id, vec![])?;
+			let oracle_twap = Self::Decimal::checked_from_rational(nonnormalized_oracle_twap, 100)
 				.ok_or(ArithmeticError::Overflow)?;
 
 			let vamm_twap = T::Vamm::get_twap(&market.vamm_id)?;
