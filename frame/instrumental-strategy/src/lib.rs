@@ -15,11 +15,19 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 	use crate::weights::WeightInfo;
 
-	use frame_support::pallet_prelude::*;
+	use frame_support::{
+		pallet_prelude::*,
+		storage::bounded_btree_set::BoundedBTreeSet,
+	};
 	use frame_system::{
 		ensure_signed,
 		pallet_prelude::*,
 	};
+
+	use sp_runtime::traits::{CheckedAdd, One};
+	use std::ops::AddAssign;
+
+	use codec::FullCodec;
 
 	// -------------------------------------------------------------------------------------------
 	//                                Declaration Of The Pallet Type                              
@@ -40,6 +48,9 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		type WeightInfo: WeightInfo;
+
+		/// The maximum number of vaults that can be associated with this strategy.
+		type MaxStrategies: Get<u32>;
 	}
 
 	// -------------------------------------------------------------------------------------------
@@ -49,6 +60,22 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
     //                                       Runtime  Storage                                     
 	// -------------------------------------------------------------------------------------------
+
+	// /// The number of strategies, also used to generate the next vault identifier.
+	// #[pallet::storage]
+	// #[pallet::getter(fn strategy_count)]
+	// pub type StrategyCount<T: Config> = StorageValue<_, T::StrategyId, ValueQuery>;
+
+	// ///
+	// #[pallet::storage]
+	// #[pallet::getter(fn strategy_account)]
+	// pub type StrategyAccount<T: Config> = 
+	// 	StorageMap<_, Blake2_128Concat, T::StrategyId, T::AccountId>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn associated_vaults)]
+	pub type WhitelistedStrategies<T: Config> =
+		StorageValue<_, BoundedBTreeSet<T::AccountId, T::MaxStrategies> , ValueQuery>;
 
 	// -------------------------------------------------------------------------------------------
     //                                        Runtime Events                                      
@@ -68,6 +95,9 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
+		StrategyAlreadyWhitelisted,
+
+		TooManyWhitelistedStrategies
 	}
 
 	// -------------------------------------------------------------------------------------------
@@ -102,6 +132,31 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
     //                                     Trait Implementation                                   
 	// -------------------------------------------------------------------------------------------
+
+	impl<T: Config> Pallet<T> {
+
+		pub fn whitelist_strategy(account_id: T::AccountId) -> DispatchResult {
+			WhitelistedStrategies::<T>::try_mutate(|strategies| -> DispatchResult {
+				ensure!(!strategies.contains(&account_id), Error::<T>::StrategyAlreadyWhitelisted);
+
+				strategies.try_insert(account_id)
+					.map_err(|_| Error::<T>::TooManyWhitelistedStrategies)?;
+
+				Ok(())
+			})
+			
+			// StrategyCount::<T>::mutate(|strategy_id| {
+			// 	let strategy_id = {
+			// 		*strategy_id += One::one();
+			// 		*strategy_id
+			// 	};
+
+			// 	StrategyAccount::<T>::insert(strategy_id, account_id);
+
+			// 	Ok(strategy_id)
+			// })
+		}
+	}
 }
 
 // -----------------------------------------------------------------------------------------------

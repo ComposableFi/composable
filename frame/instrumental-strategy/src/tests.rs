@@ -1,28 +1,27 @@
 #[allow(unused_imports)]
 
+use crate::pallet::Error;
 use crate::mock::runtime::{
-    ALICE, Event, ExtBuilder, InstrumentalStrategy, Origin, System
+    ExtBuilder, InstrumentalStrategy, MockRuntime,
 };
-use crate::pallet;
+use crate::mock::strategies::*;
 
-use frame_support::assert_ok;
+use frame_support::{assert_ok, assert_noop};
 
 #[test]
-fn call_test_extrinsic() {
+fn test_whitelist_strategy() {
     ExtBuilder::default().build().execute_with(|| {
-        assert_ok!(InstrumentalStrategy::test(Origin::signed(ALICE)));
+        assert_ok!(InstrumentalStrategy::whitelist_strategy(PABLO_STRATEGY.account_id()));
     });
 }
 
 #[test]
-fn test_extrinsic_emits_event() {
+fn test_whitelisting_a_strategy_twice_results_in_an_error() {
     ExtBuilder::default().build().execute_with(|| {
-        System::set_block_number(1);
-
-        assert_ok!(InstrumentalStrategy::test(Origin::signed(ALICE)));
-
-        System::assert_last_event(Event::InstrumentalStrategy(
-            pallet::Event::Test { issuer: ALICE}
-        ));
+        assert_ok!(InstrumentalStrategy::whitelist_strategy(PABLO_STRATEGY.account_id()));
+        assert_noop!(
+            InstrumentalStrategy::whitelist_strategy(PABLO_STRATEGY.account_id()),
+            Error::<MockRuntime>::StrategyAlreadyWhitelisted
+        );
     });
 }
