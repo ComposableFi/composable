@@ -24,7 +24,9 @@ where
 		quote_asset_id: SafeRpcWrapper<AssetId>,
 		amount: SafeRpcWrapper<Balance>,
 		at: Option<BlockHash>,
-	) -> RpcResult<PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>;
+	) -> RpcResult<
+		PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
+	>;
 }
 
 pub struct Pablo<C, Block> {
@@ -58,7 +60,9 @@ where
 		quote_asset_id: SafeRpcWrapper<AssetId>,
 		amount: SafeRpcWrapper<Balance>,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>> {
+	) -> RpcResult<
+		PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
+	> {
 		let api = self.client.runtime_api();
 
 		let at = BlockId::hash(at.unwrap_or_else(|| {
