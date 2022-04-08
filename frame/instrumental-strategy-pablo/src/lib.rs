@@ -76,8 +76,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn associated_vaults)]
 	pub type AssociatedVaults<T: Config> =
-		// TODO: consider the tradeoff of using BoundedBTreeSet
-		StorageValue<_, BoundedBTreeSet<T::VaultId,T::MaxAssociatedVaults>, ValueQuery>;
+		StorageValue<_, BoundedBTreeSet<T::VaultId, T::MaxAssociatedVaults>, ValueQuery>;
 
 	// -------------------------------------------------------------------------------------------
     //                                        Runtime Events                                      
@@ -146,9 +145,7 @@ pub mod pallet {
 					.map_err(|_| Error::<T>::TooManyAssociatedStrategies)?;
 
 				Ok(())
-			})?;
-
-			Ok(())
+			})
 		}
 	}
 }
