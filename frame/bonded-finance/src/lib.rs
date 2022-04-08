@@ -29,46 +29,7 @@
 	trivial_casts,
 	unused_extern_crates
 )]
-
-//! Bonded Finance pallet
-//!
-//! - [`Config`]
-//! - [`Call`]
-//!
-//! ## Overview
-//!
-//! A simple pallet providing means of submitting bond offers.
-//!
-//! Alice offers some bond priced in specific assets per bond as some amount of shares.
-//! At same time she provides reward asset which will be vested into account which takes bond
-//! offers. She locks some native currency to make the offer registered.
-//!
-//! Bob bonds parts of shares from offer by transfer some asset amount desired by Alice.
-//! Bob will be vested part of reward amount during maturity period from that moment.
-//! It the end of some period Bob may or may be not be return with amount he provided to Alice -
-//! depends on how offer was setup.
-//!
-//! Alice may cancel offer and prevent new bonds on offer, she gets her native tokens back.
-//! All existing vesting periods continue to be executed.
-//!
-//! ## Use cases
-//!
-//! - Staking. User locks amount for some period of time, gets reward in the end or vested. Stake
-//!   returns to user in the end.
-//! - Vesting. User offers amount and ensure that recepients has 'ticket' tokens to bond to get
-//!   reward.
-//! - Sell/Exchange/Trade. User makes bond offer, other users takes offer in exchange for other
-//!   amount..
-//!
-//! ## Concerns
-//!
-//! Protocol is not protected from sniper bots, whales and other attackers.
-//! Could lock amounts after into time locked fNFTs, vested, or offer to depend on time and already
-//! taken amount.
-//!
-//! ## Interface
-//!
-//! This pallet implements the `composable_traits::bonded_finance::BondedFinance`.
+#![doc = include_str!("../README.md")]
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarks;
@@ -236,11 +197,12 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Create a new offer. So later can `bond` it.
+		/// Create a new bond offer. To be `bond` to later.
 		///
 		/// The dispatch origin for this call must be _Signed_ and the sender must have the
-		/// appropriate funds.
-		/// Allow the issuer to ask for his account to be kept alive using the `keep_alive`
+		/// appropriate funds to stake the offer.
+		///
+		/// Allows the issuer to ask for their account to be kept alive using the `keep_alive`
 		/// parameter.
 		///
 		/// Emits a `NewOffer`.
@@ -259,14 +221,15 @@ pub mod pallet {
 			Ok(())
 		}
 		/// Bond to an offer.
-		/// And user should provide the number of contracts she is willing to buy.
-		/// On offer completion (a.k.a. no more contract on the offer), the `stake` put by the
-		/// creator is refunded.
+		///
+		/// The issuer should provide the number of contracts they are willing to buy.
+		/// Once there are no more contracts available on the offer, the `stake` put by the
+		/// offer creator is refunded.
 		///
 		/// The dispatch origin for this call must be _Signed_ and the sender must have the
-		/// appropriate funds.
+		/// appropriate funds to buy the desired number of contracts.
 		///
-		/// Allow the bonder to ask for his account to be kept alive using the `keep_alive`
+		/// Allows the issuer to ask for their account to be kept alive using the `keep_alive`
 		/// parameter.
 		///
 		/// Emits a `NewBond`.
@@ -283,8 +246,11 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Cancel a running offer. Blocking further bond but not cancelling the
-		/// currently vested rewards. The `stake` put by the creator is refunded.
+		/// Cancel a running offer.
+		///
+		/// Blocking further bonds but not cancelling the currently vested rewards. The `stake` put
+		/// by the offer creator is refunded.
+		///
 		/// The dispatch origin for this call must be _Signed_ and the sender must be `AdminOrigin`
 		///
 		/// Emits a `OfferCancelled`.
@@ -391,6 +357,7 @@ pub mod pallet {
 							keep_alive,
 						)?;
 						let current_block = frame_system::Pallet::<T>::current_block_number();
+						// Schedule the vesting of the reward.
 						T::Vesting::vested_transfer(
 							offer.reward.asset,
 							&offer_account,
@@ -406,6 +373,7 @@ pub mod pallet {
 						)?;
 						match offer.maturity {
 							BondDuration::Finite { return_in } => {
+								// Schedule the return of the bonded amount
 								T::Vesting::vested_transfer(
 									offer.asset,
 									&offer.beneficiary,

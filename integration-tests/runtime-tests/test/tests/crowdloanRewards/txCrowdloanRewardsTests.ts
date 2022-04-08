@@ -1,22 +1,8 @@
-import R from 'ramda';
-import { PalletCrowdloanRewardsModelsRemoteAccount } from '@composable/types/interfaces';
-import { u128, u32 } from '@polkadot/types-codec';
 import { expect } from 'chai';
-import { IKeyringPair } from '@polkadot/types/types';
 import {KeyringPair} from "@polkadot/keyring/types";
 import testConfiguration from './test_configuration.json';
-import {sendAndWaitForSuccess, sendUnsignedAndWaitForSuccess} from "@composable/utils/polkadotjs";
+import {TxCrowdloanRewardsTests, ethAccount} from "@composabletests/tests/crowdloanRewards/testHandlers/crowdloanHandler";
 import {mintAssetsToWallet} from "@composable/utils/mintingHelper";
-
-const toHexString = bytes =>
-  Array.prototype.map.call(bytes, x => ('0' + (x & 0xFF).toString(16)).slice(-2)).join('');
-
-// The prefix is defined as pallet config
-const proofMessage = (account: IKeyringPair, isEth=false) =>
-  (isEth ? "picasso-" : "<Bytes>picasso-") + toHexString(account.publicKey) + (isEth ? "" : "</Bytes>");
-
-const ethAccount = (seed: number) =>
-  web3.eth.accounts.privateKeyToAccount("0x" + seed.toString(16).padStart(64, '0'));
 
 
 /**
@@ -70,30 +56,32 @@ describe('CrowdloanRewards Tests', function() {
         "Skipping populate() & initialize().")
   });
 
-  before('Providing funds to crowdloan pallet', async function() {
+  before('Providing funds to Alice & our imaginary contributor wallet', async function() {
     if (!testConfiguration.enabledTests.tx.setup.provideAssets)
       this.skip();
     // 2 minutes timeout
     this.timeout(60 * 2 * 1000);
-    const {data: [resultAccountId1, resultAccountId2, resultNumber],}
-      = await TxCrowdloanRewardsTests.beforeCrowdlownTestsProvideFunds(sudoKey);
-    expect(resultAccountId1.toString()).to.be
-      .equal(api.createType('AccountId32', walletAlice.publicKey).toString());
-    expect(resultNumber).to.be.a.bignumber;
+    await mintAssetsToWallet(sudoKey, sudoKey, [1]);
+    await mintAssetsToWallet(contributorRewardAccount, sudoKey, [1]);
+    await mintAssetsToWallet(contributorEthRewardAccount, sudoKey, [1]);
   });
 
   /**
    * Here we populate the crowdloan pallet with a random generated list of contributors.
    *
-   * This is a SUDO call and is checked with `.isOk`.
+   * This is a SUDO call! Though the checks are within the handler function, due to multiple transaction being sent
+   * within a for loop.
    */
   it('Can populate the list of contributors', async function() {
     if (!testConfiguration.enabledTests.tx.populate_success.populate1 || onExistingChain)
       this.skip();
-    // 2 minutes timeout
-    this.timeout(60 * 2 * 1000);
-    const { data: [result,], } = await TxCrowdloanRewardsTests.txCrowdloanRewardsPopulateTest(sudoKey, walletAlice);
-    expect(result.isOk).to.be.true;
+    // 5 minutes timeout
+    this.timeout(5 * 60 * 1000);
+    const testContributorRelayChainObject = await TxCrowdloanRewardsTests.txCrowdloanRewardsPopulateTest(
+      sudoKey,
+      contributor
+    );
+    expect(testContributorRelayChainObject).to.not.be.an("Error");
   });
 
   /**
@@ -134,10 +122,15 @@ describe('CrowdloanRewards Tests', function() {
         contributor,
         contributorRewardAccount
       ),
-    ]).then(function([result, result2]) {
-      expect(result.data[1].toString()).to.be
+    ]).then(function([
+      {data: [result1Request1, result2Request1]},
+      {data: [result1Request2, result2Request2]}
+    ]) {
+      expect(result1Request1).to.not.be.an("Error");
+      expect(result1Request2).to.not.be.an("Error");
+      expect(result2Request1.toString()).to.be
         .equal(api.createType('AccountId32', contributorEthRewardAccount.publicKey).toString());
-      expect(result2.data[1].toString()).to.be
+      expect(result2Request2.toString()).to.be
         .equal(api.createType('AccountId32', contributorRewardAccount.publicKey).toString());
     });
   });
@@ -151,142 +144,58 @@ describe('CrowdloanRewards Tests', function() {
    * 2. The public key of the transacting wallet.
    * 3. The claimed amount.
    */
-  it('Can claim the crowdloan reward', async function() {
+  it('KSM contributor can claim the crowdloan reward', async function() {
     if (!testConfiguration.enabledTests.tx.claim_success.claim1 || onExistingChain)
       this.skip();
     // 2 minutes timeout
     this.timeout(60 * 2 * 1000);
     const { data: [resultRemoteAccountId, resultAccountId, resultClaimedAmount], }
       = await TxCrowdloanRewardsTests.txCrowdloanRewardsClaimTest(contributorRewardAccount);
+    expect(resultRemoteAccountId).to.not.be.an("Error");
     expect(resultClaimedAmount).to.be.a.bignumber;
+    expect(resultClaimedAmount.toNumber()).to.be.greaterThan(0);
     expect(resultAccountId.toString()).to.be
       .equal(api.createType('AccountId32', contributorRewardAccount.publicKey).toString())
   });
+
+  it('ETH contributor can claim the crowdloan reward', async function() {
+    if (!testConfiguration.enabledTests.tx.claim_success.claim1 || onExistingChain)
+      this.skip();
+    // 2 minutes timeout
+    this.timeout(60 * 2 * 1000);
+    const { data: [resultRemoteAccountId, resultAccountId, resultClaimedAmount], }
+      = await TxCrowdloanRewardsTests.txCrowdloanRewardsClaimTest(contributorEthRewardAccount);
+    expect(resultRemoteAccountId).to.not.be.an("Error");
+    expect(resultClaimedAmount).to.be.a.bignumber;
+    expect(resultAccountId.toString()).to.be
+      .equal(api.createType('AccountId32', contributorEthRewardAccount.publicKey).toString())
+  });
+
+  describe("Crowdloan Failure Tests", function () {
+    if (!testConfiguration.enabledTests.tx.failure_tests.enabled)
+      return;
+    /***
+     * Here we try to re- associate the same contributor wallets,
+     * even though they're already associated.
+     */
+    it('Can not re- associate the same picasso account', async function() {
+      if (!testConfiguration.enabledTests.tx.failure_tests.associate_failure.associate1)
+        this.skip();
+      // 2 minutes timeout
+      this.timeout(60 * 2 * 1000);
+      await Promise.all([
+        TxCrowdloanRewardsTests.txCrowdloanRewardsEthAssociateTest(
+          contributorEth,
+          walletCharlie
+        ),
+        TxCrowdloanRewardsTests.txCrowdloanRewardsRelayAssociateTests(
+          contributor,
+          walletCharlie
+        ),
+      ]).then(function([{data:[result,]}, {data: [result2,]}]) {
+        expect(result).to.be.an("Error")
+        expect(result2).to.be.an("Error")
+      });
+    });
+  });
 });
-
-export class TxCrowdloanRewardsTests {
-  /**
-   * Providing the crowdloan pallet with funds
-   *
-   * Unfortunately we can't directly mint into the pallet therefore,
-   * we mint into the Alice wallet and transfer funds from there.
-   *
-   * @param {KeyringPair} sudoKey Wallet with sudo rights.
-   */
-  public static async beforeCrowdlownTestsProvideFunds(sudoKey:KeyringPair) {
-    const palletPublicKey = api.consts.crowdloanRewards.accountId;
-    await mintAssetsToWallet(sudoKey, sudoKey, [1]);
-    return await sendAndWaitForSuccess(
-      api,
-      sudoKey,
-      api.events.balances.Transfer.is,
-      api.tx.balances.transfer(palletPublicKey, 100000000000000)
-    );
-  }
-
-  /**
-   * tx.crowdloanRewards.initialize
-   *
-   * @param {KeyringPair} sudoKey Wallet with sudo rights.
-   */
-  public static txCrowdloanRewardsInitializeTest(sudoKey:KeyringPair) {
-    return sendAndWaitForSuccess(
-      api,
-      sudoKey,
-      api.events.sudo.Sudid.is,
-      api.tx.sudo.sudo(
-        api.tx.crowdloanRewards.initialize()
-      )
-    );
-  }
-
-  /**
-   * tx.crowdloanRewards.populate
-   *
-   * @param {KeyringPair} sudoKey Wallet with sudo rights.
-   * @param {KeyringPair} contributor The picasso wallet of which the contributor wallets are derived from.
-   */
-  public static async txCrowdloanRewardsPopulateTest(sudoKey:KeyringPair, contributor:KeyringPair) {
-    const vesting48weeks = api.createType('u32', 100800);
-    const reward = api.createType('u128', 1_000_000_000_000);
-    const relay_accounts =
-      R.unfold<number, [PalletCrowdloanRewardsModelsRemoteAccount, u128, u32]>(n => n > 50 ? false : [[
-        api.createType(
-          'PalletCrowdloanRewardsModelsRemoteAccount',
-          { RelayChain: contributor.derive("/contributor-" + n.toString()).publicKey }
-        ),
-        reward,
-        vesting48weeks,
-      ], n + 1], 1);
-    const eth_accounts =
-      R.unfold<number, [PalletCrowdloanRewardsModelsRemoteAccount, u128, u32]>(n => n > 50 ? false : [[
-        api.createType(
-          'PalletCrowdloanRewardsModelsRemoteAccount',
-          { Ethereum: ethAccount(n).address }
-        ),
-        reward,
-        vesting48weeks,
-      ], n + 1], 1);
-    const accounts = relay_accounts.concat(eth_accounts);
-    return await sendAndWaitForSuccess(
-      api,
-      sudoKey,
-      api.events.sudo.Sudid.is,
-      api.tx.sudo.sudo(
-        api.tx.crowdloanRewards.populate(accounts)
-      )
-    );
-  }
-
-  /**
-   * tx.crowdloanRewards.associate RelayChain
-   *
-   * @param {KeyringPair} contributor The contributor relay chain wallet public key.
-   * @param {KeyringPair} contributorRewardAccount The wallet the contributor wants to receive their PICA to.
-   */
-  public static async txCrowdloanRewardsRelayAssociateTests(contributor:KeyringPair, contributorRewardAccount) {
-    // arbitrary, user defined reward account
-    const proof = contributor.sign(proofMessage(contributorRewardAccount));
-    return await sendUnsignedAndWaitForSuccess(
-      api,
-      api.events.crowdloanRewards.Associated.is,
-      api.tx.crowdloanRewards.associate(
-        contributorRewardAccount.publicKey,
-        api.createType('PalletCrowdloanRewardsModelsProof',
-          { RelayChain: [contributor.publicKey, { Sr25519: proof }] })
-      )
-    );
-  }
-
-  /**
-   * tx.crowdloanRewards.associate ETH Chain
-   *
-   * @param {KeyringPair} contributor The contributor ETH chain wallet public key.
-   * @param {KeyringPair} contributorRewardAccount The wallet the contributor wants to receive their PICA to.
-   */
-  public static async txCrowdloanRewardsEthAssociateTest(contributor, contributorRewardAccount) {
-    const proof = contributor.sign(proofMessage(contributorRewardAccount, true));
-    return await sendUnsignedAndWaitForSuccess(
-      api,
-      api.events.crowdloanRewards.Associated.is,
-      api.tx.crowdloanRewards.associate(
-        contributorRewardAccount.publicKey,
-        api.createType('PalletCrowdloanRewardsModelsProof', { Ethereum: proof.signature })
-      )
-    );
-  }
-
-  /**
-   * tx.crowdloanRewards.claim
-   *
-   * @param { KeyringPair } wallet The reward account which tries to claim.
-   */
-  public static async txCrowdloanRewardsClaimTest(wallet:KeyringPair) {
-    return await sendAndWaitForSuccess(
-      api,
-      wallet,
-      api.events.crowdloanRewards.Claimed.is,
-      api.tx.crowdloanRewards.claim()
-    );
-  }
-}
