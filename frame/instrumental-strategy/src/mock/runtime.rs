@@ -5,6 +5,8 @@ use frame_support::{
 	traits::Everything,
 };
 
+use composable_traits::instrumental::StrategyId;
+
 use sp_runtime::{
 	testing::Header,
 	traits::IdentityLookup
@@ -25,7 +27,7 @@ parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 }
 
-impl frame_system::Config for Test {
+impl frame_system::Config for MockRuntime {
 	type Origin = Origin;
 	type Index = u64;
 	type BlockNumber = BlockNumber;
@@ -60,7 +62,7 @@ parameter_types! {
 	pub const BalanceExistentialDeposit: u64 = 1;
 }
 
-impl pallet_balances::Config for Test {
+impl pallet_balances::Config for MockRuntime {
 	type Balance = Balance;
 	type Event = Event;
 	type DustRemoval = ();
@@ -76,20 +78,26 @@ impl pallet_balances::Config for Test {
 //                                      Instrumental Strategy                                    
 // -----------------------------------------------------------------------------------------------
 
-impl pallet_instrumental_strategy::Config for Test {
+parameter_types! {
+	pub const MaxStrategies: u32 = 10;
+}
+
+impl pallet_instrumental_strategy::Config for MockRuntime {
 	type Event = Event;
 	type WeightInfo = ();
+
+	type MaxStrategies = MaxStrategies;
 }
 
 // -----------------------------------------------------------------------------------------------
 //                                        Construct Runtime                                      
 // -----------------------------------------------------------------------------------------------
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
+type Block = frame_system::mocking::MockBlock<MockRuntime>;
 
 frame_support::construct_runtime!(
-	pub enum Test where
+	pub enum MockRuntime where
 		Block = Block,
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
@@ -110,7 +118,7 @@ pub struct ExtBuilder {
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+		let t = frame_system::GenesisConfig::default().build_storage::<MockRuntime>().unwrap();
 
 		t.into()
 	}
