@@ -64,6 +64,7 @@
 
 pub use pallet::*;
 // Bring to scope so that 'Implemented Functions' hyperlinks work
+#[allow(unused_imports)]
 use composable_traits::clearing_house::Instruments;
 
 #[cfg(test)]
