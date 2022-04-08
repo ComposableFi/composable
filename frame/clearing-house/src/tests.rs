@@ -34,7 +34,7 @@ use sp_runtime::{traits::Zero, FixedI128};
 type MarketConfig = <TestPallet as ClearingHouse>::MarketConfig;
 type Market = <TestPallet as Instruments>::Market;
 type Position = <TestPallet as Instruments>::Position;
-type VammParams = mock_vamm::VammParams;
+type VammConfig = mock_vamm::VammConfig;
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
@@ -68,14 +68,14 @@ fn run_to_block(n: u64) {
 //                                          Valid Inputs
 // ----------------------------------------------------------------------------------------------------
 
-fn valid_vamm_params() -> VammParams {
-	VammParams {}
+fn valid_vamm_config() -> VammConfig {
+	VammConfig {}
 }
 
 fn valid_market_config() -> MarketConfig {
 	MarketConfig {
 		asset: DOT,
-		vamm_params: valid_vamm_params(),
+		vamm_config: valid_vamm_config(),
 		// 10x max leverage to open a position
 		margin_ratio_initial: FixedI128::from_float(0.1),
 		// liquidate when above 50x leverage
@@ -262,7 +262,7 @@ proptest! {
 	#[test]
 	fn mock_vamm_created_id_reflects_genesis_config(vamm_id in any::<Option<VammId>>()) {
 		ExtBuilder { vamm_id , ..Default::default() }.build().execute_with(|| {
-			let created = <Runtime as Config>::Vamm::create(&valid_vamm_params());
+			let created = <Runtime as Config>::Vamm::create(&valid_vamm_config());
 			match vamm_id {
 				Some(id) => assert_ok!(created, id),
 				None => assert_err!(created, mock_vamm::Error::<Runtime>::FailedToCreateVamm),

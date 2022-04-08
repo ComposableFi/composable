@@ -178,11 +178,11 @@ pub mod pallet {
 
 	/// Specifications for market creation
 	#[derive(Encode, Decode, PartialEq, Clone, Debug, TypeInfo)]
-	pub struct MarketConfig<AssetId, VammParams, Decimal> {
+	pub struct MarketConfig<AssetId, VammConfig, Decimal> {
 		/// Asset id of the underlying for the derivatives market
 		pub asset: AssetId,
-		/// Parameters for creating and initializing the vAMM for price discovery
-		pub vamm_params: VammParams,
+		/// Configuration for creating and initializing the vAMM for price discovery
+		pub vamm_config: VammConfig,
 		/// Minimum margin ratio for opening a new position
 		pub margin_ratio_initial: Decimal,
 		/// Margin ratio below which liquidations can occur
@@ -228,10 +228,10 @@ pub mod pallet {
 	type AssetIdOf<T> = <T as DeFiComposableConfig>::MayBeAssetId;
 	type MarketIdOf<T> = <T as Config>::MarketId;
 	type DecimalOf<T> = <T as Config>::Decimal;
-	type VammParamsOf<T> = <<T as Config>::Vamm as Vamm>::VammParams;
+	type VammConfigOf<T> = <<T as Config>::Vamm as Vamm>::VammConfig;
 	type VammIdOf<T> = <<T as Config>::Vamm as Vamm>::VammId;
 	type PositionOf<T> = Position<MarketIdOf<T>, DecimalOf<T>>;
-	type MarketConfigOf<T> = MarketConfig<AssetIdOf<T>, VammParamsOf<T>, DecimalOf<T>>;
+	type MarketConfigOf<T> = MarketConfig<AssetIdOf<T>, VammConfigOf<T>, DecimalOf<T>>;
 	type MarketOf<T> = Market<AssetIdOf<T>, DecimalOf<T>, VammIdOf<T>>;
 
 	// ----------------------------------------------------------------------------------------------------
@@ -504,7 +504,7 @@ pub mod pallet {
 				let market_id = id.clone();
 				let market = Market {
 					asset_id: config.asset,
-					vamm_id: T::Vamm::create(&config.vamm_params)?,
+					vamm_id: T::Vamm::create(&config.vamm_config)?,
 					margin_ratio_initial: config.margin_ratio_initial,
 					margin_ratio_maintenance: config.margin_ratio_maintenance,
 					funding_frequency: config.funding_frequency,

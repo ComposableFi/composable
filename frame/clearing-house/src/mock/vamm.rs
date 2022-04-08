@@ -73,7 +73,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq)]
-	pub struct VammParams;
+	pub struct VammConfig;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Runtime  Storage
@@ -93,11 +93,11 @@ pub mod pallet {
 
 	impl<T: Config> Vamm for Pallet<T> {
 		type VammId = T::VammId;
-		type VammParams = VammParams;
+		type VammConfig = VammConfig;
 		type Decimal = T::Decimal;
 
 		#[allow(unused_variables)]
-		fn create(info: &Self::VammParams) -> Result<Self::VammId, DispatchError> {
+		fn create(info: &Self::VammConfig) -> Result<Self::VammId, DispatchError> {
 			if let Some(id) = Self::vamm_id() {
 				Ok(id)
 			} else {
