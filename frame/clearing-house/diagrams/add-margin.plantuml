@@ -17,6 +17,10 @@ return
 
 CH -> CHS : get/create margin account
 
+note right CH
+settle funding payments?
+end note
+
 CH -> CHS : update margin amount
 
 ?<-o CH : emit event
