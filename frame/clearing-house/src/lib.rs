@@ -45,6 +45,11 @@
 //!
 //! ### Implemented Functions
 //!
+//! - [`add_margin`](pallet/struct.Pallet.html#method.add_margin-1)
+//! - [`create_market`](pallet/struct.Pallet.html#method.create_market-1)
+//! - [`funding_rate`](Pallet::funding_rate)
+//! - [`funding_owed`](Pallet::funding_owed)
+//!
 //! ## Usage
 //!
 //! ### Example
@@ -52,12 +57,15 @@
 //! ## Related Modules
 //!
 //! - `pallet-vamm`
-//! - `pallet-oracle`
+//! - [`pallet-oracle`](../oracle/index.html)
 //!
 //! <!-- Original author: @0xangelo -->
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub use pallet::*;
+// Bring to scope so that 'Implemented Functions' hyperlinks work
+#[allow(unused_imports)]
+use composable_traits::clearing_house::Instruments;
 
 #[cfg(test)]
 mod mock;
@@ -151,25 +159,43 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	/// Stores the user's position in a particular market
-	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
+	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug)]
 	pub struct Position<MarketId, Decimal> {
 		/// The Id of the virtual market
-		market_id: MarketId,
+		pub market_id: MarketId,
 		/// Virtual base asset amount. Positive implies long position and negative, short.
-		base_asset_amount: Decimal,
+		pub base_asset_amount: Decimal,
 		/// Virtual quote asset notional amount (margin * leverage * direction) used to open the
 		/// position
-		quote_asset_notional_amount: Decimal,
+		pub quote_asset_notional_amount: Decimal,
 		/// Last cumulative funding rate used to update this position. The market's latest
 		/// cumulative funding rate minus this gives the funding rate this position must pay. This
 		/// rate multiplied by this position's size (base asset amount * amm price) gives the total
 		/// funding owed, which is deducted from the trader account's margin. This debt is
 		/// accounted for in margin ratio calculations, which may lead to liquidation.
-		last_cum_funding: Decimal,
+		pub last_cum_funding: Decimal,
+	}
+
+	/// Specifications for market creation
+	#[derive(Encode, Decode, PartialEq, Clone, Debug, TypeInfo)]
+	pub struct MarketConfig<AssetId, VammConfig, Decimal> {
+		/// Asset id of the underlying for the derivatives market
+		pub asset: AssetId,
+		/// Configuration for creating and initializing the vAMM for price discovery
+		pub vamm_config: VammConfig,
+		/// Minimum margin ratio for opening a new position
+		pub margin_ratio_initial: Decimal,
+		/// Margin ratio below which liquidations can occur
+		pub margin_ratio_maintenance: Decimal,
+		/// Time span between each funding rate update
+		pub funding_frequency: DurationSeconds,
+		/// Period of time over which funding (the difference between mark and index prices) gets
+		/// paid.
+		pub funding_period: DurationSeconds,
 	}
 
 	/// Data relating to a perpetual contracts market
-	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
+	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug)]
 	pub struct Market<AssetId, Decimal, VammId> {
 		/// The Id of the vAMM used for price discovery in the virtual market
 		pub vamm_id: VammId,
@@ -202,9 +228,10 @@ pub mod pallet {
 	type AssetIdOf<T> = <T as DeFiComposableConfig>::MayBeAssetId;
 	type MarketIdOf<T> = <T as Config>::MarketId;
 	type DecimalOf<T> = <T as Config>::Decimal;
-	type VammParamsOf<T> = <<T as Config>::Vamm as Vamm>::VammParams;
+	type VammConfigOf<T> = <<T as Config>::Vamm as Vamm>::VammConfig;
 	type VammIdOf<T> = <<T as Config>::Vamm as Vamm>::VammId;
 	type PositionOf<T> = Position<MarketIdOf<T>, DecimalOf<T>>;
+	type MarketConfigOf<T> = MarketConfig<AssetIdOf<T>, VammConfigOf<T>, DecimalOf<T>>;
 	type MarketOf<T> = Market<AssetIdOf<T>, DecimalOf<T>, VammIdOf<T>>;
 
 	// ----------------------------------------------------------------------------------------------------
@@ -321,7 +348,7 @@ pub mod pallet {
 		/// Attempted to create a new market but either initial or maintenance margin ratios are
 		/// outside the interval (0, 1)
 		InvalidMarginRatioRequirement,
-		/// Attempted to create a new market but the initial margin ratio is less or equal than/to
+		/// Attempted to create a new market but the initial margin ratio is less than or equal to
 		/// the maintenance one
 		InitialMarginRatioLessThanMaintenance,
 	}
@@ -372,8 +399,11 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// # Overview
 		/// Creates a new perpetuals market with the desired parameters.
+		///
+		/// # Overview
+		///
+		/// ![](http://www.plantuml.com/plantuml/svg/FOux3i8m40LxJW47IBQdYeJ4FJQRHsnXhwFzYEiJKL2DPgfPFDWYUxlSgahB3MdjMY8ElnCPV-QzHiar7IP30ngpZ4wFqO_Xl3OyAybV22u5HY_Z3f86jghxL4OwQAkydzr931oOEjiRCH-DzNUmGBUJNm00)
 		///
 		/// ## Parameters
 		/// - `asset`: Asset id of the underlying for the derivatives market
@@ -399,34 +429,19 @@ pub mod pallet {
 		///
 		/// ## Errors
 		/// - [`NoPriceFeedForAsset`](Error::<T>::NoPriceFeedForAsset)
-		/// - [`FundingPeriodNotMultipleOfFrequency`](Error::<T>::
-		///   FundingPeriodNotMultipleOfFrequency)
+		/// - [`FundingPeriodNotMultipleOfFrequency`](
+		///   Error::<T>::FundingPeriodNotMultipleOfFrequency)
 		/// - [`ZeroLengthFundingPeriodOrFrequency`](Error::<T>::ZeroLengthFundingPeriodOrFrequency)
 		/// - [`InvalidMarginRatioRequirement`](Error::<T>::InvalidMarginRatioRequirement)
-		/// - [`InitialMarginRatioLessThanMaintenance`](Error::<T>::
-		///   InitialMarginRatioLessThanMaintenance)
+		/// - [`InitialMarginRatioLessThanMaintenance`](
+		///   Error::<T>::InitialMarginRatioLessThanMaintenance)
 		///
 		/// # Weight/Runtime
 		/// `O(1)`
 		#[pallet::weight(<T as Config>::WeightInfo::create_market())]
-		pub fn create_market(
-			origin: OriginFor<T>,
-			asset: AssetIdOf<T>,
-			vamm_params: VammParamsOf<T>,
-			margin_ratio_initial: T::Decimal,
-			margin_ratio_maintenance: T::Decimal,
-			funding_frequency: DurationSeconds,
-			funding_period: DurationSeconds,
-		) -> DispatchResult {
+		pub fn create_market(origin: OriginFor<T>, config: MarketConfigOf<T>) -> DispatchResult {
 			ensure_signed(origin)?;
-			let _ = <Self as ClearingHouse>::create_market(
-				asset,
-				vamm_params,
-				margin_ratio_initial,
-				margin_ratio_maintenance,
-				funding_frequency,
-				funding_period,
-			)?;
+			let _ = <Self as ClearingHouse>::create_market(&config)?;
 			Ok(())
 		}
 	}
@@ -439,10 +454,8 @@ pub mod pallet {
 		type AccountId = T::AccountId;
 		type AssetId = AssetIdOf<T>;
 		type Balance = T::Balance;
-		type Decimal = T::Decimal;
-		type DurationSeconds = DurationSeconds;
 		type MarketId = T::MarketId;
-		type VammParams = VammParamsOf<T>;
+		type MarketConfig = MarketConfigOf<T>;
 
 		fn add_margin(
 			account: &Self::AccountId,
@@ -465,44 +478,37 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn create_market(
-			asset: Self::AssetId,
-			vamm_params: Self::VammParams,
-			margin_ratio_initial: Self::Decimal,
-			margin_ratio_maintenance: Self::Decimal,
-			funding_frequency: Self::DurationSeconds,
-			funding_period: Self::DurationSeconds,
-		) -> Result<Self::MarketId, DispatchError> {
-			MarketCount::<T>::try_mutate(|id| {
-				ensure!(T::Oracle::is_supported(asset)?, Error::<T>::NoPriceFeedForAsset);
-				ensure!(
-					funding_period > 0 && funding_frequency > 0,
-					Error::<T>::ZeroLengthFundingPeriodOrFrequency
-				);
-				ensure!(
-					funding_period.rem_euclid(funding_frequency) == 0,
-					Error::<T>::FundingPeriodNotMultipleOfFrequency
-				);
-				ensure!(
-					margin_ratio_initial > T::Decimal::zero() &&
-						margin_ratio_initial < T::Decimal::one() &&
-						margin_ratio_maintenance > T::Decimal::zero() &&
-						margin_ratio_maintenance < T::Decimal::one(),
-					Error::<T>::InvalidMarginRatioRequirement
-				);
-				ensure!(
-					margin_ratio_initial > margin_ratio_maintenance,
-					Error::<T>::InitialMarginRatioLessThanMaintenance
-				);
+		fn create_market(config: &Self::MarketConfig) -> Result<Self::MarketId, DispatchError> {
+			ensure!(T::Oracle::is_supported(config.asset)?, Error::<T>::NoPriceFeedForAsset);
+			ensure!(
+				config.funding_period > 0 && config.funding_frequency > 0,
+				Error::<T>::ZeroLengthFundingPeriodOrFrequency
+			);
+			ensure!(
+				config.funding_period.rem_euclid(config.funding_frequency) == 0,
+				Error::<T>::FundingPeriodNotMultipleOfFrequency
+			);
+			ensure!(
+				config.margin_ratio_initial > T::Decimal::zero() &&
+					config.margin_ratio_initial < T::Decimal::one() &&
+					config.margin_ratio_maintenance > T::Decimal::zero() &&
+					config.margin_ratio_maintenance < T::Decimal::one(),
+				Error::<T>::InvalidMarginRatioRequirement
+			);
+			ensure!(
+				config.margin_ratio_initial > config.margin_ratio_maintenance,
+				Error::<T>::InitialMarginRatioLessThanMaintenance
+			);
 
+			MarketCount::<T>::try_mutate(|id| {
 				let market_id = id.clone();
 				let market = Market {
-					asset_id: asset,
-					vamm_id: T::Vamm::create(vamm_params)?,
-					margin_ratio_initial,
-					margin_ratio_maintenance,
-					funding_frequency,
-					funding_period,
+					asset_id: config.asset,
+					vamm_id: T::Vamm::create(&config.vamm_config)?,
+					margin_ratio_initial: config.margin_ratio_initial,
+					margin_ratio_maintenance: config.margin_ratio_maintenance,
+					funding_frequency: config.funding_frequency,
+					funding_period: config.funding_period,
 					cum_funding_rate: Default::default(),
 					funding_rate_ts: T::UnixTime::now().as_secs(),
 				};
@@ -511,7 +517,10 @@ pub mod pallet {
 				// Change the market count at the end
 				*id = id.checked_add(&One::one()).ok_or(ArithmeticError::Overflow)?;
 
-				Self::deposit_event(Event::MarketCreated { market: market_id.clone(), asset });
+				Self::deposit_event(Event::MarketCreated {
+					market: market_id.clone(),
+					asset: config.asset,
+				});
 				Ok(market_id)
 			})
 		}
@@ -519,12 +528,13 @@ pub mod pallet {
 
 	impl<T: Config> Instruments for Pallet<T> {
 		type Market = MarketOf<T>;
+		type Position = PositionOf<T>;
 		type Decimal = T::Decimal;
 
 		fn funding_rate(market: &Self::Market) -> Result<Self::Decimal, DispatchError> {
 			// Oracle returns prices in USDT cents
-			let unnormalized_oracle_twap = T::Oracle::get_twap(market.asset_id, vec![])?;
-			let oracle_twap = Self::Decimal::checked_from_rational(unnormalized_oracle_twap, 10u32)
+			let nonnormalized_oracle_twap = T::Oracle::get_twap(market.asset_id, vec![])?;
+			let oracle_twap = Self::Decimal::checked_from_rational(nonnormalized_oracle_twap, 100)
 				.ok_or(ArithmeticError::Overflow)?;
 
 			let vamm_twap = T::Vamm::get_twap(&market.vamm_id)?;
@@ -539,6 +549,25 @@ pub mod pallet {
 			let rate =
 				price_spread.checked_mul(&period_adjustment).ok_or(ArithmeticError::Underflow)?;
 			Ok(rate)
+		}
+
+		fn funding_owed(
+			market: &Self::Market,
+			position: &Self::Position,
+		) -> Result<Self::Decimal, DispatchError> {
+			let cum_funding_delta = market
+				.cum_funding_rate
+				.checked_sub(&position.last_cum_funding)
+				.ok_or(ArithmeticError::Underflow)?;
+			let payment =
+				cum_funding_delta.checked_mul(&position.base_asset_amount).ok_or_else(|| {
+					match cum_funding_delta.is_negative() ^ position.base_asset_amount.is_negative()
+					{
+						true => ArithmeticError::Underflow,
+						false => ArithmeticError::Overflow,
+					}
+				})?;
+			Ok(payment)
 		}
 	}
 

@@ -45,7 +45,7 @@ frame_support::construct_runtime!(
 		Assets: pallet_assets::{Pallet, Call, Storage},
 		Vamm: mock_vamm::{Pallet, Storage},
 		Oracle: mock_oracle::{Pallet, Storage},
-		ClearingHouse: clearing_house::{Pallet, Call, Storage, Event<T>},
+		TestPallet: clearing_house::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -53,6 +53,7 @@ pub type Balance = u128;
 pub type Amount = i64;
 pub type VammId = u64;
 pub type Decimal = FixedI128;
+pub type MarketId = u64;
 
 // ----------------------------------------------------------------------------------------------------
 //                                                FRAME System
@@ -223,19 +224,19 @@ impl DeFiComposableConfig for Runtime {
 }
 
 parameter_types! {
-	pub const ClearingHouseId: PalletId = PalletId(*b"test_pid");
+	pub const TestPalletId: PalletId = PalletId(*b"test_pid");
 }
 
 impl clearing_house::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
-	type MarketId = u64;
+	type MarketId = MarketId;
 	type Decimal = Decimal;
 	type UnixTime = Timestamp;
 	type Vamm = Vamm;
 	type Oracle = Oracle;
 	type Assets = Assets;
-	type PalletId = ClearingHouseId;
+	type PalletId = TestPalletId;
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -247,7 +248,9 @@ pub struct ExtBuilder {
 	pub balances: Vec<(AccountId, AssetId, Balance)>,
 	pub collateral_types: Vec<AssetId>,
 	pub vamm_id: Option<VammId>,
+	pub vamm_twap: Option<Decimal>,
 	pub oracle_asset_support: Option<bool>,
+	pub oracle_twap: Option<u64>,
 }
 
 impl ExtBuilder {
@@ -268,12 +271,14 @@ impl ExtBuilder {
 			.assimilate_storage(&mut storage)
 			.unwrap();
 
-		mock_vamm::GenesisConfig::<Runtime> { vamm_id: self.vamm_id }
+		mock_vamm::GenesisConfig::<Runtime> { vamm_id: self.vamm_id, twap: self.vamm_twap }
 			.assimilate_storage(&mut storage)
 			.unwrap();
 
-		let oracle_genesis =
-			mock_oracle::GenesisConfig { supports_assets: self.oracle_asset_support };
+		let oracle_genesis = mock_oracle::GenesisConfig {
+			supports_assets: self.oracle_asset_support,
+			twap: self.oracle_twap,
+		};
 		GenesisBuild::<Runtime>::assimilate_storage(&oracle_genesis, &mut storage).unwrap();
 
 		storage.into()

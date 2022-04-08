@@ -10,7 +10,7 @@ pub mod pallet {
 	use composable_traits::vamm::Vamm;
 	use frame_support::pallet_prelude::*;
 	use scale_info::TypeInfo;
-	use sp_runtime::FixedPointNumber;
+	use sp_runtime::{traits::Zero, FixedPointNumber};
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                    Declaration Of The Pallet Type
@@ -27,7 +27,11 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type VammId: FullCodec + MaxEncodedLen + MaybeSerializeDeserialize + TypeInfo + Clone;
-		type Decimal: FixedPointNumber;
+		type Decimal: FixedPointNumber
+			+ FullCodec
+			+ MaxEncodedLen
+			+ MaybeSerializeDeserialize
+			+ TypeInfo;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -37,18 +41,20 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub vamm_id: Option<T::VammId>,
+		pub twap: Option<T::Decimal>,
 	}
 
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { vamm_id: None }
+			Self { vamm_id: None, twap: Some(T::Decimal::zero()) }
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
-			NextVammId::<T>::set(self.vamm_id.clone())
+			NextVammId::<T>::set(self.vamm_id.clone());
+			Twap::<T>::set(self.twap);
 		}
 	}
 
@@ -67,7 +73,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq)]
-	pub struct VammParams;
+	pub struct VammConfig;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Runtime  Storage
@@ -77,17 +83,21 @@ pub mod pallet {
 	#[pallet::getter(fn vamm_id)]
 	pub type NextVammId<T: Config> = StorageValue<_, T::VammId, OptionQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn hardcoded_twap)]
+	pub type Twap<T: Config> = StorageValue<_, T::Decimal, OptionQuery>;
+
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Trait Implementations
 	// ----------------------------------------------------------------------------------------------------
 
 	impl<T: Config> Vamm for Pallet<T> {
 		type VammId = T::VammId;
-		type VammParams = VammParams;
+		type VammConfig = VammConfig;
 		type Decimal = T::Decimal;
 
 		#[allow(unused_variables)]
-		fn create(info: Self::VammParams) -> Result<Self::VammId, DispatchError> {
+		fn create(info: &Self::VammConfig) -> Result<Self::VammId, DispatchError> {
 			if let Some(id) = Self::vamm_id() {
 				Ok(id)
 			} else {
@@ -97,8 +107,11 @@ pub mod pallet {
 
 		#[allow(unused_variables)]
 		fn get_twap(vamm: &Self::VammId) -> Result<Self::Decimal, DispatchError> {
-			Ok(Self::Decimal::checked_from_rational(10000u32, 100u32)
-				.ok_or(Error::<T>::FailedToCalculateTwap)?)
+			if let Some(twap) = Self::hardcoded_twap() {
+				Ok(twap)
+			} else {
+				Err(Error::<T>::FailedToCalculateTwap.into())
+			}
 		}
 	}
 }

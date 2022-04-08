@@ -2,7 +2,6 @@
 //!
 //! Common traits for clearing house implementations
 use frame_support::pallet_prelude::DispatchError;
-use sp_runtime::FixedPointNumber;
 
 /// Exposes functionality for trading of perpetual contracts
 ///
@@ -16,14 +15,10 @@ pub trait ClearingHouse {
 	type AssetId;
 	/// The balance type for an account
 	type Balance;
-	/// Signed fixed point number implementation
-	type Decimal: FixedPointNumber;
-	/// Time span in seconds (unsigned)
-	type DurationSeconds;
 	/// The identifier type for each market
 	type MarketId;
-	/// Parameters for creating and initializing a new vAMM instance.
-	type VammParams;
+	/// Specification for market creation
+	type MarketConfig;
 
 	/// Add margin to a user's account
 	///
@@ -38,24 +33,11 @@ pub trait ClearingHouse {
 	/// Create a new perpetuals market
 	///
 	/// ## Parameters
-	/// - `asset`: Asset id of the underlying for the derivatives market
-	/// - `vamm_params`: Parameters for creating and initializing the vAMM for price discovery
-	/// - `margin_ratio_initial`: Minimum margin ratio for opening a new position
-	/// - `margin_ratio_maintenance`: Margin ratio below which liquidations can occur
-	/// - `funding_frequency`: Time span between each funding rate update
-	/// - `funding_period`: Period of time over which funding (the difference between mark and
-	///   index prices) gets paid.
+	/// - `config`: specification for market creation
 	///
 	/// ## Returns
-	/// The new market id, if successful
-	fn create_market(
-		asset: Self::AssetId,
-		vamm_params: Self::VammParams,
-		margin_ratio_initial: Self::Decimal,
-		margin_ratio_maintenance: Self::Decimal,
-		funding_frequency: Self::DurationSeconds,
-		funding_period: Self::DurationSeconds,
-	) -> Result<Self::MarketId, DispatchError>;
+	/// The new market's id, if successful
+	fn create_market(config: &Self::MarketConfig) -> Result<Self::MarketId, DispatchError>;
 }
 
 /// Exposes functionality for querying funding-related quantities of synthetic instruments
@@ -67,17 +49,36 @@ pub trait ClearingHouse {
 pub trait Instruments {
 	/// Data relating to a derivatives market
 	type Market;
-	/// Signed fixed point number implementation
-	type Decimal: FixedPointNumber;
+	/// Data relating to a trader's position in a market
+	type Position;
+	/// Signed decimal number implementation
+	type Decimal;
 
 	/// Computes the funding rate for a derivatives market
 	///
 	/// The funding rate is a function of the open interest and the index to mark price divergence.
 	///
 	/// ## Parameters
-	/// * `market`: the derivatives [Market](Self::Market) data
+	/// * `market`: the derivatives market data
 	///
 	/// ## Returns
-	/// The current funding rate as a fixed point number
+	/// The current funding rate as a signed decimal number
 	fn funding_rate(market: &Self::Market) -> Result<Self::Decimal, DispatchError>;
+
+	/// Computes the funding owed due to a particular position in a market
+	///
+	/// The funding owed may be positive or negative. In the former case, the position's owner has a
+	/// debt to its counterparty (e.g., the derivative writer, the protocol, or automated market
+	/// maker). The reverse is true in the latter case.
+	///
+	/// ## Parameters
+	/// * `market`: the derivatives market data
+	/// * `position`: the position in said market
+	///
+	/// ## Returns
+	/// The funding owed by the position's owner as a signed decimal number
+	fn funding_owed(
+		market: &Self::Market,
+		position: &Self::Position,
+	) -> Result<Self::Decimal, DispatchError>;
 }
