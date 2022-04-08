@@ -12,19 +12,19 @@ use sp_std::sync::Arc;
 #[rpc]
 pub trait PabloApi<BlockHash, PoolId, AssetId, Balance>
 where
-	PoolId: Codec,
-	AssetId: Codec,
-	Balance: Codec,
+	PoolId: SafeRpcWrapperType,
+	AssetId: SafeRpcWrapperType,
+	Balance: SafeRpcWrapperType,
 {
 	#[rpc(name = "pablo_pricesFor")]
 	fn prices_for(
 		&self,
-		pool_id: PoolId,
-		base_asset_id: AssetId,
-		quote_asset_id: AssetId,
-		amount: Balance,
+		pool_id: SafeRpcWrapper<PoolId>,
+		base_asset_id: SafeRpcWrapper<AssetId>,
+		quote_asset_id: SafeRpcWrapper<AssetId>,
+		amount: SafeRpcWrapper<Balance>,
 		at: Option<BlockHash>,
-	) -> RpcResult<PriceAggregate<PoolId, AssetId, Balance>>;
+	) -> RpcResult<PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>;
 }
 
 pub struct Pablo<C, Block> {
@@ -43,9 +43,9 @@ impl<C, Block, PoolId, AssetId, Balance>
 	for Pablo<C, (Block, PoolId, AssetId, Balance)>
 where
 	Block: BlockT,
-	PoolId: Send + Sync + 'static + Codec,
-	AssetId: Send + Sync + 'static + Codec,
-	Balance: Send + Sync + 'static + Codec,
+	PoolId: Send + Sync + 'static + Codec + SafeRpcWrapperType,
+	AssetId: Send + Sync + 'static + Codec + SafeRpcWrapperType,
+	Balance: Send + Sync + 'static + Codec + SafeRpcWrapperType,
 	C: Send + Sync + 'static,
 	C: ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block>,
@@ -53,19 +53,21 @@ where
 {
 	fn prices_for(
 		&self,
-		pool_id: PoolId,
-		base_asset_id: AssetId,
-		quote_asset_id: AssetId,
-		amount: Balance,
+		pool_id: SafeRpcWrapper<PoolId>,
+		base_asset_id: SafeRpcWrapper<AssetId>,
+		quote_asset_id: SafeRpcWrapper<AssetId>,
+		amount: SafeRpcWrapper<Balance>,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<PriceAggregate<PoolId, AssetId, Balance>> {
+	) -> RpcResult<PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>> {
 		let api = self.client.runtime_api();
 
 		let at = BlockId::hash(at.unwrap_or_else(|| {
 			self.client.info().best_hash
 		}));
 
-		let runtime_api_result = api.prices_for(&at, pool_id, base_asset_id, quote_asset_id, amount);
+		// calling ../../runtime-api
+		let runtime_api_result =
+			api.prices_for(&at, pool_id.0, base_asset_id.0, quote_asset_id.0, amount.0);
 		runtime_api_result.map_err(|e| {
 			RpcError {
 				code: ErrorCode::ServerError(9876), // No real reason for this value

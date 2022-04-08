@@ -1207,9 +1207,30 @@ impl_runtime_apis! {
 	}
 
 	impl pablo_runtime_api::PabloRuntimeApi<Block, PoolId, CurrencyId, Balance> for Runtime {
-		fn prices_for(pool_id: PoolId, base_asset_id: CurrencyId, quote_asset_id: CurrencyId, amount: Balance) -> PriceAggregate<PoolId, CurrencyId, Balance> {
-			pablo::prices_for::<Runtime>(pool_id, base_asset_id, quote_asset_id, amount)
-				.unwrap_or_else(|_| PriceAggregate{ pool_id, base_asset_id, quote_asset_id, spot_price: 0_u128})
+		fn prices_for(
+			pool_id: PoolId,
+			base_asset_id: CurrencyId,
+			quote_asset_id: CurrencyId,
+			amount: Balance
+		) -> PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
+			pablo::prices_for::<Runtime>(
+				pool_id,
+				base_asset_id,
+				quote_asset_id,
+				amount
+			)
+			.map(|p| PriceAggregate{
+				pool_id: SafeRpcWrapper(p.pool_id),
+				base_asset_id: SafeRpcWrapper(p.base_asset_id),
+				quote_asset_id: SafeRpcWrapper(p.quote_asset_id),
+				spot_price: SafeRpcWrapper(p.spot_price)
+			})
+			.unwrap_or_else(|_| PriceAggregate{
+				pool_id: SafeRpcWrapper(pool_id),
+				base_asset_id: SafeRpcWrapper(base_asset_id),
+				quote_asset_id: SafeRpcWrapper(quote_asset_id),
+				spot_price: SafeRpcWrapper(0_u128)
+			})
 		}
 	}
 
