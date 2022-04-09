@@ -80,3 +80,18 @@ pub trait TransferTo {
 		now: Self::BlockNumber,
 	) -> DispatchResultWithPostInfo;
 }
+
+/// Trait containing relevant business logic for incoming transactions.
+pub trait Claim {
+	type AccountId;
+	type AssetId;
+	type BlockNumber;
+
+	/// Collects funds deposited by the Relayer into the owner's account.
+	fn claim_to(
+		caller: Self::AccountId,
+		asset_id: Self::AssetId,
+		to: Self::AccountId,
+		now: Self::BlockNumber,
+	) -> DispatchResultWithPostInfo;
+}

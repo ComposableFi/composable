@@ -38,7 +38,7 @@ pub mod pallet {
 	use composable_support::{types::EthereumAddress, validation::Validated};
 	use composable_traits::{
 		math::SafeAdd,
-		mosaic::{RelayManager, TransferTo},
+		mosaic::{Claim, RelayManager, TransferTo},
 	};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
@@ -650,30 +650,8 @@ pub mod pallet {
 			let caller = ensure_signed(origin)?;
 			let now = <frame_system::Pallet<T>>::block_number();
 
-			IncomingTransactions::<T>::try_mutate_exists::<_, _, _, DispatchError, _>(
-				caller.clone(),
-				asset_id,
-				|deposit| {
-					let (amount, unlock_after) = deposit.ok_or(Error::<T>::NoClaimableTx)?;
-					ensure!(unlock_after < now, Error::<T>::TxStillLocked);
-					T::Assets::transfer(
-						asset_id,
-						&Self::sub_account_id(SubAccount::new_incoming(caller.clone())),
-						&to,
-						amount,
-						false,
-					)?;
-					// Delete the deposit.
-					deposit.take();
-					Self::deposit_event(Event::<T>::TransferClaimed {
-						by: caller,
-						to,
-						asset_id,
-						amount,
-					});
-					Ok(())
-				},
-			)?;
+			<Pallet<T> as Claim>::claim_to(caller, asset_id, to, now)?;
+
 			Ok(().into())
 		}
 
@@ -1018,6 +996,46 @@ pub mod pallet {
 						},
 						None => *tx = Some((amount, lock_until)),
 					}
+					Ok(())
+				},
+			)?;
+
+			Ok(().into())
+		}
+	}
+
+	impl<T: Config> Claim for Pallet<T> {
+		type AccountId = AccountIdOf<T>;
+		type AssetId = AssetIdOf<T>;
+		type BlockNumber = BlockNumberOf<T>;
+
+		fn claim_to(
+			caller: Self::AccountId,
+			asset_id: Self::AssetId,
+			to: Self::AccountId,
+			now: Self::BlockNumber,
+		) -> DispatchResultWithPostInfo {
+			IncomingTransactions::<T>::try_mutate_exists::<_, _, _, DispatchError, _>(
+				caller.clone(),
+				asset_id,
+				|deposit| {
+					let (amount, unlock_after) = deposit.ok_or(Error::<T>::NoClaimableTx)?;
+					ensure!(unlock_after < now, Error::<T>::TxStillLocked);
+					T::Assets::transfer(
+						asset_id,
+						&Self::sub_account_id(SubAccount::new_incoming(caller.clone())),
+						&to,
+						amount,
+						false,
+					)?;
+					// Delete the deposit.
+					deposit.take();
+					Self::deposit_event(Event::<T>::TransferClaimed {
+						by: caller,
+						to,
+						asset_id,
+						amount,
+					});
 					Ok(())
 				},
 			)?;
