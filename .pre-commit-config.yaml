@@ -29,7 +29,7 @@ repos:
     pass_filenames: false
     files: ^frame/vamm/
     types: [rust]
-    stages: [commit, push]
+    stages: [push, manual]
   - id: vamm::cargo-check
     name: vamm::cargo-check
     entry: cargo +nightly check --all-targets -p pallet-vamm
@@ -37,7 +37,7 @@ repos:
     pass_filenames: false
     files: ^frame/vamm/
     types: [rust]
-    stages: [commit, push]
+    stages: [push, manual]
   - id: vamm::cargo-test
     name: vamm::cargo-test
     entry: cargo +nightly test --all-features --tests -p pallet-vamm
@@ -45,7 +45,7 @@ repos:
     pass_filenames: false
     files: ^frame/vamm/
     types: [rust]
-    stages: [push]
+    stages: [push, manual]
   - id: vamm::cargo-clippy
     name: vamm::cargo-clippy
     entry: cargo +nightly clippy --all-targets --no-deps -p pallet-vamm -- -D warnings -D clippy::all
@@ -53,7 +53,15 @@ repos:
     pass_filenames: false
     files: ^frame/vamm/
     types: [rust]
-    stages: [push]
+    stages: [manual]
+  - id: vamm::cargo-doc
+    name: vamm::cargo-doc
+    entry: cargo +nightly doc --no-deps -p pallet-vamm
+    language: system
+    pass_filenames: false
+    files: ^frame/vamm/
+    types: [rust]
+    stages: [manual]
 
 - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
   rev: v8.0.0
