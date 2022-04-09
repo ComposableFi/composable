@@ -77,7 +77,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	use codec::{Codec, FullCodec};
-	use composable_traits::vamm::*;
+	use composable_traits::vamm::{Vamm, VammConfig};
 	use frame_support::{pallet_prelude::*, sp_std::fmt::Debug, transactional, Blake2_128Concat};
 	use sp_runtime::{
 		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Zero},
@@ -308,22 +308,20 @@ pub mod pallet {
 		/// `O(1)`
 
 		#[transactional]
-		fn create(
-			params: composable_traits::vamm::VammParams<BalanceOf<T>>,
-		) -> Result<Self::VammId, DispatchError> {
+		fn create(config: VammConfig<BalanceOf<T>>) -> Result<Self::VammId, DispatchError> {
 			// TODO: (Matheus)
 			// How to ensure that the caller has the right privileges?
 			// (eg. How to ensure the caller is the Clearing House, and not anyone else?)
-			ensure!(!params.base_asset_reserves.is_zero(), Error::<T>::BaseAssetReserveIsZero);
-			ensure!(!params.quote_asset_reserves.is_zero(), Error::<T>::QuoteAssetReserveIsZero);
-			ensure!(!params.peg_multiplier.is_zero(), Error::<T>::PegMultiplierIsZero);
+			ensure!(!config.base_asset_reserves.is_zero(), Error::<T>::BaseAssetReserveIsZero);
+			ensure!(!config.quote_asset_reserves.is_zero(), Error::<T>::QuoteAssetReserveIsZero);
+			ensure!(!config.peg_multiplier.is_zero(), Error::<T>::PegMultiplierIsZero);
 
 			VammCounter::<T>::try_mutate(|next_id| {
 				let id = *next_id;
 				let vamm_state = VammStateOf::<T> {
-					base_asset_reserves: params.base_asset_reserves,
-					quote_asset_reserves: params.quote_asset_reserves,
-					peg_multiplier: params.peg_multiplier,
+					base_asset_reserves: config.base_asset_reserves,
+					quote_asset_reserves: config.quote_asset_reserves,
+					peg_multiplier: config.peg_multiplier,
 					closed: Default::default(),
 				};
 

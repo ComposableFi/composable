@@ -19,11 +19,11 @@ pub trait Vamm {
 	///
 	/// ## Returns
 	/// The identifier of the newly created vamm.
-	fn create(params: VammParams<Self::Balance>) -> Result<Self::VammId, DispatchError>;
+	fn create(config: VammConfig<Self::Balance>) -> Result<Self::VammId, DispatchError>;
 }
 
 /// Specify a common encapsulation layer for the [`create`](Vamm::create) function.
-pub struct VammParams<Balance> {
+pub struct VammConfig<Balance> {
 	/// The total amount of base assets to be set in vamm's creation.
 	pub base_asset_reserves: Balance,
 	/// The total amount of quote assets to be set in vamm's creation.

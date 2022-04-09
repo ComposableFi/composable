@@ -4,7 +4,7 @@ use crate::{
 	pallet::{Error, VammMap, VammState},
 };
 
-use composable_traits::vamm::{Vamm as VammTrait, VammParams};
+use composable_traits::vamm::{Vamm as VammTrait, VammConfig};
 
 use proptest::prelude::*;
 
@@ -69,7 +69,7 @@ proptest! {
 			};
 
 			let vamm_created_ok = Vamm::create(
-				VammParams{base_asset_reserves,
+				VammConfig{base_asset_reserves,
 						   quote_asset_reserves,
 						   peg_multiplier});
 			let vamm_created_some = Vamm::get_vamm(vamm_created_ok.unwrap());
@@ -89,7 +89,7 @@ proptest! {
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_ok!(Vamm::create(
-				VammParams{base_asset_reserves,
+				VammConfig{base_asset_reserves,
 						   quote_asset_reserves,
 						   peg_multiplier}));
 		});
@@ -103,7 +103,7 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_noop!(
 				Vamm::create(
-					VammParams{base_asset_reserves: ZERO_RESERVE,
+					VammConfig{base_asset_reserves: ZERO_RESERVE,
 							   quote_asset_reserves,
 							   peg_multiplier}),
 				Error::<MockRuntime>::BaseAssetReserveIsZero);
@@ -118,7 +118,7 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_noop!(
 				Vamm::create(
-					VammParams{base_asset_reserves,
+					VammConfig{base_asset_reserves,
 							quote_asset_reserves: ZERO_RESERVE,
 							peg_multiplier}),
 				Error::<MockRuntime>::QuoteAssetReserveIsZero);
@@ -133,7 +133,7 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_noop!(
 				Vamm::create(
-					VammParams{base_asset_reserves,
+					VammConfig{base_asset_reserves,
 							   quote_asset_reserves,
 							   peg_multiplier: ZERO_RESERVE}),
 				Error::<MockRuntime>::PegMultiplierIsZero);
@@ -152,7 +152,7 @@ proptest! {
 
 			for _ in 0..loop_times {
 				assert_ok!(Vamm::create(
-					VammParams{base_asset_reserves,
+					VammConfig{base_asset_reserves,
 							   quote_asset_reserves,
 							   peg_multiplier}));
 			}
@@ -172,7 +172,7 @@ proptest! {
 			System::set_block_number(1);
 
 			let vamm_created_ok = Vamm::create(
-				VammParams{base_asset_reserves,
+				VammConfig{base_asset_reserves,
 						   quote_asset_reserves,
 						   peg_multiplier});
 			let vamm_created = Vamm::get_vamm(vamm_created_ok.unwrap()).unwrap();
@@ -194,7 +194,7 @@ proptest! {
 			assert!(!VammMap::<MockRuntime>::contains_key(0u128));
 
 			let vamm_created_ok = Vamm::create(
-				VammParams{base_asset_reserves,
+				VammConfig{base_asset_reserves,
 						   quote_asset_reserves,
 						   peg_multiplier});
 			assert_ok!(vamm_created_ok);
