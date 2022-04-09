@@ -21,7 +21,7 @@ package "pallet-clearing-house" {
         + liquidate()
         + update_funding()
         # create_market()
-        # stop_market()
+        # close_market()
     }
 
     interface "ClearingHouse" as CH <<trait>> {
@@ -31,7 +31,7 @@ package "pallet-clearing-house" {
         ~ close_position()
         ~ liquidate()
         ~ create_market()
-        ~ stop_market()
+        ~ close_market()
         ~ update_funding()
     }
     
@@ -46,7 +46,6 @@ package "pallet-clearing-house" {
     interface "Instruments" as ITrait <<trait>> {
         ~ funding_owed(Position)
         ~ funding_rate(MarketId)
-        ~ update_funding(MarketId)
     }
 
     interface "FeeModel" as FTrait <<trait>> {
@@ -74,11 +73,14 @@ package "pallet-clearing-house" {
         }
 
         class Market <<struct>> {
-            VammId vamm_id
             AssetId asset_id
+            VammId vamm_id
+            Decimal margin_ratio_initial
+            Decimal margin_ratio_maintenance
             Decimal cum_funding_rate
-            Timestamp funding_rate_ts
-            Duration periodicity
+            Duration funding_rate_ts
+            Duration funding_frequency
+            Duration funding_period
         }
     }
 }
@@ -121,11 +123,11 @@ hide circle
 
 '================== Storage relationships
 Markets ..down> Market : maps
-Market::vamm_id ..> vAmms : references
+Market::vamm_id ..> vAmm : used in
 Market::asset_id ..> Oracle : used in
 
 Positions ..down> Position: maps
-Position ..left> Markets : references
+Position ..right> Markets : references
 
 '================== Control flow relationships             
 ClearingHouse -> CH : wraps
@@ -135,6 +137,10 @@ CH -[#blue]-> ITrait : calls
 'add_margin
 'remove_margin
 CH -[#red]-> MarginAccounts : write
+
+'create_market
+'close_market
+CH -[#red]-> Markets : write
 
 'remove_margin
 CH -[#blue]-> RETrait : calls
@@ -150,18 +156,18 @@ CH -[#blue]right> FTrait : calls
 CH -[#blue]-> vAmm : calls
 
 'update_funding
-ITrait -[#red]-> Markets : write
+ITrait -[#green]-> Markets : read
 ITrait -[#blue]-> Oracle : calls
 ITrait -[#blue]-> vAmm : calls
 
 'get_margin_ratio
 RETrait -[#green]-> MarginAccounts : read
 RETrait -[#green]-> Positions : read
-RETrait -[#blue]-> ITrait : calls
+RETrait -left[#blue]> ITrait : calls
 RETrait -[#blue]-> vAmm : calls
 
 'vAMM
-vAmm -[#red]-> vAmms : write
-vAmms ..> vAmmState : maps
+vAmm -down[#red]-> vAmms : write
+vAmms ..right> vAmmState : maps
 
 @enduml

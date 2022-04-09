@@ -1,9 +1,8 @@
 @startuml create_market
 !theme mars
 
-actor "god" as g
+actor "Authority" as g
 participant "Clearing\nHouse" as ch
-participant "trait\nInstruments" as inst
 database "Markets" as markets
 participant "vAMM" as vamm
 participant "Oracle" as oracle 
@@ -12,18 +11,16 @@ g -> ch : ""create_market""
 
 ch -> oracle : check has price feed for ""AssetId""
 
-ch -> vamm : ""create""
+ch -> vamm ++: ""create""
 return ""VammId""
 
 ch -> ch : get new market id
 
-ch -> markets : store ""Market"" struct
-
-ch -> inst ++: ""update_funding""
-inst -> vamm: fetch TWAP
-inst -> oracle: fetch TWAP
-inst -> markets : update\n""cum_funding_rate""
+ch -> ch ++: initialize ""Market""
+ch -> ch: get current timestamp
 return
+
+ch -[#red]> markets : store ""Market""
 
 ?<-o ch : emit event
 @enduml

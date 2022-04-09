@@ -1,0 +1,60 @@
+@startuml update_funding
+!theme mars
+
+actor "User/Bot" as user
+participant "Clearing\nHouse" as ch
+participant "Instruments" as inst
+database "Markets" as mkts
+participant "Oracle" as oracle
+participant "vAMM" as vamm
+collections "Collateral\naccount" as vault
+collections "Insurance\naccount" as insurance
+collections "Fees\naccount" as fees
+
+user -> ch : ""update_funding""
+
+ch -[#green]> mkts : get ""Market""
+
+note right ch
+ensure time since last update
+  "">= funding_frequency""
+end note
+
+ch -> inst ++: ""funding_rate""
+note right inst
+ensure valid oracle?
+ensure mark/oracle spread low
+end note
+inst -> oracle : get TWAP
+note right inst
+normalize oracle TWAP?
+end note
+inst -> vamm : get TWAP
+note right inst
+cap funding rate?
+end note
+return current funding rate
+
+== Storage updates ==
+
+note over ch, mkts
+add funding rate to market cumulative
+set funding timestamp to current time
+end note
+ch -[#red]> mkts : update
+
+== Asset transfers ==
+
+alt Clearing House receives funding
+    ch -> vault : users pay from margin
+    vault -> insurance : collateral
+else Clearing House pays funding
+    ch -> fees : rebate from Fee Pool
+    fees -> vault : fees
+end
+
+====
+
+?<-o ch : emit event
+
+@enduml

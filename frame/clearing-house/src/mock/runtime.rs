@@ -3,12 +3,13 @@ use crate::{
 	mock::{
 		accounts::{AccountId, ALICE},
 		assets::{AssetId, PICA},
+		oracle as mock_oracle, vamm as mock_vamm,
 	},
 };
 use composable_traits::defi::DeFiComposableConfig;
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{ConstU16, ConstU64, Everything, GenesisBuild},
+	traits::{ConstU16, ConstU32, ConstU64, Everything, GenesisBuild},
 	PalletId,
 };
 use frame_system as system;
@@ -20,6 +21,10 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	FixedI128,
 };
+
+// ----------------------------------------------------------------------------------------------------
+//                                             Construct Runtime
+// ----------------------------------------------------------------------------------------------------
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 type Block = frame_system::mocking::MockBlock<Runtime>;
@@ -34,15 +39,25 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Assets: pallet_assets::{Pallet, Call, Storage},
-		ClearingHouse: clearing_house::{Pallet, Call, Storage, Event<T>},
+		Vamm: mock_vamm::{Pallet, Storage},
+		Oracle: mock_oracle::{Pallet, Storage},
+		TestPallet: clearing_house::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
 pub type Balance = u128;
 pub type Amount = i64;
+pub type VammId = u64;
+pub type Decimal = FixedI128;
+pub type MarketId = u64;
+
+// ----------------------------------------------------------------------------------------------------
+//                                                FRAME System
+// ----------------------------------------------------------------------------------------------------
 
 impl system::Config for Runtime {
 	type BaseCallFilter = frame_support::traits::Everything;
@@ -68,8 +83,12 @@ impl system::Config for Runtime {
 	type SystemWeightInfo = ();
 	type SS58Prefix = ConstU16<42>;
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
+
+// ----------------------------------------------------------------------------------------------------
+//                                                 Balances
+// ----------------------------------------------------------------------------------------------------
 
 parameter_types! {
 	pub const NativeExistentialDeposit: Balance = 0;
@@ -87,11 +106,34 @@ impl pallet_balances::Config for Runtime {
 	type ReserveIdentifier = [u8; 8];
 }
 
+// ----------------------------------------------------------------------------------------------------
+//                                             Governance Registry
+// ----------------------------------------------------------------------------------------------------
+
 impl governance_registry::Config for Runtime {
 	type AssetId = AssetId;
 	type WeightInfo = ();
 	type Event = Event;
 }
+
+// ----------------------------------------------------------------------------------------------------
+//                                                 Timestamp
+// ----------------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const MinimumPeriod: u64 = 5;
+}
+
+impl pallet_timestamp::Config for Runtime {
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                                 ORML Tokens
+// ----------------------------------------------------------------------------------------------------
 
 parameter_type_with_key! {
 	pub TokensExistentialDeposit: |_currency_id: AssetId| -> Balance {
@@ -111,6 +153,10 @@ impl orml_tokens::Config for Runtime {
 	type DustRemovalWhitelist = Everything;
 }
 
+// ----------------------------------------------------------------------------------------------------
+//                                               Currency Factory
+// ----------------------------------------------------------------------------------------------------
+
 impl pallet_currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = AssetId;
@@ -118,6 +164,10 @@ impl pallet_currency_factory::Config for Runtime {
 	type ReserveOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
 }
+
+// ----------------------------------------------------------------------------------------------------
+//                                                   Assets
+// ----------------------------------------------------------------------------------------------------
 
 parameter_types! {
 	pub const NativeAssetId: AssetId = PICA;
@@ -139,31 +189,68 @@ impl pallet_assets::Config for Runtime {
 	type GovernanceRegistry = GovernanceRegistry;
 }
 
+// ----------------------------------------------------------------------------------------------------
+//                                                   VAMM
+// ----------------------------------------------------------------------------------------------------
+
+impl mock_vamm::Config for Runtime {
+	type VammId = VammId;
+	type Decimal = Decimal;
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                                   Oracle
+// ----------------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const MaxAnswerBound: u32 = 5;
+}
+
+impl mock_oracle::Config for Runtime {
+	type AssetId = AssetId;
+	type Balance = Balance;
+	type Timestamp = u64;
+	type LocalAssets = ();
+	type MaxAnswerBound = MaxAnswerBound;
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                               Clearing House
+// ----------------------------------------------------------------------------------------------------
+
 impl DeFiComposableConfig for Runtime {
 	type Balance = Balance;
 	type MayBeAssetId = AssetId;
 }
 
 parameter_types! {
-	pub const ClearingHouseId: PalletId = PalletId(*b"test_pid");
+	pub const TestPalletId: PalletId = PalletId(*b"test_pid");
 }
 
 impl clearing_house::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
-	type MarketId = u64;
-	type Decimal = FixedI128;
-	type Timestamp = u64;
-	type Duration = u64;
-	type VAMMId = u64;
+	type MarketId = MarketId;
+	type Decimal = Decimal;
+	type UnixTime = Timestamp;
+	type Vamm = Vamm;
+	type Oracle = Oracle;
 	type Assets = Assets;
-	type PalletId = ClearingHouseId;
+	type PalletId = TestPalletId;
 }
+
+// ----------------------------------------------------------------------------------------------------
+//                                             Externalities Builder
+// ----------------------------------------------------------------------------------------------------
 
 pub struct ExtBuilder {
 	pub native_balances: Vec<(AccountId, Balance)>,
 	pub balances: Vec<(AccountId, AssetId, Balance)>,
 	pub collateral_types: Vec<AssetId>,
+	pub vamm_id: Option<VammId>,
+	pub vamm_twap: Option<Decimal>,
+	pub oracle_asset_support: Option<bool>,
+	pub oracle_twap: Option<u64>,
 }
 
 impl ExtBuilder {
@@ -184,8 +271,16 @@ impl ExtBuilder {
 			.assimilate_storage(&mut storage)
 			.unwrap();
 
-		let mut ext: sp_io::TestExternalities = storage.into();
-		ext.execute_with(|| System::set_block_number(1));
-		ext
+		mock_vamm::GenesisConfig::<Runtime> { vamm_id: self.vamm_id, twap: self.vamm_twap }
+			.assimilate_storage(&mut storage)
+			.unwrap();
+
+		let oracle_genesis = mock_oracle::GenesisConfig {
+			supports_assets: self.oracle_asset_support,
+			twap: self.oracle_twap,
+		};
+		GenesisBuild::<Runtime>::assimilate_storage(&oracle_genesis, &mut storage).unwrap();
+
+		storage.into()
 	}
 }
