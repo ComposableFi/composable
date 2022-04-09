@@ -822,7 +822,7 @@ pub mod pallet {
 			current_block: Self::BlockNumber,
 		) {
 			let ttl = current_block.saturating_add(ttl);
-			let relayer = relayer.rotate(new.clone(), ttl);
+			let relayer = relayer.rotate(new, ttl);
 			Relayer::<T>::set(Some(relayer.into()));
 		}
 
@@ -883,7 +883,7 @@ pub mod pallet {
 		}
 
 		fn set_relayer(relayer: Self::AccountId) {
-			Relayer::<T>::set(Some(StaleRelayer::new(relayer.clone())));
+			Relayer::<T>::set(Some(StaleRelayer::new(relayer)));
 		}
 
 		fn set_timelock_duration(period: Self::BlockNumber) {
@@ -1005,7 +1005,7 @@ pub mod pallet {
 			let lock_until = now.safe_add(&TimeLockPeriod::<T>::get())?;
 
 			OutgoingTransactions::<T>::try_mutate(
-				caller.clone(),
+				caller,
 				asset_id,
 				|tx| -> Result<(), DispatchError> {
 					match tx.as_mut() {
