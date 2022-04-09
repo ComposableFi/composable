@@ -12,6 +12,16 @@ pub trait RelayManager {
 	type NetworkId;
 	type NetworkInfo;
 	type RelayerConfig;
+	type RemoteAssetId;
+
+	/// Confirms that the Relayer will relay a transaction.
+	fn accept_transfer(
+		asset_id: Self::AssetId,
+		from: Self::AccountId,
+		network_id: Self::NetworkId,
+		remote_asset_id: Self::RemoteAssetId,
+		amount: Self::Balance,
+	) -> DispatchResultWithPostInfo;
 
 	/// Rotates the Relayer Account.
 	fn rotate_relayer(

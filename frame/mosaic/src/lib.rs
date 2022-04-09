@@ -501,47 +501,15 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			Self::ensure_relayer(origin)?;
 			let asset_id = Self::get_local_mapping(remote_asset_id.clone(), network_id.clone())?;
-			OutgoingTransactions::<T>::try_mutate_exists::<_, _, _, DispatchError, _>(
-				from.clone(),
+
+			<Pallet<T> as RelayManager>::accept_transfer(
 				asset_id,
-				|maybe_tx| match *maybe_tx {
-					Some((balance, lock_period)) => {
-						ensure!(amount <= balance, Error::<T>::AmountMismatch);
-						T::Assets::burn_from(
-							asset_id,
-							&Self::sub_account_id(SubAccount::new_outgoing(from.clone())),
-							amount,
-						)?;
-
-						// No remaing funds need to be transferred for this asset, so we can delete
-						// the storage item.
-						if amount == balance {
-							*maybe_tx = None;
-							Self::deposit_event(Event::<T>::TransferAccepted {
-								from,
-								network_id,
-								remote_asset_id,
-								asset_id,
-								amount,
-							});
-						} else {
-							let new_balance =
-								balance.checked_sub(&amount).ok_or(Error::<T>::AmountMismatch)?;
-							*maybe_tx = Some((new_balance, lock_period));
-							Self::deposit_event(Event::<T>::PartialTransferAccepted {
-								from,
-								network_id,
-								remote_asset_id,
-								asset_id,
-								amount,
-							});
-						}
-
-						Ok(())
-					},
-					None => Err(Error::<T>::NoOutgoingTx.into()),
-				},
+				from,
+				network_id,
+				remote_asset_id,
+				amount,
 			)?;
+
 			Ok(().into())
 		}
 
@@ -793,6 +761,59 @@ pub mod pallet {
 		type NetworkId = NetworkIdOf<T>;
 		type NetworkInfo = NetworkInfo<BalanceOf<T>>;
 		type RelayerConfig = RelayerConfig<T::AccountId, T::BlockNumber>;
+		type RemoteAssetId = RemoteAssetIdOf<T>;
+
+		fn accept_transfer(
+			asset_id: Self::AssetId,
+			from: Self::AccountId,
+			network_id: Self::NetworkId,
+			remote_asset_id: Self::RemoteAssetId,
+			amount: Self::Balance,
+		) -> DispatchResultWithPostInfo {
+			OutgoingTransactions::<T>::try_mutate_exists::<_, _, _, DispatchError, _>(
+				from.clone(),
+				asset_id,
+				|maybe_tx| match *maybe_tx {
+					Some((balance, lock_period)) => {
+						ensure!(amount <= balance, Error::<T>::AmountMismatch);
+						T::Assets::burn_from(
+							asset_id,
+							&Self::sub_account_id(SubAccount::new_outgoing(from.clone())),
+							amount,
+						)?;
+
+						// No remaing funds need to be transferred for this asset, so we can delete
+						// the storage item.
+						if amount == balance {
+							*maybe_tx = None;
+							Self::deposit_event(Event::<T>::TransferAccepted {
+								from,
+								network_id,
+								remote_asset_id,
+								asset_id,
+								amount,
+							});
+						} else {
+							let new_balance =
+								balance.checked_sub(&amount).ok_or(Error::<T>::AmountMismatch)?;
+							*maybe_tx = Some((new_balance, lock_period));
+							Self::deposit_event(Event::<T>::PartialTransferAccepted {
+								from,
+								network_id,
+								remote_asset_id,
+								asset_id,
+								amount,
+							});
+						}
+
+						Ok(())
+					},
+					None => Err(Error::<T>::NoOutgoingTx.into()),
+				},
+			)?;
+
+			Ok(().into())
+		}
 
 		fn rotate_relayer(
 			relayer: Self::RelayerConfig,
