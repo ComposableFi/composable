@@ -1,8 +1,8 @@
-//! Traits used in the implementation of the Mosaic pallet
+//! Traits used in the implementation of the Mosaic pallet.
 
 use frame_support::dispatch::DispatchResultWithPostInfo;
 
-/// Trait containing the business logic relevant to managing the Relayer of the Mosaic pallet
+/// Trait containing the business logic relevant to managing the Relayer of the Mosaic pallet.
 pub trait RelayManager {
 	type AccountId;
 	type AssetId;
@@ -52,5 +52,31 @@ pub trait RelayManager {
 		to: Self::AccountId,
 		amount: Self::Balance,
 		lock_time: Self::BlockNumber,
+	) -> DispatchResultWithPostInfo;
+}
+
+/// Trait containing relevant business logic for outgoing transactions.
+pub trait TransferTo {
+	type AccountId;
+	type AssetId;
+	type Balance;
+	type BlockNumber;
+
+	/// Claims user funds from outgoing transactions in the event the Relayer has not picked the
+	/// funds up.
+	fn claim_stale_to(
+		caller: Self::AccountId,
+		asset_id: Self::AssetId,
+		to: Self::AccountId,
+		now: Self::BlockNumber,
+	) -> DispatchResultWithPostInfo;
+
+	/// Creates an outgoing transaction request.
+	fn transfer_to(
+		caller: Self::AccountId,
+		asset_id: Self::AssetId,
+		amount: Self::Balance,
+		keep_alive: bool,
+		now: Self::BlockNumber,
 	) -> DispatchResultWithPostInfo;
 }

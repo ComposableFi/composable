@@ -36,7 +36,10 @@ pub mod pallet {
 	};
 	use codec::FullCodec;
 	use composable_support::{types::EthereumAddress, validation::Validated};
-	use composable_traits::{math::SafeAdd, mosaic::RelayManager};
+	use composable_traits::{
+		math::SafeAdd,
+		mosaic::{RelayManager, TransferTo},
+	};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,
@@ -453,31 +456,14 @@ pub mod pallet {
 			ensure!(network_info.max_transfer_size >= amount, Error::<T>::ExceedsMaxTransferSize);
 			ensure!(network_info.min_transfer_size <= amount, Error::<T>::BelowMinTransferSize);
 
-			T::Assets::transfer(
-				asset_id,
-				&caller,
-				&Self::sub_account_id(SubAccount::new_outgoing(caller.clone())),
-				amount,
-				keep_alive,
-			)?;
 			let now = <frame_system::Pallet<T>>::block_number();
-			let lock_until = now.safe_add(&TimeLockPeriod::<T>::get())?;
 
-			OutgoingTransactions::<T>::try_mutate(
+			<Pallet<T> as TransferTo>::transfer_to(
 				caller.clone(),
 				asset_id,
-				|tx| -> Result<(), DispatchError> {
-					match tx.as_mut() {
-						// If we already have an outgoing tx, we update the lock_time and add the
-						// amount.
-						Some((already_locked, _)) => {
-							let amount = amount.safe_add(already_locked)?;
-							*tx = Some((amount, lock_until))
-						},
-						None => *tx = Some((amount, lock_until)),
-					}
-					Ok(())
-				},
+				amount,
+				keep_alive,
+				now,
 			)?;
 
 			let id = generate_id::<T>(&caller, &network_id, &asset_id, &address, &amount, &now);
@@ -572,39 +558,8 @@ pub mod pallet {
 
 			let now = <frame_system::Pallet<T>>::block_number();
 
-			OutgoingTransactions::<T>::try_mutate_exists(
-				caller.clone(),
-				asset_id,
-				|prev| -> Result<(), DispatchError> {
-					let amount = match *prev {
-						Some((balance, lock_time)) => {
-							let still_locked = lock_time >= now;
-							if still_locked {
-								Err(Error::<T>::TxStillLocked)
-							} else {
-								T::Assets::transfer(
-									asset_id,
-									&Self::sub_account_id(SubAccount::new_outgoing(caller.clone())),
-									&to,
-									balance,
-									false,
-								)?;
-								Ok(balance)
-							}
-						},
-						_ => Err(Error::<T>::NoStaleTransactions),
-					}?;
+			<Pallet<T> as TransferTo>::claim_stale_to(caller, asset_id, to, now)?;
 
-					*prev = None;
-					Self::deposit_event(Event::<T>::StaleTxClaimed {
-						to,
-						asset_id,
-						by: caller,
-						amount,
-					});
-					Ok(())
-				},
-			)?;
 			Ok(().into())
 		}
 
@@ -979,6 +934,93 @@ pub mod pallet {
 
 				Ok(())
 			})?;
+
+			Ok(().into())
+		}
+	}
+
+	impl<T: Config> TransferTo for Pallet<T> {
+		type AccountId = AccountIdOf<T>;
+		type AssetId = AssetIdOf<T>;
+		type Balance = BalanceOf<T>;
+		type BlockNumber = BlockNumberOf<T>;
+
+		fn claim_stale_to(
+			caller: Self::AccountId,
+			asset_id: Self::AssetId,
+			to: Self::AccountId,
+			now: Self::BlockNumber,
+		) -> DispatchResultWithPostInfo {
+			OutgoingTransactions::<T>::try_mutate_exists(
+				caller.clone(),
+				asset_id,
+				|prev| -> Result<(), DispatchError> {
+					let amount = match *prev {
+						Some((balance, lock_time)) => {
+							let still_locked = lock_time >= now;
+							if still_locked {
+								Err(Error::<T>::TxStillLocked)
+							} else {
+								T::Assets::transfer(
+									asset_id,
+									&Self::sub_account_id(SubAccount::new_outgoing(caller.clone())),
+									&to,
+									balance,
+									false,
+								)?;
+								Ok(balance)
+							}
+						},
+						_ => Err(Error::<T>::NoStaleTransactions),
+					}?;
+
+					*prev = None;
+					Self::deposit_event(Event::<T>::StaleTxClaimed {
+						to,
+						asset_id,
+						by: caller,
+						amount,
+					});
+					Ok(())
+				},
+			)?;
+
+			Ok(().into())
+		}
+
+		fn transfer_to(
+			caller: Self::AccountId,
+			asset_id: Self::AssetId,
+			amount: Self::Balance,
+			keep_alive: bool,
+			now: Self::BlockNumber,
+		) -> DispatchResultWithPostInfo {
+			T::Assets::transfer(
+				asset_id,
+				&caller,
+				&Self::sub_account_id(SubAccount::new_outgoing(caller.clone())),
+				amount,
+				keep_alive,
+			)?;
+
+			let lock_until = now.safe_add(&TimeLockPeriod::<T>::get())?;
+
+			OutgoingTransactions::<T>::try_mutate(
+				caller.clone(),
+				asset_id,
+				|tx| -> Result<(), DispatchError> {
+					match tx.as_mut() {
+						// If we already have an outgoing tx, we update the lock_time and add the
+						// amount.
+						Some((already_locked, _)) => {
+							let amount = amount.safe_add(already_locked)?;
+							*tx = Some((amount, lock_until))
+						},
+						None => *tx = Some((amount, lock_until)),
+					}
+					Ok(())
+				},
+			)?;
 
 			Ok(().into())
 		}
