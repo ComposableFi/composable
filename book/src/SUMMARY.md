@@ -54,6 +54,7 @@
     - [Walkthroughs](./products/parachain-vault-strategy/walkthroughs.md)
 - [The Picasso Parachain](./products/the-picasso-parachain.md)
     - [Polkadot - A Brief Overview](./products/the-picasso-parachain/polkadot-a-brief-overview.md)
+    - [Council](./products/the-picasso-parachain/council.md)
     - [The Picasso Tech Stack](./products/the-picasso-parachain/the-picasso-tech-stack.md)
         - [L2 Transfer and Communication Interface](./products/the-picasso-parachain/the-picasso-tech-stack/l2-transfer-and-communication-interface.md)
         - [Apollo: The Oracle Pallet](./products/the-picasso-parachain/the-picasso-tech-stack/apollo.md)
