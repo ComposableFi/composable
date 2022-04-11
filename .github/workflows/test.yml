@@ -15,9 +15,9 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Build the stack
-      run: docker-compose up -d
+      run: docker-compose up -d && cargo test
 
-    - name: Run Test
-      uses: docker://composablefi/ci-linux:production
-      with: 
-        args: cargo test
+    #- name: Run Test
+    #  uses: docker://composablefi/ci-linux:production
+    #  with: 
+    #    args: cargo test
