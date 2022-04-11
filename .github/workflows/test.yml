@@ -8,21 +8,16 @@ on:
 jobs:
   tests:
     name: Composable Test
-    #container:
-    #  image: composablefi/composable-sandbox:latest
     runs-on: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v2
-  
+
+    - name: Prepare a test environment
+      run: docker-compose up -d
+
     - name: Run Test
-      uses: docker://composablefi/composable-sandbox:latest
-      with: 
-        args: cargo test
+      run: |
+        docker run --rm -v$(pwd):/build -e "NODE_ENDPOINT=ws://composable:9988" --workdir /build --network beefy-client_default composablefi/ci-linux:production cargo test
 
-    #- name: Build the stack
-    #  run: docker-compose up -d && cargo test
-
-    #- name: Run Test
-    #  uses: docker://composablefi/ci-linux:production
-    #  with: 
-    #    args: cargo test
+    - name: Cleanup
+      run: docker-compose down --remove-orphans

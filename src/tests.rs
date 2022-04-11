@@ -162,8 +162,9 @@ async fn get_mmr_update(
 async fn test_ingest_mmr_with_proof() {
     let store = StorageMock::new();
     let mut beef_light_client = BeefyLightClient::new(store);
+    let url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9944".to_string());
     let client = subxt::ClientBuilder::new()
-        .set_url("ws://127.0.0.1:9944")
+        .set_url(url)
         .build::<subxt::DefaultConfig>()
         .await
         .unwrap();
@@ -323,8 +324,9 @@ fn should_fail_with_invalid_validator_set_id() {
 async fn verify_parachain_headers() {
     let store = StorageMock::new();
     let mut beef_light_client = BeefyLightClient::new(store);
+    let url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9944".to_string());
     let client = subxt::ClientBuilder::new()
-        .set_url("ws://127.0.0.1:9944")
+        .set_url(url)
         .build::<subxt::DefaultConfig>()
         .await
         .unwrap();
