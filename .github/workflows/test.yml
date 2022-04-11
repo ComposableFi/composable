@@ -17,7 +17,7 @@ jobs:
 
     - name: Run Test
       run: |
-        docker run --rm -v$(pwd):/build -e "NODE_ENDPOINT=ws://composable:9988" --workdir /build --network beefy-client_default composablefi/ci-linux:production cargo test
+        docker run --rm -v$(pwd):/build -e "NODE_ENDPOINT=ws://composable:9944" --workdir /build --network beefy-client_default composablefi/ci-linux:production cargo test
 
     - name: Cleanup
       run: docker-compose down --remove-orphans
