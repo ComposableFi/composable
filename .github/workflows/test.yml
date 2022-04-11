@@ -13,9 +13,14 @@ jobs:
     runs-on: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v2
+  
+    - name: Run Test
+      uses: docker://composablefi/composable-sandbox:latest
+      with: 
+        args: cargo test
 
-    - name: Build the stack
-      run: docker-compose up -d && cargo test
+    #- name: Build the stack
+    #  run: docker-compose up -d && cargo test
 
     #- name: Run Test
     #  uses: docker://composablefi/ci-linux:production
