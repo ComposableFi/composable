@@ -4,4 +4,4 @@ services:
   composable:
     image: composablefi/composable-sandbox
     ports:
-      - "9988:9988"
+      - "9944:9944"
