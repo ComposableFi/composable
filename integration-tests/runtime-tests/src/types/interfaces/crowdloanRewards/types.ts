@@ -251,7 +251,15 @@ export interface PalletMosaicNetworkInfo extends Struct {
 }
 
 /** @name PalletMosaicRelayerStaleRelayer */
-export interface PalletMosaicRelayerStaleRelayer extends Null {}
+export interface PalletMosaicRelayerStaleRelayer extends Struct {
+  readonly relayer: {
+    readonly current: AccountId32;
+    readonly next: {
+    readonly ttl: u32;
+    readonly account: AccountId32;
+  } & Struct;
+  } & Struct;
+}
 
 /** @name PalletOracleAssetInfo */
 export interface PalletOracleAssetInfo extends Null {}

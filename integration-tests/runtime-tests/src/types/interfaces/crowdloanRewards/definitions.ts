@@ -119,7 +119,15 @@ export default {
     PalletMosaicDecayBudgetPenaltyDecayer: "Null",
     PalletAssetsRegistryForeignMetadata: "Null",
     PalletMosaicAssetInfo: "Null",
-    PalletMosaicRelayerStaleRelayer: "Null",
+    PalletMosaicRelayerStaleRelayer: {
+      relayer: {
+        current: "AccountId32",
+        next: {
+          ttl: "u32",
+          account: "AccountId32"
+        }
+      }
+    },
     FrameSupportScheduleMaybeHashed: "Null",
     FrameSupportScheduleLookupError: "Null",
     PalletCurrencyFactoryRanges: "Null",
