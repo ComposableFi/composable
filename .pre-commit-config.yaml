@@ -21,7 +21,7 @@ repos:
     files: ^frame/(clearing-house/|composable-traits/src/(clearing_house.rs|vamm.rs))
     types: [rust]
   - id: clearing-house::cargo-test
-    name: claring-house::cargo-test
+    name: clearing-house::cargo-test
     entry: cargo test --all-targets -p pallet-clearing-house
     language: system
     pass_filenames: false
