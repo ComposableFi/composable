@@ -1045,6 +1045,7 @@ impl pallet_ibc::Config for Runtime {
 
 impl pallet_ibc_ping::Config for Runtime {
 	type Event = Event;
+	type IbcHandler = Ibc;
 }
 
 construct_runtime!(

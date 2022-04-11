@@ -18,8 +18,8 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
 
 #ibc = { version = "0.13.0", default-features = false }
-#ibc-proto = { version = "0.17.0", default-features = false }
 ibc = { git = "https://github.com/informalsystems/ibc-rs.git", branch = "master", default-features = false }
+ibc-trait = {path = "../ibc/ibc-trait", default-features = false }
 
 [features]
 default = ['std']
@@ -34,4 +34,5 @@ std = [
     "frame-support/std",
     "sp-std/std",
     "ibc/std",
+    "ibc-trait/std"
 ]

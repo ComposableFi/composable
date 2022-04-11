@@ -7785,6 +7785,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "ibc",
+ "ibc-trait",
  "log 0.4.16",
  "parity-scale-codec",
  "scale-info",

@@ -31,17 +31,15 @@ impl<T: Config + Send + Sync> IbcRouter<T> {
 
 impl<T: Config + Send + Sync> Router for IbcRouter<T> {
 	fn get_route_mut(&mut self, module_id: &impl Borrow<ModuleId>) -> Option<&mut dyn Module> {
-		let ibc_ping = pallet_ibc_ping::MODULE_ID;
-		match module_id {
-			id if id.borrow().to_string().as_str() == ibc_ping => Some(&mut self.pallet_ibc_ping),
+		match module_id.borrow().to_string().as_str() {
+			pallet_ibc_ping::MODULE_ID => Some(&mut self.pallet_ibc_ping),
 			&_ => None,
 		}
 	}
 
 	fn has_route(&self, module_id: &impl Borrow<ModuleId>) -> bool {
-		let ibc_ping = pallet_ibc_ping::MODULE_ID;
-		match module_id {
-			id if id.borrow().to_string().as_str() == ibc_ping => true,
+		match module_id.borrow().to_string().as_str() {
+			pallet_ibc_ping::MODULE_ID => true,
 			&_ => false,
 		}
 	}

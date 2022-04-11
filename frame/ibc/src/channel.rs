@@ -347,10 +347,13 @@ where
 
 	fn lookup_module_by_channel(
 		&self,
-		channel_id: &ChannelId,
+		_channel_id: &ChannelId,
 		port_id: &PortId,
 	) -> Result<(ModuleId, ChannelCapability), ICS04Error> {
-		todo!()
+		let (module_id, cap) =
+			self.lookup_module_by_port(port_id).map_err(|_| ICS04Error::route_not_found())?;
+		let cap = cap.deref().clone();
+		Ok((module_id, ChannelCapability::from(cap)))
 	}
 }
 

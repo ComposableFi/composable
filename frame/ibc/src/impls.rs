@@ -9,10 +9,7 @@ use ibc::core::{
 		context::ChannelKeeper,
 		packet::{Packet, Sequence},
 	},
-	ics05_port::{
-		capabilities::PortCapability,
-		context::{CapabilityKeeper, PortKeeper},
-	},
+	ics05_port::{capabilities::PortCapability, context::PortKeeper},
 	ics24_host::{
 		identifier::*,
 		path::{
@@ -31,6 +28,7 @@ use ibc_primitives::{
 	QueryPacketCommitmentResponse, QueryPacketCommitmentsResponse, QueryPacketReceiptResponse,
 	SendPacketData,
 };
+use ibc_trait::{Error as IbcHandlerError, IbcTrait};
 use scale_info::prelude::collections::BTreeMap;
 use sp_runtime::traits::BlakeTwo256;
 use sp_std::time::Duration;
@@ -625,11 +623,11 @@ where
 	}
 }
 
-impl<T: Config + Send + Sync> crate::traits::IbcTrait<T> for Pallet<T>
+impl<T: Config + Send + Sync> IbcTrait for Pallet<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
-	fn send_packet(data: SendPacketData) -> Result<(), Error<T>> {
+	fn send_packet(data: SendPacketData) -> Result<(), IbcHandlerError> {
 		let channel_id = data.channel_id;
 		let port_id = data.port_id;
 
@@ -641,31 +639,36 @@ where
 					None
 				}
 			})
-			.ok_or(Error::<T>::Other)?;
+			.ok_or(IbcHandlerError::SendPacketError)?;
 
 		let client_id = ConnectionClient::<T>::iter()
 			.find_map(
 				|(client_id, conn)| if conn == connection_id { Some(client_id) } else { None },
 			)
-			.ok_or(Error::<T>::Other)?;
+			.ok_or(IbcHandlerError::SendPacketError)?;
 		let client_state = ClientStates::<T>::get(client_id.clone());
-		let client_state =
-			AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
+		let client_state = AnyClientState::decode_vec(&client_state)
+			.map_err(|_| IbcHandlerError::SendPacketError)?;
 		let latest_height = client_state.latest_height();
-		let encoded_height = latest_height.encode_vec().map_err(|_| Error::<T>::EncodingError)?;
+		let encoded_height =
+			latest_height.encode_vec().map_err(|_| IbcHandlerError::SendPacketError)?;
 		let consensus_state = ConsensusStates::<T>::get(client_id, encoded_height);
 		let consensus_state = AnyConsensusState::decode_vec(&consensus_state)
-			.map_err(|_| Error::<T>::DecodingError)?;
+			.map_err(|_| IbcHandlerError::SendPacketError)?;
 		let latest_timestamp = consensus_state.timestamp();
 		let mut ctx = crate::routing::Context::<T>::new();
 		let next_seq_send = NextSequenceSend::<T>::get(port_id.clone(), channel_id.clone());
 		let sequence = Sequence::from(next_seq_send);
-		let source_port = port_id_from_bytes(port_id.clone())?;
-		let source_channel = channel_id_from_bytes(channel_id.clone())?;
-		let destination_port = port_id_from_bytes(data.dest_port_id)?;
-		let destination_channel = channel_id_from_bytes(data.dest_channel_id)?;
+		let source_port = port_id_from_bytes::<T>(port_id.clone())
+			.map_err(|_| IbcHandlerError::SendPacketError)?;
+		let source_channel = channel_id_from_bytes::<T>(channel_id.clone())
+			.map_err(|_| IbcHandlerError::SendPacketError)?;
+		let destination_port = port_id_from_bytes::<T>(data.dest_port_id)
+			.map_err(|_| IbcHandlerError::SendPacketError)?;
+		let destination_channel = channel_id_from_bytes::<T>(data.dest_channel_id)
+			.map_err(|_| IbcHandlerError::SendPacketError)?;
 		let timestamp = (latest_timestamp + Duration::from_nanos(data.timeout_timestamp_offset))
-			.map_err(|_| Error::<T>::Other)?;
+			.map_err(|_| IbcHandlerError::SendPacketError)?;
 		let packet = Packet {
 			sequence,
 			source_port,
@@ -679,9 +682,9 @@ where
 
 		let send_packet_result =
 			ibc::core::ics04_channel::handler::send_packet::send_packet(&ctx, packet.clone())
-				.map_err(|_| Error::<T>::Other)?;
+				.map_err(|_| IbcHandlerError::SendPacketError)?;
 		ctx.store_packet_result(send_packet_result.result)
-			.map_err(|_| Error::<T>::Other)?;
+			.map_err(|_| IbcHandlerError::SendPacketError)?;
 
 		// store packet offchain
 		let key = Pallet::<T>::offchain_key(channel_id, port_id);
@@ -695,9 +698,9 @@ where
 		Ok(())
 	}
 
-	fn bind_port(port_id: PortId) -> Result<PortCapability, Error<T>> {
+	fn bind_port(port_id: PortId) -> Result<PortCapability, IbcHandlerError> {
 		let mut ctx = crate::routing::Context::<T>::new();
-		let port_cap = ctx.bind_port(port_id).map_err(|_| Error::<T>::Other)?;
+		let port_cap = ctx.bind_port(port_id).map_err(|_| IbcHandlerError::BindPortError)?;
 		Ok(port_cap)
 	}
 }

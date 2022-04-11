@@ -32,6 +32,7 @@ tendermint-proto = { version = "0.23.6", default-features = false }
 # local deps
 ibc-primitives = { path = "ibc-primitives", default-features = false }
 pallet-ibc-ping = { path = "../ibc-ping", default-features = false }
+ibc-trait = { path = "ibc-trait", default-features = false }
 
 [dev-dependencies]
 hex = '0.4.0'
@@ -57,7 +58,8 @@ std = [
 	'ibc-proto/std',
 	'ibc-primitives/std',
 	'balances/std',
-	"pallet-ibc-ping/std"
+	"pallet-ibc-ping/std",
+	"ibc-trait/std"
 ]
 
 runtime-benchmarks = ["frame-benchmarking"]

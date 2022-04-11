@@ -1,17 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use codec::{Decode, Encode};
-use core::{
-	fmt::{Debug, Formatter, Write},
-	write,
-};
-use frame_support::{
-	dispatch::DispatchResult,
-	metadata::StorageEntryModifier::Default,
-	traits::IsSubType,
-	weights::{ClassifyDispatch, DispatchClass, Pays, PaysFee, WeighData, Weight},
-};
-use frame_system::ensure_signed;
+use core::{fmt::Formatter, write};
+use frame_support::dispatch::DispatchResult;
 use ibc::{
 	core::{
 		ics04_channel::{
@@ -26,14 +16,6 @@ use ibc::{
 		ics26_routing::context::{Module, ModuleOutput, OnRecvPacketAck},
 	},
 	signer::Signer,
-};
-use log::info;
-use scale_info::TypeInfo;
-use sp_runtime::{
-	traits::{Bounded, DispatchInfoOf, SaturatedConversion, Saturating, SignedExtension},
-	transaction_validity::{
-		InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
-	},
 };
 use sp_std::{marker::PhantomData, prelude::*};
 
@@ -52,6 +34,7 @@ pub mod pallet {
 	use super::*;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
+	use ibc_trait::IbcTrait;
 
 	/// Our pallet's configuration trait. All our types and constants go in here. If the
 	/// pallet is dependent on specific other pallets, then their configuration traits
@@ -62,6 +45,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type IbcHandler: ibc_trait::IbcTrait;
 	}
 
 	// Simple declaration of the `Pallet` type. It is placeholder we use to implement traits and
@@ -75,7 +59,21 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn bind_ibc_port(origin: OriginFor<T>) -> DispatchResult {
 			ensure_root(origin)?;
+			if Capability::<T>::get().is_some() {
+				return Err(Error::<T>::PortAlreadyBound.into())
+			}
 			let port_id = PortId::from_str(PORT_ID).map_err(|_| Error::<T>::ErrorBindingPort)?;
+			let capability =
+				T::IbcHandler::bind_port(port_id).map_err(|_| Error::<T>::ErrorBindingPort)?;
+			let cap = capability.index();
+			Capability::<T>::put(cap);
+			Self::deposit_event(Event::<T>::PortBound);
+			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		pub fn open_channel(origin: OriginFor<T>) -> DispatchResult {
+			ensure_root(origin)?;
 			Ok(())
 		}
 	}
@@ -83,7 +81,7 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		Success,
+		PortBound,
 	}
 
 	#[pallet::storage]
@@ -94,6 +92,8 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Error generating port id
 		ErrorBindingPort,
+		/// Port already bound
+		PortAlreadyBound,
 	}
 }
 
