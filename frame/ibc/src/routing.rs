@@ -4,6 +4,7 @@ use ibc::{
 	applications::ics20_fungible_token_transfer::context::Ics20Context,
 	core::ics26_routing::context::{Ics26Context, Module, ModuleId, Router},
 };
+use scale_info::prelude::string::ToString;
 
 #[derive(Clone)]
 pub struct Context<T: Config> {
@@ -11,26 +12,42 @@ pub struct Context<T: Config> {
 	router: IbcRouter<T>,
 }
 
-impl<T: Config> Context<T> {
+impl<T: Config + Send + Sync> Context<T> {
 	pub fn new() -> Self {
-		Self { _pd: PhantomData::default(), router: IbcRouter(PhantomData::default()) }
+		Self { _pd: PhantomData::default(), router: IbcRouter::new() }
 	}
 }
 
 #[derive(Clone)]
-pub struct IbcRouter<T: Config>(PhantomData<T>);
+pub struct IbcRouter<T: Config> {
+	pallet_ibc_ping: pallet_ibc_ping::IbcHandler<T>,
+}
 
-impl<T: Config> Router for IbcRouter<T> {
-	fn get_route_mut(&mut self, module_id: &impl Borrow<ModuleId>) -> Option<&mut dyn Module> {
-		todo!()
-	}
-
-	fn has_route(&self, module_id: &impl Borrow<ModuleId>) -> bool {
-		todo!()
+impl<T: Config + Send + Sync> IbcRouter<T> {
+	fn new() -> Self {
+		Self { pallet_ibc_ping: pallet_ibc_ping::IbcHandler::<T>::new() }
 	}
 }
 
-impl<T: Config> Ics26Context for Context<T>
+impl<T: Config + Send + Sync> Router for IbcRouter<T> {
+	fn get_route_mut(&mut self, module_id: &impl Borrow<ModuleId>) -> Option<&mut dyn Module> {
+		let ibc_ping = pallet_ibc_ping::MODULE_ID;
+		match module_id {
+			id if id.borrow().to_string().as_str() == ibc_ping => Some(&mut self.pallet_ibc_ping),
+			&_ => None,
+		}
+	}
+
+	fn has_route(&self, module_id: &impl Borrow<ModuleId>) -> bool {
+		let ibc_ping = pallet_ibc_ping::MODULE_ID;
+		match module_id {
+			id if id.borrow().to_string().as_str() == ibc_ping => true,
+			&_ => false,
+		}
+	}
+}
+
+impl<T: Config + Send + Sync> Ics26Context for Context<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
@@ -45,5 +62,7 @@ where
 	}
 }
 
-impl<T: Config> Ics20Context for Context<T> where u32: From<<T as frame_system::Config>::BlockNumber>
-{}
+impl<T: Config + Send + Sync> Ics20Context for Context<T> where
+	u32: From<<T as frame_system::Config>::BlockNumber>
+{
+}

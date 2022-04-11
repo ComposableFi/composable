@@ -91,6 +91,7 @@ vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-fe
 pallet-ibc = { path = "../../frame/ibc", default-features = false }
 ibc-runtime-api = { path = "../../frame/ibc/ibc-runtime-api", default-features = false }
 ibc-primitives = { path = "../../frame/ibc/ibc-primitives", default-features = false }
+pallet-ibc-ping = { path = "../../frame/ibc-ping", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.19" }
@@ -266,6 +267,7 @@ std = [
   "dex-router/std",
   "pallet-ibc/std",
   "ibc-runtime-api/std",
-	"ibc-primitives/std"
+	"ibc-primitives/std",
+  "pallet-ibc-ping/std"
 ]
 wasm-builder = []

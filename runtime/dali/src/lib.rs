@@ -1043,6 +1043,10 @@ impl pallet_ibc::Config for Runtime {
 	type ExpectedBlockTime = ExpectedBlockTime;
 }
 
+impl pallet_ibc_ping::Config for Runtime {
+	type Event = Event;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1106,7 +1110,8 @@ construct_runtime!(
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 
 		// IBC
-		Ibc: pallet_ibc::{Pallet, Call, Storage, Event<T>} = 101
+		Ibc: pallet_ibc::{Pallet, Call, Storage, Event<T>} = 101,
+		IbcPing: pallet_ibc_ping::{Pallet, Call, Storage, Event<t>} = 102
 	}
 );
 

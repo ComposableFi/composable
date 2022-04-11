@@ -18,7 +18,7 @@ use ibc::{
 };
 use tendermint_proto::Protobuf;
 
-impl<T: Config> ClientReader for Context<T>
+impl<T: Config + Send + Sync> ClientReader for Context<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
@@ -168,7 +168,7 @@ where
 	}
 }
 
-impl<T: Config> ClientKeeper for Context<T> {
+impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 	fn store_client_type(
 		&mut self,
 		client_id: ClientId,

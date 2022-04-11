@@ -7779,6 +7779,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-ibc-ping"
+version = "0.0.1"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "ibc",
+ "log 0.4.16",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-runtime",
+ "sp-std 4.0.0",
+]
+
+[[package]]
 name = "pallet-identity"
 version = "4.0.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.18#8aefe51bf90d38378269539f1f1b4941a187616a"

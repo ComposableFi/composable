@@ -16,7 +16,7 @@ use ibc::{
 };
 use tendermint_proto::Protobuf;
 
-impl<T: Config> ConnectionReader for Context<T>
+impl<T: Config + Sync + Send> ConnectionReader for Context<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
@@ -102,7 +102,7 @@ where
 	}
 }
 
-impl<T: Config> ConnectionKeeper for Context<T>
+impl<T: Config + Sync + Send> ConnectionKeeper for Context<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {

@@ -30,7 +30,8 @@ ibc-proto = { git = "https://github.com/informalsystems/ibc-rs.git", branch = "m
 tendermint-proto = { version = "0.23.6", default-features = false }
 
 # local deps
-ibc-primitives = { path = "ibc-primitives", default-features = false}
+ibc-primitives = { path = "ibc-primitives", default-features = false }
+pallet-ibc-ping = { path = "../ibc-ping", default-features = false }
 
 [dev-dependencies]
 hex = '0.4.0'
@@ -55,7 +56,8 @@ std = [
 	'ibc/std',
 	'ibc-proto/std',
 	'ibc-primitives/std',
-	'balances/std'
+	'balances/std',
+	"pallet-ibc-ping/std"
 ]
 
 runtime-benchmarks = ["frame-benchmarking"]

@@ -12,12 +12,10 @@ use ibc::core::{
 };
 use scale_info::prelude::string::ToString;
 
-impl<T: Config> CapabilityReader for Context<T> {
+impl<T: Config + Send + Sync> CapabilityReader for Context<T> {
 	fn get_capability(&self, name: &CapabilityName) -> Result<Capability, ICS05Error> {
 		let cap = Capabilities::<T>::get(name.to_string().as_bytes().to_vec());
-		u64::decode(&mut &*cap)
-			.map(|cap| cap.into())
-			.map_err(|_| ICS05Error::implementation_specific())
+		Ok(Capability::from(cap))
 	}
 
 	fn authenticate_capability(
@@ -26,9 +24,7 @@ impl<T: Config> CapabilityReader for Context<T> {
 		capability: &Capability,
 	) -> Result<(), ICS05Error> {
 		let cap = Capabilities::<T>::get(name.to_string().as_bytes().to_vec());
-		let cap: Capability = u64::decode(&mut &*cap)
-			.map(|cap| cap.into())
-			.map_err(|_| ICS05Error::implementation_specific())?;
+		let cap = Capability::from(cap);
 		if &cap == capability {
 			return Ok(())
 		}
@@ -36,31 +32,42 @@ impl<T: Config> CapabilityReader for Context<T> {
 	}
 }
 
-impl<T: Config> PortReader for Context<T> {
-	// TODO: Revisit when port binding and routing is implemented
+impl<T: Config + Sync + Send> PortReader for Context<T> {
 	fn lookup_module_by_port(
 		&self,
-		_port_id: &PortId,
+		port_id: &PortId,
 	) -> Result<(ModuleId, PortCapability), ICS05Error> {
-		log::trace!("in port: [look_module_by_port]");
-
-		Ok((ModuleId::new("hello".into()).unwrap(), PortCapability::from(Capability::default())))
+		match port_id.as_str() {
+			val if val == pallet_ibc_ping::PORT_ID => {
+				let capability_name = Self::port_capability_name(port_id.clone());
+				let capability_key = capability_name.to_string().as_bytes().to_vec();
+				let capability = Capabilities::<T>::get(capability_key);
+				let capability = Capability::from(capability);
+				Ok((
+					ModuleId::from_str(pallet_ibc_ping::MODULE_ID)
+						.map_err(|_| ICS05Error::implementation_specific())?,
+					capability.into(),
+				))
+			},
+			_ => Err(ICS05Error::module_not_found(port_id.clone())),
+		}
 	}
 }
 
-impl<T: Config> CapabilityKeeper for Context<T> {
+impl<T: Config + Sync + Send> CapabilityKeeper for Context<T> {
 	fn new_capability(&mut self, name: CapabilityName) -> Result<Capability, ICS05Error> {
 		let capability_key = name.to_string().as_bytes().to_vec();
 		if Capabilities::<T>::contains_key(capability_key) {
 			return Err(ICS05Error::implementation_specific())
 		}
 		let count = Capabilities::<T>::count() as u64;
+		self.claim_capability(name, Capability::from(count));
 		Ok(count.into())
 	}
 
 	fn claim_capability(&mut self, name: CapabilityName, capability: Capability) {
 		let capability_key = name.to_string().as_bytes().to_vec();
-		let cap = capability.index().encode();
+		let cap = capability.index();
 		Capabilities::<T>::insert(capability_key, cap);
 	}
 
@@ -70,4 +77,4 @@ impl<T: Config> CapabilityKeeper for Context<T> {
 	}
 }
 
-impl<T: Config> PortKeeper for Context<T> {}
+impl<T: Config + Send + Sync> PortKeeper for Context<T> {}

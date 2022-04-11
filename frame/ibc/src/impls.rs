@@ -9,6 +9,10 @@ use ibc::core::{
 		context::ChannelKeeper,
 		packet::{Packet, Sequence},
 	},
+	ics05_port::{
+		capabilities::PortCapability,
+		context::{CapabilityKeeper, PortKeeper},
+	},
 	ics24_host::{
 		identifier::*,
 		path::{
@@ -136,11 +140,11 @@ where
 			trie.insert(channel_key.encode().as_slice(), &channel_end)
 				.map_err(|_| Error::<T>::TrieInsertError)?;
 
-			trie.insert(next_seq_ack_key.encode().as_slice(), &next_seq_ack)
+			trie.insert(next_seq_ack_key.encode().as_slice(), &next_seq_ack.encode())
 				.map_err(|_| Error::<T>::TrieInsertError)?;
-			trie.insert(next_seq_send_key.encode().as_slice(), &next_seq_send)
+			trie.insert(next_seq_send_key.encode().as_slice(), &next_seq_send.encode())
 				.map_err(|_| Error::<T>::TrieInsertError)?;
-			trie.insert(next_seq_recv_key.encode().as_slice(), &next_seq_recv)
+			trie.insert(next_seq_recv_key.encode().as_slice(), &next_seq_recv.encode())
 				.map_err(|_| Error::<T>::TrieInsertError)?;
 		}
 
@@ -148,9 +152,7 @@ where
 		for ((port, channel, sequence), commitment) in PacketCommitment::<T>::iter() {
 			let channel_id = channel_id_from_bytes::<T>(channel)?;
 			let port_id = port_id_from_bytes::<T>(port)?;
-			let sequence = ibc::core::ics04_channel::packet::Sequence::from(
-				u64::decode(&mut &*sequence).map_err(|_| Error::<T>::DecodingError)?,
-			);
+			let sequence = ibc::core::ics04_channel::packet::Sequence::from(sequence);
 
 			let commitment_path = CommitmentsPath { port_id, channel_id, sequence };
 
@@ -166,9 +168,7 @@ where
 		for ((port, channel, sequence), ack) in Acknowledgements::<T>::iter() {
 			let channel_id = channel_id_from_bytes::<T>(channel)?;
 			let port_id = port_id_from_bytes::<T>(port)?;
-			let sequence = ibc::core::ics04_channel::packet::Sequence::from(
-				u64::decode(&mut &*sequence).map_err(|_| Error::<T>::DecodingError)?,
-			);
+			let sequence = ibc::core::ics04_channel::packet::Sequence::from(sequence);
 
 			let ack_path = AcksPath { port_id, channel_id, sequence };
 
@@ -184,9 +184,7 @@ where
 		for ((port, channel, sequence), receipt) in PacketReceipt::<T>::iter() {
 			let channel_id = channel_id_from_bytes::<T>(channel)?;
 			let port_id = port_id_from_bytes::<T>(port)?;
-			let sequence = ibc::core::ics04_channel::packet::Sequence::from(
-				u64::decode(&mut &*sequence).map_err(|_| Error::<T>::DecodingError)?,
-			);
+			let sequence = ibc::core::ics04_channel::packet::Sequence::from(sequence);
 
 			let receipt_path = ReceiptsPath { port_id, channel_id, sequence };
 
@@ -398,7 +396,7 @@ where
 					let packet_state = PacketState {
 						port_id: port_id.clone(),
 						channel_id: channel_id.clone(),
-						sequence: u64::decode(&mut &*s).unwrap_or_default(),
+						sequence: s,
 						data: commitment,
 					};
 					Some(packet_state)
@@ -421,7 +419,7 @@ where
 					let packet_state = PacketState {
 						port_id: port_id.clone(),
 						channel_id: channel_id.clone(),
-						sequence: u64::decode(&mut &*s).unwrap_or_default(),
+						sequence: s,
 						data: ack,
 					};
 					Some(packet_state)
@@ -441,8 +439,7 @@ where
 		Ok(seqs
 			.into_iter()
 			.filter(|s| {
-				let sequence = s.encode();
-				!PacketReceipt::<T>::contains_key((port_id.clone(), channel_id.clone(), sequence))
+				!PacketReceipt::<T>::contains_key((port_id.clone(), channel_id.clone(), *s))
 			})
 			.collect())
 	}
@@ -455,8 +452,7 @@ where
 		Ok(seqs
 			.into_iter()
 			.filter(|s| {
-				let sequence = s.encode();
-				PacketCommitment::<T>::contains_key((port_id.clone(), channel_id.clone(), sequence))
+				PacketCommitment::<T>::contains_key((port_id.clone(), channel_id.clone(), *s))
 			})
 			.collect())
 	}
@@ -465,10 +461,7 @@ where
 		channel_id: Vec<u8>,
 		port_id: Vec<u8>,
 	) -> Result<QueryNextSequenceReceiveResponse, Error<T>> {
-		let sequence = u64::decode(
-			&mut NextSequenceRecv::<T>::get(port_id.clone(), channel_id.clone()).as_slice(),
-		)
-		.map_err(|_| Error::<T>::DecodingError)?;
+		let sequence = NextSequenceRecv::<T>::get(port_id.clone(), channel_id.clone());
 		let port_id = port_id_from_bytes(port_id)?;
 		let channel_id = channel_id_from_bytes(channel_id)?;
 		let next_seq_recv_path = format!("{}", SeqRecvsPath(port_id, channel_id));
@@ -487,9 +480,7 @@ where
 		port_id: Vec<u8>,
 		seq: u64,
 	) -> Result<QueryPacketCommitmentResponse, Error<T>> {
-		let seq_bytes = seq.encode();
-		let commitment =
-			PacketCommitment::<T>::get((port_id.clone(), channel_id.clone(), seq_bytes));
+		let commitment = PacketCommitment::<T>::get((port_id.clone(), channel_id.clone(), seq));
 		let port_id = port_id_from_bytes(port_id)?;
 		let channel_id = channel_id_from_bytes(channel_id)?;
 		let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
@@ -509,8 +500,7 @@ where
 		port_id: Vec<u8>,
 		seq: u64,
 	) -> Result<QueryPacketAcknowledgementResponse, Error<T>> {
-		let seq_bytes = seq.encode();
-		let ack = Acknowledgements::<T>::get((port_id.clone(), channel_id.clone(), seq_bytes));
+		let ack = Acknowledgements::<T>::get((port_id.clone(), channel_id.clone(), seq));
 		let port_id = port_id_from_bytes(port_id)?;
 		let channel_id = channel_id_from_bytes(channel_id)?;
 		let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
@@ -530,8 +520,7 @@ where
 		port_id: Vec<u8>,
 		seq: u64,
 	) -> Result<QueryPacketReceiptResponse, Error<T>> {
-		let seq_bytes = seq.encode();
-		let receipt = PacketReceipt::<T>::get((port_id.clone(), channel_id.clone(), seq_bytes));
+		let receipt = PacketReceipt::<T>::get((port_id.clone(), channel_id.clone(), seq));
 		let receipt = String::from_utf8(receipt).map_err(|_| Error::<T>::DecodingError)?;
 		let port_id = port_id_from_bytes(port_id)?;
 		let channel_id = channel_id_from_bytes(channel_id)?;
@@ -604,7 +593,7 @@ where
 					if !PacketCommitment::<T>::contains_key((
 						port_id.clone(),
 						channel_id.clone(),
-						key.encode(),
+						key,
 					)) {
 						let _ = offchain_packets.remove(&key);
 					}
@@ -636,7 +625,7 @@ where
 	}
 }
 
-impl<T: Config> crate::traits::SendPacketTrait<T> for Pallet<T>
+impl<T: Config + Send + Sync> crate::traits::IbcTrait<T> for Pallet<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
@@ -670,8 +659,6 @@ where
 		let latest_timestamp = consensus_state.timestamp();
 		let mut ctx = crate::routing::Context::<T>::new();
 		let next_seq_send = NextSequenceSend::<T>::get(port_id.clone(), channel_id.clone());
-		let next_seq_send =
-			u64::decode(&mut &*next_seq_send).map_err(|_| Error::<T>::DecodingError)?;
 		let sequence = Sequence::from(next_seq_send);
 		let source_port = port_id_from_bytes(port_id.clone())?;
 		let source_channel = channel_id_from_bytes(channel_id.clone())?;
@@ -707,29 +694,35 @@ where
 		sp_io::offchain_index::set(&key, offchain_packets.encode().as_slice());
 		Ok(())
 	}
+
+	fn bind_port(port_id: PortId) -> Result<PortCapability, Error<T>> {
+		let mut ctx = crate::routing::Context::<T>::new();
+		let port_cap = ctx.bind_port(port_id).map_err(|_| Error::<T>::Other)?;
+		Ok(port_cap)
+	}
 }
 
-fn port_id_from_bytes<T: Config>(port: Vec<u8>) -> Result<PortId, Error<T>> {
+pub fn port_id_from_bytes<T: Config>(port: Vec<u8>) -> Result<PortId, Error<T>> {
 	PortId::from_str(&String::from_utf8(port).map_err(|_| Error::<T>::DecodingError)?)
 		.map_err(|_| Error::<T>::DecodingError)
 }
 
-fn channel_id_from_bytes<T: Config>(channel: Vec<u8>) -> Result<ChannelId, Error<T>> {
+pub fn channel_id_from_bytes<T: Config>(channel: Vec<u8>) -> Result<ChannelId, Error<T>> {
 	ChannelId::from_str(&String::from_utf8(channel).map_err(|_| Error::<T>::DecodingError)?)
 		.map_err(|_| Error::<T>::DecodingError)
 }
 
-fn connection_id_from_bytes<T: Config>(connection: Vec<u8>) -> Result<ConnectionId, Error<T>> {
+pub fn connection_id_from_bytes<T: Config>(connection: Vec<u8>) -> Result<ConnectionId, Error<T>> {
 	ConnectionId::from_str(&String::from_utf8(connection).map_err(|_| Error::<T>::DecodingError)?)
 		.map_err(|_| Error::<T>::DecodingError)
 }
 
-fn client_id_from_bytes<T: Config>(client_id: Vec<u8>) -> Result<ClientId, Error<T>> {
+pub fn client_id_from_bytes<T: Config>(client_id: Vec<u8>) -> Result<ClientId, Error<T>> {
 	ClientId::from_str(&String::from_utf8(client_id).map_err(|_| Error::<T>::DecodingError)?)
 		.map_err(|_| Error::<T>::DecodingError)
 }
 
-fn client_type_from_bytes<T: Config>(client_type: Vec<u8>) -> Result<ClientType, Error<T>> {
+pub fn client_type_from_bytes<T: Config>(client_type: Vec<u8>) -> Result<ClientType, Error<T>> {
 	ClientType::from_str(&String::from_utf8(client_type).map_err(|_| Error::<T>::DecodingError)?)
 		.map_err(|_| Error::<T>::DecodingError)
 }

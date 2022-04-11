@@ -28,6 +28,24 @@ pub struct Any {
 	pub value: Vec<u8>,
 }
 
+#[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
+pub struct ConnectionParams {
+	/// Utf8 string bytes
+	pub connnection_id: Vec<u8>,
+	/// A vector of (identifer, features) all encoded as Utf8 string bytes
+	pub versions: Vec<(Vec<u8>, Vec<Vec<u8>>)>,
+	/// Utf8 client_id bytes
+	pub client_id: Vec<u8>,
+	/// Counterparty client id
+	pub counterparty_client_id: Vec<u8>,
+	/// Counterparty connection id
+	pub counterparty_connection_id: Vec<u8>,
+	/// Counter party commitment prefix
+	pub commitment_prefix: Vec<u8>,
+	/// Delay period in nanoseconds
+	pub delay_period: u64,
+}
+
 impl From<ibc_proto::google::protobuf::Any> for Any {
 	fn from(any: ibc_proto::google::protobuf::Any) -> Self {
 		Self { type_url: any.type_url.as_bytes().to_vec(), value: any.value }
@@ -66,12 +84,21 @@ pub mod pallet {
 		traits::{Currency, UnixTime},
 	};
 	use frame_system::pallet_prelude::*;
+	use ibc::core::{
+		ics03_connection::{
+			connection::{ConnectionEnd, Counterparty, State},
+			context::ConnectionKeeper,
+			version::Version,
+		},
+		ics23_commitment::commitment::CommitmentPrefix,
+	};
 
+	use crate::impls::{client_id_from_bytes, connection_id_from_bytes};
 	use sp_runtime::{generic::DigestItem, SaturatedConversion};
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config: frame_system::Config + balances::Config {
+	pub trait Config: frame_system::Config + balances::Config + pallet_ibc_ping::Config {
 		type TimeProvider: UnixTime;
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -160,48 +187,27 @@ pub mod pallet {
 	#[pallet::storage]
 	/// capability_name => capability
 	pub type Capabilities<T: Config> =
-		CountedStorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
+		CountedStorageMap<_, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;
 
 	#[pallet::storage]
 	/// (port_identifier, channel_identifier) => Sequence
-	pub type NextSequenceSend<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		Vec<u8>,
-		Blake2_128Concat,
-		Vec<u8>,
-		Vec<u8>,
-		ValueQuery,
-	>;
+	pub type NextSequenceSend<T: Config> =
+		StorageDoubleMap<_, Blake2_128Concat, Vec<u8>, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;
 
 	#[pallet::storage]
 	/// (port_identifier, channel_identifier) => Sequence
-	pub type NextSequenceRecv<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		Vec<u8>,
-		Blake2_128Concat,
-		Vec<u8>,
-		Vec<u8>,
-		ValueQuery,
-	>;
+	pub type NextSequenceRecv<T: Config> =
+		StorageDoubleMap<_, Blake2_128Concat, Vec<u8>, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;
 
 	#[pallet::storage]
 	/// (port_identifier, channel_identifier) = Sequence
-	pub type NextSequenceAck<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		Vec<u8>,
-		Blake2_128Concat,
-		Vec<u8>,
-		Vec<u8>,
-		ValueQuery,
-	>;
+	pub type NextSequenceAck<T: Config> =
+		StorageDoubleMap<_, Blake2_128Concat, Vec<u8>, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;
 
 	#[pallet::storage]
-	/// (port_identifier, channel_identifier, sequence) => Hash
+	/// (port_identifier, channel_identifier, Sequence) => Hash
 	pub type Acknowledgements<T: Config> =
-		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
 	/// clientId => ClientType
@@ -216,12 +222,12 @@ pub mod pallet {
 	#[pallet::storage]
 	/// (port_id, channel_id, sequence) => receipt
 	pub type PacketReceipt<T: Config> =
-		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
 	/// (port_id, channel_id, sequence) => hash
 	pub type PacketCommitment<T: Config> =
-		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, Vec<u8>), Vec<u8>, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
 	/// height => IbcConsensusState
@@ -233,6 +239,8 @@ pub mod pallet {
 	pub enum Event<T> {
 		/// Processed incoming ibc messages
 		ProcessedIBCMessages,
+		/// Initiated a new connection
+		ConnectionInitiated,
 	}
 	/// Errors inform users that something went wrong.
 	#[pallet::error]
@@ -255,6 +263,8 @@ pub mod pallet {
 		SendPacketError,
 		/// Other forms of errors
 		Other,
+		/// Invalid route
+		InvalidRoute,
 	}
 
 	#[pallet::hooks]
@@ -295,6 +305,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T>
 	where
 		u32: From<<T as frame_system::Config>::BlockNumber>,
+		T: Send + Sync,
 	{
 		#[pallet::weight(0)]
 		#[frame_support::transactional]
@@ -317,6 +328,58 @@ pub mod pallet {
 				.map_err(|_| Error::<T>::ProcessingError)?;
 
 			log::trace!("result: {:?}", result);
+			Self::deposit_event(Event::<T>::ProcessedIBCMessages);
+			Ok(())
+		}
+		#[pallet::weight(0)]
+		#[frame_support::transactional]
+		pub fn initiate_connection(
+			origin: OriginFor<T>,
+			params: ConnectionParams,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			if !ClientStates::<T>::contains_key(params.client_id.clone()) {
+				return Err(Error::<T>::ClientStateNotFound.into())
+			}
+			let client_id = client_id_from_bytes::<T>(params.client_id)?;
+			let connection_id = connection_id_from_bytes::<T>(params.connnection_id)?;
+			let counterparty_client_id = client_id_from_bytes::<T>(params.counterparty_client_id)?;
+			let counterparty_connection_id =
+				connection_id_from_bytes::<T>(params.counterparty_connection_id)?;
+			let versions = params
+				.versions
+				.into_iter()
+				.map(|(identifier, features)| {
+					let identifier =
+						String::from_utf8(identifier).map_err(|_| Error::<T>::DecodingError)?;
+					let features = features
+						.into_iter()
+						.map(|feat| String::from_utf8(feat))
+						.collect::<Result<Vec<_>, _>>()
+						.map_err(|_| Error::<T>::DecodingError)?;
+					let raw_version =
+						ibc_proto::ibc::core::connection::v1::Version { identifier, features };
+					let version: Version =
+						raw_version.try_into().map_err(|_| Error::<T>::DecodingError)?;
+					Ok(version)
+				})
+				.collect::<Result<Vec<_>, Error<T>>>()?;
+			let commitment_prefix: CommitmentPrefix =
+				params.commitment_prefix.try_into().map_err(|_| Error::<T>::DecodingError)?;
+			let counterparty = Counterparty::new(
+				counterparty_client_id,
+				Some(counterparty_connection_id),
+				commitment_prefix,
+			);
+			let delay = core::time::Duration::from_nanos(params.delay_period);
+			let connection_end =
+				ConnectionEnd::new(State::Init, client_id.clone(), counterparty, versions, delay);
+			let mut ctx = routing::Context::<T>::new();
+			ctx.store_connection(connection_id.clone(), &connection_end)
+				.map_err(|_| Error::<T>::Other)?;
+			ctx.store_connection_to_client(connection_id, &client_id)
+				.map_err(|_| Error::<T>::Other)?;
+			Self::deposit_event(Event::<T>::ConnectionInitiated);
 			Ok(())
 		}
 	}

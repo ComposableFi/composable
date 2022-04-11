@@ -25,7 +25,7 @@ use ibc::{
 };
 use tendermint_proto::Protobuf;
 
-impl<T: Config> ChannelReader for Context<T>
+impl<T: Config + Sync + Send> ChannelReader for Context<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
@@ -144,12 +144,10 @@ where
 			port_channel_id.0.as_bytes(),
 			port_channel_id.1.to_string().as_bytes(),
 		) {
-			let data = <NextSequenceSend<T>>::get(
+			let seq = <NextSequenceSend<T>>::get(
 				port_channel_id.0.as_bytes(),
 				port_channel_id.1.to_string().as_bytes(),
 			);
-			let mut data: &[u8] = &data;
-			let seq = u64::decode(&mut data).map_err(|_| ICS04Error::implementation_specific())?;
 			log::trace!("in channel : [get_next_sequence] >> sequence  = {:?}", seq);
 			Ok(Sequence::from(seq))
 		} else {
@@ -164,13 +162,10 @@ where
 		&self,
 		port_channel_id: &(PortId, ChannelId),
 	) -> Result<Sequence, ICS04Error> {
-		let data = <NextSequenceRecv<T>>::get(
+		let seq = <NextSequenceRecv<T>>::get(
 			port_channel_id.0.as_bytes(),
 			port_channel_id.1.to_string().as_bytes(),
 		);
-		let mut data: &[u8] = &data;
-		let seq = u64::decode(&mut data)
-			.map_err(|_| ICS04Error::missing_next_recv_seq(port_channel_id.clone()))?;
 		log::trace!("in channel : [get_next_sequence_recv] >> sequence = {:?}", seq);
 		Ok(Sequence::from(seq))
 	}
@@ -179,13 +174,10 @@ where
 		&self,
 		port_channel_id: &(PortId, ChannelId),
 	) -> Result<Sequence, ICS04Error> {
-		let data = <NextSequenceAck<T>>::get(
+		let seq = <NextSequenceAck<T>>::get(
 			port_channel_id.0.as_bytes(),
 			port_channel_id.1.to_string().as_bytes(),
 		);
-		let mut data: &[u8] = &data;
-		let seq = u64::decode(&mut data)
-			.map_err(|_| ICS04Error::missing_next_ack_seq(port_channel_id.clone()))?;
 		log::trace!("in channel : [get_next_sequence_ack] >> sequence = {:?}", seq);
 		Ok(Sequence::from(seq))
 	}
@@ -195,12 +187,11 @@ where
 		key: &(PortId, ChannelId, Sequence),
 	) -> Result<String, ICS04Error> {
 		let seq = u64::from(key.2);
-		let seq = seq.encode();
 
 		if <PacketCommitment<T>>::contains_key((
 			key.0.as_bytes(),
 			key.1.to_string().as_bytes(),
-			seq.clone(),
+			seq,
 		)) {
 			let data =
 				<PacketCommitment<T>>::get((key.0.as_bytes(), key.1.to_string().as_bytes(), seq));
@@ -221,13 +212,8 @@ where
 		key: &(PortId, ChannelId, Sequence),
 	) -> Result<Receipt, ICS04Error> {
 		let seq = u64::from(key.2);
-		let seq = seq.encode();
 
-		if <PacketReceipt<T>>::contains_key((
-			key.0.as_bytes(),
-			key.1.to_string().as_bytes(),
-			seq.clone(),
-		)) {
+		if <PacketReceipt<T>>::contains_key((key.0.as_bytes(), key.1.to_string().as_bytes(), seq)) {
 			let data =
 				<PacketReceipt<T>>::get((key.0.as_bytes(), key.1.to_string().as_bytes(), seq));
 			let data =
@@ -250,12 +236,11 @@ where
 		key: &(PortId, ChannelId, Sequence),
 	) -> Result<String, ICS04Error> {
 		let seq = u64::from(key.2);
-		let seq = seq.encode();
 
 		if <Acknowledgements<T>>::contains_key((
 			key.0.as_bytes(),
 			key.1.to_string().as_bytes(),
-			seq.clone(),
+			seq,
 		)) {
 			let data =
 				<Acknowledgements<T>>::get((key.0.as_bytes(), key.1.to_string().as_bytes(), seq));
@@ -369,7 +354,7 @@ where
 	}
 }
 
-impl<T: Config> ChannelKeeper for Context<T>
+impl<T: Config + Sync + Send> ChannelKeeper for Context<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
@@ -382,11 +367,10 @@ where
 	) -> Result<(), ICS04Error> {
 		let input = format!("{:?},{:?},{:?}", timestamp, heigh, data);
 		let seq = u64::from(key.2);
-		let seq = seq.encode();
 
 		// insert packet commitment key-value
 		<PacketCommitment<T>>::insert(
-			(key.0.as_bytes().to_vec(), key.1.to_string().as_bytes().to_vec(), seq.clone()),
+			(key.0.as_bytes().to_vec(), key.1.to_string().as_bytes().to_vec(), seq),
 			ChannelReader::hash(self, input).encode(),
 		);
 
@@ -398,13 +382,12 @@ where
 		key: (PortId, ChannelId, Sequence),
 	) -> Result<(), ICS04Error> {
 		let seq = u64::from(key.2);
-		let seq = seq.encode();
 
 		// delete packet commitment
 		<PacketCommitment<T>>::remove((
 			key.0.as_bytes().to_vec(),
 			key.1.to_string().as_bytes().to_vec(),
-			seq.clone(),
+			seq,
 		));
 
 		Ok(())
@@ -420,7 +403,6 @@ where
 		};
 
 		let seq = u64::from(key.2);
-		let seq = seq.encode();
 
 		<PacketReceipt<T>>::insert(
 			(key.0.as_bytes().to_vec(), key.1.to_string().as_bytes().to_vec(), seq),
@@ -437,11 +419,10 @@ where
 	) -> Result<(), ICS04Error> {
 		let ack = format!("{:?}", ack);
 		let seq = u64::from(key.2);
-		let seq = seq.encode();
 
 		// store packet acknowledgement key-value
 		<Acknowledgements<T>>::insert(
-			(key.0.as_bytes().to_vec(), key.1.to_string().as_bytes().to_vec(), seq.clone()),
+			(key.0.as_bytes().to_vec(), key.1.to_string().as_bytes().to_vec(), seq),
 			ChannelReader::hash(self, ack).encode(),
 		);
 
@@ -453,13 +434,12 @@ where
 		key: (PortId, ChannelId, Sequence),
 	) -> Result<(), ICS04Error> {
 		let seq = u64::from(key.2);
-		let seq = seq.encode();
 
 		// remove acknowledgements
 		<Acknowledgements<T>>::remove((
 			key.0.as_bytes().to_vec(),
 			key.1.to_string().as_bytes().to_vec(),
-			seq.clone(),
+			seq,
 		));
 
 		Ok(())
@@ -518,7 +498,6 @@ where
 		seq: Sequence,
 	) -> Result<(), ICS04Error> {
 		let seq = u64::from(seq);
-		let seq = seq.encode();
 
 		<NextSequenceSend<T>>::insert(
 			port_channel_id.0.as_bytes().to_vec(),
@@ -535,7 +514,6 @@ where
 		seq: Sequence,
 	) -> Result<(), ICS04Error> {
 		let seq = u64::from(seq);
-		let seq = seq.encode();
 
 		<NextSequenceRecv<T>>::insert(
 			port_channel_id.0.as_bytes().to_vec(),
@@ -552,7 +530,6 @@ where
 		seq: Sequence,
 	) -> Result<(), ICS04Error> {
 		let seq = u64::from(seq);
-		let seq = seq.encode();
 
 		<NextSequenceAck<T>>::insert(
 			port_channel_id.0.as_bytes().to_vec(),
