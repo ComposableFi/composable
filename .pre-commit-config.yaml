@@ -18,8 +18,16 @@ repos:
     language: system
     pass_filenames: false
     stages: [push]
-    files: ^frame/clearing-house/
+    files: ^frame/(clearing-house/|composable-traits/src/(clearing_house.rs|vamm.rs))
     types: [rust]
+  - id: clearing-house::cargo-test
+    name: claring-house::cargo-test
+    entry: cargo test --all-targets -p pallet-clearing-house
+    language: system
+    pass_filenames: false
+    files: ^frame/(clearing-house/|composable-traits/src/(clearing_house.rs|vamm.rs))
+    types: [rust]
+    stages: [push]
 
     ########## VAMM ##########
   - id: vamm::cargo-fmt
