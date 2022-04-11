@@ -2,9 +2,9 @@ name: "Docker Release"
 
 on:
   workflow_dispatch:
-  push:
-    tags: 
-      - '*'
+  #push:
+  #  tags: 
+  #    - '*'
       
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
