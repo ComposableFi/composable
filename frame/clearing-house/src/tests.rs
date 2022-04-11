@@ -262,7 +262,7 @@ proptest! {
 	#[test]
 	fn mock_vamm_created_id_reflects_genesis_config(vamm_id in any::<Option<VammId>>()) {
 		ExtBuilder { vamm_id , ..Default::default() }.build().execute_with(|| {
-			let created = <Runtime as Config>::Vamm::create(&valid_vamm_config());
+			let created = <Runtime as Config>::Vamm::create(valid_vamm_config());
 			match vamm_id {
 				Some(id) => assert_ok!(created, id),
 				None => assert_err!(created, mock_vamm::Error::<Runtime>::FailedToCreateVamm),
