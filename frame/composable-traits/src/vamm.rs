@@ -15,11 +15,14 @@ use sp_std::fmt::Debug;
 pub trait Vamm {
 	/// The balance type for an account.
 	type Balance;
+
 	/// Signed fixed point number implementation
 	type Decimal: FixedPointNumber;
+
 	/// Configuration for creating and initializing a new vAMM instance. May be used in extrinsic
 	/// signatures
 	type VammConfig: FullCodec + MaxEncodedLen + TypeInfo + Debug + Clone + PartialEq;
+
 	/// The identifier type for each virtual automated market maker.
 	type VammId: FullCodec + MaxEncodedLen + TypeInfo;
 
@@ -27,11 +30,11 @@ pub trait Vamm {
 	///
 	/// ## Returns
 	/// The identifier of the newly created vamm.
-	fn create(config: Self::VammConfig) -> Result<Self::VammId, DispatchError>;
+	fn create(config: &Self::VammConfig) -> Result<Self::VammId, DispatchError>;
 
 	/// Compute the time-weighted average price of a virtual AMM
 	#[allow(unused_variables)]
-	fn get_twap(vamm: &Self::VammId) -> Result<Self::Decimal, DispatchError>;
+	fn get_twap(vamm_id: &Self::VammId) -> Result<Self::Decimal, DispatchError>;
 }
 
 /// Specify a common encapsulation layer for the [`create`](Vamm::create) function.
