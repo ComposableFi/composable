@@ -385,7 +385,7 @@ pub mod pallet {
 		/// ![](http://www.plantuml.com/plantuml/svg/FSrD2W8n343XlQVG0ynaxsf0y1wPDhQ592tvmUihBbmztkexFD0YXI-teOMpKXfVUyJoEu3XUsyZUfxfP6LgaCPUfi1ZofgE9zDpGFaFa9TE1Yz38IXCQ4FRrcSwGHtO3CK1Qzq4hGtT5wF--8EqVli1)
 		///
 		/// ## Parameters:
-		/// - `asset`: The identifier of the asset type being deposited
+		/// - `asset_id`: The identifier of the asset type being deposited
 		/// - `amount`: The balance of `asset` to be transferred from the caller to the Clearing
 		///   House
 		///
@@ -407,11 +407,11 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::add_margin())]
 		pub fn add_margin(
 			origin: OriginFor<T>,
-			asset: AssetIdOf<T>,
+			asset_id: AssetIdOf<T>,
 			amount: T::Balance,
 		) -> DispatchResult {
-			let acc = ensure_signed(origin)?;
-			<Self as ClearingHouse>::add_margin(&acc, asset, amount)?;
+			let account_id = ensure_signed(origin)?;
+			<Self as ClearingHouse>::add_margin(&account_id, asset_id, amount)?;
 			Ok(())
 		}
 
@@ -481,7 +481,7 @@ pub mod pallet {
 		///
 		/// ## Parameters
 		///
-		/// - `market`: the perpetuals market Id to open a position in
+		/// - `market_id`: the perpetuals market Id to open a position in
 		/// - `direction`: whether to long or short the base asset
 		/// - `quote_asset_amount`: the amount of exposure to the base asset in quote asset value
 		/// - `base_asset_amount_limit`: the minimum absolute amount of base asset to add to the
@@ -508,15 +508,15 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::open_position())]
 		pub fn open_position(
 			origin: OriginFor<T>,
-			market: T::MarketId,
+			market_id: T::MarketId,
 			direction: Direction,
 			quote_asset_amount: T::Balance,
 			base_asset_amount_limit: T::Balance,
 		) -> DispatchResult {
-			let account = ensure_signed(origin)?;
+			let account_id = ensure_signed(origin)?;
 			let _ = <Self as ClearingHouse>::open_position(
-				&account,
-				&market,
+				&account_id,
+				&market_id,
 				direction,
 				quote_asset_amount,
 				base_asset_amount_limit,
@@ -538,23 +538,33 @@ pub mod pallet {
 		type MarketConfig = MarketConfigOf<T>;
 
 		fn add_margin(
-			account: &Self::AccountId,
-			asset: Self::AssetId,
+			account_id: &Self::AccountId,
+			asset_id: Self::AssetId,
 			amount: Self::Balance,
 		) -> Result<(), DispatchError> {
 			ensure!(
-				CollateralTypes::<T>::contains_key(asset),
+				CollateralTypes::<T>::contains_key(asset_id),
 				Error::<T>::UnsupportedCollateralType
 			);
 
 			// Assuming stablecoin collateral and all markets quoted in dollars
-			T::Assets::transfer(asset, account, &T::PalletId::get().into_account(), amount, true)?;
+			T::Assets::transfer(
+				asset_id,
+				account_id,
+				&T::PalletId::get().into_account(),
+				amount,
+				true,
+			)?;
 
-			let old_margin = Self::get_margin(&account).unwrap_or_else(T::Balance::zero);
+			let old_margin = Self::get_margin(&account_id).unwrap_or_else(T::Balance::zero);
 			let new_margin = old_margin.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
-			AccountsMargin::<T>::insert(&account, new_margin);
+			AccountsMargin::<T>::insert(&account_id, new_margin);
 
-			Self::deposit_event(Event::MarginAdded { account: account.clone(), asset, amount });
+			Self::deposit_event(Event::MarginAdded {
+				account: account_id.clone(),
+				asset: asset_id,
+				amount,
+			});
 			Ok(())
 		}
 
@@ -606,13 +616,13 @@ pub mod pallet {
 		}
 
 		fn open_position(
-			account: &Self::AccountId,
-			market: &Self::MarketId,
+			account_id: &Self::AccountId,
+			market_id: &Self::MarketId,
 			direction: Self::Direction,
 			quote_asset_amount: Self::Balance,
 			base_asset_amount_limit: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			let market = Self::get_market(&market).ok_or(Error::<T>::MarketIdNotFound)?;
+			let market = Self::get_market(&market_id).ok_or(Error::<T>::MarketIdNotFound)?;
 
 			Ok(0u32.into())
 		}

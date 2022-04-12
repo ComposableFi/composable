@@ -28,12 +28,12 @@ pub trait ClearingHouse {
 	/// account per user.
 	///
 	/// ## Parameters
-	/// - `account`: the trader's margin account Id
-	/// - `asset`: the type of asset to deposit as collateral
+	/// - `account_id`: the trader's margin account Id
+	/// - `asset_id`: the type of asset to deposit as collateral
 	/// - `amount`: the amount of collateral
 	fn add_margin(
-		account: &Self::AccountId,
-		asset: Self::AssetId,
+		account_id: &Self::AccountId,
+		asset_id: Self::AssetId,
 		amount: Self::Balance,
 	) -> Result<(), DispatchError>;
 
@@ -56,8 +56,8 @@ pub trait ClearingHouse {
 	/// * Reversing of the existing position, if the trade's direction is counter to the existion position's one and its magnitude is greater than the existing postion's size
 	///
 	/// ## Parameters
-	/// - `account`: the trader's margin account Id
-	/// - `market`: the perpetuals market Id to open a position in
+	/// - `account_id`: the trader's margin account Id
+	/// - `market_id`: the perpetuals market Id to open a position in
 	/// - `direction`: whether to long or short the base asset
 	/// - `quote_asset_amount`: the amount of exposure to the base asset in quote asset value
 	/// - `base_asset_amount_limit`: the minimum absolute amount of base asset to add to the
@@ -66,8 +66,8 @@ pub trait ClearingHouse {
 	/// ## Returns
 	/// The absolute amount of base asset exchanged
 	fn open_position(
-		account: &Self::AccountId,
-		market: &Self::MarketId,
+		account_id: &Self::AccountId,
+		market_id: &Self::MarketId,
 		direction: Self::Direction,
 		quote_asset_amount: Self::Balance,
 		base_asset_amount_limit: Self::Balance,
