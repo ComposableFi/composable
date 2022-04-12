@@ -17,7 +17,8 @@ macro_rules! match_event {
 		matches!(
 			$ev,
 			AllRuntimeEvents::Picasso(picasso_runtime::Event::$event($sub_ev)) |
-				AllRuntimeEvents::Dali(dali_runtime::Event::$event($sub_ev))
+				AllRuntimeEvents::Dali(dali_runtime::Event::$event($sub_ev)) |
+				AllRuntimeEvents::Composable(composable_runtime::Event::$event($sub_ev))
 		)
 	}};
 }

@@ -29,8 +29,8 @@ describe('tx.constantProductDex Tests', function () {
     walletId2 = walletBob.derive("/test/constantProductDex/walletId2");
     walletId1Account = api.createType('AccountId32', walletId1.address).toString();
     walletId2Account = api.createType('AccountId32', walletId2.address).toString();
-    baseAssetId = 2;
-    quoteAssetId = 3;
+    baseAssetId = 129;
+    quoteAssetId = 4;
     baseAmount = 2500;
     quoteAmount = 2500;
     //sets the owner fee to 1.00%/Type Permill
@@ -50,7 +50,7 @@ describe('tx.constantProductDex Tests', function () {
 
     it('Users can create a constantProduct pool', async function() {
       if(!testConfiguration.enabledTests.successTests.createPool.enabled){
-        return;
+        this.skip();
       }
       this.timeout(2*60*1000);
       poolId = await createPool(walletId1, 
@@ -58,7 +58,7 @@ describe('tx.constantProductDex Tests', function () {
         quoteAssetId,
         ownerFee
       );
-      let returnedOwnerFee = await getOwnerFee(poolId);
+      const returnedOwnerFee = await getOwnerFee(poolId);
       //verify if the pool is created
       expect(poolId).to.be.a('number');
       //Verify if the pool is created with specified owner Fee
@@ -67,7 +67,7 @@ describe('tx.constantProductDex Tests', function () {
         
     it('Given that users has sufficient balance, User1 can send funds to pool', async function(){
       if(!testConfiguration.enabledTests.successTests.addLiquidityTests.enabled){
-        return;
+        this.skip();
       }
       this.timeout(2*60*1000);
       const result = await addFundstoThePool(walletId1,
@@ -83,7 +83,7 @@ describe('tx.constantProductDex Tests', function () {
 
     it('User2 can send funds to pool and router adjusts deposited amounts based on constantProductFormula to prevent arbitrage', async function(){
       if(!testConfiguration.enabledTests.successTests.addLiquidityTests.enabled){
-        return;
+        this.skip();
       }
       this.timeout(2*60*1000);
       const assetAmount = 30;
@@ -96,7 +96,7 @@ describe('tx.constantProductDex Tests', function () {
 
     it("Given the pool has the sufficient funds, User1 can't completely drain the funds", async function(){
       if(!testConfiguration.enabledTests.successTests.poolDrainTest.enabled){
-        return;
+        this.skip();
       }
       this.timeout(2*60*1000);
       await buyFromPool(walletId1, baseAssetId, 2800).catch(error=>{
@@ -106,7 +106,7 @@ describe('tx.constantProductDex Tests', function () {
 
     it('User1 can buy from the pool and router respects the constantProductFormula', async function() {
       if(!testConfiguration.enabledTests.successTests.buyTest.enabled){
-        return;
+        this.skip();
       }
       this.timeout(2 * 60 * 1000);
       const result = await buyFromPool(walletId1, baseAssetId, 30); 
@@ -117,7 +117,7 @@ describe('tx.constantProductDex Tests', function () {
     
     it('User1 can sell on the pool', async function(){
       if(!testConfiguration.enabledTests.successTests.sellTest.enabled){
-        return;
+        this.skip();
       }
       this.timeout(2*60*1000);
       const accountIdSeller = await sellToPool(walletId1, baseAssetId, 20);
@@ -126,7 +126,7 @@ describe('tx.constantProductDex Tests', function () {
 
     it('User2 can swap from the pool', async function(){
       if(!testConfiguration.enabledTests.successTests.swapTest.enabled){
-        return;
+        this.skip();
       }
       this.timeout(2*60*1000);
       const quotedAmount = 12;
@@ -140,19 +140,19 @@ describe('tx.constantProductDex Tests', function () {
 
     it('Owner of the pool receives owner fee on the transactions happened in the pool', async function(){
       if(!testConfiguration.enabledTests.successTests.ownerFeeTest.enabled){
-        return;
+        this.skip();
       }
       this.timeout(2*60*1000);
-      let ownerInitialTokens = await getUserTokens(walletId1, quoteAssetId);
+      const ownerInitialTokens = await getUserTokens(walletId1, quoteAssetId);
       const result = await buyFromPool(walletId2, baseAssetId, 500);      
-      let ownerAfterTokens = await getUserTokens(walletId1, quoteAssetId);
+      const ownerAfterTokens = await getUserTokens(walletId1, quoteAssetId);
       //verifies the ownerFee to be added in the owner account.
       expect(ownerAfterTokens).to.be.equal(ownerInitialTokens+(result.ownerFee.toNumber()))
     });
 
     it('User1 can remove liquidity from the pool by using LP Tokens', async function(){
       if(!testConfiguration.enabledTests.successTests.removeLiquidityTest.enabled){
-        return;
+        this.skip();
       }
       this.timeout(2*60*1000);
       //Randomly checks an integer value that is always < mintedLPTokens. 
@@ -161,7 +161,3 @@ describe('tx.constantProductDex Tests', function () {
     });
   });
 })
-  
-
-  
-
