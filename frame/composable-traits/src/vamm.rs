@@ -1,11 +1,10 @@
 //! # Virtual Automated Market Maker
 //!
 //! Common traits and data structures for vamm implementation.
-use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
+use codec::{FullCodec, MaxEncodedLen};
 use frame_support::pallet_prelude::DispatchError;
 use scale_info::TypeInfo;
 use sp_runtime::FixedPointNumber;
-use sp_std::fmt::Debug;
 
 /// Exposes functionality for creation and management of virtual automated market makers.
 ///
@@ -19,9 +18,8 @@ pub trait Vamm {
 	/// Signed fixed point number implementation
 	type Decimal: FixedPointNumber;
 
-	/// Configuration for creating and initializing a new vAMM instance. May be used in extrinsic
-	/// signatures
-	type VammConfig: FullCodec + MaxEncodedLen + TypeInfo + Debug + Clone + PartialEq;
+	/// Configuration for creating and initializing a new vAMM instance
+	type VammConfig;
 
 	/// The identifier type for each virtual automated market maker.
 	type VammId: FullCodec + MaxEncodedLen + TypeInfo;
@@ -38,7 +36,6 @@ pub trait Vamm {
 }
 
 /// Specify a common encapsulation layer for the [`create`](Vamm::create) function.
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq)]
 pub struct VammConfig<Balance> {
 	/// The total amount of base assets to be set in vamm's creation.
 	pub base_asset_reserves: Balance,

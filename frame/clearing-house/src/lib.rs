@@ -144,7 +144,15 @@ pub mod pallet {
 		type UnixTime: UnixTime;
 
 		/// Virtual Automated Market Maker pallet implementation
-		type Vamm: Vamm<Balance = Self::Balance, Decimal = Self::Decimal>;
+		type Vamm: Vamm<
+			Balance = Self::Balance,
+			Decimal = Self::Decimal,
+			VammConfig = Self::VammConfig,
+		>;
+
+		/// Configuration for creating and initializing a new vAMM instance. To be used as an
+		/// extrinsic input
+		type VammConfig: FullCodec + MaxEncodedLen + TypeInfo + Debug + Clone + PartialEq;
 
 		/// Price feed (in USDT) Oracle pallet implementation
 		type Oracle: Oracle<AssetId = Self::MayBeAssetId, Balance = Self::Balance>;
@@ -236,7 +244,7 @@ pub mod pallet {
 	type AssetIdOf<T> = <T as DeFiComposableConfig>::MayBeAssetId;
 	type MarketIdOf<T> = <T as Config>::MarketId;
 	type DecimalOf<T> = <T as Config>::Decimal;
-	type VammConfigOf<T> = <<T as Config>::Vamm as Vamm>::VammConfig;
+	type VammConfigOf<T> = <T as Config>::VammConfig;
 	type VammIdOf<T> = <<T as Config>::Vamm as Vamm>::VammId;
 	type PositionOf<T> = Position<MarketIdOf<T>, DecimalOf<T>>;
 	type MarketConfigOf<T> = MarketConfig<AssetIdOf<T>, VammConfigOf<T>, DecimalOf<T>>;
@@ -512,7 +520,7 @@ pub mod pallet {
 				let market_id = id.clone();
 				let market = Market {
 					asset_id: config.asset,
-					vamm_id: T::Vamm::create(config.vamm_config.clone())?,
+					vamm_id: T::Vamm::create(&config.vamm_config)?,
 					margin_ratio_initial: config.margin_ratio_initial,
 					margin_ratio_maintenance: config.margin_ratio_maintenance,
 					funding_frequency: config.funding_frequency,
