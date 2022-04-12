@@ -90,7 +90,7 @@ pub mod pallet {
 		ics23_commitment::commitment::CommitmentPrefix,
 	};
 
-	use crate::impls::{client_id_from_bytes, connection_id_from_bytes};
+	use ibc_trait::{client_id_from_bytes, connection_id_from_bytes};
 	use sp_runtime::{generic::DigestItem, SaturatedConversion};
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
@@ -337,9 +337,12 @@ pub mod pallet {
 			if !ClientStates::<T>::contains_key(params.client_id.clone()) {
 				return Err(Error::<T>::ClientStateNotFound.into())
 			}
-			let client_id = client_id_from_bytes::<T>(params.client_id)?;
-			let connection_id = connection_id_from_bytes::<T>(params.connnection_id)?;
-			let counterparty_client_id = client_id_from_bytes::<T>(params.counterparty_client_id)?;
+			let client_id =
+				client_id_from_bytes(params.client_id).map_err(|_| Error::<T>::DecodingError)?;
+			let connection_id = connection_id_from_bytes(params.connnection_id)
+				.map_err(|_| Error::<T>::DecodingError)?;
+			let counterparty_client_id = client_id_from_bytes(params.counterparty_client_id)
+				.map_err(|_| Error::<T>::DecodingError)?;
 			let versions = params
 				.versions
 				.into_iter()
