@@ -1,28 +1,9 @@
-//! # Mosaic
-//! ## Overview
-//!
-//! The Mosaic Pallet implements the interface for the Mosaic Relayer. The Mosaic
-//! Relayer will relay liqudity accross chains and layers.
-//!
-//! As opposed to the EVM-EVM bridge, this pallet takes a different approach and
-//! uses mint and burn operations. Because of that it also limits the amount the
-//! relayer can mint using a decaying penalty.
-//!
-//! ## Decaying Penalty
-//!
-//! At moment N, the relayer has a maximum budget `budget`. Minting a token adds a
-//! penalty `penalty` to the relayer. The penalty decreases each block according to
-//! decay function `decayer`, which depends on the penalty, `current_block`, and
-//! `last_decay_block`. The current maximum amount that the relayer can mint is
-//! given by `budget - decayer(penalty, current_block, last_decay_block)`. The new
-//! penalty is the decayed previous penalty plus the minted amount.
-
+#![doc = include_str!("../README.md")]
 // TODO
 // 1. TEST!
 // 2. RPCs for relayer convenience.
 // 3. Refactor core logic to traits.
 // 4. Benchmarks and Weights!
-
 #![cfg_attr(not(feature = "std"), no_std)]
 
 mod decay;
@@ -392,7 +373,7 @@ pub mod pallet {
 		/// Rotates the Relayer Account
 		///
 		/// # Restrictions
-		///  - Only callable by the current relayer.
+		///  - Only callable by the current Relayer.
 		///  - The Time To Live (TTL) must be greater than the [`MinimumTTL`](Config::MinimumTTL)
 		#[pallet::weight(T::WeightInfo::rotate_relayer())]
 		pub fn rotate_relayer(
@@ -455,7 +436,7 @@ pub mod pallet {
 		}
 
 		/// Creates an outgoing transaction request, locking the funds locally until picked up by
-		/// the relayer.
+		/// the Relayer.
 		///
 		/// # Restrictions
 		/// - Network must be supported.
@@ -545,7 +526,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Claims user funds from the `OutgoingTransactions`, in case that the relayer has not
+		/// Claims user funds from the `OutgoingTransactions`, in case that the Relayer has not
 		/// picked them up.
 		#[pallet::weight(T::WeightInfo::claim_stale_to())]
 		#[transactional]

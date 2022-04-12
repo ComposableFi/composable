@@ -1,8 +1,6 @@
 # Mosaic
 
-*The Mosaic pallet enables cross-chain and cross-layer transfers*
-
----
+The Mosaic pallet enables cross-chain and cross-layer transfers
 
 ## Overview
 
@@ -22,6 +20,165 @@ decay function decayer, which depends on the penalty, `current_block`, and
 given by `budget - decayer(penalty, current_block, last_decay_block)`. The new 
 penalty is the decayed previous penalty plus the minted amount.
 
+## Workflow
+
+The Mosaic pallet is comprised of three main components: the Relayer interface, 
+incoming transactions, and outgoing transactions.
+
+### The Relayer Interface
+
+The Relayer interface provides the necessary functionality for managing the 
+constrains of the Relayer and exposing the functionality needed by the Relayer 
+to conduct transactions. The Relayer, while operating on this network, is 
+constrained by the set budget, supported networks, and the maximum transaction 
+sizes for those networks. The Relayer will need to be able to accept new 
+transactions and mint the funds needed for conducting those transactions. 
+Additionally, in the event of finality issues on the destination network, the 
+Relayer will need to be able to burn funds.
+
+The Relayer's net budget is determined by the set gross budget and the [decay 
+penalty](#decaying-penalty). This budget controlls the minting capabilities of 
+the Relayer on this network.
+
+### Incoming Transactions
+
+Incoming transactions are transactions who's destination is this network. Once 
+funds have been minted on this network and the lock time has passed, they may be 
+claimed to conclude the transaction.
+
+In the event that any issues occurred with finalizing a transaction, the waiting 
+funds associated with incoming transactions that have yet to be claimed may be 
+burned by the Relayer.
+
+### Outgoing Transactions
+
+Outgoing transactions are transactions originating on this network who's 
+destination is elsewhere. These transactions must first be requested by the 
+user, then accepted by the Relayer. Once accepted by the Relayer the funds of 
+this transaction will no longer be claimable on the origin network. Before 
+acceptance by the Relayer, funds may be reclaimed by the user.
+
+## Pallet Extrinsics
+
+### Set Relayer 
+
+`set_relayer`
+
+Sets the current Relayer configuration.
+
+This is enacted immediately and invalidates inflight, incoming transactions from
+the previous Relayer. However, existing budgets relain in place.
+
+This can only be called by the[`ControlOrigin`](#controlorigin). 
+### Rotate Relayer
+
+`rotate_relayer`
+
+Rotates the relay account.
+
+#### Restrictions
+
+This is only callable by the current Relayer.
+
+The Time To Live (TTL) must be greater than the [`MinimumTTL`](#minimumttl).
+
+### Set Network
+
+`set_network`
+
+Sets the supported networks and maximum transaction sizes accepted by the 
+Relayer.
+
+This can only be called by the current Relayer.
+
+### Set Budget
+
+`set_budget`
+
+Sets the Relayer budget for incoming transactions for specific assets.
+
+This does not reset the current `penalty`.
+
+This can only be called by the [`ControlOrigin`](#controlorigin).
+
+### Transfer To 
+
+`transfer_to`
+
+Creates an outgoing transaction request.
+
+Locks the funds locally until picked up by the Relayer.
+
+#### Restrictions
+
+* The network must be supported
+
+* The asset ID must be supported
+
+* The amount must have sufficient funds
+
+* The origin must have sufficient funds
+
+* Transactions that cause overflows (due to being too close to exceeding the max 
+  balance) will be caught and returned as errors
+
+### Accept Transfer 
+
+`accept_transfer`
+
+This is called by the Relayer to confirm that it will relay a transaction.
+
+Once this is called, the sender will be unable to reclaim their tokens.
+
+If all the funds are not removed, the reclaim period will not be reset. If the 
+reclaim period is not reset, the Relayer will still attempt to pick up the 
+remainder of the transaction.
+
+### Claim Stale To 
+
+`claim_stale_to`
+
+Claims funds from outgoing transactions not yet picked up by the Relayer.
+
+### Time Locked Mint 
+
+`timelocked_mint`
+
+Mints new tokens into the pallets wallet.
+
+These tokens will be available for pickup after the `lock_time` blocks have 
+passed.
+
+### Set Time Lock Duration
+
+`set_timelock_duration`
+
+Sets the time lock, in blocks, on new transfers.
+
+This can only be called by the `ControlOrigin`.
+
+### Rescind Time Locked Mint
+
+`rescind_timelocked_mint`
+
+Burns unclaimed funds that are waiting in incoming transactions.
+
+This may be used by the Relayer in case of finality issues on the other side of 
+the bridge.
+
+### Claim To 
+
+`claim_to`
+
+Collects funds that have been deposited by the Relayer into the owner's account.
+
+### Update Asset Mapping
+
+`update_asset_mapping`
+
+Updates a network asset mapping.
+
+This can only be called by the [`ControlOrigin`](#controlorigin).
 
 ## Pallet Configuration
 
