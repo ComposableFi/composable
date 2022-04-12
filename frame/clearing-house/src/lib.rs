@@ -453,6 +453,38 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Opens a position in a market
+		///
+		/// # Overview
+		///
+		/// ![](http://www.plantuml.com/plantuml/svg/FOuzgiD030RxTugN0zZgKna2kOUyLhm2hRJeXrm_9aMgZszWOBP8zAmXVpVM9dLGkVptp1bt0CVtUdBssYl8cscIvjfimCF6jC1TwCdGVWSeMYU7b-CWQ4BehEVIhOBWO3ml7c2JTBaCJZPTfw1-2pRIuzeF)
+		///
+		/// ## Parameters
+		///
+		/// - `market`: the perpetuals market Id to open a position in
+		/// - `direction`: whether to long or short the base asset
+		/// - `quote_asset_amount`: the amount of exposure to the base asset in quote asset value
+		/// - `base_asset_amount_limit`: the minimum absolute amount of base asset to add to the
+		///   position. Prevents slippage
+		///
+		/// ## Assumptions or Requirements
+		///
+		/// TODO(0xangelo)
+		///
+		/// ## Emits
+		///
+		/// TODO(0xangelo)
+		///
+		/// ## State Changes
+		///
+		/// TODO(0xangelo)
+		///
+		/// ## Erros
+		///
+		/// TODO(0xangelo)
+		///
+		/// # Weight/Runtime
+		/// TODO(0xangelo)
 		#[pallet::weight(<T as Config>::WeightInfo::open_position())]
 		pub fn open_position(
 			origin: OriginFor<T>,
