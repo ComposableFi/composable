@@ -38,7 +38,7 @@ pub mod pallet {
 	use composable_support::{types::EthereumAddress, validation::Validated};
 	use composable_traits::{
 		math::SafeAdd,
-		mosaic::{Claim, RelayManager, TransferTo},
+		mosaic::{Claim, RelayerInterface, TransferTo},
 	};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
@@ -363,7 +363,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			T::ControlOrigin::ensure_origin(origin)?;
 
-			<Pallet<T> as RelayManager>::set_relayer(relayer.clone());
+			<Pallet<T> as RelayerInterface>::set_relayer(relayer.clone());
 
 			Self::deposit_event(Event::RelayerSet { relayer });
 			Ok(().into())
@@ -383,7 +383,12 @@ pub mod pallet {
 			let ttl = validated_ttl.value();
 			let (relayer, current_block) = Self::ensure_relayer(origin)?;
 
-			<Pallet<T> as RelayManager>::rotate_relayer(relayer, new.clone(), ttl, current_block);
+			<Pallet<T> as RelayerInterface>::rotate_relayer(
+				relayer,
+				new.clone(),
+				ttl,
+				current_block,
+			);
 
 			Self::deposit_event(Event::RelayerRotated { account_id: new, ttl });
 			Ok(().into())
@@ -398,7 +403,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			Self::ensure_relayer(origin)?;
 
-			<Pallet<T> as RelayManager>::set_network(network_id.clone(), network_info.clone());
+			<Pallet<T> as RelayerInterface>::set_network(network_id.clone(), network_info.clone());
 
 			Self::deposit_event(Event::NetworksUpdated { network_id, network_info });
 			Ok(().into())
@@ -421,7 +426,7 @@ pub mod pallet {
 			// to grant mosaic permission to mint. We'll save that for phase 3.
 			T::ControlOrigin::ensure_origin(origin)?;
 
-			<Pallet<T> as RelayManager>::set_budget(asset_id, amount, decay.clone());
+			<Pallet<T> as RelayerInterface>::set_budget(asset_id, amount, decay.clone());
 
 			Self::deposit_event(Event::BudgetUpdated { asset_id, amount, decay });
 			Ok(().into())
@@ -502,7 +507,7 @@ pub mod pallet {
 			Self::ensure_relayer(origin)?;
 			let asset_id = Self::get_local_mapping(remote_asset_id.clone(), network_id.clone())?;
 
-			<Pallet<T> as RelayManager>::accept_transfer(
+			<Pallet<T> as RelayerInterface>::accept_transfer(
 				asset_id,
 				from,
 				network_id,
@@ -546,7 +551,7 @@ pub mod pallet {
 			let (_caller, current_block) = Self::ensure_relayer(origin)?;
 			let asset_id = Self::get_local_mapping(remote_asset_id.clone(), network_id.clone())?;
 
-			<Pallet<T> as RelayManager>::timelocked_mint(
+			<Pallet<T> as RelayerInterface>::timelocked_mint(
 				asset_id,
 				current_block,
 				to.clone(),
@@ -574,7 +579,7 @@ pub mod pallet {
 			let validated_period = period.value();
 			T::ControlOrigin::ensure_origin(origin)?;
 
-			<Pallet<T> as RelayManager>::set_timelock_duration(validated_period);
+			<Pallet<T> as RelayerInterface>::set_timelock_duration(validated_period);
 
 			Ok(().into())
 		}
@@ -593,7 +598,7 @@ pub mod pallet {
 			Self::ensure_relayer(origin)?;
 			let asset_id = Self::get_local_mapping(remote_asset_id.clone(), network_id.clone())?;
 
-			<Pallet<T> as RelayManager>::rescind_timelocked_mint(
+			<Pallet<T> as RelayerInterface>::rescind_timelocked_mint(
 				asset_id,
 				account.clone(),
 				untrusted_amount,
@@ -752,7 +757,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> RelayManager for Pallet<T> {
+	impl<T: Config> RelayerInterface for Pallet<T> {
 		type AccountId = T::AccountId;
 		type AssetId = AssetIdOf<T>;
 		type Balance = BalanceOf<T>;

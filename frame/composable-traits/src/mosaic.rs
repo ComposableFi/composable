@@ -3,7 +3,7 @@
 use frame_support::dispatch::DispatchResultWithPostInfo;
 
 /// Trait containing the business logic relevant to managing the Relayer of the Mosaic pallet.
-pub trait RelayManager {
+pub trait RelayerInterface {
 	type AccountId;
 	type AssetId;
 	type Balance;
