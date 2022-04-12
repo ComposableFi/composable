@@ -1,6 +1,8 @@
 # Mosaic
 
-The Mosaic pallet enables cross-chain and cross-layer transfers
+*The Mosaic pallet enables cross-chain and cross-layer transfers*
+
+---
 
 ## Overview
 

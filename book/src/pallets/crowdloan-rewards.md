@@ -1,6 +1,8 @@
 # Crowdloan Rewards
 
-The Crowdloan Rewards pallet allows contributors to claim their rewards.
+*The Crowdloan Rewards pallet allows contributors to claim their rewards.*
+
+---
 
 ## Overview
 
