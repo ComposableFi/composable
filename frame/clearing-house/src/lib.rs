@@ -495,7 +495,7 @@ pub mod pallet {
 		///
 		/// ## Erros
 		///
-		/// TODO(0xangelo)
+		/// - [`MarketIdNotFound`](Error::<T>::MarketIdNotFound)
 		///
 		/// # Weight/Runtime
 		/// TODO(0xangelo)
