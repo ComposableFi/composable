@@ -179,7 +179,7 @@ proptest! {
 			assert_ok!(vamm_created_ok);
 
 			System::assert_last_event(Event::Vamm(
-				pallet::Event::Created { vamm_id: 0u128, state: vamm_created}
+				pallet::Event::Created { vamm_id: 0_u128, state: vamm_created}
 			))
 		});
 	}
@@ -191,7 +191,7 @@ proptest! {
 		peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE
 	) {
 		ExtBuilder::default().build().execute_with(|| {
-			assert!(!VammMap::<MockRuntime>::contains_key(0u128));
+			assert!(!VammMap::<MockRuntime>::contains_key(0_u128));
 
 			let vamm_created_ok = Vamm::create(
 				VammConfig{base_asset_reserves,
@@ -199,7 +199,7 @@ proptest! {
 						   peg_multiplier});
 			assert_ok!(vamm_created_ok);
 
-			assert!(VammMap::<MockRuntime>::contains_key(0u128));
+			assert!(VammMap::<MockRuntime>::contains_key(0_u128));
 		});
 	}
 }
