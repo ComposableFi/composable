@@ -87,9 +87,14 @@
 
 # 🎨 PALLETS AND INTEGRATION GUIDES
 - [crowdloan-rewards](./pallets/crowdloan-rewards.md)
+    - [Extrinsics](./pallets/crowdloan-rewards/extrinsics.md)
+    - [Integration Guide](./pallets/crowdloan-rewards/integration-guide.md)
 - [bonded-finance](./pallets/bonded-finance.md)
+    - [Extrinsics](./pallets/bonded-finance/extrinsics.md)
+    - [Integration Guide](./pallets/bonded-finance/integration-guide.md)
 - [mosaic](./pallets/mosaic.md)
-
+    - [Extrinsics](./pallets/mosaic/extrinsics.md)
+    - [Integration Guide](./pallets/mosaic/integration-guide.md)
 # ❓ FAQS
 - [FAQs](./faqs/faqs.md)
 

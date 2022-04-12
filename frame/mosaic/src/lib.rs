@@ -480,17 +480,24 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Called by the relayer to confirm that it will relay a transaction, disabling the user
-		/// from reclaiming their tokens.
+		// ANCHOR: accept_transfer_docs
+		/// This is called by the Relayer to confirm that it will relay a transaction.
 		///
-		/// # Restrictions
+		/// Once this is called, the sender will be unable to reclaim their tokens.
+		///
+		/// If all the funds are not removed, the reclaim period will not be reset. If the
+		/// reclaim period is not reset, the Relayer will still attempt to pick up the
+		/// remainder of the transaction.
+		///
+		/// ### Restrictions
 		/// - Origin must be relayer
 		/// - Outgoing transaction must exist for the user
 		/// - Amount must be equal or lower than what the user has locked
 		///
-		/// # Note
+		/// ### Note
 		/// - Reclaim period is not reset if not all the funds are moved; menaing that the clock
 		///   remains ticking for the relayer to pick up the rest of the transaction.
+		// ANCHOR_END: accept_transfer_docs
 		#[pallet::weight(T::WeightInfo::accept_transfer())]
 		#[transactional]
 		pub fn accept_transfer(
