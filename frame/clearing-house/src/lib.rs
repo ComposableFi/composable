@@ -56,7 +56,7 @@
 //!
 //! ## Related Modules
 //!
-//! - `pallet-vamm`
+//! - [`pallet-vamm`](../vamm/index.html)
 //! - [`pallet-oracle`](../oracle/index.html)
 //!
 //! <!-- Original author: @0xangelo -->
