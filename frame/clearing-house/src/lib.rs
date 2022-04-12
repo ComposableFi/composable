@@ -139,7 +139,7 @@ pub mod pallet {
 		/// Implementation for querying the current Unix timestamp
 		type UnixTime: UnixTime;
 		/// Virtual Automated Market Maker pallet implementation
-		type Vamm: Vamm<Decimal = Self::Decimal>;
+		type Vamm: Vamm<Balance = Self::Balance, Decimal = Self::Decimal>;
 		/// Price feed (in USDT) Oracle pallet implementation
 		type Oracle: Oracle<AssetId = Self::MayBeAssetId, Balance = Self::Balance>;
 		/// Pallet implementation of asset transfers.
@@ -504,7 +504,7 @@ pub mod pallet {
 				let market_id = id.clone();
 				let market = Market {
 					asset_id: config.asset,
-					vamm_id: T::Vamm::create(&config.vamm_config)?,
+					vamm_id: T::Vamm::create(config.vamm_config.clone())?,
 					margin_ratio_initial: config.margin_ratio_initial,
 					margin_ratio_maintenance: config.margin_ratio_maintenance,
 					funding_frequency: config.funding_frequency,

@@ -81,7 +81,7 @@ pub mod pallet {
 	use frame_support::{pallet_prelude::*, sp_std::fmt::Debug, transactional, Blake2_128Concat};
 	use sp_runtime::{
 		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Zero},
-		ArithmeticError,
+		ArithmeticError, FixedPointNumber,
 	};
 
 	// ----------------------------------------------------------------------------------------------------
@@ -141,6 +141,9 @@ pub mod pallet {
 			+ Ord
 			+ Parameter
 			+ Zero;
+
+		/// Signed decimal fixed point number.
+		type Decimal: FullCodec + MaxEncodedLen + TypeInfo + FixedPointNumber;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -267,6 +270,8 @@ pub mod pallet {
 	impl<T: Config> Vamm for Pallet<T> {
 		type VammId = VammIdOf<T>;
 		type Balance = BalanceOf<T>;
+		type VammConfig = VammConfig<Self::Balance>;
+		type Decimal = T::Decimal;
 
 		/// Creates a new virtual automated market maker.
 		///
@@ -309,7 +314,7 @@ pub mod pallet {
 		/// `O(1)`
 
 		#[transactional]
-		fn create(config: VammConfig<BalanceOf<T>>) -> Result<Self::VammId, DispatchError> {
+		fn create(config: Self::VammConfig) -> Result<Self::VammId, DispatchError> {
 			// TODO: (Matheus)
 			// How to ensure that the caller has the right privileges?
 			// (eg. How to ensure the caller is the Clearing House, and not anyone else?)
@@ -333,6 +338,10 @@ pub mod pallet {
 
 				Ok(id)
 			})
+		}
+
+		fn get_twap(vamm: &Self::VammId) -> Result<Self::Decimal, DispatchError> {
+			todo!()
 		}
 	}
 

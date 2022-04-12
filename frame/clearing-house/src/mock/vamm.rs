@@ -7,7 +7,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
-	use composable_traits::vamm::Vamm;
+	use composable_traits::{defi::DeFiComposableConfig, vamm::Vamm};
 	use frame_support::pallet_prelude::*;
 	use scale_info::TypeInfo;
 	use sp_runtime::{traits::Zero, FixedPointNumber};
@@ -25,7 +25,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: DeFiComposableConfig + frame_system::Config {
 		type VammId: FullCodec + MaxEncodedLen + MaybeSerializeDeserialize + TypeInfo + Clone;
 		type Decimal: FixedPointNumber
 			+ FullCodec
@@ -92,12 +92,13 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	impl<T: Config> Vamm for Pallet<T> {
-		type VammId = T::VammId;
-		type VammConfig = VammConfig;
+		type Balance = T::Balance;
 		type Decimal = T::Decimal;
+		type VammConfig = VammConfig;
+		type VammId = T::VammId;
 
 		#[allow(unused_variables)]
-		fn create(info: &Self::VammConfig) -> Result<Self::VammId, DispatchError> {
+		fn create(info: Self::VammConfig) -> Result<Self::VammId, DispatchError> {
 			if let Some(id) = Self::vamm_id() {
 				Ok(id)
 			} else {
