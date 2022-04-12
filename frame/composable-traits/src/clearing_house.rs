@@ -68,7 +68,7 @@ pub trait ClearingHouse {
 	fn open_position(
 		account: &Self::AccountId,
 		market: &Self::MarketId,
-		direction: &Self::Direction,
+		direction: Self::Direction,
 		quote_asset_amount: Self::Balance,
 		base_asset_amount_limit: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;

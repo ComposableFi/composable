@@ -160,7 +160,7 @@ pub mod pallet {
 	//                                           Pallet Types
 	// ----------------------------------------------------------------------------------------------------
 
-	#[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
+	#[derive(Encode, Decode, TypeInfo, Debug, Clone, Copy, PartialEq)]
 	pub enum Direction {
 		Long,
 		Short,
@@ -359,6 +359,8 @@ pub mod pallet {
 		/// Attempted to create a new market but the initial margin ratio is less than or equal to
 		/// the maintenance one
 		InitialMarginRatioLessThanMaintenance,
+		/// Raised when querying a market with an invalid or nonexistent market Id
+		MarketIdNotFound,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -505,7 +507,15 @@ pub mod pallet {
 			quote_asset_amount: T::Balance,
 			base_asset_amount_limit: T::Balance,
 		) -> DispatchResult {
-			todo!()
+			let account = ensure_signed(origin)?;
+			let _ = <Self as ClearingHouse>::open_position(
+				&account,
+				&market,
+				direction,
+				quote_asset_amount,
+				base_asset_amount_limit,
+			)?;
+			Ok(())
 		}
 	}
 
@@ -592,11 +602,13 @@ pub mod pallet {
 		fn open_position(
 			account: &Self::AccountId,
 			market: &Self::MarketId,
-			direction: &Self::Direction,
+			direction: Self::Direction,
 			quote_asset_amount: Self::Balance,
 			base_asset_amount_limit: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			todo!()
+			let market = Self::get_market(&market).ok_or(Error::<T>::MarketIdNotFound)?;
+
+			Ok(0u32.into())
 		}
 	}
 

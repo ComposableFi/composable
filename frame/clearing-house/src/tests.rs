@@ -90,13 +90,14 @@ fn valid_market_config() -> MarketConfig {
 // ----------------------------------------------------------------------------------------------------
 
 trait MarketInitializer {
-	fn init_market(self) -> Self;
+	fn init_market(self, market_id: &mut MarketId) -> Self;
 }
 
 impl MarketInitializer for sp_io::TestExternalities {
-	fn init_market(mut self) -> Self {
+	fn init_market(mut self, market_id: &mut MarketId) -> Self {
 		self.execute_with(|| {
-			<TestPallet as ClearingHouse>::create_market(&valid_market_config()).unwrap();
+			*market_id =
+				<TestPallet as ClearingHouse>::create_market(&valid_market_config()).unwrap();
 		});
 
 		self
@@ -450,6 +451,28 @@ proptest! {
 			);
 		})
 	}
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                            Open Position
+// ----------------------------------------------------------------------------------------------------
+
+#[test]
+fn fails_to_open_position_if_market_id_invalid() {
+	let mut market_id: MarketId = 0;
+
+	ExtBuilder::default().build().init_market(&mut market_id).execute_with(|| {
+		assert_noop!(
+			TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id + 1,
+				Direction::Long,
+				10_000u64.into(),
+				1_000u64.into()
+			),
+			Error::<Runtime>::MarketIdNotFound,
+		);
+	})
 }
 
 // ----------------------------------------------------------------------------------------------------
