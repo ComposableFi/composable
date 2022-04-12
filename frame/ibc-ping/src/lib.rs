@@ -19,7 +19,7 @@ use ibc::{
 	},
 	signer::Signer,
 };
-use scale_info::prelude::string::String;
+use scale_info::prelude::string::{String, ToString};
 use sp_std::{marker::PhantomData, prelude::*, vec};
 
 // Re-export pallet items so that they can be accessed from the crate namespace.
@@ -56,6 +56,7 @@ pub mod pallet {
 	// method.
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	#[pallet::call]
@@ -216,7 +217,7 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 			counterparty_version
 		);
 		let channel_id = channel_id.to_string().as_bytes().to_vec();
-		let _ = Channels::<T>::try_mutate(|val| {
+		let _ = Channels::<T>::try_mutate::<_, Error<T>, _>(|val| {
 			val.push(channel_id);
 			Ok(())
 		});
@@ -231,7 +232,7 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 	) -> Result<(), Ics04Error> {
 		log::info!("Channel open confirmed {:?}, {:?}", channel_id, port_id);
 		let channel_id = channel_id.to_string().as_bytes().to_vec();
-		let _ = Channels::<T>::try_mutate(|val| {
+		let _ = Channels::<T>::try_mutate::<_, Error<T>, _>(|val| {
 			val.push(channel_id);
 			Ok(())
 		});
@@ -246,10 +247,10 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 	) -> Result<(), Ics04Error> {
 		log::info!("Channel close started {:?} {:?}", channel_id, port_id);
 		let channel_id = channel_id.to_string().as_bytes().to_vec();
-		let _ = Channels::<T>::try_mutate(|val| {
+		let _ = Channels::<T>::try_mutate::<_, Error<T>, _>(|val| {
 			let new_val = val
 				.into_iter()
-				.filter_map(|ch| if ch != &&channel_id { Some(ch.clone()) } else { None })
+				.filter_map(|ch| if ch != &channel_id { Some(ch.clone()) } else { None })
 				.collect::<Vec<_>>();
 			*val = new_val;
 			Ok(())
@@ -265,10 +266,10 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 	) -> Result<(), Ics04Error> {
 		log::info!("Channel close confirmed\n ChannelId: {:?}, PortId: {:?}", channel_id, port_id);
 		let channel_id = channel_id.to_string().as_bytes().to_vec();
-		let _ = Channels::<T>::try_mutate(|val| {
+		let _ = Channels::<T>::try_mutate::<_, Error<T>, _>(|val| {
 			let new_val = val
 				.into_iter()
-				.filter_map(|ch| if ch != &&channel_id { Some(ch.clone()) } else { None })
+				.filter_map(|ch| if ch != &channel_id { Some(ch.clone()) } else { None })
 				.collect::<Vec<_>>();
 			*val = new_val;
 			Ok(())
