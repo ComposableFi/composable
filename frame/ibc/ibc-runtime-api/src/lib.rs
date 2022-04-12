@@ -36,7 +36,7 @@ sp_api::decl_runtime_apis! {
 		fn connections() -> Option<QueryConnectionsResponse>;
 
 		/// Returns all connections associated with the given client
-		fn connection_using_client(client_id: Vec<u8>) -> Option<IdentifiedConnection>;
+		fn connection_using_client(client_id: Vec<u8>) -> Option<Vec<IdentifiedConnection>>;
 
 		/// Returns Connection handshake proof
 		fn connection_handshake_proof(client_id: Vec<u8>, conn_id: Vec<u8>) -> Option<ConnectionHandshakeProof>;

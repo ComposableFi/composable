@@ -38,8 +38,6 @@ pub struct ConnectionParams {
 	pub client_id: Vec<u8>,
 	/// Counterparty client id
 	pub counterparty_client_id: Vec<u8>,
-	/// Counterparty connection id
-	pub counterparty_connection_id: Vec<u8>,
 	/// Counter party commitment prefix
 	pub commitment_prefix: Vec<u8>,
 	/// Delay period in nanoseconds
@@ -177,7 +175,6 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	// store_connection_channels
 	#[pallet::storage]
 	/// connection_identifier => Vec<(port_id, channel_id)>
 	pub type ChannelsConnection<T: Config> =
@@ -214,9 +211,9 @@ pub mod pallet {
 		CountedStorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
-	/// client_id => Connection id
+	/// client_id => Vec<Connection_id>
 	pub type ConnectionClient<T: Config> =
-		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
+		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<Vec<u8>>, ValueQuery>;
 
 	#[pallet::storage]
 	/// (port_id, channel_id, sequence) => receipt
@@ -343,8 +340,6 @@ pub mod pallet {
 			let client_id = client_id_from_bytes::<T>(params.client_id)?;
 			let connection_id = connection_id_from_bytes::<T>(params.connnection_id)?;
 			let counterparty_client_id = client_id_from_bytes::<T>(params.counterparty_client_id)?;
-			let counterparty_connection_id =
-				connection_id_from_bytes::<T>(params.counterparty_connection_id)?;
 			let versions = params
 				.versions
 				.into_iter()
@@ -365,11 +360,7 @@ pub mod pallet {
 				.collect::<Result<Vec<_>, Error<T>>>()?;
 			let commitment_prefix: CommitmentPrefix =
 				params.commitment_prefix.try_into().map_err(|_| Error::<T>::DecodingError)?;
-			let counterparty = Counterparty::new(
-				counterparty_client_id,
-				Some(counterparty_connection_id),
-				commitment_prefix,
-			);
+			let counterparty = Counterparty::new(counterparty_client_id, None, commitment_prefix);
 			let delay = core::time::Duration::from_nanos(params.delay_period);
 			let connection_end =
 				ConnectionEnd::new(State::Init, client_id.clone(), counterparty, versions, delay);

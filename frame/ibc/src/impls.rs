@@ -323,11 +323,19 @@ where
 	}
 
 	/// Get all connection states for a client
-	pub fn connection_using_client(client_id: Vec<u8>) -> Result<IdentifiedConnection, Error<T>> {
-		let connection_id = ConnectionClient::<T>::get(client_id);
-		let connection = Connections::<T>::get(connection_id.clone());
+	pub fn connection_using_client(
+		client_id: Vec<u8>,
+	) -> Result<Vec<IdentifiedConnection>, Error<T>> {
+		let connection_ids = ConnectionClient::<T>::get(client_id);
+		let connections = connection_ids
+			.into_iter()
+			.map(|connection_id| IdentifiedConnection {
+				connection_end: Connections::<T>::get(connection_id.clone()),
+				connection_id,
+			})
+			.collect::<Vec<_>>();
 
-		Ok(IdentifiedConnection { connection_id, connection_end: connection })
+		Ok(connections)
 	}
 
 	/// Get client state for client which this channel is bound to
@@ -338,7 +346,7 @@ where
 		for (connection_id, channels) in ChannelsConnection::<T>::iter() {
 			if channels.contains(&(port_id.clone(), channel_id.clone())) {
 				if let Some((client_id, ..)) = ConnectionClient::<T>::iter()
-					.find(|(.., connection)| &connection_id == connection)
+					.find(|(.., connection_ids)| connection_ids.contains(&connection_id))
 				{
 					let client_state = ClientStates::<T>::get(client_id.clone());
 					return Ok(IdentifiedClientState { client_id, client_state })
@@ -643,7 +651,13 @@ where
 
 		let client_id = ConnectionClient::<T>::iter()
 			.find_map(
-				|(client_id, conn)| if conn == connection_id { Some(client_id) } else { None },
+				|(client_id, conns)| {
+					if conns.contains(&connection_id) {
+						Some(client_id)
+					} else {
+						None
+					}
+				},
 			)
 			.ok_or(IbcHandlerError::SendPacketError)?;
 		let client_state = ClientStates::<T>::get(client_id.clone());

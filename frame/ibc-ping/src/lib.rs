@@ -124,7 +124,8 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 		_counterparty: &Counterparty,
 		_version: &Version,
 	) -> Result<(), Ics04Error> {
-		todo!()
+		log::info!("Channel initialised");
+		Ok(())
 	}
 
 	fn on_chan_open_try(
@@ -136,9 +137,10 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 		_channel_id: &ChannelId,
 		_channel_cap: &ChannelCapability,
 		_counterparty: &Counterparty,
-		_counterparty_version: &Version,
+		counterparty_version: &Version,
 	) -> Result<Version, Ics04Error> {
-		todo!()
+		log::info!("Channel initialised");
+		Ok(counterparty_version.clone())
 	}
 
 	fn on_chan_open_ack(
@@ -148,7 +150,8 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 		_channel_id: &ChannelId,
 		_counterparty_version: &Version,
 	) -> Result<(), Ics04Error> {
-		todo!()
+		log::info!("Channel acknowledged");
+		Ok(())
 	}
 
 	fn on_chan_open_confirm(
@@ -157,7 +160,8 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 		_port_id: &PortId,
 		_channel_id: &ChannelId,
 	) -> Result<(), Ics04Error> {
-		todo!()
+		log::info!("Channel open confirmed");
+		Ok(())
 	}
 
 	fn on_chan_close_init(
@@ -166,7 +170,8 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 		_port_id: &PortId,
 		_channel_id: &ChannelId,
 	) -> Result<(), Ics04Error> {
-		todo!()
+		log::info!("Channel close started");
+		Ok(())
 	}
 
 	fn on_chan_close_confirm(
@@ -175,7 +180,8 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 		_port_id: &PortId,
 		_channel_id: &ChannelId,
 	) -> Result<(), Ics04Error> {
-		todo!()
+		log::info!("Channel close confirmed");
+		Ok(())
 	}
 
 	fn on_recv_packet(

@@ -138,11 +138,13 @@ where
 			client_id
 		);
 
-		<ConnectionClient<T>>::insert(
+		ConnectionClient::<T>::try_mutate::<_, _, ICS03Error, _>(
 			client_id.as_bytes().to_vec(),
-			connection_id.as_bytes().to_vec(),
-		);
-		Ok(())
+			|val| {
+				val.push(connection_id.as_bytes().to_vec());
+				Ok(())
+			},
+		)
 	}
 
 	fn increase_connection_counter(&mut self) {

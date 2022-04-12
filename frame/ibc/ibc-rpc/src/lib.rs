@@ -154,7 +154,7 @@ pub trait IbcApi<BlockNumber> {
 		&self,
 		height: u32,
 		client_id: String,
-	) -> Result<IdentifiedConnection>;
+	) -> Result<Vec<IdentifiedConnection>>;
 
 	/// Generate proof for connection handshake
 	#[rpc(name = "ibc_generateConnectionHandshakeProof")]
@@ -599,7 +599,7 @@ where
 		&self,
 		height: u32,
 		client_id: String,
-	) -> Result<IdentifiedConnection> {
+	) -> Result<Vec<IdentifiedConnection>> {
 		let api = self.client.runtime_api();
 		let block_hash = self
 			.client
@@ -609,24 +609,29 @@ where
 			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
-		let result: ibc_primitives::IdentifiedConnection = api
+		let result: Vec<ibc_primitives::IdentifiedConnection> = api
 			.connection_using_client(&at, client_id.as_bytes().to_vec())
 			.ok()
 			.flatten()
 			.ok_or(runtime_error_into_rpc_error("Failed to fetch connections"))?;
-		let connection_id = String::from_utf8(result.connection_id)
-			.map_err(|_| runtime_error_into_rpc_error("Failed to decode connection id"))?;
-		let connection_id = ConnectionId::from_str(&connection_id)
-			.map_err(|_| runtime_error_into_rpc_error("Failed to decode connection id"))?;
-		let connection_end = ConnectionEnd::decode_vec(&result.connection_end)
-			.map_err(|_| runtime_error_into_rpc_error("Failed to decode connection end"))?;
-		let identified_connection =
-			ibc::core::ics03_connection::connection::IdentifiedConnectionEnd::new(
-				connection_id,
-				connection_end,
-			);
-		let identified_connection: IdentifiedConnection = identified_connection.into();
-		Ok(identified_connection)
+		result
+			.into_iter()
+			.map(|ident_conn| {
+				let connection_id = String::from_utf8(ident_conn.connection_id)
+					.map_err(|_| runtime_error_into_rpc_error("Failed to decode connection id"))?;
+				let connection_id = ConnectionId::from_str(&connection_id)
+					.map_err(|_| runtime_error_into_rpc_error("Failed to decode connection id"))?;
+				let connection_end = ConnectionEnd::decode_vec(&ident_conn.connection_end)
+					.map_err(|_| runtime_error_into_rpc_error("Failed to decode connection end"))?;
+				let identified_connection =
+					ibc::core::ics03_connection::connection::IdentifiedConnectionEnd::new(
+						connection_id,
+						connection_end,
+					);
+				let identified_connection: IdentifiedConnection = identified_connection.into();
+				Ok(identified_connection)
+			})
+			.collect::<Result<Vec<_>>>()
 	}
 
 	fn generate_conn_handshake_proof(

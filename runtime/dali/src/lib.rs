@@ -1110,9 +1110,9 @@ construct_runtime!(
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 
-		// IBC
-		Ibc: pallet_ibc::{Pallet, Call, Storage, Event<T>} = 101,
-		IbcPing: pallet_ibc_ping::{Pallet, Call, Storage, Event<t>} = 102
+		// IBC Support, pallet-ibc should be the last in the list of pallets that use the ibc protocol
+		IbcPing: pallet_ibc_ping::{Pallet, Call, Storage, Event<t>} = 101,
+		Ibc: pallet_ibc::{Pallet, Call, Storage, Event<T>} = 102
 	}
 );
 
@@ -1426,7 +1426,7 @@ impl_runtime_apis! {
 			Ibc::connections().ok()
 		}
 
-		fn connection_using_client(client_id: Vec<u8>) -> Option<ibc_primitives::IdentifiedConnection>{
+		fn connection_using_client(client_id: Vec<u8>) -> Option<Vec<ibc_primitives::IdentifiedConnection>>{
 			Ibc::connection_using_client(client_id).ok()
 		}
 
