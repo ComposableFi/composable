@@ -95,6 +95,7 @@ pub mod pallet {
 		traits::{AccountIdConversion, BlockNumberProvider, Convert, One, Zero},
 		ArithmeticError, FixedPointNumber, Permill,
 	};
+	use sp_std::vec::Vec;
 
 	#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
 	pub enum PoolInitConfiguration<AccountId, AssetId, BlockNumber> {

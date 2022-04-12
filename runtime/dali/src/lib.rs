@@ -28,7 +28,7 @@ use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
 	BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, MosaicRemoteAssetId,
 	MultiExistentialDeposits, NativeExistentialDeposit, Signature, AVERAGE_ON_INITIALIZE_RATIO,
-	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use cumulus_primitives_core::ParaId;
@@ -1022,6 +1022,7 @@ parameter_types! {
   pub LbpMaxSaleDuration: BlockNumber = 30 * DAYS;
   pub LbpMaxInitialWeight: Permill = Permill::from_percent(95);
   pub LbpMinFinalWeight: Permill = Permill::from_percent(5);
+  pub TWAPInterval: u64 = MILLISECS_PER_BLOCK * 10;
 }
 
 impl pablo::Config for Runtime {
@@ -1039,6 +1040,9 @@ impl pablo::Config for Runtime {
 	type LbpMaxInitialWeight = LbpMaxInitialWeight;
 	type LbpMinFinalWeight = LbpMinFinalWeight;
 	type PoolCreationOrigin = EnsureSigned<Self::AccountId>;
+	type EnableTwapOrigin = EnsureRootOrHalfCouncil;
+	type TWAPInterval = TWAPInterval;
+	type Time = Timestamp;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
 }
 
