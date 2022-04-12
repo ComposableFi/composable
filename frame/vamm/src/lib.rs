@@ -154,6 +154,7 @@ pub mod pallet {
 	type TimestampOf<T> = <T as Config>::Timestamp;
 	type VammIdOf<T> = <T as Config>::VammId;
 	type VammStateOf<T> = VammState<BalanceOf<T>, TimestampOf<T>>;
+	type VammConfigOf<T> = VammConfig<BalanceOf<T>>;
 
 	/// Represents the direction a of a position.
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
@@ -270,7 +271,7 @@ pub mod pallet {
 	impl<T: Config> Vamm for Pallet<T> {
 		type VammId = VammIdOf<T>;
 		type Balance = BalanceOf<T>;
-		type VammConfig = VammConfig<Self::Balance>;
+		type VammConfig = VammConfigOf<T>;
 		type Decimal = T::Decimal;
 
 		/// Creates a new virtual automated market maker.
@@ -314,7 +315,7 @@ pub mod pallet {
 		/// `O(1)`
 
 		#[transactional]
-		fn create(config: Self::VammConfig) -> Result<Self::VammId, DispatchError> {
+		fn create(config: &Self::VammConfig) -> Result<Self::VammId, DispatchError> {
 			// TODO: (Matheus)
 			// How to ensure that the caller has the right privileges?
 			// (eg. How to ensure the caller is the Clearing House, and not anyone else?)
@@ -340,7 +341,7 @@ pub mod pallet {
 			})
 		}
 
-		fn get_twap(vamm: &Self::VammId) -> Result<Self::Decimal, DispatchError> {
+		fn get_twap(vamm_id: &Self::VammId) -> Result<Self::Decimal, DispatchError> {
 			todo!()
 		}
 	}

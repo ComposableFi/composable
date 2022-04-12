@@ -98,7 +98,7 @@ pub mod pallet {
 		type VammId = T::VammId;
 
 		#[allow(unused_variables)]
-		fn create(info: Self::VammConfig) -> Result<Self::VammId, DispatchError> {
+		fn create(config: &Self::VammConfig) -> Result<Self::VammId, DispatchError> {
 			if let Some(id) = Self::vamm_id() {
 				Ok(id)
 			} else {
