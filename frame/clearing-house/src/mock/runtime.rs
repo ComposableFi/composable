@@ -224,6 +224,7 @@ impl DeFiComposableConfig for Runtime {
 }
 
 parameter_types! {
+	pub const MaxPositions: u32 = 5;
 	pub const TestPalletId: PalletId = PalletId(*b"test_pid");
 }
 
@@ -231,6 +232,7 @@ impl clearing_house::Config for Runtime {
 	type Event = Event;
 	type WeightInfo = ();
 	type MarketId = MarketId;
+	type MaxPositions = MaxPositions;
 	type Decimal = Decimal;
 	type UnixTime = Timestamp;
 	type Vamm = Vamm;

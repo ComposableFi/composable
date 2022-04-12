@@ -99,6 +99,7 @@ pub mod pallet {
 	};
 	use frame_support::{
 		pallet_prelude::*,
+		storage::bounded_vec::BoundedVec,
 		traits::{tokens::fungibles::Transfer, GenesisBuild, UnixTime},
 		Blake2_128Concat, PalletId, Twox64Concat,
 	};
@@ -124,8 +125,10 @@ pub mod pallet {
 	pub trait Config: DeFiComposableConfig + frame_system::Config {
 		/// Event type emitted by this pallet. Depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
 		/// Weight information for this pallet's extrinsics
 		type WeightInfo: WeightInfo;
+
 		/// The market ID type for this pallet.
 		type MarketId: CheckedAdd
 			+ One
@@ -136,20 +139,29 @@ pub mod pallet {
 			+ Clone
 			+ PartialEq
 			+ Debug;
+
+		/// The maximum number of open positions (one for each market) for a trader
+		type MaxPositions: Get<u32>;
+
 		/// Signed decimal fixed point number.
 		type Decimal: FullCodec + MaxEncodedLen + TypeInfo + FixedPointNumber;
+
 		/// Implementation for querying the current Unix timestamp
 		type UnixTime: UnixTime;
+
 		/// Virtual Automated Market Maker pallet implementation
 		type Vamm: Vamm<Balance = Self::Balance, Decimal = Self::Decimal>;
+
 		/// Price feed (in USDT) Oracle pallet implementation
 		type Oracle: Oracle<AssetId = Self::MayBeAssetId, Balance = Self::Balance>;
+
 		/// Pallet implementation of asset transfers.
 		type Assets: Transfer<
 			Self::AccountId,
 			Balance = Self::Balance,
 			AssetId = Self::MayBeAssetId,
 		>;
+
 		/// The id used as the `AccountId` of the clearing house. This should be unique across all
 		/// pallets to avoid name collisions with other pallets and clearing houses.
 		#[pallet::constant]
@@ -256,18 +268,12 @@ pub mod pallet {
 	#[pallet::getter(fn get_margin)]
 	pub type AccountsMargin<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, T::Balance>;
 
-	/// Maps [AccountId](frame_system::Config::AccountId) and [MarketId](Config::MarketId) to its
-	/// respective [Position](Position), if it exists.
+	/// Maps [AccountId](frame_system::Config::AccountId) to its respective [Positions](Position),
+	/// as a vector.
 	#[pallet::storage]
 	#[pallet::getter(fn get_position)]
-	pub type Positions<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		T::AccountId,
-		Twox64Concat,
-		T::MarketId,
-		PositionOf<T>,
-	>;
+	pub type Positions<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, BoundedVec<PositionOf<T>, T::MaxPositions>>;
 
 	/// The number of markets, also used to generate the next market identifier.
 	///
