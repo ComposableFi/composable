@@ -9,6 +9,7 @@ import {
   txBondedFinanceCancelFailureTest,
   txBondedFinanceCancelSuccessTest, txBondedFinanceCancelSudoSuccessTest
 } from "@composabletests/tests/bondedFinance/testHandlers/cancelTests";
+import {mintAssetsToWallet} from "@composable/utils/mintingHelper";
 
 
 /**
@@ -30,18 +31,23 @@ describe('tx.bondedFinance Tests', function() {
     // Timeout set to 2 minutes
     this.timeout(2*60*1000);
     // #1 Create offer using Alice's wallet.
+    before('mint assets into the wallet', async function(){
+      this.timeout(2*60*1000);
+      await mintAssetsToWallet(walletAlice, walletAlice, [4]);
+      await mintAssetsToWallet(walletBob, walletAlice, [4]);
+    });
     it('Can create a new offer', async function () {
       if (!testConfiguration.enabledTests.offer_bond__success.create1)
         this.skip();
       const requestParameters = {
         beneficiary: walletAlice.publicKey,
-        asset: api.createType('u128', 1),
-        bondPrice: api.consts.bondedFinance.stake,
+        asset: api.createType('u128', 4),
+        bondPrice: api.createType('u128', 100000000000000),
         nbOfBonds: api.createType('u128', 10),
         maturity: { Finite: { returnIn: api.createType('u32', 16) } },
         reward: {
-          asset: api.createType('u128', 1),
-          amount: api.consts.bondedFinance.minReward,
+          asset: api.createType('u128', 4),
+          amount: api.createType('u128', 1100000000000000),
           maturity: api.createType('u32', 1)
         }
       };
@@ -56,13 +62,13 @@ describe('tx.bondedFinance Tests', function() {
         this.skip();
       const requestParameters = {
         beneficiary: walletBob.publicKey,
-        asset: api.createType('u128', 1),
-        bondPrice: api.consts.bondedFinance.stake,
+        asset: api.createType('u128', 4),
+        bondPrice: api.createType('u128', 100000000000000),
         nbOfBonds: api.createType('u128', 10),
         maturity: { Finite: { returnIn: api.createType('u32', 16) } },
         reward: {
           asset: api.createType('u128', 1),
-          amount: api.consts.bondedFinance.minReward,
+          amount: api.createType('u128', 1100000000000000),
           maturity: api.createType('u32', 1)
         }
       };
@@ -100,20 +106,18 @@ describe('tx.bondedFinance Tests', function() {
         this.skip();
       const requestParameters = {
         beneficiary: walletAlice.publicKey,
-        asset: api.createType('u128', 1),
+        asset: api.createType('u128', 4),
         bondPrice: api.createType('u128', api.consts.bondedFinance.stake.toNumber()-1),
         nbOfBonds: api.createType('u128', 10),
         maturity: {Finite: {returnIn: api.createType('u32', 16)}},
         reward: {
-          asset: api.createType('u128', 1),
+          asset: api.createType('u128', 4),
           amount: api.consts.bondedFinance.minReward,
           maturity: api.createType('u32', 1)
         }
       };
-      const {data: [result],} = await txBondedFinanceOfferFailureTest(walletAlice, requestParameters);
-      // !Note: Doesn't provide failure message, and instead returns the same result as a successful call.
-      // E.g. on a clean chain it returns `3`, because it would have been the third offer.
-      expect(result.toNumber()).to.be.a('Number');
+      await txBondedFinanceOfferFailureTest(walletAlice, requestParameters).catch(e=>
+          expect(e).to.be.an('Error'));
     });
 
     // #5 Alice can't create offer with the reward amount too low.
@@ -122,18 +126,18 @@ describe('tx.bondedFinance Tests', function() {
         this.skip();
       const requestParameters = {
         beneficiary: walletAlice.publicKey,
-        asset: api.createType('u128', 1),
+        asset: api.createType('u128', 4),
         bondPrice: api.consts.bondedFinance.stake,
         nbOfBonds: api.createType('u128', 10),
         maturity: {Finite: {returnIn: api.createType('u32', 16)}},
         reward: {
-          asset: api.createType('u128', 1),
+          asset: api.createType('u128', 4),
           amount: api.createType('u128', api.consts.bondedFinance.minReward.toNumber()-1),
           maturity: api.createType('u32', 1)
         }
       };
-      const {data: [result],} = await txBondedFinanceOfferFailureTest(walletAlice, requestParameters);
-      expect(result.toNumber()).to.be.a('number');
+      await txBondedFinanceOfferFailureTest(walletAlice, requestParameters).catch(e=>
+          expect(e).to.be.an('Error'));
     });
 
     // #5 Alice can't create offer with the reward amount too low.
@@ -142,7 +146,7 @@ describe('tx.bondedFinance Tests', function() {
         this.skip();
       const requestParameters = {
         beneficiary: walletAlice.publicKey,
-        asset: api.createType('u128', 1),
+        asset: api.createType('u128', 4),
         bondPrice: api.consts.bondedFinance.stake,
         nbOfBonds: api.createType('u128', 10),
         maturity: {Finite: {returnIn: api.createType('u32', 16)}},
@@ -152,8 +156,8 @@ describe('tx.bondedFinance Tests', function() {
           maturity: api.createType('u32', 1)
         }
       };
-      const {data: [result],} = await txBondedFinanceOfferFailureTest(walletAlice, requestParameters);
-      expect(result.toNumber()).to.be.a('number');
+      await txBondedFinanceOfferFailureTest(walletAlice, requestParameters).catch(e=>
+          expect(e).to.be.an('Error'));
     });
   });
 
@@ -164,13 +168,13 @@ describe('tx.bondedFinance Tests', function() {
     if (!testConfiguration.enabledTests.cancel_failure.enabled)
       return;
     // Timeout set to 2 minutes
-    this.timeout(2*60*1000);
+    this.timeout(2 * 60 * 1000);
     it('Should not be able to cancel offer that doesn\'t exist', async function () {
       if (!testConfiguration.enabledTests.cancel_failure.cancel_offer_not_exist)
         this.skip();
       const offerId = 1337;
-      const { data: [result], } = await txBondedFinanceCancelFailureTest(walletAlice, offerId);
-      expect(result.toNumber()).to.be.a('number');
+      await txBondedFinanceCancelFailureTest(walletAlice, offerId).catch(e =>
+          expect(e).to.be.an('Error'));
     });
   });
 
