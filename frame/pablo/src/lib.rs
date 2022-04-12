@@ -518,7 +518,9 @@ pub mod pallet {
 					|prev_price_cumulative| -> Result<(), DispatchError> {
 						let (base_price_cumulative, quote_price_cumulative) =
 							update_price_cumulative_state::<T>(pool_id, prev_price_cumulative)?;
-						let twap_update_res = TWAPState::<T>::try_mutate(
+						// if update_twap_state fails, return Err() so effect of
+						// update_price_cumulative_state is also gets reverted.
+						TWAPState::<T>::try_mutate(
 							pool_id,
 							|prev_twap_state| -> Result<(), DispatchError> {
 								update_twap_state::<T>(
@@ -527,10 +529,7 @@ pub mod pallet {
 									prev_twap_state,
 								)
 							},
-						);
-						// if update_twap_state fails, return Err() so effect of
-						// update_price_cumulative_state is also gets reverted.
-						twap_update_res
+						)
 					},
 				);
 				if result.is_ok() {
