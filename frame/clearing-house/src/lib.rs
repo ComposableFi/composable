@@ -422,13 +422,7 @@ pub mod pallet {
 		/// ![](http://www.plantuml.com/plantuml/svg/FOux3i8m40LxJW47IBQdYeJ4FJQRHsnXhwFzYEiJKL2DPgfPFDWYUxlSgahB3MdjMY8ElnCPV-QzHiar7IP30ngpZ4wFqO_Xl3OyAybV22u5HY_Z3f86jghxL4OwQAkydzr931oOEjiRCH-DzNUmGBUJNm00)
 		///
 		/// ## Parameters
-		/// - `asset`: Asset id of the underlying for the derivatives market
-		/// - `vamm_params`: Parameters for creating and initializing the vAMM for price discovery
-		/// - `margin_ratio_initial`: Minimum margin ratio for opening a new position
-		/// - `margin_ratio_maintenance`: Margin ratio below which liquidations can occur
-		/// - `funding_frequency`: Time span between each funding rate update
-		/// - `funding_period`: Period of time over which funding (the difference between mark and
-		///   index prices) gets paid.
+		/// - `config`: specification for market creation
 		///
 		/// ## Assumptions or Requirements
 		/// * The underlying must have a stable price feed via another pallet
