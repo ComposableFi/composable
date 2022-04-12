@@ -42,11 +42,13 @@
 //!
 //! - [`add_margin`](Call::add_margin)
 //! - [`create_market`](Call::create_market)
+//! - [`open_position`](Call::open_position)
 //!
 //! ### Implemented Functions
 //!
 //! - [`add_margin`](pallet/struct.Pallet.html#method.add_margin-1)
 //! - [`create_market`](pallet/struct.Pallet.html#method.create_market-1)
+//! - [`open_position`](pallet/struct.Pallet.html#method.open_position-1)
 //! - [`funding_rate`](Pallet::funding_rate)
 //! - [`unrealized_funding`](Pallet::unrealized_funding)
 //!
@@ -157,6 +159,12 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Pallet Types
 	// ----------------------------------------------------------------------------------------------------
+
+	#[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
+	pub enum Direction {
+		Long,
+		Short,
+	}
 
 	/// Stores the user's position in a particular market
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug)]
@@ -444,6 +452,17 @@ pub mod pallet {
 			let _ = <Self as ClearingHouse>::create_market(&config)?;
 			Ok(())
 		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::open_position())]
+		pub fn open_position(
+			origin: OriginFor<T>,
+			market: T::MarketId,
+			direction: Direction,
+			quote_asset_amount: T::Balance,
+			base_asset_amount_limit: T::Balance,
+		) -> DispatchResult {
+			todo!()
+		}
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -454,6 +473,7 @@ pub mod pallet {
 		type AccountId = T::AccountId;
 		type AssetId = AssetIdOf<T>;
 		type Balance = T::Balance;
+		type Direction = Direction;
 		type MarketId = T::MarketId;
 		type MarketConfig = MarketConfigOf<T>;
 
@@ -523,6 +543,16 @@ pub mod pallet {
 				});
 				Ok(market_id)
 			})
+		}
+
+		fn open_position(
+			account: &Self::AccountId,
+			market: &Self::MarketId,
+			direction: &Self::Direction,
+			quote_asset_amount: Self::Balance,
+			base_asset_amount_limit: Self::Balance,
+		) -> Result<Self::Balance, DispatchError> {
+			todo!()
 		}
 	}
 

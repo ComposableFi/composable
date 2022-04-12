@@ -15,6 +15,8 @@ pub trait ClearingHouse {
 	type AssetId;
 	/// The balance type for an account
 	type Balance;
+	/// The direction type for a position. Usually to disambiguate long and short positions
+	type Direction;
 	/// The identifier type for each market
 	type MarketId;
 	/// Specification for market creation
@@ -24,8 +26,13 @@ pub trait ClearingHouse {
 	///
 	/// Assumes margin account is unique to each wallet address, i.e., there's only one margin
 	/// account per user.
+	///
+	/// ## Parameters
+	/// - `account`: the trader's margin account Id
+	/// - `asset`: the type of asset to deposit as collateral
+	/// - `amount`: the amount of collateral
 	fn add_margin(
-		acc: &Self::AccountId,
+		account: &Self::AccountId,
 		asset: Self::AssetId,
 		amount: Self::Balance,
 	) -> Result<(), DispatchError>;
@@ -38,6 +45,33 @@ pub trait ClearingHouse {
 	/// ## Returns
 	/// The new market's id, if successful
 	fn create_market(config: &Self::MarketConfig) -> Result<Self::MarketId, DispatchError>;
+
+	/// Open a position in a market
+	///
+	/// This may result in the following outcomes:
+	/// * Creation of a whole new position in the market, if one didn't already exist
+	/// * Increase in the size of an existing position, if the trade's direction matches the existion position's one
+	/// * Decrease in the size of an existing position, if the trade's direction is counter to the existion position's one and its magnitude is smaller than the existing postion's size
+	/// * Closing of the existing position, if the trade's direction is counter to the existion position's one and its magnitude is approximately the existing postion's size
+	/// * Reversing of the existing position, if the trade's direction is counter to the existion position's one and its magnitude is greater than the existing postion's size
+	///
+	/// ## Parameters
+	/// - `account`: the trader's margin account Id
+	/// - `market`: the perpetuals market Id to open a position in
+	/// - `direction`: whether to long or short the base asset
+	/// - `quote_asset_amount`: the amount of exposure to the base asset in quote asset value
+	/// - `base_asset_amount_limit`: the minimum absolute amount of base asset to add to the
+	///   position. Prevents slippage
+	///
+	/// ## Returns
+	/// The absolute amount of base asset exchanged
+	fn open_position(
+		account: &Self::AccountId,
+		market: &Self::MarketId,
+		direction: &Self::Direction,
+		quote_asset_amount: Self::Balance,
+		base_asset_amount_limit: Self::Balance,
+	) -> Result<Self::Balance, DispatchError>;
 }
 
 /// Exposes functionality for querying funding-related quantities of synthetic instruments
