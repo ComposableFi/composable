@@ -1,6 +1,8 @@
 # Bonded Finance
 
-A pallet providing means of submitting and maintaining bond offers.
+*A pallet providing means of submitting and maintaining bond offers.*
+
+---
 
 ## Overview
 

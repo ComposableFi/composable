@@ -3,10 +3,6 @@
 - [👋 Introduction](introduction.md)
 - [💻 Developer Guides](./developer-guides.md)
     - [Composable SDK](./developer-guides/composable-sdk.md)
-    - [Pallet Overviews](./developer-guides/pallet-overviews.md)
-        - [Bonded Finance](./developer-guides/pallet-overviews/bonded-finance.md)
-        - [Crowdloan Rewards](./developer-guides/pallet-overviews/crowdloan-rewards.md)
-        - [Mosaic](./developer-guides/pallet-overviews/mosaic.md)
 
 # 💿  PRODUCTS
 - [Technical Stack Overview](./products/technical-stack-overview.md)
@@ -88,6 +84,11 @@
 # 🩺 AUDITS AND FIXES
 - [Audit Results, Recommendations, and Remediations](./audits/audit-results-recommendations-and-remediations.md)
 - [Code Fixes](./audits/code-fixes.md)
+
+# 🎨 PALLETS AND INTEGRATION GUIDES
+- [crowdloan-rewards](./pallets/crowdloan-rewards.md)
+- [bonded-finance](./pallets/bonded-finance.md)
+- [mosaic](./pallets/mosaic.md)
 
 # ❓ FAQS
 - [FAQs](./faqs/faqs.md)
