@@ -493,12 +493,12 @@ proptest! {
 
 proptest! {
 	#[test]
-	fn funding_owed_query_leaves_storage_intact(
+	fn unrealized_funding_query_leaves_storage_intact(
 		market in any_market(), position in any_position()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_storage_noop!(
-				assert_ok!(<TestPallet as Instruments>::funding_owed(&market, &position))
+				assert_ok!(<TestPallet as Instruments>::unrealized_funding(&market, &position))
 			);
 		})
 	}
@@ -506,7 +506,7 @@ proptest! {
 
 proptest! {
 	#[test]
-	fn funding_owed_is_nonzero_iff_cum_rates_not_equal(
+	fn unrealized_funding_is_nonzero_iff_cum_rates_not_equal(
 		market in any_market(),
 		market_id in any::<MarketId>(),
 		base_asset_amount in bounded_decimal(),
@@ -521,7 +521,7 @@ proptest! {
 				last_cum_funding: market.cum_funding_rate + cum_funding_delta
 			};
 
-			let result = <TestPallet as Instruments>::funding_owed(&market, &position).unwrap();
+			let result = <TestPallet as Instruments>::unrealized_funding(&market, &position).unwrap();
 
 			assert_eq!(cum_funding_delta.is_zero(), result.is_zero());
 		})

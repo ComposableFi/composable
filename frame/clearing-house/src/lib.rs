@@ -48,7 +48,7 @@
 //! - [`add_margin`](pallet/struct.Pallet.html#method.add_margin-1)
 //! - [`create_market`](pallet/struct.Pallet.html#method.create_market-1)
 //! - [`funding_rate`](Pallet::funding_rate)
-//! - [`funding_owed`](Pallet::funding_owed)
+//! - [`unrealized_funding`](Pallet::unrealized_funding)
 //!
 //! ## Usage
 //!
@@ -551,7 +551,7 @@ pub mod pallet {
 			Ok(rate)
 		}
 
-		fn funding_owed(
+		fn unrealized_funding(
 			market: &Self::Market,
 			position: &Self::Position,
 		) -> Result<Self::Decimal, DispatchError> {

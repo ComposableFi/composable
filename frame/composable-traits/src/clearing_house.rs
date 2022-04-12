@@ -44,7 +44,7 @@ pub trait ClearingHouse {
 ///
 /// Provides functions for:
 /// * querying the current funding rate for a market
-/// * computing the funding payments owed by a position
+/// * computing a position's unrealized funding payments
 /// * updating the cumulative funding rate of a market
 pub trait Instruments {
 	/// Data relating to a derivatives market
@@ -65,19 +65,22 @@ pub trait Instruments {
 	/// The current funding rate as a signed decimal number
 	fn funding_rate(market: &Self::Market) -> Result<Self::Decimal, DispatchError>;
 
-	/// Computes the funding owed due to a particular position in a market
+	/// Computes a position's unrealized funding payments
 	///
-	/// The funding owed may be positive or negative. In the former case, the position's owner has a
-	/// debt to its counterparty (e.g., the derivative writer, the protocol, or automated market
-	/// maker). The reverse is true in the latter case.
+	/// The unrealized funding may be positive or negative. In the former case, the position's owner
+	/// has a 'debt' to its counterparty (e.g., the derivative writer, the protocol, or automated
+	/// market maker). The reverse is true in the latter case.
+	///
+	/// Note that this is similar to unrealized PnL, in that market conditions may change and a
+	/// previously negative unrealized funding can turn positive.
 	///
 	/// ## Parameters
 	/// * `market`: the derivatives market data
 	/// * `position`: the position in said market
 	///
 	/// ## Returns
-	/// The funding owed by the position's owner as a signed decimal number
-	fn funding_owed(
+	/// The position's unrealized funding payments as a signed decimal number
+	fn unrealized_funding(
 		market: &Self::Market,
 		position: &Self::Position,
 	) -> Result<Self::Decimal, DispatchError>;
