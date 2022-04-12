@@ -15,7 +15,7 @@ use sp_std::fmt::Debug;
 pub trait Vamm {
 	/// The balance type for an account.
 	type Balance;
-
+  
 	/// Signed fixed point number implementation
 	type Decimal: FixedPointNumber;
 
