@@ -61,6 +61,10 @@
 //! - [`Clearing House Pallet`](../clearing_house/index.html)
 //!
 //! <!-- Original author: @Cardosaum -->
+
+// Ensure we're `no_std` when compiling for Wasm.
+#![cfg_attr(not(feature = "std"), no_std)]
+// Allow some linters for tests.
 #![cfg_attr(
 	not(test),
 	warn(
@@ -71,9 +75,9 @@
 		clippy::unwrap_used,
 		clippy::panic
 	)
-)] // allow in tests
+)]
+// Specify linters to VAMM Pallet.
 #![warn(clippy::unseparated_literal_suffix)]
-#![cfg_attr(not(feature = "std"), no_std)]
 #![deny(
 	dead_code,
 	bad_style,
