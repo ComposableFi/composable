@@ -20,6 +20,16 @@ pub trait Vamm {
 	/// ## Returns
 	/// The identifier of the newly created vamm.
 	fn create(config: VammConfig<Self::Balance>) -> Result<Self::VammId, DispatchError>;
+	fn get_price(
+		vamm_id: Self::VammId,
+		asset_type: AssetType,
+	) -> Result<Self::Balance, DispatchError>;
+}
+
+/// Distinguish between the two assets in a vamm.
+pub enum AssetType {
+	BaseAsset,
+	QuoteAsset,
 }
 
 /// Specify a common encapsulation layer for the [`create`](Vamm::create) function.

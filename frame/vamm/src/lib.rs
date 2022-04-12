@@ -77,8 +77,9 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	use codec::{Codec, FullCodec};
-	use composable_traits::vamm::{Vamm, VammConfig};
+	use composable_traits::vamm::{AssetType, Vamm, VammConfig};
 	use frame_support::{pallet_prelude::*, sp_std::fmt::Debug, transactional, Blake2_128Concat};
+	use sp_arithmetic::traits::Unsigned;
 	use sp_runtime::{
 		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Zero},
 		ArithmeticError,
@@ -115,6 +116,7 @@ pub mod pallet {
 			+ Parameter
 			+ PartialEq
 			+ TypeInfo
+			+ Unsigned
 			+ Zero;
 
 		/// Timestamp to be used for twap calculations and market closing.
@@ -140,6 +142,7 @@ pub mod pallet {
 			+ MaxEncodedLen
 			+ Ord
 			+ Parameter
+			+ Unsigned
 			+ Zero;
 	}
 
@@ -228,6 +231,10 @@ pub mod pallet {
 		QuoteAssetReserveIsZero,
 		/// Tried to set `peg_multiplier` to zero.
 		PegMultiplierIsZero,
+		/// Tried to access an invalid [VammId](Config::VammId).
+		VammDoesNotExist,
+		/// Tried to retrieve a Vamm but the function failed.
+		FailToRetrieveVamm,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -307,7 +314,6 @@ pub mod pallet {
 		///
 		/// # Runtime
 		/// `O(1)`
-
 		#[transactional]
 		fn create(config: VammConfig<BalanceOf<T>>) -> Result<Self::VammId, DispatchError> {
 			// TODO: (Matheus)
@@ -333,6 +339,33 @@ pub mod pallet {
 
 				Ok(id)
 			})
+		}
+
+		/// Get the current price of asset in vamm. One can query either quote or base asset.
+		fn get_price(
+			vamm_id: VammIdOf<T>,
+			asset_type: AssetType,
+		) -> Result<BalanceOf<T>, DispatchError> {
+			// Requested vamm must exist.
+			ensure!(VammMap::<T>::contains_key(vamm_id), Error::<T>::VammDoesNotExist);
+
+			let vamm_state = VammMap::<T>::get(vamm_id).ok_or(Error::<T>::FailToRetrieveVamm)?;
+
+			match asset_type {
+				AssetType::BaseAsset => Ok(vamm_state
+					.base_asset_reserves
+					.checked_mul(&vamm_state.peg_multiplier)
+					.ok_or(ArithmeticError::Overflow)?
+					.checked_div(&vamm_state.quote_asset_reserves)
+					.ok_or(ArithmeticError::Overflow)?),
+
+				AssetType::QuoteAsset => Ok(vamm_state
+					.quote_asset_reserves
+					.checked_mul(&vamm_state.peg_multiplier)
+					.ok_or(ArithmeticError::Overflow)?
+					.checked_div(&vamm_state.base_asset_reserves)
+					.ok_or(ArithmeticError::Overflow)?),
+			}
 		}
 	}
 
