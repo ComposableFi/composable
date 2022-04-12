@@ -8,5 +8,6 @@ pub use num_traits::{One, Zero};
 // it is like std defaults imports
 pub use sp_std::prelude::*;
 
+// cumulus based pallet default
 pub use frame_support::pallet_prelude::*;
 pub use frame_system::pallet_prelude::*;

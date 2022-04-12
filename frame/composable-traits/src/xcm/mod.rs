@@ -74,7 +74,7 @@ impl<Parameters: Encode> XcmCumulusDispatch<Parameters> {
 }
 
 /// The actualy binary data dispatched into `Call`.
-/// Assets to be liqudatied was moved with `xcm::latest::Instruction::TransferReserveAsset` before
+/// Assets to be liquidated was moved with `xcm::latest::Instruction::TransferReserveAsset` before
 /// in same XCM message.
 #[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct XcmSellRequest {
@@ -127,7 +127,7 @@ pub struct SellOrderResponse {
 	pub body: SellResponse,
 }
 
-// Nex relation must hold:
+// Next relation must hold:
 // Sell minimal price  <= initial price <= final price
 #[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub enum SellResponse {

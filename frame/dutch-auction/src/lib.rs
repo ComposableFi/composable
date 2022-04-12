@@ -174,10 +174,10 @@ pub mod pallet {
 		RequestedOrderDoesNotExists,
 		OrderParametersIsInvalid,
 		TakeParametersIsInvalid,
-		TakeLimitDoesNotSatisfiesOrder,
+		TakeLimitDoesNotSatisfyOrder,
 		OrderNotFound,
 		TakeOrderDidNotHappen,
-		NotEnoughNativeCurrentyToPayForAuction,
+		NotEnoughNativeCurrencyToPayForAuction,
 		/// errors trying to decode and parse XCM input
 		XcmCannotDecodeRemoteParametersToLocalRepresentations,
 		XcmCannotFindLocalIdentifiersAsDecodedFromRemote,
@@ -260,10 +260,9 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Inserts or replaces auction configuration.
+		/// Already running auctions are not updated.
 		#[pallet::weight(T::WeightInfo::add_configuration())]
-
-		/// adds configuration of updates in place
-		/// already running acutions are not updated
 		pub fn add_configuration(
 			origin: OriginFor<T>,
 			configuration_id: ConfigurationId,
@@ -413,10 +412,7 @@ pub mod pallet {
 			ensure!(take.is_valid(), Error::<T>::TakeParametersIsInvalid,);
 			let order = <SellOrders<T>>::try_get(order_id)
 				.map_err(|_x| Error::<T>::RequestedOrderDoesNotExists)?;
-			ensure!(
-				order.order.take.limit <= take.limit,
-				Error::<T>::TakeLimitDoesNotSatisfiesOrder,
-			);
+			ensure!(order.order.take.limit <= take.limit, Error::<T>::TakeLimitDoesNotSatisfyOrder,);
 			let limit = order.order.take.limit;
 			// may consider storing calculation results within single block, so that finalize does
 			// not recalculates
