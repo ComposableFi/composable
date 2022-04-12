@@ -457,6 +457,18 @@ pub mod pallet {
 		///
 		/// # Overview
 		///
+		/// This may result in the following outcomes:
+		/// * Creation of a whole new position in the market, if one didn't already exist
+		/// * Increase in the size of an existing position, if the trade's direction matches the
+		///   existion position's one
+		/// * Decrease in the size of an existing position, if the trade's direction is counter to
+		///   the existion position's one and its magnitude is smaller than the existing postion's
+		///   size
+		/// * Closing of the existing position, if the trade's direction is counter to the existion
+		///   position's one and its magnitude is approximately the existing postion's size
+		/// * Reversing of the existing position, if the trade's direction is counter to the
+		///   existion position's one and its magnitude is greater than the existing postion's size
+		///
 		/// ![](http://www.plantuml.com/plantuml/svg/FOuzgiD030RxTugN0zZgKna2kOUyLhm2hRJeXrm_9aMgZszWOBP8zAmXVpVM9dLGkVptp1bt0CVtUdBssYl8cscIvjfimCF6jC1TwCdGVWSeMYU7b-CWQ4BehEVIhOBWO3ml7c2JTBaCJZPTfw1-2pRIuzeF)
 		///
 		/// ## Parameters
