@@ -120,7 +120,7 @@ pub mod pallet {
 	use sp_arithmetic::traits::Unsigned;
 	use sp_runtime::{
 		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Zero},
-		ArithmeticError,
+		ArithmeticError, FixedPointNumber,
 	};
 
 	// ----------------------------------------------------------------------------------------------------
@@ -182,6 +182,9 @@ pub mod pallet {
 			+ Parameter
 			+ Unsigned
 			+ Zero;
+
+		/// Signed decimal fixed point number.
+		type Decimal: FullCodec + MaxEncodedLen + TypeInfo + FixedPointNumber;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -192,6 +195,7 @@ pub mod pallet {
 	type TimestampOf<T> = <T as Config>::Timestamp;
 	type VammIdOf<T> = <T as Config>::VammId;
 	type VammStateOf<T> = VammState<BalanceOf<T>, TimestampOf<T>>;
+	type VammConfigOf<T> = VammConfig<BalanceOf<T>>;
 
 	/// Represents the direction a of a position.
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
@@ -312,6 +316,8 @@ pub mod pallet {
 	impl<T: Config> Vamm for Pallet<T> {
 		type VammId = VammIdOf<T>;
 		type Balance = BalanceOf<T>;
+		type VammConfig = VammConfigOf<T>;
+		type Decimal = T::Decimal;
 
 		/// Creates a new virtual automated market maker.
 		///
@@ -353,7 +359,7 @@ pub mod pallet {
 		/// # Runtime
 		/// `O(1)`
 		#[transactional]
-		fn create(config: VammConfig<BalanceOf<T>>) -> Result<Self::VammId, DispatchError> {
+		fn create(config: &Self::VammConfig) -> Result<Self::VammId, DispatchError> {
 			// TODO: (Matheus)
 			// How to ensure that the caller has the right privileges?
 			// (eg. How to ensure the caller is the Clearing House, and not anyone else?)
@@ -382,7 +388,6 @@ pub mod pallet {
 		/// Get the current mark price in vamm.
 		///
 		/// # Overview
-		///
 		fn get_price(vamm_id: VammIdOf<T>) -> Result<BalanceOf<T>, DispatchError> {
 			// Requested vamm must exist.
 			ensure!(VammMap::<T>::contains_key(vamm_id), Error::<T>::VammDoesNotExist);
@@ -395,6 +400,10 @@ pub mod pallet {
 				.ok_or(ArithmeticError::Overflow)?
 				.checked_div(&vamm_state.base_asset_reserves)
 				.ok_or(ArithmeticError::Overflow)?)
+		}
+
+		fn get_twap(vamm_id: &Self::VammId) -> Result<Self::Decimal, DispatchError> {
+			todo!()
 		}
 	}
 

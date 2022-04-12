@@ -139,7 +139,7 @@ pub mod pallet {
 		/// Implementation for querying the current Unix timestamp
 		type UnixTime: UnixTime;
 		/// Virtual Automated Market Maker pallet implementation
-		type Vamm: Vamm<Decimal = Self::Decimal>;
+		type Vamm: Vamm<Balance = Self::Balance, Decimal = Self::Decimal>;
 		/// Price feed (in USDT) Oracle pallet implementation
 		type Oracle: Oracle<AssetId = Self::MayBeAssetId, Balance = Self::Balance>;
 		/// Pallet implementation of asset transfers.
