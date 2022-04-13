@@ -7,9 +7,14 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
-	use composable_traits::{defi::DeFiComposableConfig, vamm::Vamm};
+	use composable_traits::{
+		defi::DeFiComposableConfig,
+		vamm::{SwapConfig, SwapSimulationConfig, Vamm},
+	};
 	use frame_support::pallet_prelude::*;
+	use num_integer::Integer;
 	use scale_info::TypeInfo;
+	use sp_arithmetic::traits::Unsigned;
 	use sp_runtime::{traits::Zero, FixedPointNumber};
 
 	// ----------------------------------------------------------------------------------------------------
@@ -26,12 +31,18 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: DeFiComposableConfig + frame_system::Config {
-		type VammId: FullCodec + MaxEncodedLen + MaybeSerializeDeserialize + TypeInfo + Clone;
+		type VammId: FullCodec
+			+ MaxEncodedLen
+			+ MaybeSerializeDeserialize
+			+ TypeInfo
+			+ Clone
+			+ Unsigned;
 		type Decimal: FixedPointNumber
 			+ FullCodec
 			+ MaxEncodedLen
 			+ MaybeSerializeDeserialize
 			+ TypeInfo;
+		type Integer: Integer;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -91,13 +102,16 @@ pub mod pallet {
 	//                                           Trait Implementations
 	// ----------------------------------------------------------------------------------------------------
 
+	#[allow(unused_variables)]
 	impl<T: Config> Vamm for Pallet<T> {
 		type Balance = T::Balance;
 		type Decimal = T::Decimal;
+		type Integer = T::Integer;
+		type SwapConfig = SwapConfig<Self::VammId, Self::Balance>;
+		type SwapSimulationConfig = SwapSimulationConfig<Self::VammId, Self::Balance>;
 		type VammConfig = VammConfig;
 		type VammId = T::VammId;
 
-		#[allow(unused_variables)]
 		fn create(config: &Self::VammConfig) -> Result<Self::VammId, DispatchError> {
 			if let Some(id) = Self::vamm_id() {
 				Ok(id)
@@ -106,13 +120,26 @@ pub mod pallet {
 			}
 		}
 
-		#[allow(unused_variables)]
+		fn get_price(vamm_id: Self::VammId) -> Result<Self::Balance, DispatchError> {
+			todo!()
+		}
+
 		fn get_twap(vamm: &Self::VammId) -> Result<Self::Decimal, DispatchError> {
 			if let Some(twap) = Self::hardcoded_twap() {
 				Ok(twap)
 			} else {
 				Err(Error::<T>::FailedToCalculateTwap.into())
 			}
+		}
+
+		fn swap(config: &Self::SwapConfig) -> Result<Self::Integer, DispatchError> {
+			todo!()
+		}
+
+		fn swap_simulation(
+			config: &Self::SwapSimulationConfig,
+		) -> Result<Self::Integer, DispatchError> {
+			todo!()
 		}
 	}
 }

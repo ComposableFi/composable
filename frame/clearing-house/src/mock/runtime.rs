@@ -54,6 +54,7 @@ pub type Amount = i64;
 pub type VammId = u64;
 pub type Decimal = FixedI128;
 pub type MarketId = u64;
+pub type Integer = i128;
 
 // ----------------------------------------------------------------------------------------------------
 //                                                FRAME System
@@ -196,6 +197,7 @@ impl pallet_assets::Config for Runtime {
 impl mock_vamm::Config for Runtime {
 	type VammId = VammId;
 	type Decimal = Decimal;
+	type Integer = Integer;
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -237,6 +239,7 @@ impl clearing_house::Config for Runtime {
 	type UnixTime = Timestamp;
 	type Vamm = Vamm;
 	type VammConfig = mock_vamm::VammConfig;
+	type VammId = VammId;
 	type Oracle = Oracle;
 	type Assets = Assets;
 	type PalletId = TestPalletId;

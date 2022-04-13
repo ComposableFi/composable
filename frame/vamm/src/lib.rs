@@ -77,8 +77,10 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	use codec::{Codec, FullCodec};
-	use composable_traits::vamm::{Vamm, VammConfig};
+	use composable_traits::vamm::{SwapConfig, SwapSimulationConfig, Vamm, VammConfig};
 	use frame_support::{pallet_prelude::*, sp_std::fmt::Debug, transactional, Blake2_128Concat};
+	use num_integer::Integer;
+	use sp_arithmetic::traits::Unsigned;
 	use sp_runtime::{
 		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Zero},
 		ArithmeticError, FixedPointNumber,
@@ -115,6 +117,7 @@ pub mod pallet {
 			+ Parameter
 			+ PartialEq
 			+ TypeInfo
+			+ Unsigned
 			+ Zero;
 
 		/// Timestamp to be used for twap calculations and market closing.
@@ -144,6 +147,9 @@ pub mod pallet {
 
 		/// Signed decimal fixed point number.
 		type Decimal: FullCodec + MaxEncodedLen + TypeInfo + FixedPointNumber;
+
+		/// The Integer type used by the pallet for computing swaps.
+		type Integer: Integer;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -151,10 +157,13 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	type BalanceOf<T> = <T as Config>::Balance;
+	type IntegerOf<T> = <T as Config>::Integer;
 	type TimestampOf<T> = <T as Config>::Timestamp;
 	type VammIdOf<T> = <T as Config>::VammId;
-	type VammStateOf<T> = VammState<BalanceOf<T>, TimestampOf<T>>;
+	type SwapConfigOf<T> = SwapConfig<VammIdOf<T>, BalanceOf<T>>;
+	type SwapSimulationConfigOf<T> = SwapSimulationConfig<VammIdOf<T>, BalanceOf<T>>;
 	type VammConfigOf<T> = VammConfig<BalanceOf<T>>;
+	type VammStateOf<T> = VammState<BalanceOf<T>, TimestampOf<T>>;
 
 	/// Represents the direction a of a position.
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
@@ -269,10 +278,13 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	impl<T: Config> Vamm for Pallet<T> {
-		type VammId = VammIdOf<T>;
 		type Balance = BalanceOf<T>;
-		type VammConfig = VammConfigOf<T>;
 		type Decimal = T::Decimal;
+		type Integer = IntegerOf<T>;
+		type SwapConfig = SwapConfigOf<T>;
+		type SwapSimulationConfig = SwapSimulationConfigOf<T>;
+		type VammConfig = VammConfigOf<T>;
+		type VammId = VammIdOf<T>;
 
 		/// Creates a new virtual automated market maker.
 		///
@@ -341,7 +353,25 @@ pub mod pallet {
 			})
 		}
 
+		#[allow(unused_variables)]
+		fn get_price(vamm_id: Self::VammId) -> Result<Self::Balance, DispatchError> {
+			todo!()
+		}
+
+		#[allow(unused_variables)]
 		fn get_twap(vamm_id: &Self::VammId) -> Result<Self::Decimal, DispatchError> {
+			todo!()
+		}
+
+		#[allow(unused_variables)]
+		fn swap(config: &Self::SwapConfig) -> Result<Self::Integer, DispatchError> {
+			todo!()
+		}
+
+		#[allow(unused_variables)]
+		fn swap_simulation(
+			config: &Self::SwapSimulationConfig,
+		) -> Result<Self::Integer, DispatchError> {
 			todo!()
 		}
 	}

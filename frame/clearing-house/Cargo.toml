@@ -29,6 +29,7 @@ serde = { version = '1', optional = true }
 [dev-dependencies]
 proptest = "1.0.0"
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
+num-integer = "0.1.44"
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb" }
 pallet-assets = { path = '../assets', default-features = false }

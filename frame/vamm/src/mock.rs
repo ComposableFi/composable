@@ -36,6 +36,7 @@ frame_support::construct_runtime!(
 pub type Balance = u128;
 pub type BlockNumber = u64;
 pub type VammId = u128;
+pub type Integer = i128;
 
 // ----------------------------------------------------------------------------------------------------
 //                                                FRAME System
@@ -121,6 +122,7 @@ impl pallet_vamm::Config for MockRuntime {
 	type Timestamp = i64;
 	type VammId = VammId;
 	type Decimal = FixedI128;
+	type Integer = Integer;
 }
 
 // ----------------------------------------------------------------------------------------------------

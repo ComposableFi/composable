@@ -96,7 +96,7 @@ pub mod pallet {
 		defi::DeFiComposableConfig,
 		oracle::Oracle,
 		time::DurationSeconds,
-		vamm::Vamm,
+		vamm::{SwapConfig, SwapSimulationConfig, Vamm},
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -154,12 +154,18 @@ pub mod pallet {
 		type Vamm: Vamm<
 			Balance = Self::Balance,
 			Decimal = Self::Decimal,
+			SwapConfig = SwapConfig<Self::VammId, Self::Balance>,
+			SwapSimulationConfig = SwapSimulationConfig<Self::VammId, Self::Balance>,
 			VammConfig = Self::VammConfig,
+			VammId = Self::VammId,
 		>;
 
 		/// Configuration for creating and initializing a new vAMM instance. To be used as an
 		/// extrinsic input
 		type VammConfig: FullCodec + MaxEncodedLen + TypeInfo + Debug + Clone + PartialEq;
+
+		/// Virtual automated market maker identifier; usually an integer
+		type VammId: FullCodec + MaxEncodedLen + TypeInfo;
 
 		/// Price feed (in USDT) Oracle pallet implementation
 		type Oracle: Oracle<AssetId = Self::MayBeAssetId, Balance = Self::Balance>;
@@ -255,10 +261,13 @@ pub mod pallet {
 	}
 
 	type AssetIdOf<T> = <T as DeFiComposableConfig>::MayBeAssetId;
+	type BalanceOf<T> = <T as DeFiComposableConfig>::Balance;
 	type MarketIdOf<T> = <T as Config>::MarketId;
 	type DecimalOf<T> = <T as Config>::Decimal;
 	type VammConfigOf<T> = <T as Config>::VammConfig;
-	type VammIdOf<T> = <<T as Config>::Vamm as Vamm>::VammId;
+	type VammIdOf<T> = <T as Config>::VammId;
+	type SwapConfigOf<T> = SwapConfig<VammIdOf<T>, BalanceOf<T>>;
+	type SwapSimulationConfigOf<T> = SwapSimulationConfig<VammIdOf<T>, BalanceOf<T>>;
 	type PositionOf<T> = Position<MarketIdOf<T>, DecimalOf<T>>;
 	type MarketConfigOf<T> = MarketConfig<AssetIdOf<T>, VammConfigOf<T>, DecimalOf<T>>;
 	type MarketOf<T> = Market<AssetIdOf<T>, DecimalOf<T>, VammIdOf<T>>;
