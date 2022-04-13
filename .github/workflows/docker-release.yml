@@ -54,26 +54,16 @@ jobs:
     - name: OutputTag
       if: 
       run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) && echo $RELEASE_VERSION
-    
-    - name: FileExistChecking
-      uses: filiph/linkcheck@v2.0.20
-      with:
-        arguments: https://github.com/ComposableFi/composable/releases/download/v2.1.4/composable
 
-    - name: Check file existence
-      id: check_files
-      uses: andstor/file-existence-action@v1
-      with:
-        files: https://github.com/ComposableFi/composable/releases/download/v2.1.4/composable
+    - name: CheckFileExist
+      id: existcheck
+      run: |
+        EXISTSTATUS=$(curl -o /dev/null -Isw '%{http_code}\n' https://github.com/ComposableFi/composable/releases/download/${RELEASE_VERSION}/composable)
+        echo "::set-output name=EXISTOUT::$EXISTSTATUS"
 
     - name: FileStatusNotification
-      if: steps.check_files.outputs.files_exists == 'false'
-      run: echo "It does not exist!"
-
-    #- name: CheckifFileExists
-    #  run: | 
-    #    RELEASE_URL=https://github.com/ComposableFi/composable/releases/download/${VERSION}/composable
-    #    if [[ `wget -S --spider $RELEASE_URL  2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then echo "true"; fi
+      if: steps.existcheck.outputs.EXISTOUT == '302'
+      run: echo "File is Existing"
 
     - name: Build Docker image
       run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make containerize
