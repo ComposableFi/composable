@@ -1,0 +1,38 @@
+name: Runtime Tests
+
+on:
+  # push: # we will uncomment it after we will fix issues with the verification system
+  #   branches:
+  #     - main
+
+jobs:
+  tests:
+    name: Runtime tests
+    runs-on:
+    - ubuntu-latest
+    concurrency:
+      group: runtime-tests-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Prepare a test environment
+      run: |
+        cd integration-tests/runtime-tests
+        docker-compose -f docker-compose-ci.yml up -d
+
+    - name: Wait when the node will be started
+      timeout-minutes: 5
+      run: |
+        cd integration-tests/runtime-tests
+        ../../scripts/wait_polkadot_launch.sh
+
+    - name: Run tests
+      run: |
+        cd integration-tests/runtime-tests
+        docker run --rm -v$(pwd):/build -e "ENDPOINT=composable:9988" --workdir /build --network runtime-tests_default --entrypoint=/build/DockerRun.sh node:17
+
+    - name: Cleanup
+      run: |
+        cd integration-tests/runtime-tests
+        docker-compose -f docker-compose-ci.yml down --remove-orphans
