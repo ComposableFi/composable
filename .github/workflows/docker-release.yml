@@ -52,7 +52,6 @@ jobs:
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}  
     
     - name: OutputTag
-      if: 
       run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) && echo $RELEASE_VERSION
 
     - name: CheckFileExist
