@@ -87,7 +87,6 @@ jobs:
         tags: composablefi/composable:${{ steps.imagetag.outputs.release_version }}, composablefi/composable:latest
 
     - uses: 8398a7/action-slack@v3
-      if: steps.existcheck.outputs.EXISTOUT == '302'
       with:
         status: ${{ job.status }}
         fields: repo,message,commit,author,action,eventName,ref,workflow,job,took,pullRequest
