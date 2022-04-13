@@ -24,6 +24,7 @@ jobs:
     - name: Get commits
       id: get_commit
       run: |
+        git config --global --add safe.directory /github/workspace
         cd scripts/github && npm install
         npm run get-commit-for-pr -- --repo=composableFi/composable --commit_sha=$GITHUB_SHA
 
