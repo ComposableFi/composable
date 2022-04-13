@@ -491,6 +491,24 @@ fn fails_to_open_position_if_market_id_invalid() {
 	})
 }
 
+#[test]
+fn fails_to_increase_position_if_not_enough_margin() {
+	let mut market_id: MarketId = 0;
+
+	ExtBuilder::default().build().init_market(&mut market_id).execute_with(|| {
+		assert_noop!(
+			TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				Direction::Long,
+				10_000u64.into(),
+				1_000u64.into(),
+			),
+			Error::<Runtime>::InsufficientCollateral,
+		);
+	})
+}
+
 // ----------------------------------------------------------------------------------------------------
 //                                          Instruments trait
 // ----------------------------------------------------------------------------------------------------

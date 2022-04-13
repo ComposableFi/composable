@@ -24,6 +24,7 @@
 //!   or negative) to the Clearing House.
 //! * **Collateral**: 'Real' asset(s) backing the trader's position(s), ensuring he/she can pay back
 //!   the Clearing House.
+//! * **IMR**: acronym for 'Initial Margin Ratio'
 //!
 //! ### Goals
 //!
@@ -367,6 +368,8 @@ pub mod pallet {
 		InitialMarginRatioLessThanMaintenance,
 		/// Raised when querying a market with an invalid or nonexistent market Id
 		MarketIdNotFound,
+		/// Raised when opening a risk-increasing position that takes the account below the IMR
+		InsufficientCollateral,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
