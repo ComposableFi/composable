@@ -412,6 +412,7 @@ pub mod pallet {
 				.ok_or(ArithmeticError::Overflow)?)
 		}
 
+		#[allow(unused_variables)]
 		fn get_twap(vamm_id: &Self::VammId) -> Result<Self::Decimal, DispatchError> {
 			todo!()
 		}
