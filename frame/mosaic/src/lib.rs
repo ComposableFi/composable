@@ -353,9 +353,6 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		// ANCHOR: set_relayer_docs
-		/// `set_relayer`
-		///
 		/// Sets the current Relayer configuration.
 		///
 		/// This is enacted immediately and invalidates inflight/ incoming transactions from the
@@ -364,7 +361,6 @@ pub mod pallet {
 		/// This can only be called by the [`ControlOrigin`][controlorigin].
 		///
 		/// [controlorigin]: https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/trait.Config.html#associatedtype.ControlOrigin
-		// ANCHOR_END: set_relayer_docs
 		#[pallet::weight(T::WeightInfo::set_relayer())]
 		pub fn set_relayer(
 			origin: OriginFor<T>,
