@@ -48,35 +48,45 @@ mod uniswap_tests;
 
 mod liquidity_bootstrapping;
 mod stable_swap;
+mod twap;
+mod types;
 mod uniswap;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::{stable_swap::StableSwap, uniswap::Uniswap, PoolConfiguration::ConstantProduct};
+	use crate::{
+		stable_swap::StableSwap,
+		twap::{update_price_cumulative_state, update_twap_state},
+		types::{PriceCumulative, TimeWeightedAveragePrice},
+		uniswap::Uniswap,
+	};
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
-		currency::CurrencyFactory,
-		defi::CurrencyPair,
-		dex::{Amm, ConstantProductPoolInfo, StableSwapPoolInfo},
-		math::{SafeAdd, SafeSub},
+		currency::{CurrencyFactory, LocalAssets},
+		defi::{CurrencyPair, Rate},
+		dex::{Amm, ConstantProductPoolInfo, LiquidityBootstrappingPoolInfo, StableSwapPoolInfo},
+		math::SafeArithmetic,
 	};
 	use core::fmt::Debug;
 	use frame_support::{
 		pallet_prelude::*,
-		traits::fungibles::{Inspect, Mutate, Transfer},
+		traits::{
+			fungibles::{Inspect, Mutate, Transfer},
+			Time,
+		},
 		transactional, PalletId, RuntimeDebug,
 	};
 
 	use crate::liquidity_bootstrapping::LiquidityBootstrapping;
+	use composable_maths::dex::price::compute_initial_price_cumulative;
 	use composable_support::validation::Validated;
-	use composable_traits::{currency::LocalAssets, dex::LiquidityBootstrappingPoolInfo};
 	use frame_system::{
 		ensure_signed,
 		pallet_prelude::{BlockNumberFor, OriginFor},
 	};
 	use sp_runtime::{
 		traits::{AccountIdConversion, BlockNumberProvider, Convert, One, Zero},
-		Permill,
+		ArithmeticError, FixedPointNumber, Permill,
 	};
 
 	#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
@@ -123,6 +133,10 @@ pub mod pallet {
 		<T as Config>::AssetId,
 		<T as frame_system::Config>::BlockNumber,
 	>;
+	pub(crate) type MomentOf<T> = <<T as Config>::Time as Time>::Moment;
+	pub(crate) type TWAPStateOf<T> = TimeWeightedAveragePrice<MomentOf<T>, <T as Config>::Balance>;
+	pub(crate) type PriceCumulativeStateOf<T> =
+		PriceCumulative<MomentOf<T>, <T as Config>::Balance>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -231,8 +245,7 @@ pub mod pallet {
 			+ Copy
 			+ Ord
 			+ Zero
-			+ SafeAdd
-			+ SafeSub;
+			+ SafeArithmetic;
 
 		/// An isomorphism: Balance<->u128
 		type Convert: Convert<u128, BalanceOf<Self>> + Convert<BalanceOf<Self>, u128>;
@@ -257,13 +270,12 @@ pub mod pallet {
 			+ Copy
 			+ Zero
 			+ One
-			+ SafeAdd
-			+ SafeSub;
+			+ SafeArithmetic;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
-		// Used for spot price calculation for LBP
+		/// Used for spot price calculation for LBP
 		type LocalAssets: LocalAssets<AssetIdOf<Self>>;
 
 		/// Minimum duration for a sale.
@@ -284,6 +296,16 @@ pub mod pallet {
 
 		/// Required origin for pool creation.
 		type PoolCreationOrigin: EnsureOrigin<Self::Origin>;
+
+		/// Required origin to enable TWAP on pool.
+		type EnableTwapOrigin: EnsureOrigin<Self::Origin>;
+
+		/// Time provider.
+		type Time: Time;
+
+		/// The interval between TWAP computations.
+		#[pallet::constant]
+		type TWAPInterval: Get<MomentOf<Self>>;
 	}
 
 	#[pallet::pallet]
@@ -303,6 +325,23 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
 	pub type Pools<T: Config> = StorageMap<_, Blake2_128Concat, T::PoolId, PoolConfigurationOf<T>>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn twap)]
+	#[pallet::unbounded]
+	pub type TWAPState<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::PoolId, TWAPStateOf<T>, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn price_cumulative)]
+	#[pallet::unbounded]
+	pub type PriceCumulativeState<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::PoolId, PriceCumulativeStateOf<T>, OptionQuery>;
+
+	pub(crate) enum PriceRatio {
+		Swapped,
+		NotSwapped,
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -420,6 +459,77 @@ pub mod pallet {
 			)?;
 			Ok(())
 		}
+
+		#[pallet::weight(10_000)]
+		#[transactional]
+		pub fn enable_twap(origin: OriginFor<T>, pool_id: T::PoolId) -> DispatchResult {
+			T::EnableTwapOrigin::ensure_origin(origin)?;
+			if TWAPState::<T>::contains_key(pool_id) {
+				// pool_id is alread enabled for TWAP
+				return Ok(())
+			}
+			let current_timestamp = T::Time::now();
+			let rate_base = Self::do_get_exchange_rate(pool_id, PriceRatio::NotSwapped)?;
+			let rate_quote = Self::do_get_exchange_rate(pool_id, PriceRatio::Swapped)?;
+			let (base_price_cumulative, quote_price_cumulative) = (
+				compute_initial_price_cumulative::<T::Convert, _>(rate_base)?,
+				compute_initial_price_cumulative::<T::Convert, _>(rate_quote)?,
+			);
+			TWAPState::<T>::insert(
+				pool_id,
+				TimeWeightedAveragePrice {
+					base_price_cumulative,
+					quote_price_cumulative,
+					timestamp: current_timestamp,
+					base_twap: rate_base,
+					quote_twap: rate_quote,
+				},
+			);
+			PriceCumulativeState::<T>::insert(
+				pool_id,
+				PriceCumulative {
+					timestamp: current_timestamp,
+					base_price_cumulative,
+					quote_price_cumulative,
+				},
+			);
+			Ok(())
+		}
+	}
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
+		fn on_initialize(_block_number: T::BlockNumber) -> Weight {
+			let mut weight: Weight = 0;
+			let twap_enabled_pools: Vec<T::PoolId> =
+				PriceCumulativeState::<T>::iter_keys().collect();
+			for pool_id in twap_enabled_pools {
+				let result = PriceCumulativeState::<T>::try_mutate(
+					pool_id,
+					|prev_price_cumulative| -> Result<(), DispatchError> {
+						let (base_price_cumulative, quote_price_cumulative) =
+							update_price_cumulative_state::<T>(pool_id, prev_price_cumulative)?;
+						let twap_update_res = TWAPState::<T>::try_mutate(
+							pool_id,
+							|prev_twap_state| -> Result<(), DispatchError> {
+								update_twap_state::<T>(
+									base_price_cumulative,
+									quote_price_cumulative,
+									prev_twap_state,
+								)
+							},
+						);
+						// if update_twap_state fails, return Err() so effect of
+						// update_price_cumulative_state is also gets reverted.
+						twap_update_res
+					},
+				);
+				if result.is_ok() {
+					weight += 1;
+				}
+			}
+			weight
+		}
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -467,6 +577,54 @@ pub mod pallet {
 		pub(crate) fn account_id(pool_id: &T::PoolId) -> T::AccountId {
 			T::PalletId::get().into_sub_account(pool_id)
 		}
+
+		pub(crate) fn do_get_exchange_rate(
+			pool_id: T::PoolId,
+			price_ratio: PriceRatio,
+		) -> Result<Rate, DispatchError> {
+			let pair = Self::currency_pair(pool_id)?;
+			let pool_account = Self::account_id(&pool_id);
+			let pair = match price_ratio {
+				PriceRatio::NotSwapped => pair,
+				PriceRatio::Swapped => pair.swap(),
+			};
+			let pool_base_asset_under_management =
+				T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
+			let pool_quote_asset_under_management =
+				T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
+			Ok(Rate::checked_from_rational(
+				pool_base_asset_under_management,
+				pool_quote_asset_under_management,
+			)
+			.ok_or(ArithmeticError::Overflow)?)
+		}
+
+		fn update_twap(pool_id: T::PoolId) -> Result<(), DispatchError> {
+			// update price cumulatives
+			let (base_price_cumulative, quote_price_cumulative) =
+				PriceCumulativeState::<T>::try_mutate(
+					pool_id,
+					|prev_price_cumulative| -> Result<(T::Balance, T::Balance), DispatchError> {
+						update_price_cumulative_state::<T>(pool_id, prev_price_cumulative)
+					},
+				)?;
+			if base_price_cumulative != T::Balance::zero() &&
+				quote_price_cumulative != T::Balance::zero()
+			{
+				// update TWAP
+				let _ = TWAPState::<T>::try_mutate(
+					pool_id,
+					|prev_twap_state| -> Result<(), DispatchError> {
+						update_twap_state::<T>(
+							base_price_cumulative,
+							quote_price_cumulative,
+							prev_twap_state,
+						)
+					},
+				);
+			}
+			Ok(())
+		}
 	}
 
 	impl<T: Config> Amm for Pallet<T> {
@@ -484,11 +642,9 @@ pub mod pallet {
 		) -> Result<CurrencyPair<Self::AssetId>, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			match pool {
-				PoolConfiguration::StableSwap(stable_swap_pool_info) =>
-					Ok(stable_swap_pool_info.pair),
-				ConstantProduct(constant_product_pool_info) => Ok(constant_product_pool_info.pair),
-				PoolConfiguration::LiquidityBootstrapping(liquidity_bootstrapping_pool_info) =>
-					Ok(liquidity_bootstrapping_pool_info.pair),
+				PoolConfiguration::StableSwap(info) => Ok(info.pair),
+				PoolConfiguration::ConstantProduct(info) => Ok(info.pair),
+				PoolConfiguration::LiquidityBootstrapping(info) => Ok(info.pair),
 			}
 		}
 
@@ -500,22 +656,13 @@ pub mod pallet {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
-				PoolConfiguration::StableSwap(stable_swap_pool_info) =>
-					StableSwap::<T>::get_exchange_value(
-						&stable_swap_pool_info,
-						&pool_account,
-						asset_id,
-						amount,
-					),
-				ConstantProduct(constant_product_pool_info) => Uniswap::<T>::get_exchange_value(
-					&constant_product_pool_info,
-					&pool_account,
-					asset_id,
-					amount,
-				),
-				PoolConfiguration::LiquidityBootstrapping(liquidity_bootstrapping_pool_info) =>
+				PoolConfiguration::StableSwap(info) =>
+					StableSwap::<T>::get_exchange_value(&info, &pool_account, asset_id, amount),
+				PoolConfiguration::ConstantProduct(info) =>
+					Uniswap::<T>::get_exchange_value(&info, &pool_account, asset_id, amount),
+				PoolConfiguration::LiquidityBootstrapping(info) =>
 					LiquidityBootstrapping::<T>::get_exchange_value(
-						liquidity_bootstrapping_pool_info,
+						info,
 						pool_account,
 						asset_id,
 						amount,
@@ -535,29 +682,28 @@ pub mod pallet {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			let minted_lp = match pool {
-				PoolConfiguration::StableSwap(stable_swap_pool_info) =>
-					StableSwap::<T>::add_liquidity(
-						who,
-						stable_swap_pool_info,
-						pool_account,
-						base_amount,
-						quote_amount,
-						min_mint_amount,
-						keep_alive,
-					)?,
-				ConstantProduct(constant_product_pool_info) => Uniswap::<T>::add_liquidity(
+				PoolConfiguration::StableSwap(info) => StableSwap::<T>::add_liquidity(
 					who,
-					constant_product_pool_info,
+					info,
 					pool_account,
 					base_amount,
 					quote_amount,
 					min_mint_amount,
 					keep_alive,
 				)?,
-				PoolConfiguration::LiquidityBootstrapping(liquidity_bootstrapping_pool_info) =>
+				PoolConfiguration::ConstantProduct(info) => Uniswap::<T>::add_liquidity(
+					who,
+					info,
+					pool_account,
+					base_amount,
+					quote_amount,
+					min_mint_amount,
+					keep_alive,
+				)?,
+				PoolConfiguration::LiquidityBootstrapping(info) =>
 					LiquidityBootstrapping::<T>::add_liquidity(
 						who,
-						liquidity_bootstrapping_pool_info,
+						info,
 						pool_account,
 						base_amount,
 						quote_amount,
@@ -565,6 +711,7 @@ pub mod pallet {
 						keep_alive,
 					)?,
 			};
+			Self::update_twap(pool_id)?;
 			Self::deposit_event(Event::<T>::LiquidityAdded {
 				who: who.clone(),
 				pool_id,
@@ -586,16 +733,17 @@ pub mod pallet {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
-				PoolConfiguration::StableSwap(stable_swap_pool_info) => {
+				PoolConfiguration::StableSwap(info) => {
 					let (base_amount, quote_amount, updated_lp) =
 						StableSwap::<T>::remove_liquidity(
 							who,
-							stable_swap_pool_info,
+							info,
 							pool_account,
 							lp_amount,
 							min_base_amount,
 							min_quote_amount,
 						)?;
+					Self::update_twap(pool_id)?;
 					Self::deposit_event(Event::<T>::LiquidityRemoved {
 						pool_id,
 						who: who.clone(),
@@ -604,15 +752,16 @@ pub mod pallet {
 						total_issuance: updated_lp,
 					});
 				},
-				ConstantProduct(constant_product_pool_info) => {
+				PoolConfiguration::ConstantProduct(info) => {
 					let (base_amount, quote_amount, updated_lp) = Uniswap::<T>::remove_liquidity(
 						who,
-						constant_product_pool_info,
+						info,
 						pool_account,
 						lp_amount,
 						min_base_amount,
 						min_quote_amount,
 					)?;
+					Self::update_twap(pool_id)?;
 					Self::deposit_event(Event::<T>::LiquidityRemoved {
 						pool_id,
 						who: who.clone(),
@@ -621,17 +770,18 @@ pub mod pallet {
 						total_issuance: updated_lp,
 					});
 				},
-				PoolConfiguration::LiquidityBootstrapping(liquidity_bootstrapping_pool_info) => {
+				PoolConfiguration::LiquidityBootstrapping(info) => {
 					let (base_amount, quote_amount) =
 						LiquidityBootstrapping::<T>::remove_liquidity(
 							who,
 							pool_id,
-							liquidity_bootstrapping_pool_info,
+							info,
 							pool_account,
 							lp_amount,
 							min_base_amount,
 							min_quote_amount,
 						)?;
+					Self::update_twap(pool_id)?;
 					Self::deposit_event(Event::PoolDeleted { pool_id, base_amount, quote_amount });
 				},
 			}
@@ -650,13 +800,13 @@ pub mod pallet {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			let (base_amount, fees) = match pool {
-				PoolConfiguration::StableSwap(pool) => {
+				PoolConfiguration::StableSwap(info) => {
 					// /!\ NOTE(hussein-aitlahcen): after this check, do not use pool.pair as the
 					// provided pair might have been swapped
-					ensure!(pair == pool.pair, Error::<T>::PairMismatch);
+					ensure!(pair == info.pair, Error::<T>::PairMismatch);
 					// NOTE: lp_fees includes owner_fees.
 					let (base_amount_excluding_fees, quote_amount, lp_fees, owner_fees) =
-						StableSwap::<T>::do_compute_swap(&pool, &pool_account, quote_amount, true)?;
+						StableSwap::<T>::do_compute_swap(&info, &pool_account, quote_amount, true)?;
 
 					ensure!(
 						base_amount_excluding_fees >= min_receive,
@@ -665,7 +815,7 @@ pub mod pallet {
 					T::Assets::transfer(pair.quote, who, &pool_account, quote_amount, keep_alive)?;
 
 					// NOTE(hussein-aitlance): no need to keep alive the pool account
-					T::Assets::transfer(pair.base, &pool_account, &pool.owner, owner_fees, false)?;
+					T::Assets::transfer(pair.base, &pool_account, &info.owner, owner_fees, false)?;
 					T::Assets::transfer(
 						pair.base,
 						&pool_account,
@@ -675,11 +825,11 @@ pub mod pallet {
 					)?;
 					(base_amount_excluding_fees, lp_fees)
 				},
-				ConstantProduct(constant_product_pool_info) => {
+				PoolConfiguration::ConstantProduct(info) => {
 					// NOTE: lp_fees includes owner_fees.
 					let (base_amount, quote_amount_excluding_lp_fee, lp_fees, owner_fees) =
 						Uniswap::<T>::do_compute_swap(
-							&constant_product_pool_info,
+							&info,
 							&pool_account,
 							pair,
 							quote_amount,
@@ -696,20 +846,14 @@ pub mod pallet {
 						keep_alive,
 					)?;
 					// NOTE(hussein-aitlance): no need to keep alive the pool account
-					T::Assets::transfer(
-						pair.quote,
-						who,
-						&constant_product_pool_info.owner,
-						owner_fees,
-						false,
-					)?;
+					T::Assets::transfer(pair.quote, who, &info.owner, owner_fees, false)?;
 					T::Assets::transfer(pair.base, &pool_account, who, base_amount, false)?;
 					(base_amount, lp_fees)
 				},
-				PoolConfiguration::LiquidityBootstrapping(liquidity_bootstrapping_pool_info) => {
+				PoolConfiguration::LiquidityBootstrapping(info) => {
 					let current_block = frame_system::Pallet::<T>::current_block_number();
 					let (fees, base_amount) = LiquidityBootstrapping::<T>::do_get_exchange(
-						liquidity_bootstrapping_pool_info,
+						info,
 						&pool_account,
 						pair,
 						current_block,
@@ -725,6 +869,7 @@ pub mod pallet {
 					(base_amount, fees)
 				},
 			};
+			Self::update_twap(pool_id)?;
 			Self::deposit_event(Event::<T>::Swapped {
 				pool_id,
 				who: who.clone(),
@@ -747,9 +892,9 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			match pool {
-				PoolConfiguration::StableSwap(pool) => {
+				PoolConfiguration::StableSwap(info) => {
 					let pair =
-						if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
+						if asset_id == info.pair.base { info.pair } else { info.pair.swap() };
 					// Since when buying asset user can't executed exchange as he don't know how
 					// much amount of token he has to trade-in to get expected buy tokens.
 					// So we compute price assuming user wants to sell instead of buy.
@@ -758,21 +903,15 @@ pub mod pallet {
 					Self::exchange(who, pool_id, pair, dx, T::Balance::zero(), keep_alive)?;
 					Ok(amount)
 				},
-				ConstantProduct(constant_product_pool) => {
-					let pair = if asset_id == constant_product_pool.pair.base {
-						constant_product_pool.pair
-					} else {
-						constant_product_pool.pair.swap()
-					};
+				PoolConfiguration::ConstantProduct(info) => {
+					let pair =
+						if asset_id == info.pair.base { info.pair } else { info.pair.swap() };
 					let quote_amount = Self::get_exchange_value(pool_id, asset_id, amount)?;
 					Self::exchange(who, pool_id, pair, quote_amount, T::Balance::zero(), keep_alive)
 				},
-				PoolConfiguration::LiquidityBootstrapping(liquidity_bootstrapping_pool_info) => {
-					let pair = if asset_id == liquidity_bootstrapping_pool_info.pair.base {
-						liquidity_bootstrapping_pool_info.pair
-					} else {
-						liquidity_bootstrapping_pool_info.pair.swap()
-					};
+				PoolConfiguration::LiquidityBootstrapping(info) => {
+					let pair =
+						if asset_id == info.pair.base { info.pair } else { info.pair.swap() };
 					let quote_amount = Self::get_exchange_value(pool_id, asset_id, amount)?;
 					Self::exchange(who, pool_id, pair, quote_amount, T::Balance::zero(), keep_alive)
 				},
@@ -789,25 +928,19 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			match pool {
-				PoolConfiguration::StableSwap(pool) => {
+				PoolConfiguration::StableSwap(info) => {
 					let pair =
-						if asset_id == pool.pair.base { pool.pair.swap() } else { pool.pair };
+						if asset_id == info.pair.base { info.pair.swap() } else { info.pair };
 					Self::exchange(who, pool_id, pair, amount, Self::Balance::zero(), keep_alive)
 				},
-				ConstantProduct(constant_product_pool) => {
-					let pair = if asset_id == constant_product_pool.pair.base {
-						constant_product_pool.pair.swap()
-					} else {
-						constant_product_pool.pair
-					};
+				PoolConfiguration::ConstantProduct(info) => {
+					let pair =
+						if asset_id == info.pair.base { info.pair.swap() } else { info.pair };
 					Self::exchange(who, pool_id, pair, amount, T::Balance::zero(), keep_alive)
 				},
-				PoolConfiguration::LiquidityBootstrapping(liquidity_bootstrapping_pool_info) => {
-					let pair = if asset_id == liquidity_bootstrapping_pool_info.pair.base {
-						liquidity_bootstrapping_pool_info.pair.swap()
-					} else {
-						liquidity_bootstrapping_pool_info.pair
-					};
+				PoolConfiguration::LiquidityBootstrapping(info) => {
+					let pair =
+						if asset_id == info.pair.base { info.pair.swap() } else { info.pair };
 					Self::exchange(who, pool_id, pair, amount, T::Balance::zero(), keep_alive)
 				},
 			}

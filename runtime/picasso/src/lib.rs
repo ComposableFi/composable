@@ -214,6 +214,7 @@ impl assets_registry::Config for Runtime {
 	type UpdateAdminOrigin = EnsureRootOrHalfCouncil;
 	type LocalAdminOrigin = assets_registry::EnsureLocalAdmin<Runtime>;
 	type ForeignAdminOrigin = assets_registry::EnsureForeignAdmin<Runtime>;
+	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 }
 
 impl assets::Config for Runtime {
@@ -902,6 +903,7 @@ mod benches {
 		[currency_factory, CurrencyFactory]
 		[bonded_finance, BondedFinance]
 		[vesting, Vesting]
+		[assets_registry, AssetsRegistry]
 	);
 }
 

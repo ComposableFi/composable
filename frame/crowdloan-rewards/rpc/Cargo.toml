@@ -21,7 +21,6 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 
 # local
 composable-support = { path = "../../composable-support" }
-composable-traits = { path = "../../composable-traits" }
 crowdloan-rewards-runtime-api = { path = "../runtime-api" }
 
 # SCALE

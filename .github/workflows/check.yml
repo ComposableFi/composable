@@ -65,7 +65,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Rustup show
         run: |
-         /home/runner/.cargo/bin/rustup show
+          /home/runner/.cargo/bin/rustup show
       - name: Run Test (with coverage)
         run: |
           /home/runner/.cargo/bin/cargo +nightly-2021-11-08 install -f cargo-llvm-cov
@@ -187,7 +187,6 @@ jobs:
 
       - name: Taplo format (Toml)
         run: |
-          cargo install taplo-cli
           taplo lint --warn-as-error
           taplo fmt --warn-as-error
           if ! git diff-index HEAD; then
@@ -197,17 +196,13 @@ jobs:
           fi
       
       - name: Hadolint
-        env:
-          HADOLINT_VERSION: v2.8.0
         continue-on-error: true # this step is such a pita
         run: |
-          curl -L -o hadolint "https://github.com/hadolint/hadolint/releases/download/${HADOLINT_VERSION}/hadolint-Linux-x86_64"
-          chmod +x hadolint
-          ./hadolint --version
+          hadolint --version
           total_exit_code=0
           while IFS= read -r file; do
             echo "=== $file ==="
-            ./hadolint --config .hadolint.yaml $file || total_exit_code=$?
+            hadolint --config .hadolint.yaml $file || total_exit_code=$?
             echo ""
           done << (find . -name "Dockerfile")
           exit $total_exit_code
@@ -235,18 +230,13 @@ jobs:
       - name: Cargo Single Depedency
         # description: Speed up builds and reduced security check surface
         run: |
-         cargo install -f cargo-deny
+         cargo +nightly install -f cargo-deny
          # start from minimal dependency crate
-         cargo deny --manifest-path ./frame/composable-support/Cargo.toml check Ban
+         cargo +nightly deny --manifest-path ./frame/composable-support/Cargo.toml check Ban
 
       - name: Cargo udeps
-        env:
-          UDEPS_VERSION: v0.1.24
         run: |
-          curl -L -O "https://github.com/est31/cargo-udeps/releases/download/${UDEPS_VERSION}/cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
-          tar xzf "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz"
-          cp "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu/cargo-udeps" ~/.cargo/bin/
-          rm -r "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu.tar.gz" "cargo-udeps-${UDEPS_VERSION}-x86_64-unknown-linux-gnu"
           cargo udeps --version
-          SKIP_WASM_BUILD=1 cargo udeps --workspace --all-features
+          # Compilation of local-integration-tests crate with --all-features doesn't work
+          SKIP_WASM_BUILD=1 cargo +nightly udeps --workspace --exclude local-integration-tests --all-features
         continue-on-error: true # Often this turns gives false positives, due to the different ways that Substrate uses features.  

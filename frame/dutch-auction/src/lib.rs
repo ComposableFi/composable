@@ -38,9 +38,9 @@
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
+#![deny(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![warn(
+#![deny(
 	bad_style,
 	bare_trait_objects,
 	const_err,
@@ -64,7 +64,7 @@ pub mod math;
 #[cfg(test)]
 mod tests;
 
-#[cfg(feature = "runtime-benchmarks")]
+#[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
 mod mock;
 
@@ -84,7 +84,6 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{tokens::fungible::Transfer as NativeTransfer, IsType, UnixTime},
-		weights::WeightToFeePolynomial,
 		PalletId,
 	};
 	use frame_system::{
@@ -101,7 +100,6 @@ pub mod pallet {
 
 	#[pallet::config]
 	#[pallet::disable_frame_system_supertrait_check]
-	#[cfg(not(feature = "runtime-benchmarks"))]
 	pub trait Config: DeFiComposableConfig + frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type UnixTime: UnixTime;
@@ -119,29 +117,10 @@ pub mod pallet {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 		type NativeCurrency: NativeTransfer<Self::AccountId, Balance = Self::Balance>;
-		/// Convert a weight value into a deductible fee based on the currency type.
-		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>;
-	}
-	#[cfg(feature = "runtime-benchmarks")]
-	pub trait Config: DeFiComposableConfig + frame_system::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type UnixTime: UnixTime;
-		type OrderId: OrderIdLike + WrappingNext + Zero;
-		type MultiCurrency: MultiCurrency<
-				Self::AccountId,
-				CurrencyId = Self::MayBeAssetId,
-				Balance = <Self as DeFiComposableConfig>::Balance,
-			> + MultiReservableCurrency<
-				Self::AccountId,
-				CurrencyId = Self::MayBeAssetId,
-				Balance = <Self as DeFiComposableConfig>::Balance,
-			>;
-		type WeightInfo: WeightInfo;
-		type PalletId: Get<PalletId>;
-		type NativeCurrency: NativeTransfer<Self::AccountId, Balance = Self::Balance>
-			+ Currency<Self::AccountId>;
-		/// Convert a weight value into a deductible fee based on the currency type.
-		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>;
+
+		/// ED taken to create position. Part of if returned when position is liqudated.
+		#[pallet::constant]
+		type PositionExistentialDeposit: Get<Self::Balance>;
 	}
 
 	#[derive(Encode, Decode, MaxEncodedLen, Default, TypeInfo, Clone, Debug, PartialEq)]
@@ -279,7 +258,7 @@ pub mod pallet {
 				treasury,
 				&order.from_to,
 				order.context.deposit,
-				true,
+				false,
 			)?;
 
 			<SellOrders<T>>::remove(order_id);
@@ -303,11 +282,10 @@ pub mod pallet {
 				*x
 			});
 			let treasury = &T::PalletId::get().into_account();
-			let deposit = T::WeightToFee::calc(&T::WeightInfo::liquidate());
+			let deposit = T::PositionExistentialDeposit::get();
 			<T::NativeCurrency as NativeTransfer<T::AccountId>>::transfer(
 				from_to, treasury, deposit, true,
-			)
-			.map_err(|_| Error::<T>::NotEnoughNativeCurrentyToPayForAuction)?;
+			)?;
 
 			let now = T::UnixTime::now().as_secs();
 			let order = SellOf::<T> {

@@ -20,9 +20,6 @@ sp-runtime = { default-features = false, git = "https://github.com/paritytech/su
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 composable-traits = { path = "../composable-traits", default-features = false }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb", default-features = false }
-pallet-curve-amm = { path = "../curve-amm", default-features = false }
-pallet-uniswap-v2 = { path = "../uniswap-v2", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = [
   "derive",
 ] }
@@ -37,8 +34,11 @@ version = "2.0.0"
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 pallet-currency-factory = { version = "0.0.1", path = "../currency-factory" }
+pallet-curve-amm = { path = "../curve-amm", default-features = false }
+pallet-uniswap-v2 = { path = "../uniswap-v2", default-features = false }
 
 [features]
 default = ["std"]
@@ -49,7 +49,4 @@ std = [
   "frame-support/std",
   "frame-system/std",
   "sp-runtime/std",
-  "pallet-curve-amm/std",
-  "orml-traits/std",
-  "pallet-uniswap-v2/std",
 ]

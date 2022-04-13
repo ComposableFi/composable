@@ -1,8 +1,10 @@
 use crate as pallet_assets_registry;
 pub use composable_traits::assets::XcmAssetLocation;
-use frame_support::{ord_parameter_types, parameter_types, traits::Everything};
-use frame_system as system;
-use frame_system::EnsureSignedBy;
+use frame_support::{
+	ord_parameter_types, parameter_types,
+	traits::{EnsureOneOf, Everything},
+};
+use frame_system::{self as system, EnsureRoot, EnsureSignedBy};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
@@ -73,9 +75,13 @@ impl pallet_assets_registry::Config for Test {
 	type LocalAssetId = u128;
 	type ForeignAssetId = u128;
 	type Location = XcmAssetLocation;
-	type UpdateAdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
+	type UpdateAdminOrigin = EnsureOneOf<
+		EnsureSignedBy<RootAccount, AccountId>, // for tests
+		EnsureRoot<AccountId>,                  // for benchmarks
+	>;
 	type LocalAdminOrigin = pallet_assets_registry::EnsureLocalAdmin<Test>;
 	type ForeignAdminOrigin = pallet_assets_registry::EnsureForeignAdmin<Test>;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.

@@ -38,7 +38,6 @@ pallet-vault = { default-features = false, path = "../vault", optional = true }
 
 log = { version = "0.4.14", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
-plotters = { version = "0.3.1", optional = true }
 scale-info = { version = "1.0", default-features = false, features = [
   "derive",
 ] }
@@ -87,5 +86,3 @@ runtime-benchmarks = [
   "pallet-timestamp/runtime-benchmarks",
   "pallet-balances/runtime-benchmarks",
 ]
-
-visualization = ["plotters"]

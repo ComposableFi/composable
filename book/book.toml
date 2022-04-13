@@ -1,0 +1,17 @@
+[book]
+authors = ["Composable Finance"]
+language = "en"
+multilingual = false
+src = "src"
+title = "Composable Finance"
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "light"
+no-section-label = true
+
+[output.html.fold]
+enable = true
+
+[output.html.print]
+enable = false

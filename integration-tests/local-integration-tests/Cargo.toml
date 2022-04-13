@@ -66,9 +66,12 @@ common = { path = "../../runtime/common", default-features = false }
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
 currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
 governance-registry = { package = "pallet-governance-registry", path = "../../frame/governance-registry", default-features = false, optional = true }
+liquidations = { package = "pallet-liquidations", path = "../../frame/liquidations", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
+uniswap-v2 = { package = "pallet-uniswap-v2", path = "../../frame/uniswap-v2", default-features = false }
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false }
+
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
@@ -121,7 +124,7 @@ env_logger = "0.9.0"
 
 [features]
 dali = ["std", "develop", "local-integration-tests"]
-default = ["std", "develop", "local-integration-tests", "picasso"]
+default = ["std", "develop", "local-integration-tests", "dali"]
 local-integration-tests = [
   "dali-runtime/local-integration-tests",
   "picasso-runtime/local-integration-tests",
@@ -176,6 +179,7 @@ std = [
   "cumulus-primitives-utility/std",
   "collator-selection/std",
   "xcm/std",
+  "liquidations/std",
   "xcm-builder/std",
   "xcm-executor/std",
   "aura/std",
@@ -185,6 +189,7 @@ std = [
   "polkadot-core-primitives/std",
   "polkadot-primitives/std",
   "polkadot-runtime-parachains/std",
+  "uniswap-v2/std",
 ]
 
 runtime-benchmarks = [
@@ -201,6 +206,7 @@ runtime-benchmarks = [
   "session-benchmarking/runtime-benchmarks",
   "pallet-xcm/runtime-benchmarks",
   "sp-runtime/runtime-benchmarks",
+  "liquidations/runtime-benchmarks",
   "xcm-builder/runtime-benchmarks",
   "indices/runtime-benchmarks",
   "membership/runtime-benchmarks",
@@ -214,6 +220,7 @@ runtime-benchmarks = [
   "picasso-runtime/runtime-benchmarks",
   "polkadot-primitives/runtime-benchmarks",
   "polkadot-runtime-parachains/runtime-benchmarks",
+  "uniswap-v2/runtime-benchmarks",
 ]
 
 develop = ["assets", "assets-registry", "governance-registry"]
