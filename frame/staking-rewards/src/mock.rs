@@ -14,7 +14,6 @@ use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup, Zero},
-	Perbill,
 };
 use system::EnsureRoot;
 
@@ -90,7 +89,7 @@ parameter_types! {
   pub const MaxStakingPresets: u32 = 10;
   pub const MaxRewardAssets: u32 = 10;
   pub const EpochDuration: DurationSeconds = MILLISECS_PER_BLOCK * REWARD_EPOCH_DURATION_BLOCK / 1000;
-  pub TagRewardPenalty: Perbill = Perbill::from_float(0.5);
+  pub const RewardPerBlock: u32 = 100;
 }
 
 impl Config for Test {
@@ -104,7 +103,7 @@ impl Config for Test {
 	type MaxStakingPresets = MaxStakingPresets;
 	type MaxRewardAssets = MaxRewardAssets;
 	type EpochDuration = EpochDuration;
-	type TagRewardPenatly = TagRewardPenalty;
+	type RewardPerBlock = RewardPerBlock;
 }
 
 impl FinancialNFTProtocol<AccountId> for Test {

@@ -38,6 +38,8 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use std::collections::BTreeSet;
+
 	use composable_traits::{
 		financial_nft::{FinancialNFTProvider, NFTClass},
 		math::SafeAdd,
@@ -100,6 +102,21 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	#[pallet::getter(fn class_instances)]
+	pub type ClassInstances<T: Config> =
+		StorageMap<_, Blake2_128Concat, NFTClass, BTreeSet<NFTInstanceId>, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn owner_instances)]
+	pub type OwnerInstances<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		AccountIdOf<T>,
+		BTreeSet<(NFTClass, NFTInstanceId)>,
+		OptionQuery,
+	>;
+
+	#[pallet::storage]
 	#[pallet::getter(fn class)]
 	pub type Class<T: Config> = StorageMap<
 		_,
@@ -150,6 +167,12 @@ pub mod pallet {
 		) -> DispatchResult {
 			Instance::<T>::try_mutate((class, instance), |entry| match entry {
 				Some((owner, _)) => {
+					OwnerInstances::<T>::mutate(owner.clone(), |x| match x {
+						Some(instances) => {
+							instances.remove(&(*class, *instance));
+						},
+						None => {},
+					});
 					*owner = destination.clone();
 					Ok(())
 				},
@@ -166,17 +189,52 @@ pub mod pallet {
 		) -> DispatchResult {
 			ensure!(Self::instance((class, instance)).is_none(), Error::<T>::InstanceAlreadyExists);
 			Instance::<T>::insert((class, instance), (who, BTreeMap::<Vec<u8>, Vec<u8>>::new()));
+			ClassInstances::<T>::mutate(class, |x| match x {
+				Some(instances) => {
+					instances.insert(*instance);
+				},
+				None => {
+					*x = Some([*instance].into_iter().collect::<BTreeSet<_>>());
+				},
+			});
+			OwnerInstances::<T>::mutate(who, |x| match x {
+				Some(instances) => {
+					instances.insert((*class, *instance));
+				},
+				None => {
+					*x = Some(
+						[(*class, *instance)]
+							.into_iter()
+							.collect::<BTreeSet<(NFTClass, NFTInstanceId)>>(),
+					);
+				},
+			});
 			Ok(())
 		}
 
 		fn burn_from(class: &Self::ClassId, instance: &Self::InstanceId) -> DispatchResult {
-			Instance::<T>::try_mutate_exists((class, instance), |entry| match entry {
-				Some(_) => {
-					*entry = None;
-					Ok(())
+			Instance::<T>::try_mutate_exists((class, instance), |entry| -> DispatchResult {
+				match entry {
+					Some((owner, _)) => {
+						OwnerInstances::<T>::mutate(owner, |x| match x {
+							Some(instances) => {
+								instances.remove(&(*class, *instance));
+							},
+							None => {},
+						});
+						*entry = None;
+						Ok(())
+					},
+					None => Err(Error::<T>::InstanceNotFound.into()),
+				}
+			})?;
+			ClassInstances::<T>::mutate(class, |x| match x {
+				Some(instances) => {
+					instances.remove(instance);
 				},
-				None => Err(Error::<T>::InstanceNotFound.into()),
-			})
+				None => {},
+			});
+			Ok(())
 		}
 
 		fn set_attribute(
