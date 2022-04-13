@@ -1,4 +1,4 @@
-use codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
 use core::fmt::Debug;
 use frame_support::{
 	dispatch::DispatchResult,
@@ -39,14 +39,14 @@ pub trait FinancialNFTProvider<AccountId>: Create<AccountId> + Mutate<AccountId>
 /// single attribute key.
 pub trait FinancialNFTProtocol<AccountId: Eq> {
 	/// Abstract type of a class id.
-	type ClassId: Encode + Decode + TypeInfo;
+	type ClassId: FullCodec + TypeInfo;
 
 	/// Abstract type of an instance id. Used to uniquely identify NFTs.
-	type InstanceId: Copy + Eq + Debug + Encode + Decode + TypeInfo;
+	type InstanceId: Copy + Eq + Debug + FullCodec + TypeInfo;
 
 	/// Abstract type of a version. Used to migrate NFT when updating their content.
 	/// Migration must be done by the protocol operating on the NFT type.
-	type Version: Encode + Decode + TypeInfo;
+	type Version: FullCodec + TypeInfo;
 
 	/// NFT provider from which we load/store NFT's.
 	type NFTProvider: FinancialNFTProvider<
@@ -168,7 +168,9 @@ pub trait FinancialNFTProtocol<AccountId: Eq> {
 }
 
 /// Default ClassId type used for NFTs.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(
+	Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Encode, Decode, MaxEncodedLen, TypeInfo,
+)]
 #[repr(transparent)]
 pub struct NFTClass(u8);
 
@@ -177,7 +179,9 @@ impl NFTClass {
 }
 
 /// Default Version type used for NFTs.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(
+	Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Encode, Decode, MaxEncodedLen, TypeInfo,
+)]
 #[repr(transparent)]
 pub struct NFTVersion(u8);
 
