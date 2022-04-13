@@ -56,9 +56,9 @@ jobs:
       run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) && echo $RELEASE_VERSION
     
     - name: FileExistChecking
-      uses: filiph/linkcheck@v2.0.15+1
+      uses: filiph/linkcheck@v2.0.20
       with:
-        arguments: <URL>
+        arguments: https://github.com/ComposableFi/composable/releases/download/v2.1.4/composable
 
     - name: Check file existence
       id: check_files
