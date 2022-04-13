@@ -4,6 +4,7 @@
 use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
 use frame_support::pallet_prelude::DispatchError;
 use scale_info::TypeInfo;
+use sp_arithmetic::traits::Unsigned;
 use sp_runtime::FixedPointNumber;
 use sp_std::fmt::Debug;
 
@@ -23,7 +24,7 @@ pub trait Vamm {
 	type VammConfig: FullCodec + MaxEncodedLen + TypeInfo + Debug + Clone + PartialEq;
 
 	/// The identifier type for each virtual automated market maker.
-	type VammId: FullCodec + MaxEncodedLen + TypeInfo;
+	type VammId: FullCodec + MaxEncodedLen + TypeInfo + Unsigned;
 
 	/// Create a new virtual automated market maker.
 	///
