@@ -93,6 +93,6 @@ pub enum AssetType {
 
 /// The two possible directions to go when opening/closing a position in the vamm.
 pub enum Direction {
-	Long,
-	Short,
+	Add,
+	Remove,
 }
