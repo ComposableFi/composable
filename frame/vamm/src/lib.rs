@@ -49,8 +49,8 @@
 //! ### Runtime Storage Objects
 //!
 //! - [`VammCounter`](VammCounter): The number of created vamms.
-//! - [`VammMap`](VammMap): Mapping of a [VammId](Config::VammId) to it's
-//! corresponding [VammState].
+//! - [`VammMap`](VammMap): Mapping of a [`VammId`](Config::VammId) to it's
+//! corresponding [`VammState`].
 //!
 //! ## Usage
 //!
@@ -73,7 +73,8 @@
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
-		clippy::panic
+		clippy::panic,
+		clippy::doc_markdown
 	)
 )]
 // Specify linters to VAMM Pallet.
@@ -381,7 +382,7 @@ pub mod pallet {
 		/// # Runtime
 		/// `O(1)`
 		#[transactional]
-		fn create(config: &Self::VammConfig) -> Result<Self::VammId, DispatchError> {
+		fn create(config: &VammConfigOf<T>) -> Result<VammIdOf<T>, DispatchError> {
 			// TODO: (Matheus)
 			// How to ensure that the caller has the right privileges?
 			// (eg. How to ensure the caller is the Clearing House, and not anyone else?)
@@ -437,19 +438,22 @@ pub mod pallet {
 		}
 
 		#[allow(unused_variables)]
-		fn get_twap(vamm_id: &Self::VammId) -> Result<Self::Decimal, DispatchError> {
+		fn get_twap(vamm_id: &VammIdOf<T>) -> Result<Self::Decimal, DispatchError> {
 			todo!()
 		}
 
 		#[allow(unused_variables)]
-		fn swap(config: &Self::SwapConfig) -> Result<Self::Integer, DispatchError> {
-			todo!()
+		fn swap(config: &SwapConfigOf<T>) -> Result<Self::Integer, DispatchError> {
+			match config.asset {
+				AssetType::Quote => Self::swap_quote_asset(&config),
+				AssetType::Base => todo!(),
+			}
 		}
 
 		#[allow(unused_variables)]
 		fn swap_simulation(
-			config: &Self::SwapSimulationConfig,
-		) -> Result<Self::Integer, DispatchError> {
+			config: &SwapSimulationConfigOf<T>,
+		) -> Result<IntegerOf<T>, DispatchError> {
 			todo!()
 		}
 	}
@@ -465,7 +469,11 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {}
 
 	// Helper functions - low-level functionality
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		fn swap_quote_asset(config: &SwapConfigOf<T>) -> Result<IntegerOf<T>, DispatchError> {
+			todo!()
+		}
+	}
 }
 
 // ----------------------------------------------------------------------------------------------------
