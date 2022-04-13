@@ -1,16 +1,10 @@
 # Mosaic Extrinsics
 
-## Set Relayer 
+## Set Relayer
 
-`set_relayer`
+{{#doc_comment_include ../../../../frame/mosaic/src/lib.rs:set_relayer_docs}}
 
-Sets the current Relayer configuration.
-
-This is enacted immediately and invalidates inflight, incoming transactions from
-the previous Relayer. However, existing budgets relain in place.
-
-This can only be called by the[`ControlOrigin`](#controlorigin). 
-### Rotate Relayer
+## Rotate Relayer
 
 `rotate_relayer`
 
@@ -26,8 +20,7 @@ The Time To Live (TTL) must be greater than the [`MinimumTTL`](#minimumttl).
 
 `set_network`
 
-Sets the supported networks and maximum transaction sizes accepted by the 
-Relayer.
+Sets the supported networks and maximum transaction sizes accepted by the Relayer.
 
 This can only be called by the current Relayer.
 
@@ -41,7 +34,7 @@ This does not reset the current `penalty`.
 
 This can only be called by the [`ControlOrigin`](#controlorigin).
 
-### Transfer To 
+### Transfer To
 
 `transfer_to`
 
@@ -59,27 +52,26 @@ Locks the funds locally until picked up by the Relayer.
 
 * The origin must have sufficient funds
 
-* Transactions that cause overflows (due to being too close to exceeding the max 
+* Transactions that cause overflows (due to being too close to exceeding the max
   balance) will be caught and returned as errors
 
-## Accept Transfer 
+## Accept Transfer
 
 {{#doc_comment_include ../../../../frame/mosaic/src/lib.rs:accept_transfer_docs}}
 
-
-### Claim Stale To 
+### Claim Stale To
 
 `claim_stale_to`
 
 Claims funds from outgoing transactions not yet picked up by the Relayer.
 
-### Time Locked Mint 
+### Time Locked Mint
 
 `timelocked_mint`
 
 Mints new tokens into the pallets wallet.
 
-These tokens will be available for pickup after the `lock_time` blocks have 
+These tokens will be available for pickup after the `lock_time` blocks have
 passed.
 
 ### Set Time Lock Duration
@@ -96,10 +88,10 @@ This can only be called by the `ControlOrigin`.
 
 Burns unclaimed funds that are waiting in incoming transactions.
 
-This may be used by the Relayer in case of finality issues on the other side of 
+This may be used by the Relayer in case of finality issues on the other side of
 the bridge.
 
-### Claim To 
+### Claim To
 
 `claim_to`
 

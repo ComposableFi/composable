@@ -349,9 +349,18 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Sets the current relayer configuration. This is enacted immediately and invalidates
-		/// inflight, incoming transactions from the previous relayer. Budgets remain in place
-		/// however.
+		// ANCHOR: set_relayer_docs
+		/// `set_relayer`
+		///
+		/// Sets the current Relayer configuration.
+		///
+		/// This is enacted immediately and invalidates inflight/ incoming transactions from the
+		/// previous Relayer. However, existing budgets remain in place.
+		///
+		/// This can only be called by the [`ControlOrigin`][controlorigin].
+		///
+		/// [controlorigin]: https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/trait.Config.html#associatedtype.ControlOrigin
+		// ANCHOR_END: set_relayer_docs
 		#[pallet::weight(T::WeightInfo::set_relayer())]
 		pub fn set_relayer(
 			origin: OriginFor<T>,
