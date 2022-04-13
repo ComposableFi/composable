@@ -60,6 +60,7 @@ jobs:
       run: |
         EXISTSTATUS=$(curl -o /dev/null -Isw '%{http_code}\n' https://github.com/ComposableFi/composable/releases/download/${RELEASE_VERSION}/composable)
         echo $EXISTSTATUS
+        echo $RELEASE_VERSION
         echo "::set-output name=EXISTOUT::$EXISTSTATUS"
 
     - name: FileStatusNotification
