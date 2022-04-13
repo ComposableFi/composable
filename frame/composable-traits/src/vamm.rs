@@ -31,6 +31,9 @@ pub trait Vamm {
 	/// Configuration for swap assets in a vamm.
 	type SwapConfig;
 
+	/// Configuration for simulation of asset swap in a vamm.
+	type SwapSimulationConfig;
+
 	/// The identifier type for each virtual automated market maker.
 	type VammId: Unsigned;
 
@@ -42,6 +45,10 @@ pub trait Vamm {
 
 	/// Performs swap of assets.
 	fn swap(config: &Self::SwapConfig) -> Result<Self::Integer, DispatchError>;
+
+	/// Performs swap simulation.
+	fn swap_simulation(config: &Self::SwapSimulationConfig)
+		-> Result<Self::Integer, DispatchError>;
 
 	/// Get the quote asset mark price for the specified vamm.
 	fn get_price(vamm_id: Self::VammId) -> Result<Self::Balance, DispatchError>;
@@ -68,6 +75,14 @@ pub struct SwapConfig<VammId, Balance> {
 	pub input_amount: Balance,
 	pub direction: Direction,
 	pub output_amount_limit: Balance,
+}
+
+/// Specify a common encapsulation layer for the swap simulation functions.
+pub struct SwapSimulationConfig<VammId, Balance> {
+	pub vamm_id: VammId,
+	pub asset: AssetType,
+	pub input_amount: Balance,
+	pub direction: Direction,
 }
 
 /// Distinguish between asset types present in the vamm.

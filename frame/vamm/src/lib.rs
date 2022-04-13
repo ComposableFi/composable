@@ -115,7 +115,9 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	use codec::{Codec, FullCodec};
-	use composable_traits::vamm::{AssetType, Direction, SwapConfig, Vamm, VammConfig};
+	use composable_traits::vamm::{
+		AssetType, Direction, SwapConfig, SwapSimulationConfig, Vamm, VammConfig,
+	};
 	use frame_support::{pallet_prelude::*, sp_std::fmt::Debug, transactional, Blake2_128Concat};
 	use num_integer::Integer;
 	use sp_arithmetic::traits::Unsigned;
@@ -205,6 +207,7 @@ pub mod pallet {
 	type TimestampOf<T> = <T as Config>::Timestamp;
 	type VammIdOf<T> = <T as Config>::VammId;
 	type SwapConfigOf<T> = SwapConfig<VammIdOf<T>, BalanceOf<T>>;
+	type SwapSimulationConfigOf<T> = SwapSimulationConfig<VammIdOf<T>, BalanceOf<T>>;
 	type VammConfigOf<T> = VammConfig<BalanceOf<T>>;
 	type VammStateOf<T> = VammState<BalanceOf<T>, TimestampOf<T>>;
 
@@ -334,6 +337,7 @@ pub mod pallet {
 		type Decimal = T::Decimal;
 		type Integer = IntegerOf<T>;
 		type SwapConfig = SwapConfigOf<T>;
+		type SwapSimulationConfig = SwapSimulationConfigOf<T>;
 		type VammConfig = VammConfigOf<T>;
 		type VammId = VammIdOf<T>;
 
@@ -427,6 +431,13 @@ pub mod pallet {
 
 		#[allow(unused_variables)]
 		fn swap(config: &Self::SwapConfig) -> Result<Self::Integer, DispatchError> {
+			todo!()
+		}
+
+		#[allow(unused_variables)]
+		fn swap_simulation(
+			config: &Self::SwapSimulationConfig,
+		) -> Result<Self::Integer, DispatchError> {
 			todo!()
 		}
 	}
