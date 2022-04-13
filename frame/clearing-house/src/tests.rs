@@ -98,14 +98,37 @@ fn valid_base_asset_amount_limit() -> Balance {
 // ----------------------------------------------------------------------------------------------------
 
 trait MarketInitializer {
-	fn init_market(self, market_id: &mut MarketId) -> Self;
+	fn init_market(self, market_id: &mut MarketId, config: Option<MarketConfig>) -> Self;
+	fn init_markets<T>(self, market_ids: &mut Vec<MarketId>, configs: T) -> Self
+	where
+		T: Iterator<Item = Option<MarketConfig>>;
+
+	fn create_market_helper(config: Option<MarketConfig>) -> MarketId {
+		<TestPallet as ClearingHouse>::create_market(&match config {
+			Some(c) => c,
+			None => valid_market_config(),
+		})
+		.unwrap()
+	}
 }
 
 impl MarketInitializer for sp_io::TestExternalities {
-	fn init_market(mut self, market_id: &mut MarketId) -> Self {
+	fn init_market(mut self, market_id: &mut MarketId, config: Option<MarketConfig>) -> Self {
 		self.execute_with(|| {
-			*market_id =
-				<TestPallet as ClearingHouse>::create_market(&valid_market_config()).unwrap();
+			*market_id = Self::create_market_helper(config);
+		});
+
+		self
+	}
+
+	fn init_markets<T>(mut self, market_ids: &mut Vec<MarketId>, configs: T) -> Self
+	where
+		T: Iterator<Item = Option<MarketConfig>>,
+	{
+		self.execute_with(|| {
+			for config in configs {
+				market_ids.push(Self::create_market_helper(config));
+			}
 		});
 
 		self
@@ -485,35 +508,73 @@ proptest! {
 fn fails_to_open_position_if_market_id_invalid() {
 	let mut market_id: MarketId = 0;
 
-	ExtBuilder::default().build().init_market(&mut market_id).execute_with(|| {
-		assert_noop!(
-			TestPallet::open_position(
-				Origin::signed(ALICE),
-				market_id + 1,
-				Direction::Long,
-				valid_quote_asset_amount(),
-				valid_base_asset_amount_limit()
-			),
-			Error::<Runtime>::MarketIdNotFound,
-		);
-	})
+	ExtBuilder::default()
+		.build()
+		.init_market(&mut market_id, None)
+		.execute_with(|| {
+			assert_noop!(
+				TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id + 1,
+					Direction::Long,
+					valid_quote_asset_amount(),
+					valid_base_asset_amount_limit()
+				),
+				Error::<Runtime>::MarketIdNotFound,
+			);
+		})
 }
 
 #[test]
 fn open_position_in_new_market_increases_number_of_positions() {
 	let mut market_id: MarketId = 0;
 
-	ExtBuilder::default().build().init_market(&mut market_id).execute_with(|| {
-		let positions_before = TestPallet::get_positions(&ALICE).len();
-		assert_ok!(TestPallet::open_position(
-			Origin::signed(ALICE),
-			market_id,
-			Direction::Long,
-			valid_quote_asset_amount(),
-			valid_base_asset_amount_limit(),
-		));
-		assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before + 1);
-	})
+	ExtBuilder::default()
+		.build()
+		.init_market(&mut market_id, None)
+		.execute_with(|| {
+			let positions_before = TestPallet::get_positions(&ALICE).len();
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				Direction::Long,
+				valid_quote_asset_amount(),
+				valid_base_asset_amount_limit(),
+			));
+			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before + 1);
+		})
+}
+
+#[test]
+fn fails_to_create_new_position_if_violates_maximum_positions_num() {
+	let max_positions = <Runtime as Config>::MaxPositions::get() as usize;
+	let mut market_ids = Vec::<_>::new();
+	let configs = vec![None; max_positions + 1];
+
+	ExtBuilder::default()
+		.build()
+		.init_markets(&mut market_ids, configs.into_iter())
+		.execute_with(|| {
+			for idx in 0..max_positions {
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_ids[idx],
+					Direction::Long,
+					valid_quote_asset_amount(),
+					valid_base_asset_amount_limit(),
+				));
+			}
+			assert_noop!(
+				TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_ids[max_positions],
+					Direction::Long,
+					valid_quote_asset_amount(),
+					valid_base_asset_amount_limit(),
+				),
+				Error::<Runtime>::MaxPositionsExceeded
+			);
+		})
 }
 
 #[test]
@@ -521,18 +582,21 @@ fn open_position_in_new_market_increases_number_of_positions() {
 fn fails_to_increase_position_if_not_enough_margin() {
 	let mut market_id: MarketId = 0;
 
-	ExtBuilder::default().build().init_market(&mut market_id).execute_with(|| {
-		assert_noop!(
-			TestPallet::open_position(
-				Origin::signed(ALICE),
-				market_id,
-				Direction::Long,
-				valid_quote_asset_amount(),
-				valid_base_asset_amount_limit()
-			),
-			Error::<Runtime>::InsufficientCollateral,
-		);
-	})
+	ExtBuilder::default()
+		.build()
+		.init_market(&mut market_id, None)
+		.execute_with(|| {
+			assert_noop!(
+				TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Long,
+					valid_quote_asset_amount(),
+					valid_base_asset_amount_limit()
+				),
+				Error::<Runtime>::InsufficientCollateral,
+			);
+		})
 }
 
 // ----------------------------------------------------------------------------------------------------
