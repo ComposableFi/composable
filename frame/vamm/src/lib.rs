@@ -410,18 +410,30 @@ pub mod pallet {
 		/// Get the current mark price in vamm.
 		///
 		/// # Overview
-		fn get_price(vamm_id: VammIdOf<T>) -> Result<BalanceOf<T>, DispatchError> {
+		fn get_price(
+			vamm_id: VammIdOf<T>,
+			asset_type: AssetType,
+		) -> Result<BalanceOf<T>, DispatchError> {
 			// Requested vamm must exist.
 			ensure!(VammMap::<T>::contains_key(vamm_id), Error::<T>::VammDoesNotExist);
 
 			let vamm_state = VammMap::<T>::get(vamm_id).ok_or(Error::<T>::FailToRetrieveVamm)?;
 
-			Ok(vamm_state
-				.quote_asset_reserves
-				.checked_mul(&vamm_state.peg_multiplier)
-				.ok_or(ArithmeticError::Overflow)?
-				.checked_div(&vamm_state.base_asset_reserves)
-				.ok_or(ArithmeticError::Overflow)?)
+			match asset_type {
+				AssetType::Base => Ok(vamm_state
+					.quote_asset_reserves
+					.checked_mul(&vamm_state.peg_multiplier)
+					.ok_or(ArithmeticError::Overflow)?
+					.checked_div(&vamm_state.base_asset_reserves)
+					.ok_or(ArithmeticError::Overflow)?),
+
+				AssetType::Quote => Ok(vamm_state
+					.base_asset_reserves
+					.checked_mul(&vamm_state.peg_multiplier)
+					.ok_or(ArithmeticError::Overflow)?
+					.checked_div(&vamm_state.quote_asset_reserves)
+					.ok_or(ArithmeticError::Overflow)?),
+			}
 		}
 
 		#[allow(unused_variables)]

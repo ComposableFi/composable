@@ -3,7 +3,7 @@ use crate::{
 	pallet,
 	pallet::{Error, VammMap, VammState},
 };
-use composable_traits::vamm::{Vamm as VammTrait, VammConfig};
+use composable_traits::vamm::{AssetType, Vamm as VammTrait, VammConfig};
 use frame_support::{assert_noop, assert_ok, pallet_prelude::Hooks};
 use proptest::prelude::*;
 use sp_runtime::{ArithmeticError, DispatchError};
@@ -226,7 +226,7 @@ proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
 	#[allow(clippy::disallowed_methods)]
-	fn get_price(
+	fn get_price_base_asset(
 		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve(),
 	) {
 		ExtBuilder {
@@ -242,15 +242,50 @@ proptest! {
 			let quote_peg = quote_asset_reserves.checked_mul(peg_multiplier);
 			if quote_peg.is_none() {
 				assert_eq!(
-					Vamm::get_price(0),
+					Vamm::get_price(0, AssetType::Base),
 					Err(DispatchError::Arithmetic(ArithmeticError::Overflow)))
 			} else if quote_peg.unwrap().checked_div(base_asset_reserves).is_none() {
 				assert_eq!(
-					Vamm::get_price(0),
+					Vamm::get_price(0, AssetType::Base),
 					Err(DispatchError::Arithmetic(ArithmeticError::Underflow)))
 			} else {
 				assert_eq!(
-					Vamm::get_price(0),
+					Vamm::get_price(0, AssetType::Base),
+					Ok(quote_peg.unwrap().checked_div(base_asset_reserves).unwrap()))
+			}
+		})
+	}
+}
+
+proptest! {
+	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
+	#[test]
+	#[allow(clippy::disallowed_methods)]
+	fn get_price_quote_asset(
+		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve(),
+	) {
+		ExtBuilder {
+			vamm_count: 1,
+			vamms: vec![
+				(0,
+				 VammState{
+					 base_asset_reserves,
+					 quote_asset_reserves,
+					 peg_multiplier,
+					 closed: None})]
+		}.build().execute_with(|| {
+			let quote_peg = quote_asset_reserves.checked_mul(peg_multiplier);
+			if quote_peg.is_none() {
+				assert_eq!(
+					Vamm::get_price(0, AssetType::Quote),
+					Err(DispatchError::Arithmetic(ArithmeticError::Overflow)))
+			} else if quote_peg.unwrap().checked_div(base_asset_reserves).is_none() {
+				assert_eq!(
+					Vamm::get_price(0, AssetType::Quote),
+					Err(DispatchError::Arithmetic(ArithmeticError::Underflow)))
+			} else {
+				assert_eq!(
+					Vamm::get_price(0, AssetType::Quote),
 					Ok(quote_peg.unwrap().checked_div(base_asset_reserves).unwrap()))
 			}
 		})

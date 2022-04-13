@@ -51,7 +51,10 @@ pub trait Vamm {
 		-> Result<Self::Integer, DispatchError>;
 
 	/// Get the quote asset mark price for the specified vamm.
-	fn get_price(vamm_id: Self::VammId) -> Result<Self::Balance, DispatchError>;
+	fn get_price(
+		vamm_id: Self::VammId,
+		asset_type: AssetType,
+	) -> Result<Self::Balance, DispatchError>;
 
 	/// Compute the time-weighted average price of a virtual AMM.
 	#[allow(unused_variables)]
