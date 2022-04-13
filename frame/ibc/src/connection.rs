@@ -96,7 +96,7 @@ where
 		Ok(any_consensus_state)
 	}
 
-	// TODO: Define consenssus state for substrate chains in ibc-rs and modify this after
+	// TODO: Define consensus state for substrate chains in ibc-rs and modify this after
 	fn host_consensus_state(&self, _height: Height) -> Result<AnyConsensusState, ICS03Error> {
 		Err(ICS03Error::implementation_specific())
 	}

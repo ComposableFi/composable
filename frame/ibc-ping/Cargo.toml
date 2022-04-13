@@ -20,6 +20,7 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 #ibc = { version = "0.13.0", default-features = false }
 ibc = { git = "https://github.com/informalsystems/ibc-rs.git", branch = "master", default-features = false }
 ibc-trait = {path = "../ibc/ibc-trait", default-features = false }
+ibc-primitives = {path = "../ibc/ibc-primitives", default-features = false }
 
 [features]
 default = ['std']
@@ -34,5 +35,6 @@ std = [
     "frame-support/std",
     "sp-std/std",
     "ibc/std",
-    "ibc-trait/std"
+    "ibc-trait/std",
+    "ibc-primitives/std"
 ]

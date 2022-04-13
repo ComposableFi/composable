@@ -28,6 +28,24 @@ pub use pallet::*;
 pub const MODULE_ID: &'static str = "pallet-ibc-ping";
 pub const PORT_ID: &'static str = "ibc-ping";
 
+#[derive(
+	Clone,
+	PartialEq,
+	Eq,
+	codec::Encode,
+	codec::Decode,
+	frame_support::RuntimeDebug,
+	scale_info::TypeInfo,
+)]
+pub struct SendPingParams {
+	data: Vec<u8>,
+	timeout_height_offset: u64,
+	timeout_timestamp_offset: u64,
+	channel_id: Vec<u8>,
+	dest_port_id: Vec<u8>,
+	dest_channel_id: Vec<u8>,
+}
+
 // Definition of the pallet logic, to be aggregated at runtime definition through
 // `construct_runtime`.
 #[frame_support::pallet]
@@ -38,6 +56,7 @@ pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 	use ibc::core::ics04_channel::channel::{ChannelEnd, Order, State};
+	use ibc_primitives::SendPacketData;
 	use ibc_trait::{connection_id_from_bytes, port_id_from_bytes, IbcTrait, OpenChannelParams};
 
 	/// Our pallet's configuration trait. All our types and constants go in here. If the
@@ -114,14 +133,41 @@ pub mod pallet {
 			let capability = Capability::<T>::get().ok_or(Error::<T>::MissingPortCapability)?;
 			let capability = RawCapability::from(capability);
 			T::IbcHandler::open_channel(port_id, capability.into(), channel_end)
-				.map_err(|_| Error::<T>::ChannelInitError.into())
+				.map_err(|_| Error::<T>::ChannelInitError)?;
+			Self::deposit_event(Event::<T>::ChannelOpened);
+			Ok(())
+		}
+
+		#[pallet::weight(0)]
+		pub fn send_ping(origin: OriginFor<T>, params: SendPingParams) -> DispatchResult {
+			ensure_root(origin)?;
+			let capability = Capability::<T>::get().ok_or(Error::<T>::MissingPortCapability)?;
+			let capability = RawCapability::from(capability);
+			let send_packet = SendPacketData {
+				data: params.data,
+				timeout_height_offset: params.timeout_height_offset,
+				timeout_timestamp_offset: params.timeout_timestamp_offset,
+				capability,
+				port_id: PORT_ID.as_bytes().to_vec(),
+				channel_id: params.channel_id,
+				dest_port_id: params.dest_port_id,
+				dest_channel_id: params.dest_channel_id,
+			};
+			T::IbcHandler::send_packet(send_packet).map_err(|_| Error::<T>::PacketSendError)?;
+			Self::deposit_event(Event::<T>::PacketSent);
+			Ok(())
 		}
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+		/// Port for pallet has been bound
 		PortBound,
+		/// A send packet has been registered
+		PacketSent,
+		/// A channel has been opened
+		ChannelOpened
 	}
 
 	#[pallet::storage]
@@ -144,6 +190,8 @@ pub mod pallet {
 		ChannelInitError,
 		/// Missing port capability
 		MissingPortCapability,
+		/// Error registering packet
+		PacketSendError,
 	}
 }
 
