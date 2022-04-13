@@ -55,7 +55,7 @@ jobs:
       id: existcheck
       run: |
         RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)
-        #EXISTSTATUS=$(curl -o /dev/null -Isw '%{http_code}\n' https://github.com/ComposableFi/composable/releases/download/${RELEASE_VERSION}/composable)
+        EXISTSTATUS=$(curl -o /dev/null -Isw '%{http_code}\n' https://github.com/ComposableFi/composable/releases/download/${RELEASE_VERSION}/composable)
         echo $EXISTSTATUS
         echo $RELEASE_VERSION
         echo "::set-output name=EXISTOUT::$EXISTSTATUS"
