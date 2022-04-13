@@ -60,10 +60,6 @@ jobs:
         echo $RELEASE_VERSION
         echo "::set-output name=EXISTOUT::$EXISTSTATUS"
 
-    #- name: FileStatusNotification
-    #  if: steps.existcheck.outputs.EXISTOUT == '302'
-    #  run: echo "File is Existing"
-
     - name: Build Docker image
       if: steps.existcheck.outputs.EXISTOUT == '302'
       run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make containerize
