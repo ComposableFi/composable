@@ -122,8 +122,10 @@ pub mod pallet {
 	pub trait Config: DeFiComposableConfig + frame_system::Config {
 		/// Event type emitted by this pallet. Depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
 		/// Weight information for this pallet's extrinsics
 		type WeightInfo: WeightInfo;
+
 		/// The market ID type for this pallet.
 		type MarketId: CheckedAdd
 			+ One
@@ -134,20 +136,34 @@ pub mod pallet {
 			+ Clone
 			+ PartialEq
 			+ Debug;
+
 		/// Signed decimal fixed point number.
 		type Decimal: FullCodec + MaxEncodedLen + TypeInfo + FixedPointNumber;
+
 		/// Implementation for querying the current Unix timestamp
 		type UnixTime: UnixTime;
+
 		/// Virtual Automated Market Maker pallet implementation
-		type Vamm: Vamm<Balance = Self::Balance, Decimal = Self::Decimal>;
+		type Vamm: Vamm<
+			Balance = Self::Balance,
+			Decimal = Self::Decimal,
+			VammConfig = Self::VammConfig,
+		>;
+
+		/// Configuration for creating and initializing a new vAMM instance. To be used as an
+		/// extrinsic input
+		type VammConfig: FullCodec + MaxEncodedLen + TypeInfo + Debug + Clone + PartialEq;
+
 		/// Price feed (in USDT) Oracle pallet implementation
 		type Oracle: Oracle<AssetId = Self::MayBeAssetId, Balance = Self::Balance>;
+
 		/// Pallet implementation of asset transfers.
 		type Assets: Transfer<
 			Self::AccountId,
 			Balance = Self::Balance,
 			AssetId = Self::MayBeAssetId,
 		>;
+
 		/// The id used as the `AccountId` of the clearing house. This should be unique across all
 		/// pallets to avoid name collisions with other pallets and clearing houses.
 		#[pallet::constant]
@@ -228,7 +244,7 @@ pub mod pallet {
 	type AssetIdOf<T> = <T as DeFiComposableConfig>::MayBeAssetId;
 	type MarketIdOf<T> = <T as Config>::MarketId;
 	type DecimalOf<T> = <T as Config>::Decimal;
-	type VammConfigOf<T> = <<T as Config>::Vamm as Vamm>::VammConfig;
+	type VammConfigOf<T> = <T as Config>::VammConfig;
 	type VammIdOf<T> = <<T as Config>::Vamm as Vamm>::VammId;
 	type PositionOf<T> = Position<MarketIdOf<T>, DecimalOf<T>>;
 	type MarketConfigOf<T> = MarketConfig<AssetIdOf<T>, VammConfigOf<T>, DecimalOf<T>>;
@@ -504,7 +520,7 @@ pub mod pallet {
 				let market_id = id.clone();
 				let market = Market {
 					asset_id: config.asset,
-					vamm_id: T::Vamm::create(config.vamm_config.clone())?,
+					vamm_id: T::Vamm::create(&config.vamm_config)?,
 					margin_ratio_initial: config.margin_ratio_initial,
 					margin_ratio_maintenance: config.margin_ratio_maintenance,
 					funding_frequency: config.funding_frequency,
