@@ -358,6 +358,22 @@ fn create_first_market_succeeds() {
 }
 
 #[test]
+fn can_create_two_markets_with_same_config() {
+	ExtBuilder::default().build().execute_with(|| {
+		run_to_block(2);
+		let mut count = TestPallet::market_count();
+		let block_time_now = <Timestamp as UnixTime>::now().as_secs();
+
+		for _ in 0..2 {
+			assert_ok!(TestPallet::create_market(Origin::signed(ALICE), valid_market_config()));
+
+			assert_eq!(TestPallet::get_market(count).unwrap().funding_rate_ts, block_time_now);
+			count += 1;
+		}
+	})
+}
+
+#[test]
 fn fails_to_create_market_for_unsupported_asset_by_oracle() {
 	ExtBuilder { oracle_asset_support: Some(false), ..Default::default() }
 		.build()
