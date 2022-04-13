@@ -88,7 +88,7 @@ pub mod pallet {
 	pub(crate) type StakingConfigOf<T> =
 		StakingConfig<AccountIdOf<T>, DurationPresetsOf<T>, RewardAssetsOf<T>>;
 	pub(crate) type EpochDurationOf<T> = <T as Config>::EpochDuration;
-  #[allow(dead_code)]
+	#[allow(dead_code)]
 	pub(crate) type PenaltyOf<T> = Penalty<AccountIdOf<T>>;
 
 	#[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
