@@ -52,15 +52,16 @@ jobs:
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}  
     
     - name: OutputTag
+      if: 
       run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) && echo $RELEASE_VERSION
     
     - name: Check file existence
       id: check_files
       uses: andstor/file-existence-action@v1
       with:
-        files: https://github.com/ComposableFi/composable/releases/download/v2.1.4/composable
+        files: https://github.com/ComposableFi/composable/releases/download/${RELEASE_VERSION}/composable
 
-    - name: File exists
+    - name: FileStatusNotification
       if: steps.check_files.outputs.files_exists == 'true'
       run: echo "It exists !"
 
