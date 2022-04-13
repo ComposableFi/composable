@@ -130,6 +130,13 @@ impl pallet_vamm::Config for MockRuntime {
 #[derive(Default)]
 pub struct ExtBuilder {
 	pub vamm_count: VammId,
+	pub vamms: Vec<(
+		VammId,
+		pallet_vamm::VammState<
+			<MockRuntime as pallet_vamm::Config>::Balance,
+			<MockRuntime as pallet_vamm::Config>::Timestamp,
+		>,
+	)>,
 }
 
 impl ExtBuilder {
@@ -138,9 +145,12 @@ impl ExtBuilder {
 		let mut storage =
 			frame_system::GenesisConfig::default().build_storage::<MockRuntime>().unwrap();
 
-		pallet_vamm::GenesisConfig::<MockRuntime> { vamm_count: self.vamm_count }
-			.assimilate_storage(&mut storage)
-			.unwrap();
+		pallet_vamm::GenesisConfig::<MockRuntime> {
+			vamm_count: self.vamm_count,
+			vamms: self.vamms,
+		}
+		.assimilate_storage(&mut storage)
+		.unwrap();
 
 		storage.into()
 	}

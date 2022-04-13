@@ -123,6 +123,9 @@ pub mod pallet {
 		ArithmeticError, FixedPointNumber,
 	};
 
+	#[cfg(feature = "std")]
+	use serde::{Deserialize, Serialize};
+
 	// ----------------------------------------------------------------------------------------------------
 	//                                    Declaration Of The Pallet Type
 	// ----------------------------------------------------------------------------------------------------
@@ -164,6 +167,7 @@ pub mod pallet {
 			+ Debug
 			+ FullCodec
 			+ MaxEncodedLen
+			+ MaybeSerializeDeserialize
 			+ PartialEq
 			+ TypeInfo;
 
@@ -178,6 +182,7 @@ pub mod pallet {
 			+ Codec
 			+ Copy
 			+ MaxEncodedLen
+			+ MaybeSerializeDeserialize
 			+ Ord
 			+ Parameter
 			+ Unsigned
@@ -206,6 +211,7 @@ pub mod pallet {
 
 	/// Data relating to the state of a virtual market.
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug)]
+	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 	pub struct VammState<Balance, Timestamp> {
 		/// The total amount of base asset present in the vamm.
 		pub base_asset_reserves: Balance,
@@ -293,12 +299,13 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub vamm_count: VammIdOf<T>,
+		pub vamms: Vec<(VammIdOf<T>, VammState<BalanceOf<T>, TimestampOf<T>>)>,
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { vamm_count: Default::default() }
+			Self { vamm_count: Default::default(), vamms: Default::default() }
 		}
 	}
 
@@ -306,6 +313,9 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			VammCounter::<T>::put(self.vamm_count);
+			self.vamms.iter().for_each(|(vamm_id, vamm_state)| {
+				VammMap::<T>::insert(vamm_id, vamm_state);
+			})
 		}
 	}
 
