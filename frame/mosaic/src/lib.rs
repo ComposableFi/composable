@@ -36,7 +36,10 @@ pub mod pallet {
 	};
 	use codec::FullCodec;
 	use composable_support::{types::EthereumAddress, validation::Validated};
-	use composable_traits::math::SafeAdd;
+	use composable_traits::{
+		math::SafeAdd,
+		mosaic::{Claim, RelayerInterface, TransferTo},
+	};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,
@@ -359,7 +362,9 @@ pub mod pallet {
 			relayer: T::AccountId,
 		) -> DispatchResultWithPostInfo {
 			T::ControlOrigin::ensure_origin(origin)?;
-			Relayer::<T>::set(Some(StaleRelayer::new(relayer.clone())));
+
+			<Pallet<T> as RelayerInterface>::set_relayer(relayer.clone());
+
 			Self::deposit_event(Event::RelayerSet { relayer });
 			Ok(().into())
 		}
@@ -377,9 +382,14 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let ttl = validated_ttl.value();
 			let (relayer, current_block) = Self::ensure_relayer(origin)?;
-			let ttl = current_block.saturating_add(ttl);
-			let relayer = relayer.rotate(new.clone(), ttl);
-			Relayer::<T>::set(Some(relayer.into()));
+
+			<Pallet<T> as RelayerInterface>::rotate_relayer(
+				relayer,
+				new.clone(),
+				ttl,
+				current_block,
+			);
+
 			Self::deposit_event(Event::RelayerRotated { account_id: new, ttl });
 			Ok(().into())
 		}
@@ -392,7 +402,9 @@ pub mod pallet {
 			network_info: NetworkInfo<BalanceOf<T>>,
 		) -> DispatchResultWithPostInfo {
 			Self::ensure_relayer(origin)?;
-			NetworkInfos::<T>::insert(network_id.clone(), network_info.clone());
+
+			<Pallet<T> as RelayerInterface>::set_network(network_id.clone(), network_info.clone());
+
 			Self::deposit_event(Event::NetworksUpdated { network_id, network_info });
 			Ok(().into())
 		}
@@ -413,24 +425,9 @@ pub mod pallet {
 			// Can also be token governance associated I reckon, as Angular holders should be able
 			// to grant mosaic permission to mint. We'll save that for phase 3.
 			T::ControlOrigin::ensure_origin(origin)?;
-			let current_block = <frame_system::Pallet<T>>::block_number();
 
-			AssetsInfo::<T>::mutate(asset_id, |item| {
-				let new = item
-					.take()
-					.map(|mut asset_info| {
-						asset_info.budget = amount;
-						asset_info.penalty_decayer = decay.clone();
-						asset_info
-					})
-					.unwrap_or_else(|| AssetInfo {
-						last_mint_block: current_block,
-						budget: amount,
-						penalty: Zero::zero(),
-						penalty_decayer: decay.clone(),
-					});
-				*item = Some(new);
-			});
+			<Pallet<T> as RelayerInterface>::set_budget(asset_id, amount, decay.clone());
+
 			Self::deposit_event(Event::BudgetUpdated { asset_id, amount, decay });
 			Ok(().into())
 		}
@@ -464,31 +461,14 @@ pub mod pallet {
 			ensure!(network_info.max_transfer_size >= amount, Error::<T>::ExceedsMaxTransferSize);
 			ensure!(network_info.min_transfer_size <= amount, Error::<T>::BelowMinTransferSize);
 
-			T::Assets::transfer(
-				asset_id,
-				&caller,
-				&Self::sub_account_id(SubAccount::new_outgoing(caller.clone())),
-				amount,
-				keep_alive,
-			)?;
 			let now = <frame_system::Pallet<T>>::block_number();
-			let lock_until = now.safe_add(&TimeLockPeriod::<T>::get())?;
 
-			OutgoingTransactions::<T>::try_mutate(
+			<Pallet<T> as TransferTo>::transfer_to(
 				caller.clone(),
 				asset_id,
-				|tx| -> Result<(), DispatchError> {
-					match tx.as_mut() {
-						// If we already have an outgoing tx, we update the lock_time and add the
-						// amount.
-						Some((already_locked, _)) => {
-							let amount = amount.safe_add(already_locked)?;
-							*tx = Some((amount, lock_until))
-						},
-						None => *tx = Some((amount, lock_until)),
-					}
-					Ok(())
-				},
+				amount,
+				keep_alive,
+				now,
 			)?;
 
 			let id = generate_id::<T>(&caller, &network_id, &asset_id, &address, &amount, &now);
@@ -526,47 +506,15 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			Self::ensure_relayer(origin)?;
 			let asset_id = Self::get_local_mapping(remote_asset_id.clone(), network_id.clone())?;
-			OutgoingTransactions::<T>::try_mutate_exists::<_, _, _, DispatchError, _>(
-				from.clone(),
+
+			<Pallet<T> as RelayerInterface>::accept_transfer(
 				asset_id,
-				|maybe_tx| match *maybe_tx {
-					Some((balance, lock_period)) => {
-						ensure!(amount <= balance, Error::<T>::AmountMismatch);
-						T::Assets::burn_from(
-							asset_id,
-							&Self::sub_account_id(SubAccount::new_outgoing(from.clone())),
-							amount,
-						)?;
-
-						// No remaing funds need to be transferred for this asset, so we can delete
-						// the storage item.
-						if amount == balance {
-							*maybe_tx = None;
-							Self::deposit_event(Event::<T>::TransferAccepted {
-								from,
-								network_id,
-								remote_asset_id,
-								asset_id,
-								amount,
-							});
-						} else {
-							let new_balance =
-								balance.checked_sub(&amount).ok_or(Error::<T>::AmountMismatch)?;
-							*maybe_tx = Some((new_balance, lock_period));
-							Self::deposit_event(Event::<T>::PartialTransferAccepted {
-								from,
-								network_id,
-								remote_asset_id,
-								asset_id,
-								amount,
-							});
-						}
-
-						Ok(())
-					},
-					None => Err(Error::<T>::NoOutgoingTx.into()),
-				},
+				from,
+				network_id,
+				remote_asset_id,
+				amount,
 			)?;
+
 			Ok(().into())
 		}
 
@@ -583,39 +531,8 @@ pub mod pallet {
 
 			let now = <frame_system::Pallet<T>>::block_number();
 
-			OutgoingTransactions::<T>::try_mutate_exists(
-				caller.clone(),
-				asset_id,
-				|prev| -> Result<(), DispatchError> {
-					let amount = match *prev {
-						Some((balance, lock_time)) => {
-							let still_locked = lock_time >= now;
-							if still_locked {
-								Err(Error::<T>::TxStillLocked)
-							} else {
-								T::Assets::transfer(
-									asset_id,
-									&Self::sub_account_id(SubAccount::new_outgoing(caller.clone())),
-									&to,
-									balance,
-									false,
-								)?;
-								Ok(balance)
-							}
-						},
-						_ => Err(Error::<T>::NoStaleTransactions),
-					}?;
+			<Pallet<T> as TransferTo>::claim_stale_to(caller, asset_id, to, now)?;
 
-					*prev = None;
-					Self::deposit_event(Event::<T>::StaleTxClaimed {
-						to,
-						asset_id,
-						by: caller,
-						amount,
-					});
-					Ok(())
-				},
-			)?;
 			Ok(().into())
 		}
 
@@ -634,50 +551,22 @@ pub mod pallet {
 			let (_caller, current_block) = Self::ensure_relayer(origin)?;
 			let asset_id = Self::get_local_mapping(remote_asset_id.clone(), network_id.clone())?;
 
-			AssetsInfo::<T>::try_mutate_exists::<_, _, DispatchError, _>(asset_id, |info| {
-				let AssetInfo { last_mint_block, penalty, budget, penalty_decayer } =
-					info.take().ok_or(Error::<T>::UnsupportedAsset)?;
+			<Pallet<T> as RelayerInterface>::timelocked_mint(
+				asset_id,
+				current_block,
+				to.clone(),
+				amount,
+				lock_time,
+			)?;
 
-				let new_penalty = penalty_decayer
-					.checked_decay(penalty, current_block, last_mint_block)
-					.unwrap_or_else(Zero::zero);
-
-				let penalised_budget = budget.saturating_sub(new_penalty);
-
-				// Check if the relayer has a sufficient budget to mint the requested amount.
-				ensure!(amount <= penalised_budget, Error::<T>::InsufficientBudget);
-
-				T::Assets::mint_into(
-					asset_id,
-					&Self::sub_account_id(SubAccount::new_incoming(to.clone())),
-					amount,
-				)?;
-
-				let lock_at = current_block.saturating_add(lock_time);
-
-				IncomingTransactions::<T>::mutate(to.clone(), asset_id, |prev| match prev {
-					Some((balance, _)) =>
-						*prev = Some(((*balance).saturating_add(amount), lock_at)),
-					_ => *prev = Some((amount, lock_at)),
-				});
-
-				*info = Some(AssetInfo {
-					last_mint_block: current_block,
-					budget,
-					penalty: new_penalty.saturating_add(amount),
-					penalty_decayer,
-				});
-
-				Self::deposit_event(Event::<T>::TransferInto {
-					id,
-					to,
-					network_id,
-					remote_asset_id,
-					asset_id,
-					amount,
-				});
-				Ok(())
-			})?;
+			Self::deposit_event(Event::<T>::TransferInto {
+				id,
+				to,
+				network_id,
+				remote_asset_id,
+				asset_id,
+				amount,
+			});
 
 			Ok(().into())
 		}
@@ -689,7 +578,9 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let validated_period = period.value();
 			T::ControlOrigin::ensure_origin(origin)?;
-			TimeLockPeriod::<T>::set(validated_period);
+
+			<Pallet<T> as RelayerInterface>::set_timelock_duration(validated_period);
+
 			Ok(().into())
 		}
 
@@ -707,30 +598,17 @@ pub mod pallet {
 			Self::ensure_relayer(origin)?;
 			let asset_id = Self::get_local_mapping(remote_asset_id.clone(), network_id.clone())?;
 
-			IncomingTransactions::<T>::try_mutate_exists::<_, _, _, DispatchError, _>(
-				account.clone(),
+			<Pallet<T> as RelayerInterface>::rescind_timelocked_mint(
 				asset_id,
-				|prev| {
-					let (balance, _) = prev.as_mut().ok_or(Error::<T>::NoClaimableTx)?;
-					// Wipe the entire incoming transaction.
-					if *balance == untrusted_amount {
-						*prev = None;
-					} else {
-						*balance = balance.saturating_sub(untrusted_amount);
-					}
-					T::Assets::burn_from(
-						asset_id,
-						&Self::sub_account_id(SubAccount::new_incoming(account.clone())),
-						untrusted_amount,
-					)?;
-					Self::deposit_event(Event::<T>::TransferIntoRescined {
-						account,
-						amount: untrusted_amount,
-						asset_id,
-					});
-					Ok(())
-				},
+				account.clone(),
+				untrusted_amount,
 			)?;
+
+			Self::deposit_event(Event::<T>::TransferIntoRescined {
+				account,
+				amount: untrusted_amount,
+				asset_id,
+			});
 
 			Ok(().into())
 		}
@@ -745,30 +623,8 @@ pub mod pallet {
 			let caller = ensure_signed(origin)?;
 			let now = <frame_system::Pallet<T>>::block_number();
 
-			IncomingTransactions::<T>::try_mutate_exists::<_, _, _, DispatchError, _>(
-				caller.clone(),
-				asset_id,
-				|deposit| {
-					let (amount, unlock_after) = deposit.ok_or(Error::<T>::NoClaimableTx)?;
-					ensure!(unlock_after < now, Error::<T>::TxStillLocked);
-					T::Assets::transfer(
-						asset_id,
-						&Self::sub_account_id(SubAccount::new_incoming(caller.clone())),
-						&to,
-						amount,
-						false,
-					)?;
-					// Delete the deposit.
-					deposit.take();
-					Self::deposit_event(Event::<T>::TransferClaimed {
-						by: caller,
-						to,
-						asset_id,
-						amount,
-					});
-					Ok(())
-				},
-			)?;
+			<Pallet<T> as Claim>::claim_to(caller, asset_id, to, now)?;
+
 			Ok(().into())
 		}
 
@@ -898,6 +754,319 @@ pub mod pallet {
 		) -> Result<RemoteAssetIdOf<T>, Error<T>> {
 			LocalToRemoteAsset::<T>::try_get(asset_id, network_id)
 				.map_err(|_| Error::<T>::AssetNotMapped)
+		}
+	}
+
+	impl<T: Config> RelayerInterface for Pallet<T> {
+		type AccountId = T::AccountId;
+		type AssetId = AssetIdOf<T>;
+		type Balance = BalanceOf<T>;
+		type BlockNumber = T::BlockNumber;
+		type BudgetPenaltyDecayer = T::BudgetPenaltyDecayer;
+		type NetworkId = NetworkIdOf<T>;
+		type NetworkInfo = NetworkInfo<BalanceOf<T>>;
+		type RelayerConfig = RelayerConfig<T::AccountId, T::BlockNumber>;
+		type RemoteAssetId = RemoteAssetIdOf<T>;
+
+		fn accept_transfer(
+			asset_id: Self::AssetId,
+			from: Self::AccountId,
+			network_id: Self::NetworkId,
+			remote_asset_id: Self::RemoteAssetId,
+			amount: Self::Balance,
+		) -> DispatchResultWithPostInfo {
+			OutgoingTransactions::<T>::try_mutate_exists::<_, _, _, DispatchError, _>(
+				from.clone(),
+				asset_id,
+				|maybe_tx| match *maybe_tx {
+					Some((balance, lock_period)) => {
+						ensure!(amount <= balance, Error::<T>::AmountMismatch);
+						T::Assets::burn_from(
+							asset_id,
+							&Self::sub_account_id(SubAccount::new_outgoing(from.clone())),
+							amount,
+						)?;
+
+						// No remaing funds need to be transferred for this asset, so we can delete
+						// the storage item.
+						if amount == balance {
+							*maybe_tx = None;
+							Self::deposit_event(Event::<T>::TransferAccepted {
+								from,
+								network_id,
+								remote_asset_id,
+								asset_id,
+								amount,
+							});
+						} else {
+							let new_balance =
+								balance.checked_sub(&amount).ok_or(Error::<T>::AmountMismatch)?;
+							*maybe_tx = Some((new_balance, lock_period));
+							Self::deposit_event(Event::<T>::PartialTransferAccepted {
+								from,
+								network_id,
+								remote_asset_id,
+								asset_id,
+								amount,
+							});
+						}
+
+						Ok(())
+					},
+					None => Err(Error::<T>::NoOutgoingTx.into()),
+				},
+			)?;
+
+			Ok(().into())
+		}
+
+		fn rotate_relayer(
+			relayer: Self::RelayerConfig,
+			new: Self::AccountId,
+			ttl: Self::BlockNumber,
+			current_block: Self::BlockNumber,
+		) {
+			let ttl = current_block.saturating_add(ttl);
+			let relayer = relayer.rotate(new, ttl);
+			Relayer::<T>::set(Some(relayer.into()));
+		}
+
+		fn rescind_timelocked_mint(
+			asset_id: Self::AssetId,
+			account: Self::AccountId,
+			untrusted_amount: Self::Balance,
+		) -> DispatchResultWithPostInfo {
+			IncomingTransactions::<T>::try_mutate_exists::<_, _, _, DispatchError, _>(
+				account.clone(),
+				asset_id,
+				|prev| {
+					let (balance, _) = prev.as_mut().ok_or(Error::<T>::NoClaimableTx)?;
+					// Wipe the entire incoming transaction.
+					if *balance == untrusted_amount {
+						*prev = None;
+					} else {
+						*balance = balance.saturating_sub(untrusted_amount);
+					}
+					T::Assets::burn_from(
+						asset_id,
+						&Self::sub_account_id(SubAccount::new_incoming(account.clone())),
+						untrusted_amount,
+					)?;
+					Ok(())
+				},
+			)?;
+			Ok(().into())
+		}
+
+		fn set_budget(
+			asset_id: Self::AssetId,
+			amount: Self::Balance,
+			decay: Self::BudgetPenaltyDecayer,
+		) {
+			let current_block = <frame_system::Pallet<T>>::block_number();
+
+			AssetsInfo::<T>::mutate(asset_id, |item| {
+				let new = item
+					.take()
+					.map(|mut asset_info| {
+						asset_info.budget = amount;
+						asset_info.penalty_decayer = decay.clone();
+						asset_info
+					})
+					.unwrap_or_else(|| AssetInfo {
+						last_mint_block: current_block,
+						budget: amount,
+						penalty: Zero::zero(),
+						penalty_decayer: decay.clone(),
+					});
+				*item = Some(new);
+			});
+		}
+
+		fn set_network(network_id: Self::NetworkId, network_info: Self::NetworkInfo) {
+			NetworkInfos::<T>::insert(network_id, network_info);
+		}
+
+		fn set_relayer(relayer: Self::AccountId) {
+			Relayer::<T>::set(Some(StaleRelayer::new(relayer)));
+		}
+
+		fn set_timelock_duration(period: Self::BlockNumber) {
+			TimeLockPeriod::<T>::set(period);
+		}
+
+		fn timelocked_mint(
+			asset_id: Self::AssetId,
+			current_block: Self::BlockNumber,
+			to: Self::AccountId,
+			amount: Self::Balance,
+			lock_time: Self::BlockNumber,
+		) -> DispatchResultWithPostInfo {
+			AssetsInfo::<T>::try_mutate_exists::<_, _, DispatchError, _>(asset_id, |info| {
+				let AssetInfo { last_mint_block, penalty, budget, penalty_decayer } =
+					info.take().ok_or(Error::<T>::UnsupportedAsset)?;
+
+				let new_penalty = penalty_decayer
+					.checked_decay(penalty, current_block, last_mint_block)
+					.unwrap_or_else(Zero::zero);
+
+				let penalised_budget = budget.saturating_sub(new_penalty);
+
+				// Check if the relayer has a sufficient budget to mint the requested amount.
+				ensure!(amount <= penalised_budget, Error::<T>::InsufficientBudget);
+
+				T::Assets::mint_into(
+					asset_id,
+					&Self::sub_account_id(SubAccount::new_incoming(to.clone())),
+					amount,
+				)?;
+
+				let lock_at = current_block.saturating_add(lock_time);
+
+				IncomingTransactions::<T>::mutate(to.clone(), asset_id, |prev| match prev {
+					Some((balance, _)) =>
+						*prev = Some(((*balance).saturating_add(amount), lock_at)),
+					_ => *prev = Some((amount, lock_at)),
+				});
+
+				*info = Some(AssetInfo {
+					last_mint_block: current_block,
+					budget,
+					penalty: new_penalty.saturating_add(amount),
+					penalty_decayer,
+				});
+
+				Ok(())
+			})?;
+
+			Ok(().into())
+		}
+	}
+
+	impl<T: Config> TransferTo for Pallet<T> {
+		type AccountId = AccountIdOf<T>;
+		type AssetId = AssetIdOf<T>;
+		type Balance = BalanceOf<T>;
+		type BlockNumber = BlockNumberOf<T>;
+
+		fn claim_stale_to(
+			caller: Self::AccountId,
+			asset_id: Self::AssetId,
+			to: Self::AccountId,
+			now: Self::BlockNumber,
+		) -> DispatchResultWithPostInfo {
+			OutgoingTransactions::<T>::try_mutate_exists(
+				caller.clone(),
+				asset_id,
+				|prev| -> Result<(), DispatchError> {
+					let amount = match *prev {
+						Some((balance, lock_time)) => {
+							let still_locked = lock_time >= now;
+							if still_locked {
+								Err(Error::<T>::TxStillLocked)
+							} else {
+								T::Assets::transfer(
+									asset_id,
+									&Self::sub_account_id(SubAccount::new_outgoing(caller.clone())),
+									&to,
+									balance,
+									false,
+								)?;
+								Ok(balance)
+							}
+						},
+						_ => Err(Error::<T>::NoStaleTransactions),
+					}?;
+
+					*prev = None;
+					Self::deposit_event(Event::<T>::StaleTxClaimed {
+						to,
+						asset_id,
+						by: caller,
+						amount,
+					});
+					Ok(())
+				},
+			)?;
+
+			Ok(().into())
+		}
+
+		fn transfer_to(
+			caller: Self::AccountId,
+			asset_id: Self::AssetId,
+			amount: Self::Balance,
+			keep_alive: bool,
+			now: Self::BlockNumber,
+		) -> DispatchResultWithPostInfo {
+			T::Assets::transfer(
+				asset_id,
+				&caller,
+				&Self::sub_account_id(SubAccount::new_outgoing(caller.clone())),
+				amount,
+				keep_alive,
+			)?;
+
+			let lock_until = now.safe_add(&TimeLockPeriod::<T>::get())?;
+
+			OutgoingTransactions::<T>::try_mutate(
+				caller,
+				asset_id,
+				|tx| -> Result<(), DispatchError> {
+					match tx.as_mut() {
+						// If we already have an outgoing tx, we update the lock_time and add the
+						// amount.
+						Some((already_locked, _)) => {
+							let amount = amount.safe_add(already_locked)?;
+							*tx = Some((amount, lock_until))
+						},
+						None => *tx = Some((amount, lock_until)),
+					}
+					Ok(())
+				},
+			)?;
+
+			Ok(().into())
+		}
+	}
+
+	impl<T: Config> Claim for Pallet<T> {
+		type AccountId = AccountIdOf<T>;
+		type AssetId = AssetIdOf<T>;
+		type BlockNumber = BlockNumberOf<T>;
+
+		fn claim_to(
+			caller: Self::AccountId,
+			asset_id: Self::AssetId,
+			to: Self::AccountId,
+			now: Self::BlockNumber,
+		) -> DispatchResultWithPostInfo {
+			IncomingTransactions::<T>::try_mutate_exists::<_, _, _, DispatchError, _>(
+				caller.clone(),
+				asset_id,
+				|deposit| {
+					let (amount, unlock_after) = deposit.ok_or(Error::<T>::NoClaimableTx)?;
+					ensure!(unlock_after < now, Error::<T>::TxStillLocked);
+					T::Assets::transfer(
+						asset_id,
+						&Self::sub_account_id(SubAccount::new_incoming(caller.clone())),
+						&to,
+						amount,
+						false,
+					)?;
+					// Delete the deposit.
+					deposit.take();
+					Self::deposit_event(Event::<T>::TransferClaimed {
+						by: caller,
+						to,
+						asset_id,
+						amount,
+					});
+					Ok(())
+				},
+			)?;
+
+			Ok(().into())
 		}
 	}
 
