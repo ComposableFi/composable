@@ -54,10 +54,20 @@ jobs:
     - name: OutputTag
       run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) && echo $RELEASE_VERSION
     
-    - name: CheckifFileExists
-      run: | 
-        RELEASE_URL=https://github.com/ComposableFi/composable/releases/download/${VERSION}/composable
-        if [[ `wget -S --spider $RELEASE_URL  2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then echo "true"; fi
+    - name: Check file existence
+      id: check_files
+      uses: andstor/file-existence-action@v1
+      with:
+        files: https://github.com/ComposableFi/composable/releases/download/${VERSION}/composable
+
+    - name: File exists
+      if: steps.check_files.outputs.files_exists == 'true'
+      run: echo "It exists !"
+
+    #- name: CheckifFileExists
+    #  run: | 
+    #    RELEASE_URL=https://github.com/ComposableFi/composable/releases/download/${VERSION}/composable
+    #    if [[ `wget -S --spider $RELEASE_URL  2>&1 | grep 'HTTP/1.1 200 OK'` ]]; then echo "true"; fi
 
     - name: Build Docker image
       run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make containerize
