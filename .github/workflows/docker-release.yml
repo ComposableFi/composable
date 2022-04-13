@@ -55,6 +55,11 @@ jobs:
       if: 
       run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) && echo $RELEASE_VERSION
     
+    - name: FileExistChecking
+      uses: filiph/linkcheck@v2.0.15+1
+      with:
+        arguments: <URL>
+
     - name: Check file existence
       id: check_files
       uses: andstor/file-existence-action@v1
