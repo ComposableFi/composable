@@ -628,7 +628,7 @@ pub mod pallet {
 			quote_asset_amount: Self::Balance,
 			base_asset_amount_limit: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			let mut market = Self::get_market(&market_id).ok_or(Error::<T>::MarketIdNotFound)?;
+			let market = Self::get_market(&market_id).ok_or(Error::<T>::MarketIdNotFound)?;
 
 			let mut positions = Self::get_positions(&account_id);
 			let position_index = match positions.iter().position(|p| p.market_id == *market_id) {
@@ -647,6 +647,7 @@ pub mod pallet {
 			};
 			let position = &mut positions[position_index];
 
+			Positions::<T>::insert(&account_id, positions);
 			Ok(0u32.into())
 		}
 	}
