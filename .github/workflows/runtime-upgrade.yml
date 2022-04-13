@@ -1,0 +1,36 @@
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - runtime_upgrade_nodejs
+#on:
+#  workflow_dispatch:
+#  create:
+#    tags:
+#      - v*
+
+jobs:
+  start_playbook:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-20.04
+
+  #  if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+
+    steps:
+      - uses: actions/checkout@v2
+
+     #runs ssh connection
+      - name: Go to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          command_timeout: 30m
+          script: |
+            eval $(ssh-agent -s)
+            ssh-add /home/ubuntu/.ssh/composable_ansib
+            ls- la
+ #           ansible-playbook -i test_inv runtime_upgrade_bash.yml --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
