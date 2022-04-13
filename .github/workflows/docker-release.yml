@@ -62,8 +62,8 @@ jobs:
         files: https://github.com/ComposableFi/composable/releases/download/${RELEASE_VERSION}/composable
 
     - name: FileStatusNotification
-      if: steps.check_files.outputs.files_exists == 'true'
-      run: echo "It exists !"
+      if: steps.check_files.outputs.files_exists == 'false'
+      run: echo "It does not exist!"
 
     #- name: CheckifFileExists
     #  run: | 
