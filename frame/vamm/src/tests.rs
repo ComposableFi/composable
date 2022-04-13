@@ -3,12 +3,10 @@ use crate::{
 	pallet,
 	pallet::{Error, VammMap, VammState},
 };
-
 use composable_traits::vamm::{Vamm as VammTrait, VammConfig};
-
-use proptest::prelude::*;
-
 use frame_support::{assert_noop, assert_ok, pallet_prelude::Hooks};
+use proptest::prelude::*;
+use sp_runtime::{ArithmeticError, DispatchError};
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Setup
@@ -217,5 +215,44 @@ proptest! {
 
 			assert!(VammMap::<MockRuntime>::contains_key(0_u128));
 		});
+	}
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                             Get Price
+// ----------------------------------------------------------------------------------------------------
+
+proptest! {
+	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
+	#[test]
+	#[allow(clippy::disallowed_methods)]
+	fn get_price(
+		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve(),
+	) {
+		ExtBuilder {
+			vamm_count: 1,
+			vamms: vec![
+				(0,
+				 VammState{
+					 base_asset_reserves,
+					 quote_asset_reserves,
+					 peg_multiplier,
+					 closed: None})]
+		}.build().execute_with(|| {
+			let quote_peg = quote_asset_reserves.checked_mul(peg_multiplier);
+			if quote_peg.is_none() {
+				assert_eq!(
+					Vamm::get_price(0),
+					Err(DispatchError::Arithmetic(ArithmeticError::Overflow)))
+			} else if quote_peg.unwrap().checked_div(base_asset_reserves).is_none() {
+				assert_eq!(
+					Vamm::get_price(0),
+					Err(DispatchError::Arithmetic(ArithmeticError::Underflow)))
+			} else {
+				assert_eq!(
+					Vamm::get_price(0),
+					Ok(quote_peg.unwrap().checked_div(base_asset_reserves).unwrap()))
+			}
+		})
 	}
 }
