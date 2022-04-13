@@ -26,7 +26,7 @@ jobs:
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
-          key: ${{ secrets.KEY }}
+          key: ${{ secrets.SERVER_KEY }}
           port: ${{ secrets.SERVER_PORT }}
           command_timeout: 30m
           script: |
