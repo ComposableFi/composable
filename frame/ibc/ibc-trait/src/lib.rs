@@ -16,6 +16,7 @@ pub enum Error {
 	BindPortError,
 	ChannelInitError,
 	DecodingError,
+	InvalidCapability
 }
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]

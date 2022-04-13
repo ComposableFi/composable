@@ -21,6 +21,7 @@ use ibc::core::{
 		},
 	},
 };
+use ibc::core::ics05_port::capabilities::{PortCapabilityType, TypedCapability};
 use ibc_primitives::{
 	ConnectionHandshakeProof, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection,
 	OffchainPacketType, PacketState, Proof, QueryChannelResponse, QueryChannelsResponse,
@@ -693,6 +694,11 @@ where
 		let sequence = Sequence::from(next_seq_send);
 		let source_port =
 			port_id_from_bytes(port_id.clone()).map_err(|_| IbcHandlerError::SendPacketError)?;
+		let typed_cap: TypedCapability<PortCapabilityType> = data.capability.into();
+		let port_cap: PortCapability = typed_cap.into();
+		if !ctx.authenticate(source_port.clone(), &port_cap) {
+			return Err(IbcHandlerError::InvalidCapability)
+		}
 		let source_channel = channel_id_from_bytes(channel_id.clone())
 			.map_err(|_| IbcHandlerError::SendPacketError)?;
 		let destination_port =
