@@ -102,7 +102,7 @@ pub mod pallet {
 		pallet_prelude::*,
 		storage::bounded_vec::BoundedVec,
 		traits::{tokens::fungibles::Transfer, GenesisBuild, UnixTime},
-		Blake2_128Concat, PalletId, Twox64Concat,
+		transactional, Blake2_128Concat, PalletId, Twox64Concat,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::{
@@ -272,9 +272,14 @@ pub mod pallet {
 	/// Maps [AccountId](frame_system::Config::AccountId) to its respective [Positions](Position),
 	/// as a vector.
 	#[pallet::storage]
-	#[pallet::getter(fn get_position)]
-	pub type Positions<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::AccountId, BoundedVec<PositionOf<T>, T::MaxPositions>>;
+	#[pallet::getter(fn get_positions)]
+	pub type Positions<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		T::AccountId,
+		BoundedVec<PositionOf<T>, T::MaxPositions>,
+		ValueQuery,
+	>;
 
 	/// The number of markets, also used to generate the next market identifier.
 	///
@@ -370,6 +375,9 @@ pub mod pallet {
 		MarketIdNotFound,
 		/// Raised when opening a risk-increasing position that takes the account below the IMR
 		InsufficientCollateral,
+		/// Raised when creating a new position but exceeding the maximum number of positions for
+		/// an account
+		MaxPositionsExceeded,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -612,6 +620,7 @@ pub mod pallet {
 			})
 		}
 
+		#[transactional]
 		fn open_position(
 			account_id: &Self::AccountId,
 			market_id: &Self::MarketId,
@@ -619,7 +628,24 @@ pub mod pallet {
 			quote_asset_amount: Self::Balance,
 			base_asset_amount_limit: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			let market = Self::get_market(&market_id).ok_or(Error::<T>::MarketIdNotFound)?;
+			let mut market = Self::get_market(&market_id).ok_or(Error::<T>::MarketIdNotFound)?;
+
+			let mut positions = Self::get_positions(&account_id);
+			let position_index = match positions.iter().position(|p| p.market_id == *market_id) {
+				Some(index) => index,
+				None => {
+					positions
+						.try_push(PositionOf::<T> {
+							market_id: market_id.clone(),
+							base_asset_amount: Zero::zero(),
+							quote_asset_notional_amount: Zero::zero(),
+							last_cum_funding: market.cum_funding_rate,
+						})
+						.map_err(|_| Error::<T>::MaxPositionsExceeded)?;
+					positions.len() - 1
+				},
+			};
+			let position = &mut positions[position_index];
 
 			Ok(0u32.into())
 		}
