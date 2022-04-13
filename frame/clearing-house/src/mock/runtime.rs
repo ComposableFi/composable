@@ -236,6 +236,7 @@ impl clearing_house::Config for Runtime {
 	type Decimal = Decimal;
 	type UnixTime = Timestamp;
 	type Vamm = Vamm;
+	type VammConfig = mock_vamm::VammConfig;
 	type Oracle = Oracle;
 	type Assets = Assets;
 	type PalletId = TestPalletId;
