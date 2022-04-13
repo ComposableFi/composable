@@ -43,7 +43,33 @@ const MINIMUM_RESERVE: Balance = ZERO_RESERVE + 1;
 const MAXIMUM_RESERVE: Balance = Balance::MAX;
 
 #[allow(dead_code)]
-const RUN_CASES: u32 = 100;
+const RUN_CASES: u32 = 1000;
+
+prop_compose! {
+	fn min_max_reserve()(
+		base_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE,
+		quote_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE,
+		peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE
+	) -> (Balance, Balance, Balance) {
+		(base_asset_reserves, quote_asset_reserves, peg_multiplier)
+	}
+}
+
+prop_compose! {
+	fn zero_reserve()(
+		zero_reserve in ZERO_RESERVE..=ZERO_RESERVE,
+	) -> Balance {
+		zero_reserve
+	}
+}
+
+prop_compose! {
+	fn loop_times()(
+		loop_times in MINIMUM_RESERVE..=500,
+	) -> Balance {
+		loop_times
+	}
+}
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Create Vamm
@@ -54,9 +80,7 @@ proptest! {
 	#[test]
 	#[allow(clippy::disallowed_methods)]
 	fn create_vamm(
-		base_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE,
-		quote_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE,
-		peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE
+		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			let vamm_counter = Vamm::vamm_count();
@@ -81,11 +105,9 @@ proptest! {
 		});
 	}
 
-
+	#[test]
 	fn create_vamm_succeeds(
-		base_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE,
-		quote_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE,
-		peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE
+		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_ok!(Vamm::create(
@@ -95,57 +117,55 @@ proptest! {
 		});
 	}
 
-
+	#[test]
 	fn create_vamm_zero_base_asset_reserves_error(
-		quote_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE,
-		peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE
+		base_asset_reserves in zero_reserve(),
+		(_, quote_asset_reserves, peg_multiplier) in min_max_reserve()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_noop!(
 				Vamm::create(
-					&VammConfig{base_asset_reserves: ZERO_RESERVE,
+					&VammConfig{base_asset_reserves,
 							   quote_asset_reserves,
 							   peg_multiplier}),
 				Error::<MockRuntime>::BaseAssetReserveIsZero);
 		})
 	}
 
-
+	#[test]
 	fn create_vamm_zero_quote_asset_reserves_error(
-		base_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE,
-		peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE
+		quote_asset_reserves in zero_reserve(),
+		(base_asset_reserves, _, peg_multiplier) in min_max_reserve()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_noop!(
 				Vamm::create(
 					&VammConfig{base_asset_reserves,
-							quote_asset_reserves: ZERO_RESERVE,
+							quote_asset_reserves,
 							peg_multiplier}),
 				Error::<MockRuntime>::QuoteAssetReserveIsZero);
 		})
 	}
 
-
+	#[test]
 	fn create_vamm_zero_peg_multiplier_error(
-		base_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE,
-		quote_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE
+		peg_multiplier in zero_reserve(),
+		(base_asset_reserves, quote_asset_reserves, _) in min_max_reserve()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_noop!(
 				Vamm::create(
 					&VammConfig{base_asset_reserves,
 							   quote_asset_reserves,
-							   peg_multiplier: ZERO_RESERVE}),
+							   peg_multiplier}),
 				Error::<MockRuntime>::PegMultiplierIsZero);
 		})
 	}
 
-
+	#[test]
 	fn create_vamm_update_counter_succeeds(
-		base_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE,
-		quote_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE,
-		peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE,
-		loop_times in MINIMUM_RESERVE..=100
+		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve(),
+		loop_times in loop_times()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			let markets = Vamm::vamm_count();
@@ -161,12 +181,10 @@ proptest! {
 		});
 	}
 
-
+	#[test]
 	#[allow(clippy::disallowed_methods)]
 	fn create_vamm_emits_event_succeeds(
-		base_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE,
-		quote_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE,
-		peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE
+		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve(),
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
@@ -184,11 +202,9 @@ proptest! {
 		});
 	}
 
-
+	#[test]
 	fn create_vamm_updates_storage_map(
-		base_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE,
-		quote_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE,
-		peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE
+		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve(),
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert!(!VammMap::<MockRuntime>::contains_key(0_u128));
