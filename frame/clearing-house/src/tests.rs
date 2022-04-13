@@ -85,6 +85,14 @@ fn valid_market_config() -> MarketConfig {
 	}
 }
 
+fn valid_quote_asset_amount() -> Balance {
+	10_000u64.into()
+}
+
+fn valid_base_asset_amount_limit() -> Balance {
+	1_000u64.into()
+}
+
 // ----------------------------------------------------------------------------------------------------
 //                                           Initializers
 // ----------------------------------------------------------------------------------------------------
@@ -483,11 +491,28 @@ fn fails_to_open_position_if_market_id_invalid() {
 				Origin::signed(ALICE),
 				market_id + 1,
 				Direction::Long,
-				10_000u64.into(),
-				1_000u64.into()
+				valid_quote_asset_amount(),
+				valid_base_asset_amount_limit()
 			),
 			Error::<Runtime>::MarketIdNotFound,
 		);
+	})
+}
+
+#[test]
+fn open_position_in_new_market_increases_number_of_positions() {
+	let mut market_id: MarketId = 0;
+
+	ExtBuilder::default().build().init_market(&mut market_id).execute_with(|| {
+		let positions_before = TestPallet::get_positions(&ALICE).len();
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(ALICE),
+			market_id,
+			Direction::Long,
+			valid_quote_asset_amount(),
+			valid_base_asset_amount_limit(),
+		));
+		assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before + 1);
 	})
 }
 
@@ -502,8 +527,8 @@ fn fails_to_increase_position_if_not_enough_margin() {
 				Origin::signed(ALICE),
 				market_id,
 				Direction::Long,
-				10_000u64.into(),
-				1_000u64.into(),
+				valid_quote_asset_amount(),
+				valid_base_asset_amount_limit()
 			),
 			Error::<Runtime>::InsufficientCollateral,
 		);
