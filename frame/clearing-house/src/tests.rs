@@ -492,6 +492,7 @@ fn fails_to_open_position_if_market_id_invalid() {
 }
 
 #[test]
+#[ignore]
 fn fails_to_increase_position_if_not_enough_margin() {
 	let mut market_id: MarketId = 0;
 
