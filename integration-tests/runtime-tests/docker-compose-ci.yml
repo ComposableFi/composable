@@ -1,0 +1,7 @@
+version: "3.9"
+
+services:
+  composable:
+    image: composablefi/composable-sandbox:latest
+    ports:
+      - "9988:9988"
