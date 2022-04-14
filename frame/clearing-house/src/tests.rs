@@ -578,6 +578,64 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 }
 
 #[test]
+fn short_trade_can_close_long_position() {
+	let mut market_id: MarketId = 0;
+
+	ExtBuilder::default()
+		.build()
+		.init_market(&mut market_id, None)
+		.execute_with(|| {
+			let positions_before = TestPallet::get_positions(&ALICE).len();
+
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				Direction::Long,
+				valid_quote_asset_amount(),
+				valid_base_asset_amount_limit(),
+			));
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				Direction::Short,
+				valid_quote_asset_amount(),
+				valid_base_asset_amount_limit(),
+			));
+
+			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
+		})
+}
+
+#[test]
+fn long_trade_can_short_long_position() {
+	let mut market_id: MarketId = 0;
+
+	ExtBuilder::default()
+		.build()
+		.init_market(&mut market_id, None)
+		.execute_with(|| {
+			let positions_before = TestPallet::get_positions(&ALICE).len();
+
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				Direction::Short,
+				valid_quote_asset_amount(),
+				valid_base_asset_amount_limit(),
+			));
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				Direction::Long,
+				valid_quote_asset_amount(),
+				valid_base_asset_amount_limit(),
+			));
+
+			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
+		})
+}
+
+#[test]
 #[ignore]
 fn fails_to_increase_position_if_not_enough_margin() {
 	let mut market_id: MarketId = 0;
