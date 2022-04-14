@@ -39,22 +39,27 @@ pub fn generate_docs(path: &Path, output_path: &Path) -> anyhow::Result<()> {
 			syn::Item::Mod(module) if module.attrs == frame_support_pallet_attr => Some(module),
 			_ => None,
 		})
-		.context("No #[frame_support::pallet] attribute present in file; is this file a pallet?")?;
+		.context(format!(
+			"No #[frame_support::pallet] attribute present in file \"{}\"; is this file a pallet?",
+			&path.to_string_lossy()
+		))?;
 
 	let imp = item_mod
 		.content
-		.context(
-			"Module annotated by #[frame_support::pallet] has no content; is this file a pallet?",
-		)?
+		.context(format!(
+			"Module annotated by #[frame_support::pallet] has no content; is the file \"{}\" a pallet?",
+			&path.to_string_lossy()
+		))?
 		.1
 		.into_iter()
 		.find_map(|inner_mod_item| match inner_mod_item {
 			syn::Item::Impl(imp) if imp.attrs == pallet_call_attr => Some(imp),
 			_ => None,
 		})
-		.context(
-			"No #[pallet::call] attribute present in file; are there extrinsics for this pallet?",
-		)?;
+		.context(format!(
+			"No #[pallet::call] attribute present in file  \"{}\"; are there extrinsics for this pallet?",
+			&path.to_string_lossy()
+		))?;
 
 	for impl_item in imp.items {
 		if let syn::ImplItem::Method(method) = impl_item {

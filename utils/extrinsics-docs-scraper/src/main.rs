@@ -62,13 +62,13 @@ fn main() -> anyhow::Result<()> {
 	// The notification back-end is selected based on the platform.
 	let mut watcher = watcher(tx, Duration::from_secs(1)).unwrap();
 
-	let pallet_entries = get_pallet_info(&path, &output_path)?;
+	let pallets = get_pallet_info(&path, &output_path)?;
 
-	for pallet_entry in &pallet_entries {
-		watcher.watch(&pallet_entry.lib_rs_path, RecursiveMode::NonRecursive).unwrap();
+	for pallet in &pallets {
+		watcher.watch(&pallet.lib_rs_path, RecursiveMode::NonRecursive).unwrap();
 	}
 
-	let path_map = pallet_entries
+	let path_map = pallets
 		.into_iter()
 		.map(|entry| (entry.lib_rs_path.clone(), entry))
 		.collect::<HashMap<_, _>>();
@@ -79,8 +79,7 @@ fn main() -> anyhow::Result<()> {
 				match event {
 					// Only write & create events matter, since the lib.rs files shouldn't be moved, renamed or deleted.
 					// If pallets are being refactored, hot-reloading the book is most likely not a priority
-					DebouncedEvent::NoticeWrite(changed_file_path)
-					| DebouncedEvent::Create(changed_file_path)
+					DebouncedEvent::Create(changed_file_path)
 					| DebouncedEvent::Write(changed_file_path) => {
 						let pallet_info = path_map.get(&*changed_file_path).with_context(|| {
 							format!(
@@ -131,10 +130,13 @@ fn get_pallet_info(path: &Path, output_path: &Path) -> Result<Vec<PalletInfo>, a
 						.then(|| ())
 						.context(format!("Pallet {} does not have a lib.rs file", &name))?;
 
+					lib_rs_path = lib_rs_path.canonicalize()?;
+
 					let mut docs_output_path = output_path.to_owned();
 					docs_output_path.extend([&name]);
 					if docs_output_path.exists() {
 						docs_output_path.extend(["extrinsics.md"]);
+						docs_output_path = docs_output_path.canonicalize()?;
 						Ok(Some(PalletInfo { name, lib_rs_path, docs_output_path }))
 					} else {
 						log::warn!(
@@ -183,8 +185,8 @@ fn init_logger(verbosity: u64) {
 	logger.init();
 }
 
+#[derive(Debug)]
 struct PalletInfo {
-	#[allow(dead_code)] // will be used in the future
 	name: String,
 	lib_rs_path: PathBuf,
 	docs_output_path: PathBuf,
