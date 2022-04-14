@@ -760,18 +760,20 @@ fn long_trade_can_close_long_position() {
 #[ignore]
 fn fails_to_increase_position_if_not_enough_margin() {
 	let mut market_id: MarketId = 0;
+	let base_amount_limit = valid_base_asset_amount_limit().try_into().unwrap();
 
 	ExtBuilder::default()
 		.build()
 		.init_market(&mut market_id, None)
 		.execute_with(|| {
+			VammPallet::set_swap_output(Some(base_amount_limit));
 			assert_noop!(
 				TestPallet::open_position(
 					Origin::signed(ALICE),
 					market_id,
 					Direction::Long,
 					valid_quote_asset_amount(),
-					valid_base_asset_amount_limit()
+					base_amount_limit.unsigned_abs(),
 				),
 				Error::<Runtime>::InsufficientCollateral,
 			);
