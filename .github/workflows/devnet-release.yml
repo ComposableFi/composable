@@ -41,7 +41,7 @@ jobs:
     - name: Install latest Nightly
       uses: actions-rs/toolchain@v1
       with:
-          toolchain: nightly-2022-02-01
+          toolchain: nightly-2021-11-29
           target: wasm32-unknown-unknown
 
     - uses: Swatinem/rust-cache@v1
