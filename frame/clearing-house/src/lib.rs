@@ -127,26 +127,26 @@ pub mod pallet {
 		/// Pallet implementation of asset transfers.
 		type Assets: Transfer<
 			Self::AccountId,
-			Balance = Self::Balance,
 			AssetId = Self::MayBeAssetId,
+			Balance = Self::Balance,
 		>;
 
 		/// Signed decimal fixed point number.
-		type Decimal: FullCodec + MaxEncodedLen + TypeInfo + FixedPointNumber;
+		type Decimal: FixedPointNumber + FullCodec + MaxEncodedLen + TypeInfo;
 
 		/// Event type emitted by this pallet. Depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The market ID type for this pallet.
 		type MarketId: CheckedAdd
-			+ One
+			+ Clone
+			+ Debug
 			+ Default
 			+ FullCodec
 			+ MaxEncodedLen
-			+ TypeInfo
-			+ Clone
+			+ One
 			+ PartialEq
-			+ Debug;
+			+ TypeInfo;
 
 		/// The maximum number of open positions (one for each market) for a trader
 		type MaxPositions: Get<u32>;
@@ -174,7 +174,7 @@ pub mod pallet {
 
 		/// Configuration for creating and initializing a new vAMM instance. To be used as an
 		/// extrinsic input
-		type VammConfig: FullCodec + MaxEncodedLen + TypeInfo + Debug + Clone + PartialEq;
+		type VammConfig: Clone + Debug + FullCodec + MaxEncodedLen + PartialEq + TypeInfo;
 
 		/// Virtual automated market maker identifier; usually an integer
 		type VammId: FullCodec + MaxEncodedLen + TypeInfo;
