@@ -1,6 +1,6 @@
 use crate::{
 	mock::{
-		accounts::ALICE,
+		accounts::{AccountId, ALICE},
 		assets::{AssetId, DOT, PICA, USDC},
 		oracle as mock_oracle,
 		runtime::{
@@ -99,6 +99,20 @@ fn valid_base_asset_amount_limit() -> Balance {
 // ----------------------------------------------------------------------------------------------------
 //                                           Initializers
 // ----------------------------------------------------------------------------------------------------
+
+trait MarginInitializer {
+	fn set_margin(self, account_id: &AccountId, asset_id: AssetId, amount: Balance) -> Self;
+}
+
+impl MarginInitializer for sp_io::TestExternalities {
+	fn set_margin(mut self, account_id: &AccountId, asset_id: AssetId, amount: Balance) -> Self {
+		self.execute_with(|| {
+			assert_ok!(<TestPallet as ClearingHouse>::add_margin(account_id, asset_id, amount));
+		});
+
+		self
+	}
+}
 
 trait MarketInitializer {
 	fn init_market(self, market_id: &mut MarketId, config: Option<MarketConfig>) -> Self;
@@ -551,18 +565,23 @@ proptest! {
 #[test]
 fn fails_to_open_position_if_market_id_invalid() {
 	let mut market_id: MarketId = 0;
+	let quote_amount = valid_quote_asset_amount();
+	let base_amount_limit = valid_base_asset_amount_limit();
 
-	ExtBuilder::default()
+	ExtBuilder { balances: vec![(ALICE, USDC, quote_amount)], ..Default::default() }
 		.build()
 		.init_market(&mut market_id, None)
+		.set_margin(&ALICE, USDC, quote_amount)
 		.execute_with(|| {
+			VammPallet::set_swap_output(Some(base_amount_limit.try_into().unwrap()));
+
 			assert_noop!(
 				TestPallet::open_position(
 					Origin::signed(ALICE),
 					market_id + 1,
 					Direction::Long,
-					valid_quote_asset_amount(),
-					valid_base_asset_amount_limit()
+					quote_amount,
+					base_amount_limit
 				),
 				Error::<Runtime>::MarketIdNotFound,
 			);
@@ -572,18 +591,23 @@ fn fails_to_open_position_if_market_id_invalid() {
 #[test]
 fn open_position_in_new_market_increases_number_of_positions() {
 	let mut market_id: MarketId = 0;
+	let quote_amount = valid_quote_asset_amount();
+	let base_amount_limit = valid_base_asset_amount_limit();
 
-	ExtBuilder::default()
+	ExtBuilder { balances: vec![(ALICE, USDC, quote_amount)], ..Default::default() }
 		.build()
 		.init_market(&mut market_id, None)
+		.set_margin(&ALICE, USDC, quote_amount)
 		.execute_with(|| {
+			VammPallet::set_swap_output(Some(base_amount_limit.try_into().unwrap()));
+
 			let positions_before = TestPallet::get_positions(&ALICE).len();
 			assert_ok!(TestPallet::open_position(
 				Origin::signed(ALICE),
 				market_id,
 				Direction::Long,
-				valid_quote_asset_amount(),
-				valid_base_asset_amount_limit(),
+				quote_amount,
+				base_amount_limit,
 			));
 			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before + 1);
 		})
@@ -593,19 +617,27 @@ fn open_position_in_new_market_increases_number_of_positions() {
 fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 	let max_positions = <Runtime as Config>::MaxPositions::get() as usize;
 	let mut market_ids = Vec::<_>::new();
-	let configs = vec![None; max_positions + 1];
+	let orders = max_positions + 1;
+	let configs = vec![None; orders];
 
-	ExtBuilder::default()
+	let quote_amount_total = valid_quote_asset_amount();
+	let quote_amount: Balance = quote_amount_total / (orders as u128);
+	let base_amount_limit: Balance = valid_base_asset_amount_limit() / (orders as u128);
+
+	ExtBuilder { balances: vec![(ALICE, USDC, quote_amount_total)], ..Default::default() }
 		.build()
 		.init_markets(&mut market_ids, configs.into_iter())
+		.set_margin(&ALICE, USDC, quote_amount_total)
 		.execute_with(|| {
+			VammPallet::set_swap_output(Some(base_amount_limit.try_into().unwrap()));
+
 			for market_id in market_ids.iter().take(max_positions) {
 				assert_ok!(TestPallet::open_position(
 					Origin::signed(ALICE),
 					*market_id,
 					Direction::Long,
-					valid_quote_asset_amount(),
-					valid_base_asset_amount_limit(),
+					quote_amount,
+					base_amount_limit,
 				));
 			}
 			assert_noop!(
@@ -613,8 +645,8 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 					Origin::signed(ALICE),
 					market_ids[max_positions],
 					Direction::Long,
-					valid_quote_asset_amount(),
-					valid_base_asset_amount_limit(),
+					quote_amount,
+					base_amount_limit,
 				),
 				Error::<Runtime>::MaxPositionsExceeded
 			);
@@ -624,26 +656,33 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 #[test]
 fn short_trade_can_close_long_position() {
 	let mut market_id: MarketId = 0;
+	let quote_amount = valid_quote_asset_amount();
+	let base_amount_limit: i128 = valid_base_asset_amount_limit().try_into().unwrap();
 
-	ExtBuilder::default()
+	ExtBuilder { balances: vec![(ALICE, USDC, quote_amount * 2)], ..Default::default() }
 		.build()
 		.init_market(&mut market_id, None)
+		.set_margin(&ALICE, USDC, quote_amount)
 		.execute_with(|| {
 			let positions_before = TestPallet::get_positions(&ALICE).len();
 
+			VammPallet::set_swap_output(Some(base_amount_limit));
 			assert_ok!(TestPallet::open_position(
 				Origin::signed(ALICE),
 				market_id,
 				Direction::Long,
-				valid_quote_asset_amount(),
-				valid_base_asset_amount_limit(),
+				quote_amount,
+				base_amount_limit.unsigned_abs(),
 			));
+
+			VammPallet::set_swap_output(Some(-base_amount_limit));
+			// TODO(0xangelo): set simulated swap output
 			assert_ok!(TestPallet::open_position(
 				Origin::signed(ALICE),
 				market_id,
 				Direction::Short,
-				valid_quote_asset_amount(),
-				valid_base_asset_amount_limit(),
+				quote_amount,
+				base_amount_limit.unsigned_abs(),
 			));
 
 			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
@@ -653,26 +692,33 @@ fn short_trade_can_close_long_position() {
 #[test]
 fn long_trade_can_close_long_position() {
 	let mut market_id: MarketId = 0;
+	let quote_amount = valid_quote_asset_amount();
+	let base_amount_limit: i128 = valid_base_asset_amount_limit().try_into().unwrap();
 
-	ExtBuilder::default()
+	ExtBuilder { balances: vec![(ALICE, USDC, quote_amount * 2)], ..Default::default() }
 		.build()
 		.init_market(&mut market_id, None)
+		.set_margin(&ALICE, USDC, quote_amount)
 		.execute_with(|| {
 			let positions_before = TestPallet::get_positions(&ALICE).len();
 
+			VammPallet::set_swap_output(Some(-base_amount_limit));
 			assert_ok!(TestPallet::open_position(
 				Origin::signed(ALICE),
 				market_id,
 				Direction::Short,
-				valid_quote_asset_amount(),
-				valid_base_asset_amount_limit(),
+				quote_amount,
+				base_amount_limit.unsigned_abs(),
 			));
+
+			VammPallet::set_swap_output(Some(base_amount_limit));
+			// TODO(0xangelo): set simulated swap output
 			assert_ok!(TestPallet::open_position(
 				Origin::signed(ALICE),
 				market_id,
 				Direction::Long,
-				valid_quote_asset_amount(),
-				valid_base_asset_amount_limit(),
+				quote_amount,
+				base_amount_limit.unsigned_abs(),
 			));
 
 			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
