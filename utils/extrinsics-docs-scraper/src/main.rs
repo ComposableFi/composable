@@ -1,32 +1,42 @@
-use std::{fs, io::Write, path::PathBuf};
+use std::{
+	collections::HashMap,
+	fs::{self, DirEntry},
+	io::{self, Write},
+	path::{Path, PathBuf},
+	sync::mpsc::channel,
+	time::Duration,
+};
 
 use anyhow::Context;
 use clap::{Arg, Command};
 use env_logger::fmt::Color;
+use extrinsics_docs_scraper::generate_docs;
 use log::LevelFilter;
-use syn::{parse::Parser, Attribute, Lit, Meta, MetaNameValue};
+use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 
-const PATH_ARG: &str = "PATH";
-const OUTPUT_PATH_ARG: &str = "OUTPUT_PATH";
+const FRAME_DIR_PATH_ARG: &str = "FRAME_DIR_PATH";
+const BOOK_PALLETS_DOCS_OUTPUT_PATH_ARG: &str = "BOOK_PALLETS_DOCS_OUTPUT_PATH";
 const VERBOSITY_ARG: &str = "VERBOSITY";
 
 fn main() -> anyhow::Result<()> {
 	let matches = Command::new("extrinsics-docs-scraper")
 		.arg_required_else_help(true)
 		.arg(
-			Arg::new(PATH_ARG)
+			Arg::new(FRAME_DIR_PATH_ARG)
 				.long("path")
 				.takes_value(true)
+				.value_hint(clap::ValueHint::AnyPath)
 				.forbid_empty_values(true)
 				.required(true)
-				.help("Path to input file. Should be the file containing the pallet's `frame_support::pallet` macro.")
+				.help("Path to the FRAME directory containing all the pallets to gather documentation from.")
 		).arg(
-			Arg::new(OUTPUT_PATH_ARG)
+			Arg::new(BOOK_PALLETS_DOCS_OUTPUT_PATH_ARG)
 				.long("output-path")
 				.takes_value(true)
+				.value_hint(clap::ValueHint::AnyPath)
 				.forbid_empty_values(true)
 				.required(true)
-				.help("The output path for the generated documentation.")
+				.help("The output path for the generated documentation. Files will be written to <output-path>/<pallet>/.")
 		).arg(
 			Arg::new(VERBOSITY_ARG)
 				.long("verbose")
@@ -34,20 +44,118 @@ fn main() -> anyhow::Result<()> {
 				.takes_value(false)
 				.multiple_occurrences(true)
 				.max_occurrences(3)
-				.help("Verbosity for output logging. Can be specified multiple times, up to 3 total.")
+				.help("Verbosity for output logging. Can be specified multiple times, up to 3 times total.")
 		).get_matches();
 
 	let verbosity = matches.occurrences_of(VERBOSITY_ARG);
-	let path = matches.value_of_t(PATH_ARG).unwrap_or_else(|e| e.exit());
-	let output_path = matches.value_of_t(OUTPUT_PATH_ARG).unwrap_or_else(|e| e.exit());
+	let path: PathBuf = matches.value_of_t(FRAME_DIR_PATH_ARG).unwrap_or_else(|e| e.exit());
+	let output_path: PathBuf = matches
+		.value_of_t(BOOK_PALLETS_DOCS_OUTPUT_PATH_ARG)
+		.unwrap_or_else(|e| e.exit());
 
 	init_logger(verbosity);
 
-	generate_docs(path, output_path)?;
+	// Create a channel to receive the events.
+	let (tx, rx) = channel();
 
-	Ok(())
+	// Create a watcher object, delivering debounced events.
+	// The notification back-end is selected based on the platform.
+	let mut watcher = watcher(tx, Duration::from_secs(1)).unwrap();
+
+	let pallet_entries = get_pallet_info(&path, &output_path)?;
+
+	for pallet_entry in &pallet_entries {
+		watcher.watch(&pallet_entry.lib_rs_path, RecursiveMode::NonRecursive).unwrap();
+	}
+
+	let path_map = pallet_entries
+		.into_iter()
+		.map(|entry| (entry.lib_rs_path.clone(), entry))
+		.collect::<HashMap<_, _>>();
+
+	loop {
+		match rx.recv() {
+			Ok(event) => {
+				match event {
+					// Only write & create events matter, since the lib.rs files shouldn't be moved, renamed or deleted.
+					// If pallets are being refactored, hot-reloading the book is most likely not a priority
+					DebouncedEvent::NoticeWrite(changed_file_path)
+					| DebouncedEvent::Create(changed_file_path)
+					| DebouncedEvent::Write(changed_file_path) => {
+						let pallet_info = path_map.get(&*changed_file_path).with_context(|| {
+							format!(
+								"recieved event about non-watched file \"{}\"",
+								&changed_file_path.to_string_lossy()
+							)
+						})?;
+
+						log::info!(
+							"Changed file detected, regenerating documentation for {}",
+							pallet_info.name
+						);
+
+						if let Err(why) =
+							generate_docs(&changed_file_path, &*pallet_info.docs_output_path)
+						{
+							log::error!("{}", why);
+						}
+					},
+					_ => {},
+				}
+			},
+			Err(e) => log::error!("Error watching files: {:?}", e),
+		}
+	}
 }
 
+fn get_pallet_info(path: &Path, output_path: &Path) -> Result<Vec<PalletInfo>, anyhow::Error> {
+	let pallet_entries = fs::read_dir(&path)
+		.context("Unable to read input directory")?
+		.map(|dir_entry: io::Result<DirEntry>| -> anyhow::Result<Option<PalletInfo>> {
+			let dir_entry = dir_entry?;
+
+			if let Ok(metadata) = dir_entry.metadata() {
+				if metadata.is_dir() {
+					let name = dir_entry
+						.path()
+						.file_name()
+						.unwrap()
+						.to_str()
+						.map(ToOwned::to_owned)
+						.context("File path was not valid unicode")?;
+
+					let mut lib_rs_path = dir_entry.path();
+					lib_rs_path.extend(["src", "lib.rs"]);
+					lib_rs_path
+						.exists()
+						.then(|| ())
+						.context(format!("Pallet {} does not have a lib.rs file", &name))?;
+
+					let mut docs_output_path = output_path.to_owned();
+					docs_output_path.extend([&name]);
+					if docs_output_path.exists() {
+						docs_output_path.extend(["extrinsics.md"]);
+						Ok(Some(PalletInfo { name, lib_rs_path, docs_output_path }))
+					} else {
+						log::warn!(
+							"Pallet {} does not have a section in the book; skipping.",
+							&name
+						);
+						Ok(None)
+					}
+				} else {
+					Ok(None)
+				}
+			} else {
+				Ok(None)
+			}
+		})
+		.filter_map(Result::transpose)
+		.collect::<anyhow::Result<Vec<PalletInfo>>>()?;
+	Ok(pallet_entries)
+}
+
+/// Initializes the logger for the crate with the given verbosity.
 fn init_logger(verbosity: u64) {
 	let mut logger = env_logger::Builder::new();
 	logger.format(|f, record| {
@@ -59,8 +167,7 @@ fn init_logger(verbosity: u64) {
 			log::Level::Warn => {
 				writeln!(f, "{}: {}", style.set_bold(true).value("warning"), record.args())
 			},
-			log::Level::Info => writeln!(f, "{}", record.args()),
-			log::Level::Debug => writeln!(f, "{}", record.args()),
+			log::Level::Info | log::Level::Debug => writeln!(f, "{}", record.args()),
 			log::Level::Trace => {
 				writeln!(f, "{}", f.style().set_color(Color::Black).value(record.args()))
 			},
@@ -76,116 +183,9 @@ fn init_logger(verbosity: u64) {
 	logger.init();
 }
 
-fn generate_docs(path: PathBuf, output_path: PathBuf) -> anyhow::Result<()> {
-	let input_file = fs::read_to_string(path).context("Unable to read input file")?;
-
-	let ast = syn::parse_file(&input_file).unwrap();
-
-	// pallet module will be annotated with this macro
-	let frame_support_pallet_attr =
-		Attribute::parse_outer.parse_str("#[frame_support::pallet]").unwrap();
-
-	// extrinsics impl will be annotated with this attribute
-	let pallet_call_attr = Attribute::parse_outer.parse_str("#[pallet::call]").unwrap();
-
-	let mut out_file = fs::OpenOptions::new()
-		.create(true)
-		.write(true)
-		.open(output_path)
-		.context("Unable to open output file")?;
-
-	let item_mod = ast
-		.items
-		.into_iter()
-		.find_map(|outer_mod_item| match outer_mod_item {
-			syn::Item::Mod(module) if module.attrs == frame_support_pallet_attr => Some(module),
-			_ => None,
-		})
-		.context("No #[frame_support::pallet] attribute present in file; is this file a pallet?")?;
-
-	let imp = item_mod
-		.content
-		.context(
-			"Module annotated by #[frame_support::pallet] has no content; is this file a pallet?",
-		)?
-		.1
-		.into_iter()
-		.find_map(|inner_mod_item| match inner_mod_item {
-			syn::Item::Impl(imp) if imp.attrs == pallet_call_attr => Some(imp),
-			_ => None,
-		})
-		.context(
-			"No #[pallet::call] attribute present in file; are there extrinsics for this pallet?",
-		)?;
-
-	for impl_item in imp.items {
-		if let syn::ImplItem::Method(method) = impl_item {
-			let extrinsic_name = method.sig.ident.to_string();
-
-			// extrinsic header
-			writeln!(&mut out_file, "")?;
-			writeln!(&mut out_file, "## {}", extrinsic_name)?;
-
-			match get_docs_from_attrs(&extrinsic_name, method.attrs)? {
-				Some(s) => {
-					// extrinsic documentation
-					writeln!(&mut out_file, "")?;
-					writeln!(&mut out_file, "{}", s)?;
-
-					log::info!("Wrote documentation for extrinsic {}", extrinsic_name);
-				},
-				None => {
-					log::warn!("No documentation found for extrinsic {}", &extrinsic_name);
-				},
-			}
-		} else {
-			continue;
-		}
-	}
-
-	Ok(())
-}
-
-fn get_docs_from_attrs(name: &str, attrs: Vec<Attribute>) -> anyhow::Result<Option<String>> {
-	let doc_lines = attrs
-		.iter()
-		.filter_map(|attr| {
-			if let Ok(Meta::NameValue(MetaNameValue {
-				path,
-				eq_token: _,
-				lit: Lit::Str(lit_str),
-			})) = attr.parse_meta()
-			{
-				if path.is_ident("doc") {
-					// when doc comments are desugared, they still contain the leading space (between the /// and the content):
-					//
-					// #[doc = " doc here"]
-					//          ^ leading space here
-					//
-					// Since we (typically) use /// style for doc comments, unconditionally remove the leading space and error otherwise.
-
-					let doc_string = lit_str.value();
-
-					// blank lines won't have a leading space
-					if doc_string.is_empty() {
-						return Some(Ok(doc_string));
-					}
-
-					match doc_string
-							.strip_prefix(' ')
-							.map(ToOwned::to_owned)
-							.context(format!("Unable to remove leading space for doc comment on extrinsic `{}`. Ensure that the doccomment uses /// style.", name)) {
-						Ok(cleaned_doc_string) => Some(anyhow::Result::Ok(cleaned_doc_string.to_owned())),
-						Err(why) => return Some(Err(why)),
-					}
-				} else {
-					None
-				}
-			} else {
-				None
-			}
-		})
-		.collect::<anyhow::Result<Vec<_>>>()?;
-
-	Ok((!doc_lines.is_empty()).then(move || doc_lines.join("\n")))
+struct PalletInfo {
+	#[allow(dead_code)] // will be used in the future
+	name: String,
+	lib_rs_path: PathBuf,
+	docs_output_path: PathBuf,
 }
