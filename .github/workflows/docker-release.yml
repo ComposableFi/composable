@@ -51,16 +51,28 @@ jobs:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}  
 
+    - name: CheckFileExist
+      id: existcheck
+      run: |
+        RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)
+        EXISTSTATUS=$(curl -o /dev/null -Isw '%{http_code}\n' https://github.com/ComposableFi/composable/releases/download/${RELEASE_VERSION}/composable)
+        echo $EXISTSTATUS
+        echo $RELEASE_VERSION
+        echo "::set-output name=EXISTOUT::$EXISTSTATUS"
+
     - name: Build Docker image
+      if: steps.existcheck.outputs.EXISTOUT == '302'
       run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make containerize
     
     - name: Image Tag Version
       id: imagetag
+      if: steps.existcheck.outputs.EXISTOUT == '302'
       run: |
         RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1)
         echo ::set-output name=release_version::${RELEASE_VERSION}
 
     - name: Build for Multiple Arch
+      if: steps.existcheck.outputs.EXISTOUT == '302'
       uses: docker/build-push-action@v2
       with:
         builder: ${{ steps.buildx.outputs.name }}
@@ -69,9 +81,7 @@ jobs:
         platforms: linux/386,linux/amd64,linux/arm64,linux/ppc64le,linux/arm/v6,linux/arm/v7, linux/arm/v8
         push: true
         tags: composablefi/composable:${{ steps.imagetag.outputs.release_version }}, composablefi/composable:latest
-
-    #- name:  Docker push
-    #  run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make push
+        build-args: VERSION=${{ steps.imagetag.outputs.release_version }}
 
     - uses: 8398a7/action-slack@v3
       with:
