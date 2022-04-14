@@ -1,12 +1,12 @@
 use crate as pallet_instrumental;
 
-use pallet_instrumental::currency::{CurrencyId, PICA};
-use pallet_instrumental::account_id::*;
+use pallet_instrumental::mock::currency::{CurrencyId, PICA};
+use pallet_instrumental::mock::account_id::{AccountId, ADMIN};
 
 use composable_traits::governance::{GovernanceRegistry, SignedRawOrigin};
-use frame_support::ord_parameter_types;
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use frame_support::{
+	ord_parameter_types,
 	parameter_types,
 	PalletId,
 	traits::{Everything, GenesisBuild},
@@ -131,7 +131,7 @@ impl pallet_currency_factory::Config for MockRuntime {
 // ----------------------------------------------------------------------------------------------------
 
 ord_parameter_types! {
-	pub const RootAccount: AccountId = ALICE;
+	pub const RootAccount: AccountId = ADMIN;
 }
 
 parameter_types! {
