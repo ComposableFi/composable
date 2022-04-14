@@ -89,7 +89,7 @@ parameter_types! {
   pub const MaxStakingPresets: u32 = 10;
   pub const MaxRewardAssets: u32 = 10;
   pub const EpochDuration: DurationSeconds = MILLISECS_PER_BLOCK * REWARD_EPOCH_DURATION_BLOCK / 1000;
-  pub const RewardPerBlock: u32 = 100;
+  pub const ElementToProcessPerBlock: u32 = 100;
 }
 
 impl Config for Test {
@@ -103,7 +103,7 @@ impl Config for Test {
 	type MaxStakingPresets = MaxStakingPresets;
 	type MaxRewardAssets = MaxRewardAssets;
 	type EpochDuration = EpochDuration;
-	type RewardPerBlock = RewardPerBlock;
+	type ElementToProcessPerBlock = ElementToProcessPerBlock;
 }
 
 impl FinancialNFTProtocol<AccountId> for Test {

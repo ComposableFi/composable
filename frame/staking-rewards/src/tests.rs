@@ -227,10 +227,10 @@ mod stake {
 			configure_default_pica();
 			let stake = 1_000_000_000_000;
 			let duration = WEEK;
-			let initial_total_shares = StakingRewards::total_shares(PICA);
+			let initial_total_shares = StakingRewards::total_shares((PICA, BTC));
 			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
 			assert_ok!(<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, duration, false));
-			let final_total_shares = StakingRewards::total_shares(PICA);
+			let final_total_shares = StakingRewards::total_shares((PICA, BTC));
 			assert_eq!(initial_total_shares, final_total_shares);
 		});
 	}
@@ -260,11 +260,11 @@ mod stake {
 				.expect("impossible; qed;")
 				.mul_floor(stake);
 			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
-			let initial_total_shares = StakingRewards::total_shares(PICA);
+			let initial_total_shares = StakingRewards::total_shares((PICA, BTC));
 			assert_ok!(<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, duration, false));
 			// Enter new epoch
 			advance_state_machine();
-			let final_total_shares = StakingRewards::total_shares(PICA);
+			let final_total_shares = StakingRewards::total_shares((PICA, BTC));
 			let delta_total_shares =
 				final_total_shares.checked_sub(initial_total_shares).expect("impossible; qed;");
 			assert_eq!(delta_total_shares, shares);

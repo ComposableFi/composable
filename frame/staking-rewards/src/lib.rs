@@ -95,8 +95,9 @@ pub mod pallet {
 	pub enum State<K: Encode> {
 		WaitingForEpochEnd,
 		RewardingStart,
-		RewardingContinue { previous_key: K },
+		RewardingContinue { last_processed_nft: K },
 		RewardingComplete,
+		RegisteringContinue { last_processed_nft: K },
 	}
 
 	#[pallet::event]
@@ -129,6 +130,7 @@ pub mod pallet {
 		ClaimRequireRestake,
 		AlreadyTagged,
 		EpochNotFound,
+		PalletIsBusy,
 	}
 
 	#[pallet::config]
@@ -174,9 +176,8 @@ pub mod pallet {
 		#[pallet::constant]
 		type EpochDuration: Get<DurationSeconds>;
 
-		/// The number of stakers to reward per block when the reward epoch ends.
 		#[pallet::constant]
-		type RewardPerBlock: Get<u32>;
+		type ElementToProcessPerBlock: Get<u32>;
 	}
 
 	#[pallet::type_value]
@@ -227,8 +228,14 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn total_shares)]
-	pub type TotalShares<T: Config> =
-		StorageMap<_, Blake2_128Concat, AssetIdOf<T>, u128, ValueQuery, SharesOnEmpty<T>>;
+	pub type TotalShares<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		(AssetIdOf<T>, AssetIdOf<T>),
+		u128,
+		ValueQuery,
+		SharesOnEmpty<T>,
+	>;
 
 	#[pallet::type_value]
 	pub fn RewardStateOnEmpty<T: Config>() -> (EpochId, Timestamp) {
@@ -349,6 +356,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(_: T::BlockNumber) -> Weight {
+			// TODO(hussein-aitlahcen): abstract per-block fold of chunk into a macro:
 			match Self::current_state() {
 				State::WaitingForEpochEnd => {
 					Self::update_epoch();
@@ -356,30 +364,28 @@ pub mod pallet {
 				State::RewardingStart => {
 					Self::on_reward_stakers(None);
 				},
-				State::RewardingContinue { previous_key } => {
-					Self::on_reward_stakers(Some(previous_key));
+				State::RewardingContinue { last_processed_nft } => {
+					Self::on_reward_stakers(Some(last_processed_nft));
 				},
-				State::RewardingComplete => {
-					for (nft_id, v) in PendingStakers::<T>::drain() {
-						// NOTE(hussein-aitlahcen): Should be impossible as burning imply removing
-						// from PendingStakers
-						let nft = T::get_protocol_nft::<StakingNFTOf<T>>(&nft_id)
-							.expect("impossible; qed");
-						TotalShares::<T>::mutate(nft.asset, |v| {
-							// NOTE(hussein-aitlahcen): sizeof(share) < u128, total issuance is
-							// u128, if this overflow, the whole system is broken
-							*v = v.checked_add(nft.shares()).expect("impossible; qed;");
-						});
-						Stakers::<T>::insert(nft_id, v);
-					}
-					CurrentState::<T>::set(State::WaitingForEpochEnd);
-				},
+				State::RewardingComplete => Self::on_register_new_stakers(None),
+				State::RegisteringContinue { last_processed_nft } =>
+					Self::on_register_new_stakers(Some(last_processed_nft)),
 			}
 			0
 		}
 	}
 
 	impl<T: Config> Pallet<T> {
+		pub(crate) fn ensure_valid_interaction_state() -> DispatchResult {
+			match Self::current_state() {
+				State::WaitingForEpochEnd |
+				State::RewardingStart |
+				State::RewardingContinue { .. } => Ok(()),
+				State::RewardingComplete | State::RegisteringContinue { .. } =>
+					Err(Error::<T>::PalletIsBusy.into()),
+			}
+		}
+
 		pub(crate) fn update_epoch() {
 			let now = T::Time::now().as_secs();
 			EpochStart::<T>::mutate(|entry| match entry {
@@ -410,6 +416,53 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::NewEpoch { id: Self::current_epoch() });
 		}
 
+		pub(crate) fn on_register_new_stakers(previous_nft: Option<InstanceIdOf<T>>) {
+			let nb_of_elem_to_process = T::ElementToProcessPerBlock::get() as usize;
+			let mut stakers_to_register = match previous_nft {
+				Some(nft_id) => PendingStakers::<T>::iter_from(nft_id.encode()),
+				None => PendingStakers::<T>::iter(),
+			};
+
+			let register_staker = |nft_id| {
+				// NOTE(hussein-aitlahcen): Should be impossible as burning imply removing
+				// from PendingStakers
+				let nft = T::get_protocol_nft::<StakingNFTOf<T>>(&nft_id).expect("impossible; qed");
+				for reward_asset in nft.pending_rewards.keys() {
+					TotalShares::<T>::mutate((nft.asset, reward_asset), |total_shares| {
+						// NOTE(hussein-aitlahcen): sizeof(share) < u128, total issuance
+						*total_shares =
+							total_shares.checked_add(nft.shares()).expect("impossible; qed;");
+					});
+				}
+				Stakers::<T>::insert(nft_id, ());
+			};
+
+			let stakers_processed =
+				stakers_to_register.try_fold(Vec::new(), |mut stakers_registered, (nft_id, _)| {
+					register_staker(nft_id);
+					stakers_registered.push(nft_id);
+					if processed == nb_of_elem_to_process {
+						Err((stakers_registered, nft_id))
+					} else {
+						Ok(stakers_registered)
+					}
+				});
+
+			match stakers_processed {
+				// Completed registering, back to normal state
+				Ok(stakers_registered) => {
+					stakers_registered.iter().for_each(PendingStakers::<T>::remove);
+					CurrentState::<T>::set(State::WaitingForEpochEnd);
+				},
+				Err((stakers_registered, last_nft)) => {
+					stakers_registered.iter().for_each(PendingStakers::<T>::remove);
+					CurrentState::<T>::set(State::RegisteringContinue {
+						last_processed_nft: last_nft,
+					});
+				},
+			}
+		}
+
 		pub(crate) fn on_reward_stakers(previous_nft: Option<InstanceIdOf<T>>) {
 			EndEpochSnapshot::<T>::mutate(|(reward_epoch, reward_epoch_start)| {
 				let reward_nft = |nft_id| {
@@ -423,10 +476,11 @@ pub mod pallet {
 								},
 								PositionState::LockedRewarding => {
 									let shares = nft.shares();
-									let total_shares = Self::total_shares(nft.asset);
 									for (reward_asset, pending_reward) in
 										nft.pending_rewards.clone().into_iter()
 									{
+										let total_shares =
+											Self::total_shares((nft.asset, reward_asset));
 										let reward = EpochRewards::<T>::get(
 											(*reward_epoch, nft.asset),
 											reward_asset,
@@ -454,15 +508,14 @@ pub mod pallet {
 						},
 					)
 				};
-				let nb_of_elem_to_process = T::RewardPerBlock::get() as usize;
+				let nb_of_elem_to_process = T::ElementToProcessPerBlock::get() as usize;
 				let mut stakers_to_reward = match previous_nft {
 					Some(nft_id) => Stakers::<T>::iter_from(nft_id.encode()),
 					None => Stakers::<T>::iter(),
 				};
 				let process_result =
 					stakers_to_reward.try_fold(0usize, |processed, (nft_id, _)| {
-						let r = reward_nft(nft_id);
-						match r {
+						match reward_nft(nft_id) {
 							Ok(_) => {},
 							Err(e) => {
 								log::warn!("Failed to reward NFT: {:?}, message: {:?}", nft_id, e);
@@ -480,7 +533,9 @@ pub mod pallet {
 						CurrentState::<T>::set(State::RewardingComplete);
 					},
 					Err(last_nft) => {
-						CurrentState::<T>::set(State::RewardingContinue { previous_key: last_nft });
+						CurrentState::<T>::set(State::RewardingContinue {
+							last_processed_nft: last_nft,
+						});
 					},
 				}
 			});
@@ -567,6 +622,7 @@ pub mod pallet {
 			duration: DurationSeconds,
 			keep_alive: bool,
 		) -> Result<Self::InstanceId, DispatchError> {
+			Self::ensure_valid_interaction_state()?;
 			let config = Self::get_config(asset)?;
 			let reward_multiplier = *config
 				.duration_presets
@@ -608,6 +664,7 @@ pub mod pallet {
 		}
 
 		fn unstake(instance_id: &Self::InstanceId, to: &Self::AccountId) -> DispatchResult {
+			Self::ensure_valid_interaction_state()?;
 			let nft = T::get_protocol_nft::<StakingNFTOf<T>>(instance_id)?;
 			let protocol_account = Self::account_id(&nft.asset);
 			let current_epoch = Self::current_epoch();
@@ -621,18 +678,28 @@ pub mod pallet {
 				},
 				PositionState::LockedRewarding => {
 					// Decrement total shares.
-					TotalShares::<T>::try_mutate(nft.asset, |total_shares| -> DispatchResult {
-						*total_shares = total_shares.safe_sub(&nft.shares())?;
-						Ok(())
-					})?;
+					for reward_asset in nft.pending_rewards.keys() {
+						TotalShares::<T>::try_mutate(
+							(nft.asset, reward_asset),
+							|total_shares| -> DispatchResult {
+								*total_shares = total_shares.safe_sub(&nft.shares())?;
+								Ok(())
+							},
+						)?;
+					}
 					nft.early_unstake_penalty.penalize::<BalanceOf<T>>(nft.stake)
 				},
 				PositionState::Expired => {
 					// Decrement total shares.
-					TotalShares::<T>::try_mutate(nft.asset, |total_shares| -> DispatchResult {
-						*total_shares = total_shares.safe_sub(&nft.shares())?;
-						Ok(())
-					})?;
+					for reward_asset in nft.pending_rewards.keys() {
+						TotalShares::<T>::try_mutate(
+							(nft.asset, reward_asset),
+							|total_shares| -> DispatchResult {
+								*total_shares = total_shares.safe_sub(&nft.shares())?;
+								Ok(())
+							},
+						)?;
+					}
 					Ok(PenaltyOutcome::NotApplied { amount: nft.stake })
 				},
 			}?;
