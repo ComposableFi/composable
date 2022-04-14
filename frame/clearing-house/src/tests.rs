@@ -555,10 +555,10 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 		.build()
 		.init_markets(&mut market_ids, configs.into_iter())
 		.execute_with(|| {
-			for idx in 0..max_positions {
+			for market_idx in market_ids.iter().take(max_positions) {
 				assert_ok!(TestPallet::open_position(
 					Origin::signed(ALICE),
-					market_ids[idx],
+					*market_idx,
 					Direction::Long,
 					valid_quote_asset_amount(),
 					valid_base_asset_amount_limit(),
