@@ -1,4 +1,9 @@
-include = ["Cargo.toml", "**/*.toml", "Cargo.lock"]
+include = [
+  "Cargo.toml",
+  "**/*.toml",
+  # just to normalize against "locked" check with does text diff, not semantic diff 
+  "Cargo.lock",
+]
 
 [formatting]
 # Align consecutive entries vertically.

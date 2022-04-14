@@ -65,16 +65,33 @@ jobs:
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
       - uses: actions/checkout@v2
-      - name: Rustup show
-        run: |
-          /home/runner/.cargo/bin/rustup show
       - name: Run Test (with coverage)
         run: |
-          /home/runner/.cargo/bin/cargo +nightly-2021-11-29 install -f cargo-llvm-cov
-          /home/runner/.cargo/bin/rustup component add llvm-tools-preview --toolchain=nightly-2021-11-29
           # commands working on lock are not reproducible (random), so we normalize
-          cargo +nightly-2021-11-29 fmt --all && taplo fmt
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo +nightly-2021-11-29 llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --lcov --output-path lcov.info
+          echo  "canonize toml and backup"
+          taplo fmt
+          cp Cargo.lock Cargo.lock.backup
+
+          echo  "update and canonize"
+          cargo +nightly-2021-11-29 metadata --format-version=1 --manifest-path Cargo.toml --all-features > /dev/null
+          taplo fmt
+
+          echo  "diff and error if different"
+          diff Cargo.lock Cargo.lock.backup > /dev/null 2>&1
+          # TODO: uncomment it after docker release
+          # error=$?
+          # if [ $error -eq 0 ]
+          # then
+          #   echo "Cargo.lock and Cargo.lock.backup are the same file"
+          # elif [ $error -eq 1 ]
+          # then
+          #   echo "Cargo.lock and Cargo.lock.backup differ" >&2
+          #   #exit 1
+          # else
+          #   echo "There was something wrong with the diff command"
+          # fi
+
+          #SKIP_WASM_BUILD=1 cargo +nightly-2021-11-29 llvm-cov --workspace --release --verbose --features=runtime-benchmarks --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
