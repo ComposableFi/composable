@@ -70,11 +70,11 @@ jobs:
           /home/runner/.cargo/bin/rustup show
       - name: Run Test (with coverage)
         run: |
-          /home/runner/.cargo/bin/cargo +nightly-2022-04-08 install -f cargo-llvm-cov
-          /home/runner/.cargo/bin/rustup component add llvm-tools-preview --toolchain=nightly-2022-04-08
+          /home/runner/.cargo/bin/cargo +nightly-2021-11-29 install -f cargo-llvm-cov
+          /home/runner/.cargo/bin/rustup component add llvm-tools-preview --toolchain=nightly-2021-11-29
           # commands working on lock are not reproducible (random), so we normalize
-          cargo +nightly-2022-04-08 fmt --all && taplo fmt
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo +nightly-2022-04-08 llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --lcov --output-path lcov.info
+          cargo +nightly-2021-11-29 fmt --all && taplo fmt
+          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo +nightly-2021-11-29 llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
