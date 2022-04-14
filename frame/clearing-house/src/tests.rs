@@ -709,7 +709,7 @@ fn short_trade_can_close_long_position() {
 			));
 
 			VammPallet::set_swap_output(Some(-base_amount_limit));
-			VammPallet::set_swap_simulation_output(Some(-base_amount_limit));
+			VammPallet::set_swap_simulation_output(Some(quote_amount.try_into().unwrap()));
 			assert_ok!(TestPallet::open_position(
 				Origin::signed(ALICE),
 				market_id,
@@ -745,7 +745,7 @@ fn long_trade_can_close_long_position() {
 			));
 
 			VammPallet::set_swap_output(Some(base_amount_limit));
-			VammPallet::set_swap_simulation_output(Some(base_amount_limit));
+			VammPallet::set_swap_simulation_output(Some(quote_amount.try_into().unwrap()));
 			assert_ok!(TestPallet::open_position(
 				Origin::signed(ALICE),
 				market_id,
