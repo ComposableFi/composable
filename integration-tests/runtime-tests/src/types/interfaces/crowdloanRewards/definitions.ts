@@ -147,5 +147,6 @@ export default {
       fee: "Permill",
       ownerFee: "Permill"
     },
+    ComposableSupportEthereumAddress: "Null",
   },
 };

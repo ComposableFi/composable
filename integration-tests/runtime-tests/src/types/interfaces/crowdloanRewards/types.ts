@@ -11,6 +11,9 @@ import type { AccountId32, Balance, Permill } from '@polkadot/types/interfaces/r
 /** @name CommonMosaicRemoteAssetId */
 export interface CommonMosaicRemoteAssetId extends Null {}
 
+/** @name ComposableSupportEthereumAddress */
+export interface ComposableSupportEthereumAddress extends Null {}
+
 /** @name ComposableTraitsAssetsXcmAssetLocation */
 export interface ComposableTraitsAssetsXcmAssetLocation extends Null {}
 

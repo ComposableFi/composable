@@ -32,7 +32,7 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
       /**
        * Balance available for the specified account for the specified asset.
        **/
-      balanceOf: AugmentedRpc<(asset: CurrencyId | AnyNumber | Uint8Array, account: AccountId32 | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<AssetsBalance>>;
+      balanceOf: AugmentedRpc<(asset: CurrencyId | string | Uint8Array, account: AccountId32 | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<AssetsBalance>>;
     };
     author: {
       /**

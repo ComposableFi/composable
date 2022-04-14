@@ -172,6 +172,10 @@ declare module '@polkadot/api-base/types/consts' {
     dutchAuction: {
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
+       * ED taken to create position. Part of if returned when position is liqudated.
+       **/
+      positionExistentialDeposit: u128 & AugmentedConst<ApiType>;
+      /**
        * Generic const
        **/
       [key: string]: Codec;

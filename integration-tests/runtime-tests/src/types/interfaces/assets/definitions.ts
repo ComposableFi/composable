@@ -21,7 +21,7 @@ export default {
     },
   },
   types: {
-    CurrencyId: "u128",
+    CurrencyId: "String",
     AssetsBalance: "u128",
   },
 };
