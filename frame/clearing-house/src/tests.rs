@@ -16,7 +16,7 @@ use composable_traits::{
 	clearing_house::{ClearingHouse, Instruments},
 	oracle::Oracle,
 	time::{DurationSeconds, ONE_HOUR},
-	vamm::Vamm,
+	vamm::{AssetType, Direction as VammDirection, Vamm},
 };
 use frame_support::{
 	assert_err, assert_noop, assert_ok, assert_storage_noop, pallet_prelude::Hooks,
@@ -36,6 +36,7 @@ use sp_runtime::{traits::Zero, FixedI128};
 type MarketConfig = <TestPallet as ClearingHouse>::MarketConfig;
 type Market = <TestPallet as Instruments>::Market;
 type Position = <TestPallet as Instruments>::Position;
+type SwapConfig = <VammPallet as Vamm>::SwapConfig;
 type VammConfig = mock_vamm::VammConfig;
 
 impl Default for ExtBuilder {
@@ -271,6 +272,28 @@ prop_compose! {
 	}
 }
 
+fn any_asset_type() -> impl Strategy<Value = AssetType> {
+	prop_oneof![Just(AssetType::Base), Just(AssetType::Quote)]
+}
+
+fn any_vamm_direction() -> impl Strategy<Value = VammDirection> {
+	prop_oneof![Just(VammDirection::Add), Just(VammDirection::Remove)]
+}
+
+prop_compose! {
+	fn any_swap_config()(
+		vamm_id in any::<VammId>(),
+		asset in any_asset_type(),
+		input_amount in any::<Balance>(),
+		direction in any_vamm_direction(),
+		output_amount_limit in any::<Balance>(),
+	) -> SwapConfig {
+		SwapConfig {
+			vamm_id, asset, input_amount, direction, output_amount_limit
+		}
+	}
+}
+
 // ----------------------------------------------------------------------------------------------------
 //                                           Mocked Pallets Tests
 // ----------------------------------------------------------------------------------------------------
@@ -302,6 +325,25 @@ proptest! {
 				None => assert_err!(created, mock_vamm::Error::<Runtime>::FailedToCreateVamm),
 			}
 		})
+	}
+}
+
+proptest! {
+	#[test]
+	fn can_set_swap_output_for_mock_vamm(
+		integer in any::<Option<i128>>(), swap_config in any_swap_config()
+	) {
+		ExtBuilder::default()
+			.build()
+			.execute_with(|| {
+				VammPallet::set_swap_output(integer);
+
+				let output = VammPallet::swap(&swap_config);
+				match integer {
+					Some(i) => assert_ok!(output, i),
+					None => assert_err!(output, mock_vamm::Error::<Runtime>::FailedToExecuteSwap)
+				};
+			})
 	}
 }
 

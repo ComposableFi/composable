@@ -66,6 +66,7 @@ pub struct VammConfig<Balance> {
 }
 
 /// Specify a common encapsulation layer for the swap functions.
+#[derive(Clone, Debug)]
 pub struct SwapConfig<VammId, Balance> {
 	pub vamm_id: VammId,
 	pub asset: AssetType,
@@ -83,12 +84,14 @@ pub struct SwapSimulationConfig<VammId, Balance> {
 }
 
 /// Distinguish between asset types present in the vamm.
+#[derive(Clone, Debug)]
 pub enum AssetType {
 	Base,
 	Quote,
 }
 
 /// The two possible directions to go when opening/closing a position in the vamm.
+#[derive(Clone, Debug)]
 pub enum Direction {
 	Add,
 	Remove,

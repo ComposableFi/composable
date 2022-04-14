@@ -31,18 +31,18 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: DeFiComposableConfig + frame_system::Config {
-		type VammId: FullCodec
+		type VammId: Clone
+			+ FullCodec
 			+ MaxEncodedLen
 			+ MaybeSerializeDeserialize
 			+ TypeInfo
-			+ Clone
 			+ Unsigned;
 		type Decimal: FixedPointNumber
 			+ FullCodec
 			+ MaxEncodedLen
 			+ MaybeSerializeDeserialize
 			+ TypeInfo;
-		type Integer: Integer;
+		type Integer: From<i128> + FullCodec + Integer + MaxEncodedLen + TypeInfo;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -77,6 +77,7 @@ pub mod pallet {
 	pub enum Error<T> {
 		FailedToCreateVamm,
 		FailedToCalculateTwap,
+		FailedToExecuteSwap,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -97,6 +98,10 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn hardcoded_twap)]
 	pub type Twap<T: Config> = StorageValue<_, T::Decimal, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn swap_output_amount)]
+	pub type SwapOutput<T: Config> = StorageValue<_, T::Integer, OptionQuery>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Trait Implementations
@@ -133,13 +138,29 @@ pub mod pallet {
 		}
 
 		fn swap(config: &Self::SwapConfig) -> Result<Self::Integer, DispatchError> {
-			todo!()
+			let Self::SwapConfig { vamm_id, asset, input_amount, direction, output_amount_limit } =
+				config;
+
+			match Self::swap_output_amount() {
+				Some(integer) => Ok(integer),
+				None => Err(Error::<T>::FailedToExecuteSwap.into()),
+			}
 		}
 
 		fn swap_simulation(
 			config: &Self::SwapSimulationConfig,
 		) -> Result<Self::Integer, DispatchError> {
 			todo!()
+		}
+	}
+
+	// ----------------------------------------------------------------------------------------------------
+	//                                           Helper Functions
+	// ----------------------------------------------------------------------------------------------------
+
+	impl<T: Config> Pallet<T> {
+		pub fn set_swap_output(integer: Option<T::Integer>) {
+			SwapOutput::<T>::set(integer);
 		}
 	}
 }
