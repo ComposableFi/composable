@@ -1,9 +1,9 @@
 //! # Instrumental Pallet
 //! 
-//! This pallet will house the logic required by [`Instrumental Finance`](https://www.instrumental.finance/);
-//! Instrumental will speak to this pallet through the Mosaic Pallet. This pallet will be responsible
-//! for sending assets into their associated vaults and specifying which strategies should be set for each
-//! vault.
+//! This pallet will house the logic required by [`Instrumental Finance`]
+//! (https://www.instrumental.finance/); Instrumental will speak to this pallet through the Mosaic
+//! Pallet. This pallet will be responsible for sending assets into their associated vaults and 
+//! specifying which strategies should be set for each vault.
 //! 
 //! ## Overview
 //! 
@@ -22,14 +22,15 @@
 //! - users: Instrumentals users lie in the Ethereum ecosystem and interact (indirectly) with this
 //!     pallet through the [`Instrumental Finance`](https://www.instrumental.finance/) frontend.
 //! 
-//! - Instrumental: The Ethereum-native smart contracts provide the core functionality for Instrumental.
+//! - Instrumental: The Ethereum-native smart contracts provide the core functionality for
+//!     Instrumental.
 //! 
 //! - Mosaic Pallet: Instrumental speaks to the Mosaic pallet which then redirects calls to the 
 //!     Instrumental pallet.
 //! 
-//! - [`Vault Pallet`](../pallet_vault/index.html): Each asset supported by this pallet will have an underlying vault.
-//!     Each vault will have an associated strategy that will dictate where those assets will go in 
-//!     order to earn yield.
+//! - [`Vault Pallet`](../pallet_vault/index.html): Each asset supported by this pallet will have
+//!     an underlying vault. Each vault will have an associated strategy that will dictate where
+//!     those assets will go in order to earn yield.
 //! 
 //! ### Implementations
 //! 
@@ -37,8 +38,8 @@
 //! 
 //! ### Extrinsics
 //! 
-//! - [`create`](Pallet::create): Creates a Cubic vault that is responsible for housing the specified asset
-//!     and enforcing its strategy.
+//! - [`create`](Pallet::create): Creates a Cubic vault that is responsible for housing the 
+//!     specified asset and enforcing its strategy.
 //! 
 //! - [`add_liquidity`](Pallet::add_liquidity): Adds assets to its associated vault.
 //! 
@@ -46,8 +47,8 @@
 //! 
 //! ### Runtime Storage Objects
 //! 
-//! - [`AssetVault`](AssetVault): Mapping of an `AssetId` to the underlying Cubic Vault's `VaultId` 
-//!     that is responsible for enforcing the asset's strategy.
+//! - [`AssetVault`](AssetVault): Mapping of an `AssetId` to the underlying Cubic Vault's 
+//!     `VaultId` that is responsible for enforcing the asset's strategy.
 //! 
 //! ## Usage
 //! 
@@ -70,9 +71,9 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	// ----------------------------------------------------------------------------------------------------
-	//                                       Imports and Dependencies                                      
-	// ----------------------------------------------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
+	//                                   Imports and Dependencies                                
+	// -------------------------------------------------------------------------------------------
 
 	use crate::weights::WeightInfo;
 
@@ -100,17 +101,18 @@ pub mod pallet {
 	use sp_std::fmt::Debug;
 	use codec::{Codec, FullCodec};
 	
-	// ----------------------------------------------------------------------------------------------------
-	//                                    Declaration Of The Pallet Type                                           
-	// ----------------------------------------------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
+	//                                Declaration Of The Pallet Type                              
+	// -------------------------------------------------------------------------------------------
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
-	// ----------------------------------------------------------------------------------------------------
-	//                                             Config Trait                                            
-	// ----------------------------------------------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
+	//                                         Config Trait                                       
+	// -------------------------------------------------------------------------------------------
+
 
 	// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -165,13 +167,13 @@ pub mod pallet {
 		type PalletId: Get<PalletId>;
 	}
 
-	// ----------------------------------------------------------------------------------------------------
-    //                                             Pallet Types                                           
-	// ----------------------------------------------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
+    //                                         Pallet Types                                       
+	// -------------------------------------------------------------------------------------------
 
-	// ----------------------------------------------------------------------------------------------------
-    //                                            Runtime Storage                                          
-	// ----------------------------------------------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
+    //                                       Runtime  Storage                                     
+	// -------------------------------------------------------------------------------------------
 
 	/// Stores the `VaultId` that corresponds to a specific `AssetId`.
 	#[pallet::storage]
@@ -179,9 +181,9 @@ pub mod pallet {
 	pub type AssetVault<T: Config> = 
 		StorageMap<_, Blake2_128Concat, T::AssetId, T::VaultId>;
 
-	// ----------------------------------------------------------------------------------------------------
-    //                                            Runtime Events                                          
-	// ----------------------------------------------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
+    //                                        Runtime Events                                      
+	// -------------------------------------------------------------------------------------------
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -192,22 +194,24 @@ pub mod pallet {
 			config: VaultConfig<T::AccountId, T::AssetId>
 		},
 
-		/// Emitted after a successful call to the [`add_liquidity`](Pallet::add_liquidity) extrinsic.
+		/// Emitted after a successful call to the [`add_liquidity`](Pallet::add_liquidity)
+		///     extrinsic.
 		AddedLiquidity {
 			asset: T::AssetId,
 			amount: T::Balance
 		},
 
-		/// Emitted after a successful call to the [`remove_liquidity`](Pallet::remove_liquidity) extrinsic.
+		/// Emitted after a successful call to the [`remove_liquidity`](Pallet::remove_liquidity)
+		///     extrinsic.
 		RemovedLiquidity {
 			asset: T::AssetId,
 			amount: T::Balance
 		},
 	}
 
-	// ----------------------------------------------------------------------------------------------------
-    //                                           Runtime  Errors                                           
-	// ----------------------------------------------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
+    //                                        Runtime Errors                                      
+	// -------------------------------------------------------------------------------------------
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -215,25 +219,25 @@ pub mod pallet {
 		///     has an associated vault.
 		VaultAlreadyExists,
 
-		/// This error is thrown when a user tries to call add_liquidity or remove_liquidity on an asset 
-		///     that does not have an associated vault (yet).
+		/// This error is thrown when a user tries to call add_liquidity or remove_liquidity on  
+		///     an asset that does not have an associated vault (yet).
 		AssetDoesNotHaveAnAssociatedVault,
 
-		/// This error is thrown if a user tries to withdraw an amount of assets that is currently not
-		///     held in the specified vault.
+		/// This error is thrown if a user tries to withdraw an amount of assets that is currently
+		///     not held in the specified vault.
 		NotEnoughLiquidity,
 	}
 
-	// ----------------------------------------------------------------------------------------------------
-    //                                                Hooks                                                
-	// ----------------------------------------------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
+    //                                            Hooks                                           
+	// -------------------------------------------------------------------------------------------
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
-	// ----------------------------------------------------------------------------------------------------
-    //                                              Extrinsics                                             
-	// ----------------------------------------------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
+    //                                          Extrinsics                                        
+	// -------------------------------------------------------------------------------------------
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -254,8 +258,8 @@ pub mod pallet {
 		/// - [`Event::Created`](Event::Created)
 		/// 
 		/// ## State Changes
-		/// - [`AssetVault`](AssetVault): a mapping between the parameter `asset` and the created vault's
-		///     `VaultId` is stored.
+		/// - [`AssetVault`](AssetVault): a mapping between the parameter `asset` and the created
+		///     vault's `VaultId` is stored.
 		/// 
 		/// ## Errors
 		/// - `VaultAlreadyExists`: there already exists an underlying vault for `asset`.
@@ -358,9 +362,9 @@ pub mod pallet {
 		}
 	}
 
-	// ----------------------------------------------------------------------------------------------------
-    //                                          Instrumental Trait                                         
-	// ----------------------------------------------------------------------------------------------------
+	// -------------------------------------------------------------------------------------------
+    //                                      Instrumental Trait                                    
+	// -------------------------------------------------------------------------------------------
 
 	impl<T: Config> Instrumental for Pallet<T> {
 		type AccountId = T::AccountId;
@@ -379,8 +383,8 @@ pub mod pallet {
 		/// 1. 'config.asset_id' must not correspond to a preexisting Instrumental vault.
 		/// 
 		/// ## State Changes
-		/// - [`AssetVault`](AssetVault): a mapping between the parameter `asset` and the created vault's
-		///     `VaultId` is stored.
+		/// - [`AssetVault`](AssetVault): a mapping between the parameter `asset` and the created
+		///     vault's `VaultId` is stored.
 		/// 
 		/// ## Errors
 		/// - `VaultAlreadyExists`: their already exists an underlying vault for `asset`.
@@ -390,7 +394,10 @@ pub mod pallet {
 			config: VaultConfig<Self::AccountId, Self::AssetId>,
 		) -> Result<Self::VaultId, DispatchError> {
 			// Requirement 1) An asset can only have one vault associated with it
-			ensure!(!AssetVault::<T>::contains_key(config.asset_id), Error::<T>::VaultAlreadyExists);
+			ensure!(
+				!AssetVault::<T>::contains_key(config.asset_id), 
+				Error::<T>::VaultAlreadyExists
+			);
 			
 			let vault_id = Self::do_create(config)?;
 
@@ -462,10 +469,10 @@ pub mod pallet {
 		}
 	}
 
-	// ----------------------------------------------------------------------------------------------------
-    //                                        Low Level Functionality                                      
-	// ----------------------------------------------------------------------------------------------------
-
+	// -------------------------------------------------------------------------------------------
+    //                                   Low Level Functionality                                  
+	// -------------------------------------------------------------------------------------------
+	
 	impl<T: Config> Pallet<T> {
 		// TODO: (Nevin)
 		//  - decide if each asset should have an associated account, or if
@@ -543,11 +550,9 @@ pub mod pallet {
 
 }
 
-// ----------------------------------------------------------------------------------------------------
-//                                              Unit Tests                                             
-// ----------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------
+//                                             Unit Tests                                         
+// -----------------------------------------------------------------------------------------------
 
 #[cfg(test)]
-mod unit_tests {
-
-}
+mod unit_tests {}
