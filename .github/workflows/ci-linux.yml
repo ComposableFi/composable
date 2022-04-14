@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - ci-linux
+      - dz/branch
 
 env:
   DOCKER_USER_OPTION: '$UID:$GID'

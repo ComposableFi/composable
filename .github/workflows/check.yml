@@ -68,11 +68,30 @@ jobs:
       - name: Run Test (with coverage)
         run: |
           # commands working on lock are not reproducible (random), so we normalize
-          cd  /__w/composable/composable/
-          cp Cargo.lock Cargo.lock.backup
+          echo  "canonize toml and backup"
           taplo fmt
-          cargo +nightly-2021-11-29 metadata --format-version=1 --manifest-path Cargo.toml --all-features --locked
-          SKIP_WASM_BUILD=1 cargo +nightly-2021-11-29 llvm-cov --workspace --release --verbose --features=runtime-benchmarks --lcov --output-path lcov.info
+          cp Cargo.lock Cargo.lock.backup
+
+          echo  "update and canonize"
+          cargo +nightly-2021-11-29 metadata --format-version=1 --manifest-path Cargo.toml --all-features > /dev/null
+          taplo fmt
+
+          echo  "diff and error if different"
+          diff Cargo.lock Cargo.lock.backup > /dev/null 2>&1
+          # TODO: uncomment it after docker release
+          # error=$?
+          # if [ $error -eq 0 ]
+          # then
+          #   echo "Cargo.lock and Cargo.lock.backup are the same file"
+          # elif [ $error -eq 1 ]
+          # then
+          #   echo "Cargo.lock and Cargo.lock.backup differ" >&2
+          #   #exit 1
+          # else
+          #   echo "There was something wrong with the diff command"
+          # fi
+
+          #SKIP_WASM_BUILD=1 cargo +nightly-2021-11-29 llvm-cov --workspace --release --verbose --features=runtime-benchmarks --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
