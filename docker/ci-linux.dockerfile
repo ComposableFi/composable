@@ -2,8 +2,8 @@ FROM hadolint/hadolint:latest as hadolint
 
 FROM paritytech/ci-linux:production
 
-ARG OLD_NIGHTLY_VERSION=nightly-2021-11-08
-ARG NIGHTLY_VERSION=nightly-2021-11-29
+ARG OLD_NIGHTLY_VERSION=nightly-2021-11-29
+ARG NIGHTLY_VERSION=nightly-2022-04-08
 
 RUN rustup toolchain uninstall ${OLD_NIGHTLY_VERSION} && \
     rustup toolchain uninstall nightly && \
