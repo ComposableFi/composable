@@ -2,14 +2,14 @@ FROM hadolint/hadolint:latest as hadolint
 
 FROM paritytech/ci-linux:production
 
-ARG OLD_NIGHTLY_VERSION=nightly-2021-11-08
+# allow for in place/gradual upgrades
 ARG NIGHTLY_VERSION=nightly-2021-11-29
 ARG NEW_NIGHTLY_VERSION=nightly-2022-04-08
 
-RUN rustup toolchain uninstall ${OLD_NIGHTLY_VERSION}
+# do not unnstall nightly from parity, do not overoptimize
+# that can be used to test issues on our image vs official 
 
-RUN rustup toolchain uninstall nightly && \
-    rustup toolchain install ${NIGHTLY_VERSION} && \
+RUN rustup toolchain install ${NIGHTLY_VERSION} && \
     rustup component add clippy && \
     rustup component add clippy --toolchain ${NIGHTLY_VERSION} && \
     rustup component add rustfmt && \
@@ -21,8 +21,7 @@ RUN rustup toolchain uninstall nightly && \
     cargo +${NIGHTLY_VERSION} install cargo-udeps --locked && \
     ln -s "${RUSTUP_HOME}/toolchains/${NIGHTLY_VERSION}-x86_64-unknown-linux-gnu" "${RUSTUP_HOME}/toolchains/nightly-x86_64-unknown-linux-gnu"
 
-RUN rustup toolchain uninstall nightly && \
-    rustup toolchain install ${NEW_NIGHTLY_VERSION} && \
+RUN rustup toolchain install ${NEW_NIGHTLY_VERSION} && \
     rustup component add clippy && \
     rustup component add clippy --toolchain ${NEW_NIGHTLY_VERSION} && \
     rustup component add rustfmt && \
