@@ -70,7 +70,7 @@ jobs:
           # commands working on lock are not reproducible (random), so we normalize
           cargo +nightly-2021-11-29 fmt --all && taplo fmt
           # unfortunately llvm changed lock files, so we validate separately
-          cargo metadata --format-version=1 --manifest-path /__w/composable/composable/Cargo.toml --locked
+          cargo +nightly-2021-11-29 metadata --format-version=1 --manifest-path /__w/composable/composable/Cargo.toml --locked
           SKIP_WASM_BUILD=1 cargo +nightly-2021-11-29 llvm-cov --workspace --release --verbose --features=runtime-benchmarks --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
