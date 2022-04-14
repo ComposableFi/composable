@@ -651,7 +651,7 @@ fn short_trade_can_close_long_position() {
 }
 
 #[test]
-fn long_trade_can_short_long_position() {
+fn long_trade_can_close_long_position() {
 	let mut market_id: MarketId = 0;
 
 	ExtBuilder::default()
