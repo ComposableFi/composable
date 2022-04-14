@@ -697,6 +697,7 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 
 proptest! {
 	#[test]
+	#[ignore = "to be implemented"]
 	fn short_trade_can_close_long_position(
 		(minimum_trade_size, eps) in min_trade_size_and_eps(FixedI128::from_float(0.01))
 	) {
@@ -742,6 +743,7 @@ proptest! {
 
 proptest! {
 	#[test]
+	#[ignore = "to be implemented"]
 	fn long_trade_can_close_long_position(
 		(minimum_trade_size, eps) in min_trade_size_and_eps(FixedI128::from_float(0.01))
 	) {
@@ -786,7 +788,7 @@ proptest! {
 }
 
 #[test]
-#[ignore]
+#[ignore = "to be implemented"]
 fn fails_to_increase_position_if_not_enough_margin() {
 	let mut market_id: MarketId = 0;
 	let base_amount_limit = valid_base_asset_amount_limit().try_into().unwrap();
