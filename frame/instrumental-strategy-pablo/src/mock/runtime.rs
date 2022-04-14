@@ -2,23 +2,28 @@ use crate as pallet_pablo_strategy;
 
 use frame_support::{
 	parameter_types,
-	traits::Everything,
+	traits::Everything, PalletId,
 };
+use frame_system::EnsureRoot;
 
 use sp_runtime::{
 	testing::Header,
-	traits::IdentityLookup
+	traits::{ConvertInto, IdentityLookup}
 };
 use sp_core::H256;
 
-pub type BlockNumber = u64;
-pub type AccountId = u128;
-pub type Balance = u128;
+use orml_traits::parameter_type_with_key;
 
+pub type AccountId = u128;
+pub type Amount = i128;
+pub type BlockNumber = u64;
+pub type Balance = u128;
+pub type CurrencyId = u128;
+
+pub const VAULT_PALLET_ID: PalletId = PalletId(*b"cubic___");
 pub type VaultId = u64;
 
 pub const MAX_ASSOCIATED_VAULTS: u32 = 10;
-pub const ALICE: AccountId = 0;
 
 // -----------------------------------------------------------------------------------------------
 //                                             Config                                             
@@ -75,6 +80,80 @@ impl pallet_balances::Config for MockRuntime {
 	type ReserveIdentifier = [u8; 8];
 }
 
+// ----------------------------------------------------------------------------------------------------
+//                                                Tokens                                               
+// ----------------------------------------------------------------------------------------------------
+
+parameter_type_with_key! {
+	pub ExistentialDeposits: |_currency_id: CurrencyId| -> Balance {
+		0u128
+	};
+}
+
+type ReserveIdentifier = [u8; 8];
+impl orml_tokens::Config for MockRuntime {
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = Amount;
+	type CurrencyId = CurrencyId;
+	type WeightInfo = ();
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = ();
+	type MaxLocks = ();
+	type ReserveIdentifier = ReserveIdentifier;
+	type MaxReserves = frame_support::traits::ConstU32<2>;
+	type DustRemovalWhitelist = Everything;
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                           Currency Factory                                          
+// ----------------------------------------------------------------------------------------------------
+
+impl pallet_currency_factory::Config for MockRuntime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type AddOrigin = EnsureRoot<AccountId>;
+	type WeightInfo = ();
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                                Vault                                                
+// ----------------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const MaxStrategies: usize = 255;
+	pub const CreationDeposit: Balance = 10;
+	pub const ExistentialDeposit: Balance = 1000;
+	pub const RentPerBlock: Balance = 1;
+	pub const MinimumDeposit: Balance = 0;
+	pub const MinimumWithdrawal: Balance = 0;
+	pub const VaultPalletId: PalletId = VAULT_PALLET_ID;
+  	pub const TombstoneDuration: u64 = 42;
+}
+
+impl pallet_vault::Config for MockRuntime {
+	type Event = Event;
+	type Currency = Tokens;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type MaxStrategies = MaxStrategies;
+	type CurrencyFactory = LpTokenFactory;
+	type Convert = ConvertInto;
+	type MinimumDeposit = MinimumDeposit;
+	type MinimumWithdrawal = MinimumWithdrawal;
+	type CreationDeposit = CreationDeposit;
+	type ExistentialDeposit = ExistentialDeposit;
+	type RentPerBlock = RentPerBlock;
+	type NativeCurrency = Balances;
+	type VaultId = VaultId;
+	type TombstoneDuration = TombstoneDuration;
+	type WeightInfo = ();
+	type PalletId = VaultPalletId;
+}
+
 // -----------------------------------------------------------------------------------------------
 //                                      Instrumental Strategy                                    
 // -----------------------------------------------------------------------------------------------
@@ -86,7 +165,10 @@ parameter_types! {
 impl pallet_pablo_strategy::Config for MockRuntime {
 	type Event = Event;
 	type WeightInfo = ();
+	type AssetId = CurrencyId;
+	type Balance = Balance;
 	type VaultId = VaultId;
+	type Vault = Vault;
 	type MaxAssociatedVaults = MaxAssociatedVaults;
 }
 
@@ -105,6 +187,11 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
+		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
+
+		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
+
+		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		PabloStrategy: pallet_pablo_strategy::{Pallet, Call, Storage, Event<T>},
 	}
 );

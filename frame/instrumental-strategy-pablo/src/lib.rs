@@ -18,11 +18,19 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		storage::bounded_btree_set::BoundedBTreeSet,
-		transactional
+		transactional, dispatch::DispatchResult
 	};
 
+	use sp_runtime::{
+		traits::{
+			AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
+		},
+	};
+
+	use composable_traits::vault::StrategicVault;
+
 	use sp_std::fmt::Debug;
-	use codec::FullCodec;
+	use codec::{Codec, FullCodec};
 
 	// -------------------------------------------------------------------------------------------
 	//                                Declaration Of The Pallet Type                              
@@ -44,6 +52,31 @@ pub mod pallet {
 
 		type WeightInfo: WeightInfo;
 
+		/// The Balance type used by the pallet for bookkeeping. `Config::Convert` is used for
+		/// conversions to `u128`, which are used in the computations.
+		type Balance: Default
+			+ Parameter
+			+ Codec
+			+ MaxEncodedLen
+			+ Copy
+			+ Ord
+			+ CheckedAdd
+			+ CheckedSub
+			+ CheckedMul
+			+ AtLeast32BitUnsigned
+			+ Zero;
+
+		/// The `AssetId` used by the pallet. Corresponds to the Ids used by the Currency pallet.
+		type AssetId: FullCodec
+			+ MaxEncodedLen
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ Default
+			+ TypeInfo;
+
 		/// The `VaultId` used by the pallet. Corresponds to the Ids used by the Vault pallet.
 		type VaultId: FullCodec
 			+ MaxEncodedLen
@@ -56,6 +89,13 @@ pub mod pallet {
 			+ Ord
 			+ TypeInfo
 			+ Into<u128>;
+
+		type Vault: StrategicVault<
+			AssetId = Self::AssetId,
+			Balance = Self::Balance,
+			AccountId = Self::AccountId,
+			VaultId = Self::VaultId
+		> ;
 
 		/// The maximum number of vaults that can be associated with this strategy.
 		type MaxAssociatedVaults: Get<u32>;
@@ -82,6 +122,10 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		AssociatedVault { vault_id: T::VaultId },
+
+		RebalancedVault { vault_id: T::VaultId },
+
+		UnableToRebalanceVault { vault_id: T::VaultId },
 	}
 
 	// -------------------------------------------------------------------------------------------
@@ -126,12 +170,39 @@ pub mod pallet {
 				vaults.try_insert(*vault_id)
 					.map_err(|_| Error::<T>::TooManyAssociatedStrategies)?;
 
-				Self::deposit_event(Event::AssociatedVault { vault_id: *vault_id });
+				Self::deposit_event(Event::AssociatedVault{ vault_id: *vault_id });
 
 				Ok(*vault_id)
 			})
 		}
 		
+		pub fn rebalance() -> DispatchResult {
+			AssociatedVaults::<T>::try_mutate(|vaults| -> DispatchResult {
+				vaults.iter().for_each(|vault_id| {
+					if let Ok(_) = Self::do_rebalance(vault_id) {
+						Self::deposit_event(Event::RebalancedVault{ vault_id: *vault_id });
+					} else {
+						Self::deposit_event(Event::UnableToRebalanceVault{ vault_id: *vault_id });
+					}
+				});
+
+				Ok(())
+			})
+		}
+
+	}
+
+	// -------------------------------------------------------------------------------------------
+    //                                   Low Level Functionality                                  
+	// -------------------------------------------------------------------------------------------
+	
+	impl<T: Config> Pallet<T> {
+		
+		#[transactional]
+		fn do_rebalance(_vault_id: &T::VaultId) -> DispatchResult {
+			Ok(())
+		}
+
 	}
 }
 
