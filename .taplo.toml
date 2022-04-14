@@ -1,4 +1,4 @@
-include = ["Cargo.toml", "**/*.toml"]
+include = ["Cargo.toml", "**/*.toml", "Cargo.lock"]
 
 [formatting]
 # Align consecutive entries vertically.

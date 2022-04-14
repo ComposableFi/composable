@@ -71,6 +71,6 @@ workspace = false
 
 [tasks.setup-dev-linux]
 description = "asdd"
-script="""
+script = """
 rustup toolchain install nightly-2022-04-08 --profile minimal --component rustfmt clippy && \
 """

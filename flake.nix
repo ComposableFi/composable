@@ -66,7 +66,7 @@
               # (rust-bin.stable.latest.default.override {
               #   extensions = [ "rust-src" ];
               # })
-              (rust-bin.nightly."2022-02-01".default.override {
+              (rust-bin.nightly."2022-04-08".default.override {
                 targets = [ "wasm32-unknown-unknown" ];
               })
             ];
@@ -77,7 +77,7 @@
             # shellHook = ''
             #   export PATH=$PATH:~/.cargo/bin
             #   export PATH=$PATH:~/.rustup/toolchains/$RUSTC_VERSION-aarch64-unknown-linux-gnu/bin/
-            #   rustup target add wasm32-unknown-unknown --toolchain nightly-2022-02-01
+            #   rustup target add wasm32-unknown-unknown --toolchain nightly-2022-04-08
             #   '';
 
 
