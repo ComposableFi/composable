@@ -22,7 +22,7 @@ impl Strategy {
 
 // separate module so that the `allow` attribute isn't applied to the entirety of the Strategy
 // module.
-pub mod defs {
+pub mod strategies {
 	#![allow(clippy::upper_case_acronyms)]
     #![allow(non_camel_case_types)]
     #![allow(unused)]
@@ -35,4 +35,4 @@ pub mod defs {
     pub const PABLO_STRATEGY: Strategy = Strategy::new(PalletId(*b"stratpab"));
 }
 
-pub use defs::*;
+pub use strategies::*;
