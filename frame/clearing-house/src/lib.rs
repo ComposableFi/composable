@@ -211,24 +211,6 @@ pub mod pallet {
 		pub last_cum_funding: Decimal,
 	}
 
-	/// Specifications for market creation
-	#[derive(Encode, Decode, PartialEq, Clone, Debug, TypeInfo)]
-	pub struct MarketConfig<AssetId, Decimal, VammConfig> {
-		/// Asset id of the underlying for the derivatives market
-		pub asset: AssetId,
-		/// Configuration for creating and initializing the vAMM for price discovery
-		pub vamm_config: VammConfig,
-		/// Minimum margin ratio for opening a new position
-		pub margin_ratio_initial: Decimal,
-		/// Margin ratio below which liquidations can occur
-		pub margin_ratio_maintenance: Decimal,
-		/// Time span between each funding rate update
-		pub funding_frequency: DurationSeconds,
-		/// Period of time over which funding (the difference between mark and index prices) gets
-		/// paid.
-		pub funding_period: DurationSeconds,
-	}
-
 	/// Data relating to a perpetual contracts market
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug)]
 	pub struct Market<AssetId, Decimal, VammId> {
@@ -257,6 +239,27 @@ pub mod pallet {
 		///
 		/// Setting the funding period too short may cause nobody to trade the perpetual because
 		/// there’s too punitive of a price to pay in the case the funding rate flips sign.
+		pub funding_period: DurationSeconds,
+	}
+
+	/// Specifications for market creation
+	#[derive(Encode, Decode, PartialEq, Clone, Debug, TypeInfo)]
+	pub struct MarketConfig<AssetId, Decimal, VammConfig> {
+		/// Asset id of the underlying for the derivatives market
+		pub asset: AssetId,
+		/// Configuration for creating and initializing the vAMM for price discovery
+		pub vamm_config: VammConfig,
+		/// Minimum margin ratio for opening a new position
+		pub margin_ratio_initial: Decimal,
+		/// Margin ratio below which liquidations can occur
+		pub margin_ratio_maintenance: Decimal,
+		/// Minimum amount of quote asset to exchange when opening a position. Also serves to round
+		/// a trade if it results in closing an existing position
+		pub minimum_trade_size: Decimal,
+		/// Time span between each funding rate update
+		pub funding_frequency: DurationSeconds,
+		/// Period of time over which funding (the difference between mark and index prices) gets
+		/// paid.
 		pub funding_period: DurationSeconds,
 	}
 

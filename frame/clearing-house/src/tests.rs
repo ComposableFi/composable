@@ -27,14 +27,14 @@ use proptest::{
 	num::f64::{NEGATIVE, POSITIVE, ZERO},
 	prelude::*,
 };
-use sp_runtime::{traits::Zero, FixedI128};
+use sp_runtime::{traits::Zero, FixedI128, FixedPointNumber};
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Setup
 // ----------------------------------------------------------------------------------------------------
 
-type MarketConfig = <TestPallet as ClearingHouse>::MarketConfig;
 type Market = <TestPallet as Instruments>::Market;
+type MarketConfig = <TestPallet as ClearingHouse>::MarketConfig;
 type Position = <TestPallet as Instruments>::Position;
 type SwapConfig = <VammPallet as Vamm>::SwapConfig;
 type SwapSimulationConfig = <VammPallet as Vamm>::SwapSimulationConfig;
@@ -84,6 +84,8 @@ fn valid_market_config() -> MarketConfig {
 		margin_ratio_initial: FixedI128::from_float(0.1),
 		// liquidate when above 50x leverage
 		margin_ratio_maintenance: FixedI128::from_float(0.02),
+		// 'One cent' of the quote asset
+		minimum_trade_size: FixedI128::checked_from_rational(1, 100).unwrap(),
 		funding_frequency: ONE_HOUR,
 		funding_period: ONE_HOUR * 24,
 	}
