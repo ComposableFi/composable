@@ -231,18 +231,18 @@ parameter_types! {
 }
 
 impl clearing_house::Config for Runtime {
+	type Assets = Assets;
+	type Decimal = Decimal;
 	type Event = Event;
-	type WeightInfo = ();
 	type MarketId = MarketId;
 	type MaxPositions = MaxPositions;
-	type Decimal = Decimal;
+	type Oracle = Oracle;
+	type PalletId = TestPalletId;
 	type UnixTime = Timestamp;
 	type Vamm = Vamm;
 	type VammConfig = mock_vamm::VammConfig;
 	type VammId = VammId;
-	type Oracle = Oracle;
-	type Assets = Assets;
-	type PalletId = TestPalletId;
+	type WeightInfo = ();
 }
 
 // ----------------------------------------------------------------------------------------------------

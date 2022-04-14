@@ -124,11 +124,18 @@ pub mod pallet {
 	// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
 	pub trait Config: DeFiComposableConfig + frame_system::Config {
+		/// Pallet implementation of asset transfers.
+		type Assets: Transfer<
+			Self::AccountId,
+			Balance = Self::Balance,
+			AssetId = Self::MayBeAssetId,
+		>;
+
+		/// Signed decimal fixed point number.
+		type Decimal: FullCodec + MaxEncodedLen + TypeInfo + FixedPointNumber;
+
 		/// Event type emitted by this pallet. Depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-
-		/// Weight information for this pallet's extrinsics
-		type WeightInfo: WeightInfo;
 
 		/// The market ID type for this pallet.
 		type MarketId: CheckedAdd
@@ -144,8 +151,13 @@ pub mod pallet {
 		/// The maximum number of open positions (one for each market) for a trader
 		type MaxPositions: Get<u32>;
 
-		/// Signed decimal fixed point number.
-		type Decimal: FullCodec + MaxEncodedLen + TypeInfo + FixedPointNumber;
+		/// Price feed (in USDT) Oracle pallet implementation
+		type Oracle: Oracle<AssetId = Self::MayBeAssetId, Balance = Self::Balance>;
+
+		/// The id used as the `AccountId` of the clearing house. This should be unique across all
+		/// pallets to avoid name collisions with other pallets and clearing houses.
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
 
 		/// Implementation for querying the current Unix timestamp
 		type UnixTime: UnixTime;
@@ -167,20 +179,8 @@ pub mod pallet {
 		/// Virtual automated market maker identifier; usually an integer
 		type VammId: FullCodec + MaxEncodedLen + TypeInfo;
 
-		/// Price feed (in USDT) Oracle pallet implementation
-		type Oracle: Oracle<AssetId = Self::MayBeAssetId, Balance = Self::Balance>;
-
-		/// Pallet implementation of asset transfers.
-		type Assets: Transfer<
-			Self::AccountId,
-			Balance = Self::Balance,
-			AssetId = Self::MayBeAssetId,
-		>;
-
-		/// The id used as the `AccountId` of the clearing house. This should be unique across all
-		/// pallets to avoid name collisions with other pallets and clearing houses.
-		#[pallet::constant]
-		type PalletId: Get<PalletId>;
+		/// Weight information for this pallet's extrinsics
+		type WeightInfo: WeightInfo;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
