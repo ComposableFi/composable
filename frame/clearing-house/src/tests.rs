@@ -707,7 +707,7 @@ fn short_trade_can_close_long_position() {
 			));
 
 			VammPallet::set_swap_output(Some(-base_amount_limit));
-			// TODO(0xangelo): set simulated swap output
+			VammPallet::set_swap_simulation_output(Some(-base_amount_limit));
 			assert_ok!(TestPallet::open_position(
 				Origin::signed(ALICE),
 				market_id,
@@ -743,7 +743,7 @@ fn long_trade_can_close_long_position() {
 			));
 
 			VammPallet::set_swap_output(Some(base_amount_limit));
-			// TODO(0xangelo): set simulated swap output
+			VammPallet::set_swap_simulation_output(Some(base_amount_limit));
 			assert_ok!(TestPallet::open_position(
 				Origin::signed(ALICE),
 				market_id,
