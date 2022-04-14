@@ -78,6 +78,7 @@ pub mod pallet {
 		FailedToCreateVamm,
 		FailedToCalculateTwap,
 		FailedToExecuteSwap,
+		FailedToSimulateSwap,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -100,8 +101,12 @@ pub mod pallet {
 	pub type Twap<T: Config> = StorageValue<_, T::Decimal, OptionQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn swap_output_amount)]
+	#[pallet::getter(fn _swap_output)]
 	pub type SwapOutput<T: Config> = StorageValue<_, T::Integer, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn _swap_simulation_output)]
+	pub type SwapSimulationOutput<T: Config> = StorageValue<_, T::Integer, OptionQuery>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Trait Implementations
@@ -141,7 +146,7 @@ pub mod pallet {
 			let Self::SwapConfig { vamm_id, asset, input_amount, direction, output_amount_limit } =
 				config;
 
-			match Self::swap_output_amount() {
+			match Self::_swap_output() {
 				Some(integer) => Ok(integer),
 				None => Err(Error::<T>::FailedToExecuteSwap.into()),
 			}
@@ -150,7 +155,12 @@ pub mod pallet {
 		fn swap_simulation(
 			config: &Self::SwapSimulationConfig,
 		) -> Result<Self::Integer, DispatchError> {
-			todo!()
+			let Self::SwapSimulationConfig { vamm_id, asset, input_amount, direction } = config;
+
+			match Self::_swap_simulation_output() {
+				Some(integer) => Ok(integer),
+				None => Err(Error::<T>::FailedToSimulateSwap.into()),
+			}
 		}
 	}
 
@@ -161,6 +171,10 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn set_swap_output(integer: Option<T::Integer>) {
 			SwapOutput::<T>::set(integer);
+		}
+
+		pub fn set_swap_simulation_output(integer: Option<T::Integer>) {
+			SwapSimulationOutput::<T>::set(integer);
 		}
 	}
 }

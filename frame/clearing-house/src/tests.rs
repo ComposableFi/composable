@@ -37,6 +37,7 @@ type MarketConfig = <TestPallet as ClearingHouse>::MarketConfig;
 type Market = <TestPallet as Instruments>::Market;
 type Position = <TestPallet as Instruments>::Position;
 type SwapConfig = <VammPallet as Vamm>::SwapConfig;
+type SwapSimulationConfig = <VammPallet as Vamm>::SwapSimulationConfig;
 type VammConfig = mock_vamm::VammConfig;
 
 impl Default for ExtBuilder {
@@ -308,6 +309,17 @@ prop_compose! {
 	}
 }
 
+prop_compose! {
+	fn any_swap_simulation_config()(
+		vamm_id in any::<VammId>(),
+		asset in any_asset_type(),
+		input_amount in any::<Balance>(),
+		direction in any_vamm_direction(),
+	) -> SwapSimulationConfig {
+		SwapSimulationConfig { vamm_id, asset, input_amount, direction }
+	}
+}
+
 // ----------------------------------------------------------------------------------------------------
 //                                           Mocked Pallets Tests
 // ----------------------------------------------------------------------------------------------------
@@ -345,17 +357,36 @@ proptest! {
 proptest! {
 	#[test]
 	fn can_set_swap_output_for_mock_vamm(
-		integer in any::<Option<i128>>(), swap_config in any_swap_config()
+		integer in any::<Option<i128>>(), config in any_swap_config()
 	) {
 		ExtBuilder::default()
 			.build()
 			.execute_with(|| {
 				VammPallet::set_swap_output(integer);
 
-				let output = VammPallet::swap(&swap_config);
+				let output = VammPallet::swap(&config);
 				match integer {
 					Some(i) => assert_ok!(output, i),
 					None => assert_err!(output, mock_vamm::Error::<Runtime>::FailedToExecuteSwap)
+				};
+			})
+	}
+}
+
+proptest! {
+	#[test]
+	fn cat_set_swap_simulation_output_for_mock_vamm(
+		integer in any::<Option<i128>>(), config in any_swap_simulation_config()
+	) {
+		ExtBuilder::default()
+			.build()
+			.execute_with(|| {
+				VammPallet::set_swap_simulation_output(integer);
+
+				let output = VammPallet::swap_simulation(&config);
+				match integer {
+					Some(i) => assert_ok!(output, i),
+					None => assert_err!(output, mock_vamm::Error::<Runtime>::FailedToSimulateSwap)
 				};
 			})
 	}

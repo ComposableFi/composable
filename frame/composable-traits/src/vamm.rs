@@ -76,6 +76,7 @@ pub struct SwapConfig<VammId, Balance> {
 }
 
 /// Specify a common encapsulation layer for the swap simulation functions.
+#[derive(Clone, Debug)]
 pub struct SwapSimulationConfig<VammId, Balance> {
 	pub vamm_id: VammId,
 	pub asset: AssetType,
