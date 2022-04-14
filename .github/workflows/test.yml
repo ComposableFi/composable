@@ -15,6 +15,11 @@ jobs:
     - name: Prepare a test environment
       run: docker-compose up -d
 
+    - name: Wait when the node will be started
+      timeout-minutes: 5
+      run: |
+        ./scripts/wait_polkadot_launch.sh
+
     - name: Run Test
       run: |
         docker run --rm -v$(pwd):/build -e "NODE_ENDPOINT=ws://composable:9944" --workdir /build --network beefy-client_default composablefi/ci-linux:production cargo test
