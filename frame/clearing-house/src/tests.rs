@@ -92,11 +92,11 @@ fn valid_market_config() -> MarketConfig {
 }
 
 fn valid_quote_asset_amount() -> Balance {
-	10_000u64.into()
+	FixedI128::checked_from_integer(100).unwrap().into_inner().unsigned_abs().into()
 }
 
 fn valid_base_asset_amount_limit() -> Balance {
-	1_000u64.into()
+	FixedI128::checked_from_integer(10).unwrap().into_inner().unsigned_abs().into()
 }
 
 // ----------------------------------------------------------------------------------------------------
