@@ -64,12 +64,6 @@ mod tests;
 #[cfg(test)]
 mod mock;
 
-#[cfg(test)]
-mod currency;
-
-#[cfg(test)]
-mod account_id;
-
 mod weights;
 
 pub use pallet::*;
