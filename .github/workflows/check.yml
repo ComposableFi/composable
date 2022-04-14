@@ -56,6 +56,8 @@ jobs:
     concurrency:
       group: testcov-${{ github.ref }}
       cancel-in-progress: true
+    container:
+      image: composablefi/ci-linux:production
     steps:
       - name: Clean up
         continue-on-error: true
@@ -69,7 +71,9 @@ jobs:
       - name: Run Test (with coverage)
         run: |
           /home/runner/.cargo/bin/cargo +nightly-2021-11-29 install -f cargo-llvm-cov
-          /home/runner/.cargo/bin/rustup component add llvm-tools-preview --toolchain=nightly-2021-11-29
+          /home/runner/.cargo/bin/rustup component add llvm-tools-preview --toolchain=nightly-2021-11-29 
+          # commands working on lock are not reproducible (random), so we normalize
+          cargo +nightly-2021-11-29 fmt --all && taplo fmt
           SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo +nightly-2021-11-29 llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
@@ -129,35 +133,6 @@ jobs:
             --steps=1 \
             --repeat=1 \
             --log error
-
-
-  substrate-tests:
-    name: Unit Tests 
-    runs-on:
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: tests-${{ github.ref }}
-      cancel-in-progress: true
-    container:
-      image: composablefi/ci-linux:production
-    steps:
-      - name: Clean up
-        continue-on-error: true
-        run: |
-          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
-          docker system prune --force --all --volumes
-      - uses: actions/checkout@v2
-      - name: Rustup show
-        run: |
-         rustup show
-      - uses: actions/checkout@v2
-      - name: Run Test
-        run: |
-          SKIP_WASM_BUILD=1 cargo test --workspace --locked --release --verbose --features=runtime-benchmarks
-
 
   linters:
     name: Linters
@@ -230,12 +205,13 @@ jobs:
       - name: Cargo Single Depedency
         # description: Speed up builds and reduced security check surface
         run: |
-         cargo install -f cargo-deny
+         cargo +nightly install -f cargo-deny
          # start from minimal dependency crate
-         cargo deny --manifest-path ./frame/composable-support/Cargo.toml check Ban
+         cargo +nightly deny --manifest-path ./frame/composable-support/Cargo.toml check Ban
 
       - name: Cargo udeps
         run: |
           cargo udeps --version
-          SKIP_WASM_BUILD=1 cargo +nightly udeps --workspace --all-features
+          # Compilation of local-integration-tests crate with --all-features doesn't work
+          SKIP_WASM_BUILD=1 cargo +nightly udeps --workspace --exclude local-integration-tests --all-features
         continue-on-error: true # Often this turns gives false positives, due to the different ways that Substrate uses features.  
