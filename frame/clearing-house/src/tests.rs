@@ -92,11 +92,11 @@ fn valid_market_config() -> MarketConfig {
 }
 
 fn valid_quote_asset_amount() -> Balance {
-	FixedI128::checked_from_integer(100).unwrap().into_inner().unsigned_abs().into()
+	FixedI128::checked_from_integer(100).unwrap().into_inner().unsigned_abs()
 }
 
 fn valid_base_asset_amount_limit() -> Balance {
-	FixedI128::checked_from_integer(10).unwrap().into_inner().unsigned_abs().into()
+	FixedI128::checked_from_integer(10).unwrap().into_inner().unsigned_abs()
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -319,6 +319,15 @@ prop_compose! {
 		direction in any_vamm_direction(),
 	) -> SwapSimulationConfig {
 		SwapSimulationConfig { vamm_id, asset, input_amount, direction }
+	}
+}
+
+prop_compose! {
+	// Assumes min_fixed is positive and nonzero
+	fn min_trade_size_and_eps(min_fixed: FixedI128)(
+		eps in (-min_fixed.into_inner())..=min_fixed.into_inner()
+	) -> (FixedI128, i128) {
+		(min_fixed, eps)
 	}
 }
 
@@ -686,78 +695,95 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 		})
 }
 
-#[test]
-fn short_trade_can_close_long_position() {
-	let mut market_id: MarketId = 0;
-	let quote_amount = valid_quote_asset_amount();
-	let base_amount_limit: i128 = valid_base_asset_amount_limit().try_into().unwrap();
+proptest! {
+	#[test]
+	fn short_trade_can_close_long_position(
+		(minimum_trade_size, eps) in min_trade_size_and_eps(FixedI128::from_float(0.01))
+	) {
+		let mut market_id: MarketId = 0;
+		let mut market_config = valid_market_config();
+		market_config.minimum_trade_size = minimum_trade_size;
 
-	ExtBuilder { balances: vec![(ALICE, USDC, quote_amount * 2)], ..Default::default() }
-		.build()
-		.init_market(&mut market_id, None)
-		.set_margin(&ALICE, USDC, quote_amount)
-		.execute_with(|| {
-			let positions_before = TestPallet::get_positions(&ALICE).len();
+		let quote_amount = valid_quote_asset_amount();
+		let base_amount_limit: i128 = valid_base_asset_amount_limit().try_into().unwrap();
 
-			VammPallet::set_swap_output(Some(base_amount_limit));
-			assert_ok!(TestPallet::open_position(
-				Origin::signed(ALICE),
-				market_id,
-				Direction::Long,
-				quote_amount,
-				base_amount_limit.unsigned_abs(),
-			));
+		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount * 2)], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(market_config))
+			.set_margin(&ALICE, USDC, quote_amount)
+			.execute_with(|| {
+				let positions_before = TestPallet::get_positions(&ALICE).len();
 
-			VammPallet::set_swap_output(Some(-base_amount_limit));
-			VammPallet::set_swap_simulation_output(Some(quote_amount.try_into().unwrap()));
-			assert_ok!(TestPallet::open_position(
-				Origin::signed(ALICE),
-				market_id,
-				Direction::Short,
-				quote_amount,
-				base_amount_limit.unsigned_abs(),
-			));
+				VammPallet::set_swap_output(Some(base_amount_limit));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Long,
+					quote_amount,
+					base_amount_limit.unsigned_abs(),
+				));
 
-			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
+				VammPallet::set_swap_output(Some(-base_amount_limit));
+				VammPallet::set_swap_simulation_output(Some(
+					i128::try_from(quote_amount).unwrap() + eps
+				));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Short,
+					quote_amount,
+					base_amount_limit.unsigned_abs(),
+				));
+
+				assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
 		})
+	}
 }
 
-#[test]
-fn long_trade_can_close_long_position() {
-	let mut market_id: MarketId = 0;
-	let quote_amount = valid_quote_asset_amount();
-	let base_amount_limit: i128 = valid_base_asset_amount_limit().try_into().unwrap();
+proptest! {
+	#[test]
+	fn long_trade_can_close_long_position(
+		(minimum_trade_size, eps) in min_trade_size_and_eps(FixedI128::from_float(0.01))
+	) {
+		let mut market_id: MarketId = 0;
+		let mut market_config = valid_market_config();
+		market_config.minimum_trade_size = minimum_trade_size;
 
-	ExtBuilder { balances: vec![(ALICE, USDC, quote_amount * 2)], ..Default::default() }
-		.build()
-		.init_market(&mut market_id, None)
-		.set_margin(&ALICE, USDC, quote_amount)
-		.execute_with(|| {
-			let positions_before = TestPallet::get_positions(&ALICE).len();
+		let quote_amount = valid_quote_asset_amount();
+		let base_amount_limit: i128 = valid_base_asset_amount_limit().try_into().unwrap();
 
-			VammPallet::set_swap_output(Some(-base_amount_limit));
-			assert_ok!(TestPallet::open_position(
-				Origin::signed(ALICE),
-				market_id,
-				Direction::Short,
-				quote_amount,
-				base_amount_limit.unsigned_abs(),
-			));
+		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount * 2)], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(market_config))
+			.set_margin(&ALICE, USDC, quote_amount)
+			.execute_with(|| {
+				let positions_before = TestPallet::get_positions(&ALICE).len();
 
-			VammPallet::set_swap_output(Some(base_amount_limit));
-			VammPallet::set_swap_simulation_output(Some(quote_amount.try_into().unwrap()));
-			assert_ok!(TestPallet::open_position(
-				Origin::signed(ALICE),
-				market_id,
-				Direction::Long,
-				quote_amount,
-				base_amount_limit.unsigned_abs(),
-			));
+				VammPallet::set_swap_output(Some(-base_amount_limit));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Short,
+					quote_amount,
+					base_amount_limit.unsigned_abs(),
+				));
 
-			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
-		})
+				VammPallet::set_swap_output(Some(base_amount_limit));
+				VammPallet::set_swap_simulation_output(Some(
+					-(i128::try_from(quote_amount).unwrap() + eps)
+				));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Long,
+					quote_amount,
+					base_amount_limit.unsigned_abs(),
+				));
+
+				assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
+			})
+	}
 }
-
 #[test]
 #[ignore]
 fn fails_to_increase_position_if_not_enough_margin() {
