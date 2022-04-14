@@ -4,7 +4,9 @@ use crate::{
 		assets::{AssetId, DOT, PICA, USDC},
 		oracle as mock_oracle,
 		runtime::{
-			Balance, ExtBuilder, MarketId, Origin, Runtime, System, TestPallet, Timestamp, VammId,
+			Balance, ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime,
+			System as SystemPallet, TestPallet, Timestamp as TimestampPallet, Vamm as VammPallet,
+			VammId,
 		},
 		vamm as mock_vamm,
 	},
@@ -51,16 +53,16 @@ impl Default for ExtBuilder {
 }
 
 fn run_to_block(n: u64) {
-	while System::block_number() < n {
-		if System::block_number() > 0 {
-			Timestamp::on_finalize(System::block_number());
-			System::on_finalize(System::block_number());
+	while SystemPallet::block_number() < n {
+		if SystemPallet::block_number() > 0 {
+			TimestampPallet::on_finalize(SystemPallet::block_number());
+			SystemPallet::on_finalize(SystemPallet::block_number());
 		}
-		System::set_block_number(System::block_number() + 1);
+		SystemPallet::set_block_number(SystemPallet::block_number() + 1);
 		// Time is set in milliseconds, so at each block we increment the timestamp by 1000ms = 1s
-		let _ = Timestamp::set(Origin::none(), System::block_number() * 1000);
-		System::on_initialize(System::block_number());
-		Timestamp::on_initialize(System::block_number());
+		let _ = TimestampPallet::set(Origin::none(), SystemPallet::block_number() * 1000);
+		SystemPallet::on_initialize(SystemPallet::block_number());
+		TimestampPallet::on_initialize(SystemPallet::block_number());
 	}
 }
 
@@ -278,7 +280,7 @@ proptest! {
 	#[test]
 	fn mock_oracle_asset_support_reflects_genesis_config(oracle_asset_support in any::<Option<bool>>()) {
 		ExtBuilder { oracle_asset_support, ..Default::default() }.build().execute_with(|| {
-			let is_supported = <Runtime as Config>::Oracle::is_supported(DOT);
+			let is_supported = OraclePallet::is_supported(DOT);
 			match oracle_asset_support {
 				Some(support) => assert_ok!(is_supported, support),
 				None => {
@@ -294,7 +296,7 @@ proptest! {
 	#[test]
 	fn mock_vamm_created_id_reflects_genesis_config(vamm_id in any::<Option<VammId>>()) {
 		ExtBuilder { vamm_id , ..Default::default() }.build().execute_with(|| {
-			let created = <Runtime as Config>::Vamm::create(&valid_vamm_config());
+			let created = VammPallet::create(&valid_vamm_config());
 			match vamm_id {
 				Some(id) => assert_ok!(created, id),
 				None => assert_err!(created, mock_vamm::Error::<Runtime>::FailedToCreateVamm),
@@ -344,7 +346,7 @@ fn deposit_supported_collateral_succeeds() {
 			let before = AccountsMargin::<Runtime>::get(&account).unwrap_or_default();
 			assert_ok!(TestPallet::add_margin(Origin::signed(account), asset, amount));
 
-			System::assert_last_event(Event::MarginAdded { account, asset, amount }.into());
+			SystemPallet::assert_last_event(Event::MarginAdded { account, asset, amount }.into());
 
 			let after = AccountsMargin::<Runtime>::get(&account).unwrap_or_default();
 			assert_eq!(after - before, amount);
@@ -359,15 +361,15 @@ fn deposit_supported_collateral_succeeds() {
 #[test]
 fn create_first_market_succeeds() {
 	ExtBuilder::default().build().execute_with(|| {
-		run_to_block(10); // Timestamp unix time does not work properly at genesis
+		run_to_block(10); // TimestampPallet unix time does not work properly at genesis
 		let old_count = TestPallet::market_count();
-		let block_time_now = <Timestamp as UnixTime>::now().as_secs();
+		let block_time_now = <TimestampPallet as UnixTime>::now().as_secs();
 
 		let config = valid_market_config();
 		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config.clone()));
 
 		// Ensure first market id is 0 (we know its type since it's defined in the mock runtime)
-		System::assert_last_event(
+		SystemPallet::assert_last_event(
 			Event::MarketCreated { market: 0u64, asset: config.asset }.into(),
 		);
 		assert!(Markets::<Runtime>::contains_key(0u64));
@@ -393,7 +395,7 @@ fn can_create_two_markets_with_same_config() {
 	ExtBuilder::default().build().execute_with(|| {
 		run_to_block(2);
 		let mut count = TestPallet::market_count();
-		let block_time_now = <Timestamp as UnixTime>::now().as_secs();
+		let block_time_now = <TimestampPallet as UnixTime>::now().as_secs();
 
 		for _ in 0..2 {
 			assert_ok!(TestPallet::create_market(Origin::signed(ALICE), valid_market_config()));
