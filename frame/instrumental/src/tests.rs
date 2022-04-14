@@ -1,14 +1,15 @@
 #[cfg(test)]
 
-use crate::mock::{
+use crate::{pallet, pallet::AssetVault, pallet::Error};
+
+use crate::mock::runtime::{
     Assets, Balance, Event, ExtBuilder, Instrumental, 
     MockRuntime, Origin, System, Vault
 };
-use crate::{pallet, pallet::AssetVault, pallet::Error};
-use crate::currency::{
+use crate::mock::currency::{
     CurrencyId, pick_currency, USDC
 };
-use crate::account_id::{AccountId, ADMIN, pick_account};
+use crate::mock::account_id::{AccountId, ADMIN, pick_account};
 
 use pallet_vault::Vaults as VaultInfoStorage;
 use composable_traits::vault::{Vault as VaultTrait, VaultConfig};
