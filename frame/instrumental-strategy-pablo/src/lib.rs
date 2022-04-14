@@ -20,10 +20,6 @@ pub mod pallet {
 		storage::bounded_btree_set::BoundedBTreeSet,
 		transactional
 	};
-	use frame_system::{
-		ensure_signed,
-		pallet_prelude::*,
-	};
 
 	use sp_std::fmt::Debug;
 	use codec::FullCodec;
@@ -85,9 +81,7 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		Test {
-			issuer: T::AccountId
-		},
+		AssociatedVault { vault_id: T::VaultId },
 	}
 
 	// -------------------------------------------------------------------------------------------
@@ -106,47 +100,38 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
-
-	}
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
 	// -------------------------------------------------------------------------------------------
     //                                          Extrinsics                                         
 	// -------------------------------------------------------------------------------------------
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
-
-		#[pallet::weight(0)]
-		pub fn test(
-			origin: OriginFor<T>,
-		) -> DispatchResultWithPostInfo {
-			// Requirement 0) This extrinsic must be signed 
-			let from = ensure_signed(origin)?;
-
-			Self::deposit_event(Event::Test { issuer: from });
-
-			Ok(().into())
-		}
-	}
+	impl<T: Config> Pallet<T> {}
 
 	// -------------------------------------------------------------------------------------------
-    //                                  Instrumental Strategy                                     
+    //                                      Protocol Strategy                                     
 	// -------------------------------------------------------------------------------------------
+
+	// TODO: (Nevin)
+	//  - create InstrumentalProtocolStrategyTrait
 
 	impl<T: Config> Pallet<T> {
 		
 		#[transactional]
-		pub fn associate_vault(vault_id: &T::VaultId) -> DispatchResult {
-			AssociatedVaults::<T>::try_mutate(|vaults| -> Result<(), DispatchError> {
+		pub fn associate_vault(vault_id: &T::VaultId) -> Result<T::VaultId, DispatchError> {
+			AssociatedVaults::<T>::try_mutate(|vaults| -> Result<T::VaultId, DispatchError> {
 				ensure!(!vaults.contains(&vault_id), Error::<T>::VaultAlreadyAssociated);
 
 				vaults.try_insert(*vault_id)
 					.map_err(|_| Error::<T>::TooManyAssociatedStrategies)?;
 
-				Ok(())
+				Self::deposit_event(Event::AssociatedVault { vault_id: *vault_id });
+
+				Ok(*vault_id)
 			})
 		}
+		
 	}
 }
 
@@ -155,5 +140,4 @@ pub mod pallet {
 // -----------------------------------------------------------------------------------------------
 
 #[cfg(test)]
-mod unit_tests {
-}
+mod unit_tests {}

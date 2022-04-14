@@ -19,10 +19,6 @@ pub mod pallet {
 		pallet_prelude::*,
 		storage::bounded_btree_set::BoundedBTreeSet,
 	};
-	use frame_system::{
-		ensure_signed,
-		pallet_prelude::*,
-	};
 
 	// -------------------------------------------------------------------------------------------
 	//                                Declaration Of The Pallet Type                              
@@ -56,17 +52,6 @@ pub mod pallet {
     //                                       Runtime  Storage                                     
 	// -------------------------------------------------------------------------------------------
 
-	// /// The number of strategies, also used to generate the next vault identifier.
-	// #[pallet::storage]
-	// #[pallet::getter(fn strategy_count)]
-	// pub type StrategyCount<T: Config> = StorageValue<_, T::StrategyId, ValueQuery>;
-
-	// ///
-	// #[pallet::storage]
-	// #[pallet::getter(fn strategy_account)]
-	// pub type StrategyAccount<T: Config> = 
-	// 	StorageMap<_, Blake2_128Concat, T::StrategyId, T::AccountId>;
-
 	#[pallet::storage]
 	#[pallet::getter(fn associated_vaults)]
 	pub type WhitelistedStrategies<T: Config> =
@@ -79,9 +64,7 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		Test {
-			issuer: T::AccountId
-		},
+		WhitelistedStrategy { strategy: T::AccountId }
 	}
 
 	// -------------------------------------------------------------------------------------------
@@ -96,60 +79,41 @@ pub mod pallet {
 	}
 
 	// -------------------------------------------------------------------------------------------
-    //                                            Hooks                                                
+    //                                            Hooks                                           
 	// -------------------------------------------------------------------------------------------
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
-
-	}
+	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
 	// -------------------------------------------------------------------------------------------
-    //                                          Extrinsics                                         
+    //                                          Extrinsics                                        
 	// -------------------------------------------------------------------------------------------
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
-
-		#[pallet::weight(0)]
-		pub fn test(
-			origin: OriginFor<T>,
-		) -> DispatchResultWithPostInfo {
-			// Requirement 0) This extrinsic must be signed 
-			let from = ensure_signed(origin)?;
-
-			Self::deposit_event(Event::Test { issuer: from });
-
-			Ok(().into())
-		}
-	}
+	impl<T: Config> Pallet<T> {}
 
 	// -------------------------------------------------------------------------------------------
     //                                     Trait Implementation                                   
 	// -------------------------------------------------------------------------------------------
 
+	// TODO: (Nevin)
+	//  - create InstrumentalStrategy trait
+
 	impl<T: Config> Pallet<T> {
 
 		pub fn whitelist_strategy(account_id: T::AccountId) -> DispatchResult {
 			WhitelistedStrategies::<T>::try_mutate(|strategies| -> DispatchResult {
-				ensure!(!strategies.contains(&account_id), Error::<T>::StrategyAlreadyWhitelisted);
+				ensure!(
+					!strategies.contains(&account_id), Error::<T>::StrategyAlreadyWhitelisted
+				);
 
-				strategies.try_insert(account_id)
+				strategies.try_insert(account_id.clone())
 					.map_err(|_| Error::<T>::TooManyWhitelistedStrategies)?;
+
+				Self::deposit_event(Event::WhitelistedStrategy {strategy: account_id} );
 
 				Ok(())
 			})
-
-			// StrategyCount::<T>::mutate(|strategy_id| {
-			// 	let strategy_id = {
-			// 		*strategy_id += One::one();
-			// 		*strategy_id
-			// 	};
-
-			// 	StrategyAccount::<T>::insert(strategy_id, account_id);
-
-			// 	Ok(strategy_id)
-			// })
 		}
 	}
 }
@@ -159,5 +123,4 @@ pub mod pallet {
 // -----------------------------------------------------------------------------------------------
 
 #[cfg(test)]
-mod unit_tests {
-}
+mod unit_tests {}
