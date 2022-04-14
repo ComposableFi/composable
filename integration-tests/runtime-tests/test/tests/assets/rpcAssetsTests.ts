@@ -17,7 +17,7 @@ describe.only('rpc.assets Tests', function () {
         let asset_id = api.createType('CurrencyId', converter.decToHex('123456789123456789', {prefix: '0x'}));
         console.log("Asset ID Object [123456789123456789]: " + asset_id);
         let result = await RpcAssetsTests.rpcAssetsTest(asset_id, publicKey);
-        console.warn("Result: " + result.toString());
+        console.warn("Result [123456789123456789]: " + result.toString());
         expect(result).to.be.a["bignumber"].that.equals('0');
 
         asset_id = api.createType('CurrencyId', converter.decToHex('1', {prefix: '0x'}));
@@ -30,7 +30,7 @@ describe.only('rpc.assets Tests', function () {
         asset_id = api.createType('CurrencyId', asset_id);
         console.log("Asset ID Object [4]: " + asset_id); // Here we can see the string gets somehow converted into a unicode character instead of staying hexadecimal.
         result = await RpcAssetsTests.rpcAssetsTest(asset_id, publicKey);
-        console.warn("Result: " + result.toString());
+        console.warn("Result [4]: " + result.toString());
 
         // For some reason asset ID 129 gets converted to `�` character. No matter which conversion method I tried!
         // We're catching this to keep our tests running.
@@ -39,7 +39,7 @@ describe.only('rpc.assets Tests', function () {
         asset_id = api.createType('CurrencyId', asset_id);
         console.log("Asset ID Object [129]: " + asset_id); // Here we can see the string gets somehow converted into a unicode character instead of staying hexadecimal.
         result = await RpcAssetsTests.rpcAssetsTest(asset_id, publicKey).catch(()=>{return api.createType('u128')});
-        console.warn("Result: " + result.toString());
+        console.warn("Result [129]: " + result.toString());
 
         const mintResult = await mintAssetsToWallet(publicKey, walletAlice, [1, 4, 129]);
         expect(mintResult).to.not.be.an('Error');
@@ -50,12 +50,12 @@ describe.only('rpc.assets Tests', function () {
 
         asset_id = converter.decToHex('4', {prefix: '0x'});
         result = await RpcAssetsTests.rpcAssetsTest(asset_id, publicKey);
-        console.warn("Result: " + result.toString());
+        console.warn("Result [4]: " + result.toString());
 
         asset_id = api.createType('CurrencyId', converter.decToHex('129', {prefix: '0x'}));
         console.log(asset_id);
         result = await RpcAssetsTests.rpcAssetsTest(asset_id, publicKey).catch(()=>{return api.createType('u128')});
-        console.warn("Result: " + result.toString());
+        console.warn("Result: [129]: " + result.toString());
 
         expect(resultFirstPicaCheck.toBigInt()).to.be.not.equal(secondPICACheckResult.toBigInt());
     });
