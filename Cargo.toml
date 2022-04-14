@@ -4,6 +4,7 @@ edition = "2018"
 homepage = "https://composable.finance"
 name = "composable"
 version = "1.0.0"
+resolver = "2"
 
 [[bin]]
 name = "composable"

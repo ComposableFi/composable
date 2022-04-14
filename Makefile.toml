@@ -68,3 +68,9 @@ script = '''
 cargo build --release --features runtime-benchmarks
 '''
 workspace = false
+
+[tasks.setup-dev-linux]
+description = "asdd"
+script="""
+rustup toolchain install nightly-2022-04-08 --profile minimal --component rustfmt clippy && \
+"""
