@@ -195,7 +195,7 @@ pub mod pallet {
 
 	/// Stores the user's position in a particular market
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug)]
-	pub struct Position<MarketId, Decimal> {
+	pub struct Position<Decimal, MarketId> {
 		/// The Id of the virtual market
 		pub market_id: MarketId,
 		/// Virtual base asset amount. Positive implies long position and negative, short.
@@ -213,7 +213,7 @@ pub mod pallet {
 
 	/// Specifications for market creation
 	#[derive(Encode, Decode, PartialEq, Clone, Debug, TypeInfo)]
-	pub struct MarketConfig<AssetId, VammConfig, Decimal> {
+	pub struct MarketConfig<AssetId, Decimal, VammConfig> {
 		/// Asset id of the underlying for the derivatives market
 		pub asset: AssetId,
 		/// Configuration for creating and initializing the vAMM for price discovery
@@ -268,8 +268,8 @@ pub mod pallet {
 	type VammIdOf<T> = <T as Config>::VammId;
 	type SwapConfigOf<T> = SwapConfig<VammIdOf<T>, BalanceOf<T>>;
 	type SwapSimulationConfigOf<T> = SwapSimulationConfig<VammIdOf<T>, BalanceOf<T>>;
-	type PositionOf<T> = Position<MarketIdOf<T>, DecimalOf<T>>;
-	type MarketConfigOf<T> = MarketConfig<AssetIdOf<T>, VammConfigOf<T>, DecimalOf<T>>;
+	type PositionOf<T> = Position<DecimalOf<T>, MarketIdOf<T>>;
+	type MarketConfigOf<T> = MarketConfig<AssetIdOf<T>, DecimalOf<T>, VammConfigOf<T>>;
 	type MarketOf<T> = Market<AssetIdOf<T>, DecimalOf<T>, VammIdOf<T>>;
 
 	// ----------------------------------------------------------------------------------------------------
