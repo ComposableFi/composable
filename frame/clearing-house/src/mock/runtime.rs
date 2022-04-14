@@ -49,12 +49,12 @@ frame_support::construct_runtime!(
 	}
 );
 
-pub type Balance = u128;
 pub type Amount = i64;
-pub type VammId = u64;
+pub type Balance = u128;
 pub type Decimal = FixedI128;
-pub type MarketId = u64;
 pub type Integer = i128;
+pub type MarketId = u64;
+pub type VammId = u64;
 
 // ----------------------------------------------------------------------------------------------------
 //                                                FRAME System
@@ -234,6 +234,7 @@ impl clearing_house::Config for Runtime {
 	type Assets = Assets;
 	type Decimal = Decimal;
 	type Event = Event;
+	type Integer = Integer;
 	type MarketId = MarketId;
 	type MaxPositions = MaxPositions;
 	type Oracle = Oracle;

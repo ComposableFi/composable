@@ -87,8 +87,6 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 
-	use std::fmt::Debug;
-
 	use crate::weights::WeightInfo;
 	use codec::FullCodec;
 	use composable_traits::{
@@ -96,7 +94,7 @@ pub mod pallet {
 		defi::DeFiComposableConfig,
 		oracle::Oracle,
 		time::DurationSeconds,
-		vamm::{SwapConfig, SwapSimulationConfig, Vamm},
+		vamm::{AssetType, Direction as VammDirection, SwapConfig, SwapSimulationConfig, Vamm},
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -105,10 +103,12 @@ pub mod pallet {
 		transactional, Blake2_128Concat, PalletId, Twox64Concat,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
+	use num_integer::Integer;
 	use sp_runtime::{
-		traits::{AccountIdConversion, CheckedAdd, CheckedMul, CheckedSub, One, Zero},
-		ArithmeticError, FixedPointNumber,
+		traits::{AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Zero},
+		ArithmeticError, FixedPointNumber, FixedPointOperand,
 	};
+	use sp_std::fmt::Debug;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                       Declaration Of The Pallet Type
@@ -132,10 +132,19 @@ pub mod pallet {
 		>;
 
 		/// Signed decimal fixed point number.
-		type Decimal: FixedPointNumber + FullCodec + MaxEncodedLen + TypeInfo;
+		type Decimal: FixedPointNumber<Inner = Self::Integer> + FullCodec + MaxEncodedLen + TypeInfo;
 
 		/// Event type emitted by this pallet. Depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+
+		/// Integer type underlying fixed point decimal and Vamm swap implementations
+		type Integer: CheckedDiv
+			+ CheckedMul
+			+ Debug
+			+ FixedPointOperand
+			+ Integer
+			+ One
+			+ TryFrom<Self::Balance>;
 
 		/// The market ID type for this pallet.
 		type MarketId: CheckedAdd
@@ -166,6 +175,7 @@ pub mod pallet {
 		type Vamm: Vamm<
 			Balance = Self::Balance,
 			Decimal = Self::Decimal,
+			Integer = Self::Integer,
 			SwapConfig = SwapConfig<Self::VammId, Self::Balance>,
 			SwapSimulationConfig = SwapSimulationConfig<Self::VammId, Self::Balance>,
 			VammConfig = Self::VammConfig,
@@ -666,6 +676,39 @@ pub mod pallet {
 				},
 			};
 			let position = &mut positions[position_index];
+
+			let position_direction = if position.base_asset_amount.is_zero() {
+				direction
+			} else if position.base_asset_amount.is_positive() {
+				Self::Direction::Long
+			} else {
+				Self::Direction::Short
+			};
+
+			if direction == position_direction {
+				let swapped = <T as Config>::Vamm::swap(&SwapConfigOf::<T> {
+					vamm_id: market.vamm_id,
+					asset: AssetType::Quote,
+					input_amount: quote_asset_amount,
+					direction: match direction {
+						Direction::Long => VammDirection::Add,
+						Direction::Short => VammDirection::Remove,
+					},
+					output_amount_limit: base_asset_amount_limit,
+				})?;
+
+				position.base_asset_amount =
+					position.base_asset_amount + T::Decimal::from_inner(swapped);
+				let quote_asset_amount_decimal = T::Decimal::from_inner(
+					quote_asset_amount.try_into().map_err(|_| ArithmeticError::Overflow)?,
+				);
+				position.quote_asset_notional_amount = match direction {
+					Direction::Long =>
+						position.quote_asset_notional_amount + quote_asset_amount_decimal,
+					Direction::Short =>
+						position.quote_asset_notional_amount - quote_asset_amount_decimal,
+				}
+			}
 
 			Positions::<T>::insert(&account_id, positions);
 			Ok(0u32.into())

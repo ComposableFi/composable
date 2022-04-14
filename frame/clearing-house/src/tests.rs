@@ -784,6 +784,7 @@ proptest! {
 			})
 	}
 }
+
 #[test]
 #[ignore]
 fn fails_to_increase_position_if_not_enough_margin() {
