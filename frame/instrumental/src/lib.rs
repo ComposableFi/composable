@@ -64,6 +64,7 @@ mod tests;
 
 mod mock;
 mod weights;
+mod validation;
 
 pub use pallet::*;
 
@@ -74,6 +75,7 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 
 	use crate::weights::WeightInfo;
+	use crate::validation::ValidateVaultDoesNotExist;
 
 	use frame_support::{
 		pallet_prelude::*,
@@ -89,6 +91,7 @@ pub mod pallet {
 		instrumental::{Instrumental, InstrumentalVaultConfig},
 		vault::{Deposit as Duration, FundsAvailability, StrategicVault, Vault, VaultConfig},
 	};
+	use composable_support::validation::Validated;
 
 	use sp_runtime::{
 		ArithmeticError,
@@ -172,6 +175,9 @@ pub mod pallet {
     //                                         Pallet Types                                       
 	// -------------------------------------------------------------------------------------------
 
+	pub type InstrumentalVaultConfigFor<T> =
+		InstrumentalVaultConfig<<T as Config>::AssetId, Perquintill>;
+
 	// -------------------------------------------------------------------------------------------
     //                                       Runtime  Storage                                     
 	// -------------------------------------------------------------------------------------------
@@ -192,7 +198,7 @@ pub mod pallet {
 		/// Emitted after a successful call to the [`create`](Pallet::create) extrinsic.
 		Created {
 			vault_id: T::VaultId,
-			config: InstrumentalVaultConfig<T::AssetId, Perquintill>
+			config: InstrumentalVaultConfigFor<T>
 		},
 
 		/// Emitted after a successful call to the [`add_liquidity`](Pallet::add_liquidity)
@@ -219,6 +225,10 @@ pub mod pallet {
 		/// This error is thrown when a vault is trying to be created for an asset that already
 		///     has an associated vault.
 		VaultAlreadyExists,
+
+		/// This error is thrown when a vault is trying to be created with a `strategies` 
+		///     `Perquintill` value outside of the range [0, 1].
+		InvalidDeployablePercent,
 
 		/// This error is thrown when a user tries to call add_liquidity or remove_liquidity on  
 		///     an asset that does not have an associated vault (yet).
@@ -269,12 +279,9 @@ pub mod pallet {
 		/// 
 		/// # Weight: O(TBD)
 		#[pallet::weight(<T as Config>::WeightInfo::create())]
-		// TODO: (Nevin)
-		//  - refactor input to origin, asset_id & deployable_percent
-		//  - or potentially origin & instrumental_vault_config: InstrumentalVaultConfig<AssetId, Perquintill>
 		pub fn create(
 			origin: OriginFor<T>,
-			config: InstrumentalVaultConfig<T::AssetId, Perquintill>,
+			config: InstrumentalVaultConfigFor<T>,
 		) -> DispatchResultWithPostInfo {
 			// TODO: (Nevin)
 			//  - (potentially) enforce that the issuer must have privileged rights
@@ -282,8 +289,7 @@ pub mod pallet {
 			// Requirement 1) This extrinsic must be signed 
 			let _from = ensure_signed(origin)?;
 
-			let vault_id = <Self as Instrumental>::create(config.clone())?;
-
+			let vault_id = <Self as Instrumental>::create(config)?;
 			Self::deposit_event(Event::Created { vault_id, config });
 
 			Ok(().into())
@@ -401,20 +407,13 @@ pub mod pallet {
 		/// 
 		/// # Runtime: O(TBD)
 		fn create(
-			config: InstrumentalVaultConfig<T::AssetId, Perquintill>
+			config: InstrumentalVaultConfigFor<T>
 		) -> Result<Self::VaultId, DispatchError> {
-			// TODO: (Nevin)
-			//  - create validation object and validate input
 
-			// Requirement 1) An asset can only have one vault associated with it
-			ensure!(
-				!AssetVault::<T>::contains_key(config.asset_id), 
-				Error::<T>::VaultAlreadyExists
-			);
-			
-			let vault_id = Self::do_create(config)?;
-
-			Ok(vault_id)
+			match Validated::new(config) {
+				Ok(validated_config) => Self::do_create(validated_config),
+				Err(_) => Err(DispatchError::from(Error::<T>::VaultAlreadyExists))
+			}
 		}
 	
 		/// Add assets into its underlying vault.
@@ -490,7 +489,7 @@ pub mod pallet {
 		
 		#[transactional]
 		fn do_create(
-			config: InstrumentalVaultConfig<T::AssetId, Perquintill>,
+			config: Validated<InstrumentalVaultConfigFor<T>, ValidateVaultDoesNotExist<T>>,
 		) -> Result<T::VaultId, DispatchError> {
 			// Requirement 1) Obtain each required field for the VaultConfig struct
 			let asset_id = config.asset_id;
