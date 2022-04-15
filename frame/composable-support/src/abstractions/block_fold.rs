@@ -85,9 +85,8 @@ where
 					});
 				match r {
 					Ok((_, next_state)) => BlockFold::Done { state: next_state.clone() },
-					Err((next_state, previous_key)) => {
-						BlockFold::Cont { strategy, state: next_state.clone(), previous_key }
-					},
+					Err((next_state, previous_key)) =>
+						BlockFold::Cont { strategy, state: next_state.clone(), previous_key },
 				}
 			},
 		};

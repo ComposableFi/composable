@@ -142,30 +142,24 @@ mod hook_state {
 				assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &account, stake));
 				assert_ok!(<StakingRewards as Staking>::stake(&PICA, &account, stake, WEEK, false));
 			});
-			assert_eq!(
-				PendingStakers::<Test>::iter().count(),
-        nb_of_accounts as usize
-			);
+			assert_eq!(PendingStakers::<Test>::iter().count(), nb_of_accounts as usize);
 			assert_eq!(Stakers::<Test>::iter().count(), 0);
 			run_to_block(1);
 			assert_eq!(StakingRewards::current_state(), State::Rewarding);
 			run_to_block(2);
-      let block_start = System::block_number() + 1;
-      let block_end = block_start + (nb_of_accounts as u64 / ElementToProcessPerBlock::get() as u64);
-			(block_start..block_end)
-        .for_each(|block| {
-				  run_to_block(block);
-				  assert_eq!(
-					  Stakers::<Test>::iter().count(),
-					  (block - block_start + 1) as usize * ElementToProcessPerBlock::get() as usize
-				  );
+			let block_start = System::block_number() + 1;
+			let block_end =
+				block_start + (nb_of_accounts as u64 / ElementToProcessPerBlock::get() as u64);
+			(block_start..block_end).for_each(|block| {
+				run_to_block(block);
+				assert_eq!(
+					Stakers::<Test>::iter().count(),
+					(block - block_start + 1) as usize * ElementToProcessPerBlock::get() as usize
+				);
 			});
-			assert_eq!(
-				Stakers::<Test>::iter().count(),
-        nb_of_accounts as usize
-			);
-      run_to_block(System::block_number() + 1);
-      assert_eq!(PendingStakers::<Test>::iter().count(), 0);
+			assert_eq!(Stakers::<Test>::iter().count(), nb_of_accounts as usize);
+			run_to_block(System::block_number() + 1);
+			assert_eq!(PendingStakers::<Test>::iter().count(), 0);
 			assert_eq!(StakingRewards::current_state(), State::WaitingForEpochEnd);
 		});
 	}
