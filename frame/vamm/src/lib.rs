@@ -408,9 +408,46 @@ pub mod pallet {
 			})
 		}
 
-		/// Get the current mark price in vamm.
+		/// Gets the current price of the __base__ or __quote__ asset in a vamm.
 		///
 		/// # Overview
+		/// In order for the caller know which is the current price of an asset
+		/// in an specific vamm it has to request it to the Vamm Pallet. The
+		/// Vamm Pallet consults the runtime storage for the desired vamm,
+		/// computes the current price and returns it to the caller.
+		///
+		/// In the diagram below the [`Clearing House
+		/// Pallet`](../../clearing_house/index.html) is depicted as the caller.
+		///
+		/// ![](https://www.plantuml.com/plantuml/svg/PP2zJaCn34RtF8Mv2w3gla07rD815YOaTfD-t1kHds0xxUj3KW52h3x7HvPtQYpMKdJw7d9buKG2hIKhdg3A2-uHotalKivaqk0iM0Gzm8XLOLGbUD1R4M9wuPJSDJShx2sSs40bkojRaK29HPshB1Pyg9oDfaC4IyWBFPQcc8YL_FfNwSa1JhrzPEDNLj3qR4Lu0TrquNOOEXJdLvhlXhxPRFyTAlXeK7ETTsyiNRGnKcF33xt0Gqcr6KRXctr1lyxpblQ_SRT3FlPdVW80)
+		///
+		/// ## Parameters
+		///  - `vamm_id`: The ID of the desired vamm to query.
+		///  - `asset_type`: The desired asset type to get info about. (either
+		///  __base__ or __quote__)
+		///
+		/// ## Returns
+		/// The price of __base__ asset in relation to __quote__
+		/// (or vice-versa).
+		///
+		/// ## Assumptions or Requirements
+		/// In order to consult the current price for an asset, we need to
+		/// ensure that the desired vamm_id exists.
+		///
+		/// ## Emits
+		/// No event is emitted for this function.
+		///
+		/// ## State Changes
+		/// This function does not mutate runtime storage.
+		///
+		/// ## Errors
+		/// * [`Error::<T>::VammDoesNotExist`]
+		/// * [`Error::<T>::FailToRetrieveVamm`]
+		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
+		/// * [`ArithmeticError::DivisionByZero`](sp_runtime::ArithmeticError)
+		///
+		/// # Runtime
+		/// `O(1)`
 		fn get_price(
 			vamm_id: VammIdOf<T>,
 			asset_type: AssetType,
