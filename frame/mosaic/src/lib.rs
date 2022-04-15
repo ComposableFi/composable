@@ -358,7 +358,7 @@ pub mod pallet {
 		/// This is enacted immediately and invalidates inflight/ incoming transactions from the
 		/// previous Relayer. However, existing budgets remain in place.
 		///
-		/// This can only be called by the [`ControlOrigin`][controlorigin].
+		/// This can only be called by the [`ControlOrigin`].
 		///
 		/// [controlorigin]: https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/trait.Config.html#associatedtype.ControlOrigin
 		#[pallet::weight(T::WeightInfo::set_relayer())]

@@ -1,3 +1,4 @@
+use heck::ToTitleCase;
 use pulldown_cmark::{Event, HeadingLevel, Parser, Tag};
 use std::{
 	fmt::{self, Write},
@@ -63,7 +64,11 @@ pub(crate) fn generate_docs(pallet_info: &PalletInfo) -> Result<(), ScrapeError>
 		}); // only the extrinsics
 
 	// pallet name header
-	writeln!(&mut extrinsics_docs_out_string, "# `{}` Pallet Extrinsics", pallet_info.pallet_name)?;
+	writeln!(
+		&mut extrinsics_docs_out_string,
+		"# {} Pallet Extrinsics",
+		pallet_info.pallet_name.to_title_case()
+	)?;
 
 	for extrinsic_definition in extrinsics_definitions {
 		let extrinsic_name = extrinsic_definition.sig.ident.to_string();
@@ -72,7 +77,15 @@ pub(crate) fn generate_docs(pallet_info: &PalletInfo) -> Result<(), ScrapeError>
 
 		// extrinsic header
 		writeln!(&mut extrinsics_docs_out_string)?;
-		writeln!(&mut extrinsics_docs_out_string, "## `{}`", extrinsic_name)?;
+		writeln!(&mut extrinsics_docs_out_string, "## {}", extrinsic_name.to_title_case())?;
+
+		writeln!(&mut extrinsics_docs_out_string)?;
+		writeln!(
+			&mut extrinsics_docs_out_string,
+			"[`{extrinsic_name}`](https://dali.devnets.composablefinance.ninja/doc/pallet_{pallet_name}/pallet/enum.Call.html#variant.{extrinsic_name})",
+			extrinsic_name = &extrinsic_name,
+			pallet_name = &pallet_info.pallet_name
+		)?;
 
 		match get_docs_from_attrs(&extrinsic_name, &pallet_info, &extrinsic_definition.attrs)? {
 			Some(s) => {
