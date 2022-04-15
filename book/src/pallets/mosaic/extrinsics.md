@@ -1,5 +1,8 @@
+# Mosaic Pallet Extrinsics
 
-## `set_relayer`
+## Set Relayer
+
+[`set_relayer`](https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/enum.Call.html#variant.set_relayer)
 
 Sets the current Relayer configuration.
 
@@ -12,7 +15,9 @@ This can only be called by the \[`ControlOrigin`\].
 
 * Only callable by root
 
-## `rotate_relayer`
+## Rotate Relayer
+
+[`rotate_relayer`](https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/enum.Call.html#variant.rotate_relayer)
 
 Rotates the Relayer Account.
 
@@ -21,11 +26,15 @@ Rotates the Relayer Account.
 * Only callable by the current relayer.
 * TTL must be sufficiently long.
 
-## `set_network`
+## Set Network
+
+[`set_network`](https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/enum.Call.html#variant.set_network)
 
 Sets supported networks and maximum transaction sizes accepted by the relayer.
 
-## `set_budget`
+## Set Budget
+
+[`set_budget`](https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/enum.Call.html#variant.set_budget)
 
 Sets the relayer budget for *incoming* transactions for specific assets. Does not reset
 the current `penalty`.
@@ -34,7 +43,9 @@ the current `penalty`.
 
 * Only callable by root
 
-## `transfer_to`
+## Transfer To
+
+[`transfer_to`](https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/enum.Call.html#variant.transfer_to)
 
 Creates an outgoing transaction request, locking the funds locally until picked up by
 the relayer.
@@ -48,7 +59,9 @@ the relayer.
 * Transfers near Balance::max may result in overflows, which are caught and returned as
   an error.
 
-## `accept_transfer`
+## Accept Transfer
+
+[`accept_transfer`](https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/enum.Call.html#variant.accept_transfer)
 
 This is called by the Relayer to confirm that it will relay a transaction.
 
@@ -69,30 +82,42 @@ remainder of the transaction.
 * Reclaim period is not reset if not all the funds are moved; menaing that the clock
   remains ticking for the relayer to pick up the rest of the transaction.
 
-## `claim_stale_to`
+## Claim Stale To
+
+[`claim_stale_to`](https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/enum.Call.html#variant.claim_stale_to)
 
 Claims user funds from the `OutgoingTransactions`, in case that the relayer has not
 picked them up.
 
-## `timelocked_mint`
+## Timelocked Mint
+
+[`timelocked_mint`](https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/enum.Call.html#variant.timelocked_mint)
 
 Mints new tokens into the pallet's wallet, ready for the user to be picked up after
 `lock_time` blocks have expired.
 
-## `set_timelock_duration`
+## Set Timelock Duration
+
+[`set_timelock_duration`](https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/enum.Call.html#variant.set_timelock_duration)
 
 No documentation available at this time.
 
-## `rescind_timelocked_mint`
+## Rescind Timelocked Mint
+
+[`rescind_timelocked_mint`](https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/enum.Call.html#variant.rescind_timelocked_mint)
 
 Burns funds waiting in incoming_transactions that are still unclaimed. May be used by
 the relayer in case of finality issues on the other side of the bridge.
 
-## `claim_to`
+## Claim To
+
+[`claim_to`](https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/enum.Call.html#variant.claim_to)
 
 Collects funds deposited by the relayer into the owner's account
 
-## `update_asset_mapping`
+## Update Asset Mapping
+
+[`update_asset_mapping`](https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/enum.Call.html#variant.update_asset_mapping)
 
 Update a network asset mapping.
 
@@ -102,6 +127,4 @@ Possibly emits one of:
 
 * `AssetMappingCreated`
 * `AssetMappingDeleted`
-* `AssetMappingUpdated`
-ted`
 * `AssetMappingUpdated`
