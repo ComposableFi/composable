@@ -441,7 +441,8 @@ pub mod pallet {
 		/// - AssetId must be supported.
 		/// - Amount must be lower than the networks `max_transfer_size`.
 		/// - Origin must have sufficient funds.
-		/// - Transfers near Balance::max may result in overflows, which are caught and returned as an error.
+		/// - Transfers near Balance::max may result in overflows, which are caught and returned as
+		///   an error.
 		#[pallet::weight(T::WeightInfo::transfer_to())]
 		#[transactional]
 		pub fn transfer_to(
