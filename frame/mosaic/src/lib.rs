@@ -445,8 +445,7 @@ pub mod pallet {
 		/// - AssetId must be supported.
 		/// - Amount must be lower than the networks `max_transfer_size`.
 		/// - Origin must have sufficient funds.
-		/// - Transfers near Balance::max may result in overflows, which are caught and returned as
-		///   an error.
+		/// - Transfers near Balance::max may result in overflows, which are caught and returned as an error.
 		#[pallet::weight(T::WeightInfo::transfer_to())]
 		#[transactional]
 		pub fn transfer_to(
@@ -489,7 +488,6 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		// ANCHOR: accept_transfer_docs
 		/// This is called by the Relayer to confirm that it will relay a transaction.
 		///
 		/// Once this is called, the sender will be unable to reclaim their tokens.
@@ -498,15 +496,14 @@ pub mod pallet {
 		/// reclaim period is not reset, the Relayer will still attempt to pick up the
 		/// remainder of the transaction.
 		///
-		/// ### Restrictions
+		/// # Restrictions
 		/// - Origin must be relayer
 		/// - Outgoing transaction must exist for the user
 		/// - Amount must be equal or lower than what the user has locked
 		///
-		/// ### Note
+		/// # Note
 		/// - Reclaim period is not reset if not all the funds are moved; menaing that the clock
 		///   remains ticking for the relayer to pick up the rest of the transaction.
-		// ANCHOR_END: accept_transfer_docs
 		#[pallet::weight(T::WeightInfo::accept_transfer())]
 		#[transactional]
 		pub fn accept_transfer(
