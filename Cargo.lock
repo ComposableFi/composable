@@ -4845,7 +4845,12 @@ dependencies = [
  "frame-support",
  "frame-system",
  "log 0.4.14",
+ "orml-tokens",
+ "orml-traits",
  "pallet-balances",
+ "pallet-currency-factory",
+ "pallet-instrumental",
+ "pallet-vault",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -8261,6 +8266,7 @@ dependencies = [
 name = "pallet-instrumental"
 version = "0.1.0"
 dependencies = [
+ "composable-support",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
