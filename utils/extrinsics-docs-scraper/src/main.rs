@@ -96,8 +96,9 @@ fn main() -> anyhow::Result<()> {
 				Ok(event) => {
 					match event {
 						// Only write events matter, since the lib.rs files shouldn't be
-						// moved, renamed or deleted (write events will always follow create events). If pallets are being refactored, hot-reloading
-						// the book is most likely not a priority.
+						// moved, renamed or deleted (write events will always follow create
+						// events). If pallets are being refactored, hot-reloading the book is most
+						// likely not a priority.
 						DebouncedEvent::Write(changed_file_path) => {
 							let pallet_info = pallet_lib_rs_path_to_pallet_info_map
 								.get(&*changed_file_path)
