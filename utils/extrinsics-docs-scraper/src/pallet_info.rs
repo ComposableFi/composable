@@ -15,7 +15,7 @@ pub(crate) fn get_pallet_info(
 	let pallet_entries = fs::read_dir(&frame_dir_path)
 		.context("Unable to read input directory")?
 		.map(|dir_entry: io::Result<DirEntry>| -> anyhow::Result<Option<PalletInfo>> {
-			let dir_entry = dir_entry?;
+			let dir_entry = dir_entry.context("Error reading input directory")?;
 
 			if let Ok(metadata) = dir_entry.metadata() {
 				if metadata.is_dir() {
@@ -27,26 +27,56 @@ pub(crate) fn get_pallet_info(
 						.map(ToOwned::to_owned)
 						.context("File path was not valid unicode")?;
 
-					let mut lib_rs_path = dir_entry.path();
-					lib_rs_path.extend(["src", "lib.rs"]);
+					let cargo_toml = cargo_toml::Manifest::from_slice(
+						fs::read_to_string(PathBuf::from_iter([
+							dir_entry.path(),
+							"Cargo.toml".into(),
+						]))
+						.context(format!(
+							"Error reading Cargo.toml file for pallet {}",
+							&pallet_name
+						))?
+						.as_bytes(),
+					)
+					.context(format!(
+						"Error parsing Cargo.toml file for pallet {}",
+						&pallet_name
+					))?;
+
+					let lib_rs_path =
+						PathBuf::from_iter([dir_entry.path(), "src".into(), "lib.rs".into()])
+							.canonicalize()
+							.context(format!(
+								"Unable to canonicalize path to lib.rs file for pallet {}",
+								&pallet_name
+							))?;
+
 					lib_rs_path
 						.exists()
 						.then(|| ())
 						.context(format!("Pallet {} does not have a lib.rs file", &pallet_name))?;
 
-					lib_rs_path = lib_rs_path.canonicalize()?;
+					let docs_output_folder =
+						PathBuf::from_iter([pallet_docs_output_path, &PathBuf::from(&pallet_name)]);
 
-					let mut docs_output_folder = pallet_docs_output_path.to_owned();
-					docs_output_folder.extend([&pallet_name]);
 					if docs_output_folder.exists() {
-						docs_output_folder = docs_output_folder.canonicalize()?;
 						Ok(Some(PalletInfo {
-							pallet_name,
-							lib_rs_path,
+							pallet_name_full: cargo_toml
+								.package
+								.context(format!(
+									"Cargo.toml file for pallet {} has no `[package]` section",
+									&pallet_name
+								))?
+								.name,
 							docs_output_paths: DocsOutputInfo {
-								folder: docs_output_folder,
+								folder: docs_output_folder.canonicalize().context(format!(
+									"Unable to canonicalize path to output folder for pallet {}",
+									&pallet_name
+								))?,
 								extrinsics_docs_file_name: "extrinsics.md".to_string().into(),
 							},
+							pallet_name,
+							lib_rs_path,
 						}))
 					} else {
 						log::warn!(
@@ -71,6 +101,8 @@ pub(crate) fn get_pallet_info(
 pub(crate) struct PalletInfo {
 	/// The name of the pallet.
 	pub(crate) pallet_name: String,
+	/// The full name of the pallet, as defined in the pallet's Cargo.toml `[package.name]` field.
+	pub(crate) pallet_name_full: String,
 	/// The absolute path to the pallet's `lib.rs` file.
 	pub(crate) lib_rs_path: PathBuf,
 	/// Where to output the generated documentation to. See [`DocsOutputInfo`] for more
