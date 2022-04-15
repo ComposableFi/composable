@@ -14,6 +14,9 @@
 // limitations under the License.
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(test)]
+use std::println as debug;
+
 pub mod error;
 pub mod primitives;
 #[cfg(test)]
@@ -24,17 +27,21 @@ pub mod traits;
 
 use crate::error::BeefyClientError;
 use crate::primitives::{
-    BeefyNextAuthoritySet, KeccakHasher, MmrUpdateProof, SignatureWithAuthorityIndex, HASH_LENGTH,
+    BeefyNextAuthoritySet, KeccakHasher, MmrUpdateProof, ParachainsUpdateProof,
+    SignatureWithAuthorityIndex, HASH_LENGTH,
 };
 use crate::traits::{AuthoritySet, MmrState, StorageRead, StorageWrite};
 use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
+use beefy_primitives::mmr::MmrLeaf;
 use codec::Encode;
 use sp_core::{ByteArray, H256};
-use sp_core_hashing::keccak_256;
-use sp_io::crypto;
+use sp_io::{crypto, hashing::keccak_256};
 use sp_runtime::traits::Convert;
 
 use sp_std::prelude::*;
+
+#[cfg(not(feature = "std"))]
+use sp_std::vec;
 
 pub struct BeefyLightClient<Store: StorageRead + StorageWrite> {
     store: Store,
@@ -96,11 +103,15 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
         };
 
         let mmr_root_hash = H256::from_slice(&*mmr_root_vec);
+        #[cfg(test)]
+        debug!("Extracted mmr root hash: {:?}", mmr_root_hash);
 
         // Beefy validators sign the keccak_256 hash of the scale encoded commitment
         let encoded_commitment = mmr_update.signed_commitment.commitment.encode();
         let commitment_hash = keccak_256(&*encoded_commitment);
 
+        #[cfg(test)]
+        debug!("Recovering authority keys from signatures");
         let mut authority_indices = Vec::new();
         let authority_leaves = mmr_update
             .signed_commitment
@@ -157,12 +168,19 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
         let latest_beefy_height = self.store.mmr_state()?.latest_beefy_height;
 
         if mmr_update.signed_commitment.commitment.block_number <= latest_beefy_height {
+            #[cfg(test)]
+            debug!(
+                "Invalid update, block_number {:?} <= latest_beefy_height {:?}",
+                mmr_update.signed_commitment.commitment.block_number, latest_beefy_height
+            );
             return Err(BeefyClientError::InvalidMmrUpdate);
         }
 
         // Move on to verify mmr_proof
         let node = pallet_mmr_primitives::DataOrHash::Data(mmr_update.latest_mmr_leaf.clone());
 
+        #[cfg(test)]
+        debug!("Verifying leaf proof {:?}", mmr_update.mmr_proof.clone());
         pallet_mmr::verify_leaf_proof::<sp_runtime::traits::Keccak256, _>(
             mmr_root_hash.into(),
             node,
@@ -181,6 +199,61 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
                 next_authorities: mmr_update.latest_mmr_leaf.beefy_next_authority_set,
             })?;
         }
+        Ok(())
+    }
+
+    pub fn verify_parachain_headers(
+        &self,
+        parachain_update: ParachainsUpdateProof,
+    ) -> Result<(), BeefyClientError> {
+        let mut mmr_leaves = Vec::new();
+
+        for parachain_header in parachain_update.parachain_headers {
+            let pair = (parachain_header.para_id, parachain_header.parachain_header);
+            let leaf_bytes = pair.encode();
+
+            let proof =
+                rs_merkle::MerkleProof::<KeccakHasher>::new(parachain_header.parachain_heads_proof);
+            let leaf_hash = keccak_256(&leaf_bytes);
+            let root = proof
+                .root(
+                    &vec![parachain_header.heads_leaf_index as usize],
+                    &vec![leaf_hash],
+                    parachain_header.heads_total_count as usize,
+                )
+                .map_err(|_| BeefyClientError::InvalidMerkleProof)?;
+            // reconstruct leaf
+            let mmr_leaf = MmrLeaf {
+                version: parachain_header.partial_mmr_leaf.version,
+                parent_number_and_hash: parachain_header.partial_mmr_leaf.parent_number_and_hash,
+                beefy_next_authority_set: parachain_header
+                    .partial_mmr_leaf
+                    .beefy_next_authority_set,
+                parachain_heads: root.into(),
+            };
+
+            let node = pallet_mmr_primitives::DataOrHash::Data(mmr_leaf);
+            mmr_leaves.push(node);
+        }
+
+        let mmr_state = self
+            .store
+            .mmr_state()
+            .map_err(|_| BeefyClientError::StorageReadError)?;
+
+        #[cfg(test)]
+        debug!(
+            "Verifying leaves proof {:?}, root hash {:?}",
+            parachain_update.mmr_proof.clone(),
+            mmr_state.mmr_root_hash
+        );
+
+        pallet_mmr::verify_leaves_proof::<sp_runtime::traits::Keccak256, _>(
+            mmr_state.mmr_root_hash.into(),
+            mmr_leaves,
+            parachain_update.mmr_proof,
+        )
+        .map_err(|_| BeefyClientError::InvalidMmrProof)?;
         Ok(())
     }
 }
