@@ -38,9 +38,8 @@ pub(crate) fn generate_docs(pallet_info: &PalletInfo) -> Result<(), ScrapeError>
 			// i'm unsure if there would ever be a case where the pallet module would be
 			// annotated with anything else? perhaps an #[allow(..)] or something similar. same
 			// logic applies to finding the extrinsics impl.
-			syn::Item::Mod(module) if module.attrs.contains(&frame_support_pallet_attr) => {
-				Some(module)
-			},
+			syn::Item::Mod(module) if module.attrs.contains(&frame_support_pallet_attr) =>
+				Some(module),
 			_ => None,
 		}) // find the module in the file that has the attribute
 		.ok_or_else(|| ScrapeError::PalletAttributeNotPresent(pallet_info.lib_rs_path.clone()))?
@@ -126,7 +125,7 @@ fn alter_markdown(input: &str, extrinsic_name: &str, pallet_info: &PalletInfo) -
 
 	for event in parser {
 		match event {
-			Event::Start(Tag::Heading(level, ident, classes)) => {
+			Event::Start(Tag::Heading(level, ident, classes)) =>
 				altered_events.push(Event::Start(Tag::Heading(
 					match HeadingLevel::try_from((level as usize) + 2_usize) {
 						Ok(ok) => ok,
@@ -137,15 +136,13 @@ fn alter_markdown(input: &str, extrinsic_name: &str, pallet_info: &PalletInfo) -
 					},
 					ident,
 					classes,
-				)))
-			},
-			Event::End(Tag::Heading(level, ident, classes)) => {
+				))),
+			Event::End(Tag::Heading(level, ident, classes)) =>
 				altered_events.push(Event::End(Tag::Heading(
 					HeadingLevel::try_from((level as usize) + 2_usize).unwrap_or(HeadingLevel::H6),
 					ident,
 					classes,
-				)))
-			},
+				))),
 			Event::Text(text) => {
 				if bad_heading {
 					log::error!(
