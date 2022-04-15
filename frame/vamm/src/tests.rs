@@ -247,7 +247,7 @@ proptest! {
 			} else if quote_peg.unwrap().checked_div(base_asset_reserves).is_none() {
 				assert_eq!(
 					Vamm::get_price(0, AssetType::Base),
-					Err(DispatchError::Arithmetic(ArithmeticError::Underflow)))
+					Err(DispatchError::Arithmetic(ArithmeticError::DivisionByZero)))
 			} else {
 				assert_eq!(
 					Vamm::get_price(0, AssetType::Base),
@@ -282,7 +282,7 @@ proptest! {
 			} else if quote_peg.unwrap().checked_div(base_asset_reserves).is_none() {
 				assert_eq!(
 					Vamm::get_price(0, AssetType::Quote),
-					Err(DispatchError::Arithmetic(ArithmeticError::Underflow)))
+					Err(DispatchError::Arithmetic(ArithmeticError::DivisionByZero)))
 			} else {
 				assert_eq!(
 					Vamm::get_price(0, AssetType::Quote),
