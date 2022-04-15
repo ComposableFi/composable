@@ -293,6 +293,8 @@ pub mod pallet {
 		VammDoesNotExist,
 		/// Tried to retrieve a Vamm but the function failed.
 		FailToRetrieveVamm,
+		/// Tried to execute a trade but the Vamm didn't have enough funds to fulfill it.
+		InsufficientFundsForTrade,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -481,6 +483,32 @@ pub mod pallet {
 
 		#[allow(unused_variables)]
 		fn swap(config: &SwapConfigOf<T>) -> Result<Self::Integer, DispatchError> {
+			// Sanity checks
+			// 1) Requested vamm must exists and be retrievable.
+			ensure!(VammMap::<T>::contains_key(config.vamm_id), Error::<T>::VammDoesNotExist);
+			let vamm_state = VammMap::<T>::get(vamm_id).ok_or(Error::<T>::FailToRetrieveVamm)?;
+
+			match config.direction {
+				// 2) If we intend to remove some asset amount from vamm, we must
+				// have sufficient funds for it.
+				Direction::Remove => {
+					match config.asset {
+						AssetType::Base => ensure!(config.input_amount <= vamm_state.base_asset_reserves, Error::<T>::InsufficientFundsForTrade),
+						AssetType::Quote => ensure!(config.input_amount <= vamm_state.quote_asset_reserves, Error::<T>::InsufficientFundsForTrade),
+					}
+				},
+
+				// 3) If we intend to add some asset amount to the vamm, the
+				// final amount must not overflow.
+				Direction::Add => {
+					match config.asset {
+						AssetType::Base => ensure!(config.input_amount.checked_add(vamm_state.base_asset_reserves).is_some(), Error::<T>::TradeExtrapolatesMaximumSupportedAmount),
+						AssetType::Quote => ensure!(config.input_amount.checked_add(vamm_state.quote_asset_reserves).is_some(), Error::<T>::TradeExtrapolatesMaximumSupportedAmount),
+					}
+				}
+			}
+
+			// Delegate swap to helper functions.
 			match config.asset {
 				AssetType::Quote => Self::swap_quote_asset(&config),
 				AssetType::Base => todo!(),
