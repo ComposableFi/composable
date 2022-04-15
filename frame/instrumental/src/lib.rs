@@ -62,9 +62,7 @@
 #[cfg(test)]
 mod tests;
 
-#[cfg(test)]
 mod mock;
-
 mod weights;
 
 pub use pallet::*;
@@ -88,18 +86,22 @@ pub mod pallet {
 	};
 
 	use composable_traits::{
-		instrumental::Instrumental,
+		instrumental::{Instrumental, InstrumentalVaultConfig},
 		vault::{Deposit as Duration, FundsAvailability, StrategicVault, Vault, VaultConfig},
 	};
 
 	use sp_runtime::{
+		ArithmeticError,
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub,
 			Zero,
 		},
+		Perquintill,
 	};
-	use sp_std::fmt::Debug;
+
 	use codec::{Codec, FullCodec};
+	use sp_std::fmt::Debug;
+	use std::collections::BTreeMap;
 	
 	// -------------------------------------------------------------------------------------------
 	//                                Declaration Of The Pallet Type                              
@@ -112,7 +114,6 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 	//                                         Config Trait                                       
 	// -------------------------------------------------------------------------------------------
-
 
 	// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -191,7 +192,7 @@ pub mod pallet {
 		/// Emitted after a successful call to the [`create`](Pallet::create) extrinsic.
 		Created {
 			vault_id: T::VaultId,
-			config: VaultConfig<T::AccountId, T::AssetId>
+			config: InstrumentalVaultConfig<T::AssetId, Perquintill>
 		},
 
 		/// Emitted after a successful call to the [`add_liquidity`](Pallet::add_liquidity)
@@ -268,9 +269,12 @@ pub mod pallet {
 		/// 
 		/// # Weight: O(TBD)
 		#[pallet::weight(<T as Config>::WeightInfo::create())]
+		// TODO: (Nevin)
+		//  - refactor input to origin, asset_id & deployable_percent
+		//  - or potentially origin & instrumental_vault_config: InstrumentalVaultConfig<AssetId, Perquintill>
 		pub fn create(
 			origin: OriginFor<T>,
-			config: VaultConfig<T::AccountId, T::AssetId>,
+			config: InstrumentalVaultConfig<T::AssetId, Perquintill>,
 		) -> DispatchResultWithPostInfo {
 			// TODO: (Nevin)
 			//  - (potentially) enforce that the issuer must have privileged rights
@@ -372,6 +376,12 @@ pub mod pallet {
 		type Balance = T::Balance;
 		type VaultId = T::VaultId;
 
+		// TODO: (Nevin)
+		//  - should each asset have its own account?
+		fn account_id() -> Self::AccountId {
+			T::PalletId::get().into_account()
+		}
+
 		/// Create an underlying vault and save a reference to its 'VaultId'.
 		/// 
 		/// # Overview
@@ -391,8 +401,11 @@ pub mod pallet {
 		/// 
 		/// # Runtime: O(TBD)
 		fn create(
-			config: VaultConfig<Self::AccountId, Self::AssetId>,
+			config: InstrumentalVaultConfig<T::AssetId, Perquintill>
 		) -> Result<Self::VaultId, DispatchError> {
+			// TODO: (Nevin)
+			//  - create validation object and validate input
+
 			// Requirement 1) An asset can only have one vault associated with it
 			ensure!(
 				!AssetVault::<T>::contains_key(config.asset_id), 
@@ -474,34 +487,37 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 	
 	impl<T: Config> Pallet<T> {
-		// TODO: (Nevin)
-		//  - decide if each asset should have an associated account, or if
-		//        the pallet itself should have one global account
-		fn account_id(asset: &T::AssetId) -> T::AccountId {
-			T::PalletId::get().into_sub_account(asset)
-		}
 		
 		#[transactional]
 		fn do_create(
-			config: VaultConfig<T::AccountId, T::AssetId>,
+			config: InstrumentalVaultConfig<T::AssetId, Perquintill>,
 		) -> Result<T::VaultId, DispatchError> {
-			let asset = config.asset_id;
-			let account_id = Self::account_id(&asset);
+			// Requirement 1) Obtain each required field for the VaultConfig struct
+			let asset_id = config.asset_id;
+			let manager = Self::account_id();
 
-			// TODO: (Nevin)
-			//  - decide a better way to input VaultConfig fields (maybe as separate inputs)
-			//  - VaultConfig.manager should be set to account_id
+			let reserved = Perquintill::one()
+				.checked_sub(&config.percent_deployable)
+				.ok_or( ArithmeticError::Overflow)?;
+
+			// let strategy_account_id = Self::InstrumentalStrategy::best_strategy_for_asset(asset_id)
+			let strategy_account_id = manager.clone();
+			let strategies: BTreeMap<T::AccountId, Perquintill> = BTreeMap::from([
+				(strategy_account_id, config.percent_deployable)
+			]);
+
+			// Requirement 2) Create the underlying vault
 			let vault_id: T::VaultId = T::Vault::create(
 				Duration::Existential,
 				VaultConfig {
-					asset_id: config.asset_id,
-					manager: account_id,
-					reserved: config.reserved,
-					strategies: config.strategies,
+					asset_id,
+					manager,
+					reserved,
+					strategies
 				},
 			)?;
 
-			AssetVault::<T>::insert(asset, &vault_id);
+			AssetVault::<T>::insert(asset_id, &vault_id);
 			
 			Ok(vault_id)
 		}

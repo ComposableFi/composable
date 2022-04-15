@@ -245,8 +245,6 @@ frame_support::construct_runtime!(
 pub struct ExtBuilder {
 	native_balances: Vec<(AccountId, Balance)>,
 	balances: Vec<(AccountId, CurrencyId, Balance)>,
-	
-	vault_count: u64,
 }
 
 impl ExtBuilder {
@@ -286,34 +284,5 @@ impl ExtBuilder {
 
 		self
 	}
-
-	pub fn initialize_vault(mut self, asset: CurrencyId, balance: Balance) -> ExtBuilder {
-		self.vault_count += 1;
-		let vault_id = self.vault_count;
-
-		let vault_account = VAULT_PALLET_ID.into_sub_account(&vault_id);
-		if asset == NATIVE_ASSET {
-			self.native_balances.push((vault_account, balance));
-		} else {
-			self.balances.push((vault_account, asset, balance));
-		}
-		
-		self
-	}
-
-	pub fn initialize_vaults(mut self, reserves: Vec<(CurrencyId, Balance)>) -> ExtBuilder {
-		reserves.into_iter().for_each(|(asset, balance)| {
-			self.vault_count += 1;
-			let vault_id = self.vault_count;
-
-			let vault_account = VAULT_PALLET_ID.into_sub_account(&vault_id);
-			if asset == NATIVE_ASSET {
-				self.native_balances.push((vault_account, balance));
-			} else {
-				self.balances.push((vault_account, asset, balance));
-			}
-		});
-		
-		self
-	}
+	
 }
