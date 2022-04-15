@@ -7,8 +7,8 @@ title = "Composable Finance"
 
 [output.html]
 default-theme = "light"
-preferred-dark-theme = "light"
 no-section-label = true
+preferred-dark-theme = "light"
 
 [output.html.fold]
 enable = true

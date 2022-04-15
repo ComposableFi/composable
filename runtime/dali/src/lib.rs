@@ -28,7 +28,7 @@ use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
 	BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, MosaicRemoteAssetId,
 	MultiExistentialDeposits, NativeExistentialDeposit, Signature, AVERAGE_ON_INITIALIZE_RATIO,
-	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use cumulus_primitives_core::ParaId;
@@ -64,6 +64,7 @@ pub use frame_support::{
 use codec::Encode;
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
+use frame_system::EnsureSigned;
 use scale_info::TypeInfo;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
@@ -110,7 +111,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 2000,
+	spec_version: 2100,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -1015,6 +1016,36 @@ impl liquidity_bootstrapping::Config for Runtime {
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 }
 
+parameter_types! {
+  pub PabloId: PalletId = PalletId(*b"pall_pab");
+  pub LbpMinSaleDuration: BlockNumber = DAYS;
+  pub LbpMaxSaleDuration: BlockNumber = 30 * DAYS;
+  pub LbpMaxInitialWeight: Permill = Permill::from_percent(95);
+  pub LbpMinFinalWeight: Permill = Permill::from_percent(5);
+  pub TWAPInterval: u64 = MILLISECS_PER_BLOCK * 10;
+}
+
+impl pablo::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type Convert = ConvertInto;
+	type CurrencyFactory = CurrencyFactory;
+	type Assets = Assets;
+	type PoolId = PoolId;
+	type PalletId = PabloId;
+	type LocalAssets = CurrencyFactory;
+	type LbpMinSaleDuration = LbpMinSaleDuration;
+	type LbpMaxSaleDuration = LbpMaxSaleDuration;
+	type LbpMaxInitialWeight = LbpMaxInitialWeight;
+	type LbpMinFinalWeight = LbpMinFinalWeight;
+	type PoolCreationOrigin = EnsureSigned<Self::AccountId>;
+	type EnableTwapOrigin = EnsureRootOrHalfCouncil;
+	type TWAPInterval = TWAPInterval;
+	type Time = Timestamp;
+	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1076,6 +1107,7 @@ construct_runtime!(
 		ConstantProductDex: uniswap_v2::{Pallet, Call, Storage, Event<T>} = 65,
 		StableSwapDex: curve_amm::{Pallet, Call, Storage, Event<T>} = 66,
 		LiquidityBootstrapping: liquidity_bootstrapping::{Pallet, Call, Storage, Event<T>} = 67,
+		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 68,
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
 );
@@ -1150,6 +1182,7 @@ mod benches {
 		[curve_amm, StableSwapDex]
 		[liquidity_bootstrapping, LiquidityBootstrapping]
 		[assets_registry, AssetsRegistry]
+		[pablo, Pablo]
 	);
 }
 

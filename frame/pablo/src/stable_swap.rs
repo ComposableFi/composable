@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use crate::{Config, Error, PoolConfiguration, PoolCount, Pools};
 use composable_maths::dex::stable_swap::{compute_base, compute_d};
 use composable_traits::{
@@ -16,8 +14,7 @@ use sp_runtime::{
 	traits::{CheckedAdd, Convert, One, Zero},
 	ArithmeticError, DispatchError, Permill,
 };
-
-use sp_std::ops::Mul;
+use sp_std::{marker::PhantomData, ops::Mul};
 
 pub(crate) struct StableSwap<T>(PhantomData<T>);
 
