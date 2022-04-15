@@ -79,7 +79,7 @@ fn reserve_transfer(from: [u8; 32], to: [u8; 32]) {
 	let before =
 		This::execute_with(|| this_runtime::Assets::free_balance(CurrencyId::KSM, to_account));
 	KusamaRelay::execute_with(|| {
-		<kusama_runtime::Balances as support::traits::Currency<_>>::deposit_creating(
+		let _ = <kusama_runtime::Balances as support::traits::Currency<_>>::deposit_creating(
 			from_account,
 			balance,
 		);

@@ -408,11 +408,11 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     dutchAuction: {
-      NotEnoughNativeCurrentyToPayForAuction: AugmentedError<ApiType>;
+      NotEnoughNativeCurrencyToPayForAuction: AugmentedError<ApiType>;
       OrderNotFound: AugmentedError<ApiType>;
       OrderParametersIsInvalid: AugmentedError<ApiType>;
       RequestedOrderDoesNotExists: AugmentedError<ApiType>;
-      TakeLimitDoesNotSatisfiesOrder: AugmentedError<ApiType>;
+      TakeLimitDoesNotSatisfyOrder: AugmentedError<ApiType>;
       TakeParametersIsInvalid: AugmentedError<ApiType>;
       /**
        * Generic error

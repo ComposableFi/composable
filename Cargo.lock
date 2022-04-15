@@ -1618,6 +1618,7 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "plotters",
+ "polkadot-parachain",
  "proptest",
  "scale-info",
  "serde",
@@ -6968,10 +6969,13 @@ version = "0.0.1"
 dependencies = [
  "composable-tests-helpers",
  "composable-traits",
+ "cumulus-pallet-xcm",
+ "cumulus-primitives-core",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "hex-literal",
+ "log 0.4.16",
  "num-traits",
  "orml-tokens",
  "orml-traits",
@@ -6980,6 +6984,7 @@ dependencies = [
  "pallet-currency-factory",
  "pallet-timestamp",
  "parity-scale-codec",
+ "polkadot-parachain",
  "proptest",
  "scale-info",
  "serde",
@@ -6989,6 +6994,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "xcm",
 ]
 
 [[package]]
@@ -7148,6 +7154,7 @@ dependencies = [
  "composable-support",
  "composable-tests-helpers",
  "composable-traits",
+ "cumulus-pallet-xcm",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -7175,6 +7182,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "xcm",
 ]
 
 [[package]]
@@ -7183,6 +7191,8 @@ version = "0.0.1"
 dependencies = [
  "composable-tests-helpers",
  "composable-traits",
+ "cumulus-pallet-xcm",
+ "cumulus-primitives-core",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -7204,6 +7214,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "xcm",
 ]
 
 [[package]]

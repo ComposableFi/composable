@@ -31,7 +31,6 @@ use common::{
 	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use cumulus_primitives_core::ParaId;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -75,6 +74,8 @@ use system::{
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
 pub use xcmp::XcmConfig;
+
+use crate::xcmp::XcmRouter;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -893,6 +894,9 @@ impl dutch_auction::Config for Runtime {
 	type UnixTime = Timestamp;
 	type WeightInfo = weights::dutch_auction::WeightInfo<Runtime>;
 	type PositionExistentialDeposit = NativeExistentialDeposit;
+	type XcmOrigin = Origin;
+	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type XcmSender = XcmRouter;
 }
 
 parameter_types! {
@@ -928,8 +932,9 @@ impl liquidations::Config for Runtime {
 	type LiquidationStrategyId = LiquidationStrategyId;
 	type OrderId = OrderId;
 	type WeightInfo = weights::liquidations::WeightInfo<Runtime>;
-	type ParachainId = ParaId;
 	type PalletId = LiquidationsPalletId;
+	type CanModifyStrategies = EnsureRootOrHalfCouncil;
+	type XcmSender = XcmRouter;
 }
 
 parameter_types! {
