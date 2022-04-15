@@ -5,7 +5,7 @@ use frame_support::{
 use codec::Codec;
 use sp_runtime::Perquintill;
 
-#[derive(Clone, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
+#[derive(Clone, Copy, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
 pub struct InstrumentalVaultConfig<AssetId, Percent> {
     pub asset_id: AssetId,
     pub percent_deployable: Percent,

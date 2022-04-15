@@ -298,7 +298,7 @@ fn create_extrinsic_emits_event() {
 }
 
 #[test]
-fn cannot_create_more_than_one_vault_for_an_asset() {
+fn create_extrinsic_enforces_you_cannot_create_more_than_one_vault_for_an_asset() {
     ExtBuilder::default().build().execute_with(|| {
         let config = InstrumentalVaultConfigBuilder::default().build();
         assert_ok!(Instrumental::create(Origin::signed(ADMIN), config.clone()));
@@ -309,7 +309,6 @@ fn cannot_create_more_than_one_vault_for_an_asset() {
         );
     });
 }
-
 
 #[test]
 fn create_extrinsic_updates_storage() {
@@ -650,5 +649,5 @@ proptest! {
             });
         });
     }
-    
+
 }

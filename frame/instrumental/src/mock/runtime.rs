@@ -12,7 +12,6 @@ use frame_support::{
 	traits::{Everything, GenesisBuild},
 };
 
-use sp_runtime::traits::AccountIdConversion;
 use sp_runtime::{
 	testing::Header,
 	traits::{ConvertInto, IdentityLookup}
@@ -291,5 +290,5 @@ impl ExtBuilder {
 
 		self
 	}
-	
+
 }
