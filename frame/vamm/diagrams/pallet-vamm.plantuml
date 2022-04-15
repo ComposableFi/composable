@@ -1,0 +1,56 @@
+@startuml
+!theme mars
+
+package "pallet-vamm" {
+    interface Vamm <<trait>> {
+        ~ create(config: VammConfig)
+        ~ close(vamm: VammId, when: Timestamp)
+        ~ get_price(vamm_id: VammId, asset: AssetType)
+        ~ get_twap(vamm: VammId)
+        ~ swap(config: SwapConfig)
+        ~ move_price(vamm: VammId, base_asset_amount: Balance, quote_asset_amount: Balance)
+        ~ move_to_price(vamm: VammId, target_price: Balance)
+    }
+    database "Vamm Storage" {
+        map Vamms <<StorageMap>> {
+            VammId =>
+        }
+        class VammState <<struct>> {
+            Balance base_asset_reserves
+            Balance quote_asset_reserves
+            Balance peg_multiplier
+            Option<Timestamp> closed
+        }
+    }
+}
+
+package "Vamm Custom Types" {
+    class VammConfig <<struct>> {
+        Balance base_asset_reserves
+        Balance quote_asset_reserves
+        Balance peg_multiplier
+    }
+
+    class SwapConfig <<struct>> {
+        VammId vamm_id
+        AssetType asset
+        Balance input_amount
+        Direction direction
+        Balance output_amount_limit
+    }
+
+    enum AssetType <<enum>> {
+        Base
+        Quote
+    }
+
+    enum Direction <<enum>> {
+    Add,
+    Remove
+    }
+}
+
+
+Vamm -down-> Vamms : write
+Vamms ..right> VammState : maps
+@enduml
