@@ -441,7 +441,7 @@ pub mod pallet {
 				stakers_to_register.try_fold(Vec::new(), |mut stakers_registered, (nft_id, _)| {
 					register_staker(nft_id);
 					stakers_registered.push(nft_id);
-					if processed == nb_of_elem_to_process {
+					if processed == stakers_registered.len() {
 						Err((stakers_registered, nft_id))
 					} else {
 						Ok(stakers_registered)
