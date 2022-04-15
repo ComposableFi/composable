@@ -1,6 +1,6 @@
 use crate::{
 	mock::{
-		new_test_ext, process_block, AccountId, AssetId, BlockNumber, Event, Origin,
+		new_test_ext, process_block, run_to_block, AccountId, AssetId, BlockNumber, Event, Origin,
 		StakingRewards, System, Test, Tokens, MILLISECS_PER_BLOCK, REWARD_EPOCH_DURATION_BLOCK,
 	},
 	Error, PenaltyOf, StakingConfigOf, State,
@@ -37,6 +37,10 @@ fn duration_to_block(duration: DurationSeconds) -> BlockNumber {
 	duration * 1000 / MILLISECS_PER_BLOCK
 }
 
+fn run_to_duration(duration: DurationSeconds) {
+	run_to_block(duration_to_block(duration))
+}
+
 fn configure_pica(early_unstake_penalty: PenaltyOf<Test>) -> StakingConfigOf<Test> {
 	let config = StakingConfig {
 		duration_presets: [(WEEK, Perbill::from_float(0.5)), (MONTH, Perbill::from_float(1.0))]
@@ -61,12 +65,12 @@ fn configure_default_pica() -> StakingConfigOf<Test> {
 }
 
 fn advance_state_machine() {
-	process_block(1);
-	process_block(1);
-	process_block(1);
+	run_to_block(3);
 }
 
 mod hook_state {
+	use crate::{mock::ElementToProcessPerBlock, PendingStakers, Stakers};
+
 	use super::*;
 
 	#[test]
@@ -75,9 +79,17 @@ mod hook_state {
 			// State machine constant over block number
 			assert_eq!(StakingRewards::current_state(), State::WaitingForEpochEnd);
 			process_block(0);
-			assert_eq!(StakingRewards::current_state(), State::RewardingStart);
+			assert_eq!(StakingRewards::current_state(), State::Rewarding);
 			process_block(0);
-			assert_eq!(StakingRewards::current_state(), State::RewardingComplete);
+			assert_eq!(StakingRewards::current_state(), State::Registering);
+			process_block(0);
+			assert_eq!(StakingRewards::current_state(), State::WaitingForEpochEnd);
+			process_block(0);
+			assert_eq!(StakingRewards::current_state(), State::WaitingForEpochEnd);
+			process_block(0);
+			assert_eq!(StakingRewards::current_state(), State::WaitingForEpochEnd);
+			process_block(0);
+			assert_eq!(StakingRewards::current_state(), State::WaitingForEpochEnd);
 		});
 	}
 
@@ -93,7 +105,70 @@ mod hook_state {
 		});
 	}
 
-	// TODO: more complex scenarios, like checking for correctness of chunk processing
+	#[test]
+	fn pending_stakers_transferred_to_stakers() {
+		new_test_ext().execute_with(|| {
+			configure_default_pica();
+			let stake = 1_000_000_000_000;
+			let accounts = (BOB + 1..100).collect::<Vec<_>>();
+			let nfts = accounts
+				.iter()
+				.map(|account| {
+					assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, account, stake));
+					let nft_id =
+						<StakingRewards as Staking>::stake(&PICA, account, stake, WEEK, false)
+							.expect("impossible; qed;");
+					assert!(StakingRewards::pending_stakers(nft_id).is_some());
+					assert!(StakingRewards::stakers(nft_id).is_none());
+					nft_id
+				})
+				.collect::<Vec<_>>();
+			run_to_duration(MINUTE);
+			for nft in nfts {
+				assert!(StakingRewards::stakers(nft).is_some());
+				assert!(StakingRewards::pending_stakers(nft).is_none());
+			}
+		});
+	}
+
+	#[test]
+	fn pending_stakers_processed_by_chunk() {
+		new_test_ext().execute_with(|| {
+			configure_default_pica();
+			let stake = 1_000_000_000_000;
+			let account_start = BOB + 1;
+			let nb_of_accounts = 1000;
+			(account_start..account_start + nb_of_accounts).for_each(|account| {
+				assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &account, stake));
+				assert_ok!(<StakingRewards as Staking>::stake(&PICA, &account, stake, WEEK, false));
+			});
+			assert_eq!(
+				PendingStakers::<Test>::iter().count(),
+        nb_of_accounts as usize
+			);
+			assert_eq!(Stakers::<Test>::iter().count(), 0);
+			run_to_block(1);
+			assert_eq!(StakingRewards::current_state(), State::Rewarding);
+			run_to_block(2);
+      let block_start = System::block_number() + 1;
+      let block_end = block_start + (nb_of_accounts as u64 / ElementToProcessPerBlock::get() as u64);
+			(block_start..block_end)
+        .for_each(|block| {
+				  run_to_block(block);
+				  assert_eq!(
+					  Stakers::<Test>::iter().count(),
+					  (block - block_start + 1) as usize * ElementToProcessPerBlock::get() as usize
+				  );
+			});
+			assert_eq!(
+				Stakers::<Test>::iter().count(),
+        nb_of_accounts as usize
+			);
+      run_to_block(System::block_number() + 1);
+      assert_eq!(PendingStakers::<Test>::iter().count(), 0);
+			assert_eq!(StakingRewards::current_state(), State::WaitingForEpochEnd);
+		});
+	}
 }
 
 mod configure {
@@ -194,10 +269,10 @@ mod stake {
 	#[test]
 	fn just_works() {
 		new_test_ext().execute_with(|| {
-			process_block(1);
 			configure_default_pica();
 			let stake = 1_000_000_000_000;
 			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
+			advance_state_machine();
 			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
 				.expect("impossible; qed;");
 			System::assert_last_event(Event::StakingRewards(crate::Event::Staked {
@@ -361,8 +436,7 @@ mod unstake {
 			assert_ok!(Tokens::mint_into(PICA, &ALICE, stake));
 			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
 				.expect("impossible; qed;");
-			advance_state_machine();
-			process_block(duration_to_block(WEEK + MINUTE));
+			run_to_duration(WEEK + MINUTE);
 			assert_ok!(<StakingRewards as Staking>::unstake(&instance_id, &ALICE));
 			assert_eq!(Tokens::balance(PICA, &ALICE), stake);
 		});

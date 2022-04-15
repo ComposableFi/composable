@@ -42,6 +42,7 @@ mod mock;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use composable_support::abstractions::block_fold::{BlockFold, FoldStorage, FoldStrategy};
 	use composable_traits::{
 		financial_nft::{FinancialNFTProtocol, NFTClass, NFTVersion},
 		math::{safe_multiply_by_rational, SafeAdd, SafeSub},
@@ -92,12 +93,10 @@ pub mod pallet {
 	pub(crate) type PenaltyOf<T> = Penalty<AccountIdOf<T>>;
 
 	#[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-	pub enum State<K: Encode> {
+	pub enum State {
 		WaitingForEpochEnd,
-		RewardingStart,
-		RewardingContinue { last_processed_nft: K },
-		RewardingComplete,
-		RegisteringContinue { last_processed_nft: K },
+		Rewarding,
+		Registering,
 	}
 
 	#[pallet::event]
@@ -181,14 +180,17 @@ pub mod pallet {
 	}
 
 	#[pallet::type_value]
-	pub fn StateOnEmpty<T: Config>() -> State<InstanceIdOf<T>> {
+	pub fn StateOnEmpty<T: Config>() -> State {
 		State::WaitingForEpochEnd
 	}
 
 	#[pallet::storage]
 	#[pallet::getter(fn current_state)]
-	pub type CurrentState<T: Config> =
-		StorageValue<_, State<InstanceIdOf<T>>, ValueQuery, StateOnEmpty<T>>;
+	pub type CurrentState<T: Config> = StorageValue<_, State, ValueQuery, StateOnEmpty<T>>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn fold_over_stakers)]
+	pub type FoldState<T: Config> = StorageValue<_, BlockFold<(), InstanceIdOf<T>>, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn current_epoch_start)]
@@ -214,7 +216,7 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		(EpochId, AssetIdOf<T>),
-		Blake2_128Concat,
+		Twox64Concat,
 		AssetIdOf<T>,
 		BalanceOf<T>,
 		ValueQuery,
@@ -230,7 +232,7 @@ pub mod pallet {
 	#[pallet::getter(fn total_shares)]
 	pub type TotalShares<T: Config> = StorageMap<
 		_,
-		Blake2_128Concat,
+		Twox64Concat,
 		(AssetIdOf<T>, AssetIdOf<T>),
 		u128,
 		ValueQuery,
@@ -259,7 +261,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn staking_configurations)]
 	pub type StakingConfigurations<T: Config> =
-		StorageMap<_, Blake2_128Concat, AssetIdOf<T>, StakingConfigOf<T>, OptionQuery>;
+		StorageMap<_, Twox64Concat, AssetIdOf<T>, StakingConfigOf<T>, OptionQuery>;
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -361,15 +363,91 @@ pub mod pallet {
 				State::WaitingForEpochEnd => {
 					Self::update_epoch();
 				},
-				State::RewardingStart => {
-					Self::on_reward_stakers(None);
+				State::Rewarding => {
+					let (reward_epoch, reward_epoch_start) = EndEpochSnapshot::<T>::get();
+					let result = <(FoldState<T>, Stakers<T>)>::step(
+						FoldStrategy::Chunk {
+							number_of_elements: T::ElementToProcessPerBlock::get(),
+						},
+						(),
+						|_, nft_id, _| {
+							let try_reward = T::try_mutate_protocol_nft(
+								&nft_id,
+								|nft: &mut StakingNFTOf<T>| -> DispatchResult {
+									match nft.state(&reward_epoch, reward_epoch_start) {
+										PositionState::Pending => {},
+										PositionState::Expired => {
+											// TODO: move to treasury
+										},
+										PositionState::LockedRewarding => {
+											let shares = nft.shares();
+											for (reward_asset, pending_reward) in
+												nft.pending_rewards.clone().into_iter()
+											{
+												let total_shares =
+													Self::total_shares((nft.asset, reward_asset));
+												let reward = EpochRewards::<T>::get(
+													(reward_epoch, nft.asset),
+													reward_asset,
+												)
+												.saturated_into();
+												let reward_shares = safe_multiply_by_rational(
+													shares,
+													reward,
+													total_shares,
+												)?;
+												nft.pending_rewards
+													.try_insert(
+														reward_asset,
+														pending_reward.safe_add(
+															&reward_shares.try_into().map_err(
+																|_| ArithmeticError::Overflow,
+															)?,
+														)?,
+													)
+													.map_err(|_| ArithmeticError::Overflow)?;
+											}
+										},
+									}
+									Ok(())
+								},
+							);
+							if let Err(e) = try_reward {
+								log::warn!("Failed to reward NFT: {:?}, message: {:?}", nft_id, e);
+							}
+						},
+					);
+					if let BlockFold::Done { .. } = result {
+						CurrentState::<T>::set(State::Registering);
+					}
 				},
-				State::RewardingContinue { last_processed_nft } => {
-					Self::on_reward_stakers(Some(last_processed_nft));
+				State::Registering => {
+					let result = <(FoldState<T>, PendingStakers<T>)>::step(
+						FoldStrategy::Chunk {
+							number_of_elements: T::ElementToProcessPerBlock::get(),
+						},
+						(),
+						|_, nft_id, _| {
+							let nft = T::get_protocol_nft::<StakingNFTOf<T>>(&nft_id)
+								.expect("impossible; qed");
+							for reward_asset in nft.pending_rewards.keys() {
+								TotalShares::<T>::mutate(
+									(nft.asset, reward_asset),
+									|total_shares| {
+										*total_shares = total_shares
+											.checked_add(nft.shares())
+											.expect("impossible; qed;");
+									},
+								);
+							}
+							Stakers::<T>::insert(nft_id, ());
+						},
+					);
+					if let BlockFold::Done { .. } = result {
+						PendingStakers::<T>::remove_all(None);
+						CurrentState::<T>::set(State::WaitingForEpochEnd);
+					}
 				},
-				State::RewardingComplete => Self::on_register_new_stakers(None),
-				State::RegisteringContinue { last_processed_nft } =>
-					Self::on_register_new_stakers(Some(last_processed_nft)),
 			}
 			0
 		}
@@ -378,11 +456,8 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub(crate) fn ensure_valid_interaction_state() -> DispatchResult {
 			match Self::current_state() {
-				State::WaitingForEpochEnd |
-				State::RewardingStart |
-				State::RewardingContinue { .. } => Ok(()),
-				State::RewardingComplete | State::RegisteringContinue { .. } =>
-					Err(Error::<T>::PalletIsBusy.into()),
+				State::WaitingForEpochEnd => Ok(()),
+				State::Rewarding | State::Registering => Err(Error::<T>::PalletIsBusy.into()),
 			}
 		}
 
@@ -411,134 +486,9 @@ pub mod pallet {
 			// Increment epoch.
 			CurrentEpoch::<T>::mutate(|x| *x = *x + 1);
 			// Set rewarding state, i.e. rewarding previous epoch.
-			CurrentState::<T>::set(State::<InstanceIdOf<T>>::RewardingStart);
+			CurrentState::<T>::set(State::Rewarding);
 			// Notify.
 			Self::deposit_event(Event::<T>::NewEpoch { id: Self::current_epoch() });
-		}
-
-		pub(crate) fn on_register_new_stakers(previous_nft: Option<InstanceIdOf<T>>) {
-			let nb_of_elem_to_process = T::ElementToProcessPerBlock::get() as usize;
-			let mut stakers_to_register = match previous_nft {
-				Some(nft_id) => PendingStakers::<T>::iter_from(nft_id.encode()),
-				None => PendingStakers::<T>::iter(),
-			};
-
-			let register_staker = |nft_id| {
-				// NOTE(hussein-aitlahcen): Should be impossible as burning imply removing
-				// from PendingStakers
-				let nft = T::get_protocol_nft::<StakingNFTOf<T>>(&nft_id).expect("impossible; qed");
-				for reward_asset in nft.pending_rewards.keys() {
-					TotalShares::<T>::mutate((nft.asset, reward_asset), |total_shares| {
-						// NOTE(hussein-aitlahcen): sizeof(share) < u128, total issuance
-						*total_shares =
-							total_shares.checked_add(nft.shares()).expect("impossible; qed;");
-					});
-				}
-				Stakers::<T>::insert(nft_id, ());
-			};
-
-			let stakers_processed =
-				stakers_to_register.try_fold(Vec::new(), |mut stakers_registered, (nft_id, _)| {
-					register_staker(nft_id);
-					stakers_registered.push(nft_id);
-					if processed == stakers_registered.len() {
-						Err((stakers_registered, nft_id))
-					} else {
-						Ok(stakers_registered)
-					}
-				});
-
-			match stakers_processed {
-				// Completed registering, back to normal state
-				Ok(stakers_registered) => {
-					stakers_registered.iter().for_each(PendingStakers::<T>::remove);
-					CurrentState::<T>::set(State::WaitingForEpochEnd);
-				},
-				Err((stakers_registered, last_nft)) => {
-					stakers_registered.iter().for_each(PendingStakers::<T>::remove);
-					CurrentState::<T>::set(State::RegisteringContinue {
-						last_processed_nft: last_nft,
-					});
-				},
-			}
-		}
-
-		pub(crate) fn on_reward_stakers(previous_nft: Option<InstanceIdOf<T>>) {
-			EndEpochSnapshot::<T>::mutate(|(reward_epoch, reward_epoch_start)| {
-				let reward_nft = |nft_id| {
-					T::try_mutate_protocol_nft(
-						&nft_id,
-						|nft: &mut StakingNFTOf<T>| -> DispatchResult {
-							match nft.state(reward_epoch, *reward_epoch_start) {
-								PositionState::Pending => {},
-								PositionState::Expired => {
-									// TODO: move to treasury
-								},
-								PositionState::LockedRewarding => {
-									let shares = nft.shares();
-									for (reward_asset, pending_reward) in
-										nft.pending_rewards.clone().into_iter()
-									{
-										let total_shares =
-											Self::total_shares((nft.asset, reward_asset));
-										let reward = EpochRewards::<T>::get(
-											(*reward_epoch, nft.asset),
-											reward_asset,
-										)
-										.saturated_into();
-										let reward_shares = safe_multiply_by_rational(
-											shares,
-											reward,
-											total_shares,
-										)?;
-										nft.pending_rewards
-											.try_insert(
-												reward_asset,
-												pending_reward.safe_add(
-													&reward_shares
-														.try_into()
-														.map_err(|_| ArithmeticError::Overflow)?,
-												)?,
-											)
-											.map_err(|_| ArithmeticError::Overflow)?;
-									}
-								},
-							}
-							Ok(())
-						},
-					)
-				};
-				let nb_of_elem_to_process = T::ElementToProcessPerBlock::get() as usize;
-				let mut stakers_to_reward = match previous_nft {
-					Some(nft_id) => Stakers::<T>::iter_from(nft_id.encode()),
-					None => Stakers::<T>::iter(),
-				};
-				let process_result =
-					stakers_to_reward.try_fold(0usize, |processed, (nft_id, _)| {
-						match reward_nft(nft_id) {
-							Ok(_) => {},
-							Err(e) => {
-								log::warn!("Failed to reward NFT: {:?}, message: {:?}", nft_id, e);
-							},
-						}
-						if processed == nb_of_elem_to_process {
-							Err(nft_id)
-						} else {
-							Ok(processed + 1)
-						}
-					});
-				match process_result {
-					// Completed rewarding
-					Ok(_) => {
-						CurrentState::<T>::set(State::RewardingComplete);
-					},
-					Err(last_nft) => {
-						CurrentState::<T>::set(State::RewardingContinue {
-							last_processed_nft: last_nft,
-						});
-					},
-				}
-			});
 		}
 
 		pub(crate) fn epoch_start() -> Timestamp {
