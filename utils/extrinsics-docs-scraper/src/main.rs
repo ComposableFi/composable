@@ -1,180 +1,139 @@
-use std::{
-	collections::HashMap,
-	fs::{self, DirEntry},
-	io::{self, Write},
-	path::{Path, PathBuf},
-	sync::mpsc::channel,
-	time::Duration,
-};
+use std::{collections::HashMap, path::PathBuf, sync::mpsc::channel, time::Duration};
 
 use anyhow::Context;
-use clap::{Arg, Command};
-use env_logger::fmt::Color;
-use extrinsics_docs_scraper::generate_docs;
+use clap::Parser;
 use log::LevelFilter;
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 
-const FRAME_DIR_PATH_ARG: &str = "FRAME_DIR_PATH";
-const BOOK_PALLETS_DOCS_OUTPUT_PATH_ARG: &str = "BOOK_PALLETS_DOCS_OUTPUT_PATH";
-const VERBOSITY_ARG: &str = "VERBOSITY";
+mod pallet_info;
+mod scrape;
+
+use crate::{pallet_info::get_pallet_info, scrape::generate_docs};
+
+#[derive(Parser)]
+#[clap(arg_required_else_help(true))]
+struct Cli {
+	/// The path to the FRAME directory containing all the pallets to gather documentation from.
+	#[clap(
+		long,
+		parse(from_os_str),
+		value_hint(clap::ValueHint::AnyPath),
+		forbid_empty_values(true)
+	)]
+	frame_directory_path: PathBuf,
+
+	/// The output path for the generated documentation. Files will be written to
+	/// <output-path>/<pallet>/.
+	///
+	/// The provided directory will be scanned for sub-directories that match the pallets found in
+	/// <FRAME_DIRECTORY_PATH>. Any pallets that don't have their own subfolder will be skipped and
+	/// a warning will be emitted.
+	#[clap(
+		long,
+		parse(from_os_str),
+		value_hint(clap::ValueHint::AnyPath),
+		forbid_empty_values(true)
+	)]
+	output_path: PathBuf,
+
+	/// Set the verbosity for output logging. Can be specified up to 3 times for more verbose
+	/// output.
+	///
+	/// Warnings and errors are emitted by default. Errors will always be emitted.
+	#[clap(
+		short,
+		long = "verbose",
+		takes_value(false),
+		multiple_occurrences(true),
+		max_occurrences(3),
+		parse(from_occurrences),
+		verbatim_doc_comment
+	)]
+	verbosity: u8,
+
+	/// Enable hot-reloading of the documentation by watching for file changes in the provided
+	/// frame_directory_path.
+	#[clap(long, parse(from_flag))]
+	watch: bool,
+}
 
 fn main() -> anyhow::Result<()> {
-	let matches = Command::new("extrinsics-docs-scraper")
-		.arg_required_else_help(true)
-		.arg(
-			Arg::new(FRAME_DIR_PATH_ARG)
-				.long("path")
-				.takes_value(true)
-				.value_hint(clap::ValueHint::AnyPath)
-				.forbid_empty_values(true)
-				.required(true)
-				.help("Path to the FRAME directory containing all the pallets to gather documentation from.")
-		).arg(
-			Arg::new(BOOK_PALLETS_DOCS_OUTPUT_PATH_ARG)
-				.long("output-path")
-				.takes_value(true)
-				.value_hint(clap::ValueHint::AnyPath)
-				.forbid_empty_values(true)
-				.required(true)
-				.help("The output path for the generated documentation. Files will be written to <output-path>/<pallet>/.")
-		).arg(
-			Arg::new(VERBOSITY_ARG)
-				.long("verbose")
-				.short('v')
-				.takes_value(false)
-				.multiple_occurrences(true)
-				.max_occurrences(3)
-				.help("Verbosity for output logging. Can be specified multiple times, up to 3 times total.")
-		).get_matches();
+	let args = Cli::parse();
 
-	let verbosity = matches.occurrences_of(VERBOSITY_ARG);
-	let path: PathBuf = matches.value_of_t(FRAME_DIR_PATH_ARG).unwrap_or_else(|e| e.exit());
-	let output_path: PathBuf = matches
-		.value_of_t(BOOK_PALLETS_DOCS_OUTPUT_PATH_ARG)
-		.unwrap_or_else(|e| e.exit());
+	init_logger(args.verbosity);
 
-	init_logger(verbosity);
+	let pallet_infos = get_pallet_info(&args.frame_directory_path, &args.output_path)?;
 
-	// Create a channel to receive the events.
-	let (tx, rx) = channel();
-
-	// Create a watcher object, delivering debounced events.
-	// The notification back-end is selected based on the platform.
-	let mut watcher = watcher(tx, Duration::from_secs(1)).unwrap();
-
-	let pallets = get_pallet_info(&path, &output_path)?;
-
-	for pallet in &pallets {
-		watcher.watch(&pallet.lib_rs_path, RecursiveMode::NonRecursive).unwrap();
-	}
-
-	let path_map = pallets
+	let pallet_lib_rs_path_to_pallet_info_map = pallet_infos
 		.into_iter()
 		.map(|entry| (entry.lib_rs_path.clone(), entry))
 		.collect::<HashMap<_, _>>();
 
-	loop {
-		match rx.recv() {
-			Ok(event) => {
-				match event {
-					// Only write & create events matter, since the lib.rs files shouldn't be moved, renamed or deleted.
-					// If pallets are being refactored, hot-reloading the book is most likely not a priority
-					DebouncedEvent::Create(changed_file_path)
-					| DebouncedEvent::Write(changed_file_path) => {
-						let pallet_info = path_map.get(&*changed_file_path).with_context(|| {
-							format!(
-								"recieved event about non-watched file \"{}\"",
-								&changed_file_path.to_string_lossy()
-							)
-						})?;
-
-						log::info!(
-							"Changed file detected, regenerating documentation for {}",
-							pallet_info.name
-						);
-
-						if let Err(why) =
-							generate_docs(&changed_file_path, &*pallet_info.docs_output_path)
-						{
-							log::error!("{}", why);
-						}
-					},
-					_ => {},
-				}
-			},
-			Err(e) => log::error!("Error watching files: {:?}", e),
+	// generate docs for all pallets
+	for (_, pallet_info) in pallet_lib_rs_path_to_pallet_info_map.iter() {
+		if let Err(why) = generate_docs(&pallet_info) {
+			log::error!("{}", why);
 		}
 	}
-}
 
-fn get_pallet_info(path: &Path, output_path: &Path) -> Result<Vec<PalletInfo>, anyhow::Error> {
-	let pallet_entries = fs::read_dir(&path)
-		.context("Unable to read input directory")?
-		.map(|dir_entry: io::Result<DirEntry>| -> anyhow::Result<Option<PalletInfo>> {
-			let dir_entry = dir_entry?;
+	if args.watch {
+		// wait a few seconds to allow the previous files to save
+		std::thread::sleep(Duration::from_nanos(2));
 
-			if let Ok(metadata) = dir_entry.metadata() {
-				if metadata.is_dir() {
-					let name = dir_entry
-						.path()
-						.file_name()
-						.unwrap()
-						.to_str()
-						.map(ToOwned::to_owned)
-						.context("File path was not valid unicode")?;
+		// Create a channel to receive the events.
+		let (tx, rx) = channel();
 
-					let mut lib_rs_path = dir_entry.path();
-					lib_rs_path.extend(["src", "lib.rs"]);
-					lib_rs_path
-						.exists()
-						.then(|| ())
-						.context(format!("Pallet {} does not have a lib.rs file", &name))?;
+		// Create a watcher object, delivering debounced events.
+		// The notification back-end is selected based on the platform.
+		let mut watcher = watcher(tx, Duration::from_secs(2)).unwrap();
 
-					lib_rs_path = lib_rs_path.canonicalize()?;
+		for (_, pallet_info) in &pallet_lib_rs_path_to_pallet_info_map {
+			watcher.watch(&pallet_info.lib_rs_path, RecursiveMode::NonRecursive).unwrap();
+		}
 
-					let mut docs_output_path = output_path.to_owned();
-					docs_output_path.extend([&name]);
-					if docs_output_path.exists() {
-						docs_output_path.extend(["extrinsics.md"]);
-						docs_output_path = docs_output_path.canonicalize()?;
-						Ok(Some(PalletInfo { name, lib_rs_path, docs_output_path }))
-					} else {
-						log::warn!(
-							"Pallet {} does not have a section in the book; skipping.",
-							&name
-						);
-						Ok(None)
+		loop {
+			match rx.recv() {
+				Ok(event) => {
+					match event {
+						// Only write events matter, since the lib.rs files shouldn't be
+						// moved, renamed or deleted (write events will always follow create events). If pallets are being refactored, hot-reloading
+						// the book is most likely not a priority.
+						DebouncedEvent::Write(changed_file_path) => {
+							let pallet_info = pallet_lib_rs_path_to_pallet_info_map
+								.get(&*changed_file_path)
+								.with_context(|| {
+									format!(
+										"recieved event about non-watched file \"{}\"",
+										&changed_file_path.to_string_lossy()
+									)
+								})?;
+
+							log::info!(
+								"Changed file detected, regenerating documentation for `{}`",
+								pallet_info.pallet_name
+							);
+
+							if let Err(why) = generate_docs(&pallet_info) {
+								log::error!("{}", why);
+							}
+						},
+						_ => {},
 					}
-				} else {
-					Ok(None)
-				}
-			} else {
-				Ok(None)
+				},
+				Err(e) => log::error!("Error watching files: {:?}", e),
 			}
-		})
-		.filter_map(Result::transpose)
-		.collect::<anyhow::Result<Vec<PalletInfo>>>()?;
-	Ok(pallet_entries)
+		}
+	}
+
+	Ok(())
 }
 
 /// Initializes the logger for the crate with the given verbosity.
-fn init_logger(verbosity: u64) {
+fn init_logger(verbosity: u8) {
 	let mut logger = env_logger::Builder::new();
-	logger.format(|f, record| {
-		let mut style = f.default_level_style(record.level());
-		match record.level() {
-			log::Level::Error => {
-				writeln!(f, "{}", style.value(format!("{}: {}", record.level(), record.args())))
-			},
-			log::Level::Warn => {
-				writeln!(f, "{}: {}", style.set_bold(true).value("warning"), record.args())
-			},
-			log::Level::Info | log::Level::Debug => writeln!(f, "{}", record.args()),
-			log::Level::Trace => {
-				writeln!(f, "{}", f.style().set_color(Color::Black).value(record.args()))
-			},
-		}
-	});
+	logger.format_module_path(false);
+	logger.format_target(false);
+	logger.format_timestamp(None);
 	match verbosity {
 		0 => logger.filter_level(LevelFilter::Warn),
 		1 => logger.filter_level(LevelFilter::Info),
@@ -183,11 +142,4 @@ fn init_logger(verbosity: u64) {
 		_ => unreachable!(),
 	};
 	logger.init();
-}
-
-#[derive(Debug)]
-struct PalletInfo {
-	name: String,
-	lib_rs_path: PathBuf,
-	docs_output_path: PathBuf,
 }
