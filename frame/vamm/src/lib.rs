@@ -355,7 +355,7 @@ pub mod pallet {
 		/// In the diagram below the [`Clearing House
 		/// Pallet`](../../clearing_house/index.html) is depicted as the caller.
 		///
-		/// ![](https://www.plantuml.com/plantuml/svg/TP3FQi904CRl-nHZAbIHWCMRs81_3kt1Ndo2SJ8cYybEkZk9hzziIYeMtDF2z_j-0r-uMjUWnneyXqPSu2E7W0Nlk9BRrdkvWVgMZLgj6BhjyGWr-Yiha6TKAmvIEBL4VGqkVSUyOgk2fBP3PH1d9bfopR4MpAJnGfotdc5wGLlrdzcq3iNS06mkudgjLEBVanUYPV-IR7FE8c0cxFA_yeCd_5v_ubckjlktrJEFQT2h9TjWNqds5QEthe0FQGCdW06eV4JY0aFGOLsR71NF61YIauh7Wc4MWVb0X7_8hXAwKedM3V6PZA4IqcnGBHPhsCT5UTpNytVBGKrC8pNe7g4nJ3FfTMiuS2F1Aj30vAE9EtPt5AXCq_LzjkIBRoFvUKZcvWS0)
+		/// ![](https://www.plantuml.com/plantuml/svg/NP2nQiCm48PtFSNLIrk2Ny13I9CCxT0kXUuN-SSMjYHNTxPVlvR0b6GJ-Zu-VkuaoabdFnePN9WuiQS4cM8GV4A4EvmnnlKjfRYIfXb6dOwW7_QUR0AhYy4yywoHhRg55RHzF6aF3_ASn9WjgywwYODITHd1oOMEtkCig8Y5R7-lv7O1o_OmBIlVM43LjyR47UWb2w_5a0VbF4Oxs9vTAFXcZR4zrSUIEXmQkkJ9PTW0fOJV6Q8cqsoLtBsqm_eOjrn3LqnHd98jJhkNi23ygsJxkcxe2-lEFwxcXD3cI_y1)
 		///
 		/// ## Parameters:
 		/// - `base_asset_reserves`: The amount of base asset
