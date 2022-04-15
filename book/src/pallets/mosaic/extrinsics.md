@@ -1,3 +1,6 @@
+<!-- AUTOMATICALLY GENERATED -->
+<!-- Generated at 2022-04-15T18:28:00.683145888Z -->
+
 # Mosaic Pallet Extrinsics
 
 ## Set Relayer

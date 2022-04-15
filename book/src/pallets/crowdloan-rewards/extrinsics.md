@@ -1,3 +1,6 @@
+<!-- AUTOMATICALLY GENERATED -->
+<!-- Generated at 2022-04-15T18:28:00.685667566Z -->
+
 # Crowdloan Rewards Pallet Extrinsics
 
 ## Initialize

@@ -1,3 +1,6 @@
+<!-- AUTOMATICALLY GENERATED -->
+<!-- Generated at 2022-04-15T18:28:00.679159637Z -->
+
 # Bonded Finance Pallet Extrinsics
 
 ## Offer
