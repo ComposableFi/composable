@@ -11,7 +11,7 @@ use crate::mock::currency::{
 };
 use crate::mock::account_id::{AccountId, ADMIN, pick_account};
 
-use pallet_vault::Vaults as VaultInfoStorage;
+use composable_traits::instrumental::InstrumentalVaultConfig;
 use composable_traits::vault::{Vault as VaultTrait, VaultConfig};
 
 use frame_support::{
@@ -27,6 +27,40 @@ use itertools::Itertools;
 // ----------------------------------------------------------------------------------------------------
 //                                           Helper Functions                                          
 // ----------------------------------------------------------------------------------------------------
+
+struct InstrumentalVaultConfigBuilder {
+    pub asset_id: CurrencyId,
+    pub percent_deployable: Perquintill,
+}
+
+impl Default for InstrumentalVaultConfigBuilder {
+    fn default() -> Self {
+        InstrumentalVaultConfigBuilder {
+            asset_id: USDC::ID,
+            percent_deployable: Perquintill::zero(),
+        }
+    }
+}
+
+#[allow(dead_code)]
+impl InstrumentalVaultConfigBuilder {
+    fn build(self) -> InstrumentalVaultConfig<CurrencyId, Perquintill> {
+        InstrumentalVaultConfig {
+            asset_id:  self.asset_id,
+            percent_deployable: self.percent_deployable,
+        }
+    }
+
+    fn asset_id(mut self, asset: CurrencyId) -> Self {
+        self.asset_id = asset;
+        self
+    }
+
+    fn percent_deployable(mut self, percent_deployable: Perquintill) -> Self {
+        self.percent_deployable = percent_deployable;
+        self
+    }
+}
 
 struct VaultConfigBuilder {
     pub asset_id: CurrencyId,
@@ -79,24 +113,24 @@ impl VaultConfigBuilder {
     }
 }
 
-struct VaultBuilder {
-    pub configs: Vec<VaultConfig<AccountId, CurrencyId>>,
+struct InstrumentalVaultBuilder {
+    pub configs: Vec<InstrumentalVaultConfig<CurrencyId, Perquintill>>,
 }
 
 #[allow(dead_code)]
-impl VaultBuilder {
+impl InstrumentalVaultBuilder {
     fn new() -> Self {
-        VaultBuilder {
+        InstrumentalVaultBuilder {
             configs: Vec::new(),
         }
     }
 
-    fn add(mut self, config: VaultConfig<AccountId, CurrencyId>) -> Self {
+    fn add(mut self, config: InstrumentalVaultConfig<CurrencyId, Perquintill>) -> Self {
         self.configs.push(config);
         self
     }
 
-    fn group_add(mut self, configs: Vec<VaultConfig<AccountId, CurrencyId>>) -> Self {
+    fn group_add(mut self, configs: Vec<InstrumentalVaultConfig<CurrencyId, Perquintill>>) -> Self {
         configs.into_iter().for_each(|config| { 
             self.configs.push(config); 
         });
@@ -113,22 +147,22 @@ impl VaultBuilder {
     }
 }
 
-pub trait VaultInitializer {
-	fn initialize_vault(self: Self, config: VaultConfig<AccountId, CurrencyId>) -> Self;
-    fn initialize_vaults(self: Self, configs: Vec<VaultConfig<AccountId, CurrencyId>>) -> Self;
+pub trait InstrumentalVaultInitializer {
+	fn initialize_vault(self: Self, config: InstrumentalVaultConfig<CurrencyId, Perquintill>) -> Self;
+    fn initialize_vaults(self: Self, configs: Vec<InstrumentalVaultConfig<CurrencyId, Perquintill>>) -> Self;
 
     fn initialize_reserve(self: Self, asset: CurrencyId, balance: Balance) -> Self;
     fn initialize_reserves(self: Self, reserves: Vec<(CurrencyId, Balance)>) -> Self;
 
     fn initialize_vaults_with_reserves(
         self: Self, 
-        configs: Vec<VaultConfig<AccountId, CurrencyId>>,
+        configs: Vec<InstrumentalVaultConfig<CurrencyId, Perquintill>>,
         reserves: Vec<(CurrencyId, Balance)>
     ) -> Self ;
 }
 
-impl VaultInitializer for sp_io::TestExternalities {
-	fn initialize_vault(mut self: Self, config: VaultConfig<AccountId, CurrencyId>) -> Self {
+impl InstrumentalVaultInitializer for sp_io::TestExternalities {
+	fn initialize_vault(mut self: Self, config: InstrumentalVaultConfig<CurrencyId, Perquintill>) -> Self {
 		self.execute_with(|| 
             Instrumental::create(Origin::signed(ADMIN), config.clone()).ok()
         );
@@ -136,7 +170,7 @@ impl VaultInitializer for sp_io::TestExternalities {
         self
     }
 
-    fn initialize_vaults(mut self: Self, configs: Vec<VaultConfig<AccountId, CurrencyId>>) -> Self {
+    fn initialize_vaults(mut self: Self, configs: Vec<InstrumentalVaultConfig<CurrencyId, Perquintill>>) -> Self {
 		self.execute_with(|| {
             configs.iter().for_each(|config| {
                 Instrumental::create(Origin::signed(ADMIN), config.clone()).ok();
@@ -170,7 +204,7 @@ impl VaultInitializer for sp_io::TestExternalities {
 
     fn initialize_vaults_with_reserves(
         self: Self, 
-        configs: Vec<VaultConfig<AccountId, CurrencyId>>,
+        configs: Vec<InstrumentalVaultConfig<CurrencyId, Perquintill>>,
         reserves: Vec<(CurrencyId, Balance)>
     ) -> Self {
         self.initialize_vaults(configs).initialize_reserves(reserves)
@@ -254,7 +288,7 @@ fn create_extrinsic_emits_event() {
     ExtBuilder::default().build().execute_with(|| {
         System::set_block_number(1);
 
-        let config = VaultConfigBuilder::default().build();
+        let config = InstrumentalVaultConfigBuilder::default().build();
         assert_ok!(Instrumental::create(Origin::signed(ADMIN), config.clone()));
 
         System::assert_last_event(Event::Instrumental(
@@ -266,7 +300,7 @@ fn create_extrinsic_emits_event() {
 #[test]
 fn cannot_create_more_than_one_vault_for_an_asset() {
     ExtBuilder::default().build().execute_with(|| {
-        let config = VaultConfigBuilder::default().build();
+        let config = InstrumentalVaultConfigBuilder::default().build();
         assert_ok!(Instrumental::create(Origin::signed(ADMIN), config.clone()));
 
         assert_noop!(
@@ -282,7 +316,7 @@ fn create_extrinsic_updates_storage() {
     ExtBuilder::default().build().execute_with(|| {
         assert!(!AssetVault::<MockRuntime>::contains_key(USDC::ID));
 
-        let config = VaultConfigBuilder::default().build();
+        let config = InstrumentalVaultConfigBuilder::default().build();
         assert_ok!(Instrumental::create(Origin::signed(ADMIN), config));
 
         assert!(AssetVault::<MockRuntime>::contains_key(USDC::ID));
@@ -296,7 +330,7 @@ proptest! {
     fn create_extrinsic(assets in generate_assets()) {
         ExtBuilder::default().build().execute_with(|| {
             assets.iter().for_each(|&asset| {
-                let config = VaultConfigBuilder::default().asset_id(asset).build();
+                let config = InstrumentalVaultConfigBuilder::default().asset_id(asset).build();
 
                 if !AssetVault::<MockRuntime>::contains_key(asset) {
                     assert_ok!(Instrumental::create(Origin::signed(ADMIN), config));
@@ -323,7 +357,7 @@ fn add_liquidity_extrinsic_emits_event() {
     ).build().execute_with(|| {
         System::set_block_number(1);
 
-        let config = VaultConfigBuilder::default().build();
+        let config = InstrumentalVaultConfigBuilder::default().build();
         assert_ok!(Instrumental::create(Origin::signed(ADMIN), config));
 
         assert_ok!(Instrumental::add_liquidity(Origin::signed(ADMIN), USDC::ID, USDC::units(100)));
@@ -348,7 +382,7 @@ fn add_liquidity_asset_must_have_an_associated_vault() {
 #[allow(unused_must_use)]
 fn add_liquidity_does_not_update_storage_if_user_does_not_have_balance() {
     ExtBuilder::default().build().execute_with(|| {
-        let config = VaultConfigBuilder::default().build();
+        let config = InstrumentalVaultConfigBuilder::default().build();
         assert_ok!(Instrumental::create(Origin::signed(ADMIN), config));
         
         assert_storage_noop!(
@@ -367,7 +401,7 @@ proptest! {
     ) {
         // Create a VaultConfig object for each asset in assets
         let configs = assets.iter().map(|&asset| {
-            VaultConfigBuilder::default().asset_id(asset).build()
+            InstrumentalVaultConfigBuilder::default().asset_id(asset).build()
         }).collect();
 
         ExtBuilder::default().initialize_balances(deposits.clone()).build()
@@ -392,7 +426,7 @@ proptest! {
     ) {
         // Create a VaultConfig object for each asset in deposits
         let configs = deposits.iter().map(|&(_, asset, _)| {
-            VaultConfigBuilder::default().asset_id(asset).build()
+            InstrumentalVaultConfigBuilder::default().asset_id(asset).build()
         }).collect();
 
         ExtBuilder::default().initialize_balances(deposits.clone()).build()
@@ -421,7 +455,7 @@ proptest! {
 
 #[test]
 fn remove_liquidity_extrinsic_emits_event() {
-    let config = VaultConfigBuilder::default().build();
+    let config = InstrumentalVaultConfigBuilder::default().build();
 
     ExtBuilder::default()
         .initialize_balance(ADMIN, USDC::ID, USDC::units(100))
@@ -461,7 +495,7 @@ proptest! {
     ) {
         // Create a VaultConfig object for each asset in reserves
         let configs = reserves.iter().map(|&(asset, _)| {
-            VaultConfigBuilder::default().asset_id(asset).build()
+            InstrumentalVaultConfigBuilder::default().asset_id(asset).build()
         }).collect();
 
         ExtBuilder::default().build().initialize_vaults_with_reserves(configs, reserves).execute_with(|| {        
@@ -495,7 +529,7 @@ proptest! {
     ) {
         // Create a VaultConfig object for each asset in deposits
         let configs = deposits.iter().map(|&(_, asset, _)| {
-            VaultConfigBuilder::default().asset_id(asset).build()
+            InstrumentalVaultConfigBuilder::default().asset_id(asset).build()
         }).collect();
         
         ExtBuilder::default().initialize_balances(deposits.clone()).build().initialize_vaults(configs).execute_with(|| {                    
@@ -529,26 +563,6 @@ proptest! {
 // ----------------------------------------------------------------------------------------------------
 
 #[test]
-fn ext_builder_initialize_vault() {
-    let vault_id = 1u64;
-    let (asset, balance) = (USDC::ID, USDC::units(100));
-
-    ExtBuilder::default().initialize_vault(asset, balance).build().execute_with(|| {
-        let config = VaultConfigBuilder::default().asset_id(asset).build();
-        assert_ok!(Instrumental::create(Origin::signed(ADMIN), config));
-        
-        // Requirement 1) The Instrumental Pallet saves a reference to each created Vault
-        assert!(AssetVault::<MockRuntime>::contains_key(asset));
-
-        assert!(VaultInfoStorage::<MockRuntime>::contains_key(vault_id));
-
-        let vault_account = 
-            <Vault as composable_traits::vault::Vault>::account_id(&vault_id);
-        assert_eq!(Assets::balance(USDC::ID, &vault_account), balance);
-    });
-}
-
-#[test]
 fn ext_builder_initialize_balance() {
     let user = ADMIN;
     let (asset, balance) = (USDC::ID, USDC::units(100));
@@ -560,25 +574,6 @@ fn ext_builder_initialize_balance() {
 
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(NUMBER_OF_PROPTEST_CASES))]
-
-    #[test]
-    fn ext_builder_initialize_vaults(
-        reserves in generate_reserves()
-    ) {
-        ExtBuilder::default().initialize_vaults(reserves.clone()).build().execute_with(|| {
-            VaultBuilder::new().group_add(
-                reserves.iter().map(|(asset, _balance)| { VaultConfigBuilder::default().asset_id(*asset).build() }
-            ).collect()).build();
-            
-            reserves.into_iter().for_each(|(asset, balance)| {
-                let vault_id = AssetVault::<MockRuntime>::get(asset).unwrap();
-                let vault_account = 
-                    <Vault as composable_traits::vault::Vault>::account_id(&vault_id);
-
-                assert_eq!(Assets::balance(asset, &vault_account), balance);
-            });
-        });
-    }
 
     #[test]
     fn ext_builder_initialize_balances(
@@ -599,7 +594,7 @@ proptest! {
 #[test]
 fn test_externalities_initialize_vault() {
     let asset = USDC::ID;
-    let config = VaultConfigBuilder::default().asset_id(asset).build();
+    let config = InstrumentalVaultConfigBuilder::default().asset_id(asset).build();
     
     ExtBuilder::default().build().initialize_vault(config).execute_with(|| {                    
         assert!(AssetVault::<MockRuntime>::contains_key(asset));
@@ -609,7 +604,7 @@ fn test_externalities_initialize_vault() {
 #[test]
 fn test_externalities_initialize_reserve() {
     let asset = USDC::ID;
-    let config = VaultConfigBuilder::default().asset_id(asset).build();
+    let config = InstrumentalVaultConfigBuilder::default().asset_id(asset).build();
     
     let balance = USDC::units(1_000);
     ExtBuilder::default().build().initialize_vault(config).initialize_reserve(asset, balance).execute_with(|| {
@@ -629,7 +624,7 @@ proptest! {
         assets in generate_assets()
     ) {
         let configs = assets.iter().map(|&asset| {
-            VaultConfigBuilder::default().asset_id(asset).build()
+            InstrumentalVaultConfigBuilder::default().asset_id(asset).build()
         }).collect();
 
         ExtBuilder::default().build().initialize_vaults(configs).execute_with(|| {                    
@@ -642,7 +637,7 @@ proptest! {
         reserves in generate_reserves()
     ) {
         let configs = reserves.iter().map(|&(asset, _)| {
-            VaultConfigBuilder::default().asset_id(asset).build()
+            InstrumentalVaultConfigBuilder::default().asset_id(asset).build()
         }).collect();
 
         ExtBuilder::default().build().initialize_vaults_with_reserves(configs, reserves.clone()).execute_with(|| {                    
@@ -655,4 +650,5 @@ proptest! {
             });
         });
     }
+    
 }
