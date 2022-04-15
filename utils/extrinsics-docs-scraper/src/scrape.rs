@@ -6,6 +6,7 @@ use std::{
 	path::PathBuf,
 };
 use syn::{parse::Parser as _, Attribute, Lit, Meta, MetaNameValue};
+use time::{format_description::well_known::Rfc3339, OffsetDateTime};
 
 use crate::pallet_info::PalletInfo;
 
@@ -65,6 +66,15 @@ pub(crate) fn generate_docs(
 			syn::ImplItem::Method(method) => Some(method),
 			_ => None,
 		}); // only the extrinsics
+
+	// automatically generated information
+	writeln!(&mut extrinsics_docs_out_string, "<!-- AUTOMATICALLY GENERATED -->",)?;
+	writeln!(
+		&mut extrinsics_docs_out_string,
+		"<!-- Generated at {} -->",
+		OffsetDateTime::now_utc().format(&Rfc3339).unwrap()
+	)?;
+	writeln!(&mut extrinsics_docs_out_string)?;
 
 	// pallet name header
 	writeln!(
