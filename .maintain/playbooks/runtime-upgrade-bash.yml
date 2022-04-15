@@ -1,0 +1,123 @@
+---
+- hosts: all
+  vars:
+    work_dir: "/home/ubuntu/composable/"
+    wss: "ws://127.0.0.1:9944"
+  tasks:
+    - name: remove a github repository
+      shell: rm -rf {{ work_dir }}
+      ignore_errors: True
+
+    - name: Clone a github repository
+      git:
+        repo: https://github.com/ComposableFi/composable
+        dest: "{{work_dir}}"
+        clone: yes
+        update: yes
+
+    - name: "Set release version"
+      shell: |
+        cd {{ work_dir }}scripts/github/
+        (git tag --sort=committerdate | grep -E '^v[0-9]' | tail -4 | head -1 ) > {{ work_dir }}scripts/github/RELEASE_ENV
+
+
+    - name: composable runtime upgrade
+      block:
+        - name: get wasm
+          shell: |
+            cd {{ work_dir }}scripts/github
+            wget https://github.com/ComposableFi/composable/releases/download/$(cat RELEASE_ENV)/composable_runtime.wasm
+
+        - name: Install packages based on package.json
+          yarn:
+            path: "{{ work_dir + 'scripts/github' }}"
+
+        - name: Update all packages in package.json to their latest version.
+          yarn:
+            path: "{{ work_dir + 'scripts/github' }}"
+            state: latest
+
+        - name: wasm_update composable_runtime
+          shell: |
+            cd {{ work_dir }}scripts/github
+            yarn upgrade-runtime --root_key=* --rpc_ws_url={{ wss }} --path=./composable_runtime.wasm
+          async: 120 # Maximum allowed time in Seconds
+          poll: 10 # Polling Interval in Seconds
+
+        - name: wasm_update_checker composable_runtime
+          shell: python3 subwasm.py --chain composable &
+          async: 10000 # Maximum allowed time in Seconds
+          poll: 10 # Polling Interval in Seconds
+
+      rescue:
+        - name: Print errors
+          debug:
+            msg: 'cant do wasm update for composable_runtime'
+
+
+    - name: dali runtime upgrade
+      block:
+        - name: get wasm
+          shell: |
+            cd {{ work_dir }}scripts/github
+            wget https://github.com/ComposableFi/composable/releases/download/$(cat RELEASE_ENV)/dali_runtime.wasm
+
+        - name: Install packages based on package.json
+          yarn:
+            path: "{{ work_dir + 'scripts/github' }}"
+
+        - name: Update all packages in package.json to their latest version.
+          yarn:
+            path: "{{ work_dir + 'scripts/github' }}"
+            state: latest
+
+        - name: wasm_update dali_runtime
+          shell: |
+            cd {{ work_dir }}scripts/github
+            yarn upgrade-runtime --root_key=* --rpc_ws_url={{ wss }} --path=./dali_runtime.wasm
+          async: 120 # Maximum allowed time in Seconds
+          poll: 10 # Polling Interval in Seconds
+
+        - name: wasm_update_checker dali_runtime
+          shell: python3 subwasm.py --chain dali &
+          async: 10000 # Maximum allowed time in Seconds
+          poll: 10 # Polling Interval in Seconds
+
+      rescue:
+        - name: Print errors
+          debug:
+            msg: 'cant do wasm update for dali_runtime'
+
+
+    - name: picasso runtime upgrade
+      block:
+        - name: get wasm
+          shell: |
+            cd {{ work_dir }}scripts/github
+            wget https://github.com/ComposableFi/composable/releases/download/$(cat RELEASE_ENV)/picasso_runtime.wasm
+
+        - name: Install packages based on package.json
+          yarn:
+            path: "{{ work_dir + 'scripts/github' }}"
+
+        - name: Update all packages in package.json to their latest version.
+          yarn:
+            path: "{{ work_dir + 'scripts/github' }}"
+            state: latest
+
+        - name: wasm_update picasso_runtime
+          shell: |
+            cd {{ work_dir }}scripts/github
+            yarn upgrade-runtime --root_key=***** --rpc_ws_url={{ wss }} --path=./picasso_runtime.wasm
+          async: 120 # Maximum allowed time in Seconds
+          poll: 10 # Polling Interval in Seconds
+
+        - name: wasm_update
+          shell: python3 subwasm.py --chain picasso &
+          async: 10000 # Maximum allowed time in Seconds
+          poll: 10 # Polling Interval in Seconds
+
+      rescue:
+        - name: Print errors
+          debug:
+            msg: 'cant do wasm update for picasso_runtime'
