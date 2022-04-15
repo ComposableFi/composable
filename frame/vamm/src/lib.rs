@@ -411,7 +411,7 @@ pub mod pallet {
 		/// Gets the current price of the __base__ or __quote__ asset in a vamm.
 		///
 		/// # Overview
-		/// In order for the caller know which is the current price of an asset
+		/// In order for the caller knows which is the current price of an asset
 		/// in an specific vamm it has to request it to the Vamm Pallet. The
 		/// Vamm Pallet consults the runtime storage for the desired vamm,
 		/// computes the current price and returns it to the caller.
