@@ -20,6 +20,7 @@ pub mod curve_amm;
 pub mod lending;
 pub mod liquidations;
 pub mod liquidity_bootstrapping;
+pub mod pablo;
 pub mod session;
 pub mod timestamp;
 pub mod tokens;

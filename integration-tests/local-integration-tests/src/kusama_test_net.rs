@@ -26,7 +26,6 @@ pub const BOB: [u8; 32] = [5_u8; 32];
 pub const CHARLIE: [u8; 32] = [6_u8; 32];
 
 pub const PICA: Balances = 1_000_000_000_000;
-pub const KSM: Balances = PICA / 50;
 
 decl_test_parachain! {
 	pub struct This {

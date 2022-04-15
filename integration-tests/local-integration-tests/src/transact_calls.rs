@@ -46,17 +46,18 @@ fn dex() {
 		FixedU128::saturating_from_integer(42u64),
 	);
 
-	/// this can be generated from scale by third parties
-	let sell = this_runtime::Call::Liquidations(liquidations::Call::<this_runtime::Runtime>::sell {
-		order: order.clone(),
-		configuration: Default::default(),
-	});
+	// this can be generated from scale by third parties
+	let sell =
+		this_runtime::Call::Liquidations(liquidations::Call::<this_runtime::Runtime>::sell {
+			order: order.clone(),
+			configuration: Default::default(),
+		});
 	let binary_sell =
 		composable_traits::liquidation::XcmLiquidation::new(63, 1, order.clone(), vec![]);
 
 	assert_eq!(sell.encode(), binary_sell.encode());
 
-	let this_native_treasury_amount = This::execute_with(|| {
+	let _this_native_treasury_amount = This::execute_with(|| {
 		assert_ok!(this_runtime::Assets::deposit(
 			any_asset,
 			&sibling_account(),

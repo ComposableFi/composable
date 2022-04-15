@@ -31,9 +31,10 @@ std = [
   "codec/std",
   "scale-info/std",
   "serde",
-  "cumulus-primitives-core/std",
   "sp-std/std",
   "sp-runtime/std",
   "frame-support/std",
   "frame-system/std",
+  "cumulus-pallet-xcm/std",
+  "cumulus-primitives-core/std",
 ]

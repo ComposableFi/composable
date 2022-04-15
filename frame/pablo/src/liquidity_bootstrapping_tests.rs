@@ -61,7 +61,7 @@ fn with_pool<T>(
 	new_test_ext().execute_with(|| -> T {
 		// Actually create the pool.
 		assert_ok!(Pablo::create(
-			Origin::root(),
+			Origin::signed(owner),
 			PoolInitConfiguration::LiquidityBootstrapping(pool.value())
 		));
 
