@@ -23,6 +23,7 @@ pub mod governance;
 pub mod lending;
 pub mod liquidation;
 pub mod math;
+pub mod mosaic;
 pub mod oracle;
 pub mod privilege;
 pub mod time;
