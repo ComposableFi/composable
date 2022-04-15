@@ -243,11 +243,7 @@ version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a3203e79f4dd9bdda415ed03cf14dae5a2bf775c683a00f94e9cd1faf0f596e5"
 dependencies = [
-<<<<<<< HEAD
  "quote 1.0.18",
-=======
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -463,13 +459,8 @@ version = "0.1.53"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed6aa3524a2dfcf9fe180c51eae2b58738348d819517ceadf95789c51fff7600"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -1331,13 +1322,8 @@ checksum = "a3aab4734e083b809aaf5794e14e756d1c798d2c69c7f7de7a09a2f5214993c1"
 dependencies = [
  "heck 0.4.0",
  "proc-macro-error",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -2028,11 +2014,7 @@ version = "0.1.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f877be4f7c9f246b183111634f75baa039715e3f46ce860677d3b19a69fb229c"
 dependencies = [
-<<<<<<< HEAD
  "quote 1.0.18",
-=======
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -2299,13 +2281,8 @@ version = "0.1.0"
 source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.17#db11baacc325537be74ad34517fcb28ed9ded6c6"
 dependencies = [
  "proc-macro-crate 1.1.3",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -2665,13 +2642,8 @@ version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fcc3dd5e9e9c0b295d6e1e4d811fb6f157d5ffd784b8d202fc62eac8035a770b"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -2823,13 +2795,8 @@ version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "558e40ea573c374cf53507fd240b7ee2f5477df7cfebdb97323ec61c719399c5"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -2884,13 +2851,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "570d109b813e904becc80d8d5da38376818a143348413f7149f1340fe04754d4"
 dependencies = [
  "heck 0.4.0",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -2915,13 +2877,8 @@ version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "946ee94e3dbf58fdd324f9ce245c7b238d46a66f00e86a020b71996349e46cce"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -2931,13 +2888,8 @@ version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4e58b112d5099aa0857c5d05f0eacab86406dd8c0f85fe5d320a13256d29ecf4"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -3160,13 +3112,13 @@ dependencies = [
 
 [[package]]
 name = "filetime"
-version = "0.2.15"
+version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "975ccf83d8d9d0d84682850a38c8169027be83368805971cc4f238c2b245bc98"
+checksum = "c0408e2626025178a6a7f7ffc05a25bc47103229f19c113755de7bf63816290c"
 dependencies = [
  "cfg-if 1.0.0",
  "libc",
- "redox_syscall 0.2.11",
+ "redox_syscall 0.2.13",
  "winapi 0.3.9",
 ]
 
@@ -3414,13 +3366,8 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17#22
 dependencies = [
  "Inflector",
  "frame-support-procedural-tools",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -3431,13 +3378,8 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17#22
 dependencies = [
  "frame-support-procedural-tools-derive",
  "proc-macro-crate 1.1.3",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -3446,13 +3388,8 @@ name = "frame-support-procedural-tools-derive"
 version = "3.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17#22d40c761a985482f93bbbea5ba4199bdba74f8e"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -3680,13 +3617,8 @@ version = "0.3.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "33c1e13800337f4d4d7a316bf45a567dbcb6ffe087f16424852d97e97a91f512"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -3843,9 +3775,9 @@ dependencies = [
 
 [[package]]
 name = "gloo-timers"
-version = "0.2.3"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d12a7f4e95cfe710f1d624fb1210b7d961a5fb05c4fd942f4feab06e61f590e"
+checksum = "5fb7d06c1c8cc2a29bee7ec961009a0b2caa0793ee4900c2ffb348734ba1c8f9"
 dependencies = [
  "futures-channel",
  "futures-core",
@@ -4193,7 +4125,7 @@ dependencies = [
  "hyper 0.14.18",
  "log 0.4.16",
  "rustls 0.20.4",
- "rustls-native-certs 0.6.1",
+ "rustls-native-certs 0.6.2",
  "tokio",
  "tokio-rustls 0.23.3",
  "webpki-roots 0.22.3",
@@ -4311,13 +4243,8 @@ version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "11d7a9f6330b71fea57921c9b61c47ee6e84f72d394754eff6163ae67e7395eb"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -4533,13 +4460,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b939a78fa820cdfcb7ee7484466746a7377760970f6f9c6fe19f9edcc8a38d2"
 dependencies = [
  "proc-macro-crate 0.1.5",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -4668,7 +4590,7 @@ dependencies = [
  "jsonrpsee-core 0.8.0",
  "jsonrpsee-types 0.8.0",
  "pin-project 1.0.10",
- "rustls-native-certs 0.6.1",
+ "rustls-native-certs 0.6.2",
  "soketto",
  "thiserror",
  "tokio",
@@ -4747,13 +4669,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4299ebf790ea9de1cb72e73ff2ae44c723ef264299e5e2d5ef46a371eb3ac3d8"
 dependencies = [
  "proc-macro-crate 1.1.3",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -4764,13 +4681,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "63e171d8071079c8ccdce1b4ab34411c5afa6158d57db7963311ad3c6d073cb1"
 dependencies = [
  "proc-macro-crate 1.1.3",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -5476,11 +5388,7 @@ version = "0.25.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "072c290f727d39bdc4e9d6d1c847978693d25a673bd757813681e33e5f6c00c2"
 dependencies = [
-<<<<<<< HEAD
  "quote 1.0.18",
-=======
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -6192,13 +6100,8 @@ checksum = "424f6e86263cd5294cbd7f1e95746b95aca0e0d66bff31e5a40d6baa87b4aa99"
 dependencies = [
  "proc-macro-crate 1.1.3",
  "proc-macro-error",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
  "synstructure",
 ]
@@ -6265,13 +6168,8 @@ version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "01fcc0b8149b4632adc89ac3b7b31a12fb6099a0317a4eb2ebff574ef7de7218"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -6523,13 +6421,8 @@ version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a15c83b586f00268c619c1cb3340ec1a6f59dd9ba1d9833a273a68e6d5cd8ffc"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -7906,13 +7799,8 @@ version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17#22d40c761a985482f93bbbea5ba4199bdba74f8e"
 dependencies = [
  "proc-macro-crate 1.1.3",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -8284,13 +8172,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1557010476e0595c9b568d16dcfb81b93cdeb157612726f5170d31aa707bed27"
 dependencies = [
  "proc-macro-crate 1.1.3",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -8336,11 +8219,7 @@ version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f557c32c6d268a07c921471619c0295f5efad3a0e76d4f97a05c091a51d110b2"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
-=======
- "proc-macro2 1.0.36",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
  "synstructure",
 ]
@@ -8589,13 +8468,8 @@ checksum = "99b8db626e31e5b81787b9783425769681b347011cc59471e33ea46d2ea0cf55"
 dependencies = [
  "pest",
  "pest_meta",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -8728,13 +8602,8 @@ version = "0.4.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "044964427019eed9d49d9d5bbce6047ef18f37100ea400912a9fa4a3523ab12a"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -8744,13 +8613,8 @@ version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "744b6f092ba29c3650faf274db506afd39944f48420f6c86b17cfe0ee1cb36bb"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -9517,13 +9381,8 @@ version = "0.9.17"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.17#de0ecd4760b146ecf33f5e867d707d789e21e060"
 dependencies = [
  "proc-macro-crate 1.1.3",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -10079,13 +9938,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "da25490ff9892aab3fcf7c36f08cfb902dd3e71ca0f9f9517bea02a73a5ce38c"
 dependencies = [
  "proc-macro-error-attr",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
  "version_check 0.9.4",
 ]
@@ -10208,13 +10062,8 @@ checksum = "f9cc1a3263e07e0bf68e96268f37665207b49560d98739662cdfaae215c720fe"
 dependencies = [
  "anyhow",
  "itertools",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -10518,9 +10367,9 @@ checksum = "60a357793950651c4ed0f3f52338f53b2f809f32d83a07f72909fa13e4c6c1e3"
 
 [[package]]
 name = "rayon"
-version = "1.5.1"
+version = "1.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c06aca804d41dbc8ba42dfd964f0d01334eceb64314b9ecf7c5fad5188a06d90"
+checksum = "fd249e82c21598a9a426a4e00dd7adc1d640b22445ec8545feef801d1a74c221"
 dependencies = [
  "autocfg 1.1.0",
  "crossbeam-deque",
@@ -10530,14 +10379,13 @@ dependencies = [
 
 [[package]]
 name = "rayon-core"
-version = "1.9.1"
+version = "1.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d78120e2c850279833f1dd3582f730c4ab53ed95aeaaaa862a2a5c71b1656d8e"
+checksum = "9f51245e1e62e1f1629cbfec37b5793bbabcaeb90f30e94d2ba03564687353e4"
 dependencies = [
  "crossbeam-channel",
  "crossbeam-deque",
  "crossbeam-utils 0.8.8",
- "lazy_static",
  "num_cpus",
 ]
 
@@ -10604,13 +10452,8 @@ version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4c38e3aecd2b21cb3959637b883bb3714bc7e43f0268b9a29d3743ee3e55cdd2"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -10977,9 +10820,9 @@ dependencies = [
 
 [[package]]
 name = "rustls-native-certs"
-version = "0.6.1"
+version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5ca9ebdfa27d3fc180e42879037b5338ab1c040c06affd00d8338598e7800943"
+checksum = "0167bac7a9f490495f3c33013e7722b53cb087ecbe082fb0c6387c96f634ea50"
 dependencies = [
  "openssl-probe",
  "rustls-pemfile",
@@ -10989,9 +10832,9 @@ dependencies = [
 
 [[package]]
 name = "rustls-pemfile"
-version = "0.2.1"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5eebeaeb360c87bfb72e84abdb3447159c0eaececf1bef2aecd65a8be949d1c9"
+checksum = "e7522c9de787ff061458fe9a829dc790a3f5b22dc571694fc5883f448b94d9a9"
 dependencies = [
  "base64 0.13.0",
 ]
@@ -11164,13 +11007,8 @@ version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17#22d40c761a985482f93bbbea5ba4199bdba74f8e"
 dependencies = [
  "proc-macro-crate 1.1.3",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -11987,13 +11825,8 @@ version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17#22d40c761a985482f93bbbea5ba4199bdba74f8e"
 dependencies = [
  "proc-macro-crate 1.1.3",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -12070,13 +11903,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baeb2780690380592f86205aa4ee49815feb2acad8c2f59e6dd207148c3f1fcd"
 dependencies = [
  "proc-macro-crate 1.1.3",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -12238,7 +12066,6 @@ version = "1.0.136"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08597e7152fcd306f41838ed3e37be9eaeed2b61c42e2117266a554fab4662f9"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
  "syn 1.0.91",
@@ -12251,11 +12078,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2963a69a2b3918c1dc75a45a18bd3fcd1120e31d3f59deb1b2f9b5d5ffb8baa4"
 dependencies = [
  "serde",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
- "syn 1.0.91",
->>>>>>> 454ffcd0... Fix MD parser
 ]
 
 [[package]]
@@ -12693,13 +12515,8 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17#22
 dependencies = [
  "blake2-rfc",
  "proc-macro-crate 1.1.3",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -12956,13 +12773,8 @@ name = "sp-debug-derive"
 version = "4.0.0"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17#22d40c761a985482f93bbbea5ba4199bdba74f8e"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -13091,13 +12903,8 @@ version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17#22d40c761a985482f93bbbea5ba4199bdba74f8e"
 dependencies = [
  "proc-macro-crate 1.1.3",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -13177,13 +12984,8 @@ source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17#22
 dependencies = [
  "Inflector",
  "proc-macro-crate 1.1.3",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -13366,13 +13168,8 @@ version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.17#22d40c761a985482f93bbbea5ba4199bdba74f8e"
 dependencies = [
  "parity-scale-codec",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -13451,13 +13248,8 @@ checksum = "f2261c91034a1edc3fc4d1b80e89d82714faede0515c14a75da10cb941546bbf"
 dependencies = [
  "cfg_aliases",
  "memchr",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -13554,13 +13346,8 @@ checksum = "dcb5ae327f9cc13b68763b5749770cb9e048a99bd9dfdfa58d0cf05d5f64afe0"
 dependencies = [
  "heck 0.3.3",
  "proc-macro-error",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -13778,13 +13565,8 @@ version = "0.12.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f36bdaa60a83aca3921b5259d5400cbf5e90fc51931376a9bd4a0eb79aa7210f"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
  "unicode-xid 0.2.2",
 ]
@@ -13854,13 +13636,8 @@ version = "1.0.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa32fd3f627f367fe16f893e2597ae3c05020f8bba2666a4e6ea73d377e5714b"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -14079,13 +13856,8 @@ version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b557f72f448c511a979e2564e55d74e6c4432fc96ff4f6241bc6bded342643b7"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -14230,9 +14002,9 @@ dependencies = [
 
 [[package]]
 name = "toml"
-version = "0.5.8"
+version = "0.5.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a31142970826733df8241ef35dc040ef98c679ab14d7c3e54d827099b3acecaa"
+checksum = "8d82e1a7758622a465f8cee077614c73484dac5b836c02ff6a40d5d1010324d7"
 dependencies = [
  "serde",
 ]
@@ -14245,9 +14017,9 @@ checksum = "360dfd1d6d30e05fda32ace2c8c70e9c0a9da713275777f5a4dbb8a1893930c6"
 
 [[package]]
 name = "tracing"
-version = "0.1.33"
+version = "0.1.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80b9fa4360528139bc96100c160b7ae879f5567f49f1782b0b02035b0358ebf3"
+checksum = "5d0ecdcb44a79f0fe9844f0c4f33a342cbcbb5117de8001e6ba0dc2351327d09"
 dependencies = [
  "cfg-if 1.0.0",
  "log 0.4.16",
@@ -14262,21 +14034,16 @@ version = "0.1.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2e65ce065b4b5c53e73bb28912318cb8c9e9ad3921f1d669eb0e68b4c8143a2b"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
 [[package]]
 name = "tracing-core"
-version = "0.1.25"
+version = "0.1.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6dfce9f3241b150f36e8e54bb561a742d5daa1a47b5dd9a5ce369fd4a4db2210"
+checksum = "f54c8ca710e81886d498c2fd3331b56c93aa248d49de2222ad2742247c60072f"
 dependencies = [
  "lazy_static",
  "valuable",
@@ -14842,13 +14609,8 @@ dependencies = [
  "bumpalo",
  "lazy_static",
  "log 0.4.16",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
  "wasm-bindgen-shared",
 ]
@@ -14881,13 +14643,8 @@ version = "0.2.80"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "99ec0dc7a4756fffc231aab1b9f2f578d23cd391390ab27f952ae0c9b3ece20b"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
  "wasm-bindgen-backend",
  "wasm-bindgen-shared",
@@ -15557,13 +15314,8 @@ version = "0.1.0"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.17#de0ecd4760b146ecf33f5e867d707d789e21e060"
 dependencies = [
  "Inflector",
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
 ]
 
@@ -15596,13 +15348,8 @@ version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f8f187641dad4f680d25c4bfc4225b418165984179f26ca76ec4fb6441d3a17"
 dependencies = [
-<<<<<<< HEAD
  "proc-macro2 1.0.37",
  "quote 1.0.18",
-=======
- "proc-macro2 1.0.36",
- "quote 1.0.16",
->>>>>>> 454ffcd0... Fix MD parser
  "syn 1.0.91",
  "synstructure",
 ]
