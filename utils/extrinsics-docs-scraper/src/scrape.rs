@@ -1,4 +1,4 @@
-use heck::ToTitleCase;
+use heck::{ToSnakeCase, ToTitleCase};
 use pulldown_cmark::{Event, HeadingLevel, Parser, Tag};
 use std::{
 	fmt::{self, Write},
@@ -15,7 +15,10 @@ use crate::pallet_info::PalletInfo;
 /// # Errors
 ///
 /// See [`ScrapeError`] for all possible errors.
-pub(crate) fn generate_docs(pallet_info: &PalletInfo) -> Result<(), ScrapeError> {
+pub(crate) fn generate_docs(
+	pallet_info: &PalletInfo,
+	docs_root_url: &str,
+) -> Result<(), ScrapeError> {
 	log::debug!("reading input file \"{}\"", &pallet_info.lib_rs_path.to_string_lossy());
 	let input_file = fs::read_to_string(&pallet_info.lib_rs_path)?;
 
@@ -82,9 +85,10 @@ pub(crate) fn generate_docs(pallet_info: &PalletInfo) -> Result<(), ScrapeError>
 		writeln!(&mut extrinsics_docs_out_string)?;
 		writeln!(
 			&mut extrinsics_docs_out_string,
-			"[`{extrinsic_name}`](https://dali.devnets.composablefinance.ninja/doc/pallet_{pallet_name}/pallet/enum.Call.html#variant.{extrinsic_name})",
+			"[`{extrinsic_name}`]({docs_root_url}{pallet_name_full}/pallet/enum.Call.html#variant.{extrinsic_name})",
 			extrinsic_name = &extrinsic_name,
-			pallet_name = &pallet_info.pallet_name
+			pallet_name_full = &pallet_info.pallet_name_full.to_snake_case(),
+			docs_root_url = docs_root_url,
 		)?;
 
 		match get_docs_from_attrs(&extrinsic_name, &pallet_info, &extrinsic_definition.attrs)? {

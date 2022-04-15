@@ -1,7 +1,7 @@
-use std::{collections::HashMap, path::PathBuf, sync::mpsc::channel, time::Duration};
+use std::{collections::HashMap, ops::Not, path::PathBuf, sync::mpsc::channel, time::Duration};
 
 use anyhow::Context;
-use clap::Parser;
+use clap::{Parser, ValueHint};
 use log::LevelFilter;
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 
@@ -21,6 +21,17 @@ struct Cli {
 		forbid_empty_values(true)
 	)]
 	frame_directory_path: PathBuf,
+
+	/// The URL to the root of the rustdocs.
+	///
+	/// Ensure that the URL passed includes the path to the docs, not just the root url of the
+	/// hosting site (i.e. if the docs are hosted at /doc/, supply https://some.site.com/doc/ instead
+	/// of https://some.site.com/). The generated documentation will use this as the base to link to
+	/// the rustdocs with, appending directly to the end of the url. A trailing `/` is optional,
+	/// and will be appended if not provided.
+	#[clap(long, value_hint(ValueHint::Url), forbid_empty_values(true))]
+	// TODO: Use an actual URL/URI type for this
+	docs_root_url: String,
 
 	/// The output path for the generated documentation. Files will be written to
 	/// <output-path>/<pallet>/.
@@ -62,6 +73,13 @@ fn main() -> anyhow::Result<()> {
 
 	init_logger(args.verbosity);
 
+	let docs_root_url_cleaned = args
+		.docs_root_url
+		.ends_with('/')
+		.not()
+		.then(|| String::from_iter([&args.docs_root_url, "/"]))
+		.unwrap_or_else(|| args.docs_root_url);
+
 	let pallet_infos = get_pallet_info(&args.frame_directory_path, &args.output_path)?;
 
 	let pallet_lib_rs_path_to_pallet_info_map = pallet_infos
@@ -71,7 +89,7 @@ fn main() -> anyhow::Result<()> {
 
 	// generate docs for all pallets
 	for (_, pallet_info) in pallet_lib_rs_path_to_pallet_info_map.iter() {
-		if let Err(why) = generate_docs(&pallet_info) {
+		if let Err(why) = generate_docs(&pallet_info, &docs_root_url_cleaned) {
 			log::error!("{}", why);
 		}
 	}
@@ -114,7 +132,7 @@ fn main() -> anyhow::Result<()> {
 								pallet_info.pallet_name
 							);
 
-							if let Err(why) = generate_docs(&pallet_info) {
+							if let Err(why) = generate_docs(&pallet_info, &docs_root_url_cleaned) {
 								log::error!("{}", why);
 							}
 						},
