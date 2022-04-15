@@ -1,106 +1,84 @@
-# Mosaic Extrinsics
+# `mosaic` Pallet Extrinsics
 
-## Set Relayer
+## `set_budget`
 
-{{#doc_comment_include ../../../../frame/mosaic/src/lib.rs:set_relayer_docs}}
+Sets the current Relayer configuration.
 
-## Rotate Relayer
+This is enacted immediately and invalidates inflight/ incoming transactions from the
+previous Relayer. However, existing budgets remain in place.
 
-`rotate_relayer`
+This can only be called by the \[`ControlOrigin`\].
 
-Rotates the relay account.
+### Restrictions
 
-#### Restrictions
+* Only callable by root
 
-This is only callable by the current Relayer.
+## `transfer_to`
 
-The Time To Live (TTL) must be greater than the [`MinimumTTL`](#minimumttl).
+Creates an outgoing transaction request, locking the funds locally until picked up by
+the relayer.
 
-### Set Network
+### Restrictions
 
-`set_network`
+* Network must be supported.
+* AssetId must be supported.
+* Amount must be lower than the networks `max_transfer_size`.
+* Origin must have sufficient funds.
+* Transfers near Balance::max may result in overflows, which are caught and returned as
+  an error.
 
-Sets the supported networks and maximum transaction sizes accepted by the Relayer.
+## `accept_transfer`
 
-This can only be called by the current Relayer.
+This is called by the Relayer to confirm that it will relay a transaction.
 
-### Set Budget
+Once this is called, the sender will be unable to reclaim their tokens.
 
-`set_budget`
+If all the funds are not removed, the reclaim period will not be reset. If the
+reclaim period is not reset, the Relayer will still attempt to pick up the
+remainder of the transaction.
 
-Sets the Relayer budget for incoming transactions for specific assets.
+### Restrictions
 
-This does not reset the current `penalty`.
+* Origin must be relayer
+* Outgoing transaction must exist for the user
+* Amount must be equal or lower than what the user has locked
 
-This can only be called by the [`ControlOrigin`](#controlorigin).
+### Note
 
-### Transfer To
+* Reclaim period is not reset if not all the funds are moved; menaing that the clock
+  remains ticking for the relayer to pick up the rest of the transaction.
 
-`transfer_to`
+## `claim_stale_to`
 
-Creates an outgoing transaction request.
+Claims user funds from the `OutgoingTransactions`, in case that the relayer has not
+picked them up.
 
-Locks the funds locally until picked up by the Relayer.
+## `timelocked_mint`
 
-#### Restrictions
+Mints new tokens into the pallet's wallet, ready for the user to be picked up after
+`lock_time` blocks have expired.
 
-* The network must be supported
+## `set_timelock_duration`
 
-* The asset ID must be supported
+No documentation available at this time.
 
-* The amount must have sufficient funds
+## `rescind_timelocked_mint`
 
-* The origin must have sufficient funds
+Burns funds waiting in incoming_transactions that are still unclaimed. May be used by
+the relayer in case of finality issues on the other side of the bridge.
 
-* Transactions that cause overflows (due to being too close to exceeding the max
-  balance) will be caught and returned as errors
+## `claim_to`
 
-## Accept Transfer
+Collects funds deposited by the relayer into the owner's account
 
-{{#doc_comment_include ../../../../frame/mosaic/src/lib.rs:accept_transfer_docs}}
+## `update_asset_mapping`
 
-### Claim Stale To
+Update a network asset mapping.
 
-`claim_stale_to`
+The caller must be `ControlOrigin`.
 
-Claims funds from outgoing transactions not yet picked up by the Relayer.
+Possibly emits one of:
 
-### Time Locked Mint
-
-`timelocked_mint`
-
-Mints new tokens into the pallets wallet.
-
-These tokens will be available for pickup after the `lock_time` blocks have
-passed.
-
-### Set Time Lock Duration
-
-`set_timelock_duration`
-
-Sets the time lock, in blocks, on new transfers.
-
-This can only be called by the `ControlOrigin`.
-
-### Rescind Time Locked Mint
-
-`rescind_timelocked_mint`
-
-Burns unclaimed funds that are waiting in incoming transactions.
-
-This may be used by the Relayer in case of finality issues on the other side of
-the bridge.
-
-### Claim To
-
-`claim_to`
-
-Collects funds that have been deposited by the Relayer into the owner's account.
-
-### Update Asset Mapping
-
-`update_asset_mapping`
-
-Updates a network asset mapping.
-
-This can only be called by the [`ControlOrigin`](#controlorigin).
+* `AssetMappingCreated`
+* `AssetMappingDeleted`
+* `AssetMappingUpdated`
