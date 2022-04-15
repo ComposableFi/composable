@@ -48,7 +48,7 @@ dev:
 	cargo run
 
 run-book:
-	bash -c "(trap 'kill 0' SIGINT; cargo run --manifest-path utils/extrinsics-docs-scraper/Cargo.toml --release -- --frame-directory-path frame/ --output-path book/src/pallets/ -vvv --watch & mdbook serve book/ $(if $(filter y,${open}),'--open'))"
+	bash -c "(trap 'kill 0' SIGINT; cargo run --manifest-path utils/extrinsics-docs-scraper/Cargo.toml --release -- --docs-root-url 'https://dali.devnets.composablefinance.ninja/doc/' --frame-directory-path frame/ --output-path book/src/pallets/ -vvv --watch & mdbook serve book/ $(if $(filter y,${open}),'--open'))"
 
 .PHONY: version
 version:

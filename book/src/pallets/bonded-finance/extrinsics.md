@@ -2,7 +2,7 @@
 
 ## Offer
 
-[`offer`](https://dali.devnets.composablefinance.ninja/doc/pallet_bonded-finance/pallet/enum.Call.html#variant.offer)
+[`offer`](https://dali.devnets.composablefinance.ninja/doc/pallet_bonded_finance/pallet/enum.Call.html#variant.offer)
 
 Create a new bond offer. To be `bond` to later.
 
@@ -16,7 +16,7 @@ Emits a `NewOffer`.
 
 ## Bond
 
-[`bond`](https://dali.devnets.composablefinance.ninja/doc/pallet_bonded-finance/pallet/enum.Call.html#variant.bond)
+[`bond`](https://dali.devnets.composablefinance.ninja/doc/pallet_bonded_finance/pallet/enum.Call.html#variant.bond)
 
 Bond to an offer.
 
@@ -35,7 +35,7 @@ Possibily Emits a `OfferCompleted`.
 
 ## Cancel
 
-[`cancel`](https://dali.devnets.composablefinance.ninja/doc/pallet_bonded-finance/pallet/enum.Call.html#variant.cancel)
+[`cancel`](https://dali.devnets.composablefinance.ninja/doc/pallet_bonded_finance/pallet/enum.Call.html#variant.cancel)
 
 Cancel a running offer.
 
