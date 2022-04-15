@@ -463,14 +463,14 @@ pub mod pallet {
 					.checked_mul(&vamm_state.peg_multiplier)
 					.ok_or(ArithmeticError::Overflow)?
 					.checked_div(&vamm_state.base_asset_reserves)
-					.ok_or(ArithmeticError::Overflow)?),
+					.ok_or(ArithmeticError::DivisionByZero)?),
 
 				AssetType::Quote => Ok(vamm_state
 					.base_asset_reserves
 					.checked_mul(&vamm_state.peg_multiplier)
 					.ok_or(ArithmeticError::Overflow)?
 					.checked_div(&vamm_state.quote_asset_reserves)
-					.ok_or(ArithmeticError::Overflow)?),
+					.ok_or(ArithmeticError::DivisionByZero)?),
 			}
 		}
 
