@@ -12,6 +12,7 @@
 #![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod abstractions;
 pub mod collections;
 pub mod rpc_helpers;
 pub mod types;
