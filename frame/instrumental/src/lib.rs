@@ -259,7 +259,7 @@ pub mod pallet {
 		/// 
 		/// ## Parameters
 		/// - `origin`: `Origin` type representing the origin of this dispatch.
-		/// - `config`: the `VaultConfig` of the underlying vault to create.
+		/// - `config`: the `InstrumentalVaultConfig` of the underlying vault to create.
 		/// 
 		/// ## Requirements
 		/// 1. the call must have been signed by the issuer.
@@ -393,7 +393,7 @@ pub mod pallet {
 		/// # Overview
 		/// 
 		/// ## Parameters
-		/// - `config`: the `VaultConfig` of the underlying vault to create.
+		/// - `config`: the `InstrumentalVaultConfig` of the underlying vault to create.
 		/// 
 		/// ## Requirements
 		/// 1. 'config.asset_id' must not correspond to a preexisting Instrumental vault.
@@ -409,7 +409,6 @@ pub mod pallet {
 		fn create(
 			config: InstrumentalVaultConfigFor<T>
 		) -> Result<Self::VaultId, DispatchError> {
-
 			match Validated::new(config) {
 				Ok(validated_config) => Self::do_create(validated_config),
 				Err(_) => Err(DispatchError::from(Error::<T>::VaultAlreadyExists))
@@ -499,6 +498,9 @@ pub mod pallet {
 				.checked_sub(&config.percent_deployable)
 				.ok_or( ArithmeticError::Overflow)?;
 
+			// TODO: (Nevin)
+			//  - obtain the optimum strategies account_id
+			
 			// let strategy_account_id = Self::InstrumentalStrategy::best_strategy_for_asset(asset_id)
 			let strategy_account_id = manager.clone();
 			let strategies: BTreeMap<T::AccountId, Perquintill> = BTreeMap::from([
