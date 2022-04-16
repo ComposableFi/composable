@@ -1,3 +1,5 @@
+#![allow(clippy::unnecessary_cast)]
+
 use frame_support::weights::Weight;
 use sp_std::marker::PhantomData;
 

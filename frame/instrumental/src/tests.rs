@@ -141,46 +141,46 @@ impl InstrumentalVaultBuilder {
         // TODO: (Nevin)
         //  - remove duplicate assets
         self.configs.iter()
-            .for_each(|config| {
-               Instrumental::create(Origin::signed(ADMIN), config.clone()).ok();
+            .for_each(|&config| {
+               Instrumental::create(Origin::signed(ADMIN), config).ok();
             })
     }
 }
 
 pub trait InstrumentalVaultInitializer {
-	fn initialize_vault(self: Self, config: InstrumentalVaultConfig<CurrencyId, Perquintill>) -> Self;
-    fn initialize_vaults(self: Self, configs: Vec<InstrumentalVaultConfig<CurrencyId, Perquintill>>) -> Self;
+	fn initialize_vault(self, config: InstrumentalVaultConfig<CurrencyId, Perquintill>) -> Self;
+    fn initialize_vaults(self, configs: Vec<InstrumentalVaultConfig<CurrencyId, Perquintill>>) -> Self;
 
-    fn initialize_reserve(self: Self, asset: CurrencyId, balance: Balance) -> Self;
-    fn initialize_reserves(self: Self, reserves: Vec<(CurrencyId, Balance)>) -> Self;
+    fn initialize_reserve(self, asset: CurrencyId, balance: Balance) -> Self;
+    fn initialize_reserves(self, reserves: Vec<(CurrencyId, Balance)>) -> Self;
 
     fn initialize_vaults_with_reserves(
-        self: Self, 
+        self, 
         configs: Vec<InstrumentalVaultConfig<CurrencyId, Perquintill>>,
         reserves: Vec<(CurrencyId, Balance)>
     ) -> Self ;
 }
 
 impl InstrumentalVaultInitializer for sp_io::TestExternalities {
-	fn initialize_vault(mut self: Self, config: InstrumentalVaultConfig<CurrencyId, Perquintill>) -> Self {
+	fn initialize_vault(mut self, config: InstrumentalVaultConfig<CurrencyId, Perquintill>) -> Self {
 		self.execute_with(|| 
-            Instrumental::create(Origin::signed(ADMIN), config.clone()).ok()
+            Instrumental::create(Origin::signed(ADMIN), config).ok()
         );
         
         self
     }
 
-    fn initialize_vaults(mut self: Self, configs: Vec<InstrumentalVaultConfig<CurrencyId, Perquintill>>) -> Self {
+    fn initialize_vaults(mut self, configs: Vec<InstrumentalVaultConfig<CurrencyId, Perquintill>>) -> Self {
 		self.execute_with(|| {
-            configs.iter().for_each(|config| {
-                Instrumental::create(Origin::signed(ADMIN), config.clone()).ok();
+            configs.iter().for_each(|&config| {
+                Instrumental::create(Origin::signed(ADMIN), config).ok();
             });
         });
         
         self
     }
 
-    fn initialize_reserve(mut self: Self, asset: CurrencyId, balance: Balance) -> Self {
+    fn initialize_reserve(mut self, asset: CurrencyId, balance: Balance) -> Self {
         self.execute_with(|| {
             assert_ok!(<Assets as Mutate<AccountId>>::mint_into(asset, &ADMIN, balance));
 
@@ -190,7 +190,7 @@ impl InstrumentalVaultInitializer for sp_io::TestExternalities {
         self
     }
 
-    fn initialize_reserves(mut self: Self, reserves: Vec<(CurrencyId, Balance)>) -> Self {
+    fn initialize_reserves(mut self, reserves: Vec<(CurrencyId, Balance)>) -> Self {
         self.execute_with(|| {
             reserves.iter().for_each(|&(asset, balance)| {
                 assert_ok!(<Assets as Mutate<AccountId>>::mint_into(asset, &ADMIN, balance));
@@ -203,7 +203,7 @@ impl InstrumentalVaultInitializer for sp_io::TestExternalities {
     }
 
     fn initialize_vaults_with_reserves(
-        self: Self, 
+        self, 
         configs: Vec<InstrumentalVaultConfig<CurrencyId, Perquintill>>,
         reserves: Vec<(CurrencyId, Balance)>
     ) -> Self {
@@ -289,7 +289,7 @@ fn create_extrinsic_emits_event() {
         System::set_block_number(1);
 
         let config = InstrumentalVaultConfigBuilder::default().build();
-        assert_ok!(Instrumental::create(Origin::signed(ADMIN), config.clone()));
+        assert_ok!(Instrumental::create(Origin::signed(ADMIN), config));
 
         System::assert_last_event(Event::Instrumental(
             pallet::Event::Created { vault_id: 1u64, config }
@@ -301,7 +301,7 @@ fn create_extrinsic_emits_event() {
 fn create_extrinsic_enforces_you_cannot_create_more_than_one_vault_for_an_asset() {
     ExtBuilder::default().build().execute_with(|| {
         let config = InstrumentalVaultConfigBuilder::default().build();
-        assert_ok!(Instrumental::create(Origin::signed(ADMIN), config.clone()));
+        assert_ok!(Instrumental::create(Origin::signed(ADMIN), config));
 
         assert_noop!(
             Instrumental::create(Origin::signed(ADMIN), config),
@@ -459,7 +459,7 @@ fn remove_liquidity_extrinsic_emits_event() {
     ExtBuilder::default()
         .initialize_balance(ADMIN, USDC::ID, USDC::units(100))
         .build()
-        .initialize_vault(config.clone())
+        .initialize_vault(config)
         .execute_with(|| {
             System::set_block_number(1);
 

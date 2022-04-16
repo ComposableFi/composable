@@ -11,7 +11,7 @@ pub struct Strategy {
 impl Strategy {
     const fn new(pallet_id: PalletId) -> Strategy {
         Strategy {
-            pallet_id: pallet_id,
+            pallet_id,
         }
     }
 
@@ -22,7 +22,7 @@ impl Strategy {
 
 // separate module so that the `allow` attribute isn't applied to the entirety of the Strategy
 // module.
-pub mod strategies {
+pub mod defined_strategies {
 	#![allow(clippy::upper_case_acronyms)]
     #![allow(non_camel_case_types)]
     #![allow(unused)]
@@ -35,4 +35,4 @@ pub mod strategies {
     pub const PABLO_STRATEGY: Strategy = Strategy::new(PalletId(*b"stratpab"));
 }
 
-pub use strategies::*;
+pub use defined_strategies::*;
