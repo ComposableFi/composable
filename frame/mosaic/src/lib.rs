@@ -419,55 +419,6 @@ pub mod pallet {
 		///
 		/// # Restrictions
 		/// - Only callable by root
-		#[pallet::weight(T::WeightInfo::set_relayer())]
-		pub fn set_relayer(
-			origin: OriginFor<T>,
-			relayer: T::AccountId,
-		) -> DispatchResultWithPostInfo {
-			T::ControlOrigin::ensure_origin(origin)?;
-			Relayer::<T>::set(Some(StaleRelayer::new(relayer.clone())));
-			Self::deposit_event(Event::RelayerSet { relayer });
-			Ok(().into())
-		}
-
-		/// Rotates the Relayer Account.
-		///
-		/// # Restrictions
-		///  - Only callable by the current relayer.
-		///  - TTL must be sufficiently long.
-		#[pallet::weight(T::WeightInfo::rotate_relayer())]
-		pub fn rotate_relayer(
-			origin: OriginFor<T>,
-			new: T::AccountId,
-			validated_ttl: Validated<T::BlockNumber, ValidTTL<T::MinimumTTL>>,
-		) -> DispatchResultWithPostInfo {
-			let ttl = validated_ttl.value();
-			let (relayer, current_block) = Self::ensure_relayer(origin)?;
-			let ttl = current_block.saturating_add(ttl);
-			let relayer = relayer.rotate(new.clone(), ttl);
-			Relayer::<T>::set(Some(relayer.into()));
-			Self::deposit_event(Event::RelayerRotated { account_id: new, ttl });
-			Ok(().into())
-		}
-
-		/// Sets supported networks and maximum transaction sizes accepted by the relayer.
-		#[pallet::weight(T::WeightInfo::set_network())]
-		pub fn set_network(
-			origin: OriginFor<T>,
-			network_id: NetworkIdOf<T>,
-			network_info: NetworkInfo<BalanceOf<T>>,
-		) -> DispatchResultWithPostInfo {
-			Self::ensure_relayer(origin)?;
-			NetworkInfos::<T>::insert(network_id.clone(), network_info.clone());
-			Self::deposit_event(Event::NetworksUpdated { network_id, network_info });
-			Ok(().into())
-		}
-
-		/// Sets the relayer budget for _incoming_ transactions for specific assets. Does not reset
-		/// the current `penalty`.
-		///
-		/// # Restrictions
-		/// - Only callable by root
 		#[pallet::weight(T::WeightInfo::set_budget())]
 		#[transactional]
 		pub fn set_budget(
