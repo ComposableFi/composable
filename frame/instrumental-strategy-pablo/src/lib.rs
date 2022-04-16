@@ -27,7 +27,10 @@ pub mod pallet {
 		},
 	};
 
-	use composable_traits::vault::StrategicVault;
+	use composable_traits::{
+		instrumental::InstrumentalProtocolStrategy,
+		vault::StrategicVault
+	};
 
 	use sp_std::fmt::Debug;
 	use codec::{Codec, FullCodec};
@@ -157,15 +160,13 @@ pub mod pallet {
     //                                      Protocol Strategy                                     
 	// -------------------------------------------------------------------------------------------
 
-	// TODO: (Nevin)
-	//  - create InstrumentalProtocolStrategyTrait
+	impl<T: Config> InstrumentalProtocolStrategy for Pallet<T> {
+		type VaultId = T::VaultId;
 
-	impl<T: Config> Pallet<T> {
-		
 		#[transactional]
-		pub fn associate_vault(vault_id: &T::VaultId) -> Result<T::VaultId, DispatchError> {
-			AssociatedVaults::<T>::try_mutate(|vaults| -> Result<T::VaultId, DispatchError> {
-				ensure!(!vaults.contains(&vault_id), Error::<T>::VaultAlreadyAssociated);
+		fn associate_vault(vault_id: &Self::VaultId) -> Result<Self::VaultId, DispatchError> {
+			AssociatedVaults::<T>::try_mutate(|vaults| -> Result<Self::VaultId, DispatchError> {
+				ensure!(!vaults.contains(vault_id), Error::<T>::VaultAlreadyAssociated);
 
 				vaults.try_insert(*vault_id)
 					.map_err(|_| Error::<T>::TooManyAssociatedStrategies)?;
@@ -176,10 +177,10 @@ pub mod pallet {
 			})
 		}
 		
-		pub fn rebalance() -> DispatchResult {
+		fn rebalance() -> DispatchResult {
 			AssociatedVaults::<T>::try_mutate(|vaults| -> DispatchResult {
 				vaults.iter().for_each(|vault_id| {
-					if let Ok(_) = Self::do_rebalance(vault_id) {
+					if Self::do_rebalance(vault_id).is_ok() {
 						Self::deposit_event(Event::RebalancedVault{ vault_id: *vault_id });
 					} else {
 						Self::deposit_event(Event::UnableToRebalanceVault{ vault_id: *vault_id });
@@ -189,7 +190,6 @@ pub mod pallet {
 				Ok(())
 			})
 		}
-
 	}
 
 	// -------------------------------------------------------------------------------------------

@@ -11,11 +11,10 @@ use sp_runtime::{
 };
 use sp_core::H256;
 
-pub type BlockNumber = u64;
 pub type AccountId = u128;
+pub type BlockNumber = u64;
 pub type Balance = u128;
-
-pub const ALICE: AccountId = 0;
+pub type CurrencyId = u128;
 
 // -----------------------------------------------------------------------------------------------
 //                                             Config                                             
@@ -83,7 +82,7 @@ parameter_types! {
 impl pallet_instrumental_strategy::Config for MockRuntime {
 	type Event = Event;
 	type WeightInfo = ();
-
+	type AssetId = CurrencyId;
 	type MaxStrategies = MaxStrategies;
 }
 

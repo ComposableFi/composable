@@ -35,3 +35,13 @@ pub trait Instrumental {
         amount: Self::Balance
     ) -> DispatchResult;
 }
+
+pub trait InstrumentalProtocolStrategy {
+    type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
+
+    fn associate_vault(vault_id: &Self::VaultId) -> Result<Self::VaultId, DispatchError>;
+    
+    // TODO: (Kevin)
+    //  - can probably be a template method and call add_liquidity and remove_liquidity implementations
+    fn rebalance() -> DispatchResult;
+}

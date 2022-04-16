@@ -5,6 +5,8 @@ use crate::mock::runtime::{
     Event, ExtBuilder, MAX_ASSOCIATED_VAULTS, MockRuntime, PabloStrategy, VaultId, System
 };
 
+use composable_traits::instrumental::InstrumentalProtocolStrategy;
+
 use frame_support::{assert_ok, assert_noop};
 
 // -----------------------------------------------------------------------------------------------

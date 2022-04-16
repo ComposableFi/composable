@@ -20,6 +20,9 @@ pub mod pallet {
 		storage::bounded_btree_set::BoundedBTreeSet,
 	};
 
+	use codec::FullCodec;
+	use sp_std::fmt::Debug;
+
 	// -------------------------------------------------------------------------------------------
 	//                                Declaration Of The Pallet Type                              
 	// -------------------------------------------------------------------------------------------
@@ -39,6 +42,19 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		type WeightInfo: WeightInfo;
+		
+		type AssetId: FullCodec
+			+ MaxEncodedLen
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ Default
+			+ TypeInfo;
+
+		// TODO: (Nevin)
+		//  - type Strategies: [impl InstrumentalProtocolStrategy]
 
 		/// The maximum number of vaults that can be associated with this strategy.
 		type MaxStrategies: Get<u32>;
@@ -93,7 +109,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {}
 
 	// -------------------------------------------------------------------------------------------
-    //                                     Trait Implementation                                   
+    //                                Instrumental Dynamic Strategy                               
 	// -------------------------------------------------------------------------------------------
 
 	// TODO: (Nevin)
@@ -115,7 +131,30 @@ pub mod pallet {
 				Ok(())
 			})
 		}
+
+		// pub fn set_strategy()
+		// cycle through strategies and call get_apy on each. set the highest apy strategy 
 	}
+
+	// -------------------------------------------------------------------------------------------
+    //                                      Protocol Strategy                                     
+	// -------------------------------------------------------------------------------------------
+
+	// TODO: (Nevin)
+	//  - implement InstrumentalProtocolStrategy; rebalance should act as a composite
+	//        associate_strategy should set the optimum strategy
+
+	
+	// -------------------------------------------------------------------------------------------
+    //                                   Low Level Functionality                                  
+	// -------------------------------------------------------------------------------------------
+
+	// impl<T: Config> Pallet<T> {
+
+	// 	pub fn best_strategy_for_asset(asset_id: T::AssetId) -> Result<T::AccountId, DispatchError> {
+
+	// 	}
+	// }
 }
 
 // -----------------------------------------------------------------------------------------------
