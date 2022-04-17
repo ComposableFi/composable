@@ -25,7 +25,7 @@ jobs:
       timeout-minutes: 5
       run: |
         cd integration-tests/runtime-tests
-        ../../scripts/wait_polkadot_launch.sh
+        time ../../scripts/wait_for_polkadot_launch.sh
 
     - name: Run tests
       run: |
