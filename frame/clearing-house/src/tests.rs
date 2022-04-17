@@ -46,10 +46,10 @@ impl Default for ExtBuilder {
 			native_balances: vec![],
 			balances: vec![],
 			collateral_types: vec![USDC],
-			vamm_id: Some(0u64),
+			vamm_id: Some(0_u64),
 			vamm_twap: Some(FixedI128::from_float(100.0)),
 			oracle_asset_support: Some(true),
-			oracle_twap: Some(10_000u64),
+			oracle_twap: Some(10_000_u64),
 		}
 	}
 }
@@ -173,7 +173,7 @@ prop_compose! {
 
 prop_compose! {
 	fn zero_to_one_open_interval()(
-		float in (0.0..1.0f64).prop_filter("Zero not included in (0, 1)", |num| num > &0.0)
+		float in (0.0..1.0_f64).prop_filter("Zero not included in (0, 1)", |num| num > &0.0)
 	) -> f64 {
 		float
 	}
@@ -243,7 +243,7 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn bounded_decimal()(float in -1e9..1e9f64) -> FixedI128 {
+	fn bounded_decimal()(float in -1e9..1e9_f64) -> FixedI128 {
 		FixedI128::from_float(float)
 	}
 }
@@ -412,7 +412,7 @@ fn add_margin_returns_transfer_error() {
 	ExtBuilder::default().build().execute_with(|| {
 		let origin = Origin::signed(ALICE);
 		assert_noop!(
-			TestPallet::add_margin(origin, USDC, 1_000u32.into()),
+			TestPallet::add_margin(origin, USDC, 1_000_u32.into()),
 			TokenError::<Runtime>::BalanceTooLow
 		);
 	});
@@ -425,7 +425,7 @@ fn deposit_unsupported_collateral_returns_error() {
 		.execute_with(|| {
 			let origin = Origin::signed(ALICE);
 			assert_noop!(
-				TestPallet::add_margin(origin, PICA, 1_000u32.into()),
+				TestPallet::add_margin(origin, PICA, 1_000_u32.into()),
 				Error::<Runtime>::UnsupportedCollateralType
 			);
 		});
@@ -439,7 +439,7 @@ fn deposit_supported_collateral_succeeds() {
 			run_to_block(1);
 			let account = ALICE;
 			let asset = USDC;
-			let amount: Balance = 1_000u32.into();
+			let amount: Balance = 1_000_u32.into();
 
 			let before = AccountsMargin::<Runtime>::get(&account).unwrap_or_default();
 			assert_ok!(TestPallet::add_margin(Origin::signed(account), asset, amount));
@@ -468,15 +468,15 @@ fn create_first_market_succeeds() {
 
 		// Ensure first market id is 0 (we know its type since it's defined in the mock runtime)
 		SystemPallet::assert_last_event(
-			Event::MarketCreated { market: 0u64, asset: config.asset }.into(),
+			Event::MarketCreated { market: 0_u64, asset: config.asset }.into(),
 		);
-		assert!(Markets::<Runtime>::contains_key(0u64));
+		assert!(Markets::<Runtime>::contains_key(0_u64));
 
 		// Ensure market count is increased by 1
 		assert_eq!(TestPallet::market_count(), old_count + 1);
 
 		// Ensure new market matches creation parameters
-		let market = TestPallet::get_market(0u64).unwrap();
+		let market = TestPallet::get_market(0_u64).unwrap();
 		assert_eq!(market.asset_id, config.asset);
 		assert_eq!(market.margin_ratio_initial, config.margin_ratio_initial);
 		assert_eq!(market.margin_ratio_maintenance, config.margin_ratio_maintenance);

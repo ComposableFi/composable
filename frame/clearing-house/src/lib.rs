@@ -18,7 +18,7 @@
 //! * **Perpetual contract**: A derivative product that allows a trader to have exposure to the underlying's price without owning it. See [The Cartoon Guide to Perps](https://www.paradigm.xyz/2021/03/the-cartoon-guide-to-perps) for intuitions.
 //! * **Market**: Perpetual contracts market, where users trade virtual tokens mirroring the
 //!   base-quote asset pair of spot markets. A.k.a. a virtual market.
-//! * **vAMM**: Virtual automated market maker allowing price discovery in virtual markets based on
+//! * **VAMM**: Virtual automated market maker allowing price discovery in virtual markets based on
 //!   the supply of virtual base/quote assets.
 //! * **Position**: Amount of a particular virtual asset owned by a trader. Implies debt (positive
 //!   or negative) to the Clearing House.
@@ -316,7 +316,6 @@ pub mod pallet {
 	type VammConfigOf<T> = <T as Config>::VammConfig;
 	type VammIdOf<T> = <T as Config>::VammId;
 	type SwapConfigOf<T> = SwapConfig<VammIdOf<T>, BalanceOf<T>>;
-	type SwapSimulationConfigOf<T> = SwapSimulationConfig<VammIdOf<T>, BalanceOf<T>>;
 	type PositionOf<T> = Position<DecimalOf<T>, MarketIdOf<T>>;
 	type MarketConfigOf<T> = MarketConfig<AssetIdOf<T>, DecimalOf<T>, VammConfigOf<T>>;
 	type MarketOf<T> = Market<AssetIdOf<T>, DecimalOf<T>, VammIdOf<T>>;
@@ -339,6 +338,7 @@ pub mod pallet {
 	/// as a vector.
 	#[pallet::storage]
 	#[pallet::getter(fn get_positions)]
+	#[allow(clippy::disallowed_types)]
 	pub type Positions<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
@@ -695,23 +695,8 @@ pub mod pallet {
 			base_asset_amount_limit: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
 			let market = Self::get_market(&market_id).ok_or(Error::<T>::MarketIdNotFound)?;
-
 			let mut positions = Self::get_positions(&account_id);
-			let position_index = match positions.iter().position(|p| p.market_id == *market_id) {
-				Some(index) => index,
-				None => {
-					positions
-						.try_push(PositionOf::<T> {
-							market_id: market_id.clone(),
-							base_asset_amount: Zero::zero(),
-							quote_asset_notional_amount: Zero::zero(),
-							last_cum_funding: market.cum_funding_rate,
-						})
-						.map_err(|_| Error::<T>::MaxPositionsExceeded)?;
-					positions.len() - 1
-				},
-			};
-			let position = &mut positions[position_index];
+			let position = Self::get_or_create_position(&mut positions, market_id, &market)?;
 
 			let position_direction = if position.base_asset_amount.is_zero() {
 				direction
@@ -747,7 +732,7 @@ pub mod pallet {
 			}
 
 			Positions::<T>::insert(&account_id, positions);
-			Ok(0u32.into())
+			Ok(0_u32.into())
 		}
 	}
 
@@ -807,5 +792,28 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {}
 
 	// Helper functions - low-level functionality
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		fn get_or_create_position<'a>(
+			positions: &'a mut BoundedVec<PositionOf<T>, T::MaxPositions>,
+			market_id: &T::MarketId,
+			market: &MarketOf<T>,
+		) -> Result<&'a mut PositionOf<T>, DispatchError> {
+			Ok(match positions.iter().position(|p| p.market_id == *market_id) {
+				Some(index) => positions.get_mut(index).expect("Item succesfully found above"),
+				None => {
+					positions
+						.try_push(PositionOf::<T> {
+							market_id: market_id.clone(),
+							base_asset_amount: Zero::zero(),
+							quote_asset_notional_amount: Zero::zero(),
+							last_cum_funding: market.cum_funding_rate,
+						})
+						.map_err(|_| Error::<T>::MaxPositionsExceeded)?;
+					positions
+						.get_mut(positions.len() - 1)
+						.expect("Will always succeed if the above push does")
+				},
+			})
+		}
+	}
 }
