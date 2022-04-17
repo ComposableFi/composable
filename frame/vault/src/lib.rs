@@ -672,7 +672,7 @@ pub mod pallet {
 		}
 
 		/// Turns an existent strategy account `strategy_account` of a vault determined by
-		/// `vault_idx` into a liquidation state where withdrawn funds should de returned as soon
+		/// `vault_idx` into a liquidation state where withdrawn funds should be returned as soon
 		/// as possible.
 		///
 		/// Only the vault's manager will be able to call this method.
