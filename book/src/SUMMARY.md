@@ -95,6 +95,7 @@
 - [mosaic](./pallets/mosaic.md)
     - [Extrinsics](./pallets/mosaic/extrinsics.md)
     - [Integration Guide](./pallets/mosaic/integration-guide.md)
+- [vault](./pallets/vault.md)
 # ❓ FAQS
 - [FAQs](./faqs/faqs.md)
 
