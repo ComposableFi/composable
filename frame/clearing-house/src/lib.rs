@@ -180,7 +180,8 @@ pub mod pallet {
 			+ FixedPointOperand
 			+ Integer
 			+ One
-			+ TryFrom<Self::Balance>;
+			+ TryFrom<Self::Balance>
+			+ TryInto<Self::Balance>;
 
 		/// The market ID type for this pallet.
 		type MarketId: CheckedAdd
@@ -223,7 +224,7 @@ pub mod pallet {
 		type VammConfig: Clone + Debug + FullCodec + MaxEncodedLen + PartialEq + TypeInfo;
 
 		/// Virtual automated market maker identifier; usually an integer
-		type VammId: FullCodec + MaxEncodedLen + TypeInfo;
+		type VammId: Clone + FullCodec + MaxEncodedLen + TypeInfo;
 
 		/// Weight information for this pallet's extrinsics
 		type WeightInfo: WeightInfo;
@@ -319,6 +320,7 @@ pub mod pallet {
 	type VammConfigOf<T> = <T as Config>::VammConfig;
 	type VammIdOf<T> = <T as Config>::VammId;
 	type SwapConfigOf<T> = SwapConfig<VammIdOf<T>, BalanceOf<T>>;
+	type SwapSimulationConfigOf<T> = SwapSimulationConfig<VammIdOf<T>, BalanceOf<T>>;
 	type PositionOf<T> = Position<DecimalOf<T>, MarketIdOf<T>>;
 	type MarketConfigOf<T> = MarketConfig<AssetIdOf<T>, DecimalOf<T>, VammConfigOf<T>>;
 	type MarketOf<T> = Market<AssetIdOf<T>, DecimalOf<T>, VammIdOf<T>>;
@@ -706,18 +708,16 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let market = Self::get_market(&market_id).ok_or(Error::<T>::MarketIdNotFound)?;
 			let mut positions = Self::get_positions(&account_id);
-			let position = Self::get_or_create_position(&mut positions, market_id, &market)?;
+			let (position, position_index) =
+				Self::get_or_create_position(&mut positions, market_id, &market)?;
 
-			let position_direction = if position.base_asset_amount.is_zero() {
-				direction
-			} else if position.base_asset_amount.is_positive() {
-				Self::Direction::Long
-			} else {
-				Self::Direction::Short
-			};
+			let mut quote_asset_amount_decimal = T::Decimal::from_inner(
+				quote_asset_amount.try_into().map_err(|_| ArithmeticError::Overflow)?,
+			);
 
-			if direction == position_direction {
-				let swapped = <T as Config>::Vamm::swap(&SwapConfigOf::<T> {
+			if direction == Self::position_direction(&position).unwrap_or(direction) {
+				// increase position
+				let swapped = T::Vamm::swap(&SwapConfigOf::<T> {
 					vamm_id: market.vamm_id,
 					asset: AssetType::Quote,
 					input_amount: quote_asset_amount,
@@ -730,14 +730,34 @@ pub mod pallet {
 
 				position.base_asset_amount =
 					position.base_asset_amount + T::Decimal::from_inner(swapped);
-				let quote_asset_amount_decimal = T::Decimal::from_inner(
-					quote_asset_amount.try_into().map_err(|_| ArithmeticError::Overflow)?,
-				);
 				position.quote_asset_notional_amount = match direction {
 					Direction::Long =>
 						position.quote_asset_notional_amount + quote_asset_amount_decimal,
 					Direction::Short =>
 						position.quote_asset_notional_amount - quote_asset_amount_decimal,
+				}
+			} else {
+				// Round trade if it nearly closes the position
+				let abs_base_asset_value =
+					Self::base_asset_value(&market, &position)?.saturating_abs();
+
+				let diff = abs_base_asset_value
+					.checked_sub(&quote_asset_amount_decimal)
+					.ok_or(ArithmeticError::Underflow)?;
+				if diff.saturating_abs() < market.minimum_trade_size {
+					// round trade to close off position
+					quote_asset_amount_decimal = abs_base_asset_value;
+				}
+
+				if quote_asset_amount_decimal < abs_base_asset_value {
+					// decrease position
+					todo!();
+				} else if quote_asset_amount_decimal == abs_base_asset_value {
+					// close position
+					positions.swap_remove(position_index);
+				} else {
+					// reverse position
+					todo!();
 				}
 			}
 
@@ -807,9 +827,10 @@ pub mod pallet {
 			positions: &'a mut BoundedVec<PositionOf<T>, T::MaxPositions>,
 			market_id: &T::MarketId,
 			market: &MarketOf<T>,
-		) -> Result<&'a mut PositionOf<T>, DispatchError> {
+		) -> Result<(&'a mut PositionOf<T>, usize), DispatchError> {
 			Ok(match positions.iter().position(|p| p.market_id == *market_id) {
-				Some(index) => positions.get_mut(index).expect("Item succesfully found above"),
+				Some(index) =>
+					(positions.get_mut(index).expect("Item succesfully found above"), index),
 				None => {
 					positions
 						.try_push(PositionOf::<T> {
@@ -819,11 +840,46 @@ pub mod pallet {
 							last_cum_funding: market.cum_funding_rate,
 						})
 						.map_err(|_| Error::<T>::MaxPositionsExceeded)?;
-					positions
-						.get_mut(positions.len() - 1)
-						.expect("Will always succeed if the above push does")
+					let index = positions.len() - 1;
+					let position = positions
+						.get_mut(index)
+						.expect("Will always succeed if the above push does");
+					(position, index)
 				},
 			})
+		}
+
+		fn position_direction(position: &PositionOf<T>) -> Option<Direction> {
+			if position.base_asset_amount.is_zero() {
+				None
+			} else if position.base_asset_amount.is_positive() {
+				Some(Direction::Long)
+			} else {
+				Some(Direction::Short)
+			}
+		}
+
+		fn base_asset_value(
+			market: &MarketOf<T>,
+			position: &PositionOf<T>,
+		) -> Result<T::Decimal, DispatchError> {
+			let sim_swapped = T::Vamm::swap_simulation(&SwapSimulationConfigOf::<T> {
+				vamm_id: market.vamm_id.clone(),
+				asset: AssetType::Base,
+				input_amount: position
+					.base_asset_amount
+					.saturating_abs()
+					.into_inner()
+					.try_into()
+					.map_err(|_| ArithmeticError::Underflow)
+					.expect("An absolute of Integer can always be converted to Balance"),
+				direction: match Self::position_direction(&position).unwrap_or(Direction::Long) {
+					Direction::Long => VammDirection::Add,
+					Direction::Short => VammDirection::Remove,
+				},
+			})?;
+
+			Ok(T::Decimal::from_inner(sim_swapped))
 		}
 	}
 }
