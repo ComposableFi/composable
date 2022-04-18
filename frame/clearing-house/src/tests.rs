@@ -104,11 +104,11 @@ fn valid_base_asset_amount_limit() -> Balance {
 // ----------------------------------------------------------------------------------------------------
 
 trait MarginInitializer {
-	fn set_margin(self, account_id: &AccountId, asset_id: AssetId, amount: Balance) -> Self;
+	fn add_margin(self, account_id: &AccountId, asset_id: AssetId, amount: Balance) -> Self;
 }
 
 impl MarginInitializer for sp_io::TestExternalities {
-	fn set_margin(mut self, account_id: &AccountId, asset_id: AssetId, amount: Balance) -> Self {
+	fn add_margin(mut self, account_id: &AccountId, asset_id: AssetId, amount: Balance) -> Self {
 		self.execute_with(|| {
 			assert_ok!(<TestPallet as ClearingHouse>::add_margin(account_id, asset_id, amount));
 		});
@@ -613,7 +613,7 @@ fn fails_to_open_position_if_market_id_invalid() {
 	ExtBuilder { balances: vec![(ALICE, USDC, quote_amount)], ..Default::default() }
 		.build()
 		.init_market(&mut market_id, None)
-		.set_margin(&ALICE, USDC, quote_amount)
+		.add_margin(&ALICE, USDC, quote_amount)
 		.execute_with(|| {
 			VammPallet::set_swap_output(Some(base_amount_limit.try_into().unwrap()));
 
@@ -639,7 +639,7 @@ fn open_position_in_new_market_increases_number_of_positions() {
 	ExtBuilder { balances: vec![(ALICE, USDC, quote_amount)], ..Default::default() }
 		.build()
 		.init_market(&mut market_id, None)
-		.set_margin(&ALICE, USDC, quote_amount)
+		.add_margin(&ALICE, USDC, quote_amount)
 		.execute_with(|| {
 			VammPallet::set_swap_output(Some(base_amount_limit.try_into().unwrap()));
 
@@ -669,7 +669,7 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 	ExtBuilder { balances: vec![(ALICE, USDC, quote_amount_total)], ..Default::default() }
 		.build()
 		.init_markets(&mut market_ids, configs.into_iter())
-		.set_margin(&ALICE, USDC, quote_amount_total)
+		.add_margin(&ALICE, USDC, quote_amount_total)
 		.execute_with(|| {
 			VammPallet::set_swap_output(Some(base_amount_limit.try_into().unwrap()));
 
@@ -711,7 +711,7 @@ proptest! {
 		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount * 2)], ..Default::default() }
 			.build()
 			.init_market(&mut market_id, Some(market_config))
-			.set_margin(&ALICE, USDC, quote_amount)
+			.add_margin(&ALICE, USDC, quote_amount)
 			.execute_with(|| {
 				let positions_before = TestPallet::get_positions(&ALICE).len();
 
@@ -757,7 +757,7 @@ proptest! {
 		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount * 2)], ..Default::default() }
 			.build()
 			.init_market(&mut market_id, Some(market_config))
-			.set_margin(&ALICE, USDC, quote_amount)
+			.add_margin(&ALICE, USDC, quote_amount)
 			.execute_with(|| {
 				let positions_before = TestPallet::get_positions(&ALICE).len();
 
