@@ -46,6 +46,8 @@ where
 		initial_state: S,
 		f: impl Fn(S, IK, IV) -> S,
 	) -> BlockFold<S, IK> {
+		// TODO(hussein-aitlahcen): initial, clear implementation. Nice first issue: improve
+		// performance by staying in `mutate`.
 		let fold_state = StorageValue::<P, BlockFold<S, IK>, OptionQuery>::mutate(|x| match x {
 			None => {
 				let initial = BlockFold::Init { strategy: initial_strategy, state: initial_state };
@@ -74,19 +76,21 @@ where
 		};
 		let next_fold_state = match strategy {
 			FoldStrategy::Chunk { number_of_elements } => {
-				let r =
-					iterator.try_fold((0u32, current_state), |(processed, state), (key, value)| {
+				let r = iterator.try_fold(
+					(0_u32, current_state),
+					|(processed, state), (key, value)| {
 						let next_state = f(state, key.clone(), value);
 						if processed == number_of_elements.saturating_sub(1) {
 							Err((next_state, key))
 						} else {
 							Ok((processed + 1, next_state))
 						}
-					});
+					},
+				);
 				match r {
-					Ok((_, next_state)) => BlockFold::Done { state: next_state.clone() },
+					Ok((_, next_state)) => BlockFold::Done { state: next_state },
 					Err((next_state, previous_key)) =>
-						BlockFold::Cont { strategy, state: next_state.clone(), previous_key },
+						BlockFold::Cont { strategy, state: next_state, previous_key },
 				}
 			},
 		};
