@@ -809,6 +809,53 @@ proptest! {
 	}
 }
 
+proptest! {
+	#[test]
+	fn closing_position_with_trade_realizes_pnl(pnl_decimal in bounded_decimal()) {
+		let mut market_id: MarketId = 0;
+
+		let quote_amount = valid_quote_asset_amount() as i128;
+		let quote_amount_abs = quote_amount.unsigned_abs();
+		let base_amount_limit = valid_base_asset_amount_limit() as i128;
+		let margin = quote_amount;
+		let pnl = pnl_decimal.into_inner();
+
+		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount_abs * 2)], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(valid_market_config()))
+			.add_margin(&ALICE, USDC, quote_amount_abs)
+			.execute_with(|| {
+				let positions_before = TestPallet::get_positions(&ALICE).len();
+
+				VammPallet::set_swap_output(Some(base_amount_limit));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Long,
+					quote_amount_abs,
+					base_amount_limit.unsigned_abs(),
+				));
+
+				// Set price of base so that it should give the desired PnL in quote
+				VammPallet::set_swap_output(Some(quote_amount + pnl));
+				VammPallet::set_swap_simulation_output(Some(quote_amount + pnl));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Short,
+					(quote_amount + pnl).unsigned_abs(),
+					base_amount_limit.unsigned_abs(),
+				));
+
+				assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
+				assert_eq!(
+					TestPallet::get_margin(&ALICE).unwrap() as i128,
+					(margin + pnl).max(0)
+				)
+		})
+	}
+}
+
 #[test]
 #[ignore = "to be implemented"]
 fn fails_to_increase_position_if_not_enough_margin() {
