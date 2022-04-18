@@ -2,10 +2,10 @@ use crate::{mock::*, Error};
 use composable_tests_helpers::test::helper::acceptable_computation_error;
 use composable_traits::{
 	defi::CurrencyPair,
-	dex::{Amm as AmmTrait, DexRouteNode, DexRouter as DexRouterTrait},
+	dex::{Amm as AmmTrait, DexRouter as DexRouterTrait},
 };
 use frame_support::{assert_noop, assert_ok, traits::fungibles::Mutate};
-use pallet_pablo::PoolInitConfiguration;
+use pallet_pablo::{Error as PabloError, PoolInitConfiguration};
 use sp_runtime::Permill;
 
 // Create Amm pool with given amounts added as liquidity to the pool.
@@ -91,6 +91,19 @@ fn create_usdt_usdc_pool() -> PoolId {
 	create_curve_amm_pool(assets, amounts, amp_coeff, fee, admin_fee)
 }
 
+fn create_usdt_dai_pool() -> PoolId {
+	let unit = 1_000_000_000_000_u128;
+	// usdc usdt have same price which is 1 USD
+	let initial_dai = 1_000_000_000 * unit;
+	let initial_usdt = 1_000_000_000 * unit;
+	let amp_coeff = 100;
+	let fee = Permill::zero();
+	let admin_fee = Permill::zero();
+	let assets = CurrencyPair::new(USDT, DAI);
+	let amounts = vec![initial_usdt, initial_dai];
+	create_curve_amm_pool(assets, amounts, amp_coeff, fee, admin_fee)
+}
+
 fn create_usdc_eth_pool() -> PoolId {
 	let unit = 1_000_000_000_000_u128;
 	let eth_price = 3000_u128;
@@ -103,16 +116,25 @@ fn create_usdc_eth_pool() -> PoolId {
 	create_constant_product_amm_pool(assets, amounts, fee, admin_fee)
 }
 
+fn create_dai_eth_pool() -> PoolId {
+	let unit = 1_000_000_000_000_u128;
+	let eth_price = 3000_u128;
+	let eth_balance = 1_000_000_000 * unit;
+	let dai_balance = eth_price * eth_balance;
+	let fee = Permill::zero();
+	let admin_fee = Permill::zero();
+	let assets = CurrencyPair::new(DAI, ETH);
+	let amounts = vec![dai_balance, eth_balance];
+	create_constant_product_amm_pool(assets, amounts, fee, admin_fee)
+}
+
 #[test]
 fn get_route_tests() {
 	new_test_ext().execute_with(|| {
-		let currency_pair = CurrencyPair { base: ETH, quote: USDT };
+		let currency_pair = CurrencyPair { base: USDT, quote: ETH };
 		assert_eq!(DexRouter::get_route(currency_pair), None);
 
-		let dex_route = vec![
-			DexRouteNode::Pablo(create_usdc_eth_pool()),
-			DexRouteNode::Pablo(create_usdt_usdc_pool()),
-		];
+		let dex_route = vec![create_usdc_eth_pool(), create_usdt_usdc_pool()];
 		assert_ok!(DexRouter::update_route(
 			&ALICE,
 			currency_pair,
@@ -125,14 +147,11 @@ fn get_route_tests() {
 #[test]
 fn update_route_tests() {
 	new_test_ext().execute_with(|| {
-		let currency_pair = CurrencyPair { base: ETH, quote: USDT };
+		let currency_pair = CurrencyPair { base: USDT, quote: ETH };
 		assert_eq!(DexRouter::get_route(currency_pair), None);
 
 		// insert
-		let dex_route = vec![
-			DexRouteNode::Pablo(create_usdc_eth_pool()),
-			DexRouteNode::Pablo(create_usdt_usdc_pool()),
-		];
+		let dex_route = vec![create_usdc_eth_pool(), create_usdt_usdc_pool()];
 		assert_ok!(DexRouter::update_route(
 			&ALICE,
 			currency_pair,
@@ -141,10 +160,7 @@ fn update_route_tests() {
 		assert_eq!(DexRouter::get_route(currency_pair), Some(dex_route));
 
 		// update
-		let dex_route = vec![
-			DexRouteNode::Pablo(create_usdt_usdc_pool()),
-			DexRouteNode::Pablo(create_usdc_eth_pool()),
-		];
+		let dex_route = vec![create_dai_eth_pool(), create_usdt_dai_pool()];
 		assert_ok!(DexRouter::update_route(
 			&ALICE,
 			currency_pair,
@@ -158,24 +174,27 @@ fn update_route_tests() {
 
 		// invalid route, case #1
 		let dex_route = vec![
-			DexRouteNode::Pablo(create_usdt_usdc_pool()),
-			DexRouteNode::Pablo(42), // fake route
-			DexRouteNode::Pablo(create_usdc_eth_pool()),
+			create_usdc_eth_pool(),
+			42, // fake route
+			create_usdt_usdc_pool(),
 		];
 		assert_noop!(
 			DexRouter::update_route(&ALICE, currency_pair, Some(dex_route.try_into().unwrap())),
-			Error::<Test>::PoolDoesNotExist,
+			PabloError::<Test>::PoolNotFound,
 		);
 
 		// invalid route, case #2
-		let dex_route = vec![
-			DexRouteNode::Pablo(create_usdt_usdc_pool()),
-			DexRouteNode::Pablo(create_usdc_eth_pool()),
-			DexRouteNode::Pablo(42), // fake route
-		];
+		let dex_route = vec![create_usdt_usdc_pool(), create_usdc_eth_pool()];
 		assert_noop!(
 			DexRouter::update_route(&ALICE, currency_pair, Some(dex_route.try_into().unwrap())),
-			Error::<Test>::PoolDoesNotExist,
+			Error::<Test>::UnexpectedNodeFound,
+		);
+
+		// invalid route, case #3
+		let dex_route = vec![create_usdc_eth_pool()];
+		assert_noop!(
+			DexRouter::update_route(&ALICE, currency_pair, Some(dex_route.try_into().unwrap())),
+			Error::<Test>::MoreThanOneNodesExpectedInRoute,
 		);
 	});
 }
@@ -185,10 +204,7 @@ fn exchange_tests() {
 	new_test_ext().execute_with(|| {
 		let unit = 1_000_000_000_000_u128;
 		let currency_pair = CurrencyPair { base: USDT, quote: ETH };
-		let dex_route = vec![
-			DexRouteNode::Pablo(create_usdc_eth_pool()),
-			DexRouteNode::Pablo(create_usdt_usdc_pool()),
-		];
+		let dex_route = vec![create_usdc_eth_pool(), create_usdt_usdc_pool()];
 		assert_ok!(DexRouter::update_route(
 			&ALICE,
 			currency_pair,
@@ -210,10 +226,7 @@ fn buy_test() {
 	new_test_ext().execute_with(|| {
 		let unit = 1_000_000_000_000_u128;
 		let currency_pair = CurrencyPair { base: USDT, quote: ETH };
-		let dex_route = vec![
-			DexRouteNode::Pablo(create_usdc_eth_pool()),
-			DexRouteNode::Pablo(create_usdt_usdc_pool()),
-		];
+		let dex_route = vec![create_usdc_eth_pool(), create_usdt_usdc_pool()];
 		// USDC/ETH
 		// USDT/USDC
 		// USDT/ETH

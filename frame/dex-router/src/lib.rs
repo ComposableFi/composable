@@ -20,7 +20,7 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		defi::CurrencyPair,
-		dex::{Amm, DexRoute, DexRouteNode, DexRouter},
+		dex::{Amm, DexRoute, DexRouter},
 		math::SafeArithmetic,
 	};
 	use core::fmt::Debug;
@@ -90,10 +90,12 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Number of hops in route exceeded maximum limit.
 		MaxHopsExceeded,
-		/// A Pool provided as part of route does not exist.
-		PoolDoesNotExist,
 		/// For given asset pair no route found.
 		NoRouteFound,
+		/// Unexpected node found.
+		UnexpectedNodeFound,
+		/// Route must have at least two pools.
+		MoreThanOneNodesExpectedInRoute,
 	}
 
 	#[pallet::event]
@@ -103,20 +105,20 @@ pub mod pallet {
 			who: T::AccountId,
 			x_asset_id: T::AssetId,
 			y_asset_id: T::AssetId,
-			route: Vec<DexRouteNode<T::PoolId>>,
+			route: Vec<T::PoolId>,
 		},
 		RouteDeleted {
 			who: T::AccountId,
 			x_asset_id: T::AssetId,
 			y_asset_id: T::AssetId,
-			route: Vec<DexRouteNode<T::PoolId>>,
+			route: Vec<T::PoolId>,
 		},
 		RouteUpdated {
 			who: T::AccountId,
 			x_asset_id: T::AssetId,
 			y_asset_id: T::AssetId,
-			old_route: Vec<DexRouteNode<T::PoolId>>,
-			updated_route: Vec<DexRouteNode<T::PoolId>>,
+			old_route: Vec<T::PoolId>,
+			updated_route: Vec<T::PoolId>,
 		},
 	}
 
@@ -124,22 +126,45 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {}
 
 	impl<T: Config> Pallet<T> {
+		fn check_route(
+			asset_pair: CurrencyPair<T::AssetId>,
+			route: &BoundedVec<T::PoolId, T::MaxHopsInRoute>,
+		) -> Result<(), DispatchError> {
+			ensure!(route.len() > 1, Error::<T>::MoreThanOneNodesExpectedInRoute);
+			route
+				.iter()
+				// starting with asset_pair.quote, make sure current node's quote
+				// matches with previous node's base
+				.try_fold(asset_pair.quote, |val, iter| {
+					T::Pablo::currency_pair(*iter).and_then(
+						|pair| -> Result<T::AssetId, DispatchError> {
+							if pair.quote == val {
+								Ok(pair.base)
+							} else {
+								Err(Error::<T>::UnexpectedNodeFound.into())
+							}
+						},
+					)
+				})
+				// last node's base asset matches asset_pair's base
+				.and_then(|val| -> Result<(), DispatchError> {
+					if val == asset_pair.base {
+						Ok(())
+					} else {
+						Err(Error::<T>::UnexpectedNodeFound.into())
+					}
+				})
+		}
+
 		fn do_update_route(
 			who: &T::AccountId,
 			asset_pair: CurrencyPair<T::AssetId>,
-			route: BoundedVec<DexRouteNode<T::PoolId>, T::MaxHopsInRoute>,
+			route: BoundedVec<T::PoolId, T::MaxHopsInRoute>,
 		) -> Result<(), DispatchError> {
 			let k1 = asset_pair.base;
 			let k2 = asset_pair.quote;
-			for r in route.as_slice() {
-				match r {
-					DexRouteNode::Pablo(pool_id) => {
-						ensure!(T::Pablo::pool_exists(*pool_id), Error::<T>::PoolDoesNotExist)
-					},
-				}
-			}
+			Self::check_route(asset_pair, &route)?;
 			let existing_route = DexRoutes::<T>::get(k1, k2);
-
 			DexRoutes::<T>::insert(k1, k2, DexRoute::Direct(route.clone()));
 			let event = match existing_route {
 				Some(DexRoute::Direct(old_route)) => Event::RouteUpdated {
@@ -185,7 +210,7 @@ pub mod pallet {
 		fn update_route(
 			who: &T::AccountId,
 			asset_pair: CurrencyPair<T::AssetId>,
-			route: Option<BoundedVec<DexRouteNode<T::PoolId>, T::MaxHopsInRoute>>,
+			route: Option<BoundedVec<T::PoolId, T::MaxHopsInRoute>>,
 		) -> Result<(), DispatchError> {
 			match route {
 				Some(bounded_route) => Self::do_update_route(who, asset_pair, bounded_route)?,
@@ -194,7 +219,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn get_route(asset_pair: CurrencyPair<T::AssetId>) -> Option<Vec<DexRouteNode<T::PoolId>>> {
+		fn get_route(asset_pair: CurrencyPair<T::AssetId>) -> Option<Vec<T::PoolId>> {
 			DexRoutes::<T>::get(asset_pair.base, asset_pair.quote)
 				.map(|DexRoute::Direct(route)| route.into_inner())
 		}
@@ -208,21 +233,17 @@ pub mod pallet {
 			let route = Self::get_route(asset_pair).ok_or(Error::<T>::NoRouteFound)?;
 			let mut dx_t = dx;
 			let mut dy_t = T::Balance::zero();
-			for route_node in &route {
-				match route_node {
-					DexRouteNode::Pablo(pool_id) => {
-						let currency_pair = T::Pablo::currency_pair(*pool_id)?;
-						dy_t = T::Pablo::exchange(
-							who,
-							*pool_id,
-							currency_pair,
-							dx_t,
-							T::Balance::zero(),
-							true,
-						)?;
-						dx_t = dy_t;
-					},
-				}
+			for pool_id in &route {
+				let currency_pair = T::Pablo::currency_pair(*pool_id)?;
+				dy_t = T::Pablo::exchange(
+					who,
+					*pool_id,
+					currency_pair,
+					dx_t,
+					T::Balance::zero(),
+					true,
+				)?;
+				dx_t = dy_t;
 			}
 			Ok(dy_t)
 		}
@@ -243,30 +264,22 @@ pub mod pallet {
 			let route = Self::get_route(asset_pair).ok_or(Error::<T>::NoRouteFound)?;
 			let mut dy_t = amount;
 			let mut dx_t = T::Balance::zero();
-			for route_node in route.iter().rev() {
-				match route_node {
-					DexRouteNode::Pablo(pool_id) => {
-						let currency_pair = T::Pablo::currency_pair(*pool_id)?;
-						dx_t = T::Pablo::get_exchange_value(*pool_id, currency_pair.base, dy_t)?;
-						dy_t = dx_t;
-					},
-				}
+			for pool_id in route.iter().rev() {
+				let currency_pair = T::Pablo::currency_pair(*pool_id)?;
+				dx_t = T::Pablo::get_exchange_value(*pool_id, currency_pair.base, dy_t)?;
+				dy_t = dx_t;
 			}
-			for route_node in route {
-				match route_node {
-					DexRouteNode::Pablo(pool_id) => {
-						let currency_pair = T::Pablo::currency_pair(pool_id)?;
-						let dy_t = T::Pablo::exchange(
-							who,
-							pool_id,
-							currency_pair,
-							dx_t,
-							T::Balance::zero(),
-							true,
-						)?;
-						dx_t = dy_t;
-					},
-				}
+			for pool_id in route {
+				let currency_pair = T::Pablo::currency_pair(pool_id)?;
+				let dy_t = T::Pablo::exchange(
+					who,
+					pool_id,
+					currency_pair,
+					dx_t,
+					T::Balance::zero(),
+					true,
+				)?;
+				dx_t = dy_t;
 			}
 			Ok(dx_t)
 		}
