@@ -269,6 +269,9 @@ pub mod pallet {
 		pub margin_ratio_initial: Decimal,
 		/// Margin ratio below which liquidations can occur
 		pub margin_ratio_maintenance: Decimal,
+		/// Minimum amount of quote asset to exchange when opening a position. Also serves to round
+		/// a trade if it results in closing an existing position
+		pub minimum_trade_size: Decimal,
 		/// The latest cumulative funding rate of this market. Must be updated periodically.
 		pub cum_funding_rate: Decimal,
 		/// The timestamp for the latest funding rate update.
@@ -437,6 +440,8 @@ pub mod pallet {
 		/// Attempted to create a new market but the initial margin ratio is less than or equal to
 		/// the maintenance one
 		InitialMarginRatioLessThanMaintenance,
+		/// Attempted to create a new market but the minimum trade size is negative
+		NegativeMinimumTradeSize,
 		/// Raised when querying a market with an invalid or nonexistent market Id
 		MarketIdNotFound,
 		/// Raised when opening a risk-increasing position that takes the account below the IMR
@@ -660,6 +665,10 @@ pub mod pallet {
 				config.margin_ratio_initial > config.margin_ratio_maintenance,
 				Error::<T>::InitialMarginRatioLessThanMaintenance
 			);
+			ensure!(
+				config.minimum_trade_size > T::Decimal::zero(),
+				Error::<T>::NegativeMinimumTradeSize
+			);
 
 			MarketCount::<T>::try_mutate(|id| {
 				let market_id = id.clone();
@@ -668,6 +677,7 @@ pub mod pallet {
 					vamm_id: T::Vamm::create(&config.vamm_config)?,
 					margin_ratio_initial: config.margin_ratio_initial,
 					margin_ratio_maintenance: config.margin_ratio_maintenance,
+					minimum_trade_size: config.minimum_trade_size,
 					funding_frequency: config.funding_frequency,
 					funding_period: config.funding_period,
 					cum_funding_rate: Default::default(),

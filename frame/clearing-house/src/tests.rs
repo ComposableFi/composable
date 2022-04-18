@@ -249,6 +249,12 @@ prop_compose! {
 }
 
 prop_compose! {
+	fn any_minimum_trade_size()(float in 0.0..1e9_f64) -> FixedI128 {
+		FixedI128::from_float(float)
+	}
+}
+
+prop_compose! {
 	fn any_market()(
 		vamm_id in any::<VammId>(),
 		asset_id in any::<AssetId>(),
@@ -256,6 +262,7 @@ prop_compose! {
 			margin_ratio_initial,
 			margin_ratio_maintenance
 		) in initial_gt_maintenance_margin_ratio(),
+		minimum_trade_size in any_minimum_trade_size(),
 		cum_funding_rate in bounded_decimal(),
 		funding_rate_ts in any_duration(),
 		(funding_frequency, funding_period) in funding_params()
@@ -265,6 +272,7 @@ prop_compose! {
 			asset_id,
 			margin_ratio_initial,
 			margin_ratio_maintenance,
+			minimum_trade_size,
 			cum_funding_rate,
 			funding_rate_ts,
 			funding_frequency,
@@ -595,6 +603,22 @@ proptest! {
 			assert_noop!(
 				TestPallet::create_market(Origin::signed(ALICE), config),
 				Error::<Runtime>::InitialMarginRatioLessThanMaintenance
+			);
+		})
+	}
+}
+
+proptest! {
+	#[test]
+	fn fails_to_create_market_if_minimum_trade_size_is_negative(
+		float in (-1e9_f64)..0.0
+	) {
+		ExtBuilder::default().build().execute_with(|| {
+			let mut config = valid_market_config();
+			config.minimum_trade_size = FixedI128::from_float(float);
+			assert_noop!(
+				TestPallet::create_market(Origin::signed(ALICE), config),
+				Error::<Runtime>::NegativeMinimumTradeSize
 			);
 		})
 	}
