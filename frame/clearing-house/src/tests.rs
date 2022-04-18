@@ -214,8 +214,8 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn any_decimal()(float in any::<f64>()) -> FixedI128 {
-		FixedI128::from_float(float)
+	fn any_decimal()(inner in any::<i128>()) -> FixedI128 {
+		FixedI128::from_inner(inner)
 	}
 }
 
@@ -243,8 +243,10 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn bounded_decimal()(float in -1e9..1e9_f64) -> FixedI128 {
-		FixedI128::from_float(float)
+	fn bounded_decimal()(
+		inner in (-1_000_000_000 * FixedI128::DIV)..(1_000_000_000 * FixedI128::DIV)
+	) -> FixedI128 {
+		FixedI128::from_inner(inner)
 	}
 }
 
