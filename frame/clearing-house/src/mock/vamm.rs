@@ -143,9 +143,6 @@ pub mod pallet {
 		}
 
 		fn swap(config: &Self::SwapConfig) -> Result<Self::Integer, DispatchError> {
-			let Self::SwapConfig { vamm_id, asset, input_amount, direction, output_amount_limit } =
-				config;
-
 			match Self::_swap_output() {
 				Some(integer) => Ok(integer),
 				None => Err(Error::<T>::FailedToExecuteSwap.into()),
@@ -155,8 +152,6 @@ pub mod pallet {
 		fn swap_simulation(
 			config: &Self::SwapSimulationConfig,
 		) -> Result<Self::Integer, DispatchError> {
-			let Self::SwapSimulationConfig { vamm_id, asset, input_amount, direction } = config;
-
 			match Self::_swap_simulation_output() {
 				Some(integer) => Ok(integer),
 				None => Err(Error::<T>::FailedToSimulateSwap.into()),
