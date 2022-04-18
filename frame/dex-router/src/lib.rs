@@ -63,13 +63,7 @@ pub mod pallet {
 			+ CheckedAdd
 			+ Zero
 			+ One;
-		type StableSwapDex: Amm<
-			AssetId = Self::AssetId,
-			Balance = Self::Balance,
-			AccountId = Self::AccountId,
-			PoolId = Self::PoolId,
-		>;
-		type ConstantProductDex: Amm<
+		type Pablo: Amm<
 			AssetId = Self::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
@@ -139,17 +133,8 @@ pub mod pallet {
 			let k2 = asset_pair.quote;
 			for r in route.as_slice() {
 				match r {
-					DexRouteNode::Curve(pool_id) => {
-						ensure!(
-							T::StableSwapDex::pool_exists(*pool_id),
-							Error::<T>::PoolDoesNotExist
-						)
-					},
-					DexRouteNode::Uniswap(pool_id) => {
-						ensure!(
-							T::ConstantProductDex::pool_exists(*pool_id),
-							Error::<T>::PoolDoesNotExist
-						)
+					DexRouteNode::Pablo(pool_id) => {
+						ensure!(T::Pablo::pool_exists(*pool_id), Error::<T>::PoolDoesNotExist)
 					},
 				}
 			}
@@ -225,21 +210,9 @@ pub mod pallet {
 			let mut dy_t = T::Balance::zero();
 			for route_node in &route {
 				match route_node {
-					DexRouteNode::Curve(pool_id) => {
-						let currency_pair = T::StableSwapDex::currency_pair(*pool_id)?;
-						dy_t = T::StableSwapDex::exchange(
-							who,
-							*pool_id,
-							currency_pair,
-							dx_t,
-							T::Balance::zero(),
-							true,
-						)?;
-						dx_t = dy_t;
-					},
-					DexRouteNode::Uniswap(pool_id) => {
-						let currency_pair = T::ConstantProductDex::currency_pair(*pool_id)?;
-						dy_t = T::ConstantProductDex::exchange(
+					DexRouteNode::Pablo(pool_id) => {
+						let currency_pair = T::Pablo::currency_pair(*pool_id)?;
+						dy_t = T::Pablo::exchange(
 							who,
 							*pool_id,
 							currency_pair,
@@ -272,43 +245,18 @@ pub mod pallet {
 			let mut dx_t = T::Balance::zero();
 			for route_node in route.iter().rev() {
 				match route_node {
-					DexRouteNode::Curve(pool_id) => {
-						let currency_pair = T::StableSwapDex::currency_pair(*pool_id)?;
-						dx_t = T::StableSwapDex::get_exchange_value(
-							*pool_id,
-							currency_pair.base,
-							dy_t,
-						)?;
-						dy_t = dx_t;
-					},
-					DexRouteNode::Uniswap(pool_id) => {
-						let currency_pair = T::ConstantProductDex::currency_pair(*pool_id)?;
-						dx_t = T::ConstantProductDex::get_exchange_value(
-							*pool_id,
-							currency_pair.base,
-							dy_t,
-						)?;
+					DexRouteNode::Pablo(pool_id) => {
+						let currency_pair = T::Pablo::currency_pair(*pool_id)?;
+						dx_t = T::Pablo::get_exchange_value(*pool_id, currency_pair.base, dy_t)?;
 						dy_t = dx_t;
 					},
 				}
 			}
 			for route_node in route {
 				match route_node {
-					DexRouteNode::Curve(pool_id) => {
-						let currency_pair = T::StableSwapDex::currency_pair(pool_id)?;
-						let dy_t = T::StableSwapDex::exchange(
-							who,
-							pool_id,
-							currency_pair,
-							dx_t,
-							T::Balance::zero(),
-							true,
-						)?;
-						dx_t = dy_t;
-					},
-					DexRouteNode::Uniswap(pool_id) => {
-						let currency_pair = T::ConstantProductDex::currency_pair(pool_id)?;
-						let dy_t = T::ConstantProductDex::exchange(
+					DexRouteNode::Pablo(pool_id) => {
+						let currency_pair = T::Pablo::currency_pair(pool_id)?;
+						let dy_t = T::Pablo::exchange(
 							who,
 							pool_id,
 							currency_pair,

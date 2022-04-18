@@ -242,8 +242,7 @@ pub struct LiquidityBootstrappingPoolInfo<AccountId, AssetId, BlockNumber> {
 
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
 pub enum DexRouteNode<PoolId> {
-	Curve(PoolId),
-	Uniswap(PoolId),
+	Pablo(PoolId),
 }
 
 /// Describes route for DEX.
