@@ -85,7 +85,7 @@ fn valid_market_config() -> MarketConfig {
 		// liquidate when above 50x leverage
 		margin_ratio_maintenance: FixedI128::from_float(0.02),
 		// 'One cent' of the quote asset
-		minimum_trade_size: FixedI128::checked_from_rational(1, 100).unwrap(),
+		minimum_trade_size: FixedI128::from_float(0.01),
 		funding_frequency: ONE_HOUR,
 		funding_period: ONE_HOUR * 24,
 	}
