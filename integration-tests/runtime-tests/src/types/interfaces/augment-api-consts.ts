@@ -172,6 +172,10 @@ declare module '@polkadot/api-base/types/consts' {
     dutchAuction: {
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
+       * ED taken to create position. Part of if returned when position is liqudated.
+       **/
+      positionExistentialDeposit: u128 & AugmentedConst<ApiType>;
+      /**
        * Generic const
        **/
       [key: string]: Codec;
@@ -255,6 +259,13 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    liquidations: {
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     liquidityBootstrapping: {
       /**
        * Maximum initial weight.
@@ -321,6 +332,33 @@ declare module '@polkadot/api-base/types/consts' {
     oracle: {
       maxHistory: u32 & AugmentedConst<ApiType>;
       maxPrePrices: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    pablo: {
+      /**
+       * Maximum initial weight.
+       **/
+      lbpMaxInitialWeight: Permill & AugmentedConst<ApiType>;
+      /**
+       * Maximum duration for a sale.
+       **/
+      lbpMaxSaleDuration: u32 & AugmentedConst<ApiType>;
+      /**
+       * Minimum final weight.
+       **/
+      lbpMinFinalWeight: Permill & AugmentedConst<ApiType>;
+      /**
+       * Minimum duration for a sale.
+       **/
+      lbpMinSaleDuration: u32 & AugmentedConst<ApiType>;
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * The interval between TWAP computations.
+       **/
+      twapInterval: u64 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
