@@ -1,5 +1,6 @@
+use core::{fmt::Display, str::FromStr};
 use codec::Codec;
-use composable_support::rpc_helpers::{SafeRpcWrapper, SafeRpcWrapperType};
+use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::dex::PriceAggregate;
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result as RpcResult};
 use jsonrpc_derive::rpc;
@@ -12,9 +13,9 @@ use sp_std::sync::Arc;
 #[rpc]
 pub trait PabloApi<BlockHash, PoolId, AssetId, Balance>
 where
-	PoolId: SafeRpcWrapperType,
-	AssetId: SafeRpcWrapperType,
-	Balance: SafeRpcWrapperType,
+	PoolId: FromStr + Display,
+	AssetId: FromStr + Display,
+	Balance: FromStr + Display,
 {
 	#[rpc(name = "pablo_pricesFor")]
 	fn prices_for(
@@ -44,9 +45,9 @@ impl<C, Block, PoolId, AssetId, Balance> PabloApi<<Block as BlockT>::Hash, PoolI
 	for Pablo<C, (Block, PoolId, AssetId, Balance)>
 where
 	Block: BlockT,
-	PoolId: Send + Sync + 'static + Codec + SafeRpcWrapperType,
-	AssetId: Send + Sync + 'static + Codec + SafeRpcWrapperType,
-	Balance: Send + Sync + 'static + Codec + SafeRpcWrapperType,
+	PoolId: Send + Sync + 'static + Codec + FromStr + Display,
+	AssetId: Send + Sync + 'static + Codec + FromStr + Display,
+	Balance: Send + Sync + 'static + Codec + FromStr + Display,
 	C: Send + Sync + 'static,
 	C: ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block>,

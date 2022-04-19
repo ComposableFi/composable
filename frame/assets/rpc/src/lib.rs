@@ -40,8 +40,8 @@ impl<C, Block, AssetId, AccountId, Balance>
 	for Assets<C, (Block, AssetId, AccountId, Balance)>
 where
 	Block: BlockT,
-	AssetId: Codec + Send + Sync + 'static + Codec + FromStr + Display,
-	AccountId: Codec + Send + Sync + 'static + Codec + FromStr + Display,
+	AssetId: Send + Sync + 'static + Codec + FromStr + Display,
+	AccountId: Send + Sync + 'static + Codec + FromStr + Display,
 	Balance: Send + Sync + 'static + Codec + FromStr + Display,
 	C: Send + Sync + 'static,
 	C: ProvideRuntimeApi<Block>,
