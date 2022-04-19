@@ -743,19 +743,15 @@ pub mod pallet {
 						position.quote_asset_notional_amount - quote_asset_amount_decimal,
 				}
 			} else {
-				// Round trade if it nearly closes the position
 				let abs_base_asset_value =
 					Self::base_asset_value(&market, position, position_direction)?.saturating_abs();
 
-				// TODO(0xangelo): wrap this in Self::round_trade_if_necessary
-				let diff = math::decimal_checked_sub::<T>(
+				// Round trade if it nearly closes the position
+				Self::round_trade_if_necessary(
+					&market,
+					&mut quote_asset_amount_decimal,
 					&abs_base_asset_value,
-					&quote_asset_amount_decimal,
 				)?;
-				if diff.saturating_abs() < market.minimum_trade_size {
-					// round trade to close off position
-					quote_asset_amount_decimal = abs_base_asset_value;
-				}
 
 				match quote_asset_amount_decimal.cmp(&abs_base_asset_value) {
 					Ordering::Less => {
@@ -903,6 +899,20 @@ pub mod pallet {
 			})?;
 
 			Ok(T::Decimal::from_inner(sim_swapped))
+		}
+
+		fn round_trade_if_necessary(
+			market: &MarketOf<T>,
+			quote_asset_amount_decimal: &mut T::Decimal,
+			abs_base_asset_value: &T::Decimal,
+		) -> Result<(), DispatchError> {
+			let diff =
+				math::decimal_checked_sub::<T>(abs_base_asset_value, quote_asset_amount_decimal)?;
+			if diff.saturating_abs() < market.minimum_trade_size {
+				// round trade to close off position
+				*quote_asset_amount_decimal = *abs_base_asset_value;
+			}
+			Ok(())
 		}
 
 		fn update_margin_with_pnl(
