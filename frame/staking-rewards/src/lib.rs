@@ -615,6 +615,7 @@ pub mod pallet {
 
 		fn unstake(instance_id: &Self::InstanceId, to: &Self::AccountId) -> DispatchResult {
 			Self::ensure_valid_interaction_state()?;
+      <Self as Staking>::claim(instance_id, to)?;
 			let nft = T::get_protocol_nft::<StakingNFTOf<T>>(instance_id)?;
 			let protocol_account = Self::account_id(&nft.asset);
 			let current_epoch = Self::current_epoch();
