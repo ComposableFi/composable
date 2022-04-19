@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use composable_support::rpc_helpers::SafeRpcWrapper;
 use codec::Codec;
+use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::dex::PriceAggregate;
 
 // Pablo Runtime API declaration. Implemented for each runtime at
