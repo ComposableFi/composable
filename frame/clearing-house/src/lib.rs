@@ -140,11 +140,15 @@ pub mod pallet {
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use num_integer::Integer;
+	use num_traits::Signed;
 	use sp_runtime::{
-		traits::{AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Zero},
+		traits::{
+			AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating,
+			Zero,
+		},
 		ArithmeticError, FixedPointNumber, FixedPointOperand,
 	};
-	use sp_std::fmt::Debug;
+	use sp_std::{cmp::Ordering, fmt::Debug};
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                       Declaration Of The Pallet Type
@@ -180,6 +184,7 @@ pub mod pallet {
 			+ FixedPointOperand
 			+ Integer
 			+ One
+			+ Signed
 			+ TryFrom<Self::Balance>
 			+ TryInto<Self::Balance>;
 
@@ -224,7 +229,7 @@ pub mod pallet {
 		type VammConfig: Clone + Debug + FullCodec + MaxEncodedLen + PartialEq + TypeInfo;
 
 		/// Virtual automated market maker identifier; usually an integer
-		type VammId: Clone + FullCodec + MaxEncodedLen + TypeInfo;
+		type VammId: Clone + Copy + FullCodec + MaxEncodedLen + TypeInfo;
 
 		/// Weight information for this pallet's extrinsics
 		type WeightInfo: WeightInfo;
@@ -715,7 +720,9 @@ pub mod pallet {
 				quote_asset_amount.try_into().map_err(|_| ArithmeticError::Overflow)?,
 			);
 
-			if direction == Self::position_direction(&position).unwrap_or(direction) {
+			let position_direction = Self::position_direction(position).unwrap_or(direction);
+
+			if direction == position_direction {
 				// increase position
 				let swapped = T::Vamm::swap(&SwapConfigOf::<T> {
 					vamm_id: market.vamm_id,
@@ -739,7 +746,7 @@ pub mod pallet {
 			} else {
 				// Round trade if it nearly closes the position
 				let abs_base_asset_value =
-					Self::base_asset_value(&market, &position)?.saturating_abs();
+					Self::base_asset_value(&market, position, position_direction)?.saturating_abs();
 
 				let diff = abs_base_asset_value
 					.checked_sub(&quote_asset_amount_decimal)
@@ -749,16 +756,44 @@ pub mod pallet {
 					quote_asset_amount_decimal = abs_base_asset_value;
 				}
 
-				if quote_asset_amount_decimal < abs_base_asset_value {
-					// decrease position
-					todo!();
-				} else if quote_asset_amount_decimal == abs_base_asset_value {
-					// close position
-					positions.swap_remove(position_index);
-				} else {
-					// reverse position
-					todo!();
-				}
+				match quote_asset_amount_decimal.cmp(&abs_base_asset_value) {
+					Ordering::Less => {
+						// decrease position
+						todo!();
+					},
+					Ordering::Equal => {
+						// close position
+						let swapped = T::Vamm::swap(&SwapConfigOf::<T> {
+							vamm_id: market.vamm_id,
+							asset: AssetType::Base,
+							input_amount: Self::abs_decimal_to_balance(&position.base_asset_amount),
+							direction: match position_direction {
+								Direction::Long => VammDirection::Add,
+								Direction::Short => VammDirection::Remove,
+							},
+							output_amount_limit: Self::abs_decimal_to_balance(
+								&quote_asset_amount_decimal,
+							),
+						})?;
+
+						let pnl = T::Decimal::from_inner(swapped)
+							.checked_sub(&position.quote_asset_notional_amount)
+							.ok_or(ArithmeticError::Underflow)?;
+
+						// TODO(0xangelo): properly handle if the user doesn't have margin
+						let margin = Self::get_margin(account_id).unwrap_or_default();
+						AccountsMargin::<T>::insert(
+							account_id,
+							Self::update_margin_with_pnl(&margin, &pnl)?,
+						);
+
+						positions.swap_remove(position_index);
+					},
+					Ordering::Greater => {
+						// reverse position
+						todo!();
+					},
+				};
 			}
 
 			Positions::<T>::insert(&account_id, positions);
@@ -862,24 +897,45 @@ pub mod pallet {
 		fn base_asset_value(
 			market: &MarketOf<T>,
 			position: &PositionOf<T>,
+			position_direction: Direction,
 		) -> Result<T::Decimal, DispatchError> {
 			let sim_swapped = T::Vamm::swap_simulation(&SwapSimulationConfigOf::<T> {
-				vamm_id: market.vamm_id.clone(),
+				vamm_id: market.vamm_id,
 				asset: AssetType::Base,
-				input_amount: position
-					.base_asset_amount
-					.saturating_abs()
-					.into_inner()
-					.try_into()
-					.map_err(|_| ArithmeticError::Underflow)
-					.expect("An absolute of Integer can always be converted to Balance"),
-				direction: match Self::position_direction(&position).unwrap_or(Direction::Long) {
+				input_amount: Self::abs_decimal_to_balance(&position.base_asset_amount),
+				direction: match position_direction {
 					Direction::Long => VammDirection::Add,
 					Direction::Short => VammDirection::Remove,
 				},
 			})?;
 
 			Ok(T::Decimal::from_inner(sim_swapped))
+		}
+
+		fn abs_decimal_to_balance(decimal: &T::Decimal) -> T::Balance {
+			decimal
+				.saturating_abs()
+				.into_inner()
+				.try_into()
+				.map_err(|_| ArithmeticError::Underflow)
+				.expect("An absolute of Integer can always be converted to Balance")
+		}
+
+		fn update_margin_with_pnl(
+			margin: &T::Balance,
+			pnl: &T::Decimal,
+		) -> Result<T::Balance, DispatchError> {
+			let int = pnl.into_inner();
+			let abs_int = int
+				.abs()
+				.try_into()
+				.map_err(|_| ArithmeticError::Underflow)
+				.expect("Positive Integer can always convert to Balance");
+
+			Ok(match int.is_positive() {
+				true => margin.checked_add(&abs_int).ok_or(ArithmeticError::Underflow)?,
+				false => margin.saturating_sub(abs_int),
+			})
 		}
 	}
 }
