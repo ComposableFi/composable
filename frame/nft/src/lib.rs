@@ -194,7 +194,7 @@ pub mod pallet {
 					instances.insert(*instance);
 				},
 				None => {
-					*x = Some([*instance].into_iter().collect::<BTreeSet<_>>());
+					*x = Some(BTreeSet::<_>::from([*instance]));
 				},
 			});
 			OwnerInstances::<T>::mutate(who, |x| match x {
@@ -202,11 +202,7 @@ pub mod pallet {
 					instances.insert((*class, *instance));
 				},
 				None => {
-					*x = Some(
-						[(*class, *instance)]
-							.into_iter()
-							.collect::<BTreeSet<(NFTClass, NFTInstanceId)>>(),
-					);
+					*x = Some(BTreeSet::<(NFTClass, NFTInstanceId)>::from([(*class, *instance)]));
 				},
 			});
 			Ok(())
