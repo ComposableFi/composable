@@ -1,8 +1,7 @@
-use core::str::FromStr;
-use core::fmt::Display;
 use assets_runtime_api::AssetsRuntimeApi;
 use codec::Codec;
 use composable_support::rpc_helpers::SafeRpcWrapper;
+use core::{fmt::Display, str::FromStr};
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result as RpcResult};
 use jsonrpc_derive::rpc;
 use sp_api::ProvideRuntimeApi;
@@ -13,8 +12,8 @@ use sp_std::sync::Arc;
 #[rpc]
 pub trait AssetsApi<BlockHash, AssetId, AccountId, Balance>
 where
-  AssetId: FromStr + Display,
-  Balance: FromStr + Display,
+	AssetId: FromStr + Display,
+	Balance: FromStr + Display,
 {
 	#[rpc(name = "assets_balanceOf")]
 	fn balance_of(

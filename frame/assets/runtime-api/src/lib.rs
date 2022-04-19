@@ -13,7 +13,7 @@ sp_api::decl_runtime_apis! {
 	where
 		AccountId: Codec,
 		Balance: Codec,
-    AssetId: Codec,
+	AssetId: Codec,
 	{
 		fn balance_of(asset_id: SafeRpcWrapper<AssetId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */;
 	}

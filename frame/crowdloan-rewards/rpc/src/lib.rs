@@ -1,7 +1,6 @@
-use core::str::FromStr;
-use core::fmt::Display;
 use codec::Codec;
 use composable_support::rpc_helpers::SafeRpcWrapper;
+use core::{fmt::Display, str::FromStr};
 use crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi;
 use frame_support::{pallet_prelude::MaybeSerializeDeserialize, Parameter};
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result as RpcResult};
@@ -14,7 +13,7 @@ use sp_std::{marker::PhantomData, sync::Arc};
 #[rpc]
 pub trait CrowdloanRewardsApi<BlockHash, AccountId, Balance>
 where
-  Balance: FromStr + Display,
+	Balance: FromStr + Display,
 {
 	#[rpc(name = "crowdloanRewards_amountAvailableToClaimFor")]
 	fn amount_available_to_claim_for(

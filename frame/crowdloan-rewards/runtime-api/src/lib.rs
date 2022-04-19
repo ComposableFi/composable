@@ -11,7 +11,7 @@ sp_api::decl_runtime_apis! {
 	pub trait CrowdloanRewardsRuntimeApi<AccountId, Balance>
 	where
 		AccountId: Codec,
-    Balance: Codec
+	Balance: Codec
 	{
 		fn amount_available_to_claim_for(account: AccountId) -> SafeRpcWrapper<Balance>;
 	}
