@@ -32,7 +32,7 @@ export default {
     SpConsensusAuraSr25519AppSr25519Public: "Null",
     ComposableTraitsBondedFinanceBondOffer: {
       beneficiary: "AccountId32",
-      asset: "u128",
+      asset: "CurrencyId",
       bondPrice: "u128",
       nbOfBonds: "u128",
       maturity: "ComposableTraitsBondedFinanceBondDuration",
@@ -43,7 +43,7 @@ export default {
       Finite: {returnIn: "u32"}
     },
     ComposableTraitsBondedFinanceBondOfferReward: {
-      asset: "u128",
+      asset: "CurrencyId",
       amount: "u128",
       maturity: "u32"
     },
@@ -125,10 +125,6 @@ export default {
     PalletCurrencyFactoryRanges: "Null",
     PalletCurrencyFactoryRangesRange: "Null",
     PalletLiquidationsLiquidationStrategyConfiguration: "Null",
-    ComposableTraitsDefiCurrencyPair: {
-      base: "u128",
-      quote: "u128"
-    },
     CommonMosaicRemoteAssetId: "Null",
     ComposableTraitsDexConsantProductPoolInfo: "Null",
     ComposableTraitsLendingMarketConfig: "Null",
@@ -139,10 +135,7 @@ export default {
     PalletLiquidityBootstrappingPool: "Null",
     ComposableTraitsDexConstantProductPoolInfo: {
       owner: "AccountId32",
-      pair: {
-        base: "u128",
-        quote: "u128"
-      },
+      pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
       lpToken: "u128",
       fee: "Permill",
       ownerFee: "Permill"
