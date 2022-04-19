@@ -1,9 +1,9 @@
 FROM ubuntu:21.10
 
 ENV RUSTUP_HOME=/usr/local/rustup
-ENV	CARGO_HOME=/usr/local/cargo
-ENV	PATH=/usr/local/cargo/bin:$PATH
-ENV	DEBIAN_FRONTEND=noninteractive
+ENV CARGO_HOME=/usr/local/cargo
+ENV PATH=/usr/local/cargo/bin:$PATH
+ENV DEBIAN_FRONTEND=noninteractive
 
 RUN set -eux; \
 	apt-get -y update && \

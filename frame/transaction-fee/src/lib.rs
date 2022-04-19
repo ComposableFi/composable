@@ -7,7 +7,7 @@
 	not(test),
 	warn(
 		clippy::disallowed_methods,
-		clippy::disallowed_type,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -133,7 +133,7 @@ pub mod pallet {
 	#[pallet::getter(fn next_fee_multiplier)]
 	// `NextFeeMultiplierOnEmpty` explicitly defines what happens on empty, so `ValueQuery` is
 	// allowed.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type NextFeeMultiplier<T: Config> =
 		StorageValue<_, Multiplier, ValueQuery, NextFeeMultiplierOnEmpty>;
 

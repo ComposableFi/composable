@@ -53,7 +53,7 @@
 	not(test),
 	warn(
 		clippy::disallowed_methods,
-		clippy::disallowed_type,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,

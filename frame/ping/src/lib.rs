@@ -20,7 +20,7 @@
 	not(test),
 	warn(
 		clippy::disallowed_methods,
-		clippy::disallowed_type,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -74,7 +74,7 @@ pub mod pallet {
 	/// The target parachains to ping.
 	#[pallet::storage]
 	// Targets is an empty BoundedVec by default, which causes the pallet not to ping any targets.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub(super) type Targets<T: Config> = StorageValue<
 		_,
 		BoundedVec<(ParaId, BoundedVec<u8, T::MaxPayload>), T::MaxTargets>,
@@ -84,7 +84,7 @@ pub mod pallet {
 	/// The total number of pings sent.
 	#[pallet::storage]
 	// Absence of PingCount is equivalent to 0, so ValueQuery is valid here.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub(super) type PingCount<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	/// The sent pings.

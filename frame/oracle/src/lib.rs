@@ -3,14 +3,14 @@
 	not(test),
 	warn(
 		clippy::disallowed_methods,
-		clippy::disallowed_type,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::too_many_arguments)]
 pub use pallet::*;
@@ -191,7 +191,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn assets_count)]
-	#[allow(clippy::disallowed_type)] // Default asset count of 0 is valid in this context
+	#[allow(clippy::disallowed_types)] // Default asset count of 0 is valid in this context
 	/// Total amount of assets
 	pub type AssetsCount<T: Config> = StorageValue<_, u32, ValueQuery>;
 
@@ -230,7 +230,7 @@ pub mod pallet {
 	// REVIEW: (benluelo) I think there's probably a better way to use this with an OptionQuery,
 	// instead of checking against defaults.
 	/// Price for an asset and blocknumber asset was updated at
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type Prices<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
@@ -241,7 +241,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn price_history)]
-	#[allow(clippy::disallowed_type)] // default history for an asset is an empty list, which is valid in this context.
+	#[allow(clippy::disallowed_types)] // default history for an asset is an empty list, which is valid in this context.
 	/// Price for an asset and blocknumber asset was updated at
 	pub type PriceHistory<T: Config> = StorageMap<
 		_,
@@ -253,7 +253,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn pre_prices)]
-	#[allow(clippy::disallowed_type)] // default history for an asset is an empty list, which is valid in this context.
+	#[allow(clippy::disallowed_types)] // default history for an asset is an empty list, which is valid in this context.
 	/// Temporary prices before aggregated
 	pub type PrePrices<T: Config> = StorageMap<
 		_,
@@ -267,7 +267,7 @@ pub mod pallet {
 	#[pallet::getter(fn asset_info)]
 	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
 	// use OptionQuery instead
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	/// Information about asset, including precision threshold and max/min answers
 	pub type AssetsInfo<T: Config> = StorageMap<
 		_,

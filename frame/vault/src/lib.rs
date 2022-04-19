@@ -2,7 +2,7 @@
 	not(test),
 	warn(
 		clippy::disallowed_methods,
-		clippy::disallowed_type,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -293,7 +293,7 @@ pub mod pallet {
 	/// Cleaned up vaults do not decrement the counter.
 	#[pallet::storage]
 	#[pallet::getter(fn vault_count)]
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type VaultCount<T: Config> = StorageValue<_, T::VaultId, ValueQuery>;
 
 	/// Info for each specific vaults.
@@ -313,7 +313,7 @@ pub mod pallet {
 	#[pallet::getter(fn capital_structure)]
 	// Bit questionable to have this be ValueQuery, as technically that makes it difficult to
 	// determine if a strategy is connected to a vault vs not having an allocation at all.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type CapitalStructure<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
