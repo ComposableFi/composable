@@ -413,7 +413,14 @@ declare module '@polkadot/api-base/types/errors' {
       OrderParametersIsInvalid: AugmentedError<ApiType>;
       RequestedOrderDoesNotExists: AugmentedError<ApiType>;
       TakeLimitDoesNotSatisfyOrder: AugmentedError<ApiType>;
+      TakeOrderDidNotHappen: AugmentedError<ApiType>;
       TakeParametersIsInvalid: AugmentedError<ApiType>;
+      /**
+       * errors trying to decode and parse XCM input
+       **/
+      XcmCannotDecodeRemoteParametersToLocalRepresentations: AugmentedError<ApiType>;
+      XcmCannotFindLocalIdentifiersAsDecodedFromRemote: AugmentedError<ApiType>;
+      XcmNotFoundConfigurationById: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -784,6 +791,24 @@ declare module '@polkadot/api-base/types/errors' {
        * Signer has not been set
        **/
       UnsetSigner: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    pablo: {
+      AmpFactorMustBeGreaterThanZero: AugmentedError<ApiType>;
+      AssetAmountMustBePositiveNumber: AugmentedError<ApiType>;
+      CannotRespectMinimumRequested: AugmentedError<ApiType>;
+      InvalidAmount: AugmentedError<ApiType>;
+      InvalidFees: AugmentedError<ApiType>;
+      InvalidPair: AugmentedError<ApiType>;
+      InvalidSaleState: AugmentedError<ApiType>;
+      MissingAmount: AugmentedError<ApiType>;
+      MustBeOwner: AugmentedError<ApiType>;
+      PairMismatch: AugmentedError<ApiType>;
+      PoolConfigurationNotSupported: AugmentedError<ApiType>;
+      PoolNotFound: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
