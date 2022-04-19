@@ -37,18 +37,14 @@ use ibc_trait::{
 use scale_info::prelude::collections::BTreeMap;
 use sp_runtime::traits::BlakeTwo256;
 use sp_std::time::Duration;
-use sp_trie::{TrieDBMut, TrieMut};
 use tendermint_proto::Protobuf;
 
 impl<T: Config> Pallet<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
-	pub(crate) fn build_ibc_state_trie<'a>(
-		db: &'a mut sp_trie::MemoryDB<BlakeTwo256>,
-		root: &'a mut sp_core::H256,
-	) -> Result<TrieDBMut<'a, sp_trie::LayoutV0<BlakeTwo256>>, Error<T>> {
-		let mut trie = <TrieDBMut<sp_trie::LayoutV0<BlakeTwo256>>>::new(db, root);
+	pub(crate) fn build_ibc_state_root() -> Result<sp_core::H256, Error<T>> {
+		let mut inputs = Vec::new();
 		let prefix = T::CONNECTION_PREFIX.to_vec();
 
 		// Insert client state in trie
@@ -72,10 +68,8 @@ where
 			let mut client_state_key = prefix.clone();
 			client_state_key.extend_from_slice(client_state_path.as_bytes());
 			client_type_key.extend_from_slice(client_type_path.as_bytes());
-			trie.insert(client_state_key.encode().as_slice(), &client_state)
-				.map_err(|_| Error::<T>::TrieInsertError)?;
-			trie.insert(client_type_key.encode().as_slice(), &client_type)
-				.map_err(|_| Error::<T>::TrieInsertError)?;
+			inputs.push((client_state_key.encode(), client_state));
+			inputs.push((client_type_key.encode(), client_type))
 		}
 
 		// Insert consensus states in trie
@@ -101,8 +95,7 @@ where
 			let mut key = prefix.clone();
 			let path = format!("{}", consensus_path);
 			key.extend_from_slice(&path.as_bytes());
-			trie.insert(key.encode().as_slice(), &consensus_state)
-				.map_err(|_| Error::<T>::TrieInsertError)?;
+			inputs.push((key.encode(), consensus_state));
 		}
 
 		// Insert connection ends in trie
@@ -114,8 +107,7 @@ where
 			.map_err(|_| Error::<T>::DecodingError)?;
 			let path = format!("{}", ConnectionsPath(connection_id));
 			key.extend_from_slice(path.as_bytes());
-			trie.insert(key.encode().as_slice(), &connection_end)
-				.map_err(|_| Error::<T>::TrieInsertError)?;
+			inputs.push((key.encode(), connection_end))
 		}
 
 		// Insert channel ends and sequences in trie
@@ -141,15 +133,10 @@ where
 			next_seq_ack_key.extend_from_slice(next_seq_ack_path.as_bytes());
 
 			channel_key.extend_from_slice(channel_path.as_bytes());
-			trie.insert(channel_key.encode().as_slice(), &channel_end)
-				.map_err(|_| Error::<T>::TrieInsertError)?;
-
-			trie.insert(next_seq_ack_key.encode().as_slice(), &next_seq_ack.encode())
-				.map_err(|_| Error::<T>::TrieInsertError)?;
-			trie.insert(next_seq_send_key.encode().as_slice(), &next_seq_send.encode())
-				.map_err(|_| Error::<T>::TrieInsertError)?;
-			trie.insert(next_seq_recv_key.encode().as_slice(), &next_seq_recv.encode())
-				.map_err(|_| Error::<T>::TrieInsertError)?;
+			inputs.push((channel_key.encode(), channel_end));
+			inputs.push((next_seq_ack_key.encode(), next_seq_ack.encode()));
+			inputs.push((next_seq_send_key.encode(), next_seq_send.encode()));
+			inputs.push((next_seq_recv_key.encode(), next_seq_recv.encode()));
 		}
 
 		// Insert packet commitments in trie
@@ -164,9 +151,7 @@ where
 			let mut commitment_key = prefix.clone();
 			let commitment_path_str = format!("{}", commitment_path);
 			commitment_key.extend_from_slice(commitment_path_str.as_bytes());
-
-			trie.insert(commitment_key.encode().as_slice(), &commitment)
-				.map_err(|_| Error::<T>::TrieInsertError)?;
+			inputs.push((commitment_key.encode(), commitment))
 		}
 
 		// Insert packet acknowledgements in trie
@@ -181,9 +166,7 @@ where
 			let mut ack_key = prefix.clone();
 			let ack_path_str = format!("{}", ack_path);
 			ack_key.extend_from_slice(ack_path_str.as_bytes());
-
-			trie.insert(ack_key.encode().as_slice(), &ack)
-				.map_err(|_| Error::<T>::TrieInsertError)?;
+			inputs.push((ack_key.encode(), ack));
 		}
 
 		// Insert packet receipts in trie
@@ -198,29 +181,21 @@ where
 			let mut receipt_key = prefix.clone();
 			let receipt_path_str = format!("{}", receipt_path);
 			receipt_key.extend_from_slice(receipt_path_str.as_bytes());
-
-			trie.insert(receipt_key.encode().as_slice(), &receipt)
-				.map_err(|_| Error::<T>::TrieInsertError)?;
+			inputs.push((receipt_key.encode(), receipt))
 		}
 
-		Ok(trie)
+		Ok(sp_io::trie::blake2_256_root(inputs, sp_core::storage::StateVersion::V0))
 	}
 
 	pub(crate) fn extract_ibc_state_root() -> Result<Vec<u8>, Error<T>> {
-		let mut db = sp_trie::MemoryDB::<BlakeTwo256>::default();
-		let mut root = Default::default();
-		let mut trie = Self::build_ibc_state_trie(&mut db, &mut root)?;
-		Ok(trie.root().as_bytes().to_vec())
+		let root = Self::build_ibc_state_root()?;
+		Ok(root.as_bytes().to_vec())
 	}
 
 	pub fn generate_raw_proof(keys: Vec<Vec<u8>>) -> Result<Vec<u8>, Error<T>> {
 		let keys = keys.iter().collect::<Vec<_>>();
-		let mut db = sp_trie::MemoryDB::<BlakeTwo256>::default();
-		let root = {
-			let mut root = Default::default();
-			let mut trie = Self::build_ibc_state_trie(&mut db, &mut root)?;
-			trie.root().clone()
-		};
+		let root = Self::build_ibc_state_root()?;
+		let db = sp_trie::MemoryDB::<BlakeTwo256>::default();
 		sp_trie::generate_trie_proof::<sp_trie::LayoutV0<BlakeTwo256>, _, _, _>(&db, root, keys)
 			.map(|proof| proof.encode())
 			.map_err(|_| Error::<T>::ProofGenerationError)
