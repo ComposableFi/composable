@@ -14,8 +14,6 @@ where
 	T: Copy + One + num_traits::WrappingAdd,
 {
 	fn next(&self) -> Self {
-		// todo!()
 		self.wrapping_add(&T::one())
-		// u8::wrappping
 	}
 }
