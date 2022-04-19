@@ -130,6 +130,7 @@ pub mod pallet {
 		AlreadyTagged,
 		EpochNotFound,
 		PalletIsBusy,
+    ImpossibleState
 	}
 
 	#[pallet::config]
@@ -591,7 +592,7 @@ pub mod pallet {
 				.map(|x| (x, BalanceOf::<T>::zero()))
 				.collect::<BTreeMap<_, _>>()
 				.try_into()
-				.expect("map does not alter the length; qed;");
+        .map_err(|_| Error::<T>::ImpossibleState)?;
 			let nft: StakingNFTOf<T> = StakingNFT {
 				asset: *asset,
 				stake: amount,
