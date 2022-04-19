@@ -246,39 +246,43 @@ pub mod pallet {
 
 	/// Stores the user's position in a particular market
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug)]
-	pub struct Position<Decimal, MarketId> {
+	#[scale_info(skip_type_params(T))]
+	#[codec(mel_bound())]
+	pub struct Position<T: Config> {
 		/// The Id of the virtual market
-		pub market_id: MarketId,
+		pub market_id: T::MarketId,
 		/// Virtual base asset amount. Positive implies long position and negative, short.
-		pub base_asset_amount: Decimal,
+		pub base_asset_amount: T::Decimal,
 		/// Virtual quote asset notional amount (margin * leverage * direction) used to open the
 		/// position
-		pub quote_asset_notional_amount: Decimal,
+		pub quote_asset_notional_amount: T::Decimal,
 		/// Last cumulative funding rate used to update this position. The market's latest
 		/// cumulative funding rate minus this gives the funding rate this position must pay. This
 		/// rate multiplied by this position's size (base asset amount * amm price) gives the total
 		/// funding owed, which is deducted from the trader account's margin. This debt is
 		/// accounted for in margin ratio calculations, which may lead to liquidation.
-		pub last_cum_funding: Decimal,
+		pub last_cum_funding: T::Decimal,
 	}
 
 	/// Data relating to a perpetual contracts market
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug)]
-	pub struct Market<AssetId, Decimal, VammId> {
+	#[scale_info(skip_type_params(T))]
+	#[codec(mel_bound())]
+	pub struct Market<T: Config> {
 		/// The Id of the vAMM used for price discovery in the virtual market
-		pub vamm_id: VammId,
+		pub vamm_id: T::VammId,
 		/// The Id of the underlying asset (base-quote pair). A price feed from one or more oracles
 		/// must be available for this symbol
-		pub asset_id: AssetId,
+		pub asset_id: AssetIdOf<T>,
 		/// Minimum margin ratio for opening a new position
-		pub margin_ratio_initial: Decimal,
+		pub margin_ratio_initial: T::Decimal,
 		/// Margin ratio below which liquidations can occur
-		pub margin_ratio_maintenance: Decimal,
+		pub margin_ratio_maintenance: T::Decimal,
 		/// Minimum amount of quote asset to exchange when opening a position. Also serves to round
 		/// a trade if it results in closing an existing position
-		pub minimum_trade_size: Decimal,
+		pub minimum_trade_size: T::Decimal,
 		/// The latest cumulative funding rate of this market. Must be updated periodically.
-		pub cum_funding_rate: Decimal,
+		pub cum_funding_rate: T::Decimal,
 		/// The timestamp for the latest funding rate update.
 		pub funding_rate_ts: DurationSeconds,
 		/// The time span between each funding rate update.
@@ -319,15 +323,12 @@ pub mod pallet {
 
 	type AssetIdOf<T> = <T as DeFiComposableConfig>::MayBeAssetId;
 	type BalanceOf<T> = <T as DeFiComposableConfig>::Balance;
-	type MarketIdOf<T> = <T as Config>::MarketId;
 	type DecimalOf<T> = <T as Config>::Decimal;
 	type VammConfigOf<T> = <T as Config>::VammConfig;
 	type VammIdOf<T> = <T as Config>::VammId;
 	type SwapConfigOf<T> = SwapConfig<VammIdOf<T>, BalanceOf<T>>;
 	type SwapSimulationConfigOf<T> = SwapSimulationConfig<VammIdOf<T>, BalanceOf<T>>;
-	type PositionOf<T> = Position<DecimalOf<T>, MarketIdOf<T>>;
 	type MarketConfigOf<T> = MarketConfig<AssetIdOf<T>, DecimalOf<T>, VammConfigOf<T>>;
-	type MarketOf<T> = Market<AssetIdOf<T>, DecimalOf<T>, VammIdOf<T>>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Runtime Storage
@@ -352,7 +353,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		T::AccountId,
-		BoundedVec<PositionOf<T>, T::MaxPositions>,
+		BoundedVec<Position<T>, T::MaxPositions>,
 		ValueQuery,
 	>;
 
@@ -369,7 +370,7 @@ pub mod pallet {
 	/// Maps [MarketId](Config::MarketId) to the corresponding virtual [Market] specs
 	#[pallet::storage]
 	#[pallet::getter(fn get_market)]
-	pub type Markets<T: Config> = StorageMap<_, Blake2_128Concat, T::MarketId, MarketOf<T>>;
+	pub type Markets<T: Config> = StorageMap<_, Blake2_128Concat, T::MarketId, Market<T>>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                         Genesis Configuration
@@ -802,8 +803,8 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Instruments for Pallet<T> {
-		type Market = MarketOf<T>;
-		type Position = PositionOf<T>;
+		type Market = Market<T>;
+		type Position = Position<T>;
 		type Decimal = T::Decimal;
 
 		fn funding_rate(market: &Self::Market) -> Result<Self::Decimal, DispatchError> {
@@ -848,16 +849,16 @@ pub mod pallet {
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
 		fn get_or_create_position<'a>(
-			positions: &'a mut BoundedVec<PositionOf<T>, T::MaxPositions>,
+			positions: &'a mut BoundedVec<Position<T>, T::MaxPositions>,
 			market_id: &T::MarketId,
-			market: &MarketOf<T>,
-		) -> Result<(&'a mut PositionOf<T>, usize), DispatchError> {
+			market: &Market<T>,
+		) -> Result<(&'a mut Position<T>, usize), DispatchError> {
 			Ok(match positions.iter().position(|p| p.market_id == *market_id) {
 				Some(index) =>
 					(positions.get_mut(index).expect("Item succesfully found above"), index),
 				None => {
 					positions
-						.try_push(PositionOf::<T> {
+						.try_push(Position::<T> {
 							market_id: market_id.clone(),
 							base_asset_amount: Zero::zero(),
 							quote_asset_notional_amount: Zero::zero(),
@@ -873,7 +874,7 @@ pub mod pallet {
 			})
 		}
 
-		fn position_direction(position: &PositionOf<T>) -> Option<Direction> {
+		fn position_direction(position: &Position<T>) -> Option<Direction> {
 			if position.base_asset_amount.is_zero() {
 				None
 			} else if position.base_asset_amount.is_positive() {
@@ -884,8 +885,8 @@ pub mod pallet {
 		}
 
 		fn base_asset_value(
-			market: &MarketOf<T>,
-			position: &PositionOf<T>,
+			market: &Market<T>,
+			position: &Position<T>,
 			position_direction: Direction,
 		) -> Result<T::Decimal, DispatchError> {
 			let sim_swapped = T::Vamm::swap_simulation(&SwapSimulationConfigOf::<T> {
@@ -902,7 +903,7 @@ pub mod pallet {
 		}
 
 		fn round_trade_if_necessary(
-			market: &MarketOf<T>,
+			market: &Market<T>,
 			quote_asset_amount_decimal: &mut T::Decimal,
 			abs_base_asset_value: &T::Decimal,
 		) -> Result<(), DispatchError> {
