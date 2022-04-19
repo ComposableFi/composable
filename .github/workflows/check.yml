@@ -56,6 +56,8 @@ jobs:
     concurrency:
       group: testcov-${{ github.ref }}
       cancel-in-progress: true
+    container:
+      image: composablefi/ci-linux:2022-04-18
     steps:
       - name: Clean up
         continue-on-error: true
@@ -65,12 +67,11 @@ jobs:
       - uses: actions/checkout@v2
       - name: Rustup show
         run: |
-          /home/runner/.cargo/bin/rustup show
+          rustup show
+
       - name: Run Test (with coverage)
         run: |
-          /home/runner/.cargo/bin/cargo +nightly-2021-11-08 install -f cargo-llvm-cov
-          /home/runner/.cargo/bin/rustup component add llvm-tools-preview --toolchain=nightly-2021-11-08
-          SKIP_WASM_BUILD=1 /home/runner/.cargo/bin/cargo +nightly-2021-11-08 llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --lcov --output-path lcov.info
+          SKIP_WASM_BUILD=1 cargo +nightly llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
@@ -185,7 +186,7 @@ jobs:
         run: |
           cargo +nightly fmt --all -- --check
 
-      - name: work around permission issue (https://github.com/actions/checkout/issues/760)
+      - name: Work around permission issue (https://github.com/actions/checkout/issues/760)
         run: |
           git config --global --add safe.directory /__w/composable/composable
 
@@ -234,13 +235,13 @@ jobs:
       - name: Cargo Single Depedency
         # description: Speed up builds and reduced security check surface
         run: |
-         cargo +nightly install -f cargo-deny
-         # start from minimal dependency crate
-         cargo +nightly deny --manifest-path ./frame/composable-support/Cargo.toml check Ban
+          cargo +nightly install -f cargo-deny
+          # start from minimal dependency crate
+          cargo +nightly deny --manifest-path ./frame/composable-support/Cargo.toml check Ban
 
       - name: Cargo udeps
+        continue-on-error: true # Often this turns gives false positives, due to the different ways that Substrate uses features.
         run: |
           cargo udeps --version
           # Compilation of local-integration-tests crate with --all-features doesn't work
           SKIP_WASM_BUILD=1 cargo +nightly udeps --workspace --exclude local-integration-tests --all-features
-        continue-on-error: true # Often this turns gives false positives, due to the different ways that Substrate uses features.  
