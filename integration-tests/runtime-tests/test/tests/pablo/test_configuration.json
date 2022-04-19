@@ -1,0 +1,33 @@
+{
+  "enabledTests": {
+     "enabled": true,
+     
+    "successTests": {
+      "enabled": true,
+      "createPool": {
+        "enabled": true
+      },
+      "addLiquidityTests": {
+        "enabled": true
+      },
+      "poolDrainTest": {
+        "enabled": true
+      },
+      "buyTest": {
+        "enabled": true
+      },
+      "sellTest": {
+        "enabled": true
+      },
+      "swapTest": {
+        "enabled": true
+      },
+      "ownerFeeTest": {
+        "enabled": true
+      },
+      "removeLiquidityTest": {
+        "enabled": true
+      }
+    }    
+  }
+}
