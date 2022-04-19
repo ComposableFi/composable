@@ -542,7 +542,7 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		#[transactional]
-		pub(crate) fn do_create_pool(
+		pub fn do_create_pool(
 			init_config: PoolInitConfigurationOf<T>,
 		) -> Result<T::PoolId, DispatchError> {
 			let (owner, pool_id) = match init_config {

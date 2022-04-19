@@ -240,17 +240,11 @@ pub struct LiquidityBootstrappingPoolInfo<AccountId, AssetId, BlockNumber> {
 	pub fee: Permill,
 }
 
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
-pub enum DexRouteNode<PoolId> {
-	Curve(PoolId),
-	Uniswap(PoolId),
-}
-
 /// Describes route for DEX.
 /// `Direct` gives vector of pool_id to use as router.
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
 pub enum DexRoute<PoolId, MaxHops: Get<u32>> {
-	Direct(BoundedVec<DexRouteNode<PoolId>, MaxHops>),
+	Direct(BoundedVec<PoolId, MaxHops>),
 }
 
 pub trait DexRouter<AccountId, AssetId, PoolId, Balance, MaxHops> {
@@ -260,10 +254,10 @@ pub trait DexRouter<AccountId, AssetId, PoolId, Balance, MaxHops> {
 	fn update_route(
 		who: &AccountId,
 		asset_pair: CurrencyPair<AssetId>,
-		route: Option<BoundedVec<DexRouteNode<PoolId>, MaxHops>>,
+		route: Option<BoundedVec<PoolId, MaxHops>>,
 	) -> Result<(), DispatchError>;
 	/// If route exist return `Some(Vec<PoolId>)`, else `None`.
-	fn get_route(asset_pair: CurrencyPair<AssetId>) -> Option<Vec<DexRouteNode<PoolId>>>;
+	fn get_route(asset_pair: CurrencyPair<AssetId>) -> Option<Vec<PoolId>>;
 	/// Exchange `dx` of `base` asset of `asset_pair` with associated route.
 	fn exchange(
 		who: &AccountId,
