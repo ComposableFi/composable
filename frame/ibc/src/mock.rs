@@ -3,17 +3,14 @@ use frame_support::{pallet_prelude::ConstU32, parameter_types};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
-	testing::Header,
-	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
-	MultiSignature,
+	generic,
+	traits::{BlakeTwo256, IdentityLookup},
 };
 use std::time::{Duration, Instant};
 
-pub type Signature = MultiSignature;
-pub(crate) type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+type Header = generic::Header<u32, BlakeTwo256>;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -24,12 +21,13 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: balances,
+		Ping: pallet_ibc_ping,
 		Ibc: pallet_ibc::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
 parameter_types! {
-	pub const BlockHashCount: u64 = 250;
+	pub const BlockHashCount: u32 = 250;
 	pub const SS58Prefix: u8 = 42;
 	pub const ExpectedBlockTime: u64 = 1000;
 	pub const ExistentialDeposit: u64 = 10000;
@@ -43,10 +41,10 @@ impl system::Config for Test {
 	type Origin = Origin;
 	type Call = Call;
 	type Index = u64;
-	type BlockNumber = u64;
+	type BlockNumber = u32;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
-	type AccountId = AccountId;
+	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
@@ -62,9 +60,13 @@ impl system::Config for Test {
 	type MaxConsumers = ConstU32<2>;
 }
 
+impl pallet_ibc_ping::Config for Test {
+	type Event = Event;
+	type IbcHandler = Ibc;
+}
+
 pub struct MockUnixTime;
 
-// maybe future to fix
 impl frame_support::traits::UnixTime for MockUnixTime {
 	fn now() -> Duration {
 		let now_time = Instant::now().elapsed();
@@ -92,6 +94,7 @@ impl balances::Config for Test {
 	type ReserveIdentifier = [u8; 8];
 	type WeightInfo = ();
 }
+
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()

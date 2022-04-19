@@ -66,6 +66,8 @@ impl Default for IbcConsensusState {
 
 #[cfg(test)]
 mod mock;
+#[cfg(test)]
+mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
@@ -183,7 +185,7 @@ pub mod pallet {
 	#[pallet::storage]
 	/// capability_name => capability
 	pub type Capabilities<T: Config> =
-		CountedStorageMap<_, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;
+		CountedStorageMap<_, Blake2_128Concat, Vec<u8>, u64, OptionQuery>;
 
 	#[pallet::storage]
 	/// (port_identifier, channel_identifier) => Sequence

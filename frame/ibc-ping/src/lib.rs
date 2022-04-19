@@ -26,7 +26,7 @@ use sp_std::{marker::PhantomData, prelude::*, vec};
 pub use pallet::*;
 
 pub const MODULE_ID: &'static str = "pallet-ibc-ping";
-pub const PORT_ID: &'static str = "ibc-ping";
+pub const PORT_ID: &'static str = "ping";
 
 #[derive(
 	Clone,
@@ -167,7 +167,7 @@ pub mod pallet {
 		/// A send packet has been registered
 		PacketSent,
 		/// A channel has been opened
-		ChannelOpened
+		ChannelOpened,
 	}
 
 	#[pallet::storage]

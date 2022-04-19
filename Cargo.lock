@@ -7788,12 +7788,16 @@ dependencies = [
  "ibc-primitives",
  "ibc-trait",
  "log 0.4.16",
+ "pallet-balances",
+ "pallet-ibc",
  "parity-scale-codec",
  "scale-info",
  "serde",
  "sp-core",
+ "sp-io",
  "sp-runtime",
  "sp-std 4.0.0",
+ "tendermint-proto",
 ]
 
 [[package]]

@@ -9,7 +9,7 @@ use ibc::core::{
 		packet::{Packet, Sequence},
 	},
 	ics05_port::{
-		capabilities::PortCapability,
+		capabilities::{PortCapability, PortCapabilityType, TypedCapability},
 		context::{PortKeeper, PortReader},
 	},
 	ics24_host::{
@@ -21,7 +21,6 @@ use ibc::core::{
 		},
 	},
 };
-use ibc::core::ics05_port::capabilities::{PortCapabilityType, TypedCapability};
 use ibc_primitives::{
 	ConnectionHandshakeProof, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection,
 	OffchainPacketType, PacketState, Proof, QueryChannelResponse, QueryChannelsResponse,

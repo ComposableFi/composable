@@ -14,7 +14,8 @@ use scale_info::prelude::string::ToString;
 
 impl<T: Config + Send + Sync> CapabilityReader for Context<T> {
 	fn get_capability(&self, name: &CapabilityName) -> Result<Capability, ICS05Error> {
-		let cap = Capabilities::<T>::get(name.to_string().as_bytes().to_vec());
+		let cap = Capabilities::<T>::get(name.to_string().as_bytes().to_vec())
+			.ok_or(ICS05Error::implementation_specific())?;
 		Ok(Capability::from(cap))
 	}
 
@@ -23,7 +24,8 @@ impl<T: Config + Send + Sync> CapabilityReader for Context<T> {
 		name: &CapabilityName,
 		capability: &Capability,
 	) -> Result<(), ICS05Error> {
-		let cap = Capabilities::<T>::get(name.to_string().as_bytes().to_vec());
+		let cap = Capabilities::<T>::get(name.to_string().as_bytes().to_vec())
+			.ok_or(ICS05Error::implementation_specific())?;
 		let cap = Capability::from(cap);
 		if &cap == capability {
 			return Ok(())
@@ -41,7 +43,8 @@ impl<T: Config + Sync + Send> PortReader for Context<T> {
 			val if val == pallet_ibc_ping::PORT_ID => {
 				let capability_name = Self::port_capability_name(port_id.clone());
 				let capability_key = capability_name.to_string().as_bytes().to_vec();
-				let capability = Capabilities::<T>::get(capability_key);
+				let capability = Capabilities::<T>::get(capability_key)
+					.ok_or(ICS05Error::implementation_specific())?;
 				let capability = Capability::from(capability);
 				Ok((
 					ModuleId::from_str(pallet_ibc_ping::MODULE_ID)
