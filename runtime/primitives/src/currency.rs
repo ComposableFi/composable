@@ -2,10 +2,11 @@
 use codec::{CompactAs, Decode, Encode, MaxEncodedLen};
 use composable_traits::currency::Exponent;
 use core::ops::Div;
+use core::str::FromStr;
+use core::fmt::Display;
 use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
 
-use composable_support::rpc_helpers::FromHexStr;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_runtime::sp_std::ops::Deref;
@@ -41,6 +42,20 @@ pub trait WellKnownCurrency {
 #[repr(transparent)]
 pub struct CurrencyId(pub u128);
 
+impl FromStr for CurrencyId {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+      u128::from_str(s).map(CurrencyId).map_err(|_| ())
+    }
+}
+
+impl Display for CurrencyId {
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		let CurrencyId(id) = self;
+		write!(f, "{}", id)
+	}
+}
+
 impl WellKnownCurrency for CurrencyId {
 	const NATIVE: CurrencyId = CurrencyId::PICA;
 	const RELAY_NATIVE: CurrencyId = CurrencyId::KSM;
@@ -70,20 +85,6 @@ impl CurrencyId {
 	}
 	pub fn milli<T: From<u64> + Div<Output = T>>() -> T {
 		Self::unit::<T>() / T::from(1000_u64)
-	}
-}
-
-impl FromHexStr for CurrencyId {
-	type Err = <u128 as FromHexStr>::Err;
-
-	fn from_hex_str(src: &str) -> core::result::Result<Self, Self::Err> {
-		u128::from_hex_str(src).map(CurrencyId)
-	}
-}
-
-impl core::fmt::LowerHex for CurrencyId {
-	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-		core::fmt::LowerHex::fmt(&self.0, f)
 	}
 }
 
