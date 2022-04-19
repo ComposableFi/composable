@@ -5,12 +5,12 @@ import { addFundstoThePool, buyFromPool, createPool, getOwnerFee, getUserTokens,
 import { mintAssetsToWallet } from '@composable/utils/mintingHelper';
 
 /**
-   * This suite includes tests for the constantProductDex Pallet. 
+   * This suite includes tests for the constantProductDex in Pablo pallet.
    * Tested functionalities are:
-   * Create - AddLiquidity - Buy - Sell - Swap - RemoveLiquidity with basic calculations with constantProductFormula and OwnerFee.  
+   * RPC - Create - AddLiquidity - Buy - Sell - Swap - RemoveLiquidity with basic calculations with constantProductFormula and OwnerFee.
    * Mainly consists of happy path testing.
 */
-describe('tx.constantProductDex Tests', function () {
+describe('tx.pablo.constantProductDex Tests', function () {
 
   let walletId1: KeyringPair,
   walletId2: KeyringPair;
@@ -43,7 +43,7 @@ describe('tx.constantProductDex Tests', function () {
     await mintAssetsToWallet(walletId2, walletAlice, [1, baseAssetId, quoteAssetId]);       
   });
   
-  describe('tx.constantProductDex Success Tests', function() {
+  describe('tx.pablo.constantProductDex Success Tests', function() {
     if(!testConfiguration.enabledTests.successTests.enabled){
       return;
     }
@@ -59,6 +59,7 @@ describe('tx.constantProductDex Tests', function () {
         ownerFee
       );
       const returnedOwnerFee = await getOwnerFee(poolId);
+      console.log(poolId);
       //verify if the pool is created
       expect(poolId).to.be.a('number');
       //Verify if the pool is created with specified owner Fee
@@ -74,6 +75,7 @@ describe('tx.constantProductDex Tests', function () {
         baseAmount,
         quoteAmount
       );
+      console.log(result);
       //Once funds added to the pool, User is deposited with LP Tokens. 
       wallet1LpTokens = result.returnedLPTokens.toNumber();    
       expect(result.baseAdded.toNumber()).to.be.equal(baseAmount);

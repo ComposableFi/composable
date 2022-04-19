@@ -3,7 +3,7 @@ import {KeyringPair} from "@polkadot/keyring/types";
 import { u128 } from '@polkadot/types-codec';
 
 /**
- *Contains handler methods for the constantProductDex Tests. 
+ *Contains handler methods for the pablo Tests. 
  */
 let poolId: number;  
 let constantProductk: number;
@@ -21,11 +21,18 @@ export async function createPool(walletId: KeyringPair, baseAssetId: number, quo
   });
   const fee = api.createType('Permill', 0);
   const ownerFees = api.createType('Permill', ownerFee);
+  const walletIdAccount = api.createType('AccountId32', walletId.address).toString();
+  const poolConfig = api.createType('PalletPabloPoolConfiguration', {
+    owner: walletIdAccount,
+    pair: pair,
+    fee: fee,
+    owner_fee: ownerFees,
+  })
   const {data: [resultPoolId],} = await sendAndWaitForSuccess(
     api,
     walletId,
-    api.events.constantProductDex.PoolCreated.is,
-    api.tx.constantProductDex.create(pair, fee, ownerFees)
+    api.events.pablo.PoolCreated.is,
+    api.tx.pablo.create(poolConfig)
   );
   poolId = resultPoolId.toNumber();
   return poolId;
@@ -38,8 +45,8 @@ export async function addFundstoThePool(walletId:KeyringPair, baseAmount:number,
   const {data: [,walletIdResult,baseAdded, quoteAdded,returnedLPTokens]} =await sendAndWaitForSuccess(
     api,
     walletId,
-    api.events.constantProductDex.LiquidityAdded.is,
-    api.tx.constantProductDex.addLiquidity(poolId, 
+    api.events.pablo.LiquidityAdded.is,
+    api.tx.pablo.addLiquidity(poolId, 
       baseAmountParam, 
       quoteAmountParam, 
       minMintAmountParam, 
@@ -62,8 +69,8 @@ export async function buyFromPool(walletId: KeyringPair, assetId:number, amountT
   const {data: [accountId,poolArg,quoteArg,swapArg,amountgathered,quoteAmount,ownerFee] } = await sendAndWaitForSuccess(
     api,
     walletId,
-    api.events.constantProductDex.Swapped.is,
-    api.tx.constantProductDex.buy(
+    api.events.pablo.Swapped.is,
+    api.tx.pablo.buy(
       poolIdParam,
       assetIdParam,
       amountParam,
@@ -81,8 +88,8 @@ export async function sellToPool(walletId: KeyringPair, assetId: number, amount:
   const {data: [result, ...rest]} = await sendAndWaitForSuccess(
     api,
     walletId,
-    api.events.constantProductDex.Swapped.is,
-    api.tx.constantProductDex.sell(
+    api.events.pablo.Swapped.is,
+    api.tx.pablo.sell(
       poolIdParam,
       assetIdParam,
       amountParam,
@@ -101,8 +108,8 @@ export async function removeLiquidityFromPool(walletId: KeyringPair, lpTokens:nu
   const {data: [resultPoolId,resultWallet,resultBase,resultQuote,remainingLpTokens]}=await sendAndWaitForSuccess(
     api,
     walletId,
-    api.events.constantProductDex.LiquidityRemoved.is,
-    api.tx.constantProductDex.removeLiquidity(
+    api.events.pablo.LiquidityRemoved.is,
+    api.tx.pablo.removeLiquidity(
       poolIdParam,
       lpTokenParam,
       minBaseParam,
@@ -129,8 +136,8 @@ export async function swapTokenPairs(wallet: KeyringPair,
     const {data: [resultPoolId,resultWallet,resultQuote,resultBase,resultBaseAmount,returnedQuoteAmount,]}= await sendAndWaitForSuccess(
       api,
       wallet,
-      api.events.constantProductDex.Swapped.is,
-      api.tx.constantProductDex.swap(
+      api.events.pablo.Swapped.is,
+      api.tx.pablo.swap(
         poolIdParam,
         currencyPair,
         quoteAmountParam,
@@ -147,6 +154,6 @@ export async function getUserTokens(walletId: KeyringPair, assetId: number){
 }
 
 export async function getOwnerFee(poolId: number){
-  const result = await api.query.constantProductDex.pools(api.createType('u128', poolId));
-  return result.unwrap().ownerFee.toNumber();
+  const result = await api.query.pablo.pools(api.createType('u128', poolId));
+  return result.unwrap().asConstantProduct.ownerFee.toNumber();
 }
