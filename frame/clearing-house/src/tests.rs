@@ -341,6 +341,14 @@ prop_compose! {
 	}
 }
 
+prop_compose! {
+	fn any_pnl_decimal(entry_value: FixedI128)(
+		exit_value_inner in 0..FixedI128::saturating_from_integer(1_000_000_000).into_inner()
+	) -> FixedI128 {
+		FixedI128::from_inner(exit_value_inner) - entry_value
+	}
+}
+
 // ----------------------------------------------------------------------------------------------------
 //                                           Mocked Pallets Tests
 // ----------------------------------------------------------------------------------------------------
@@ -813,10 +821,13 @@ proptest! {
 
 proptest! {
 	#[test]
-	fn closing_position_with_trade_realizes_pnl(pnl_decimal in bounded_decimal()) {
+	fn closing_position_with_trade_realizes_pnl(
+		(quote_amount_decimal, pnl_decimal) in Just(FixedI128::saturating_from_integer(100))
+			.prop_flat_map(|q| (Just(q), any_pnl_decimal(q)))
+	) {
 		let mut market_id: MarketId = 0;
 
-		let quote_amount = valid_quote_asset_amount() as i128;
+		let quote_amount = quote_amount_decimal.into_inner();
 		let quote_amount_abs = quote_amount.unsigned_abs();
 		let base_amount_limit = valid_base_asset_amount_limit() as i128;
 		let margin = quote_amount;
@@ -839,8 +850,10 @@ proptest! {
 				));
 
 				// Set price of base so that it should give the desired PnL in quote
-				VammPallet::set_swap_output(Some(quote_amount + pnl));
+				// swapping all of base would give quote_amount + pnl
 				VammPallet::set_swap_simulation_output(Some(quote_amount + pnl));
+				// We swap all of base to close the position
+				VammPallet::set_swap_output(Some(quote_amount + pnl));
 				assert_ok!(TestPallet::open_position(
 					Origin::signed(ALICE),
 					market_id,
