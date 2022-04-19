@@ -745,7 +745,7 @@ where
 		port_id: PortId,
 		capability: PortCapability,
 		channel_end: ChannelEnd,
-	) -> Result<(), IbcHandlerError> {
+	) -> Result<ChannelId, IbcHandlerError> {
 		let mut ctx = crate::routing::Context::<T>::new();
 		if !ctx.authenticate(port_id.clone(), &capability) {
 			return Err(IbcHandlerError::ChannelInitError)
@@ -761,9 +761,10 @@ where
 				.get(0)
 				.ok_or(IbcHandlerError::ChannelInitError)?
 				.clone(),
-			&(port_id, channel_id),
+			&(port_id, channel_id.clone()),
 		)
-		.map_err(|_| IbcHandlerError::ChannelInitError)
+		.map_err(|_| IbcHandlerError::ChannelInitError)?;
+		Ok(channel_id)
 	}
 }
 

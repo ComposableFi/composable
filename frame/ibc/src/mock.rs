@@ -1,7 +1,10 @@
 use crate as pallet_ibc;
 use frame_support::{pallet_prelude::ConstU32, parameter_types};
 use frame_system as system;
-use sp_core::H256;
+use sp_core::{
+	offchain::{testing::TestOffchainExt, OffchainDbExt, OffchainWorkerExt},
+	H256,
+};
 use sp_runtime::{
 	generic,
 	traits::{BlakeTwo256, IdentityLookup},
@@ -95,7 +98,16 @@ impl balances::Config for Test {
 	type WeightInfo = ();
 }
 
+fn register_offchain_ext(ext: &mut sp_io::TestExternalities) {
+	let (offchain, _offchain_state) = TestOffchainExt::with_offchain_db(ext.offchain_db());
+	ext.register_extension(OffchainDbExt::new(offchain.clone()));
+	ext.register_extension(OffchainWorkerExt::new(offchain));
+}
+
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	let mut ext: sp_io::TestExternalities =
+		system::GenesisConfig::default().build_storage::<Test>().unwrap().into();
+	register_offchain_ext(&mut ext);
+	ext
 }

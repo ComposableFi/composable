@@ -11,6 +11,7 @@ use ibc_primitives::SendPacketData;
 use scale_info::{prelude::string::String, TypeInfo};
 use sp_std::{prelude::*, str::FromStr};
 
+#[derive(RuntimeDebug)]
 pub enum Error {
 	SendPacketError,
 	BindPortError,
@@ -25,6 +26,7 @@ pub struct OpenChannelParams {
 	pub order: u8,
 	pub connection_id: Vec<u8>,
 	pub counterparty_port_id: Vec<u8>,
+	/// UTF8 string bytes
 	pub version: Vec<u8>,
 }
 
@@ -35,7 +37,7 @@ pub trait IbcTrait {
 		port_id: PortId,
 		capability: PortCapability,
 		channel_end: ChannelEnd,
-	) -> Result<(), Error>;
+	) -> Result<ChannelId, Error>;
 }
 
 pub fn port_id_from_bytes(port: Vec<u8>) -> Result<PortId, Error> {

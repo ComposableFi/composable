@@ -97,8 +97,15 @@ where
 	}
 
 	// TODO: Define consensus state for substrate chains in ibc-rs and modify this after
+	#[cfg(not(test))]
 	fn host_consensus_state(&self, _height: Height) -> Result<AnyConsensusState, ICS03Error> {
 		Err(ICS03Error::implementation_specific())
+	}
+
+	#[cfg(test)]
+	fn host_consensus_state(&self, height: Height) -> Result<AnyConsensusState, ICS03Error> {
+		use ibc::mock::{client_state::MockConsensusState, header::MockHeader};
+		Ok(AnyConsensusState::Mock(MockConsensusState::new(MockHeader::new(height))))
 	}
 }
 

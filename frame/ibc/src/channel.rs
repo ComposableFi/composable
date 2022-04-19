@@ -140,22 +140,12 @@ where
 		&self,
 		port_channel_id: &(PortId, ChannelId),
 	) -> Result<Sequence, ICS04Error> {
-		if <NextSequenceSend<T>>::contains_key(
+		let seq = <NextSequenceSend<T>>::get(
 			port_channel_id.0.as_bytes(),
 			port_channel_id.1.to_string().as_bytes(),
-		) {
-			let seq = <NextSequenceSend<T>>::get(
-				port_channel_id.0.as_bytes(),
-				port_channel_id.1.to_string().as_bytes(),
-			);
-			log::trace!("in channel : [get_next_sequence] >> sequence  = {:?}", seq);
-			Ok(Sequence::from(seq))
-		} else {
-			log::trace!(
-				"in channel : [get_next_sequence] >> read get next sequence send return None"
-			);
-			Err(ICS04Error::missing_next_send_seq(port_channel_id.clone()))
-		}
+		);
+		log::trace!("in channel : [get_next_sequence] >> sequence  = {:?}", seq);
+		Ok(Sequence::from(seq))
 	}
 
 	fn get_next_sequence_recv(

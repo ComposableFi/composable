@@ -30,8 +30,6 @@ pub struct Any {
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ConnectionParams {
-	/// Utf8 string bytes
-	pub connnection_id: Vec<u8>,
 	/// A vector of (identifer, features) all encoded as Utf8 string bytes
 	pub versions: Vec<(Vec<u8>, Vec<Vec<u8>>)>,
 	/// Utf8 client_id bytes
@@ -90,9 +88,10 @@ pub mod pallet {
 			version::Version,
 		},
 		ics23_commitment::commitment::CommitmentPrefix,
+		ics24_host::identifier::ConnectionId,
 	};
 
-	use ibc_trait::{client_id_from_bytes, connection_id_from_bytes};
+	use ibc_trait::client_id_from_bytes;
 	use sp_runtime::{generic::DigestItem, SaturatedConversion};
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
@@ -341,8 +340,7 @@ pub mod pallet {
 			}
 			let client_id =
 				client_id_from_bytes(params.client_id).map_err(|_| Error::<T>::DecodingError)?;
-			let connection_id = connection_id_from_bytes(params.connnection_id)
-				.map_err(|_| Error::<T>::DecodingError)?;
+			let connection_id = ConnectionId::new(Connections::<T>::count() as u64);
 			let counterparty_client_id = client_id_from_bytes(params.counterparty_client_id)
 				.map_err(|_| Error::<T>::DecodingError)?;
 			let versions = params

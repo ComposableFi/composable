@@ -25,7 +25,7 @@ use sp_std::{marker::PhantomData, prelude::*, vec};
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
 
-pub const MODULE_ID: &'static str = "pallet-ibc-ping";
+pub const MODULE_ID: &'static str = "PalletIbcPing";
 pub const PORT_ID: &'static str = "ping";
 
 #[derive(
@@ -38,12 +38,12 @@ pub const PORT_ID: &'static str = "ping";
 	scale_info::TypeInfo,
 )]
 pub struct SendPingParams {
-	data: Vec<u8>,
-	timeout_height_offset: u64,
-	timeout_timestamp_offset: u64,
-	channel_id: Vec<u8>,
-	dest_port_id: Vec<u8>,
-	dest_channel_id: Vec<u8>,
+	pub data: Vec<u8>,
+	pub timeout_height_offset: u64,
+	pub timeout_timestamp_offset: u64,
+	pub channel_id: Vec<u8>,
+	pub dest_port_id: Vec<u8>,
+	pub dest_channel_id: Vec<u8>,
 }
 
 // Definition of the pallet logic, to be aggregated at runtime definition through
@@ -101,9 +101,6 @@ pub mod pallet {
 			let state = match params.state {
 				0 => State::Uninitialized,
 				1 => State::Init,
-				2 => State::TryOpen,
-				3 => State::Open,
-				4 => State::Closed,
 				_ => return Err(Error::<T>::InvalidParams.into()),
 			};
 			let order = match params.order {
@@ -132,9 +129,13 @@ pub mod pallet {
 				.map_err(|_| Error::<T>::ChannelInitError)?;
 			let capability = Capability::<T>::get().ok_or(Error::<T>::MissingPortCapability)?;
 			let capability = RawCapability::from(capability);
-			T::IbcHandler::open_channel(port_id, capability.into(), channel_end)
-				.map_err(|_| Error::<T>::ChannelInitError)?;
-			Self::deposit_event(Event::<T>::ChannelOpened);
+			let channel_id =
+				T::IbcHandler::open_channel(port_id.clone(), capability.into(), channel_end)
+					.map_err(|_| Error::<T>::ChannelInitError)?;
+			Self::deposit_event(Event::<T>::ChannelOpened {
+				channel_id: channel_id.to_string().as_bytes().to_vec(),
+				port_id: port_id.as_bytes().to_vec(),
+			});
 			Ok(())
 		}
 
@@ -153,7 +154,10 @@ pub mod pallet {
 				dest_port_id: params.dest_port_id,
 				dest_channel_id: params.dest_channel_id,
 			};
-			T::IbcHandler::send_packet(send_packet).map_err(|_| Error::<T>::PacketSendError)?;
+			T::IbcHandler::send_packet(send_packet).map_err(|e| {
+				println!("{:?}", e);
+				Error::<T>::PacketSendError
+			})?;
 			Self::deposit_event(Event::<T>::PacketSent);
 			Ok(())
 		}
@@ -167,7 +171,7 @@ pub mod pallet {
 		/// A send packet has been registered
 		PacketSent,
 		/// A channel has been opened
-		ChannelOpened,
+		ChannelOpened { channel_id: Vec<u8>, port_id: Vec<u8> },
 	}
 
 	#[pallet::storage]
