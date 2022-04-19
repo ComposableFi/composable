@@ -26,8 +26,8 @@ pub use xcmp::{MaxInstructions, UnitWeightCost, XcmConfig};
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
 	BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, MultiExistentialDeposits,
-	NativeExistentialDeposit, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
-	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION, PoolId
+	NativeExistentialDeposit, PoolId, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
+	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 
 use composable_traits::dex::PriceAggregate;

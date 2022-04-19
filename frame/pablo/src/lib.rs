@@ -71,7 +71,10 @@ pub mod pallet {
 	use composable_traits::{
 		currency::{CurrencyFactory, LocalAssets},
 		defi::{CurrencyPair, Rate},
-		dex::{PriceAggregate, Amm, ConstantProductPoolInfo, LiquidityBootstrappingPoolInfo, StableSwapPoolInfo},
+		dex::{
+			Amm, ConstantProductPoolInfo, LiquidityBootstrappingPoolInfo, PriceAggregate,
+			StableSwapPoolInfo,
+		},
 		math::SafeArithmetic,
 	};
 	use core::fmt::Debug;
@@ -961,16 +964,11 @@ pub mod pallet {
 		pool_id: T::PoolId,
 		base_asset_id: T::AssetId,
 		quote_asset_id: T::AssetId,
-		amount: T::Balance)
-		-> Result<PriceAggregate<T::PoolId, T::AssetId, T::Balance>, DispatchError> {
+		amount: T::Balance,
+	) -> Result<PriceAggregate<T::PoolId, T::AssetId, T::Balance>, DispatchError> {
 		// quote_asset_id is always known given the base as no multi-asset pool support is
 		// implemented as of now.
 		let spot_price = <Pallet<T> as Amm>::get_exchange_value(pool_id, base_asset_id, amount)?;
-		Ok(PriceAggregate {
-			pool_id,
-			base_asset_id,
-			quote_asset_id,
-			spot_price
-		})
+		Ok(PriceAggregate { pool_id, base_asset_id, quote_asset_id, spot_price })
 	}
 }

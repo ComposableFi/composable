@@ -1,9 +1,9 @@
 use codec::Codec;
-use pablo_runtime_api::PabloRuntimeApi;
 use composable_support::rpc_helpers::{SafeRpcWrapper, SafeRpcWrapperType};
 use composable_traits::dex::PriceAggregate;
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result as RpcResult};
 use jsonrpc_derive::rpc;
+use pablo_runtime_api::PabloRuntimeApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
@@ -40,8 +40,7 @@ impl<C, M> Pablo<C, M> {
 	}
 }
 
-impl<C, Block, PoolId, AssetId, Balance>
-	PabloApi<<Block as BlockT>::Hash, PoolId, AssetId, Balance>
+impl<C, Block, PoolId, AssetId, Balance> PabloApi<<Block as BlockT>::Hash, PoolId, AssetId, Balance>
 	for Pablo<C, (Block, PoolId, AssetId, Balance)>
 where
 	Block: BlockT,
@@ -65,9 +64,7 @@ where
 	> {
 		let api = self.client.runtime_api();
 
-		let at = BlockId::hash(at.unwrap_or_else(|| {
-			self.client.info().best_hash
-		}));
+		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
 
 		// calling ../../runtime-api
 		let runtime_api_result =
