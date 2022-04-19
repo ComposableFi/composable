@@ -871,6 +871,61 @@ proptest! {
 	}
 }
 
+proptest! {
+	#[test]
+	#[ignore = "to be implemented"]
+	fn reducing_position_realizes_pnl(
+		(quote_amount_decimal, pnl_decimal) in Just(FixedI128::saturating_from_integer(100))
+			.prop_flat_map(|q| (Just(q), any_pnl_decimal(q)))
+	) {
+		let mut market_id: MarketId = 0;
+
+		let quote_amount = quote_amount_decimal.into_inner();
+		// Initial price = 10
+		let base_amount = FixedI128::saturating_from_integer(10).into_inner();
+		let margin = quote_amount;
+		let pnl = pnl_decimal.into_inner();
+		ExtBuilder { balances: vec![(ALICE, USDC, margin.unsigned_abs())], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(valid_market_config()))
+			.add_margin(&ALICE, USDC, margin.unsigned_abs())
+			.execute_with(|| {
+				let positions_before = TestPallet::get_positions(&ALICE).len();
+
+				// Open new position
+				VammPallet::set_swap_output(Some(base_amount));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Long,
+					quote_amount.unsigned_abs(),
+					base_amount.unsigned_abs(),
+				));
+
+				// Swapping all of base would give quote_amount + pnl
+				VammPallet::set_swap_simulation_output(Some(quote_amount + pnl));
+				// We want to subtract 50% for the position base_asset_amount
+				VammPallet::set_swap_output(Some(- base_amount / 2));
+				// Reduce (close) position by 50%
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Short,
+					((quote_amount + pnl) / 2).unsigned_abs(),
+					(base_amount / 2).unsigned_abs(),
+				));
+
+				// Positions remains open
+				assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before + 1);
+				// 50% of the PnL was realized
+				assert_eq!(
+					TestPallet::get_margin(&ALICE).unwrap() as i128,
+					(margin + pnl / 2).max(0)
+				)
+			})
+	}
+}
+
 #[test]
 #[ignore = "to be implemented"]
 fn fails_to_increase_position_if_not_enough_margin() {
