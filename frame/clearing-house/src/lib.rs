@@ -112,6 +112,8 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+mod math;
+
 mod weights;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -123,7 +125,7 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 
-	use crate::weights::WeightInfo;
+	use crate::{math, weights::WeightInfo};
 	use codec::FullCodec;
 	use composable_traits::{
 		clearing_house::{ClearingHouse, Instruments},
@@ -142,10 +144,7 @@ pub mod pallet {
 	use num_integer::Integer;
 	use num_traits::Signed;
 	use sp_runtime::{
-		traits::{
-			AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating,
-			Zero,
-		},
+		traits::{AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, One, Saturating, Zero},
 		ArithmeticError, FixedPointNumber, FixedPointOperand,
 	};
 	use sp_std::{cmp::Ordering, fmt::Debug};
@@ -748,9 +747,11 @@ pub mod pallet {
 				let abs_base_asset_value =
 					Self::base_asset_value(&market, position, position_direction)?.saturating_abs();
 
-				let diff = abs_base_asset_value
-					.checked_sub(&quote_asset_amount_decimal)
-					.ok_or(ArithmeticError::Underflow)?;
+				// TODO(0xangelo): wrap this in Self::round_trade_if_necessary
+				let diff = math::decimal_checked_sub::<T>(
+					&abs_base_asset_value,
+					&quote_asset_amount_decimal,
+				)?;
 				if diff.saturating_abs() < market.minimum_trade_size {
 					// round trade to close off position
 					quote_asset_amount_decimal = abs_base_asset_value;
@@ -766,19 +767,22 @@ pub mod pallet {
 						let swapped = T::Vamm::swap(&SwapConfigOf::<T> {
 							vamm_id: market.vamm_id,
 							asset: AssetType::Base,
-							input_amount: Self::abs_decimal_to_balance(&position.base_asset_amount),
+							input_amount: math::decimal_abs_to_balance::<T>(
+								&position.base_asset_amount,
+							),
 							direction: match position_direction {
 								Direction::Long => VammDirection::Add,
 								Direction::Short => VammDirection::Remove,
 							},
-							output_amount_limit: Self::abs_decimal_to_balance(
+							output_amount_limit: math::decimal_abs_to_balance::<T>(
 								&quote_asset_amount_decimal,
 							),
 						})?;
 
-						let pnl = T::Decimal::from_inner(swapped)
-							.checked_sub(&position.quote_asset_notional_amount)
-							.ok_or(ArithmeticError::Underflow)?;
+						let pnl = math::decimal_checked_sub::<T>(
+							&T::Decimal::from_inner(swapped),
+							&position.quote_asset_notional_amount,
+						)?;
 
 						// TODO(0xangelo): properly handle if the user doesn't have margin
 						let margin = Self::get_margin(account_id).unwrap_or_default();
@@ -814,35 +818,24 @@ pub mod pallet {
 
 			let vamm_twap = T::Vamm::get_twap(&market.vamm_id)?;
 
-			let price_spread =
-				vamm_twap.checked_sub(&oracle_twap).ok_or(ArithmeticError::Underflow)?;
+			let price_spread = math::decimal_checked_sub::<T>(&vamm_twap, &oracle_twap)?;
 			let period_adjustment = Self::Decimal::checked_from_rational(
 				market.funding_frequency,
 				market.funding_period,
 			)
 			.ok_or(ArithmeticError::Underflow)?;
-			let rate =
-				price_spread.checked_mul(&period_adjustment).ok_or(ArithmeticError::Underflow)?;
-			Ok(rate)
+			Ok(math::decimal_checked_mul::<T>(&price_spread, &period_adjustment)?)
 		}
 
 		fn unrealized_funding(
 			market: &Self::Market,
 			position: &Self::Position,
 		) -> Result<Self::Decimal, DispatchError> {
-			let cum_funding_delta = market
-				.cum_funding_rate
-				.checked_sub(&position.last_cum_funding)
-				.ok_or(ArithmeticError::Underflow)?;
-			let payment =
-				cum_funding_delta.checked_mul(&position.base_asset_amount).ok_or_else(|| {
-					match cum_funding_delta.is_negative() ^ position.base_asset_amount.is_negative()
-					{
-						true => ArithmeticError::Underflow,
-						false => ArithmeticError::Overflow,
-					}
-				})?;
-			Ok(payment)
+			let cum_funding_delta = math::decimal_checked_sub::<T>(
+				&market.cum_funding_rate,
+				&position.last_cum_funding,
+			)?;
+			Ok(math::decimal_checked_mul::<T>(&cum_funding_delta, &position.base_asset_amount)?)
 		}
 	}
 
@@ -902,7 +895,7 @@ pub mod pallet {
 			let sim_swapped = T::Vamm::swap_simulation(&SwapSimulationConfigOf::<T> {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Base,
-				input_amount: Self::abs_decimal_to_balance(&position.base_asset_amount),
+				input_amount: math::decimal_abs_to_balance::<T>(&position.base_asset_amount),
 				direction: match position_direction {
 					Direction::Long => VammDirection::Add,
 					Direction::Short => VammDirection::Remove,
@@ -912,29 +905,15 @@ pub mod pallet {
 			Ok(T::Decimal::from_inner(sim_swapped))
 		}
 
-		fn abs_decimal_to_balance(decimal: &T::Decimal) -> T::Balance {
-			decimal
-				.saturating_abs()
-				.into_inner()
-				.try_into()
-				.map_err(|_| ArithmeticError::Underflow)
-				.expect("An absolute of Integer can always be converted to Balance")
-		}
-
 		fn update_margin_with_pnl(
 			margin: &T::Balance,
 			pnl: &T::Decimal,
 		) -> Result<T::Balance, DispatchError> {
-			let int = pnl.into_inner();
-			let abs_int = int
-				.abs()
-				.try_into()
-				.map_err(|_| ArithmeticError::Underflow)
-				.expect("Positive Integer can always convert to Balance");
+			let abs_pnl = math::decimal_abs_to_balance::<T>(pnl);
 
-			Ok(match int.is_positive() {
-				true => margin.checked_add(&abs_int).ok_or(ArithmeticError::Underflow)?,
-				false => margin.saturating_sub(abs_int),
+			Ok(match pnl.is_positive() {
+				true => margin.checked_add(&abs_pnl).ok_or(ArithmeticError::Overflow)?,
+				false => margin.saturating_sub(abs_pnl),
 			})
 		}
 	}
