@@ -99,15 +99,16 @@ where
 				}
 			},
 		};
-		match next_fold_state.clone() {
-			BlockFold::Done { .. } => {
+		match next_fold_state {
+			x @ BlockFold::Done { .. } => {
 				StorageValue::<P, BlockFold<S, IK>, OptionQuery>::set(None);
+				x
 			},
 			x => {
-				StorageValue::<P, BlockFold<S, IK>, OptionQuery>::set(Some(x));
+				StorageValue::<P, BlockFold<S, IK>, OptionQuery>::set(Some(x.clone()));
+				x
 			},
 		}
-		next_fold_state
 	}
 }
 
