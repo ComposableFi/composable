@@ -1,7 +1,7 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
+		clippy::disallowed_methods,
 		clippy::disallowed_type,
 		clippy::indexing_slicing,
 		clippy::todo,

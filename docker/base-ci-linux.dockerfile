@@ -11,8 +11,8 @@ RUN set -eux; \
 		libssl-dev clang lld libclang-dev make cmake \
 		git pkg-config curl time ca-certificates \
 		xz-utils unzip && \
-    curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path --profile minimal --default-toolchain stable && \
-    apt-get autoremove -y && \
+	curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path --profile minimal --default-toolchain stable && \
+	apt-get autoremove -y && \
 	apt-get clean && \
-    rustup show && \
-    cargo --version
+	rustup show && \
+	cargo --version

@@ -18,7 +18,7 @@ Reference for proof mechanism: https://github.com/paritytech/polkadot/blob/maste
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
+		clippy::disallowed_methods,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
