@@ -130,7 +130,7 @@ pub mod pallet {
 		AlreadyTagged,
 		EpochNotFound,
 		PalletIsBusy,
-    ImpossibleState
+		ImpossibleState,
 	}
 
 	#[pallet::config]
@@ -592,7 +592,7 @@ pub mod pallet {
 				.map(|x| (x, BalanceOf::<T>::zero()))
 				.collect::<BTreeMap<_, _>>()
 				.try_into()
-        .map_err(|_| Error::<T>::ImpossibleState)?;
+				.map_err(|_| Error::<T>::ImpossibleState)?;
 			let nft: StakingNFTOf<T> = StakingNFT {
 				asset: *asset,
 				stake: amount,
@@ -616,7 +616,7 @@ pub mod pallet {
 
 		fn unstake(instance_id: &Self::InstanceId, to: &Self::AccountId) -> DispatchResult {
 			Self::ensure_valid_interaction_state()?;
-      <Self as Staking>::claim(instance_id, to)?;
+			<Self as Staking>::claim(instance_id, to)?;
 			let nft = T::get_protocol_nft::<StakingNFTOf<T>>(instance_id)?;
 			let protocol_account = Self::account_id(&nft.asset);
 			let current_epoch = Self::current_epoch();
