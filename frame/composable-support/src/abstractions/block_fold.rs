@@ -7,7 +7,10 @@ use frame_support::{
 };
 use scale_info::TypeInfo;
 
+/// Fold over a storage, block per block.
 pub trait FoldStorage<S, K, V> {
+	/// Execute a step of the fold, this does mutate the fold state storage to keep track for the
+	/// next execution. Must be executed once per block.
 	fn step(
 		initial_strategy: FoldStrategy,
 		initial_state: S,
@@ -15,15 +18,22 @@ pub trait FoldStorage<S, K, V> {
 	) -> BlockFold<S, K>;
 }
 
+/// Folding strategies.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub enum FoldStrategy {
+	/// Fold `number_of_elements` elements per block.
 	Chunk { number_of_elements: u32 },
 }
 
+/// Block folding state, storing the intermediate/final state as well as the previously iterated
+/// key.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub enum BlockFold<S, K> {
+	/// Folding initialization. Iteration will start with the fist element.
 	Init { strategy: FoldStrategy, state: S },
+	/// Folding continuation. We hold the previous key to continue from there at next iteration.
 	Cont { strategy: FoldStrategy, state: S, previous_key: K },
+	/// Folding done. We hold the final state.
 	Done { state: S },
 }
 

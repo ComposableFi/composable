@@ -71,15 +71,3 @@ Meaning that if a user trade a NFT including pending rewards, the new owner will
 
 Any protocol is able to rewards the stakers by calling the
 `StakingRewards::transfer_reward` implementation of this pallet.
-
-# Technical details
-
-In order to avoid having to iterate over all the positions when rewarding, we
-need a way to track how to compute the reward for a user, using the current
-pallet state and the NFT data.
-
-To track the collected rewards, we use an accumulator for each reward asset.
-When a user is staking, we store a copy of the accumulators in the NFT.
-When a user is claiming, we do the delta and compute it's shares given the reward multiplier.
-To avoid instant dillution, a newly minted NFT shares is taken into account when
-the current reward epoch ended (parameter to the pallet, let's say half week).
