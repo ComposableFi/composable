@@ -81,11 +81,15 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	pub use crate::weights::WeightInfo;
-	use codec::{Decode, Encode};
+	use crate::{prelude::*, types::*};
+	use xcm::latest::{prelude::*, MultiAsset, WeightLimit::Unlimited};
+
+	use crate::{math::*, support::DefiMultiReservableCurrency};
 	use composable_support::math::wrapping_next::WrappingNext;
 	use composable_traits::{
 		defi::{DeFiComposableConfig, DeFiEngine, OrderIdLike, Sell, SellEngine, Take},
-		time::{TimeReleaseFunction, Timestamp},
+		time::TimeReleaseFunction,
+		xcm::{ConfigurationId, CumulusMethodId, XcmSellInitialResponseTransact, XcmSellRequest},
 	};
 	use cumulus_pallet_xcm::{ensure_sibling_para, Origin as CumulusOrigin};
 	use frame_support::{
@@ -100,6 +104,7 @@ pub mod pallet {
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
 	use sp_runtime::{traits::AccountIdConversion, DispatchError};
 	use sp_std::convert::TryInto;
+
 	pub type OrderIdOf<T> = <T as Config>::OrderId;
 	pub type SellOf<T> = SellOrder<
 		<T as DeFiComposableConfig>::MayBeAssetId,

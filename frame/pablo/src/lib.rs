@@ -68,7 +68,7 @@ pub mod pallet {
 		WeightInfo,
 	};
 	use codec::{Codec, FullCodec};
-	use composable_support::math::safe::{SafeAdd, SafeSub};
+	use composable_support::math::safe::SafeArithmetic;
 	use composable_traits::{
 		currency::{CurrencyFactory, LocalAssets},
 		defi::{CurrencyPair, Rate},

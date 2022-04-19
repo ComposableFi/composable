@@ -1,4 +1,4 @@
-use composable_support::math::{SafeArithmetic, SafeMul};
+use composable_support::math::safe::{SafeArithmetic, SafeMul};
 use composable_traits::defi::Rate;
 use frame_support::ensure;
 use sp_runtime::{

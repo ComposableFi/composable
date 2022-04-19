@@ -57,17 +57,10 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::{OptionQuery, StorageMap, StorageValue},
-		traits::{Get, IsType, UnixTime},
+		traits::{EnsureOrigin, Get, IsType, UnixTime},
 		PalletId, Parameter, Twox64Concat,
 	};
-	use frame_system::ensure_signed;
-
-	#[cfg(feature = "std")]
-	use frame_support::traits::GenesisBuild;
-
-	use frame_support::traits::EnsureOrigin;
-
-	use frame_system::pallet_prelude::OriginFor;
+	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use scale_info::TypeInfo;
 	use sp_runtime::{DispatchError, Permill, Perquintill};
 	use sp_std::vec::Vec;

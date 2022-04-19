@@ -7397,6 +7397,7 @@ dependencies = [
 name = "pallet-nft"
 version = "0.0.1"
 dependencies = [
+ "composable-support",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
