@@ -34,10 +34,8 @@ pub mod pallet {
 		weights::WeightInfo,
 	};
 	use codec::FullCodec;
-	use composable_traits::{
-		mosaic::{Claim, RelayerInterface, TransferTo},
-	};
 	use composable_support::{math::safe::SafeAdd, types::EthereumAddress, validation::Validated};
+	use composable_traits::mosaic::{Claim, RelayerInterface, TransferTo};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,
