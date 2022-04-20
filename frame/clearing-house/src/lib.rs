@@ -802,6 +802,7 @@ pub mod pallet {
 
 						// Realize PnL
 						let margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
+						// TODO(0xangelo): properly handle bad debt incurred by large negative PnL
 						AccountsMargin::<T>::insert(
 							account_id,
 							Self::update_margin_with_pnl(&margin, &pnl)?,
@@ -829,8 +830,9 @@ pub mod pallet {
 							&position.quote_asset_notional_amount,
 						)?;
 
-						// TODO(0xangelo): properly handle if the user doesn't have margin
+						// Realize PnL
 						let margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
+						// TODO(0xangelo): properly handle bad debt incurred by large negative PnL
 						AccountsMargin::<T>::insert(
 							account_id,
 							Self::update_margin_with_pnl(&margin, &pnl)?,
