@@ -848,6 +848,7 @@ pub mod pallet {
 			}
 
 			Positions::<T>::insert(account_id, positions);
+			// TODO(0xangelo): return base abs amount swapped
 			Ok(0_u32.into())
 		}
 	}
