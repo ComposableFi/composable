@@ -898,7 +898,7 @@ pub mod pallet {
 
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
-		pub fn get_or_create_position<'a>(
+		fn get_or_create_position<'a>(
 			positions: &'a mut BoundedVec<Position<T>, T::MaxPositions>,
 			market_id: &T::MarketId,
 			market: &Market<T>,

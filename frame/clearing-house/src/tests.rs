@@ -674,29 +674,33 @@ fn fails_to_open_position_if_market_id_invalid() {
 		})
 }
 
-#[test]
-fn open_position_in_new_market_increases_number_of_positions() {
-	let mut market_id: MarketId = 0;
-	let quote_amount = valid_quote_asset_amount();
-	let base_amount_limit = valid_base_asset_amount_limit();
+proptest! {
+	#[test]
+	fn open_position_in_new_market_increases_number_of_positions(
+		direction in prop_oneof![Just(Direction::Long), Just(Direction::Short)]
+	) {
+		let mut market_id: MarketId = 0;
+		let quote_amount = valid_quote_asset_amount();
+		let base_amount_limit = valid_base_asset_amount_limit();
 
-	ExtBuilder { balances: vec![(ALICE, USDC, quote_amount)], ..Default::default() }
-		.build()
-		.init_market(&mut market_id, None)
-		.add_margin(&ALICE, USDC, quote_amount)
-		.execute_with(|| {
-			VammPallet::set_swap_output(Some(base_amount_limit.try_into().unwrap()));
+		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount)], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, None)
+			.add_margin(&ALICE, USDC, quote_amount)
+			.execute_with(|| {
+				VammPallet::set_swap_output(Some(base_amount_limit.try_into().unwrap()));
 
-			let positions_before = TestPallet::get_positions(&ALICE).len();
-			assert_ok!(TestPallet::open_position(
-				Origin::signed(ALICE),
-				market_id,
-				Direction::Long,
-				quote_amount,
-				base_amount_limit,
-			));
-			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before + 1);
-		})
+				let positions_before = TestPallet::get_positions(&ALICE).len();
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					direction,
+					quote_amount,
+					base_amount_limit,
+				));
+				assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before + 1);
+			})
+	}
 }
 
 #[test]
@@ -924,7 +928,7 @@ proptest! {
 					(base_amount / 2).unsigned_abs(),
 				));
 
-				let mut positions = TestPallet::get_positions(&ALICE);
+				let positions = TestPallet::get_positions(&ALICE);
 				// Positions remains open
 				assert_eq!(positions.len(), positions_before + 1);
 				// 50% of the PnL is realized
@@ -933,9 +937,7 @@ proptest! {
 					(margin + pnl / 2).unsigned_abs()
 				);
 
-				let (position, _) = TestPallet::get_or_create_position(
-					&mut positions, &market_id, &TestPallet::get_market(&market_id).unwrap()
-				).unwrap();
+				let position = positions.iter().find(|p| p.market_id == market_id).unwrap();
 				// Position base asset and quote asset notional are cut in half
 				assert_eq!(position.base_asset_amount.into_inner(), base_amount / 2);
 				assert_eq!(position.quote_asset_notional_amount.into_inner(), quote_amount / 2);
