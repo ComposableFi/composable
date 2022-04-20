@@ -825,10 +825,17 @@ pub mod pallet {
 							),
 						})?;
 
-						let pnl = math::decimal_checked_sub::<T>(
-							&T::Decimal::from_inner(swapped),
-							&position.quote_asset_notional_amount,
-						)?;
+						let exit_value = T::Decimal::from_inner(swapped);
+						let pnl = match position_direction {
+							Direction::Long => math::decimal_checked_sub::<T>(
+								&exit_value,
+								&position.quote_asset_notional_amount,
+							)?,
+							Direction::Short => math::decimal_checked_sub::<T>(
+								&position.quote_asset_notional_amount,
+								&exit_value,
+							)?,
+						};
 
 						// Realize PnL
 						let margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
