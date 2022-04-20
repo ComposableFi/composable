@@ -94,8 +94,6 @@ pub mod pallet {
 		NoRouteFound,
 		/// Unexpected node found.
 		UnexpectedNodeFound,
-		/// Route must have at least two pools.
-		MoreThanOneNodesExpectedInRoute,
 	}
 
 	#[pallet::event]
@@ -130,7 +128,6 @@ pub mod pallet {
 			asset_pair: CurrencyPair<T::AssetId>,
 			route: &BoundedVec<T::PoolId, T::MaxHopsInRoute>,
 		) -> Result<(), DispatchError> {
-			ensure!(route.len() > 1, Error::<T>::MoreThanOneNodesExpectedInRoute);
 			route
 				.iter()
 				// starting with asset_pair.quote, make sure current node's quote
