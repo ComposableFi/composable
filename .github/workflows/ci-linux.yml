@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - ci-linux
+      - andor0/update-ci-linux
 
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
