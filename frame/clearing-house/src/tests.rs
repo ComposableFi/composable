@@ -900,8 +900,8 @@ proptest! {
 
 				assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
 				assert_eq!(
-					TestPallet::get_margin(&ALICE).unwrap() as i128,
-					(margin + pnl).max(0)
+					TestPallet::get_margin(&ALICE).unwrap(),
+					(margin + pnl) as u128
 				)
 		})
 	}
@@ -1014,6 +1014,67 @@ proptest! {
 				// Position base asset and quote asset notional are cut in half
 				assert_eq!(position.base_asset_amount.into_inner(), base_amount / 2);
 				assert_eq!(position.quote_asset_notional_amount.into_inner(), quote_amount / 2);
+			})
+	}
+}
+
+proptest! {
+	#[test]
+	fn reducing_short_position_partially_realizes_pnl(
+		(quote_amount_decimal, pnl_decimal) in any_short_pnl(FixedI128::saturating_from_integer(100))
+	) {
+		let mut market_id: MarketId = 0;
+		let mut market_config = valid_market_config();
+		market_config.minimum_trade_size = FixedI128::zero();
+
+		let quote_amount = quote_amount_decimal.into_inner();
+		// Initial price = 10
+		let base_amount = FixedI128::saturating_from_integer(10).into_inner();
+		let margin = quote_amount;
+		let pnl = pnl_decimal.into_inner();
+		ExtBuilder { balances: vec![(ALICE, USDC, margin.unsigned_abs())], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(market_config))
+			.add_margin(&ALICE, USDC, margin.unsigned_abs())
+			.execute_with(|| {
+				let positions_before = TestPallet::get_positions(&ALICE).len();
+
+				// Open new position
+				VammPallet::set_swap_output(Some(-base_amount));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Short,
+					quote_amount.unsigned_abs(),
+					base_amount.unsigned_abs(),
+				));
+
+				// Swapping all of base would give quote_amount + pnl
+				VammPallet::set_swap_simulation_output(Some(-(quote_amount + pnl)));
+				// We want to subtract 50% for the position base_asset_amount
+				VammPallet::set_swap_output(Some(base_amount / 2));
+				// Reduce (close) position by 50%
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Long,
+					((quote_amount + pnl) / 2).unsigned_abs(),
+					(base_amount / 2).unsigned_abs(),
+				));
+
+				let positions = TestPallet::get_positions(&ALICE);
+				// Positions remains open
+				assert_eq!(positions.len(), positions_before + 1);
+				// 50% of the PnL is realized
+				assert_eq!(
+					TestPallet::get_margin(&ALICE).unwrap(),
+					(margin + pnl / 2).max(0).unsigned_abs()
+				);
+
+				let position = positions.iter().find(|p| p.market_id == market_id).unwrap();
+				// Position base asset and quote asset notional are cut in half
+				assert_eq!(position.base_asset_amount.into_inner(), -base_amount / 2);
+				assert_eq!(position.quote_asset_notional_amount.into_inner(), -quote_amount / 2);
 			})
 	}
 }
