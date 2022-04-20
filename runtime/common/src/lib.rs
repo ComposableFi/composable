@@ -34,6 +34,9 @@ mod types {
 
 	pub type BondOfferId = u128;
 
+	/// Pablo pool ID
+	pub type PoolId = u128;
+
 	/// Timestamp implementation.
 	pub type Moment = u64;
 

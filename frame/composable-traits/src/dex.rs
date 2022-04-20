@@ -5,6 +5,8 @@ use crate::{
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::{traits::Get, BoundedVec, RuntimeDebug};
 use scale_info::TypeInfo;
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 use sp_arithmetic::traits::Saturating;
 use sp_runtime::{
 	traits::{CheckedMul, CheckedSub},
@@ -276,4 +278,14 @@ pub trait DexRouter<AccountId, AssetId, PoolId, Balance, MaxHops> {
 		asset_pair: CurrencyPair<AssetId>,
 		amount: Balance,
 	) -> Result<Balance, DispatchError>;
+}
+
+/// Aggregated prices for a given base/quote currency pair in a pool.
+#[derive(Encode, Decode, Default, Clone, PartialEq, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct PriceAggregate<PoolId, AssetId, Balance> {
+	pub pool_id: PoolId,
+	pub base_asset_id: AssetId,
+	pub quote_asset_id: AssetId,
+	pub spot_price: Balance, // prices based on any other stat such as TWAP goes here..
 }
