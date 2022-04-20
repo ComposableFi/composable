@@ -517,7 +517,7 @@ pub mod pallet {
 
 			// Delegate swap to helper functions.
 			match config.asset {
-				AssetType::Quote => Self::swap_quote_asset(&config),
+				AssetType::Quote => Self::swap_quote_asset(config),
 				AssetType::Base => todo!(),
 			}
 		}
