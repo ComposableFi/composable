@@ -194,8 +194,16 @@ fn update_route_tests() {
 		let dex_route = vec![create_usdc_eth_pool()];
 		assert_noop!(
 			DexRouter::update_route(&ALICE, currency_pair, Some(dex_route.try_into().unwrap())),
-			Error::<Test>::MoreThanOneNodesExpectedInRoute,
+			Error::<Test>::UnexpectedNodeFound,
 		);
+
+		// route with a single pool.
+		let dex_route = vec![create_usdt_usdc_pool()];
+		assert_ok!(DexRouter::update_route(
+			&ALICE,
+			CurrencyPair::new(USDT, USDC),
+			Some(dex_route.clone().try_into().unwrap())
+		));
 	});
 }
 
