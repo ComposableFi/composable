@@ -52,6 +52,12 @@ pub fn decimal_checked_mul<T: Config>(
 	a: &T::Decimal,
 	b: &T::Decimal,
 ) -> Result<T::Decimal, ArithmeticError> {
+	// sign(a) sign(b) | CheckedMul
+	// ----------------------------
+	//      -1      -1 | Overflow
+	//      -1       1 | Underflow
+	//       1      -1 | Underflow
+	//       1       1 | Overflow
 	a.checked_mul(b).ok_or_else(|| match a.is_negative() ^ b.is_negative() {
 		true => Underflow,
 		false => Overflow,
@@ -62,6 +68,12 @@ pub fn decimal_checked_div<T: Config>(
 	a: &T::Decimal,
 	b: &T::Decimal,
 ) -> Result<T::Decimal, ArithmeticError> {
+	// sign(a) sign(b) | CheckedDiv
+	// ----------------------------
+	//      -1      -1 | Overflow
+	//      -1       1 | Underflow
+	//       1      -1 | Underflow
+	//       1       1 | Overflow
 	a.checked_div(b).ok_or_else(|| {
 		if b.is_zero() {
 			DivisionByZero
