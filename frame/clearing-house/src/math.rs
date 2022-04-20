@@ -3,7 +3,7 @@ use num_traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub};
 use sp_runtime::{
 	traits::Zero,
 	ArithmeticError,
-	ArithmeticError::{Overflow, Underflow},
+	ArithmeticError::{DivisionByZero, Overflow, Underflow},
 	FixedPointNumber,
 };
 
@@ -12,7 +12,7 @@ pub fn decimal_abs_to_balance<T: Config>(decimal: &T::Decimal) -> T::Balance {
 		.saturating_abs()
 		.into_inner()
 		.try_into()
-		.map_err(|_| ArithmeticError::Underflow)
+		.map_err(|_| Underflow)
 		.expect("An absolute of Integer can always be converted to Balance")
 }
 
@@ -43,8 +43,8 @@ pub fn decimal_checked_sub<T: Config>(
 	//       1      -1 | Overflow
 	//       1       1 | Ok
 	a.checked_sub(b).ok_or_else(|| match a.is_positive() {
-		true => ArithmeticError::Overflow,
-		false => ArithmeticError::Underflow,
+		true => Overflow,
+		false => Underflow,
 	})
 }
 
@@ -53,8 +53,8 @@ pub fn decimal_checked_mul<T: Config>(
 	b: &T::Decimal,
 ) -> Result<T::Decimal, ArithmeticError> {
 	a.checked_mul(b).ok_or_else(|| match a.is_negative() ^ b.is_negative() {
-		true => ArithmeticError::Underflow,
-		false => ArithmeticError::Overflow,
+		true => Underflow,
+		false => Overflow,
 	})
 }
 
@@ -64,11 +64,11 @@ pub fn decimal_checked_div<T: Config>(
 ) -> Result<T::Decimal, ArithmeticError> {
 	a.checked_div(b).ok_or_else(|| {
 		if b.is_zero() {
-			ArithmeticError::DivisionByZero
+			DivisionByZero
 		} else {
 			match a.is_negative() ^ b.is_negative() {
-				true => ArithmeticError::Underflow,
-				false => ArithmeticError::Overflow,
+				true => Underflow,
+				false => Overflow,
 			}
 		}
 	})
