@@ -4,13 +4,13 @@ title Vamm creation
 'autoactivate on
 !theme mars
 
-participant "Clearing House" as ch
+participant "Client" as client
 participant "Vamm" as vamm
 database "Storage (Vamm)" as svamm
 database "Blockchain" as bc
 
-ch -> vamm++: Create market request
+client -> vamm++: Create market request
 vamm -> svamm: Create market
 vamm -->o bc: Deposit created market event
-vamm --> ch--: New market ID
+vamm --> client--: New market ID
 @enduml

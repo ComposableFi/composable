@@ -4,12 +4,12 @@ title Get asset price for a Vamm
 'autoactivate on
 !theme mars
 
-participant "Clearing House" as ch
+participant "Client" as client
 participant "Vamm" as vamm
 database "Storage (Vamm)" as svamm
 
-ch -> vamm++: Get asset price request
+client -> vamm++: Get asset price request
 vamm -> svamm: Get vamm state
 vamm -> vamm: Compute price
-vamm --> ch--: Asset price
+vamm --> client--: Asset price
 @enduml
