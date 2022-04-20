@@ -283,13 +283,13 @@ pub mod pallet {
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Tried to set `base_asset_reserves` to zero.
+		/// Tried to set [`base_asset_reserves`](VammState) to zero.
 		BaseAssetReserveIsZero,
-		/// Tried to set `quote_asset_reserves` to zero.
+		/// Tried to set [`quote_asset_reserves`](VammState) to zero.
 		QuoteAssetReserveIsZero,
-		/// Tried to set `peg_multiplier` to zero.
+		/// Tried to set [`peg_multiplier`](VammState) to zero.
 		PegMultiplierIsZero,
-		/// Tried to access an invalid [VammId](Config::VammId).
+		/// Tried to access an invalid [`VammId`](Config::VammId).
 		VammDoesNotExist,
 		/// Tried to retrieve a Vamm but the function failed.
 		FailToRetrieveVamm,
