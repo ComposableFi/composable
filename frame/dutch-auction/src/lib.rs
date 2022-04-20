@@ -382,7 +382,7 @@ pub mod pallet {
 			configuration: TimeReleaseFunction,
 		) -> Result<Self::OrderId, DispatchError> {
 			ensure!(order.is_valid(), Error::<T>::OrderParametersIsInvalid,);
-			let order_id = <OrdersIndex<T>>::try_increment();
+			let order_id = <OrdersIndex<T>>::increment();
 			let treasury = &T::PalletId::get().into_account();
 			let deposit = T::PositionExistentialDeposit::get();
 			<T::NativeCurrency as NativeTransfer<T::AccountId>>::transfer(

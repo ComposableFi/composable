@@ -30,9 +30,9 @@ where
 {
 	type Output;
 
-	fn try_increment() -> Self::Output;
+	fn increment() -> Self::Output;
 
-	fn try_increment_with<Err, F>(f: F) -> Result<Self::Output, Err>
+	fn increment_and_check<Err, F>(f: F) -> Result<Self::Output, Err>
 	where
 		Err: Debug,
 		F: FnOnce(T) -> Result<T, Err>;
@@ -46,9 +46,9 @@ where
 {
 	type Output;
 
-	fn try_increment_inner() -> Self::Output;
+	fn increment_inner() -> Self::Output;
 
-	fn try_increment_with_inner<Err, F>(f: F) -> Result<Self::Output, Err>
+	fn increment_and_check_inner<Err, F>(f: F) -> Result<Self::Output, Err>
 	where
 		Err: Debug,
 		F: FnOnce(T) -> Result<T, Err>;
@@ -67,7 +67,7 @@ where
 {
 	type Output = I::Output;
 
-	fn try_increment_inner() -> Self::Output {
+	fn increment_inner() -> Self::Output {
 		StorageValue::<P, T, ValueQuery, Nonce<T, S, I>>::mutate(|x| {
 			let new_x = I::increment(*x);
 			*x = new_x;
@@ -75,7 +75,7 @@ where
 		})
 	}
 
-	fn try_increment_with_inner<Err: Debug, F: FnOnce(T) -> Result<T, Err>>(
+	fn increment_and_check_inner<Err: Debug, F: FnOnce(T) -> Result<T, Err>>(
 		f: F,
 	) -> Result<Self::Output, Err> {
 		StorageValue::<P, T, ValueQuery, Nonce<T, S, I>>::try_mutate(|x| {
@@ -102,7 +102,7 @@ where
 {
 	type Output = I::Output;
 
-	fn try_increment_inner() -> Self::Output {
+	fn increment_inner() -> Self::Output {
 		StorageValue::<P, T, ValueQuery, Nonce<T, S, I>>::try_mutate(
 			|x| -> Result<T, IncrementErr> {
 				match I::increment(*x) {
@@ -116,7 +116,7 @@ where
 		)
 	}
 
-	fn try_increment_with_inner<
+	fn increment_and_check_inner<
 		ClosureCheckErr: Debug,
 		F: FnOnce(T) -> Result<T, ClosureCheckErr>,
 	>(
@@ -148,16 +148,16 @@ where
 {
 	type Output = <(TStorage, I::Output) as StorageNonceInner<T, S, I>>::Output;
 
-	fn try_increment() -> Self::Output {
-		<(TStorage, I::Output) as StorageNonceInner<T, S, I>>::try_increment_inner()
+	fn increment() -> Self::Output {
+		<(TStorage, I::Output) as StorageNonceInner<T, S, I>>::increment_inner()
 	}
 
-	fn try_increment_with<Err, F>(f: F) -> Result<Self::Output, Err>
+	fn increment_and_check<Err, F>(f: F) -> Result<Self::Output, Err>
 	where
 		Err: Debug,
 		F: FnOnce(T) -> Result<T, Err>,
 	{
-		<(TStorage, I::Output) as StorageNonceInner<T, S, I>>::try_increment_with_inner(f)
+		<(TStorage, I::Output) as StorageNonceInner<T, S, I>>::increment_and_check_inner(f)
 	}
 }
 
@@ -321,26 +321,3 @@ mod sealed {
 	impl<T> Sealed for SafeIncrement<T> {}
 	impl<T> Sealed for WrappingIncrement<T> {}
 }
-
-// pub trait InfallibleIncrement<T>: Increment<T, Output = T> {
-// 	fn increment(self) -> T {
-// 		<Self as Increment>::increment(self)
-// 	}
-// }
-
-// impl<_Self, T> InfallibleIncrement<T> for _Self where _Self: Increment<T, Output = T> {}
-
-// pub trait TryIncrement<T>: Increment<T, Output = Result<T, Self::Error>> {
-// 	type Error: Debug;
-
-// 	fn increment(self) -> Result<T, Self::Error> {
-// 		<Self as Increment>::increment(self)
-// 	}
-// }
-
-// impl<_Self, T, E> TryIncrement<T> for _Self
-// where
-// 	_Self: Increment<T, Output = Result<T, Self::Error>>,
-// {
-// 	type Error = E;
-// }

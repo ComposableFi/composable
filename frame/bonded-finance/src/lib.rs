@@ -295,7 +295,7 @@ pub mod pallet {
 			offer: BondOfferOf<T>,
 			keep_alive: bool,
 		) -> Result<T::BondOfferId, DispatchError> {
-			let offer_id = BondOfferCount::<T>::try_increment()?;
+			let offer_id = BondOfferCount::<T>::increment()?;
 			let offer_account = Self::account_id(offer_id);
 			T::NativeCurrency::transfer(from, &offer_account, T::Stake::get(), keep_alive)?;
 			T::Currency::transfer(
