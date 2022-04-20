@@ -33,8 +33,8 @@ pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_support::{
+		abstractions::nonce::{SafeIncrement, StartAtZero, StorageNonce},
 		math::safe::SafeDiv,
-		storage::nonce::{StartAtZero, StorageNonce},
 		validation::Validated,
 	};
 	use composable_traits::{
@@ -196,7 +196,8 @@ pub mod pallet {
 	#[pallet::getter(fn assets_count)]
 	#[allow(clippy::disallowed_types)] // Default asset count of 0 is valid in this context
 	/// Total amount of assets
-	pub type AssetsCount<T: Config> = StorageValue<_, u32, ValueQuery, StartAtZero<u32>>;
+	pub type AssetsCount<T: Config> =
+		StorageValue<_, u32, ValueQuery, StartAtZero<u32, SafeIncrement<u32>>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn signer_to_controller)]
@@ -488,7 +489,7 @@ pub mod pallet {
 
 			let current_asset_info = Self::asset_info(asset_id);
 			if current_asset_info.is_none() {
-				AssetsCount::<T>::try_increment()?;
+				AssetsCount::<T>::increment()?;
 			}
 
 			AssetsInfo::<T>::insert(asset_id, asset_info);
