@@ -810,7 +810,7 @@ pub mod pallet {
 					},
 					Ordering::Equal => {
 						// close position
-						let swapped = T::Vamm::swap(&SwapConfigOf::<T> {
+						let _ = T::Vamm::swap(&SwapConfigOf::<T> {
 							vamm_id: market.vamm_id,
 							asset: AssetType::Base,
 							input_amount: math::decimal_abs_to_balance::<T>(
@@ -825,17 +825,14 @@ pub mod pallet {
 							),
 						})?;
 
-						let exit_value = T::Decimal::from_inner(swapped);
-						let pnl = match position_direction {
-							Direction::Long => math::decimal_checked_sub::<T>(
-								&exit_value,
-								&position.quote_asset_notional_amount,
-							)?,
-							Direction::Short => math::decimal_checked_sub::<T>(
-								&position.quote_asset_notional_amount,
-								&exit_value,
-							)?,
+						let exit_value = match position_direction {
+							Direction::Long => quote_abs_amount_decimal,
+							Direction::Short => quote_abs_amount_decimal.neg(),
 						};
+						let pnl = math::decimal_checked_sub::<T>(
+							&exit_value,
+							&position.quote_asset_notional_amount,
+						)?;
 
 						// Realize PnL
 						let margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
