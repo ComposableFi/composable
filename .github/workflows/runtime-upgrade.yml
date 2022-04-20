@@ -15,12 +15,8 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ubuntu-20.04
 
-  #  if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
-
     steps:
       - uses: actions/checkout@v2
-
-     #runs ssh connection
       - name: Go to server
         uses: appleboy/ssh-action@master
         with:
@@ -34,6 +30,3 @@ jobs:
             ssh-add /home/ubuntu/.ssh/composable_ansib
             ls -la
             ansible-playbook -i test_inv runtime_upgrade_bash.yml --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
-
-  run_ga_playbook:
-    runs-on: ubuntu-20.04
