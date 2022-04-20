@@ -85,7 +85,10 @@ pub mod pallet {
 	use xcm::latest::{prelude::*, MultiAsset, WeightLimit::Unlimited};
 
 	use crate::{math::*, support::DefiMultiReservableCurrency};
-	use composable_support::math::wrapping_next::WrappingNext;
+	use composable_support::{
+		abstractions::nonce::{StartAtZero, StorageNonce, WrappingIncrement},
+		math::wrapping_next::WrappingNext,
+	};
 	use composable_traits::{
 		defi::{DeFiComposableConfig, DeFiEngine, OrderIdLike, Sell, SellEngine, Take},
 		time::TimeReleaseFunction,
@@ -122,7 +125,7 @@ pub mod pallet {
 	pub trait Config: DeFiComposableConfig + frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		type UnixTime: UnixTime;
-		type OrderId: OrderIdLike + WrappingNext + Zero;
+		type OrderId: OrderIdLike + WrappingNext + Zero + One;
 		type MultiCurrency: MultiCurrency<
 				Self::AccountId,
 				CurrencyId = Self::MayBeAssetId,
@@ -192,8 +195,13 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn orders_index)]
-	#[allow(clippy::disallowed_types)] // OrderIdOnEmpty provides a default value
-	pub type OrdersIndex<T: Config> = StorageValue<_, T::OrderId, ValueQuery, OrderIdOnEmpty<T>>;
+	#[allow(clippy::disallowed_type)] // nonce
+	pub type OrdersIndex<T: Config> = StorageValue<
+		_,
+		T::OrderId,
+		ValueQuery,
+		StartAtZero<T::OrderId, WrappingIncrement<T::OrderId>>,
+	>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn buys)]
@@ -252,11 +260,6 @@ pub mod pallet {
 		type MayBeAssetId = T::MayBeAssetId;
 		type Balance = T::Balance;
 		type AccountId = T::AccountId;
-	}
-
-	#[pallet::type_value]
-	pub fn OrderIdOnEmpty<T: Config>() -> T::OrderId {
-		T::OrderId::zero()
 	}
 
 	#[pallet::call]
@@ -379,11 +382,7 @@ pub mod pallet {
 			configuration: TimeReleaseFunction,
 		) -> Result<Self::OrderId, DispatchError> {
 			ensure!(order.is_valid(), Error::<T>::OrderParametersIsInvalid,);
-			let order_id = <OrdersIndex<T>>::mutate(|x| {
-				*x = x.next();
-				// in case of wrapping, will need to check existence of order/takes
-				*x
-			});
+			let order_id = <OrdersIndex<T>>::try_increment();
 			let treasury = &T::PalletId::get().into_account();
 			let deposit = T::PositionExistentialDeposit::get();
 			<T::NativeCurrency as NativeTransfer<T::AccountId>>::transfer(
