@@ -46,8 +46,8 @@ pub use pallet::*;
 pub mod pallet {
 	use codec::FullCodec;
 	use composable_support::{
+		abstractions::nonce::{SafeIncrement, StartAtZero, StorageNonce},
 		math::safe::SafeAdd,
-		storage::nonce::{StartAtZero, StorageNonce},
 		validation::Validated,
 	};
 	use composable_traits::{
@@ -172,11 +172,6 @@ pub mod pallet {
 	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
-
-	#[pallet::type_value]
-	pub fn BondOfferOnEmpty<T: Config>() -> T::BondOfferId {
-		T::BondOfferId::zero()
-	}
 
 	/// The counter used to uniquely identify bond offers within this pallet.
 	#[pallet::storage]
