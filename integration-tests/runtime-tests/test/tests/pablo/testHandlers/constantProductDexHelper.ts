@@ -22,11 +22,13 @@ export async function createPool(walletId: KeyringPair, baseAssetId: number, quo
   const fee = api.createType('Permill', 0);
   const ownerFees = api.createType('Permill', ownerFee);
   const walletIdAccount = api.createType('AccountId32', walletId.address).toString();
-  const poolConfig = api.createType('PalletPabloPoolConfiguration', {
-    owner: walletIdAccount,
-    pair: pair,
-    fee: fee,
-    owner_fee: ownerFees,
+  const poolConfig = api.createType('PalletPabloPoolInitConfiguration', {
+    ConstantProduct: {
+      owner: walletIdAccount,
+      pair: pair,
+      fee: fee,
+      owner_fee: ownerFees,
+    }
   })
   const {data: [resultPoolId],} = await sendAndWaitForSuccess(
     api,
