@@ -1,10 +1,10 @@
-name: "composable-sandbox Docker image"
+name: "base-ci-linux Docker image"
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - composable-sandbox
+      - base-ci-linux
 
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
@@ -43,7 +43,7 @@ jobs:
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}  
 
     - name: Build Docker image
-      run: make containerize-composable-sandbox
+      run: make containerize-base-ci-linux
 
     - name:  Docker push
-      run: make push-composable-sandbox
+      run: make push-base-ci-linux

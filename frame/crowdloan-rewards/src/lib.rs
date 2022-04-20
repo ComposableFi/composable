@@ -18,14 +18,14 @@ Reference for proof mechanism: https://github.com/paritytech/polkadot/blob/maste
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
+		clippy::disallowed_methods,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -196,21 +196,21 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn total_rewards)]
 	// Absence of total rewards is equivalent to 0, so ValueQuery is allowed.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type TotalRewards<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
 
 	/// The rewards claimed so far.
 	#[pallet::storage]
 	#[pallet::getter(fn claimed_rewards)]
 	// Absence of claimed rewards is equivalent to 0, so ValueQuery is allowed.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type ClaimedRewards<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
 
 	/// The total number of contributors.
 	#[pallet::storage]
 	#[pallet::getter(fn total_contributors)]
 	// Absence of total contributors is equivalent to 0, so ValueQuery is allowed.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type TotalContributors<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	/// The block at which the users are able to claim their rewards.

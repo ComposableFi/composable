@@ -3,15 +3,15 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -87,7 +87,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn nft_count)]
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type NFTCount<T: Config> =
 		StorageMap<_, Blake2_128Concat, NFTClass, NFTInstanceId, ValueQuery, NFTCountOnEmpty<T>>;
 

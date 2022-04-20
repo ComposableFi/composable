@@ -1,8 +1,8 @@
 #![cfg_attr(
 	not(test),
 	deny(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -171,13 +171,13 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn strategy_index)]
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type StrategyIndex<T: Config> =
 		StorageValue<_, T::LiquidationStrategyId, frame_support::pallet_prelude::ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn default_strategy_index)]
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type DefaultStrategyIndex<T: Config> =
 		StorageValue<_, T::LiquidationStrategyId, frame_support::pallet_prelude::ValueQuery>;
 
