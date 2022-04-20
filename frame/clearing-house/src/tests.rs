@@ -350,6 +350,15 @@ prop_compose! {
 	}
 }
 
+prop_compose! {
+	// Assumes entry_value is positive
+	fn any_short_pnl(entry_value: FixedI128)(
+		exit_value_inner in 1..FixedI128::saturating_from_integer(1_000_000_000).into_inner()
+	) -> (FixedI128, FixedI128) {
+		(entry_value, entry_value - FixedI128::from_inner(exit_value_inner))
+	}
+}
+
 // ----------------------------------------------------------------------------------------------------
 //                                           Mocked Pallets Tests
 // ----------------------------------------------------------------------------------------------------
@@ -893,6 +902,56 @@ proptest! {
 				assert_eq!(
 					TestPallet::get_margin(&ALICE).unwrap() as i128,
 					(margin + pnl).max(0)
+				)
+		})
+	}
+}
+
+proptest! {
+	#[test]
+	fn closing_short_position_with_trade_realizes_pnl(
+		(quote_amount_decimal, pnl_decimal) in any_short_pnl(FixedI128::saturating_from_integer(100))
+	) {
+		let mut market_id: MarketId = 0;
+
+		let quote_amount = quote_amount_decimal.into_inner();
+		let base_amount = FixedI128::saturating_from_integer(10).into_inner();
+		let margin = quote_amount;
+		let pnl = pnl_decimal.into_inner();
+
+		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount as u128)], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(valid_market_config()))
+			.add_margin(&ALICE, USDC, quote_amount as u128)
+			.execute_with(|| {
+				let positions_before = TestPallet::get_positions(&ALICE).len();
+
+				VammPallet::set_swap_output(Some(-base_amount));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Short,
+					quote_amount as u128,
+					base_amount as u128,
+				));
+
+				// Set price of base so that it should give the desired PnL in quote
+				// swapping all of base would give quote_amount + pnl
+				VammPallet::set_swap_simulation_output(Some(-(quote_amount + pnl)));
+				// We swap all of base to close the position
+				VammPallet::set_swap_output(Some(-(quote_amount + pnl)));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Long,
+					(quote_amount + pnl).unsigned_abs(),
+					base_amount as u128,
+				));
+
+				assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
+				assert_eq!(
+					TestPallet::get_margin(&ALICE).unwrap(),
+					(margin + pnl).max(0) as u128
 				)
 		})
 	}
