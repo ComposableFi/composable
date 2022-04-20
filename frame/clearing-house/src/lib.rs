@@ -720,10 +720,8 @@ pub mod pallet {
 			let (position, position_index) =
 				Self::get_or_create_position(&mut positions, market_id, &market)?;
 
-			// TODO(0xangelo): wrap this in math::decimal_from_balance::<T>
-			let mut quote_abs_amount_decimal = T::Decimal::from_inner(
-				quote_asset_amount.try_into().map_err(|_| ArithmeticError::Overflow)?,
-			);
+			let mut quote_abs_amount_decimal =
+				math::decimal_from_balance::<T>(&quote_asset_amount)?;
 
 			let position_direction = Self::position_direction(position).unwrap_or(direction);
 

@@ -16,6 +16,12 @@ pub fn decimal_abs_to_balance<T: Config>(decimal: &T::Decimal) -> T::Balance {
 		.expect("An absolute of Integer can always be converted to Balance")
 }
 
+pub fn decimal_from_balance<T: Config>(
+	balance: &T::Balance,
+) -> Result<T::Decimal, ArithmeticError> {
+	Ok(T::Decimal::from_inner((*balance).try_into().map_err(|_| ArithmeticError::Overflow)?))
+}
+
 pub fn decimal_checked_add<T: Config>(
 	a: &T::Decimal,
 	b: &T::Decimal,
