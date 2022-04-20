@@ -1,6 +1,7 @@
 import { sendAndWaitForSuccess } from '@composable/utils/polkadotjs';
 import {KeyringPair} from "@polkadot/keyring/types";
 import { u128 } from '@polkadot/types-codec';
+import {CustomRpcBalance, CustomRpcCurrencyId, PalletPabloPoolId, SafeRpcWrapper} from "@composable/types/interfaces";
 
 /**
  *Contains handler methods for the pablo Tests. 
@@ -44,15 +45,16 @@ export async function addFundstoThePool(walletId:KeyringPair, baseAmount:number,
   const quoteAmountParam = api.createType('u128', quoteAmount);
   const keepAliveParam = api.createType('bool', true);
   const minMintAmountParam = api.createType('u128', 0);
-  const {data: [,walletIdResult,baseAdded, quoteAdded,returnedLPTokens]} =await sendAndWaitForSuccess(
+  const {data: [,walletIdResult,baseAdded, quoteAdded,returnedLPTokens]} = await sendAndWaitForSuccess(
     api,
     walletId,
     api.events.pablo.LiquidityAdded.is,
-    api.tx.pablo.addLiquidity(poolId, 
-      baseAmountParam, 
-      quoteAmountParam, 
-      minMintAmountParam, 
-      keepAliveParam
+    api.tx.pablo.addLiquidity(
+        poolId,
+        baseAmountParam,
+        quoteAmountParam,
+        minMintAmountParam,
+        keepAliveParam
     )
   );
   mintedLPTokens += returnedLPTokens.toNumber();
@@ -158,4 +160,8 @@ export async function getUserTokens(walletId: KeyringPair, assetId: number){
 export async function getOwnerFee(poolId: number){
   const result = await api.query.pablo.pools(api.createType('u128', poolId));
   return result.unwrap().asConstantProduct.ownerFee.toNumber();
+}
+
+export async function rpcPriceFor(poolId: PalletPabloPoolId, baseAssetId: CustomRpcCurrencyId, quoteAssetId: CustomRpcCurrencyId) {
+  return await api.rpc.pablo.pricesFor(poolId, baseAssetId, quoteAssetId, api.createType('CustomRpcBalance', 1));
 }
