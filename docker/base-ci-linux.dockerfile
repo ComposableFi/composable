@@ -5,6 +5,7 @@ ENV CARGO_HOME=/usr/local/cargo
 ENV PATH=/usr/local/cargo/bin:$PATH
 ENV DEBIAN_FRONTEND=noninteractive
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN set -eux; \
 	apt-get -y update && \
 	apt-get install -y --no-install-recommends \
