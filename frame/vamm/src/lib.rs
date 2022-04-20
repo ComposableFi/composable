@@ -354,10 +354,7 @@ pub mod pallet {
 		/// [`Created`](Event::<T>::Created) event on the blockchain and returns
 		/// the new [`VammId`](Config::VammId) to the caller.
 		///
-		/// In the diagram below the [`Clearing House
-		/// Pallet`](../../clearing_house/index.html) is depicted as the caller.
-		///
-		/// ![](https://www.plantuml.com/plantuml/svg/NP2nQiCm48PtFSNLIrk2Ny13I9CCxT0kXUuN-SSMjYHNTxPVlvR0b6GJ-Zu-VkuaoabdFnePN9WuiQS4cM8GV4A4EvmnnlKjfRYIfXb6dOwW7_QUR0AhYy4yywoHhRg55RHzF6aF3_ASn9WjgywwYODITHd1oOMEtkCig8Y5R7-lv7O1o_OmBIlVM43LjyR47UWb2w_5a0VbF4Oxs9vTAFXcZR4zrSUIEXmQkkJ9PTW0fOJV6Q8cqsoLtBsqm_eOjrn3LqnHd98jJhkNi23ygsJxkcxe2-lEFwxcXD3cI_y1)
+		/// ![](https://www.plantuml.com/plantuml/svg/NP2nJiCm48PtFyNH1L2L5yXGbROB0on8x5VdLsibjiFT9NbzQaE4odRIz-dp-VPgB3R5mMaVqiZ2aGGwvgHuWofVSC2GbnUHl93916V11j0dnqXUm1PoSeyyMMPlOMO3vUGUx8e8YYpgtCXYmOUHaz7cE0Gasn0h-JhUuzAjSBuDhcFZCojeys5P-09wAi9pDVIVSXYox_sLGwhux9txUO6QNSrjjoqToyfriHv6Wgy9QgxGOjNalRJ2PfTloPPE6BC68r-TRYrXHlfJVx_MD2szOrcTrvFR8tNbsjy0)
 		///
 		/// ## Parameters:
 		/// - `base_asset_reserves`: The amount of base asset
@@ -418,10 +415,7 @@ pub mod pallet {
 		/// Vamm Pallet consults the runtime storage for the desired vamm,
 		/// computes the current price and returns it to the caller.
 		///
-		/// In the diagram below the [`Clearing House
-		/// Pallet`](../../clearing_house/index.html) is depicted as the caller.
-		///
-		/// ![](https://www.plantuml.com/plantuml/svg/PP2zJaCn34RtF8Mv2w3gla07rD815YOaTfD-t1kHds0xxUj3KW52h3x7HvPtQYpMKdJw7d9buKG2hIKhdg3A2-uHotalKivaqk0iM0Gzm8XLOLGbUD1R4M9wuPJSDJShx2sSs40bkojRaK29HPshB1Pyg9oDfaC4IyWBFPQcc8YL_FfNwSa1JhrzPEDNLj3qR4Lu0TrquNOOEXJdLvhlXhxPRFyTAlXeK7ETTsyiNRGnKcF33xt0Gqcr6KRXctr1lyxpblQ_SRT3FlPdVW80)
+		/// ![](https://www.plantuml.com/plantuml/svg/PP0zJWCn44PxdsBO1b2q5qY14b9GKI7H3vkFOB7-OURRvFfWhm0XEillpHlBEwSQbpG7Vu-vgcaIWzUI7OzmrnFkCPVBtgnSXBOWC7A6F82Yxg1KYnFajPYeF6jAuLeN5fqOpqf8oU6ARqYGfEOXL3N6ALRDbE4mHsGEeYvJF_x5BTVXkNMFIdrHXmnFBAOdo4qJRhlXNGbhHSQxFhBPRFyzrF2nm1aQRruVNBL-vLJYXwxmK59TY5xuPbzmNJQEMzd_BWWxv6Fxq4y0)
 		///
 		/// ## Parameters
 		///  - `vamm_id`: The ID of the desired vamm to query.
