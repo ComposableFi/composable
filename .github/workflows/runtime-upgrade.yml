@@ -29,4 +29,4 @@ jobs:
             eval $(ssh-agent -s)
             ssh-add /home/ubuntu/.ssh/composable_ansib
             ls -la
-            cd /home/runner/ansible_test && ansible-playbook -i test_inv runtime_upgrade_bash.yml --user ubuntu -e 'ansible_python_interpreter=/usr/bin/python3'
+            ansible-playbook -i test_inv runtime_upgrade_bash.yml --user ubuntu -e 'ansible_python_interpreter=/usr/bin/python3'
