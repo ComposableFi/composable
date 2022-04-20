@@ -14,5 +14,6 @@ RUN set -eux; \
 	curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path --profile minimal --default-toolchain stable && \
 	apt-get autoremove -y && \
 	apt-get clean && \
+	find /var/lib/apt/lists/ -type f -not -name lock -delete && \
 	rustup show && \
 	cargo --version
