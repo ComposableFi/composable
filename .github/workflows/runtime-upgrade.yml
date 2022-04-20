@@ -31,8 +31,8 @@ jobs:
           command_timeout: 30m
           script: |
             eval $(ssh-agent -s)
- #           ssh-add /home/ubuntu/.ssh/composable_ansib
- #           ls -la
+            ssh-add /home/ubuntu/.ssh/composable_ansib
+            ls -la
             ansible-playbook -i test_inv runtime_upgrade_bash.yml --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
 
   run_ga_playbook:
