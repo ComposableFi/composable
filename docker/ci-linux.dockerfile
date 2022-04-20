@@ -20,6 +20,6 @@ RUN rustup toolchain install ${NIGHTLY_VERSION} && \
     apt-get install -y --no-install-recommends libfreetype6-dev libexpat1-dev && \
     apt-get autoremove -y && \
     apt-get clean && \
-	find /var/lib/apt/lists/ -type f -not -name lock -delete
+    find /var/lib/apt/lists/ -type f -not -name lock -delete
 
 COPY --from=hadolint /bin/hadolint /usr/local/bin/

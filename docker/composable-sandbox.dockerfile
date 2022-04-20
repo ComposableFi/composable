@@ -1,4 +1,4 @@
-FROM composablefi/ci-linux:production as builder
+FROM composablefi/ci-linux:2022-04-18 as builder
 
 COPY . /build
 WORKDIR /build
@@ -9,7 +9,7 @@ RUN cargo build --release
 
 FROM composablefi/mmr-polkadot:latest as mmr-polkadot
 
-FROM debian:11-slim
+FROM ubuntu:21.10
 LABEL description="Docker image with Composable"
 
 ENV DEBIAN_FRONTEND=noninteractive
