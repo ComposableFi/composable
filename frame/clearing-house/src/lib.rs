@@ -147,7 +147,7 @@ pub mod pallet {
 		traits::{AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, One, Saturating, Zero},
 		ArithmeticError, FixedPointNumber, FixedPointOperand,
 	};
-	use sp_std::{cmp::Ordering, fmt::Debug};
+	use sp_std::{cmp::Ordering, fmt::Debug, ops::Neg};
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                       Declaration Of The Pallet Type
@@ -171,7 +171,11 @@ pub mod pallet {
 		>;
 
 		/// Signed decimal fixed point number.
-		type Decimal: FixedPointNumber<Inner = Self::Integer> + FullCodec + MaxEncodedLen + TypeInfo;
+		type Decimal: FixedPointNumber<Inner = Self::Integer>
+			+ FullCodec
+			+ MaxEncodedLen
+			+ Neg<Output = Self::Decimal>
+			+ TypeInfo;
 
 		/// Event type emitted by this pallet. Depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -673,7 +677,7 @@ pub mod pallet {
 				Error::<T>::InitialMarginRatioLessThanMaintenance
 			);
 			ensure!(
-				config.minimum_trade_size > T::Decimal::zero(),
+				config.minimum_trade_size >= T::Decimal::zero(),
 				Error::<T>::NegativeMinimumTradeSize
 			);
 
@@ -716,7 +720,8 @@ pub mod pallet {
 			let (position, position_index) =
 				Self::get_or_create_position(&mut positions, market_id, &market)?;
 
-			let mut quote_asset_amount_decimal = T::Decimal::from_inner(
+			// TODO(0xangelo): wrap this in math::decimal_from_balance::<T>
+			let mut quote_abs_amount_decimal = T::Decimal::from_inner(
 				quote_asset_amount.try_into().map_err(|_| ArithmeticError::Overflow)?,
 			);
 
@@ -735,14 +740,17 @@ pub mod pallet {
 					output_amount_limit: base_asset_amount_limit,
 				})?;
 
-				position.base_asset_amount =
-					position.base_asset_amount + T::Decimal::from_inner(swapped);
-				position.quote_asset_notional_amount = match direction {
-					Direction::Long =>
-						position.quote_asset_notional_amount + quote_asset_amount_decimal,
-					Direction::Short =>
-						position.quote_asset_notional_amount - quote_asset_amount_decimal,
-				}
+				position.base_asset_amount = math::decimal_checked_add::<T>(
+					&position.base_asset_amount,
+					&T::Decimal::from_inner(swapped),
+				)?;
+				position.quote_asset_notional_amount = math::decimal_checked_add::<T>(
+					&position.quote_asset_notional_amount,
+					&match direction {
+						Direction::Long => quote_abs_amount_decimal,
+						Direction::Short => quote_abs_amount_decimal.neg(),
+					},
+				)?;
 			} else {
 				let abs_base_asset_value =
 					Self::base_asset_value(&market, position, position_direction)?.saturating_abs();
@@ -750,14 +758,56 @@ pub mod pallet {
 				// Round trade if it nearly closes the position
 				Self::round_trade_if_necessary(
 					&market,
-					&mut quote_asset_amount_decimal,
+					&mut quote_abs_amount_decimal,
 					&abs_base_asset_value,
 				)?;
 
-				match quote_asset_amount_decimal.cmp(&abs_base_asset_value) {
+				match quote_abs_amount_decimal.cmp(&abs_base_asset_value) {
 					Ordering::Less => {
 						// decrease position
-						todo!();
+						let swapped = T::Vamm::swap(&SwapConfigOf::<T> {
+							vamm_id: market.vamm_id,
+							asset: AssetType::Quote,
+							input_amount: math::decimal_abs_to_balance::<T>(
+								&quote_abs_amount_decimal,
+							),
+							direction: match direction {
+								Direction::Long => VammDirection::Add,
+								Direction::Short => VammDirection::Remove,
+							},
+							output_amount_limit: base_asset_amount_limit,
+						})?;
+						let base_delta_decimal = T::Decimal::from_inner(swapped);
+
+						// Compute proportion of quote asset notional amount closed
+						let entry_value = math::decimal_checked_mul::<T>(
+							&position.quote_asset_notional_amount,
+							&math::decimal_checked_div::<T>(
+								&base_delta_decimal.saturating_abs(),
+								&position.base_asset_amount.saturating_abs(),
+							)?,
+						)?;
+						let exit_value = match position_direction {
+							Direction::Long => quote_abs_amount_decimal,
+							Direction::Short => quote_abs_amount_decimal.neg(),
+						};
+						let pnl = math::decimal_checked_sub::<T>(&exit_value, &entry_value)?;
+
+						position.base_asset_amount = math::decimal_checked_add::<T>(
+							&position.base_asset_amount,
+							&base_delta_decimal,
+						)?;
+						position.quote_asset_notional_amount = math::decimal_checked_sub::<T>(
+							&position.quote_asset_notional_amount,
+							&entry_value,
+						)?;
+
+						// Realize PnL
+						let margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
+						AccountsMargin::<T>::insert(
+							account_id,
+							Self::update_margin_with_pnl(&margin, &pnl)?,
+						);
 					},
 					Ordering::Equal => {
 						// close position
@@ -772,7 +822,7 @@ pub mod pallet {
 								Direction::Short => VammDirection::Remove,
 							},
 							output_amount_limit: math::decimal_abs_to_balance::<T>(
-								&quote_asset_amount_decimal,
+								&quote_abs_amount_decimal,
 							),
 						})?;
 
@@ -782,7 +832,7 @@ pub mod pallet {
 						)?;
 
 						// TODO(0xangelo): properly handle if the user doesn't have margin
-						let margin = Self::get_margin(account_id).unwrap_or_default();
+						let margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
 						AccountsMargin::<T>::insert(
 							account_id,
 							Self::update_margin_with_pnl(&margin, &pnl)?,
@@ -797,7 +847,7 @@ pub mod pallet {
 				};
 			}
 
-			Positions::<T>::insert(&account_id, positions);
+			Positions::<T>::insert(account_id, positions);
 			Ok(0_u32.into())
 		}
 	}
@@ -848,7 +898,7 @@ pub mod pallet {
 
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
-		fn get_or_create_position<'a>(
+		pub fn get_or_create_position<'a>(
 			positions: &'a mut BoundedVec<Position<T>, T::MaxPositions>,
 			market_id: &T::MarketId,
 			market: &Market<T>,
@@ -904,14 +954,13 @@ pub mod pallet {
 
 		fn round_trade_if_necessary(
 			market: &Market<T>,
-			quote_asset_amount_decimal: &mut T::Decimal,
-			abs_base_asset_value: &T::Decimal,
+			quote_abs_amount: &mut T::Decimal,
+			base_abs_value: &T::Decimal,
 		) -> Result<(), DispatchError> {
-			let diff =
-				math::decimal_checked_sub::<T>(abs_base_asset_value, quote_asset_amount_decimal)?;
+			let diff = math::decimal_checked_sub::<T>(base_abs_value, quote_abs_amount)?;
 			if diff.saturating_abs() < market.minimum_trade_size {
 				// round trade to close off position
-				*quote_asset_amount_decimal = *abs_base_asset_value;
+				*quote_abs_amount = *base_abs_value;
 			}
 			Ok(())
 		}

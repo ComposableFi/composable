@@ -343,7 +343,7 @@ prop_compose! {
 
 prop_compose! {
 	fn any_pnl_decimal(entry_value: FixedI128)(
-		exit_value_inner in 0..FixedI128::saturating_from_integer(1_000_000_000).into_inner()
+		exit_value_inner in 1..FixedI128::saturating_from_integer(1_000_000_000).into_inner()
 	) -> FixedI128 {
 		FixedI128::from_inner(exit_value_inner) - entry_value
 	}
@@ -634,6 +634,15 @@ proptest! {
 	}
 }
 
+#[test]
+fn can_create_market_with_zero_minimum_trade_size() {
+	ExtBuilder::default().build().execute_with(|| {
+		let mut config = valid_market_config();
+		config.minimum_trade_size = FixedI128::zero();
+		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));
+	})
+}
+
 // ----------------------------------------------------------------------------------------------------
 //                                            Open Position
 // ----------------------------------------------------------------------------------------------------
@@ -873,12 +882,13 @@ proptest! {
 
 proptest! {
 	#[test]
-	#[ignore = "to be implemented"]
-	fn reducing_position_realizes_pnl(
+	fn reducing_position_partially_realizes_pnl(
 		(quote_amount_decimal, pnl_decimal) in Just(FixedI128::saturating_from_integer(100))
 			.prop_flat_map(|q| (Just(q), any_pnl_decimal(q)))
 	) {
 		let mut market_id: MarketId = 0;
+		let mut market_config = valid_market_config();
+		market_config.minimum_trade_size = FixedI128::zero();
 
 		let quote_amount = quote_amount_decimal.into_inner();
 		// Initial price = 10
@@ -887,7 +897,7 @@ proptest! {
 		let pnl = pnl_decimal.into_inner();
 		ExtBuilder { balances: vec![(ALICE, USDC, margin.unsigned_abs())], ..Default::default() }
 			.build()
-			.init_market(&mut market_id, Some(valid_market_config()))
+			.init_market(&mut market_id, Some(market_config))
 			.add_margin(&ALICE, USDC, margin.unsigned_abs())
 			.execute_with(|| {
 				let positions_before = TestPallet::get_positions(&ALICE).len();
@@ -915,13 +925,21 @@ proptest! {
 					(base_amount / 2).unsigned_abs(),
 				));
 
+				let mut positions = TestPallet::get_positions(&ALICE);
 				// Positions remains open
-				assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before + 1);
-				// 50% of the PnL was realized
+				assert_eq!(positions.len(), positions_before + 1);
+				// 50% of the PnL is realized
 				assert_eq!(
-					TestPallet::get_margin(&ALICE).unwrap() as i128,
-					(margin + pnl / 2).max(0)
-				)
+					TestPallet::get_margin(&ALICE).unwrap(),
+					(margin + pnl / 2).unsigned_abs()
+				);
+
+				let (position, _) = TestPallet::get_or_create_position(
+					&mut positions, &market_id, &TestPallet::get_market(&market_id).unwrap()
+				).unwrap();
+				// Position base asset and quote asset notional are cut in half
+				assert_eq!(position.base_asset_amount.into_inner(), base_amount / 2);
+				assert_eq!(position.quote_asset_notional_amount.into_inner(), quote_amount / 2);
 			})
 	}
 }
