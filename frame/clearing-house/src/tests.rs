@@ -741,7 +741,7 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 
 proptest! {
 	#[test]
-	fn short_trade_can_close_long_position(
+	fn short_trade_can_close_long_position_within_tolerance(
 		(minimum_trade_size, eps) in min_trade_size_and_eps(FixedI128::from_float(0.01))
 	) {
 		let mut market_id: MarketId = 0;
@@ -786,7 +786,7 @@ proptest! {
 
 proptest! {
 	#[test]
-	fn long_trade_can_close_long_position(
+	fn long_trade_can_close_long_position_within_tolerance(
 		(minimum_trade_size, eps) in min_trade_size_and_eps(FixedI128::from_float(0.01))
 	) {
 		let mut market_id: MarketId = 0;
