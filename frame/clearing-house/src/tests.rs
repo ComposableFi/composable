@@ -681,14 +681,17 @@ proptest! {
 	) {
 		let mut market_id: MarketId = 0;
 		let quote_amount = valid_quote_asset_amount();
-		let base_amount_limit = valid_base_asset_amount_limit();
+		let base_amount = valid_base_asset_amount_limit() as i128;
 
 		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount)], ..Default::default() }
 			.build()
 			.init_market(&mut market_id, None)
 			.add_margin(&ALICE, USDC, quote_amount)
 			.execute_with(|| {
-				VammPallet::set_swap_output(Some(base_amount_limit.try_into().unwrap()));
+				VammPallet::set_swap_output(Some(match direction {
+					Direction::Long => base_amount,
+					Direction::Short => -base_amount
+				}));
 
 				let positions_before = TestPallet::get_positions(&ALICE).len();
 				assert_ok!(TestPallet::open_position(
@@ -696,9 +699,20 @@ proptest! {
 					market_id,
 					direction,
 					quote_amount,
-					base_amount_limit,
+					base_amount as u128,
 				));
-				assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before + 1);
+
+				let positions = TestPallet::get_positions(&ALICE);
+				assert_eq!(positions.len(), positions_before + 1);
+				let position = positions.iter().find(|p| p.market_id == market_id).unwrap();
+				assert!(match direction {
+					Direction::Long => position.base_asset_amount.is_positive(),
+					Direction::Short => position.base_asset_amount.is_negative()
+				});
+				assert!(match direction {
+					Direction::Long => position.quote_asset_notional_amount.is_positive(),
+					Direction::Short => position.quote_asset_notional_amount.is_negative()
+				});
 			})
 	}
 }
