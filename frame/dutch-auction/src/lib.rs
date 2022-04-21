@@ -86,7 +86,10 @@ pub mod pallet {
 
 	use crate::{math::*, support::DefiMultiReservableCurrency};
 	use composable_support::{
-		abstractions::nonce::{StartAtZero, StorageNonce, WrappingIncrement},
+		abstractions::{
+			nonce::{Nonce, StorageNonce},
+			utils::{increment::WrappingIncrement, start_at::ZeroInit},
+		},
 		math::wrapping_next::WrappingNext,
 	};
 	use composable_traits::{
@@ -196,12 +199,8 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn orders_index)]
 	#[allow(clippy::disallowed_type)] // nonce
-	pub type OrdersIndex<T: Config> = StorageValue<
-		_,
-		T::OrderId,
-		ValueQuery,
-		StartAtZero<T::OrderId, WrappingIncrement<T::OrderId>>,
-	>;
+	pub type OrdersIndex<T: Config> =
+		StorageValue<_, T::OrderId, ValueQuery, Nonce<ZeroInit, WrappingIncrement>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn buys)]

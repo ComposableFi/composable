@@ -22,7 +22,7 @@ pub mod pallet {
 	use composable_support::math::safe::SafeArithmetic;
 	use composable_traits::{
 		defi::CurrencyPair,
-		dex::{Amm, DexRoute, DexRouteNode, DexRouter},
+		dex::{Amm, DexRoute, DexRouter},
 	};
 	use core::fmt::Debug;
 	use frame_support::pallet_prelude::*;

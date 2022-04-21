@@ -76,7 +76,6 @@ pub mod pallet {
 			Amm, ConstantProductPoolInfo, LiquidityBootstrappingPoolInfo, PriceAggregate,
 			StableSwapPoolInfo,
 		},
-		math::SafeArithmetic,
 	};
 	use core::fmt::Debug;
 	use frame_support::{

@@ -49,7 +49,10 @@ pub use pallet::*;
 pub mod pallet {
 	use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
 	use composable_support::{
-		abstractions::nonce::{StartAtDefault, StorageNonce, WrappingIncrement},
+		abstractions::{
+			nonce::{Nonce, StorageNonce},
+			utils::{increment::WrappingIncrement, start_at::DefaultInit},
+		},
 		math::wrapping_next::WrappingNext,
 	};
 	use composable_traits::{
@@ -174,7 +177,7 @@ pub mod pallet {
 		_,
 		T::LiquidationStrategyId,
 		ValueQuery,
-		StartAtDefault<T::LiquidationStrategyId, WrappingIncrement<T::LiquidationStrategyId>>,
+		Nonce<DefaultInit, WrappingIncrement>,
 	>;
 
 	#[pallet::storage]

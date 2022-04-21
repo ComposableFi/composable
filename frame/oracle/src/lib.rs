@@ -33,7 +33,10 @@ pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_support::{
-		abstractions::nonce::{SafeIncrement, StartAtZero, StorageNonce},
+		abstractions::{
+			nonce::{Nonce, StorageNonce},
+			utils::{increment::SafeIncrement, start_at::ZeroInit},
+		},
 		math::safe::SafeDiv,
 		validation::Validated,
 	};
@@ -197,7 +200,7 @@ pub mod pallet {
 	#[allow(clippy::disallowed_types)] // Default asset count of 0 is valid in this context
 	/// Total amount of assets
 	pub type AssetsCount<T: Config> =
-		StorageValue<_, u32, ValueQuery, StartAtZero<u32, SafeIncrement<u32>>>;
+		StorageValue<_, u32, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn signer_to_controller)]

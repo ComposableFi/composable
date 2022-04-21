@@ -29,8 +29,10 @@ rustc-hex = { version = "2.1.0", default-features = false }
 serde = { version = "1.0.130", features = ["derive"], optional = true }
 
 [dev-dependencies]
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 proptest = { version = "1.0" }
 serde_json = "1.0.45"
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 [features]
 default = ["std"]
