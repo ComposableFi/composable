@@ -936,15 +936,16 @@ proptest! {
 				));
 
 				// Set price of base so that it should give the desired PnL in quote
-				// swapping all of base would give quote_amount + pnl
-				VammPallet::set_swap_simulation_output(Some(-(quote_amount + pnl)));
+				// swapping all of base would give -quote_amount + pnl
+				let new_base_value = quote_amount - pnl;
+				VammPallet::set_swap_simulation_output(Some(-new_base_value));
 				// We swap all of base to close the position
-				VammPallet::set_swap_output(Some(-(quote_amount + pnl)));
+				VammPallet::set_swap_output(Some(-new_base_value));
 				assert_ok!(TestPallet::open_position(
 					Origin::signed(ALICE),
 					market_id,
 					Direction::Long,
-					(quote_amount + pnl).unsigned_abs(),
+					(-new_base_value).unsigned_abs(),
 					base_amount as u128,
 				));
 
@@ -1025,7 +1026,7 @@ proptest! {
 	) {
 		let mut market_id: MarketId = 0;
 		let mut market_config = valid_market_config();
-		market_config.minimum_trade_size = FixedI128::zero();
+		market_config.minimum_trade_size = 0.into();
 
 		let quote_amount = quote_amount_decimal.into_inner();
 		// Initial price = 10
@@ -1049,8 +1050,8 @@ proptest! {
 					base_amount.unsigned_abs(),
 				));
 
-				// Swapping all of base would give quote_amount + pnl
-				VammPallet::set_swap_simulation_output(Some(-(quote_amount + pnl)));
+				// Swapping all of base would give -quote_amount + pnl
+				VammPallet::set_swap_simulation_output(Some(-quote_amount + pnl));
 				// We want to subtract 50% for the position base_asset_amount
 				VammPallet::set_swap_output(Some(base_amount / 2));
 				// Reduce (close) position by 50%
@@ -1058,7 +1059,7 @@ proptest! {
 					Origin::signed(ALICE),
 					market_id,
 					Direction::Long,
-					((quote_amount + pnl) / 2).unsigned_abs(),
+					((-quote_amount + pnl) / 2).unsigned_abs(),
 					(base_amount / 2).unsigned_abs(),
 				));
 
@@ -1138,7 +1139,7 @@ proptest! {
 
 				let position = positions.iter().find(|p| p.market_id == market_id).unwrap();
 				assert_eq!(position.base_asset_amount, -base_amount_decimal);
-				assert_eq!(position.quote_asset_notional_amount, quote_amount_decimal - quote_delta_decimal);
+				assert_eq!(position.quote_asset_notional_amount, -(quote_amount_decimal + pnl_decimal));
 
 				// Full PnL is realized
 				assert_eq!(
