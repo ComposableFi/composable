@@ -260,6 +260,7 @@ pub mod pallet {
 		InvalidSaleState,
 		InvalidAmount,
 		CannotRespectMinimumRequested,
+		LpTokenNotRequiedForLbp,
 	}
 
 	#[pallet::config]
@@ -590,6 +591,10 @@ pub mod pallet {
 			pool_id: Self::PoolId,
 		) -> Result<CurrencyPair<Self::AssetId>, DispatchError> {
 			Ok(Self::get_pool(pool_id)?.pair)
+		}
+
+		fn lp_token(_pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError> {
+			Err(Error::<T>::LpTokenNotRequiedForLbp.into())
 		}
 
 		fn get_exchange_value(

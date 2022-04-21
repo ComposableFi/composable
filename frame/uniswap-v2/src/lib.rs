@@ -368,6 +368,11 @@ pub mod pallet {
 			Ok(pool.pair)
 		}
 
+		fn lp_token(pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError> {
+			let pool = Self::get_pool(pool_id)?;
+			Ok(pool.lp_token)
+		}
+
 		fn get_exchange_value(
 			pool_id: Self::PoolId,
 			asset_id: Self::AssetId,

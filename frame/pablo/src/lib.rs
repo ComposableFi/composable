@@ -230,6 +230,7 @@ pub mod pallet {
 		InvalidFees,
 		AmpFactorMustBeGreaterThanZero,
 		MissingAmount,
+		NoLpTokenForLbp,
 	}
 
 	#[pallet::config]
@@ -663,6 +664,16 @@ pub mod pallet {
 				PoolConfiguration::StableSwap(info) => Ok(info.pair),
 				PoolConfiguration::ConstantProduct(info) => Ok(info.pair),
 				PoolConfiguration::LiquidityBootstrapping(info) => Ok(info.pair),
+			}
+		}
+
+		fn lp_token(pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError> {
+			let pool = Self::get_pool(pool_id)?;
+			match pool {
+				PoolConfiguration::StableSwap(info) => Ok(info.lp_token),
+				PoolConfiguration::ConstantProduct(info) => Ok(info.lp_token),
+				PoolConfiguration::LiquidityBootstrapping(_) =>
+					Err(Error::<T>::NoLpTokenForLbp.into()),
 			}
 		}
 

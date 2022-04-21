@@ -1051,6 +1051,23 @@ impl pablo::Config for Runtime {
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
 }
 
+parameter_types! {
+  #[derive(codec::Encode, codec::Decode, codec::MaxEncodedLen, TypeInfo)]
+	pub const MaxHopsCount: u32 = 4;
+	pub DexRouterPalletID: PalletId = PalletId(*b"dex_rout");
+}
+
+impl dex_router::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type MaxHopsInRoute = MaxHopsCount;
+	type PoolId = PoolId;
+	type Pablo = Pablo;
+	type PalletId = DexRouterPalletID;
+	type WeightInfo = ();
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1113,6 +1130,7 @@ construct_runtime!(
 		StableSwapDex: curve_amm::{Pallet, Call, Storage, Event<T>} = 66,
 		LiquidityBootstrapping: liquidity_bootstrapping::{Pallet, Call, Storage, Event<T>} = 67,
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 68,
+		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 69,
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
 );
@@ -1188,6 +1206,7 @@ mod benches {
 		[liquidity_bootstrapping, LiquidityBootstrapping]
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
+		[dex_router, DexRouter]
 	);
 }
 

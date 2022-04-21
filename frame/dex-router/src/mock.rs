@@ -15,7 +15,7 @@ use system::{EnsureRoot, EnsureSigned};
 pub type Balance = u128;
 pub type AssetId = u128;
 pub type Amount = i128;
-pub type PoolId = u32;
+pub type PoolId = u128;
 pub type BlockNumber = u64;
 pub type AccountId = u128;
 
@@ -26,7 +26,7 @@ pub static BOB: AccountId = 2;
 #[allow(dead_code)]
 pub static CHARLIE: AccountId = 3;
 #[allow(dead_code)]
-pub static CURVE_ADMIN_FEE_ACC_ID: AccountId = 4;
+pub static EVE: AccountId = 4;
 
 pub type Moment = composable_traits::time::Timestamp;
 pub const USDT: AssetId = 2;
@@ -179,6 +179,7 @@ impl pallet_pablo::Config for Test {
 parameter_types! {
   #[derive(codec::Encode, codec::Decode, codec::MaxEncodedLen, TypeInfo)]
 	pub const MaxHopsCount: u32 = 4;
+	pub TestDexRouterPalletID: PalletId = PalletId(*b"dex_rout");
 }
 
 impl dex_router::Config for Test {
@@ -186,8 +187,10 @@ impl dex_router::Config for Test {
 	type AssetId = AssetId;
 	type Balance = Balance;
 	type MaxHopsInRoute = MaxHopsCount;
-	type PoolId = u32;
+	type PoolId = PoolId;
 	type Pablo = Pablo;
+	type PalletId = TestDexRouterPalletID;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.
