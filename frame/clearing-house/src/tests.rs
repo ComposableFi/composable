@@ -344,7 +344,7 @@ prop_compose! {
 prop_compose! {
 	// Assumes entry_value is positive
 	fn any_long_pnl(entry_value: FixedI128)(
-		exit_value_inner in 1..FixedI128::saturating_from_integer(1_000_000_000).into_inner()
+		exit_value_inner in 1..FixedI128::from(1_000_000_000).into_inner()
 	) -> (FixedI128, FixedI128) {
 		(entry_value, FixedI128::from_inner(exit_value_inner) - entry_value)
 	}
@@ -353,7 +353,7 @@ prop_compose! {
 prop_compose! {
 	// Assumes entry_value is positive
 	fn any_short_pnl(entry_value: FixedI128)(
-		exit_value_inner in 1..FixedI128::saturating_from_integer(1_000_000_000).into_inner()
+		exit_value_inner in 1..FixedI128::from(1_000_000_000).into_inner()
 	) -> (FixedI128, FixedI128) {
 		(entry_value, entry_value - FixedI128::from_inner(exit_value_inner))
 	}
@@ -859,7 +859,7 @@ proptest! {
 proptest! {
 	#[test]
 	fn closing_long_position_with_trade_realizes_pnl(
-		(quote_amount_decimal, pnl_decimal) in any_long_pnl(FixedI128::saturating_from_integer(100))
+		(quote_amount_decimal, pnl_decimal) in any_long_pnl(100.into())
 	) {
 		let mut market_id: MarketId = 0;
 
@@ -910,12 +910,12 @@ proptest! {
 proptest! {
 	#[test]
 	fn closing_short_position_with_trade_realizes_pnl(
-		(quote_amount_decimal, pnl_decimal) in any_short_pnl(FixedI128::saturating_from_integer(100))
+		(quote_amount_decimal, pnl_decimal) in any_short_pnl(100.into())
 	) {
 		let mut market_id: MarketId = 0;
 
 		let quote_amount = quote_amount_decimal.into_inner();
-		let base_amount = FixedI128::saturating_from_integer(10).into_inner();
+		let base_amount = FixedI128::from(10).into_inner();
 		let margin = quote_amount;
 		let pnl = pnl_decimal.into_inner();
 
@@ -960,7 +960,7 @@ proptest! {
 proptest! {
 	#[test]
 	fn reducing_long_position_partially_realizes_pnl(
-		(quote_amount_decimal, pnl_decimal) in any_long_pnl(FixedI128::saturating_from_integer(100))
+		(quote_amount_decimal, pnl_decimal) in any_long_pnl(100.into())
 	) {
 		let mut market_id: MarketId = 0;
 		let mut market_config = valid_market_config();
@@ -968,7 +968,7 @@ proptest! {
 
 		let quote_amount = quote_amount_decimal.into_inner();
 		// Initial price = 10
-		let base_amount = FixedI128::saturating_from_integer(10).into_inner();
+		let base_amount = FixedI128::from(10).into_inner();
 		let margin = quote_amount;
 		let pnl = pnl_decimal.into_inner();
 		ExtBuilder { balances: vec![(ALICE, USDC, margin.unsigned_abs())], ..Default::default() }
@@ -1021,7 +1021,7 @@ proptest! {
 proptest! {
 	#[test]
 	fn reducing_short_position_partially_realizes_pnl(
-		(quote_amount_decimal, pnl_decimal) in any_short_pnl(FixedI128::saturating_from_integer(100))
+		(quote_amount_decimal, pnl_decimal) in any_short_pnl(100.into())
 	) {
 		let mut market_id: MarketId = 0;
 		let mut market_config = valid_market_config();
@@ -1029,7 +1029,7 @@ proptest! {
 
 		let quote_amount = quote_amount_decimal.into_inner();
 		// Initial price = 10
-		let base_amount = FixedI128::saturating_from_integer(10).into_inner();
+		let base_amount = FixedI128::from(10).into_inner();
 		let margin = quote_amount;
 		let pnl = pnl_decimal.into_inner();
 		ExtBuilder { balances: vec![(ALICE, USDC, margin.unsigned_abs())], ..Default::default() }
@@ -1082,15 +1082,15 @@ proptest! {
 proptest! {
 	#[test]
 	fn reversing_long_position_realizes_pnl(
-		(quote_amount_decimal, pnl_decimal) in any_long_pnl(FixedI128::saturating_from_integer(100))
+		(quote_amount_decimal, pnl_decimal) in any_long_pnl(100.into())
 	) {
 		let mut market_id: MarketId = 0;
 		let mut market_config = valid_market_config();
-		market_config.minimum_trade_size = FixedI128::zero();
+		market_config.minimum_trade_size = 0.into();
 
 		let quote_amount = quote_amount_decimal.into_inner();
 		// Initial price = 10
-		let base_amount_decimal = FixedI128::saturating_from_integer(10);
+		let base_amount_decimal: FixedI128 = 10.into();
 		let base_amount = base_amount_decimal.into_inner();
 		let margin = quote_amount;
 		let pnl = pnl_decimal.into_inner();
