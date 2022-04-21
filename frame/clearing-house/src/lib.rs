@@ -125,7 +125,10 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 
-	use crate::{math, math::TryMath, weights::WeightInfo};
+	use crate::{
+		math::{FromBalance, IntoBalance, TryMath},
+		weights::WeightInfo,
+	};
 	use codec::FullCodec;
 	use composable_traits::{
 		clearing_house::{ClearingHouse, Instruments},
@@ -720,8 +723,7 @@ pub mod pallet {
 			let (position, position_index) =
 				Self::get_or_create_position(&mut positions, market_id, &market)?;
 
-			let mut quote_abs_amount_decimal =
-				math::decimal_from_balance::<T>(&quote_asset_amount)?;
+			let mut quote_abs_amount_decimal = T::Decimal::from_balance(quote_asset_amount)?;
 
 			let position_direction = Self::position_direction(position).unwrap_or(direction);
 
@@ -738,7 +740,7 @@ pub mod pallet {
 					},
 					output_amount_limit: base_asset_amount_limit,
 				})?;
-				base_swapped = math::integer_to_balance::<T>(&swapped);
+				base_swapped = swapped.into_balance()?;
 
 				position.base_asset_amount.try_add_(&T::Decimal::from_inner(swapped))?;
 				position.quote_asset_notional_amount.try_add_(&match direction {
@@ -764,16 +766,14 @@ pub mod pallet {
 						let swapped = T::Vamm::swap(&SwapConfigOf::<T> {
 							vamm_id: market.vamm_id,
 							asset: AssetType::Quote,
-							input_amount: math::decimal_abs_to_balance::<T>(
-								&quote_abs_amount_decimal,
-							),
+							input_amount: quote_abs_amount_decimal.into_balance()?,
 							direction: match direction {
 								Direction::Long => VammDirection::Add,
 								Direction::Short => VammDirection::Remove,
 							},
 							output_amount_limit: base_asset_amount_limit,
 						})?;
-						base_swapped = math::integer_to_balance::<T>(&swapped);
+						base_swapped = swapped.into_balance()?;
 						let base_delta_decimal = T::Decimal::from_inner(swapped);
 
 						// Compute proportion of quote asset notional amount closed
@@ -792,8 +792,7 @@ pub mod pallet {
 					},
 					Ordering::Equal => {
 						// close position
-						base_swapped =
-							math::decimal_abs_to_balance::<T>(&position.base_asset_amount);
+						base_swapped = position.base_asset_amount.into_balance()?;
 						let _ = T::Vamm::swap(&SwapConfigOf::<T> {
 							vamm_id: market.vamm_id,
 							asset: AssetType::Base,
@@ -802,9 +801,7 @@ pub mod pallet {
 								Direction::Long => VammDirection::Add,
 								Direction::Short => VammDirection::Remove,
 							},
-							output_amount_limit: math::decimal_abs_to_balance::<T>(
-								&quote_abs_amount_decimal,
-							),
+							output_amount_limit: quote_abs_amount_decimal.into_balance()?,
 						})?;
 
 						entry_value = position.quote_asset_notional_amount;
@@ -820,16 +817,14 @@ pub mod pallet {
 						let swapped = T::Vamm::swap(&SwapConfigOf::<T> {
 							vamm_id: market.vamm_id,
 							asset: AssetType::Quote,
-							input_amount: math::decimal_abs_to_balance::<T>(
-								&quote_abs_amount_decimal,
-							),
+							input_amount: quote_abs_amount_decimal.into_balance()?,
 							direction: match direction {
 								Direction::Long => VammDirection::Add,
 								Direction::Short => VammDirection::Remove,
 							},
 							output_amount_limit: base_asset_amount_limit,
 						})?;
-						base_swapped = math::integer_to_balance::<T>(&swapped);
+						base_swapped = swapped.into_balance()?;
 
 						// Since reversing is equivalent to closing a position and then opening a
 						// new one in the opposite direction, all of the current position's PnL is
@@ -951,7 +946,7 @@ pub mod pallet {
 			let sim_swapped = T::Vamm::swap_simulation(&SwapSimulationConfigOf::<T> {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Base,
-				input_amount: math::decimal_abs_to_balance::<T>(&position.base_asset_amount),
+				input_amount: position.base_asset_amount.into_balance()?,
 				direction: match position_direction {
 					Direction::Long => VammDirection::Add,
 					Direction::Short => VammDirection::Remove,
@@ -978,7 +973,7 @@ pub mod pallet {
 			margin: &T::Balance,
 			pnl: &T::Decimal,
 		) -> Result<T::Balance, DispatchError> {
-			let abs_pnl = math::decimal_abs_to_balance::<T>(pnl);
+			let abs_pnl = pnl.into_balance()?;
 
 			Ok(match pnl.is_positive() {
 				true => margin.checked_add(&abs_pnl).ok_or(ArithmeticError::Overflow)?,

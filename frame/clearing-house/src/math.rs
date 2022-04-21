@@ -1,5 +1,4 @@
-use crate::Config;
-use num_traits::Signed;
+use num_traits::{Signed, Unsigned};
 use sp_runtime::{
 	ArithmeticError,
 	ArithmeticError::{DivisionByZero, Overflow, Underflow},
@@ -100,19 +99,49 @@ where
 	}
 }
 
-pub fn integer_to_balance<T: Config>(int: &T::Integer) -> T::Balance {
-	int.abs()
-		.try_into()
-		.map_err(|_| Underflow)
-		.expect("An absolute of Integer can always be converted to Balance")
+// The following types are markers to disambiguate the two implementations of IntoBalance below.
+// Since traits can overlap, the 'where' clauses below are not enough to tell the compiler which
+// implementation of the trait it should use for a particular type
+pub struct Int;
+pub struct FixedPoint;
+
+pub trait IntoBalance<Balance, Marker> {
+	fn into_balance(self) -> Result<Balance, ArithmeticError>;
 }
 
-pub fn decimal_abs_to_balance<T: Config>(decimal: &T::Decimal) -> T::Balance {
-	integer_to_balance::<T>(&decimal.into_inner())
+impl<B, I> IntoBalance<B, Int> for I
+where
+	B: Unsigned,
+	I: Signed + TryInto<B>,
+{
+	fn into_balance(self) -> Result<B, ArithmeticError> {
+		// Absolute value can still overflow if B's capacity is less than I's
+		self.abs().try_into().map_err(|_| Overflow)
+	}
 }
 
-pub fn decimal_from_balance<T: Config>(
-	balance: &T::Balance,
-) -> Result<T::Decimal, ArithmeticError> {
-	Ok(T::Decimal::from_inner((*balance).try_into().map_err(|_| ArithmeticError::Overflow)?))
+impl<B, D> IntoBalance<B, FixedPoint> for D
+where
+	B: Unsigned,
+	D: FixedPointNumber,
+	D::Inner: IntoBalance<B, Int>,
+{
+	fn into_balance(self) -> Result<B, ArithmeticError> {
+		self.into_inner().into_balance()
+	}
+}
+
+pub trait FromBalance<Balance>: Sized {
+	fn from_balance(value: Balance) -> Result<Self, ArithmeticError>;
+}
+
+impl<B, D> FromBalance<B> for D
+where
+	B: Unsigned,
+	D: FixedPointNumber,
+	D::Inner: TryFrom<B>,
+{
+	fn from_balance(value: B) -> Result<Self, ArithmeticError> {
+		Ok(Self::from_inner(value.try_into().map_err(|_| Overflow)?))
+	}
 }
