@@ -44,7 +44,7 @@ describe('tx.mosaic Tests', function () {
     let pNetworkId;
     let ethAddress;
 
-    describe('tx.mosaic Success Tests', function() {
+    describe('tx.mosaic Tests', function() {
         this.timeout(4*60*1000);
         if (!testConfiguration.enabledTests.query.account__success.enabled)
             return;
@@ -166,7 +166,7 @@ describe('tx.mosaic Tests', function () {
             //verify that the incoming transaction is locked in the incoming transaction pool.
             expect(lockedAmount.unwrap()[0].toNumber()).to.be.equal(transferAmount);
         });
-        it('Only relayer should mint assets into pallet wallet with timelock/incoming transactions', async function(){
+        it('Only relayer should mint assets into pallet wallet with timelock/incoming transactions (Failure Test)', async function(){
             // Check if this test is enabled.
             if (!testConfiguration.enabledTests.OnlyRelayerCanMintAssets)
                 this.skip();
@@ -207,7 +207,7 @@ describe('tx.mosaic Tests', function () {
             expect(result.toString()).to.be.equal(api.createType('AccountId32', newRelayerWallet.address).toString());
         })
 
-        it('Only relayer should be able to burn untrusted amounts from incoming tx', async function() {
+        it('Only relayer should be able to burn untrusted amounts from incoming tx (Failure Test)', async function() {
             // Check if this test is enabled.
             if (!testConfiguration.enabledTests.OnlyRelayerCanRescindTimeLockFunds)
                 this.skip();
@@ -250,7 +250,7 @@ describe('tx.mosaic Tests', function () {
             expect(result.toString()).to.be.equal(api.createType('AccountId32', senderWallet.address).toString());
         });
 
-        it('Only receiver should be able to claim incoming transfers', async function() {
+        it('Only receiver should be able to claim incoming transfers (Failure Test)', async function() {
             // Check if this test is enabled.
             if (!testConfiguration.enabledTests.OnlyReceiverCanClaimTransaction)
                 this.skip();
