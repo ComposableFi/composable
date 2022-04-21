@@ -41,9 +41,9 @@ services:
     ports:
       - 9090:9090
     command:
-      - --config.file=/home/prometheus/prometheus2.yml
+      - --config.file=/home/prometheus/prometheus.yml
     volumes:
-      - ./prometheus2.yml:/home/prometheus/prometheus2.yml
+      - ./prometheus.yml:/home/prometheus/prometheus.yml
     restart: always
     networks:
       - composable_network
