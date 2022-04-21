@@ -7,7 +7,7 @@
   "scripts": {
     "compile": "tsc -p . --declaration",
     "live_compile": "tsc -p . -w",
-    "lint": "eslint test/**/*.ts src/**/*.ts --fix-dry-run",
+    "lint": "eslint 'test/**/*.ts' 'src/**/*.ts' --fix-dry-run ",
     "prepare": "npm run compile",
     "init": "ts-node -r tsconfig-paths/register src/main.ts",
     "init_and_test": "npm run init && npm run test",
