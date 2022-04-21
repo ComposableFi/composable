@@ -1,11 +1,104 @@
 use crate::Config;
-use num_traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Signed};
+use num_traits::Signed;
 use sp_runtime::{
-	traits::Zero,
 	ArithmeticError,
 	ArithmeticError::{DivisionByZero, Overflow, Underflow},
 	FixedPointNumber,
 };
+
+pub trait TryMath: Sized {
+	fn try_add(&self, other: &Self) -> Result<Self, ArithmeticError>;
+
+	fn try_sub(&self, other: &Self) -> Result<Self, ArithmeticError>;
+
+	fn try_mul(&self, other: &Self) -> Result<Self, ArithmeticError>;
+
+	fn try_div(&self, other: &Self) -> Result<Self, ArithmeticError>;
+
+	fn try_add_(&mut self, other: &Self) -> Result<(), ArithmeticError> {
+		*self = self.try_add(other)?;
+		Ok(())
+	}
+
+	fn try_sub_(&mut self, other: &Self) -> Result<(), ArithmeticError> {
+		*self = self.try_sub(other)?;
+		Ok(())
+	}
+
+	fn try_mul_(&mut self, other: &Self) -> Result<(), ArithmeticError> {
+		*self = self.try_mul(other)?;
+		Ok(())
+	}
+
+	fn try_div_(&mut self, other: &Self) -> Result<(), ArithmeticError> {
+		*self = self.try_div(other)?;
+		Ok(())
+	}
+}
+
+impl<T> TryMath for T
+where
+	T: FixedPointNumber,
+{
+	fn try_add(&self, other: &Self) -> Result<Self, ArithmeticError> {
+		// sign(a) sign(other) | CheckedAdd
+		// ----------------------------
+		//      -1      -1 | Underflow
+		//      -1       1 | Ok
+		//       1      -1 | Ok
+		//       1       1 | Overflow
+		self.checked_add(other).ok_or_else(|| match self.is_positive() {
+			true => Overflow,
+			false => Underflow,
+		})
+	}
+
+	fn try_sub(&self, other: &Self) -> Result<Self, ArithmeticError> {
+		// sign(a) sign(other) | CheckedSub
+		// ----------------------------
+		//      -1      -1 | Ok
+		//      -1       1 | Underflow
+		//       1      -1 | Overflow
+		//       1       1 | Ok
+		self.checked_sub(other).ok_or_else(|| match self.is_positive() {
+			true => Overflow,
+			false => Underflow,
+		})
+	}
+
+	fn try_mul(&self, other: &Self) -> Result<Self, ArithmeticError> {
+		// sign(a) sign(other) | CheckedMul
+		// ----------------------------
+		//      -1      -1 | Overflow
+		//      -1       1 | Underflow
+		//       1      -1 | Underflow
+		//       1       1 | Overflow
+		self.checked_mul(other)
+			.ok_or_else(|| match self.is_negative() ^ other.is_negative() {
+				true => Underflow,
+				false => Overflow,
+			})
+	}
+
+	fn try_div(&self, other: &Self) -> Result<Self, ArithmeticError> {
+		// sign(a) sign(other) | CheckedDiv
+		// ----------------------------
+		//      -1      -1 | Overflow
+		//      -1       1 | Underflow
+		//       1      -1 | Underflow
+		//       1       1 | Overflow
+		self.checked_div(other).ok_or_else(|| {
+			if other.is_zero() {
+				DivisionByZero
+			} else {
+				match self.is_negative() ^ other.is_negative() {
+					true => Underflow,
+					false => Overflow,
+				}
+			}
+		})
+	}
+}
 
 pub fn integer_to_balance<T: Config>(int: &T::Integer) -> T::Balance {
 	int.abs()
@@ -22,74 +115,4 @@ pub fn decimal_from_balance<T: Config>(
 	balance: &T::Balance,
 ) -> Result<T::Decimal, ArithmeticError> {
 	Ok(T::Decimal::from_inner((*balance).try_into().map_err(|_| ArithmeticError::Overflow)?))
-}
-
-pub fn decimal_checked_add<T: Config>(
-	a: &T::Decimal,
-	b: &T::Decimal,
-) -> Result<T::Decimal, ArithmeticError> {
-	// sign(a) sign(b) | CheckedAdd
-	// ----------------------------
-	//      -1      -1 | Underflow
-	//      -1       1 | Ok
-	//       1      -1 | Ok
-	//       1       1 | Overflow
-	a.checked_add(b).ok_or_else(|| match a.is_positive() {
-		true => Overflow,
-		false => Underflow,
-	})
-}
-
-pub fn decimal_checked_sub<T: Config>(
-	a: &T::Decimal,
-	b: &T::Decimal,
-) -> Result<T::Decimal, ArithmeticError> {
-	// sign(a) sign(b) | CheckedSub
-	// ----------------------------
-	//      -1      -1 | Ok
-	//      -1       1 | Underflow
-	//       1      -1 | Overflow
-	//       1       1 | Ok
-	a.checked_sub(b).ok_or_else(|| match a.is_positive() {
-		true => Overflow,
-		false => Underflow,
-	})
-}
-
-pub fn decimal_checked_mul<T: Config>(
-	a: &T::Decimal,
-	b: &T::Decimal,
-) -> Result<T::Decimal, ArithmeticError> {
-	// sign(a) sign(b) | CheckedMul
-	// ----------------------------
-	//      -1      -1 | Overflow
-	//      -1       1 | Underflow
-	//       1      -1 | Underflow
-	//       1       1 | Overflow
-	a.checked_mul(b).ok_or_else(|| match a.is_negative() ^ b.is_negative() {
-		true => Underflow,
-		false => Overflow,
-	})
-}
-
-pub fn decimal_checked_div<T: Config>(
-	a: &T::Decimal,
-	b: &T::Decimal,
-) -> Result<T::Decimal, ArithmeticError> {
-	// sign(a) sign(b) | CheckedDiv
-	// ----------------------------
-	//      -1      -1 | Overflow
-	//      -1       1 | Underflow
-	//       1      -1 | Underflow
-	//       1       1 | Overflow
-	a.checked_div(b).ok_or_else(|| {
-		if b.is_zero() {
-			DivisionByZero
-		} else {
-			match a.is_negative() ^ b.is_negative() {
-				true => Underflow,
-				false => Overflow,
-			}
-		}
-	})
 }

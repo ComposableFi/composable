@@ -125,7 +125,7 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 
-	use crate::{math, weights::WeightInfo};
+	use crate::{math, math::TryMath, weights::WeightInfo};
 	use codec::FullCodec;
 	use composable_traits::{
 		clearing_house::{ClearingHouse, Instruments},
@@ -740,17 +740,11 @@ pub mod pallet {
 				})?;
 				base_swapped = math::integer_to_balance::<T>(&swapped);
 
-				position.base_asset_amount = math::decimal_checked_add::<T>(
-					&position.base_asset_amount,
-					&T::Decimal::from_inner(swapped),
-				)?;
-				position.quote_asset_notional_amount = math::decimal_checked_add::<T>(
-					&position.quote_asset_notional_amount,
-					&match direction {
-						Direction::Long => quote_abs_amount_decimal,
-						Direction::Short => quote_abs_amount_decimal.neg(),
-					},
-				)?;
+				position.base_asset_amount.try_add_(&T::Decimal::from_inner(swapped))?;
+				position.quote_asset_notional_amount.try_add_(&match direction {
+					Direction::Long => quote_abs_amount_decimal,
+					Direction::Short => quote_abs_amount_decimal.neg(),
+				})?;
 			} else {
 				let abs_base_asset_value =
 					Self::base_asset_value(&market, position, position_direction)?.saturating_abs();
@@ -783,26 +777,18 @@ pub mod pallet {
 						let base_delta_decimal = T::Decimal::from_inner(swapped);
 
 						// Compute proportion of quote asset notional amount closed
-						entry_value = math::decimal_checked_mul::<T>(
-							&position.quote_asset_notional_amount,
-							&math::decimal_checked_div::<T>(
-								&base_delta_decimal.saturating_abs(),
-								&position.base_asset_amount.saturating_abs(),
-							)?,
+						entry_value = position.quote_asset_notional_amount.try_mul(
+							&base_delta_decimal
+								.saturating_abs()
+								.try_div(&position.base_asset_amount.saturating_abs())?,
 						)?;
 						exit_value = match position_direction {
 							Direction::Long => quote_abs_amount_decimal,
 							Direction::Short => quote_abs_amount_decimal.neg(),
 						};
 
-						position.base_asset_amount = math::decimal_checked_add::<T>(
-							&position.base_asset_amount,
-							&base_delta_decimal,
-						)?;
-						position.quote_asset_notional_amount = math::decimal_checked_sub::<T>(
-							&position.quote_asset_notional_amount,
-							&entry_value,
-						)?;
+						position.base_asset_amount.try_add_(&base_delta_decimal)?;
+						position.quote_asset_notional_amount.try_sub_(&entry_value)?;
 					},
 					Ordering::Equal => {
 						// close position
@@ -854,21 +840,16 @@ pub mod pallet {
 							Direction::Short => abs_base_asset_value.neg(),
 						};
 
-						position.base_asset_amount = math::decimal_checked_add::<T>(
-							&position.base_asset_amount,
-							&T::Decimal::from_inner(swapped),
-						)?;
-						position.quote_asset_notional_amount = math::decimal_checked_add::<T>(
-							&exit_value,
-							&match direction {
+						position.base_asset_amount.try_add_(&T::Decimal::from_inner(swapped))?;
+						position.quote_asset_notional_amount =
+							exit_value.try_add(&match direction {
 								Direction::Long => quote_abs_amount_decimal,
 								Direction::Short => quote_abs_amount_decimal.neg(),
-							},
-						)?;
+							})?;
 					},
 				};
 
-				let pnl = math::decimal_checked_sub::<T>(&exit_value, &entry_value)?;
+				let pnl = exit_value.try_sub(&entry_value)?;
 				// Realize PnL
 				let margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
 				// TODO(0xangelo): properly handle bad debt incurred by large negative PnL
@@ -896,24 +877,21 @@ pub mod pallet {
 
 			let vamm_twap = T::Vamm::get_twap(&market.vamm_id)?;
 
-			let price_spread = math::decimal_checked_sub::<T>(&vamm_twap, &oracle_twap)?;
+			let price_spread = vamm_twap.try_sub(&oracle_twap)?;
 			let period_adjustment = Self::Decimal::checked_from_rational(
 				market.funding_frequency,
 				market.funding_period,
 			)
 			.ok_or(ArithmeticError::Underflow)?;
-			Ok(math::decimal_checked_mul::<T>(&price_spread, &period_adjustment)?)
+			Ok(price_spread.try_mul(&period_adjustment)?)
 		}
 
 		fn unrealized_funding(
 			market: &Self::Market,
 			position: &Self::Position,
 		) -> Result<Self::Decimal, DispatchError> {
-			let cum_funding_delta = math::decimal_checked_sub::<T>(
-				&market.cum_funding_rate,
-				&position.last_cum_funding,
-			)?;
-			Ok(math::decimal_checked_mul::<T>(&cum_funding_delta, &position.base_asset_amount)?)
+			let cum_funding_delta = market.cum_funding_rate.try_sub(&position.last_cum_funding)?;
+			Ok(cum_funding_delta.try_mul(&position.base_asset_amount)?)
 		}
 	}
 
@@ -988,7 +966,7 @@ pub mod pallet {
 			quote_abs_amount: &mut T::Decimal,
 			base_abs_value: &T::Decimal,
 		) -> Result<(), DispatchError> {
-			let diff = math::decimal_checked_sub::<T>(base_abs_value, quote_abs_amount)?;
+			let diff = base_abs_value.try_sub(quote_abs_amount)?;
 			if diff.saturating_abs() < market.minimum_trade_size {
 				// round trade to close off position
 				*quote_abs_amount = *base_abs_value;
