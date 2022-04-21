@@ -1079,6 +1079,76 @@ proptest! {
 	}
 }
 
+proptest! {
+	#[test]
+	fn reversing_long_position_realizes_pnl(
+		(quote_amount_decimal, pnl_decimal) in any_long_pnl(FixedI128::saturating_from_integer(100))
+	) {
+		let mut market_id: MarketId = 0;
+		let mut market_config = valid_market_config();
+		market_config.minimum_trade_size = FixedI128::zero();
+
+		let quote_amount = quote_amount_decimal.into_inner();
+		// Initial price = 10
+		let base_amount_decimal = FixedI128::saturating_from_integer(10);
+		let base_amount = base_amount_decimal.into_inner();
+		let margin = quote_amount;
+		let pnl = pnl_decimal.into_inner();
+		ExtBuilder { balances: vec![(ALICE, USDC, margin.unsigned_abs())], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(market_config))
+			.add_margin(&ALICE, USDC, margin.unsigned_abs())
+			.execute_with(|| {
+				let positions_before = TestPallet::get_positions(&ALICE).len();
+
+				// Open new position
+				VammPallet::set_swap_output(Some(base_amount));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Long,
+					quote_amount.unsigned_abs(),
+					base_amount.unsigned_abs(),
+				));
+
+				// Swapping all of base would give quote_amount + pnl
+				VammPallet::set_swap_simulation_output(Some(quote_amount + pnl));
+				// We want to end up with the reverse of the position (in base tokens)
+				// Now:
+				// base = quote_amount + pnl
+				// Goal:
+				// -base = -(quote_amount + pnl)
+				// Delta:
+				// base * 2 = (quote_amount + pnl) * 2
+				let base_delta_decimal = base_amount_decimal * 2.into();
+				let quote_delta_decimal = (quote_amount_decimal + pnl_decimal) * 2.into();
+				VammPallet::set_swap_output(Some(-base_delta_decimal.into_inner()));
+				// Reverse position
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Short,
+					quote_delta_decimal.into_inner().unsigned_abs(),
+					base_delta_decimal.into_inner().unsigned_abs(),
+				));
+
+				let positions = TestPallet::get_positions(&ALICE);
+				// Position remains open
+				assert_eq!(positions.len(), positions_before + 1);
+
+				let position = positions.iter().find(|p| p.market_id == market_id).unwrap();
+				assert_eq!(position.base_asset_amount, -base_amount_decimal);
+				assert_eq!(position.quote_asset_notional_amount, quote_amount_decimal - quote_delta_decimal);
+
+				// Full PnL is realized
+				assert_eq!(
+					TestPallet::get_margin(&ALICE).unwrap(),
+					(margin + pnl) as u128
+				);
+			})
+	}
+}
+
 #[test]
 #[ignore = "to be implemented"]
 fn fails_to_increase_position_if_not_enough_margin() {
