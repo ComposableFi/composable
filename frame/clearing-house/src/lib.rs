@@ -846,7 +846,51 @@ pub mod pallet {
 					},
 					Ordering::Greater => {
 						// reverse position
-						todo!();
+						let swapped = T::Vamm::swap(&SwapConfigOf::<T> {
+							vamm_id: market.vamm_id,
+							asset: AssetType::Quote,
+							input_amount: math::decimal_abs_to_balance::<T>(
+								&quote_abs_amount_decimal,
+							),
+							direction: match direction {
+								Direction::Long => VammDirection::Add,
+								Direction::Short => VammDirection::Remove,
+							},
+							output_amount_limit: base_asset_amount_limit,
+						})?;
+						let base_asset_amount_delta = T::Decimal::from_inner(swapped);
+
+						// Since reversing is equivalent to closing a position and then opening a
+						// new one in the opposite direction, all of the current position's PnL is
+						// realized
+						let exit_value = match position_direction {
+							Direction::Long => abs_base_asset_value,
+							Direction::Short => abs_base_asset_value.neg(),
+						};
+						let pnl = math::decimal_checked_sub::<T>(
+							&exit_value,
+							&position.quote_asset_notional_amount,
+						)?;
+
+						position.base_asset_amount = math::decimal_checked_add::<T>(
+							&position.base_asset_amount,
+							&base_asset_amount_delta,
+						)?;
+						position.quote_asset_notional_amount = math::decimal_checked_add::<T>(
+							&position.quote_asset_notional_amount,
+							&match direction {
+								Direction::Long => quote_abs_amount_decimal,
+								Direction::Short => quote_abs_amount_decimal.neg(),
+							},
+						)?;
+
+						// Realize PnL
+						let margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
+						// TODO(0xangelo): properly handle bad debt incurred by large negative PnL
+						AccountsMargin::<T>::insert(
+							account_id,
+							Self::update_margin_with_pnl(&margin, &pnl)?,
+						);
 					},
 				};
 			}
