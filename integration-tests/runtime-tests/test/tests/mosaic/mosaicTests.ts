@@ -5,10 +5,10 @@ import {KeyringPair} from "@polkadot/keyring/types";
 import { mintAssetsToWallet } from '@composable/utils/mintingHelper';
 import {
     CommonMosaicRemoteAssetId,
-    OrmlTokensAccountData,
     PalletMosaicDecayBudgetPenaltyDecayer,
     PalletMosaicNetworkInfo
 } from "@composable/types/interfaces";
+import BN from "bn.js";
 
 /**
  * Mosaic Pallet Tests
@@ -273,7 +273,7 @@ describe('tx.mosaic Tests', function () {
                 receiverWallet,
                 assetId);
             const afterTokens = await api.query.tokens.accounts(userWallet.address, assetId);
-            expect(initialTokens.free.toNumber()).to.be.equal((afterTokens.free.toNumber())-transferAmount);
+            expect(new BN(initialTokens.free).eq(new BN(afterTokens.free).sub(new BN(transferAmount)))).to.be.true;
         });
 
         it('User should be able to reclaim the stale funds not accepted by the relayer and locked in outgoing transactions pool', async function(){
@@ -286,7 +286,7 @@ describe('tx.mosaic Tests', function () {
             const {data: [result]} = await TxMosaicTests.testClaimStaleFunds(startRelayerWallet, assetId);
             const afterTokens = await api.query.tokens.accounts(wallet.address, assetId);
             //verify that the reclaimed tokens are transferred into user balance.
-            expect(initialTokens.free.toNumber()).to.be.equal((afterTokens.free.toNumber())-transferAmount);
+            expect(new BN(initialTokens.free).eq(new BN(afterTokens.free).sub(new BN(transferAmount)))).to.be.true;
         });
     });
 });
