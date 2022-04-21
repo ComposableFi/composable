@@ -37,6 +37,7 @@ https://docs.moonbeam.network/builders/xcm/overview/
 - https://www.youtube.com/watch?v=wrA9vlPjVPE
 - https://research.web3.foundation/en/latest/polkadot/XCMP/Opening_closing%20XCMP%20Channel.html
 - https://www.youtube.com/watch?v=P_yLrFfmLrU 
+- https://blog.quarkslab.com/resources/2022-02-27-xcmv2-audit/21-12-908-REP.pdf
 
 ## Generic context
 

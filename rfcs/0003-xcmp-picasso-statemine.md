@@ -10,19 +10,23 @@ This proposal sugget to open bidirectional HRMP channel between Picasso and Stat
 2. Statemine accept channel request and send request to Picasso
 3. Accept channel form Statemine to Picasso
 
+All steps are SCALE endcoded and can be decoded and exectued by named consensuses.
+
+Proposa follows same steps as other chains did.
+
 ## Preparation
 
 One should have `Identity` on Kusama to create `Proposal` on  https://parachains.polkassembly.io/ . 
 
-Suggested amount is 50 KSM total for all operations on `Balance`.
+Suggested amount is 50 KSM total for all operations on `Balance`, for creating identity, backing proposal and sending XCM messages.
 
-Picasso chain also should have Balance, better 22 KSM.
+Picasso chain also should have Balance, better 22 KSM. Because its subereign account may also pay some fee.
 
-## Picasso Goverannce create request
+## Picasso Goverannce to create request
 
 Picasso to ask Statemint to open channel on Kusama encoded as `hrmp`  `0x3c00e8030000e803000000900100` to open channel. Can be decoded by Kusama.
 
-That should be send from Parachain account from Picasso:
+That should be send from Parachain account from Picasso via next `relayerXcm.send` :
 
 Encoded as `0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee383c00e8030000e803000000900100`  .
 
@@ -30,7 +34,7 @@ Can be decoded via https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.com
 
 ## Accept proposal and propose back
 
-Create `Proposal` for referenda with:
+Create `Proposal` for referenda to ensure Kusama executed channel opening on its owned Statemine network:
 ```
 This proposal aims to open HRMP channel between Statemine & Picasso. For more context please read here.
 
@@ -93,7 +97,7 @@ calls: [
 ]
 ```
 
-#### Decoded proposal 
+#### Decoded proposal
 
 Above encoded call is next XCM message:
 ```json
@@ -233,15 +237,14 @@ Where [Kusama.utility.batchAll](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fku
 
 ## Accept request from Statemine
 
-Accept channel from state mine `0x3c01e8030000`
+Accept channel from state mine as  `0x3c01e8030000` (can be decoded by Kusama)
 
 
-Sent as XCM  message `0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee183c01e8030000`
+Sent as XCM  message from Picaso with that acceptance via `0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee183c01e8030000`
 
 Decoded by https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode
 
 ## References
-
 
 - https://kusama.polkassembly.io/referendum/163
 
