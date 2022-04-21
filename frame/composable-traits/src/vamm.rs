@@ -1,13 +1,12 @@
 //! # Virtual Automated Market Maker
 //!
 //! Common traits and data structures for vamm implementation.
-use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
+use codec::{FullCodec, MaxEncodedLen};
 use frame_support::pallet_prelude::DispatchError;
 use num_integer::Integer;
 use scale_info::TypeInfo;
 use sp_arithmetic::traits::Unsigned;
 use sp_runtime::FixedPointNumber;
-use sp_std::fmt::Debug;
 
 /// Exposes functionality for creation and management of virtual automated market makers.
 ///
