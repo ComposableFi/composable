@@ -859,7 +859,7 @@ pub mod pallet {
 							&T::Decimal::from_inner(swapped),
 						)?;
 						position.quote_asset_notional_amount = math::decimal_checked_add::<T>(
-							&position.quote_asset_notional_amount,
+							&exit_value,
 							&match direction {
 								Direction::Long => quote_abs_amount_decimal,
 								Direction::Short => quote_abs_amount_decimal.neg(),
