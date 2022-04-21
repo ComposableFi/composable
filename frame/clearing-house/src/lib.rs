@@ -760,6 +760,8 @@ pub mod pallet {
 					&abs_base_asset_value,
 				)?;
 
+				let entry_value: T::Decimal;
+				let exit_value: T::Decimal;
 				match quote_abs_amount_decimal.cmp(&abs_base_asset_value) {
 					Ordering::Less => {
 						// decrease position
@@ -778,18 +780,17 @@ pub mod pallet {
 						let base_delta_decimal = T::Decimal::from_inner(swapped);
 
 						// Compute proportion of quote asset notional amount closed
-						let entry_value = math::decimal_checked_mul::<T>(
+						entry_value = math::decimal_checked_mul::<T>(
 							&position.quote_asset_notional_amount,
 							&math::decimal_checked_div::<T>(
 								&base_delta_decimal.saturating_abs(),
 								&position.base_asset_amount.saturating_abs(),
 							)?,
 						)?;
-						let exit_value = match position_direction {
+						exit_value = match position_direction {
 							Direction::Long => quote_abs_amount_decimal,
 							Direction::Short => quote_abs_amount_decimal.neg(),
 						};
-						let pnl = math::decimal_checked_sub::<T>(&exit_value, &entry_value)?;
 
 						position.base_asset_amount = math::decimal_checked_add::<T>(
 							&position.base_asset_amount,
@@ -799,14 +800,6 @@ pub mod pallet {
 							&position.quote_asset_notional_amount,
 							&entry_value,
 						)?;
-
-						// Realize PnL
-						let margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
-						// TODO(0xangelo): properly handle bad debt incurred by large negative PnL
-						AccountsMargin::<T>::insert(
-							account_id,
-							Self::update_margin_with_pnl(&margin, &pnl)?,
-						);
 					},
 					Ordering::Equal => {
 						// close position
@@ -825,22 +818,11 @@ pub mod pallet {
 							),
 						})?;
 
-						let exit_value = match position_direction {
+						entry_value = position.quote_asset_notional_amount;
+						exit_value = match position_direction {
 							Direction::Long => quote_abs_amount_decimal,
 							Direction::Short => quote_abs_amount_decimal.neg(),
 						};
-						let pnl = math::decimal_checked_sub::<T>(
-							&exit_value,
-							&position.quote_asset_notional_amount,
-						)?;
-
-						// Realize PnL
-						let margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
-						// TODO(0xangelo): properly handle bad debt incurred by large negative PnL
-						AccountsMargin::<T>::insert(
-							account_id,
-							Self::update_margin_with_pnl(&margin, &pnl)?,
-						);
 
 						positions.swap_remove(position_index);
 					},
@@ -863,14 +845,11 @@ pub mod pallet {
 						// Since reversing is equivalent to closing a position and then opening a
 						// new one in the opposite direction, all of the current position's PnL is
 						// realized
-						let exit_value = match position_direction {
+						entry_value = position.quote_asset_notional_amount;
+						exit_value = match position_direction {
 							Direction::Long => abs_base_asset_value,
 							Direction::Short => abs_base_asset_value.neg(),
 						};
-						let pnl = math::decimal_checked_sub::<T>(
-							&exit_value,
-							&position.quote_asset_notional_amount,
-						)?;
 
 						position.base_asset_amount = math::decimal_checked_add::<T>(
 							&position.base_asset_amount,
@@ -883,16 +862,17 @@ pub mod pallet {
 								Direction::Short => quote_abs_amount_decimal.neg(),
 							},
 						)?;
-
-						// Realize PnL
-						let margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
-						// TODO(0xangelo): properly handle bad debt incurred by large negative PnL
-						AccountsMargin::<T>::insert(
-							account_id,
-							Self::update_margin_with_pnl(&margin, &pnl)?,
-						);
 					},
 				};
+
+				let pnl = math::decimal_checked_sub::<T>(&exit_value, &entry_value)?;
+				// Realize PnL
+				let margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
+				// TODO(0xangelo): properly handle bad debt incurred by large negative PnL
+				AccountsMargin::<T>::insert(
+					account_id,
+					Self::update_margin_with_pnl(&margin, &pnl)?,
+				);
 			}
 
 			Positions::<T>::insert(account_id, positions);
