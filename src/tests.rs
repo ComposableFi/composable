@@ -1,6 +1,6 @@
 use crate::primitives::{ParachainHeader, PartialMmrLeaf, SignedCommitment};
 use crate::{
-    runtime, BeefyLightClient, KeccakHasher, MmrUpdateProof, ParachainsUpdateProof,
+    runtime, BeefyLightClient, HostFunctions, KeccakHasher, MmrUpdateProof, ParachainsUpdateProof,
     SignatureWithAuthorityIndex,
 };
 use crate::{AuthoritySet, BeefyClientError, MmrState, StorageRead, StorageWrite, H256};
@@ -12,6 +12,7 @@ use frame_support::assert_ok;
 use hex_literal::hex;
 use pallet_mmr_primitives::Proof;
 use sp_core::bytes::to_hex;
+use sp_io::crypto;
 use sp_runtime::traits::Convert;
 use std::collections::BTreeMap;
 use subxt::rpc::ClientT;
@@ -22,6 +23,22 @@ pub const PARA_ID: u32 = 2000;
 pub struct StorageMock {
     mmr_state: MmrState,
     authority_set: AuthoritySet,
+}
+
+pub struct Crypto;
+impl HostFunctions for Crypto {
+    fn keccak_256(input: &[u8]) -> [u8; 32] {
+        keccak_256(input)
+    }
+
+    fn secp256k1_ecdsa_recover_compressed(
+        signature: &[u8; 65],
+        value: &[u8; 32],
+    ) -> Option<Vec<u8>> {
+        crypto::secp256k1_ecdsa_recover_compressed(signature, value)
+            .ok()
+            .map(|val| val.to_vec())
+    }
 }
 
 impl StorageMock {
@@ -161,7 +178,7 @@ async fn get_mmr_update(
 #[tokio::test]
 async fn test_ingest_mmr_with_proof() {
     let store = StorageMock::new();
-    let mut beef_light_client = BeefyLightClient::new(store);
+    let mut beef_light_client = BeefyLightClient::<_, Crypto>::new(store);
     let url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9944".to_string());
     let client = subxt::ClientBuilder::new()
         .set_url(url)
@@ -236,7 +253,7 @@ async fn test_ingest_mmr_with_proof() {
 #[test]
 fn should_fail_with_incomplete_signature_threshold() {
     let store = StorageMock::new();
-    let mut beef_light_client = BeefyLightClient::new(store);
+    let mut beef_light_client = BeefyLightClient::<_, Crypto>::new(store);
     let mmr_update = MmrUpdateProof {
         signed_commitment: SignedCommitment {
             commitment: beefy_primitives::Commitment {
@@ -279,7 +296,7 @@ fn should_fail_with_incomplete_signature_threshold() {
 #[test]
 fn should_fail_with_invalid_validator_set_id() {
     let store = StorageMock::new();
-    let mut beef_light_client = BeefyLightClient::new(store);
+    let mut beef_light_client = BeefyLightClient::<_, Crypto>::new(store);
 
     let mmr_update = MmrUpdateProof {
         signed_commitment: SignedCommitment {
@@ -323,7 +340,7 @@ fn should_fail_with_invalid_validator_set_id() {
 #[tokio::test]
 async fn verify_parachain_headers() {
     let store = StorageMock::new();
-    let mut beef_light_client = BeefyLightClient::new(store);
+    let mut beef_light_client = BeefyLightClient::<_, Crypto>::new(store);
     let url = std::env::var("NODE_ENDPOINT").unwrap_or("ws://127.0.0.1:9944".to_string());
     let client = subxt::ClientBuilder::new()
         .set_url(url)

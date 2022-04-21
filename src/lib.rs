@@ -14,6 +14,7 @@
 // limitations under the License.
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use core::marker::PhantomData;
 #[cfg(test)]
 use std::println as debug;
 
@@ -30,12 +31,11 @@ use crate::primitives::{
     BeefyNextAuthoritySet, KeccakHasher, MmrUpdateProof, ParachainsUpdateProof,
     SignatureWithAuthorityIndex, HASH_LENGTH,
 };
-use crate::traits::{AuthoritySet, MmrState, StorageRead, StorageWrite};
+use crate::traits::{AuthoritySet, HostFunctions, MmrState, StorageRead, StorageWrite};
 use beefy_primitives::known_payload_ids::MMR_ROOT_ID;
 use beefy_primitives::mmr::MmrLeaf;
 use codec::Encode;
 use sp_core::{ByteArray, H256};
-use sp_io::{crypto, hashing::keccak_256};
 use sp_runtime::traits::Convert;
 
 use sp_std::prelude::*;
@@ -43,14 +43,18 @@ use sp_std::prelude::*;
 #[cfg(not(feature = "std"))]
 use sp_std::vec;
 
-pub struct BeefyLightClient<Store: StorageRead + StorageWrite> {
+pub struct BeefyLightClient<Store: StorageRead + StorageWrite, Crypto: HostFunctions> {
     store: Store,
+    _phantom: PhantomData<Crypto>,
 }
 
-impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
+impl<Store: StorageRead + StorageWrite, Crypto: HostFunctions> BeefyLightClient<Store, Crypto> {
     /// Create a new instance of the light client
     pub fn new(store: Store) -> Self {
-        Self { store }
+        Self {
+            store,
+            _phantom: PhantomData::default(),
+        }
     }
 
     /// Return a reference to the underlying store
@@ -108,7 +112,7 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
 
         // Beefy validators sign the keccak_256 hash of the scale encoded commitment
         let encoded_commitment = mmr_update.signed_commitment.commitment.encode();
-        let commitment_hash = keccak_256(&*encoded_commitment);
+        let commitment_hash = <Crypto as HostFunctions>::keccak_256(&*encoded_commitment);
 
         #[cfg(test)]
         debug!("Recovering authority keys from signatures");
@@ -118,17 +122,21 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
             .signatures
             .into_iter()
             .map(|SignatureWithAuthorityIndex { index, signature }| {
-                crypto::secp256k1_ecdsa_recover_compressed(&signature, &commitment_hash)
-                    .map(|public_key_bytes| {
-                        beefy_primitives::crypto::AuthorityId::from_slice(&public_key_bytes).ok()
-                    })
-                    .ok()
-                    .flatten()
-                    .map(|pub_key| {
-                        authority_indices.push(index as usize);
-                        keccak_256(&beefy_mmr::BeefyEcdsaToEthereum::convert(pub_key))
-                    })
-                    .ok_or_else(|| BeefyClientError::InvalidSignature)
+                <Crypto as HostFunctions>::secp256k1_ecdsa_recover_compressed(
+                    &signature,
+                    &commitment_hash,
+                )
+                .map(|public_key_bytes| {
+                    beefy_primitives::crypto::AuthorityId::from_slice(&public_key_bytes).ok()
+                })
+                .flatten()
+                .map(|pub_key| {
+                    authority_indices.push(index as usize);
+                    <Crypto as HostFunctions>::keccak_256(
+                        &beefy_mmr::BeefyEcdsaToEthereum::convert(pub_key),
+                    )
+                })
+                .ok_or_else(|| BeefyClientError::InvalidSignature)
             })
             .collect::<Result<Vec<_>, BeefyClientError>>()?;
 
@@ -214,7 +222,7 @@ impl<Store: StorageRead + StorageWrite> BeefyLightClient<Store> {
 
             let proof =
                 rs_merkle::MerkleProof::<KeccakHasher>::new(parachain_header.parachain_heads_proof);
-            let leaf_hash = keccak_256(&leaf_bytes);
+            let leaf_hash = <Crypto as HostFunctions>::keccak_256(&leaf_bytes);
             let root = proof
                 .root(
                     &vec![parachain_header.heads_leaf_index as usize],
