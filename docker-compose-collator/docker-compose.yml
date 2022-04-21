@@ -4,8 +4,8 @@ services:
   composable_node:
     image: composablefi/composable:latest
     container_name: composable_node
-    volume:
-      - .composable-data:/data
+    volumes:
+      - ./composable-data:/data
     ports:
       - 9833:9833
       - 9844:9844
