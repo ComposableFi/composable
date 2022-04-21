@@ -843,7 +843,6 @@ pub mod pallet {
 							},
 							output_amount_limit: base_asset_amount_limit,
 						})?;
-						let base_asset_amount_delta = T::Decimal::from_inner(swapped);
 						base_swapped = math::integer_to_balance::<T>(&swapped);
 
 						// Since reversing is equivalent to closing a position and then opening a
@@ -857,7 +856,7 @@ pub mod pallet {
 
 						position.base_asset_amount = math::decimal_checked_add::<T>(
 							&position.base_asset_amount,
-							&base_asset_amount_delta,
+							&T::Decimal::from_inner(swapped),
 						)?;
 						position.quote_asset_notional_amount = math::decimal_checked_add::<T>(
 							&position.quote_asset_notional_amount,
