@@ -154,10 +154,7 @@ pub mod pallet {
 				dest_port_id: params.dest_port_id,
 				dest_channel_id: params.dest_channel_id,
 			};
-			T::IbcHandler::send_packet(send_packet).map_err(|e| {
-				println!("{:?}", e);
-				Error::<T>::PacketSendError
-			})?;
+			T::IbcHandler::send_packet(send_packet).map_err(|e| Error::<T>::PacketSendError)?;
 			Self::deposit_event(Event::<T>::PacketSent);
 			Ok(())
 		}

@@ -186,6 +186,7 @@ runtime-benchmarks = [
   "pablo/runtime-benchmarks",
   "dex-router/runtime-benchmarks",
   "common/runtime-benchmarks",
+	"pallet-ibc/runtime-benchmarks"
 ]
 std = [
   "codec/std",

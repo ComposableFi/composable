@@ -248,8 +248,6 @@ pub mod pallet {
 		DecodingError,
 		/// Error encoding some type
 		EncodingError,
-		/// Error inserting a value in trie
-		TrieInsertError,
 		/// Error generating trie proof
 		ProofGenerationError,
 		/// Client consensus state not found for height

@@ -25,9 +25,10 @@ balances = { package = "pallet-balances", git = "https://github.com/paritytech/s
 
 #ibc = { version = "0.13.0", default-features = false }
 #ibc-proto = { version = "0.17.0", default-features = false }
-ibc = { git = "https://github.com/informalsystems/ibc-rs.git", branch = "master", default-features = false }
-ibc-proto = { git = "https://github.com/informalsystems/ibc-rs.git", branch = "master", default-features = false }
+ibc = { git = "https://github.com/informalsystems/ibc-rs", branch = "master", default-features = false }
+ibc-proto = { git = "https://github.com/informalsystems/ibc-rs", branch = "master", default-features = false }
 tendermint-proto = { version = "0.23.6", default-features = false }
+tendermint = { version = "0.23.6", optional = true, default-features = false }
 
 # local deps
 ibc-primitives = { path = "ibc-primitives", default-features = false }
@@ -63,5 +64,8 @@ std = [
 	"ibc-trait/std"
 ]
 
-runtime-benchmarks = ["frame-benchmarking"]
+runtime-benchmarks = [
+	"frame-benchmarking",
+	"tendermint"
+]
 try-runtime = ["frame-support/try-runtime"]

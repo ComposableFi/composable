@@ -1056,7 +1056,7 @@ impl_runtime_apis! {
 			None
 		}
 
-		fn connection_using_client(_client_id: Vec<u8>) -> Option<ibc_primitives::IdentifiedConnection>{
+		fn connection_using_client(_client_id: Vec<u8>) -> Option<Vec<ibc_primitives::IdentifiedConnection>>{
 			None
 		}
 

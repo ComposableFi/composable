@@ -81,9 +81,16 @@ where
 		deps.client.clone(),
 	)));
 
+<<<<<<< HEAD
 	io.extend_with(ibc_rpc::IbcApi::to_delegate(ibc_rpc::IbcRpcHandler::new(
 		deps.client.clone(),
 		deps.chain_props,
+=======
+	io.extend_with(PabloApi::to_delegate(Pablo::new(client.clone())));
+	io.extend_with(ibc_rpc::IbcApi::to_delegate(ibc_rpc::IbcRpcHandler::new(
+		client,
+		chain_props,
+>>>>>>> 32061084 (rebase and fix conflicts)
 	)));
 
 	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_assets_api(
