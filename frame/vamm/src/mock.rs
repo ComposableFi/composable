@@ -36,6 +36,7 @@ frame_support::construct_runtime!(
 pub type Balance = u128;
 pub type BlockNumber = u64;
 pub type VammId = u128;
+pub type Integer = i128;
 
 // ----------------------------------------------------------------------------------------------------
 //                                                FRAME System
@@ -121,6 +122,7 @@ impl pallet_vamm::Config for MockRuntime {
 	type Timestamp = i64;
 	type VammId = VammId;
 	type Decimal = FixedI128;
+	type Integer = Integer;
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -130,6 +132,13 @@ impl pallet_vamm::Config for MockRuntime {
 #[derive(Default)]
 pub struct ExtBuilder {
 	pub vamm_count: VammId,
+	pub vamms: Vec<(
+		VammId,
+		pallet_vamm::VammState<
+			<MockRuntime as pallet_vamm::Config>::Balance,
+			<MockRuntime as pallet_vamm::Config>::Timestamp,
+		>,
+	)>,
 }
 
 impl ExtBuilder {
@@ -138,9 +147,12 @@ impl ExtBuilder {
 		let mut storage =
 			frame_system::GenesisConfig::default().build_storage::<MockRuntime>().unwrap();
 
-		pallet_vamm::GenesisConfig::<MockRuntime> { vamm_count: self.vamm_count }
-			.assimilate_storage(&mut storage)
-			.unwrap();
+		pallet_vamm::GenesisConfig::<MockRuntime> {
+			vamm_count: self.vamm_count,
+			vamms: self.vamms,
+		}
+		.assimilate_storage(&mut storage)
+		.unwrap();
 
 		storage.into()
 	}
