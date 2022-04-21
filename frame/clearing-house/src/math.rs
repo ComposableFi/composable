@@ -1,5 +1,5 @@
 use crate::Config;
-use num_traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub};
+use num_traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Signed};
 use sp_runtime::{
 	traits::Zero,
 	ArithmeticError,
@@ -7,13 +7,15 @@ use sp_runtime::{
 	FixedPointNumber,
 };
 
-pub fn decimal_abs_to_balance<T: Config>(decimal: &T::Decimal) -> T::Balance {
-	decimal
-		.saturating_abs()
-		.into_inner()
+pub fn integer_to_balance<T: Config>(int: &T::Integer) -> T::Balance {
+	int.abs()
 		.try_into()
 		.map_err(|_| Underflow)
 		.expect("An absolute of Integer can always be converted to Balance")
+}
+
+pub fn decimal_abs_to_balance<T: Config>(decimal: &T::Decimal) -> T::Balance {
+	integer_to_balance::<T>(&decimal.into_inner())
 }
 
 pub fn decimal_from_balance<T: Config>(

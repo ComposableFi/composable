@@ -725,6 +725,7 @@ pub mod pallet {
 
 			let position_direction = Self::position_direction(position).unwrap_or(direction);
 
+			let base_swapped: T::Balance;
 			if direction == position_direction {
 				// increase position
 				let swapped = T::Vamm::swap(&SwapConfigOf::<T> {
@@ -737,6 +738,7 @@ pub mod pallet {
 					},
 					output_amount_limit: base_asset_amount_limit,
 				})?;
+				base_swapped = math::integer_to_balance::<T>(&swapped);
 
 				position.base_asset_amount = math::decimal_checked_add::<T>(
 					&position.base_asset_amount,
@@ -777,6 +779,7 @@ pub mod pallet {
 							},
 							output_amount_limit: base_asset_amount_limit,
 						})?;
+						base_swapped = math::integer_to_balance::<T>(&swapped);
 						let base_delta_decimal = T::Decimal::from_inner(swapped);
 
 						// Compute proportion of quote asset notional amount closed
@@ -803,12 +806,12 @@ pub mod pallet {
 					},
 					Ordering::Equal => {
 						// close position
+						base_swapped =
+							math::decimal_abs_to_balance::<T>(&position.base_asset_amount);
 						let _ = T::Vamm::swap(&SwapConfigOf::<T> {
 							vamm_id: market.vamm_id,
 							asset: AssetType::Base,
-							input_amount: math::decimal_abs_to_balance::<T>(
-								&position.base_asset_amount,
-							),
+							input_amount: base_swapped,
 							direction: match position_direction {
 								Direction::Long => VammDirection::Add,
 								Direction::Short => VammDirection::Remove,
@@ -841,6 +844,7 @@ pub mod pallet {
 							output_amount_limit: base_asset_amount_limit,
 						})?;
 						let base_asset_amount_delta = T::Decimal::from_inner(swapped);
+						base_swapped = math::integer_to_balance::<T>(&swapped);
 
 						// Since reversing is equivalent to closing a position and then opening a
 						// new one in the opposite direction, all of the current position's PnL is
@@ -876,8 +880,7 @@ pub mod pallet {
 			}
 
 			Positions::<T>::insert(account_id, positions);
-			// TODO(0xangelo): return base abs amount swapped
-			Ok(0_u32.into())
+			Ok(base_swapped)
 		}
 	}
 
