@@ -2,12 +2,10 @@ version: "3.7"
 
 services:
   composable_node:
+    image: composablefi/composable:latest
     container_name: composable_node
-    build:
-      context: .
-      dockerfile: ./Dockerfile
-    volumes:
-      - ./chain-data:/chain-data
+    volume:
+      - .composable-data:/data
     ports:
       - 9833:9833
       - 9844:9844
@@ -18,7 +16,7 @@ services:
       /usr/local/bin/composable
       --collator
       --chain=picasso
-      --base-path /chain-data
+      --base-path /data
       --unsafe-ws-external
       --unsafe-rpc-external
       --listen-addr=/ip4/0.0.0.0/tcp/30334
