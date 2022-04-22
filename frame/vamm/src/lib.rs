@@ -634,6 +634,12 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let result = match config.direction {
 				// 1) If we intend to remove some asset amount from vamm, we must
+			// TODO(Cardosaum): Implement check based on time to assess if vamm
+			// is operational. Essentialy, check if `time.now() <
+			// vamm_state.closed`, in case vamm_state is Some(time).
+			//
+			// The vamm must not be closed
+
 				// have sufficient funds for it.
 				Direction::Remove => match config.asset {
 					AssetType::Base => ensure!(
