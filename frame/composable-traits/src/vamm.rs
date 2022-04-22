@@ -1,10 +1,8 @@
 //! # Virtual Automated Market Maker
 //!
 //! Common traits and data structures for vamm implementation.
-use codec::{FullCodec, MaxEncodedLen};
 use frame_support::pallet_prelude::DispatchError;
 use num_integer::Integer;
-use scale_info::TypeInfo;
 use sp_arithmetic::traits::Unsigned;
 use sp_runtime::FixedPointNumber;
 
@@ -72,7 +70,7 @@ pub struct VammConfig<Balance> {
 }
 
 /// Specify a common encapsulation layer for the swap functions.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub struct SwapConfig<VammId, Balance> {
 	pub vamm_id: VammId,
 	pub asset: AssetType,
@@ -82,6 +80,7 @@ pub struct SwapConfig<VammId, Balance> {
 }
 
 /// Specify a common encapsulation layer for the swap simulation functions.
+#[derive(Clone, Debug)]
 pub struct SwapSimulationConfig<VammId, Balance> {
 	pub vamm_id: VammId,
 	pub asset: AssetType,

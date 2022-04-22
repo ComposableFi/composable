@@ -1,10 +1,13 @@
 use crate::{
+	math::IntoBalance,
 	mock::{
-		accounts::ALICE,
+		accounts::{AccountId, ALICE},
 		assets::{AssetId, DOT, PICA, USDC},
 		oracle as mock_oracle,
 		runtime::{
-			Balance, ExtBuilder, MarketId, Origin, Runtime, System, TestPallet, Timestamp, VammId,
+			Balance, ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime,
+			System as SystemPallet, TestPallet, Timestamp as TimestampPallet, Vamm as VammPallet,
+			VammId,
 		},
 		vamm as mock_vamm,
 	},
@@ -14,7 +17,7 @@ use composable_traits::{
 	clearing_house::{ClearingHouse, Instruments},
 	oracle::Oracle,
 	time::{DurationSeconds, ONE_HOUR},
-	vamm::Vamm,
+	vamm::{AssetType, Direction as VammDirection, Vamm},
 };
 use frame_support::{
 	assert_err, assert_noop, assert_ok, assert_storage_noop, pallet_prelude::Hooks,
@@ -25,15 +28,17 @@ use proptest::{
 	num::f64::{NEGATIVE, POSITIVE, ZERO},
 	prelude::*,
 };
-use sp_runtime::{traits::Zero, FixedI128};
+use sp_runtime::{traits::Zero, FixedI128, FixedPointNumber};
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Setup
 // ----------------------------------------------------------------------------------------------------
 
-type MarketConfig = <TestPallet as ClearingHouse>::MarketConfig;
 type Market = <TestPallet as Instruments>::Market;
+type MarketConfig = <TestPallet as ClearingHouse>::MarketConfig;
 type Position = <TestPallet as Instruments>::Position;
+type SwapConfig = <VammPallet as Vamm>::SwapConfig;
+type SwapSimulationConfig = <VammPallet as Vamm>::SwapSimulationConfig;
 type VammConfig = mock_vamm::VammConfig;
 
 impl Default for ExtBuilder {
@@ -42,26 +47,38 @@ impl Default for ExtBuilder {
 			native_balances: vec![],
 			balances: vec![],
 			collateral_types: vec![USDC],
-			vamm_id: Some(0u64),
-			vamm_twap: Some(FixedI128::from_float(100.0)),
+			vamm_id: Some(0_u64),
+			vamm_twap: Some(100.into()),
 			oracle_asset_support: Some(true),
-			oracle_twap: Some(10_000u64),
+			oracle_twap: Some(10_000_u64),
 		}
 	}
 }
 
 fn run_to_block(n: u64) {
-	while System::block_number() < n {
-		if System::block_number() > 0 {
-			Timestamp::on_finalize(System::block_number());
-			System::on_finalize(System::block_number());
+	while SystemPallet::block_number() < n {
+		if SystemPallet::block_number() > 0 {
+			TimestampPallet::on_finalize(SystemPallet::block_number());
+			SystemPallet::on_finalize(SystemPallet::block_number());
 		}
-		System::set_block_number(System::block_number() + 1);
+		SystemPallet::set_block_number(SystemPallet::block_number() + 1);
 		// Time is set in milliseconds, so at each block we increment the timestamp by 1000ms = 1s
-		let _ = Timestamp::set(Origin::none(), System::block_number() * 1000);
-		System::on_initialize(System::block_number());
-		Timestamp::on_initialize(System::block_number());
+		let _ = TimestampPallet::set(Origin::none(), SystemPallet::block_number() * 1000);
+		SystemPallet::on_initialize(SystemPallet::block_number());
+		TimestampPallet::on_initialize(SystemPallet::block_number());
 	}
+}
+
+/// Return the balance representation of the input value, according to the precision of the fixed
+/// point implementation
+fn as_balance<T: Into<FixedI128>>(value: T) -> u128 {
+	as_inner(value) as u128
+}
+
+/// Return the inner integer of the fixed point representation of the input value
+fn as_inner<T: Into<FixedI128>>(value: T) -> i128 {
+	let f: FixedI128 = value.into();
+	f.into_inner()
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -80,23 +97,71 @@ fn valid_market_config() -> MarketConfig {
 		margin_ratio_initial: FixedI128::from_float(0.1),
 		// liquidate when above 50x leverage
 		margin_ratio_maintenance: FixedI128::from_float(0.02),
+		// 'One cent' of the quote asset
+		minimum_trade_size: FixedI128::from_float(0.01),
 		funding_frequency: ONE_HOUR,
 		funding_period: ONE_HOUR * 24,
 	}
+}
+
+fn valid_quote_asset_amount() -> Balance {
+	as_balance(100)
+}
+
+fn valid_base_asset_amount_limit() -> Balance {
+	as_balance(10)
 }
 
 // ----------------------------------------------------------------------------------------------------
 //                                           Initializers
 // ----------------------------------------------------------------------------------------------------
 
+trait MarginInitializer {
+	fn add_margin(self, account_id: &AccountId, asset_id: AssetId, amount: Balance) -> Self;
+}
+
+impl MarginInitializer for sp_io::TestExternalities {
+	fn add_margin(mut self, account_id: &AccountId, asset_id: AssetId, amount: Balance) -> Self {
+		self.execute_with(|| {
+			assert_ok!(<TestPallet as ClearingHouse>::add_margin(account_id, asset_id, amount));
+		});
+
+		self
+	}
+}
+
 trait MarketInitializer {
-	fn init_market(self) -> Self;
+	fn init_market(self, market_id: &mut MarketId, config: Option<MarketConfig>) -> Self;
+	fn init_markets<T>(self, market_ids: &mut Vec<MarketId>, configs: T) -> Self
+	where
+		T: Iterator<Item = Option<MarketConfig>>;
+
+	fn create_market_helper(config: Option<MarketConfig>) -> MarketId {
+		<TestPallet as ClearingHouse>::create_market(&match config {
+			Some(c) => c,
+			None => valid_market_config(),
+		})
+		.unwrap()
+	}
 }
 
 impl MarketInitializer for sp_io::TestExternalities {
-	fn init_market(mut self) -> Self {
+	fn init_market(mut self, market_id: &mut MarketId, config: Option<MarketConfig>) -> Self {
 		self.execute_with(|| {
-			<TestPallet as ClearingHouse>::create_market(&valid_market_config()).unwrap();
+			*market_id = Self::create_market_helper(config);
+		});
+
+		self
+	}
+
+	fn init_markets<T>(mut self, market_ids: &mut Vec<MarketId>, configs: T) -> Self
+	where
+		T: Iterator<Item = Option<MarketConfig>>,
+	{
+		self.execute_with(|| {
+			for config in configs {
+				market_ids.push(Self::create_market_helper(config));
+			}
 		});
 
 		self
@@ -121,7 +186,7 @@ prop_compose! {
 
 prop_compose! {
 	fn zero_to_one_open_interval()(
-		float in (0.0..1.0f64).prop_filter("Zero not included in (0, 1)", |num| num > &0.0)
+		float in (0.0..1.0_f64).prop_filter("Zero not included in (0, 1)", |num| num > &0.0)
 	) -> f64 {
 		float
 	}
@@ -162,8 +227,8 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn any_decimal()(float in any::<f64>()) -> FixedI128 {
-		FixedI128::from_float(float)
+	fn any_decimal()(inner in any::<i128>()) -> FixedI128 {
+		FixedI128::from_inner(inner)
 	}
 }
 
@@ -191,8 +256,16 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn bounded_decimal()(float in -1e9..1e9f64) -> FixedI128 {
-		FixedI128::from_float(float)
+	fn bounded_decimal()(
+		inner in as_inner(-1_000_000_000)..as_inner(1_000_000_000)
+	) -> FixedI128 {
+		FixedI128::from_inner(inner)
+	}
+}
+
+prop_compose! {
+	fn any_minimum_trade_size()(inner in 0..as_inner(1_000_000_000)) -> FixedI128 {
+		FixedI128::from_inner(inner)
 	}
 }
 
@@ -204,6 +277,7 @@ prop_compose! {
 			margin_ratio_initial,
 			margin_ratio_maintenance
 		) in initial_gt_maintenance_margin_ratio(),
+		minimum_trade_size in any_minimum_trade_size(),
 		cum_funding_rate in bounded_decimal(),
 		funding_rate_ts in any_duration(),
 		(funding_frequency, funding_period) in funding_params()
@@ -213,6 +287,7 @@ prop_compose! {
 			asset_id,
 			margin_ratio_initial,
 			margin_ratio_maintenance,
+			minimum_trade_size,
 			cum_funding_rate,
 			funding_rate_ts,
 			funding_frequency,
@@ -237,6 +312,68 @@ prop_compose! {
 	}
 }
 
+fn any_asset_type() -> impl Strategy<Value = AssetType> {
+	prop_oneof![Just(AssetType::Base), Just(AssetType::Quote)]
+}
+
+fn any_vamm_direction() -> impl Strategy<Value = VammDirection> {
+	prop_oneof![Just(VammDirection::Add), Just(VammDirection::Remove)]
+}
+
+prop_compose! {
+	fn any_swap_config()(
+		vamm_id in any::<VammId>(),
+		asset in any_asset_type(),
+		input_amount in any::<Balance>(),
+		direction in any_vamm_direction(),
+		output_amount_limit in any::<Balance>(),
+	) -> SwapConfig {
+		SwapConfig {
+			vamm_id, asset, input_amount, direction, output_amount_limit
+		}
+	}
+}
+
+prop_compose! {
+	fn any_swap_simulation_config()(
+		vamm_id in any::<VammId>(),
+		asset in any_asset_type(),
+		input_amount in any::<Balance>(),
+		direction in any_vamm_direction(),
+	) -> SwapSimulationConfig {
+		SwapSimulationConfig { vamm_id, asset, input_amount, direction }
+	}
+}
+
+prop_compose! {
+	fn min_trade_size_and_eps(min_size: u128)(
+		eps in -(min_size as i128)..=(min_size as i128)
+	) -> (FixedI128, i128) {
+		// Couldn't find a better way to ensure that min_size is positive, so this will trigger a
+		// test error otherwise
+		assert!(min_size > 0);
+		(FixedI128::from_inner(min_size as i128), eps)
+	}
+}
+
+prop_compose! {
+	fn any_long_pnl(entry_value: u128)(
+		exit_value_inner in 1..as_inner(1_000_000_000)
+	) -> (FixedI128, FixedI128) {
+		let entry = FixedI128::from_inner(entry_value as i128);
+		(entry, FixedI128::from_inner(exit_value_inner) - entry)
+	}
+}
+
+prop_compose! {
+	fn any_short_pnl(entry_value: u128)(
+		exit_value_inner in 1..as_inner(1_000_000_000)
+	) -> (FixedI128, FixedI128) {
+		let entry = FixedI128::from_inner(entry_value as i128);
+		(entry, entry - FixedI128::from_inner(exit_value_inner))
+	}
+}
+
 // ----------------------------------------------------------------------------------------------------
 //                                           Mocked Pallets Tests
 // ----------------------------------------------------------------------------------------------------
@@ -246,7 +383,7 @@ proptest! {
 	#[test]
 	fn mock_oracle_asset_support_reflects_genesis_config(oracle_asset_support in any::<Option<bool>>()) {
 		ExtBuilder { oracle_asset_support, ..Default::default() }.build().execute_with(|| {
-			let is_supported = <Runtime as Config>::Oracle::is_supported(DOT);
+			let is_supported = OraclePallet::is_supported(DOT);
 			match oracle_asset_support {
 				Some(support) => assert_ok!(is_supported, support),
 				None => {
@@ -262,12 +399,50 @@ proptest! {
 	#[test]
 	fn mock_vamm_created_id_reflects_genesis_config(vamm_id in any::<Option<VammId>>()) {
 		ExtBuilder { vamm_id , ..Default::default() }.build().execute_with(|| {
-			let created = <Runtime as Config>::Vamm::create(&valid_vamm_config());
+			let created = VammPallet::create(&valid_vamm_config());
 			match vamm_id {
 				Some(id) => assert_ok!(created, id),
 				None => assert_err!(created, mock_vamm::Error::<Runtime>::FailedToCreateVamm),
 			}
 		})
+	}
+}
+
+proptest! {
+	#[test]
+	fn can_set_swap_output_for_mock_vamm(
+		integer in any::<Option<i128>>(), config in any_swap_config()
+	) {
+		ExtBuilder::default()
+			.build()
+			.execute_with(|| {
+				VammPallet::set_swap_output(integer);
+
+				let output = VammPallet::swap(&config);
+				match integer {
+					Some(i) => assert_ok!(output, i),
+					None => assert_err!(output, mock_vamm::Error::<Runtime>::FailedToExecuteSwap)
+				};
+			})
+	}
+}
+
+proptest! {
+	#[test]
+	fn cat_set_swap_simulation_output_for_mock_vamm(
+		integer in any::<Option<i128>>(), config in any_swap_simulation_config()
+	) {
+		ExtBuilder::default()
+			.build()
+			.execute_with(|| {
+				VammPallet::set_swap_simulation_output(integer);
+
+				let output = VammPallet::swap_simulation(&config);
+				match integer {
+					Some(i) => assert_ok!(output, i),
+					None => assert_err!(output, mock_vamm::Error::<Runtime>::FailedToSimulateSwap)
+				};
+			})
 	}
 }
 
@@ -280,7 +455,7 @@ fn add_margin_returns_transfer_error() {
 	ExtBuilder::default().build().execute_with(|| {
 		let origin = Origin::signed(ALICE);
 		assert_noop!(
-			TestPallet::add_margin(origin, USDC, 1_000u32.into()),
+			TestPallet::add_margin(origin, USDC, 1_000_u32.into()),
 			TokenError::<Runtime>::BalanceTooLow
 		);
 	});
@@ -293,7 +468,7 @@ fn deposit_unsupported_collateral_returns_error() {
 		.execute_with(|| {
 			let origin = Origin::signed(ALICE);
 			assert_noop!(
-				TestPallet::add_margin(origin, PICA, 1_000u32.into()),
+				TestPallet::add_margin(origin, PICA, 1_000_u32.into()),
 				Error::<Runtime>::UnsupportedCollateralType
 			);
 		});
@@ -307,12 +482,12 @@ fn deposit_supported_collateral_succeeds() {
 			run_to_block(1);
 			let account = ALICE;
 			let asset = USDC;
-			let amount: Balance = 1_000u32.into();
+			let amount: Balance = 1_000_u32.into();
 
 			let before = AccountsMargin::<Runtime>::get(&account).unwrap_or_default();
 			assert_ok!(TestPallet::add_margin(Origin::signed(account), asset, amount));
 
-			System::assert_last_event(Event::MarginAdded { account, asset, amount }.into());
+			SystemPallet::assert_last_event(Event::MarginAdded { account, asset, amount }.into());
 
 			let after = AccountsMargin::<Runtime>::get(&account).unwrap_or_default();
 			assert_eq!(after - before, amount);
@@ -327,24 +502,24 @@ fn deposit_supported_collateral_succeeds() {
 #[test]
 fn create_first_market_succeeds() {
 	ExtBuilder::default().build().execute_with(|| {
-		run_to_block(10); // Timestamp unix time does not work properly at genesis
+		run_to_block(10); // TimestampPallet unix time does not work properly at genesis
 		let old_count = TestPallet::market_count();
-		let block_time_now = <Timestamp as UnixTime>::now().as_secs();
+		let block_time_now = <TimestampPallet as UnixTime>::now().as_secs();
 
 		let config = valid_market_config();
 		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config.clone()));
 
 		// Ensure first market id is 0 (we know its type since it's defined in the mock runtime)
-		System::assert_last_event(
-			Event::MarketCreated { market: 0u64, asset: config.asset }.into(),
+		SystemPallet::assert_last_event(
+			Event::MarketCreated { market: 0_u64, asset: config.asset }.into(),
 		);
-		assert!(Markets::<Runtime>::contains_key(0u64));
+		assert!(Markets::<Runtime>::contains_key(0_u64));
 
 		// Ensure market count is increased by 1
 		assert_eq!(TestPallet::market_count(), old_count + 1);
 
 		// Ensure new market matches creation parameters
-		let market = TestPallet::get_market(0u64).unwrap();
+		let market = TestPallet::get_market(0_u64).unwrap();
 		assert_eq!(market.asset_id, config.asset);
 		assert_eq!(market.margin_ratio_initial, config.margin_ratio_initial);
 		assert_eq!(market.margin_ratio_maintenance, config.margin_ratio_maintenance);
@@ -353,6 +528,22 @@ fn create_first_market_succeeds() {
 
 		// Ensure last funding rate timestamp is the same as this block's time
 		assert_eq!(market.funding_rate_ts, block_time_now);
+	})
+}
+
+#[test]
+fn can_create_two_markets_with_same_config() {
+	ExtBuilder::default().build().execute_with(|| {
+		run_to_block(2);
+		let mut count = TestPallet::market_count();
+		let block_time_now = <TimestampPallet as UnixTime>::now().as_secs();
+
+		for _ in 0..2 {
+			assert_ok!(TestPallet::create_market(Origin::signed(ALICE), valid_market_config()));
+
+			assert_eq!(TestPallet::get_market(count).unwrap().funding_rate_ts, block_time_now);
+			count += 1;
+		}
 	})
 }
 
@@ -452,6 +643,730 @@ proptest! {
 	}
 }
 
+proptest! {
+	#[test]
+	fn fails_to_create_market_if_minimum_trade_size_is_negative(
+		inner in as_inner(-1_000_000_000)..0
+	) {
+		ExtBuilder::default().build().execute_with(|| {
+			let mut config = valid_market_config();
+			config.minimum_trade_size = FixedI128::from_inner(inner);
+			assert_noop!(
+				TestPallet::create_market(Origin::signed(ALICE), config),
+				Error::<Runtime>::NegativeMinimumTradeSize
+			);
+		})
+	}
+}
+
+#[test]
+fn can_create_market_with_zero_minimum_trade_size() {
+	ExtBuilder::default().build().execute_with(|| {
+		let mut config = valid_market_config();
+		config.minimum_trade_size = 0.into();
+		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));
+	})
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                            Open Position
+// ----------------------------------------------------------------------------------------------------
+
+#[test]
+fn fails_to_open_position_if_market_id_invalid() {
+	let mut market_id: MarketId = 0;
+	let quote_amount = valid_quote_asset_amount();
+	let base_amount_limit = valid_base_asset_amount_limit();
+
+	ExtBuilder { balances: vec![(ALICE, USDC, quote_amount)], ..Default::default() }
+		.build()
+		.init_market(&mut market_id, None)
+		.add_margin(&ALICE, USDC, quote_amount)
+		.execute_with(|| {
+			VammPallet::set_swap_output(Some(base_amount_limit.try_into().unwrap()));
+
+			assert_noop!(
+				TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id + 1,
+					Direction::Long,
+					quote_amount,
+					base_amount_limit
+				),
+				Error::<Runtime>::MarketIdNotFound,
+			);
+		})
+}
+
+proptest! {
+	#[test]
+	fn open_position_in_new_market_succeeds(
+		direction in prop_oneof![Just(Direction::Long), Just(Direction::Short)]
+	) {
+		let mut market_id: MarketId = 0;
+		let quote_amount = valid_quote_asset_amount();
+		let base_amount = valid_base_asset_amount_limit() as i128;
+
+		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount)], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, None)
+			.add_margin(&ALICE, USDC, quote_amount)
+			.execute_with(|| {
+				// For event emission
+				run_to_block(1);
+
+				VammPallet::set_swap_output(Some(match direction {
+					Direction::Long => base_amount,
+					Direction::Short => -base_amount
+				}));
+
+				let positions_before = TestPallet::get_positions(&ALICE).len();
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					direction,
+					quote_amount,
+					base_amount as u128,
+				));
+
+				let positions = TestPallet::get_positions(&ALICE);
+				assert_eq!(positions.len(), positions_before + 1);
+				let position = positions.iter().find(|p| p.market_id == market_id).unwrap();
+				assert!(match direction {
+					Direction::Long => position.base_asset_amount.is_positive(),
+					Direction::Short => position.base_asset_amount.is_negative()
+				});
+				assert!(match direction {
+					Direction::Long => position.quote_asset_notional_amount.is_positive(),
+					Direction::Short => position.quote_asset_notional_amount.is_negative()
+				});
+
+				SystemPallet::assert_last_event(
+					Event::TradeExecuted {
+						market: market_id,
+						direction,
+						quote: quote_amount,
+						base: base_amount as u128,
+					}.into()
+				);
+			})
+	}
+}
+
+#[test]
+fn fails_to_create_new_position_if_violates_maximum_positions_num() {
+	let max_positions = <Runtime as Config>::MaxPositions::get() as usize;
+	let mut market_ids = Vec::<_>::new();
+	let orders = max_positions + 1;
+	let configs = vec![None; orders];
+
+	let quote_amount_total = valid_quote_asset_amount();
+	let quote_amount: Balance = quote_amount_total / (orders as u128);
+	let base_amount_limit: Balance = valid_base_asset_amount_limit() / (orders as u128);
+
+	ExtBuilder { balances: vec![(ALICE, USDC, quote_amount_total)], ..Default::default() }
+		.build()
+		.init_markets(&mut market_ids, configs.into_iter())
+		.add_margin(&ALICE, USDC, quote_amount_total)
+		.execute_with(|| {
+			VammPallet::set_swap_output(Some(base_amount_limit.try_into().unwrap()));
+
+			for market_id in market_ids.iter().take(max_positions) {
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					*market_id,
+					Direction::Long,
+					quote_amount,
+					base_amount_limit,
+				));
+			}
+			assert_noop!(
+				TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_ids[max_positions],
+					Direction::Long,
+					quote_amount,
+					base_amount_limit,
+				),
+				Error::<Runtime>::MaxPositionsExceeded
+			);
+		})
+}
+
+proptest! {
+	#[test]
+	fn short_trade_can_close_long_position_within_tolerance(
+		(minimum_trade_size, eps) in min_trade_size_and_eps(as_balance((1, 100)))
+	) {
+		let mut market_id: MarketId = 0;
+		let mut market_config = valid_market_config();
+		market_config.minimum_trade_size = minimum_trade_size;
+
+		let quote_amount = valid_quote_asset_amount();
+		let base_amount_limit: i128 = valid_base_asset_amount_limit().try_into().unwrap();
+
+		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount * 2)], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(market_config))
+			.add_margin(&ALICE, USDC, quote_amount)
+			.execute_with(|| {
+				// For event emission
+				run_to_block(1);
+
+				let positions_before = TestPallet::get_positions(&ALICE).len();
+
+				VammPallet::set_swap_output(Some(base_amount_limit));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Long,
+					quote_amount,
+					base_amount_limit.unsigned_abs(),
+				));
+
+				VammPallet::set_swap_output(Some(-base_amount_limit));
+				VammPallet::set_swap_simulation_output(Some(
+					i128::try_from(quote_amount).unwrap() + eps
+				));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Short,
+					quote_amount,
+					base_amount_limit.unsigned_abs(),
+				));
+
+				assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
+
+				SystemPallet::assert_last_event(
+					Event::TradeExecuted {
+						market: market_id,
+						direction: Direction::Short,
+						quote: quote_amount,
+						base: base_amount_limit.unsigned_abs(),
+					}.into()
+				);
+		})
+	}
+}
+
+proptest! {
+	#[test]
+	fn long_trade_can_close_long_position_within_tolerance(
+		(minimum_trade_size, eps) in min_trade_size_and_eps(as_balance((1, 100)))
+	) {
+		let mut market_id: MarketId = 0;
+		let mut market_config = valid_market_config();
+		market_config.minimum_trade_size = minimum_trade_size;
+
+		let quote_amount = valid_quote_asset_amount();
+		let base_amount_limit: i128 = valid_base_asset_amount_limit().try_into().unwrap();
+
+		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount * 2)], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(market_config))
+			.add_margin(&ALICE, USDC, quote_amount)
+			.execute_with(|| {
+				// For event emission
+				run_to_block(1);
+
+				let positions_before = TestPallet::get_positions(&ALICE).len();
+
+				VammPallet::set_swap_output(Some(-base_amount_limit));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Short,
+					quote_amount,
+					base_amount_limit.unsigned_abs(),
+				));
+
+				VammPallet::set_swap_output(Some(base_amount_limit));
+				VammPallet::set_swap_simulation_output(Some(
+					-(i128::try_from(quote_amount).unwrap() + eps)
+				));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Long,
+					quote_amount,
+					base_amount_limit.unsigned_abs(),
+				));
+
+				assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
+
+				SystemPallet::assert_last_event(
+					Event::TradeExecuted {
+						market: market_id,
+						direction: Direction::Long,
+						quote: quote_amount,
+						base: base_amount_limit.unsigned_abs(),
+					}.into()
+				);
+			})
+	}
+}
+
+proptest! {
+	#[test]
+	fn closing_long_position_with_trade_realizes_pnl(
+		(quote_amount_decimal, pnl_decimal) in any_long_pnl(as_balance(100))
+	) {
+		let mut market_id: MarketId = 0;
+
+		let quote_amount = quote_amount_decimal.into_inner();
+		let quote_amount_abs = quote_amount.unsigned_abs();
+		let base_amount_limit = valid_base_asset_amount_limit() as i128;
+		let margin = quote_amount;
+		let pnl = pnl_decimal.into_inner();
+
+		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount_abs * 2)], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(valid_market_config()))
+			.add_margin(&ALICE, USDC, quote_amount_abs)
+			.execute_with(|| {
+				// For event emission
+				run_to_block(1);
+
+				let positions_before = TestPallet::get_positions(&ALICE).len();
+
+				VammPallet::set_swap_output(Some(base_amount_limit));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Long,
+					quote_amount_abs,
+					base_amount_limit.unsigned_abs(),
+				));
+
+				// Set price of base so that it should give the desired PnL in quote
+				// swapping all of base would give quote_amount + pnl
+				VammPallet::set_swap_simulation_output(Some(quote_amount + pnl));
+				// We swap all of base to close the position
+				VammPallet::set_swap_output(Some(quote_amount + pnl));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Short,
+					(quote_amount + pnl).unsigned_abs(),
+					base_amount_limit.unsigned_abs(),
+				));
+
+				assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
+				assert_eq!(
+					TestPallet::get_margin(&ALICE).unwrap(),
+					(margin + pnl) as u128
+				);
+
+				SystemPallet::assert_last_event(
+					Event::TradeExecuted {
+						market: market_id,
+						direction: Direction::Short,
+						quote: (quote_amount + pnl).unsigned_abs(),
+						base: base_amount_limit.unsigned_abs(),
+					}.into()
+				);
+		})
+	}
+}
+
+proptest! {
+	#[test]
+	fn closing_short_position_with_trade_realizes_pnl(
+		(quote_amount_decimal, pnl_decimal) in any_short_pnl(as_balance(100))
+	) {
+		let mut market_id: MarketId = 0;
+
+		let quote_amount = quote_amount_decimal.into_inner();
+		let base_amount = as_inner(10);
+		let margin = quote_amount;
+		let pnl = pnl_decimal.into_inner();
+
+		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount as u128)], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(valid_market_config()))
+			.add_margin(&ALICE, USDC, quote_amount as u128)
+			.execute_with(|| {
+				// For event emission
+				run_to_block(1);
+
+				let positions_before = TestPallet::get_positions(&ALICE).len();
+
+				VammPallet::set_swap_output(Some(-base_amount));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Short,
+					quote_amount as u128,
+					base_amount as u128,
+				));
+
+				// Set price of base so that it should give the desired PnL in quote
+				// swapping all of base would give -quote_amount + pnl
+				let new_base_value = quote_amount - pnl;
+				VammPallet::set_swap_simulation_output(Some(-new_base_value));
+				// We swap all of base to close the position
+				VammPallet::set_swap_output(Some(-new_base_value));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Long,
+					(-new_base_value).unsigned_abs(),
+					base_amount as u128,
+				));
+
+				assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
+				assert_eq!(
+					TestPallet::get_margin(&ALICE).unwrap(),
+					(margin + pnl).max(0) as u128
+				);
+
+				SystemPallet::assert_last_event(
+					Event::TradeExecuted {
+						market: market_id,
+						direction: Direction::Long,
+						quote: new_base_value.unsigned_abs(),
+						base: base_amount.unsigned_abs(),
+					}.into()
+				);
+		})
+	}
+}
+
+proptest! {
+	#[test]
+	fn reducing_long_position_partially_realizes_pnl(
+		(quote_amount_decimal, pnl_decimal) in any_long_pnl(as_balance(100))
+	) {
+		let mut market_id: MarketId = 0;
+		let mut market_config = valid_market_config();
+		market_config.minimum_trade_size = 0.into();
+
+		let quote_amount = quote_amount_decimal.into_inner();
+		// Initial price = 10
+		let base_amount = as_inner(10);
+		let margin = quote_amount;
+		let pnl = pnl_decimal.into_inner();
+		ExtBuilder { balances: vec![(ALICE, USDC, margin.unsigned_abs())], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(market_config))
+			.add_margin(&ALICE, USDC, margin.unsigned_abs())
+			.execute_with(|| {
+				// For event emission
+				run_to_block(1);
+
+				let positions_before = TestPallet::get_positions(&ALICE).len();
+
+				// Open new position
+				VammPallet::set_swap_output(Some(base_amount));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Long,
+					quote_amount.unsigned_abs(),
+					base_amount.unsigned_abs(),
+				));
+
+				// Swapping all of base would give quote_amount + pnl
+				VammPallet::set_swap_simulation_output(Some(quote_amount + pnl));
+				// We want to subtract 50% for the position base_asset_amount
+				VammPallet::set_swap_output(Some(- base_amount / 2));
+				// Reduce (close) position by 50%
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Short,
+					((quote_amount + pnl) / 2).unsigned_abs(),
+					(base_amount / 2).unsigned_abs(),
+				));
+
+				let positions = TestPallet::get_positions(&ALICE);
+				// Positions remains open
+				assert_eq!(positions.len(), positions_before + 1);
+				// 50% of the PnL is realized
+				assert_eq!(
+					TestPallet::get_margin(&ALICE).unwrap(),
+					(margin + pnl / 2).unsigned_abs()
+				);
+
+				let position = positions.iter().find(|p| p.market_id == market_id).unwrap();
+				// Position base asset and quote asset notional are cut in half
+				assert_eq!(position.base_asset_amount.into_inner(), base_amount / 2);
+				assert_eq!(position.quote_asset_notional_amount.into_inner(), quote_amount / 2);
+
+				SystemPallet::assert_last_event(
+					Event::TradeExecuted {
+						market: market_id,
+						direction: Direction::Short,
+						quote: ((quote_amount + pnl) / 2).unsigned_abs(),
+						base: (base_amount / 2).unsigned_abs(),
+					}.into()
+				);
+			})
+	}
+}
+
+proptest! {
+	#[test]
+	fn reducing_short_position_partially_realizes_pnl(
+		(quote_amount_decimal, pnl_decimal) in any_short_pnl(as_balance(100))
+	) {
+		let mut market_id: MarketId = 0;
+		let mut market_config = valid_market_config();
+		market_config.minimum_trade_size = 0.into();
+
+		let quote_amount = quote_amount_decimal.into_inner();
+		// Initial price = 10
+		let base_amount = as_inner(10);
+		let margin = quote_amount;
+		let pnl = pnl_decimal.into_inner();
+		ExtBuilder { balances: vec![(ALICE, USDC, margin.unsigned_abs())], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(market_config))
+			.add_margin(&ALICE, USDC, margin.unsigned_abs())
+			.execute_with(|| {
+				// For event emission
+				run_to_block(1);
+
+				let positions_before = TestPallet::get_positions(&ALICE).len();
+
+				// Open new position
+				VammPallet::set_swap_output(Some(-base_amount));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Short,
+					quote_amount.unsigned_abs(),
+					base_amount.unsigned_abs(),
+				));
+
+				// Swapping all of base would give -quote_amount + pnl
+				VammPallet::set_swap_simulation_output(Some(-quote_amount + pnl));
+				// We want to subtract 50% for the position base_asset_amount
+				VammPallet::set_swap_output(Some(base_amount / 2));
+				// Reduce (close) position by 50%
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Long,
+					((-quote_amount + pnl) / 2).unsigned_abs(),
+					(base_amount / 2).unsigned_abs(),
+				));
+
+				let positions = TestPallet::get_positions(&ALICE);
+				// Positions remains open
+				assert_eq!(positions.len(), positions_before + 1);
+				// 50% of the PnL is realized
+				assert_eq!(
+					TestPallet::get_margin(&ALICE).unwrap(),
+					(margin + pnl / 2).max(0).unsigned_abs()
+				);
+
+				let position = positions.iter().find(|p| p.market_id == market_id).unwrap();
+				// Position base asset and quote asset notional are cut in half
+				assert_eq!(position.base_asset_amount.into_inner(), -base_amount / 2);
+				assert_eq!(position.quote_asset_notional_amount.into_inner(), -quote_amount / 2);
+
+				SystemPallet::assert_last_event(
+					Event::TradeExecuted {
+						market: market_id,
+						direction: Direction::Long,
+						quote: ((-quote_amount + pnl) / 2).unsigned_abs(),
+						base: (base_amount / 2).unsigned_abs(),
+					}.into()
+				);
+			})
+	}
+}
+
+proptest! {
+	#[test]
+	fn reversing_long_position_realizes_pnl(
+		(quote_amount_decimal, pnl_decimal) in any_long_pnl(as_balance(100))
+	) {
+		let mut market_id: MarketId = 0;
+		let mut market_config = valid_market_config();
+		market_config.minimum_trade_size = 0.into();
+
+		let quote_amount = quote_amount_decimal.into_inner();
+		// Initial price = 10
+		let base_amount_decimal: FixedI128 = 10.into();
+		let base_amount = base_amount_decimal.into_inner();
+		let margin = quote_amount;
+		let pnl = pnl_decimal.into_inner();
+		ExtBuilder { balances: vec![(ALICE, USDC, margin.unsigned_abs())], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(market_config))
+			.add_margin(&ALICE, USDC, margin.unsigned_abs())
+			.execute_with(|| {
+				// For event emission
+				run_to_block(1);
+
+				let positions_before = TestPallet::get_positions(&ALICE).len();
+
+				// Open new position
+				VammPallet::set_swap_output(Some(base_amount));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Long,
+					quote_amount.unsigned_abs(),
+					base_amount.unsigned_abs(),
+				));
+
+				// Swapping all of base would give quote_amount + pnl
+				VammPallet::set_swap_simulation_output(Some(quote_amount + pnl));
+				// We want to end up with the reverse of the position (in base tokens)
+				// Now:
+				// base = quote_amount + pnl
+				// Goal:
+				// -base = -(quote_amount + pnl)
+				// Delta:
+				// base * 2 = (quote_amount + pnl) * 2
+				let base_delta_decimal = base_amount_decimal * 2.into();
+				let quote_delta_decimal = (quote_amount_decimal + pnl_decimal) * 2.into();
+				VammPallet::set_swap_output(Some(-base_delta_decimal.into_inner()));
+				// Reverse position
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Short,
+					quote_delta_decimal.into_balance().unwrap(),
+					base_delta_decimal.into_balance().unwrap(),
+				));
+
+				let positions = TestPallet::get_positions(&ALICE);
+				// Position remains open
+				assert_eq!(positions.len(), positions_before + 1);
+
+				let position = positions.iter().find(|p| p.market_id == market_id).unwrap();
+				assert_eq!(position.base_asset_amount, -base_amount_decimal);
+				assert_eq!(position.quote_asset_notional_amount, -(quote_amount_decimal + pnl_decimal));
+
+				// Full PnL is realized
+				assert_eq!(
+					TestPallet::get_margin(&ALICE).unwrap(),
+					(margin + pnl) as u128
+				);
+
+				SystemPallet::assert_last_event(
+					Event::TradeExecuted {
+						market: market_id,
+						direction: Direction::Short,
+						quote: quote_delta_decimal.into_balance().unwrap(),
+						base: base_delta_decimal.into_balance().unwrap(),
+					}.into()
+				);
+			})
+	}
+}
+
+proptest! {
+	#[test]
+	fn reversing_short_position_realizes_pnl(
+		(quote_amount_decimal, pnl_decimal) in any_short_pnl(as_balance(100))
+	) {
+		let mut market_id: MarketId = 0;
+		let mut market_config = valid_market_config();
+		market_config.minimum_trade_size = 0.into();
+
+		let quote_amount = quote_amount_decimal.into_inner();
+		// Initial price = 10
+		let base_amount_decimal: FixedI128 = 10.into();
+		let base_amount = base_amount_decimal.into_inner();
+		let margin = quote_amount;
+		let pnl = pnl_decimal.into_inner();
+		ExtBuilder { balances: vec![(ALICE, USDC, margin.unsigned_abs())], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(market_config))
+			.add_margin(&ALICE, USDC, margin.unsigned_abs())
+			.execute_with(|| {
+				// For event emission
+				run_to_block(1);
+
+				let positions_before = TestPallet::get_positions(&ALICE).len();
+
+				// Open new position
+				VammPallet::set_swap_output(Some(-base_amount));
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Short,
+					quote_amount.unsigned_abs(),
+					base_amount.unsigned_abs(),
+				));
+
+				// Swapping all of base would give -quote_amount + pnl
+				VammPallet::set_swap_simulation_output(Some(-quote_amount + pnl));
+				// We want to end up with the reverse of the position (in base tokens)
+				// Now:
+				// -base = -quote_amount + pnl
+				// Goal:
+				// base = quote_amount - pnl
+				// Delta:
+				// -base * 2 = (-quote_amount + pnl) * 2
+				let base_delta_decimal = base_amount_decimal * 2.into();
+				let quote_delta_decimal = (-quote_amount_decimal + pnl_decimal) * 2.into();
+				VammPallet::set_swap_output(Some(base_delta_decimal.into_inner()));
+				// Reverse position
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Long,
+					quote_delta_decimal.into_balance().unwrap(),
+					base_delta_decimal.into_balance().unwrap(),
+				));
+
+				let positions = TestPallet::get_positions(&ALICE);
+				// Position remains open
+				assert_eq!(positions.len(), positions_before + 1);
+
+				let position = positions.iter().find(|p| p.market_id == market_id).unwrap();
+				assert_eq!(position.base_asset_amount, base_amount_decimal);
+				assert_eq!(position.quote_asset_notional_amount, quote_amount_decimal - pnl_decimal);
+
+				// Full PnL is realized
+				assert_eq!(
+					TestPallet::get_margin(&ALICE).unwrap(),
+					(margin + pnl).max(0) as u128
+				);
+
+				SystemPallet::assert_last_event(
+					Event::TradeExecuted {
+						market: market_id,
+						direction: Direction::Long,
+						quote: quote_delta_decimal.into_balance().unwrap(),
+						base: base_delta_decimal.into_balance().unwrap(),
+					}.into()
+				);
+			})
+	}
+}
+
+#[test]
+#[ignore = "to be implemented"]
+fn fails_to_increase_position_if_not_enough_margin() {
+	let mut market_id: MarketId = 0;
+	let base_amount_limit = valid_base_asset_amount_limit().try_into().unwrap();
+
+	ExtBuilder::default()
+		.build()
+		.init_market(&mut market_id, None)
+		.execute_with(|| {
+			VammPallet::set_swap_output(Some(base_amount_limit));
+			assert_noop!(
+				TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_id,
+					Direction::Long,
+					valid_quote_asset_amount(),
+					base_amount_limit.unsigned_abs(),
+				),
+				Error::<Runtime>::InsufficientCollateral,
+			);
+		})
+}
+
 // ----------------------------------------------------------------------------------------------------
 //                                          Instruments trait
 // ----------------------------------------------------------------------------------------------------
@@ -493,12 +1408,12 @@ proptest! {
 
 proptest! {
 	#[test]
-	fn funding_owed_query_leaves_storage_intact(
+	fn unrealized_funding_query_leaves_storage_intact(
 		market in any_market(), position in any_position()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_storage_noop!(
-				assert_ok!(<TestPallet as Instruments>::funding_owed(&market, &position))
+				assert_ok!(<TestPallet as Instruments>::unrealized_funding(&market, &position))
 			);
 		})
 	}
@@ -506,7 +1421,7 @@ proptest! {
 
 proptest! {
 	#[test]
-	fn funding_owed_is_nonzero_iff_cum_rates_not_equal(
+	fn unrealized_funding_is_nonzero_iff_cum_rates_not_equal(
 		market in any_market(),
 		market_id in any::<MarketId>(),
 		base_asset_amount in bounded_decimal(),
@@ -521,7 +1436,7 @@ proptest! {
 				last_cum_funding: market.cum_funding_rate + cum_funding_delta
 			};
 
-			let result = <TestPallet as Instruments>::funding_owed(&market, &position).unwrap();
+			let result = <TestPallet as Instruments>::unrealized_funding(&market, &position).unwrap();
 
 			assert_eq!(cum_funding_delta.is_zero(), result.is_zero());
 		})

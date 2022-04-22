@@ -49,11 +49,12 @@ frame_support::construct_runtime!(
 	}
 );
 
-pub type Balance = u128;
 pub type Amount = i64;
-pub type VammId = u64;
+pub type Balance = u128;
 pub type Decimal = FixedI128;
+pub type Integer = i128;
 pub type MarketId = u64;
+pub type VammId = u64;
 
 // ----------------------------------------------------------------------------------------------------
 //                                                FRAME System
@@ -196,6 +197,7 @@ impl pallet_assets::Config for Runtime {
 impl mock_vamm::Config for Runtime {
 	type VammId = VammId;
 	type Decimal = Decimal;
+	type Integer = Integer;
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -224,20 +226,24 @@ impl DeFiComposableConfig for Runtime {
 }
 
 parameter_types! {
+	pub const MaxPositions: u32 = 5;
 	pub const TestPalletId: PalletId = PalletId(*b"test_pid");
 }
 
 impl clearing_house::Config for Runtime {
-	type Event = Event;
-	type WeightInfo = ();
-	type MarketId = MarketId;
+	type Assets = Assets;
 	type Decimal = Decimal;
+	type Event = Event;
+	type Integer = Integer;
+	type MarketId = MarketId;
+	type MaxPositions = MaxPositions;
+	type Oracle = Oracle;
+	type PalletId = TestPalletId;
 	type UnixTime = Timestamp;
 	type Vamm = Vamm;
 	type VammConfig = mock_vamm::VammConfig;
-	type Oracle = Oracle;
-	type Assets = Assets;
-	type PalletId = TestPalletId;
+	type VammId = VammId;
+	type WeightInfo = ();
 }
 
 // ----------------------------------------------------------------------------------------------------

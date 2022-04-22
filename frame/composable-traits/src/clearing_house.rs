@@ -15,6 +15,8 @@ pub trait ClearingHouse {
 	type AssetId;
 	/// The balance type for an account
 	type Balance;
+	/// The direction type for a position. Usually to disambiguate long and short positions
+	type Direction;
 	/// The identifier type for each market
 	type MarketId;
 	/// Specification for market creation
@@ -24,9 +26,14 @@ pub trait ClearingHouse {
 	///
 	/// Assumes margin account is unique to each wallet address, i.e., there's only one margin
 	/// account per user.
+	///
+	/// ## Parameters
+	/// - `account_id`: the trader's margin account Id
+	/// - `asset_id`: the type of asset to deposit as collateral
+	/// - `amount`: the amount of collateral
 	fn add_margin(
-		acc: &Self::AccountId,
-		asset: Self::AssetId,
+		account_id: &Self::AccountId,
+		asset_id: Self::AssetId,
 		amount: Self::Balance,
 	) -> Result<(), DispatchError>;
 
@@ -38,13 +45,44 @@ pub trait ClearingHouse {
 	/// ## Returns
 	/// The new market's id, if successful
 	fn create_market(config: &Self::MarketConfig) -> Result<Self::MarketId, DispatchError>;
+
+	/// Open a position in a market
+	///
+	/// This may result in the following outcomes:
+	/// * Creation of a whole new position in the market, if one didn't already exist
+	/// * An increase in the size of an existing position, if the trade's direction matches the
+	///   existing position's one
+	/// * A decrease in the size of an existing position, if the trade's direction is counter to the
+	///   existing position's one and its magnitude is smaller than the existing postion's size
+	/// * Closing of the existing position, if the trade's direction is counter to the existing
+	///   position's one and its magnitude is approximately the existing postion's size
+	/// * Reversing of the existing position, if the trade's direction is counter to the existing
+	///   position's one and its magnitude is greater than the existing postion's size
+	///
+	/// ## Parameters
+	/// - `account_id`: the trader's margin account Id
+	/// - `market_id`: the perpetuals market Id to open a position in
+	/// - `direction`: whether to long or short the base asset
+	/// - `quote_asset_amount`: the amount of exposure to the base asset in quote asset value
+	/// - `base_asset_amount_limit`: the minimum absolute amount of base asset to add to the
+	///   position. Prevents slippage
+	///
+	/// ## Returns
+	/// The absolute amount of base asset exchanged
+	fn open_position(
+		account_id: &Self::AccountId,
+		market_id: &Self::MarketId,
+		direction: Self::Direction,
+		quote_asset_amount: Self::Balance,
+		base_asset_amount_limit: Self::Balance,
+	) -> Result<Self::Balance, DispatchError>;
 }
 
 /// Exposes functionality for querying funding-related quantities of synthetic instruments
 ///
 /// Provides functions for:
 /// * querying the current funding rate for a market
-/// * computing the funding payments owed by a position
+/// * computing a position's unrealized funding payments
 /// * updating the cumulative funding rate of a market
 pub trait Instruments {
 	/// Data relating to a derivatives market
@@ -65,19 +103,22 @@ pub trait Instruments {
 	/// The current funding rate as a signed decimal number
 	fn funding_rate(market: &Self::Market) -> Result<Self::Decimal, DispatchError>;
 
-	/// Computes the funding owed due to a particular position in a market
+	/// Computes a position's unrealized funding payments
 	///
-	/// The funding owed may be positive or negative. In the former case, the position's owner has a
-	/// debt to its counterparty (e.g., the derivative writer, the protocol, or automated market
-	/// maker). The reverse is true in the latter case.
+	/// The unrealized funding may be positive or negative. In the former case, the position's owner
+	/// has a 'debt' to its counterparty (e.g., the derivative writer, the protocol, or automated
+	/// market maker). The reverse is true in the latter case.
+	///
+	/// Note that this is similar to unrealized PnL, in that market conditions may change and a
+	/// previously negative unrealized funding can turn positive.
 	///
 	/// ## Parameters
 	/// * `market`: the derivatives market data
 	/// * `position`: the position in said market
 	///
 	/// ## Returns
-	/// The funding owed by the position's owner as a signed decimal number
-	fn funding_owed(
+	/// The position's unrealized funding payments as a signed decimal number
+	fn unrealized_funding(
 		market: &Self::Market,
 		position: &Self::Position,
 	) -> Result<Self::Decimal, DispatchError>;
