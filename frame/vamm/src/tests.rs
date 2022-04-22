@@ -187,7 +187,7 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			let vamm_counter = Vamm::vamm_count();
 
-			let vamm_expected = VammState::<Balance, <MockRuntime as pallet::Config>::Timestamp> {
+			let vamm_expected = VammState::<Balance, VammTimestamp> {
 					base_asset_reserves,
 					quote_asset_reserves,
 					peg_multiplier,
