@@ -145,6 +145,34 @@ prop_compose! {
 	}
 }
 
+prop_compose! {
+	fn get_swap_config(config: TestSwapConfig<VammId, Balance, SR>)(
+		vamm_id in balance_range(),
+		asset in prop_oneof![Just(AssetType::Base), Just(AssetType::Quote)],
+		input_amount in balance_range(),
+		direction in prop_oneof![Just(Direction::Add), Just(Direction::Remove)],
+		output_amount_limit in balance_range(),
+	) -> SwapConfig<VammId, Balance> {
+		SwapConfig {
+			vamm_id: config
+				.vamm_id
+				.unwrap_or(vamm_id),
+			asset: config
+				.asset
+				.unwrap_or(asset),
+			input_amount: config
+				.input_amount
+				.unwrap_or(input_amount),
+			direction: config
+				.direction
+				.unwrap_or(direction),
+			output_amount_limit: config
+				.output_amount_limit
+				.unwrap_or(output_amount_limit),
+		}
+	}
+}
+
 // ----------------------------------------------------------------------------------------------------
 //                                             Create Vamm
 // ----------------------------------------------------------------------------------------------------
