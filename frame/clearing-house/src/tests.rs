@@ -48,7 +48,7 @@ impl Default for ExtBuilder {
 			balances: vec![],
 			collateral_types: vec![USDC],
 			vamm_id: Some(0_u64),
-			vamm_twap: Some(FixedI128::from_float(100.0)),
+			vamm_twap: Some(100.into()),
 			oracle_asset_support: Some(true),
 			oracle_twap: Some(10_000_u64),
 		}
@@ -67,6 +67,18 @@ fn run_to_block(n: u64) {
 		SystemPallet::on_initialize(SystemPallet::block_number());
 		TimestampPallet::on_initialize(SystemPallet::block_number());
 	}
+}
+
+/// Return the balance representation of the input value, according to the precision of the fixed
+/// point implementation
+fn as_balance<T: Into<FixedI128>>(value: T) -> u128 {
+	as_inner(value) as u128
+}
+
+/// Return the inner integer of the fixed point representation of the input value
+fn as_inner<T: Into<FixedI128>>(value: T) -> i128 {
+	let f: FixedI128 = value.into();
+	f.into_inner()
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -93,11 +105,11 @@ fn valid_market_config() -> MarketConfig {
 }
 
 fn valid_quote_asset_amount() -> Balance {
-	FixedI128::saturating_from_integer(100).into_balance().unwrap()
+	as_balance(100)
 }
 
 fn valid_base_asset_amount_limit() -> Balance {
-	FixedI128::saturating_from_integer(10).into_balance().unwrap()
+	as_balance(10)
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -245,15 +257,15 @@ prop_compose! {
 
 prop_compose! {
 	fn bounded_decimal()(
-		inner in (-1_000_000_000 * FixedI128::DIV)..(1_000_000_000 * FixedI128::DIV)
+		inner in as_inner(-1_000_000_000)..as_inner(1_000_000_000)
 	) -> FixedI128 {
 		FixedI128::from_inner(inner)
 	}
 }
 
 prop_compose! {
-	fn any_minimum_trade_size()(float in 0.0..1e9_f64) -> FixedI128 {
-		FixedI128::from_float(float)
+	fn any_minimum_trade_size()(inner in 0..as_inner(1_000_000_000)) -> FixedI128 {
+		FixedI128::from_inner(inner)
 	}
 }
 
@@ -334,29 +346,31 @@ prop_compose! {
 }
 
 prop_compose! {
-	// Assumes min_fixed is positive and nonzero
-	fn min_trade_size_and_eps(min_fixed: FixedI128)(
-		eps in (-min_fixed.into_inner())..=min_fixed.into_inner()
+	fn min_trade_size_and_eps(min_size: u128)(
+		eps in -(min_size as i128)..=(min_size as i128)
 	) -> (FixedI128, i128) {
-		(min_fixed, eps)
+		// Couldn't find a better way to ensure that min_size is positive, so this will trigger a
+		// test error otherwise
+		assert!(min_size > 0);
+		(FixedI128::from_inner(min_size as i128), eps)
 	}
 }
 
 prop_compose! {
-	// Assumes entry_value is positive
-	fn any_long_pnl(entry_value: FixedI128)(
-		exit_value_inner in 1..FixedI128::from(1_000_000_000).into_inner()
+	fn any_long_pnl(entry_value: u128)(
+		exit_value_inner in 1..as_inner(1_000_000_000)
 	) -> (FixedI128, FixedI128) {
-		(entry_value, FixedI128::from_inner(exit_value_inner) - entry_value)
+		let entry = FixedI128::from_inner(entry_value as i128);
+		(entry, FixedI128::from_inner(exit_value_inner) - entry)
 	}
 }
 
 prop_compose! {
-	// Assumes entry_value is positive
-	fn any_short_pnl(entry_value: FixedI128)(
-		exit_value_inner in 1..FixedI128::from(1_000_000_000).into_inner()
+	fn any_short_pnl(entry_value: u128)(
+		exit_value_inner in 1..as_inner(1_000_000_000)
 	) -> (FixedI128, FixedI128) {
-		(entry_value, entry_value - FixedI128::from_inner(exit_value_inner))
+		let entry = FixedI128::from_inner(entry_value as i128);
+		(entry, entry - FixedI128::from_inner(exit_value_inner))
 	}
 }
 
@@ -632,11 +646,11 @@ proptest! {
 proptest! {
 	#[test]
 	fn fails_to_create_market_if_minimum_trade_size_is_negative(
-		float in (-1e9_f64)..0.0
+		inner in as_inner(-1_000_000_000)..0
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			let mut config = valid_market_config();
-			config.minimum_trade_size = FixedI128::from_float(float);
+			config.minimum_trade_size = FixedI128::from_inner(inner);
 			assert_noop!(
 				TestPallet::create_market(Origin::signed(ALICE), config),
 				Error::<Runtime>::NegativeMinimumTradeSize
@@ -649,7 +663,7 @@ proptest! {
 fn can_create_market_with_zero_minimum_trade_size() {
 	ExtBuilder::default().build().execute_with(|| {
 		let mut config = valid_market_config();
-		config.minimum_trade_size = FixedI128::zero();
+		config.minimum_trade_size = 0.into();
 		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));
 	})
 }
@@ -782,7 +796,7 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 proptest! {
 	#[test]
 	fn short_trade_can_close_long_position_within_tolerance(
-		(minimum_trade_size, eps) in min_trade_size_and_eps(FixedI128::from_float(0.01))
+		(minimum_trade_size, eps) in min_trade_size_and_eps(as_balance((1, 100)))
 	) {
 		let mut market_id: MarketId = 0;
 		let mut market_config = valid_market_config();
@@ -839,7 +853,7 @@ proptest! {
 proptest! {
 	#[test]
 	fn long_trade_can_close_long_position_within_tolerance(
-		(minimum_trade_size, eps) in min_trade_size_and_eps(FixedI128::from_float(0.01))
+		(minimum_trade_size, eps) in min_trade_size_and_eps(as_balance((1, 100)))
 	) {
 		let mut market_id: MarketId = 0;
 		let mut market_config = valid_market_config();
@@ -896,7 +910,7 @@ proptest! {
 proptest! {
 	#[test]
 	fn closing_long_position_with_trade_realizes_pnl(
-		(quote_amount_decimal, pnl_decimal) in any_long_pnl(100.into())
+		(quote_amount_decimal, pnl_decimal) in any_long_pnl(as_balance(100))
 	) {
 		let mut market_id: MarketId = 0;
 
@@ -959,12 +973,12 @@ proptest! {
 proptest! {
 	#[test]
 	fn closing_short_position_with_trade_realizes_pnl(
-		(quote_amount_decimal, pnl_decimal) in any_short_pnl(100.into())
+		(quote_amount_decimal, pnl_decimal) in any_short_pnl(as_balance(100))
 	) {
 		let mut market_id: MarketId = 0;
 
 		let quote_amount = quote_amount_decimal.into_inner();
-		let base_amount = FixedI128::from(10).into_inner();
+		let base_amount = as_inner(10);
 		let margin = quote_amount;
 		let pnl = pnl_decimal.into_inner();
 
@@ -1022,15 +1036,15 @@ proptest! {
 proptest! {
 	#[test]
 	fn reducing_long_position_partially_realizes_pnl(
-		(quote_amount_decimal, pnl_decimal) in any_long_pnl(100.into())
+		(quote_amount_decimal, pnl_decimal) in any_long_pnl(as_balance(100))
 	) {
 		let mut market_id: MarketId = 0;
 		let mut market_config = valid_market_config();
-		market_config.minimum_trade_size = FixedI128::zero();
+		market_config.minimum_trade_size = 0.into();
 
 		let quote_amount = quote_amount_decimal.into_inner();
 		// Initial price = 10
-		let base_amount = FixedI128::from(10).into_inner();
+		let base_amount = as_inner(10);
 		let margin = quote_amount;
 		let pnl = pnl_decimal.into_inner();
 		ExtBuilder { balances: vec![(ALICE, USDC, margin.unsigned_abs())], ..Default::default() }
@@ -1095,7 +1109,7 @@ proptest! {
 proptest! {
 	#[test]
 	fn reducing_short_position_partially_realizes_pnl(
-		(quote_amount_decimal, pnl_decimal) in any_short_pnl(100.into())
+		(quote_amount_decimal, pnl_decimal) in any_short_pnl(as_balance(100))
 	) {
 		let mut market_id: MarketId = 0;
 		let mut market_config = valid_market_config();
@@ -1103,7 +1117,7 @@ proptest! {
 
 		let quote_amount = quote_amount_decimal.into_inner();
 		// Initial price = 10
-		let base_amount = FixedI128::from(10).into_inner();
+		let base_amount = as_inner(10);
 		let margin = quote_amount;
 		let pnl = pnl_decimal.into_inner();
 		ExtBuilder { balances: vec![(ALICE, USDC, margin.unsigned_abs())], ..Default::default() }
@@ -1168,7 +1182,7 @@ proptest! {
 proptest! {
 	#[test]
 	fn reversing_long_position_realizes_pnl(
-		(quote_amount_decimal, pnl_decimal) in any_long_pnl(100.into())
+		(quote_amount_decimal, pnl_decimal) in any_long_pnl(as_balance(100))
 	) {
 		let mut market_id: MarketId = 0;
 		let mut market_config = valid_market_config();
@@ -1250,7 +1264,7 @@ proptest! {
 proptest! {
 	#[test]
 	fn reversing_short_position_realizes_pnl(
-		(quote_amount_decimal, pnl_decimal) in any_short_pnl(100.into())
+		(quote_amount_decimal, pnl_decimal) in any_short_pnl(as_balance(100))
 	) {
 		let mut market_id: MarketId = 0;
 		let mut market_config = valid_market_config();
