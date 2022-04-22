@@ -866,6 +866,14 @@ pub mod pallet {
 			}
 
 			Positions::<T>::insert(account_id, positions);
+
+			Self::deposit_event(Event::TradeExecuted {
+				market: market_id.clone(),
+				direction,
+				quote: quote_asset_amount,
+				base: base_swapped,
+			});
+
 			Ok(base_swapped)
 		}
 	}
