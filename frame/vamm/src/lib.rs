@@ -501,6 +501,17 @@ pub mod pallet {
 			todo!()
 		}
 	}
+
+	// ----------------------------------------------------------------------------------------------------
+	//                              Helper Functions
+	// ----------------------------------------------------------------------------------------------------
+
+	// Helper types - core functionality
+	struct CalculateSwapAsset<T: Config> {
+		output_amount: BalanceOf<T>,
+		input_amount: BalanceOf<T>,
+	}
+
 				// have sufficient funds for it.
 				Direction::Remove => match config.asset {
 					AssetType::Base => ensure!(
