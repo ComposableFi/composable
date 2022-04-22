@@ -27,6 +27,27 @@ fn run_to_block(n: u64) {
 	}
 }
 
+type VammTimestamp = <MockRuntime as pallet::Config>::Timestamp;
+type VammId = <Vamm as VammTrait>::VammId;
+type SR = impl Strategy<Value = u128, Tree = u128>;
+
+#[derive(Default)]
+struct TestVammState<Balance, VammTimestamp> {
+	base_asset_reserves: Option<Balance>,
+	quote_asset_reserves: Option<Balance>,
+	peg_multiplier: Option<Balance>,
+	closed: Option<Option<VammTimestamp>>,
+}
+
+// #[derive(Default)]
+struct TestSwapConfig<VammId, Balance, SR> {
+	vamm_id: Option<VammId>,
+	asset: Option<AssetType>,
+	input_amount: Option<SR>,
+	direction: Option<Direction>,
+	output_amount_limit: Option<Balance>,
+}
+
 // ----------------------------------------------------------------------------------------------------
 //                                             Prop_compose
 // ----------------------------------------------------------------------------------------------------
@@ -90,6 +111,37 @@ prop_compose! {
 		loop_times in MINIMUM_RESERVE..=500,
 	) -> Balance {
 		loop_times
+	}
+}
+
+prop_compose! {
+	fn timestamp()(
+		t in VammTimestamp::MIN..=VammTimestamp::MAX
+	) -> Option<VammTimestamp> {
+		Some(t)
+	}
+}
+
+prop_compose! {
+	fn get_vamm_state(config: TestVammState<Balance, VammTimestamp>)(
+		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve(),
+		closed in prop_oneof![timestamp(), Just(None)]
+
+	) -> VammState<Balance, VammTimestamp> {
+		VammState {
+			base_asset_reserves: config
+				.base_asset_reserves
+				.unwrap_or(base_asset_reserves),
+			quote_asset_reserves: config
+				.quote_asset_reserves
+				.unwrap_or(quote_asset_reserves),
+			peg_multiplier: config
+				.peg_multiplier
+				.unwrap_or(peg_multiplier),
+			closed: config
+				.closed
+				.unwrap_or(closed),
+		}
 	}
 }
 
