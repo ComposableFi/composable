@@ -601,6 +601,29 @@ pub mod pallet {
 			})
 		}
 
+		fn calculate_quote_asset_amount_swapped(
+			quote_asset_reserve_before: &BalanceOf<T>,
+			quote_asset_reserve_after: &BalanceOf<T>,
+			direction: &Direction,
+			vamm_state: &VammStateOf<T>,
+		) -> Result<BalanceOf<T>, DispatchError> {
+			let quote_asset_reserve_change = match direction {
+				Direction::Add => quote_asset_reserve_before
+					.checked_sub(quote_asset_reserve_after)
+					.ok_or(ArithmeticError::Underflow)?,
+				Direction::Remove => quote_asset_reserve_after
+					.checked_sub(quote_asset_reserve_before)
+					.ok_or(ArithmeticError::Underflow)?,
+			};
+
+			let quote_asset_amount = quote_asset_reserve_change
+				.checked_mul(&vamm_state.peg_multiplier)
+				.ok_or(ArithmeticError::Overflow)?;
+
+			Ok(quote_asset_amount)
+		}
+	}
+
 				// have sufficient funds for it.
 				Direction::Remove => match config.asset {
 					AssetType::Base => ensure!(
