@@ -387,7 +387,7 @@ pub mod pallet {
 		/// `O(1)`
 		#[transactional]
 		fn create(config: &VammConfigOf<T>) -> Result<VammIdOf<T>, DispatchError> {
-			// TODO: (Matheus)
+			// TODO(Cardosaum)
 			// How to ensure that the caller has the right privileges?
 			// (eg. How to ensure the caller is the Clearing House, and not anyone else?)
 			ensure!(!config.base_asset_reserves.is_zero(), Error::<T>::BaseAssetReserveIsZero);
