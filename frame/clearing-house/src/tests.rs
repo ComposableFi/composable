@@ -698,6 +698,9 @@ proptest! {
 			.init_market(&mut market_id, None)
 			.add_margin(&ALICE, USDC, quote_amount)
 			.execute_with(|| {
+				// For event emission
+				run_to_block(1);
+
 				VammPallet::set_swap_output(Some(match direction {
 					Direction::Long => base_amount,
 					Direction::Short => -base_amount
@@ -723,6 +726,15 @@ proptest! {
 					Direction::Long => position.quote_asset_notional_amount.is_positive(),
 					Direction::Short => position.quote_asset_notional_amount.is_negative()
 				});
+
+				SystemPallet::assert_last_event(
+					Event::TradeExecuted {
+						market: market_id,
+						direction: direction,
+						quote: quote_amount,
+						base: base_amount as u128,
+					}.into()
+				);
 			})
 	}
 }
@@ -784,6 +796,9 @@ proptest! {
 			.init_market(&mut market_id, Some(market_config))
 			.add_margin(&ALICE, USDC, quote_amount)
 			.execute_with(|| {
+				// For event emission
+				run_to_block(1);
+
 				let positions_before = TestPallet::get_positions(&ALICE).len();
 
 				VammPallet::set_swap_output(Some(base_amount_limit));
@@ -808,6 +823,15 @@ proptest! {
 				));
 
 				assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
+
+				SystemPallet::assert_last_event(
+					Event::TradeExecuted {
+						market: market_id,
+						direction: Direction::Short,
+						quote: quote_amount,
+						base: base_amount_limit.unsigned_abs(),
+					}.into()
+				);
 		})
 	}
 }
@@ -829,6 +853,9 @@ proptest! {
 			.init_market(&mut market_id, Some(market_config))
 			.add_margin(&ALICE, USDC, quote_amount)
 			.execute_with(|| {
+				// For event emission
+				run_to_block(1);
+
 				let positions_before = TestPallet::get_positions(&ALICE).len();
 
 				VammPallet::set_swap_output(Some(-base_amount_limit));
@@ -853,6 +880,15 @@ proptest! {
 				));
 
 				assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
+
+				SystemPallet::assert_last_event(
+					Event::TradeExecuted {
+						market: market_id,
+						direction: Direction::Long,
+						quote: quote_amount,
+						base: base_amount_limit.unsigned_abs(),
+					}.into()
+				);
 			})
 	}
 }
@@ -875,6 +911,9 @@ proptest! {
 			.init_market(&mut market_id, Some(valid_market_config()))
 			.add_margin(&ALICE, USDC, quote_amount_abs)
 			.execute_with(|| {
+				// For event emission
+				run_to_block(1);
+
 				let positions_before = TestPallet::get_positions(&ALICE).len();
 
 				VammPallet::set_swap_output(Some(base_amount_limit));
@@ -903,7 +942,16 @@ proptest! {
 				assert_eq!(
 					TestPallet::get_margin(&ALICE).unwrap(),
 					(margin + pnl) as u128
-				)
+				);
+
+				SystemPallet::assert_last_event(
+					Event::TradeExecuted {
+						market: market_id,
+						direction: Direction::Short,
+						quote: (quote_amount + pnl).unsigned_abs(),
+						base: base_amount_limit.unsigned_abs(),
+					}.into()
+				);
 		})
 	}
 }
@@ -925,6 +973,9 @@ proptest! {
 			.init_market(&mut market_id, Some(valid_market_config()))
 			.add_margin(&ALICE, USDC, quote_amount as u128)
 			.execute_with(|| {
+				// For event emission
+				run_to_block(1);
+
 				let positions_before = TestPallet::get_positions(&ALICE).len();
 
 				VammPallet::set_swap_output(Some(-base_amount));
@@ -954,7 +1005,16 @@ proptest! {
 				assert_eq!(
 					TestPallet::get_margin(&ALICE).unwrap(),
 					(margin + pnl).max(0) as u128
-				)
+				);
+
+				SystemPallet::assert_last_event(
+					Event::TradeExecuted {
+						market: market_id,
+						direction: Direction::Long,
+						quote: new_base_value.unsigned_abs(),
+						base: base_amount.unsigned_abs(),
+					}.into()
+				);
 		})
 	}
 }
@@ -978,6 +1038,9 @@ proptest! {
 			.init_market(&mut market_id, Some(market_config))
 			.add_margin(&ALICE, USDC, margin.unsigned_abs())
 			.execute_with(|| {
+				// For event emission
+				run_to_block(1);
+
 				let positions_before = TestPallet::get_positions(&ALICE).len();
 
 				// Open new position
@@ -1016,6 +1079,15 @@ proptest! {
 				// Position base asset and quote asset notional are cut in half
 				assert_eq!(position.base_asset_amount.into_inner(), base_amount / 2);
 				assert_eq!(position.quote_asset_notional_amount.into_inner(), quote_amount / 2);
+
+				SystemPallet::assert_last_event(
+					Event::TradeExecuted {
+						market: market_id,
+						direction: Direction::Short,
+						quote: ((quote_amount + pnl) / 2).unsigned_abs(),
+						base: (base_amount / 2).unsigned_abs(),
+					}.into()
+				);
 			})
 	}
 }
@@ -1039,6 +1111,9 @@ proptest! {
 			.init_market(&mut market_id, Some(market_config))
 			.add_margin(&ALICE, USDC, margin.unsigned_abs())
 			.execute_with(|| {
+				// For event emission
+				run_to_block(1);
+
 				let positions_before = TestPallet::get_positions(&ALICE).len();
 
 				// Open new position
@@ -1077,6 +1152,15 @@ proptest! {
 				// Position base asset and quote asset notional are cut in half
 				assert_eq!(position.base_asset_amount.into_inner(), -base_amount / 2);
 				assert_eq!(position.quote_asset_notional_amount.into_inner(), -quote_amount / 2);
+
+				SystemPallet::assert_last_event(
+					Event::TradeExecuted {
+						market: market_id,
+						direction: Direction::Long,
+						quote: ((-quote_amount + pnl) / 2).unsigned_abs(),
+						base: (base_amount / 2).unsigned_abs(),
+					}.into()
+				);
 			})
 	}
 }
@@ -1101,6 +1185,9 @@ proptest! {
 			.init_market(&mut market_id, Some(market_config))
 			.add_margin(&ALICE, USDC, margin.unsigned_abs())
 			.execute_with(|| {
+				// For event emission
+				run_to_block(1);
+
 				let positions_before = TestPallet::get_positions(&ALICE).len();
 
 				// Open new position
@@ -1147,6 +1234,15 @@ proptest! {
 					TestPallet::get_margin(&ALICE).unwrap(),
 					(margin + pnl) as u128
 				);
+
+				SystemPallet::assert_last_event(
+					Event::TradeExecuted {
+						market: market_id,
+						direction: Direction::Short,
+						quote: quote_delta_decimal.into_balance().unwrap(),
+						base: base_delta_decimal.into_balance().unwrap(),
+					}.into()
+				);
 			})
 	}
 }
@@ -1171,6 +1267,9 @@ proptest! {
 			.init_market(&mut market_id, Some(market_config))
 			.add_margin(&ALICE, USDC, margin.unsigned_abs())
 			.execute_with(|| {
+				// For event emission
+				run_to_block(1);
+
 				let positions_before = TestPallet::get_positions(&ALICE).len();
 
 				// Open new position
@@ -1216,6 +1315,15 @@ proptest! {
 				assert_eq!(
 					TestPallet::get_margin(&ALICE).unwrap(),
 					(margin + pnl).max(0) as u128
+				);
+
+				SystemPallet::assert_last_event(
+					Event::TradeExecuted {
+						market: market_id,
+						direction: Direction::Long,
+						quote: quote_delta_decimal.into_balance().unwrap(),
+						base: base_delta_decimal.into_balance().unwrap(),
+					}.into()
 				);
 			})
 	}

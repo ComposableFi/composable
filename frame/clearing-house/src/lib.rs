@@ -429,6 +429,17 @@ pub mod pallet {
 			/// Id of the underlying asset
 			asset: AssetIdOf<T>,
 		},
+		/// New trade successfully executed
+		TradeExecuted {
+			/// Id of the market
+			market: T::MarketId,
+			/// Direction of the trade (long/short)
+			direction: Direction,
+			/// Notional amount of quote asset exchanged
+			quote: T::Balance,
+			/// Amount of base asset exchanged
+			base: T::Balance,
+		},
 	}
 
 	// ----------------------------------------------------------------------------------------------------
