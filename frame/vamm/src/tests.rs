@@ -44,10 +44,34 @@ const MAXIMUM_RESERVE: Balance = Balance::MAX;
 const RUN_CASES: u32 = 1000;
 
 prop_compose! {
+	fn balance_range()(
+		range in MINIMUM_RESERVE..=MAXIMUM_RESERVE
+	) -> Balance {
+		range
+	}
+}
+
+prop_compose! {
+	fn balance_range_lower_half()(
+		range in MINIMUM_RESERVE..=MAXIMUM_RESERVE/2
+	) -> Balance {
+		range
+	}
+}
+
+prop_compose! {
+	fn balance_range_upper_half()(
+		range in MAXIMUM_RESERVE/2..=MAXIMUM_RESERVE
+	) -> Balance {
+		range
+	}
+}
+
+prop_compose! {
 	fn min_max_reserve()(
-		base_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE,
-		quote_asset_reserves in MINIMUM_RESERVE..=MAXIMUM_RESERVE,
-		peg_multiplier in MINIMUM_RESERVE..=MAXIMUM_RESERVE
+		base_asset_reserves in balance_range(),
+		quote_asset_reserves in balance_range(),
+		peg_multiplier in balance_range()
 	) -> (Balance, Balance, Balance) {
 		(base_asset_reserves, quote_asset_reserves, peg_multiplier)
 	}
