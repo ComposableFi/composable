@@ -8,14 +8,14 @@ use sp_std::vec::Vec;
 sp_api::decl_runtime_apis! {
 	/// IBC Runtime Apis
 	pub trait IbcRuntimeApi {
+		/// Returns inputs used to create trie db
+		fn get_trie_inputs() -> Option<Vec<(Vec<u8>, Vec<u8>)>>;
+
 		/// Returns the balance of this address
 		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128>;
 
 		/// Quuery offchain packets
 		fn query_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<OffchainPacketType>>;
-
-		/// Generate trie proof for these keys
-		fn generate_proof(keys: Vec<Vec<u8>>) -> Option<Proof>;
 
 		/// Returns client state at height
 		fn client_state(client_id: Vec<u8>) -> Option<QueryClientStateResponse>;
@@ -38,9 +38,6 @@ sp_api::decl_runtime_apis! {
 		/// Returns all connections associated with the given client
 		fn connection_using_client(client_id: Vec<u8>) -> Option<Vec<IdentifiedConnection>>;
 
-		/// Returns Connection handshake proof
-		fn connection_handshake_proof(client_id: Vec<u8>, conn_id: Vec<u8>) -> Option<ConnectionHandshakeProof>;
-
 		fn channel(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<QueryChannelResponse>;
 
 		/// Should return the client state for the client supporting this channel
@@ -51,6 +48,8 @@ sp_api::decl_runtime_apis! {
 
 		/// Returns all channels registered on chain
 		fn channels() -> Option<QueryChannelsResponse>;
+
+		fn connection_handshake(client_id: Vec<u8>, connection_id: Vec<u8>) -> Option<ConnectionHandshake>;
 
 		fn packet_commitments(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<QueryPacketCommitmentsResponse>;
 

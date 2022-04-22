@@ -1101,15 +1101,15 @@ impl_runtime_apis! {
 	}
 
 	impl ibc_runtime_api::IbcRuntimeApi<Block> for Runtime {
+		fn get_trie_inputs() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
+			None
+		}
+
 		fn query_balance_with_address(_addr: Vec<u8>) -> Option<u128> {
 			None
 		}
 
 		fn query_packets(_channel_id: Vec<u8>, _port_id: Vec<u8>, _seqs: Vec<u64>) -> Option<Vec<ibc_primitives::OffchainPacketType>> {
-			None
-		}
-
-		fn generate_proof(_keys: Vec<Vec<u8>>) -> Option<ibc_primitives::Proof> {
 			None
 		}
 
@@ -1142,7 +1142,7 @@ impl_runtime_apis! {
 			None
 		}
 
-		fn connection_handshake_proof(_client_id: Vec<u8>, _connection_id: Vec<u8>) -> Option<ibc_primitives::ConnectionHandshakeProof> {
+		fn connection_handshake(_client_id: Vec<u8>, _connection_id: Vec<u8>) -> Option<ibc_primitives::ConnectionHandshake> {
 			None
 		}
 

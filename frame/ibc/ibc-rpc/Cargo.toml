@@ -20,6 +20,7 @@ serde = { version = "1.0.136", features = ["derive"] }
 ibc-primitives = { path = "../ibc-primitives" }
 
 sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }

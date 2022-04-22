@@ -1390,16 +1390,16 @@ impl_runtime_apis! {
 	}
 
 	impl ibc_runtime_api::IbcRuntimeApi<Block> for Runtime {
+		fn get_trie_inputs() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
+			Ibc::build_trie_inputs().ok()
+		}
+
 		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128> {
 			Ibc::query_balance_with_address(addr).ok()
 		}
 
 		fn query_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::OffchainPacketType>> {
 			Ibc::get_offchain_packets(channel_id, port_id, seqs).ok()
-		}
-
-		fn generate_proof(keys: Vec<Vec<u8>>) -> Option<ibc_primitives::Proof> {
-			Ibc::generate_proof(keys).ok()
 		}
 
 		fn client_state(client_id: Vec<u8>) -> Option<ibc_primitives::QueryClientStateResponse> {
@@ -1431,8 +1431,8 @@ impl_runtime_apis! {
 			Ibc::connection_using_client(client_id).ok()
 		}
 
-		fn connection_handshake_proof(client_id: Vec<u8>, connection_id: Vec<u8>) -> Option<ibc_primitives::ConnectionHandshakeProof> {
-			Ibc::generate_connection_handshake_proof(client_id, connection_id).ok()
+		fn connection_handshake(client_id: Vec<u8>, connection_id: Vec<u8>) -> Option<ibc_primitives::ConnectionHandshake> {
+			Ibc::connection_handshake(client_id, connection_id).ok()
 		}
 
 		fn channel(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryChannelResponse> {

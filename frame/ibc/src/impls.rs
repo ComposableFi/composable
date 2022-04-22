@@ -22,8 +22,8 @@ use ibc::core::{
 	},
 };
 use ibc_primitives::{
-	ConnectionHandshakeProof, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection,
-	OffchainPacketType, PacketState, Proof, QueryChannelResponse, QueryChannelsResponse,
+	ConnectionHandshake, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection,
+	OffchainPacketType, PacketState, QueryChannelResponse, QueryChannelsResponse,
 	QueryClientStateResponse, QueryConnectionResponse, QueryConnectionsResponse,
 	QueryConsensusStateResponse, QueryNextSequenceReceiveResponse,
 	QueryPacketAcknowledgementResponse, QueryPacketAcknowledgementsResponse,
@@ -43,7 +43,7 @@ impl<T: Config> Pallet<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
-	pub(crate) fn build_ibc_state_root() -> Result<sp_core::H256, Error<T>> {
+	pub fn build_trie_inputs() -> Result<Vec<(Vec<u8>, Vec<u8>)>, Error<T>> {
 		let mut inputs = Vec::new();
 		let prefix = T::CONNECTION_PREFIX.to_vec();
 
@@ -184,26 +184,17 @@ where
 			inputs.push((receipt_key.encode(), receipt))
 		}
 
+		Ok(inputs)
+	}
+
+	pub(crate) fn build_ibc_state_root() -> Result<sp_core::H256, Error<T>> {
+		let inputs = Self::build_trie_inputs()?;
 		Ok(sp_io::trie::blake2_256_root(inputs, sp_core::storage::StateVersion::V0))
 	}
 
 	pub(crate) fn extract_ibc_state_root() -> Result<Vec<u8>, Error<T>> {
 		let root = Self::build_ibc_state_root()?;
 		Ok(root.as_bytes().to_vec())
-	}
-
-	pub fn generate_raw_proof(keys: Vec<Vec<u8>>) -> Result<Vec<u8>, Error<T>> {
-		let keys = keys.iter().collect::<Vec<_>>();
-		let root = Self::build_ibc_state_root()?;
-		let db = sp_trie::MemoryDB::<BlakeTwo256>::default();
-		sp_trie::generate_trie_proof::<sp_trie::LayoutV0<BlakeTwo256>, _, _, _>(&db, root, keys)
-			.map(|proof| proof.encode())
-			.map_err(|_| Error::<T>::ProofGenerationError)
-	}
-
-	pub fn generate_proof(keys: Vec<Vec<u8>>) -> Result<Proof, Error<T>> {
-		let proof = Self::generate_raw_proof(keys)?;
-		Ok(Proof { proof, height: host_height::<T>() })
 	}
 
 	// IBC Runtime Api helper methods
@@ -221,11 +212,7 @@ where
 		let channel_path = format!("{}", ChannelEndsPath(port_id.clone(), channel_id.clone()));
 		key.extend_from_slice(channel_path.as_bytes());
 
-		Ok(QueryChannelResponse {
-			channel,
-			proof: Self::generate_raw_proof(vec![key])?,
-			height: host_height::<T>(),
-		})
+		Ok(QueryChannelResponse { channel, trie_key: key, height: host_height::<T>() })
 	}
 
 	/// Get a connection state
@@ -238,11 +225,7 @@ where
 		let connection_path = format!("{}", ConnectionsPath(connection_id));
 		key.extend_from_slice(connection_path.as_bytes());
 
-		Ok(QueryConnectionResponse {
-			connection,
-			proof: Self::generate_raw_proof(vec![key])?,
-			height: host_height::<T>(),
-		})
+		Ok(QueryConnectionResponse { connection, trie_key: key, height: host_height::<T>() })
 	}
 
 	/// Get a client state
@@ -255,11 +238,7 @@ where
 
 		key.extend_from_slice(client_state_path.as_bytes());
 
-		Ok(QueryClientStateResponse {
-			client_state,
-			proof: Self::generate_raw_proof(vec![key])?,
-			height: host_height::<T>(),
-		})
+		Ok(QueryClientStateResponse { client_state, trie_key: key, height: host_height::<T>() })
 	}
 
 	/// Get all client states
@@ -304,7 +283,7 @@ where
 
 		Ok(QueryConsensusStateResponse {
 			consensus_state,
-			proof: Self::generate_raw_proof(vec![key])?,
+			trie_key: key,
 			height: host_height::<T>(),
 		})
 	}
@@ -462,11 +441,7 @@ where
 		let mut key = T::CONNECTION_PREFIX.to_vec();
 		key.extend_from_slice(next_seq_recv_path.as_bytes());
 
-		Ok(QueryNextSequenceReceiveResponse {
-			sequence,
-			proof: Self::generate_raw_proof(vec![key])?,
-			height: host_height::<T>(),
-		})
+		Ok(QueryNextSequenceReceiveResponse { sequence, trie_key: key, height: host_height::<T>() })
 	}
 
 	pub fn packet_commitment(
@@ -483,11 +458,7 @@ where
 		let mut key = T::CONNECTION_PREFIX.to_vec();
 		key.extend_from_slice(commitment_path.as_bytes());
 
-		Ok(QueryPacketCommitmentResponse {
-			commitment,
-			proof: Self::generate_raw_proof(vec![key])?,
-			height: host_height::<T>(),
-		})
+		Ok(QueryPacketCommitmentResponse { commitment, trie_key: key, height: host_height::<T>() })
 	}
 
 	pub fn packet_acknowledgement(
@@ -504,11 +475,7 @@ where
 		let mut key = T::CONNECTION_PREFIX.to_vec();
 		key.extend_from_slice(acks_path.as_bytes());
 
-		Ok(QueryPacketAcknowledgementResponse {
-			ack,
-			proof: Self::generate_raw_proof(vec![key])?,
-			height: host_height::<T>(),
-		})
+		Ok(QueryPacketAcknowledgementResponse { ack, trie_key: key, height: host_height::<T>() })
 	}
 
 	pub fn packet_receipt(
@@ -526,17 +493,13 @@ where
 		let mut key = T::CONNECTION_PREFIX.to_vec();
 		key.extend_from_slice(receipt_path.as_bytes());
 		let receipt = if &receipt == "Ok" { true } else { false };
-		Ok(QueryPacketReceiptResponse {
-			receipt,
-			proof: Self::generate_raw_proof(vec![key])?,
-			height: host_height::<T>(),
-		})
+		Ok(QueryPacketReceiptResponse { receipt, trie_key: key, height: host_height::<T>() })
 	}
 
-	pub fn generate_connection_handshake_proof(
+	pub fn connection_handshake(
 		client_id: Vec<u8>,
 		connection_id: Vec<u8>,
-	) -> Result<ConnectionHandshakeProof, Error<T>> {
+	) -> Result<ConnectionHandshake, Error<T>> {
 		let client_state = ClientStates::<T>::get(client_id.clone());
 		let client_state_decoded =
 			AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
@@ -561,9 +524,9 @@ where
 		let mut consensus_key = prefix.clone();
 		consensus_key.extend_from_slice(consensus_path.as_bytes());
 
-		Ok(ConnectionHandshakeProof {
+		Ok(ConnectionHandshake {
 			client_state,
-			proof: Self::generate_raw_proof(vec![client_state_key, connection_key, consensus_key])?,
+			trie_keys: vec![client_state_key, connection_key, consensus_key],
 			height: host_height::<T>(),
 		})
 	}
