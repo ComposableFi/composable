@@ -29,7 +29,6 @@ fn run_to_block(n: u64) {
 
 type VammTimestamp = <MockRuntime as pallet::Config>::Timestamp;
 type VammId = <Vamm as VammTrait>::VammId;
-type SR = impl Strategy<Value = u128, Tree = u128>;
 
 #[derive(Default)]
 struct TestVammState<Balance, VammTimestamp> {
@@ -39,11 +38,11 @@ struct TestVammState<Balance, VammTimestamp> {
 	closed: Option<Option<VammTimestamp>>,
 }
 
-// #[derive(Default)]
-struct TestSwapConfig<VammId, Balance, SR> {
+#[derive(Default)]
+struct TestSwapConfig<VammId, Balance> {
 	vamm_id: Option<VammId>,
 	asset: Option<AssetType>,
-	input_amount: Option<SR>,
+	input_amount: Option<Balance>,
 	direction: Option<Direction>,
 	output_amount_limit: Option<Balance>,
 }
@@ -146,7 +145,7 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn get_swap_config(config: TestSwapConfig<VammId, Balance, SR>)(
+	fn get_swap_config(config: TestSwapConfig<VammId, Balance>)(
 		vamm_id in balance_range(),
 		asset in prop_oneof![Just(AssetType::Base), Just(AssetType::Quote)],
 		input_amount in balance_range(),
