@@ -512,6 +512,38 @@ pub mod pallet {
 		input_amount: BalanceOf<T>,
 	}
 
+	// Helper functions - core functionality
+	impl<T: Config> Pallet<T> {
+		fn swap_quote_asset(
+			config: &SwapConfigOf<T>,
+			vamm_state: &mut VammStateOf<T>,
+		) -> Result<BalanceOf<T>, DispatchError> {
+			// TODO(Cardosaum): Is it needed to divide the quote asset by the
+			// peg_multiplier the way Drift does?
+			let quote_asset_reserve_amount = config
+				.input_amount
+				.checked_div(&vamm_state.peg_multiplier)
+				.ok_or(ArithmeticError::DivisionByZero)?;
+
+			let initial_base_asset_reserve = vamm_state.base_asset_reserves;
+			let swap_amount = Self::calculate_swap_asset(
+				&quote_asset_reserve_amount,
+				&vamm_state.quote_asset_reserves,
+				&config.direction,
+				vamm_state,
+			)?;
+
+			vamm_state.base_asset_reserves = swap_amount.output_amount;
+			vamm_state.quote_asset_reserves = swap_amount.input_amount;
+
+			let base_asset_amount = initial_base_asset_reserve
+				.checked_sub(&swap_amount.output_amount)
+				.ok_or(ArithmeticError::Underflow)?;
+
+			// TODO(Cardosaum): Return an `IntegerOf<T>` rather than Balance
+			Ok(base_asset_amount)
+		}
+
 				// have sufficient funds for it.
 				Direction::Remove => match config.asset {
 					AssetType::Base => ensure!(
