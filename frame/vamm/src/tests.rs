@@ -419,3 +419,30 @@ proptest! {
 	}
 }
 
+// ----------------------------------------------------------------------------------------------------
+//                                             Swap Base Asset
+// ----------------------------------------------------------------------------------------------------
+
+proptest! {
+	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
+	#[test]
+	fn swap_base_remove_insufficient_funds_error(
+		vamm_state in get_vamm_state(Default::default()),
+		swap_config in get_swap_config(
+			TestSwapConfig {
+				direction: Some(Direction::Remove),
+				vamm_id: Some(0),
+				input_amount: Some(balance_range_lower_half()),
+				..Default::default()}),
+	) {
+		prop_assume!(swap_config.input_amount <= vamm_state.base_asset_reserves);
+
+		ExtBuilder {
+			vamm_count: 1,
+			vamms: vec![(0, vamm_state)]
+		}.build().execute_with(|| {
+			let swap = Vamm::swap(&swap_config);
+			assert_err!(swap, Error::<MockRuntime>::VammDoesNotExist);
+		})
+	}
+}
