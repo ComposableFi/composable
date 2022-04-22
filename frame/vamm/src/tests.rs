@@ -3,8 +3,8 @@ use crate::{
 	pallet,
 	pallet::{Error, VammMap, VammState},
 };
-use composable_traits::vamm::{AssetType, Vamm as VammTrait, VammConfig};
-use frame_support::{assert_noop, assert_ok, pallet_prelude::Hooks};
+use composable_traits::vamm::{AssetType, Direction, SwapConfig, Vamm as VammTrait, VammConfig};
+use frame_support::{assert_err, assert_noop, assert_ok, pallet_prelude::Hooks};
 use proptest::prelude::*;
 use sp_runtime::{ArithmeticError, DispatchError};
 
