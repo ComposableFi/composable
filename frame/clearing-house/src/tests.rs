@@ -1,4 +1,5 @@
 use crate::{
+	math::IntoBalance,
 	mock::{
 		accounts::{AccountId, ALICE},
 		assets::{AssetId, DOT, PICA, USDC},
@@ -92,11 +93,11 @@ fn valid_market_config() -> MarketConfig {
 }
 
 fn valid_quote_asset_amount() -> Balance {
-	FixedI128::checked_from_integer(100).unwrap().into_inner().unsigned_abs()
+	FixedI128::saturating_from_integer(100).into_balance().unwrap()
 }
 
 fn valid_base_asset_amount_limit() -> Balance {
-	FixedI128::checked_from_integer(10).unwrap().into_inner().unsigned_abs()
+	FixedI128::saturating_from_integer(10).into_balance().unwrap()
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -1129,8 +1130,8 @@ proptest! {
 					Origin::signed(ALICE),
 					market_id,
 					Direction::Short,
-					quote_delta_decimal.into_inner().unsigned_abs(),
-					base_delta_decimal.into_inner().unsigned_abs(),
+					quote_delta_decimal.into_balance().unwrap(),
+					base_delta_decimal.into_balance().unwrap(),
 				));
 
 				let positions = TestPallet::get_positions(&ALICE);
@@ -1199,8 +1200,8 @@ proptest! {
 					Origin::signed(ALICE),
 					market_id,
 					Direction::Long,
-					quote_delta_decimal.into_inner().unsigned_abs(),
-					base_delta_decimal.into_inner().unsigned_abs(),
+					quote_delta_decimal.into_balance().unwrap(),
+					base_delta_decimal.into_balance().unwrap(),
 				));
 
 				let positions = TestPallet::get_positions(&ALICE);
