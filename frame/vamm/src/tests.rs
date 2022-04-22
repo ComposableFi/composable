@@ -61,7 +61,7 @@ const MINIMUM_RESERVE: Balance = ZERO_RESERVE + 1;
 const MAXIMUM_RESERVE: Balance = Balance::MAX;
 
 #[allow(dead_code)]
-const RUN_CASES: u32 = 1000;
+const RUN_CASES: u32 = 10000;
 
 prop_compose! {
 	fn balance_range()(
