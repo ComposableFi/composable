@@ -568,10 +568,10 @@ pub mod pallet {
 		///
 		/// This may result in the following outcomes:
 		/// * Creation of a whole new position in the market, if one didn't already exist
-		/// * Increase in the size of an existing position, if the trade's direction matches the
-		///   existion position's one
-		/// * Decrease in the size of an existing position, if the trade's direction is counter to
-		///   the existion position's one and its magnitude is smaller than the existing postion's
+		/// * An increase in the size of an existing position, if the trade's direction matches the
+		///   existing position's one
+		/// * A decrease in the size of an existing position, if the trade's direction is counter to
+		///   the existing position's one and its magnitude is smaller than the existing postion's
 		///   size
 		/// * Closing of the existing position, if the trade's direction is counter to the existion
 		///   position's one and its magnitude is approximately the existing postion's size
@@ -590,19 +590,25 @@ pub mod pallet {
 		///
 		/// ## Assumptions or Requirements
 		///
-		/// TODO(0xangelo)
+		/// There's a maximum number of positions ([`Config::MaxPositions`]) than can be open for
+		/// each account id at any given time. If opening a position in a new market exceeds this
+		/// number, the transactions fails.
 		///
 		/// ## Emits
 		///
-		/// TODO(0xangelo)
+		/// - [`TradeExecuted`](Event::<T>::TradeExecuted)
 		///
 		/// ## State Changes
 		///
-		/// TODO(0xangelo)
+		/// The following storage items may be modified:
+		/// - [`AccountsMargin`]: if trade decreases, closes, or reverses a position, it's PnL is
+		///   realized
+		/// - [`Positions`]: either a new entry is added or an existing one is updated
 		///
 		/// ## Erros
 		///
 		/// - [`MarketIdNotFound`](Error::<T>::MarketIdNotFound)
+		/// - [`MaxPositionsExceeded`](Error::<T>::MaxPositionsExceeded)
 		///
 		/// # Weight/Runtime
 		/// TODO(0xangelo)
