@@ -544,6 +544,29 @@ pub mod pallet {
 			Ok(base_asset_amount)
 		}
 
+		fn swap_base_asset(
+			config: &SwapConfigOf<T>,
+			vamm_state: &mut VammStateOf<T>,
+		) -> Result<BalanceOf<T>, DispatchError> {
+			let initial_quote_asset_reserve = vamm_state.quote_asset_reserves;
+			let swap_amount = Self::calculate_swap_asset(
+				&config.input_amount,
+				&vamm_state.base_asset_reserves,
+				&config.direction,
+				vamm_state,
+			)?;
+
+			vamm_state.base_asset_reserves = swap_amount.input_amount;
+			vamm_state.quote_asset_reserves = swap_amount.output_amount;
+
+			Self::calculate_quote_asset_amount_swapped(
+				&initial_quote_asset_reserve,
+				&swap_amount.output_amount,
+				&config.direction,
+				&vamm_state,
+			)
+		}
+
 				// have sufficient funds for it.
 				Direction::Remove => match config.asset {
 					AssetType::Base => ensure!(
