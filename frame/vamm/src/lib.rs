@@ -662,28 +662,29 @@ pub mod pallet {
 		}
 	}
 
-		#[allow(unused_variables)]
-		fn swap_simulation(
-			config: &SwapSimulationConfigOf<T>,
-		) -> Result<IntegerOf<T>, DispatchError> {
-			todo!()
-		}
-	}
-
-	// ----------------------------------------------------------------------------------------------------
-	//                              Helper Functions
-	// ----------------------------------------------------------------------------------------------------
-
-	// Helper functions - core functionality
-	impl<T: Config> Pallet<T> {}
-
-	// Helper functions - validity checks
-	impl<T: Config> Pallet<T> {}
-
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
-		fn swap_quote_asset(config: &SwapConfigOf<T>) -> Result<IntegerOf<T>, DispatchError> {
-			todo!()
+		fn get_vamm_state(vamm_id: &VammIdOf<T>) -> Result<VammStateOf<T>, DispatchError> {
+			// Requested vamm must exists and be retrievable.
+			ensure!(VammMap::<T>::contains_key(vamm_id), Error::<T>::VammDoesNotExist);
+			let vamm_state = VammMap::<T>::get(vamm_id).ok_or(Error::<T>::FailToRetrieveVamm)?;
+			Ok(vamm_state)
+		}
+
+		fn balance_to_u128(value: BalanceOf<T>) -> Result<u128, DispatchError> {
+			Ok(TryInto::<u128>::try_into(value).ok().ok_or(ArithmeticError::Overflow)?)
+		}
+
+		fn balance_to_u256(value: BalanceOf<T>) -> Result<U256, DispatchError> {
+			Ok(U256::from(Self::balance_to_u128(value)?))
+		}
+
+		fn u256_to_u128(value: U256) -> Result<u128, DispatchError> {
+			Ok(TryInto::<u128>::try_into(value).ok().ok_or(ArithmeticError::Overflow)?)
+		}
+
+		fn u256_to_balance(value: U256) -> Result<BalanceOf<T>, DispatchError> {
+			Ok(Self::u256_to_u128(value)?.try_into().ok().ok_or(ArithmeticError::Overflow)?)
 		}
 	}
 }
