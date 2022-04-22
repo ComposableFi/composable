@@ -73,7 +73,7 @@ prop_compose! {
 
 prop_compose! {
 	fn balance_range_lower_half()(
-		range in MINIMUM_RESERVE..=MAXIMUM_RESERVE/2
+		range in MINIMUM_RESERVE..MAXIMUM_RESERVE/2
 	) -> Balance {
 		range
 	}
