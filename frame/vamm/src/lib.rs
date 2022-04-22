@@ -122,6 +122,7 @@ pub mod pallet {
 	use frame_support::{pallet_prelude::*, sp_std::fmt::Debug, transactional, Blake2_128Concat};
 	use num_integer::Integer;
 	use sp_arithmetic::traits::Unsigned;
+	use sp_core::U256;
 	use sp_runtime::{
 		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Zero},
 		ArithmeticError, FixedPointNumber,
@@ -479,16 +480,27 @@ pub mod pallet {
 			todo!()
 		}
 
-		#[allow(unused_variables)]
-		fn swap(config: &SwapConfigOf<T>) -> Result<Self::Integer, DispatchError> {
-			// Sanity checks
-			// 1) Requested vamm must exists and be retrievable.
-			ensure!(VammMap::<T>::contains_key(config.vamm_id), Error::<T>::VammDoesNotExist);
-			let vamm_state =
-				VammMap::<T>::get(config.vamm_id).ok_or(Error::<T>::FailToRetrieveVamm)?;
+		fn swap(config: &SwapConfigOf<T>) -> Result<Self::Balance, DispatchError> {
+			// Get Vamm state.
+			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
 
-			match config.direction {
-				// 2) If we intend to remove some asset amount from vamm, we must
+			// Perform required sanity checks.
+			Self::swap_sanity_check(config, &vamm_state)?;
+
+			// Delegate swap to helper functions.
+			match config.asset {
+				AssetType::Quote => Self::swap_quote_asset(config, &mut vamm_state),
+				AssetType::Base => Self::swap_base_asset(config, &mut vamm_state),
+			}
+		}
+
+		#[allow(unused_variables)]
+		fn swap_simulation(
+			config: &SwapSimulationConfigOf<T>,
+		) -> Result<IntegerOf<T>, DispatchError> {
+			todo!()
+		}
+	}
 				// have sufficient funds for it.
 				Direction::Remove => match config.asset {
 					AssetType::Base => ensure!(
