@@ -43,7 +43,8 @@ pub trait Vamm {
 	fn create(config: &Self::VammConfig) -> Result<Self::VammId, DispatchError>;
 
 	/// Performs swap of assets.
-	fn swap(config: &Self::SwapConfig) -> Result<Self::Integer, DispatchError>;
+	// TODO(Cardosaum): Change signature to return an `Integer` rather than `Balance`
+	fn swap(config: &Self::SwapConfig) -> Result<Self::Balance, DispatchError>;
 
 	/// Performs swap simulation.
 	fn swap_simulation(config: &Self::SwapSimulationConfig)
