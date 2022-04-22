@@ -18,7 +18,7 @@
     - name: "Set release version"
       shell: |
         cd {{ work_dir }}scripts/github/
-        (git tag --sort=committerdate | grep -E '^v[0-9]' | tail -4 | head -1 ) > {{ work_dir }}scripts/github/RELEASE_ENV
+        (git tag --sort=committerdate | grep -E '^v[0-9]' | tail -7 | head -1 ) > {{ work_dir }}scripts/github/RELEASE_ENV
 
 
     - name: composable runtime upgrade
