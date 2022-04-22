@@ -730,7 +730,7 @@ proptest! {
 				SystemPallet::assert_last_event(
 					Event::TradeExecuted {
 						market: market_id,
-						direction: direction,
+						direction,
 						quote: quote_amount,
 						base: base_amount as u128,
 					}.into()
