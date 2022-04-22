@@ -70,6 +70,8 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 mod impls;
+pub mod weight;
+pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {

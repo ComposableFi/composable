@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use core::{fmt::Formatter, write};
-use frame_support::dispatch::DispatchResult;
+use frame_support::dispatch::{DispatchResult, Weight};
 use ibc::{
 	core::{
 		ics04_channel::{
@@ -19,6 +19,7 @@ use ibc::{
 	},
 	signer::Signer,
 };
+use ibc_trait::CallbackWeight;
 use scale_info::prelude::string::{String, ToString};
 use sp_std::{marker::PhantomData, prelude::*, vec};
 
@@ -154,7 +155,7 @@ pub mod pallet {
 				dest_port_id: params.dest_port_id,
 				dest_channel_id: params.dest_channel_id,
 			};
-			T::IbcHandler::send_packet(send_packet).map_err(|e| Error::<T>::PacketSendError)?;
+			T::IbcHandler::send_packet(send_packet).map_err(|_| Error::<T>::PacketSendError)?;
 			Self::deposit_event(Event::<T>::PacketSent);
 			Ok(())
 		}
@@ -356,5 +357,54 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 	) -> Result<(), Ics04Error> {
 		log::info!("Timout Packet {:?}", packet);
 		Ok(())
+	}
+}
+
+pub struct WeightHandler<T: Config>(PhantomData<T>);
+impl<T: Config> WeightHandler<T> {
+	pub fn new() -> Self {
+		Self(PhantomData::default())
+	}
+}
+
+impl<T: Config> CallbackWeight for WeightHandler<T> {
+	fn on_chan_open_init(&self) -> Weight {
+		todo!()
+	}
+
+	fn on_chan_open_try(&self) -> Weight {
+		todo!()
+	}
+
+	fn on_chan_open_ack(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight {
+		todo!()
+	}
+
+	fn on_chan_open_confirm(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight {
+		todo!()
+	}
+
+	fn on_chan_close_init(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight {
+		todo!()
+	}
+
+	fn on_chan_close_confirm(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight {
+		todo!()
+	}
+
+	fn on_recv_packet(&self, _packet: &Packet) -> Weight {
+		todo!()
+	}
+
+	fn on_acknowledgement_packet(
+		&self,
+		_packet: &Packet,
+		_acknowledgement: &Acknowledgement,
+	) -> Weight {
+		todo!()
+	}
+
+	fn on_timeout_packet(&self, _packet: &Packet) -> Weight {
+		todo!()
 	}
 }

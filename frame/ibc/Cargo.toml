@@ -29,6 +29,7 @@ ibc = { git = "https://github.com/informalsystems/ibc-rs", branch = "master", de
 ibc-proto = { git = "https://github.com/informalsystems/ibc-rs", branch = "master", default-features = false }
 tendermint-proto = { version = "0.23.6", default-features = false }
 tendermint = { version = "0.23.6", optional = true, default-features = false }
+hex-literal = { version = "0.3.4", optional = true }
 
 # local deps
 ibc-primitives = { path = "ibc-primitives", default-features = false }
@@ -66,6 +67,7 @@ std = [
 
 runtime-benchmarks = [
 	"frame-benchmarking",
-	"tendermint"
+	"tendermint",
+	"hex-literal"
 ]
 try-runtime = ["frame-support/try-runtime"]

@@ -1,9 +1,9 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 use codec::{Decode, Encode};
-use frame_support::RuntimeDebug;
+use frame_support::{weights::Weight, RuntimeDebug};
 use ibc::core::{
 	ics02_client::client_type::ClientType,
-	ics04_channel::channel::ChannelEnd,
+	ics04_channel::{channel::ChannelEnd, msgs::acknowledgement::Acknowledgement, packet::Packet},
 	ics05_port::capabilities::PortCapability,
 	ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
 };
@@ -38,6 +38,30 @@ pub trait IbcTrait {
 		capability: PortCapability,
 		channel_end: ChannelEnd,
 	) -> Result<ChannelId, Error>;
+}
+
+pub trait CallbackWeight {
+	fn on_chan_open_init(&self) -> Weight;
+
+	fn on_chan_open_try(&self) -> Weight;
+
+	fn on_chan_open_ack(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight;
+
+	fn on_chan_open_confirm(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight;
+
+	fn on_chan_close_init(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight;
+
+	fn on_chan_close_confirm(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight;
+
+	fn on_recv_packet(&self, _packet: &Packet) -> Weight;
+
+	fn on_acknowledgement_packet(
+		&self,
+		_packet: &Packet,
+		_acknowledgement: &Acknowledgement,
+	) -> Weight;
+
+	fn on_timeout_packet(&self, packet: &Packet) -> Weight;
 }
 
 pub fn port_id_from_bytes(port: Vec<u8>) -> Result<PortId, Error> {
