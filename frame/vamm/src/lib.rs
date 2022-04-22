@@ -567,6 +567,40 @@ pub mod pallet {
 			)
 		}
 
+		fn calculate_swap_asset(
+			swap_amount: &BalanceOf<T>,
+			input_asset_amount: &BalanceOf<T>,
+			direction: &Direction,
+			vamm_state: &VammStateOf<T>,
+		) -> Result<CalculateSwapAsset<T>, DispatchError> {
+			// NOTE(Cardosaum): There is still the problem that, if Balance is
+			// U256 or greater, this would overflow. (does it matter?)
+			let base_asset_reserves_u256 = Self::balance_to_u256(vamm_state.base_asset_reserves)?;
+			let quote_asset_reserves_u256 = Self::balance_to_u256(vamm_state.quote_asset_reserves)?;
+			let invariant = base_asset_reserves_u256
+				.checked_mul(quote_asset_reserves_u256)
+				.ok_or(ArithmeticError::Overflow)?;
+
+			let new_input_amount = match direction {
+				Direction::Add =>
+					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?,
+
+				Direction::Remove =>
+					input_asset_amount.checked_sub(swap_amount).ok_or(ArithmeticError::Overflow)?,
+			};
+			let new_input_amount_u256 = Self::balance_to_u256(new_input_amount)?;
+
+			let new_output_amount_u256 = invariant
+				.checked_div(new_input_amount_u256)
+				.ok_or(ArithmeticError::DivisionByZero)?;
+			let new_output_amount = Self::u256_to_balance(new_output_amount_u256)?;
+
+			Ok(CalculateSwapAsset {
+				input_amount: new_input_amount,
+				output_amount: new_output_amount,
+			})
+		}
+
 				// have sufficient funds for it.
 				Direction::Remove => match config.asset {
 					AssetType::Base => ensure!(
