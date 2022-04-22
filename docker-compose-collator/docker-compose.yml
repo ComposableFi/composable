@@ -7,10 +7,9 @@ services:
     volumes:
       - ./composable-data:/data
     ports:
-      - 9833:9833
-      - 9844:9844
       - 40333:40333
       - 30333:30333
+      - 9615:9615
     restart: unless-stopped
     command:  >
       /usr/local/bin/composable
@@ -25,7 +24,6 @@ services:
       --
       --execution=wasm
       --listen-addr=/ip4/0.0.0.0/tcp/30333
-
     logging:
       driver: "json-file"
       options:
@@ -33,7 +31,6 @@ services:
         max-file: "10"
     networks:
       - composable_network
-
 
   prometheus:
     image: prom/prometheus:latest
