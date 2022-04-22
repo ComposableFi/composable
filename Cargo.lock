@@ -3024,9 +3024,11 @@ dependencies = [
  "notify",
  "pulldown-cmark",
  "pulldown-cmark-to-cmark",
+ "serde",
  "syn 1.0.91",
  "thiserror",
  "time 0.3.9",
+ "toml",
 ]
 
 [[package]]

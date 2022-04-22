@@ -1,9 +1,10 @@
-use std::{collections::HashMap, ops::Not, path::PathBuf, sync::mpsc::channel, time::Duration};
+use std::{collections::HashMap, fs, ops::Not, path::PathBuf, sync::mpsc::channel, time::Duration};
 
 use anyhow::Context;
-use clap::{Parser, ValueHint};
+use clap::Parser;
 use log::LevelFilter;
 use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
+use serde::{Deserialize, Serialize};
 
 mod pallet_info;
 mod scrape;
@@ -13,39 +14,14 @@ use crate::{pallet_info::get_pallet_info, scrape::generate_docs};
 #[derive(Parser)]
 #[clap(arg_required_else_help(true))]
 struct Cli {
-	/// The path to the FRAME directory containing all the pallets to gather documentation from.
+	/// The path to the configuration file.
 	#[clap(
 		long,
 		parse(from_os_str),
 		value_hint(clap::ValueHint::AnyPath),
 		forbid_empty_values(true)
 	)]
-	frame_directory_path: PathBuf,
-
-	/// The URL to the root of the rustdocs.
-	///
-	/// Ensure that the URL passed includes the path to the docs, not just the root url of the
-	/// hosting site (i.e. if the docs are hosted at /doc/, supply https://some.site.com/doc/ instead
-	/// of https://some.site.com/). The generated documentation will use this as the base to link to
-	/// the rustdocs with, appending directly to the end of the url. A trailing `/` is optional,
-	/// and will be appended if not provided.
-	#[clap(long, value_hint(ValueHint::Url), forbid_empty_values(true))]
-	// TODO: Use an actual URL/URI type for this
-	docs_root_url: String,
-
-	/// The output path for the generated documentation. Files will be written to
-	/// <output-path>/<pallet>/.
-	///
-	/// The provided directory will be scanned for sub-directories that match the pallets found in
-	/// <FRAME_DIRECTORY_PATH>. Any pallets that don't have their own subfolder will be skipped and
-	/// a warning will be emitted.
-	#[clap(
-		long,
-		parse(from_os_str),
-		value_hint(clap::ValueHint::AnyPath),
-		forbid_empty_values(true)
-	)]
-	output_path: PathBuf,
+	config_file_path: PathBuf,
 
 	/// Set the verbosity for output logging. Can be specified up to 3 times for more verbose
 	/// output.
@@ -68,19 +44,59 @@ struct Cli {
 	watch: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct Config {
+	/// The path to the FRAME directory containing all the pallets to gather documentation from.
+	frame_directory_path: PathBuf,
+
+	/// The URL to the root of the rustdocs.
+	///
+	/// Ensure that the URL passed includes the path to the docs, not just the root url of the
+	/// hosting site (i.e. if the docs are hosted at /doc/, supply https://some.site.com/doc/ instead
+	/// of https://some.site.com/). The generated documentation will use this as the base to link to
+	/// the rustdocs with, appending directly to the end of the url. A trailing `/` is optional,
+	/// and will be appended if not provided.
+	// TODO: Use an actual URL/URI type for this
+	docs_root_url: String,
+
+	/// The output path for the generated documentation. Files will be written to
+	/// <output-path>/<pallet>/.
+	///
+	/// The provided directory will be scanned for sub-directories that match the pallets found in
+	/// <FRAME_DIRECTORY_PATH>. Any pallets that don't have their own subfolder will be skipped and
+	/// a warning will be emitted.
+	output_path: PathBuf,
+
+	/// A list of folders in the provided FRAME directory that should be ignored.
+	exclude: Vec<String>,
+}
+
 fn main() -> anyhow::Result<()> {
 	let args = Cli::parse();
 
 	init_logger(args.verbosity);
 
-	let docs_root_url_cleaned = args
+	let config: Config = toml::from_str(
+		&fs::read_to_string(args.config_file_path)
+			.context("Unable to read file at provided config-file-path")?,
+	)
+	.context("Unable to parse configuration file as TOML")?;
+
+	let docs_root_url_cleaned = config
 		.docs_root_url
 		.ends_with('/')
 		.not()
-		.then(|| String::from_iter([&args.docs_root_url, "/"]))
-		.unwrap_or_else(|| args.docs_root_url);
+		.then(|| String::from_iter([&config.docs_root_url, "/"]))
+		.unwrap_or_else(|| config.docs_root_url);
 
-	let pallet_infos = get_pallet_info(&args.frame_directory_path, &args.output_path)?;
+	let pallet_infos = get_pallet_info(
+		&config
+			.frame_directory_path
+			.canonicalize()
+			.context("Unable to canonicalize input directory")?,
+		&config.output_path,
+		&config.exclude,
+	)?;
 
 	let pallet_lib_rs_path_to_pallet_info_map = pallet_infos
 		.into_iter()

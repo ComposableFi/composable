@@ -1,7 +1,6 @@
-use anyhow::Context;
+use anyhow::{ensure, Context};
 use std::{
-	fs::{self, DirEntry},
-	io,
+	fs::{self, DirEntry, Metadata},
 	path::{Path, PathBuf},
 };
 
@@ -11,90 +10,80 @@ use std::{
 pub(crate) fn get_pallet_info(
 	frame_dir_path: &Path,
 	pallet_docs_output_path: &Path,
+	exclude: &[String],
 ) -> Result<Vec<PalletInfo>, anyhow::Error> {
-	let pallet_entries = fs::read_dir(&frame_dir_path)
-		.context("Unable to read input directory")?
-		.map(|dir_entry: io::Result<DirEntry>| -> anyhow::Result<Option<PalletInfo>> {
-			let dir_entry = dir_entry.context("Error reading input directory")?;
+	fs::read_dir(&frame_dir_path)
+		.context(format!(
+			"Unable to read input directory: \"{}\"",
+			&frame_dir_path.to_string_lossy()
+		))?
+		.map(|dir_entry| dir_entry.context("Error reading input directory"))
+		.collect::<anyhow::Result<Vec<_>>>()?
+		.into_iter()
+		.filter(|d| d.metadata().as_ref().map(Metadata::is_dir).unwrap_or(false))
+		.map(|dir_entry: DirEntry| -> anyhow::Result<_> {
+			dir_entry
+				.path()
+				.file_name()
+				.unwrap() // assume the path isn't terminated in `..` when reading directory
+				.to_str()
+				.map(ToOwned::to_owned)
+				.context("File path was not valid unicode")
+		})
+		.collect::<anyhow::Result<Vec<_>>>()?
+		.into_iter()
+		.filter(|pallet_name| !exclude.contains(pallet_name))
+		.map(|pallet_name| -> anyhow::Result<Option<PalletInfo>> {
+			let cargo_toml = cargo_toml::Manifest::from_slice(
+				fs::read_to_string(frame_dir_path.join(&pallet_name).join("Cargo.toml"))
+					.context(format!("Error reading Cargo.toml file for pallet {}", &pallet_name))?
+					.as_bytes(),
+			)
+			.context(format!("Error parsing Cargo.toml file for pallet {}", &pallet_name))?;
 
-			if let Ok(metadata) = dir_entry.metadata() {
-				if metadata.is_dir() {
-					let pallet_name = dir_entry
-						.path()
-						.file_name()
-						.unwrap() // assume the path isn't terminated in ..
-						.to_str()
-						.map(ToOwned::to_owned)
-						.context("File path was not valid unicode")?;
+			let lib_rs_path = frame_dir_path
+				.join(&pallet_name)
+				.join("src")
+				.join("lib.rs")
+				.canonicalize()
+				.context(format!(
+					"Unable to canonicalize path to lib.rs file for pallet {}",
+					&pallet_name
+				))?;
 
-					let cargo_toml = cargo_toml::Manifest::from_slice(
-						fs::read_to_string(PathBuf::from_iter([
-							dir_entry.path(),
-							"Cargo.toml".into(),
-						]))
+			ensure!(lib_rs_path.exists(), "Pallet {} does not have a lib.rs file", &pallet_name);
+
+			let docs_output_folder = pallet_docs_output_path.join(&pallet_name);
+
+			if docs_output_folder.exists() {
+				Ok(Some(PalletInfo {
+					pallet_name_full: cargo_toml
+						.package
 						.context(format!(
-							"Error reading Cargo.toml file for pallet {}",
+							"Cargo.toml file for pallet {} has no `[package]` section",
 							&pallet_name
 						))?
-						.as_bytes(),
-					)
-					.context(format!(
-						"Error parsing Cargo.toml file for pallet {}",
-						&pallet_name
-					))?;
-
-					let lib_rs_path =
-						PathBuf::from_iter([dir_entry.path(), "src".into(), "lib.rs".into()])
-							.canonicalize()
-							.context(format!(
-								"Unable to canonicalize path to lib.rs file for pallet {}",
-								&pallet_name
-							))?;
-
-					lib_rs_path
-						.exists()
-						.then(|| ())
-						.context(format!("Pallet {} does not have a lib.rs file", &pallet_name))?;
-
-					let docs_output_folder =
-						PathBuf::from_iter([pallet_docs_output_path, &PathBuf::from(&pallet_name)]);
-
-					if docs_output_folder.exists() {
-						Ok(Some(PalletInfo {
-							pallet_name_full: cargo_toml
-								.package
-								.context(format!(
-									"Cargo.toml file for pallet {} has no `[package]` section",
-									&pallet_name
-								))?
-								.name,
-							docs_output_paths: DocsOutputInfo {
-								folder: docs_output_folder.canonicalize().context(format!(
-									"Unable to canonicalize path to output folder for pallet {}",
-									&pallet_name
-								))?,
-								extrinsics_docs_file_name: "extrinsics.md".to_string().into(),
-							},
-							pallet_name,
-							lib_rs_path,
-						}))
-					} else {
-						log::warn!(
-							"Pallet `{}` does not have a section in the book; skipping",
+						.name,
+					docs_output_paths: DocsOutputInfo {
+						folder: docs_output_folder.canonicalize().context(format!(
+							"Unable to canonicalize path to output folder for pallet {}",
 							&pallet_name
-						);
-						Ok(None)
-					}
-				} else {
-					Ok(None)
-				}
+						))?,
+						extrinsics_docs_file_name: "extrinsics.md".to_string().into(),
+					},
+					pallet_name,
+					lib_rs_path,
+				}))
 			} else {
+				log::warn!(
+					"Pallet `{}` does not have a section in the book; skipping",
+					&pallet_name
+				);
 				Ok(None)
 			}
 		})
 		.filter_map(Result::transpose)
-		.collect::<anyhow::Result<Vec<PalletInfo>>>()?;
-	Ok(pallet_entries)
+		.collect::<anyhow::Result<Vec<PalletInfo>>>()
 }
 
 #[derive(Debug, Clone)]

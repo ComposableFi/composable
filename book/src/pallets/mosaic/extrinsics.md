@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-04-15T18:28:00.683145888Z -->
+<!-- Generated at 2022-04-22T18:59:06.83901452Z -->
 
 # Mosaic Pallet Extrinsics
 
@@ -14,15 +14,11 @@ previous Relayer. However, existing budgets remain in place.
 
 This can only be called by the \[`ControlOrigin`\].
 
-### Restrictions
-
-* Only callable by root
-
 ## Rotate Relayer
 
 [`rotate_relayer`](https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/enum.Call.html#variant.rotate_relayer)
 
-Rotates the Relayer Account.
+Rotates the Relayer Account
 
 ### Restrictions
 

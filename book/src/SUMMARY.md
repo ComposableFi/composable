@@ -4,7 +4,7 @@
 - [💻 Developer Guides](./developer-guides.md)
     - [Composable SDK](./developer-guides/composable-sdk.md)
 
-# 💿  PRODUCTS
+# 💿 PRODUCTS
 - [Technical Stack Overview](./products/technical-stack-overview.md)
 - [Cross-Chain Virtual Machine](./products/cross-chain-virtual-machine.md)
     - [Innovation Availability Layer](./products/cross-chain-virtual-machine/innovation-availability-layer.md)
@@ -85,6 +85,13 @@
 - [Audit Results, Recommendations, and Remediations](./audits/audit-results-recommendations-and-remediations.md)
 - [Code Fixes](./audits/code-fixes.md)
 
+# ❓ FAQS
+- [FAQs](./faqs/faqs.md)
+
+
+# 📖 BOOK
+- [Contributing](./book/contributing.md)
+
 # 🎨 PALLETS AND INTEGRATION GUIDES
 - [crowdloan-rewards](./pallets/crowdloan-rewards.md)
     - [Extrinsics](./pallets/crowdloan-rewards/extrinsics.md)
@@ -98,10 +105,57 @@
 - [vault](./pallets/vault.md)
     - [Extrinsics](./pallets/vault/extrinsics.md)
     - [Integration Guide](./pallets/vault/integration-guide.md)
-# ❓ FAQS
-- [FAQs](./faqs/faqs.md)
-
-
-# 📖 BOOK
-- [Contributing](./book/contributing.md)
-
+- [liquidity-bootstrapping](./pallets/liquidity-bootstrapping.md)
+    - [Extrinsics](./pallets/liquidity-bootstrapping/extrinsics.md)
+    - [Integration Guide](./pallets/liquidity-bootstrapping/integration-guide.md)
+- [dex-router](./pallets/dex-router.md)
+    - [Extrinsics](./pallets/dex-router/extrinsics.md)
+    - [Integration Guide](./pallets/dex-router/integration-guide.md)
+- [currency-factory](./pallets/currency-factory.md)
+    - [Extrinsics](./pallets/currency-factory/extrinsics.md)
+    - [Integration Guide](./pallets/currency-factory/integration-guide.md)
+- [lending](./pallets/lending.md)
+    - [Extrinsics](./pallets/lending/extrinsics.md)
+    - [Integration Guide](./pallets/lending/integration-guide.md)
+- [privilege](./pallets/privilege.md)
+    - [Extrinsics](./pallets/privilege/extrinsics.md)
+    - [Integration Guide](./pallets/privilege/integration-guide.md)
+- [assets](./pallets/assets.md)
+    - [Extrinsics](./pallets/assets/extrinsics.md)
+    - [Integration Guide](./pallets/assets/integration-guide.md)
+- [democracy](./pallets/democracy.md)
+    - [Extrinsics](./pallets/democracy/extrinsics.md)
+    - [Integration Guide](./pallets/democracy/integration-guide.md)
+- [staking-rewards](./pallets/staking-rewards.md)
+    - [Extrinsics](./pallets/staking-rewards/extrinsics.md)
+    - [Integration Guide](./pallets/staking-rewards/integration-guide.md)
+- [governance-registry](./pallets/governance-registry.md)
+    - [Extrinsics](./pallets/governance-registry/extrinsics.md)
+    - [Integration Guide](./pallets/governance-registry/integration-guide.md)
+- [ping](./pallets/ping.md)
+    - [Extrinsics](./pallets/ping/extrinsics.md)
+    - [Integration Guide](./pallets/ping/integration-guide.md)
+- [uniswap-v2](./pallets/uniswap-v2.md)
+    - [Extrinsics](./pallets/uniswap-v2/extrinsics.md)
+    - [Integration Guide](./pallets/uniswap-v2/integration-guide.md)
+- [pablo](./pallets/pablo.md)
+    - [Extrinsics](./pallets/pablo/extrinsics.md)
+    - [Integration Guide](./pallets/pablo/integration-guide.md)
+- [nft](./pallets/nft.md)
+    - [Extrinsics](./pallets/nft/extrinsics.md)
+    - [Integration Guide](./pallets/nft/integration-guide.md)
+- [curve-amm](./pallets/curve-amm.md)
+    - [Extrinsics](./pallets/curve-amm/extrinsics.md)
+    - [Integration Guide](./pallets/curve-amm/integration-guide.md)
+- [vesting](./pallets/vesting.md)
+    - [Extrinsics](./pallets/vesting/extrinsics.md)
+    - [Integration Guide](./pallets/vesting/integration-guide.md)
+- [dutch-auction](./pallets/dutch-auction.md)
+    - [Extrinsics](./pallets/dutch-auction/extrinsics.md)
+    - [Integration Guide](./pallets/dutch-auction/integration-guide.md)
+- [oracle](./pallets/oracle.md)
+    - [Extrinsics](./pallets/oracle/extrinsics.md)
+    - [Integration Guide](./pallets/oracle/integration-guide.md)
+- [assets-registry](./pallets/assets-registry.md)
+    - [Extrinsics](./pallets/assets-registry/extrinsics.md)
+    - [Integration Guide](./pallets/assets-registry/integration-guide.md)

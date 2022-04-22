@@ -1,5 +1,5 @@
 <!-- AUTOMATICALLY GENERATED -->
-<!-- Generated at 2022-04-15T18:28:00.679159637Z -->
+<!-- Generated at 2022-04-22T18:59:06.82215946Z -->
 
 # Bonded Finance Pallet Extrinsics
 

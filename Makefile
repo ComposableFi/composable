@@ -47,11 +47,12 @@ udeps:
 dev:
 	cargo run
 
+# run as `make open=y run-book` to open as well
 run-book:
-	bash -c "(trap 'kill 0' SIGINT; cargo run --manifest-path utils/extrinsics-docs-scraper/Cargo.toml --release -- --docs-root-url 'https://dali.devnets.composablefinance.ninja/doc/' --frame-directory-path frame/ --output-path book/src/pallets/ -vvv --watch & mdbook serve book/ $(if $(filter y,${open}),'--open'))"
+	bash -c "(trap 'kill 0' SIGINT; cargo run -p extrinsics-docs-scraper --release -- --config-file-path=scraper.toml -vvv --watch & mdbook serve book/ $(if $(filter y,${open}),'--open'))"
 
 build-book:
-	cargo run --manifest-path utils/extrinsics-docs-scraper/Cargo.toml --release -- --docs-root-url 'https://dali.devnets.composablefinance.ninja/doc/' --frame-directory-path frame/ --output-path book/src/pallets/ -vvv
+	cargo run -p extrinsics-docs-scraper --release -- --config-file-path=scraper.toml
 	mdbook build book/
 
 .PHONY: version
