@@ -9,7 +9,7 @@ pub mod pallet {
 	use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
 	use composable_traits::{
 		defi::DeFiComposableConfig,
-		vamm::{SwapConfig, SwapSimulationConfig, Vamm},
+		vamm::{AssetType, SwapConfig, SwapSimulationConfig, Vamm},
 	};
 	use frame_support::pallet_prelude::*;
 	use num_integer::Integer;
@@ -130,7 +130,10 @@ pub mod pallet {
 			}
 		}
 
-		fn get_price(vamm_id: Self::VammId) -> Result<Self::Balance, DispatchError> {
+		fn get_price(
+			vamm_id: Self::VammId,
+			asset_type: AssetType,
+		) -> Result<Self::Balance, DispatchError> {
 			todo!()
 		}
 

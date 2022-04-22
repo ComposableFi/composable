@@ -1,0 +1,15 @@
+@startuml
+skinparam responseMessageBelowArrow true
+title Get asset price for a Vamm
+'autoactivate on
+!theme mars
+
+participant "Client" as client
+participant "Vamm" as vamm
+database "Storage (Vamm)" as svamm
+
+client -> vamm++: Get asset price request
+vamm -> svamm: Get vamm state
+vamm -> vamm: Compute price
+vamm --> client--: Asset price
+@enduml

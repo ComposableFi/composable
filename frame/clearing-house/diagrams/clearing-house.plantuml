@@ -57,8 +57,8 @@ package "pallet-clearing-house" {
             AccountId => Balance collateral
         }
 
-        map Positions <<StorageDoubleMap>> {
-            AccountId, MarketId =>
+        map Positions <<StorageMap>> {
+            AccountId => BoundedVec<Position, _> positions
         }
 
         map Markets <<StorageMap>> {
@@ -75,12 +75,13 @@ package "pallet-clearing-house" {
         class Market <<struct>> {
             AssetId asset_id
             VammId vamm_id
+            Decimal cum_funding_rate
             Decimal margin_ratio_initial
             Decimal margin_ratio_maintenance
-            Decimal cum_funding_rate
-            Duration funding_rate_ts
+            Decimal minimum_trade_size
             Duration funding_frequency
             Duration funding_period
+            Duration funding_rate_ts
         }
     }
 }
@@ -88,11 +89,11 @@ package "pallet-clearing-house" {
 package "pallet-virtual-amm" {
     interface "Vamm" as vAmm <<trait>> {
         ~ ""create(config: VammConfig)""
-        ~ ""deprecate(vamm: VammId, when: Timestamp)""
+        ~ ""close(vamm: VammId, when: Timestamp)""
         ~ ""get_price(vamm: VammId, asset: VammAsset)""
         ~ ""get_twap(vamm: VammId)""
-        ~ ""swap_base_asset(vamm: VammId, amount: u128, direction: SwapDirection)""
-        ~ ""swap_quote_asset(vamm: VammId, amount: u128, direction: SwapDirection)""
+        ~ ""swap(config: SwapConfig)""
+        ~ ""swap_simulation(config: SwapSimulationConfig)""
         ~ ""move_price(vamm: VammId, base_asset_amount: u128, quote_asset_amount: u128)""
         ~ ""move_to_price(vamm: VammId, target_price: u128)""
     }
@@ -113,7 +114,7 @@ Markets ..down> Market : maps
 Market::vamm_id ..> vAmm : used in
 Market::asset_id ..> Oracle : used in
 
-Positions ..down> Position: maps
+Positions::positions ..down> Position: contains
 Position ..right> Markets : references
 
 '================== Control flow relationships             
