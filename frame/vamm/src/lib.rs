@@ -632,14 +632,14 @@ pub mod pallet {
 			config: &SwapConfigOf<T>,
 			vamm_state: &VammStateOf<T>,
 		) -> Result<(), DispatchError> {
-			let result = match config.direction {
-				// 1) If we intend to remove some asset amount from vamm, we must
 			// TODO(Cardosaum): Implement check based on time to assess if vamm
 			// is operational. Essentialy, check if `time.now() <
 			// vamm_state.closed`, in case vamm_state is Some(time).
 			//
 			// The vamm must not be closed
 
+			match config.direction {
+				// If we intend to remove some asset amount from vamm, we must
 				// have sufficient funds for it.
 				Direction::Remove => match config.asset {
 					AssetType::Base => ensure!(
@@ -652,7 +652,7 @@ pub mod pallet {
 					),
 				},
 
-				// 2) If we intend to add some asset amount to the vamm, the
+				// If we intend to add some asset amount to the vamm, the
 				// final amount must not overflow.
 				Direction::Add => match config.asset {
 					AssetType::Base => ensure!(
@@ -666,7 +666,7 @@ pub mod pallet {
 				},
 			};
 
-			Ok(result)
+			Ok(())
 		}
 	}
 
