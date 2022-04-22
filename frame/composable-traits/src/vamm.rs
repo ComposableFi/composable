@@ -97,7 +97,7 @@ pub enum AssetType {
 }
 
 /// The two possible directions to go when opening/closing a position in the vamm.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Direction {
 	Add,
 	Remove,
