@@ -624,6 +624,14 @@ pub mod pallet {
 		}
 	}
 
+	// Helper functions - validity checks
+	impl<T: Config> Pallet<T> {
+		fn swap_sanity_check(
+			config: &SwapConfigOf<T>,
+			vamm_state: &VammStateOf<T>,
+		) -> Result<(), DispatchError> {
+			let result = match config.direction {
+				// 1) If we intend to remove some asset amount from vamm, we must
 				// have sufficient funds for it.
 				Direction::Remove => match config.asset {
 					AssetType::Base => ensure!(
@@ -636,7 +644,7 @@ pub mod pallet {
 					),
 				},
 
-				// 3) If we intend to add some asset amount to the vamm, the
+				// 2) If we intend to add some asset amount to the vamm, the
 				// final amount must not overflow.
 				Direction::Add => match config.asset {
 					AssetType::Base => ensure!(
@@ -648,14 +656,11 @@ pub mod pallet {
 						Error::<T>::TradeExtrapolatesMaximumSupportedAmount
 					),
 				},
-			}
+			};
 
-			// Delegate swap to helper functions.
-			match config.asset {
-				AssetType::Quote => Self::swap_quote_asset(config),
-				AssetType::Base => todo!(),
-			}
+			Ok(result)
 		}
+	}
 
 		#[allow(unused_variables)]
 		fn swap_simulation(
