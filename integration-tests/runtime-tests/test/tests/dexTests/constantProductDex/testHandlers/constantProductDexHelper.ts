@@ -21,11 +21,20 @@ export async function createPool(walletId: KeyringPair, baseAssetId: number, quo
   });
   const fee = api.createType('Permill', 0);
   const ownerFees = api.createType('Permill', ownerFee);
+  const constantPool  = api.createType('ConstantProduct', {
+    walletId,
+    pair,
+    fee,
+    ownerFees
+  });
+  const constPool = api.createType('PalletPabloPoolInitConfiguration', {
+    ConstantProduct: constantPool,
+  });
   const {data: [resultPoolId],} = await sendAndWaitForSuccess(
     api,
     walletId,
-    api.events.constantProductDex.PoolCreated.is,
-    api.tx.constantProductDex.create(pair, fee, ownerFees)
+    api.events.pablo.PoolCreated.is,
+    api.tx.pablo.create(constPool)
   );
   poolId = resultPoolId.toNumber();
   return poolId;
@@ -38,8 +47,9 @@ export async function addFundstoThePool(walletId:KeyringPair, baseAmount:number,
   const {data: [,walletIdResult,baseAdded, quoteAdded,returnedLPTokens]} =await sendAndWaitForSuccess(
     api,
     walletId,
-    api.events.constantProductDex.LiquidityAdded.is,
-    api.tx.constantProductDex.addLiquidity(poolId, 
+    api.events.pablo.LiquidityAdded.is,
+    api.tx.pablo.addLiquidity(
+      poolId,
       baseAmountParam, 
       quoteAmountParam, 
       minMintAmountParam, 

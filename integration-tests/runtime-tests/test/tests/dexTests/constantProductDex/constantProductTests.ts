@@ -34,13 +34,14 @@ describe('tx.constantProductDex Tests', function () {
     baseAmount = 2500;
     quoteAmount = 2500;
     //sets the owner fee to 1.00%/Type Permill
-    ownerFee = 10000;      
+    ownerFee = 10000;
   });   
   
   before('Minting assets', async function() {
     this.timeout(8*60*1000);
     await mintAssetsToWallet(walletId1, walletAlice, [1, baseAssetId, quoteAssetId]);
-    await mintAssetsToWallet(walletId2, walletAlice, [1, baseAssetId, quoteAssetId]);       
+    await mintAssetsToWallet(walletId2, walletAlice, [1, baseAssetId, quoteAssetId]);
+    console.log("Hello I am in before");
   });
   
   describe('tx.constantProductDex Success Tests', function() {
@@ -48,7 +49,7 @@ describe('tx.constantProductDex Tests', function () {
       return;
     }
 
-    it('Users can create a constantProduct pool', async function() {
+    it.only('Users can create a constantProduct pool', async function() {
       if(!testConfiguration.enabledTests.successTests.createPool.enabled){
         this.skip();
       }

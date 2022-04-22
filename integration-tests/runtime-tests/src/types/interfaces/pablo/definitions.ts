@@ -4,12 +4,20 @@ export default {
     PalletPabloPoolInitConfiguration: "PalletPabloPoolConfiguration",
     PalletPabloPoolConfiguration: {
       _enum: {
-        StableSwap: "Null",
-        ConstantProduct: "Null",
-        LiquidityBootstrapping: "Null"
+        StableSwap: "StableSwap",
+        ConstantProduct: "ConstantProduct",
+        LiquidityBootstrapping: "LiquidityBootstrapping"
       }
     },
     PalletPabloPriceCumulative: "Null",
     PalletPabloTimeWeightedAveragePrice: "Null",
+    ConstantProduct: {
+      owner: "AccountId32",
+      pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
+      fee: "Permill",
+      ownerFee: "Permill"
+    },
+    StableSwap: "Null",
+    LiquidityBootstrapping: "Null"
   },
 };
