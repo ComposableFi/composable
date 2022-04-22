@@ -54,7 +54,7 @@ where
 	MaxError: Debug + Default + Into<PalletError> + 'static,
 	PalletError: 'static,
 {
-	type Output = Result<T, PalletError>;
+	type Output = Result<T, MaxError>;
 
 	/// [`Add`] is used safely here since `M::get()` must be `<=` the upper limit for `T`.
 	fn increment(value: T) -> Self::Output {
@@ -62,7 +62,7 @@ where
 		if new_value <= Max::get() {
 			Ok(new_value)
 		} else {
-			Err(MaxError::default().into())
+			Err(MaxError::default())
 		}
 	}
 }
@@ -83,7 +83,7 @@ where
 macro_rules! error_to_pallet_error {
 	($($name:ident -> $to:ident;)+) => {
 		$(
-			#[derive(core::fmt::Debug, core::default::Default)]
+			#[derive(core::fmt::Debug, core::default::Default, core::cmp::PartialEq)]
 			pub struct $name;
 
 			impl<T: Config> From<$name> for Error<T> {
