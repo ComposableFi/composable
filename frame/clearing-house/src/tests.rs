@@ -686,7 +686,7 @@ fn fails_to_open_position_if_market_id_invalid() {
 
 proptest! {
 	#[test]
-	fn open_position_in_new_market_increases_number_of_positions(
+	fn open_position_in_new_market_succeeds(
 		direction in prop_oneof![Just(Direction::Long), Just(Direction::Short)]
 	) {
 		let mut market_id: MarketId = 0;
