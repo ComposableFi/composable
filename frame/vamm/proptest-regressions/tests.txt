@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 593a1ddd4a3267040b5b019732c07ceedd9bf126cdf11cf46f0d466b38d2ca2d # shrinks to (base_asset_reserves, quote_asset_reserves, peg_multiplier) = (1, 1, 1), vamm_state = VammState { base_asset_reserves: 1, quote_asset_reserves: 1, peg_multiplier: 1, closed: Some(0) }
