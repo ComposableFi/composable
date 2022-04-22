@@ -761,8 +761,8 @@ pub mod pallet {
 				})?;
 				base_swapped = swapped.into_balance()?;
 
-				position.base_asset_amount.try_add_(&T::Decimal::from_inner(swapped))?;
-				position.quote_asset_notional_amount.try_add_(&match direction {
+				position.base_asset_amount.try_add_mut(&T::Decimal::from_inner(swapped))?;
+				position.quote_asset_notional_amount.try_add_mut(&match direction {
 					Direction::Long => quote_abs_amount_decimal,
 					Direction::Short => quote_abs_amount_decimal.neg(),
 				})?;
@@ -806,8 +806,8 @@ pub mod pallet {
 							Direction::Short => quote_abs_amount_decimal.neg(),
 						};
 
-						position.base_asset_amount.try_add_(&base_delta_decimal)?;
-						position.quote_asset_notional_amount.try_sub_(&entry_value)?;
+						position.base_asset_amount.try_add_mut(&base_delta_decimal)?;
+						position.quote_asset_notional_amount.try_sub_mut(&entry_value)?;
 					},
 					Ordering::Equal => {
 						// close position
@@ -854,7 +854,7 @@ pub mod pallet {
 							Direction::Short => abs_base_asset_value.neg(),
 						};
 
-						position.base_asset_amount.try_add_(&T::Decimal::from_inner(swapped))?;
+						position.base_asset_amount.try_add_mut(&T::Decimal::from_inner(swapped))?;
 						position.quote_asset_notional_amount =
 							exit_value.try_add(&match direction {
 								Direction::Long => quote_abs_amount_decimal,

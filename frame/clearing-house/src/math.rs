@@ -14,22 +14,22 @@ pub trait TryMath: Sized {
 
 	fn try_div(&self, other: &Self) -> Result<Self, ArithmeticError>;
 
-	fn try_add_(&mut self, other: &Self) -> Result<(), ArithmeticError> {
+	fn try_add_mut(&mut self, other: &Self) -> Result<(), ArithmeticError> {
 		*self = self.try_add(other)?;
 		Ok(())
 	}
 
-	fn try_sub_(&mut self, other: &Self) -> Result<(), ArithmeticError> {
+	fn try_sub_mut(&mut self, other: &Self) -> Result<(), ArithmeticError> {
 		*self = self.try_sub(other)?;
 		Ok(())
 	}
 
-	fn try_mul_(&mut self, other: &Self) -> Result<(), ArithmeticError> {
+	fn try_mul_mut(&mut self, other: &Self) -> Result<(), ArithmeticError> {
 		*self = self.try_mul(other)?;
 		Ok(())
 	}
 
-	fn try_div_(&mut self, other: &Self) -> Result<(), ArithmeticError> {
+	fn try_div_mut(&mut self, other: &Self) -> Result<(), ArithmeticError> {
 		*self = self.try_div(other)?;
 		Ok(())
 	}
