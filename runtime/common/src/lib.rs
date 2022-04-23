@@ -189,8 +189,8 @@ pub fn multi_existential_deposits(currency_id: &CurrencyId) -> Balance {
 		// ED PICA for other asset account?)
 		// 2. ask CurrencyFactory
 		// 3. use harcoded values
-		// 4. else Balance::MAX
-		.unwrap_or(Balance::MAX)
+		// 4. else 1_000_000_u128
+		.unwrap_or(1_000_000_u128)
 }
 
 parameter_type_with_key! {
