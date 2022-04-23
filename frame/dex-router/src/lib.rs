@@ -15,6 +15,9 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+
 pub mod weights;
 
 #[frame_support::pallet]
@@ -260,6 +263,9 @@ pub mod pallet {
 			asset_pair: CurrencyPair<T::AssetId>,
 			route: &BoundedVec<T::PoolId, T::MaxHopsInRoute>,
 		) -> Result<(), DispatchError> {
+            sp_std::if_std! {
+                println!("asset_pair.quote {:?} , asset_pair.base {:?}", asset_pair.quote, asset_pair.base);
+            }
 			route
 				.iter()
 				// starting with asset_pair.quote, make sure current node's quote
@@ -267,6 +273,9 @@ pub mod pallet {
 				.try_fold(asset_pair.quote, |val, iter| {
 					T::Pablo::currency_pair(*iter).and_then(
 						|pair| -> Result<T::AssetId, DispatchError> {
+                            sp_std::if_std! {
+                                println!("pool_id {:?} pair.quote {:?} pair.base {:?} val {:?}", *iter, pair.quote, pair.base, val);
+                            }
 							if pair.quote == val {
 								Ok(pair.base)
 							} else {

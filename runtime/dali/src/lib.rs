@@ -1065,7 +1065,7 @@ impl dex_router::Config for Runtime {
 	type PoolId = PoolId;
 	type Pablo = Pablo;
 	type PalletId = DexRouterPalletID;
-	type WeightInfo = ();
+	type WeightInfo = weights::dex_router::WeightInfo<Runtime>;
 }
 
 construct_runtime!(

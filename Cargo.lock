@@ -6989,6 +6989,7 @@ dependencies = [
  "composable-support",
  "composable-tests-helpers",
  "composable-traits",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "orml-tokens",

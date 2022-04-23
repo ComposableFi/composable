@@ -184,6 +184,7 @@ runtime-benchmarks = [
   "curve-amm/runtime-benchmarks",
   "liquidity-bootstrapping/runtime-benchmarks",
   "pablo/runtime-benchmarks",
+  "dex-router/runtime-benchmarks",
   "common/runtime-benchmarks",
 ]
 std = [

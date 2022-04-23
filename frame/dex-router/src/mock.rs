@@ -33,6 +33,8 @@ pub const USDT: AssetId = 2;
 pub const ETH: AssetId = 3;
 pub const USDC: AssetId = 4;
 pub const DAI: AssetId = 5;
+pub const PICA: AssetId = 6;
+pub const KSM: AssetId = 7;
 pub const TWAP_INTERVAL: Moment = 10;
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
 
