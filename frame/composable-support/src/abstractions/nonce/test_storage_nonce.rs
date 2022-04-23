@@ -94,7 +94,6 @@ pub mod pallet {
 	}
 
 	#[pallet::event]
-	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {}
 
 	#[pallet::error]
@@ -103,6 +102,9 @@ pub mod pallet {
 		OneInit_IncrementToMax_ValueTooLarge,
 		DefaultInit_IncrementToMax_ValueTooLarge,
 	}
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
@@ -226,7 +228,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = MockUncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		TestPallet: pallet::{Pallet, Storage, Event<T>},
+		TestPallet: pallet::{Pallet, Call, Storage},
 	}
 );
 
@@ -282,7 +284,7 @@ pub struct ExtBuilder;
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+		let t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 		let mut ext = sp_io::TestExternalities::new(t);
 		ext.execute_with(|| System::set_block_number(1));
 		ext
