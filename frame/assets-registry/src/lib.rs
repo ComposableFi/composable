@@ -1,11 +1,3 @@
-//! Pallet for allowing to map assets from this and other parachain.
-//!
-//! It works as next:
-//! 1. Each mapping is bidirectional.
-//! 2. Assets map added as candidate and waits for approval.
-//! 3. After approval map return mapped value.
-//! 4. Map of native token to this chain(here) is added unconditionally.
-
 #![cfg_attr(
 	not(test),
 	warn(
@@ -19,6 +11,7 @@
 )] // allow in tests
 #![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![doc = include_str!("../README.md")]
 
 pub use pallet::*;
 
