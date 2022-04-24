@@ -1,29 +1,22 @@
-
-
 # Overview
 
+Allows to map remote assets to local and back(bidirectional). Mapping can be created only by privilidged origin.
 
+Used for cross chain message transfers and payments.
 
-- helps to hide complexity of creating mappings of local ids to and from HydraDX, with proper authorities and voting
-- should support any asset to be added
-- support to transfer assets to HydraDX (forward mapping)
-- support to transfer assets back from HydraDX to Composable (back mapping)
-- supports not only HydraDX
+## Basics
 
-## v1
+Each remote pallet must have local identifiers. This pallet calls [CurrencyFactory](../currecy-factory/README.md) to get that done.
 
-- support small set of well know assets added manually on both registries
-- manually asking HydraDX to add mapping
+Remote assets may have different than local decimals, so remote asset may be configured to have proper decimals.
 
-## vNEXT
+## Weights and fees
 
-- support any assets to be added new via voting processes
+If assets can be used to pay for execution of messages, it can be set with:
 
+- Minimal fee in asset amount on target chain. So messages which will pay less than this fee will not be sent
+- Allowing to pay fee for exectution on this chain, by mapping asset amount to native. In case apprvoed [DEX route](../dex-router/README.md) has approprotiate pool, it used to override registry value.
 
-//! Pallet for allowing to map assets from this and other parachain.
-//!
-//! It works as next:
-//! 1. Each mapping is bidirectional.
-//! 2. Assets map added as candidate and waits for approval.
-//! 3. After approval map return mapped value.
-//! 4. Map of native token to this chain(here) is added unconditionally.
+## Well known tokens
+
+Like relay native, are baked into codebase directly.
