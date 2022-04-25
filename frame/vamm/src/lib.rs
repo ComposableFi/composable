@@ -193,7 +193,7 @@ pub mod pallet {
 			+ Zero;
 
 		/// Signed decimal fixed point number.
-		type Decimal: FullCodec + MaxEncodedLen + TypeInfo + FixedPointNumber;
+		type Decimal: FullCodec + MaxEncodedLen + TypeInfo + FixedPointNumber<Inner = Self::Balance>;
 
 		/// The Integer type used by the pallet for computing swaps.
 		type Integer: Integer;
@@ -204,7 +204,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	type BalanceOf<T> = <T as Config>::Balance;
-	type IntegerOf<T> = <T as Config>::Integer;
+	type DecimalOf<T> = <T as Config>::Decimal;
 	type TimestampOf<T> = <T as Config>::Timestamp;
 	type VammIdOf<T> = <T as Config>::VammId;
 	type SwapConfigOf<T> = SwapConfig<VammIdOf<T>, BalanceOf<T>>;
@@ -342,7 +342,6 @@ pub mod pallet {
 	impl<T: Config> Vamm for Pallet<T> {
 		type Balance = BalanceOf<T>;
 		type Decimal = T::Decimal;
-		type Integer = IntegerOf<T>;
 		type SwapConfig = SwapConfigOf<T>;
 		type SwapSimulationConfig = SwapSimulationConfigOf<T>;
 		type VammConfig = VammConfigOf<T>;
@@ -451,12 +450,13 @@ pub mod pallet {
 		fn get_price(
 			vamm_id: VammIdOf<T>,
 			asset_type: AssetType,
-		) -> Result<BalanceOf<T>, DispatchError> {
+		) -> Result<DecimalOf<T>, DispatchError> {
 			// Requested vamm must exist.
 			ensure!(VammMap::<T>::contains_key(vamm_id), Error::<T>::VammDoesNotExist);
 
 			let vamm_state = VammMap::<T>::get(vamm_id).ok_or(Error::<T>::FailToRetrieveVamm)?;
 
+			// TODO(Cardosaum): convert to Decimal
 			match asset_type {
 				AssetType::Base => Ok(vamm_state
 					.quote_asset_reserves
@@ -475,12 +475,12 @@ pub mod pallet {
 		}
 
 		#[allow(unused_variables)]
-		fn get_twap(vamm_id: &VammIdOf<T>) -> Result<Self::Decimal, DispatchError> {
+		fn get_twap(vamm_id: &VammIdOf<T>) -> Result<DecimalOf<T>, DispatchError> {
 			todo!()
 		}
 
 		#[allow(unused_variables)]
-		fn swap(config: &SwapConfigOf<T>) -> Result<Self::Integer, DispatchError> {
+		fn swap(config: &SwapConfigOf<T>) -> Result<BalanceOf<T>, DispatchError> {
 			// Sanity checks
 			// 1) Requested vamm must exists and be retrievable.
 			ensure!(VammMap::<T>::contains_key(config.vamm_id), Error::<T>::VammDoesNotExist);
@@ -525,7 +525,7 @@ pub mod pallet {
 		#[allow(unused_variables)]
 		fn swap_simulation(
 			config: &SwapSimulationConfigOf<T>,
-		) -> Result<IntegerOf<T>, DispatchError> {
+		) -> Result<BalanceOf<T>, DispatchError> {
 			todo!()
 		}
 	}
@@ -542,7 +542,7 @@ pub mod pallet {
 
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
-		fn swap_quote_asset(config: &SwapConfigOf<T>) -> Result<IntegerOf<T>, DispatchError> {
+		fn swap_quote_asset(config: &SwapConfigOf<T>) -> Result<BalanceOf<T>, DispatchError> {
 			todo!()
 		}
 	}
