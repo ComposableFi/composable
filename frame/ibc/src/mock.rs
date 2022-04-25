@@ -1,5 +1,5 @@
 use crate as pallet_ibc;
-use frame_support::{pallet_prelude::ConstU32, parameter_types};
+use frame_support::{pallet_prelude::ConstU32, parameter_types, traits::ConstU64};
 use frame_system as system;
 use sp_core::{
 	offchain::{testing::TestOffchainExt, OffchainDbExt, OffchainWorkerExt},
@@ -84,6 +84,14 @@ impl pallet_ibc::Config for Test {
 	const INDEXING_PREFIX: &'static [u8] = b"ibc";
 	const CONNECTION_PREFIX: &'static [u8] = b"ibc";
 	type ExpectedBlockTime = ExpectedBlockTime;
+	type WeightInfo = ();
+}
+
+impl pallet_timestamp::Config for Test {
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type MinimumPeriod = ConstU64<5>;
+	type WeightInfo = ();
 }
 
 impl balances::Config for Test {

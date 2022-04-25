@@ -44,6 +44,7 @@ serde = { version = "1.0" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 chrono = "0.4.19"
 ibc = { git = "https://github.com/informalsystems/ibc-rs.git", branch = "master", features = ["mocks"] }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 [features]
 default = ['std']

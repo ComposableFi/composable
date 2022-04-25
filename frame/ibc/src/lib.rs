@@ -110,6 +110,7 @@ pub mod pallet {
 		const CONNECTION_PREFIX: &'static [u8];
 		#[pallet::constant]
 		type ExpectedBlockTime: Get<u64>;
+		type WeightInfo: crate::weight::WeightInfo;
 	}
 
 	#[pallet::pallet]
@@ -304,7 +305,7 @@ pub mod pallet {
 		u32: From<<T as frame_system::Config>::BlockNumber>,
 		T: Send + Sync,
 	{
-		#[pallet::weight(0)]
+		#[pallet::weight(crate::weight::deliver::<T>(&messages))]
 		#[frame_support::transactional]
 		pub fn deliver(origin: OriginFor<T>, messages: Vec<Any>) -> DispatchResult {
 			let _sender = ensure_signed(origin)?;

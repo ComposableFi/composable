@@ -1,12 +1,13 @@
-use crate::{Any, Config};
+use super::*;
 use core::marker::PhantomData;
 use frame_support::pallet_prelude::Weight;
 use ibc::core::{
-	ics02_client::msgs as client_msgs, ics03_connection::msgs as conn_msgs,
-	ics04_channel::msgs as chan_msgs,
+	ics02_client::msgs::ClientMsg,
+	ics03_connection::msgs::ConnectionMsg,
+	ics04_channel::msgs::{ChannelMsg, PacketMsg},
+	ics26_routing::msgs::Ics26Envelope,
 };
 use ibc_trait::CallbackWeight;
-use sp_std::prelude::*;
 
 pub trait WeightInfo {
 	fn create_client() -> Weight;
@@ -36,10 +37,6 @@ impl WeightInfo for () {
 pub struct WeightRouter<T: Config>(PhantomData<T>);
 
 impl<T: Config> WeightRouter<T> {
-	pub fn new() -> Self {
-		Self(PhantomData::default())
-	}
-
 	pub fn get_weight(port_id: &str) -> Box<dyn CallbackWeight> {
 		match port_id {
 			pallet_ibc_ping::PORT_ID => Box::new(pallet_ibc_ping::WeightHandler::<T>::new()),
@@ -48,12 +45,101 @@ impl<T: Config> WeightRouter<T> {
 	}
 }
 
-pub fn deliver<T: Config>(msgs: Vec<Any>) -> Weight {
-	let _router = WeightRouter::<T>::new();
-	msgs.into_iter().fold(Weight::default(), |acc, msg| {
-		// Decode message type and get port_id
-		// Add benchmarked weight for that message type
-		// Add benchmarked weight for module callback
-		acc
-	})
+pub(crate) fn deliver<T: Config>(msgs: &Vec<Any>) -> Weight {
+	msgs.into_iter()
+		.filter_map(|msg| {
+			let type_url = String::from_utf8(msg.type_url.clone()).unwrap_or_default();
+			let msg = ibc_proto::google::protobuf::Any { type_url, value: msg.value.clone() };
+			let msg: Option<Ics26Envelope> = msg.try_into().ok();
+			msg
+		})
+		.fold(Weight::default(), |acc, msg| {
+			// Decode message type and get port_id
+			// Add benchmarked weight for that message type
+			// Add benchmarked weight for module callback
+			let temp = match msg {
+				Ics26Envelope::Ics2Msg(msgs) => match msgs {
+					ClientMsg::CreateClient(_) => <T as Config>::WeightInfo::create_client(),
+					ClientMsg::UpdateClient(_) => <T as Config>::WeightInfo::update_client(),
+					ClientMsg::Misbehaviour(_) => Weight::default(),
+					ClientMsg::UpgradeClient(_) => Weight::default(),
+				},
+				Ics26Envelope::Ics3Msg(msgs) => match msgs {
+					ConnectionMsg::ConnectionOpenInit(_) =>
+						<T as Config>::WeightInfo::connection_init(),
+					ConnectionMsg::ConnectionOpenTry(_) => {
+						unimplemented!()
+					},
+					ConnectionMsg::ConnectionOpenAck(_) => {
+						unimplemented!()
+					},
+					ConnectionMsg::ConnectionOpenConfirm(_) => {
+						unimplemented!()
+					},
+				},
+				Ics26Envelope::Ics4ChannelMsg(msgs) => match msgs {
+					ChannelMsg::ChannelOpenInit(channel_msg) => {
+						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str());
+						let cb_weight = cb.on_chan_open_init();
+						cb_weight.saturating_add(<T as Config>::WeightInfo::create_channel())
+					},
+					ChannelMsg::ChannelOpenTry(channel_msg) => {
+						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str());
+						let _cb_weight = cb.on_chan_open_try();
+						unimplemented!()
+					},
+					ChannelMsg::ChannelOpenAck(channel_msg) => {
+						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str());
+						let _cb_weight =
+							cb.on_chan_open_ack(&channel_msg.port_id, &channel_msg.channel_id);
+						unimplemented!()
+					},
+					ChannelMsg::ChannelOpenConfirm(channel_msg) => {
+						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str());
+						let _cb_weight =
+							cb.on_chan_open_confirm(&channel_msg.port_id, &channel_msg.channel_id);
+						unimplemented!()
+					},
+					ChannelMsg::ChannelCloseInit(channel_msg) => {
+						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str());
+						let _cb_weight =
+							cb.on_chan_close_init(&channel_msg.port_id, &channel_msg.channel_id);
+						unimplemented!()
+					},
+					ChannelMsg::ChannelCloseConfirm(channel_msg) => {
+						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str());
+						let _cb_weight =
+							cb.on_chan_close_confirm(&channel_msg.port_id, &channel_msg.channel_id);
+						unimplemented!()
+					},
+				},
+				Ics26Envelope::Ics4PacketMsg(msgs) => match msgs {
+					PacketMsg::RecvPacket(packet_msg) => {
+						let cb = WeightRouter::<T>::get_weight(packet_msg.packet.destination_port.as_str());
+						let _cb_weight = cb.on_recv_packet(&packet_msg.packet);
+						unimplemented!()
+					},
+					PacketMsg::AckPacket(packet_msg) => {
+						let cb = WeightRouter::<T>::get_weight(packet_msg.packet.destination_port.as_str());
+						let _cb_weight = cb.on_acknowledgement_packet(
+							&packet_msg.packet,
+							&packet_msg.acknowledgement,
+						);
+						unimplemented!()
+					},
+					PacketMsg::ToPacket(packet_msg) => {
+						let cb = WeightRouter::<T>::get_weight(packet_msg.packet.destination_port.as_str());
+						let _cb_weight = cb.on_timeout_packet(&packet_msg.packet);
+						unimplemented!()
+					},
+					PacketMsg::ToClosePacket(packet_msg) => {
+						let cb = WeightRouter::<T>::get_weight(packet_msg.packet.destination_port.as_str());
+						let _cb_weight = cb.on_timeout_packet(&packet_msg.packet);
+						unimplemented!()
+					},
+				},
+				_ => Weight::default(),
+			};
+			acc.saturating_add(temp)
+		})
 }

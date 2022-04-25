@@ -35,7 +35,6 @@ use ibc_trait::{
 	Error as IbcHandlerError, IbcTrait,
 };
 use scale_info::prelude::collections::BTreeMap;
-use sp_runtime::traits::BlakeTwo256;
 use sp_std::time::Duration;
 use tendermint_proto::Protobuf;
 

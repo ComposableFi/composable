@@ -1041,6 +1041,7 @@ impl pallet_ibc::Config for Runtime {
 	const INDEXING_PREFIX: &'static [u8] = b"ibc";
 	const CONNECTION_PREFIX: &'static [u8] = b"ibc";
 	type ExpectedBlockTime = ExpectedBlockTime;
+	type WeightInfo = pallet_ibc::weights::WeightInfo<Self>;
 }
 
 impl pallet_ibc_ping::Config for Runtime {
