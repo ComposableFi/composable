@@ -1,5 +1,5 @@
 use crate::{
-	mock::{Balance, Event, ExtBuilder, MockRuntime, Origin, System, Timestamp, Vamm},
+	mock::{Balance, Event, ExtBuilder, MockRuntime, Origin, System, TestPallet, Timestamp},
 	pallet,
 	pallet::{Error, VammMap, VammState},
 };
@@ -28,7 +28,7 @@ fn run_to_block(n: u64) {
 }
 
 type VammTimestamp = <MockRuntime as pallet::Config>::Timestamp;
-type VammId = <Vamm as VammTrait>::VammId;
+type VammId = <TestPallet as VammTrait>::VammId;
 
 #[derive(Default)]
 struct TestVammState<Balance, VammTimestamp> {
@@ -184,7 +184,7 @@ proptest! {
 		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
-			let vamm_counter = Vamm::vamm_count();
+			let vamm_counter = TestPallet::vamm_count();
 
 			let vamm_expected = VammState::<Balance, VammTimestamp> {
 					base_asset_reserves,
@@ -193,16 +193,16 @@ proptest! {
 					closed: Default::default(),
 			};
 
-			let vamm_created_ok = Vamm::create(
+			let vamm_created_ok = TestPallet::create(
 				&VammConfig{base_asset_reserves,
 						   quote_asset_reserves,
 						   peg_multiplier});
-			let vamm_created_some = Vamm::get_vamm(vamm_created_ok.unwrap());
+			let vamm_created_some = TestPallet::get_vamm(vamm_created_ok.unwrap());
 
 			assert_ok!(vamm_created_ok);
 			assert_eq!(vamm_created_some, Some(vamm_expected));
 
-			assert_eq!(Vamm::vamm_count(), vamm_counter+1);
+			assert_eq!(TestPallet::vamm_count(), vamm_counter+1);
 		});
 	}
 
@@ -211,7 +211,7 @@ proptest! {
 		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
-			assert_ok!(Vamm::create(
+			assert_ok!(TestPallet::create(
 				&VammConfig{base_asset_reserves,
 						   quote_asset_reserves,
 						   peg_multiplier}));
@@ -225,7 +225,7 @@ proptest! {
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_noop!(
-				Vamm::create(
+				TestPallet::create(
 					&VammConfig{base_asset_reserves,
 							   quote_asset_reserves,
 							   peg_multiplier}),
@@ -240,7 +240,7 @@ proptest! {
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_noop!(
-				Vamm::create(
+				TestPallet::create(
 					&VammConfig{base_asset_reserves,
 							quote_asset_reserves,
 							peg_multiplier}),
@@ -255,7 +255,7 @@ proptest! {
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_noop!(
-				Vamm::create(
+				TestPallet::create(
 					&VammConfig{base_asset_reserves,
 							   quote_asset_reserves,
 							   peg_multiplier}),
@@ -269,16 +269,16 @@ proptest! {
 		loop_times in loop_times()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
-			let markets = Vamm::vamm_count();
+			let markets = TestPallet::vamm_count();
 
 			for _ in 0..loop_times {
-				assert_ok!(Vamm::create(
+				assert_ok!(TestPallet::create(
 					&VammConfig{base_asset_reserves,
 							   quote_asset_reserves,
 							   peg_multiplier}));
 			}
 
-			assert_eq!(Vamm::vamm_count(), markets + loop_times);
+			assert_eq!(TestPallet::vamm_count(), markets + loop_times);
 		});
 	}
 
@@ -290,14 +290,14 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
 
-			let vamm_created_ok = Vamm::create(
+			let vamm_created_ok = TestPallet::create(
 				&VammConfig{base_asset_reserves,
 						   quote_asset_reserves,
 						   peg_multiplier});
-			let vamm_created = Vamm::get_vamm(vamm_created_ok.unwrap()).unwrap();
+			let vamm_created = TestPallet::get_vamm(vamm_created_ok.unwrap()).unwrap();
 			assert_ok!(vamm_created_ok);
 
-			System::assert_last_event(Event::Vamm(
+			System::assert_last_event(Event::TestPallet(
 				pallet::Event::Created { vamm_id: 0_u128, state: vamm_created}
 			))
 		});
@@ -310,7 +310,7 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			assert!(!VammMap::<MockRuntime>::contains_key(0_u128));
 
-			let vamm_created_ok = Vamm::create(
+			let vamm_created_ok = TestPallet::create(
 				&VammConfig{base_asset_reserves,
 						   quote_asset_reserves,
 						   peg_multiplier});
@@ -345,15 +345,15 @@ proptest! {
 			let quote_peg = quote_asset_reserves.checked_mul(peg_multiplier);
 			if quote_peg.is_none() {
 				assert_eq!(
-					Vamm::get_price(0, AssetType::Base),
+					TestPallet::get_price(0, AssetType::Base),
 					Err(DispatchError::Arithmetic(ArithmeticError::Overflow)))
 			} else if quote_peg.unwrap().checked_div(base_asset_reserves).is_none() {
 				assert_eq!(
-					Vamm::get_price(0, AssetType::Base),
+					TestPallet::get_price(0, AssetType::Base),
 					Err(DispatchError::Arithmetic(ArithmeticError::DivisionByZero)))
 			} else {
 				assert_eq!(
-					Vamm::get_price(0, AssetType::Base),
+					TestPallet::get_price(0, AssetType::Base),
 					Ok(quote_peg.unwrap().checked_div(base_asset_reserves).unwrap()))
 			}
 		})
@@ -380,15 +380,15 @@ proptest! {
 			let quote_peg = quote_asset_reserves.checked_mul(peg_multiplier);
 			if quote_peg.is_none() {
 				assert_eq!(
-					Vamm::get_price(0, AssetType::Quote),
+					TestPallet::get_price(0, AssetType::Quote),
 					Err(DispatchError::Arithmetic(ArithmeticError::Overflow)))
 			} else if quote_peg.unwrap().checked_div(base_asset_reserves).is_none() {
 				assert_eq!(
-					Vamm::get_price(0, AssetType::Quote),
+					TestPallet::get_price(0, AssetType::Quote),
 					Err(DispatchError::Arithmetic(ArithmeticError::DivisionByZero)))
 			} else {
 				assert_eq!(
-					Vamm::get_price(0, AssetType::Quote),
+					TestPallet::get_price(0, AssetType::Quote),
 					Ok(quote_peg.unwrap().checked_div(base_asset_reserves).unwrap()))
 			}
 		})
@@ -412,7 +412,7 @@ proptest! {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
-			let swap = Vamm::swap(&swap_config);
+			let swap = TestPallet::swap(&swap_config);
 			assert_err!(swap, Error::<MockRuntime>::VammDoesNotExist);
 		})
 	}
@@ -449,7 +449,7 @@ proptest! {
 				*vamm = Some(vamm_state);
 			});
 
-			let swap = Vamm::swap(&swap_config);
+			let swap = TestPallet::swap(&swap_config);
 			assert_err!(swap, Error::<MockRuntime>::InsufficientFundsForTrade);
 		})
 	}
@@ -482,7 +482,7 @@ proptest! {
 				*vamm = Some(vamm_state);
 			});
 
-			let swap = Vamm::swap(&swap_config);
+			let swap = TestPallet::swap(&swap_config);
 			assert_ok!(swap);
 		})
 	}
@@ -514,7 +514,7 @@ proptest! {
 				*vamm = Some(vamm_state);
 			});
 
-			let swap = Vamm::swap(&swap_config);
+			let swap = TestPallet::swap(&swap_config);
 			assert_err!(swap, Error::<MockRuntime>::TradeExtrapolatesMaximumSupportedAmount);
 		})
 	}
@@ -551,7 +551,7 @@ proptest! {
 				*vamm = Some(vamm_state);
 			});
 
-			let swap = Vamm::swap(&swap_config);
+			let swap = TestPallet::swap(&swap_config);
 			assert_err!(swap, Error::<MockRuntime>::InsufficientFundsForTrade);
 		})
 	}
@@ -583,7 +583,8 @@ proptest! {
 				*vamm = Some(vamm_state);
 			});
 
-			let swap = Vamm::swap(&swap_config);
+			// dbg!(Timestamp::now());
+			let swap = TestPallet::swap(&swap_config);
 			assert_err!(swap, Error::<MockRuntime>::TradeExtrapolatesMaximumSupportedAmount);
 		})
 	}

@@ -29,7 +29,7 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
-		Vamm: pallet_vamm::{Pallet, Storage, Event<T>},
+		TestPallet: pallet_vamm::{Pallet, Storage, Event<T>},
 	}
 );
 
