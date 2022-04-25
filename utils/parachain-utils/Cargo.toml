@@ -29,7 +29,7 @@ structopt = "0.3.23"
 sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 
 common = { package = "common", path = "../../runtime/common" }
-substrate-xt = { git = "https://github.com/polytope-labs/substrate-xt", branch = "master" }
+substrate-xt = { git = "https://github.com/polytope-labs/substrate-xt", branch = "seun-polkadot-v0.9.18" }
 
 utils-common = { path = "../common" }
 

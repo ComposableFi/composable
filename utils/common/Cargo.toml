@@ -12,6 +12,6 @@ derive_more = "0.99.17"
 picasso-runtime = { path = "../../runtime/picasso" }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-substrate-xt = { git = "https://github.com/polytope-labs/substrate-xt", branch = "master" }
+substrate-xt = { git = "https://github.com/polytope-labs/substrate-xt", branch = "seun-polkadot-v0.9.18" }
 system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
