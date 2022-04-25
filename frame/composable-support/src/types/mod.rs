@@ -44,3 +44,19 @@ impl<'de> frame_support::Deserialize<'de> for EthereumAddress {
 		Ok(r)
 	}
 }
+
+/// Struct representing an Elliptic Curve Signature
+#[derive(Encode, Decode, Clone, MaxEncodedLen, TypeInfo)]
+pub struct EcdsaSignature(pub [u8; 65]);
+
+impl PartialEq for EcdsaSignature {
+	fn eq(&self, other: &Self) -> bool {
+		self.0[..] == other.0[..]
+	}
+}
+
+impl sp_std::fmt::Debug for EcdsaSignature {
+	fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
+		write!(f, "EcdsaSignature({:?})", &self.0[..])
+	}
+}
