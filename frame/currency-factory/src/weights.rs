@@ -20,6 +20,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	}
 
 	fn set_metadata() -> Weight {
-        10_000
-    }
+		10_000
+	}
 }

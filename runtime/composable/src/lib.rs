@@ -641,9 +641,8 @@ impl currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRootOrHalfCouncil;
-	type ReserveOrigin = EnsureRootOrHalfCouncil;
-	type WeightInfo = ();
-	// type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
+	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
+	type Balance = Balance;
 }
 
 impl democracy::Config for Runtime {

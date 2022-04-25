@@ -100,7 +100,7 @@ pub mod pallet {
 			+ SafeAdd
 			+ SafeSub;
 		type Convert: Convert<u128, Self::Balance> + Convert<Self::Balance, u128>;
-		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
+		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId, Self::Balance>;
 		type Assets: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
 			+ Inspect<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>;

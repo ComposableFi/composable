@@ -35,7 +35,7 @@ impl<T: Config> Uniswap<T> {
 		let total_fees = fee.checked_add(&owner_fee).ok_or(ArithmeticError::Overflow)?;
 		ensure!(total_fees < Permill::one(), Error::<T>::InvalidFees);
 
-		let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS)?;
+		let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS, T::Balance::default())?;
 
 		// Add new pool
 		let pool_id =

@@ -262,7 +262,7 @@ pub mod pallet {
 		type Convert: Convert<u128, BalanceOf<Self>> + Convert<BalanceOf<Self>, u128>;
 
 		/// Factory to create new lp-token.
-		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
+		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId, Self::Balance>;
 
 		/// Dependency allowing this pallet to transfer funds from one account to another.
 		type Assets: Transfer<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>

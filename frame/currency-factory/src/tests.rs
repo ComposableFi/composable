@@ -1,6 +1,9 @@
 use crate::mocks::*;
 use composable_tests_helpers::prop_assert_ok;
-use composable_traits::{currency::{CurrencyFactory, RangeId}, xcm::Balance};
+use composable_traits::{
+	currency::{CurrencyFactory, RangeId},
+	xcm::Balance,
+};
 use proptest::prelude::*;
 
 prop_compose! {
