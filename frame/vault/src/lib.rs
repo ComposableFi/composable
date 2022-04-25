@@ -139,7 +139,7 @@ pub mod pallet {
 			+ AtLeast32BitUnsigned
 			+ From<u128>
 			+ Zero;
-		type CurrencyFactory: CurrencyFactory<Self::AssetId>;
+		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
 		type AssetId: FullCodec
 			+ MaxEncodedLen
 			+ Eq
@@ -735,7 +735,7 @@ pub mod pallet {
 				);
 
 				let lp_token_id = {
-					T::CurrencyFactory::create(RangeId::LP_TOKENS)
+					T::CurrencyFactory::create(RangeId::LP_TOKENS, T::Balance::zero())
 						.map_err(|_| Error::<T>::CannotCreateAsset)?
 				};
 

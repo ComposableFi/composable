@@ -8,6 +8,7 @@ use sp_std::marker::PhantomData;
 
 pub trait WeightInfo {
 	fn add_range() -> Weight;
+	fn set_metadata() -> Weight;
 }
 
 pub struct SubstrateWeight<T>(PhantomData<T>);
@@ -17,13 +18,8 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
-}
 
-// For backwards compatibility and tests
-impl WeightInfo for () {
-	fn add_range() -> Weight {
-		(83_205_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
-	}
+	fn set_metadata() -> Weight {
+        10_000
+    }
 }

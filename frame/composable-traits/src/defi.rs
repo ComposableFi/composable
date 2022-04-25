@@ -222,7 +222,7 @@ pub trait SellEngine<Configuration>: DeFiEngine {
 }
 
 pub trait DeFiComposableConfig: frame_system::Config {
-	type MayBeAssetId: AssetIdLike + MaybeSerializeDeserialize + Default + MaxEncodedLen + Debug;
+	type MayBeAssetId: AssetIdLike + MaybeSerializeDeserialize + Default + MaxEncodedLen + Debug ;
 
 	type Balance: BalanceLike
 		+ MathBalance

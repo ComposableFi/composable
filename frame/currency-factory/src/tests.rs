@@ -1,6 +1,6 @@
 use crate::mocks::*;
 use composable_tests_helpers::prop_assert_ok;
-use composable_traits::currency::{CurrencyFactory, RangeId};
+use composable_traits::{currency::{CurrencyFactory, RangeId}, xcm::Balance};
 use proptest::prelude::*;
 
 prop_compose! {
@@ -43,7 +43,7 @@ proptest! {
 	) {
 		new_test_ext().execute_with(|| {
 			for _ in 0..30 {
-				let res = <CurrencyRanges as CurrencyFactory<AssetId>>::create(RangeId::from(range));
+				let res = <CurrencyRanges as CurrencyFactory<AssetId, Balance>>::create(RangeId::from(range), 42);
 				prop_assert_ok!(res);
 
 			}
@@ -58,7 +58,7 @@ proptest! {
 		new_test_ext().execute_with(|| {
 			let mut prev = None;
 			for _ in 0..i {
-				let res = <CurrencyRanges as CurrencyFactory<AssetId>>::create(RangeId::TOKENS);
+				let res = <CurrencyRanges as CurrencyFactory<AssetId, Balance>>::create(RangeId::TOKENS, 42);
 				prop_assert_ok!(res);
 				if let Some(prev) = prev {
 					prop_assert_eq!(prev + 1, res.unwrap())
