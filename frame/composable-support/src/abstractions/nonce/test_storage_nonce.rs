@@ -12,10 +12,7 @@ pub mod pallet {
 	#![allow(non_camel_case_types)] // makes it easier to read the long type names
 
 	use codec::FullCodec;
-	use frame_support::{
-		pallet_prelude::*,
-		traits::{Get, IsType},
-	};
+	use frame_support::{pallet_prelude::*, traits::Get};
 	use sp_runtime::traits::{One, Zero};
 	use sp_std::ops::Add;
 
@@ -33,8 +30,6 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-
 		type ZeroInit_WrappingIncrement: Copy + Zero + WrappingNext + TypeInfo + Member + FullCodec;
 		type OneInit_WrappingIncrement: Copy + One + WrappingNext + TypeInfo + Member + FullCodec;
 		type DefaultInit_WrappingIncrement: Copy
@@ -92,9 +87,6 @@ pub mod pallet {
 		#[pallet::constant]
 		type DefaultInit_IncrementToMax_MaximumValue: Get<Self::DefaultInit_IncrementToMax>;
 	}
-
-	#[pallet::event]
-	pub enum Event<T: Config> {}
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -232,6 +224,7 @@ frame_support::construct_runtime!(
 	}
 );
 
+// mostly copied from dutch-auction
 impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
 	type BlockWeights = ();
@@ -260,8 +253,6 @@ impl frame_system::Config for Test {
 }
 
 impl pallet::Config for Test {
-	type Event = Event;
-
 	type ZeroInit_WrappingIncrement = u8;
 	type OneInit_WrappingIncrement = u8;
 	type DefaultInit_WrappingIncrement = u8;

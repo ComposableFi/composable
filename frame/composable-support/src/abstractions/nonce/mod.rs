@@ -4,9 +4,12 @@ use crate::abstractions::utils::{increment::Increment, start_at::StartAtValue};
 
 use codec::FullCodec;
 use frame_support::{
-	pallet_prelude::{StorageValue, ValueQuery},
+	pallet_prelude::StorageValue,
 	traits::{Get, StorageInstance},
 };
+
+#[allow(clippy::disallowed_types)]
+use frame_support::pallet_prelude::ValueQuery;
 
 #[cfg(test)]
 mod test_storage_nonce;
