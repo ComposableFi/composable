@@ -465,7 +465,7 @@ where
 			relay_chain_interface,
 			relay_chain_slot_duration,
 			import_queue,
-			collator_options: CollatorOptions { relay_chain_rpc_url: None }
+			collator_options,
 		};
 
 		start_full_node(params)?;
