@@ -806,7 +806,7 @@ proptest! {
 		let quote_amount = valid_quote_asset_amount();
 		let base_amount_limit: i128 = valid_base_asset_amount_limit().try_into().unwrap();
 
-		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount * 2)], ..Default::default() }
+		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount)], ..Default::default() }
 			.build()
 			.init_market(&mut market_id, Some(market_config))
 			.add_margin(&ALICE, USDC, quote_amount)
@@ -863,7 +863,7 @@ proptest! {
 		let quote_amount = valid_quote_asset_amount();
 		let base_amount_limit: i128 = valid_base_asset_amount_limit().try_into().unwrap();
 
-		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount * 2)], ..Default::default() }
+		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount)], ..Default::default() }
 			.build()
 			.init_market(&mut market_id, Some(market_config))
 			.add_margin(&ALICE, USDC, quote_amount)
