@@ -12,9 +12,10 @@ pub type Exponent = u32;
 /// Creates a new asset, compatible with [`MultiCurrency`](https://docs.rs/orml-traits/0.4.0/orml_traits/currency/trait.MultiCurrency.html).
 /// The implementor should ensure that a new `CurrencyId` is created and collisions are avoided.
 /// Is about Local assets representations. These may differ remotely.
-pub trait CurrencyFactory<CurrencyId> {
-	fn create(id: RangeId) -> Result<CurrencyId, DispatchError>;
-	fn reserve_lp_token_id() -> Result<CurrencyId, DispatchError> {
+pub trait CurrencyFactory<AssetId, Balance> {
+	/// permissionsless creation of new transferable asset id
+	fn create(id: RangeId, ed: Balance) -> Result<AssetId, DispatchError>;
+	fn reserve_lp_token_id() -> Result<AssetId, DispatchError> {
 		Self::create(RangeId::LP_TOKENS)
 	}
 }

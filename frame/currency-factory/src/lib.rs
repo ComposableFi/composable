@@ -54,7 +54,7 @@ pub mod pallet {
 		weights::WeightInfo,
 	};
 	use codec::FullCodec;
-	use composable_traits::currency::{CurrencyFactory, Exponent, LocalAssets};
+	use composable_traits::{currency::{CurrencyFactory, Exponent, LocalAssets}, xcm::Balance};
 	use frame_support::{pallet_prelude::*, traits::EnsureOrigin, PalletId};
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
@@ -102,10 +102,12 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn asset_id_rages)]
-	// Storage is intialized using RangesOnEmpty, so ValueQuery is allowed.
+	// Storage is initialized using RangesOnEmpty, so ValueQuery is allowed.
 	#[allow(clippy::disallowed_types)]
 	pub type AssetIdRanges<T: Config> =
 		StorageValue<_, Ranges<T::AssetId>, ValueQuery, RangesOnEmpty<T>>;
+
+	pub type AssetEd<T:Config> = StorageMap<_>
 
 	#[pallet::type_value]
 	pub fn RangesOnEmpty<T: Config>() -> Ranges<T::AssetId> {
@@ -130,9 +132,10 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> CurrencyFactory<T::AssetId> for Pallet<T> {
-		fn create(id: RangeId) -> Result<T::AssetId, DispatchError> {
-			AssetIdRanges::<T>::mutate(|range| range.increment(id))
+	impl<T: Config> CurrencyFactory<T::AssetId, T::Balance> for Pallet<T> {
+		fn create(id: RangeId, ed: T::Balance ) -> Result<T::AssetId, DispatchError> {
+			let asset_id = AssetIdRanges::<T>::mutate(|range| range.increment(id))
+			
 		}
 	}
 
