@@ -757,7 +757,7 @@ pub mod pallet {
 					position,
 					&market,
 					direction,
-					quote_asset_amount,
+					&quote_abs_amount_decimal,
 					base_asset_amount_limit,
 				)?;
 			} else {
@@ -775,33 +775,13 @@ pub mod pallet {
 				let exit_value: T::Decimal;
 				match quote_abs_amount_decimal.cmp(&abs_base_asset_value) {
 					Ordering::Less => {
-						// decrease position
-						let swapped = T::Vamm::swap(&SwapConfigOf::<T> {
-							vamm_id: market.vamm_id,
-							asset: AssetType::Quote,
-							input_amount: quote_abs_amount_decimal.into_balance()?,
-							direction: match direction {
-								Direction::Long => VammDirection::Add,
-								Direction::Short => VammDirection::Remove,
-							},
-							output_amount_limit: base_asset_amount_limit,
-						})?;
-						base_swapped = swapped.into_balance()?;
-						let base_delta_decimal = T::Decimal::from_inner(swapped);
-
-						// Compute proportion of quote asset notional amount closed
-						entry_value = position.quote_asset_notional_amount.try_mul(
-							&base_delta_decimal
-								.saturating_abs()
-								.try_div(&position.base_asset_amount.saturating_abs())?,
+						(base_swapped, entry_value, exit_value) = Self::decrease_position(
+							position,
+							&market,
+							direction,
+							&quote_abs_amount_decimal,
+							base_asset_amount_limit,
 						)?;
-						exit_value = match position_direction {
-							Direction::Long => quote_abs_amount_decimal,
-							Direction::Short => quote_abs_amount_decimal.neg(),
-						};
-
-						position.base_asset_amount.try_add_mut(&base_delta_decimal)?;
-						position.quote_asset_notional_amount.try_sub_mut(&entry_value)?;
 					},
 					Ordering::Equal => {
 						// close position
@@ -921,13 +901,13 @@ pub mod pallet {
 			position: &mut Position<T>,
 			market: &Market<T>,
 			direction: Direction,
-			quote_asset_amount: T::Balance,
+			quote_abs_amount_decimal: &T::Decimal,
 			base_asset_amount_limit: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
 			let swapped = T::Vamm::swap(&SwapConfigOf::<T> {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Quote,
-				input_amount: quote_asset_amount,
+				input_amount: quote_abs_amount_decimal.into_balance()?,
 				direction: match direction {
 					Direction::Long => VammDirection::Add,
 					Direction::Short => VammDirection::Remove,
@@ -935,14 +915,49 @@ pub mod pallet {
 				output_amount_limit: base_asset_amount_limit,
 			})?;
 
-			let quote_abs_amount_decimal = T::Decimal::from_balance(quote_asset_amount)?;
 			position.base_asset_amount.try_add_mut(&T::Decimal::from_inner(swapped))?;
 			position.quote_asset_notional_amount.try_add_mut(&match direction {
-				Direction::Long => quote_abs_amount_decimal,
+				Direction::Long => *quote_abs_amount_decimal,
 				Direction::Short => quote_abs_amount_decimal.neg(),
 			})?;
 
 			Ok(swapped.into_balance()?)
+		}
+
+		fn decrease_position(
+			position: &mut Position<T>,
+			market: &Market<T>,
+			direction: Direction,
+			quote_abs_amount_decimal: &T::Decimal,
+			base_asset_amount_limit: T::Balance,
+		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
+			let swapped = T::Vamm::swap(&SwapConfigOf::<T> {
+				vamm_id: market.vamm_id,
+				asset: AssetType::Quote,
+				input_amount: quote_abs_amount_decimal.into_balance()?,
+				direction: match direction {
+					Direction::Long => VammDirection::Add,
+					Direction::Short => VammDirection::Remove,
+				},
+				output_amount_limit: base_asset_amount_limit,
+			})?;
+			let base_delta_decimal = T::Decimal::from_inner(swapped);
+
+			// Compute proportion of quote asset notional amount closed
+			let entry_value = position.quote_asset_notional_amount.try_mul(
+				&base_delta_decimal
+					.saturating_abs()
+					.try_div(&position.base_asset_amount.saturating_abs())?,
+			)?;
+			let exit_value = match direction {
+				Direction::Long => quote_abs_amount_decimal.neg(),
+				Direction::Short => *quote_abs_amount_decimal,
+			};
+
+			position.base_asset_amount.try_add_mut(&base_delta_decimal)?;
+			position.quote_asset_notional_amount.try_sub_mut(&entry_value)?;
+
+			Ok((swapped.into_balance()?, entry_value, exit_value))
 		}
 	}
 
