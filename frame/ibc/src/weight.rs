@@ -10,7 +10,9 @@ use sp_std::prelude::*;
 
 pub trait WeightInfo {
 	fn create_client() -> Weight;
+	fn update_client() -> Weight;
 	fn connection_init() -> Weight;
+	fn create_channel() -> Weight;
 }
 
 impl WeightInfo for () {
@@ -18,7 +20,15 @@ impl WeightInfo for () {
 		0
 	}
 
+	fn update_client() -> Weight {
+		0
+	}
+
 	fn connection_init() -> Weight {
+		0
+	}
+
+	fn create_channel() -> Weight {
 		0
 	}
 }

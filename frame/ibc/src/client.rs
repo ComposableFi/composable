@@ -181,7 +181,7 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		);
 
 		let client_id = client_id.as_bytes().to_vec();
-		let client_type = client_type.as_str().encode();
+		let client_type = client_type.as_str().as_bytes().to_vec();
 		<Clients<T>>::insert(client_id, client_type);
 		Ok(())
 	}

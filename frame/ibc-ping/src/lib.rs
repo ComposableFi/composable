@@ -195,6 +195,13 @@ pub mod pallet {
 		/// Error registering packet
 		PacketSendError,
 	}
+
+	impl<T: Config> Pallet<T> {
+		#[cfg(feature = "runtime-benchmarks")]
+		pub fn set_capability(cap: u64) {
+			Capability::<T>::put(cap);
+		}
+	}
 }
 
 #[derive(Clone)]

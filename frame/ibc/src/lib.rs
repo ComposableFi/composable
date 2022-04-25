@@ -322,7 +322,10 @@ pub mod pallet {
 				.into_iter()
 				.map(|msg| ibc::core::ics26_routing::handler::deliver(&mut ctx, msg))
 				.collect::<Result<Vec<_>, _>>()
-				.map_err(|_| Error::<T>::ProcessingError)?;
+				.map_err(|e| {
+					log::error!("{:?}", e);
+					Error::<T>::ProcessingError
+				})?;
 
 			log::trace!("result: {:?}", result);
 			Self::deposit_event(Event::<T>::ProcessedIBCMessages);

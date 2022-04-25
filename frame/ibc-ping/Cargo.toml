@@ -45,3 +45,5 @@ std = [
     "ibc-trait/std",
     "ibc-primitives/std"
 ]
+
+runtime-benchmarks = []

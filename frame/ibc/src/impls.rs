@@ -702,6 +702,7 @@ where
 			&(port_id, channel_id.clone()),
 		)
 		.map_err(|_| IbcHandlerError::ChannelInitError)?;
+		ctx.increase_channel_counter();
 		Ok(channel_id)
 	}
 }

@@ -538,6 +538,9 @@ where
 	/// Should never fail.
 	fn increase_channel_counter(&mut self) {
 		log::trace!("in channel: [increase_channel_counter]");
-		let _ = ChannelCounter::<T>::try_mutate::<_, (), _>(|val| Ok(val.saturating_add(1)));
+		let _ = ChannelCounter::<T>::try_mutate::<_, (), _>(|val| {
+			*val = val.saturating_add(1);
+			Ok(())
+		});
 	}
 }
