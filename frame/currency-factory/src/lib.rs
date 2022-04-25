@@ -105,9 +105,12 @@ pub mod pallet {
 	// Storage is initialized using RangesOnEmpty, so ValueQuery is allowed.
 	#[allow(clippy::disallowed_types)]
 	pub type AssetIdRanges<T: Config> =
-		StorageValue<_, Ranges<T::AssetId>, ValueQuery, RangesOnEmpty<T>>;
-
-	pub type AssetEd<T:Config> = StorageMap<_>
+	StorageValue<_, Ranges<T::AssetId>, ValueQuery, RangesOnEmpty<T>>;
+		
+	#[pallet::storage]
+	#[pallet::getter(fn get_assets_ed)]
+	pub type AssetEd<T:Config> = StorageMap<_, Twox128, T::AssetId, T::Balance, OptionQuery>;
+	
 
 	#[pallet::type_value]
 	pub fn RangesOnEmpty<T: Config>() -> Ranges<T::AssetId> {
@@ -134,7 +137,7 @@ pub mod pallet {
 
 	impl<T: Config> CurrencyFactory<T::AssetId, T::Balance> for Pallet<T> {
 		fn create(id: RangeId, ed: T::Balance ) -> Result<T::AssetId, DispatchError> {
-			let asset_id = AssetIdRanges::<T>::mutate(|range| range.increment(id))
+			let asset_id = AssetIdRanges::<T>::mutate(|range| range.increment(id));
 			
 		}
 	}

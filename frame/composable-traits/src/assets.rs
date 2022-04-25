@@ -1,12 +1,15 @@
 //! Interfaces to managed assets
 use codec::{Decode, Encode};
-use frame_support::dispatch::DispatchResult;
+use composable_support::collections::vec::bounded::BiBoundedVec;
+use frame_support::{dispatch::DispatchResult, BoundedVec, parameter_types};
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "std")]
 use sp_std::vec::Vec;
 use xcm::latest::MultiLocation;
+
+// TODO: move into xcm stuff  into subfolder in pr for modifying assets-registry
 
 /// works only with concrete assets
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
@@ -74,6 +77,7 @@ pub trait RemoteAssetRegistry {
 	/// Return asset for given location.
 	fn location_to_asset(location: Self::AssetNativeLocation) -> Option<Self::AssetId>;
 }
+
 
 #[cfg(feature = "std")]
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Debug, Deserialize, Serialize)]
@@ -280,4 +284,10 @@ pub enum BodyPartDef {
 	AtLeastProportion { nom: u32, denom: u32 },
 	/// More than than the given proportion of members of the body.
 	MoreThanProportion { nom: u32, denom: u32 },
+}
+#[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo)]
+//#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct BasicAssetMetadata {
+	pub symbol : BiBoundedVec<u8, 1, 8>,
+	pub name : BiBoundedVec<u8, 1, 32>,
 }

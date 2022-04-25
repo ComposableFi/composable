@@ -15,8 +15,8 @@ pub type Exponent = u32;
 pub trait CurrencyFactory<AssetId, Balance> {
 	/// permissionsless creation of new transferable asset id
 	fn create(id: RangeId, ed: Balance) -> Result<AssetId, DispatchError>;
-	fn reserve_lp_token_id() -> Result<AssetId, DispatchError> {
-		Self::create(RangeId::LP_TOKENS)
+	fn reserve_lp_token_id(ed: Balance) -> Result<AssetId, DispatchError> {
+		Self::create(RangeId::LP_TOKENS, ed)
 	}
 }
 
