@@ -474,6 +474,9 @@ pub mod pallet {
 		/// Raised when creating a new position but exceeding the maximum number of positions for
 		/// an account
 		MaxPositionsExceeded,
+		/// Raised when creating a new position with quote asset amount less than the market's
+		/// minimum trade size
+		TradeSizeTooSmall,
 	}
 
 	// ----------------------------------------------------------------------------------------------------

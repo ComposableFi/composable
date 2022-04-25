@@ -796,6 +796,41 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 
 proptest! {
 	#[test]
+	fn fails_to_open_position_if_trade_size_too_small(
+		(minimum_trade_size, eps) in min_trade_size_and_eps(as_balance((1, 100)))
+	) {
+		let mut market_id: MarketId = 0;
+		let mut market_config = valid_market_config();
+		market_config.minimum_trade_size = minimum_trade_size;
+
+		let quote_amount = eps.unsigned_abs();
+		let direction = match eps.is_positive() {
+			true => Direction::Long,
+			false => Direction::Short,
+		};
+		let base_asset_amount_limit = eps; // Arbitrary (price = 1 in this case)
+
+		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount)], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(market_config))
+			.add_margin(&ALICE, USDC, quote_amount)
+			.execute_with(|| {
+				assert_noop!(
+					TestPallet::open_position(
+						Origin::signed(ALICE),
+						market_id,
+						direction,
+						quote_amount,
+						base_asset_amount_limit.unsigned_abs()
+					),
+					Error::<Runtime>::TradeSizeTooSmall
+				);
+			})
+	}
+}
+
+proptest! {
+	#[test]
 	fn short_trade_can_close_long_position_within_tolerance(
 		(minimum_trade_size, eps) in min_trade_size_and_eps(as_balance((1, 100)))
 	) {
