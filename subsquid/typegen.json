@@ -1,0 +1,10 @@
+{
+  "outDir": "src/types",
+  "chainVersions": "daliDevVersions.json",
+  "typesBundle": "kusama",
+  "events": [
+    "balances.Transfer",
+    "pablo.PoolCreated"
+  ],
+  "calls": []
+}

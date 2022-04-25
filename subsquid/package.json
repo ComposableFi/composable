@@ -1,0 +1,40 @@
+{
+  "name": "kusama-balances",
+  "private": true,
+  "scripts": {
+    "build": "rm -rf lib && tsc",
+    "init": "node db/init.js",
+    "db:migrate": "npx sqd db migrate",
+    "schema:reset": "",
+    "processor:migrate": "echo skip",
+    "processor:start": "node lib/processor.js",
+    "processor:docker-run": "bash scripts/docker-run.sh",
+    "query-node:start": "squid-graphql-server",
+    "lint": "npm run lint:prod -- --fix",
+    "lint:prod": "eslint . --ext .ts --ignore-path .gitignore --max-warnings 0"
+  },
+  "dependencies": {
+    "@subsquid/archive-registry": "^0.0.6",
+    "@subsquid/cli": "^0.3.0",
+    "@subsquid/graphql-server": "^0.2.0",
+    "@subsquid/ss58": "^0.1.0",
+    "@subsquid/substrate-processor": "^0.7.1",
+    "dotenv": "^16.0.0",
+    "pg": "^8.7.3",
+    "typeorm": "^0.2.41"
+  },
+  "devDependencies": {
+    "@subsquid/substrate-metadata-explorer": "^0.0.8",
+    "@subsquid/substrate-typegen": "^0.4.2",
+    "@types/node": "^16.11.27",
+    "@typescript-eslint/eslint-plugin": "^4.33.0",
+    "typescript": "~4.6.2",
+    "eslint": "^7.32.0",
+    "eslint-config-airbnb-typescript": "^12.3.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-eslint-comments": "^3.2.0",
+    "eslint-plugin-import": "^2.25.3",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-type-graphql": "^0.3.2"
+  }
+}
