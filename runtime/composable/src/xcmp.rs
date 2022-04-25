@@ -4,13 +4,17 @@
 
 use super::*; // recursive dependency onto runtime
 use codec::{Decode, Encode};
-use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
+use scale_info::TypeInfo;
+use composable_traits::{
+	assets::{RemoteAssetRegistry, XcmAssetLocation},
+	currency::LocalAssets,
+};
 use core::marker::PhantomData;
 use cumulus_primitives_core::{IsSystem, ParaId};
 use frame_support::{
 	construct_runtime, log, match_type, parameter_types,
 	traits::{
-		Contains, Everything, KeyOwnerProofSystem, Nothing, OriginTrait, Randomness, StorageInfo,
+		Contains, Everything, KeyOwnerProofSystem, Nothing, OriginTrait, Randomness, StorageInfo, PalletInfoAccess,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -19,12 +23,14 @@ use frame_support::{
 	},
 	PalletId,
 };
+use orml_traits::location::AbsoluteReserveProvider;
 use orml_traits::parameter_type_with_key;
-use orml_xcm_support::{IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
+use orml_xcm_support::{DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
+use sp_core::{H160, H256};
 use sp_runtime::{
 	traits::{AccountIdLookup, BlakeTwo256, Convert, ConvertInto, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
@@ -42,6 +48,7 @@ use xcm_executor::{
 	traits::{ConvertOrigin, TransactAsset, WeightTrader},
 	Assets, Config, XcmExecutor,
 };
+use common::xcmp::CurrencyIdConvert;
 
 parameter_types! {
 	// pub const RelayLocation: MultiLocation = MultiLocation::X1(Junction::Parent);
@@ -126,7 +133,9 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	LocationToAccountId,
 	CurrencyId,
 	CurrencyIdConvert,
+	DepositFailureHandler,
 >;
+
 
 parameter_types! {
 	pub const BaseXcmWeight: Weight = 0;
@@ -145,7 +154,7 @@ impl xcm_executor::Config for XcmConfig {
 	type AssetTransactor = LocalAssetTransactor;
 
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	type IsReserve = MultiNativeAsset;
+	type IsReserve = MultiNativeAsset<AbsoluteReserveProvider>;
 	type IsTeleporter = (); // <- should be enough to allow teleportation of PICA
 	type LocationInverter = LocationInverter<Ancestry>;
 	type Barrier = Barrier;
@@ -203,6 +212,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ExecuteOverweightOrigin = EnsureRootOrHalfCouncil;
 	type ControllerOrigin = EnsureRootOrHalfCouncil;
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
+	type WeightInfo = cumulus_pallet_xcmp_queue::weights::SubstrateWeight<Self>;
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {

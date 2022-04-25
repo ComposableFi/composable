@@ -7,22 +7,22 @@ version = "0.1.0"
 
 [dependencies]
 async-std = { version = "1", features = ["attributes", "tokio1"] }
-balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 common = { path = "../../runtime/common" }
 composable-runtime = { path = "../../runtime/composable" }
 dali-runtime = { path = "../../runtime/dali" }
 env_logger = "0.8.4"
 envy = "0.4"
-frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 hex = "0.4.3"
 hmac = "0.11.0"
 log = "0.4.14"
-parachain-system = { package = "cumulus-pallet-parachain-system", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.17" }
+parachain-system = { package = "cumulus-pallet-parachain-system", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.18" }
 picasso-runtime = { path = "../../runtime/picasso" }
 serde = { version = "1", features = ["derive"] }
 serde_urlencoded = "0.7.0"
 sha2 = "0.9.8"
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 structopt = "0.3.25"
 substrate-xt = { git = "https://github.com/polytope-labs/substrate-xt", branch = "master" }
 tide = "0.16"
