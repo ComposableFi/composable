@@ -1,4 +1,4 @@
-@startuml
+@startuml "Assets Mapping"
 
 box Composable #LightYellow
   actor "Root or Collective" as composable_authority
@@ -21,14 +21,14 @@ note across: Bob can approve an asset mapping candidate
 
 ...
 
-alice -> assets_registry_pallet: Approve an asset mapping candidate with local_asset_id = x, foreign_asset_id = y and decimals = z
+alice -> assets_registry_pallet: Approve an asset mapping candidate with local_asset_id = x, foreign_asset_id = y, location = l and decimals = d
 
 ...
 
-bob -> assets_registry_pallet: Approve an asset mapping candidate with local_asset_id = x, foreign_asset_id = y and decimals = z
+bob -> assets_registry_pallet: Approve an asset mapping candidate with local_asset_id = x, foreign_asset_id = y, location = l and decimals = d
 note over assets_registry_pallet
 asset mapping for local_asset_id = x,
-foreign_asset_id = y and decimals = z
+foreign_asset_id = y, location = l and decimals = d
 stored
 end note
 
