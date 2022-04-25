@@ -1,7 +1,17 @@
 
 # Overview
 
-This proposal sugget to open bidirectional HRMP channel between Picasso and Statemine. This will enable crosschain communication between Picasso and Statemine to enable various use cases including crosschain token transfer.
+This proposal suggest to open bidirectional HRMP channel between Picasso and Statemine. This will enable crosschain communication between Picasso and Statemine to enable various use cases including crosschain token transfer.
+
+- [Overview](#overview)
+  - [Steps](#steps)
+  - [Preparation](#preparation)
+  - [Picasso Governance to create request](#picasso-governance-to-create-request)
+  - [Accept proposal and propose back](#accept-proposal-and-propose-back)
+    - [Proposal body](#proposal-body)
+      - [Decoded proposal](#decoded-proposal)
+  - [Accept request from Statemine](#accept-request-from-statemine)
+  - [References](#references)
 
 ## Steps
 
@@ -10,7 +20,7 @@ This proposal sugget to open bidirectional HRMP channel between Picasso and Stat
 2. Statemine accept channel request and send request to Picasso
 3. Accept channel form Statemine to Picasso
 
-All steps are SCALE endcoded and can be decoded and exectued by named consensuses.
+All steps are SCALE encoded and can be decoded and exectued by named consensuses.
 
 Proposa follows same steps as other chains did.
 
@@ -20,11 +30,11 @@ One should have `Identity` on Kusama to create `Proposal` on  https://parachains
 
 Suggested amount is 50 KSM total for all operations on `Balance`, for creating identity, backing proposal and sending XCM messages.
 
-Picasso chain also should have Balance, better 22 KSM. Because its subereign account may also pay some fee.
+Picasso chain also should have Balance, better 22 KSM. Because its sovereign account may also pay some fee.
 
-## Picasso Goverannce to create request
+## Picasso Governance to create request
 
-Picasso to ask Statemint to open channel on Kusama encoded as `hrmp`  `0x3c00e8030000e803000000900100` to open channel. Can be decoded by Kusama.
+Picasso to ask Statemine to open channel on Kusama encoded as `hrmp`  `0x3c00e8030000e803000000900100` to open channel. Can be decoded by Kusama.
 
 That should be send from Parachain account from Picasso via next `relayerXcm.send` :
 
@@ -240,7 +250,7 @@ Where [Kusama.utility.batchAll](https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fku
 Accept channel from state mine as  `0x3c01e8030000` (can be decoded by Kusama)
 
 
-Sent as XCM  message from Picaso with that acceptance via `0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee183c01e8030000`
+Sent as XCM  message from Picasso with that acceptance via `0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee183c01e8030000`
 
 Decoded by https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode
 
