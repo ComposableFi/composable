@@ -1,3 +1,5 @@
+// TODO: move this pallet stuff into currency-factory (check if used on picasso and may need to
+// route from this pallet to factory)
 //! # Governance Registry Pallet
 //!
 //! Is used to add new assets into chain.
