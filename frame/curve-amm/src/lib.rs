@@ -100,7 +100,7 @@ pub mod pallet {
 			+ SafeAdd
 			+ SafeSub;
 		type Convert: Convert<u128, Self::Balance> + Convert<Self::Balance, u128>;
-		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
+		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId, Self::Balance>;
 		type Assets: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
 			+ Inspect<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>;
@@ -612,7 +612,8 @@ pub mod pallet {
 			let total_fees = fee.checked_add(&owner_fee).ok_or(ArithmeticError::Overflow)?;
 			ensure!(total_fees < Permill::one(), Error::<T>::InvalidFees);
 
-			let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS)?;
+			// TODO: pass from ED from above
+			let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS, T::Balance::zero())?;
 			// Add new pool
 			let pool_id =
 				PoolCount::<T>::try_mutate(|pool_count| -> Result<T::PoolId, DispatchError> {

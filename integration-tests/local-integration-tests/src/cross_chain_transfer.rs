@@ -16,10 +16,11 @@ use crate::{
 };
 use codec::Encode;
 use common::{AccountId, Balance};
-use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
+use composable_traits::defi::Ratio;
 
+use frame_system::RawOrigin;
 use this_runtime::{
-	Assets, AssetsRegistry, Balances, MaxInstructions, Origin, Runtime, System, Tokens,
+	Assets,  MaxInstructions, Origin, Runtime, System, Tokens,
 	UnitWeightCost, XTokens,
 };
 
@@ -55,27 +56,19 @@ fn reserve_transfer_from_relay_map() {
 	simtest();
 	let from = ALICE;
 	let to = BOB;
-	This::execute_with(|| {
-		assert_ok!(this_runtime::AssetsRegistry::set_location(
-			CurrencyId::KSM, // KSM id as it is locally
-			// if we get tokens from parent chain, these can be only native token
-			XcmAssetLocation::RELAY_NATIVE,
-		));
-	});
-
 	reserve_transfer(from, to);
 }
 
 /// how it works:
-/// top level ReserveTransfer instruction is interprtered first on sending chain
+/// top level ReserveTransfer instruction is interpreted first on sending chain
 /// it transfers amount from sender account to target chain account on sending chain
-///  send it custs wrapper part of XCM message, and sends remaining with deposit
-/// target chain sees deposit amount and mints approciate amount
-/// validats origin of reserve (must be relay)
+/// send it cut of wrapper part of XCM message, and sends remaining with deposit
+/// target chain sees deposit amount and mints appreciate amount
+/// validate origin of reserve (must be relay)
 fn reserve_transfer(from: [u8; 32], to: [u8; 32]) {
 	let from_account = &AccountId::from(from);
 	let to_account = &AccountId::from(to);
-	let balance = enough_weigth();
+	let balance = enough_weight();
 	let before =
 		This::execute_with(|| this_runtime::Assets::free_balance(CurrencyId::KSM, to_account));
 	KusamaRelay::execute_with(|| {
@@ -107,10 +100,6 @@ fn reserve_transfer(from: [u8; 32], to: [u8; 32]) {
 fn transfer_to_relay_chain() {
 	simtest();
 	This::execute_with(|| {
-		assert_ok!(<this_runtime::AssetsRegistry as RemoteAssetRegistry>::set_location(
-			CurrencyId::KSM,
-			XcmAssetLocation::RELAY_NATIVE,
-		));
 		let transferred = this_runtime::XTokens::transfer(
 			this_runtime::Origin::signed(ALICE.into()),
 			CurrencyId::KSM,
@@ -144,14 +133,16 @@ fn transfer_to_relay_chain() {
 #[test]
 fn transfer_from_this_to_sibling() {
 	simtest();
-
 	This::execute_with(|| {
-		assert_ok!(<this_runtime::AssetsRegistry as RemoteAssetRegistry>::set_location(
+		assert_ok!(this_runtime::AssetsRegistry::update_asset(
+			RawOrigin::Root.into(),
 			CurrencyId::PICA,
-			composable_traits::assets::XcmAssetLocation(MultiLocation::new(
+			composable_traits::xcm::assets::XcmAssetLocation(MultiLocation::new(
 				1,
 				X2(Parachain(SIBLING_PARA_ID), GeneralKey(CurrencyId::PICA.encode()))
-			))
+			)),
+			Some(Ratio::saturating_from_rational(1, 1)),
+			None,
 		));
 	});
 
@@ -190,28 +181,19 @@ fn transfer_from_sibling_to_this() {
 	simtest();
 
 	Sibling::execute_with(|| {
-		assert_ok!(<sibling_runtime::AssetsRegistry as RemoteAssetRegistry>::set_location(
-			// local id
+		assert_ok!(this_runtime::AssetsRegistry::update_asset(
+			RawOrigin::Root.into(),
 			CurrencyId::PICA,
-			// remote id
-			// first part is remote network,
-			// second part is id of asset on remote
-			composable_traits::assets::XcmAssetLocation(MultiLocation::new(
+			composable_traits::xcm::assets::XcmAssetLocation(MultiLocation::new(
 				1,
 				X2(Parachain(THIS_PARA_ID), GeneralKey(CurrencyId::PICA.encode()))
-			))
+			)),
+			Some(Ratio::saturating_from_rational(1, 1)),
+			None,
 		));
 	});
 
 	This::execute_with(|| {
-		assert_ok!(<this_runtime::AssetsRegistry as RemoteAssetRegistry>::set_location(
-			CurrencyId::PICA,
-			composable_traits::assets::XcmAssetLocation(MultiLocation::new(
-				1,
-				X2(Parachain(SIBLING_PARA_ID), GeneralKey(CurrencyId::PICA.encode()))
-			))
-		));
-
 		assert_ok!(this_runtime::XTokens::transfer(
 			this_runtime::Origin::signed(ALICE.into()),
 			CurrencyId::PICA,
@@ -279,6 +261,7 @@ fn transfer_insufficient_amount_should_fail() {
 fn transfer_to_sibling() {
 	simtest();
 	let _other_currency = CurrencyId::KSM;
+
 	fn this_native_reserve_account() -> AccountId {
 		use sp_runtime::traits::AccountIdConversion;
 		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account()
@@ -395,7 +378,7 @@ fn transfer_from_relay_chain_deposit_to_treasury_if_below_existential_deposit() 
 		assert_eq!(
 			this_runtime::Tokens::free_balance(CurrencyId::KSM, &AccountId::from(receiver)),
 			0,
-			"assets did not get to recepient as it is not enough to pay ED"
+			"assets did not get to recipient as it is not enough to pay ED"
 		);
 		assert_eq!(
 			this_runtime::Tokens::free_balance(
@@ -408,14 +391,14 @@ fn transfer_from_relay_chain_deposit_to_treasury_if_below_existential_deposit() 
 }
 
 /// from: Acala
-/// this test resonably iff we know ratio of KSM to PICA, if not, it should be rewritten to ensure
+/// this test reasonably iff we know ratio of KSM to PICA, if not, it should be rewritten to ensure
 /// permissioned execution of some very specific action from other chains
 #[test]
 fn xcm_transfer_execution_barrier_trader_works() {
 	simtest();
 
 	let unit_instruction_weight = UnitWeightCost::get() / 50;
-	assert!(unit_instruction_weight > 0, "barrier makes sence iff there is pay for messages");
+	assert!(unit_instruction_weight > 0, "barrier makes sense iff there is pay for messages");
 
 	// relay-chain use normal account to send xcm, destination para-chain can't pass Barrier check
 	let tiny = 100;
@@ -508,252 +491,6 @@ fn xcm_transfer_execution_barrier_trader_works() {
 	});
 }
 
-/// source: Acala
-#[test]
-fn para_chain_subscribe_version_notify_of_sibling_chain() {
-	simtest();
-	This::execute_with(|| {
-		let r = pallet_xcm::Pallet::<this_runtime::Runtime>::force_subscribe_version_notify(
-			this_runtime::Origin::root(),
-			Box::new((Parent, Parachain(SIBLING_PARA_ID)).into()),
-		);
-		assert_ok!(r);
-	});
-	This::execute_with(|| {
-		assert!(this_runtime::System::events().iter().any(|r| matches!(
-			r.event,
-			this_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::XcmpMessageSent(
-				Some(_)
-			))
-		)));
-	});
-	Sibling::execute_with(|| {
-		assert!(sibling_runtime::System::events().iter().any(|r| matches!(
-			r.event,
-			this_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::XcmpMessageSent(
-				Some(_)
-			)) | this_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::Success(Some(_)))
-		)));
-	});
-}
-
-/// source: Acala
-#[test]
-fn para_chain_subscribe_version_notify_of_relay_chain() {
-	This::execute_with(|| {
-		let r = pallet_xcm::Pallet::<this_runtime::Runtime>::force_subscribe_version_notify(
-			this_runtime::Origin::root(),
-			Box::new(Parent.into()),
-		);
-		assert_ok!(r);
-	});
-	This::execute_with(|| {
-		this_runtime::System::assert_has_event(this_runtime::Event::RelayerXcm(
-			pallet_xcm::Event::SupportedVersionChanged(
-				MultiLocation { parents: 1, interior: Here },
-				2,
-			),
-		));
-	});
-}
-
-/// source: Acala
-#[test]
-fn relay_chain_subscribe_version_notify_of_para_chain() {
-	KusamaRelay::execute_with(|| {
-		let r = pallet_xcm::Pallet::<kusama_runtime::Runtime>::force_subscribe_version_notify(
-			kusama_runtime::Origin::root(),
-			Box::new(Parachain(THIS_PARA_ID).into().into()),
-		);
-		assert_ok!(r);
-	});
-	KusamaRelay::execute_with(|| {
-		kusama_runtime::System::assert_has_event(kusama_runtime::Event::XcmPallet(
-			pallet_xcm::Event::SupportedVersionChanged(
-				MultiLocation { parents: 0, interior: X1(Parachain(THIS_PARA_ID)) },
-				2,
-			),
-		));
-	});
-}
-
-#[test]
-fn test_assets_registry_module() {
-	simtest();
-
-	let local_asset = CurrencyId::PICA;
-	let foreign_asset = CurrencyId::PICA;
-
-	fn picasso_reserve_account() -> AccountId {
-		use sp_runtime::traits::AccountIdConversion;
-		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account()
-	}
-
-	This::execute_with(|| {
-		let local_admin = AccountId::from(ALICE);
-		let foreign_admin = AccountId::from(BOB);
-		let decimals = 12;
-		let location = XcmAssetLocation(
-			MultiLocation::new(
-				1,
-				X2(Parachain(SIBLING_PARA_ID), GeneralKey(CurrencyId::PICA.encode())),
-			)
-			.into(),
-		);
-
-		assert_ok!(AssetsRegistry::set_local_admin(Origin::root(), local_admin.clone()));
-		assert_ok!(AssetsRegistry::set_foreign_admin(Origin::root(), foreign_admin.clone()));
-
-		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
-			Origin::signed(local_admin),
-			local_asset,
-			foreign_asset,
-			location.clone(),
-			decimals,
-		));
-		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
-			Origin::signed(foreign_admin),
-			local_asset,
-			foreign_asset,
-			location,
-			decimals,
-		));
-	});
-
-	Sibling::execute_with(|| {
-		let local_admin = AccountId::from(ALICE);
-		let foreign_admin = AccountId::from(BOB);
-		let decimals = 12;
-		let location = XcmAssetLocation(
-			MultiLocation::new(
-				1,
-				X2(Parachain(THIS_PARA_ID), GeneralKey(CurrencyId::PICA.encode())),
-			)
-			.into(),
-		);
-
-		assert_ok!(AssetsRegistry::set_local_admin(Origin::root(), local_admin.clone()));
-		assert_ok!(AssetsRegistry::set_foreign_admin(Origin::root(), foreign_admin.clone()));
-
-		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
-			Origin::signed(local_admin),
-			foreign_asset,
-			local_asset,
-			location.clone(),
-			decimals,
-		));
-		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
-			Origin::signed(foreign_admin),
-			foreign_asset,
-			local_asset,
-			location,
-			decimals,
-		));
-	});
-
-	Sibling::execute_with(|| {
-		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 0);
-
-		assert_ok!(XTokens::transfer(
-			this_runtime::Origin::signed(ALICE.into()),
-			CurrencyId::PICA,
-			5 * PICA,
-			Box::new(
-				MultiLocation::new(
-					1,
-					X2(
-						Parachain(THIS_PARA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
-					)
-				)
-				.into()
-			),
-			1_000_000_000,
-		));
-
-		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 5 * PICA);
-		assert_eq!(Balances::free_balance(&AccountId::from(ALICE)), 200 * PICA - 5 * PICA);
-	});
-
-	This::execute_with(|| {
-		let balance = this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
-		assert_eq_error_rate!(balance, 5 * PICA, (UnitWeightCost::get() * 10) as u128);
-
-		assert_ok!(XTokens::transfer(
-			Origin::signed(BOB.into()),
-			foreign_asset,
-			PICA,
-			Box::new(
-				MultiLocation::new(
-					1,
-					X2(
-						Parachain(SIBLING_PARA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: ALICE.into() }
-					)
-				)
-				.into()
-			),
-			1_000_000_000,
-		));
-
-		let balance = this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
-		assert_eq_error_rate!(balance, 5 * PICA - PICA, (UnitWeightCost::get() * 10) as u128);
-	});
-
-	Sibling::execute_with(|| {
-		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 5 * PICA);
-		let balance = this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(ALICE));
-		assert_eq_error_rate!(
-			balance,
-			200 * PICA - 5 * PICA + PICA,
-			(UnitWeightCost::get() * 10) as u128
-		);
-	});
-
-	Sibling::execute_with(|| {
-		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 5 * PICA);
-		let balance = this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(ALICE));
-		assert_eq_error_rate!(
-			balance,
-			200 * PICA - 5 * PICA + PICA,
-			(UnitWeightCost::get() * 10) as u128
-		);
-
-		assert_ok!(XTokens::transfer(
-			Origin::signed(ALICE.into()),
-			CurrencyId::PICA,
-			5 * PICA,
-			Box::new(
-				MultiLocation::new(
-					1,
-					X2(
-						Parachain(THIS_PARA_ID),
-						Junction::AccountId32 { network: NetworkId::Any, id: BOB.into() }
-					)
-				)
-				.into()
-			),
-			1_000_000_000,
-		));
-
-		assert_eq!(Balances::free_balance(&picasso_reserve_account()), 10 * PICA);
-		let balance = this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(ALICE));
-		assert_eq_error_rate!(
-			balance,
-			200 * PICA - 5 * PICA + PICA - 5 * PICA,
-			(UnitWeightCost::get() * 10) as u128
-		);
-	});
-
-	This::execute_with(|| {
-		let balance = this_runtime::Assets::free_balance(CurrencyId::PICA, &AccountId::from(BOB));
-		assert_eq_error_rate!(
-			balance,
-			5 * PICA - PICA + 5 * PICA,
-			(UnitWeightCost::get() * 10) as u128
-		);
-	});
-}
 
 #[test]
 fn unspent_xcm_fee_is_returned_correctly() {
@@ -1016,12 +753,12 @@ fn sibling_trap_assets_works() {
 	simtest();
 
 	let any_asset = CurrencyId::kUSD;
-	// TODO: create  foregn asset via factory
+	// TODO: create  foreign asset via factory
 	// TODO: set key for it to allow transfer
-	// TODO: parametriz test. ISSUE: how to solve DEX swap paying for transfer?
+	// TODO: parametrize test. ISSUE: how to solve DEX swap paying for transfer?
 	let sibling_non_native_amount = assert_above_deposit(any_asset, 100_000_000_000);
 	let some_native_amount = 1_000_000_000;
-	let this_liveness_native_amount = enough_weigth();
+	let this_liveness_native_amount = enough_weight();
 	let this_native_asset = CurrencyId::PICA;
 
 	let this_native_treasury_amount = This::execute_with(|| {
@@ -1036,20 +773,17 @@ fn sibling_trap_assets_works() {
 				&this_runtime::TreasuryAccount::get(),
 				this_liveness_native_amount,
 			);
-		<balances::Pallet<Runtime> as support::traits::Currency<AccountId>>::free_balance(
+		let balance = <balances::Pallet<Runtime> as support::traits::Currency<AccountId>>::free_balance(
 			&this_runtime::TreasuryAccount::get(),
-		)
+		);
+		let remote = composable_traits::xcm::assets::XcmAssetLocation(MultiLocation::new(
+			1,
+			X2(Parachain(SIBLING_PARA_ID), GeneralKey(any_asset.encode())),
+		));
+		assert_ok!(this_runtime::AssetsRegistry::update_asset(RawOrigin::Root.into(), any_asset, remote, Ratio::checked_from_integer(1), None));
+		balance
 	});
-
-	let remote = composable_traits::assets::XcmAssetLocation(MultiLocation::new(
-		1,
-		X2(Parachain(SIBLING_PARA_ID), GeneralKey(any_asset.encode())),
-	));
-
-	This::execute_with(|| {
-		assert_ok!(this_runtime::AssetsRegistry::set_location(any_asset, remote,));
-	});
-
+	
 	// buy execution via native token, and try withdraw on this some amount
 	Sibling::execute_with(|| {
 		let assets: MultiAsset = (

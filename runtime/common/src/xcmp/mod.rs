@@ -2,7 +2,7 @@
 use crate::{AccountId, Balance};
 use codec::{Decode, Encode};
 use composable_traits::{
-	assets::{RemoteAssetRegistry, XcmAssetLocation},
+	xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate, XcmAssetLocation},
 	oracle::MinimalOracle,
 };
 use frame_support::{
@@ -209,7 +209,7 @@ pub struct CurrencyIdConvert<AssetRegistry, WellKnownCurrency, ThisParaId, WellK
 /// converts local currency into remote,
 /// native currency is built in
 impl<
-		AssetRegistry: RemoteAssetRegistry<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
+		AssetRegistry: RemoteAssetRegistryInspect<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
 		WellKnown: WellKnownCurrency,
 		ThisParaId: Get<Id>,
 		WellKnownXcmpAssets,
@@ -224,7 +224,7 @@ impl<
 			)),
 			CurrencyId::RELAY_NATIVE => Some(MultiLocation::parent()),
 			_ =>
-				if let Some(location) = AssetRegistry::asset_to_location(id).map(Into::into) {
+				if let Some(location) = AssetRegistry::asset_to_remote(id).map(|x| x.location.into()) {
 					Some(location)
 				} else {
 					log::trace!(
@@ -255,7 +255,7 @@ pub const RELAY_LOCATION: MultiLocation = MultiLocation { parents: 1, interior: 
 /// 2. in some well know cases remote asset id is statically typed into here (so it is okey to send
 /// their id to us) 3. and in other cases they must map on us, and than send our id to here
 impl<
-		AssetsRegistry: RemoteAssetRegistry<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
+		AssetsRegistry: RemoteAssetRegistryInspect<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
 		WellKnown: WellKnownCurrency,
 		ThisParaId: Get<Id>,
 		WellKnownXcmpAssets: XcmpAssets,
@@ -312,7 +312,7 @@ impl<
 
 /// covert remote to local, usually when receiving transfer
 impl<
-		T: RemoteAssetRegistry<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
+		T: RemoteAssetRegistryInspect<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
 		WellKnown: WellKnownCurrency,
 		ThisParaId: Get<Id>,
 		WellKnownXcmpAssets: XcmpAssets,

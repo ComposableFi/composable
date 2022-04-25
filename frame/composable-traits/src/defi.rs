@@ -1,5 +1,6 @@
 //! Common codes and conventions for DeFi pallets
-use codec::{Codec, Decode, Encode, FullCodec, MaxEncodedLen};
+
+use codec::{Codec, Decode, Encode, FullCodec, MaxEncodedLen, EncodeLike};
 use frame_support::{pallet_prelude::MaybeSerializeDeserialize, Parameter};
 use scale_info::TypeInfo;
 use sp_runtime::{
@@ -263,6 +264,7 @@ pub type LiftedFixedBalance = FixedU128;
 
 /// unitless ratio of one thing to other.
 pub type Ratio = FixedU128;
+
 
 #[cfg(test)]
 mod tests {

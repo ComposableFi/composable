@@ -1,6 +1,6 @@
 [env]
 CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
-
+NIGHTLY_VERSION="2022-04-18"
 
 [tasks.fmt]
 script = '''
@@ -58,15 +58,16 @@ cargo +stable test --package local-integration-tests --features local-integratio
 workspace = false
 
 [tasks.run-local-integration-tests-debug]
+description="fastest way to build and debug runtime in simulator"
 script = '''
-RUST_BACKTRACE=full RUST_LOG=trace,parity-db=warn,trie=warn,runtime=trace,substrate-relay=trace,bridge=trace,xcmp=trace cargo +stable test  --package local-integration-tests --features local-integration-tests --features picasso  --no-default-features -- --nocapture --test-threads=1
+RUST_BACKTRACE=full RUST_LOG=trace,parity-db=warn,trie=warn,runtime=trace,substrate-relay=trace,bridge=trace,xcmp=trace cargo +stable ltest  --package local-integration-tests --features local-integration-tests --features picasso  --no-default-features -- --nocapture --test-threads=1
 '''
 workspace = false
 
 [tasks.check-ci]
 script = '''
-SKIP_WASM_BUILD=1 cargo +nightly-2021-11-08 check --benches --all # checks all rust crates with default-features, tests, benchmarks
-SKIP_WASM_BUILD=1 env -u RUSTFLAGS cargo +nightly-2021-11-08 clippy --all-targets --tests -- -D warnings
+SKIP_WASM_BUILD=1 cargo +nightly-$NIGHTLY_VERSION check --benches --all # checks all rust crates with default-features, tests, benchmarks
+SKIP_WASM_BUILD=1 env -u RUSTFLAGS cargo +nightly-$NIGHTLY_VERSION clippy --all-targets --tests -- -D warnings
 '''
 workspace = false
 

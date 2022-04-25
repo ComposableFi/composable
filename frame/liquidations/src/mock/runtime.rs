@@ -158,7 +158,7 @@ impl pallet_currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRoot<AccountId>;
-	type ReserveOrigin = EnsureRoot<AccountId>;
+	type Balance = Balance;
 	type WeightInfo = ();
 }
 

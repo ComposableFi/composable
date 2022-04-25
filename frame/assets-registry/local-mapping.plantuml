@@ -27,17 +27,17 @@ alice -> assets_registry_pallet: Approve an asset mapping candidate with local_a
 
 bob -> assets_registry_pallet: Approve an asset mapping candidate with local_asset_id = x, foreign_asset_id = y and decimals = z
 note over assets_registry_pallet
-asset mapping for local_asset_id = x,
-foreign_asset_id = y and decimals = z
-stored
+  asset mapping for local_asset_id = x,
+  foreign_asset_id = y and decimals = z
+  stored
 end note
 
 note across: Alice and Bob can set metadata of asset mapping for local_asset_id = x and foreign_asset_id = y
 
 alt
-alice -> assets_registry_pallet: Set metadata of asset mapping for local_asset_id = x and foreign asset = y
+  alice -> assets_registry_pallet: Set metadata of asset mapping for local_asset_id = x and foreign asset = y
 else
-bob -> assets_registry_pallet: Set metadata of asset mapping for local_asset_id = x and foreign asset = y
+  bob -> assets_registry_pallet: Set metadata of asset mapping for local_asset_id = x and foreign asset = y
 end
 
 @enduml

@@ -40,11 +40,24 @@ https://www.youtube.com/watch?v=XU6dAAQD9UE - trust and XCMP
 
 https://polkadot.network/blog/statemint-becomes-first-common-good-parachain-on-polkadot/
 
-
 ### Other parachains usage
 
 https://www.youtube.com/watch?v=5mspUoK1aIE
 
-### Issues
+### Existing solutions
 
-We use ORML + Cumulus, which does not support out of box access to all instructions.
+- ORML + Cumulus, which does not support out of box access to all XMP and as of now opinionated implementations instructions.
+
+
+### General cross~~bank~~chain patterns, bridges and helpers
+
+- https://gendal.me/2013/11/24/a-simple-explanation-of-how-money-moves-around-the-banking-system/
+- https://medium.com/composable-finance/trustless-bridging-438a6e5c917a
+- https://research.csiro.au/blockchainpatterns/general-patterns/blockchain-payment-patterns/token-swap/
+
+
+
+<!-- 
+		assert_ok!(
+			this_runtime::AssetsRegistry::register_asset(RawOrigin::Root.into(), XcmAssetLocation::RELAY_NATIVE,  42, Ratio::checked_from_integer(1), 4);
+		); -->

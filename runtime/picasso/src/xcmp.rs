@@ -5,7 +5,7 @@ use super::*; // recursive dependency onto runtime
 use codec::{Decode, Encode};
 use common::xcmp::*;
 use composable_traits::{
-	assets::{RemoteAssetRegistry, XcmAssetLocation},
+	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
 	defi::Ratio,
 	oracle::MinimalOracle,
 };
