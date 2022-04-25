@@ -738,14 +738,16 @@ pub mod pallet {
 			quote_asset_amount: Self::Balance,
 			base_asset_amount_limit: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			// TODO(0xangelo): ensure trade size not too small
-
 			let market = Self::get_market(&market_id).ok_or(Error::<T>::MarketIdNotFound)?;
 			let mut positions = Self::get_positions(&account_id);
 			let (position, position_index) =
 				Self::get_or_create_position(&mut positions, market_id, &market)?;
 
 			let mut quote_abs_amount_decimal = T::Decimal::from_balance(quote_asset_amount)?;
+			ensure!(
+				quote_abs_amount_decimal >= market.minimum_trade_size,
+				Error::<T>::TradeSizeTooSmall
+			);
 
 			let position_direction = Self::position_direction(position).unwrap_or(direction);
 
