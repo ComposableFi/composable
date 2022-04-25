@@ -50,7 +50,7 @@ pub mod pallet {
 	use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
 	use composable_support::{
 		abstractions::{
-			nonce::{Nonce, StorageNonce},
+			nonce::{Increment, Nonce, ValueQuery},
 			utils::{increment::WrappingIncrement, start_at::DefaultInit},
 		},
 		math::wrapping_next::WrappingNext,
@@ -62,7 +62,7 @@ pub mod pallet {
 	};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
-		pallet_prelude::{OptionQuery, StorageMap, StorageValue, ValueQuery},
+		pallet_prelude::{OptionQuery, StorageMap, StorageValue},
 		traits::{EnsureOrigin, Get, IsType, UnixTime},
 		PalletId, Parameter, Twox64Concat,
 	};
@@ -172,7 +172,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn strategy_index)]
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type StrategyIndex<T: Config> = StorageValue<
 		_,
 		T::LiquidationStrategyId,

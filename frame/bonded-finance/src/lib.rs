@@ -47,7 +47,7 @@ pub mod pallet {
 	use codec::FullCodec;
 	use composable_support::{
 		abstractions::{
-			nonce::{Nonce, StorageNonce},
+			nonce::{Increment, Nonce},
 			utils::{increment::SafeIncrement, start_at::ZeroInit},
 		},
 		math::safe::SafeAdd,
@@ -179,7 +179,7 @@ pub mod pallet {
 	/// The counter used to uniquely identify bond offers within this pallet.
 	#[pallet::storage]
 	#[pallet::getter(fn bond_offer_count)]
-	#[allow(clippy::disallowed_type)] // nonce, ValueQuery is OK
+	#[allow(clippy::disallowed_types)] // nonce, ValueQuery is OK
 	pub type BondOfferCount<T: Config> =
 		StorageValue<_, T::BondOfferId, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 

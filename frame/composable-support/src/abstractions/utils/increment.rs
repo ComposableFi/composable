@@ -7,7 +7,7 @@ use sp_runtime::{traits::One, ArithmeticError};
 use sp_std::{fmt::Debug, marker::PhantomData, ops::Add};
 
 /// A trait defining something that has a potential "next" value..
-pub trait Increment<T: 'static>: Sealed + 'static {
+pub trait Incrementor<T: 'static>: Sealed + 'static {
 	type Output;
 
 	fn increment(value: T) -> Self::Output;
@@ -16,7 +16,7 @@ pub trait Increment<T: 'static>: Sealed + 'static {
 /// [Increment] with [`WrappingNext`].
 pub struct WrappingIncrement {}
 
-impl<T> Increment<T> for WrappingIncrement
+impl<T> Incrementor<T> for WrappingIncrement
 where
 	T: Debug + WrappingNext + 'static,
 {
@@ -30,7 +30,7 @@ where
 /// [Increment] with [`SafeAdd`].
 pub struct SafeIncrement {}
 
-impl<T> Increment<T> for SafeIncrement
+impl<T> Incrementor<T> for SafeIncrement
 where
 	T: Debug + SafeAdd + One + 'static,
 {
@@ -47,7 +47,7 @@ pub struct IncrementToMax<M: 'static, E: 'static, PE: 'static> {
 	_marker: PhantomData<(M, E, PE)>,
 }
 
-impl<T, Max, MaxError, PalletError> Increment<T> for IncrementToMax<Max, MaxError, PalletError>
+impl<T, Max, MaxError, PalletError> Incrementor<T> for IncrementToMax<Max, MaxError, PalletError>
 where
 	T: Debug + Add<T, Output = T> + One + PartialOrd + 'static,
 	Max: Get<T> + 'static,

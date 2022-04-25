@@ -87,7 +87,7 @@ pub mod pallet {
 	use crate::{math::*, support::DefiMultiReservableCurrency};
 	use composable_support::{
 		abstractions::{
-			nonce::{Nonce, StorageNonce},
+			nonce::{Increment, Nonce},
 			utils::{increment::WrappingIncrement, start_at::ZeroInit},
 		},
 		math::wrapping_next::WrappingNext,
@@ -198,7 +198,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn orders_index)]
-	#[allow(clippy::disallowed_type)] // nonce
+	#[allow(clippy::disallowed_types)] // nonce
 	pub type OrdersIndex<T: Config> =
 		StorageValue<_, T::OrderId, ValueQuery, Nonce<ZeroInit, WrappingIncrement>>;
 

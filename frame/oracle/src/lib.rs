@@ -34,7 +34,7 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_support::{
 		abstractions::{
-			nonce::{Nonce, StorageNonce},
+			nonce::{Increment, Nonce},
 			utils::{increment::SafeIncrement, start_at::ZeroInit},
 		},
 		math::safe::SafeDiv,
