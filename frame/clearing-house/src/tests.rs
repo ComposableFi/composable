@@ -1,3 +1,5 @@
+#![allow(clippy::disallowed_methods)] // Allow use of .unwrap() in tests
+
 use crate::{
 	math::IntoBalance,
 	mock::{
@@ -498,7 +500,6 @@ fn deposit_supported_collateral_succeeds() {
 //                                             Create Market
 // ----------------------------------------------------------------------------------------------------
 
-#[allow(clippy::disallowed_methods)]
 #[test]
 fn create_first_market_succeeds() {
 	ExtBuilder::default().build().execute_with(|| {
