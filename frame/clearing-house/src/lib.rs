@@ -753,24 +753,13 @@ pub mod pallet {
 
 			let base_swapped: T::Balance;
 			if direction == position_direction {
-				// increase position
-				let swapped = T::Vamm::swap(&SwapConfigOf::<T> {
-					vamm_id: market.vamm_id,
-					asset: AssetType::Quote,
-					input_amount: quote_asset_amount,
-					direction: match direction {
-						Direction::Long => VammDirection::Add,
-						Direction::Short => VammDirection::Remove,
-					},
-					output_amount_limit: base_asset_amount_limit,
-				})?;
-				base_swapped = swapped.into_balance()?;
-
-				position.base_asset_amount.try_add_mut(&T::Decimal::from_inner(swapped))?;
-				position.quote_asset_notional_amount.try_add_mut(&match direction {
-					Direction::Long => quote_abs_amount_decimal,
-					Direction::Short => quote_abs_amount_decimal.neg(),
-				})?;
+				base_swapped = Self::increase_position(
+					position,
+					&market,
+					direction,
+					quote_asset_amount,
+					base_asset_amount_limit,
+				)?;
 			} else {
 				let abs_base_asset_value =
 					Self::base_asset_value(&market, position, position_direction)?.saturating_abs();
@@ -927,7 +916,35 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	// Helper functions - core functionality
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		fn increase_position(
+			position: &mut Position<T>,
+			market: &Market<T>,
+			direction: Direction,
+			quote_asset_amount: T::Balance,
+			base_asset_amount_limit: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
+			let swapped = T::Vamm::swap(&SwapConfigOf::<T> {
+				vamm_id: market.vamm_id,
+				asset: AssetType::Quote,
+				input_amount: quote_asset_amount,
+				direction: match direction {
+					Direction::Long => VammDirection::Add,
+					Direction::Short => VammDirection::Remove,
+				},
+				output_amount_limit: base_asset_amount_limit,
+			})?;
+
+			let quote_abs_amount_decimal = T::Decimal::from_balance(quote_asset_amount)?;
+			position.base_asset_amount.try_add_mut(&T::Decimal::from_inner(swapped))?;
+			position.quote_asset_notional_amount.try_add_mut(&match direction {
+				Direction::Long => quote_abs_amount_decimal,
+				Direction::Short => quote_abs_amount_decimal.neg(),
+			})?;
+
+			Ok(swapped.into_balance()?)
+		}
+	}
 
 	// Helper functions - validity checks
 	impl<T: Config> Pallet<T> {}
