@@ -10,7 +10,7 @@ use sp_core::{sr25519::Signature, H256};
 use sp_runtime::{
 	testing::Header,
 	traits::{IdentifyAccount, IdentityLookup, Verify},
-	FixedU128
+	FixedU128,
 };
 
 // ----------------------------------------------------------------------------------------------------

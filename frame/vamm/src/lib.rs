@@ -455,21 +455,23 @@ pub mod pallet {
 			ensure!(VammMap::<T>::contains_key(vamm_id), Error::<T>::VammDoesNotExist);
 
 			let vamm_state = VammMap::<T>::get(vamm_id).ok_or(Error::<T>::FailToRetrieveVamm)?;
+			let quote_asset_reserves_decimal =
+				DecimalOf::<T>::from_inner(vamm_state.quote_asset_reserves);
+			let base_asset_reserves_decimal =
+				DecimalOf::<T>::from_inner(vamm_state.base_asset_reserves);
+			let peg_multiplier_decimal = DecimalOf::<T>::from_inner(vamm_state.peg_multiplier);
 
-			// TODO(Cardosaum): convert to Decimal
 			match asset_type {
-				AssetType::Base => Ok(vamm_state
-					.quote_asset_reserves
-					.checked_mul(&vamm_state.peg_multiplier)
+				AssetType::Base => Ok(quote_asset_reserves_decimal
+					.checked_mul(&peg_multiplier_decimal)
 					.ok_or(ArithmeticError::Overflow)?
-					.checked_div(&vamm_state.base_asset_reserves)
+					.checked_div(&base_asset_reserves_decimal)
 					.ok_or(ArithmeticError::DivisionByZero)?),
 
-				AssetType::Quote => Ok(vamm_state
-					.base_asset_reserves
-					.checked_mul(&vamm_state.peg_multiplier)
+				AssetType::Quote => Ok(base_asset_reserves_decimal
+					.checked_mul(&peg_multiplier_decimal)
 					.ok_or(ArithmeticError::Overflow)?
-					.checked_div(&vamm_state.quote_asset_reserves)
+					.checked_div(&quote_asset_reserves_decimal)
 					.ok_or(ArithmeticError::DivisionByZero)?),
 			}
 		}
