@@ -67,8 +67,10 @@ pub mod pallet {
 	use super::models::{Proof, RemoteAccount, Reward};
 	use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
-	use composable_support::types::{EcdsaSignature, EthereumAddress};
-	use composable_traits::math::SafeAdd;
+	use composable_support::{
+		math::safe::SafeAdd,
+		types::{EcdsaSignature, EthereumAddress},
+	};
 	use frame_support::{
 		dispatch::PostDispatchInfo,
 		pallet_prelude::*,

@@ -1,8 +1,6 @@
-use crate::{
-	defi::CurrencyPair,
-	math::{SafeAdd, SafeSub},
-};
+use crate::defi::CurrencyPair;
 use codec::{Decode, Encode, MaxEncodedLen};
+use composable_support::math::safe::{SafeAdd, SafeSub};
 use frame_support::{traits::Get, BoundedVec, RuntimeDebug};
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]

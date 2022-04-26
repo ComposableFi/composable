@@ -1,7 +1,10 @@
 use core::ops::Neg;
 
 use codec::{Decode, Encode};
-use composable_support::validation::Validate;
+use composable_support::{
+	math::safe::{SafeAdd, SafeDiv, SafeMul},
+	validation::Validate,
+};
 use scale_info::TypeInfo;
 use sp_std::{cmp::Ordering, convert::TryInto};
 
@@ -14,7 +17,6 @@ use sp_arithmetic::per_things::Percent;
 
 use crate::{
 	defi::{LiftedFixedBalance, Rate, ZeroToOneFixedU128},
-	math::{SafeAdd, SafeDiv, SafeMul},
 	time::{DurationSeconds, SECONDS_PER_YEAR_NAIVE},
 };
 

@@ -6,6 +6,7 @@ use crate::{
 	PoolConfiguration::ConstantProduct,
 	PoolInitConfiguration,
 };
+use composable_support::math::safe::safe_multiply_by_rational;
 use composable_tests_helpers::{
 	prop_assert_ok,
 	test::helper::{acceptable_computation_error, default_acceptable_computation_error},
@@ -13,7 +14,6 @@ use composable_tests_helpers::{
 use composable_traits::{
 	defi::CurrencyPair,
 	dex::{Amm, ConstantProductPoolInfo},
-	math::safe_multiply_by_rational,
 };
 use frame_support::{
 	assert_ok,

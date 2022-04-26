@@ -14,6 +14,7 @@
 
 pub mod abstractions;
 pub mod collections;
+pub mod math;
 pub mod rpc_helpers;
 pub mod types;
 pub mod validation;

@@ -42,10 +42,12 @@ mod mock;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use composable_support::abstractions::block_fold::{BlockFold, FoldStorage, FoldStrategy};
+	use composable_support::{
+		abstractions::block_fold::{BlockFold, FoldStorage, FoldStrategy},
+		math::safe::{safe_multiply_by_rational, SafeAdd, SafeSub},
+	};
 	use composable_traits::{
 		financial_nft::{FinancialNFTProtocol, NFTClass, NFTVersion},
-		math::{safe_multiply_by_rational, SafeAdd, SafeSub},
 		staking_rewards::{
 			Penalty, PenaltyOutcome, PositionState, Staking, StakingConfig, StakingNFT,
 			StakingReward,

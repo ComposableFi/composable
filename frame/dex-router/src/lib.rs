@@ -18,10 +18,11 @@ mod tests;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::{Codec, FullCodec};
+
+	use composable_support::math::safe::SafeArithmetic;
 	use composable_traits::{
 		defi::CurrencyPair,
 		dex::{Amm, DexRoute, DexRouter},
-		math::SafeArithmetic,
 	};
 	use core::fmt::Debug;
 	use frame_support::pallet_prelude::*;

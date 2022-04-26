@@ -52,13 +52,11 @@ pub mod pallet {
 	use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_maths::dex::constant_product::{compute_out_given_in, compute_spot_price};
-	use composable_support::validation::{Validate, Validated};
-	use composable_traits::{
-		currency::LocalAssets,
-		defi::CurrencyPair,
-		dex::Amm,
-		math::{SafeAdd, SafeSub},
+	use composable_support::{
+		math::safe::{SafeAdd, SafeSub},
+		validation::{Validate, Validated},
 	};
+	use composable_traits::{currency::LocalAssets, defi::CurrencyPair, dex::Amm};
 	use core::fmt::Debug;
 	use frame_support::{
 		pallet_prelude::*,

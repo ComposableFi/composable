@@ -1,18 +1,27 @@
 use sp_runtime::{
 	helpers_128bit::multiply_by_rational,
-	traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating, Zero},
+	traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Zero},
 	ArithmeticError,
 };
 
-/// Thin convenient wrapper to lift the Result in a Dispatch context.
+/// Thin wrapper around [`multiply_by_rational`], transforming any errors into [`ArithmeticError`]
+/// for easier use in pallets and Dispatch-related contexts. See [`multiply_by_rational`] for more
+/// information.
+///
+/// Note: [`multiply_by_rational`] clamps `c` at a minimum of `1`, which can be confusing.
+/// [`safe_multiply_by_rational`] instead returns a divide by zero error if `c == 0`.
 pub fn safe_multiply_by_rational(a: u128, b: u128, c: u128) -> Result<u128, ArithmeticError> {
-	multiply_by_rational(a, b, c).map_err(|_| ArithmeticError::Overflow)
+	if c == 0 {
+		Err(ArithmeticError::DivisionByZero)
+	} else {
+		multiply_by_rational(a, b, c).map_err(|_| ArithmeticError::Overflow)
+	}
 }
 
-/// little bit slower than maximizing performance by knowing constraints.
-/// Example, you sum to negative numbers, can get underflow, so need to check on each add; but if
-/// you have positive number only, you cannot have underflow. Same for other constrains, like non
-/// zero divisor.
+// little bit slower than maximizing performance by knowing constraints.
+// Example, you sum to negative numbers, can get underflow, so need to check on each add; but if
+// you have positive number only, you cannot have underflow. Same for other constrains, like non
+// zero divisor.
 
 pub trait SafeAdd: Sized {
 	fn safe_add(&self, rhs: &Self) -> Result<Self, ArithmeticError>;
@@ -63,23 +72,4 @@ impl<T: CheckedSub + Zero> SafeSub for T {
 	}
 }
 
-impl<T: SafeAdd + SafeDiv + SafeMul + SafeSub> SafeArithmetic for T {}
-
-/// An object from which we can derive a second object of the same type.
-/// This function cannot fail and might return the same object if a boundary is about to be crossed.
-// This kind of function is usually called an Endomorphism. But let's keep it simple.
-pub trait WrappingNext {
-	/// pallet must be coded that way that wrapping around does not do harm except of error
-	/// so additional check should be check on pallet level
-	fn next(&self) -> Self;
-}
-
-impl<T> WrappingNext for T
-where
-	T: Copy + One + Saturating,
-{
-	fn next(&self) -> Self {
-		// bug: this should WrappingAdd from num_traits.
-		self.saturating_add(T::one())
-	}
-}
+impl<T: Sized + SafeAdd + SafeDiv + SafeMul + SafeSub> SafeArithmetic for T {}

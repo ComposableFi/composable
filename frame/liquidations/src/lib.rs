@@ -47,31 +47,32 @@ pub use pallet::*;
 /// TODO: add here backward mapping registry assets interface
 #[frame_support::pallet]
 pub mod pallet {
-
 	use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
+	use composable_support::{
+		abstractions::{
+			nonce::{Increment, Nonce, ValueQuery},
+			utils::{increment::WrappingIncrement, start_at::DefaultInit},
+		},
+		math::wrapping_next::WrappingNext,
+	};
 	use composable_traits::{
 		defi::{DeFiComposableConfig, DeFiEngine, Sell, SellEngine},
 		liquidation::Liquidation,
-		math::WrappingNext,
 		time::{LinearDecrease, StairstepExponentialDecrease, TimeReleaseFunction},
 	};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::{OptionQuery, StorageMap, StorageValue},
-		traits::{Get, IsType, UnixTime},
+		traits::{EnsureOrigin, Get, IsType, UnixTime},
 		PalletId, Parameter, Twox64Concat,
 	};
-	use frame_system::ensure_signed;
-
-	#[cfg(feature = "std")]
-	use frame_support::traits::GenesisBuild;
-
-	use frame_support::traits::EnsureOrigin;
-
-	use frame_system::pallet_prelude::OriginFor;
+	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use scale_info::TypeInfo;
 	use sp_runtime::{DispatchError, Permill, Perquintill};
 	use sp_std::vec::Vec;
+
+	#[cfg(feature = "std")]
+	use frame_support::traits::GenesisBuild;
 
 	use crate::weights::WeightInfo;
 
@@ -138,7 +139,7 @@ pub mod pallet {
 			configuraiton: LiquidationStrategyConfiguration,
 		) -> DispatchResultWithPostInfo {
 			T::CanModifyStrategies::ensure_origin(origin)?;
-			let index = Pallet::<T>::create_strategy_id();
+			let index = StrategyIndex::<T>::increment();
 			Strategies::<T>::insert(index, configuraiton);
 			Ok(().into())
 		}
@@ -154,9 +155,9 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		// TODO:: Add API to manage callback from liquidation engine and managing it state
+		// TODO: Add API to manage callback from liquidation engine and managing it state
 		// TODO: each step from request to have its slots so can tackle
-		// TODO: add incetivised API to allow ""progress" finalization if it stalled (or OCW)
+		// TODO: add incetivised API to allow "progress" finalization if it stalled (or OCW)
 	}
 
 	#[pallet::storage]
@@ -172,14 +173,18 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn strategy_index)]
 	#[allow(clippy::disallowed_types)]
-	pub type StrategyIndex<T: Config> =
-		StorageValue<_, T::LiquidationStrategyId, frame_support::pallet_prelude::ValueQuery>;
+	pub type StrategyIndex<T: Config> = StorageValue<
+		_,
+		T::LiquidationStrategyId,
+		ValueQuery,
+		Nonce<DefaultInit, WrappingIncrement>,
+	>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn default_strategy_index)]
 	#[allow(clippy::disallowed_types)]
 	pub type DefaultStrategyIndex<T: Config> =
-		StorageValue<_, T::LiquidationStrategyId, frame_support::pallet_prelude::ValueQuery>;
+		StorageValue<_, T::LiquidationStrategyId, ValueQuery>;
 
 	impl<T: Config> DeFiEngine for Pallet<T> {
 		type MayBeAssetId = T::MayBeAssetId;
@@ -196,10 +201,7 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		pub fn create_strategy_id() -> T::LiquidationStrategyId {
-			StrategyIndex::<T>::mutate(|x| {
-				*x = x.next();
-				*x
-			})
+			StrategyIndex::<T>::increment()
 		}
 	}
 
@@ -215,14 +217,14 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
 			// DutchAction
-			let index = Pallet::<T>::create_strategy_id();
+			let index = StrategyIndex::<T>::increment();
 			DefaultStrategyIndex::<T>::set(index);
 			let linear_ten_minutes = LiquidationStrategyConfiguration::DutchAuction(
 				TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 10 * 60 }),
 			);
 			Strategies::<T>::insert(index, linear_ten_minutes);
 
-			let index = Pallet::<T>::create_strategy_id();
+			let index = StrategyIndex::<T>::increment();
 			let exponential =
 				StairstepExponentialDecrease { step: 10, cut: Permill::from_rational(95_u32, 100) };
 			let exponential = LiquidationStrategyConfiguration::DutchAuction(

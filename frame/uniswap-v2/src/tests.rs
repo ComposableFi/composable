@@ -1,9 +1,10 @@
 use crate::mock::*;
+use composable_support::math::safe::safe_multiply_by_rational;
 use composable_tests_helpers::{
 	prop_assert_ok,
 	test::helper::{acceptable_computation_error, default_acceptable_computation_error},
 };
-use composable_traits::{defi::CurrencyPair, dex::Amm, math::safe_multiply_by_rational};
+use composable_traits::{defi::CurrencyPair, dex::Amm};
 use frame_support::{
 	assert_err, assert_ok,
 	traits::fungibles::{Inspect, Mutate},

@@ -40,10 +40,8 @@ pub use pallet::*;
 pub mod pallet {
 	use std::collections::BTreeSet;
 
-	use composable_traits::{
-		financial_nft::{FinancialNFTProvider, NFTClass},
-		math::SafeAdd,
-	};
+	use composable_support::math::safe::SafeAdd;
+	use composable_traits::financial_nft::{FinancialNFTProvider, NFTClass};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
