@@ -470,7 +470,7 @@ pub mod pallet {
 
 	/// Lending instances counter
 	#[pallet::storage]
-	#[allow(clippy::disallowed_type)] // MarketIndex implements Default, so ValueQuery is ok here. REVIEW: Should it?
+	#[allow(clippy::disallowed_types)] // MarketIndex implements Default, so ValueQuery is ok here. REVIEW: Should it?
 	pub type LendingCount<T: Config> = StorageValue<_, MarketIndex, ValueQuery>;
 
 	/// Indexed lending instances. Maps markets to their respective [`MarketConfig`].
@@ -559,7 +559,7 @@ pub mod pallet {
 
 	/// The timestamp of the previous block or defaults to timestamp at genesis.
 	#[pallet::storage]
-	#[allow(clippy::disallowed_type)] // LastBlockTimestamp is set on genesis (see below) so it will always be set.
+	#[allow(clippy::disallowed_types)] // LastBlockTimestamp is set on genesis (see below) so it will always be set.
 	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
 	#[pallet::genesis_config]
