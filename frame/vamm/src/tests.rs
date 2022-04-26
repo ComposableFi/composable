@@ -461,6 +461,8 @@ proptest! {
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
+	#[ignore = "to be implemented"]
+	// TODO(Cardosaum): Implement test correctly
 	fn swap_base_remove_succeeds(
 		mut vamm_state in get_vamm_state(Default::default()),
 		mut swap_config in get_swap_config(
