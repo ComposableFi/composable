@@ -1,6 +1,6 @@
 #![cfg_attr(
 	not(test),
-	warn(
+	deny(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
@@ -121,67 +121,6 @@ pub mod pallet {
 	pub type VaultInfo<T> =
 		crate::models::VaultInfo<AccountIdOf<T>, BalanceOf<T>, AssetIdOf<T>, BlockNumberOf<T>>;
 
-	// NOTE(hussein-aitlahcen): extra constraints for benchmarking simplicity
-	#[cfg(feature = "runtime-benchmarks")]
-	pub trait Config: frame_system::Config {
-		#[allow(missing_docs)]
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type Balance: Default
-			+ Parameter
-			+ Codec
-			+ MaxEncodedLen
-			+ Copy
-			+ Ord
-			+ CheckedAdd
-			+ CheckedSub
-			+ CheckedMul
-			+ SaturatingSub
-			+ AtLeast32BitUnsigned
-			+ From<u128>
-			+ Zero;
-		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
-		type AssetId: FullCodec
-			+ MaxEncodedLen
-			+ Eq
-			+ PartialEq
-			+ Copy
-			+ MaybeSerializeDeserialize
-			+ Debug
-			+ Default
-			+ From<u128>
-			+ TypeInfo;
-		type NativeCurrency: TransferNative<Self::AccountId, Balance = Self::Balance>
-			+ MutateNative<Self::AccountId, Balance = Self::Balance>
-			+ MutateHoldNative<Self::AccountId, Balance = Self::Balance>;
-		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
-		type VaultId: AddAssign
-			+ FullCodec
-			+ MaxEncodedLen
-			+ One
-			+ Eq
-			+ PartialEq
-			+ Copy
-			+ MaybeSerializeDeserialize
-			+ Debug
-			+ Default
-			+ Into<u128>
-			+ From<u64>
-			+ TypeInfo;
-		type WeightInfo: WeightInfo;
-		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
-		type MaxStrategies: Get<usize>;
-		type MinimumDeposit: Get<Self::Balance>;
-		type MinimumWithdrawal: Get<Self::Balance>;
-		type CreationDeposit: Get<Self::Balance>;
-		type ExistentialDeposit: Get<Self::Balance>;
-		type TombstoneDuration: Get<Self::BlockNumber>;
-		type RentPerBlock: Get<Self::Balance>;
-		type PalletId: Get<PalletId>;
-	}
-
-	#[cfg(not(feature = "runtime-benchmarks"))]
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		#[allow(missing_docs)]
@@ -205,7 +144,7 @@ pub mod pallet {
 		/// The pallet creates new LP tokens for every created vault. It uses `CurrencyFactory`, as
 		/// `orml`'s currency traits do not provide an interface to obtain asset ids (to avoid id
 		/// collisions).
-		type CurrencyFactory: CurrencyFactory<Self::AssetId>;
+		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
 
 		/// The `AssetId` used by the pallet. Corresponds the the Ids used by the Currency pallet.
 		type AssetId: FullCodec

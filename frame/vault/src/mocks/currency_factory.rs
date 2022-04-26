@@ -61,6 +61,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type Balance: Default;
 	}
 
 	#[pallet::pallet]
@@ -78,14 +79,17 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(10_000)]
 		pub fn create(_origin: OriginFor<T>, id: RangeId) -> DispatchResultWithPostInfo {
-			let currency_id = <Self as CurrencyFactory<MockCurrencyId>>::create(id)?;
+			let currency_id = <Self as CurrencyFactory<MockCurrencyId, T::Balance>>::create(
+				id,
+				T::Balance::default(),
+			)?;
 			Self::deposit_event(Event::Created(currency_id));
 			Ok(().into())
 		}
 	}
 
-	impl<T: Config> CurrencyFactory<MockCurrencyId> for Pallet<T> {
-		fn create(_: RangeId) -> Result<MockCurrencyId, DispatchError> {
+	impl<T: Config> CurrencyFactory<MockCurrencyId, T::Balance> for Pallet<T> {
+		fn create(_: RangeId, _: T::Balance) -> Result<MockCurrencyId, DispatchError> {
 			let lp_token_id = CurrencyCounter::<T>::mutate(|c| {
 				*c += 1;
 				*c

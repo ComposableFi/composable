@@ -129,6 +129,7 @@ impl orml_tokens::Config for Test {
 
 impl crate::mocks::currency_factory::Config for Test {
 	type Event = Event;
+	type Balance = Balance;
 }
 
 impl crate::mocks::strategy::Config for Test {
