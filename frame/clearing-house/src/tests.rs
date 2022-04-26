@@ -767,7 +767,7 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 		.init_markets(&mut market_ids, configs.into_iter())
 		.add_margin(&ALICE, USDC, quote_amount_total)
 		.execute_with(|| {
-			VammPallet::set_swap_output(Some(base_amount_limit.try_into().unwrap()));
+			VammPallet::set_swap_output(Some(base_amount_limit));
 
 			for market_id in market_ids.iter().take(max_positions) {
 				assert_ok!(TestPallet::open_position(
@@ -1397,7 +1397,7 @@ proptest! {
 #[ignore = "to be implemented"]
 fn fails_to_increase_position_if_not_enough_margin() {
 	let mut market_id: MarketId = 0;
-	let base_amount_limit = valid_base_asset_amount_limit().try_into().unwrap();
+	let base_amount_limit = valid_base_asset_amount_limit();
 
 	ExtBuilder::default()
 		.build()
