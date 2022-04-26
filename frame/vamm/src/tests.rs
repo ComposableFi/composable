@@ -496,7 +496,7 @@ proptest! {
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
-	fn swap_base_add_trade_extrapoles_maximum_supported_amount_error(
+	fn swap_base_add_trade_exptrapolates_maximum_supported_amount_error(
 		mut vamm_state in get_vamm_state(Default::default()),
 		mut swap_config in get_swap_config(
 			TestSwapConfig {
@@ -565,7 +565,7 @@ proptest! {
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
-	fn swap_quote_add_trade_extrapoles_maximum_supported_amount_error(
+	fn swap_quote_add_trade_exptrapolates_maximum_supported_amount_error(
 		mut vamm_state in get_vamm_state(Default::default()),
 		mut swap_config in get_swap_config(
 			TestSwapConfig {
