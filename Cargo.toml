@@ -24,7 +24,7 @@ runtime-benchmarks = ["composable-node/runtime-benchmarks"]
 std = ["composable-node/std"]
 
 [workspace]
-exclude = ["frame/transaction-fee"]
+exclude = ["frame/transaction-fee","utils/extrinsics-docs-scraper"]
 members = [
   "frame/*",
   "integration-tests/local-integration-tests",
@@ -40,7 +40,6 @@ members = [
   "utils/parachain-utils",
   "utils/price-feed",
   "utils/collator-sidecar",
-  "utils/extrinsics-docs-scraper",
   "simnode/simnode-node",
   "simnode/simnode-tests",
   "simnode/common",
