@@ -26,6 +26,7 @@ std = ["composable-node/std"]
 [workspace]
 exclude = ["frame/transaction-fee"]
 members = [
+  "xcvm/*",
   "frame/*",
   "integration-tests/local-integration-tests",
   "node",
