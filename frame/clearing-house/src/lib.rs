@@ -940,6 +940,8 @@ pub mod pallet {
 					.saturating_abs()
 					.try_div(&position.base_asset_amount.saturating_abs())?,
 			)?;
+			// Trade direction is opposite of position direction, so we compute the exit value
+			// accordingly
 			let exit_value = match direction {
 				Direction::Long => quote_abs_amount_decimal.neg(),
 				Direction::Short => *quote_abs_amount_decimal,
