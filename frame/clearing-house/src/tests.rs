@@ -314,6 +314,10 @@ prop_compose! {
 	}
 }
 
+fn any_direction() -> impl Strategy<Value = Direction> {
+	prop_oneof![Just(Direction::Long), Just(Direction::Short)]
+}
+
 fn any_asset_type() -> impl Strategy<Value = AssetType> {
 	prop_oneof![Just(AssetType::Base), Just(AssetType::Quote)]
 }
@@ -702,7 +706,7 @@ fn fails_to_open_position_if_market_id_invalid() {
 proptest! {
 	#[test]
 	fn open_position_in_new_market_succeeds(
-		direction in prop_oneof![Just(Direction::Long), Just(Direction::Short)]
+		direction in any_direction()
 	) {
 		let mut market_id: MarketId = 0;
 		let quote_amount = valid_quote_asset_amount();
@@ -1393,28 +1397,37 @@ proptest! {
 	}
 }
 
-#[test]
-#[ignore = "to be implemented"]
-fn fails_to_increase_position_if_not_enough_margin() {
-	let mut market_id: MarketId = 0;
-	let base_amount_limit = valid_base_asset_amount_limit();
+proptest! {
+	#[test]
+	fn fails_to_increase_position_if_not_enough_margin(
+		direction in any_direction()
+	) {
+		let mut market_id: MarketId = 0;
+		let mut market_config = valid_market_config();
+		market_config.margin_ratio_initial = (1, 10).into();  // 1/10 IMR, or 10x leverage
 
-	ExtBuilder::default()
-		.build()
-		.init_market(&mut market_id, None)
-		.execute_with(|| {
-			VammPallet::set_swap_output(Some(base_amount_limit));
-			assert_noop!(
-				TestPallet::open_position(
-					Origin::signed(ALICE),
-					market_id,
-					Direction::Long,
-					valid_quote_asset_amount(),
-					base_amount_limit,
-				),
-				Error::<Runtime>::InsufficientCollateral,
-			);
-		})
+		let margin = as_balance(10);
+		let quote_amount = as_balance(100) + 1; // Just over 10x margin
+		let base_amount_limit = as_balance(10); // Arbitrary
+
+		ExtBuilder { balances: vec![(ALICE, USDC, margin)], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(market_config))
+			.add_margin(&ALICE, USDC, margin)
+			.execute_with(|| {
+				VammPallet::set_swap_output(Some(base_amount_limit));
+				assert_noop!(
+					TestPallet::open_position(
+						Origin::signed(ALICE),
+						market_id,
+						direction,
+						quote_amount,
+						base_amount_limit,
+					),
+					Error::<Runtime>::InsufficientCollateral,
+				);
+			})
+	}
 }
 
 // ----------------------------------------------------------------------------------------------------
