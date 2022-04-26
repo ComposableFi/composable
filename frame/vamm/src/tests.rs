@@ -27,6 +27,8 @@ fn run_to_block(n: u64) {
 	}
 }
 
+type Decimal = <MockRuntime as pallet::Config>::Decimal;
+
 // ----------------------------------------------------------------------------------------------------
 //                                             Prop_compose
 // ----------------------------------------------------------------------------------------------------
@@ -240,6 +242,7 @@ proptest! {
 					 closed: None})]
 		}.build().execute_with(|| {
 			let quote_peg = quote_asset_reserves.checked_mul(peg_multiplier);
+
 			if quote_peg.is_none() {
 				assert_eq!(
 					Vamm::get_price(0, AssetType::Base),
@@ -251,7 +254,7 @@ proptest! {
 			} else {
 				assert_eq!(
 					Vamm::get_price(0, AssetType::Base),
-					Ok(quote_peg.unwrap().checked_div(base_asset_reserves).unwrap()))
+					Ok(Decimal::from_inner(quote_peg.unwrap().checked_div(base_asset_reserves).unwrap())))
 			}
 		})
 	}
@@ -275,6 +278,7 @@ proptest! {
 					 closed: None})]
 		}.build().execute_with(|| {
 			let quote_peg = quote_asset_reserves.checked_mul(peg_multiplier);
+
 			if quote_peg.is_none() {
 				assert_eq!(
 					Vamm::get_price(0, AssetType::Quote),
@@ -286,7 +290,7 @@ proptest! {
 			} else {
 				assert_eq!(
 					Vamm::get_price(0, AssetType::Quote),
-					Ok(quote_peg.unwrap().checked_div(base_asset_reserves).unwrap()))
+					Ok(Decimal::from_inner(quote_peg.unwrap().checked_div(base_asset_reserves).unwrap())))
 			}
 		})
 	}

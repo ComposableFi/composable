@@ -19,7 +19,7 @@ use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
-	FixedI128,
+	FixedI128, FixedU128,
 };
 
 // ----------------------------------------------------------------------------------------------------
@@ -54,6 +54,7 @@ pub type Balance = u128;
 pub type Decimal = FixedI128;
 pub type Integer = i128;
 pub type MarketId = u64;
+pub type UnsignedDecimal = FixedU128;
 pub type VammId = u64;
 
 // ----------------------------------------------------------------------------------------------------
@@ -196,8 +197,7 @@ impl pallet_assets::Config for Runtime {
 
 impl mock_vamm::Config for Runtime {
 	type VammId = VammId;
-	type Decimal = Decimal;
-	type Integer = Integer;
+	type Decimal = UnsignedDecimal;
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -255,7 +255,7 @@ pub struct ExtBuilder {
 	pub balances: Vec<(AccountId, AssetId, Balance)>,
 	pub collateral_types: Vec<AssetId>,
 	pub vamm_id: Option<VammId>,
-	pub vamm_twap: Option<Decimal>,
+	pub vamm_twap: Option<UnsignedDecimal>,
 	pub oracle_asset_support: Option<bool>,
 	pub oracle_twap: Option<u64>,
 }

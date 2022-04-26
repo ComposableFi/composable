@@ -126,7 +126,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	use crate::{
-		math::{FromBalance, IntoBalance, TryMath},
+		math::{FromBalance, IntoBalance, IntoDecimal, IntoSigned, TryMath},
 		weights::WeightInfo,
 	};
 	use codec::FullCodec;
@@ -183,7 +183,8 @@ pub mod pallet {
 		/// Event type emitted by this pallet. Depends on the runtime's definition of an event.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
-		/// Integer type underlying fixed point decimal and Vamm swap implementations
+		/// Integer type underlying fixed point decimal implementation. Must be convertible to/from
+		/// the balance type
 		type Integer: CheckedDiv
 			+ CheckedMul
 			+ Debug
@@ -222,8 +223,6 @@ pub mod pallet {
 		/// Virtual Automated Market Maker pallet implementation
 		type Vamm: Vamm<
 			Balance = Self::Balance,
-			Decimal = Self::Decimal,
-			Integer = Self::Integer,
 			SwapConfig = SwapConfig<Self::VammId, Self::Balance>,
 			SwapSimulationConfig = SwapSimulationConfig<Self::VammId, Self::Balance>,
 			VammConfig = Self::VammConfig,
@@ -807,7 +806,7 @@ pub mod pallet {
 					},
 					Ordering::Greater => {
 						// reverse position
-						let swapped = T::Vamm::swap(&SwapConfigOf::<T> {
+						base_swapped = T::Vamm::swap(&SwapConfigOf::<T> {
 							vamm_id: market.vamm_id,
 							asset: AssetType::Quote,
 							input_amount: quote_abs_amount_decimal.into_balance()?,
@@ -817,7 +816,6 @@ pub mod pallet {
 							},
 							output_amount_limit: base_asset_amount_limit,
 						})?;
-						base_swapped = swapped.into_balance()?;
 
 						// Since reversing is equivalent to closing a position and then opening a
 						// new one in the opposite direction, all of the current position's PnL is
@@ -828,7 +826,9 @@ pub mod pallet {
 							Direction::Short => abs_base_asset_value.neg(),
 						};
 
-						position.base_asset_amount.try_add_mut(&T::Decimal::from_inner(swapped))?;
+						position
+							.base_asset_amount
+							.try_add_mut(&Self::decimal_from_swapped(base_swapped, direction)?)?;
 						position.quote_asset_notional_amount =
 							exit_value.try_add(&match direction {
 								Direction::Long => quote_abs_amount_decimal,
@@ -871,7 +871,8 @@ pub mod pallet {
 			let oracle_twap = Self::Decimal::checked_from_rational(nonnormalized_oracle_twap, 100)
 				.ok_or(ArithmeticError::Overflow)?;
 
-			let vamm_twap = T::Vamm::get_twap(&market.vamm_id)?;
+			let vamm_twap: Self::Decimal = T::Vamm::get_twap(&market.vamm_id)
+				.and_then(|p| p.into_signed().map_err(|e| e.into()))?;
 
 			let price_spread = vamm_twap.try_sub(&oracle_twap)?;
 			let period_adjustment = Self::Decimal::checked_from_rational(
@@ -904,7 +905,8 @@ pub mod pallet {
 			quote_abs_amount_decimal: &T::Decimal,
 			base_asset_amount_limit: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
-			let swapped = T::Vamm::swap(&SwapConfigOf::<T> {
+			// increase position
+			let base_swapped = T::Vamm::swap(&SwapConfigOf::<T> {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Quote,
 				input_amount: quote_abs_amount_decimal.into_balance()?,
@@ -915,13 +917,15 @@ pub mod pallet {
 				output_amount_limit: base_asset_amount_limit,
 			})?;
 
-			position.base_asset_amount.try_add_mut(&T::Decimal::from_inner(swapped))?;
+			position
+				.base_asset_amount
+				.try_add_mut(&Self::decimal_from_swapped(base_swapped, direction)?)?;
 			position.quote_asset_notional_amount.try_add_mut(&match direction {
 				Direction::Long => *quote_abs_amount_decimal,
 				Direction::Short => quote_abs_amount_decimal.neg(),
 			})?;
 
-			Ok(swapped.into_balance()?)
+			Ok(base_swapped)
 		}
 
 		fn decrease_position(
@@ -931,7 +935,8 @@ pub mod pallet {
 			quote_abs_amount_decimal: &T::Decimal,
 			base_asset_amount_limit: T::Balance,
 		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
-			let swapped = T::Vamm::swap(&SwapConfigOf::<T> {
+			// decrease position
+			let base_swapped = T::Vamm::swap(&SwapConfigOf::<T> {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Quote,
 				input_amount: quote_abs_amount_decimal.into_balance()?,
@@ -941,7 +946,7 @@ pub mod pallet {
 				},
 				output_amount_limit: base_asset_amount_limit,
 			})?;
-			let base_delta_decimal = T::Decimal::from_inner(swapped);
+			let base_delta_decimal = Self::decimal_from_swapped(base_swapped, direction)?;
 
 			// Compute proportion of quote asset notional amount closed
 			let entry_value = position.quote_asset_notional_amount.try_mul(
@@ -957,7 +962,7 @@ pub mod pallet {
 			position.base_asset_amount.try_add_mut(&base_delta_decimal)?;
 			position.quote_asset_notional_amount.try_sub_mut(&entry_value)?;
 
-			Ok((swapped.into_balance()?, entry_value, exit_value))
+			Ok((base_swapped, entry_value, exit_value))
 		}
 	}
 
@@ -966,6 +971,17 @@ pub mod pallet {
 
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
+		fn decimal_from_swapped(
+			swapped: T::Balance,
+			direction: Direction,
+		) -> Result<T::Decimal, DispatchError> {
+			let abs: T::Decimal = swapped.into_decimal()?;
+			Ok(match direction {
+				Direction::Long => abs,
+				Direction::Short => abs.neg(),
+			})
+		}
+
 		fn get_or_create_position<'a>(
 			positions: &'a mut BoundedVec<Position<T>, T::MaxPositions>,
 			market_id: &T::MarketId,
@@ -1017,7 +1033,7 @@ pub mod pallet {
 				},
 			})?;
 
-			Ok(T::Decimal::from_inner(sim_swapped))
+			Self::decimal_from_swapped(sim_swapped, position_direction)
 		}
 
 		fn round_trade_if_necessary(

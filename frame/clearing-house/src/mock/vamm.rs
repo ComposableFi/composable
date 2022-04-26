@@ -12,7 +12,6 @@ pub mod pallet {
 		vamm::{AssetType, SwapConfig, SwapSimulationConfig, Vamm},
 	};
 	use frame_support::pallet_prelude::*;
-	use num_integer::Integer;
 	use scale_info::TypeInfo;
 	use sp_arithmetic::traits::Unsigned;
 	use sp_runtime::{traits::Zero, FixedPointNumber};
@@ -37,12 +36,11 @@ pub mod pallet {
 			+ MaybeSerializeDeserialize
 			+ TypeInfo
 			+ Unsigned;
-		type Decimal: FixedPointNumber
+		type Decimal: FixedPointNumber<Inner = Self::Balance>
 			+ FullCodec
 			+ MaxEncodedLen
 			+ MaybeSerializeDeserialize
 			+ TypeInfo;
-		type Integer: From<i128> + FullCodec + Integer + MaxEncodedLen + TypeInfo;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -102,11 +100,11 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn _swap_output)]
-	pub type SwapOutput<T: Config> = StorageValue<_, T::Integer, OptionQuery>;
+	pub type SwapOutput<T: Config> = StorageValue<_, T::Balance, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn _swap_simulation_output)]
-	pub type SwapSimulationOutput<T: Config> = StorageValue<_, T::Integer, OptionQuery>;
+	pub type SwapSimulationOutput<T: Config> = StorageValue<_, T::Balance, OptionQuery>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Trait Implementations
@@ -116,7 +114,6 @@ pub mod pallet {
 	impl<T: Config> Vamm for Pallet<T> {
 		type Balance = T::Balance;
 		type Decimal = T::Decimal;
-		type Integer = T::Integer;
 		type SwapConfig = SwapConfig<Self::VammId, Self::Balance>;
 		type SwapSimulationConfig = SwapSimulationConfig<Self::VammId, Self::Balance>;
 		type VammConfig = VammConfig;
@@ -133,7 +130,7 @@ pub mod pallet {
 		fn get_price(
 			vamm_id: Self::VammId,
 			asset_type: AssetType,
-		) -> Result<Self::Balance, DispatchError> {
+		) -> Result<Self::Decimal, DispatchError> {
 			todo!()
 		}
 
@@ -145,7 +142,7 @@ pub mod pallet {
 			}
 		}
 
-		fn swap(config: &Self::SwapConfig) -> Result<Self::Integer, DispatchError> {
+		fn swap(config: &Self::SwapConfig) -> Result<Self::Balance, DispatchError> {
 			match Self::_swap_output() {
 				Some(integer) => Ok(integer),
 				None => Err(Error::<T>::FailedToExecuteSwap.into()),
@@ -154,9 +151,9 @@ pub mod pallet {
 
 		fn swap_simulation(
 			config: &Self::SwapSimulationConfig,
-		) -> Result<Self::Integer, DispatchError> {
+		) -> Result<Self::Balance, DispatchError> {
 			match Self::_swap_simulation_output() {
-				Some(integer) => Ok(integer),
+				Some(balance) => Ok(balance),
 				None => Err(Error::<T>::FailedToSimulateSwap.into()),
 			}
 		}
@@ -167,12 +164,12 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	impl<T: Config> Pallet<T> {
-		pub fn set_swap_output(integer: Option<T::Integer>) {
-			SwapOutput::<T>::set(integer);
+		pub fn set_swap_output(balance: Option<T::Balance>) {
+			SwapOutput::<T>::set(balance);
 		}
 
-		pub fn set_swap_simulation_output(integer: Option<T::Integer>) {
-			SwapSimulationOutput::<T>::set(integer);
+		pub fn set_swap_simulation_output(balance: Option<T::Balance>) {
+			SwapSimulationOutput::<T>::set(balance);
 		}
 	}
 }
