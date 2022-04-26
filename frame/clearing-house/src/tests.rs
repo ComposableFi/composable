@@ -957,7 +957,7 @@ proptest! {
 		let margin = quote_amount;
 		let pnl = pnl_decimal.into_inner();
 
-		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount_abs * 2)], ..Default::default() }
+		ExtBuilder { balances: vec![(ALICE, USDC, quote_amount_abs)], ..Default::default() }
 			.build()
 			.init_market(&mut market_id, Some(valid_market_config()))
 			.add_margin(&ALICE, USDC, quote_amount_abs)
