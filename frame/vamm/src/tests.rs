@@ -588,7 +588,6 @@ proptest! {
 				*vamm = Some(vamm_state);
 			});
 
-			// dbg!(Timestamp::now());
 			let swap = TestPallet::swap(&swap_config);
 			assert_err!(swap, Error::<MockRuntime>::TradeExtrapolatesMaximumSupportedAmount);
 		})
