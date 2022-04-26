@@ -12,7 +12,8 @@ use sp_std::fmt::Debug;
 
 use crate::currency::{AssetIdLike, BalanceLike, MathBalance};
 
-// TODO: Docs? What is this?
+/// I give `amount` into protocol, but want to some amount within `limit` back. Amount of what
+/// depends on protocol and other higher context.
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq)]
 pub struct Take<Balance> {
 	/// amount of `base`
