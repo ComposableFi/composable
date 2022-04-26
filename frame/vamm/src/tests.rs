@@ -117,15 +117,15 @@ prop_compose! {
 prop_compose! {
 	fn timestamp()(
 		t in VammTimestamp::MIN..=VammTimestamp::MAX
-	) -> Option<VammTimestamp> {
-		Some(t)
+	) -> VammTimestamp {
+		t
 	}
 }
 
 prop_compose! {
 	fn get_vamm_state(config: TestVammState<Balance, VammTimestamp>)(
 		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve(),
-		closed in prop_oneof![timestamp(), Just(None)]
+		closed in prop_oneof![timestamp().prop_map(|t| Some(t)), Just(None)]
 
 	) -> VammState<Balance, VammTimestamp> {
 		VammState {
