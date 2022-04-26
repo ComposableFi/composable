@@ -10,7 +10,7 @@ use sp_core::{sr25519::Signature, H256};
 use sp_runtime::{
 	testing::Header,
 	traits::{IdentifyAccount, IdentityLookup, Verify},
-	FixedI128,
+	FixedU128,
 };
 
 // ----------------------------------------------------------------------------------------------------
@@ -121,7 +121,7 @@ impl pallet_vamm::Config for MockRuntime {
 	type Event = Event;
 	type Timestamp = i64;
 	type VammId = VammId;
-	type Decimal = FixedI128;
+	type Decimal = FixedU128;
 	type Integer = Integer;
 }
 

@@ -2,7 +2,6 @@
 //!
 //! Common traits and data structures for vamm implementation.
 use frame_support::pallet_prelude::DispatchError;
-use num_integer::Integer;
 use sp_arithmetic::traits::Unsigned;
 use sp_runtime::FixedPointNumber;
 
@@ -13,13 +12,10 @@ use sp_runtime::FixedPointNumber;
 /// - updating vamm's parameters
 pub trait Vamm {
 	/// The balance type for an account.
-	type Balance;
-
-	/// The __signed__ balance-like type.
-	type Integer: Integer;
+	type Balance: Unsigned;
 
 	/// Signed fixed point number implementation
-	type Decimal: FixedPointNumber;
+	type Decimal: FixedPointNumber<Inner = Self::Balance>;
 
 	/// Configuration for creating and initializing a new vAMM instance. May be
 	/// used in extrinsic signatures
@@ -41,18 +37,17 @@ pub trait Vamm {
 	fn create(config: &Self::VammConfig) -> Result<Self::VammId, DispatchError>;
 
 	/// Performs swap of assets.
-	// TODO(Cardosaum): Change signature to return an `Integer` rather than `Balance`
 	fn swap(config: &Self::SwapConfig) -> Result<Self::Balance, DispatchError>;
 
 	/// Performs swap simulation.
 	fn swap_simulation(config: &Self::SwapSimulationConfig)
-		-> Result<Self::Integer, DispatchError>;
+		-> Result<Self::Balance, DispatchError>;
 
 	/// Get the quote asset mark price for the specified vamm.
 	fn get_price(
 		vamm_id: Self::VammId,
 		asset_type: AssetType,
-	) -> Result<Self::Balance, DispatchError>;
+	) -> Result<Self::Decimal, DispatchError>;
 
 	/// Compute the time-weighted average price of a virtual AMM.
 	#[allow(unused_variables)]

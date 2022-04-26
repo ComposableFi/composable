@@ -27,6 +27,7 @@ fn run_to_block(n: u64) {
 	}
 }
 
+type Decimal = <MockRuntime as pallet::Config>::Decimal;
 type VammTimestamp = <MockRuntime as pallet::Config>::Timestamp;
 type VammId = <TestPallet as VammTrait>::VammId;
 
@@ -343,6 +344,7 @@ proptest! {
 					 closed: None})]
 		}.build().execute_with(|| {
 			let quote_peg = quote_asset_reserves.checked_mul(peg_multiplier);
+
 			if quote_peg.is_none() {
 				assert_eq!(
 					TestPallet::get_price(0, AssetType::Base),
@@ -354,7 +356,7 @@ proptest! {
 			} else {
 				assert_eq!(
 					TestPallet::get_price(0, AssetType::Base),
-					Ok(quote_peg.unwrap().checked_div(base_asset_reserves).unwrap()))
+					Ok(Decimal::from_inner(quote_peg.unwrap().checked_div(base_asset_reserves).unwrap())))
 			}
 		})
 	}
@@ -378,6 +380,7 @@ proptest! {
 					 closed: None})]
 		}.build().execute_with(|| {
 			let quote_peg = quote_asset_reserves.checked_mul(peg_multiplier);
+
 			if quote_peg.is_none() {
 				assert_eq!(
 					TestPallet::get_price(0, AssetType::Quote),
@@ -389,7 +392,7 @@ proptest! {
 			} else {
 				assert_eq!(
 					TestPallet::get_price(0, AssetType::Quote),
-					Ok(quote_peg.unwrap().checked_div(base_asset_reserves).unwrap()))
+					Ok(Decimal::from_inner(quote_peg.unwrap().checked_div(base_asset_reserves).unwrap())))
 			}
 		})
 	}
