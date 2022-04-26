@@ -99,35 +99,18 @@ where
 	}
 }
 
-// The following types are markers to disambiguate the two implementations of IntoBalance below.
-// Since traits can overlap, the 'where' clauses below are not enough to tell the compiler which
-// implementation of the trait it should use for a particular type
-pub struct Int;
-pub struct FixedPoint;
-
-pub trait IntoBalance<Balance, Marker> {
+pub trait IntoBalance<Balance> {
 	fn into_balance(self) -> Result<Balance, ArithmeticError>;
 }
 
-impl<B, I> IntoBalance<B, Int> for I
-where
-	B: Unsigned,
-	I: Signed + TryInto<B>,
-{
-	fn into_balance(self) -> Result<B, ArithmeticError> {
-		// Absolute value can still overflow if B's capacity is less than I's
-		self.abs().try_into().map_err(|_| Overflow)
-	}
-}
-
-impl<B, D> IntoBalance<B, FixedPoint> for D
+impl<B, D> IntoBalance<B> for D
 where
 	B: Unsigned,
 	D: FixedPointNumber,
-	D::Inner: IntoBalance<B, Int>,
+	D::Inner: Signed + TryInto<B>,
 {
 	fn into_balance(self) -> Result<B, ArithmeticError> {
-		self.into_inner().into_balance()
+		self.into_inner().abs().try_into().map_err(|_| Overflow)
 	}
 }
 
@@ -143,5 +126,47 @@ where
 {
 	fn from_balance(value: B) -> Result<Self, ArithmeticError> {
 		Ok(Self::from_inner(value.try_into().map_err(|_| Overflow)?))
+	}
+}
+
+pub trait IntoDecimal<D> {
+	fn into_decimal(self) -> Result<D, ArithmeticError>;
+}
+
+impl<B, D> IntoDecimal<D> for B
+where
+	D: FromBalance<B>,
+{
+	fn into_decimal(self) -> Result<D, ArithmeticError> {
+		D::from_balance(self)
+	}
+}
+
+pub trait FromUnsigned<U>: Sized {
+	fn from_unsigned(value: U) -> Result<Self, ArithmeticError>;
+}
+
+pub trait IntoSigned<S> {
+	fn into_signed(self) -> Result<S, ArithmeticError>;
+}
+
+impl<S, U> FromUnsigned<U> for S
+where
+	S: FixedPointNumber,
+	S::Inner: Signed,
+	U: FixedPointNumber,
+	U::Inner: TryInto<S::Inner> + Unsigned,
+{
+	fn from_unsigned(value: U) -> Result<Self, ArithmeticError> {
+		Ok(Self::from_inner(value.into_inner().try_into().map_err(|_| Overflow)?))
+	}
+}
+
+impl<S, U> IntoSigned<S> for U
+where
+	S: FromUnsigned<U>,
+{
+	fn into_signed(self) -> Result<S, ArithmeticError> {
+		S::from_unsigned(self)
 	}
 }
