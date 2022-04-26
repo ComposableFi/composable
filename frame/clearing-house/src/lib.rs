@@ -793,35 +793,14 @@ pub mod pallet {
 						positions.swap_remove(position_index);
 					},
 					Ordering::Greater => {
-						// reverse position
-						base_swapped = T::Vamm::swap(&SwapConfigOf::<T> {
-							vamm_id: market.vamm_id,
-							asset: AssetType::Quote,
-							input_amount: quote_abs_amount_decimal.into_balance()?,
-							direction: match direction {
-								Direction::Long => VammDirection::Add,
-								Direction::Short => VammDirection::Remove,
-							},
-							output_amount_limit: base_asset_amount_limit,
-						})?;
-
-						// Since reversing is equivalent to closing a position and then opening a
-						// new one in the opposite direction, all of the current position's PnL is
-						// realized
-						entry_value = position.quote_asset_notional_amount;
-						exit_value = match position_direction {
-							Direction::Long => abs_base_asset_value,
-							Direction::Short => abs_base_asset_value.neg(),
-						};
-
-						position
-							.base_asset_amount
-							.try_add_mut(&Self::decimal_from_swapped(base_swapped, direction)?)?;
-						position.quote_asset_notional_amount =
-							exit_value.try_add(&match direction {
-								Direction::Long => quote_abs_amount_decimal,
-								Direction::Short => quote_abs_amount_decimal.neg(),
-							})?;
+						(base_swapped, entry_value, exit_value) = Self::reverse_position(
+							position,
+							&market,
+							direction,
+							&quote_abs_amount_decimal,
+							base_asset_amount_limit,
+							&abs_base_asset_value,
+						)?;
 					},
 				};
 
@@ -977,6 +956,47 @@ pub mod pallet {
 				Direction::Long => quote_amount_decimal,
 				Direction::Short => quote_amount_decimal.neg(),
 			};
+
+			Ok((base_swapped, entry_value, exit_value))
+		}
+
+		fn reverse_position(
+			position: &mut Position<T>,
+			market: &Market<T>,
+			direction: Direction,
+			quote_abs_amount_decimal: &T::Decimal,
+			base_asset_amount_limit: T::Balance,
+			abs_base_asset_value: &T::Decimal,
+		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
+			let base_swapped = T::Vamm::swap(&SwapConfigOf::<T> {
+				vamm_id: market.vamm_id,
+				asset: AssetType::Quote,
+				input_amount: quote_abs_amount_decimal.into_balance()?,
+				direction: match direction {
+					Direction::Long => VammDirection::Add,
+					Direction::Short => VammDirection::Remove,
+				},
+				output_amount_limit: base_asset_amount_limit,
+			})?;
+
+			// Since reversing is equivalent to closing a position and then opening a
+			// new one in the opposite direction, all of the current position's PnL is
+			// realized
+			let entry_value = position.quote_asset_notional_amount;
+			// Trade direction is opposite of position direction, so we compute the exit value
+			// accordingly
+			let exit_value = match direction {
+				Direction::Long => abs_base_asset_value.neg(),
+				Direction::Short => *abs_base_asset_value,
+			};
+
+			position
+				.base_asset_amount
+				.try_add_mut(&Self::decimal_from_swapped(base_swapped, direction)?)?;
+			position.quote_asset_notional_amount = exit_value.try_add(&match direction {
+				Direction::Long => *quote_abs_amount_decimal,
+				Direction::Short => quote_abs_amount_decimal.neg(),
+			})?;
 
 			Ok((base_swapped, entry_value, exit_value))
 		}
