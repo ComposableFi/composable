@@ -783,24 +783,12 @@ pub mod pallet {
 						)?;
 					},
 					Ordering::Equal => {
-						// close position
-						base_swapped = position.base_asset_amount.into_balance()?;
-						let _ = T::Vamm::swap(&SwapConfigOf::<T> {
-							vamm_id: market.vamm_id,
-							asset: AssetType::Base,
-							input_amount: base_swapped,
-							direction: match position_direction {
-								Direction::Long => VammDirection::Add,
-								Direction::Short => VammDirection::Remove,
-							},
-							output_amount_limit: quote_abs_amount_decimal.into_balance()?,
-						})?;
-
-						entry_value = position.quote_asset_notional_amount;
-						exit_value = match position_direction {
-							Direction::Long => quote_abs_amount_decimal,
-							Direction::Short => quote_abs_amount_decimal.neg(),
-						};
+						(base_swapped, entry_value, exit_value) = Self::close_position(
+							position,
+							position_direction,
+							&market,
+							quote_abs_amount_decimal.into_balance()?,
+						)?;
 
 						positions.swap_remove(position_index);
 					},
@@ -905,7 +893,6 @@ pub mod pallet {
 			quote_abs_amount_decimal: &T::Decimal,
 			base_asset_amount_limit: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
-			// increase position
 			let base_swapped = T::Vamm::swap(&SwapConfigOf::<T> {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Quote,
@@ -935,7 +922,6 @@ pub mod pallet {
 			quote_abs_amount_decimal: &T::Decimal,
 			base_asset_amount_limit: T::Balance,
 		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
-			// decrease position
 			let base_swapped = T::Vamm::swap(&SwapConfigOf::<T> {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Quote,
@@ -961,6 +947,34 @@ pub mod pallet {
 
 			position.base_asset_amount.try_add_mut(&base_delta_decimal)?;
 			position.quote_asset_notional_amount.try_sub_mut(&entry_value)?;
+
+			Ok((base_swapped, entry_value, exit_value))
+		}
+
+		fn close_position(
+			position: &Position<T>,
+			position_direction: Direction,
+			market: &Market<T>,
+			quote_asset_amount_limit: T::Balance,
+		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
+			let base_swapped = position.base_asset_amount.into_balance()?;
+			let quote_swapped = T::Vamm::swap(&SwapConfigOf::<T> {
+				vamm_id: market.vamm_id,
+				asset: AssetType::Base,
+				input_amount: base_swapped,
+				direction: match position_direction {
+					Direction::Long => VammDirection::Add,
+					Direction::Short => VammDirection::Remove,
+				},
+				output_amount_limit: quote_asset_amount_limit,
+			})?;
+
+			let entry_value = position.quote_asset_notional_amount;
+			let quote_amount_decimal: T::Decimal = quote_swapped.into_decimal()?;
+			let exit_value = match position_direction {
+				Direction::Long => quote_amount_decimal,
+				Direction::Short => quote_amount_decimal.neg(),
+			};
 
 			Ok((base_swapped, entry_value, exit_value))
 		}
