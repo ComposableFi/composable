@@ -520,8 +520,6 @@ pub mod pallet {
 			config: &SwapConfigOf<T>,
 			vamm_state: &mut VammStateOf<T>,
 		) -> Result<BalanceOf<T>, DispatchError> {
-			// TODO(Cardosaum): Is it needed to divide the quote asset by the
-			// peg_multiplier the way Drift does?
 			let quote_asset_reserve_amount = config
 				.input_amount
 				.checked_div(&vamm_state.peg_multiplier)
@@ -542,7 +540,6 @@ pub mod pallet {
 				.checked_sub(&swap_amount.output_amount)
 				.ok_or(ArithmeticError::Underflow)?;
 
-			// TODO(Cardosaum): Return an `IntegerOf<T>` rather than Balance
 			Ok(base_asset_amount)
 		}
 
