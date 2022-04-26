@@ -476,6 +476,8 @@ pub mod pallet {
 		/// Raised when creating a new position with quote asset amount less than the market's
 		/// minimum trade size
 		TradeSizeTooSmall,
+		/// Raised when trying to fetch a position from the positions vector with an invalid index
+		PositionNotFound,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -772,37 +774,31 @@ pub mod pallet {
 
 				let entry_value: T::Decimal;
 				let exit_value: T::Decimal;
-				match quote_abs_amount_decimal.cmp(&abs_base_asset_value) {
-					Ordering::Less => {
-						(base_swapped, entry_value, exit_value) = Self::decrease_position(
+				(base_swapped, entry_value, exit_value) =
+					match quote_abs_amount_decimal.cmp(&abs_base_asset_value) {
+						Ordering::Less => Self::decrease_position(
 							position,
 							&market,
 							direction,
 							&quote_abs_amount_decimal,
 							base_asset_amount_limit,
-						)?;
-					},
-					Ordering::Equal => {
-						(base_swapped, entry_value, exit_value) = Self::close_position(
-							position,
+						)?,
+						Ordering::Equal => Self::close_position(
+							&mut positions,
+							position_index,
 							position_direction,
 							&market,
 							quote_abs_amount_decimal.into_balance()?,
-						)?;
-
-						positions.swap_remove(position_index);
-					},
-					Ordering::Greater => {
-						(base_swapped, entry_value, exit_value) = Self::reverse_position(
+						)?,
+						Ordering::Greater => Self::reverse_position(
 							position,
 							&market,
 							direction,
 							&quote_abs_amount_decimal,
 							base_asset_amount_limit,
 							&abs_base_asset_value,
-						)?;
-					},
-				};
+						)?,
+					};
 
 				let pnl = exit_value.try_sub(&entry_value)?;
 				// Realize PnL
@@ -933,11 +929,15 @@ pub mod pallet {
 		}
 
 		fn close_position(
-			position: &Position<T>,
+			positions: &mut BoundedVec<Position<T>, T::MaxPositions>,
+			position_index: usize,
 			position_direction: Direction,
 			market: &Market<T>,
 			quote_asset_amount_limit: T::Balance,
 		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
+			// This should always succeed if called by <Self as ClearingHouse>::open_position
+			let position = positions.get(position_index).ok_or(Error::<T>::PositionNotFound)?;
+
 			let base_swapped = position.base_asset_amount.into_balance()?;
 			let quote_swapped = T::Vamm::swap(&SwapConfigOf::<T> {
 				vamm_id: market.vamm_id,
@@ -956,6 +956,8 @@ pub mod pallet {
 				Direction::Long => quote_amount_decimal,
 				Direction::Short => quote_amount_decimal.neg(),
 			};
+
+			positions.swap_remove(position_index);
 
 			Ok((base_swapped, entry_value, exit_value))
 		}
