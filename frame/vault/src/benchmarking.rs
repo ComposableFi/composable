@@ -58,7 +58,15 @@ fn create_vault<T: Config>(
 
 const A: u128 = 0;
 // if to make it generic, and pass u128, it will pass HasCompact, and u128 will be 5 bits, not 16...
-pub fn recode_unwrap_u128<O: Decode + MaxEncodedLen + Encode>(raw: u128) -> O {
+pub fn recode_unwrap_u128<
+	O: Decode + MaxEncodedLen + Encode,
+	I: Decode + MaxEncodedLen + Encode,
+>(
+	raw: I,
+) -> O {
+	// next does not holds, because in wasm it is 16 and 8, in native 16 and 5. But that works fine
+	// overall assert_eq!(I::max_encoded_len(), O::max_encoded_len(), "<I as
+	// MaxEncodedLen>::max_encoded_len() must be equal <O as MaxEncodedLen>::max_encoded_len()");
 	O::decode(&mut &raw.encode()[..]).unwrap()
 }
 

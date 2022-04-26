@@ -155,7 +155,7 @@ pub mod pallet {
 			metadata: BasicAssetMetadata,
 		) -> DispatchResultWithPostInfo {
 			T::AddOrigin::ensure_origin(origin)?;
-			if let Some(_) = AssetEd::<T>::get(asset_id) {
+			if AssetEd::<T>::get(asset_id).is_some() {
 				// note: if will decide to build route on symbol, than better to make second map
 				// from symbol to asset to check unique
 				AssetMetadata::<T>::insert(asset_id, metadata);
@@ -171,7 +171,7 @@ pub mod pallet {
 		fn create(id: RangeId, ed: T::Balance) -> Result<T::AssetId, DispatchError> {
 			let asset_id = AssetIdRanges::<T>::mutate(|range| range.increment(id))?;
 			AssetEd::<T>::insert(asset_id, ed);
-			return Ok(asset_id)
+			Ok(asset_id)
 		}
 	}
 

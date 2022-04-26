@@ -141,11 +141,12 @@ impl<T, const L: usize, const U: usize> BiBoundedVec<T, L, U> {
 	/// use sp_std::convert::TryInto;
 	///
 	/// let data: BiBoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
-	/// assert_eq!(*data.first(), 1);
+	/// assert_eq!(data.first(), Some(&1));
 	/// ```
-	pub fn first(&self) -> &T {
-		#[allow(clippy::unwrap_used)]
-		self.inner.first().unwrap()
+	pub fn first(&self) -> Option<&T> {
+		// can make conditional depending on `const_evaluatable_checked` in nightly so that  in case
+		// of at least 1 element, never option
+		self.inner.first()
 	}
 
 	/// Returns the last element of non-empty Vec
@@ -156,11 +157,12 @@ impl<T, const L: usize, const U: usize> BiBoundedVec<T, L, U> {
 	/// use sp_std::convert::TryInto;
 	///
 	/// let data: BiBoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
-	/// assert_eq!(*data.last(), 2);
+	/// assert_eq!(data.last(), Some(&2));
 	/// ```
-	pub fn last(&self) -> &T {
-		#[allow(clippy::unwrap_used)]
-		self.inner.last().unwrap()
+	pub fn last(&self) -> Option<&T> {
+		// can make conditional depending on `const_evaluatable_checked` in nightly so that  in case
+		// of at least 1 element, never option
+		self.inner.last()
 	}
 
 	/// Create a new `BiBoundedVec` by consuming `self` and mapping each element.
@@ -237,8 +239,9 @@ impl<T, const L: usize, const U: usize> BiBoundedVec<T, L, U> {
 		for element in self.inner.into_iter() {
 			out.push(map_fn(element)?);
 		}
-		#[allow(clippy::unwrap_used)]
-		Ok(BiBoundedVec::from_vec(out).unwrap())
+
+		Ok(BiBoundedVec::from_vec(out)
+			.expect("prove: was created with exact known amount of elements"))
 	}
 
 	/// Create a new `BiBoundedVec` by mapping references of `self` elements
@@ -269,8 +272,9 @@ impl<T, const L: usize, const U: usize> BiBoundedVec<T, L, U> {
 		for element in self.inner.iter() {
 			out.push(map_fn(element)?);
 		}
-		#[allow(clippy::unwrap_used)]
-		Ok(BiBoundedVec::from_vec(out).unwrap())
+
+		Ok(BiBoundedVec::from_vec(out)
+			.expect("prove: was created with exact known amount of elements"))
 	}
 
 	/// Returns a reference for an element at index or `None` if out of bounds
@@ -298,20 +302,18 @@ impl<T, const L: usize, const U: usize> BiBoundedVec<T, L, U> {
 	}
 
 	/// Returns the last and all the rest of the elements
-	pub fn split_last(&self) -> (&T, &[T]) {
-		#[allow(clippy::unwrap_used)]
-		self.inner.split_last().unwrap()
+	pub fn split_last(&self) -> Option<(&T, &[T])> {
+		self.inner.split_last()
 	}
 
 	/// Return a new BiBoundedVec with indices included
 	pub fn enumerated(self) -> BiBoundedVec<(usize, T), L, U> {
-		#[allow(clippy::unwrap_used)]
 		self.inner
 			.into_iter()
 			.enumerate()
 			.collect::<Vec<(usize, T)>>()
 			.try_into()
-			.unwrap()
+			.expect("prove: was created with exact known amount of elements")
 	}
 }
 
@@ -432,13 +434,13 @@ mod tests {
 	#[test]
 	fn first() {
 		let data: BiBoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
-		assert_eq!(data.first(), &1u8);
+		assert_eq!(data.first(), Some(&1u8));
 	}
 
 	#[test]
 	fn last() {
 		let data: BiBoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
-		assert_eq!(data.last(), &2u8);
+		assert_eq!(data.last(), Some(&2u8));
 	}
 
 	#[test]
@@ -493,9 +495,9 @@ mod tests {
 	#[test]
 	fn split_last() {
 		let data: BiBoundedVec<_, 2, 8> = vec![1u8, 2].try_into().unwrap();
-		assert_eq!(data.split_last(), (&2u8, [1u8].as_ref()));
+		assert_eq!(data.split_last().unwrap(), (&2u8, [1u8].as_ref()));
 		let data1: BiBoundedVec<_, 1, 8> = vec![1u8].try_into().unwrap();
-		assert_eq!(data1.split_last(), (&1u8, Vec::new().as_ref()));
+		assert_eq!(data1.split_last().unwrap(), (&1u8, Vec::new().as_ref()));
 	}
 
 	#[test]

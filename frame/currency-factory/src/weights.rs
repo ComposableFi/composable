@@ -23,3 +23,13 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		10_000
 	}
 }
+
+impl WeightInfo for () {
+	fn add_range() -> Weight {
+		10_000
+	}
+
+	fn set_metadata() -> Weight {
+		10_000
+	}
+}

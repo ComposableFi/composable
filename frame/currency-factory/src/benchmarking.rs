@@ -3,12 +3,12 @@
 use super::*;
 
 #[allow(unused_imports)]
-use crate::Pallet as CurrencyRanges;
+use crate::Pallet as CurrencyFactory;
 use crate::{self as currency_factory};
 use codec::{Decode, Encode};
 use composable_traits::{
 	assets::BasicAssetMetadata,
-	currency::{CurrencyFactory, RangeId},
+	currency::{CurrencyFactory as DeFiCurrencyFactory, RangeId},
 };
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
@@ -28,7 +28,7 @@ benchmarks! {
 	}: _(RawOrigin::Root, 100000000000000)
 	set_metadata {
 		currency_factory::Pallet::<T>::add_range(RawOrigin::Root.into(), 0).unwrap();
-		let asset_id = <currency_factory::Pallet::<T> as CurrencyFactory::<T::AssetId, T::Balance>>::create(RangeId::from(0), T::Balance::default()).unwrap();
+		let asset_id = <currency_factory::Pallet::<T> as DeFiCurrencyFactory::<T::AssetId, T::Balance>>::create(RangeId::from(0), T::Balance::default()).unwrap();
 		let metadata = BasicAssetMetadata::try_from(b"SMB", b"Symbol Name").unwrap();
 	}: {
 		currency_factory::Pallet::<T>::set_metadata(RawOrigin::Root.into(), asset_id,  metadata).unwrap();
