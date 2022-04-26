@@ -282,7 +282,7 @@ pub trait DexRouter<AccountId, AssetId, PoolId, Balance, MaxHops> {
 		amount: Balance,
 		min_receive: Balance,
 	) -> Result<Balance, DispatchError>;
-	/// Add liquidity to underlying dex pool. Works only for route with single pool.
+	/// Add liquidity to the underlying dex pool. Works only for a route with a single pool.
 	fn add_liquidity(
 		who: &AccountId,
 		asset_pair: CurrencyPair<AssetId>,

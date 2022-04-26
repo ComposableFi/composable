@@ -33,8 +33,6 @@ pub const USDT: AssetId = 2;
 pub const ETH: AssetId = 3;
 pub const USDC: AssetId = 4;
 pub const DAI: AssetId = 5;
-pub const PICA: AssetId = 6;
-pub const KSM: AssetId = 7;
 pub const TWAP_INTERVAL: Moment = 10;
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
 
@@ -179,7 +177,7 @@ impl pallet_pablo::Config for Test {
 }
 
 parameter_types! {
-  #[derive(codec::Encode, codec::Decode, codec::MaxEncodedLen, TypeInfo)]
+	#[derive(TypeInfo, codec::MaxEncodedLen, codec::Encode)]
 	pub const MaxHopsCount: u32 = 4;
 	pub TestDexRouterPalletID: PalletId = PalletId(*b"dex_rout");
 }

@@ -105,7 +105,7 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		// /// Number of hops in route exceeded maximum limit.
+		/// Number of hops in route exceeded maximum limit.
 		MaxHopsExceeded,
 		/// For given asset pair no route found.
 		NoRouteFound,
@@ -143,6 +143,8 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Create, update or remove route.
+		/// On successful emits one of `RouteAdded`, `RouteUpdated` or `RouteDeleted`.
 		#[pallet::weight(T::WeightInfo::update_route())]
 		pub fn update_route(
 			origin: OriginFor<T>,
@@ -160,6 +162,8 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Exchange `amount` of quote asset for `asset_pair` via route found in router.
+		/// On successful underlying DEX pallets will emit appropriate event
 		#[pallet::weight(T::WeightInfo::exchange())]
 		pub fn exchange(
 			origin: OriginFor<T>,
@@ -178,6 +182,8 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Sell `amount` of quote asset for `asset_pair` via route found in router.
+		/// On successful underlying DEX pallets will emit appropriate event.
 		#[pallet::weight(T::WeightInfo::sell())]
 		pub fn sell(
 			origin: OriginFor<T>,
@@ -196,6 +202,28 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Buy `amount` of quote asset for `asset_pair` via route found in router.
+		/// On successful underlying DEX pallets will emit appropriate event.
+		#[pallet::weight(T::WeightInfo::buy())]
+		pub fn buy(
+			origin: OriginFor<T>,
+			asset_pair: CurrencyPair<T::AssetId>,
+			amount: T::Balance,
+			min_receive: T::Balance,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ = <Self as DexRouter<
+				T::AccountId,
+				T::AssetId,
+				T::PoolId,
+				T::Balance,
+				T::MaxHopsInRoute,
+			>>::buy(&who, asset_pair, amount, min_receive)?;
+			Ok(())
+		}
+
+		/// Add liquidity to the underlying pablo pool.
+		/// Works only for single pool route.
 		#[pallet::weight(T::WeightInfo::add_liquidity())]
 		pub fn add_liquidity(
 			origin: OriginFor<T>,
@@ -218,6 +246,8 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Remove liquidity from the underlying pablo pool.
+		/// Works only for single pool route.
 		#[pallet::weight(T::WeightInfo::remove_liquidity())]
 		pub fn remove_liquidity(
 			origin: OriginFor<T>,
@@ -238,24 +268,6 @@ pub mod pallet {
 			)?;
 			Ok(())
 		}
-
-		#[pallet::weight(T::WeightInfo::buy())]
-		pub fn buy(
-			origin: OriginFor<T>,
-			asset_pair: CurrencyPair<T::AssetId>,
-			amount: T::Balance,
-			min_receive: T::Balance,
-		) -> DispatchResult {
-			let who = ensure_signed(origin)?;
-			let _ = <Self as DexRouter<
-				T::AccountId,
-				T::AssetId,
-				T::PoolId,
-				T::Balance,
-				T::MaxHopsInRoute,
-			>>::buy(&who, asset_pair, amount, min_receive)?;
-			Ok(())
-		}
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -263,9 +275,9 @@ pub mod pallet {
 			asset_pair: CurrencyPair<T::AssetId>,
 			route: &BoundedVec<T::PoolId, T::MaxHopsInRoute>,
 		) -> Result<(), DispatchError> {
-            sp_std::if_std! {
-                println!("asset_pair.quote {:?} , asset_pair.base {:?}", asset_pair.quote, asset_pair.base);
-            }
+			sp_std::if_std! {
+				println!("asset_pair.quote {:?} , asset_pair.base {:?}", asset_pair.quote, asset_pair.base);
+			}
 			route
 				.iter()
 				// starting with asset_pair.quote, make sure current node's quote
@@ -273,9 +285,9 @@ pub mod pallet {
 				.try_fold(asset_pair.quote, |val, iter| {
 					T::Pablo::currency_pair(*iter).and_then(
 						|pair| -> Result<T::AssetId, DispatchError> {
-                            sp_std::if_std! {
-                                println!("pool_id {:?} pair.quote {:?} pair.base {:?} val {:?}", *iter, pair.quote, pair.base, val);
-                            }
+							sp_std::if_std! {
+								println!("pool_id {:?} pair.quote {:?} pair.base {:?} val {:?}", *iter, pair.quote, pair.base, val);
+							}
 							if pair.quote == val {
 								Ok(pair.base)
 							} else {
@@ -300,25 +312,25 @@ pub mod pallet {
 			route: BoundedVec<T::PoolId, T::MaxHopsInRoute>,
 		) -> Result<(), DispatchError> {
 			Self::validate_route(asset_pair, &route)?;
-			let k1 = asset_pair.base;
-			let k2 = asset_pair.quote;
+			let base_asset = asset_pair.base;
+			let quote_asset = asset_pair.quote;
 			let existing_route = Self::get_route(asset_pair);
-			// remove any route for k1,k2 or symmetric k2/k1 pair.
-			DexRoutes::<T>::remove(k1, k2);
-			DexRoutes::<T>::remove(k2, k1);
-			DexRoutes::<T>::insert(k1, k2, DexRoute::Direct(route.clone()));
+			// remove any route for base_asset/quote_asset or symmetric quote_asset/base_asset pair.
+			DexRoutes::<T>::remove(base_asset, quote_asset);
+			DexRoutes::<T>::remove(quote_asset, base_asset);
+			DexRoutes::<T>::insert(base_asset, quote_asset, DexRoute::Direct(route.clone()));
 			let event = match existing_route {
 				Some((old_route, _)) => Event::RouteUpdated {
 					who: who.clone(),
-					x_asset_id: k1,
-					y_asset_id: k2,
+					x_asset_id: base_asset,
+					y_asset_id: quote_asset,
 					old_route,
 					updated_route: route.to_vec(),
 				},
 				None => Event::RouteAdded {
 					who: who.clone(),
-					x_asset_id: k1,
-					y_asset_id: k2,
+					x_asset_id: base_asset,
+					y_asset_id: quote_asset,
 					route: route.to_vec(),
 				},
 			};
@@ -330,18 +342,18 @@ pub mod pallet {
 			who: &T::AccountId,
 			asset_pair: CurrencyPair<T::AssetId>,
 		) -> Result<(), DispatchError> {
-			let mut k1 = asset_pair.base;
-			let mut k2 = asset_pair.quote;
+			let mut base_asset = asset_pair.base;
+			let mut quote_asset = asset_pair.quote;
 			if let Some((to_be_deleted_route, reverse)) = Self::get_route(asset_pair) {
 				if reverse {
-					k1 = asset_pair.quote;
-					k2 = asset_pair.base;
+					quote_asset = asset_pair.quote;
+					base_asset = asset_pair.base;
 				}
-				DexRoutes::<T>::remove(k1, k2);
+				DexRoutes::<T>::remove(base_asset, quote_asset);
 				Self::deposit_event(Event::RouteDeleted {
 					who: who.clone(),
-					x_asset_id: k1,
-					y_asset_id: k2,
+					x_asset_id: base_asset,
+					y_asset_id: quote_asset,
 					route: to_be_deleted_route,
 				});
 			}

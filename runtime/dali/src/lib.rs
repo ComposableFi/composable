@@ -1052,7 +1052,7 @@ impl pablo::Config for Runtime {
 }
 
 parameter_types! {
-  #[derive(codec::Encode, codec::Decode, codec::MaxEncodedLen, TypeInfo)]
+	#[derive(TypeInfo, codec::MaxEncodedLen, codec::Encode)]
 	pub const MaxHopsCount: u32 = 4;
 	pub DexRouterPalletID: PalletId = PalletId(*b"dex_rout");
 }
