@@ -47,6 +47,14 @@ udeps:
 dev:
 	cargo run
 
+# run as `make open=y run-book` to open as well
+run-book:
+	bash -c "(trap 'kill 0' SIGINT; cargo run -p extrinsics-docs-scraper --release -- --config-file-path=scraper.toml -vvv --watch & mdbook serve book/ $(if $(filter y,${open}),'--open'))"
+
+build-book:
+	cargo run -p extrinsics-docs-scraper --release -- --config-file-path=scraper.toml
+	mdbook build book/
+
 .PHONY: version
 version:
 	@if [ ${RELEASE_VERSION} ]; then \

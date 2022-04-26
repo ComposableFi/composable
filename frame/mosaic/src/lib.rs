@@ -349,9 +349,14 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Sets the current relayer configuration. This is enacted immediately and invalidates
-		/// inflight, incoming transactions from the previous relayer. Budgets remain in place
-		/// however.
+		/// Sets the current Relayer configuration.
+		///
+		/// This is enacted immediately and invalidates inflight/ incoming transactions from the
+		/// previous Relayer. However, existing budgets remain in place.
+		///
+		/// This can only be called by the [`ControlOrigin`].
+		///
+		/// [controlorigin]: https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/trait.Config.html#associatedtype.ControlOrigin
 		#[pallet::weight(T::WeightInfo::set_relayer())]
 		pub fn set_relayer(
 			origin: OriginFor<T>,
@@ -480,8 +485,13 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Called by the relayer to confirm that it will relay a transaction, disabling the user
-		/// from reclaiming their tokens.
+		/// This is called by the Relayer to confirm that it will relay a transaction.
+		///
+		/// Once this is called, the sender will be unable to reclaim their tokens.
+		///
+		/// If all the funds are not removed, the reclaim period will not be reset. If the
+		/// reclaim period is not reset, the Relayer will still attempt to pick up the
+		/// remainder of the transaction.
 		///
 		/// # Restrictions
 		/// - Origin must be relayer
