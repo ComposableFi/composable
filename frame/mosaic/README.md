@@ -13,8 +13,8 @@ relayer can mint using a decaying penalty.
 
 ### Decaying Penalty
 
-At moment N, the Relayer has a maximum budget budget. Minting a token adds a 
-penalty penalty to the Relayer. The penalty decreases each block according to 
+At moment N, the Relayer has a maximum budget. Minting a token adds a 
+penalty to the Relayer. The penalty decreases each block according to 
 decay function decayer, which depends on the penalty, `current_block`, and 
 `last_decay_block`. The current maximum amount that the Relayer can mint is 
 given by `budget - decayer(penalty, current_block, last_decay_block)`. The new 
@@ -28,7 +28,7 @@ incoming transactions, and outgoing transactions.
 ### The Relayer Interface
 
 The Relayer interface provides the necessary functionality for managing the 
-constrains of the Relayer and exposing the functionality needed by the Relayer 
+constraints of the Relayer and exposing the functionality needed by the Relayer 
 to conduct transactions. The Relayer, while operating on this network, is 
 constrained by the set budget, supported networks, and the maximum transaction 
 sizes for those networks. The Relayer will need to be able to accept new 
