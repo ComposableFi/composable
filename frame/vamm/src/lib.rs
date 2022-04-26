@@ -581,13 +581,11 @@ pub mod pallet {
 				.ok_or(ArithmeticError::Overflow)?;
 
 			let new_input_amount = match direction {
-				Direction::Add => {
-					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?
-				},
+				Direction::Add =>
+					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?,
 
-				Direction::Remove => {
-					input_asset_amount.checked_sub(swap_amount).ok_or(ArithmeticError::Overflow)?
-				},
+				Direction::Remove =>
+					input_asset_amount.checked_sub(swap_amount).ok_or(ArithmeticError::Overflow)?,
 			};
 			let new_input_amount_u256 = Self::balance_to_u256(new_input_amount)?;
 
