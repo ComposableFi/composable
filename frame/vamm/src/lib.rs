@@ -275,6 +275,14 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// Emitted after a successful call to the [`create`](Pallet::create) function.
 		Created { vamm_id: VammIdOf<T>, state: VammStateOf<T> },
+		/// Emitted after a successfull call to [`swap`](Pallet::swap) function.
+		Swapped {
+			vamm_id: VammIdOf<T>,
+			input_amount: BalanceOf<T>,
+			output_amount: BalanceOf<T>,
+			input_asset_type: AssetType,
+			direction: Direction,
+		},
 	}
 
 	// ----------------------------------------------------------------------------------------------------
