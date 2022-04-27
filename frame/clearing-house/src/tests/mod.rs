@@ -76,6 +76,11 @@ fn as_inner<T: Into<FixedI128>>(value: T) -> i128 {
 	f.into_inner()
 }
 
+fn as_uinner<T: Into<FixedU128>>(value: T) -> u128 {
+	let f: FixedU128 = value.into();
+	f.into_inner()
+}
+
 // ----------------------------------------------------------------------------------------------------
 //                                          Valid Inputs
 // ----------------------------------------------------------------------------------------------------
@@ -168,7 +173,10 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn any_price()(inner in 1..=as_balance(1_000_000_000)) -> FixedU128 {
+	// Anywhere from 1 / (1 trillion) to 1 trillion
+	fn any_price()(
+		inner in as_uinner((1, 10_u128.pow(12)))..=as_uinner(10_u128.pow(12))
+	) -> FixedU128 {
 		FixedU128::from_inner(inner)
 	}
 }
