@@ -4,8 +4,8 @@ name = "simnode-common"
 version = "0.1.0"
 
 [dependencies]
-simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, branch = "master" }
-substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", branch = "master" }
+simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, branch = "seun-polkadot-v0.9.18" }
+substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", branch = "seun-polkadot-v0.9.18" }
 
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
