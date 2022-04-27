@@ -739,6 +739,7 @@ pub mod pallet {
 			quote_asset_amount: Self::Balance,
 			base_asset_amount_limit: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
+			let margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
 			let market = Self::get_market(&market_id).ok_or(Error::<T>::MarketIdNotFound)?;
 			let mut positions = Self::get_positions(&account_id);
 			let (position, position_index) =
@@ -802,13 +803,14 @@ pub mod pallet {
 
 				let pnl = exit_value.try_sub(&entry_value)?;
 				// Realize PnL
-				let margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
 				// TODO(0xangelo): properly handle bad debt incurred by large negative PnL
 				AccountsMargin::<T>::insert(
 					account_id,
 					Self::update_margin_with_pnl(&margin, &pnl)?,
 				);
 			}
+
+			// ensure!(Self::is_above_imr(&positions, margin)?, Error::<T>::InsufficientCollateral);
 
 			Positions::<T>::insert(account_id, positions);
 
@@ -1005,7 +1007,35 @@ pub mod pallet {
 	}
 
 	// Helper functions - validity checks
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		#[allow(dead_code)]
+		fn is_above_imr(
+			positions: &BoundedVec<Position<T>, T::MaxPositions>,
+			margin: T::Balance,
+		) -> Result<bool, DispatchError> {
+			let mut nonnormalized_imr = T::Decimal::zero();
+			let mut equity: T::Decimal = margin.into_decimal()?;
+			for position in positions.iter() {
+				if let Some(direction) = Self::position_direction(position) {
+					// Should always succeed
+					let market = Markets::<T>::get(&position.market_id)
+						.ok_or(Error::<T>::MarketIdNotFound)?;
+					let value = Self::base_asset_value(&market, position, direction)?;
+					let abs_value = value.saturating_abs();
+
+					nonnormalized_imr.try_add_mut(
+						&abs_value
+							.try_mul(&market.margin_ratio_initial)
+							.and_then(|d| d.try_div(&abs_value))?,
+					)?;
+
+					equity.try_add_mut(&value.try_sub(&position.quote_asset_notional_amount)?)?;
+				}
+			}
+
+			Ok(equity >= nonnormalized_imr)
+		}
+	}
 
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
