@@ -29,7 +29,7 @@ polkadot-parachain = { git = "https://github.com/paritytech/polkadot", default-f
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
-serde = { version = "1.0.130", optional = true }
+serde = { version = '1.0.136', optional = true }
 smallvec = "1.7.0"
 sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }

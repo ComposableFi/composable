@@ -23,7 +23,7 @@ composable-traits = { path = "../composable-traits", default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
-serde = { version = '1', optional = true }
+serde = { version = '1.0.136', optional = true }
 
 [dependencies.codec]
 default-features = false

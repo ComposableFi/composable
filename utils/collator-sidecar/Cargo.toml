@@ -8,7 +8,7 @@ version = "0.1.0"
 [dependencies]
 async-std = { version = "1", features = ["attributes", "tokio1"] }
 env_logger = "0.8.4"
-serde = { version = "1", features = ["derive"] }
+serde = { version = '1.0.136', optional = true, features = ["derive"] }
 structopt = "0.3.25"
 tide = "0.16"
 tokio = { version = "1.12.0", features = ["macros", "rt-multi-thread"] }

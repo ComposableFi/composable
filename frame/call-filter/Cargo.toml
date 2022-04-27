@@ -12,7 +12,7 @@ composable-traits = { path = "../../frame/composable-traits", default-features =
 scale-info = { version = "2.1.1", features = [
   "derive",
 ], default-features = false }
-serde = { version = "1.0.130", optional = true }
+serde = { version = "1.0.136", optional = true }
 sp-io = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
 sp-std = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }

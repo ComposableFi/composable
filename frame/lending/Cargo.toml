@@ -57,7 +57,7 @@ pallet-dutch-auction = { path = "../dutch-auction" }
 pallet-liquidations = { path = "../liquidations" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 proptest = "1.0"
-serde = { version = "1.0.130" }
+serde = { version = '1.0.136' }
 smallvec = "1.7.0"
 
 [features]

@@ -14,7 +14,7 @@ clap = "3.1.6"
 codec = { package = "parity-scale-codec", version = "3.0.0" }
 jsonrpc-core = "18"
 log = "0.4.14"
-serde = { version = "1.0.130", features = ["derive"] }
+serde = { version = "1.0.136", features = ["derive"] }
 
 # Local Dependencies
 common = { path = "../runtime/common" }
