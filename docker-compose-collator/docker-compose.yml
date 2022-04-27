@@ -7,7 +7,8 @@ services:
     volumes:
       - ./composable-data:/data
     ports:
-      - 40333:40333
+      - 9944:9944
+      - 30334:30334
       - 30333:30333
       - 9615:9615
     restart: unless-stopped
@@ -20,6 +21,7 @@ services:
       --unsafe-rpc-external
       --listen-addr=/ip4/0.0.0.0/tcp/30334
       --prometheus-external
+      --prometheus-port 9615
       --execution wasm
       --
       --execution=wasm
@@ -33,7 +35,7 @@ services:
       - composable_network
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.34.0
     container_name: prometheus
     ports:
       - 9090:9090
@@ -46,7 +48,7 @@ services:
       - composable_network
  
   cadvisor:
-    image: google/cadvisor:latest
+    image: gcr.io/cadvisor/cadvisor:v0.39.3
     container_name: cadvisor
     ports:
       - 8080:8080
@@ -62,9 +64,10 @@ services:
       - composable_network
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:8.4.4
     container_name: grafana
-    user: "1000"
+    #user: "0"
+    user: "$UID:$GID"
     ports:
       - 3000:3000
     volumes:
