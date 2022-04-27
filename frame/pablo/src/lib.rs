@@ -159,7 +159,7 @@ pub mod pallet {
 			/// Owner of the pool.
 			owner: T::AccountId,
 			// Pool assets
-			assets: CurrencyPair<AssetIdOf<T>>
+			assets: CurrencyPair<AssetIdOf<T>>,
 		},
 		/// The sale ended, the funds repatriated and the pool deleted.
 		PoolDeleted {
@@ -566,20 +566,23 @@ pub mod pallet {
 						fee,
 						owner_fee,
 					)?,
-					pair
+					pair,
 				),
-				PoolInitConfiguration::ConstantProduct { owner, pair, fee, owner_fee } =>
-					(owner.clone(), Uniswap::<T>::do_create_pool(&owner, pair, fee, owner_fee)?, pair),
+				PoolInitConfiguration::ConstantProduct { owner, pair, fee, owner_fee } => (
+					owner.clone(),
+					Uniswap::<T>::do_create_pool(&owner, pair, fee, owner_fee)?,
+					pair,
+				),
 				PoolInitConfiguration::LiquidityBootstrapping(pool_config) => {
 					let validated_pool_config = Validated::new(pool_config.clone())?;
 					(
 						pool_config.owner,
 						LiquidityBootstrapping::<T>::do_create_pool(validated_pool_config)?,
-						pool_config.pair
+						pool_config.pair,
 					)
 				},
 			};
-			Self::deposit_event(Event::<T>::PoolCreated { owner, pool_id, assets: pair});
+			Self::deposit_event(Event::<T>::PoolCreated { owner, pool_id, assets: pair });
 			Ok(pool_id)
 		}
 
