@@ -107,7 +107,7 @@ pub mod pallet {
 		type Balance: BalanceLike;
 		#[pallet::constant]
 		type NativeAssetId: Get<Self::AssetId>;
-		type GenerateCurrencyId: CurrencyFactory<Self::AssetId>;
+		type GenerateCurrencyId: CurrencyFactory<Self::AssetId, Self::Balance>;
 		type NativeCurrency;
 		type MultiCurrency;
 		type GovernanceRegistry: GetByKey<Self::AssetId, Result<SignedRawOrigin<Self::AccountId>, DispatchError>>
@@ -282,7 +282,8 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-			let id = T::GenerateCurrencyId::create(RangeId::TOKENS)?;
+			// TODO: pass non zero from creators
+			let id = T::GenerateCurrencyId::create(RangeId::TOKENS, T::Balance::default())?;
 			let dest = T::Lookup::lookup(dest)?;
 			<Self as Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
 			Ok(().into())
@@ -300,7 +301,7 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-			let id = T::GenerateCurrencyId::create(RangeId::TOKENS)?;
+			let id = T::GenerateCurrencyId::create(RangeId::TOKENS, T::Balance::default())?;
 			let governance_origin = T::Lookup::lookup(governance_origin)?;
 			T::GovernanceRegistry::set(id, SignedRawOrigin::Signed(governance_origin));
 			let dest = T::Lookup::lookup(dest)?;

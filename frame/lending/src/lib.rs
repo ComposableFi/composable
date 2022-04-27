@@ -187,7 +187,10 @@ pub mod pallet {
 			AccountId = Self::AccountId,
 		>;
 
-		type CurrencyFactory: CurrencyFactory<<Self as DeFiComposableConfig>::MayBeAssetId>;
+		type CurrencyFactory: CurrencyFactory<
+			<Self as DeFiComposableConfig>::MayBeAssetId,
+			Self::Balance,
+		>;
 
 		type MultiCurrency: Transfer<
 				Self::AccountId,
@@ -1210,8 +1213,8 @@ pub mod pallet {
 						.under_collaterized_warn_percent,
 					liquidators: config_input.updatable.liquidators,
 				};
-
-				let debt_asset_id = T::CurrencyFactory::reserve_lp_token_id()?;
+				// TODO: pass ED from API,
+				let debt_asset_id = T::CurrencyFactory::reserve_lp_token_id(T::Balance::default())?;
 
 				DebtMarkets::<T>::insert(market_id, debt_asset_id);
 				Markets::<T>::insert(market_id, config);

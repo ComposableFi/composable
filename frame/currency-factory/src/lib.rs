@@ -39,7 +39,7 @@ pub use weights::{SubstrateWeight, WeightInfo};
 mod ranges;
 mod weights;
 
-#[cfg(feature = "runtime-benchmarks")]
+#[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
 
 #[cfg(test)]
@@ -53,11 +53,12 @@ pub mod pallet {
 		ranges::{Range, RangeId, Ranges},
 		weights::WeightInfo,
 	};
-	use codec::FullCodec;
-	use composable_traits::currency::{CurrencyFactory, Exponent, LocalAssets};
-	use frame_support::{pallet_prelude::*, traits::EnsureOrigin, PalletId};
+	use composable_traits::{
+		assets::BasicAssetMetadata,
+		currency::{AssetIdLike, BalanceLike, CurrencyFactory, Exponent, LocalAssets},
+	};
+	use frame_support::{pallet_prelude::*, traits::EnsureOrigin, transactional, PalletId};
 	use frame_system::pallet_prelude::*;
-	use scale_info::TypeInfo;
 	use sp_runtime::{
 		traits::{CheckedAdd, Saturating},
 		DispatchError,
@@ -72,7 +73,9 @@ pub mod pallet {
 	}
 
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		AssetNotFound,
+	}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -80,19 +83,18 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The currency which can be created from thin air.
-		type AssetId: FullCodec
-			+ Copy
-			+ TypeInfo
+		type AssetId: AssetIdLike
 			+ From<u128>
 			+ Saturating
-			+ Clone
 			+ Ord
 			+ CheckedAdd
 			+ core::fmt::Debug
 			+ MaxEncodedLen;
 
+		type Balance: BalanceLike;
+
+		///  can add new ranges or assign metadata
 		type AddOrigin: EnsureOrigin<Self::Origin>;
-		type ReserveOrigin: EnsureOrigin<Self::Origin>;
 		type WeightInfo: WeightInfo;
 	}
 
@@ -102,10 +104,26 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn asset_id_rages)]
-	// Storage is intialized using RangesOnEmpty, so ValueQuery is allowed.
+	// Storage is initialized using RangesOnEmpty, so ValueQuery is allowed.
 	#[allow(clippy::disallowed_types)]
 	pub type AssetIdRanges<T: Config> =
 		StorageValue<_, Ranges<T::AssetId>, ValueQuery, RangesOnEmpty<T>>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn get_assets_ed)]
+	pub type AssetEd<T: Config> = StorageMap<_, Twox128, T::AssetId, T::Balance, OptionQuery>;
+
+	// technically that can be stored offchain, but other parachains do int on chain too (and some
+	// other blockchains) also may do routing for approved symbols based, not on ids, too
+	#[pallet::storage]
+	#[pallet::getter(fn get_assets_metadata)]
+	pub type AssetMetadata<T: Config> = StorageMap<
+		_,
+		Twox128,
+		T::AssetId,
+		composable_traits::assets::BasicAssetMetadata,
+		OptionQuery,
+	>;
 
 	#[pallet::type_value]
 	pub fn RangesOnEmpty<T: Config>() -> Ranges<T::AssetId> {
@@ -128,11 +146,32 @@ pub mod pallet {
 
 			Ok(().into())
 		}
+
+		/// Sets metadata
+		#[pallet::weight(T::WeightInfo::set_metadata())]
+		pub fn set_metadata(
+			origin: OriginFor<T>,
+			asset_id: T::AssetId,
+			metadata: BasicAssetMetadata,
+		) -> DispatchResultWithPostInfo {
+			T::AddOrigin::ensure_origin(origin)?;
+			if AssetEd::<T>::get(asset_id).is_some() {
+				// note: if will decide to build route on symbol, than better to make second map
+				// from symbol to asset to check unique
+				AssetMetadata::<T>::insert(asset_id, metadata);
+				Ok(().into())
+			} else {
+				Err(Error::<T>::AssetNotFound.into())
+			}
+		}
 	}
 
-	impl<T: Config> CurrencyFactory<T::AssetId> for Pallet<T> {
-		fn create(id: RangeId) -> Result<T::AssetId, DispatchError> {
-			AssetIdRanges::<T>::mutate(|range| range.increment(id))
+	impl<T: Config> CurrencyFactory<T::AssetId, T::Balance> for Pallet<T> {
+		#[transactional]
+		fn create(id: RangeId, ed: T::Balance) -> Result<T::AssetId, DispatchError> {
+			let asset_id = AssetIdRanges::<T>::mutate(|range| range.increment(id))?;
+			AssetEd::<T>::insert(asset_id, ed);
+			Ok(asset_id)
 		}
 	}
 

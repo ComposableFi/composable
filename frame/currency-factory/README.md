@@ -1,6 +1,6 @@
 # Overview
 
-Currency pallet allows to create new sovereign(local consensus) currencies(assets).
+Currency pallet allows to create new sovereign(local consensus) currencies(assets) from thin air.
 
 Each currency falls into one of next categories:
 
