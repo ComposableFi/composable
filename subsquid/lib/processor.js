@@ -27,23 +27,30 @@ const ss58 = __importStar(require("@subsquid/ss58"));
 const substrate_processor_1 = require("@subsquid/substrate-processor");
 const model_1 = require("./model");
 const events_1 = require("./types/events");
+const dbHelper_1 = require("./dbHelper");
+const pabloProcessor_1 = require("./pabloProcessor");
 const processor = new substrate_processor_1.SubstrateProcessor("composable_dali_dev");
 processor.setBatchSize(500);
 processor.setDataSource({
     archive: `http://localhost:4010/v1/graphql`,
     chain: "wss://dali.devnets.composablefinance.ninja/parachain/alice",
 });
+// TODO add event handlers for Pablo
+processor.addEventHandler('pablo.PoolCreated', async (ctx) => {
+    const event = new events_1.PabloPoolCreatedEvent(ctx);
+    await (0, pabloProcessor_1.processPoolCreatedEvent)(ctx, event);
+});
 processor.addEventHandler("balances.Transfer", async (ctx) => {
     const transfer = getTransferEvent(ctx);
     const tip = ctx.extrinsic?.tip || 0n;
-    const from = ss58.codec("kusama").encode(transfer.from);
-    const to = ss58.codec("kusama").encode(transfer.to);
-    const fromAcc = await getOrCreate(ctx.store, model_1.Account, from);
+    const from = ss58.codec("picasso").encode(transfer.from);
+    const to = ss58.codec("picasso").encode(transfer.to);
+    const fromAcc = await (0, dbHelper_1.getOrCreate)(ctx.store, model_1.Account, from);
     fromAcc.balance = fromAcc.balance || 0n;
     fromAcc.balance -= transfer.amount;
     fromAcc.balance -= tip;
     await ctx.store.save(fromAcc);
-    const toAcc = await getOrCreate(ctx.store, model_1.Account, to);
+    const toAcc = await (0, dbHelper_1.getOrCreate)(ctx.store, model_1.Account, to);
     toAcc.balance = toAcc.balance || 0n;
     toAcc.balance += transfer.amount;
     await ctx.store.save(toAcc);
@@ -71,15 +78,5 @@ function getTransferEvent(ctx) {
         const { from, to, amount } = event.asLatest;
         return { from, to, amount };
     }
-}
-async function getOrCreate(store, EntityConstructor, id) {
-    let entity = await store.get(EntityConstructor, {
-        where: { id },
-    });
-    if (entity == null) {
-        entity = new EntityConstructor();
-        entity.id = id;
-    }
-    return entity;
 }
 //# sourceMappingURL=processor.js.map

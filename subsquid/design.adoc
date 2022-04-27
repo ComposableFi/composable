@@ -42,7 +42,7 @@ entity PabloTransaction {
     receivedTimestamp: timestamp
 }
 
-entity PabloPoolStatistics {
+entity PabloPool {
     * poolId: string
     --
     * transactionCount: number
@@ -53,7 +53,7 @@ entity PabloPoolStatistics {
     * calculatedTimestamp: timestamp
 }
 
-entity PabloPoolAssetStatistics {
+entity PabloPoolAsset {
     * poolId: string
     * assetId: string
     --
@@ -63,11 +63,11 @@ entity PabloPoolAssetStatistics {
     * calculatedTimestamp: timestamp
 }
 
-PabloPoolStatistics }|..|| PabloTransaction
-PabloPoolStatistics }|..|| PabloPoolAssetStatistics
+PabloPool }|..|| PabloTransaction
+PabloPool }|..|| PabloPoolAsset
 ----
 
-NOTE: Pablo could support multi-asset pools in the future, hence a many to one relationship between the `PabloPoolStatistics` and `PabloPoolAssetStatistics`.
+NOTE: Pablo could support multi-asset pools in the future, hence a many to one relationship between the `PabloPool` and `PabloPoolAsset`.
 
 
 === Event Processing
@@ -82,16 +82,16 @@ start
 :receive pablo event;
 if (PoolCreated) then (yes)
     :record PabloTransaction with asset\nrelated fields empty;
-    :record empty PabloPoolStatistics\nand PabloPoolAssetStatistics;
+    :record empty PabloPool\nand PabloPoolAsset;
 elseif (LiquidityAdded) then (yes)
     :record PabloTransaction;
-    :record PabloPoolStatistics\nand PabloPoolAssetStatistics;
+    :record PabloPool\nand PabloPoolAsset;
 (no) elseif (Swap) then (yes)
     :record PabloTransaction;
-    :record PabloPoolStatistics\nand PabloPoolAssetStatistics;
+    :record PabloPool\nand PabloPoolAsset;
 (no) elseif (LiquidityRemoved) then (yes)
     :record PabloTransaction;
-    :record PabloPoolStatistics\nand PabloPoolAssetStatistics;
+    :record PabloPool\nand PabloPoolAsset;
 (no) elseif (PoolRemoved) then (yes)
     :no processing;
 else (irrelevant)

@@ -16,4 +16,8 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./account.model"), exports);
 __exportStar(require("./historicalBalance.model"), exports);
+__exportStar(require("./pabloTransaction.model"), exports);
+__exportStar(require("./_pabloTransactionType"), exports);
+__exportStar(require("./pabloPool.model"), exports);
+__exportStar(require("./pabloPoolAsset.model"), exports);
 //# sourceMappingURL=index.js.map
