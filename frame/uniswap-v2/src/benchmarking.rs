@@ -106,7 +106,7 @@ benchmarks! {
 	  let price = <Uni<T> as Amm>::get_exchange_value(pool_id, btc, unit.into())?;
 	  assert_ok!(T::Assets::mint_into(usdt, &user, price));
 	  // buy 1 btc
-  }: _(RawOrigin::Signed(user), pool_id, btc, unit.into(), false)
+  }: _(RawOrigin::Signed(user), pool_id, btc, unit.into(), 0_u128.into(), false)
 
  sell {
 	  let btc: T::AssetId = 100.into();
@@ -138,7 +138,7 @@ benchmarks! {
 	  ));
 	  let user = account("user", 0, 0);
 	  assert_ok!(T::Assets::mint_into(btc, &user, unit.into()));
- }: _(RawOrigin::Signed(user), pool_id, btc, unit.into(), false)
+ }: _(RawOrigin::Signed(user), pool_id, btc, unit.into(), 0_u128.into(), false)
 
  swap {
 	  let btc: T::AssetId = 100.into();

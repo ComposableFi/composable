@@ -48,6 +48,7 @@ pub trait Amm {
 		pool_id: Self::PoolId,
 		asset_id: Self::AssetId,
 		amount: Self::Balance,
+		min_receive: Self::Balance,
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
 
@@ -58,6 +59,7 @@ pub trait Amm {
 		pool_id: Self::PoolId,
 		asset_id: Self::AssetId,
 		amount: Self::Balance,
+		min_receive: Self::Balance,
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
 
@@ -261,44 +263,44 @@ pub trait DexRouter<AccountId, AssetId, PoolId, Balance, MaxHops> {
 	/// If route exist return `Some((Vec<PoolId>, bool))`, else `None`.
 	/// boolean in pair indicates if route needs to be used in reversed direction.
 	fn get_route(asset_pair: CurrencyPair<AssetId>) -> Option<(Vec<PoolId>, bool)>;
-	/// Exchange `amount` of `quote` asset of `asset_pair` with associated route.
-	fn exchange(
-		who: &AccountId,
-		asset_pair: CurrencyPair<AssetId>,
-		amount: Balance,
-		min_receive: Balance,
-	) -> Result<Balance, DispatchError>;
-	/// Sell `amount` of `quote` asset of asset_pair with associated route.
-	fn sell(
-		who: &AccountId,
-		asset_pair: CurrencyPair<AssetId>,
-		amount: Balance,
-		min_receive: Balance,
-	) -> Result<Balance, DispatchError>;
-	/// Buy `amount` of `quote` asset of asset_pair with associated route.
-	fn buy(
-		who: &AccountId,
-		asset_pair: CurrencyPair<AssetId>,
-		amount: Balance,
-		min_receive: Balance,
-	) -> Result<Balance, DispatchError>;
-	/// Add liquidity to the underlying dex pool. Works only for a route with a single pool.
-	fn add_liquidity(
-		who: &AccountId,
-		asset_pair: CurrencyPair<AssetId>,
-		base_amount: Balance,
-		quote_amount: Balance,
-		min_mint_amount: Balance,
-		keep_alive: bool,
-	) -> Result<(), DispatchError>;
-	/// Remove liquidity from underlying dex pool. Works only for route with single pool.
-	fn remove_liquidity(
-		who: &AccountId,
-		asset_pair: CurrencyPair<AssetId>,
-		lp_amount: Balance,
-		min_base_amount: Balance,
-		min_quote_amount: Balance,
-	) -> Result<(), DispatchError>;
+	// /// Exchange `amount` of `quote` asset of `asset_pair` with associated route.
+	// fn exchange(
+	// 	who: &AccountId,
+	// 	asset_pair: CurrencyPair<AssetId>,
+	// 	amount: Balance,
+	// 	min_receive: Balance,
+	// ) -> Result<Balance, DispatchError>;
+	// /// Sell `amount` of `quote` asset of asset_pair with associated route.
+	// fn sell(
+	// 	who: &AccountId,
+	// 	asset_pair: CurrencyPair<AssetId>,
+	// 	amount: Balance,
+	// 	min_receive: Balance,
+	// ) -> Result<Balance, DispatchError>;
+	// /// Buy `amount` of `quote` asset of asset_pair with associated route.
+	// fn buy(
+	// 	who: &AccountId,
+	// 	asset_pair: CurrencyPair<AssetId>,
+	// 	amount: Balance,
+	// 	min_receive: Balance,
+	// ) -> Result<Balance, DispatchError>;
+	// /// Add liquidity to the underlying dex pool. Works only for a route with a single pool.
+	// fn add_liquidity(
+	// 	who: &AccountId,
+	// 	asset_pair: CurrencyPair<AssetId>,
+	// 	base_amount: Balance,
+	// 	quote_amount: Balance,
+	// 	min_mint_amount: Balance,
+	// 	keep_alive: bool,
+	// ) -> Result<(), DispatchError>;
+	// /// Remove liquidity from underlying dex pool. Works only for route with single pool.
+	// fn remove_liquidity(
+	// 	who: &AccountId,
+	// 	asset_pair: CurrencyPair<AssetId>,
+	// 	lp_amount: Balance,
+	// 	min_base_amount: Balance,
+	// 	min_quote_amount: Balance,
+	// ) -> Result<(), DispatchError>;
 }
 
 /// Aggregated prices for a given base/quote currency pair in a pool.

@@ -236,11 +236,13 @@ fn exchange_tests() {
 		));
 		assert_ok!(Tokens::mint_into(ETH, &CHARLIE, 10_u128 * unit));
 		// exchange ETH for USDT
-		let dy = <DexRouter as DexRouterTrait<_, _, _, _, _>>::exchange(
+		let dy = <DexRouter as AmmTrait>::exchange(
 			&CHARLIE,
+			currency_pair,
 			currency_pair,
 			1_u128 * unit,
 			2998_000_000_000_00_u128,
+			false,
 		);
 		assert_ok!(dy);
 		let dy = dy.unwrap();
@@ -250,11 +252,13 @@ fn exchange_tests() {
 		assert_ok!(acceptable_computation_error(dy, expected_value, precision, epsilon));
 		assert_ok!(Tokens::mint_into(USDT, &CHARLIE, 6000_u128 * unit));
 		// exchange USDT for ETH
-		let dy = <DexRouter as DexRouterTrait<_, _, _, _, _>>::exchange(
+		let dy = <DexRouter as AmmTrait>::exchange(
 			&CHARLIE,
+			currency_pair.swap(),
 			currency_pair.swap(),
 			3000_u128 * unit,
 			980000000000_u128,
+			false,
 		);
 		assert_ok!(dy);
 		let dy = dy.unwrap();
@@ -262,11 +266,13 @@ fn exchange_tests() {
 		assert_ok!(acceptable_computation_error(dy, expected_value, precision, epsilon));
 		// exchange USDT for ETH but expect high value
 		assert_noop!(
-			<DexRouter as DexRouterTrait<_, _, _, _, _>>::exchange(
+			<DexRouter as AmmTrait>::exchange(
 				&CHARLIE,
 				currency_pair.swap(),
+				currency_pair.swap(),
 				3000_u128 * unit,
-				1100000007962_u128
+				1100000007962_u128,
+				false,
 			),
 			Error::<Test>::CanNotRespectMinAmountRequested
 		);
@@ -289,11 +295,13 @@ fn buy_test() {
 		));
 		assert_ok!(Tokens::mint_into(ETH, &CHARLIE, 2_u128 * unit));
 		// buy 3000 USDT
-		let dy = <DexRouter as DexRouterTrait<_, _, _, _, _>>::buy(
+		let dy = <DexRouter as AmmTrait>::buy(
 			&CHARLIE,
 			currency_pair,
+			currency_pair.base, /* will be ignored */
 			3000_u128 * unit,
 			0_u128,
+			false,
 		);
 		assert_ok!(dy);
 		let dy = dy.unwrap();
@@ -303,11 +311,13 @@ fn buy_test() {
 		assert_ok!(acceptable_computation_error(dy, expected_value, precision, epsilon));
 		assert_ok!(Tokens::mint_into(USDT, &CHARLIE, 6100_u128 * unit));
 		// buy 1 ETH
-		let dy = <DexRouter as DexRouterTrait<_, _, _, _, _>>::buy(
+		let dy = <DexRouter as AmmTrait>::buy(
 			&CHARLIE,
 			currency_pair.swap(),
+			currency_pair.base, /* will be ignored */
 			1_u128 * unit,
 			980000000000_u128,
+			false,
 		);
 		assert_ok!(dy);
 		let dy = dy.unwrap();
@@ -317,11 +327,13 @@ fn buy_test() {
 		assert_ok!(acceptable_computation_error(dy, expected_value, precision, epsilon));
 		// buy 1 ETH but expect 1.0005
 		assert_noop!(
-			<DexRouter as DexRouterTrait<_, _, _, _, _>>::buy(
+			<DexRouter as AmmTrait>::buy(
 				&CHARLIE,
 				currency_pair.swap(),
+				currency_pair.base, /* will be ignored */
 				1_u128 * unit,
-				1_000_500_000_000_u128
+				1_000_500_000_000_u128,
+				false,
 			),
 			Error::<Test>::CanNotRespectMinAmountRequested
 		);
@@ -349,7 +361,7 @@ fn unsupported_operation_test() {
 		assert_ok!(Tokens::mint_into(USDT, &EVE, usdt_amount));
 		// base, quote amount shold match currency_pair's base quote asset
 		assert_noop!(
-			<DexRouter as DexRouterTrait<_, _, _, _, _>>::add_liquidity(
+			<DexRouter as AmmTrait>::add_liquidity(
 				&EVE,
 				currency_pair.swap(),
 				eth_amount,
@@ -360,13 +372,7 @@ fn unsupported_operation_test() {
 			Error::<Test>::UnsupportedOperation
 		);
 		assert_noop!(
-			<DexRouter as DexRouterTrait<_, _, _, _, _>>::remove_liquidity(
-				&EVE,
-				currency_pair,
-				unit,
-				0_u128,
-				0_u128
-			),
+			<DexRouter as AmmTrait>::remove_liquidity(&EVE, currency_pair, unit, 0_u128, 0_u128,),
 			Error::<Test>::UnsupportedOperation
 		);
 	});
@@ -386,11 +392,13 @@ fn single_pool_route_test() {
 		));
 		assert_ok!(Tokens::mint_into(ETH, &CHARLIE, 3_u128 * unit));
 		// buy 3000 USDC
-		let dy = <DexRouter as DexRouterTrait<_, _, _, _, _>>::buy(
+		let dy = <DexRouter as AmmTrait>::buy(
 			&CHARLIE,
 			currency_pair,
+			currency_pair.base, /* will be ignored */
 			3000_u128 * unit,
 			0_u128,
+			false,
 		);
 		assert_ok!(dy);
 		let dy = dy.unwrap();
@@ -399,11 +407,13 @@ fn single_pool_route_test() {
 		let epsilon = 1;
 		assert_ok!(acceptable_computation_error(dy, expected_value, precision, epsilon));
 		// exchange ETH for USDT
-		let dy = <DexRouter as DexRouterTrait<_, _, _, _, _>>::exchange(
+		let dy = <DexRouter as AmmTrait>::exchange(
 			&CHARLIE,
+			currency_pair,
 			currency_pair,
 			1_u128 * unit,
 			2998_000_000_000_00_u128,
+			false,
 		);
 		assert_ok!(dy);
 		let dy = dy.unwrap();

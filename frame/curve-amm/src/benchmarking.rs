@@ -103,7 +103,7 @@ benchmarks! {
 	  let user = account("user", 0, 0);
 	  assert_ok!(T::Assets::mint_into(usdt, &user, (1000_u128 * unit).into()));
 	  // buy 1000 USDC
- }: _(RawOrigin::Signed(user), pool_id, usdc, (1000_u128 * unit).into(), false)
+ }: _(RawOrigin::Signed(user), pool_id, usdc, (1000_u128 * unit).into(), 0_u128.into(), false)
 
  sell {
 	  let usdc: T::AssetId = 100.into();
@@ -135,7 +135,7 @@ benchmarks! {
 	  let user = account("user", 0, 0);
 	  assert_ok!(T::Assets::mint_into(usdc, &user, (1000_u128 * unit).into()));
 	  // sell 1000 USDC
- }: _(RawOrigin::Signed(user), pool_id, usdc, (1000_u128 * unit).into(), false)
+ }: _(RawOrigin::Signed(user), pool_id, usdc, (1000_u128 * unit).into(), 0_u128.into(), false)
 
  swap {
 	  let usdc: T::AssetId = 100.into();

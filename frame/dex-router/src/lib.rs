@@ -172,13 +172,8 @@ pub mod pallet {
 			min_receive: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as DexRouter<
-				T::AccountId,
-				T::AssetId,
-				T::PoolId,
-				T::Balance,
-				T::MaxHopsInRoute,
-			>>::exchange(&who, asset_pair, amount, min_receive)?;
+			let _ =
+				<Self as Amm>::exchange(&who, asset_pair, asset_pair, amount, min_receive, false)?;
 			Ok(())
 		}
 
@@ -192,13 +187,14 @@ pub mod pallet {
 			min_receive: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as DexRouter<
-				T::AccountId,
-				T::AssetId,
-				T::PoolId,
-				T::Balance,
-				T::MaxHopsInRoute,
-			>>::sell(&who, asset_pair, amount, min_receive)?;
+			let _ = <Self as Amm>::sell(
+				&who,
+				asset_pair,
+				asset_pair.base, /* will be ignored */
+				amount,
+				min_receive,
+				false,
+			)?;
 			Ok(())
 		}
 
@@ -212,13 +208,14 @@ pub mod pallet {
 			min_receive: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as DexRouter<
-				T::AccountId,
-				T::AssetId,
-				T::PoolId,
-				T::Balance,
-				T::MaxHopsInRoute,
-			>>::buy(&who, asset_pair, amount, min_receive)?;
+			let _ = <Self as Amm>::buy(
+				&who,
+				asset_pair,
+				asset_pair.base, /* will be ignored */
+				amount,
+				min_receive,
+				false,
+			)?;
 			Ok(())
 		}
 
@@ -234,14 +231,13 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as DexRouter<
-				T::AccountId,
-				T::AssetId,
-				T::PoolId,
-				T::Balance,
-				T::MaxHopsInRoute,
-			>>::add_liquidity(
-				&who, asset_pair, base_amount, quote_amount, min_mint_amount, keep_alive
+			let _ = <Self as Amm>::add_liquidity(
+				&who,
+				asset_pair,
+				base_amount,
+				quote_amount,
+				min_mint_amount,
+				keep_alive,
 			)?;
 			Ok(())
 		}
@@ -257,14 +253,12 @@ pub mod pallet {
 			min_quote_amount: T::Balance,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as DexRouter<
-				T::AccountId,
-				T::AssetId,
-				T::PoolId,
-				T::Balance,
-				T::MaxHopsInRoute,
-			>>::remove_liquidity(
-				&who, asset_pair, lp_amount, min_base_amount, min_quote_amount
+			let _ = <Self as Amm>::remove_liquidity(
+				&who,
+				asset_pair,
+				lp_amount,
+				min_base_amount,
+				min_quote_amount,
 			)?;
 			Ok(())
 		}
@@ -388,17 +382,62 @@ pub mod pallet {
 				|DexRoute::Direct(route)| Some((route.into_inner(), false)),
 			)
 		}
+	}
 
-		// TODO: expected minimum value can be provided from input parameter.
+	impl<T: Config> Amm for Pallet<T> {
+		type AssetId = T::AssetId;
+		type Balance = T::Balance;
+		type AccountId = T::AccountId;
+		type PoolId = CurrencyPair<T::AssetId>;
+
+		fn pool_exists(pool_id: Self::PoolId) -> bool {
+			DexRoutes::<T>::contains_key(pool_id.base, pool_id.quote) ||
+				DexRoutes::<T>::contains_key(pool_id.quote, pool_id.base)
+		}
+
+		fn currency_pair(
+			pool_id: Self::PoolId,
+		) -> Result<CurrencyPair<Self::AssetId>, DispatchError> {
+			if Self::pool_exists(pool_id) {
+				Ok(pool_id)
+			} else {
+				Err(Error::<T>::NoRouteFound.into())
+			}
+		}
+
+		fn lp_token(pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError> {
+			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
+			if route.len() != 1 {
+				return Err(Error::<T>::UnsupportedOperation.into())
+			}
+			let pablo_pool_id = route.get(0).ok_or(Error::<T>::UnsupportedOperation)?;
+			T::Pablo::lp_token(*pablo_pool_id)
+		}
+
+		fn get_exchange_value(
+			pool_id: Self::PoolId,
+			asset_id: Self::AssetId,
+			amount: Self::Balance,
+		) -> Result<Self::Balance, DispatchError> {
+			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
+			if route.len() != 1 {
+				return Err(Error::<T>::UnsupportedOperation.into())
+			}
+			let pablo_pool_id = route.get(0).ok_or(Error::<T>::UnsupportedOperation)?;
+			T::Pablo::get_exchange_value(*pablo_pool_id, asset_id, amount)
+		}
+
 		#[transactional]
 		fn exchange(
-			who: &T::AccountId,
-			asset_pair: CurrencyPair<T::AssetId>,
-			amount: T::Balance,
-			min_receive: T::Balance,
-		) -> Result<T::Balance, DispatchError> {
+			who: &Self::AccountId,
+			_pool_id: Self::PoolId,
+			asset_pair: CurrencyPair<Self::AssetId>,
+			quote_amount: Self::Balance,
+			min_receive: Self::Balance,
+			keep_alive: bool,
+		) -> Result<Self::Balance, DispatchError> {
 			let (route, reverse) = Self::get_route(asset_pair).ok_or(Error::<T>::NoRouteFound)?;
-			let mut dx_t = amount;
+			let mut dx_t = quote_amount;
 			let mut dy_t = T::Balance::zero();
 			let mut forward_iter;
 			let mut backward_iter;
@@ -420,7 +459,7 @@ pub mod pallet {
 					currency_pair,
 					dx_t,
 					T::Balance::zero(),
-					true,
+					keep_alive,
 				)?;
 				dx_t = dy_t;
 			}
@@ -430,28 +469,26 @@ pub mod pallet {
 
 		#[transactional]
 		fn sell(
-			who: &T::AccountId,
-			asset_pair: CurrencyPair<T::AssetId>,
-			amount: T::Balance,
-			min_receive: T::Balance,
-		) -> Result<T::Balance, DispatchError> {
-			<Self as DexRouter<
-				T::AccountId,
-				T::AssetId,
-				T::PoolId,
-				T::Balance,
-				T::MaxHopsInRoute,
-			>>::exchange(who, asset_pair, amount, min_receive)
+			who: &Self::AccountId,
+			pool_id: Self::PoolId,
+			_asset_id: Self::AssetId,
+			amount: Self::Balance,
+			min_receive: Self::Balance,
+			keep_alive: bool,
+		) -> Result<Self::Balance, DispatchError> {
+			<Self as Amm>::exchange(who, pool_id, pool_id, amount, min_receive, keep_alive)
 		}
 
 		#[transactional]
 		fn buy(
-			who: &T::AccountId,
-			asset_pair: CurrencyPair<T::AssetId>,
-			amount: T::Balance,
-			min_receive: T::Balance,
-		) -> Result<T::Balance, DispatchError> {
-			let (route, reverse) = Self::get_route(asset_pair).ok_or(Error::<T>::NoRouteFound)?;
+			who: &Self::AccountId,
+			pool_id: Self::PoolId,
+			_asset_id: Self::AssetId,
+			amount: Self::Balance,
+			min_receive: Self::Balance,
+			keep_alive: bool,
+		) -> Result<Self::Balance, DispatchError> {
+			let (route, reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			let mut dy_t = amount;
 			let mut dx_t = T::Balance::zero();
 			let mut forward_iter;
@@ -489,7 +526,7 @@ pub mod pallet {
 					currency_pair,
 					dx_t,
 					T::Balance::zero(),
-					true,
+					keep_alive,
 				)?;
 				dx_t = dy_t;
 			}
@@ -499,14 +536,14 @@ pub mod pallet {
 
 		#[transactional]
 		fn add_liquidity(
-			who: &T::AccountId,
-			asset_pair: CurrencyPair<T::AssetId>,
-			base_amount: T::Balance,
-			quote_amount: T::Balance,
-			min_mint_amount: T::Balance,
+			who: &Self::AccountId,
+			pool_id: Self::PoolId,
+			base_amount: Self::Balance,
+			quote_amount: Self::Balance,
+			min_mint_amount: Self::Balance,
 			keep_alive: bool,
 		) -> Result<(), DispatchError> {
-			let (route, _reverse) = Self::get_route(asset_pair).ok_or(Error::<T>::NoRouteFound)?;
+			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			if route.len() != 1 {
 				return Err(Error::<T>::UnsupportedOperation.into())
 			}
@@ -524,12 +561,12 @@ pub mod pallet {
 		#[transactional]
 		fn remove_liquidity(
 			who: &T::AccountId,
-			asset_pair: CurrencyPair<T::AssetId>,
-			lp_amount: T::Balance,
-			min_base_amount: T::Balance,
-			min_quote_amount: T::Balance,
+			pool_id: Self::PoolId,
+			lp_amount: Self::Balance,
+			min_base_amount: Self::Balance,
+			min_quote_amount: Self::Balance,
 		) -> Result<(), DispatchError> {
-			let (route, _reverse) = Self::get_route(asset_pair).ok_or(Error::<T>::NoRouteFound)?;
+			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			if route.len() != 1 {
 				return Err(Error::<T>::UnsupportedOperation.into())
 			}
