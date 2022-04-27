@@ -13,7 +13,7 @@ pub struct Airdrop<AccountId, Balance, Moment> {
 	/// Amount of the `total_funds` already claimed.
 	pub(crate) claimed_funds: Balance,
 	/// Starting block of the Airdrop.
-	pub(crate) start: Moment,
+	pub(crate) start: AirdropStart<Moment>,
 	/// The mimimum time, in blocks, between recipient claims.
 	pub(crate) schedule: Moment,
 }
@@ -29,6 +29,13 @@ pub struct RecipientFund<Balance, Period> {
 	pub(crate) vesting_period: Period,
 	/// If claims by this user will be funded by an external pool.
 	pub(crate) funded_claim: bool,
+}
+
+/// Indicates if an Airdrop should start at a specific block or be started manually.
+#[derive(Clone, Copy, RuntimeDebug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+pub enum AirdropStart<Moment> {
+    StartAt(Moment),
+    Manual,
 }
 
 /// Proof that a remote account owns a local recipient account.
