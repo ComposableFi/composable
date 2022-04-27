@@ -110,6 +110,7 @@ polkadot-parachain = { git = "https://github.com/paritytech/polkadot", default-f
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
+wasmtime-environ = "0.36.0"
 session-benchmarking = { package = "cumulus-pallet-session-benchmarking", git = "https://github.com/paritytech/cumulus", default-features = false , branch = "polkadot-v0.9.18" }
 xcm = { git = "https://github.com/paritytech/polkadot", default-features = false , branch = "release-v0.9.18" }
 xcm-builder = { git = "https://github.com/paritytech/polkadot", default-features = false , branch = "release-v0.9.18" }

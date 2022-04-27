@@ -55,8 +55,12 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 
-use codec::Encode;
-use codec::Codec;
+use codec::{Encode, Codec, EncodeLike};
+use scale_info::TypeInfo;
+use sp_std::{
+	fmt::Debug,
+};
+use sp_runtime::AccountId32;
 use frame_support::traits::{EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
 #[cfg(any(feature = "std", test))]
@@ -957,11 +961,10 @@ impl_runtime_apis! {
 		}
 	}
 
-
-	impl<Call, AccountId> simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime
+	impl<Call, AccountId: Clone> simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime
 		where
 			Call: Codec,
-			AccountId: Codec,
+			AccountId: Codec + EncodeLike<AccountId32> + Clone+ PartialEq + TypeInfo + Debug,
 	{
 		fn create_transaction(call: Call, signer: AccountId) -> Vec<u8> {
 			use sp_runtime::{

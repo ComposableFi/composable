@@ -25,9 +25,9 @@ sp-io = { default-features = false, git = "https://github.com/paritytech/substra
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 
-lite-json = { version = "0.1", default-features = false }
-log = { version = "0.4.14", default-features = false }
-serde_json = { version = "1.0.45", default-features = false, features = [
+lite-json = { version = "0.1.3", default-features = false }
+log = { version = "0.4.16", default-features = false }
+serde_json = { version = "1.0.79", default-features = false, features = [
   "alloc",
 ] }
 
