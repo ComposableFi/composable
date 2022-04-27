@@ -1410,16 +1410,16 @@ proptest! {
 
 proptest! {
 	#[test]
-	#[ignore = "Refactoring tests"]
 	fn fails_to_increase_position_if_not_enough_margin(
-		direction in any_direction()
+		direction in any_direction(),
+		excess in 1..as_balance(1_000_000),
 	) {
 		let mut market_id: MarketId = 0;
 		let mut market_config = valid_market_config();
 		market_config.margin_ratio_initial = (1, 10).into();  // 1/10 IMR, or 10x leverage
 
 		let margin = as_balance(10);
-		let quote_amount = as_balance(100) + 1; // Just over 10x margin
+		let quote_amount = as_balance(100) + excess; // Over 10x margin
 
 		ExtBuilder { balances: vec![(ALICE, USDC, margin)], ..Default::default() }
 			.build()

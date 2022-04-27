@@ -754,6 +754,8 @@ pub mod pallet {
 			let position_direction = Self::position_direction(position).unwrap_or(direction);
 
 			let base_swapped: T::Balance;
+			// Whether or not the trade increases the risk exposure of the account
+			let mut is_risk_increasing = false;
 			if direction == position_direction {
 				base_swapped = Self::increase_position(
 					position,
@@ -762,6 +764,8 @@ pub mod pallet {
 					&quote_abs_amount_decimal,
 					base_asset_amount_limit,
 				)?;
+
+				is_risk_increasing = true;
 			} else {
 				let abs_base_asset_value =
 					Self::base_asset_value(&market, position, position_direction)?.saturating_abs();
@@ -791,14 +795,20 @@ pub mod pallet {
 							&market,
 							quote_abs_amount_decimal.into_balance()?,
 						)?,
-						Ordering::Greater => Self::reverse_position(
-							position,
-							&market,
-							direction,
-							&quote_abs_amount_decimal,
-							base_asset_amount_limit,
-							&abs_base_asset_value,
-						)?,
+						Ordering::Greater => {
+							is_risk_increasing = quote_abs_amount_decimal
+								.try_sub(&abs_base_asset_value)? >
+								abs_base_asset_value;
+
+							Self::reverse_position(
+								position,
+								&market,
+								direction,
+								&quote_abs_amount_decimal,
+								base_asset_amount_limit,
+								&abs_base_asset_value,
+							)?
+						},
 					};
 
 				let pnl = exit_value.try_sub(&entry_value)?;
@@ -810,7 +820,12 @@ pub mod pallet {
 				);
 			}
 
-			// ensure!(Self::is_above_imr(&positions, margin)?, Error::<T>::InsufficientCollateral);
+			if is_risk_increasing {
+				ensure!(
+					Self::is_above_imr(&positions, margin)?,
+					Error::<T>::InsufficientCollateral
+				);
+			}
 
 			Positions::<T>::insert(account_id, positions);
 
@@ -1008,7 +1023,6 @@ pub mod pallet {
 
 	// Helper functions - validity checks
 	impl<T: Config> Pallet<T> {
-		#[allow(dead_code)]
 		fn is_above_imr(
 			positions: &BoundedVec<Position<T>, T::MaxPositions>,
 			margin: T::Balance,
@@ -1023,11 +1037,8 @@ pub mod pallet {
 					let value = Self::base_asset_value(&market, position, direction)?;
 					let abs_value = value.saturating_abs();
 
-					nonnormalized_imr.try_add_mut(
-						&abs_value
-							.try_mul(&market.margin_ratio_initial)
-							.and_then(|d| d.try_div(&abs_value))?,
-					)?;
+					nonnormalized_imr
+						.try_add_mut(&abs_value.try_mul(&market.margin_ratio_initial)?)?;
 
 					equity.try_add_mut(&value.try_sub(&position.quote_asset_notional_amount)?)?;
 				}
