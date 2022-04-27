@@ -482,6 +482,55 @@ pub mod pallet {
 			todo!()
 		}
 
+		/// Performs the swap of the desired asset agains the vamm.
+		///
+		/// # Overview
+		/// In order for the caller be able to swap assets in the vamm, it has
+		/// to request it to the Vamm Pallet. The pallet will perform all needed
+		/// checks to ensure the swap is a valid one and then, using the
+		/// corresponding function it was configured to, will compute the amount
+		/// of assets the caller will recieve.
+		///
+		/// In the current state the only function available to perform these
+		/// computations is the CFMM `x * y = k`.
+		///
+		/// TODO(Cardosaum): Create the diagram for the function.
+		/// ![](https://www.plantuml.com/plantuml/svg/PP0zJWCn44PxdsBO1b2q5qY14b9GKI7H3vkFOB7-OURRvFfWhm0XEillpHlBEwSQbpG7Vu-vgcaIWzUI7OzmrnFkCPVBtgnSXBOWC7A6F82Yxg1KYnFajPYeF6jAuLeN5fqOpqf8oU6ARqYGfEOXL3N6ALRDbE4mHsGEeYvJF_x5BTVXkNMFIdrHXmnFBAOdo4qJRhlXNGbhHSQxFhBPRFyzrF2nm1aQRruVNBL-vLJYXwxmK59TY5xuPbzmNJQEMzd_BWWxv6Fxq4y0)
+		///
+		/// ## Parameters
+		///  - `config`: Specification for swaps.
+		///
+		/// ## Returns
+		/// The amount of the other asset the caller will receive as a
+		/// result of the swap.
+		///
+		/// E.g. If the caller swaps _quote_ asset, it will receive some amount
+		/// of _base_ asset (and vice-versa).
+		///
+		/// ## Assumptions or Requirements
+		/// * The requested [`VammId`](Config::VammId) must exists
+		/// * The desired swap amount can not exceed the maximum supported value
+		/// for the Vamm
+		/// * The desired swap amount must result in at least
+		/// [`output_amount_limit`](composable_traits::vamm::SwapConfig)
+		///
+		/// ## Emits
+		/// * [`Swaped`](Event::<T>::Swapped)
+		///
+		/// ## State Changes
+		/// Updates [`VammMap`] storage map.
+		///
+		/// ## Errors
+		/// * [`Error::<T>::VammDoesNotExist`]
+		/// * [`Error::<T>::FailToRetrieveVamm`]
+		/// * [`Error::<T>::InsufficientFundsForTrade`]
+		/// * [`Error::<T>::TradeExtrapolatesMaximumSupportedAmount`]
+		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
+		/// * [`ArithmeticError::Underflow`](sp_runtime::ArithmeticError)
+		/// * [`ArithmeticError::DivisionByZero`](sp_runtime::ArithmeticError)
+		///
+		/// # Runtime
+		/// `O(1)`
 		fn swap(config: &SwapConfigOf<T>) -> Result<BalanceOf<T>, DispatchError> {
 			// Get Vamm state.
 			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
