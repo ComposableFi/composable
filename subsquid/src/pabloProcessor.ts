@@ -11,9 +11,12 @@ export async function processPoolCreatedEvent(ctx: EventHandlerContext, event: P
     const pool = await getOrCreate(ctx.store, PabloPool, poolCreatedEvt.poolId.toString());
     // only set values if the owner was missing, i.e a new pool
     if (pool.owner == null) {
-        pool.owner = ownerAcc;
+        pool.owner = owner;
         pool.poolId = poolCreatedEvt.poolId.toString();
+        pool.quoteAssetId = BigInt(0);
         pool.transactionCount = 0;
+        pool.totalLiquidity = '0.0';
+        pool.totalVolume = '0.0';
         pool.calculatedTimestamp = BigInt(new Date().getTime());
         pool.blockNumber = BigInt(ctx.block.height);
         await ctx.store.save(pool);

@@ -39,7 +39,7 @@ type PabloTransaction @entity {
 type PabloPool @entity {
   "Pool ID"
   poolId: ID!
-  owner: Account!
+  owner: String!
   transactionCount: Int!
   # TODO investigate the best way to represent decimals
   totalLiquidity: String!
