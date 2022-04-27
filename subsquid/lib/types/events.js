@@ -99,7 +99,7 @@ class PabloPoolCreatedEvent {
      * Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
      */
     get isV2100() {
-        return this.ctx._chain.getEventHash('pablo.PoolCreated') === '9d2b9ca9cc54280587b78a037ab5d28ac846875ec675325c76892e5e5cdfa3fe';
+        return this.ctx._chain.getEventHash('pablo.PoolCreated') === '76b660a348da63e9f657f2e6efbf072d8b02fe00cce4524df8e49986c270e996';
     }
     /**
      * Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
