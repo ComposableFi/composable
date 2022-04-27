@@ -50,6 +50,12 @@ prop_compose! {
 	}
 }
 
+prop_compose! {
+	fn percentage_fraction()(percent in 1..100_u128) -> FixedU128 {
+		FixedU128::from((percent, 100))
+	}
+}
+
 // ----------------------------------------------------------------------------------------------------
 //                                            Open Position
 // ----------------------------------------------------------------------------------------------------
@@ -458,7 +464,10 @@ proptest! {
 
 proptest! {
 	#[test]
-	fn reducing_long_position_partially_realizes_pnl(new_price in any_price()) {
+	fn reducing_long_position_partially_realizes_pnl(
+		new_price in any_price(),
+		percentf in percentage_fraction()
+	) {
 		let mut market_id: MarketId = 0;
 		let mut market_config = valid_market_config();
 		market_config.minimum_trade_size = 0.into();
@@ -490,37 +499,41 @@ proptest! {
 
 
 				VammPallet::set_price(Some(new_price));
-				let base_value_to_close =
-					(new_price * FixedU128::from_inner(base_amount / 2)).into_inner();
-				// Reduce (close) position by 50%
+				// Reduce (close) position by desired percentage
+				let base_amount_to_close = percentf.saturating_mul_int(base_amount);
+				let base_value_to_close = new_price.saturating_mul_int(base_amount_to_close);
 				assert_ok!(
 					<TestPallet as ClearingHouse>::open_position(
 						&ALICE,
 						&market_id,
 						Direction::Short,
 						base_value_to_close,
-						base_amount / 2,
+						base_amount_to_close,
 					),
-					base_amount / 2,
+					base_amount_to_close,
 				);
 
 				let positions = TestPallet::get_positions(&ALICE);
 				// Positions remains open
 				assert_eq!(positions.len(), positions_before + 1);
 
-				// 50% of the PnL is realized
-				let pnl = base_value_to_close as i128 - (quote_amount / 2) as i128;
+				// Fraction of the PnL is realized
+				let entry_value = percentf.saturating_mul_int(quote_amount);
+				let pnl = base_value_to_close as i128 - entry_value as i128;
 				assert_eq!(
 					TestPallet::get_margin(&ALICE).unwrap(),
 					(margin + pnl) as u128
 				);
 
 				let position = positions.iter().find(|p| p.market_id == market_id).unwrap();
-				// Position base asset and quote asset notional are cut in half
-				assert_eq!(position.base_asset_amount.into_inner(), (base_amount / 2) as i128);
+				// Position base asset and quote asset notional are cut by percentage
+				assert_eq!(
+					position.base_asset_amount.into_inner(),
+					(base_amount - base_amount_to_close) as i128
+				);
 				assert_eq!(
 					position.quote_asset_notional_amount.into_inner(),
-					(quote_amount / 2) as i128
+					(quote_amount - entry_value) as i128
 				);
 
 				SystemPallet::assert_last_event(
@@ -528,7 +541,7 @@ proptest! {
 						market: market_id,
 						direction: Direction::Short,
 						quote: base_value_to_close,
-						base: base_amount / 2,
+						base: base_amount_to_close,
 					}.into()
 				);
 			})
@@ -537,7 +550,10 @@ proptest! {
 
 proptest! {
 	#[test]
-	fn reducing_short_position_partially_realizes_pnl(new_price in any_price()) {
+	fn reducing_short_position_partially_realizes_pnl(
+		new_price in any_price(),
+		percentf in percentage_fraction()
+	) {
 		let mut market_id: MarketId = 0;
 		let mut market_config = valid_market_config();
 		market_config.minimum_trade_size = 0.into();
@@ -569,37 +585,41 @@ proptest! {
 				);
 
 				VammPallet::set_price(Some(new_price));
-				// Reduce (close) position by 50%
-				let base_value_to_close =
-					new_price.saturating_mul_int(base_amount / 2);
+				// Reduce (close) position by desired percentage
+				let base_amount_to_close = percentf.saturating_mul_int(base_amount);
+				let base_value_to_close = new_price.saturating_mul_int(base_amount_to_close);
 				assert_ok!(
 					<TestPallet as ClearingHouse>::open_position(
 						&ALICE,
 						&market_id,
 						Direction::Long,
 						base_value_to_close,
-						base_amount / 2,
+						base_amount_to_close,
 					),
-					base_amount / 2
+					base_amount_to_close
 				);
 
 				// Positions remains open
 				let positions = TestPallet::get_positions(&ALICE);
 				assert_eq!(positions.len(), positions_before + 1);
 
-				// 50% of the PnL is realized
-				let pnl = margin / 2 - base_value_to_close as i128;
+				// Percentage of the PnL is realized
+				let entry_value = percentf.saturating_mul_int(quote_amount);
+				let pnl = entry_value as i128 - base_value_to_close as i128;
 				assert_eq!(
 					TestPallet::get_margin(&ALICE).unwrap(),
 					(margin + pnl).max(0) as u128
 				);
 
 				let position = positions.iter().find(|p| p.market_id == market_id).unwrap();
-				// Position base asset and quote asset notional are cut in half
-				assert_eq!(position.base_asset_amount.into_inner(), -(base_amount as i128) / 2);
+				// Position base asset and quote asset notional are cut by percentage
+				assert_eq!(
+					position.base_asset_amount.into_inner(),
+					-((base_amount - base_amount_to_close) as i128)
+				);
 				assert_eq!(
 					position.quote_asset_notional_amount.into_inner(),
-					-(quote_amount as i128) / 2
+					-((quote_amount - entry_value) as i128)
 				);
 
 				SystemPallet::assert_last_event(
@@ -607,7 +627,7 @@ proptest! {
 						market: market_id,
 						direction: Direction::Long,
 						quote: base_value_to_close,
-						base: base_amount / 2,
+						base: base_amount_to_close,
 					}.into()
 				);
 			})
