@@ -230,10 +230,11 @@ jobs:
 
       - name: mdbook
         run: |
-          mdbook test > >(tee log) 2> >(tee log)
-          exit_code=$?
+          set -e
+          cd book
+          mdbook test 2>&1 | tee log
           if [ -z "$(cat log | grep ERROR)" ]; then
-            exit $exit_code
+            true
           else
             exit 1
           fi
