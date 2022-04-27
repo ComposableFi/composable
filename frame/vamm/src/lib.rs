@@ -631,7 +631,7 @@ pub mod pallet {
 
 			let new_input_amount = match direction {
 				Direction::Add => {
-					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Underflow)?
+					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?
 				},
 
 				Direction::Remove => {
