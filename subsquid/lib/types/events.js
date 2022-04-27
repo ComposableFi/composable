@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PabloPoolCreatedEvent = exports.BalancesTransferEvent = void 0;
+exports.PabloSwappedEvent = exports.PabloPoolDeletedEvent = exports.PabloPoolCreatedEvent = exports.PabloLiquidityRemovedEvent = exports.PabloLiquidityAddedEvent = exports.BalancesTransferEvent = void 0;
 const assert_1 = __importDefault(require("assert"));
 const support_1 = require("./support");
 class BalancesTransferEvent {
@@ -34,6 +34,62 @@ class BalancesTransferEvent {
     }
 }
 exports.BalancesTransferEvent = BalancesTransferEvent;
+class PabloLiquidityAddedEvent {
+    constructor(ctx) {
+        this.ctx = ctx;
+        (0, assert_1.default)(this.ctx.event.name === 'pablo.LiquidityAdded');
+    }
+    /**
+     * Liquidity added into the pool `T::PoolId`.
+     */
+    get isV2100() {
+        return this.ctx._chain.getEventHash('pablo.LiquidityAdded') === '312d582090ea3aa5c6ba6b929f4114d4a54ddca29cc066e4de5540c288ce5464';
+    }
+    /**
+     * Liquidity added into the pool `T::PoolId`.
+     */
+    get asV2100() {
+        (0, assert_1.default)(this.isV2100);
+        return this.ctx._chain.decodeEvent(this.ctx.event);
+    }
+    get isLatest() {
+        (0, support_1.deprecateLatest)();
+        return this.isV2100;
+    }
+    get asLatest() {
+        (0, support_1.deprecateLatest)();
+        return this.asV2100;
+    }
+}
+exports.PabloLiquidityAddedEvent = PabloLiquidityAddedEvent;
+class PabloLiquidityRemovedEvent {
+    constructor(ctx) {
+        this.ctx = ctx;
+        (0, assert_1.default)(this.ctx.event.name === 'pablo.LiquidityRemoved');
+    }
+    /**
+     * Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
+     */
+    get isV2100() {
+        return this.ctx._chain.getEventHash('pablo.LiquidityRemoved') === 'ef123c9326de7ce47d183c1b7d729db3c90f89a6bd64122aa03a48c169c6aa5b';
+    }
+    /**
+     * Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
+     */
+    get asV2100() {
+        (0, assert_1.default)(this.isV2100);
+        return this.ctx._chain.decodeEvent(this.ctx.event);
+    }
+    get isLatest() {
+        (0, support_1.deprecateLatest)();
+        return this.isV2100;
+    }
+    get asLatest() {
+        (0, support_1.deprecateLatest)();
+        return this.asV2100;
+    }
+}
+exports.PabloLiquidityRemovedEvent = PabloLiquidityRemovedEvent;
 class PabloPoolCreatedEvent {
     constructor(ctx) {
         this.ctx = ctx;
@@ -62,4 +118,60 @@ class PabloPoolCreatedEvent {
     }
 }
 exports.PabloPoolCreatedEvent = PabloPoolCreatedEvent;
+class PabloPoolDeletedEvent {
+    constructor(ctx) {
+        this.ctx = ctx;
+        (0, assert_1.default)(this.ctx.event.name === 'pablo.PoolDeleted');
+    }
+    /**
+     * The sale ended, the funds repatriated and the pool deleted.
+     */
+    get isV2100() {
+        return this.ctx._chain.getEventHash('pablo.PoolDeleted') === '1b2177997ab30c1eecba237f26886dc4fce241682664c0c2ccd6fa478d585089';
+    }
+    /**
+     * The sale ended, the funds repatriated and the pool deleted.
+     */
+    get asV2100() {
+        (0, assert_1.default)(this.isV2100);
+        return this.ctx._chain.decodeEvent(this.ctx.event);
+    }
+    get isLatest() {
+        (0, support_1.deprecateLatest)();
+        return this.isV2100;
+    }
+    get asLatest() {
+        (0, support_1.deprecateLatest)();
+        return this.asV2100;
+    }
+}
+exports.PabloPoolDeletedEvent = PabloPoolDeletedEvent;
+class PabloSwappedEvent {
+    constructor(ctx) {
+        this.ctx = ctx;
+        (0, assert_1.default)(this.ctx.event.name === 'pablo.Swapped');
+    }
+    /**
+     * Token exchange happened.
+     */
+    get isV2100() {
+        return this.ctx._chain.getEventHash('pablo.Swapped') === 'cd4fbb8566d58553fc0cec0b6b7ee799d3f643b2953e2000db716e5919cb9214';
+    }
+    /**
+     * Token exchange happened.
+     */
+    get asV2100() {
+        (0, assert_1.default)(this.isV2100);
+        return this.ctx._chain.decodeEvent(this.ctx.event);
+    }
+    get isLatest() {
+        (0, support_1.deprecateLatest)();
+        return this.isV2100;
+    }
+    get asLatest() {
+        (0, support_1.deprecateLatest)();
+        return this.asV2100;
+    }
+}
+exports.PabloSwappedEvent = PabloSwappedEvent;
 //# sourceMappingURL=events.js.map

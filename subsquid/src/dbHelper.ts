@@ -19,7 +19,7 @@ export async function getOrCreate<T extends { id: string }>(
         where: { id },
     });
 
-    if (entity == null) {
+    if (entity == undefined) {
         entity = new EntityConstructor();
         entity.id = id;
     }
