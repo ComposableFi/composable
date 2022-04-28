@@ -22,6 +22,9 @@ build:
 clean:
 	@cargo clean
 
+bench:
+	./scripts/benchmark.sh
+
 test:
 	@cargo test $(TESTS) --offline --lib -- --color=always --nocapture
 
