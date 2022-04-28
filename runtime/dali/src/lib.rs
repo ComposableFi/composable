@@ -67,7 +67,7 @@ use frame_system::EnsureSigned;
 use scale_info::TypeInfo;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-use sp_runtime::{AccountId32, MultiAddress};
+use sp_runtime::{AccountId32};
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
 use sp_std::fmt::Debug;
 use system::{

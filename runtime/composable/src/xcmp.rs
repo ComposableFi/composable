@@ -176,7 +176,7 @@ parameter_types! {
 pub struct AccountIdToMultiLocation;
 impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	fn convert(account: AccountId) -> MultiLocation {
-		X1(AccountId32 { network: NetworkId::Any, id: account.into() }).into()
+		X1(Junction::AccountId32 { network: NetworkId::Any, id: account.into() }).into()
 	}
 }
 
