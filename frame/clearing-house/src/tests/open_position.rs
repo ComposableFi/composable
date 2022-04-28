@@ -87,6 +87,48 @@ fn fails_to_open_position_if_market_id_invalid() {
 		})
 }
 
+#[test]
+fn fails_to_create_new_position_if_violates_maximum_positions_num() {
+	let max_positions = <Runtime as Config>::MaxPositions::get() as usize;
+	let mut market_ids = Vec::<_>::new();
+	let orders = max_positions + 1;
+	let configs = vec![None; orders];
+
+	let quote_amount_total = valid_quote_asset_amount();
+	let quote_amount: Balance = quote_amount_total / (orders as u128);
+	let base_amount_limit: Balance = valid_base_asset_amount_limit() / (orders as u128);
+
+	ExtBuilder { balances: vec![(ALICE, USDC, quote_amount_total)], ..Default::default() }
+		.build()
+		.init_markets(&mut market_ids, configs.into_iter())
+		.add_margin(&ALICE, USDC, quote_amount_total)
+		.execute_with(|| {
+			// Current price = quote_amount / base_amount_limit
+			VammPallet::set_price(Some((quote_amount, base_amount_limit).into()));
+
+			for market_id in market_ids.iter().take(max_positions) {
+				assert_ok!(TestPallet::open_position(
+					Origin::signed(ALICE),
+					*market_id,
+					Direction::Long,
+					quote_amount,
+					base_amount_limit,
+				));
+			}
+
+			assert_noop!(
+				TestPallet::open_position(
+					Origin::signed(ALICE),
+					market_ids[max_positions],
+					Direction::Long,
+					quote_amount,
+					base_amount_limit,
+				),
+				Error::<Runtime>::MaxPositionsExceeded
+			);
+		})
+}
+
 proptest! {
 	#[test]
 	fn open_position_in_new_market_succeeds(
@@ -138,51 +180,7 @@ proptest! {
 				);
 			})
 	}
-}
 
-#[test]
-fn fails_to_create_new_position_if_violates_maximum_positions_num() {
-	let max_positions = <Runtime as Config>::MaxPositions::get() as usize;
-	let mut market_ids = Vec::<_>::new();
-	let orders = max_positions + 1;
-	let configs = vec![None; orders];
-
-	let quote_amount_total = valid_quote_asset_amount();
-	let quote_amount: Balance = quote_amount_total / (orders as u128);
-	let base_amount_limit: Balance = valid_base_asset_amount_limit() / (orders as u128);
-
-	ExtBuilder { balances: vec![(ALICE, USDC, quote_amount_total)], ..Default::default() }
-		.build()
-		.init_markets(&mut market_ids, configs.into_iter())
-		.add_margin(&ALICE, USDC, quote_amount_total)
-		.execute_with(|| {
-			// Current price = quote_amount / base_amount_limit
-			VammPallet::set_price(Some((quote_amount, base_amount_limit).into()));
-
-			for market_id in market_ids.iter().take(max_positions) {
-				assert_ok!(TestPallet::open_position(
-					Origin::signed(ALICE),
-					*market_id,
-					Direction::Long,
-					quote_amount,
-					base_amount_limit,
-				));
-			}
-
-			assert_noop!(
-				TestPallet::open_position(
-					Origin::signed(ALICE),
-					market_ids[max_positions],
-					Direction::Long,
-					quote_amount,
-					base_amount_limit,
-				),
-				Error::<Runtime>::MaxPositionsExceeded
-			);
-		})
-}
-
-proptest! {
 	#[test]
 	fn fails_to_open_position_if_trade_size_too_small(
 		(minimum_trade_size, eps) in min_trade_size_and_eps(as_balance((1, 100)))
@@ -216,9 +214,7 @@ proptest! {
 				);
 			})
 	}
-}
 
-proptest! {
 	#[test]
 	fn short_trade_can_close_long_position_within_tolerance(
 		(minimum_trade_size, eps) in min_trade_size_and_eps(as_balance((1, 100)))
@@ -274,9 +270,7 @@ proptest! {
 				);
 		})
 	}
-}
 
-proptest! {
 	#[test]
 	fn long_trade_can_close_short_position_within_tolerance(
 		(minimum_trade_size, eps) in min_trade_size_and_eps(as_balance((1, 100)))
@@ -332,9 +326,7 @@ proptest! {
 				);
 			})
 	}
-}
 
-proptest! {
 	#[test]
 	fn closing_long_position_with_trade_realizes_pnl(new_price in any_price()) {
 		let mut market_id: MarketId = 0;
@@ -395,9 +387,7 @@ proptest! {
 				);
 		})
 	}
-}
 
-proptest! {
 	#[test]
 	fn closing_short_position_with_trade_realizes_pnl(new_price in any_price()) {
 		let mut market_id: MarketId = 0;
@@ -460,9 +450,7 @@ proptest! {
 				);
 		})
 	}
-}
 
-proptest! {
 	#[test]
 	fn reducing_long_position_partially_realizes_pnl(
 		new_price in any_price(),
@@ -546,9 +534,7 @@ proptest! {
 				);
 			})
 	}
-}
 
-proptest! {
 	#[test]
 	fn reducing_short_position_partially_realizes_pnl(
 		new_price in any_price(),
@@ -632,9 +618,7 @@ proptest! {
 				);
 			})
 	}
-}
 
-proptest! {
 	#[test]
 	fn reversing_long_position_realizes_pnl(new_price in any_price()) {
 		let mut market_id: MarketId = 0;
@@ -718,9 +702,7 @@ proptest! {
 				);
 			})
 	}
-}
 
-proptest! {
 	#[test]
 	fn reversing_short_position_realizes_pnl(new_price in any_price()) {
 		let mut market_id: MarketId = 0;
@@ -805,9 +787,7 @@ proptest! {
 				);
 			})
 	}
-}
 
-proptest! {
 	#[test]
 	fn fails_to_increase_position_if_not_enough_margin(
 		direction in any_direction(),
