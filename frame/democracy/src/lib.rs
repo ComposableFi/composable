@@ -720,8 +720,7 @@ pub mod pallet {
 			#[pallet::compact] seconds_upper_bound: u32,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-
-            let seconds = Self::len_of_deposit_of(proposal).ok_or(Error::<T>::ProposalMissing)?;
+			let seconds = Self::len_of_deposit_of(proposal).ok_or(Error::<T>::ProposalMissing)?;
 			ensure!(seconds <= seconds_upper_bound, Error::<T>::WrongUpperBound);
 			let mut deposit = Self::deposit_of(proposal).ok_or(Error::<T>::ProposalMissing)?;
 			T::NativeCurrency::reserve(&who, deposit.1)?;
@@ -1966,7 +1965,7 @@ impl<T: Config> Pallet<T> {
 		// To decode the enum variant we only need the first byte.
 		let mut buf = [0u8; 1];
 		let key = <Preimages<T>>::hashed_key_for(proposal_id);
-        let bytes = sp_io::storage::read(&key, &mut buf, 0).ok_or(Error::<T>::NotImminent)?;
+		let bytes = sp_io::storage::read(&key, &mut buf, 0).ok_or(Error::<T>::NotImminent)?;
 		// The value may be smaller that 1 byte.
 		let mut input = &buf[0..buf.len().min(bytes as usize)];
 
@@ -1996,7 +1995,7 @@ impl<T: Config> Pallet<T> {
 		// * at most 5 bytes to decode a `Compact<u32>`
 		let mut buf = [0u8; 6];
 		let key = <Preimages<T>>::hashed_key_for(proposal_id);
-        let bytes = sp_io::storage::read(&key, &mut buf, 0).ok_or(Error::<T>::PreimageMissing)?;
+		let bytes = sp_io::storage::read(&key, &mut buf, 0).ok_or(Error::<T>::PreimageMissing)?;
 		// The value may be smaller that 6 bytes.
 		let mut input = &buf[0..buf.len().min(bytes as usize)];
 
