@@ -789,7 +789,7 @@ proptest! {
 	}
 
 	#[test]
-	fn fails_to_increase_position_if_not_enough_margin(
+	fn fails_to_create_new_position_without_enough_margin(
 		direction in any_direction(),
 		excess in 1..as_balance(1_000_000),
 	) {
@@ -816,6 +816,44 @@ proptest! {
 						base_amount_limit,
 					),
 					Error::<Runtime>::InsufficientCollateral,
+				);
+			})
+	}
+
+	#[test]
+	fn succeeds_in_creating_new_position_with_enough_margin(
+		direction in any_direction(),
+		max_leverage_percent in 100..2_000u128,  // Anywhere from 1x to 20x margin
+		percentf in percentage_fraction()
+	) {
+		let mut market_id: MarketId = 0;
+		let mut market_config = valid_market_config();
+		market_config.margin_ratio_initial = (100, max_leverage_percent).into();
+
+		let margin = as_balance(10);
+		let quote_amount_max = market_config
+			.margin_ratio_initial
+			.reciprocal()
+			.unwrap()
+			.saturating_mul_int(margin);
+		let quote_amount = percentf.saturating_mul_int(quote_amount_max);
+
+		ExtBuilder { balances: vec![(ALICE, USDC, margin)], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(market_config))
+			.add_margin(&ALICE, USDC, margin)
+			.execute_with(|| {
+				VammPallet::set_price(Some(10.into()));
+				let base_amount_limit = quote_amount / 10;
+				assert_ok!(
+					<TestPallet as ClearingHouse>::open_position(
+						&ALICE,
+						&market_id,
+						direction,
+						quote_amount,
+						base_amount_limit
+					),
+					base_amount_limit,
 				);
 			})
 	}
