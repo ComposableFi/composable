@@ -1,6 +1,5 @@
 @startuml
 skinparam responseMessageBelowArrow true
-title Vamm creation
 'autoactivate on
 !theme mars
 
