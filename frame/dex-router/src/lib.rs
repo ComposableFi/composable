@@ -306,28 +306,30 @@ pub mod pallet {
 			route: BoundedVec<T::PoolId, T::MaxHopsInRoute>,
 		) -> Result<(), DispatchError> {
 			Self::validate_route(asset_pair, &route)?;
-			let base_asset = asset_pair.base;
-			let quote_asset = asset_pair.quote;
 			let existing_route = Self::get_route(asset_pair);
-			// remove any route for base_asset/quote_asset or symmetric quote_asset/base_asset pair.
-			DexRoutes::<T>::remove(base_asset, quote_asset);
-			DexRoutes::<T>::remove(quote_asset, base_asset);
-			DexRoutes::<T>::insert(base_asset, quote_asset, DexRoute::Direct(route.clone()));
 			let event = match existing_route {
-				Some((old_route, _)) => Event::RouteUpdated {
-					who: who.clone(),
-					x_asset_id: base_asset,
-					y_asset_id: quote_asset,
-					old_route,
-					updated_route: route.to_vec(),
+				Some((old_route, reverse)) => {
+					if reverse {
+						DexRoutes::<T>::remove(asset_pair.quote, asset_pair.base);
+					} else {
+						DexRoutes::<T>::remove(asset_pair.base, asset_pair.quote);
+					}
+					Event::RouteUpdated {
+						who: who.clone(),
+						x_asset_id: asset_pair.base,
+						y_asset_id: asset_pair.quote,
+						old_route,
+						updated_route: route.to_vec(),
+					}
 				},
 				None => Event::RouteAdded {
 					who: who.clone(),
-					x_asset_id: base_asset,
-					y_asset_id: quote_asset,
+					x_asset_id: asset_pair.base,
+					y_asset_id: asset_pair.quote,
 					route: route.to_vec(),
 				},
 			};
+			DexRoutes::<T>::insert(asset_pair.base, asset_pair.quote, DexRoute::Direct(route));
 			Self::deposit_event(event);
 			Ok(())
 		}
@@ -407,11 +409,10 @@ pub mod pallet {
 
 		fn lp_token(pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
-			if route.len() != 1 {
-				return Err(Error::<T>::UnsupportedOperation.into())
+			match route[..] {
+				[pool_id] => T::Pablo::lp_token(pool_id),
+				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}
-			let pablo_pool_id = route.get(0).ok_or(Error::<T>::UnsupportedOperation)?;
-			T::Pablo::lp_token(*pablo_pool_id)
 		}
 
 		fn get_exchange_value(
@@ -420,11 +421,10 @@ pub mod pallet {
 			amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
-			if route.len() != 1 {
-				return Err(Error::<T>::UnsupportedOperation.into())
+			match route[..] {
+				[pool_id] => T::Pablo::get_exchange_value(pool_id, asset_id, amount),
+				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}
-			let pablo_pool_id = route.get(0).ok_or(Error::<T>::UnsupportedOperation)?;
-			T::Pablo::get_exchange_value(*pablo_pool_id, asset_id, amount)
 		}
 
 		#[transactional]
@@ -544,18 +544,17 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> Result<(), DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
-			if route.len() != 1 {
-				return Err(Error::<T>::UnsupportedOperation.into())
+			match route[..] {
+				[pool_id] => T::Pablo::add_liquidity(
+					who,
+					pool_id,
+					base_amount,
+					quote_amount,
+					min_mint_amount,
+					keep_alive,
+				),
+				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}
-			let pool_id = route.get(0).ok_or(Error::<T>::UnsupportedOperation)?;
-			T::Pablo::add_liquidity(
-				who,
-				*pool_id,
-				base_amount,
-				quote_amount,
-				min_mint_amount,
-				keep_alive,
-			)
 		}
 
 		#[transactional]
@@ -567,11 +566,16 @@ pub mod pallet {
 			min_quote_amount: Self::Balance,
 		) -> Result<(), DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
-			if route.len() != 1 {
-				return Err(Error::<T>::UnsupportedOperation.into())
+			match route[..] {
+				[pool_id] => T::Pablo::remove_liquidity(
+					who,
+					pool_id,
+					lp_amount,
+					min_base_amount,
+					min_quote_amount,
+				),
+				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}
-			let pool_id = route.get(0).ok_or(Error::<T>::UnsupportedOperation)?;
-			T::Pablo::remove_liquidity(who, *pool_id, lp_amount, min_base_amount, min_quote_amount)
 		}
 	}
 }
