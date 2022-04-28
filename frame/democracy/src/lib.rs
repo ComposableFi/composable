@@ -1426,7 +1426,7 @@ impl<T: Config> Pallet<T> {
 		vote: AccountVote<BalanceOf<T>>,
 	) -> DispatchResult {
 		let mut status = Self::referendum_status(ref_index)?;
-		ensure!(vote.balance() <= T::NativeCurrency::free_balance(who), Error::<T>::InsufficientFunds);
+		ensure!(vote.balance() <= T::Currency::free_balance(status.proposal_id.asset_id,who), Error::<T>::InsufficientFunds);
 		VotingOf::<T>::try_mutate((who, status.proposal_id.asset_id),
          |voting| -> DispatchResult {
 			if let Voting::Direct { ref mut votes, delegations, .. } = voting {
@@ -1460,7 +1460,7 @@ impl<T: Config> Pallet<T> {
 		})?;
 		// Extend the lock to `balance` (rather than setting it) since we don't know what other
 		// votes are in place.
-		T::NativeCurrency::extend_lock(DEMOCRACY_ID, who, vote.balance(), WithdrawReasons::TRANSFER);
+		T::Currency::extend_lock(DEMOCRACY_ID, status.proposal_id.asset_id, who, vote.balance());
 		ReferendumInfoOf::<T>::insert(ref_index, ReferendumInfo::Ongoing(status));
 		Ok(())
 	}
@@ -1828,7 +1828,7 @@ impl<T: Config> Pallet<T> {
 		let last = Self::referendum_count();
 		let r = last.saturating_sub(next);
 
-		// pick out another public referendum if it's time.
+		// // pick out another public referendum if it's time.
 		if (now % T::LaunchPeriod::get()).is_zero() {
 			// Errors come from the queue being empty. If the queue is not empty, it will take
 			// full block weight.
