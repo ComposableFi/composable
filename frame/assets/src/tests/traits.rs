@@ -320,6 +320,7 @@ mod multicurrency {
 
 		#[test]
 		fn test_minimum_balance_implementation(
+			_account in accounts(),
 			asset_id in asset(),
 			(_first, _second, _third) in valid_amounts_without_overflow_3()) {
 			new_test_ext_multi_currency().execute_with(|| {

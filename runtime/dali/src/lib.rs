@@ -732,6 +732,46 @@ impl democracy::Config for Runtime {
 	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
 }
 
+impl multicurrency_democracy::Config for Runtime {
+	type Proposal = Call;
+	type Event = Event;
+	type Balance = Balance;
+	type AssetId = CurrencyId;
+	type NativeCurrency = Balances;
+	type Currency = Assets;
+	type EnactmentPeriod = EnactmentPeriod;
+	type LaunchPeriod = LaunchPeriod;
+	type VotingPeriod = VotingPeriod;
+	type VoteLockingPeriod = EnactmentPeriod;
+	type MinimumDeposit = MinimumDeposit;
+
+	// TODO: prod values
+	type ExternalOrigin = EnsureRootOrHalfCouncil;
+	type ExternalMajorityOrigin = EnsureRootOrHalfCouncil;
+	type ExternalDefaultOrigin = EnsureRootOrHalfCouncil;
+
+	type FastTrackOrigin = EnsureRootOrHalfCouncil;
+	type InstantOrigin = EnsureRootOrHalfCouncil;
+	type InstantAllowed = InstantAllowed;
+
+	type FastTrackVotingPeriod = FastTrackVotingPeriod;
+	type CancellationOrigin = EnsureRootOrHalfCouncil;
+	type BlacklistOrigin = EnsureRootOrHalfCouncil;
+	type CancelProposalOrigin = EnsureRootOrHalfCouncil;
+	type VetoOrigin = collective::EnsureMember<AccountId, CouncilInstance>;
+	type OperationalPreimageOrigin = collective::EnsureMember<AccountId, CouncilInstance>;
+	type Slash = Treasury;
+
+	type CooloffPeriod = CooloffPeriod;
+	type MaxProposals = MaxProposals;
+	type MaxVotes = MaxVotes;
+	type PalletsOrigin = OriginCaller;
+
+	type PreimageByteDeposit = PreimageByteDeposit;
+	type Scheduler = Scheduler;
+	type WeightInfo = weights::multicurrency_democracy::WeightInfo<Runtime>;
+}
+
 impl multitenant_democracy::Config for Runtime {
 	type Proposal = Call;
 	type Event = Event;
@@ -1137,7 +1177,7 @@ construct_runtime!(
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
-		MultiCurrencyDemocracy: multitenant_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 101,
+		MultiCurrencyDemocracy: multicurrency_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 101,
 	}
 );
 

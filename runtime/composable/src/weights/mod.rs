@@ -8,7 +8,7 @@ pub mod indices;
 pub mod membership;
 // pub mod scheduler;
 pub mod currency_factory;
-pub mod multitenant_democracy;
+pub mod multicurrency_democracy;
 pub mod session;
 pub mod timestamp;
 pub mod tokens;

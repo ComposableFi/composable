@@ -19,7 +19,7 @@ pub mod oracle;
 pub mod dex_router;
 pub mod lending;
 pub mod liquidations;
-pub mod multitenant_democracy;
+pub mod multicurrency_democracy;
 pub mod pablo;
 pub mod session;
 pub mod timestamp;

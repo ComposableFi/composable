@@ -23,12 +23,10 @@ use frame_benchmarking::{account, benchmarks, whitelist_account};
 use frame_support::{
 	assert_noop, assert_ok,
 	codec::Decode,
-	traits::{
-		schedule::DispatchTime, Currency, EnsureOrigin, Get, OnInitialize, UnfilteredDispatchable,
-	},
+	traits::{schedule::DispatchTime, EnsureOrigin, Get, OnInitialize, UnfilteredDispatchable},
 };
 use frame_system::{Pallet as System, RawOrigin};
-use sp_runtime::traits::{BadOrigin, Bounded, One};
+use sp_runtime::traits::{BadOrigin, One};
 
 use crate::Pallet as Democracy;
 

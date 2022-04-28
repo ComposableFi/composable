@@ -77,7 +77,7 @@ composable-traits = {path = "../../frame/composable-traits", default-features = 
 crowdloan-rewards = {package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false}
 currency-factory = {package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false}
 governance-registry = {package = "pallet-governance-registry", path = "../../frame/governance-registry", default-features = false}
-multitenant-democracy = {package = "pallet-multitenant-democracy", path = "../../frame/democracy", default-features = false}
+multicurrency-democracy = {package = "pallet-multicurrency-democracy", path = "../../frame/democracy", default-features = false}
 primitives = {path = "../primitives", default-features = false}
 vesting = {package = "pallet-vesting", path = "../../frame/vesting", default-features = false}
 
@@ -236,6 +236,6 @@ runtime-benchmarks = [
   "assets-registry/runtime-benchmarks",
   "vesting/runtime-benchmarks",
   "bonded-finance/runtime-benchmarks",
-  "multitenant-democracy/runtime-benchmarks",
+  "multicurrency-democracy/runtime-benchmarks",
   "common/runtime-benchmarks",
 ]

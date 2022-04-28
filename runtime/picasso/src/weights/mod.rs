@@ -13,7 +13,7 @@ pub mod indices;
 pub mod membership;
 pub mod multisig;
 // pub mod scheduler;
-pub mod multitenant_democracy;
+pub mod multicurrency_democracy;
 pub mod session;
 pub mod timestamp;
 pub mod tokens;

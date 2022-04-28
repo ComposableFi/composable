@@ -690,7 +690,7 @@ impl democracy::Config for Runtime {
 	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
 }
 
-impl multitenant_democracy::Config for Runtime {
+impl multicurrency_democracy::Config for Runtime {
 	type Proposal = Call;
 	type Event = Event;
 	type Balance = Balance;
@@ -727,7 +727,7 @@ impl multitenant_democracy::Config for Runtime {
 
 	type PreimageByteDeposit = PreimageByteDeposit;
 	type Scheduler = Scheduler;
-	type WeightInfo = weights::multitenant_democracy::WeightInfo<Runtime>;
+	type WeightInfo = weights::multicurrency_democracy::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -820,7 +820,7 @@ construct_runtime!(
 		CrowdloanRewards: crowdloan_rewards::{Pallet, Call, Storage, Event<T>, ValidateUnsigned} = 56,
 		Assets: assets::{Pallet, Call, Storage} = 57,
 		GovernanceRegistry: governance_registry::{Pallet, Call, Storage, Event<T>} = 58,
-		MultiCurrencyDemocracy: multitenant_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 69,
+		MultiCurrencyDemocracy: multicurrency_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 69,
 	}
 );
 

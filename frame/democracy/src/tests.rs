@@ -23,13 +23,11 @@ use codec::Encode;
 use frame_support::{
 	assert_noop, assert_ok, ord_parameter_types, parameter_types,
 	traits::{
-		ConstU32, ConstU64, Contains, EqualPrivilegeOnly, Everything, GenesisBuild, OnInitialize,
-		SortedMembers,
+		ConstU32, ConstU64, Contains, EqualPrivilegeOnly, GenesisBuild, OnInitialize, SortedMembers,
 	},
 	weights::Weight,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
-use orml_traits::parameter_type_with_key;
 use pallet_balances::{BalanceLock, Error as BalancesError};
 use sp_core::H256;
 use sp_runtime::{
@@ -48,33 +46,13 @@ mod public_proposals;
 mod scheduling;
 mod voting;
 
-type Balance = u64;
-type AccountId = u64;
-type AssetId = u64;
-
 const AYE: Vote = Vote { aye: true, conviction: Conviction::None };
 const NAY: Vote = Vote { aye: false, conviction: Conviction::None };
 const BIG_AYE: Vote = Vote { aye: true, conviction: Conviction::Locked1x };
 const BIG_NAY: Vote = Vote { aye: false, conviction: Conviction::Locked1x };
 
-// Multi Currency Assets
-const DEFAULT_ASSET: AssetId = 1;
-const DOT_ASSET: AssetId = 2;
-const X_ASSET: AssetId = 3;
-const Y_ASSET: AssetId = 4;
-
-const MAX_PROPOSALS: u32 = 100;
-
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
-
-pub struct AlwaysRootOrigin;
-
-impl types::OriginMap<AssetId, Origin> for AlwaysRootOrigin {
-	fn try_origin_for(_asset_id: AssetId) -> Result<Origin, DispatchError> {
-		Ok(Origin::root())
-	}
-}
 
 frame_support::construct_runtime!(
 	pub enum Test where
@@ -84,8 +62,6 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
-		Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>},
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
@@ -118,7 +94,6 @@ impl orml_tokens::Config for Test {
 }
 
 parameter_types! {
-	pub const BlockHashCount: u64 = 250;
 	pub BlockWeights: frame_system::limits::BlockWeights =
 		frame_system::limits::BlockWeights::simple_max(1_000_000);
 }
@@ -137,7 +112,7 @@ impl frame_system::Config for Test {
 	type Lookup = IdentityLookup<Self::AccountId>;
 	type Header = Header;
 	type Event = Event;
-	type BlockHashCount = BlockHashCount;
+	type BlockHashCount = ConstU64<250>;
 	type Version = ();
 	type PalletInfo = PalletInfo;
 	type AccountData = pallet_balances::AccountData<u64>;
@@ -150,10 +125,7 @@ impl frame_system::Config for Test {
 }
 parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * BlockWeights::get().max_block;
-	pub const MaxScheduledPerBlock: u32 = 50;
-    pub const NoPreimagePostponement: Option<u64> = Some(10);
 }
-
 impl pallet_scheduler::Config for Test {
 	type Event = Event;
 	type Origin = Origin;
@@ -176,11 +148,11 @@ parameter_types! {
 impl pallet_balances::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
-	type MaxLocks =MaxLocks;
-	type Balance = Balance;
+	type MaxLocks = ConstU32<10>;
+	type Balance = u64;
 	type Event = Event;
 	type DustRemoval = ();
-	type ExistentialDeposit = ExistentialDeposit;
+	type ExistentialDeposit = ConstU64<1>;
 	type AccountStore = System;
 	type WeightInfo = ();
 }
@@ -206,12 +178,9 @@ impl SortedMembers<u64> for OneToFive {
 }
 
 impl Config for Test {
-	type Balance = u64;
-	type AssetId = u64;
 	type Proposal = Call;
 	type Event = Event;
-	type NativeCurrency = Balances;
-	type Currency = Tokens;
+	type Currency = pallet_balances::Pallet<Self>;
 	type EnactmentPeriod = ConstU64<2>;
 	type LaunchPeriod = ConstU64<2>;
 	type VotingPeriod = ConstU64<2>;
@@ -239,57 +208,16 @@ impl Config for Test {
 	type MaxProposals = ConstU32<100>;
 }
 
-parameter_types! {
-	pub const PreimageMaxSize: u32 = 4096 * 1024;
-	pub PreimageBaseDeposit: Balance = 1;
-}
-
-impl pallet_preimage::Config for Test {
-	type Event = Event;
-	type Currency = Balances;
-	type ManagerOrigin = EnsureRoot<AccountId>;
-	type MaxSize = PreimageMaxSize;
-	type BaseDeposit = PreimageBaseDeposit;
-	type ByteDeposit = PreimageByteDeposit;
-	type WeightInfo = ();
-}
-
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
-		balances: vec![(0, 100),(1, 10), (2, 20), (3, 30), (4, 40), (5, 50), (6, 60)],
+		balances: vec![(1, 10), (2, 20), (3, 30), (4, 40), (5, 50), (6, 60)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
 	pallet_democracy::GenesisConfig::<Test>::default()
 		.assimilate_storage(&mut t)
 		.unwrap();
-	
-	orml_tokens::GenesisConfig::<Test> {
-			balances: vec![
-				(1, DEFAULT_ASSET, 10),
-				(2, DEFAULT_ASSET, 20),
-				(3, DEFAULT_ASSET, 30),
-				(4, DEFAULT_ASSET, 40),
-				(5, DEFAULT_ASSET, 50),
-				(6, DEFAULT_ASSET, 60),
-				(1, DOT_ASSET, 10),
-				(2, DOT_ASSET, 20),
-				(3, DOT_ASSET, 30),
-				(4, DOT_ASSET, 40),
-				(5, DOT_ASSET, 50),
-				(6, DOT_ASSET, 60),
-				(1, X_ASSET, 100),
-				(2, X_ASSET, 200),
-				(3, X_ASSET, 300),
-				(4, X_ASSET, 400),
-				(5, X_ASSET, 500),
-				(6, X_ASSET, 600),
-			],
-	}
-	.assimilate_storage(&mut t)
-	.unwrap();
-
 	let mut ext = sp_io::TestExternalities::new(t);
 	ext.execute_with(|| System::set_block_number(1));
 	ext
@@ -306,7 +234,7 @@ fn params_should_work() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(Democracy::referendum_count(), 0);
 		assert_eq!(Balances::free_balance(42), 0);
-		assert_eq!(Balances::total_issuance(), 310);
+		assert_eq!(Balances::total_issuance(), 210);
 	});
 }
 
@@ -327,56 +255,24 @@ fn set_balance_proposal_hash(value: u64) -> H256 {
 	BlakeTwo256::hash(&set_balance_proposal(value)[..])
 }
 
-fn set_balance_proposal_id(value: u64) -> ProposalId<H256, AssetId> {
+fn set_balance_proposal_hash_and_note(value: u64) -> H256 {
 	let p = set_balance_proposal(value);
 	let h = BlakeTwo256::hash(&p[..]);
-	ProposalId { hash: h, asset_id: DEFAULT_ASSET }
-}
-
-fn set_balance_proposal_hash_and_note(value: u64) -> ProposalId<H256, AssetId> {
-	let p = set_balance_proposal(value);
-	let h = BlakeTwo256::hash(&p[..]);
-	match Democracy::note_preimage(Origin::signed(6), p, DEFAULT_ASSET) {
+	match Democracy::note_preimage(Origin::signed(6), p) {
 		Ok(_) => (),
 		Err(x) if x == Error::<Test>::DuplicatePreimage.into() => (),
 		Err(x) => panic!("{:?}", x),
 	}
-	ProposalId { hash: h, asset_id: DEFAULT_ASSET }
-}
-
-fn set_balance_proposal_hash_and_note_and_asset(
-	value: u64,
-	asset_id: AssetId,
-) -> ProposalId<H256, AssetId> {
-	let p = set_balance_proposal(value);
-	let h = BlakeTwo256::hash(&p[..]);
-	match Democracy::note_preimage(Origin::signed(6), p, asset_id) {
-		Ok(_) => (),
-		Err(x) if x == Error::<Test>::DuplicatePreimage.into() => (),
-		Err(x) => panic!("{:?}", x),
-	}
-	ProposalId { hash: h, asset_id }
+	h
 }
 
 fn propose_set_balance(who: u64, value: u64, delay: u64) -> DispatchResult {
-	Democracy::propose(Origin::signed(who), set_balance_proposal_hash(value), DEFAULT_ASSET, delay)
+	Democracy::propose(Origin::signed(who), set_balance_proposal_hash(value), delay)
 }
 
 fn propose_set_balance_and_note(who: u64, value: u64, delay: u64) -> DispatchResult {
-	let id = set_balance_proposal_hash_and_note(value);
-	Democracy::propose(Origin::signed(who), id.hash, id.asset_id, delay)
+	Democracy::propose(Origin::signed(who), set_balance_proposal_hash_and_note(value), delay)
 }
-
-fn propose_set_balance_and_note_and_asset(
-	who: u64,
-	value: u64,
-	asset_id: AssetId,
-	delay: u64,
-) -> DispatchResult {
-	let id = set_balance_proposal_hash_and_note_and_asset(value, asset_id);
-	Democracy::propose(Origin::signed(who), id.hash, id.asset_id, delay)
-}
-
 
 fn next_block() {
 	System::set_block_number(System::block_number() + 1);
