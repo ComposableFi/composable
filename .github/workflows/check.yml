@@ -228,6 +228,17 @@ jobs:
           done << (find . -name "*.md" -not -path "*/node_modules/*" -not -path "./.github/*")
           exit $total_exit_code
 
+      - name: mdbook
+        run: |
+          set -e
+          cd book
+          mdbook test 2>&1 | tee log
+          if [ -z "$(cat log | grep ERROR)" ]; then
+            true
+          else
+            exit 1
+          fi
+
       - name: Cargo clippy
         run: |
           SKIP_WASM_BUILD=1 env -u RUSTFLAGS cargo +nightly clippy --all-targets --tests -- -D warnings
