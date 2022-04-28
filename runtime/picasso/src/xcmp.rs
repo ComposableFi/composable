@@ -22,8 +22,10 @@ use frame_support::{
 	},
 	PalletId, RuntimeDebug,
 };
-use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key, MultiCurrency};
-use orml_traits::location::{RelativeReserveProvider, Reserve};
+use orml_traits::{
+	location::{AbsoluteReserveProvider, RelativeReserveProvider, Reserve},
+	parameter_type_with_key, MultiCurrency,
+};
 
 use orml_xcm_support::{
 	DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset, OnDepositFail,

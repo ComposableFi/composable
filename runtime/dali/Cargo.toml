@@ -64,7 +64,6 @@ timestamp = { package = "pallet-timestamp", git = "https://github.com/paritytech
 transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
 treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
 utility = { package = "pallet-utility", git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
-wasmtime-environ = "0.36.0"
 
 # local modules
 assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }

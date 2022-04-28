@@ -318,7 +318,8 @@ pub fn run() -> Result<()> {
 				info!("Parachain genesis state: {}", genesis_state);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
-				Ok(crate::service::start_node(config, polkadot_config, collator_options, id).await?)
+				Ok(crate::service::start_node(config, polkadot_config, collator_options, id)
+					.await?)
 			})
 		},
 	}

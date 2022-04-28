@@ -4,7 +4,7 @@
 
 use super::*; // recursive dependency onto runtime
 use codec::{Decode, Encode};
-use scale_info::TypeInfo;
+use common::xcmp::CurrencyIdConvert;
 use composable_traits::{
 	assets::{RemoteAssetRegistry, XcmAssetLocation},
 	currency::LocalAssets,
@@ -14,7 +14,8 @@ use cumulus_primitives_core::{IsSystem, ParaId};
 use frame_support::{
 	construct_runtime, log, match_type, parameter_types,
 	traits::{
-		Contains, Everything, KeyOwnerProofSystem, Nothing, OriginTrait, Randomness, StorageInfo, PalletInfoAccess,
+		Contains, Everything, KeyOwnerProofSystem, Nothing, OriginTrait, PalletInfoAccess,
+		Randomness, StorageInfo,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -23,14 +24,15 @@ use frame_support::{
 	},
 	PalletId,
 };
-use orml_traits::location::AbsoluteReserveProvider;
-use orml_traits::parameter_type_with_key;
-use orml_xcm_support::{DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset};
+use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
+use orml_xcm_support::{
+	DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset,
+};
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
+use scale_info::TypeInfo;
 use sp_api::impl_runtime_apis;
-use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
-use sp_core::{H160, H256};
+use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H160, H256};
 use sp_runtime::{
 	traits::{AccountIdLookup, BlakeTwo256, Convert, ConvertInto, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
@@ -48,7 +50,6 @@ use xcm_executor::{
 	traits::{ConvertOrigin, TransactAsset, WeightTrader},
 	Assets, Config, XcmExecutor,
 };
-use common::xcmp::CurrencyIdConvert;
 
 parameter_types! {
 	// pub const RelayLocation: MultiLocation = MultiLocation::X1(Junction::Parent);
@@ -135,7 +136,6 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	CurrencyIdConvert,
 	DepositFailureHandler,
 >;
-
 
 parameter_types! {
 	pub const BaseXcmWeight: Weight = 0;

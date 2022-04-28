@@ -60,18 +60,16 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 
-use codec::{Encode, Codec, EncodeLike};
-use scale_info::TypeInfo;
-use sp_std::{
-	fmt::Debug,
-};
-use sp_runtime::{AccountId32, MultiAddress};
+use codec::{Codec, Encode, EncodeLike};
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
 use frame_system::EnsureSigned;
+use scale_info::TypeInfo;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
+use sp_runtime::{AccountId32, MultiAddress};
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
+use sp_std::fmt::Debug;
 use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
@@ -1320,7 +1318,7 @@ impl_runtime_apis! {
 	impl<Call, AccountId> simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime
 		where
 			Call: Codec,
-			AccountId: Codec + EncodeLike<AccountId32> + Clone+ PartialEq + TypeInfo + Debug,
+			AccountId: Codec + EncodeLike<AccountId32> + Into<AccountId32> + Clone+ PartialEq + TypeInfo + Debug,
 	{
 		fn create_transaction(call: Call, signer: AccountId) -> Vec<u8> {
 			use sp_runtime::{
@@ -1328,7 +1326,6 @@ impl_runtime_apis! {
 				traits::StaticLookup,
 			};
 			use sp_core::sr25519;
-
 			let nonce = frame_system::Pallet::<Runtime>::account_nonce(signer.clone());
 			let extra = (
 				system::CheckNonZeroSender::<Runtime>::new(),
@@ -1340,11 +1337,14 @@ impl_runtime_apis! {
 				system::CheckWeight::<Runtime>::new(),
 				transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
 			);
-
 			let signature = MultiSignature::from(sr25519::Signature([0_u8;64]));
-			let address = AccountIdLookup::unlookup(signer) as AccountId32;
-			let ext = UncheckedExtrinsic::new_signed(call, MultiAddress::Id(address), signature, extra);
-
+			let address = AccountIdLookup::unlookup(signer.into());
+			let ext = generic::UncheckedExtrinsic::<Address, Call, Signature, SignedExtra>::new_signed(
+				call,
+				address,
+				signature,
+				extra,
+			);
 			ext.encode()
 		}
 	}
