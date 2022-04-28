@@ -823,7 +823,7 @@ proptest! {
 	#[test]
 	fn succeeds_in_creating_new_position_with_enough_margin(
 		direction in any_direction(),
-		max_leverage_percent in 100..2_000u128,  // Anywhere from 1x to 20x margin
+		max_leverage_percent in 100..2_000_u128,  // Anywhere from 1x to 20x margin
 		percentf in percentage_fraction()
 	) {
 		let mut market_id: MarketId = 0;
