@@ -31,7 +31,7 @@ type PabloTransaction @entity {
   quoteAssetId: BigInt!
   quoteAssetAmount: BigInt!
   blockNumber: BigInt!
-  priceInQuoteAsset: String!
+  spotPrice: String!
   # unix timestamp in ms
   receivedTimestamp: BigInt!
 }
@@ -41,7 +41,6 @@ type PabloPool @entity {
   poolId: ID!
   owner: String!
   transactionCount: Int!
-  # TODO investigate the best way to represent decimals
   totalLiquidity: String!
   totalVolume: String!
   # Asset used for all quotes in this type

@@ -38,7 +38,7 @@ entity PabloTransaction {
     * quoteAssetId: string
     * quoteAssetAmount: string
     * blockNumber: number
-    priceInQuoteAsset: string
+    * spotPrice: string
     receivedTimestamp: timestamp
 }
 
@@ -54,6 +54,7 @@ entity PabloPool {
 }
 
 entity PabloPoolAsset {
+    * id: poolId + '-' + assetId
     * poolId: string
     * assetId: string
     --

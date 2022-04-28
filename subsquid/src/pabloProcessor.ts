@@ -11,7 +11,7 @@ function createTransaction(
     pool: PabloPool,
     who: string,
     transactionType: PabloTransactionType,
-    priceInQuoteAsset: string,
+    spotPrice: string,
     baseAssetId: bigint,
     baseAssetAmount: bigint,
     quoteAssetId: bigint,
@@ -25,7 +25,7 @@ function createTransaction(
     tx.blockNumber = BigInt(ctx.block.height);
     tx.receivedTimestamp = BigInt(new Date().getTime());
     tx.transactionType = transactionType;
-    tx.priceInQuoteAsset = priceInQuoteAsset;
+    tx.spotPrice = spotPrice;
     tx.baseAssetId = baseAssetId;
     tx.baseAssetAmount = baseAssetAmount;
     tx.quoteAssetId = quoteAssetId;

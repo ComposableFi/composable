@@ -44,7 +44,7 @@ export class PabloTransaction {
   blockNumber!: bigint
 
   @Column_("text", {nullable: false})
-  priceInQuoteAsset!: string
+  spotPrice!: string
 
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   receivedTimestamp!: bigint
