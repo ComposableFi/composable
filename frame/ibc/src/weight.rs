@@ -17,6 +17,8 @@ pub trait WeightInfo {
 	fn channel_open_try() -> Weight;
 	fn channel_open_ack() -> Weight;
 	fn channel_open_confirm() -> Weight;
+	fn channel_close_init() -> Weight;
+	fn channel_close_confirm() -> Weight;
 }
 
 impl WeightInfo for () {
@@ -45,6 +47,13 @@ impl WeightInfo for () {
 	}
 
 	fn channel_open_confirm() -> Weight {
+		0
+	}
+
+	fn channel_close_init() -> Weight {
+		0
+	}
+	fn channel_close_confirm() -> Weight {
 		0
 	}
 }
@@ -117,15 +126,15 @@ pub(crate) fn deliver<T: Config>(msgs: &Vec<Any>) -> Weight {
 					},
 					ChannelMsg::ChannelCloseInit(channel_msg) => {
 						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str());
-						let _cb_weight =
+						let cb_weight =
 							cb.on_chan_close_init(&channel_msg.port_id, &channel_msg.channel_id);
-						unimplemented!()
+						cb_weight.saturating_add(<T as Config>::WeightInfo::channel_close_init())
 					},
 					ChannelMsg::ChannelCloseConfirm(channel_msg) => {
 						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str());
-						let _cb_weight =
+						let cb_weight =
 							cb.on_chan_close_confirm(&channel_msg.port_id, &channel_msg.channel_id);
-						unimplemented!()
+						cb_weight.saturating_add(<T as Config>::WeightInfo::channel_close_confirm())
 					},
 				},
 				Ics26Envelope::Ics4PacketMsg(msgs) => match msgs {

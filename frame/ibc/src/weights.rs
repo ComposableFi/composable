@@ -114,4 +114,24 @@ impl<T: frame_system::Config> crate::weight::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Ibc Capabilities (r:1 w:0)
+	// Storage: Ibc Channels (r:1 w:1)
+	// Storage: Ibc Connections (r:1 w:0)
+	// Storage: IbcPing Channels (r:1 w:1)
+	fn channel_close_init() -> Weight {
+		(40_000_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+	}
+	// Storage: Ibc Capabilities (r:1 w:0)
+	// Storage: Ibc Channels (r:1 w:1)
+	// Storage: Ibc Connections (r:1 w:0)
+	// Storage: Ibc ClientStates (r:1 w:0)
+	// Storage: Ibc ConsensusStates (r:1 w:0)
+	// Storage: IbcPing Channels (r:1 w:1)
+	fn channel_close_confirm() -> Weight {
+		(89_000_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(6 as Weight))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+	}
 }

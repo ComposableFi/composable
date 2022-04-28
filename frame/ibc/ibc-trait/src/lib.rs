@@ -91,8 +91,7 @@ pub fn client_type_from_bytes(client_type: Vec<u8>) -> Result<ClientType, Error>
 }
 
 pub fn apply_prefix_and_encode(prefix: &[u8], path: Vec<String>) -> Result<Vec<u8>, Error> {
-	let prefix = String::from_utf8(prefix.to_vec()).map_err(|_| Error::ErrorDecodingPrefix)?;
-	let mut key_path = vec![prefix.as_bytes()];
+	let mut key_path = vec![prefix];
 	let path = path.iter().map(|val| val.as_bytes()).collect::<Vec<_>>();
 	key_path.extend_from_slice(&path);
 	Ok(key_path.encode())
