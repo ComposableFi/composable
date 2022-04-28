@@ -40,6 +40,10 @@ processor.addEventHandler('pablo.PoolCreated', async (ctx) => {
     const event = new events_1.PabloPoolCreatedEvent(ctx);
     await (0, pabloProcessor_1.processPoolCreatedEvent)(ctx, event);
 });
+processor.addEventHandler('pablo.LiquidityAdded', async (ctx) => {
+    const event = new events_1.PabloLiquidityAddedEvent(ctx);
+    await (0, pabloProcessor_1.processLiquidityAddedEvent)(ctx, event);
+});
 processor.addEventHandler("balances.Transfer", async (ctx) => {
     const transfer = getTransferEvent(ctx);
     const tip = ctx.extrinsic?.tip || 0n;

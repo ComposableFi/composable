@@ -6,9 +6,9 @@ import {
 } from "@subsquid/substrate-processor";
 import { lookupArchive } from "@subsquid/archive-registry";
 import { Account, HistoricalBalance } from "./model";
-import {BalancesTransferEvent, PabloPoolCreatedEvent} from "./types/events";
+import {BalancesTransferEvent, PabloLiquidityAddedEvent, PabloPoolCreatedEvent} from "./types/events";
 import {getOrCreate} from "./dbHelper";
-import {processPoolCreatedEvent} from "./pabloProcessor";
+import {processLiquidityAddedEvent, processPoolCreatedEvent} from "./pabloProcessor";
 
 const processor = new SubstrateProcessor("composable_dali_dev");
 
@@ -22,6 +22,11 @@ processor.setDataSource({
 processor.addEventHandler('pablo.PoolCreated', async (ctx) => {
   const event = new PabloPoolCreatedEvent(ctx);
   await processPoolCreatedEvent(ctx, event);
+});
+
+processor.addEventHandler('pablo.LiquidityAdded', async (ctx) => {
+  const event = new PabloLiquidityAddedEvent(ctx);
+  await processLiquidityAddedEvent(ctx, event);
 });
 
 processor.addEventHandler("balances.Transfer", async (ctx) => {

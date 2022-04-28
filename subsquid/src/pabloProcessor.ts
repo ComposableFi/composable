@@ -34,8 +34,8 @@ function createTransaction(
 function createAsset(pool: PabloPool, assetId: bigint, ctx: EventHandlerContext, timestamp: bigint) {
     const asset = new PabloPoolAsset();
     asset.pool = pool;
-    asset.id = assetId.toString();
-    asset.assetId = assetId.toString();
+    asset.id = createPoolAssetId(pool.poolId, assetId);
+    asset.assetId = assetId;
     asset.blockNumber = BigInt(ctx.block.height);
     asset.totalLiquidity = BigInt(0);
     asset.totalVolume = BigInt(0);
@@ -60,6 +60,7 @@ function getPoolCreatedEvent(event: PabloPoolCreatedEvent): PoolCreatedEvent {
 }
 
 export async function processPoolCreatedEvent(ctx: EventHandlerContext, event: PabloPoolCreatedEvent) {
+    console.info('processing PoolCreatedEvent', event);
     const poolCreatedEvt = getPoolCreatedEvent(event);
     const owner = ss58.codec("picasso").encode(poolCreatedEvt.owner);
     const pool = await getOrCreate(ctx.store, PabloPool, poolCreatedEvt.poolId.toString());
@@ -88,8 +89,8 @@ export async function processPoolCreatedEvent(ctx: EventHandlerContext, event: P
             poolCreatedEvt.assets.quote,
             BigInt(0));
 
-        let quoteAsset = await get(ctx.store, PabloPoolAsset, poolCreatedEvt.assets.quote.toString());
-        let baseAsset = await get(ctx.store, PabloPoolAsset, poolCreatedEvt.assets.base.toString());
+        let quoteAsset = await get(ctx.store, PabloPoolAsset, createPoolAssetId(pool.poolId, poolCreatedEvt.assets.quote));
+        let baseAsset = await get(ctx.store, PabloPoolAsset, createPoolAssetId(pool.poolId, poolCreatedEvt.assets.base));
         if (quoteAsset != undefined || baseAsset != undefined) {
             console.error("Unexpected assets for pool in db", quoteAsset, baseAsset);
             throw new Error("Unexpected assets found");
@@ -102,6 +103,10 @@ export async function processPoolCreatedEvent(ctx: EventHandlerContext, event: P
         await ctx.store.save(quoteAsset);
         await ctx.store.save(tx);
     }
+}
+
+function createPoolAssetId(poolId: string, assetId: bigint): string {
+    return poolId + '-' + assetId;
 }
 
 interface LiquidityAddedEvent {
@@ -123,6 +128,7 @@ function getLiquidityAddedEvent(event: PabloLiquidityAddedEvent): LiquidityAdded
 }
 
 export async function processLiquidityAddedEvent(ctx: EventHandlerContext, event: PabloLiquidityAddedEvent) {
+    console.info('processing LiquidityAddedEvent', event);
     const liquidityAddedEvt = getLiquidityAddedEvent(event);
     const who = ss58.codec("picasso").encode(liquidityAddedEvt.who);
     const pool = await get(ctx.store, PabloPool, liquidityAddedEvt.poolId.toString());
@@ -139,7 +145,7 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext, event
 
         // find baseAsset: Following is only valid for dual asset pools
         const baseAsset = pool.poolAssets
-            .find((asset) => asset.assetId != pool.quoteAssetId.toString());
+            .find((asset) => asset.assetId != pool.quoteAssetId);
         if (baseAsset == undefined) {
             throw new Error('baseAsset not found');
         }
@@ -148,7 +154,7 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext, event
         baseAsset.blockNumber = BigInt(ctx.block.height);
         // find quoteAsset
         const quoteAsset = pool.poolAssets
-            .find((asset) => asset.assetId == pool.quoteAssetId.toString());
+            .find((asset) => asset.assetId == pool.quoteAssetId);
         if (quoteAsset == undefined) {
             throw new Error('quoteAsset not found');
         }
