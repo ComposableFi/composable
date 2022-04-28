@@ -31,7 +31,6 @@ type PabloTransaction @entity {
   quoteAssetId: BigInt!
   quoteAssetAmount: BigInt!
   blockNumber: BigInt!
-  # TODO investigate the best way to represent decimals
   priceInQuoteAsset: String!
   # unix timestamp in ms
   receivedTimestamp: BigInt!

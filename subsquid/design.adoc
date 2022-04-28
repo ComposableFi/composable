@@ -57,6 +57,7 @@ entity PabloPoolAsset {
     * poolId: string
     * assetId: string
     --
+    # Quoted in terms of the same assetId
     * totalLiquidity: number
     * totalVolume: number
     * blockNumber: number
