@@ -14,6 +14,8 @@ pub trait WeightInfo {
 	fn update_client() -> Weight;
 	fn connection_init() -> Weight;
 	fn create_channel() -> Weight;
+	fn channel_open_try() -> Weight;
+	fn channel_open_ack() -> Weight;
 }
 
 impl WeightInfo for () {
@@ -30,6 +32,14 @@ impl WeightInfo for () {
 	}
 
 	fn create_channel() -> Weight {
+		0
+	}
+
+	fn channel_open_try() -> Weight {
+		0
+	}
+
+	fn channel_open_ack() -> Weight {
 		0
 	}
 }
@@ -85,14 +95,14 @@ pub(crate) fn deliver<T: Config>(msgs: &Vec<Any>) -> Weight {
 					},
 					ChannelMsg::ChannelOpenTry(channel_msg) => {
 						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str());
-						let _cb_weight = cb.on_chan_open_try();
-						unimplemented!()
+						let cb_weight = cb.on_chan_open_try();
+						cb_weight.saturating_add(<T as Config>::WeightInfo::channel_open_try())
 					},
 					ChannelMsg::ChannelOpenAck(channel_msg) => {
 						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str());
-						let _cb_weight =
+						let cb_weight =
 							cb.on_chan_open_ack(&channel_msg.port_id, &channel_msg.channel_id);
-						unimplemented!()
+						cb_weight.saturating_add(<T as Config>::WeightInfo::channel_open_ack())
 					},
 					ChannelMsg::ChannelOpenConfirm(channel_msg) => {
 						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str());
@@ -115,12 +125,16 @@ pub(crate) fn deliver<T: Config>(msgs: &Vec<Any>) -> Weight {
 				},
 				Ics26Envelope::Ics4PacketMsg(msgs) => match msgs {
 					PacketMsg::RecvPacket(packet_msg) => {
-						let cb = WeightRouter::<T>::get_weight(packet_msg.packet.destination_port.as_str());
+						let cb = WeightRouter::<T>::get_weight(
+							packet_msg.packet.destination_port.as_str(),
+						);
 						let _cb_weight = cb.on_recv_packet(&packet_msg.packet);
 						unimplemented!()
 					},
 					PacketMsg::AckPacket(packet_msg) => {
-						let cb = WeightRouter::<T>::get_weight(packet_msg.packet.destination_port.as_str());
+						let cb = WeightRouter::<T>::get_weight(
+							packet_msg.packet.destination_port.as_str(),
+						);
 						let _cb_weight = cb.on_acknowledgement_packet(
 							&packet_msg.packet,
 							&packet_msg.acknowledgement,
@@ -128,12 +142,16 @@ pub(crate) fn deliver<T: Config>(msgs: &Vec<Any>) -> Weight {
 						unimplemented!()
 					},
 					PacketMsg::ToPacket(packet_msg) => {
-						let cb = WeightRouter::<T>::get_weight(packet_msg.packet.destination_port.as_str());
+						let cb = WeightRouter::<T>::get_weight(
+							packet_msg.packet.destination_port.as_str(),
+						);
 						let _cb_weight = cb.on_timeout_packet(&packet_msg.packet);
 						unimplemented!()
 					},
 					PacketMsg::ToClosePacket(packet_msg) => {
-						let cb = WeightRouter::<T>::get_weight(packet_msg.packet.destination_port.as_str());
+						let cb = WeightRouter::<T>::get_weight(
+							packet_msg.packet.destination_port.as_str(),
+						);
 						let _cb_weight = cb.on_timeout_packet(&packet_msg.packet);
 						unimplemented!()
 					},

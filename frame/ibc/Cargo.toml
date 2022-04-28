@@ -15,6 +15,8 @@ scale-info = { version = "1.0", default-features = false, features = ["derive"] 
 
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false, optional = true }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false, optional = true }
+simple-iavl = { git = "https://github.com/Wizdave97/simple-avl", default-features = false, optional = true }
+prost = { version = "0.9", default-features = false, optional = true }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", default-features = false }
@@ -31,6 +33,7 @@ ibc-proto = { git = "https://github.com/informalsystems/ibc-rs", branch = "maste
 tendermint-proto = { version = "0.23.6", default-features = false }
 tendermint = { version = "0.23.6", optional = true, default-features = false }
 hex-literal = { version = "0.3.4", optional = true }
+ics23 = { version = "0.7.0", default-features = false, optional = true}
 
 # local deps
 ibc-primitives = { path = "ibc-primitives", default-features = false }
@@ -72,6 +75,9 @@ runtime-benchmarks = [
 	"tendermint",
 	"hex-literal",
 	"pallet-timestamp",
-	"pallet-ibc-ping/runtime-benchmarks"
+	"pallet-ibc-ping/runtime-benchmarks",
+	"simple-iavl",
+	"ics23",
+	"prost"
 ]
 try-runtime = ["frame-support/try-runtime"]

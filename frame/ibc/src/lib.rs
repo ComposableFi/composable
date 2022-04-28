@@ -68,6 +68,8 @@ mod mock;
 mod tests;
 
 #[cfg(feature = "runtime-benchmarks")]
+mod benchmark_utils;
+#[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 mod impls;
 pub mod weight;
