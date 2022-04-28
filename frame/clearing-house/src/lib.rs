@@ -1025,7 +1025,7 @@ pub mod pallet {
 			positions: &BoundedVec<Position<T>, T::MaxPositions>,
 			margin: T::Balance,
 		) -> Result<bool, DispatchError> {
-			let mut nonnormalized_imr = T::Decimal::zero();
+			let mut min_equity = T::Decimal::zero();
 			let mut equity: T::Decimal = margin.into_decimal()?;
 			for position in positions.iter() {
 				if let Some(direction) = Self::position_direction(position) {
@@ -1035,14 +1035,14 @@ pub mod pallet {
 					let value = Self::base_asset_value(&market, position, direction)?;
 					let abs_value = value.saturating_abs();
 
-					nonnormalized_imr
-						.try_add_mut(&abs_value.try_mul(&market.margin_ratio_initial)?)?;
+					min_equity.try_add_mut(&abs_value.try_mul(&market.margin_ratio_initial)?)?;
 
+					// Add PnL
 					equity.try_add_mut(&value.try_sub(&position.quote_asset_notional_amount)?)?;
 				}
 			}
 
-			Ok(equity >= nonnormalized_imr)
+			Ok(equity >= min_equity)
 		}
 	}
 
