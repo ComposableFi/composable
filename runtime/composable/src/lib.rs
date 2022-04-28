@@ -60,7 +60,7 @@ use scale_info::TypeInfo;
 use sp_std::{
 	fmt::Debug,
 };
-use sp_runtime::AccountId32;
+use sp_runtime::{AccountId32, MultiAddress};
 use frame_support::traits::{EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
 #[cfg(any(feature = "std", test))]
@@ -961,7 +961,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl<Call, AccountId: Clone> simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime
+	impl<Call, AccountId> simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime
 		where
 			Call: Codec,
 			AccountId: Codec + EncodeLike<AccountId32> + Clone+ PartialEq + TypeInfo + Debug,
@@ -986,8 +986,8 @@ impl_runtime_apis! {
 			);
 
 			let signature = MultiSignature::from(sr25519::Signature([0_u8;64]));
-			let address = AccountIdLookup::unlookup(signer);
-			let ext = UncheckedExtrinsic::new_signed(call, address, signature, extra);
+			let address = AccountIdLookup::unlookup(signer) as AccountId32;
+			let ext = UncheckedExtrinsic::new_signed(call, MultiAddress::Id(address), signature, extra);
 
 			ext.encode()
 		}
