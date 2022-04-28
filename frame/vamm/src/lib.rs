@@ -502,7 +502,6 @@ pub mod pallet {
 		/// In the current state the only function available to perform these
 		/// computations is the CFMM `x * y = k`.
 		///
-		/// TODO(Cardosaum): Create the diagram for the function.
 		/// ![](https://www.plantuml.com/plantuml/svg/FSq_giCm383n_PtYzGBHtYbGw3MA8YknmPAD_ZJNR-ZGwUCtVQi7MgJqlrjJwbauhV_NYEbt0CDpELhKtDBPQ6Ymna93u35a3iUjyxC1_G3iLDbWDnI6Duf0QNXSSjXJAThGbvyubzbHlz-LjLpz0000)
 		///
 		/// ## Parameters
