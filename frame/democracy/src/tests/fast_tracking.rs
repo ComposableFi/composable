@@ -29,12 +29,11 @@ fn fast_track_referendum_works() {
 			Error::<Test>::ProposalMissing
 		);
 		let id = set_balance_proposal_hash_and_note(2);
-		assert_ok!(Democracy::external_propose_majority(
-			Origin::signed(3),
-			id.hash,
-			id.asset_id
-		));
-		assert_noop!(Democracy::fast_track(Origin::signed(1), id.hash, id.asset_id, 3, 2), BadOrigin);
+		assert_ok!(Democracy::external_propose_majority(Origin::signed(3), id.hash, id.asset_id));
+		assert_noop!(
+			Democracy::fast_track(Origin::signed(1), id.hash, id.asset_id, 3, 2),
+			BadOrigin
+		);
 		assert_ok!(Democracy::fast_track(Origin::signed(5), id.hash, id.asset_id, 2, 0));
 		assert_eq!(
 			Democracy::referendum_status(0),
@@ -58,12 +57,15 @@ fn instant_referendum_works() {
 			Democracy::fast_track(Origin::signed(5), id.hash, id.asset_id, 3, 2),
 			Error::<Test>::ProposalMissing
 		);
-		assert_ok!(Democracy::external_propose_majority(
-			Origin::signed(3),
-			id.hash, id.asset_id
-		));
-		assert_noop!(Democracy::fast_track(Origin::signed(1), id.hash, id.asset_id, 3, 2), BadOrigin);
-		assert_noop!(Democracy::fast_track(Origin::signed(5), id.hash, id.asset_id, 1, 0), BadOrigin);
+		assert_ok!(Democracy::external_propose_majority(Origin::signed(3), id.hash, id.asset_id));
+		assert_noop!(
+			Democracy::fast_track(Origin::signed(1), id.hash, id.asset_id, 3, 2),
+			BadOrigin
+		);
+		assert_noop!(
+			Democracy::fast_track(Origin::signed(5), id.hash, id.asset_id, 1, 0),
+			BadOrigin
+		);
 		assert_noop!(
 			Democracy::fast_track(Origin::signed(6), id.hash, id.asset_id, 1, 0),
 			Error::<Test>::InstantNotAllowed
@@ -88,11 +90,7 @@ fn fast_track_referendum_fails_when_no_simple_majority() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(0);
 		let id = set_balance_proposal_hash_and_note(2);
-		assert_ok!(Democracy::external_propose(
-			Origin::signed(2),
-			id.hash, 
-			id.asset_id
-		));
+		assert_ok!(Democracy::external_propose(Origin::signed(2), id.hash, id.asset_id));
 		assert_noop!(
 			Democracy::fast_track(Origin::signed(5), id.hash, id.asset_id, 3, 2),
 			Error::<Test>::NotSimpleMajority

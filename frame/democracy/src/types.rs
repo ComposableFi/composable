@@ -193,8 +193,9 @@ pub enum ReferendumInfo<BlockNumber, Hash, Balance, AssetId> {
 	Finished { approved: bool, end: BlockNumber },
 }
 
-impl<BlockNumber, Hash, Balance: Default, AssetId> 
-     ReferendumInfo<BlockNumber, Hash, Balance, AssetId> {
+impl<BlockNumber, Hash, Balance: Default, AssetId>
+	ReferendumInfo<BlockNumber, Hash, Balance, AssetId>
+{
 	/// Create a new instance.
 	pub fn new(
 		end: BlockNumber,
