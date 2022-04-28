@@ -281,8 +281,8 @@ export async function processSwappedEvent(ctx: EventHandlerContext, event: Pablo
         tx = createTransaction(ctx, pool, who,
             PabloTransactionType.SWAP,
             isReverse
-                ? Big(swappedEvt.quoteAmount.toString()).div(Big(swappedEvt.baseAmount.toString())).toString()
-                : Big(swappedEvt.baseAmount.toString()).div(Big(swappedEvt.quoteAmount.toString())).toString(),
+                ? Big(swappedEvt.baseAmount.toString()).div(Big(swappedEvt.quoteAmount.toString())).toString()
+                : Big(swappedEvt.quoteAmount.toString()).div(Big(swappedEvt.baseAmount.toString())).toString(),
             BigInt(baseAsset.assetId),
             swappedEvt.baseAmount,
             pool.quoteAssetId,
