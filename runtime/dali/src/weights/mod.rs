@@ -17,6 +17,7 @@ pub mod multisig;
 pub mod oracle;
 // pub mod scheduler;
 pub mod curve_amm;
+pub mod dex_router;
 pub mod lending;
 pub mod liquidations;
 pub mod liquidity_bootstrapping;

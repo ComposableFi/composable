@@ -133,9 +133,11 @@ fn test_dex_demo() {
 		// mint 1 USDT, after selling 100 USDC we get 99 USDT so to buy 100 USDC we need 100 USDT
 		assert_ok!(Tokens::mint_into(USDT, &BOB, unit));
 
-		Pablo::sell(Origin::signed(BOB), pool_id, USDC, swap_usdc, false).expect("sell failed");
+		Pablo::sell(Origin::signed(BOB), pool_id, USDC, swap_usdc, 0_u128, false)
+			.expect("sell failed");
 
-		Pablo::buy(Origin::signed(BOB), pool_id, USDC, swap_usdc, false).expect("buy failed");
+		Pablo::buy(Origin::signed(BOB), pool_id, USDC, swap_usdc, 0_u128, false)
+			.expect("buy failed");
 
 		let bob_usdc = Tokens::balance(USDC, &BOB);
 
@@ -357,7 +359,7 @@ fn fees() {
 		let bob_usdt = 1000 * unit;
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
-		assert_ok!(Pablo::sell(Origin::signed(BOB), pool_id, USDT, bob_usdt, false));
+		assert_ok!(Pablo::sell(Origin::signed(BOB), pool_id, USDT, bob_usdt, 0_u128, false));
 		let usdc_balance = Tokens::balance(USDC, &BOB);
 		// received usdc should bob_usdt - lp_fee
 		assert_ok!(acceptable_computation_error(
@@ -400,7 +402,7 @@ fn high_slippage() {
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
 
-		assert_ok!(Pablo::sell(Origin::signed(BOB), pool_id, USDT, bob_usdt, false));
+		assert_ok!(Pablo::sell(Origin::signed(BOB), pool_id, USDT, bob_usdt, 0_u128, false));
 		let usdc_balance = Tokens::balance(USDC, &BOB);
 		assert!((bob_usdt - usdc_balance) > 5_u128);
 	});
@@ -479,10 +481,10 @@ proptest! {
 			Permill::zero(),
 		);
 		prop_assert_ok!(Tokens::mint_into(USDT, &BOB, value));
-		prop_assert_ok!(Pablo::sell(Origin::signed(BOB), pool_id, USDT, value, false));
+		prop_assert_ok!(Pablo::sell(Origin::signed(BOB), pool_id, USDT, value, 0_u128, false));
 		// mint 1 extra USDC so that original amount of USDT can be buy back even with small slippage
 		prop_assert_ok!(Tokens::mint_into(USDC, &BOB, unit));
-		prop_assert_ok!(Pablo::buy(Origin::signed(BOB), pool_id, USDT, value, false));
+		prop_assert_ok!(Pablo::buy(Origin::signed(BOB), pool_id, USDT, value, 0_u128, false));
 		let bob_usdt = Tokens::balance(USDT, &BOB);
 		prop_assert_ok!(default_acceptable_computation_error(bob_usdt, value));
 		Ok(())
@@ -663,8 +665,8 @@ fn curve_graph() {
 			.map(|_| {
 				let amount = unit;
 				let _ = Tokens::mint_into(USDC, &BOB, amount).expect("mint failed");
-				let _base =
-					<Pablo as Amm>::sell(&BOB, pool_id, USDC, amount, true).expect("sell failed");
+				let _base = <Pablo as Amm>::sell(&BOB, pool_id, USDC, amount, 0_u128, true)
+					.expect("sell failed");
 				let pool_sell_asset_balance =
 					Tokens::balance(USDC, &pool_account) as f64 / unit as f64;
 				let pool_buy_asset_balance =
@@ -687,8 +689,8 @@ fn curve_graph() {
 			.map(|_| {
 				let amount = unit;
 				let _ = Tokens::mint_into(USDT, &BOB, amount).expect("mint failed");
-				let _base =
-					<Pablo as Amm>::sell(&BOB, pool_id, USDT, amount, true).expect("sell failed");
+				let _base = <Pablo as Amm>::sell(&BOB, pool_id, USDT, amount, 0_u128, true)
+					.expect("sell failed");
 				let pool_sell_asset_balance =
 					Tokens::balance(USDC, &pool_account) as f64 / unit as f64;
 				let pool_buy_asset_balance =

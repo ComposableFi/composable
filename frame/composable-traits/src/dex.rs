@@ -27,6 +27,8 @@ pub trait Amm {
 
 	fn currency_pair(pool_id: Self::PoolId) -> Result<CurrencyPair<Self::AssetId>, DispatchError>;
 
+	fn lp_token(pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError>;
+
 	/// Get pure exchange value for given units of given asset. (Note this does not include fees.)
 	/// `pool_id` the pool containing the `asset_id`.
 	/// `asset_id` the asset the user is interested in.
@@ -46,6 +48,7 @@ pub trait Amm {
 		pool_id: Self::PoolId,
 		asset_id: Self::AssetId,
 		amount: Self::Balance,
+		min_receive: Self::Balance,
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
 
@@ -56,6 +59,7 @@ pub trait Amm {
 		pool_id: Self::PoolId,
 		asset_id: Self::AssetId,
 		amount: Self::Balance,
+		min_receive: Self::Balance,
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
 
@@ -256,26 +260,9 @@ pub trait DexRouter<AccountId, AssetId, PoolId, Balance, MaxHops> {
 		asset_pair: CurrencyPair<AssetId>,
 		route: Option<BoundedVec<PoolId, MaxHops>>,
 	) -> Result<(), DispatchError>;
-	/// If route exist return `Some(Vec<PoolId>)`, else `None`.
-	fn get_route(asset_pair: CurrencyPair<AssetId>) -> Option<Vec<PoolId>>;
-	/// Exchange `dx` of `base` asset of `asset_pair` with associated route.
-	fn exchange(
-		who: &AccountId,
-		asset_pair: CurrencyPair<AssetId>,
-		dx: Balance,
-	) -> Result<Balance, DispatchError>;
-	/// Sell `amount` of `base` asset of asset_pair with associated route.
-	fn sell(
-		who: &AccountId,
-		asset_pair: CurrencyPair<AssetId>,
-		amount: Balance,
-	) -> Result<Balance, DispatchError>;
-	/// Buy `amount` of `quote` asset of asset_pair with associated route.
-	fn buy(
-		who: &AccountId,
-		asset_pair: CurrencyPair<AssetId>,
-		amount: Balance,
-	) -> Result<Balance, DispatchError>;
+	/// If route exist return `Some((Vec<PoolId>, bool))`, else `None`.
+	/// boolean in pair indicates if route needs to be used in reversed direction.
+	fn get_route(asset_pair: CurrencyPair<AssetId>) -> Option<(Vec<PoolId>, bool)>;
 }
 
 /// Aggregated prices for a given base/quote currency pair in a pool.

@@ -230,6 +230,7 @@ pub mod pallet {
 		InvalidFees,
 		AmpFactorMustBeGreaterThanZero,
 		MissingAmount,
+		NoLpTokenForLbp,
 	}
 
 	#[pallet::config]
@@ -379,10 +380,11 @@ pub mod pallet {
 			pool_id: T::PoolId,
 			asset_id: T::AssetId,
 			amount: T::Balance,
+			min_receive: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::buy(&who, pool_id, asset_id, amount, keep_alive)?;
+			let _ = <Self as Amm>::buy(&who, pool_id, asset_id, amount, min_receive, keep_alive)?;
 			Ok(())
 		}
 
@@ -395,10 +397,11 @@ pub mod pallet {
 			pool_id: T::PoolId,
 			asset_id: T::AssetId,
 			amount: T::Balance,
+			min_receive: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::sell(&who, pool_id, asset_id, amount, keep_alive)?;
+			let _ = <Self as Amm>::sell(&who, pool_id, asset_id, amount, min_receive, keep_alive)?;
 			Ok(())
 		}
 
@@ -666,6 +669,16 @@ pub mod pallet {
 			}
 		}
 
+		fn lp_token(pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError> {
+			let pool = Self::get_pool(pool_id)?;
+			match pool {
+				PoolConfiguration::StableSwap(info) => Ok(info.lp_token),
+				PoolConfiguration::ConstantProduct(info) => Ok(info.lp_token),
+				PoolConfiguration::LiquidityBootstrapping(_) =>
+					Err(Error::<T>::NoLpTokenForLbp.into()),
+			}
+		}
+
 		fn get_exchange_value(
 			pool_id: Self::PoolId,
 			asset_id: Self::AssetId,
@@ -906,6 +919,7 @@ pub mod pallet {
 			pool_id: Self::PoolId,
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
+			min_receive: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
@@ -918,20 +932,20 @@ pub mod pallet {
 					// So we compute price assuming user wants to sell instead of buy.
 					// And then do exchange computed amount with token indices flipped.
 					let dx = Self::get_exchange_value(pool_id, asset_id, amount)?;
-					Self::exchange(who, pool_id, pair, dx, T::Balance::zero(), keep_alive)?;
+					Self::exchange(who, pool_id, pair, dx, min_receive, keep_alive)?;
 					Ok(amount)
 				},
 				PoolConfiguration::ConstantProduct(info) => {
 					let pair =
 						if asset_id == info.pair.base { info.pair } else { info.pair.swap() };
 					let quote_amount = Self::get_exchange_value(pool_id, asset_id, amount)?;
-					Self::exchange(who, pool_id, pair, quote_amount, T::Balance::zero(), keep_alive)
+					Self::exchange(who, pool_id, pair, quote_amount, min_receive, keep_alive)
 				},
 				PoolConfiguration::LiquidityBootstrapping(info) => {
 					let pair =
 						if asset_id == info.pair.base { info.pair } else { info.pair.swap() };
 					let quote_amount = Self::get_exchange_value(pool_id, asset_id, amount)?;
-					Self::exchange(who, pool_id, pair, quote_amount, T::Balance::zero(), keep_alive)
+					Self::exchange(who, pool_id, pair, quote_amount, min_receive, keep_alive)
 				},
 			}
 		}
@@ -942,6 +956,7 @@ pub mod pallet {
 			pool_id: Self::PoolId,
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
+			min_receive: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
@@ -949,17 +964,17 @@ pub mod pallet {
 				PoolConfiguration::StableSwap(info) => {
 					let pair =
 						if asset_id == info.pair.base { info.pair.swap() } else { info.pair };
-					Self::exchange(who, pool_id, pair, amount, Self::Balance::zero(), keep_alive)
+					Self::exchange(who, pool_id, pair, amount, min_receive, keep_alive)
 				},
 				PoolConfiguration::ConstantProduct(info) => {
 					let pair =
 						if asset_id == info.pair.base { info.pair.swap() } else { info.pair };
-					Self::exchange(who, pool_id, pair, amount, T::Balance::zero(), keep_alive)
+					Self::exchange(who, pool_id, pair, amount, min_receive, keep_alive)
 				},
 				PoolConfiguration::LiquidityBootstrapping(info) => {
 					let pair =
 						if asset_id == info.pair.base { info.pair.swap() } else { info.pair };
-					Self::exchange(who, pool_id, pair, amount, T::Balance::zero(), keep_alive)
+					Self::exchange(who, pool_id, pair, amount, min_receive, keep_alive)
 				},
 			}
 		}

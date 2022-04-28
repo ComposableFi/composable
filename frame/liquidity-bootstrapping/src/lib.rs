@@ -260,6 +260,7 @@ pub mod pallet {
 		InvalidSaleState,
 		InvalidAmount,
 		CannotRespectMinimumRequested,
+		LpTokenNotRequiredForLbp,
 	}
 
 	#[pallet::config]
@@ -383,10 +384,11 @@ pub mod pallet {
 			pool_id: PoolIdOf<T>,
 			asset_id: AssetIdOf<T>,
 			amount: BalanceOf<T>,
+			min_receive: BalanceOf<T>,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::buy(&who, pool_id, asset_id, amount, keep_alive)?;
+			let _ = <Self as Amm>::buy(&who, pool_id, asset_id, amount, min_receive, keep_alive)?;
 			Ok(())
 		}
 
@@ -399,10 +401,11 @@ pub mod pallet {
 			pool_id: PoolIdOf<T>,
 			asset_id: AssetIdOf<T>,
 			amount: BalanceOf<T>,
+			min_receive: BalanceOf<T>,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::sell(&who, pool_id, asset_id, amount, keep_alive)?;
+			let _ = <Self as Amm>::sell(&who, pool_id, asset_id, amount, min_receive, keep_alive)?;
 			Ok(())
 		}
 
@@ -592,6 +595,10 @@ pub mod pallet {
 			Ok(Self::get_pool(pool_id)?.pair)
 		}
 
+		fn lp_token(_pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError> {
+			Err(Error::<T>::LpTokenNotRequiredForLbp.into())
+		}
+
 		fn get_exchange_value(
 			pool_id: Self::PoolId,
 			asset_id: Self::AssetId,
@@ -611,19 +618,13 @@ pub mod pallet {
 			pool_id: Self::PoolId,
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
+			min_receive: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
 			let quote_amount = Self::get_exchange_value(pool_id, asset_id, amount)?;
-			<Self as Amm>::exchange(
-				who,
-				pool_id,
-				pair,
-				quote_amount,
-				T::Balance::zero(),
-				keep_alive,
-			)
+			<Self as Amm>::exchange(who, pool_id, pair, quote_amount, min_receive, keep_alive)
 		}
 
 		#[transactional]
@@ -632,11 +633,12 @@ pub mod pallet {
 			pool_id: Self::PoolId,
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
+			min_receive: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pair = if asset_id == pool.pair.base { pool.pair.swap() } else { pool.pair };
-			<Self as Amm>::exchange(who, pool_id, pair, amount, T::Balance::zero(), keep_alive)
+			<Self as Amm>::exchange(who, pool_id, pair, amount, min_receive, keep_alive)
 		}
 
 		#[transactional]
