@@ -144,7 +144,6 @@ pub mod pallet {
 		transactional, Blake2_128Concat, PalletId, Twox64Concat,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
-	use num_integer::Integer;
 	use num_traits::Signed;
 	use sp_runtime::{
 		traits::{AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, One, Saturating, Zero},
@@ -189,7 +188,6 @@ pub mod pallet {
 			+ CheckedMul
 			+ Debug
 			+ FixedPointOperand
-			+ Integer
 			+ One
 			+ Signed
 			+ TryFrom<Self::Balance>
