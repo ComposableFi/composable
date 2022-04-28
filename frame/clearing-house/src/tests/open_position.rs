@@ -857,4 +857,53 @@ proptest! {
 				);
 			})
 	}
+
+	#[test]
+	fn can_decrease_position_even_if_below_imr(direction in any_direction()) {
+		let mut market_id: MarketId = 0;
+		let mut market_config = valid_market_config();
+		market_config.margin_ratio_initial = (1, 10).into();  // 1/10 IMR, or 10x leverage
+
+		let margin = as_balance(10);
+		let quote_amount = as_balance(100); // 10x margin => max leverage
+
+		ExtBuilder { balances: vec![(ALICE, USDC, margin)], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(market_config))
+			.add_margin(&ALICE, USDC, margin)
+			.execute_with(|| {
+				VammPallet::set_price(Some(10.into()));
+				let base_amount_limit = quote_amount / 10;
+				assert_ok!(
+					<TestPallet as ClearingHouse>::open_position(
+						&ALICE,
+						&market_id,
+						direction,
+						quote_amount,
+						base_amount_limit
+					),
+					base_amount_limit,
+				);
+
+				let new_price: FixedU128 = match direction {
+					Direction::Long => 8, // decrease price => negative PnL
+					Direction::Short => 12, // increase price => negative PnL
+				}.into();
+				VammPallet::set_price(Some(new_price));
+				let new_base_value = new_price.saturating_mul_int(base_amount_limit);
+				assert_ok!(
+					<TestPallet as ClearingHouse>::open_position(
+						&ALICE,
+						&market_id,
+						match direction {
+							Direction::Long => Direction::Short,
+							Direction::Short => Direction::Long,
+						},
+						new_base_value / 2,
+						base_amount_limit / 2,
+					),
+					base_amount_limit / 2,
+				);
+			})
+	}
 }
