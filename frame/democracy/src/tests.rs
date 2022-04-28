@@ -23,12 +23,13 @@ use codec::Encode;
 use frame_support::{
 	assert_noop, assert_ok, ord_parameter_types, parameter_types,
 	traits::{
-		ConstU32,Everything, ConstU64, Contains, EqualPrivilegeOnly, GenesisBuild, OnInitialize, SortedMembers,
+		ConstU32, ConstU64, Contains, EqualPrivilegeOnly, Everything, GenesisBuild, OnInitialize,
+		SortedMembers,
 	},
 	weights::Weight,
 };
-use orml_traits::parameter_type_with_key;
 use frame_system::{EnsureRoot, EnsureSignedBy};
+use orml_traits::parameter_type_with_key;
 use pallet_balances::{BalanceLock, Error as BalancesError};
 use sp_core::H256;
 use sp_runtime::{
@@ -116,7 +117,6 @@ impl orml_tokens::Config for Test {
 	type DustRemovalWhitelist = Everything;
 }
 
-
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub BlockWeights: frame_system::limits::BlockWeights =
@@ -151,7 +151,7 @@ impl frame_system::Config for Test {
 parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * BlockWeights::get().max_block;
 	pub const MaxScheduledPerBlock: u32 = 50;
-    pub const NoPreimagePostponement: Option<u64> = Some(10);
+	pub const NoPreimagePostponement: Option<u64> = Some(10);
 }
 
 impl pallet_scheduler::Config for Test {
@@ -176,7 +176,7 @@ parameter_types! {
 impl pallet_balances::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
-	type MaxLocks =MaxLocks;
+	type MaxLocks = MaxLocks;
 	type Balance = Balance;
 	type Event = Event;
 	type DustRemoval = ();
@@ -257,35 +257,35 @@ impl pallet_preimage::Config for Test {
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
-		balances: vec![(0, 100),(1, 10), (2, 20), (3, 30), (4, 40), (5, 50), (6, 60)],
+		balances: vec![(0, 100), (1, 10), (2, 20), (3, 30), (4, 40), (5, 50), (6, 60)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
 	pallet_democracy::GenesisConfig::<Test>::default()
 		.assimilate_storage(&mut t)
 		.unwrap();
-	
+
 	orml_tokens::GenesisConfig::<Test> {
-			balances: vec![
-				(1, DEFAULT_ASSET, 10),
-				(2, DEFAULT_ASSET, 20),
-				(3, DEFAULT_ASSET, 30),
-				(4, DEFAULT_ASSET, 40),
-				(5, DEFAULT_ASSET, 50),
-				(6, DEFAULT_ASSET, 60),
-				(1, DOT_ASSET, 10),
-				(2, DOT_ASSET, 20),
-				(3, DOT_ASSET, 30),
-				(4, DOT_ASSET, 40),
-				(5, DOT_ASSET, 50),
-				(6, DOT_ASSET, 60),
-				(1, X_ASSET, 100),
-				(2, X_ASSET, 200),
-				(3, X_ASSET, 300),
-				(4, X_ASSET, 400),
-				(5, X_ASSET, 500),
-				(6, X_ASSET, 600),
-			],
+		balances: vec![
+			(1, DEFAULT_ASSET, 10),
+			(2, DEFAULT_ASSET, 20),
+			(3, DEFAULT_ASSET, 30),
+			(4, DEFAULT_ASSET, 40),
+			(5, DEFAULT_ASSET, 50),
+			(6, DEFAULT_ASSET, 60),
+			(1, DOT_ASSET, 10),
+			(2, DOT_ASSET, 20),
+			(3, DOT_ASSET, 30),
+			(4, DOT_ASSET, 40),
+			(5, DOT_ASSET, 50),
+			(6, DOT_ASSET, 60),
+			(1, X_ASSET, 100),
+			(2, X_ASSET, 200),
+			(3, X_ASSET, 300),
+			(4, X_ASSET, 400),
+			(5, X_ASSET, 500),
+			(6, X_ASSET, 600),
+		],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
@@ -359,7 +359,7 @@ fn set_balance_proposal_hash_and_note_and_asset(
 }
 
 fn propose_set_balance(who: u64, value: u64, delay: u64) -> DispatchResult {
-	Democracy::propose(Origin::signed(who), set_balance_proposal_hash(value),DEFAULT_ASSET, delay)
+	Democracy::propose(Origin::signed(who), set_balance_proposal_hash(value), DEFAULT_ASSET, delay)
 }
 
 fn propose_set_balance_and_note(who: u64, value: u64, delay: u64) -> DispatchResult {
@@ -376,7 +376,6 @@ fn propose_set_balance_and_note_and_asset(
 	let id = set_balance_proposal_hash_and_note_and_asset(value, asset_id);
 	Democracy::propose(Origin::signed(who), id.hash, id.asset_id, delay)
 }
-
 
 fn next_block() {
 	System::set_block_number(System::block_number() + 1);

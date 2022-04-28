@@ -49,7 +49,7 @@ fn split_vote_cancellation_should_work() {
 		let r = begin_referendum();
 		let v = AccountVote::Split { aye: 30, nay: 20 };
 		assert_ok!(Democracy::vote(Origin::signed(5), r, v));
-		assert_ok!(Democracy::remove_vote(Origin::signed(5), DEFAULT_ASSET,  r));
+		assert_ok!(Democracy::remove_vote(Origin::signed(5), DEFAULT_ASSET, r));
 		assert_eq!(tally(r), Tally { ayes: 0, nays: 0, turnout: 0 });
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5, DEFAULT_ASSET));
 		assert_eq!(Balances::locks(5), vec![]);
