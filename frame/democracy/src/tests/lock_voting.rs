@@ -63,18 +63,18 @@ fn lock_voting_should_work() {
 
 		// Referendum passed; 1 and 5 didn't get their way and can now reap and unlock.
 		assert_ok!(Democracy::remove_vote(Origin::signed(1), DEFAULT_ASSET, r));
-		assert_ok!(Democracy::unlock(Origin::signed(1), 1,DEFAULT_ASSET));
+		assert_ok!(Democracy::unlock(Origin::signed(1), 1, DEFAULT_ASSET));
 		// Anyone can reap and unlock anyone else's in this context.
-		assert_ok!(Democracy::remove_other_vote(Origin::signed(2), 5, DEFAULT_ASSET,r));
+		assert_ok!(Democracy::remove_other_vote(Origin::signed(2), 5, DEFAULT_ASSET, r));
 		assert_ok!(Democracy::unlock(Origin::signed(2), 5, DEFAULT_ASSET));
 
 		// 2, 3, 4 got their way with the vote, so they cannot be reaped by others.
 		assert_noop!(
-			Democracy::remove_other_vote(Origin::signed(1), 2, DEFAULT_ASSET,  r),
+			Democracy::remove_other_vote(Origin::signed(1), 2, DEFAULT_ASSET, r),
 			Error::<Test>::NoPermission
 		);
 		// However, they can be unvoted by the owner, though it will make no difference to the lock.
-		assert_ok!(Democracy::remove_vote(Origin::signed(2),DEFAULT_ASSET,  r));
+		assert_ok!(Democracy::remove_vote(Origin::signed(2), DEFAULT_ASSET, r));
 		assert_ok!(Democracy::unlock(Origin::signed(2), 2, DEFAULT_ASSET));
 
 		assert_eq!(Tokens::locks(&1, DEFAULT_ASSET).len(), 0);
@@ -100,7 +100,7 @@ fn lock_voting_should_work() {
 
 		fast_forward_to(13);
 		assert_noop!(
-			Democracy::remove_other_vote(Origin::signed(1), 3,DEFAULT_ASSET, r),
+			Democracy::remove_other_vote(Origin::signed(1), 3, DEFAULT_ASSET, r),
 			Error::<Test>::NoPermission
 		);
 		assert_ok!(Democracy::unlock(Origin::signed(1), 3, DEFAULT_ASSET));
@@ -153,7 +153,13 @@ fn lock_voting_should_work_with_delegation() {
 		assert_ok!(Democracy::vote(Origin::signed(1), r, nay(5, 10)));
 		assert_ok!(Democracy::vote(Origin::signed(2), r, aye(4, 20)));
 		assert_ok!(Democracy::vote(Origin::signed(3), r, aye(3, 30)));
-		assert_ok!(Democracy::delegate(Origin::signed(4), 2, DEFAULT_ASSET, Conviction::Locked2x, 40));
+		assert_ok!(Democracy::delegate(
+			Origin::signed(4),
+			2,
+			DEFAULT_ASSET,
+			Conviction::Locked2x,
+			40
+		));
 		assert_ok!(Democracy::vote(Origin::signed(5), r, nay(1, 50)));
 
 		assert_eq!(tally(r), Tally { ayes: 250, nays: 100, turnout: 150 });
@@ -206,7 +212,7 @@ fn prior_lockvotes_should_be_enforced() {
 
 		fast_forward_to(7);
 		assert_noop!(
-			Democracy::remove_other_vote(Origin::signed(1), 5,DEFAULT_ASSET, r.2),
+			Democracy::remove_other_vote(Origin::signed(1), 5, DEFAULT_ASSET, r.2),
 			Error::<Test>::NoPermission
 		);
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5, DEFAULT_ASSET));
@@ -223,18 +229,18 @@ fn prior_lockvotes_should_be_enforced() {
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5, DEFAULT_ASSET));
 		assert_eq!(Tokens::locks(&5, DEFAULT_ASSET)[0].amount, 20);
 		fast_forward_to(14);
-		assert_ok!(Democracy::remove_other_vote(Origin::signed(1), 5,DEFAULT_ASSET, r.1));
+		assert_ok!(Democracy::remove_other_vote(Origin::signed(1), 5, DEFAULT_ASSET, r.1));
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5, DEFAULT_ASSET));
 		assert_eq!(Tokens::locks(&5, DEFAULT_ASSET)[0].amount, 10);
 		fast_forward_to(25);
 		assert_noop!(
-			Democracy::remove_other_vote(Origin::signed(1), 5, DEFAULT_ASSET,r.0),
+			Democracy::remove_other_vote(Origin::signed(1), 5, DEFAULT_ASSET, r.0),
 			Error::<Test>::NoPermission
 		);
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5, DEFAULT_ASSET));
 		assert_eq!(Tokens::locks(&5, DEFAULT_ASSET)[0].amount, 10);
 		fast_forward_to(26);
-		assert_ok!(Democracy::remove_other_vote(Origin::signed(1), 5,DEFAULT_ASSET, r.0));
+		assert_ok!(Democracy::remove_other_vote(Origin::signed(1), 5, DEFAULT_ASSET, r.0));
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5, DEFAULT_ASSET));
 		assert_eq!(Tokens::locks(&5, DEFAULT_ASSET).len(), 0);
 	});
@@ -249,7 +255,7 @@ fn single_consolidation_of_lockvotes_should_work_as_before() {
 		// r.2 locked 50 until 2 + 2 * 3 = #8
 
 		fast_forward_to(7);
-		assert_ok!(Democracy::remove_vote(Origin::signed(5),DEFAULT_ASSET, r.2));
+		assert_ok!(Democracy::remove_vote(Origin::signed(5), DEFAULT_ASSET, r.2));
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5, DEFAULT_ASSET));
 		assert_eq!(Tokens::locks(&5, DEFAULT_ASSET)[0].amount, 50);
 		fast_forward_to(8);
@@ -265,7 +271,7 @@ fn single_consolidation_of_lockvotes_should_work_as_before() {
 		assert_eq!(Tokens::locks(&5, DEFAULT_ASSET)[0].amount, 10);
 
 		fast_forward_to(25);
-		assert_ok!(Democracy::remove_vote(Origin::signed(5), DEFAULT_ASSET,  r.0));
+		assert_ok!(Democracy::remove_vote(Origin::signed(5), DEFAULT_ASSET, r.0));
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5, DEFAULT_ASSET));
 		assert_eq!(Tokens::locks(&5, DEFAULT_ASSET)[0].amount, 10);
 		fast_forward_to(26);
@@ -315,7 +321,13 @@ fn locks_should_persist_from_voting_to_delegation() {
 		assert_ok!(Democracy::remove_vote(Origin::signed(5), DEFAULT_ASSET, r));
 		// locked 10 until #26.
 
-		assert_ok!(Democracy::delegate(Origin::signed(5), 1, DEFAULT_ASSET, Conviction::Locked3x, 20));
+		assert_ok!(Democracy::delegate(
+			Origin::signed(5),
+			1,
+			DEFAULT_ASSET,
+			Conviction::Locked3x,
+			20
+		));
 		// locked 20.
 		assert_eq!(Tokens::locks(&5, DEFAULT_ASSET)[0].amount, 20);
 
@@ -344,7 +356,13 @@ fn locks_should_persist_from_voting_to_delegation() {
 fn locks_should_persist_from_delegation_to_voting() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(0);
-		assert_ok!(Democracy::delegate(Origin::signed(5), 1, DEFAULT_ASSET, Conviction::Locked5x, 5));
+		assert_ok!(Democracy::delegate(
+			Origin::signed(5),
+			1,
+			DEFAULT_ASSET,
+			Conviction::Locked5x,
+			5
+		));
 		assert_ok!(Democracy::undelegate(Origin::signed(5), DEFAULT_ASSET));
 		// locked 5 until 16 * 3 = #48
 

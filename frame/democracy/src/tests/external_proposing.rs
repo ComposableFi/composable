@@ -24,11 +24,7 @@ fn veto_external_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(0);
 		let id = set_balance_proposal_hash_and_note(2);
-		assert_ok!(Democracy::external_propose(
-			Origin::signed(2),
-			id.hash,
-			id.asset_id,
-		));
+		assert_ok!(Democracy::external_propose(Origin::signed(2), id.hash, id.asset_id,));
 		assert!(<NextExternal<Test>>::exists());
 
 		let id = set_balance_proposal_hash_and_note(2);
@@ -37,25 +33,29 @@ fn veto_external_works() {
 		assert!(!<NextExternal<Test>>::exists());
 		// fails - same proposal can't be resubmitted.
 		assert_noop!(
-			Democracy::external_propose(Origin::signed(2), set_balance_proposal_hash(2),DEFAULT_ASSET),
+			Democracy::external_propose(
+				Origin::signed(2),
+				set_balance_proposal_hash(2),
+				DEFAULT_ASSET
+			),
 			Error::<Test>::ProposalBlacklisted
 		);
 
 		fast_forward_to(1);
 		// fails as we're still in cooloff period.
 		assert_noop!(
-			Democracy::external_propose(Origin::signed(2), set_balance_proposal_hash(2),DEFAULT_ASSET),
+			Democracy::external_propose(
+				Origin::signed(2),
+				set_balance_proposal_hash(2),
+				DEFAULT_ASSET
+			),
 			Error::<Test>::ProposalBlacklisted
 		);
 
 		fast_forward_to(2);
 		// works; as we're out of the cooloff period.
 		let id = set_balance_proposal_hash_and_note(2);
-		assert_ok!(Democracy::external_propose(
-			Origin::signed(2),
-			id.hash,
-			id.asset_id,
-		));
+		assert_ok!(Democracy::external_propose(Origin::signed(2), id.hash, id.asset_id,));
 		assert!(<NextExternal<Test>>::exists());
 
 		// 3 can't veto the same thing twice.
@@ -72,16 +72,16 @@ fn veto_external_works() {
 		fast_forward_to(3);
 		// same proposal fails as we're still in cooloff
 		assert_noop!(
-			Democracy::external_propose(Origin::signed(2), set_balance_proposal_hash(2),DEFAULT_ASSET),
+			Democracy::external_propose(
+				Origin::signed(2),
+				set_balance_proposal_hash(2),
+				DEFAULT_ASSET
+			),
 			Error::<Test>::ProposalBlacklisted
 		);
 		// different proposal works fine.
 		let id = set_balance_proposal_hash_and_note(3);
-		assert_ok!(Democracy::external_propose(
-			Origin::signed(2),
-			id.hash,
-			id.asset_id,
-		));
+		assert_ok!(Democracy::external_propose(Origin::signed(2), id.hash, id.asset_id,));
 	});
 }
 
@@ -91,14 +91,10 @@ fn external_blacklisting_should_work() {
 		System::set_block_number(0);
 
 		let id = set_balance_proposal_hash_and_note(2);
-		assert_ok!(Democracy::external_propose(
-			Origin::signed(2),
-			id.hash, 
-			id.asset_id
-		));
+		assert_ok!(Democracy::external_propose(Origin::signed(2), id.hash, id.asset_id));
 
 		let hash = set_balance_proposal_hash(2);
-		assert_ok!(Democracy::blacklist(Origin::root(), hash, DEFAULT_ASSET,None));
+		assert_ok!(Democracy::blacklist(Origin::root(), hash, DEFAULT_ASSET, None));
 
 		fast_forward_to(2);
 		assert_noop!(Democracy::referendum_status(0), Error::<Test>::ReferendumInvalid);
@@ -115,16 +111,21 @@ fn external_referendum_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(0);
 		assert_noop!(
-			Democracy::external_propose(Origin::signed(1), set_balance_proposal_hash(2),DEFAULT_ASSET),
+			Democracy::external_propose(
+				Origin::signed(1),
+				set_balance_proposal_hash(2),
+				DEFAULT_ASSET
+			),
 			BadOrigin,
 		);
 		let id = set_balance_proposal_hash_and_note(2);
-		assert_ok!(Democracy::external_propose(
-			Origin::signed(2),
-			id.hash, id.asset_id
-		));
+		assert_ok!(Democracy::external_propose(Origin::signed(2), id.hash, id.asset_id));
 		assert_noop!(
-			Democracy::external_propose(Origin::signed(2), set_balance_proposal_hash(1),DEFAULT_ASSET),
+			Democracy::external_propose(
+				Origin::signed(2),
+				set_balance_proposal_hash(1),
+				DEFAULT_ASSET
+			),
 			Error::<Test>::DuplicateProposal
 		);
 		fast_forward_to(2);
@@ -149,16 +150,16 @@ fn external_majority_referendum_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(0);
 		assert_noop!(
-			Democracy::external_propose_majority(Origin::signed(1), set_balance_proposal_hash(2),DEFAULT_ASSET),
+			Democracy::external_propose_majority(
+				Origin::signed(1),
+				set_balance_proposal_hash(2),
+				DEFAULT_ASSET
+			),
 			BadOrigin,
 		);
 
 		let id = set_balance_proposal_hash_and_note(2);
-		assert_ok!(Democracy::external_propose_majority(
-			Origin::signed(3),
-			id.hash, 
-			id.asset_id
-		));
+		assert_ok!(Democracy::external_propose_majority(Origin::signed(3), id.hash, id.asset_id));
 		fast_forward_to(2);
 		assert_eq!(
 			Democracy::referendum_status(0),
@@ -181,16 +182,16 @@ fn external_default_referendum_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(0);
 		assert_noop!(
-			Democracy::external_propose_default(Origin::signed(3), set_balance_proposal_hash(2),DEFAULT_ASSET),
+			Democracy::external_propose_default(
+				Origin::signed(3),
+				set_balance_proposal_hash(2),
+				DEFAULT_ASSET
+			),
 			BadOrigin,
 		);
 
 		let id = set_balance_proposal_hash_and_note(2);
-		assert_ok!(Democracy::external_propose_default(
-			Origin::signed(1),
-			id.hash, 
-			id.asset_id
-		));
+		assert_ok!(Democracy::external_propose_default(Origin::signed(1), id.hash, id.asset_id));
 		fast_forward_to(2);
 		assert_eq!(
 			Democracy::referendum_status(0),
@@ -213,11 +214,7 @@ fn external_and_public_interleaving_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(0);
 		let id = set_balance_proposal_hash_and_note(1);
-		assert_ok!(Democracy::external_propose(
-			Origin::signed(2),
-			id.hash, 
-			id.asset_id
-		));
+		assert_ok!(Democracy::external_propose(Origin::signed(2), id.hash, id.asset_id));
 		assert_ok!(propose_set_balance_and_note(6, 2, 2));
 
 		fast_forward_to(2);
@@ -235,11 +232,7 @@ fn external_and_public_interleaving_works() {
 		);
 		// replenish external
 		let id = set_balance_proposal_hash_and_note(3);
-		assert_ok!(Democracy::external_propose(
-			Origin::signed(2),
-			id.hash, 
-			id.asset_id,
-		));
+		assert_ok!(Democracy::external_propose(Origin::signed(2), id.hash, id.asset_id,));
 
 		fast_forward_to(4);
 
@@ -271,11 +264,7 @@ fn external_and_public_interleaving_works() {
 		);
 		// replenish external
 		let id = set_balance_proposal_hash_and_note(5);
-		assert_ok!(Democracy::external_propose(
-			Origin::signed(2),
-			id.hash,
-			id.asset_id,
-		));
+		assert_ok!(Democracy::external_propose(Origin::signed(2), id.hash, id.asset_id,));
 
 		fast_forward_to(8);
 
@@ -292,11 +281,7 @@ fn external_and_public_interleaving_works() {
 		);
 		// replenish both
 		let id = set_balance_proposal_hash_and_note(7);
-		assert_ok!(Democracy::external_propose(
-			Origin::signed(2),
-			id.hash, 
-			id.asset_id,
-		));
+		assert_ok!(Democracy::external_propose(Origin::signed(2), id.hash, id.asset_id,));
 		assert_ok!(propose_set_balance_and_note(6, 4, 2));
 
 		fast_forward_to(10);
