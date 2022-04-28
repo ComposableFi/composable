@@ -24,6 +24,7 @@ type PabloTransaction @entity {
   "ID of the event that was used to derive this transaction"
   eventId: ID!
   pool: PabloPool!
+  who: String!
   transactionType: PabloTransactionType
   baseAssetId: BigInt!
   baseAssetAmount: BigInt!

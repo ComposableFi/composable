@@ -9,6 +9,7 @@ import {CurrencyPair} from "./types/v2100";
 function createTransaction(
     ctx: EventHandlerContext,
     pool: PabloPool,
+    who: string,
     transactionType: PabloTransactionType,
     priceInQuoteAsset: string,
     baseAssetId: bigint,
@@ -20,6 +21,7 @@ function createTransaction(
     tx.id = ctx.event.id;
     tx.eventId = ctx.event.id;
     tx.pool = pool;
+    tx.who = who;
     tx.blockNumber = BigInt(ctx.block.height);
     tx.receivedTimestamp = BigInt(new Date().getTime());
     tx.transactionType = transactionType;
@@ -81,7 +83,9 @@ export async function processPoolCreatedEvent(ctx: EventHandlerContext, event: P
             console.error("Unexpected transaction in db", tx);
             throw new Error("Unexpected transaction in db");
         }
-        tx = createTransaction(ctx, pool, PabloTransactionType.CREATE_POOL,
+        tx = createTransaction(ctx, pool,
+            owner,
+            PabloTransactionType.CREATE_POOL,
             // Following fields are irrelevant for CREATE_POOL
             '0',
             poolCreatedEvt.assets.base,
@@ -166,7 +170,8 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext, event
         if (tx != undefined) {
             throw new Error("Unexpected transaction in db");
         }
-        tx = createTransaction(ctx, pool, PabloTransactionType.ADD_LIQUIDITY,
+        tx = createTransaction(ctx, pool, who,
+            PabloTransactionType.ADD_LIQUIDITY,
             Big(liquidityAddedEvt.baseAmount.toString())
                 .div(Big(liquidityAddedEvt.quoteAmount.toString())).toString(),
             BigInt(baseAsset.assetId),
@@ -273,7 +278,8 @@ export async function processSwappedEvent(ctx: EventHandlerContext, event: Pablo
         if (tx != undefined) {
             throw new Error("Unexpected transaction in db");
         }
-        tx = createTransaction(ctx, pool, PabloTransactionType.SWAP,
+        tx = createTransaction(ctx, pool, who,
+            PabloTransactionType.SWAP,
             isReverse
                 ? Big(swappedEvt.quoteAmount.toString()).div(Big(swappedEvt.baseAmount.toString())).toString()
                 : Big(swappedEvt.baseAmount.toString()).div(Big(swappedEvt.quoteAmount.toString())).toString(),

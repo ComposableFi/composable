@@ -22,6 +22,9 @@ export class PabloTransaction {
   @ManyToOne_(() => PabloPool, {nullable: false})
   pool!: PabloPool
 
+  @Column_("text", {nullable: false})
+  who!: string
+
   @Column_("varchar", {length: 16, nullable: true})
   transactionType!: PabloTransactionType | undefined | null
 
