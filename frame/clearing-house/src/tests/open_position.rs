@@ -906,4 +906,73 @@ proptest! {
 				);
 			})
 	}
+
+	#[test]
+	fn imr_is_combination_of_market_imrs_with_open_positions(direction in any_direction()) {
+		let mut market_ids = Vec::<_>::new();
+		let mut configs = Vec::<_>::new();
+		let mut market_config = valid_market_config();
+		market_config.margin_ratio_initial = (1, 10).into(); // 10x leverage
+		configs.push(Some(market_config.clone()));
+		market_config.margin_ratio_initial = (1, 20).into(); // 20x leverage
+		configs.push(Some(market_config));
+
+		let margin = as_balance(60);
+
+		ExtBuilder { balances: vec![(ALICE, USDC, margin)], ..Default::default() }
+			.build()
+			.init_markets(&mut market_ids, configs.into_iter())
+			.add_margin(&ALICE, USDC, margin)
+			.execute_with(|| {
+				let price = 10;
+				VammPallet::set_price(Some(price.into()));
+
+				// Since the two markets have 10x and 20x max leverage respectively, the first has
+				// two times more margin requirement than the second. Thus, it has double the weight
+				// in calculating the account's max leverage. By splitting one third of our total
+				// exposure in the first market and the rest in the second, we can have 15x max
+				// leverage for our account.
+				let quote_amount = as_balance(300); // (15 x 60 = 900)
+				let base_amount = quote_amount / price;
+				assert_ok!(
+					<TestPallet as ClearingHouse>::open_position(
+						&ALICE,
+						&market_ids[0],
+						direction,
+						quote_amount,
+						base_amount,
+					),
+					base_amount,
+				);
+
+				// For second market
+				let quote_amount = as_balance(600);
+				let base_amount = quote_amount / price;
+				// This should exceed the max leverage and fail
+				let quote_amount_fail = quote_amount + 100;
+				let base_amount_fail = quote_amount_fail / price;
+				assert_noop!(
+					<TestPallet as ClearingHouse>::open_position(
+						&ALICE,
+						&market_ids[1],
+						direction,
+						quote_amount_fail,
+						base_amount_fail,
+					),
+					Error::<Runtime>::InsufficientCollateral
+				);
+
+				// This should succeed (max leverage)
+				assert_ok!(
+					<TestPallet as ClearingHouse>::open_position(
+						&ALICE,
+						&market_ids[1],
+						direction,
+						quote_amount,
+						base_amount,
+					),
+					base_amount
+				);
+			})
+	}
 }
