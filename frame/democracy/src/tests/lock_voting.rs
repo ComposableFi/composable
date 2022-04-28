@@ -56,7 +56,7 @@ fn lock_voting_should_work() {
 
 		// All balances are currently locked.
 		for i in 1..=5 {
-			assert_eq!(Balances::locks(i), vec![the_lock(i * 10)]);
+			assert_eq!(Tokens::locks(&i, DEFAULT_ASSET)[0].amount, i * 10);
 		}
 
 		fast_forward_to(2);
@@ -317,7 +317,7 @@ fn locks_should_persist_from_voting_to_delegation() {
 
 		assert_ok!(Democracy::delegate(Origin::signed(5), 1, DEFAULT_ASSET, Conviction::Locked3x, 20));
 		// locked 20.
-		assert!(Balances::locks(5)[0].amount == 20);
+		assert_eq!(Tokens::locks(&5, DEFAULT_ASSET)[0].amount, 20);
 
 		assert_ok!(Democracy::undelegate(Origin::signed(5), DEFAULT_ASSET));
 		// locked 20 until #14
@@ -328,15 +328,15 @@ fn locks_should_persist_from_voting_to_delegation() {
 
 		fast_forward_to(14);
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5, DEFAULT_ASSET));
-		assert!(Balances::locks(5)[0].amount >= 10);
+		assert!(Tokens::locks(&5, DEFAULT_ASSET)[0].amount >= 10);
 
 		fast_forward_to(25);
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5, DEFAULT_ASSET));
-		assert!(Balances::locks(5)[0].amount >= 10);
+		assert!(Tokens::locks(&5, DEFAULT_ASSET)[0].amount >= 10);
 
 		fast_forward_to(26);
 		assert_ok!(Democracy::unlock(Origin::signed(5), 5, DEFAULT_ASSET));
-		assert_eq!(Tokens::locks(&5, DEFAULT_ASSET)[0].amount, 20);
+		assert_eq!(Tokens::locks(&5, DEFAULT_ASSET).len(), 0);
 	});
 }
 
