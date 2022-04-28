@@ -1,4 +1,4 @@
-use crate::{mock::*, Any, ConnectionParams};
+use crate::{mock::*, routing::Context, Any, ConnectionParams};
 use frame_support::assert_ok;
 use ibc::{
 	core::{
@@ -9,7 +9,9 @@ use ibc::{
 			msgs::create_client::{MsgCreateAnyClient, TYPE_URL},
 		},
 		ics03_connection::{msgs::conn_open_ack, version::Version as ConnVersion},
-		ics04_channel::{channel::Order, msgs::chan_open_ack, Version as ChanVersion},
+		ics04_channel::{
+			channel::Order, context::ChannelReader, msgs::chan_open_ack, Version as ChanVersion,
+		},
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
 	},
 	mock::{
@@ -233,7 +235,7 @@ fn should_send_ping_packet() {
 		let offchain_packet = crate::Pallet::<Test>::get_offchain_packets(
 			"channel-0".as_bytes().to_vec(),
 			"ping".as_bytes().to_vec(),
-			vec![0],
+			vec![1],
 		)
 		.unwrap();
 		assert_eq!(offchain_packet.len(), 1);

@@ -29,9 +29,11 @@ use ibc::{
 			version::Version as ConnVersion,
 		},
 		ics04_channel::{
-			channel::ChannelEnd,
+			channel::{ChannelEnd, State as ChannelState},
+			context::{ChannelKeeper, ChannelReader},
 			msgs::{
 				chan_open_ack::TYPE_URL as CHAN_OPEN_ACK_TYPE_URL,
+				chan_open_confirm::TYPE_URL as CHAN_OPEN_CONFIRM_TYPE_URL,
 				chan_open_init::{MsgChannelOpenInit, TYPE_URL as CHAN_OPEN_TYPE_URL},
 				chan_open_try::TYPE_URL as CHAN_OPEN_TRY_TYPE_URL,
 			},
@@ -181,8 +183,8 @@ benchmarks! {
 
 		ctx.store_connection(connection_id.clone(), &connection_end).unwrap();
 		ctx.store_connection_to_client(connection_id, &client_id).unwrap();
-
-		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap(), None);
+		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
+		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), None);
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::Init,
 			ibc::core::ics04_channel::channel::Order::Unordered,
@@ -190,7 +192,7 @@ benchmarks! {
 			vec![ConnectionId::new(0)],
 			ibc::core::ics04_channel::Version::default()
 		);
-		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
+
 		let value = MsgChannelOpenInit {
 			port_id: port_id.clone(),
 			channel: channel_end,
@@ -239,7 +241,7 @@ benchmarks! {
 		let capability = PalletIbc::<T>::bind_port(port_id.clone()).unwrap();
 		pallet_ibc_ping::Pallet::<T>::set_capability(capability.index());
 
-		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap(), Some(ChannelId::new(0)));
+		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::Init,
 			ibc::core::ics04_channel::channel::Order::Unordered,
@@ -267,10 +269,11 @@ benchmarks! {
 		let caller: T::AccountId = whitelisted_caller();
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
 	verify {
-
+		let channel_end = ctx.channel_end(&(PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap(), ChannelId::new(0))).unwrap();
+		assert_eq!(channel_end.state, ChannelState::TryOpen);
 	}
 
-	// channel_open_try
+	// channel_open_ack
 	channel_open_ack {
 		let mut ctx = routing::Context::<T>::new();
 		let now: <T as pallet_timestamp::Config>::Moment = 1650894363u64.saturating_mul(1000);
@@ -302,7 +305,7 @@ benchmarks! {
 		let capability = PalletIbc::<T>::bind_port(port_id.clone()).unwrap();
 		pallet_ibc_ping::Pallet::<T>::set_capability(capability.index());
 
-		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap(), Some(ChannelId::new(0)));
+		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::Init,
 			ibc::core::ics04_channel::channel::Order::Unordered,
@@ -330,7 +333,65 @@ benchmarks! {
 		let caller: T::AccountId = whitelisted_caller();
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
 	verify {
+		let channel_end = ctx.channel_end(&(PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap(), ChannelId::new(0))).unwrap();
+		assert_eq!(channel_end.state, ChannelState::Open);
+	}
 
+	// channel_open_confirm
+	channel_open_confirm {
+		let mut ctx = routing::Context::<T>::new();
+		let now: <T as pallet_timestamp::Config>::Moment = 1650894363u64.saturating_mul(1000);
+		pallet_timestamp::Pallet::<T>::set_timestamp(now);
+		let (mock_client_state, mock_cs_state) = create_mock_state();
+		let mock_client_state = AnyClientState::Tendermint(mock_client_state);
+		let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
+		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
+		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
+		ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
+		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
+		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
+
+		let connection_id = ConnectionId::new(0);
+		let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+		let delay_period = core::time::Duration::from_nanos(1000);
+		let connection_counterparty = Counterparty::new(counterparty_client_id, Some(ConnectionId::new(1)), commitment_prefix);
+		let connection_end = ConnectionEnd::new(State::Open, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
+
+		ctx.store_connection(connection_id.clone(), &connection_end).unwrap();
+		ctx.store_connection_to_client(connection_id, &client_id).unwrap();
+		let value = create_client_update().encode_vec().unwrap();
+
+		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
+
+		ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
+
+		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
+		let capability = PalletIbc::<T>::bind_port(port_id.clone()).unwrap();
+		pallet_ibc_ping::Pallet::<T>::set_capability(capability.index());
+
+		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
+		let channel_end = ChannelEnd::new(
+			ibc::core::ics04_channel::channel::State::TryOpen,
+			ibc::core::ics04_channel::channel::Order::Unordered,
+			counterparty_channel,
+			vec![ConnectionId::new(0)],
+			ibc::core::ics04_channel::Version::default()
+		);
+
+		ctx.store_channel((port_id.clone(), ChannelId::new(0)), &channel_end).unwrap();
+		ctx.store_connection_channels(ConnectionId::new(0), &(port_id, ChannelId::new(0))).unwrap();
+
+		let (cs_state, value) = create_chan_open_confirm();
+		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
+		let msg = Any {
+			type_url: CHAN_OPEN_CONFIRM_TYPE_URL.as_bytes().to_vec(),
+			value: value.encode_vec().unwrap()
+		};
+		let caller: T::AccountId = whitelisted_caller();
+	}: deliver(RawOrigin::Signed(caller), vec![msg])
+	verify {
+		let channel_end = ctx.channel_end(&(PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap(), ChannelId::new(0))).unwrap();
+		assert_eq!(channel_end.state, ChannelState::Open);
 	}
 }
 

@@ -1,25 +1,29 @@
 use super::*;
 use codec::{Decode, Encode};
 use frame_support::traits::Currency;
-use ibc::core::{
-	ics02_client::{client_consensus::AnyConsensusState, client_state::AnyClientState},
-	ics04_channel::{
-		channel::ChannelEnd,
-		context::{ChannelKeeper, ChannelReader},
-		packet::{Packet, Sequence},
-	},
-	ics05_port::{
-		capabilities::{PortCapability, PortCapabilityType, TypedCapability},
-		context::{PortKeeper, PortReader},
-	},
-	ics24_host::{
-		identifier::*,
-		path::{
-			AcksPath, ChannelEndsPath, ClientConsensusStatePath, ClientStatePath, ClientTypePath,
-			CommitmentsPath, ConnectionsPath, ReceiptsPath, SeqAcksPath, SeqRecvsPath,
-			SeqSendsPath,
+use ibc::{
+	core::{
+		ics02_client::{client_consensus::AnyConsensusState, client_state::AnyClientState},
+		ics04_channel::{
+			channel::ChannelEnd,
+			context::{ChannelKeeper, ChannelReader},
+			msgs::chan_open_init::{MsgChannelOpenInit, TYPE_URL as CHANNEL_OPEN_INIT_TYPE_URL},
+			packet::{Packet, Sequence},
+		},
+		ics05_port::{
+			capabilities::{PortCapability, PortCapabilityType, TypedCapability},
+			context::{PortKeeper, PortReader},
+		},
+		ics24_host::{
+			identifier::*,
+			path::{
+				AcksPath, ChannelEndsPath, ClientConsensusStatePath, ClientStatePath,
+				ClientTypePath, CommitmentsPath, ConnectionsPath, ReceiptsPath, SeqAcksPath,
+				SeqRecvsPath, SeqSendsPath,
+			},
 		},
 	},
+	signer::Signer,
 };
 use ibc_primitives::{
 	ConnectionHandshake, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection,
@@ -34,7 +38,7 @@ use ibc_trait::{
 	channel_id_from_bytes, client_id_from_bytes, connection_id_from_bytes, port_id_from_bytes,
 	Error as IbcHandlerError, IbcTrait,
 };
-use scale_info::prelude::collections::BTreeMap;
+use scale_info::prelude::{collections::BTreeMap, string::ToString};
 use sp_std::time::Duration;
 use tendermint_proto::Protobuf;
 
@@ -690,18 +694,15 @@ where
 		let channel_counter =
 			ctx.channel_counter().map_err(|_| IbcHandlerError::ChannelInitError)?;
 		let channel_id = ChannelId::new(channel_counter);
-		ctx.store_channel((port_id.clone(), channel_id.clone()), &channel_end)
+		let value = MsgChannelOpenInit { port_id, channel: channel_end, signer: Signer::new("") }
+			.encode_vec()
+			.unwrap();
+		let msg = ibc_proto::google::protobuf::Any {
+			type_url: CHANNEL_OPEN_INIT_TYPE_URL.to_string(),
+			value,
+		};
+		ibc::core::ics26_routing::handler::deliver(&mut ctx, msg)
 			.map_err(|_| IbcHandlerError::ChannelInitError)?;
-		ctx.store_connection_channels(
-			channel_end
-				.connection_hops()
-				.get(0)
-				.ok_or(IbcHandlerError::ChannelInitError)?
-				.clone(),
-			&(port_id, channel_id.clone()),
-		)
-		.map_err(|_| IbcHandlerError::ChannelInitError)?;
-		ctx.increase_channel_counter();
 		Ok(channel_id)
 	}
 }

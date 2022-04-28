@@ -16,6 +16,7 @@ pub trait WeightInfo {
 	fn create_channel() -> Weight;
 	fn channel_open_try() -> Weight;
 	fn channel_open_ack() -> Weight;
+	fn channel_open_confirm() -> Weight;
 }
 
 impl WeightInfo for () {
@@ -40,6 +41,10 @@ impl WeightInfo for () {
 	}
 
 	fn channel_open_ack() -> Weight {
+		0
+	}
+
+	fn channel_open_confirm() -> Weight {
 		0
 	}
 }
@@ -106,9 +111,9 @@ pub(crate) fn deliver<T: Config>(msgs: &Vec<Any>) -> Weight {
 					},
 					ChannelMsg::ChannelOpenConfirm(channel_msg) => {
 						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str());
-						let _cb_weight =
+						let cb_weight =
 							cb.on_chan_open_confirm(&channel_msg.port_id, &channel_msg.channel_id);
-						unimplemented!()
+						cb_weight.saturating_add(<T as Config>::WeightInfo::channel_open_confirm())
 					},
 					ChannelMsg::ChannelCloseInit(channel_msg) => {
 						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str());
