@@ -4,6 +4,8 @@
 #![allow(non_camel_case_types)]
 #![allow(dead_code)]
 
+extern crate core;
+
 use codec::{Decode, Encode};
 use frame_system::ensure_signed;
 pub use pallet::*;
@@ -108,7 +110,7 @@ pub mod pallet {
 		type Currency: Currency<Self::AccountId>;
 		/// Prefix for events stored in the Off-chain DB via Indexing API.
 		const INDEXING_PREFIX: &'static [u8];
-		/// Prefix for ibc connection
+		/// Prefix for ibc connection, should be valid utf8 string bytes
 		const CONNECTION_PREFIX: &'static [u8];
 		#[pallet::constant]
 		type ExpectedBlockTime: Get<u64>;

@@ -35,8 +35,8 @@ use ibc_primitives::{
 	SendPacketData,
 };
 use ibc_trait::{
-	channel_id_from_bytes, client_id_from_bytes, connection_id_from_bytes, port_id_from_bytes,
-	Error as IbcHandlerError, IbcTrait,
+	apply_prefix_and_encode, channel_id_from_bytes, client_id_from_bytes, connection_id_from_bytes,
+	port_id_from_bytes, Error as IbcHandlerError, IbcTrait,
 };
 use scale_info::prelude::{collections::BTreeMap, string::ToString};
 use sp_std::time::Duration;
@@ -48,7 +48,6 @@ where
 {
 	pub fn build_trie_inputs() -> Result<Vec<(Vec<u8>, Vec<u8>)>, Error<T>> {
 		let mut inputs = Vec::new();
-		let prefix = T::CONNECTION_PREFIX.to_vec();
 
 		// Insert client state in trie
 		for (client_id, client_state) in ClientStates::<T>::iter() {
@@ -67,12 +66,14 @@ where
 			.map_err(|_| Error::<T>::DecodingError)?;
 			let client_state_path = format!("{}", ClientStatePath(id.clone()));
 			let client_type_path = format!("{}", ClientTypePath(id.clone()));
-			let mut client_type_key = prefix.clone();
-			let mut client_state_key = prefix.clone();
-			client_state_key.extend_from_slice(client_state_path.as_bytes());
-			client_type_key.extend_from_slice(client_type_path.as_bytes());
-			inputs.push((client_state_key.encode(), client_state));
-			inputs.push((client_type_key.encode(), client_type))
+			let client_type_key =
+				apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![client_type_path])
+					.map_err(|_| Error::<T>::DecodingError)?;
+			let client_state_key =
+				apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![client_state_path])
+					.map_err(|_| Error::<T>::DecodingError)?;
+			inputs.push((client_state_key, client_state));
+			inputs.push((client_type_key, client_type))
 		}
 
 		// Insert consensus states in trie
@@ -95,22 +96,22 @@ where
 				epoch: height.revision_number,
 				height: height.revision_height,
 			};
-			let mut key = prefix.clone();
 			let path = format!("{}", consensus_path);
-			key.extend_from_slice(&path.as_bytes());
-			inputs.push((key.encode(), consensus_state));
+			let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![path])
+				.map_err(|_| Error::<T>::DecodingError)?;
+			inputs.push((key, consensus_state));
 		}
 
 		// Insert connection ends in trie
 		for (connection, connection_end) in Connections::<T>::iter() {
-			let mut key = prefix.clone();
 			let connection_id = ConnectionId::from_str(
 				&String::from_utf8(connection).map_err(|_| Error::<T>::DecodingError)?,
 			)
 			.map_err(|_| Error::<T>::DecodingError)?;
 			let path = format!("{}", ConnectionsPath(connection_id));
-			key.extend_from_slice(path.as_bytes());
-			inputs.push((key.encode(), connection_end))
+			let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![path])
+				.map_err(|_| Error::<T>::DecodingError)?;
+			inputs.push((key, connection_end))
 		}
 
 		// Insert channel ends and sequences in trie
@@ -118,7 +119,6 @@ where
 			let next_seq_send = NextSequenceSend::<T>::get(&port, &channel);
 			let next_seq_recv = NextSequenceRecv::<T>::get(&port, &channel);
 			let next_seq_ack = NextSequenceAck::<T>::get(&port, &channel);
-			let mut channel_key = prefix.clone();
 			let channel_id =
 				channel_id_from_bytes(channel).map_err(|_| Error::<T>::DecodingError)?;
 			let port_id = port_id_from_bytes(port).map_err(|_| Error::<T>::DecodingError)?;
@@ -128,18 +128,21 @@ where
 			let next_seq_recv_path =
 				format!("{}", SeqRecvsPath(port_id.clone(), channel_id.clone()));
 			let next_seq_ack_path = format!("{}", SeqAcksPath(port_id.clone(), channel_id.clone()));
-			let mut next_seq_send_key = prefix.clone();
-			let mut next_seq_recv_key = prefix.clone();
-			let mut next_seq_ack_key = prefix.clone();
-			next_seq_recv_key.extend_from_slice(next_seq_recv_path.as_bytes());
-			next_seq_send_key.extend_from_slice(next_seq_send_path.as_bytes());
-			next_seq_ack_key.extend_from_slice(next_seq_ack_path.as_bytes());
-
-			channel_key.extend_from_slice(channel_path.as_bytes());
-			inputs.push((channel_key.encode(), channel_end));
-			inputs.push((next_seq_ack_key.encode(), next_seq_ack.encode()));
-			inputs.push((next_seq_send_key.encode(), next_seq_send.encode()));
-			inputs.push((next_seq_recv_key.encode(), next_seq_recv.encode()));
+			let next_seq_send_key =
+				apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_send_path])
+					.map_err(|_| Error::<T>::DecodingError)?;
+			let next_seq_recv_key =
+				apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_recv_path])
+					.map_err(|_| Error::<T>::DecodingError)?;
+			let next_seq_ack_key =
+				apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_ack_path])
+					.map_err(|_| Error::<T>::DecodingError)?;
+			let channel_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![channel_path])
+				.map_err(|_| Error::<T>::DecodingError)?;
+			inputs.push((channel_key, channel_end));
+			inputs.push((next_seq_ack_key, next_seq_ack.encode()));
+			inputs.push((next_seq_send_key, next_seq_send.encode()));
+			inputs.push((next_seq_recv_key, next_seq_recv.encode()));
 		}
 
 		// Insert packet commitments in trie
@@ -151,10 +154,11 @@ where
 
 			let commitment_path = CommitmentsPath { port_id, channel_id, sequence };
 
-			let mut commitment_key = prefix.clone();
-			let commitment_path_str = format!("{}", commitment_path);
-			commitment_key.extend_from_slice(commitment_path_str.as_bytes());
-			inputs.push((commitment_key.encode(), commitment))
+			let commitment_path = format!("{}", commitment_path);
+			let commitment_key =
+				apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![commitment_path])
+					.map_err(|_| Error::<T>::DecodingError)?;
+			inputs.push((commitment_key, commitment))
 		}
 
 		// Insert packet acknowledgements in trie
@@ -166,10 +170,10 @@ where
 
 			let ack_path = AcksPath { port_id, channel_id, sequence };
 
-			let mut ack_key = prefix.clone();
-			let ack_path_str = format!("{}", ack_path);
-			ack_key.extend_from_slice(ack_path_str.as_bytes());
-			inputs.push((ack_key.encode(), ack));
+			let ack_path = format!("{}", ack_path);
+			let ack_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![ack_path])
+				.map_err(|_| Error::<T>::DecodingError)?;
+			inputs.push((ack_key, ack));
 		}
 
 		// Insert packet receipts in trie
@@ -181,10 +185,10 @@ where
 
 			let receipt_path = ReceiptsPath { port_id, channel_id, sequence };
 
-			let mut receipt_key = prefix.clone();
-			let receipt_path_str = format!("{}", receipt_path);
-			receipt_key.extend_from_slice(receipt_path_str.as_bytes());
-			inputs.push((receipt_key.encode(), receipt))
+			let receipt_path = format!("{}", receipt_path);
+			let receipt_key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![receipt_path])
+				.map_err(|_| Error::<T>::DecodingError)?;
+			inputs.push((receipt_key, receipt))
 		}
 
 		Ok(inputs)
@@ -211,9 +215,9 @@ where
 		let channel_id =
 			channel_id_from_bytes(channel_id.clone()).map_err(|_| Error::<T>::DecodingError)?;
 
-		let mut key = T::CONNECTION_PREFIX.to_vec();
 		let channel_path = format!("{}", ChannelEndsPath(port_id.clone(), channel_id.clone()));
-		key.extend_from_slice(channel_path.as_bytes());
+		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![channel_path])
+			.map_err(|_| Error::<T>::DecodingError)?;
 
 		Ok(QueryChannelResponse { channel, trie_key: key, height: host_height::<T>() })
 	}
@@ -221,12 +225,12 @@ where
 	/// Get a connection state
 	pub fn connection(connection_id: Vec<u8>) -> Result<QueryConnectionResponse, Error<T>> {
 		let connection = Connections::<T>::get(connection_id.clone());
-		let mut key = T::CONNECTION_PREFIX.to_vec();
 		let connection_id =
 			connection_id_from_bytes(connection_id).map_err(|_| Error::<T>::DecodingError)?;
 
 		let connection_path = format!("{}", ConnectionsPath(connection_id));
-		key.extend_from_slice(connection_path.as_bytes());
+		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![connection_path])
+			.map_err(|_| Error::<T>::DecodingError)?;
 
 		Ok(QueryConnectionResponse { connection, trie_key: key, height: host_height::<T>() })
 	}
@@ -234,12 +238,12 @@ where
 	/// Get a client state
 	pub fn client(client_id: Vec<u8>) -> Result<QueryClientStateResponse, Error<T>> {
 		let client_state = ClientStates::<T>::get(client_id.clone());
-		let mut key = T::CONNECTION_PREFIX.to_vec();
 		let client_id = client_id_from_bytes(client_id).map_err(|_| Error::<T>::DecodingError)?;
 
 		let client_state_path = format!("{}", ClientStatePath(client_id));
 
-		key.extend_from_slice(client_state_path.as_bytes());
+		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![client_state_path])
+			.map_err(|_| Error::<T>::DecodingError)?;
 
 		Ok(QueryClientStateResponse { client_state, trie_key: key, height: host_height::<T>() })
 	}
@@ -270,7 +274,6 @@ where
 			height
 		};
 		let consensus_state = ConsensusStates::<T>::get(client_id.clone(), height.clone());
-		let mut key = T::CONNECTION_PREFIX.to_vec();
 		let client_id =
 			client_id_from_bytes(client_id.clone()).map_err(|_| Error::<T>::DecodingError)?;
 
@@ -282,7 +285,8 @@ where
 		};
 
 		let path = format!("{}", consensus_path);
-		key.extend_from_slice(path.as_bytes());
+		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![path])
+			.map_err(|_| Error::<T>::DecodingError)?;
 
 		Ok(QueryConsensusStateResponse {
 			consensus_state,
@@ -441,8 +445,8 @@ where
 		let channel_id =
 			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
 		let next_seq_recv_path = format!("{}", SeqRecvsPath(port_id, channel_id));
-		let mut key = T::CONNECTION_PREFIX.to_vec();
-		key.extend_from_slice(next_seq_recv_path.as_bytes());
+		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_recv_path])
+			.map_err(|_| Error::<T>::DecodingError)?;
 
 		Ok(QueryNextSequenceReceiveResponse { sequence, trie_key: key, height: host_height::<T>() })
 	}
@@ -458,8 +462,8 @@ where
 			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
 		let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
 		let commitment_path = format!("{}", CommitmentsPath { port_id, channel_id, sequence });
-		let mut key = T::CONNECTION_PREFIX.to_vec();
-		key.extend_from_slice(commitment_path.as_bytes());
+		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![commitment_path])
+			.map_err(|_| Error::<T>::DecodingError)?;
 
 		Ok(QueryPacketCommitmentResponse { commitment, trie_key: key, height: host_height::<T>() })
 	}
@@ -475,8 +479,8 @@ where
 			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
 		let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
 		let acks_path = format!("{}", AcksPath { port_id, channel_id, sequence });
-		let mut key = T::CONNECTION_PREFIX.to_vec();
-		key.extend_from_slice(acks_path.as_bytes());
+		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![acks_path])
+			.map_err(|_| Error::<T>::DecodingError)?;
 
 		Ok(QueryPacketAcknowledgementResponse { ack, trie_key: key, height: host_height::<T>() })
 	}
@@ -493,8 +497,8 @@ where
 			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
 		let sequence = ibc::core::ics04_channel::packet::Sequence::from(seq);
 		let receipt_path = format!("{}", ReceiptsPath { port_id, channel_id, sequence });
-		let mut key = T::CONNECTION_PREFIX.to_vec();
-		key.extend_from_slice(receipt_path.as_bytes());
+		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![receipt_path])
+			.map_err(|_| Error::<T>::DecodingError)?;
 		let receipt = if &receipt == "Ok" { true } else { false };
 		Ok(QueryPacketReceiptResponse { receipt, trie_key: key, height: host_height::<T>() })
 	}
@@ -511,7 +515,7 @@ where
 			client_id_from_bytes(client_id.clone()).map_err(|_| Error::<T>::DecodingError)?;
 		let connection_id = connection_id_from_bytes(connection_id.clone())
 			.map_err(|_| Error::<T>::DecodingError)?;
-		let prefix = T::CONNECTION_PREFIX.to_vec();
+		let prefix = T::CONNECTION_PREFIX;
 		let connection_path = format!("{}", ConnectionsPath(connection_id));
 		let consensus_path = ClientConsensusStatePath {
 			client_id: client_id.clone(),
@@ -520,12 +524,12 @@ where
 		};
 		let client_state_path = format!("{}", ClientStatePath(client_id.clone()));
 		let consensus_path = format!("{}", consensus_path);
-		let mut client_state_key = prefix.clone();
-		client_state_key.extend_from_slice(client_state_path.as_bytes());
-		let mut connection_key = prefix.clone();
-		connection_key.extend_from_slice(connection_path.as_bytes());
-		let mut consensus_key = prefix.clone();
-		consensus_key.extend_from_slice(consensus_path.as_bytes());
+		let client_state_key = apply_prefix_and_encode(prefix, vec![client_state_path])
+			.map_err(|_| Error::<T>::DecodingError)?;
+		let connection_key = apply_prefix_and_encode(prefix, vec![connection_path])
+			.map_err(|_| Error::<T>::DecodingError)?;
+		let consensus_key = apply_prefix_and_encode(prefix, vec![consensus_path])
+			.map_err(|_| Error::<T>::DecodingError)?;
 
 		Ok(ConnectionHandshake {
 			client_state,
