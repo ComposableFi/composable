@@ -1,4 +1,4 @@
-import {PabloLiquidityAddedEvent, PabloPoolCreatedEvent} from "./types/events";
+import {PabloLiquidityAddedEvent, PabloPoolCreatedEvent, PabloSwappedEvent} from "./types/events";
 import {EventHandlerContext} from "@subsquid/substrate-processor";
 import * as ss58 from "@subsquid/ss58";
 import {get, getOrCreate} from "./dbHelper";
@@ -22,7 +22,7 @@ function createTransaction(
     tx.pool = pool;
     tx.blockNumber = BigInt(ctx.block.height);
     tx.receivedTimestamp = BigInt(new Date().getTime());
-    tx.transactionType = PabloTransactionType.CREATE_POOL;
+    tx.transactionType = transactionType;
     tx.priceInQuoteAsset = priceInQuoteAsset;
     tx.baseAssetId = baseAssetId;
     tx.baseAssetAmount = baseAssetAmount;
@@ -173,6 +173,114 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext, event
             liquidityAddedEvt.baseAmount,
             pool.quoteAssetId,
             liquidityAddedEvt.quoteAmount);
+
+        await ctx.store.save(pool);
+        await ctx.store.save(baseAsset);
+        await ctx.store.save(quoteAsset);
+        await ctx.store.save(tx);
+    } else {
+        throw new Error("Pool not found");
+    }
+}
+
+interface SwappedEvent {
+    poolId: bigint,
+    who: Uint8Array,
+    baseAsset: bigint,
+    quoteAsset: bigint,
+    baseAmount: bigint,
+    quoteAmount: bigint,
+    fee: bigint
+}
+
+function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
+    if (event.isV2100) {
+        const {poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee} = event.asV2100;
+        return {poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee};
+    } else {
+        const {poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee} = event.asLatest;
+        return {poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee};
+    }
+}
+
+export async function processSwappedEvent(ctx: EventHandlerContext, event: PabloSwappedEvent) {
+    console.info('processing SwappedEvent', event);
+    const swappedEvt = getSwappedEvent(event);
+    const who = ss58.codec("picasso").encode(swappedEvt.who);
+    const pool = await get(ctx.store, PabloPool, swappedEvt.poolId.toString());
+    // only set values if the owner was missing, i.e a new pool
+    if (pool != undefined) {
+        const isReverse: boolean = pool.quoteAssetId != swappedEvt.quoteAsset;
+        const timestamp = BigInt(new Date().getTime());
+        pool.transactionCount += 1;
+        pool.calculatedTimestamp = timestamp;
+        pool.blockNumber = BigInt(ctx.block.height);
+        // find baseAsset: Following is only valid for dual asset pools
+        const baseAsset = pool.poolAssets
+            .find((asset) => asset.assetId != pool.quoteAssetId);
+        if (baseAsset == undefined) {
+            throw new Error('baseAsset not found');
+        }
+        // find quoteAsset
+        const quoteAsset = pool.poolAssets
+            .find((asset) => asset.assetId == pool.quoteAssetId);
+        if (quoteAsset == undefined) {
+            throw new Error('quoteAsset not found');
+        }
+        if (isReverse) {
+            console.debug('Reverse swap');
+            // volume
+            pool.totalVolume = Big(pool.totalVolume).add(Big(swappedEvt.baseAmount.toString())).toString();
+            baseAsset.totalVolume += swappedEvt.quoteAmount;
+            quoteAsset.totalVolume += swappedEvt.baseAmount;
+
+            // liquidity
+            pool.totalLiquidity = Big(pool.totalLiquidity)
+                // fees TODO is this correct?
+                .sub(Big(swappedEvt.fee.toString()))
+                .toString();
+            // for reverse exchange "default quote" (included as the base amount in the evt) amount leaves the pool
+            baseAsset.totalLiquidity += swappedEvt.quoteAmount;
+            quoteAsset.totalLiquidity -= swappedEvt.baseAmount;
+            quoteAsset.totalLiquidity -= swappedEvt.fee;
+         } else {
+            console.debug('Normal swap');
+            // volume
+            pool.totalVolume = Big(pool.totalVolume).add(Big(swappedEvt.quoteAmount.toString())).toString();
+            baseAsset.totalVolume += swappedEvt.baseAmount;
+            quoteAsset.totalVolume += swappedEvt.quoteAmount;
+
+            // liquidity
+            pool.totalLiquidity = Big(pool.totalLiquidity)
+                // fees TODO is this correct?
+                .sub(
+                    // calculated the quote amount based on the exchange rate as the fees are in the base asset
+                    Big(swappedEvt.quoteAmount.toString())
+                        .div(Big(swappedEvt.baseAmount.toString()))
+                        .mul(Big(swappedEvt.fee.toString())))
+                .toString();
+            // for normal exchange "default quote" amount gets into the pool
+            baseAsset.totalLiquidity -= swappedEvt.baseAmount;
+            baseAsset.totalLiquidity -= swappedEvt.fee;
+            quoteAsset.totalLiquidity += swappedEvt.quoteAmount;
+        }
+        baseAsset.calculatedTimestamp = timestamp;
+        baseAsset.blockNumber = BigInt(ctx.block.height);
+        quoteAsset.calculatedTimestamp = timestamp;
+        quoteAsset.blockNumber = BigInt(ctx.block.height);
+
+        let tx = await get(ctx.store, PabloTransaction, ctx.event.id);
+        if (tx != undefined) {
+            throw new Error("Unexpected transaction in db");
+        }
+        tx = createTransaction(ctx, pool, PabloTransactionType.SWAP,
+            isReverse
+                ? Big(swappedEvt.quoteAmount.toString()).div(Big(swappedEvt.baseAmount.toString())).toString()
+                : Big(swappedEvt.baseAmount.toString()).div(Big(swappedEvt.quoteAmount.toString())).toString(),
+            BigInt(baseAsset.assetId),
+            swappedEvt.baseAmount,
+            pool.quoteAssetId,
+            swappedEvt.quoteAmount);
 
         await ctx.store.save(pool);
         await ctx.store.save(baseAsset);
