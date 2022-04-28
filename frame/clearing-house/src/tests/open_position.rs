@@ -907,6 +907,8 @@ proptest! {
 			})
 	}
 
+	// TODO(0xangelo): reversing should check IMR if needed
+
 	#[test]
 	fn imr_is_combination_of_market_imrs_with_open_positions(direction in any_direction()) {
 		let mut market_ids = Vec::<_>::new();
