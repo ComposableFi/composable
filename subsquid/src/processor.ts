@@ -6,7 +6,14 @@ import {
 } from "@subsquid/substrate-processor";
 import { lookupArchive } from "@subsquid/archive-registry";
 import { Account, HistoricalBalance } from "./model";
-import { BalancesTransferEvent } from "./types/events";
+import {
+  BalancesTransferEvent,
+  PabloLiquidityAddedEvent,
+  PabloPoolCreatedEvent,
+  PabloSwappedEvent
+} from "./types/events";
+import {getOrCreate} from "./dbHelper";
+import {processLiquidityAddedEvent, processPoolCreatedEvent, processSwappedEvent} from "./pabloProcessor";
 
 const processor = new SubstrateProcessor("composable_dali_dev");
 
@@ -16,14 +23,27 @@ processor.setDataSource({
   chain: "wss://dali.devnets.composablefinance.ninja/parachain/alice",
 });
 
-
 // TODO add event handlers for Pablo
+processor.addEventHandler('pablo.PoolCreated', async (ctx) => {
+  const event = new PabloPoolCreatedEvent(ctx);
+  await processPoolCreatedEvent(ctx, event);
+});
+
+processor.addEventHandler('pablo.LiquidityAdded', async (ctx) => {
+  const event = new PabloLiquidityAddedEvent(ctx);
+  await processLiquidityAddedEvent(ctx, event);
+});
+
+processor.addEventHandler('pablo.Swapped', async (ctx) => {
+  const event = new PabloSwappedEvent(ctx);
+  await processSwappedEvent(ctx, event);
+});
 
 processor.addEventHandler("balances.Transfer", async (ctx) => {
   const transfer = getTransferEvent(ctx);
   const tip = ctx.extrinsic?.tip || 0n;
-  const from = ss58.codec("kusama").encode(transfer.from);
-  const to = ss58.codec("kusama").encode(transfer.to);
+  const from = ss58.codec("picasso").encode(transfer.from);
+  const to = ss58.codec("picasso").encode(transfer.to);
 
   const fromAcc = await getOrCreate(ctx.store, Account, from);
   fromAcc.balance = fromAcc.balance || 0n;
@@ -73,24 +93,3 @@ function getTransferEvent(ctx: EventHandlerContext): TransferEvent {
     return { from, to, amount };
   }
 }
-
-async function getOrCreate<T extends { id: string }>(
-  store: Store,
-  EntityConstructor: EntityConstructor<T>,
-  id: string
-): Promise<T> {
-  let entity = await store.get<T>(EntityConstructor, {
-    where: { id },
-  });
-
-  if (entity == null) {
-    entity = new EntityConstructor();
-    entity.id = id;
-  }
-
-  return entity;
-}
-
-type EntityConstructor<T> = {
-  new (...args: any[]): T;
-};
