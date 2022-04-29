@@ -570,15 +570,15 @@ pub mod pallet {
 		/// # Overview
 		///
 		/// This may result in the following outcomes:
-		/// * Creation of a whole new position in the market, if one didn't already exist
-		/// * An increase in the size of an existing position, if the trade's direction matches the
+		/// - Creation of a whole new position in the market, if one didn't already exist
+		/// - An increase in the size of an existing position, if the trade's direction matches the
 		///   existing position's one
-		/// * A decrease in the size of an existing position, if the trade's direction is counter to
+		/// - A decrease in the size of an existing position, if the trade's direction is counter to
 		///   the existing position's one and its magnitude is smaller than the existing postion's
 		///   size
-		/// * Closing of the existing position, if the trade's direction is counter to the existion
-		///   position's one and its magnitude is approximately the existing postion's size
-		/// * Reversing of the existing position, if the trade's direction is counter to the
+		/// - Closing of the existing position, if the trade's direction is counter to the existion
+		///   position's one and its magnitude is approximately the existing position's size
+		/// - Reversing of the existing position, if the trade's direction is counter to the
 		///   existion position's one and its magnitude is greater than the existing postion's size
 		///
 		/// ![](http://www.plantuml.com/plantuml/svg/FOuzgiD030RxTugN0zZgKna2kOUyLhm2hRJeXrm_9aMgZszWOBP8zAmXVpVM9dLGkVptp1bt0CVtUdBssYl8cscIvjfimCF6jC1TwCdGVWSeMYU7b-CWQ4BehEVIhOBWO3ml7c2JTBaCJZPTfw1-2pRIuzeF)
@@ -593,9 +593,14 @@ pub mod pallet {
 		///
 		/// ## Assumptions or Requirements
 		///
-		/// There's a maximum number of positions ([`Config::MaxPositions`]) than can be open for
-		/// each account id at any given time. If opening a position in a new market exceeds this
-		/// number, the transactions fails.
+		/// - The market must exist and have been initialized prior to calling this extrinsic
+		/// - There's a maximum number of positions ([`Config::MaxPositions`]) than can be open for
+		///   each account id at any given time. If opening a position in a new market exceeds this
+		///   number, the transactions fails.
+		/// - Each market has a [minimum trade size](Market::minimum_trade_size) required, so trades
+		///   with quote asset amount less than this threshold will be rejected
+		/// - Trades which increase the total risk of an account (and thus its margin requirement),
+		///   will be rejected if they result in the account falling below its aggregate IMR
 		///
 		/// ## Emits
 		///
@@ -604,17 +609,22 @@ pub mod pallet {
 		/// ## State Changes
 		///
 		/// The following storage items may be modified:
-		/// - [`AccountsMargin`]: if trade decreases, closes, or reverses a position, it's PnL is
+		/// - [`AccountsMargin`]: if trade decreases, closes, or reverses a position, its PnL is
 		///   realized
-		/// - [`Positions`]: either a new entry is added or an existing one is updated
+		/// - [`Positions`]: a new entry may be added or an existing one updated/removed
 		///
-		/// ## Erros
+		/// ## Errors
 		///
+		/// - [`TradeSizeTooSmall`](Error::<T>::TradeSizeTooSmall)
 		/// - [`MarketIdNotFound`](Error::<T>::MarketIdNotFound)
 		/// - [`MaxPositionsExceeded`](Error::<T>::MaxPositionsExceeded)
+		/// - [`InsufficientCollateral`](Error::<T>::InsufficientCollateral)
+		/// - [`ArithmeticError`]
 		///
 		/// # Weight/Runtime
-		/// TODO(0xangelo)
+		///
+		/// The total runtime is O(`n`), where `n` is the number of open positions after executing
+		/// the trade.
 		#[pallet::weight(<T as Config>::WeightInfo::open_position())]
 		pub fn open_position(
 			origin: OriginFor<T>,
