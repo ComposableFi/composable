@@ -5,7 +5,7 @@ use frame_support::{
 };
 use frame_system as system;
 use frame_system::EnsureSignedBy;
-use sp_core::{sr25519::Signature, H256, sr25519};
+use sp_core::{sr25519, sr25519::Signature, H256};
 use sp_keystore::{testing::KeyStore, SyncCryptoStore};
 use sp_runtime::{
 	testing::{Header, TestXt},
@@ -15,7 +15,6 @@ use sp_runtime::{
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
-
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -30,15 +29,12 @@ frame_support::construct_runtime!(
 	}
 );
 
-pub type BlockNumber = u64;
-
 // pub type StalePrice = Get<u64>;
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 42;
 }
-
 
 pub type BlockNumber = u64;
 
@@ -86,7 +82,6 @@ impl pallet_balances::Config for Test {
 	type ReserveIdentifier = [u8; 8];
 }
 
-
 parameter_types! {
 	pub const StakeLock: u64 = 1;
 	pub const MinStake: u64 = 1;
@@ -131,7 +126,6 @@ where
 	}
 }
 
-
 pub type AssetId = u128;
 pub type PriceValue = u128;
 impl pallet_oracle::Config for Test {
@@ -157,10 +151,10 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	let genesis = pallet_balances::GenesisConfig::<Test> {
 		balances: vec![
-            (get_account_1(), 100),
-            (get_root_account(), 100),
-            (get_account_4(), 100),
-            (get_account_5(), 100),
+			(get_account_1(), 100),
+			(get_root_account(), 100),
+			(get_account_4(), 100),
+			(get_account_5(), 100),
 		],
 	};
 	genesis.assimilate_storage(&mut t).unwrap();
@@ -168,21 +162,21 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 }
 
 pub const fn get_account_1() -> AccountId {
-    sr25519::Public([1u8; 32])
+	sr25519::Public([1u8; 32])
 }
 
 pub const fn get_root_account() -> AccountId {
-    sr25519::Public([2u8; 32])
+	sr25519::Public([2u8; 32])
 }
 
 pub const fn get_account_3() -> AccountId {
-    sr25519::Public([3u8; 32])
+	sr25519::Public([3u8; 32])
 }
 
 pub fn get_account_4() -> AccountId {
-    sr25519::Public([4u8; 32])
+	sr25519::Public([4u8; 32])
 }
 
 pub fn get_account_5() -> AccountId {
-    sr25519::Public([5u8; 32])
+	sr25519::Public([5u8; 32])
 }
