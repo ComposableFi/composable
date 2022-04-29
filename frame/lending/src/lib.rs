@@ -2,8 +2,8 @@
 #![cfg_attr(
 	not(any(test, feature = "runtime-benchmarks")),
 	deny(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -62,7 +62,10 @@ pub use crate::weights::WeightInfo;
 pub mod pallet {
 	use crate::{models::BorrowerData, weights::WeightInfo};
 	use codec::Codec;
-	use composable_support::validation::Validated;
+	use composable_support::{
+		math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub},
+		validation::Validated,
+	};
 	use composable_traits::{
 		currency::CurrencyFactory,
 		defi::*,
@@ -72,7 +75,6 @@ pub mod pallet {
 			MarketConfig, MarketModelValid, UpdateInput,
 		},
 		liquidation::Liquidation,
-		math::{SafeAdd, SafeDiv, SafeMul, SafeSub},
 		oracle::Oracle,
 		time::{DurationSeconds, Timestamp, SECONDS_PER_YEAR_NAIVE},
 		vault::{Deposit, FundsAvailability, StrategicVault, Vault, VaultConfig},
@@ -185,7 +187,10 @@ pub mod pallet {
 			AccountId = Self::AccountId,
 		>;
 
-		type CurrencyFactory: CurrencyFactory<<Self as DeFiComposableConfig>::MayBeAssetId>;
+		type CurrencyFactory: CurrencyFactory<
+			<Self as DeFiComposableConfig>::MayBeAssetId,
+			Self::Balance,
+		>;
 
 		type MultiCurrency: Transfer<
 				Self::AccountId,
@@ -406,7 +411,7 @@ pub mod pallet {
 	/// Lending instances counter
 	#[pallet::storage]
 	#[pallet::getter(fn lending_count)]
-	#[allow(clippy::disallowed_type)] // MarketIndex implements Default, so ValueQuery is ok here.
+	#[allow(clippy::disallowed_types)] // MarketIndex implements Default, so ValueQuery is ok here.
 	pub type LendingCount<T: Config> = StorageValue<_, MarketIndex, ValueQuery>;
 
 	/// Indexed lending instances
@@ -428,7 +433,7 @@ pub mod pallet {
 	/// Debt token allows to simplify some debt management and implementation of features
 	#[pallet::storage]
 	#[pallet::getter(fn debt_currencies)]
-	#[allow(clippy::disallowed_type)] // AssetId implements default, so ValueQuery is ok here.
+	#[allow(clippy::disallowed_types)] // AssetId implements default, so ValueQuery is ok here.
 	pub type DebtMarkets<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
@@ -478,7 +483,7 @@ pub mod pallet {
 	/// market borrow index
 	#[pallet::storage]
 	#[pallet::getter(fn borrow_index)]
-	#[allow(clippy::disallowed_type)] // MarketIndex implements default, so ValueQuery is ok here.
+	#[allow(clippy::disallowed_types)] // MarketIndex implements default, so ValueQuery is ok here.
 	pub type BorrowIndex<T: Config> =
 		StorageMap<_, Twox64Concat, MarketIndex, ZeroToOneFixedU128, ValueQuery>;
 
@@ -498,7 +503,7 @@ pub mod pallet {
 	/// The timestamp of the previous block or defaults to timestamp at genesis.
 	#[pallet::storage]
 	#[pallet::getter(fn last_block_timestamp)]
-	#[allow(clippy::disallowed_type)] // Timestamp default is 0, which is valid in this context.
+	#[allow(clippy::disallowed_types)] // Timestamp default is 0, which is valid in this context.
 	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
 	#[pallet::genesis_config]
@@ -1208,8 +1213,8 @@ pub mod pallet {
 						.under_collaterized_warn_percent,
 					liquidators: config_input.updatable.liquidators,
 				};
-
-				let debt_asset_id = T::CurrencyFactory::reserve_lp_token_id()?;
+				// TODO: pass ED from API,
+				let debt_asset_id = T::CurrencyFactory::reserve_lp_token_id(T::Balance::default())?;
 
 				DebtMarkets::<T>::insert(market_id, debt_asset_id);
 				Markets::<T>::insert(market_id, config);

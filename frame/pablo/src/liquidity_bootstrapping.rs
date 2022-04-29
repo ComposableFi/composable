@@ -3,8 +3,11 @@ use crate::{
 	PoolConfiguration, PoolCount, Pools,
 };
 use composable_maths::dex::constant_product::{compute_out_given_in, compute_spot_price};
-use composable_support::validation::{Validate, Validated};
-use composable_traits::{currency::LocalAssets, defi::CurrencyPair, dex::SaleState, math::SafeAdd};
+use composable_support::{
+	math::safe::SafeAdd,
+	validation::{Validate, Validated},
+};
+use composable_traits::{currency::LocalAssets, defi::CurrencyPair, dex::SaleState};
 use frame_support::{
 	pallet_prelude::*,
 	traits::fungibles::{Inspect, Transfer},

@@ -1,9 +1,9 @@
+#![doc = include_str!("../README.md")]
 // TODO
 // 1. TEST!
 // 2. RPCs for relayer convenience.
 // 3. Refactor core logic to traits.
 // 4. Benchmarks and Weights!
-
 #![cfg_attr(not(feature = "std"), no_std)]
 
 mod decay;
@@ -27,7 +27,6 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
-
 	use crate::{
 		decay::Decayer,
 		relayer::{RelayerConfig, StaleRelayer},
@@ -35,11 +34,8 @@ pub mod pallet {
 		weights::WeightInfo,
 	};
 	use codec::FullCodec;
-	use composable_support::{types::EthereumAddress, validation::Validated};
-	use composable_traits::{
-		math::SafeAdd,
-		mosaic::{Claim, RelayerInterface, TransferTo},
-	};
+	use composable_support::{math::safe::SafeAdd, types::EthereumAddress, validation::Validated};
+	use composable_traits::mosaic::{Claim, RelayerInterface, TransferTo};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::*,
@@ -178,13 +174,13 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn time_lock_period)]
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type TimeLockPeriod<T: Config> =
 		StorageValue<_, BlockNumberOf<T>, ValueQuery, TimeLockPeriodOnEmpty<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn nonce)]
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type Nonce<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::type_value]
@@ -353,9 +349,14 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Sets the current relayer configuration. This is enacted immediately and invalidates
-		/// inflight, incoming transactions from the previous relayer. Budgets remain in place
-		/// however.
+		/// Sets the current Relayer configuration.
+		///
+		/// This is enacted immediately and invalidates inflight/ incoming transactions from the
+		/// previous Relayer. However, existing budgets remain in place.
+		///
+		/// This can only be called by the [`ControlOrigin`].
+		///
+		/// [controlorigin]: https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/trait.Config.html#associatedtype.ControlOrigin
 		#[pallet::weight(T::WeightInfo::set_relayer())]
 		pub fn set_relayer(
 			origin: OriginFor<T>,
@@ -372,8 +373,8 @@ pub mod pallet {
 		/// Rotates the Relayer Account
 		///
 		/// # Restrictions
-		///  - Only callable by the current relayer.
-		///  - TTL must be sufficiently long.
+		///  - Only callable by the current Relayer.
+		///  - The Time To Live (TTL) must be greater than the [`MinimumTTL`](Config::MinimumTTL)
 		#[pallet::weight(T::WeightInfo::rotate_relayer())]
 		pub fn rotate_relayer(
 			origin: OriginFor<T>,
@@ -394,7 +395,9 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Sets supported networks and maximum transaction sizes accepted by the relayer.
+		/// Sets supported networks and maximum transaction sizes accepted by the Relayer.
+		///
+		/// Only callable by the current Relayer
 		#[pallet::weight(T::WeightInfo::set_network())]
 		pub fn set_network(
 			origin: OriginFor<T>,
@@ -413,7 +416,7 @@ pub mod pallet {
 		/// the current `penalty`.
 		///
 		/// # Restrictions
-		/// - Only callable by root
+		/// - This can only be called by the [`ControlOrigin`](Config::ControlOrigin)
 		#[pallet::weight(T::WeightInfo::set_budget())]
 		#[transactional]
 		pub fn set_budget(
@@ -433,7 +436,7 @@ pub mod pallet {
 		}
 
 		/// Creates an outgoing transaction request, locking the funds locally until picked up by
-		/// the relayer.
+		/// the Relayer.
 		///
 		/// # Restrictions
 		/// - Network must be supported.
@@ -484,11 +487,16 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Called by the relayer to confirm that it will relay a transaction, disabling the user
-		/// from reclaiming their tokens.
+		/// This is called by the Relayer to confirm that it will relay a transaction.
+		///
+		/// Once this is called, the sender will be unable to reclaim their tokens.
+		///
+		/// If all the funds are not removed, the reclaim period will not be reset. If the
+		/// reclaim period is not reset, the Relayer will still attempt to pick up the
+		/// remainder of the transaction.
 		///
 		/// # Restrictions
-		/// - Origin must be relayer
+		/// - Only callable by the current Relayer
 		/// - Outgoing transaction must exist for the user
 		/// - Amount must be equal or lower than what the user has locked
 		///
@@ -518,7 +526,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Claims user funds from the `OutgoingTransactions`, in case that the relayer has not
+		/// Claims user funds from the `OutgoingTransactions`, in case that the Relayer has not
 		/// picked them up.
 		#[pallet::weight(T::WeightInfo::claim_stale_to())]
 		#[transactional]
@@ -538,6 +546,8 @@ pub mod pallet {
 
 		/// Mints new tokens into the pallet's wallet, ready for the user to be picked up after
 		/// `lock_time` blocks have expired.
+		///
+		/// Only callable by the current Relayer
 		#[pallet::weight(T::WeightInfo::timelocked_mint())]
 		pub fn timelocked_mint(
 			origin: OriginFor<T>,
@@ -571,6 +581,9 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// Sets the time lock, in blocks, on new transfers
+		///
+		/// This can only be called by the [`ControlOrigin`](Config::ControlOrigin)
 		#[pallet::weight(T::WeightInfo::set_timelock_duration())]
 		pub fn set_timelock_duration(
 			origin: OriginFor<T>,
@@ -584,8 +597,9 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Burns funds waiting in incoming_transactions that are still unclaimed. May be used by
-		/// the relayer in case of finality issues on the other side of the bridge.
+		/// Burns funds waiting in incoming_transactions that are still unclaimed.
+		///
+		/// May be used by the Relayer in case of finality issues on the other side of the bridge.
 		#[pallet::weight(T::WeightInfo::rescind_timelocked_mint())]
 		#[transactional]
 		pub fn rescind_timelocked_mint(
@@ -613,7 +627,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Collects funds deposited by the relayer into the owner's account
+		/// Collects funds deposited by the Relayer into the owner's account
 		#[pallet::weight(T::WeightInfo::claim_to())]
 		pub fn claim_to(
 			origin: OriginFor<T>,
@@ -630,7 +644,7 @@ pub mod pallet {
 
 		/// Update a network asset mapping.
 		///
-		/// The caller must be `ControlOrigin`.
+		/// This can only be called by the [`ControlOrigin`](Config::ControlOrigin)
 		///
 		/// Possibly emits one of:
 		/// - `AssetMappingCreated`
@@ -1082,6 +1096,7 @@ pub mod pallet {
 		use sp_runtime::traits::Hash;
 
 		let nonce = Nonce::<T>::mutate(|nonce| {
+			// TODO: Use WrappingNext here
 			*nonce = nonce.wrapping_add(1);
 			*nonce
 		});

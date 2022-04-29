@@ -46,6 +46,7 @@ std = [
   "scale-info/std",
   "xcm/std",
   "polkadot-parachain/std",
+  "composable-support/std",
 ]
 visualization = ["plotters"]
 

@@ -50,6 +50,14 @@ udeps:
 dev:
 	cargo run
 
+# run as `make open=y run-book` to open as well
+run-book:
+	bash -c "(trap 'kill 0' SIGINT; cargo run -p extrinsics-docs-scraper --release -- --config-file-path=scraper.toml -vvv --watch & mdbook serve book/ $(if $(filter y,${open}),'--open'))"
+
+build-book:
+	cargo run -p extrinsics-docs-scraper --release -- --config-file-path=scraper.toml
+	mdbook build book/
+
 .PHONY: version
 version:
 	@if [ ${RELEASE_VERSION} ]; then \
@@ -99,11 +107,19 @@ push-mmr-polkadot:
 
 containerize-ci-linux:
 	@docker build -f docker/ci-linux.dockerfile \
-		-t ${REPO}/ci-linux:production  \
+		-t ${REPO}/ci-linux:2022-04-18  \
 		.
 
 push-ci-linux:
-	@docker push ${REPO}/ci-linux:production
+	@docker push ${REPO}/ci-linux:2022-04-18
+
+containerize-base-ci-linux:
+	@docker build -f docker/base-ci-linux.dockerfile \
+		-t ${REPO}/base-ci-linux:1.60.0  \
+		.
+
+push-base-ci-linux:
+	@docker push ${REPO}/base-ci-linux:1.60.0
 
 stop:
 	@docker-compose down
@@ -119,7 +135,7 @@ endif
 
 .PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release push-release
 .PHONY: containerize-composable-sandbox push-composable-sandbox containerize-mmr-polkadot push-mmr-polkadot
-.PHONY: containerize-ci-linux push-ci-linux
+.PHONY: containerize-ci-linux push-ci-linux containerize-base-ci-linux push-base-ci-linux
 
 #----------------------------------------------------------------------
 # UTILITY FUNCTIONS TO remove

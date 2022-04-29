@@ -1,8 +1,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -27,10 +27,12 @@ pub use xcmp::{MaxInstructions, UnitWeightCost};
 use common::{
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
 	BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, MosaicRemoteAssetId,
-	MultiExistentialDeposits, NativeExistentialDeposit, Signature, AVERAGE_ON_INITIALIZE_RATIO,
-	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	MultiExistentialDeposits, NativeExistentialDeposit, PoolId, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
+use composable_traits::dex::PriceAggregate;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -761,8 +763,8 @@ impl currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRootOrHalfCouncil;
-	type ReserveOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
+	type Balance = Balance;
 }
 
 impl assets_registry::Config for Runtime {
@@ -964,8 +966,6 @@ impl lending::Config for Runtime {
 	type WeightToFee = WeightToFee;
 }
 
-pub type PoolId = u128;
-
 parameter_types! {
   pub const ConstantProductPalletId: PalletId = PalletId(*b"pal_cnst");
 }
@@ -1053,6 +1053,23 @@ impl pablo::Config for Runtime {
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
 }
 
+parameter_types! {
+	#[derive(TypeInfo, codec::MaxEncodedLen, codec::Encode)]
+	pub const MaxHopsCount: u32 = 4;
+	pub DexRouterPalletID: PalletId = PalletId(*b"dex_rout");
+}
+
+impl dex_router::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type MaxHopsInRoute = MaxHopsCount;
+	type PoolId = PoolId;
+	type Pablo = Pablo;
+	type PalletId = DexRouterPalletID;
+	type WeightInfo = weights::dex_router::WeightInfo<Runtime>;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1115,6 +1132,7 @@ construct_runtime!(
 		StableSwapDex: curve_amm::{Pallet, Call, Storage, Event<T>} = 66,
 		LiquidityBootstrapping: liquidity_bootstrapping::{Pallet, Call, Storage, Event<T>} = 67,
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 68,
+		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 69,
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
 );
@@ -1190,6 +1208,7 @@ mod benches {
 		[liquidity_bootstrapping, LiquidityBootstrapping]
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
+		[dex_router, DexRouter]
 	);
 }
 
@@ -1206,6 +1225,34 @@ impl_runtime_apis! {
 				crowdloan_rewards::amount_available_to_claim_for::<Runtime>(account_id)
 					.unwrap_or_else(|_| Balance::zero())
 			)
+		}
+	}
+
+	impl pablo_runtime_api::PabloRuntimeApi<Block, PoolId, CurrencyId, Balance> for Runtime {
+		fn prices_for(
+			pool_id: PoolId,
+			base_asset_id: CurrencyId,
+			quote_asset_id: CurrencyId,
+			amount: Balance
+		) -> PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
+			pablo::prices_for::<Runtime>(
+				pool_id,
+				base_asset_id,
+				quote_asset_id,
+				amount
+			)
+			.map(|p| PriceAggregate{
+				pool_id: SafeRpcWrapper(p.pool_id),
+				base_asset_id: SafeRpcWrapper(p.base_asset_id),
+				quote_asset_id: SafeRpcWrapper(p.quote_asset_id),
+				spot_price: SafeRpcWrapper(p.spot_price)
+			})
+			.unwrap_or_else(|_| PriceAggregate{
+				pool_id: SafeRpcWrapper(pool_id),
+				base_asset_id: SafeRpcWrapper(base_asset_id),
+				quote_asset_id: SafeRpcWrapper(quote_asset_id),
+				spot_price: SafeRpcWrapper(0_u128)
+			})
 		}
 	}
 

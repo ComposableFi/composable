@@ -84,6 +84,7 @@ liquidity-bootstrapping = { package = "pallet-liquidity-bootstrapping", path = "
 mosaic = { package = "pallet-mosaic", path = "../../frame/mosaic", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false }
 pablo = { package = "pallet-pablo", path = "../../frame/pablo", default-features = false }
+dex-router = { package = "pallet-dex-router", path = "../../frame/dex-router", default-features = false}
 primitives = { path = "../primitives", default-features = false }
 uniswap-v2 = { package = "pallet-uniswap-v2", path = "../../frame/uniswap-v2", default-features = false }
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false }
@@ -96,6 +97,7 @@ transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rp
 # local RPCs
 assets-runtime-api = { path = '../../frame/assets/runtime-api', default-features = false }
 crowdloan-rewards-runtime-api = { path = '../../frame/crowdloan-rewards/runtime-api', default-features = false }
+pablo-runtime-api = { path = '../../frame/pablo/runtime-api', default-features = false }
 
 # Used for runtime benchmarking
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
@@ -182,6 +184,7 @@ runtime-benchmarks = [
   "curve-amm/runtime-benchmarks",
   "liquidity-bootstrapping/runtime-benchmarks",
   "pablo/runtime-benchmarks",
+  "dex-router/runtime-benchmarks",
   "common/runtime-benchmarks",
 ]
 std = [
@@ -263,5 +266,6 @@ std = [
   "curve-amm/std",
   "liquidity-bootstrapping/std",
   "pablo/std",
+  "dex-router/std"
 ]
 wasm-builder = []

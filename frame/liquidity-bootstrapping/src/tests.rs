@@ -148,7 +148,14 @@ mod sell {
 			|pool_id, pool, _, _| {
 				// Buy project token
 				assert_ok!(Tokens::mint_into(USDT, &BOB, unit));
-				assert_ok!(LBP::sell(Origin::signed(BOB), pool_id, pool.pair.quote, unit, false));
+				assert_ok!(LBP::sell(
+					Origin::signed(BOB),
+					pool_id,
+					pool.pair.quote,
+					unit,
+					0_u128,
+					false
+				));
 				assert_ok!(default_acceptable_computation_error(
 					Tokens::balance(PROJECT_TOKEN, &BOB),
 					unit
@@ -183,7 +190,14 @@ mod buy {
 			|pool_id, pool, _, _| {
 				// Buy project token
 				assert_ok!(Tokens::mint_into(USDT, &BOB, unit));
-				assert_ok!(LBP::buy(Origin::signed(BOB), pool_id, pool.pair.base, unit, false));
+				assert_ok!(LBP::buy(
+					Origin::signed(BOB),
+					pool_id,
+					pool.pair.base,
+					unit,
+					0_u128,
+					false
+				));
 				assert_ok!(default_acceptable_computation_error(
 					Tokens::balance(PROJECT_TOKEN, &BOB),
 					unit

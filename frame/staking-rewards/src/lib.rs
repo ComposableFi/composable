@@ -1,15 +1,15 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -42,10 +42,12 @@ mod mock;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use composable_support::abstractions::block_fold::{BlockFold, FoldStorage, FoldStrategy};
+	use composable_support::{
+		abstractions::block_fold::{BlockFold, FoldStorage, FoldStrategy},
+		math::safe::{safe_multiply_by_rational, SafeAdd, SafeSub},
+	};
 	use composable_traits::{
 		financial_nft::{FinancialNFTProtocol, NFTClass, NFTVersion},
-		math::{safe_multiply_by_rational, SafeAdd, SafeSub},
 		staking_rewards::{
 			Penalty, PenaltyOutcome, PositionState, Staking, StakingConfig, StakingNFT,
 			StakingReward,

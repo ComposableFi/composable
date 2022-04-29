@@ -6,6 +6,7 @@ use crate::{
 	PoolConfiguration::ConstantProduct,
 	PoolInitConfiguration,
 };
+use composable_support::math::safe::safe_multiply_by_rational;
 use composable_tests_helpers::{
 	prop_assert_ok,
 	test::helper::{acceptable_computation_error, default_acceptable_computation_error},
@@ -13,7 +14,6 @@ use composable_tests_helpers::{
 use composable_traits::{
 	defi::CurrencyPair,
 	dex::{Amm, ConstantProductPoolInfo},
-	math::safe_multiply_by_rational,
 };
 use frame_support::{
 	assert_ok,
@@ -132,7 +132,7 @@ fn test() {
 		let swap_btc = unit;
 		assert_ok!(Tokens::mint_into(BTC, &BOB, swap_btc));
 
-		<Pablo as Amm>::sell(&BOB, pool_id, BTC, swap_btc, false).expect("sell failed");
+		<Pablo as Amm>::sell(&BOB, pool_id, BTC, swap_btc, 0_u128, false).expect("sell failed");
 
 		let new_pool_invariant = current_pool_product();
 		assert_ok!(default_acceptable_computation_error(
@@ -140,7 +140,7 @@ fn test() {
 			new_pool_invariant
 		));
 
-		<Pablo as Amm>::buy(&BOB, pool_id, BTC, swap_btc, false).expect("buy failed");
+		<Pablo as Amm>::buy(&BOB, pool_id, BTC, swap_btc, 0_u128, false).expect("buy failed");
 
 		let precision = 100;
 		let epsilon = 5;
@@ -284,7 +284,7 @@ fn high_slippage() {
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(BTC, &BOB, bob_btc));
 
-		assert_ok!(<Pablo as Amm>::sell(&BOB, pool_id, BTC, bob_btc, false));
+		assert_ok!(<Pablo as Amm>::sell(&BOB, pool_id, BTC, bob_btc, 0_u128, false));
 		let usdt_balance = Tokens::balance(USDT, &BOB);
 		let idea_usdt_balance = bob_btc * btc_price;
 		assert!((idea_usdt_balance - usdt_balance) > 5_u128);
@@ -310,7 +310,7 @@ fn fees() {
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
 
-		assert_ok!(<Pablo as Amm>::sell(&BOB, pool_id, USDT, bob_usdt, false));
+		assert_ok!(<Pablo as Amm>::sell(&BOB, pool_id, USDT, bob_usdt, 0_u128, false));
 		let btc_balance = Tokens::balance(BTC, &BOB);
         sp_std::if_std! {
             println!("expected_btc_value {:?}, btc_balance {:?}", expected_btc_value, btc_balance);
@@ -350,11 +350,11 @@ proptest! {
 			Permill::zero(),
 		);
 		prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
-		prop_assert_ok!(Pablo::sell(Origin::signed(BOB), pool_id, USDT, usdt_value, false));
+		prop_assert_ok!(Pablo::sell(Origin::signed(BOB), pool_id, USDT, usdt_value, 0_u128, false));
 		let bob_btc = Tokens::balance(BTC, &BOB);
 		// mint extra BTC equal to slippage so that original amount of USDT can be buy back
 		prop_assert_ok!(Tokens::mint_into(BTC, &BOB, btc_value - bob_btc));
-		prop_assert_ok!(Pablo::buy(Origin::signed(BOB), pool_id, USDT, usdt_value, false));
+		prop_assert_ok!(Pablo::buy(Origin::signed(BOB), pool_id, USDT, usdt_value, 0_u128, false));
 		let bob_usdt = Tokens::balance(USDT, &BOB);
 		let slippage = usdt_value -  bob_usdt;
 		let slippage_percentage = slippage as f64 * 100.0_f64 / usdt_value as f64;

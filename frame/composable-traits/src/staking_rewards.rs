@@ -1,9 +1,9 @@
 use crate::{
 	financial_nft::{NFTClass, NFTVersion},
-	math::SafeSub,
 	time::{DurationSeconds, Timestamp},
 };
 use codec::{Decode, Encode};
+use composable_support::math::safe::SafeSub;
 use core::fmt::Debug;
 use frame_support::{dispatch::DispatchResult, traits::Get};
 use scale_info::TypeInfo;
