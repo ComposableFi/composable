@@ -1,4 +1,5 @@
 use super::*;
+use crate::routing::Context;
 use core::time::Duration;
 use ibc::{
 	clients::ics07_tendermint::{
@@ -21,21 +22,25 @@ use ibc::{
 				ChannelEnd, Counterparty as ChannelCounterParty, Order as ChannelOrder,
 				State as ChannelState,
 			},
+			context::{ChannelKeeper, ChannelReader},
 			msgs::{
-				chan_close_confirm::MsgChannelCloseConfirm, chan_close_init::MsgChannelCloseInit,
-				chan_open_ack::MsgChannelOpenAck, chan_open_confirm::MsgChannelOpenConfirm,
-				chan_open_try::MsgChannelOpenTry,
+				acknowledgement::MsgAcknowledgement, chan_close_confirm::MsgChannelCloseConfirm,
+				chan_close_init::MsgChannelCloseInit, chan_open_ack::MsgChannelOpenAck,
+				chan_open_confirm::MsgChannelOpenConfirm, chan_open_try::MsgChannelOpenTry,
+				recv_packet::MsgRecvPacket,
 			},
+			packet::Packet,
 			Version as ChannelVersion,
 		},
 		ics23_commitment::{commitment::CommitmentPrefix, specs::ProofSpecs},
 		ics24_host::{
 			identifier::{ChainId, ChannelId, ClientId, ConnectionId, PortId},
-			path::{ChannelEndsPath, ConnectionsPath},
+			path::{AcksPath, ChannelEndsPath, CommitmentsPath, ConnectionsPath},
 		},
 	},
 	proofs::Proofs,
 	signer::Signer,
+	timestamp::Timestamp,
 	Height,
 };
 use ibc_proto::{ibc::core::commitment::v1::MerkleProof, ics23::CommitmentProof};
@@ -371,6 +376,147 @@ pub fn create_chan_close_confirm() -> (ConsensusState, MsgChannelCloseConfirm) {
 		MsgChannelCloseConfirm {
 			port_id,
 			channel_id: Default::default(),
+			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))
+				.unwrap(),
+			signer: Signer::new("relayer"),
+		},
+	)
+}
+
+pub fn create_recv_packet<T: Config + Send + Sync>(data: Vec<u8>) -> (ConsensusState, MsgRecvPacket)
+where
+	u32: From<<T as frame_system::Config>::BlockNumber>,
+{
+	let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
+	let packet = Packet {
+		sequence: 1u64.into(),
+		source_port: port_id.clone(),
+		source_channel: ChannelId::new(0),
+		destination_port: port_id.clone(),
+		destination_channel: ChannelId::new(0),
+		data,
+		timeout_height: Height::new(0, 5),
+		timeout_timestamp: Timestamp::from_nanoseconds(1690894363u64.saturating_mul(1000000000))
+			.unwrap(),
+	};
+	let ctx = Context::<T>::new();
+	let input =
+		format!("{:?},{:?},{:?}", packet.timeout_timestamp, packet.timeout_height, packet.data);
+	let mut commitment_bytes = Vec::new();
+	let commitment = ctx.hash(input);
+	prost::Message::encode(&commitment, &mut commitment_bytes).unwrap();
+	let mut avl_tree = create_avl();
+	let path = format!(
+		"{}",
+		CommitmentsPath { port_id, channel_id: ChannelId::new(0), sequence: 1.into() }
+	)
+	.as_bytes()
+	.to_vec();
+	avl_tree.insert(path.clone(), commitment_bytes);
+	let root = match avl_tree.root_hash().unwrap().clone() {
+		Hash::Sha256(root) => root.to_vec(),
+		Hash::None => panic!("Failed to generate root hash"),
+	};
+	let proof = avl_tree.get_proof(&*path).unwrap();
+	avl_tree.insert("ibc".as_bytes().to_vec(), root);
+	let root = match avl_tree.root_hash().unwrap().clone() {
+		Hash::Sha256(root) => root.to_vec(),
+		Hash::None => panic!("Failed to generate root hash"),
+	};
+	let proof_0 = avl_tree.get_proof("ibc".as_bytes()).unwrap();
+	let mut buf = Vec::new();
+	prost::Message::encode(&proof, &mut buf).unwrap();
+	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
+	let mut buf = Vec::new();
+	prost::Message::encode(&proof_0, &mut buf).unwrap();
+	let proof_0: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
+	let merkle_proof = MerkleProof { proofs: vec![proof, proof_0] };
+	let mut buf = Vec::new();
+	prost::Message::encode(&merkle_proof, &mut buf).unwrap();
+	let header = create_tendermint_header();
+	let cs_state = ConsensusState {
+		timestamp: header.signed_header.header.time,
+		root: root.into(),
+		next_validators_hash: header.signed_header.header.next_validators_hash,
+	};
+
+	(
+		cs_state,
+		MsgRecvPacket {
+			packet,
+			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))
+				.unwrap(),
+			signer: Signer::new("relayer"),
+		},
+	)
+}
+
+pub fn create_ack_packet<T: Config + Send + Sync>(
+	data: Vec<u8>,
+	ack: Vec<u8>,
+) -> (ConsensusState, MsgAcknowledgement)
+where
+	u32: From<<T as frame_system::Config>::BlockNumber>,
+{
+	let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
+	let packet = Packet {
+		sequence: 1u64.into(),
+		source_port: port_id.clone(),
+		source_channel: ChannelId::new(0),
+		destination_port: port_id.clone(),
+		destination_channel: ChannelId::new(0),
+		data: data.clone(),
+		timeout_height: Height::new(0, 5),
+		timeout_timestamp: Timestamp::from_nanoseconds(1690894363u64.saturating_mul(1000000000))
+			.unwrap(),
+	};
+	let mut ctx = Context::<T>::new();
+	ctx.store_packet_commitment(
+		(port_id.clone(), ChannelId::new(0), 1.into()),
+		packet.timeout_timestamp.clone(),
+		packet.timeout_height.clone(),
+		data,
+	)
+	.unwrap();
+
+	let mut avl_tree = create_avl();
+	let path =
+		format!("{}", AcksPath { port_id, channel_id: ChannelId::new(0), sequence: 1.into() })
+			.as_bytes()
+			.to_vec();
+	avl_tree.insert(path.clone(), ack.clone());
+	let root = match avl_tree.root_hash().unwrap().clone() {
+		Hash::Sha256(root) => root.to_vec(),
+		Hash::None => panic!("Failed to generate root hash"),
+	};
+	let proof = avl_tree.get_proof(&*path).unwrap();
+	avl_tree.insert("ibc".as_bytes().to_vec(), root);
+	let root = match avl_tree.root_hash().unwrap().clone() {
+		Hash::Sha256(root) => root.to_vec(),
+		Hash::None => panic!("Failed to generate root hash"),
+	};
+	let proof_0 = avl_tree.get_proof("ibc".as_bytes()).unwrap();
+	let mut buf = Vec::new();
+	prost::Message::encode(&proof, &mut buf).unwrap();
+	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
+	let mut buf = Vec::new();
+	prost::Message::encode(&proof_0, &mut buf).unwrap();
+	let proof_0: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
+	let merkle_proof = MerkleProof { proofs: vec![proof, proof_0] };
+	let mut buf = Vec::new();
+	prost::Message::encode(&merkle_proof, &mut buf).unwrap();
+	let header = create_tendermint_header();
+	let cs_state = ConsensusState {
+		timestamp: header.signed_header.header.time,
+		root: root.into(),
+		next_validators_hash: header.signed_header.header.next_validators_hash,
+	};
+
+	(
+		cs_state,
+		MsgAcknowledgement {
+			packet,
+			acknowledgement: ack.into(),
 			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))
 				.unwrap(),
 			signer: Signer::new("relayer"),

@@ -72,6 +72,7 @@ std = [
 
 runtime-benchmarks = [
 	"frame-benchmarking",
+	"frame-system/runtime-benchmarks",
 	"tendermint",
 	"hex-literal",
 	"pallet-timestamp",

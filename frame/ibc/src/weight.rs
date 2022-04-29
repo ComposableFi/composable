@@ -19,6 +19,8 @@ pub trait WeightInfo {
 	fn channel_open_confirm() -> Weight;
 	fn channel_close_init() -> Weight;
 	fn channel_close_confirm() -> Weight;
+	fn recv_packet(i: u32) -> Weight;
+	fn ack_packet(i: u32, j: u32) -> Weight;
 }
 
 impl WeightInfo for () {
@@ -53,7 +55,16 @@ impl WeightInfo for () {
 	fn channel_close_init() -> Weight {
 		0
 	}
+
 	fn channel_close_confirm() -> Weight {
+		0
+	}
+
+	fn recv_packet(_i: u32) -> Weight {
+		0
+	}
+
+	fn ack_packet(_i: u32, _j: u32) -> Weight {
 		0
 	}
 }
@@ -142,18 +153,23 @@ pub(crate) fn deliver<T: Config>(msgs: &Vec<Any>) -> Weight {
 						let cb = WeightRouter::<T>::get_weight(
 							packet_msg.packet.destination_port.as_str(),
 						);
-						let _cb_weight = cb.on_recv_packet(&packet_msg.packet);
-						unimplemented!()
+						let cb_weight = cb.on_recv_packet(&packet_msg.packet);
+						cb_weight.saturating_add(<T as Config>::WeightInfo::recv_packet(
+							packet_msg.packet.data.len() as u32,
+						))
 					},
 					PacketMsg::AckPacket(packet_msg) => {
 						let cb = WeightRouter::<T>::get_weight(
 							packet_msg.packet.destination_port.as_str(),
 						);
-						let _cb_weight = cb.on_acknowledgement_packet(
+						let cb_weight = cb.on_acknowledgement_packet(
 							&packet_msg.packet,
 							&packet_msg.acknowledgement,
 						);
-						unimplemented!()
+						cb_weight.saturating_add(<T as Config>::WeightInfo::ack_packet(
+							packet_msg.packet.data.len() as u32,
+							packet_msg.acknowledgement.into_bytes().len() as u32,
+						))
 					},
 					PacketMsg::ToPacket(packet_msg) => {
 						let cb = WeightRouter::<T>::get_weight(

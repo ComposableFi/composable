@@ -134,4 +134,38 @@ impl<T: frame_system::Config> crate::weight::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Ibc Capabilities (r:1 w:0)
+	// Storage: Ibc Channels (r:1 w:0)
+	// Storage: Ibc Connections (r:1 w:0)
+	// Storage: Timestamp Now (r:1 w:0)
+	// Storage: Ibc ClientStates (r:1 w:0)
+	// Storage: Ibc ConsensusStates (r:1 w:0)
+	// Storage: Ibc ClientUpdateTime (r:1 w:0)
+	// Storage: Ibc ClientUpdateHeight (r:1 w:0)
+	// Storage: Ibc PacketReceipt (r:1 w:1)
+	fn recv_packet(i: u32, ) -> Weight {
+		(119_617_000 as Weight)
+			// Standard Error: 2_000
+			.saturating_add((107_000 as Weight).saturating_mul(i as Weight))
+			.saturating_add(T::DbWeight::get().reads(9 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+	}
+	// Storage: Ibc Capabilities (r:1 w:0)
+	// Storage: Ibc Channels (r:1 w:0)
+	// Storage: Ibc Connections (r:1 w:0)
+	// Storage: Ibc PacketCommitment (r:1 w:1)
+	// Storage: Ibc ClientStates (r:1 w:0)
+	// Storage: Ibc ConsensusStates (r:1 w:0)
+	// Storage: Timestamp Now (r:1 w:0)
+	// Storage: Ibc ClientUpdateTime (r:1 w:0)
+	// Storage: Ibc ClientUpdateHeight (r:1 w:0)
+	fn ack_packet(i: u32, j: u32, ) -> Weight {
+		(113_242_000 as Weight)
+			// Standard Error: 1_000
+			.saturating_add((98_000 as Weight).saturating_mul(i as Weight))
+			// Standard Error: 1_000
+			.saturating_add((58_000 as Weight).saturating_mul(j as Weight))
+			.saturating_add(T::DbWeight::get().reads(9 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+	}
 }

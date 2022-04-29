@@ -208,10 +208,9 @@ where
 				<PacketReceipt<T>>::get((key.0.as_bytes(), key.1.to_string().as_bytes(), seq));
 			let data =
 				String::from_utf8(data).map_err(|_| ICS04Error::implementation_specific())?;
-
 			let data = match data.as_ref() {
 				"Ok" => Receipt::Ok,
-				_ => unreachable!(),
+				_ => return Err(ICS04Error::packet_receipt_not_found(seq.into())),
 			};
 			log::trace!("in channel : [get_packet_receipt] >> packet_receipt = {:?}", data);
 			Ok(data)
@@ -364,7 +363,7 @@ where
 		// insert packet commitment key-value
 		<PacketCommitment<T>>::insert(
 			(key.0.as_bytes().to_vec(), key.1.to_string().as_bytes().to_vec(), seq),
-			ChannelReader::hash(self, input).encode(),
+			ChannelReader::hash(self, input).as_bytes(),
 		);
 
 		Ok(())
@@ -392,7 +391,7 @@ where
 		receipt: Receipt,
 	) -> Result<(), ICS04Error> {
 		let receipt = match receipt {
-			Receipt::Ok => "Ok".encode(),
+			Receipt::Ok => "Ok".as_bytes(),
 		};
 
 		let seq = u64::from(key.2);
