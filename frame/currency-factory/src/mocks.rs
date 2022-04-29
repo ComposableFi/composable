@@ -29,8 +29,8 @@ frame_support::construct_runtime!(
 impl Config for Test {
 	type Event = Event;
 	type AssetId = AssetId;
+	type Balance = u128;
 	type AddOrigin = EnsureRoot<AccountId>;
-	type ReserveOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = crate::weights::SubstrateWeight<Test>;
 }
 

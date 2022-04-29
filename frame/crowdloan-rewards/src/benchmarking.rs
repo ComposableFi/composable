@@ -2,7 +2,8 @@ use super::*;
 
 use crate::Pallet as CrowdloanReward;
 
-use crate::models::{EcdsaSignature, EthereumAddress, Proof, RemoteAccount};
+use composable_support::types::{EcdsaSignature, EthereumAddress}
+use crate::models::{Proof, RemoteAccount};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
 use frame_system::RawOrigin;
 use sp_core::{ed25519, keccak_256, Pair};

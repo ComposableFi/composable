@@ -1,15 +1,15 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(
 	bad_style,
@@ -54,11 +54,11 @@ pub mod pallet {
 		weights::WeightInfo,
 	};
 	use codec::{Codec, FullCodec};
+	use composable_support::math::safe::{safe_multiply_by_rational, SafeAdd, SafeSub};
 	use composable_traits::{
 		currency::{CurrencyFactory, RangeId},
 		defi::CurrencyPair,
 		dex::{Amm, StableSwapPoolInfo},
-		math::{safe_multiply_by_rational, SafeAdd, SafeSub},
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -100,7 +100,7 @@ pub mod pallet {
 			+ SafeAdd
 			+ SafeSub;
 		type Convert: Convert<u128, Self::Balance> + Convert<Self::Balance, u128>;
-		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
+		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId, Self::Balance>;
 		type Assets: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>
 			+ Inspect<Self::AccountId, Balance = Self::Balance, AssetId = <Self as Config>::AssetId>;
@@ -132,7 +132,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn pool_count)]
 	// Absence of pool count is equivalent to 0, so ValueQuery is allowed.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type PoolCount<T: Config> = StorageValue<_, T::PoolId, ValueQuery, PoolCountOnEmpty<T>>;
 
 	#[pallet::type_value]
@@ -245,10 +245,11 @@ pub mod pallet {
 			pool_id: T::PoolId,
 			asset_id: T::AssetId,
 			amount: T::Balance,
+			min_receive: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::buy(&who, pool_id, asset_id, amount, keep_alive)?;
+			let _ = <Self as Amm>::buy(&who, pool_id, asset_id, amount, min_receive, keep_alive)?;
 			Ok(())
 		}
 
@@ -261,10 +262,11 @@ pub mod pallet {
 			pool_id: T::PoolId,
 			asset_id: T::AssetId,
 			amount: T::Balance,
+			min_receive: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::sell(&who, pool_id, asset_id, amount, keep_alive)?;
+			let _ = <Self as Amm>::sell(&who, pool_id, asset_id, amount, min_receive, keep_alive)?;
 			Ok(())
 		}
 
@@ -358,6 +360,11 @@ pub mod pallet {
 			Ok(pool.pair)
 		}
 
+		fn lp_token(pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError> {
+			let pool = Self::get_pool(pool_id)?;
+			Ok(pool.lp_token)
+		}
+
 		fn get_exchange_value(
 			pool_id: Self::PoolId,
 			asset_id: Self::AssetId,
@@ -382,6 +389,7 @@ pub mod pallet {
 			pool_id: Self::PoolId,
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
+			min_receive: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
@@ -391,7 +399,7 @@ pub mod pallet {
 			// So we compute price assuming user wants to sell instead of buy.
 			// And then do exchange computed amount with token indices flipped.
 			let dx = Self::get_exchange_value(pool_id, asset_id, amount)?;
-			Self::exchange(who, pool_id, pair, dx, T::Balance::zero(), keep_alive)?;
+			Self::exchange(who, pool_id, pair, dx, min_receive, keep_alive)?;
 			Ok(amount)
 		}
 
@@ -401,11 +409,12 @@ pub mod pallet {
 			pool_id: Self::PoolId,
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
+			min_receive: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pair = if asset_id == pool.pair.base { pool.pair.swap() } else { pool.pair };
-			let dy = Self::exchange(who, pool_id, pair, amount, Self::Balance::zero(), keep_alive)?;
+			let dy = Self::exchange(who, pool_id, pair, amount, min_receive, keep_alive)?;
 			Ok(dy)
 		}
 
@@ -612,7 +621,8 @@ pub mod pallet {
 			let total_fees = fee.checked_add(&owner_fee).ok_or(ArithmeticError::Overflow)?;
 			ensure!(total_fees < Permill::one(), Error::<T>::InvalidFees);
 
-			let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS)?;
+			// TODO: pass from ED from above
+			let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS, T::Balance::zero())?;
 			// Add new pool
 			let pool_id =
 				PoolCount::<T>::try_mutate(|pool_count| -> Result<T::PoolId, DispatchError> {

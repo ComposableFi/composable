@@ -1,8 +1,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -33,6 +33,9 @@ mod types {
 	// tests, integration, benchmark, (simnode?)
 
 	pub type BondOfferId = u128;
+
+	/// Pablo pool ID
+	pub type PoolId = u128;
 
 	/// Timestamp implementation.
 	pub type Moment = u64;
@@ -180,7 +183,13 @@ pub fn multi_existential_deposits(_currency_id: &CurrencyId) -> Balance {
 #[cfg(not(feature = "runtime-benchmarks"))]
 pub fn multi_existential_deposits(currency_id: &CurrencyId) -> Balance {
 	PriceConverter::get_price_inverse(*currency_id, NativeExistentialDeposit::get())
-		.unwrap_or(Balance::MAX) // TODO: here DEX call to pemissioned markets should come
+		// TODO:
+		// 1. ask approved DEX pair for price  (is it enought performacne? or should we allow pay in
+		// ED PICA for other asset account?)
+		// 2. ask CurrencyFactory
+		// 3. use harcoded values
+		// 4. else 1_000_000_u128
+		.unwrap_or(1_000_000_u128)
 }
 
 parameter_type_with_key! {

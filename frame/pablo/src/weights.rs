@@ -7,15 +7,15 @@ use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use sp_std::marker::PhantomData;
 
 pub trait WeightInfo {
-  fn create() -> Weight;
-  fn buy() -> Weight;
-  fn sell() -> Weight;
-  fn swap() -> Weight;
-  fn add_liquidity() -> Weight;
-  fn remove_liquidity() -> Weight;
-  fn add_liquidity_lbp() -> Weight;
-  fn remove_liquidity_lbp() -> Weight;
-  fn create_lbp() -> Weight;
+	fn create() -> Weight;
+	fn create_lbp() -> Weight;
+	fn add_liquidity() -> Weight;
+	fn add_liquidity_lbp() -> Weight;
+	fn remove_liquidity() -> Weight;
+	fn remove_liquidity_lbp() -> Weight;
+	fn buy() -> Weight;
+	fn sell() -> Weight;
+	fn swap() -> Weight;
 }
 
 // For backwards compatibility and tests

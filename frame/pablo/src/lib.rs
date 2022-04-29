@@ -1,8 +1,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -68,11 +68,14 @@ pub mod pallet {
 		WeightInfo,
 	};
 	use codec::{Codec, FullCodec};
+	use composable_support::math::safe::SafeArithmetic;
 	use composable_traits::{
 		currency::{CurrencyFactory, LocalAssets},
 		defi::{CurrencyPair, Rate},
-		dex::{Amm, ConstantProductPoolInfo, LiquidityBootstrappingPoolInfo, StableSwapPoolInfo},
-		math::SafeArithmetic,
+		dex::{
+			Amm, ConstantProductPoolInfo, LiquidityBootstrappingPoolInfo, PriceAggregate,
+			StableSwapPoolInfo,
+		},
 	};
 	use core::fmt::Debug;
 	use frame_support::{
@@ -155,6 +158,8 @@ pub mod pallet {
 			pool_id: T::PoolId,
 			/// Owner of the pool.
 			owner: T::AccountId,
+			// Pool assets
+			assets: CurrencyPair<AssetIdOf<T>>,
 		},
 		/// The sale ended, the funds repatriated and the pool deleted.
 		PoolDeleted {
@@ -225,6 +230,7 @@ pub mod pallet {
 		InvalidFees,
 		AmpFactorMustBeGreaterThanZero,
 		MissingAmount,
+		NoLpTokenForLbp,
 	}
 
 	#[pallet::config]
@@ -259,7 +265,7 @@ pub mod pallet {
 		type Convert: Convert<u128, BalanceOf<Self>> + Convert<BalanceOf<Self>, u128>;
 
 		/// Factory to create new lp-token.
-		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId>;
+		type CurrencyFactory: CurrencyFactory<<Self as Config>::AssetId, Self::Balance>;
 
 		/// Dependency allowing this pallet to transfer funds from one account to another.
 		type Assets: Transfer<AccountIdOf<Self>, Balance = BalanceOf<Self>, AssetId = AssetIdOf<Self>>
@@ -329,7 +335,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn pool_count)]
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type PoolCount<T: Config> = StorageValue<_, T::PoolId, ValueQuery, PoolCountOnEmpty<T>>;
 
 	#[pallet::storage]
@@ -374,10 +380,11 @@ pub mod pallet {
 			pool_id: T::PoolId,
 			asset_id: T::AssetId,
 			amount: T::Balance,
+			min_receive: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::buy(&who, pool_id, asset_id, amount, keep_alive)?;
+			let _ = <Self as Amm>::buy(&who, pool_id, asset_id, amount, min_receive, keep_alive)?;
 			Ok(())
 		}
 
@@ -390,10 +397,11 @@ pub mod pallet {
 			pool_id: T::PoolId,
 			asset_id: T::AssetId,
 			amount: T::Balance,
+			min_receive: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::sell(&who, pool_id, asset_id, amount, keep_alive)?;
+			let _ = <Self as Amm>::sell(&who, pool_id, asset_id, amount, min_receive, keep_alive)?;
 			Ok(())
 		}
 
@@ -545,7 +553,7 @@ pub mod pallet {
 		pub fn do_create_pool(
 			init_config: PoolInitConfigurationOf<T>,
 		) -> Result<T::PoolId, DispatchError> {
-			let (owner, pool_id) = match init_config {
+			let (owner, pool_id, pair) = match init_config {
 				PoolInitConfiguration::StableSwap {
 					owner,
 					pair,
@@ -561,18 +569,23 @@ pub mod pallet {
 						fee,
 						owner_fee,
 					)?,
+					pair,
 				),
-				PoolInitConfiguration::ConstantProduct { owner, pair, fee, owner_fee } =>
-					(owner.clone(), Uniswap::<T>::do_create_pool(&owner, pair, fee, owner_fee)?),
+				PoolInitConfiguration::ConstantProduct { owner, pair, fee, owner_fee } => (
+					owner.clone(),
+					Uniswap::<T>::do_create_pool(&owner, pair, fee, owner_fee)?,
+					pair,
+				),
 				PoolInitConfiguration::LiquidityBootstrapping(pool_config) => {
 					let validated_pool_config = Validated::new(pool_config.clone())?;
 					(
 						pool_config.owner,
 						LiquidityBootstrapping::<T>::do_create_pool(validated_pool_config)?,
+						pool_config.pair,
 					)
 				},
 			};
-			Self::deposit_event(Event::<T>::PoolCreated { owner, pool_id });
+			Self::deposit_event(Event::<T>::PoolCreated { owner, pool_id, assets: pair });
 			Ok(pool_id)
 		}
 
@@ -653,6 +666,16 @@ pub mod pallet {
 				PoolConfiguration::StableSwap(info) => Ok(info.pair),
 				PoolConfiguration::ConstantProduct(info) => Ok(info.pair),
 				PoolConfiguration::LiquidityBootstrapping(info) => Ok(info.pair),
+			}
+		}
+
+		fn lp_token(pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError> {
+			let pool = Self::get_pool(pool_id)?;
+			match pool {
+				PoolConfiguration::StableSwap(info) => Ok(info.lp_token),
+				PoolConfiguration::ConstantProduct(info) => Ok(info.lp_token),
+				PoolConfiguration::LiquidityBootstrapping(_) =>
+					Err(Error::<T>::NoLpTokenForLbp.into()),
 			}
 		}
 
@@ -896,6 +919,7 @@ pub mod pallet {
 			pool_id: Self::PoolId,
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
+			min_receive: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
@@ -908,20 +932,20 @@ pub mod pallet {
 					// So we compute price assuming user wants to sell instead of buy.
 					// And then do exchange computed amount with token indices flipped.
 					let dx = Self::get_exchange_value(pool_id, asset_id, amount)?;
-					Self::exchange(who, pool_id, pair, dx, T::Balance::zero(), keep_alive)?;
+					Self::exchange(who, pool_id, pair, dx, min_receive, keep_alive)?;
 					Ok(amount)
 				},
 				PoolConfiguration::ConstantProduct(info) => {
 					let pair =
 						if asset_id == info.pair.base { info.pair } else { info.pair.swap() };
 					let quote_amount = Self::get_exchange_value(pool_id, asset_id, amount)?;
-					Self::exchange(who, pool_id, pair, quote_amount, T::Balance::zero(), keep_alive)
+					Self::exchange(who, pool_id, pair, quote_amount, min_receive, keep_alive)
 				},
 				PoolConfiguration::LiquidityBootstrapping(info) => {
 					let pair =
 						if asset_id == info.pair.base { info.pair } else { info.pair.swap() };
 					let quote_amount = Self::get_exchange_value(pool_id, asset_id, amount)?;
-					Self::exchange(who, pool_id, pair, quote_amount, T::Balance::zero(), keep_alive)
+					Self::exchange(who, pool_id, pair, quote_amount, min_receive, keep_alive)
 				},
 			}
 		}
@@ -932,6 +956,7 @@ pub mod pallet {
 			pool_id: Self::PoolId,
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
+			min_receive: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
@@ -939,19 +964,33 @@ pub mod pallet {
 				PoolConfiguration::StableSwap(info) => {
 					let pair =
 						if asset_id == info.pair.base { info.pair.swap() } else { info.pair };
-					Self::exchange(who, pool_id, pair, amount, Self::Balance::zero(), keep_alive)
+					Self::exchange(who, pool_id, pair, amount, min_receive, keep_alive)
 				},
 				PoolConfiguration::ConstantProduct(info) => {
 					let pair =
 						if asset_id == info.pair.base { info.pair.swap() } else { info.pair };
-					Self::exchange(who, pool_id, pair, amount, T::Balance::zero(), keep_alive)
+					Self::exchange(who, pool_id, pair, amount, min_receive, keep_alive)
 				},
 				PoolConfiguration::LiquidityBootstrapping(info) => {
 					let pair =
 						if asset_id == info.pair.base { info.pair.swap() } else { info.pair };
-					Self::exchange(who, pool_id, pair, amount, T::Balance::zero(), keep_alive)
+					Self::exchange(who, pool_id, pair, amount, min_receive, keep_alive)
 				},
 			}
 		}
+	}
+
+	/// Retrieve the price(s) from the given pool calculated for the given `base_asset_id`
+	/// and `quote_asset_id` pair.
+	pub fn prices_for<T: Config>(
+		pool_id: T::PoolId,
+		base_asset_id: T::AssetId,
+		quote_asset_id: T::AssetId,
+		amount: T::Balance,
+	) -> Result<PriceAggregate<T::PoolId, T::AssetId, T::Balance>, DispatchError> {
+		// quote_asset_id is always known given the base as no multi-asset pool support is
+		// implemented as of now.
+		let spot_price = <Pallet<T> as Amm>::get_exchange_value(pool_id, base_asset_id, amount)?;
+		Ok(PriceAggregate { pool_id, base_asset_id, quote_asset_id, spot_price })
 	}
 }

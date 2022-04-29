@@ -2,6 +2,7 @@
 /* eslint-disable */
 
 import type { CustomRpcBalance, CustomRpcCurrencyId } from '@composable/types/interfaces/common';
+import type { PalletPabloPoolId, PalletPabloPriceAggregate } from '@composable/types/interfaces/pablo';
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
 import type { Metadata, StorageKey } from '@polkadot/types';
 import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, u32, u64 } from '@polkadot/types-codec';
@@ -387,6 +388,12 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        * Set offchain local storage under given key and prefix
        **/
       localStorageSet: AugmentedRpc<(kind: StorageKind | 'PERSISTENT' | 'LOCAL' | number | Uint8Array, key: Bytes | string | Uint8Array, value: Bytes | string | Uint8Array) => Observable<Null>>;
+    };
+    pablo: {
+      /**
+       * Get the price(in quote asset) for the given asset pair in the given pool for the given amount
+       **/
+      pricesFor: AugmentedRpc<(poolId: PalletPabloPoolId | string, baseAssetId: CustomRpcCurrencyId | string, quoteAssetId: CustomRpcCurrencyId | string, amount: CustomRpcBalance | string, at?: Hash | string | Uint8Array) => Observable<PalletPabloPriceAggregate>>;
     };
     payment: {
       /**

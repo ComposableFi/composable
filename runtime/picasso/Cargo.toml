@@ -29,7 +29,6 @@ normal = [
 executive = { package = "frame-executive", git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
 frame-support = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
 frame-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
-wasmtime-environ = "0.36.0"
 
 # primitives
 sp-api = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
@@ -88,6 +87,7 @@ transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rp
 # local RPCs
 assets-runtime-api = { path = '../../frame/assets/runtime-api', default-features = false }
 crowdloan-rewards-runtime-api = { path = '../../frame/crowdloan-rewards/runtime-api', default-features = false }
+pablo-runtime-api = { path = '../../frame/pablo/runtime-api', default-features = false }
 
 # Used for runtime benchmarking
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [

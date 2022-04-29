@@ -1,16 +1,16 @@
 #![cfg_attr(
 	not(test),
-	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+	deny(
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)
-)] // allow in tests#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
+)] // allow in tests#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![warn(
+#![deny(
 	bad_style,
 	bare_trait_objects,
 	const_err,
@@ -45,10 +45,16 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
-	use composable_support::validation::Validated;
+	use composable_support::{
+		abstractions::{
+			nonce::{Increment, Nonce},
+			utils::{increment::SafeIncrement, start_at::ZeroInit},
+		},
+		math::safe::SafeAdd,
+		validation::Validated,
+	};
 	use composable_traits::{
 		bonded_finance::{BondDuration, BondOffer, BondedFinance, ValidBondOffer},
-		math::SafeAdd,
 		vesting::{VestedTransfer, VestingSchedule, VestingWindow::BlockNumberBased},
 	};
 	use frame_support::{
@@ -170,19 +176,12 @@ pub mod pallet {
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
-	#[pallet::type_value]
-	pub fn BondOfferOnEmpty<T: Config>() -> T::BondOfferId {
-		T::BondOfferId::zero()
-	}
-
 	/// The counter used to uniquely identify bond offers within this pallet.
 	#[pallet::storage]
 	#[pallet::getter(fn bond_offer_count)]
-	// `BondOfferOnEmpty<T>` explicitly defines the behaviour when empty, so `ValueQuery` is
-	// allowed.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)] // nonce, ValueQuery is OK
 	pub type BondOfferCount<T: Config> =
-		StorageValue<_, T::BondOfferId, ValueQuery, BondOfferOnEmpty<T>>;
+		StorageValue<_, T::BondOfferId, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 
 	/// A mapping from offer ID to the pair: (issuer, offer)
 	#[pallet::storage]
@@ -297,12 +296,7 @@ pub mod pallet {
 			offer: BondOfferOf<T>,
 			keep_alive: bool,
 		) -> Result<T::BondOfferId, DispatchError> {
-			let offer_id = BondOfferCount::<T>::try_mutate(
-				|offer_id| -> Result<T::BondOfferId, DispatchError> {
-					*offer_id = offer_id.safe_add(&T::BondOfferId::one())?;
-					Ok(*offer_id)
-				},
-			)?;
+			let offer_id = BondOfferCount::<T>::increment()?;
 			let offer_account = Self::account_id(offer_id);
 			T::NativeCurrency::transfer(from, &offer_account, T::Stake::get(), keep_alive)?;
 			T::Currency::transfer(

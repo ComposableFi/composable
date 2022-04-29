@@ -51,6 +51,7 @@
             # TODO: support non-aarch64 architectures
 
             buildInputs = with pkgs; [
+              mdbook
               llvmPackages_latest.llvm
               llvmPackages_latest.bintools
               zlib.out
