@@ -48,8 +48,8 @@ cargo build --release
 
 ### One-liner
 ```sh
-RUST_C="nightly-2021-11-07"
-RELEASE_TAG="v2.1.3"
+RUST_C="nightly-2022-04-18"
+RELEASE_TAG="v2.1.6"
 
 sudo apt install -y git clang curl libssl-dev llvm libudev-dev && \
 git clone --depth 1 --branch $RELEASE_TAG https://github.com/ComposableFi/composable.git && \
@@ -73,7 +73,7 @@ Compiled node should be in
 ## Download Prebuilt Node
 
 ```sh
-wget https://github.com/ComposableFi/composable/releases/download/v2.1.3/composable
+wget https://github.com/ComposableFi/composable/releases/download/v2.1.6/composable
 ```
 
 ### Run as systemd service
