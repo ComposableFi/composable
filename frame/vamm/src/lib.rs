@@ -538,8 +538,7 @@ pub mod pallet {
 		///
 		/// # Runtime
 		/// `O(1)`
-		// TODO(Cardosaum): make this function 'transactional'
-		// #[transactional]
+		#[transactional]
 		fn swap(config: &SwapConfigOf<T>) -> Result<BalanceOf<T>, DispatchError> {
 			// Get Vamm state.
 			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
@@ -551,13 +550,14 @@ pub mod pallet {
 			let amount_swapped = match config.asset {
 				AssetType::Quote => Self::swap_quote_asset(config, &mut vamm_state),
 				AssetType::Base => Self::swap_base_asset(config, &mut vamm_state),
-			};
+			}?;
 
 			// Update runtime storage
-			todo!();
+			VammMap::<T>::insert(&config.vamm_id, vamm_state);
+
 
 			// Return total swapped asset
-			todo!();
+			Ok(amount_swapped)
 		}
 
 		#[allow(unused_variables)]
