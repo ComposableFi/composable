@@ -1,6 +1,6 @@
 // std
-use std::{sync::Arc, time::Duration};
 use polkadot_service::CollatorPair;
+use std::{sync::Arc, time::Duration};
 // Cumulus Imports
 use common::OpaqueBlock as Block;
 use cumulus_client_cli::CollatorOptions;
@@ -309,11 +309,11 @@ where
 		&mut task_manager,
 		collator_options.clone(),
 	)
-		.await
-		.map_err(|e| match e {
-			RelayChainError::ServiceError(polkadot_service::Error::Sub(x)) => x,
-			s => s.to_string().into(),
-		})?;
+	.await
+	.map_err(|e| match e {
+		RelayChainError::ServiceError(polkadot_service::Error::Sub(x)) => x,
+		s => s.to_string().into(),
+	})?;
 
 	let block_announce_validator = BlockAnnounceValidator::new(relay_chain_interface.clone(), id);
 
@@ -533,10 +533,13 @@ async fn build_relay_chain_interface(
 	collator_options: CollatorOptions,
 ) -> RelayChainResult<(Arc<(dyn RelayChainInterface + 'static)>, Option<CollatorPair>)> {
 	match collator_options.relay_chain_rpc_url {
-		Some(relay_chain_url) => Ok((
-			Arc::new(RelayChainRPCInterface::new(relay_chain_url).await?) as Arc<_>,
-			None,
-		)),
-		None => build_inprocess_relay_chain(polkadot_config, parachain_config, telemetry_worker_handle, task_manager),
+		Some(relay_chain_url) =>
+			Ok((Arc::new(RelayChainRPCInterface::new(relay_chain_url).await?) as Arc<_>, None)),
+		None => build_inprocess_relay_chain(
+			polkadot_config,
+			parachain_config,
+			telemetry_worker_handle,
+			task_manager,
+		),
 	}
 }

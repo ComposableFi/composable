@@ -12,9 +12,7 @@ use frame_support::{
 	weights::WeightToFeePolynomial,
 };
 use num_traits::Zero;
-use orml_traits::location::{
-	Reserve, AbsoluteReserveProvider,
-};
+use orml_traits::location::{AbsoluteReserveProvider, Reserve};
 use polkadot_primitives::v1::Id;
 use primitives::currency::{CurrencyId, WellKnownCurrency};
 use sp_runtime::traits::Convert;

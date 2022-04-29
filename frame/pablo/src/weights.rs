@@ -15,6 +15,7 @@ pub trait WeightInfo {
   fn remove_liquidity() -> Weight;
   fn add_liquidity_lbp() -> Weight;
   fn remove_liquidity_lbp() -> Weight;
+  fn create_lbp() -> Weight;
 }
 
 // For backwards compatibility and tests
@@ -43,7 +44,15 @@ impl WeightInfo for () {
     10_000
   }
 
-  fn add_liquidity_lbp() -> Weight { 10_000 }
+  fn add_liquidity_lbp() -> Weight {
+    10_000
+  }
 
-  fn remove_liquidity_lbp() -> Weight { 10_000 }
+  fn remove_liquidity_lbp() -> Weight {
+    10_000
+  }
+
+  fn create_lbp() -> Weight {
+    10_000
+  }
 }

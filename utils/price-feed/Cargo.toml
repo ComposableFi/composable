@@ -16,7 +16,7 @@ jsonrpc-client-transports = "18.0.0"
 jsonrpc-core = "18.0.0"
 lazy_static = "1.4.0"
 log = "0.4.14"
-serde = { version = '1.0.136', optional = true, features = ["derive"] }
+serde = { version = '1.0.136', features = ["derive"] }
 serde_json = "1.0.45"
 signal-hook = "0.3"
 signal-hook-tokio = { version = "0.3", features = ["futures-v0_3"] }
