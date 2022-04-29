@@ -907,7 +907,57 @@ proptest! {
 			})
 	}
 
-	// TODO(0xangelo): reversing should check IMR if needed
+	#[test]
+	fn cannot_reverse_position_while_exceeding_max_leverage(
+		direction in any_direction()
+	) {
+		let mut market_id: MarketId = 0;
+		let mut market_config = valid_market_config();
+		market_config.margin_ratio_initial = (1, 10).into();  // 1/10 IMR, or 10x leverage
+
+		let margin = as_balance(10);
+		let quote_amount = as_balance(100); // 10x margin => max leverage
+
+		ExtBuilder { balances: vec![(ALICE, USDC, margin)], ..Default::default() }
+			.build()
+			.init_market(&mut market_id, Some(market_config))
+			.add_margin(&ALICE, USDC, margin)
+			.execute_with(|| {
+				let price = 10;
+				VammPallet::set_price(Some(price.into()));
+
+				let base_amount_limit = quote_amount / price;
+				assert_ok!(
+					<TestPallet as ClearingHouse>::open_position(
+						&ALICE,
+						&market_id,
+						direction,
+						quote_amount,
+						base_amount_limit
+					),
+					base_amount_limit,
+				);
+
+				// Open trade in the opposite direction while increasing risk
+				// This would leaves us with and position with greater size than the current one,
+				// but the trade should be blocked because we're already at max leverage
+				let quote_amount_delta = 2 * quote_amount + 100;
+				let base_amount_delta = quote_amount_delta / price;
+				assert_noop!(
+					<TestPallet as ClearingHouse>::open_position(
+						&ALICE,
+						&market_id,
+						match direction {
+							Direction::Long => Direction::Short,
+							Direction::Short => Direction::Long,
+						},
+						quote_amount_delta,
+						base_amount_delta,
+					),
+					Error::<Runtime>::InsufficientCollateral
+				);
+			})
+	}
 
 	#[test]
 	fn imr_is_combination_of_market_imrs_with_open_positions(direction in any_direction()) {
