@@ -35,7 +35,7 @@
 
 pub use pallet::*;
 
-#[cfg(feature = "runtime-benchmarks")]
+#[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
 #[cfg(test)]
 mod common_test_functions;
@@ -928,7 +928,7 @@ pub mod pallet {
 					let pair =
 						if asset_id == info.pair.base { info.pair } else { info.pair.swap() };
 					// Since when buying asset user can't executed exchange as he don't know how
-					// much amount of token he has to trade-in to get expected buy tokens.
+					// much amount of quote token he has to trade-in to get expected buy tokens.
 					// So we compute price assuming user wants to sell instead of buy.
 					// And then do exchange computed amount with token indices flipped.
 					let dx = Self::get_exchange_value(pool_id, asset_id, amount)?;
