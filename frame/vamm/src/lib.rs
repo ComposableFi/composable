@@ -538,7 +538,8 @@ pub mod pallet {
 		///
 		/// # Runtime
 		/// `O(1)`
-		#[transactional]
+		// TODO(Cardosaum): make this function 'transactional'
+		// #[transactional]
 		fn swap(config: &SwapConfigOf<T>) -> Result<BalanceOf<T>, DispatchError> {
 			// Get Vamm state.
 			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
