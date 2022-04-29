@@ -21,6 +21,17 @@
   npx squid-graphql-server
   ```
 
+## Updating Schema and Adding Migrations
+
+This is the normal development process when trying to support new data types in the db.
+
+- Update the `schema.graphql` file with the necessary entities.
+- Run `npx sqd codegen` to generate the database entities for the schema.
+- Run `npm run build` to compile new files.
+- Run `npx sqd db create-migration` to generate a new migration file for the new or updated entities.
+- If you would like to reset the db and regenerate the tables run `./scripts/reset-db.sh`
+- Now to process the archived and new events run `npm run build && node -r dotenv/config lib/processor.js`
+
 ## Updating Types
 
 This is used for example to add support for new events
