@@ -12,8 +12,6 @@ sp_api::decl_runtime_apis! {
 		PoolId: Codec,
 		AssetId: Codec,
 		Balance: Codec,
-		(&'static PoolId, &'static AssetId, &'static AssetId, &'static Balance): sp_api::Encode + 'static,
-		composable_traits::dex::PriceAggregate<composable_support::rpc_helpers::SafeRpcWrapper<PoolId>, composable_support::rpc_helpers::SafeRpcWrapper<AssetId>, composable_support::rpc_helpers::SafeRpcWrapper<Balance>>: sp_api::Decode + 'static,
 	{
 		/// Retrieve the price(s) from the given pool calculated for the given `base_asset_id`
 		/// and `quote_asset_id` pair.
