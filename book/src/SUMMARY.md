@@ -3,6 +3,7 @@
 - [👋 Introduction](introduction.md)
 - [💻 Developer Guides](./developer-guides.md)
     - [Composable SDK](./developer-guides/composable-sdk.md)
+    - [Collator Set-Up Guide](./developer-guides/collator-set-up-guide.md)
 
 # 💿 PRODUCTS
 - [Technical Stack Overview](./products/technical-stack-overview.md)
