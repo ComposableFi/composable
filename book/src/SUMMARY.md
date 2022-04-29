@@ -8,7 +8,6 @@
 
 - [Technical Stack Overview](./products/technical-stack-overview.md)
 - [Cross-Chain Virtual Machine](./products/cross-chain-virtual-machine.md)
-  - [Innovation Availability Layer](./products/cross-chain-virtual-machine/innovation-availability-layer.md)
 - [Routing Layer](./products/routing-layer.md)
 - [Mosaic](./products/mosaic.md)
   - [Fragmentation in DeFi's Layer 2](./products/mosaic/fragmentation-in-layer-2.md)
