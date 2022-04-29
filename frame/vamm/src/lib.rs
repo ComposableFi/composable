@@ -625,7 +625,7 @@ pub mod pallet {
 				&initial_quote_asset_reserve,
 				&swap_amount.output_amount,
 				&config.direction,
-				&vamm_state,
+				vamm_state,
 			)
 		}
 
