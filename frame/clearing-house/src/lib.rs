@@ -456,8 +456,8 @@ pub mod pallet {
 		FundingPeriodNotMultipleOfFrequency,
 		/// Attempted to create a new market but the funding period or frequency is 0 seconds long
 		ZeroLengthFundingPeriodOrFrequency,
-		/// Attempted to create a new market but either initial or maintenance margin ratios are
-		/// outside the interval (0, 1)
+		/// Attempted to create a new market but either the initial margin ratio is outside (0, 1]
+		/// or the maintenance margin ratio is outside (0, 1)
 		InvalidMarginRatioRequirement,
 		/// Attempted to create a new market but the initial margin ratio is less than or equal to
 		/// the maintenance one
@@ -537,7 +537,8 @@ pub mod pallet {
 		/// * The underlying must have a stable price feed via another pallet
 		/// * The funding period must be a multiple of its frequency
 		/// * Both funding period and frequency must be nonzero
-		/// * Initial and Maintenance margin ratios must be in the (0, 1) open interval
+		/// * Initial and Maintenance margin ratios must be in the (0, 1] and (0, 1) intervals
+		///   respectively
 		/// * Initial margin ratio must be greater than maintenance
 		///
 		/// ## Emits
@@ -689,7 +690,7 @@ pub mod pallet {
 			);
 			ensure!(
 				config.margin_ratio_initial > T::Decimal::zero() &&
-					config.margin_ratio_initial < T::Decimal::one() &&
+					config.margin_ratio_initial <= T::Decimal::one() &&
 					config.margin_ratio_maintenance > T::Decimal::zero() &&
 					config.margin_ratio_maintenance < T::Decimal::one(),
 				Error::<T>::InvalidMarginRatioRequirement

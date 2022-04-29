@@ -9,18 +9,15 @@ use crate::{
 		},
 	},
 	pallet::{Error, Event, Markets},
-	tests::{as_inner, run_to_block, zero_to_one_open_interval},
+	tests::{as_inner, run_to_block},
 };
 use composable_traits::{
 	clearing_house::ClearingHouse,
 	time::{DurationSeconds, ONE_HOUR},
 };
 use frame_support::{assert_noop, assert_ok, traits::UnixTime};
-use proptest::{
-	num::f64::{NEGATIVE, POSITIVE, ZERO},
-	prelude::*,
-};
-use sp_runtime::FixedI128;
+use proptest::prelude::*;
+use sp_runtime::{FixedI128, FixedPointNumber};
 
 type MarketConfig = <TestPallet as ClearingHouse>::MarketConfig;
 type VammConfig = mock::vamm::VammConfig;
@@ -53,37 +50,67 @@ fn valid_market_config() -> MarketConfig {
 // ----------------------------------------------------------------------------------------------------
 
 prop_compose! {
-	fn float_le_zero()(float in ZERO | NEGATIVE) -> f64 {
-		float
+	fn decimal_gt_zero_lt_one()(inner in 1..as_inner(1)) -> FixedI128 {
+		FixedI128::from_inner(inner)
 	}
 }
 
 prop_compose! {
-	fn float_ge_one()(float in ZERO | POSITIVE) -> f64 {
-		1.0 + float
+	fn decimal_gt_zero_le_one()(inner in 1..=as_inner(1)) -> FixedI128 {
+		FixedI128::from_inner(inner)
+	}
+}
+
+prop_compose! {
+	fn decimal_le_zero()(inner in i128::MIN..=0) -> FixedI128 {
+		FixedI128::from_inner(inner)
+	}
+}
+
+prop_compose! {
+	fn decimal_ge_one()(inner in as_inner(1)..=i128::MAX) -> FixedI128 {
+		FixedI128::from_inner(inner)
+	}
+}
+
+prop_compose! {
+	fn decimal_gt_one()(inner in (as_inner(1) + 1)..=i128::MAX) -> FixedI128 {
+		FixedI128::from_inner(inner)
+	}
+}
+
+prop_compose! {
+	fn invalid_initial_margin_ratio()(
+		decimal in prop_oneof![decimal_le_zero(), decimal_gt_one()]
+	) -> FixedI128 {
+		decimal
+	}
+}
+
+prop_compose! {
+	fn invalid_maintenance_margin_ratio()(
+		decimal in prop_oneof![decimal_le_zero(), decimal_ge_one()]
+	) -> FixedI128 {
+		decimal
+	}
+}
+
+prop_compose! {
+	fn decimal_gt_zero_le_input(input: FixedI128)(
+		inner in 1..=input.into_inner()
+	) -> FixedI128 {
+		FixedI128::from_inner(inner)
 	}
 }
 
 prop_compose! {
 	fn initial_le_maintenance_margin_ratio()(
-		(maintenance, decrement) in zero_to_one_open_interval()
-			.prop_flat_map(|num| (Just(num), 0.0..num))
+		maint in decimal_gt_zero_lt_one()
+	)(
+		initial in decimal_gt_zero_le_input(maint),
+		maintenance in Just(maint)
 	) -> (FixedI128, FixedI128) {
-		(FixedI128::from_float(maintenance - decrement), FixedI128::from_float(maintenance))
-	}
-}
-
-prop_compose! {
-	fn invalid_margin_ratio_req()(
-		float in prop_oneof![float_le_zero(), float_ge_one()]
-	) -> FixedI128 {
-		FixedI128::from_float(float)
-	}
-}
-
-prop_compose! {
-	fn valid_margin_ratio_req()(float in zero_to_one_open_interval()) -> FixedI128 {
-		FixedI128::from_float(float)
+		(initial, maintenance)
 	}
 }
 
@@ -199,11 +226,11 @@ proptest! {
 
 proptest! {
 	#[test]
-	fn fails_to_create_market_if_margin_ratios_not_between_zero_and_one(
+	fn fails_to_create_market_if_margin_ratios_not_in_valid_range(
 		(margin_ratio_initial, margin_ratio_maintenance) in prop_oneof![
-			(valid_margin_ratio_req(), invalid_margin_ratio_req()),
-			(invalid_margin_ratio_req(), valid_margin_ratio_req()),
-			(invalid_margin_ratio_req(), invalid_margin_ratio_req())
+			(decimal_gt_zero_le_one(), invalid_maintenance_margin_ratio()),
+			(invalid_maintenance_margin_ratio(), decimal_gt_zero_lt_one()),
+			(invalid_maintenance_margin_ratio(), invalid_maintenance_margin_ratio())
 		]
 	) {
 		ExtBuilder::default().build().execute_with(|| {
