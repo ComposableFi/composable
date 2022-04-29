@@ -2,7 +2,7 @@
 
 ---
 
-The Composable Finance team is made up of individuals dedicated to realize seamless cross-chain user experience and a blockchain-agnostic future of DeFi. There are around 65 people on the Composable team, with 40 developers (including 15 on frontend or integration) and 25 on design, strategy and marketing. Select biographies on our core members are below. 
+The Composable Finance team is made up of individuals dedicated to realizing a seamless cross-chain user experience and a blockchain-agnostic future of DeFi. There are around 65 people on the Composable team, with 40 developers (including 15 on frontend or integration) and 25 on design, strategy and marketing. Select biographies on our core members are below. 
 
 ## 0xbrainjar | Founder & CEO
 
@@ -12,7 +12,7 @@ Brainjar brings a deep understanding of the blockchain space and a comprehensive
 
 Karel is a long-time crypto user and developer, passionate about decentralization through technological means. Karel has worked on a range of protocols and contracts, such as Ethereum, NEO, Substrate, and custom chains. He is well versed in several programming languages including Rust, Solidity and Haskell. He brings this expertise to the Composable team, working to help democratize financial instruments and markets. Follow him on [Twitter](https://twitter.com/0xkaiserkarel).
 
-## MarmiteToast | Head of Strategy and Ecosystem Development
+## MarmiteToast | Head of Product Strategy
 
 Marmite had a career as a physical commodity trader and has been involved in the DeFi developments in his spare time since 2019. He works with the CEO and the CTO in designing the roadmap and conducts outreach with various protocols to fully utilize the Composable tech stack. He also works with a group of community managers to bring updates to the community on [Discord](https://discord.com/channels/828751308060098601/828752316105621604) and [Twitter](https://twitter.com/TLE_dot_com). 
 
@@ -37,7 +37,7 @@ Nanni brings a lot of passion, professionalism and ideas to the Picasso team. Na
 
 Cosmin entered the crypto space in 2017, and has had a long career in computer science. He brings strong Solidity skills as well as the engineering know-how from years of working as a full-stack engineer. Cosmin currently leads the development of Mosaic Phase 2 and the SDK. Follow him on [Twitter](https://twitter.com/gcosmintech?lang=en). 
 
-## Seun Lanlege | Parachain Lead
+## Seun Lanlege | Bridging Lead 
 
 Seun is bringing his wealth of experience as a former core developer at Parity Technologies to Picasso. Seun is leading the Polkadot team and harnessing his knowledge and experience to the growth of the Picasso Parachain. He is focused on the Picasso and Composable runtime as well as developing trustless bridging solutions between various networks, including DotSama, Cosmos, and more. Follow him on [Twitter](https://twitter.com/seunlanlege) or [Medium](https://medium.com/@seunlanlege).
 
@@ -53,9 +53,9 @@ Boba has a passion for understanding incentive structures, game theory, and bot 
 
 Radu is a fan and contributor of the open source community. Radu brings to Composable a wealth of experience having experience as a Senior developer in blockchain Solidity, Truffle, Ganache, Mist, MetaMask. On the server side Radu is experienced in Golang, including Gorilla, Websockets and concurrency design patterns. Radu is passionate about building Web 3 solutions and focuses on bringing Composable to a blockchain agnostic future. Follow him on [Twitter](https://twitter.com/radugheorghies)
 
-## Hussein Ait Lachen | Rust Developer Lead
+## Hussein Ait Lachen | XCVM Lead 
 
-Hussein has a passion for functional programming and started his career as a self taught haskeller working in a logistic startup. He got involved in blockchain technology in 2020 and with his background as a Haskeller, Hussein started looking into Cardano and its                                                                                                                                 domain. Hussein joined Mlabs in 2021 and now works as a Rust lead for Composable working with the Substrate Team in building and shipping various DeFi products on the Composable parachain. Hussien also loves game hacking and bypassing anti cheats and still does this in his spare time. Follow him on [Twitter](https://twitter.com/haitlah)
+Hussein has a passion for functional programming and started his career as a self taught haskeller working in a logistic startup. He got involved in blockchain technology in 2020 and with his background as a Haskeller, Hussein started looking into Cardano and its                                       domain. Hussein joined Mlabs in 2021 and now works as a Rust lead for Composable working with the Substrate Team in building and shipping various DeFi products on the Composable parachain. Hussien also loves game hacking and bypassing anti cheats and still does this in his spare time. Follow him on [Twitter](https://twitter.com/haitlah)
 
 ## Connor Davis | Rust Developer Junior
 
@@ -73,7 +73,7 @@ Ben is a self taught software developer, he is passionate about building cross c
 
 Dayo is passionate about helping startups architect and build their infrastructure to scale and this is why he is a great addition to the Composable team. He has a background in cloud services and solutions and has worked with projects such as Flow blockchain and he brings his expertise to Composable as a DevOps engineer. Follow Dayo on [Twitter](https://twitter.com/haroldsphinx). 
 
-## Blas Rodriguez Irizar | Rust Solana Developer
+## Blas Rodriguez Irizar | Bridging Developer 
 
 Blas has worked building zk-rollups at Consensys, has expertise in building high performance systems, and working with different blockchains (Solana, Ethereum, and Bitcoin). He studied Economics and Finance, and now works at Composable on trustless bridges. Follow him on [Twitter](https://mobile.twitter.com/blasrodri)
 
