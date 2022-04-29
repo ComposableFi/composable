@@ -547,10 +547,16 @@ pub mod pallet {
 			Self::swap_sanity_check(config, &vamm_state)?;
 
 			// Delegate swap to helper functions.
-			match config.asset {
+			let amount_swapped = match config.asset {
 				AssetType::Quote => Self::swap_quote_asset(config, &mut vamm_state),
 				AssetType::Base => Self::swap_base_asset(config, &mut vamm_state),
-			}
+			};
+
+			// Update runtime storage
+			todo!();
+
+			// Return total swapped asset
+			todo!();
 		}
 
 		#[allow(unused_variables)]
