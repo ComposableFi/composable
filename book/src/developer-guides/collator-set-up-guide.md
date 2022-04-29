@@ -2,7 +2,7 @@
 
 # COLLATOR SET UP GUIDE
 
-In this document we will cover how to set up a collaborator with Composable 
+In this document we will cover how to set up a collator with Composable 
 Finance. There are several ways to do that.
 
 * Build node locally
