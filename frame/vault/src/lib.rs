@@ -1,8 +1,8 @@
 #![cfg_attr(
 	not(test),
-	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+	deny(
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -49,7 +49,7 @@ pub use pallet::*;
 
 pub mod mocks;
 
-#[cfg(feature = "runtime-benchmarks")]
+#[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
 pub mod weights;
 
@@ -121,67 +121,6 @@ pub mod pallet {
 	pub type VaultInfo<T> =
 		crate::models::VaultInfo<AccountIdOf<T>, BalanceOf<T>, AssetIdOf<T>, BlockNumberOf<T>>;
 
-	// NOTE(hussein-aitlahcen): extra constraints for benchmarking simplicity
-	#[cfg(feature = "runtime-benchmarks")]
-	pub trait Config: frame_system::Config {
-		#[allow(missing_docs)]
-		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type Balance: Default
-			+ Parameter
-			+ Codec
-			+ MaxEncodedLen
-			+ Copy
-			+ Ord
-			+ CheckedAdd
-			+ CheckedSub
-			+ CheckedMul
-			+ SaturatingSub
-			+ AtLeast32BitUnsigned
-			+ From<u128>
-			+ Zero;
-		type CurrencyFactory: CurrencyFactory<Self::AssetId>;
-		type AssetId: FullCodec
-			+ MaxEncodedLen
-			+ Eq
-			+ PartialEq
-			+ Copy
-			+ MaybeSerializeDeserialize
-			+ Debug
-			+ Default
-			+ From<u128>
-			+ TypeInfo;
-		type NativeCurrency: TransferNative<Self::AccountId, Balance = Self::Balance>
-			+ MutateNative<Self::AccountId, Balance = Self::Balance>
-			+ MutateHoldNative<Self::AccountId, Balance = Self::Balance>;
-		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
-			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
-		type VaultId: AddAssign
-			+ FullCodec
-			+ MaxEncodedLen
-			+ One
-			+ Eq
-			+ PartialEq
-			+ Copy
-			+ MaybeSerializeDeserialize
-			+ Debug
-			+ Default
-			+ Into<u128>
-			+ From<u64>
-			+ TypeInfo;
-		type WeightInfo: WeightInfo;
-		type Convert: Convert<Self::Balance, u128> + Convert<u128, Self::Balance>;
-		type MaxStrategies: Get<usize>;
-		type MinimumDeposit: Get<Self::Balance>;
-		type MinimumWithdrawal: Get<Self::Balance>;
-		type CreationDeposit: Get<Self::Balance>;
-		type ExistentialDeposit: Get<Self::Balance>;
-		type TombstoneDuration: Get<Self::BlockNumber>;
-		type RentPerBlock: Get<Self::Balance>;
-		type PalletId: Get<PalletId>;
-	}
-
-	#[cfg(not(feature = "runtime-benchmarks"))]
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		#[allow(missing_docs)]
@@ -205,7 +144,7 @@ pub mod pallet {
 		/// The pallet creates new LP tokens for every created vault. It uses `CurrencyFactory`, as
 		/// `orml`'s currency traits do not provide an interface to obtain asset ids (to avoid id
 		/// collisions).
-		type CurrencyFactory: CurrencyFactory<Self::AssetId>;
+		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
 
 		/// The `AssetId` used by the pallet. Corresponds the the Ids used by the Currency pallet.
 		type AssetId: FullCodec
@@ -293,7 +232,7 @@ pub mod pallet {
 	/// Cleaned up vaults do not decrement the counter.
 	#[pallet::storage]
 	#[pallet::getter(fn vault_count)]
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type VaultCount<T: Config> = StorageValue<_, T::VaultId, ValueQuery>;
 
 	/// Info for each specific vaults.
@@ -313,7 +252,7 @@ pub mod pallet {
 	#[pallet::getter(fn capital_structure)]
 	// Bit questionable to have this be ValueQuery, as technically that makes it difficult to
 	// determine if a strategy is connected to a vault vs not having an allocation at all.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type CapitalStructure<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
@@ -672,7 +611,7 @@ pub mod pallet {
 		}
 
 		/// Turns an existent strategy account `strategy_account` of a vault determined by
-		/// `vault_idx` into a liquidation state where withdrawn funds should de returned as soon
+		/// `vault_idx` into a liquidation state where withdrawn funds should be returned as soon
 		/// as possible.
 		///
 		/// Only the vault's manager will be able to call this method.
@@ -735,7 +674,7 @@ pub mod pallet {
 				);
 
 				let lp_token_id = {
-					T::CurrencyFactory::create(RangeId::LP_TOKENS)
+					T::CurrencyFactory::create(RangeId::LP_TOKENS, T::Balance::zero())
 						.map_err(|_| Error::<T>::CannotCreateAsset)?
 				};
 

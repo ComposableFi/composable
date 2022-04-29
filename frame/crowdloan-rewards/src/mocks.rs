@@ -1,9 +1,9 @@
 use crate::{
 	self as pallet_crowdloan_rewards,
-	models::{EcdsaSignature, Proof, RemoteAccount},
+	models::{Proof, RemoteAccount},
 };
 use codec::Encode;
-use composable_support::types::EthereumAddress;
+use composable_support::types::{EcdsaSignature, EthereumAddress};
 use frame_support::{
 	construct_runtime, dispatch::DispatchResultWithPostInfo, parameter_types, traits::Everything,
 	PalletId,

@@ -1,8 +1,12 @@
-use codec::{Decode, Encode};
+use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
 use core::fmt::Debug;
-use frame_support::traits::{
-	tokens::nonfungibles::{Create, Inspect, Mutate},
-	Get,
+use frame_support::{
+	dispatch::DispatchResult,
+	ensure,
+	traits::{
+		tokens::nonfungibles::{Create, Inspect, Mutate},
+		Get,
+	},
 };
 use scale_info::TypeInfo;
 use sp_runtime::{DispatchError, TokenError};
@@ -33,23 +37,20 @@ pub trait FinancialNFTProvider<AccountId>: Create<AccountId> + Mutate<AccountId>
 ///
 /// The interface will always fully serialize/deserialize the NFT type with the NFT::Version as
 /// single attribute key.
-pub trait FinancialNFTProtocol {
-	/// Abstract type of an account id.
-	type AccountId: Copy + Eq;
-
+pub trait FinancialNFTProtocol<AccountId: Eq> {
 	/// Abstract type of a class id.
-	type ClassId: Encode + Decode + TypeInfo;
+	type ClassId: FullCodec + TypeInfo;
 
 	/// Abstract type of an instance id. Used to uniquely identify NFTs.
-	type InstanceId: Copy + Eq + Debug + Encode + Decode + TypeInfo;
+	type InstanceId: Copy + Eq + Debug + FullCodec + TypeInfo;
 
 	/// Abstract type of a version. Used to migrate NFT when updating their content.
 	/// Migration must be done by the protocol operating on the NFT type.
-	type Version: Encode + Decode + TypeInfo;
+	type Version: FullCodec + TypeInfo;
 
 	/// NFT provider from which we load/store NFT's.
 	type NFTProvider: FinancialNFTProvider<
-		Self::AccountId,
+		AccountId,
 		ClassId = Self::ClassId,
 		InstanceId = Self::InstanceId,
 	>;
@@ -63,13 +64,27 @@ pub trait FinancialNFTProtocol {
 	///
 	/// Return the NFT instance id if successfull, otherwise the underlying NFT provider error.
 	fn mint_protocol_nft<NFT>(
-		owner: &Self::AccountId,
+		owner: &AccountId,
 		nft: &NFT,
 	) -> Result<Self::InstanceId, DispatchError>
 	where
 		NFT: Get<Self::ClassId> + Get<Self::Version> + Encode,
 	{
 		Self::NFTProvider::mint_nft(&NFT::get(), owner, &<NFT as Get<Self::Version>>::get(), &nft)
+	}
+
+	/// Retrieve the _possible_ owner of the NFT identified by `instance_id`.
+	///
+	/// Arguments
+	///
+	/// * `instance_id` the ID that uniquely identify the NFT.
+	fn get_protocol_nft_owner<NFT>(
+		instance_id: &Self::InstanceId,
+	) -> Result<AccountId, DispatchError>
+	where
+		NFT: Get<Self::ClassId>,
+	{
+		Self::NFTProvider::owner(&NFT::get(), instance_id).ok_or(DispatchError::CannotLookup)
 	}
 
 	/// Ensure that the owner of the identifier NFT is `account_id`.
@@ -81,16 +96,15 @@ pub trait FinancialNFTProtocol {
 	///
 	/// Returns `Ok(())` if `owner` is the owner of the NFT identified by `instance_id`.
 	fn ensure_protocol_nft_owner<NFT>(
-		owner: &Self::AccountId,
+		owner: &AccountId,
 		instance_id: &Self::InstanceId,
 	) -> Result<(), DispatchError>
 	where
 		NFT: Get<Self::ClassId>,
 	{
-		match Self::NFTProvider::owner(&NFT::get(), instance_id) {
-			Some(nft_owner) if nft_owner == *owner => Ok(()),
-			_ => Err(DispatchError::BadOrigin),
-		}
+		let nft_owner = Self::get_protocol_nft_owner::<NFT>(instance_id)?;
+		ensure!(nft_owner == *owner, DispatchError::BadOrigin);
+		Ok(())
 	}
 
 	/// Return an NFT identified by its instance id.
@@ -139,25 +153,38 @@ pub trait FinancialNFTProtocol {
 		)?;
 		Ok(r)
 	}
+
+	/// Destroy the given NFT. Irreversible operation.
+	///
+	/// Arguments
+	///
+	/// * `instance_id` the NFT instance to destroy.
+	fn burn_protocol_nft<NFT>(instance_id: &Self::InstanceId) -> DispatchResult
+	where
+		NFT: Get<Self::ClassId>,
+	{
+		Self::NFTProvider::burn_from(&NFT::get(), instance_id)
+	}
 }
 
 /// Default ClassId type used for NFTs.
+#[derive(
+	Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Encode, Decode, MaxEncodedLen, TypeInfo,
+)]
 #[repr(transparent)]
 pub struct NFTClass(u8);
 
 impl NFTClass {
-	pub const CHAOS_STAKING: NFTClass = NFTClass(1);
+	pub const STAKING: NFTClass = NFTClass(1);
 }
 
 /// Default Version type used for NFTs.
+#[derive(
+	Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Encode, Decode, MaxEncodedLen, TypeInfo,
+)]
 #[repr(transparent)]
 pub struct NFTVersion(u8);
 
 impl NFTVersion {
 	pub const VERSION_1: NFTVersion = NFTVersion(1);
-}
-
-pub trait DefaultFinancialNFTProtocol:
-	FinancialNFTProtocol<ClassId = NFTClass, Version = NFTVersion>
-{
 }

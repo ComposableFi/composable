@@ -44,6 +44,12 @@ docker rmi composablefi/composable-sandbox:latest
 '''
 workspace = false
 
+[tasks.run-unit-tests]
+script = '''
+SKIP_WASM_BUILD=1 cargo test --workspace --locked --release --verbose --features=runtime-benchmarks
+'''
+workspace = false
+
 [tasks.run-local-integration-tests]
 script = '''
 # we cannot use toolchain setting as different parts of codebase require different compiler
@@ -59,7 +65,8 @@ workspace = false
 
 [tasks.check-ci]
 script = '''
-SKIP_WASM_BUILD=1 cargo +nightly check --benches --all # checks all rust crates with default-features, tests, benchmarks
+SKIP_WASM_BUILD=1 cargo +nightly-2021-11-08 check --benches --all # checks all rust crates with default-features, tests, benchmarks
+SKIP_WASM_BUILD=1 env -u RUSTFLAGS cargo +nightly-2021-11-08 clippy --all-targets --tests -- -D warnings
 '''
 workspace = false
 

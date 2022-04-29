@@ -27,6 +27,7 @@ use sp_runtime::{
 	},
 	DispatchError, Perbill,
 };
+use xcm::latest::SendXcm;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 type Block = frame_system::mocking::MockBlock<Runtime>;
@@ -41,8 +42,6 @@ pub type OrderId = u32;
 parameter_types! {
 	pub const LiquidationsPalletId : PalletId = PalletId(*b"liqd_tns");
 }
-
-pub type ParachainId = u32;
 
 pub const MINIMUM_BALANCE: Balance = 1_000_000;
 
@@ -146,7 +145,7 @@ impl pallet_currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRoot<AccountId>;
-	type ReserveOrigin = EnsureRoot<AccountId>;
+	type Balance = Balance;
 	type WeightInfo = ();
 }
 
@@ -281,24 +280,6 @@ parameter_types! {
 // later will reuse mocks from that crate
 pub struct DutchAuctionsMocks;
 
-impl pallet_dutch_auction::weights::WeightInfo for DutchAuctionsMocks {
-	fn ask() -> frame_support::dispatch::Weight {
-		0
-	}
-
-	fn take() -> frame_support::dispatch::Weight {
-		0
-	}
-
-	fn liquidate() -> frame_support::dispatch::Weight {
-		0
-	}
-
-	fn known_overhead_for_on_finalize() -> frame_support::dispatch::Weight {
-		0
-	}
-}
-
 impl WeightToFeePolynomial for DutchAuctionsMocks {
 	type Balance = Balance;
 
@@ -313,6 +294,26 @@ impl WeightToFeePolynomial for DutchAuctionsMocks {
 	}
 }
 
+pub struct XcmFake;
+impl Into<Result<cumulus_pallet_xcm::Origin, XcmFake>> for XcmFake {
+	fn into(self) -> Result<cumulus_pallet_xcm::Origin, XcmFake> {
+		todo!("please test via local-integration-tests")
+	}
+}
+impl From<Origin> for XcmFake {
+	fn from(_: Origin) -> Self {
+		todo!("please test via local-integration-tests")
+	}
+}
+impl SendXcm for XcmFake {
+	fn send_xcm(
+		_destination: impl Into<xcm::latest::MultiLocation>,
+		_message: xcm::latest::Xcm<()>,
+	) -> xcm::latest::SendResult {
+		todo!("please test via local-integration-tests")
+	}
+}
+
 impl pallet_dutch_auction::Config for Runtime {
 	type Event = Event;
 	type UnixTime = Timestamp;
@@ -322,6 +323,9 @@ impl pallet_dutch_auction::Config for Runtime {
 	type PositionExistentialDeposit = MinimumDeposit;
 	type PalletId = DutchAuctionPalletId;
 	type NativeCurrency = Balances;
+	type XcmOrigin = XcmFake;
+	type AdminOrigin = EnsureRoot<Self::AccountId>;
+	type XcmSender = XcmFake;
 }
 
 impl pallet_liquidations::Config for Runtime {
@@ -332,7 +336,8 @@ impl pallet_liquidations::Config for Runtime {
 	type OrderId = OrderId;
 	type PalletId = LiquidationsPalletId;
 	type WeightInfo = ();
-	type ParachainId = ParachainId;
+	type CanModifyStrategies = EnsureRoot<Self::AccountId>;
+	type XcmSender = XcmFake;
 }
 
 pub type Extrinsic = TestXt<Call, ()>;

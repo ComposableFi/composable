@@ -1,12 +1,10 @@
-use std::marker::PhantomData;
-
 use crate::{Config, Error, PoolConfiguration, PoolCount, Pools};
 use composable_maths::dex::stable_swap::{compute_base, compute_d};
+use composable_support::math::safe::{safe_multiply_by_rational, SafeAdd, SafeSub};
 use composable_traits::{
 	currency::{CurrencyFactory, RangeId},
 	defi::CurrencyPair,
 	dex::StableSwapPoolInfo,
-	math::{safe_multiply_by_rational, SafeAdd, SafeSub},
 };
 use frame_support::{
 	pallet_prelude::*,
@@ -16,8 +14,7 @@ use sp_runtime::{
 	traits::{CheckedAdd, Convert, One, Zero},
 	ArithmeticError, DispatchError, Permill,
 };
-
-use sp_std::ops::Mul;
+use sp_std::{marker::PhantomData, ops::Mul};
 
 pub(crate) struct StableSwap<T>(PhantomData<T>);
 
@@ -35,7 +32,7 @@ impl<T: Config> StableSwap<T> {
 		let total_fees = fee.checked_add(&owner_fee).ok_or(ArithmeticError::Overflow)?;
 		ensure!(total_fees < Permill::one(), Error::<T>::InvalidFees);
 
-		let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS)?;
+		let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS, T::Balance::default())?;
 		// Add new pool
 		let pool_id =
 			PoolCount::<T>::try_mutate(|pool_count| -> Result<T::PoolId, DispatchError> {

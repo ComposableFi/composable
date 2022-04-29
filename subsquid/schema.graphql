@@ -1,0 +1,64 @@
+type Account @entity {
+  "Account address"
+  id: ID!
+  balance: BigInt!
+  historicalBalances: [HistoricalBalance!] @derivedFrom(field: "account")
+}
+
+type HistoricalBalance @entity {
+  id: ID!
+  account: Account!
+  balance: BigInt!
+  date: DateTime!
+}
+
+enum PabloTransactionType {
+  ADD_LIQUIDITY,
+  REMOVE_LIQUIDITY,
+  SWAP,
+  CREATE_POOL,
+  DELETE_POOL
+}
+
+type PabloTransaction @entity {
+  "ID of the event that was used to derive this transaction"
+  eventId: ID!
+  pool: PabloPool!
+  who: String!
+  transactionType: PabloTransactionType
+  baseAssetId: BigInt!
+  baseAssetAmount: BigInt!
+  quoteAssetId: BigInt!
+  quoteAssetAmount: BigInt!
+  blockNumber: BigInt!
+  spotPrice: String!
+  # unix timestamp in ms
+  receivedTimestamp: BigInt!
+}
+
+type PabloPool @entity {
+  "Pool ID"
+  poolId: ID!
+  owner: String!
+  transactionCount: Int!
+  totalLiquidity: String!
+  totalVolume: String!
+  # Asset used for all quotes in this type
+  quoteAssetId: BigInt!
+  blockNumber: BigInt!
+  # unix timestamp in ms
+  calculatedTimestamp: BigInt!
+  poolAssets: [PabloPoolAsset!] @derivedFrom(field: "pool")
+  transactions: [PabloTransaction!] @derivedFrom(field: "pool")
+}
+
+type PabloPoolAsset @entity {
+  id: ID!
+  assetId: BigInt!
+  pool: PabloPool!
+  totalLiquidity: BigInt!
+  totalVolume: BigInt!
+  blockNumber: BigInt!
+  # unix timestamp in ms
+  calculatedTimestamp: BigInt!
+}

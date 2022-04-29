@@ -1,6 +1,7 @@
 use super::*;
 
 use crate::Pallet as Vault;
+use codec::{Decode, Encode, MaxEncodedLen};
 use composable_support::validation::Validated;
 use composable_traits::vault::{CapabilityVault, Deposit, Vault as VaultTrait, VaultConfig};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
@@ -32,7 +33,7 @@ fn create_vault_extended<T: Config>(
 	deposit_: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
 ) -> (T::VaultId, VaultInfo<T>) {
 	let config = VaultConfig {
-		asset_id: T::AssetId::from(asset_id),
+		asset_id: recode_unwrap_u128(asset_id),
 		manager: whitelisted_caller(),
 		reserved,
 		strategies: [(strategy_account_id, strategy_share)].iter().cloned().collect(),
@@ -56,18 +57,30 @@ fn create_vault<T: Config>(
 }
 
 const A: u128 = 0;
+// if to make it generic, and pass u128, it will pass HasCompact, and u128 will be 5 bits, not 16...
+pub fn recode_unwrap_u128<
+	O: Decode + MaxEncodedLen + Encode,
+	I: Decode + MaxEncodedLen + Encode,
+>(
+	raw: I,
+) -> O {
+	// next does not holds, because in wasm it is 16 and 8, in native 16 and 5. But that works fine
+	// overall assert_eq!(I::max_encoded_len(), O::max_encoded_len(), "<I as
+	// MaxEncodedLen>::max_encoded_len() must be equal <O as MaxEncodedLen>::max_encoded_len()");
+	O::decode(&mut &raw.encode()[..]).unwrap()
+}
 
 benchmarks! {
 	create {
 		let caller: T::AccountId = whitelisted_caller();
-		let asset_id = T::AssetId::from(A);
+		let asset_id = recode_unwrap_u128(A);
 		let reserved = Perquintill::from_percent(100);
 		let manager = whitelisted_caller();
 		let strategies = Default::default();
 		let amount = T::CreationDeposit::get() * 10u32.into();
-		T::Currency::mint_into(T::AssetId::from(A), &caller, amount * 2u32.into())?;
+		T::Currency::mint_into(recode_unwrap_u128(A), &caller, amount * 2u32.into())?;
 		T::NativeCurrency::mint_into(&caller, amount * 2u32.into())?;
-		let vault_id = 1.into();
+		let vault_id = recode_unwrap_u128(1u128);
 	}: _(
 		RawOrigin::Signed(caller.clone()),
 		VaultConfig {
@@ -88,7 +101,7 @@ benchmarks! {
 		let caller: T::AccountId = whitelisted_caller();
 		let amount = T::CreationDeposit::get() * 10u32.into();
 		let (vault, _) = create_vault::<T>(A, whitelisted_caller());
-		T::Currency::mint_into(T::AssetId::from(A), &caller, amount * 2u32.into())?;
+		T::Currency::mint_into(recode_unwrap_u128(A), &caller, amount * 2u32.into())?;
 		T::NativeCurrency::mint_into(&caller, amount * 2u32.into())?;
 	}: _(RawOrigin::Signed(caller.clone()), vault, amount)
 	verify {
@@ -103,7 +116,7 @@ benchmarks! {
 		let caller: T::AccountId = whitelisted_caller();
 		let amount = T::CreationDeposit::get() * 10u32.into();
 		let (vault, _) = create_vault::<T>(A, caller.clone());
-		T::Currency::mint_into(T::AssetId::from(A), &caller, amount * 2u32.into())?;
+		T::Currency::mint_into(recode_unwrap_u128(A), &caller, amount * 2u32.into())?;
 		T::NativeCurrency::mint_into(&caller, amount * 2u32.into())?;
 		<Vault<T> as VaultTrait>::deposit(&vault, &caller, amount)?;
 	}: _(RawOrigin::Signed(caller.clone()), vault, amount)
@@ -143,21 +156,21 @@ benchmarks! {
 		let add_amount = Validated::new(T::CreationDeposit::get()).unwrap();
 		let block = System::<T>::block_number();
 		let deposit_ = Deposit::Rent { amount, at: block };
-		T::Currency::mint_into(T::AssetId::from(A), &caller, amount * 2u32.into())?;
+		T::Currency::mint_into(recode_unwrap_u128(A), &caller, amount * 2u32.into())?;
 		T::NativeCurrency::mint_into(&caller, amount * 2u32.into())?;
 		let (vault, _) = create_vault_extended::<T>(A, caller.clone(), DEFAULT_STRATEGY_SHARE, DEFAULT_RESERVE, deposit_);
 		System::<T>::set_block_number(10_000_000u32.into());
 	}: _(RawOrigin::Signed(caller), vault, add_amount)
 
 	claim_surcharge {
-		let vault = 1.into();
+		let vault = recode_unwrap_u128(1u128);
 		let caller: T::AccountId = whitelisted_caller();
-		let asset_id = T::AssetId::from(A);
+		let asset_id = recode_unwrap_u128(A);
 		let reserved = Perquintill::from_percent(100);
 		let strategies = Default::default();
 		let amount = T::CreationDeposit::get() * 10u32.into();
 		let block = System::<T>::block_number();
-		T::Currency::mint_into(T::AssetId::from(A), &caller, amount * 2u32.into())?;
+		T::Currency::mint_into(recode_unwrap_u128(A), &caller, amount * 2u32.into())?;
 		T::NativeCurrency::mint_into(&caller, amount * 2u32.into())?;
 		Vault::<T>::create(
 			RawOrigin::Signed(caller.clone()).into(),
@@ -177,7 +190,7 @@ benchmarks! {
 		let amount = T::CreationDeposit::get() * 10u32.into();
 		let block = System::<T>::block_number();
 		let deposit_ = Deposit::Rent { amount, at: block };
-		T::Currency::mint_into(T::AssetId::from(A), &caller, amount * 2u32.into())?;
+		T::Currency::mint_into(recode_unwrap_u128(A), &caller, amount * 2u32.into())?;
 		T::NativeCurrency::mint_into(&caller, amount * 2u32.into())?;
 		let (vault, _) = create_vault_extended::<T>(A, caller.clone(), DEFAULT_STRATEGY_SHARE, DEFAULT_RESERVE, deposit_);
 		System::<T>::set_block_number(10_000_000u32.into());

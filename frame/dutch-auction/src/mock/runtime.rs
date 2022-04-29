@@ -24,6 +24,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
 	Perbill,
 };
+use xcm::latest::{opaque::Xcm, SendXcm};
 
 use super::governance_registry::GovernanceRegistry;
 
@@ -156,7 +157,7 @@ impl pallet_currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRoot<AccountId>;
-	type ReserveOrigin = EnsureRoot<AccountId>;
+	type Balance = Balance;
 	type WeightInfo = ();
 }
 
@@ -179,6 +180,30 @@ impl pallet_dutch_auction::Config for Runtime {
 	type PositionExistentialDeposit = NativeExistentialDeposit;
 	type PalletId = DutchAuctionPalletId;
 	type NativeCurrency = Balances;
+	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
+	type XcmSender = XcmFake;
+
+	type XcmOrigin = XcmFake;
+}
+
+pub struct XcmFake;
+impl Into<Result<cumulus_pallet_xcm::Origin, XcmFake>> for XcmFake {
+	fn into(self) -> Result<cumulus_pallet_xcm::Origin, XcmFake> {
+		todo!("please test via local-integration-tests")
+	}
+}
+impl From<Origin> for XcmFake {
+	fn from(_: Origin) -> Self {
+		todo!("please test via local-integration-tests")
+	}
+}
+impl SendXcm for XcmFake {
+	fn send_xcm(
+		_destination: impl Into<xcm::latest::MultiLocation>,
+		_message: xcm::latest::Xcm<()>,
+	) -> xcm::latest::SendResult {
+		todo!("please test via local-integration-tests")
+	}
 }
 
 #[allow(dead_code)] // not really dead

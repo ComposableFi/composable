@@ -1,10 +1,10 @@
-use crate::{
-	defi::CurrencyPair,
-	math::{SafeAdd, SafeSub},
-};
+use crate::defi::CurrencyPair;
 use codec::{Decode, Encode, MaxEncodedLen};
+use composable_support::math::safe::{SafeAdd, SafeSub};
 use frame_support::{traits::Get, BoundedVec, RuntimeDebug};
 use scale_info::TypeInfo;
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 use sp_arithmetic::traits::Saturating;
 use sp_runtime::{
 	traits::{CheckedMul, CheckedSub},
@@ -27,6 +27,8 @@ pub trait Amm {
 
 	fn currency_pair(pool_id: Self::PoolId) -> Result<CurrencyPair<Self::AssetId>, DispatchError>;
 
+	fn lp_token(pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError>;
+
 	/// Get pure exchange value for given units of given asset. (Note this does not include fees.)
 	/// `pool_id` the pool containing the `asset_id`.
 	/// `asset_id` the asset the user is interested in.
@@ -46,6 +48,7 @@ pub trait Amm {
 		pool_id: Self::PoolId,
 		asset_id: Self::AssetId,
 		amount: Self::Balance,
+		min_receive: Self::Balance,
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
 
@@ -56,6 +59,7 @@ pub trait Amm {
 		pool_id: Self::PoolId,
 		asset_id: Self::AssetId,
 		amount: Self::Balance,
+		min_receive: Self::Balance,
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
 
@@ -240,17 +244,11 @@ pub struct LiquidityBootstrappingPoolInfo<AccountId, AssetId, BlockNumber> {
 	pub fee: Permill,
 }
 
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
-pub enum DexRouteNode<PoolId> {
-	Curve(PoolId),
-	Uniswap(PoolId),
-}
-
 /// Describes route for DEX.
 /// `Direct` gives vector of pool_id to use as router.
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, PartialEq, Eq, RuntimeDebug)]
 pub enum DexRoute<PoolId, MaxHops: Get<u32>> {
-	Direct(BoundedVec<DexRouteNode<PoolId>, MaxHops>),
+	Direct(BoundedVec<PoolId, MaxHops>),
 }
 
 pub trait DexRouter<AccountId, AssetId, PoolId, Balance, MaxHops> {
@@ -260,26 +258,19 @@ pub trait DexRouter<AccountId, AssetId, PoolId, Balance, MaxHops> {
 	fn update_route(
 		who: &AccountId,
 		asset_pair: CurrencyPair<AssetId>,
-		route: Option<BoundedVec<DexRouteNode<PoolId>, MaxHops>>,
+		route: Option<BoundedVec<PoolId, MaxHops>>,
 	) -> Result<(), DispatchError>;
-	/// If route exist return `Some(Vec<PoolId>)`, else `None`.
-	fn get_route(asset_pair: CurrencyPair<AssetId>) -> Option<Vec<DexRouteNode<PoolId>>>;
-	/// Exchange `dx` of `base` asset of `asset_pair` with associated route.
-	fn exchange(
-		who: &AccountId,
-		asset_pair: CurrencyPair<AssetId>,
-		dx: Balance,
-	) -> Result<Balance, DispatchError>;
-	/// Sell `amount` of `base` asset of asset_pair with associated route.
-	fn sell(
-		who: &AccountId,
-		asset_pair: CurrencyPair<AssetId>,
-		amount: Balance,
-	) -> Result<Balance, DispatchError>;
-	/// Buy `amount` of `quote` asset of asset_pair with associated route.
-	fn buy(
-		who: &AccountId,
-		asset_pair: CurrencyPair<AssetId>,
-		amount: Balance,
-	) -> Result<Balance, DispatchError>;
+	/// If route exist return `Some((Vec<PoolId>, bool))`, else `None`.
+	/// boolean in pair indicates if route needs to be used in reversed direction.
+	fn get_route(asset_pair: CurrencyPair<AssetId>) -> Option<(Vec<PoolId>, bool)>;
+}
+
+/// Aggregated prices for a given base/quote currency pair in a pool.
+#[derive(Encode, Decode, Default, Clone, PartialEq, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct PriceAggregate<PoolId, AssetId, Balance> {
+	pub pool_id: PoolId,
+	pub base_asset_id: AssetId,
+	pub quote_asset_id: AssetId,
+	pub spot_price: Balance, // prices based on any other stat such as TWAP goes here..
 }

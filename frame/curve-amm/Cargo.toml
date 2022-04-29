@@ -31,6 +31,7 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 
 pallet-vault = { default-features = false, version = "0.0.1", path = "../vault", optional = true }
 
+composable-support = { path = "../composable-support", default-features = false }
 composable-traits = { default-features = false, version = "0.0.1", path = "../composable-traits" }
 log = { version = "0.4.14", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
@@ -42,8 +43,10 @@ serde = { version = '1', optional = true }
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
+frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 pallet-currency-factory = { version = "0.0.1", path = "../currency-factory" }
 proptest = "1.0"
 

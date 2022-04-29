@@ -3,8 +3,11 @@ use crate::{
 	PoolConfiguration, PoolCount, Pools,
 };
 use composable_maths::dex::constant_product::{compute_out_given_in, compute_spot_price};
-use composable_support::validation::{Validate, Validated};
-use composable_traits::{currency::LocalAssets, defi::CurrencyPair, dex::SaleState, math::SafeAdd};
+use composable_support::{
+	math::safe::SafeAdd,
+	validation::{Validate, Validated},
+};
+use composable_traits::{currency::LocalAssets, defi::CurrencyPair, dex::SaleState};
 use frame_support::{
 	pallet_prelude::*,
 	traits::fungibles::{Inspect, Transfer},
@@ -12,7 +15,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::BlockNumberFor;
 use sp_runtime::traits::{BlockNumberProvider, Convert, One, Zero};
-use std::marker::PhantomData;
+use sp_std::marker::PhantomData;
 
 #[derive(Copy, Clone, Encode, Decode, MaxEncodedLen, PartialEq, Eq, TypeInfo)]
 pub struct PoolIsValid<T>(PhantomData<T>);
@@ -133,8 +136,8 @@ impl<T: Config> LiquidityBootstrapping<T> {
 		} else {
 			(ai, 0)
 		};
-		let bi = T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
-		let bo = T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
+		let bi = T::Convert::convert(T::Assets::balance(pair.quote, pool_account));
+		let bo = T::Convert::convert(T::Assets::balance(pair.base, pool_account));
 
 		let base_amount = compute_out_given_in(wi, wo, bi, bo, ai_minus_fees)?;
 

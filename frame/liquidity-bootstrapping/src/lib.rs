@@ -1,8 +1,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -32,7 +32,7 @@
 	unused_extern_crates
 )]
 
-#[cfg(feature = "runtime-benchmarks")]
+#[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
 
 #[cfg(test)]
@@ -52,13 +52,11 @@ pub mod pallet {
 	use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_maths::dex::constant_product::{compute_out_given_in, compute_spot_price};
-	use composable_support::validation::{Validate, Validated};
-	use composable_traits::{
-		currency::LocalAssets,
-		defi::CurrencyPair,
-		dex::Amm,
-		math::{SafeAdd, SafeSub},
+	use composable_support::{
+		math::safe::{SafeAdd, SafeSub},
+		validation::{Validate, Validated},
 	};
+	use composable_traits::{currency::LocalAssets, defi::CurrencyPair, dex::Amm};
 	use core::fmt::Debug;
 	use frame_support::{
 		pallet_prelude::*,
@@ -262,6 +260,7 @@ pub mod pallet {
 		InvalidSaleState,
 		InvalidAmount,
 		CannotRespectMinimumRequested,
+		LpTokenNotRequiredForLbp,
 	}
 
 	#[pallet::config]
@@ -354,7 +353,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn pool_count)]
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type PoolCount<T: Config> = StorageValue<_, T::PoolId, ValueQuery, PoolCountOnEmpty<T>>;
 
 	#[pallet::storage]
@@ -385,10 +384,11 @@ pub mod pallet {
 			pool_id: PoolIdOf<T>,
 			asset_id: AssetIdOf<T>,
 			amount: BalanceOf<T>,
+			min_receive: BalanceOf<T>,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::buy(&who, pool_id, asset_id, amount, keep_alive)?;
+			let _ = <Self as Amm>::buy(&who, pool_id, asset_id, amount, min_receive, keep_alive)?;
 			Ok(())
 		}
 
@@ -401,10 +401,11 @@ pub mod pallet {
 			pool_id: PoolIdOf<T>,
 			asset_id: AssetIdOf<T>,
 			amount: BalanceOf<T>,
+			min_receive: BalanceOf<T>,
 			keep_alive: bool,
 		) -> DispatchResult {
 			let who = ensure_signed(origin)?;
-			let _ = <Self as Amm>::sell(&who, pool_id, asset_id, amount, keep_alive)?;
+			let _ = <Self as Amm>::sell(&who, pool_id, asset_id, amount, min_receive, keep_alive)?;
 			Ok(())
 		}
 
@@ -594,6 +595,10 @@ pub mod pallet {
 			Ok(Self::get_pool(pool_id)?.pair)
 		}
 
+		fn lp_token(_pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError> {
+			Err(Error::<T>::LpTokenNotRequiredForLbp.into())
+		}
+
 		fn get_exchange_value(
 			pool_id: Self::PoolId,
 			asset_id: Self::AssetId,
@@ -613,19 +618,13 @@ pub mod pallet {
 			pool_id: Self::PoolId,
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
+			min_receive: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
 			let quote_amount = Self::get_exchange_value(pool_id, asset_id, amount)?;
-			<Self as Amm>::exchange(
-				who,
-				pool_id,
-				pair,
-				quote_amount,
-				T::Balance::zero(),
-				keep_alive,
-			)
+			<Self as Amm>::exchange(who, pool_id, pair, quote_amount, min_receive, keep_alive)
 		}
 
 		#[transactional]
@@ -634,11 +633,12 @@ pub mod pallet {
 			pool_id: Self::PoolId,
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
+			min_receive: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pair = if asset_id == pool.pair.base { pool.pair.swap() } else { pool.pair };
-			<Self as Amm>::exchange(who, pool_id, pair, amount, T::Balance::zero(), keep_alive)
+			<Self as Amm>::exchange(who, pool_id, pair, amount, min_receive, keep_alive)
 		}
 
 		#[transactional]
