@@ -14,6 +14,7 @@ RUN rustup toolchain install ${NIGHTLY_VERSION} && \
     rustup component add llvm-tools-preview --toolchain=${NIGHTLY_VERSION} && \
     cargo install taplo-cli --version 0.5.0 && \
     cargo install cargo-spellcheck --version 0.11.2 && \
+    cargo install mdbook --version 0.4.18 && \
     cargo +${NIGHTLY_VERSION} install cargo-udeps --version 0.1.28 --locked && \
     ln -s "${RUSTUP_HOME}/toolchains/${NIGHTLY_VERSION}-x86_64-unknown-linux-gnu" "${RUSTUP_HOME}/toolchains/nightly-x86_64-unknown-linux-gnu" && \
     apt-get update && \
