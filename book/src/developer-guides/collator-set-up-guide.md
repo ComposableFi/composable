@@ -26,7 +26,7 @@ sudo apt install -y git clang curl libssl-dev llvm libudev-dev
 ```sh
 #!/bin/bash
 
-RUST_C="nightly-2021-11-07"
+RUST_C="nightly-2022-04-18"
 
 curl https://sh.rustup.rs -sSf | sh -s -- -y && \
 export PATH="$PATH:$HOME/.cargo/bin" && \
@@ -40,14 +40,14 @@ rustup show
 ### Get project and build node
 
 ```sh
-git clone --depth 1 --branch v2.1.3 https://github.com/ComposableFi/composable.git && \
+git clone --depth 1 --branch v2.1.6 https://github.com/ComposableFi/composable.git && \
 cd composable && \
 export SKIP_WASM_BUILD=1 && \
 cargo build --release
 ```
 
 ### One-liner
-```
+```sh
 RUST_C="nightly-2021-11-07"
 RELEASE_TAG="v2.1.3"
 
@@ -66,7 +66,7 @@ cargo build --release
 ```
 
 Compiled node should be in
-```
+```sh
 ./target/release
 ```
 
