@@ -43,8 +43,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: cargo check --all --benches
         run: |
-          SKIP_WASM_BUILD=1 cargo +nightly check --benches --all # checks all rust crates with default-features, tests, benchmarks
-
+          SKIP_WASM_BUILD=1 cargo +nightly check --benches --all --features runtime-benchmarks # checks all rust crates with default-features, tests, benchmarks
 
   substrate-test-coverage:
     name: Unit Tests (With Coverage)

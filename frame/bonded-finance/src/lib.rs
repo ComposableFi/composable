@@ -31,7 +31,7 @@
 )]
 #![doc = include_str!("../README.md")]
 
-#[cfg(feature = "runtime-benchmarks")]
+#[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarks;
 
 mod mock;
