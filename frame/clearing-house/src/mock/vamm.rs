@@ -12,9 +12,13 @@ pub mod pallet {
 		vamm::{AssetType, SwapConfig, SwapSimulationConfig, Vamm},
 	};
 	use frame_support::pallet_prelude::*;
+	use num_traits::CheckedDiv;
 	use scale_info::TypeInfo;
 	use sp_arithmetic::traits::Unsigned;
-	use sp_runtime::{traits::Zero, FixedPointNumber};
+	use sp_runtime::{
+		traits::{Saturating, Zero},
+		ArithmeticError, FixedPointNumber,
+	};
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                    Declaration Of The Pallet Type
@@ -40,6 +44,7 @@ pub mod pallet {
 			+ FullCodec
 			+ MaxEncodedLen
 			+ MaybeSerializeDeserialize
+			+ Saturating
 			+ TypeInfo;
 	}
 
@@ -99,12 +104,8 @@ pub mod pallet {
 	pub type Twap<T: Config> = StorageValue<_, T::Decimal, OptionQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn _swap_output)]
-	pub type SwapOutput<T: Config> = StorageValue<_, T::Balance, OptionQuery>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn _swap_simulation_output)]
-	pub type SwapSimulationOutput<T: Config> = StorageValue<_, T::Balance, OptionQuery>;
+	#[pallet::getter(fn _price)]
+	pub type Price<T: Config> = StorageValue<_, T::Decimal, OptionQuery>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Trait Implementations
@@ -143,8 +144,8 @@ pub mod pallet {
 		}
 
 		fn swap(config: &Self::SwapConfig) -> Result<Self::Balance, DispatchError> {
-			match Self::_swap_output() {
-				Some(integer) => Ok(integer),
+			match Self::_price() {
+				Some(price) => Self::get_value(config.input_amount, &config.asset, price),
 				None => Err(Error::<T>::FailedToExecuteSwap.into()),
 			}
 		}
@@ -152,10 +153,16 @@ pub mod pallet {
 		fn swap_simulation(
 			config: &Self::SwapSimulationConfig,
 		) -> Result<Self::Balance, DispatchError> {
-			match Self::_swap_simulation_output() {
-				Some(balance) => Ok(balance),
-				None => Err(Error::<T>::FailedToSimulateSwap.into()),
-			}
+			let Self::SwapSimulationConfig { vamm_id, asset, input_amount, direction } =
+				config.clone();
+			<Self as Vamm>::swap(&Self::SwapConfig {
+				vamm_id,
+				asset,
+				input_amount,
+				direction,
+				output_amount_limit: 0_u32.into(),
+			})
+			.map_err(|_| Error::<T>::FailedToSimulateSwap.into())
 		}
 	}
 
@@ -164,12 +171,22 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	impl<T: Config> Pallet<T> {
-		pub fn set_swap_output(balance: Option<T::Balance>) {
-			SwapOutput::<T>::set(balance);
+		pub fn set_price(price: Option<T::Decimal>) {
+			Price::<T>::set(price)
 		}
 
-		pub fn set_swap_simulation_output(balance: Option<T::Balance>) {
-			SwapSimulationOutput::<T>::set(balance);
+		pub fn get_value(
+			amount: T::Balance,
+			asset_type: &AssetType,
+			price: T::Decimal,
+		) -> Result<T::Balance, DispatchError> {
+			let amount_decimal = T::Decimal::from_inner(amount);
+			Ok(match asset_type {
+				AssetType::Base => price.saturating_mul(amount_decimal),
+				AssetType::Quote =>
+					amount_decimal.checked_div(&price).ok_or(ArithmeticError::DivisionByZero)?,
+			}
+			.into_inner())
 		}
 	}
 }
