@@ -555,6 +555,14 @@ pub mod pallet {
 			// Update runtime storage
 			VammMap::<T>::insert(&config.vamm_id, vamm_state);
 
+			// Deposit swap event into blockchain
+			Self::deposit_event(Event::<T>::Swapped {
+				vamm_id: config.vamm_id,
+				input_amount: config.input_amount,
+				output_amount: amount_swapped,
+				input_asset_type: config.asset,
+				direction: config.direction,
+			});
 
 			// Return total swapped asset
 			Ok(amount_swapped)
