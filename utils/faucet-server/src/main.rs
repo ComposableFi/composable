@@ -1,8 +1,7 @@
-use hmac::{Hmac, Mac};
+use hmac::{digest::generic_array::GenericArray, Hmac, Mac};
 use sha2::Sha256;
 use sp_core::{crypto::Ss58Codec, sr25519, Pair};
 use std::sync::Arc;
-use hmac::digest::generic_array::GenericArray;
 use structopt::StructOpt;
 use substrate_xt::Client;
 use tide::{prelude::*, Error, Request};
