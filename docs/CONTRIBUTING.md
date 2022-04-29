@@ -11,7 +11,7 @@ Before contributing, go through the documentation found in `~/docs/`.  Specifica
 ## Workflow
 When contributing code changes, follow this general process to ensure the CI pipeline processes code and that your work is accessible via ClickUp.  
 1) Create a git branch with a short name that is descriptive of the issue/feature you are working on  
-2) Create a 'Draft' PR from your new branch. Include your ClipUp issue ID in either the title or description of the PR  
+2) Create a 'Draft' PR from your new branch. Include your ClickUp issue ID in either the title or description of the PR  
 Example Title: `[CU-1u0b7bm] Added CONTRIBUTING.md`
 3) Ensure your commits are signed and verified
 4) Change the state of your PR to 'Open' once you are ready for review
