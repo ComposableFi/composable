@@ -61,9 +61,9 @@ use codec::{Codec, Encode, EncodeLike};
 use frame_support::traits::{EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
 use scale_info::TypeInfo;
+use sp_runtime::AccountId32;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
-use sp_runtime::{AccountId32};
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
 use sp_std::fmt::Debug;
 use system::{
