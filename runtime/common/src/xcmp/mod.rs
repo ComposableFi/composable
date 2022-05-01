@@ -2,8 +2,8 @@
 use crate::{AccountId, Balance};
 use codec::{Decode, Encode};
 use composable_traits::{
-	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
 	oracle::MinimalOracle,
+	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
 };
 use frame_support::{
 	dispatch::Weight,
@@ -224,7 +224,9 @@ impl<
 			)),
 			CurrencyId::RELAY_NATIVE => Some(MultiLocation::parent()),
 			_ =>
-				if let Some(location) = AssetRegistry::asset_to_remote(id).map(|x| x.location.into()) {
+				if let Some(location) =
+					AssetRegistry::asset_to_remote(id).map(|x| x.location.into())
+				{
 					Some(location)
 				} else {
 					log::trace!(

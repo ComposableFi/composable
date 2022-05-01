@@ -32,7 +32,7 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		CurrencyFactory : pallet_currency_factory::{Pallet, Call, Storage, Event<T>},
-		
+
 		AssetsRegistry: pallet_assets_registry::{Pallet, Call, Storage, Event<T>},
 	}
 );
@@ -46,9 +46,9 @@ impl pallet_currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = AssetId;
 	type Balance = Balance;
-	type AddOrigin =  EnsureOneOf<
-	EnsureSignedBy<RootAccount, AccountId>, // for tests
-	EnsureRoot<AccountId>,                  // for benchmarks
+	type AddOrigin = EnsureOneOf<
+		EnsureSignedBy<RootAccount, AccountId>, // for tests
+		EnsureRoot<AccountId>,                  // for benchmarks
 	>;
 	type WeightInfo = pallet_currency_factory::SubstrateWeight<Self>;
 }

@@ -53,10 +53,10 @@ mod cross_chain_transfer;
 mod runtime_tests;
 
 #[cfg(test)]
+mod assets_integration;
+#[cfg(test)]
 mod helpers;
 pub mod prelude;
 mod relaychain;
 #[cfg(test)]
 mod transact_calls;
-#[cfg(test)]
-mod assets_integration;

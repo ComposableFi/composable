@@ -61,8 +61,10 @@ pub trait RemoteAssetRegistryInspect {
 	type AssetNativeLocation;
 
 	/// Return reserve location for given asset.
-	fn asset_to_remote(asset_id: Self::AssetId) -> Option<ForeignMetadata<Self::AssetNativeLocation>>;
-	
+	fn asset_to_remote(
+		asset_id: Self::AssetId,
+	) -> Option<ForeignMetadata<Self::AssetNativeLocation>>;
+
 	/// How much of foreign assets I have to pay for unit of native asset
 	fn get_ratio(asset_id: Self::AssetId) -> Option<Ratio>;
 
@@ -74,34 +76,38 @@ pub trait RemoteAssetRegistryInspect {
 pub trait RemoteAssetRegistryMutate {
 	type AssetId;
 	type AssetNativeLocation;
-    type Balance;
+	type Balance;
 
 	/// Set asset native location.
 	///
-	/// Adds mapping between native location and local asset id and vice versa. 
-	/// It is assumed that it is possible to use origin as chain who holds reserve of tokens. 
-	/// 
-    /// Inputs:
-    /// `asset_id` local asset id created using `CurrencyFactory`
-    /// `location` - remote location
-    /// `ed` - minimal amount of registered asset allowed to form account
-    /// `ratio` - how much of remote assets should you pay to get unit if local native asset (used to allow). if there is no price ration on chain, asset cannot be used to pay for execution
-    /// `decimals` - if asset decimals is not 12, than value must be provided
+	/// Adds mapping between native location and local asset id and vice versa.
+	/// It is assumed that it is possible to use origin as chain who holds reserve of tokens.
+	///
+	/// Inputs:
+	/// `asset_id` local asset id created using `CurrencyFactory`
+	/// `location` - remote location
+	/// `ed` - minimal amount of registered asset allowed to form account
+	/// `ratio` - how much of remote assets should you pay to get unit if local native asset (used
+	/// to allow). if there is no price ration on chain, asset cannot be used to pay for execution
+	/// `decimals` - if asset decimals is not 12, than value must be provided
 	/// Emits `LocationSet` event when successful.
 	/// `asset_id` - local asset id create via `CurrencyFactory`
 	/// `location` - remote location relative to this chain
-	fn set_reserve_location(asset_id: Self::AssetId, location: Self::AssetNativeLocation, ratio: Option<Ratio>, decimals: Option<Exponent>) 
-		-> DispatchResult;
+	fn set_reserve_location(
+		asset_id: Self::AssetId,
+		location: Self::AssetNativeLocation,
+		ratio: Option<Ratio>,
+		decimals: Option<Exponent>,
+	) -> DispatchResult;
 
-
-    /// allows change  ratio of how much remote assets is needed for unit of native  
-    fn update_ratio(location: Self::AssetNativeLocation, ration: Option<Ratio>) -> DispatchResult;
+	/// allows change  ratio of how much remote assets is needed for unit of native  
+	fn update_ratio(location: Self::AssetNativeLocation, ration: Option<Ratio>) -> DispatchResult;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct ForeignMetadata<AssetNativeLocation> {
-    pub decimals: Option<Exponent>,
-    pub location:   AssetNativeLocation,
+	pub decimals: Option<Exponent>,
+	pub location: AssetNativeLocation,
 }
 
 #[cfg(feature = "std")]

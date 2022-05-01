@@ -14,6 +14,7 @@
 
 pub mod assets;
 pub mod bonded_finance;
+pub mod bounded;
 pub mod call_filter;
 pub mod currency;
 pub mod defi;
@@ -30,4 +31,3 @@ pub mod time;
 pub mod vault;
 pub mod vesting;
 pub mod xcm;
-pub mod bounded;

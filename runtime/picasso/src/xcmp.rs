@@ -5,9 +5,9 @@ use super::*; // recursive dependency onto runtime
 use codec::{Decode, Encode};
 use common::xcmp::*;
 use composable_traits::{
-	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
 	defi::Ratio,
 	oracle::MinimalOracle,
+	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
 };
 use cumulus_primitives_core::{IsSystem, ParaId};
 use frame_support::{

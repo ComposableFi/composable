@@ -125,7 +125,6 @@ fn withdraw_and_deposit_back_on_same_chain() {
 	});
 }
 
-
 /// source: Acala
 #[test]
 fn relay_chain_subscribe_version_notify_of_para_chain() {
@@ -145,7 +144,6 @@ fn relay_chain_subscribe_version_notify_of_para_chain() {
 		));
 	});
 }
-
 
 /// source: Acala
 #[test]

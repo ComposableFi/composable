@@ -1,33 +1,25 @@
 ///! tests that various assets integration scenarios work well
-/// 
 // TODO: make sure that compile assets ED/weights are used when configured
 // TODO: make sure that non compile assets work same
 // TODO: make sure that compile time assets of same service as non compile,
 // TODO: i.e. part of apis for symbol/name/local id/remote id/ED/weight
-
 use crate::{
 	helpers::*,
-	kusama_test_net::{
-		 Sibling, This, ALICE,  BOB, PICA,
-		SIBLING_PARA_ID, THIS_PARA_ID,
-	},
+	kusama_test_net::{Sibling, This, ALICE, BOB, PICA, SIBLING_PARA_ID, THIS_PARA_ID},
 	prelude::*,
 };
 use codec::Encode;
-use common::{AccountId};
-use composable_traits::{xcm::assets::{ XcmAssetLocation}, defi::Ratio};
+use common::AccountId;
+use composable_traits::{defi::Ratio, xcm::assets::XcmAssetLocation};
 
 use frame_system::RawOrigin;
-use this_runtime::{
-	Balances, Origin, 
-	UnitWeightCost, XTokens,
-};
+use this_runtime::{Balances, Origin, UnitWeightCost, XTokens};
 
 use orml_traits::currency::MultiCurrency;
 
 use primitives::currency::*;
-use sp_runtime::{assert_eq_error_rate,};
-use support::{assert_ok};
+use sp_runtime::assert_eq_error_rate;
+use support::assert_ok;
 use xcm_emulator::TestExt;
 
 // TODO: make sure Acala assets like that are tested
@@ -65,7 +57,7 @@ fn assets_registry_works_for_identity() {
 			RawOrigin::Root.into(),
 			identity_asset,
 			remote,
-			Ratio::checked_from_integer(1), 
+			Ratio::checked_from_integer(1),
 			None,
 		));
 	});
@@ -84,7 +76,7 @@ fn assets_registry_works_for_identity() {
 			RawOrigin::Root.into(),
 			identity_asset,
 			remote,
-			Ratio::checked_from_integer(1), 
+			Ratio::checked_from_integer(1),
 			None,
 		));
 	});

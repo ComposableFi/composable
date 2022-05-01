@@ -12,66 +12,75 @@
 
 // cannot make const generic because `the type must not depend on the parameter`
 // there is no solution in crates which works with substrate numbers in substrate context
-trait Bound<Inner : PartialOrd + Encode + Decode + MaxEncodedLen + TypeInfo + MaybeSerializeDeserialize + Sized> {
-	const MINIMAL : Inner;
-	const MAXIMAL : Inner; 
+trait Bound<
+	Inner: PartialOrd + Encode + Decode + MaxEncodedLen + TypeInfo + MaybeSerializeDeserialize + Sized,
+>
+{
+	const MINIMAL: Inner;
+	const MAXIMAL: Inner;
 	//  rust prevents `functions in traits cannot be const`, so cannot validate like that
-		/* const  fn validate() -> bool  {
-			Self::MINIMAL < Self::MAXIMAL
-		}
-        */
+	/* const  fn validate() -> bool  {
+		Self::MINIMAL < Self::MAXIMAL
+	}
+	*/
 }
 
 /* possible macro (similar to what Rust will allow to do on CONST parameters)
 bounded_num! {
-    struct BoundedRatio(FixedU128);
-    
-    impl Bound<FixedU128, const MINIMAL = FixedU128::from_inner(1), const MAXIMAL = FixedU128::from_inner(u128::MAX)> 
-    for BounderRatio
-    where 
-        // MAXIMAL can be INFINITY to produce unbounded upper result
-        MINIMAL < MAXIMAL  
+	struct BoundedRatio(FixedU128);
+
+	impl Bound<FixedU128, const MINIMAL = FixedU128::from_inner(1), const MAXIMAL = FixedU128::from_inner(u128::MAX)>
+	for BounderRatio
+	where
+		// MAXIMAL can be INFINITY to produce unbounded upper result
+		MINIMAL < MAXIMAL
 }
 */
 
-use codec::{MaxEncodedLen, Decode, Encode};
+use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::pallet_prelude::MaybeSerializeDeserialize;
 use scale_info::TypeInfo;
 use sp_runtime::FixedU128;
 
-struct BoundedRatio<Inner: PartialOrd + Encode + Decode + MaxEncodedLen + TypeInfo + MaybeSerializeDeserialize + Sized >(Inner); 
+struct BoundedRatio<
+	Inner: PartialOrd + Encode + Decode + MaxEncodedLen + TypeInfo + MaybeSerializeDeserialize + Sized,
+>(Inner);
 
 impl Bound<FixedU128> for BoundedRatio<FixedU128> {
-		/// never division by zero, so can overflow (which is division by zero)
-		const MINIMAL:FixedU128  =FixedU128::from_inner(1);
-		const MAXIMAL:FixedU128  =FixedU128::from_inner(u128::MAX);
+	/// never division by zero, so can overflow (which is division by zero)
+	const MINIMAL: FixedU128 = FixedU128::from_inner(1);
+	const MAXIMAL: FixedU128 = FixedU128::from_inner(u128::MAX);
 }
 
 // cannot be generic
 impl From<BoundedRatio<FixedU128>> for FixedU128 {
-    fn from(this: BoundedRatio<FixedU128>) -> Self {
-        this.0
-    }
+	fn from(this: BoundedRatio<FixedU128>) -> Self {
+		this.0
+	}
 }
-// cannot make generic encode, because `the type parameter `Inner` is not constrained by the impl trait, self type, or predicates`
-impl<Inner :  PartialOrd + Encode + Decode + MaxEncodedLen + TypeInfo + MaybeSerializeDeserialize + Sized>  Encode for BoundedRatio<Inner> {
-    fn size_hint(&self) -> usize {
+// cannot make generic encode, because `the type parameter `Inner` is not constrained by the impl
+// trait, self type, or predicates`
+impl<
+		Inner: PartialOrd + Encode + Decode + MaxEncodedLen + TypeInfo + MaybeSerializeDeserialize + Sized,
+	> Encode for BoundedRatio<Inner>
+{
+	fn size_hint(&self) -> usize {
 		self.0.size_hint()
 	}
 
-    fn encode_to<T: codec::Output + ?Sized>(&self, dest: &mut T) {
+	fn encode_to<T: codec::Output + ?Sized>(&self, dest: &mut T) {
 		self.0.encode_to(dest);
-	}	
-} 
+	}
+}
 
 impl Decode for BoundedRatio<FixedU128> {
-    fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
-        // NOTE: we do not use limits constraint bits size of number
+	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
+		// NOTE: we do not use limits constraint bits size of number
 		let raw = FixedU128::decode(input)?;
 		let raw = Self(raw);
 		if <Self as Bound<FixedU128>>::MINIMAL >= <Self as Bound<FixedU128>>::MAXIMAL {
 			return Err(codec::Error::from("constrains are not satisfied"))
 		}
 		Ok(raw)
-    }
+	}
 }

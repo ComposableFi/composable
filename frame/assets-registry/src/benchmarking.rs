@@ -3,11 +3,11 @@
 
 use super::*;
 use crate::{self as pallet_assets_registry, Pallet as AssetsRegistry};
+use codec::{Decode, Encode};
 use composable_traits::{defi::Ratio, xcm::assets::XcmAssetLocation};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_system::{EventRecord, RawOrigin};
 use sp_std::prelude::*;
-use codec::{Encode, Decode};
 
 const SEED: u32 = 0;
 
@@ -19,7 +19,7 @@ benchmarks! {
 	}
 	register_asset {
 		let remote = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..]).unwrap();
-		
+
 	}: _(RawOrigin::Root,remote , 42_u64.into(), Some(Ratio::from_inner(123)), Some(3))
 }
 

@@ -29,7 +29,14 @@ pub mod weights;
 pub mod pallet {
 	pub use crate::weights::WeightInfo;
 	use codec::{EncodeLike, FullCodec};
-	use composable_traits::{ currency::{Exponent, BalanceLike, CurrencyFactory, RangeId}, xcm::assets::{RemoteAssetRegistryInspect, ForeignMetadata, XcmAssetLocation, RemoteAssetRegistryMutate}, defi::Ratio};
+	use composable_traits::{
+		currency::{BalanceLike, CurrencyFactory, Exponent, RangeId},
+		defi::Ratio,
+		xcm::assets::{
+			ForeignMetadata, RemoteAssetRegistryInspect, RemoteAssetRegistryMutate,
+			XcmAssetLocation,
+		},
+	};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin,
 	};
@@ -69,7 +76,7 @@ pub mod pallet {
 		/// The origin which may set local and foreign admins.
 		type UpdateAdminOrigin: EnsureOrigin<Self::Origin>;
 		type WeightInfo: WeightInfo;
-		type Balance : BalanceLike;
+		type Balance: BalanceLike;
 		type CurrencyFactory: CurrencyFactory<Self::LocalAssetId, Self::Balance>;
 	}
 
@@ -93,9 +100,8 @@ pub mod pallet {
 	/// Mapping (local asset, foreign asset) to a candidate status.
 	#[pallet::storage]
 	#[pallet::getter(fn asset_ratio)]
-	pub type AssetRatio<T: Config> =
-			StorageMap<_, Twox128, T::LocalAssetId,  Ratio, OptionQuery>;
-	
+	pub type AssetRatio<T: Config> = StorageMap<_, Twox128, T::LocalAssetId, Ratio, OptionQuery>;
+
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config>(PhantomData<T>);
 
@@ -111,21 +117,14 @@ pub mod pallet {
 	where
 		XcmAssetLocation: EncodeLike<<T as Config>::ForeignAssetId>,
 	{
-		fn build(&self) {
-		}
+		fn build(&self) {}
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		AssetRegistered {
-			asset_id : T::LocalAssetId,
-			location: T::ForeignAssetId,
-		},
-		AssetUpdated {
-			asset_id : T::LocalAssetId,
-			location: T::ForeignAssetId,
-		},
+		AssetRegistered { asset_id: T::LocalAssetId, location: T::ForeignAssetId },
+		AssetUpdated { asset_id: T::LocalAssetId, location: T::ForeignAssetId },
 	}
 
 	#[pallet::error]
@@ -135,23 +134,23 @@ pub mod pallet {
 	}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {		
-
+	impl<T: Config> Pallet<T> {
 		/// creates asset using `CurrencyFactory`,
 		/// raises `AssetRegistered` event
 		#[pallet::weight(<T as Config>::WeightInfo::register_asset())]
 		pub fn register_asset(
 			origin: OriginFor<T>,
-			location: T::ForeignAssetId, 
+			location: T::ForeignAssetId,
 			ed: T::Balance,
-			ratio: Option<Ratio>, decimals: Option<Exponent>,
+			ratio: Option<Ratio>,
+			decimals: Option<Exponent>,
 		) -> DispatchResultWithPostInfo {
 			T::UpdateAdminOrigin::ensure_origin(origin)?;
-			if ForeignToLocal::<T>::contains_key(&location){
+			if ForeignToLocal::<T>::contains_key(&location) {
 				return Err(Error::<T>::ForeignAssetAlreadyRegistered.into())
 			}
 			let asset_id = T::CurrencyFactory::create(RangeId::FOREIGN_ASSETS, ed)?;
-			Self::set_reserve_location(asset_id, location.clone(), ratio, decimals)?;		
+			Self::set_reserve_location(asset_id, location.clone(), ratio, decimals)?;
 			Self::deposit_event(Event::<T>::AssetRegistered { asset_id, location });
 			Ok(().into())
 		}
@@ -161,58 +160,67 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::update_asset())]
 		pub fn update_asset(
 			origin: OriginFor<T>,
-			asset_id: T::LocalAssetId, 
-			location: T::ForeignAssetId, 
-			ratio: Option<Ratio>, decimals: Option<Exponent>,
+			asset_id: T::LocalAssetId,
+			location: T::ForeignAssetId,
+			ratio: Option<Ratio>,
+			decimals: Option<Exponent>,
 		) -> DispatchResultWithPostInfo {
 			T::UpdateAdminOrigin::ensure_origin(origin)?;
 			// note: does not validates if assets exists, not clear what is expected in this case
-			Self::set_reserve_location(asset_id, location.clone(), ratio, decimals)?;		
+			Self::set_reserve_location(asset_id, location.clone(), ratio, decimals)?;
 			Self::deposit_event(Event::<T>::AssetUpdated { asset_id, location });
 			Ok(().into())
 		}
 	}
 
-	impl <T:Config> RemoteAssetRegistryMutate for Pallet<T> {
-    type AssetId = T::LocalAssetId;
+	impl<T: Config> RemoteAssetRegistryMutate for Pallet<T> {
+		type AssetId = T::LocalAssetId;
 
-    type AssetNativeLocation = T::ForeignAssetId;
+		type AssetNativeLocation = T::ForeignAssetId;
 
-    type Balance = T::Balance;
+		type Balance = T::Balance;
 
-    fn set_reserve_location(asset_id: Self::AssetId, location: Self::AssetNativeLocation, ratio: Option<Ratio>, decimals: Option<Exponent>) 
-		-> DispatchResult {
-			ForeignToLocal::<T>::insert(&location, asset_id );
-			LocalToForeign::<T>::insert(asset_id, ForeignMetadata { decimals, location});
+		fn set_reserve_location(
+			asset_id: Self::AssetId,
+			location: Self::AssetNativeLocation,
+			ratio: Option<Ratio>,
+			decimals: Option<Exponent>,
+		) -> DispatchResult {
+			ForeignToLocal::<T>::insert(&location, asset_id);
+			LocalToForeign::<T>::insert(asset_id, ForeignMetadata { decimals, location });
 			AssetRatio::<T>::mutate_exists(asset_id, |x| *x = ratio);
 			Ok(())
-    }
+		}
 
-    fn update_ratio(location: Self::AssetNativeLocation, ratio: Option<Ratio>) -> DispatchResult {
-        if let Some(asset_id) = ForeignToLocal::<T>::get(location) { 
+		fn update_ratio(
+			location: Self::AssetNativeLocation,
+			ratio: Option<Ratio>,
+		) -> DispatchResult {
+			if let Some(asset_id) = ForeignToLocal::<T>::get(location) {
 				AssetRatio::<T>::mutate_exists(asset_id, |x| *x = ratio);
 				Ok(())
-			}
-			else {
+			} else {
 				Err(Error::<T>::AssetNotFound.into())
 			}
-    	}
+		}
 	}
 
 	impl<T: Config> RemoteAssetRegistryInspect for Pallet<T> {
 		type AssetId = T::LocalAssetId;
 		type AssetNativeLocation = T::ForeignAssetId;
 
-		fn asset_to_remote(asset_id: Self::AssetId) -> Option<composable_traits::xcm::assets::ForeignMetadata<Self::AssetNativeLocation>> {
-				LocalToForeign::<T>::get(asset_id)
+		fn asset_to_remote(
+			asset_id: Self::AssetId,
+		) -> Option<composable_traits::xcm::assets::ForeignMetadata<Self::AssetNativeLocation>> {
+			LocalToForeign::<T>::get(asset_id)
 		}
 
 		fn get_ratio(asset_id: Self::AssetId) -> Option<composable_traits::defi::Ratio> {
-				AssetRatio::<T>::get(asset_id)
-			}
+			AssetRatio::<T>::get(asset_id)
+		}
 
 		fn location_to_asset(location: Self::AssetNativeLocation) -> Option<Self::AssetId> {
-				ForeignToLocal::<T>::get(location)
+			ForeignToLocal::<T>::get(location)
 		}
 	}
 }

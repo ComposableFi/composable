@@ -20,8 +20,7 @@ use composable_traits::defi::Ratio;
 
 use frame_system::RawOrigin;
 use this_runtime::{
-	Assets,  MaxInstructions, Origin, Runtime, System, Tokens,
-	UnitWeightCost, XTokens,
+	Assets, MaxInstructions, Origin, Runtime, System, Tokens, UnitWeightCost, XTokens,
 };
 
 use num_traits::Zero;
@@ -491,7 +490,6 @@ fn xcm_transfer_execution_barrier_trader_works() {
 	});
 }
 
-
 #[test]
 fn unspent_xcm_fee_is_returned_correctly() {
 	let parachain_account: AccountId =
@@ -773,17 +771,24 @@ fn sibling_trap_assets_works() {
 				&this_runtime::TreasuryAccount::get(),
 				this_liveness_native_amount,
 			);
-		let balance = <balances::Pallet<Runtime> as support::traits::Currency<AccountId>>::free_balance(
-			&this_runtime::TreasuryAccount::get(),
-		);
+		let balance =
+			<balances::Pallet<Runtime> as support::traits::Currency<AccountId>>::free_balance(
+				&this_runtime::TreasuryAccount::get(),
+			);
 		let remote = composable_traits::xcm::assets::XcmAssetLocation(MultiLocation::new(
 			1,
 			X2(Parachain(SIBLING_PARA_ID), GeneralKey(any_asset.encode())),
 		));
-		assert_ok!(this_runtime::AssetsRegistry::update_asset(RawOrigin::Root.into(), any_asset, remote, Ratio::checked_from_integer(1), None));
+		assert_ok!(this_runtime::AssetsRegistry::update_asset(
+			RawOrigin::Root.into(),
+			any_asset,
+			remote,
+			Ratio::checked_from_integer(1),
+			None
+		));
 		balance
 	});
-	
+
 	// buy execution via native token, and try withdraw on this some amount
 	Sibling::execute_with(|| {
 		let assets: MultiAsset = (

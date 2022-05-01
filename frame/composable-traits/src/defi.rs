@@ -265,7 +265,6 @@ pub type LiftedFixedBalance = FixedU128;
 /// unitless ratio of one thing to other.
 pub type Ratio = FixedU128;
 
-
 #[cfg(test)]
 mod tests {
 	use super::{Ratio, Take};
