@@ -22,6 +22,10 @@ build:
 clean:
 	@cargo clean
 
+.PHONY: build-release
+build-release:
+	cargo build --locked --features with-all-runtime --profile production --workspace --exclude runtime-integration-tests --exclude e2e-tests --exclude test-service
+
 bench:
 	./scripts/benchmark.sh
 
