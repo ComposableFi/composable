@@ -30,32 +30,12 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> assets_registry::WeightInfo for WeightInfo<T> {
 	// Storage: AssetsRegistry LocalAdmin (r:0 w:1)
-	fn set_local_admin() -> Weight {
-		(20_520_000 as Weight)
+	fn register_asset() -> Weight {
+		(10_219_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
-	// Storage: AssetsRegistry ForeignAdmin (r:0 w:1)
-	fn set_foreign_admin() -> Weight {
-		(20_621_000 as Weight)
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
-	// Storage: AssetsRegistry LocalAdmin (r:1 w:0)
-	// Storage: AssetsRegistry ForeignAdmin (r:1 w:0)
-	// Storage: AssetsRegistry LocalToForeign (r:1 w:0)
-	// Storage: AssetsRegistry ForeignToLocal (r:1 w:0)
-	// Storage: AssetsRegistry AssetsMappingCandidates (r:1 w:1)
-	fn approve_assets_mapping_candidate() -> Weight {
-		(46_797_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
-	}
-	// Storage: AssetsRegistry LocalAdmin (r:1 w:0)
-	// Storage: AssetsRegistry ForeignAdmin (r:1 w:0)
-	// Storage: AssetsRegistry LocalToForeign (r:1 w:0)
-	// Storage: AssetsRegistry ForeignAssetMetadata (r:0 w:1)
-	fn set_metadata() -> Weight {
-		(37_729_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
+	fn update_asset() -> Weight {
+		(10_219_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 }

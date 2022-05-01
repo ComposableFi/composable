@@ -7,6 +7,8 @@
 //!
 //! Main use case is automatic liquidations of assets.
 
+pub mod assets;
+
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use xcm::latest::QueryId;

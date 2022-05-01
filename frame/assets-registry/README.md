@@ -1,6 +1,6 @@
 # Overview
 
-Allows to map remote assets to local and back(bidirectional). Mapping can be created only by privilidged origin.
+Allows to map remote assets to local and back(bidirectional). Mapping can be created only by privileged origin.
 
 Used for cross chain message transfers and payments.
 
@@ -20,3 +20,9 @@ If assets can be used to pay for execution of messages, it can be set with:
 ## Well known tokens
 
 Like relay native, are baked into codebase directly.
+
+## Governance
+
+Remote assets can be added only by governance. Also assets may be locked to chain. No XCMP operation involving these will be possible.
+
+Remote asset can be approved by other chain origin. Such assets can be Teleported to and from relevant chain.

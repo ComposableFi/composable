@@ -210,11 +210,10 @@ parameter_types! {
 impl assets_registry::Config for Runtime {
 	type Event = Event;
 	type LocalAssetId = CurrencyId;
-	type ForeignAssetId = CurrencyId;
-	type Location = composable_traits::assets::XcmAssetLocation;
+	type Balance = Balance;
+	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
 	type UpdateAdminOrigin = EnsureRootOrHalfCouncil;
-	type LocalAdminOrigin = assets_registry::EnsureLocalAdmin<Runtime>;
-	type ForeignAdminOrigin = assets_registry::EnsureForeignAdmin<Runtime>;
+	type CurrencyFactory = CurrencyFactory;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 }
 

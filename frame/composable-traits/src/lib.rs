@@ -30,3 +30,4 @@ pub mod time;
 pub mod vault;
 pub mod vesting;
 pub mod xcm;
+pub mod bounded;
