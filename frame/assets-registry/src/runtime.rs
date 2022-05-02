@@ -96,6 +96,10 @@ impl pallet_assets_registry::Config for Runtime {
 		EnsureSignedBy<RootAccount, AccountId>, // for tests
 		EnsureRoot<AccountId>,                  // for benchmarks
 	>;
+	type ParachainOrGovernanceOrigin = EnsureOneOf<
+		EnsureSignedBy<RootAccount, AccountId>, // for tests
+		EnsureRoot<AccountId>,                  // for benchmarks
+	>;
 	type WeightInfo = SubstrateWeight<Self>;
 }
 

@@ -22,7 +22,7 @@ normal = [
 executive = { package = "frame-executive", git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
 frame-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
 num-traits = { version = "0.2.14", default-features = false }
-support = { package = "frame-support", git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
+frame-support = { package = "frame-support", git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
 
 # primitives
 sp-api = { git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
@@ -142,7 +142,7 @@ std = [
   "sp-block-builder/std",
   "sp-transaction-pool/std",
   "sp-inherents/std",
-  "support/std",
+  "frame-support/std",
   "executive/std",
   "frame-system/std",
   "utility/std",
@@ -192,7 +192,7 @@ std = [
 
 runtime-benchmarks = [
   "benchmarking",
-  "support/runtime-benchmarks",
+  "frame-support/runtime-benchmarks",
   "system-benchmarking",
   "frame-system/runtime-benchmarks",
   "hex-literal",

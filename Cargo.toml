@@ -29,7 +29,6 @@ members = [
   "frame/*",
   "integration-tests/local-integration-tests",
   "node",
-
   "runtime/common",
   "runtime/primitives",
   "runtime/picasso",

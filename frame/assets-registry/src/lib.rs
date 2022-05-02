@@ -18,7 +18,7 @@ pub use pallet::*;
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
 #[cfg(test)]
-mod mock;
+mod runtime;
 
 #[cfg(test)]
 mod tests;
@@ -33,10 +33,11 @@ pub mod pallet {
 		currency::{BalanceLike, CurrencyFactory, Exponent, RangeId},
 		defi::Ratio,
 		xcm::assets::{
-			ForeignMetadata, RemoteAssetRegistryInspect, RemoteAssetRegistryMutate,
-			XcmAssetLocation,
+			AssetRatioInspect, ForeignMetadata, RemoteAssetRegistryInspect,
+			RemoteAssetRegistryMutate, XcmAssetLocation,
 		},
 	};
+	use cumulus_primitives_core::ParaId;
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo, pallet_prelude::*, traits::EnsureOrigin,
 	};
@@ -75,6 +76,8 @@ pub mod pallet {
 
 		/// The origin which may set local and foreign admins.
 		type UpdateAssetRegistryOrigin: EnsureOrigin<Self::Origin>;
+		/// really can be governance of this chain or remote parachain origin
+		type ParachainOrGovernanceOrigin: EnsureOrigin<Self::Origin>;
 		type WeightInfo: WeightInfo;
 		type Balance: BalanceLike;
 		type CurrencyFactory: CurrencyFactory<Self::LocalAssetId, Self::Balance>;
@@ -96,6 +99,18 @@ pub mod pallet {
 	#[pallet::getter(fn from_foreign_asset)]
 	pub type ForeignToLocal<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::ForeignAssetId, T::LocalAssetId, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn minimal_amount)]
+	pub type MinimalAmounts<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		ParaId,
+		Blake2_128Concat,
+		T::ForeignAssetId,
+		T::Balance,
+		OptionQuery,
+	>;
 
 	/// How much of asset amount is needed to pay for one unit of native token.
 	#[pallet::storage]
@@ -173,6 +188,28 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::AssetUpdated { asset_id, location });
 			Ok(().into())
 		}
+
+		/// Minimal amount of asset_id required to send message to other network.
+		/// Target network may or may not accept payment.
+		/// Assumed this is maintained up to date by technical team.
+		/// Mostly UI hint and fail fast solution. In theory can be updated by.
+		/// If None, than it is well known cannot pay with that asset on target_parachain_id.
+		/// If Some(0), than price can be anything greater or equal to zero.
+		/// If Some(MAX), than actually it forbids transfers.
+		#[pallet::weight(<T as Config>::WeightInfo::set_minimal_amount())]
+		pub fn set_minimal_amount(
+			origin: OriginFor<T>,
+			target_parachain_id: ParaId,
+			asset_id: T::ForeignAssetId,
+			minimal_amount: Option<T::Balance>,
+		) -> DispatchResultWithPostInfo {
+			T::ParachainOrGovernanceOrigin::ensure_origin(origin)?;
+			// TODO: in case it is set to parachain, check that chain can target only its origin
+			MinimalAmounts::<T>::mutate_exists(target_parachain_id, asset_id, |x| {
+				*x = minimal_amount
+			});
+			Ok(().into())
+		}
 	}
 
 	impl<T: Config> RemoteAssetRegistryMutate for Pallet<T> {
@@ -210,6 +247,7 @@ pub mod pallet {
 	impl<T: Config> RemoteAssetRegistryInspect for Pallet<T> {
 		type AssetId = T::LocalAssetId;
 		type AssetNativeLocation = T::ForeignAssetId;
+		type Balance = T::Balance;
 
 		fn asset_to_remote(
 			asset_id: Self::AssetId,
@@ -217,12 +255,22 @@ pub mod pallet {
 			LocalToForeign::<T>::get(asset_id)
 		}
 
-		fn get_ratio(asset_id: Self::AssetId) -> Option<composable_traits::defi::Ratio> {
-			AssetRatio::<T>::get(asset_id)
-		}
-
 		fn location_to_asset(location: Self::AssetNativeLocation) -> Option<Self::AssetId> {
 			ForeignToLocal::<T>::get(location)
+		}
+
+		fn min_xcm_fee(
+			parachain_id: ParaId,
+			remote_asset_id: Self::AssetNativeLocation,
+		) -> Option<Self::Balance> {
+			<MinimalAmounts<T>>::get(parachain_id, remote_asset_id)
+		}
+	}
+
+	impl<T: Config> AssetRatioInspect for Pallet<T> {
+		type AssetId = T::LocalAssetId;
+		fn get_ratio(asset_id: Self::AssetId) -> Option<composable_traits::defi::Ratio> {
+			AssetRatio::<T>::get(asset_id)
 		}
 	}
 }

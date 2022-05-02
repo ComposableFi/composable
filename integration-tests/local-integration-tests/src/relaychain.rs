@@ -4,7 +4,7 @@ use self::kusama::RelayChainCall;
 use crate::prelude::*;
 use common::Balance;
 
-use support::RuntimeDebug;
+use frame_support::RuntimeDebug;
 use xcm::latest::{
 	Junction::Parachain, Junctions::X1, MultiAsset, MultiLocation, OriginKind,
 	WeightLimit::Unlimited, Xcm,

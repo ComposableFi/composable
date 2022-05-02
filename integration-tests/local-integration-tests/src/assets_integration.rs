@@ -9,27 +9,50 @@ use crate::{
 	prelude::*,
 };
 use codec::Encode;
-use common::AccountId;
-use composable_traits::{defi::Ratio, xcm::assets::XcmAssetLocation};
+use common::{AccountId, PriceConverter};
+use composable_traits::{defi::Ratio, oracle::MinimalOracle, xcm::assets::XcmAssetLocation};
 
 use frame_system::RawOrigin;
 use this_runtime::{Balances, Origin, UnitWeightCost, XTokens};
 
 use orml_traits::currency::MultiCurrency;
 
+use frame_support::assert_ok;
 use primitives::currency::*;
 use sp_runtime::assert_eq_error_rate;
-use support::assert_ok;
 use xcm_emulator::TestExt;
 
-// TODO: make sure Acala assets like that are tested
-// This::execute_with(|| {
-// 		assert_ok!(this_runtime::AssetsRegistry::set_location(
-// 			CurrencyId::KSM, // KSM id as it is locally
-// 			// if we get tokens from parent chain, these can be only native token
-// 			XcmAssetLocation::RELAY_NATIVE,
-// 		));
-// 	});
+#[test]
+fn assets_registry_works_well_for_ratios() {
+	simtest();
+	This::execute_with(|| {
+		use this_runtime::*;
+		AssetsRegistry::update_asset(
+			RawOrigin::Root.into(),
+			CurrencyId(42),
+			XcmAssetLocation(MultiLocation::new(1, X1(Parachain(666)))),
+			Ratio::checked_from_integer(10),
+			None,
+		)
+		.unwrap();
+		AssetsRegistry::update_asset(
+			RawOrigin::Root.into(),
+			CurrencyId(123),
+			XcmAssetLocation(MultiLocation::new(1, X1(Parachain(4321)))),
+			Ratio::checked_from_rational(10u32, 100u32),
+			None,
+		)
+		.unwrap();
+		assert_eq!(
+			1000,
+			<PriceConverter<AssetsRegistry>>::get_price_inverse(CurrencyId(42), 100).unwrap()
+		);
+		assert_eq!(
+			10,
+			<PriceConverter<AssetsRegistry>>::get_price_inverse(CurrencyId(123), 100).unwrap()
+		);
+	});
+}
 
 /// so we can map asset on one chain to asset on other chain to be 1 to 1.
 #[test]

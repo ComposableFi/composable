@@ -22,7 +22,7 @@
 	no_mangle_generic_items,
 	overflowing_literals,
 	path_statements,
-	patterns_in_fns_without_body,
+	patterns_in_fngits_without_body,
 	private_in_public,
 	unconditional_recursion,
 	unused_allocation,
@@ -60,3 +60,6 @@ pub mod prelude;
 mod relaychain;
 #[cfg(test)]
 mod transact_calls;
+
+#[cfg(test)]
+mod statemine;

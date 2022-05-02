@@ -23,4 +23,4 @@ benchmarks! {
 	}: _(RawOrigin::Root,remote , 42_u64.into(), Some(Ratio::from_inner(123)), Some(3))
 }
 
-impl_benchmark_test_suite!(AssetsRegistry, crate::mock::new_test_ext(), crate::mock::Runtime);
+impl_benchmark_test_suite!(AssetsRegistry, crate::runtime::new_test_ext(), crate::runtime::Runtime);
