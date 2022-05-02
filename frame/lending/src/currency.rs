@@ -13,7 +13,7 @@
 /// let one_hundred_a_tokens = ACOIN::units(100);
 /// let one_value_of_b = BCOIN::one();
 /// ```
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, TypeInfo)]
 pub struct Currency<const ID: u128, const EXPONENT: u8> {}
 
 impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
@@ -68,6 +68,16 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	}
 }
 
+impl<const ID: u128, const EXPONENT: u8> codec::Encode for Currency<ID, EXPONENT> {
+    fn size_hint(&self) -> usize {
+		16
+	}
+	
+    fn encode_to<T: codec::Output + ?Sized>(&self, dest: &mut T) {
+		ID.encode_to(dest);
+	}	
+}
+
 // separate module so that the `allow` attribute isn't appllied to the entirety of the currency
 // module.
 pub mod defs {
@@ -83,5 +93,6 @@ pub mod defs {
 }
 
 pub use defs::*;
+use scale_info::TypeInfo;
 
 pub type CurrencyId = u128;

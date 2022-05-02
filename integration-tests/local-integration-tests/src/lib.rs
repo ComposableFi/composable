@@ -11,7 +11,7 @@
 )] // allow in tests
 #![warn(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![deny(
+#![warn(
 	unused_imports,
 	clippy::useless_conversion,
 	bad_style,
@@ -58,3 +58,6 @@ pub mod prelude;
 mod relaychain;
 #[cfg(test)]
 mod transact_calls;
+
+#[cfg(test)]
+mod statemine;

@@ -331,7 +331,7 @@ impl cumulus_pallet_xcm::Config for Runtime {
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type VersionWrapper = ();
+	type VersionWrapper = RelayerXcm;
 	type ChannelInfo = ParachainSystem;
 	type ExecuteOverweightOrigin = EnsureRootOrHalfCouncil;
 	type ControllerOrigin = EnsureRootOrHalfCouncil;

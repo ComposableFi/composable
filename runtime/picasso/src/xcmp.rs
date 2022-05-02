@@ -352,7 +352,7 @@ impl<Origin: OriginTrait> ConvertOrigin<Origin> for SystemParachainAsSuperuser<O
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type VersionWrapper = ();
+	type VersionWrapper = RelayerXcm;
 	type ChannelInfo = ParachainSystem;
 	type ControllerOrigin = EnsureRootOrHalfCouncil;
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;

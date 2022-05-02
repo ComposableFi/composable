@@ -69,7 +69,6 @@ governance-registry = { package = "pallet-governance-registry", path = "../../fr
 liquidations = { package = "pallet-liquidations", path = "../../frame/liquidations", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
-uniswap-v2 = { package = "pallet-uniswap-v2", path = "../../frame/uniswap-v2", default-features = false }
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false }
 
 
@@ -97,6 +96,7 @@ cumulus-primitives-timestamp = { git = "https://github.com/paritytech/cumulus", 
 cumulus-primitives-utility = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.17", default-features = false }
 pallet-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.17", default-features = false }
 parachain-info = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.17", default-features = false }
+parachains-common = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.17", default-features = false }
 polkadot-parachain = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.17", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = [
   "derive",
@@ -110,6 +110,7 @@ xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "relea
 
 # added on top of runtime for emulation of network
 kusama-runtime = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.17", default-features = false }
+statemine-runtime = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.17" }
 paste = "1.0.6"
 polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.17", default-features = false }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.17", default-features = false }
@@ -189,7 +190,6 @@ std = [
   "polkadot-core-primitives/std",
   "polkadot-primitives/std",
   "polkadot-runtime-parachains/std",
-  "uniswap-v2/std",
 ]
 
 runtime-benchmarks = [
@@ -220,7 +220,6 @@ runtime-benchmarks = [
   "picasso-runtime/runtime-benchmarks",
   "polkadot-primitives/runtime-benchmarks",
   "polkadot-runtime-parachains/runtime-benchmarks",
-  "uniswap-v2/runtime-benchmarks",
 ]
 
 develop = ["assets", "assets-registry", "governance-registry"]

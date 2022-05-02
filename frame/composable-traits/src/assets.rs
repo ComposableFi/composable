@@ -74,7 +74,7 @@ pub trait RemoteAssetRegistry {
 	/// Return location for given asset.
 	fn asset_to_location(asset_id: Self::AssetId) -> Option<Self::AssetNativeLocation>;
 
-	/// Return asset for given location.
+	/// Return asset_id for given location.
 	fn location_to_asset(location: Self::AssetNativeLocation) -> Option<Self::AssetId>;
 }
 

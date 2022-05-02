@@ -154,7 +154,13 @@ impl MinimalOracle for PriceConverter {
 			CurrencyId::PICA => Ok(amount),
 			CurrencyId::KSM => Ok(amount / 10),
 			CurrencyId::kUSD => Ok(amount / 10),
-			_ => Err(DispatchError::Other("cannot pay with given weight")),
+			_ => {
+				#[cfg(feature = "std")]
+				{
+					dbg!("failed ED for {:?}", &asset_id);
+				}
+				Err(DispatchError::Other("cannot pay with given weight"))
+			}
 		}
 	}
 }
@@ -182,6 +188,9 @@ pub fn multi_existential_deposits(_currency_id: &CurrencyId) -> Balance {
 }
 
 #[cfg(not(feature = "runtime-benchmarks"))]
+const MINIMAL_EXISTENTIAL_DEPOSIT: Balance = 1_000_000; 
+
+#[cfg(not(feature = "runtime-benchmarks"))]
 pub fn multi_existential_deposits(currency_id: &CurrencyId) -> Balance {
 	PriceConverter::get_price_inverse(*currency_id, NativeExistentialDeposit::get())
 		// TODO:
@@ -196,6 +205,10 @@ pub fn multi_existential_deposits(currency_id: &CurrencyId) -> Balance {
 parameter_type_with_key! {
 	// Minimum amount an account has to hold to stay in state
 	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
+		#[cfg(feature = "std")] 
+		{
+			dbg!("asking ED for {:?}", &currency_id);
+		}
 		multi_existential_deposits(currency_id)
 	};
 }

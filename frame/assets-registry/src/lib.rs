@@ -335,6 +335,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let _ = ensure_signed(origin.clone())?;
 			Self::ensure_admins_only(origin)?;
+
 			ensure!(
 				<LocalToForeign<T>>::contains_key(local_asset_id),
 				Error::<T>::LocalAssetIdNotFound
@@ -368,6 +369,7 @@ pub mod pallet {
 
 		/// Get the foreign_asset_id of location.
 		fn location_to_asset(location: Self::AssetNativeLocation) -> Option<Self::AssetId> {
+			//panic!("{:?}", location);
 			<FromForeignAssetLocation<T>>::get(location)
 		}
 	}
