@@ -2,11 +2,7 @@ import { expect } from "chai";
 import testConfiguration from "./test_configuration.json";
 import { KeyringPair } from "@polkadot/keyring/types";
 import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
-import {
-  CommonMosaicRemoteAssetId,
-  PalletMosaicDecayBudgetPenaltyDecayer,
-  PalletMosaicNetworkInfo
-} from "@composable/types/interfaces";
+import { CommonMosaicRemoteAssetId } from "@composable/types/interfaces";
 import BN from "bn.js";
 import { TxMosaicTests } from "@composabletests/tests/mosaic/testHandlers/mosaicTestHelper";
 
@@ -94,6 +90,8 @@ describe("tx.mosaic Tests", function() {
         maxTransferSize: api.createType("u128", 800000000000)
       });
       const { data: [retNetworkId, retNetworkInfo] } = await TxMosaicTests.testSetNetwork(startRelayerWallet, pNetworkId, networkInfo);
+      expect(retNetworkId).to.not.be.an("Error");
+      expect(retNetworkInfo).to.not.be.an("Error");
       //Verifies the newly created networkId
       expect(retNetworkId.toNumber()).to.be.equal(networkId);
     });
@@ -132,6 +130,7 @@ describe("tx.mosaic Tests", function() {
         ethAddress,
         transferAmount
       );
+      expect(result).to.not.be.an("Error");
       const lockedAmount = await api.query.mosaic.outgoingTransactions(startRelayerWallet.address, assetId);
       //verify that the amount sent is locked in the outgoing pool.
       expect(lockedAmount.unwrap()[0].toNumber()).to.be.equal(transferAmount);
@@ -188,6 +187,7 @@ describe("tx.mosaic Tests", function() {
         this.skip();
       const { data: [result] } = await TxMosaicTests.testRotateRelayer(startRelayerWallet,
         newRelayerWallet.address);
+      expect(result).to.not.be.an("Error");
       const relayerInfo = await api.query.mosaic.relayer();
       //verify that the relayer records information about the next relayer wallet
       expect(relayerInfo.unwrap().relayer.next.toJSON().account).to.be.equal(api.createType("AccountId32", newRelayerWallet.address).toString());
@@ -230,6 +230,7 @@ describe("tx.mosaic Tests", function() {
         assetId,
         paramRemoteTokenContAdd,
         transferAmount);
+      expect(result).to.not.be.an("Error");
       const lockedAmount = await api.query.mosaic.outgoingTransactions(userWallet.address, assetId);
       //Verify that the transferred amount is locked in the outgoing transaction pool.
       expect(lockedAmount.unwrap()[0].toNumber()).to.be.equal(transferAmount);
@@ -272,6 +273,7 @@ describe("tx.mosaic Tests", function() {
       const { data: [result] } = await TxMosaicTests.testClaimTransactions(userWallet,
         receiverWallet,
         assetId);
+      expect(result).to.not.be.an("Error");
       const afterTokens = await api.query.tokens.accounts(userWallet.address, assetId);
       expect(new BN(initialTokens.free).eq(new BN(afterTokens.free).sub(new BN(transferAmount)))).to.be.true;
     });
@@ -284,6 +286,7 @@ describe("tx.mosaic Tests", function() {
       const wallet = startRelayerWallet;
       const initialTokens = await api.query.tokens.accounts(wallet.address, assetId);
       const { data: [result] } = await TxMosaicTests.testClaimStaleFunds(startRelayerWallet, assetId);
+      expect(result).to.not.be.an("Error");
       const afterTokens = await api.query.tokens.accounts(wallet.address, assetId);
       //verify that the reclaimed tokens are transferred into user balance.
       expect(new BN(initialTokens.free).eq(new BN(afterTokens.free).sub(new BN(transferAmount)))).to.be.true;

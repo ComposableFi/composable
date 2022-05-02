@@ -7,7 +7,6 @@ import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
  * @param {u64} offerId
  * @param {u128} nbOfBonds
  */
-
 export async function txBondedFinanceBondSuccessTest(wallet: IKeyringPair, offerId, nbOfBonds) {
   return await sendAndWaitForSuccess(
     api,

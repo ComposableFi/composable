@@ -1,28 +1,19 @@
 import { u128 } from "@polkadot/types-codec";
-import { expect } from "chai";
 import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
+import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
 
 
 export async function runBeforeTxOracleAddStake(sudoKey, wallet1, wallet2) {
-  const { data: [result1] } = await sendAndWaitForSuccess(
-    api,
+  await mintAssetsToWallet(
+    wallet1,
     sudoKey,
-    api.events.sudo.Sudid.is,
-    api.tx.sudo.sudo(
-      api.tx.assets.mintInto(1, wallet1.publicKey, 555555555555)
-    )
+    [1]
   );
-  expect(result1.isOk).to.be.true;
-  const { data: [result2] } = await sendAndWaitForSuccess(
-    api,
+  await mintAssetsToWallet(
+    wallet2,
     sudoKey,
-    api.events.sudo.Sudid.is,
-    api.tx.sudo.sudo(
-      api.tx.assets.mintInto(1, wallet2.publicKey, 555555555555)
-    )
+    [1]
   );
-  expect(result2.isOk).to.be.true;
-  return;
 }
 
 /**

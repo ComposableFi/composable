@@ -2,6 +2,13 @@ import { ApiPromise } from "@polkadot/api";
 import { AnyTuple, IEvent } from "@polkadot/types/types";
 import { SubmittableExtrinsic, AddressOrPair } from "@polkadot/api/types";
 
+/**
+ * Sends an unsigned extrinsic and waits for success.
+ * @param api Connected API Object.
+ * @param filter Success event to be waited for.
+ * @param call Extrinsic call.
+ * @param intendedToFail If set to true the transaction is expected to fail.
+ */
 export async function sendUnsignedAndWaitForSuccess<T extends AnyTuple>(
   api: ApiPromise,
   filter: (event: IEvent<AnyTuple>) => event is IEvent<T>,
@@ -11,6 +18,14 @@ export async function sendUnsignedAndWaitForSuccess<T extends AnyTuple>(
   return await sendUnsignedAndWaitFor(api, filter, call, intendedToFail);
 }
 
+/**
+ * Sends a signed extrinsic and waits for success.
+ * @param api Connected API Object.
+ * @param sender Wallet initiating the transaction.
+ * @param filter Success event to be waited for.
+ * @param call Extrinsic call.
+ * @param intendedToFail If set to true the transaction is expected to fail.
+ */
 export async function sendAndWaitForSuccess<T extends AnyTuple>(
   api: ApiPromise,
   sender: AddressOrPair,
@@ -21,6 +36,28 @@ export async function sendAndWaitForSuccess<T extends AnyTuple>(
   return await sendAndWaitFor(api, sender, filter, call, intendedToFail);
 }
 
+/**
+ * Sends multiple signed extrinsics and waits for success
+ * @param api Connected API Object.
+ * @param sender Wallet initiating the transaction.
+ * @param filter Success event to be waited for.
+ * @param call Extrinsic call.
+ * @param intendedToFail If set to true the transaction is expected to fail.
+ */
+export async function sendWithBatchAndWaitForSuccess<T extends AnyTuple>(
+  api: ApiPromise,
+  sender: AddressOrPair,
+  filter: (event: IEvent<AnyTuple>) => event is IEvent<T>,
+  call: SubmittableExtrinsic<"promise">[],
+  intendedToFail: boolean
+): Promise<IEvent<T>> {
+  return await sendAndWaitForWithBatch(api, sender, filter, call, intendedToFail);
+}
+
+/**
+ * Waits for N amount of blocks.
+ * @param n Amount of blocks.
+ */
 export async function waitForBlocks(n = 1) {
   return await waitForBlockHandler(n);
 }
@@ -158,7 +195,7 @@ export function sendAndWaitForWithBatch<T extends AnyTuple>(
   api: ApiPromise,
   sender: AddressOrPair,
   filter: (event: IEvent<AnyTuple>) => event is IEvent<T>,
-  call: any[],
+  call: SubmittableExtrinsic<"promise">[],
   intendedToFail: boolean
 ): Promise<IEvent<T>> {
   return new Promise<IEvent<T>>(function(resolve, reject) {

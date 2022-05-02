@@ -1,11 +1,11 @@
+import { IKeyringPair } from "@polkadot/types/types";
+import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
+
 /**
  * Tests tx.bondedFinance.cancel with provided parameters that should succeed.
  * @param {IKeyringPair} wallet Connected API Promise.
  * @param {u64} offerId
  */
-import { IKeyringPair } from "@polkadot/types/types";
-import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
-
 export async function txBondedFinanceCancelSuccessTest(wallet: IKeyringPair, offerId) {
   return await sendAndWaitForSuccess(
     api,

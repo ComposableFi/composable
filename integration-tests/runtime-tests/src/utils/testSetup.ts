@@ -1,4 +1,3 @@
-/* eslint-disable no-var */
 import "@composable/../../src/types/interfaces/augment-api";
 import "@composable/../../src/types/interfaces/augment-types";
 import * as definitions from "@composable/../../src/types/interfaces/definitions";

@@ -13,7 +13,7 @@ import {
 import { txOracleSubmitPriceSuccessTest } from "@composabletests/tests/oracle/testHandlers/submitPriceTests";
 import { txOracleRemoveStakeSuccessTest } from "@composabletests/tests/oracle/testHandlers/removeStakeTests";
 import { txOracleReclaimStakeSuccessTest } from "@composabletests/tests/oracle/testHandlers/reclaimStakeTests";
-import { waitForBlocks } from "@composable/utils/polkadotjs"; // Weird import, because I had compilation problems.
+import { waitForBlocks } from "@composable/utils/polkadotjs";
 
 /**
  * Contains all TX tests for the pallet:
@@ -90,9 +90,7 @@ describe("tx.oracle Tests", function() {
     it("Can set signer", async function() {
       if (!testConfiguration.enabledTests.setSigner__success.set1)
         this.skip();
-      const sudoKey = walletAlice;
-      const { data: [result] } = await runBeforeTxOracleSetSigner(sudoKey, signedWallet); // Making sure we have funds.
-      expect(result.isOk).to.be.true;
+      await runBeforeTxOracleSetSigner(walletAlice, signedWallet); // Making sure we have funds.
       const { data: [resultAccount0, resultAccount1] } = await txOracleSetSignerSuccessTest(controllerWallet, signedWallet)
         .catch(function(exc) {
           return { data: [exc] }; /* We can't call this.skip() from here. */
@@ -121,8 +119,7 @@ describe("tx.oracle Tests", function() {
     it("Can add stake from creator/controller", async function() {
       if (!testConfiguration.enabledTests.addStake__success.add1)
         this.skip();
-      const sudoKey = walletAlice;
-      await runBeforeTxOracleAddStake(sudoKey, controllerWallet, signedWallet); // Preparing the signer to have funds.
+      await runBeforeTxOracleAddStake(walletAlice, controllerWallet, signedWallet); // Preparing the signer to have funds.
       const stake = api.createType("u128", 250000000000);
       const { data: [result] } = await txOracleAddStakeSuccessTest(controllerWallet, stake);
       expect(result).to.not.be.an("Error");

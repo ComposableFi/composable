@@ -1,14 +1,12 @@
 import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
+import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
 
 
 export async function runBeforeTxOracleSetSigner(sudoKey, signer) {
-  return await sendAndWaitForSuccess(
-    api,
+  return await mintAssetsToWallet(
+    signer,
     sudoKey,
-    api.events.sudo.Sudid.is,
-    api.tx.sudo.sudo(
-      api.tx.assets.mintInto(1, signer.publicKey, 555555555555)
-    )
+    [1]
   );
 }
 

@@ -125,10 +125,11 @@ describe("CrowdloanRewards Tests", function() {
         contributor,
         contributorRewardAccount
       )
-    ]).then(function([
-                       { data: [result1Request1, result2Request1] },
-                       { data: [result1Request2, result2Request2] }
-                     ]) {
+    ]).then(function(
+      [
+        { data: [result1Request1, result2Request1] },
+        { data: [result1Request2, result2Request2] }
+      ]) {
       expect(result1Request1).to.not.be.an("Error");
       expect(result1Request2).to.not.be.an("Error");
       expect(result2Request1.toString()).to.be
