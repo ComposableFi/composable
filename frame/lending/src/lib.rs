@@ -1361,12 +1361,7 @@ pub mod pallet {
 				borrowing_account,
 				amount_to_borrow,
 				false,
-			)
-			/* .map_err(crate::map_dispatch_err(
-				// <T as Config>::MultiCurrency::
-				(),
-				Error::<T>::NotEnoughBorrowAsset,
-			)) */?;
+			)?;
 			DebtIndex::<T>::insert(market_id, borrowing_account, new_account_interest_index);
 			BorrowTimestamp::<T>::insert(
 				market_id,
