@@ -345,6 +345,15 @@ pub mod pallet {
 			Self::deposit_event(Event::AssetMetadataUpdated(local_asset_id));
 			Ok(().into())
 		}
+
+		/// Minimal amount of asset_id required to send message to other network.
+		/// Target network may or may not accept payment.
+		/// Assumed this is maintained up to date by technical team.
+		/// Mostly UI hint and fail fast solution. In theory can be updated by 
+		#[pallet::weight(<T as Config>::WeightInfo::set_metadata())]
+		pub fn minimal_amount(asset_id: ) -> DispatchResultWithPostInfo {
+
+		}
 	}
 
 	impl<T: Config> RemoteAssetRegistry for Pallet<T> {
