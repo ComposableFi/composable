@@ -3,7 +3,7 @@ use crate::{
 	mock::{
 		accounts::ALICE,
 		runtime::{
-			ExtBuilder, Origin, Runtime, System as SystemPallet, TestPallet,
+			ExtBuilder, MarketId, Origin, Runtime, System as SystemPallet, TestPallet,
 			Timestamp as TimestampPallet,
 		},
 	},
@@ -15,6 +15,7 @@ use composable_traits::{
 	time::{DurationSeconds, ONE_HOUR},
 };
 use frame_support::{assert_noop, assert_ok, pallet_prelude::Hooks};
+use proptest::prelude::*;
 
 fn run_for_seconds(seconds: DurationSeconds) {
 	if SystemPallet::block_number() > 0 {
@@ -26,6 +27,18 @@ fn run_for_seconds(seconds: DurationSeconds) {
 	let _ = TimestampPallet::set(Origin::none(), TimestampPallet::now() + 1_000 * seconds);
 	SystemPallet::on_initialize(SystemPallet::block_number());
 	TimestampPallet::on_initialize(SystemPallet::block_number());
+}
+
+proptest! {
+	#[test]
+	fn cannot_update_for_nonexistent_market(market_id in any::<MarketId>()) {
+		ExtBuilder::default().build().execute_with(|| {
+			assert_noop!(
+				TestPallet::update_funding(Origin::signed(ALICE), market_id),
+				Error::<Runtime>::MarketIdNotFound
+			);
+		})
+	}
 }
 
 #[test]
