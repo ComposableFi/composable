@@ -212,7 +212,7 @@ impl assets_registry::Config for Runtime {
 	type LocalAssetId = CurrencyId;
 	type Balance = Balance;
 	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
-	type UpdateAdminOrigin = EnsureRootOrHalfCouncil;
+	type UpdateAssetRegistryOrigin = EnsureRootOrHalfCouncil;
 	type CurrencyFactory = CurrencyFactory;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 }

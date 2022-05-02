@@ -74,7 +74,7 @@ pub mod pallet {
 			+ TypeInfo;
 
 		/// The origin which may set local and foreign admins.
-		type UpdateAdminOrigin: EnsureOrigin<Self::Origin>;
+		type UpdateAssetRegistryOrigin: EnsureOrigin<Self::Origin>;
 		type WeightInfo: WeightInfo;
 		type Balance: BalanceLike;
 		type CurrencyFactory: CurrencyFactory<Self::LocalAssetId, Self::Balance>;
@@ -97,7 +97,7 @@ pub mod pallet {
 	pub type ForeignToLocal<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::ForeignAssetId, T::LocalAssetId, OptionQuery>;
 
-	/// Mapping (local asset, foreign asset) to a candidate status.
+	/// How much of asset amount is needed to pay for one unit of native token.
 	#[pallet::storage]
 	#[pallet::getter(fn asset_ratio)]
 	pub type AssetRatio<T: Config> = StorageMap<_, Twox128, T::LocalAssetId, Ratio, OptionQuery>;
@@ -145,7 +145,7 @@ pub mod pallet {
 			ratio: Option<Ratio>,
 			decimals: Option<Exponent>,
 		) -> DispatchResultWithPostInfo {
-			T::UpdateAdminOrigin::ensure_origin(origin)?;
+			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
 			if ForeignToLocal::<T>::contains_key(&location) {
 				return Err(Error::<T>::ForeignAssetAlreadyRegistered.into())
 			}
@@ -155,8 +155,8 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// given well existing asset, update its remote information
-		/// use with caution
+		/// Given well existing asset, update its remote information.
+		/// Use with caution as it allow reroute assets location.
 		#[pallet::weight(<T as Config>::WeightInfo::update_asset())]
 		pub fn update_asset(
 			origin: OriginFor<T>,
@@ -165,8 +165,10 @@ pub mod pallet {
 			ratio: Option<Ratio>,
 			decimals: Option<Exponent>,
 		) -> DispatchResultWithPostInfo {
-			T::UpdateAdminOrigin::ensure_origin(origin)?;
+			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
 			// note: does not validates if assets exists, not clear what is expected in this case
+			// TODO: after compile time well known assets allow to check existence, add ensure
+			// clause for that
 			Self::set_reserve_location(asset_id, location.clone(), ratio, decimals)?;
 			Self::deposit_event(Event::<T>::AssetUpdated { asset_id, location });
 			Ok(().into())

@@ -92,7 +92,7 @@ impl pallet_assets_registry::Config for Runtime {
 	type Balance = Balance;
 	type CurrencyFactory = CurrencyFactory;
 	type ForeignAssetId = XcmAssetLocation;
-	type UpdateAdminOrigin = EnsureOneOf<
+	type UpdateAssetRegistryOrigin = EnsureOneOf<
 		EnsureSignedBy<RootAccount, AccountId>, // for tests
 		EnsureRoot<AccountId>,                  // for benchmarks
 	>;
