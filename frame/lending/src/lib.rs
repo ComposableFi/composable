@@ -372,6 +372,8 @@ pub mod pallet {
 		InvalidTimestampOnBorrowRequest,
 		NotEnoughBorrowAsset,
 
+		BorrowRentDoesNotExist,
+
 		/// Attempted to withdraw more collateral than the account has in the market.
 		NotEnoughCollateralToWithdraw,
 		/// The market would go under collateralized if the requested amount of collateral was
@@ -1521,17 +1523,16 @@ pub mod pallet {
 				BorrowTimestamp::<T>::remove(market_id, beneficiary);
 				DebtIndex::<T>::remove(market_id, beneficiary);
 
-				// give back rent (rent == deposit?)
-				if let Some(rent) = BorrowRent::<T>::get(market_id, beneficiary) {
-					<T as Config>::NativeCurrency::transfer(
-						&market_account,
-						beneficiary,
-						rent,
-						false, // <- we do not need to keep the market account alive
-					)?;
-				} else {
-					// ??? REVIEW
-				}
+				// give back rent (rent = deposit)
+				let rent = BorrowRent::<T>::get(market_id, beneficiary)
+					.ok_or(Error::<T>::BorrowRentDoesNotExist)?;
+
+				<T as Config>::NativeCurrency::transfer(
+					&market_account,
+					beneficiary,
+					rent,
+					false, // we do not need to keep the market account alive
+				)?;
 			}
 
 			Ok(repaid_amount)
