@@ -395,6 +395,9 @@ pub mod pallet {
 		TradeSizeTooSmall,
 		/// Raised when trying to fetch a position from the positions vector with an invalid index
 		PositionNotFound,
+		/// Raised when trying to update the funding rate for a market before its funding frequency
+		/// has passed since its last update
+		UpdatingFundingTooEarly,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -560,6 +563,44 @@ pub mod pallet {
 				quote_asset_amount,
 				base_asset_amount_limit,
 			)?;
+			Ok(())
+		}
+
+		/// Update the funding rate for a market
+		///
+		/// # Overview
+		///
+		/// This should be called periodically for each market so that subsequent calculations of
+		/// unrealized funding for each position are up-to-date.
+		///
+		/// ![](https://www.plantuml.com/plantuml/svg/FOqx2iCm40Nxd28vWFtwL8P0xh6MrfPWzM4_vFenAL8DmnIpcPDwDBazQayIcKFbNjodFO6pUebzJQFXDTeSHhlmkoBz1KeViAN2YaEfCP8mQUtdKaOO8rSwbPeXPYRdvOYUhxfEeVxxRjppnIy0)
+		///
+		/// ## Parameters
+		/// - `market_id`: the perpetuals market Id
+		///
+		/// ## Assumptions or Requirements
+		///
+		/// TODO(0xangelo)
+		///
+		/// ## Emits
+		///
+		/// TODO(0xangelo)
+		///
+		/// ## State Changes
+		///
+		/// TODO(0xangelo)
+		///
+		/// ## Errors
+		///
+		/// - [`UpdatingFundingTooEarly`](Error::<T>::UpdatingFundingTooEarly)
+		///
+		/// ## Weight/Runtime
+		///
+		/// TODO(0xangelo)
+		#[pallet::weight(<T as Config>::WeightInfo::update_funding())]
+		pub fn update_funding(origin: OriginFor<T>, market_id: T::MarketId) -> DispatchResult {
+			ensure_signed(origin)?;
+			<Self as ClearingHouse>::update_funding(&market_id)?;
 			Ok(())
 		}
 	}
@@ -765,6 +806,10 @@ pub mod pallet {
 			});
 
 			Ok(base_swapped)
+		}
+
+		fn update_funding(market_id: &Self::MarketId) -> Result<(), DispatchError> {
+			todo!()
 		}
 	}
 

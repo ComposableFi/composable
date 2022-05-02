@@ -24,6 +24,7 @@ pub mod add_margin;
 pub mod create_market;
 pub mod instruments;
 pub mod open_position;
+pub mod update_funding;
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Setup

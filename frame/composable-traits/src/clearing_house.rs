@@ -76,6 +76,15 @@ pub trait ClearingHouse {
 		quote_asset_amount: Self::Balance,
 		base_asset_amount_limit: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
+
+	/// Update the funding rate for a market
+	///
+	/// This should be called periodically for each market so that subsequent calculations of
+	/// unrealized funding for each position are up-to-date
+	///
+	/// # Parameters
+	/// - `market_id`: the perpetuals market Id
+	fn update_funding(market_id: &Self::MarketId) -> Result<(), DispatchError>;
 }
 
 /// Exposes functionality for querying funding-related quantities of synthetic instruments
