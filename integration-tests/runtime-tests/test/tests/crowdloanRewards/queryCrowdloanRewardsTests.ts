@@ -1,28 +1,27 @@
-/* eslint-disable no-trailing-spaces */
 import { expect } from "chai";
-
 
 describe("query.crowdloanRewards.account Tests", function() {
   // Set timeout to 1 minute.
   this.timeout(60 * 1000);
   it("query.crowdloanRewards.claimedRewards Tests", async function() {
-    await QueryCrowdloanRewardsTests.queryCrowdloanRewardsClaimedRewardsTest();
+    const claimedRewards = await QueryCrowdloanRewardsTests.queryCrowdloanRewardsClaimedRewardsTest();
+    expect(claimedRewards.toNumber()).to.be.a("number");
   });
 
   it("query.crowdloanRewards.totalContributors Tests", async function() {
-    await QueryCrowdloanRewardsTests.queryCrowdloanRewardsTotalContributorsTest();
+    const totalContributors = await QueryCrowdloanRewardsTests.queryCrowdloanRewardsTotalContributorsTest();
+    expect(totalContributors.toNumber()).to.be.a("number");
   });
 
   it("query.crowdloanRewards.totalRewards Tests", async function() {
-    await QueryCrowdloanRewardsTests.queryCrowdloanRewardsTotalRewardsTest();
+    const totalRewards = await QueryCrowdloanRewardsTests.queryCrowdloanRewardsTotalRewardsTest();
+    expect(totalRewards.toNumber()).to.be.a("number");
   });
 });
 
 /**
  * Contains all Query tests for the pallet:
  * crowdloanRewards
- *
- * ToDo: Add additional checks.
  */
 export class QueryCrowdloanRewardsTests {
   /**
@@ -30,8 +29,7 @@ export class QueryCrowdloanRewardsTests {
    * query.crowdloanRewards.claimedRewards()
    */
   public static async queryCrowdloanRewardsClaimedRewardsTest() {
-    const claimedRewards = await api.query.crowdloanRewards.claimedRewards();
-    expect(claimedRewards.toNumber()).to.be.a("number");
+    return await api.query.crowdloanRewards.claimedRewards();
   }
 
   /**
@@ -39,8 +37,7 @@ export class QueryCrowdloanRewardsTests {
    * query.crowdloanRewards.totalContributors()
    */
   public static async queryCrowdloanRewardsTotalContributorsTest() {
-    const totalContributors = await api.query.crowdloanRewards.totalContributors();
-    expect(totalContributors.toNumber()).to.be.a("number");
+    return await api.query.crowdloanRewards.totalContributors();
   }
 
   /**
@@ -48,7 +45,6 @@ export class QueryCrowdloanRewardsTests {
    * query.crowdloanRewards.totalRewards()
    */
   public static async queryCrowdloanRewardsTotalRewardsTest() {
-    const totalRewards = await api.query.crowdloanRewards.totalRewards();
-    expect(totalRewards.toNumber()).to.be.a("number");
+    return await api.query.crowdloanRewards.totalRewards();
   }
 }
