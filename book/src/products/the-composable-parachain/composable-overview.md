@@ -3,7 +3,8 @@
 ## Problems with a multi-chain DeFi environment
 
 Composable Finance seeks to solve the challenge of siloed and fragmented 
-liquidity brought about by a lack of interoperability in the blockchain space.
+liquidity brought about by a lack of interoperability in the blockchain 
+space.
 
 The DeFi ecosystem has grown to encompass multiple chains. These chains have 
 their own respective value propositions, and are optimized for different 
@@ -54,12 +55,12 @@ Parachain.
 
 ## Tech stack overview
 
-![tech-stack-overview](./tech-stack-overview.png)
+![tech-stack](./tech-stack-overview.png)
 
 Composable’s technical stack is composed of novel reinventions of the virtual 
 machine, routing layer, bridge, and application layer.
 
-### *Transfer availability layer*
+*Transfer availability layer*
 
 Composable does not have a traditional bridge. Instead, it has the Mosaic 
 transfer availability layer. Mosaic forecasts liquidity demands and dynamically 
@@ -68,7 +69,7 @@ Where this process is too time consuming, just-in-time liquidity bots are able
 to bridge any gaps, ensuring guaranteed transfer of assets even in large 
 transactions.
 
-### *Routing layer*
+*Routing layer*
 
 Composable’s Routing Layer, available for use through the Composable Parachain, 
 is able to perfectly select the optimal route for the transfer of assets across 
@@ -76,7 +77,7 @@ a network of bridges, chains, and layers, to ensure their transfer to the
 destination layer or chain with lowest cost, and highest speed, backed by the 
 security of Polkadot.
 
-### *Cross-Chain Virtual Machine (XCVM)*
+*Cross-Chain Virtual Machine (XCVM)*
 
 Composable’s XCVM functions as a place for developers to create smart contracts 
 that span multiple chains and ecosystems. Though different ecosystems have 
@@ -85,7 +86,7 @@ contracts, the XCVM enables developers to write smart contracts that are
 cross-chain and layer in a single to use, accessible interface. In addition, the 
 contract is written in Rust, without the need to learn multiple languages.
 
-### *Application Layer*
+*Application Layer*
 
 Composable’s application layer makes use of composable pallets through the 
 Substrate framework. As such, they are easy to create, deploy, and combine 
