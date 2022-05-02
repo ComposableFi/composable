@@ -1308,3 +1308,8 @@ fn assert_extrinsic_event<T: crate::Config>(
 	assert_ok!(result);
 	assert_last_event::<T>(event);
 }
+
+/// Asserts the event wasn't dispatched.
+fn assert_no_event(event: crate::mocks::Event) {
+	assert!(System::events().iter().all(|record| record.event != event));
+}
