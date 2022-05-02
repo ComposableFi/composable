@@ -809,12 +809,21 @@ pub mod pallet {
 			Ok(base_swapped)
 		}
 
+		#[transactional]
 		fn update_funding(market_id: &Self::MarketId) -> Result<(), DispatchError> {
-			let market = Markets::<T>::get(market_id).ok_or(Error::<T>::MarketIdNotFound)?;
+			let mut market = Markets::<T>::get(market_id).ok_or(Error::<T>::MarketIdNotFound)?;
+			let now = T::UnixTime::now().as_secs();
 			ensure!(
-				T::UnixTime::now().as_secs() - market.funding_rate_ts >= market.funding_frequency,
+				now - market.funding_rate_ts >= market.funding_frequency,
 				Error::<T>::UpdatingFundingTooEarly
 			);
+
+			let funding_rate = <Self as Instruments>::funding_rate(&market)?;
+
+			market.cum_funding_rate.try_add_mut(&funding_rate)?;
+			market.funding_rate_ts = now;
+
+			Markets::<T>::insert(market_id, market);
 
 			Ok(())
 		}
