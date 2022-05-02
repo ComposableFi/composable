@@ -1,6 +1,7 @@
 use super::*;
 use crate::routing::Context;
 use core::time::Duration;
+use frame_benchmarking::BenchmarkParameter::c;
 use ibc::{
 	clients::ics07_tendermint::{
 		client_state::{AllowUpdate, ClientState as TendermintClientState},
@@ -9,6 +10,7 @@ use ibc::{
 	},
 	core::{
 		ics02_client::{
+			client_consensus::AnyConsensusState, client_state::AnyClientState,
 			client_type::ClientType, header::AnyHeader, msgs::update_client::MsgUpdateAnyClient,
 			trust_threshold::TrustThreshold,
 		},
@@ -27,7 +29,7 @@ use ibc::{
 				acknowledgement::MsgAcknowledgement, chan_close_confirm::MsgChannelCloseConfirm,
 				chan_close_init::MsgChannelCloseInit, chan_open_ack::MsgChannelOpenAck,
 				chan_open_confirm::MsgChannelOpenConfirm, chan_open_try::MsgChannelOpenTry,
-				recv_packet::MsgRecvPacket,
+				recv_packet::MsgRecvPacket, timeout::MsgTimeout,
 			},
 			packet::Packet,
 			Version as ChannelVersion,
@@ -35,7 +37,10 @@ use ibc::{
 		ics23_commitment::{commitment::CommitmentPrefix, specs::ProofSpecs},
 		ics24_host::{
 			identifier::{ChainId, ChannelId, ClientId, ConnectionId, PortId},
-			path::{AcksPath, ChannelEndsPath, CommitmentsPath, ConnectionsPath},
+			path::{
+				AcksPath, ChannelEndsPath, ClientConsensusStatePath, ClientStatePath,
+				CommitmentsPath, ConnectionsPath, SeqRecvsPath,
+			},
 		},
 	},
 	proofs::Proofs,
@@ -111,7 +116,7 @@ pub fn create_client_update() -> MsgUpdateAnyClient {
 }
 
 // Creates a MsgConnectionOpenTry from a tendermint chain submitted to a substrate chain
-pub fn create_conn_open_try() -> MsgConnectionOpenTry {
+pub fn create_conn_open_try() -> (ConsensusState, MsgConnectionOpenTry) {
 	let client_id = ClientId::new(ClientType::Tendermint, 0).unwrap();
 	let counterparty_client_id = ClientId::new(ClientType::Tendermint, 1).unwrap();
 	let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
@@ -122,33 +127,100 @@ pub fn create_conn_open_try() -> MsgConnectionOpenTry {
 	);
 	let delay_period = core::time::Duration::from_nanos(1000);
 	let chain_b_connection_counterparty =
-		Counterparty::new(client_id.clone(), Some(ConnectionId::new(0)), commitment_prefix.clone());
+		Counterparty::new(client_id.clone(), None, commitment_prefix.clone());
 	let mut avl_tree = create_avl();
 	let connection_end = ConnectionEnd::new(
-		ConnState::Open,
-		counterparty_client_id,
+		ConnState::Init,
+		counterparty_client_id.clone(),
 		chain_b_connection_counterparty,
 		vec![ConnVersion::default()],
 		delay_period,
 	);
-	let path = format!("{}", ConnectionsPath(ConnectionId::new(1)));
-	let mut key = commitment_prefix.as_bytes().to_vec();
-	key.extend_from_slice(path.as_bytes());
-	avl_tree.insert(key.clone(), connection_end.encode_vec().unwrap());
+	let (client_state, cs_state) = create_mock_state();
+	let consensus_path = format!(
+		"{}",
+		ClientConsensusStatePath { client_id: counterparty_client_id.clone(), epoch: 0, height: 1 }
+	)
+	.as_bytes()
+	.to_vec();
 
-	let proof = avl_tree.get_proof(&*key).unwrap();
+	let client_path = format!("{}", ClientStatePath(counterparty_client_id)).as_bytes().to_vec();
+	let path = format!("{}", ConnectionsPath(ConnectionId::new(1))).as_bytes().to_vec();
+	avl_tree.insert(path.clone(), connection_end.encode_vec().unwrap());
+	avl_tree.insert(
+		consensus_path.clone(),
+		AnyConsensusState::Tendermint(cs_state).encode_vec().unwrap(),
+	);
+	avl_tree.insert(
+		client_path.clone(),
+		AnyClientState::Tendermint(client_state).encode_vec().unwrap(),
+	);
+	let root = match avl_tree.root_hash().unwrap().clone() {
+		Hash::Sha256(root) => root.to_vec(),
+		Hash::None => panic!("Failed to generate root hash"),
+	};
+	let proof = avl_tree.get_proof(&*path).unwrap();
+	let consensus_proof = avl_tree.get_proof(&*consensus_path).unwrap();
+	let client_proof = avl_tree.get_proof(&*client_path).unwrap();
+	avl_tree.insert("ibc".as_bytes().to_vec(), root);
+	let root = match avl_tree.root_hash().unwrap().clone() {
+		Hash::Sha256(root) => root.to_vec(),
+		Hash::None => panic!("Failed to generate root hash"),
+	};
+	let proof_0 = avl_tree.get_proof("ibc".as_bytes()).unwrap();
 	let mut buf = Vec::new();
 	prost::Message::encode(&proof, &mut buf).unwrap();
-	MsgConnectionOpenTry {
-		previous_connection_id: Some(ConnectionId::new(0)),
-		client_id,
-		client_state: None,
-		counterparty: chain_a_counterparty,
-		counterparty_versions: vec![ConnVersion::default()],
-		proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 1)).unwrap(),
-		delay_period,
-		signer: Signer::new("relayer"),
-	}
+	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
+	buf.clear();
+	prost::Message::encode(&proof_0, &mut buf).unwrap();
+	let proof_0: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
+	buf.clear();
+	prost::Message::encode(&consensus_proof, &mut buf).unwrap();
+	let consensus_proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
+	buf.clear();
+	prost::Message::encode(&client_proof, &mut buf).unwrap();
+	let client_proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
+	let merkle_proof = MerkleProof { proofs: vec![proof, proof_0.clone()] };
+	buf.clear();
+	prost::Message::encode(&merkle_proof, &mut buf).unwrap();
+	let consensus_proof = MerkleProof { proofs: vec![consensus_proof, proof_0.clone()] };
+	let client_proof = MerkleProof { proofs: vec![client_proof, proof_0] };
+	let mut consensus_buf = Vec::new();
+	let mut client_buf = Vec::new();
+	prost::Message::encode(&consensus_proof, &mut consensus_buf).unwrap();
+	prost::Message::encode(&client_proof, &mut client_buf).unwrap();
+	let header = create_tendermint_header();
+	let cs_state = ConsensusState {
+		timestamp: header.signed_header.header.time,
+		root: root.into(),
+		next_validators_hash: header.signed_header.header.next_validators_hash,
+	};
+	(
+		cs_state,
+		MsgConnectionOpenTry {
+			previous_connection_id: Some(ConnectionId::new(0)),
+			client_id,
+			client_state: None,
+			counterparty: chain_a_counterparty,
+			counterparty_versions: vec![ConnVersion::default()],
+			proofs: Proofs::new(
+				buf.try_into().unwrap(),
+				Some(client_buf.try_into().unwrap()),
+				Some(
+					ibc::proofs::ConsensusProof::new(
+						consensus_buf.try_into().unwrap(),
+						Height::new(0, 1),
+					)
+					.unwrap(),
+				),
+				None,
+				Height::new(0, 2),
+			)
+			.unwrap(),
+			delay_period,
+			signer: Signer::new("relayer"),
+		},
+	)
 }
 
 pub fn create_chan_open_try() -> (ConsensusState, MsgChannelOpenTry) {
@@ -180,11 +252,11 @@ pub fn create_chan_open_try() -> (ConsensusState, MsgChannelOpenTry) {
 	let mut buf = Vec::new();
 	prost::Message::encode(&proof, &mut buf).unwrap();
 	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
-	let mut buf = Vec::new();
+	buf.clear();
 	prost::Message::encode(&proof_0, &mut buf).unwrap();
 	let proof_0: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
 	let merkle_proof = MerkleProof { proofs: vec![proof, proof_0] };
-	let mut buf = Vec::new();
+	buf.clear();
 	prost::Message::encode(&merkle_proof, &mut buf).unwrap();
 	let header = create_tendermint_header();
 	let cs_state = ConsensusState {
@@ -243,11 +315,11 @@ pub fn create_chan_open_ack() -> (ConsensusState, MsgChannelOpenAck) {
 	let mut buf = Vec::new();
 	prost::Message::encode(&proof, &mut buf).unwrap();
 	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
-	let mut buf = Vec::new();
+	buf.clear();
 	prost::Message::encode(&proof_0, &mut buf).unwrap();
 	let proof_0: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
 	let merkle_proof = MerkleProof { proofs: vec![proof, proof_0] };
-	let mut buf = Vec::new();
+	buf.clear();
 	prost::Message::encode(&merkle_proof, &mut buf).unwrap();
 	let header = create_tendermint_header();
 	let cs_state = ConsensusState {
@@ -299,11 +371,11 @@ pub fn create_chan_open_confirm() -> (ConsensusState, MsgChannelOpenConfirm) {
 	let mut buf = Vec::new();
 	prost::Message::encode(&proof, &mut buf).unwrap();
 	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
-	let mut buf = Vec::new();
+	buf.clear();
 	prost::Message::encode(&proof_0, &mut buf).unwrap();
 	let proof_0: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
 	let merkle_proof = MerkleProof { proofs: vec![proof, proof_0] };
-	let mut buf = Vec::new();
+	buf.clear();
 	prost::Message::encode(&merkle_proof, &mut buf).unwrap();
 	let header = create_tendermint_header();
 	let cs_state = ConsensusState {
@@ -358,11 +430,11 @@ pub fn create_chan_close_confirm() -> (ConsensusState, MsgChannelCloseConfirm) {
 	let mut buf = Vec::new();
 	prost::Message::encode(&proof, &mut buf).unwrap();
 	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
-	let mut buf = Vec::new();
+	buf.clear();
 	prost::Message::encode(&proof_0, &mut buf).unwrap();
 	let proof_0: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
 	let merkle_proof = MerkleProof { proofs: vec![proof, proof_0] };
-	let mut buf = Vec::new();
+	buf.clear();
 	prost::Message::encode(&merkle_proof, &mut buf).unwrap();
 	let header = create_tendermint_header();
 	let cs_state = ConsensusState {
@@ -427,11 +499,11 @@ where
 	let mut buf = Vec::new();
 	prost::Message::encode(&proof, &mut buf).unwrap();
 	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
-	let mut buf = Vec::new();
+	buf.clear();
 	prost::Message::encode(&proof_0, &mut buf).unwrap();
 	let proof_0: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
 	let merkle_proof = MerkleProof { proofs: vec![proof, proof_0] };
-	let mut buf = Vec::new();
+	buf.clear();
 	prost::Message::encode(&merkle_proof, &mut buf).unwrap();
 	let header = create_tendermint_header();
 	let cs_state = ConsensusState {
@@ -499,11 +571,11 @@ where
 	let mut buf = Vec::new();
 	prost::Message::encode(&proof, &mut buf).unwrap();
 	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
-	let mut buf = Vec::new();
+	buf.clear();
 	prost::Message::encode(&proof_0, &mut buf).unwrap();
 	let proof_0: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
 	let merkle_proof = MerkleProof { proofs: vec![proof, proof_0] };
-	let mut buf = Vec::new();
+	buf.clear();
 	prost::Message::encode(&merkle_proof, &mut buf).unwrap();
 	let header = create_tendermint_header();
 	let cs_state = ConsensusState {
@@ -517,6 +589,75 @@ where
 		MsgAcknowledgement {
 			packet,
 			acknowledgement: ack.into(),
+			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))
+				.unwrap(),
+			signer: Signer::new("relayer"),
+		},
+	)
+}
+
+pub fn create_timeout_packet<T: Config + Send + Sync>(data: Vec<u8>) -> (ConsensusState, MsgTimeout)
+where
+	u32: From<<T as frame_system::Config>::BlockNumber>,
+{
+	let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
+	let packet = Packet {
+		sequence: 1u64.into(),
+		source_port: port_id.clone(),
+		source_channel: ChannelId::new(0),
+		destination_port: port_id.clone(),
+		destination_channel: ChannelId::new(0),
+		data: data.clone(),
+		timeout_height: Height::new(0, 1),
+		timeout_timestamp: Timestamp::from_nanoseconds(1620894363u64.saturating_mul(1000000000))
+			.unwrap(),
+	};
+	let mut ctx = Context::<T>::new();
+	ctx.store_packet_commitment(
+		(port_id.clone(), ChannelId::new(0), 1.into()),
+		packet.timeout_timestamp.clone(),
+		packet.timeout_height.clone(),
+		data,
+	)
+	.unwrap();
+
+	let mut avl_tree = create_avl();
+	let path = format!("{}", SeqRecvsPath(port_id, ChannelId::new(0))).as_bytes().to_vec();
+	let mut seq_bytes = Vec::new();
+	prost::Message::encode(&1u64, &mut seq_bytes).unwrap();
+	avl_tree.insert(path.clone(), seq_bytes);
+	let root = match avl_tree.root_hash().unwrap().clone() {
+		Hash::Sha256(root) => root.to_vec(),
+		Hash::None => panic!("Failed to generate root hash"),
+	};
+	let proof = avl_tree.get_proof(&*path).unwrap();
+	avl_tree.insert("ibc".as_bytes().to_vec(), root);
+	let root = match avl_tree.root_hash().unwrap().clone() {
+		Hash::Sha256(root) => root.to_vec(),
+		Hash::None => panic!("Failed to generate root hash"),
+	};
+	let proof_0 = avl_tree.get_proof("ibc".as_bytes()).unwrap();
+	let mut buf = Vec::new();
+	prost::Message::encode(&proof, &mut buf).unwrap();
+	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
+	buf.clear();
+	prost::Message::encode(&proof_0, &mut buf).unwrap();
+	let proof_0: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
+	let merkle_proof = MerkleProof { proofs: vec![proof, proof_0] };
+	buf.clear();
+	prost::Message::encode(&merkle_proof, &mut buf).unwrap();
+	let header = create_tendermint_header();
+	let cs_state = ConsensusState {
+		timestamp: header.signed_header.header.time,
+		root: root.into(),
+		next_validators_hash: header.signed_header.header.next_validators_hash,
+	};
+
+	(
+		cs_state,
+		MsgTimeout {
+			packet,
+			next_sequence_recv: Default::default(),
 			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))
 				.unwrap(),
 			signer: Signer::new("relayer"),

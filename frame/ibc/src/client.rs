@@ -1,7 +1,7 @@
 use super::*;
 use core::str::FromStr;
 
-use crate::{impls::host_height, routing::Context};
+use crate::routing::Context;
 use ibc::{
 	core::{
 		ics02_client::{
@@ -11,6 +11,7 @@ use ibc::{
 			context::{ClientKeeper, ClientReader},
 			error::Error as ICS02Error,
 		},
+		ics03_connection::context::ConnectionReader,
 		ics24_host::identifier::ClientId,
 	},
 	timestamp::Timestamp,
@@ -21,6 +22,7 @@ use tendermint_proto::Protobuf;
 impl<T: Config + Send + Sync> ClientReader for Context<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
+	Self: ConnectionReader,
 {
 	fn client_type(&self, client_id: &ClientId) -> Result<ClientType, ICS02Error> {
 		log::trace!("in client : [client_type] >> client_id = {:?}", client_id);
@@ -142,21 +144,15 @@ where
 
 	fn host_height(&self) -> Height {
 		log::trace!("in client: [host_height]");
-		let current_height = host_height::<T>();
-		Height::new(0, current_height)
+		ConnectionReader::host_current_height(self)
 	}
 
 	fn host_consensus_state(&self, height: Height) -> Result<AnyConsensusState, ICS02Error> {
-		let root = CommitmentRoot::<T>::get();
-		let block_number = height.revision_height;
-		let _ibc_cs = root.get(&block_number).ok_or(ICS02Error::empty_consensus_state_response())?;
-		// TODO: Revisit after consensus state for beefy light client is defined in chains is
-		// defined in ibc-rs
-		Err(ICS02Error::implementation_specific())
+		ConnectionReader::host_consensus_state(self, height)
+			.map_err(|_| ICS02Error::implementation_specific())
 	}
 
 	fn pending_host_consensus_state(&self) -> Result<AnyConsensusState, ICS02Error> {
-		// Not needed since host timestamp implemented already
 		Err(ICS02Error::implementation_specific())
 	}
 

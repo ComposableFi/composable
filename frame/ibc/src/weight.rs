@@ -13,6 +13,7 @@ pub trait WeightInfo {
 	fn create_client() -> Weight;
 	fn update_client() -> Weight;
 	fn connection_init() -> Weight;
+	fn conn_try_open() -> Weight;
 	fn create_channel() -> Weight;
 	fn channel_open_try() -> Weight;
 	fn channel_open_ack() -> Weight;
@@ -21,6 +22,7 @@ pub trait WeightInfo {
 	fn channel_close_confirm() -> Weight;
 	fn recv_packet(i: u32) -> Weight;
 	fn ack_packet(i: u32, j: u32) -> Weight;
+	fn timeout_packet(i: u32) -> Weight;
 }
 
 impl WeightInfo for () {
@@ -33,6 +35,10 @@ impl WeightInfo for () {
 	}
 
 	fn connection_init() -> Weight {
+		0
+	}
+
+	fn conn_try_open() -> Weight {
 		0
 	}
 
@@ -65,6 +71,10 @@ impl WeightInfo for () {
 	}
 
 	fn ack_packet(_i: u32, _j: u32) -> Weight {
+		0
+	}
+
+	fn timeout_packet(_i: u32) -> Weight {
 		0
 	}
 }
@@ -102,9 +112,8 @@ pub(crate) fn deliver<T: Config>(msgs: &Vec<Any>) -> Weight {
 				Ics26Envelope::Ics3Msg(msgs) => match msgs {
 					ConnectionMsg::ConnectionOpenInit(_) =>
 						<T as Config>::WeightInfo::connection_init(),
-					ConnectionMsg::ConnectionOpenTry(_) => {
-						unimplemented!()
-					},
+					ConnectionMsg::ConnectionOpenTry(_) =>
+						<T as Config>::WeightInfo::conn_try_open(),
 					ConnectionMsg::ConnectionOpenAck(_) => {
 						unimplemented!()
 					},
@@ -175,15 +184,19 @@ pub(crate) fn deliver<T: Config>(msgs: &Vec<Any>) -> Weight {
 						let cb = WeightRouter::<T>::get_weight(
 							packet_msg.packet.destination_port.as_str(),
 						);
-						let _cb_weight = cb.on_timeout_packet(&packet_msg.packet);
-						unimplemented!()
+						let cb_weight = cb.on_timeout_packet(&packet_msg.packet);
+						cb_weight.saturating_add(<T as Config>::WeightInfo::timeout_packet(
+							packet_msg.packet.data.len() as u32,
+						))
 					},
 					PacketMsg::ToClosePacket(packet_msg) => {
 						let cb = WeightRouter::<T>::get_weight(
 							packet_msg.packet.destination_port.as_str(),
 						);
-						let _cb_weight = cb.on_timeout_packet(&packet_msg.packet);
-						unimplemented!()
+						let cb_weight = cb.on_timeout_packet(&packet_msg.packet);
+						cb_weight.saturating_add(<T as Config>::WeightInfo::timeout_packet(
+							packet_msg.packet.data.len() as u32,
+						))
 					},
 				},
 				_ => Weight::default(),

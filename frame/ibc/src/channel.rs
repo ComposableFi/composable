@@ -3,11 +3,14 @@ use core::{ops::Deref, str::FromStr, time::Duration};
 use frame_support::traits::Get;
 use scale_info::prelude::string::ToString;
 
-use crate::{impls::host_height, routing::Context};
+use crate::routing::Context;
 use ibc::{
 	core::{
-		ics02_client::{client_consensus::AnyConsensusState, client_state::AnyClientState},
-		ics03_connection::connection::ConnectionEnd,
+		ics02_client::{
+			client_consensus::AnyConsensusState, client_state::AnyClientState,
+			context::ClientReader,
+		},
+		ics03_connection::{connection::ConnectionEnd, context::ConnectionReader},
 		ics04_channel::{
 			channel::ChannelEnd,
 			context::{ChannelKeeper, ChannelReader},
@@ -28,6 +31,7 @@ use tendermint_proto::Protobuf;
 impl<T: Config + Sync + Send> ChannelReader for Context<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
+	Self: ConnectionReader + ClientReader,
 {
 	/// Returns the ChannelEnd for the given `port_id` and `chan_id`.
 	fn channel_end(&self, port_channel_id: &(PortId, ChannelId)) -> Result<ChannelEnd, ICS04Error> {
@@ -261,36 +265,22 @@ where
 
 	/// Returns the current height of the local chain.
 	fn host_height(&self) -> Height {
-		let current_height = host_height::<T>();
-		log::trace!(
-			"in channel: [host_height] >> host_height = {:?}",
-			Height::new(0, current_height)
-		);
-		Height::new(0, current_height)
+		ConnectionReader::host_current_height(self)
 	}
 
 	/// Returns the current timestamp of the local chain.
 	fn host_timestamp(&self) -> Timestamp {
-		use frame_support::traits::UnixTime;
-		use sp_runtime::traits::SaturatedConversion;
-		let time = T::TimeProvider::now();
-		let ts = Timestamp::from_nanoseconds(time.as_nanos().saturated_into::<u64>())
-			.map_err(|e| panic!("{:?}, caused by {:?} from pallet timestamp_pallet", e, time));
-		ts.unwrap()
+		ClientReader::host_timestamp(self)
 	}
 
 	fn host_consensus_state(&self, height: Height) -> Result<AnyConsensusState, ICS04Error> {
-		let root = CommitmentRoot::<T>::get();
-		let block_number = height.revision_height;
-		let _ibc_cs = root.get(&block_number).ok_or(ICS04Error::implementation_specific())?;
-		// TODO: Revisit after consensus state for beefy light client is defined in chains is
-		// defined in ibc-rs
-		Err(ICS04Error::implementation_specific())
+		ConnectionReader::host_consensus_state(self, height)
+			.map_err(|_| ICS04Error::implementation_specific())
 	}
 
 	fn pending_host_consensus_state(&self) -> Result<AnyConsensusState, ICS04Error> {
-		// Not needed since host timestamp implemented already
-		Err(ICS04Error::implementation_specific())
+		ClientReader::pending_host_consensus_state(self)
+			.map_err(|_| ICS04Error::implementation_specific())
 	}
 
 	fn client_update_time(

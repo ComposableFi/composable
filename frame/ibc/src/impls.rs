@@ -52,14 +52,6 @@ where
 		// Insert client state in trie
 		for (client_id, client_state) in ClientStates::<T>::iter() {
 			let client_type = Clients::<T>::get(&client_id);
-			let client_state = AnyClientState::decode_vec(&*client_state)
-				.map_err(|_| Error::<T>::DecodingError)?;
-			let client_state = match client_state {
-				AnyClientState::Tendermint(state) =>
-					state.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
-				_ => continue,
-			};
-
 			let id = ClientId::from_str(
 				&String::from_utf8(client_id).map_err(|_| Error::<T>::DecodingError)?,
 			)
@@ -83,13 +75,6 @@ where
 				&String::from_utf8(client_id).map_err(|_| Error::<T>::DecodingError)?,
 			)
 			.map_err(|_| Error::<T>::DecodingError)?;
-			let consensus_state = match AnyConsensusState::decode_vec(&*consensus_state)
-				.map_err(|_| Error::<T>::DecodingError)?
-			{
-				AnyConsensusState::Tendermint(state) =>
-					state.encode_vec().map_err(|_| Error::<T>::EncodingError)?,
-				_ => continue,
-			};
 			let height = ibc::Height::decode(&*height).map_err(|_| Error::<T>::DecodingError)?;
 			let consensus_path = ClientConsensusStatePath {
 				client_id,

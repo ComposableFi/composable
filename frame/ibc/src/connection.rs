@@ -97,9 +97,16 @@ where
 	}
 
 	// TODO: Define consensus state for substrate chains in ibc-rs and modify this after
-	#[cfg(not(test))]
+	#[cfg(not(any(test, feature = "runtime-benchmarks")))]
 	fn host_consensus_state(&self, _height: Height) -> Result<AnyConsensusState, ICS03Error> {
 		Err(ICS03Error::implementation_specific())
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn host_consensus_state(&self, _height: Height) -> Result<AnyConsensusState, ICS03Error> {
+		use crate::benchmark_utils::create_mock_state;
+		let (.., cs_state) = create_mock_state();
+		Ok(AnyConsensusState::Tendermint(cs_state))
 	}
 
 	#[cfg(test)]
