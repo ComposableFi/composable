@@ -3,9 +3,7 @@
 //! Cannot port QueryHold because it is not implemented
 
 use crate::{helpers::*, kusama_test_net::*, prelude::*};
-use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
 
-use primitives::currency::CurrencyId;
 use support::assert_ok;
 use xcm::latest::prelude::*;
 use xcm_emulator::TestExt;
@@ -34,16 +32,11 @@ fn throw_exception() {
 	});
 }
 
-/// this is low levl
+/// when it starts, it captures amounts in holder registry
 #[test]
 fn initiate_reserver_withdraw_on_relay() {
 	simtest();
 	This::execute_with(|| {
-		assert_ok!(<this_runtime::AssetsRegistry as RemoteAssetRegistry>::set_location(
-			CurrencyId::KSM,
-			XcmAssetLocation::RELAY_NATIVE,
-		));
-
 		let origin = MultiLocation::new(
 			0,
 			X1(AccountId32 {
@@ -107,7 +100,7 @@ fn send_remark() {
 }
 
 #[test]
-fn withdraw_and_deposit_back() {
+fn withdraw_and_deposit_back_on_same_chain() {
 	simtest();
 	let send_amount = 10;
 
@@ -132,5 +125,71 @@ fn withdraw_and_deposit_back() {
 	});
 }
 
+/// source: Acala
 #[test]
-fn location_of_deposit_asset() {}
+fn relay_chain_subscribe_version_notify_of_para_chain() {
+	KusamaRelay::execute_with(|| {
+		let r = pallet_xcm::Pallet::<kusama_runtime::Runtime>::force_subscribe_version_notify(
+			kusama_runtime::Origin::root(),
+			Box::new(Parachain(THIS_PARA_ID).into().into()),
+		);
+		assert_ok!(r);
+	});
+	KusamaRelay::execute_with(|| {
+		kusama_runtime::System::assert_has_event(kusama_runtime::Event::XcmPallet(
+			pallet_xcm::Event::SupportedVersionChanged(
+				MultiLocation { parents: 0, interior: X1(Parachain(THIS_PARA_ID)) },
+				2,
+			),
+		));
+	});
+}
+
+/// source: Acala
+#[test]
+fn para_chain_subscribe_version_notify_of_relay_chain() {
+	This::execute_with(|| {
+		let r = pallet_xcm::Pallet::<this_runtime::Runtime>::force_subscribe_version_notify(
+			this_runtime::Origin::root(),
+			Box::new(Parent.into()),
+		);
+		assert_ok!(r);
+	});
+	This::execute_with(|| {
+		this_runtime::System::assert_has_event(this_runtime::Event::RelayerXcm(
+			pallet_xcm::Event::SupportedVersionChanged(
+				MultiLocation { parents: 1, interior: Here },
+				2,
+			),
+		));
+	});
+}
+
+/// source: Acala
+#[test]
+fn para_chain_subscribe_version_notify_of_sibling_chain() {
+	simtest();
+	This::execute_with(|| {
+		let r = pallet_xcm::Pallet::<this_runtime::Runtime>::force_subscribe_version_notify(
+			this_runtime::Origin::root(),
+			Box::new((Parent, Parachain(SIBLING_PARA_ID)).into()),
+		);
+		assert_ok!(r);
+	});
+	This::execute_with(|| {
+		assert!(this_runtime::System::events().iter().any(|r| matches!(
+			r.event,
+			this_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::XcmpMessageSent(
+				Some(_)
+			))
+		)));
+	});
+	Sibling::execute_with(|| {
+		assert!(sibling_runtime::System::events().iter().any(|r| matches!(
+			r.event,
+			this_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::XcmpMessageSent(
+				Some(_)
+			)) | this_runtime::Event::XcmpQueue(cumulus_pallet_xcmp_queue::Event::Success(Some(_)))
+		)));
+	});
+}

@@ -44,7 +44,7 @@ pub fn env_logger_init() {
 mod kusama_test_net;
 
 #[cfg(test)]
-mod xcm_tests;
+mod low_level_xcm_orml_tests;
 
 #[cfg(test)]
 mod cross_chain_transfer;
@@ -52,6 +52,8 @@ mod cross_chain_transfer;
 #[cfg(test)]
 mod runtime_tests;
 
+#[cfg(test)]
+mod assets_integration;
 #[cfg(test)]
 mod helpers;
 pub mod prelude;

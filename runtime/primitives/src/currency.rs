@@ -12,13 +12,13 @@ use sp_runtime::sp_std::ops::Deref;
 /// Trait used to write generalized code over well know currencies
 /// We use const to allow for match on these
 /// Allows to have reuse of code amids runtime and cross relay transfers in future.
-// TODO: split CurrenyId for runtimes - one for DOT and one for KSM
+// TODO: split CurrencyId for runtimes - one for DOT and one for KSM
 pub trait WellKnownCurrency {
-	// works well with pattnrs unlike impl trait `associated consts cannot be referenced in
+	// works well with patterns unlike impl trait `associated consts cannot be referenced in
 	// patterns`
 	const NATIVE: Self;
 	/// usually we expect running with relay,
-	/// but if  not, than degenrative case would be this equal to `NATIVE`
+	/// but if  not, than degenerative case would be this equal to `NATIVE`
 	const RELAY_NATIVE: Self;
 }
 

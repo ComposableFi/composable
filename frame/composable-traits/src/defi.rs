@@ -1,4 +1,5 @@
 //! Common codes and conventions for DeFi pallets
+
 use codec::{Codec, Decode, Encode, FullCodec, MaxEncodedLen};
 use frame_support::{pallet_prelude::MaybeSerializeDeserialize, Parameter};
 use scale_info::TypeInfo;

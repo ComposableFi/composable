@@ -6550,6 +6550,7 @@ dependencies = [
  "frame-system",
  "log 0.4.16",
  "pallet-balances",
+ "pallet-currency-factory",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
