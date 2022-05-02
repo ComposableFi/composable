@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 72bce17dcd55ba63c17de8febbd0c8b6e0c1fe9f17e5c1eb9eb9a2da0e21b64a # shrinks to vamm_state = VammState { base_asset_reserves: 1, quote_asset_reserves: 1, peg_multiplier: 1, closed: Some(0) }, swap_config = SwapConfig { vamm_id: 1, asset: Base, input_amount: 1, direction: Add, output_amount_limit: 1 }
+cc d2b77ddbcbbe996e02f660021269ac5339a658ca7a1b465520258ce579132f25 # shrinks to mut vamm_state = VammState { base_asset_reserves: 1, quote_asset_reserves: 1, peg_multiplier: 1, closed: None }, mut swap_config = SwapConfig { vamm_id: 1, asset: Base, input_amount: 1, direction: Add, output_amount_limit: 1 }
