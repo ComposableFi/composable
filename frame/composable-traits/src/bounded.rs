@@ -16,11 +16,11 @@ trait Bound<
 	Inner: PartialOrd + Encode + Decode + MaxEncodedLen + TypeInfo + MaybeSerializeDeserialize + Sized,
 >
 {
-	const MINIMAL: Inner;
-	const MAXIMAL: Inner;
+	const MIN: Inner;
+	const MAX: Inner;
 	//  rust prevents `functions in traits cannot be const`, so cannot validate like that
 	/* const  fn validate() -> bool  {
-		Self::MINIMAL < Self::MAXIMAL
+		Self::MIN < Self::MAX
 	}
 	*/
 }
@@ -28,12 +28,12 @@ trait Bound<
 /* possible macro (similar to what Rust will allow to do on CONST parameters)
 bounded_num! {
 	struct BoundedRatio(FixedU128);
-
-	impl Bound<FixedU128, const MINIMAL = FixedU128::from_inner(1), const MAXIMAL = FixedU128::from_inner(u128::MAX)>
+	// impl deref, into/from, transparent serialization traits
+	impl Bound<FixedU128, const MIN = FixedU128::from_inner(1), const MAX = FixedU128::from_inner(u128::MAX)>
 	for BounderRatio
 	where
-		// MAXIMAL can be INFINITY to produce unbounded upper result
-		MINIMAL < MAXIMAL
+		// MAX can be INFINITY to produce unbounded upper result
+		MIN < MAX
 }
 */
 
@@ -48,8 +48,8 @@ struct BoundedRatio<
 
 impl Bound<FixedU128> for BoundedRatio<FixedU128> {
 	/// never division by zero, so can overflow (which is division by zero)
-	const MINIMAL: FixedU128 = FixedU128::from_inner(1);
-	const MAXIMAL: FixedU128 = FixedU128::from_inner(u128::MAX);
+	const MIN: FixedU128 = FixedU128::from_inner(1);
+	const MAX: FixedU128 = FixedU128::from_inner(u128::MAX);
 }
 
 // cannot be generic
@@ -78,7 +78,7 @@ impl Decode for BoundedRatio<FixedU128> {
 		// NOTE: we do not use limits constraint bits size of number
 		let raw = FixedU128::decode(input)?;
 		let raw = Self(raw);
-		if <Self as Bound<FixedU128>>::MINIMAL >= <Self as Bound<FixedU128>>::MAXIMAL {
+		if <Self as Bound<FixedU128>>::MIN >= <Self as Bound<FixedU128>>::MAX {
 			return Err(codec::Error::from("constrains are not satisfied"))
 		}
 		Ok(raw)
