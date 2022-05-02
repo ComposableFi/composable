@@ -592,6 +592,7 @@ pub mod pallet {
 		///
 		/// ## Errors
 		///
+		/// - [`MarketIdNotFound`](Error::<T>::MarketIdNotFound)
 		/// - [`UpdatingFundingTooEarly`](Error::<T>::UpdatingFundingTooEarly)
 		///
 		/// ## Weight/Runtime
@@ -809,7 +810,13 @@ pub mod pallet {
 		}
 
 		fn update_funding(market_id: &Self::MarketId) -> Result<(), DispatchError> {
-			todo!()
+			let market = Markets::<T>::get(market_id).ok_or(Error::<T>::MarketIdNotFound)?;
+			ensure!(
+				T::UnixTime::now().as_secs() - market.funding_rate_ts >= market.funding_frequency,
+				Error::<T>::UpdatingFundingTooEarly
+			);
+
+			Ok(())
 		}
 	}
 
