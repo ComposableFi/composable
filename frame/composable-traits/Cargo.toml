@@ -48,6 +48,7 @@ std = [
   "polkadot-parachain/std",
   "composable-support/std",
 ]
+test-utils = []
 visualization = ["plotters"]
 
 [package.metadata.cargo-udeps.ignore]

@@ -106,7 +106,7 @@ pub mod pallet {
 	// WrappingIncrement
 
 	#[pallet::storage]
-	#[allow(clippy::disallowed_type)] // nonce
+	#[allow(clippy::disallowed_types)] // nonce
 	pub type Nonce_ZeroInit_WrappingIncrement<T: Config> = StorageValue<
 		_,
 		T::ZeroInit_WrappingIncrement,
@@ -115,7 +115,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	#[allow(clippy::disallowed_type)] // nonce
+	#[allow(clippy::disallowed_types)] // nonce
 	pub type Nonce_OneInit_WrappingIncrement<T: Config> = StorageValue<
 		_,
 		T::OneInit_WrappingIncrement,
@@ -124,7 +124,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	#[allow(clippy::disallowed_type)] // nonce
+	#[allow(clippy::disallowed_types)] // nonce
 	pub type Nonce_DefaultInit_WrappingIncrement<T: Config> = StorageValue<
 		_,
 		T::DefaultInit_WrappingIncrement,
@@ -135,17 +135,17 @@ pub mod pallet {
 	// SafeIncrement
 
 	#[pallet::storage]
-	#[allow(clippy::disallowed_type)] // nonce
+	#[allow(clippy::disallowed_types)] // nonce
 	pub type Nonce_ZeroInit_SafeIncrement<T: Config> =
 		StorageValue<_, T::ZeroInit_SafeIncrement, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 
 	#[pallet::storage]
-	#[allow(clippy::disallowed_type)] // nonce
+	#[allow(clippy::disallowed_types)] // nonce
 	pub type Nonce_OneInit_SafeIncrement<T: Config> =
 		StorageValue<_, T::OneInit_SafeIncrement, ValueQuery, Nonce<OneInit, SafeIncrement>>;
 
 	#[pallet::storage]
-	#[allow(clippy::disallowed_type)] // nonce
+	#[allow(clippy::disallowed_types)] // nonce
 	pub type Nonce_DefaultInit_SafeIncrement<T: Config> = StorageValue<
 		_,
 		T::DefaultInit_SafeIncrement,
@@ -156,7 +156,7 @@ pub mod pallet {
 	// IncrementToMax
 
 	#[pallet::storage]
-	#[allow(clippy::disallowed_type)] // nonce
+	#[allow(clippy::disallowed_types)] // nonce
 	pub type Nonce_ZeroInit_IncrementToMax<T: Config> = StorageValue<
 		_,
 		T::ZeroInit_IncrementToMax,
@@ -172,7 +172,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	#[allow(clippy::disallowed_type)] // nonce
+	#[allow(clippy::disallowed_types)] // nonce
 	pub type Nonce_OneInit_IncrementToMax<T: Config> = StorageValue<
 		_,
 		T::OneInit_IncrementToMax,
@@ -188,7 +188,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
-	#[allow(clippy::disallowed_type)] // nonce
+	#[allow(clippy::disallowed_types)] // nonce
 	pub type Nonce_DefaultInit_IncrementToMax<T: Config> = StorageValue<
 		_,
 		T::DefaultInit_IncrementToMax,

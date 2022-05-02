@@ -953,7 +953,7 @@ impl lending::Config for Runtime {
 	type MultiCurrency = Assets;
 	type Liquidation = Liquidations;
 	type UnixTime = Timestamp;
-	type MaxLendingCount = MaxLendingCount;
+	type MaxMarketCount = MaxLendingCount;
 	type AuthorityId = oracle::crypto::BathurstStId;
 	type WeightInfo = weights::lending::WeightInfo<Runtime>;
 	type LiquidationStrategyId = u32;
