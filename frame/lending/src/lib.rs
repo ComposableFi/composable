@@ -1175,7 +1175,7 @@ pub mod pallet {
 					liquidators: config_input.updatable.liquidators,
 				};
 				// TODO: pass ED from API,
-				let debt_asset_id = T::CurrencyFactory::reserve_lp_token_id(T::Balance::default())?;
+				let debt_token_id = T::CurrencyFactory::reserve_lp_token_id(T::Balance::default())?;
 
 				DebtTokenForMarket::<T>::insert(market_id, debt_token_id);
 				Markets::<T>::insert(market_id, market_config);
