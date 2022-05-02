@@ -372,8 +372,6 @@ pub mod pallet {
 		InvalidTimestampOnBorrowRequest,
 		NotEnoughBorrowAsset,
 
-		BorrowRentDoesNotExist,
-
 		/// Attempted to withdraw more collateral than the account has in the market.
 		NotEnoughCollateralToWithdraw,
 		/// The market would go under collateralized if the requested amount of collateral was
@@ -417,6 +415,8 @@ pub mod pallet {
 		CannotRepayZeroBalance,
 		/// Cannot repay the total amount of debt when partially repaying.
 		CannotRepayMoreThanTotalDebt,
+
+		BorrowRentDoesNotExist,
 	}
 
 	#[pallet::event]
