@@ -964,63 +964,6 @@ impl lending::Config for Runtime {
 }
 
 parameter_types! {
-  pub const ConstantProductPalletId: PalletId = PalletId(*b"pal_cnst");
-}
-
-impl uniswap_v2::Config for Runtime {
-	type Event = Event;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type CurrencyFactory = CurrencyFactory;
-	type Assets = Assets;
-	type Convert = ConvertInto;
-	type PoolId = PoolId;
-	type PalletId = ConstantProductPalletId;
-	type WeightInfo = weights::uniswap_v2::WeightInfo<Runtime>;
-}
-
-parameter_types! {
-  pub const StableSwapPalletId: PalletId = PalletId(*b"pal_stab");
-}
-
-impl curve_amm::Config for Runtime {
-	type Event = Event;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type CurrencyFactory = CurrencyFactory;
-	type Assets = Assets;
-	type Convert = ConvertInto;
-	type PoolId = PoolId;
-	type PalletId = StableSwapPalletId;
-	type WeightInfo = weights::curve_amm::WeightInfo<Runtime>;
-}
-
-parameter_types! {
-  pub LBPId: PalletId = PalletId(*b"pall_lbp");
-  pub MinSaleDuration: BlockNumber = DAYS;
-  pub MaxSaleDuration: BlockNumber = 30 * DAYS;
-  pub MaxInitialWeight: Permill = Permill::from_percent(95);
-  pub MinFinalWeight: Permill = Permill::from_percent(5);
-}
-
-impl liquidity_bootstrapping::Config for Runtime {
-	type Event = Event;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type Convert = ConvertInto;
-	type Assets = Tokens;
-	type PoolId = PoolId;
-	type LocalAssets = CurrencyFactory;
-	type PalletId = LBPId;
-	type MinSaleDuration = MinSaleDuration;
-	type MaxSaleDuration = MaxSaleDuration;
-	type MaxInitialWeight = MaxInitialWeight;
-	type MinFinalWeight = MinFinalWeight;
-	type WeightInfo = weights::liquidity_bootstrapping::WeightInfo<Runtime>;
-	type AdminOrigin = EnsureRootOrHalfCouncil;
-}
-
-parameter_types! {
   pub PabloId: PalletId = PalletId(*b"pall_pab");
   pub LbpMinSaleDuration: BlockNumber = DAYS;
   pub LbpMaxSaleDuration: BlockNumber = 30 * DAYS;
@@ -1125,11 +1068,8 @@ construct_runtime!(
 		Mosaic: mosaic::{Pallet, Call, Storage, Event<T>} = 62,
 		Liquidations: liquidations::{Pallet, Call, Storage, Event<T>} = 63,
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
-		ConstantProductDex: uniswap_v2::{Pallet, Call, Storage, Event<T>} = 65,
-		StableSwapDex: curve_amm::{Pallet, Call, Storage, Event<T>} = 66,
-		LiquidityBootstrapping: liquidity_bootstrapping::{Pallet, Call, Storage, Event<T>} = 67,
-		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 68,
-		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 69,
+		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
+		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
 );
@@ -1200,9 +1140,6 @@ mod benches {
 		[liquidations, Liquidations]
 		[bonded_finance, BondedFinance]
 		//FIXME: broken with dali [lending, Lending]
-		[uniswap_v2, ConstantProductDex]
-		[curve_amm, StableSwapDex]
-		[liquidity_bootstrapping, LiquidityBootstrapping]
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
 		[dex_router, DexRouter]
