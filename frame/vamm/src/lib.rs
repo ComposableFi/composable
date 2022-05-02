@@ -119,7 +119,9 @@ pub mod pallet {
 	use composable_traits::vamm::{
 		AssetType, Direction, SwapConfig, SwapSimulationConfig, Vamm, VammConfig,
 	};
-	use frame_support::{pallet_prelude::*, sp_std::fmt::Debug, transactional, Blake2_128Concat};
+	use frame_support::{
+		pallet_prelude::*, sp_std::fmt::Debug, traits::UnixTime, transactional, Blake2_128Concat,
+	};
 	use num_integer::Integer;
 	use sp_arithmetic::traits::Unsigned;
 	use sp_core::U256;
@@ -165,17 +167,6 @@ pub mod pallet {
 			+ Unsigned
 			+ Zero;
 
-		/// Timestamp to be used for twap calculations and market closing.
-		type Timestamp: Default
-			+ Clone
-			+ Copy
-			+ Debug
-			+ FullCodec
-			+ MaxEncodedLen
-			+ MaybeSerializeDeserialize
-			+ PartialEq
-			+ TypeInfo;
-
 		/// The Balance type used by the pallet for bookkeeping. `Config::Convert` is used for
 		/// conversions to `u128`, which are used in the computations.
 		type Balance: Default
@@ -198,6 +189,21 @@ pub mod pallet {
 
 		/// The Integer type used by the pallet for computing swaps.
 		type Integer: Integer;
+
+		/// Type representing the current time.
+		type Moment: Default
+			+ Codec
+			+ TypeInfo
+			+ Debug
+			+ AtLeast32BitUnsigned
+			+ Copy
+			+ Clone
+			+ MaxEncodedLen
+			+ MaybeSerializeDeserialize
+			+ Into<u64>;
+
+		/// Implementation for querying the current Unix timestamp
+		type TimeProvider: UnixTime;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -206,12 +212,12 @@ pub mod pallet {
 
 	type BalanceOf<T> = <T as Config>::Balance;
 	type DecimalOf<T> = <T as Config>::Decimal;
-	type TimestampOf<T> = <T as Config>::Timestamp;
 	type VammIdOf<T> = <T as Config>::VammId;
+	type MomentOf<T> = <T as Config>::Moment;
 	type SwapConfigOf<T> = SwapConfig<VammIdOf<T>, BalanceOf<T>>;
 	type SwapSimulationConfigOf<T> = SwapSimulationConfig<VammIdOf<T>, BalanceOf<T>>;
 	type VammConfigOf<T> = VammConfig<BalanceOf<T>>;
-	type VammStateOf<T> = VammState<BalanceOf<T>, TimestampOf<T>>;
+	type VammStateOf<T> = VammState<BalanceOf<T>, MomentOf<T>>;
 
 	/// Represents the direction a of a position.
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
@@ -223,7 +229,7 @@ pub mod pallet {
 	/// Data relating to the state of a virtual market.
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug)]
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-	pub struct VammState<Balance, Timestamp> {
+	pub struct VammState<Balance, Moment> {
 		/// The total amount of base asset present in the vamm.
 		pub base_asset_reserves: Balance,
 
@@ -241,7 +247,7 @@ pub mod pallet {
 		/// as normal, but if the value is `Some(timestamp)` it means the market
 		/// is flaged to be closed and the closing action will take (or took)
 		/// effect at the time `timestamp`.
-		pub closed: Option<Timestamp>,
+		pub closed: Option<Moment>,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -308,6 +314,8 @@ pub mod pallet {
 		/// Tried to add some amount of asset to Vamm but it would exceeds the
 		/// supported maximum value.
 		TradeExtrapolatesMaximumSupportedAmount,
+		/// Tried to perform operation agains a closed Vamm.
+		VammIsClosed,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -324,7 +332,7 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub vamm_count: VammIdOf<T>,
-		pub vamms: Vec<(VammIdOf<T>, VammState<BalanceOf<T>, TimestampOf<T>>)>,
+		pub vamms: Vec<(VammIdOf<T>, VammState<BalanceOf<T>, MomentOf<T>>)>,
 	}
 
 	#[cfg(feature = "std")]
@@ -653,11 +661,13 @@ pub mod pallet {
 				.ok_or(ArithmeticError::Overflow)?;
 
 			let new_input_amount = match direction {
-				Direction::Add =>
-					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?,
+				Direction::Add => {
+					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?
+				},
 
-				Direction::Remove =>
-					input_asset_amount.checked_sub(swap_amount).ok_or(ArithmeticError::Underflow)?,
+				Direction::Remove => {
+					input_asset_amount.checked_sub(swap_amount).ok_or(ArithmeticError::Underflow)?
+				},
 			};
 			let new_input_amount_u256 = Self::balance_to_u256(new_input_amount)?;
 
@@ -701,11 +711,13 @@ pub mod pallet {
 			config: &SwapConfigOf<T>,
 			vamm_state: &VammStateOf<T>,
 		) -> Result<(), DispatchError> {
-			// TODO(Cardosaum): Implement check based on time to assess if vamm
-			// is operational. Essentialy, check if `time.now() <
-			// vamm_state.closed`, in case vamm_state is Some(time).
-			//
-			// The vamm must not be closed
+			// We must ensure that the vamm is not closed before perfoming any swap.
+			{
+				let now = T::TimeProvider::now().as_secs();
+				if let Some(timestamp) = vamm_state.closed {
+					ensure!(now >= Into::<u64>::into(timestamp), Error::<T>::VammIsClosed)
+				}
+			}
 
 			match config.direction {
 				// If we intend to remove some asset amount from vamm, we must

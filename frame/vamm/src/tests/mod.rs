@@ -34,7 +34,7 @@ fn run_to_block(n: u64) {
 }
 
 type Decimal = <MockRuntime as pallet::Config>::Decimal;
-type VammTimestamp = <MockRuntime as pallet::Config>::Timestamp;
+type VammTimestamp = <MockRuntime as pallet::Config>::Moment;
 type VammId = <TestPallet as VammTrait>::VammId;
 
 #[derive(Default)]
@@ -54,10 +54,6 @@ struct TestSwapConfig<VammId, Balance> {
 	output_amount_limit: Option<Balance>,
 }
 
-// ----------------------------------------------------------------------------------------------------
-//                                             Prop_compose
-// ----------------------------------------------------------------------------------------------------
-
 #[allow(dead_code)]
 const ZERO_RESERVE: Balance = Balance::MIN;
 
@@ -69,6 +65,26 @@ const MAXIMUM_RESERVE: Balance = Balance::MAX;
 
 #[allow(dead_code)]
 const RUN_CASES: u32 = 1000;
+
+// ----------------------------------------------------------------------------------------------------
+//                                             Prop_compose
+// ----------------------------------------------------------------------------------------------------
+
+prop_compose! {
+	fn u64_range_lower_half()(
+		x in u64::MIN..u64::MAX/2
+	) -> u64 {
+		x
+	}
+}
+
+prop_compose! {
+	fn u64_range_upper_half()(
+		x in u64::MAX/2..=u64::MAX
+	) -> u64 {
+		x
+	}
+}
 
 prop_compose! {
 	fn balance_range()(

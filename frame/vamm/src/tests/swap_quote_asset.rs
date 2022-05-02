@@ -31,6 +31,9 @@ proptest! {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
+			// Ensure vamm is open before start operation to swap assets.
+			vamm_state.closed = None;
+
 			swap_config.input_amount = input_amount;
 			vamm_state.quote_asset_reserves = quote_asset_reserves;
 			VammMap::<MockRuntime>::mutate(0, |vamm| {
@@ -63,6 +66,9 @@ proptest! {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
+			// Ensure vamm is open before start operation to swap assets.
+			vamm_state.closed = None;
+
 			swap_config.input_amount = input_amount;
 			vamm_state.quote_asset_reserves = quote_asset_reserves;
 			VammMap::<MockRuntime>::mutate(0, |vamm| {

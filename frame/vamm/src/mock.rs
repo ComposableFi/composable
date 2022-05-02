@@ -37,6 +37,7 @@ pub type Balance = u128;
 pub type BlockNumber = u64;
 pub type VammId = u128;
 pub type Integer = i128;
+pub type Moment = u64;
 
 // ----------------------------------------------------------------------------------------------------
 //                                                FRAME System
@@ -118,11 +119,12 @@ parameter_types! {
 
 impl pallet_vamm::Config for MockRuntime {
 	type Balance = Balance;
-	type Event = Event;
-	type Timestamp = i64;
-	type VammId = VammId;
 	type Decimal = FixedU128;
+	type Event = Event;
 	type Integer = Integer;
+	type Moment = Moment;
+	type TimeProvider = Timestamp;
+	type VammId = VammId;
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -136,7 +138,7 @@ pub struct ExtBuilder {
 		VammId,
 		pallet_vamm::VammState<
 			<MockRuntime as pallet_vamm::Config>::Balance,
-			<MockRuntime as pallet_vamm::Config>::Timestamp,
+			<MockRuntime as pallet_vamm::Config>::Moment,
 		>,
 	)>,
 }
