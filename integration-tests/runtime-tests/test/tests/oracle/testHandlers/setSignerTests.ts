@@ -1,4 +1,4 @@
-import {sendAndWaitForSuccess} from "@composable/utils/polkadotjs";
+import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
 
 
 export async function runBeforeTxOracleSetSigner(sudoKey, signer) {

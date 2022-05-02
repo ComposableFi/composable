@@ -3,15 +3,15 @@
  * @param {IKeyringPair} wallet Connected API Promise.
  * @param {u64} offerId
  */
-import {IKeyringPair} from "@polkadot/types/types";
-import {sendAndWaitForSuccess} from "@composable/utils/polkadotjs";
+import { IKeyringPair } from "@polkadot/types/types";
+import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
 
 export async function txBondedFinanceCancelSuccessTest(wallet: IKeyringPair, offerId) {
   return await sendAndWaitForSuccess(
     api,
     wallet,
     api.events.bondedFinance.OfferCancelled.is,
-    api.tx.bondedFinance.cancel(offerId),
+    api.tx.bondedFinance.cancel(offerId)
   );
 }
 
@@ -40,7 +40,7 @@ export async function txBondedFinanceCancelSudoSuccessTest(wallet: IKeyringPair,
     api,
     wallet,
     api.events.sudo.Sudid.is, api.tx.sudo.sudo(
-      api.tx.bondedFinance.cancel(offerId),
+      api.tx.bondedFinance.cancel(offerId)
     )
   );
 }

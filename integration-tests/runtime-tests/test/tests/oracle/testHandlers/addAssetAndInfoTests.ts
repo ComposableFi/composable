@@ -1,5 +1,5 @@
-import {IKeyringPair} from "@polkadot/types/types";
-import {sendAndWaitForSuccess} from "@composable/utils/polkadotjs";
+import { IKeyringPair } from "@polkadot/types/types";
+import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
 
 
 /**
@@ -36,7 +36,7 @@ export async function txOracleAddAssetAndInfoSuccessTest(
         blockInterval,
         reward,
         slash
-      ),
+      )
     )
   );
 }

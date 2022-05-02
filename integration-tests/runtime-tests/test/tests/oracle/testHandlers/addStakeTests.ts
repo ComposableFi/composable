@@ -1,10 +1,10 @@
-import {u128} from "@polkadot/types-codec";
-import {expect} from "chai";
-import {sendAndWaitForSuccess} from "@composable/utils/polkadotjs";
+import { u128 } from "@polkadot/types-codec";
+import { expect } from "chai";
+import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
 
 
 export async function runBeforeTxOracleAddStake(sudoKey, wallet1, wallet2) {
-  const {data: [result1],} = await sendAndWaitForSuccess(
+  const { data: [result1] } = await sendAndWaitForSuccess(
     api,
     sudoKey,
     api.events.sudo.Sudid.is,
@@ -13,7 +13,7 @@ export async function runBeforeTxOracleAddStake(sudoKey, wallet1, wallet2) {
     )
   );
   expect(result1.isOk).to.be.true;
-  const {data: [result2],} = await sendAndWaitForSuccess(
+  const { data: [result2] } = await sendAndWaitForSuccess(
     api,
     sudoKey,
     api.events.sudo.Sudid.is,
@@ -22,7 +22,7 @@ export async function runBeforeTxOracleAddStake(sudoKey, wallet1, wallet2) {
     )
   );
   expect(result2.isOk).to.be.true;
-  return
+  return;
 }
 
 /**
@@ -30,7 +30,7 @@ export async function runBeforeTxOracleAddStake(sudoKey, wallet1, wallet2) {
  * @param sender Connected API Promise w/ sudo rights.
  * @param {u128} stake Staking amount.
  */
-export async function txOracleAddStakeSuccessTest(sender, stake:u128) {
+export async function txOracleAddStakeSuccessTest(sender, stake: u128) {
   return await sendAndWaitForSuccess(
     api,
     sender,

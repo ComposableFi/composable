@@ -1,7 +1,7 @@
 /* eslint-disable no-var */
-import { ApiPromise, Keyring } from '@polkadot/api';
-import { KeyringPair } from '@polkadot/keyring/types';
-import Web3 from 'web3';
+import { ApiPromise, Keyring } from "@polkadot/api";
+import { KeyringPair } from "@polkadot/keyring/types";
+import Web3 from "web3";
 
 declare global {
   var useTestnetWallets: boolean;
@@ -17,4 +17,3 @@ declare global {
   var walletFerdie: KeyringPair;
   var web3: Web3;
 }
-

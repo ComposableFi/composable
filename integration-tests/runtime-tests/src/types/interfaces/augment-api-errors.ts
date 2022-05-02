@@ -13,10 +13,25 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     assetsRegistry: {
+      /**
+       * The foreign asset Id already used.
+       **/
       ForeignAssetIdAlreadyUsed: AugmentedError<ApiType>;
+      /**
+       * The foreign asset Id not found.
+       **/
       ForeignAssetIdNotFound: AugmentedError<ApiType>;
+      /**
+       * The local asset Id already used.
+       **/
       LocalAssetIdAlreadyUsed: AugmentedError<ApiType>;
+      /**
+       * The local asset Id not found.
+       **/
       LocalAssetIdNotFound: AugmentedError<ApiType>;
+      /**
+       * Only local admin or foreign admin can do this.
+       **/
       OnlyAllowedForAdmins: AugmentedError<ApiType>;
       /**
        * Generic error
@@ -269,6 +284,7 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     currencyFactory: {
+      AssetNotFound: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -388,6 +404,32 @@ declare module '@polkadot/api-base/types/errors' {
        * Invalid upper bound.
        **/
       WrongUpperBound: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    dexRouter: {
+      /**
+       * Can not respect minimum amount requested.
+       **/
+      CanNotRespectMinAmountRequested: AugmentedError<ApiType>;
+      /**
+       * Number of hops in route exceeded maximum limit.
+       **/
+      MaxHopsExceeded: AugmentedError<ApiType>;
+      /**
+       * For given asset pair no route found.
+       **/
+      NoRouteFound: AugmentedError<ApiType>;
+      /**
+       * Unexpected node found while route validation.
+       **/
+      UnexpectedNodeFoundWhileValidation: AugmentedError<ApiType>;
+      /**
+       * Unsupported operation.
+       **/
+      UnsupportedOperation: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -590,6 +632,7 @@ declare module '@polkadot/api-base/types/errors' {
       CannotRespectMinimumRequested: AugmentedError<ApiType>;
       InvalidAmount: AugmentedError<ApiType>;
       InvalidSaleState: AugmentedError<ApiType>;
+      LpTokenNotRequiredForLbp: AugmentedError<ApiType>;
       MustBeOwner: AugmentedError<ApiType>;
       PairMismatch: AugmentedError<ApiType>;
       PoolNotFound: AugmentedError<ApiType>;
@@ -806,6 +849,7 @@ declare module '@polkadot/api-base/types/errors' {
       InvalidSaleState: AugmentedError<ApiType>;
       MissingAmount: AugmentedError<ApiType>;
       MustBeOwner: AugmentedError<ApiType>;
+      NoLpTokenForLbp: AugmentedError<ApiType>;
       PairMismatch: AugmentedError<ApiType>;
       PoolConfigurationNotSupported: AugmentedError<ApiType>;
       PoolNotFound: AugmentedError<ApiType>;

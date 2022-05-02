@@ -1,11 +1,11 @@
 /* eslint-disable no-var */
-import '@composable/../../src/types/interfaces/augment-api';
-import '@composable/../../src/types/interfaces/augment-types';
-import * as definitions from '@composable/../../src/types/interfaces/definitions';
+import "@composable/../../src/types/interfaces/augment-api";
+import "@composable/../../src/types/interfaces/augment-types";
+import * as definitions from "@composable/../../src/types/interfaces/definitions";
 
 import { ApiPromise, Keyring, WsProvider } from "@polkadot/api";
-import { ApiOptions } from '@polkadot/api/types';
-import Web3 from 'web3';
+import { ApiOptions } from "@polkadot/api/types";
+import Web3 from "web3";
 
 import chai_bn from "chai-bn";
 import BN from "bn.js";
@@ -27,7 +27,7 @@ exports.mochaHooks = {
       .reduce((accumulator, key) => ({ ...accumulator, [key]: definitions[key].rpc }), {});
     const types = Object.values(definitions).reduce((accumulator, { types }) => ({ ...accumulator, ...types }), {});
 
-    global.endpoint = 'ws://' + (process.env.ENDPOINT ?? '127.0.0.1:9988');
+    global.endpoint = "ws://" + (process.env.ENDPOINT ?? "127.0.0.1:9988");
     const provider = new WsProvider(global.endpoint);
     console.debug(`Establishing connection to ${global.endpoint}...`);
     const apiOptions: ApiOptions = {
@@ -39,18 +39,18 @@ exports.mochaHooks = {
 
     // do something before every test,
     // then run the next hook in this array
-    global.keyring = new Keyring({ type: 'sr25519' });
+    global.keyring = new Keyring({ type: "sr25519" });
 
     if (global.useTestnetWallets === true) {
-      global.walletAlice = global.keyring.addFromUri('//Alice');
-      global.walletBob = global.keyring.addFromUri('//Bob');
-      global.walletCharlie = global.keyring.addFromUri('//Charlie');
-      global.walletDave = global.keyring.addFromUri('//Dave');
-      global.walletEve = global.keyring.addFromUri('//Eve');
-      global.walletFerdie = global.keyring.addFromUri('//Ferdie');
+      global.walletAlice = global.keyring.addFromUri("//Alice");
+      global.walletBob = global.keyring.addFromUri("//Bob");
+      global.walletCharlie = global.keyring.addFromUri("//Charlie");
+      global.walletDave = global.keyring.addFromUri("//Dave");
+      global.walletEve = global.keyring.addFromUri("//Eve");
+      global.walletFerdie = global.keyring.addFromUri("//Ferdie");
     }
   },
   async afterAll() {
     return await global.api.disconnect();
   }
-}
+};

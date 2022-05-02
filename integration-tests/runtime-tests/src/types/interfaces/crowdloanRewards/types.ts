@@ -15,6 +15,9 @@ export interface CommonMosaicRemoteAssetId extends Null {}
 /** @name ComposableSupportEthereumAddress */
 export interface ComposableSupportEthereumAddress extends Null {}
 
+/** @name ComposableTraitsAssetsBasicAssetMetadata */
+export interface ComposableTraitsAssetsBasicAssetMetadata extends Null {}
+
 /** @name ComposableTraitsAssetsXcmAssetLocation */
 export interface ComposableTraitsAssetsXcmAssetLocation extends Null {}
 
@@ -66,6 +69,9 @@ export interface ComposableTraitsDexConstantProductPoolInfo extends Struct {
   readonly fee: Permill;
   readonly ownerFee: Permill;
 }
+
+/** @name ComposableTraitsDexDexRoute */
+export interface ComposableTraitsDexDexRoute extends Null {}
 
 /** @name ComposableTraitsDexStableSwapPoolInfo */
 export interface ComposableTraitsDexStableSwapPoolInfo extends Null {}

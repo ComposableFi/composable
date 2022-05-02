@@ -4,7 +4,7 @@
  * @param price Price to be submitted.
  * @param assetId Specifies asset id.
  */
-import {sendAndWaitForSuccess} from "@composable/utils/polkadotjs";
+import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
 
 
 export async function txOracleSubmitPriceSuccessTest(signer, price, assetId) {

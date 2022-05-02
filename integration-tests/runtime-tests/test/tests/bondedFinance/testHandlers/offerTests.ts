@@ -1,5 +1,6 @@
-import {IKeyringPair} from "@polkadot/types/types";
-import {sendAndWaitForSuccess} from "@composable/utils/polkadotjs";
+import { IKeyringPair } from "@polkadot/types/types";
+import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
+
 /**
  * Tests tx.bondedFinance.offer with provided parameters that should succeed.
  * @param {IKeyringPair} wallet Connected API Promise.
@@ -11,7 +12,7 @@ export async function txBondedFinanceOfferSuccessTest(wallet: IKeyringPair, requ
     api,
     wallet,
     api.events.bondedFinance.NewOffer.is,
-    api.tx.bondedFinance.offer(requestParameters, true),
+    api.tx.bondedFinance.offer(requestParameters, true)
   );
 }
 

@@ -12,9 +12,21 @@ import type { FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchIn
 declare module '@polkadot/api-base/types/events' {
   export interface AugmentedEvents<ApiType extends ApiTypes> {
     assetsRegistry: {
+      /**
+       * Local admin or foreign admin updated a metadata of foreign asset.
+       **/
       AssetMetadataUpdated: AugmentedEvent<ApiType, [u128]>;
+      /**
+       * Local admin or foreign admin approved an assets mapping candidate.
+       **/
       AssetsMappingCandidateUpdated: AugmentedEvent<ApiType, [u128, u128]>;
+      /**
+       * `Config::UpdateAdminOrigin` set a new foreign admin.
+       **/
       ForeignAdminUpdated: AugmentedEvent<ApiType, [AccountId32]>;
+      /**
+       * `Config::UpdateAdminOrigin` set a new local admin.
+       **/
       LocalAdminUpdated: AugmentedEvent<ApiType, [AccountId32]>;
       /**
        * Generic event
@@ -318,6 +330,15 @@ declare module '@polkadot/api-base/types/events' {
        * An account has voted in a referendum
        **/
       Voted: AugmentedEvent<ApiType, [AccountId32, u32, PalletDemocracyVoteAccountVote]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    dexRouter: {
+      RouteAdded: AugmentedEvent<ApiType, [AccountId32, u128, u128, Vec<u128>]>;
+      RouteDeleted: AugmentedEvent<ApiType, [AccountId32, u128, u128, Vec<u128>]>;
+      RouteUpdated: AugmentedEvent<ApiType, [AccountId32, u128, u128, Vec<u128>, Vec<u128>]>;
       /**
        * Generic event
        **/
@@ -647,7 +668,7 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
        **/
-      PoolCreated: AugmentedEvent<ApiType, [u128, AccountId32]>;
+      PoolCreated: AugmentedEvent<ApiType, [u128, AccountId32, ComposableTraitsDefiCurrencyPairCurrencyId]>;
       /**
        * The sale ended, the funds repatriated and the pool deleted.
        **/

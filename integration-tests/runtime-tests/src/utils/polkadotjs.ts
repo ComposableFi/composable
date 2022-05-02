@@ -1,12 +1,12 @@
-import { ApiPromise } from '@polkadot/api';
-import { AnyTuple, IEvent } from '@polkadot/types/types';
-import { SubmittableExtrinsic, AddressOrPair } from '@polkadot/api/types';
+import { ApiPromise } from "@polkadot/api";
+import { AnyTuple, IEvent } from "@polkadot/types/types";
+import { SubmittableExtrinsic, AddressOrPair } from "@polkadot/api/types";
 
 export async function sendUnsignedAndWaitForSuccess<T extends AnyTuple>(
   api: ApiPromise,
   filter: (event: IEvent<AnyTuple>) => event is IEvent<T>,
   call: SubmittableExtrinsic<"promise">,
-  intendedToFail=false
+  intendedToFail = false
 ): Promise<IEvent<T>> {
   return await sendUnsignedAndWaitFor(api, filter, call, intendedToFail);
 }
@@ -16,12 +16,12 @@ export async function sendAndWaitForSuccess<T extends AnyTuple>(
   sender: AddressOrPair,
   filter: (event: IEvent<AnyTuple>) => event is IEvent<T>,
   call: SubmittableExtrinsic<"promise">,
-  intendedToFail=false
+  intendedToFail = false
 ): Promise<IEvent<T>> {
   return await sendAndWaitFor(api, sender, filter, call, intendedToFail);
 }
 
-export async function waitForBlocks(n=1) {
+export async function waitForBlocks(n = 1) {
   return await waitForBlockHandler(n);
 }
 
@@ -32,7 +32,7 @@ export async function waitForBlocks(n=1) {
 export async function waitForBlockHandler(n) {
   const originBlock = await api.query.system.number();
   let currentBlock = await api.query.system.number();
-  while(currentBlock.toNumber() < originBlock.toNumber()+n) {
+  while (currentBlock.toNumber() < originBlock.toNumber() + n) {
     await sleep(3000);
     currentBlock = await api.query.system.number();
   }
@@ -55,11 +55,11 @@ export function sendUnsignedAndWaitFor<T extends AnyTuple>(
   api: ApiPromise,
   filter: (event: IEvent<AnyTuple>) => event is IEvent<T>,
   call: SubmittableExtrinsic<"promise">,
-  intendedToFail:boolean
+  intendedToFail: boolean
 ): Promise<IEvent<T>> {
-  return new Promise<IEvent<T>>(function (resolve, reject) {
+  return new Promise<IEvent<T>>(function(resolve, reject) {
     call
-      .send(function (res) {
+      .send(function(res) {
         const { dispatchError, status } = res;
         if (dispatchError) {
           if (dispatchError.isModule) {
@@ -81,7 +81,7 @@ export function sendUnsignedAndWaitFor<T extends AnyTuple>(
           }
         }
       })
-      .catch(function (e) {
+      .catch(function(e) {
         reject(Error(e.stack));
       });
   });
@@ -101,17 +101,17 @@ export function sendAndWaitFor<T extends AnyTuple>(
   sender: AddressOrPair,
   filter: (event: IEvent<AnyTuple>) => event is IEvent<T>,
   call: SubmittableExtrinsic<"promise">,
-  intendedToFail:boolean
+  intendedToFail: boolean
 ): Promise<IEvent<T>> {
-  return new Promise<IEvent<T>>(function (resolve, reject) {
+  return new Promise<IEvent<T>>(function(resolve, reject) {
     call
-      .signAndSend(sender, {nonce: -1}, function (res) {
-        const {dispatchError, status} = res;
+      .signAndSend(sender, { nonce: -1 }, function(res) {
+        const { dispatchError, status } = res;
         if (dispatchError) {
           if (dispatchError.isModule) {
             // for module errors, we have the section indexed, lookup
             const decoded = api.registry.findMetaError(dispatchError.asModule);
-            const {docs, name, section} = decoded;
+            const { docs, name, section } = decoded;
             if (intendedToFail) {
               const event = res.events.find(e => filter(e.event)).event;
               if (filter(event))
@@ -148,65 +148,66 @@ export function sendAndWaitFor<T extends AnyTuple>(
           }
         }
       })
-      .catch(function (e) {
+      .catch(function(e) {
         reject(Error(e.stack));
       });
   });
 }
+
 export function sendAndWaitForWithBatch<T extends AnyTuple>(
-    api: ApiPromise,
-    sender: AddressOrPair,
-    filter: (event: IEvent<AnyTuple>) => event is IEvent<T>,
-    call: any[],
-    intendedToFail:boolean
+  api: ApiPromise,
+  sender: AddressOrPair,
+  filter: (event: IEvent<AnyTuple>) => event is IEvent<T>,
+  call: any[],
+  intendedToFail: boolean
 ): Promise<IEvent<T>> {
-  return new Promise<IEvent<T>>(function (resolve, reject) {
+  return new Promise<IEvent<T>>(function(resolve, reject) {
     api.tx.utility.batch(call)
-        .signAndSend(sender, {nonce: -1}, function (res) {
-          const {dispatchError, status} = res;
-          if (dispatchError) {
-            if (dispatchError.isModule) {
-              // for module errors, we have the section indexed, lookup
-              const decoded = api.registry.findMetaError(dispatchError.asModule);
-              const {docs, name, section} = decoded;
-              if (intendedToFail) {
-                const event = res.events.find(e => filter(e.event)).event;
-                if (filter(event))
-                  resolve(event);
-              }
-              reject(Error(`${section}.${name}: ${docs.join(" ")}`));
-            } else {
-              if (intendedToFail) {
-                const event = res.events.find(e => filter(e.event)).event;
-                if (filter(event))
-                  resolve(event);
-              }
-              reject(Error(dispatchError.toString()));
+      .signAndSend(sender, { nonce: -1 }, function(res) {
+        const { dispatchError, status } = res;
+        if (dispatchError) {
+          if (dispatchError.isModule) {
+            // for module errors, we have the section indexed, lookup
+            const decoded = api.registry.findMetaError(dispatchError.asModule);
+            const { docs, name, section } = decoded;
+            if (intendedToFail) {
+              const event = res.events.find(e => filter(e.event)).event;
+              if (filter(event))
+                resolve(event);
             }
-          }
-          if (status.isInBlock || status.isFinalized) {
-            if (res.events.find(e => filter(e.event)) == undefined)
-              return reject(status.toString());
-            const event = res.events.find(e => filter(e.event)).event;
-            if (filter(event)) {
-              if (intendedToFail) {
-                const event = res.events.find(e => filter(e.event)).event;
-                if (filter(event))
-                  reject(event);
-              }
-              resolve(event);
-            } else {
-              if (intendedToFail) {
-                const event = res.events.find(e => filter(e.event)).event;
-                if (filter(event))
-                  resolve(event);
-              }
-              reject(Error("1014: Priority is too low:"));
+            reject(Error(`${section}.${name}: ${docs.join(" ")}`));
+          } else {
+            if (intendedToFail) {
+              const event = res.events.find(e => filter(e.event)).event;
+              if (filter(event))
+                resolve(event);
             }
+            reject(Error(dispatchError.toString()));
           }
-        })
-        .catch(function (e) {
-          reject(Error(e.stack));
-        });
+        }
+        if (status.isInBlock || status.isFinalized) {
+          if (res.events.find(e => filter(e.event)) == undefined)
+            return reject(status.toString());
+          const event = res.events.find(e => filter(e.event)).event;
+          if (filter(event)) {
+            if (intendedToFail) {
+              const event = res.events.find(e => filter(e.event)).event;
+              if (filter(event))
+                reject(event);
+            }
+            resolve(event);
+          } else {
+            if (intendedToFail) {
+              const event = res.events.find(e => filter(e.event)).event;
+              if (filter(event))
+                resolve(event);
+            }
+            reject(Error("1014: Priority is too low:"));
+          }
+        }
+      })
+      .catch(function(e) {
+        reject(Error(e.stack));
+      });
   });
 }
