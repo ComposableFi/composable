@@ -6,7 +6,7 @@ use crate::{
 		oracle as mock_oracle, vamm as mock_vamm,
 	},
 };
-use composable_traits::defi::DeFiComposableConfig;
+use composable_traits::{defi::DeFiComposableConfig, time::DurationSeconds};
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{ConstU16, ConstU32, ConstU64, Everything, GenesisBuild},
@@ -122,8 +122,10 @@ impl governance_registry::Config for Runtime {
 //                                                 Timestamp
 // ----------------------------------------------------------------------------------------------------
 
+pub const MINIMUM_PERIOD_SECONDS: DurationSeconds = 5;
+
 parameter_types! {
-	pub const MinimumPeriod: u64 = 5;
+	pub const MinimumPeriod: u64 = MINIMUM_PERIOD_SECONDS;
 }
 
 impl pallet_timestamp::Config for Runtime {

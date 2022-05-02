@@ -5,3 +5,4 @@
 # It is recommended to check this file in to source control so that
 # everyone who runs the test benefits from these saved cases.
 cc 8053ac29583c270cca56d873da8c8a8431530a81ef4841774f0b1f784dce234c # shrinks to market_id = 0
+cc 2500ebf797a0ebf4385fa701b122982cbbd6634f7a512f0023f17122566aed3c # shrinks to percent = 0

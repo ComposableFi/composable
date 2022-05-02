@@ -4,7 +4,7 @@ use crate::{
 		accounts::ALICE,
 		runtime::{
 			ExtBuilder, MarketId, Origin, Runtime, System as SystemPallet, TestPallet,
-			Timestamp as TimestampPallet,
+			Timestamp as TimestampPallet, MINIMUM_PERIOD_SECONDS,
 		},
 	},
 	tests::run_to_block,
@@ -29,6 +29,22 @@ fn run_for_seconds(seconds: DurationSeconds) {
 	TimestampPallet::on_initialize(SystemPallet::block_number());
 }
 
+// ----------------------------------------------------------------------------------------------------
+//                                             Prop Compose
+// ----------------------------------------------------------------------------------------------------
+
+prop_compose! {
+	fn seconds_lt(upper_bound: DurationSeconds)(
+		s in MINIMUM_PERIOD_SECONDS..upper_bound
+	) -> DurationSeconds {
+		s
+	}
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                            Update Funding
+// ----------------------------------------------------------------------------------------------------
+
 proptest! {
 	#[test]
 	fn cannot_update_for_nonexistent_market(market_id in any::<MarketId>()) {
@@ -41,24 +57,25 @@ proptest! {
 	}
 }
 
+proptest! {
 #[test]
-fn enforces_funding_frequency() {
-	let funding_frequency = ONE_HOUR;
-	let percent = 10;
+	fn enforces_funding_frequency(seconds in seconds_lt(ONE_HOUR)) {
+		let funding_frequency = ONE_HOUR;
 
-	ExtBuilder::default().build().execute_with(|| {
-		run_to_block(1);
-		let mut config = valid_market_config();
-		config.funding_frequency = ONE_HOUR;
-		let market_id = <TestPallet as ClearingHouse>::create_market(&config).unwrap();
+		ExtBuilder::default().build().execute_with(|| {
+			run_to_block(1);
+			let mut config = valid_market_config();
+			config.funding_frequency = funding_frequency;
+			let market_id = <TestPallet as ClearingHouse>::create_market(&config).unwrap();
 
-		run_for_seconds((percent * funding_frequency) / 100);
-		assert_noop!(
-			TestPallet::update_funding(Origin::signed(ALICE), market_id),
-			Error::<Runtime>::UpdatingFundingTooEarly
-		);
+			run_for_seconds(seconds);
+			assert_noop!(
+				TestPallet::update_funding(Origin::signed(ALICE), market_id),
+				Error::<Runtime>::UpdatingFundingTooEarly
+			);
 
-		run_for_seconds(((100 - percent) * funding_frequency) / 100);
-		assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
-	})
+			run_for_seconds(ONE_HOUR - seconds);
+			assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
+		})
+	}
 }
