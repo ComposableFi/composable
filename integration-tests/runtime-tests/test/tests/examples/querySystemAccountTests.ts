@@ -23,7 +23,8 @@ describe("query.system Tests", function() {
       // Check if this test is enabled.
       if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1)
         this.skip();
-      await QuerySystemAccountTests.checkBalance(api, walletAlice.address);
+      const balance = await QuerySystemAccountTests.checkBalance(api, walletAlice.address);
+      expect(balance.free.toBigInt() > 0).to.be.true; // .to.be.greater(0) didn't work for some reason.
     });
   });
 });
@@ -36,6 +37,6 @@ export class QuerySystemAccountTests {
    */
   public static async checkBalance(api: ApiPromise, walletAddress: string) {
     const { data: balance } = await api.query.system.account(walletAddress);
-    expect(balance.free.toBigInt() > 0).to.be.true; // .to.be.greater(0) didn't work for some reason.
+    return balance;
   }
 }
