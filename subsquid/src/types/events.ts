@@ -166,13 +166,13 @@ export class PabloSwappedEvent {
    * Token exchange happened.
    */
   get isV2100(): boolean {
-    return this.ctx._chain.getEventHash('pablo.Swapped') === 'cd4fbb8566d58553fc0cec0b6b7ee799d3f643b2953e2000db716e5919cb9214'
+    return this.ctx._chain.getEventHash('pablo.Swapped') === '73a258f235725f2f463ea476ffa00443cd41db40c2c4f574b3444b43d16c2806'
   }
 
   /**
    * Token exchange happened.
    */
-  get asV2100(): {poolId: bigint, who: v2100.AccountId32, baseAsset: v2100.CurrencyId, quoteAsset: v2100.CurrencyId, baseAmount: bigint, quoteAmount: bigint, fee: bigint} {
+  get asV2100(): {poolId: bigint, who: v2100.AccountId32, baseAsset: v2100.CurrencyId, quoteAsset: v2100.CurrencyId, feeAsset: v2100.CurrencyId, baseAmount: bigint, quoteAmount: bigint, fee: bigint} {
     assert(this.isV2100)
     return this.ctx._chain.decodeEvent(this.ctx.event)
   }
@@ -182,7 +182,7 @@ export class PabloSwappedEvent {
     return this.isV2100
   }
 
-  get asLatest(): {poolId: bigint, who: v2100.AccountId32, baseAsset: v2100.CurrencyId, quoteAsset: v2100.CurrencyId, baseAmount: bigint, quoteAmount: bigint, fee: bigint} {
+  get asLatest(): {poolId: bigint, who: v2100.AccountId32, baseAsset: v2100.CurrencyId, quoteAsset: v2100.CurrencyId, feeAsset: v2100.CurrencyId, baseAmount: bigint, quoteAmount: bigint, fee: bigint} {
     deprecateLatest()
     return this.asV2100
   }

@@ -193,6 +193,7 @@ interface SwappedEvent {
     who: Uint8Array,
     baseAsset: bigint,
     quoteAsset: bigint,
+    feeAsset: bigint,
     baseAmount: bigint,
     quoteAmount: bigint,
     fee: bigint
@@ -200,11 +201,11 @@ interface SwappedEvent {
 
 function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
     if (event.isV2100) {
-        const {poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee} = event.asV2100;
-        return {poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee};
+        const {poolId, who, baseAsset, quoteAsset, feeAsset, baseAmount, quoteAmount, fee} = event.asV2100;
+        return {poolId, who, baseAsset, quoteAsset, feeAsset, baseAmount, quoteAmount, fee};
     } else {
-        const {poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee} = event.asLatest;
-        return {poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee};
+        const {poolId, who, baseAsset, quoteAsset, feeAsset, baseAmount, quoteAmount, fee} = event.asLatest;
+        return {poolId, who, baseAsset, quoteAsset, feeAsset, baseAmount, quoteAmount, fee};
     }
 }
 
@@ -232,6 +233,9 @@ export async function processSwappedEvent(ctx: EventHandlerContext, event: Pablo
         if (quoteAsset == undefined) {
             throw new Error('quoteAsset not found');
         }
+        let spotPrice = isReverse
+            ? Big(swappedEvt.baseAmount.toString()).div(Big(swappedEvt.quoteAmount.toString()))
+            : Big(swappedEvt.quoteAmount.toString()).div(Big(swappedEvt.baseAmount.toString()))
         if (isReverse) {
             console.debug('Reverse swap');
             // volume
@@ -241,8 +245,7 @@ export async function processSwappedEvent(ctx: EventHandlerContext, event: Pablo
 
             // liquidity
             pool.totalLiquidity = Big(pool.totalLiquidity)
-                // fees TODO is this correct?
-                .sub(Big(swappedEvt.fee.toString()))
+                .sub(calculateFeeInQuoteAsset(spotPrice, quoteAsset.assetId, swappedEvt.feeAsset, swappedEvt.fee))
                 .toString();
             // for reverse exchange "default quote" (included as the base amount in the evt) amount leaves the pool
             baseAsset.totalLiquidity += swappedEvt.quoteAmount;
@@ -257,12 +260,7 @@ export async function processSwappedEvent(ctx: EventHandlerContext, event: Pablo
 
             // liquidity
             pool.totalLiquidity = Big(pool.totalLiquidity)
-                // fees TODO is this correct?
-                .sub(
-                    // calculated the quote amount based on the exchange rate as the fees are in the base asset
-                    Big(swappedEvt.quoteAmount.toString())
-                        .div(Big(swappedEvt.baseAmount.toString()))
-                        .mul(Big(swappedEvt.fee.toString())))
+                .sub(calculateFeeInQuoteAsset(spotPrice, quoteAsset.assetId, swappedEvt.feeAsset, swappedEvt.fee))
                 .toString();
             // for normal exchange "default quote" amount gets into the pool
             baseAsset.totalLiquidity -= swappedEvt.baseAmount;
@@ -280,9 +278,7 @@ export async function processSwappedEvent(ctx: EventHandlerContext, event: Pablo
         }
         tx = createTransaction(ctx, pool, who,
             PabloTransactionType.SWAP,
-            isReverse
-                ? Big(swappedEvt.baseAmount.toString()).div(Big(swappedEvt.quoteAmount.toString())).toString()
-                : Big(swappedEvt.quoteAmount.toString()).div(Big(swappedEvt.baseAmount.toString())).toString(),
+            spotPrice.toString(),
             BigInt(baseAsset.assetId),
             swappedEvt.baseAmount,
             pool.quoteAssetId,
@@ -295,5 +291,15 @@ export async function processSwappedEvent(ctx: EventHandlerContext, event: Pablo
     } else {
         throw new Error("Pool not found");
     }
+}
+
+function calculateFeeInQuoteAsset(
+    spotPrice: Big,
+    quoteAsset: bigint,
+    feeAsset: bigint,
+    fee: bigint
+) : Big {
+    // calculated the quote amount based on the exchange rate if the fees are in the base asset
+    return feeAsset == quoteAsset ? Big(fee.toString()) : spotPrice.mul(fee.toString());
 }
 
