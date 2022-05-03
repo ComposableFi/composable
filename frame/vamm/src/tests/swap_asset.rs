@@ -1,14 +1,15 @@
 use crate::{
-	mock::{ExtBuilder, MockRuntime, TestPallet},
-	pallet::Error,
+	mock::{Balance, ExtBuilder, MockRuntime, System, TestPallet},
+	pallet::{Error, Event, VammMap},
 	tests::{
-		balance_range_lower_half, balance_range_upper_half, get_swap_config, get_vamm_state,
-		run_to_block, then_and_now, RUN_CASES,
+		balance_range_low, balance_range_lower_half, balance_range_upper_half, get_swap_config,
+		get_vamm_state, run_to_block, then_and_now, RUN_CASES,
 	},
 };
-use composable_traits::vamm::Vamm as VammTrait;
-use frame_support::assert_noop;
+use composable_traits::vamm::{Direction, Vamm as VammTrait};
+use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
+use sp_runtime::traits::Zero;
 
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
@@ -92,6 +93,52 @@ proptest! {
 				TestPallet::swap(&swap_config),
 				Error::<MockRuntime>::SwappedAmountLessThanMinimumLimit
 			);
+		})
+	}
+}
+
+proptest! {
+	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
+	#[test]
+	fn swap_asset_suceeds_emitting_event(
+		mut vamm_state in get_vamm_state(Default::default()),
+		mut swap_config in get_swap_config(Default::default()),
+		base in balance_range_low(),
+		quote in balance_range_low(),
+		peg in balance_range_low(),
+	) {
+		// Ensure vamm is open before start operation to swap assets.
+		vamm_state.closed = None;
+
+		// Ensure values won't overflow when computing swap.
+		vamm_state.base_asset_reserves = base;
+		vamm_state.quote_asset_reserves = quote;
+		vamm_state.peg_multiplier = peg;
+
+		// Disable output limit check
+		swap_config.output_amount_limit = Balance::zero();
+
+		swap_config.vamm_id = 0;
+
+		ExtBuilder {
+			vamm_count: 1,
+			vamms: vec![(0, vamm_state)]
+		}.build().execute_with(|| {
+			// For event emission
+			run_to_block(1);
+			let swap = TestPallet::swap(&swap_config);
+
+			if swap.is_ok() {
+				System::assert_last_event(
+					Event::Swapped {
+						vamm_id: swap_config.vamm_id,
+						input_amount: swap_config.input_amount,
+						output_amount: swap.unwrap(),
+						input_asset_type: swap_config.asset,
+						direction: swap_config.direction,
+					}.into()
+				);
+			}
 		})
 	}
 }
