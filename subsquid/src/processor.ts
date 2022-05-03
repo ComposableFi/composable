@@ -19,8 +19,8 @@ const processor = new SubstrateProcessor("composable_dali_dev");
 
 processor.setBatchSize(500);
 processor.setDataSource({
-  archive: `http://localhost:8080/v1/graphql`,
-  chain: "ws://localhost:9988",
+  archive: `http://localhost:4010/v1/graphql`,
+  chain: "wss://dali.devnets.composablefinance.ninja/parachain/alice",
 });
 
 // TODO add event handlers for Pablo

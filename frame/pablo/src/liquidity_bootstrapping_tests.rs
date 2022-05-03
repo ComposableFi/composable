@@ -169,8 +169,8 @@ mod sell {
 }
 
 mod buy {
-    use crate::common_test_functions::assert_has_event;
-    use super::*;
+	use super::*;
+	use crate::common_test_functions::assert_has_event;
 
 	#[test]
 	fn can_buy_one_to_one() {
@@ -202,11 +202,11 @@ mod buy {
 					0_u128,
 					false
 				));
-				assert_has_event::<Test, _>(
-					|e| matches!(
+				assert_has_event::<Test, _>(|e| {
+					matches!(
 					    e.event,
-				        mock::Event::Pablo(crate::Event::Swapped { pool_id, fee_asset, .. }) if pool_id == created_pool_id && fee_asset == USDT),
-				    );
+				        mock::Event::Pablo(crate::Event::Swapped { pool_id, fee_asset, .. }) if pool_id == created_pool_id && fee_asset == USDT)
+				});
 				assert_ok!(default_acceptable_computation_error(
 					Tokens::balance(PROJECT_TOKEN, &BOB),
 					unit

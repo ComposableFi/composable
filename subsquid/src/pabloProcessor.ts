@@ -299,7 +299,7 @@ function calculateFeeInQuoteAsset(
     feeAsset: bigint,
     fee: bigint
 ) : Big {
-    // calculated the quote amount based on the exchange rate if the fees are in the base asset
+    // calculate the quote amount based on the exchange rate if the fees are in the base asset
     return feeAsset == quoteAsset ? Big(fee.toString()) : spotPrice.mul(fee.toString());
 }
 

@@ -912,7 +912,7 @@ pub mod pallet {
 				base_amount,
 				quote_amount,
 				fee: fees,
-				fee_asset: fee_asset_id
+				fee_asset: fee_asset_id,
 			});
 			Ok(base_amount)
 		}
