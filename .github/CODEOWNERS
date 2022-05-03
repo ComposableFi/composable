@@ -7,5 +7,6 @@
 docker/ @haroldsphinx @seunlanlege
 runtime/ @seunlanlege
 node/ @seunlanlege
+book/ @0xbrainjar2
 
 Makefile @haroldsphinx
