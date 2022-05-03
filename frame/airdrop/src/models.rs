@@ -13,9 +13,11 @@ pub struct Airdrop<AccountId, Balance, Moment> {
 	/// Amount of the `total_funds` already claimed.
 	pub(crate) claimed_funds: Balance,
 	/// Starting block of the Airdrop.
-	pub(crate) start: AirdropStart<Moment>,
-	/// The mimimum time, in blocks, between recipient claims.
+	pub(crate) start: Option<Moment>,
+	/// The minimum time, in blocks, between recipient claims.
 	pub(crate) schedule: Moment,
+	/// Set `true` if an airdrop has been explicitly disabled.
+	pub(crate) disabled: bool,
 }
 
 /// Funds, and related information, to be claimed by an Airdrop recipient.
@@ -25,17 +27,21 @@ pub struct RecipientFund<Balance, Period> {
 	pub(crate) total: Balance,
 	/// Amount of the `total` this recipient has claimed.
 	pub(crate) claimed: Balance,
-	/// The mimimum time, in blocks, between recipient claims.
+	/// The minimum time, in blocks, between recipient claims.
 	pub(crate) vesting_period: Period,
 	/// If claims by this user will be funded by an external pool.
 	pub(crate) funded_claim: bool,
 }
 
-/// Indicates if an Airdrop should start at a specific block or be started manually.
-#[derive(Clone, Copy, RuntimeDebug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
-pub enum AirdropStart<Moment> {
-    StartAt(Moment),
-    Manual,
+/// Current State of an [`Airdrop`](Airdrop).
+#[derive(Encode, Decode, PartialEq, Copy, Clone, TypeInfo, MaxEncodedLen)]
+pub enum AirdropState {
+	/// The Airdrop has been created but has not started.
+	Created,
+	/// The Airdrop has started. Recipients can claim funds.
+	Enabled,
+	/// The Airdrop has ended. Recipients can **NOT** claim funds.
+	Disabled,
 }
 
 /// Proof that a remote account owns a local recipient account.
