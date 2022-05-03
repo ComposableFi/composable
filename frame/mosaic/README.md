@@ -5,11 +5,11 @@ The Mosaic pallet enables cross-chain and cross-layer transfers
 ## Overview
 
 The Mosaic Pallet implements the interface for the Mosaic Relayer. The Mosaic 
-Relayer will relay liqudity accross chains and layers.
+Relayer will relay liqudity across chains and layers.
 
 As opposed to the EVM-EVM bridge, this pallet takes a different approach and 
 uses mint and burn operations. Because of that it also limits the amount the 
-relayer can mint using a decaying penalty.
+Relayer can mint using a decaying penalty.
 
 ### Decaying Penalty
 
@@ -37,7 +37,7 @@ Additionally, in the event of finality issues on the destination network, the
 Relayer will need to be able to burn funds.
 
 The Relayer's net budget is determined by the set gross budget and the [decay 
-penalty](#decaying-penalty). This budget controlls the minting capabilities of 
+penalty](#decaying-penalty). This budget controls the minting capabilities of 
 the Relayer on this network.
 
 ### Incoming Transactions
