@@ -23,7 +23,6 @@ processor.setDataSource({
   chain: "wss://dali.devnets.composablefinance.ninja/parachain/alice",
 });
 
-// TODO add event handlers for Pablo
 processor.addEventHandler('pablo.PoolCreated', async (ctx) => {
   const event = new PabloPoolCreatedEvent(ctx);
   await processPoolCreatedEvent(ctx, event);
