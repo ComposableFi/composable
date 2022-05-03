@@ -715,7 +715,7 @@ pub mod pallet {
 			{
 				let now = T::TimeProvider::now().as_secs();
 				if let Some(timestamp) = vamm_state.closed {
-					ensure!(now >= Into::<u64>::into(timestamp), Error::<T>::VammIsClosed)
+					ensure!(now < Into::<u64>::into(timestamp), Error::<T>::VammIsClosed)
 				}
 			}
 
