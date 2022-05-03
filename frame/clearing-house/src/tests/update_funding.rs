@@ -1,20 +1,19 @@
-use super::valid_market_config;
+use super::{
+	any_balance, any_price, valid_market_config, MarketConfig, MarketInitializer, RunToBlock,
+};
 use crate::{
 	math::FromUnsigned,
 	mock::{
 		accounts::ALICE,
+		assets::USDC,
 		runtime::{
-			ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime, System as SystemPallet,
-			TestPallet, Timestamp as TimestampPallet, Vamm as VammPallet, MINIMUM_PERIOD_SECONDS,
+			ExtBuilder, MarketId, Origin, Runtime, System as SystemPallet, TestPallet,
+			Timestamp as TimestampPallet, Vamm as VammPallet, MINIMUM_PERIOD_SECONDS,
 		},
 	},
-	tests::{any_price, run_to_block},
 	Error, Event,
 };
-use composable_traits::{
-	clearing_house::ClearingHouse,
-	time::{DurationSeconds, ONE_HOUR},
-};
+use composable_traits::time::{DurationSeconds, ONE_HOUR};
 use frame_support::{assert_noop, assert_ok, pallet_prelude::Hooks};
 use proptest::prelude::*;
 use sp_runtime::FixedI128;
@@ -29,6 +28,23 @@ fn run_for_seconds(seconds: DurationSeconds) {
 	let _ = TimestampPallet::set(Origin::none(), TimestampPallet::now() + 1_000 * seconds);
 	SystemPallet::on_initialize(SystemPallet::block_number());
 	TimestampPallet::on_initialize(SystemPallet::block_number());
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                                Setup
+// ----------------------------------------------------------------------------------------------------
+
+fn with_market_context<R>(
+	ext_builder: ExtBuilder,
+	config: MarketConfig,
+	execute: impl FnOnce(MarketId) -> R,
+) -> R {
+	let mut ext = ext_builder.build().run_to_block(1);
+	let market_id = ext.execute_with(|| {
+		<sp_io::TestExternalities as MarketInitializer>::create_market_helper(Some(config))
+	});
+
+	ext.execute_with(|| execute(market_id))
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -60,67 +76,67 @@ proptest! {
 
 	#[test]
 	fn enforces_funding_frequency(seconds in seconds_lt(ONE_HOUR)) {
-		let funding_frequency = ONE_HOUR;
+		let mut config = valid_market_config();
+		config.funding_frequency = ONE_HOUR;
 
-		ExtBuilder::default().build().execute_with(|| {
-			run_to_block(1);
-			let mut config = valid_market_config();
-			config.funding_frequency = funding_frequency;
-			let market_id = <TestPallet as ClearingHouse>::create_market(&config).unwrap();
+		with_market_context(
+			ExtBuilder::default(),
+			config,
+			|market_id| {
+				run_for_seconds(seconds);
+				assert_noop!(
+					TestPallet::update_funding(Origin::signed(ALICE), market_id),
+					Error::<Runtime>::UpdatingFundingTooEarly
+				);
 
-			run_for_seconds(seconds);
-			assert_noop!(
-				TestPallet::update_funding(Origin::signed(ALICE), market_id),
-				Error::<Runtime>::UpdatingFundingTooEarly
-			);
-
-			run_for_seconds(ONE_HOUR - seconds);
-			assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
-		})
+				run_for_seconds(ONE_HOUR - seconds);
+				assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
+			}
+		);
 	}
 
 	// TODO(0xangelo): what to expect if a lot of time has passed since the last update?
 
 	#[test]
-	fn updates_market_state(new_mark_price in any_price()) {
-		let funding_frequency = ONE_HOUR;
-		let oracle_price = 10_000; // 100 in cents
-		let vamm_price = 100.into();
+	fn updates_market_state(new_vamm_twap in any_price()) {
+		let mut config = valid_market_config();
+		config.funding_frequency = ONE_HOUR;
+		let vamm_twap = 100.into();
 
-		ExtBuilder::default().build().execute_with(|| {
-			run_to_block(1);
-			// Set oracle and vamm TWAPs
-			OraclePallet::set_twap(Some(oracle_price));
-			VammPallet::set_twap(Some(vamm_price));
+		with_market_context(
+			ExtBuilder {
+				oracle_twap: Some(10_000), // 100 in cents
+				vamm_twap: Some(vamm_twap),
+				..Default::default()
+			},
+			config,
+			|market_id| {
+				let old_market = TestPallet::get_market(&market_id).unwrap();
 
-			let mut config = valid_market_config();
-			config.funding_frequency = funding_frequency;
-			let market_id = <TestPallet as ClearingHouse>::create_market(&config).unwrap();
-			let old_market = TestPallet::get_market(&market_id).unwrap();
+				run_for_seconds(ONE_HOUR);
+				// Set new vamm TWAP, leave oracle unchanged
+				VammPallet::set_twap(Some(new_vamm_twap));
 
-			run_for_seconds(ONE_HOUR);
-			// Set new oracle and vamm TWAPs
-			OraclePallet::set_twap(Some(oracle_price));
-			VammPallet::set_twap(Some(new_mark_price));
+				assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
 
-			assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
+				let new_market = TestPallet::get_market(&market_id).unwrap();
+				let delta = FixedI128::from_unsigned(new_vamm_twap).unwrap()
+					- FixedI128::from_unsigned(vamm_twap).unwrap();
+				assert_eq!(new_market.funding_rate_ts, old_market.funding_rate_ts + ONE_HOUR);
+				assert_eq!(
+					new_market.cum_funding_rate,
+					old_market.cum_funding_rate +
+						delta *
+						FixedI128::from((old_market.funding_frequency, old_market.funding_period))
+				);
 
-			let new_market = TestPallet::get_market(&market_id).unwrap();
-			let delta = FixedI128::from_unsigned(new_mark_price).unwrap()
-				- FixedI128::from_unsigned(vamm_price).unwrap();
-			assert_eq!(new_market.funding_rate_ts, old_market.funding_rate_ts + ONE_HOUR);
-			assert_eq!(
-				new_market.cum_funding_rate,
-				old_market.cum_funding_rate +
-					delta *
-					FixedI128::from((old_market.funding_frequency, old_market.funding_period))
-			);
+				SystemPallet::assert_last_event(
+					Event::FundingUpdated {
+						market: market_id, time: new_market.funding_rate_ts
+					}.into(),
+				)
+			}
+		);
 
-			SystemPallet::assert_last_event(
-				Event::FundingUpdated {
-					market: market_id, time: new_market.funding_rate_ts
-				}.into(),
-			)
-		})
 	}
 }

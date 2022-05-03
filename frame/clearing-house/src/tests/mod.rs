@@ -109,6 +109,20 @@ fn valid_market_config() -> MarketConfig {
 //                                           Initializers
 // ----------------------------------------------------------------------------------------------------
 
+trait RunToBlock {
+	fn run_to_block(self, n: u64) -> Self;
+}
+
+impl RunToBlock for sp_io::TestExternalities {
+	fn run_to_block(mut self, n: u64) -> Self {
+		self.execute_with(|| {
+			run_to_block(n);
+		});
+
+		self
+	}
+}
+
 trait MarginInitializer {
 	fn add_margin(self, account_id: &AccountId, asset_id: AssetId, amount: Balance) -> Self;
 }
@@ -175,9 +189,16 @@ prop_compose! {
 
 prop_compose! {
 	// Anywhere from 1 / (1 trillion) to 1 trillion
-	fn any_price()(
-		inner in as_uinner((1, 10_u128.pow(12)))..=as_uinner(10_u128.pow(12))
-	) -> FixedU128 {
+	fn any_balance()(
+		balance in as_uinner((1, 10_u128.pow(12)))..=as_uinner(10_u128.pow(12))
+	) -> Balance {
+		balance
+	}
+}
+
+prop_compose! {
+	// Anywhere from 1 / (1 trillion) to 1 trillion
+	fn any_price()(inner in any_balance()) -> FixedU128 {
 		FixedU128::from_inner(inner)
 	}
 }
