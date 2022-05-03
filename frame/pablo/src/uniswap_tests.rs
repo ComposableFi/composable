@@ -3,6 +3,7 @@ use crate::{
 	common_test_functions::*,
 	mock,
 	mock::{Pablo, *},
+	pallet,
 	PoolConfiguration::ConstantProduct,
 	PoolInitConfiguration,
 };
@@ -311,6 +312,13 @@ fn fees() {
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
 
 		assert_ok!(<Pablo as Amm>::sell(&BOB, pool_id, USDT, bob_usdt, 0_u128, false));
+		let price = pallet::prices_for::<Test>(
+			pool_id,
+			BTC,
+			USDT,
+			1 * unit,
+		).unwrap();
+		assert_eq!(price.spot_price, 46_326_729_585_161_862);
 		let btc_balance = Tokens::balance(BTC, &BOB);
         sp_std::if_std! {
             println!("expected_btc_value {:?}, btc_balance {:?}", expected_btc_value, btc_balance);

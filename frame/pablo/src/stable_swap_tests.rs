@@ -3,6 +3,7 @@ use crate::{
 	common_test_functions::*,
 	mock,
 	mock::{Pablo, *},
+	pallet,
 	PoolConfiguration::StableSwap,
 	PoolInitConfiguration,
 };
@@ -359,7 +360,17 @@ fn fees() {
 		let bob_usdt = 1000 * unit;
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
-		assert_ok!(Pablo::sell(Origin::signed(BOB), created_pool_id, USDT, bob_usdt, 0_u128, false));
+		assert_ok!(Pablo::sell(
+			Origin::signed(BOB),
+			created_pool_id,
+			USDT,
+			bob_usdt,
+			0_u128,
+			false
+		));
+		let price = pallet::prices_for::<Test>(created_pool_id, USDC, USDT, 1 * unit).unwrap();
+		assert_eq!(price.spot_price, 999999999991);
+
 		assert_has_event::<Test, _>(
 			|e| matches!(
 				e.event,
