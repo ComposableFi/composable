@@ -14,6 +14,8 @@ pub trait WeightInfo {
 	fn update_client() -> Weight;
 	fn connection_init() -> Weight;
 	fn conn_try_open() -> Weight;
+	fn conn_open_ack() -> Weight;
+	fn conn_open_confirm() -> Weight;
 	fn create_channel() -> Weight;
 	fn channel_open_try() -> Weight;
 	fn channel_open_ack() -> Weight;
@@ -39,6 +41,14 @@ impl WeightInfo for () {
 	}
 
 	fn conn_try_open() -> Weight {
+		0
+	}
+
+	fn conn_open_ack() -> Weight {
+		0
+	}
+
+	fn conn_open_confirm() -> Weight {
 		0
 	}
 
@@ -114,12 +124,10 @@ pub(crate) fn deliver<T: Config>(msgs: &Vec<Any>) -> Weight {
 						<T as Config>::WeightInfo::connection_init(),
 					ConnectionMsg::ConnectionOpenTry(_) =>
 						<T as Config>::WeightInfo::conn_try_open(),
-					ConnectionMsg::ConnectionOpenAck(_) => {
-						unimplemented!()
-					},
-					ConnectionMsg::ConnectionOpenConfirm(_) => {
-						unimplemented!()
-					},
+					ConnectionMsg::ConnectionOpenAck(_) =>
+						<T as Config>::WeightInfo::conn_open_ack(),
+					ConnectionMsg::ConnectionOpenConfirm(_) =>
+						<T as Config>::WeightInfo::conn_open_confirm(),
 				},
 				Ics26Envelope::Ics4ChannelMsg(msgs) => match msgs {
 					ChannelMsg::ChannelOpenInit(channel_msg) => {

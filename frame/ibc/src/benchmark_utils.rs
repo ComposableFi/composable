@@ -16,7 +16,10 @@ use ibc::{
 		},
 		ics03_connection::{
 			connection::{ConnectionEnd, Counterparty, State as ConnState},
-			msgs::conn_open_try::MsgConnectionOpenTry,
+			msgs::{
+				conn_open_ack::MsgConnectionOpenAck, conn_open_confirm::MsgConnectionOpenConfirm,
+				conn_open_try::MsgConnectionOpenTry,
+			},
 			version::Version as ConnVersion,
 		},
 		ics04_channel::{
@@ -153,7 +156,7 @@ pub fn create_conn_open_try() -> (ConsensusState, MsgConnectionOpenTry) {
 	);
 	avl_tree.insert(
 		client_path.clone(),
-		AnyClientState::Tendermint(client_state).encode_vec().unwrap(),
+		AnyClientState::Tendermint(client_state.clone()).encode_vec().unwrap(),
 	);
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
@@ -200,7 +203,7 @@ pub fn create_conn_open_try() -> (ConsensusState, MsgConnectionOpenTry) {
 		MsgConnectionOpenTry {
 			previous_connection_id: Some(ConnectionId::new(0)),
 			client_id,
-			client_state: None,
+			client_state: Some(AnyClientState::Tendermint(client_state)),
 			counterparty: chain_a_counterparty,
 			counterparty_versions: vec![ConnVersion::default()],
 			proofs: Proofs::new(
@@ -218,6 +221,193 @@ pub fn create_conn_open_try() -> (ConsensusState, MsgConnectionOpenTry) {
 			)
 			.unwrap(),
 			delay_period,
+			signer: Signer::new("relayer"),
+		},
+	)
+}
+
+pub fn create_conn_open_ack() -> (ConsensusState, MsgConnectionOpenAck) {
+	let client_id = ClientId::new(ClientType::Tendermint, 0).unwrap();
+	let counterparty_client_id = ClientId::new(ClientType::Tendermint, 1).unwrap();
+	let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+	let delay_period = core::time::Duration::from_nanos(1000);
+	let chain_b_connection_counterparty =
+		Counterparty::new(client_id.clone(), Some(ConnectionId::new(0)), commitment_prefix.clone());
+	let mut avl_tree = create_avl();
+	let connection_end = ConnectionEnd::new(
+		ConnState::TryOpen,
+		counterparty_client_id.clone(),
+		chain_b_connection_counterparty,
+		vec![ConnVersion::default()],
+		delay_period,
+	);
+
+	let (client_state, cs_state) = create_mock_state();
+	let consensus_path = format!(
+		"{}",
+		ClientConsensusStatePath { client_id: counterparty_client_id.clone(), epoch: 0, height: 1 }
+	)
+	.as_bytes()
+	.to_vec();
+
+	let client_path = format!("{}", ClientStatePath(counterparty_client_id)).as_bytes().to_vec();
+	let path = format!("{}", ConnectionsPath(ConnectionId::new(1))).as_bytes().to_vec();
+	avl_tree.insert(path.clone(), connection_end.encode_vec().unwrap());
+	avl_tree.insert(
+		consensus_path.clone(),
+		AnyConsensusState::Tendermint(cs_state).encode_vec().unwrap(),
+	);
+	avl_tree.insert(
+		client_path.clone(),
+		AnyClientState::Tendermint(client_state.clone()).encode_vec().unwrap(),
+	);
+	let root = match avl_tree.root_hash().unwrap().clone() {
+		Hash::Sha256(root) => root.to_vec(),
+		Hash::None => panic!("Failed to generate root hash"),
+	};
+	let proof = avl_tree.get_proof(&*path).unwrap();
+	let consensus_proof = avl_tree.get_proof(&*consensus_path).unwrap();
+	let client_proof = avl_tree.get_proof(&*client_path).unwrap();
+	avl_tree.insert("ibc".as_bytes().to_vec(), root);
+	let root = match avl_tree.root_hash().unwrap().clone() {
+		Hash::Sha256(root) => root.to_vec(),
+		Hash::None => panic!("Failed to generate root hash"),
+	};
+	let proof_0 = avl_tree.get_proof("ibc".as_bytes()).unwrap();
+	let mut buf = Vec::new();
+	prost::Message::encode(&proof, &mut buf).unwrap();
+	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
+	buf.clear();
+	prost::Message::encode(&proof_0, &mut buf).unwrap();
+	let proof_0: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
+	buf.clear();
+	prost::Message::encode(&consensus_proof, &mut buf).unwrap();
+	let consensus_proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
+	buf.clear();
+	prost::Message::encode(&client_proof, &mut buf).unwrap();
+	let client_proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
+	let merkle_proof = MerkleProof { proofs: vec![proof, proof_0.clone()] };
+	buf.clear();
+	prost::Message::encode(&merkle_proof, &mut buf).unwrap();
+	let consensus_proof = MerkleProof { proofs: vec![consensus_proof, proof_0.clone()] };
+	let client_proof = MerkleProof { proofs: vec![client_proof, proof_0] };
+	let mut consensus_buf = Vec::new();
+	let mut client_buf = Vec::new();
+	prost::Message::encode(&consensus_proof, &mut consensus_buf).unwrap();
+	prost::Message::encode(&client_proof, &mut client_buf).unwrap();
+	let header = create_tendermint_header();
+	let cs_state = ConsensusState {
+		timestamp: header.signed_header.header.time,
+		root: root.into(),
+		next_validators_hash: header.signed_header.header.next_validators_hash,
+	};
+	(
+		cs_state,
+		MsgConnectionOpenAck {
+			connection_id: ConnectionId::new(0),
+			counterparty_connection_id: ConnectionId::new(1),
+			client_state: Some(AnyClientState::Tendermint(client_state)),
+			proofs: Proofs::new(
+				buf.try_into().unwrap(),
+				Some(client_buf.try_into().unwrap()),
+				Some(
+					ibc::proofs::ConsensusProof::new(
+						consensus_buf.try_into().unwrap(),
+						Height::new(0, 1),
+					)
+					.unwrap(),
+				),
+				None,
+				Height::new(0, 2),
+			)
+			.unwrap(),
+			version: ConnVersion::default(),
+			signer: Signer::new("relayer"),
+		},
+	)
+}
+
+pub fn create_conn_open_confirm() -> (ConsensusState, MsgConnectionOpenConfirm) {
+	let client_id = ClientId::new(ClientType::Tendermint, 0).unwrap();
+	let counterparty_client_id = ClientId::new(ClientType::Tendermint, 1).unwrap();
+	let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+	let delay_period = core::time::Duration::from_nanos(1000);
+	let chain_b_connection_counterparty =
+		Counterparty::new(client_id.clone(), Some(ConnectionId::new(0)), commitment_prefix.clone());
+	let mut avl_tree = create_avl();
+	let connection_end = ConnectionEnd::new(
+		ConnState::Open,
+		counterparty_client_id.clone(),
+		chain_b_connection_counterparty,
+		vec![ConnVersion::default()],
+		delay_period,
+	);
+
+	let (.., cs_state) = create_mock_state();
+	let consensus_path = format!(
+		"{}",
+		ClientConsensusStatePath { client_id: counterparty_client_id.clone(), epoch: 0, height: 1 }
+	)
+	.as_bytes()
+	.to_vec();
+
+	let path = format!("{}", ConnectionsPath(ConnectionId::new(1))).as_bytes().to_vec();
+	avl_tree.insert(path.clone(), connection_end.encode_vec().unwrap());
+	avl_tree.insert(
+		consensus_path.clone(),
+		AnyConsensusState::Tendermint(cs_state).encode_vec().unwrap(),
+	);
+	let root = match avl_tree.root_hash().unwrap().clone() {
+		Hash::Sha256(root) => root.to_vec(),
+		Hash::None => panic!("Failed to generate root hash"),
+	};
+	let proof = avl_tree.get_proof(&*path).unwrap();
+	let consensus_proof = avl_tree.get_proof(&*consensus_path).unwrap();
+	avl_tree.insert("ibc".as_bytes().to_vec(), root);
+	let root = match avl_tree.root_hash().unwrap().clone() {
+		Hash::Sha256(root) => root.to_vec(),
+		Hash::None => panic!("Failed to generate root hash"),
+	};
+	let proof_0 = avl_tree.get_proof("ibc".as_bytes()).unwrap();
+	let mut buf = Vec::new();
+	prost::Message::encode(&proof, &mut buf).unwrap();
+	let proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
+	buf.clear();
+	prost::Message::encode(&proof_0, &mut buf).unwrap();
+	let proof_0: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
+	buf.clear();
+	prost::Message::encode(&consensus_proof, &mut buf).unwrap();
+	let consensus_proof: CommitmentProof = prost::Message::decode(buf.as_ref()).unwrap();
+	let merkle_proof = MerkleProof { proofs: vec![proof, proof_0.clone()] };
+	buf.clear();
+	prost::Message::encode(&merkle_proof, &mut buf).unwrap();
+	let consensus_proof = MerkleProof { proofs: vec![consensus_proof, proof_0.clone()] };
+	let mut consensus_buf = Vec::new();
+	prost::Message::encode(&consensus_proof, &mut consensus_buf).unwrap();
+	let header = create_tendermint_header();
+	let cs_state = ConsensusState {
+		timestamp: header.signed_header.header.time,
+		root: root.into(),
+		next_validators_hash: header.signed_header.header.next_validators_hash,
+	};
+	(
+		cs_state,
+		MsgConnectionOpenConfirm {
+			connection_id: ConnectionId::new(0),
+			proofs: Proofs::new(
+				buf.try_into().unwrap(),
+				None,
+				Some(
+					ibc::proofs::ConsensusProof::new(
+						consensus_buf.try_into().unwrap(),
+						Height::new(0, 1),
+					)
+					.unwrap(),
+				),
+				None,
+				Height::new(0, 2),
+			)
+			.unwrap(),
 			signer: Signer::new("relayer"),
 		},
 	)

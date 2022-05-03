@@ -23,8 +23,9 @@ use ibc::{
 			connection::{ConnectionEnd, Counterparty, State},
 			context::{ConnectionKeeper, ConnectionReader},
 			msgs::{
-				conn_open_init,
-				conn_open_try::{MsgConnectionOpenTry, TYPE_URL as CONN_TRY_OPEN},
+				conn_open_ack::TYPE_URL as CONN_OPEN_ACK_TYPE_URL,
+				conn_open_confirm::TYPE_URL as CONN_OPEN_CONFIRM_TYPE_URL, conn_open_init,
+				conn_open_try::TYPE_URL as CONN_TRY_OPEN_TYPE_URL,
 			},
 			version::Version as ConnVersion,
 		},
@@ -170,11 +171,86 @@ benchmarks! {
 		let (cs_state, value) = create_conn_open_try();
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
 		let caller: T::AccountId = whitelisted_caller();
-		let msg = Any { type_url: CONN_TRY_OPEN.as_bytes().to_vec(), value: value.encode_vec().unwrap() };
+		let msg = Any { type_url: CONN_TRY_OPEN_TYPE_URL.as_bytes().to_vec(), value: value.encode_vec().unwrap() };
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
 	verify {
 		let connection_end = ConnectionReader::connection_end(&ctx, &ConnectionId::new(0)).unwrap();
 		assert_eq!(connection_end.state, State::TryOpen);
+	}
+
+	// Commenting this out pending bug-fix in ibc-rs
+	// connection open ack
+	// conn_open_ack {
+	// 	let mut ctx = routing::Context::<T>::new();
+	// 	let now: <T as pallet_timestamp::Config>::Moment = 1650894363u64.saturating_mul(1000);
+	// 	pallet_timestamp::Pallet::<T>::set_timestamp(now);
+	// 	let (mock_client_state, mock_cs_state) = create_mock_state();
+	// 	let mock_client_state = AnyClientState::Tendermint(mock_client_state);
+	// 	let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
+	// 	let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
+	// 	let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
+	// 	ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
+	// 	ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
+	// 	ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
+	//
+	// 	let connection_id = ConnectionId::new(0);
+	// 	let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+	// 	let delay_period = core::time::Duration::from_nanos(1000);
+	// 	let connection_counterparty = Counterparty::new(counterparty_client_id, Some(ConnectionId::new(1)), commitment_prefix);
+	// 	let connection_end = ConnectionEnd::new(State::Init, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
+	//
+	// 	ctx.store_connection(connection_id.clone(), &connection_end).unwrap();
+	// 	ctx.store_connection_to_client(connection_id, &client_id).unwrap();
+	//
+	// 	let value = create_client_update().encode_vec().unwrap();
+	// 	let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
+	// 	ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
+	//
+	// 	let (cs_state, value) = create_conn_open_ack();
+	// 	ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
+	// 	let caller: T::AccountId = whitelisted_caller();
+	// 	let msg = Any { type_url: CONN_OPEN_ACK_TYPE_URL.as_bytes().to_vec(), value: value.encode_vec().unwrap() };
+	// }: deliver(RawOrigin::Signed(caller), vec![msg])
+	// verify {
+	// 	let connection_end = ConnectionReader::connection_end(&ctx, &ConnectionId::new(0)).unwrap();
+	// 	assert_eq!(connection_end.state, State::Open);
+	// }
+
+	// connection open confirm
+	conn_open_confirm {
+		let mut ctx = routing::Context::<T>::new();
+		let now: <T as pallet_timestamp::Config>::Moment = 1650894363u64.saturating_mul(1000);
+		pallet_timestamp::Pallet::<T>::set_timestamp(now);
+		let (mock_client_state, mock_cs_state) = create_mock_state();
+		let mock_client_state = AnyClientState::Tendermint(mock_client_state);
+		let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
+		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
+		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
+		ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
+		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
+		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
+
+		let connection_id = ConnectionId::new(0);
+		let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+		let delay_period = core::time::Duration::from_nanos(1000);
+		let connection_counterparty = Counterparty::new(counterparty_client_id, Some(ConnectionId::new(1)), commitment_prefix);
+		let connection_end = ConnectionEnd::new(State::TryOpen, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
+
+		ctx.store_connection(connection_id.clone(), &connection_end).unwrap();
+		ctx.store_connection_to_client(connection_id, &client_id).unwrap();
+
+		let value = create_client_update().encode_vec().unwrap();
+		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
+		ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
+
+		let (cs_state, value) = create_conn_open_confirm();
+		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
+		let caller: T::AccountId = whitelisted_caller();
+		let msg = Any { type_url: CONN_OPEN_CONFIRM_TYPE_URL.as_bytes().to_vec(), value: value.encode_vec().unwrap() };
+	}: deliver(RawOrigin::Signed(caller), vec![msg])
+	verify {
+		let connection_end = ConnectionReader::connection_end(&ctx, &ConnectionId::new(0)).unwrap();
+		assert_eq!(connection_end.state, State::Open);
 	}
 
 	// create channel
