@@ -250,7 +250,8 @@ pub mod pallet {
 		}
 
 		/// Populate pallet by adding more rewards.
-		/// Can be called multiple times. Idempotent.
+		/// Can be called multiple times. If an remote account already has a reward, it will be
+        /// replaced by the new reward value.
 		/// Can only be called before `initialize`.
 		#[pallet::weight(<T as Config>::WeightInfo::populate(rewards.len() as u32))]
 		#[transactional]
