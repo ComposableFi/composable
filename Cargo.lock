@@ -6909,6 +6909,7 @@ dependencies = [
  "frame-system",
  "log 0.4.16",
  "pallet-balances",
+ "pallet-currency-factory",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
@@ -7777,6 +7778,7 @@ name = "pallet-oracle"
 version = "1.0.0"
 dependencies = [
  "composable-support",
+ "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
@@ -7786,6 +7788,7 @@ dependencies = [
  "pallet-balances",
  "parity-scale-codec",
  "parking_lot 0.12.0",
+ "proptest",
  "scale-info",
  "serde",
  "serde_json",

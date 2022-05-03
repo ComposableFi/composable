@@ -207,6 +207,9 @@ pub mod pallet {
 			base_asset: T::AssetId,
 			/// Id of asset used as output.
 			quote_asset: T::AssetId,
+			/// Id of the asset for fee. Depending on the pool type the asset ID of the fee can be
+			/// either the base or the quote asset ID.
+			fee_asset: T::AssetId,
 			/// Amount of base asset received.
 			base_amount: T::Balance,
 			/// Amount of quote asset provided.
@@ -830,7 +833,7 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let (base_amount, fees) = match pool {
+			let (base_amount, fees, fee_asset_id) = match pool {
 				PoolConfiguration::StableSwap(info) => {
 					// /!\ NOTE(hussein-aitlahcen): after this check, do not use pool.pair as the
 					// provided pair might have been swapped
@@ -854,7 +857,7 @@ pub mod pallet {
 						base_amount_excluding_fees,
 						false,
 					)?;
-					(base_amount_excluding_fees, lp_fees)
+					(base_amount_excluding_fees, lp_fees, pair.base)
 				},
 				PoolConfiguration::ConstantProduct(info) => {
 					// NOTE: lp_fees includes owner_fees.
@@ -879,7 +882,7 @@ pub mod pallet {
 					// NOTE(hussein-aitlance): no need to keep alive the pool account
 					T::Assets::transfer(pair.quote, who, &info.owner, owner_fees, false)?;
 					T::Assets::transfer(pair.base, &pool_account, who, base_amount, false)?;
-					(base_amount, lp_fees)
+					(base_amount, lp_fees, pair.quote)
 				},
 				PoolConfiguration::LiquidityBootstrapping(info) => {
 					let current_block = frame_system::Pallet::<T>::current_block_number();
@@ -897,7 +900,7 @@ pub mod pallet {
 					T::Assets::transfer(pair.quote, who, &pool_account, quote_amount, keep_alive)?;
 					// NOTE(hussein-aitlance): no need to keep alive the pool account
 					T::Assets::transfer(pair.base, &pool_account, who, base_amount, false)?;
-					(base_amount, fees)
+					(base_amount, fees, pair.quote)
 				},
 			};
 			Self::update_twap(pool_id)?;
@@ -909,6 +912,7 @@ pub mod pallet {
 				base_amount,
 				quote_amount,
 				fee: fees,
+				fee_asset: fee_asset_id,
 			});
 			Ok(base_amount)
 		}

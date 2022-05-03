@@ -3,6 +3,7 @@ use crate::{
 	common_test_functions::*,
 	mock,
 	mock::{Pablo, *},
+	pallet,
 	PoolConfiguration::StableSwap,
 	PoolInitConfiguration,
 };
@@ -347,7 +348,7 @@ fn fees() {
 		let initial_usdc = 1_000_000_000_000_u128 * unit;
 		let lp_fee = Permill::from_float(0.05);
 		let owner_fee = Permill::from_float(0.01); // 10% of lp fees goes to pool owner
-		let pool_id = create_stable_swap_pool(
+		let created_pool_id = create_stable_swap_pool(
 			USDC,
 			USDT,
 			initial_usdc,
@@ -359,7 +360,22 @@ fn fees() {
 		let bob_usdt = 1000 * unit;
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
-		assert_ok!(Pablo::sell(Origin::signed(BOB), pool_id, USDT, bob_usdt, 0_u128, false));
+		assert_ok!(Pablo::sell(
+			Origin::signed(BOB),
+			created_pool_id,
+			USDT,
+			bob_usdt,
+			0_u128,
+			false
+		));
+		let price = pallet::prices_for::<Test>(created_pool_id, USDC, USDT, 1 * unit).unwrap();
+		assert_eq!(price.spot_price, 999999999991);
+
+		assert_has_event::<Test, _>(
+			|e| matches!(
+				e.event,
+				mock::Event::Pablo(crate::Event::Swapped { pool_id, fee_asset, .. }) if pool_id == created_pool_id && fee_asset == USDC),
+		);
 		let usdc_balance = Tokens::balance(USDC, &BOB);
 		// received usdc should bob_usdt - lp_fee
 		assert_ok!(acceptable_computation_error(

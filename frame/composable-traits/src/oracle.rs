@@ -40,6 +40,7 @@ pub trait Oracle {
 	type MaxAnswerBound: Get<u32>;
 	// type BlockNumber: From<u64>;
 	// type StalePrice: Get<Self::BlockNumber>;
+
 	/// Quote the `amount` of `asset_id` in normalized currency unit cent. Default is USDT Cent.
 	/// Which is 0.01 of USDT. `Result::Err` is returned if `asset_id` not supported or price
 	/// information not available.
@@ -95,7 +96,7 @@ pub trait Oracle {
 		weighting: Vec<Self::Balance>,
 	) -> Result<Self::Balance, DispatchError>;
 
-	/// How much of `quote` for unit `base` Oracle suggests to take.  
+	/// How much of `quote` for unit `base` Oracle suggests to take.
 	/// Up to oracle how it decides ratio.
 	/// If there is no direct trading pair, can estimate via common pair (to which all currencies
 	/// are normalized). General formula
@@ -109,7 +110,7 @@ pub trait Oracle {
 	fn get_ratio(pair: CurrencyPair<Self::AssetId>) -> Result<Ratio, DispatchError>;
 
 	/// Given `asset_id` and `amount` of price asset.
-	/// Returns what amount of  `asset_id` will be required to be same price as `amount` of
+	/// Returns what amount of `asset_id` will be required to be same price as `amount` of
 	/// normalized currency
 	/// `amount` - in smallest units
 	fn get_price_inverse(

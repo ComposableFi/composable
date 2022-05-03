@@ -75,6 +75,7 @@ composable-support = { path = '../../frame/composable-support', default-features
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
 crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false }
 currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
+dex-router = { package = "pallet-dex-router", path = "../../frame/dex-router", default-features = false }
 dutch-auction = { package = "pallet-dutch-auction", path = "../../frame/dutch-auction", default-features = false }
 governance-registry = { package = "pallet-governance-registry", path = "../../frame/governance-registry", default-features = false }
 lending = { package = "pallet-lending", path = "../../frame/lending", default-features = false }
@@ -82,7 +83,6 @@ liquidations = { package = "pallet-liquidations", path = "../../frame/liquidatio
 mosaic = { package = "pallet-mosaic", path = "../../frame/mosaic", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false }
 pablo = { package = "pallet-pablo", path = "../../frame/pablo", default-features = false }
-dex-router = { package = "pallet-dex-router", path = "../../frame/dex-router", default-features = false}
 primitives = { path = "../primitives", default-features = false }
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
@@ -258,6 +258,6 @@ std = [
   "liquidations/std",
   "simnode-apis/std",
   "pablo/std",
-  "dex-router/std"
+  "dex-router/std",
 ]
 wasm-builder = []

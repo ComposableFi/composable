@@ -1,7 +1,7 @@
 //! Testing custom XCMP transactions call
 
 use crate::{
-	helpers::{assert_above_deposit, enough_weigth, sibling_account, simtest},
+	helpers::{assert_above_deposit, enough_weight, sibling_account, simtest},
 	kusama_test_net::*,
 	prelude::*,
 };
@@ -33,7 +33,7 @@ fn dex() {
 	let any_asset = CurrencyId::kUSD;
 	let sibling_non_native_amount = assert_above_deposit(any_asset, 100_000_000_000);
 	let some_native_amount = 1_000_000_000;
-	let this_liveness_native_amount = enough_weigth();
+	let this_liveness_native_amount = enough_weight();
 	let this_native_asset = CurrencyId::PICA;
 
 	let user = AccountId::from(ALICE);

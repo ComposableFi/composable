@@ -46,6 +46,7 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+composable-traits = { path = "../composable-traits", features = ["test-utils"] }
 hex-literal = "0.3.3"
 once_cell = "1.8.0"
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b5d4ce1d08fb54c0007c2055653892d2c93a92e" }

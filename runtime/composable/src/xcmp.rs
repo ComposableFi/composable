@@ -9,6 +9,7 @@ use composable_traits::{
 	assets::{RemoteAssetRegistry, XcmAssetLocation},
 	currency::LocalAssets,
 };
+use composable_traits::xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation};
 use core::marker::PhantomData;
 use cumulus_primitives_core::{IsSystem, ParaId};
 use frame_support::{
