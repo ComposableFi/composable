@@ -348,7 +348,6 @@ fn can_create_valid_market() {
 		);
 
 		Tokens::mint_into(BORROW_ASSET_ID, &*ALICE, INITIAL_BORROW_ASSET_AMOUNT).unwrap();
-        
         let manager = *ALICE;
 		let origin = Origin::signed(manager);
         let input = config.clone().try_into_validated().unwrap();
@@ -361,11 +360,10 @@ fn can_create_valid_market() {
 			Market creation result was {:#?}",
 			should_be_created,
 		);
-    
         // Check if corresponded event was emitted 
 		let currency_pair = input.currency_pair;
         // Market id and vault id values are defined via previous logic.
-        let market_id = pallet_lending::pallet::MarketIndex::new(1); 
+        let market_id = pallet_lending::pallet::MarketIndex::new(1);
         let vault_id = 1;
 	    let market_created_event = crate::Event::MarketCreated {market_id, vault_id, manager, currency_pair};
         System::assert_has_event(Event::Lending(market_created_event));
