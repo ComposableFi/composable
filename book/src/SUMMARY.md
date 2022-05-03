@@ -39,6 +39,7 @@
     - [Apollo: The Oracle Pallet](./products/the-picasso-parachain/the-picasso-tech-stack/apollo.md)
     - [Cubic: The Vaults Pallet](./products/the-picasso-parachain/the-picasso-tech-stack/cubic.md)
     - [Angular Finance: The Isolated Lending Pair Pallet](./products/the-picasso-parachain/the-picasso-tech-stack/angular.md)
+  - [KSM Purchase Log](./products/the-picasso-parachain/ksm-purchase-log.md)
 - [The Composable Parachain](./products/the-composable-parachain.md)
   - [Composable Overview](./products/the-composable-parachain/composable-overview.md)
   
