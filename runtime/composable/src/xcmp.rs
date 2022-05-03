@@ -6,7 +6,6 @@ use super::*; // recursive dependency onto runtime
 use codec::{Decode, Encode};
 use common::xcmp::CurrencyIdConvert;
 use composable_traits::{
-	assets::{RemoteAssetRegistry, XcmAssetLocation},
 	currency::LocalAssets,
 };
 use composable_traits::xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation};
