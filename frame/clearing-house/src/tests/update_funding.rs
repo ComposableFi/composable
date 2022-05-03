@@ -7,16 +7,19 @@ use crate::{
 		accounts::ALICE,
 		assets::USDC,
 		runtime::{
-			ExtBuilder, MarketId, Origin, Runtime, System as SystemPallet, TestPallet,
-			Timestamp as TimestampPallet, Vamm as VammPallet, MINIMUM_PERIOD_SECONDS,
+			ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime, System as SystemPallet,
+			TestPallet, Timestamp as TimestampPallet, Vamm as VammPallet, MINIMUM_PERIOD_SECONDS,
 		},
 	},
-	Error, Event,
+	Direction, Error, Event,
 };
-use composable_traits::time::{DurationSeconds, ONE_HOUR};
+use composable_traits::{
+	clearing_house::ClearingHouse,
+	time::{DurationSeconds, ONE_HOUR},
+};
 use frame_support::{assert_noop, assert_ok, pallet_prelude::Hooks};
 use proptest::prelude::*;
-use sp_runtime::FixedI128;
+use sp_runtime::{FixedI128, FixedU128};
 
 fn run_for_seconds(seconds: DurationSeconds) {
 	if SystemPallet::block_number() > 0 {
@@ -79,64 +82,56 @@ proptest! {
 		let mut config = valid_market_config();
 		config.funding_frequency = ONE_HOUR;
 
-		with_market_context(
-			ExtBuilder::default(),
-			config,
-			|market_id| {
-				run_for_seconds(seconds);
-				assert_noop!(
-					TestPallet::update_funding(Origin::signed(ALICE), market_id),
-					Error::<Runtime>::UpdatingFundingTooEarly
-				);
+		with_market_context(ExtBuilder::default(), config, |market_id| {
+			run_for_seconds(seconds);
+			assert_noop!(
+				TestPallet::update_funding(Origin::signed(ALICE), market_id),
+				Error::<Runtime>::UpdatingFundingTooEarly
+			);
 
-				run_for_seconds(ONE_HOUR - seconds);
-				assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
-			}
-		);
+			run_for_seconds(ONE_HOUR - seconds);
+			assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
+		});
 	}
 
 	// TODO(0xangelo): what to expect if a lot of time has passed since the last update?
 
 	#[test]
-	fn updates_market_state(new_vamm_twap in any_price()) {
+	fn updates_market_state(vamm_twap in any_price()) {
 		let mut config = valid_market_config();
 		config.funding_frequency = ONE_HOUR;
-		let vamm_twap = 100.into();
+		let ext_builder = ExtBuilder {
+			..Default::default()
+		};
 
-		with_market_context(
-			ExtBuilder {
-				oracle_twap: Some(10_000), // 100 in cents
-				vamm_twap: Some(vamm_twap),
-				..Default::default()
-			},
-			config,
-			|market_id| {
-				let old_market = TestPallet::get_market(&market_id).unwrap();
+		with_market_context(ext_builder, config, |market_id| {
+			let old_market = TestPallet::get_market(&market_id).unwrap();
 
-				run_for_seconds(ONE_HOUR);
-				// Set new vamm TWAP, leave oracle unchanged
-				VammPallet::set_twap(Some(new_vamm_twap));
+			run_for_seconds(ONE_HOUR);
+			// Set new TWAPs
+			OraclePallet::set_twap(Some(10_000)); // 100 in cents
+			let oracle_twap: FixedU128 = 100.into();
+			VammPallet::set_twap(Some(vamm_twap));
 
-				assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
+			assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
 
-				let new_market = TestPallet::get_market(&market_id).unwrap();
-				let delta = FixedI128::from_unsigned(new_vamm_twap).unwrap()
-					- FixedI128::from_unsigned(vamm_twap).unwrap();
-				assert_eq!(new_market.funding_rate_ts, old_market.funding_rate_ts + ONE_HOUR);
-				assert_eq!(
-					new_market.cum_funding_rate,
-					old_market.cum_funding_rate +
-						delta *
-						FixedI128::from((old_market.funding_frequency, old_market.funding_period))
-				);
+			let new_market = TestPallet::get_market(&market_id).unwrap();
+			let delta = FixedI128::from_unsigned(vamm_twap).unwrap()
+				- FixedI128::from_unsigned(oracle_twap).unwrap();
+			assert_eq!(new_market.funding_rate_ts, old_market.funding_rate_ts + ONE_HOUR);
+			assert_eq!(
+				new_market.cum_funding_rate,
+				old_market.cum_funding_rate +
+					delta *
+					FixedI128::from((old_market.funding_frequency, old_market.funding_period))
+			);
 
-				SystemPallet::assert_last_event(
-					Event::FundingUpdated {
-						market: market_id, time: new_market.funding_rate_ts
-					}.into(),
-				)
-			}
-		);
+			SystemPallet::assert_last_event(
+				Event::FundingUpdated {
+					market: market_id, time: new_market.funding_rate_ts
+				}.into(),
+			)
+		});
 
 	}
 }
