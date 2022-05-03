@@ -60,6 +60,7 @@ pub fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 	frame_system::Pallet::<T>::assert_last_event(generic_event.into());
 }
 
+/// Create a mock avl implementation that can be used to mock tendermint's iavl tree.
 fn create_avl() -> simple_iavl::avl::AvlTree<Vec<u8>, Vec<u8>> {
 	let mut avl_tree = simple_iavl::avl::AvlTree::new();
 	// Insert some dummy data in tree
@@ -70,6 +71,10 @@ fn create_avl() -> simple_iavl::avl::AvlTree<Vec<u8>, Vec<u8>> {
 	avl_tree
 }
 
+/// Creates a tendermint header
+/// Light signed header bytes obtained from
+/// `tendermint_testgen::LightBlock::new_default_with_time_and_chain_id("test-chain".to_string(),
+/// Time::now(), 2).generate().unwrap().signed_header.encode_vec();`
 fn create_tendermint_header() -> Header {
 	let raw_validator_set = hex_literal::hex!("0a3c0a14a6e7b6810df8120580f2a81710e228f454f99c9712220a2050c4a5871ad3379f2879d12cef750d1211633283a9c3730238e6ddf084db4c8a18320a3c0a14c7832263600476fd6ff4c5cb0a86080d0e5f48b212220a20ebe80b7cadea277ac05fb85c7164fe15ebd6873c4a74b3296a462a1026fd9b0f18321864").to_vec();
 	let raw_signed_header = hex_literal::hex!("0a9c010a02080b120a746573742d636861696e1802220c08abc49a930610a8f39fc1014220e4d2147e1c5994daf958eafa8413706f1c75e1a2813a2cd0d32876a25d9bcf984a20e4d2147e1c5994daf958eafa8413706f1c75e1a2813a2cd0d32876a25d9bcf985220e4d2147e1c5994daf958eafa8413706f1c75e1a2813a2cd0d32876a25d9bcf987214a6e7b6810df8120580f2a81710e228f454f99c9712a202080210011a480a20afc35ec1d9620052c6d71122cb5504ee68802184023a217547ca2248df902fbb122408011220afc35ec1d9620052c6d71122cb5504ee68802184023a217547ca2248df902fbb226808021214a6e7b6810df8120580f2a81710e228f454f99c971a0c08abc49a930610a8f39fc1012240a91380fe3cde0147994b82a0b00b28bd82870df38b2cad5b4ba25c9a4c833cd50f3143ffaa4e924eccd143639fb3decf6b94570aff2c50f1346e88d06555fd0d226808021214c7832263600476fd6ff4c5cb0a86080d0e5f48b21a0c08abc49a930610a8f39fc10122407e2e349d9a0adfc3564654fcf88d328cf50a13179cc5ddaf87dd0e1abd4b45685312def0affbae29e8b7882af3b76b056f81b701bb2e43769fb63fe3696b090f").to_vec();
@@ -86,6 +91,10 @@ fn create_tendermint_header() -> Header {
 
 pub fn create_mock_state() -> (TendermintClientState, ConsensusState) {
 	let spec = simple_iavl::avl::get_proof_spec();
+	// The tendermint light client requires two proof specs one for the iavl tree used to
+	// in constructing the ibc commitment root and another for the tendermint state tree
+	// For the benchmarks we use the same spec for both so we can use one single iavl tree
+	// to generate both proofs.
 	let proof_specs = ProofSpecs::from(vec![spec.clone(), spec]);
 	let mock_client_state = TendermintClientState::new(
 		ChainId::from_string("test-chain"),
@@ -117,6 +126,13 @@ pub fn create_client_update() -> MsgUpdateAnyClient {
 		signer: Signer::new("relayer"),
 	}
 }
+// Proof generation process for all tendermint benchmarks
+// The process is as follows, we insert the all the required ibc paths and values needed to generate
+// the proof in the context of the benchmark in question, then we extract the root from the tree and
+// also extract a proof for any key we need After this we insert the extracted root inside the avl
+// tree as the value for the commitment prefix. We then get a proof for the commitment prefix.
+// We then extract the new root and use this as the commitment root
+// This new root is then set as the ibc commitment root in the light client consensus state.
 
 // Creates a MsgConnectionOpenTry from a tendermint chain submitted to a substrate chain
 pub fn create_conn_open_try() -> (ConsensusState, MsgConnectionOpenTry) {
