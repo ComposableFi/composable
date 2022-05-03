@@ -316,6 +316,8 @@ pub mod pallet {
 		TradeExtrapolatesMaximumSupportedAmount,
 		/// Tried to perform operation agains a closed Vamm.
 		VammIsClosed,
+		/// Tried to swap assets but the amount returned was less than the minimum expected.
+		SwappedAmountLessThanMinimumLimit,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -559,6 +561,12 @@ pub mod pallet {
 				AssetType::Quote => Self::swap_quote_asset(config, &mut vamm_state),
 				AssetType::Base => Self::swap_base_asset(config, &mut vamm_state),
 			}?;
+
+			// Ensure swapped amount is valid
+			ensure!(
+				amount_swapped >= config.output_amount_limit,
+				Error::<T>::SwappedAmountLessThanMinimumLimit
+			);
 
 			// Update runtime storage
 			VammMap::<T>::insert(&config.vamm_id, vamm_state);
