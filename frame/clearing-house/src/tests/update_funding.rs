@@ -8,7 +8,7 @@ use crate::{
 		},
 	},
 	tests::run_to_block,
-	Error,
+	Error, Event,
 };
 use composable_traits::{
 	clearing_house::ClearingHouse,
@@ -114,6 +114,8 @@ fn updates_market_state() {
 					FixedI128::from((old_market.funding_frequency, old_market.funding_period))
 		);
 
-		// TODO(0xangelo): expect event
+		SystemPallet::assert_last_event(
+			Event::FundingUpdated { market: market_id, time: new_market.funding_rate_ts }.into(),
+		)
 	})
 }

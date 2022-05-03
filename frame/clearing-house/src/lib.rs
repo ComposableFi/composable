@@ -137,6 +137,7 @@ pub mod pallet {
 		clearing_house::{ClearingHouse, Instruments},
 		defi::DeFiComposableConfig,
 		oracle::Oracle,
+		time::DurationSeconds,
 		vamm::{AssetType, Direction as VammDirection, SwapConfig, SwapSimulationConfig, Vamm},
 	};
 	use frame_support::{
@@ -355,6 +356,13 @@ pub mod pallet {
 			quote: T::Balance,
 			/// Amount of base asset exchanged
 			base: T::Balance,
+		},
+		/// Market funding rate successfully updated
+		FundingUpdated {
+			/// Id of the market
+			market: T::MarketId,
+			/// Timestamp of the funding rate update
+			time: DurationSeconds,
 		},
 	}
 
