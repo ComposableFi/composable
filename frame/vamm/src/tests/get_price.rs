@@ -4,7 +4,7 @@ use crate::{
 	tests::{min_max_reserve, Decimal, RUN_CASES},
 };
 use composable_traits::vamm::{AssetType, Vamm as VammTrait};
-use frame_support::{assert_err, assert_ok};
+use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 use sp_runtime::ArithmeticError;
 
@@ -28,13 +28,13 @@ proptest! {
 			let quote_peg = quote_asset_reserves.checked_mul(peg_multiplier);
 
 			if quote_peg.is_none() {
-				assert_err!(
+				assert_noop!(
 					TestPallet::get_price(0, AssetType::Base),
-					ArithmeticError::Overflow)
+					ArithmeticError::Overflow);
 			} else if quote_peg.unwrap().checked_div(base_asset_reserves).is_none() {
-				assert_err!(
+				assert_noop!(
 					TestPallet::get_price(0, AssetType::Base),
-					ArithmeticError::DivisionByZero)
+					ArithmeticError::DivisionByZero);
 			} else {
 				assert_ok!(
 					TestPallet::get_price(0, AssetType::Base),
@@ -64,13 +64,13 @@ proptest! {
 			let quote_peg = quote_asset_reserves.checked_mul(peg_multiplier);
 
 			if quote_peg.is_none() {
-				assert_err!(
+				assert_noop!(
 					TestPallet::get_price(0, AssetType::Quote),
-					ArithmeticError::Overflow)
+					ArithmeticError::Overflow);
 			} else if quote_peg.unwrap().checked_div(base_asset_reserves).is_none() {
-				assert_err!(
+				assert_noop!(
 					TestPallet::get_price(0, AssetType::Quote),
-					ArithmeticError::DivisionByZero)
+					ArithmeticError::DivisionByZero);
 			} else {
 				assert_ok!(
 					TestPallet::get_price(0, AssetType::Quote),

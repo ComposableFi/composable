@@ -1,13 +1,13 @@
 use crate::{
 	mock::{ExtBuilder, MockRuntime, TestPallet},
-	pallet::{Error, VammMap},
+	pallet::Error,
 	tests::{
 		balance_range_lower_half, balance_range_upper_half, get_swap_config, get_vamm_state,
 		TestSwapConfig, RUN_CASES,
 	},
 };
 use composable_traits::vamm::{AssetType, Direction, Vamm as VammTrait};
-use frame_support::assert_err;
+use frame_support::assert_noop;
 use proptest::prelude::*;
 
 proptest! {
@@ -27,21 +27,20 @@ proptest! {
 		prop_assume!(input_amount > quote_asset_reserves);
 		prop_assume!(swap_config.direction == Direction::Remove);
 
+		// Ensure vamm is open before starting operation to swap assets.
+		vamm_state.closed = None;
+
+		vamm_state.quote_asset_reserves = quote_asset_reserves;
+		swap_config.input_amount = input_amount;
+
 		ExtBuilder {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
-			// Ensure vamm is open before start operation to swap assets.
-			vamm_state.closed = None;
-
-			swap_config.input_amount = input_amount;
-			vamm_state.quote_asset_reserves = quote_asset_reserves;
-			VammMap::<MockRuntime>::mutate(0, |vamm| {
-				*vamm = Some(vamm_state);
-			});
-
-			let swap = TestPallet::swap(&swap_config);
-			assert_err!(swap, Error::<MockRuntime>::InsufficientFundsForTrade);
+			assert_noop!(
+				TestPallet::swap(&swap_config),
+				Error::<MockRuntime>::InsufficientFundsForTrade
+			);
 		})
 	}
 }
@@ -62,21 +61,19 @@ proptest! {
 	) {
 		prop_assume!(swap_config.direction == Direction::Add);
 
+		// Ensure vamm is open before starting operation to swap assets.
+		vamm_state.closed = None;
+
+		swap_config.input_amount = input_amount;
+		vamm_state.quote_asset_reserves = quote_asset_reserves;
 		ExtBuilder {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
-			// Ensure vamm is open before start operation to swap assets.
-			vamm_state.closed = None;
-
-			swap_config.input_amount = input_amount;
-			vamm_state.quote_asset_reserves = quote_asset_reserves;
-			VammMap::<MockRuntime>::mutate(0, |vamm| {
-				*vamm = Some(vamm_state);
-			});
-
-			let swap = TestPallet::swap(&swap_config);
-			assert_err!(swap, Error::<MockRuntime>::TradeExtrapolatesMaximumSupportedAmount);
+			assert_noop!(
+				TestPallet::swap(&swap_config),
+				Error::<MockRuntime>::TradeExtrapolatesMaximumSupportedAmount
+			);
 		})
 	}
 }

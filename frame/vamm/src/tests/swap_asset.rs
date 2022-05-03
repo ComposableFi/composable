@@ -23,8 +23,10 @@ proptest! {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
-			let swap = TestPallet::swap(&swap_config);
-			assert_err!(swap, Error::<MockRuntime>::VammDoesNotExist);
+			assert_noop!(
+				TestPallet::swap(&swap_config),
+				Error::<MockRuntime>::VammDoesNotExist
+			);
 		})
 	}
 }
@@ -36,19 +38,25 @@ proptest! {
 		mut swap_config in get_swap_config(Default::default()),
 		(close, now) in then_and_now()
 	) {
+		// Make the current time be greater than the time when the vamm is
+		// set to close, doing this we ensure we can't make swaps due to the
+		// vamm be closed.
+		vamm_state.closed = Some(close);
+		swap_config.vamm_id = 0;
+
 		ExtBuilder {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
-			// Make the current time be greater than the time when the vamm is
-			// set to close, doing this we ensure we can't make swaps due to the
-			// vamm be closed.
-			vamm_state.closed = Some(close);
 			run_to_block(now);
-			swap_config.vamm_id = 0;
-			VammMap::<MockRuntime>::insert(0, vamm_state);
-			let swap = TestPallet::swap(&swap_config);
-			assert_err!(swap, Error::<MockRuntime>::VammIsClosed);
+
+			assert_noop!(
+				TestPallet::swap(&swap_config),
+				Error::<MockRuntime>::VammIsClosed
+			);
+		})
+	}
+}
 
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
