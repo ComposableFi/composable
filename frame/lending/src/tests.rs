@@ -543,9 +543,18 @@ fn vault_takes_part_of_borrow_so_cannot_withdraw() {
 			}),
 		);
 		assert_noop!(
-			Lending::borrow(Origin::signed(*ALICE), market_id, deposit_btc + initial_total_cash),
+			Lending::borrow(
+				Origin::signed(*ALICE),
+				market_id.clone(),
+				deposit_btc + initial_total_cash
+			),
 			Error::<Runtime>::NotEnoughBorrowAsset
 		);
+		assert_no_event(Event::Lending(pallet_lending::Event::<Runtime>::Borrowed {
+			sender: *ALICE,
+			market_id,
+			amount: deposit_btc + initial_total_cash,
+		}));
 	});
 }
 
