@@ -392,6 +392,13 @@ fn test_borrow_repay_in_same_block() {
 			),
 			Error::<Runtime>::BorrowAndRepayInSameBlockIsNotSupported,
 		);
+
+		assert_no_event(Event::Lending(crate::Event::BorrowRepaid {
+			sender: *ALICE,
+			market_id,
+			beneficiary: *ALICE,
+			amount: alice_repay_amount,
+		}));
 	});
 }
 
@@ -710,6 +717,13 @@ fn test_repay_partial_amount() {
 				}),
 			},
 		);
+
+		assert_no_event(Event::Lending(crate::Event::BorrowRepaid {
+			sender: *ALICE,
+			market_id: market_index,
+			beneficiary: *ALICE,
+			amount: alice_total_debt_with_interest + 1,
+		}));
 
 		assert_extrinsic_event::<Runtime>(
 			Lending::repay_borrow(
