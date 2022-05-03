@@ -670,7 +670,7 @@ parameter_types! {
 	// https://github.com/paritytech/polkadot/blob/dc784f9b47e4681897cfd477b4f0760330875a87/runtime/kusama/src/lib.rs#L237
 	// so we increase it by a factor 10. This might still be on the low side.
 	pub PreimageByteDeposit: Balance = CurrencyId::milli::<u128>() * 100_u128;
-	pub const InstantAllowed: ConstBool<true> = true;
+	pub const InstantAllowed: bool = true;
 	pub const MaxVotes: u32 = 100;
 	pub const MaxProposals: u32 = 100;
 }
