@@ -229,6 +229,77 @@ fn accrue_interest_plotter() {
 	}
 }
 
+// Was implemented for MarketUpdated event emission testing
+#[test]
+fn can_update_market() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		let manager = *ALICE;
+		let origin = Origin::signed(manager);
+		// Create a market
+		let ((market_id, _), _) = create_simple_vaulted_market(BTC::instance(), manager);
+		// Get the market from the storage via market id
+		let market = crate::Markets::<Runtime>::get(market_id).unwrap();
+
+		let update_input = UpdateInput {
+			collateral_factor: market.collateral_factor,
+			under_collateralized_warn_percent: market.under_collateralized_warn_percent,
+			liquidators: market.liquidators,
+			interest_rate_model: InterestRateModel::Curve(
+				CurveModel::new(CurveModel::MAX_BASE_RATE).unwrap(),
+			),
+		};
+		let input = update_input.clone();
+		let updated = Lending::update_market(origin, market_id, update_input);
+		// check if the market was successfully updated
+		assert_ok!(updated);
+		let market_updated_event: crate::Event<Runtime> =
+			crate::Event::MarketUpdated { market_id, input };
+		// check if the event was emitted
+		System::assert_has_event(Event::Lending(market_updated_event));
+	})
+}
+// Was implemented for CollateralDeposited emission testing
+#[test]
+fn can_deposit_collateral() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		let sender = *ALICE;
+		let origin = Origin::signed(sender);
+		let amount = 100;
+		// Create a market
+		let ((market_id, _), _) = create_simple_vaulted_market(BTC::instance(), sender);
+		// Deposit some collateral
+		let deposited = Lending::deposit_collateral(origin, market_id.clone(), amount);
+		// Check if everything is fine
+		assert_ok!(deposited);
+		let deposit_event: crate::Event<Runtime> =
+			crate::Event::CollateralDeposited { sender, market_id, amount };
+		// check if the event was emitted
+		System::assert_has_event(Event::Lending(deposit_event));
+	});
+}
+
+// Was implemented for CollateralWithdrawn event emission testing
+#[test]
+fn can_withdraw_collateral() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		let sender = *ALICE;
+		let origin = Origin::signed(sender);
+		let amount = 100;
+		// Create a market
+		let ((market_id, _), _) = create_simple_vaulted_market(BTC::instance(), sender);
+		// Deposit some collateral
+		let _deposited = Lending::deposit_collateral(origin.clone(), market_id.clone(), amount);
+		let withdrawed = Lending::withdraw_collateral(origin, market_id.clone(), amount);
+		assert_ok!(withdrawed);
+		let withdraw_event = crate::Event::CollateralWithdrawn { sender, market_id, amount };
+		// check if the event was emitted
+		System::assert_has_event(Event::Lending(withdraw_event));
+	});
+}
+
 #[test]
 /// Tests market creation and the associated event(s).
 fn can_create_valid_market() {
@@ -277,9 +348,12 @@ fn can_create_valid_market() {
 		);
 
 		Tokens::mint_into(BORROW_ASSET_ID, &*ALICE, INITIAL_BORROW_ASSET_AMOUNT).unwrap();
+        
+        let manager = *ALICE;
+		let origin = Origin::signed(manager);
+        let input = config.clone().try_into_validated().unwrap();
 
-		let should_be_created =
-			Lending::create_market(Origin::signed(*ALICE), config.clone().try_into_validated().unwrap());
+		let should_be_created = Lending::create_market(origin, input.clone());
 
 		assert!(
 			matches!(should_be_created, Ok(PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },)),
@@ -287,6 +361,14 @@ fn can_create_valid_market() {
 			Market creation result was {:#?}",
 			should_be_created,
 		);
+    
+        // Check if corresponded event was emitted 
+		let currency_pair = input.currency_pair;
+        // Market id and vault id values are defined via previous logic.
+        let market_id = pallet_lending::pallet::MarketIndex::new(1); 
+        let vault_id = 1;
+	    let market_created_event = crate::Event::MarketCreated {market_id, vault_id, manager, currency_pair};
+        System::assert_has_event(Event::Lending(market_created_event));
 
 		let initial_pool_size = Lending::calculate_initial_pool_size(BORROW_ASSET_ID).unwrap();
 		let alice_balance_after_market_creation = Tokens::balance(BORROW_ASSET_ID, &*ALICE);
@@ -585,7 +667,7 @@ fn test_vault_market_can_withdraw() {
 #[test]
 fn test_liquidate_multiple() {
 	new_test_ext().execute_with(|| {
-		let (market, vault) = create_simple_market();
+		let (market, _vault) = create_simple_market();
 
 		mint_and_deposit_collateral::<Runtime>(&*ALICE, BTC::units(100), market, BTC::ID);
 		mint_and_deposit_collateral::<Runtime>(&*BOB, BTC::units(100), market, BTC::ID);
