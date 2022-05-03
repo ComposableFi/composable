@@ -46,7 +46,7 @@ impl Default for ExtBuilder {
 			vamm_id: Some(0_u64),
 			vamm_twap: Some(100.into()),
 			oracle_asset_support: Some(true),
-			oracle_twap: Some(10_000_u64),
+			oracle_twap: Some(10_000),
 		}
 	}
 }

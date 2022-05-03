@@ -29,7 +29,12 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type AssetId: Copy;
-		type Balance: From<u64> + FullCodec + MaxEncodedLen + TypeInfo;
+		type Balance: Clone
+			+ From<u64>
+			+ FullCodec
+			+ MaxEncodedLen
+			+ MaybeSerializeDeserialize
+			+ TypeInfo;
 		type Timestamp;
 		type LocalAssets: LocalAssets<Self::AssetId>;
 		type MaxAnswerBound: Get<u32>;
@@ -40,18 +45,23 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	#[pallet::genesis_config]
-	#[derive(Default)]
-	pub struct GenesisConfig {
+	pub struct GenesisConfig<T: Config> {
 		pub supports_assets: Option<bool>,
-		pub twap: Option<u64>,
+		pub twap: Option<T::Balance>,
+	}
+
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self { supports_assets: Some(true), twap: Some(100_u64.into()) }
+		}
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig {
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			SupportsAssets::<T>::set(self.supports_assets);
-			if let Some(twap) = self.twap {
-				Twap::<T>::set(Some(twap.into()));
+			if let Some(twap) = self.twap.clone() {
+				Twap::<T>::set(Some(twap));
 			}
 		}
 	}

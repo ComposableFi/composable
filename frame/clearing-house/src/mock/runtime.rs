@@ -259,7 +259,7 @@ pub struct ExtBuilder {
 	pub vamm_id: Option<VammId>,
 	pub vamm_twap: Option<UnsignedDecimal>,
 	pub oracle_asset_support: Option<bool>,
-	pub oracle_twap: Option<u64>,
+	pub oracle_twap: Option<Balance>,
 }
 
 impl ExtBuilder {
