@@ -264,11 +264,10 @@ pub mod pallet {
 				// Continue on admin origin
 				(_, Ok(_)) => {},
 				// Only issuer is allowed
-				(Ok(account), _) => {
+				(Ok(account), _) =>
 					if issuer != account {
-						return Err(DispatchError::BadOrigin);
-					}
-				},
+						return Err(DispatchError::BadOrigin)
+					},
 				_ => return Err(DispatchError::BadOrigin),
 			};
 			let offer_account = Self::account_id(offer_id);
@@ -331,8 +330,8 @@ pub mod pallet {
 							Error::<T>::OfferCompleted
 						);
 						ensure!(
-							nb_of_bonds > BalanceOf::<T>::zero()
-								&& nb_of_bonds <= offer.nb_of_bonds,
+							nb_of_bonds > BalanceOf::<T>::zero() &&
+								nb_of_bonds <= offer.nb_of_bonds,
 							Error::<T>::InvalidNumberOfBonds
 						);
 						// can't overflow, subsumed by `offer.valid()` in
