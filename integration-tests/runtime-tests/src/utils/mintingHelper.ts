@@ -17,12 +17,19 @@ export async function mintAssetsToWallet(
   amount = BigInt(300000000000000000000000)
 ) {
   const tx = [];
+  const balancesBefore = [];
   for (const asset of assetIDs) {
     const pAsset = api.createType("u128", asset);
+    balancesBefore.push(parseInt((await api.rpc.assets.balanceOf(pAsset.toString(), wallet.publicKey)).toString()));
     tx.push(api.tx.sudo.sudo(
       api.tx.assets.mintInto(pAsset, wallet.publicKey, amount)
     ));
   }
   const { data: [result] } = await sendWithBatchAndWaitForSuccess(api, sudoKey, api.events.sudo.Sudid.is, tx, false);
   expect(result.isOk).to.be.true;
+  for (let i = 0; i < assetIDs.length; i++) {
+    const newBalance = await api.rpc.assets.balanceOf(assetIDs[i].toString(), wallet.publicKey);
+    // ToDo: Enhance comparison by comparing `newBalance = (balanceBefore + amount) - transactionFee`
+    expect(parseInt(newBalance.toString())).to.be.greaterThan(balancesBefore[i]);
+  }
 }
