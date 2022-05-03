@@ -87,8 +87,11 @@ pub mod pallet {
 	use crate::{math::*, support::DefiMultiReservableCurrency};
 	use composable_support::{
 		abstractions::{
-			nonce::{Increment, Nonce},
-			utils::{increment::WrappingIncrement, start_at::ZeroInit},
+			nonce::Nonce,
+			utils::{
+				increment::{Increment, WrappingIncrement},
+				start_at::ZeroInit,
+			},
 		},
 		math::wrapping_next::WrappingNext,
 	};
@@ -509,7 +512,7 @@ pub mod pallet {
 					}
 
 					if amount_received > T::Balance::zero() {
-						return Ok(())
+						return Ok(());
 					}
 				}
 				Err(Error::<T>::TakeOrderDidNotHappen.into())
@@ -597,7 +600,7 @@ pub mod pallet {
 							},
 							Err(_) => {
 								// TODO: insert here event to allow to act on failure
-								return Err(Error::<T>::TakeOrderDidNotHappen.into())
+								return Err(Error::<T>::TakeOrderDidNotHappen.into());
 							},
 						}
 					}

@@ -37,13 +37,24 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
-	use composable_support::math::wrapping_next::WrappingNext;
+	use composable_support::{
+		abstractions::{
+			counter::Counter,
+			utils::{
+				decrement::{Decrement, SafeDecrement},
+				increment::{Increment, IncrementToMax},
+				start_at::ZeroInit,
+			},
+		},
+		error_to_pallet_error,
+		math::wrapping_next::WrappingNext,
+	};
 	use composable_traits::privilege::{
 		InspectPrivilege, InspectPrivilegeGroup, MutatePrivilege, MutatePrivilegeGroup, Privilege,
 		PrivilegedGroupOf,
 	};
 	use frame_support::pallet_prelude::*;
-	use sp_runtime::traits::MaybeDisplay;
+	use sp_runtime::{traits::MaybeDisplay, DispatchError};
 	use sp_std::fmt::Debug;
 
 	type AccountIdOf<T> = <T as Config>::AccountId;
@@ -61,7 +72,9 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
+		// TODO: Rename to `TooManyGroups` (pluralize properly)
 		TooManyGroup,
+		// TODO: Rename to `TooManyMembers` (pluralize properly)
 		TooManyMember,
 		GroupNotFound,
 		GroupPrivilegeNotHeld,
@@ -148,7 +161,70 @@ pub mod pallet {
 	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
 	// use OptionQuery instead
 	#[allow(clippy::disallowed_types)]
-	pub type GroupCount<T: Config> = StorageValue<_, u32, ValueQuery>;
+	pub type GroupCount<T: Config> = StorageValue<
+		_,
+		u32,
+		ValueQuery,
+		Counter<ZeroInit, IncrementToMax<T::MaxGroup, TooManyGroup, Error<T>>, SafeDecrement>,
+	>;
+
+	error_to_pallet_error!(
+		TooManyGroup -> TooManyGroup;
+	);
+
+	// #[derive(::core::fmt::Debug, ::core::default::Default, ::core::cmp::PartialEq)]
+	// pub struct TooManyGroup;
+
+	// impl<T: Config> From<TooManyGroup> for Error<T> {
+	// 	fn from(_: TooManyGroup) -> Error<T> {
+	// 		Error::<T>::TooManyGroup
+	// 	}
+	// }
+
+	// pub trait IntoDispatchError<TError, T>
+	// where
+	// 	Self: Into<TError>,
+	// 	TError: Into<DispatchError>,
+	// {
+	// 	fn into_dispatch_error(self) -> DispatchError;
+	// }
+
+	// impl<TError, T> IntoDispatchError<TError, T> for T
+	// where
+	// 	Self: Into<TError>,
+	// 	TError: Into<DispatchError>,
+	// {
+	// 	fn into_dispatch_error(self) -> DispatchError {
+	// 		let error: TError = self.into();
+	// 		let t = error.into();
+	// 		t
+	// 	}
+	// }
+
+	// impl<T: Config> Into<DispatchErrorIntermediary<Error<T>, T>> for TooManyGroup {
+	// 	fn into(self) -> DispatchErrorIntermediary<Error<T>, T> {
+	// 		todo!()
+	// 	}
+	// }
+	// impl<T: Config> Into<DispatchError> for DispatchErrorIntermediary<Error<T>, T> {
+	// 	fn into(self) -> DispatchError {
+	// 		todo!()
+	// 	}
+	// }
+	// impl<T: Config> Into<DispatchError> for TooManyGroup {
+	// 	fn into(self) -> DispatchError {
+	// 		todo!()
+	// 	}
+	// }
+
+	// pub struct DispatchErrorIntermediary<TError, T>(PhantomData<(TError, T)>);
+
+	// impl<T, TError> From<DispatchErrorIntermediary<TError, T>> for DispatchError
+	// where
+	// 	T: IntoDispatchError<TError, T>,
+	// {
+	// 	fn into() -> () {}
+	// }
 
 	impl<T: Config> InspectPrivilege for Pallet<T> {
 		type AccountId = AccountIdOf<T>;
@@ -220,12 +296,12 @@ pub mod pallet {
 			group: PrivilegedGroupOf<Self>,
 			privilege: Privilege,
 		) -> Result<Self::GroupId, DispatchError> {
-			ensure!(GroupCount::<T>::get() < T::MaxGroup::get(), Error::<T>::TooManyGroup);
+			// ensure!(GroupCount::<T>::get() < T::MaxGroup::get(), Error::<T>::TooManyGroup);
 			GroupId::<T>::try_mutate(|previous_group_id| {
 				let group_id = previous_group_id.next();
 				*previous_group_id = group_id;
 
-				GroupCount::<T>::mutate(|x| *x += 1);
+				GroupCount::<T>::increment()?;
 				GroupPrivileges::<T>::insert(group_id, privilege);
 				// NOTE(hussein-aitlahcen): we don't know if it's correctly sorted at creation,
 				// hence we promote member per member.

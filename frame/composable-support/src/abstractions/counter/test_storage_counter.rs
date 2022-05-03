@@ -18,30 +18,32 @@ pub mod pallet {
 
 	use crate::{
 		abstractions::{
-			nonce::{Nonce, StorageValue},
+			counter::{Counter, StorageValue},
 			utils::{
-				increment::{IncrementToMax, SafeIncrement, WrappingIncrement},
+				decrement::SafeDecrement,
+				increment::{IncrementToMax, SafeIncrement},
 				start_at::{DefaultInit, OneInit, ZeroInit},
 			},
 		},
 		error_to_pallet_error,
-		math::{safe::SafeAdd, wrapping_next::WrappingNext},
+		math::safe::SafeAdd,
 	};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type ZeroInit_WrappingIncrement: Copy + Zero + WrappingNext + TypeInfo + Member + FullCodec;
-		type OneInit_WrappingIncrement: Copy + One + WrappingNext + TypeInfo + Member + FullCodec;
-		type DefaultInit_WrappingIncrement: Copy
+		type ZeroInit_SafeIncrement: Copy + Zero + SafeAdd + One + TypeInfo + Member + FullCodec;
+		type OneInit_SafeIncrement: Copy + One + SafeAdd + One + TypeInfo + Member + FullCodec;
+		type DefaultInit_SafeIncrement: Copy
 			+ Default
-			+ WrappingNext
+			+ SafeAdd
+			+ One
 			+ TypeInfo
 			+ Member
 			+ FullCodec;
 
-		type ZeroInit_SafeIncrement: Copy + Zero + SafeAdd + One + TypeInfo + Member + FullCodec;
-		type OneInit_SafeIncrement: Copy + One + SafeAdd + One + TypeInfo + Member + FullCodec;
-		type DefaultInit_SafeIncrement: Copy
+		type ZeroInit_SafeDecrement: Copy + Zero + SafeAdd + One + TypeInfo + Member + FullCodec;
+		type OneInit_SafeDecrement: Copy + One + SafeAdd + One + TypeInfo + Member + FullCodec;
+		type DefaultInit_SafeDecrement: Copy
 			+ Default
 			+ SafeAdd
 			+ One
@@ -104,103 +106,85 @@ pub mod pallet {
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
-	// WrappingIncrement
-
-	#[pallet::storage]
-	#[allow(clippy::disallowed_types)] // nonce
-	pub type Nonce_ZeroInit_WrappingIncrement<T: Config> = StorageValue<
-		_,
-		T::ZeroInit_WrappingIncrement,
-		ValueQuery,
-		Nonce<ZeroInit, WrappingIncrement>,
-	>;
-
-	#[pallet::storage]
-	#[allow(clippy::disallowed_types)] // nonce
-	pub type Nonce_OneInit_WrappingIncrement<T: Config> = StorageValue<
-		_,
-		T::OneInit_WrappingIncrement,
-		ValueQuery,
-		Nonce<OneInit, WrappingIncrement>,
-	>;
-
-	#[pallet::storage]
-	#[allow(clippy::disallowed_types)] // nonce
-	pub type Nonce_DefaultInit_WrappingIncrement<T: Config> = StorageValue<
-		_,
-		T::DefaultInit_WrappingIncrement,
-		ValueQuery,
-		Nonce<DefaultInit, WrappingIncrement>,
-	>;
-
 	// SafeIncrement
 
 	#[pallet::storage]
-	#[allow(clippy::disallowed_types)] // nonce
-	pub type Nonce_ZeroInit_SafeIncrement<T: Config> =
-		StorageValue<_, T::ZeroInit_SafeIncrement, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
+	#[allow(clippy::disallowed_type)] // counter
+	pub type Counter_ZeroInit_SafeIncrement<T: Config> = StorageValue<
+		_,
+		T::ZeroInit_SafeIncrement,
+		ValueQuery,
+		Counter<ZeroInit, SafeIncrement, SafeDecrement>,
+	>;
 
 	#[pallet::storage]
-	#[allow(clippy::disallowed_types)] // nonce
-	pub type Nonce_OneInit_SafeIncrement<T: Config> =
-		StorageValue<_, T::OneInit_SafeIncrement, ValueQuery, Nonce<OneInit, SafeIncrement>>;
+	#[allow(clippy::disallowed_type)] // counter
+	pub type Counter_OneInit_SafeIncrement<T: Config> = StorageValue<
+		_,
+		T::OneInit_SafeIncrement,
+		ValueQuery,
+		Counter<OneInit, SafeIncrement, SafeDecrement>,
+	>;
 
 	#[pallet::storage]
-	#[allow(clippy::disallowed_types)] // nonce
-	pub type Nonce_DefaultInit_SafeIncrement<T: Config> = StorageValue<
+	#[allow(clippy::disallowed_type)] // counter
+	pub type Counter_DefaultInit_SafeIncrement<T: Config> = StorageValue<
 		_,
 		T::DefaultInit_SafeIncrement,
 		ValueQuery,
-		Nonce<DefaultInit, SafeIncrement>,
+		Counter<DefaultInit, SafeIncrement, SafeDecrement>,
 	>;
 
 	// IncrementToMax
 
 	#[pallet::storage]
-	#[allow(clippy::disallowed_types)] // nonce
-	pub type Nonce_ZeroInit_IncrementToMax<T: Config> = StorageValue<
+	#[allow(clippy::disallowed_type)] // counter
+	pub type Counter_ZeroInit_ToMax<T: Config> = StorageValue<
 		_,
 		T::ZeroInit_IncrementToMax,
 		ValueQuery,
-		Nonce<
+		Counter<
 			ZeroInit,
 			IncrementToMax<
 				T::ZeroInit_IncrementToMax_MaximumValue,
 				ZeroInit_IncrementToMax_Error,
 				Error<T>,
 			>,
+			SafeDecrement,
 		>,
 	>;
 
 	#[pallet::storage]
-	#[allow(clippy::disallowed_types)] // nonce
-	pub type Nonce_OneInit_IncrementToMax<T: Config> = StorageValue<
+	#[allow(clippy::disallowed_type)] // counter
+	pub type Counter_OneInit_ToMax<T: Config> = StorageValue<
 		_,
 		T::OneInit_IncrementToMax,
 		ValueQuery,
-		Nonce<
+		Counter<
 			OneInit,
 			IncrementToMax<
 				T::OneInit_IncrementToMax_MaximumValue,
 				OneInit_IncrementToMax_Error,
 				Error<T>,
 			>,
+			SafeDecrement,
 		>,
 	>;
 
 	#[pallet::storage]
-	#[allow(clippy::disallowed_types)] // nonce
-	pub type Nonce_DefaultInit_IncrementToMax<T: Config> = StorageValue<
+	#[allow(clippy::disallowed_type)] // counter
+	pub type Counter_DefaultInit_ToMax<T: Config> = StorageValue<
 		_,
 		T::DefaultInit_IncrementToMax,
 		ValueQuery,
-		Nonce<
+		Counter<
 			DefaultInit,
 			IncrementToMax<
 				T::DefaultInit_IncrementToMax_MaximumValue,
 				DefaultInit_IncrementToMax_Error,
 				Error<T>,
 			>,
+			SafeDecrement,
 		>,
 	>;
 
@@ -254,13 +238,13 @@ impl frame_system::Config for Test {
 }
 
 impl pallet::Config for Test {
-	type ZeroInit_WrappingIncrement = u8;
-	type OneInit_WrappingIncrement = u8;
-	type DefaultInit_WrappingIncrement = u8;
-
 	type ZeroInit_SafeIncrement = u8;
 	type OneInit_SafeIncrement = u8;
 	type DefaultInit_SafeIncrement = u8;
+
+	type ZeroInit_SafeDecrement = u8;
+	type OneInit_SafeDecrement = u8;
+	type DefaultInit_SafeDecrement = u8;
 
 	type ZeroInit_IncrementToMax = u8;
 	type OneInit_IncrementToMax = u8;
@@ -283,7 +267,7 @@ impl ExtBuilder {
 	}
 }
 
-mod safe_increment {
+mod safe {
 	use frame_support::assert_noop;
 	use sp_runtime::{
 		traits::{One, Zero},
@@ -295,22 +279,32 @@ mod safe_increment {
 	#[test]
 	fn one_start() {
 		ExtBuilder::default().build().execute_with(|| {
-			let initial_value = pallet::Nonce_OneInit_SafeIncrement::<Test>::get();
+			let initial_value = pallet::Counter_OneInit_SafeIncrement::<Test>::get();
 			assert!(initial_value.is_one(), "initial value should be one");
 
 			for _ in 0..254 {
-				pallet::Nonce_OneInit_SafeIncrement::<Test>::increment().unwrap();
+				pallet::Counter_OneInit_SafeIncrement::<Test>::increment().unwrap();
 			}
 
 			assert_noop!(
-				pallet::Nonce_OneInit_SafeIncrement::<Test>::increment(),
+				pallet::Counter_OneInit_SafeIncrement::<Test>::increment(),
 				ArithmeticError::Overflow
+			);
+
+			// go down one further than the above loop since we started at 1
+			for _ in 0..255 {
+				pallet::Counter_OneInit_SafeIncrement::<Test>::decrement().unwrap();
+			}
+
+			assert_noop!(
+				pallet::Counter_OneInit_SafeIncrement::<Test>::decrement(),
+				ArithmeticError::Underflow
 			);
 
 			// once more for good measure
 			assert_noop!(
-				pallet::Nonce_OneInit_SafeIncrement::<Test>::increment(),
-				ArithmeticError::Overflow
+				pallet::Counter_OneInit_SafeIncrement::<Test>::decrement(),
+				ArithmeticError::Underflow
 			);
 		})
 	}
@@ -318,22 +312,31 @@ mod safe_increment {
 	#[test]
 	fn zero_start() {
 		ExtBuilder::default().build().execute_with(|| {
-			let initial_value = pallet::Nonce_ZeroInit_SafeIncrement::<Test>::get();
+			let initial_value = pallet::Counter_ZeroInit_SafeIncrement::<Test>::get();
 			assert!(initial_value.is_zero(), "initial value should be zero");
 
 			for _ in 0..255 {
-				pallet::Nonce_ZeroInit_SafeIncrement::<Test>::increment().unwrap();
+				pallet::Counter_ZeroInit_SafeIncrement::<Test>::increment().unwrap();
 			}
 
 			assert_noop!(
-				pallet::Nonce_ZeroInit_SafeIncrement::<Test>::increment(),
+				pallet::Counter_ZeroInit_SafeIncrement::<Test>::increment(),
 				ArithmeticError::Overflow
+			);
+
+			for _ in 0..255 {
+				pallet::Counter_ZeroInit_SafeIncrement::<Test>::decrement().unwrap();
+			}
+
+			assert_noop!(
+				pallet::Counter_ZeroInit_SafeIncrement::<Test>::decrement(),
+				ArithmeticError::Underflow
 			);
 
 			// once more for good measure
 			assert_noop!(
-				pallet::Nonce_ZeroInit_SafeIncrement::<Test>::increment(),
-				ArithmeticError::Overflow
+				pallet::Counter_ZeroInit_SafeIncrement::<Test>::decrement(),
+				ArithmeticError::Underflow
 			);
 		})
 	}
@@ -341,136 +344,80 @@ mod safe_increment {
 	#[test]
 	fn default_start() {
 		ExtBuilder::default().build().execute_with(|| {
-			let initial_value = pallet::Nonce_DefaultInit_SafeIncrement::<Test>::get();
+			let initial_value = pallet::Counter_DefaultInit_SafeIncrement::<Test>::get();
 			assert_eq!(initial_value, u8::default(), "initial value should be the default");
 
 			// default is the same as zero in the case of u8
 			for _ in 0..255 {
-				pallet::Nonce_DefaultInit_SafeIncrement::<Test>::increment().unwrap();
+				pallet::Counter_DefaultInit_SafeIncrement::<Test>::increment().unwrap();
 			}
 
 			assert_noop!(
-				pallet::Nonce_DefaultInit_SafeIncrement::<Test>::increment(),
+				pallet::Counter_DefaultInit_SafeIncrement::<Test>::increment(),
 				ArithmeticError::Overflow
+			);
+
+			for _ in 0..255 {
+				pallet::Counter_DefaultInit_SafeIncrement::<Test>::decrement().unwrap();
+			}
+
+			assert_noop!(
+				pallet::Counter_DefaultInit_SafeIncrement::<Test>::decrement(),
+				ArithmeticError::Underflow
 			);
 
 			// once more for good measure
 			assert_noop!(
-				pallet::Nonce_DefaultInit_SafeIncrement::<Test>::increment(),
-				ArithmeticError::Overflow
+				pallet::Counter_DefaultInit_SafeIncrement::<Test>::decrement(),
+				ArithmeticError::Underflow
 			);
 		})
 	}
 }
 
-mod wrapping_increment {
-	use super::*;
-	use sp_runtime::traits::{One, Zero};
-
-	#[test]
-	fn one_start() {
-		ExtBuilder::default().build().execute_with(|| {
-			// probbaly an uncommon usecase
-
-			let initial_value = pallet::Nonce_OneInit_WrappingIncrement::<Test>::get();
-			assert!(initial_value.is_one(), "initial value should be one");
-
-			for _ in 0..254 {
-				pallet::Nonce_OneInit_WrappingIncrement::<Test>::increment();
-			}
-
-			// wrapping when starting at 1 has somewhat strange behaviour when the type has a
-			// zero value
-			assert!(pallet::Nonce_OneInit_WrappingIncrement::<Test>::increment().is_zero());
-
-			// one more than previous loop as it wrapped to zero
-			for _ in 0..255 {
-				pallet::Nonce_OneInit_WrappingIncrement::<Test>::increment();
-			}
-
-			assert!(pallet::Nonce_OneInit_WrappingIncrement::<Test>::increment().is_zero());
-		})
-	}
-
-	#[test]
-	fn zero_start() {
-		ExtBuilder::default().build().execute_with(|| {
-			let initial_value = pallet::Nonce_ZeroInit_WrappingIncrement::<Test>::get();
-			assert!(initial_value.is_zero(), "initial value should be zero");
-
-			for _ in 0..255 {
-				pallet::Nonce_ZeroInit_WrappingIncrement::<Test>::increment();
-			}
-
-			assert_eq!(
-				pallet::Nonce_ZeroInit_WrappingIncrement::<Test>::increment(),
-				initial_value
-			);
-
-			for _ in 0..255 {
-				pallet::Nonce_ZeroInit_WrappingIncrement::<Test>::increment();
-			}
-
-			assert_eq!(
-				pallet::Nonce_ZeroInit_WrappingIncrement::<Test>::increment(),
-				initial_value
-			);
-		})
-	}
-
-	#[test]
-	fn default_start() {
-		ExtBuilder::default().build().execute_with(|| {
-			let initial_value = pallet::Nonce_DefaultInit_WrappingIncrement::<Test>::get();
-			assert_eq!(initial_value, u8::default(), "initial value should be the default");
-
-			// default is the same as zero in the case of u8
-			for _ in 0..255 {
-				pallet::Nonce_DefaultInit_WrappingIncrement::<Test>::increment();
-			}
-
-			assert_eq!(
-				pallet::Nonce_DefaultInit_WrappingIncrement::<Test>::increment(),
-				initial_value
-			);
-
-			for _ in 0..255 {
-				pallet::Nonce_DefaultInit_WrappingIncrement::<Test>::increment();
-			}
-
-			assert_eq!(
-				pallet::Nonce_DefaultInit_WrappingIncrement::<Test>::increment(),
-				initial_value
-			);
-		})
-	}
-}
-
-mod increment_to_max {
+mod max_min {
 	use frame_support::assert_noop;
-	use sp_runtime::traits::{One, Zero};
+	use sp_runtime::{
+		traits::{One, Zero},
+		ArithmeticError,
+	};
 
 	use super::*;
 
 	#[test]
 	fn one_start() {
 		ExtBuilder::default().build().execute_with(|| {
-			let initial_value = pallet::Nonce_OneInit_IncrementToMax::<Test>::get();
+			let initial_value = pallet::Counter_OneInit_ToMax::<Test>::get();
 			assert!(initial_value.is_one(), "initial value should be one");
 
 			for _ in 0..19 {
-				pallet::Nonce_OneInit_IncrementToMax::<Test>::increment().unwrap();
+				pallet::Counter_OneInit_ToMax::<Test>::increment().unwrap();
 			}
 
 			assert_noop!(
-				pallet::Nonce_OneInit_IncrementToMax::<Test>::increment(),
+				pallet::Counter_OneInit_ToMax::<Test>::increment(),
 				pallet::Error::<Test>::OneInit_IncrementToMax_ValueTooLarge,
 			);
 
 			// once more for good measure
 			assert_noop!(
-				pallet::Nonce_OneInit_IncrementToMax::<Test>::increment(),
+				pallet::Counter_OneInit_ToMax::<Test>::increment(),
 				pallet::Error::<Test>::OneInit_IncrementToMax_ValueTooLarge,
+			);
+
+			for _ in 0..20 {
+				pallet::Counter_OneInit_ToMax::<Test>::decrement().unwrap();
+			}
+
+			assert_noop!(
+				pallet::Counter_OneInit_ToMax::<Test>::decrement(),
+				ArithmeticError::Underflow
+			);
+
+			// once more for good measure
+			assert_noop!(
+				pallet::Counter_OneInit_ToMax::<Test>::decrement(),
+				ArithmeticError::Underflow
 			);
 		})
 	}
@@ -478,22 +425,37 @@ mod increment_to_max {
 	#[test]
 	fn zero_start() {
 		ExtBuilder::default().build().execute_with(|| {
-			let initial_value = pallet::Nonce_ZeroInit_IncrementToMax::<Test>::get();
+			let initial_value = pallet::Counter_ZeroInit_ToMax::<Test>::get();
 			assert!(initial_value.is_zero(), "initial value should be zero");
 
 			for _ in 0..20 {
-				pallet::Nonce_ZeroInit_IncrementToMax::<Test>::increment().unwrap();
+				pallet::Counter_ZeroInit_ToMax::<Test>::increment().unwrap();
 			}
 
 			assert_noop!(
-				pallet::Nonce_ZeroInit_IncrementToMax::<Test>::increment(),
+				pallet::Counter_ZeroInit_ToMax::<Test>::increment(),
 				pallet::Error::<Test>::ZeroInit_IncrementToMax_ValueTooLarge
 			);
 
 			// once more for good measure
 			assert_noop!(
-				pallet::Nonce_ZeroInit_IncrementToMax::<Test>::increment(),
+				pallet::Counter_ZeroInit_ToMax::<Test>::increment(),
 				pallet::Error::<Test>::ZeroInit_IncrementToMax_ValueTooLarge
+			);
+
+			for _ in 0..20 {
+				pallet::Counter_ZeroInit_ToMax::<Test>::decrement().unwrap();
+			}
+
+			assert_noop!(
+				pallet::Counter_ZeroInit_ToMax::<Test>::decrement(),
+				ArithmeticError::Underflow
+			);
+
+			// once more for good measure
+			assert_noop!(
+				pallet::Counter_ZeroInit_ToMax::<Test>::decrement(),
+				ArithmeticError::Underflow
 			);
 		})
 	}
@@ -501,23 +463,38 @@ mod increment_to_max {
 	#[test]
 	fn default_start() {
 		ExtBuilder::default().build().execute_with(|| {
-			let initial_value = pallet::Nonce_DefaultInit_IncrementToMax::<Test>::get();
+			let initial_value = pallet::Counter_DefaultInit_ToMax::<Test>::get();
 			assert_eq!(initial_value, u8::default(), "initial value should be the default");
 
 			// default is the same as zero in the case of u8
 			for _ in 0..20 {
-				pallet::Nonce_DefaultInit_IncrementToMax::<Test>::increment().unwrap();
+				pallet::Counter_DefaultInit_ToMax::<Test>::increment().unwrap();
 			}
 
 			assert_noop!(
-				pallet::Nonce_DefaultInit_IncrementToMax::<Test>::increment(),
+				pallet::Counter_DefaultInit_ToMax::<Test>::increment(),
 				pallet::Error::<Test>::DefaultInit_IncrementToMax_ValueTooLarge
 			);
 
 			// once more for good measure
 			assert_noop!(
-				pallet::Nonce_DefaultInit_IncrementToMax::<Test>::increment(),
+				pallet::Counter_DefaultInit_ToMax::<Test>::increment(),
 				pallet::Error::<Test>::DefaultInit_IncrementToMax_ValueTooLarge
+			);
+
+			for _ in 0..20 {
+				pallet::Counter_DefaultInit_ToMax::<Test>::decrement().unwrap();
+			}
+
+			assert_noop!(
+				pallet::Counter_DefaultInit_ToMax::<Test>::decrement(),
+				ArithmeticError::Underflow
+			);
+
+			// once more for good measure
+			assert_noop!(
+				pallet::Counter_DefaultInit_ToMax::<Test>::decrement(),
+				ArithmeticError::Underflow
 			);
 		})
 	}
