@@ -163,5 +163,5 @@ export async function getOwnerFee(poolId: number){
 }
 
 export async function rpcPriceFor(poolId: PalletPabloPoolId, baseAssetId: CustomRpcCurrencyId, quoteAssetId: CustomRpcCurrencyId) {
-  return await api.rpc.pablo.pricesFor(poolId, baseAssetId, quoteAssetId, api.createType('CustomRpcBalance', 1));
+  return await api.rpc.pablo.pricesFor(poolId, baseAssetId, quoteAssetId, api.createType('CustomRpcBalance', 1_000_000_000_000 /* unit */));
 }

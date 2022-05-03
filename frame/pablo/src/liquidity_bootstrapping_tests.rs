@@ -3,7 +3,7 @@ use crate::{
 	liquidity_bootstrapping::PoolIsValid,
 	mock,
 	mock::{Pablo, *},
-	Error, PoolInitConfiguration,
+	pallet, Error, PoolInitConfiguration,
 };
 use composable_support::validation::Validated;
 use composable_tests_helpers::test::helper::default_acceptable_computation_error;
@@ -207,6 +207,10 @@ mod buy {
 					    e.event,
 				        mock::Event::Pablo(crate::Event::Swapped { pool_id, fee_asset, .. }) if pool_id == created_pool_id && fee_asset == USDT)
 				});
+				let price =
+					pallet::prices_for::<Test>(created_pool_id, PROJECT_TOKEN, USDT, 1 * unit)
+						.unwrap();
+				assert_eq!(price.spot_price, 1_000_000_999_997);
 				assert_ok!(default_acceptable_computation_error(
 					Tokens::balance(PROJECT_TOKEN, &BOB),
 					unit
