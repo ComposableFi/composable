@@ -592,7 +592,7 @@ pub mod pallet {
 		///
 		/// ## Emits
 		///
-		/// TODO(0xangelo)
+		/// - [`FundingUpdated`](Event::<T>::FundingUpdated)
 		///
 		/// ## State Changes
 		///
@@ -833,6 +833,7 @@ pub mod pallet {
 
 			Markets::<T>::insert(market_id, market);
 
+			Self::deposit_event(Event::FundingUpdated { market: market_id.clone(), time: now });
 			Ok(())
 		}
 	}
