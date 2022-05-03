@@ -888,7 +888,13 @@ fn liquidation() {
 
 		process_and_progress_blocks(10_000);
 
-		assert_ok!(Lending::liquidate(Origin::signed(*ALICE), market_id, vec![*ALICE]));
+		assert_extrinsic_event::<Runtime>(
+			Lending::liquidate(Origin::signed(*ALICE), market_id.clone(), vec![*ALICE]),
+			Event::Lending(crate::Event::LiquidationInitiated {
+				market_id,
+				borrowers: vec![*ALICE],
+			}),
+		);
 	});
 }
 
