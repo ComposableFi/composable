@@ -32,8 +32,8 @@ const pabloProcessor_1 = require("./pabloProcessor");
 const processor = new substrate_processor_1.SubstrateProcessor("composable_dali_dev");
 processor.setBatchSize(500);
 processor.setDataSource({
-    archive: `http://localhost:4010/v1/graphql`,
-    chain: "wss://dali.devnets.composablefinance.ninja/parachain/alice",
+    archive: `http://localhost:8080/v1/graphql`,
+    chain: "ws://localhost:9988",
 });
 // TODO add event handlers for Pablo
 processor.addEventHandler('pablo.PoolCreated', async (ctx) => {

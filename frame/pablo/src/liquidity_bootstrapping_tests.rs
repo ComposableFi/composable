@@ -1,6 +1,7 @@
 #[cfg(test)]
 use crate::{
 	liquidity_bootstrapping::PoolIsValid,
+	mock,
 	mock::{Pablo, *},
 	Error, PoolInitConfiguration,
 };
@@ -169,6 +170,7 @@ mod sell {
 
 mod buy {
 	use super::*;
+	use crate::common_test_functions::assert_has_event;
 
 	#[test]
 	fn can_buy_one_to_one() {
@@ -189,17 +191,22 @@ mod buy {
 			fee,
 			initial_project_tokens,
 			initial_usdt,
-			|pool_id, pool, _, _| {
+			|created_pool_id, pool, _, _| {
 				// Buy project token
 				assert_ok!(Tokens::mint_into(USDT, &BOB, unit));
 				assert_ok!(Pablo::buy(
 					Origin::signed(BOB),
-					pool_id,
+					created_pool_id,
 					pool.pair.base,
 					unit,
 					0_u128,
 					false
 				));
+				assert_has_event::<Test, _>(|e| {
+					matches!(
+					    e.event,
+				        mock::Event::Pablo(crate::Event::Swapped { pool_id, fee_asset, .. }) if pool_id == created_pool_id && fee_asset == USDT)
+				});
 				assert_ok!(default_acceptable_computation_error(
 					Tokens::balance(PROJECT_TOKEN, &BOB),
 					unit
