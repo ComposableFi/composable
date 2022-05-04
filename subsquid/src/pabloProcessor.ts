@@ -61,10 +61,14 @@ function getPoolCreatedEvent(event: PabloPoolCreatedEvent): PoolCreatedEvent {
     }
 }
 
+function encodeAccount(account: Uint8Array) {
+    return ss58.codec("picasso").encode(account);
+}
+
 export async function processPoolCreatedEvent(ctx: EventHandlerContext, event: PabloPoolCreatedEvent) {
-    console.info('processing PoolCreatedEvent', event);
+    console.debug('processing PoolCreatedEvent', event);
     const poolCreatedEvt = getPoolCreatedEvent(event);
-    const owner = ss58.codec("picasso").encode(poolCreatedEvt.owner);
+    const owner = encodeAccount(poolCreatedEvt.owner);
     const pool = await getOrCreate(ctx.store, PabloPool, poolCreatedEvt.poolId.toString());
     // only set values if the owner was missing, i.e a new pool
     if (pool.owner == null) {
@@ -109,7 +113,7 @@ export async function processPoolCreatedEvent(ctx: EventHandlerContext, event: P
     }
 }
 
-function createPoolAssetId(poolId: string, assetId: bigint): string {
+export function createPoolAssetId(poolId: string, assetId: bigint): string {
     return poolId + '-' + assetId;
 }
 
@@ -132,9 +136,9 @@ function getLiquidityAddedEvent(event: PabloLiquidityAddedEvent): LiquidityAdded
 }
 
 export async function processLiquidityAddedEvent(ctx: EventHandlerContext, event: PabloLiquidityAddedEvent) {
-    console.info('processing LiquidityAddedEvent', event);
+    console.debug('processing LiquidityAddedEvent', event);
     const liquidityAddedEvt = getLiquidityAddedEvent(event);
-    const who = ss58.codec("picasso").encode(liquidityAddedEvt.who);
+    const who = encodeAccount(liquidityAddedEvt.who);
     const pool = await get(ctx.store, PabloPool, liquidityAddedEvt.poolId.toString());
     // only set values if the owner was missing, i.e a new pool
     if (pool != undefined) {
@@ -210,9 +214,9 @@ function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
 }
 
 export async function processSwappedEvent(ctx: EventHandlerContext, event: PabloSwappedEvent) {
-    console.info('processing SwappedEvent', event);
+    console.debug('processing SwappedEvent', event);
     const swappedEvt = getSwappedEvent(event);
-    const who = ss58.codec("picasso").encode(swappedEvt.who);
+    const who = encodeAccount(swappedEvt.who);
     const pool = await get(ctx.store, PabloPool, swappedEvt.poolId.toString());
     // only set values if the owner was missing, i.e a new pool
     if (pool != undefined) {
@@ -279,10 +283,11 @@ export async function processSwappedEvent(ctx: EventHandlerContext, event: Pablo
         tx = createTransaction(ctx, pool, who,
             PabloTransactionType.SWAP,
             spotPrice.toString(),
-            BigInt(baseAsset.assetId),
+            swappedEvt.baseAsset,
             swappedEvt.baseAmount,
-            pool.quoteAssetId,
-            swappedEvt.quoteAmount);
+            swappedEvt.quoteAsset,
+            swappedEvt.quoteAmount
+        );
 
         await ctx.store.save(pool);
         await ctx.store.save(baseAsset);
