@@ -1,0 +1,48 @@
+[package]
+authors = ["Parity Technologies <admin@parity.io>", "Composable Developers"]
+description = "This crate provides means to instantiate and execute wasm modules."
+edition = "2021"
+homepage = "https://substrate.io"
+license = "Apache-2.0"
+name = "sp-sandbox"
+readme = "README.md"
+repository = "https://github.com/paritytech/substrate/"
+version = "0.10.0-dev"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasmi = { version = "0.9.1", default-features = false, features = ["core"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+wasmi = "0.9.0"
+
+[dependencies]
+log = { version = "0.4", default-features = false }
+wasmi = { version = "0.9.0", optional = true }
+
+codec = { package = "parity-scale-codec", version = "2.0.0", default-features = false }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-wasm-interface = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+
+[dev-dependencies]
+assert_matches = "1.3.0"
+wat = "1.0"
+
+[features]
+default = ["std"]
+std = [
+  "log/std",
+  "wasmi",
+  "codec/std",
+  "sp-core/std",
+  "sp-io/std",
+  "sp-std/std",
+  "sp-wasm-interface/std",
+]
+strict = []
+wasmer-sandbox = []
