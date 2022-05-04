@@ -3,19 +3,29 @@ use crate::{exec::Ext, wasm::Runtime};
 use sp_runtime::{ArithmeticError, DispatchError};
 use sp_sandbox::{ReturnValue, SandboxInstance, SandboxMemory, Value};
 use sp_std::{vec, vec::Vec};
+use wasmi::ValueType;
 
-/* TODO(hussein-aitlahcen):
-   - allow runtime to access to marshalling as we probably need them in host functions (defined in runtime).
-   - make error strongly typed
-*/
-
-// TODO(hussein-aitlahcen): use thoses constants for export checking
-// the doc is unclear though as it state that instantiate/execute/query is mandatory but almost 0 of
-// their example satisfy this...
 pub const INSTANTIATE_FUNCTION: &str = "instantiate";
 pub const EXECUTE_FUNCTION: &str = "execute";
 pub const QUERY_FUNCTION: &str = "query";
+pub const ALLOCATE_FUNCTION: &str = "allocate";
+pub const DEALLOCATE_FUNCTION: &str = "deallocate";
 
+// TODO(hussein-aitlahcen): use this constants for export checking
+// the doc is unclear though as it state that instantiate/execute/query is mandatory but almost 0 of
+// their example satisfy this...
+pub const REQUIRED_EXPORTS: &[(&str, &[ValueType])] = &[
+	(ALLOCATE_FUNCTION, &[ValueType::I32]),
+	(DEALLOCATE_FUNCTION, &[ValueType::I32]),
+	(INSTANTIATE_FUNCTION, &[ValueType::I32, ValueType::I32, ValueType::I32]),
+	(EXECUTE_FUNCTION, &[ValueType::I32, ValueType::I32, ValueType::I32]),
+	(QUERY_FUNCTION, &[ValueType::I32, ValueType::I32]),
+];
+
+/* TODO(hussein-aitlahcen):
+- allow runtime to access to marshalling functions as we probably need them in host functions (defined in runtime).
+- make error strongly typed
+ */
 pub struct CosmwasmInstance<'a, E: Ext + 'a> {
 	instance: sp_sandbox::default_executor::Instance<Runtime<'a, E>>,
 	runtime: Runtime<'a, E>,
@@ -32,7 +42,7 @@ impl<'a, E: Ext + 'a> CosmwasmInstance<'a, E> {
 	fn allocate<T: TryInto<i32>>(&mut self, len: T) -> Result<u32, DispatchError> {
 		log::debug!(target: "runtime::contracts", "Allocate");
 		match self.instance.invoke(
-			"allocate",
+			ALLOCATE_FUNCTION,
 			&[Value::I32(
 				len.try_into()
 					.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?,
@@ -50,7 +60,7 @@ impl<'a, E: Ext + 'a> CosmwasmInstance<'a, E> {
 	fn deallocate<T: TryInto<i32>>(&mut self, ptr: T) -> Result<(), DispatchError> {
 		log::debug!(target: "runtime::contracts", "Deallocate");
 		match self.instance.invoke(
-			"deallocate",
+			DEALLOCATE_FUNCTION,
 			&[Value::I32(
 				ptr.try_into()
 					.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?,
