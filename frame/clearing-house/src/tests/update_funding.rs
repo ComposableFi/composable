@@ -1,6 +1,4 @@
-use super::{
-	any_balance, any_price, valid_market_config, MarketConfig, MarketInitializer, RunToBlock,
-};
+use super::{any_balance, any_price, valid_market_config, with_market_context};
 use crate::{
 	math::FromUnsigned,
 	mock::{
@@ -22,6 +20,10 @@ use frame_support::{assert_noop, assert_ok, pallet_prelude::Hooks, traits::fungi
 use proptest::prelude::*;
 use sp_runtime::{traits::AccountIdConversion, FixedI128, FixedU128};
 
+// ----------------------------------------------------------------------------------------------------
+//                                               Helpers
+// ----------------------------------------------------------------------------------------------------
+
 fn run_for_seconds(seconds: DurationSeconds) {
 	if SystemPallet::block_number() > 0 {
 		TimestampPallet::on_finalize(SystemPallet::block_number());
@@ -32,23 +34,6 @@ fn run_for_seconds(seconds: DurationSeconds) {
 	let _ = TimestampPallet::set(Origin::none(), TimestampPallet::now() + 1_000 * seconds);
 	SystemPallet::on_initialize(SystemPallet::block_number());
 	TimestampPallet::on_initialize(SystemPallet::block_number());
-}
-
-// ----------------------------------------------------------------------------------------------------
-//                                                Setup
-// ----------------------------------------------------------------------------------------------------
-
-fn with_market_context<R>(
-	ext_builder: ExtBuilder,
-	config: MarketConfig,
-	execute: impl FnOnce(MarketId) -> R,
-) -> R {
-	let mut ext = ext_builder.build().run_to_block(1);
-	let market_id = ext.execute_with(|| {
-		<sp_io::TestExternalities as MarketInitializer>::create_market_helper(Some(config))
-	});
-
-	ext.execute_with(|| execute(market_id))
 }
 
 // ----------------------------------------------------------------------------------------------------

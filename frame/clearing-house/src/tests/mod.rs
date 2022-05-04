@@ -1,4 +1,5 @@
-#![allow(clippy::disallowed_methods)] // Allow use of .unwrap() in tests
+// Allow use of .unwrap() in tests and unused Results from function calls
+#![allow(clippy::disallowed_methods, unused_must_use)]
 
 use crate::mock::{
 	self as mock,
@@ -51,6 +52,10 @@ impl Default for ExtBuilder {
 	}
 }
 
+// ----------------------------------------------------------------------------------------------------
+//                                             Helpers
+// ----------------------------------------------------------------------------------------------------
+
 fn run_to_block(n: u64) {
 	while SystemPallet::block_number() < n {
 		if SystemPallet::block_number() > 0 {
@@ -80,6 +85,42 @@ fn as_inner<T: Into<FixedI128>>(value: T) -> i128 {
 fn as_uinner<T: Into<FixedU128>>(value: T) -> u128 {
 	let f: FixedU128 = value.into();
 	f.into_inner()
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                        Execution Contexts
+// ----------------------------------------------------------------------------------------------------
+
+fn with_market_context<R>(
+	ext_builder: ExtBuilder,
+	config: MarketConfig,
+	execute: impl FnOnce(MarketId) -> R,
+) -> R {
+	let mut ext = ext_builder.build().run_to_block(1);
+	let market_id = ext.execute_with(|| {
+		<sp_io::TestExternalities as MarketInitializer>::create_market_helper(Some(config))
+	});
+
+	ext.execute_with(|| execute(market_id))
+}
+
+fn with_markets_context<R>(
+	ext_builder: ExtBuilder,
+	configs: Vec<MarketConfig>,
+	execute: impl FnOnce(Vec<MarketId>) -> R,
+) -> R {
+	let mut ext = ext_builder.build().run_to_block(1);
+	let market_ids = ext.execute_with(|| {
+		let mut ids = Vec::<_>::new();
+		for config in configs {
+			ids.push(<sp_io::TestExternalities as MarketInitializer>::create_market_helper(Some(
+				config,
+			)));
+		}
+		ids
+	});
+
+	ext.execute_with(|| execute(market_ids))
 }
 
 // ----------------------------------------------------------------------------------------------------
