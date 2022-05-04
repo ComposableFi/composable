@@ -375,7 +375,7 @@ mod safe {
 	}
 }
 
-mod max_min {
+mod increment_to_max {
 	use frame_support::assert_noop;
 	use sp_runtime::{
 		traits::{One, Zero},
