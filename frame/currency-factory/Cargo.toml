@@ -36,6 +36,7 @@ composable-traits = { path = "../composable-traits", default-features = false }
 
 [dev-dependencies]
 composable-tests-helpers = { version = "0.0.1", path = "../composable-tests-helpers" }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 proptest = "1.0.0"
 

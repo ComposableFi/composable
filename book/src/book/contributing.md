@@ -37,7 +37,13 @@ A browser will open showing a local copy of this book. Simply edit the contents 
 
 ## Getting your changes published
 
-Simple create a **pull request** on GitHub with your changes to the `book/`, and when it gets merged your changes are automatically published by the CI.
+Before publishing your changes, make sure they pass the linter. To do this, run the following command inside the `./book/` directory.
+
+```sh
+mdbook test
+```
+
+After your changes pass the linter without error, simple create a **pull request** on GitHub with your changes to the `book/`, and when it gets merged your changes are automatically published by the CI.
 
 ---
 
@@ -65,5 +71,7 @@ Sometimes, you may want to have an emoji in the H1 title (like on the introducti
 
 # **👋** Introduction
 
+### Common Errors
 
+By default, mdbook will attempt to lint code blocks with `rustc`. To avoid this, either specify another language or add `ignore` to your codeblocks. More details [here](https://rust-lang.github.io/mdBook/cli/test.html).
 

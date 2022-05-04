@@ -4,7 +4,7 @@ use scale_info::TypeInfo;
 use sp_runtime::traits::{AtLeast32BitUnsigned, Zero};
 use sp_std::fmt::Debug;
 
-use crate::math::{SafeAdd, SafeDiv, SafeMul, SafeSub};
+use composable_support::math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub};
 
 /// really u8, but easy to do math operations
 pub type Exponent = u32;
@@ -12,10 +12,11 @@ pub type Exponent = u32;
 /// Creates a new asset, compatible with [`MultiCurrency`](https://docs.rs/orml-traits/0.4.0/orml_traits/currency/trait.MultiCurrency.html).
 /// The implementor should ensure that a new `CurrencyId` is created and collisions are avoided.
 /// Is about Local assets representations. These may differ remotely.
-pub trait CurrencyFactory<CurrencyId> {
-	fn create(id: RangeId) -> Result<CurrencyId, DispatchError>;
-	fn reserve_lp_token_id() -> Result<CurrencyId, DispatchError> {
-		Self::create(RangeId::LP_TOKENS)
+pub trait CurrencyFactory<AssetId, Balance> {
+	/// permissionsless creation of new transferable asset id
+	fn create(id: RangeId, ed: Balance) -> Result<AssetId, DispatchError>;
+	fn reserve_lp_token_id(ed: Balance) -> Result<AssetId, DispatchError> {
+		Self::create(RangeId::LP_TOKENS, ed)
 	}
 }
 
@@ -73,16 +74,15 @@ pub trait BalanceLike:
 	+ TypeInfo
 {
 }
-impl<
-		T: AtLeast32BitUnsigned
-			+ FullCodec
-			+ Copy
-			+ Default
-			+ Debug
-			+ MaybeSerializeDeserialize
-			+ MaxEncodedLen
-			+ TypeInfo,
-	> BalanceLike for T
+impl<T> BalanceLike for T where
+	T: AtLeast32BitUnsigned
+		+ FullCodec
+		+ Copy
+		+ Default
+		+ Debug
+		+ MaybeSerializeDeserialize
+		+ MaxEncodedLen
+		+ TypeInfo
 {
 }
 

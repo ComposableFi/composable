@@ -3,8 +3,8 @@
 use crate as pablo;
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
+use frame_system::EnsureSigned;
 use orml_traits::parameter_type_with_key;
-
 use sp_arithmetic::traits::Zero;
 use sp_core::H256;
 use sp_runtime::{
@@ -16,11 +16,14 @@ use system::EnsureRoot;
 
 pub type CurrencyId = u128;
 pub type BlockNumber = u64;
+pub type Moment = composable_traits::time::Timestamp;
 
 pub const BTC: AssetId = 0;
 pub const USDT: CurrencyId = 2;
 pub const USDC: CurrencyId = 4;
 pub const PROJECT_TOKEN: AssetId = 1;
+pub const TWAP_INTERVAL: Moment = 10;
+pub const MILLISECS_PER_BLOCK: u64 = 12000;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -36,6 +39,7 @@ frame_support::construct_runtime!(
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>},
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 	}
 );
 
@@ -43,7 +47,7 @@ impl pallet_currency_factory::Config for Test {
 	type Event = Event;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRoot<AccountId>;
-	type ReserveOrigin = EnsureRoot<AccountId>;
+	type Balance = Balance;
 	type WeightInfo = ();
 }
 
@@ -120,6 +124,18 @@ parameter_types! {
 	pub MaxSaleDuration: BlockNumber = 30 * 24 * 3600 / 12;
 	pub MaxInitialWeight: Permill = Permill::from_percent(95);
 	pub MinFinalWeight: Permill = Permill::from_percent(5);
+	pub const TWAPInterval: Moment = MILLISECS_PER_BLOCK * TWAP_INTERVAL;
+}
+
+parameter_types! {
+	pub const MinimumPeriod: u64 = MILLISECS_PER_BLOCK / 2;
+}
+
+impl pallet_timestamp::Config for Test {
+	type Moment = Moment;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
 }
 
 impl pablo::Config for Test {
@@ -136,7 +152,11 @@ impl pablo::Config for Test {
 	type LbpMaxSaleDuration = MaxSaleDuration;
 	type LbpMaxInitialWeight = MaxInitialWeight;
 	type LbpMinFinalWeight = MinFinalWeight;
-	type PoolCreationOrigin = EnsureRoot<AccountId>;
+	type PoolCreationOrigin = EnsureSigned<Self::AccountId>;
+	type EnableTwapOrigin = EnsureRoot<AccountId>;
+	type Time = Timestamp;
+	type TWAPInterval = TWAPInterval;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.

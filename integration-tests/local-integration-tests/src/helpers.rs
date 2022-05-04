@@ -52,7 +52,7 @@ pub fn assert_above_deposit(asset_id: CurrencyId, amount: Balance) -> Balance {
 }
 
 /// weigh enough to handle any XCMP message
-pub fn enough_weigth() -> u128 {
+pub fn enough_weight() -> u128 {
 	let this_liveness_native_amount = BaseXcmWeight::get() as u128 +
 		100 * UnitWeightCost::get() as Balance * MaxInstructions::get() as Balance;
 	this_liveness_native_amount

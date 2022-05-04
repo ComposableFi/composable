@@ -4,7 +4,7 @@
 
 use super::*; // recursive dependency onto runtime
 use codec::{Decode, Encode};
-use composable_traits::assets::{RemoteAssetRegistry, XcmAssetLocation};
+use composable_traits::xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation};
 use core::marker::PhantomData;
 use cumulus_primitives_core::{IsSystem, ParaId};
 use frame_support::{

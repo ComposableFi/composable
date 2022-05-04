@@ -1,8 +1,8 @@
 #![cfg_attr(
 	not(test),
 	deny(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -44,31 +44,35 @@ pub use crate::weights::WeightInfo;
 
 pub use pallet::*;
 
+/// TODO: add here backward mapping registry assets interface
 #[frame_support::pallet]
 pub mod pallet {
-
 	use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
+	use composable_support::{
+		abstractions::{
+			nonce::{Increment, Nonce, ValueQuery},
+			utils::{increment::WrappingIncrement, start_at::DefaultInit},
+		},
+		math::wrapping_next::WrappingNext,
+	};
 	use composable_traits::{
 		defi::{DeFiComposableConfig, DeFiEngine, Sell, SellEngine},
 		liquidation::Liquidation,
-		math::WrappingNext,
 		time::{LinearDecrease, StairstepExponentialDecrease, TimeReleaseFunction},
 	};
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::{OptionQuery, StorageMap, StorageValue},
-		traits::{Get, IsType, UnixTime},
+		traits::{EnsureOrigin, Get, IsType, UnixTime},
 		PalletId, Parameter, Twox64Concat,
 	};
-	use frame_system::ensure_signed;
-
-	#[cfg(feature = "std")]
-	use frame_support::traits::GenesisBuild;
-
-	use frame_system::pallet_prelude::OriginFor;
+	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use scale_info::TypeInfo;
 	use sp_runtime::{DispatchError, Permill, Perquintill};
 	use sp_std::vec::Vec;
+
+	#[cfg(feature = "std")]
+	use frame_support::traits::GenesisBuild;
 
 	use crate::weights::WeightInfo;
 
@@ -96,12 +100,17 @@ pub mod pallet {
 
 		type OrderId: Default + FullCodec + MaxEncodedLen + sp_std::fmt::Debug;
 
+		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
 		// /// when called, engine pops latest order to liquidate and pushes back result
 		// type Liquidate: Parameter + Dispatchable<Origin = Self::Origin> + From<Call<Self>>;
 		type WeightInfo: WeightInfo;
-		type ParachainId: FullCodec + MaxEncodedLen + Default + Parameter + Clone;
+
+		/// is used to talk to external liquidation engines
+		type XcmSender: xcm::latest::SendXcm;
+
+		type CanModifyStrategies: EnsureOrigin<Self::Origin>;
 	}
 
 	#[pallet::event]
@@ -123,12 +132,19 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight(T::WeightInfo::add_liquidation_strategy())]
 		pub fn add_liquidation_strategy(
-			_origin: OriginFor<T>,
-			_configuraiton: LiquidationStrategyConfiguration<T::ParachainId>,
+			origin: OriginFor<T>,
+			// TODO: make it validated
+			// TODO: User parachains pallet to validate parachain is connected
+			// TODO: use hardocded swap interface to validate native token is supported
+			configuraiton: LiquidationStrategyConfiguration,
 		) -> DispatchResultWithPostInfo {
-			Err(DispatchError::Other("add_liquidation_strategy: no implemented").into())
+			T::CanModifyStrategies::ensure_origin(origin)?;
+			let index = StrategyIndex::<T>::increment();
+			Strategies::<T>::insert(index, configuraiton);
+			Ok(().into())
 		}
-		#[pallet::weight(10_000)]
+
+		#[pallet::weight(T::WeightInfo::sell())]
 		pub fn sell(
 			origin: OriginFor<T>,
 			order: Sell<T::MayBeAssetId, T::Balance>,
@@ -138,6 +154,10 @@ pub mod pallet {
 			Self::liquidate(&who, order, configuration)?;
 			Ok(().into())
 		}
+
+		// TODO: Add API to manage callback from liquidation engine and managing it state
+		// TODO: each step from request to have its slots so can tackle
+		// TODO: add incetivised API to allow "progress" finalization if it stalled (or OCW)
 	}
 
 	#[pallet::storage]
@@ -146,21 +166,25 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		T::LiquidationStrategyId,
-		LiquidationStrategyConfiguration<T::ParachainId>,
+		LiquidationStrategyConfiguration,
 		OptionQuery,
 	>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn strategy_index)]
-	#[allow(clippy::disallowed_type)]
-	pub type StrategyIndex<T: Config> =
-		StorageValue<_, T::LiquidationStrategyId, frame_support::pallet_prelude::ValueQuery>;
+	#[allow(clippy::disallowed_types)]
+	pub type StrategyIndex<T: Config> = StorageValue<
+		_,
+		T::LiquidationStrategyId,
+		ValueQuery,
+		Nonce<DefaultInit, WrappingIncrement>,
+	>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn default_strategy_index)]
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type DefaultStrategyIndex<T: Config> =
-		StorageValue<_, T::LiquidationStrategyId, frame_support::pallet_prelude::ValueQuery>;
+		StorageValue<_, T::LiquidationStrategyId, ValueQuery>;
 
 	impl<T: Config> DeFiEngine for Pallet<T> {
 		type MayBeAssetId = T::MayBeAssetId;
@@ -177,47 +201,30 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		pub fn create_strategy_id() -> T::LiquidationStrategyId {
-			StrategyIndex::<T>::mutate(|x| {
-				*x = x.next();
-				*x
-			})
+			StrategyIndex::<T>::increment()
 		}
 	}
 
 	#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
-	pub enum LiquidationStrategyConfiguration<ParachainId> {
+	pub enum LiquidationStrategyConfiguration {
 		DutchAuction(TimeReleaseFunction),
-		UniswapV2 { slippage: Perquintill },
-		XcmDex { parachain_id: ParachainId },
-		/* Building fully decoupled flow is described bellow. Will avoid that for now.
-		 * ```plantuml
-		 * `solves question - how pallet can invoke list of other pallets with different configuration types
-		 * `so yet sharing some liquidation part and tracing liquidation id
-		 * dutch_auction_strategy -> liquidation : Create new strategy id
-		 * dutch_auction_strategy -> liquidation : Add Self Dispatchable call (baked with strategyid)
-		 * liquidation -> liquidation: Add liquidation order
-		 * liquidation -> liquidation: Get Dispatchable by Strategyid
-		 * liquidation --> dutch_auction_strategy: Invoke Dispatchable
-		 * dutch_auction_strategy -> dutch_auction_strategy: Get liquidation configuration by id previosly baked into call
-		 * dutch_auction_strategy --> liquidation: Pop next order
-		 * dutch_auction_strategy -> dutch_auction_strategy: Start liquidation
-		 * ```
-		 *Dynamic { liquidate: Dispatch, minimum_price: Balance }, */
+		Pablo { slippage: Perquintill },
+		Xcm(composable_traits::xcm::XcmSellRequestTransactConfiguration),
 	}
 
 	#[cfg(feature = "std")]
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig {
 		fn build(&self) {
-			let index = Pallet::<T>::create_strategy_id();
+			// DutchAction
+			let index = StrategyIndex::<T>::increment();
 			DefaultStrategyIndex::<T>::set(index);
-
 			let linear_ten_minutes = LiquidationStrategyConfiguration::DutchAuction(
 				TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 10 * 60 }),
 			);
 			Strategies::<T>::insert(index, linear_ten_minutes);
 
-			let index = Pallet::<T>::create_strategy_id();
+			let index = StrategyIndex::<T>::increment();
 			let exponential =
 				StairstepExponentialDecrease { step: 10, cut: Permill::from_rational(95_u32, 100) };
 			let exponential = LiquidationStrategyConfiguration::DutchAuction(

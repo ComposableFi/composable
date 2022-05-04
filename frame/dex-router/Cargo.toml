@@ -10,6 +10,7 @@ version = "0.0.1"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
@@ -19,7 +20,9 @@ sp-io = { default-features = false, git = "https://github.com/paritytech/substra
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
+composable-support = { path = "../composable-support", default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
+pallet-pablo = { path = "../pablo", default-features = false }
 scale-info = { version = "1.0", default-features = false, features = [
   "derive",
 ] }
@@ -33,12 +36,13 @@ version = "2.0.0"
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
+frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 pallet-currency-factory = { version = "0.0.1", path = "../currency-factory" }
-pallet-curve-amm = { path = "../curve-amm", default-features = false }
-pallet-uniswap-v2 = { path = "../uniswap-v2", default-features = false }
+pallet-pablo = { path = "../pablo", default-features = false }
+pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 [features]
 default = ["std"]
@@ -49,4 +53,10 @@ std = [
   "frame-support/std",
   "frame-system/std",
   "sp-runtime/std",
+]
+
+runtime-benchmarks = [
+  "frame-benchmarking",
+  "frame-support/runtime-benchmarks",
+  "frame-system/runtime-benchmarks",
 ]

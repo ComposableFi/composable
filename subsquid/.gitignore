@@ -1,0 +1,7 @@
+/node_modules
+/lib
+
+/**Versions.json
+
+# IDE files
+/.idea

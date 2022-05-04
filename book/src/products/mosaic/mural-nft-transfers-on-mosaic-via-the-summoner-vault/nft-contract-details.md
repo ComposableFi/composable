@@ -4,7 +4,7 @@
 
 ## Functions
 
-```
+```solidity
 function transferERC721ToLayer( 
     address sourceNFTAddress,
     uint256 sourceNFTId,
@@ -19,7 +19,7 @@ This function emits `TransferInitiated` with `isRelease == true` if the NFT is t
 
 This function emits `TransferInitiated` with `isRelease == false` when the NFT is being transferred to a destination network other than the original network of the NFT. `TransferInitiated` event contains the information about the original NFT which is needed in the `summonNFT` method. On receiving this event the relayer has to call the `summonNFT` method on the destination layer.
 
-```
+```solidity
 function releaseSeal(
     address nftOwner,
     address nftContract,
@@ -34,7 +34,7 @@ This method is called in two cases:
 1. To release the original NFT on the original network. The boolean `isFailure` is false. 
 2. To release the source NFT on the source network in case of a failed transfer. The boolean `isFailure` is true.
 
-```
+```solidity
 summonNFT(
     string memory nftUri,
     address destinationAddress,

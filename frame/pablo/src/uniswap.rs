@@ -2,11 +2,11 @@ use crate::{Config, Error, PoolConfiguration, PoolCount, Pools};
 use composable_maths::dex::constant_product::{
 	compute_deposit_lp, compute_in_given_out, compute_out_given_in,
 };
+use composable_support::math::safe::{safe_multiply_by_rational, SafeAdd, SafeSub};
 use composable_traits::{
 	currency::{CurrencyFactory, RangeId},
 	defi::CurrencyPair,
 	dex::ConstantProductPoolInfo,
-	math::{safe_multiply_by_rational, SafeAdd, SafeSub},
 };
 use frame_support::{
 	pallet_prelude::*,
@@ -35,7 +35,7 @@ impl<T: Config> Uniswap<T> {
 		let total_fees = fee.checked_add(&owner_fee).ok_or(ArithmeticError::Overflow)?;
 		ensure!(total_fees < Permill::one(), Error::<T>::InvalidFees);
 
-		let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS)?;
+		let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS, T::Balance::default())?;
 
 		// Add new pool
 		let pool_id =
@@ -85,7 +85,7 @@ impl<T: Config> Uniswap<T> {
 		quote_amount: T::Balance,
 		min_mint_amount: T::Balance,
 		keep_alive: bool,
-	) -> Result<T::Balance, DispatchError> {
+	) -> Result<(T::Balance, T::Balance, T::Balance), DispatchError> {
 		ensure!(base_amount > T::Balance::zero(), Error::<T>::InvalidAmount);
 		let pool_base_aum = T::Convert::convert(T::Assets::balance(pool.pair.base, &pool_account));
 		let pool_quote_aum =
@@ -108,7 +108,7 @@ impl<T: Config> Uniswap<T> {
 		T::Assets::transfer(pool.pair.base, who, &pool_account, base_amount, keep_alive)?;
 		T::Assets::transfer(pool.pair.quote, who, &pool_account, quote_amount, keep_alive)?;
 		T::Assets::mint_into(pool.lp_token, who, lp_token_to_mint)?;
-		Ok(lp_token_to_mint)
+		Ok((base_amount, quote_amount, lp_token_to_mint))
 	}
 
 	#[transactional]

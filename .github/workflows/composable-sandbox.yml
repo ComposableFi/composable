@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - composable-sandbox
-      
+
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
   SCCACHE_GCS_BUCKET: 'composable-build-artefacts'

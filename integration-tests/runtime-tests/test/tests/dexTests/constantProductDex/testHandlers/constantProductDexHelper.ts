@@ -15,9 +15,9 @@ quoteAmountTotal = 0;
 mintedLPTokens = 0;
 
 export async function createPool(walletId: KeyringPair, baseAssetId: number, quoteAssetId: number, ownerFee: number){
-  const pair = api.createType('ComposableTraitsDefiCurrencyPair', {
-    base: api.createType('u128', baseAssetId),
-    quote: api.createType('u128', quoteAssetId)
+  const pair = api.createType('ComposableTraitsDefiCurrencyPairCurrencyId', {
+    base: api.createType('CurrencyId', baseAssetId),
+    quote: api.createType('CurrencyId', quoteAssetId)
   });
   const fee = api.createType('Permill', 0);
   const ownerFees = api.createType('Permill', ownerFee);
@@ -119,9 +119,9 @@ export async function swapTokenPairs(wallet: KeyringPair,
   minReceiveAmount: number = 0
   ){
     const poolIdParam = api.createType('u128', poolId);
-    const currencyPair = api.createType('ComposableTraitsDefiCurrencyPair', {
-      base: api.createType('u128', baseAssetId),
-      quote: api.createType('u128',quoteAssetId)
+    const currencyPair = api.createType('ComposableTraitsDefiCurrencyPairCurrencyId', {
+      base: api.createType('CurrencyId', baseAssetId),
+      quote: api.createType('CurrencyId',quoteAssetId)
     });
     const quoteAmountParam = api.createType('u128', quoteAmount);
     const minReceiveParam = api.createType('u128', minReceiveAmount);

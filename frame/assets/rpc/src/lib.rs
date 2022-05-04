@@ -1,6 +1,7 @@
 use assets_runtime_api::AssetsRuntimeApi;
 use codec::Codec;
-use composable_support::rpc_helpers::{SafeRpcWrapper, SafeRpcWrapperType};
+use composable_support::rpc_helpers::SafeRpcWrapper;
+use core::{fmt::Display, str::FromStr};
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result as RpcResult};
 use jsonrpc_derive::rpc;
 use sp_api::ProvideRuntimeApi;
@@ -11,8 +12,8 @@ use sp_std::sync::Arc;
 #[rpc]
 pub trait AssetsApi<BlockHash, AssetId, AccountId, Balance>
 where
-	AssetId: SafeRpcWrapperType,
-	Balance: SafeRpcWrapperType,
+	AssetId: FromStr + Display,
+	Balance: FromStr + Display,
 {
 	#[rpc(name = "assets_balanceOf")]
 	fn balance_of(
@@ -39,9 +40,9 @@ impl<C, Block, AssetId, AccountId, Balance>
 	for Assets<C, (Block, AssetId, AccountId, Balance)>
 where
 	Block: BlockT,
-	AssetId: Codec + Send + Sync + 'static + SafeRpcWrapperType,
-	AccountId: Codec + Send + Sync + 'static,
-	Balance: Send + Sync + 'static + SafeRpcWrapperType,
+	AssetId: Send + Sync + 'static + Codec + FromStr + Display,
+	AccountId: Send + Sync + 'static + Codec + FromStr + Display,
+	Balance: Send + Sync + 'static + Codec + FromStr + Display,
 	C: Send + Sync + 'static,
 	C: ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block>,

@@ -1,11 +1,10 @@
 //! CurrencyId implementation
 use codec::{CompactAs, Decode, Encode, MaxEncodedLen};
 use composable_traits::currency::Exponent;
-use core::ops::Div;
+use core::{fmt::Display, ops::Div, str::FromStr};
 use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
 
-use composable_support::rpc_helpers::FromHexStr;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_runtime::sp_std::ops::Deref;
@@ -13,13 +12,13 @@ use sp_runtime::sp_std::ops::Deref;
 /// Trait used to write generalized code over well know currencies
 /// We use const to allow for match on these
 /// Allows to have reuse of code amids runtime and cross relay transfers in future.
-// TODO: split CurrenyId for runtimes - one for DOT and one for KSM
+// TODO: split CurrencyId for runtimes - one for DOT and one for KSM
 pub trait WellKnownCurrency {
-	// works well with pattnrs unlike impl trait `associated consts cannot be referenced in
+	// works well with patterns unlike impl trait `associated consts cannot be referenced in
 	// patterns`
 	const NATIVE: Self;
 	/// usually we expect running with relay,
-	/// but if  not, than degenrative case would be this equal to `NATIVE`
+	/// but if  not, than degenerative case would be this equal to `NATIVE`
 	const RELAY_NATIVE: Self;
 }
 
@@ -41,6 +40,20 @@ pub trait WellKnownCurrency {
 #[repr(transparent)]
 pub struct CurrencyId(pub u128);
 
+impl FromStr for CurrencyId {
+	type Err = ();
+	fn from_str(s: &str) -> Result<Self, Self::Err> {
+		u128::from_str(s).map(CurrencyId).map_err(|_| ())
+	}
+}
+
+impl Display for CurrencyId {
+	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+		let CurrencyId(id) = self;
+		write!(f, "{}", id)
+	}
+}
+
 impl WellKnownCurrency for CurrencyId {
 	const NATIVE: CurrencyId = CurrencyId::PICA;
 	const RELAY_NATIVE: CurrencyId = CurrencyId::KSM;
@@ -48,7 +61,9 @@ impl WellKnownCurrency for CurrencyId {
 
 impl CurrencyId {
 	pub const INVALID: CurrencyId = CurrencyId(0);
+	/// Runtime native token Kusama
 	pub const PICA: CurrencyId = CurrencyId(1);
+	/// Runtime native token Polkadot
 	pub const LAYR: CurrencyId = CurrencyId(2);
 	pub const CROWD_LOAN: CurrencyId = CurrencyId(3);
 
@@ -68,20 +83,6 @@ impl CurrencyId {
 	}
 	pub fn milli<T: From<u64> + Div<Output = T>>() -> T {
 		Self::unit::<T>() / T::from(1000_u64)
-	}
-}
-
-impl FromHexStr for CurrencyId {
-	type Err = <u128 as FromHexStr>::Err;
-
-	fn from_hex_str(src: &str) -> core::result::Result<Self, Self::Err> {
-		u128::from_hex_str(src).map(CurrencyId)
-	}
-}
-
-impl core::fmt::LowerHex for CurrencyId {
-	fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-		core::fmt::LowerHex::fmt(&self.0, f)
 	}
 }
 

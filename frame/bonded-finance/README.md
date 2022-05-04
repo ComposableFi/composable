@@ -76,7 +76,7 @@ they own.
 ### Buying Bonds
 
 Bonds can be purchased with the `bond` extrinsic. Buyers will indicate the 
-number of bonds they wish to buy. If the number number of bonds they wish to 
+number of bonds they wish to buy. If the number of bonds they wish to 
 buy is higher than the number of available bonds in the contract, the 
 transaction will not go through.
 

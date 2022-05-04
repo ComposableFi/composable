@@ -5,9 +5,9 @@ use super::*; // recursive dependency onto runtime
 use codec::{Decode, Encode};
 use common::xcmp::*;
 use composable_traits::{
-	assets::{RemoteAssetRegistry, XcmAssetLocation},
 	defi::Ratio,
 	oracle::MinimalOracle,
+	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
 };
 use cumulus_primitives_core::{IsSystem, ParaId};
 use frame_support::{
@@ -267,6 +267,7 @@ parameter_types! {
 parameter_type_with_key! {
 	pub ParachainMinFee: |location: MultiLocation| -> u128 {
 		#[allow(clippy::match_ref_pats)] // false positive
+		#[allow(clippy::match_single_binding)]
 		match (location.parents, location.first_interior()) {
 			// (1, Some(Parachain(2))) => 40,
 			_ => 0,

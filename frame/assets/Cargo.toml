@@ -36,6 +36,7 @@ num-traits = { version = "0.2.14", default-features = false }
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
+frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }

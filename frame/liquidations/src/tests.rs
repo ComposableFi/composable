@@ -73,3 +73,5 @@ fn serde_call() {
 	assert_eq!(sell_typed.encode(), sell_binary.encode());
 	assert_eq!(sell_typed.encode(), sell_binary_flat.encode());
 }
+
+// TODO: add XCM end to end tests with callbacks

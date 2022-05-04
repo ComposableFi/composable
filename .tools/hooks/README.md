@@ -12,4 +12,4 @@ To install a script, simply copy the contents of the script you want to install 
 
 The style `pre-commit` hook runs `make style` to format all files and re-stage all originally changed files. This can be useful to help avoid "rustfmt" commits to get CI to pass.
 
-**NOTE**: You probably want to disable or  turn this off when merging and/ or rebasing.
+**NOTE**: You probably want to disable or turn this off when merging and/ or rebasing.
