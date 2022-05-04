@@ -64,6 +64,7 @@ pub use frame_support::{
 };
 
 use codec::{Codec, Encode, EncodeLike};
+use contracts::weights::WeightInfo;
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
 use frame_system::EnsureSigned;
@@ -1025,6 +1026,63 @@ impl dex_router::Config for Runtime {
 	type WeightInfo = weights::dex_router::WeightInfo<Runtime>;
 }
 
+const fn deposit(items: u32, bytes: u32) -> Balance {
+	(items as Balance * CurrencyId::unit::<Balance>() +
+		(bytes as Balance) * (5 * CurrencyId::milli::<Balance>() / 100)) /
+		10
+}
+
+parameter_types! {
+	pub const DepositPerItem: Balance = deposit(1, 0);
+	pub const DepositPerByte: Balance = deposit(0, 1);
+	// The lazy deletion runs inside on_initialize.
+	pub DeletionWeightLimit: Weight = AVERAGE_ON_INITIALIZE_RATIO *
+		RuntimeBlockWeights::get().max_block;
+	// The weight needed for decoding the queue should be less or equal than a fifth
+	// of the overall weight dedicated to the lazy deletion.
+	pub DeletionQueueDepth: u32 = ((DeletionWeightLimit::get() / (
+			<Runtime as contracts::Config>::WeightInfo::on_initialize_per_queue_item(1) -
+			<Runtime as contracts::Config>::WeightInfo::on_initialize_per_queue_item(0)
+		)) / 5) as u32;
+	pub Schedule: contracts::Schedule<Runtime> = {
+		let mut schedule = contracts::Schedule::<Runtime>::default();
+		// We decided to **temporarily* increase the default allowed contract size here
+		// (the default is `128 * 1024`).
+		//
+		// Our reasoning is that a number of people ran into `CodeTooLarge` when trying
+		// to deploy their contracts. We are currently introducing a number of optimizations
+		// into ink! which should bring the contract sizes lower. In the meantime we don't
+		// want to pose additional friction on developers.
+		schedule.limits.code_len = 512 * 1024;
+		schedule
+	};
+}
+
+impl contracts::Config for Runtime {
+	type Time = Timestamp;
+	type Randomness = RandomnessCollectiveFlip;
+	type Currency = Balances;
+	type Event = Event;
+	type Call = Call;
+	/// The safest default is to allow no calls at all.
+	///
+	/// Runtimes should whitelist dispatchables that are allowed to be called from contracts
+	/// and make sure they are stable. Dispatchables exposed to contracts are not allowed to
+	/// change because that would break already deployed contracts. The `Call` structure itself
+	/// is not allowed to change the indices of existing pallets, too.
+	type CallFilter = frame_support::traits::Nothing;
+	type DepositPerItem = DepositPerItem;
+	type DepositPerByte = DepositPerByte;
+	type WeightPrice = transaction_payment::Pallet<Self>;
+	type WeightInfo = contracts::weights::SubstrateWeight<Self>;
+	type ChainExtension = ();
+	type DeletionQueueDepth = DeletionQueueDepth;
+	type DeletionWeightLimit = DeletionWeightLimit;
+	type Schedule = Schedule;
+	type CallStack = [contracts::Frame<Self>; 31];
+	type AddressGenerator = contracts::DefaultAddressGenerator;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1085,6 +1143,8 @@ construct_runtime!(
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
+    Contracts: contracts::{Pallet, Call, Storage, Event<T>} = 67,
+
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
 );

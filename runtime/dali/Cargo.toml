@@ -73,6 +73,7 @@ call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter"
 common = { path = "../common", default-features = false }
 composable-support = { path = '../../frame/composable-support', default-features = false }
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
+contracts = { package = "pallet-contracts", path = "../../frame/contracts", default-features = false }
 crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false }
 currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
 dex-router = { package = "pallet-dex-router", path = "../../frame/dex-router", default-features = false }
