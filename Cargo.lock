@@ -4423,7 +4423,7 @@ dependencies = [
  "bytes 1.1.0",
  "derive_more",
  "flex-error",
- "ibc-proto 0.17.1",
+ "ibc-proto",
  "ics23",
  "num-traits",
  "prost",
@@ -4446,7 +4446,7 @@ dependencies = [
 name = "ibc-primitives"
 version = "0.1.0"
 dependencies = [
- "ibc 0.13.0",
+ "ibc",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -4485,9 +4485,9 @@ dependencies = [
 name = "ibc-rpc"
 version = "0.1.0"
 dependencies = [
- "ibc 0.14.1",
+ "ibc",
  "ibc-primitives",
- "ibc-proto 0.17.1",
+ "ibc-proto",
  "ibc-runtime-api",
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -4518,7 +4518,7 @@ name = "ibc-trait"
 version = "0.1.0"
 dependencies = [
  "frame-support",
- "ibc 0.13.0",
+ "ibc",
  "ibc-primitives",
  "parity-scale-codec",
  "scale-info",
@@ -7732,9 +7732,9 @@ dependencies = [
  "frame-system",
  "hex",
  "hex-literal",
- "ibc 0.14.1",
+ "ibc",
  "ibc-primitives",
- "ibc-proto 0.17.1",
+ "ibc-proto",
  "ibc-trait",
  "ics23",
  "log 0.4.16",
@@ -7764,7 +7764,7 @@ version = "0.0.1"
 dependencies = [
  "frame-support",
  "frame-system",
- "ibc 0.13.0",
+ "ibc",
  "ibc-primitives",
  "ibc-trait",
  "log 0.4.16",
