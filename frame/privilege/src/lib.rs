@@ -168,9 +168,7 @@ pub mod pallet {
 		Counter<ZeroInit, IncrementToMax<T::MaxGroup, TooManyGroup, Error<T>>, SafeDecrement>,
 	>;
 
-	error_to_pallet_error!(
-		TooManyGroup;
-	);
+	error_to_pallet_error!(TooManyGroup,);
 
 	impl<T: Config> InspectPrivilege for Pallet<T> {
 		type AccountId = AccountIdOf<T>;
