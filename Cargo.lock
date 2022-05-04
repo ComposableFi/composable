@@ -4395,7 +4395,35 @@ dependencies = [
  "bytes 1.1.0",
  "derive_more",
  "flex-error",
- "ibc-proto",
+ "ibc-proto 0.17.0",
+ "ics23",
+ "num-traits",
+ "prost",
+ "prost-types",
+ "safe-regex",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "sha2 0.10.2",
+ "subtle-encoding",
+ "tendermint",
+ "tendermint-light-client-verifier",
+ "tendermint-proto",
+ "tendermint-testgen",
+ "time 0.3.9",
+ "tracing",
+]
+
+[[package]]
+name = "ibc"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb0ec80ab8334fcde56bc8c243f2bb84427adf74765a040f90ea4882d0257b14"
+dependencies = [
+ "bytes 1.1.0",
+ "derive_more",
+ "flex-error",
+ "ibc-proto 0.17.1",
  "ics23",
  "num-traits",
  "prost",
@@ -4418,7 +4446,7 @@ dependencies = [
 name = "ibc-primitives"
 version = "0.1.0"
 dependencies = [
- "ibc",
+ "ibc 0.13.0",
  "parity-scale-codec",
  "scale-info",
  "serde",
@@ -4440,12 +4468,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "ibc-proto"
+version = "0.17.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "29b871ed82567f5612054e8d7928d1dfda31341147cf5747fe396b017dcec0cb"
+dependencies = [
+ "base64 0.13.0",
+ "bytes 1.1.0",
+ "prost",
+ "prost-types",
+ "serde",
+ "tendermint-proto",
+]
+
+[[package]]
 name = "ibc-rpc"
 version = "0.1.0"
 dependencies = [
- "ibc",
+ "ibc 0.14.1",
  "ibc-primitives",
- "ibc-proto",
+ "ibc-proto 0.17.1",
  "ibc-runtime-api",
  "jsonrpc-core",
  "jsonrpc-core-client",
@@ -4476,7 +4518,7 @@ name = "ibc-trait"
 version = "0.1.0"
 dependencies = [
  "frame-support",
- "ibc",
+ "ibc 0.13.0",
  "ibc-primitives",
  "parity-scale-codec",
  "scale-info",
@@ -7690,9 +7732,9 @@ dependencies = [
  "frame-system",
  "hex",
  "hex-literal",
- "ibc",
+ "ibc 0.14.1",
  "ibc-primitives",
- "ibc-proto",
+ "ibc-proto 0.17.1",
  "ibc-trait",
  "ics23",
  "log 0.4.16",
@@ -7722,7 +7764,7 @@ version = "0.0.1"
 dependencies = [
  "frame-support",
  "frame-system",
- "ibc",
+ "ibc 0.13.0",
  "ibc-primitives",
  "ibc-trait",
  "log 0.4.16",
