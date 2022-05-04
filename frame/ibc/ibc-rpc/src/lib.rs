@@ -92,7 +92,7 @@ pub fn generate_raw_proof(inputs: Vec<(Vec<u8>, Vec<u8>)>, keys: Vec<Vec<u8>>) -
 			trie.insert(&*key, &*value)
 				.map_err(|_| runtime_error_into_rpc_error("Failed to generate proof"))?;
 		}
-		trie.root().clone()
+		*trie.root()
 	};
 
 	sp_trie::generate_trie_proof::<sp_trie::LayoutV0<BlakeTwo256>, _, _, _>(&db, root, keys)
@@ -502,7 +502,7 @@ where
 		let api = self.client.runtime_api();
 		let at = BlockId::Hash(self.client.info().best_hash);
 		let client_height = ibc::Height::new(revision_number, revision_height);
-		let height = client_height.encode_vec().map_err(|e| runtime_error_into_rpc_error(e))?;
+		let height = client_height.encode_vec().map_err(runtime_error_into_rpc_error)?;
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
