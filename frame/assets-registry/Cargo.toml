@@ -39,6 +39,7 @@ scale-info = { version = "1.0", default-features = false, features = [
 [dev-dependencies]
 frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+pallet-currency-factory = { path = "../currency-factory", default-features = false }
 
 [features]
 default = ["std"]
@@ -54,6 +55,7 @@ std = [
   "sp-core/std",
   "sp-std/std",
   "xcm/std",
+  "pallet-currency-factory/std",
 ]
 
 runtime-benchmarks = [

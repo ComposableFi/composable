@@ -1,7 +1,10 @@
 use core::ops::Neg;
 
 use codec::{Decode, Encode};
-use composable_support::validation::Validate;
+use composable_support::{
+	math::safe::{SafeAdd, SafeDiv, SafeMul},
+	validation::Validate,
+};
 use scale_info::TypeInfo;
 use sp_std::{cmp::Ordering, convert::TryInto};
 
@@ -14,12 +17,11 @@ use sp_arithmetic::per_things::Percent;
 
 use crate::{
 	defi::{LiftedFixedBalance, Rate, ZeroToOneFixedU128},
-	math::{SafeAdd, SafeDiv, SafeMul},
 	time::{DurationSeconds, SECONDS_PER_YEAR_NAIVE},
 };
 
 /// utilization_ratio = total_borrows / (total_cash + total_borrows)
-pub fn calc_utilization_ratio(
+pub fn calculate_utilization_ratio(
 	cash: LiftedFixedBalance,
 	borrows: LiftedFixedBalance,
 ) -> Result<Percent, ArithmeticError> {
@@ -30,13 +32,17 @@ pub fn calc_utilization_ratio(
 	let total = cash.safe_add(&borrows)?;
 	let utilization_ratio = borrows
 		.checked_div(&total)
+		// REVIEW: total can be zero
 		.expect("above checks prove it cannot error")
 		.checked_mul_int(100_u8)
 		.ok_or(ArithmeticError::Overflow)?;
 	Ok(Percent::from_percent(utilization_ratio))
+
+	// Percent::from_rational(borrows, total)
 }
 
 pub trait InterestRate {
+	// Mutable because of [`DynamicPIDControllerModel::get_output_utilization_ratio`].
 	fn get_borrow_rate(&mut self, utilization: Percent) -> Option<Rate>;
 }
 
@@ -425,6 +431,7 @@ pub fn increment_index(
 	index: Rate,
 	delta_time: DurationSeconds,
 ) -> Result<Rate, ArithmeticError> {
+	// borrow_rate * index * delta_time / SECONDS_PER_YEAR_NAIVE + index
 	borrow_rate
 		.safe_mul(&index)?
 		.safe_mul(&FixedU128::saturating_from_integer(delta_time))?

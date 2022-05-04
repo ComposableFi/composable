@@ -3,6 +3,7 @@
 use crate as pablo;
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
+use frame_system::EnsureSigned;
 use orml_traits::parameter_type_with_key;
 use sp_arithmetic::traits::Zero;
 use sp_core::H256;
@@ -46,7 +47,7 @@ impl pallet_currency_factory::Config for Test {
 	type Event = Event;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRoot<AccountId>;
-	type ReserveOrigin = EnsureRoot<AccountId>;
+	type Balance = Balance;
 	type WeightInfo = ();
 }
 
@@ -151,10 +152,11 @@ impl pablo::Config for Test {
 	type LbpMaxSaleDuration = MaxSaleDuration;
 	type LbpMaxInitialWeight = MaxInitialWeight;
 	type LbpMinFinalWeight = MinFinalWeight;
-	type PoolCreationOrigin = EnsureRoot<AccountId>;
+	type PoolCreationOrigin = EnsureSigned<Self::AccountId>;
 	type EnableTwapOrigin = EnsureRoot<AccountId>;
 	type Time = Timestamp;
 	type TWAPInterval = TWAPInterval;
+	type WeightInfo = ();
 }
 
 // Build genesis storage according to the mock runtime.

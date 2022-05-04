@@ -24,10 +24,10 @@ use sp_runtime::{
 };
 
 use sp_arithmetic::per_things::Percent;
+use composable_support::math::safe::{LiftedFixedBalance, SafeArithmetic};
 
 use crate::{
 	loans::{DurationSeconds, ONE_HOUR},
-	math::{LiftedFixedBalance, SafeArithmetic},
 };
 
 /// The fixed point number from 0..to max.
@@ -63,7 +63,7 @@ pub enum InterestRateModel {
 
 impl Default for InterestRateModel {
 	// unwrap is used with known parameters, and unit tested right below.
-	#[allow(clippy::disallowed_method)]
+	#[allow(clippy::disallowed_methods)]
 	fn default() -> Self {
 		Self::new_jump_model(
 			Rate::saturating_from_rational(2, 100),

@@ -5,7 +5,7 @@ export default {
       params: [
         {
           name: "asset",
-          type: "CurrencyId"
+          type: "CustomRpcCurrencyId"
         },
         {
           name: "account",
@@ -17,11 +17,8 @@ export default {
           isOptional: true,
         },
       ],
-      type: "AssetsBalance"
+      type: "CustomRpcBalance"
     },
   },
-  types: {
-    CurrencyId: "u128",
-    AssetsBalance: "u128",
-  },
+  types: {}
 };

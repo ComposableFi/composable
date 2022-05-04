@@ -8,6 +8,8 @@ pub trait WeightInfo {
 	fn take() -> Weight;
 	fn liquidate() -> Weight;
 	fn known_overhead_for_on_finalize() -> Weight;
+	fn xcm_sell() -> Weight;
+	fn add_configuration() -> Weight;
 }
 
 /// Weight functions for `dutch_auction`.
@@ -47,5 +49,13 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		(195_022_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
+	}
+
+	fn xcm_sell() -> Weight {
+		10_000
+	}
+
+	fn add_configuration() -> Weight {
+		10_000
 	}
 }

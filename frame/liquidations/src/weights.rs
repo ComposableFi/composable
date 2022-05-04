@@ -8,6 +8,10 @@ pub trait WeightInfo {
 	fn add_liquidation_strategy() -> Weight {
 		10_000
 	}
+
+	fn sell() -> Weight {
+		10_000
+	}
 }
 
 impl WeightInfo for () {}

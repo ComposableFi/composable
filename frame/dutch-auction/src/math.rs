@@ -2,12 +2,11 @@
 //! Linear, step-wise exponential, and continuous exponential, others, configured from MakerDao
 //! https://github.com/makerdao/dss/blob/master/src/abaci.sol
 
+use composable_support::math::safe::{SafeDiv, SafeMul};
 use composable_traits::{
 	defi::LiftedFixedBalance,
-	math::{SafeDiv, SafeMul},
 	time::{DurationSeconds, LinearDecrease, StairstepExponentialDecrease, TimeReleaseFunction},
 };
-
 use sp_runtime::{
 	traits::{Saturating, Zero},
 	ArithmeticError, FixedPointNumber,

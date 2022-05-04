@@ -69,7 +69,6 @@ governance-registry = { package = "pallet-governance-registry", path = "../../fr
 liquidations = { package = "pallet-liquidations", path = "../../frame/liquidations", default-features = false }
 oracle = { package = "pallet-oracle", path = "../../frame/oracle", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
-uniswap-v2 = { package = "pallet-uniswap-v2", path = "../../frame/uniswap-v2", default-features = false }
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false }
 
 
@@ -189,7 +188,6 @@ std = [
   "polkadot-core-primitives/std",
   "polkadot-primitives/std",
   "polkadot-runtime-parachains/std",
-  "uniswap-v2/std",
 ]
 
 runtime-benchmarks = [
@@ -220,7 +218,6 @@ runtime-benchmarks = [
   "picasso-runtime/runtime-benchmarks",
   "polkadot-primitives/runtime-benchmarks",
   "polkadot-runtime-parachains/runtime-benchmarks",
-  "uniswap-v2/runtime-benchmarks",
 ]
 
 develop = ["assets", "assets-registry", "governance-registry"]

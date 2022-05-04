@@ -1,5 +1,5 @@
-use crate as pallet_assets_registry;
-pub use composable_traits::assets::XcmAssetLocation;
+use crate::{self as pallet_assets_registry, weights::SubstrateWeight};
+use composable_traits::xcm::assets::XcmAssetLocation;
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{EnsureOneOf, Everything},
@@ -12,8 +12,9 @@ use sp_runtime::{
 };
 
 pub type AccountId = u32;
-type Block = frame_system::mocking::MockBlock<Test>;
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+type Balance = u64;
+type Block = frame_system::mocking::MockBlock<Runtime>;
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 
 pub const ROOT: AccountId = 0_u32;
 pub const ALICE: AccountId = 1_u32;
@@ -24,12 +25,14 @@ pub const DECIMALS: u8 = 12;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
-	pub enum Test where
+	pub enum Runtime where
 		Block = Block,
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		CurrencyFactory : pallet_currency_factory::{Pallet, Call, Storage, Event<T>},
+
 		AssetsRegistry: pallet_assets_registry::{Pallet, Call, Storage, Event<T>},
 	}
 );
@@ -39,7 +42,18 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 42;
 }
 
-impl system::Config for Test {
+impl pallet_currency_factory::Config for Runtime {
+	type Event = Event;
+	type AssetId = AssetId;
+	type Balance = Balance;
+	type AddOrigin = EnsureOneOf<
+		EnsureSignedBy<RootAccount, AccountId>, // for tests
+		EnsureRoot<AccountId>,                  // for benchmarks
+	>;
+	type WeightInfo = pallet_currency_factory::SubstrateWeight<Self>;
+}
+
+impl system::Config for Runtime {
 	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
@@ -70,21 +84,22 @@ ord_parameter_types! {
 	pub const RootAccount: AccountId = ROOT;
 }
 
-impl pallet_assets_registry::Config for Test {
+type AssetId = u128;
+
+impl pallet_assets_registry::Config for Runtime {
 	type Event = Event;
-	type LocalAssetId = u128;
-	type ForeignAssetId = u128;
-	type Location = XcmAssetLocation;
-	type UpdateAdminOrigin = EnsureOneOf<
+	type LocalAssetId = AssetId;
+	type Balance = Balance;
+	type CurrencyFactory = CurrencyFactory;
+	type ForeignAssetId = XcmAssetLocation;
+	type UpdateAssetRegistryOrigin = EnsureOneOf<
 		EnsureSignedBy<RootAccount, AccountId>, // for tests
 		EnsureRoot<AccountId>,                  // for benchmarks
 	>;
-	type LocalAdminOrigin = pallet_assets_registry::EnsureLocalAdmin<Test>;
-	type ForeignAdminOrigin = pallet_assets_registry::EnsureForeignAdmin<Test>;
-	type WeightInfo = ();
+	type WeightInfo = SubstrateWeight<Self>;
 }
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	system::GenesisConfig::default().build_storage::<Runtime>().unwrap().into()
 }
