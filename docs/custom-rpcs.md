@@ -32,8 +32,8 @@ rust-version = "1.56"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-codec = { default-features = false, features = ["derive"], package = "parity-scale-codec", version = "2.0.0" }
+sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+codec = { default-features = false, features = ["derive"], package = "parity-scale-codec", version = "3.0.0" }
 
 # ...any other dependencies, as per usual
 
@@ -80,14 +80,14 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # substrate primitives
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 
 # SCALE
-scale-info = { version = "1.0", features = ["derive"] }
-codec = { version = "2.0.0", package = "parity-scale-codec", features = ["derive"] }
+scale-info = { version = "2.1.1", features = ["derive"] }
+codec = { version = "3.0.0", package = "parity-scale-codec", features = ["derive"] }
 
 # local
 pallet-name-runtime-api = { path = "../runtime-api" }

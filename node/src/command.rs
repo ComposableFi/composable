@@ -285,6 +285,7 @@ pub fn run() -> Result<()> {
 			},
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
+			let collator_options = cli.run.collator_options();
 
 			runner.run_node_until_exit(|config| async move {
 				let _ = &cli;
@@ -317,7 +318,8 @@ pub fn run() -> Result<()> {
 				info!("Parachain genesis state: {}", genesis_state);
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
-				Ok(crate::service::start_node(config, polkadot_config, id).await?)
+				Ok(crate::service::start_node(config, polkadot_config, collator_options, id)
+					.await?)
 			})
 		},
 	}
