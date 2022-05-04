@@ -26,12 +26,6 @@ macro_rules! error_to_pallet_error {
 					Error::<T>::$to
 				}
 			}
-
-			// impl<T: From<$name>> From<$name> for DispatchError {
-			// 	fn from(_: $name) -> DispatchError {
-			// 		T::from($to).into()
-			// 	}
-			// }
 		)+
 	};
 }
