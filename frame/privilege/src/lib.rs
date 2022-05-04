@@ -296,7 +296,6 @@ pub mod pallet {
 			group: PrivilegedGroupOf<Self>,
 			privilege: Privilege,
 		) -> Result<Self::GroupId, DispatchError> {
-			// ensure!(GroupCount::<T>::get() < T::MaxGroup::get(), Error::<T>::TooManyGroup);
 			GroupId::<T>::try_mutate(|previous_group_id| {
 				let group_id = previous_group_id.next();
 				*previous_group_id = group_id;
@@ -317,7 +316,7 @@ pub mod pallet {
 		}
 
 		fn delete(group_id: Self::GroupId) -> DispatchResult {
-			GroupCount::<T>::mutate(|x| *x -= 1);
+			GroupCount::<T>::decrement()?;
 			GroupPrivileges::<T>::remove(group_id);
 			GroupMembers::<T>::remove(group_id);
 			Self::deposit_event(Event::GroupDeleted { group_id });
