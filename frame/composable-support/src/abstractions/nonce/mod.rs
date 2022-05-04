@@ -1,7 +1,7 @@
 use crate::abstractions::utils::{
 	increment::{Increment, Incrementor},
 	start_at::StartAtValue,
-	LegalValueQuery,
+	ValueQuery,
 };
 
 use codec::FullCodec;
@@ -74,8 +74,7 @@ where
 }
 
 #[allow(clippy::disallowed_types)]
-impl<P, T, S, I> NonceHelperTrait<T, S, I>
-	for (StorageValue<P, T, LegalValueQuery, Nonce<S, I>>, T, S)
+impl<P, T, S, I> NonceHelperTrait<T, S, I> for (StorageValue<P, T, ValueQuery, Nonce<S, I>>, T, S)
 where
 	P: StorageInstance + 'static,
 	T: FullCodec + Clone + Copy + 'static,
@@ -87,7 +86,7 @@ where
 
 	fn increment_inner() -> Self::Output {
 		#[allow(clippy::disallowed_types)]
-		StorageValue::<P, T, LegalValueQuery, Nonce<S, I>>::mutate(|x| {
+		StorageValue::<P, T, ValueQuery, Nonce<S, I>>::mutate(|x| {
 			let new_x = I::increment(*x);
 			*x = new_x;
 			new_x
@@ -97,7 +96,7 @@ where
 
 #[allow(clippy::disallowed_types)]
 impl<P, T, S, I, IncrementErr> NonceHelperTrait<T, S, I>
-	for (StorageValue<P, T, LegalValueQuery, Nonce<S, I>>, Result<T, IncrementErr>, S)
+	for (StorageValue<P, T, ValueQuery, Nonce<S, I>>, Result<T, IncrementErr>, S)
 where
 	P: StorageInstance + 'static,
 	T: FullCodec + Clone + Copy + 'static,
@@ -110,37 +109,35 @@ where
 
 	fn increment_inner() -> Self::Output {
 		#[allow(clippy::disallowed_types)]
-		StorageValue::<P, T, LegalValueQuery, Nonce<S, I>>::try_mutate(
-			|x| -> Result<T, IncrementErr> {
-				match I::increment(*x) {
-					Ok(new_x) => {
-						*x = new_x;
-						Ok(new_x)
-					},
-					Err(err) => Err(err),
-				}
-			},
-		)
+		StorageValue::<P, T, ValueQuery, Nonce<S, I>>::try_mutate(|x| -> Result<T, IncrementErr> {
+			match I::increment(*x) {
+				Ok(new_x) => {
+					*x = new_x;
+					Ok(new_x)
+				},
+				Err(err) => Err(err),
+			}
+		})
 	}
 }
 
-impl<P, T, S, I> Increment<T, I> for StorageValue<P, T, LegalValueQuery, Nonce<S, I>>
+impl<P, T, S, I> Increment<T, I> for StorageValue<P, T, ValueQuery, Nonce<S, I>>
 where
 	P: StorageInstance + 'static,
 	T: FullCodec + Clone + Copy + 'static,
 	S: StartAtValue<T>,
 	I: Incrementor<T>,
-	(StorageValue<P, T, LegalValueQuery, Nonce<S, I>>, I::Output, S): NonceHelperTrait<T, S, I>,
+	(StorageValue<P, T, ValueQuery, Nonce<S, I>>, I::Output, S): NonceHelperTrait<T, S, I>,
 {
 	type Output =
-		<(StorageValue<P, T, LegalValueQuery, Nonce<S, I>>, I::Output, S) as NonceHelperTrait<
+		<(StorageValue<P, T, ValueQuery, Nonce<S, I>>, I::Output, S) as NonceHelperTrait<
 			T,
 			S,
 			I,
 		>>::Output;
 
 	fn increment() -> Self::Output {
-		<(StorageValue<P, T, LegalValueQuery, Nonce<S, I>>, I::Output, S) as NonceHelperTrait<
+		<(StorageValue<P, T, ValueQuery, Nonce<S, I>>, I::Output, S) as NonceHelperTrait<
 			T,
 			S,
 			I,

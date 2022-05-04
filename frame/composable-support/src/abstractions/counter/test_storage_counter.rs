@@ -147,7 +147,7 @@ pub mod pallet {
 			ZeroInit,
 			IncrementToMax<
 				T::ZeroInit_IncrementToMax_MaximumValue,
-				ZeroInit_IncrementToMax_Error,
+				ZeroInit_IncrementToMax_ValueTooLarge,
 				Error<T>,
 			>,
 			SafeDecrement,
@@ -164,7 +164,7 @@ pub mod pallet {
 			OneInit,
 			IncrementToMax<
 				T::OneInit_IncrementToMax_MaximumValue,
-				OneInit_IncrementToMax_Error,
+				OneInit_IncrementToMax_ValueTooLarge,
 				Error<T>,
 			>,
 			SafeDecrement,
@@ -181,7 +181,7 @@ pub mod pallet {
 			DefaultInit,
 			IncrementToMax<
 				T::DefaultInit_IncrementToMax_MaximumValue,
-				DefaultInit_IncrementToMax_Error,
+				DefaultInit_IncrementToMax_ValueTooLarge,
 				Error<T>,
 			>,
 			SafeDecrement,
@@ -189,9 +189,9 @@ pub mod pallet {
 	>;
 
 	error_to_pallet_error!(
-		ZeroInit_IncrementToMax_Error -> ZeroInit_IncrementToMax_ValueTooLarge;
-		OneInit_IncrementToMax_Error -> OneInit_IncrementToMax_ValueTooLarge;
-		DefaultInit_IncrementToMax_Error -> DefaultInit_IncrementToMax_ValueTooLarge;
+		ZeroInit_IncrementToMax_ValueTooLarge,
+		OneInit_IncrementToMax_ValueTooLarge,
+		DefaultInit_IncrementToMax_ValueTooLarge,
 	);
 }
 

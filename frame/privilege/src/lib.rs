@@ -169,7 +169,7 @@ pub mod pallet {
 	>;
 
 	error_to_pallet_error!(
-		TooManyGroup -> TooManyGroup;
+		TooManyGroup;
 	);
 
 	impl<T: Config> InspectPrivilege for Pallet<T> {

@@ -94,8 +94,8 @@ mod sealed {
 
 	use crate::abstractions::{
 		counter::{Counter, CounterHelperTrait},
-		nonce::{LegalValueQuery, Nonce, NonceHelperTrait},
-		utils::decrement::Decrementor,
+		nonce::{Nonce, NonceHelperTrait},
+		utils::{decrement::Decrementor, ValueQuery},
 	};
 
 	use super::*;
@@ -104,24 +104,24 @@ mod sealed {
 	/// If you want to add a new implementor, be sure to add it here and ensure it's tested.
 	pub trait Sealed {}
 
-	impl<P, T, S, I> Sealed for StorageValue<P, T, LegalValueQuery, Nonce<S, I>>
+	impl<P, T, S, I> Sealed for StorageValue<P, T, ValueQuery, Nonce<S, I>>
 	where
 		P: StorageInstance + 'static,
 		T: FullCodec + Clone + Copy + 'static,
 		S: StartAtValue<T>,
 		I: Incrementor<T>,
-		(StorageValue<P, T, LegalValueQuery, Nonce<S, I>>, I::Output, S): NonceHelperTrait<T, S, I>,
+		(StorageValue<P, T, ValueQuery, Nonce<S, I>>, I::Output, S): NonceHelperTrait<T, S, I>,
 	{
 	}
 
-	impl<P, T, S, I, D> Sealed for StorageValue<P, T, LegalValueQuery, Counter<S, I, D>>
+	impl<P, T, S, I, D> Sealed for StorageValue<P, T, ValueQuery, Counter<S, I, D>>
 	where
 		P: StorageInstance + 'static,
 		T: FullCodec + Clone + Copy + 'static,
 		S: StartAtValue<T>,
 		I: Incrementor<T>,
 		D: Decrementor<T>,
-		(StorageValue<P, T, LegalValueQuery, Counter<S, I, D>>, I::Output, D::Output, S):
+		(StorageValue<P, T, ValueQuery, Counter<S, I, D>>, I::Output, D::Output, S):
 			CounterHelperTrait<T, I, D>,
 	{
 	}

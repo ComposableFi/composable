@@ -2,7 +2,7 @@ use crate::abstractions::utils::{
 	decrement::{Decrement, Decrementor},
 	increment::{Increment, Incrementor},
 	start_at::StartAtValue,
-	LegalValueQuery,
+	ValueQuery,
 };
 
 use codec::FullCodec;
@@ -80,7 +80,7 @@ where
 
 #[allow(clippy::disallowed_types)]
 impl<P, T, S, I, D> CounterHelperTrait<T, I, D>
-	for (StorageValue<P, T, LegalValueQuery, Counter<S, I, D>>, T, T, S)
+	for (StorageValue<P, T, ValueQuery, Counter<S, I, D>>, T, T, S)
 where
 	P: StorageInstance + 'static,
 	T: FullCodec + Clone + Copy + 'static,
@@ -94,7 +94,7 @@ where
 
 	fn increment_inner() -> Self::IOutput {
 		#[allow(clippy::disallowed_types)]
-		StorageValue::<P, T, LegalValueQuery, Counter<S, I, D>>::mutate(|x| {
+		StorageValue::<P, T, ValueQuery, Counter<S, I, D>>::mutate(|x| {
 			let new_x = I::increment(*x);
 			*x = new_x;
 			new_x
@@ -103,7 +103,7 @@ where
 
 	fn decrement_inner() -> Self::DOutput {
 		#[allow(clippy::disallowed_types)]
-		StorageValue::<P, T, LegalValueQuery, Counter<S, I, D>>::mutate(|x| {
+		StorageValue::<P, T, ValueQuery, Counter<S, I, D>>::mutate(|x| {
 			let new_x = D::decrement(*x);
 			*x = new_x;
 			new_x
@@ -114,7 +114,7 @@ where
 #[allow(clippy::disallowed_types)]
 impl<P, T, S, I, D, IncrementErr, DecrementErr> CounterHelperTrait<T, I, D>
 	for (
-		StorageValue<P, T, LegalValueQuery, Counter<S, I, D>>,
+		StorageValue<P, T, ValueQuery, Counter<S, I, D>>,
 		Result<T, IncrementErr>,
 		Result<T, DecrementErr>,
 		S,
@@ -133,7 +133,7 @@ impl<P, T, S, I, D, IncrementErr, DecrementErr> CounterHelperTrait<T, I, D>
 
 	fn increment_inner() -> Self::IOutput {
 		#[allow(clippy::disallowed_types)]
-		StorageValue::<P, T, LegalValueQuery, Counter<S, I, D>>::try_mutate(
+		StorageValue::<P, T, ValueQuery, Counter<S, I, D>>::try_mutate(
 			|x| -> Result<T, IncrementErr> {
 				match I::increment(*x) {
 					Ok(new_x) => {
@@ -148,7 +148,7 @@ impl<P, T, S, I, D, IncrementErr, DecrementErr> CounterHelperTrait<T, I, D>
 
 	fn decrement_inner() -> Self::DOutput {
 		#[allow(clippy::disallowed_types)]
-		StorageValue::<P, T, LegalValueQuery, Counter<S, I, D>>::try_mutate(
+		StorageValue::<P, T, ValueQuery, Counter<S, I, D>>::try_mutate(
 			|x| -> Result<T, DecrementErr> {
 				match D::decrement(*x) {
 					Ok(new_x) => {
@@ -163,25 +163,25 @@ impl<P, T, S, I, D, IncrementErr, DecrementErr> CounterHelperTrait<T, I, D>
 }
 
 #[allow(clippy::disallowed_types)]
-impl<P, T, S, I, D> Increment<T, I> for StorageValue<P, T, LegalValueQuery, Counter<S, I, D>>
+impl<P, T, S, I, D> Increment<T, I> for StorageValue<P, T, ValueQuery, Counter<S, I, D>>
 where
 	P: StorageInstance + 'static,
 	T: FullCodec + Clone + Copy + 'static,
 	S: StartAtValue<T>,
 	I: Incrementor<T>,
 	D: Decrementor<T>,
-	(StorageValue<P, T, LegalValueQuery, Counter<S, I, D>>, I::Output, D::Output, S):
+	(StorageValue<P, T, ValueQuery, Counter<S, I, D>>, I::Output, D::Output, S):
 		CounterHelperTrait<T, I, D>,
 {
 	type Output =
-		<(StorageValue<P, T, LegalValueQuery, Counter<S, I, D>>, I::Output, D::Output, S) as CounterHelperTrait<
+		<(StorageValue<P, T, ValueQuery, Counter<S, I, D>>, I::Output, D::Output, S) as CounterHelperTrait<
 			T,
 			I,
 			D,
 		>>::IOutput;
 
 	fn increment() -> Self::Output {
-		<(StorageValue<P, T, LegalValueQuery, Counter<S, I, D>>, I::Output, D::Output, S) as CounterHelperTrait<
+		<(StorageValue<P, T, ValueQuery, Counter<S, I, D>>, I::Output, D::Output, S) as CounterHelperTrait<
 			T,
 			I,
 			D,
@@ -190,25 +190,25 @@ where
 }
 
 #[allow(clippy::disallowed_types)]
-impl<P, T, S, I, D> Decrement<T, D> for StorageValue<P, T, LegalValueQuery, Counter<S, I, D>>
+impl<P, T, S, I, D> Decrement<T, D> for StorageValue<P, T, ValueQuery, Counter<S, I, D>>
 where
 	P: StorageInstance + 'static,
 	T: FullCodec + Clone + Copy + 'static,
 	S: StartAtValue<T>,
 	I: Incrementor<T>,
 	D: Decrementor<T>,
-	(StorageValue<P, T, LegalValueQuery, Counter<S, I, D>>, I::Output, D::Output, S):
+	(StorageValue<P, T, ValueQuery, Counter<S, I, D>>, I::Output, D::Output, S):
 		CounterHelperTrait<T, I, D>,
 {
 	type Output =
-		<(StorageValue<P, T, LegalValueQuery, Counter<S, I, D>>, I::Output, D::Output, S) as CounterHelperTrait<
+		<(StorageValue<P, T, ValueQuery, Counter<S, I, D>>, I::Output, D::Output, S) as CounterHelperTrait<
 			T,
 			I,
 			D,
 		>>::DOutput;
 
 	fn decrement() -> Self::Output {
-		<(StorageValue<P, T, LegalValueQuery, Counter<S, I, D>>, I::Output, D::Output, S) as CounterHelperTrait<
+		<(StorageValue<P, T, ValueQuery, Counter<S, I, D>>, I::Output, D::Output, S) as CounterHelperTrait<
 			T,
 			I,
 			D,
