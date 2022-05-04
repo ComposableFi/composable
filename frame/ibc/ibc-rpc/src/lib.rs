@@ -351,7 +351,7 @@ where
 			.query_packets(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec(), seqs)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error fetching packets"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching packets"))?;
 
 		packets
 			.into_iter()
@@ -388,17 +388,20 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 		let at = BlockId::Hash(block_hash);
+		let para_id = api
+			.para_id(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
 		let inputs: Vec<(Vec<u8>, Vec<u8>)> = api
 			.get_trie_inputs(&at)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error getting trie inputs"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
 		Ok(Proof {
 			proof: generate_raw_proof(inputs, keys)?,
 			height: ibc_proto::ibc::core::client::v1::Height {
-				revision_number: 0,
+				revision_number: para_id.into(),
 				revision_height: height as u64,
 			},
 		})
@@ -437,26 +440,29 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
+		let para_id = api
+			.para_id(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
 		let result: ibc_primitives::QueryClientStateResponse = api
 			.client_state(&at, client_id.as_bytes().to_vec())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error querying client state"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error querying client state"))?;
 		let inputs: Vec<(Vec<u8>, Vec<u8>)> = api
 			.get_trie_inputs(&at)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error getting trie inputs"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
 		let client_state = AnyClientState::decode_vec(&result.client_state)
 			.map_err(|_| runtime_error_into_rpc_error("Error querying client state"))?;
 		Ok(QueryClientStateResponse {
 			client_state: Some(client_state.into()),
 			proof: generate_raw_proof(inputs, vec![result.trie_key])?,
 			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
-				revision_number: 0,
+				revision_number: para_id.into(),
 				revision_height: result.height,
 			}),
 		})
@@ -469,14 +475,13 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
-		let result: Vec<u8> = api
-			.host_consensus_state(&at)
-			.ok()
-			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error querying host consensus state"))?;
+		let result: Vec<u8> =
+			api.host_consensus_state(&at).ok().flatten().ok_or_else(|| {
+				runtime_error_into_rpc_error("Error querying host consensus state")
+			})?;
 		let consensus_state = AnyConsensusState::decode_vec(&result)
 			.map_err(|_| runtime_error_into_rpc_error("Error querying host consensus state"))?;
 
@@ -498,23 +503,26 @@ where
 		let at = BlockId::Hash(self.client.info().best_hash);
 		let client_height = ibc::Height::new(revision_number, revision_height);
 		let height = client_height.encode_vec().map_err(|e| runtime_error_into_rpc_error(e))?;
+		let para_id = api
+			.para_id(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
 		let result: ibc_primitives::QueryConsensusStateResponse = api
 			.client_consensus_state(&at, client_id.as_bytes().to_vec(), height, latest_cs)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error querying client consensus state"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error querying client consensus state"))?;
 		let consensus_state = AnyConsensusState::decode_vec(&result.consensus_state)
 			.map_err(|_| runtime_error_into_rpc_error("Error querying client consensus state"))?;
 		let inputs: Vec<(Vec<u8>, Vec<u8>)> = api
 			.get_trie_inputs(&at)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error getting trie inputs"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
 		Ok(QueryConsensusStateResponse {
 			consensus_state: Some(consensus_state.into()),
 			proof: generate_raw_proof(inputs, vec![result.trie_key])?,
 			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
-				revision_number: 0,
+				revision_number: para_id.into(),
 				revision_height: result.height,
 			}),
 		})
@@ -563,15 +571,17 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
-
+		let para_id = api
+			.para_id(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
 		let result: ibc_primitives::QueryConnectionResponse = api
 			.connection(&at, connection_id.as_bytes().to_vec())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Failed to fetch connection state"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Failed to fetch connection state"))?;
 		let connection_end =
 			ibc::core::ics03_connection::connection::ConnectionEnd::decode_vec(&result.connection)
 				.map_err(|_| runtime_error_into_rpc_error("Failed to decode connection end"))?;
@@ -579,12 +589,12 @@ where
 			.get_trie_inputs(&at)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error getting trie inputs"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
 		Ok(QueryConnectionResponse {
 			connection: Some(connection_end.into()),
 			proof: generate_raw_proof(inputs, vec![result.trie_key])?,
 			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
-				revision_number: 0,
+				revision_number: para_id.into(),
 				revision_height: result.height,
 			}),
 		})
@@ -598,8 +608,10 @@ where
 			.connections(&at)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Failed to fetch connections"))?;
-
+			.ok_or_else(|| runtime_error_into_rpc_error("Failed to fetch connections"))?;
+		let para_id = api
+			.para_id(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
 		let connections = result
 			.connections
 			.into_iter()
@@ -625,7 +637,7 @@ where
 			connections,
 			pagination: None,
 			height: Some(ibc_proto::ibc::core::client::v1::Height {
-				revision_number: 0,
+				revision_number: para_id.into(),
 				revision_height: result.height,
 			}),
 		})
@@ -642,14 +654,14 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
 		let result: Vec<ibc_primitives::IdentifiedConnection> = api
 			.connection_using_client(&at, client_id.as_bytes().to_vec())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Failed to fetch connections"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Failed to fetch connections"))?;
 		result
 			.into_iter()
 			.map(|ident_conn| {
@@ -682,19 +694,22 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
+		let para_id = api
+			.para_id(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
 		let inputs: Vec<(Vec<u8>, Vec<u8>)> = api
 			.get_trie_inputs(&at)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error getting trie inputs"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
 		let result: ibc_primitives::ConnectionHandshake = api
 			.connection_handshake(&at, client_id.as_bytes().to_vec(), conn_id.as_bytes().to_vec())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error getting trie inputs"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
 
 		let client_state = AnyClientState::decode_vec(&result.client_state)
 			.map_err(|_| runtime_error_into_rpc_error("Failed to decode client state"))?;
@@ -705,7 +720,7 @@ where
 			},
 			proof: generate_raw_proof(inputs, result.trie_keys)?,
 			height: ibc_proto::ibc::core::client::v1::Height {
-				revision_number: 0,
+				revision_number: para_id.into(),
 				revision_height: result.height,
 			},
 		})
@@ -723,26 +738,29 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
+		let para_id = api
+			.para_id(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
 		let result: ibc_primitives::QueryChannelResponse = api
 			.channel(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Failed to fetch channel state"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Failed to fetch channel state"))?;
 		let channel = ibc::core::ics04_channel::channel::ChannelEnd::decode_vec(&result.channel)
 			.map_err(|_| runtime_error_into_rpc_error("Failed to decode channel state"))?;
 		let inputs: Vec<(Vec<u8>, Vec<u8>)> = api
 			.get_trie_inputs(&at)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error getting trie inputs"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
 		Ok(QueryChannelResponse {
 			channel: Some(channel.into()),
 			proof: generate_raw_proof(inputs, vec![result.trie_key])?,
 			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
-				revision_number: 0,
+				revision_number: para_id.into(),
 				revision_height: result.height,
 			}),
 		})
@@ -760,15 +778,14 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
-
 		let result: ibc_primitives::IdentifiedClientState = api
 			.channel_client(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Failed to Client state for channel"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Failed to Client state for channel"))?;
 
 		let client_state = AnyClientState::decode_vec(&result.client_state)
 			.map_err(|_| runtime_error_into_rpc_error("Failed to decode cleint state"))?;
@@ -790,15 +807,19 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
-
+		let para_id = api
+			.para_id(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
 		let result: ibc_primitives::QueryChannelsResponse = api
 			.connection_channels(&at, connection_id.as_bytes().to_vec())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Failed to fetch channels state for connection"))?;
+			.ok_or_else(|| {
+				runtime_error_into_rpc_error("Failed to fetch channels state for connection")
+			})?;
 		let channels = result
 			.channels
 			.into_iter()
@@ -827,7 +848,7 @@ where
 			channels,
 			pagination: None,
 			height: Some(ibc_proto::ibc::core::client::v1::Height {
-				revision_number: 0,
+				revision_number: para_id.into(),
 				revision_height: result.height,
 			}),
 		})
@@ -836,12 +857,14 @@ where
 	fn query_channels(&self) -> Result<QueryChannelsResponse> {
 		let api = self.client.runtime_api();
 		let at = BlockId::Hash(self.client.info().best_hash);
-
+		let para_id = api
+			.para_id(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
 		let result: ibc_primitives::QueryChannelsResponse = api
 			.channels(&at)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Failed to fetch channels"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Failed to fetch channels"))?;
 		let channels = result
 			.channels
 			.into_iter()
@@ -870,7 +893,7 @@ where
 			channels,
 			pagination: None,
 			height: Some(ibc_proto::ibc::core::client::v1::Height {
-				revision_number: 0,
+				revision_number: para_id.into(),
 				revision_height: result.height,
 			}),
 		})
@@ -888,15 +911,17 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
-
+		let para_id = api
+			.para_id(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
 		let result: ibc_primitives::QueryPacketCommitmentsResponse = api
 			.packet_commitments(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Failed to fetch commitments"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Failed to fetch commitments"))?;
 		let commitments = result
 			.commitments
 			.into_iter()
@@ -917,7 +942,7 @@ where
 			commitments,
 			pagination: None,
 			height: Some(ibc_proto::ibc::core::client::v1::Height {
-				revision_number: 0,
+				revision_number: para_id.into(),
 				revision_height: result.height,
 			}),
 		})
@@ -935,10 +960,12 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
-
+		let para_id = api
+			.para_id(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
 		let result: ibc_primitives::QueryPacketAcknowledgementsResponse = api
 			.packet_acknowledgements(
 				&at,
@@ -947,7 +974,7 @@ where
 			)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Failed to fetch acknowledgements"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Failed to fetch acknowledgements"))?;
 		let acknowledgements = result
 			.acks
 			.into_iter()
@@ -968,7 +995,7 @@ where
 			acknowledgements,
 			pagination: None,
 			height: Some(ibc_proto::ibc::core::client::v1::Height {
-				revision_number: 0,
+				revision_number: para_id.into(),
 				revision_height: result.height,
 			}),
 		})
@@ -987,7 +1014,7 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 		let at = BlockId::Hash(block_hash);
 
 		api.unreceived_packets(
@@ -998,7 +1025,7 @@ where
 		)
 		.ok()
 		.flatten()
-		.ok_or(runtime_error_into_rpc_error("Failed to unreceived packet sequences"))
+		.ok_or_else(|| runtime_error_into_rpc_error("Failed to unreceived packet sequences"))
 	}
 
 	fn query_unreceived_acknowledgements(
@@ -1014,7 +1041,7 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 		let at = BlockId::Hash(block_hash);
 
 		api.unreceived_acknowledgements(
@@ -1025,7 +1052,7 @@ where
 		)
 		.ok()
 		.flatten()
-		.ok_or(runtime_error_into_rpc_error("Failed to unreceived packet sequences"))
+		.ok_or_else(|| runtime_error_into_rpc_error("Failed to unreceived packet sequences"))
 	}
 
 	fn query_next_seq_recv(
@@ -1040,24 +1067,27 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
+		let para_id = api
+			.para_id(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
 		let result: ibc_primitives::QueryNextSequenceReceiveResponse = api
 			.next_seq_recv(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error fetching next sequence"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching next sequence"))?;
 		let inputs: Vec<(Vec<u8>, Vec<u8>)> = api
 			.get_trie_inputs(&at)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error getting trie inputs"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
 		Ok(QueryNextSequenceReceiveResponse {
 			next_sequence_receive: result.sequence,
 			proof: generate_raw_proof(inputs, vec![result.trie_key])?,
 			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
-				revision_number: 0,
+				revision_number: para_id.into(),
 				revision_height: result.height,
 			}),
 		})
@@ -1076,9 +1106,12 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
+		let para_id = api
+			.para_id(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
 		let result: ibc_primitives::QueryPacketCommitmentResponse = api
 			.packet_commitment(
 				&at,
@@ -1088,17 +1121,17 @@ where
 			)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error fetching next sequence"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching next sequence"))?;
 		let inputs: Vec<(Vec<u8>, Vec<u8>)> = api
 			.get_trie_inputs(&at)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error getting trie inputs"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
 		Ok(QueryPacketCommitmentResponse {
 			commitment: result.commitment,
 			proof: generate_raw_proof(inputs, vec![result.trie_key])?,
 			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
-				revision_number: 0,
+				revision_number: para_id.into(),
 				revision_height: result.height,
 			}),
 		})
@@ -1117,9 +1150,12 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
+		let para_id = api
+			.para_id(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
 		let result: ibc_primitives::QueryPacketAcknowledgementResponse = api
 			.packet_acknowledgement(
 				&at,
@@ -1129,17 +1165,17 @@ where
 			)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error fetching next sequence"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching next sequence"))?;
 		let inputs: Vec<(Vec<u8>, Vec<u8>)> = api
 			.get_trie_inputs(&at)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error getting trie inputs"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
 		Ok(QueryPacketAcknowledgementResponse {
 			acknowledgement: result.ack,
 			proof: generate_raw_proof(inputs, vec![result.trie_key])?,
 			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
-				revision_number: 0,
+				revision_number: para_id.into(),
 				revision_height: result.height,
 			}),
 		})
@@ -1158,24 +1194,27 @@ where
 			.hash(height.into())
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error retreiving block hash"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error retreiving block hash"))?;
 
 		let at = BlockId::Hash(block_hash);
+		let para_id = api
+			.para_id(&at)
+			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
 		let result: ibc_primitives::QueryPacketReceiptResponse = api
 			.packet_receipt(&at, channel_id.as_bytes().to_vec(), port_id.as_bytes().to_vec(), seq)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error fetching next sequence"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error fetching next sequence"))?;
 		let inputs: Vec<(Vec<u8>, Vec<u8>)> = api
 			.get_trie_inputs(&at)
 			.ok()
 			.flatten()
-			.ok_or(runtime_error_into_rpc_error("Error getting trie inputs"))?;
+			.ok_or_else(|| runtime_error_into_rpc_error("Error getting trie inputs"))?;
 		Ok(QueryPacketReceiptResponse {
 			received: result.receipt,
 			proof: generate_raw_proof(inputs, vec![result.trie_key])?,
 			proof_height: Some(ibc_proto::ibc::core::client::v1::Height {
-				revision_number: 0,
+				revision_number: para_id.into(),
 				revision_height: result.height,
 			}),
 		})

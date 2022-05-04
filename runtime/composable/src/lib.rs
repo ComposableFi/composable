@@ -48,7 +48,7 @@ use sp_version::RuntimeVersion;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Contains, Everything, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
+	traits::{Contains, Everything, KeyOwnerProofSystem, Nothing, Randomness Get, StorageInfo},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -1019,6 +1019,10 @@ impl_runtime_apis! {
 	}
 
 	impl ibc_runtime_api::IbcRuntimeApi<Block> for Runtime {
+		fn para_id() -> u32 {
+			<Runtime as cumulus_pallet_parachain_system::Config>::SelfParaId::get().into()
+		}
+
 		fn get_trie_inputs() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
 			None
 		}

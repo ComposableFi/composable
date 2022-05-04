@@ -52,7 +52,7 @@ pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
 		ConstBool, ConstU128, ConstU16, ConstU32, Contains, Everything, KeyOwnerProofSystem,
-		Nothing, Randomness, StorageInfo,
+		Nothing, Randomness, StorageInfo, Get
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -1101,6 +1101,10 @@ impl_runtime_apis! {
 	}
 
 	impl ibc_runtime_api::IbcRuntimeApi<Block> for Runtime {
+		fn para_id() -> u32 {
+			<Runtime as cumulus_pallet_parachain_system::Config>::SelfParaId::get().into()
+		}
+
 		fn get_trie_inputs() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
 			None
 		}

@@ -65,6 +65,48 @@ pub trait CallbackWeight {
 	fn on_timeout_packet(&self, packet: &Packet) -> Weight;
 }
 
+impl CallbackWeight for () {
+	fn on_chan_open_init(&self) -> Weight {
+		Weight::MAX
+	}
+
+	fn on_chan_open_try(&self) -> Weight {
+		Weight::MAX
+	}
+
+	fn on_chan_open_ack(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight {
+		Weight::MAX
+	}
+
+	fn on_chan_open_confirm(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight {
+		Weight::MAX
+	}
+
+	fn on_chan_close_init(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight {
+		Weight::MAX
+	}
+
+	fn on_chan_close_confirm(&self, _port_id: &PortId, _channel_id: &ChannelId) -> Weight {
+		Weight::MAX
+	}
+
+	fn on_recv_packet(&self, _packet: &Packet) -> Weight {
+		Weight::MAX
+	}
+
+	fn on_acknowledgement_packet(
+		&self,
+		_packet: &Packet,
+		_acknowledgement: &Acknowledgement,
+	) -> Weight {
+		Weight::MAX
+	}
+
+	fn on_timeout_packet(&self, _packet: &Packet) -> Weight {
+		Weight::MAX
+	}
+}
+
 pub fn port_id_from_bytes(port: Vec<u8>) -> Result<PortId, Error> {
 	PortId::from_str(&String::from_utf8(port).map_err(|_| Error::DecodingError)?)
 		.map_err(|_| Error::DecodingError)

@@ -8,6 +8,8 @@ use sp_std::vec::Vec;
 sp_api::decl_runtime_apis! {
 	/// IBC Runtime Apis
 	pub trait IbcRuntimeApi {
+		/// Get parachain id
+		fn para_id() -> u32;
 		/// Returns inputs used to create trie db
 		fn get_trie_inputs() -> Option<Vec<(Vec<u8>, Vec<u8>)>>;
 
