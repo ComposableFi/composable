@@ -714,7 +714,7 @@ pub mod pallet {
 			base_asset_amount_limit: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
 			let margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
-			let market = Self::get_market(&market_id).ok_or(Error::<T>::MarketIdNotFound)?;
+			let mut market = Self::get_market(&market_id).ok_or(Error::<T>::MarketIdNotFound)?;
 			let mut positions = Self::get_positions(&account_id);
 			let (position, position_index) =
 				Self::get_or_create_position(&mut positions, market_id, &market)?;
@@ -802,6 +802,8 @@ pub mod pallet {
 			}
 
 			Positions::<T>::insert(account_id, positions);
+			Self::update_market_after_trade(&mut market, base_swapped, direction)?;
+			Markets::<T>::insert(market_id, market);
 
 			Self::deposit_event(Event::TradeExecuted {
 				market: market_id.clone(),
@@ -873,6 +875,19 @@ pub mod pallet {
 
 	// Helper functions - core functionality
 	impl<T: Config> Pallet<T> {
+		fn update_market_after_trade(
+			market: &mut Market<T>,
+			base_asset_amount: T::Balance,
+			direction: Direction,
+		) -> Result<(), DispatchError> {
+			let base_amount_decimal: T::Decimal = base_asset_amount.into_decimal()?;
+			market.net_base_asset_amount.try_add_mut(&match direction {
+				Direction::Long => base_amount_decimal,
+				Direction::Short => base_amount_decimal.neg(),
+			})?;
+			Ok(())
+		}
+
 		fn increase_position(
 			position: &mut Position<T>,
 			market: &Market<T>,
