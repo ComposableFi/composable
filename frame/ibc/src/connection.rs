@@ -102,17 +102,11 @@ where
 		Err(ICS03Error::implementation_specific())
 	}
 
-	#[cfg(feature = "runtime-benchmarks")]
+	#[cfg(any(test, feature = "runtime-benchmarks"))]
 	fn host_consensus_state(&self, _height: Height) -> Result<AnyConsensusState, ICS03Error> {
 		use crate::benchmark_utils::create_mock_state;
 		let (.., cs_state) = create_mock_state();
 		Ok(AnyConsensusState::Tendermint(cs_state))
-	}
-
-	#[cfg(test)]
-	fn host_consensus_state(&self, height: Height) -> Result<AnyConsensusState, ICS03Error> {
-		use ibc::mock::{client_state::MockConsensusState, header::MockHeader};
-		Ok(AnyConsensusState::Mock(MockConsensusState::new(MockHeader::new(height))))
 	}
 }
 

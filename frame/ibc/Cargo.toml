@@ -46,6 +46,10 @@ sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkad
 chrono = "0.4.19"
 ibc = { version = "0.14.1", features = ["mocks"] }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+prost = { version = "0.9" }
+tendermint = { version = "0.23.6" }
+simple-iavl = { git = "https://github.com/Wizdave97/simple-avl" }
+hex-literal = { version = "0.3.4" }
 
 [features]
 default = ['std']
