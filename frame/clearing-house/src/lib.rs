@@ -524,7 +524,7 @@ pub mod pallet {
 		/// ## Assumptions or Requirements
 		///
 		/// - The market must exist and have been initialized prior to calling this extrinsic
-		/// - There's a maximum number of positions ([`Config::MaxPositions`]) than can be open for
+		/// - There's a maximum number of positions ([`Config::MaxPositions`]) that can be open for
 		///   each account id at any given time. If opening a position in a new market exceeds this
 		///   number, the transactions fails.
 		/// - Each market has a [minimum trade size](Market::minimum_trade_size) required, so trades
