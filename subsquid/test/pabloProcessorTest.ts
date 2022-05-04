@@ -3,8 +3,18 @@ import * as ss58 from "@subsquid/ss58";
 import {EventHandlerContext, Store, SubstrateBlock, SubstrateEvent} from "@subsquid/substrate-processor";
 import {anyOfClass, anything, capture, instance, mock, verify, when} from "ts-mockito";
 import {PabloPool, PabloPoolAsset, PabloTransaction, PabloTransactionType} from "../src/model";
-import {processLiquidityAddedEvent, processPoolCreatedEvent, processSwappedEvent} from "../src/pabloProcessor";
-import {PabloLiquidityAddedEvent, PabloPoolCreatedEvent, PabloSwappedEvent} from "../src/types/events";
+import {
+    processLiquidityAddedEvent,
+    processLiquidityRemovedEvent,
+    processPoolCreatedEvent,
+    processSwappedEvent
+} from "../src/pabloProcessor";
+import {
+    PabloLiquidityAddedEvent,
+    PabloLiquidityRemovedEvent,
+    PabloPoolCreatedEvent,
+    PabloSwappedEvent
+} from "../src/types/events";
 import {randomFill, randomUUID} from "crypto";
 import Big from "big.js";
 
@@ -107,6 +117,22 @@ function createLiquidityAddedEvent() {
         baseAmount: BigInt(10_000 * UNIT),
         quoteAmount: BigInt(10_000 * UNIT),
         mintedLp: BigInt(200)
+    };
+    when(eventMock.asV2100).thenReturn(evt);
+    when(eventMock.asLatest).thenReturn(evt);
+    let event = instance(eventMock);
+    return {who, event};
+}
+
+function createLiquidityRemovedEvent() {
+    let eventMock = mock(PabloLiquidityRemovedEvent);
+    let who = createAccount();
+    let evt = {
+        who: who,
+        poolId: BigInt(1),
+        baseAmount: BigInt(10_000 * UNIT),
+        quoteAmount: BigInt(10_000 * UNIT),
+        totalIssuance: BigInt(10_000)
     };
     when(eventMock.asV2100).thenReturn(evt);
     when(eventMock.asLatest).thenReturn(evt);
@@ -242,12 +268,11 @@ describe('PoolCreated Tests', function () {
     });
 });
 
-describe('Liquidity Added Tests', function () {
+describe('Liquidity Added & Removed Tests', function () {
 
     it('Should add liquidity to the Pool and record Assets and Transaction correctly', async function () {
         // given
         let pabloPool = createZeroPool();
-        pabloPool.poolAssets[0]
         let storeMock: Store = mock<Store>();
         when(storeMock.get<PabloPool>(PabloPool, anything()))
             .thenReturn(Promise.resolve(pabloPool));
@@ -294,6 +319,64 @@ describe('Liquidity Added Tests', function () {
             ctx.event.id,
             encodeAccount(who),
             PabloTransactionType.ADD_LIQUIDITY,
+            '1',
+            BigInt(1),
+            BigInt(10_000 * UNIT),
+            BigInt(4),
+            BigInt(10_000 * UNIT)
+        );
+    });
+
+    it('Should remove liquidity from the Pool and record Assets and Transaction correctly', async function () {
+        // given
+        let pabloPool = createZeroPool();
+        addLiquidity(pabloPool, BigInt(10_000_000 * UNIT), BigInt(10_000_000 * UNIT));
+        let storeMock: Store = mock<Store>();
+        when(storeMock.get<PabloPool>(PabloPool, anything()))
+            .thenReturn(Promise.resolve(pabloPool));
+        let ctx = createCtx(storeMock, 1);
+        let {who, event} = createLiquidityRemovedEvent();
+
+        // when
+        await processLiquidityRemovedEvent(ctx, event);
+
+        // then
+        verify(storeMock.save(anyOfClass(PabloPool))).once();
+        const [poolArg] = capture(storeMock.save).first();
+        assertPool(
+            poolArg as unknown as PabloPool,
+            '1',
+            pabloPool.owner,
+            BigInt(1),
+            3,
+            BigInt(4),
+            '19980000000000000000',
+            '0.0'
+        );
+        verify(storeMock.save(anyOfClass(PabloPoolAsset))).twice();
+        const [assetOneArg] = capture(storeMock.save).second();
+        assertAsset(assetOneArg as unknown as PabloPoolAsset,
+            '1-1',
+            BigInt(1),
+            BigInt(1),
+            BigInt(9_990_000 * UNIT),
+            BigInt(0)
+        );
+        const [assetTwoArg] = capture(storeMock.save).byCallIndex(2);
+        assertAsset(assetTwoArg as unknown as PabloPoolAsset,
+            '1-4',
+            BigInt(4),
+            BigInt(1),
+            BigInt(9_990_000 * UNIT),
+            BigInt(0)
+        );
+        verify(storeMock.save(anyOfClass(PabloTransaction))).once();
+        const [txArg] = capture(storeMock.save).last();
+        assertTransaction(
+            txArg as unknown as PabloTransaction,
+            ctx.event.id,
+            encodeAccount(who),
+            PabloTransactionType.REMOVE_LIQUIDITY,
             '1',
             BigInt(1),
             BigInt(10_000 * UNIT),
