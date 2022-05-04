@@ -82,6 +82,7 @@ prop_compose! {
 			margin_ratio_initial,
 			margin_ratio_maintenance,
 			minimum_trade_size,
+			net_base_asset_amount: 0.into(),
 			cum_funding_rate,
 			funding_rate_ts,
 			funding_frequency,

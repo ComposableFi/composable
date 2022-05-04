@@ -686,9 +686,10 @@ pub mod pallet {
 					margin_ratio_initial: config.margin_ratio_initial,
 					margin_ratio_maintenance: config.margin_ratio_maintenance,
 					minimum_trade_size: config.minimum_trade_size,
+					net_base_asset_amount: Zero::zero(),
 					funding_frequency: config.funding_frequency,
 					funding_period: config.funding_period,
-					cum_funding_rate: Default::default(),
+					cum_funding_rate: Zero::zero(),
 					funding_rate_ts: T::UnixTime::now().as_secs(),
 				};
 				Markets::<T>::insert(&market_id, market);

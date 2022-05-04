@@ -69,7 +69,11 @@ pub struct Market<T: Config> {
 	/// Minimum amount of quote asset to exchange when opening a position. Also serves to round
 	/// a trade if it results in closing an existing position
 	pub minimum_trade_size: T::Decimal,
-	/// The latest cumulative funding rate of this market. Must be updated periodically.
+	/// Net position, in base asset, of all traders. Used to compute parameter adjustment costs and
+	/// funding payments from/to the Clearing House
+	pub net_base_asset_amount: T::Decimal,
+	/// The latest cumulative funding rate of this
+	/// market. Must be updated periodically.
 	pub cum_funding_rate: T::Decimal,
 	/// The timestamp for the latest funding rate update.
 	pub funding_rate_ts: DurationSeconds,
