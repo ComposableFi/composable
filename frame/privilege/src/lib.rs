@@ -172,60 +172,6 @@ pub mod pallet {
 		TooManyGroup -> TooManyGroup;
 	);
 
-	// #[derive(::core::fmt::Debug, ::core::default::Default, ::core::cmp::PartialEq)]
-	// pub struct TooManyGroup;
-
-	// impl<T: Config> From<TooManyGroup> for Error<T> {
-	// 	fn from(_: TooManyGroup) -> Error<T> {
-	// 		Error::<T>::TooManyGroup
-	// 	}
-	// }
-
-	// pub trait IntoDispatchError<TError, T>
-	// where
-	// 	Self: Into<TError>,
-	// 	TError: Into<DispatchError>,
-	// {
-	// 	fn into_dispatch_error(self) -> DispatchError;
-	// }
-
-	// impl<TError, T> IntoDispatchError<TError, T> for T
-	// where
-	// 	Self: Into<TError>,
-	// 	TError: Into<DispatchError>,
-	// {
-	// 	fn into_dispatch_error(self) -> DispatchError {
-	// 		let error: TError = self.into();
-	// 		let t = error.into();
-	// 		t
-	// 	}
-	// }
-
-	// impl<T: Config> Into<DispatchErrorIntermediary<Error<T>, T>> for TooManyGroup {
-	// 	fn into(self) -> DispatchErrorIntermediary<Error<T>, T> {
-	// 		todo!()
-	// 	}
-	// }
-	// impl<T: Config> Into<DispatchError> for DispatchErrorIntermediary<Error<T>, T> {
-	// 	fn into(self) -> DispatchError {
-	// 		todo!()
-	// 	}
-	// }
-	// impl<T: Config> Into<DispatchError> for TooManyGroup {
-	// 	fn into(self) -> DispatchError {
-	// 		todo!()
-	// 	}
-	// }
-
-	// pub struct DispatchErrorIntermediary<TError, T>(PhantomData<(TError, T)>);
-
-	// impl<T, TError> From<DispatchErrorIntermediary<TError, T>> for DispatchError
-	// where
-	// 	T: IntoDispatchError<TError, T>,
-	// {
-	// 	fn into() -> () {}
-	// }
-
 	impl<T: Config> InspectPrivilege for Pallet<T> {
 		type AccountId = AccountIdOf<T>;
 
