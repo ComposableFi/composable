@@ -1,6 +1,7 @@
 use crate::abstractions::utils::{
 	increment::{Increment, Incrementor},
 	start_at::StartAtValue,
+	LegalValueQuery,
 };
 
 use codec::FullCodec;
@@ -73,7 +74,8 @@ where
 }
 
 #[allow(clippy::disallowed_types)]
-impl<P, T, S, I> NonceHelperTrait<T, S, I> for (StorageValue<P, T, ValueQuery, Nonce<S, I>>, T, S)
+impl<P, T, S, I> NonceHelperTrait<T, S, I>
+	for (StorageValue<P, T, LegalValueQuery, Nonce<S, I>>, T, S)
 where
 	P: StorageInstance + 'static,
 	T: FullCodec + Clone + Copy + 'static,
@@ -85,7 +87,7 @@ where
 
 	fn increment_inner() -> Self::Output {
 		#[allow(clippy::disallowed_types)]
-		StorageValue::<P, T, ValueQuery, Nonce<S, I>>::mutate(|x| {
+		StorageValue::<P, T, LegalValueQuery, Nonce<S, I>>::mutate(|x| {
 			let new_x = I::increment(*x);
 			*x = new_x;
 			new_x
@@ -95,7 +97,7 @@ where
 
 #[allow(clippy::disallowed_types)]
 impl<P, T, S, I, IncrementErr> NonceHelperTrait<T, S, I>
-	for (StorageValue<P, T, ValueQuery, Nonce<S, I>>, Result<T, IncrementErr>, S)
+	for (StorageValue<P, T, LegalValueQuery, Nonce<S, I>>, Result<T, IncrementErr>, S)
 where
 	P: StorageInstance + 'static,
 	T: FullCodec + Clone + Copy + 'static,
@@ -108,59 +110,40 @@ where
 
 	fn increment_inner() -> Self::Output {
 		#[allow(clippy::disallowed_types)]
-		StorageValue::<P, T, ValueQuery, Nonce<S, I>>::try_mutate(|x| -> Result<T, IncrementErr> {
-			match I::increment(*x) {
-				Ok(new_x) => {
-					*x = new_x;
-					Ok(new_x)
-				},
-				Err(err) => Err(err),
-			}
-		})
+		StorageValue::<P, T, LegalValueQuery, Nonce<S, I>>::try_mutate(
+			|x| -> Result<T, IncrementErr> {
+				match I::increment(*x) {
+					Ok(new_x) => {
+						*x = new_x;
+						Ok(new_x)
+					},
+					Err(err) => Err(err),
+				}
+			},
+		)
 	}
 }
 
-impl<P, T, S, I> Increment<T, I> for StorageValue<P, T, ValueQuery, Nonce<S, I>>
+impl<P, T, S, I> Increment<T, I> for StorageValue<P, T, LegalValueQuery, Nonce<S, I>>
 where
 	P: StorageInstance + 'static,
 	T: FullCodec + Clone + Copy + 'static,
 	S: StartAtValue<T>,
 	I: Incrementor<T>,
-	(StorageValue<P, T, ValueQuery, Nonce<S, I>>, I::Output, S): NonceHelperTrait<T, S, I>,
+	(StorageValue<P, T, LegalValueQuery, Nonce<S, I>>, I::Output, S): NonceHelperTrait<T, S, I>,
 {
 	type Output =
-		<(StorageValue<P, T, ValueQuery, Nonce<S, I>>, I::Output, S) as NonceHelperTrait<
+		<(StorageValue<P, T, LegalValueQuery, Nonce<S, I>>, I::Output, S) as NonceHelperTrait<
 			T,
 			S,
 			I,
 		>>::Output;
 
 	fn increment() -> Self::Output {
-		<(StorageValue<P, T, ValueQuery, Nonce<S, I>>, I::Output, S) as NonceHelperTrait<T, S, I>>::increment_inner()
+		<(StorageValue<P, T, LegalValueQuery, Nonce<S, I>>, I::Output, S) as NonceHelperTrait<
+			T,
+			S,
+			I,
+		>>::increment_inner()
 	}
 }
-
-/// `#[allow(clippy::disallowed_types)]` on an import currently errors:
-///
-/// ```rust,ignore
-/// #[allow(clippy::disallowed_types)]
-/// use frame_support::pallet_prelude::ValueQuery;
-/// ```
-///
-/// Output:
-///
-/// ```plaintext
-/// error: useless lint attribute
-///   --> frame/composable-support/src/abstractions/nonce/mod.rs:14:1
-///    |
-/// 14 | #[allow(clippy::disallowed_types)]
-///    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: if you just forgot a `!`, use: `#![allow(clippy::disallowed_types)]`
-///    |
-///    = note: `#[deny(clippy::useless_attribute)]` on by default
-///    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#useless_attribute
-/// ```
-///
-/// This type is a re-export to allow for importing it (as opposed to using a fully qualified
-/// path) when using a nonce in a pallet that isn't importing `frame_support::pallet_prelude::*`.
-#[allow(clippy::disallowed_types)]
-pub type ValueQuery = frame_support::pallet_prelude::ValueQuery;

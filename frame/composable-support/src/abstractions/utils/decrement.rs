@@ -5,7 +5,7 @@ use crate::{
 
 use codec::FullCodec;
 use sp_runtime::{traits::One, ArithmeticError};
-use sp_std::{fmt::Debug, marker::PhantomData, ops::Add};
+use sp_std::fmt::Debug;
 
 /// An extension trait for [`StorageValue`]s that can be decreased.
 pub trait Decrement<T, D>: Sealed + 'static
@@ -77,7 +77,7 @@ mod sealed {
 
 	use crate::abstractions::{
 		counter::{Counter, CounterHelperTrait},
-		nonce::ValueQuery,
+		nonce::LegalValueQuery,
 		utils::increment::Incrementor,
 	};
 
@@ -87,14 +87,14 @@ mod sealed {
 	/// If you want to add a new implementor, be sure to add it here and ensure it's tested.
 	pub trait Sealed {}
 
-	impl<P, T, S, I, D> Sealed for StorageValue<P, T, ValueQuery, Counter<S, I, D>>
+	impl<P, T, S, I, D> Sealed for StorageValue<P, T, LegalValueQuery, Counter<S, I, D>>
 	where
 		P: StorageInstance + 'static,
 		T: FullCodec + Clone + Copy + 'static,
 		S: StartAtValue<T>,
 		I: Incrementor<T>,
 		D: Decrementor<T>,
-		(StorageValue<P, T, ValueQuery, Counter<S, I, D>>, I::Output, D::Output, S):
+		(StorageValue<P, T, LegalValueQuery, Counter<S, I, D>>, I::Output, D::Output, S):
 			CounterHelperTrait<T, I, D>,
 	{
 	}

@@ -35,3 +35,28 @@ macro_rules! error_to_pallet_error {
 		)+
 	};
 }
+
+/// `#[allow(clippy::disallowed_types)]` on an import currently errors:
+///
+/// ```rust,ignore
+/// #[allow(clippy::disallowed_types)]
+/// use frame_support::pallet_prelude::ValueQuery;
+/// ```
+///
+/// Output:
+///
+/// ```plaintext
+/// error: useless lint attribute
+///   --> frame/composable-support/src/abstractions/nonce/mod.rs:14:1
+///    |
+/// 14 | #[allow(clippy::disallowed_types)]
+///    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ help: if you just forgot a `!`, use: `#![allow(clippy::disallowed_types)]`
+///    |
+///    = note: `#[deny(clippy::useless_attribute)]` on by default
+///    = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#useless_attribute
+/// ```
+///
+/// This type is a re-export to allow for importing it (as opposed to using a fully qualified
+/// path) when using a nonce in a pallet that isn't importing `frame_support::pallet_prelude::*`.
+#[allow(clippy::disallowed_types)]
+pub type LegalValueQuery = frame_support::pallet_prelude::ValueQuery;
