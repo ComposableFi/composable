@@ -316,7 +316,7 @@ where
 	fn channel_counter(&self) -> Result<u64, ICS04Error> {
 		let count = ChannelCounter::<T>::get();
 		log::trace!("in channel: [channel_counter] >> channel_counter = {:?}", count);
-		Ok(count)
+		Ok(count.into())
 	}
 
 	fn max_expected_time_per_block(&self) -> Duration {

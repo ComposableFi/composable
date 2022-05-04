@@ -6,12 +6,14 @@ use crate::benchmark_utils::*;
 #[allow(unused)]
 use crate::Pallet as PalletIbc;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
+use frame_support::traits::Hooks;
 use frame_system::RawOrigin;
 use ibc::{
 	core::{
 		ics02_client::{
 			client_consensus::AnyConsensusState,
 			client_state::{AnyClientState, ClientState},
+			client_type::ClientType,
 			context::ClientKeeper,
 			height::Height,
 			msgs::{
@@ -819,6 +821,80 @@ benchmarks! {
 			Ok(_) => panic!("Commitment should not exist"),
 			Err(e) => assert_eq!(e.detail(), Ics04Error::packet_commitment_not_found(1u64.into()).detail())
 		}
+	}
+
+	on_finalize {
+		// counter for clients
+		let a in 1..1000;
+		// counter for connections
+		let b in 1..1000;
+		// counter for channels
+		let c in 1..1000;
+		// counter for packet commitments
+		let d in 1..1000;
+		// counter for packet acknowledgements
+		let e in 1..1000;
+		// counter for packet receipts
+		let f in 1..1000;
+		let mut ctx = routing::Context::<T>::new();
+		for i in 1..a {
+			let (mock_client_state, mock_cs_state) = create_mock_state();
+			let mock_client_state = AnyClientState::Tendermint(mock_client_state);
+			let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
+			let client_id = ClientId::new(mock_client_state.client_type(), i.into()).unwrap();
+			ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
+			ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
+			ctx.store_consensus_state(client_id, Height::new(0, 1), mock_cs_state).unwrap();
+		}
+
+		for j in 1..b {
+			let connection_id = ConnectionId::new(j.into());
+			let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+			let delay_period = core::time::Duration::from_nanos(1000);
+			let client_id = ClientId::new(ClientType::Tendermint, 0).unwrap();
+			let connection_counterparty = Counterparty::new(client_id.clone(), Some(ConnectionId::new(j.into())), commitment_prefix);
+			let connection_end = ConnectionEnd::new(State::Open, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
+			ctx.store_connection(connection_id.clone(), &connection_end).unwrap();
+		}
+
+		for k in 1..c {
+			let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
+			let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(k.into())));
+			let channel_end = ChannelEnd::new(
+				ibc::core::ics04_channel::channel::State::Open,
+				ibc::core::ics04_channel::channel::Order::Unordered,
+				counterparty_channel,
+				vec![ConnectionId::new(k.into())],
+				ibc::core::ics04_channel::Version::default()
+			);
+
+			ctx.store_channel((port_id.clone(), ChannelId::new(k.into())), &channel_end).unwrap();
+		}
+
+		for l in 1..d {
+			let commitment = vec![0;32];
+			let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
+			let channel_id = ChannelId::new(0);
+			PacketCommitment::<T>::insert((port_id.as_bytes(), channel_id.to_string().as_bytes(), l as u64), commitment)
+		}
+
+		for m in 1..e {
+			let ack = vec![0;32];
+			let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
+			let channel_id = ChannelId::new(0);
+			Acknowledgements::<T>::insert((port_id.as_bytes(), channel_id.to_string().as_bytes(), m as u64), ack)
+		}
+
+		for n in 1..f {
+			let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
+			let channel_id = ChannelId::new(0);
+			PacketReceipt::<T>::insert((port_id.as_bytes(), channel_id.to_string().as_bytes(), n as u64), "Ok".as_bytes())
+		}
+
+	}: { PalletIbc::<T>::on_finalize(0u32.into())}
+	verify {
+		let commitment_roots = CommitmentRoot::<T>::get();
+		assert_eq!(commitment_roots.len(), 1);
 	}
 }
 

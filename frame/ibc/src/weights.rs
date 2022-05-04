@@ -209,4 +209,40 @@ impl<T: frame_system::Config> crate::weight::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: Ibc ClientStates (r:1 w:0)
+	// Storage: Ibc ConsensusStates (r:1 w:0)
+	// Storage: Ibc Connections (r:1000 w:0)
+	// Storage: Ibc Channels (r:1000 w:0)
+	// Storage: Ibc NextSequenceSend (r:999 w:0)
+	// Storage: Ibc NextSequenceRecv (r:999 w:0)
+	// Storage: Ibc NextSequenceAck (r:999 w:0)
+	// Storage: Ibc PacketCommitment (r:1000 w:0)
+	// Storage: Ibc Acknowledgements (r:1000 w:0)
+	// Storage: Ibc PacketReceipt (r:1000 w:0)
+	// Storage: Timestamp Now (r:1 w:0)
+	// Storage: Ibc CommitmentRoot (r:1 w:1)
+	// Storage: System Digest (r:1 w:1)
+	// Storage: Ibc Clients (r:49 w:0)
+	fn on_finalize(a: u32, b: u32, c: u32, d: u32, e: u32, f: u32, ) -> Weight {
+		(0 as Weight)
+			// Standard Error: 308_000
+			.saturating_add((26_858_000 as Weight).saturating_mul(a as Weight))
+			// Standard Error: 308_000
+			.saturating_add((8_135_000 as Weight).saturating_mul(b as Weight))
+			// Standard Error: 308_000
+			.saturating_add((21_904_000 as Weight).saturating_mul(c as Weight))
+			// Standard Error: 308_000
+			.saturating_add((11_217_000 as Weight).saturating_mul(d as Weight))
+			// Standard Error: 308_000
+			.saturating_add((12_298_000 as Weight).saturating_mul(e as Weight))
+			// Standard Error: 308_000
+			.saturating_add((11_000_000 as Weight).saturating_mul(f as Weight))
+			.saturating_add(T::DbWeight::get().reads((3 as Weight).saturating_mul(a as Weight)))
+			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(b as Weight)))
+			.saturating_add(T::DbWeight::get().reads((4 as Weight).saturating_mul(c as Weight)))
+			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(d as Weight)))
+			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(e as Weight)))
+			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(f as Weight)))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+	}
 }

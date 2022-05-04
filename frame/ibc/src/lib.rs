@@ -97,6 +97,7 @@ pub mod pallet {
 		ics24_host::identifier::ConnectionId,
 	};
 
+	use crate::weight::WeightInfo;
 	use ibc_trait::client_id_from_bytes;
 	use sp_runtime::{generic::DigestItem, SaturatedConversion};
 
@@ -169,7 +170,7 @@ pub mod pallet {
 		CountedStorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
-	pub type ChannelCounter<T: Config> = StorageValue<_, u64, ValueQuery>;
+	pub type ChannelCounter<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::storage]
 	/// (port_identifier, channel_identifier) => ChannelEnd
@@ -211,7 +212,7 @@ pub mod pallet {
 	#[pallet::storage]
 	/// (port_identifier, channel_identifier, Sequence) => Hash
 	pub type Acknowledgements<T: Config> =
-		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
+		CountedStorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
 	/// clientId => ClientType
@@ -226,12 +227,12 @@ pub mod pallet {
 	#[pallet::storage]
 	/// (port_id, channel_id, sequence) => receipt
 	pub type PacketReceipt<T: Config> =
-		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
+		CountedStorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
 	/// (port_id, channel_id, sequence) => hash
 	pub type PacketCommitment<T: Config> =
-		StorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
+		CountedStorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
 	/// height => IbcConsensusState
@@ -274,6 +275,17 @@ pub mod pallet {
 	where
 		u32: From<<T as frame_system::Config>::BlockNumber>,
 	{
+		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
+			<T as Config>::WeightInfo::on_finalize(
+				Clients::<T>::count() as u32,
+				Connections::<T>::count() as u32,
+				ChannelCounter::<T>::get(),
+				PacketCommitment::<T>::count() as u32,
+				Acknowledgements::<T>::count() as u32,
+				PacketReceipt::<T>::count() as u32,
+			)
+		}
+
 		fn on_finalize(_n: BlockNumberFor<T>) {
 			let root = Pallet::<T>::extract_ibc_state_root();
 			if let Ok(root) = root {

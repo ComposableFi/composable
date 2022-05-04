@@ -25,6 +25,14 @@ pub trait WeightInfo {
 	fn recv_packet(i: u32) -> Weight;
 	fn ack_packet(i: u32, j: u32) -> Weight;
 	fn timeout_packet(i: u32) -> Weight;
+	/// on_finalize benchmarks
+	/// a => number of light clients
+	/// b => number of connections
+	/// c => number of channels
+	/// d => number of packet commitments
+	/// e => number of packet acknowledgements
+	/// f => number of packet receipts
+	fn on_finalize(a: u32, b: u32, c: u32, d: u32, e: u32, f: u32) -> Weight;
 }
 
 impl WeightInfo for () {
@@ -85,6 +93,10 @@ impl WeightInfo for () {
 	}
 
 	fn timeout_packet(_i: u32) -> Weight {
+		0
+	}
+
+	fn on_finalize(_a: u32, _b: u32, _c: u32, _d: u32, _e: u32, _f: u32) -> Weight {
 		0
 	}
 }

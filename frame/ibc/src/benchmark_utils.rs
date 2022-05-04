@@ -1,7 +1,6 @@
 use super::*;
 use crate::routing::Context;
 use core::time::Duration;
-use frame_benchmarking::BenchmarkParameter::c;
 use ibc::{
 	clients::ics07_tendermint::{
 		client_state::{AllowUpdate, ClientState as TendermintClientState},
