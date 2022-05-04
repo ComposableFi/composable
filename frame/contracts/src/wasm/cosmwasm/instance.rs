@@ -1,4 +1,7 @@
-use super::types::*;
+use super::{
+	sandbox::CosmwasmSandbox,
+	types::{DeserializeLimit, Env, ExecuteResult, InstantiateResult, MessageInfo, QueryResult},
+};
 use crate::{exec::Ext, wasm::Runtime};
 use sp_runtime::{ArithmeticError, DispatchError};
 use sp_sandbox::{ReturnValue, SandboxInstance, SandboxMemory, Value};
@@ -105,9 +108,11 @@ impl<'a, E: Ext + 'a> CosmwasmInstance<'a, E> {
 			.map_err(|_| DispatchError::Other("could not read region"))?;
 		serde_json::from_slice(&value).map_err(|_| DispatchError::Other("couldn't deserialize"))
 	}
+}
 
+impl<'a, E: Ext + 'a> CosmwasmSandbox for CosmwasmInstance<'a, E> {
 	// TODO(hussein-aitlahcen): refactor instantiate/execute/query with a generic function
-	pub fn instantiate(
+	fn instantiate(
 		&mut self,
 		env: Env,
 		info: MessageInfo,
@@ -133,7 +138,7 @@ impl<'a, E: Ext + 'a> CosmwasmInstance<'a, E> {
 		}
 	}
 
-	pub fn execute(
+	fn execute(
 		&mut self,
 		env: Env,
 		info: MessageInfo,
@@ -159,7 +164,7 @@ impl<'a, E: Ext + 'a> CosmwasmInstance<'a, E> {
 		}
 	}
 
-	pub fn query(&mut self, env: Env, message: &[u8]) -> Result<QueryResult, DispatchError> {
+	fn query(&mut self, env: Env, message: &[u8]) -> Result<QueryResult, DispatchError> {
 		let parameters = vec![self.marshall_in(&env)?, self.passthrough_in(message)?]
 			.into_iter()
 			.map(|v| Value::I32(v as i32))
