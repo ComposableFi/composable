@@ -51,8 +51,8 @@ use sp_version::RuntimeVersion;
 pub use frame_support::{
 	construct_runtime, parameter_types,
 	traits::{
-		ConstBool, ConstU128, ConstU16, ConstU32, Contains, Everything, KeyOwnerProofSystem,
-		Nothing, Randomness, StorageInfo, Get
+		ConstBool, ConstU128, ConstU16, ConstU32, Contains, Everything, Get, KeyOwnerProofSystem,
+		Nothing, Randomness, StorageInfo,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
