@@ -10,7 +10,6 @@ use crate::{
 	pallet::{AccountsMargin, Error, Event},
 	tests::run_to_block,
 };
-
 use frame_support::{assert_noop, assert_ok, traits::fungibles::Inspect};
 use orml_tokens::Error as TokenError;
 use sp_runtime::traits::AccountIdConversion;
@@ -66,13 +65,8 @@ fn deposit_supported_collateral_succeeds() {
 			assert_eq!(after.0 - before.0, amount);
 			assert_eq!(after.1, before.1 - amount);
 
-			assert_eq!(
-				<AssetsPallet as Inspect<AccountId>>::balance(
-					USDC,
-					&TestPalletId::get().into_account()
-				),
-				amount
-			);
+			let pallet_acc = TestPalletId::get().into_sub_account("Collateral");
+			assert_eq!(<AssetsPallet as Inspect<AccountId>>::balance(USDC, &pallet_acc), amount);
 
 			SystemPallet::assert_last_event(Event::MarginAdded { account, asset, amount }.into());
 		})

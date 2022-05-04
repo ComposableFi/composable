@@ -637,13 +637,8 @@ pub mod pallet {
 			);
 
 			// Assuming stablecoin collateral and all markets quoted in dollars
-			T::Assets::transfer(
-				asset_id,
-				account_id,
-				&T::PalletId::get().into_account(),
-				amount,
-				true,
-			)?;
+			let pallet_acc = T::PalletId::get().into_sub_account("Collateral");
+			T::Assets::transfer(asset_id, account_id, &pallet_acc, amount, true)?;
 
 			let old_margin = Self::get_margin(&account_id).unwrap_or_else(T::Balance::zero);
 			let new_margin = old_margin.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
@@ -834,6 +829,7 @@ pub mod pallet {
 			Markets::<T>::insert(market_id, market);
 
 			Self::deposit_event(Event::FundingUpdated { market: market_id.clone(), time: now });
+
 			Ok(())
 		}
 	}
