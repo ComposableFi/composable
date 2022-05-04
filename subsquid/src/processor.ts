@@ -9,14 +9,14 @@ import { Account, HistoricalBalance } from "./model";
 import {
   BalancesTransferEvent,
   PabloLiquidityAddedEvent, PabloLiquidityRemovedEvent,
-  PabloPoolCreatedEvent,
+  PabloPoolCreatedEvent, PabloPoolDeletedEvent,
   PabloSwappedEvent
 } from "./types/events";
 import {getOrCreate} from "./dbHelper";
 import {
   processLiquidityAddedEvent,
   processLiquidityRemovedEvent,
-  processPoolCreatedEvent,
+  processPoolCreatedEvent, processPoolDeletedEvent,
   processSwappedEvent
 } from "./pabloProcessor";
 
@@ -31,6 +31,11 @@ processor.setDataSource({
 processor.addEventHandler('pablo.PoolCreated', async (ctx) => {
   const event = new PabloPoolCreatedEvent(ctx);
   await processPoolCreatedEvent(ctx, event);
+});
+
+processor.addEventHandler('pablo.PoolDeleted', async (ctx) => {
+  const event = new PabloPoolDeletedEvent(ctx);
+  await processPoolDeletedEvent(ctx, event);
 });
 
 processor.addEventHandler('pablo.LiquidityAdded', async (ctx) => {
