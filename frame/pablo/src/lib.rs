@@ -715,7 +715,7 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
-			let minted_lp = match pool {
+			let (added_base_amount, added_quote_amount, minted_lp) = match pool {
 				PoolConfiguration::StableSwap(info) => StableSwap::<T>::add_liquidity(
 					who,
 					info,
@@ -749,8 +749,8 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::LiquidityAdded {
 				who: who.clone(),
 				pool_id,
-				base_amount,
-				quote_amount,
+				base_amount: added_base_amount,
+				quote_amount: added_quote_amount,
 				minted_lp,
 			});
 			Ok(())

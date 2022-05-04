@@ -194,6 +194,47 @@ fn add_remove_lp() {
 	});
 }
 
+#[test]
+fn test_add_liquidity_with_disproportionate_amount() {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let initial_usdc = 2500_u128 * unit;
+		let initial_usdt = 2500_u128 * unit;
+		let pool = create_pool(
+			USDC,
+			USDT,
+			initial_usdc,
+			initial_usdt,
+			Permill::from_percent(1),
+			Permill::zero(),
+		);
+
+		let base_amount = 30_u128 * unit;
+		let quote_amount = 1_00_u128 * unit;
+		assert_ok!(Tokens::mint_into(USDC, &ALICE, base_amount));
+		assert_ok!(Tokens::mint_into(USDT, &ALICE, quote_amount));
+
+		// Add the liquidity, user tries to provide more quote_amount compare to
+        // pool's ratio
+		assert_ok!(<Pablo as Amm>::add_liquidity(
+			&ALICE,
+			pool,
+			base_amount,
+			quote_amount,
+			0,
+			false
+		));
+	assert_last_event::<Test, _>(|e| {
+		matches!(e.event,
+            mock::Event::Pablo(crate::Event::LiquidityAdded { who, pool_id, base_amount, quote_amount, .. })
+            if who == ALICE
+            && pool_id == pool
+            && base_amount == 30_u128 * unit
+            && quote_amount == 30_u128 * unit)
+	});
+	});
+}
+
 // test add liquidity with min_mint_amount
 #[test]
 fn add_lp_with_min_mint_amount() {

@@ -136,7 +136,7 @@ impl<T: Config> StableSwap<T> {
 		quote_amount: T::Balance,
 		min_mint_amount: T::Balance,
 		keep_alive: bool,
-	) -> Result<T::Balance, DispatchError> {
+	) -> Result<(T::Balance, T::Balance, T::Balance), DispatchError> {
 		let zero = T::Balance::zero();
 		ensure!(base_amount > zero, Error::<T>::AssetAmountMustBePositiveNumber);
 		ensure!(quote_amount > zero, Error::<T>::AssetAmountMustBePositiveNumber);
@@ -215,7 +215,7 @@ impl<T: Config> StableSwap<T> {
 			keep_alive,
 		)?;
 		T::Assets::mint_into(pool.lp_token, who, mint_amount)?;
-		Ok(mint_amount)
+		Ok((base_amount, quote_amount, mint_amount))
 	}
 
 	pub fn remove_liquidity(
