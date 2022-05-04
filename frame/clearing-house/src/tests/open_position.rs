@@ -170,6 +170,9 @@ proptest! {
 					Direction::Short => position.quote_asset_notional_amount.is_negative()
 				});
 
+				let market = TestPallet::get_market(&market_id).unwrap();
+				assert_eq!(market.net_base_asset_amount, position.base_asset_amount);
+
 				SystemPallet::assert_last_event(
 					Event::TradeExecuted {
 						market: market_id,
@@ -260,6 +263,9 @@ proptest! {
 
 				assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
 
+				let market = TestPallet::get_market(&market_id).unwrap();
+				assert_eq!(market.net_base_asset_amount, 0.into());
+
 				SystemPallet::assert_last_event(
 					Event::TradeExecuted {
 						market: market_id,
@@ -315,6 +321,9 @@ proptest! {
 				));
 
 				assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
+
+				let market = TestPallet::get_market(&market_id).unwrap();
+				assert_eq!(market.net_base_asset_amount, 0.into());
 
 				SystemPallet::assert_last_event(
 					Event::TradeExecuted {
@@ -524,6 +533,9 @@ proptest! {
 					(quote_amount - entry_value) as i128
 				);
 
+				let market = TestPallet::get_market(&market_id).unwrap();
+				assert_eq!(market.net_base_asset_amount, position.base_asset_amount);
+
 				SystemPallet::assert_last_event(
 					Event::TradeExecuted {
 						market: market_id,
@@ -608,6 +620,9 @@ proptest! {
 					-((quote_amount - entry_value) as i128)
 				);
 
+				let market = TestPallet::get_market(&market_id).unwrap();
+				assert_eq!(market.net_base_asset_amount, position.base_asset_amount);
+
 				SystemPallet::assert_last_event(
 					Event::TradeExecuted {
 						market: market_id,
@@ -684,6 +699,9 @@ proptest! {
 					position.quote_asset_notional_amount,
 					-FixedI128::from_balance(new_base_value).unwrap()
 				);
+
+				let market = TestPallet::get_market(&market_id).unwrap();
+				assert_eq!(market.net_base_asset_amount, position.base_asset_amount);
 
 				// Full PnL is realized
 				let pnl = new_base_value as i128 - margin;
@@ -769,6 +787,9 @@ proptest! {
 					position.quote_asset_notional_amount,
 					FixedI128::from_balance(new_base_value).unwrap()
 				);
+
+				let market = TestPallet::get_market(&market_id).unwrap();
+				assert_eq!(market.net_base_asset_amount, position.base_asset_amount);
 
 				// Full PnL is realized
 				let pnl = margin - new_base_value as i128;
@@ -939,7 +960,7 @@ proptest! {
 				);
 
 				// Open trade in the opposite direction while increasing risk
-				// This would leaves us with and position with greater size than the current one,
+				// This would leaves us with a position with greater size than the current one,
 				// but the trade should be blocked because we're already at max leverage
 				let quote_amount_delta = 2 * quote_amount + 100;
 				let base_amount_delta = quote_amount_delta / price;

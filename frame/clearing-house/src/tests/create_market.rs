@@ -146,8 +146,8 @@ fn create_first_market_succeeds() {
 		assert_eq!(market.funding_frequency, config.funding_frequency);
 		assert_eq!(market.funding_period, config.funding_period);
 
-		assert_eq!(market.net_base_asset_amount, 0.into());
 		assert_eq!(market.cum_funding_rate, 0.into());
+		assert_eq!(market.net_base_asset_amount, 0.into());
 		// Ensure last funding rate timestamp is the same as this block's time
 		assert_eq!(market.funding_rate_ts, block_time_now);
 	})
