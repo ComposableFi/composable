@@ -22,12 +22,12 @@ version = "3.0.0"
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.18" }
-pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", optional = true , branch = "polkadot-v0.9.18" }
+pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.18" }
+pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.18" }
 
 composable-support = { default-features = false, path = "../composable-support" }
 composable-traits = { default-features = false, path = "../composable-traits" }
-cumulus-pallet-xcm = { git = "https://github.com/paritytech/cumulus", default-features = false , branch = "polkadot-v0.9.18" }
+cumulus-pallet-xcm = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.18" }
 pallet-oracle = { default-features = false, optional = true, path = "../oracle" }
 pallet-vault = { default-features = false, path = "../vault", optional = true }
 sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
@@ -45,8 +45,8 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
-frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 composable-traits = { path = "../composable-traits", features = ["test-utils"] }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 hex-literal = "0.3.3"
 once_cell = "1.8.0"
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b5d4ce1d08fb54c0007c2055653892d2c93a92e" }

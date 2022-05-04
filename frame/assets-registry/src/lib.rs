@@ -9,7 +9,7 @@
 		clippy::panic
 	)
 )] // allow in tests
-#![deny(clippy::unseparated_literal_suffix)]
+#![deny(clippy::unseparated_literal_suffix, unused_imports, dead_code)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![doc = include_str!("../README.md")]
 

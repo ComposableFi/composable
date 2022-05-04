@@ -127,10 +127,6 @@ use orml_traits::parameter_type_with_key;
 parameter_type_with_key! {
 	// Minimum amount an account has to hold to stay in state
 	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
-		#[cfg(feature = "std")]
-		{
-			dbg!("asking ED for {:?}", &currency_id);
-		}
 		multi_existential_deposits::<AssetsRegistry>(currency_id)
 	};
 }

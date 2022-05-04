@@ -1,6 +1,6 @@
 #![cfg_attr(
 	not(test),
-	warn(
+	deny(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
@@ -9,19 +9,18 @@
 		clippy::panic
 	)
 )]
-#![warn(clippy::unseparated_literal_suffix)]
+#![deny(clippy::unseparated_literal_suffix, unused_imports, non_snake_case, dead_code)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod impls;
 pub mod xcmp;
 use core::marker::PhantomData;
 
-use composable_support::math::safe::{SafeDiv, SafeMul};
+use composable_support::math::safe::SafeDiv;
 use composable_traits::{defi::Ratio, oracle::MinimalOracle, xcm::assets::AssetRatioInspect};
 pub use constants::*;
 use frame_support::parameter_types;
 use num_traits::CheckedMul;
-use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_runtime::{DispatchError, FixedPointNumber};
 pub use types::*;
@@ -145,7 +144,7 @@ mod constants {
 #[derive(Default)]
 pub struct PriceConverter<AssetsRegistry>(PhantomData<AssetsRegistry>);
 
-pub mod XcmpErrors {
+pub mod xcmp_errors {
 	pub const ASSET_IS_NOT_PRICEABLE: &str = "Asset is not priceable";
 	pub const AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE: &str =
 		"Amount of asset is more than max possible";
@@ -171,16 +170,16 @@ impl<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>> MinimalOracle
 							payment.into_inner().safe_div(&Ratio::accuracy()).map_err(Into::into)
 						} else {
 							Err(DispatchError::Other(
-								XcmpErrors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
+								xcmp_errors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
 							))
 						}
 					} else {
 						Err(DispatchError::Other(
-							XcmpErrors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
+							xcmp_errors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
 						))
 					}
 				} else {
-					Err(DispatchError::Other(XcmpErrors::ASSET_IS_NOT_PRICEABLE))
+					Err(DispatchError::Other(xcmp_errors::ASSET_IS_NOT_PRICEABLE))
 				},
 		}
 	}
@@ -197,7 +196,7 @@ parameter_types! {
 }
 
 #[cfg(feature = "runtime-benchmarks")]
-pub fn multi_existential_deposits(_currency_id: &CurrencyId) -> Balance {
+pub fn multi_existential_deposits<AssetsRegistry>(_currency_id: &CurrencyId) -> Balance {
 	// ISSUE:
 	// Running benchmarks with non zero multideopist leads to fail in 3rd party pallet.
 	// It is not cleary why it happens.pub const BaseXcmWeight: Weight = 100_000_000;
@@ -207,9 +206,6 @@ pub fn multi_existential_deposits(_currency_id: &CurrencyId) -> Balance {
 	use num_traits::Zero;
 	Balance::zero()
 }
-
-#[cfg(not(feature = "runtime-benchmarks"))]
-const MINIMAL_EXISTENTIAL_DEPOSIT: Balance = 1_000_000;
 
 #[cfg(not(feature = "runtime-benchmarks"))]
 pub fn multi_existential_deposits<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>(

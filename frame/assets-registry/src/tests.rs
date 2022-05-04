@@ -5,9 +5,8 @@ use composable_traits::{
 		AssetRatioInspect, ForeignMetadata, RemoteAssetRegistryInspect, XcmAssetLocation,
 	},
 };
-use frame_support::{assert_err, assert_noop, assert_ok};
+use frame_support::assert_ok;
 use frame_system::RawOrigin;
-use sp_runtime::{traits::BadOrigin, DispatchError, Storage};
 
 #[test]
 fn negative_get_metadata() {

@@ -2,14 +2,12 @@
 //! positive side effects
 
 use super::*;
-use crate::{self as pallet_assets_registry, Pallet as AssetsRegistry};
+use crate::{self as pallet_assets_registry};
 use codec::{Decode, Encode};
 use composable_traits::{defi::Ratio, xcm::assets::XcmAssetLocation};
-use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
-use frame_system::{EventRecord, RawOrigin};
+use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
+use frame_system::RawOrigin;
 use sp_std::prelude::*;
-
-const SEED: u32 = 0;
 
 benchmarks! {
 	where_clause {
