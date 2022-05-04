@@ -32,7 +32,14 @@ use crate::{
 	exec::{ExecResult, Executable, ExportedFunction, Ext},
 	gas::GasMeter,
 	wasm::{
-		cosmwasm::{instance::*, types::*},
+		cosmwasm::{
+			instance::CosmwasmInstance,
+			sandbox::CosmwasmSandbox,
+			types::{
+				Addr, BlockInfo, ContractInfo, Env, ExecuteResult, InstantiateResult, MessageInfo,
+				QueryResult, Timestamp, TransactionInfo,
+			},
+		},
 		env_def::FunctionImplProvider,
 	},
 	AccountIdOf, BalanceOf, CodeHash, CodeStorage, Config, Schedule,
