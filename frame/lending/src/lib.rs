@@ -455,7 +455,7 @@ pub mod pallet {
 		BorrowRepaid {
 			sender: T::AccountId,
 			market_id: MarketIndex,
-			beneficiary: T::AccountId, // REVIEW: Should beneficiary be removed?
+			beneficiary: T::AccountId,
 			amount: T::Balance,
 		},
 		/// Event emitted when a liquidation is initiated for a loan.
@@ -565,7 +565,7 @@ pub mod pallet {
 	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
 	#[pallet::genesis_config]
-	#[derive(Default)] // REVIEW: Is default required?
+	#[derive(Default)]
 	pub struct GenesisConfig {}
 
 	#[pallet::genesis_build]
@@ -1162,7 +1162,7 @@ pub mod pallet {
 					&manager,
 					&Self::account_id(&market_id),
 					initial_pool_size,
-					false, // <- REVIEW: Do we want to possibly reap the manager?
+					false, // TODO: Replace with keep_alive parameter
 				)?;
 
 				let market_config = MarketConfig {
@@ -1310,7 +1310,6 @@ pub mod pallet {
 
 			let market_account = Self::account_id(market_id);
 
-			// REVIEW: Remove? (remove can_* checks)
 			Self::can_borrow(
 				market_id,
 				borrowing_account,
