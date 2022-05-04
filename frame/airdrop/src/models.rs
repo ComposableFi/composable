@@ -10,6 +10,8 @@ pub struct Airdrop<AccountId, Balance, Moment> {
 	pub(crate) creator: AccountId,
 	/// Total funds committed to the Airdrop.
 	pub(crate) total_funds: Balance,
+	/// Total number of recipients
+	pub(crate) total_recipients: u32,
 	/// Amount of the `total_funds` already claimed.
 	pub(crate) claimed_funds: Balance,
 	/// Starting block of the Airdrop.
