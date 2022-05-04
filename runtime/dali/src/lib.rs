@@ -1011,15 +1011,15 @@ impl dex_router::Config for Runtime {
 	type WeightInfo = weights::dex_router::WeightInfo<Runtime>;
 }
 
-const fn deposit(items: u32, bytes: u32) -> Balance {
+fn deposit(items: u32, bytes: u32) -> Balance {
 	(items as Balance * CurrencyId::unit::<Balance>() +
 		(bytes as Balance) * (5 * CurrencyId::milli::<Balance>() / 100)) /
 		10
 }
 
 parameter_types! {
-	pub const DepositPerItem: Balance = deposit(1, 0);
-	pub const DepositPerByte: Balance = deposit(0, 1);
+	pub DepositPerItem: Balance = deposit(1, 0);
+	pub DepositPerByte: Balance = deposit(0, 1);
 	// The lazy deletion runs inside on_initialize.
 	pub DeletionWeightLimit: Weight = AVERAGE_ON_INITIALIZE_RATIO *
 		RuntimeBlockWeights::get().max_block;
