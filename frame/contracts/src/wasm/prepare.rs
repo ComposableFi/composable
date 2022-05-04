@@ -230,10 +230,11 @@ impl<'a, T: Config> ContractModule<'a, T> {
 			})
 			.count();
 
-    // TODO(hussein-aitlahcen): get mandatory export from cosmwasm/consts.rs by exporting const functions prototype from cosmwasm/instance.rs
-    // as mentioned in the comments in instance.rs, the spec https://github.com/CosmWasm/cosmwasm#exports
-    // state that "instantiate, execute and query must be defined by your contract.", but it's not respected by their examples.
-    // extract interface_version_8 to a list of supported versions.
+		// TODO(hussein-aitlahcen): get mandatory export from cosmwasm/consts.rs by exporting const
+		// functions prototype from cosmwasm/instance.rs as mentioned in the comments in instance.rs, the spec https://github.com/CosmWasm/cosmwasm#exports
+		// state that "instantiate, execute and query must be defined by your contract.", but it's
+		// not respected by their examples. extract interface_version_8 to a list of supported
+		// versions.
 
 		let required_exports: Vec<(&str, Vec<ValueType>)> = vec![
 			// ("instantiate", vec![ValueType::I32, ValueType::I32, ValueType::I32]),

@@ -2,8 +2,7 @@ use super::types::*;
 use crate::{exec::Ext, wasm::Runtime};
 use sp_runtime::{ArithmeticError, DispatchError};
 use sp_sandbox::{ReturnValue, SandboxInstance, SandboxMemory, Value};
-use sp_std::vec;
-use sp_std::vec::Vec;
+use sp_std::{vec, vec::Vec};
 
 /* TODO(hussein-aitlahcen):
    - allow runtime to access to marshalling as we probably need them in host functions (defined in runtime).
