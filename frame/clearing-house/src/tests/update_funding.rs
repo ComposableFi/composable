@@ -4,11 +4,12 @@ use super::{
 use crate::{
 	math::FromUnsigned,
 	mock::{
-		accounts::ALICE,
+		accounts::{AccountId, ALICE},
 		assets::USDC,
 		runtime::{
-			ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime, System as SystemPallet,
-			TestPallet, Timestamp as TimestampPallet, Vamm as VammPallet, MINIMUM_PERIOD_SECONDS,
+			Assets as AssetsPallet, ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime,
+			System as SystemPallet, TestPallet, TestPalletId, Timestamp as TimestampPallet,
+			Vamm as VammPallet, MINIMUM_PERIOD_SECONDS,
 		},
 	},
 	Direction, Error, Event,
@@ -17,9 +18,9 @@ use composable_traits::{
 	clearing_house::ClearingHouse,
 	time::{DurationSeconds, ONE_HOUR},
 };
-use frame_support::{assert_noop, assert_ok, pallet_prelude::Hooks};
+use frame_support::{assert_noop, assert_ok, pallet_prelude::Hooks, traits::fungibles::Inspect};
 use proptest::prelude::*;
-use sp_runtime::{FixedI128, FixedU128};
+use sp_runtime::{traits::AccountIdConversion, FixedI128, FixedU128};
 
 fn run_for_seconds(seconds: DurationSeconds) {
 	if SystemPallet::block_number() > 0 {
@@ -132,6 +133,42 @@ proptest! {
 				}.into(),
 			)
 		});
+	}
 
+	#[test]
+	fn clearing_house_receives_funding(net_position in any_balance()) {
+		let mut config = valid_market_config();
+		config.funding_frequency = ONE_HOUR;
+		config.funding_period = ONE_HOUR;
+		let ext_builder = ExtBuilder {
+			balances: vec![(ALICE, USDC, net_position)],
+			..Default::default()
+		};
+
+		with_market_context(ext_builder, config, |market_id| {
+			let _ = <TestPallet as ClearingHouse>::add_margin(&ALICE, USDC, net_position);
+			VammPallet::set_price(Some(1.into()));
+			// Alice opens a position representing the net one of all traders
+			let _ = <TestPallet as ClearingHouse>::open_position(
+				&ALICE,
+				&market_id,
+				Direction::Long,
+				net_position,
+				net_position,
+			);
+
+			let market = TestPallet::get_market(&market_id).unwrap();
+			run_for_seconds(market.funding_frequency);
+			OraclePallet::set_twap(Some(100)); // 1 in cents
+			VammPallet::set_twap(Some(2.into()));
+			assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
+
+			// funding rate is 1 ( TWAP_diff * freq / period )
+			// payment = rate * net_position
+			let payment = net_position;
+
+			let insurance_acc = TestPalletId::get().into_sub_account("Insurance");
+			assert_eq!(<AssetsPallet as Inspect<AccountId>>::balance(USDC, &insurance_acc), payment);
+		});
 	}
 }
