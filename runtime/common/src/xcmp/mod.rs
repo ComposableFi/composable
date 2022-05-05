@@ -12,7 +12,7 @@ use frame_support::{
 	weights::WeightToFeePolynomial,
 };
 use num_traits::Zero;
-use orml_traits::location::Reserve;
+use orml_traits::location::{AbsoluteReserveProvider, Reserve};
 use polkadot_primitives::v1::Id;
 use primitives::currency::{CurrencyId, WellKnownCurrency};
 use sp_runtime::traits::Convert;
@@ -340,7 +340,7 @@ impl FilterAssetLocation for DebugMultiNativeAsset {
 			"asset: {:?}; origin: {:?}; reserve: {:?};",
 			&asset,
 			&origin,
-			&asset.clone().reserve(),
+			AbsoluteReserveProvider::reserve(&asset.clone()),
 		);
 		false
 	}

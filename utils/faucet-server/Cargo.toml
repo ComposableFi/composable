@@ -6,25 +6,25 @@ name = "faucet-server"
 version = "0.1.0"
 
 [dependencies]
-async-std = { version = "1", features = ["attributes", "tokio1"] }
-balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+async-std = { version = "1.9.0", features = ["attributes", "tokio1"] }
+balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 common = { path = "../../runtime/common" }
 composable-runtime = { path = "../../runtime/composable" }
 dali-runtime = { path = "../../runtime/dali" }
-env_logger = "0.8.4"
-envy = "0.4"
-frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+env_logger = "0.9.0"
+envy = "0.4.2"
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 hex = "0.4.3"
-hmac = "0.11.0"
-log = "0.4.14"
-parachain-system = { package = "cumulus-pallet-parachain-system", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.17" }
+hmac = "0.12.1"
+log = "0.4.16"
+parachain-system = { package = "cumulus-pallet-parachain-system", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.18" }
 picasso-runtime = { path = "../../runtime/picasso" }
-serde = { version = "1", features = ["derive"] }
-serde_urlencoded = "0.7.0"
-sha2 = "0.9.8"
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-structopt = "0.3.25"
-substrate-xt = { git = "https://github.com/polytope-labs/substrate-xt", branch = "master" }
-tide = "0.16"
-tokio = { version = "1.12.0", features = ["macros", "rt-multi-thread"] }
+serde = { version = '1.0.136'}
+serde_urlencoded = "0.7.1"
+sha2 = "0.10.2"
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+structopt = "0.3.26"
+substrate-xt = { git = "https://github.com/polytope-labs/substrate-xt", branch = "seun-polkadot-v0.9.18" }
+tide = "0.17.0-beta.1"
+tokio = { version = "0.3.7", features = ["macros", "rt-multi-thread"] }
 utils-common = { path = "../common" }

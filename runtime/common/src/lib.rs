@@ -104,7 +104,6 @@ mod constants {
 		weights::{constants::WEIGHT_PER_SECOND, Weight},
 	};
 	use frame_system::EnsureRoot;
-	use sp_core::u32_trait::{_1, _2};
 	use sp_runtime::Perbill;
 
 	/// This determines the average expected block time that we are targeting. Blocks will be
@@ -135,7 +134,7 @@ mod constants {
 	/// Origin for either root or half of general council
 	pub type EnsureRootOrHalfCouncil = EnsureOneOf<
 		EnsureRoot<AccountId>,
-		collective::EnsureProportionAtLeast<_1, _2, AccountId, CouncilInstance>,
+		collective::EnsureProportionAtLeast<AccountId, CouncilInstance, 1, 2>,
 	>;
 }
 

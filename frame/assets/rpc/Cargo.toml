@@ -11,10 +11,10 @@ targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
 # substrate primitives
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 
 # local
 assets-runtime-api = { path = "../runtime-api" }
@@ -23,8 +23,8 @@ composable-support = { path = "../../composable-support" }
 # SCALE
 codec = { default-features = false, features = [
   "derive",
-], package = "parity-scale-codec", version = "2.0.0" }
-scale-info = { version = "1.0", default-features = false, features = [
+], package = "parity-scale-codec", version = "3.0.0" }
+scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
 

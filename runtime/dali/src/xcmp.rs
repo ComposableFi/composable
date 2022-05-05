@@ -22,7 +22,10 @@ use frame_support::{
 	},
 	PalletId, RuntimeDebug,
 };
-use orml_traits::{location::Reserve, parameter_type_with_key, MultiCurrency};
+use orml_traits::{
+	location::{AbsoluteReserveProvider, RelativeReserveProvider, Reserve},
+	parameter_type_with_key, MultiCurrency,
+};
 use orml_xcm_support::{
 	DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset, OnDepositFail,
 };
@@ -175,13 +178,13 @@ impl FilterAssetLocation for RelayReserveFromParachain {
 	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
 		// NOTE: In Acala there is not such thing
 		// if asset is KSM and send from some parachain then allow for  that
-		asset.reserve() == Some(MultiLocation::parent()) &&
+		AbsoluteReserveProvider::reserve(asset) == Some(MultiLocation::parent()) &&
 			matches!(origin, MultiLocation { parents: 1, interior: X1(Parachain(_)) })
 	}
 }
 
 type IsReserveAssetLocationFilter =
-	(DebugMultiNativeAsset, MultiNativeAsset, RelayReserveFromParachain);
+	(DebugMultiNativeAsset, MultiNativeAsset<AbsoluteReserveProvider>, RelayReserveFromParachain);
 
 type AssetsIdConverter =
 	CurrencyIdConvert<AssetsRegistry, CurrencyId, ParachainInfo, StaticAssetsMap>;
@@ -286,9 +289,11 @@ impl orml_xtokens::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig>;
 	type Weigher = FixedWeightBounds<UnitWeightCost, Call, MaxInstructions>;
 	type BaseXcmWeight = BaseXcmWeight;
-	type MinXcmFee = ParachainMinFee;
 	type LocationInverter = LocationInverter<Ancestry>;
 	type MaxAssetsForTransfer = MaxAssetsForTransfer;
+	type MinXcmFee = ParachainMinFee;
+	type MultiLocationsFilter = Everything;
+	type ReserveProvider = AbsoluteReserveProvider;
 }
 
 impl orml_unknown_tokens::Config for Runtime {
@@ -336,6 +341,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ExecuteOverweightOrigin = EnsureRootOrHalfCouncil;
 	type ControllerOrigin = EnsureRootOrHalfCouncil;
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
+	type WeightInfo = cumulus_pallet_xcmp_queue::weights::SubstrateWeight<Self>;
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {

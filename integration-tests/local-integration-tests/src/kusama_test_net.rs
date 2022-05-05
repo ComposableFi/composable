@@ -73,7 +73,8 @@ decl_test_network! {
 
 fn default_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
 	HostConfiguration {
-		validation_upgrade_cooldown: 1_u32,
+		minimum_validation_upgrade_delay: 5,
+		validation_upgrade_cooldown: 5u32,
 		validation_upgrade_delay: 5,
 		code_retention_period: 1200,
 		max_code_size: MAX_CODE_SIZE,
@@ -81,13 +82,12 @@ fn default_parachains_host_configuration() -> HostConfiguration<BlockNumber> {
 		max_head_data_size: 32 * 1024,
 		group_rotation_frequency: 20,
 		chain_availability_period: 4,
-		minimum_validation_upgrade_delay: 5,
 		thread_availability_period: 4,
 		max_upward_queue_count: 8,
 		max_upward_queue_size: 1024 * 1024,
 		max_downward_message_size: 1024,
 		ump_service_total_weight: 4 * 1_000_000_000,
-		max_upward_message_size: 1024 * 1024,
+		max_upward_message_size: 50 * 1024,
 		max_upward_message_num_per_candidate: 5,
 		hrmp_sender_deposit: 0,
 		hrmp_recipient_deposit: 0,
