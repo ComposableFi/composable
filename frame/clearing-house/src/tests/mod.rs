@@ -3,7 +3,7 @@
 
 use crate::mock::{
 	self as mock,
-	accounts::AccountId,
+	accounts::{AccountId, ALICE},
 	assets::{AssetId, DOT, USDC},
 	runtime::{
 		Balance, ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime,
@@ -121,6 +121,20 @@ fn with_markets_context<R>(
 	});
 
 	ext.execute_with(|| execute(market_ids))
+}
+
+fn with_trading_context<R>(
+	config: MarketConfig,
+	margin: Balance,
+	execute: impl FnOnce(MarketId) -> R,
+) -> R {
+	let ext_builder = ExtBuilder { balances: vec![(ALICE, USDC, margin)], ..Default::default() };
+
+	with_market_context(ext_builder, config, |market_id| {
+		TestPallet::add_margin(Origin::signed(ALICE), USDC, margin);
+
+		execute(market_id)
+	})
 }
 
 // ----------------------------------------------------------------------------------------------------

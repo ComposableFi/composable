@@ -849,16 +849,18 @@ pub mod pallet {
 			if !(funding_rate.is_zero() | market.net_base_asset_amount.is_zero()) {
 				let amount = funding_rate.try_mul(&market.net_base_asset_amount)?.into_balance()?;
 
-				match funding_rate.is_positive() == market.net_base_asset_amount.is_positive() {
-					true => T::Assets::transfer(
+				if funding_rate.is_positive() == market.net_base_asset_amount.is_positive() {
+					T::Assets::transfer(
 						CollateralType::<T>::get().ok_or(Error::<T>::NoCollateralTypeSet)?,
 						&T::PalletId::get().into_sub_account("Collateral"),
 						&T::PalletId::get().into_sub_account("Insurance"),
 						amount,
 						false,
-					)?,
-					// TODO(0xangelo): should we have a separate account for the fee pool?
-					false => todo!(),
+					)?;
+				} else {
+					// TODO(0xangelo): should we cap the funding rate if the funding pool isn't deep
+					// enough?
+					market.fee_pool = market.fee_pool.saturating_sub(amount);
 				};
 			}
 

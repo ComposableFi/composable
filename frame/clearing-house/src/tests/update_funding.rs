@@ -1,4 +1,6 @@
-use super::{any_balance, any_price, valid_market_config, with_market_context};
+use super::{
+	any_balance, any_price, valid_market_config, with_market_context, with_trading_context,
+};
 use crate::{
 	math::FromUnsigned,
 	mock::{
@@ -154,6 +156,38 @@ proptest! {
 
 			let insurance_acc = TestPalletId::get().into_sub_account("Insurance");
 			assert_eq!(<AssetsPallet as Inspect<AccountId>>::balance(USDC, &insurance_acc), payment);
+		});
+	}
+
+	#[test]
+	fn clearing_house_pays_funding(net_position in any_balance()) {
+		let mut config = valid_market_config();
+		config.funding_frequency = ONE_HOUR;
+		config.funding_period = ONE_HOUR;
+		config.taker_fee = 100; // 1%
+		let fee = net_position / 100;
+
+		with_trading_context(config.clone(), net_position + fee, |market_id| {
+			VammPallet::set_price(Some(1.into()));
+			// Alice opens a position representing the net one of all traders
+			let _ = <TestPallet as ClearingHouse>::open_position(
+				&ALICE,
+				&market_id,
+				Direction::Long,
+				net_position,
+				net_position,
+			);
+
+			run_for_seconds(config.funding_frequency);
+			OraclePallet::set_twap(Some(101)); // 1.01 in cents
+			VammPallet::set_twap(Some(1.into()));
+			assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
+
+			// funding rate is 1% ( TWAP_diff * freq / period )
+			// payment = rate * net_position = fee
+			let market = TestPallet::get_market(&market_id).unwrap();
+			// Whole fee pool is paid back in funding
+			assert_eq!(market.fee_pool, 0);
 		});
 	}
 }

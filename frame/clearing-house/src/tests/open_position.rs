@@ -9,8 +9,8 @@ use crate::{
 	},
 	pallet::{Config, Direction, Error, Event},
 	tests::{
-		any_price, as_balance, valid_market_config as base_market_config, with_market_context,
-		with_markets_context, MarginInitializer, MarketConfig, MarketInitializer,
+		any_price, as_balance, valid_market_config as base_market_config, with_markets_context,
+		with_trading_context, MarginInitializer, MarketConfig, MarketInitializer,
 	},
 };
 use composable_traits::clearing_house::ClearingHouse;
@@ -21,20 +21,6 @@ use sp_runtime::{FixedI128, FixedPointNumber, FixedU128};
 // ----------------------------------------------------------------------------------------------------
 //                                        Execution Contexts
 // ----------------------------------------------------------------------------------------------------
-
-fn with_trading_context<R>(
-	config: MarketConfig,
-	margin: Balance,
-	execute: impl FnOnce(MarketId) -> R,
-) -> R {
-	let ext_builder = ExtBuilder { balances: vec![(ALICE, USDC, margin)], ..Default::default() };
-
-	with_market_context(ext_builder, config, |market_id| {
-		TestPallet::add_margin(Origin::signed(ALICE), USDC, margin);
-
-		execute(market_id)
-	})
-}
 
 fn cross_margin_context<R>(
 	configs: Vec<MarketConfig>,
