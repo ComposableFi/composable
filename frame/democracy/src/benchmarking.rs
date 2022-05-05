@@ -629,7 +629,7 @@ benchmarks! {
 		Preimages::<T>::insert(&proposal_id, PreimageStatus::Missing(block_number));
 
 		let caller = funded_account::<T>("caller", 0);
-		let encoded_proposal, asset_id = vec![1; b as usize];
+		let encoded_proposal = vec![1; b as usize];
 		whitelist_account!(caller);
 	}: _(RawOrigin::Signed(caller), encoded_proposal, asset_id.clone(), asset_id)
 	verify {
@@ -646,10 +646,10 @@ benchmarks! {
 	reap_preimage {
 		// Num of bytes in encoded proposal
 		let b in 0 .. MAX_BYTES;
-
+		
+		let asset_id = T::AssetId::from(DOT_ASSET);
 		let encoded_proposal = vec![1; b as usize];
 		let proposal_hash = T::Hashing::hash(&encoded_proposal, asset_id[..]);
-		let asset_id = T::AssetId::from(DOT_ASSET);
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
 
 		let submitter = funded_account::<T>("submitter", b);
