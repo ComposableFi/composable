@@ -1744,9 +1744,9 @@ impl<T: Config> Pallet<T> {
 			voting.locked_balance()
 		});
 		if lock_needed.is_zero() {
-			T::Currency::remove_lock(DEMOCRACY_ID, asset_id, who)?;
+			T::Currency::remove_lock(DEMOCRACY_ID, asset_id, who);
 		} else {
-			T::Currency::set_lock(DEMOCRACY_ID, asset_id, who, lock_needed)?;
+			T::Currency::set_lock(DEMOCRACY_ID, asset_id, who, lock_needed);
 		}
 	}
 
