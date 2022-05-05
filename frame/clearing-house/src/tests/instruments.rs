@@ -85,6 +85,7 @@ prop_compose! {
 			minimum_trade_size,
 			net_base_asset_amount: 0.into(),
 			cum_funding_rate,
+			fee_pool: 0,
 			funding_rate_ts,
 			funding_frequency,
 			funding_period,

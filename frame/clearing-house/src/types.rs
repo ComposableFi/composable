@@ -75,6 +75,8 @@ pub struct Market<T: Config> {
 	/// The latest cumulative funding rate of this
 	/// market. Must be updated periodically.
 	pub cum_funding_rate: T::Decimal,
+	/// Amount, in quote asset, of fees collected from trades
+	pub fee_pool: T::Balance,
 	/// The timestamp for the latest funding rate update.
 	pub funding_rate_ts: DurationSeconds,
 	/// The time span between each funding rate update.

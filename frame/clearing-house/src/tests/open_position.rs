@@ -167,10 +167,10 @@ proptest! {
 		let mut config = valid_market_config();
 		config.taker_fee = 10; // 0.1%
 		let quote_amount = valid_quote_asset_amount();
-		// Have enough margin to pay for fees
-		let margin = quote_amount + (quote_amount * config.taker_fee) / 10_000;
+		let fees = (quote_amount * config.taker_fee) / 10_000;
 
-		with_trading_context(config, margin, |market_id| {
+		// Have enough margin to pay for fees
+		with_trading_context(config, quote_amount + fees, |market_id| {
 			let positions_before = TestPallet::get_positions(&ALICE).len();
 
 			let base_amount = valid_base_asset_amount_limit();
@@ -200,9 +200,12 @@ proptest! {
 			// Ensure fees are deducted from margin
 			assert_eq!(TestPallet::get_margin(&ALICE), Some(quote_amount));
 
-			// Ensure market net position is updated
+			// Ensure market state is updated:
+			// - net position
+			// - fees collected
 			let market = TestPallet::get_market(&market_id).unwrap();
 			assert_eq!(market.net_base_asset_amount, position.base_asset_amount);
+			assert_eq!(market.fee_pool, fees);
 
 			SystemPallet::assert_last_event(
 				Event::TradeExecuted {

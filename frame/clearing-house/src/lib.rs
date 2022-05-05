@@ -149,7 +149,10 @@ pub mod pallet {
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use num_traits::Signed;
 	use sp_runtime::{
-		traits::{AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, One, Saturating, Zero},
+		traits::{
+			AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating,
+			Zero,
+		},
 		ArithmeticError, FixedPointNumber, FixedPointOperand,
 	};
 	use sp_std::{cmp::Ordering, fmt::Debug, ops::Neg};
@@ -688,6 +691,7 @@ pub mod pallet {
 					margin_ratio_maintenance: config.margin_ratio_maintenance,
 					minimum_trade_size: config.minimum_trade_size,
 					net_base_asset_amount: Zero::zero(),
+					fee_pool: Zero::zero(),
 					funding_frequency: config.funding_frequency,
 					funding_period: config.funding_period,
 					cum_funding_rate: Zero::zero(),
@@ -715,7 +719,7 @@ pub mod pallet {
 			quote_asset_amount: Self::Balance,
 			base_asset_amount_limit: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			let margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
+			let mut margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
 			let mut market = Self::get_market(&market_id).ok_or(Error::<T>::MarketIdNotFound)?;
 			let mut positions = Self::get_positions(&account_id);
 			let (position, position_index) =
@@ -790,12 +794,15 @@ pub mod pallet {
 				let pnl = exit_value.try_sub(&entry_value)?;
 				// Realize PnL
 				// TODO(0xangelo): properly handle bad debt incurred by large negative PnL
-				AccountsMargin::<T>::insert(
-					account_id,
-					Self::update_margin_with_pnl(&margin, &pnl)?,
-				);
+				margin = Self::update_margin_with_pnl(&margin, &pnl)?;
 			}
 
+			// Charge fees
+			let fee = Self::fee_for_trade(&market, &quote_abs_amount_decimal)?;
+			margin = margin.checked_sub(&fee).ok_or(ArithmeticError::Underflow)?;
+			market.fee_pool = market.fee_pool.checked_add(&fee).ok_or(ArithmeticError::Overflow)?;
+
+			// Check account risk
 			if is_risk_increasing {
 				ensure!(
 					Self::is_above_imr(&positions, margin)?,
@@ -803,6 +810,8 @@ pub mod pallet {
 				);
 			}
 
+			// Update storage
+			AccountsMargin::<T>::insert(account_id, margin);
 			Positions::<T>::insert(account_id, positions);
 			Self::update_market_after_trade(&mut market, base_swapped, direction)?;
 			Markets::<T>::insert(market_id, market);
@@ -813,7 +822,6 @@ pub mod pallet {
 				quote: quote_asset_amount,
 				base: base_swapped,
 			});
-
 			Ok(base_swapped)
 		}
 
@@ -902,6 +910,18 @@ pub mod pallet {
 
 	// Helper functions - core functionality
 	impl<T: Config> Pallet<T> {
+		fn fee_for_trade(
+			market: &Market<T>,
+			quote_abs_amount: &T::Decimal,
+		) -> Result<T::Balance, ArithmeticError> {
+			quote_abs_amount
+				.into_balance()?
+				.checked_mul(&market.taker_fee)
+				.ok_or(ArithmeticError::Overflow)?
+				.checked_div(&10_000_u32.into())
+				.ok_or(ArithmeticError::DivisionByZero)
+		}
+
 		fn update_market_after_trade(
 			market: &mut Market<T>,
 			base_asset_amount: T::Balance,
