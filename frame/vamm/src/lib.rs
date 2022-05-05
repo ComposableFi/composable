@@ -45,6 +45,8 @@
 //!
 //! * [`create`](pallet/struct.Pallet.html#method.create): Creates a new vamm,
 //! returning it's Id.
+//! * [`swap`](pallet/struct.Pallet.html#method.swap): Performs swap of a
+//! desired asset, returning it's counterparty.
 //!
 //! ### Runtime Storage Objects
 //!
