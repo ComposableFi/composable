@@ -375,6 +375,8 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// User attempted to deposit unsupported asset type as collateral in its margin account
 		UnsupportedCollateralType,
+		/// An operation required the asset id of a valid collateral type but none were registered
+		NoCollateralTypeSet,
 		/// Attempted to create a new market but the underlying asset is not supported by the
 		/// oracle
 		NoPriceFeedForAsset,
@@ -818,21 +820,48 @@ pub mod pallet {
 		#[transactional]
 		fn update_funding(market_id: &Self::MarketId) -> Result<(), DispatchError> {
 			let mut market = Markets::<T>::get(market_id).ok_or(Error::<T>::MarketIdNotFound)?;
+
+			// Check that enough time has passed since last update
 			let now = T::UnixTime::now().as_secs();
 			ensure!(
 				now - market.funding_rate_ts >= market.funding_frequency,
 				Error::<T>::UpdatingFundingTooEarly
 			);
 
+			// Pay funding
+			// net position sign | funding rate sign | transfer
+			// --------------------------------------------------------------
+			//                -1 |                -1 | Collateral -> IF
+			//                -1 |                 1 | Fee Pool -> Collateral
+			//                 1 |                -1 | Fee Pool -> Collateral
+			//                 1 |                 1 | Collateral -> IF
+			//                 - |                 0 | n/a
+			//                 0 |                 - | n/a
 			let funding_rate = <Self as Instruments>::funding_rate(&market)?;
+			if !(funding_rate.is_zero() | market.net_base_asset_amount.is_zero()) {
+				let amount = funding_rate.try_mul(&market.net_base_asset_amount)?.into_balance()?;
 
+				match funding_rate.is_positive() == market.net_base_asset_amount.is_positive() {
+					true => T::Assets::transfer(
+						CollateralTypes::<T>::iter_keys()
+							.next()
+							.ok_or(Error::<T>::NoCollateralTypeSet)?,
+						&T::PalletId::get().into_sub_account("Collateral"),
+						&T::PalletId::get().into_sub_account("Insurance"),
+						amount,
+						false,
+					)?,
+					// TODO(0xangelo): should we have a separate account for the fee pool?
+					false => todo!(),
+				};
+			}
+
+			// Update market state
 			market.cum_funding_rate.try_add_mut(&funding_rate)?;
 			market.funding_rate_ts = now;
-
 			Markets::<T>::insert(market_id, market);
 
 			Self::deposit_event(Event::FundingUpdated { market: market_id.clone(), time: now });
-
 			Ok(())
 		}
 	}

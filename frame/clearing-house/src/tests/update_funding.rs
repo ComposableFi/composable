@@ -121,7 +121,6 @@ proptest! {
 	}
 
 	#[test]
-	#[ignore = "unimplemented"]
 	fn clearing_house_receives_funding(net_position in any_balance()) {
 		let mut config = valid_market_config();
 		config.funding_frequency = ONE_HOUR;
