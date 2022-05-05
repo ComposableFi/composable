@@ -9,8 +9,8 @@ use crate::{
 	},
 	pallet::{Config, Direction, Error, Event},
 	tests::{
-		any_price, as_balance, valid_market_config, with_market_context, with_markets_context,
-		MarginInitializer, MarketConfig, MarketInitializer,
+		any_price, as_balance, valid_market_config as base_market_config, with_market_context,
+		with_markets_context, MarginInitializer, MarketConfig, MarketInitializer,
 	},
 };
 use composable_traits::clearing_house::ClearingHouse;
@@ -60,6 +60,12 @@ fn valid_quote_asset_amount() -> Balance {
 
 fn valid_base_asset_amount_limit() -> Balance {
 	as_balance(10)
+}
+
+fn valid_market_config() -> MarketConfig {
+	let mut config = base_market_config();
+	config.taker_fee = 0;
+	config
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -158,9 +164,13 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 proptest! {
 	#[test]
 	fn open_position_in_new_market_succeeds(direction in any_direction()) {
+		let mut config = valid_market_config();
+		config.taker_fee = 10; // 0.1%
 		let quote_amount = valid_quote_asset_amount();
+		// Have enough margin to pay for fees
+		let margin = quote_amount + (quote_amount * config.taker_fee) / 10_000;
 
-		with_trading_context(valid_market_config(), quote_amount, |market_id| {
+		with_trading_context(config, margin, |market_id| {
 			let positions_before = TestPallet::get_positions(&ALICE).len();
 
 			let base_amount = valid_base_asset_amount_limit();
@@ -174,6 +184,7 @@ proptest! {
 				base_amount,
 			));
 
+			// Ensure a new position is created
 			let positions = TestPallet::get_positions(&ALICE);
 			assert_eq!(positions.len(), positions_before + 1);
 			let position = positions.iter().find(|p| p.market_id == market_id).unwrap();
@@ -186,6 +197,10 @@ proptest! {
 				Direction::Short => position.quote_asset_notional_amount.is_negative()
 			});
 
+			// Ensure fees are deducted from margin
+			assert_eq!(TestPallet::get_margin(&ALICE), Some(quote_amount));
+
+			// Ensure market net position is updated
 			let market = TestPallet::get_market(&market_id).unwrap();
 			assert_eq!(market.net_base_asset_amount, position.base_asset_amount);
 
