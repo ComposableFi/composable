@@ -69,8 +69,10 @@ jobs:
           rustup show
 
       - name: Run Test (with coverage)
+        env:
+          SKIP_WASM_BUILD: 1
         run: |
-          SKIP_WASM_BUILD=1 cargo +nightly llvm-cov --workspace --locked --release --verbose --features=runtime-benchmarks --lcov --output-path lcov.info
+          cargo +nightly llvm-cov --workspace --locked --release --verbose --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
