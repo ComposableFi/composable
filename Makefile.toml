@@ -59,8 +59,9 @@ workspace = false
 
 [tasks.run-local-integration-tests-debug]
 description = "fastest way to build and debug runtime in simulator"
+env = { RUST_BACKTRACE = "full", RUST_LOG = "trace,parity-db=warn,trie=warn,runtime=trace,substrate-relay=trace,bridge=trace,xcmp=trace,xcm=trace" }
 script = '''
-RUST_BACKTRACE=full RUST_LOG=trace,parity-db=warn,trie=warn,runtime=trace,substrate-relay=trace,bridge=trace,xcmp=trace,xcm=trace cargo +stable test  --package local-integration-tests --features local-integration-tests --features picasso  --no-default-features -- --nocapture --test-threads=1
+cargo +stable test --package local-integration-tests --features local-integration-tests --features picasso --no-default-features -- --nocapture --test-threads=1
 '''
 workspace = false
 

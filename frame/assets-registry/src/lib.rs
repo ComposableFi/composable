@@ -28,13 +28,13 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	pub use crate::weights::WeightInfo;
-	use codec::{EncodeLike, FullCodec};
+	use codec::FullCodec;
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory, Exponent, RangeId},
 		defi::Ratio,
 		xcm::assets::{
 			AssetRatioInspect, ForeignMetadata, RemoteAssetRegistryInspect,
-			RemoteAssetRegistryMutate, XcmAssetLocation,
+			RemoteAssetRegistryMutate,
 		},
 	};
 	use cumulus_primitives_core::ParaId;
@@ -44,7 +44,7 @@ pub mod pallet {
 
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
-	use sp_std::{fmt::Debug, marker::PhantomData, str};
+	use sp_std::{fmt::Debug, str};
 
 	/// The module configuration trait.
 	#[pallet::config]
@@ -118,7 +118,7 @@ pub mod pallet {
 	pub type AssetRatio<T: Config> = StorageMap<_, Twox128, T::LocalAssetId, Ratio, OptionQuery>;
 
 	#[pallet::genesis_config]
-	pub struct GenesisConfig<T: Config>(PhantomData<T>);
+	pub struct GenesisConfig<T: Config>(sp_std::marker::PhantomData<T>);
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
@@ -130,7 +130,8 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T>
 	where
-		XcmAssetLocation: EncodeLike<<T as Config>::ForeignAssetId>,
+		composable_traits::xcm::assets::XcmAssetLocation:
+			codec::EncodeLike<<T as Config>::ForeignAssetId>,
 	{
 		fn build(&self) {}
 	}

@@ -49,6 +49,7 @@ mod kusama {
 ///  params:
 /// - to: The destination for the transfer
 /// - amount: The amount of staking currency to be transferred.
+#[allow(dead_code)] // for future use in cross chain tests
 pub fn balances_transfer_keep_alive<T: Config>(
 	to: T::AccountId,
 	amount: RelayBalance,
@@ -60,6 +61,7 @@ pub fn balances_transfer_keep_alive<T: Config>(
 ///  params:
 /// - call: The call to be executed. Can be nested with `utility_batch_call`
 /// - index: The index of sub-account to be used as the new origin.
+#[allow(dead_code)] // for future use in cross chain tests
 pub fn utility_as_derivative_call<T: Config>(
 	call: RelayChainCall<T>,
 	index: u16,
@@ -73,6 +75,7 @@ pub fn utility_as_derivative_call<T: Config>(
 /// - extra_fee: Extra fee (in staking currency) used for buy the `weight` and `debt`.
 /// - weight: the weight limit used for XCM.
 /// - debt: the weight limit used to process the `call`.
+#[allow(dead_code)] // for future use in cross chain tests
 pub fn finalize_call_into_xcm_message<T: Config>(
 	call: RelayChainCall<T>,
 	extra_fee: Balance,

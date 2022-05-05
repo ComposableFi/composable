@@ -109,10 +109,12 @@ xcm-executor = { git = "https://github.com/paritytech/polkadot", default-feature
 
 # added on top of runtime for emulation of network
 kusama-runtime = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.18" }
+parachains-common = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.18" }
 paste = "1.0.6"
 polkadot-core-primitives = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.18" }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.18" }
 polkadot-runtime-parachains = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.18" }
+statemine-runtime = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.18" }
 xcm-emulator = { git = "https://github.com/shaunxw/xcm-simulator", rev = "22d94e7754b7d8b956b20855b51891928ed0a2f5", default-features = false }
 
 dali-runtime = { package = "dali-runtime", path = "../../runtime/dali", default-features = false }
@@ -188,6 +190,8 @@ std = [
   "polkadot-core-primitives/std",
   "polkadot-primitives/std",
   "polkadot-runtime-parachains/std",
+  "statemine-runtime/std",
+  "parachains-common/std",
 ]
 
 runtime-benchmarks = [
@@ -218,6 +222,7 @@ runtime-benchmarks = [
   "picasso-runtime/runtime-benchmarks",
   "polkadot-primitives/runtime-benchmarks",
   "polkadot-runtime-parachains/runtime-benchmarks",
+  "statemine-runtime/runtime-benchmarks",
 ]
 
 develop = ["assets", "assets-registry", "governance-registry"]

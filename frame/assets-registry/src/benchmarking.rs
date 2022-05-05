@@ -3,6 +3,10 @@
 
 use super::*;
 use crate::{self as pallet_assets_registry};
+
+#[allow(unused_imports)]
+use crate::Pallet as AssetsRegistry;
+
 use codec::{Decode, Encode};
 use composable_traits::{defi::Ratio, xcm::assets::XcmAssetLocation};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};

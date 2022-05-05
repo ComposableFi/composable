@@ -14,7 +14,6 @@ pub const UNIT: Balance = 1_000_000_000_000;
 pub const TEN: Balance = 10 * UNIT;
 pub const FEE_WEIGHT: Balance = 4_000_000_000;
 //pub const FEE_STATEMINE: Balance = 10_666_664;
-pub const FEE_STATEMINE: Balance = 4_000_000_000;
 pub const FEE_KUSAMA: Balance = 106_666_660;
 
 use crate::{helpers::simtest, kusama_test_net::*, prelude::*};
@@ -38,27 +37,36 @@ use xcm_emulator::TestExt;
 #[test]
 fn transfer_native_from_relay_chain_to_statemine() {
 	simtest();
+	let bob_on_statemine_original = Statemine::execute_with(|| {
+		statemine_runtime::Balances::free_balance(&AccountId::from(BOB))
+	});
+	let amount = CurrencyId::unit::<Balance>();
 	KusamaRelay::execute_with(|| {
 		assert_ok!(kusama_runtime::XcmPallet::reserve_transfer_assets(
 			kusama_runtime::Origin::signed(ALICE.into()),
 			Box::new(Parachain(STATEMINE_PARA_ID).into().into()),
 			Box::new(Junction::AccountId32 { id: BOB, network: NetworkId::Any }.into().into()),
-			Box::new((Here, CurrencyId::unit::<Balance>()).into()),
+			Box::new((Here, amount).into()),
 			0
 		));
 	});
 
 	Statemine::execute_with(|| {
-		assert_eq!(
-			CurrencyId::unit::<Balance>() - FEE_STATEMINE,
-			statemine_runtime::Balances::free_balance(&AccountId::from(BOB))
+		assert!(
+			bob_on_statemine_original <
+				statemine_runtime::Balances::free_balance(&AccountId::from(BOB)),
+			"balance increased"
+		);
+		assert!(
+			amount > statemine_runtime::Balances::free_balance(&AccountId::from(BOB)),
+			"fee taken"
 		);
 	});
 }
 
 /// Statemine issues custom token
 #[test]
-fn this_chain_statemine_transfer_works() {
+fn this_chain_statemine_transfers_back_and_forth_work() {
 	simtest();
 	let this_parachain_account: AccountId =
 		polkadot_parachain::primitives::Sibling::from(THIS_PARA_ID).into_account();
@@ -68,8 +76,6 @@ fn this_chain_statemine_transfer_works() {
 	// minimum asset should be: FEE_WEIGHT+FEE_KUSAMA+max(KUSAMA_ED,STATEMINE_ED+FEE_STATEMINE).
 	// but due to current half fee, sender asset should at lease: FEE_WEIGHT + 2 * FEE_KUSAMA
 	let relay_native_asset_amount = 3 * FEE_WEIGHT + 3 * FEE_KUSAMA;
-	// ISSUE: using big number like 2132123 fails with some weird bug
-	let remote_asset_id = 11; // magic number to avoid zero defaults and easy to find
 	let remote_asset_id = 3451561; // magic number to avoid zero defaults and easy to find
 	let foreign_asset_id_on_this = register_statemine_asset(remote_asset_id);
 	let accounted_native_balance = statemine_side(TEN + relay_native_asset_amount, remote_asset_id);
@@ -84,7 +90,7 @@ fn this_chain_statemine_transfer_works() {
 
 	this_chain_side(relay_native_asset_amount, foreign_asset_id_on_this);
 
-	/// during transfer relay rebalanced amounts
+	// during transfer relay rebalanced amounts
 	KusamaRelay::execute_with(|| {
 		assert!(kusama_runtime::Balances::free_balance(&this_para_id) < this_reserve);
 		assert!(statemine_reserve < kusama_runtime::Balances::free_balance(&state_mine_para_id));
@@ -99,13 +105,13 @@ fn this_chain_statemine_transfer_works() {
 		assert_eq!(9 * UNIT, Assets::balance(remote_asset_id, &this_parachain_account));
 
 		assert_eq!(
-			UNIT + FEE_WEIGHT - FEE_STATEMINE,
+			1003989333336, // approx. UNIT + FEE_WEIGHT - FEE_STATEMINE,
 			Balances::free_balance(&AccountId::from(BOB))
 		);
 		let new_balance = Balances::free_balance(&this_parachain_account);
 		assert!(accounted_native_balance <= new_balance);
 		assert_eq!(
-			10012533333300, /* approximately this UNIT + asset_amount - FEE_WEIGHT - FEE_KUSAMA
+			10016522666636, /* approximately this UNIT + asset_amount - FEE_WEIGHT - FEE_KUSAMA
 			                 * - FEE_STATEMINE - FEE_WEIGHT, */
 			new_balance,
 		);
@@ -235,9 +241,10 @@ fn register_statemine_asset(remote_asset_id: CommonAssetId) -> CurrencyId {
 			frame_system::RawOrigin::Root.into(),
 			location.clone(),
 			42,
-			Ratio::checked_from_rational(10, 100),
+			Ratio::checked_from_rational(10_u8, 100),
 			Some(4),
-		);
+		)
+		.unwrap();
 		let location =
 			XcmAssetLocation::new(MultiLocation::new(1, X1(Parachain(STATEMINE_PARA_ID))).into());
 		AssetsRegistry::set_minimal_amount(
