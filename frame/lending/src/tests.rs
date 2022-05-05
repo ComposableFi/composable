@@ -320,8 +320,8 @@ fn can_create_valid_market() {
 			Market creation result was {:#?}",
 			should_be_created,
 		);
-    
-    // Check if corresponded event was emitted
+
+        //  Check if corresponded event was emitted
 		let currency_pair = input.currency_pair;
         // Market id and vault id values are defined via previous logic.
         let market_id = pallet_lending::pallet::MarketIndex::new(1);
