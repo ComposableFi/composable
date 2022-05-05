@@ -494,15 +494,13 @@ fn borrow_flow() {
 			.div(get_price(BTC::ID, BTC::ONE));
 
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, collateral_amount));
-        assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral_amount));
-        let event =
-		    Event::Lending(crate::Event::CollateralDeposited {
-			    sender: *ALICE,
-			    amount: collateral_amount,
-			    market_id: market,
-			});
+		assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral_amount));
+		let event = Event::Lending(crate::Event::CollateralDeposited {
+			sender: *ALICE,
+			amount: collateral_amount,
+			market_id: market,
+		});
 		System::assert_last_event(event);
-
 
 		let limit_normalized = Lending::get_borrow_limit(&market, &ALICE).unwrap();
 
@@ -716,11 +714,10 @@ fn test_liquidate_multiple() {
 				panic!("{:#?}", why)
 			},
 		};
-        let event =
-	 	    Event::Lending(crate::Event::LiquidationInitiated {
-		    	market_id: market,
-                 borrowers: vec![*ALICE, *BOB, *CHARLIE],
-			});
+		let event = Event::Lending(crate::Event::LiquidationInitiated {
+			market_id: market,
+			borrowers: vec![*ALICE, *BOB, *CHARLIE],
+		});
 		System::assert_last_event(event);
 		Lending::should_liquidate(&market, &*ALICE).unwrap();
 	})
@@ -1072,12 +1069,11 @@ fn test_warn_soon_under_collateralized() {
 		let two_btc_amount = BTC::units(2);
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, two_btc_amount));
 		assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, two_btc_amount));
-        let event =
-	    	Event::Lending(crate::Event::CollateralDeposited {
-	    		sender: *ALICE,
-	    		amount: two_btc_amount,
-	    		market_id: market,
-			});
+		let event = Event::Lending(crate::Event::CollateralDeposited {
+			sender: *ALICE,
+			amount: two_btc_amount,
+			market_id: market,
+		});
 		System::assert_last_event(event);
 
 		let usdt_amt = USDT::units(100_000);
