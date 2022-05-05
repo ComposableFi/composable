@@ -47,7 +47,7 @@ workspace = false
 [tasks.run-unit-tests]
 env = { SKIP_WASM_BUILD = 1 }
 script = '''
-cargo test --workspace --locked --release --verbose --features=runtime-benchmarks
+cargo test cross_chain_transfer --workspace --locked --release --verbose
 '''
 workspace = false
 
@@ -66,7 +66,7 @@ workspace = false
 
 [tasks.run-local-integration-tests-debug]
 description = "fastest way to build and debug runtime in simulator"
-env = { RUST_BACKTRACE = "full", RUST_LOG = "trace,parity-db=warn,trie=warn,runtime=trace,substrate-relay=trace,bridge=trace,xcmp=trace,xcm=trace" }
+env = { RUST_BACKTRACE = "full", RUST_LOG = "trace,parity-db=warn,trie=warn,runtime=trace,substrate-relay=trace,bridge=trace,xcmp=trace,xcm=trace", SKIP_WASM_BUILD = 1 }
 script = '''
 cargo +stable test --package local-integration-tests --features local-integration-tests --features picasso --no-default-features -- --nocapture --test-threads=1
 '''

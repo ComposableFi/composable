@@ -198,8 +198,8 @@ parameter_types! {
 #[cfg(feature = "runtime-benchmarks")]
 pub fn multi_existential_deposits<AssetsRegistry>(_currency_id: &CurrencyId) -> Balance {
 	// ISSUE:
-	// Running benchmarks with non zero multideopist leads to fail in 3rd party pallet.
-	// It is not cleary why it happens.pub const BaseXcmWeight: Weight = 100_000_000;
+	// Running benchmarks with non zero multideposit leads to fail in 3rd party pallet.
+	// It is not clearly why it happens.pub const BaseXcmWeight: Weight = 100_000_000;
 	// 2022-03-14 20:50:19 Running Benchmark: collective.set_members 2/1 1/1
 	// Error:
 	//   0: Invalid input: Account cannot exist with the funds that would be given
@@ -216,10 +216,10 @@ pub fn multi_existential_deposits<AssetsRegistry: AssetRatioInspect<AssetId = Cu
 		NativeExistentialDeposit::get(),
 	)
 	// TODO:
-	// 1. ask approved DEX pair for price  (is it enought performacne? or should we allow pay in
+	// 1. ask approved DEX pair for price  (is it enough performance? or should we allow pay in
 	// ED PICA for other asset account?)
 	// 2. ask CurrencyFactory
-	// 3. use harcoded values
+	// 3. use hardcoded values
 	// 4. else 1_000_000_u128
 	.unwrap_or(1_000_000_u128)
 }
