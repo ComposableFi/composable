@@ -1505,7 +1505,7 @@ export default {
     horizontalMessages: 'BTreeMap<u32, Vec<PolkadotCorePrimitivesInboundHrmpMessage>>'
   },
   /**
-   * Lookup176: polkadot_primitives::v1::PersistedValidationData<primitive_types::H256, N>
+   * Lookup176: polkadot_primitives::v2::PersistedValidationData<primitive_types::H256, N>
    **/
   PolkadotPrimitivesV1PersistedValidationData: {
     parentHead: 'Bytes',
@@ -2583,7 +2583,7 @@ export default {
     _enum: ['MinimumThreshold', 'AlreadyApproved', 'NoApprovalsNeeded', 'TooFewSignatories', 'TooManySignatories', 'SignatoriesOutOfOrder', 'SenderInSignatories', 'NotFound', 'NotOwner', 'NoTimepoint', 'WrongTimepoint', 'UnexpectedTimepoint', 'MaxWeightTooLow', 'AlreadyStored']
   },
   /**
-   * Lookup295: polkadot_primitives::v1::UpgradeRestriction
+   * Lookup295: polkadot_primitives::v2::UpgradeRestriction
    **/
   PolkadotPrimitivesV1UpgradeRestriction: {
     _enum: ['Present']
@@ -2598,7 +2598,7 @@ export default {
     egressChannels: 'Vec<(u32,PolkadotPrimitivesV1AbridgedHrmpChannel)>'
   },
   /**
-   * Lookup299: polkadot_primitives::v1::AbridgedHrmpChannel
+   * Lookup299: polkadot_primitives::v2::AbridgedHrmpChannel
    **/
   PolkadotPrimitivesV1AbridgedHrmpChannel: {
     maxCapacity: 'u32',
@@ -2609,7 +2609,7 @@ export default {
     mqcHead: 'Option<H256>'
   },
   /**
-   * Lookup300: polkadot_primitives::v1::AbridgedHostConfiguration
+   * Lookup300: polkadot_primitives::v2::AbridgedHostConfiguration
    **/
   PolkadotPrimitivesV1AbridgedHostConfiguration: {
     maxCodeSize: 'u32',

@@ -273,14 +273,14 @@ export default {
     }
   },
   /**
-   * Lookup43: polkadot_primitives::v1::CandidateReceipt<primitive_types::H256>
+   * Lookup43: polkadot_primitives::v2::CandidateReceipt<primitive_types::H256>
    **/
   PolkadotPrimitivesV1CandidateReceipt: {
     descriptor: 'PolkadotPrimitivesV1CandidateDescriptor',
     commitmentsHash: 'H256'
   },
   /**
-   * Lookup44: polkadot_primitives::v1::CandidateDescriptor<primitive_types::H256>
+   * Lookup44: polkadot_primitives::v2::CandidateDescriptor<primitive_types::H256>
    **/
   PolkadotPrimitivesV1CandidateDescriptor: {
     paraId: 'u32',
@@ -1428,7 +1428,7 @@ export default {
    **/
   PolkadotPrimitivesV0ValidatorAppPublic: 'SpCoreSr25519Public',
   /**
-   * Lookup191: polkadot_primitives::v1::assignment_app::Public
+   * Lookup191: polkadot_primitives::v2::assignment_app::Public
    **/
   PolkadotPrimitivesV1AssignmentAppPublic: 'SpCoreSr25519Public',
   /**
@@ -1956,7 +1956,7 @@ export default {
     backingGroup: 'u32'
   },
   /**
-   * Lookup245: polkadot_primitives::v1::CandidateCommitments<N>
+   * Lookup245: polkadot_primitives::v2::CandidateCommitments<N>
    **/
   PolkadotPrimitivesV1CandidateCommitments: {
     upwardMessages: 'Vec<Bytes>',
@@ -1984,7 +1984,7 @@ export default {
     _enum: ['WrongBitfieldSize', 'BitfieldDuplicateOrUnordered', 'ValidatorIndexOutOfBounds', 'InvalidBitfieldSignature', 'UnscheduledCandidate', 'CandidateScheduledBeforeParaFree', 'WrongCollator', 'ScheduledOutOfOrder', 'HeadDataTooLarge', 'PrematureCodeUpgrade', 'NewCodeTooLarge', 'CandidateNotInParentContext', 'InvalidGroupIndex', 'InsufficientBacking', 'InvalidBacking', 'NotCollatorSigned', 'ValidationDataHashMismatch', 'IncorrectDownwardMessageHandling', 'InvalidUpwardMessages', 'HrmpWatermarkMishandling', 'InvalidOutboundHrmp', 'InvalidValidationCodeHash', 'ParaHeadMismatch', 'BitfieldReferencesFreedCore']
   },
   /**
-   * Lookup252: polkadot_primitives::v1::ScrapedOnChainVotes<primitive_types::H256>
+   * Lookup252: polkadot_primitives::v2::ScrapedOnChainVotes<primitive_types::H256>
    **/
   PolkadotPrimitivesV1ScrapedOnChainVotes: {
     session: 'u32',
@@ -2006,7 +2006,7 @@ export default {
    **/
   PolkadotPrimitivesV0ValidatorAppSignature: 'SpCoreSr25519Signature',
   /**
-   * Lookup260: polkadot_primitives::v1::DisputeStatementSet
+   * Lookup260: polkadot_primitives::v2::DisputeStatementSet
    **/
   PolkadotPrimitivesV1DisputeStatementSet: {
     candidateHash: 'H256',
@@ -2014,7 +2014,7 @@ export default {
     statements: 'Vec<(PolkadotPrimitivesV1DisputeStatement,u32,PolkadotPrimitivesV0ValidatorAppSignature)>'
   },
   /**
-   * Lookup263: polkadot_primitives::v1::DisputeStatement
+   * Lookup263: polkadot_primitives::v2::DisputeStatement
    **/
   PolkadotPrimitivesV1DisputeStatement: {
     _enum: {
@@ -2023,7 +2023,7 @@ export default {
     }
   },
   /**
-   * Lookup264: polkadot_primitives::v1::ValidDisputeStatementKind
+   * Lookup264: polkadot_primitives::v2::ValidDisputeStatementKind
    **/
   PolkadotPrimitivesV1ValidDisputeStatementKind: {
     _enum: {
@@ -2034,7 +2034,7 @@ export default {
     }
   },
   /**
-   * Lookup265: polkadot_primitives::v1::InvalidDisputeStatementKind
+   * Lookup265: polkadot_primitives::v2::InvalidDisputeStatementKind
    **/
   PolkadotPrimitivesV1InvalidDisputeStatementKind: {
     _enum: ['Explicit']
@@ -2050,7 +2050,7 @@ export default {
     }
   },
   /**
-   * Lookup267: polkadot_primitives::v1::InherentData<sp_runtime::generic::header::Header<Number, sp_runtime::traits::BlakeTwo256>>
+   * Lookup267: polkadot_primitives::v2::InherentData<sp_runtime::generic::header::Header<Number, sp_runtime::traits::BlakeTwo256>>
    **/
   PolkadotPrimitivesV1InherentData: {
     bitfields: 'Vec<PolkadotPrimitivesV1SignedUncheckedSigned>',
@@ -2059,7 +2059,7 @@ export default {
     parentHeader: 'SpRuntimeHeader'
   },
   /**
-   * Lookup269: polkadot_primitives::v1::signed::UncheckedSigned<polkadot_primitives::v1::AvailabilityBitfield, polkadot_primitives::v1::AvailabilityBitfield>
+   * Lookup269: polkadot_primitives::v2::signed::UncheckedSigned<polkadot_primitives::v2::AvailabilityBitfield, polkadot_primitives::v2::AvailabilityBitfield>
    **/
   PolkadotPrimitivesV1SignedUncheckedSigned: {
     payload: 'BitVec',
@@ -2067,7 +2067,7 @@ export default {
     signature: 'PolkadotPrimitivesV0ValidatorAppSignature'
   },
   /**
-   * Lookup271: polkadot_primitives::v1::BackedCandidate<primitive_types::H256>
+   * Lookup271: polkadot_primitives::v2::BackedCandidate<primitive_types::H256>
    **/
   PolkadotPrimitivesV1BackedCandidate: {
     candidate: 'PolkadotPrimitivesV1CommittedCandidateReceipt',
@@ -2075,7 +2075,7 @@ export default {
     validatorIndices: 'BitVec'
   },
   /**
-   * Lookup272: polkadot_primitives::v1::CommittedCandidateReceipt<primitive_types::H256>
+   * Lookup272: polkadot_primitives::v2::CommittedCandidateReceipt<primitive_types::H256>
    **/
   PolkadotPrimitivesV1CommittedCandidateReceipt: {
     descriptor: 'PolkadotPrimitivesV1CandidateDescriptor',
@@ -2102,18 +2102,18 @@ export default {
     coreOffset: 'u32'
   },
   /**
-   * Lookup279: polkadot_primitives::v1::ParathreadEntry
+   * Lookup279: polkadot_primitives::v2::ParathreadEntry
    **/
   PolkadotPrimitivesV1ParathreadEntry: {
     claim: 'PolkadotPrimitivesV1ParathreadClaim',
     retries: 'u32'
   },
   /**
-   * Lookup280: polkadot_primitives::v1::ParathreadClaim
+   * Lookup280: polkadot_primitives::v2::ParathreadClaim
    **/
   PolkadotPrimitivesV1ParathreadClaim: '(u32,PolkadotPrimitivesV0CollatorAppPublic)',
   /**
-   * Lookup283: polkadot_primitives::v1::CoreOccupied
+   * Lookup283: polkadot_primitives::v2::CoreOccupied
    **/
   PolkadotPrimitivesV1CoreOccupied: {
     _enum: {
@@ -2160,13 +2160,13 @@ export default {
     activatedAt: 'u32'
   },
   /**
-   * Lookup294: polkadot_primitives::v1::UpgradeGoAhead
+   * Lookup294: polkadot_primitives::v2::UpgradeGoAhead
    **/
   PolkadotPrimitivesV1UpgradeGoAhead: {
     _enum: ['Abort', 'GoAhead']
   },
   /**
-   * Lookup295: polkadot_primitives::v1::UpgradeRestriction
+   * Lookup295: polkadot_primitives::v2::UpgradeRestriction
    **/
   PolkadotPrimitivesV1UpgradeRestriction: {
     _enum: ['Present']
@@ -2322,7 +2322,7 @@ export default {
     _enum: ['OpenHrmpChannelToSelf', 'OpenHrmpChannelInvalidRecipient', 'OpenHrmpChannelZeroCapacity', 'OpenHrmpChannelCapacityExceedsLimit', 'OpenHrmpChannelZeroMessageSize', 'OpenHrmpChannelMessageSizeExceedsLimit', 'OpenHrmpChannelAlreadyExists', 'OpenHrmpChannelAlreadyRequested', 'OpenHrmpChannelLimitExceeded', 'AcceptHrmpChannelDoesntExist', 'AcceptHrmpChannelAlreadyConfirmed', 'AcceptHrmpChannelLimitExceeded', 'CloseHrmpChannelUnauthorized', 'CloseHrmpChannelDoesntExist', 'CloseHrmpChannelAlreadyUnderway', 'CancelHrmpOpenChannelUnauthorized', 'OpenHrmpChannelDoesntExist', 'OpenHrmpChannelAlreadyConfirmed']
   },
   /**
-   * Lookup319: polkadot_primitives::v1::SessionInfo
+   * Lookup319: polkadot_primitives::v2::SessionInfo
    **/
   PolkadotPrimitivesV1SessionInfo: {
     validators: 'Vec<PolkadotPrimitivesV0ValidatorAppPublic>',
@@ -2337,7 +2337,7 @@ export default {
     neededApprovals: 'u32'
   },
   /**
-   * Lookup322: polkadot_primitives::v1::DisputeState<N>
+   * Lookup322: polkadot_primitives::v2::DisputeState<N>
    **/
   PolkadotPrimitivesV1DisputeState: {
     validatorsFor: 'BitVec',
