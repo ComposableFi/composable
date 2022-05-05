@@ -320,7 +320,7 @@ benchmarks! {
 
 		let origin = T::VetoOrigin::successful_origin();
 		ensure!(NextExternal::<T>::get().is_some(), "no external proposal");
-	}: _<T::Origin>(origin, proposal_id, asset_id)
+	}: _<T::Origin>(origin, proposal_hash, asset_id)
 	verify {
 		assert!(NextExternal::<T>::get().is_none());
 		let (_, new_vetoers) = <Blacklist<T>>::get(&proposal_id).ok_or("no blacklist")?;
