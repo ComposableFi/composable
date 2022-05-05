@@ -149,8 +149,20 @@
 //! - `cancel_queued` - Cancels a proposal that is queued for enactment.
 //! - `clear_public_proposal` - Removes all public proposals.
 
+#![cfg_attr(
+	not(test),
+	warn(
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
+		clippy::indexing_slicing,
+		clippy::todo,
+		clippy::unwrap_used,
+		clippy::panic
+	)
+)] // allow in tests
 #![recursion_limit = "256"]
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::type_complexity)]
 
 use codec::{Codec, Decode, Encode, FullCodec, Input};
 use frame_support::{
