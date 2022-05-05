@@ -230,6 +230,7 @@ fn accrue_interest_plotter() {
 }
 
 // Was implemented for MarketUpdated event emission testing
+// This is only the test where MarketUpdated event is used.
 #[test]
 fn can_update_market() {
 	new_test_ext().execute_with(|| {
@@ -258,46 +259,6 @@ fn can_update_market() {
 		// check if the event was emitted
 		System::assert_has_event(Event::Lending(market_updated_event));
 	})
-}
-// Was implemented for CollateralDeposited emission testing
-#[test]
-fn can_deposit_collateral() {
-	new_test_ext().execute_with(|| {
-		System::set_block_number(1);
-		let sender = *ALICE;
-		let origin = Origin::signed(sender);
-		let amount = 100;
-		// Create a market
-		let ((market_id, _), _) = create_simple_vaulted_market(BTC::instance(), sender);
-		// Deposit some collateral
-		let deposited = Lending::deposit_collateral(origin, market_id.clone(), amount);
-		// Check if everything is fine
-		assert_ok!(deposited);
-		let deposit_event: crate::Event<Runtime> =
-			crate::Event::CollateralDeposited { sender, market_id, amount };
-		// check if the event was emitted
-		System::assert_has_event(Event::Lending(deposit_event));
-	});
-}
-
-// Was implemented for CollateralWithdrawn event emission testing
-#[test]
-fn can_withdraw_collateral() {
-	new_test_ext().execute_with(|| {
-		System::set_block_number(1);
-		let sender = *ALICE;
-		let origin = Origin::signed(sender);
-		let amount = 100;
-		// Create a market
-		let ((market_id, _), _) = create_simple_vaulted_market(BTC::instance(), sender);
-		// Deposit some collateral
-		let _deposited = Lending::deposit_collateral(origin.clone(), market_id.clone(), amount);
-		let withdrawed = Lending::withdraw_collateral(origin, market_id.clone(), amount);
-		assert_ok!(withdrawed);
-		let withdraw_event = crate::Event::CollateralWithdrawn { sender, market_id, amount };
-		// check if the event was emitted
-		System::assert_has_event(Event::Lending(withdraw_event));
-	});
 }
 
 #[test]
@@ -533,7 +494,15 @@ fn borrow_flow() {
 			.div(get_price(BTC::ID, BTC::ONE));
 
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, collateral_amount));
-		assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral_amount));
+        assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral_amount));
+        let event =
+		    Event::Lending(crate::Event::CollateralDeposited {
+			    sender: *ALICE,
+			    amount: collateral_amount,
+			    market_id: market,
+			});
+		System::assert_last_event(event);
+
 
 		let limit_normalized = Lending::get_borrow_limit(&market, &ALICE).unwrap();
 
@@ -739,7 +708,6 @@ fn test_liquidate_multiple() {
 		mint_and_deposit_collateral::<Runtime>(&*ALICE, BTC::units(100), market, BTC::ID);
 		mint_and_deposit_collateral::<Runtime>(&*BOB, BTC::units(100), market, BTC::ID);
 		mint_and_deposit_collateral::<Runtime>(&*CHARLIE, BTC::units(100), market, BTC::ID);
-
 		match Lending::liquidate(Origin::signed(*ALICE), market, vec![*ALICE, *BOB, *CHARLIE]) {
 			Ok(_) => {
 				println!("ok!")
@@ -748,7 +716,12 @@ fn test_liquidate_multiple() {
 				panic!("{:#?}", why)
 			},
 		};
-
+        let event =
+	 	    Event::Lending(crate::Event::LiquidationInitiated {
+		    	market_id: market,
+                 borrowers: vec![*ALICE, *BOB, *CHARLIE],
+			});
+		System::assert_last_event(event);
 		Lending::should_liquidate(&market, &*ALICE).unwrap();
 	})
 }
@@ -1099,7 +1072,13 @@ fn test_warn_soon_under_collateralized() {
 		let two_btc_amount = BTC::units(2);
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, two_btc_amount));
 		assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, two_btc_amount));
-		// TODO: Check events from above call
+        let event =
+	    	Event::Lending(crate::Event::CollateralDeposited {
+	    		sender: *ALICE,
+	    		amount: two_btc_amount,
+	    		market_id: market,
+			});
+		System::assert_last_event(event);
 
 		let usdt_amt = USDT::units(100_000);
 		assert_ok!(Tokens::mint_into(USDT::ID, &CHARLIE, usdt_amt));
