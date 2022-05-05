@@ -1,10 +1,12 @@
-import { IKeyringPair } from "@polkadot/types/types";
 import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
+import { ApiPromise } from "@polkadot/api";
+import { KeyringPair } from "@polkadot/keyring/types";
 
 
 /**
  * Tests tx.oracle.addAssetAndInfo with provided parameters that should succeed.
- * @param {IKeyringPair} sudoKey Connected API Promise w/ sudo rights.
+ * @param api Connect ApiPromise
+ * @param {KeyringPair} sudoKey Connected API Promise w/ sudo rights.
  * @param assetId Id for the asset
  * @param threshold Percent close to mean to be rewarded
  * @param minAnswers Min answers before aggregation
@@ -14,7 +16,8 @@ import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
  * @param slash slash amount for bad answer
  */
 export async function txOracleAddAssetAndInfoSuccessTest(
-  sudoKey: IKeyringPair,
+  api: ApiPromise,
+  sudoKey: KeyringPair,
   assetId,
   threshold,
   minAnswers,

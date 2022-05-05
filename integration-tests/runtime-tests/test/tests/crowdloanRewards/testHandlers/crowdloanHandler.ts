@@ -5,6 +5,8 @@ import { PalletCrowdloanRewardsModelsRemoteAccount } from "@composable/types/int
 import { u128, u32 } from "@polkadot/types-codec";
 import { shares } from "@composabletests/tests/crowdloanRewards/contributions.json";
 import { expect } from "chai";
+import Web3 from "web3";
+import { ApiPromise } from "@polkadot/api";
 
 
 const toHexString = bytes =>
@@ -15,7 +17,7 @@ const proofMessage = (account: IKeyringPair, isEth = false) =>
   (isEth ? "picasso-" : "<Bytes>picasso-") + toHexString(account.publicKey) + (isEth ? "" : "</Bytes>");
 
 export const ethAccount = (seed: number) =>
-  web3.eth.accounts.privateKeyToAccount("0x" + seed.toString(16).padStart(64, "0"));
+  new Web3().eth.accounts.privateKeyToAccount("0x" + seed.toString(16).padStart(64, "0"));
 
 export class TxCrowdloanRewardsTests {
   /**
@@ -24,10 +26,11 @@ export class TxCrowdloanRewardsTests {
    * Unfortunately we can't directly mint into the pallet therefore,
    * we mint into the Alice wallet and transfer funds from there.
    *
+   * @param {ApiPromise} api Connected API Client.
    * @param {KeyringPair} sudoKey Wallet with sudo rights.
    * @param amount
    */
-  public static async beforeCrowdloanTestsProvideFunds(sudoKey: KeyringPair, amount) {
+  public static async beforeCrowdloanTestsProvideFunds(api: ApiPromise, sudoKey: KeyringPair, amount) {
     const palletPublicKey = api.consts.crowdloanRewards.accountId;
     return await sendAndWaitForSuccess(
       api,
@@ -40,9 +43,10 @@ export class TxCrowdloanRewardsTests {
   /**
    * tx.crowdloanRewards.initialize
    *
+   * @param {ApiPromise} api Connected API Client.
    * @param {KeyringPair} sudoKey Wallet with sudo rights.
    */
-  public static txCrowdloanRewardsInitializeTest(sudoKey: KeyringPair) {
+  public static txCrowdloanRewardsInitializeTest(api: ApiPromise, sudoKey: KeyringPair) {
     return sendAndWaitForSuccess(
       api,
       sudoKey,
@@ -56,10 +60,12 @@ export class TxCrowdloanRewardsTests {
   /**
    * tx.crowdloanRewards.populate
    *
+   * @param {ApiPromise} api Connected API Client.
+   * @param {Web3} web3 Web3 Object, to be received using `connectionHelper.getNewConnection()`
    * @param {KeyringPair} sudoKey Wallet with sudo rights.
    * @param testContributorWallet KSM Wallet of contributor to populate with.
    */
-  public static async txCrowdloanRewardsPopulateTest(sudoKey: KeyringPair, testContributorWallet: KeyringPair) {
+  public static async txCrowdloanRewardsPopulateTest(api: ApiPromise, sudoKey: KeyringPair, testContributorWallet: KeyringPair) {
     const vesting48weeks = api.createType("u32", 100800);
     let contributors: Array<[PalletCrowdloanRewardsModelsRemoteAccount, u128, u32]> = [];
     // Before we go through all the contributors, we inject our test wallet at the very beginning.
@@ -102,12 +108,13 @@ export class TxCrowdloanRewardsTests {
       if (i % 2500 == 0 && i != 0) {
         // Providing funds since calling `populate` verifies that the pallet funds are equal to contributor amount.
         const { data: [provideFundsResult] } = await TxCrowdloanRewardsTests.beforeCrowdloanTestsProvideFunds(
+          api,
           sudoKey,
           api.createType("u128", amount)
         );
         expect(provideFundsResult).to.not.be.undefined;
         // Actual population step.
-        const { data: [result] } = await TxCrowdloanRewardsTests.txCrowdloanRewardsPopulateTestHandler(sudoKey, contributors);
+        const { data: [result] } = await TxCrowdloanRewardsTests.txCrowdloanRewardsPopulateTestHandler(api, sudoKey, contributors);
         expect(result.isOk).to.be.true;
         amount = 0;
         contributors = [];
@@ -123,7 +130,7 @@ export class TxCrowdloanRewardsTests {
    * @param {KeyringPair} sudoKey Wallet with sudo rights.
    * @param {KeyringPair} contributors List of contributors to be transacted.
    */
-  public static async txCrowdloanRewardsPopulateTestHandler(sudoKey: KeyringPair, contributors) {
+  public static async txCrowdloanRewardsPopulateTestHandler(api: ApiPromise, sudoKey: KeyringPair, contributors) {
     return await sendAndWaitForSuccess(
       api,
       sudoKey,
@@ -140,7 +147,7 @@ export class TxCrowdloanRewardsTests {
    * @param {KeyringPair} contributor The contributor relay chain wallet public key.
    * @param {KeyringPair} contributorRewardAccount The wallet the contributor wants to receive their PICA to.
    */
-  public static async txCrowdloanRewardsRelayAssociateTests(contributor: KeyringPair, contributorRewardAccount) {
+  public static async txCrowdloanRewardsRelayAssociateTests(api: ApiPromise, contributor: KeyringPair, contributorRewardAccount) {
     // arbitrary, user defined reward account
     const proof = contributor.sign(proofMessage(contributorRewardAccount));
     return await sendUnsignedAndWaitForSuccess(
@@ -160,7 +167,7 @@ export class TxCrowdloanRewardsTests {
    * @param {KeyringPair} contributor The contributor ETH chain wallet public key.
    * @param {KeyringPair} contributorRewardAccount The wallet the contributor wants to receive their PICA to.
    */
-  public static async txCrowdloanRewardsEthAssociateTest(contributor, contributorRewardAccount) {
+  public static async txCrowdloanRewardsEthAssociateTest(api: ApiPromise, contributor, contributorRewardAccount) {
     const proof = contributor.sign(proofMessage(contributorRewardAccount, true));
     return await sendUnsignedAndWaitForSuccess(
       api,
@@ -177,7 +184,7 @@ export class TxCrowdloanRewardsTests {
    *
    * @param { KeyringPair } wallet The reward account which tries to claim.
    */
-  public static async txCrowdloanRewardsClaimTest(wallet: KeyringPair) {
+  public static async txCrowdloanRewardsClaimTest(api: ApiPromise, wallet: KeyringPair) {
     return await sendAndWaitForSuccess(
       api,
       wallet,

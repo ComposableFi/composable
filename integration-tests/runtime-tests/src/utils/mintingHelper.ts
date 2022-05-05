@@ -1,16 +1,19 @@
 import { sendWithBatchAndWaitForSuccess } from "@composable/utils/polkadotjs";
 import { expect } from "chai";
 import { KeyringPair } from "@polkadot/keyring/types";
+import { ApiPromise } from "@polkadot/api";
 
 /***
- * This mints all specified assets to a specified wallet.
+ * This mints a specific `amount` to all specified `assetIDs` to a defined `wallet`.
  *
+ * @param api Connected api client
  * @param wallet The wallet receiving the assets.
  * @param sudoKey The sudo key making the transaction.
  * @param assetIDs All assets to be minted to wallet.
  * @param amount Mint amount.
  */
 export async function mintAssetsToWallet(
+  api: ApiPromise,
   wallet: KeyringPair,
   sudoKey: KeyringPair,
   assetIDs: number[],

@@ -14,6 +14,9 @@ import { txOracleSubmitPriceSuccessTest } from "@composabletests/tests/oracle/te
 import { txOracleRemoveStakeSuccessTest } from "@composabletests/tests/oracle/testHandlers/removeStakeTests";
 import { txOracleReclaimStakeSuccessTest } from "@composabletests/tests/oracle/testHandlers/reclaimStakeTests";
 import { waitForBlocks } from "@composable/utils/polkadotjs";
+import { ApiPromise } from "@polkadot/api";
+import { getNewConnection } from "@composable/utils/connectionHelper";
+import { getDevWallets } from "@composable/utils/walletHelper";
 
 /**
  * Contains all TX tests for the pallet:
@@ -23,18 +26,23 @@ describe("tx.oracle Tests", function() {
   if (!testConfiguration.enabledTests.enabled)
     return;
 
+  let api: ApiPromise;
   let assetsCountStart: number;
   let newAsset1: number;
   let signedWallet: KeyringPair;
   let controllerWallet: KeyringPair;
 
-  before(async function() {
+  before("Setting up the tests", async function() {
+    this.timeout(60 * 1000);
+    const { newClient, newKeyring } = await getNewConnection();
+    api = newClient;
+    const { devWalletAlice } = getDevWallets(newKeyring);
     // Getting the id for the about to be created asset.
     assetsCountStart = (await api.query.oracle.assetsCount()).toNumber();
     newAsset1 = assetsCountStart + 1;
 
-    signedWallet = walletAlice.derive("/oracleSigner");
-    controllerWallet = walletAlice;
+    signedWallet = devWalletAlice.derive("/oracleSigner");
+    controllerWallet = devWalletAlice;
   });
   /**
    * oracle.addAssetAndInfo Success Tests
@@ -57,6 +65,7 @@ describe("tx.oracle Tests", function() {
       const reward = api.createType("u128", 150000000000);
       const slash = api.createType("u128", 100000000000);
       const { data: [result] } = await txOracleAddAssetAndInfoSuccessTest(
+        api,
         controllerWallet,
         assetId,
         threshold,
@@ -90,11 +99,16 @@ describe("tx.oracle Tests", function() {
     it("Can set signer", async function() {
       if (!testConfiguration.enabledTests.setSigner__success.set1)
         this.skip();
-      await runBeforeTxOracleSetSigner(walletAlice, signedWallet); // Making sure we have funds.
-      const { data: [resultAccount0, resultAccount1] } = await txOracleSetSignerSuccessTest(controllerWallet, signedWallet)
-        .catch(function(exc) {
-          return { data: [exc] }; /* We can't call this.skip() from here. */
-        });
+      await runBeforeTxOracleSetSigner(api, controllerWallet, signedWallet); // Making sure we have funds.
+
+      const { data: [resultAccount0, resultAccount1] } = await txOracleSetSignerSuccessTest(
+        api,
+        controllerWallet,
+        signedWallet
+      ).catch(function(exc) {
+        return { data: [exc] }; /* We can't call this.skip() from here. */
+      });
+
       if (resultAccount0.message == "oracle.SignerUsed: This signer is already in use" ||
         resultAccount0.message == "oracle.ControllerUsed: This controller is already in use")
         return this.skip(); // If the test is run a second time on the same chain, we already have a signer set.
@@ -119,9 +133,14 @@ describe("tx.oracle Tests", function() {
     it("Can add stake from creator/controller", async function() {
       if (!testConfiguration.enabledTests.addStake__success.add1)
         this.skip();
-      await runBeforeTxOracleAddStake(walletAlice, controllerWallet, signedWallet); // Preparing the signer to have funds.
+      await runBeforeTxOracleAddStake(
+        api,
+        controllerWallet,
+        controllerWallet,
+        signedWallet
+      ); // Preparing the signer to have funds.
       const stake = api.createType("u128", 250000000000);
-      const { data: [result] } = await txOracleAddStakeSuccessTest(controllerWallet, stake);
+      const { data: [result] } = await txOracleAddStakeSuccessTest(api, controllerWallet, stake);
       expect(result).to.not.be.an("Error");
       expect(result.toString()).to.be
         .equal(api.createType("AccountId32", signedWallet.publicKey).toString());
@@ -144,7 +163,7 @@ describe("tx.oracle Tests", function() {
         this.skip();
       const price = api.createType("u128", 10000);
       const assetId = api.createType("u128", newAsset1);
-      const { data: [result] } = await txOracleSubmitPriceSuccessTest(signedWallet, price, assetId);
+      const { data: [result] } = await txOracleSubmitPriceSuccessTest(api, signedWallet, price, assetId);
       expect(result).to.not.be.an("Error");
       expect(result.toString()).to.be
         .equal(api.createType("AccountId32", signedWallet.publicKey).toString());
@@ -165,7 +184,7 @@ describe("tx.oracle Tests", function() {
     it("Can remove stake", async function() {
       if (!testConfiguration.enabledTests.removeStake__success.remove1)
         this.skip();
-      const { data: [result] } = await txOracleRemoveStakeSuccessTest(controllerWallet);
+      const { data: [result] } = await txOracleRemoveStakeSuccessTest(api, controllerWallet);
       expect(result).to.not.be.an("Error");
       expect(result.toString()).to.be
         .equal(api.createType("AccountId32", signedWallet.publicKey).toString());
@@ -196,8 +215,8 @@ describe("tx.oracle Tests", function() {
       const currentBlock = await api.query.system.number();
       expect(currentBlock.toNumber()).to.be.a("Number");
       // Taking a nap until we reach the unlocking block.
-      await waitForBlocks(unlockBlock.toNumber() - currentBlock.toNumber());
-      const { data: [result] } = await txOracleReclaimStakeSuccessTest(controllerWallet);
+      await waitForBlocks(api, unlockBlock.toNumber() - currentBlock.toNumber());
+      const { data: [result] } = await txOracleReclaimStakeSuccessTest(api, controllerWallet);
       expect(result).to.not.be.an("Error");
       expect(result.toString()).to.be
         .equal(api.createType("AccountId32", signedWallet.publicKey).toString());

@@ -4,10 +4,11 @@ import { SubmittableExtrinsic, AddressOrPair } from "@polkadot/api/types";
 
 /**
  * Sends an unsigned extrinsic and waits for success.
- * @param api Connected API Object.
- * @param filter Success event to be waited for.
- * @param call Extrinsic call.
- * @param intendedToFail If set to true the transaction is expected to fail.
+ * @param {ApiPromise} api Connected API Client.
+ * @param {IEvent<AnyTuple>} filter Success event to be waited for.
+ * @param {SubmittableExtrinsic<Promise>} call Extrinsic call.
+ * @param {boolean} intendedToFail If set to true the transaction is expected to fail.
+ * @returns event that fits the filter
  */
 export async function sendUnsignedAndWaitForSuccess<T extends AnyTuple>(
   api: ApiPromise,
@@ -20,11 +21,12 @@ export async function sendUnsignedAndWaitForSuccess<T extends AnyTuple>(
 
 /**
  * Sends a signed extrinsic and waits for success.
- * @param api Connected API Object.
- * @param sender Wallet initiating the transaction.
- * @param filter Success event to be waited for.
- * @param call Extrinsic call.
- * @param intendedToFail If set to true the transaction is expected to fail.
+ * @param {ApiPromise} api Connected API Client.
+ * @param {AddressOrPair} sender Wallet initiating the transaction.
+ * @param {IEvent<AnyTuple>} filter Success event to be waited for.
+ * @param {SubmittableExtrinsic<Promise>} call Extrinsic call.
+ * @param {boolean} intendedToFail If set to true the transaction is expected to fail.
+ * @returns event that fits the filter
  */
 export async function sendAndWaitForSuccess<T extends AnyTuple>(
   api: ApiPromise,
@@ -38,11 +40,12 @@ export async function sendAndWaitForSuccess<T extends AnyTuple>(
 
 /**
  * Sends multiple signed extrinsics and waits for success
- * @param api Connected API Object.
- * @param sender Wallet initiating the transaction.
- * @param filter Success event to be waited for.
- * @param call Extrinsic call.
- * @param intendedToFail If set to true the transaction is expected to fail.
+ * @param {ApiPromise} api Connected API Client.
+ * @param {AddressOrPair} sender Wallet initiating the transaction.
+ * @param {IEvent<AnyTuple>} filter Success event to be waited for.
+ * @param {SubmittableExtrinsic<Promise>} call Extrinsic call.
+ * @param {boolean} intendedToFail If set to true the transaction is expected to fail.
+ * @returns event that fits the filter
  */
 export async function sendWithBatchAndWaitForSuccess<T extends AnyTuple>(
   api: ApiPromise,
@@ -56,17 +59,21 @@ export async function sendWithBatchAndWaitForSuccess<T extends AnyTuple>(
 
 /**
  * Waits for N amount of blocks.
- * @param n Amount of blocks.
+ * @param {ApiPromise} api Connected API Client.
+ * @param {number} n Amount of blocks.
+ * @return The current block number after waiting.
  */
-export async function waitForBlocks(n = 1) {
-  return await waitForBlockHandler(n);
+export async function waitForBlocks(api: ApiPromise, n = 1) {
+  return await waitForBlockHandler(api, n);
 }
 
 /**
  * Helper to wait for n blocks.
- * @param n Block wait duration.
+ * @param {ApiPromise} api Connected API Client.
+ * @param {number} n Block wait duration.
+ * @return The current block number after waiting.
  */
-export async function waitForBlockHandler(n) {
+export async function waitForBlockHandler(api: ApiPromise, n) {
   const originBlock = await api.query.system.number();
   let currentBlock = await api.query.system.number();
   while (currentBlock.toNumber() < originBlock.toNumber() + n) {
@@ -191,6 +198,15 @@ export function sendAndWaitFor<T extends AnyTuple>(
   });
 }
 
+/**
+ * Sends multiple signed extrinsics and waits for success
+ * @param {ApiPromise} api Connected API Client.
+ * @param {AddressOrPair} sender Wallet initiating the transaction.
+ * @param {IEvent<AnyTuple>} filter Success event to be waited for.
+ * @param {SubmittableExtrinsic<Promise>} call Extrinsic call.
+ * @param {boolean} intendedToFail If set to true the transaction is expected to fail.
+ * @returns event that fits the filter
+ */
 export function sendAndWaitForWithBatch<T extends AnyTuple>(
   api: ApiPromise,
   sender: AddressOrPair,

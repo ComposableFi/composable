@@ -6,6 +6,9 @@ import {
   ethAccount
 } from "@composabletests/tests/crowdloanRewards/testHandlers/crowdloanHandler";
 import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
+import { ApiPromise, Keyring } from "@polkadot/api";
+import { getNewConnection } from "@composable/utils/connectionHelper";
+import { getDevWallets } from "@composable/utils/walletHelper";
 
 
 /**
@@ -20,7 +23,10 @@ describe("CrowdloanRewards Tests", function() {
   if (!testConfiguration.enabledTests.tx.enabled)
     return;
 
-  let wallet: KeyringPair,
+  let api: ApiPromise;
+  let keyring: Keyring;
+
+  let walletCharlie: KeyringPair,
     sudoKey: KeyringPair,
     contributor: KeyringPair,
     contributorRewardAccount: KeyringPair,
@@ -35,17 +41,21 @@ describe("CrowdloanRewards Tests", function() {
    * We also identify if this chain had already tests run on it.
    * And if so, we skip the populate() and initialize() tests.
    */
-  before("Initializing Variables", async function() {
-    sudoKey = walletAlice;
-    wallet = walletAlice;
+  before("Setting up tests", async function() {
+    this.timeout(60 * 1000);
+    const { newClient, newKeyring } = await getNewConnection();
+    api = newClient;
+    const { devWalletAlice, devWalletCharlie } = getDevWallets(newKeyring);
+    walletCharlie = devWalletCharlie;
+    sudoKey = devWalletAlice;
     let associationExisting = true;
     let i = 1;
     while (associationExisting) {
-      contributor = wallet.derive("/contributor-" + i);
+      contributor = devWalletCharlie.derive("/contributor-" + i);
       contributorEth = ethAccount(i);
       // arbitrary, user defined reward account
       contributorRewardAccount = contributor.derive("/reward");
-      contributorEthRewardAccount = wallet.derive("/reward-eth-" + i);
+      contributorEthRewardAccount = devWalletCharlie.derive("/reward-eth-" + i);
       const existingAssociations = await api.query.crowdloanRewards.associations(contributorRewardAccount.publicKey);
       if (existingAssociations.toString() == "") {
         associationExisting = false;
@@ -64,9 +74,13 @@ describe("CrowdloanRewards Tests", function() {
       this.skip();
     // 2 minutes timeout
     this.timeout(60 * 2 * 1000);
-    await mintAssetsToWallet(sudoKey, sudoKey, [1]);
-    await mintAssetsToWallet(contributorRewardAccount, sudoKey, [1]);
-    await mintAssetsToWallet(contributorEthRewardAccount, sudoKey, [1]);
+    await mintAssetsToWallet(api, sudoKey, sudoKey, [1]);
+    await mintAssetsToWallet(api, contributorRewardAccount, sudoKey, [1]);
+    await mintAssetsToWallet(api, contributorEthRewardAccount, sudoKey, [1]);
+  });
+
+  after("Closing the connection", async function() {
+    await api.disconnect();
   });
 
   /**
@@ -81,6 +95,7 @@ describe("CrowdloanRewards Tests", function() {
     // 5 minutes timeout
     this.timeout(5 * 60 * 1000);
     const testContributorRelayChainObject = await TxCrowdloanRewardsTests.txCrowdloanRewardsPopulateTest(
+      api,
       sudoKey,
       contributor
     );
@@ -97,7 +112,7 @@ describe("CrowdloanRewards Tests", function() {
       this.skip();
     // 2 minutes timeout
     this.timeout(60 * 2 * 1000);
-    const { data: [result] } = await TxCrowdloanRewardsTests.txCrowdloanRewardsInitializeTest(sudoKey);
+    const { data: [result] } = await TxCrowdloanRewardsTests.txCrowdloanRewardsInitializeTest(api, sudoKey);
     expect(result.isOk).to.be.true;
   });
 
@@ -118,10 +133,12 @@ describe("CrowdloanRewards Tests", function() {
     this.timeout(60 * 20 * 1000);
     await Promise.all([
       TxCrowdloanRewardsTests.txCrowdloanRewardsEthAssociateTest(
+        api,
         contributorEth,
         contributorEthRewardAccount
       ),
       TxCrowdloanRewardsTests.txCrowdloanRewardsRelayAssociateTests(
+        api,
         contributor,
         contributorRewardAccount
       )
@@ -154,7 +171,7 @@ describe("CrowdloanRewards Tests", function() {
     // 2 minutes timeout
     this.timeout(60 * 2 * 1000);
     const { data: [resultRemoteAccountId, resultAccountId, resultClaimedAmount] }
-      = await TxCrowdloanRewardsTests.txCrowdloanRewardsClaimTest(contributorRewardAccount);
+      = await TxCrowdloanRewardsTests.txCrowdloanRewardsClaimTest(api, contributorRewardAccount);
     expect(resultRemoteAccountId).to.not.be.an("Error");
     expect(resultClaimedAmount).to.be.a.bignumber;
     expect(resultClaimedAmount.toNumber()).to.be.greaterThan(0);
@@ -168,7 +185,7 @@ describe("CrowdloanRewards Tests", function() {
     // 2 minutes timeout
     this.timeout(60 * 2 * 1000);
     const { data: [resultRemoteAccountId, resultAccountId, resultClaimedAmount] }
-      = await TxCrowdloanRewardsTests.txCrowdloanRewardsClaimTest(contributorEthRewardAccount);
+      = await TxCrowdloanRewardsTests.txCrowdloanRewardsClaimTest(api, contributorEthRewardAccount);
     expect(resultRemoteAccountId).to.not.be.an("Error");
     expect(resultClaimedAmount).to.be.a.bignumber;
     expect(resultAccountId.toString()).to.be
@@ -189,10 +206,12 @@ describe("CrowdloanRewards Tests", function() {
       this.timeout(60 * 2 * 1000);
       await Promise.all([
         TxCrowdloanRewardsTests.txCrowdloanRewardsEthAssociateTest(
+          api,
           contributorEth,
           walletCharlie
         ),
         TxCrowdloanRewardsTests.txCrowdloanRewardsRelayAssociateTests(
+          api,
           contributor,
           walletCharlie
         )

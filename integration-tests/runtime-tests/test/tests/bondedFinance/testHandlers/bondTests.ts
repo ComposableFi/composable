@@ -1,33 +1,27 @@
 import { IKeyringPair } from "@polkadot/types/types";
 import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
+import { ApiPromise } from "@polkadot/api";
+import { u128, u64 } from "@polkadot/types-codec";
 
 /**
  * Tests tx.bondedFinance.offer with provided parameters that should succeed.
+ *
+ * @param {ApiPromise} api Connected API Client.
  * @param {IKeyringPair} wallet Connected API Promise.
  * @param {u64} offerId
- * @param {u128} nbOfBonds
+ * @param {u128|number} nbOfBonds
+ * @return Transaction event.
  */
-export async function txBondedFinanceBondSuccessTest(wallet: IKeyringPair, offerId, nbOfBonds) {
+export async function txBondedFinanceBondSuccessTest(
+  api: ApiPromise,
+  wallet: IKeyringPair,
+  offerId:u64,
+  nbOfBonds:u128|number
+) {
   return await sendAndWaitForSuccess(
     api,
     wallet,
     api.events.bondedFinance.NewBond.is,
     api.tx.bondedFinance.bond(offerId, nbOfBonds, true)
-  );
-}
-
-/**
- * Tests tx.bondedFinance.offer with provided parameters that should fail.
- * @param {IKeyringPair} wallet Connected API Promise.
- * @param {u64} offerId
- * @param {u128} nbOfBonds
- */
-export async function txBondedFinanceBondFailureTest(wallet: IKeyringPair, offerId, nbOfBonds) {
-  return await sendAndWaitForSuccess(
-    api,
-    wallet,
-    api.events.system.ExtrinsicFailed.is,
-    api.tx.bondedFinance.bond(offerId, nbOfBonds, true),
-    true
   );
 }

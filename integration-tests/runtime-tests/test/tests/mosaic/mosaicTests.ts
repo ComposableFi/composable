@@ -5,6 +5,9 @@ import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
 import { CommonMosaicRemoteAssetId } from "@composable/types/interfaces";
 import BN from "bn.js";
 import { TxMosaicTests } from "@composabletests/tests/mosaic/testHandlers/mosaicTestHelper";
+import { ApiPromise } from "@polkadot/api";
+import { getNewConnection } from "@composable/utils/connectionHelper";
+import { getDevWallets } from "@composable/utils/walletHelper";
 
 /**
  * Mosaic Pallet Tests
@@ -29,14 +32,19 @@ describe("tx.mosaic Tests", function() {
   // Check if group of tests are enabled.
   if (!testConfiguration.enabledTests.query.enabled)
     return;
+
+  let api: ApiPromise;
+
   let sudoKey: KeyringPair,
     startRelayerWallet: KeyringPair,
     newRelayerWallet: KeyringPair,
     userWallet: KeyringPair,
     remoteAssetId: CommonMosaicRemoteAssetId;
+
   let transferAmount: number,
     assetId: number,
     networkId: number;
+
   let pNetworkId;
   let ethAddress;
 
@@ -44,12 +52,16 @@ describe("tx.mosaic Tests", function() {
     this.timeout(4 * 60 * 1000);
     if (!testConfiguration.enabledTests.query.account__success.enabled)
       return;
-    before("Initialize variables", async function() {
+
+    before("Setting up the tests", async function() {
       this.timeout(4 * 60 * 1000);
-      sudoKey = walletAlice;
-      startRelayerWallet = walletEve.derive("/tests/mosaicPallets/wallet1");
-      newRelayerWallet = walletAlice.derive("/tests/mosaicPallets/wallet2");
-      userWallet = walletFerdie.derive("/tests/mosaicPallets/wallet3");
+      const { newClient, newKeyring } = await getNewConnection();
+      api = newClient;
+      const { devWalletAlice, devWalletEve, devWalletFerdie } = getDevWallets(newKeyring);
+      sudoKey = devWalletAlice;
+      startRelayerWallet = devWalletEve.derive("/tests/mosaicPallets/wallet1");
+      newRelayerWallet = devWalletAlice.derive("/tests/mosaicPallets/wallet2");
+      userWallet = devWalletFerdie.derive("/tests/mosaicPallets/wallet3");
       assetId = 4;
       transferAmount = 100000000000;
       networkId = 1;
@@ -59,11 +71,16 @@ describe("tx.mosaic Tests", function() {
         EthereumTokenAddress: api.createType("[u8;20]", "0x")
       });
     });
+
     before("Mint available assets into wallets", async function() {
       this.timeout(5 * 60 * 1000);
-      await mintAssetsToWallet(startRelayerWallet, sudoKey, [1, 4]);
-      await mintAssetsToWallet(newRelayerWallet, sudoKey, [1, 4]);
-      await mintAssetsToWallet(userWallet, sudoKey, [1, 4]);
+      await mintAssetsToWallet(api, startRelayerWallet, sudoKey, [1, 4]);
+      await mintAssetsToWallet(api, newRelayerWallet, sudoKey, [1, 4]);
+      await mintAssetsToWallet(api, userWallet, sudoKey, [1, 4]);
+    });
+
+    after("Closing the connection", async function() {
+      await api.disconnect();
     });
 
     /**
@@ -74,9 +91,10 @@ describe("tx.mosaic Tests", function() {
       // Check if this test is enabled.
       if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1)
         this.skip();
-      const { data: [result] } = await TxMosaicTests.testSetRelayer(sudoKey, startRelayerWallet.address);
+      const { data: [result] } = await TxMosaicTests.testSetRelayer(api, sudoKey, startRelayerWallet.address);
       expect(result.isOk).to.be.true;
     });
+
     /**
      * Setting the network.
      */
@@ -89,12 +107,18 @@ describe("tx.mosaic Tests", function() {
         minTransferSize: api.createType("u128", 0),
         maxTransferSize: api.createType("u128", 800000000000)
       });
-      const { data: [retNetworkId, retNetworkInfo] } = await TxMosaicTests.testSetNetwork(startRelayerWallet, pNetworkId, networkInfo);
+      const { data: [retNetworkId, retNetworkInfo] } = await TxMosaicTests.testSetNetwork(
+        api,
+        startRelayerWallet,
+        pNetworkId,
+        networkInfo
+      );
       expect(retNetworkId).to.not.be.an("Error");
       expect(retNetworkInfo).to.not.be.an("Error");
       //Verifies the newly created networkId
       expect(retNetworkId.toNumber()).to.be.equal(networkId);
     });
+
     /**
      * Setting the budget.
      * A sudo call therefore result is verified by isOk.
@@ -108,7 +132,13 @@ describe("tx.mosaic Tests", function() {
         Linear:
           api.createType("PalletMosaicDecayLinearDecay", { factor: api.createType("u128", 5) })
       });
-      const { data: [result] } = await TxMosaicTests.testSetBudget(sudoKey, assetId, transAmount, pDecay);
+      const { data: [result] } = await TxMosaicTests.testSetBudget(
+        api,
+        sudoKey,
+        assetId,
+        transAmount,
+        pDecay
+      );
       expect(result.isOk).to.be.true;
     });
 
@@ -116,7 +146,13 @@ describe("tx.mosaic Tests", function() {
       // Check if this test is enabled.
       if (!testConfiguration.enabledTests.updateAssetMapping)
         this.skip();
-      const { data: [result] } = await TxMosaicTests.testUpdateAssetMaping(sudoKey, assetId, pNetworkId, remoteAssetId);
+      const { data: [result] } = await TxMosaicTests.testUpdateAssetMaping(
+        api,
+        sudoKey,
+        assetId,
+        pNetworkId,
+        remoteAssetId
+      );
       expect(result.isOk).to.be.true;
     });
 
@@ -124,7 +160,9 @@ describe("tx.mosaic Tests", function() {
       // Check if this test is enabled.
       if (!testConfiguration.enabledTests.sendTransferTo)
         this.skip();
-      const { data: [result] } = await TxMosaicTests.testTransferTo(startRelayerWallet,
+      const { data: [result] } = await TxMosaicTests.testTransferTo(
+        api,
+        startRelayerWallet,
         pNetworkId,
         assetId,
         ethAddress,
@@ -141,11 +179,14 @@ describe("tx.mosaic Tests", function() {
       if (!testConfiguration.enabledTests.relayerCanMintAssets)
         this.skip();
       const toTransfer = newRelayerWallet.address;
-      await TxMosaicTests.lockFunds(startRelayerWallet,
+      await TxMosaicTests.lockFunds(
+        api,
+        startRelayerWallet,
         pNetworkId,
         remoteAssetId,
         toTransfer,
-        transferAmount);
+        transferAmount
+      );
       const lockedAmount = await api.query.mosaic.incomingTransactions(toTransfer, assetId);
       //verify that the incoming transaction is locked in the incoming transaction pool.
       expect(lockedAmount.unwrap()[0].toNumber()).to.be.equal(transferAmount);
@@ -156,28 +197,35 @@ describe("tx.mosaic Tests", function() {
       if (!testConfiguration.enabledTests.userCanMintAssets)
         this.skip();
       const toTransfer = userWallet.address;
-      await TxMosaicTests.lockFunds(startRelayerWallet,
+      await TxMosaicTests.lockFunds(
+        api,
+        startRelayerWallet,
         pNetworkId,
         remoteAssetId,
         toTransfer,
-        transferAmount);
+        transferAmount
+      );
       const lockedAmount = await api.query.mosaic.incomingTransactions(toTransfer, assetId);
       //verify that the incoming transaction is locked in the incoming transaction pool.
       expect(lockedAmount.unwrap()[0].toNumber()).to.be.equal(transferAmount);
     });
+
     it("Only relayer should mint assets into pallet wallet with timelock/incoming transactions (Failure Test)", async function() {
       // Check if this test is enabled.
       if (!testConfiguration.enabledTests.OnlyRelayerCanMintAssets)
         this.skip();
       const toTransfer = newRelayerWallet.address;
       //verify that the transaction fails with BadOrigin message
-      await TxMosaicTests.lockFunds(userWallet,
+      await TxMosaicTests.lockFunds(
+        api,
+        userWallet,
         pNetworkId,
         remoteAssetId,
         toTransfer,
-        transferAmount).catch(error =>
-        expect(error.message).to.contain("BadOrigin"));
+        transferAmount
+      ).catch(error => expect(error.message).to.contain("BadOrigin"));
     });
+
     /**
      * Rotating the relayer.
      * Sudo call therefore result is checked by `.isOk`.
@@ -185,8 +233,11 @@ describe("tx.mosaic Tests", function() {
     it("Should be able to rotate relayer", async function() {
       if (!testConfiguration.enabledTests.query.account__success.balanceGTZero1)
         this.skip();
-      const { data: [result] } = await TxMosaicTests.testRotateRelayer(startRelayerWallet,
-        newRelayerWallet.address);
+      const { data: [result] } = await TxMosaicTests.testRotateRelayer(
+        api,
+        startRelayerWallet,
+        newRelayerWallet.address
+      );
       expect(result).to.not.be.an("Error");
       const relayerInfo = await api.query.mosaic.relayer();
       //verify that the relayer records information about the next relayer wallet
@@ -199,10 +250,13 @@ describe("tx.mosaic Tests", function() {
         this.skip();
       const wallet = startRelayerWallet;
       const returnWallet = newRelayerWallet;
-      const { data: [result] } = await TxMosaicTests.testRescindTimeLockedFunds(wallet,
+      const { data: [result] } = await TxMosaicTests.testRescindTimeLockedFunds(
+        api,
+        wallet,
         returnWallet,
         remoteAssetId,
-        transferAmount);
+        transferAmount
+      );
       //We can change the assertion, get the info from chain from incoming pool and verify that the amount locked is reduced from the amount total
       expect(result.toString()).to.be.equal(api.createType("AccountId32", newRelayerWallet.address).toString());
     });
@@ -213,11 +267,13 @@ describe("tx.mosaic Tests", function() {
         this.skip();
       const wallet = userWallet;
       const returnWallet = newRelayerWallet;
-      await TxMosaicTests.testRescindTimeLockedFunds(wallet,
+      await TxMosaicTests.testRescindTimeLockedFunds(
+        api,
+        wallet,
         returnWallet,
         remoteAssetId,
-        transferAmount).catch(error =>
-        expect(error.message).to.contain("BadOrigin"));
+        transferAmount
+      ).catch(error => expect(error.message).to.contain("BadOrigin"));
     });
 
     it("Other users should be able to send transfers to another network, creating an outgoing transaction", async function() {
@@ -225,11 +281,14 @@ describe("tx.mosaic Tests", function() {
       if (!testConfiguration.enabledTests.userCanCreateOutgoingTransaction)
         this.skip();
       const paramRemoteTokenContAdd = "0x0423276a1da214B094D54386a1Fb8489A9d32730";
-      const { data: [result] } = await TxMosaicTests.testTransferTo(userWallet,
+      const { data: [result] } = await TxMosaicTests.testTransferTo(
+        api,
+        userWallet,
         pNetworkId,
         assetId,
         paramRemoteTokenContAdd,
-        transferAmount);
+        transferAmount
+      );
       expect(result).to.not.be.an("Error");
       const lockedAmount = await api.query.mosaic.outgoingTransactions(userWallet.address, assetId);
       //Verify that the transferred amount is locked in the outgoing transaction pool.
@@ -242,11 +301,14 @@ describe("tx.mosaic Tests", function() {
         this.skip();
       this.timeout(2 * 60 * 1000);
       const senderWallet = userWallet;
-      const { data: [result] } = await TxMosaicTests.testAcceptTransfer(startRelayerWallet,
+      const { data: [result] } = await TxMosaicTests.testAcceptTransfer(
+        api,
+        startRelayerWallet,
         senderWallet,
         pNetworkId,
         remoteAssetId,
-        transferAmount);
+        transferAmount
+      );
       //verify that the relayer address is returned.
       expect(result.toString()).to.be.equal(api.createType("AccountId32", senderWallet.address).toString());
     });
@@ -256,13 +318,17 @@ describe("tx.mosaic Tests", function() {
       if (!testConfiguration.enabledTests.OnlyReceiverCanClaimTransaction)
         this.skip();
       this.timeout(2 * 60 * 1000);
-      const receiverWallet = walletBob;
-      await TxMosaicTests.testClaimTransactions(receiverWallet,
+      const receiverWallet = startRelayerWallet;
+      await TxMosaicTests.testClaimTransactions(
+        api,
         receiverWallet,
-        assetId).catch(error => {
+        receiverWallet,
+        assetId
+      ).catch(error => {
         expect(error.message).to.contain("NoClaimable");
       });
     });
+
     it("Receiver should be able to claim incoming transfers", async function() {
       // Check if this test is enabled.
       if (!testConfiguration.enabledTests.receiverCanClaimTransaction)
@@ -270,9 +336,12 @@ describe("tx.mosaic Tests", function() {
       this.timeout(2 * 60 * 1000);
       const receiverWallet = userWallet;
       const initialTokens = await api.query.tokens.accounts(userWallet.address, assetId);
-      const { data: [result] } = await TxMosaicTests.testClaimTransactions(userWallet,
+      const { data: [result] } = await TxMosaicTests.testClaimTransactions(
+        api,
+        userWallet,
         receiverWallet,
-        assetId);
+        assetId
+      );
       expect(result).to.not.be.an("Error");
       const afterTokens = await api.query.tokens.accounts(userWallet.address, assetId);
       expect(new BN(initialTokens.free).eq(new BN(afterTokens.free).sub(new BN(transferAmount)))).to.be.true;
@@ -285,7 +354,7 @@ describe("tx.mosaic Tests", function() {
       this.timeout(2 * 60 * 1000);
       const wallet = startRelayerWallet;
       const initialTokens = await api.query.tokens.accounts(wallet.address, assetId);
-      const { data: [result] } = await TxMosaicTests.testClaimStaleFunds(startRelayerWallet, assetId);
+      const { data: [result] } = await TxMosaicTests.testClaimStaleFunds(api, startRelayerWallet, assetId);
       expect(result).to.not.be.an("Error");
       const afterTokens = await api.query.tokens.accounts(wallet.address, assetId);
       //verify that the reclaimed tokens are transferred into user balance.
