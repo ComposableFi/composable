@@ -79,7 +79,7 @@ fn add_referendum<T: Config>(n: u32) -> Result<ReferendumIndex, &'static str> {
 		None,
 		63,
 		frame_system::RawOrigin::Root.into(),
-		Call::enact_proposal { proposal_hash, index: referendum_index }.into(),
+		Call::enact_proposal { proposal_id, index: referendum_index }.into(),
 	)
 	.map_err(|_| "failed to schedule named")?;
 	Ok(referendum_index)
