@@ -665,7 +665,7 @@ benchmarks! {
 		whitelist_account!(caller);
 	}: _(RawOrigin::Signed(caller), proposal_hash.clone(), asset_id, u32::MAX)
 	verify {
-		let proposal_hash = T::Hashing::hash(&encoded_proposal, asset_id[..]);
+		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
 		let asset_id = T::AssetId::from(DOT_ASSET);
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
 
