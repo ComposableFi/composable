@@ -4,6 +4,7 @@
 - [💻 Developer Guides](./developer-guides.md)
     - [Composable SDK](./developer-guides/composable-sdk.md)
     - [Collator Set-Up Guide](./developer-guides/collator-set-up-guide.md)
+    - [Frame-NFT](./developer-guides/frame-nft.md)
 
 # 💿 PRODUCTS
 - [Technical Stack Overview](./products/technical-stack-overview.md)
