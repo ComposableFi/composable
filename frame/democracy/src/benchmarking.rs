@@ -621,7 +621,7 @@ benchmarks! {
 
 		// d + 1 to include the one we are testing
 		let encoded_proposal = vec![1; b as usize];
-		let proposal_hash = T::Hashing::hash(&encoded_proposal, asset_id[..]);
+		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
 		let asset_id = T::AssetId::from(DOT_ASSET);
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
 		
