@@ -371,41 +371,41 @@ pub mod pallet {
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
-		/// User attempted to deposit an unsupported asset type as collateral in its margin account
-		UnsupportedCollateralType,
+		/// Attempted to create a new market but the funding period is not a multiple of the
+		/// funding frequency
+		FundingPeriodNotMultipleOfFrequency,
+		/// Attempted to create a new market but the initial margin ratio is less than or equal to
+		/// the maintenance one
+		InitialMarginRatioLessThanMaintenance,
+		/// Raised when opening a risk-increasing position that takes the account below the IMR
+		InsufficientCollateral,
+		/// Attempted to create a new market but either the initial margin ratio is outside (0, 1]
+		/// or the maintenance margin ratio is outside (0, 1)
+		InvalidMarginRatioRequirement,
+		/// Raised when querying a market with an invalid or nonexistent market Id
+		MarketIdNotFound,
+		/// Raised when creating a new position but exceeding the maximum number of positions for
+		/// an account
+		MaxPositionsExceeded,
+		/// Attempted to create a new market but the minimum trade size is negative
+		NegativeMinimumTradeSize,
 		/// An operation required the asset id of a valid collateral type but none were registered
 		NoCollateralTypeSet,
 		/// Attempted to create a new market but the underlying asset is not supported by the
 		/// oracle
 		NoPriceFeedForAsset,
-		/// Attempted to create a new market but the funding period is not a multiple of the
-		/// funding frequency
-		FundingPeriodNotMultipleOfFrequency,
-		/// Attempted to create a new market but the funding period or frequency is 0 seconds long
-		ZeroLengthFundingPeriodOrFrequency,
-		/// Attempted to create a new market but either the initial margin ratio is outside (0, 1]
-		/// or the maintenance margin ratio is outside (0, 1)
-		InvalidMarginRatioRequirement,
-		/// Attempted to create a new market but the initial margin ratio is less than or equal to
-		/// the maintenance one
-		InitialMarginRatioLessThanMaintenance,
-		/// Attempted to create a new market but the minimum trade size is negative
-		NegativeMinimumTradeSize,
-		/// Raised when querying a market with an invalid or nonexistent market Id
-		MarketIdNotFound,
-		/// Raised when opening a risk-increasing position that takes the account below the IMR
-		InsufficientCollateral,
-		/// Raised when creating a new position but exceeding the maximum number of positions for
-		/// an account
-		MaxPositionsExceeded,
+		/// Raised when trying to fetch a position from the positions vector with an invalid index
+		PositionNotFound,
 		/// Raised when creating a new position with quote asset amount less than the market's
 		/// minimum trade size
 		TradeSizeTooSmall,
-		/// Raised when trying to fetch a position from the positions vector with an invalid index
-		PositionNotFound,
+		/// User attempted to deposit an unsupported asset type as collateral in its margin account
+		UnsupportedCollateralType,
 		/// Raised when trying to update the funding rate for a market before its funding frequency
 		/// has passed since its last update
 		UpdatingFundingTooEarly,
+		/// Attempted to create a new market but the funding period or frequency is 0 seconds long
+		ZeroLengthFundingPeriodOrFrequency,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
