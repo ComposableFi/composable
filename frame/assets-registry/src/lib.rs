@@ -102,7 +102,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn minimal_amount)]
-	pub type MinimalAmounts<T: Config> = StorageDoubleMap<
+	pub type MinFeeAmounts<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
 		ParaId,
@@ -193,12 +193,13 @@ pub mod pallet {
 		/// Minimal amount of asset_id required to send message to other network.
 		/// Target network may or may not accept payment.
 		/// Assumed this is maintained up to date by technical team.
-		/// Mostly UI hint and fail fast solution. In theory can be updated by.
+		/// Mostly UI hint and fail fast solution.
+		/// In theory can be updated by parachain sovereign account too.
 		/// If None, than it is well known cannot pay with that asset on target_parachain_id.
 		/// If Some(0), than price can be anything greater or equal to zero.
 		/// If Some(MAX), than actually it forbids transfers.
-		#[pallet::weight(<T as Config>::WeightInfo::set_minimal_amount())]
-		pub fn set_minimal_amount(
+		#[pallet::weight(<T as Config>::WeightInfo::set_min_fee())]
+		pub fn set_min_fee(
 			origin: OriginFor<T>,
 			target_parachain_id: ParaId,
 			asset_id: T::ForeignAssetId,
@@ -206,7 +207,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			T::ParachainOrGovernanceOrigin::ensure_origin(origin)?;
 			// TODO: in case it is set to parachain, check that chain can target only its origin
-			MinimalAmounts::<T>::mutate_exists(target_parachain_id, asset_id, |x| {
+			MinFeeAmounts::<T>::mutate_exists(target_parachain_id, asset_id, |x| {
 				*x = minimal_amount
 			});
 			Ok(().into())
@@ -264,7 +265,7 @@ pub mod pallet {
 			parachain_id: ParaId,
 			remote_asset_id: Self::AssetNativeLocation,
 		) -> Option<Self::Balance> {
-			<MinimalAmounts<T>>::get(parachain_id, remote_asset_id)
+			<MinFeeAmounts<T>>::get(parachain_id, remote_asset_id)
 		}
 	}
 

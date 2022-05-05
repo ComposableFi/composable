@@ -125,9 +125,8 @@ fn this_chain_side(fee_amount: u128, foreign_asset_id_on_this: CurrencyId) {
 
 		let bob_statemine_asset_amount =
 			Tokens::free_balance(foreign_asset_id_on_this, &AccountId::from(BOB));
-		// approx. TEN - fee
-		// TODO: simulate tests to get only fees so can do little bit better than hardcode
-		assert_eq!(9_999_936_000_000, bob_statemine_asset_amount,);
+			// approx. TEN - fee
+		assert_eq!(set_min_fee_000_000, bob_statemine_asset_amount,);
 		// ensure sender has enough KSM balance to be charged as fee
 		assert_ok!(Tokens::deposit(CurrencyId::RELAY_NATIVE, &AccountId::from(BOB), TEN));
 		assert!(fee_amount != 0);

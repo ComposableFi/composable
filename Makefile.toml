@@ -47,7 +47,7 @@ workspace = false
 [tasks.run-unit-tests]
 env = { SKIP_WASM_BUILD = 1 }
 script = '''
-cargo test cross_chain_transfer --workspace --locked --release --verbose
+cargo test --workspace --locked --release --verbose
 '''
 workspace = false
 

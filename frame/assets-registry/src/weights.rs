@@ -9,7 +9,7 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
 	fn register_asset() -> Weight;
 	fn update_asset() -> Weight;
-	fn set_minimal_amount() -> Weight;
+	fn set_min_fee() -> Weight;
 }
 
 /// Weights for pallet_assets_registry using the Substrate node and recommended hardware.
@@ -21,7 +21,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn update_asset() -> Weight {
 		(9_958_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
-	fn set_minimal_amount() -> Weight {
+	fn set_min_fee() -> Weight {
 		(9_958_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 }
