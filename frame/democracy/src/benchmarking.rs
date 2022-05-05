@@ -231,7 +231,7 @@ benchmarks! {
 		// Add a referendum of our proposal.
 		let referendum_index = add_referendum::<T>(0)?;
 		assert_ok!(Democracy::<T>::referendum_status(referendum_index));
-	}: _<T::Origin>(origin, hash, Some(referendum_index))
+	}: _<T::Origin>(origin, hash, asset_id, Some(referendum_index))
 	verify {
 		// Referendum has been canceled
 		assert_noop!(
@@ -604,9 +604,9 @@ benchmarks! {
 		let asset_id = T::AssetId::from(DOT_ASSET);
 
 		whitelist_account!(caller);
-	}: _(RawOrigin::Signed(caller), encoded_proposal, asset_id.clone(), asset_id)
+	}: _(RawOrigin::Signed(caller), encoded_proposal.clone(), asset_id)
 	verify {
-		let proposal_hash = T::Hashing::hash(&encoded_proposal, asset_id[..]);
+		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
 
 		match Preimages::<T>::get(proposal_id) {
@@ -631,9 +631,9 @@ benchmarks! {
 		let caller = funded_account::<T>("caller", 0);
 		let encoded_proposal = vec![1; b as usize];
 		whitelist_account!(caller);
-	}: _(RawOrigin::Signed(caller), encoded_proposal, asset_id.clone(), asset_id)
+	}: _(RawOrigin::Signed(caller), encoded_proposal.clone(), asset_id)
 	verify {
-		let proposal_hash = T::Hashing::hash(&encoded_proposal, asset_id[..]);
+		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
 		let asset_id = T::AssetId::from(DOT_ASSET);
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
 
@@ -653,7 +653,7 @@ benchmarks! {
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
 
 		let submitter = funded_account::<T>("submitter", b);
-		Democracy::<T>::note_preimage(RawOrigin::Signed(submitter.clone()).into(), encoded_proposal, asset_id.clone(), asset_id)?;
+		Democracy::<T>::note_preimage(RawOrigin::Signed(submitter.clone()).into(), encoded_proposal.clone(), asset_id)?;
 
 		// We need to set this otherwise we get `Early` error.
 		let block_number = T::VotingPeriod::get() + T::EnactmentPeriod::get() + T::BlockNumber::one();
@@ -815,10 +815,10 @@ benchmarks! {
 		let generic_call: T::Proposal = raw_call.into();
 		let encoded_proposal = generic_call.encode();
 
-		let proposal_hash = T::Hashing::hash(&encoded_proposal, asset_id[..]);
+		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
 
-		Democracy::<T>::note_preimage(RawOrigin::Signed(proposer).into(), encoded_proposal, asset_id, asset_id)?;
+		Democracy::<T>::note_preimage(RawOrigin::Signed(proposer).into(), encoded_proposal, asset_id: asset_id)?;
 
 		match Preimages::<T>::get(proposal_id) {
 			Some(PreimageStatus::Available { .. }) => (),
@@ -838,7 +838,7 @@ benchmarks! {
 		let proposer = funded_account::<T>("proposer", 0);
 		// Random invalid bytes
 		let encoded_proposal = vec![200; b as usize];
-		let proposal_hash = T::Hashing::hash(&encoded_proposal, asset_id[..]);
+		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
 		let asset_id = T::AssetId::from(DOT_ASSET);
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
 
