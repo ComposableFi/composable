@@ -175,7 +175,7 @@ use frame_support::{
 	},
 	weights::Weight,
 };
-use orml_traits::{GetByKey, MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
+use orml_traits::{MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{
@@ -1696,7 +1696,7 @@ impl<T: Config> Pallet<T> {
 				);
 				// Extend the lock to `balance` (rather than setting it) since we don't know what
 				// other votes are in place.
-				T::Currency::extend_lock(DEMOCRACY_ID, asset_id, &who, balance);
+				T::Currency::extend_lock(DEMOCRACY_ID, asset_id, &who, balance)?;
 				Ok(votes)
 			})?;
 		Self::deposit_event(Event::<T>::Delegated { who, target });
@@ -1744,9 +1744,9 @@ impl<T: Config> Pallet<T> {
 			voting.locked_balance()
 		});
 		if lock_needed.is_zero() {
-			T::Currency::remove_lock(DEMOCRACY_ID, asset_id, who);
+			T::Currency::remove_lock(DEMOCRACY_ID, asset_id, who)?;
 		} else {
-			T::Currency::set_lock(DEMOCRACY_ID, asset_id, who, lock_needed);
+			T::Currency::set_lock(DEMOCRACY_ID, asset_id, who, lock_needed)?;
 		}
 	}
 
