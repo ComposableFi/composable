@@ -8,12 +8,17 @@ import { lookupArchive } from "@subsquid/archive-registry";
 import { Account, HistoricalBalance } from "./model";
 import {
   BalancesTransferEvent,
-  PabloLiquidityAddedEvent,
-  PabloPoolCreatedEvent,
+  PabloLiquidityAddedEvent, PabloLiquidityRemovedEvent,
+  PabloPoolCreatedEvent, PabloPoolDeletedEvent,
   PabloSwappedEvent
 } from "./types/events";
 import {getOrCreate} from "./dbHelper";
-import {processLiquidityAddedEvent, processPoolCreatedEvent, processSwappedEvent} from "./pabloProcessor";
+import {
+  processLiquidityAddedEvent,
+  processLiquidityRemovedEvent,
+  processPoolCreatedEvent, processPoolDeletedEvent,
+  processSwappedEvent
+} from "./pabloProcessor";
 
 const processor = new SubstrateProcessor("composable_dali_dev");
 
@@ -23,15 +28,24 @@ processor.setDataSource({
   chain: "wss://dali.devnets.composablefinance.ninja/parachain/alice",
 });
 
-// TODO add event handlers for Pablo
 processor.addEventHandler('pablo.PoolCreated', async (ctx) => {
   const event = new PabloPoolCreatedEvent(ctx);
   await processPoolCreatedEvent(ctx, event);
 });
 
+processor.addEventHandler('pablo.PoolDeleted', async (ctx) => {
+  const event = new PabloPoolDeletedEvent(ctx);
+  await processPoolDeletedEvent(ctx, event);
+});
+
 processor.addEventHandler('pablo.LiquidityAdded', async (ctx) => {
   const event = new PabloLiquidityAddedEvent(ctx);
   await processLiquidityAddedEvent(ctx, event);
+});
+
+processor.addEventHandler('pablo.LiquidityRemoved', async (ctx) => {
+  const event = new PabloLiquidityRemovedEvent(ctx);
+  await processLiquidityRemovedEvent(ctx, event);
 });
 
 processor.addEventHandler('pablo.Swapped', async (ctx) => {

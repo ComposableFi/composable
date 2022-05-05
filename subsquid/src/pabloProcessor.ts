@@ -1,4 +1,9 @@
-import {PabloLiquidityAddedEvent, PabloPoolCreatedEvent, PabloSwappedEvent} from "./types/events";
+import {
+    PabloLiquidityAddedEvent,
+    PabloLiquidityRemovedEvent,
+    PabloPoolCreatedEvent, PabloPoolDeletedEvent,
+    PabloSwappedEvent
+} from "./types/events";
 import {EventHandlerContext} from "@subsquid/substrate-processor";
 import * as ss58 from "@subsquid/ss58";
 import {get, getOrCreate} from "./dbHelper";
@@ -61,10 +66,14 @@ function getPoolCreatedEvent(event: PabloPoolCreatedEvent): PoolCreatedEvent {
     }
 }
 
+function encodeAccount(account: Uint8Array) {
+    return ss58.codec("picasso").encode(account);
+}
+
 export async function processPoolCreatedEvent(ctx: EventHandlerContext, event: PabloPoolCreatedEvent) {
-    console.info('processing PoolCreatedEvent', event);
+    console.debug('processing PoolCreatedEvent', ctx.event.id);
     const poolCreatedEvt = getPoolCreatedEvent(event);
-    const owner = ss58.codec("picasso").encode(poolCreatedEvt.owner);
+    const owner = encodeAccount(poolCreatedEvt.owner);
     const pool = await getOrCreate(ctx.store, PabloPool, poolCreatedEvt.poolId.toString());
     // only set values if the owner was missing, i.e a new pool
     if (pool.owner == null) {
@@ -109,7 +118,7 @@ export async function processPoolCreatedEvent(ctx: EventHandlerContext, event: P
     }
 }
 
-function createPoolAssetId(poolId: string, assetId: bigint): string {
+export function createPoolAssetId(poolId: string, assetId: bigint): string {
     return poolId + '-' + assetId;
 }
 
@@ -132,9 +141,9 @@ function getLiquidityAddedEvent(event: PabloLiquidityAddedEvent): LiquidityAdded
 }
 
 export async function processLiquidityAddedEvent(ctx: EventHandlerContext, event: PabloLiquidityAddedEvent) {
-    console.info('processing LiquidityAddedEvent', event);
+    console.debug('processing LiquidityAddedEvent', ctx.event.id);
     const liquidityAddedEvt = getLiquidityAddedEvent(event);
-    const who = ss58.codec("picasso").encode(liquidityAddedEvt.who);
+    const who = encodeAccount(liquidityAddedEvt.who);
     const pool = await get(ctx.store, PabloPool, liquidityAddedEvt.poolId.toString());
     // only set values if the owner was missing, i.e a new pool
     if (pool != undefined) {
@@ -188,6 +197,81 @@ export async function processLiquidityAddedEvent(ctx: EventHandlerContext, event
     }
 }
 
+interface LiquidityRemovedEvent {
+    who: Uint8Array,
+    poolId: bigint,
+    baseAmount: bigint,
+    quoteAmount: bigint,
+    totalIssuance: bigint
+}
+
+function getLiquidityRemovedEvent(event: PabloLiquidityRemovedEvent): LiquidityRemovedEvent {
+    if (event.isV2100) {
+        const {who, poolId, baseAmount, quoteAmount, totalIssuance} = event.asV2100;
+        return {who, poolId, baseAmount, quoteAmount, totalIssuance};
+    } else {
+        const {who, poolId, baseAmount, quoteAmount, totalIssuance} = event.asLatest;
+        return {who, poolId, baseAmount, quoteAmount, totalIssuance};
+    }
+}
+
+export async function processLiquidityRemovedEvent(ctx: EventHandlerContext, event: PabloLiquidityRemovedEvent) {
+    console.debug('processing LiquidityAddedEvent', ctx.event.id);
+    const liquidityRemovedEvt = getLiquidityRemovedEvent(event);
+    const who = encodeAccount(liquidityRemovedEvt.who);
+    const pool = await get(ctx.store, PabloPool, liquidityRemovedEvt.poolId.toString());
+    // only set values if the owner was missing, i.e a new pool
+    if (pool != undefined) {
+        const timestamp = BigInt(new Date().getTime());
+        pool.transactionCount += 1;
+        pool.totalLiquidity = Big(pool.totalLiquidity)
+            // multiplying by 2 to account for base amount being removed
+            .sub(Big(liquidityRemovedEvt.quoteAmount.toString()).mul(2))
+            .toString();
+        pool.calculatedTimestamp = timestamp;
+        pool.blockNumber = BigInt(ctx.block.height);
+
+        // find baseAsset: Following is only valid for dual asset pools
+        const baseAsset = pool.poolAssets
+            .find((asset) => asset.assetId != pool.quoteAssetId);
+        if (baseAsset == undefined) {
+            throw new Error('baseAsset not found');
+        }
+        baseAsset.totalLiquidity -= liquidityRemovedEvt.baseAmount;
+        baseAsset.calculatedTimestamp = timestamp;
+        baseAsset.blockNumber = BigInt(ctx.block.height);
+        // find quoteAsset
+        const quoteAsset = pool.poolAssets
+            .find((asset) => asset.assetId == pool.quoteAssetId);
+        if (quoteAsset == undefined) {
+            throw new Error('quoteAsset not found');
+        }
+        quoteAsset.totalLiquidity -= liquidityRemovedEvt.quoteAmount;
+        quoteAsset.calculatedTimestamp = timestamp;
+        quoteAsset.blockNumber = BigInt(ctx.block.height);
+
+        let tx = await get(ctx.store, PabloTransaction, ctx.event.id);
+        if (tx != undefined) {
+            throw new Error("Unexpected transaction in db");
+        }
+        tx = createTransaction(ctx, pool, who,
+            PabloTransactionType.REMOVE_LIQUIDITY,
+            Big(liquidityRemovedEvt.baseAmount.toString())
+                .div(Big(liquidityRemovedEvt.quoteAmount.toString())).toString(),
+            BigInt(baseAsset.assetId),
+            liquidityRemovedEvt.baseAmount,
+            pool.quoteAssetId,
+            liquidityRemovedEvt.quoteAmount);
+
+        await ctx.store.save(pool);
+        await ctx.store.save(baseAsset);
+        await ctx.store.save(quoteAsset);
+        await ctx.store.save(tx);
+    } else {
+        throw new Error("Pool not found");
+    }
+}
+
 interface SwappedEvent {
     poolId: bigint,
     who: Uint8Array,
@@ -210,9 +294,9 @@ function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
 }
 
 export async function processSwappedEvent(ctx: EventHandlerContext, event: PabloSwappedEvent) {
-    console.info('processing SwappedEvent', event);
+    console.debug('processing SwappedEvent', ctx.event.id);
     const swappedEvt = getSwappedEvent(event);
-    const who = ss58.codec("picasso").encode(swappedEvt.who);
+    const who = encodeAccount(swappedEvt.who);
     const pool = await get(ctx.store, PabloPool, swappedEvt.poolId.toString());
     // only set values if the owner was missing, i.e a new pool
     if (pool != undefined) {
@@ -279,10 +363,82 @@ export async function processSwappedEvent(ctx: EventHandlerContext, event: Pablo
         tx = createTransaction(ctx, pool, who,
             PabloTransactionType.SWAP,
             spotPrice.toString(),
-            BigInt(baseAsset.assetId),
+            swappedEvt.baseAsset,
             swappedEvt.baseAmount,
+            swappedEvt.quoteAsset,
+            swappedEvt.quoteAmount
+        );
+
+        await ctx.store.save(pool);
+        await ctx.store.save(baseAsset);
+        await ctx.store.save(quoteAsset);
+        await ctx.store.save(tx);
+    } else {
+        throw new Error("Pool not found");
+    }
+}
+
+
+interface PoolDeletedEvent {
+    poolId: bigint,
+    baseAmount: bigint,
+    quoteAmount: bigint,
+}
+
+function getPoolDeletedEvent(event: PabloPoolDeletedEvent): PoolDeletedEvent {
+    if (event.isV2100) {
+        const {poolId, baseAmount, quoteAmount} = event.asV2100;
+        return {poolId, baseAmount, quoteAmount};
+    } else {
+        const {poolId, baseAmount, quoteAmount} = event.asLatest;
+        return {poolId, baseAmount, quoteAmount};
+    }
+}
+
+export async function processPoolDeletedEvent(ctx: EventHandlerContext, event: PabloPoolDeletedEvent) {
+    console.debug('processing LiquidityAddedEvent', ctx.event.id);
+    const poolDeletedEvent = getPoolDeletedEvent(event);
+    const pool = await get(ctx.store, PabloPool, poolDeletedEvent.poolId.toString());
+    // only set values if the owner was missing, i.e a new pool
+    if (pool != undefined) {
+        const who = pool.owner;
+        const timestamp = BigInt(new Date().getTime());
+        pool.transactionCount += 1;
+        pool.totalLiquidity = '0.0';
+        pool.calculatedTimestamp = timestamp;
+        pool.blockNumber = BigInt(ctx.block.height);
+
+        // find baseAsset: Following is only valid for dual asset pools
+        const baseAsset = pool.poolAssets
+            .find((asset) => asset.assetId != pool.quoteAssetId);
+        if (baseAsset == undefined) {
+            throw new Error('baseAsset not found');
+        }
+        baseAsset.totalLiquidity -= poolDeletedEvent.baseAmount;
+        baseAsset.calculatedTimestamp = timestamp;
+        baseAsset.blockNumber = BigInt(ctx.block.height);
+        // find quoteAsset
+        const quoteAsset = pool.poolAssets
+            .find((asset) => asset.assetId == pool.quoteAssetId);
+        if (quoteAsset == undefined) {
+            throw new Error('quoteAsset not found');
+        }
+        quoteAsset.totalLiquidity -= poolDeletedEvent.quoteAmount;
+        quoteAsset.calculatedTimestamp = timestamp;
+        quoteAsset.blockNumber = BigInt(ctx.block.height);
+
+        let tx = await get(ctx.store, PabloTransaction, ctx.event.id);
+        if (tx != undefined) {
+            throw new Error("Unexpected transaction in db");
+        }
+        tx = createTransaction(ctx, pool, who,
+            PabloTransactionType.DELETE_POOL,
+            Big(poolDeletedEvent.baseAmount.toString())
+                .div(Big(poolDeletedEvent.quoteAmount.toString())).toString(),
+            BigInt(baseAsset.assetId),
+            poolDeletedEvent.baseAmount,
             pool.quoteAssetId,
-            swappedEvt.quoteAmount);
+            poolDeletedEvent.quoteAmount);
 
         await ctx.store.save(pool);
         await ctx.store.save(baseAsset);
