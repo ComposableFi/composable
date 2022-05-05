@@ -521,7 +521,7 @@ benchmarks! {
 			let ref_idx = add_referendum::<T>(i)?;
 			Democracy::<T>::vote(RawOrigin::Signed(new_delegate.clone()).into(), ref_idx, account_vote.clone())?;
 		}
-		let votes = match VotingOf::<T>::get(&new_delegate) {
+		let votes = match VotingOf::<T>::get((&new_delegate, asset_id)) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -844,7 +844,7 @@ benchmarks! {
 
 		Democracy::<T>::note_preimage(RawOrigin::Signed(proposer).into(), encoded_proposal, asset_id)?;
 
-		match Preimages::<T>::get(proposal_hash) {
+		match Preimages::<T>::get(proposal_id) {
 			Some(PreimageStatus::Available { .. }) => (),
 			_ => return Err("preimage not available".into())
 		}
