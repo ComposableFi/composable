@@ -143,6 +143,7 @@ fn valid_market_config() -> MarketConfig {
 		minimum_trade_size: FixedI128::from_float(0.01),
 		funding_frequency: ONE_HOUR,
 		funding_period: ONE_HOUR * 24,
+		taker_fee: 10, // 0.1%
 	}
 }
 

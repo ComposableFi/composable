@@ -90,11 +90,13 @@ pub struct Market<T: Config> {
 	/// Setting the funding period too short may cause nobody to trade the perpetual because
 	/// there’s too punitive of a price to pay in the case the funding rate flips sign.
 	pub funding_period: DurationSeconds,
+	/// Taker fee, in basis points, applied to all market orders
+	pub taker_fee: T::Balance,
 }
 
 /// Specifications for market creation
 #[derive(Encode, Decode, PartialEq, Clone, Debug, TypeInfo)]
-pub struct MarketConfig<AssetId, Decimal, VammConfig> {
+pub struct MarketConfig<AssetId, Balance, Decimal, VammConfig> {
 	/// Asset id of the underlying for the derivatives market
 	pub asset: AssetId,
 	/// Configuration for creating and initializing the vAMM for price discovery
@@ -111,4 +113,6 @@ pub struct MarketConfig<AssetId, Decimal, VammConfig> {
 	/// Period of time over which funding (the difference between mark and index prices) gets
 	/// paid.
 	pub funding_period: DurationSeconds,
+	/// Taker fee, in basis points, applied to all market orders
+	pub taker_fee: Balance,
 }

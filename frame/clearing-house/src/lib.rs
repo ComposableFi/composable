@@ -252,7 +252,8 @@ pub mod pallet {
 	type VammIdOf<T> = <T as Config>::VammId;
 	type SwapConfigOf<T> = SwapConfig<VammIdOf<T>, BalanceOf<T>>;
 	type SwapSimulationConfigOf<T> = SwapSimulationConfig<VammIdOf<T>, BalanceOf<T>>;
-	type MarketConfigOf<T> = MarketConfig<AssetIdOf<T>, DecimalOf<T>, VammConfigOf<T>>;
+	type MarketConfigOf<T> =
+		MarketConfig<AssetIdOf<T>, BalanceOf<T>, DecimalOf<T>, VammConfigOf<T>>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Runtime Storage
@@ -691,6 +692,7 @@ pub mod pallet {
 					funding_period: config.funding_period,
 					cum_funding_rate: Zero::zero(),
 					funding_rate_ts: T::UnixTime::now().as_secs(),
+					taker_fee: config.taker_fee,
 				};
 				Markets::<T>::insert(&market_id, market);
 
