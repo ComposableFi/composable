@@ -141,7 +141,7 @@ benchmarks! {
 			let ref_idx = add_referendum::<T>(i)?;
 			Democracy::<T>::vote(RawOrigin::Signed(caller.clone()).into(), ref_idx, account_vote.clone())?;
 		}
-		let votes = match VotingOf::<T>::get(&caller, asset_id) {
+		let votes = match VotingOf::<T>::get((&caller, asset_id)) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
