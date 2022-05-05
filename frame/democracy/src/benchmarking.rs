@@ -507,7 +507,7 @@ benchmarks! {
 			Conviction::Locked1x,
 			delegated_balance,
 		)?;
-		let (target, balance) = match VotingOf::<T>::get(&caller, asset_id) {
+		let (target, balance) = match VotingOf::<T>::get((&caller, asset_id)) {
 			Voting::Delegating { target, balance, .. } => (target, balance),
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -529,13 +529,13 @@ benchmarks! {
 		whitelist_account!(caller);
 	}: _(RawOrigin::Signed(caller.clone()), new_delegate.clone(), asset_id,  Conviction::Locked1x, delegated_balance)
 	verify {
-		let (target, balance) = match VotingOf::<T>::get(&caller, asset_id) {
+		let (target, balance) = match VotingOf::<T>::get((&caller, asset_id)) {
 			Voting::Delegating { target, balance, .. } => (target, balance),
 			_ => return Err("Votes are not direct".into()),
 		};
 		assert_eq!(target, new_delegate, "delegation target didn't work");
 		assert_eq!(balance, delegated_balance, "delegation balance didn't work");
-		let delegations = match VotingOf::<T>::get(&new_delegate, asset_id) {
+		let delegations = match VotingOf::<T>::get((&new_delegate, asset_id)) {
 			Voting::Direct { delegations, .. } => delegations,
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -559,7 +559,7 @@ benchmarks! {
 			Conviction::Locked1x,
 			delegated_balance,
 		)?;
-		let (target, balance) = match VotingOf::<T>::get(&caller, asset_id) {
+		let (target, balance) = match VotingOf::<T>::get((&caller, asset_id)) {
 			Voting::Delegating { target, balance, .. } => (target, balance),
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -575,7 +575,7 @@ benchmarks! {
 				account_vote.clone()
 			)?;
 		}
-		let votes = match VotingOf::<T>::get(&the_delegate, asset_id) {
+		let votes = match VotingOf::<T>::get((&the_delegate, asset_id)) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -584,7 +584,7 @@ benchmarks! {
 	}: _(RawOrigin::Signed(caller.clone()), asset_id)
 	verify {
 		// Voting should now be direct
-		match VotingOf::<T>::get(&caller, asset_id) {
+		match VotingOf::<T>::get((&caller, asset_id)) {
 			Voting::Direct { .. } => (),
 			_ => return Err("undelegation failed".into()),
 		}
@@ -694,7 +694,7 @@ benchmarks! {
 	}: unlock(RawOrigin::Signed(caller), locker.clone(), asset_id)
 	verify {
 		// Note that we may want to add a `get_lock` api to actually verify
-		let voting = VotingOf::<T>::get(&locker, asset_id);
+		let voting = VotingOf::<T>::get((&locker, asset_id));
 		assert_eq!(voting.locked_balance(), BalanceOf::<T>::zero());
 	}
 
@@ -717,13 +717,13 @@ benchmarks! {
 		let referendum_index = add_referendum::<T>(r)?;
 		Democracy::<T>::vote(RawOrigin::Signed(locker.clone()).into(), referendum_index, big_vote)?;
 
-		let votes = match VotingOf::<T>::get(&locker, asset_id) {
+		let votes = match VotingOf::<T>::get((&locker, asset_id)) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
 		assert_eq!(votes.len(), (r + 1) as usize, "Votes were not recorded.");
 
-		let voting = VotingOf::<T>::get(&locker, asset_id);
+		let voting = VotingOf::<T>::get((&locker, asset_id));
 		assert_eq!(voting.locked_balance(), base_balance * 10u32.into());
 
 		Democracy::<T>::remove_vote(RawOrigin::Signed(locker.clone()).into(), asset_id,  referendum_index)?;
@@ -732,13 +732,13 @@ benchmarks! {
 		whitelist_account!(caller);
 	}: unlock(RawOrigin::Signed(caller), locker.clone(), asset_id)
 	verify {
-		let votes = match VotingOf::<T>::get(&locker, asset_id) {
+		let votes = match VotingOf::<T>::get((&locker, asset_id)) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
 		assert_eq!(votes.len(), r as usize, "Vote was not removed");
 
-		let voting = VotingOf::<T>::get(&locker, asset_id);
+		let voting = VotingOf::<T>::get((&locker, asset_id));
 		// Note that we may want to add a `get_lock` api to actually verify
 		assert_eq!(voting.locked_balance(), base_balance);
 	}
@@ -756,7 +756,7 @@ benchmarks! {
 			Democracy::<T>::vote(RawOrigin::Signed(caller.clone()).into(), ref_idx, account_vote.clone())?;
 		}
 
-		let votes = match VotingOf::<T>::get(&caller, asset_id) {
+		let votes = match VotingOf::<T>::get((&caller, asset_id)) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -766,7 +766,7 @@ benchmarks! {
 		whitelist_account!(caller);
 	}: _(RawOrigin::Signed(caller.clone()), asset_id,  referendum_index)
 	verify {
-		let votes = match VotingOf::<T>::get(&caller, asset_id) {
+		let votes = match VotingOf::<T>::get((&caller, asset_id)) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -786,7 +786,7 @@ benchmarks! {
 			Democracy::<T>::vote(RawOrigin::Signed(caller.clone()).into(), ref_idx, account_vote.clone())?;
 		}
 
-		let votes = match VotingOf::<T>::get(&caller, asset_id) {
+		let votes = match VotingOf::<T>::get((&caller, asset_id)) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -796,7 +796,7 @@ benchmarks! {
 		whitelist_account!(caller);
 	}: _(RawOrigin::Signed(caller.clone()), caller.clone(), asset_id,  referendum_index)
 	verify {
-		let votes = match VotingOf::<T>::get(&caller, asset_id) {
+		let votes = match VotingOf::<T>::get((&caller, asset_id)) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
