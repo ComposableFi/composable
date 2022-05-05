@@ -39,7 +39,6 @@ macro_rules! whitelist {
 
 benchmarks! {
 	add_asset_and_info {
-		let caller: T::AccountId = whitelisted_caller();
 		let asset_id = 1;
 		let threshold = Validated::new(Percent::from_percent(80)).unwrap();
 		let min_answers = Validated::new(3).unwrap();
@@ -50,7 +49,7 @@ benchmarks! {
 
 	}: {
 		assert_ok!(
-			<Oracle<T>>::add_asset_and_info(RawOrigin::Signed(caller).into(), asset_id.into(), threshold, min_answers, max_answers, block_interval, reward, slash)
+			<Oracle<T>>::add_asset_and_info(RawOrigin::Root.into(), asset_id.into(), threshold, min_answers, max_answers, block_interval, reward, slash)
 		);
 	}
 	verify {
@@ -183,7 +182,7 @@ benchmarks! {
 			}
 		})
 		.collect::<Vec<_>>();
-		// the worst scenerio is when we need to remove a price first so gonna need to fill the price history
+		// the worst scenario is when we need to remove a price first so gonna need to fill the price history
 		let price = Price { price: 100u32.into(), block };
 		let historic_prices = BoundedVec::try_from(vec![price; T::MaxHistory::get() as usize]).unwrap();
 		PriceHistory::<T>::insert(asset_id, historic_prices);
