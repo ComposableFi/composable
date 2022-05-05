@@ -347,32 +347,24 @@ fn transfer_to_sibling() {
 	});
 }
 
-/// if Bob sends amount of his tokens and these are above weigth but less than ED,
+/// if Bob sends amount of his tokens and these are above weight but less than ED,
 /// than our treasury takes that amount, sorry Bob
-/// Acala's tests
+/// from: Acala
 #[test]
-fn transfer_from_relay_chain_deposit_to_treasury_if_below_existential_deposit() {
+fn transfer_from_relay_chain_deposit_to_treasury_if_below_ed() {
 	simtest();
 	let receiver = CHARLIE;
 	let (picasso_treasury, under_ed) = This::execute_with(|| {
 		use this_runtime::*;
 		let under_ed = under_existential_deposit::<AssetsRegistry>(LocalAssetId::KSM, 3);
-		assert_eq!(
-			this_runtime::Tokens::free_balance(CurrencyId::KSM, &AccountId::from(receiver)),
-			0,
-		);
-		(
-			this_runtime::Tokens::free_balance(
-				CurrencyId::KSM,
-				&this_runtime::TreasuryAccount::get(),
-			),
-			under_ed,
-		)
+		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(receiver)), 0,);
+		(Tokens::free_balance(CurrencyId::KSM, &this_runtime::TreasuryAccount::get()), under_ed)
 	});
 
 	KusamaRelay::execute_with(|| {
-		assert_ok!(kusama_runtime::XcmPallet::reserve_transfer_assets(
-			kusama_runtime::Origin::signed(ALICE.into()),
+		use kusama_runtime::*;
+		assert_ok!(XcmPallet::reserve_transfer_assets(
+			Origin::signed(ALICE.into()),
 			Box::new(Parachain(THIS_PARA_ID).into().into()),
 			Box::new(Junction::AccountId32 { id: receiver, network: NetworkId::Any }.into().into()),
 			Box::new((Here, under_ed).into()),
@@ -381,16 +373,14 @@ fn transfer_from_relay_chain_deposit_to_treasury_if_below_existential_deposit() 
 	});
 
 	This::execute_with(|| {
+		use this_runtime::*;
 		assert_eq!(
-			this_runtime::Tokens::free_balance(CurrencyId::KSM, &AccountId::from(receiver)),
+			Tokens::free_balance(CurrencyId::KSM, &AccountId::from(receiver)),
 			0,
 			"assets did not get to recipient as it is not enough to pay ED"
 		);
 		assert_eq!(
-			this_runtime::Tokens::free_balance(
-				CurrencyId::KSM,
-				&this_runtime::TreasuryAccount::get()
-			),
+			Tokens::free_balance(CurrencyId::KSM, &TreasuryAccount::get()),
 			under_ed - picasso_treasury
 		);
 	});

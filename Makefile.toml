@@ -45,8 +45,15 @@ docker rmi composablefi/composable-sandbox:latest
 workspace = false
 
 [tasks.run-unit-tests]
+env = { SKIP_WASM_BUILD = 1 }
 script = '''
-SKIP_WASM_BUILD=1 cargo test --workspace --locked --release --verbose --features=runtime-benchmarks
+cargo test --workspace --locked --release --verbose --features=runtime-benchmarks
+'''
+workspace = false
+
+[tasks.style]
+script = '''
+make style
 '''
 workspace = false
 

@@ -3,7 +3,6 @@ use composable_traits::{oracle::MinimalOracle, xcm::assets::AssetRatioInspect};
 use cumulus_primitives_core::ParaId;
 
 use frame_support::log;
-use num_traits::One;
 use primitives::currency::CurrencyId;
 use sp_runtime::traits::AccountIdConversion;
 
@@ -26,8 +25,8 @@ pub fn under_existential_deposit<AssetsRegistry: AssetRatioInspect<AssetId = Cur
 	_instruction_count: usize,
 ) -> Balance {
 	PriceConverter::<AssetsRegistry>::get_price_inverse(asset_id, NativeExistentialDeposit::get())
-		.unwrap()
-		.saturating_sub(Balance::one())
+		.unwrap() /
+		Balance::from(2_u128)
 }
 
 /// dumps events for debugging
