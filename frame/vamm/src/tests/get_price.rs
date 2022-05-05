@@ -23,6 +23,7 @@ proptest! {
 					 base_asset_reserves,
 					 quote_asset_reserves,
 					 peg_multiplier,
+					 invariant: Default::default(),
 					 closed: None})]
 		}.build().execute_with(|| {
 			let quote_peg = quote_asset_reserves.checked_mul(peg_multiplier);
@@ -59,6 +60,7 @@ proptest! {
 					 base_asset_reserves,
 					 quote_asset_reserves,
 					 peg_multiplier,
+					 invariant: Default::default(),
 					 closed: None})]
 		}.build().execute_with(|| {
 			let quote_peg = quote_asset_reserves.checked_mul(peg_multiplier);

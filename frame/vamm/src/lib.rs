@@ -239,6 +239,9 @@ pub mod pallet {
 		/// The magnitude of the quote asset reserve.
 		pub peg_multiplier: Balance,
 
+		/// The invariant `K`.
+		pub invariant: U256,
+
 		/// Whether this market is closed or not.
 		///
 		/// This variable function as a signal to allow pallets who uses the
@@ -318,6 +321,9 @@ pub mod pallet {
 		VammIsClosed,
 		/// Tried to swap assets but the amount returned was less than the minimum expected.
 		SwappedAmountLessThanMinimumLimit,
+		/// Tried to derive invariant from base and quote asset, but the
+		/// computation was not successful.
+		FailedToDeriveInvariantFromBaseAndQuoteAsset,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -410,6 +416,13 @@ pub mod pallet {
 			ensure!(!config.base_asset_reserves.is_zero(), Error::<T>::BaseAssetReserveIsZero);
 			ensure!(!config.quote_asset_reserves.is_zero(), Error::<T>::QuoteAssetReserveIsZero);
 			ensure!(!config.peg_multiplier.is_zero(), Error::<T>::PegMultiplierIsZero);
+			let invariant_result =
+				Self::compute_invariant(config.base_asset_reserves, config.quote_asset_reserves);
+			ensure!(
+				invariant_result.is_ok(),
+				Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset
+			);
+			let invariant = invariant_result?;
 
 			VammCounter::<T>::try_mutate(|next_id| {
 				let id = *next_id;
@@ -417,6 +430,7 @@ pub mod pallet {
 					base_asset_reserves: config.base_asset_reserves,
 					quote_asset_reserves: config.quote_asset_reserves,
 					peg_multiplier: config.peg_multiplier,
+					invariant,
 					closed: Default::default(),
 				};
 
@@ -783,9 +797,14 @@ pub mod pallet {
 		fn u256_to_balance(value: U256) -> Result<BalanceOf<T>, DispatchError> {
 			Ok(Self::u256_to_u128(value)?.try_into().ok().ok_or(ArithmeticError::Overflow)?)
 		}
+
+		pub fn compute_invariant(
+			base: BalanceOf<T>,
+			quote: BalanceOf<T>,
+		) -> Result<U256, DispatchError> {
+			let base_u256 = Self::balance_to_u256(base)?;
+			let quote_u256 = Self::balance_to_u256(quote)?;
+			Ok(base_u256.checked_mul(quote_u256).ok_or(ArithmeticError::Overflow)?)
+		}
 	}
 }
-
-// ----------------------------------------------------------------------------------------------------
-//                                              Unit Tests
-// ----------------------------------------------------------------------------------------------------

@@ -166,6 +166,14 @@ prop_compose! {
 		closed in prop_oneof![timestamp().prop_map(Some), Just(None)]
 
 	) -> VammState<Balance, VammTimestamp> {
+		let invariant = match (
+			config.base_asset_reserves,
+			config.quote_asset_reserves
+		) {
+			(Some(base), Some(quote)) => TestPallet::compute_invariant(base, quote),
+			_ => TestPallet::compute_invariant(base_asset_reserves, quote_asset_reserves)
+		}.unwrap();
+
 		VammState {
 			base_asset_reserves: config
 				.base_asset_reserves
@@ -176,6 +184,7 @@ prop_compose! {
 			peg_multiplier: config
 				.peg_multiplier
 				.unwrap_or(peg_multiplier),
+			invariant,
 			closed: config
 				.closed
 				.unwrap_or(closed),

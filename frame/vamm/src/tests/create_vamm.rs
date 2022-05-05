@@ -17,10 +17,16 @@ proptest! {
 		ExtBuilder::default().build().execute_with(|| {
 			let vamm_counter = TestPallet::vamm_count();
 
+			let invariant = TestPallet::compute_invariant(
+				base_asset_reserves,
+				quote_asset_reserves
+			).unwrap();
+
 			let vamm_expected = VammState::<Balance, VammTimestamp> {
 					base_asset_reserves,
 					quote_asset_reserves,
 					peg_multiplier,
+					invariant,
 					closed: Default::default(),
 			};
 
