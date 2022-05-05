@@ -428,13 +428,13 @@ pub mod pallet {
 	/// The number of (public) proposals that have been made so far.
 	#[pallet::storage]
 	#[pallet::getter(fn public_prop_count)]
-    #[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_types)]
 	pub type PublicPropCount<T> = StorageValue<_, PropIndex, ValueQuery>;
 
 	/// The public proposals. Unsorted. The second item is the proposal's hash.
 	#[pallet::storage]
 	#[pallet::getter(fn public_props)]
-    #[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_types)]
 	pub type PublicProps<T: Config> = StorageValue<
 		_,
 		Vec<(PropIndex, ProposalId<T::Hash, T::AssetId>, T::AccountId)>,
@@ -464,14 +464,14 @@ pub mod pallet {
 	/// The next free referendum index, aka the number of referenda started so far.
 	#[pallet::storage]
 	#[pallet::getter(fn referendum_count)]
-    #[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_types)]
 	pub type ReferendumCount<T> = StorageValue<_, ReferendumIndex, ValueQuery>;
 
 	/// The lowest referendum index representing an unbaked referendum. Equal to
 	/// `ReferendumCount` if there isn't a unbaked referendum.
 	#[pallet::storage]
 	#[pallet::getter(fn lowest_unbaked)]
-    #[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_types)]
 	pub type LowestUnbaked<T> = StorageValue<_, ReferendumIndex, ValueQuery>;
 
 	/// Information concerning any given referendum.
@@ -491,7 +491,7 @@ pub mod pallet {
 	///
 	/// TWOX-NOTE: SAFE as `AccountId`s are crypto hashes anyway.
 	#[pallet::storage]
-    #[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_types)]
 	pub type VotingOf<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
@@ -505,7 +505,7 @@ pub mod pallet {
 	// TODO: There should be any number of tabling origins, not just public and "external"
 	// (council). https://github.com/paritytech/substrate/issues/5322
 	#[pallet::storage]
-    #[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_types)]
 	pub type LastTabledWasExternal<T> = StorageValue<_, bool, ValueQuery>;
 
 	/// The referendum to be tabled whenever it would be valid to table an external proposal.
@@ -528,7 +528,7 @@ pub mod pallet {
 
 	/// Record of all proposals that have been subject to emergency cancellation.
 	#[pallet::storage]
-    #[allow(clippy::disallowed_types)]
+	#[allow(clippy::disallowed_types)]
 	pub type Cancellations<T: Config> =
 		StorageMap<_, Identity, ProposalId<T::Hash, T::AssetId>, bool, ValueQuery>;
 
