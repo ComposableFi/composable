@@ -151,7 +151,7 @@ benchmarks! {
 		whitelist_account!(caller);
 	}: vote(RawOrigin::Signed(caller.clone()), referendum_index, account_vote)
 	verify {
-		let votes = match VotingOf::<T>::get(&caller, asset_id) {
+		let votes = match VotingOf::<T>::get((&caller, asset_id)) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
