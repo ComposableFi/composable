@@ -205,7 +205,7 @@ interface LiquidityRemovedEvent {
     totalIssuance: bigint
 }
 
-function getLiquidityRemoveEvent(event: PabloLiquidityRemovedEvent): LiquidityRemovedEvent {
+function getLiquidityRemovedEvent(event: PabloLiquidityRemovedEvent): LiquidityRemovedEvent {
     if (event.isV2100) {
         const {who, poolId, baseAmount, quoteAmount, totalIssuance} = event.asV2100;
         return {who, poolId, baseAmount, quoteAmount, totalIssuance};
@@ -217,7 +217,7 @@ function getLiquidityRemoveEvent(event: PabloLiquidityRemovedEvent): LiquidityRe
 
 export async function processLiquidityRemovedEvent(ctx: EventHandlerContext, event: PabloLiquidityRemovedEvent) {
     console.debug('processing LiquidityAddedEvent', ctx.event.id);
-    const liquidityRemovedEvt = getLiquidityRemoveEvent(event);
+    const liquidityRemovedEvt = getLiquidityRemovedEvent(event);
     const who = encodeAccount(liquidityRemovedEvt.who);
     const pool = await get(ctx.store, PabloPool, liquidityRemovedEvt.poolId.toString());
     // only set values if the owner was missing, i.e a new pool
