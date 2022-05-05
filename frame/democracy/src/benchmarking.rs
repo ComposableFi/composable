@@ -163,7 +163,8 @@ benchmarks! {
 
 		let caller = funded_account::<T>("caller", 0);
 		let account_vote = account_vote::<T>(100u32.into());
-
+		let asset_id = T::AssetId::from(DOT_ASSET);
+		
 		// We need to create existing direct votes
 		for i in 0 ..=r {
 			let ref_idx = add_referendum::<T>(i)?;
@@ -599,7 +600,7 @@ benchmarks! {
 		let b in 0 .. MAX_BYTES;
 
 		let caller = funded_account::<T>("caller", 0);
-		let encoded_proposal, asset_id = vec![1; b as usize];
+		let encoded_proposal = vec![1; b as usize];
 		let asset_id = T::AssetId::from(DOT_ASSET);
 
 		whitelist_account!(caller);
@@ -619,7 +620,7 @@ benchmarks! {
 		let b in 0 .. MAX_BYTES;
 
 		// d + 1 to include the one we are testing
-		let encoded_proposal, asset_id = vec![1; b as usize];
+		let encoded_proposal = vec![1; b as usize];
 		let proposal_hash = T::Hashing::hash(&encoded_proposal, asset_id[..]);
 		let asset_id = T::AssetId::from(DOT_ASSET);
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
@@ -646,7 +647,7 @@ benchmarks! {
 		// Num of bytes in encoded proposal
 		let b in 0 .. MAX_BYTES;
 
-		let encoded_proposal, asset_id = vec![1; b as usize];
+		let encoded_proposal = vec![1; b as usize];
 		let proposal_hash = T::Hashing::hash(&encoded_proposal, asset_id[..]);
 		let asset_id = T::AssetId::from(DOT_ASSET);
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
@@ -812,7 +813,7 @@ benchmarks! {
 		let proposer = funded_account::<T>("proposer", 0);
 		let raw_call = Call::note_preimage { encoded_proposal, asset_id: vec![1; b as usize] };
 		let generic_call: T::Proposal = raw_call.into();
-		let encoded_proposal, asset_id = generic_call.encode();
+		let encoded_proposal = generic_call.encode();
 
 		let proposal_hash = T::Hashing::hash(&encoded_proposal, asset_id[..]);
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
@@ -836,7 +837,7 @@ benchmarks! {
 
 		let proposer = funded_account::<T>("proposer", 0);
 		// Random invalid bytes
-		let encoded_proposal, asset_id = vec![200; b as usize];
+		let encoded_proposal = vec![200; b as usize];
 		let proposal_hash = T::Hashing::hash(&encoded_proposal, asset_id[..]);
 		let asset_id = T::AssetId::from(DOT_ASSET);
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
