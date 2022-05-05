@@ -12,7 +12,6 @@ database "Markets" as mkts
 database "Positions" as positions
 database "AccountsMargin" as accs
 collections "Collateral\naccount" as vault
-collections "Fees\naccount" as fees
 
 user -> ch : open position
 
@@ -22,7 +21,7 @@ ch -[#green]> mkts : get ""Market""
 ch -[#green]> positions : get/create position
 'note right CH: compute quote asset\nnotional amount
 
-group settle funding payments?
+group settle funding payment for position
 ch -[#red]> accs : update collateral
 end
 
@@ -43,6 +42,7 @@ end
 
 group charge fee
 ch -[#red]> accs : subtract fee from user's collateral
+ch -[#red]> mkts : add fee to market's fee pool
 end
 
 note right ch
@@ -72,13 +72,6 @@ note right ch
 allow ""!meets_imr"" if trade
 is risk decreasing?
 end note
-
-== Asset transfers ==
-
-group charge fee
-ch -> vault : transfer to Fee Pool
-vault -> fees : quote asset
-end
 
 ====
 
