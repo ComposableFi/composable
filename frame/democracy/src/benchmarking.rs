@@ -31,6 +31,7 @@ use frame_system::{Pallet as System, RawOrigin};
 use sp_runtime::traits::{BadOrigin, Bounded, One};
 
 use crate::Pallet as Democracy;
+use sp_std::vec;
 
 const SEED: u32 = 0;
 const MAX_REFERENDUMS: u32 = 99;
