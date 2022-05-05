@@ -150,6 +150,7 @@ fn create_first_market_succeeds() {
 
 		assert_eq!(market.cum_funding_rate, 0.into());
 		assert_eq!(market.net_base_asset_amount, 0.into());
+		assert_eq!(market.fee_pool, 0);
 		// Ensure last funding rate timestamp is the same as this block's time
 		assert_eq!(market.funding_rate_ts, block_time_now);
 	})
@@ -288,6 +289,15 @@ fn can_create_market_with_zero_minimum_trade_size() {
 	ExtBuilder::default().build().execute_with(|| {
 		let mut config = valid_market_config();
 		config.minimum_trade_size = 0.into();
+		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));
+	})
+}
+
+#[test]
+fn can_create_market_with_zero_taker_fees() {
+	ExtBuilder::default().build().execute_with(|| {
+		let mut config = valid_market_config();
+		config.taker_fee = 0;
 		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));
 	})
 }
