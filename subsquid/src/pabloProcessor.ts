@@ -71,7 +71,7 @@ function encodeAccount(account: Uint8Array) {
 }
 
 export async function processPoolCreatedEvent(ctx: EventHandlerContext, event: PabloPoolCreatedEvent) {
-    console.debug('processing PoolCreatedEvent', event);
+    console.debug('processing PoolCreatedEvent', ctx.event.id);
     const poolCreatedEvt = getPoolCreatedEvent(event);
     const owner = encodeAccount(poolCreatedEvt.owner);
     const pool = await getOrCreate(ctx.store, PabloPool, poolCreatedEvt.poolId.toString());
@@ -141,7 +141,7 @@ function getLiquidityAddedEvent(event: PabloLiquidityAddedEvent): LiquidityAdded
 }
 
 export async function processLiquidityAddedEvent(ctx: EventHandlerContext, event: PabloLiquidityAddedEvent) {
-    console.debug('processing LiquidityAddedEvent', event);
+    console.debug('processing LiquidityAddedEvent', ctx.event.id);
     const liquidityAddedEvt = getLiquidityAddedEvent(event);
     const who = encodeAccount(liquidityAddedEvt.who);
     const pool = await get(ctx.store, PabloPool, liquidityAddedEvt.poolId.toString());
@@ -216,7 +216,7 @@ function getLiquidityRemoveEvent(event: PabloLiquidityRemovedEvent): LiquidityRe
 }
 
 export async function processLiquidityRemovedEvent(ctx: EventHandlerContext, event: PabloLiquidityRemovedEvent) {
-    console.debug('processing LiquidityAddedEvent', event);
+    console.debug('processing LiquidityAddedEvent', ctx.event.id);
     const liquidityRemovedEvt = getLiquidityRemoveEvent(event);
     const who = encodeAccount(liquidityRemovedEvt.who);
     const pool = await get(ctx.store, PabloPool, liquidityRemovedEvt.poolId.toString());
@@ -294,7 +294,7 @@ function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
 }
 
 export async function processSwappedEvent(ctx: EventHandlerContext, event: PabloSwappedEvent) {
-    console.debug('processing SwappedEvent', event);
+    console.debug('processing SwappedEvent', ctx.event.id);
     const swappedEvt = getSwappedEvent(event);
     const who = encodeAccount(swappedEvt.who);
     const pool = await get(ctx.store, PabloPool, swappedEvt.poolId.toString());
@@ -396,7 +396,7 @@ function getPoolDeletedEvent(event: PabloPoolDeletedEvent): PoolDeletedEvent {
 }
 
 export async function processPoolDeletedEvent(ctx: EventHandlerContext, event: PabloPoolDeletedEvent) {
-    console.debug('processing LiquidityAddedEvent', event);
+    console.debug('processing LiquidityAddedEvent', ctx.event.id);
     const poolDeletedEvent = getPoolDeletedEvent(event);
     const pool = await get(ctx.store, PabloPool, poolDeletedEvent.poolId.toString());
     // only set values if the owner was missing, i.e a new pool
