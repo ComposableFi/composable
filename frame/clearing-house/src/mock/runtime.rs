@@ -255,7 +255,7 @@ impl clearing_house::Config for Runtime {
 pub struct ExtBuilder {
 	pub native_balances: Vec<(AccountId, Balance)>,
 	pub balances: Vec<(AccountId, AssetId, Balance)>,
-	pub collateral_types: Vec<AssetId>,
+	pub collateral_type: Option<AssetId>,
 	pub vamm_id: Option<VammId>,
 	pub vamm_twap: Option<UnsignedDecimal>,
 	pub oracle_asset_support: Option<bool>,
@@ -276,7 +276,7 @@ impl ExtBuilder {
 			.assimilate_storage(&mut storage)
 			.unwrap();
 
-		clearing_house::GenesisConfig::<Runtime> { collateral_types: self.collateral_types }
+		clearing_house::GenesisConfig::<Runtime> { collateral_type: self.collateral_type }
 			.assimilate_storage(&mut storage)
 			.unwrap();
 

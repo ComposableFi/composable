@@ -144,7 +144,7 @@ pub mod pallet {
 		pallet_prelude::*,
 		storage::bounded_vec::BoundedVec,
 		traits::{tokens::fungibles::Transfer, GenesisBuild, UnixTime},
-		transactional, Blake2_128Concat, PalletId, Twox64Concat,
+		transactional, Blake2_128Concat, PalletId,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use num_traits::Signed;
@@ -258,9 +258,9 @@ pub mod pallet {
 	//                                           Runtime Storage
 	// ----------------------------------------------------------------------------------------------------
 
-	/// Supported collateral asset ids
+	/// Supported collateral asset id
 	#[pallet::storage]
-	pub type CollateralTypes<T: Config> = StorageMap<_, Twox64Concat, AssetIdOf<T>, ()>;
+	pub type CollateralType<T: Config> = StorageValue<_, AssetIdOf<T>, OptionQuery>;
 
 	/// Maps [AccountId](frame_system::Config::AccountId) to its collateral
 	/// [Balance](DeFiComposableConfig::Balance), if set.
@@ -302,23 +302,21 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		/// Genesis accepted collateral asset types
-		pub collateral_types: Vec<AssetIdOf<T>>,
+		/// Genesis accepted collateral asset type
+		pub collateral_type: Option<AssetIdOf<T>>,
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { collateral_types: vec![] }
+			Self { collateral_type: None }
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
-			self.collateral_types.iter().for_each(|asset| {
-				CollateralTypes::<T>::insert(asset, ());
-			})
+			CollateralType::<T>::set(self.collateral_type);
 		}
 	}
 
@@ -373,7 +371,7 @@ pub mod pallet {
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
-		/// User attempted to deposit unsupported asset type as collateral in its margin account
+		/// User attempted to deposit an unsupported asset type as collateral in its margin account
 		UnsupportedCollateralType,
 		/// An operation required the asset id of a valid collateral type but none were registered
 		NoCollateralTypeSet,
@@ -634,7 +632,7 @@ pub mod pallet {
 			amount: Self::Balance,
 		) -> Result<(), DispatchError> {
 			ensure!(
-				CollateralTypes::<T>::contains_key(asset_id),
+				CollateralType::<T>::get().ok_or(Error::<T>::NoCollateralTypeSet)? == asset_id,
 				Error::<T>::UnsupportedCollateralType
 			);
 
@@ -843,9 +841,7 @@ pub mod pallet {
 
 				match funding_rate.is_positive() == market.net_base_asset_amount.is_positive() {
 					true => T::Assets::transfer(
-						CollateralTypes::<T>::iter_keys()
-							.next()
-							.ok_or(Error::<T>::NoCollateralTypeSet)?,
+						CollateralType::<T>::get().ok_or(Error::<T>::NoCollateralTypeSet)?,
 						&T::PalletId::get().into_sub_account("Collateral"),
 						&T::PalletId::get().into_sub_account("Insurance"),
 						amount,

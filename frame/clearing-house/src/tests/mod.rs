@@ -43,7 +43,7 @@ impl Default for ExtBuilder {
 		Self {
 			native_balances: vec![],
 			balances: vec![],
-			collateral_types: vec![USDC],
+			collateral_type: Some(USDC),
 			vamm_id: Some(0_u64),
 			vamm_twap: Some(100.into()),
 			oracle_asset_support: Some(true),
