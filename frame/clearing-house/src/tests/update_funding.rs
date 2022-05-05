@@ -88,11 +88,8 @@ proptest! {
 	fn updates_market_state(vamm_twap in any_price()) {
 		let mut config = valid_market_config();
 		config.funding_frequency = ONE_HOUR;
-		let ext_builder = ExtBuilder {
-			..Default::default()
-		};
 
-		with_market_context(ext_builder, config, |market_id| {
+		with_market_context(ExtBuilder::default(), config, |market_id| {
 			let old_market = TestPallet::get_market(&market_id).unwrap();
 
 			run_for_seconds(ONE_HOUR);
@@ -127,13 +124,8 @@ proptest! {
 		let mut config = valid_market_config();
 		config.funding_frequency = ONE_HOUR;
 		config.funding_period = ONE_HOUR;
-		let ext_builder = ExtBuilder {
-			balances: vec![(ALICE, USDC, net_position)],
-			..Default::default()
-		};
 
-		with_market_context(ext_builder, config, |market_id| {
-			let _ = <TestPallet as ClearingHouse>::add_margin(&ALICE, USDC, net_position);
+		with_trading_context(config, net_position, |market_id| {
 			VammPallet::set_price(Some(1.into()));
 			// Alice opens a position representing the net one of all traders
 			let _ = <TestPallet as ClearingHouse>::open_position(
