@@ -289,7 +289,7 @@ benchmarks! {
 		let proposal_hash: T::Hash = T::Hashing::hash_of(&0);
 		let asset_id = T::AssetId::from(DOT_ASSET);
 
-		Democracy::<T>::external_propose_default(origin_propose, proposal_hash.clone())?;
+		Democracy::<T>::external_propose_default(origin_propose, proposal_hash.clone(), asset_id)?;
 
 		// NOTE: Instant origin may invoke a little bit more logic, but may not always succeed.
 		let origin_fast_track = T::FastTrackOrigin::successful_origin();
@@ -309,7 +309,7 @@ benchmarks! {
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id};
 
 		let origin_propose = T::ExternalDefaultOrigin::successful_origin();
-		Democracy::<T>::external_propose_default(origin_propose, proposal_hash.clone())?;
+		Democracy::<T>::external_propose_default(origin_propose, proposal_hash.clone(), asset_id)?;
 
 		let mut vetoers: Vec<T::AccountId> = Vec::new();
 		for i in 0 .. v {
