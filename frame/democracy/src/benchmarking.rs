@@ -686,7 +686,7 @@ benchmarks! {
 		for i in 0 .. r {
 			let ref_idx = add_referendum::<T>(i)?;
 			Democracy::<T>::vote(RawOrigin::Signed(locker.clone()).into(), ref_idx, small_vote.clone())?;
-			Democracy::<T>::remove_vote(RawOrigin::Signed(locker.clone()).into(), ref_idx)?;
+			Democracy::<T>::remove_vote(RawOrigin::Signed(locker.clone()).into(), asset_id, ref_idx)?;
 		}
 
 		let caller = funded_account::<T>("caller", 0);
@@ -818,7 +818,7 @@ benchmarks! {
 		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
 
-		Democracy::<T>::note_preimage(RawOrigin::Signed(proposer).into(), encoded_proposal, asset_id: asset_id)?;
+		Democracy::<T>::note_preimage(RawOrigin::Signed(proposer).into(), encoded_proposal, asset_id)?;
 
 		match Preimages::<T>::get(proposal_id) {
 			Some(PreimageStatus::Available { .. }) => (),
