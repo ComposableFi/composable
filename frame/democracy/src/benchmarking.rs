@@ -56,7 +56,12 @@ fn add_proposal<T: Config>(n: u32) -> Result<T::Hash, &'static str> {
 	let proposal_hash: T::Hash = T::Hashing::hash_of(&n);
 	let asset_id = DOT_ASSET;
 
-	Democracy::<T>::propose(RawOrigin::Signed(other).into(), proposal_hash, asset_id.into(), value.into())?;
+	Democracy::<T>::propose(
+		RawOrigin::Signed(other).into(),
+		proposal_hash,
+		asset_id.into(),
+		value.into(),
+	)?;
 
 	Ok(proposal_hash)
 }
@@ -369,7 +374,7 @@ benchmarks! {
 		let origin = T::ExternalMajorityOrigin::successful_origin();
 		let proposal_hash = T::Hashing::hash_of(&r);
 		let asset_id = T::AssetId::from(DOT_ASSET);
-		
+
 		let call = Call::<T>::external_propose_majority { proposal_hash, asset_id };
 		call.dispatch_bypass_filter(origin)?;
 		// External proposal created
@@ -625,7 +630,7 @@ benchmarks! {
 		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
 		let asset_id = T::AssetId::from(DOT_ASSET);
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
-		
+
 		let block_number = T::BlockNumber::one();
 		Preimages::<T>::insert(&proposal_id, PreimageStatus::Missing(block_number));
 
@@ -647,7 +652,7 @@ benchmarks! {
 	reap_preimage {
 		// Num of bytes in encoded proposal
 		let b in 0 .. MAX_BYTES;
-		
+
 		let encoded_proposal = vec![1; b as usize];
 		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
 		let asset_id = T::AssetId::from(DOT_ASSET);
