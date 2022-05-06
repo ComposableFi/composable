@@ -6,7 +6,7 @@ fn main() {
 	//   target depending on cfg of build debug/release)
 	// - make cargo make to build this package for wasm target with all proper env vars
 	// - make sure that CI/CD gets wasm only via make file to make builds more reproducible
-	// - document that maximal reproducability is possible if to build in layered docker
+	// - document that maximal reproducability is possible if to build in layered docker.
 	#[cfg(feature = "wasm-builder")]
 	{
 		substrate_wasm_builder::WasmBuilder::new()
