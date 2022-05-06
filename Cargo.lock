@@ -1445,7 +1445,6 @@ dependencies = [
  "pallet-balances",
  "pallet-collator-selection",
  "pallet-collective",
- "pallet-lending",
  "pallet-sudo",
  "pallet-treasury",
  "parity-scale-codec",

@@ -36,7 +36,6 @@ collective = { package = "pallet-collective", git = "https://github.com/parityte
 treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/substrate", default-features = false , branch = "polkadot-v0.9.18" }
 
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
-pallet-lending = { path = "../../frame/lending", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b5d4ce1d08fb54c0007c2055653892d2c93a92e", default-features = false }
 primitives = { path = "../primitives", default-features = false }
