@@ -25,6 +25,7 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Timestamp: pallet_timestamp,
 		Balances: balances,
+		ParachainInfo: parachain_info,
 		Ping: pallet_ibc_ping,
 		Ibc: pallet_ibc::{Pallet, Call, Storage, Event<T>},
 	}
@@ -63,6 +64,8 @@ impl system::Config for Test {
 	type OnSetCode = ();
 	type MaxConsumers = ConstU32<2>;
 }
+
+impl parachain_info::Config for Test {}
 
 impl pallet_ibc_ping::Config for Test {
 	type Event = Event;

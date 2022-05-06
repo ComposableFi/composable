@@ -1,7 +1,8 @@
 use super::*;
 use core::str::FromStr;
 
-use crate::routing::Context;
+use crate::{impls::host_height, routing::Context};
+use frame_support::traits::Get;
 use ibc::{
 	core::{
 		ics02_client::{
@@ -22,7 +23,6 @@ use tendermint_proto::Protobuf;
 impl<T: Config + Send + Sync> ClientReader for Context<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
-	Self: ConnectionReader,
 {
 	fn client_type(&self, client_id: &ClientId) -> Result<ClientType, ICS02Error> {
 		log::trace!("in client : [client_type] >> client_id = {:?}", client_id);
@@ -144,7 +144,9 @@ where
 
 	fn host_height(&self) -> Height {
 		log::trace!("in client: [host_height]");
-		ConnectionReader::host_current_height(self)
+		let current_height = host_height::<T>();
+		let para_id: u32 = parachain_info::Pallet::<T>::get().into();
+		Height::new(para_id.into(), current_height)
 	}
 
 	fn host_consensus_state(&self, height: Height) -> Result<AnyConsensusState, ICS02Error> {

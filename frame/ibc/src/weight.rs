@@ -2,29 +2,34 @@ use super::*;
 use core::marker::PhantomData;
 use frame_support::pallet_prelude::Weight;
 use ibc::core::{
-	ics02_client::msgs::ClientMsg,
+	ics02_client::{client_type::ClientType, msgs::ClientMsg},
 	ics03_connection::msgs::ConnectionMsg,
-	ics04_channel::msgs::{ChannelMsg, PacketMsg},
+	ics04_channel::{
+		context::ChannelReader,
+		msgs::{ChannelMsg, PacketMsg},
+	},
+	ics24_host::identifier::ClientId,
 	ics26_routing::msgs::Ics26Envelope,
 };
-use ibc_trait::CallbackWeight;
+use ibc_trait::{client_id_from_bytes, CallbackWeight};
+use scale_info::prelude::string::ToString;
 
 pub trait WeightInfo {
-	fn create_client() -> Weight;
-	fn update_client() -> Weight;
-	fn connection_init() -> Weight;
-	fn conn_try_open() -> Weight;
-	fn conn_open_ack() -> Weight;
-	fn conn_open_confirm() -> Weight;
-	fn create_channel() -> Weight;
-	fn channel_open_try() -> Weight;
-	fn channel_open_ack() -> Weight;
-	fn channel_open_confirm() -> Weight;
+	fn create_tendermint_client() -> Weight;
+	fn update_tendermint_client() -> Weight;
+	fn connection_open_init() -> Weight;
+	fn conn_try_open_tendermint() -> Weight;
+	fn conn_open_ack_tendermint() -> Weight;
+	fn conn_open_confirm_tendermint() -> Weight;
+	fn channel_open_init() -> Weight;
+	fn channel_open_try_tendermint() -> Weight;
+	fn channel_open_ack_tendermint() -> Weight;
+	fn channel_open_confirm_tendermint() -> Weight;
 	fn channel_close_init() -> Weight;
-	fn channel_close_confirm() -> Weight;
-	fn recv_packet(i: u32) -> Weight;
-	fn ack_packet(i: u32, j: u32) -> Weight;
-	fn timeout_packet(i: u32) -> Weight;
+	fn channel_close_confirm_tendermint() -> Weight;
+	fn recv_packet_tendermint(i: u32) -> Weight;
+	fn ack_packet_tendermint(i: u32, j: u32) -> Weight;
+	fn timeout_packet_tendermint(i: u32) -> Weight;
 	/// on_finalize benchmarks
 	/// a => number of light clients
 	/// b => number of connections
@@ -36,43 +41,43 @@ pub trait WeightInfo {
 }
 
 impl WeightInfo for () {
-	fn create_client() -> Weight {
+	fn create_tendermint_client() -> Weight {
 		0
 	}
 
-	fn update_client() -> Weight {
+	fn update_tendermint_client() -> Weight {
 		0
 	}
 
-	fn connection_init() -> Weight {
+	fn connection_open_init() -> Weight {
 		0
 	}
 
-	fn conn_try_open() -> Weight {
+	fn conn_try_open_tendermint() -> Weight {
 		0
 	}
 
-	fn conn_open_ack() -> Weight {
+	fn conn_open_ack_tendermint() -> Weight {
 		0
 	}
 
-	fn conn_open_confirm() -> Weight {
+	fn conn_open_confirm_tendermint() -> Weight {
 		0
 	}
 
-	fn create_channel() -> Weight {
+	fn channel_open_init() -> Weight {
 		0
 	}
 
-	fn channel_open_try() -> Weight {
+	fn channel_open_try_tendermint() -> Weight {
 		0
 	}
 
-	fn channel_open_ack() -> Weight {
+	fn channel_open_ack_tendermint() -> Weight {
 		0
 	}
 
-	fn channel_open_confirm() -> Weight {
+	fn channel_open_confirm_tendermint() -> Weight {
 		0
 	}
 
@@ -80,19 +85,19 @@ impl WeightInfo for () {
 		0
 	}
 
-	fn channel_close_confirm() -> Weight {
+	fn channel_close_confirm_tendermint() -> Weight {
 		0
 	}
 
-	fn recv_packet(_i: u32) -> Weight {
+	fn recv_packet_tendermint(_i: u32) -> Weight {
 		0
 	}
 
-	fn ack_packet(_i: u32, _j: u32) -> Weight {
+	fn ack_packet_tendermint(_i: u32, _j: u32) -> Weight {
 		0
 	}
 
-	fn timeout_packet(_i: u32) -> Weight {
+	fn timeout_packet_tendermint(_i: u32) -> Weight {
 		0
 	}
 
@@ -112,7 +117,24 @@ impl<T: Config> WeightRouter<T> {
 	}
 }
 
-pub(crate) fn deliver<T: Config>(msgs: &Vec<Any>) -> Weight {
+/// Get client id for a port and channel combination
+pub fn channel_client<T: Config>(channel_id: &[u8], port_id: &[u8]) -> Result<ClientId, Error<T>> {
+	for (connection_id, channels) in ChannelsConnection::<T>::iter() {
+		if channels.contains(&(port_id.to_vec(), channel_id.to_vec())) {
+			if let Some((client_id, ..)) = ConnectionClient::<T>::iter()
+				.find(|(.., connection_ids)| connection_ids.contains(&connection_id))
+			{
+				return Ok(client_id_from_bytes(client_id).map_err(|_| Error::<T>::Other)?)
+			}
+		}
+	}
+	Err(Error::<T>::Other)
+}
+
+pub(crate) fn deliver<T: Config + Send + Sync>(msgs: &Vec<Any>) -> Weight
+where
+	u32: From<<T as frame_system::Config>::BlockNumber>,
+{
 	msgs.into_iter()
 		.filter_map(|msg| {
 			let type_url = String::from_utf8(msg.type_url.clone()).unwrap_or_default();
@@ -121,66 +143,285 @@ pub(crate) fn deliver<T: Config>(msgs: &Vec<Any>) -> Weight {
 			msg
 		})
 		.fold(Weight::default(), |acc, msg| {
-			// Decode message type and get port_id
 			// Add benchmarked weight for that message type
 			// Add benchmarked weight for module callback
 			let temp = match msg {
 				Ics26Envelope::Ics2Msg(msgs) => match msgs {
-					ClientMsg::CreateClient(_) => <T as Config>::WeightInfo::create_client(),
-					ClientMsg::UpdateClient(_) => <T as Config>::WeightInfo::update_client(),
+					ClientMsg::CreateClient(msg) => {
+						let client_type = msg.client_state.client_type();
+						match client_type {
+							ClientType::Tendermint =>
+								<T as Config>::WeightInfo::create_tendermint_client(),
+							_ => Weight::default(),
+						}
+					},
+					ClientMsg::UpdateClient(msg) => {
+						let client_type_str = msg.client_id.as_str().rsplit_once('-');
+						if let Some((client_type_str, ..)) = client_type_str {
+							if let Ok(client_type) = ClientType::from_str(client_type_str) {
+								match client_type {
+									ClientType::Tendermint =>
+										<T as Config>::WeightInfo::update_tendermint_client(),
+									_ => Weight::default(),
+								}
+							} else {
+								Weight::default()
+							}
+						} else {
+							Weight::default()
+						}
+					},
 					ClientMsg::Misbehaviour(_) => Weight::default(),
 					ClientMsg::UpgradeClient(_) => Weight::default(),
 				},
 				Ics26Envelope::Ics3Msg(msgs) => match msgs {
-					ConnectionMsg::ConnectionOpenInit(_) =>
-						<T as Config>::WeightInfo::connection_init(),
-					ConnectionMsg::ConnectionOpenTry(_) =>
-						<T as Config>::WeightInfo::conn_try_open(),
-					ConnectionMsg::ConnectionOpenAck(_) =>
-						<T as Config>::WeightInfo::conn_open_ack(),
-					ConnectionMsg::ConnectionOpenConfirm(_) =>
-						<T as Config>::WeightInfo::conn_open_confirm(),
+					ConnectionMsg::ConnectionOpenInit(msg) => {
+						let client_type_str = msg.client_id.as_str().rsplit_once('-');
+						if let Some((client_type_str, ..)) = client_type_str {
+							if let Ok(client_type) = ClientType::from_str(client_type_str) {
+								match client_type {
+									ClientType::Tendermint =>
+										<T as Config>::WeightInfo::connection_open_init(),
+									_ => Weight::default(),
+								}
+							} else {
+								Weight::default()
+							}
+						} else {
+							Weight::default()
+						}
+					},
+					ConnectionMsg::ConnectionOpenTry(msg) => {
+						let client_type_str = msg.client_id.as_str().rsplit_once('-');
+						if let Some((client_type_str, ..)) = client_type_str {
+							if let Ok(client_type) = ClientType::from_str(client_type_str) {
+								match client_type {
+									ClientType::Tendermint =>
+										<T as Config>::WeightInfo::conn_try_open_tendermint(),
+									_ => Weight::default(),
+								}
+							} else {
+								Weight::default()
+							}
+						} else {
+							Weight::default()
+						}
+					},
+					ConnectionMsg::ConnectionOpenAck(msg) => {
+						let connection_id = msg.connection_id;
+						let ctx = crate::routing::Context::<T>::new();
+						let connection_end = ctx.connection_end(&connection_id).unwrap_or_default();
+						let client_type_str = connection_end.client_id().as_str().rsplit_once('-');
+						if let Some((client_type_str, ..)) = client_type_str {
+							if let Ok(client_type) = ClientType::from_str(client_type_str) {
+								match client_type {
+									ClientType::Tendermint =>
+										<T as Config>::WeightInfo::conn_open_ack_tendermint(),
+									_ => Weight::default(),
+								}
+							} else {
+								Weight::default()
+							}
+						} else {
+							Weight::default()
+						}
+					},
+					ConnectionMsg::ConnectionOpenConfirm(msg) => {
+						let connection_id = msg.connection_id;
+						let ctx = crate::routing::Context::<T>::new();
+						let connection_end = ctx.connection_end(&connection_id).unwrap_or_default();
+						let client_type_str = connection_end.client_id().as_str().rsplit_once('-');
+						if let Some((client_type_str, ..)) = client_type_str {
+							if let Ok(client_type) = ClientType::from_str(client_type_str) {
+								match client_type {
+									ClientType::Tendermint =>
+										<T as Config>::WeightInfo::conn_try_open_tendermint(),
+									_ => Weight::default(),
+								}
+							} else {
+								Weight::default()
+							}
+						} else {
+							Weight::default()
+						}
+					},
 				},
 				Ics26Envelope::Ics4ChannelMsg(msgs) => match msgs {
 					ChannelMsg::ChannelOpenInit(channel_msg) => {
 						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str())
 							.unwrap_or(Box::new(()));
 						let cb_weight = cb.on_chan_open_init();
-						cb_weight.saturating_add(<T as Config>::WeightInfo::create_channel())
+						let lc_verification_weight =
+							match channel_msg.channel.connection_hops.get(0) {
+								Some(connection_id) => {
+									let ctx = crate::routing::Context::<T>::new();
+									let connection_end =
+										ctx.connection_end(connection_id).unwrap_or_default();
+									let client_type_str =
+										connection_end.client_id().as_str().rsplit_once('-');
+									if let Some((client_type_str, ..)) = client_type_str {
+										if let Ok(client_type) =
+											ClientType::from_str(client_type_str)
+										{
+											match client_type {
+												ClientType::Tendermint =>
+													<T as Config>::WeightInfo::channel_open_init(),
+												_ => Weight::default(),
+											}
+										} else {
+											Weight::default()
+										}
+									} else {
+										Weight::default()
+									}
+								},
+								None => Weight::default(),
+							};
+						cb_weight.saturating_add(lc_verification_weight)
 					},
 					ChannelMsg::ChannelOpenTry(channel_msg) => {
 						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str())
 							.unwrap_or(Box::new(()));
 						let cb_weight = cb.on_chan_open_try();
-						cb_weight.saturating_add(<T as Config>::WeightInfo::channel_open_try())
+						let lc_verification_weight =
+							match channel_msg.channel.connection_hops.get(0) {
+								Some(connection_id) => {
+									let ctx = crate::routing::Context::<T>::new();
+									let connection_end =
+										ctx.connection_end(connection_id).unwrap_or_default();
+									let client_type_str =
+										connection_end.client_id().as_str().rsplit_once('-');
+									if let Some((client_type_str, ..)) = client_type_str {
+										if let Ok(client_type) =
+											ClientType::from_str(client_type_str)
+										{
+											match client_type {
+											ClientType::Tendermint => <T as Config>::WeightInfo::channel_open_try_tendermint(),
+											_ => Weight::default()
+										}
+										} else {
+											Weight::default()
+										}
+									} else {
+										Weight::default()
+									}
+								},
+								None => Weight::default(),
+							};
+						cb_weight.saturating_add(lc_verification_weight)
 					},
 					ChannelMsg::ChannelOpenAck(channel_msg) => {
 						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str())
 							.unwrap_or(Box::new(()));
 						let cb_weight =
 							cb.on_chan_open_ack(&channel_msg.port_id, &channel_msg.channel_id);
-						cb_weight.saturating_add(<T as Config>::WeightInfo::channel_open_ack())
+						let lc_verification_weight = match channel_client::<T>(
+							channel_msg.port_id.as_bytes(),
+							channel_msg.channel_id.to_string().as_bytes(),
+						) {
+							Ok(client_id) => {
+								let client_type_str = client_id.as_str().rsplit_once('-');
+								if let Some((client_type_str, ..)) = client_type_str {
+									if let Ok(client_type) = ClientType::from_str(client_type_str) {
+										match client_type {
+												ClientType::Tendermint => <T as Config>::WeightInfo::channel_open_ack_tendermint(),
+												_ => Weight::default()
+											}
+									} else {
+										Weight::default()
+									}
+								} else {
+									Weight::default()
+								}
+							},
+							Err(_) => Weight::default(),
+						};
+						cb_weight.saturating_add(lc_verification_weight)
 					},
 					ChannelMsg::ChannelOpenConfirm(channel_msg) => {
 						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str())
 							.unwrap_or(Box::new(()));
 						let cb_weight =
 							cb.on_chan_open_confirm(&channel_msg.port_id, &channel_msg.channel_id);
-						cb_weight.saturating_add(<T as Config>::WeightInfo::channel_open_confirm())
+						let lc_verification_weight = match channel_client::<T>(
+							channel_msg.port_id.as_bytes(),
+							channel_msg.channel_id.to_string().as_bytes(),
+						) {
+							Ok(client_id) => {
+								let client_type_str = client_id.as_str().rsplit_once('-');
+								if let Some((client_type_str, ..)) = client_type_str {
+									if let Ok(client_type) = ClientType::from_str(client_type_str) {
+										match client_type {
+											ClientType::Tendermint => <T as Config>::WeightInfo::channel_open_confirm_tendermint(),
+											_ => Weight::default()
+										}
+									} else {
+										Weight::default()
+									}
+								} else {
+									Weight::default()
+								}
+							},
+							Err(_) => Weight::default(),
+						};
+						cb_weight.saturating_add(lc_verification_weight)
 					},
 					ChannelMsg::ChannelCloseInit(channel_msg) => {
 						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str())
 							.unwrap_or(Box::new(()));
 						let cb_weight =
 							cb.on_chan_close_init(&channel_msg.port_id, &channel_msg.channel_id);
-						cb_weight.saturating_add(<T as Config>::WeightInfo::channel_close_init())
+						let lc_verification_weight = match channel_client::<T>(
+							channel_msg.port_id.as_bytes(),
+							channel_msg.channel_id.to_string().as_bytes(),
+						) {
+							Ok(client_id) => {
+								let client_type_str = client_id.as_str().rsplit_once('-');
+								if let Some((client_type_str, ..)) = client_type_str {
+									if let Ok(client_type) = ClientType::from_str(client_type_str) {
+										match client_type {
+											ClientType::Tendermint =>
+												<T as Config>::WeightInfo::channel_close_init(),
+											_ => Weight::default(),
+										}
+									} else {
+										Weight::default()
+									}
+								} else {
+									Weight::default()
+								}
+							},
+							Err(_) => Weight::default(),
+						};
+						cb_weight.saturating_add(lc_verification_weight)
 					},
 					ChannelMsg::ChannelCloseConfirm(channel_msg) => {
 						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str())
 							.unwrap_or(Box::new(()));
 						let cb_weight =
 							cb.on_chan_close_confirm(&channel_msg.port_id, &channel_msg.channel_id);
-						cb_weight.saturating_add(<T as Config>::WeightInfo::channel_close_confirm())
+						let lc_verification_weight = match channel_client::<T>(
+							channel_msg.port_id.as_bytes(),
+							channel_msg.channel_id.to_string().as_bytes(),
+						) {
+							Ok(client_id) => {
+								let client_type_str = client_id.as_str().rsplit_once('-');
+								if let Some((client_type_str, ..)) = client_type_str {
+									if let Ok(client_type) = ClientType::from_str(client_type_str) {
+										match client_type {
+											ClientType::Tendermint => <T as Config>::WeightInfo::channel_close_confirm_tendermint(),
+											_ => Weight::default()
+										}
+									} else {
+										Weight::default()
+									}
+								} else {
+									Weight::default()
+								}
+							},
+							Err(_) => Weight::default(),
+						};
+						cb_weight.saturating_add(lc_verification_weight)
 					},
 				},
 				Ics26Envelope::Ics4PacketMsg(msgs) => match msgs {
@@ -190,9 +431,31 @@ pub(crate) fn deliver<T: Config>(msgs: &Vec<Any>) -> Weight {
 						)
 						.unwrap_or(Box::new(()));
 						let cb_weight = cb.on_recv_packet(&packet_msg.packet);
-						cb_weight.saturating_add(<T as Config>::WeightInfo::recv_packet(
-							packet_msg.packet.data.len() as u32,
-						))
+						let lc_verification_weight = match channel_client::<T>(
+							packet_msg.packet.destination_port.as_bytes(),
+							packet_msg.packet.destination_channel.to_string().as_bytes(),
+						) {
+							Ok(client_id) => {
+								let client_type_str = client_id.as_str().rsplit_once('-');
+								if let Some((client_type_str, ..)) = client_type_str {
+									if let Ok(client_type) = ClientType::from_str(client_type_str) {
+										match client_type {
+											ClientType::Tendermint =>
+												<T as Config>::WeightInfo::recv_packet_tendermint(
+													packet_msg.packet.data.len() as u32,
+												),
+											_ => Weight::default(),
+										}
+									} else {
+										Weight::default()
+									}
+								} else {
+									Weight::default()
+								}
+							},
+							Err(_) => Weight::default(),
+						};
+						cb_weight.saturating_add(lc_verification_weight)
 					},
 					PacketMsg::AckPacket(packet_msg) => {
 						let cb = WeightRouter::<T>::get_weight(
@@ -203,10 +466,33 @@ pub(crate) fn deliver<T: Config>(msgs: &Vec<Any>) -> Weight {
 							&packet_msg.packet,
 							&packet_msg.acknowledgement,
 						);
-						cb_weight.saturating_add(<T as Config>::WeightInfo::ack_packet(
-							packet_msg.packet.data.len() as u32,
-							packet_msg.acknowledgement.into_bytes().len() as u32,
-						))
+						let lc_verification_weight = match channel_client::<T>(
+							packet_msg.packet.destination_port.as_bytes(),
+							packet_msg.packet.destination_channel.to_string().as_bytes(),
+						) {
+							Ok(client_id) => {
+								let client_type_str = client_id.as_str().rsplit_once('-');
+								if let Some((client_type_str, ..)) = client_type_str {
+									if let Ok(client_type) = ClientType::from_str(client_type_str) {
+										match client_type {
+											ClientType::Tendermint =>
+												<T as Config>::WeightInfo::ack_packet_tendermint(
+													packet_msg.packet.data.len() as u32,
+													packet_msg.acknowledgement.into_bytes().len()
+														as u32,
+												),
+											_ => Weight::default(),
+										}
+									} else {
+										Weight::default()
+									}
+								} else {
+									Weight::default()
+								}
+							},
+							Err(_) => Weight::default(),
+						};
+						cb_weight.saturating_add(lc_verification_weight)
 					},
 					PacketMsg::ToPacket(packet_msg) => {
 						let cb = WeightRouter::<T>::get_weight(
@@ -214,9 +500,31 @@ pub(crate) fn deliver<T: Config>(msgs: &Vec<Any>) -> Weight {
 						)
 						.unwrap_or(Box::new(()));
 						let cb_weight = cb.on_timeout_packet(&packet_msg.packet);
-						cb_weight.saturating_add(<T as Config>::WeightInfo::timeout_packet(
-							packet_msg.packet.data.len() as u32,
-						))
+						let lc_verification_weight = match channel_client::<T>(
+							packet_msg.packet.destination_port.as_bytes(),
+							packet_msg.packet.destination_channel.to_string().as_bytes(),
+						) {
+							Ok(client_id) => {
+								let client_type_str = client_id.as_str().rsplit_once('-');
+								if let Some((client_type_str, ..)) = client_type_str {
+									if let Ok(client_type) = ClientType::from_str(client_type_str) {
+										match client_type {
+											ClientType::Tendermint =>
+												<T as Config>::WeightInfo::timeout_packet_tendermint(
+													packet_msg.packet.data.len() as u32,
+												),
+											_ => Weight::default(),
+										}
+									} else {
+										Weight::default()
+									}
+								} else {
+									Weight::default()
+								}
+							},
+							Err(_) => Weight::default(),
+						};
+						cb_weight.saturating_add(lc_verification_weight)
 					},
 					PacketMsg::ToClosePacket(packet_msg) => {
 						let cb = WeightRouter::<T>::get_weight(
@@ -224,9 +532,31 @@ pub(crate) fn deliver<T: Config>(msgs: &Vec<Any>) -> Weight {
 						)
 						.unwrap_or(Box::new(()));
 						let cb_weight = cb.on_timeout_packet(&packet_msg.packet);
-						cb_weight.saturating_add(<T as Config>::WeightInfo::timeout_packet(
-							packet_msg.packet.data.len() as u32,
-						))
+						let lc_verification_weight = match channel_client::<T>(
+							packet_msg.packet.destination_port.as_bytes(),
+							packet_msg.packet.destination_channel.to_string().as_bytes(),
+						) {
+							Ok(client_id) => {
+								let client_type_str = client_id.as_str().rsplit_once('-');
+								if let Some((client_type_str, ..)) = client_type_str {
+									if let Ok(client_type) = ClientType::from_str(client_type_str) {
+										match client_type {
+											ClientType::Tendermint =>
+												<T as Config>::WeightInfo::timeout_packet_tendermint(
+													packet_msg.packet.data.len() as u32,
+												),
+											_ => Weight::default(),
+										}
+									} else {
+										Weight::default()
+									}
+								} else {
+									Weight::default()
+								}
+							},
+							Err(_) => Weight::default(),
+						};
+						cb_weight.saturating_add(lc_verification_weight)
 					},
 				},
 				_ => Weight::default(),

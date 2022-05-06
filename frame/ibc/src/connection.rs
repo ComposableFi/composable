@@ -1,9 +1,13 @@
 use super::*;
 
 use crate::{impls::host_height, routing::Context};
+use frame_support::traits::Get;
 use ibc::{
 	core::{
-		ics02_client::{client_consensus::AnyConsensusState, client_state::AnyClientState},
+		ics02_client::{
+			client_consensus::AnyConsensusState, client_state::AnyClientState,
+			context::ClientReader,
+		},
 		ics03_connection::{
 			connection::ConnectionEnd,
 			context::{ConnectionKeeper, ConnectionReader},
@@ -19,6 +23,7 @@ use tendermint_proto::Protobuf;
 impl<T: Config + Sync + Send> ConnectionReader for Context<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
+	Self: ClientReader,
 {
 	fn connection_end(&self, conn_id: &ConnectionId) -> Result<ConnectionEnd, ICS03Error> {
 		log::trace!("in connection : [connection_end] >> connection_id = {:?}", conn_id);
@@ -31,12 +36,8 @@ where
 	}
 
 	fn client_state(&self, client_id: &ClientId) -> Result<AnyClientState, ICS03Error> {
-		log::trace!("in connection : [client_state] >> client_id = {:?}", client_id);
-		let data = <ClientStates<T>>::get(client_id.as_bytes());
-		let state = AnyClientState::decode_vec(&*data)
-			.map_err(|_| ICS03Error::frozen_client(client_id.clone()))?;
-		log::trace!("in connection : [client_state] >> client_state: {:?}", state);
-		Ok(state)
+		ClientReader::client_state(self, client_id)
+			.map_err(|_| ICS03Error::implementation_specific())
 	}
 
 	fn host_current_height(&self) -> Height {
@@ -45,7 +46,8 @@ where
 			"in connection : [host_current_height] >> Host current height = {:?}",
 			Height::new(0, current_height)
 		);
-		Height::new(0, current_height)
+		let para_id: u32 = parachain_info::Pallet::<T>::get().into();
+		Height::new(para_id.into(), current_height)
 	}
 
 	fn host_oldest_height(&self) -> Height {
@@ -54,11 +56,12 @@ where
 		let (block_number, ..) = temp.get(0).cloned().unwrap_or_default();
 		let block_number = format!("{:?}", block_number);
 		let height = block_number.parse().unwrap_or_default();
+		let para_id: u32 = parachain_info::Pallet::<T>::get().into();
 		log::trace!(
 			"in connection : [host_oldest_height] >> Host oldest height = {:?}",
-			Height::new(0, height)
+			Height::new(para_id.into(), height)
 		);
-		Height::new(0, height)
+		Height::new(para_id.into(), height)
 	}
 
 	fn connection_counter(&self) -> Result<u64, ICS03Error> {
@@ -78,22 +81,8 @@ where
 		client_id: &ClientId,
 		height: Height,
 	) -> Result<AnyConsensusState, ICS03Error> {
-		log::trace!(
-			"in connection : [client_consensus_state] client_id = {:?}, height = {:?}",
-			client_id,
-			height
-		);
-
-		let height = height.encode_vec().map_err(|_| ICS03Error::implementation_specific())?;
-		let value = <ConsensusStates<T>>::get(client_id.as_bytes(), height);
-
-		let any_consensus_state = AnyConsensusState::decode_vec(&*value)
-			.map_err(|_| ICS03Error::missing_consensus_height())?;
-		log::trace!(
-			"in channel: [client_consensus_state] >> any consensus state = {:?}",
-			any_consensus_state
-		);
-		Ok(any_consensus_state)
+		ClientReader::consensus_state(self, client_id, height)
+			.map_err(|_| ICS03Error::missing_consensus_height())
 	}
 
 	// TODO: Define consensus state for substrate chains in ibc-rs and modify this after
@@ -104,7 +93,7 @@ where
 
 	#[cfg(any(test, feature = "runtime-benchmarks"))]
 	fn host_consensus_state(&self, _height: Height) -> Result<AnyConsensusState, ICS03Error> {
-		use crate::benchmark_utils::create_mock_state;
+		use crate::benchmarks::tendermint_benchmark_utils::create_mock_state;
 		let (.., cs_state) = create_mock_state();
 		Ok(AnyConsensusState::Tendermint(cs_state))
 	}

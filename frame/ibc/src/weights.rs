@@ -43,7 +43,7 @@ impl<T: frame_system::Config> crate::weight::WeightInfo for WeightInfo<T> {
 	// Storage: Ibc ClientUpdateHeight (r:0 w:1)
 	// Storage: Ibc ConsensusStates (r:0 w:1)
 	// Storage: Ibc ClientStates (r:0 w:1)
-	fn create_client() -> Weight {
+	fn create_tendermint_client() -> Weight {
 		(39_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
@@ -54,7 +54,7 @@ impl<T: frame_system::Config> crate::weight::WeightInfo for WeightInfo<T> {
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: Ibc ClientUpdateTime (r:0 w:1)
 	// Storage: Ibc ClientUpdateHeight (r:0 w:1)
-	fn update_client() -> Weight {
+	fn update_tendermint_client() -> Weight {
 		(498_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
@@ -63,7 +63,7 @@ impl<T: frame_system::Config> crate::weight::WeightInfo for WeightInfo<T> {
 	// Storage: Ibc CounterForConnections (r:1 w:1)
 	// Storage: Ibc Connections (r:1 w:1)
 	// Storage: Ibc ConnectionClient (r:1 w:1)
-	fn connection_init() -> Weight {
+	fn connection_open_init() -> Weight {
 		(36_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
@@ -72,7 +72,7 @@ impl<T: frame_system::Config> crate::weight::WeightInfo for WeightInfo<T> {
 	// Storage: Ibc Connections (r:1 w:1)
 	// Storage: Ibc ClientStates (r:1 w:0)
 	// Storage: Ibc ConsensusStates (r:1 w:0)
-	fn conn_try_open() -> Weight {
+	fn conn_try_open_tendermint() -> Weight {
 		(165_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
@@ -81,7 +81,7 @@ impl<T: frame_system::Config> crate::weight::WeightInfo for WeightInfo<T> {
 	// Storage: Ibc Connections (r:1 w:1)
 	// Storage: Ibc ClientStates (r:1 w:0)
 	// Storage: Ibc ConsensusStates (r:1 w:0)
-	fn conn_open_ack() -> Weight {
+	fn conn_open_ack_tendermint() -> Weight {
 		(183_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
@@ -89,7 +89,7 @@ impl<T: frame_system::Config> crate::weight::WeightInfo for WeightInfo<T> {
 	// Storage: Ibc Connections (r:1 w:1)
 	// Storage: Ibc ClientStates (r:1 w:0)
 	// Storage: Ibc ConsensusStates (r:1 w:0)
-	fn conn_open_confirm() -> Weight {
+	fn conn_open_confirm_tendermint() -> Weight {
 		(75_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
@@ -102,7 +102,7 @@ impl<T: frame_system::Config> crate::weight::WeightInfo for WeightInfo<T> {
 	// Storage: Ibc NextSequenceSend (r:0 w:1)
 	// Storage: Ibc Channels (r:0 w:1)
 	// Storage: Ibc NextSequenceRecv (r:0 w:1)
-	fn create_channel() -> Weight {
+	fn channel_open_init() -> Weight {
 		(49_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
@@ -112,7 +112,7 @@ impl<T: frame_system::Config> crate::weight::WeightInfo for WeightInfo<T> {
 	// Storage: Ibc Connections (r:1 w:0)
 	// Storage: Ibc ClientStates (r:1 w:0)
 	// Storage: Ibc ConsensusStates (r:1 w:0)
-	fn channel_open_try() -> Weight {
+	fn channel_open_try_tendermint() -> Weight {
 		(93_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
@@ -123,7 +123,7 @@ impl<T: frame_system::Config> crate::weight::WeightInfo for WeightInfo<T> {
 	// Storage: Ibc ClientStates (r:1 w:0)
 	// Storage: Ibc ConsensusStates (r:1 w:0)
 	// Storage: IbcPing Channels (r:1 w:1)
-	fn channel_open_ack() -> Weight {
+	fn channel_open_ack_tendermint() -> Weight {
 		(103_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
@@ -134,7 +134,7 @@ impl<T: frame_system::Config> crate::weight::WeightInfo for WeightInfo<T> {
 	// Storage: Ibc ClientStates (r:1 w:0)
 	// Storage: Ibc ConsensusStates (r:1 w:0)
 	// Storage: IbcPing Channels (r:1 w:1)
-	fn channel_open_confirm() -> Weight {
+	fn channel_open_confirm_tendermint() -> Weight {
 		(98_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
@@ -154,7 +154,7 @@ impl<T: frame_system::Config> crate::weight::WeightInfo for WeightInfo<T> {
 	// Storage: Ibc ClientStates (r:1 w:0)
 	// Storage: Ibc ConsensusStates (r:1 w:0)
 	// Storage: IbcPing Channels (r:1 w:1)
-	fn channel_close_confirm() -> Weight {
+	fn channel_close_confirm_tendermint() -> Weight {
 		(94_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
@@ -168,7 +168,7 @@ impl<T: frame_system::Config> crate::weight::WeightInfo for WeightInfo<T> {
 	// Storage: Ibc ClientUpdateTime (r:1 w:0)
 	// Storage: Ibc ClientUpdateHeight (r:1 w:0)
 	// Storage: Ibc PacketReceipt (r:1 w:1)
-	fn recv_packet(i: u32, ) -> Weight {
+	fn recv_packet_tendermint(i: u32, ) -> Weight {
 		(113_828_000 as Weight)
 			// Standard Error: 3_000
 			.saturating_add((119_000 as Weight).saturating_mul(i as Weight))
@@ -184,7 +184,7 @@ impl<T: frame_system::Config> crate::weight::WeightInfo for WeightInfo<T> {
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: Ibc ClientUpdateTime (r:1 w:0)
 	// Storage: Ibc ClientUpdateHeight (r:1 w:0)
-	fn ack_packet(i: u32, j: u32, ) -> Weight {
+	fn ack_packet_tendermint(i: u32, j: u32, ) -> Weight {
 		(124_544_000 as Weight)
 			// Standard Error: 2_000
 			.saturating_add((97_000 as Weight).saturating_mul(i as Weight))
@@ -202,7 +202,7 @@ impl<T: frame_system::Config> crate::weight::WeightInfo for WeightInfo<T> {
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: Ibc ClientUpdateTime (r:1 w:0)
 	// Storage: Ibc ClientUpdateHeight (r:1 w:0)
-	fn timeout_packet(i: u32, ) -> Weight {
+	fn timeout_packet_tendermint(i: u32, ) -> Weight {
 		(123_969_000 as Weight)
 			// Standard Error: 2_000
 			.saturating_add((108_000 as Weight).saturating_mul(i as Weight))
@@ -246,3 +246,4 @@ impl<T: frame_system::Config> crate::weight::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 }
+

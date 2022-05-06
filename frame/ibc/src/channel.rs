@@ -53,16 +53,8 @@ where
 
 	/// Returns the ConnectionState for the given identifier `connection_id`.
 	fn connection_end(&self, connection_id: &ConnectionId) -> Result<ConnectionEnd, ICS04Error> {
-		if <Connections<T>>::contains_key(connection_id.as_bytes()) {
-			let data = <Connections<T>>::get(connection_id.as_bytes());
-			let ret = ConnectionEnd::decode_vec(&*data)
-				.map_err(|_| ICS04Error::implementation_specific())?;
-			log::trace!("In channel : [connection_end] >> connection_end = {:?}", ret);
-			Ok(ret)
-		} else {
-			log::trace!("in channel : [channel_end] >> read connection end returns None");
-			Err(ICS04Error::connection_not_open(connection_id.clone()))
-		}
+		ConnectionReader::connection_end(self, connection_id)
+			.map_err(|_| ICS04Error::connection_not_open(connection_id.clone()))
 	}
 
 	fn connection_channels(
@@ -101,11 +93,8 @@ where
 	/// Returns the ClientState for the given identifier `client_id`. Necessary dependency towards
 	/// proof verification.
 	fn client_state(&self, client_id: &ClientId) -> Result<AnyClientState, ICS04Error> {
-		let data = <ClientStates<T>>::get(client_id.as_bytes());
-		let state = AnyClientState::decode_vec(&*data)
-			.map_err(|_| ICS04Error::implementation_specific())?;
-		log::trace!("in channel : [client_state] >> Any client state: {:?}", state);
-		Ok(state)
+		ClientReader::client_state(self, client_id)
+			.map_err(|_| ICS04Error::implementation_specific())
 	}
 
 	fn client_consensus_state(
@@ -113,16 +102,8 @@ where
 		client_id: &ClientId,
 		height: Height,
 	) -> Result<AnyConsensusState, ICS04Error> {
-		let height = height.encode_vec().map_err(|_| ICS04Error::implementation_specific())?;
-		let value = <ConsensusStates<T>>::get(client_id.as_bytes(), height);
-
-		let any_consensus_state = AnyConsensusState::decode_vec(&*value)
-			.map_err(|_| ICS04Error::implementation_specific())?;
-		log::trace!(
-			"in channel: [client_consensus_state] >> any consensus state = {:?}",
-			any_consensus_state
-		);
-		Ok(any_consensus_state)
+		ClientReader::consensus_state(self, client_id, height)
+			.map_err(|_| ICS04Error::implementation_specific())
 	}
 
 	fn authenticated_capability(&self, port_id: &PortId) -> Result<ChannelCapability, ICS04Error> {

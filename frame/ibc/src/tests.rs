@@ -1,5 +1,5 @@
 use crate::{mock::*, Any, ConnectionParams};
-use frame_support::assert_ok;
+use frame_support::{assert_ok, traits::Get};
 use ibc::{
 	core::{
 		ics02_client::{
@@ -162,8 +162,11 @@ fn should_send_ping_packet() {
 				vec![0u8; 32].try_into().unwrap(),
 				Some(vec![0u8; 32].try_into().unwrap()),
 				Some(
-					ConsensusProof::new(vec![0u8; 32].try_into().unwrap(), Height::new(0, 1))
-						.unwrap(),
+					ConsensusProof::new(
+						vec![0u8; 32].try_into().unwrap(),
+						Height::new(u32::from(ParachainInfo::get()).into(), 1),
+					)
+					.unwrap(),
 				),
 				None,
 				Height::new(0, 1),
@@ -199,8 +202,11 @@ fn should_send_ping_packet() {
 				vec![0u8; 32].try_into().unwrap(),
 				Some(vec![0u8; 32].try_into().unwrap()),
 				Some(
-					ConsensusProof::new(vec![0u8; 32].try_into().unwrap(), Height::new(0, 1))
-						.unwrap(),
+					ConsensusProof::new(
+						vec![0u8; 32].try_into().unwrap(),
+						Height::new(u32::from(ParachainInfo::get()).into(), 1),
+					)
+					.unwrap(),
 				),
 				None,
 				Height::new(0, 1),

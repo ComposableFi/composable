@@ -1,10 +1,12 @@
 //! Benchmarking setup for pallet-template
 
-use super::*;
-
-use crate::benchmark_utils::*;
 #[allow(unused)]
-use crate::Pallet as PalletIbc;
+use super::super::*;
+use crate::{
+	benchmarks::tendermint_benchmark_utils::*, pallet::Pallet as PalletIbc, routing::Context, Any,
+	Config,
+};
+use core::str::FromStr;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::traits::Hooks;
 use frame_system::RawOrigin;
@@ -63,10 +65,10 @@ const TIMESTAMP: u64 = 1650894363;
 benchmarks! {
 	where_clause {
 		where u32: From<<T as frame_system::Config>::BlockNumber>,
-				T: Send + Sync + pallet_timestamp::Config<Moment = u64>,
+				T: Send + Sync + pallet_timestamp::Config<Moment = u64> + parachain_info::Config,
 	}
 	// create_client
-	create_client {
+	create_tendermint_client {
 		let (mock_client_state, mock_cs_state) = create_mock_state();
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
 		let msg = MsgCreateAnyClient::new(
@@ -87,7 +89,7 @@ benchmarks! {
 	}
 
 	// update_client
-	update_client {
+	update_tendermint_client {
 		let mut ctx = routing::Context::<T>::new();
 		// Set timestamp to the same timestamp used in generating tendermint header, because there
 		// will be a comparison between the local timestamp and the timestamp existing in the header
@@ -149,7 +151,7 @@ benchmarks! {
 
 
 	// connection open try
-	conn_try_open {
+	conn_try_open_tendermint {
 		let mut ctx = routing::Context::<T>::new();
 		let now: <T as pallet_timestamp::Config>::Moment = TIMESTAMP.saturating_mul(1000);
 		pallet_timestamp::Pallet::<T>::set_timestamp(now);
@@ -181,7 +183,7 @@ benchmarks! {
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 		ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
 
-		let (cs_state, value) = create_conn_open_try();
+		let (cs_state, value) = create_conn_open_try::<T>();
 		// Update consensus state with the new root that we'll enable proofs to be correctly verified
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
 		let caller: T::AccountId = whitelisted_caller();
@@ -194,7 +196,7 @@ benchmarks! {
 
 	// Commenting this out pending bug-fix in ibc-rs
 	// connection open ack
-	// conn_open_ack {
+	// conn_open_ack_tendermint {
 	// 	let mut ctx = routing::Context::<T>::new();
 	// 	let now: <T as pallet_timestamp::Config>::Moment = TIMESTAMP.saturating_mul(1000);
 	// 	pallet_timestamp::Pallet::<T>::set_timestamp(now);
@@ -222,7 +224,7 @@ benchmarks! {
 	// 	let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 	// 	ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
 	//
-	// 	let (cs_state, value) = create_conn_open_ack();
+	// 	let (cs_state, value) = create_conn_open_ack::<T>();
 	// 	ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
 	// 	let caller: T::AccountId = whitelisted_caller();
 	// 	let msg = Any { type_url: CONN_OPEN_ACK_TYPE_URL.as_bytes().to_vec(), value: value.encode_vec().unwrap() };
@@ -233,7 +235,7 @@ benchmarks! {
 	// }
 
 	// connection open confirm
-	conn_open_confirm {
+	conn_open_confirm_tendermint {
 		let mut ctx = routing::Context::<T>::new();
 		let now: <T as pallet_timestamp::Config>::Moment = TIMESTAMP.saturating_mul(1000);
 		pallet_timestamp::Pallet::<T>::set_timestamp(now);
@@ -264,7 +266,7 @@ benchmarks! {
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 		ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
 
-		let (cs_state, value) = create_conn_open_confirm();
+		let (cs_state, value) = create_conn_open_confirm::<T>();
 		// Update consensus state with the new root that we'll enable proofs to be correctly verified
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
 		let caller: T::AccountId = whitelisted_caller();
@@ -277,7 +279,7 @@ benchmarks! {
 
 	// For all channel messages to be processed successfully, a connection end must exist and be in the OPEN state
 	// create channel
-	create_channel {
+	channel_open_init {
 		let mut ctx = routing::Context::<T>::new();
 		let (mock_client_state, mock_cs_state) = create_mock_state();
 		let mock_client_state = AnyClientState::Tendermint(mock_client_state);
@@ -323,7 +325,7 @@ benchmarks! {
 	}
 
 	// channel_open_try
-	channel_open_try {
+	channel_open_try_tendermint {
 		let mut ctx = routing::Context::<T>::new();
 		let now: <T as pallet_timestamp::Config>::Moment = TIMESTAMP.saturating_mul(1000);
 		pallet_timestamp::Pallet::<T>::set_timestamp(now);
@@ -390,7 +392,7 @@ benchmarks! {
 	}
 
 	// channel_open_ack
-	channel_open_ack {
+	channel_open_ack_tendermint {
 		let mut ctx = routing::Context::<T>::new();
 		let now: <T as pallet_timestamp::Config>::Moment = TIMESTAMP.saturating_mul(1000);
 		pallet_timestamp::Pallet::<T>::set_timestamp(now);
@@ -454,7 +456,7 @@ benchmarks! {
 	}
 
 	// channel_open_confirm
-	channel_open_confirm {
+	channel_open_confirm_tendermint {
 		let mut ctx = routing::Context::<T>::new();
 		let now: <T as pallet_timestamp::Config>::Moment = TIMESTAMP.saturating_mul(1000);
 		pallet_timestamp::Pallet::<T>::set_timestamp(now);
@@ -567,7 +569,7 @@ benchmarks! {
 	}
 
 	// channel_close_confirm
-	channel_close_confirm {
+	channel_close_confirm_tendermint {
 		let mut ctx = routing::Context::<T>::new();
 		let now: <T as pallet_timestamp::Config>::Moment = TIMESTAMP.saturating_mul(1000);
 		pallet_timestamp::Pallet::<T>::set_timestamp(now);
@@ -625,7 +627,7 @@ benchmarks! {
 
 
 	// recv_packet
-	recv_packet {
+	recv_packet_tendermint {
 		let i in 1..1000u32;
 		let data = vec![0u8;i.try_into().unwrap()];
 		let mut ctx = routing::Context::<T>::new();
@@ -690,7 +692,7 @@ benchmarks! {
 	}
 
 	// ack_packet
-	ack_packet {
+	ack_packet_tendermint {
 		let i in 1..1000u32;
 		let j in 1..1000u32;
 		let data = vec![0u8;i.try_into().unwrap()];
@@ -756,7 +758,7 @@ benchmarks! {
 		}
 	}
 
-	timeout_packet {
+	timeout_packet_tendermint {
 		let i in 1..1000u32;
 		let data = vec![0u8;i.try_into().unwrap()];
 		let mut ctx = routing::Context::<T>::new();
@@ -836,7 +838,7 @@ benchmarks! {
 		let e in 1..1000;
 		// counter for packet receipts
 		let f in 1..1000;
-		let mut ctx = routing::Context::<T>::new();
+		let mut ctx = crate::routing::Context::<T>::new();
 		for i in 1..a {
 			let (mock_client_state, mock_cs_state) = create_mock_state();
 			let mock_client_state = AnyClientState::Tendermint(mock_client_state);

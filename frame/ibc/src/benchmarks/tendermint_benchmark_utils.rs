@@ -1,6 +1,6 @@
-use super::*;
-use crate::routing::Context;
-use core::time::Duration;
+use crate::{routing::Context, Config};
+use core::{str::FromStr, time::Duration};
+use frame_support::traits::Get;
 use ibc::{
 	clients::ics07_tendermint::{
 		client_state::{AllowUpdate, ClientState as TendermintClientState},
@@ -51,7 +51,8 @@ use ibc::{
 	Height,
 };
 use ibc_proto::{ibc::core::commitment::v1::MerkleProof, ics23::CommitmentProof};
-use scale_info::prelude::string::ToString;
+use scale_info::prelude::{format, string::ToString};
+use sp_std::prelude::*;
 use tendermint::{block::signed_header::SignedHeader, validator::Set as ValidatorSet, Hash};
 use tendermint_proto::Protobuf;
 
@@ -134,7 +135,7 @@ pub fn create_client_update() -> MsgUpdateAnyClient {
 // This new root is then set as the ibc commitment root in the light client consensus state.
 
 // Creates a MsgConnectionOpenTry from a tendermint chain submitted to a substrate chain
-pub fn create_conn_open_try() -> (ConsensusState, MsgConnectionOpenTry) {
+pub fn create_conn_open_try<T: Config>() -> (ConsensusState, MsgConnectionOpenTry) {
 	let client_id = ClientId::new(ClientType::Tendermint, 0).unwrap();
 	let counterparty_client_id = ClientId::new(ClientType::Tendermint, 1).unwrap();
 	let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
@@ -157,7 +158,11 @@ pub fn create_conn_open_try() -> (ConsensusState, MsgConnectionOpenTry) {
 	let (client_state, cs_state) = create_mock_state();
 	let consensus_path = format!(
 		"{}",
-		ClientConsensusStatePath { client_id: counterparty_client_id.clone(), epoch: 0, height: 1 }
+		ClientConsensusStatePath {
+			client_id: counterparty_client_id.clone(),
+			epoch: u32::from(parachain_info::Pallet::<T>::get()).into(),
+			height: 1
+		}
 	)
 	.as_bytes()
 	.to_vec();
@@ -227,7 +232,7 @@ pub fn create_conn_open_try() -> (ConsensusState, MsgConnectionOpenTry) {
 				Some(
 					ibc::proofs::ConsensusProof::new(
 						consensus_buf.try_into().unwrap(),
-						Height::new(0, 1),
+						Height::new(u32::from(parachain_info::Pallet::<T>::get()).into(), 1),
 					)
 					.unwrap(),
 				),
@@ -241,7 +246,7 @@ pub fn create_conn_open_try() -> (ConsensusState, MsgConnectionOpenTry) {
 	)
 }
 
-pub fn create_conn_open_ack() -> (ConsensusState, MsgConnectionOpenAck) {
+pub fn create_conn_open_ack<T: Config>() -> (ConsensusState, MsgConnectionOpenAck) {
 	let client_id = ClientId::new(ClientType::Tendermint, 0).unwrap();
 	let counterparty_client_id = ClientId::new(ClientType::Tendermint, 1).unwrap();
 	let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
@@ -260,7 +265,11 @@ pub fn create_conn_open_ack() -> (ConsensusState, MsgConnectionOpenAck) {
 	let (client_state, cs_state) = create_mock_state();
 	let consensus_path = format!(
 		"{}",
-		ClientConsensusStatePath { client_id: counterparty_client_id.clone(), epoch: 0, height: 1 }
+		ClientConsensusStatePath {
+			client_id: counterparty_client_id.clone(),
+			epoch: u32::from(parachain_info::Pallet::<T>::get()).into(),
+			height: 1
+		}
 	)
 	.as_bytes()
 	.to_vec();
@@ -328,7 +337,7 @@ pub fn create_conn_open_ack() -> (ConsensusState, MsgConnectionOpenAck) {
 				Some(
 					ibc::proofs::ConsensusProof::new(
 						consensus_buf.try_into().unwrap(),
-						Height::new(0, 1),
+						Height::new(u32::from(parachain_info::Pallet::<T>::get()).into(), 1),
 					)
 					.unwrap(),
 				),
@@ -342,7 +351,7 @@ pub fn create_conn_open_ack() -> (ConsensusState, MsgConnectionOpenAck) {
 	)
 }
 
-pub fn create_conn_open_confirm() -> (ConsensusState, MsgConnectionOpenConfirm) {
+pub fn create_conn_open_confirm<T: Config>() -> (ConsensusState, MsgConnectionOpenConfirm) {
 	let client_id = ClientId::new(ClientType::Tendermint, 0).unwrap();
 	let counterparty_client_id = ClientId::new(ClientType::Tendermint, 1).unwrap();
 	let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
@@ -361,7 +370,11 @@ pub fn create_conn_open_confirm() -> (ConsensusState, MsgConnectionOpenConfirm) 
 	let (.., cs_state) = create_mock_state();
 	let consensus_path = format!(
 		"{}",
-		ClientConsensusStatePath { client_id: counterparty_client_id.clone(), epoch: 0, height: 1 }
+		ClientConsensusStatePath {
+			client_id: counterparty_client_id.clone(),
+			epoch: u32::from(parachain_info::Pallet::<T>::get()).into(),
+			height: 1
+		}
 	)
 	.as_bytes()
 	.to_vec();
@@ -415,7 +428,7 @@ pub fn create_conn_open_confirm() -> (ConsensusState, MsgConnectionOpenConfirm) 
 				Some(
 					ibc::proofs::ConsensusProof::new(
 						consensus_buf.try_into().unwrap(),
-						Height::new(0, 1),
+						Height::new(u32::from(parachain_info::Pallet::<T>::get()).into(), 1),
 					)
 					.unwrap(),
 				),
@@ -672,7 +685,7 @@ where
 		destination_port: port_id.clone(),
 		destination_channel: ChannelId::new(0),
 		data,
-		timeout_height: Height::new(0, 5),
+		timeout_height: Height::new(2000, 5),
 		timeout_timestamp: Timestamp::from_nanoseconds(1690894363u64.saturating_mul(1000000000))
 			.unwrap(),
 	};
@@ -743,7 +756,7 @@ where
 		destination_port: port_id.clone(),
 		destination_channel: ChannelId::new(0),
 		data: data.clone(),
-		timeout_height: Height::new(0, 5),
+		timeout_height: Height::new(2000, 5),
 		timeout_timestamp: Timestamp::from_nanoseconds(1690894363u64.saturating_mul(1000000000))
 			.unwrap(),
 	};

@@ -273,11 +273,6 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 			port_id,
 			counterparty_version
 		);
-		let channel_id = channel_id.to_string().as_bytes().to_vec();
-		let _ = Channels::<T>::try_mutate::<_, Error<T>, _>(|val| {
-			val.push(channel_id);
-			Ok(())
-		});
 		Ok(())
 	}
 
@@ -288,11 +283,6 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 		channel_id: &ChannelId,
 	) -> Result<(), Ics04Error> {
 		log::info!("Channel open confirmed {:?}, {:?}", channel_id, port_id);
-		let channel_id = channel_id.to_string().as_bytes().to_vec();
-		let _ = Channels::<T>::try_mutate::<_, Error<T>, _>(|val| {
-			val.push(channel_id);
-			Ok(())
-		});
 		Ok(())
 	}
 
@@ -303,15 +293,6 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 		channel_id: &ChannelId,
 	) -> Result<(), Ics04Error> {
 		log::info!("Channel close started {:?} {:?}", channel_id, port_id);
-		let channel_id = channel_id.to_string().as_bytes().to_vec();
-		let _ = Channels::<T>::try_mutate::<_, Error<T>, _>(|val| {
-			let new_val = val
-				.into_iter()
-				.filter_map(|ch| if ch != &channel_id { Some(ch.clone()) } else { None })
-				.collect::<Vec<_>>();
-			*val = new_val;
-			Ok(())
-		});
 		Ok(())
 	}
 
@@ -322,15 +303,6 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 		channel_id: &ChannelId,
 	) -> Result<(), Ics04Error> {
 		log::info!("Channel close confirmed\n ChannelId: {:?}, PortId: {:?}", channel_id, port_id);
-		let channel_id = channel_id.to_string().as_bytes().to_vec();
-		let _ = Channels::<T>::try_mutate::<_, Error<T>, _>(|val| {
-			let new_val = val
-				.into_iter()
-				.filter_map(|ch| if ch != &channel_id { Some(ch.clone()) } else { None })
-				.collect::<Vec<_>>();
-			*val = new_val;
-			Ok(())
-		});
 		Ok(())
 	}
 

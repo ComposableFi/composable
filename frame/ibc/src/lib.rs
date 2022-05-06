@@ -64,15 +64,13 @@ impl Default for IbcConsensusState {
 	}
 }
 
+#[cfg(any(test, feature = "runtime-benchmarks"))]
+pub(crate) mod benchmarks;
 #[cfg(test)]
 mod mock;
 #[cfg(test)]
 mod tests;
 
-#[cfg(any(test, feature = "runtime-benchmarks"))]
-mod benchmark_utils;
-#[cfg(feature = "runtime-benchmarks")]
-mod benchmarking;
 mod impls;
 pub mod weight;
 pub mod weights;
@@ -103,7 +101,9 @@ pub mod pallet {
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config: frame_system::Config + balances::Config + pallet_ibc_ping::Config {
+	pub trait Config:
+		frame_system::Config + balances::Config + pallet_ibc_ping::Config + parachain_info::Config
+	{
 		type TimeProvider: UnixTime;
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
@@ -340,7 +340,7 @@ pub mod pallet {
 				.map(|msg| ibc::core::ics26_routing::handler::deliver(&mut ctx, msg))
 				.collect::<Result<Vec<_>, _>>()
 				.map_err(|e| {
-					log::error!("{:?}", e);
+					log::info!("{:?}", e);
 					Error::<T>::ProcessingError
 				})?;
 

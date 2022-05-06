@@ -25,6 +25,7 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18", default-features = false }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18", default-features = false }
 balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18", default-features = false }
+parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false , branch = "polkadot-v0.9.18" }
 
 ibc = { version = "0.14.1", default-features = false }
 ibc-proto = { version = "0.17.1", default-features = false }
@@ -69,7 +70,8 @@ std = [
 	'ibc-primitives/std',
 	'balances/std',
 	"pallet-ibc-ping/std",
-	"ibc-trait/std"
+	"ibc-trait/std",
+	"parachain-info/std"
 ]
 
 runtime-benchmarks = [
@@ -83,4 +85,5 @@ runtime-benchmarks = [
 	"ics23",
 	"prost"
 ]
+
 try-runtime = ["frame-support/try-runtime"]
