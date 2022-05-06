@@ -17,11 +17,6 @@ type Block = frame_system::mocking::MockBlock<Runtime>;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 
 pub const ROOT: AccountId = 0_u32;
-pub const ALICE: AccountId = 1_u32;
-pub const BOB: AccountId = 2_u32;
-pub const CHARLIE: AccountId = 3_u32;
-
-pub const DECIMALS: u8 = 12;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -93,6 +88,10 @@ impl pallet_assets_registry::Config for Runtime {
 	type CurrencyFactory = CurrencyFactory;
 	type ForeignAssetId = XcmAssetLocation;
 	type UpdateAssetRegistryOrigin = EnsureOneOf<
+		EnsureSignedBy<RootAccount, AccountId>, // for tests
+		EnsureRoot<AccountId>,                  // for benchmarks
+	>;
+	type ParachainOrGovernanceOrigin = EnsureOneOf<
 		EnsureSignedBy<RootAccount, AccountId>, // for tests
 		EnsureRoot<AccountId>,                  // for benchmarks
 	>;
