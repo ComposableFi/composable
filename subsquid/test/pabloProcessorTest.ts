@@ -22,7 +22,8 @@ const UNIT = 1_000_000_000_000;
 
 function assertPool(
     poolArg: PabloPool,
-    poolId: string,
+    id: string,
+    poolId: bigint,
     owner: string,
     blockNumber: bigint,
     transactionCount: number,
@@ -30,9 +31,9 @@ function assertPool(
     totalLiquidity: string,
     totalVolume: string
 ) {
+    expect(poolArg.id).eq(id);
     expect(poolArg.poolId).eq(poolId);
-    expect(poolArg.owner)
-        .eq(owner);
+    expect(poolArg.owner).eq(owner);
     expect(poolArg.blockNumber).eq(blockNumber);
     expect(poolArg.transactionCount).eq(transactionCount);
     expect(poolArg.quoteAssetId).eq(quoteAssetId);
@@ -85,6 +86,7 @@ function createCtx(storeMock: Store, blockHeight: number) {
     let ctx: EventHandlerContext = instance(ctxMock);
     ctx.store = instance(storeMock);
     ctx.block = blockMock;
+    ctx.event = event;
     return ctx;
 }
 
@@ -198,7 +200,8 @@ function createZeroPool() {
     let baseAsset = createZeroAsset('1-1', BigInt(1));
     let quoteAsset = createZeroAsset('1-4', BigInt(4));
     let pabloPool = new PabloPool();
-    pabloPool.poolId = '1';
+    pabloPool.id = randomUUID();
+    pabloPool.poolId = BigInt(1);
     pabloPool.owner = encodeAccount(createAccount());
     pabloPool.quoteAssetId = BigInt(4);
     pabloPool.totalLiquidity = '0.0';
@@ -241,7 +244,8 @@ describe('PoolCreated Tests', function () {
         const [poolArg] = capture(storeMock.save).first();
         assertPool(
             poolArg as unknown as PabloPool,
-            '1',
+            ctx.event.id,
+            BigInt(1),
             encodeAccount(owner),
             BigInt(1),
             1,
@@ -252,7 +256,7 @@ describe('PoolCreated Tests', function () {
         verify(storeMock.save(anyOfClass(PabloPoolAsset))).twice();
         const [assetOneArg] = capture(storeMock.save).second();
         assertAsset(assetOneArg as unknown as PabloPoolAsset,
-            '1-1',
+            ctx.event.id + '-' + '1-1',
             BigInt(1),
             BigInt(1),
             BigInt(0),
@@ -260,7 +264,7 @@ describe('PoolCreated Tests', function () {
         );
         const [assetTwoArg] = capture(storeMock.save).byCallIndex(2);
         assertAsset(assetTwoArg as unknown as PabloPoolAsset,
-            '1-4',
+            ctx.event.id + '-' + '1-4',
             BigInt(4),
             BigInt(1),
             BigInt(0),
@@ -301,7 +305,8 @@ describe('Liquidity Added & Removed Tests', function () {
         const [poolArg] = capture(storeMock.save).first();
         assertPool(
             poolArg as unknown as PabloPool,
-            '1',
+            ctx.event.id,
+            BigInt(1),
             pabloPool.owner,
             BigInt(1),
             2,
@@ -312,7 +317,7 @@ describe('Liquidity Added & Removed Tests', function () {
         verify(storeMock.save(anyOfClass(PabloPoolAsset))).twice();
         const [assetOneArg] = capture(storeMock.save).second();
         assertAsset(assetOneArg as unknown as PabloPoolAsset,
-            '1-1',
+            ctx.event.id + '-' +  '1-1',
             BigInt(1),
             BigInt(1),
             BigInt(10_000 * UNIT),
@@ -320,7 +325,7 @@ describe('Liquidity Added & Removed Tests', function () {
         );
         const [assetTwoArg] = capture(storeMock.save).byCallIndex(2);
         assertAsset(assetTwoArg as unknown as PabloPoolAsset,
-            '1-4',
+            ctx.event.id + '-' +  '1-4',
             BigInt(4),
             BigInt(1),
             BigInt(10_000 * UNIT),
@@ -359,7 +364,8 @@ describe('Liquidity Added & Removed Tests', function () {
         const [poolArg] = capture(storeMock.save).first();
         assertPool(
             poolArg as unknown as PabloPool,
-            '1',
+            ctx.event.id,
+            BigInt(1),
             pabloPool.owner,
             BigInt(1),
             3,
@@ -370,7 +376,7 @@ describe('Liquidity Added & Removed Tests', function () {
         verify(storeMock.save(anyOfClass(PabloPoolAsset))).twice();
         const [assetOneArg] = capture(storeMock.save).second();
         assertAsset(assetOneArg as unknown as PabloPoolAsset,
-            '1-1',
+            ctx.event.id + '-' +  '1-1',
             BigInt(1),
             BigInt(1),
             BigInt(9_990_000 * UNIT),
@@ -378,7 +384,7 @@ describe('Liquidity Added & Removed Tests', function () {
         );
         const [assetTwoArg] = capture(storeMock.save).byCallIndex(2);
         assertAsset(assetTwoArg as unknown as PabloPoolAsset,
-            '1-4',
+            ctx.event.id + '-' + '1-4',
             BigInt(4),
             BigInt(1),
             BigInt(9_990_000 * UNIT),
@@ -420,7 +426,8 @@ describe('PoolDeleted Tests', function () {
         const [poolArg] = capture(storeMock.save).first();
         assertPool(
             poolArg as unknown as PabloPool,
-            '1',
+            ctx.event.id,
+            BigInt(1),
             pabloPool.owner,
             BigInt(1),
             3,
@@ -431,7 +438,7 @@ describe('PoolDeleted Tests', function () {
         verify(storeMock.save(anyOfClass(PabloPoolAsset))).twice();
         const [assetOneArg] = capture(storeMock.save).second();
         assertAsset(assetOneArg as unknown as PabloPoolAsset,
-            '1-1',
+            ctx.event.id + '-' +  '1-1',
             BigInt(1),
             BigInt(1),
             BigInt(0),
@@ -439,7 +446,7 @@ describe('PoolDeleted Tests', function () {
         );
         const [assetTwoArg] = capture(storeMock.save).byCallIndex(2);
         assertAsset(assetTwoArg as unknown as PabloPoolAsset,
-            '1-4',
+            ctx.event.id + '-' + '1-4',
             BigInt(4),
             BigInt(1),
             BigInt(0),
@@ -481,7 +488,8 @@ describe('Swapped Tests', function () {
         const [poolArg] = capture(storeMock.save).first();
         assertPool(
             poolArg as unknown as PabloPool,
-            '1',
+            ctx.event.id,
+            BigInt(1),
             pabloPool.owner,
             BigInt(1),
             3,
@@ -492,7 +500,7 @@ describe('Swapped Tests', function () {
         verify(storeMock.save(anyOfClass(PabloPoolAsset))).twice();
         const [assetOneArg] = capture(storeMock.save).second();
         assertAsset(assetOneArg as unknown as PabloPoolAsset,
-            '1-1',
+            ctx.event.id + '-' +    '1-1',
             BigInt(1),
             BigInt(1),
             BigInt(9899 * UNIT),
@@ -500,7 +508,7 @@ describe('Swapped Tests', function () {
         );
         const [assetTwoArg] = capture(storeMock.save).byCallIndex(2);
         assertAsset(assetTwoArg as unknown as PabloPoolAsset,
-            '1-4',
+            ctx.event.id + '-' +   '1-4',
             BigInt(4),
             BigInt(1),
             BigInt(10_025 * UNIT),
@@ -546,7 +554,8 @@ describe('Swapped Tests', function () {
         const [poolArg] = capture(storeMock.save).first();
         assertPool(
             poolArg as unknown as PabloPool,
-            '1',
+            ctx.event.id,
+            BigInt(1),
             pabloPool.owner,
             BigInt(1),
             3,
@@ -557,7 +566,7 @@ describe('Swapped Tests', function () {
         verify(storeMock.save(anyOfClass(PabloPoolAsset))).twice();
         const [assetOneArg] = capture(storeMock.save).second();
         assertAsset(assetOneArg as unknown as PabloPoolAsset,
-            '1-1',
+            ctx.event.id + '-' +  '1-1',
             BigInt(1),
             BigInt(1),
             BigInt(10_025 * UNIT),
@@ -565,7 +574,7 @@ describe('Swapped Tests', function () {
         );
         const [assetTwoArg] = capture(storeMock.save).byCallIndex(2);
         assertAsset(assetTwoArg as unknown as PabloPoolAsset,
-            '1-4',
+            ctx.event.id + '-' + '1-4',
             BigInt(4),
             BigInt(1),
             BigInt(9987 * UNIT),
