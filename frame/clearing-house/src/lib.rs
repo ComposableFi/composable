@@ -44,12 +44,14 @@
 //! - [`add_margin`](Call::add_margin)
 //! - [`create_market`](Call::create_market)
 //! - [`open_position`](Call::open_position)
+//! - [`update_funding`](Call::update_funding)
 //!
 //! ### Implemented Functions
 //!
 //! - [`add_margin`](pallet/struct.Pallet.html#method.add_margin-1)
 //! - [`create_market`](pallet/struct.Pallet.html#method.create_market-1)
 //! - [`open_position`](pallet/struct.Pallet.html#method.open_position-1)
+//! - [`update_funding`](pallet/struct.Pallet.html#method.update_funding-1)
 //! - [`funding_rate`](Pallet::funding_rate)
 //! - [`unrealized_funding`](Pallet::unrealized_funding)
 //!
