@@ -24,11 +24,11 @@ use frame_support::{
 	assert_noop, assert_ok,
 	codec::Decode,
 	traits::{
-		schedule::DispatchTime, Currency, EnsureOrigin, Get, OnInitialize, UnfilteredDispatchable,
+		schedule::DispatchTime, EnsureOrigin, Get, OnInitialize, UnfilteredDispatchable,
 	},
 };
 use frame_system::{Pallet as System, RawOrigin};
-use sp_runtime::traits::{BadOrigin, Bounded, One};
+use sp_runtime::traits::{BadOrigin, One};
 
 use crate::Pallet as Democracy;
 use sp_std::vec;
@@ -38,7 +38,7 @@ const MAX_REFERENDUMS: u32 = 99;
 const MAX_SECONDERS: u32 = 100;
 const MAX_BYTES: u32 = 16_384;
 
-const DOT_ASSET: u64 = 2;
+const DOT_ASSET: u128 = 2;
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 	frame_system::Pallet::<T>::assert_last_event(generic_event.into());

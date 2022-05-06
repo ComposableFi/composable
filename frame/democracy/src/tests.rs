@@ -159,11 +159,6 @@ parameter_types! {
 	pub const MaxLocks: u32 = 50;
 }
 
-parameter_types! {
-	pub const ExistentialDeposit: Balance = 1;
-	pub const MaxLocks: u32 = 50;
-}
-
 impl pallet_balances::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
