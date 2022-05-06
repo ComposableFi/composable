@@ -217,6 +217,7 @@ pub type PropIndex = u32;
 /// A referendum index.
 pub type ReferendumIndex = u32;
 
+#[allow(type_alias_bounds)]
 type BalanceOf<T: Config> = T::Balance;
 
 type NegativeImbalanceOf<T> = <<T as Config>::NativeCurrency as Currency<
@@ -1229,7 +1230,7 @@ pub mod pallet {
 			asset_id: T::AssetId,
 		) -> DispatchResult {
 			ensure_signed(origin)?;
-			Self::update_lock(&target, asset_id);
+			Self::update_lock(&target, asset_id)?;
 			Ok(())
 		}
 
@@ -2101,7 +2102,7 @@ impl<T: Config> Pallet<T> {
 fn decode_compact_u32_at(key: &[u8]) -> Option<u32> {
 	// `Compact<u32>` takes at most 5 bytes.
 	let mut buf = [0u8; 5];
-	let bytes = sp_io::storage::read(key.clone(), &mut buf, 0)?;
+	let bytes = sp_io::storage::read(key, &mut buf, 0)?;
 	// The value may be smaller than 5 bytes.
 	let mut input = &buf[0..buf.len().min(bytes as usize)];
 	match codec::Compact::<u32>::decode(&mut input) {
