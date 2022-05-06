@@ -612,10 +612,7 @@ proptest! {
 				<TestPallet as ClearingHouse>::open_position(
 					&ALICE,
 					&market_id,
-					match direction {
-						Direction::Long => Direction::Short,
-						Direction::Short => Direction::Long,
-					},
+					direction.opposite(),
 					new_base_value / 2,
 					base_amount_limit / 2,
 				),
