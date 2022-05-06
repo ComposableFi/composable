@@ -13,10 +13,16 @@ export class PabloPool {
   id!: string
 
   /**
-   * Pool ID
+   * ID of the last event that was used to derive this entity data
    */
   @Column_("text", {nullable: false})
-  poolId!: string
+  eventId!: string
+
+  /**
+   * Pool ID
+   */
+  @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
+  poolId!: bigint
 
   @Column_("text", {nullable: false})
   owner!: string

@@ -11,6 +11,7 @@ This proposal suggest to open bidirectional HRMP channel between Picasso and Sta
     - [Proposal body](#proposal-body)
       - [Decoded proposal](#decoded-proposal)
   - [Accept request from Statemine](#accept-request-from-statemine)
+  - [Make price for USDT](#make-price-for-usdt)
   - [References](#references)
 
 ## Steps
@@ -19,6 +20,7 @@ This proposal suggest to open bidirectional HRMP channel between Picasso and Sta
 1. Open channel request from Picasso to Statemine
 2. Statemine accept channel request and send request to Picasso
 3. Accept channel form Statemine to Picasso
+4. Make USDT priceable on Picasso
 
 All steps are SCALE encoded and can be decoded and exectued by named consensuses.
 
@@ -253,6 +255,10 @@ Accept channel from state mine as  `0x3c01e8030000` (can be decoded by Kusama)
 Sent as XCM  message from Picasso with that acceptance via `0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee183c01e8030000`
 
 Decoded by https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.finance#/extrinsics/decode
+
+## Make price for USDT
+
+Register USDT in registry with asset id 11 and decimals of 4.
 
 ## References
 
