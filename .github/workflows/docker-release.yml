@@ -55,7 +55,7 @@ jobs:
       run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make containerize
     
     - name:  Docker push
-     run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make push
+      run: RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1) make push
 
     - uses: 8398a7/action-slack@v3
       with:
