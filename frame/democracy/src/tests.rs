@@ -153,11 +153,6 @@ impl pallet_scheduler::Config for Test {
 	type NoPreimagePostponement = ();
 }
 
-parameter_types! {
-	pub const ExistentialDeposit: Balance = 1;
-	pub const MaxLocks: u32 = 50;
-}
-
 impl pallet_balances::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
