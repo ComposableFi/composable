@@ -326,6 +326,10 @@ pub mod pallet {
 		/// Tried to derive invariant from base and quote asset, but the
 		/// computation was not successful.
 		FailedToDeriveInvariantFromBaseAndQuoteAsset,
+		/// Tried to perform swap operation but it would drain all base asset reserves.
+		BaseAssetReservesWouldBeCompletelyDrained,
+		/// Tried to perform swap operation but it would drain all quote asset reserves.
+		QuoteAssetReservesWouldBeCompletelyDrained,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -578,10 +582,20 @@ pub mod pallet {
 				AssetType::Base => Self::swap_base_asset(config, &mut vamm_state),
 			}?;
 
-			// Ensure swapped amount is valid
+			// Ensure swapped amount is valid.
 			ensure!(
 				amount_swapped >= config.output_amount_limit,
 				Error::<T>::SwappedAmountLessThanMinimumLimit
+			);
+
+			// Ensure both quote and base assets weren't completely drained from vamm.
+			ensure!(
+				!vamm_state.base_asset_reserves.is_zero(),
+				Error::<T>::BaseAssetReservesWouldBeCompletelyDrained
+			);
+			ensure!(
+				!vamm_state.quote_asset_reserves.is_zero(),
+				Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained
 			);
 
 			// Update runtime storage
