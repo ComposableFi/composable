@@ -49,14 +49,14 @@ pub trait ClearingHouse {
 	/// Open a position in a market
 	///
 	/// This may result in the following outcomes:
-	/// * Creation of a whole new position in the market, if one didn't already exist
-	/// * An increase in the size of an existing position, if the trade's direction matches the
+	/// - Creation of a whole new position in the market, if one didn't already exist
+	/// - An increase in the size of an existing position, if the trade's direction matches the
 	///   existing position's one
-	/// * A decrease in the size of an existing position, if the trade's direction is counter to the
+	/// - A decrease in the size of an existing position, if the trade's direction is counter to the
 	///   existing position's one and its magnitude is smaller than the existing postion's size
-	/// * Closing of the existing position, if the trade's direction is counter to the existing
-	///   position's one and its magnitude is approximately the existing postion's size
-	/// * Reversing of the existing position, if the trade's direction is counter to the existing
+	/// - Closing of the existing position, if the trade's direction is counter to the existion
+	///   position's one and its magnitude is approximately the existing position's size
+	/// - Reversing of the existing position, if the trade's direction is counter to the existion
 	///   position's one and its magnitude is greater than the existing postion's size
 	///
 	/// ## Parameters
@@ -76,6 +76,15 @@ pub trait ClearingHouse {
 		quote_asset_amount: Self::Balance,
 		base_asset_amount_limit: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
+
+	/// Update the funding rate for a market
+	///
+	/// This should be called periodically for each market so that subsequent calculations of
+	/// unrealized funding for each position are up-to-date
+	///
+	/// # Parameters
+	/// - `market_id`: the perpetuals market Id
+	fn update_funding(market_id: &Self::MarketId) -> Result<(), DispatchError>;
 }
 
 /// Exposes functionality for querying funding-related quantities of synthetic instruments

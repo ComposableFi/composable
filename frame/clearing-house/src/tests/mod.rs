@@ -1,8 +1,9 @@
-#![allow(clippy::disallowed_methods)] // Allow use of .unwrap() in tests
+// Allow use of .unwrap() in tests and unused Results from function calls
+#![allow(clippy::disallowed_methods, unused_must_use)]
 
 use crate::mock::{
 	self as mock,
-	accounts::AccountId,
+	accounts::{AccountId, ALICE},
 	assets::{AssetId, DOT, USDC},
 	runtime::{
 		Balance, ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime,
@@ -13,7 +14,7 @@ use crate::mock::{
 use composable_traits::{
 	clearing_house::{ClearingHouse, Instruments},
 	oracle::Oracle,
-	time::ONE_HOUR,
+	time::{DurationSeconds, ONE_HOUR},
 	vamm::{AssetType, Direction as VammDirection, Vamm},
 };
 use frame_support::{assert_err, assert_ok, pallet_prelude::Hooks};
@@ -24,6 +25,7 @@ pub mod add_margin;
 pub mod create_market;
 pub mod instruments;
 pub mod open_position;
+pub mod update_funding;
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Setup
@@ -41,14 +43,18 @@ impl Default for ExtBuilder {
 		Self {
 			native_balances: vec![],
 			balances: vec![],
-			collateral_types: vec![USDC],
+			collateral_type: Some(USDC),
 			vamm_id: Some(0_u64),
 			vamm_twap: Some(100.into()),
 			oracle_asset_support: Some(true),
-			oracle_twap: Some(10_000_u64),
+			oracle_twap: Some(10_000),
 		}
 	}
 }
+
+// ----------------------------------------------------------------------------------------------------
+//                                             Helpers
+// ----------------------------------------------------------------------------------------------------
 
 fn run_to_block(n: u64) {
 	while SystemPallet::block_number() < n {
@@ -62,6 +68,20 @@ fn run_to_block(n: u64) {
 		SystemPallet::on_initialize(SystemPallet::block_number());
 		TimestampPallet::on_initialize(SystemPallet::block_number());
 	}
+}
+
+fn run_for_seconds(seconds: DurationSeconds) {
+	// Not using an equivalent run_to_block call here because it causes the tests to slow down
+	// drastically
+	if SystemPallet::block_number() > 0 {
+		TimestampPallet::on_finalize(SystemPallet::block_number());
+		SystemPallet::on_finalize(SystemPallet::block_number());
+	}
+	SystemPallet::set_block_number(SystemPallet::block_number() + 1);
+	// Time is set in milliseconds, so we multiply the seconds by 1_000
+	let _ = TimestampPallet::set(Origin::none(), TimestampPallet::now() + 1_000 * seconds);
+	SystemPallet::on_initialize(SystemPallet::block_number());
+	TimestampPallet::on_initialize(SystemPallet::block_number());
 }
 
 /// Return the balance representation of the input value, according to the precision of the fixed
@@ -79,6 +99,56 @@ fn as_inner<T: Into<FixedI128>>(value: T) -> i128 {
 fn as_uinner<T: Into<FixedU128>>(value: T) -> u128 {
 	let f: FixedU128 = value.into();
 	f.into_inner()
+}
+
+// ----------------------------------------------------------------------------------------------------
+//                                        Execution Contexts
+// ----------------------------------------------------------------------------------------------------
+
+fn with_market_context<R>(
+	ext_builder: ExtBuilder,
+	config: MarketConfig,
+	execute: impl FnOnce(MarketId) -> R,
+) -> R {
+	let mut ext = ext_builder.build().run_to_block(1);
+	let market_id = ext.execute_with(|| {
+		<sp_io::TestExternalities as MarketInitializer>::create_market_helper(Some(config))
+	});
+
+	ext.execute_with(|| execute(market_id))
+}
+
+fn with_markets_context<R>(
+	ext_builder: ExtBuilder,
+	configs: Vec<MarketConfig>,
+	execute: impl FnOnce(Vec<MarketId>) -> R,
+) -> R {
+	let mut ext = ext_builder.build().run_to_block(1);
+	let market_ids = ext.execute_with(|| {
+		let mut ids = Vec::<_>::new();
+		for config in configs {
+			ids.push(<sp_io::TestExternalities as MarketInitializer>::create_market_helper(Some(
+				config,
+			)));
+		}
+		ids
+	});
+
+	ext.execute_with(|| execute(market_ids))
+}
+
+fn with_trading_context<R>(
+	config: MarketConfig,
+	margin: Balance,
+	execute: impl FnOnce(MarketId) -> R,
+) -> R {
+	let ext_builder = ExtBuilder { balances: vec![(ALICE, USDC, margin)], ..Default::default() };
+
+	with_market_context(ext_builder, config, |market_id| {
+		TestPallet::add_margin(Origin::signed(ALICE), USDC, margin);
+
+		execute(market_id)
+	})
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -101,12 +171,27 @@ fn valid_market_config() -> MarketConfig {
 		minimum_trade_size: FixedI128::from_float(0.01),
 		funding_frequency: ONE_HOUR,
 		funding_period: ONE_HOUR * 24,
+		taker_fee: 10, // 0.1%
 	}
 }
 
 // ----------------------------------------------------------------------------------------------------
 //                                           Initializers
 // ----------------------------------------------------------------------------------------------------
+
+trait RunToBlock {
+	fn run_to_block(self, n: u64) -> Self;
+}
+
+impl RunToBlock for sp_io::TestExternalities {
+	fn run_to_block(mut self, n: u64) -> Self {
+		self.execute_with(|| {
+			run_to_block(n);
+		});
+
+		self
+	}
+}
 
 trait MarginInitializer {
 	fn add_margin(self, account_id: &AccountId, asset_id: AssetId, amount: Balance) -> Self;
@@ -174,9 +259,16 @@ prop_compose! {
 
 prop_compose! {
 	// Anywhere from 1 / (1 trillion) to 1 trillion
-	fn any_price()(
-		inner in as_uinner((1, 10_u128.pow(12)))..=as_uinner(10_u128.pow(12))
-	) -> FixedU128 {
+	fn any_balance()(
+		balance in as_uinner((1, 10_u128.pow(12)))..=as_uinner(10_u128.pow(12))
+	) -> Balance {
+		balance
+	}
+}
+
+prop_compose! {
+	// Anywhere from 1 / (1 trillion) to 1 trillion
+	fn any_price()(inner in any_balance()) -> FixedU128 {
 		FixedU128::from_inner(inner)
 	}
 }

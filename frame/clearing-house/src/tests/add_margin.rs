@@ -1,15 +1,18 @@
 use crate::{
 	mock::{
-		accounts::ALICE,
+		accounts::{AccountId, ALICE},
 		assets::{PICA, USDC},
-		runtime::{Balance, ExtBuilder, Origin, Runtime, System as SystemPallet, TestPallet},
+		runtime::{
+			Assets as AssetsPallet, Balance, ExtBuilder, Origin, Runtime, System as SystemPallet,
+			TestPallet, TestPalletId,
+		},
 	},
 	pallet::{AccountsMargin, Error, Event},
 	tests::run_to_block,
 };
-
-use frame_support::{assert_noop, assert_ok};
+use frame_support::{assert_noop, assert_ok, traits::fungibles::Inspect};
 use orml_tokens::Error as TokenError;
+use sp_runtime::traits::AccountIdConversion;
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Add Margin
@@ -47,14 +50,24 @@ fn deposit_supported_collateral_succeeds() {
 			run_to_block(1);
 			let account = ALICE;
 			let asset = USDC;
-			let amount: Balance = 1_000_u32.into();
+			let amount: Balance = 1_000;
 
-			let before = AccountsMargin::<Runtime>::get(&account).unwrap_or_default();
+			let before = (
+				AccountsMargin::<Runtime>::get(&account).unwrap_or_default(),
+				<AssetsPallet as Inspect<AccountId>>::balance(USDC, &ALICE),
+			);
 			assert_ok!(TestPallet::add_margin(Origin::signed(account), asset, amount));
 
-			SystemPallet::assert_last_event(Event::MarginAdded { account, asset, amount }.into());
+			let after = (
+				AccountsMargin::<Runtime>::get(&account).unwrap_or_default(),
+				<AssetsPallet as Inspect<AccountId>>::balance(USDC, &ALICE),
+			);
+			assert_eq!(after.0 - before.0, amount);
+			assert_eq!(after.1, before.1 - amount);
 
-			let after = AccountsMargin::<Runtime>::get(&account).unwrap_or_default();
-			assert_eq!(after - before, amount);
+			let pallet_acc = TestPalletId::get().into_sub_account("Collateral");
+			assert_eq!(<AssetsPallet as Inspect<AccountId>>::balance(USDC, &pallet_acc), amount);
+
+			SystemPallet::assert_last_event(Event::MarginAdded { account, asset, amount }.into());
 		})
 }

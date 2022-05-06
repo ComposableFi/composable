@@ -4,5 +4,5 @@
 #
 # It is recommended to check this file in to source control so that
 # everyone who runs the test benefits from these saved cases.
-cc 1470150209ed1613e9854838f373890c970ae4c970e90d19112a55fdf910ef3d # shrinks to direction = Long
-cc 598045f9cd4e3692eba545605147173d2089d033edda25c3bad0d3f6f19b61be # shrinks to direction = Long, max_leverage_percent = 100, percentf = FixedU128(0.010000000000000000)
+cc 8053ac29583c270cca56d873da8c8a8431530a81ef4841774f0b1f784dce234c # shrinks to market_id = 0
+cc 2500ebf797a0ebf4385fa701b122982cbbd6634f7a512f0023f17122566aed3c # shrinks to percent = 0

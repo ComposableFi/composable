@@ -74,7 +74,8 @@ prop_compose! {
 		minimum_trade_size in any_minimum_trade_size(),
 		cum_funding_rate in bounded_decimal(),
 		funding_rate_ts in any_duration(),
-		(funding_frequency, funding_period) in funding_params()
+		(funding_frequency, funding_period) in funding_params(),
+		taker_fee in Just(10),
 	) -> Market {
 		Market {
 			vamm_id,
@@ -82,10 +83,13 @@ prop_compose! {
 			margin_ratio_initial,
 			margin_ratio_maintenance,
 			minimum_trade_size,
+			net_base_asset_amount: 0.into(),
 			cum_funding_rate,
+			fee_pool: 0,
 			funding_rate_ts,
 			funding_frequency,
 			funding_period,
+			taker_fee
 		}
 	}
 }

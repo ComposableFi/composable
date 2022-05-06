@@ -44,12 +44,14 @@
 //! - [`add_margin`](Call::add_margin)
 //! - [`create_market`](Call::create_market)
 //! - [`open_position`](Call::open_position)
+//! - [`update_funding`](Call::update_funding)
 //!
 //! ### Implemented Functions
 //!
 //! - [`add_margin`](pallet/struct.Pallet.html#method.add_margin-1)
 //! - [`create_market`](pallet/struct.Pallet.html#method.create_market-1)
 //! - [`open_position`](pallet/struct.Pallet.html#method.open_position-1)
+//! - [`update_funding`](pallet/struct.Pallet.html#method.update_funding-1)
 //! - [`funding_rate`](Pallet::funding_rate)
 //! - [`unrealized_funding`](Pallet::unrealized_funding)
 //!
@@ -114,6 +116,8 @@ mod tests;
 
 mod math;
 
+mod types;
+
 mod weights;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -125,6 +129,7 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 
+	pub use crate::types::{Direction, Market, MarketConfig, Position};
 	use crate::{
 		math::{FromBalance, IntoBalance, IntoDecimal, IntoSigned, TryMath},
 		weights::WeightInfo,
@@ -141,12 +146,15 @@ pub mod pallet {
 		pallet_prelude::*,
 		storage::bounded_vec::BoundedVec,
 		traits::{tokens::fungibles::Transfer, GenesisBuild, UnixTime},
-		transactional, Blake2_128Concat, PalletId, Twox64Concat,
+		transactional, Blake2_128Concat, PalletId,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use num_traits::Signed;
 	use sp_runtime::{
-		traits::{AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, One, Saturating, Zero},
+		traits::{
+			AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating,
+			Zero,
+		},
 		ArithmeticError, FixedPointNumber, FixedPointOperand,
 	};
 	use sp_std::{cmp::Ordering, fmt::Debug, ops::Neg};
@@ -242,89 +250,6 @@ pub mod pallet {
 	//                                           Pallet Types
 	// ----------------------------------------------------------------------------------------------------
 
-	#[derive(Encode, Decode, TypeInfo, Debug, Clone, Copy, PartialEq)]
-	pub enum Direction {
-		Long,
-		Short,
-	}
-
-	/// Stores the user's position in a particular market
-	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug)]
-	#[scale_info(skip_type_params(T))]
-	#[codec(mel_bound())]
-	pub struct Position<T: Config> {
-		/// The Id of the virtual market
-		pub market_id: T::MarketId,
-		/// Virtual base asset amount. Positive implies long position and negative, short.
-		pub base_asset_amount: T::Decimal,
-		/// Virtual quote asset notional amount (margin * leverage * direction) used to open the
-		/// position
-		pub quote_asset_notional_amount: T::Decimal,
-		/// Last cumulative funding rate used to update this position. The market's latest
-		/// cumulative funding rate minus this gives the funding rate this position must pay. This
-		/// rate multiplied by this position's size (base asset amount * amm price) gives the total
-		/// funding owed, which is deducted from the trader account's margin. This debt is
-		/// accounted for in margin ratio calculations, which may lead to liquidation.
-		pub last_cum_funding: T::Decimal,
-	}
-
-	/// Data relating to a perpetual contracts market
-	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug)]
-	#[scale_info(skip_type_params(T))]
-	#[codec(mel_bound())]
-	pub struct Market<T: Config> {
-		/// The Id of the vAMM used for price discovery in the virtual market
-		pub vamm_id: T::VammId,
-		/// The Id of the underlying asset (base-quote pair). A price feed from one or more oracles
-		/// must be available for this symbol
-		pub asset_id: AssetIdOf<T>,
-		/// Minimum margin ratio for opening a new position
-		pub margin_ratio_initial: T::Decimal,
-		/// Margin ratio below which liquidations can occur
-		pub margin_ratio_maintenance: T::Decimal,
-		/// Minimum amount of quote asset to exchange when opening a position. Also serves to round
-		/// a trade if it results in closing an existing position
-		pub minimum_trade_size: T::Decimal,
-		/// The latest cumulative funding rate of this market. Must be updated periodically.
-		pub cum_funding_rate: T::Decimal,
-		/// The timestamp for the latest funding rate update.
-		pub funding_rate_ts: DurationSeconds,
-		/// The time span between each funding rate update.
-		pub funding_frequency: DurationSeconds,
-		/// Period of time over which funding (the difference between mark and index prices) gets
-		/// paid.
-		///
-		/// Setting the funding period too long may cause the perpetual to start trading at a
-		/// very dislocated price to the index because there’s less of an incentive for basis
-		/// arbitrageurs to push the prices back in line since they would have to carry the basis
-		/// risk for a longer period of time.
-		///
-		/// Setting the funding period too short may cause nobody to trade the perpetual because
-		/// there’s too punitive of a price to pay in the case the funding rate flips sign.
-		pub funding_period: DurationSeconds,
-	}
-
-	/// Specifications for market creation
-	#[derive(Encode, Decode, PartialEq, Clone, Debug, TypeInfo)]
-	pub struct MarketConfig<AssetId, Decimal, VammConfig> {
-		/// Asset id of the underlying for the derivatives market
-		pub asset: AssetId,
-		/// Configuration for creating and initializing the vAMM for price discovery
-		pub vamm_config: VammConfig,
-		/// Minimum margin ratio for opening a new position
-		pub margin_ratio_initial: Decimal,
-		/// Margin ratio below which liquidations can occur
-		pub margin_ratio_maintenance: Decimal,
-		/// Minimum amount of quote asset to exchange when opening a position. Also serves to round
-		/// a trade if it results in closing an existing position
-		pub minimum_trade_size: Decimal,
-		/// Time span between each funding rate update
-		pub funding_frequency: DurationSeconds,
-		/// Period of time over which funding (the difference between mark and index prices) gets
-		/// paid.
-		pub funding_period: DurationSeconds,
-	}
-
 	type AssetIdOf<T> = <T as DeFiComposableConfig>::MayBeAssetId;
 	type BalanceOf<T> = <T as DeFiComposableConfig>::Balance;
 	type DecimalOf<T> = <T as Config>::Decimal;
@@ -332,15 +257,16 @@ pub mod pallet {
 	type VammIdOf<T> = <T as Config>::VammId;
 	type SwapConfigOf<T> = SwapConfig<VammIdOf<T>, BalanceOf<T>>;
 	type SwapSimulationConfigOf<T> = SwapSimulationConfig<VammIdOf<T>, BalanceOf<T>>;
-	type MarketConfigOf<T> = MarketConfig<AssetIdOf<T>, DecimalOf<T>, VammConfigOf<T>>;
+	type MarketConfigOf<T> =
+		MarketConfig<AssetIdOf<T>, BalanceOf<T>, DecimalOf<T>, VammConfigOf<T>>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Runtime Storage
 	// ----------------------------------------------------------------------------------------------------
 
-	/// Supported collateral asset ids
+	/// Supported collateral asset id
 	#[pallet::storage]
-	pub type CollateralTypes<T: Config> = StorageMap<_, Twox64Concat, AssetIdOf<T>, ()>;
+	pub type CollateralType<T: Config> = StorageValue<_, AssetIdOf<T>, OptionQuery>;
 
 	/// Maps [AccountId](frame_system::Config::AccountId) to its collateral
 	/// [Balance](DeFiComposableConfig::Balance), if set.
@@ -382,23 +308,21 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		/// Genesis accepted collateral asset types
-		pub collateral_types: Vec<AssetIdOf<T>>,
+		/// Genesis accepted collateral asset type
+		pub collateral_type: Option<AssetIdOf<T>>,
 	}
 
 	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { collateral_types: vec![] }
+			Self { collateral_type: None }
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
-			self.collateral_types.iter().for_each(|asset| {
-				CollateralTypes::<T>::insert(asset, ());
-			})
+			CollateralType::<T>::set(self.collateral_type);
 		}
 	}
 
@@ -437,6 +361,13 @@ pub mod pallet {
 			/// Amount of base asset exchanged
 			base: T::Balance,
 		},
+		/// Market funding rate successfully updated
+		FundingUpdated {
+			/// Id of the market
+			market: T::MarketId,
+			/// Timestamp of the funding rate update
+			time: DurationSeconds,
+		},
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -446,36 +377,41 @@ pub mod pallet {
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
-		/// User attempted to deposit unsupported asset type as collateral in its margin account
-		UnsupportedCollateralType,
-		/// Attempted to create a new market but the underlying asset is not supported by the
-		/// oracle
-		NoPriceFeedForAsset,
 		/// Attempted to create a new market but the funding period is not a multiple of the
 		/// funding frequency
 		FundingPeriodNotMultipleOfFrequency,
-		/// Attempted to create a new market but the funding period or frequency is 0 seconds long
-		ZeroLengthFundingPeriodOrFrequency,
-		/// Attempted to create a new market but either initial or maintenance margin ratios are
-		/// outside the interval (0, 1)
-		InvalidMarginRatioRequirement,
 		/// Attempted to create a new market but the initial margin ratio is less than or equal to
 		/// the maintenance one
 		InitialMarginRatioLessThanMaintenance,
-		/// Attempted to create a new market but the minimum trade size is negative
-		NegativeMinimumTradeSize,
-		/// Raised when querying a market with an invalid or nonexistent market Id
-		MarketIdNotFound,
 		/// Raised when opening a risk-increasing position that takes the account below the IMR
 		InsufficientCollateral,
+		/// Attempted to create a new market but either the initial margin ratio is outside (0, 1]
+		/// or the maintenance margin ratio is outside (0, 1)
+		InvalidMarginRatioRequirement,
+		/// Raised when querying a market with an invalid or nonexistent market Id
+		MarketIdNotFound,
 		/// Raised when creating a new position but exceeding the maximum number of positions for
 		/// an account
 		MaxPositionsExceeded,
+		/// Attempted to create a new market but the minimum trade size is negative
+		NegativeMinimumTradeSize,
+		/// An operation required the asset id of a valid collateral type but none were registered
+		NoCollateralTypeSet,
+		/// Attempted to create a new market but the underlying asset is not supported by the
+		/// oracle
+		NoPriceFeedForAsset,
+		/// Raised when trying to fetch a position from the positions vector with an invalid index
+		PositionNotFound,
 		/// Raised when creating a new position with quote asset amount less than the market's
 		/// minimum trade size
 		TradeSizeTooSmall,
-		/// Raised when trying to fetch a position from the positions vector with an invalid index
-		PositionNotFound,
+		/// User attempted to deposit an unsupported asset type as collateral in its margin account
+		UnsupportedCollateralType,
+		/// Raised when trying to update the funding rate for a market before its funding frequency
+		/// has passed since its last update
+		UpdatingFundingTooEarly,
+		/// Attempted to create a new market but the funding period or frequency is 0 seconds long
+		ZeroLengthFundingPeriodOrFrequency,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -537,7 +473,8 @@ pub mod pallet {
 		/// * The underlying must have a stable price feed via another pallet
 		/// * The funding period must be a multiple of its frequency
 		/// * Both funding period and frequency must be nonzero
-		/// * Initial and Maintenance margin ratios must be in the (0, 1) open interval
+		/// * Initial and Maintenance margin ratios must be in the (0, 1] and (0, 1) intervals
+		///   respectively
 		/// * Initial margin ratio must be greater than maintenance
 		///
 		/// ## Emits
@@ -569,15 +506,15 @@ pub mod pallet {
 		/// # Overview
 		///
 		/// This may result in the following outcomes:
-		/// * Creation of a whole new position in the market, if one didn't already exist
-		/// * An increase in the size of an existing position, if the trade's direction matches the
+		/// - Creation of a whole new position in the market, if one didn't already exist
+		/// - An increase in the size of an existing position, if the trade's direction matches the
 		///   existing position's one
-		/// * A decrease in the size of an existing position, if the trade's direction is counter to
+		/// - A decrease in the size of an existing position, if the trade's direction is counter to
 		///   the existing position's one and its magnitude is smaller than the existing postion's
 		///   size
-		/// * Closing of the existing position, if the trade's direction is counter to the existion
-		///   position's one and its magnitude is approximately the existing postion's size
-		/// * Reversing of the existing position, if the trade's direction is counter to the
+		/// - Closing of the existing position, if the trade's direction is counter to the existion
+		///   position's one and its magnitude is approximately the existing position's size
+		/// - Reversing of the existing position, if the trade's direction is counter to the
 		///   existion position's one and its magnitude is greater than the existing postion's size
 		///
 		/// ![](http://www.plantuml.com/plantuml/svg/FOuzgiD030RxTugN0zZgKna2kOUyLhm2hRJeXrm_9aMgZszWOBP8zAmXVpVM9dLGkVptp1bt0CVtUdBssYl8cscIvjfimCF6jC1TwCdGVWSeMYU7b-CWQ4BehEVIhOBWO3ml7c2JTBaCJZPTfw1-2pRIuzeF)
@@ -592,9 +529,14 @@ pub mod pallet {
 		///
 		/// ## Assumptions or Requirements
 		///
-		/// There's a maximum number of positions ([`Config::MaxPositions`]) than can be open for
-		/// each account id at any given time. If opening a position in a new market exceeds this
-		/// number, the transactions fails.
+		/// - The market must exist and have been initialized prior to calling this extrinsic
+		/// - There's a maximum number of positions ([`Config::MaxPositions`]) that can be open for
+		///   each account id at any given time. If opening a position in a new market exceeds this
+		///   number, the transactions fails.
+		/// - Each market has a [minimum trade size](Market::minimum_trade_size) required, so trades
+		///   with quote asset amount less than this threshold will be rejected
+		/// - Trades which increase the total risk of an account (and thus its margin requirement),
+		///   will be rejected if they result in the account falling below its aggregate IMR
 		///
 		/// ## Emits
 		///
@@ -603,17 +545,22 @@ pub mod pallet {
 		/// ## State Changes
 		///
 		/// The following storage items may be modified:
-		/// - [`AccountsMargin`]: if trade decreases, closes, or reverses a position, it's PnL is
+		/// - [`AccountsMargin`]: if trade decreases, closes, or reverses a position, its PnL is
 		///   realized
-		/// - [`Positions`]: either a new entry is added or an existing one is updated
+		/// - [`Positions`]: a new entry may be added or an existing one updated/removed
 		///
-		/// ## Erros
+		/// ## Errors
 		///
+		/// - [`TradeSizeTooSmall`](Error::<T>::TradeSizeTooSmall)
 		/// - [`MarketIdNotFound`](Error::<T>::MarketIdNotFound)
 		/// - [`MaxPositionsExceeded`](Error::<T>::MaxPositionsExceeded)
+		/// - [`InsufficientCollateral`](Error::<T>::InsufficientCollateral)
+		/// - [`ArithmeticError`]
 		///
 		/// # Weight/Runtime
-		/// TODO(0xangelo)
+		///
+		/// The total runtime is O(`n`), where `n` is the number of open positions after executing
+		/// the trade.
 		#[pallet::weight(<T as Config>::WeightInfo::open_position())]
 		pub fn open_position(
 			origin: OriginFor<T>,
@@ -630,6 +577,45 @@ pub mod pallet {
 				quote_asset_amount,
 				base_asset_amount_limit,
 			)?;
+			Ok(())
+		}
+
+		/// Update the funding rate for a market
+		///
+		/// # Overview
+		///
+		/// This should be called periodically for each market so that subsequent calculations of
+		/// unrealized funding for each position are up-to-date.
+		///
+		/// ![](https://www.plantuml.com/plantuml/svg/FOqx2iCm40Nxd28vWFtwL8P0xh6MrfPWzM4_vFenAL8DmnIpcPDwDBazQayIcKFbNjodFO6pUebzJQFXDTeSHhlmkoBz1KeViAN2YaEfCP8mQUtdKaOO8rSwbPeXPYRdvOYUhxfEeVxxRjppnIy0)
+		///
+		/// ## Parameters
+		/// - `market_id`: the perpetuals market Id
+		///
+		/// ## Assumptions or Requirements
+		///
+		/// TODO(0xangelo)
+		///
+		/// ## Emits
+		///
+		/// - [`FundingUpdated`](Event::<T>::FundingUpdated)
+		///
+		/// ## State Changes
+		///
+		/// TODO(0xangelo)
+		///
+		/// ## Errors
+		///
+		/// - [`MarketIdNotFound`](Error::<T>::MarketIdNotFound)
+		/// - [`UpdatingFundingTooEarly`](Error::<T>::UpdatingFundingTooEarly)
+		///
+		/// ## Weight/Runtime
+		///
+		/// TODO(0xangelo)
+		#[pallet::weight(<T as Config>::WeightInfo::update_funding())]
+		pub fn update_funding(origin: OriginFor<T>, market_id: T::MarketId) -> DispatchResult {
+			ensure_signed(origin)?;
+			<Self as ClearingHouse>::update_funding(&market_id)?;
 			Ok(())
 		}
 	}
@@ -652,18 +638,13 @@ pub mod pallet {
 			amount: Self::Balance,
 		) -> Result<(), DispatchError> {
 			ensure!(
-				CollateralTypes::<T>::contains_key(asset_id),
+				CollateralType::<T>::get().ok_or(Error::<T>::NoCollateralTypeSet)? == asset_id,
 				Error::<T>::UnsupportedCollateralType
 			);
 
 			// Assuming stablecoin collateral and all markets quoted in dollars
-			T::Assets::transfer(
-				asset_id,
-				account_id,
-				&T::PalletId::get().into_account(),
-				amount,
-				true,
-			)?;
+			let pallet_acc = T::PalletId::get().into_sub_account("Collateral");
+			T::Assets::transfer(asset_id, account_id, &pallet_acc, amount, true)?;
 
 			let old_margin = Self::get_margin(&account_id).unwrap_or_else(T::Balance::zero);
 			let new_margin = old_margin.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
@@ -689,7 +670,7 @@ pub mod pallet {
 			);
 			ensure!(
 				config.margin_ratio_initial > T::Decimal::zero() &&
-					config.margin_ratio_initial < T::Decimal::one() &&
+					config.margin_ratio_initial <= T::Decimal::one() &&
 					config.margin_ratio_maintenance > T::Decimal::zero() &&
 					config.margin_ratio_maintenance < T::Decimal::one(),
 				Error::<T>::InvalidMarginRatioRequirement
@@ -711,10 +692,13 @@ pub mod pallet {
 					margin_ratio_initial: config.margin_ratio_initial,
 					margin_ratio_maintenance: config.margin_ratio_maintenance,
 					minimum_trade_size: config.minimum_trade_size,
+					net_base_asset_amount: Zero::zero(),
+					fee_pool: Zero::zero(),
 					funding_frequency: config.funding_frequency,
 					funding_period: config.funding_period,
-					cum_funding_rate: Default::default(),
+					cum_funding_rate: Zero::zero(),
 					funding_rate_ts: T::UnixTime::now().as_secs(),
+					taker_fee: config.taker_fee,
 				};
 				Markets::<T>::insert(&market_id, market);
 
@@ -737,23 +721,25 @@ pub mod pallet {
 			quote_asset_amount: Self::Balance,
 			base_asset_amount_limit: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			let margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
-			let market = Self::get_market(&market_id).ok_or(Error::<T>::MarketIdNotFound)?;
-			let mut positions = Self::get_positions(&account_id);
-			let (position, position_index) =
-				Self::get_or_create_position(&mut positions, market_id, &market)?;
-
+			let mut market = Self::get_market(&market_id).ok_or(Error::<T>::MarketIdNotFound)?;
 			let mut quote_abs_amount_decimal = T::Decimal::from_balance(quote_asset_amount)?;
 			ensure!(
 				quote_abs_amount_decimal >= market.minimum_trade_size,
 				Error::<T>::TradeSizeTooSmall
 			);
 
-			let position_direction = Self::position_direction(position).unwrap_or(direction);
+			let mut positions = Self::get_positions(&account_id);
+			let (position, position_index) =
+				Self::get_or_create_position(&mut positions, market_id, &market)?;
+			let position_direction = position.direction().unwrap_or(direction);
 
-			let base_swapped: T::Balance;
+			let mut margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
+			// Settle funding for position before any modifications
+			Self::settle_funding(position, &market, &mut margin)?;
+
 			// Whether or not the trade increases the risk exposure of the account
 			let mut is_risk_increasing = false;
+			let base_swapped: T::Balance;
 			if direction == position_direction {
 				base_swapped = Self::increase_position(
 					position,
@@ -812,12 +798,15 @@ pub mod pallet {
 				let pnl = exit_value.try_sub(&entry_value)?;
 				// Realize PnL
 				// TODO(0xangelo): properly handle bad debt incurred by large negative PnL
-				AccountsMargin::<T>::insert(
-					account_id,
-					Self::update_margin_with_pnl(&margin, &pnl)?,
-				);
+				margin = Self::update_margin_with_pnl(&margin, &pnl)?;
 			}
 
+			// Charge fees
+			let fee = Self::fee_for_trade(&market, &quote_abs_amount_decimal)?;
+			margin = margin.checked_sub(&fee).ok_or(ArithmeticError::Underflow)?;
+			market.fee_pool = market.fee_pool.checked_add(&fee).ok_or(ArithmeticError::Overflow)?;
+
+			// Check account risk
 			if is_risk_increasing {
 				ensure!(
 					Self::is_above_imr(&positions, margin)?,
@@ -825,7 +814,11 @@ pub mod pallet {
 				);
 			}
 
+			// Update storage
+			AccountsMargin::<T>::insert(account_id, margin);
 			Positions::<T>::insert(account_id, positions);
+			Self::update_market_after_trade(&mut market, base_swapped, direction)?;
+			Markets::<T>::insert(market_id, market);
 
 			Self::deposit_event(Event::TradeExecuted {
 				market: market_id.clone(),
@@ -833,8 +826,55 @@ pub mod pallet {
 				quote: quote_asset_amount,
 				base: base_swapped,
 			});
-
 			Ok(base_swapped)
+		}
+
+		#[transactional]
+		fn update_funding(market_id: &Self::MarketId) -> Result<(), DispatchError> {
+			let mut market = Markets::<T>::get(market_id).ok_or(Error::<T>::MarketIdNotFound)?;
+
+			// Check that enough time has passed since last update
+			let now = T::UnixTime::now().as_secs();
+			ensure!(
+				now - market.funding_rate_ts >= market.funding_frequency,
+				Error::<T>::UpdatingFundingTooEarly
+			);
+
+			// Pay funding
+			// net position sign | funding rate sign | transfer
+			// --------------------------------------------------------------
+			//                -1 |                -1 | Collateral -> IF
+			//                -1 |                 1 | Fee Pool -> Collateral
+			//                 1 |                -1 | Fee Pool -> Collateral
+			//                 1 |                 1 | Collateral -> IF
+			//                 - |                 0 | n/a
+			//                 0 |                 - | n/a
+			let funding_rate = <Self as Instruments>::funding_rate(&market)?;
+			if !(funding_rate.is_zero() | market.net_base_asset_amount.is_zero()) {
+				let amount = funding_rate.try_mul(&market.net_base_asset_amount)?.into_balance()?;
+
+				if funding_rate.is_positive() == market.net_base_asset_amount.is_positive() {
+					T::Assets::transfer(
+						CollateralType::<T>::get().ok_or(Error::<T>::NoCollateralTypeSet)?,
+						&T::PalletId::get().into_sub_account("Collateral"),
+						&T::PalletId::get().into_sub_account("Insurance"),
+						amount,
+						false,
+					)?;
+				} else {
+					// TODO(0xangelo): should we cap the funding rate if the funding pool isn't deep
+					// enough?
+					market.fee_pool = market.fee_pool.saturating_sub(amount);
+				};
+			}
+
+			// Update market state
+			market.cum_funding_rate.try_add_mut(&funding_rate)?;
+			market.funding_rate_ts = now;
+			Markets::<T>::insert(market_id, market);
+
+			Self::deposit_event(Event::FundingUpdated { market: market_id.clone(), time: now });
+			Ok(())
 		}
 	}
 
@@ -876,6 +916,50 @@ pub mod pallet {
 
 	// Helper functions - core functionality
 	impl<T: Config> Pallet<T> {
+		fn settle_funding(
+			position: &mut Position<T>,
+			market: &Market<T>,
+			margin: &mut T::Balance,
+		) -> Result<(), DispatchError> {
+			let cum_rate = market.cum_funding_rate.try_sub(&position.last_cum_funding)?;
+			let payment = cum_rate.try_mul(&position.base_asset_amount)?;
+			if payment.is_positive() {
+				*margin = margin
+					.checked_add(&payment.into_balance()?)
+					.ok_or(ArithmeticError::Overflow)?;
+			} else if payment.is_negative() {
+				// TODO(0xangelo): can we have bad debt from unrealized funding if user wasn't
+				// liquidated in time?
+				*margin = margin.saturating_sub(payment.into_balance()?);
+			}
+			Ok(())
+		}
+
+		fn fee_for_trade(
+			market: &Market<T>,
+			quote_abs_amount: &T::Decimal,
+		) -> Result<T::Balance, ArithmeticError> {
+			quote_abs_amount
+				.into_balance()?
+				.checked_mul(&market.taker_fee)
+				.ok_or(ArithmeticError::Overflow)?
+				.checked_div(&10_000_u32.into())
+				.ok_or(ArithmeticError::DivisionByZero)
+		}
+
+		fn update_market_after_trade(
+			market: &mut Market<T>,
+			base_asset_swapped: T::Balance,
+			direction: Direction,
+		) -> Result<(), DispatchError> {
+			let base_amount_decimal: T::Decimal = base_asset_swapped.into_decimal()?;
+			market.net_base_asset_amount.try_add_mut(&match direction {
+				Direction::Long => base_amount_decimal,
+				Direction::Short => base_amount_decimal.neg(),
+			})?;
+			Ok(())
+		}
+
 		fn increase_position(
 			position: &mut Position<T>,
 			market: &Market<T>,
@@ -1028,7 +1112,7 @@ pub mod pallet {
 			let mut min_equity = T::Decimal::zero();
 			let mut equity: T::Decimal = margin.into_decimal()?;
 			for position in positions.iter() {
-				if let Some(direction) = Self::position_direction(position) {
+				if let Some(direction) = position.direction() {
 					// Should always succeed
 					let market = Markets::<T>::get(&position.market_id)
 						.ok_or(Error::<T>::MarketIdNotFound)?;
@@ -1083,16 +1167,6 @@ pub mod pallet {
 					(position, index)
 				},
 			})
-		}
-
-		fn position_direction(position: &Position<T>) -> Option<Direction> {
-			if position.base_asset_amount.is_zero() {
-				None
-			} else if position.base_asset_amount.is_positive() {
-				Some(Direction::Long)
-			} else {
-				Some(Direction::Short)
-			}
 		}
 
 		fn base_asset_value(

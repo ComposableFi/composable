@@ -6,7 +6,7 @@ use crate::{
 		oracle as mock_oracle, vamm as mock_vamm,
 	},
 };
-use composable_traits::defi::DeFiComposableConfig;
+use composable_traits::{defi::DeFiComposableConfig, time::DurationSeconds};
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{ConstU16, ConstU32, ConstU64, Everything, GenesisBuild},
@@ -122,8 +122,10 @@ impl governance_registry::Config for Runtime {
 //                                                 Timestamp
 // ----------------------------------------------------------------------------------------------------
 
+pub const MINIMUM_PERIOD_SECONDS: DurationSeconds = 5;
+
 parameter_types! {
-	pub const MinimumPeriod: u64 = 5;
+	pub const MinimumPeriod: u64 = MINIMUM_PERIOD_SECONDS;
 }
 
 impl pallet_timestamp::Config for Runtime {
@@ -253,11 +255,11 @@ impl clearing_house::Config for Runtime {
 pub struct ExtBuilder {
 	pub native_balances: Vec<(AccountId, Balance)>,
 	pub balances: Vec<(AccountId, AssetId, Balance)>,
-	pub collateral_types: Vec<AssetId>,
+	pub collateral_type: Option<AssetId>,
 	pub vamm_id: Option<VammId>,
 	pub vamm_twap: Option<UnsignedDecimal>,
 	pub oracle_asset_support: Option<bool>,
-	pub oracle_twap: Option<u64>,
+	pub oracle_twap: Option<Balance>,
 }
 
 impl ExtBuilder {
@@ -274,7 +276,7 @@ impl ExtBuilder {
 			.assimilate_storage(&mut storage)
 			.unwrap();
 
-		clearing_house::GenesisConfig::<Runtime> { collateral_types: self.collateral_types }
+		clearing_house::GenesisConfig::<Runtime> { collateral_type: self.collateral_type }
 			.assimilate_storage(&mut storage)
 			.unwrap();
 

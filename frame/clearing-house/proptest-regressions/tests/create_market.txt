@@ -4,5 +4,4 @@
 #
 # It is recommended to check this file in to source control so that
 # everyone who runs the test benefits from these saved cases.
-cc 1470150209ed1613e9854838f373890c970ae4c970e90d19112a55fdf910ef3d # shrinks to direction = Long
-cc 598045f9cd4e3692eba545605147173d2089d033edda25c3bad0d3f6f19b61be # shrinks to direction = Long, max_leverage_percent = 100, percentf = FixedU128(0.010000000000000000)
+cc 44c4a74e9b0cf9ef05490c11c8a4446e9bf10ef9c11c2ce819451b4cc1276185 # shrinks to (margin_ratio_initial, margin_ratio_maintenance) = (FixedI128(1.000000000000000000), FixedI128(0.514042628035060928))

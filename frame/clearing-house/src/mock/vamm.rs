@@ -175,6 +175,10 @@ pub mod pallet {
 			Price::<T>::set(price)
 		}
 
+		pub fn set_twap(twap: Option<T::Decimal>) {
+			Twap::<T>::set(twap)
+		}
+
 		pub fn get_value(
 			amount: T::Balance,
 			asset_type: &AssetType,
