@@ -30,15 +30,8 @@ pub fn calculate_utilization_ratio(
 	}
 
 	let total = cash.safe_add(&borrows)?;
-	let utilization_ratio = borrows
-		.checked_div(&total)
-		// REVIEW: total can be zero
-		.expect("above checks prove it cannot error")
-		.checked_mul_int(100_u8)
-		.ok_or(ArithmeticError::Overflow)?;
-	Ok(Percent::from_percent(utilization_ratio))
 
-	// Percent::from_rational(borrows, total)
+	Ok(Percent::from_rational(borrows.into_inner(), total.into_inner()))
 }
 
 pub trait InterestRate {

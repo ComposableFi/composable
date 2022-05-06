@@ -1,4 +1,4 @@
-use hmac::{Hmac, Mac, NewMac};
+use hmac::{digest::generic_array::GenericArray, Hmac, Mac};
 use sha2::Sha256;
 use sp_core::{crypto::Ss58Codec, sr25519, Pair};
 use std::sync::Arc;
@@ -90,7 +90,8 @@ async fn faucet_handler(mut req: Request<Arc<State>>) -> tide::Result {
 		.expect("HMAC can take key of any size");
 	let preimage = format!("v0:{}:{}", timestamp, body_string);
 	mac.update(preimage.as_bytes());
-	mac.verify(&hex::decode(signature)?)
+	let tag_vec = hex::decode(signature)?;
+	mac.verify(GenericArray::from_slice(tag_vec.as_slice()))
 		.map_err(|_| Error::from_str(400, "Invalid Signature".to_string()))?;
 	// message has been verified.
 

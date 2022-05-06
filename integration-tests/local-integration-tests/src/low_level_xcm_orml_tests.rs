@@ -4,7 +4,7 @@
 
 use crate::{helpers::*, kusama_test_net::*, prelude::*};
 
-use support::assert_ok;
+use frame_support::assert_ok;
 use xcm::latest::prelude::*;
 use xcm_emulator::TestExt;
 use xcm_executor::XcmExecutor;
@@ -193,3 +193,15 @@ fn para_chain_subscribe_version_notify_of_sibling_chain() {
 		)));
 	});
 }
+
+#[test]
+fn fungibles_creation() {
+	let asset_amount = Fungibility::Fungible(42);
+	let _: MultiAssets = (MultiLocation::new(1, X1(Parachain(1000))), asset_amount).into();
+}
+
+// TODO: make versioning and noop tests seaprate
+//let noop : Xcm<Call> = Xcm(vec![]);
+// let tests = <PolkadotXcm as xcm::WrapVersion>::wrap_version(&MultiLocation::new(1,
+// X1(Parachain(THIS_PARA_ID))).into(), noop.clone()); assert_ok!(tests);
+// PolkadotXcm::execute(origin.clone(), Box::new(xcm::VersionedXcm::V2(noop.into())), 42);

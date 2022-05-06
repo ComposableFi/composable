@@ -12,7 +12,7 @@ use frame_support::{
 	weights::WeightToFeePolynomial,
 };
 use num_traits::Zero;
-use orml_traits::location::Reserve;
+use orml_traits::location::{AbsoluteReserveProvider, Reserve};
 use polkadot_primitives::v1::Id;
 use primitives::currency::{CurrencyId, WellKnownCurrency};
 use sp_runtime::traits::Convert;
@@ -126,14 +126,19 @@ impl<
 
 		if let AssetId::Concrete(ref multi_location) = xcmp_asset_id.clone() {
 			if let Some(asset_id) = AssetConverter::convert(multi_location.clone()) {
+				// NOTE: we have som many traces cause TooExpensive (as in Acala)
+				// NOTE: no suitable error for now. Could repurpose Trap(u64), but that will violate
+				// documentation
 				let fee = WeightToFee::calc(&weight);
+				log::trace!(target : "xcmp::buy_weight", "required payment in native token is: {:?}", fee );
 				let price = PriceConverter::get_price_inverse(asset_id, fee)
 					.map_err(|_| XcmError::TooExpensive)?;
+				log::trace!(target : "xcmp::buy_weight", "amount of priceable token to pay fee{:?}", price );
 
 				let required =
 					MultiAsset { id: xcmp_asset_id.clone(), fun: Fungibility::Fungible(price) };
 
-				log::trace!(target : "xcmp::buy_weight", "{:?} {:?} ", required, payment );
+				log::trace!(target : "xcmp::buy_weight", "required priceable token {:?}; provided payment:{:?} ", required, payment );
 				let unused = payment.checked_sub(required).map_err(|_| XcmError::TooExpensive)?;
 
 				self.fee = self.fee.saturating_add(fee);
@@ -340,7 +345,7 @@ impl FilterAssetLocation for DebugMultiNativeAsset {
 			"asset: {:?}; origin: {:?}; reserve: {:?};",
 			&asset,
 			&origin,
-			&asset.clone().reserve(),
+			AbsoluteReserveProvider::reserve(&asset.clone()),
 		);
 		false
 	}
@@ -357,13 +362,4 @@ impl<X, Y, Treasury: TakeRevenue, Z> Drop for TransactionFeePoolTrader<X, Y, Tre
 	}
 }
 
-// // here we should add any partner network for zero cost transactions
-// // 1000 is statmeing - see kusama runtime setup
-// // (1, Here) - jump 1 up, and say here - Relay
-// // (1, 1000) - jump 1 up and go to child 1000
-// match_type! {
-// 	pub type WellKnownsChains: impl Contains<MultiLocation> = {
-// 		 |
-// 			MultiLocation { parents: 1, interior: X1(Parachain(1000)) }
-// 	};
-// }
+pub const STATEMINE_PARA_ID: u32 = 1000;

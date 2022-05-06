@@ -116,14 +116,16 @@ pub mod pallet {
 		<T as Config>::LiquidationStrategyId,
 	>;
 
+	pub type MarketId = u32;
+
 	// REVIEW: Maybe move this to `models::market_index`?
 	// TODO: Rename to `MarketId`.
 	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq, MaxEncodedLen, TypeInfo)]
 	#[repr(transparent)]
 	pub struct MarketIndex(
 		#[cfg(test)] // to allow pattern matching in tests outside of this crate
-		pub u32,
-		#[cfg(not(test))] pub(crate) u32,
+		pub MarketId,
+		#[cfg(not(test))] pub(crate) MarketId,
 	);
 
 	impl MarketIndex {
@@ -455,7 +457,7 @@ pub mod pallet {
 		BorrowRepaid {
 			sender: T::AccountId,
 			market_id: MarketIndex,
-			beneficiary: T::AccountId, // REVIEW: Should beneficiary be removed?
+			beneficiary: T::AccountId,
 			amount: T::Balance,
 		},
 		/// Event emitted when a liquidation is initiated for a loan.
@@ -565,7 +567,7 @@ pub mod pallet {
 	pub type LastBlockTimestamp<T: Config> = StorageValue<_, Timestamp, ValueQuery>;
 
 	#[pallet::genesis_config]
-	#[derive(Default)] // REVIEW: Is default required?
+	#[derive(Default)]
 	pub struct GenesisConfig {}
 
 	#[pallet::genesis_build]
@@ -1162,7 +1164,7 @@ pub mod pallet {
 					&manager,
 					&Self::account_id(&market_id),
 					initial_pool_size,
-					false, // <- REVIEW: Do we want to possibly reap the manager?
+					false, // TODO: Replace with keep_alive parameter
 				)?;
 
 				let market_config = MarketConfig {
@@ -1310,7 +1312,6 @@ pub mod pallet {
 
 			let market_account = Self::account_id(market_id);
 
-			// REVIEW: Remove? (remove can_* checks)
 			Self::can_borrow(
 				market_id,
 				borrowing_account,
@@ -1773,5 +1774,25 @@ pub mod pallet {
 	pub(crate) struct AccruedInterest<T: Config> {
 		pub(crate) accrued_increment: T::Balance,
 		pub(crate) new_borrow_index: FixedU128,
+	}
+
+	/// Retrieve the current interest rate for the given `market_id`.
+	pub fn current_interest_rate<T: Config>(market_id: MarketId) -> Result<Rate, DispatchError> {
+		let market_id = MarketIndex::new(market_id);
+		let total_borrowed_from_market_excluding_interest =
+			Pallet::<T>::total_borrowed_from_market_excluding_interest(&market_id)?;
+		let total_available_to_be_borrowed =
+			Pallet::<T>::total_available_to_be_borrowed(&market_id)?;
+		let utilization_ratio = Pallet::<T>::calculate_utilization_ratio(
+			total_available_to_be_borrowed,
+			total_borrowed_from_market_excluding_interest,
+		)?;
+
+		Markets::<T>::try_get(market_id)
+			.map_err(|_| Error::<T>::MarketDoesNotExist)?
+			.interest_rate_model
+			.get_borrow_rate(utilization_ratio)
+			.ok_or(Error::<T>::BorrowRateDoesNotExist)
+			.map_err(Into::into)
 	}
 }

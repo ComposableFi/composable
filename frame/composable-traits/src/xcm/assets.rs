@@ -1,6 +1,7 @@
 //! Interfaces to managed assets
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::dispatch::DispatchResult;
+use polkadot_parachain::primitives::Id;
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -44,6 +45,13 @@ impl XcmAssetLocation {
 	}
 }
 
+// ration of any asset to native
+pub trait AssetRatioInspect {
+	type AssetId;
+	/// How much of foreign assets I have to pay for unit of native asset
+	fn get_ratio(asset_id: Self::AssetId) -> Option<Ratio>;
+}
+
 pub trait RemoteAssetRegistryInspect {
 	/// Local asset id.
 	/// Each implemented of this trait must hedge common id space for well known local assets
@@ -60,16 +68,27 @@ pub trait RemoteAssetRegistryInspect {
 	/// for this
 	type AssetNativeLocation;
 
+	type Balance;
+
 	/// Return reserve location for given asset.
 	fn asset_to_remote(
 		asset_id: Self::AssetId,
 	) -> Option<ForeignMetadata<Self::AssetNativeLocation>>;
 
-	/// How much of foreign assets I have to pay for unit of native asset
-	fn get_ratio(asset_id: Self::AssetId) -> Option<Ratio>;
-
 	/// Return asset for given reserve location.
 	fn location_to_asset(location: Self::AssetNativeLocation) -> Option<Self::AssetId>;
+
+	/// if I want to send XCM message to `parachain_id` and pay with `remote_asset_id`,
+	/// what minimal amount I should send as fee
+	fn min_xcm_fee(
+		parachain_id: Id,
+		remote_asset_id: Self::AssetNativeLocation,
+	) -> Option<Self::Balance>;
+
+	// NOTE: can extend later to have fee per parachain, so if needed we can reduce `spam` from
+	// other networks regardless of what they use for payments as of now any XCM message pays shared
+	// common basic fee for sure fn min_xcm_native_in_fee(parachain_id: Id) ->
+	// Option<Self::Balance>;
 }
 
 /// Used in tandem with `CurrencyFactory` trait

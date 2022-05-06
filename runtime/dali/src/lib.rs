@@ -21,13 +21,14 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 mod weights;
 mod xcmp;
 
+use orml_traits::parameter_type_with_key;
 // TODO: consider moving this to shared runtime
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
 use common::{
-	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, MosaicRemoteAssetId,
-	MultiExistentialDeposits, NativeExistentialDeposit, PoolId, Signature,
+	impls::DealWithFees, multi_existential_deposits, AccountId, AccountIndex, Address, Amount,
+	AuraId, Balance, BlockNumber, BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash,
+	Moment, MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
@@ -62,14 +63,16 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 
-use codec::Encode;
+use codec::{Codec, Encode, EncodeLike};
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
 use frame_system::EnsureSigned;
 use scale_info::TypeInfo;
+use sp_runtime::AccountId32;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
+use sp_std::fmt::Debug;
 use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
@@ -125,6 +128,13 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
 	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
+}
+
+parameter_type_with_key! {
+	// Minimum amount an account has to hold to stay in state
+	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
+		multi_existential_deposits::<AssetsRegistry>(currency_id)
+	};
 }
 
 parameter_types! {
@@ -771,6 +781,7 @@ impl assets_registry::Config for Runtime {
 	type CurrencyFactory = CurrencyFactory;
 	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
 	type UpdateAssetRegistryOrigin = EnsureRootOrHalfCouncil;
+	type ParachainOrGovernanceOrigin = EnsureRootOrHalfCouncil;
 	type Balance = Balance;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 }
@@ -1296,14 +1307,17 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime {
+	impl<Call, AccountId> simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime
+		where
+			Call: Codec,
+			AccountId: Codec + EncodeLike<AccountId32> + Into<AccountId32> + Clone+ PartialEq + TypeInfo + Debug,
+	{
 		fn create_transaction(call: Call, signer: AccountId) -> Vec<u8> {
 			use sp_runtime::{
 				generic::Era, MultiSignature,
 				traits::StaticLookup,
 			};
 			use sp_core::sr25519;
-
 			let nonce = frame_system::Pallet::<Runtime>::account_nonce(signer.clone());
 			let extra = (
 				system::CheckNonZeroSender::<Runtime>::new(),
@@ -1315,11 +1329,14 @@ impl_runtime_apis! {
 				system::CheckWeight::<Runtime>::new(),
 				transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
 			);
-
 			let signature = MultiSignature::from(sr25519::Signature([0_u8;64]));
-			let address = AccountIdLookup::unlookup(signer);
-			let ext = UncheckedExtrinsic::new_signed(call, address, signature, extra);
-
+			let address = AccountIdLookup::unlookup(signer.into());
+			let ext = generic::UncheckedExtrinsic::<Address, Call, Signature, SignedExtra>::new_signed(
+				call,
+				address,
+				signature,
+				extra,
+			);
 			ext.encode()
 		}
 	}

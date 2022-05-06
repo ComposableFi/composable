@@ -24,7 +24,8 @@ YDATE=$(date -d yesterday +'%m-%d-%Y')
 run_simnode() {
   CHAIN="$1"
   echo "Running simnode for $CHAIN"
-  FILENAME=cl-1-$YDATE.zip
+  HOST=$(echo $HOSTNAME)
+  FILENAME=$HOST-$YDATE.zip
   GS_BUCKET="$CHAIN-data-store"
   sudo gsutil cp gs://$GS_BUCKET/"$FILENAME" .
   sudo unzip -o "$FILENAME" -d /tmp/db
