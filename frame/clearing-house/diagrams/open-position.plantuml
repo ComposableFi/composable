@@ -19,7 +19,6 @@ user -> ch : open position
 
 ch -[#green]> mkts : get ""Market""
 ch -[#green]> positions : get/create position
-'note right CH: compute quote asset\nnotional amount
 
 group settle funding payment for position
 ch -[#red]> accs : update collateral
@@ -36,7 +35,7 @@ ch -[#red]> positions : update position
 ch -[#red]> mkts : update open interest
 
 
-opt decreased/reversed position
+opt decreased/closed/reversed position
 ch -[#red]> accs : realize PnL
 end
 
@@ -70,7 +69,7 @@ return ""meets_imr""
 
 note right ch
 allow ""!meets_imr"" if trade
-is risk decreasing?
+is risk decreasing
 end note
 
 ====
