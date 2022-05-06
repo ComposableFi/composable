@@ -28,7 +28,6 @@ use frame_support::{
 	},
 	weights::Weight,
 };
-use orml_traits::parameter_type_with_key;
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use orml_traits::parameter_type_with_key;
 use pallet_balances::{BalanceLock, Error as BalancesError};
