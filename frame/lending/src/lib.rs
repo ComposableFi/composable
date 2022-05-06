@@ -116,14 +116,16 @@ pub mod pallet {
 		<T as Config>::LiquidationStrategyId,
 	>;
 
+	pub type MarketId = u32;
+
 	// REVIEW: Maybe move this to `models::market_index`?
 	// TODO: Rename to `MarketId`.
 	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq, MaxEncodedLen, TypeInfo)]
 	#[repr(transparent)]
 	pub struct MarketIndex(
 		#[cfg(test)] // to allow pattern matching in tests outside of this crate
-		pub u32,
-		#[cfg(not(test))] pub(crate) u32,
+		pub MarketId,
+		#[cfg(not(test))] pub(crate) MarketId,
 	);
 
 	impl MarketIndex {
@@ -1772,5 +1774,28 @@ pub mod pallet {
 	pub(crate) struct AccruedInterest<T: Config> {
 		pub(crate) accrued_increment: T::Balance,
 		pub(crate) new_borrow_index: FixedU128,
+	}
+
+	/// Retrieve the current interest rate for the given `market_id`.
+	pub fn current_interest_rate<T: Config>(market_id: MarketId) -> Result<Rate, DispatchError> {
+		let market_id = MarketIndex::new(market_id);
+		let total_borrowed_from_market_excluding_interest =
+			Pallet::<T>::total_borrowed_from_market_excluding_interest(&market_id)?;
+		let total_available_to_be_borrowed =
+			Pallet::<T>::total_available_to_be_borrowed(&market_id)?;
+		let utilization_ratio = Pallet::<T>::calculate_utilization_ratio(
+			total_available_to_be_borrowed,
+			total_borrowed_from_market_excluding_interest,
+		)?;
+
+		Markets::<T>::try_mutate(market_id, |market_config| {
+			market_config
+				.as_mut()
+				.ok_or(Error::<T>::MarketDoesNotExist)?
+				.interest_rate_model
+				.get_borrow_rate(utilization_ratio)
+				.ok_or(Error::<T>::BorrowRateDoesNotExist)
+		})
+		.map_err(Into::into)
 	}
 }

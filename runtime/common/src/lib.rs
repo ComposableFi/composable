@@ -26,6 +26,7 @@ pub use types::*;
 mod types {
 	use codec::{Decode, Encode, MaxEncodedLen};
 	use core::fmt::Debug;
+	pub use pallet_lending::MarketId;
 	use scale_info::TypeInfo;
 	use sp_runtime::traits::{IdentifyAccount, Verify};
 
