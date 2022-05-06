@@ -928,6 +928,8 @@ pub mod pallet {
 					.checked_add(&payment.into_balance()?)
 					.ok_or(ArithmeticError::Overflow)?;
 			} else if payment.is_negative() {
+				// TODO(0xangelo): can we have bad debt from unrealized funding if user wasn't
+				// liquidated in time?
 				*margin = margin.saturating_sub(payment.into_balance()?);
 			}
 			Ok(())
