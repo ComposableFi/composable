@@ -71,7 +71,6 @@ fn run_to_block(n: u64) {
 }
 
 fn run_for_seconds(seconds: DurationSeconds) {
-	// TODO(0xangelo): replace all of the below to a call to run_to_block
 	if SystemPallet::block_number() > 0 {
 		TimestampPallet::on_finalize(SystemPallet::block_number());
 		SystemPallet::on_finalize(SystemPallet::block_number());
