@@ -2,13 +2,15 @@ use crate::{
 	mock::{Balance, ExtBuilder, MockRuntime, System, TestPallet},
 	pallet::{Error, Event, VammMap},
 	tests::{
-		balance_range_low, balance_range_lower_half, balance_range_upper_half, get_swap_config,
-		get_vamm_state, run_to_block, then_and_now, RUN_CASES,
+		any_vamm_state, balance_range_low, balance_range_lower_half, balance_range_upper_half,
+		get_swap_config, get_vamm_state, run_to_block, then_and_now, RUN_CASES,
 	},
+	VammState,
 };
-use composable_traits::vamm::{Direction, Vamm as VammTrait};
+use composable_traits::vamm::{AssetType, Direction, SwapConfig, Vamm as VammTrait};
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
+use sp_core::U256;
 use sp_runtime::traits::Zero;
 
 proptest! {
@@ -63,20 +65,12 @@ proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
 	fn fails_to_swap_assets_if_output_is_less_than_minimum_limit(
-		mut vamm_state in get_vamm_state(Default::default()),
+		mut vamm_state in any_vamm_state(),
 		mut swap_config in get_swap_config(Default::default()),
-		base in balance_range_lower_half(),
-		quote in balance_range_lower_half(),
-		peg in balance_range_lower_half(),
 		limit in balance_range_upper_half(),
 	) {
 		// Ensure vamm is open before start operation to swap assets.
 		vamm_state.closed = None;
-
-		// Ensure values won't overflow when computing swap.
-		vamm_state.base_asset_reserves = base;
-		vamm_state.quote_asset_reserves = quote;
-		vamm_state.peg_multiplier = peg;
 
 		// Ensure input amount will not cause `InsufficientFundsForTrade`,
 		// `Overflow`, `Underflow`, etc.
@@ -141,4 +135,160 @@ proptest! {
 			}
 		})
 	}
+}
+
+#[test]
+fn swap_add_base() {
+	let swap_config = SwapConfig {
+		vamm_id: 0,
+		asset: AssetType::Base,
+		input_amount: 1_000_000_000_000,
+		direction: Direction::Add,
+		output_amount_limit: 0,
+	};
+
+	let base_u256 = U256::from(2_u128) * U256::exp10(12);
+	let quote_u256 = U256::from(50_u128) * U256::exp10(12);
+	let invariant = base_u256 * quote_u256;
+
+	ExtBuilder {
+		vamm_count: 1,
+		vamms: vec![
+			// Initial state
+			(
+				0,
+				VammState {
+					base_asset_reserves: base_u256.as_u128(),
+					quote_asset_reserves: quote_u256.as_u128(),
+					peg_multiplier: 1,
+					invariant,
+					closed: None,
+				},
+			),
+			// Expected final state
+			(
+				1,
+				VammState {
+					base_asset_reserves: 3_000_000_000_000,
+					quote_asset_reserves: 33_333_333_333_333,
+					peg_multiplier: 1,
+					invariant,
+					closed: None,
+				},
+			),
+		],
+	}
+	.build()
+	.execute_with(|| {
+		let swap = TestPallet::swap(&swap_config);
+		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
+		let vamm_expected = VammMap::<MockRuntime>::get(1);
+
+		assert_eq!(swap, Ok(16_666_666_666_667));
+		assert_eq!(vamm_after_swap, vamm_expected);
+	})
+}
+
+#[test]
+fn swap_remove_base() {
+	let swap_config = SwapConfig {
+		vamm_id: 0,
+		asset: AssetType::Base,
+		input_amount: 1_000_000_000_000,
+		direction: Direction::Remove,
+		output_amount_limit: 0,
+	};
+
+	let base_u256 = U256::from(2_u128) * U256::exp10(12);
+	let quote_u256 = U256::from(50_u128) * U256::exp10(12);
+	let invariant = base_u256 * quote_u256;
+
+	ExtBuilder {
+		vamm_count: 1,
+		vamms: vec![
+			// Initial state
+			(
+				0,
+				VammState {
+					base_asset_reserves: base_u256.as_u128(),
+					quote_asset_reserves: quote_u256.as_u128(),
+					peg_multiplier: 1,
+					invariant,
+					closed: None,
+				},
+			),
+			// Expected final state
+			(
+				1,
+				VammState {
+					base_asset_reserves: 1_000_000_000_000,
+					quote_asset_reserves: 100_000_000_000_000,
+					peg_multiplier: 1,
+					invariant,
+					closed: None,
+				},
+			),
+		],
+	}
+	.build()
+	.execute_with(|| {
+		let swap = TestPallet::swap(&swap_config);
+		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
+		let vamm_expected = VammMap::<MockRuntime>::get(1);
+
+		assert_eq!(swap, Ok(50_000_000_000_000));
+		assert_eq!(vamm_after_swap, vamm_expected);
+	})
+}
+
+#[test]
+fn swap_add_quote() {
+	let swap_config = SwapConfig {
+		vamm_id: 0,
+		asset: AssetType::Quote,
+		input_amount: 1_000_000_000_000,
+		direction: Direction::Add,
+		output_amount_limit: 0,
+	};
+
+	let base_u256 = U256::from(2_u128) * U256::exp10(12);
+	let quote_u256 = U256::from(50_u128) * U256::exp10(12);
+	let invariant = base_u256 * quote_u256;
+
+	ExtBuilder {
+		vamm_count: 1,
+		vamms: vec![
+			// Initial state
+			(
+				0,
+				VammState {
+					base_asset_reserves: base_u256.as_u128(),
+					quote_asset_reserves: quote_u256.as_u128(),
+					peg_multiplier: 1,
+					invariant,
+					closed: None,
+				},
+			),
+			// Expected final state
+			(
+				1,
+				VammState {
+					base_asset_reserves: 1_960_784_313_725,
+					quote_asset_reserves: 51_000_000_000_000,
+					peg_multiplier: 1,
+					invariant,
+					closed: None,
+				},
+			),
+		],
+	}
+	.build()
+	.execute_with(|| {
+		let swap = TestPallet::swap(&swap_config);
+		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
+		let vamm_expected = VammMap::<MockRuntime>::get(1);
+
+		assert_eq!(swap, Ok(39_215_686_275));
+		assert_eq!(vamm_after_swap, vamm_expected);
+	})
 }

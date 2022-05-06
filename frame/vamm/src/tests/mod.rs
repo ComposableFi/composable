@@ -161,6 +161,33 @@ prop_compose! {
 }
 
 prop_compose! {
+	fn any_sane_asset_amount()(
+		x in 1_000_000_000..=1_000_000_000_000_000_u128
+	) -> u128 {
+		x
+	}
+}
+
+prop_compose! {
+	fn any_vamm_state()(
+		base in any_sane_asset_amount(),
+		quote in any_sane_asset_amount(),
+		peg in 1..=100_000_u128,
+		closed in prop_oneof![timestamp().prop_map(Some), Just(None)]
+	) -> VammState<Balance, VammTimestamp> {
+		VammState {
+			base_asset_reserves: base,
+			quote_asset_reserves: quote,
+			peg_multiplier: peg,
+			invariant: TestPallet::compute_invariant(
+				base, quote
+			).unwrap(),
+			closed,
+		}
+	}
+}
+
+prop_compose! {
 	fn get_vamm_state(config: TestVammState<Balance, VammTimestamp>)(
 		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve(),
 		closed in prop_oneof![timestamp().prop_map(Some), Just(None)]
