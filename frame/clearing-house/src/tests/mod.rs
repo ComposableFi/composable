@@ -71,6 +71,8 @@ fn run_to_block(n: u64) {
 }
 
 fn run_for_seconds(seconds: DurationSeconds) {
+	// Not using an equivalent run_to_block call here because it causes the tests to slow down
+	// drastically
 	if SystemPallet::block_number() > 0 {
 		TimestampPallet::on_finalize(SystemPallet::block_number());
 		SystemPallet::on_finalize(SystemPallet::block_number());
