@@ -13,3 +13,4 @@ pub mod timestamp;
 pub mod tokens;
 pub mod treasury;
 pub mod utility;
+pub mod multicurrency_democracy;

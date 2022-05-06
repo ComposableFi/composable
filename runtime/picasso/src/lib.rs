@@ -726,6 +726,46 @@ impl democracy::Config for Runtime {
 	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
 }
 
+impl multicurrency_democracy::Config for Runtime {
+	type Proposal = Call;
+	type Event = Event;
+	type Balance = Balance;
+	type AssetId = CurrencyId;
+	type NativeCurrency = Balances;
+	type Currency = Assets;
+	type EnactmentPeriod = EnactmentPeriod;
+	type LaunchPeriod = LaunchPeriod;
+	type VotingPeriod = VotingPeriod;
+	type VoteLockingPeriod = EnactmentPeriod;
+	type MinimumDeposit = MinimumDeposit;
+
+	// TODO: prod values
+	type ExternalOrigin = EnsureRootOrHalfCouncil;
+	type ExternalMajorityOrigin = EnsureRootOrHalfCouncil;
+	type ExternalDefaultOrigin = EnsureRootOrHalfCouncil;
+
+	type FastTrackOrigin = EnsureRootOrHalfCouncil;
+	type InstantOrigin = EnsureRootOrHalfCouncil;
+	type InstantAllowed = InstantAllowed;
+
+	type FastTrackVotingPeriod = FastTrackVotingPeriod;
+	type CancellationOrigin = EnsureRootOrHalfCouncil;
+	type BlacklistOrigin = EnsureRootOrHalfCouncil;
+	type CancelProposalOrigin = EnsureRootOrHalfCouncil;
+	type VetoOrigin = collective::EnsureMember<AccountId, CouncilInstance>;
+	type OperationalPreimageOrigin = collective::EnsureMember<AccountId, CouncilInstance>;
+	type Slash = Treasury;
+
+	type CooloffPeriod = CooloffPeriod;
+	type MaxProposals = MaxProposals;
+	type MaxVotes = MaxVotes;
+	type PalletsOrigin = OriginCaller;
+
+	type PreimageByteDeposit = PreimageByteDeposit;
+	type Scheduler = Scheduler;
+	type WeightInfo = weights::multicurrency_democracy::WeightInfo<Runtime>;
+}
+
 impl currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
@@ -855,6 +895,7 @@ construct_runtime!(
 		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 57,
 		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 58,
 		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 59,
+		MultiCurrencyDemocracy: multicurrency_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 60,
 	}
 );
 
