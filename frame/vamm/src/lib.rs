@@ -687,6 +687,10 @@ pub mod pallet {
 			};
 			let new_input_amount_u256 = Self::balance_to_u256(new_input_amount)?;
 
+			// TODO(Cardosaum): Maybe it would be worth to create another sanity
+			// check in the helper function tracking the inputs and verify if
+			// they would result in a division by zero? (Doing this we could
+			// present a better error message for the caller).
 			let new_output_amount_u256 = vamm_state
 				.invariant
 				.checked_div(new_input_amount_u256)
