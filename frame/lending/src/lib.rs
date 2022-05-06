@@ -1788,14 +1788,11 @@ pub mod pallet {
 			total_borrowed_from_market_excluding_interest,
 		)?;
 
-		Markets::<T>::try_mutate(market_id, |market_config| {
-			market_config
-				.as_mut()
-				.ok_or(Error::<T>::MarketDoesNotExist)?
-				.interest_rate_model
-				.get_borrow_rate(utilization_ratio)
-				.ok_or(Error::<T>::BorrowRateDoesNotExist)
-		})
-		.map_err(Into::into)
+		Markets::<T>::try_get(market_id)
+			.map_err(|_| Error::<T>::MarketDoesNotExist)?
+			.interest_rate_model
+			.get_borrow_rate(utilization_ratio)
+			.ok_or(Error::<T>::BorrowRateDoesNotExist)
+			.map_err(Into::into)
 	}
 }
