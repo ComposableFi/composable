@@ -28,6 +28,7 @@ use frame_support::{
 	},
 	weights::Weight,
 };
+use orml_traits::parameter_type_with_key;
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use orml_traits::parameter_type_with_key;
 use pallet_balances::{BalanceLock, Error as BalancesError};
@@ -166,6 +167,11 @@ impl pallet_scheduler::Config for Test {
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type PreimageProvider = ();
 	type NoPreimagePostponement = NoPreimagePostponement;
+}
+
+parameter_types! {
+	pub const ExistentialDeposit: Balance = 1;
+	pub const MaxLocks: u32 = 50;
 }
 
 parameter_types! {
