@@ -949,10 +949,10 @@ pub mod pallet {
 
 		fn update_market_after_trade(
 			market: &mut Market<T>,
-			base_asset_amount: T::Balance,
+			base_asset_swapped: T::Balance,
 			direction: Direction,
 		) -> Result<(), DispatchError> {
-			let base_amount_decimal: T::Decimal = base_asset_amount.into_decimal()?;
+			let base_amount_decimal: T::Decimal = base_asset_swapped.into_decimal()?;
 			market.net_base_asset_amount.try_add_mut(&match direction {
 				Direction::Long => base_amount_decimal,
 				Direction::Short => base_amount_decimal.neg(),
