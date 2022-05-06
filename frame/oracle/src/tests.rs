@@ -6,7 +6,7 @@ use codec::Decode;
 use composable_traits::{defi::CurrencyPair, oracle::Price};
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::{Currency, OnInitialize},
+	traits::{Currency, Hooks},
 	BoundedVec,
 };
 use pallet_balances::Error as BalancesError;
@@ -20,10 +20,9 @@ use sp_runtime::{
 };
 use std::sync::Arc;
 
-use crate::validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
-use composable_support::validation::{Validate, Validated};
+use crate::validation::ValidBlockInterval;
+use composable_support::validation::Validated;
 use composable_tests_helpers::{prop_assert_noop, prop_assert_ok};
-use core::{fmt, marker::PhantomData};
 use proptest::prelude::*;
 
 use sp_core::H256;
@@ -583,7 +582,6 @@ mod reclaim_stake {
 				System::set_block_number(start_block);
 				// Remove the stake from setting the signer
 				prop_assert_ok!(Oracle::remove_stake(Origin::signed(controller_account)));
-				let withdrawal = Withdraw { stake: MinStake::get(), unlock_block: start_block + StakeLock::get() };
 
 				// Can't remove anymore because we did not stake anything else
 				prop_assert_noop!(
@@ -881,6 +879,7 @@ fn test_payout_slash() {
 		let account_3 = get_account_3();
 		let account_4 = get_account_4();
 		let account_5 = get_account_5();
+		let treasury_account = get_treasury_account();
 		assert_ok!(Oracle::set_signer(Origin::signed(account_5), account_2));
 
 		let one = PrePrice { price: 79, block: 0, who: account_1 };
@@ -915,9 +914,14 @@ fn test_payout_slash() {
 
 		add_price_storage(79, 0, account_1, 0);
 		add_price_storage(100, 0, account_2, 0);
+		assert_ok!(Oracle::set_signer(Origin::signed(account_2), account_1));
+		assert_eq!(Oracle::oracle_stake(account_1), Some(1));
+		assert_ok!(Oracle::set_signer(Origin::signed(account_1), account_4));
+		assert_eq!(Oracle::oracle_stake(account_4), Some(1));
 
 		assert_eq!(Oracle::answer_in_transit(account_1), Some(5));
 		assert_eq!(Oracle::answer_in_transit(account_2), Some(5));
+		assert_eq!(Balances::free_balance(treasury_account), 100);
 
 		Oracle::handle_payout(
 			&vec![one, two, three, four, five],
@@ -929,13 +933,16 @@ fn test_payout_slash() {
 		assert_eq!(Oracle::answer_in_transit(account_1), Some(0));
 		assert_eq!(Oracle::answer_in_transit(account_2), Some(0));
 		// account 1 and 4 gets slashed 2 and 5 gets rewarded
-		assert_eq!(Balances::free_balance(account_1), 95);
+		assert_eq!(Oracle::oracle_stake(account_1), Some(0));
 		// 5 gets 2's reward and its own
 		assert_eq!(Balances::free_balance(account_5), 109);
-		assert_eq!(Balances::free_balance(account_2), 100);
+		assert_eq!(Balances::free_balance(account_2), 99);
 
 		assert_eq!(Balances::free_balance(account_3), 0);
-		assert_eq!(Balances::free_balance(account_4), 95);
+		// assert_eq!(Balances::free_balance(account_4), 95);
+		assert_eq!(Oracle::oracle_stake(account_4), Some(0));
+		// treasury gets 1 from both account1 and account4's stake
+		assert_eq!(Balances::free_balance(treasury_account), 102);
 
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
@@ -955,13 +962,114 @@ fn test_payout_slash() {
 		);
 
 		// account 4 gets slashed 2 5 and 1 gets rewarded
-		assert_eq!(Balances::free_balance(account_1), 90);
+		assert_eq!(Balances::free_balance(account_1), 99);
 		// 5 gets 2's reward and its own
 		assert_eq!(Balances::free_balance(account_5), 117);
-		assert_eq!(Balances::free_balance(account_2), 100);
+		assert_eq!(Balances::free_balance(account_2), 99);
 
 		assert_eq!(Balances::free_balance(account_3), 0);
-		assert_eq!(Balances::free_balance(account_4), 90);
+		assert_eq!(Oracle::oracle_stake(account_4), Some(0));
+		assert_eq!(Balances::free_balance(treasury_account), 102);
+		assert_eq!(Balances::free_balance(account_4), 100);
+	});
+}
+
+#[test]
+fn halborn_test_escape_slashing() {
+	new_test_ext().execute_with(|| {
+		const ASSET_ID: u128 = 0;
+		const MIN_ANSWERS: u32 = 3;
+		const MAX_ANSWERS: u32 = 5;
+		const THRESHOLD: Percent = Percent::from_percent(80);
+		const BLOCK_INTERVAL: u64 = 5;
+		const REWARD: u64 = 5;
+		const SLASH: u64 = 5;
+
+		let account_1 = get_account_1();
+		let account_2 = get_root_account();
+		let account_4 = get_account_4();
+		let account_5 = get_account_5();
+		let treasury_account = get_treasury_account();
+
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			ASSET_ID,
+			Validated::new(THRESHOLD).unwrap(),
+			Validated::new(MIN_ANSWERS).unwrap(),
+			Validated::new(MAX_ANSWERS).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL).unwrap(),
+			REWARD,
+			SLASH
+		));
+
+		let balance1 = Balances::free_balance(account_1);
+		let balance2 = Balances::free_balance(account_2);
+		let balance4 = Balances::free_balance(account_4);
+		let balance5 = Balances::free_balance(account_5);
+
+		println!("BALANCE before staking");
+		println!("1: {}", balance1);
+		println!("2: {}", balance2);
+		println!("4: {}", balance4);
+		println!("5: {}", balance5);
+
+		System::set_block_number(6);
+		assert_ok!(Oracle::set_signer(Origin::signed(account_2), account_1));
+		assert_ok!(Oracle::set_signer(Origin::signed(account_1), account_2));
+		assert_ok!(Oracle::set_signer(Origin::signed(account_5), account_4));
+		assert_ok!(Oracle::set_signer(Origin::signed(account_4), account_5));
+		assert_ok!(Oracle::add_stake(Origin::signed(account_1), 50));
+		assert_ok!(Oracle::add_stake(Origin::signed(account_2), 50));
+		assert_ok!(Oracle::add_stake(Origin::signed(account_4), 99));
+		assert_ok!(Oracle::add_stake(Origin::signed(account_5), 50));
+
+		let balance1 = Balances::free_balance(account_1);
+		let balance2 = Balances::free_balance(account_2);
+		let balance4 = Balances::free_balance(account_4);
+		let balance5 = Balances::free_balance(account_5);
+		println!("BALANCE before price submissions");
+		println!("1: {}", balance1);
+		println!("2: {}", balance2);
+		println!("4: {}", balance4);
+		println!("5: {}", balance5);
+
+		assert_ok!(Oracle::submit_price(Origin::signed(account_1), 100_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(Origin::signed(account_2), 100_u128, 0_u128));
+		// Proposing price of 4000 would result in getting stake slashed of controller account_5
+		assert_ok!(Oracle::submit_price(Origin::signed(account_4), 4000_u128, 0_u128));
+
+		System::set_block_number(7);
+		Oracle::on_initialize(7);
+		let res = <Oracle as composable_traits::oracle::Oracle>::get_price(0, 1).unwrap();
+		println!("AFTER 1st SUBMIT PRICE - PRICE: {:?} | BLOCK: {:?}", res.price, res.block);
+		let balance1 = Balances::free_balance(account_1);
+		let balance2 = Balances::free_balance(account_2);
+		let balance4 = Balances::free_balance(account_4);
+		let balance5 = Balances::free_balance(account_5);
+		println!("BALANCE after price submissions");
+		println!("1: {}", balance1);
+		println!("2: {}", balance2);
+		println!("4: {}", balance4);
+		println!("5: {}", balance5);
+
+		assert_ok!(Oracle::remove_stake(Origin::signed(account_5)));
+		System::set_block_number(44);
+		assert_ok!(Oracle::reclaim_stake(Origin::signed(account_5)));
+		let balance1 = Balances::free_balance(account_1);
+		let balance2 = Balances::free_balance(account_2);
+		let balance4 = Balances::free_balance(account_4);
+		let balance5 = Balances::free_balance(account_5);
+		let balance_treasury = Balances::free_balance(treasury_account);
+		println!("BALANCE after account_4 removed stake:");
+		println!("1: {}", balance1);
+		println!("2: {}", balance2);
+		println!("4: {}", balance4);
+		println!("5: {}", balance5);
+		println!("TreasuryAccount Balance: {}", balance_treasury);
+		// account4 (signer) with controller account5 has reported skewed price.
+		// So account5 's stake is slashed and slashed amount is transferred to treasury_account
+		assert_eq!(balance5, 95_u64);
+		assert_eq!(balance_treasury, 105_u64);
 	});
 }
 
@@ -1483,7 +1591,6 @@ mod test {
 	use super::*;
 	use composable_support::validation::Validate;
 	use frame_support::assert_ok;
-	use mock::Test;
 	use validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
 
 	#[test]
