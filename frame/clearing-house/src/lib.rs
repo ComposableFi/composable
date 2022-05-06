@@ -928,9 +928,7 @@ pub mod pallet {
 					.checked_add(&payment.into_balance()?)
 					.ok_or(ArithmeticError::Overflow)?;
 			} else if payment.is_negative() {
-				*margin = margin
-					.checked_sub(&payment.into_balance()?)
-					.ok_or(ArithmeticError::Underflow)?;
+				*margin = margin.saturating_sub(payment.into_balance()?);
 			}
 			Ok(())
 		}
