@@ -1,5 +1,6 @@
 use super::{
-	any_balance, any_price, valid_market_config, with_market_context, with_trading_context,
+	any_balance, any_price, run_for_seconds, valid_market_config, with_market_context,
+	with_trading_context,
 };
 use crate::{
 	math::FromUnsigned,
@@ -8,8 +9,8 @@ use crate::{
 		assets::USDC,
 		runtime::{
 			Assets as AssetsPallet, ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime,
-			System as SystemPallet, TestPallet, TestPalletId, Timestamp as TimestampPallet,
-			Vamm as VammPallet, MINIMUM_PERIOD_SECONDS,
+			System as SystemPallet, TestPallet, TestPalletId, Vamm as VammPallet,
+			MINIMUM_PERIOD_SECONDS,
 		},
 	},
 	Direction, Error, Event,
@@ -18,25 +19,9 @@ use composable_traits::{
 	clearing_house::ClearingHouse,
 	time::{DurationSeconds, ONE_HOUR},
 };
-use frame_support::{assert_noop, assert_ok, pallet_prelude::Hooks, traits::fungibles::Inspect};
+use frame_support::{assert_noop, assert_ok, traits::fungibles::Inspect};
 use proptest::prelude::*;
 use sp_runtime::{traits::AccountIdConversion, FixedI128, FixedU128};
-
-// ----------------------------------------------------------------------------------------------------
-//                                               Helpers
-// ----------------------------------------------------------------------------------------------------
-
-fn run_for_seconds(seconds: DurationSeconds) {
-	if SystemPallet::block_number() > 0 {
-		TimestampPallet::on_finalize(SystemPallet::block_number());
-		SystemPallet::on_finalize(SystemPallet::block_number());
-	}
-	SystemPallet::set_block_number(SystemPallet::block_number() + 1);
-	// Time is set in milliseconds, so we multiply the seconds by 1_000
-	let _ = TimestampPallet::set(Origin::none(), TimestampPallet::now() + 1_000 * seconds);
-	SystemPallet::on_initialize(SystemPallet::block_number());
-	TimestampPallet::on_initialize(SystemPallet::block_number());
-}
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Prop Compose

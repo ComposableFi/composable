@@ -14,7 +14,7 @@ use crate::mock::{
 use composable_traits::{
 	clearing_house::{ClearingHouse, Instruments},
 	oracle::Oracle,
-	time::ONE_HOUR,
+	time::{DurationSeconds, ONE_HOUR},
 	vamm::{AssetType, Direction as VammDirection, Vamm},
 };
 use frame_support::{assert_err, assert_ok, pallet_prelude::Hooks};
@@ -68,6 +68,19 @@ fn run_to_block(n: u64) {
 		SystemPallet::on_initialize(SystemPallet::block_number());
 		TimestampPallet::on_initialize(SystemPallet::block_number());
 	}
+}
+
+fn run_for_seconds(seconds: DurationSeconds) {
+	// TODO(0xangelo): replace all of the below to a call to run_to_block
+	if SystemPallet::block_number() > 0 {
+		TimestampPallet::on_finalize(SystemPallet::block_number());
+		SystemPallet::on_finalize(SystemPallet::block_number());
+	}
+	SystemPallet::set_block_number(SystemPallet::block_number() + 1);
+	// Time is set in milliseconds, so we multiply the seconds by 1_000
+	let _ = TimestampPallet::set(Origin::none(), TimestampPallet::now() + 1_000 * seconds);
+	SystemPallet::on_initialize(SystemPallet::block_number());
+	TimestampPallet::on_initialize(SystemPallet::block_number());
 }
 
 /// Return the balance representation of the input value, according to the precision of the fixed

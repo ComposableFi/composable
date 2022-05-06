@@ -721,23 +721,25 @@ pub mod pallet {
 			quote_asset_amount: Self::Balance,
 			base_asset_amount_limit: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			let mut margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
 			let mut market = Self::get_market(&market_id).ok_or(Error::<T>::MarketIdNotFound)?;
-			let mut positions = Self::get_positions(&account_id);
-			let (position, position_index) =
-				Self::get_or_create_position(&mut positions, market_id, &market)?;
-
 			let mut quote_abs_amount_decimal = T::Decimal::from_balance(quote_asset_amount)?;
 			ensure!(
 				quote_abs_amount_decimal >= market.minimum_trade_size,
 				Error::<T>::TradeSizeTooSmall
 			);
 
+			let mut positions = Self::get_positions(&account_id);
+			let (position, position_index) =
+				Self::get_or_create_position(&mut positions, market_id, &market)?;
 			let position_direction = position.direction().unwrap_or(direction);
 
-			let base_swapped: T::Balance;
+			let mut margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
+			// Settle funding for position before any modifications
+			Self::settle_funding(position, &market, &mut margin)?;
+
 			// Whether or not the trade increases the risk exposure of the account
 			let mut is_risk_increasing = false;
+			let base_swapped: T::Balance;
 			if direction == position_direction {
 				base_swapped = Self::increase_position(
 					position,
@@ -914,6 +916,25 @@ pub mod pallet {
 
 	// Helper functions - core functionality
 	impl<T: Config> Pallet<T> {
+		fn settle_funding(
+			position: &mut Position<T>,
+			market: &Market<T>,
+			margin: &mut T::Balance,
+		) -> Result<(), DispatchError> {
+			let cum_rate = market.cum_funding_rate.try_sub(&position.last_cum_funding)?;
+			let payment = cum_rate.try_mul(&position.base_asset_amount)?;
+			if payment.is_positive() {
+				*margin = margin
+					.checked_add(&payment.into_balance()?)
+					.ok_or(ArithmeticError::Overflow)?;
+			} else if payment.is_negative() {
+				*margin = margin
+					.checked_sub(&payment.into_balance()?)
+					.ok_or(ArithmeticError::Underflow)?;
+			}
+			Ok(())
+		}
+
 		fn fee_for_trade(
 			market: &Market<T>,
 			quote_abs_amount: &T::Decimal,

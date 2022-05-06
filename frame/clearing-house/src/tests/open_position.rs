@@ -3,17 +3,18 @@ use crate::{
 		accounts::ALICE,
 		assets::USDC,
 		runtime::{
-			Balance, ExtBuilder, MarketId, Origin, Runtime, System as SystemPallet, TestPallet,
-			Vamm as VammPallet,
+			Balance, ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime,
+			System as SystemPallet, TestPallet, Vamm as VammPallet,
 		},
 	},
 	pallet::{Config, Direction, Error, Event},
 	tests::{
-		any_price, as_balance, valid_market_config as base_market_config, with_markets_context,
-		with_trading_context, MarginInitializer, MarketConfig, MarketInitializer,
+		any_price, as_balance, run_for_seconds, valid_market_config as base_market_config,
+		with_markets_context, with_trading_context, MarginInitializer, MarketConfig,
+		MarketInitializer,
 	},
 };
-use composable_traits::clearing_house::ClearingHouse;
+use composable_traits::{clearing_house::ClearingHouse, time::ONE_HOUR};
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 use sp_runtime::{FixedI128, FixedPointNumber, FixedU128};
@@ -183,13 +184,16 @@ proptest! {
 				Direction::Short => position.quote_asset_notional_amount.is_negative()
 			});
 
+			// Ensure cumulative funding is initialized to market's current
+			let market = TestPallet::get_market(&market_id).unwrap();
+			assert_eq!(position.last_cum_funding, market.cum_funding_rate);
+
 			// Ensure fees are deducted from margin
 			assert_eq!(TestPallet::get_margin(&ALICE), Some(quote_amount));
 
 			// Ensure market state is updated:
 			// - net position
 			// - fees collected
-			let market = TestPallet::get_market(&market_id).unwrap();
 			assert_eq!(market.net_base_asset_amount, position.base_asset_amount);
 			assert_eq!(market.fee_pool, fees);
 
@@ -270,6 +274,59 @@ proptest! {
 
 			let market = TestPallet::get_market(&market_id).unwrap();
 			assert_eq!(market.net_base_asset_amount, 0.into());
+		});
+	}
+
+	#[test]
+	fn trading_realizes_position_funding_payments(
+		direction in any_direction(),
+		rate in -100..=100_i128, // -1% to 1% in basis points
+	) {
+		let mut config = valid_market_config();
+		config.funding_frequency = ONE_HOUR;
+		config.funding_period = ONE_HOUR;
+		config.margin_ratio_initial = (1, 10).into(); // allow 10x leverage, more than enough
+		config.taker_fee = 100; // 1%
+		let quote_amount = as_balance(10_000);
+		let fee = (quote_amount * config.taker_fee) / 10_000;
+
+		with_trading_context(config, quote_amount + fee * 2, |market_id| {
+			VammPallet::set_price(Some(1.into()));
+			let base_amount = quote_amount;
+			// Open an initial position, pay fees
+			assert_ok!(
+				<TestPallet as ClearingHouse>::open_position(
+					&ALICE,
+					&market_id,
+					direction,
+					quote_amount,
+					base_amount,
+				),
+				base_amount
+			);
+
+			// Update market funding rate
+			run_for_seconds(ONE_HOUR);
+			OraclePallet::set_twap(Some(100)); // 1.0 in cents
+			// price in basis points
+			VammPallet::set_twap(Some(((10_000 + rate) as u128, 10_000).into()));
+			assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
+
+			// Increase position, pay fees, and expect funding settlement
+			assert_ok!(
+				<TestPallet as ClearingHouse>::open_position(
+					&ALICE,
+					&market_id,
+					direction,
+					quote_amount,
+					base_amount,
+				),
+				base_amount
+			);
+			let sign = match direction { Direction::Long => 1, _ => -1 };
+			let payment = sign * (rate * quote_amount as i128) / 10_000;
+			let margin = quote_amount as i128  + payment; // Initial margin minus fees + funding
+			assert_eq!(TestPallet::get_margin(&ALICE), Some(margin as u128));
 		});
 	}
 
