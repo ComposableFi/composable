@@ -1738,15 +1738,15 @@ impl<T: Config> Pallet<T> {
 
 	/// Rejig the lock on an account. It will never get more stringent (since that would indicate
 	/// a security hole) but may be reduced from what they are currently.
-	fn update_lock(who: &T::AccountId, asset_id: T::AssetId) {
+	fn update_lock(who: &T::AccountId, asset_id: T::AssetId) -> Result<(), DispatchError> {
 		let lock_needed = VotingOf::<T>::mutate((who, asset_id), |voting| {
 			voting.rejig(frame_system::Pallet::<T>::block_number());
 			voting.locked_balance()
 		});
 		if lock_needed.is_zero() {
-			T::Currency::remove_lock(DEMOCRACY_ID, asset_id, who);
+			T::Currency::remove_lock(DEMOCRACY_ID, asset_id, who)?;
 		} else {
-			T::Currency::set_lock(DEMOCRACY_ID, asset_id, who, lock_needed);
+			T::Currency::set_lock(DEMOCRACY_ID, asset_id, who, lock_needed)?;
 		}
 	}
 
