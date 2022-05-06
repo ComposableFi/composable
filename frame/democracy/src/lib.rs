@@ -1748,6 +1748,7 @@ impl<T: Config> Pallet<T> {
 		} else {
 			T::Currency::set_lock(DEMOCRACY_ID, asset_id, who, lock_needed)?;
 		}
+		Ok(())
 	}
 
 	/// Start a referendum
