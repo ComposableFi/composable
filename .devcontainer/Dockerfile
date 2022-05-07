@@ -10,7 +10,7 @@ RUN apt update -y
 RUN apt -y install --no-install-recommends curl xz-utils
 
 # Install Nix 2.4pre20210126.
-ARG NIX_INSTALL_SCRIPT=https://github.com/numtide/nix-flakes-installer/releases/download/nix-2.4pre20210126_f15f0b8/install
+ARG NIX_INSTALL_SCRIPT=https://github.com/numtide/nix-unstable-installer/releases/download/nix-2.9.0pre20220428_660835d/install
 RUN curl -L ${NIX_INSTALL_SCRIPT} | sudo -u vscode NIX_INSTALLER_NO_MODIFY_PROFILE=1 sh
 
 # Configuration for Nix from the repository shared amongst developers.
