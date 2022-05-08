@@ -1151,6 +1151,7 @@ mod benches {
 		[liquidations, Liquidations]
 		[bonded_finance, BondedFinance]
 		//FIXME: broken with dali [lending, Lending]
+		[lending, Lending]
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
 		[dex_router, DexRouter]
