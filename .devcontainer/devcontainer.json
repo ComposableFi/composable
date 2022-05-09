@@ -1,13 +1,21 @@
-// For format details, see https://aka.ms/vscode-remote/devcontainer.json or the definition README at
-// https://github.com/microsoft/vscode-dev-containers/tree/master/containers/docker-existing-dockerfile
-// Variant of https://github.dev/xtruder/nix-devcontainer/tree/main/.devcontainer
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.234.0/containers/rust
 {
-	"name": "nix-devcontainer",
-	"dockerComposeFile": "docker-compose.yml",
-	"service": "dev",
-	"workspaceFolder": "/workspace",
-	"userEnvProbe": "loginShell",
-	"updateRemoteUserUID": false,
+	"name": "Rust",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"args": {
+			// Use the VARIANT arg to pick a Debian OS version: buster, bullseye
+			// Use bullseye when on local on arm64/Apple Silicon.
+			"VARIANT": "bullseye"
+		}
+	},
+	"runArgs": [
+		"--cap-add=SYS_PTRACE",
+		"--security-opt",
+		"seccomp=unconfined"
+	],
+	// Set *default* container specific settings.json values on container create.
 	"settings": {
 		"lldb.executable": "/usr/bin/lldb",
 		// VS Code don't watch files under ./target
@@ -16,10 +24,8 @@
 		},
 		"rust-analyzer.checkOnSave.command": "clippy"
 	},
-	"onCreateCommand": "nix-shell --command 'echo done building nix dev environment'",
+	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
-		"arrterian.nix-env-selector",
-		"jnoortheen.nix-ide",
 		"fsevenm.run-it-on",
 		"ms-azuretools.vscode-docker",
 		"yzhang.markdown-all-in-one",
@@ -31,6 +37,12 @@
 		"ms-azuretools.vscode-docker",
 		"GitHub.copilot",
 		"eamodio.gitlens",
-		"bbenoist.Nix"
-	]
+		"ms-vscode.makefile-tools"
+	],
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	// "forwardPorts": [],
+	// Use 'postCreateCommand' to run commands after the container is created.
+	// "postCreateCommand": "rustc --version",
+	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+	"remoteUser": "vscode"
 }
