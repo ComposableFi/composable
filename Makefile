@@ -42,7 +42,7 @@ style-check:
 style:
 	@rustup component add rustfmt 2> /dev/null
 	cargo install taplo-cli 2> /dev/null
-	cargo +nightly-2021-11-08 fmt --all && taplo fmt
+	cargo +nightly-2022-04-18 fmt --all && taplo fmt
 
 lint:
 	@rustup component add clippy 2> /dev/null

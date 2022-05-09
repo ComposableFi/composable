@@ -53,8 +53,6 @@ RUN ln -s /usr/bin/gcc /usr/bin/"$(uname -m)"-linux-musl-gcc
 
 ARG LIBCLANG_PATH="$(sudo find / -name libclang.so)"
 
-RUN echo whereis c++
-
 RUN rustup update stable && \
     rustup update nightly-2022-04-18 && \
     rustup target add wasm32-unknown-unknown --toolchain nightly-2022-04-18 && \
@@ -72,4 +70,13 @@ RUN rustup component add clippy && \
 
 RUN cargo install bottom
 RUN cargo install mdbook
-RUN npm install --global yarn
+RUN cargo install taplo-cli
+
+RUN wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash && \
+    export NVM_DIR="$HOME/.nvm" && \
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && \
+    nvm install 16 && \
+    nvm use 16
+
+# RUN npm install --global yarn
