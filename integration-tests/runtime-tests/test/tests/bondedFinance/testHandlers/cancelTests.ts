@@ -10,7 +10,7 @@ import { u64 } from "@polkadot/types-codec";
  * @param {u64|number} offerId
  * @return Transaction event.
  */
-export async function txBondedFinanceCancelSuccessTest(api: ApiPromise, wallet: IKeyringPair, offerId:u64|number) {
+export async function txBondedFinanceCancelSuccessTest(api: ApiPromise, wallet: IKeyringPair, offerId: u64 | number) {
   return await sendAndWaitForSuccess(
     api,
     wallet,
@@ -26,7 +26,7 @@ export async function txBondedFinanceCancelSuccessTest(api: ApiPromise, wallet: 
  * @param {u64|number} offerId
  * @return Transaction event.
  */
-export async function txBondedFinanceCancelFailureTest(api: ApiPromise, wallet: IKeyringPair, offerId:u64|number) {
+export async function txBondedFinanceCancelFailureTest(api: ApiPromise, wallet: IKeyringPair, offerId: u64 | number) {
   return await sendAndWaitForSuccess(
     api,
     wallet,
@@ -43,7 +43,7 @@ export async function txBondedFinanceCancelFailureTest(api: ApiPromise, wallet: 
  * @param {u64|number} offerId
  * @return Transaction event.
  */
-export async function txBondedFinanceCancelSudoSuccessTest(api: ApiPromise, wallet: IKeyringPair, offerId:u64|number) {
+export async function txBondedFinanceCancelSudoSuccessTest(api: ApiPromise, wallet: IKeyringPair, offerId: u64 | number) {
   return await sendAndWaitForSuccess(
     api,
     wallet,

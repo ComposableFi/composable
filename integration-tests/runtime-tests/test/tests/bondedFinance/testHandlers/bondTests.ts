@@ -15,8 +15,8 @@ import { u128, u64 } from "@polkadot/types-codec";
 export async function txBondedFinanceBondSuccessTest(
   api: ApiPromise,
   wallet: IKeyringPair,
-  offerId:u64,
-  nbOfBonds:u128|number
+  offerId: u64,
+  nbOfBonds: u128 | number
 ) {
   return await sendAndWaitForSuccess(
     api,

@@ -15,9 +15,9 @@ describe("rpc.crowdloanRewards Tests", function() {
   let walletAlice: KeyringPair;
   before("Setting up tests", async function() {
     this.timeout(60 * 1000);
-    const {newClient, newKeyring} = await getNewConnection();
+    const { newClient, newKeyring } = await getNewConnection();
     api = newClient;
-    const {devWalletAlice} = getDevWallets(newKeyring);
+    const { devWalletAlice } = getDevWallets(newKeyring);
     walletAlice = devWalletAlice;
   });
 
