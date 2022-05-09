@@ -31,7 +31,7 @@ RUN arch="$(uname -m)" && \
     wget -qO /tmp/rustup-init "https://static.rust-lang.org/rustup/archive/${RUSTUP_INIT_VERSION}/${rustArch}/rustup-init" && \
     echo "${rustupSha256}  /tmp/rustup-init" | sha256sum -c - && \
     chmod +x /tmp/rustup-init && \
-    /tmp/rustup-init -y --no-modify-path --profile minimal --default-toolchain ${RUST_VERSION} --default-host ${rustArch} && \
+    /tmp/rustup-init -y --no-modify-path --default-host ${rustArch} && \
     rm /tmp/rustup-init && \
     chmod -R a+w ${RUSTUP_HOME} ${CARGO_HOME}
 
@@ -44,6 +44,8 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN ln -s /usr/bin/gcc /usr/bin/"$(uname -m)"-linux-musl-gcc
+
+RUN rustup update stable && rustup update nightly-2022-04-18 && rustup target add wasm32-unknown-unknown --toolchain nightly-2022-04-18 && rustup default stable
 
 # Install Rust tooling
 ARG RUST_ANALYZER_VERSION=2022-04-25
