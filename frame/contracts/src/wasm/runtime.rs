@@ -21,7 +21,10 @@ use crate::{
 	exec::{ExecError, ExecResult, Ext, StorageKey, TopicOf},
 	gas::{ChargedAmount, Token},
 	schedule::HostFnWeights,
-	wasm::env_def::ConvertibleToWasm,
+	wasm::{
+		cosmwasm::types::{DeserializeLimit, ExecuteResult, QueryResult},
+		env_def::ConvertibleToWasm,
+	},
 	BalanceOf, CodeHash, Config, Error, SENTINEL,
 };
 use bitflags::bitflags;
@@ -30,10 +33,23 @@ use frame_support::{dispatch::DispatchError, ensure, weights::Weight};
 use pallet_contracts_primitives::{ExecReturnValue, ReturnFlags};
 use sp_core::{crypto::UncheckedFrom, Bytes};
 use sp_io::hashing::{blake2_128, blake2_256, keccak_256, sha2_256};
-use sp_runtime::traits::{Bounded, Zero};
-use sp_sandbox::SandboxMemory;
+use sp_runtime::{
+	traits::{Bounded, Zero},
+	ArithmeticError,
+};
+use sp_sandbox::{
+	default_executor::{
+		DefinedHostFunctions, EnvironmentDefinitionBuilder, GuestExternals, Memory,
+	},
+	SandboxMemory,
+};
 use sp_std::{prelude::*, vec};
 use wasm_instrument::parity_wasm::elements::ValueType;
+use wasmi::{
+	ExternVal, FuncInstance, Module, ModuleInstance, ModuleRef, NopExternals, RuntimeValue, Trap,
+};
+
+use super::cosmwasm::types::{InstantiateResult, MessageInfo};
 
 /// Every error that can be returned to a contract when it calls any of the host functions.
 ///
@@ -325,17 +341,6 @@ impl RuntimeCosts {
 	}
 }
 
-/// Same as [`Runtime::charge_gas`].
-///
-/// We need this access as a macro because sometimes hiding the lifetimes behind
-/// a function won't work out.
-macro_rules! charge_gas {
-	($runtime:expr, $costs:expr) => {{
-		let token = $costs.token(&$runtime.ext.schedule().host_fn_weights);
-		$runtime.ext.gas_meter().charge(token)
-	}};
-}
-
 #[cfg_attr(test, derive(Debug, PartialEq, Eq))]
 #[derive(Copy, Clone)]
 struct RuntimeToken {
@@ -424,11 +429,19 @@ fn already_charged(_: u32) -> Option<RuntimeCosts> {
 	None
 }
 
+pub const INSTANTIATE_FUNCTION: &str = "instantiate";
+pub const EXECUTE_FUNCTION: &str = "execute";
+pub const QUERY_FUNCTION: &str = "query";
+pub const ALLOCATE_FUNCTION: &str = "allocate";
+pub const DEALLOCATE_FUNCTION: &str = "deallocate";
+
 /// Can only be used for one call.
 pub struct Runtime<'a, E: Ext + 'a> {
 	ext: &'a mut E,
 	input_data: Option<Vec<u8>>,
 	memory: sp_sandbox::default_executor::Memory,
+	instance: ModuleRef,
+	defined_host_functions: DefinedHostFunctions<Self>,
 	trap_reason: Option<TrapReason>,
 }
 
@@ -436,6 +449,89 @@ impl<'a, E: Ext + 'a> Runtime<'a, E> {
 	/// Get a mutable reference to the memory region of this contract.
 	pub fn memory(&mut self) -> &mut sp_sandbox::default_executor::Memory {
 		&mut self.memory
+	}
+
+  /// Invoke an exported function from the loaded module.
+	pub fn invoke(
+		&mut self,
+		function: &str,
+		args: &[RuntimeValue],
+	) -> Result<Option<RuntimeValue>, DispatchError> {
+		match self.instance.export_by_name(function) {
+			Some(ExternVal::Func(func_instance)) => {
+				let cloned = self.defined_host_functions.clone();
+				let mut externals = GuestExternals { state: self, defined_host_functions: &cloned };
+				FuncInstance::invoke(&func_instance, args, &mut externals)
+					.map_err(|_| DispatchError::Other("Failed to invoke function"))
+			},
+			_ => Err(DispatchError::Other("Failed to find exported function")),
+		}
+	}
+
+  /// Call the allocate function of the loaded cosmwasm contract.
+	pub fn allocate<T: TryInto<i32>>(&mut self, len: T) -> Result<u32, DispatchError> {
+		match self.invoke(
+			ALLOCATE_FUNCTION,
+			&[RuntimeValue::I32(
+				len.try_into()
+					.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?,
+			)],
+		) {
+			Ok(Some(RuntimeValue::I32(ptr))) => Ok(ptr as u32),
+			e => {
+				log::debug!(target: "runtime::contracts", "Allocate failed {:?}", e);
+				Err(DispatchError::Other("allocate failed"))
+			},
+		}
+	}
+
+  /// Call the deallocate function of the loaded cosmwasm contract.
+	pub fn deallocate<T: TryInto<i32>>(&mut self, ptr: T) -> Result<(), DispatchError> {
+		match self.invoke(
+			DEALLOCATE_FUNCTION,
+			&[RuntimeValue::I32(
+				ptr.try_into()
+					.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?,
+			)],
+		) {
+			Ok(None) => Ok(()),
+			e => {
+				log::debug!(target: "runtime::contracts", "Deallocate failed {:?}", e);
+				Err(DispatchError::Other("deallocate failed"))
+			},
+		}
+	}
+
+  /// Load a raw payload into a contract memory.
+	pub fn passthrough_in(&mut self, data: &[u8]) -> Result<u32, DispatchError> {
+		let ptr = self.allocate(data.len())?;
+		self.memory()
+			.write_region(ptr, &data)
+			.map_err(|_| DispatchError::Other("could not write region"))?;
+		Ok(ptr)
+	}
+
+  /// JSON marshaling of an arbitrary type into the contract memory.
+	pub fn marshall_in<T>(&mut self, x: &T) -> Result<u32, DispatchError>
+	where
+		T: serde::ser::Serialize + ?Sized,
+	{
+		let serialized =
+			serde_json::to_vec(x).map_err(|_| DispatchError::Other("couldn't serialize"))?;
+		self.passthrough_in(&serialized)
+	}
+
+  /// JSON marshaling of an arbitrary type from the contract memory.
+	pub fn marshall_out<T>(&mut self, ptr: u32) -> Result<T, DispatchError>
+	where
+		T: serde::de::DeserializeOwned + DeserializeLimit + ?Sized,
+	{
+		log::debug!(target: "runtime::contracts", "Marshall out");
+		let value = self
+			.memory()
+			.read_region(ptr, T::deserialize_limit())
+			.map_err(|_| DispatchError::Other("could not read region"))?;
+		serde_json::from_slice(&value).map_err(|_| DispatchError::Other("couldn't deserialize"))
 	}
 }
 
@@ -447,12 +543,116 @@ where
 {
 	pub fn new(
 		ext: &'a mut E,
+		code: &[u8],
+		env_def_builder: &EnvironmentDefinitionBuilder<Self>,
 		input_data: Vec<u8>,
-		memory: sp_sandbox::default_executor::Memory,
-	) -> Self {
-		Runtime { ext, input_data: Some(input_data), memory, trap_reason: None }
+	) -> Result<Self, DispatchError> {
+
+		log::debug!(target: "runtime::contracts", "loading code from buffer");
+
+		let module = Module::from_buffer(code).map_err(|_| DispatchError::Other(""))?;
+		let not_started_instance =
+			ModuleInstance::new(&module, env_def_builder).map_err(|_| DispatchError::Other(""))?;
+
+		log::debug!(target: "runtime::contracts", "starting instance with no externals");
+		let defined_host_functions = env_def_builder.defined_host_functions.clone();
+		let instance = {
+			let instance = not_started_instance
+				.run_start(&mut NopExternals)
+				.map_err(|_| DispatchError::Other(""))?;
+			instance
+		};
+
+		let memory = match instance.export_by_name("memory") {
+			Some(ExternVal::Memory(memory)) => {
+				log::debug!(target: "runtime::contracts", "set internal memory");
+				Ok(Memory::new(memory))
+			},
+			_ => Err(DispatchError::Other("could not find memory export, must be impossible as checked on upload")),
+		}?;
+
+		Ok(Runtime {
+			ext,
+			input_data: Some(input_data),
+			memory,
+			instance,
+			defined_host_functions,
+			trap_reason: None,
+		})
 	}
 
+	pub fn do_instantiate(
+		&mut self,
+		env: super::cosmwasm::types::Env,
+		info: MessageInfo,
+		message: &[u8],
+	) -> Result<InstantiateResult, DispatchError> {
+		let parameters =
+			vec![self.marshall_in(&env)?, self.marshall_in(&info)?, self.passthrough_in(message)?]
+				.into_iter()
+				.map(|v| RuntimeValue::I32(v as i32))
+				.collect::<Vec<_>>();
+		match self.invoke(INSTANTIATE_FUNCTION, &parameters) {
+			Ok(Some(RuntimeValue::I32(response_ptr))) => {
+				let response = self.marshall_out::<InstantiateResult>(response_ptr as u32);
+				self.deallocate(response_ptr)?;
+				log::debug!(target: "runtime::contracts", "Instantiate done {:?}", response);
+				response
+			},
+			e => {
+				log::debug!(target: "runtime::contracts", "Instantiate failed {:?}", e);
+				Err(DispatchError::Other("could not instantiate"))
+			},
+		}
+	}
+
+	pub fn do_execute(
+		&mut self,
+		env: super::cosmwasm::types::Env,
+		info: MessageInfo,
+		message: &[u8],
+	) -> Result<ExecuteResult, DispatchError> {
+		let parameters =
+			vec![self.marshall_in(&env)?, self.marshall_in(&info)?, self.passthrough_in(message)?]
+				.into_iter()
+				.map(|v| RuntimeValue::I32(v as i32))
+				.collect::<Vec<_>>();
+		match self.invoke(EXECUTE_FUNCTION, &parameters) {
+			Ok(Some(RuntimeValue::I32(response_ptr))) => {
+				let response = self.marshall_out::<ExecuteResult>(response_ptr as u32);
+				self.deallocate(response_ptr)?;
+				log::debug!(target: "runtime::contracts", "Execute done {:?}", response);
+				response
+			},
+			e => {
+				log::debug!(target: "runtime::contracts", "Execute failed {:?}", e);
+				Err(DispatchError::Other("could not execute"))
+			},
+		}
+	}
+
+	pub fn do_query(
+		&mut self,
+		env: super::cosmwasm::types::Env,
+		message: &[u8],
+	) -> Result<QueryResult, DispatchError> {
+		let parameters = vec![self.marshall_in(&env)?, self.passthrough_in(message)?]
+			.into_iter()
+			.map(|v| RuntimeValue::I32(v as i32))
+			.collect::<Vec<_>>();
+		match self.invoke(QUERY_FUNCTION, &parameters) {
+			Ok(Some(RuntimeValue::I32(response_ptr))) => {
+				let response = self.marshall_out::<QueryResult>(response_ptr as u32);
+				self.deallocate(response_ptr)?;
+				log::debug!(target: "runtime::contracts", "Query done {:?}", response);
+				response
+			},
+			e => {
+				log::debug!(target: "runtime::contracts", "Query failed {:?}", e);
+				Err(DispatchError::Other("could not execute"))
+			},
+		}
+	}
 	/// Converts the sandbox result and the runtime state into the execution outcome.
 	///
 	/// It evaluates information stored in the `trap_reason` variable of the runtime and
@@ -516,7 +716,8 @@ where
 	///
 	/// Returns `Err(HostError)` if there is not enough gas.
 	pub fn charge_gas(&mut self, costs: RuntimeCosts) -> Result<ChargedAmount, DispatchError> {
-		charge_gas!(self, costs)
+		let token = costs.token(&self.ext.schedule().host_fn_weights);
+		self.ext.gas_meter().charge(token)
 	}
 
 	/// Adjust a previously charged amount down to its actual amount.
@@ -756,60 +957,61 @@ where
 		output_ptr: u32,
 		output_len_ptr: u32,
 	) -> Result<ReturnCode, TrapReason> {
-		self.charge_gas(call_type.cost())?;
-		let input_data = if flags.contains(CallFlags::CLONE_INPUT) {
-			let input = self.input_data.as_ref().ok_or_else(|| Error::<E::T>::InputForwarded)?;
-			charge_gas!(self, RuntimeCosts::CallInputCloned(input.len() as u32))?;
-			input.clone()
-		} else if flags.contains(CallFlags::FORWARD_INPUT) {
-			self.input_data.take().ok_or_else(|| Error::<E::T>::InputForwarded)?
-		} else {
-			self.charge_gas(RuntimeCosts::CopyFromContract(input_data_len))?;
-			self.read_sandbox_memory(input_data_ptr, input_data_len)?
-		};
+		Ok(ReturnCode::Success)
+		// self.charge_gas(call_type.cost())?;
+		// let input_data = if flags.contains(CallFlags::CLONE_INPUT) {
+		// 	let input = self.input_data.as_ref().ok_or_else(|| Error::<E::T>::InputForwarded)?;
+		// 	charge_gas!(self, RuntimeCosts::CallInputCloned(input.len() as u32))?;
+		// 	input.clone()
+		// } else if flags.contains(CallFlags::FORWARD_INPUT) {
+		// 	self.input_data.take().ok_or_else(|| Error::<E::T>::InputForwarded)?
+		// } else {
+		// 	self.charge_gas(RuntimeCosts::CopyFromContract(input_data_len))?;
+		// 	self.read_sandbox_memory(input_data_ptr, input_data_len)?
+		// };
 
-		let call_outcome = match call_type {
-			CallType::Call { callee_ptr, value_ptr, gas } => {
-				let callee: <<E as Ext>::T as frame_system::Config>::AccountId =
-					self.read_sandbox_memory_as(callee_ptr)?;
-				let value: BalanceOf<<E as Ext>::T> = self.read_sandbox_memory_as(value_ptr)?;
-				if value > 0u32.into() {
-					self.charge_gas(RuntimeCosts::CallSurchargeTransfer)?;
-				}
-				self.ext.call(
-					gas,
-					callee,
-					value,
-					input_data,
-					flags.contains(CallFlags::ALLOW_REENTRY),
-				)
-			},
-			CallType::DelegateCall { code_hash_ptr } => {
-				if flags.contains(CallFlags::ALLOW_REENTRY) {
-					return Err(Error::<E::T>::InvalidCallFlags.into())
-				}
-				let code_hash = self.read_sandbox_memory_as(code_hash_ptr)?;
-				self.ext.delegate_call(code_hash, input_data)
-			},
-		};
+		// let call_outcome = match call_type {
+		// 	CallType::Call { callee_ptr, value_ptr, gas } => {
+		// 		let callee: <<E as Ext>::T as frame_system::Config>::AccountId =
+		// 			self.read_sandbox_memory_as(callee_ptr)?;
+		// 		let value: BalanceOf<<E as Ext>::T> = self.read_sandbox_memory_as(value_ptr)?;
+		// 		if value > 0u32.into() {
+		// 			self.charge_gas(RuntimeCosts::CallSurchargeTransfer)?;
+		// 		}
+		// 		self.ext.call(
+		// 			gas,
+		// 			callee,
+		// 			value,
+		// 			input_data,
+		// 			flags.contains(CallFlags::ALLOW_REENTRY),
+		// 		)
+		// 	},
+		// 	CallType::DelegateCall { code_hash_ptr } => {
+		// 		if flags.contains(CallFlags::ALLOW_REENTRY) {
+		// 			return Err(Error::<E::T>::InvalidCallFlags.into())
+		// 		}
+		// 		let code_hash = self.read_sandbox_memory_as(code_hash_ptr)?;
+		// 		self.ext.delegate_call(code_hash, input_data)
+		// 	},
+		// };
 
-		// `TAIL_CALL` only matters on an `OK` result. Otherwise the call stack comes to
-		// a halt anyways without anymore code being executed.
-		if flags.contains(CallFlags::TAIL_CALL) {
-			if let Ok(return_value) = call_outcome {
-				return Err(TrapReason::Return(ReturnData {
-					flags: return_value.flags.bits(),
-					data: return_value.data.0,
-				}))
-			}
-		}
+		// // `TAIL_CALL` only matters on an `OK` result. Otherwise the call stack comes to
+		// // a halt anyways without anymore code being executed.
+		// if flags.contains(CallFlags::TAIL_CALL) {
+		// 	if let Ok(return_value) = call_outcome {
+		// 		return Err(TrapReason::Return(ReturnData {
+		// 			flags: return_value.flags.bits(),
+		// 			data: return_value.data.0,
+		// 		}))
+		// 	}
+		// }
 
-		if let Ok(output) = &call_outcome {
-			self.write_sandbox_output(output_ptr, output_len_ptr, &output.data, true, |len| {
-				Some(RuntimeCosts::CopyToContract(len))
-			})?;
-		}
-		Ok(Runtime::<E>::exec_into_return_code(call_outcome)?)
+		// if let Ok(output) = &call_outcome {
+		// 	self.write_sandbox_output(output_ptr, output_len_ptr, &output.data, true, |len| {
+		// 		Some(RuntimeCosts::CopyToContract(len))
+		// 	})?;
+		// }
+		// Ok(Runtime::<E>::exec_into_return_code(call_outcome)?)
 	}
 
 	fn instantiate(
@@ -826,30 +1028,31 @@ where
 		salt_ptr: u32,
 		salt_len: u32,
 	) -> Result<ReturnCode, TrapReason> {
-		self.charge_gas(RuntimeCosts::InstantiateBase { input_data_len, salt_len })?;
-		let value: BalanceOf<<E as Ext>::T> = self.read_sandbox_memory_as(value_ptr)?;
-		if value > 0u32.into() {
-			self.charge_gas(RuntimeCosts::InstantiateSurchargeTransfer)?;
-		}
-		let code_hash: CodeHash<<E as Ext>::T> = self.read_sandbox_memory_as(code_hash_ptr)?;
-		let input_data = self.read_sandbox_memory(input_data_ptr, input_data_len)?;
-		let salt = self.read_sandbox_memory(salt_ptr, salt_len)?;
-		let instantiate_outcome = self.ext.instantiate(gas, code_hash, value, input_data, &salt);
-		if let Ok((address, output)) = &instantiate_outcome {
-			if !output.flags.contains(ReturnFlags::REVERT) {
-				self.write_sandbox_output(
-					address_ptr,
-					address_len_ptr,
-					&address.encode(),
-					true,
-					already_charged,
-				)?;
-			}
-			self.write_sandbox_output(output_ptr, output_len_ptr, &output.data, true, |len| {
-				Some(RuntimeCosts::CopyToContract(len))
-			})?;
-		}
-		Ok(Runtime::<E>::exec_into_return_code(instantiate_outcome.map(|(_, retval)| retval))?)
+		Ok(ReturnCode::Success)
+		// self.charge_gas(RuntimeCosts::InstantiateBase { input_data_len, salt_len })?;
+		// let value: BalanceOf<<E as Ext>::T> = self.read_sandbox_memory_as(value_ptr)?;
+		// if value > 0u32.into() {
+		// 	self.charge_gas(RuntimeCosts::InstantiateSurchargeTransfer)?;
+		// }
+		// let code_hash: CodeHash<<E as Ext>::T> = self.read_sandbox_memory_as(code_hash_ptr)?;
+		// let input_data = self.read_sandbox_memory(input_data_ptr, input_data_len)?;
+		// let salt = self.read_sandbox_memory(salt_ptr, salt_len)?;
+		// let instantiate_outcome = self.ext.instantiate(gas, code_hash, value, input_data, &salt);
+		// if let Ok((address, output)) = &instantiate_outcome {
+		// 	if !output.flags.contains(ReturnFlags::REVERT) {
+		// 		self.write_sandbox_output(
+		// 			address_ptr,
+		// 			address_len_ptr,
+		// 			&address.encode(),
+		// 			true,
+		// 			already_charged,
+		// 		)?;
+		// 	}
+		// 	self.write_sandbox_output(output_ptr, output_len_ptr, &output.data, true, |len| {
+		// 		Some(RuntimeCosts::CopyToContract(len))
+		// 	})?;
+		// }
+		// Ok(Runtime::<E>::exec_into_return_code(instantiate_outcome.map(|(_, retval)| retval))?)
 	}
 
 	fn terminate(&mut self, beneficiary_ptr: u32) -> Result<(), TrapReason> {
@@ -2129,73 +2332,110 @@ define_env!(Env, <E: Ext>,
 		}
 	},
 
-			// ============ COSMWASM ============
-			[env] db_read(ctx, key_ptr: u32) -> u32 => {
-				log::debug!(target: "runtime::contracts", "DbRead");
-				Ok(0)
-			},
-			[env] db_write(ctx, _key: u32, _value: u32) => {
-				log::debug!(target: "runtime::contracts", "DbWrite");
-				Ok(())
-			},
-			[env] db_remove(ctx, _key: u32) => {
-				log::debug!(target: "runtime::contracts", "DbRemove");
-				Ok(())
-			},
+	// ============ COSMWASM ============
+	[env] db_read(ctx, key_ptr: u32) -> u32 => {
+		log::debug!(target: "runtime::contracts", "DbRead");
+		let charged = ctx.charge_gas(RuntimeCosts::GetStorage(ctx.ext.max_value_size()))?;
+		let key = keccak_256(&ctx.memory().read_region(key_ptr, MAX_LENGTH_DB_KEY as _)?);
+		if let Some(value) = ctx.ext.get_storage(&key) {
+			ctx.adjust_gas(charged, RuntimeCosts::GetStorage(value.len() as u32));
+		  let value_ptr = ctx.allocate(value.len())?;
+		ctx.memory().write_region(value_ptr, &value)?;
+			Ok(value_ptr)
+		} else {
+			ctx.adjust_gas(charged, RuntimeCosts::GetStorage(0));
+			Ok(0)
+		}
+	},
 
-			[env] db_scan(ctx, _statr_ptr: u32, _end_ptr: u32, _order: i32) -> u32 => {
-				log::debug!(target: "runtime::contracts", "DbScan");
-				Ok(0)
-			},
-			[env] db_next(ctx, _iterator_id: u32) -> u32 => {
-				log::debug!(target: "runtime::contracts", "DbNext");
-				Ok(0)
-			},
+	[env] db_write(ctx, key_ptr: u32, value_ptr: u32) => {
+		log::debug!(target: "runtime::contracts", "DbWrite");
+		let key = keccak_256(&ctx.memory().read_region(key_ptr, MAX_LENGTH_DB_KEY as _)?);
+		let value = ctx.memory().read_region(value_ptr, MAX_LENGTH_DB_VALUE as _)?;
+	  let value_len = value.len() as u32;
+		let max_size = ctx.ext.max_value_size();
+		let charged = ctx
+			.charge_gas(RuntimeCosts::SetStorage { new_bytes: value_len, old_bytes: max_size })?;
+		if value_len > max_size {
+			Err(Error::<E::T>::ValueTooLarge)?;
+		}
+		let write_outcome = ctx.ext.set_storage(key, Some(value), false)?;
+		ctx.adjust_gas(
+			charged,
+			RuntimeCosts::SetStorage { new_bytes: value_len, old_bytes: write_outcome.old_len() },
+		);
+		Ok(())
+	},
 
-			[env] addr_validate(ctx, source_ptr: u32) -> u32 => {
-				log::debug!(target: "runtime::contracts", "AddrValidate");
-				Ok(0)
-			},
-			[env] addr_canonicalize(ctx, source_ptr: u32, destination_ptr: u32) -> u32 => {
-				log::debug!(target: "runtime::contracts", "AddrCanonicalize");
-				Ok(0)
-			},
-			[env] addr_humanize(ctx, source_ptr: u32, destination_ptr: u32) -> u32 => {
-				log::debug!(target: "runtime::contracts", "AddrHumanize");
-				Ok(0)
-			},
+	[env] db_remove(ctx, key_ptr: u32) => {
+		log::debug!(target: "runtime::contracts", "DbRemove");
+		let key = keccak_256(&ctx.memory().read_region(key_ptr, MAX_LENGTH_DB_KEY as _)?);
+		let max_size = ctx.ext.max_value_size();
+		let charged = ctx
+			.charge_gas(RuntimeCosts::SetStorage { new_bytes: 0, old_bytes: max_size })?;
+		let write_outcome = ctx.ext.set_storage(key, None, false)?;
+		ctx.adjust_gas(
+			charged,
+			RuntimeCosts::SetStorage { new_bytes: 0, old_bytes: write_outcome.old_len() },
+		);
+		Ok(())
+	},
 
-			[env] secp256k1_verify(ctx, message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32 => {
-				log::debug!(target: "runtime::contracts", "Verify1");
-				Ok(0)
-			},
-			[env] secp256k1_recover_pubkey(ctx, message_hash_ptr: u32, signature_ptr: u32, recovery_param: u32) -> u64 => {
-				log::debug!(target: "runtime::contracts", "Pubkey");
-				Ok(0)
-			},
-			[env] ed25519_verify(ctx, message_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32 => {
-				log::debug!(target: "runtime::contracts", "Verify");
-				Ok(0)
-			},
-			[env] ed25519_batch_verify(ctx, messages_ptr: u32, signatures_ptr: u32, public_keys_ptr: u32) -> u32 => {
-				log::debug!(target: "runtime::contracts", "BatchVerify");
-				Ok(0)
-			},
+	[env] db_scan(ctx, _statr_ptr: u32, _end_ptr: u32, _order: i32) -> u32 => {
+		log::debug!(target: "runtime::contracts", "DbScan");
+		Ok(0)
+	},
 
-			[env] debug(ctx, source_ptr: u32) => {
-				log::debug!(target: "runtime::contracts", "Debug");
-				// ctx.charge_gas(RuntimeCosts::DebugMessage)?;
-				// if ctx.ext.append_debug_buffer("") {
-				// 	let data = ctx.read_sandbox_memory(source_ptr, MAX_LENGTH_DEBUG)?;
-				// 	let msg = core::str::from_utf8(&data)
-				// 		.map_err(|_| <Error<E::T>>::DebugMessageInvalidUTF8)?;
-				// 	ctx.ext.append_debug_buffer(msg);
-				// }
-				Ok(())
-			},
+	[env] db_next(ctx, _iterator_id: u32) -> u32 => {
+		log::debug!(target: "runtime::contracts", "DbNext");
+		Ok(0)
+	},
 
-			[env] query_chain(ctx, request: u32) -> u32 => {
-				log::debug!(target: "runtime::contracts", "QueryChain");
-				Ok(0)
-			},
+	[env] addr_validate(ctx, _source_ptr: u32) -> u32 => {
+		log::debug!(target: "runtime::contracts", "AddrValidate");
+		Ok(0)
+	},
+	[env] addr_canonicalize(ctx, _source_ptr: u32, _destination_ptr: u32) -> u32 => {
+		log::debug!(target: "runtime::contracts", "AddrCanonicalize");
+		Ok(0)
+	},
+	[env] addr_humanize(ctx, _source_ptr: u32, _destination_ptr: u32) -> u32 => {
+		log::debug!(target: "runtime::contracts", "AddrHumanize");
+		Ok(0)
+	},
+
+	[env] secp256k1_verify(ctx, _message_hash_ptr: u32, _signature_ptr: u32, _public_key_ptr: u32) -> u32 => {
+		log::debug!(target: "runtime::contracts", "Verify1");
+		Ok(0)
+	},
+	[env] secp256k1_recover_pubkey(ctx, _message_hash_ptr: u32, _signature_ptr: u32, _recovery_param: u32) -> u64 => {
+		log::debug!(target: "runtime::contracts", "Pubkey");
+		Ok(0)
+	},
+	[env] ed25519_verify(ctx, _message_ptr: u32, _signature_ptr: u32, _public_key_ptr: u32) -> u32 => {
+		log::debug!(target: "runtime::contracts", "Verify");
+		Ok(0)
+	},
+	[env] ed25519_batch_verify(ctx, _messages_ptr: u32, _signatures_ptr: u32, _public_keys_ptr: u32) -> u32 => {
+		log::debug!(target: "runtime::contracts", "BatchVerify");
+		Ok(0)
+	},
+
+	[env] debug(ctx, source_ptr: u32) => {
+		log::debug!(target: "runtime::contracts", "Debug");
+		ctx.charge_gas(RuntimeCosts::DebugMessage)?;
+		if ctx.ext.append_debug_buffer("") {
+			let data = ctx.memory().read_region(source_ptr, MAX_LENGTH_DEBUG as _)?;
+			let msg = core::str::from_utf8(&data)
+				.map_err(|_| <Error<E::T>>::DebugMessageInvalidUTF8)?;
+		  log::debug!(target: "runtime::contracts", "Debug message: {}", msg);
+			ctx.ext.append_debug_buffer(msg);
+		}
+		Ok(())
+	},
+
+	[env] query_chain(ctx, _request: u32) -> u32 => {
+		log::debug!(target: "runtime::contracts", "QueryChain");
+		Ok(0)
+	},
 );

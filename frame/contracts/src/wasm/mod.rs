@@ -21,7 +21,7 @@
 #[macro_use]
 mod env_def;
 mod code_cache;
-mod cosmwasm;
+pub mod cosmwasm;
 mod prepare;
 mod runtime;
 
@@ -29,16 +29,12 @@ mod runtime;
 pub use crate::wasm::code_cache::reinstrument;
 pub use crate::wasm::runtime::{CallFlags, ReturnCode, Runtime, RuntimeCosts};
 use crate::{
-	exec::{ExecResult, Executable, ExportedFunction, Ext},
+	exec::{Executable, ExecuteFunction, ExportedFunction, Ext},
 	gas::GasMeter,
 	wasm::{
-		cosmwasm::{
-			instance::CosmwasmInstance,
-			sandbox::CosmwasmSandbox,
-			types::{
-				Addr, BlockInfo, ContractInfo, Env, ExecuteResult, InstantiateResult, MessageInfo,
-				QueryResult, Timestamp, TransactionInfo,
-			},
+		cosmwasm::types::{
+			Addr, BlockInfo, ContractInfo, CosmwasmExecutionResult, CosmwasmQueryResult, Env,
+			ExecuteResult, InstantiateResult, MessageInfo, QueryResult, Timestamp, TransactionInfo,
 		},
 		env_def::FunctionImplProvider,
 	},
@@ -46,15 +42,16 @@ use crate::{
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::dispatch::{DispatchError, DispatchResult};
-use pallet_contracts_primitives::{ExecReturnValue, ReturnFlags};
 use sp_core::{crypto::UncheckedFrom, Bytes};
+use sp_runtime::traits::Convert;
 use sp_sandbox::{
-	default_executor::Memory, SandboxEnvironmentBuilder, SandboxInstance, SandboxMemory,
+	default_executor::{EnvironmentDefinitionBuilder, Memory},
+	ReturnValue, SandboxEnvironmentBuilder, SandboxInstance, SandboxMemory, Value,
 };
 use sp_std::{prelude::*, vec};
 #[cfg(test)]
 pub use tests::MockExt;
-use wasmi::{ExternVal, NotStartedModuleRef};
+use wasmi::{ExternVal, NotStartedModuleRef, RuntimeValue};
 
 /// A prepared wasm module ready for execution.
 ///
@@ -214,12 +211,12 @@ where
 	fn execute<E: Ext<T = T>>(
 		self,
 		ext: &mut E,
-		function: &ExportedFunction,
+		function: &ExecuteFunction,
 		input_data: Vec<u8>,
-	) -> ExecResult {
+	) -> Result<CosmwasmExecutionResult, DispatchError> {
 		// We store before executing so that the code hash is available in the constructor.
 		let code = self.code.clone();
-		if let &ExportedFunction::Instantiate = function {
+		if let &ExecuteFunction::Instantiate = function {
 			code_cache::store(self, true)?;
 		}
 		let mut imports = sp_sandbox::default_executor::EnvironmentDefinitionBuilder::new();
@@ -229,68 +226,122 @@ where
 
 		// Instantiate the instance from the instrumented module code and invoke the contract
 		// entrypoint.
-		let input_data_cloned = input_data.clone();
+		let mut runtime = Runtime::new(ext, &code, &imports, input_data.clone())?;
 
-		// TODO(hussein-aitlahcen): avoid panicking, even if the contract has been previously
-		// checked for the export.
-		let make_runtime = |not_started_instance: &NotStartedModuleRef| match not_started_instance
-			.not_started_instance()
-			.export_by_name("memory")
-			.expect("impossible")
+		pub fn to_string<T>(data: &T) -> Result<alloc::string::String, DispatchError>
+		where
+			T: serde::ser::Serialize + ?Sized,
 		{
-			ExternVal::Memory(memory) => {
-				log::debug!(target: "runtime::contracts", "Set internal memory");
-				Runtime::new(ext, input_data_cloned, Memory::new(memory))
+			serde_json::to_string(data).map_err(|_| DispatchError::Other("couldn't serialize"))
+		}
+
+		log::debug!(target: "runtime::contracts", "Executing function {:?}", function);
+
+		match function {
+			ExecuteFunction::Instantiate => {
+				// TODO(hussein-aitlahcen): example of env setup + instantiation
+				// this should probably be setup by the caller as well.
+
+				let env = Env {
+					block: BlockInfo {
+						height: 0,
+						time: Timestamp(
+							to_string(&0u128)
+								.map_err(|_| DispatchError::Other("marshall failed"))?,
+						),
+						chain_id: Default::default(),
+					},
+					transaction: Some(TransactionInfo { index: 0 }),
+					contract: ContractInfo {
+						address: Addr::unchecked(T::AccountIdToFromString::convert(
+							runtime.ext().address().clone(),
+						)),
+					},
+				};
+
+				let info = MessageInfo {
+					sender: Addr::unchecked(T::AccountIdToFromString::convert(
+						runtime.ext().caller().clone(),
+					)),
+					funds: vec![],
+				};
+
+				let InstantiateResult(response) = runtime.do_instantiate(env, info, &input_data)?;
+
+				Ok(response)
 			},
-			_ => panic!("impossible"),
+			ExecuteFunction::Call => {
+				let env = Env {
+					block: BlockInfo {
+						height: 0,
+						time: Timestamp(
+							to_string(&0u64)
+								.map_err(|_| DispatchError::Other("marshall failed"))?,
+						),
+						chain_id: Default::default(),
+					},
+					transaction: Some(TransactionInfo { index: 0 }),
+					contract: ContractInfo {
+						address: Addr::unchecked(T::AccountIdToFromString::convert(
+							runtime.ext().address().clone(),
+						)),
+					},
+				};
+
+				let info = MessageInfo {
+					sender: Addr::unchecked(T::AccountIdToFromString::convert(
+						runtime.ext().caller().clone(),
+					)),
+					funds: vec![],
+				};
+
+				let ExecuteResult(response) = runtime.do_execute(env, info, &input_data)?;
+
+				Ok(response)
+			},
+		}
+	}
+
+	fn query<E: Ext<T = T>>(
+		self,
+		ext: &mut E,
+		input_data: Vec<u8>,
+	) -> Result<CosmwasmQueryResult, DispatchError> {
+		// We store before executing so that the code hash is available in the constructor.
+		let code = self.code.clone();
+		let mut imports = sp_sandbox::default_executor::EnvironmentDefinitionBuilder::new();
+		runtime::Env::impls(&mut |module, name, func_ptr| {
+			imports.add_host_func(module, name, func_ptr);
+		});
+
+		// Instantiate the instance from the instrumented module code and invoke the contract
+		// entrypoint.
+		let mut runtime = Runtime::new(ext, &code, &imports, input_data.clone())?;
+
+		pub fn to_string<T>(data: &T) -> Result<alloc::string::String, DispatchError>
+		where
+			T: serde::ser::Serialize + ?Sized,
+		{
+			serde_json::to_string(data).map_err(|_| DispatchError::Other("couldn't serialize"))
+		}
+
+		log::debug!(target: "runtime::contracts", "Querying contract");
+
+		let env = Env {
+			block: BlockInfo {
+				height: 0,
+				time: Timestamp(
+					to_string(&0u64).map_err(|_| DispatchError::Other("marshall failed"))?,
+				),
+				chain_id: Default::default(),
+			},
+			transaction: Some(TransactionInfo { index: 0 }),
+			contract: ContractInfo { address: Addr::unchecked("321") },
 		};
 
-		let (instance, runtime) =
-			sp_sandbox::default_executor::Instance::new(&code, &imports, make_runtime)
-				.map_err(|_| DispatchError::Other("couldn't create instance"))?;
+		let QueryResult(response) = runtime.do_query(env, &input_data)?;
 
-		let mut cosmwasm_instance = CosmwasmInstance::new(instance, runtime);
-
-		let result = {
-			pub fn to_string<T>(data: &T) -> Result<alloc::string::String, DispatchError>
-			where
-				T: serde::ser::Serialize + ?Sized,
-			{
-				serde_json::to_string(data).map_err(|_| DispatchError::Other("couldn't serialize"))
-			}
-
-			log::debug!(target: "runtime::contracts", "Executing function {:?}", function);
-
-			// TODO(hussein-aitlahcen): move this match at the caller level and directly dispatch
-			// the according function.
-			match function {
-				ExportedFunction::Instantiate => {
-					// TODO(hussein-aitlahcen): example of env setup + instantiation
-					// this should probably be setup by the caller as well.
-
-					let env = Env {
-						block: BlockInfo {
-							height: 0,
-							time: Timestamp(
-								to_string(&0u64)
-									.map_err(|_| DispatchError::Other("marshall failed"))?,
-							),
-							chain_id: Default::default(),
-						},
-						transaction: Some(TransactionInfo { index: 0 }),
-						contract: ContractInfo { address: Addr::unchecked("321") },
-					};
-
-					let info = MessageInfo { sender: Addr::unchecked("123"), funds: vec![] };
-
-					cosmwasm_instance.instantiate(env, info, &input_data)
-				},
-				ExportedFunction::Call => todo!(),
-				ExportedFunction::Query => todo!(),
-			}
-		};
-		log::debug!(target: "runtime::contracts", "Call completed {:?}", result);
-		Ok(ExecReturnValue { flags: ReturnFlags::empty(), data: Bytes(Vec::new()) })
+		Ok(response)
 	}
 
 	fn code_hash(&self) -> &CodeHash<T> {
