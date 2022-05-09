@@ -718,7 +718,7 @@ impl democracy::Config for Runtime {
 	type CancellationOrigin = EnsureRootOrHalfCouncil;
 	type BlacklistOrigin = EnsureRootOrHalfCouncil;
 	type CancelProposalOrigin = EnsureRootOrHalfCouncil;
-	type VetoOrigin = collective::EnsureMember<AccountId, CouncilInstance>; 
+	type VetoOrigin = collective::EnsureMember<AccountId, CouncilInstance>;
 	type OperationalPreimageOrigin = collective::EnsureMember<AccountId, CouncilInstance>;
 	type Slash = Treasury;
 
