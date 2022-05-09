@@ -29,17 +29,23 @@ use composable_traits::{
 use frame_support::{
 	assert_err, assert_noop, assert_ok,
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, PostDispatchInfo},
-	traits::fungibles::{Inspect, Mutate},
+	traits::{OffchainWorker, OnFinalize, OnInitialize, fungibles::{Inspect, Mutate}},
 	weights::Pays,
 };
 use frame_system::{EventRecord, Phase};
 use pallet_vault::models::VaultInfo;
 use proptest::{prelude::*, test_runner::TestRunner};
 use sp_arithmetic::assert_eq_error_rate;
-use sp_core::{H256, U256};
+use sp_core::{
+	offchain::{testing, OffchainWorkerExt, TransactionPoolExt},
+	H256, U256,
+};
+use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
 use sp_runtime::{
 	ArithmeticError, DispatchError, FixedPointNumber, FixedU128, ModuleError, Percent, Perquintill,
+	RuntimeAppPublic,
 };
+use std::sync::Arc;
 
 const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
 const DEFAULT_MARKET_VAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
@@ -81,8 +87,8 @@ fn accrue_interest_base_cases() {
 	let error = 25;
 	assert_eq!(
 		accrued_increase,
-		10_000_000_000_000_000_000 * MILLISECS_PER_BLOCK as u128 / SECONDS_PER_YEAR_NAIVE as u128 +
-			error
+		10_000_000_000_000_000_000 * MILLISECS_PER_BLOCK as u128 / SECONDS_PER_YEAR_NAIVE as u128
+			+ error
 	);
 }
 
@@ -229,8 +235,8 @@ fn accrue_interest_plotter() {
 	}
 }
 
-// This is only the test where MarketUpdated event is used.
 #[test]
+// This is only the test where MarketUpdated event is used.
 fn can_update_market() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(1);
@@ -1020,8 +1026,8 @@ fn liquidation() {
 			}),
 		);
 
-		let usdt_amt = 2 * DEFAULT_COLLATERAL_FACTOR * USDT::ONE * get_price(BTC::ID, collateral) /
-			get_price(NORMALIZED::ID, NORMALIZED::ONE);
+		let usdt_amt = 2 * DEFAULT_COLLATERAL_FACTOR * USDT::ONE * get_price(BTC::ID, collateral)
+			/ get_price(NORMALIZED::ID, NORMALIZED::ONE);
 		assert_ok!(Tokens::mint_into(USDT::ID, &CHARLIE, usdt_amt));
 		assert_ok!(Vault::deposit(Origin::signed(*CHARLIE), vault, usdt_amt));
 
@@ -1049,6 +1055,91 @@ fn liquidation() {
 				market_id,
 				borrowers: vec![*ALICE],
 			}),
+		);
+	});
+}
+
+#[test]
+fn test_liquidation_offchain_worker() {
+	const PHRASE: &str =
+		"news slush supreme milk chapter athlete soap sausage put clutch what kitten";
+
+	// Create key store and transaction pool for testing environment.
+	let (pool, pool_state) = testing::TestTransactionPoolExt::new();
+	let keystore = KeyStore::new();
+	SyncCryptoStore::sr25519_generate_new(
+		&keystore,
+		crate::crypto::Public::ID,
+		Some(&format!("{}/mergenchi", PHRASE)),
+	)
+	.unwrap();
+
+	// Create externalities, register transaction pool and key store in the externalities.
+	let mut ext = new_test_ext();
+	ext.register_extension(TransactionPoolExt::new(pool));
+	ext.register_extension(KeystoreExt(Arc::new(keystore)));
+	ext.execute_with(|| {
+		let manager = *ALICE;
+		let lender = *CHARLIE;
+        
+        // Create a market with BTC as collateral asset and USDT as borrow asset. 
+        // Initial collateral asset price is 50_000 USDT. Market's collateral factor equals two. 
+        // It means that borrow supposed to be undercolateraized when 
+        // borrowed amount is higher then one half of collateral amount in terms of USDT.
+		let (market_id, vault) = create_market::<50_000>(
+			USDT::instance(),
+			BTC::instance(),
+			manager,
+			DEFAULT_MARKET_VAULT_RESERVE,
+			MoreThanOneFixedU128::saturating_from_integer(2),
+		);
+
+		// Deposit collateral.
+		let collateral_value = BTC::units(1);
+		assert_ok!(Tokens::mint_into(BTC::ID, &manager, collateral_value));
+		assert_extrinsic_event::<Runtime>(
+			Lending::deposit_collateral(Origin::signed(manager), market_id, collateral_value),
+			Event::Lending(crate::Event::CollateralDeposited {
+				sender: manager,
+				amount: collateral_value,
+				market_id,
+			}),
+		);
+
+		// Deposit USDT in the vault.
+		let vault_value = USDT::units(100_000_000);
+		assert_ok!(Tokens::mint_into(USDT::ID, &lender, vault_value));
+		assert_ok!(Vault::deposit(Origin::signed(lender), vault, vault_value));
+
+		process_and_progress_blocks(1);
+
+		// Borrow 20_000 USDT.
+		let borrowed_value = USDT::units(20_000);
+		assert_extrinsic_event::<Runtime>(
+			Lending::borrow(Origin::signed(manager), market_id, borrowed_value),
+			Event::Lending(crate::Event::Borrowed {
+				sender: manager,
+				amount: borrowed_value,
+				market_id,
+			}),
+		);
+
+		// Emulate situation when collateral price has fallen down
+        // from 50_000 USDT to 38_000 USDT.
+        // Now the borrow is undercolateraized since market's collateral factor equals two.
+        // Therefore, one BTC can cover only 19_000 of 20_0000 borrowed USDT. 
+		set_price(BTC::ID, NORMALIZED::units(38_000));
+
+		// Run off-chain worker.
+		Lending::offchain_worker(System::block_number());
+
+		// Check if corresponded liquidation transaction has been placed in the pool
+		let tx = pool_state.write().transactions.pop().unwrap();
+		assert!(pool_state.read().transactions.is_empty());
+		let tx = Extrinsic::decode(&mut &*tx).unwrap();
+		assert_eq!(
+			tx.call,
+			Call::Lending(crate::Call::liquidate { market_id, borrowers: vec![manager.clone()] })
 		);
 	});
 }

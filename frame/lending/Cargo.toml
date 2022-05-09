@@ -33,6 +33,7 @@ pallet-vault = { default-features = false, path = "../vault", optional = true }
 sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-keystore = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.18" }
