@@ -46,12 +46,14 @@ RUN arch="$(uname -m)" && \
 # TODO: openssl-devel on Fedora
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
-    apt-get -y install --no-install-recommends libclang-dev gcc libc6-dev musl-tools make openssl libssl-dev pkg-config && \
+    apt-get -y install --no-install-recommends clang libclang-dev gcc libc6-dev musl-tools make openssl libssl-dev pkg-config && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN ln -s /usr/bin/gcc /usr/bin/"$(uname -m)"-linux-musl-gcc
 
 ARG LIBCLANG_PATH="$(sudo find / -name libclang.so)"
+
+RUN echo whereis c++
 
 RUN rustup update stable && \
     rustup update nightly-2022-04-18 && \
