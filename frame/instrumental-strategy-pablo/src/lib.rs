@@ -162,6 +162,7 @@ pub mod pallet {
 
 	impl<T: Config> InstrumentalProtocolStrategy for Pallet<T> {
 		type VaultId = T::VaultId;
+		type AssetId = T::AssetId;
 
 		#[transactional]
 		fn associate_vault(vault_id: &Self::VaultId) -> Result<Self::VaultId, DispatchError> {

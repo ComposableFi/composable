@@ -38,6 +38,7 @@ pub trait Instrumental {
 
 pub trait InstrumentalProtocolStrategy {
     type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
+	type AssetId;
 
     fn associate_vault(vault_id: &Self::VaultId) -> Result<Self::VaultId, DispatchError>;
     
