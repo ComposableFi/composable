@@ -40,7 +40,7 @@ RUN arch="$(uname -m)" && \
 # - musl-tools required for static binaries
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
-    apt-get -y install --no-install-recommends gcc libc6-dev musl-tools && \
+    apt-get -y install --no-install-recommends gcc libc6-dev musl-tools make && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN ln -s /usr/bin/gcc /usr/bin/"$(uname -m)"-linux-musl-gcc
@@ -50,4 +50,4 @@ ARG RUST_ANALYZER_VERSION=2022-04-25
 RUN wget -qO- "https://github.com/rust-analyzer/rust-analyzer/releases/download/${RUST_ANALYZER_VERSION}/rust-analyzer-$(uname -m)-unknown-linux-gnu.gz" | \
     gunzip > /usr/local/bin/rust-analyzer && \
     chmod 500 /usr/local/bin/rust-analyzer
-RUN rustup component add clippy
+RUN rustup component add clippy && rustup component add rustfmt && rustup component add rust-src
