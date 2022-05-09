@@ -34,4 +34,4 @@ EXPOSE 30333 9933 9944 9615
 
 VOLUME ["/data"] 
 
-CMD ["composable", "--version"]
+# CMD ["composable", "--version"]
