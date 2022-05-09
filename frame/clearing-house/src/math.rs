@@ -1,11 +1,11 @@
-use num_traits::{Signed, Unsigned};
+use num_traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Signed, Unsigned};
 use sp_runtime::{
 	ArithmeticError,
 	ArithmeticError::{DivisionByZero, Overflow, Underflow},
 	FixedPointNumber,
 };
 
-pub trait TryMath: Sized {
+pub trait UnsignedMath: CheckedAdd + CheckedDiv + CheckedMul + CheckedSub + Unsigned {
 	fn try_add(&self, other: &Self) -> Result<Self, ArithmeticError>;
 
 	fn try_sub(&self, other: &Self) -> Result<Self, ArithmeticError>;
@@ -35,10 +35,58 @@ pub trait TryMath: Sized {
 	}
 }
 
-impl<T> TryMath for T
+impl<T> UnsignedMath for T
 where
-	T: FixedPointNumber,
+	T: CheckedAdd + CheckedDiv + CheckedMul + CheckedSub + Unsigned,
 {
+	fn try_add(&self, other: &Self) -> Result<Self, ArithmeticError> {
+		self.checked_add(other).ok_or(Overflow)
+	}
+
+	fn try_sub(&self, other: &Self) -> Result<Self, ArithmeticError> {
+		self.checked_sub(other).ok_or(Underflow)
+	}
+
+	fn try_mul(&self, other: &Self) -> Result<Self, ArithmeticError> {
+		self.checked_mul(other).ok_or(Overflow)
+	}
+
+	fn try_div(&self, other: &Self) -> Result<Self, ArithmeticError> {
+		self.checked_div(other).ok_or(DivisionByZero)
+	}
+}
+
+pub trait FixedPointMath: FixedPointNumber {
+	fn try_add(&self, other: &Self) -> Result<Self, ArithmeticError>;
+
+	fn try_sub(&self, other: &Self) -> Result<Self, ArithmeticError>;
+
+	fn try_mul(&self, other: &Self) -> Result<Self, ArithmeticError>;
+
+	fn try_div(&self, other: &Self) -> Result<Self, ArithmeticError>;
+
+	fn try_add_mut(&mut self, other: &Self) -> Result<(), ArithmeticError> {
+		*self = self.try_add(other)?;
+		Ok(())
+	}
+
+	fn try_sub_mut(&mut self, other: &Self) -> Result<(), ArithmeticError> {
+		*self = self.try_sub(other)?;
+		Ok(())
+	}
+
+	fn try_mul_mut(&mut self, other: &Self) -> Result<(), ArithmeticError> {
+		*self = self.try_mul(other)?;
+		Ok(())
+	}
+
+	fn try_div_mut(&mut self, other: &Self) -> Result<(), ArithmeticError> {
+		*self = self.try_div(other)?;
+		Ok(())
+	}
+}
+
+impl<T: FixedPointNumber> FixedPointMath for T {
 	fn try_add(&self, other: &Self) -> Result<Self, ArithmeticError> {
 		// sign(a) sign(other) | CheckedAdd
 		// ----------------------------

@@ -131,7 +131,7 @@ pub mod pallet {
 
 	pub use crate::types::{Direction, Market, MarketConfig, Position};
 	use crate::{
-		math::{FromBalance, IntoBalance, IntoDecimal, IntoSigned, TryMath},
+		math::{FixedPointMath, FromBalance, IntoBalance, IntoDecimal, IntoSigned, UnsignedMath},
 		weights::WeightInfo,
 	};
 	use codec::FullCodec;
@@ -151,10 +151,7 @@ pub mod pallet {
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use num_traits::Signed;
 	use sp_runtime::{
-		traits::{
-			AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating,
-			Zero,
-		},
+		traits::{AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, One, Saturating, Zero},
 		ArithmeticError, FixedPointNumber, FixedPointOperand,
 	};
 	use sp_std::{cmp::Ordering, fmt::Debug, ops::Neg};
@@ -647,7 +644,7 @@ pub mod pallet {
 			T::Assets::transfer(asset_id, account_id, &pallet_acc, amount, true)?;
 
 			let old_margin = Self::get_margin(&account_id).unwrap_or_else(T::Balance::zero);
-			let new_margin = old_margin.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
+			let new_margin = old_margin.try_add(&amount)?;
 			AccountsMargin::<T>::insert(&account_id, new_margin);
 
 			Self::deposit_event(Event::MarginAdded {
@@ -803,8 +800,8 @@ pub mod pallet {
 
 			// Charge fees
 			let fee = Self::fee_for_trade(&market, &quote_abs_amount_decimal)?;
-			margin = margin.checked_sub(&fee).ok_or(ArithmeticError::Underflow)?;
-			market.fee_pool = market.fee_pool.checked_add(&fee).ok_or(ArithmeticError::Overflow)?;
+			margin.try_sub_mut(&fee)?;
+			market.fee_pool.try_add_mut(&fee)?;
 
 			// Check account risk
 			if is_risk_increasing {
@@ -854,8 +851,7 @@ pub mod pallet {
 				let amount = funding_rate.try_mul(&market.net_base_asset_amount)?.into_balance()?;
 
 				if funding_rate.is_positive() == market.net_base_asset_amount.is_positive() {
-					market.fee_pool =
-						market.fee_pool.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
+					market.fee_pool.try_add_mut(&amount)?;
 				} else {
 					// TODO(0xangelo): should we cap the funding rate if the funding pool isn't deep
 					// enough?
@@ -919,9 +915,7 @@ pub mod pallet {
 			let cum_rate = market.cum_funding_rate.try_sub(&position.last_cum_funding)?;
 			let payment = cum_rate.try_mul(&position.base_asset_amount)?;
 			if payment.is_positive() {
-				*margin = margin
-					.checked_add(&payment.into_balance()?)
-					.ok_or(ArithmeticError::Overflow)?;
+				margin.try_add_mut(&payment.into_balance()?)?;
 			} else if payment.is_negative() {
 				// TODO(0xangelo): can we have bad debt from unrealized funding if user wasn't
 				// liquidated in time?
@@ -936,10 +930,8 @@ pub mod pallet {
 		) -> Result<T::Balance, ArithmeticError> {
 			quote_abs_amount
 				.into_balance()?
-				.checked_mul(&market.taker_fee)
-				.ok_or(ArithmeticError::Overflow)?
-				.checked_div(&10_000_u32.into())
-				.ok_or(ArithmeticError::DivisionByZero)
+				.try_mul(&market.taker_fee)?
+				.try_div(&10_000_u32.into())
 		}
 
 		fn update_market_after_trade(
@@ -1202,7 +1194,7 @@ pub mod pallet {
 			let abs_pnl = pnl.into_balance()?;
 
 			Ok(match pnl.is_positive() {
-				true => margin.checked_add(&abs_pnl).ok_or(ArithmeticError::Overflow)?,
+				true => margin.try_add(&abs_pnl)?,
 				false => margin.saturating_sub(abs_pnl),
 			})
 		}
