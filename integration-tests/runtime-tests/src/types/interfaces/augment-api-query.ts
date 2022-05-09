@@ -2,7 +2,7 @@
 /* eslint-disable */
 
 import type { ComposableTraitsXcmCumulusMethodId } from '@composable/types/interfaces/common';
-import type { CommonMosaicRemoteAssetId, ComposableTraitsAssetsBasicAssetMetadata, ComposableTraitsAssetsXcmAssetLocation, ComposableTraitsBondedFinanceBondOffer, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsDexConstantProductPoolInfo, ComposableTraitsDexDexRoute, ComposableTraitsDexStableSwapPoolInfo, ComposableTraitsGovernanceSignedRawOrigin, ComposableTraitsLendingMarketConfig, ComposableTraitsOraclePrice, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVestingVestingSchedule, CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueQueueConfigData, DaliRuntimeOpaqueSessionKeys, OrmlTokensAccountData, OrmlTokensBalanceLock, PalletAssetsRegistryCandidateStatus, PalletAssetsRegistryForeignMetadata, PalletCollatorSelectionCandidateInfo, PalletCrowdloanRewardsModelsRemoteAccount, PalletCrowdloanRewardsModelsReward, PalletCurrencyFactoryRanges, PalletDemocracyPreimageStatus, PalletDemocracyReferendumInfo, PalletDemocracyReleases, PalletDemocracyVoteThreshold, PalletDemocracyVoteVoting, PalletDutchAuctionSellOrder, PalletDutchAuctionTakeOrder, PalletIdentityRegistrarInfo, PalletIdentityRegistration, PalletLiquidationsLiquidationStrategyConfiguration, PalletLiquidityBootstrappingPool, PalletMosaicAssetInfo, PalletMosaicNetworkInfo, PalletMosaicRelayerStaleRelayer, PalletOracleAssetInfo, PalletOraclePrePrice, PalletOracleWithdraw, PalletPreimageRequestStatus, PalletSchedulerScheduledV3, PalletTreasuryProposal, PalletVaultModelsStrategyOverview, PalletVaultModelsVaultInfo, PolkadotPrimitivesV1AbridgedHostConfiguration, PolkadotPrimitivesV1PersistedValidationData, SpConsensusAuraSr25519AppSr25519Public } from '@composable/types/interfaces/crowdloanRewards';
+import type { CommonMosaicRemoteAssetId, ComposableTraitsAssetsBasicAssetMetadata, ComposableTraitsBondedFinanceBondOffer, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsDexDexRoute, ComposableTraitsGovernanceSignedRawOrigin, ComposableTraitsLendingMarketConfig, ComposableTraitsOraclePrice, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVestingVestingSchedule, ComposableTraitsXcmAssetsForeignMetadata, ComposableTraitsXcmAssetsXcmAssetLocation, CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueQueueConfigData, DaliRuntimeOpaqueSessionKeys, OrmlTokensAccountData, OrmlTokensBalanceLock, PalletCollatorSelectionCandidateInfo, PalletCrowdloanRewardsModelsRemoteAccount, PalletCrowdloanRewardsModelsReward, PalletCurrencyFactoryRanges, PalletDemocracyPreimageStatus, PalletDemocracyReferendumInfo, PalletDemocracyReleases, PalletDemocracyVoteThreshold, PalletDemocracyVoteVoting, PalletDutchAuctionSellOrder, PalletDutchAuctionTakeOrder, PalletIdentityRegistrarInfo, PalletIdentityRegistration, PalletLiquidationsLiquidationStrategyConfiguration, PalletMosaicAssetInfo, PalletMosaicNetworkInfo, PalletMosaicRelayerStaleRelayer, PalletOracleAssetInfo, PalletOraclePrePrice, PalletOracleWithdraw, PalletPreimageRequestStatus, PalletSchedulerScheduledV3, PalletTreasuryProposal, PalletVaultModelsStrategyOverview, PalletVaultModelsVaultInfo, PolkadotPrimitivesV1AbridgedHostConfiguration, PolkadotPrimitivesV1PersistedValidationData, SpConsensusAuraSr25519AppSr25519Public, SpTrieStorageProof } from '@composable/types/interfaces/crowdloanRewards';
 import type { PalletPabloPoolConfiguration, PalletPabloPriceCumulative, PalletPabloTimeWeightedAveragePrice } from '@composable/types/interfaces/pablo';
 import type { ApiTypes } from '@polkadot/api-base/types';
 import type { Data } from '@polkadot/types';
@@ -22,37 +22,18 @@ declare module '@polkadot/api-base/types/storage' {
     };
     assetsRegistry: {
       /**
-       * Mapping (local asset, foreign asset) to a candidate status.
+       * How much of asset amount is needed to pay for one unit of native token.
        **/
-      assetsMappingCandidates: AugmentedQuery<ApiType, (arg: ITuple<[u128, u128]> | [u128 | AnyNumber | Uint8Array, u128 | AnyNumber | Uint8Array]) => Observable<Option<PalletAssetsRegistryCandidateStatus>>, [ITuple<[u128, u128]>]> & QueryableStorageEntry<ApiType, [ITuple<[u128, u128]>]>;
-      /**
-       * Foreign admin account.
-       **/
-      foreignAdmin: AugmentedQuery<ApiType, () => Observable<Option<AccountId32>>, []> & QueryableStorageEntry<ApiType, []>;
-      /**
-       * Mapping foreign asset to foreign location.
-       **/
-      foreignAssetLocation: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<XcmV1MultiLocation>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
-      /**
-       * Mapping local asset to foreign asset metadata.
-       **/
-      foreignAssetMetadata: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<PalletAssetsRegistryForeignMetadata>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
+      assetRatio: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<u128>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
       /**
        * Mapping foreign asset to local asset.
        **/
-      foreignToLocal: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<u128>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
-      /**
-       * Mapping foreign location to foreign asset.
-       **/
-      fromForeignAssetLocation: AugmentedQuery<ApiType, (arg: ComposableTraitsAssetsXcmAssetLocation | { parents?: any; interior?: any } | string | Uint8Array) => Observable<Option<u128>>, [ComposableTraitsAssetsXcmAssetLocation]> & QueryableStorageEntry<ApiType, [ComposableTraitsAssetsXcmAssetLocation]>;
-      /**
-       * Local admin account.
-       **/
-      localAdmin: AugmentedQuery<ApiType, () => Observable<Option<AccountId32>>, []> & QueryableStorageEntry<ApiType, []>;
+      foreignToLocal: AugmentedQuery<ApiType, (arg: ComposableTraitsXcmAssetsXcmAssetLocation | { parents?: any; interior?: any } | string | Uint8Array) => Observable<Option<u128>>, [ComposableTraitsXcmAssetsXcmAssetLocation]> & QueryableStorageEntry<ApiType, [ComposableTraitsXcmAssetsXcmAssetLocation]>;
       /**
        * Mapping local asset to foreign asset.
        **/
-      localToForeign: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<u128>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
+      localToForeign: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<ComposableTraitsXcmAssetsForeignMetadata>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
+      minFeeAmounts: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: ComposableTraitsXcmAssetsXcmAssetLocation | { parents?: any; interior?: any } | string | Uint8Array) => Observable<Option<u128>>, [u32, ComposableTraitsXcmAssetsXcmAssetLocation]> & QueryableStorageEntry<ApiType, [u32, ComposableTraitsXcmAssetsXcmAssetLocation]>;
       /**
        * Generic query
        **/
@@ -193,20 +174,6 @@ declare module '@polkadot/api-base/types/storage' {
        * Last block authored by collator.
        **/
       lastAuthoredBlock: AugmentedQuery<ApiType, (arg: AccountId32 | string | Uint8Array) => Observable<u32>, [AccountId32]> & QueryableStorageEntry<ApiType, [AccountId32]>;
-      /**
-       * Generic query
-       **/
-      [key: string]: QueryableStorageEntry<ApiType>;
-    };
-    constantProductDex: {
-      /**
-       * Current number of pools (also ID for the next created pool)
-       **/
-      poolCount: AugmentedQuery<ApiType, () => Observable<u128>, []> & QueryableStorageEntry<ApiType, []>;
-      /**
-       * Existing pools
-       **/
-      pools: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<ComposableTraitsDexConstantProductPoolInfo>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
       /**
        * Generic query
        **/
@@ -479,21 +446,32 @@ declare module '@polkadot/api-base/types/storage' {
       /**
        * market borrow index
        **/
-      borrowIndex: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<u128>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
+      borrowIndex: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<Option<u128>>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
       borrowRent: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: AccountId32 | string | Uint8Array) => Observable<Option<u128>>, [u32, AccountId32]> & QueryableStorageEntry<ApiType, [u32, AccountId32]>;
       /**
        * Latest timestamp at which account borrowed from market.
+       * 
+       * (Market, Account) -> Timestamp
        **/
       borrowTimestamp: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: AccountId32 | string | Uint8Array) => Observable<Option<u64>>, [u32, AccountId32]> & QueryableStorageEntry<ApiType, [u32, AccountId32]>;
       /**
        * at which lending index account did borrowed.
+       * if first borrow: market index when the borrowed occured
+       * if additional borrow: market index adjusted wrt the previous index
        **/
       debtIndex: AugmentedQuery<ApiType, (arg1: u32 | AnyNumber | Uint8Array, arg2: AccountId32 | string | Uint8Array) => Observable<Option<u128>>, [u32, AccountId32]> & QueryableStorageEntry<ApiType, [u32, AccountId32]>;
       /**
-       * Original debt values are on balances.
-       * Debt token allows to simplify some debt management and implementation of features
+       * Maps markets to their corresponding debt token.
+       * 
+       * ```text
+       * MarketIndex -> debt asset
+       * ```
+       * 
+       * See [this clickup task](task) for a more in-depth explanation.
+       * 
+       * [task]: <https://sharing.clickup.com/20465559/t/h/27y9y84/15U30TKC3THPZYT>
        **/
-      debtMarkets: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<u128>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
+      debtTokenForMarket: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<Option<u128>>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
       /**
        * The timestamp of the previous block or defaults to timestamp at genesis.
        **/
@@ -503,7 +481,11 @@ declare module '@polkadot/api-base/types/storage' {
        **/
       lendingCount: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
       /**
-       * Indexed lending instances
+       * Indexed lending instances. Maps markets to their respective [`MarketConfig`].
+       * 
+       * ```text
+       * MarketIndex -> MarketConfig
+       * ```
        **/
       markets: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<Option<ComposableTraitsLendingMarketConfig>>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
       /**
@@ -515,14 +497,6 @@ declare module '@polkadot/api-base/types/storage' {
       defaultStrategyIndex: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
       strategies: AugmentedQuery<ApiType, (arg: u32 | AnyNumber | Uint8Array) => Observable<Option<PalletLiquidationsLiquidationStrategyConfiguration>>, [u32]> & QueryableStorageEntry<ApiType, [u32]>;
       strategyIndex: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
-      /**
-       * Generic query
-       **/
-      [key: string]: QueryableStorageEntry<ApiType>;
-    };
-    liquidityBootstrapping: {
-      poolCount: AugmentedQuery<ApiType, () => Observable<u128>, []> & QueryableStorageEntry<ApiType, []>;
-      pools: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<PalletLiquidityBootstrappingPool>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
       /**
        * Generic query
        **/
@@ -706,6 +680,15 @@ declare module '@polkadot/api-base/types/storage' {
        **/
       processedDownwardMessages: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
       /**
+       * The state proof for the last relay parent block.
+       * 
+       * This field is meant to be updated each block with the validation data inherent. Therefore,
+       * before processing of the inherent, e.g. in `on_initialize` this data may be stale.
+       * 
+       * This data is also absent from the genesis.
+       **/
+      relayStateProof: AugmentedQuery<ApiType, () => Observable<Option<SpTrieStorageProof>>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
        * The snapshot of some state related to messaging relevant to the current parachain as per
        * the relay parent.
        * 
@@ -827,20 +810,6 @@ declare module '@polkadot/api-base/types/storage' {
        * The current set of validators.
        **/
       validators: AugmentedQuery<ApiType, () => Observable<Vec<AccountId32>>, []> & QueryableStorageEntry<ApiType, []>;
-      /**
-       * Generic query
-       **/
-      [key: string]: QueryableStorageEntry<ApiType>;
-    };
-    stableSwapDex: {
-      /**
-       * Current number of pools (also ID for the next created pool)
-       **/
-      poolCount: AugmentedQuery<ApiType, () => Observable<u128>, []> & QueryableStorageEntry<ApiType, []>;
-      /**
-       * Existing pools
-       **/
-      pools: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<ComposableTraitsDexStableSwapPoolInfo>>, [u128]> & QueryableStorageEntry<ApiType, [u128]>;
       /**
        * Generic query
        **/

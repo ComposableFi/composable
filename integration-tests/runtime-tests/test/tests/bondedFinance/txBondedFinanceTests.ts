@@ -21,7 +21,7 @@ import { KeyringPair } from "@polkadot/keyring/types";
  * Contains all TX tests for the pallet:
  * bondedFinance
  */
-describe.only("tx.bondedFinance Tests", function() {
+describe("tx.bondedFinance Tests", function() {
   if (!testConfiguration.enabledTests.enabled)
     return;
   let api: ApiPromise;

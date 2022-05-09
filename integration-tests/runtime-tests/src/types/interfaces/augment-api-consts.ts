@@ -74,13 +74,6 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
-    constantProductDex: {
-      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
-      /**
-       * Generic const
-       **/
-      [key: string]: Codec;
-    };
     crowdloanRewards: {
       /**
        * The AccountId of this pallet.
@@ -256,7 +249,7 @@ declare module '@polkadot/api-base/types/consts' {
        * 
        * We depend on Oracle to price in Lending. So we know price anyway.
        * We normalized price over all markets and protect from spam all possible pairs equally.
-       * Locking borrow amount ensures manager can create market wit borrow assets, and we force
+       * Locking borrow amount ensures manager can create market with borrow assets, and we force
        * him to really create it.
        * 
        * This solution forces to have amount before creating market.
@@ -271,29 +264,6 @@ declare module '@polkadot/api-base/types/consts' {
       [key: string]: Codec;
     };
     liquidations: {
-      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
-      /**
-       * Generic const
-       **/
-      [key: string]: Codec;
-    };
-    liquidityBootstrapping: {
-      /**
-       * Maximum initial weight.
-       **/
-      maxInitialWeight: Permill & AugmentedConst<ApiType>;
-      /**
-       * Maximum duration for a sale.
-       **/
-      maxSaleDuration: u32 & AugmentedConst<ApiType>;
-      /**
-       * Minimum final weight.
-       **/
-      minFinalWeight: Permill & AugmentedConst<ApiType>;
-      /**
-       * Minimum duration for a sale.
-       **/
-      minSaleDuration: u32 & AugmentedConst<ApiType>;
       palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
        * Generic const
@@ -386,13 +356,6 @@ declare module '@polkadot/api-base/types/consts' {
        * Not strictly enforced, but used for weight estimation.
        **/
       maxScheduledPerBlock: u32 & AugmentedConst<ApiType>;
-      /**
-       * Generic const
-       **/
-      [key: string]: Codec;
-    };
-    stableSwapDex: {
-      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

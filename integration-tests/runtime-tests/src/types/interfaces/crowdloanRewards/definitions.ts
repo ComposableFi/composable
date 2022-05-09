@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { DefinitionRpc } from "@polkadot/types/types";
 
 export default {
@@ -150,6 +151,10 @@ export default {
     },
     ComposableSupportEthereumAddress: "Null",
     ComposableTraitsAssetsBasicAssetMetadata: "Null",
-    ComposableTraitsDexDexRoute: "Null"
+    ComposableTraitsDexDexRoute: "Null",
+    ComposableTraitsLendingRepayStrategy: "Null",
+    ComposableTraitsXcmAssetsXcmAssetLocation: "Null",
+    SpTrieStorageProof: "Null",
+    ComposableTraitsXcmAssetsForeignMetadata: "Null"
   }
 };
