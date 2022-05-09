@@ -4,7 +4,7 @@ use crate::{
 	mock::{Balance, MockRuntime, Origin, System, TestPallet, Timestamp},
 	pallet::{self, VammState},
 };
-use composable_traits::vamm::{AssetType, Direction, SwapConfig, Vamm as VammTrait};
+use composable_traits::vamm::{AssetType, Direction, SwapConfig, Vamm as VammTrait, VammConfig};
 use frame_support::pallet_prelude::Hooks;
 use proptest::prelude::*;
 
@@ -244,5 +244,41 @@ prop_compose! {
 				.output_amount_limit
 				.unwrap_or(output_amount_limit),
 		}
+	}
+}
+
+fn swap_config_add_only() -> BoxedStrategy<SwapConfig<VammId, Balance>> {
+	(
+		Just(0_u128),
+		prop_oneof![Just(AssetType::Base), Just(AssetType::Quote)],
+		1_000_000_000..=1_000_000_000_000_000_u128,
+		Just(Direction::Add),
+		Just(0_u128),
+	)
+		.prop_map(|(vamm_id, asset, input_amount, direction, output_amount_limit)| SwapConfig {
+			vamm_id,
+			asset,
+			input_amount,
+			direction,
+			output_amount_limit,
+		})
+		.boxed()
+}
+
+fn multiple_swap_configs(max_swaps: usize) -> Vec<BoxedStrategy<SwapConfig<VammId, Balance>>> {
+	let mut swaps = Vec::with_capacity(max_swaps);
+	for _ in 0..max_swaps {
+		swaps.push(swap_config_add_only());
+	}
+	swaps
+}
+
+prop_compose! {
+	fn multiple_swaps()(
+		swaps_count in 100_000..1_000_000_usize
+	) (
+		swaps in multiple_swap_configs(swaps_count)
+	) -> Vec<SwapConfig<VammId, Balance>> {
+		swaps
 	}
 }

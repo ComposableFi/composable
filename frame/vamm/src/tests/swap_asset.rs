@@ -3,12 +3,12 @@ use crate::{
 	pallet::{Error, Event, VammMap},
 	tests::{
 		any_vamm_state, balance_range_low, balance_range_upper_half, get_swap_config,
-		get_vamm_state, run_to_block, then_and_now, RUN_CASES,
+		get_vamm_state, multiple_swaps, run_to_block, then_and_now, RUN_CASES,
 	},
 	VammState,
 };
 use composable_traits::vamm::{AssetType, Direction, SwapConfig, Vamm as VammTrait};
-use frame_support::assert_noop;
+use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 use sp_core::U256;
 use sp_runtime::traits::Zero;
@@ -349,4 +349,129 @@ fn swap_remove_quote() {
 		assert_eq!(swap, Ok(39_215_686_275));
 		assert_eq!(vamm_after_swap, vamm_expected);
 	})
+}
+
+proptest! {
+	#![proptest_config(ProptestConfig::with_cases(1))]
+	#[test]
+	fn multiple_swaps_dont_diverge_from_original_invariant_both_base_and_quote(
+		mut vamm_state in any_vamm_state(),
+		swap_config in multiple_swaps()
+	) {
+		// Ensure vamm is always open
+		vamm_state.closed = None;
+
+		ExtBuilder {
+			vamm_count: 1,
+			vamms: vec![(0, vamm_state)]
+		}.build().execute_with(|| {
+			let vamm_before_swap = VammMap::<MockRuntime>::get(0);
+			for x in swap_config.iter() {
+				assert_ok!(TestPallet::swap(x));
+			}
+			let vamm_after_swap = VammMap::<MockRuntime>::get(0);
+
+			let invariant_before = TestPallet::compute_invariant(
+				vamm_before_swap.unwrap().base_asset_reserves,
+				vamm_before_swap.unwrap().quote_asset_reserves,
+			).unwrap();
+
+			let invariant_after = TestPallet::compute_invariant(
+				vamm_after_swap.unwrap().base_asset_reserves,
+				vamm_after_swap.unwrap().quote_asset_reserves,
+			).unwrap();
+
+			let invariant_epsilon = invariant_before / U256::exp10(8);
+			let invariant_delta = invariant_before.max(invariant_after)
+				- invariant_before.min(invariant_after);
+
+			assert_eq!(invariant_delta / vamm_state.invariant, U256::zero());
+			assert!(invariant_delta <= invariant_epsilon);
+		});
+	}
+}
+
+proptest! {
+	#![proptest_config(ProptestConfig::with_cases(1))]
+	#[test]
+	fn multiple_swaps_dont_diverge_from_original_invariant_only_base(
+		mut vamm_state in any_vamm_state(),
+		mut swap_config in multiple_swaps()
+	) {
+		// Ensure vamm is always open
+		vamm_state.closed = None;
+
+		ExtBuilder {
+			vamm_count: 1,
+			vamms: vec![(0, vamm_state)]
+		}.build().execute_with(|| {
+			let vamm_before_swap = VammMap::<MockRuntime>::get(0);
+			for mut x in swap_config.iter_mut() {
+				// Make swaps only for base asset
+				x.asset = AssetType::Base;
+				assert_ok!(TestPallet::swap(x));
+			}
+			let vamm_after_swap = VammMap::<MockRuntime>::get(0);
+
+			let invariant_before = TestPallet::compute_invariant(
+				vamm_before_swap.unwrap().base_asset_reserves,
+				vamm_before_swap.unwrap().quote_asset_reserves,
+			).unwrap();
+
+			let invariant_after = TestPallet::compute_invariant(
+				vamm_after_swap.unwrap().base_asset_reserves,
+				vamm_after_swap.unwrap().quote_asset_reserves,
+			).unwrap();
+
+			let invariant_epsilon = invariant_before / U256::exp10(8);
+			let invariant_delta = invariant_before.max(invariant_after)
+				- invariant_before.min(invariant_after);
+
+			assert_eq!(invariant_delta / vamm_state.invariant, U256::zero());
+			assert!(invariant_delta <= invariant_epsilon);
+		});
+
+	}
+}
+
+proptest! {
+	#![proptest_config(ProptestConfig::with_cases(1))]
+	#[test]
+	fn multiple_swaps_dont_diverge_from_original_invariant_only_quote(
+		mut vamm_state in any_vamm_state(),
+		mut swap_config in multiple_swaps()
+	) {
+		// Ensure vamm is always open
+		vamm_state.closed = None;
+
+		ExtBuilder {
+			vamm_count: 1,
+			vamms: vec![(0, vamm_state)]
+		}.build().execute_with(|| {
+			let vamm_before_swap = VammMap::<MockRuntime>::get(0);
+			for mut x in swap_config.iter_mut() {
+				// Make swaps only for quote asset
+				x.asset = AssetType::Quote;
+				assert_ok!(TestPallet::swap(x));
+			}
+			let vamm_after_swap = VammMap::<MockRuntime>::get(0);
+
+			let invariant_before = TestPallet::compute_invariant(
+				vamm_before_swap.unwrap().base_asset_reserves,
+				vamm_before_swap.unwrap().quote_asset_reserves,
+			).unwrap();
+
+			let invariant_after = TestPallet::compute_invariant(
+				vamm_after_swap.unwrap().base_asset_reserves,
+				vamm_after_swap.unwrap().quote_asset_reserves,
+			).unwrap();
+
+			let invariant_epsilon = invariant_before / U256::exp10(8);
+			let invariant_delta = invariant_before.max(invariant_after)
+				- invariant_before.min(invariant_after);
+
+			assert_eq!(invariant_delta / vamm_state.invariant, U256::zero());
+			assert!(invariant_delta <= invariant_epsilon);
+		});
+	}
 }
