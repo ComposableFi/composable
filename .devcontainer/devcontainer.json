@@ -41,7 +41,8 @@
 		"ms-azuretools.vscode-docker",
 		"GitHub.copilot",
 		"eamodio.gitlens",
-		"ms-vscode.makefile-tools"
+		"ms-vscode.makefile-tools",
+		"ms-vsliveshare.vsliveshare"
 	],
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
