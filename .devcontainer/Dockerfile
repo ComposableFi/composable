@@ -1,5 +1,10 @@
 ARG BASEDEV_VERSION=v0.12.0
 
+# ARG RUST_SRC_PATH = "${rust-nightly}/lib/rustlib/src/rust/src"
+# ARG LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib"
+# ARG PROTOC = "${protobuf}/bin/protoc"
+# ARG ROCKSDB_LIB_DIR = "${rocksdb}/lib"
+
 FROM qmcgaw/basedevcontainer:${BASEDEV_VERSION}-debian
 ARG CREATED
 ARG COMMIT
@@ -41,10 +46,12 @@ RUN arch="$(uname -m)" && \
 # TODO: openssl-devel on Fedora
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
-    apt-get -y install --no-install-recommends gcc libc6-dev musl-tools make openssl libssl-dev pkg-config && \
+    apt-get -y install --no-install-recommends libclang-dev gcc libc6-dev musl-tools make openssl libssl-dev pkg-config && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN ln -s /usr/bin/gcc /usr/bin/"$(uname -m)"-linux-musl-gcc
+
+ARG LIBCLANG_PATH="$(sudo find / -name libclang.so)"
 
 RUN rustup update stable && \
     rustup update nightly-2022-04-18 && \
