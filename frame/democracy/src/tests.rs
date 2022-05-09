@@ -76,7 +76,7 @@ impl Contains<Call> for BaseFilter {
 }
 
 parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: u64| -> Balance {
+	pub ExistentialDeposits: |_currency_id: u128| -> Balance {
 		Zero::zero()
 	};
 }
