@@ -70,15 +70,25 @@ jobs:
 
       # The following actions will attempt to append the built wasm binaries to the release draft.
       # If the proper env variables have been set by the runtime_release step.
+     # - name: Upload Dali wasm
+     #   id: upload-dali-wasm
+     #   if: env.dali_wasm == 1
+     #   uses: actions/upload-release-asset@v1
+     #   with:
+     #     upload_url: ${{ steps.release_drafter.outputs.upload_url }}
+     #     asset_path: ./runtime/dali/target/srtool/release/wbuild/dali-runtime/dali_runtime.compact.compressed.wasm
+     #     asset_name: dali_runtime.wasm
+     #     asset_content_type: application/octet-stream
+
       - name: Upload Dali wasm
-        id: upload-dali-wasm
-        if: env.dali_wasm == 1
-        uses: actions/upload-release-asset@v1
+        uses: svenstaro/upload-release-action@v2
         with:
-          upload_url: ${{ steps.release_drafter.outputs.upload_url }}
-          asset_path: ./runtime/dali/target/srtool/release/wbuild/dali-runtime/dali_runtime.compact.compressed.wasm
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./runtime/dali/target/srtool/release/wbuild/dali-runtime/dali_runtime.compact.compressed.wasm
           asset_name: dali_runtime.wasm
-          asset_content_type: application/octet-stream
+          tag: ${{ github.ref }}
+          overwrite: true
+          body: "test"
 
       - name: Upload Picasso wasm
         id: upload-picasso-wasm
