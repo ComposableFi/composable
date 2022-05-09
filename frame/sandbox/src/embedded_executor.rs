@@ -68,7 +68,7 @@ impl super::SandboxMemory for Memory {
 
 struct HostFuncIndex(usize);
 
-struct DefinedHostFunctions<T> {
+pub struct DefinedHostFunctions<T> {
 	funcs: Vec<HostFuncType<T>>,
 }
 
@@ -101,9 +101,9 @@ impl fmt::Display for DummyHostError {
 
 impl wasmi::HostError for DummyHostError {}
 
-struct GuestExternals<'a, T: 'a> {
-	state: &'a mut T,
-	defined_host_functions: &'a DefinedHostFunctions<T>,
+pub struct GuestExternals<'a, T: 'a> {
+	pub state: &'a mut T,
+	pub defined_host_functions: &'a DefinedHostFunctions<T>,
 }
 
 impl<'a, T> Externals for GuestExternals<'a, T> {
@@ -136,7 +136,7 @@ enum ExternVal {
 /// A builder for the environment of the sandboxed WASM module.
 pub struct EnvironmentDefinitionBuilder<T> {
 	map: BTreeMap<(Vec<u8>, Vec<u8>), ExternVal>,
-	defined_host_functions: DefinedHostFunctions<T>,
+	pub defined_host_functions: DefinedHostFunctions<T>,
 }
 
 impl<T> super::SandboxEnvironmentBuilder<T, Memory> for EnvironmentDefinitionBuilder<T> {
@@ -254,7 +254,7 @@ impl<T> super::SandboxInstance<T> for Instance<T> {
 		code: &[u8],
 		env_def_builder: &EnvironmentDefinitionBuilder<T>,
 		mk_state: impl FnOnce(&NotStartedModuleRef) -> T,
-	) -> Result<(Instance<T>, T), Error> {
+	) -> Result<(Self, T), Error> {
 		let module = Module::from_buffer(code).map_err(|_| Error::Module)?;
 		let not_started_instance =
 			ModuleInstance::new(&module, env_def_builder).map_err(|_| Error::Module)?;
