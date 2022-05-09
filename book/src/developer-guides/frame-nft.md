@@ -1,17 +1,16 @@
 # Overview
-Frame-NFT is aimed at developers to provide them with a reliable and adjustable codebase for NFT-based projects. 
+Pallet-NFT provides basic non-fungible token functionality. 
 This is especially necessary due to the various forms that NFTs can present as, each with their own unique traits.
 In the following we will do a quick recap of what makes NFTs special followed by how that is reflected in Frame-NFT's code.
 And finally, we will discuss two use cases.
 
 ---
 
-# Recap
+# Non-Fungible Tokens
 NFTs (Non-Fungible-Tokens) have a few characteristics setting them apart from fungible ones like currency, precious metals, or carbon credits:
 * Non - Interchangeable 
 * Specific creator and owner
-* Unique digital signature
-* Unique asset like Art, Music or Property
+* Uniquely Identifiable
 * Provide complete history of their creation and trades
 
 They represent ownership of a unique tangible or intangible asset, and record its history on the blockchain.
@@ -29,7 +28,7 @@ Safety is key when it comes to processing of data, which is why we use Blake2-12
 ---
 
 # Use Cases
-Frame-NFT is a module for integrators to make their own and use how they see fit.
+Pallet-NFT is a module for integrators to make their own NFT applications.
 Let's walk through at least two possible applications. One will be an NFT-Art-Gallery and the other a ticket booth.
 
 ### Art Gallery
@@ -37,7 +36,7 @@ An artist would mint their artwork into a wallet.
 They proceed to give each artwork their respective traits, for this example let's assume we have set names and prices.
 Now we are only a few steps away from our first NFT-based art sale.
 
-Taking advantage of the frameworks complete set of tools, an Artist could:
+Taking advantage of the frameworks complete set of tools, an artist could:
 * Host their own private Gallery of minted artwork
 * Make their artwork searchable via recurring traits (style, color palette, materials, history)
 * Transfer ownership of an art piece to a buyer

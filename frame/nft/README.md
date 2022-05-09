@@ -17,7 +17,7 @@ A quick overview of the code structure, implementations and functions within the
 ### Variables
 | Macro        | Name          | Description                                        |
 |--------------|---------------|----------------------------------------------------|
-| (crate) type | AccountIdOf   | Appended by `frame_system` as `AccountId`          |
+| (crate) type | AccountIdOf   | The `AccountId` type used by the chain          |
 | (crate) type | NFTInstanceId | u128                                               |
 | struct       | NFTClass      | provided by `composable_traits` as `financial_nft` |
 
