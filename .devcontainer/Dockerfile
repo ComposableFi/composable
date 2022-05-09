@@ -69,3 +69,6 @@ RUN wget -qO- "https://github.com/rust-analyzer/rust-analyzer/releases/download/
 RUN rustup component add clippy && \
     rustup component add rustfmt && \
     rustup component add rust-src
+
+RUN cargo install bottom
+RUN cargo isntall mdbook
