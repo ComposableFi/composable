@@ -10,6 +10,10 @@
 			"VARIANT": "bullseye"
 		}
 	},
+	"hostRequirements": {
+		"memory": "16gb",
+		"cpus": 8
+	},
 	"runArgs": [
 		"--cap-add=SYS_PTRACE",
 		"--security-opt",
