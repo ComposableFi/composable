@@ -97,7 +97,7 @@ impl orml_tokens::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
 	type Amount = i128;
-	type CurrencyId = u64;
+	type CurrencyId = u128;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
