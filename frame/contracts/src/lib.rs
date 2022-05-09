@@ -127,7 +127,10 @@ use pallet_contracts_primitives::{
 };
 use scale_info::TypeInfo;
 use sp_core::{crypto::UncheckedFrom, Bytes};
-use sp_runtime::traits::{Convert, Hash, Saturating, StaticLookup};
+use sp_runtime::{
+	traits::{Convert, Hash, Saturating, StaticLookup},
+	DispatchError,
+};
 use sp_std::{fmt::Debug, prelude::*};
 
 type CodeHash<T> = <T as frame_system::Config>::Hash;
@@ -198,6 +201,7 @@ where
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
+	use alloc::string::String;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
@@ -220,6 +224,9 @@ pub mod pallet {
 			+ GetDispatchInfo
 			+ codec::Decode
 			+ IsType<<Self as frame_system::Config>::Call>;
+
+		type AccountIdToFromString: Convert<Self::AccountId, String>
+			+ Convert<String, Result<Self::AccountId, ()>>;
 
 		/// Filter that is applied to calls dispatched by contracts.
 		///
@@ -369,6 +376,34 @@ pub mod pallet {
 			let origin = ensure_signed(origin)?;
 			let dest = T::Lookup::lookup(dest)?;
 			let mut output = Self::internal_call(
+				origin,
+				dest,
+				value,
+				gas_limit,
+				storage_deposit_limit.map(Into::into),
+				data,
+				None,
+			);
+			if let Ok(retval) = &output.result {
+				if retval.did_revert() {
+					output.result = Err(<Error<T>>::ContractReverted.into());
+				}
+			}
+			output.gas_meter.into_dispatch_result(output.result, T::WeightInfo::call())
+		}
+
+		#[pallet::weight(T::WeightInfo::call().saturating_add(*gas_limit))]
+		pub fn query(
+			origin: OriginFor<T>,
+			dest: <T::Lookup as StaticLookup>::Source,
+			#[pallet::compact] value: BalanceOf<T>,
+			#[pallet::compact] gas_limit: Weight,
+			storage_deposit_limit: Option<<BalanceOf<T> as codec::HasCompact>::Type>,
+			data: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let origin = ensure_signed(origin)?;
+			let dest = T::Lookup::lookup(dest)?;
+			let mut output = Self::internal_query(
 				origin,
 				dest,
 				value,
@@ -663,6 +698,9 @@ pub mod pallet {
 	pub(crate) type CodeStorage<T: Config> =
 		StorageMap<_, Identity, CodeHash<T>, PrefabWasmModule<T>>;
 
+	#[pallet::storage]
+	pub(crate) type CodeStorageById<T: Config> = StorageMap<_, Identity, u64, CodeHash<T>>;
+
 	/// A mapping between an original code hash and its owner information.
 	#[pallet::storage]
 	pub(crate) type OwnerInfoOf<T: Config> = StorageMap<_, Identity, CodeHash<T>, OwnerInfo<T>>;
@@ -898,6 +936,42 @@ where
 		};
 		let schedule = T::Schedule::get();
 		let result = ExecStack::<T, PrefabWasmModule<T>>::run_call(
+			origin,
+			dest,
+			&mut gas_meter,
+			&mut storage_meter,
+			&schedule,
+			value,
+			data,
+			debug_message,
+		);
+		InternalCallOutput { result, gas_meter, storage_deposit: storage_meter.into_deposit() }
+	}
+
+	/// Internal function that does the actual call.
+	///
+	/// Called by dispatchables and public functions.
+	fn internal_query(
+		origin: T::AccountId,
+		dest: T::AccountId,
+		value: BalanceOf<T>,
+		gas_limit: Weight,
+		storage_deposit_limit: Option<BalanceOf<T>>,
+		data: Vec<u8>,
+		debug_message: Option<&mut Vec<u8>>,
+	) -> InternalCallOutput<T> {
+		let mut gas_meter = GasMeter::new(gas_limit);
+		let mut storage_meter = match StorageMeter::new(&origin, storage_deposit_limit, value) {
+			Ok(meter) => meter,
+			Err(err) =>
+				return InternalCallOutput {
+					result: Err(err.into()),
+					gas_meter,
+					storage_deposit: Default::default(),
+				},
+		};
+		let schedule = T::Schedule::get();
+		let result = ExecStack::<T, PrefabWasmModule<T>>::run_query(
 			origin,
 			dest,
 			&mut gas_meter,

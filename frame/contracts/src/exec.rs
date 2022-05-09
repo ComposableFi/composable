@@ -18,6 +18,7 @@
 use crate::{
 	gas::GasMeter,
 	storage::{self, Storage, WriteOutcome},
+	wasm::cosmwasm::types::{CosmwasmExecutionResult, CosmwasmQueryResult, QueryResponse, SubMsg},
 	BalanceOf, CodeHash, Config, ContractInfo, ContractInfoOf, Error, Event, Nonce,
 	Pallet as Contracts, Schedule,
 };
@@ -29,9 +30,9 @@ use frame_support::{
 	RuntimeDebug,
 };
 use frame_system::RawOrigin;
-use pallet_contracts_primitives::ExecReturnValue;
+use pallet_contracts_primitives::{ContractResult, ExecReturnValue, ReturnFlags};
 use smallvec::{Array, SmallVec};
-use sp_core::{crypto::UncheckedFrom, ecdsa::Public as ECDSAPublic};
+use sp_core::{crypto::UncheckedFrom, ecdsa::Public as ECDSAPublic, Bytes};
 use sp_io::crypto::secp256k1_ecdsa_recover_compressed;
 use sp_runtime::traits::Convert;
 use sp_std::{marker::PhantomData, mem, prelude::*, vec};
@@ -92,14 +93,14 @@ pub trait Ext: sealing::Sealed {
 	/// Call (possibly transferring some amount of funds) into the specified account.
 	///
 	/// Returns the original code size of the called contract.
-	fn call(
-		&mut self,
-		gas_limit: Weight,
-		to: AccountIdOf<Self::T>,
-		value: BalanceOf<Self::T>,
-		input_data: Vec<u8>,
-		allows_reentry: bool,
-	) -> Result<ExecReturnValue, ExecError>;
+	// fn query(
+	// 	&mut self,
+	// 	gas_limit: Weight,
+	// 	to: AccountIdOf<Self::T>,
+	// 	value: BalanceOf<Self::T>,
+	// 	input_data: Vec<u8>,
+	// 	allows_reentry: bool,
+	// ) -> Result<QueryResponse, ExecError>;
 
 	/// Execute code in the current frame.
 	///
@@ -254,6 +255,12 @@ pub enum ExportedFunction {
 	Query,
 }
 
+#[derive(Clone, Copy, PartialEq, RuntimeDebug)]
+pub enum ExecuteFunction {
+	Instantiate,
+	Call,
+}
+
 /// A trait that represents something that can be executed.
 ///
 /// In the on-chain environment this would be represented by a wasm module. This trait exists in
@@ -293,9 +300,15 @@ pub trait Executable<T: Config>: Sized {
 	fn execute<E: Ext<T = T>>(
 		self,
 		ext: &mut E,
-		function: &ExportedFunction,
+		function: &ExecuteFunction,
 		input_data: Vec<u8>,
-	) -> ExecResult;
+	) -> Result<CosmwasmExecutionResult, DispatchError>;
+
+	fn query<E: Ext<T = T>>(
+		self,
+		ext: &mut E,
+		input_data: Vec<u8>,
+	) -> Result<CosmwasmQueryResult, DispatchError>;
 
 	/// The code hash of the executable.
 	fn code_hash(&self) -> &CodeHash<T>;
@@ -368,8 +381,6 @@ pub struct Frame<T: Config> {
 	nested_gas: GasMeter<T>,
 	/// The storage meter for the individual call.
 	nested_storage: storage::meter::NestedMeter<T>,
-	/// If `false` the contract enabled its defense against reentrance attacks.
-	allows_reentry: bool,
 	/// The caller of the currently executing frame which was spawned by `delegate_call`.
 	delegate_caller: Option<T::AccountId>,
 }
@@ -396,12 +407,22 @@ enum FrameArgs<'a, T: Config, E> {
 		/// account which called the caller contract
 		delegated_call: Option<DelegatedCall<T, E>>,
 	},
+	Query {
+		/// The account id of the contract that is to be called.
+		dest: T::AccountId,
+		/// If `None` the contract info needs to be reloaded from storage.
+		cached_info: Option<ContractInfo<T>>,
+		/// This frame was created by `seal_delegate_call` and hence uses different code than
+		/// what is stored at [`Self::dest`]. Its caller ([`Frame::delegated_caller`]) is the
+		/// account which called the caller contract
+		delegated_call: Option<DelegatedCall<T, E>>,
+	},
 	Instantiate {
 		/// The contract or signed origin which instantiates the new contract.
 		sender: T::AccountId,
 		/// The nonce that should be used to derive a new trie id for the contract.
 		nonce: u64,
-		/// The executable whose `deploy` function is run.
+		/// The executable whose `instantiate` function is run.
 		executable: E,
 		/// A salt used in the contract address deriviation of the new contract.
 		salt: &'a [u8],
@@ -561,6 +582,38 @@ where
 		stack.run(executable, input_data)
 	}
 
+	/// Create and run a new call stack by calling into `dest`.
+	///
+	/// # Note
+	///
+	/// `debug_message` should only ever be set to `Some` when executing as an RPC because
+	/// it adds allocations and could be abused to drive the runtime into an OOM panic.
+	///
+	/// # Return Value
+	///
+	/// Result<(ExecReturnValue, CodeSize), (ExecError, CodeSize)>
+	pub fn run_query(
+		origin: T::AccountId,
+		dest: T::AccountId,
+		gas_meter: &'a mut GasMeter<T>,
+		storage_meter: &'a mut storage::meter::Meter<T>,
+		schedule: &'a Schedule<T>,
+		value: BalanceOf<T>,
+		input_data: Vec<u8>,
+		debug_message: Option<&'a mut Vec<u8>>,
+	) -> Result<ExecReturnValue, ExecError> {
+		let (mut stack, executable) = Self::new(
+			FrameArgs::Query { dest, cached_info: None, delegated_call: None },
+			origin,
+			gas_meter,
+			storage_meter,
+			schedule,
+			value,
+			debug_message,
+		)?;
+		stack.run(executable, input_data)
+	}
+
 	/// Create and run a new call stack by instantiating a new contract.
 	///
 	/// # Note
@@ -659,6 +712,22 @@ where
 
 					(dest, contract, executable, delegate_caller, ExportedFunction::Call, None)
 				},
+				FrameArgs::Query { dest, cached_info, delegated_call } => {
+					let contract = if let Some(contract) = cached_info {
+						contract
+					} else {
+						<ContractInfoOf<T>>::get(&dest).ok_or(<Error<T>>::ContractNotFound)?
+					};
+
+					let (executable, delegate_caller) =
+						if let Some(DelegatedCall { executable, caller }) = delegated_call {
+							(executable, Some(caller))
+						} else {
+							(E::from_storage(contract.code_hash, schedule, gas_meter)?, None)
+						};
+
+					(dest, contract, executable, delegate_caller, ExportedFunction::Query, None)
+				},
 				FrameArgs::Instantiate { sender, nonce, executable, salt } => {
 					let account_id =
 						<Contracts<T>>::contract_address(&sender, executable.code_hash(), &salt);
@@ -687,7 +756,6 @@ where
 			entry_point,
 			nested_gas: gas_meter.nested(gas_limit)?,
 			nested_storage: storage_meter.nested(),
-			allows_reentry: true,
 		};
 
 		Ok((frame, executable, nonce))
@@ -730,54 +798,193 @@ where
 		Ok(executable)
 	}
 
-	// TODO(hussein-aitlahcen): no need for frames, we can directly use a looping state machine to
-	// process actor messages/events.
+	fn run_k(
+		&mut self,
+		mut executable: E,
+		mut input_data: Vec<u8>,
+	) -> Result<ExecReturnValue, ExecError> {
+		log::debug!(target: "runtime::contracts", "run_k");
 
-	/// Run the current (top) frame.
-	///
-	/// This can be either a call or an instantiate.
-	fn run(&mut self, executable: E, input_data: Vec<u8>) -> Result<ExecReturnValue, ExecError> {
-		let entry_point = self.top_frame().entry_point;
 		let do_transaction = || {
-			// We need to charge the storage deposit before the initial transfer so that
-			// it can create the account in case the initial transfer is < ed.
-			if entry_point == ExportedFunction::Instantiate {
-				let top_frame = top_frame_mut!(self);
-				top_frame.nested_storage.charge_instantiate(
-					&self.origin,
-					&top_frame.account_id,
-					&mut top_frame.contract_info.get(&top_frame.account_id),
-				)?;
-			}
+			let mut sub_messages = Vec::new();
 
-			// Every call or instantiate also optionally transferres balance.
-			self.initial_transfer()?;
+			'l: loop {
+				let entry_point = self.top_frame().entry_point;
 
-			// Call into the wasm blob.
-			let output = executable
-				.execute(self, &entry_point, input_data)
-				.map_err(|e| ExecError { error: e.error, origin: ErrorOrigin::Callee })?;
+				log::debug!(target: "runtime::contracts", "stepping {:?}", entry_point);
 
-			// Additional work needs to be performed in case of an instantiation.
-			if !output.did_revert() && entry_point == ExportedFunction::Instantiate {
-				let frame = self.top_frame();
-
-				// It is not allowed to terminate a contract inside its constructor.
-				if matches!(frame.contract_info, CachedContract::Terminated) {
-					return Err(Error::<T>::TerminatedInInstantiate.into())
+				// We need to charge the storage deposit before the initial transfer so that
+				// it can create the account in case the initial transfer is < ed.
+				if entry_point == ExportedFunction::Instantiate {
+					let top_frame = top_frame_mut!(self);
+					top_frame.nested_storage.charge_instantiate(
+						&self.origin,
+						&top_frame.account_id,
+						&mut top_frame.contract_info.get(&top_frame.account_id),
+					)?;
 				}
 
-				// Deposit an instantiation event.
-				deposit_event::<T>(
-					vec![],
-					Event::Instantiated {
-						deployer: self.caller().clone(),
-						contract: frame.account_id.clone(),
-					},
-				);
-			}
+				// Every call or instantiate also optionally transferres balance.
+				self.initial_transfer()?;
 
-			Ok(output)
+				let result = match entry_point {
+					ExportedFunction::Query => {
+						let output = executable
+							.query(self, input_data)
+							.map_err(|e| ExecError { error: e, origin: ErrorOrigin::Callee })?;
+						match output {
+							crate::wasm::cosmwasm::types::ContractResult::Ok(bytes) => {
+								log::debug!(target: "runtime::contracts", "Query return result");
+								Ok(ExecReturnValue {
+									flags: ReturnFlags::empty(),
+									data: Bytes::from(bytes.0),
+								})
+							},
+							crate::wasm::cosmwasm::types::ContractResult::Err(_) => {
+								// TODO(hussein-aitlahcen): HANDLE ERROR
+								Ok(ExecReturnValue {
+									flags: ReturnFlags::empty(),
+									data: Bytes::from(Vec::new()),
+								})
+							},
+						}
+					},
+
+					ExportedFunction::Instantiate => {
+						let output = executable
+							.execute(self, &ExecuteFunction::Instantiate, input_data)
+							.map_err(|e| ExecError { error: e, origin: ErrorOrigin::Callee })?;
+						match output {
+							crate::wasm::cosmwasm::types::ContractResult::Ok(mut continuation) => {
+								let frame = self.top_frame();
+								// It is not allowed to terminate a contract inside its constructor.
+								if matches!(frame.contract_info, CachedContract::Terminated) {
+									return Err(Error::<T>::TerminatedInInstantiate.into())
+								}
+								// Deposit an instantiation event.
+								deposit_event::<T>(
+									vec![],
+									Event::Instantiated {
+										deployer: self.caller().clone(),
+										contract: frame.account_id.clone(),
+									},
+								);
+								log::debug!(target: "runtime::contracts", "Instantiate sub messages");
+								// Depth first
+								sub_messages.splice(..0, continuation.messages.drain(..));
+								Ok(ExecReturnValue {
+									flags: ReturnFlags::empty(),
+									data: Bytes::from(Vec::new()),
+								})
+							},
+							crate::wasm::cosmwasm::types::ContractResult::Err(_) =>
+								Ok(ExecReturnValue {
+									flags: ReturnFlags::empty(),
+									data: Bytes::from(Vec::new()),
+								}),
+						}
+					},
+
+					ExportedFunction::Call => {
+						let output =
+							executable
+								.execute(self, &ExecuteFunction::Call, input_data)
+								.map_err(|e| ExecError { error: e, origin: ErrorOrigin::Callee })?;
+						match output {
+							crate::wasm::cosmwasm::types::ContractResult::Ok(mut continuation) => {
+								log::debug!(target: "runtime::contracts", "Call sub messages");
+								// Depth first
+								sub_messages.splice(..0, continuation.messages.drain(..));
+								Ok(ExecReturnValue {
+									flags: ReturnFlags::empty(),
+									data: Bytes::from(Vec::new()),
+								})
+							},
+							crate::wasm::cosmwasm::types::ContractResult::Err(_) =>
+								Ok(ExecReturnValue {
+									flags: ReturnFlags::empty(),
+									data: Bytes::from(Vec::new()),
+								}),
+						}
+					},
+				};
+
+				match sub_messages.pop() {
+					Some(SubMsg { msg, gas_limit, .. }) => {
+						log::debug!(target: "runtime::contracts", "Handling sub message {:?}", msg);
+						match msg {
+							crate::wasm::cosmwasm::types::CosmosMsg::Bank(_) =>
+								unimplemented!("SubMsg Bank"),
+
+							// TODO: Pass XCVM instructions through this custom message?
+							crate::wasm::cosmwasm::types::CosmosMsg::Custom(_) =>
+								unimplemented!("SubMsg Custom"),
+
+							crate::wasm::cosmwasm::types::CosmosMsg::Wasm(continuation_message) =>
+								match continuation_message {
+									crate::wasm::cosmwasm::types::WasmMsg::Execute {
+										contract_addr,
+										msg,
+										funds,
+									} => match T::AccountIdToFromString::convert(contract_addr) {
+										Ok(to) => {
+											let cached_info = self
+												.frames()
+												.find(|f| {
+													f.entry_point == ExportedFunction::Call &&
+														f.account_id == to
+												})
+												.and_then(|f| match &f.contract_info {
+													CachedContract::Cached(contract) =>
+														Some(contract.clone()),
+													_ => None,
+												});
+											self.pop_frame(true);
+											executable = self.push_frame(
+												FrameArgs::Call {
+													dest: to,
+													cached_info,
+													delegated_call: None,
+												},
+												BalanceOf::<T>::from(0u32),
+												gas_limit.unwrap_or_default(),
+											)?;
+											input_data = msg.0;
+										},
+										Err(_) => {
+											log::debug!(target: "runtime::contracts", "Failed to parse addr to AccountId");
+											break 'l result
+										},
+									},
+
+									crate::wasm::cosmwasm::types::WasmMsg::Instantiate {
+										admin,
+										code_id,
+										msg,
+										funds,
+										label,
+									} => unimplemented!("SubMsg Instantiate"),
+
+									crate::wasm::cosmwasm::types::WasmMsg::Migrate {
+										contract_addr,
+										new_code_id,
+										msg,
+									} => unimplemented!("SubMsg Migrate"),
+
+									crate::wasm::cosmwasm::types::WasmMsg::UpdateAdmin {
+										contract_addr,
+										admin,
+									} => unimplemented!("SubMsg UpdateAdmin"),
+
+									crate::wasm::cosmwasm::types::WasmMsg::ClearAdmin {
+										contract_addr,
+									} => unimplemented!("SubMsg ClearAdmin"),
+								},
+						}
+					},
+					None => break 'l result,
+				}
+			}
 		};
 
 		// All changes performed by the contract are executed under a storage transaction.
@@ -786,17 +993,17 @@ where
 		//
 		// `with_transactional` may return an error caused by a limit in the
 		// transactional storage depth.
-		let transaction_outcome =
+		let transaction_outcome = || {
 			with_transaction(|| -> TransactionOutcome<Result<_, DispatchError>> {
 				let output = do_transaction();
 				match &output {
-					Ok(result) if !result.did_revert() =>
-						TransactionOutcome::Commit(Ok((true, output))),
+					Ok(_) => TransactionOutcome::Commit(Ok((true, output))),
 					_ => TransactionOutcome::Rollback(Ok((false, output))),
 				}
-			});
+			})
+		};
 
-		let (success, output) = match transaction_outcome {
+		let (success, output) = match transaction_outcome() {
 			// `with_transactional` executed successfully, and we have the expected output.
 			Ok((success, output)) => (success, output),
 			// `with_transactional` returned an error, and we propagate that error and note no state
@@ -805,6 +1012,16 @@ where
 		};
 		self.pop_frame(success);
 		output
+	}
+
+	// TODO(hussein-aitlahcen): no need for frames, we can directly use a looping state machine to
+	// process actor messages/events.
+
+	/// Run the current (top) frame.
+	///
+	/// This can be either a call or an instantiate.
+	fn run(&mut self, executable: E, input_data: Vec<u8>) -> Result<ExecReturnValue, ExecError> {
+		self.run_k(executable, input_data)
 	}
 
 	/// Remove the current (top) frame from the stack.
@@ -945,11 +1162,6 @@ where
 		self.frames().skip(1).any(|f| &f.account_id == account_id)
 	}
 
-	/// Returns whether the specified contract allows to be reentered right now.
-	fn allows_reentry(&self, id: &AccountIdOf<T>) -> bool {
-		!self.frames().any(|f| &f.account_id == id && !f.allows_reentry)
-	}
-
 	/// Increments and returns the next nonce. Pulls it from storage if it isn't in cache.
 	fn next_nonce(&mut self) -> u64 {
 		let next = if let Some(current) = self.nonce {
@@ -975,49 +1187,49 @@ where
 {
 	type T = T;
 
-	fn call(
-		&mut self,
-		gas_limit: Weight,
-		to: T::AccountId,
-		value: BalanceOf<T>,
-		input_data: Vec<u8>,
-		allows_reentry: bool,
-	) -> Result<ExecReturnValue, ExecError> {
-		// Before pushing the new frame: Protect the caller contract against reentrancy attacks.
-		// It is important to do this before calling `allows_reentry` so that a direct recursion
-		// is caught by it.
-		self.top_frame_mut().allows_reentry = allows_reentry;
+	// fn call(
+	// 	&mut self,
+	// 	gas_limit: Weight,
+	// 	to: T::AccountId,
+	// 	value: BalanceOf<T>,
+	// 	input_data: Vec<u8>,
+	// 	allows_reentry: bool,
+	// ) -> Result<QueryResponse, ExecError> {
+	// 	// Before pushing the new frame: Protect the caller contract against reentrancy attacks.
+	// 	// It is important to do this before calling `allows_reentry` so that a direct recursion
+	// 	// is caught by it.
+	// 	self.top_frame_mut().allows_reentry = allows_reentry;
 
-		let try_call = || {
-			if !self.allows_reentry(&to) {
-				return Err(<Error<T>>::ReentranceDenied.into())
-			}
-			// We ignore instantiate frames in our search for a cached contract.
-			// Otherwise it would be possible to recursively call a contract from its own
-			// constructor: We disallow calling not fully constructed contracts.
-			let cached_info = self
-				.frames()
-				.find(|f| f.entry_point == ExportedFunction::Call && f.account_id == to)
-				.and_then(|f| match &f.contract_info {
-					CachedContract::Cached(contract) => Some(contract.clone()),
-					_ => None,
-				});
-			let executable = self.push_frame(
-				FrameArgs::Call { dest: to, cached_info, delegated_call: None },
-				value,
-				gas_limit,
-			)?;
-			self.run(executable, input_data)
-		};
+	// 	let try_call = || {
+	// 		if !self.allows_reentry(&to) {
+	// 			return Err(<Error<T>>::ReentranceDenied.into())
+	// 		}
+	// 		// We ignore instantiate frames in our search for a cached contract.
+	// 		// Otherwise it would be possible to recursively call a contract from its own
+	// 		// constructor: We disallow calling not fully constructed contracts.
+	// 		let cached_info = self
+	// 			.frames()
+	// 			.find(|f| f.entry_point == ExportedFunction::Call && f.account_id == to)
+	// 			.and_then(|f| match &f.contract_info {
+	// 				CachedContract::Cached(contract) => Some(contract.clone()),
+	// 				_ => None,
+	// 			});
+	// 		let executable = self.push_frame(
+	// 			FrameArgs::Query { dest: to, cached_info, delegated_call: None },
+	// 			value,
+	// 			gas_limit,
+	// 		)?;
+	// 		self.run(executable, input_data)
+	// 	};
 
-		// We need to make sure to reset `allows_reentry` even on failure.
-		let result = try_call();
+	// 	// We need to make sure to reset `allows_reentry` even on failure.
+	// 	let result = try_call();
 
-		// Protection is on a per call basis.
-		self.top_frame_mut().allows_reentry = true;
+	// 	// Protection is on a per call basis.
+	// 	self.top_frame_mut().allows_reentry = true;
 
-		result
-	}
+	// 	result
+	// }
 
 	fn delegate_call(
 		&mut self,

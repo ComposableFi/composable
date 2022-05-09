@@ -77,6 +77,9 @@ pub mod deserialization_limits {
 	pub const RESULT_IBC_PACKET_TIMEOUT: usize = 256 * KI;
 }
 
+pub type CosmwasmExecutionResult = ContractResult<Response<Empty>>;
+pub type CosmwasmQueryResult = ContractResult<QueryResponse>;
+
 pub type QueryResponse = Binary;
 
 pub trait DeserializeLimit {
@@ -84,7 +87,7 @@ pub trait DeserializeLimit {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub struct QueryResult(ContractResult<QueryResponse>);
+pub struct QueryResult(pub CosmwasmQueryResult);
 impl DeserializeLimit for QueryResult {
 	fn deserialize_limit() -> usize {
 		deserialization_limits::RESULT_QUERY
@@ -92,7 +95,7 @@ impl DeserializeLimit for QueryResult {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub struct ExecuteResult(ContractResult<Response<Empty>>);
+pub struct ExecuteResult(pub CosmwasmExecutionResult);
 impl DeserializeLimit for ExecuteResult {
 	fn deserialize_limit() -> usize {
 		deserialization_limits::RESULT_EXECUTE
@@ -100,7 +103,7 @@ impl DeserializeLimit for ExecuteResult {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub struct InstantiateResult(ContractResult<Response<Empty>>);
+pub struct InstantiateResult(pub CosmwasmExecutionResult);
 impl DeserializeLimit for InstantiateResult {
 	fn deserialize_limit() -> usize {
 		deserialization_limits::RESULT_INSTANTIATE

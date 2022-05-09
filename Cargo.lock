@@ -2653,6 +2653,7 @@ dependencies = [
  "frame-system",
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
+ "hex",
  "hex-literal",
  "orml-tokens",
  "orml-traits",

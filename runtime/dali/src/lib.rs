@@ -40,7 +40,8 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero,
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Convert, ConvertInto,
+		Zero,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
@@ -1058,6 +1059,23 @@ parameter_types! {
 	};
 }
 
+use alloc::{format, string::String};
+extern crate alloc;
+
+pub struct AccountIdToFromString;
+impl Convert<String, Result<AccountId, ()>> for AccountIdToFromString {
+	fn convert(a: String) -> Result<AccountId, ()> {
+		let account_id =
+			TryInto::<[u8; 32]>::try_into(hex::decode(a).map_err(|_| ())?).map_err(|_| ())?;
+		Ok(AccountId::from(account_id))
+	}
+}
+impl Convert<AccountId, String> for AccountIdToFromString {
+	fn convert(a: AccountId) -> String {
+		hex::encode(a)
+	}
+}
+
 impl contracts::Config for Runtime {
 	type Time = Timestamp;
 	type Randomness = RandomnessCollectiveFlip;
@@ -1081,6 +1099,7 @@ impl contracts::Config for Runtime {
 	type Schedule = Schedule;
 	type CallStack = [contracts::Frame<Self>; 31];
 	type AddressGenerator = contracts::DefaultAddressGenerator;
+	type AccountIdToFromString = AccountIdToFromString;
 }
 
 construct_runtime!(
