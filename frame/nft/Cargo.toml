@@ -32,6 +32,9 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 composable-support = { path = "../composable-support", default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
 
+[dev-dependencies]
+composable-traits = { path = "../composable-traits", features = ["test-utils"] }
+
 [features]
 default = ["std"]
 std = [
