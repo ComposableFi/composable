@@ -35,12 +35,15 @@ Essentially the owners public key acts as a proof of authenticity and their priv
 | set_class_attribute       | User   | Unless the class can't be found, set a `key` attribute of a type of assets to a given `value`                                                                                             |
 | set_typed_class_attribute | User   | unless the class can't be found Sets an encoded `key`attribute of a type of assets to a given `value`                                                                                     |
 | mint_nft                  | User   | Mint `mint_nft` into a wallet, unless `NFTCount` returns invalid values, by calling `mint_into` and define the type of asset with encoded `key` and `value` calling `set_typed_attribute` |
+
 ---
 
 ## Traits
 The implementations to handle NFT traits used in Pallet-NFT are provided by composable_traits and composable_support.
 Composable_traits provides us with the traits for FinancialNFTProvider and NFTClass.
 Frame_support adds traits to Create, Inspect, Mutate and Transfer NFTs.
+
+---
 
 ## Workflow
 With the nature of NFTs in mind, it becomes imperative to have a straightforward implementation aiming to accommodate their traits.
@@ -50,10 +53,10 @@ Ownership being a core concept in NFTs makes the presentation and trading of own
 Showing of(f) assets as well as transfer of ownership is supported by Pallet-NFT
 
 The function `mint_nft` provides us with all the operations to `mint_into` a wallet and set its `set_typed_attributes`.
+We can then `transfer` ownership of the NFT we just minted to a new wallet `AccountIdof`.
+Looking for the new `owner`'s collection we can find our asset.
 
 ### Example
-
-
 
 ---
 

@@ -40,5 +40,8 @@ Trait implementations for Pallet-NFT are provided by composable_traits and compo
 | set_typed_class_attribute | User   | unless the class can't be found Sets an encoded `key`attribute of a type of assets to a given `value`                                                                                     |
 | mint_nft                  | User   | Mint `mint_nft` into a wallet, unless `NFTCount` returns invalid values, by calling `mint_into` and define the type of asset with encoded `key` and `value` calling `set_typed_attribute` |
 
+
 ## Workflow
 The function `mint_nft` provides us with all the operations to `mint_into` a wallet and set its `set_typed_attributes`.
+We can then `transfer` ownership of the NFT we just minted to a new wallet `AccountIdof`. 
+Looking for the new `owner`'s collection we can find our asset.
