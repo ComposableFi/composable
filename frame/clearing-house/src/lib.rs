@@ -640,7 +640,7 @@ pub mod pallet {
 			);
 
 			// Assuming stablecoin collateral and all markets quoted in dollars
-			let pallet_acc = T::PalletId::get().into_sub_account("Collateral");
+			let pallet_acc = Self::get_collateral_account();
 			T::Assets::transfer(asset_id, account_id, &pallet_acc, amount, true)?;
 
 			let old_margin = Self::get_margin(&account_id).unwrap_or_else(T::Balance::zero);
@@ -1119,6 +1119,10 @@ pub mod pallet {
 
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
+		fn get_collateral_account() -> T::AccountId {
+			T::PalletId::get().into_sub_account("Collateral")
+		}
+
 		fn decimal_from_swapped(
 			swapped: T::Balance,
 			direction: Direction,
