@@ -46,7 +46,7 @@ RUN arch="$(uname -m)" && \
 # TODO: openssl-devel on Fedora
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
-    apt-get -y install --no-install-recommends clang libclang-dev gcc libc6-dev musl-tools make openssl libssl-dev pkg-config && \
+    apt-get -y install --no-install-recommends clang libclang-dev gcc libc6-dev musl-tools make openssl libssl-dev pkg-config node && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN ln -s /usr/bin/gcc /usr/bin/"$(uname -m)"-linux-musl-gcc
@@ -72,3 +72,4 @@ RUN rustup component add clippy && \
 
 RUN cargo install bottom
 RUN cargo isntall mdbook
+RUN npm install --global yarn
