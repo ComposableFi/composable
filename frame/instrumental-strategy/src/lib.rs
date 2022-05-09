@@ -15,12 +15,24 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 	use crate::weights::WeightInfo;
 
+	use composable_traits::{
+		instrumental::InstrumentalProtocolStrategy,
+		vault::StrategicVault
+	};
+
 	use frame_support::{
 		pallet_prelude::*,
 		storage::bounded_btree_set::BoundedBTreeSet,
+		transactional,
 	};
 
-	use codec::FullCodec;
+	use sp_runtime::{
+		traits::{
+			AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
+		},
+	};
+
+	use codec::{Codec, FullCodec};
 	use sp_std::fmt::Debug;
 
 	// -------------------------------------------------------------------------------------------
@@ -43,6 +55,20 @@ pub mod pallet {
 
 		type WeightInfo: WeightInfo;
 		
+		/// The Balance type used by the pallet for bookkeeping. `Config::Convert` is used for
+		/// conversions to `u128`, which are used in the computations.
+		type Balance: Default
+			+ Parameter
+			+ Codec
+			+ MaxEncodedLen
+			+ Copy
+			+ Ord
+			+ CheckedAdd
+			+ CheckedSub
+			+ CheckedMul
+			+ AtLeast32BitUnsigned
+			+ Zero;
+
 		type AssetId: FullCodec
 			+ MaxEncodedLen
 			+ Eq
@@ -53,11 +79,38 @@ pub mod pallet {
 			+ Default
 			+ TypeInfo;
 
+		/// The `VaultId` used by the pallet. Corresponds to the Ids used by the Vault pallet.
+		type VaultId: FullCodec
+			+ MaxEncodedLen
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ Default
+			+ Ord
+			+ TypeInfo
+			+ Into<u128>;
+
+		type Vault: StrategicVault<
+			AssetId = Self::AssetId,
+			Balance = Self::Balance,
+			AccountId = Self::AccountId,
+			VaultId = Self::VaultId
+		>;
+
 		// TODO: (Nevin)
-		//  - type Strategies: [impl InstrumentalProtocolStrategy]
+		//  - try to make the connection to substrategies a vec of InstrumentalProtocolStrategy
+		//  - ideally something like: type WhitelistedStrategies: Get<[dyn InstrumentalProtocolStrategy]>;
+
+		type PabloStrategy: InstrumentalProtocolStrategy<
+			AssetId = Self::AssetId,
+			VaultId = Self::VaultId
+		>;
 
 		/// The maximum number of vaults that can be associated with this strategy.
-		type MaxStrategies: Get<u32>;
+		#[pallet::constant]
+		type MaxAssociatedVaults: Get<u32>;
 	}
 
 	// -------------------------------------------------------------------------------------------
@@ -68,10 +121,16 @@ pub mod pallet {
     //                                       Runtime  Storage                                     
 	// -------------------------------------------------------------------------------------------
 
+	// TODO: (Nevin)
+	//  - we need to store all vaults that are associated with this strategy
+
 	#[pallet::storage]
 	#[pallet::getter(fn associated_vaults)]
-	pub type WhitelistedStrategies<T: Config> =
-		StorageValue<_, BoundedBTreeSet<T::AccountId, T::MaxStrategies> , ValueQuery>;
+	pub type AssociatedVaults<T: Config> =
+		StorageValue<_, BoundedBTreeSet<T::VaultId, T::MaxAssociatedVaults>, ValueQuery>;
+
+	// TODO: (Nevin)
+	//  - we need a way of mapping a vault_id to its associated strategy
 
 	// -------------------------------------------------------------------------------------------
     //                                        Runtime Events                                      
@@ -80,7 +139,7 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		WhitelistedStrategy { strategy: T::AccountId }
+		AssociatedVault { vault_id: T::VaultId },
 	}
 
 	// -------------------------------------------------------------------------------------------
@@ -89,9 +148,9 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		StrategyAlreadyWhitelisted,
+		VaultAlreadyAssociated,
 
-		TooManyWhitelistedStrategies
+		TooManyAssociatedStrategies
 	}
 
 	// -------------------------------------------------------------------------------------------
@@ -117,44 +176,71 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 
-		pub fn whitelist_strategy(account_id: T::AccountId) -> DispatchResult {
-			WhitelistedStrategies::<T>::try_mutate(|strategies| -> DispatchResult {
-				ensure!(
-					!strategies.contains(&account_id), Error::<T>::StrategyAlreadyWhitelisted
-				);
+		// TODO: (Nevin)
+		//  - we need a way to store a vector of all strategies that are whitelisted
 
-				strategies.try_insert(account_id.clone())
-					.map_err(|_| Error::<T>::TooManyWhitelistedStrategies)?;
-
-				Self::deposit_event(Event::WhitelistedStrategy {strategy: account_id} );
-
-				Ok(())
-			})
-		}
-
-		// pub fn set_strategy()
-		// cycle through strategies and call get_apy on each. set the highest apy strategy 
+		// fn get_strategies() -> [dyn InstrumentalProtocolStrategy<
+		// 	AssetId = T::AssetId,
+		// 	VaultId = T::VaultId
+		// >] {
+		// 	vec![&T::PabloStrategy]
+		// }
 	}
 
 	// -------------------------------------------------------------------------------------------
     //                                      Protocol Strategy                                     
 	// -------------------------------------------------------------------------------------------
 
-	// TODO: (Nevin)
-	//  - implement InstrumentalProtocolStrategy; rebalance should act as a composite
-	//        associate_strategy should set the optimum strategy
+	impl<T: Config> InstrumentalProtocolStrategy for Pallet<T> {
+		type AssetId = T::AssetId;
+		type VaultId = T::VaultId;
 
-	
-	// -------------------------------------------------------------------------------------------
-    //                                   Low Level Functionality                                  
-	// -------------------------------------------------------------------------------------------
+		#[transactional]
+		fn associate_vault(vault_id: &Self::VaultId) -> DispatchResult {
+			// TODO: (Nevin)
+			//  - cycle through all whitelisted strategies and associate the vault with the
+			//    strategy with the highest earning apy
 
-	// impl<T: Config> Pallet<T> {
+			// let asset_id = T::Vault::asset_id(vault_id)?;
+			
+			// let optimum_strategy = Self::get_strategies().iter()
+			// 	.max_by_key(|strategy| strategy.get_apy(asset_id)?);	
+			
+			// optimum_strategy.associate_vault(vault_id)?;
 
-	// 	pub fn best_strategy_for_asset(asset_id: T::AssetId) -> Result<T::AccountId, DispatchError> {
+			AssociatedVaults::<T>::try_mutate(|vaults| -> DispatchResult {
+				ensure!(!vaults.contains(vault_id), Error::<T>::VaultAlreadyAssociated);
 
-	// 	}
-	// }
+				vaults.try_insert(*vault_id)
+					.map_err(|_| Error::<T>::TooManyAssociatedStrategies)?;
+
+				T::PabloStrategy::associate_vault(vault_id)?;
+
+				Self::deposit_event(Event::AssociatedVault{ vault_id: *vault_id });
+
+				Ok(())
+			})
+		}
+		
+		fn rebalance() -> DispatchResult {
+			Ok(())
+		}
+
+		fn get_apy(asset: Self::AssetId) -> Result<u128, DispatchError> {
+			// TODO: (Nevin)
+			//  - cycle through all whitelisted strategies and return highest available apy
+			
+			// let optimum_apy = Self::get_strategies()
+			// 	.iter()
+			// 	.map(|strategy| strategy.get_apy(asset))
+			// 	.max();
+			
+			// Ok(optimum_apy)
+
+			T::PabloStrategy::get_apy(asset)
+		}
+	}
+
 }
 
 // -----------------------------------------------------------------------------------------------
