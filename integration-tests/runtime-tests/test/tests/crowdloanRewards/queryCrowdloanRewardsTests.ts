@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ApiPromise, ApiRx } from "@polkadot/api";
+import { ApiPromise } from "@polkadot/api";
 import { getNewConnection } from "@composable/utils/connectionHelper";
 import testConfiguration from "@composabletests/tests/crowdloanRewards/test_configuration.json";
 
@@ -12,7 +12,6 @@ describe("query.crowdloanRewards.account Tests", function() {
   let api: ApiPromise;
 
   before("Setting up tests", async function() {
-    this.timeout(60 * 1000);
     const { newClient } = await getNewConnection();
     api = newClient;
   });

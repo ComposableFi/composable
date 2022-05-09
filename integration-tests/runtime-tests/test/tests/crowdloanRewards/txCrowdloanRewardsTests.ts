@@ -6,7 +6,7 @@ import {
   ethAccount
 } from "@composabletests/tests/crowdloanRewards/testHandlers/crowdloanHandler";
 import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
-import { ApiPromise, Keyring } from "@polkadot/api";
+import { ApiPromise } from "@polkadot/api";
 import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
 
@@ -24,7 +24,6 @@ describe("CrowdloanRewards Tests", function() {
     return;
 
   let api: ApiPromise;
-  let keyring: Keyring;
 
   let walletCharlie: KeyringPair,
     sudoKey: KeyringPair,
