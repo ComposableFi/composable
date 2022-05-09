@@ -809,7 +809,7 @@ pub mod pallet {
 			// Check account risk
 			if is_risk_increasing {
 				ensure!(
-					Self::is_above_imr(&positions, margin)?,
+					Self::meets_initial_margin_ratio(&positions, margin)?,
 					Error::<T>::InsufficientCollateral
 				);
 			}
@@ -1105,7 +1105,7 @@ pub mod pallet {
 
 	// Helper functions - validity checks
 	impl<T: Config> Pallet<T> {
-		fn is_above_imr(
+		fn meets_initial_margin_ratio(
 			positions: &BoundedVec<Position<T>, T::MaxPositions>,
 			margin: T::Balance,
 		) -> Result<bool, DispatchError> {
