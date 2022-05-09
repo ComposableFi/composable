@@ -187,7 +187,7 @@ impl SortedMembers<u64> for OneToFive {
 
 impl Config for Test {
 	type Balance = u64;
-	type AssetId = u64;
+	type AssetId = u128;
 	type Proposal = Call;
 	type Event = Event;
 	type NativeCurrency = pallet_balances::Pallet<Self>;
