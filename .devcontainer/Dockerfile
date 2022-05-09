@@ -81,5 +81,8 @@ RUN wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | 
     npm install --global yarn
 
 # Add polkadot
-RUN cd /workspaces && git clone https://github.com/paritytech/polkadot && cd /workspaces/polkadot && cargo build --release
+WORKDIR /workspaces
+RUN git clone https://github.com/paritytech/polkadot
+WORKDIR /workspaces/polkadot
+RUN cargo build --release
 
