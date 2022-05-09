@@ -3,7 +3,7 @@ use composable_runtime::GenesisConfig;
 
 use super::{Extensions, ParaId};
 
-/// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type.
+/// Specialized `ChainSpec`. This is a specialization of the general Substrate ChainSpec type..
 pub type ChainSpec = sc_service::GenericChainSpec<GenesisConfig, Extensions>;
 
 /// Generate the session keys from individual elements.

@@ -1,8 +1,9 @@
 name: Release Pipeline
 on:
   push:
-    tags:
-      - release-*
+    branch:
+      - releases
+      - trigger-new-release
 
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
