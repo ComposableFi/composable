@@ -3,7 +3,7 @@
 # check for any changes in the runtime/ and frame/*. if
 # there are any changes found, it should mark the PR breaksconsensus and
 # "auto-fail" the PR if there isn't a change in the runtime/src/lib.rs file
-# that alters the version.
+# that alters the version..
 
 set -e # fail on any error
 

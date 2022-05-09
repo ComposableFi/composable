@@ -13,7 +13,7 @@ pub mod dali;
 
 pub mod picasso;
 
-// Parachin ID.
+// Parachin ID..
 const PARA_ID: ParaId = ParaId::new(2000);
 
 /// The extensions for the [`ChainSpec`].
