@@ -111,6 +111,8 @@ jobs:
     #      overwrite: true
     #      body: "test"
 
+    # bump
+
 
       - name: Upload Picasso wasm
         id: upload-picasso-wasm
