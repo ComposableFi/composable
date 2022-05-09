@@ -422,13 +422,9 @@ pub mod pallet {
 			ensure!(!config.base_asset_reserves.is_zero(), Error::<T>::BaseAssetReserveIsZero);
 			ensure!(!config.quote_asset_reserves.is_zero(), Error::<T>::QuoteAssetReserveIsZero);
 			ensure!(!config.peg_multiplier.is_zero(), Error::<T>::PegMultiplierIsZero);
-			let invariant_result =
-				Self::compute_invariant(config.base_asset_reserves, config.quote_asset_reserves);
-			ensure!(
-				invariant_result.is_ok(),
-				Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset
-			);
-			let invariant = invariant_result?;
+			let invariant =
+				Self::compute_invariant(config.base_asset_reserves, config.quote_asset_reserves)
+					.map_err(|_| Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset)?;
 
 			VammCounter::<T>::try_mutate(|next_id| {
 				let id = *next_id;
@@ -691,13 +687,11 @@ pub mod pallet {
 			vamm_state: &VammStateOf<T>,
 		) -> Result<CalculateSwapAsset<T>, DispatchError> {
 			let new_input_amount = match direction {
-				Direction::Add => {
-					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?
-				},
+				Direction::Add =>
+					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?,
 
-				Direction::Remove => {
-					input_asset_amount.checked_sub(swap_amount).ok_or(ArithmeticError::Underflow)?
-				},
+				Direction::Remove =>
+					input_asset_amount.checked_sub(swap_amount).ok_or(ArithmeticError::Underflow)?,
 			};
 			let new_input_amount_u256 = Self::balance_to_u256(new_input_amount)?;
 
