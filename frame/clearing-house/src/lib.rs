@@ -843,10 +843,10 @@ pub mod pallet {
 			// Pay funding
 			// net position sign | funding rate sign | transfer
 			// --------------------------------------------------------------
-			//                -1 |                -1 | Collateral -> IF
+			//                -1 |                -1 | Collateral -> Fee Pool
 			//                -1 |                 1 | Fee Pool -> Collateral
 			//                 1 |                -1 | Fee Pool -> Collateral
-			//                 1 |                 1 | Collateral -> IF
+			//                 1 |                 1 | Collateral -> Fee Pool
 			//                 - |                 0 | n/a
 			//                 0 |                 - | n/a
 			let funding_rate = <Self as Instruments>::funding_rate(&market)?;
@@ -854,13 +854,8 @@ pub mod pallet {
 				let amount = funding_rate.try_mul(&market.net_base_asset_amount)?.into_balance()?;
 
 				if funding_rate.is_positive() == market.net_base_asset_amount.is_positive() {
-					T::Assets::transfer(
-						CollateralType::<T>::get().ok_or(Error::<T>::NoCollateralTypeSet)?,
-						&T::PalletId::get().into_sub_account("Collateral"),
-						&T::PalletId::get().into_sub_account("Insurance"),
-						amount,
-						false,
-					)?;
+					market.fee_pool =
+						market.fee_pool.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
 				} else {
 					// TODO(0xangelo): should we cap the funding rate if the funding pool isn't deep
 					// enough?

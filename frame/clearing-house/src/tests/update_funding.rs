@@ -5,12 +5,10 @@ use super::{
 use crate::{
 	math::FromUnsigned,
 	mock::{
-		accounts::{AccountId, ALICE},
-		assets::USDC,
+		accounts::ALICE,
 		runtime::{
-			Assets as AssetsPallet, ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime,
-			System as SystemPallet, TestPallet, TestPalletId, Vamm as VammPallet,
-			MINIMUM_PERIOD_SECONDS,
+			ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime, System as SystemPallet,
+			TestPallet, Vamm as VammPallet, MINIMUM_PERIOD_SECONDS,
 		},
 	},
 	Direction, Error, Event,
@@ -19,9 +17,9 @@ use composable_traits::{
 	clearing_house::ClearingHouse,
 	time::{DurationSeconds, ONE_HOUR},
 };
-use frame_support::{assert_noop, assert_ok, traits::fungibles::Inspect};
+use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
-use sp_runtime::{traits::AccountIdConversion, FixedI128, FixedU128};
+use sp_runtime::{FixedI128, FixedU128};
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Prop Compose
@@ -109,6 +107,7 @@ proptest! {
 		let mut config = valid_market_config();
 		config.funding_frequency = ONE_HOUR;
 		config.funding_period = ONE_HOUR;
+		config.taker_fee = 0;
 
 		with_trading_context(config, net_position, |market_id| {
 			VammPallet::set_price(Some(1.into()));
@@ -130,9 +129,8 @@ proptest! {
 			// funding rate is 1 ( TWAP_diff * freq / period )
 			// payment = rate * net_position
 			let payment = net_position;
-
-			let insurance_acc = TestPalletId::get().into_sub_account("Insurance");
-			assert_eq!(<AssetsPallet as Inspect<AccountId>>::balance(USDC, &insurance_acc), payment);
+			let market = TestPallet::get_market(&market_id).unwrap();
+			assert_eq!(market.fee_pool, payment);
 		});
 	}
 
