@@ -15,14 +15,14 @@ A quick overview of the code structure, implementations and extrinsics.
 ### Implementations
 Trait implementations for Pallet-NFT are provided by composable_traits and composable_support
 
-| Name                 | Implementation     | Description                       |
-|----------------------|--------------------|-----------------------------------|
-| FinancialNFTProvider | composable_traits  | Functionality to handle AccountId |
-| NFTClass             | composable_traits  | Default ClassId type for NFT's    |
-| Create               | composable support | handle creation of assets         |  
-| Inspect              | composable support | inspect information of an asset   |
-| Mutate               | composable support | change an assets information      |
-| Transfer             | composable support | facilitate transfer of ownership  |
+| Name                 | Description                      |
+|----------------------|----------------------------------|
+| FinancialNFTProvider | Handle AccountId                 |
+| NFTClass             | Default ClassId type for NFT's   |
+| Create               | Handle creation of assets        |  
+| Inspect              | Inspect information of an asset  |
+| Mutate               | Change an assets information     |
+| Transfer             | Facilitate transfer of ownership |
 
 ### Extrinsics
 | Name                      | Caller | Description                                                                                                                                                                               |

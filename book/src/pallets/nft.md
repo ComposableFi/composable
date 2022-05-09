@@ -21,14 +21,14 @@ Essentially the owners public key acts as a proof of authenticity and their priv
 ---
 
 ## Extrinsics
-| Name                      | Caller | Description                                                                                                                                  |
-|---------------------------|--------|----------------------------------------------------------------------------------------------------------------------------------------------|
-| create_class              | Admin  | Create a new class of assets, ensuring the class doesn't already exists                                                                      |
-| owner                     | User   | Display the owner of an asset or assets of an owner                                                                                          |
-| attribute                 | User   | Display all assets identified by a given attribute                                                                                           |
-| class_attribute           | User   | Display all assets identified by a given class attribute                                                                                     |
-| transfer                  | User   | Unless the asset can't be found, transfer an asset to a new owner                                                                            |
-| mint_nft                  | User   | Mint `mint_nft` into a wallet, unless `NFTCount` returns invalid values, by calling `mint_into` and define the asset `set_typed_attribute`   |
+| Name                      | Caller | Description                                                                                                                                    |
+|---------------------------|--------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| create_class              | Admin  | Create a new class of assets, ensuring the class doesn't already exists                                                                        |
+| owner                     | User   | Display the owner of an asset or assets of an owner                                                                                            |
+| attribute                 | User   | Display all assets identified by a given attribute                                                                                             |
+| class_attribute           | User   | Display all assets identified by a given class attribute                                                                                       |
+| transfer                  | User   | Unless the asset can't be found, transfer an asset to a new owner                                                                              |
+| mint_nft                  | User   | Mint `mint_nft` into a wallet, unless `NFTCount` returns invalid values, by calling `mint_into` and define the asset with`set_typed_attribute` |
 
 ---
 
@@ -46,7 +46,7 @@ We achieve this by having multiple methods to define distinct types and characte
 Ownership being a core concept in NFTs makes the presentation and trading of ownership a vital part of how we interact with them.
 Showing of(f) assets as well as transfer of ownership is supported by Pallet-NFT
 
-The function `mint_nft` provides us with all the operations to `mint_into` a wallet and set its `set_typed_attributes`.
+The extrinsic `mint_nft` provides us with all the operations to `mint_into` a wallet and set its `set_typed_attributes`.
 We can then `transfer` ownership of the NFT we just minted to given wallet.
 Looking for the new `owner`'s collection we can find our asset.
 
