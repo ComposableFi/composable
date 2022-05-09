@@ -71,5 +71,5 @@ RUN rustup component add clippy && \
     rustup component add rust-src
 
 RUN cargo install bottom
-RUN cargo isntall mdbook
+RUN cargo install mdbook
 RUN npm install --global yarn
