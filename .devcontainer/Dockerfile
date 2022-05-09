@@ -40,7 +40,7 @@ RUN arch="$(uname -m)" && \
 # - musl-tools required for static binaries
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
-    apt-get -y install --no-install-recommends gcc libc6-dev musl-tools make && \
+    apt-get -y install --no-install-recommends gcc libc6-dev musl-tools make openssl pkg-config && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN ln -s /usr/bin/gcc /usr/bin/"$(uname -m)"-linux-musl-gcc
