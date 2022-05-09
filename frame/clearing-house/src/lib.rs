@@ -954,16 +954,12 @@ pub mod pallet {
 			quote_abs_amount_decimal: &T::Decimal,
 			base_asset_amount_limit: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
-			let base_swapped = T::Vamm::swap(&SwapConfigOf::<T> {
-				vamm_id: market.vamm_id,
-				asset: AssetType::Quote,
-				input_amount: quote_abs_amount_decimal.into_balance()?,
-				direction: match direction {
-					Direction::Long => VammDirection::Add,
-					Direction::Short => VammDirection::Remove,
-				},
-				output_amount_limit: base_asset_amount_limit,
-			})?;
+			let base_swapped = Self::swap_quote(
+				market,
+				direction,
+				quote_abs_amount_decimal,
+				base_asset_amount_limit,
+			)?;
 
 			position
 				.base_asset_amount
@@ -983,16 +979,12 @@ pub mod pallet {
 			quote_abs_amount_decimal: &T::Decimal,
 			base_asset_amount_limit: T::Balance,
 		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
-			let base_swapped = T::Vamm::swap(&SwapConfigOf::<T> {
-				vamm_id: market.vamm_id,
-				asset: AssetType::Quote,
-				input_amount: quote_abs_amount_decimal.into_balance()?,
-				direction: match direction {
-					Direction::Long => VammDirection::Add,
-					Direction::Short => VammDirection::Remove,
-				},
-				output_amount_limit: base_asset_amount_limit,
-			})?;
+			let base_swapped = Self::swap_quote(
+				market,
+				direction,
+				quote_abs_amount_decimal,
+				base_asset_amount_limit,
+			)?;
 			let base_delta_decimal = Self::decimal_from_swapped(base_swapped, direction)?;
 
 			// Compute proportion of quote asset notional amount closed
@@ -1025,16 +1017,12 @@ pub mod pallet {
 			let position = positions.get(position_index).ok_or(Error::<T>::PositionNotFound)?;
 
 			let base_swapped = position.base_asset_amount.into_balance()?;
-			let quote_swapped = T::Vamm::swap(&SwapConfigOf::<T> {
-				vamm_id: market.vamm_id,
-				asset: AssetType::Base,
-				input_amount: base_swapped,
-				direction: match position_direction {
-					Direction::Long => VammDirection::Add,
-					Direction::Short => VammDirection::Remove,
-				},
-				output_amount_limit: quote_asset_amount_limit,
-			})?;
+			let quote_swapped = Self::swap_base(
+				market,
+				position_direction,
+				base_swapped,
+				quote_asset_amount_limit,
+			)?;
 
 			let entry_value = position.quote_asset_notional_amount;
 			let quote_amount_decimal: T::Decimal = quote_swapped.into_decimal()?;
@@ -1056,16 +1044,12 @@ pub mod pallet {
 			base_asset_amount_limit: T::Balance,
 			abs_base_asset_value: &T::Decimal,
 		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
-			let base_swapped = T::Vamm::swap(&SwapConfigOf::<T> {
-				vamm_id: market.vamm_id,
-				asset: AssetType::Quote,
-				input_amount: quote_abs_amount_decimal.into_balance()?,
-				direction: match direction {
-					Direction::Long => VammDirection::Add,
-					Direction::Short => VammDirection::Remove,
-				},
-				output_amount_limit: base_asset_amount_limit,
-			})?;
+			let base_swapped = Self::swap_quote(
+				market,
+				direction,
+				quote_abs_amount_decimal,
+				base_asset_amount_limit,
+			)?;
 
 			// Since reversing is equivalent to closing a position and then opening a
 			// new one in the opposite direction, all of the current position's PnL is
@@ -1119,6 +1103,42 @@ pub mod pallet {
 
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
+		fn swap_base(
+			market: &Market<T>,
+			direction: Direction,
+			base_amount: T::Balance,
+			quote_limit: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
+			T::Vamm::swap(&SwapConfigOf::<T> {
+				vamm_id: market.vamm_id,
+				asset: AssetType::Base,
+				input_amount: base_amount,
+				direction: match direction {
+					Direction::Long => VammDirection::Add,
+					Direction::Short => VammDirection::Remove,
+				},
+				output_amount_limit: quote_limit,
+			})
+		}
+
+		fn swap_quote(
+			market: &Market<T>,
+			direction: Direction,
+			quote_abs_decimal: &T::Decimal,
+			base_limit: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
+			T::Vamm::swap(&SwapConfigOf::<T> {
+				vamm_id: market.vamm_id,
+				asset: AssetType::Quote,
+				input_amount: quote_abs_decimal.into_balance()?,
+				direction: match direction {
+					Direction::Long => VammDirection::Add,
+					Direction::Short => VammDirection::Remove,
+				},
+				output_amount_limit: base_limit,
+			})
+		}
+
 		fn get_collateral_account() -> T::AccountId {
 			T::PalletId::get().into_sub_account("Collateral")
 		}
