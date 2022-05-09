@@ -1,8 +1,14 @@
 name: Release Pipeline
+#on:
+#  push:
+#    tags:
+#      - release-*
+
 on:
+  workflow_dispatch:
   push:
-    tags:
-      - release-*
+    branches:
+      - ga_fix_upload
 
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
