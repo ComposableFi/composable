@@ -27,7 +27,19 @@
 			"**/target/**": true
 		},
 		"rust-analyzer.checkOnSave.command": "clippy",
-		"git.enableCommitSigning": true
+		"git.enableCommitSigning": true,
+		"editor.formatOnSave": true,
+		"terminal.integrated.defaultProfile.linux": "zsh",
+		"rust-analyzer.rustfmt.enableRangeFormatting": true,
+		"[rust]": {
+			"editor.defaultFormatter": "matklad.rust-analyzer",
+			"editor.formatOnSave": true
+		},
+		"editor.quickSuggestions": {
+			"other": true,
+			"comments": false,
+			"strings": true
+		}
 	},
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
