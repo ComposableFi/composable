@@ -1141,7 +1141,7 @@ pub mod pallet {
 		) -> Result<(&'a mut Position<T>, usize), DispatchError> {
 			Ok(match positions.iter().position(|p| p.market_id == *market_id) {
 				Some(index) =>
-					(positions.get_mut(index).expect("Item succesfully found above"), index),
+					(positions.get_mut(index).expect("Item successfully found above"), index),
 				None => {
 					positions
 						.try_push(Position::<T> {
