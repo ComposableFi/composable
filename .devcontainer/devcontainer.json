@@ -26,7 +26,8 @@
 		"files.watcherExclude": {
 			"**/target/**": true
 		},
-		"rust-analyzer.checkOnSave.command": "clippy"
+		"rust-analyzer.checkOnSave.command": "clippy",
+		"git.enableCommitSigning": true
 	},
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
