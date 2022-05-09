@@ -12,13 +12,8 @@ Need to do to run 4 relay chain nodes and 1 Composable's collator:
 	cd "$old_pwd"
     ```
 
-2. download a Polkadot Relay Chain
+2. `01-relay.sh`
 
-	```bash
-	mkdir -p ../../../polkadot/target/release
-	curl https://github.com/paritytech/polkadot/releases/download/v0.9.18-rc4/polkadot -Lo ../../../polkadot/target/release/polkadot
-	../../../polkadot/target/release/polkadot --version
-    ```
 
 3. build this project
 
