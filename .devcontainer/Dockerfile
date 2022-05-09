@@ -38,18 +38,25 @@ RUN arch="$(uname -m)" && \
 # Install:
 # - gcc, libc6-dev required by Rust
 # - musl-tools required for static binaries
+# TODO: openssl-devel on Fedora
 RUN export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
-    apt-get -y install --no-install-recommends gcc libc6-dev musl-tools make openssl pkg-config && \
+    apt-get -y install --no-install-recommends gcc libc6-dev musl-tools make openssl libssl-dev pkg-config && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN ln -s /usr/bin/gcc /usr/bin/"$(uname -m)"-linux-musl-gcc
 
-RUN rustup update stable && rustup update nightly-2022-04-18 && rustup target add wasm32-unknown-unknown --toolchain nightly-2022-04-18 && rustup default stable
+RUN rustup update stable && \
+    rustup update nightly-2022-04-18 && \
+    rustup target add wasm32-unknown-unknown --toolchain nightly-2022-04-18 && \
+    rustup default stable
 
 # Install Rust tooling
 ARG RUST_ANALYZER_VERSION=2022-04-25
 RUN wget -qO- "https://github.com/rust-analyzer/rust-analyzer/releases/download/${RUST_ANALYZER_VERSION}/rust-analyzer-$(uname -m)-unknown-linux-gnu.gz" | \
     gunzip > /usr/local/bin/rust-analyzer && \
-    chmod 500 /usr/local/bin/rust-analyzer
-RUN rustup component add clippy && rustup component add rustfmt && rustup component add rust-src
+    chmod 700 /usr/local/bin/rust-analyzer
+
+RUN rustup component add clippy && \
+    rustup component add rustfmt && \
+    rustup component add rust-src
