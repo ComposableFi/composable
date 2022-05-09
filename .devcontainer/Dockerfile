@@ -80,4 +80,6 @@ RUN wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | 
     nvm use 16 && \
     npm install --global yarn
 
-# RUN
+# Add polkadot
+RUN cd /workspaces && git clone https://github.com/paritytech/polkadot && cd /workspaces/polkadot && cargo build --release
+
