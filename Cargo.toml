@@ -125,7 +125,7 @@ sp-consensus-slots ={git = "https://github.com/composableFi/substrate" ,branch =
 sp-consensus-vrf ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.19" }
 frame-election-provider-support ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.19" }
 sp-npos-elections ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.19" }
-sp-npos-elections-solution-type ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.19" }
+#sp-npos-elections-solution-type ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.19" }
 substrate-test-utils ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.19" }
 substrate-test-utils-derive ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.19" }
 sc-service ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.19" }
@@ -215,7 +215,7 @@ frame-support-test ={git = "https://github.com/composableFi/substrate" ,branch =
 frame-support-test-pallet ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.19" }
 pallet-membership ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.19" }
 pallet-mmr ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.19" }
-pallet-mmr-primitives ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.19" }
+#pallet-mmr-primitives ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.19" }
 pallet-multisig ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.19" }
 pallet-offences-benchmarking ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.19" }
 pallet-proxy ={git = "https://github.com/composableFi/substrate" ,branch = "polkadot-v0.9.19" }
