@@ -84,5 +84,6 @@ RUN wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | 
 WORKDIR /workspaces
 RUN git clone https://github.com/paritytech/polkadot
 WORKDIR /workspaces/polkadot
+ARG LIBCLANG_PATH="$(sudo find / -name libclang.so)"
 RUN cargo build --release
 
