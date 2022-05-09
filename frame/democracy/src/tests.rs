@@ -178,6 +178,11 @@ impl SortedMembers<u64> for OneToFive {
 }
 
 impl Config for Test {
+<<<<<<< HEAD
+=======
+	type Balance = u64;
+	type AssetId = u128;
+>>>>>>> 8c62b7da (updated test)
 	type Proposal = Call;
 	type Event = Event;
 	type Currency = pallet_balances::Pallet<Self>;
