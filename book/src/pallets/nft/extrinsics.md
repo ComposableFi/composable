@@ -11,7 +11,7 @@ To be called as sudo.
 
 `owner`
 
-Display the owner of a given asset or vice versa
+Display the owner of a given asset or vice versa.
 
 ## Attribute
 
@@ -30,11 +30,11 @@ Display all assets identified by a given class attribute.
 `transfer`
 
 Transfer an asset to a given owner.
-Throws error if `InstanceNotFound`
+Throws error if `InstanceNotFound`.
 
 ## Mint NFT
 
 `mint_nft`
 
 `mint_into` a given wallet and `set_typed_attributes.
-Throws error if `NFTCount` returns invalid values
+Throws error if `NFTCount` returns invalid values.
