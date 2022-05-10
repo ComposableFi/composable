@@ -905,13 +905,12 @@ pub mod pallet {
 			// - `InstantAllowed` is `true` and `origin` is `InstantOrigin`.
 			let maybe_ensure_instant = if voting_period < T::FastTrackVotingPeriod::get() {
 				Some(origin)
-			} else {
-				if let Err(origin) = T::FastTrackOrigin::try_origin(origin) {
+			} else if let Err(origin) = T::FastTrackOrigin::try_origin(origin) {
 					Some(origin)
 				} else {
 					None
-				}
 			};
+
 			if let Some(ensure_instant) = maybe_ensure_instant {
 				T::InstantOrigin::ensure_origin(ensure_instant)?;
 				ensure!(T::InstantAllowed::get(), Error::<T>::InstantNotAllowed);
@@ -1464,12 +1463,13 @@ impl<T: Config> Pallet<T> {
 				if let Voting::Direct { ref mut votes, delegations, .. } = voting {
 					match votes.binary_search_by_key(&ref_index, |i| i.0) {
 						Ok(i) => {
+							let prev_vote = votes.get_mut(i).unwrap();
 							// Shouldn't be possible to fail, but we handle it gracefully.
-							status.tally.remove(votes[i].1).ok_or(ArithmeticError::Underflow)?;
-							if let Some(approve) = votes[i].1.as_standard() {
+							status.tally.remove(prev_vote.1).ok_or(ArithmeticError::Underflow)?;
+							if let Some(approve) = prev_vote.1.as_standard() {
 								status.tally.reduce(approve, *delegations);
 							}
-							votes[i].1 = vote;
+							let _ = sp_std::mem::replace(&mut prev_vote.1 , vote);
 						},
 						Err(i) => {
 							ensure!(
