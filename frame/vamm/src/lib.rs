@@ -119,7 +119,7 @@ pub mod pallet {
 
 	use codec::{Codec, FullCodec};
 	use composable_traits::vamm::{
-		AssetType, Direction, SwapConfig, SwapSimulationConfig, Vamm, VammConfig,
+		AssetType, Direction, MovePriceConfig, SwapConfig, SwapSimulationConfig, Vamm, VammConfig,
 	};
 	use frame_support::{
 		pallet_prelude::*, sp_std::fmt::Debug, traits::UnixTime, transactional, Blake2_128Concat,
@@ -218,6 +218,7 @@ pub mod pallet {
 	type MomentOf<T> = <T as Config>::Moment;
 	type SwapConfigOf<T> = SwapConfig<VammIdOf<T>, BalanceOf<T>>;
 	type SwapSimulationConfigOf<T> = SwapSimulationConfig<VammIdOf<T>, BalanceOf<T>>;
+	type MovePriceConfigOf<T> = MovePriceConfig<VammIdOf<T>, BalanceOf<T>>;
 	type VammConfigOf<T> = VammConfig<BalanceOf<T>>;
 	type VammStateOf<T> = VammState<BalanceOf<T>, MomentOf<T>>;
 
@@ -376,6 +377,7 @@ pub mod pallet {
 		type SwapConfig = SwapConfigOf<T>;
 		type SwapSimulationConfig = SwapSimulationConfigOf<T>;
 		type VammConfig = VammConfigOf<T>;
+		type MovePriceConfig = MovePriceConfigOf<T>;
 		type VammId = VammIdOf<T>;
 
 		/// Creates a new virtual automated market maker.
@@ -615,6 +617,55 @@ pub mod pallet {
 			config: &SwapSimulationConfigOf<T>,
 		) -> Result<BalanceOf<T>, DispatchError> {
 			todo!()
+		}
+
+		/// Moves the price of a vamm to the desired values of
+		/// [`base`](VammState) and [`quote`](VammState) asset reserves.
+		///
+		/// # Overview
+		/// In order for the caller modify the [`base`](VammState) and
+		/// [`quote`](VammState) asset reserves, essentialy modifying the
+		/// invariant `k` of the function `x * y = k`, it has to request it to
+		/// the Vamm Pallet. The pallet will perform the needed validity checks
+		/// and, if everything succeeds, a
+		/// [`PriceMoved`](Event::<T>::PriceMoved) event will be deposited on
+		/// the blockchain warning the state change for the vamm and the asset
+		/// reserves of the vamm and it's invariant will change accordingly.
+		///
+		/// TODO(Cardosaum): Update diagram
+		/// ![](https://www.plantuml.com/plantuml/svg/NP2nJiCm48PtFyNH1L2L5yXGbROB0on8x5VdLsibjiFT9NbzQaE4odRIz-dp-VPgB3R5mMaVqiZ2aGGwvgHuWofVSC2GbnUHl93916V11j0dnqXUm1PoSeyyMMPlOMO3vUGUx8e8YYpgtCXYmOUHaz7cE0Gasn0h-JhUuzAjSBuDhcFZCojeys5P-09wAi9pDVIVSXYox_sLGwhux9txUO6QNSrjjoqToyfriHv6Wgy9QgxGOjNalRJ2PfTloPPE6BC68r-TRYrXHlfJVx_MD2szOrcTrvFR8tNbsjy0)
+		///
+		/// ## Parameters:
+		/// * [`config`](composable_traits::vamm::MovePriceConfig):
+		/// Specification for moving the price of the vamm.
+		///
+		/// ## Returns
+		/// This function returns the calculated invariant `K` if successful.
+		///
+		/// ## Assumptions or Requirements
+		/// In order to move the price of a vamm we need to ensure that some properties hold:
+		/// * The passed [`VammId`](Config::VammId) must be valid
+		/// * The desired vamm must be open. (See the [`closed`](VammState)
+		/// field for more information).
+		/// TODO(Cardosaum): add more requirements?
+		///
+		/// ## Emits
+		/// * [`PriceMoved`](Event::<T>::PriceMoved)
+		///
+		/// ## State Changes
+		/// Updates:
+		/// * [`VammMap`], modifying both base and quote asset reserves as well
+		/// as the invariant.
+		///
+		/// ## Errors
+		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
+		/// TODO(Cardosaum): add more after write function.
+		///
+		/// # Runtime
+		/// `O(1)`
+		#[transactional]
+		fn move_price(config: &Self::MovePriceConfig) -> Result<Self::VammId, DispatchError> {
+			todo!();
 		}
 	}
 

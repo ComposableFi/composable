@@ -30,6 +30,9 @@ pub trait Vamm {
 	/// Configuration for simulation of asset swap in a vamm.
 	type SwapSimulationConfig;
 
+	/// Configuration for moving prices in a vamm.
+	type MovePriceConfig;
+
 	/// The identifier type for each virtual automated market maker.
 	type VammId: Unsigned;
 
@@ -100,4 +103,12 @@ pub enum AssetType {
 pub enum Direction {
 	Add,
 	Remove,
+}
+
+/// Specify a common encapsulation layer for the move price function.
+#[derive(Copy, Clone, Debug)]
+pub struct MovePriceConfig<VammId, Balance> {
+	pub vamm_id: VammId,
+	pub base_asset_reserve: Balance,
+	pub quote_asset_reserve: Balance,
 }
