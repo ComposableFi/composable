@@ -51,7 +51,13 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN ln -s /usr/bin/gcc /usr/bin/"$(uname -m)"-linux-musl-gcc
 
-ARG LIBCLANG_PATH="$(sudo find / -name libclang.so)"
+# ARG LIBCLANG_PATH="$(find / -name libclang.so)"
+ENV LIBCLANG_PATH="/usr/lib/llvm-11/lib/libclang.so"
+# RUN echo $LIBCLANG_PATH
+# ENV LIBCLANG_PATH=$LIBCLANG_PATH
+# RUN echo $LIBCLANG_PATH
+# RUN find / -name libclang.so
+# RUN exit 1
 
 RUN rustup update stable && \
     rustup update nightly-2022-04-18 && \
@@ -80,10 +86,9 @@ RUN wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | 
     nvm use 16 && \
     npm install --global yarn
 
-# Add polkadot
+# # Add polkadot
 WORKDIR /workspaces
 RUN git clone https://github.com/paritytech/polkadot
 WORKDIR /workspaces/polkadot
-ARG LIBCLANG_PATH="$(sudo find / -name libclang.so)"
-RUN cargo build --release
-
+RUN export LIBCLANG_PATH="$(find / -name libclang.so)" && \
+    cargo build --release
