@@ -1472,8 +1472,7 @@ impl<T: Config> Pallet<T> {
 				if let Voting::Direct { ref mut votes, delegations, .. } = voting {
 					match votes.binary_search_by_key(&ref_index, |i| i.0) {
 						Ok(i) => {
-							let prev_vote =
-								votes.get_mut(i).ok_or(Error::<T>::InvalidIndex)?;
+							let prev_vote = votes.get_mut(i).ok_or(Error::<T>::InvalidIndex)?;
 							// Shouldn't be possible to fail, but we handle it gracefully.
 							status.tally.remove(prev_vote.1).ok_or(ArithmeticError::Underflow)?;
 							if let Some(approve) = prev_vote.1.as_standard() {
@@ -1964,8 +1963,7 @@ impl<T: Config> Pallet<T> {
 		let bytes =
 			sp_io::storage::read(&key, &mut buf, 0).ok_or_else(|| Error::<T>::NotImminent)?;
 		// The value may be smaller that 1 byte.
-		let mut input =
-			buf.get(0..buf.len().min(bytes as usize)).ok_or(Error::<T>::CastFail)?;
+		let mut input = buf.get(0..buf.len().min(bytes as usize)).ok_or(Error::<T>::CastFail)?;
 
 		match input.read_byte() {
 			Ok(0) => Ok(()), // PreimageStatus::Missing is variant 0
@@ -1994,8 +1992,7 @@ impl<T: Config> Pallet<T> {
 		let bytes =
 			sp_io::storage::read(&key, &mut buf, 0).ok_or_else(|| Error::<T>::PreimageMissing)?;
 		// The value may be smaller that 6 bytes.
-		let mut input =
-			buf.get(0..buf.len().min(bytes as usize)).ok_or(Error::<T>::CastFail)?;
+		let mut input = buf.get(0..buf.len().min(bytes as usize)).ok_or(Error::<T>::CastFail)?;
 
 		match input.read_byte() {
 			Ok(1) => (), // Check that input exists and is second variant.
