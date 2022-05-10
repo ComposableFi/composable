@@ -143,7 +143,7 @@ pub trait SimpleExchange {
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, Eq, RuntimeDebug)]
 pub struct ConstantProductPoolInfo<AccountId, AssetId> {
 	/// Owner of pool
-	pub owner: AccountId,
+	pub owner: Accoun tId,
 	/// Swappable assets
 	pub pair: CurrencyPair<AssetId>,
 	/// AssetId of LP token
