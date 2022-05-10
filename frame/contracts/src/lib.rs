@@ -204,11 +204,14 @@ pub mod pallet {
 	use alloc::string::String;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
+use sp_runtime::traits::AtLeast32Bit;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+    type Moment: AtLeast32Bit + Parameter + Default + Copy + Into<u128>;
+
 		/// The time implementation used to supply timestamps to conntracts through `seal_now`.
-		type Time: Time;
+		type Time: Time<Moment = Self::Moment>;
 
 		/// The generator used to supply randomness to contracts through `seal_random`.
 		type Randomness: Randomness<Self::Hash, Self::BlockNumber>;

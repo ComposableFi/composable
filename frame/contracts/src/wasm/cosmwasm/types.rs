@@ -2,6 +2,7 @@ use alloc::string::String;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
+use core::fmt::Display;
 
 pub mod read_limits {
 	/// A mibi (mega binary)
@@ -813,8 +814,32 @@ impl core::fmt::Display for CanonicalAddr {
 	}
 }
 
+mod string {
+  use core::fmt::Display;
+  use core::str::FromStr;
+
+  use serde::{de, Serializer, Deserialize, Deserializer};
+
+  pub fn serialize<T, S>(value: &T, serializer: S) -> Result<S::Ok, S::Error>
+  where
+    T: Display,
+    S: Serializer
+  {
+    serializer.collect_str(value)
+  }
+
+  pub fn deserialize<'de, T, D>(deserializer: D) -> Result<T, D::Error>
+  where
+    T: FromStr,
+    T::Err: Display,
+    D: Deserializer<'de>
+  {
+    alloc::string::String::deserialize(deserializer)?.parse().map_err(de::Error::custom)
+  }
+}
+
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Timestamp(pub String);
+pub struct Timestamp(#[serde(with = "string")] pub u128);
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Env {
