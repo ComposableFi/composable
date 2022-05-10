@@ -4,14 +4,14 @@
 
 `create_class`
 
-Create a new types of assets, ensuring the class doesn't already exist.
+Create a new class of assets, ensuring the class doesn't already exist.
 To be called as sudo.
 
 ## Owner
 
 `owner`
 
-Display the owner of a given asset or display assets of a given owner.
+Display the owner of a given asset or vice versa
 
 ## Attribute
 
