@@ -21,7 +21,7 @@ pub struct SignedCommitment {
     pub signatures: Vec<SignatureWithAuthorityIndex>,
 }
 
-#[derive(sp_std::fmt::Debug, Clone, Encode, Decode)]
+#[derive(sp_std::fmt::Debug, Clone, PartialEq, Eq, Encode, Decode)]
 pub struct MmrUpdateProof {
     pub signed_commitment: SignedCommitment,
     pub latest_mmr_leaf: MmrLeaf<u32, H256, H256>,
@@ -29,14 +29,14 @@ pub struct MmrUpdateProof {
     pub authority_proof: Vec<Hash>,
 }
 
-#[derive(sp_std::fmt::Debug, Clone, Encode, Decode)]
+#[derive(sp_std::fmt::Debug, Clone, PartialEq, Eq, Encode, Decode)]
 pub struct PartialMmrLeaf {
     pub version: MmrLeafVersion,
     pub parent_number_and_hash: (u32, H256),
     pub beefy_next_authority_set: BeefyNextAuthoritySet<H256>,
 }
 
-#[derive(sp_std::fmt::Debug, Clone, Encode, Decode)]
+#[derive(sp_std::fmt::Debug, Clone, PartialEq, Eq, Encode, Decode)]
 pub struct ParachainHeader {
     /// scale encoded parachain header
     pub parachain_header: Vec<u8>,
@@ -55,7 +55,7 @@ pub struct ParachainHeader {
     pub extrinsic_proof: Vec<Vec<u8>>,
 }
 
-#[derive(sp_std::fmt::Debug, Clone, Encode, Decode)]
+#[derive(sp_std::fmt::Debug, Clone, PartialEq, Eq, Encode, Decode)]
 pub struct ParachainsUpdateProof {
     pub parachain_headers: Vec<ParachainHeader>,
     pub mmr_proof: pallet_mmr_primitives::BatchProof<H256>,
