@@ -952,7 +952,8 @@ impl liquidations::Config for Runtime {
 parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
 	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
-	pub OracleMarketCreationStake : Balance = 300;
+	pub OracleMarketCreationStake: Balance = 300;
+	pub const MaxLiquidationBatchSize: u32 = 1000;
 }
 
 impl lending::Config for Runtime {
@@ -971,6 +972,7 @@ impl lending::Config for Runtime {
 	type OracleMarketCreationStake = OracleMarketCreationStake;
 	type PalletId = LendingPalletId;
 	type NativeCurrency = Balances;
+	type MaxLiquidationBatchSize = MaxLiquidationBatchSize;
 	type WeightToFee = WeightToFee;
 }
 

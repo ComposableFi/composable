@@ -10,14 +10,14 @@ use frame_support::{
 use sp_std::marker::PhantomData;
 
 pub trait WeightInfo {
-	fn create_new_market() -> Weight;
+	fn create_market() -> Weight;
 	fn deposit_collateral() -> Weight;
 	fn withdraw_collateral() -> Weight;
 	fn borrow() -> Weight;
 	fn repay_borrow() -> Weight;
-	fn liquidate(positions_count: Weight) -> Weight;
+	fn liquidate(b: u32) -> Weight;
 	fn now() -> Weight;
-	fn accrue_interest() -> Weight;
+	fn accrue_interest(x: u32) -> Weight;
 	fn account_id() -> Weight;
 	fn available_funds() -> Weight;
 	fn handle_withdrawable() -> Weight;
@@ -26,7 +26,7 @@ pub trait WeightInfo {
 }
 
 impl WeightInfo for () {
-	fn create_new_market() -> Weight {
+	fn create_market() -> Weight {
 		(96_881_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(5 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(11 as Weight))
@@ -51,10 +51,15 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(13 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
 	}
+	fn liquidate(b: u32, ) -> Weight {
+		(25_879_000 as Weight)
+			.saturating_add((7_877_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add(RocksDbWeight::get().reads(7 as Weight))
+	}
 	fn now() -> Weight {
 		(4_744_000 as Weight).saturating_add(RocksDbWeight::get().reads(1 as Weight))
 	}
-	fn accrue_interest() -> Weight {
+	fn accrue_interest(_x: u32) -> Weight {
 		(76_626_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(8 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
@@ -79,9 +84,5 @@ impl WeightInfo for () {
 		(38_744_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(1 as Weight))
-	}
-
-	fn liquidate(positions_count: Weight) -> Weight {
-		10000 * positions_count
 	}
 }

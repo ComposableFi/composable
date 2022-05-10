@@ -14,8 +14,8 @@ use composable_traits::{
 	oracle::Price,
 	vault::StrategicVault,
 };
-use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
-use frame_support::traits::{fungible, fungibles::Mutate};
+use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
+use frame_support::traits::{fungible, fungibles::Mutate, Get};
 use frame_system::{EventRecord, RawOrigin};
 use sp_runtime::{FixedPointNumber, Percent, Perquintill};
 use sp_std::prelude::*;
@@ -171,6 +171,34 @@ benchmarks! {
 		produce_block::<T>(42_u32.into(),4200_u64.into());
 		produce_block::<T>(43_u32.into(),4300_u64.into());
 	}: _(origin, market_id, caller, RepayStrategy::TotalDebt)
+
+	liquidate {
+		let b in 1..T::MaxLiquidationBatchSize::get();
+		let LendingBenchmarkingSetup {
+			caller,
+			origin,
+			bank,
+			pair,
+			input,
+		} = lending_benchmarking_setup::<T>();
+
+		let amount: BalanceOf<T> = 1_000_000_000_u64.into();
+		let part: BalanceOf<T> = 1_000_u64.into();
+
+		<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
+
+		let market_id = create_market_from_raw_origin::<T>(origin.clone(), input);
+
+		<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&Lending::<T>::account_id(&market_id), 10_000_000_000_000_u64.into()).unwrap();
+
+		let mut borrowers = vec![];
+		for i in 0..b {
+			let borrower = whitelisted_caller();
+			<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&borrower, 10_000_000_000_000_u64.into()).unwrap();
+			Lending::<T>::deposit_collateral(RawOrigin::Signed(borrower.clone()).into(), market_id, amount).unwrap();
+			borrowers.push(borrower);
+		}
+	}: _(origin, market_id, borrowers)
 
 	// HOOKS
 

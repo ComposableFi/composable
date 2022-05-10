@@ -281,6 +281,9 @@ pub mod pallet {
 		type NativeCurrency: NativeTransfer<Self::AccountId, Balance = Self::Balance>
 			+ NativeInspect<Self::AccountId, Balance = Self::Balance>;
 
+		/// The maximum size of batch for liquidation.
+		type MaxLiquidationBatchSize: Get<u32>;
+
 		/// Convert a weight value into a deductible fee based on the currency type.
 		type WeightToFee: WeightToFeePolynomial<Balance = Self::Balance>;
 	}
@@ -299,7 +302,7 @@ pub mod pallet {
 			weight += u64::from(call_counters.now) * <T as Config>::WeightInfo::now();
 			weight += u64::from(call_counters.read_markets) * one_read;
 			weight += u64::from(call_counters.accrue_interest) *
-				<T as Config>::WeightInfo::accrue_interest();
+				<T as Config>::WeightInfo::accrue_interest(1);
 			weight += u64::from(call_counters.account_id) * <T as Config>::WeightInfo::account_id();
 			weight += u64::from(call_counters.available_funds) *
 				<T as Config>::WeightInfo::available_funds();
@@ -419,6 +422,8 @@ pub mod pallet {
 		CannotRepayMoreThanTotalDebt,
 
 		BorrowRentDoesNotExist,
+
+		MaxLiquidationBatchSizeExceed,
 	}
 
 	#[pallet::event]
@@ -613,7 +618,7 @@ pub mod pallet {
 		/// - `input`   : Borrow & deposits of assets, persentages.
 		///
 		/// `origin` irreversibly pays `T::OracleMarketCreationStake`.
-		#[pallet::weight(<T as Config>::WeightInfo::create_new_market())]
+		#[pallet::weight(<T as Config>::WeightInfo::create_market())]
 		#[transactional]
 		pub fn create_market(
 			origin: OriginFor<T>,
@@ -634,7 +639,7 @@ pub mod pallet {
 
 		/// owner must be very careful calling this
 		// REVIEW: Why?
-		#[pallet::weight(<T as Config>::WeightInfo::create_new_market())]
+		#[pallet::weight(<T as Config>::WeightInfo::create_market())]
 		#[transactional]
 		pub fn update_market(
 			origin: OriginFor<T>,
@@ -749,7 +754,7 @@ pub mod pallet {
 		/// liquidation.
 		/// - `origin` : Sender of this extrinsic.
 		/// - `market_id` : Market index from which `borrower` has taken borrow.
-		#[pallet::weight(<T as Config>::WeightInfo::liquidate(borrowers.len() as Weight))]
+		#[pallet::weight(<T as Config>::WeightInfo::liquidate(borrowers.len() as u32))]
 		#[transactional]
 		pub fn liquidate(
 			origin: OriginFor<T>,
@@ -757,6 +762,7 @@ pub mod pallet {
 			borrowers: Vec<T::AccountId>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin.clone())?;
+			ensure!(borrowers.len() <= T::MaxLiquidationBatchSize::get() as usize, Error::<T>::MaxLiquidationBatchSizeExceed);
 			Self::liquidate_internal(&sender, &market_id, borrowers.clone())?;
 			Self::deposit_event(Event::LiquidationInitiated { market_id, borrowers });
 			Ok(().into())
