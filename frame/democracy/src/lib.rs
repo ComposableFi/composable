@@ -683,6 +683,8 @@ pub mod pallet {
 		MaxVotesReached,
 		/// Maximum number of proposals reached.
 		TooManyProposals,
+
+		InvalidIndex,
 	}
 
 	#[pallet::hooks]
@@ -1468,7 +1470,7 @@ impl<T: Config> Pallet<T> {
 				if let Voting::Direct { ref mut votes, delegations, .. } = voting {
 					match votes.binary_search_by_key(&ref_index, |i| i.0) {
 						Ok(i) => {
-							let prev_vote = votes.get_mut(i).unwrap();
+							let prev_vote = votes.get_mut(i).ok_or_else(|| Error::<T>::InvalidIndex)?;
 							// Shouldn't be possible to fail, but we handle it gracefully.
 							status.tally.remove(prev_vote.1).ok_or(ArithmeticError::Underflow)?;
 							if let Some(approve) = prev_vote.1.as_standard() {
@@ -1525,15 +1527,16 @@ impl<T: Config> Pallet<T> {
 				match info {
 					Some(ReferendumInfo::Ongoing(mut status)) => {
 						ensure!(matches!(scope, UnvoteScope::Any), Error::<T>::NoPermission);
+						let prev_vote = votes.get_mut(i).ok_or_else(||Error::<T>::InvalidIndex)?;
 						// Shouldn't be possible to fail, but we handle it gracefully.
-						status.tally.remove(votes[i].1).ok_or(ArithmeticError::Underflow)?;
-						if let Some(approve) = votes[i].1.as_standard() {
+						status.tally.remove(prev_vote.1).ok_or(ArithmeticError::Underflow)?;
+						if let Some(approve) = prev_vote.1.as_standard() {
 							status.tally.reduce(approve, *delegations);
 						}
 						ReferendumInfoOf::<T>::insert(ref_index, ReferendumInfo::Ongoing(status));
 					},
 					Some(ReferendumInfo::Finished { end, approved }) => {
-						if let Some((lock_periods, balance)) = votes[i].1.locked_if(approved) {
+						if let Some((lock_periods, balance)) = prev_vote.1.locked_if(approved) {
 							let unlock_at = end.saturating_add(
 								T::VoteLockingPeriod::get().saturating_mul(lock_periods.into()),
 							);
