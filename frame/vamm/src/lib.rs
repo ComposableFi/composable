@@ -117,7 +117,7 @@ pub mod pallet {
 
 	use codec::{Codec, FullCodec};
 	use composable_traits::vamm::{
-		AssetType, Direction, SwapConfig, SwapSimulationConfig, Vamm, VammConfig,
+		AssetType, Direction, MovePriceConfig, SwapConfig, SwapSimulationConfig, Vamm, VammConfig,
 	};
 	use frame_support::{pallet_prelude::*, sp_std::fmt::Debug, transactional, Blake2_128Concat};
 	use num_integer::Integer;
@@ -209,6 +209,7 @@ pub mod pallet {
 	type VammIdOf<T> = <T as Config>::VammId;
 	type SwapConfigOf<T> = SwapConfig<VammIdOf<T>, BalanceOf<T>>;
 	type SwapSimulationConfigOf<T> = SwapSimulationConfig<VammIdOf<T>, BalanceOf<T>>;
+	type MovePriceConfigOf<T> = MovePriceConfig<VammIdOf<T>, BalanceOf<T>>;
 	type VammConfigOf<T> = VammConfig<BalanceOf<T>>;
 	type VammStateOf<T> = VammState<BalanceOf<T>, TimestampOf<T>>;
 
@@ -345,6 +346,7 @@ pub mod pallet {
 		type SwapConfig = SwapConfigOf<T>;
 		type SwapSimulationConfig = SwapSimulationConfigOf<T>;
 		type VammConfig = VammConfigOf<T>;
+		type MovePriceConfig = MovePriceConfigOf<T>;
 		type VammId = VammIdOf<T>;
 
 		/// Creates a new virtual automated market maker.
@@ -482,12 +484,193 @@ pub mod pallet {
 		}
 
 		#[allow(unused_variables)]
-		fn swap(config: &SwapConfigOf<T>) -> Result<BalanceOf<T>, DispatchError> {
-			// Sanity checks
-			// 1) Requested vamm must exists and be retrievable.
-			ensure!(VammMap::<T>::contains_key(config.vamm_id), Error::<T>::VammDoesNotExist);
-			let vamm_state =
-				VammMap::<T>::get(config.vamm_id).ok_or(Error::<T>::FailToRetrieveVamm)?;
+		fn swap_simulation(
+			config: &SwapSimulationConfigOf<T>,
+		) -> Result<BalanceOf<T>, DispatchError> {
+			todo!()
+		}
+
+		/// Moves the price of a vamm to the desired values of
+		/// [`base`](VammState) and [`quote`](VammState) asset reserves.
+		///
+		/// # Overview
+		/// In order for the caller modify the [`base`](VammState) and
+		/// [`quote`](VammState) asset reserves, essentialy modifying the
+		/// invariant `k` of the function `x * y = k`, it has to request it to
+		/// the Vamm Pallet. The pallet will perform the needed validity checks
+		/// and, if everything succeeds, a
+		/// [`PriceMoved`](Event::<T>::PriceMoved) event will be deposited on
+		/// the blockchain warning the state change for the vamm and the asset
+		/// reserves of the vamm and it's invariant will change accordingly.
+		///
+		/// TODO(Cardosaum): Update diagram
+		/// ![](https://www.plantuml.com/plantuml/svg/NP2nJiCm48PtFyNH1L2L5yXGbROB0on8x5VdLsibjiFT9NbzQaE4odRIz-dp-VPgB3R5mMaVqiZ2aGGwvgHuWofVSC2GbnUHl93916V11j0dnqXUm1PoSeyyMMPlOMO3vUGUx8e8YYpgtCXYmOUHaz7cE0Gasn0h-JhUuzAjSBuDhcFZCojeys5P-09wAi9pDVIVSXYox_sLGwhux9txUO6QNSrjjoqToyfriHv6Wgy9QgxGOjNalRJ2PfTloPPE6BC68r-TRYrXHlfJVx_MD2szOrcTrvFR8tNbsjy0)
+		///
+		/// ## Parameters:
+		/// * [`config`](composable_traits::vamm::MovePriceConfig):
+		/// Specification for moving the price of the vamm.
+		///
+		/// ## Returns
+		/// This function returns the calculated invariant `K` if successful.
+		///
+		/// ## Assumptions or Requirements
+		/// In order to move the price of a vamm we need to ensure that some properties hold:
+		/// * The passed [`VammId`](Config::VammId) must be valid
+		/// * The desired vamm must be open. (See the [`closed`](VammState)
+		/// field for more information).
+		/// TODO(Cardosaum): add more requirements?
+		///
+		/// ## Emits
+		/// * [`PriceMoved`](Event::<T>::PriceMoved)
+		///
+		/// ## State Changes
+		/// Updates:
+		/// * [`VammMap`], modifying both base and quote asset reserves as well
+		/// as the invariant.
+		///
+		/// ## Errors
+		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
+		/// TODO(Cardosaum): add more after write function.
+		///
+		/// # Runtime
+		/// `O(1)`
+		#[transactional]
+		fn move_price(config: &Self::MovePriceConfig) -> Result<Self::VammId, DispatchError> {
+			todo!();
+		}
+	}
+
+	// ----------------------------------------------------------------------------------------------------
+	//                              Helper Functions
+	// ----------------------------------------------------------------------------------------------------
+
+	// Helper types - core functionality
+	struct CalculateSwapAsset<T: Config> {
+		output_amount: BalanceOf<T>,
+		input_amount: BalanceOf<T>,
+	}
+
+	// Helper functions - core functionality
+	impl<T: Config> Pallet<T> {
+		fn swap_quote_asset(
+			config: &SwapConfigOf<T>,
+			vamm_state: &mut VammStateOf<T>,
+		) -> Result<BalanceOf<T>, DispatchError> {
+			let quote_asset_reserve_amount = config
+				.input_amount
+				.checked_div(&vamm_state.peg_multiplier)
+				.ok_or(ArithmeticError::DivisionByZero)?;
+
+			let initial_base_asset_reserve = vamm_state.base_asset_reserves;
+			let swap_amount = Self::calculate_swap_asset(
+				&quote_asset_reserve_amount,
+				&vamm_state.quote_asset_reserves,
+				&config.direction,
+				vamm_state,
+			)?;
+
+			vamm_state.base_asset_reserves = swap_amount.output_amount;
+			vamm_state.quote_asset_reserves = swap_amount.input_amount;
+
+			let base_asset_amount = initial_base_asset_reserve
+				.checked_sub(&swap_amount.output_amount)
+				.ok_or(ArithmeticError::Underflow)?;
+
+			Ok(base_asset_amount)
+		}
+
+		fn swap_base_asset(
+			config: &SwapConfigOf<T>,
+			vamm_state: &mut VammStateOf<T>,
+		) -> Result<BalanceOf<T>, DispatchError> {
+			let initial_quote_asset_reserve = vamm_state.quote_asset_reserves;
+			let swap_amount = Self::calculate_swap_asset(
+				&config.input_amount,
+				&vamm_state.base_asset_reserves,
+				&config.direction,
+				vamm_state,
+			)?;
+
+			vamm_state.base_asset_reserves = swap_amount.input_amount;
+			vamm_state.quote_asset_reserves = swap_amount.output_amount;
+
+			Self::calculate_quote_asset_amount_swapped(
+				&initial_quote_asset_reserve,
+				&swap_amount.output_amount,
+				&config.direction,
+				vamm_state,
+			)
+		}
+
+		fn calculate_swap_asset(
+			swap_amount: &BalanceOf<T>,
+			input_asset_amount: &BalanceOf<T>,
+			direction: &Direction,
+			vamm_state: &VammStateOf<T>,
+		) -> Result<CalculateSwapAsset<T>, DispatchError> {
+			let new_input_amount = match direction {
+				Direction::Add => {
+					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?
+				},
+
+				Direction::Remove => {
+					input_asset_amount.checked_sub(swap_amount).ok_or(ArithmeticError::Underflow)?
+				},
+			};
+			let new_input_amount_u256 = Self::balance_to_u256(new_input_amount)?;
+
+			// TODO(Cardosaum): Maybe it would be worth to create another sanity
+			// check in the helper function tracking the inputs and verify if
+			// they would result in a division by zero? (Doing this we could
+			// present a better error message for the caller).
+			let new_output_amount_u256 = vamm_state
+				.invariant
+				.checked_div(new_input_amount_u256)
+				.ok_or(ArithmeticError::DivisionByZero)?;
+			let new_output_amount = Self::u256_to_balance(new_output_amount_u256)?;
+
+			Ok(CalculateSwapAsset {
+				input_amount: new_input_amount,
+				output_amount: new_output_amount,
+			})
+		}
+
+		fn calculate_quote_asset_amount_swapped(
+			quote_asset_reserve_before: &BalanceOf<T>,
+			quote_asset_reserve_after: &BalanceOf<T>,
+			direction: &Direction,
+			vamm_state: &VammStateOf<T>,
+		) -> Result<BalanceOf<T>, DispatchError> {
+			let quote_asset_reserve_change = match direction {
+				Direction::Add => quote_asset_reserve_before
+					.checked_sub(quote_asset_reserve_after)
+					.ok_or(ArithmeticError::Underflow)?,
+				Direction::Remove => quote_asset_reserve_after
+					.checked_sub(quote_asset_reserve_before)
+					.ok_or(ArithmeticError::Underflow)?,
+			};
+
+			let quote_asset_amount = quote_asset_reserve_change
+				.checked_mul(&vamm_state.peg_multiplier)
+				.ok_or(ArithmeticError::Overflow)?;
+
+			Ok(quote_asset_amount)
+		}
+	}
+
+	// Helper functions - validity checks
+	impl<T: Config> Pallet<T> {
+		fn swap_sanity_check(
+			config: &SwapConfigOf<T>,
+			vamm_state: &VammStateOf<T>,
+		) -> Result<(), DispatchError> {
+			// We must ensure that the vamm is not closed before perfoming any swap.
+			{
+				let now = T::TimeProvider::now().as_secs();
+				if let Some(timestamp) = vamm_state.closed {
+					ensure!(now < Into::<u64>::into(timestamp), Error::<T>::VammIsClosed)
+				}
+			}
 
 			match config.direction {
 				// 2) If we intend to remove some asset amount from vamm, we must
@@ -543,11 +726,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {}
 
 	// Helper functions - low-level functionality
-	impl<T: Config> Pallet<T> {
-		fn swap_quote_asset(config: &SwapConfigOf<T>) -> Result<BalanceOf<T>, DispatchError> {
-			todo!()
-		}
-	}
+	impl<T: Config> Pallet<T> {}
 }
 
 // ----------------------------------------------------------------------------------------------------

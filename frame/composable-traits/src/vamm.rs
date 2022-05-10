@@ -27,6 +27,9 @@ pub trait Vamm {
 	/// Configuration for simulation of asset swap in a vamm.
 	type SwapSimulationConfig;
 
+	/// Configuration for moving prices in a vamm.
+	type MovePriceConfig;
+
 	/// The identifier type for each virtual automated market maker.
 	type VammId: Unsigned;
 
@@ -64,7 +67,7 @@ pub struct VammConfig<Balance> {
 	pub peg_multiplier: Balance,
 }
 
-/// Specify a common encapsulation layer for the swap functions.
+/// Specify a common encapsulation layer for the swap function.
 #[derive(Clone, Debug)]
 pub struct SwapConfig<VammId, Balance> {
 	pub vamm_id: VammId,
@@ -74,7 +77,7 @@ pub struct SwapConfig<VammId, Balance> {
 	pub output_amount_limit: Balance,
 }
 
-/// Specify a common encapsulation layer for the swap simulation functions.
+/// Specify a common encapsulation layer for the swap simulation function.
 #[derive(Clone, Debug)]
 pub struct SwapSimulationConfig<VammId, Balance> {
 	pub vamm_id: VammId,
@@ -95,4 +98,12 @@ pub enum AssetType {
 pub enum Direction {
 	Add,
 	Remove,
+}
+
+/// Specify a common encapsulation layer for the move price function.
+#[derive(Copy, Clone, Debug)]
+pub struct MovePriceConfig<VammId, Balance> {
+	pub vamm_id: VammId,
+	pub base_asset_reserve: Balance,
+	pub quote_asset_reserve: Balance,
 }
