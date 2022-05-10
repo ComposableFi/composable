@@ -1,5 +1,6 @@
 #[cfg(test)]
 use crate::{
+	Error,
 	common_test_functions::*,
 	mock,
 	mock::{Pablo, *},
@@ -16,15 +17,12 @@ use composable_traits::{
 	defi::CurrencyPair,
 	dex::{Amm, ConstantProductPoolInfo},
 };
-use frame_support::{
-	assert_ok,
-	traits::{
-		fungibles::{Inspect, Mutate},
-		Hooks,
-	},
-};
+use frame_support::{assert_err, assert_ok, traits::{
+	fungibles::{Inspect, Mutate},
+	Hooks,
+}};
 use proptest::prelude::*;
-use sp_runtime::{traits::IntegerSquareRoot, Permill};
+use sp_runtime::{traits::IntegerSquareRoot, Permill, DispatchError};
 
 fn create_pool(
 	base_asset: AssetId,
@@ -374,6 +372,26 @@ fn fees() {
         }
 		assert_ok!(default_acceptable_computation_error(expected_alice_usdt_bal, alice_usdt_bal));
 
+	});
+}
+
+#[test]
+fn avoid_exchange_without_liquidity() {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let lp_fee = Permill::from_float(0.05);
+		let owner_fee = Permill::from_float(0.01);
+		let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			owner: ALICE,
+			pair: CurrencyPair::new(BTC, USDT),
+			fee: lp_fee,
+			owner_fee
+		};
+		System::set_block_number(1);
+		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
+		let bob_usdt = 45_000_u128 * unit;
+		let quote_usdt = bob_usdt - lp_fee.mul_floor(bob_usdt);
+		assert_err!(<Pablo as Amm>::get_exchange_value(pool_id, USDT, quote_usdt), DispatchError::from(Error::<Test>::NotEnoughLiquidity));
 	});
 }
 

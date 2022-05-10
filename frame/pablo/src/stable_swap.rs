@@ -79,6 +79,7 @@ impl<T: Config> StableSwap<T> {
 		let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
 		let pool_base_aum = T::Assets::balance(pair.base, pool_account);
 		let pool_quote_aum = T::Assets::balance(pair.quote, pool_account);
+		ensure!(!pool_base_aum.is_zero() && !pool_quote_aum.is_zero(), Error::<T>::NotEnoughLiquidity);
 		let amp = T::Convert::convert(pool.amplification_coefficient.into());
 		let d = Self::get_invariant(pool_base_aum, pool_quote_aum, amp)?;
 		let new_quote_amount = pool_quote_aum.safe_add(&amount)?;
