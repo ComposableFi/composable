@@ -1,36 +1,48 @@
-import {u128} from "@polkadot/types-codec";
-import {expect} from "chai";
-import {sendAndWaitForSuccess} from "@composable/utils/polkadotjs";
+import { u128 } from "@polkadot/types-codec";
+import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
+import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
+import { ApiPromise } from "@polkadot/api";
+import { KeyringPair } from "@polkadot/keyring/types";
 
 
-export async function runBeforeTxOracleAddStake(sudoKey, wallet1, wallet2) {
-  const {data: [result1],} = await sendAndWaitForSuccess(
+/**
+ * Provides funds for Oracle tests.
+ * @param api Connect ApiPromise
+ * @param sudoKey KeyringPair with sudo rights
+ * @param wallet1 Wallet to provide funds to
+ * @param wallet2 Wallet to provide funds to
+ */
+export async function runBeforeTxOracleAddStake(
+  api: ApiPromise,
+  sudoKey: KeyringPair,
+  wallet1: KeyringPair,
+  wallet2: KeyringPair
+) {
+  await mintAssetsToWallet(
     api,
+    wallet1,
     sudoKey,
-    api.events.sudo.Sudid.is,
-    api.tx.sudo.sudo(
-      api.tx.assets.mintInto(1, wallet1.publicKey, 555555555555)
-    )
+    [1]
   );
-  expect(result1.isOk).to.be.true;
-  const {data: [result2],} = await sendAndWaitForSuccess(
+  await mintAssetsToWallet(
     api,
+    wallet2,
     sudoKey,
-    api.events.sudo.Sudid.is,
-    api.tx.sudo.sudo(
-      api.tx.assets.mintInto(1, wallet2.publicKey, 555555555555)
-    )
+    [1]
   );
-  expect(result2.isOk).to.be.true;
-  return
 }
 
 /**
  * Tests tx.oracle.submitPrice with provided parameters that should succeed.
+ * @param api Connect ApiPromise
  * @param sender Connected API Promise w/ sudo rights.
  * @param {u128} stake Staking amount.
  */
-export async function txOracleAddStakeSuccessTest(sender, stake:u128) {
+export async function txOracleAddStakeSuccessTest(
+  api: ApiPromise,
+  sender: KeyringPair,
+  stake: u128
+) {
   return await sendAndWaitForSuccess(
     api,
     sender,
