@@ -285,7 +285,7 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Emitted after a successful call to the [`create`](Pallet::create) function.
+		/// Emitted after a successful call to [`create`](Pallet::create) function.
 		Created { vamm_id: VammIdOf<T>, state: VammStateOf<T> },
 		/// Emitted after a successfull call to [`swap`](Pallet::swap) function.
 		Swapped {
@@ -419,6 +419,9 @@ pub mod pallet {
 		/// Updates [`VammMap`] storage map and [`VammCounter`] storage value.
 		///
 		/// ## Errors
+		/// * [`Error::<T>::BaseAssetReserveIsZero`]
+		/// * [`Error::<T>::QuoteAssetReserveIsZero`]
+		/// * [`Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset`]
 		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
 		///
 		/// # Runtime
@@ -565,6 +568,7 @@ pub mod pallet {
 		/// ## Errors
 		/// * [`Error::<T>::VammDoesNotExist`]
 		/// * [`Error::<T>::FailToRetrieveVamm`]
+		/// * [`Error::<T>::VammIsClosed`]
 		/// * [`Error::<T>::InsufficientFundsForTrade`]
 		/// * [`Error::<T>::TradeExtrapolatesMaximumSupportedAmount`]
 		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
