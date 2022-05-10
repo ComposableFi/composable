@@ -354,7 +354,7 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub vamm_count: VammIdOf<T>,
-		pub vamms: Vec<(VammIdOf<T>, VammState<BalanceOf<T>, MomentOf<T>>)>,
+		pub vamms: Vec<(VammIdOf<T>, VammStateOf<T>)>,
 	}
 
 	#[cfg(feature = "std")]
@@ -431,12 +431,11 @@ pub mod pallet {
 			// TODO(Cardosaum)
 			// How to ensure that the caller has the right privileges?
 			// (eg. How to ensure the caller is the Clearing House, and not anyone else?)
-			ensure!(!config.base_asset_reserves.is_zero(), Error::<T>::BaseAssetReserveIsZero);
-			ensure!(!config.quote_asset_reserves.is_zero(), Error::<T>::QuoteAssetReserveIsZero);
+
 			ensure!(!config.peg_multiplier.is_zero(), Error::<T>::PegMultiplierIsZero);
+
 			let invariant =
-				Self::compute_invariant(config.base_asset_reserves, config.quote_asset_reserves)
-					.map_err(|_| Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset)?;
+				Self::compute_invariant(config.base_asset_reserves, config.quote_asset_reserves)?;
 
 			VammCounter::<T>::try_mutate(|next_id| {
 				let id = *next_id;
