@@ -1,9 +1,12 @@
 //! # Virtual Automated Market Maker
 //!
 //! Common traits and data structures for vamm implementation.
-use frame_support::pallet_prelude::DispatchError;
+use frame_support::pallet_prelude::*;
 use sp_arithmetic::traits::Unsigned;
 use sp_runtime::FixedPointNumber;
+
+#[cfg(feature = "std")]
+use serde::{Deserialize, Serialize};
 
 /// Exposes functionality for creation and management of virtual automated market makers.
 ///
@@ -87,14 +90,16 @@ pub struct SwapSimulationConfig<VammId, Balance> {
 }
 
 /// Distinguish between asset types present in the vamm.
-#[derive(Clone, Debug)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum AssetType {
 	Base,
 	Quote,
 }
 
 /// The two possible directions to go when opening/closing a position in the vamm.
-#[derive(Clone, Debug)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum Direction {
 	Add,
 	Remove,
