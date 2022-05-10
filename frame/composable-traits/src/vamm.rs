@@ -70,7 +70,7 @@ pub struct VammConfig<Balance> {
 	pub peg_multiplier: Balance,
 }
 
-/// Specify a common encapsulation layer for the swap functions.
+/// Specify a common encapsulation layer for the swap function.
 #[derive(Clone, Debug)]
 pub struct SwapConfig<VammId, Balance> {
 	pub vamm_id: VammId,
@@ -80,7 +80,7 @@ pub struct SwapConfig<VammId, Balance> {
 	pub output_amount_limit: Balance,
 }
 
-/// Specify a common encapsulation layer for the swap simulation functions.
+/// Specify a common encapsulation layer for the swap simulation function.
 #[derive(Clone, Debug)]
 pub struct SwapSimulationConfig<VammId, Balance> {
 	pub vamm_id: VammId,
