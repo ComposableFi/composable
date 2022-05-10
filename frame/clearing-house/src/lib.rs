@@ -896,8 +896,14 @@ pub mod pallet {
 			market: &Self::Market,
 			position: &Self::Position,
 		) -> Result<Self::Decimal, DispatchError> {
-			let cum_funding_delta = market.cum_funding_rate.try_sub(&position.last_cum_funding)?;
-			Ok(cum_funding_delta.try_mul(&position.base_asset_amount)?)
+			if position.direction().is_some() {
+				let cum_funding_delta =
+					market.cum_funding_rate.try_sub(&position.last_cum_funding)?;
+				let payment = cum_funding_delta.try_mul(&position.base_asset_amount)?;
+				Ok(payment.neg())
+			} else {
+				Ok(Zero::zero())
+			}
 		}
 	}
 
