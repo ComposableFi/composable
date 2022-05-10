@@ -295,6 +295,13 @@ pub mod pallet {
 			input_asset_type: AssetType,
 			direction: Direction,
 		},
+		/// Emitted after a successful call to [`move_price`](Pallet::move_price) function.
+		PriceMoved {
+			vamm_id: VammIdOf<T>,
+			base_asset_reserve: BalanceOf<T>,
+			quote_asset_reserve: BalanceOf<T>,
+			invariant: U256,
+		},
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -658,14 +665,44 @@ pub mod pallet {
 		/// as the invariant.
 		///
 		/// ## Errors
-		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
+		/// * [`Error::<T>::VammDoesNotExist`]
+		/// * [`Error::<T>::FailToRetrieveVamm`]
+		/// * [`Error::<T>::VammIsClosed`]
+		/// * [`Error::<T>::BaseAssetReserveIsZero`]
+		/// * [`Error::<T>::QuoteAssetReserveIsZero`]
+		/// * [`Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset`]
 		/// TODO(Cardosaum): add more after write function.
 		///
 		/// # Runtime
 		/// `O(1)`
 		#[transactional]
-		fn move_price(config: &Self::MovePriceConfig) -> Result<Self::VammId, DispatchError> {
-			todo!();
+		fn move_price(config: &Self::MovePriceConfig) -> Result<U256, DispatchError> {
+			// Get Vamm state.
+			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
+			// TODO(Cardosaum): Try to move from using function
+			// Self::is_vamm_closed to Vamm.is_closed method
+			ensure!(!Self::is_vamm_closed(&vamm_state), Error::<T>::VammIsClosed);
+
+			let invariant =
+				Self::compute_invariant(config.base_asset_reserves, config.quote_asset_reserves)?;
+
+			vamm_state.base_asset_reserves = config.base_asset_reserves;
+			vamm_state.quote_asset_reserves = config.quote_asset_reserves;
+			vamm_state.invariant = invariant;
+
+			// Update runtime storage.
+			VammMap::<T>::insert(&config.vamm_id, vamm_state);
+
+			// Deposit swap event into blockchain.
+			Self::deposit_event(Event::<T>::PriceMoved {
+				vamm_id: config.vamm_id,
+				base_asset_reserve: config.base_asset_reserves,
+				quote_asset_reserve: config.quote_asset_reserves,
+				invariant,
+			});
+
+			// Return new invariant.
+			Ok(invariant)
 		}
 	}
 
@@ -794,12 +831,7 @@ pub mod pallet {
 			vamm_state: &VammStateOf<T>,
 		) -> Result<(), DispatchError> {
 			// We must ensure that the vamm is not closed before perfoming any swap.
-			{
-				let now = T::TimeProvider::now().as_secs();
-				if let Some(timestamp) = vamm_state.closed {
-					ensure!(now < Into::<u64>::into(timestamp), Error::<T>::VammIsClosed)
-				}
-			}
+			ensure!(!Self::is_vamm_closed(&vamm_state), Error::<T>::VammIsClosed);
 
 			match config.direction {
 				// If we intend to remove some asset amount from vamm, we must
@@ -842,6 +874,14 @@ pub mod pallet {
 			Ok(vamm_state)
 		}
 
+		fn is_vamm_closed(vamm_state: &VammStateOf<T>) -> bool {
+			let now = T::TimeProvider::now().as_secs();
+			match vamm_state.closed {
+				Some(timestamp) => now < Into::<u64>::into(timestamp),
+				None => false,
+			}
+		}
+
 		fn balance_to_u128(value: BalanceOf<T>) -> Result<u128, DispatchError> {
 			Ok(TryInto::<u128>::try_into(value).ok().ok_or(ArithmeticError::Overflow)?)
 		}
@@ -862,9 +902,16 @@ pub mod pallet {
 			base: BalanceOf<T>,
 			quote: BalanceOf<T>,
 		) -> Result<U256, DispatchError> {
+			// Neither base nor quote asset are allowed to be zero since it
+			// would mean the invariant would also be zero.
+			ensure!(!base.is_zero(), Error::<T>::BaseAssetReserveIsZero);
+			ensure!(!quote.is_zero(), Error::<T>::QuoteAssetReserveIsZero);
+
 			let base_u256 = Self::balance_to_u256(base)?;
 			let quote_u256 = Self::balance_to_u256(quote)?;
-			Ok(base_u256.checked_mul(quote_u256).ok_or(ArithmeticError::Overflow)?)
+			Ok(base_u256
+				.checked_mul(quote_u256)
+				.ok_or(Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset)?)
 		}
 	}
 }

@@ -3,6 +3,7 @@
 //! Common traits and data structures for vamm implementation.
 use frame_support::pallet_prelude::*;
 use sp_arithmetic::traits::Unsigned;
+use sp_core::U256;
 use sp_runtime::FixedPointNumber;
 
 #[cfg(feature = "std")]
@@ -48,6 +49,10 @@ pub trait Vamm {
 	/// Performs swap simulation.
 	fn swap_simulation(config: &Self::SwapSimulationConfig)
 		-> Result<Self::Balance, DispatchError>;
+
+	/// Sets the amount of base and quote asset reserves, modifying the
+	/// invariant of the desired vamm.
+	fn move_price(config: &Self::MovePriceConfig) -> Result<U256, DispatchError>;
 
 	/// Get the quote asset mark price for the specified vamm.
 	fn get_price(
@@ -109,6 +114,6 @@ pub enum Direction {
 #[derive(Copy, Clone, Debug)]
 pub struct MovePriceConfig<VammId, Balance> {
 	pub vamm_id: VammId,
-	pub base_asset_reserve: Balance,
-	pub quote_asset_reserve: Balance,
+	pub base_asset_reserves: Balance,
+	pub quote_asset_reserves: Balance,
 }
