@@ -74,7 +74,9 @@ RUN rustup component add clippy && \
     rustup component add rustfmt && \
     rustup component add rust-src
 
-RUN cargo install bottom
+# Temporarily disabled while we are not yet prebuilding images
+# RUN cargo install bottom
+
 RUN cargo install mdbook
 RUN cargo install taplo-cli
 
@@ -92,3 +94,7 @@ RUN git clone https://github.com/paritytech/polkadot
 WORKDIR /workspaces/polkadot
 RUN export LIBCLANG_PATH="$(find / -name libclang.so)" && \
     cargo build --release
+
+
+WORKDIR /workspaces/composable/scripts/polkadot-launch
+RUN yarn
