@@ -911,9 +911,9 @@ pub mod pallet {
 			let maybe_ensure_instant = if voting_period < T::FastTrackVotingPeriod::get() {
 				Some(origin)
 			} else if let Err(origin) = T::FastTrackOrigin::try_origin(origin) {
-					Some(origin)
-				} else {
-					None
+				Some(origin)
+			} else {
+				None
 			};
 
 			if let Some(ensure_instant) = maybe_ensure_instant {
@@ -1474,7 +1474,7 @@ impl<T: Config> Pallet<T> {
 							if let Some(approve) = prev_vote.1.as_standard() {
 								status.tally.reduce(approve, *delegations);
 							}
-							let _ = sp_std::mem::replace(&mut prev_vote.1 , vote);
+							let _ = sp_std::mem::replace(&mut prev_vote.1, vote);
 						},
 						Err(i) => {
 							ensure!(
