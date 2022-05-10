@@ -40,6 +40,7 @@ impl<T: frame_system::Config> assets_registry::WeightInfo for WeightInfo<T> {
 		(9_958_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	fn update_asset() -> Weight {
+<<<<<<< HEAD
 		(9_958_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	fn set_min_fee() -> Weight {
@@ -52,6 +53,10 @@ impl<T: frame_system::Config> assets_registry::WeightInfo for WeightInfo<T> {
 		(31_339_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+=======
+		(10_219_000 as Weight)
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+>>>>>>> d7f1648d (rebased main)
 	}
 	// Storage: AssetsRegistry MinFeeAmounts (r:1 w:1)
 	fn set_min_fee() -> Weight {

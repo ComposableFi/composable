@@ -29,29 +29,35 @@ fn single_proposal_should_work_with_delegation() {
 		fast_forward_to(2);
 
 		// Delegate first vote.
-		assert_ok!(Democracy::delegate(Origin::signed(2), 1, Conviction::None, 20));
+		assert_ok!(Democracy::delegate(Origin::signed(2), 1, DEFAULT_ASSET, Conviction::None, 20));
 		let r = 0;
 		assert_ok!(Democracy::vote(Origin::signed(1), r, aye(1)));
 		assert_eq!(tally(r), Tally { ayes: 3, nays: 0, turnout: 30 });
 
 		// Delegate a second vote.
-		assert_ok!(Democracy::delegate(Origin::signed(3), 1, Conviction::None, 30));
+		assert_ok!(Democracy::delegate(Origin::signed(3), 1, DEFAULT_ASSET, Conviction::None, 30));
 		assert_eq!(tally(r), Tally { ayes: 6, nays: 0, turnout: 60 });
 
 		// Reduce first vote.
-		assert_ok!(Democracy::delegate(Origin::signed(2), 1, Conviction::None, 10));
+		assert_ok!(Democracy::delegate(Origin::signed(2), 1, DEFAULT_ASSET, Conviction::None, 10));
 		assert_eq!(tally(r), Tally { ayes: 5, nays: 0, turnout: 50 });
 
 		// Second vote delegates to first; we don't do tiered delegation, so it doesn't get used.
-		assert_ok!(Democracy::delegate(Origin::signed(3), 2, Conviction::None, 30));
+		assert_ok!(Democracy::delegate(Origin::signed(3), 2, DEFAULT_ASSET, Conviction::None, 30));
 		assert_eq!(tally(r), Tally { ayes: 2, nays: 0, turnout: 20 });
 
 		// Main voter cancels their vote
-		assert_ok!(Democracy::remove_vote(Origin::signed(1), r));
+		assert_ok!(Democracy::remove_vote(Origin::signed(1), DEFAULT_ASSET, r));
 		assert_eq!(tally(r), Tally { ayes: 0, nays: 0, turnout: 0 });
 
 		// First delegator delegates half funds with conviction; nothing changes yet.
-		assert_ok!(Democracy::delegate(Origin::signed(2), 1, Conviction::Locked1x, 10));
+		assert_ok!(Democracy::delegate(
+			Origin::signed(2),
+			1,
+			DEFAULT_ASSET,
+			Conviction::Locked1x,
+			10
+		));
 		assert_eq!(tally(r), Tally { ayes: 0, nays: 0, turnout: 0 });
 
 		// Main voter reinstates their vote
@@ -64,7 +70,7 @@ fn single_proposal_should_work_with_delegation() {
 fn self_delegation_not_allowed() {
 	new_test_ext().execute_with(|| {
 		assert_noop!(
-			Democracy::delegate(Origin::signed(1), 1, Conviction::None, 10),
+			Democracy::delegate(Origin::signed(1), 1, DEFAULT_ASSET, Conviction::None, 10),
 			Error::<Test>::Nonsense,
 		);
 	});
@@ -80,13 +86,13 @@ fn cyclic_delegation_should_unwind() {
 		fast_forward_to(2);
 
 		// Check behavior with cycle.
-		assert_ok!(Democracy::delegate(Origin::signed(2), 1, Conviction::None, 20));
-		assert_ok!(Democracy::delegate(Origin::signed(3), 2, Conviction::None, 30));
-		assert_ok!(Democracy::delegate(Origin::signed(1), 3, Conviction::None, 10));
+		assert_ok!(Democracy::delegate(Origin::signed(2), 1, DEFAULT_ASSET, Conviction::None, 20));
+		assert_ok!(Democracy::delegate(Origin::signed(3), 2, DEFAULT_ASSET, Conviction::None, 30));
+		assert_ok!(Democracy::delegate(Origin::signed(1), 3, DEFAULT_ASSET, Conviction::None, 10));
 		let r = 0;
-		assert_ok!(Democracy::undelegate(Origin::signed(3)));
+		assert_ok!(Democracy::undelegate(Origin::signed(3), DEFAULT_ASSET));
 		assert_ok!(Democracy::vote(Origin::signed(3), r, aye(3)));
-		assert_ok!(Democracy::undelegate(Origin::signed(1)));
+		assert_ok!(Democracy::undelegate(Origin::signed(1), DEFAULT_ASSET));
 		assert_ok!(Democracy::vote(Origin::signed(1), r, nay(1)));
 
 		// Delegated vote is counted.
@@ -110,8 +116,8 @@ fn single_proposal_should_work_with_vote_and_delegation() {
 		assert_eq!(tally(r), Tally { ayes: 1, nays: 2, turnout: 30 });
 
 		// Delegate vote.
-		assert_ok!(Democracy::remove_vote(Origin::signed(2), r));
-		assert_ok!(Democracy::delegate(Origin::signed(2), 1, Conviction::None, 20));
+		assert_ok!(Democracy::remove_vote(Origin::signed(2), DEFAULT_ASSET, r));
+		assert_ok!(Democracy::delegate(Origin::signed(2), 1, DEFAULT_ASSET, Conviction::None, 20));
 		// Delegated vote replaces the explicit vote.
 		assert_eq!(tally(r), Tally { ayes: 3, nays: 0, turnout: 30 });
 	});
@@ -125,8 +131,8 @@ fn single_proposal_should_work_with_undelegation() {
 		assert_ok!(propose_set_balance_and_note(1, 2, 1));
 
 		// Delegate and undelegate vote.
-		assert_ok!(Democracy::delegate(Origin::signed(2), 1, Conviction::None, 20));
-		assert_ok!(Democracy::undelegate(Origin::signed(2)));
+		assert_ok!(Democracy::delegate(Origin::signed(2), 1, DEFAULT_ASSET, Conviction::None, 20));
+		assert_ok!(Democracy::undelegate(Origin::signed(2), DEFAULT_ASSET));
 
 		fast_forward_to(2);
 		let r = 0;
@@ -144,9 +150,9 @@ fn single_proposal_should_work_with_delegation_and_vote() {
 		let r = begin_referendum();
 		// Delegate, undelegate and vote.
 		assert_ok!(Democracy::vote(Origin::signed(1), r, aye(1)));
-		assert_ok!(Democracy::delegate(Origin::signed(2), 1, Conviction::None, 20));
+		assert_ok!(Democracy::delegate(Origin::signed(2), 1, DEFAULT_ASSET, Conviction::None, 20));
 		assert_eq!(tally(r), Tally { ayes: 3, nays: 0, turnout: 30 });
-		assert_ok!(Democracy::undelegate(Origin::signed(2)));
+		assert_ok!(Democracy::undelegate(Origin::signed(2), DEFAULT_ASSET));
 		assert_ok!(Democracy::vote(Origin::signed(2), r, aye(2)));
 		// Delegated vote is not counted.
 		assert_eq!(tally(r), Tally { ayes: 3, nays: 0, turnout: 30 });
@@ -171,7 +177,13 @@ fn split_vote_delegation_should_be_ignored() {
 	// If transactor voted, delegated vote is overwritten.
 	new_test_ext().execute_with(|| {
 		let r = begin_referendum();
-		assert_ok!(Democracy::delegate(Origin::signed(2), 1, Conviction::Locked6x, 20));
+		assert_ok!(Democracy::delegate(
+			Origin::signed(2),
+			1,
+			DEFAULT_ASSET,
+			Conviction::Locked6x,
+			20
+		));
 		assert_ok!(Democracy::vote(Origin::signed(1), r, AccountVote::Split { aye: 10, nay: 0 }));
 		// Delegated vote is huge.
 		assert_eq!(tally(r), Tally { ayes: 1, nays: 0, turnout: 10 });
