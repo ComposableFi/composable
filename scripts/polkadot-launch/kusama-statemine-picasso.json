@@ -1,7 +1,7 @@
 {
     "relaychain": {
       "bin": "../../../polkadot/target/release/polkadot",
-      "chain": "rococo-local",
+      "chain": "kusama-local",
       "genesis": {
         "runtime": {
           "runtime_genesis_config": {
@@ -35,52 +35,38 @@
           "basePath": "/tmp/polkadot-launch/relaychains/charlie",
           "port": 30666,
           "flags": ["--beefy"]
-        },
-        {
-          "name": "dave",
-          "wsPort": 9977,
-          "basePath": "/tmp/polkadot-launch/relaychains/dave",
-          "port": 30777,
-          "flags": ["--beefy"]
-        },
-        {
-          "name": "ferdie",
-          "wsPort": 9978,
-          "basePath": "/tmp/polkadot-launch/relaychains/ferdie",
-          "port": 30778,
-          "flags": ["--beefy"]
         }
       ]
     },
     "parachains": [
-      {
-        "bin": "../../target/release/composable",
-        "chain": "dali-dev",
-        "nodes": [
-          {
-            "name": "alice",
-            "wsPort": 9988,
-            "basePath": "/tmp/polkadot-launch/parachains/alice",
-            "port": 31100,
-            "flags": ["--", "--execution=wasm"]
-          },
-          {
-            "name": "bob",
-            "wsPort": 9997,
-            "basePath": "/tmp/polkadot-launch/parachains/bob",
-            "port": 31200,
-            "flags": ["--", "--execution=wasm"]
-          },
-          {
-            "name": "charlie",
-            "wsPort": 9996,
-            "basePath": "/tmp/polkadot-launch/parachains/charlie",
-            "port": 31300,
-            "flags": ["--", "--execution=wasm"]
+        {
+            "bin": "../../target/release/composable",
+            "chain": "picasso-dev",
+            "nodes": [
+              {
+                "name": "alice",
+                "wsPort": 9988,
+                "basePath": "/tmp/polkadot-launch/parachains/alice",
+                "port": 31100,
+                "flags": ["--", "--execution=wasm"]
+              },
+              {
+                "name": "bob",
+                "wsPort": 9997,
+                "basePath": "/tmp/polkadot-launch/parachains/bob",
+                "port": 31200,
+                "flags": ["--", "--execution=wasm"]
+              },
+              {
+                "name": "charlie",
+                "wsPort": 9996,
+                "basePath": "/tmp/polkadot-launch/parachains/charlie",
+                "port": 31300,
+                "flags": ["--", "--execution=wasm"]
+              }
+            ]
           }
-        ]
-      }
-    ],
+     ],
     "types": {},
     "finalization": false,
     "simpleParachains": []
