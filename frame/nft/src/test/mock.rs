@@ -1,6 +1,10 @@
 #![cfg(test)]
 
-use frame_support::{parameter_types, traits::Everything};
+use composable_tests_helpers::test::block::MILLISECS_PER_BLOCK;
+use frame_support::{
+	parameter_types,
+	traits::{ConstU64, Everything},
+};
 use frame_system as system;
 use sp_core::H256;
 use sp_runtime::{
@@ -19,12 +23,20 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 		Nft: crate::{Pallet, Storage , Event<T>},
 	}
 );
 
 impl crate::Config for Test {
 	type Event = Event;
+}
+
+impl pallet_timestamp::Config for Test {
+	type Moment = u64;
+	type OnTimestampSet = ();
+	type MinimumPeriod = ConstU64<{ MILLISECS_PER_BLOCK / 2 }>;
+	type WeightInfo = ();
 }
 
 parameter_types! {

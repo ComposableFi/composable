@@ -35,8 +35,6 @@
 )]
 
 #[cfg(test)]
-mod mock;
-#[cfg(test)]
 mod test;
 
 pub use pallet::*;
@@ -174,18 +172,17 @@ pub mod pallet {
 				Some((owner, _)) => {
 					OwnerInstances::<T>::mutate(owner.clone(), |x| match x {
 						Some(owner_instances) => {
-							owner_instances.remove(&(*class, *instance));
-							// REVIEW: Error if not present?
+							let was_previously_owned = owner_instances.remove(&(*class, *instance));
+							debug_assert!(was_previously_owned);
+							Ok(())
 						},
-						None => {},
-					});
-					OwnerInstances::<T>::mutate(destination.clone(), |x| match x {
-						Some(destination_instances) => {
-							destination_instances.insert((*class, *instance));
-							// REVIEW: Error if not present?
-						},
-						None => x.replace(value),
-					});
+						None => Err(Error::<T>::InstanceNotFound),
+					})?;
+
+					OwnerInstances::<T>::mutate(
+						destination.clone(),
+						insert_or_init_and_insert(*class, *instance),
+					);
 					*owner = destination.clone();
 					Ok(())
 				},
@@ -210,22 +207,7 @@ pub mod pallet {
 					x.replace([*instance].into());
 				},
 			});
-			OwnerInstances::<T>::mutate(who, |x| {
-				// x.get_or_insert_with(|| [(*class, *instance)].into());
-
-				// x.map_or_else(
-				// 	|| [(*class, *instance)].into(),
-				// 	|instances| instances.insert((*class, *instance)),
-				// );
-				match x {
-					Some(instances) => {
-						instances.insert((*class, *instance));
-					},
-					None => {
-						x.replace([(*class, *instance)].into());
-					},
-				}
-			});
+			OwnerInstances::<T>::mutate(who, insert_or_init_and_insert(*class, *instance));
 			Ok(())
 		}
 
@@ -317,25 +299,19 @@ pub mod pallet {
 		}
 	}
 
-	fn insert_or_add<F>(class: &NftClass, instance: &NftInstanceId) -> F
-	where
-		F: for<'a> FnOnce(&'a mut Option<BTreeSet<(NftClass, NftInstanceId)>>) -> (),
-	{
-		|x: &mut Option<BTreeSet<(NftClass, NftInstanceId)>>| {
-			// x.get_or_insert_with(|| [(*class, *instance)].into());
-
-			// x.map_or_else(
-			// 	|| [(*class, *instance)].into(),
-			// 	|instances| instances.insert((*class, *instance)),
-			// );
-			match x {
-				Some(instances) => {
-					instances.insert((*class, *instance));
-				},
-				None => {
-					x.replace([(*class, *instance)].into());
-				},
-			}
+	/// Inserts the given (class, instance) pair into the account's instances, initializing the
+	/// instances set if it doesn't exist.
+	fn insert_or_init_and_insert(
+		class: NftClass,
+		instance: NftInstanceId,
+	) -> impl FnOnce(&'_ mut Option<BTreeSet<(NftClass, NftInstanceId)>>) -> () {
+		move |x: &mut Option<BTreeSet<(NftClass, NftInstanceId)>>| match x {
+			Some(instances) => {
+				instances.insert((class, instance));
+			},
+			None => {
+				x.replace([(class, instance)].into());
+			},
 		}
 	}
 }

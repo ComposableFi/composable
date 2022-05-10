@@ -5,13 +5,17 @@ use frame_system::EventRecord;
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{
-	mock::{Event, System, Test},
 	pallet::{ClassInstances, Config, Event as NftEvent, Instance, OwnerInstances},
+	test::mock::{Event, System, Test},
 	NftInstanceId, Pallet,
 };
 
+/// Contains the mock runtime for this pallet's tests.
+mod mock;
+
 const ALICE: u128 = 0;
-const BOB: u128 = 0;
+const BOB: u128 = 1;
+const CHARLIE: u128 = 2;
 
 pub(crate) fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 	let events = frame_system::Pallet::<T>::events();
@@ -22,14 +26,14 @@ pub(crate) fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) 
 }
 
 /// Asserts the event wasn't dispatched.
-fn assert_no_event(event: crate::mock::Event) {
+fn assert_no_event(event: Event) {
 	assert!(System::events().iter().all(|record| record.event != event));
 }
 
-/// Mints a new NFT into ALICE and checks that it was created properly, returning the id of the
+/// Mints a single NFT into ALICE and checks that it was created properly, returning the id of the
 /// newly created NFT.
 ///
-/// NOTE: Only call once!
+/// NOTE: Only call once per test!
 fn mint_nft_and_assert() -> NftInstanceId {
 	let created_nft_id =
 		Pallet::<Test>::mint_nft(&NftClass::STAKING, &ALICE, &1u32, &1u32).unwrap();
@@ -61,7 +65,7 @@ fn mint_nft_and_assert() -> NftInstanceId {
 }
 
 mod financial_nft_provider {
-	use crate::{mock::new_test_ext, test::mint_nft_and_assert};
+	use crate::test::{mint_nft_and_assert, mock::new_test_ext};
 
 	#[test]
 	fn mint_nft() {
@@ -71,16 +75,21 @@ mod financial_nft_provider {
 
 mod impls {
 	use codec::Encode;
-	use composable_traits::financial_nft::{FinancialNftProvider, NftClass};
-	use frame_support::traits::tokens::nonfungibles::{Create, Inspect, Transfer};
-	use std::collections::{BTreeMap, BTreeSet};
+	use composable_traits::financial_nft::NftClass;
+	use frame_support::traits::tokens::nonfungibles::{Create, Inspect};
 
 	use crate::{
-		mock::{new_test_ext, Test},
 		pallet::*,
-		test::{mint_nft_and_assert, ALICE, BOB},
+		test::{
+			mint_nft_and_assert,
+			mock::{new_test_ext, Test},
+			ALICE,
+		},
 		Pallet,
 	};
+
+	/// [`Transfer`] tests
+	mod transfer;
 
 	#[test]
 	fn inspect() {
@@ -100,7 +109,7 @@ mod impls {
 			assert_eq!(
 				Pallet::<Test>::class_attribute(&NftClass::STAKING, &1u32.encode()),
 				None,
-				"staking class has no attributes"
+				"staking class should have no attributes"
 			);
 		})
 	}
@@ -113,45 +122,6 @@ mod impls {
 			assert_eq!(
 				Class::<Test>::get(&NftClass::new(2)),
 				Some((ALICE, ALICE, Default::default()))
-			);
-		})
-	}
-
-	#[test]
-	fn transfer() {
-		new_test_ext().execute_with(|| {
-			let created_nft_id = mint_nft_and_assert();
-
-			assert_eq!(
-				Pallet::<Test>::owner(&NftClass::STAKING, &created_nft_id),
-				Some(ALICE),
-				"owner before transfer should be ALICE"
-			);
-
-			assert_eq!(Pallet::<Test>::transfer(&NftClass::STAKING, &created_nft_id, &BOB), Ok(()));
-
-			assert_eq!(
-				OwnerInstances::<Test>::get(&BOB).unwrap(),
-				BTreeSet::from([(NftClass::STAKING, created_nft_id)]),
-				"BOB should only have one NFT"
-			);
-
-			assert_eq!(
-				OwnerInstances::<Test>::get(&ALICE).unwrap(),
-				BTreeSet::from([]),
-				"ALICE should not have any NFTs"
-			);
-
-			assert_eq!(
-				Instance::<Test>::get(&(NftClass::STAKING, created_nft_id)),
-				Some((BOB, BTreeMap::from([(1u32.encode(), 1u32.encode())]))),
-				"owner after transfer should be BOB"
-			);
-
-			assert_eq!(
-				Pallet::<Test>::owner(&NftClass::STAKING, &created_nft_id),
-				Some(BOB),
-				"owner after transfer should be BOB"
 			);
 		})
 	}
