@@ -296,17 +296,17 @@ pub mod pallet {
 			let one_read = T::DbWeight::get().reads(1);
 			weight += u64::from(call_counters.now) * <T as Config>::WeightInfo::now();
 			weight += u64::from(call_counters.read_markets) * one_read;
-			weight += u64::from(call_counters.accrue_interest) *
-				<T as Config>::WeightInfo::accrue_interest();
+			weight += u64::from(call_counters.accrue_interest)
+				* <T as Config>::WeightInfo::accrue_interest();
 			weight += u64::from(call_counters.account_id) * <T as Config>::WeightInfo::account_id();
-			weight += u64::from(call_counters.available_funds) *
-				<T as Config>::WeightInfo::available_funds();
-			weight += u64::from(call_counters.handle_withdrawable) *
-				<T as Config>::WeightInfo::handle_withdrawable();
-			weight += u64::from(call_counters.handle_depositable) *
-				<T as Config>::WeightInfo::handle_depositable();
-			weight += u64::from(call_counters.handle_must_liquidate) *
-				<T as Config>::WeightInfo::handle_must_liquidate();
+			weight += u64::from(call_counters.available_funds)
+				* <T as Config>::WeightInfo::available_funds();
+			weight += u64::from(call_counters.handle_withdrawable)
+				* <T as Config>::WeightInfo::handle_withdrawable();
+			weight += u64::from(call_counters.handle_depositable)
+				* <T as Config>::WeightInfo::handle_depositable();
+			weight += u64::from(call_counters.handle_must_liquidate)
+				* <T as Config>::WeightInfo::handle_must_liquidate();
 			weight
 		}
 
@@ -315,7 +315,7 @@ pub mod pallet {
 			let signer = Signer::<T, <T as Config>::AuthorityId>::all_accounts();
 			if !signer.can_sign() {
 				log::warn!("No signer");
-				return
+				return;
 			}
 			for (market_id, account, _) in DebtIndex::<T>::iter() {
 				// TODO: check that it should liquidate before liquidations
@@ -791,16 +791,15 @@ pub mod pallet {
 				account_total_debt_with_interest,
 			)?;
 
-			let borrower =
-				BorrowerData::new(
-					collateral_balance_value,
-					borrow_balance_value,
-					market
-						.collateral_factor
-						.try_into_validated()
-						.map_err(|_| Error::<T>::CollateralFactorMustBeMoreThanOne)?, /* TODO: Use a proper error mesage */
-					market.under_collateralized_warn_percent,
-				);
+			let borrower = BorrowerData::new(
+				collateral_balance_value,
+				borrow_balance_value,
+				market
+					.collateral_factor
+					.try_into_validated()
+					.map_err(|_| Error::<T>::CollateralFactorMustBeMoreThanOne)?, /* TODO: Use a proper error mesage */
+				market.under_collateralized_warn_percent,
+			);
 
 			Ok(borrower)
 		}
@@ -1039,7 +1038,7 @@ pub mod pallet {
 			if let Some(latest_borrow_timestamp) = BorrowTimestamp::<T>::get(market_id, debt_owner)
 			{
 				if latest_borrow_timestamp >= LastBlockTimestamp::<T>::get() {
-					return Err(Error::<T>::InvalidTimestampOnBorrowRequest.into())
+					return Err(Error::<T>::InvalidTimestampOnBorrowRequest.into());
 				}
 			}
 
@@ -1258,8 +1257,8 @@ pub mod pallet {
 			let market_account = Self::account_id(market_id);
 
 			ensure!(
-				<T as Config>::MultiCurrency::can_deposit(market.collateral_asset, account, amount) ==
-					DepositConsequence::Success,
+				<T as Config>::MultiCurrency::can_deposit(market.collateral_asset, account, amount)
+					== DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
 			ensure!(
@@ -1408,8 +1407,9 @@ pub mod pallet {
 			let beneficiary_total_debt_with_interest =
 				match Self::total_debt_with_interest(market_id, beneficiary)? {
 					TotalDebtWithInterest::Amount(amount) => amount,
-					TotalDebtWithInterest::NoDebt =>
-						return Err(Error::<T>::CannotRepayZeroBalance.into()),
+					TotalDebtWithInterest::NoDebt => {
+						return Err(Error::<T>::CannotRepayZeroBalance.into())
+					},
 				};
 
 			let market_account = Self::account_id(market_id);
