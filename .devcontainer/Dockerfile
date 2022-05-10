@@ -51,13 +51,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN ln -s /usr/bin/gcc /usr/bin/"$(uname -m)"-linux-musl-gcc
 
-# ARG LIBCLANG_PATH="$(find / -name libclang.so)"
 ENV LIBCLANG_PATH="/usr/lib/llvm-11/lib/libclang.so"
-# RUN echo $LIBCLANG_PATH
-# ENV LIBCLANG_PATH=$LIBCLANG_PATH
-# RUN echo $LIBCLANG_PATH
-# RUN find / -name libclang.so
-# RUN exit 1
 
 RUN rustup update stable && \
     rustup update nightly-2022-04-18 && \
@@ -73,10 +67,6 @@ RUN wget -qO- "https://github.com/rust-analyzer/rust-analyzer/releases/download/
 RUN rustup component add clippy && \
     rustup component add rustfmt && \
     rustup component add rust-src
-
-# WORKDIR /workspace
-RUN cargo build
-RUN cargo build --release
 
 # Temporarily disabled while we are not yet prebuilding images
 RUN cargo install bottom
