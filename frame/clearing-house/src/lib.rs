@@ -432,7 +432,7 @@ pub mod pallet {
 		///   House
 		///
 		/// ## Assumptions or Requirements
-		/// The collateral type must be supported, i.e., contained in [`CollateralTypes`].
+		/// The collateral type must be supported, i.e., the one contained in [`CollateralType`].
 		///
 		/// ## Emits
 		/// * [`MarginAdded`](Event::<T>::MarginAdded)
@@ -584,6 +584,12 @@ pub mod pallet {
 		/// This should be called periodically for each market so that subsequent calculations of
 		/// unrealized funding for each position are up-to-date.
 		///
+		/// If there's Long-Short imbalance in the market, funding payments may be transferred
+		/// between the market Fee Pool and the Clearing House. This is done symbolically by
+		/// updating the Fee Pool and cumulative funding rate attributes of the market. The latter
+		/// influences the unrealized funding of all traders. Settlement of the unrealized funding
+		/// is done by traders via other extrinsics.
+		///
 		/// ![](https://www.plantuml.com/plantuml/svg/FOqx2iCm40Nxd28vWFtwL8P0xh6MrfPWzM4_vFenAL8DmnIpcPDwDBazQayIcKFbNjodFO6pUebzJQFXDTeSHhlmkoBz1KeViAN2YaEfCP8mQUtdKaOO8rSwbPeXPYRdvOYUhxfEeVxxRjppnIy0)
 		///
 		/// ## Parameters
@@ -591,7 +597,10 @@ pub mod pallet {
 		///
 		/// ## Assumptions or Requirements
 		///
-		/// TODO(0xangelo)
+		/// Each market has a [`funding_frequency`](Market::<T>::funding_frequency) which defines
+		/// the minimum time between calls to this extrinsic. If one attempts to call this before
+		/// `funding_frequency` has elapsed since the last funding update, the transaction will
+		/// fail.
 		///
 		/// ## Emits
 		///
@@ -599,7 +608,10 @@ pub mod pallet {
 		///
 		/// ## State Changes
 		///
-		/// TODO(0xangelo)
+		/// [`Markets`] is updated, specifically the [`Market`] attributes:
+		/// - [`cum_funding_rate`](Market::<T>::cum_funding_rate)
+		/// - [`funding_rate_ts`](Market::<T>::funding_rate_ts)
+		/// - [`fee_pool`](Market::<T>::fee_pool), if there's Long-Short imbalance
 		///
 		/// ## Errors
 		///
@@ -608,7 +620,7 @@ pub mod pallet {
 		///
 		/// ## Weight/Runtime
 		///
-		/// TODO(0xangelo)
+		/// `O(1)`
 		#[pallet::weight(<T as Config>::WeightInfo::update_funding())]
 		pub fn update_funding(origin: OriginFor<T>, market_id: T::MarketId) -> DispatchResult {
 			ensure_signed(origin)?;
