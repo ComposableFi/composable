@@ -18,7 +18,7 @@
 use crate::{
 	gas::GasMeter,
 	storage::{self, Storage, WriteOutcome},
-	wasm::cosmwasm::types::{CosmwasmExecutionResult, CosmwasmQueryResult, QueryResponse, SubMsg},
+	wasm::cosmwasm::types::{CosmwasmExecutionResult, CosmwasmQueryResult, SubMsg},
 	BalanceOf, CodeHash, Config, ContractInfo, ContractInfoOf, Error, Event, Nonce,
 	Pallet as Contracts, Schedule,
 };
@@ -30,7 +30,7 @@ use frame_support::{
 	RuntimeDebug,
 };
 use frame_system::RawOrigin;
-use pallet_contracts_primitives::{ContractResult, ExecReturnValue, ReturnFlags};
+use pallet_contracts_primitives::{ExecReturnValue, ReturnFlags};
 use smallvec::{Array, SmallVec};
 use sp_core::{crypto::UncheckedFrom, ecdsa::Public as ECDSAPublic, Bytes};
 use sp_io::crypto::secp256k1_ecdsa_recover_compressed;
@@ -38,7 +38,7 @@ use sp_runtime::traits::Convert;
 use sp_std::{marker::PhantomData, mem, prelude::*, vec};
 
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
-pub type MomentOf<T> = <<T as Config>::Time as Time>::Moment;
+pub type MomentOf<T> = <T as Config>::Moment;
 pub type SeedOf<T> = <T as frame_system::Config>::Hash;
 pub type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub type StorageKey = [u8; 32];
@@ -89,51 +89,6 @@ impl<T: Into<DispatchError>> From<T> for ExecError {
 /// This trait is sealed and cannot be implemented by downstream crates.
 pub trait Ext: sealing::Sealed {
 	type T: Config;
-
-	/// Call (possibly transferring some amount of funds) into the specified account.
-	///
-	/// Returns the original code size of the called contract.
-	// fn query(
-	// 	&mut self,
-	// 	gas_limit: Weight,
-	// 	to: AccountIdOf<Self::T>,
-	// 	value: BalanceOf<Self::T>,
-	// 	input_data: Vec<u8>,
-	// 	allows_reentry: bool,
-	// ) -> Result<QueryResponse, ExecError>;
-
-	/// Execute code in the current frame.
-	///
-	/// Returns the original code size of the called contract.
-	fn delegate_call(
-		&mut self,
-		code: CodeHash<Self::T>,
-		input_data: Vec<u8>,
-	) -> Result<ExecReturnValue, ExecError>;
-
-	/// Instantiate a contract from the given code.
-	///
-	/// Returns the original code size of the called contract.
-	/// The newly created account will be associated with `code`. `value` specifies the amount of
-	/// value transferred from this to the newly created account.
-	fn instantiate(
-		&mut self,
-		gas_limit: Weight,
-		code: CodeHash<Self::T>,
-		value: BalanceOf<Self::T>,
-		input_data: Vec<u8>,
-		salt: &[u8],
-	) -> Result<(AccountIdOf<Self::T>, ExecReturnValue), ExecError>;
-
-	/// Transfer all funds to `beneficiary` and delete the contract.
-	///
-	/// Since this function removes the self contract eagerly, if succeeded, no further actions
-	/// should be performed on this `Ext` instance.
-	///
-	/// This function will fail if the same contract is present on the contract
-	/// call stack.
-	fn terminate(&mut self, beneficiary: &AccountIdOf<Self::T>) -> Result<(), DispatchError>;
-
 	/// Transfer some amount of funds into the specified account.
 	fn transfer(&mut self, to: &AccountIdOf<Self::T>, value: BalanceOf<Self::T>) -> DispatchResult;
 
@@ -928,6 +883,7 @@ where
 										funds,
 									} => match T::AccountIdToFromString::convert(contract_addr) {
 										Ok(to) => {
+											log::debug!(target: "runtime::contracts", "setup chached info");
 											let cached_info = self
 												.frames()
 												.find(|f| {
@@ -939,7 +895,7 @@ where
 														Some(contract.clone()),
 													_ => None,
 												});
-											self.pop_frame(true);
+											log::debug!(target: "runtime::contracts", "Push new frame");
 											executable = self.push_frame(
 												FrameArgs::Call {
 													dest: to,
@@ -949,6 +905,7 @@ where
 												BalanceOf::<T>::from(0u32),
 												gas_limit.unwrap_or_default(),
 											)?;
+											log::debug!(target: "runtime::contracts", "New input");
 											input_data = msg.0;
 										},
 										Err(_) => {
@@ -1186,119 +1143,6 @@ where
 	E: Executable<T>,
 {
 	type T = T;
-
-	// fn call(
-	// 	&mut self,
-	// 	gas_limit: Weight,
-	// 	to: T::AccountId,
-	// 	value: BalanceOf<T>,
-	// 	input_data: Vec<u8>,
-	// 	allows_reentry: bool,
-	// ) -> Result<QueryResponse, ExecError> {
-	// 	// Before pushing the new frame: Protect the caller contract against reentrancy attacks.
-	// 	// It is important to do this before calling `allows_reentry` so that a direct recursion
-	// 	// is caught by it.
-	// 	self.top_frame_mut().allows_reentry = allows_reentry;
-
-	// 	let try_call = || {
-	// 		if !self.allows_reentry(&to) {
-	// 			return Err(<Error<T>>::ReentranceDenied.into())
-	// 		}
-	// 		// We ignore instantiate frames in our search for a cached contract.
-	// 		// Otherwise it would be possible to recursively call a contract from its own
-	// 		// constructor: We disallow calling not fully constructed contracts.
-	// 		let cached_info = self
-	// 			.frames()
-	// 			.find(|f| f.entry_point == ExportedFunction::Call && f.account_id == to)
-	// 			.and_then(|f| match &f.contract_info {
-	// 				CachedContract::Cached(contract) => Some(contract.clone()),
-	// 				_ => None,
-	// 			});
-	// 		let executable = self.push_frame(
-	// 			FrameArgs::Query { dest: to, cached_info, delegated_call: None },
-	// 			value,
-	// 			gas_limit,
-	// 		)?;
-	// 		self.run(executable, input_data)
-	// 	};
-
-	// 	// We need to make sure to reset `allows_reentry` even on failure.
-	// 	let result = try_call();
-
-	// 	// Protection is on a per call basis.
-	// 	self.top_frame_mut().allows_reentry = true;
-
-	// 	result
-	// }
-
-	fn delegate_call(
-		&mut self,
-		code_hash: CodeHash<Self::T>,
-		input_data: Vec<u8>,
-	) -> Result<ExecReturnValue, ExecError> {
-		let executable = E::from_storage(code_hash, &self.schedule, self.gas_meter())?;
-		let top_frame = self.top_frame_mut();
-		let contract_info = top_frame.contract_info().clone();
-		let account_id = top_frame.account_id.clone();
-		let value = top_frame.value_transferred.clone();
-		let executable = self.push_frame(
-			FrameArgs::Call {
-				dest: account_id,
-				cached_info: Some(contract_info),
-				delegated_call: Some(DelegatedCall { executable, caller: self.caller().clone() }),
-			},
-			value,
-			0,
-		)?;
-		self.run(executable, input_data)
-	}
-
-	fn instantiate(
-		&mut self,
-		gas_limit: Weight,
-		code_hash: CodeHash<T>,
-		value: BalanceOf<T>,
-		input_data: Vec<u8>,
-		salt: &[u8],
-	) -> Result<(AccountIdOf<T>, ExecReturnValue), ExecError> {
-		let executable = E::from_storage(code_hash, &self.schedule, self.gas_meter())?;
-		let nonce = self.next_nonce();
-		let executable = self.push_frame(
-			FrameArgs::Instantiate {
-				sender: self.top_frame().account_id.clone(),
-				nonce,
-				executable,
-				salt,
-			},
-			value,
-			gas_limit,
-		)?;
-		let account_id = self.top_frame().account_id.clone();
-		self.run(executable, input_data).map(|ret| (account_id, ret))
-	}
-
-	fn terminate(&mut self, beneficiary: &AccountIdOf<Self::T>) -> Result<(), DispatchError> {
-		if self.is_recursive() {
-			return Err(Error::<T>::TerminatedWhileReentrant.into())
-		}
-		let frame = self.top_frame_mut();
-		let info = frame.terminate();
-		frame.nested_storage.terminate(&info);
-		Storage::<T>::queue_trie_for_deletion(&info)?;
-		<Stack<'a, T, E>>::transfer(
-			ExistenceRequirement::AllowDeath,
-			&frame.account_id,
-			beneficiary,
-			T::Currency::free_balance(&frame.account_id),
-		)?;
-		ContractInfoOf::<T>::remove(&frame.account_id);
-		E::remove_user(info.code_hash);
-		Contracts::<T>::deposit_event(Event::Terminated {
-			contract: frame.account_id.clone(),
-			beneficiary: beneficiary.clone(),
-		});
-		Ok(())
-	}
 
 	fn transfer(&mut self, to: &T::AccountId, value: BalanceOf<T>) -> DispatchResult {
 		Self::transfer(ExistenceRequirement::KeepAlive, &self.top_frame().account_id, to, value)

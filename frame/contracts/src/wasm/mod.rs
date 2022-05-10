@@ -28,8 +28,9 @@ mod runtime;
 #[cfg(feature = "runtime-benchmarks")]
 pub use crate::wasm::code_cache::reinstrument;
 pub use crate::wasm::runtime::{CallFlags, ReturnCode, Runtime, RuntimeCosts};
+use alloc::string::String;
 use crate::{
-	exec::{Executable, ExecuteFunction, ExportedFunction, Ext},
+	exec::{Executable, ExecuteFunction, Ext},
 	gas::GasMeter,
 	wasm::{
 		cosmwasm::types::{
@@ -42,16 +43,12 @@ use crate::{
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::dispatch::{DispatchError, DispatchResult};
-use sp_core::{crypto::UncheckedFrom, Bytes};
+use sp_core::crypto::UncheckedFrom;
 use sp_runtime::traits::Convert;
-use sp_sandbox::{
-	default_executor::{EnvironmentDefinitionBuilder, Memory},
-	ReturnValue, SandboxEnvironmentBuilder, SandboxInstance, SandboxMemory, Value,
-};
+use sp_sandbox::SandboxEnvironmentBuilder;
 use sp_std::{prelude::*, vec};
 #[cfg(test)]
 pub use tests::MockExt;
-use wasmi::{ExternVal, NotStartedModuleRef, RuntimeValue};
 
 /// A prepared wasm module ready for execution.
 ///
@@ -224,79 +221,40 @@ where
 			imports.add_host_func(module, name, func_ptr);
 		});
 
-		// Instantiate the instance from the instrumented module code and invoke the contract
-		// entrypoint.
-		let mut runtime = Runtime::new(ext, &code, &imports, input_data.clone())?;
+    let now = *ext.now();
 
-		pub fn to_string<T>(data: &T) -> Result<alloc::string::String, DispatchError>
-		where
-			T: serde::ser::Serialize + ?Sized,
-		{
-			serde_json::to_string(data).map_err(|_| DispatchError::Other("couldn't serialize"))
-		}
+		let env = Env {
+			block: BlockInfo {
+				height: 0,
+				time: Timestamp(now.into()),
+				chain_id: String::from("picasso-testnet")
+			},
+			transaction: Some(TransactionInfo { index: 0 }),
+			contract: ContractInfo {
+				address: Addr::unchecked(T::AccountIdToFromString::convert(
+					ext.address().clone(),
+				)),
+			},
+		};
+
+		let info = MessageInfo {
+			sender: Addr::unchecked(T::AccountIdToFromString::convert(
+				ext.caller().clone(),
+			)),
+			funds: vec![],
+		};
+
+		let mut runtime = Runtime::new(ext, &code, &imports)?;
 
 		log::debug!(target: "runtime::contracts", "Executing function {:?}", function);
 
 		match function {
 			ExecuteFunction::Instantiate => {
-				// TODO(hussein-aitlahcen): example of env setup + instantiation
-				// this should probably be setup by the caller as well.
-
-				let env = Env {
-					block: BlockInfo {
-						height: 0,
-						time: Timestamp(
-							to_string(&0u128)
-								.map_err(|_| DispatchError::Other("marshall failed"))?,
-						),
-						chain_id: Default::default(),
-					},
-					transaction: Some(TransactionInfo { index: 0 }),
-					contract: ContractInfo {
-						address: Addr::unchecked(T::AccountIdToFromString::convert(
-							runtime.ext().address().clone(),
-						)),
-					},
-				};
-
-				let info = MessageInfo {
-					sender: Addr::unchecked(T::AccountIdToFromString::convert(
-						runtime.ext().caller().clone(),
-					)),
-					funds: vec![],
-				};
-
 				let InstantiateResult(response) = runtime.do_instantiate(env, info, &input_data)?;
-
 				Ok(response)
 			},
 			ExecuteFunction::Call => {
-				let env = Env {
-					block: BlockInfo {
-						height: 0,
-						time: Timestamp(
-							to_string(&0u64)
-								.map_err(|_| DispatchError::Other("marshall failed"))?,
-						),
-						chain_id: Default::default(),
-					},
-					transaction: Some(TransactionInfo { index: 0 }),
-					contract: ContractInfo {
-						address: Addr::unchecked(T::AccountIdToFromString::convert(
-							runtime.ext().address().clone(),
-						)),
-					},
-				};
-
-				let info = MessageInfo {
-					sender: Addr::unchecked(T::AccountIdToFromString::convert(
-						runtime.ext().caller().clone(),
-					)),
-					funds: vec![],
-				};
-
 				let ExecuteResult(response) = runtime.do_execute(env, info, &input_data)?;
-
 				Ok(response)
 			},
 		}
@@ -314,30 +272,23 @@ where
 			imports.add_host_func(module, name, func_ptr);
 		});
 
-		// Instantiate the instance from the instrumented module code and invoke the contract
-		// entrypoint.
-		let mut runtime = Runtime::new(ext, &code, &imports, input_data.clone())?;
-
-		pub fn to_string<T>(data: &T) -> Result<alloc::string::String, DispatchError>
-		where
-			T: serde::ser::Serialize + ?Sized,
-		{
-			serde_json::to_string(data).map_err(|_| DispatchError::Other("couldn't serialize"))
-		}
-
-		log::debug!(target: "runtime::contracts", "Querying contract");
+    let now = *ext.now();
 
 		let env = Env {
 			block: BlockInfo {
 				height: 0,
-				time: Timestamp(
-					to_string(&0u64).map_err(|_| DispatchError::Other("marshall failed"))?,
-				),
-				chain_id: Default::default(),
+				time: Timestamp(now.into()),
+				chain_id: String::from("picasso-testnet")
 			},
 			transaction: Some(TransactionInfo { index: 0 }),
-			contract: ContractInfo { address: Addr::unchecked("321") },
+			contract: ContractInfo {
+				address: Addr::unchecked(T::AccountIdToFromString::convert(
+					ext.address().clone(),
+				)),
+			},
 		};
+
+		let mut runtime = Runtime::new(ext, &code, &imports)?;
 
 		let QueryResult(response) = runtime.do_query(env, &input_data)?;
 

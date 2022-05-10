@@ -1077,6 +1077,7 @@ impl Convert<AccountId, String> for AccountIdToFromString {
 }
 
 impl contracts::Config for Runtime {
+  type Moment = Moment;
 	type Time = Timestamp;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
