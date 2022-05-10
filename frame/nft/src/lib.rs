@@ -173,11 +173,18 @@ pub mod pallet {
 			Instance::<T>::try_mutate((class, instance), |entry| match entry {
 				Some((owner, _)) => {
 					OwnerInstances::<T>::mutate(owner.clone(), |x| match x {
-						Some(instances) => {
-							instances.remove(&(*class, *instance));
+						Some(owner_instances) => {
+							owner_instances.remove(&(*class, *instance));
 							// REVIEW: Error if not present?
 						},
 						None => {},
+					});
+					OwnerInstances::<T>::mutate(destination.clone(), |x| match x {
+						Some(destination_instances) => {
+							destination_instances.insert((*class, *instance));
+							// REVIEW: Error if not present?
+						},
+						None => x.replace(value),
 					});
 					*owner = destination.clone();
 					Ok(())
@@ -307,6 +314,28 @@ pub mod pallet {
 			Self::mint_into(class, &instance, who)?;
 			Self::set_typed_attribute(class, &instance, key, value)?;
 			Ok(instance)
+		}
+	}
+
+	fn insert_or_add<F>(class: &NftClass, instance: &NftInstanceId) -> F
+	where
+		F: for<'a> FnOnce(&'a mut Option<BTreeSet<(NftClass, NftInstanceId)>>) -> (),
+	{
+		|x: &mut Option<BTreeSet<(NftClass, NftInstanceId)>>| {
+			// x.get_or_insert_with(|| [(*class, *instance)].into());
+
+			// x.map_or_else(
+			// 	|| [(*class, *instance)].into(),
+			// 	|instances| instances.insert((*class, *instance)),
+			// );
+			match x {
+				Some(instances) => {
+					instances.insert((*class, *instance));
+				},
+				None => {
+					x.replace([(*class, *instance)].into());
+				},
+			}
 		}
 	}
 }
