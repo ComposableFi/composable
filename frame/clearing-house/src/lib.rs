@@ -1100,6 +1100,10 @@ pub mod pallet {
 
 					// Add PnL
 					equity.try_add_mut(&value.try_sub(&position.quote_asset_notional_amount)?)?;
+					// Add unrealized funding
+					equity.try_add_mut(&<Self as Instruments>::unrealized_funding(
+						&market, position,
+					)?)?;
 				}
 			}
 

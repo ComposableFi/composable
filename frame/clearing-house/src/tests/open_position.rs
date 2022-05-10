@@ -664,6 +664,55 @@ proptest! {
 	}
 
 	#[test]
+	fn margin_ration_takes_unrealized_funding_into_account(direction in any_direction()) {
+		let mut config = valid_market_config();
+		config.funding_frequency = ONE_HOUR;
+		config.funding_period = ONE_HOUR;
+		config.margin_ratio_initial = 1.into(); // 1x leverage
+		config.taker_fee = 0;
+		let margin = as_balance(100);
+
+		cross_margin_context(vec![config.clone(), config], margin, |market_ids| {
+			let price_cents = 100;  // price = 1.0
+			VammPallet::set_price(Some((price_cents, 100).into()));
+			let quote_amount = margin / 2;
+			assert_ok!(
+				<TestPallet as ClearingHouse>::open_position(
+					&ALICE,
+					&market_ids[0],
+					direction,
+					quote_amount,
+					quote_amount,
+				),
+				quote_amount
+			);
+
+			// Update funding rate for 1st market
+			run_for_seconds(ONE_HOUR);
+			OraclePallet::set_twap(Some(price_cents));
+			VammPallet::set_twap(Some((
+				match direction { Direction::Long => price_cents + 1, _ => price_cents - 1 },
+				100
+			).into())); // funding rate = 1%
+			assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_ids[0]));
+
+			// Should fail since 1st market position is more than 0.5x leveraged due to unrealized
+			// funding
+			assert_noop!(
+				<TestPallet as ClearingHouse>::open_position(
+					&ALICE,
+					&market_ids[1],
+					direction,
+					quote_amount,
+					quote_amount,
+				),
+				Error::<Runtime>::InsufficientCollateral,
+			);
+
+		});
+	}
+
+	#[test]
 	fn imr_is_combination_of_market_imrs_with_open_positions(direction in any_direction()) {
 		let mut configs = Vec::<_>::new();
 		let mut market_config = valid_market_config();
