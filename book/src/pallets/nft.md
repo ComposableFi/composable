@@ -1,7 +1,7 @@
 # NFT
 ## Overview
 Pallet-NFT provides basic non-fungible token functionality.
-In the following we will do a quick recap of what makes NFTs special followed by how that is reflected in Frame-NFT's code.
+In the following we will do a quick recap of what makes NFTs special followed by how that is reflected in Pallet-NFTs code.
 And finally, we will discuss two use cases.
 
 
@@ -35,7 +35,7 @@ Essentially the owners' public key acts as a proof of authenticity and their pri
 ## Traits
 The implementations to handle NFT traits used in Pallet-NFT are provided by composable_traits and composable_support.
 Composable_traits provides us with the traits for FinancialNFTProvider and NFTClass.
-Frame_support adds traits to Create, Inspect, Mutate and Transfer NFTs.
+Frame_support adds traits to `Create`, `Inspect`, `Mutate` and `Transfer` NFTs.
 
 
 
@@ -63,14 +63,14 @@ They proceed to give each artwork their respective traits, for this example let'
 Now we are only a few steps away from our first NFT-based art sale.
 
 Taking advantage of the framework's complete set of tools, an artist could:
-* Host a private Gallery of minted artwork
+* Host a private gallery of minted artwork
 * Make their artwork searchable via recurring traits (style, color palette, materials, history)
 * Transfer ownership of an art piece to a buyer
 
 ---
 
 ### Ticket booth
-Moving on to the ticket booth
+Moving on to the ticket booth.
 An organizer could mint a number of NFTs representing access to an event.
 By defining traits like seat numbers or levels of access, we could streamline the planning process of an event.
 With each ticket having a unique digital signature and tracking its own history on the blockchain, we can make sure:
