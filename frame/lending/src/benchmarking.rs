@@ -14,7 +14,7 @@ use composable_traits::{
 	oracle::Price,
 	vault::StrategicVault,
 };
-use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
+use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::traits::{fungible, fungibles::Mutate, Get};
 use frame_system::{EventRecord, RawOrigin};
 use sp_runtime::{FixedPointNumber, Percent, Perquintill};
@@ -183,7 +183,6 @@ benchmarks! {
 		} = lending_benchmarking_setup::<T>();
 
 		let amount: BalanceOf<T> = 1_000_000_000_u64.into();
-		let part: BalanceOf<T> = 1_000_u64.into();
 
 		<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&caller, 10_000_000_000_000_u64.into()).unwrap();
 

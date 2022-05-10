@@ -158,7 +158,7 @@ parameter_types! {
 	pub const MinimumDeposit: Balance = 0;
 	pub const MinimumWithdrawal: Balance = 0;
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
-  pub const TombstoneDuration: u64 = 42;
+	pub const TombstoneDuration: u64 = 42;
 }
 
 impl pallet_vault::Config for Runtime {

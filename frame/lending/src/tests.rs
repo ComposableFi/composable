@@ -681,6 +681,20 @@ fn test_liquidate_multiple() {
 		};
 
 		Lending::should_liquidate(&market, &*ALICE).unwrap();
+
+		let mut borrowers = vec![];
+		let mut bytes = [0; 32];
+		for i in 0..=<Runtime as crate::Config>::MaxLiquidationBatchSize::get() {
+			let raw_account_id = U256::from(i);
+			raw_account_id.to_little_endian(&mut bytes);
+			let account_id = AccountId::from_raw(bytes);
+			mint_and_deposit_collateral::<Runtime>(&account_id, BTC::units(100), market, BTC::ID);
+			borrowers.push(account_id);
+		}
+		assert_noop!(
+			Lending::liquidate(Origin::signed(*ALICE), market, borrowers),
+			Error::<Runtime>::MaxLiquidationBatchSizeExceed,
+		);
 	})
 }
 
