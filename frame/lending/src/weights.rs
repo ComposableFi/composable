@@ -51,7 +51,7 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(13 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(6 as Weight))
 	}
-	fn liquidate(b: u32, ) -> Weight {
+	fn liquidate(b: u32) -> Weight {
 		(25_879_000 as Weight)
 			.saturating_add((7_877_000 as Weight).saturating_mul(b as Weight))
 			.saturating_add(RocksDbWeight::get().reads(7 as Weight))

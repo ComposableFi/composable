@@ -762,7 +762,10 @@ pub mod pallet {
 			borrowers: Vec<T::AccountId>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin.clone())?;
-			ensure!(borrowers.len() <= T::MaxLiquidationBatchSize::get() as usize, Error::<T>::MaxLiquidationBatchSizeExceed);
+			ensure!(
+				borrowers.len() <= T::MaxLiquidationBatchSize::get() as usize,
+				Error::<T>::MaxLiquidationBatchSizeExceed
+			);
 			Self::liquidate_internal(&sender, &market_id, borrowers.clone())?;
 			Self::deposit_event(Event::LiquidationInitiated { market_id, borrowers });
 			Ok(().into())
