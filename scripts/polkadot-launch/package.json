@@ -8,8 +8,9 @@
     "polkadot": "rm -rf /tmp/polkadot-launch && polkadot-launch polkadot.json",
     "kusama": "rm -rf /tmp/polkadot-launch && polkadot-launch kusama.json",
     "polkadot-composable": "rm -rf /tmp/polkadot-launch && polkadot-launch polkadot-composable.json",
+    "kusama-statemine": "rm -rf /tmp/polkadot-launch && polkadot-launch kusama-statemine.json",
     "kusama-statemine-picasso": "rm -rf /tmp/polkadot-launch && polkadot-launch kusama-statemine-picasso.json",
-    "composable_and_basilisk": "polkadot-launch composable_and_basilisk.json"
+    "rococo-composable-basilisk": "polkadot-launch rococo-composable-basilisk.json"
   },
   "keywords": [],
   "author": "",

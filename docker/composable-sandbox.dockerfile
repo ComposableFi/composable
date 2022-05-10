@@ -1,3 +1,4 @@
+# TODO: as of now it is broken, change it to work later, may be fix by having 3 separated docker in kind
 FROM composablefi/ci-linux:2022-04-18 as builder
 
 COPY . /build

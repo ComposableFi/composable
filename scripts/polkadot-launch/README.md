@@ -1,72 +1,49 @@
-# Run Composable's parachain only
+## Check
 
-Need to do to run 4 relay chain nodes and 1 Composable's collator:
-
-1. build a Composable's collator
-
-	```bash
-	old_pwd=$(pwd)
-	cd ../..
-	cargo build --release
-	target/release/composable --version
-	cd "$old_pwd"
-    ```
-
-2. `01-relay.sh`
-
-
-3. build this project
-
-	```bash
-	yarn
-	```
-
-4. run all
-
-	```bash
-	yarn composable
-	```
-
-URLs:
+After Steps do check any URLs:
 * `https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9945#/explorer` is the 1st Relay Chain node
 * `https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9988#/explorer` is the 1st Composable's collator
 
-# Run Composable's and Basilisk's parachains
 
-Need to do to run 4 relay chain nodes, 2 Composable's collators and 2 Basilisk's collators:
+# Run Composable's parachain only
 
-1. build a Composable's collator
 
-	```bash
-	(
-		cd ../..
-		cargo build --release
-		target/release/composable --version
-	)
-	```
+Do: 
 
-2.  `01-relay.sh`
+`relay.sh`
 
-3. download a Basilisk's collator
+`composable.sh`
 
-	```bash
-	mkdir -p ../../../Basilisk-node/target/release
-	curl https://github.com/galacticcouncil/Basilisk-node/releases/download/v7.0.0/basilisk -Lo ../../../Basilisk-node/target/release/basilisk
-	chmod +x ../../../Basilisk-node/target/release/basilisk
-	../../../Basilisk-node/target/release/basilisk --version
-	```
 
-4. build this project
+Build this project:
 
-	```bash
-	yarn
-	```
+```bash
+yarn
+```
 
-5. run all
+Run:
 
-	```bash
-	yarn composable_and_basilisk
-	```
+```bash
+yarn polkadot-composable
+```
+## Run Composable's and Basilisk's parachains
+
+Do:
+
+`relay.sh`
+
+`composable.sh`
+
+`basilisk.sh`
+
+```bash
+yarn
+```
+
+Run all
+```bash
+yarn rococo-composable-basilisk
+```
 
 
 ## Run  Kusama relay + Dali parachain + Hydra paracahin in Docker via Polka launcher
