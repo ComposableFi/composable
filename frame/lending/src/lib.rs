@@ -423,7 +423,7 @@ pub mod pallet {
 
 		BorrowRentDoesNotExist,
 
-		MaxLiquidationBatchSizeExceed,
+		MaxLiquidationBatchSizeExceeded,
 	}
 
 	#[pallet::event]
@@ -764,7 +764,7 @@ pub mod pallet {
 			let sender = ensure_signed(origin.clone())?;
 			ensure!(
 				borrowers.len() <= T::MaxLiquidationBatchSize::get() as usize,
-				Error::<T>::MaxLiquidationBatchSizeExceed
+				Error::<T>::MaxLiquidationBatchSizeExceeded
 			);
 			Self::liquidate_internal(&sender, &market_id, borrowers.clone())?;
 			Self::deposit_event(Event::LiquidationInitiated { market_id, borrowers });

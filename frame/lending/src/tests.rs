@@ -693,7 +693,7 @@ fn test_liquidate_multiple() {
 		}
 		assert_noop!(
 			Lending::liquidate(Origin::signed(*ALICE), market, borrowers),
-			Error::<Runtime>::MaxLiquidationBatchSizeExceed,
+			Error::<Runtime>::MaxLiquidationBatchSizeExceeded,
 		);
 	})
 }
