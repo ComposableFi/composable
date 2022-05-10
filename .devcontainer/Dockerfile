@@ -95,9 +95,9 @@ WORKDIR /polkadot-clone/polkadot
 RUN export LIBCLANG_PATH="$(find / -name libclang.so)" && \
     cargo build --release
 
-WORKDIR /workspaces/composable
-RUN cargo build
-RUN cargo build --release
+# WORKDIR /workspaces/composable
+# RUN cargo build
+# RUN cargo build --release
 
 # WORKDIR /workspaces/composable/scripts/polkadot-launch
 # RUN yarn
