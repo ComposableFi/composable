@@ -4,7 +4,7 @@ A pallet containing the most essential functionalities to create, and manage ass
 ## Overview
 The NFT framework pallet provides developers with fundamental tools including:
 * Minting an asset into a wallet
-* Edit, Customize and store an asset's unique attributes
+* Edit, customize and store an asset's unique attributes
 * Transfer of ownership from one user to another
 * Burn asset from a wallet
 * Inspect the attributes and owner of an asset
