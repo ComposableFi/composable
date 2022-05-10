@@ -20,10 +20,6 @@
 use super::*;
 use frame_support::traits::{fungible::Mutate as FungibleMutet, fungibles::Mutate};
 
-<<<<<<< HEAD
-proptest! {
-	#![proptest_config(ProptestConfig::with_cases(1000))]
-=======
 #[test]
 fn cancel_referendum_should_work() {
 	new_test_ext().execute_with(|| {
@@ -36,7 +32,6 @@ fn cancel_referendum_should_work() {
 		assert_ok!(Democracy::vote(Origin::signed(1), r, aye(1)));
 		assert_ok!(Democracy::cancel_referendum(Origin::root(), r.into()));
 		assert_eq!(Democracy::lowest_unbaked(), 0);
->>>>>>> ceebdcd7 (rebased main)
 
 	#[test]
 	fn cancel_referendum_should_work(
