@@ -584,6 +584,8 @@ Temporary Items
 # Custom additions
 src/**/**.js
 src/**/**.d.ts
+src/**/**.js.map
 test/**/**.js
 test/**/**.d.ts
+test/**/**.js.map
 mochawesome-report/*

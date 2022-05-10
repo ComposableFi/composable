@@ -1,8 +1,8 @@
 name: Release Pipeline
 on:
   push:
-    branches:
-      - releases
+    tags:
+      - release-*
 
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}

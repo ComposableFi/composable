@@ -10,7 +10,7 @@ simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/pol
 substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", branch = "seun-polkadot-v0.9.18" }
 
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false , branch = "polkadot-v0.9.18" }
+parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.18" }
 system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 
 

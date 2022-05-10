@@ -1,17 +1,18 @@
-use crate::mock::*;
+use crate::runtime::*;
 use composable_traits::{
 	defi::Ratio,
-	xcm::assets::{ForeignMetadata, RemoteAssetRegistryInspect, XcmAssetLocation},
+	xcm::assets::{
+		AssetRatioInspect, ForeignMetadata, RemoteAssetRegistryInspect, XcmAssetLocation,
+	},
 };
-use frame_support::{assert_err, assert_noop, assert_ok};
+use frame_support::assert_ok;
 use frame_system::RawOrigin;
-use sp_runtime::{traits::BadOrigin, DispatchError, Storage};
 
 #[test]
 fn negative_get_metadata() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(<AssetsRegistry as RemoteAssetRegistryInspect>::asset_to_remote(42), None,);
-		assert_eq!(<AssetsRegistry as RemoteAssetRegistryInspect>::get_ratio(42), None,);
+		assert_eq!(<AssetsRegistry as AssetRatioInspect>::get_ratio(42), None,);
 	});
 }
 
@@ -42,7 +43,7 @@ fn set_metadata() {
 		);
 
 		assert_eq!(
-			<AssetsRegistry as RemoteAssetRegistryInspect>::get_ratio(asset_id),
+			<AssetsRegistry as AssetRatioInspect>::get_ratio(asset_id),
 			Some(Ratio::from_inner(123)),
 		);
 

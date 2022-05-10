@@ -1,5 +1,5 @@
 //! Setup of Picasso running as if it is on Kusama relay
-use common::AccountId;
+use common::{xcmp::STATEMINE_PARA_ID, AccountId, Balance};
 use cumulus_primitives_core::ParaId;
 
 #[cfg(feature = "dali")]
@@ -12,20 +12,32 @@ use picasso_runtime as sibling_runtime;
 #[cfg(feature = "picasso")]
 use picasso_runtime as other_runtime;
 
+use frame_support::traits::GenesisBuild;
 use polkadot_primitives::v1::{BlockNumber, MAX_CODE_SIZE, MAX_POV_SIZE};
 use polkadot_runtime_parachains::configuration::HostConfiguration;
 use primitives::currency::CurrencyId;
 use sp_runtime::traits::AccountIdConversion;
-use support::traits::GenesisBuild;
-use xcm_emulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain};
-
-type Balances = u128;
+use xcm_emulator::{decl_test_network, decl_test_parachain, decl_test_relay_chain, XCM_VERSION};
 
 pub const ALICE: [u8; 32] = [4_u8; 32];
 pub const BOB: [u8; 32] = [5_u8; 32];
 pub const CHARLIE: [u8; 32] = [6_u8; 32];
 
-pub const PICA: Balances = 1_000_000_000_000;
+pub const PICA: Balance = 1_000_000_000_000;
+
+// keep in sync with parachains, as macro does not allows for names
+pub const THIS_PARA_ID: u32 = 2000;
+pub const SIBLING_PARA_ID: u32 = 3000;
+
+decl_test_parachain! {
+	pub struct Statemine {
+		Runtime = statemine_runtime::Runtime,
+		Origin = statemine_runtime::Origin,
+		XcmpMessageHandler = statemine_runtime::XcmpQueue,
+		DmpMessageHandler = statemine_runtime::DmpQueue,
+		new_ext = para_ext(STATEMINE_PARA_ID),
+	}
+}
 
 decl_test_parachain! {
 	pub struct This {
@@ -57,14 +69,11 @@ decl_test_relay_chain! {
 	}
 }
 
-// keep in sync with parachains, as macro does not allows for names
-pub const THIS_PARA_ID: u32 = 2000;
-pub const SIBLING_PARA_ID: u32 = 3000;
-
 decl_test_network! {
 	pub struct KusamaNetwork {
 		relay_chain = KusamaRelay,
 		parachains = vec![
+			(1000, Statemine),
 			(2000, This),
 			(3000, Sibling),
 		],
@@ -132,7 +141,7 @@ pub fn kusama_ext() -> sp_io::TestExternalities {
 	.unwrap();
 
 	<pallet_xcm::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
-		&pallet_xcm::GenesisConfig { safe_xcm_version: Some(2) },
+		&pallet_xcm::GenesisConfig { safe_xcm_version: Some(XCM_VERSION) },
 		&mut storage,
 	)
 	.unwrap();
@@ -172,6 +181,38 @@ pub fn picasso_ext(parachain_id: u32) -> sp_io::TestExternalities {
 
 	<liquidations::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
 		&liquidations::GenesisConfig {},
+		&mut storage,
+	)
+	.unwrap();
+	<pallet_xcm::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
+		&pallet_xcm::GenesisConfig { safe_xcm_version: Some(XCM_VERSION) },
+		&mut storage,
+	)
+	.unwrap();
+
+	let mut externalities = sp_io::TestExternalities::new(storage);
+	externalities.execute_with(|| System::set_block_number(1));
+	externalities
+}
+
+pub fn para_ext(parachain_id: u32) -> sp_io::TestExternalities {
+	let parachain_id = parachain_id.into();
+	use statemine_runtime::{Runtime, System};
+	let mut storage = frame_system::GenesisConfig::default().build_storage::<Runtime>().unwrap();
+	balances::GenesisConfig::<Runtime> {
+		balances: vec![(AccountId::from(ALICE), ALICE_PARACHAIN_BALANCE)],
+	}
+	.assimilate_storage(&mut storage)
+	.unwrap();
+
+	<parachain_info::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
+		&parachain_info::GenesisConfig { parachain_id },
+		&mut storage,
+	)
+	.unwrap();
+
+	<pallet_xcm::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
+		&pallet_xcm::GenesisConfig { safe_xcm_version: Some(XCM_VERSION) },
 		&mut storage,
 	)
 	.unwrap();

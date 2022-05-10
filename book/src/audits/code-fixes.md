@@ -81,6 +81,4 @@ With the efforts of our engineers and Parity developers, we brainstormed further
 
 In our case, no funds were lost, and no harm was done. However, we have diverted resources to setting up more infrastructure for our own integration tests (running ephemeral testnet for every single commit), which should prevent these types of bugs from occurring again.
 
-![If we unite, nobody falls. Featuring $PICA blocks, Parity devs, Picasso devs](./if-we-unite-nobody-falls.jpeg)
-
 Once again, we would like to reiterate that we have resolved the issue, and this has not caused any delay in the launch of Picasso. We thank the Parity team and our engineers, two of whom were on holiday when all this occurred, but were quick to cut their holidays short to get Picasso up and running again.
