@@ -1,4 +1,5 @@
 import {Store} from "@subsquid/substrate-processor";
+import {PabloPool} from "./model";
 
 export async function get<T extends { id: string }>(
     store: Store,
@@ -7,6 +8,16 @@ export async function get<T extends { id: string }>(
 ): Promise<T | undefined> {
     return await store.get<T>(EntityConstructor, {
         where: {id},
+    });
+}
+
+export async function getLatestPoolByPoolId<T extends { id: string }>(
+    store: Store,
+    poolId: bigint
+): Promise<PabloPool | undefined> {
+    return await store.get<PabloPool>(PabloPool, {
+        where: {poolId},
+        order: {calculatedTimestamp: 'DESC'},
     });
 }
 

@@ -40,13 +40,13 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 ] }
 
 [dev-dependencies]
+composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
+frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 parking_lot = "0.12.0"
+proptest = "1.0.0"
 serde = { version = '1.0.136' }
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-proptest = "1.0.0"
-composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
 
 [features]
 default = ["std"]

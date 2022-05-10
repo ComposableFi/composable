@@ -15,6 +15,9 @@ export interface CommonMosaicRemoteAssetId extends Null {}
 /** @name ComposableSupportEthereumAddress */
 export interface ComposableSupportEthereumAddress extends Null {}
 
+/** @name ComposableTraitsAssetsBasicAssetMetadata */
+export interface ComposableTraitsAssetsBasicAssetMetadata extends Null {}
+
 /** @name ComposableTraitsAssetsXcmAssetLocation */
 export interface ComposableTraitsAssetsXcmAssetLocation extends Null {}
 
@@ -67,6 +70,9 @@ export interface ComposableTraitsDexConstantProductPoolInfo extends Struct {
   readonly ownerFee: Permill;
 }
 
+/** @name ComposableTraitsDexDexRoute */
+export interface ComposableTraitsDexDexRoute extends Null {}
+
 /** @name ComposableTraitsDexStableSwapPoolInfo */
 export interface ComposableTraitsDexStableSwapPoolInfo extends Null {}
 
@@ -78,6 +84,9 @@ export interface ComposableTraitsLendingCreateInput extends Null {}
 
 /** @name ComposableTraitsLendingMarketConfig */
 export interface ComposableTraitsLendingMarketConfig extends Null {}
+
+/** @name ComposableTraitsLendingRepayStrategy */
+export interface ComposableTraitsLendingRepayStrategy extends Null {}
 
 /** @name ComposableTraitsLendingUpdateInput */
 export interface ComposableTraitsLendingUpdateInput extends Null {}
@@ -93,6 +102,12 @@ export interface ComposableTraitsVaultVaultConfig extends Null {}
 
 /** @name ComposableTraitsVestingVestingSchedule */
 export interface ComposableTraitsVestingVestingSchedule extends Null {}
+
+/** @name ComposableTraitsXcmAssetsForeignMetadata */
+export interface ComposableTraitsXcmAssetsForeignMetadata extends Null {}
+
+/** @name ComposableTraitsXcmAssetsXcmAssetLocation */
+export interface ComposableTraitsXcmAssetsXcmAssetLocation extends Null {}
 
 /** @name CumulusPalletDmpQueueConfigData */
 export interface CumulusPalletDmpQueueConfigData extends Null {}
@@ -303,6 +318,9 @@ export interface PolkadotPrimitivesV1PersistedValidationData extends PersistedVa
 
 /** @name SpConsensusAuraSr25519AppSr25519Public */
 export interface SpConsensusAuraSr25519AppSr25519Public extends Null {}
+
+/** @name SpTrieStorageProof */
+export interface SpTrieStorageProof extends Null {}
 
 /** @name XcmVersionedMultiAsset */
 export interface XcmVersionedMultiAsset extends Null {}

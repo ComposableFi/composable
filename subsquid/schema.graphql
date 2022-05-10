@@ -37,8 +37,10 @@ type PabloTransaction @entity {
 }
 
 type PabloPool @entity {
+  "ID of the last event that was used to derive this entity data"
+  eventId: ID!
   "Pool ID"
-  poolId: ID!
+  poolId: BigInt!
   owner: String!
   transactionCount: Int!
   totalLiquidity: String!

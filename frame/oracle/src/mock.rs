@@ -1,7 +1,10 @@
 use crate as pallet_oracle;
 use crate::*;
 use frame_support::{
-	ord_parameter_types, pallet_prelude::ConstU32, parameter_types, traits::Everything,
+	ord_parameter_types,
+	pallet_prelude::ConstU32,
+	parameter_types,
+	traits::{EnsureOneOf, Everything},
 };
 use frame_system as system;
 use frame_system::EnsureSignedBy;
@@ -12,6 +15,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
 	RuntimeAppPublic,
 };
+use system::EnsureRoot;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -137,7 +141,8 @@ impl pallet_oracle::Config for Test {
 	type StakeLock = StakeLock;
 	type StalePrice = StalePrice;
 	type MinStake = MinStake;
-	type AddOracle = EnsureSignedBy<RootAccount, sp_core::sr25519::Public>;
+	type AddOracle =
+		EnsureOneOf<EnsureSignedBy<RootAccount, sp_core::sr25519::Public>, EnsureRoot<AccountId>>;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
 	type MaxHistory = MaxHistory;

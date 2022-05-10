@@ -2,30 +2,9 @@
   "enabledTests": {
     "query": {
       "enabled": true,
-      "addAssetAndInfo_success": {
-        "enabled": true,
-        "add1": true
-      },
-      "setSigner_success": {
-        "enabled": true,
-        "set1": true
-      },
-      "addStake_success": {
-        "enabled": true,
-        "add1": true
-      },
-      "submitPrice_success": {
-        "enabled": true,
-        "submit1": true
-      },
-      "removeStake_success": {
-        "enabled": true,
-        "remove1": true
-      },
-      "reclaimStake_success": {
-        "enabled": true,
-        "reclaim1": true
-      }
+      "claimedRewards_success": true,
+      "totalContributors_success": true,
+      "totalRewards_success": true
     },
     "tx": {
       "enabled": true,

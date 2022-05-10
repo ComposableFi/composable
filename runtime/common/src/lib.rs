@@ -1,6 +1,6 @@
 #![cfg_attr(
 	not(test),
-	warn(
+	deny(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
@@ -9,17 +9,20 @@
 		clippy::panic
 	)
 )]
-#![warn(clippy::unseparated_literal_suffix)]
+#![deny(clippy::unseparated_literal_suffix, unused_imports, non_snake_case, dead_code)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod impls;
 pub mod xcmp;
-use composable_traits::oracle::MinimalOracle;
+use core::marker::PhantomData;
+
+use composable_support::math::safe::SafeDiv;
+use composable_traits::{defi::Ratio, oracle::MinimalOracle, xcm::assets::AssetRatioInspect};
 pub use constants::*;
 use frame_support::parameter_types;
-use orml_traits::parameter_type_with_key;
+use num_traits::CheckedMul;
 use primitives::currency::CurrencyId;
-use sp_runtime::DispatchError;
+use sp_runtime::{DispatchError, FixedPointNumber};
 pub use types::*;
 
 /// Common types of statemint and statemine and dali and picasso and composable.
@@ -138,13 +141,20 @@ mod constants {
 	>;
 }
 
-pub struct PriceConverter;
+#[derive(Default)]
+pub struct PriceConverter<AssetsRegistry>(PhantomData<AssetsRegistry>);
 
-impl MinimalOracle for PriceConverter {
+pub mod xcmp_errors {
+	pub const ASSET_IS_NOT_PRICEABLE: &str = "Asset is not priceable";
+	pub const AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE: &str =
+		"Amount of asset is more than max possible";
+}
+
+impl<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>> MinimalOracle
+	for PriceConverter<AssetsRegistry>
+{
 	type AssetId = CurrencyId;
-
 	type Balance = Balance;
-
 	fn get_price_inverse(
 		asset_id: Self::AssetId,
 		amount: Self::Balance,
@@ -153,7 +163,24 @@ impl MinimalOracle for PriceConverter {
 			CurrencyId::PICA => Ok(amount),
 			CurrencyId::KSM => Ok(amount / 10),
 			CurrencyId::kUSD => Ok(amount / 10),
-			_ => Err(DispatchError::Other("cannot pay with given weight")),
+			_ =>
+				if let Some(ratio) = AssetsRegistry::get_ratio(asset_id) {
+					if let Some(amount) = Ratio::checked_from_integer(amount) {
+						if let Some(payment) = ratio.checked_mul(&amount) {
+							payment.into_inner().safe_div(&Ratio::accuracy()).map_err(Into::into)
+						} else {
+							Err(DispatchError::Other(
+								xcmp_errors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
+							))
+						}
+					} else {
+						Err(DispatchError::Other(
+							xcmp_errors::AMOUNT_OF_ASSET_IS_MORE_THAN_MAX_POSSIBLE,
+						))
+					}
+				} else {
+					Err(DispatchError::Other(xcmp_errors::ASSET_IS_NOT_PRICEABLE))
+				},
 		}
 	}
 }
@@ -169,10 +196,10 @@ parameter_types! {
 }
 
 #[cfg(feature = "runtime-benchmarks")]
-pub fn multi_existential_deposits(_currency_id: &CurrencyId) -> Balance {
+pub fn multi_existential_deposits<AssetsRegistry>(_currency_id: &CurrencyId) -> Balance {
 	// ISSUE:
-	// Running benchmarks with non zero multideopist leads to fail in 3rd party pallet.
-	// It is not cleary why it happens.pub const BaseXcmWeight: Weight = 100_000_000;
+	// Running benchmarks with non zero multideposit leads to fail in 3rd party pallet.
+	// It is not clearly why it happens.pub const BaseXcmWeight: Weight = 100_000_000;
 	// 2022-03-14 20:50:19 Running Benchmark: collective.set_members 2/1 1/1
 	// Error:
 	//   0: Invalid input: Account cannot exist with the funds that would be given
@@ -181,20 +208,18 @@ pub fn multi_existential_deposits(_currency_id: &CurrencyId) -> Balance {
 }
 
 #[cfg(not(feature = "runtime-benchmarks"))]
-pub fn multi_existential_deposits(currency_id: &CurrencyId) -> Balance {
-	PriceConverter::get_price_inverse(*currency_id, NativeExistentialDeposit::get())
-		// TODO:
-		// 1. ask approved DEX pair for price  (is it enought performacne? or should we allow pay in
-		// ED PICA for other asset account?)
-		// 2. ask CurrencyFactory
-		// 3. use harcoded values
-		// 4. else 1_000_000_u128
-		.unwrap_or(1_000_000_u128)
-}
-
-parameter_type_with_key! {
-	// Minimum amount an account has to hold to stay in state
-	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
-		multi_existential_deposits(currency_id)
-	};
+pub fn multi_existential_deposits<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>(
+	currency_id: &CurrencyId,
+) -> Balance {
+	PriceConverter::<AssetsRegistry>::get_price_inverse(
+		*currency_id,
+		NativeExistentialDeposit::get(),
+	)
+	// TODO:
+	// 1. ask approved DEX pair for price  (is it enough performance? or should we allow pay in
+	// ED PICA for other asset account?)
+	// 2. ask CurrencyFactory
+	// 3. use hardcoded values
+	// 4. else 1_000_000_u128
+	.unwrap_or(1_000_000_u128)
 }

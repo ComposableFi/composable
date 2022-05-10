@@ -6,10 +6,10 @@ use crate::{
 	prelude::*,
 };
 use composable_traits::defi::Sell;
+use frame_support::{assert_ok, log};
 use frame_system::EventRecord;
 use orml_traits::currency::MultiCurrency;
 use primitives::currency::CurrencyId;
-use support::{assert_ok, log};
 use xcm_emulator::TestExt;
 
 #[macro_export]
@@ -31,7 +31,8 @@ macro_rules! match_this_event {
 fn dex() {
 	simtest();
 	let any_asset = CurrencyId::kUSD;
-	let sibling_non_native_amount = assert_above_deposit(any_asset, 100_000_000_000);
+	let sibling_non_native_amount =
+		assert_above_deposit::<this_runtime::AssetsRegistry>(any_asset, 100_000_000_000);
 	let some_native_amount = 1_000_000_000;
 	let this_liveness_native_amount = enough_weight();
 	let this_native_asset = CurrencyId::PICA;
@@ -64,22 +65,21 @@ fn dex() {
 			sibling_non_native_amount
 		));
 		log::error!("{:?}", &sibling_account());
-		let _ =
-			<balances::Pallet<this_runtime::Runtime> as support::traits::Currency<AccountId>>::deposit_creating(
-				&sibling_account(),
-				this_liveness_native_amount * 1_000_000_000_000,
-			);
+		let _ = <balances::Pallet<this_runtime::Runtime> as frame_support::traits::Currency<
+			AccountId,
+		>>::deposit_creating(
+			&sibling_account(), this_liveness_native_amount * 1_000_000_000_000
+		);
 		let _ = <assets::Pallet<this_runtime::Runtime> as MultiCurrency<AccountId>>::deposit(
 			CurrencyId::kUSD,
 			&sibling_account(),
 			this_liveness_native_amount,
 		);
 		let _ =
-			<balances::Pallet<this_runtime::Runtime> as support::traits::Currency<AccountId>>::deposit_creating(
-				&this_runtime::TreasuryAccount::get(),
-				this_liveness_native_amount,
-			);
-		<balances::Pallet<this_runtime::Runtime> as support::traits::Currency<AccountId>>::free_balance(
+			<balances::Pallet<this_runtime::Runtime> as frame_support::traits::Currency<
+				AccountId,
+			>>::deposit_creating(&this_runtime::TreasuryAccount::get(), this_liveness_native_amount);
+		<balances::Pallet<this_runtime::Runtime> as frame_support::traits::Currency<AccountId>>::free_balance(
 			&this_runtime::TreasuryAccount::get(),
 		)
 	});
