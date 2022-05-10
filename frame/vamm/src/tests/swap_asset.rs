@@ -354,7 +354,7 @@ fn swap_remove_quote() {
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(1))]
 	#[test]
-	fn multiple_swaps_dont_diverge_from_original_invariant_both_base_and_quote(
+	fn multiple_swaps_dont_diverge_from_original_invariant(
 		mut vamm_state in any_vamm_state(),
 		swap_config in multiple_swaps()
 	) {

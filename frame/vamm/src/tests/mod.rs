@@ -161,8 +161,9 @@ prop_compose! {
 }
 
 prop_compose! {
+	// TODO(Cardosaum): create as_balance and as_inner functions
 	fn any_sane_asset_amount()(
-		x in 1_000_000_000..=1_000_000_000_000_000_u128
+		x in 1_000_000_000_000_000_000..=1_000_000_000_000_000_000_000_000_000_000_u128
 	) -> u128 {
 		x
 	}
@@ -275,7 +276,7 @@ fn multiple_swap_configs(max_swaps: usize) -> Vec<BoxedStrategy<SwapConfig<VammI
 
 prop_compose! {
 	fn multiple_swaps()(
-		swaps_count in 100_000..1_000_000_usize
+		swaps_count in 100..1000_usize
 	) (
 		swaps in multiple_swap_configs(swaps_count)
 	) -> Vec<SwapConfig<VammId, Balance>> {
