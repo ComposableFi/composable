@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "polkadot": "rm -rf /tmp/polkadot-launch && polkadot-launch polkadot.json",
+    "kusama": "rm -rf /tmp/polkadot-launch && polkadot-launch kusama.json",
     "polkadot-composable": "rm -rf /tmp/polkadot-launch && polkadot-launch polkadot-composable.json",
     "kusama-statemine-picasso": "rm -rf /tmp/polkadot-launch && polkadot-launch kusama-statemine-picasso.json",
     "composable_and_basilisk": "polkadot-launch composable_and_basilisk.json"

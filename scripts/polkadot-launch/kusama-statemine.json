@@ -28,13 +28,6 @@
           "basePath": "/tmp/polkadot-launch/relaychains/bob",
           "port": 30555,
           "flags": ["--beefy"]
-        },
-        {
-          "name": "charlie",
-          "wsPort": 9966,
-          "basePath": "/tmp/polkadot-launch/relaychains/charlie",
-          "port": 30666,
-          "flags": ["--beefy"]
         }
       ]
     },

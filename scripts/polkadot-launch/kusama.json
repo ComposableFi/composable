@@ -1,7 +1,7 @@
 {
   "relaychain": {
     "bin": "../../../polkadot/target/release/polkadot",
-    "chain": "rococo-local",
+    "chain": "kusama-local",
     "genesis": {
       "runtime": {
         "runtime_genesis_config": {
@@ -30,19 +30,10 @@
         "basePath": "/tmp/polkadot-launch/relaychains/bob",
         "port": 30555,
         "flags": ["--beefy"]
-      },
-      {
-        "name": "charlie",
-        "wsPort": 9966,
-        "rpcPort": 9967,
-        "basePath": "/tmp/polkadot-launch/relaychains/charlie",
-        "port": 30666,
-        "flags": ["--beefy"]
       }
     ]
   },
   "parachains": [
-    
   ],
   "types": {},
   "finalization": false,
