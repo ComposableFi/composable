@@ -244,7 +244,7 @@ pub enum PreimageStatus<AccountId, Balance, BlockNumber> {
 }
 
 impl<AccountId, Balance, BlockNumber> PreimageStatus<AccountId, Balance, BlockNumber> {
-	fn to_missing_expiry(self) -> Option<BlockNumber> {
+	fn to_missing_expiry(&self) -> Option<&BlockNumber> {
 		match self {
 			PreimageStatus::Missing(expiry) => Some(expiry),
 			_ => None,
@@ -2055,7 +2055,7 @@ impl<T: Config> Pallet<T> {
 			provider: who.clone(),
 			deposit: Zero::zero(),
 			since: now,
-			expiry: Some(expiry),
+			expiry: Some(*expiry),
 		};
 		<Preimages<T>>::insert(proposal_hash, a);
 
