@@ -83,11 +83,8 @@ RUN wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | 
 
 # # Add polkadot
 # Not straight to the workspace dir because that seems to be causing issues.
-WORKDIR /polkadot-clone
-RUN git clone https://github.com/paritytech/polkadot
-WORKDIR /polkadot-clone/polkadot
-RUN export LIBCLANG_PATH="$(find / -name libclang.so)" && \
-    cargo build --release
+WORKDIR /polkadot-binary
+RUN wget "https://github.com/paritytech/polkadot/releases/download/v0.9.18/polkadot"
 
 # WORKDIR /workspaces/composable/scripts/polkadot-launch
 # RUN yarn
