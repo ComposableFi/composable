@@ -315,6 +315,8 @@ pub mod pallet {
 		BaseAssetReserveIsZero,
 		/// Tried to set [`quote_asset_reserves`](VammState) to zero.
 		QuoteAssetReserveIsZero,
+		/// Computed Invariant is zero.
+		InvariantIsZero,
 		/// Tried to set [`peg_multiplier`](VammState) to zero.
 		PegMultiplierIsZero,
 		/// Tried to access an invalid [`VammId`](Config::VammId).
@@ -421,6 +423,7 @@ pub mod pallet {
 		/// ## Errors
 		/// * [`Error::<T>::BaseAssetReserveIsZero`]
 		/// * [`Error::<T>::QuoteAssetReserveIsZero`]
+		/// * [`Error::<T>::InvariantIsZero`]
 		/// * [`Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset`]
 		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
 		///
@@ -673,6 +676,7 @@ pub mod pallet {
 		/// * [`Error::<T>::VammIsClosed`]
 		/// * [`Error::<T>::BaseAssetReserveIsZero`]
 		/// * [`Error::<T>::QuoteAssetReserveIsZero`]
+		/// * [`Error::<T>::InvariantIsZero`]
 		/// * [`Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset`]
 		/// TODO(Cardosaum): add more after write function.
 		///
@@ -912,9 +916,13 @@ pub mod pallet {
 
 			let base_u256 = Self::balance_to_u256(base)?;
 			let quote_u256 = Self::balance_to_u256(quote)?;
-			Ok(base_u256
+			let invariant = base_u256
 				.checked_mul(quote_u256)
-				.ok_or(Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset)?)
+				.ok_or(Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset)?;
+
+			ensure!(!invariant.is_zero(), Error::<T>::InvariantIsZero);
+
+			Ok(invariant)
 		}
 	}
 }
