@@ -304,8 +304,8 @@ pub mod pallet {
 		}
 	}
 
-	/// Returns a closure that inserts the given (class, instance) pair into the account's
-	/// instances, initializing the instances set if it doesn't exist.
+	/// Returns a closure that inserts the given value into the contained set, initializing the set
+	/// if the `Option` is `None`.
 	fn insert_or_init_and_insert<T: Ord>(t: T) -> impl FnOnce(&'_ mut Option<BTreeSet<T>>) -> () {
 		move |x: &mut Option<BTreeSet<T>>| match x {
 			Some(instances) => {
