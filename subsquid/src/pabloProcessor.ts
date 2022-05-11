@@ -21,6 +21,7 @@ function createTransaction(
     baseAssetAmount: bigint,
     quoteAssetId: bigint,
     quoteAssetAmount: bigint,
+    fee?: string,
 ) {
     let tx = new PabloTransaction();
     tx.id = ctx.event.id;
@@ -35,6 +36,7 @@ function createTransaction(
     tx.baseAssetAmount = baseAssetAmount;
     tx.quoteAssetId = quoteAssetId;
     tx.quoteAssetAmount = quoteAssetAmount;
+    tx.fee = fee || '0.0';
     return tx;
 }
 
@@ -86,6 +88,7 @@ export async function processPoolCreatedEvent(ctx: EventHandlerContext, event: P
         pool.transactionCount = 1;
         pool.totalLiquidity = '0.0';
         pool.totalVolume = '0.0';
+        pool.totalFees = '0.0';
         pool.calculatedTimestamp = timestamp;
         pool.blockNumber = BigInt(ctx.block.height);
 
@@ -337,7 +340,7 @@ export async function processSwappedEvent(ctx: EventHandlerContext, event: Pablo
         }
         let spotPrice = isReverse
             ? Big(swappedEvt.baseAmount.toString()).div(Big(swappedEvt.quoteAmount.toString()))
-            : Big(swappedEvt.quoteAmount.toString()).div(Big(swappedEvt.baseAmount.toString()))
+            : Big(swappedEvt.quoteAmount.toString()).div(Big(swappedEvt.baseAmount.toString()));
         if (isReverse) {
             console.debug('Reverse swap');
             // volume
@@ -345,10 +348,6 @@ export async function processSwappedEvent(ctx: EventHandlerContext, event: Pablo
             baseAsset.totalVolume += swappedEvt.quoteAmount;
             quoteAsset.totalVolume += swappedEvt.baseAmount;
 
-            // liquidity
-            pool.totalLiquidity = Big(pool.totalLiquidity)
-                .sub(calculateFeeInQuoteAsset(spotPrice, quoteAsset.assetId, swappedEvt.feeAsset, swappedEvt.fee))
-                .toString();
             // for reverse exchange "default quote" (included as the base amount in the evt) amount leaves the pool
             baseAsset.totalLiquidity += swappedEvt.quoteAmount;
             quoteAsset.totalLiquidity -= swappedEvt.baseAmount;
@@ -360,15 +359,19 @@ export async function processSwappedEvent(ctx: EventHandlerContext, event: Pablo
             baseAsset.totalVolume += swappedEvt.baseAmount;
             quoteAsset.totalVolume += swappedEvt.quoteAmount;
 
-            // liquidity
-            pool.totalLiquidity = Big(pool.totalLiquidity)
-                .sub(calculateFeeInQuoteAsset(spotPrice, quoteAsset.assetId, swappedEvt.feeAsset, swappedEvt.fee))
-                .toString();
             // for normal exchange "default quote" amount gets into the pool
             baseAsset.totalLiquidity -= swappedEvt.baseAmount;
             baseAsset.totalLiquidity -= swappedEvt.fee;
             quoteAsset.totalLiquidity += swappedEvt.quoteAmount;
         }
+        // fee and liquidity
+        const fee = calculateFeeInQuoteAsset(spotPrice, quoteAsset.assetId, swappedEvt.feeAsset, swappedEvt.fee);
+        pool.totalLiquidity = Big(pool.totalLiquidity)
+            .sub(fee)
+            .toString();
+        pool.totalFees = Big(pool.totalFees)
+            .add(fee)
+            .toString();
         baseAsset.id = createPoolAssetId(ctx.event.id, pool.poolId, baseAsset.assetId);
         baseAsset.pool = pool;
         baseAsset.calculatedTimestamp = timestamp;
@@ -388,7 +391,8 @@ export async function processSwappedEvent(ctx: EventHandlerContext, event: Pablo
             swappedEvt.baseAsset,
             swappedEvt.baseAmount,
             swappedEvt.quoteAsset,
-            swappedEvt.quoteAmount
+            swappedEvt.quoteAmount,
+            fee.toString()
         );
 
         await ctx.store.save(pool);
