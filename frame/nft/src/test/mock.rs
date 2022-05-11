@@ -1,6 +1,6 @@
 #![cfg(test)]
 
-use composable_tests_helpers::test::block::MILLISECS_PER_BLOCK;
+use composable_tests_helpers::test::block::{process_and_progress_blocks, MILLISECS_PER_BLOCK};
 use frame_support::{
 	parameter_types,
 	traits::{ConstU64, Everything},
@@ -73,5 +73,9 @@ impl system::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
+	let t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut ext = sp_io::TestExternalities::new(t);
+	// start at block 1 else events don't work
+	ext.execute_with(|| process_and_progress_blocks::<Nft, Test>(1));
+	ext
 }

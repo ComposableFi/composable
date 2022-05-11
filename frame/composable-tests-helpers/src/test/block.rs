@@ -8,7 +8,7 @@ use sp_runtime::traits::One;
 
 pub const MILLISECS_PER_BLOCK: u64 = 6000;
 
-/// Processes the specified amount alls [`next_block()`] and then calls
+/// Processes the specified amount of blocks, calls [`next_block()`] and then calls
 /// [`Pallet::on_finalize`](Hooks::on_finalize).
 pub fn process_and_progress_blocks<Pallet, Runtime>(blocks_to_process: usize)
 where
@@ -43,8 +43,8 @@ where
 		.safe_add(&<<Runtime as FrameSystemConfig>::BlockNumber as One>::one())
 		.expect("hit the numeric limit for block number");
 
-	// println!("PROCESSING BLOCK {}", next_block); // uncomment if you want to obliterate your
-	// terminal
+	// uncomment if you want to obliterate your terminal
+	// println!("PROCESSING BLOCK {}", next_block);
 
 	frame_system::Pallet::<Runtime>::set_block_number(next_block);
 	pallet_timestamp::Pallet::<Runtime>::set_timestamp(MILLISECS_PER_BLOCK * next_block);

@@ -4,7 +4,9 @@ use std::{
 };
 
 use codec::Encode;
-use composable_tests_helpers::test::block::process_and_progress_blocks;
+use composable_tests_helpers::test::{
+	block::process_and_progress_blocks, helper::assert_last_event,
+};
 use composable_traits::financial_nft::{FinancialNftProvider, NftClass};
 use frame_support::{
 	assert_ok,
@@ -12,8 +14,11 @@ use frame_support::{
 };
 
 use crate::{
-	test::mock::{new_test_ext, Test},
-	test::{mint_nft_and_assert, ALICE, BOB, CHARLIE},
+	test::{
+		mint_nft_and_assert,
+		mock::{new_test_ext, Event, Test},
+		ALICE, BOB, CHARLIE,
+	},
 	AccountIdOf, Instance, NftInstanceId, OwnerInstances, Pallet,
 };
 
@@ -31,7 +36,7 @@ fn simple() {
 			"owner before transfer should be ALICE"
 		);
 
-		assert_ok!(Pallet::<Test>::transfer(&NftClass::STAKING, &created_nft_id, &BOB), ());
+		assert_ok!(Pallet::<Test>::transfer(&NftClass::STAKING, &created_nft_id, &BOB));
 
 		process_and_progress_blocks::<Pallet<Test>, Test>(10);
 
@@ -74,12 +79,12 @@ fn roundtrip() {
 		process_and_progress_blocks::<Pallet<Test>, Test>(10);
 
 		// send one of ALICE's NFTs to BOB
-		assert_ok!(Pallet::<Test>::transfer(&NftClass::STAKING, &alices_nfts[0], &BOB), ());
+		assert_ok!(Pallet::<Test>::transfer(&NftClass::STAKING, &alices_nfts[0], &BOB));
 
 		process_and_progress_blocks::<Pallet<Test>, Test>(10);
 
 		// send said NFT back
-		assert_ok!(Pallet::<Test>::transfer(&NftClass::STAKING, &alices_nfts[0], &ALICE), ());
+		assert_ok!(Pallet::<Test>::transfer(&NftClass::STAKING, &alices_nfts[0], &ALICE));
 
 		let alice_storage_after_transfer = OwnerInstances::<Test>::get(&ALICE).unwrap();
 		let bob_storage_after_transfer = OwnerInstances::<Test>::get(&BOB).unwrap();
@@ -111,7 +116,12 @@ fn many() {
 
 		// transfer one of ALICE's NFTs to BOB
 		{
-			assert_ok!(Pallet::<Test>::transfer(&NftClass::STAKING, &alices_nfts[0], &BOB), ());
+			assert_ok!(Pallet::<Test>::transfer(&NftClass::STAKING, &alices_nfts[0], &BOB));
+			assert_last_event::<Test>(Event::Nft(crate::Event::NftTransferred {
+				class_id: NftClass::STAKING,
+				instance_id: alices_nfts[0],
+				to: BOB,
+			}));
 
 			assert_eq!(
 				OwnerInstances::<Test>::get(&BOB).unwrap(),
@@ -146,7 +156,12 @@ fn many() {
 		// transfer all of CHARLIES's NFTs to BOB
 		{
 			for nft_id in charlies_nfts.iter() {
-				assert_ok!(Pallet::<Test>::transfer(&NftClass::STAKING, nft_id, &BOB), ());
+				assert_ok!(Pallet::<Test>::transfer(&NftClass::STAKING, nft_id, &BOB));
+				assert_last_event::<Test>(Event::Nft(crate::Event::NftTransferred {
+					class_id: NftClass::STAKING,
+					instance_id: *nft_id,
+					to: BOB,
+				}));
 				process_and_progress_blocks::<Pallet<Test>, Test>(2);
 			}
 
@@ -181,7 +196,12 @@ fn many() {
 
 		// transfer one of (what was originally CHARLIES's) NFTs from BOB to ALICE
 		{
-			assert_ok!(Pallet::<Test>::transfer(&NftClass::STAKING, &charlies_nfts[9], &ALICE), ());
+			assert_ok!(Pallet::<Test>::transfer(&NftClass::STAKING, &charlies_nfts[9], &ALICE));
+			assert_last_event::<Test>(Event::Nft(crate::Event::NftTransferred {
+				class_id: NftClass::STAKING,
+				instance_id: charlies_nfts[9],
+				to: ALICE,
+			}));
 
 			let should_be_bobs_nfts = bobs_nfts
 				.iter()
@@ -218,10 +238,13 @@ fn many() {
 
 		// transfer one of (what was originally CHARLIES's) NFTs from ALICE back to CHARLIE
 		{
-			assert_ok!(
-				Pallet::<Test>::transfer(&NftClass::STAKING, &charlies_nfts[9], &CHARLIE),
-				()
-			);
+			assert_ok!(Pallet::<Test>::transfer(&NftClass::STAKING, &charlies_nfts[9], &CHARLIE),);
+			assert_last_event::<Test>(Event::Nft(crate::Event::NftTransferred {
+				class_id: NftClass::STAKING,
+				instance_id: charlies_nfts[9],
+				to: CHARLIE,
+			}));
+
 			assert_eq!(
 				OwnerInstances::<Test>::get(&ALICE).unwrap(),
 				alices_nfts
@@ -254,13 +277,24 @@ fn many() {
 /// NOTE: Only call once per test, per account!
 fn mint_many_nfts_and_assert(who: AccountIdOf<Test>, amount: u32) -> Vec<NftInstanceId> {
 	let new_nfts_ids = (0..amount)
-		.map(|_| Pallet::<Test>::mint_nft(&NftClass::STAKING, &who, &1u32, &1u32).unwrap())
+		.map(|_| {
+			let new_nft_id =
+				Pallet::<Test>::mint_nft(&NftClass::STAKING, &who, &1u32, &1u32).unwrap();
+
+			assert_last_event::<Test>(Event::Nft(crate::Event::NftCreated {
+				class_id: NftClass::STAKING,
+				instance_id: new_nft_id,
+			}));
+
+			new_nft_id
+		})
 		.collect::<Vec<_>>();
 
 	assert_eq!(
 		OwnerInstances::<Test>::get(&who).unwrap(),
 		new_nfts_ids.iter().map(|&id| (NftClass::STAKING, id)).collect(),
-		"the specified owner ({who}) should own the specified NFTs"
+		"the specified owner ({}) should own the specified NFTs",
+		who
 	);
 
 	new_nfts_ids

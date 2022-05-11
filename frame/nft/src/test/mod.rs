@@ -1,12 +1,11 @@
 use codec::Encode;
-use composable_support::math::safe::SafeSub;
+use composable_tests_helpers::test::helper::assert_last_event;
 use composable_traits::financial_nft::{FinancialNftProvider, NftClass};
-use frame_system::EventRecord;
 use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{
-	pallet::{ClassInstances, Config, Event as NftEvent, Instance, OwnerInstances},
-	test::mock::{Event, System, Test},
+	pallet::{ClassInstances, Event as NftEvent, Instance, OwnerInstances},
+	test::mock::{Event, Test},
 	NftInstanceId, Pallet,
 };
 
@@ -17,19 +16,6 @@ const ALICE: u128 = 0;
 const BOB: u128 = 1;
 const CHARLIE: u128 = 2;
 
-pub(crate) fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
-	let events = frame_system::Pallet::<T>::events();
-	let system_event: <T as frame_system::Config>::Event = generic_event.into();
-	// compare to the last event record
-	let EventRecord { event, .. } = &events[events.len().safe_sub(&1).expect("No events present!")];
-	assert_eq!(event, &system_event);
-}
-
-/// Asserts the event wasn't dispatched.
-fn assert_no_event(event: Event) {
-	assert!(System::events().iter().all(|record| record.event != event));
-}
-
 /// Mints a single NFT into ALICE and checks that it was created properly, returning the id of the
 /// newly created NFT.
 ///
@@ -38,10 +24,10 @@ fn mint_nft_and_assert() -> NftInstanceId {
 	let created_nft_id =
 		Pallet::<Test>::mint_nft(&NftClass::STAKING, &ALICE, &1u32, &1u32).unwrap();
 
-	// assert_last_event::<Test>(Event::Nft(NftEvent::NftCreated {
-	// 	class_id: NftClass::STAKING,
-	// 	instance_id: created_nft_id,
-	// }));
+	assert_last_event::<Test>(Event::Nft(NftEvent::NftCreated {
+		class_id: NftClass::STAKING,
+		instance_id: created_nft_id,
+	}));
 
 	assert_eq!(
 		ClassInstances::<Test>::get(&NftClass::STAKING).unwrap(),
@@ -74,6 +60,8 @@ mod financial_nft_provider {
 }
 
 mod impls {
+	use std::collections::BTreeMap;
+
 	use codec::Encode;
 	use composable_traits::financial_nft::NftClass;
 	use frame_support::traits::tokens::nonfungibles::{Create, Inspect};
@@ -93,6 +81,7 @@ mod impls {
 
 	#[test]
 	fn inspect() {
+		//! Tests the pallet's [`Inspect`] implementation.
 		new_test_ext().execute_with(|| {
 			let created_nft_id = mint_nft_and_assert();
 
@@ -116,12 +105,13 @@ mod impls {
 
 	#[test]
 	fn create() {
+		//! Tests the pallet's [`Create`] implementation.
 		new_test_ext().execute_with(|| {
 			assert_eq!(Pallet::<Test>::create_class(&NftClass::new(2), &ALICE, &ALICE), Ok(()));
 
 			assert_eq!(
 				Class::<Test>::get(&NftClass::new(2)),
-				Some((ALICE, ALICE, Default::default()))
+				Some((ALICE, ALICE, BTreeMap::default()))
 			);
 		})
 	}

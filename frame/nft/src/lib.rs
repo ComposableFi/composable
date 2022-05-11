@@ -57,9 +57,11 @@ pub mod pallet {
 	pub(crate) type NftInstanceId = u128;
 
 	#[pallet::event]
+	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
 	pub enum Event<T: Config> {
 		NftCreated { class_id: NftClass, instance_id: NftInstanceId },
 		NftBurned { class_id: NftClass, instance_id: NftInstanceId },
+		NftTransferred { class_id: NftClass, instance_id: NftInstanceId, to: AccountIdOf<T> },
 	}
 
 	#[pallet::error]
@@ -125,6 +127,7 @@ pub mod pallet {
 		_,
 		Blake2_128Concat,
 		NftClass,
+		// (who, admin, data)
 		(AccountIdOf<T>, AccountIdOf<T>, BTreeMap<Vec<u8>, Vec<u8>>),
 		OptionQuery,
 	>;
@@ -142,11 +145,12 @@ pub mod pallet {
 			instance: &Self::InstanceId,
 			key: &[u8],
 		) -> Option<Vec<u8>> {
-			Instance::<T>::get((class, instance)).and_then(|(_, nft)| nft.get(key).cloned())
+			Instance::<T>::get((class, instance))
+				.and_then(|(_, attributes)| attributes.get(key).cloned())
 		}
 
 		fn class_attribute(class: &Self::ClassId, key: &[u8]) -> Option<Vec<u8>> {
-			Class::<T>::get(class).and_then(|(_, _, class)| class.get(key).cloned())
+			Class::<T>::get(class).and_then(|(_, _, attributes)| attributes.get(key).cloned())
 		}
 	}
 
@@ -181,9 +185,14 @@ pub mod pallet {
 
 					OwnerInstances::<T>::mutate(
 						destination.clone(),
-						insert_or_init_and_insert(*class, *instance),
+						insert_or_init_and_insert((*class, *instance)),
 					);
 					*owner = destination.clone();
+					Self::deposit_event(Event::NftTransferred {
+						class_id: *class,
+						instance_id: *instance,
+						to: destination.clone(),
+					});
 					Ok(())
 				},
 				None => Err(Error::<T>::InstanceNotFound.into()),
@@ -199,15 +208,11 @@ pub mod pallet {
 		) -> DispatchResult {
 			ensure!(Self::instance((class, instance)).is_none(), Error::<T>::InstanceAlreadyExists);
 			Instance::<T>::insert((class, instance), (who, BTreeMap::<Vec<u8>, Vec<u8>>::new()));
-			ClassInstances::<T>::mutate(class, |x| match x {
-				Some(instances) => {
-					instances.insert(*instance);
-				},
-				None => {
-					x.replace([*instance].into());
-				},
-			});
-			OwnerInstances::<T>::mutate(who, insert_or_init_and_insert(*class, *instance));
+			ClassInstances::<T>::mutate(class, insert_or_init_and_insert(*instance));
+			OwnerInstances::<T>::mutate(who, insert_or_init_and_insert((*class, *instance)));
+
+			Self::deposit_event(Event::NftCreated { class_id: *class, instance_id: *instance });
+
 			Ok(())
 		}
 
@@ -299,18 +304,15 @@ pub mod pallet {
 		}
 	}
 
-	/// Inserts the given (class, instance) pair into the account's instances, initializing the
-	/// instances set if it doesn't exist.
-	fn insert_or_init_and_insert(
-		class: NftClass,
-		instance: NftInstanceId,
-	) -> impl FnOnce(&'_ mut Option<BTreeSet<(NftClass, NftInstanceId)>>) -> () {
-		move |x: &mut Option<BTreeSet<(NftClass, NftInstanceId)>>| match x {
+	/// Returns a closure that inserts the given (class, instance) pair into the account's
+	/// instances, initializing the instances set if it doesn't exist.
+	fn insert_or_init_and_insert<T: Ord>(t: T) -> impl FnOnce(&'_ mut Option<BTreeSet<T>>) -> () {
+		move |x: &mut Option<BTreeSet<T>>| match x {
 			Some(instances) => {
-				instances.insert((class, instance));
+				instances.insert(t);
 			},
 			None => {
-				x.replace([(class, instance)].into());
+				x.replace([t].into());
 			},
 		}
 	}
