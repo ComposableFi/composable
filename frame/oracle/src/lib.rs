@@ -614,8 +614,9 @@ pub mod pallet {
 					),
 				Error::<T>::NotEnoughStake
 			);
-
 			let asset_info = Self::asset_info(asset_id).ok_or(Error::<T>::InvalidAssetId)?;
+			ensure!(author_stake >= asset_info.slash, Error::<T>::NotEnoughStake);
+
 			PrePrices::<T>::try_mutate(asset_id, |current_prices| -> Result<(), DispatchError> {
 				// There can convert current_prices.len() to u32 safely
 				// because current_prices.len() limited by u32

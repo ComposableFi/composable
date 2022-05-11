@@ -721,7 +721,33 @@ mod submit_price {
 			})?;
 		}
 
+	}
 
+	fn submit_price_fails_stake_less_than_asset_slash() {
+		new_test_ext().execute_with(|| {
+			let account_1 = get_account_1();
+			let account_2 = get_root_account();
+
+			assert_ok!(Oracle::add_asset_and_info(
+				Origin::signed(account_2),
+				0,
+				Validated::new(Percent::from_percent(80)).unwrap(),
+				Validated::new(3).unwrap(),
+				Validated::new(3).unwrap(),
+				Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+				5,
+				200
+			));
+
+			System::set_block_number(6);
+			assert_ok!(Oracle::set_signer(Origin::signed(account_2), account_1));
+			assert_ok!(Oracle::add_stake(Origin::signed(account_2), 50));
+			// fails as asset's slash is high compare to current stake of account_1
+			assert_noop!(
+				Oracle::submit_price(Origin::signed(account_1), 100_u128, 0_u128),
+				Error::<Test>::NotEnoughStake
+			);
+		});
 	}
 }
 
@@ -798,6 +824,34 @@ fn add_price() {
 		assert_noop!(
 			Oracle::submit_price(Origin::signed(account_1), 100_u128, 10_u128),
 			Error::<Test>::PriceNotRequested
+		);
+	});
+}
+
+#[test]
+fn submit_price_fails_stake_less_than_asset_slash() {
+	new_test_ext().execute_with(|| {
+		let account_1 = get_account_1();
+		let account_2 = get_root_account();
+
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			0,
+			Validated::new(Percent::from_percent(80)).unwrap(),
+			Validated::new(3).unwrap(),
+			Validated::new(3).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			5,
+			200
+		));
+
+		System::set_block_number(6);
+		assert_ok!(Oracle::set_signer(Origin::signed(account_2), account_1));
+		assert_ok!(Oracle::add_stake(Origin::signed(account_2), 50));
+		// fails as asset's slash is high compare to current stake of account_1
+		assert_noop!(
+			Oracle::submit_price(Origin::signed(account_1), 100_u128, 0_u128),
+			Error::<Test>::NotEnoughStake
 		);
 	});
 }
