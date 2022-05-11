@@ -975,7 +975,7 @@ fn test_payout_slash() {
 }
 
 #[test]
-fn halborn_test_escape_slashing() {
+fn halborn_test_bypass_slashing() {
 	new_test_ext().execute_with(|| {
 		const ASSET_ID: u128 = 0;
 		const MIN_ANSWERS: u32 = 3;

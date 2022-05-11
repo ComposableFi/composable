@@ -695,10 +695,10 @@ pub mod pallet {
 				let min_accuracy = asset_info.threshold;
 				if accuracy < min_accuracy {
 					let slash_amount = asset_info.slash;
-					let amount_staked = Self::oracle_stake(answer.who.clone())
+					let new_amount_staked = Self::oracle_stake(answer.who.clone())
 						.unwrap_or_else(|| 0_u32.into())
 						.saturating_sub(slash_amount);
-					OracleStake::<T>::insert(&answer.who, amount_staked);
+					OracleStake::<T>::insert(&answer.who, new_amount_staked);
 					let result = T::Currency::repatriate_reserved(
 						&answer.who,
 						&T::TreasuryAccount::get(),
