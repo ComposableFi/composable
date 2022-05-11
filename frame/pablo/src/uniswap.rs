@@ -68,7 +68,10 @@ impl<T: Config> Uniswap<T> {
 		let half_weight = Permill::from_percent(50);
 		let pool_base_aum = T::Convert::convert(T::Assets::balance(pool.pair.base, pool_account));
 		let pool_quote_aum = T::Convert::convert(T::Assets::balance(pool.pair.quote, pool_account));
-		ensure!(!pool_base_aum.is_zero() && !pool_quote_aum.is_zero(), Error::<T>::NotEnoughLiquidity);
+		ensure!(
+			!pool_base_aum.is_zero() && !pool_quote_aum.is_zero(),
+			Error::<T>::NotEnoughLiquidity
+		);
 		let exchange_amount = if asset_id == pool.pair.quote {
 			compute_out_given_in(half_weight, half_weight, pool_quote_aum, pool_base_aum, amount)
 		} else {

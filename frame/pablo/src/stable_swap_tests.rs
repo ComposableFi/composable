@@ -1,10 +1,9 @@
 #[cfg(test)]
 use crate::{
-	Error,
 	common_test_functions::*,
 	mock,
 	mock::{Pablo, *},
-	pallet,
+	pallet, Error,
 	PoolConfiguration::StableSwap,
 	PoolInitConfiguration,
 };
@@ -13,7 +12,10 @@ use composable_tests_helpers::{
 	test::helper::{acceptable_computation_error, default_acceptable_computation_error},
 };
 use composable_traits::{defi::CurrencyPair, dex::Amm};
-use frame_support::{assert_err, assert_noop, assert_ok, traits::fungibles::{Inspect, Mutate}};
+use frame_support::{
+	assert_err, assert_noop, assert_ok,
+	traits::fungibles::{Inspect, Mutate},
+};
 use proptest::prelude::*;
 use sp_runtime::{DispatchError, Permill};
 
@@ -436,20 +438,19 @@ fn avoid_exchange_without_liquidity() {
 			owner_fee,
 		};
 		System::set_block_number(1);
-		let created_pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
+		let created_pool_id =
+			Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
 		let bob_usdt = 1000 * unit;
 		// Mint the tokens
 		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
-		assert_err!(Pablo::sell(
-			Origin::signed(BOB),
-			created_pool_id,
-			USDT,
-			bob_usdt,
-			0_u128,
-			false
-		), DispatchError::from(Error::<Test>::NotEnoughLiquidity));
-		assert_err!(pallet::prices_for::<Test>(created_pool_id, USDC, USDT, 1 * unit)
-			, DispatchError::from(Error::<Test>::NotEnoughLiquidity));
+		assert_err!(
+			Pablo::sell(Origin::signed(BOB), created_pool_id, USDT, bob_usdt, 0_u128, false),
+			DispatchError::from(Error::<Test>::NotEnoughLiquidity)
+		);
+		assert_err!(
+			pallet::prices_for::<Test>(created_pool_id, USDC, USDT, 1 * unit),
+			DispatchError::from(Error::<Test>::NotEnoughLiquidity)
+		);
 	});
 }
 
