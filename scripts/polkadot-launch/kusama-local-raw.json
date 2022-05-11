@@ -3,11 +3,11 @@
   "id": "kusama_local_testnet",
   "chainType": "Local",
   "bootNodes": [
-    "/ip4/127.0.0.1/tcp/30444/p2p/12D3KooWKNzAj185y7cTVomNkxCtRYyD8YkM2SfNm5AR8V99hoKD",
-    "/ip4/127.0.0.1/tcp/30555/p2p/12D3KooWQgdqfyjfWWqebfFwfJG1Wq77vibzcLdw2uYn3hzGEWrr",
-    "/ip4/127.0.0.1/tcp/30666/p2p/12D3KooWN7Qetp4ZD7HCcvVKvMVjP5kA73K4HcQVCevgHtrrjtmF",
-    "/ip4/127.0.0.1/tcp/30777/p2p/12D3KooWSTLnZVpBaKjttvzDhg8sLztr4p1j63znfgkvyeytez4U",
-    "/ip4/127.0.0.1/tcp/30778/p2p/12D3KooWLpZKJnifdWZ5JA193UBvkeRsppRaU9ebtygus3vwhaNJ"
+    "/ip4/127.0.0.1/tcp/30444/p2p/12D3KooWCmkBsBZ5keLLUBTDFW2PzwGifw9hTTP1fKQ7hphwYHem",
+    "/ip4/127.0.0.1/tcp/30555/p2p/12D3KooWQifGh44bVCqxMYKW7dWkGDQiiwiUk2aEswknhGYJdft3",
+    "/ip4/127.0.0.1/tcp/30666/p2p/12D3KooWPrUJQpbVonrjMBFmi8cnrj41jvpeRmQZ1oCTUYZ8MCzH",
+    "/ip4/127.0.0.1/tcp/30777/p2p/12D3KooWR5Praa6kEHKwc9ZQT9ibTXkwnq8tYSSThz1VG2dWNR7n",
+    "/ip4/127.0.0.1/tcp/30778/p2p/12D3KooWFFyycoJrWA1KfxmoB5CQRTEQQpiRSwMSM8HZsWWXCzEy"
   ],
   "telemetryEndpoints": null,
   "protocolId": "dot",

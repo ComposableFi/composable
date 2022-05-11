@@ -57,3 +57,11 @@ URLs:
 * [Relay]https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/explorer) is the 1st Relay Chain node
 * [Composable Dali](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9988#/explorer) is the 1st Composable's collator
 * [Basilisk](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9998#/explorer) is the 1st Basilisk's collator
+
+
+## References
+
+- https://docs.substrate.io/tutorials/v3/private-network/
+- https://docs.substrate.io/tutorials/v3/cumulus/start-relay/
+- https://docs.substrate.io/tutorials/v3/permissioned-network/
+- https://github.com/paritytech/cumulus/blob/master/polkadot-parachains/src/command.rs
