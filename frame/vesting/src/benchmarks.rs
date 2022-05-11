@@ -55,13 +55,6 @@ where
 	VestingSchedule { window: BlockNumberBased { start, period }, period_count, per_period }
 }
 
-fn zero_account<T>() -> T::AccountId
-where
-	T: Config,
-{
-	T::AccountId::decode(&mut TrailingZeroInput::zeroes()).unwrap()
-}
-
 benchmarks! {
   where_clause {
 	  where

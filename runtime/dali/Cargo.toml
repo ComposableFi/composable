@@ -166,7 +166,6 @@ runtime-benchmarks = [
   "scheduler/runtime-benchmarks",
   "collective/runtime-benchmarks",
   "democracy/runtime-benchmarks",
-  "multicurrency-democracy/runtime-benchmarks",
   "utility/runtime-benchmarks",
   "vault/runtime-benchmarks",
   "vesting/runtime-benchmarks",
