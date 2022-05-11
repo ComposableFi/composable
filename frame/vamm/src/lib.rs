@@ -298,8 +298,8 @@ pub mod pallet {
 		/// Emitted after a successful call to [`move_price`](Pallet::move_price) function.
 		PriceMoved {
 			vamm_id: VammIdOf<T>,
-			base_asset_reserve: BalanceOf<T>,
-			quote_asset_reserve: BalanceOf<T>,
+			base_asset_reserves: BalanceOf<T>,
+			quote_asset_reserves: BalanceOf<T>,
 			invariant: U256,
 		},
 	}
@@ -703,8 +703,8 @@ pub mod pallet {
 			// Deposit swap event into blockchain.
 			Self::deposit_event(Event::<T>::PriceMoved {
 				vamm_id: config.vamm_id,
-				base_asset_reserve: config.base_asset_reserves,
-				quote_asset_reserve: config.quote_asset_reserves,
+				base_asset_reserves: config.base_asset_reserves,
+				quote_asset_reserves: config.quote_asset_reserves,
 				invariant,
 			});
 
@@ -884,7 +884,7 @@ pub mod pallet {
 		fn is_vamm_closed(vamm_state: &VammStateOf<T>) -> bool {
 			let now = T::TimeProvider::now().as_secs();
 			match vamm_state.closed {
-				Some(timestamp) => now < Into::<u64>::into(timestamp),
+				Some(timestamp) => now >= Into::<u64>::into(timestamp),
 				None => false,
 			}
 		}
