@@ -24,7 +24,7 @@ yarn
 Run:
 
 ```bash
-yarn polkadot-composable
+yarn rococo-dali
 ```
 ## Run Composable's and Basilisk's parachains
 
@@ -42,7 +42,7 @@ yarn
 
 Run all
 ```bash
-yarn rococo-composable-basilisk
+yarn rococo-dali-basilisk
 ```
 
 

@@ -1,0 +1,73 @@
+{
+  "relaychain": {
+    "bin": "../../../polkadot/target/release/polkadot",
+    "chain": "rococo-local",
+    "nodes": [
+      {
+        "name": "alice",
+        "wsPort": 9944,
+        "port": 30444,
+        "flags": ["--rpc-cors=all", "--beefy", "--enable-offchain-indexing=true"]
+      },
+      {
+        "name": "bob",
+        "wsPort": 9955,
+        "port": 30555,
+        "flags": ["--rpc-cors=all", "--beefy"]
+      },
+      {
+        "name": "charlie",
+        "wsPort": 9966,
+        "port": 30666,
+        "flags": ["--rpc-cors=all", "--beefy"]
+      },
+      {
+        "name": "dave",
+        "wsPort": 9977,
+        "port": 30777,
+        "flags": ["--rpc-cors=all", "--beefy"]
+      },
+      {
+        "name": "ferdie",
+        "wsPort": 9978,
+        "basePath": "/tmp/polkadot-launch/relaychains/ferdie",
+        "port": 30778,
+        "flags": ["--rpc-cors=all", "--beefy"]
+      }
+
+    ],
+    "runtime_genesis_config": {
+      "parachainsConfiguration": {
+        "config": {
+          "validation_upgrade_frequency": 1,
+          "validation_upgrade_delay": 10
+        }
+      }
+    }
+  },
+  "simpleParachains": [],
+  "parachains": [
+    {
+      "bin": "../../target/release/composable",
+      "chain":"dali-dev",
+      "balance": "1000000000000000000000",
+      "nodes": [
+        {
+          "wsPort": 9988,
+          "port": 31200,
+          "flags": ["--alice", "--rpc-cors=all", "--", "--execution=wasm"]
+        },
+        {
+          "wsPort": 9989,
+          "port": 31201,
+          "flags": ["--bob", "--rpc-cors=all", "--", "--execution=wasm"]
+        }
+      ]
+    }
+  ],
+  "hrmpChannels": [
+    
+  ],
+  "types": {},
+  "finalization": false
+}

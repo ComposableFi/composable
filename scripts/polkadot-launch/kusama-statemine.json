@@ -28,33 +28,46 @@
           "basePath": "/tmp/polkadot-launch/relaychains/bob",
           "port": 30555,
           "flags": ["--beefy"]
+        },
+        {
+          "name": "charlie",
+          "wsPort": 9966,
+          "port": 30666,
+          "flags": ["--rpc-cors=all", "--beefy"]
+        },
+        {
+          "name": "dave",
+          "wsPort": 9977,
+          "port": 30777,
+          "flags": ["--rpc-cors=all", "--beefy"]
+        },
+        {
+          "name": "ferdie",
+          "wsPort": 9978,
+          "basePath": "/tmp/polkadot-launch/relaychains/ferdie",
+          "port": 30778,
+          "flags": ["--rpc-cors=all", "--beefy"]
         }
       ]
     },
     "parachains": [
         {
+
             "bin": "../../../cumulus/target/release/polkadot-collator",
-            "chain": "statemine-local",
+            "chain": "statemine-local.json",
             "nodes": [
               {
                 "name": "alice",
                 "wsPort": 9988,
                 "basePath": "/tmp/polkadot-launch/parachains/alice",
-                "port": 31100,
+                "port": 30333,
                 "flags": ["--", "--execution=wasm"]
               },
               {
                 "name": "bob",
                 "wsPort": 9997,
                 "basePath": "/tmp/polkadot-launch/parachains/bob",
-                "port": 31200,
-                "flags": ["--", "--execution=wasm"]
-              },
-              {
-                "name": "charlie",
-                "wsPort": 9996,
-                "basePath": "/tmp/polkadot-launch/parachains/charlie",
-                "port": 31300,
+                "port": 30334,
                 "flags": ["--", "--execution=wasm"]
               }
             ]
