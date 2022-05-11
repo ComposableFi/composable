@@ -17,7 +17,7 @@
   "trace-warnings": true,
   "watch-files": ["src/**/*.ts"],
   "watch-ignore": ["lib/vendor"],
-  "require": ["mochawesome/register", "src/utils/testSetup.ts"],
+  "require": ["mochawesome/register"],
   "full-trace": true,
   "parallel": false,
   "recursive": true
