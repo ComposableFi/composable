@@ -68,7 +68,8 @@ fn simple() {
 
 #[test]
 fn roundtrip() {
-	//! Tests a roundtrip transfer between 2 accounts, asserting that the storage is the same after the roundtrip.
+	//! Tests a roundtrip transfer between 2 accounts, asserting that the storage is the same after
+	//! the roundtrip.
 	new_test_ext().execute_with(|| {
 		let alices_nfts = mint_many_nfts_and_assert(ALICE, 50);
 		let _bobs_nfts = mint_many_nfts_and_assert(BOB, 50);
