@@ -83,14 +83,15 @@ RUN wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | 
 # # Add polkadot
 # Not straight to the workspace dir because that seems to be causing issues.
 WORKDIR /polkadot-binary
-RUN wget "https://github.com/paritytech/polkadot/releases/download/v0.9.18/polkadot"
+RUN wget "https://github.com/paritytech/polkadot/releases/download/v0.9.18/polkadot" && \
+    chmod +x polkadot
 
 # Add mdbook
 WORKDIR /mdbook-binary
 RUN wget https://github.com/rust-lang/mdBook/releases/download/v0.4.18/mdbook-v0.4.18-x86_64-unknown-linux-gnu.tar.gz && \ 
     tar -xzf mdbook-v0.4.18-x86_64-unknown-linux-gnu.tar.gz && \
-    cp ./mdbook /usr/bin && \
-    chmod +x /usr/bin/mdbook
+    chmod +x mdbook && \
+    cp ./mdbook /usr/bin 
 
 # WORKDIR /workspaces/composable/scripts/polkadot-launch
 # RUN yarn
