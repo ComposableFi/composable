@@ -80,8 +80,8 @@ mod impls {
 	mod transfer;
 
 	#[test]
+	/// Tests the pallet's [`Inspect`] implementation.
 	fn inspect() {
-		//! Tests the pallet's [`Inspect`] implementation.
 		new_test_ext().execute_with(|| {
 			let created_nft_id = mint_nft_and_assert();
 
@@ -110,9 +110,9 @@ mod impls {
 		})
 	}
 
+	/// Tests the pallet's [`Create`] implementation.
 	#[test]
 	fn create() {
-		//! Tests the pallet's [`Create`] implementation.
 		new_test_ext().execute_with(|| {
 			assert_eq!(
 				Pallet::<MockRuntime>::create_class(&NftClass::new(2), &ALICE, &ALICE),

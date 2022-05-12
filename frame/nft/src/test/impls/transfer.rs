@@ -22,9 +22,9 @@ use crate::{
 	AccountIdOf, Instance, NftInstanceId, OwnerInstances, Pallet,
 };
 
-#[test]
+	/// Tests a simple transfer between 2 accounts, with only 1 total NFT existing.
+	#[test]
 fn simple() {
-	//! Tests a simple transfer between 2 accounts, with only 1 total NFT existing.
 	new_test_ext().execute_with(|| {
 		let created_nft_id = mint_nft_and_assert();
 
@@ -66,10 +66,10 @@ fn simple() {
 	})
 }
 
+	/// Tests a roundtrip transfer between 2 accounts, asserting that the storage is the same after
+	/// the roundtrip.
 #[test]
 fn roundtrip() {
-	//! Tests a roundtrip transfer between 2 accounts, asserting that the storage is the same after
-	//! the roundtrip.
 	new_test_ext().execute_with(|| {
 		let alices_nfts = mint_many_nfts_and_assert(ALICE, 50);
 		let _bobs_nfts = mint_many_nfts_and_assert(BOB, 50);
@@ -95,9 +95,9 @@ fn roundtrip() {
 	})
 }
 
+	/// Tests the transfer of many NFTs between multiple accounts.
 #[test]
 fn many() {
-	//! Tests the transfer of many NFTs between multiple accounts.
 	new_test_ext().execute_with(transfer_many_test);
 
 	// in a separate function because rustfmt dies if the content of the test is in a closure
