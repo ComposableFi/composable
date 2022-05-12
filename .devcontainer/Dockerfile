@@ -99,6 +99,3 @@ RUN wget https://github.com/tamasfe/taplo/releases/download/release-cli-0.6.2/ta
     tar -xzf taplo-0.6.2-x86_64-unknown-linux-gnu.tar.gz && \
     chmod +x taplo && \
     cp ./taplo /usr/bin 
-
-# WORKDIR /workspaces/composable/scripts/polkadot-launch
-# RUN yarn
