@@ -18,14 +18,31 @@
 use crate::{
 	gas::GasMeter,
 	storage::{self, Storage, WriteOutcome},
-	wasm::cosmwasm::types::{CosmwasmExecutionResult, CosmwasmQueryResult, SubMsg},
-	BalanceOf, CodeHash, Config, ContractInfo, ContractInfoOf, Error, Event, Nonce,
-	Pallet as Contracts, Schedule,
+	wasm::{
+		self,
+		cosmwasm::types::{
+			Addr, BalanceResponse, BankMsg, BankQuery, Binary, BlockInfo, Coin,
+			ContractInfo as CosmwasmContractInfo, ContractInfoResponse,
+			ContractResult as CosmwasmResult, CosmosMsg, CosmwasmExecutionResult,
+			CosmwasmQueryResult, CosmwasmReplyResult, Env, Event as CosmwasmEvent, ExecuteResult,
+			InstantiateResult, MessageInfo, QueryRequest, QueryResult, Reply, ReplyOn, ReplyResult,
+			SubMsg, SubMsgResponse, SubMsgResult, SystemResult, Timestamp, TransactionInfo,
+			WasmMsg, WasmQuery,
+		},
+	},
+	AssetIdOf, BalanceOf, CodeHash, CodeHashToId, Config, ContractInfo, ContractInfoOf, Error,
+	Event, Nonce, Pallet as Contracts, Schedule, TransferredAssets, TrieId,
 };
+use alloc::{collections::BTreeMap, string::String};
+use codec::Encode;
+use either::Either;
 use frame_support::{
 	dispatch::{DispatchError, DispatchResult, DispatchResultWithPostInfo, Dispatchable},
 	storage::{with_transaction, TransactionOutcome},
-	traits::{Contains, Currency, ExistenceRequirement, OriginTrait, Randomness, Time},
+	traits::{
+		fungibles::{Inspect, Transfer},
+		Contains, Currency, ExistenceRequirement, OriginTrait, Randomness, Time,
+	},
 	weights::Weight,
 	RuntimeDebug,
 };
@@ -33,16 +50,16 @@ use frame_system::RawOrigin;
 use pallet_contracts_primitives::{ExecReturnValue, ReturnFlags};
 use smallvec::{Array, SmallVec};
 use sp_core::{crypto::UncheckedFrom, ecdsa::Public as ECDSAPublic, Bytes};
-use sp_io::crypto::secp256k1_ecdsa_recover_compressed;
+use sp_io::{crypto::secp256k1_ecdsa_recover_compressed, hashing::keccak_256};
 use sp_runtime::traits::Convert;
 use sp_std::{marker::PhantomData, mem, prelude::*, vec};
+use Either::{Left, Right};
 
 pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 pub type MomentOf<T> = <T as Config>::Moment;
 pub type SeedOf<T> = <T as frame_system::Config>::Hash;
 pub type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 pub type StorageKey = [u8; 32];
-pub type ExecResult = Result<ExecReturnValue, ExecError>;
 
 /// A type that represents a topic of an event. At the moment a hash is used.
 pub type TopicOf<T> = <T as frame_system::Config>::Hash;
@@ -89,8 +106,17 @@ impl<T: Into<DispatchError>> From<T> for ExecError {
 /// This trait is sealed and cannot be implemented by downstream crates.
 pub trait Ext: sealing::Sealed {
 	type T: Config;
+
+	/// Execute a read-only query request.
+	fn query_chain(&mut self, request: QueryRequest) -> Result<Vec<u8>, DispatchError>;
+
 	/// Transfer some amount of funds into the specified account.
-	fn transfer(&mut self, to: &AccountIdOf<Self::T>, value: BalanceOf<Self::T>) -> DispatchResult;
+	fn transfer(
+		&mut self,
+		asset: AssetIdOf<Self::T>,
+		to: &AccountIdOf<Self::T>,
+		amount: BalanceOf<Self::T>,
+	) -> DispatchResult;
 
 	/// Returns the storage entry of the executing account by the given `key`.
 	///
@@ -124,6 +150,16 @@ pub trait Ext: sealing::Sealed {
 	/// Returns `None` if the `address` does not belong to a contract.
 	fn code_hash(&self, address: &AccountIdOf<Self::T>) -> Option<CodeHash<Self::T>>;
 
+	/// Returns the code id of the contract for the given `address`.
+	///
+	/// Returns `None` if the `address` does not belong to a contract.
+	fn code_id(&self, address: &AccountIdOf<Self::T>) -> Option<u64>;
+
+	/// Return the trie id of the contract for the given `address`.
+	///
+	/// Returns `None` if the `address` does not belong to a contract.
+	fn trie_id(&self, address: &AccountIdOf<Self::T>) -> Option<TrieId>;
+
 	/// Returns the code hash of the contract being executed.
 	fn own_code_hash(&mut self) -> &CodeHash<Self::T>;
 
@@ -139,10 +175,10 @@ pub trait Ext: sealing::Sealed {
 	/// Returns the balance of the current contract.
 	///
 	/// The `value_transferred` is already added.
-	fn balance(&self) -> BalanceOf<Self::T>;
+	fn balance(&self, asset: AssetIdOf<Self::T>) -> BalanceOf<Self::T>;
 
 	/// Returns the value transferred along with this call.
-	fn value_transferred(&self) -> BalanceOf<Self::T>;
+	fn value_transferred(&self) -> TransferredAssets<Self::T>;
 
 	/// Returns a reference to the timestamp of the current block
 	fn now(&self) -> &MomentOf<Self::T>;
@@ -208,6 +244,7 @@ pub enum ExportedFunction {
 	/// The function which is executed when a contract is called.
 	Call,
 	Query,
+	Reply,
 }
 
 #[derive(Clone, Copy, PartialEq, RuntimeDebug)]
@@ -227,6 +264,16 @@ pub trait Executable<T: Config>: Sized {
 	/// Charges size base load and instrumentation weight from the gas meter.
 	fn from_storage(
 		code_hash: CodeHash<T>,
+		schedule: &Schedule<T>,
+		gas_meter: &mut GasMeter<T>,
+	) -> Result<Self, DispatchError>;
+
+	/// Load the executable from storage.
+	///
+	/// # Note
+	/// Charges size base load and instrumentation weight from the gas meter.
+	fn from_storage_with_id(
+		code_id: u64,
 		schedule: &Schedule<T>,
 		gas_meter: &mut GasMeter<T>,
 	) -> Result<Self, DispatchError>;
@@ -256,14 +303,24 @@ pub trait Executable<T: Config>: Sized {
 		self,
 		ext: &mut E,
 		function: &ExecuteFunction,
+		env: Env,
+		info: MessageInfo,
 		input_data: Vec<u8>,
 	) -> Result<CosmwasmExecutionResult, DispatchError>;
 
 	fn query<E: Ext<T = T>>(
 		self,
 		ext: &mut E,
+		env: Env,
 		input_data: Vec<u8>,
 	) -> Result<CosmwasmQueryResult, DispatchError>;
+
+	fn reply<E: Ext<T = T>>(
+		self,
+		ext: &mut E,
+		env: Env,
+		input_data: Vec<u8>,
+	) -> Result<CosmwasmReplyResult, DispatchError>;
 
 	/// The code hash of the executable.
 	fn code_hash(&self) -> &CodeHash<T>;
@@ -329,7 +386,7 @@ pub struct Frame<T: Config> {
 	/// The cached in-storage data of the contract.
 	contract_info: CachedContract<T>,
 	/// The amount of balance transferred by the caller as part of the call.
-	value_transferred: BalanceOf<T>,
+	value_transferred: TransferredAssets<T>,
 	/// Determines whether this is a call or instantiate frame.
 	entry_point: ExportedFunction,
 	/// The gas meter capped to the supplied gas limit.
@@ -382,6 +439,16 @@ enum FrameArgs<'a, T: Config, E> {
 		/// A salt used in the contract address deriviation of the new contract.
 		salt: &'a [u8],
 	},
+	Reply {
+		/// The account id of the contract that is to be called.
+		dest: T::AccountId,
+		/// If `None` the contract info needs to be reloaded from storage.
+		cached_info: Option<ContractInfo<T>>,
+		/// This frame was created by `seal_delegate_call` and hence uses different code than
+		/// what is stored at [`Self::dest`]. Its caller ([`Frame::delegated_caller`]) is the
+		/// account which called the caller contract
+		delegated_call: Option<DelegatedCall<T, E>>,
+	},
 }
 
 /// Describes the different states of a contract as contained in a `Frame`.
@@ -392,11 +459,6 @@ enum CachedContract<T: Config> {
 	///
 	/// In this case the cached contract is stale and needs to be reloaded from storage.
 	Invalidated,
-	/// The current contract executed `terminate` and removed the contract.
-	///
-	/// In this case a reload is neither allowed nor possible. Please note that recursive
-	/// calls cannot remove a contract as this is checked and denied.
-	Terminated,
 }
 
 impl<T: Config> CachedContract<T> {
@@ -423,16 +485,6 @@ impl<T: Config> Frame<T> {
 	/// Return the `contract_info` of the current contract.
 	fn contract_info(&mut self) -> &mut ContractInfo<T> {
 		self.contract_info.get(&self.account_id)
-	}
-
-	/// Terminate and return the `contract_info` of the current contract.
-	///
-	/// # Note
-	///
-	/// Under no circumstances the contract is allowed to access the `contract_info` after
-	/// a call to this function. This would constitute a programming error in the exec module.
-	fn terminate(&mut self) -> ContractInfo<T> {
-		self.contract_info.terminate(&self.account_id)
 	}
 }
 
@@ -491,12 +543,6 @@ impl<T: Config> CachedContract<T> {
 		self.load(account_id);
 		get_cached_or_panic_after_load!(self)
 	}
-
-	/// Terminate and return the contract info.
-	fn terminate(&mut self, account_id: &T::AccountId) -> ContractInfo<T> {
-		self.load(account_id);
-		get_cached_or_panic_after_load!(mem::replace(self, Self::Terminated))
-	}
 }
 
 impl<'a, T, E> Stack<'a, T, E>
@@ -521,7 +567,7 @@ where
 		gas_meter: &'a mut GasMeter<T>,
 		storage_meter: &'a mut storage::meter::Meter<T>,
 		schedule: &'a Schedule<T>,
-		value: BalanceOf<T>,
+		value: TransferredAssets<T>,
 		input_data: Vec<u8>,
 		debug_message: Option<&'a mut Vec<u8>>,
 	) -> Result<ExecReturnValue, ExecError> {
@@ -553,7 +599,7 @@ where
 		gas_meter: &'a mut GasMeter<T>,
 		storage_meter: &'a mut storage::meter::Meter<T>,
 		schedule: &'a Schedule<T>,
-		value: BalanceOf<T>,
+		value: TransferredAssets<T>,
 		input_data: Vec<u8>,
 		debug_message: Option<&'a mut Vec<u8>>,
 	) -> Result<ExecReturnValue, ExecError> {
@@ -585,7 +631,7 @@ where
 		gas_meter: &'a mut GasMeter<T>,
 		storage_meter: &'a mut storage::meter::Meter<T>,
 		schedule: &'a Schedule<T>,
-		value: BalanceOf<T>,
+		value: TransferredAssets<T>,
 		input_data: Vec<u8>,
 		salt: &[u8],
 		debug_message: Option<&'a mut Vec<u8>>,
@@ -615,7 +661,7 @@ where
 		gas_meter: &'a mut GasMeter<T>,
 		storage_meter: &'a mut storage::meter::Meter<T>,
 		schedule: &'a Schedule<T>,
-		value: BalanceOf<T>,
+		value: TransferredAssets<T>,
 		debug_message: Option<&'a mut Vec<u8>>,
 	) -> Result<(Self, E), ExecError> {
 		let (first_frame, executable, nonce) =
@@ -643,7 +689,7 @@ where
 	/// not initialized, yet.
 	fn new_frame<S: storage::meter::State>(
 		frame_args: FrameArgs<T, E>,
-		value_transferred: BalanceOf<T>,
+		value_transferred: TransferredAssets<T>,
 		gas_meter: &mut GasMeter<T>,
 		storage_meter: &mut storage::meter::GenericMeter<T, S>,
 		gas_limit: Weight,
@@ -683,6 +729,22 @@ where
 
 					(dest, contract, executable, delegate_caller, ExportedFunction::Query, None)
 				},
+				FrameArgs::Reply { dest, cached_info, delegated_call } => {
+					let contract = if let Some(contract) = cached_info {
+						contract
+					} else {
+						<ContractInfoOf<T>>::get(&dest).ok_or(<Error<T>>::ContractNotFound)?
+					};
+
+					let (executable, delegate_caller) =
+						if let Some(DelegatedCall { executable, caller }) = delegated_call {
+							(executable, Some(caller))
+						} else {
+							(E::from_storage(contract.code_hash, schedule, gas_meter)?, None)
+						};
+
+					(dest, contract, executable, delegate_caller, ExportedFunction::Reply, None)
+				},
 				FrameArgs::Instantiate { sender, nonce, executable, salt } => {
 					let account_id =
 						<Contracts<T>>::contract_address(&sender, executable.code_hash(), &salt);
@@ -720,10 +782,11 @@ where
 	fn push_frame(
 		&mut self,
 		frame_args: FrameArgs<T, E>,
-		value_transferred: BalanceOf<T>,
+		value_transferred: TransferredAssets<T>,
 		gas_limit: Weight,
 	) -> Result<E, ExecError> {
 		if self.frames.len() == T::CallStack::size() {
+			log::debug!(target: "runtime::contracts", "CallStack overflow");
 			return Err(Error::<T>::MaxCallDepthReached.into())
 		}
 
@@ -753,232 +816,307 @@ where
 		Ok(executable)
 	}
 
-	fn run_k(
+	fn run_recurse(
 		&mut self,
-		mut executable: E,
-		mut input_data: Vec<u8>,
+		executable: E,
+		input_data: Vec<u8>,
+		add_event: &mut dyn FnMut(CosmwasmEvent),
 	) -> Result<ExecReturnValue, ExecError> {
-		log::debug!(target: "runtime::contracts", "run_k");
+		log::debug!(target: "runtime::contracts", "== Execute new frame ==");
 
-		let do_transaction = || {
-			let mut sub_messages = Vec::new();
+		let top_frame = self.top_frame();
+		let entry_point = top_frame.entry_point;
+		let contract_address = top_frame.account_id.clone();
+		let funds = Self::transferred_assets_to_coins(top_frame.value_transferred.clone())?;
 
-			'l: loop {
-				let entry_point = self.top_frame().entry_point;
+		// We need to charge the storage deposit before the initial transfer so that
+		// it can create the account in case the initial transfer is < ed.
+		if entry_point == ExportedFunction::Instantiate {
+			let top_frame = top_frame_mut!(self);
+			top_frame.nested_storage.charge_instantiate(
+				&self.origin,
+				&top_frame.account_id,
+				&mut top_frame.contract_info.get(&top_frame.account_id),
+			)?;
+		}
 
-				log::debug!(target: "runtime::contracts", "stepping {:?}", entry_point);
+		// Every call or instantiate also optionally transferres balance.
+		self.initial_transfer()?;
 
-				// We need to charge the storage deposit before the initial transfer so that
-				// it can create the account in case the initial transfer is < ed.
-				if entry_point == ExportedFunction::Instantiate {
-					let top_frame = top_frame_mut!(self);
-					top_frame.nested_storage.charge_instantiate(
-						&self.origin,
-						&top_frame.account_id,
-						&mut top_frame.contract_info.get(&top_frame.account_id),
+		let cosmwasm_contract_addr =
+			Addr::unchecked(T::ConvertAccount::convert(contract_address.clone()));
+		let cosmwasm_sender_addr =
+			Addr::unchecked(T::ConvertAccount::convert(self.caller().clone()));
+
+		let env = Env {
+			block: BlockInfo {
+				// block number > u64 is impossible
+				height: self.block_number().try_into().map_err(|_| Error::<T>::ValueTooLarge)?,
+				time: Timestamp((*self.now()).into()),
+				// TODO: configurable
+				chain_id: String::from("picasso-testnet"),
+			},
+			transaction: Some(TransactionInfo { index: 0 }),
+			contract: CosmwasmContractInfo { address: cosmwasm_contract_addr },
+		};
+
+		let info = MessageInfo { sender: cosmwasm_sender_addr, funds };
+
+		// Left = Query branch
+		// Right = Response branch
+		let result = match entry_point {
+			ExportedFunction::Query => executable.query(self, env, input_data).and_then(|x| {
+				// Bubble up the success/error to caller, we consider an error here to be successful
+				// as we need to return the error to the querier.
+				// TODO: refactor all thoses serde_json::to_vec => map_err
+				serde_json::to_vec(&SystemResult::Ok(x))
+					.map(Binary)
+					.map(Left)
+					.map_err(|_| Error::<T>::DecodingFailed.into())
+			}),
+			ExportedFunction::Reply => executable.reply(self, env, input_data).and_then(|x| {
+				x.into_result().map(Right).map_err(|_| Error::<T>::ContractTrapped.into())
+			}),
+			ExportedFunction::Instantiate => executable
+				.execute(self, &ExecuteFunction::Instantiate, env, info, input_data)
+				.and_then(|x| {
+					x.into_result()
+						.map(|x| {
+							deposit_event::<T>(
+								vec![],
+								Event::Instantiated {
+									deployer: self.caller().clone(),
+									contract: contract_address.clone(),
+								},
+							);
+							Right(x)
+						})
+						.map_err(|_| Error::<T>::ContractTrapped.into())
+				}),
+			ExportedFunction::Call => executable
+				.execute(self, &ExecuteFunction::Call, env, info, input_data)
+				.and_then(|x| {
+					x.into_result().map(Right).map_err(|_| Error::<T>::ContractTrapped.into())
+				}),
+		}
+		.map_err(|e| ExecError { error: e, origin: ErrorOrigin::Callee });
+
+		let result = match result {
+			// Instantiate/Execute/Reply branch
+			Ok(Right(response)) => {
+				for event in response.events {
+					add_event(event);
+				}
+				'handle: for SubMsg { id, msg, gas_limit, reply_on } in response.messages {
+					log::debug!(target: "runtime::contracts", "Process sub message");
+					// Inner, submessage tx, one for each sub-message
+					sp_io::storage::start_transaction();
+					// Events generated by the current sub-message
+					let mut sub_events = Vec::<CosmwasmEvent>::new();
+					let mut raise_event = |event: CosmwasmEvent| {
+						// Yield to parent frame, i.e. recursive sub-message handing.
+						add_event(event.clone());
+						// Capture in current frame
+						sub_events.push(event);
+					};
+					let convert_addr = |addr: String| {
+						T::ConvertAccount::convert(addr).map_err(|_| {
+							log::debug!(target: "runtime::contracts", "Failed to parse addr to AccountId");
+							ExecError {
+								error: Error::<T>::DecodingFailed.into(),
+								origin: ErrorOrigin::Callee,
+							}
+						})
+					};
+					let sub_message_result = match msg {
+						// TODO: burn?
+						CosmosMsg::Bank(BankMsg::Burn { .. }) => todo!(),
+						// TODO: custom query? probably nice using xcvm through this via dispatch
+						CosmosMsg::Custom(_) => todo!(),
+						CosmosMsg::Wasm(wasm_msg) => match wasm_msg {
+							WasmMsg::Execute { contract_addr, msg: Binary(msg), funds } => {
+								let to = convert_addr(contract_addr)?;
+								log::debug!(target: "runtime::contracts", "WasmMsg::Execute");
+								let cached_info = self
+									.frames()
+									.find(|f| {
+										f.entry_point == ExportedFunction::Call &&
+											f.account_id == to
+									})
+									.and_then(|f| match &f.contract_info {
+										CachedContract::Cached(contract) => Some(contract.clone()),
+										_ => None,
+									});
+								let executable = self.push_frame(
+									FrameArgs::Call { dest: to, cached_info, delegated_call: None },
+									Self::coins_to_transferred_assets(funds)?,
+									gas_limit.unwrap_or_default(),
+								)?;
+								self.run_recurse(executable, msg, &mut raise_event)
+							},
+							// TODO: admin/label
+							WasmMsg::Instantiate {
+								admin,
+								code_id,
+								msg: Binary(msg),
+								funds,
+								label,
+							} => {
+								log::debug!(target: "runtime::contracts", "WasmMsg::Instantiate");
+								let executable = E::from_storage_with_id(
+									code_id,
+									self.schedule,
+									self.gas_meter(),
+								)?;
+								log::debug!(target: "runtime::contracts", "Found code");
+								let nonce = self.next_nonce();
+								log::debug!(target: "runtime::contracts", "Push frame");
+								let executable = self.push_frame(
+									FrameArgs::Instantiate {
+										sender: self.top_frame().account_id.clone(),
+										nonce,
+										executable,
+										salt: &[],
+									},
+									Self::coins_to_transferred_assets(funds)?,
+									gas_limit.unwrap_or_default(),
+								)?;
+								log::debug!(target: "runtime::contracts", "Do instantiate");
+								self.run_recurse(executable, msg, &mut raise_event)
+							},
+							WasmMsg::Migrate { .. } => todo!(),
+							WasmMsg::UpdateAdmin { .. } => todo!(),
+							WasmMsg::ClearAdmin { .. } => todo!(),
+						},
+						CosmosMsg::Bank(BankMsg::Send { to_address, amount }) => {
+							log::debug!(target: "runtime::contracts", "BankMsg::Send");
+							let to = convert_addr(to_address)?;
+							let transfer_assets = Self::coins_to_transferred_assets(amount)?;
+							transfer_assets
+								.into_iter()
+								.map(|(asset, amount)| {
+									Self::transfer(
+										ExistenceRequirement::AllowDeath,
+										asset,
+										&contract_address,
+										&to,
+										amount,
+									)
+								})
+								.collect::<Result<Vec<_>, _>>()
+								.map_err(|error| ExecError { error, origin: ErrorOrigin::Caller })
+								.map(|_| ExecReturnValue {
+									flags: ReturnFlags::empty(),
+									data: Bytes::from(Vec::new()),
+								})
+						},
+					};
+					let sub_call_result = match (sub_message_result, reply_on.clone()) {
+						// Commit without reply, continue to next submessage
+						(Ok(_), ReplyOn::Never | ReplyOn::Error) => {
+							sp_io::storage::commit_transaction();
+							continue 'handle
+						},
+						// Commit and reply
+						(
+							Ok(ExecReturnValue { data: Bytes(data), .. }),
+							ReplyOn::Always | ReplyOn::Success,
+						) => {
+							sp_io::storage::commit_transaction();
+							SubMsgResult::Ok(SubMsgResponse {
+								events: sub_events.clone(),
+								data: Some(Binary::from(data)),
+							})
+						},
+						// Rollback and reply
+						(Err(_), ReplyOn::Always | ReplyOn::Error) => {
+							sp_io::storage::rollback_transaction();
+							SubMsgResult::Err(String::new())
+						},
+						// Rollback and reply
+						(Err(_), ReplyOn::Never | ReplyOn::Success) => {
+							sp_io::storage::rollback_transaction();
+							SubMsgResult::Err(String::new())
+						},
+					};
+					let cached_info = self
+						.frames()
+						.find(|f| {
+							f.entry_point == ExportedFunction::Reply &&
+								f.account_id == contract_address.clone()
+						})
+						.and_then(|f| match &f.contract_info {
+							CachedContract::Cached(contract) => Some(contract.clone()),
+							_ => None,
+						});
+					let executable = self.push_frame(
+						FrameArgs::Reply {
+							dest: contract_address.clone(),
+							cached_info,
+							delegated_call: None,
+						},
+						// No funds are transferred on reply.
+						TransferredAssets::<T>::new(),
+						gas_limit.unwrap_or_default(),
+					)?;
+					log::debug!(target: "runtime::contracts", "Reply with {:?}", sub_call_result.clone());
+					// Either properly handle or short circuit to bubble up
+					self.run_recurse(
+						executable,
+						serde_json::to_vec(&Reply { id, result: sub_call_result })
+							.map_err(|_| Error::<T>::DecodingFailed)?,
+						add_event,
 					)?;
 				}
-
-				// Every call or instantiate also optionally transferres balance.
-				self.initial_transfer()?;
-
-				let result = match entry_point {
-					ExportedFunction::Query => {
-						let output = executable
-							.query(self, input_data)
-							.map_err(|e| ExecError { error: e, origin: ErrorOrigin::Callee })?;
-						match output {
-							crate::wasm::cosmwasm::types::ContractResult::Ok(bytes) => {
-								log::debug!(target: "runtime::contracts", "Query return result");
-								Ok(ExecReturnValue {
-									flags: ReturnFlags::empty(),
-									data: Bytes::from(bytes.0),
-								})
-							},
-							crate::wasm::cosmwasm::types::ContractResult::Err(_) => {
-								// TODO(hussein-aitlahcen): HANDLE ERROR
-								Ok(ExecReturnValue {
-									flags: ReturnFlags::empty(),
-									data: Bytes::from(Vec::new()),
-								})
-							},
-						}
-					},
-
-					ExportedFunction::Instantiate => {
-						let output = executable
-							.execute(self, &ExecuteFunction::Instantiate, input_data)
-							.map_err(|e| ExecError { error: e, origin: ErrorOrigin::Callee })?;
-						match output {
-							crate::wasm::cosmwasm::types::ContractResult::Ok(mut continuation) => {
-								let frame = self.top_frame();
-								// It is not allowed to terminate a contract inside its constructor.
-								if matches!(frame.contract_info, CachedContract::Terminated) {
-									return Err(Error::<T>::TerminatedInInstantiate.into())
-								}
-								// Deposit an instantiation event.
-								deposit_event::<T>(
-									vec![],
-									Event::Instantiated {
-										deployer: self.caller().clone(),
-										contract: frame.account_id.clone(),
-									},
-								);
-								log::debug!(target: "runtime::contracts", "Instantiate sub messages");
-								// Depth first
-								sub_messages.splice(..0, continuation.messages.drain(..));
-								Ok(ExecReturnValue {
-									flags: ReturnFlags::empty(),
-									data: Bytes::from(Vec::new()),
-								})
-							},
-							crate::wasm::cosmwasm::types::ContractResult::Err(_) =>
-								Ok(ExecReturnValue {
-									flags: ReturnFlags::empty(),
-									data: Bytes::from(Vec::new()),
-								}),
-						}
-					},
-
-					ExportedFunction::Call => {
-						let output =
-							executable
-								.execute(self, &ExecuteFunction::Call, input_data)
-								.map_err(|e| ExecError { error: e, origin: ErrorOrigin::Callee })?;
-						match output {
-							crate::wasm::cosmwasm::types::ContractResult::Ok(mut continuation) => {
-								log::debug!(target: "runtime::contracts", "Call sub messages");
-								// Depth first
-								sub_messages.splice(..0, continuation.messages.drain(..));
-								Ok(ExecReturnValue {
-									flags: ReturnFlags::empty(),
-									data: Bytes::from(Vec::new()),
-								})
-							},
-							crate::wasm::cosmwasm::types::ContractResult::Err(_) =>
-								Ok(ExecReturnValue {
-									flags: ReturnFlags::empty(),
-									data: Bytes::from(Vec::new()),
-								}),
-						}
-					},
-				};
-
-				match sub_messages.pop() {
-					Some(SubMsg { msg, gas_limit, .. }) => {
-						log::debug!(target: "runtime::contracts", "Handling sub message {:?}", msg);
-						match msg {
-							crate::wasm::cosmwasm::types::CosmosMsg::Bank(_) =>
-								unimplemented!("SubMsg Bank"),
-
-							// TODO: Pass XCVM instructions through this custom message?
-							crate::wasm::cosmwasm::types::CosmosMsg::Custom(_) =>
-								unimplemented!("SubMsg Custom"),
-
-							crate::wasm::cosmwasm::types::CosmosMsg::Wasm(continuation_message) =>
-								match continuation_message {
-									crate::wasm::cosmwasm::types::WasmMsg::Execute {
-										contract_addr,
-										msg,
-										funds,
-									} => match T::AccountIdToFromString::convert(contract_addr) {
-										Ok(to) => {
-											log::debug!(target: "runtime::contracts", "setup chached info");
-											let cached_info = self
-												.frames()
-												.find(|f| {
-													f.entry_point == ExportedFunction::Call &&
-														f.account_id == to
-												})
-												.and_then(|f| match &f.contract_info {
-													CachedContract::Cached(contract) =>
-														Some(contract.clone()),
-													_ => None,
-												});
-											log::debug!(target: "runtime::contracts", "Push new frame");
-											executable = self.push_frame(
-												FrameArgs::Call {
-													dest: to,
-													cached_info,
-													delegated_call: None,
-												},
-												BalanceOf::<T>::from(0u32),
-												gas_limit.unwrap_or_default(),
-											)?;
-											log::debug!(target: "runtime::contracts", "New input");
-											input_data = msg.0;
-										},
-										Err(_) => {
-											log::debug!(target: "runtime::contracts", "Failed to parse addr to AccountId");
-											break 'l result
-										},
-									},
-
-									crate::wasm::cosmwasm::types::WasmMsg::Instantiate {
-										admin,
-										code_id,
-										msg,
-										funds,
-										label,
-									} => unimplemented!("SubMsg Instantiate"),
-
-									crate::wasm::cosmwasm::types::WasmMsg::Migrate {
-										contract_addr,
-										new_code_id,
-										msg,
-									} => unimplemented!("SubMsg Migrate"),
-
-									crate::wasm::cosmwasm::types::WasmMsg::UpdateAdmin {
-										contract_addr,
-										admin,
-									} => unimplemented!("SubMsg UpdateAdmin"),
-
-									crate::wasm::cosmwasm::types::WasmMsg::ClearAdmin {
-										contract_addr,
-									} => unimplemented!("SubMsg ClearAdmin"),
-								},
-						}
-					},
-					None => break 'l result,
-				}
-			}
+				Ok(ExecReturnValue { flags: ReturnFlags::empty(), data: Bytes::from(Vec::new()) })
+			},
+			// Query branch
+			Ok(Left(Binary(v))) =>
+				Ok(ExecReturnValue { flags: ReturnFlags::empty(), data: Bytes::from(v) }),
+			// Error branch
+			Err(e) => Err(e),
 		};
 
-		// All changes performed by the contract are executed under a storage transaction.
-		// This allows for roll back on error. Changes to the cached contract_info are
-		// committed or rolled back when popping the frame.
-		//
-		// `with_transactional` may return an error caused by a limit in the
-		// transactional storage depth.
-		let transaction_outcome = || {
-			with_transaction(|| -> TransactionOutcome<Result<_, DispatchError>> {
-				let output = do_transaction();
-				match &output {
-					Ok(_) => TransactionOutcome::Commit(Ok((true, output))),
-					_ => TransactionOutcome::Rollback(Ok((false, output))),
-				}
-			})
-		};
-
-		let (success, output) = match transaction_outcome() {
-			// `with_transactional` executed successfully, and we have the expected output.
-			Ok((success, output)) => (success, output),
-			// `with_transactional` returned an error, and we propagate that error and note no state
-			// has changed.
-			Err(error) => (false, Err(error.into())),
-		};
-		self.pop_frame(success);
-		output
+		match result {
+			Ok(v) => {
+				self.pop_frame(true);
+				Ok(v)
+			},
+			Err(e) => {
+				self.pop_frame(false);
+				Err(e)
+			},
+		}
 	}
-
-	// TODO(hussein-aitlahcen): no need for frames, we can directly use a looping state machine to
-	// process actor messages/events.
 
 	/// Run the current (top) frame.
 	///
 	/// This can be either a call or an instantiate.
 	fn run(&mut self, executable: E, input_data: Vec<u8>) -> Result<ExecReturnValue, ExecError> {
-		self.run_k(executable, input_data)
+		with_transaction(|| {
+			let mut events = Vec::new();
+			let mut raise_event = |event: CosmwasmEvent| {
+				events.push(event);
+			};
+			let r = self.run_recurse(executable, input_data, &mut raise_event).and_then(|v| {
+				events
+					.iter()
+					.map(|event| -> Result<(), ExecError> {
+						let data = serde_json::to_vec(event).map_err(|_| ExecError {
+							error: Error::<T>::DecodingFailed.into(),
+							origin: ErrorOrigin::Callee,
+						})?;
+						self.deposit_event(vec![], data);
+						Ok(())
+					})
+					.collect::<Result<Vec<_>, _>>()?;
+				Ok(v)
+			});
+			match r {
+				Ok(x) => TransactionOutcome::Commit(Ok(x)),
+				Err(e) => TransactionOutcome::Rollback(Err(e)),
+			}
+		})
 	}
 
 	/// Remove the current (top) frame from the stack.
@@ -1071,24 +1209,65 @@ where
 		}
 	}
 
+	fn coins_to_transferred_assets(
+		coins: Vec<Coin>,
+	) -> Result<TransferredAssets<T>, DispatchError> {
+		let transferred_assets = coins
+			.into_iter()
+			.map(|Coin { denom, amount }| {
+				let asset =
+					T::ConvertAsset::convert(denom).map_err(|()| Error::<T>::DecodingFailed)?;
+				let amount =
+					BalanceOf::<T>::try_from(amount).map_err(|_| Error::<T>::DecodingFailed)?;
+				Ok((asset, amount))
+			})
+			.collect::<Result<BTreeMap<AssetIdOf<T>, BalanceOf<T>>, DispatchError>>()?;
+		TransferredAssets::<T>::try_from(transferred_assets)
+			.map_err(|_| Error::<T>::ValueTooLarge.into())
+	}
+
+	fn transferred_assets_to_coins(
+		transferred_assets: TransferredAssets<T>,
+	) -> Result<Vec<Coin>, DispatchError> {
+		transferred_assets
+			.into_iter()
+			.map(|(asset, balance)| -> Result<Coin, DispatchError> {
+				let amount = balance.try_into().map_err(|_| Error::<T>::ValueTooLarge)?;
+				Ok(Coin { denom: T::ConvertAsset::convert(asset), amount })
+			})
+			.collect::<Result<Vec<_>, _>>()
+	}
+
 	/// Transfer some funds from `from` to `to`.
 	fn transfer(
 		existence_requirement: ExistenceRequirement,
+		asset: AssetIdOf<T>,
 		from: &T::AccountId,
 		to: &T::AccountId,
-		value: BalanceOf<T>,
+		amount: BalanceOf<T>,
 	) -> DispatchResult {
-		T::Currency::transfer(from, to, value, existence_requirement)
-			.map_err(|_| Error::<T>::TransferFailed)?;
-		Ok(())
+		T::Assets::transfer(
+			asset,
+			from,
+			to,
+			amount,
+			match existence_requirement {
+				ExistenceRequirement::KeepAlive => true,
+				ExistenceRequirement::AllowDeath => false,
+			},
+		)
+		.map(|_| ())
+		.map_err(|_| Error::<T>::TransferFailed.into())
 	}
 
 	// The transfer as performed by a call or instantiate.
 	fn initial_transfer(&self) -> DispatchResult {
 		let frame = self.top_frame();
-		let value = frame.value_transferred;
-
-		Self::transfer(ExistenceRequirement::KeepAlive, self.caller(), &frame.account_id, value)
+		let from = self.caller();
+		let to = &frame.account_id;
+		frame.value_transferred.iter().try_fold((), |_, (asset, amount)| {
+			Self::transfer(ExistenceRequirement::KeepAlive, *asset, from, &to, *amount)
+		})
 	}
 
 	/// Reference to the current (top) frame.
@@ -1111,12 +1290,6 @@ where
 	/// Same as `frames` but with a mutable reference as iterator item.
 	fn frames_mut(&mut self) -> impl Iterator<Item = &mut Frame<T>> {
 		sp_std::iter::once(&mut self.first_frame).chain(&mut self.frames).rev()
-	}
-
-	/// Returns whether the current contract is on the stack multiple times.
-	fn is_recursive(&self) -> bool {
-		let account_id = &self.top_frame().account_id;
-		self.frames().skip(1).any(|f| &f.account_id == account_id)
 	}
 
 	/// Increments and returns the next nonce. Pulls it from storage if it isn't in cache.
@@ -1144,8 +1317,104 @@ where
 {
 	type T = T;
 
-	fn transfer(&mut self, to: &T::AccountId, value: BalanceOf<T>) -> DispatchResult {
-		Self::transfer(ExistenceRequirement::KeepAlive, &self.top_frame().account_id, to, value)
+	fn query_chain(&mut self, request: QueryRequest) -> Result<Vec<u8>, DispatchError> {
+		match request {
+			// TODO: do we impl custom query?
+			QueryRequest::Custom(_) => todo!(),
+			// TODO: do we impl all balances?
+			QueryRequest::Bank(BankQuery::AllBalances { .. }) => todo!(),
+			QueryRequest::Bank(BankQuery::Balance { address, denom }) => {
+				let asset = T::ConvertAsset::convert(denom.clone())
+					.map_err(|_| Error::<T>::DecodingFailed)?;
+				let to =
+					T::ConvertAccount::convert(address).map_err(|_| Error::<T>::DecodingFailed)?;
+				let response = SystemResult::Ok(CosmwasmResult::Ok(BalanceResponse {
+					amount: Coin {
+						denom,
+						amount: T::Assets::reducible_balance(asset, &to, false)
+							.try_into()
+							.map_err(|_| Error::<T>::ValueTooLarge)?,
+					},
+				}));
+				serde_json::to_vec(&response).map_err(|_| Error::<T>::DecodingFailed.into())
+			},
+			QueryRequest::Wasm(wasm_query) => match wasm_query {
+				WasmQuery::Smart { contract_addr, msg: Binary(msg) } => {
+					match T::ConvertAccount::convert(contract_addr) {
+						Ok(to) => {
+							let cached_info = self
+								.frames()
+								.find(|f| {
+									f.entry_point == ExportedFunction::Query && f.account_id == to
+								})
+								.and_then(|f| match &f.contract_info {
+									CachedContract::Cached(contract) => Some(contract.clone()),
+									_ => None,
+								});
+							let executable = self
+								.push_frame(
+									FrameArgs::Query {
+										dest: to,
+										cached_info,
+										delegated_call: None,
+									},
+									// Nothing transferred while querying
+									TransferredAssets::<T>::new(),
+									0,
+								)
+								.map_err(|e| e.error)?;
+							// No events on query
+							let mut raise_event = |_: CosmwasmEvent| {};
+							let Bytes(response) = self
+								.run_recurse(executable, msg, &mut raise_event)
+								.map_err(|e| e.error)?
+								.data;
+							Ok(response)
+						},
+						Err(_) => Err(Error::<T>::DecodingFailed.into()),
+					}
+				},
+				WasmQuery::Raw { contract_addr, key: Binary(key_data) } => {
+					let to = T::ConvertAccount::convert(contract_addr)
+						.map_err(|_| Error::<T>::DecodingFailed)?;
+					let trie_id = self.trie_id(&to).ok_or(Error::<T>::ContractNotFound)?;
+					let key = keccak_256(&key_data);
+					let value =
+						Storage::<T>::read(&trie_id, &key).ok_or(Error::<T>::ContractNotFound)?;
+					let response = SystemResult::Ok(CosmwasmResult::Ok(Binary(value)));
+					serde_json::to_vec(&response).map_err(|_| Error::<T>::DecodingFailed.into())
+				},
+				WasmQuery::ContractInfo { contract_addr } => {
+					let to = T::ConvertAccount::convert(contract_addr)
+						.map_err(|_| Error::<T>::DecodingFailed)?;
+					let code_id = self.code_id(&to).ok_or(Error::<T>::ContractNotFound)?;
+          // TODO: admin/pinned/ibc_port
+					let response = SystemResult::Ok(CosmwasmResult::Ok(ContractInfoResponse {
+						code_id,
+						creator: String::new(),
+						admin: None,
+						pinned: false,
+						ibc_port: None,
+					}));
+					serde_json::to_vec(&response).map_err(|_| Error::<T>::DecodingFailed.into())
+				},
+			},
+		}
+	}
+
+	fn transfer(
+		&mut self,
+		asset: AssetIdOf<T>,
+		to: &T::AccountId,
+		amount: BalanceOf<T>,
+	) -> DispatchResult {
+		Self::transfer(
+			ExistenceRequirement::KeepAlive,
+			asset,
+			&self.top_frame().account_id,
+			to,
+			amount,
+		)
 	}
 
 	fn get_storage(&mut self, key: &StorageKey) -> Option<Vec<u8>> {
@@ -1172,10 +1441,6 @@ where
 		)
 	}
 
-	fn address(&self) -> &T::AccountId {
-		&self.top_frame().account_id
-	}
-
 	fn caller(&self) -> &T::AccountId {
 		if let Some(caller) = &self.top_frame().delegate_caller {
 			&caller
@@ -1192,6 +1457,14 @@ where
 		<ContractInfoOf<T>>::get(&address).map(|contract| contract.code_hash)
 	}
 
+	fn code_id(&self, address: &AccountIdOf<T>) -> Option<u64> {
+		self.code_hash(address).and_then(CodeHashToId::<T>::get)
+	}
+
+	fn trie_id(&self, address: &T::AccountId) -> Option<TrieId> {
+		<ContractInfoOf<T>>::get(&address).map(|contract| contract.trie_id)
+	}
+
 	fn own_code_hash(&mut self) -> &CodeHash<Self::T> {
 		&self.top_frame_mut().contract_info().code_hash
 	}
@@ -1200,16 +1473,16 @@ where
 		self.caller() == &self.origin
 	}
 
-	fn balance(&self) -> BalanceOf<T> {
-		T::Currency::free_balance(&self.top_frame().account_id)
+	fn address(&self) -> &T::AccountId {
+		&self.top_frame().account_id
 	}
 
-	fn value_transferred(&self) -> BalanceOf<T> {
-		self.top_frame().value_transferred
+	fn balance(&self, asset: AssetIdOf<T>) -> BalanceOf<T> {
+		T::Assets::reducible_balance(asset, self.address(), false)
 	}
 
-	fn random(&self, subject: &[u8]) -> (SeedOf<T>, BlockNumberOf<T>) {
-		T::Randomness::random(subject)
+	fn value_transferred(&self) -> TransferredAssets<Self::T> {
+		self.top_frame().value_transferred.clone()
 	}
 
 	fn now(&self) -> &MomentOf<T> {
@@ -1218,6 +1491,10 @@ where
 
 	fn minimum_balance(&self) -> BalanceOf<T> {
 		T::Currency::minimum_balance()
+	}
+
+	fn random(&self, subject: &[u8]) -> (SeedOf<T>, BlockNumberOf<T>) {
+		T::Randomness::random(subject)
 	}
 
 	fn deposit_event(&mut self, topics: Vec<T::Hash>, data: Vec<u8>) {

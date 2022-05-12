@@ -1,5 +1,3 @@
-// This file is part of Substrate.
-
 // Copyright (C) 2018-2022 Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
@@ -18,25 +16,25 @@
 //! Environment definition of the wasm smart-contract runtime.
 
 use crate::{
-	exec::{ExecError, ExecResult, Ext, StorageKey, TopicOf},
+	exec::{ExecError, Ext, StorageKey, TopicOf},
 	gas::{ChargedAmount, Token},
 	schedule::HostFnWeights,
 	wasm::{
-		cosmwasm::types::{DeserializeLimit, ExecuteResult, QueryResult},
+		cosmwasm::types::{
+			DeserializeLimit, ExecuteResult, InstantiateResult, MessageInfo, QueryRequest,
+			QueryResult, ReadLimit, Reply, ReplyResult,
+		},
 		env_def::ConvertibleToWasm,
 	},
-	BalanceOf, CodeHash, Config, Error, SENTINEL,
+	Config, Error, SENTINEL,
 };
 use bitflags::bitflags;
 use codec::{Decode, DecodeAll, Encode, MaxEncodedLen};
 use frame_support::{dispatch::DispatchError, ensure, weights::Weight};
 use pallet_contracts_primitives::{ExecReturnValue, ReturnFlags};
-use sp_core::{crypto::UncheckedFrom, Bytes};
+use sp_core::crypto::UncheckedFrom;
 use sp_io::hashing::{blake2_128, blake2_256, keccak_256, sha2_256};
-use sp_runtime::{
-	traits::{Bounded, Zero},
-	ArithmeticError,
-};
+use sp_runtime::ArithmeticError;
 use sp_sandbox::{
 	default_executor::{
 		DefinedHostFunctions, EnvironmentDefinitionBuilder, GuestExternals, Memory,
@@ -46,10 +44,8 @@ use sp_sandbox::{
 use sp_std::{prelude::*, vec};
 use wasm_instrument::parity_wasm::elements::ValueType;
 use wasmi::{
-	ExternVal, FuncInstance, Module, ModuleInstance, ModuleRef, NopExternals, RuntimeValue, Trap,
+	ExternVal, FuncInstance, Module, ModuleInstance, ModuleRef, NopExternals, RuntimeValue,
 };
-
-use super::cosmwasm::types::{InstantiateResult, MessageInfo};
 
 /// Every error that can be returned to a contract when it calls any of the host functions.
 ///
@@ -405,6 +401,7 @@ bitflags! {
 	}
 }
 
+pub const REPLY_FUNCTION: &str = "reply";
 pub const INSTANTIATE_FUNCTION: &str = "instantiate";
 pub const EXECUTE_FUNCTION: &str = "execute";
 pub const QUERY_FUNCTION: &str = "query";
@@ -499,14 +496,18 @@ impl<'a, E: Ext + 'a> Runtime<'a, E> {
 	/// JSON marshaling of an arbitrary type from the contract memory.
 	pub fn marshall_out<T>(&mut self, ptr: u32) -> Result<T, DispatchError>
 	where
-		T: serde::de::DeserializeOwned + DeserializeLimit + ?Sized,
+		T: serde::de::DeserializeOwned + ReadLimit + DeserializeLimit + ?Sized,
 	{
 		log::debug!(target: "runtime::contracts", "Marshall out");
 		let value = self
 			.memory()
-			.read_region(ptr, T::deserialize_limit())
+			.read_region(ptr, T::read_limit())
 			.map_err(|_| DispatchError::Other("could not read region"))?;
-		serde_json::from_slice(&value).map_err(|_| DispatchError::Other("couldn't deserialize"))
+		if value.len() > T::deserialize_limit() {
+			Err(DispatchError::Other("deserialization limit reached"))
+		} else {
+			serde_json::from_slice(&value).map_err(|_| DispatchError::Other("couldn't deserialize"))
+		}
 	}
 }
 
@@ -521,7 +522,7 @@ where
 		code: &[u8],
 		env_def_builder: &EnvironmentDefinitionBuilder<Self>,
 	) -> Result<Self, DispatchError> {
-		log::debug!(target: "runtime::contracts", "loading code from buffer");
+		log::debug!(target: "runtime::contracts", "Loading code from buffer");
 
 		let module = Module::from_buffer(code).map_err(|_| DispatchError::Other(""))?;
 		let not_started_instance =
@@ -538,7 +539,7 @@ where
 
 		let memory = match instance.export_by_name("memory") {
 			Some(ExternVal::Memory(memory)) => {
-				log::debug!(target: "runtime::contracts", "set internal memory");
+				log::debug!(target: "runtime::contracts", "Set internal memory");
 				Ok(Memory::new(memory))
 			},
 			_ => Err(DispatchError::Other(
@@ -546,13 +547,7 @@ where
 			)),
 		}?;
 
-		Ok(Runtime {
-			ext,
-			memory,
-			instance,
-			defined_host_functions,
-			trap_reason: None,
-		})
+		Ok(Runtime { ext, memory, instance, defined_host_functions, trap_reason: None })
 	}
 
 	pub fn do_instantiate(
@@ -623,7 +618,30 @@ where
 			},
 			e => {
 				log::debug!(target: "runtime::contracts", "Query failed {:?}", e);
-				Err(DispatchError::Other("could not execute"))
+				Err(DispatchError::Other("could not query"))
+			},
+		}
+	}
+
+	pub fn do_reply(
+		&mut self,
+		env: super::cosmwasm::types::Env,
+		message: &[u8],
+	) -> Result<ReplyResult, DispatchError> {
+		let parameters = vec![self.marshall_in(&env)?, self.passthrough_in(message)?]
+			.into_iter()
+			.map(|v| RuntimeValue::I32(v as i32))
+			.collect::<Vec<_>>();
+		match self.invoke(REPLY_FUNCTION, &parameters) {
+			Ok(Some(RuntimeValue::I32(response_ptr))) => {
+				let response = self.marshall_out::<ReplyResult>(response_ptr as u32);
+				self.deallocate(response_ptr)?;
+				log::debug!(target: "runtime::contracts", "Reply done {:?}", response);
+				response
+			},
+			e => {
+				log::debug!(target: "runtime::contracts", "Reply failed {:?}", e);
+				Err(DispatchError::Other("could not reply"))
 			},
 		}
 	}
@@ -972,7 +990,9 @@ define_env!(Env, <E: Ext>,
 	[env] db_read(ctx, key_ptr: u32) -> u32 => {
 		log::debug!(target: "runtime::contracts", "DbRead");
 		let charged = ctx.charge_gas(RuntimeCosts::GetStorage(ctx.ext.max_value_size()))?;
-		let key = keccak_256(&ctx.memory().read_region(key_ptr, MAX_LENGTH_DB_KEY as _)?);
+	let key_data = ctx.memory().read_region(key_ptr, MAX_LENGTH_DB_KEY as _)?;
+		ctx.charge_gas(RuntimeCosts::HashKeccak256(key_data.len() as _))?;
+		let key = keccak_256(&key_data);
 		if let Some(value) = ctx.ext.get_storage(&key) {
 			ctx.adjust_gas(charged, RuntimeCosts::GetStorage(value.len() as u32));
 		  let value_ptr = ctx.allocate(value.len())?;
@@ -986,7 +1006,9 @@ define_env!(Env, <E: Ext>,
 
 	[env] db_write(ctx, key_ptr: u32, value_ptr: u32) => {
 		log::debug!(target: "runtime::contracts", "DbWrite");
-		let key = keccak_256(&ctx.memory().read_region(key_ptr, MAX_LENGTH_DB_KEY as _)?);
+	let key_data = ctx.memory().read_region(key_ptr, MAX_LENGTH_DB_KEY as _)?;
+		ctx.charge_gas(RuntimeCosts::HashKeccak256(key_data.len() as _))?;
+		let key = keccak_256(&key_data);
 		let value = ctx.memory().read_region(value_ptr, MAX_LENGTH_DB_VALUE as _)?;
 	  let value_len = value.len() as u32;
 		let max_size = ctx.ext.max_value_size();
@@ -1005,7 +1027,9 @@ define_env!(Env, <E: Ext>,
 
 	[env] db_remove(ctx, key_ptr: u32) => {
 		log::debug!(target: "runtime::contracts", "DbRemove");
-		let key = keccak_256(&ctx.memory().read_region(key_ptr, MAX_LENGTH_DB_KEY as _)?);
+	let key_data = ctx.memory().read_region(key_ptr, MAX_LENGTH_DB_KEY as _)?;
+		ctx.charge_gas(RuntimeCosts::HashKeccak256(key_data.len() as _))?;
+		let key = keccak_256(&key_data);
 		let max_size = ctx.ext.max_value_size();
 		let charged = ctx
 			.charge_gas(RuntimeCosts::SetStorage { new_bytes: 0, old_bytes: max_size })?;
@@ -1041,19 +1065,19 @@ define_env!(Env, <E: Ext>,
 	},
 
 	[env] secp256k1_verify(ctx, _message_hash_ptr: u32, _signature_ptr: u32, _public_key_ptr: u32) -> u32 => {
-		log::debug!(target: "runtime::contracts", "Verify1");
+		log::debug!(target: "runtime::contracts", "secp256k1_verify");
 		Ok(0)
 	},
 	[env] secp256k1_recover_pubkey(ctx, _message_hash_ptr: u32, _signature_ptr: u32, _recovery_param: u32) -> u64 => {
-		log::debug!(target: "runtime::contracts", "Pubkey");
+		log::debug!(target: "runtime::contracts", "secp256k1_recover_pubkey");
 		Ok(0)
 	},
 	[env] ed25519_verify(ctx, _message_ptr: u32, _signature_ptr: u32, _public_key_ptr: u32) -> u32 => {
-		log::debug!(target: "runtime::contracts", "Verify");
+		log::debug!(target: "runtime::contracts", "ed25519_verify");
 		Ok(0)
 	},
 	[env] ed25519_batch_verify(ctx, _messages_ptr: u32, _signatures_ptr: u32, _public_keys_ptr: u32) -> u32 => {
-		log::debug!(target: "runtime::contracts", "BatchVerify");
+		log::debug!(target: "runtime::contracts", "ed25519_batch_verify");
 		Ok(0)
 	},
 
@@ -1070,8 +1094,10 @@ define_env!(Env, <E: Ext>,
 		Ok(())
 	},
 
-	[env] query_chain(ctx, _request: u32) -> u32 => {
+	[env] query_chain(ctx, request_ptr: u32) -> u32 => {
 		log::debug!(target: "runtime::contracts", "QueryChain");
-		Ok(0)
+		let request = ctx.marshall_out::<QueryRequest>(request_ptr)?;
+	  let response = ctx.ext.query_chain(request)?;
+		Ok(ctx.passthrough_in(&response)?)
 	},
 );

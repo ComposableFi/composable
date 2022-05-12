@@ -2,7 +2,6 @@ use alloc::string::String;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
-use core::fmt::Display;
 
 pub mod read_limits {
 	/// A mibi (mega binary)
@@ -19,24 +18,8 @@ pub mod read_limits {
 	pub const RESULT_REPLY: usize = 64 * MI;
 	/// Max length (in bytes) of the result data from a query call.
 	pub const RESULT_QUERY: usize = 64 * MI;
-	/// Max length (in bytes) of the result data from a ibc_channel_open call.
-	#[cfg(feature = "stargate")]
-	pub const RESULT_IBC_CHANNEL_OPEN: usize = 64 * MI;
-	/// Max length (in bytes) of the result data from a ibc_channel_connect call.
-	#[cfg(feature = "stargate")]
-	pub const RESULT_IBC_CHANNEL_CONNECT: usize = 64 * MI;
-	/// Max length (in bytes) of the result data from a ibc_channel_close call.
-	#[cfg(feature = "stargate")]
-	pub const RESULT_IBC_CHANNEL_CLOSE: usize = 64 * MI;
-	/// Max length (in bytes) of the result data from a ibc_packet_receive call.
-	#[cfg(feature = "stargate")]
-	pub const RESULT_IBC_PACKET_RECEIVE: usize = 64 * MI;
-	/// Max length (in bytes) of the result data from a ibc_packet_ack call.
-	#[cfg(feature = "stargate")]
-	pub const RESULT_IBC_PACKET_ACK: usize = 64 * MI;
-	/// Max length (in bytes) of the result data from a ibc_packet_timeout call.
-	#[cfg(feature = "stargate")]
-	pub const RESULT_IBC_PACKET_TIMEOUT: usize = 64 * MI;
+	/// Max length (in bytes) of the query data from a query_chain call.
+	pub const REQUEST_QUERY: usize = 64 * MI;
 }
 
 /// The limits for the JSON deserialization.
@@ -58,28 +41,13 @@ pub mod deserialization_limits {
 	pub const RESULT_REPLY: usize = 256 * KI;
 	/// Max length (in bytes) of the result data from a query call.
 	pub const RESULT_QUERY: usize = 256 * KI;
-	/// Max length (in bytes) of the result data from a ibc_channel_open call.
-	#[cfg(feature = "stargate")]
-	pub const RESULT_IBC_CHANNEL_OPEN: usize = 256 * KI;
-	/// Max length (in bytes) of the result data from a ibc_channel_connect call.
-	#[cfg(feature = "stargate")]
-	pub const RESULT_IBC_CHANNEL_CONNECT: usize = 256 * KI;
-	/// Max length (in bytes) of the result data from a ibc_channel_close call.
-	#[cfg(feature = "stargate")]
-	pub const RESULT_IBC_CHANNEL_CLOSE: usize = 256 * KI;
-	/// Max length (in bytes) of the result data from a ibc_packet_receive call.
-	#[cfg(feature = "stargate")]
-	pub const RESULT_IBC_PACKET_RECEIVE: usize = 256 * KI;
-	/// Max length (in bytes) of the result data from a ibc_packet_ack call.
-	#[cfg(feature = "stargate")]
-	pub const RESULT_IBC_PACKET_ACK: usize = 256 * KI;
-	/// Max length (in bytes) of the result data from a ibc_packet_timeout call.
-	#[cfg(feature = "stargate")]
-	pub const RESULT_IBC_PACKET_TIMEOUT: usize = 256 * KI;
+	/// Max length (in bytes) of the query data from a query_chain call.
+	pub const REQUEST_QUERY: usize = 256 * KI;
 }
 
 pub type CosmwasmExecutionResult = ContractResult<Response<Empty>>;
 pub type CosmwasmQueryResult = ContractResult<QueryResponse>;
+pub type CosmwasmReplyResult = ContractResult<Response<Empty>>;
 
 pub type QueryResponse = Binary;
 
@@ -87,11 +55,33 @@ pub trait DeserializeLimit {
 	fn deserialize_limit() -> usize;
 }
 
+pub trait ReadLimit {
+	fn read_limit() -> usize;
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct ReplyResult(pub CosmwasmExecutionResult);
+impl DeserializeLimit for ReplyResult {
+	fn deserialize_limit() -> usize {
+		deserialization_limits::RESULT_REPLY
+	}
+}
+impl ReadLimit for ReplyResult {
+	fn read_limit() -> usize {
+		read_limits::RESULT_REPLY
+	}
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct QueryResult(pub CosmwasmQueryResult);
 impl DeserializeLimit for QueryResult {
 	fn deserialize_limit() -> usize {
 		deserialization_limits::RESULT_QUERY
+	}
+}
+impl ReadLimit for QueryResult {
+	fn read_limit() -> usize {
+		read_limits::RESULT_QUERY
 	}
 }
 
@@ -102,12 +92,117 @@ impl DeserializeLimit for ExecuteResult {
 		deserialization_limits::RESULT_EXECUTE
 	}
 }
+impl ReadLimit for ExecuteResult {
+	fn read_limit() -> usize {
+		read_limits::RESULT_EXECUTE
+	}
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct InstantiateResult(pub CosmwasmExecutionResult);
 impl DeserializeLimit for InstantiateResult {
 	fn deserialize_limit() -> usize {
 		deserialization_limits::RESULT_INSTANTIATE
+	}
+}
+impl ReadLimit for InstantiateResult {
+	fn read_limit() -> usize {
+		read_limits::RESULT_INSTANTIATE
+	}
+}
+
+#[non_exhaustive]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum QueryRequest<C = Empty> {
+	Custom(C),
+	Bank(BankQuery),
+	Wasm(WasmQuery),
+}
+
+impl<C> DeserializeLimit for QueryRequest<C> {
+	fn deserialize_limit() -> usize {
+		deserialization_limits::REQUEST_QUERY
+	}
+}
+
+impl<C> ReadLimit for QueryRequest<C> {
+	fn read_limit() -> usize {
+		read_limits::REQUEST_QUERY
+	}
+}
+
+#[non_exhaustive]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum BankQuery {
+	/// This calls into the native bank module for one denomination
+	/// Return value is BalanceResponse
+	Balance { address: String, denom: String },
+	/// This calls into the native bank module for all denominations.
+	/// Note that this may be much more expensive than Balance and should be avoided if possible.
+	/// Return value is AllBalanceResponse.
+	AllBalances { address: String },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub struct BalanceResponse {
+	/// Always returns a Coin with the requested denom.
+	/// This may be of 0 amount if no such funds.
+	pub amount: Coin,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub struct AllBalanceResponse {
+	/// Returns all non-zero coins held by this account.
+	pub amount: Vec<Coin>,
+}
+
+#[non_exhaustive]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum WasmQuery {
+	/// this queries the public API of another contract at a known address (with known ABI)
+	/// Return value is whatever the contract returns (caller should know), wrapped in a
+	/// ContractResult that is JSON encoded.
+	Smart {
+		contract_addr: String,
+		/// msg is the json-encoded QueryMsg struct
+		msg: Binary,
+	},
+	/// this queries the raw kv-store of the contract.
+	/// returns the raw, unparsed data stored at that key, which may be an empty vector if not
+	/// present
+	Raw {
+		contract_addr: String,
+		/// Key is the raw key used in the contracts Storage
+		key: Binary,
+	},
+	/// returns a ContractInfoResponse with metadata on the contract from the runtime
+	ContractInfo { contract_addr: String },
+}
+
+#[non_exhaustive]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct ContractInfoResponse {
+	pub code_id: u64,
+	/// address that instantiated this contract
+	pub creator: String,
+	/// admin who can run migrations (if any)
+	pub admin: Option<String>,
+	/// if set, the contract is pinned to the cache, and thus uses less gas when called
+	pub pinned: bool,
+	/// set if this contract has bound an IBC port
+	pub ibc_port: Option<String>,
+}
+
+impl ContractInfoResponse {
+	/// Convenience constructor for tests / mocks
+	#[doc(hidden)]
+	pub fn new(code_id: u64, creator: impl Into<String>) -> Self {
+		Self { code_id, creator: creator.into(), admin: None, pinned: false, ibc_port: None }
 	}
 }
 
@@ -436,6 +531,7 @@ impl<S> From<ContractResult<S>> for Result<S, String> {
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq)]
 pub struct Coin {
 	pub denom: String,
+	#[serde(with = "string")]
 	pub amount: u128,
 }
 
@@ -815,27 +911,28 @@ impl core::fmt::Display for CanonicalAddr {
 }
 
 mod string {
-  use core::fmt::Display;
-  use core::str::FromStr;
+	use core::{fmt::Display, str::FromStr};
 
-  use serde::{de, Serializer, Deserialize, Deserializer};
+	use serde::{de, Deserialize, Deserializer, Serializer};
 
-  pub fn serialize<T, S>(value: &T, serializer: S) -> Result<S::Ok, S::Error>
-  where
-    T: Display,
-    S: Serializer
-  {
-    serializer.collect_str(value)
-  }
+	pub fn serialize<T, S>(value: &T, serializer: S) -> Result<S::Ok, S::Error>
+	where
+		T: Display,
+		S: Serializer,
+	{
+		serializer.collect_str(value)
+	}
 
-  pub fn deserialize<'de, T, D>(deserializer: D) -> Result<T, D::Error>
-  where
-    T: FromStr,
-    T::Err: Display,
-    D: Deserializer<'de>
-  {
-    alloc::string::String::deserialize(deserializer)?.parse().map_err(de::Error::custom)
-  }
+	pub fn deserialize<'de, T, D>(deserializer: D) -> Result<T, D::Error>
+	where
+		T: FromStr,
+		T::Err: Display,
+		D: Deserializer<'de>,
+	{
+		alloc::string::String::deserialize(deserializer)?
+			.parse()
+			.map_err(de::Error::custom)
+	}
 }
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -945,4 +1042,100 @@ pub struct MessageInfo {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ContractInfo {
 	pub address: Addr,
+}
+
+/// SystemError is used for errors inside the VM and is API friendly (i.e. serializable).
+///
+/// This is used on return values for Querier as a nested result: Result<StdResult<T>, SystemError>
+/// The first wrap (SystemError) will trigger if the contract address doesn't exist,
+/// the QueryRequest is malformated, etc. The second wrap will be an error message from
+/// the contract itself.
+///
+/// Such errors are only created by the VM. The error type is defined in the standard library, to
+/// ensure the contract understands the error format without creating a dependency on cosmwasm-vm.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+#[non_exhaustive]
+pub enum SystemError {
+	InvalidRequest {
+		error: String,
+		request: Binary,
+	},
+	InvalidResponse {
+		error: String,
+		response: Binary,
+	},
+	NoSuchContract {
+		/// The address that was attempted to query
+		addr: String,
+	},
+	Unknown {},
+	UnsupportedRequest {
+		kind: String,
+	},
+}
+
+/// This is the outer result type returned by a querier to the contract.
+///
+/// We use a custom type here instead of Rust's Result because we want to be able to
+/// define the serialization, which is a public interface. Every language that compiles
+/// to Wasm and runs in the ComsWasm VM needs to create the same JSON representation.
+///
+/// # Examples
+///
+/// Success:
+///
+/// ```
+/// # use cosmwasm_std::{to_vec, Binary, ContractResult, SystemResult};
+/// let data = Binary::from(b"hello, world");
+/// let result = SystemResult::Ok(ContractResult::Ok(data));
+/// assert_eq!(to_vec(&result).unwrap(), br#"{"ok":{"ok":"aGVsbG8sIHdvcmxk"}}"#);
+/// ```
+///
+/// Failure:
+///
+/// ```
+/// # use cosmwasm_std::{to_vec, Binary, ContractResult, SystemResult, SystemError};
+/// let error = SystemError::Unknown {};
+/// let result: SystemResult<Binary> = SystemResult::Err(error);
+/// assert_eq!(to_vec(&result).unwrap(), br#"{"error":{"unknown":{}}}"#);
+/// ```
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum SystemResult<S> {
+	Ok(S),
+	#[serde(rename = "error")]
+	Err(SystemError),
+}
+
+// Implementations here mimic the Result API and should be implemented via a conversion to Result
+// to ensure API consistency
+impl<S> SystemResult<S> {
+	/// Converts a `ContractResult<S>` to a `Result<S, SystemError>` as a convenient way
+	/// to access the full Result API.
+	pub fn into_result(self) -> Result<S, SystemError> {
+		Result::<S, SystemError>::from(self)
+	}
+
+	pub fn unwrap(self) -> S {
+		self.into_result().unwrap()
+	}
+}
+
+impl<S> From<Result<S, SystemError>> for SystemResult<S> {
+	fn from(original: Result<S, SystemError>) -> SystemResult<S> {
+		match original {
+			Ok(value) => SystemResult::Ok(value),
+			Err(err) => SystemResult::Err(err),
+		}
+	}
+}
+
+impl<S> From<SystemResult<S>> for Result<S, SystemError> {
+	fn from(original: SystemResult<S>) -> Result<S, SystemError> {
+		match original {
+			SystemResult::Ok(value) => Ok(value),
+			SystemResult::Err(err) => Err(err),
+		}
+	}
 }

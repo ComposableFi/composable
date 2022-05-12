@@ -44,16 +44,20 @@ rand_pcg = { version = "0.3", optional = true }
 frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-storage = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
 base64 = { version = "0.13", default-features = false, features = ["alloc"] }
 
 pallet-contracts-primitives = { default-features = false, path = "common" }
 pallet-contracts-proc-macro = { default-features = false, path = "proc-macro" }
 sp-sandbox = { default-features = false, path = "../sandbox" }
+
+either = { version = "1.6", default-features = false }
 
 [dev-dependencies]
 assert_matches = "1"

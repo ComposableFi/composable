@@ -32,8 +32,8 @@ use crate::{
 	gas::{GasMeter, Token},
 	wasm::{prepare, PrefabWasmModule},
 	weights::WeightInfo,
-	CodeHash, CodeStorage, Config, Error, Event, OwnerInfoOf, Pallet, PristineCode, Schedule,
-	Weight,
+	CodeHash, CodeHashToId, CodeIdToHash, CodeStorage, Config, Error, Event, OwnerInfoOf, Pallet,
+	PristineCode, Schedule, Weight,
 };
 use frame_support::{
 	dispatch::{DispatchError, DispatchResult},
@@ -47,7 +47,11 @@ use sp_runtime::traits::BadOrigin;
 ///
 /// Increments the refcount of the in-storage `prefab_module` if it already exists in storage
 /// under the specified `code_hash`.
-pub fn store<T: Config>(mut module: PrefabWasmModule<T>, instantiated: bool) -> DispatchResult
+pub fn store<T: Config>(
+	mut module: PrefabWasmModule<T>,
+	id: u64,
+	instantiated: bool,
+) -> DispatchResult
 where
 	T::AccountId: UncheckedFrom<T::Hash> + AsRef<[u8]>,
 {
@@ -95,6 +99,8 @@ where
 			owner_info.refcount = if instantiated { 1 } else { 0 };
 			<PristineCode<T>>::insert(&code_hash, orig_code);
 			<OwnerInfoOf<T>>::insert(&code_hash, owner_info);
+			<CodeIdToHash<T>>::insert(&id, &code_hash);
+			<CodeHashToId<T>>::insert(&code_hash, &id);
 			*existing = Some(module);
 			<Pallet<T>>::deposit_event(Event::CodeStored { code_hash });
 			Ok(())
@@ -179,6 +185,22 @@ where
 	}
 
 	Ok(prefab_module)
+}
+
+/// Load code with the given code id.
+///
+/// If the module was instrumented with a lower version of schedule than
+/// the current one given as an argument, then this function will perform
+/// re-instrumentation and update the cache in the storage.
+pub fn load_with_id<T: Config>(
+	code_id: u64,
+	schedule: &Schedule<T>,
+	gas_meter: &mut GasMeter<T>,
+) -> Result<PrefabWasmModule<T>, DispatchError>
+where
+	T::AccountId: UncheckedFrom<T::Hash> + AsRef<[u8]>,
+{
+	load::<T>(<CodeIdToHash<T>>::get(code_id).ok_or(Error::<T>::CodeNotFound)?, schedule, gas_meter)
 }
 
 /// Instruments the passed prefab wasm module with the supplied schedule.
