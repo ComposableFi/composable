@@ -37,15 +37,7 @@
 #[cfg(test)]
 mod test;
 
-use codec::FullCodec;
-use frame_support::{
-	pallet_prelude::{OptionQuery, StorageMap},
-	storage::types::QueryKindTrait,
-	traits::{Get, StorageInstance},
-	StorageHasher,
-};
 pub use pallet::*;
-use sp_runtime::DispatchError;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -188,6 +180,7 @@ pub mod pallet {
 							debug_assert!(was_previously_owned);
 							Ok(())
 						},
+						// theoretically, this branch should never be reached
 						None => Err(Error::<T>::InstanceNotFound),
 					})?;
 
@@ -196,6 +189,7 @@ pub mod pallet {
 						insert_or_init_and_insert((*class, *instance)),
 					);
 					*owner = destination.clone();
+
 					Self::deposit_event(Event::NftTransferred {
 						class_id: *class,
 						instance_id: *instance,
@@ -232,7 +226,9 @@ pub mod pallet {
 							Some(instances) => {
 								instances.remove(&(*class, *instance));
 							},
-							None => {},
+							None => {
+								debug_assert!(false, "unreachable")
+							},
 						});
 						*entry = None;
 						Ok(())
@@ -244,8 +240,13 @@ pub mod pallet {
 				Some(instances) => {
 					instances.remove(instance);
 				},
-				None => {},
+				None => {
+					debug_assert!(false, "unreachable")
+				},
 			});
+
+			Self::deposit_event(Event::NftBurned { class_id: *class, instance_id: *instance });
+
 			Ok(())
 		}
 
@@ -323,43 +324,5 @@ pub mod pallet {
 				x.replace([t].into());
 			},
 		}
-	}
-}
-
-pub trait MutateBoth<K1, K2, V1, V2> {
-	fn mutate_both(
-		k1: K1,
-		k2: K2,
-		f: impl FnOnce(&mut V1, &mut V2) -> Result<(V1, V2), DispatchError>,
-	) -> Result<(V1, V2), DispatchError>;
-}
-
-impl<Prefix, Hasher, K1, K2, V1, V2> MutateBoth<K1, K2, V1, V2>
-	for (
-		StorageMap<Prefix, Hasher, OptionQuery, K1, V1>,
-		StorageMap<Prefix, Hasher, OptionQuery, K2, V2>,
-	) where
-	Prefix: StorageInstance,
-	Hasher: StorageHasher,
-	K1: FullCodec,
-	K2: FullCodec,
-	V1: FullCodec,
-	V2: FullCodec,
-{
-	fn mutate_both(
-		k1: K1,
-		k2: K2,
-		f: impl FnOnce(&mut V1, &mut V2) -> Result<(V1, V2), DispatchError>,
-	) -> Result<(V1, V2), DispatchError> {
-		StorageMap::<Prefix, Hasher, K1, V1, OptionQuery>::mutate(k1, |v1| {
-			if let Some(v1) = v1 {
-				StorageMap::<Prefix, Hasher, K2, V2, OptionQuery>::mutate(k2, |v2| {
-					if let Some(v2) = v2 {
-						f(v1, v2)
-					} else {
-					}
-				})
-			}
-		})
 	}
 }

@@ -22,7 +22,7 @@ mod impls {
 
 	use codec::Encode;
 	use composable_traits::financial_nft::NftClass;
-	use frame_support::traits::tokens::nonfungibles::{Create, Inspect};
+	use frame_support::traits::tokens::nonfungibles::*;
 
 	use crate::{
 		pallet::*,
@@ -33,8 +33,11 @@ mod impls {
 		},
 	};
 
-	/// [`Transfer`] tests
+	/// Tests the pallet's [`Transfer`] implementation.
 	mod transfer;
+
+	/// Tests the pallet's [`Mutate`] implementation.
+	mod mutate;
 
 	#[test]
 	/// Tests the pallet's [`Inspect`] implementation.
