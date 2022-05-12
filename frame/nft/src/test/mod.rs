@@ -5,7 +5,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{
 	pallet::{ClassInstances, Event as NftEvent, Instance, OwnerInstances},
-	test::mock::{Event, Test},
+	test::mock::{Event, MockRuntime},
 	NftInstanceId, Pallet,
 };
 
@@ -22,27 +22,27 @@ const CHARLIE: u128 = 2;
 /// NOTE: Only call once per test!
 fn mint_nft_and_assert() -> NftInstanceId {
 	let created_nft_id =
-		Pallet::<Test>::mint_nft(&NftClass::STAKING, &ALICE, &1u32, &1u32).unwrap();
+		Pallet::<MockRuntime>::mint_nft(&NftClass::STAKING, &ALICE, &1u32, &1u32).unwrap();
 
-	assert_last_event::<Test>(Event::Nft(NftEvent::NftCreated {
+	assert_last_event::<MockRuntime>(Event::Nft(NftEvent::NftCreated {
 		class_id: NftClass::STAKING,
 		instance_id: created_nft_id,
 	}));
 
 	assert_eq!(
-		ClassInstances::<Test>::get(&NftClass::STAKING).unwrap(),
+		ClassInstances::<MockRuntime>::get(&NftClass::STAKING).unwrap(),
 		BTreeSet::from([created_nft_id]),
 		"STAKING class should only have one instance"
 	);
 
 	assert_eq!(
-		OwnerInstances::<Test>::get(&ALICE).unwrap(),
+		OwnerInstances::<MockRuntime>::get(&ALICE).unwrap(),
 		BTreeSet::from([(NftClass::STAKING, created_nft_id)]),
 		"ALICE should only have one instance"
 	);
 
 	assert_eq!(
-		Instance::<Test>::get(&(NftClass::STAKING, created_nft_id)).unwrap(),
+		Instance::<MockRuntime>::get(&(NftClass::STAKING, created_nft_id)).unwrap(),
 		(ALICE, BTreeMap::from([(1u32.encode(), 1u32.encode())])),
 		"owner should be ALICE"
 	);
@@ -70,7 +70,7 @@ mod impls {
 		pallet::*,
 		test::{
 			mint_nft_and_assert,
-			mock::{new_test_ext, Test},
+			mock::{new_test_ext, MockRuntime},
 			ALICE,
 		},
 		Pallet,
@@ -86,17 +86,24 @@ mod impls {
 			let created_nft_id = mint_nft_and_assert();
 
 			// owner check
-			assert_eq!(Pallet::<Test>::owner(&NftClass::STAKING, &created_nft_id), Some(ALICE));
+			assert_eq!(
+				Pallet::<MockRuntime>::owner(&NftClass::STAKING, &created_nft_id),
+				Some(ALICE)
+			);
 
 			// attribute check
 			assert_eq!(
-				Pallet::<Test>::attribute(&NftClass::STAKING, &created_nft_id, &1u32.encode()),
+				Pallet::<MockRuntime>::attribute(
+					&NftClass::STAKING,
+					&created_nft_id,
+					&1u32.encode()
+				),
 				Some(1u32.encode())
 			);
 
 			// class attribute check
 			assert_eq!(
-				Pallet::<Test>::class_attribute(&NftClass::STAKING, &1u32.encode()),
+				Pallet::<MockRuntime>::class_attribute(&NftClass::STAKING, &1u32.encode()),
 				None,
 				"staking class should have no attributes"
 			);
@@ -107,10 +114,13 @@ mod impls {
 	fn create() {
 		//! Tests the pallet's [`Create`] implementation.
 		new_test_ext().execute_with(|| {
-			assert_eq!(Pallet::<Test>::create_class(&NftClass::new(2), &ALICE, &ALICE), Ok(()));
+			assert_eq!(
+				Pallet::<MockRuntime>::create_class(&NftClass::new(2), &ALICE, &ALICE),
+				Ok(())
+			);
 
 			assert_eq!(
-				Class::<Test>::get(&NftClass::new(2)),
+				Class::<MockRuntime>::get(&NftClass::new(2)),
 				Some((ALICE, ALICE, BTreeMap::default()))
 			);
 		})
