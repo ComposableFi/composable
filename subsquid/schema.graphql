@@ -32,7 +32,9 @@ type PabloTransaction @entity {
   quoteAssetAmount: BigInt!
   blockNumber: BigInt!
   spotPrice: String!
-  # unix timestamp in ms
+  "Optional: Only certain transaction types have fees charged by Pablo. Does NOT include the collected extrinsic execution fee."
+  fee: String!
+  "Unix timestamp in ms"
   receivedTimestamp: BigInt!
 }
 
@@ -45,10 +47,11 @@ type PabloPool @entity {
   transactionCount: Int!
   totalLiquidity: String!
   totalVolume: String!
-  # Asset used for all quotes in this type
+  totalFees: String!
+  "Asset used for all quotes in this type"
   quoteAssetId: BigInt!
   blockNumber: BigInt!
-  # unix timestamp in ms
+  "Unix timestamp in ms"
   calculatedTimestamp: BigInt!
   poolAssets: [PabloPoolAsset!] @derivedFrom(field: "pool")
   transactions: [PabloTransaction!] @derivedFrom(field: "pool")
@@ -61,6 +64,6 @@ type PabloPoolAsset @entity {
   totalLiquidity: BigInt!
   totalVolume: BigInt!
   blockNumber: BigInt!
-  # unix timestamp in ms
+  "Unix timestamp in ms"
   calculatedTimestamp: BigInt!
 }
