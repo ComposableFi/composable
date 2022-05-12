@@ -1,17 +1,7 @@
 //! CurrencyId implementation
 use codec::{CompactAs, Decode, Encode, MaxEncodedLen};
-<<<<<<< HEAD
 use composable_traits::{assets::Asset, currency::Exponent};
 use core::{fmt::Display, ops::Div, str::FromStr};
-<<<<<<< HEAD
-=======
-=======
-use composable_traits::currency::Exponent;
-
->>>>>>> 272bbddb (cargo fmt)
-use composable_traits::assets::Asset;
-use core::{fmt::Display, ops::Div, str::FromStr};
->>>>>>> 950390fe (rebased upstream)
 use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
 
@@ -95,7 +85,7 @@ impl CurrencyId {
 	pub fn milli<T: From<u64> + Div<Output = T>>() -> T {
 		Self::unit::<T>() / T::from(1000_u64)
 	}
-	
+
 	pub fn list_assets() -> Vec<Asset> {
 		vec![
 			Asset { id: CurrencyId::PICA.0 as u64, name: b"PICA".to_vec() },

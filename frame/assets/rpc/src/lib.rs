@@ -79,7 +79,9 @@ where
 	fn list_assets(&self, at: Option<<Block as BlockT>::Hash>) -> RpcResult<Vec<Asset>> {
 		let api = self.client.runtime_api();
 
-		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
+		let at = BlockId::hash(at.unwrap_or_else(||{
+            self.client.info().best_hash
+		}));
 
 		let runtime_api_result = api.list_assets(&at);
 
