@@ -68,9 +68,6 @@ RUN rustup component add clippy && \
     rustup component add rustfmt && \
     rustup component add rust-src
 
-# Temporarily disabled while we are not yet prebuilding images
-# RUN cargo install bottom
-
 RUN wget -qO- "https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh" | bash && \
     export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
@@ -81,6 +78,7 @@ RUN wget -qO- "https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh" 
 
 # # Add polkadot
 # Not straight to the workspace dir because that seems to be causing issues.
+# We move it in the devcontainer.json's postCreateCommand.
 WORKDIR /polkadot-binary
 RUN wget "https://github.com/paritytech/polkadot/releases/download/v0.9.18/polkadot" && \
     chmod +x polkadot
@@ -98,3 +96,10 @@ RUN wget "https://github.com/tamasfe/taplo/releases/download/release-cli-0.6.2/t
     tar -xzf taplo-0.6.2-x86_64-unknown-linux-gnu.tar.gz && \
     chmod +x taplo && \
     cp ./taplo /usr/bin 
+
+# Add btm
+WORKDIR /btm-binary
+RUN wget "https://github.com/ClementTsang/bottom/releases/download/0.6.8/bottom_x86_64-unknown-linux-gnu.tar.gz" && \
+    tar -xzf bottom_x86_64-unknown-linux-gnu.tar.gz && \
+    chmod +x btm && \
+    cp ./btm /usr/bin 
