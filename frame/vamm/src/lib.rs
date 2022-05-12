@@ -838,7 +838,7 @@ pub mod pallet {
 			vamm_state: &VammStateOf<T>,
 		) -> Result<(), DispatchError> {
 			// We must ensure that the vamm is not closed before perfoming any swap.
-			ensure!(!Self::is_vamm_closed(&vamm_state), Error::<T>::VammIsClosed);
+			ensure!(!Self::is_vamm_closed(vamm_state), Error::<T>::VammIsClosed);
 
 			match config.direction {
 				// If we intend to remove some asset amount from vamm, we must

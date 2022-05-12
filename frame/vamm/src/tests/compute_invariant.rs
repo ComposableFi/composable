@@ -35,7 +35,7 @@ proptest! {
 		quote in balance_range(),
 	) {
 		prop_assume!(quote != 0);
-		let base = quote * 0;
+		let base = 0;
 
 		assert_err!(
 			TestPallet::compute_invariant(base, quote),
@@ -51,7 +51,7 @@ proptest! {
 		base in balance_range(),
 	) {
 		prop_assume!(base != 0);
-		let quote = base * 0;
+		let quote = 0;
 
 		assert_err!(
 			TestPallet::compute_invariant(base, quote),
