@@ -54,7 +54,23 @@
     ]
   },
   "parachains": [
-      
+    {
+      "bin": "../../target/release/composable",
+      "chain":"dali-dev",
+      "balance": "1000000000000000000000",
+      "nodes": [
+        {
+          "wsPort": 9988,
+          "port": 31200,
+          "flags": ["--alice", "--rpc-cors=all", "--", "--execution=wasm"]
+        },
+        {
+          "wsPort": 9989,
+          "port": 31201,
+          "flags": ["--bob", "--rpc-cors=all", "--", "--execution=wasm"]
+        }
+      ]
+    }
   ],
   "types": {},
   "finalization": false,
