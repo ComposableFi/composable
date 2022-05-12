@@ -13,8 +13,7 @@ use sp_runtime::DispatchError;
 
 use crate::{
 	test::{
-		helpers::{mint_many_nfts_and_assert, to_btree},
-		helpers::mint_nft_and_assert,
+		helpers::{mint_many_nfts_and_assert, mint_nft_and_assert, to_btree},
 		mock::{new_test_ext, Event, MockRuntime},
 		ALICE, BOB, CHARLIE,
 	},
