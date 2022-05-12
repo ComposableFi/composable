@@ -1,6 +1,6 @@
 // This file is part of Substrate.
 
-// Copyright (C) 2020-2021 Parity Technologies (UK) Ltd.
+// Copyright (C) 2020-2022 Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,7 +27,6 @@ fn test_decode_compact_u32_at() {
 		migration::put_storage_value(b"test", b"", &[], v);
 		assert_eq!(decode_compact_u32_at(b"test"), None);
 
-		#[allow(clippy::useless_vec)]
 		for v in vec![0, 10, u32::MAX] {
 			let compact_v = codec::Compact(v);
 			unhashed::put(b"test", &compact_v);
@@ -42,7 +41,6 @@ fn test_decode_compact_u32_at() {
 #[test]
 fn len_of_deposit_of() {
 	new_test_ext().execute_with(|| {
-		#[allow(clippy::useless_vec)]
 		for l in vec![0, 1, 200, 1000] {
 			let value: (Vec<u64>, u64) = ((0..l).map(|_| Default::default()).collect(), 3u64);
 			DepositOf::<Test>::insert(2, value);
@@ -57,17 +55,16 @@ fn len_of_deposit_of() {
 #[test]
 fn pre_image() {
 	new_test_ext().execute_with(|| {
-		let key: ProposalId<H256, AssetId> = Default::default();
+		let key = Default::default();
 		let missing = PreimageStatus::Missing(0);
 		Preimages::<Test>::insert(key, missing);
-		assert_noop!(Democracy::pre_image_data_len(&key), Error::<Test>::PreimageMissing);
-		assert_eq!(Democracy::check_pre_image_is_missing(&key), Ok(()));
+		assert_noop!(Democracy::pre_image_data_len(key), Error::<Test>::PreimageMissing);
+		assert_eq!(Democracy::check_pre_image_is_missing(key), Ok(()));
 
 		Preimages::<Test>::remove(key);
-		assert_noop!(Democracy::pre_image_data_len(&key), Error::<Test>::PreimageMissing);
-		assert_noop!(Democracy::check_pre_image_is_missing(&key), Error::<Test>::NotImminent);
+		assert_noop!(Democracy::pre_image_data_len(key), Error::<Test>::PreimageMissing);
+		assert_noop!(Democracy::check_pre_image_is_missing(key), Error::<Test>::NotImminent);
 
-		#[allow(clippy::useless_vec)]
 		for l in vec![0, 10, 100, 1000u32] {
 			let available = PreimageStatus::Available {
 				data: (0..l).map(|i| i as u8).collect(),
@@ -78,9 +75,9 @@ fn pre_image() {
 			};
 
 			Preimages::<Test>::insert(key, available);
-			assert_eq!(Democracy::pre_image_data_len(&key), Ok(l));
+			assert_eq!(Democracy::pre_image_data_len(key), Ok(l));
 			assert_noop!(
-				Democracy::check_pre_image_is_missing(&key),
+				Democracy::check_pre_image_is_missing(key),
 				Error::<Test>::DuplicatePreimage
 			);
 		}

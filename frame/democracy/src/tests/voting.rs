@@ -1,6 +1,6 @@
 // This file is part of Substrate.
 
-// Copyright (C) 2017-2021 Parity Technologies (UK) Ltd.
+// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,9 +49,9 @@ fn split_vote_cancellation_should_work() {
 		let r = begin_referendum();
 		let v = AccountVote::Split { aye: 30, nay: 20 };
 		assert_ok!(Democracy::vote(Origin::signed(5), r, v));
-		assert_ok!(Democracy::remove_vote(Origin::signed(5), DEFAULT_ASSET, r));
+		assert_ok!(Democracy::remove_vote(Origin::signed(5), r));
 		assert_eq!(tally(r), Tally { ayes: 0, nays: 0, turnout: 0 });
-		assert_ok!(Democracy::unlock(Origin::signed(5), 5, DEFAULT_ASSET));
+		assert_ok!(Democracy::unlock(Origin::signed(5), 5));
 		assert_eq!(Balances::locks(5), vec![]);
 	});
 }
@@ -59,7 +59,6 @@ fn split_vote_cancellation_should_work() {
 #[test]
 fn single_proposal_should_work() {
 	new_test_ext().execute_with(|| {
-		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		System::set_block_number(0);
 		assert_ok!(propose_set_balance_and_note(1, 2, 1));
 		let r = 0;
@@ -74,7 +73,7 @@ fn single_proposal_should_work() {
 			Democracy::referendum_status(0),
 			Ok(ReferendumStatus {
 				end: 4,
-				proposal_id: set_balance_proposal_hash_and_note(2),
+				proposal_hash: set_balance_proposal_hash_and_note(2),
 				threshold: VoteThreshold::SuperMajorityApprove,
 				delay: 2,
 				tally: Tally { ayes: 1, nays: 0, turnout: 10 },
@@ -102,7 +101,6 @@ fn single_proposal_should_work() {
 #[test]
 fn controversial_voting_should_work() {
 	new_test_ext().execute_with(|| {
-		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		let r = Democracy::inject_referendum(
 			2,
 			set_balance_proposal_hash_and_note(2),
@@ -150,9 +148,8 @@ fn controversial_low_turnout_voting_should_work() {
 #[test]
 fn passing_low_turnout_voting_should_work() {
 	new_test_ext().execute_with(|| {
-		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		assert_eq!(Balances::free_balance(42), 0);
-		assert_eq!(Balances::total_issuance(), 310);
+		assert_eq!(Balances::total_issuance(), 210);
 
 		let r = Democracy::inject_referendum(
 			2,

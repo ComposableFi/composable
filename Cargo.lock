@@ -2706,6 +2706,11 @@ dependencies = [
  "pallet-collective",
  "pallet-crowdloan-rewards",
  "pallet-currency-factory",
+<<<<<<< HEAD
+=======
+ "pallet-curve-amm",
+ "pallet-democracy 0.0.1",
+>>>>>>> 17069d84 (updated democracy)
  "pallet-democracy 4.0.0-dev",
  "pallet-dex-router",
  "pallet-dutch-auction",

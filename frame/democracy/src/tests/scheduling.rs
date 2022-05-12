@@ -1,6 +1,6 @@
 // This file is part of Substrate.
 
-// Copyright (C) 2017-2021 Parity Technologies (UK) Ltd.
+// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,7 +22,6 @@ use super::*;
 #[test]
 fn simple_passing_should_work() {
 	new_test_ext().execute_with(|| {
-		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		let r = Democracy::inject_referendum(
 			2,
 			set_balance_proposal_hash_and_note(2),
@@ -61,7 +60,6 @@ fn simple_failing_should_work() {
 #[test]
 fn ooo_inject_referendums_should_work() {
 	new_test_ext().execute_with(|| {
-		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		let r1 = Democracy::inject_referendum(
 			3,
 			set_balance_proposal_hash_and_note(3),
@@ -92,7 +90,6 @@ fn ooo_inject_referendums_should_work() {
 #[test]
 fn delayed_enactment_should_work() {
 	new_test_ext().execute_with(|| {
-		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		let r = Democracy::inject_referendum(
 			2,
 			set_balance_proposal_hash_and_note(2),
@@ -119,7 +116,6 @@ fn delayed_enactment_should_work() {
 #[test]
 fn lowest_unbaked_should_be_sensible() {
 	new_test_ext().execute_with(|| {
-		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		let r1 = Democracy::inject_referendum(
 			3,
 			set_balance_proposal_hash_and_note(1),
@@ -141,7 +137,7 @@ fn lowest_unbaked_should_be_sensible() {
 		assert_ok!(Democracy::vote(Origin::signed(1), r1, aye(1)));
 		assert_ok!(Democracy::vote(Origin::signed(1), r2, aye(1)));
 		// r3 is canceled
-		assert_ok!(Democracy::cancel_referendum(Origin::root(), r3));
+		assert_ok!(Democracy::cancel_referendum(Origin::root(), r3.into()));
 		assert_eq!(Democracy::lowest_unbaked(), 0);
 
 		next_block();
