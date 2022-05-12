@@ -369,6 +369,8 @@ pub mod pallet {
 
 		/// The collateral factor for a market must be mroe than one.
 		CollateralFactorMustBeMoreThanOne,
+		/// Can't allow amount 0 as collateral.
+		CannotDepositZeroCollateral,
 
 		// REVIEW: Currently unused
 		MarketAndAccountPairNotFound,
@@ -1207,6 +1209,7 @@ pub mod pallet {
 			account: &Self::AccountId,
 			amount: CollateralLpAmountOf<Self>,
 		) -> Result<(), DispatchError> {
+			ensure!(amount > Self::Balance::zero(), Error::<T>::CannotDepositZeroCollateral);
 			let market = Self::get_market(market_id)?;
 			let market_account = Self::account_id(market_id);
 
