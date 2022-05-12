@@ -22,8 +22,8 @@ use crate::{
 	AccountIdOf, Instance, NftInstanceId, OwnerInstances, Pallet,
 };
 
-	/// Tests a simple transfer between 2 accounts, with only 1 total NFT existing.
-	#[test]
+/// Tests a simple transfer between 2 accounts, with only 1 total NFT existing.
+#[test]
 fn simple() {
 	new_test_ext().execute_with(|| {
 		let created_nft_id = mint_nft_and_assert();
@@ -66,8 +66,8 @@ fn simple() {
 	})
 }
 
-	/// Tests a roundtrip transfer between 2 accounts, asserting that the storage is the same after
-	/// the roundtrip.
+/// Tests a roundtrip transfer between 2 accounts, asserting that the storage is the same after
+/// the roundtrip.
 #[test]
 fn roundtrip() {
 	new_test_ext().execute_with(|| {
@@ -95,7 +95,7 @@ fn roundtrip() {
 	})
 }
 
-	/// Tests the transfer of many NFTs between multiple accounts.
+/// Tests the transfer of many NFTs between multiple accounts.
 #[test]
 fn many() {
 	new_test_ext().execute_with(transfer_many_test);
@@ -197,7 +197,11 @@ fn many() {
 
 		// transfer one of (what was originally CHARLIES's) NFTs from BOB to ALICE
 		{
-			assert_ok!(Pallet::<MockRuntime>::transfer(&NftClass::STAKING, &charlies_nfts[9], &ALICE));
+			assert_ok!(Pallet::<MockRuntime>::transfer(
+				&NftClass::STAKING,
+				&charlies_nfts[9],
+				&ALICE
+			));
 			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::NftTransferred {
 				class_id: NftClass::STAKING,
 				instance_id: charlies_nfts[9],
@@ -239,7 +243,11 @@ fn many() {
 
 		// transfer one of (what was originally CHARLIES's) NFTs from ALICE back to CHARLIE
 		{
-			assert_ok!(Pallet::<MockRuntime>::transfer(&NftClass::STAKING, &charlies_nfts[9], &CHARLIE),);
+			assert_ok!(Pallet::<MockRuntime>::transfer(
+				&NftClass::STAKING,
+				&charlies_nfts[9],
+				&CHARLIE
+			),);
 			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::NftTransferred {
 				class_id: NftClass::STAKING,
 				instance_id: charlies_nfts[9],
