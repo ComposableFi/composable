@@ -5,19 +5,15 @@
 
 use super::{setup::*, *};
 use crate::{self as pallet_lending, Pallet as Lending};
-use composable_support::validation::{TryIntoValidated, Validated};
+use composable_support::validation::TryIntoValidated;
 use composable_traits::{
-	defi::{CurrencyPair, DeFiComposableConfig, MoreThanOneFixedU128},
-	lending::{
-		math::InterestRateModel, CreateInput, Lending as LendingTrait, RepayStrategy, UpdateInput,
-	},
-	oracle::Price,
+	defi::{CurrencyPair, DeFiComposableConfig},
+	lending::{CreateInput, Lending as LendingTrait, RepayStrategy},
 	vault::StrategicVault,
 };
-use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
+use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_support::traits::{fungible, fungibles::Mutate, Get};
-use frame_system::{EventRecord, RawOrigin};
-use sp_runtime::{FixedPointNumber, Percent, Perquintill};
+use frame_system::RawOrigin;
 use sp_std::prelude::*;
 
 type BalanceOf<T> = <T as DeFiComposableConfig>::Balance;
