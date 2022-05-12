@@ -1,24 +1,19 @@
 ARG BASEDEV_VERSION=v0.12.0
 
-# ARG RUST_SRC_PATH = "${rust-nightly}/lib/rustlib/src/rust/src"
-# ARG LIBCLANG_PATH = "${llvmPackages.libclang.lib}/lib"
-# ARG PROTOC = "${protobuf}/bin/protoc"
-# ARG ROCKSDB_LIB_DIR = "${rocksdb}/lib"
-
 FROM qmcgaw/basedevcontainer:${BASEDEV_VERSION}-debian
 ARG CREATED
 ARG COMMIT
 ARG VERSION=local
 LABEL \
-    org.opencontainers.image.authors="quentin.mcgaw@gmail.com" \
+    org.opencontainers.image.authors="The Composable Finance team" \
     org.opencontainers.image.created=$CREATED \
     org.opencontainers.image.version=$VERSION \
     org.opencontainers.image.revision=$COMMIT \
-    org.opencontainers.image.url="https://github.com/qdm12/rustdevcontainer" \
-    org.opencontainers.image.documentation="https://github.com/qdm12/rustdevcontainer" \
-    org.opencontainers.image.source="https://github.com/qdm12/rustdevcontainer" \
-    org.opencontainers.image.title="Rust Debian Dev container" \
-    org.opencontainers.image.description="Rust development container for Visual Studio Code Remote Containers development"
+    org.opencontainers.image.url="https://github.com/ComposableFi/composable" \
+    org.opencontainers.image.documentation="https://github.com/ComposableFi/composable" \
+    org.opencontainers.image.source="https://github.com/ComposableFi/composable" \
+    org.opencontainers.image.title="Composable Finance devcontainer" \
+    org.opencontainers.image.description="Development container for Composable Finance"
 WORKDIR /workspace
 
 # Install Rust for the correct CPU architecture
@@ -68,11 +63,7 @@ RUN rustup component add clippy && \
     rustup component add rustfmt && \
     rustup component add rust-src
 
-# Temporarily disabled while we are not yet prebuilding images
-# RUN cargo install bottom
-RUN cargo install taplo-cli
-
-RUN wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash && \
+RUN wget -qO- "https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh" | bash && \
     export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && \
@@ -82,20 +73,28 @@ RUN wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | 
 
 # # Add polkadot
 # Not straight to the workspace dir because that seems to be causing issues.
+# We move it in the devcontainer.json's postCreateCommand.
 WORKDIR /polkadot-binary
 RUN wget "https://github.com/paritytech/polkadot/releases/download/v0.9.18/polkadot" && \
     chmod +x polkadot
 
 # Add mdbook
 WORKDIR /mdbook-binary
-RUN wget https://github.com/rust-lang/mdBook/releases/download/v0.4.18/mdbook-v0.4.18-x86_64-unknown-linux-gnu.tar.gz && \ 
+RUN wget "https://github.com/rust-lang/mdBook/releases/download/v0.4.18/mdbook-v0.4.18-x86_64-unknown-linux-gnu.tar.gz" && \ 
     tar -xzf mdbook-v0.4.18-x86_64-unknown-linux-gnu.tar.gz && \
     chmod +x mdbook && \
     cp ./mdbook /usr/bin 
 
 # Add taplo
 WORKDIR /taplo-binary
-RUN wget https://github.com/tamasfe/taplo/releases/download/release-cli-0.6.2/taplo-0.6.2-x86_64-unknown-linux-gnu.tar.gz && \
+RUN wget "https://github.com/tamasfe/taplo/releases/download/release-cli-0.6.2/taplo-0.6.2-x86_64-unknown-linux-gnu.tar.gz" && \
     tar -xzf taplo-0.6.2-x86_64-unknown-linux-gnu.tar.gz && \
     chmod +x taplo && \
     cp ./taplo /usr/bin 
+
+# Add btm
+WORKDIR /btm-binary
+RUN wget "https://github.com/ClementTsang/bottom/releases/download/0.6.8/bottom_x86_64-unknown-linux-gnu.tar.gz" && \
+    tar -xzf bottom_x86_64-unknown-linux-gnu.tar.gz && \
+    chmod +x btm && \
+    cp ./btm /usr/bin 
