@@ -42,7 +42,7 @@ style-check:
 style:
 	@rustup component add rustfmt 2> /dev/null
 	cargo install taplo-cli 2> /dev/null
-	cargo +nightly-2021-11-08 fmt --all && taplo fmt
+	cargo +nightly-2022-04-18 fmt --all && taplo fmt
 
 lint:
 	@rustup component add clippy 2> /dev/null
@@ -56,7 +56,7 @@ dev:
 
 # run as `make open=y run-book` to open as well
 run-book:
-	bash -c "(trap 'kill 0' SIGINT; cargo run -p extrinsics-docs-scraper --release -- --config-file-path=scraper.toml -vvv --watch & mdbook serve book/ $(if $(filter y,${open}),'--open'))"
+	bash -c "(trap 'kill 0' SIGINT; cargo run -p extrinsics-docs-scraper --release -- --config-file-path=scraper.toml -vvv --watch & mdbook serve --hostname 0.0.0.0 book/ $(if $(filter y,${open}),'--open'))"
 
 build-book:
 	cargo run -p extrinsics-docs-scraper --release -- --config-file-path=scraper.toml

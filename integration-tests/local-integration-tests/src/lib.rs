@@ -31,7 +31,9 @@
 	while_true,
 	trivial_casts,
 	trivial_numeric_casts,
-	unused_extern_crates
+	unused_extern_crates,
+	dead_code,
+	unused_must_use
 )]
 
 /// this must be singleton
@@ -60,3 +62,6 @@ pub mod prelude;
 mod relaychain;
 #[cfg(test)]
 mod transact_calls;
+
+#[cfg(test)]
+mod statemine;

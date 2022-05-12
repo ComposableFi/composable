@@ -26,9 +26,9 @@ use this_runtime::{
 use num_traits::Zero;
 use orml_traits::currency::MultiCurrency;
 
+use frame_support::{assert_ok, log};
 use primitives::currency::*;
 use sp_runtime::{assert_eq_error_rate, traits::AccountIdConversion, MultiAddress};
-use support::{assert_ok, log};
 use xcm::latest::prelude::*;
 use xcm_builder::ParentIsPreset;
 use xcm_emulator::TestExt;
@@ -71,7 +71,7 @@ fn reserve_transfer(from: [u8; 32], to: [u8; 32]) {
 	let before =
 		This::execute_with(|| this_runtime::Assets::free_balance(CurrencyId::KSM, to_account));
 	KusamaRelay::execute_with(|| {
-		let _ = <kusama_runtime::Balances as support::traits::Currency<_>>::deposit_creating(
+		let _ = <kusama_runtime::Balances as frame_support::traits::Currency<_>>::deposit_creating(
 			from_account,
 			balance,
 		);
@@ -347,44 +347,41 @@ fn transfer_to_sibling() {
 	});
 }
 
-/// if Bob sends amount of his tokens and these are above weigth but less than ED,
+/// if Bob sends amount of his tokens and these are above weight but less than ED,
 /// than our treasury takes that amount, sorry Bob
-/// Acala's tests
+/// from: Acala
 #[test]
-fn transfer_from_relay_chain_deposit_to_treasury_if_below_existential_deposit() {
+fn transfer_from_relay_chain_deposit_to_treasury_if_below_ed() {
 	simtest();
-	let amount = under_existential_deposit(LocalAssetId::KSM, 3);
 	let receiver = CHARLIE;
-	let picasso_treasury = This::execute_with(|| {
-		assert_eq!(
-			this_runtime::Tokens::free_balance(CurrencyId::KSM, &AccountId::from(receiver)),
-			0,
-		);
-		this_runtime::Tokens::free_balance(CurrencyId::KSM, &this_runtime::TreasuryAccount::get())
+	let (picasso_treasury, under_ed) = This::execute_with(|| {
+		use this_runtime::*;
+		let under_ed = under_existential_deposit::<AssetsRegistry>(LocalAssetId::KSM, 3);
+		assert_eq!(Tokens::free_balance(CurrencyId::KSM, &AccountId::from(receiver)), 0,);
+		(Tokens::free_balance(CurrencyId::KSM, &this_runtime::TreasuryAccount::get()), under_ed)
 	});
 
 	KusamaRelay::execute_with(|| {
-		assert_ok!(kusama_runtime::XcmPallet::reserve_transfer_assets(
-			kusama_runtime::Origin::signed(ALICE.into()),
+		use kusama_runtime::*;
+		assert_ok!(XcmPallet::reserve_transfer_assets(
+			Origin::signed(ALICE.into()),
 			Box::new(Parachain(THIS_PARA_ID).into().into()),
 			Box::new(Junction::AccountId32 { id: receiver, network: NetworkId::Any }.into().into()),
-			Box::new((Here, amount).into()),
+			Box::new((Here, under_ed).into()),
 			0
 		));
 	});
 
 	This::execute_with(|| {
+		use this_runtime::*;
 		assert_eq!(
-			this_runtime::Tokens::free_balance(CurrencyId::KSM, &AccountId::from(receiver)),
+			Tokens::free_balance(CurrencyId::KSM, &AccountId::from(receiver)),
 			0,
 			"assets did not get to recipient as it is not enough to pay ED"
 		);
 		assert_eq!(
-			this_runtime::Tokens::free_balance(
-				CurrencyId::KSM,
-				&this_runtime::TreasuryAccount::get()
-			),
-			amount - picasso_treasury
+			Tokens::free_balance(CurrencyId::KSM, &TreasuryAccount::get()),
+			under_ed - picasso_treasury
 		);
 	});
 }
@@ -620,14 +617,14 @@ fn trap_assets_larger_than_ed_works() {
 			42 * CurrencyId::unit::<Balance>()
 		));
 		let _ =
-			<balances::Pallet<Runtime> as support::traits::Currency<AccountId>>::deposit_creating(
+			<balances::Pallet<Runtime> as frame_support::traits::Currency<AccountId>>::deposit_creating(
 				&parent_account,
 				123 * CurrencyId::unit::<Balance>(),
 			);
 		// TODO: if we do not top up account initially, than any depositn_creating do not create
 		// anything may be somethign with zero block or like - fix it better way
 		let _ =
-			<balances::Pallet<Runtime> as support::traits::Currency<AccountId>>::deposit_creating(
+			<balances::Pallet<Runtime> as frame_support::traits::Currency<AccountId>>::deposit_creating(
 				&this_runtime::TreasuryAccount::get(),
 				7 * CurrencyId::unit::<Balance>(),
 			);
@@ -681,7 +678,7 @@ fn trap_assets_lower_than_existential_deposit_works() {
 
 	let (this_treasury_amount, other_treasury_amount) = This::execute_with(|| {
 		assert_ok!(Assets::deposit(any_asset, &parent_account, other_non_native_amount));
-		let _ = <this_runtime::Balances as support::traits::Currency<AccountId>>::deposit_creating(
+		let _ = <this_runtime::Balances as frame_support::traits::Currency<AccountId>>::deposit_creating(
 			&parent_account,
 			some_native_amount,
 		);
@@ -754,7 +751,8 @@ fn sibling_trap_assets_works() {
 	// TODO: create  foreign asset via factory
 	// TODO: set key for it to allow transfer
 	// TODO: parametrize test. ISSUE: how to solve DEX swap paying for transfer?
-	let sibling_non_native_amount = assert_above_deposit(any_asset, 100_000_000_000);
+	let sibling_non_native_amount =
+		assert_above_deposit::<this_runtime::AssetsRegistry>(any_asset, 100_000_000_000);
 	let some_native_amount = 1_000_000_000;
 	let this_liveness_native_amount = enough_weight();
 	let this_native_asset = CurrencyId::PICA;
@@ -762,17 +760,17 @@ fn sibling_trap_assets_works() {
 	let this_native_treasury_amount = This::execute_with(|| {
 		assert_ok!(Assets::deposit(any_asset, &sibling_account(), sibling_non_native_amount));
 		let _ =
-			<balances::Pallet<Runtime> as support::traits::Currency<AccountId>>::deposit_creating(
+			<balances::Pallet<Runtime> as frame_support::traits::Currency<AccountId>>::deposit_creating(
 				&sibling_account(),
 				this_liveness_native_amount,
 			);
 		let _ =
-			<balances::Pallet<Runtime> as support::traits::Currency<AccountId>>::deposit_creating(
+			<balances::Pallet<Runtime> as frame_support::traits::Currency<AccountId>>::deposit_creating(
 				&this_runtime::TreasuryAccount::get(),
 				this_liveness_native_amount,
 			);
 		let balance =
-			<balances::Pallet<Runtime> as support::traits::Currency<AccountId>>::free_balance(
+			<balances::Pallet<Runtime> as frame_support::traits::Currency<AccountId>>::free_balance(
 				&this_runtime::TreasuryAccount::get(),
 			);
 		let remote = composable_traits::xcm::assets::XcmAssetLocation(MultiLocation::new(

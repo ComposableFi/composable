@@ -158,7 +158,7 @@ parameter_types! {
 	pub const MinimumDeposit: Balance = 0;
 	pub const MinimumWithdrawal: Balance = 0;
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
-  pub const TombstoneDuration: u64 = 42;
+	pub const TombstoneDuration: u64 = 42;
 }
 
 impl pallet_vault::Config for Runtime {
@@ -375,6 +375,7 @@ parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
 	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
 	pub OracleMarketCreationStake: Balance = NORMALIZED::ONE;
+	pub const MaxLiquidationBatchSize: u32 = 5;
 }
 
 parameter_types! {
@@ -410,6 +411,7 @@ impl pallet_lending::Config for Runtime {
 	type LiquidationStrategyId = LiquidationStrategyId;
 	type PalletId = LendingPalletId;
 	type OracleMarketCreationStake = OracleMarketCreationStake;
+	type MaxLiquidationBatchSize = MaxLiquidationBatchSize;
 
 	type WeightToFee = WeightToFee;
 }

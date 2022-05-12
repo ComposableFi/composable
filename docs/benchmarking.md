@@ -170,7 +170,7 @@ add_benchmark!(params, batches, balances, Balances);
 // ...
 ```
 
-or [define_benchmarks](https://github.com/paritytech/substrate/blob/master/frame/benchmarking/src/lib.rs#L1834-L1869) macro (it's available starting with `polkadot-v0.9.18` branch):
+or [define_benchmarks](https://github.com/paritytech/substrate/blob/master/frame/benchmarking/src/lib.rs#L1834-L1869) macro (it's available starting with `polkadot-v0.9.20` branch):
 
 ```rust
 define_benchmarks!(
@@ -185,7 +185,7 @@ https://github.com/paritytech/substrate/blob/master/frame/benchmarking/src/lib.r
 https://crates.io/crates/frame-benchmarking
 
 Extra:
-If we are running the latest version of the frame-benchmarking dependency we can also add our pallet to the [benchmark_metadata](https://github.com/paritytech/substrate/blob/polkadot-v0.9.18/frame/benchmarking/src/utils.rs#L150) function.
+If we are running the latest version of the frame-benchmarking dependency we can also add our pallet to the [benchmark_metadata](https://github.com/paritytech/substrate/blob/polkadot-v0.9.20/frame/benchmarking/src/utils.rs#L150) function.
 
 
 

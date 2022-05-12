@@ -1,6 +1,6 @@
 # FAQs
 
-*Additional details will be published here and on our Medium as new products and tools launch.*
+*Additional details will be published here and on our socials as new products and tools launch.*
 
 ---
 
@@ -8,12 +8,11 @@
 
 ### Where can I find more information about the Composable Team?
 
-If you’ve already checked out “[The Composable Team](../ecosystem/the-composable-team.html)” tab, you can find more information using the resources below:
+If you’ve already checked out “[The Composable Team](../ecosystem/the-composable-team.md)” 
+tab, you can find more information using the resources below:
 
-- Advanced Blockchain AG’s homepage is [here](https://www.advancedblockchain.com/), with their complete portfolio [here](https://www.advancedblockchain.com/portfolio), and their newsroom of announcements and updates [here](https://blog.advancedblockchain.com/).
-- The experiences of our Co-Founder and Lead Developer Cosmin can be found on his [LinkedIn](https://www.linkedin.com/in/grigorecosmin?originalSubdomain=ro).
-
-Our [Head of Product](https://twitter.com/0xbrainjar) and [Lead Polkadot Developer](https://twitter.com/0Xvatbrain) can be followed on twitter.
+* Our Founder and CEO 0xbrainjar, can be followed on [Twitter](https://twitter.com/0xbrainjar) 
+and [Medium](https://0xbrainjar.medium.com/).
 
 ---
 
@@ -21,20 +20,31 @@ Our [Head of Product](https://twitter.com/0xbrainjar) and [Lead Polkadot Develop
 
 ### What is Composable Finance?
 
-Composable Finance is a cross-chain, cross-layer, comprehensive DeFi infrastructure, powered by Layer 2 Ethereum and Polkadot. Our ultimate goal is to make the seamlessly interoperable future of DeFi into a reality, via our suite of product offering intended to resolve particular pain points in interoperability.
+Composable Finance's vision is to become the entryway and networking fabric for 
+blockchain networks and serve all interactions, transfers, and communication 
+cross-ecosystem. Our ultimate goal is to make the seamlessly interoperable 
+future of DeFi into a reality, via our suite of products intended to provide the 
+necessary financial primitives alongside the final orchestration layer, the 
+Composable XCVM.
 
 ### How is Composable funded?
 
-The most recent round of funding for Composable Finance raised a total of $7 million. This is an incredible step for the company, pushing it into the future and towards new advancements. 
+The most recent round of funding for Composable Finance raised a total of over 
+$32 million in our [series A](https://composablefi.medium.com/composable-finance-raises-32-million-in-series-a-39e70aeff23a). 
+This is an incredible step for the company, pushing it into the future and 
+towards new advancements.
 
-Leading this round were [Advanced Blockchain AG](https://en.advancedblockchain.com/) and [Rarestone Capital](https://rarestone.capital/), both of which are key venture capitalists investing in the blockchain industry. Together these organizations used strategic investors to make this funding round a success.
+The round included notable investors in the space. GSR, Ignite (formerly 
+Tendermint Ventures), Fundamental Labs, Coinbase Ventures, LongHash Ventures, 
+Figment VC, New Form Capital, DFG, Blockchain Capital, 0xVentures, Yunt Capital, 
+Jump Capital, Polytope Capital, NGC Ventures, SOSV, and Spartan Group were among 
+those who participated.
 
-### How was Composable Finance created?
 
-Through its subsidiaries, [Advanced Blockchain AG](https://en.advancedblockchain.com/) incubated Composable Finance on the technical side and provided the intellectual property for Composable. During this period, Cosmin Grigore was the Lead Developer on the project. This incubation was completed alongside top-tier Web 3.0-focused venture capital firm [Rarestone Capital](https://rarestone.capital/), which assisted with product strategy and rollout for Composable Finance. Subsequently, Composable Finance was spun out, retaining Cosmin as its CEO. Advanced Blockchain also reinvested into Composable. 
+### Are there any resources for additional questions, updates, and information about Composable and its operations?
 
-### Are there any socials I can follow for any additional questions and get more updates and information?
+To find even more information, stay up to date, and communicate with other users 
+and our team, make sure to follow/join us at:
 
-To find more information, stay up to date, and communicate with other users and our team, make sure to follow/join us at:
+[Twitter](https://twitter.com/ComposableFin) | [Telegram](https://t.me/composablefinance) | [Discord](https://discord.com/invite/pFZn2GCn65) | [Website](https://www.composable.finance/) | [Medium](https://composablefi.medium.com/about) | [GitHub](https://github.com/ComposableFi) | [LinkedIn](https://www.linkedin.com/company/composable-finance/) | [Youtube](https://www.youtube.com/channel/UCXlKp8ev-8zOpJu0TNcc0uA)
 
-[Twitter](https://twitter.com/ComposableFin) | [Telegram](https://t.me/composablefinance) | [Discord](https://discord.com/invite/pFZn2GCn65) | [Website](https://www.composable.finance/) | [Medium](https://composablefi.medium.com/about) | [GitHub](https://github.com/ComposableFi) | [LinkedIn](https://www.linkedin.com/company/composable-finance/)
