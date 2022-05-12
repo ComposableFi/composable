@@ -341,7 +341,7 @@ fn swap_remove_quote() {
 	}
 	.build()
 	.execute_with(|| {
-		let vamm_before_swap = VammMap::<MockRuntime>::get(0);
+		// let vamm_before_swap = VammMap::<MockRuntime>::get(0);
 		let swap = TestPallet::swap(&swap_config);
 		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
 		let vamm_expected = VammMap::<MockRuntime>::get(1);
