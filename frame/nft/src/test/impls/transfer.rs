@@ -111,9 +111,9 @@ fn many() {
 
 		// NFT ownership before transfer:
 		//
-		// ALICE:   A A A A A A A A A A
-		// BOB:     B B B B B B B B B B
-		// CHARLIE: C C C C C C C C C C
+		// ALICE:   A0 A1 A2 A3 A4 A5 A6 A7 A8 A9
+		// BOB:     B0 B1 B2 B3 B4 B5 B6 B7 B8 B9
+		// CHARLIE: C0 C1 C2 C3 C4 C5 C6 C7 C8 C9
 
 		// transfer one of ALICE's NFTs to BOB
 		{
@@ -150,9 +150,9 @@ fn many() {
 
 		// NFT ownership after first transfer:
 		//
-		// ALICE:   A A A A A A A A A
-		// BOB:     A B B B B B B B B B B
-		// CHARLIE: C C C C C C C C C C
+		// ALICE:   A1 A2 A3 A4 A5 A6 A7 A8 A9
+		// BOB:     A0 B0 B1 B2 B3 B4 B5 B6 B7 B8 B9
+		// CHARLIE: C0 C1 C2 C3 C4 C5 C6 C7 C8 C9
 
 		// transfer all of CHARLIES's NFTs to BOB
 		{
@@ -191,8 +191,8 @@ fn many() {
 
 		// NFT ownership after second transfer:
 		//
-		// ALICE:   A A A A A A A A A
-		// BOB:     A B B B B B B B B B B C C C C C C C C C C
+		// ALICE:   A1 A2 A3 A4 A5 A6 A7 A8 A9
+		// BOB:     A0 B0 B1 B2 B3 B4 B5 B6 B7 B8 B9 C0 C1 C2 C3 C4 C5 C6 C7 C8 C9
 		// CHARLIE:
 
 		// transfer one of (what was originally CHARLIES's) NFTs from BOB to ALICE
@@ -237,8 +237,8 @@ fn many() {
 
 		// NFT ownership after second transfer:
 		//
-		// ALICE:   A A A A A A A A A C
-		// BOB:     A B B B B B B B B B B C C C C C C C C C
+		// ALICE:   A1 A2 A3 A4 A5 A6 A7 A8 A9 C9
+		// BOB:     A0 B0 B1 B2 B3 B4 B5 B6 B7 B8 B9 C0 C1 C2 C3 C4 C5 C6 C7 C8
 		// CHARLIE:
 
 		// transfer one of (what was originally CHARLIES's) NFTs from ALICE back to CHARLIE
@@ -274,9 +274,9 @@ fn many() {
 
 		// NFT ownership after second transfer:
 		//
-		// ALICE:   A A A A A A A A A
-		// BOB:     A B B B B B B B B B B C C C C C C C C C
-		// CHARLIE: C
+		// ALICE:   A1 A2 A3 A4 A5 A6 A7 A8 A9
+		// BOB:     A0 B0 B1 B2 B3 B4 B5 B6 B7 B8 B9 C0 C1 C2 C3 C4 C5 C6 C7 C8
+		// CHARLIE: C9
 	}
 }
 
