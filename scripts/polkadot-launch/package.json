@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "polkadot": "rm -rf /tmp/polkadot-launch && polkadot-launch polkadot.json",
     "kusama": "rm -rf /tmp/polkadot-launch && polkadot-launch kusama.json",
-    "kusama-statemine": "rm -rf /tmp/polkadot-launch && polkadot-launch kusama-statemine.json",
+    "kusama-statemine": "polkadot-launch kusama-statemine.json",
     "kusama-statemine-picasso": "rm -rf /tmp/polkadot-launch && polkadot-launch kusama-statemine-picasso.json",
     "rococo-dali": "rm -rf /tmp/polkadot-launch && polkadot-launch rococo-dali.json",
     "rococo-dali-basilisk": "rm -rf /tmp/polkadot-launch && polkadot-launch rococo-dali-basilisk.json"

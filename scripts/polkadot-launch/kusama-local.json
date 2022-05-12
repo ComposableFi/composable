@@ -3,11 +3,10 @@
   "id": "kusama_local_testnet",
   "chainType": "Local",
   "bootNodes": [
-    "/ip4/127.0.0.1/tcp/30444/p2p/12D3KooWCmkBsBZ5keLLUBTDFW2PzwGifw9hTTP1fKQ7hphwYHem",
-    "/ip4/127.0.0.1/tcp/30555/p2p/12D3KooWQifGh44bVCqxMYKW7dWkGDQiiwiUk2aEswknhGYJdft3",
-    "/ip4/127.0.0.1/tcp/30666/p2p/12D3KooWPrUJQpbVonrjMBFmi8cnrj41jvpeRmQZ1oCTUYZ8MCzH",
-    "/ip4/127.0.0.1/tcp/30777/p2p/12D3KooWR5Praa6kEHKwc9ZQT9ibTXkwnq8tYSSThz1VG2dWNR7n",
-    "/ip4/127.0.0.1/tcp/30778/p2p/12D3KooWFFyycoJrWA1KfxmoB5CQRTEQQpiRSwMSM8HZsWWXCzEy"
+    "/ip4/127.0.0.1/tcp/30444/p2p/12D3KooWRofW17po4mQTvWUXbY3Mtst2BZCwBZDDb546yHk5S972",
+    "/ip4/127.0.0.1/tcp/30555/p2p/12D3KooWNm56qcDJgPnTooD7F77t5vDd2pEXQ1ctcghX56w5swfn",
+    "/ip4/127.0.0.1/tcp/30666/p2p/12D3KooWCnRZwpSNiz2ZwmQTobRzpiVBH7LQpSQEZBL8uv1UzVQD",
+    "/ip4/127.0.0.1/tcp/30777/p2p/12D3KooWHhdKR8nUoguj7wHeBsM2UerVKrykXLQERJPjnHBhHac4"
   ],
   "telemetryEndpoints": null,
   "protocolId": "dot",
@@ -172,20 +171,6 @@
               "para_validator": "5DAAnrj7VHTznn2AWBemMuyBwZWs6FNFjdyVXUeYum3PTXFy",
               "para_assignment": "5DAAnrj7VHTznn2AWBemMuyBwZWs6FNFjdyVXUeYum3PTXFy",
               "beefy": "KWCycezxoy7MWTTqA5JDKxJbqVMiNfqThKFhb5dTfsbNaGbrW"
-            }
-          ],
-          [
-            "5CRmqmsiNFExV6VbdmPJViVxrWmkaXXvBrSX8oqBT8R9vmWk",
-            "5CRmqmsiNFExV6VbdmPJViVxrWmkaXXvBrSX8oqBT8R9vmWk",
-            {
-              "grandpa": "5E2BmpVFzYGd386XRCZ76cDePMB3sfbZp5ZKGUsrG1m6gomN",
-              "babe": "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL",
-              "im_online": "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL",
-              "parachain_validator": "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL",
-              "authority_discovery": "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL",
-              "para_validator": "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL",
-              "para_assignment": "5CiPPseXPECbkjWCa6MnjNokrgYjMqmKndv2rSnekmSK2DjL",
-              "beefy": "KW6E1KGr5pqJ9Trgt7eAuA7d7mgpJPydiEDKc2h1aGTEEzYC1"
             }
           ]
         ]

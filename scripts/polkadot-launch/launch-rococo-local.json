@@ -39,28 +39,16 @@
         "wsPort": 9977,
         "port": 30777,
         "flags": ["--beefy"]
+      },
+      {
+        "name": "ferdie",
+        "wsPort": 9978,
+        "port": 30778,
+        "flags": ["--beefy"]
       }
     ]
   },
   "parachains": [
-    {
-      "bin": "../../../cumulus/target/release/polkadot-collator",
-      "chain": "statemine-local",
-      "nodes": [
-        {
-          "name": "eve",
-          "wsPort": 9988,
-          "port": 30888,
-          "flags": ["--", "--execution=wasm","--port","31888", "--ws-port", "19988"]
-        },
-        {
-          "name": "ferdie",
-          "wsPort": 9999,
-          "port": 30999,
-          "flags": ["--", "--execution=wasm","--port","31999", "--ws-port","19999"]
-        }
-      ]
-    }
   ],
   "types": {},
   "finalization": false,
