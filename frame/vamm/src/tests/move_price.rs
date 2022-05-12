@@ -218,3 +218,32 @@ proptest! {
 		})
 	}
 }
+
+proptest! {
+	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
+	#[test]
+	fn move_price_returned_correct_invariant(
+		mut vamm_state in any_vamm_state(),
+		mut move_price_config in any_move_price_config(),
+	) {
+		// We must ensure all move price configs operate only on the existent
+		// vamm.
+		move_price_config.vamm_id = 0;
+
+		// Ensure vamm is open before starting operation.
+		vamm_state.closed = None;
+
+		ExtBuilder {
+			vamm_count: 1,
+			vamms: vec![(0, vamm_state)]
+		}.build().execute_with(|| {
+			assert_ok!(
+				TestPallet::move_price(&move_price_config),
+				TestPallet::compute_invariant(
+					move_price_config.base_asset_reserves,
+					move_price_config.quote_asset_reserves
+				).unwrap()
+			);
+		})
+	}
+}
