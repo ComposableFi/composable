@@ -70,9 +70,8 @@ RUN rustup component add clippy && \
 
 # Temporarily disabled while we are not yet prebuilding images
 # RUN cargo install bottom
-RUN cargo install taplo-cli
 
-RUN wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash && \
+RUN wget -qO- "https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh" | bash && \
     export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion" && \
@@ -88,14 +87,14 @@ RUN wget "https://github.com/paritytech/polkadot/releases/download/v0.9.18/polka
 
 # Add mdbook
 WORKDIR /mdbook-binary
-RUN wget https://github.com/rust-lang/mdBook/releases/download/v0.4.18/mdbook-v0.4.18-x86_64-unknown-linux-gnu.tar.gz && \ 
+RUN wget "https://github.com/rust-lang/mdBook/releases/download/v0.4.18/mdbook-v0.4.18-x86_64-unknown-linux-gnu.tar.gz" && \ 
     tar -xzf mdbook-v0.4.18-x86_64-unknown-linux-gnu.tar.gz && \
     chmod +x mdbook && \
     cp ./mdbook /usr/bin 
 
 # Add taplo
 WORKDIR /taplo-binary
-RUN wget https://github.com/tamasfe/taplo/releases/download/release-cli-0.6.2/taplo-0.6.2-x86_64-unknown-linux-gnu.tar.gz && \
+RUN wget "https://github.com/tamasfe/taplo/releases/download/release-cli-0.6.2/taplo-0.6.2-x86_64-unknown-linux-gnu.tar.gz" && \
     tar -xzf taplo-0.6.2-x86_64-unknown-linux-gnu.tar.gz && \
     chmod +x taplo && \
     cp ./taplo /usr/bin 
