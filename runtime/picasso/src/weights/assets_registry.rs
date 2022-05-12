@@ -37,5 +37,6 @@ impl<T: frame_system::Config> assets_registry::WeightInfo for WeightInfo<T> {
 	}
 	fn set_min_fee() -> Weight {
 		(9_958_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
+			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 }

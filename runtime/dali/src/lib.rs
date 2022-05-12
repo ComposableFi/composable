@@ -46,12 +46,11 @@ use sp_runtime::{
 	ApplyExtrinsicResult,
 };
 
-use composable_traits::assets::Asset;
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-
+use composable_traits::assets::Asset;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, match_type, parameter_types,

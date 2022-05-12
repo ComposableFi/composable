@@ -18,6 +18,7 @@ use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::Block;
+use composable_traits::assets::Asset;
 
 /// Full client dependencies.
 pub struct FullDeps<C, P> {

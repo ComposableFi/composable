@@ -44,6 +44,7 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+use composable_traits::assets::Asset;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
@@ -67,7 +68,7 @@ use sp_runtime::AccountId32;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
 use sp_std::fmt::Debug;
-use system::{
+use system::{   
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
