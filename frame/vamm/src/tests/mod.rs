@@ -12,6 +12,7 @@ use composable_traits::vamm::{
 use frame_support::pallet_prelude::Hooks;
 use proptest::prelude::*;
 
+pub mod compute_invariant;
 pub mod create_vamm;
 pub mod get_price;
 pub mod move_price;
