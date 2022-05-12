@@ -15,7 +15,7 @@ When contributing code changes, follow this general process to ensure the CI pip
 Example Title: `[CU-1u0b7bm] Added CONTRIBUTING.md`
 3) Ensure your commits are signed and verified
 4) Change the state of your PR to 'Open' once you are ready for review
-5) Once all PR checks pass, a marge will be conducted
+5) Once all PR checks pass, a merge will be conducted
 
 ## Signing and Verification
 All commits to the composable project ***must*** be signed and verified. GitHub provides an overview of commit signing that can be found [here](https://docs.github.com/en/authentication/managing-commit-signature-verification).  
