@@ -15,7 +15,8 @@ use frame_support::{
 
 use crate::{
 	test::{
-		mint_nft_and_assert,
+		helpers::mint_many_nfts_and_assert,
+		helpers::mint_nft_and_assert,
 		mock::{new_test_ext, Event, MockRuntime},
 		ALICE, BOB, CHARLIE,
 	},
@@ -278,33 +279,4 @@ fn many() {
 		// BOB:     A0 B0 B1 B2 B3 B4 B5 B6 B7 B8 B9 C0 C1 C2 C3 C4 C5 C6 C7 C8
 		// CHARLIE: C9
 	}
-}
-
-/// Mints many NFTs into the specified account and checks that they were created properly,
-/// returning the ids of the newly created NFTs.
-///
-/// NOTE: Only call once per test, per account!
-fn mint_many_nfts_and_assert(who: AccountIdOf<MockRuntime>, amount: u32) -> Vec<NftInstanceId> {
-	let new_nfts_ids = (0..amount)
-		.map(|_| {
-			let new_nft_id =
-				Pallet::<MockRuntime>::mint_nft(&NftClass::STAKING, &who, &1u32, &1u32).unwrap();
-
-			assert_last_event::<MockRuntime>(Event::Nft(crate::Event::NftCreated {
-				class_id: NftClass::STAKING,
-				instance_id: new_nft_id,
-			}));
-
-			new_nft_id
-		})
-		.collect::<Vec<_>>();
-
-	assert_eq!(
-		OwnerInstances::<MockRuntime>::get(&who).unwrap(),
-		new_nfts_ids.iter().map(|&id| (NftClass::STAKING, id)).collect(),
-		"the specified owner ({}) should own the specified NFTs",
-		who
-	);
-
-	new_nfts_ids
 }
