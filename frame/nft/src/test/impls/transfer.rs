@@ -9,9 +9,10 @@ use composable_tests_helpers::test::{
 };
 use composable_traits::financial_nft::{FinancialNftProvider, NftClass};
 use frame_support::{
-	assert_ok,
+	assert_err, assert_ok,
 	traits::tokens::nonfungibles::{Inspect, Transfer},
 };
+use sp_runtime::{DispatchError, ModuleError};
 
 use crate::{
 	test::{
@@ -279,4 +280,15 @@ fn many() {
 		// BOB:     A0 B0 B1 B2 B3 B4 B5 B6 B7 B8 B9 C0 C1 C2 C3 C4 C5 C6 C7 C8
 		// CHARLIE: C9
 	}
+}
+
+/// Tests that an NFT that doesn't exist can't be transferred.
+#[test]
+fn instance_not_found() {
+	new_test_ext().execute_with(|| {
+		assert_err!(
+			Pallet::<MockRuntime>::transfer(&NftClass::STAKING, &1, &ALICE),
+			DispatchError::from(crate::Error::<MockRuntime>::InstanceNotFound)
+		)
+	});
 }
