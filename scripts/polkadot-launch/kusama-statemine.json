@@ -51,13 +51,13 @@
           "name": "eve",
           "wsPort": 9988,
           "port": 30888,
-          "flags": ["--", "--execution=wasm","--port","31888", "--ws-port", "19988"]
+          "flags": ["--", "--execution=wasm"]
         },
         {
           "name": "ferdie",
           "wsPort": 9999,
           "port": 30999,
-          "flags": ["--", "--execution=wasm","--port","31999", "--ws-port","19999"]
+          "flags": ["--", "--execution=wasm"]
         }
       ]
     }

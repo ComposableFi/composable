@@ -19,7 +19,6 @@
         "name": "alice",
         "wsPort": 9944,
         "rpcPort": 9945,
-        "basePath": "/tmp/polkadot-launch/relaychains/alice",
         "port": 30444,
         "flags": ["--rpc-cors=all", "--beefy", "--enable-offchain-indexing=true"]
       },
@@ -27,7 +26,6 @@
         "name": "bob",
         "wsPort": 9955,
         "rpcPort": 9956,
-        "basePath": "/tmp/polkadot-launch/relaychains/bob",
         "port": 30555,
         "flags": ["--beefy"]
       }

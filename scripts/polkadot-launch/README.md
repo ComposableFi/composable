@@ -71,3 +71,5 @@ URLs:
 - https://docs.substrate.io/tutorials/v3/cumulus/start-relay/
 - https://docs.substrate.io/tutorials/v3/permissioned-network/
 - https://github.com/paritytech/cumulus/blob/master/polkadot-parachains/src/command.rs
+- https://github.com/paritytech/polkadot-launch/blob/master/src/spawn.
+- https://wiki.polkadot.network/docs/learn-common-goods
