@@ -36,12 +36,21 @@ export class PabloPool {
   @Column_("text", {nullable: false})
   totalVolume!: string
 
+  @Column_("text", {nullable: false})
+  totalFees!: string
+
+  /**
+   * Asset used for all quotes in this type
+   */
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   quoteAssetId!: bigint
 
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   blockNumber!: bigint
 
+  /**
+   * Unix timestamp in ms
+   */
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   calculatedTimestamp!: bigint
 

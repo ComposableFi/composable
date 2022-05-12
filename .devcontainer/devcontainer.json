@@ -60,8 +60,8 @@
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"onCreateCommand": "cd /workspaces/composable && cargo build && cargo build --release",
-	"postCreateCommand": "mkdir -p /workspaces/polkadot/target/release && mv /polkadot-clone/polkadot/target/release/polkadot /workspaces/polkadot/target/release/polkadot"
+	"onCreateCommand": "cd /workspaces/composable && export LIBCLANG_PATH=\"$(find / -name libclang.so)\" && cargo build", //  && cargo build --release
+	"postCreateCommand": "mkdir -p /workspaces/polkadot/target/release && mv /polkadot-binary/polkadot /workspaces/polkadot/target/release/polkadot"
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	// "remoteUser": "vscode"
 }

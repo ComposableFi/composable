@@ -29,7 +29,8 @@ function assertPool(
     transactionCount: number,
     quoteAssetId: bigint,
     totalLiquidity: string,
-    totalVolume: string
+    totalVolume: string,
+    totalFees: string,
 ) {
     expect(poolArg.id).eq(id);
     expect(poolArg.poolId).eq(poolId);
@@ -39,6 +40,7 @@ function assertPool(
     expect(poolArg.quoteAssetId).eq(quoteAssetId);
     expect(poolArg.totalLiquidity).eq(totalLiquidity);
     expect(poolArg.totalVolume).eq(totalVolume);
+    expect(poolArg.totalFees).eq(totalFees);
 }
 
 function assertTransaction(
@@ -50,7 +52,8 @@ function assertTransaction(
     baseAssetId: bigint,
     baseAssetAmount: bigint,
     quoteAssetId: bigint,
-    quoteAssetAmount: bigint
+    quoteAssetAmount: bigint,
+    fee: string
 ) {
     expect(txArg.id).eq(id);
     expect(txArg.transactionType).eq(transactionType);
@@ -60,6 +63,7 @@ function assertTransaction(
     expect(txArg.baseAssetAmount).eq(baseAssetAmount);
     expect(txArg.quoteAssetId).eq(quoteAssetId);
     expect(txArg.quoteAssetAmount).eq(quoteAssetAmount);
+    expect(txArg.fee).eq(fee);
 }
 
 function assertAsset(
@@ -206,6 +210,7 @@ function createZeroPool() {
     pabloPool.quoteAssetId = BigInt(4);
     pabloPool.totalLiquidity = '0.0';
     pabloPool.totalVolume = '0.0';
+    pabloPool.totalFees = '0.0';
     pabloPool.transactionCount = 1;
     pabloPool.blockNumber = BigInt(1);
     pabloPool.poolAssets = [
@@ -251,8 +256,9 @@ describe('PoolCreated Tests', function () {
             1,
             BigInt(4),
             '0.0',
+            '0.0',
             '0.0'
-        );
+    );
         verify(storeMock.save(anyOfClass(PabloPoolAsset))).twice();
         const [assetOneArg] = capture(storeMock.save).second();
         assertAsset(assetOneArg as unknown as PabloPoolAsset,
@@ -281,8 +287,9 @@ describe('PoolCreated Tests', function () {
             BigInt(1),
             BigInt(0),
             BigInt(4),
-            BigInt(0)
-        );
+            BigInt(0),
+            '0.0'
+    );
     });
 });
 
@@ -312,7 +319,8 @@ describe('Liquidity Added & Removed Tests', function () {
             2,
             BigInt(4),
             '20000000000000000',
-            '0.0'
+            '0.0',
+        '0.0'
         );
         verify(storeMock.save(anyOfClass(PabloPoolAsset))).twice();
         const [assetOneArg] = capture(storeMock.save).second();
@@ -342,7 +350,8 @@ describe('Liquidity Added & Removed Tests', function () {
             BigInt(1),
             BigInt(10_000 * UNIT),
             BigInt(4),
-            BigInt(10_000 * UNIT)
+            BigInt(10_000 * UNIT),
+            '0.0'
         );
     });
 
@@ -371,8 +380,9 @@ describe('Liquidity Added & Removed Tests', function () {
             3,
             BigInt(4),
             '19980000000000000000',
-            '0.0'
-        );
+            '0.0',
+        '0.0'
+    );
         verify(storeMock.save(anyOfClass(PabloPoolAsset))).twice();
         const [assetOneArg] = capture(storeMock.save).second();
         assertAsset(assetOneArg as unknown as PabloPoolAsset,
@@ -401,7 +411,8 @@ describe('Liquidity Added & Removed Tests', function () {
             BigInt(1),
             BigInt(10_000 * UNIT),
             BigInt(4),
-            BigInt(10_000 * UNIT)
+            BigInt(10_000 * UNIT),
+            '0.0'
         );
     });
 });
@@ -433,8 +444,9 @@ describe('PoolDeleted Tests', function () {
             3,
             BigInt(4),
             '0.0',
-            '0.0'
-        );
+            '0.0',
+        '0.0'
+    );
         verify(storeMock.save(anyOfClass(PabloPoolAsset))).twice();
         const [assetOneArg] = capture(storeMock.save).second();
         assertAsset(assetOneArg as unknown as PabloPoolAsset,
@@ -463,7 +475,8 @@ describe('PoolDeleted Tests', function () {
             BigInt(1),
             BigInt(10_000 * UNIT),
             BigInt(4),
-            BigInt(10_000 * UNIT)
+            BigInt(10_000 * UNIT),
+            '0.0'
         );
     });
 });
@@ -495,7 +508,8 @@ describe('Swapped Tests', function () {
             3,
             BigInt(4),
             '19999000000000000',
-            '25000000000000'
+            '25000000000000',
+            '1000000000000'
         );
         verify(storeMock.save(anyOfClass(PabloPoolAsset))).twice();
         const [assetOneArg] = capture(storeMock.save).second();
@@ -525,7 +539,8 @@ describe('Swapped Tests', function () {
             BigInt(1),
             BigInt(100 * UNIT),
             BigInt(4),
-            BigInt(25 * UNIT)
+            BigInt(25 * UNIT),
+            '1000000000000'
         );
     });
 
@@ -561,7 +576,8 @@ describe('Swapped Tests', function () {
             3,
             BigInt(4),
             '19999520000000000',
-            '12000000000000'
+            '12000000000000',
+            '480000000000'
         );
         verify(storeMock.save(anyOfClass(PabloPoolAsset))).twice();
         const [assetOneArg] = capture(storeMock.save).second();
@@ -591,7 +607,8 @@ describe('Swapped Tests', function () {
             BigInt(4),
             BigInt(12 * UNIT),
             BigInt(1),
-            BigInt(25 * UNIT)
+            BigInt(25 * UNIT),
+            '480000000000'
         );
     });
 });

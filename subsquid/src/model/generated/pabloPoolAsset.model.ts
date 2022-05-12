@@ -27,6 +27,9 @@ export class PabloPoolAsset {
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   blockNumber!: bigint
 
+  /**
+   * Unix timestamp in ms
+   */
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   calculatedTimestamp!: bigint
 }

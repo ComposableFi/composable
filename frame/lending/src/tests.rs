@@ -854,7 +854,7 @@ fn test_repay_partial_amount() {
 				post_info: PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },
 				error: DispatchError::Module(ModuleError {
 					index: 8,
-					error: 33,
+					error: 34,
 					message: Some(Error::<Runtime>::CannotRepayMoreThanTotalDebt.into(),),
 				}),
 			},
@@ -1146,6 +1146,22 @@ fn current_interest_rate_test() {
 		assert_eq!(
 			crate::current_interest_rate::<Runtime>(market_id.0).unwrap(),
 			FixedU128::saturating_from_rational(1, 10)
+		);
+	})
+}
+
+#[test]
+fn zero_amount_collateral_deposit() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		let (market_id, _vault_id) = create_simple_market();
+		let expected = 50_000;
+		set_price(BTC::ID, expected);
+		set_price(USDT::ID, 1);
+		let collateral_amount = 0;
+		assert_noop!(
+			<Lending as LendingTrait>::deposit_collateral(&market_id, &BOB, collateral_amount),
+			Error::<Runtime>::CannotDepositZeroCollateral
 		);
 	})
 }

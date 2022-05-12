@@ -82,6 +82,9 @@ pub mod pallet {
 			PoolId = Self::PoolId,
 		>;
 
+		/// Required origin to update route operations.
+		type UpdateRouteOrigin: EnsureOrigin<Self::Origin, Success = Self::AccountId>;
+
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
@@ -151,7 +154,7 @@ pub mod pallet {
 			asset_pair: CurrencyPair<T::AssetId>,
 			route: Option<BoundedVec<T::PoolId, T::MaxHopsInRoute>>,
 		) -> DispatchResult {
-			let who = ensure_signed(origin)?;
+			let who = T::UpdateRouteOrigin::ensure_origin(origin)?;
 			let _ = <Self as DexRouter<
 				T::AccountId,
 				T::AssetId,
