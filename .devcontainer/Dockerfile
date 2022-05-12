@@ -93,5 +93,9 @@ RUN wget https://github.com/rust-lang/mdBook/releases/download/v0.4.18/mdbook-v0
     chmod +x mdbook && \
     cp ./mdbook /usr/bin 
 
-# WORKDIR /workspaces/composable/scripts/polkadot-launch
-# RUN yarn
+# Add taplo
+WORKDIR /taplo-binary
+RUN wget https://github.com/tamasfe/taplo/releases/download/release-cli-0.6.2/taplo-0.6.2-x86_64-unknown-linux-gnu.tar.gz && \
+    tar -xzf taplo-0.6.2-x86_64-unknown-linux-gnu.tar.gz && \
+    chmod +x taplo && \
+    cp ./taplo /usr/bin 
