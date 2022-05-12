@@ -60,7 +60,7 @@
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"onCreateCommand": "cd /workspaces/composable && export LIBCLANG_PATH=\"$(find / -name libclang.so)\" && cargo build -j 1", //  && cargo build --release
+	"onCreateCommand": "cd /workspaces/composable/scripts/polkadot-launch && yarn", //  && cargo build --release
 	"postCreateCommand": "mkdir -p /workspaces/polkadot/target/release && cp /polkadot-binary/polkadot /workspaces/polkadot/target/release/polkadot",
 	//
 	// TODO: Add this to the onCreateCommand once we get cargo builds to work.
