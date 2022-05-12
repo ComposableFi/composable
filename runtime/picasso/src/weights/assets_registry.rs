@@ -29,6 +29,7 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `assets_registry`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> assets_registry::WeightInfo for WeightInfo<T> {
+ 
 	fn register_asset() -> Weight {
 		(9_958_000 as Weight).saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}

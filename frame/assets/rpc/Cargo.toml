@@ -14,7 +14,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 sp-api = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
 sp-blockchain = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
 sp-runtime = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
-sp-std = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
+sp-std = {git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.18"}
 
 # local
 assets-runtime-api = {path = "../runtime-api"}

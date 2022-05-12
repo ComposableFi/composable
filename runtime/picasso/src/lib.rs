@@ -46,6 +46,7 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+use composable_traits::assets::Asset;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
@@ -63,7 +64,6 @@ pub use frame_support::{
 };
 
 use codec::{Codec, Encode, EncodeLike};
-use composable_traits::assets::Asset;
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
 use scale_info::TypeInfo;

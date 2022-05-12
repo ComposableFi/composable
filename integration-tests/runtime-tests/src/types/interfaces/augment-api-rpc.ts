@@ -1,9 +1,8 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
-
+import type { Asset } from '@composable/types/interfaces/assets';
 import type { CustomRpcBalance, CustomRpcCurrencyId } from '@composable/types/interfaces/common';
 import type { PalletPabloPoolId, PalletPabloPriceAggregate } from '@composable/types/interfaces/pablo';
-import type { Asset } from '@composable/types/interfaces/assets';
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
 import type { Metadata, StorageKey } from '@polkadot/types';
 import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, u32, u64 } from '@polkadot/types-codec';
@@ -29,15 +28,17 @@ import type { MigrationStatusResult, ReadProof, RuntimeVersion, TraceBlockRespon
 import type { ApplyExtrinsicResult, ChainProperties, ChainType, Health, NetworkState, NodeRole, PeerInfo, SyncState } from '@polkadot/types/interfaces/system';
 import type { IExtrinsic, Observable } from '@polkadot/types/types';
 
-declare module "@polkadot/rpc-core/types/jsonrpc" {
+
+declare module '@polkadot/rpc-core/types/jsonrpc' {
   export interface RpcInterface {
     assets: {
       /**
        * Balance available for the specified account for the specified asset.
        **/
-      balanceOf: AugmentedRpc<(asset: CustomRpcCurrencyId | string, account: AccountId32 | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<CustomRpcBalance>>;
 
       listAssets: AugmentedRpc<(at?: Hash | string | Uint8Array) => Observable<Vec<Asset>>>;
+
+      balanceOf: AugmentedRpc<(asset: CustomRpcCurrencyId | string, account: AccountId32 | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<CustomRpcBalance>>;
     };
     author: {
       /**

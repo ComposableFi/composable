@@ -5,8 +5,10 @@ import { ApiPromise } from "@polkadot/api";
 import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
 
-describe("rpc.assets Tests", function () {
-  if (!testConfiguration.enabledTests.rpc.enabled) return;
+
+describe("rpc.assets Tests", function() {
+  if (!testConfiguration.enabledTests.rpc.enabled)
+    return;
   let api: ApiPromise;
   let walletBobPublicKey: string;
 
@@ -70,7 +72,8 @@ export class RpcAssetsTests {
   public static async rpcListAssetsTest(apiClient: ApiPromise) {
     return await apiClient.rpc.assets.listAssets();
   }
-}
+
+};
 
 function hex_to_ascii(str1: string) {
   var hex = str1.toString();
