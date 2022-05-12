@@ -28,25 +28,24 @@ mod runtime;
 #[cfg(feature = "runtime-benchmarks")]
 pub use crate::wasm::code_cache::reinstrument;
 pub use crate::wasm::runtime::{CallFlags, ReturnCode, Runtime, RuntimeCosts};
-use alloc::string::String;
 use crate::{
 	exec::{Executable, ExecuteFunction, Ext},
 	gas::GasMeter,
 	wasm::{
 		cosmwasm::types::{
-			Addr, BlockInfo, ContractInfo, CosmwasmExecutionResult, CosmwasmQueryResult, Env,
-			ExecuteResult, InstantiateResult, MessageInfo, QueryResult, Timestamp, TransactionInfo,
+			Addr, BlockInfo, Coin, ContractInfo, CosmwasmExecutionResult, CosmwasmQueryResult,
+			CosmwasmReplyResult, Env, ExecuteResult, InstantiateResult, MessageInfo, QueryResult,
+			ReplyResult, Timestamp, TransactionInfo,
 		},
 		env_def::FunctionImplProvider,
 	},
-	AccountIdOf, BalanceOf, CodeHash, CodeStorage, Config, Schedule,
+	AccountIdOf, BalanceOf, CodeHash, CodeHashToId, CodeId, CodeStorage, Config, Error, Schedule,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::dispatch::{DispatchError, DispatchResult};
 use sp_core::crypto::UncheckedFrom;
-use sp_runtime::traits::Convert;
 use sp_sandbox::SandboxEnvironmentBuilder;
-use sp_std::{prelude::*, vec};
+use sp_std::prelude::*;
 #[cfg(test)]
 pub use tests::MockExt;
 
@@ -128,8 +127,8 @@ where
 	/// Store the code without instantiating it.
 	///
 	/// Otherwise the code is stored when [`<Self as Executable>::execute`] is called.
-	pub fn store(self) -> DispatchResult {
-		code_cache::store(self, false)
+	pub fn store(self, id: u64) -> DispatchResult {
+		code_cache::store(self, id, false)
 	}
 
 	/// Remove the code from storage and refund the deposit to its owner.
@@ -161,13 +160,14 @@ where
 	/// our results. This also does not collect any deposit from the `owner`.
 	#[cfg(feature = "runtime-benchmarks")]
 	pub fn store_code_unchecked(
+		id: u64,
 		original_code: Vec<u8>,
 		schedule: &Schedule<T>,
 		owner: T::AccountId,
 	) -> DispatchResult {
 		let executable = prepare::benchmarking::prepare_contract(original_code, schedule, owner)
 			.map_err::<DispatchError, _>(Into::into)?;
-		code_cache::store(executable, false)
+		code_cache::store(executable, id, false)
 	}
 
 	/// Decrement instruction_weights_version by 1. Panics if it is already 0.
@@ -197,6 +197,14 @@ where
 		code_cache::load(code_hash, schedule, gas_meter)
 	}
 
+	fn from_storage_with_id(
+		code_id: u64,
+		schedule: &Schedule<T>,
+		gas_meter: &mut GasMeter<T>,
+	) -> Result<Self, DispatchError> {
+		code_cache::load_with_id(code_id, schedule, gas_meter)
+	}
+
 	fn add_user(code_hash: CodeHash<T>) -> Result<(), DispatchError> {
 		code_cache::increment_refcount::<T>(code_hash)
 	}
@@ -209,40 +217,24 @@ where
 		self,
 		ext: &mut E,
 		function: &ExecuteFunction,
+		env: Env,
+		info: MessageInfo,
 		input_data: Vec<u8>,
 	) -> Result<CosmwasmExecutionResult, DispatchError> {
 		// We store before executing so that the code hash is available in the constructor.
 		let code = self.code.clone();
+		let hash = self.code_hash.clone();
 		if let &ExecuteFunction::Instantiate = function {
-			code_cache::store(self, true)?;
+			code_cache::store(
+				self,
+				CodeHashToId::<T>::get(hash).ok_or(Error::<T>::ContractNotFound)?,
+				true,
+			)?;
 		}
 		let mut imports = sp_sandbox::default_executor::EnvironmentDefinitionBuilder::new();
 		runtime::Env::impls(&mut |module, name, func_ptr| {
 			imports.add_host_func(module, name, func_ptr);
 		});
-
-    let now = *ext.now();
-
-		let env = Env {
-			block: BlockInfo {
-				height: 0,
-				time: Timestamp(now.into()),
-				chain_id: String::from("picasso-testnet")
-			},
-			transaction: Some(TransactionInfo { index: 0 }),
-			contract: ContractInfo {
-				address: Addr::unchecked(T::AccountIdToFromString::convert(
-					ext.address().clone(),
-				)),
-			},
-		};
-
-		let info = MessageInfo {
-			sender: Addr::unchecked(T::AccountIdToFromString::convert(
-				ext.caller().clone(),
-			)),
-			funds: vec![],
-		};
 
 		let mut runtime = Runtime::new(ext, &code, &imports)?;
 
@@ -263,6 +255,7 @@ where
 	fn query<E: Ext<T = T>>(
 		self,
 		ext: &mut E,
+		env: Env,
 		input_data: Vec<u8>,
 	) -> Result<CosmwasmQueryResult, DispatchError> {
 		// We store before executing so that the code hash is available in the constructor.
@@ -272,25 +265,31 @@ where
 			imports.add_host_func(module, name, func_ptr);
 		});
 
-    let now = *ext.now();
-
-		let env = Env {
-			block: BlockInfo {
-				height: 0,
-				time: Timestamp(now.into()),
-				chain_id: String::from("picasso-testnet")
-			},
-			transaction: Some(TransactionInfo { index: 0 }),
-			contract: ContractInfo {
-				address: Addr::unchecked(T::AccountIdToFromString::convert(
-					ext.address().clone(),
-				)),
-			},
-		};
-
 		let mut runtime = Runtime::new(ext, &code, &imports)?;
 
 		let QueryResult(response) = runtime.do_query(env, &input_data)?;
+
+		Ok(response)
+	}
+
+	fn reply<E: Ext<T = T>>(
+		self,
+		ext: &mut E,
+		env: Env,
+		input_data: Vec<u8>,
+	) -> Result<CosmwasmReplyResult, DispatchError> {
+		// We store before executing so that the code hash is available in the constructor.
+		let code = self.code;
+		let mut imports = sp_sandbox::default_executor::EnvironmentDefinitionBuilder::new();
+		runtime::Env::impls(&mut |module, name, func_ptr| {
+			imports.add_host_func(module, name, func_ptr);
+		});
+
+		let mut runtime = Runtime::new(ext, &code, &imports)?;
+
+		log::debug!(target: "runtime::contracts", "Executing reply");
+
+		let ReplyResult(response) = runtime.do_reply(env, &input_data)?;
 
 		Ok(response)
 	}

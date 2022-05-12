@@ -113,7 +113,6 @@ impl<'a, T> Externals for GuestExternals<'a, T> {
 		args: RuntimeArgs,
 	) -> Result<Option<RuntimeValue>, Trap> {
 		let args = args.as_ref().iter().cloned().map(to_interface).collect::<Vec<_>>();
-
 		let result = (self.defined_host_functions.funcs[index])(self.state, &args);
 		match result {
 			Ok(value) => Ok(match value {

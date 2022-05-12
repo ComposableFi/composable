@@ -63,7 +63,7 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 
-use codec::Encode;
+use codec::{Decode, Encode};
 use contracts::weights::WeightInfo;
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
@@ -1019,6 +1019,7 @@ fn deposit(items: u32, bytes: u32) -> Balance {
 }
 
 parameter_types! {
+  pub const MaxTransferAssets: u32 = 16;
 	pub DepositPerItem: Balance = deposit(1, 0);
 	pub DepositPerByte: Balance = deposit(0, 1);
 	// The lazy deletion runs inside on_initialize.
@@ -1047,25 +1048,43 @@ parameter_types! {
 use alloc::{format, string::String};
 extern crate alloc;
 
-pub struct AccountIdToFromString;
-impl Convert<String, Result<AccountId, ()>> for AccountIdToFromString {
+pub struct CosmwasmAccount;
+impl Convert<String, Result<AccountId, ()>> for CosmwasmAccount {
 	fn convert(a: String) -> Result<AccountId, ()> {
 		let account_id =
 			TryInto::<[u8; 32]>::try_into(hex::decode(a).map_err(|_| ())?).map_err(|_| ())?;
 		Ok(AccountId::from(account_id))
 	}
 }
-impl Convert<AccountId, String> for AccountIdToFromString {
+impl Convert<AccountId, String> for CosmwasmAccount {
 	fn convert(a: AccountId) -> String {
 		hex::encode(a)
 	}
 }
 
+// TODO: use plain string alias?
+pub struct CosmwasmCoin;
+impl Convert<String, Result<CurrencyId, ()>> for CosmwasmCoin {
+	fn convert(a: String) -> Result<CurrencyId, ()> {
+		let currency_id = hex::decode(a).map_err(|_| ())?;
+		<CurrencyId as Decode>::decode(&mut &currency_id[..]).map_err(|_| ())
+	}
+}
+impl Convert<CurrencyId, String> for CosmwasmCoin {
+	fn convert(a: CurrencyId) -> String {
+		a.using_encoded(|x| hex::encode(x))
+	}
+}
+
 impl contracts::Config for Runtime {
-  type Moment = Moment;
+	type Moment = Moment;
 	type Time = Timestamp;
 	type Randomness = RandomnessCollectiveFlip;
 	type Currency = Balances;
+	type AssetId = CurrencyId;
+	type NativeAssetId = NativeAssetId;
+	type Assets = Assets;
+	type MaxTransferAssets = MaxTransferAssets;
 	type Event = Event;
 	type Call = Call;
 	/// The safest default is to allow no calls at all.
@@ -1085,7 +1104,8 @@ impl contracts::Config for Runtime {
 	type Schedule = Schedule;
 	type CallStack = [contracts::Frame<Self>; 31];
 	type AddressGenerator = contracts::DefaultAddressGenerator;
-	type AccountIdToFromString = AccountIdToFromString;
+	type ConvertAccount = CosmwasmAccount;
+	type ConvertAsset = CosmwasmCoin;
 }
 
 construct_runtime!(

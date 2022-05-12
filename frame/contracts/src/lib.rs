@@ -106,7 +106,7 @@ pub use crate::{
 	schedule::{HostFnWeights, InstructionWeights, Limits, Schedule},
 };
 use crate::{
-	exec::{AccountIdOf, ExecError, Executable, Stack as ExecStack},
+	exec::{ExecError, Executable, Stack as ExecStack},
 	gas::GasMeter,
 	storage::{meter::Meter as StorageMeter, ContractInfo, DeletedContract, Storage},
 	wasm::{OwnerInfo, PrefabWasmModule},
@@ -116,7 +116,11 @@ use codec::{Encode, HasCompact};
 use frame_support::{
 	dispatch::Dispatchable,
 	ensure,
-	traits::{Contains, Currency, Get, Randomness, ReservableCurrency, StorageVersion, Time},
+	storage::bounded_btree_map::BoundedBTreeMap,
+	traits::{
+		fungibles::{Inspect as FungiblesInspect, Transfer as FungiblesTransfer},
+		Contains, Currency, Get, Randomness, ReservableCurrency, StorageVersion, Time,
+	},
 	weights::{GetDispatchInfo, Pays, PostDispatchInfo, Weight},
 };
 use frame_system::Pallet as System;
@@ -133,10 +137,13 @@ use sp_runtime::{
 };
 use sp_std::{fmt::Debug, prelude::*};
 
-type CodeHash<T> = <T as frame_system::Config>::Hash;
-type TrieId = Vec<u8>;
-type BalanceOf<T> =
-	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+pub(crate) type CodeHash<T> = <T as frame_system::Config>::Hash;
+pub(crate) type TrieId = Vec<u8>;
+pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+pub(crate) type BalanceOf<T> = <<T as Config>::Currency as Currency<AccountIdOf<T>>>::Balance;
+pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
+pub(crate) type TransferredAssets<T> =
+	BoundedBTreeMap<AssetIdOf<T>, BalanceOf<T>, <T as Config>::MaxTransferAssets>;
 
 /// The current storage version.
 const STORAGE_VERSION: StorageVersion = StorageVersion::new(7);
@@ -202,13 +209,13 @@ where
 pub mod pallet {
 	use super::*;
 	use alloc::string::String;
-	use frame_support::pallet_prelude::*;
+	use frame_support::{pallet_prelude::*, traits::tokens::AssetId, transactional};
 	use frame_system::pallet_prelude::*;
-use sp_runtime::traits::AtLeast32Bit;
+	use sp_runtime::traits::AtLeast32Bit;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-    type Moment: AtLeast32Bit + Parameter + Default + Copy + Into<u128>;
+		type Moment: AtLeast32Bit + Parameter + Default + Copy + Into<u128>;
 
 		/// The time implementation used to supply timestamps to conntracts through `seal_now`.
 		type Time: Time<Moment = Self::Moment>;
@@ -219,6 +226,22 @@ use sp_runtime::traits::AtLeast32Bit;
 		/// The currency in which fees are paid and contract balances are held.
 		type Currency: ReservableCurrency<Self::AccountId>;
 
+		/// Extra ord required for bounded map.
+		type AssetId: AssetId + Ord;
+
+		/// The native asset id, used to extract the native asset from the transferred assets in
+		/// order to construct the gas meter.
+		#[pallet::constant]
+		type NativeAssetId: Get<AssetIdOf<Self>>;
+
+		/// The assets a user is able to transfer to a contract prior to execution.
+		type Assets: FungiblesInspect<Self::AccountId, AssetId = AssetIdOf<Self>, Balance = BalanceOf<Self>>
+			+ FungiblesTransfer<Self::AccountId>;
+
+		/// The maximum number of assets a user is able to transfer before calling a contract.
+		#[pallet::constant]
+		type MaxTransferAssets: Get<u32>;
+
 		/// The overarching event type.
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
@@ -228,8 +251,15 @@ use sp_runtime::traits::AtLeast32Bit;
 			+ codec::Decode
 			+ IsType<<Self as frame_system::Config>::Call>;
 
-		type AccountIdToFromString: Convert<Self::AccountId, String>
+		/// Cosmwasm translation from/to Addr type.
+		/// NOTE(hussein-aitlahcen): if contract is agnostic to addr (i.e. no hardcoded bech32,
+		/// should work out of the box)
+		type ConvertAccount: Convert<Self::AccountId, String>
 			+ Convert<String, Result<Self::AccountId, ()>>;
+
+		/// Cosmwasm translation from/to Coin.denom type.
+		type ConvertAsset: Convert<Self::AssetId, String>
+			+ Convert<String, Result<Self::AssetId, ()>>;
 
 		/// Filter that is applied to calls dispatched by contracts.
 		///
@@ -371,7 +401,7 @@ use sp_runtime::traits::AtLeast32Bit;
 		pub fn call(
 			origin: OriginFor<T>,
 			dest: <T::Lookup as StaticLookup>::Source,
-			#[pallet::compact] value: BalanceOf<T>,
+			value: TransferredAssets<T>,
 			#[pallet::compact] gas_limit: Weight,
 			storage_deposit_limit: Option<<BalanceOf<T> as codec::HasCompact>::Type>,
 			data: Vec<u8>,
@@ -399,7 +429,7 @@ use sp_runtime::traits::AtLeast32Bit;
 		pub fn query(
 			origin: OriginFor<T>,
 			dest: <T::Lookup as StaticLookup>::Source,
-			#[pallet::compact] value: BalanceOf<T>,
+			value: TransferredAssets<T>,
 			#[pallet::compact] gas_limit: Weight,
 			storage_deposit_limit: Option<<BalanceOf<T> as codec::HasCompact>::Type>,
 			data: Vec<u8>,
@@ -455,7 +485,7 @@ use sp_runtime::traits::AtLeast32Bit;
 		)]
 		pub fn instantiate_with_code(
 			origin: OriginFor<T>,
-			#[pallet::compact] value: BalanceOf<T>,
+			value: TransferredAssets<T>,
 			#[pallet::compact] gas_limit: Weight,
 			storage_deposit_limit: Option<<BalanceOf<T> as codec::HasCompact>::Type>,
 			code: Vec<u8>,
@@ -496,7 +526,7 @@ use sp_runtime::traits::AtLeast32Bit;
 		)]
 		pub fn instantiate(
 			origin: OriginFor<T>,
-			#[pallet::compact] value: BalanceOf<T>,
+			value: TransferredAssets<T>,
 			#[pallet::compact] gas_limit: Weight,
 			storage_deposit_limit: Option<<BalanceOf<T> as codec::HasCompact>::Type>,
 			code_hash: CodeHash<T>,
@@ -543,6 +573,7 @@ use sp_runtime::traits::AtLeast32Bit;
 		/// only be instantiated by permissioned entities. The same is true when uploading
 		/// through [`Self::instantiate_with_code`].
 		#[pallet::weight(T::WeightInfo::upload_code(code.len() as u32))]
+		#[transactional]
 		pub fn upload_code(
 			origin: OriginFor<T>,
 			code: Vec<u8>,
@@ -702,7 +733,13 @@ use sp_runtime::traits::AtLeast32Bit;
 		StorageMap<_, Identity, CodeHash<T>, PrefabWasmModule<T>>;
 
 	#[pallet::storage]
-	pub(crate) type CodeStorageById<T: Config> = StorageMap<_, Identity, u64, CodeHash<T>>;
+	pub(crate) type CodeIdToHash<T: Config> = StorageMap<_, Identity, u64, CodeHash<T>>;
+
+	#[pallet::storage]
+	pub(crate) type CodeHashToId<T: Config> = StorageMap<_, Identity, CodeHash<T>, u64>;
+
+	#[pallet::storage]
+	pub(crate) type CodeId<T: Config> = StorageValue<_, u64, ValueQuery>;
 
 	/// A mapping between an original code hash and its owner information.
 	#[pallet::storage]
@@ -783,7 +820,7 @@ where
 	pub fn bare_call(
 		origin: T::AccountId,
 		dest: T::AccountId,
-		value: BalanceOf<T>,
+		value: TransferredAssets<T>,
 		gas_limit: Weight,
 		storage_deposit_limit: Option<BalanceOf<T>>,
 		data: Vec<u8>,
@@ -822,7 +859,7 @@ where
 	/// If set to `true` it returns additional human readable debugging information.
 	pub fn bare_instantiate(
 		origin: T::AccountId,
-		value: BalanceOf<T>,
+		value: TransferredAssets<T>,
 		gas_limit: Weight,
 		storage_deposit_limit: Option<BalanceOf<T>>,
 		code: Code<CodeHash<T>>,
@@ -870,7 +907,12 @@ where
 			ensure!(storage_deposit_limit >= deposit, <Error<T>>::StorageDepositLimitExhausted);
 		}
 		let result = CodeUploadReturnValue { code_hash: *module.code_hash(), deposit };
-		module.store()?;
+		let next_id = CodeId::<T>::try_mutate(|v| -> Result<u64, DispatchError> {
+			let id = *v;
+			*v = v.checked_add(1).ok_or(Error::<T>::CodeRejected)?;
+			Ok(id)
+		})?;
+		module.store(next_id)?;
 		Ok(result)
 	}
 
@@ -921,22 +963,27 @@ where
 	fn internal_call(
 		origin: T::AccountId,
 		dest: T::AccountId,
-		value: BalanceOf<T>,
+		value: TransferredAssets<T>,
 		gas_limit: Weight,
 		storage_deposit_limit: Option<BalanceOf<T>>,
 		data: Vec<u8>,
 		debug_message: Option<&mut Vec<u8>>,
 	) -> InternalCallOutput<T> {
 		let mut gas_meter = GasMeter::new(gas_limit);
-		let mut storage_meter = match StorageMeter::new(&origin, storage_deposit_limit, value) {
-			Ok(meter) => meter,
-			Err(err) =>
-				return InternalCallOutput {
-					result: Err(err.into()),
-					gas_meter,
-					storage_deposit: Default::default(),
-				},
-		};
+		let transferred_native = value
+			.get(&T::NativeAssetId::get())
+			.copied()
+			.unwrap_or(BalanceOf::<T>::from(0u32));
+		let mut storage_meter =
+			match StorageMeter::new(&origin, storage_deposit_limit, transferred_native) {
+				Ok(meter) => meter,
+				Err(err) =>
+					return InternalCallOutput {
+						result: Err(err.into()),
+						gas_meter,
+						storage_deposit: Default::default(),
+					},
+			};
 		let schedule = T::Schedule::get();
 		let result = ExecStack::<T, PrefabWasmModule<T>>::run_call(
 			origin,
@@ -957,22 +1004,27 @@ where
 	fn internal_query(
 		origin: T::AccountId,
 		dest: T::AccountId,
-		value: BalanceOf<T>,
+		value: TransferredAssets<T>,
 		gas_limit: Weight,
 		storage_deposit_limit: Option<BalanceOf<T>>,
 		data: Vec<u8>,
 		debug_message: Option<&mut Vec<u8>>,
 	) -> InternalCallOutput<T> {
 		let mut gas_meter = GasMeter::new(gas_limit);
-		let mut storage_meter = match StorageMeter::new(&origin, storage_deposit_limit, value) {
-			Ok(meter) => meter,
-			Err(err) =>
-				return InternalCallOutput {
-					result: Err(err.into()),
-					gas_meter,
-					storage_deposit: Default::default(),
-				},
-		};
+		let transferred_native = value
+			.get(&T::NativeAssetId::get())
+			.copied()
+			.unwrap_or(BalanceOf::<T>::from(0u32));
+		let mut storage_meter =
+			match StorageMeter::new(&origin, storage_deposit_limit, transferred_native) {
+				Ok(meter) => meter,
+				Err(err) =>
+					return InternalCallOutput {
+						result: Err(err.into()),
+						gas_meter,
+						storage_deposit: Default::default(),
+					},
+			};
 		let schedule = T::Schedule::get();
 		let result = ExecStack::<T, PrefabWasmModule<T>>::run_query(
 			origin,
@@ -992,7 +1044,7 @@ where
 	/// Called by dispatchables and public functions.
 	fn internal_instantiate(
 		origin: T::AccountId,
-		value: BalanceOf<T>,
+		value: TransferredAssets<T>,
 		gas_limit: Weight,
 		storage_deposit_limit: Option<BalanceOf<T>>,
 		code: Code<CodeHash<T>>,
@@ -1019,6 +1071,12 @@ where
 						executable.code_len() <= schedule.limits.code_len,
 						<Error<T>>::CodeTooLarge
 					);
+					let next_id = CodeId::<T>::try_mutate(|v| -> Result<u64, DispatchError> {
+						let id = *v;
+						*v = v.checked_add(1).ok_or(Error::<T>::CodeRejected)?;
+						Ok(id)
+					})?;
+					CodeIdToHash::<T>::insert(&next_id, executable.code_hash());
 					// The open deposit will be charged during execution when the
 					// uploaded module does not already exist. This deposit is not part of the
 					// storage meter because it is not transfered to the contract but
@@ -1030,10 +1088,14 @@ where
 					PrefabWasmModule::from_storage(hash, &schedule, &mut gas_meter)?,
 				),
 			};
+			let transferred_native = value
+				.get(&T::NativeAssetId::get())
+				.copied()
+				.unwrap_or(BalanceOf::<T>::from(0u32));
 			let mut storage_meter = StorageMeter::new(
 				&origin,
 				storage_deposit_limit,
-				value.saturating_add(extra_deposit),
+				transferred_native.saturating_add(extra_deposit),
 			)?;
 			let result = ExecStack::<T, PrefabWasmModule<T>>::run_instantiate(
 				origin,
