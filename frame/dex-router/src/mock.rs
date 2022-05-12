@@ -191,6 +191,7 @@ impl dex_router::Config for Test {
 	type Pablo = Pablo;
 	type PalletId = TestDexRouterPalletID;
 	type WeightInfo = ();
+	type UpdateRouteOrigin = EnsureSigned<Self::AccountId>;
 }
 
 // Build genesis storage according to the mock runtime.

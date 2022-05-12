@@ -46,6 +46,15 @@ export class PabloTransaction {
   @Column_("text", {nullable: false})
   spotPrice!: string
 
+  /**
+   * Optional: Only certain transaction types have fees charged by Pablo. Does NOT include the collected extrinsic execution fee.
+   */
+  @Column_("text", {nullable: false})
+  fee!: string
+
+  /**
+   * Unix timestamp in ms
+   */
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   receivedTimestamp!: bigint
 }
