@@ -43,10 +43,7 @@ proptest! {
 			}
 		})
 	}
-}
 
-proptest! {
-	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
 	#[allow(clippy::disallowed_methods)]
 	fn get_price_quote_asset(
