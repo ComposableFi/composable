@@ -77,6 +77,7 @@ pub mod pallet {
 			math::{self, *},
 			BorrowAmountOf, CollateralLpAmountOf, CreateInput, CurrencyPairIsNotSame, Lending,
 			MarketConfig, MarketModelValid, RepayStrategy, TotalDebtWithInterest, UpdateInput,
+			UpdateInputVaild,
 		},
 		liquidation::Liquidation,
 		oracle::Oracle,
@@ -646,9 +647,10 @@ pub mod pallet {
 		pub fn update_market(
 			origin: OriginFor<T>,
 			market_id: MarketIndex,
-			input: UpdateInput<T::LiquidationStrategyId>,
+			input: Validated<UpdateInput<T::LiquidationStrategyId>, UpdateInputVaild>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
+			let input = input.value();
 			Markets::<T>::mutate(&market_id, |market| {
 				if let Some(market) = market {
 					ensure!(who == market.manager, Error::<T>::Unauthorized);
