@@ -889,7 +889,7 @@ define_env!(Env, <E: Ext>,
 	// ============ COSMWASM ============
 	[env] db_read(ctx, key_ptr: u32) -> u32 => {
 		log::debug!(target: "runtime::contracts", "DbRead");
-		let charged = ctx.charge_gas(RuntimeCosts::GetStorage(ctx.ext.max_value_size()))?;
+	let charged = ctx.charge_gas(RuntimeCosts::GetStorage(ctx.ext.max_value_size()))?;
 	let key_data = ctx.memory().read_region(key_ptr, MAX_LENGTH_DB_KEY as _)?;
 		ctx.charge_gas(RuntimeCosts::HashKeccak256(key_data.len() as _))?;
 		let key = keccak_256(&key_data);
@@ -928,7 +928,7 @@ define_env!(Env, <E: Ext>,
 	[env] db_remove(ctx, key_ptr: u32) => {
 		log::debug!(target: "runtime::contracts", "DbRemove");
 	let key_data = ctx.memory().read_region(key_ptr, MAX_LENGTH_DB_KEY as _)?;
-		ctx.charge_gas(RuntimeCosts::HashKeccak256(key_data.len() as _))?;
+	ctx.charge_gas(RuntimeCosts::HashKeccak256(key_data.len() as _))?;
 		let key = keccak_256(&key_data);
 		let max_size = ctx.ext.max_value_size();
 		let charged = ctx

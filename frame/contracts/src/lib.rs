@@ -777,6 +777,13 @@ pub mod pallet {
 	pub(crate) type ContractInfoOf<T: Config> =
 		StorageMap<_, Twox64Concat, T::AccountId, ContractInfo<T>>;
 
+	/// The account that instantiated a contract
+	///
+	/// TWOX-NOTE: SAFE since `AccountId` is a secure hash.
+	#[pallet::storage]
+	pub(crate) type ContractInstantiator<T: Config> =
+		StorageMap<_, Twox64Concat, T::AccountId, T::AccountId>;
+
 	/// Evicted contracts that await child trie deletion.
 	///
 	/// Child trie deletion is a heavy operation depending on the amount of storage items

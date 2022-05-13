@@ -30,8 +30,9 @@ use crate::{
 			WasmMsg, WasmQuery,
 		},
 	},
-	AssetIdOf, BalanceOf, CodeHash, CodeHashToId, Config, ContractInfo, ContractInfoOf, Error,
-	Event, Nonce, Pallet as Contracts, Schedule, TransferredAssets, TrieId,
+	AssetIdOf, BalanceOf, CodeHash, CodeHashToId, Config, ContractInfo, ContractInfoOf,
+	ContractInstantiator, Error, Event, Nonce, OwnerInfoOf, Pallet as Contracts, Schedule,
+	TransferredAssets, TrieId,
 };
 use alloc::{collections::BTreeMap, string::String};
 use codec::Encode;
@@ -159,6 +160,11 @@ pub trait Ext: sealing::Sealed {
 	///
 	/// Returns `None` if the `address` does not belong to a contract.
 	fn trie_id(&self, address: &AccountIdOf<Self::T>) -> Option<TrieId>;
+
+	/// Return the account that instantiated this contract.
+	///
+	/// Returns `None` if the `address` does not belong to a contract.
+	fn instantiator(&self, address: &AccountIdOf<Self::T>) -> Option<AccountIdOf<Self::T>>;
 
 	/// Returns the code hash of the contract being executed.
 	fn own_code_hash(&mut self) -> &CodeHash<Self::T>;
@@ -748,6 +754,7 @@ where
 				FrameArgs::Instantiate { sender, nonce, executable, salt } => {
 					let account_id =
 						<Contracts<T>>::contract_address(&sender, executable.code_hash(), &salt);
+					ContractInstantiator::<T>::insert(&account_id, &sender);
 					let trie_id = Storage::<T>::generate_trie_id(&account_id, nonce);
 					let contract = Storage::<T>::new_contract(
 						&account_id,
@@ -1405,10 +1412,13 @@ where
 					let to = T::ConvertAccount::convert(contract_addr)
 						.map_err(|_| Error::<T>::DecodingFailed)?;
 					let code_id = self.code_id(&to).ok_or(Error::<T>::ContractNotFound)?;
+					let instantiator = T::ConvertAccount::convert(
+						self.instantiator(&to).ok_or(Error::<T>::ContractNotFound)?,
+					);
 					// TODO: admin/pinned/ibc_port
 					let response = SystemResult::Ok(CosmwasmResult::Ok(ContractInfoResponse {
 						code_id,
-						creator: String::new(),
+						creator: instantiator,
 						admin: None,
 						pinned: false,
 						ibc_port: None,
@@ -1479,7 +1489,11 @@ where
 	}
 
 	fn trie_id(&self, address: &T::AccountId) -> Option<TrieId> {
-		<ContractInfoOf<T>>::get(&address).map(|contract| contract.trie_id)
+		<ContractInfoOf<T>>::get(address).map(|contract| contract.trie_id)
+	}
+
+	fn instantiator(&self, address: &T::AccountId) -> Option<T::AccountId> {
+		<ContractInstantiator<T>>::get(address)
 	}
 
 	fn own_code_hash(&mut self) -> &CodeHash<Self::T> {
