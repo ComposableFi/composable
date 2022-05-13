@@ -33,13 +33,12 @@ use crate::{
 	gas::GasMeter,
 	wasm::{
 		cosmwasm::types::{
-			Addr, BlockInfo, Coin, ContractInfo, CosmwasmExecutionResult, CosmwasmQueryResult,
-			CosmwasmReplyResult, Env, ExecuteResult, InstantiateResult, MessageInfo, QueryResult,
-			ReplyResult, Timestamp, TransactionInfo,
+			CosmwasmExecutionResult, CosmwasmQueryResult, CosmwasmReplyResult, Env, ExecuteResult,
+			InstantiateResult, MessageInfo, QueryResult, ReplyResult,
 		},
 		env_def::FunctionImplProvider,
 	},
-	AccountIdOf, BalanceOf, CodeHash, CodeHashToId, CodeId, CodeStorage, Config, Error, Schedule,
+	AccountIdOf, BalanceOf, CodeHash, CodeHashToId, CodeStorage, Config, Error, Schedule,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use frame_support::dispatch::{DispatchError, DispatchResult};
