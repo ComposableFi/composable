@@ -1046,6 +1046,31 @@ pub mod pallet {
 			market: MarketConfigOf<T>,
 			market_account: &T::AccountId,
 		) -> Result<(), DispatchError> {
+			let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
+
+			// Check is price actual yet
+			{
+				use sp_runtime::traits::CheckedSub as _;
+
+				let current_block = frame_system::Pallet::<T>::block_number();
+				let blocks_count = market.actual_blocks_count;
+
+				// check borrow asset
+				let price_block =
+					<T::Oracle as Oracle>::get_price(borrow_asset, Default::default())?.block;
+				if current_block.checked_sub(&blocks_count).unwrap_or_default() > price_block {
+					return Err(Error::<T>::VeryOldPrice.into())
+				}
+
+				// check collateral asset
+				let collateral_asset = market.collateral_asset;
+				let price_block =
+					<T::Oracle as Oracle>::get_price(collateral_asset, Default::default())?.block;
+				if current_block.checked_sub(&blocks_count).unwrap_or_default() > price_block {
+					return Err(Error::<T>::VeryOldPrice.into())
+				}
+			};
+
 			// this check prevents free flash loans
 			if let Some(latest_borrow_timestamp) = BorrowTimestamp::<T>::get(market_id, debt_owner)
 			{
@@ -1053,8 +1078,6 @@ pub mod pallet {
 					return Err(Error::<T>::InvalidTimestampOnBorrowRequest.into())
 				}
 			}
-
-			let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
 
 			let borrow_limit = Self::get_borrow_limit(market_id, debt_owner)?;
 			let borrow_amount_value = Self::get_price(borrow_asset, amount_to_borrow)?;
