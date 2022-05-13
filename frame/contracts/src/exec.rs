@@ -911,8 +911,21 @@ where
 		let result = match result {
 			// Instantiate/Execute/Reply branch
 			Ok(Right(response)) => {
+				if response.attributes.len() > 0 {
+					// https://github.com/CosmWasm/wasmd/blob/ac92fdcf37388cc8dc24535f301f64395f8fb3da/x/wasm/keeper/events.go#L16
+					add_event(Right(CosmwasmEvent {
+						ty: String::from("wasm"),
+						attributes: response.attributes,
+					}))
+				}
 				for event in response.events {
-					add_event(Right(event));
+					// https://github.com/CosmWasm/wasmd/blob/ac92fdcf37388cc8dc24535f301f64395f8fb3da/x/wasm/keeper/events.go#L29
+					let mut ty_prefixed = String::from("wasm-");
+					ty_prefixed.push_str(&event.ty);
+					add_event(Right(CosmwasmEvent {
+						ty: ty_prefixed,
+						attributes: event.attributes,
+					}));
 				}
 				'handle: for SubMsg { id, msg, gas_limit, reply_on } in response.messages {
 					log::debug!(target: "runtime::contracts", "Process sub message");
