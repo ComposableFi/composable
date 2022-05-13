@@ -55,7 +55,8 @@
 		"GitHub.copilot",
 		"eamodio.gitlens",
 		"ms-vscode.makefile-tools",
-		"ms-vsliveshare.vsliveshare"
+		"ms-vsliveshare.vsliveshare",
+		"tomoki1207.pdf"
 	],
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
