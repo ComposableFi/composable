@@ -1033,31 +1033,6 @@ pub mod pallet {
 			market: MarketConfigOf<T>,
 			market_account: &T::AccountId,
 		) -> Result<(), DispatchError> {
-			let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
-
-			// Check is price actual yet
-			{
-				use sp_runtime::traits::CheckedSub as _;
-
-				let current_block = frame_system::Pallet::<T>::block_number();
-				let blocks_count = market.actual_blocks_count;
-
-				// check borrow asset
-				let price_block =
-					<T::Oracle as Oracle>::get_price(borrow_asset, Default::default())?.block;
-				if current_block.checked_sub(&blocks_count).unwrap_or_default() > price_block {
-					return Err(Error::<T>::VeryOldPrice.into())
-				}
-
-				// check collateral asset
-				let collateral_asset = market.collateral_asset;
-				let price_block =
-					<T::Oracle as Oracle>::get_price(collateral_asset, Default::default())?.block;
-				if current_block.checked_sub(&blocks_count).unwrap_or_default() > price_block {
-					return Err(Error::<T>::VeryOldPrice.into())
-				}
-			};
-
 			// this check prevents free flash loans
 			if let Some(latest_borrow_timestamp) = BorrowTimestamp::<T>::get(market_id, debt_owner)
 			{
@@ -1066,6 +1041,7 @@ pub mod pallet {
 				}
 			}
 
+			let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
 			let borrow_limit = Self::get_borrow_limit(market_id, debt_owner)?;
 			let borrow_amount_value = Self::get_price(borrow_asset, amount_to_borrow)?;
 			ensure!(borrow_limit >= borrow_amount_value, Error::<T>::NotEnoughCollateralToBorrow);
@@ -1100,6 +1076,30 @@ pub mod pallet {
 				),
 				Error::<T>::MarketIsClosing
 			);
+
+			Ok(())
+		}
+
+		/// Check is price actual yet
+		fn is_price_actual(market: &MarketConfigOf<T>) -> Result<(), DispatchError> {
+			let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
+
+			use sp_runtime::traits::CheckedSub as _;
+
+			let current_block = frame_system::Pallet::<T>::block_number();
+			let edge_block = current_block.checked_sub(&blocks_count).unwrap_or_default();
+			let blocks_count = market.actual_blocks_count;
+
+			// check borrow asset
+			let price_block =
+				<T::Oracle as Oracle>::get_price(borrow_asset, Default::default())?.block;
+			ensure!(price_block >= edge_block, Error::<T>::VeryOldPrice);
+
+			// check collateral asset
+			let collateral_asset = market.collateral_asset;
+			let price_block =
+				<T::Oracle as Oracle>::get_price(collateral_asset, Default::default())?.block;
+			ensure!(price_block >= edge_block, Error::<T>::VeryOldPrice);
 
 			Ok(())
 		}
@@ -1336,6 +1336,8 @@ pub mod pallet {
 				Self::get_assets_for_market(market_id)?;
 
 			let market_account = Self::account_id(market_id);
+
+			Self::is_price_actual(&market)?;
 
 			Self::can_borrow(
 				market_id,
