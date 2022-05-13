@@ -869,6 +869,9 @@ where
 
 		let info = MessageInfo { sender: cosmwasm_sender_addr, funds };
 
+		log::debug!(target: "runtime::contracts", "Environment: {:?}", env);
+		log::debug!(target: "runtime::contracts", "MessageInfo: {:?}", info);
+
 		// Left = Query branch
 		// Right = Response branch
 		let result = match entry_point {
