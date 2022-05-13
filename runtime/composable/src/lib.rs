@@ -58,7 +58,10 @@ pub use frame_support::{
 };
 
 use codec::{Codec, Encode, EncodeLike};
-use frame_support::traits::{EqualPrivilegeOnly, OnRuntimeUpgrade};
+use frame_support::{
+	traits::{EqualPrivilegeOnly, OnRuntimeUpgrade},
+	weights::{ConstantMultiplier},
+};
 use frame_system as system;
 use scale_info::TypeInfo;
 use sp_runtime::AccountId32;
@@ -292,11 +295,11 @@ impl WeightToFeePolynomial for WeightToFee {
 impl transaction_payment::Config for Runtime {
 	type OnChargeTransaction =
 		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 }
 
 impl sudo::Config for Runtime {
