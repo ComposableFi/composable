@@ -464,6 +464,7 @@ impl oracle::Config for Runtime {
 	type MaxPrePrices = MaxPrePrices;
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
 	type LocalAssets = CurrencyFactory;
+	type TreasuryAccount = TreasuryAccount;
 }
 
 // Parachain stuff.
