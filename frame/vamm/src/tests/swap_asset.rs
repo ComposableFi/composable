@@ -123,6 +123,9 @@ proptest! {
 
 			let swap = TestPallet::swap(&swap_config);
 
+			// TODO(Cardosaum): Remove this `if let Ok()...` block and migrate
+			// to use `assert_ok!(swap)`. this is just a hack until all swap
+			// operations are fixed.
 			if let Ok(swap) = swap {
 				System::assert_last_event(
 					Event::Swapped {
