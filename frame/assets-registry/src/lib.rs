@@ -139,9 +139,19 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		AssetRegistered { asset_id: T::LocalAssetId, location: T::ForeignAssetId },
-		AssetUpdated { asset_id: T::LocalAssetId, location: T::ForeignAssetId },
-		MinFeeUpdated { target_parachain_id: ParaId, foreign_asset_id: T::ForeignAssetId, amount: Option<T::Balance> },
+		AssetRegistered {
+			asset_id: T::LocalAssetId,
+			location: T::ForeignAssetId,
+		},
+		AssetUpdated {
+			asset_id: T::LocalAssetId,
+			location: T::ForeignAssetId,
+		},
+		MinFeeUpdated {
+			target_parachain_id: ParaId,
+			foreign_asset_id: T::ForeignAssetId,
+			amount: Option<T::Balance>,
+		},
 	}
 
 	#[pallet::error]
@@ -163,7 +173,10 @@ pub mod pallet {
 			decimals: Option<Exponent>,
 		) -> DispatchResultWithPostInfo {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
-			ensure!(!ForeignToLocal::<T>::contains_key(&location),  Error::<T>::ForeignAssetAlreadyRegistered);
+			ensure!(
+				!ForeignToLocal::<T>::contains_key(&location),
+				Error::<T>::ForeignAssetAlreadyRegistered
+			);
 			let asset_id = T::CurrencyFactory::create(RangeId::FOREIGN_ASSETS, ed)?;
 			Self::set_reserve_location(asset_id, location.clone(), ratio, decimals)?;
 			Self::deposit_event(Event::<T>::AssetRegistered { asset_id, location });
@@ -209,7 +222,11 @@ pub mod pallet {
 			MinFeeAmounts::<T>::mutate_exists(target_parachain_id, foreign_asset_id.clone(), |x| {
 				*x = amount
 			});
-			Self::deposit_event(Event::<T>::MinFeeUpdated { target_parachain_id, foreign_asset_id, amount });
+			Self::deposit_event(Event::<T>::MinFeeUpdated {
+				target_parachain_id,
+				foreign_asset_id,
+				amount,
+			});
 			Ok(().into())
 		}
 	}
@@ -237,7 +254,8 @@ pub mod pallet {
 			location: Self::AssetNativeLocation,
 			ratio: Option<Ratio>,
 		) -> DispatchResult {
-			let asset_id = ForeignToLocal::<T>::try_get(location).map_err(|_|  Error::<T>::AssetNotFound)?;
+			let asset_id =
+				ForeignToLocal::<T>::try_get(location).map_err(|_| Error::<T>::AssetNotFound)?;
 			AssetRatio::<T>::mutate_exists(asset_id, |x| *x = ratio);
 			Ok(())
 		}
