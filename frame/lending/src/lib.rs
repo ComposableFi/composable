@@ -114,6 +114,7 @@ pub mod pallet {
 		<T as DeFiComposableConfig>::MayBeAssetId,
 		<T as frame_system::Config>::AccountId,
 		<T as Config>::LiquidationStrategyId,
+		<T as frame_system::Config>::BlockNumber,
 	>;
 
 	pub type MarketId = u32;
@@ -192,6 +193,7 @@ pub mod pallet {
 		type Oracle: Oracle<
 			AssetId = <Self as DeFiComposableConfig>::MayBeAssetId,
 			Balance = <Self as DeFiComposableConfig>::Balance,
+			Timestamp = <Self as frame_system::Config>::BlockNumber,
 		>;
 
 		/// The `id`s to be used for the [`Vault`][Config::Vault].
@@ -424,6 +426,8 @@ pub mod pallet {
 		BorrowRentDoesNotExist,
 
 		MaxLiquidationBatchSizeExceeded,
+
+		VeryOldPrice,
 	}
 
 	#[pallet::event]
@@ -608,6 +612,7 @@ pub mod pallet {
 	pub type CreateInputOf<T> = CreateInput<
 		<T as Config>::LiquidationStrategyId,
 		<T as DeFiComposableConfig>::MayBeAssetId,
+		<T as frame_system::Config>::BlockNumber,
 	>;
 
 	#[pallet::call]
@@ -644,7 +649,7 @@ pub mod pallet {
 		pub fn update_market(
 			origin: OriginFor<T>,
 			market_id: MarketIndex,
-			input: UpdateInput<T::LiquidationStrategyId>,
+			input: UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			Markets::<T>::mutate(&market_id, |market| {
@@ -1134,7 +1139,11 @@ pub mod pallet {
 
 		fn create(
 			manager: Self::AccountId,
-			config_input: CreateInput<Self::LiquidationStrategyId, Self::MayBeAssetId>,
+			config_input: CreateInput<
+				Self::LiquidationStrategyId,
+				Self::MayBeAssetId,
+				Self::BlockNumber,
+			>,
 			// TODO: add keep_alive
 		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
 			// TODO: Replace with `Validate`
@@ -1201,6 +1210,7 @@ pub mod pallet {
 
 				let market_config = MarketConfig {
 					manager,
+					actual_blocks_count: config_input.updatable.actual_blocks_count,
 					borrow_asset_vault: borrow_asset_vault.clone(),
 					collateral_asset: config_input.collateral_asset(),
 					collateral_factor: config_input.updatable.collateral_factor,
