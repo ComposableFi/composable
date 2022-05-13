@@ -688,7 +688,7 @@ fn borrow_flow() {
 			market_id: market,
 		}));
 
-		process_and_progress_blocks(10001);
+		process_and_progress_blocks(20);
 
 		assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, collateral_amount));
 
