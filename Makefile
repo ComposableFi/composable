@@ -156,7 +156,6 @@ define print_help_text
 "Here are the commands to help setting up composable in any environment: \n\
 	--- Dev --- \n\
 	make help                    : Display this help message. \n\
-	make vendor                  : Download dependencies into the 'vendor' folder. \n\
 	make containerize            : Bundle the compiled binary in a lean production-ready docker image. \n\
 	make install                 : Use docker-compose to startup composable alongside other needed services
 	make stop				     : Stop all current running containers
