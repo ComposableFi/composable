@@ -1163,6 +1163,7 @@ pub mod pallet {
 
 			LendingCount::<T>::try_mutate(|MarketIndex(previous_market_index)| {
 				let market_id = {
+					// TODO: early mutation of `previous_market_index` value before check.
 					*previous_market_index += 1;
 					ensure!(
 						*previous_market_index <= T::MaxMarketCount::get(),
