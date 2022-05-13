@@ -385,7 +385,6 @@ proptest! {
 			let invariant_delta = invariant_before.max(invariant_after)
 				- invariant_before.min(invariant_after);
 
-			assert_eq!(invariant_delta / vamm_state.invariant, U256::zero());
 			assert!(invariant_delta <= invariant_epsilon);
 		});
 	}
@@ -427,7 +426,6 @@ proptest! {
 			let invariant_delta = invariant_before.max(invariant_after)
 				- invariant_before.min(invariant_after);
 
-			assert_eq!(invariant_delta / vamm_state.invariant, U256::zero());
 			assert!(invariant_delta <= invariant_epsilon);
 		});
 
@@ -470,7 +468,6 @@ proptest! {
 			let invariant_delta = invariant_before.max(invariant_after)
 				- invariant_before.min(invariant_after);
 
-			assert_eq!(invariant_delta / vamm_state.invariant, U256::zero());
 			assert!(invariant_delta <= invariant_epsilon);
 		});
 	}
