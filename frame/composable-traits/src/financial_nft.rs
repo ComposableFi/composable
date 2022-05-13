@@ -27,8 +27,8 @@ pub trait FinancialNftProvider<AccountId>: Create<AccountId> + Mutate<AccountId>
 	fn mint_nft<K: Encode, V: Encode>(
 		class: &Self::ClassId,
 		who: &AccountId,
-		key: &K,
-		value: &V,
+		version: &K,
+		nft_data: &V,
 	) -> Result<Self::InstanceId, DispatchError>;
 }
 

@@ -132,6 +132,18 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+	impl<T: Config> Pallet<T> {
+		pub(crate) fn get_next_nft_id(
+			class: &<Self as Inspect<AccountIdOf<T>>>::ClassId,
+		) -> Result<u128, DispatchError> {
+			NftId::<T>::try_mutate(class, |x| -> Result<u128, DispatchError> {
+				let id = *x;
+				*x = x.safe_add(&1)?;
+				Ok(id)
+			})
+		}
+	}
+
 	impl<T: Config> Inspect<AccountIdOf<T>> for Pallet<T> {
 		type ClassId = NftClass;
 		type InstanceId = NftInstanceId;
@@ -146,7 +158,7 @@ pub mod pallet {
 			key: &[u8],
 		) -> Option<Vec<u8>> {
 			Instance::<T>::get((class, instance))
-				.and_then(|(_, attributes)| attributes.get(key).cloned())
+				.and_then(|(_, instance_attributes)| instance_attributes.get(key).cloned())
 		}
 
 		fn class_attribute(class: &Self::ClassId, key: &[u8]) -> Option<Vec<u8>> {
@@ -302,11 +314,7 @@ pub mod pallet {
 			key: &K,
 			value: &V,
 		) -> Result<Self::InstanceId, DispatchError> {
-			let instance = NftId::<T>::try_mutate(class, |x| -> Result<u128, DispatchError> {
-				let id = *x;
-				*x = x.safe_add(&1)?;
-				Ok(id)
-			})?;
+			let instance = Self::get_next_nft_id(&NftClass::STAKING)?;
 			Self::mint_into(class, &instance, who)?;
 			Self::set_typed_attribute(class, &instance, key, value)?;
 			Ok(instance)

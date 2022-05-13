@@ -1,9 +1,14 @@
-use codec::Encode;
+use codec::{Decode, Encode};
 use composable_tests_helpers::test::helper::assert_last_event;
 use composable_traits::financial_nft::{FinancialNftProvider, NftClass};
-use core::array;
-use frame_support::traits::tokens::nonfungibles::Mutate;
-use std::collections::{BTreeMap, BTreeSet};
+use frame_support::{
+	assert_ok,
+	traits::tokens::nonfungibles::{Inspect, Mutate},
+};
+use std::{
+	collections::{BTreeMap, BTreeSet},
+	fmt,
+};
 
 use crate::{
 	pallet::{ClassInstances, Event as NftEvent, Instance, OwnerInstances},
@@ -85,14 +90,12 @@ pub(crate) fn mint_into_and_assert() -> NftInstanceId {
 
 /// Mints many NFTs into the specified account and checks that they were created properly,
 /// returning the ids of the newly created NFTs.
-///
-/// NOTE: Only call once per test, per account!
 pub(crate) fn mint_many_nfts_and_assert<const AMOUNT: usize>(
 	who: AccountIdOf<MockRuntime>,
 ) -> [NftInstanceId; AMOUNT] {
 	let new_nfts_ids = [0; AMOUNT].map(|_| {
-		let new_nft_id =
-			Pallet::<MockRuntime>::mint_nft(&NftClass::STAKING, &who, &1u32, &1u32).unwrap();
+		let new_nft_id = Pallet::<MockRuntime>::get_next_nft_id(&NftClass::STAKING).unwrap();
+		Pallet::<MockRuntime>::mint_into(&NftClass::STAKING, &new_nft_id, &who).unwrap();
 
 		assert_last_event::<MockRuntime>(Event::Nft(crate::Event::NftCreated {
 			class_id: NftClass::STAKING,
@@ -104,7 +107,7 @@ pub(crate) fn mint_many_nfts_and_assert<const AMOUNT: usize>(
 
 	assert_eq!(
 		OwnerInstances::<MockRuntime>::get(&who).unwrap(),
-		new_nfts_ids.iter().map(|&id| (NftClass::STAKING, id)).collect(),
+		to_btree(&new_nfts_ids),
 		"the specified owner ({}) should own the specified NFTs",
 		who
 	);
@@ -117,4 +120,53 @@ pub(crate) fn mint_many_nfts_and_assert<const AMOUNT: usize>(
 /// The class for all of the instances is [`NftClass::STAKING`].
 pub(crate) fn to_btree(nfts: &[NftInstanceId]) -> BTreeSet<(NftClass, NftInstanceId)> {
 	nfts.into_iter().copied().map(|id| (NftClass::STAKING, id)).collect()
+}
+
+/// Adds the provided attributes to the specified NFT, asserting that the attributes are added
+/// successfully and that the owner doesn't change. Also tests the implementation of
+/// [`Inspect::attribute`] and [`Inspect::typed_attribute`].
+pub(crate) fn add_attributes_and_assert<
+	K: Encode,
+	V: Encode + Decode + PartialEq + fmt::Debug + Clone,
+>(
+	class: &NftClass,
+	instance: &NftInstanceId,
+	owner: u128,
+	attributes: &[(K, V)],
+) {
+	for (key, value) in attributes {
+		assert_ok!(Pallet::<MockRuntime>::set_attribute(
+			class,
+			instance,
+			&key.encode(),
+			&value.encode()
+		));
+
+		assert_eq!(
+			Pallet::<MockRuntime>::attribute(class, instance, &key.encode()),
+			Some(value.encode()),
+			"instance should have the expected attribute"
+		);
+
+		assert_eq!(
+			Pallet::<MockRuntime>::typed_attribute::<K, V>(class, instance, key),
+			Some(value.clone()),
+			"instance should have the expected attribute"
+		);
+	}
+
+	let (found_owner, data) = Instance::<MockRuntime>::get(&(*class, *instance)).unwrap();
+
+	assert_eq!(owner, found_owner, "instance owner should be {owner}");
+
+	assert!(
+		attributes
+			.iter()
+			.map(|(k, v)| (k.encode(), v.encode()))
+			.collect::<BTreeSet<_>>()
+			.difference(&data.into_iter().collect::<BTreeSet<_>>())
+			.collect::<Vec<_>>()
+			.is_empty(),
+		"instance attributes should contain the expected attribute(s)"
+	);
 }

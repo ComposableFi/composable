@@ -69,6 +69,108 @@ mod mint_into {
 	}
 }
 
+/// Tests the implementation of [`Mutate::set_attribute`].
+mod set_attribute {
+	use codec::{Decode, Encode};
+	use composable_tests_helpers::test::block::process_and_progress_blocks;
+	use composable_traits::financial_nft::NftClass;
+	use frame_support::{assert_noop, traits::tokens::nonfungibles::Mutate};
+	use sp_runtime::DispatchError;
+	use std::collections::BTreeMap;
+
+	use crate::{
+		pallet::*,
+		test::{
+			helpers::{add_attributes_and_assert, mint_into_and_assert, mint_many_nfts_and_assert},
+			mock::{new_test_ext, MockRuntime},
+			ALICE,
+		},
+	};
+
+	#[derive(Debug, Encode, Decode, Clone)]
+	struct Key(String);
+
+	#[derive(Debug, Encode, Decode, PartialEq, Clone)]
+	struct Value {
+		a: u32,
+		b: bool,
+	}
+
+	/// Tests adding attributes to an NFT owned by an account that owns multiple NFts.
+	#[test]
+	fn success() {
+		new_test_ext().execute_with(|| {
+			let [nft_to_add_attribute_to, other_nft_ids @ ..] =
+				mint_many_nfts_and_assert::<10>(ALICE);
+
+			process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
+
+			let key = Key("some key".into());
+			let value = Value { a: 10, b: true };
+
+			add_attributes_and_assert(
+				&NftClass::STAKING,
+				&nft_to_add_attribute_to,
+				ALICE,
+				&[(key.clone(), value.clone())],
+			);
+
+			let key2 = Key("some other key".into());
+			let value2 = Value { a: 20, b: false };
+
+			add_attributes_and_assert(
+				&NftClass::STAKING,
+				&nft_to_add_attribute_to,
+				ALICE,
+				&[(key2, value2)],
+			);
+
+			for should_not_be_mutated_nft_id in other_nft_ids {
+				assert_eq!(
+					Instance::<MockRuntime>::get(&(
+						NftClass::STAKING,
+						should_not_be_mutated_nft_id
+					)),
+					Some((ALICE, BTreeMap::from([]))),
+					"instance should not have any attributes"
+				);
+			}
+		})
+	}
+
+	#[test]
+	fn not_found() {
+		new_test_ext().execute_with(|| {
+			let key = Key("some key".into());
+			let value = Value { a: 10, b: true };
+
+			assert_noop!(
+				Pallet::<MockRuntime>::set_attribute(
+					&NftClass::STAKING,
+					&1,
+					&key.encode(),
+					&value.encode()
+				),
+				DispatchError::from(crate::Error::<MockRuntime>::InstanceNotFound)
+			);
+
+			let new_nft_id = mint_into_and_assert();
+
+			process_and_progress_blocks::<Pallet<MockRuntime>, MockRuntime>(10);
+
+			assert_noop!(
+				Pallet::<MockRuntime>::set_attribute(
+					&NftClass::STAKING,
+					&(new_nft_id + 1),
+					&key.encode(),
+					&value.encode()
+				),
+				DispatchError::from(crate::Error::<MockRuntime>::InstanceNotFound)
+			);
+		})
+	}
+}
+
 /// Tests the implementation of [`Mutate::burn_from`].
 mod burn_from {
 	use std::collections::BTreeSet;
