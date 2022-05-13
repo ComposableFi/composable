@@ -222,7 +222,7 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		PoolNotFound,
-		PoolConfigurationNotSupported,
+		NotEnoughLiquidity,
 		PairMismatch,
 		MustBeOwner,
 		InvalidSaleState,
