@@ -268,3 +268,10 @@ fn register_statemine_asset(remote_asset_id: CommonAssetId) -> CurrencyId {
 			.unwrap()
 	})
 }
+
+#[test]
+fn general_index_asset() {
+	let asset_id: u128 = 11;
+	let asset_id = hex::encode(asset_id.encode());
+	assert_eq!(&asset_id, "0b000000000000000000000000000000");
+}

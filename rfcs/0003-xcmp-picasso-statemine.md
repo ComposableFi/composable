@@ -258,7 +258,10 @@ Decoded by https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fpicasso-rpc.composable.
 
 ## Make price for USDT
 
-Register USDT in registry with asset id 11 and decimals of 4.
+Register USDT in registry with asset id 11 and decimals of 4 via `assetsRegistry.registerAsset` with next preimage (tune ratio as needed):
+`0x3b00010300a10f043206400b0000000000000000000000000000000a000000000000000000000000000000010000c16ff286230000000000000000000104000000`
+
+
 
 ## References
 
