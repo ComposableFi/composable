@@ -1088,10 +1088,10 @@ pub mod pallet {
 		}
 
 		/// Check is price actual yet
-		fn is_price_actual(market: &MarketConfigOf<T>) -> Result<(), DispatchError> {
-			let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
-
+		fn ensure_price(market: &MarketConfigOf<T>) -> Result<(), DispatchError> {
 			use sp_runtime::traits::CheckedSub as _;
+
+			let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
 
 			let current_block = frame_system::Pallet::<T>::block_number();
 			let blocks_count = market.actual_blocks_count;
@@ -1340,12 +1340,13 @@ pub mod pallet {
 			amount_to_borrow: BorrowAmountOf<Self>,
 		) -> Result<(), DispatchError> {
 			let market = Self::get_market(market_id)?;
+
+			Self::ensure_price(&market)?;
+
 			let MarketAssets { borrow_asset, debt_asset: debt_asset_id } =
 				Self::get_assets_for_market(market_id)?;
 
 			let market_account = Self::account_id(market_id);
-
-			Self::is_price_actual(&market)?;
 
 			Self::can_borrow(
 				market_id,

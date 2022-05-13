@@ -516,9 +516,6 @@ fn old_price() {
 			MoreThanOneFixedU128::saturating_from_integer(DEFAULT_COLLATERAL_FACTOR),
 		);
 
-		// Total amount of borrowable tokens
-		let initial_total_cash = Lending::total_available_to_be_borrowed(&market).unwrap();
-
 		// Borrow amount
 		let borrow_amount = USDT::units(BORROW_AMOUNT);
 
