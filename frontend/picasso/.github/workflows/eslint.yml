@@ -1,0 +1,42 @@
+name: ESLint
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+
+jobs:
+  node_test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          always-auth: true
+          registry-url: 'https://registry.npmjs.org'
+      - run: yarn install --ignore-scripts
+        env:
+          CI: true
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Yarn lint - Lint
+        run: yarn lint
+      - name: Save Code Linting Report JSON
+        # npm script for ESLint
+        # eslint --output-file eslint_report.json --format json src
+        # See https://eslint.org/docs/user-guide/command-line-interface#options
+        run: yarn lint:report
+        # Continue to the next step even if this fails
+        continue-on-error: true
+      - name: Annotate Code Linting Results
+        uses: ataylorme/eslint-annotate-action@1.2.0
+        with:
+          repo-token: "${{ secrets.GITHUB_TOKEN }}"
+          report-json: "app/eslint_report.json"
+      - name: Upload ESLint report
+        uses: actions/upload-artifact@v2
+        with:
+          name: eslint_report.json
+          path: eslint_report.json
