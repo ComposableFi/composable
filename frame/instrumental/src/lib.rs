@@ -88,7 +88,7 @@ pub mod pallet {
 	};
 
 	use composable_traits::{
-		instrumental::{Instrumental, InstrumentalVaultConfig},
+		instrumental::{Instrumental, InstrumentalProtocolStrategy, InstrumentalVaultConfig},
 		vault::{Deposit as Duration, FundsAvailability, StrategicVault, Vault, VaultConfig},
 	};
 	use composable_support::validation::Validated;
@@ -166,6 +166,8 @@ pub mod pallet {
 			AccountId = Self::AccountId,
 			VaultId = Self::VaultId,
 		>;
+
+		type InstrumentalStrategy: InstrumentalProtocolStrategy;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
@@ -411,7 +413,7 @@ pub mod pallet {
 		) -> Result<Self::VaultId, DispatchError> {
 			match Validated::new(config) {
 				Ok(validated_config) => Self::do_create(validated_config),
-				Err(_) => Err(DispatchError::from(Error::<T>::VaultAlreadyExists))
+				Err(_) => Err(Error::<T>::VaultAlreadyExists.into())
 			}
 		}
 	

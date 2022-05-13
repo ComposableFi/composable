@@ -30,6 +30,8 @@ serde = { version = '1', optional = true }
 [dev-dependencies]
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
 pallet-currency-factory = { path = "../currency-factory" }
+instrumental-strategy = { version = "0.1.0", path = "../instrumental-strategy", default-features = false }
+instrumental-strategy-pablo = { version = "0.1.0", path = "../instrumental-strategy-pablo", default-features = false }
 pallet-vault = { default-features = false, path = "../vault"}
 pallet-assets = { default-features = false, path = "../assets"}
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "238828ac2bafe498a2a071317639e9404d6f6994" }
