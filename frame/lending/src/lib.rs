@@ -634,7 +634,10 @@ pub mod pallet {
 		pub fn update_market(
 			origin: OriginFor<T>,
 			market_id: MarketIndex,
-			input: Validated<UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>, UpdateInputVaild>,
+			input: Validated<
+				UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>,
+				UpdateInputVaild,
+			>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let input = input.value();
