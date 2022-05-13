@@ -115,13 +115,14 @@ impl<LiquidationStrategyId, AssetId: Copy> CreateInput<LiquidationStrategyId, As
 }
 
 #[derive(Encode, Decode, Default, TypeInfo, Debug)]
-pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationStrategyId> {
+pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationStrategyId, BlockNumber> {
 	/// The owner of this market.
 	pub manager: AccountId,
 	/// The vault containing the borrow asset.
 	pub borrow_asset_vault: VaultId,
 	/// The asset being used as collateral.
 	pub collateral_asset: AssetId,
+	pub actual_blocks_count: BlockNumber,
 	pub collateral_factor: MoreThanOneFixedU128,
 	pub interest_rate_model: InterestRateModel,
 	pub under_collateralized_warn_percent: Percent,

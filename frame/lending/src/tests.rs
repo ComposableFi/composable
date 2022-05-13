@@ -44,6 +44,7 @@ use sp_runtime::{
 const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
 const DEFAULT_MARKET_VAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
 const DEFAULT_COLLATERAL_FACTOR: u128 = 2;
+const DEFAULT_ACTUAL_BLOCKS_COUNT: u64 = 1020;
 
 #[test]
 fn accrue_interest_base_cases() {
@@ -480,6 +481,102 @@ fn test_borrow_math() {
 	);
 	let borrow = borrower.get_borrow_limit().unwrap();
 	assert_eq!(borrow, LiftedFixedBalance::from(50));
+}
+
+#[test]
+fn old_price() {
+	new_test_ext().execute_with(|| {
+		// Create market
+
+		const FIRST_PRICE: u128 = 10;
+		const BORROW_AMOUNT: u128 = 30;
+		const SECOND_PRICE: u128 = 3;
+
+		let (market, vault) = create_market::<FIRST_PRICE>(
+			USDT::instance(),
+			BTC::instance(),
+			*ALICE,
+			DEFAULT_MARKET_VAULT_RESERVE,
+			MoreThanOneFixedU128::saturating_from_integer(DEFAULT_COLLATERAL_FACTOR),
+		);
+
+		// Total amount of borrowable tokens
+		let initial_total_cash = Lending::total_available_to_be_borrowed(&market).unwrap();
+
+		// Borrow amount
+		let borrow_amount = USDT::units(BORROW_AMOUNT);
+
+		assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, borrow_amount));
+		assert_ok!(Vault::deposit(Origin::signed(*ALICE), vault, borrow_amount * 2));
+
+		// Set BTC price
+		set_price(BTC::ID, BTC::ONE.mul(FIRST_PRICE));
+
+		let collateral_amount = get_price(USDT::ID, borrow_amount) // get price of USDT
+			.mul(BTC::ONE) // multiply to BTC ONE
+			.div(get_price(BTC::ID, BTC::ONE)) // divide at one BTC price
+			.mul(DEFAULT_COLLATERAL_FACTOR);
+
+		// Mint BTC tokens for ALICE
+		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, collateral_amount));
+
+		// Deposit BTC on the market
+		assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral_amount));
+
+		// Set BTC price
+		set_price(BTC::ID, BTC::ONE.mul(SECOND_PRICE));
+		set_price(USDT::ID, USDT::ONE);
+
+		// Try to borrow by SECOND_PRICE
+		assert_noop!(
+			Lending::borrow(Origin::signed(*ALICE), market, borrow_amount),
+			Error::<Runtime>::NotEnoughCollateralToBorrow
+		);
+
+		// Set BTC price
+		set_price(BTC::ID, BTC::ONE.mul(FIRST_PRICE));
+		set_price(USDT::ID, USDT::ONE);
+
+		// skip blocks
+		process_and_progress_blocks(DEFAULT_ACTUAL_BLOCKS_COUNT as usize + 1);
+
+		// Try to borrow by SECOND_PRICE
+		assert_noop!(
+			Lending::borrow(Origin::signed(*ALICE), market, borrow_amount),
+			Error::<Runtime>::VeryOldPrice
+		);
+
+		// Refresh price
+		set_price(BTC::ID, BTC::ONE.mul(FIRST_PRICE));
+		set_price(USDT::ID, USDT::ONE);
+
+		// Try to borrow by FIRST_PRICE
+		assert_ok!(Lending::borrow(Origin::signed(*ALICE), market, borrow_amount),);
+
+		// skip blocks
+		process_and_progress_blocks(DEFAULT_ACTUAL_BLOCKS_COUNT as usize + 1);
+
+		// Set BTC price
+		set_price(BTC::ID, BTC::ONE.mul(SECOND_PRICE));
+		set_price(USDT::ID, USDT::ONE);
+
+		// Try to borrow by SECOND_PRICE
+		assert_noop!(
+			Lending::borrow(Origin::signed(*ALICE), market, borrow_amount),
+			Error::<Runtime>::NotEnoughCollateralToBorrow
+		);
+
+		// skip blocks
+		process_and_progress_blocks(DEFAULT_ACTUAL_BLOCKS_COUNT as usize + 1);
+
+		// Try to repay by SECOND_PRICE
+		assert_ok!(Lending::repay_borrow(
+			Origin::signed(*ALICE),
+			market,
+			*ALICE,
+			RepayStrategy::PartialAmount(borrow_amount)
+		),);
+	});
 }
 
 #[test]
