@@ -442,26 +442,14 @@ pub mod pallet {
 		},
 		MarketUpdated {
 			market_id: MarketIndex,
-			input: UpdateInput<T::LiquidationStrategyId>,
+			input: UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>,
 		},
 		/// Event emitted when collateral is deposited.
-		CollateralDeposited {
-			sender: T::AccountId,
-			market_id: MarketIndex,
-			amount: T::Balance,
-		},
+		CollateralDeposited { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
 		/// Event emitted when collateral is withdrawed.
-		CollateralWithdrawn {
-			sender: T::AccountId,
-			market_id: MarketIndex,
-			amount: T::Balance,
-		},
+		CollateralWithdrawn { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
 		/// Event emitted when user borrows from given market.
-		Borrowed {
-			sender: T::AccountId,
-			market_id: MarketIndex,
-			amount: T::Balance,
-		},
+		Borrowed { sender: T::AccountId, market_id: MarketIndex, amount: T::Balance },
 		/// Event emitted when user repays borrow of beneficiary in given market.
 		BorrowRepaid {
 			sender: T::AccountId,
@@ -470,15 +458,9 @@ pub mod pallet {
 			amount: T::Balance,
 		},
 		/// Event emitted when a liquidation is initiated for a loan.
-		LiquidationInitiated {
-			market_id: MarketIndex,
-			borrowers: Vec<T::AccountId>,
-		},
+		LiquidationInitiated { market_id: MarketIndex, borrowers: Vec<T::AccountId> },
 		/// Event emitted to warn that loan may go under collateralized soon.
-		MayGoUnderCollateralizedSoon {
-			market_id: MarketIndex,
-			account: T::AccountId,
-		},
+		MayGoUnderCollateralizedSoon { market_id: MarketIndex, account: T::AccountId },
 	}
 
 	/// Lending instances counter
