@@ -21,7 +21,7 @@ use composable_support::validation::{TryIntoValidated, Validated};
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
 use composable_traits::{
 	defi::{CurrencyPair, LiftedFixedBalance, MoreThanOneFixedU128, Rate, ZeroToOneFixedU128},
-	lending::{self, math::*, CreateInput, UpdateInput},
+	lending::{self, math::*, CreateInput, UpdateInput, UpdateInputVaild},
 	oracle,
 	time::SECONDS_PER_YEAR_NAIVE,
 	vault::{self, Deposit, VaultConfig},
@@ -245,20 +245,34 @@ fn can_update_market() {
 		let update_input = UpdateInput {
 			collateral_factor: market.collateral_factor,
 			under_collateralized_warn_percent: market.under_collateralized_warn_percent,
-			liquidators: market.liquidators,
+			liquidators: market.liquidators.clone(),
 			actual_blocks_count: market.actual_blocks_count,
 			interest_rate_model: InterestRateModel::Curve(
 				CurveModel::new(CurveModel::MAX_BASE_RATE).unwrap(),
 			),
 		};
-		let input = update_input.clone();
-		let updated = Lending::update_market(origin, market_id, update_input);
+		let input = update_input.clone().try_into_validated().unwrap();
+		let updated = Lending::update_market(origin, market_id, input);
 		// check if the market was successfully updated
 		assert_ok!(updated);
 		let market_updated_event: crate::Event<Runtime> =
-			crate::Event::MarketUpdated { market_id, input };
+			crate::Event::MarketUpdated { market_id, input: update_input };
 		// check if the event was emitted
 		System::assert_has_event(Event::Lending(market_updated_event));
+
+		// validation on input fails as it has collateral_factor less than one
+		let update_input = UpdateInput {
+			collateral_factor: FixedU128::from_float(0.5),
+			under_collateralized_warn_percent: market.under_collateralized_warn_percent,
+			liquidators: market.liquidators,
+			interest_rate_model: InterestRateModel::Curve(
+				CurveModel::new(CurveModel::MAX_BASE_RATE).unwrap(),
+			),
+		};
+		assert_err!(
+			update_input.try_into_validated::<UpdateInputVaild>(),
+			"collateral factor must be >= 1"
+		);
 	})
 }
 
@@ -952,7 +966,7 @@ fn test_repay_partial_amount() {
 				post_info: PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },
 				error: DispatchError::Module(ModuleError {
 					index: 8,
-					error: 33,
+					error: 34,
 					message: Some(Error::<Runtime>::CannotRepayMoreThanTotalDebt.into(),),
 				}),
 			},
@@ -1226,7 +1240,7 @@ fn current_interest_rate_test() {
 
 		assert_eq!(
 			crate::current_interest_rate::<Runtime>(market_id.0).unwrap(),
-			FixedU128::saturating_from_rational(2, 100)
+			FixedU128::saturating_from_rational(2_u128, 100_u128)
 		);
 
 		// Update the market
@@ -1240,11 +1254,28 @@ fn current_interest_rate_test() {
 				CurveModel::new(CurveModel::MAX_BASE_RATE).unwrap(),
 			),
 		};
+		let update_input = update_input.try_into_validated().unwrap();
 		assert_ok!(Lending::update_market(Origin::signed(manager), market_id, update_input));
 
 		assert_eq!(
 			crate::current_interest_rate::<Runtime>(market_id.0).unwrap(),
 			FixedU128::saturating_from_rational(1, 10)
+		);
+	})
+}
+
+#[test]
+fn zero_amount_collateral_deposit() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		let (market_id, _vault_id) = create_simple_market();
+		let expected = 50_000;
+		set_price(BTC::ID, expected);
+		set_price(USDT::ID, 1);
+		let collateral_amount = 0;
+		assert_noop!(
+			<Lending as LendingTrait>::deposit_collateral(&market_id, &BOB, collateral_amount),
+			Error::<Runtime>::CannotDepositZeroCollateral
 		);
 	})
 }

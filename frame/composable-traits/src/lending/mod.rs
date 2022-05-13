@@ -32,7 +32,10 @@ pub type CollateralLpAmountOf<T> = <T as DeFiEngine>::Balance;
 
 pub type BorrowAmountOf<T> = <T as DeFiEngine>::Balance;
 
-#[derive(Encode, Decode, Default, TypeInfo, Debug, Clone, PartialEq)]
+#[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
+pub struct UpdateInputVaild;
+
+#[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq)]
 pub struct UpdateInput<LiquidationStrategyId, BlockNumber> {
 	/// Collateral factor of market
 	pub collateral_factor: MoreThanOneFixedU128,
@@ -46,10 +49,29 @@ pub struct UpdateInput<LiquidationStrategyId, BlockNumber> {
 	pub actual_blocks_count: BlockNumber,
 }
 
+impl<LiquidationStrategyId> Validate<UpdateInput<LiquidationStrategyId>, UpdateInputVaild>
+	for UpdateInputVaild
+{
+	fn validate(
+		update_input: UpdateInput<LiquidationStrategyId>,
+	) -> Result<UpdateInput<LiquidationStrategyId>, &'static str> {
+		if update_input.collateral_factor < MoreThanOneFixedU128::one() {
+			return Err("collateral factor must be >= 1")
+		}
+
+		let interest_rate_model = update_input
+			.interest_rate_model
+			.try_into_validated::<InteresteRateModelIsValid>()?
+			.value();
+
+		Ok(UpdateInput { interest_rate_model, ..update_input })
+	}
+}
+
 /// input to create market extrinsic
 ///
 /// Input to [`Lending::create()`].
-#[derive(Encode, Decode, Default, TypeInfo, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq)]
 pub struct CreateInput<LiquidationStrategyId, AssetId, BlockNumber> {
 	/// the part of market which can be changed
 	pub updatable: UpdateInput<LiquidationStrategyId, BlockNumber>,
@@ -60,9 +82,9 @@ pub struct CreateInput<LiquidationStrategyId, AssetId, BlockNumber> {
 	pub reserved_factor: Perquintill,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, TypeInfo, Default)]
+#[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
 pub struct MarketModelValid;
-#[derive(Clone, Copy, Debug, PartialEq, TypeInfo, Default)]
+#[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
 pub struct CurrencyPairIsNotSame;
 
 impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
@@ -72,20 +94,9 @@ impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
 	fn validate(
 		create_input: CreateInput<LiquidationStrategyId, Asset, BlockNumber>,
 	) -> Result<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, &'static str> {
-		if create_input.updatable.collateral_factor < MoreThanOneFixedU128::one() {
-			return Err("collateral factor must be >= 1")
-		}
+		let updatable = create_input.updatable.try_into_validated::<UpdateInputVaild>()?.value();
 
-		let interest_rate_model = create_input
-			.updatable
-			.interest_rate_model
-			.try_into_validated::<InteresteRateModelIsValid>()?
-			.value();
-
-		Ok(CreateInput {
-			updatable: UpdateInput { interest_rate_model, ..create_input.updatable },
-			..create_input
-		})
+		Ok(CreateInput { updatable, ..create_input })
 	}
 }
 
@@ -119,7 +130,7 @@ impl<LiquidationStrategyId, AssetId: Copy, BlockNumber>
 	}
 }
 
-#[derive(Encode, Decode, Default, TypeInfo, Debug)]
+#[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug)]
 pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationStrategyId, BlockNumber> {
 	/// The owner of this market.
 	pub manager: AccountId,
@@ -137,7 +148,7 @@ pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationStrategyId, Bloc
 /// Different ways that a market can be repaid.
 // REVIEW: Perhaps add an "interest only" strategy?
 // InterestOnly
-#[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, TypeInfo, RuntimeDebug, Clone, PartialEq)]
 pub enum RepayStrategy<T> {
 	/// Attempt to repay the entirety of the remaining debt.
 	TotalDebt,
@@ -166,7 +177,7 @@ pub enum RepayStrategy<T> {
 }
 
 /// The total amount of debt for an account on a market, if any.
-#[derive(Encode, Decode, TypeInfo, Debug, Clone, PartialEq)]
+#[derive(Encode, Decode, TypeInfo, RuntimeDebug, Clone, PartialEq)]
 pub enum TotalDebtWithInterest<T> {
 	/// The account has some amount of debt on the market. Guarranteed to be non-zero.
 	Amount(T),

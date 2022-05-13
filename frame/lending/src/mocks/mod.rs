@@ -267,6 +267,7 @@ impl pallet_oracle::Config for Runtime {
 	type MaxPrePrices = MinU32;
 	type WeightInfo = ();
 	type LocalAssets = Decimals;
+	type TreasuryAccount = RootAccount;
 }
 
 impl DeFiComposableConfig for Runtime {

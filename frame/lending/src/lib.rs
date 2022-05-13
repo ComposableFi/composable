@@ -77,6 +77,7 @@ pub mod pallet {
 			math::{self, *},
 			BorrowAmountOf, CollateralLpAmountOf, CreateInput, CurrencyPairIsNotSame, Lending,
 			MarketConfig, MarketModelValid, RepayStrategy, TotalDebtWithInterest, UpdateInput,
+			UpdateInputVaild,
 		},
 		liquidation::Liquidation,
 		oracle::Oracle,
@@ -371,6 +372,8 @@ pub mod pallet {
 
 		/// The collateral factor for a market must be mroe than one.
 		CollateralFactorMustBeMoreThanOne,
+		/// Can't allow amount 0 as collateral.
+		CannotDepositZeroCollateral,
 
 		// REVIEW: Currently unused
 		MarketAndAccountPairNotFound,
@@ -631,9 +634,10 @@ pub mod pallet {
 		pub fn update_market(
 			origin: OriginFor<T>,
 			market_id: MarketIndex,
-			input: UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>,
+			input: Validated<UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>, UpdateInputVaild>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
+			let input = input.value();
 			Markets::<T>::mutate(&market_id, |market| {
 				if let Some(market) = market {
 					ensure!(who == market.manager, Error::<T>::Unauthorized);
@@ -1223,6 +1227,7 @@ pub mod pallet {
 			account: &Self::AccountId,
 			amount: CollateralLpAmountOf<Self>,
 		) -> Result<(), DispatchError> {
+			ensure!(amount > Self::Balance::zero(), Error::<T>::CannotDepositZeroCollateral);
 			let market = Self::get_market(market_id)?;
 			let market_account = Self::account_id(market_id);
 

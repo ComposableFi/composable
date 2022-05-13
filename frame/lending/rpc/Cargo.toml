@@ -22,8 +22,12 @@ composable-traits = { path = "../../composable-traits" }
 lending-runtime-api = { path = "../runtime-api" }
 
 # SCALE
-codec = { default-features = false, features = [ "derive" ], package = "parity-scale-codec", version = "3.0.0" }
-scale-info = { version = "2.1.1", default-features = false, features = [ "derive" ] }
+codec = { default-features = false, features = [
+  "derive",
+], package = "parity-scale-codec", version = "3.0.0" }
+scale-info = { version = "2.1.1", default-features = false, features = [
+  "derive",
+] }
 
 # rpc
 jsonrpc-core = "18.0.0"

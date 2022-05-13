@@ -9,11 +9,9 @@ use frame_support::{
 use frame_system as system;
 use frame_system::EnsureSignedBy;
 use sp_core::{sr25519, sr25519::Signature, H256};
-use sp_keystore::{testing::KeyStore, SyncCryptoStore};
 use sp_runtime::{
 	testing::{Header, TestXt},
 	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
-	RuntimeAppPublic,
 };
 use system::EnsureRoot;
 
@@ -132,6 +130,9 @@ where
 
 pub type AssetId = u128;
 pub type PriceValue = u128;
+parameter_types! {
+ pub const TreasuryAccountId : AccountId= sr25519::Public([10u8; 32]);
+}
 impl pallet_oracle::Config for Test {
 	type Event = Event;
 	type AuthorityId = crypto::BathurstStId;
@@ -149,6 +150,7 @@ impl pallet_oracle::Config for Test {
 	type MaxPrePrices = MaxPrePrices;
 	type WeightInfo = ();
 	type LocalAssets = ();
+	type TreasuryAccount = TreasuryAccountId;
 }
 
 // Build genesis storage according to the mock runtime.
@@ -160,6 +162,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 			(get_root_account(), 100),
 			(get_account_4(), 100),
 			(get_account_5(), 100),
+			(get_treasury_account(), 100),
 		],
 	};
 	genesis.assimilate_storage(&mut t).unwrap();
@@ -184,4 +187,8 @@ pub fn get_account_4() -> AccountId {
 
 pub fn get_account_5() -> AccountId {
 	sr25519::Public([5u8; 32])
+}
+
+pub fn get_treasury_account() -> AccountId {
+	sr25519::Public([10u8; 32])
 }
