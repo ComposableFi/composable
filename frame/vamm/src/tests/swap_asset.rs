@@ -1,5 +1,5 @@
 use crate::{
-	mock::{Balance, ExtBuilder, MockRuntime, System, TestPallet},
+	mock::{Balance, ExtBuilder, MockRuntime, System, TestPallet, VammId},
 	pallet::{Error, Event, VammMap},
 	tests::{
 		any_vamm_state, balance_range_low, balance_range_upper_half, get_swap_config,
@@ -45,7 +45,7 @@ proptest! {
 		// set to close, doing this we ensure we can't make swaps due to the
 		// vamm be closed.
 		vamm_state.closed = Some(close);
-		swap_config.vamm_id = 0;
+		swap_config.vamm_id = VammId::zero();
 
 		ExtBuilder {
 			vamm_count: 1,
@@ -77,7 +77,7 @@ proptest! {
 		swap_config.input_amount = 0;
 
 		swap_config.output_amount_limit = limit;
-		swap_config.vamm_id = 0;
+		swap_config.vamm_id = VammId::zero();
 
 		ExtBuilder {
 			vamm_count: 1,
@@ -112,7 +112,7 @@ proptest! {
 		// Disable output limit check
 		swap_config.output_amount_limit = Balance::zero();
 
-		swap_config.vamm_id = 0;
+		swap_config.vamm_id = VammId::zero();
 
 		ExtBuilder {
 			vamm_count: 1,
