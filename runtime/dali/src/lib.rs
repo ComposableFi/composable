@@ -1061,33 +1061,37 @@ parameter_types! {
 }
 
 use alloc::{format, string::String};
+use core::str::FromStr;
 extern crate alloc;
 
 pub struct CosmwasmAccount;
 impl Convert<String, Result<AccountId, ()>> for CosmwasmAccount {
 	fn convert(a: String) -> Result<AccountId, ()> {
-		let account_id =
-			TryInto::<[u8; 32]>::try_into(hex::decode(a).map_err(|_| ())?).map_err(|_| ())?;
-		Ok(AccountId::from(account_id))
+		match a.strip_prefix("0x") {
+			Some(account_id) =>
+				Ok(TryInto::<[u8; 32]>::try_into(hex::decode(account_id).map_err(|_| ())?)
+					.map_err(|_| ())?
+					.into()),
+			_ => Err(()),
+		}
 	}
 }
 impl Convert<AccountId, String> for CosmwasmAccount {
 	fn convert(a: AccountId) -> String {
-		hex::encode(a)
+		format!("0x{}", hex::encode(a))
 	}
 }
 
 // TODO: use plain string alias?
 pub struct CosmwasmCoin;
 impl Convert<String, Result<CurrencyId, ()>> for CosmwasmCoin {
-	fn convert(a: String) -> Result<CurrencyId, ()> {
-		let currency_id = hex::decode(a).map_err(|_| ())?;
-		<CurrencyId as Decode>::decode(&mut &currency_id[..]).map_err(|_| ())
+	fn convert(currency_id: String) -> Result<CurrencyId, ()> {
+		CurrencyId::from_str(&currency_id).map_err(|_| ())
 	}
 }
 impl Convert<CurrencyId, String> for CosmwasmCoin {
-	fn convert(a: CurrencyId) -> String {
-		a.using_encoded(|x| hex::encode(x))
+	fn convert(CurrencyId(currency_id): CurrencyId) -> String {
+		format!("{}", currency_id)
 	}
 }
 
