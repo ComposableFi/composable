@@ -1091,8 +1091,8 @@ pub mod pallet {
 			use sp_runtime::traits::CheckedSub as _;
 
 			let current_block = frame_system::Pallet::<T>::block_number();
-			let edge_block = current_block.checked_sub(&blocks_count).unwrap_or_default();
 			let blocks_count = market.actual_blocks_count;
+			let edge_block = current_block.checked_sub(&blocks_count).unwrap_or_default();
 
 			// check borrow asset
 			let price_block =

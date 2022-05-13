@@ -49,12 +49,12 @@ pub struct UpdateInput<LiquidationStrategyId, BlockNumber> {
 	pub actual_blocks_count: BlockNumber,
 }
 
-impl<LiquidationStrategyId> Validate<UpdateInput<LiquidationStrategyId>, UpdateInputVaild>
+impl<LiquidationStrategyId, BlockNumber> Validate<UpdateInput<LiquidationStrategyId, BlockNumber>, UpdateInputVaild>
 	for UpdateInputVaild
 {
 	fn validate(
-		update_input: UpdateInput<LiquidationStrategyId>,
-	) -> Result<UpdateInput<LiquidationStrategyId>, &'static str> {
+		update_input: UpdateInput<LiquidationStrategyId, BlockNumber>,
+	) -> Result<UpdateInput<LiquidationStrategyId, BlockNumber>, &'static str> {
 		if update_input.collateral_factor < MoreThanOneFixedU128::one() {
 			return Err("collateral factor must be >= 1")
 		}

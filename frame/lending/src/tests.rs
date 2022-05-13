@@ -265,6 +265,7 @@ fn can_update_market() {
 			collateral_factor: FixedU128::from_float(0.5),
 			under_collateralized_warn_percent: market.under_collateralized_warn_percent,
 			liquidators: market.liquidators,
+			actual_blocks_count: market.actual_blocks_count,
 			interest_rate_model: InterestRateModel::Curve(
 				CurveModel::new(CurveModel::MAX_BASE_RATE).unwrap(),
 			),
