@@ -31,6 +31,8 @@ pub type Amount = i128;
 pub const VAULT_PALLET_ID: PalletId = PalletId(*b"cubic___");
 pub const NATIVE_ASSET: CurrencyId = PICA::ID;
 	
+pub const MAX_ASSOCIATED_VAULTS: u32 = 10;
+
 // ----------------------------------------------------------------------------------------------------
 //                                                Config                                               
 // ----------------------------------------------------------------------------------------------------
@@ -204,6 +206,46 @@ impl pallet_vault::Config for MockRuntime {
 	type PalletId = VaultPalletId;
 }
 
+// -----------------------------------------------------------------------------------------------
+//                                   Instrumental Pablo Strategy                                  
+// -----------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const MaxAssociatedVaults: u32 = MAX_ASSOCIATED_VAULTS;
+	pub const InstrumentalPabloStrategyPalletId: PalletId = PalletId(*b"strmxpab");
+}
+
+impl instrumental_strategy_pablo::Config for MockRuntime {
+	type Event = Event;
+	type WeightInfo = ();
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type VaultId = VaultId;
+	type Vault = Vault;
+	type MaxAssociatedVaults = MaxAssociatedVaults;
+	type PalletId = InstrumentalPabloStrategyPalletId;
+}
+
+// -----------------------------------------------------------------------------------------------
+//                                      Instrumental Strategy                                    
+// -----------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const InstrumentalStrategyPalletId: PalletId = PalletId(*b"dynamic_");
+}
+
+impl instrumental_strategy::Config for MockRuntime {
+	type Event = Event;
+	type WeightInfo = ();
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type VaultId = VaultId;
+	type Vault = Vault;
+	type PabloStrategy = PabloStrategy;
+	type MaxAssociatedVaults = MaxAssociatedVaults;
+	type PalletId = InstrumentalStrategyPalletId;
+}
+
 // ----------------------------------------------------------------------------------------------------
 //                                             Instrumental                                            
 // ----------------------------------------------------------------------------------------------------
@@ -219,6 +261,7 @@ impl pallet_instrumental::Config for MockRuntime {
 	type AssetId = CurrencyId;
 	type VaultId = VaultId;
 	type Vault = Vault;
+	type InstrumentalStrategy = InstrumentalStrategy;
 	type PalletId = InstrumentalPalletId;
 }
 
@@ -243,6 +286,8 @@ frame_support::construct_runtime!(
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
+		PabloStrategy: instrumental_strategy_pablo::{Pallet, Call, Storage, Event<T>},
+		InstrumentalStrategy: instrumental_strategy::{Pallet, Call, Storage, Event<T>},
 		Instrumental: pallet_instrumental::{Pallet, Call, Storage, Event<T>},
 	}
 );

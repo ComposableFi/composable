@@ -17,13 +17,14 @@ pub mod pallet {
 
 	use frame_support::{
 		pallet_prelude::*,
+		PalletId,
 		storage::bounded_btree_set::BoundedBTreeSet,
 		transactional, dispatch::DispatchResult
 	};
 
 	use sp_runtime::{
 		traits::{
-			AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
+			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
 		},
 	};
 
@@ -98,10 +99,14 @@ pub mod pallet {
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
 			VaultId = Self::VaultId
-		> ;
+		>;
 
 		/// The maximum number of vaults that can be associated with this strategy.
+		#[pallet::constant]
 		type MaxAssociatedVaults: Get<u32>;
+
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
 	}
 
 	// -------------------------------------------------------------------------------------------
@@ -161,12 +166,17 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 
 	impl<T: Config> InstrumentalProtocolStrategy for Pallet<T> {
+		type AccountId = T::AccountId;
 		type VaultId = T::VaultId;
 		type AssetId = T::AssetId;
 
+		fn account_id() -> Self::AccountId {
+			T::PalletId::get().into_account_truncating()
+		}
+
 		#[transactional]
-		fn associate_vault(vault_id: &Self::VaultId) -> Result<Self::VaultId, DispatchError> {
-			AssociatedVaults::<T>::try_mutate(|vaults| -> Result<Self::VaultId, DispatchError> {
+		fn associate_vault(vault_id: &Self::VaultId) -> DispatchResult {
+			AssociatedVaults::<T>::try_mutate(|vaults| -> DispatchResult {
 				ensure!(!vaults.contains(vault_id), Error::<T>::VaultAlreadyAssociated);
 
 				vaults.try_insert(*vault_id)
@@ -174,7 +184,7 @@ pub mod pallet {
 
 				Self::deposit_event(Event::AssociatedVault{ vault_id: *vault_id });
 
-				Ok(*vault_id)
+				Ok(())
 			})
 		}
 		
@@ -190,6 +200,10 @@ pub mod pallet {
 
 				Ok(())
 			})
+		}
+
+		fn get_apy(_asset: Self::AssetId) -> Result<u128, DispatchError> {
+			Ok(0)
 		}
 	}
 

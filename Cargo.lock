@@ -8145,6 +8145,8 @@ dependencies = [
  "frame-support",
  "frame-system",
  "hex-literal",
+ "instrumental-strategy",
+ "instrumental-strategy-pablo",
  "itertools",
  "log 0.4.17",
  "orml-tokens",

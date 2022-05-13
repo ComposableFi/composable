@@ -36,13 +36,25 @@ pub trait Instrumental {
     ) -> DispatchResult;
 }
 
+pub trait InstrumentalDynamicStrategy {
+    type AccountId: core::cmp::Ord;
+    type AssetId;
+
+    fn get_optimum_strategy_for(asset: Self::AssetId) -> Result<Self::AccountId, DispatchError>;
+}
+
 pub trait InstrumentalProtocolStrategy {
+    type AccountId: core::cmp::Ord;
     type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
 	type AssetId;
 
-    fn associate_vault(vault_id: &Self::VaultId) -> Result<Self::VaultId, DispatchError>;
+    fn account_id() -> Self::AccountId;
+
+    fn associate_vault(vault_id: &Self::VaultId) -> Result<(), DispatchError>;
     
     // TODO: (Kevin)
     //  - can probably be a template method and call add_liquidity and remove_liquidity implementations
     fn rebalance() -> DispatchResult;
+
+    fn get_apy(asset: Self::AssetId) -> Result<u128, DispatchError>;
 }
