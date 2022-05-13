@@ -49,8 +49,8 @@ pub struct UpdateInput<LiquidationStrategyId, BlockNumber> {
 	pub actual_blocks_count: BlockNumber,
 }
 
-impl<LiquidationStrategyId, BlockNumber> Validate<UpdateInput<LiquidationStrategyId, BlockNumber>, UpdateInputVaild>
-	for UpdateInputVaild
+impl<LiquidationStrategyId, BlockNumber>
+	Validate<UpdateInput<LiquidationStrategyId, BlockNumber>, UpdateInputVaild> for UpdateInputVaild
 {
 	fn validate(
 		update_input: UpdateInput<LiquidationStrategyId, BlockNumber>,
