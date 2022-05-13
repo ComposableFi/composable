@@ -46,7 +46,9 @@
 //! * [`create`](pallet/struct.Pallet.html#method.create): Creates a new vamm,
 //! returning it's Id.
 //! * [`swap`](pallet/struct.Pallet.html#method.swap): Performs swap of a
-//! desired asset, returning it's counterparty.
+//! * [`move_price`](pallet/struct.Pallet.html#method.move_price): Changes
+//! amount of base and quote assets in reserve, essentially changing the
+//! invariant.
 //!
 //! ### Runtime Storage Objects
 //!
@@ -636,16 +638,16 @@ pub mod pallet {
 		/// [`base`](VammState) and [`quote`](VammState) asset reserves.
 		///
 		/// # Overview
-		/// In order for the caller modify the [`base`](VammState) and
-		/// [`quote`](VammState) asset reserves, essentialy modifying the
-		/// invariant `k` of the function `x * y = k`, it has to request it to
-		/// the Vamm Pallet. The pallet will perform the needed validity checks
-		/// and, if everything succeeds, a
+		/// In order for the caller to modify the
+		/// [`base`](VammState::base_asset_reserves) and
+		/// [`quote`](VammState::quote_asset_reserves) asset reserves,
+		/// essentialy modifying the invariant `k` of the function `x * y = k`,
+		/// it has to request it to the Vamm Pallet. The pallet will perform the
+		/// needed validity checks and, if everything succeeds, a
 		/// [`PriceMoved`](Event::<T>::PriceMoved) event will be deposited on
 		/// the blockchain warning the state change for the vamm and the asset
 		/// reserves of the vamm and it's invariant will change accordingly.
 		///
-		/// TODO(Cardosaum): Update diagram
 		/// ![](https://www.plantuml.com/plantuml/svg/FSqz3i8m343XdLF01UgTgH8IrwXSrsqYnKxadt9zAWQcfszwimTQfBJReogrt3YjtKl4y2U0uMSwQfHSqzceQx36H5tWrMLqnxNnkmBz0UnKs60t58OJHM2hU5nos5CfQjT5-idBi4eyZORwky-iszKl)
 		///
 		/// ## Parameters:
@@ -660,7 +662,9 @@ pub mod pallet {
 		/// * The passed [`VammId`](Config::VammId) must be valid
 		/// * The desired vamm must be open. (See the [`closed`](VammState)
 		/// field for more information).
-		/// TODO(Cardosaum): add more requirements?
+		/// * Both [`base`](VammState::base_asset_reserves) and
+		/// [`quote`](VammState::quote_asset_reserves) must be greater than
+		/// zero.
 		///
 		/// ## Emits
 		/// * [`PriceMoved`](Event::<T>::PriceMoved)
@@ -678,7 +682,6 @@ pub mod pallet {
 		/// * [`Error::<T>::QuoteAssetReserveIsZero`]
 		/// * [`Error::<T>::InvariantIsZero`]
 		/// * [`Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset`]
-		/// TODO(Cardosaum): add more after write function.
 		///
 		/// # Runtime
 		/// `O(1)`
@@ -782,11 +785,13 @@ pub mod pallet {
 			vamm_state: &VammStateOf<T>,
 		) -> Result<CalculateSwapAsset<T>, DispatchError> {
 			let new_input_amount = match direction {
-				Direction::Add =>
-					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?,
+				Direction::Add => {
+					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?
+				},
 
-				Direction::Remove =>
-					input_asset_amount.checked_sub(swap_amount).ok_or(ArithmeticError::Underflow)?,
+				Direction::Remove => {
+					input_asset_amount.checked_sub(swap_amount).ok_or(ArithmeticError::Underflow)?
+				},
 			};
 			let new_input_amount_u256 = Self::balance_to_u256(new_input_amount)?;
 
