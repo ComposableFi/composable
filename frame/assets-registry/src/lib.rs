@@ -139,8 +139,19 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		AssetRegistered { asset_id: T::LocalAssetId, location: T::ForeignAssetId },
-		AssetUpdated { asset_id: T::LocalAssetId, location: T::ForeignAssetId },
+		AssetRegistered {
+			asset_id: T::LocalAssetId,
+			location: T::ForeignAssetId,
+		},
+		AssetUpdated {
+			asset_id: T::LocalAssetId,
+			location: T::ForeignAssetId,
+		},
+		MinFeeUpdated {
+			target_parachain_id: ParaId,
+			foreign_asset_id: T::ForeignAssetId,
+			amount: Option<T::Balance>,
+		},
 	}
 
 	#[pallet::error]
@@ -162,9 +173,10 @@ pub mod pallet {
 			decimals: Option<Exponent>,
 		) -> DispatchResultWithPostInfo {
 			T::UpdateAssetRegistryOrigin::ensure_origin(origin)?;
-			if ForeignToLocal::<T>::contains_key(&location) {
-				return Err(Error::<T>::ForeignAssetAlreadyRegistered.into())
-			}
+			ensure!(
+				!ForeignToLocal::<T>::contains_key(&location),
+				Error::<T>::ForeignAssetAlreadyRegistered
+			);
 			let asset_id = T::CurrencyFactory::create(RangeId::FOREIGN_ASSETS, ed)?;
 			Self::set_reserve_location(asset_id, location.clone(), ratio, decimals)?;
 			Self::deposit_event(Event::<T>::AssetRegistered { asset_id, location });
@@ -202,13 +214,18 @@ pub mod pallet {
 		pub fn set_min_fee(
 			origin: OriginFor<T>,
 			target_parachain_id: ParaId,
-			asset_id: T::ForeignAssetId,
-			minimal_amount: Option<T::Balance>,
+			foreign_asset_id: T::ForeignAssetId,
+			amount: Option<T::Balance>,
 		) -> DispatchResultWithPostInfo {
 			T::ParachainOrGovernanceOrigin::ensure_origin(origin)?;
 			// TODO: in case it is set to parachain, check that chain can target only its origin
-			MinFeeAmounts::<T>::mutate_exists(target_parachain_id, asset_id, |x| {
-				*x = minimal_amount
+			MinFeeAmounts::<T>::mutate_exists(target_parachain_id, foreign_asset_id.clone(), |x| {
+				*x = amount
+			});
+			Self::deposit_event(Event::<T>::MinFeeUpdated {
+				target_parachain_id,
+				foreign_asset_id,
+				amount,
 			});
 			Ok(().into())
 		}
@@ -237,12 +254,10 @@ pub mod pallet {
 			location: Self::AssetNativeLocation,
 			ratio: Option<Ratio>,
 		) -> DispatchResult {
-			if let Some(asset_id) = ForeignToLocal::<T>::get(location) {
-				AssetRatio::<T>::mutate_exists(asset_id, |x| *x = ratio);
-				Ok(())
-			} else {
-				Err(Error::<T>::AssetNotFound.into())
-			}
+			let asset_id =
+				ForeignToLocal::<T>::try_get(location).map_err(|_| Error::<T>::AssetNotFound)?;
+			AssetRatio::<T>::mutate_exists(asset_id, |x| *x = ratio);
+			Ok(())
 		}
 	}
 
