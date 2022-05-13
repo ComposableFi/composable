@@ -241,7 +241,7 @@ impl<'a, T: Config> ContractModule<'a, T> {
 			// ("query", vec![ValueType::I32, ValueType::I32]),
 			("allocate", vec![ValueType::I32]),
 			("deallocate", vec![ValueType::I32]),
-			("interface_version_8", vec![]),
+			// ("interface_version_8", vec![]),
 		];
 
 		for (name, signature) in required_exports {
