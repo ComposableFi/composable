@@ -4,30 +4,30 @@ name = "simnode-common"
 version = "0.1.0"
 
 [dependencies]
-simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, branch = "seun-polkadot-v0.9.18" }
-substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", branch = "seun-polkadot-v0.9.18" }
+simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, rev = "a1e52d5ae48282834c89dd61e88e6db47d05108f" }
+substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", rev = "a1e52d5ae48282834c89dd61e88e6db47d05108f" }
 
-frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+system = { package = "frame-system", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
 
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-sc-consensus-manual-seal = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-sp-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+sc-consensus-manual-seal = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+sp-consensus-aura = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
 
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+sp-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
 
 common = { path = "../../runtime/common" }
 composable-runtime = { path = "../../runtime/composable" }
 dali-runtime = { path = "../../runtime/dali" }
 node = { package = "composable-node", path = "../../node", features = ["dali"] }
-parachain-inherent = { package = "cumulus-primitives-parachain-inherent", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.18" }
+parachain-inherent = { package = "cumulus-primitives-parachain-inherent", git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.19" }
 picasso-runtime = { path = "../../runtime/picasso" }
 
 derive_more = "0.99.17"

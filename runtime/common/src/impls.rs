@@ -1,4 +1,5 @@
-use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
+use frame_support::traits::{Currency, OnUnbalanced};
+use frame_support::traits::Imbalance;
 
 pub type NegativeImbalance<T> =
 	<balances::Pallet<T> as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;
@@ -10,8 +11,8 @@ where
 	R: balances::Config
 		+ collator_selection::Config
 		+ treasury::Config<Currency = balances::Pallet<R>>,
-	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v1::AccountId>,
-	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v1::AccountId>,
+	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v2::AccountId>,
+	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v2::AccountId>,
 	<R as frame_system::Config>::Event: From<balances::Event<R>>,
 	<R as balances::Config>::Balance: From<u128>,
 {
@@ -35,8 +36,8 @@ where
 	R: balances::Config
 		+ collator_selection::Config
 		+ treasury::Config<Currency = balances::Pallet<R>>,
-	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v1::AccountId>,
-	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v1::AccountId>,
+	<R as frame_system::Config>::AccountId: From<polkadot_primitives::v2::AccountId>,
+	<R as frame_system::Config>::AccountId: Into<polkadot_primitives::v2::AccountId>,
 	<R as frame_system::Config>::Event: From<balances::Event<R>>,
 	<R as balances::Config>::Balance: From<u128>,
 {
