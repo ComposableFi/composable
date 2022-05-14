@@ -75,7 +75,7 @@ impl<T: frame_system::Config> collective::WeightInfo for WeightInfo<T> {
 	fn propose_proposed(b: u32, m: u32, p: u32, ) -> Weight {
 		(38_170_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((15_000 as Weight).saturating_mul(b as Weight))
+			.saturating_add((16_000 as Weight).saturating_mul(b as Weight))
 			// Standard Error: 3_000
 			.saturating_add((151_000 as Weight).saturating_mul(m as Weight))
 			// Standard Error: 3_000
