@@ -130,7 +130,7 @@ fn blacklisting_should_work() {
 
 		let hash = set_balance_proposal_hash(4);
 		assert_ok!(Democracy::referendum_status(0));
-		assert_ok!(Democracy::blacklist(Origin::root(), hash, Some(0)));
+		assert_ok!(Democracy::blacklist(Origin::root(), hash, DEFAULT_ASSET, Some(0)));
 		assert_noop!(Democracy::referendum_status(0), Error::<Test>::ReferendumInvalid);
 	});
 }
