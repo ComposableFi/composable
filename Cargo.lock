@@ -5899,6 +5899,7 @@ dependencies = [
 name = "local-integration-tests"
 version = "0.1.0"
 dependencies = [
+ "base58",
  "common",
  "composable-traits",
  "cumulus-pallet-aura-ext",

@@ -156,7 +156,6 @@ pub mod pallet {
 		handle_must_liquidate: u32,
 	}
 
-	//pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"lend");
 	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"lend");
 

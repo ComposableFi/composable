@@ -262,7 +262,6 @@ Register USDT in registry with asset id 11 and decimals of 4 via `assetsRegistry
 `0x3b00010300a10f043206400b0000000000000000000000000000000a000000000000000000000000000000010000c16ff286230000000000000000000104000000`
 
 
-
 ## References
 
 - https://kusama.polkassembly.io/referendum/163
