@@ -1099,13 +1099,17 @@ pub mod pallet {
 
 			// check borrow asset
 			let price_block =
-				<T::Oracle as Oracle>::get_price(borrow_asset, BorrowAmountOf::<Self>::default())?.block;
+				<T::Oracle as Oracle>::get_price(borrow_asset, BorrowAmountOf::<Self>::default())?
+					.block;
 			ensure!(price_block >= edge_block, Error::<T>::PriceTooOld);
 
 			// check collateral asset
 			let collateral_asset = market.collateral_asset;
-			let price_block =
-				<T::Oracle as Oracle>::get_price(collateral_asset, BorrowAmountOf::<Self>::default())?.block;
+			let price_block = <T::Oracle as Oracle>::get_price(
+				collateral_asset,
+				BorrowAmountOf::<Self>::default(),
+			)?
+			.block;
 			ensure!(price_block >= edge_block, Error::<T>::PriceTooOld);
 
 			Ok(())
