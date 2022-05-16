@@ -556,7 +556,7 @@ fn old_price() {
 		// Try to borrow by SECOND_PRICE
 		assert_noop!(
 			Lending::borrow(Origin::signed(*ALICE), market, borrow_amount),
-			Error::<Runtime>::VeryOldPrice
+			Error::<Runtime>::PriceTooOld
 		);
 
 		// Refresh price

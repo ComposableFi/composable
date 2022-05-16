@@ -430,7 +430,7 @@ pub mod pallet {
 
 		MaxLiquidationBatchSizeExceeded,
 
-		VeryOldPrice,
+		PriceTooOld,
 	}
 
 	#[pallet::event]
@@ -1100,13 +1100,13 @@ pub mod pallet {
 			// check borrow asset
 			let price_block =
 				<T::Oracle as Oracle>::get_price(borrow_asset, Default::default())?.block;
-			ensure!(price_block >= edge_block, Error::<T>::VeryOldPrice);
+			ensure!(price_block >= edge_block, Error::<T>::PriceTooOld);
 
 			// check collateral asset
 			let collateral_asset = market.collateral_asset;
 			let price_block =
 				<T::Oracle as Oracle>::get_price(collateral_asset, Default::default())?.block;
-			ensure!(price_block >= edge_block, Error::<T>::VeryOldPrice);
+			ensure!(price_block >= edge_block, Error::<T>::PriceTooOld);
 
 			Ok(())
 		}
