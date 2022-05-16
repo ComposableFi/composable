@@ -145,6 +145,7 @@ impl<T: Config> Market<T> {
 	}
 }
 
+// For testing purposes
 #[cfg(feature = "std")]
 impl<T: Config> Default for Market<T> {
 	fn default() -> Self {
