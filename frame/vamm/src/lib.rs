@@ -502,10 +502,9 @@ pub mod pallet {
 			vamm_id: VammIdOf<T>,
 			asset_type: AssetType,
 		) -> Result<DecimalOf<T>, DispatchError> {
-			// Requested vamm must exist.
-			ensure!(VammMap::<T>::contains_key(vamm_id), Error::<T>::VammDoesNotExist);
+			// Get Vamm state.
+			let vamm_state = Self::get_vamm_state(&vamm_id)?;
 
-			let vamm_state = VammMap::<T>::get(vamm_id).ok_or(Error::<T>::FailToRetrieveVamm)?;
 			let quote_asset_reserves_decimal =
 				DecimalOf::<T>::from_inner(vamm_state.quote_asset_reserves);
 			let base_asset_reserves_decimal =
