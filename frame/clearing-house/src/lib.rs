@@ -129,7 +129,10 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 
-	pub use crate::types::{Direction, Market, MarketConfig, Position};
+	pub use crate::types::{
+		Direction::{self as Direction, Long, Short},
+		Market, MarketConfig, Position,
+	};
 	use crate::{
 		math::{FixedPointMath, FromBalance, IntoBalance, IntoDecimal, IntoSigned, UnsignedMath},
 		weights::WeightInfo,
@@ -1006,8 +1009,8 @@ pub mod pallet {
 
 			position.base_asset_amount.try_add_mut(&base_delta_decimal)?;
 			position.quote_asset_notional_amount.try_add_mut(&match direction {
-				Direction::Long => *quote_abs_amount_decimal,
-				Direction::Short => quote_abs_amount_decimal.neg(),
+				Long => *quote_abs_amount_decimal,
+				Short => quote_abs_amount_decimal.neg(),
 			})?;
 
 			market.add_base_asset_amount(&base_delta_decimal, direction)?;
@@ -1039,8 +1042,8 @@ pub mod pallet {
 			// Trade direction is opposite of position direction, so we compute the exit value
 			// accordingly
 			let exit_value = match direction {
-				Direction::Long => quote_abs_amount_decimal.neg(),
-				Direction::Short => *quote_abs_amount_decimal,
+				Long => quote_abs_amount_decimal.neg(),
+				Short => *quote_abs_amount_decimal,
 			};
 
 			position.base_asset_amount.try_add_mut(&base_delta_decimal)?;
@@ -1072,8 +1075,8 @@ pub mod pallet {
 			let entry_value = position.quote_asset_notional_amount;
 			let quote_amount_decimal: T::Decimal = quote_swapped.into_decimal()?;
 			let exit_value = match position_direction {
-				Direction::Long => quote_amount_decimal,
-				Direction::Short => quote_amount_decimal.neg(),
+				Long => quote_amount_decimal,
+				Short => quote_amount_decimal.neg(),
 			};
 
 			market.sub_base_asset_amount(&position.base_asset_amount, position_direction)?;
@@ -1105,8 +1108,8 @@ pub mod pallet {
 			// Trade direction is opposite of position direction, so we compute the exit value
 			// accordingly
 			let exit_value = match direction {
-				Direction::Long => abs_base_asset_value.neg(),
-				Direction::Short => *abs_base_asset_value,
+				Long => abs_base_asset_value.neg(),
+				Short => *abs_base_asset_value,
 			};
 
 			// Account for the implicit position closing
@@ -1116,8 +1119,8 @@ pub mod pallet {
 				.base_asset_amount
 				.try_add_mut(&Self::decimal_from_swapped(base_swapped, direction)?)?;
 			position.quote_asset_notional_amount = exit_value.try_add(&match direction {
-				Direction::Long => *quote_abs_amount_decimal,
-				Direction::Short => quote_abs_amount_decimal.neg(),
+				Long => *quote_abs_amount_decimal,
+				Short => quote_abs_amount_decimal.neg(),
 			})?;
 			// Update to account for direction change
 			position.last_cum_funding = market.cum_funding_rate(direction);
@@ -1161,6 +1164,13 @@ pub mod pallet {
 
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
+		fn to_vamm_direction(direction: Direction) -> VammDirection {
+			match direction {
+				Long => VammDirection::Add,
+				Short => VammDirection::Remove,
+			}
+		}
+
 		fn swap_base(
 			market: &Market<T>,
 			direction: Direction,
@@ -1171,10 +1181,7 @@ pub mod pallet {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Base,
 				input_amount: base_amount,
-				direction: match direction {
-					Direction::Long => VammDirection::Add,
-					Direction::Short => VammDirection::Remove,
-				},
+				direction: Self::to_vamm_direction(direction),
 				output_amount_limit: quote_limit,
 			})
 		}
@@ -1189,10 +1196,7 @@ pub mod pallet {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Quote,
 				input_amount: quote_abs_decimal.into_balance()?,
-				direction: match direction {
-					Direction::Long => VammDirection::Add,
-					Direction::Short => VammDirection::Remove,
-				},
+				direction: Self::to_vamm_direction(direction),
 				output_amount_limit: base_limit,
 			})
 		}
@@ -1207,8 +1211,8 @@ pub mod pallet {
 		) -> Result<T::Decimal, DispatchError> {
 			let abs: T::Decimal = swapped.into_decimal()?;
 			Ok(match direction {
-				Direction::Long => abs,
-				Direction::Short => abs.neg(),
+				Long => abs,
+				Short => abs.neg(),
 			})
 		}
 
@@ -1248,10 +1252,7 @@ pub mod pallet {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Base,
 				input_amount: position.base_asset_amount.into_balance()?,
-				direction: match position_direction {
-					Direction::Long => VammDirection::Add,
-					Direction::Short => VammDirection::Remove,
-				},
+				direction: Self::to_vamm_direction(position_direction),
 			})?;
 
 			Self::decimal_from_swapped(sim_swapped, position_direction)
