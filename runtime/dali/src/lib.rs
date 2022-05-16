@@ -23,7 +23,7 @@ mod xcmp;
 
 use orml_traits::parameter_type_with_key;
 // TODO: consider moving this to shared runtime
-pub use xcmp::{MaxInstructions, UnitWeightCost};
+pub use xcmp::{MaxInstructions, UnitWeightCost, XcmConfig};
 
 use common::{
 	impls::DealWithFees, multi_existential_deposits, AccountId, AccountIndex, Address, Amount,
