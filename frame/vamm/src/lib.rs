@@ -287,9 +287,9 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Emitted after a successful call to [`create`](Pallet::create) function.
+		/// Emitted after a successful call to the [`create`](Pallet::create) function.
 		Created { vamm_id: VammIdOf<T>, state: VammStateOf<T> },
-		/// Emitted after a successfull call to [`swap`](Pallet::swap) function.
+		/// Emitted after a successfull call to the [`swap`](Pallet::swap) function.
 		Swapped {
 			vamm_id: VammIdOf<T>,
 			input_amount: BalanceOf<T>,
@@ -297,7 +297,7 @@ pub mod pallet {
 			input_asset_type: AssetType,
 			direction: Direction,
 		},
-		/// Emitted after a successful call to [`move_price`](Pallet::move_price) function.
+		/// Emitted after a successful call to the [`move_price`](Pallet::move_price) function.
 		PriceMoved {
 			vamm_id: VammIdOf<T>,
 			base_asset_reserves: BalanceOf<T>,
@@ -331,7 +331,7 @@ pub mod pallet {
 		/// Tried to add some amount of asset to Vamm but it would exceeds the
 		/// supported maximum value.
 		TradeExtrapolatesMaximumSupportedAmount,
-		/// Tried to perform operation agains a closed Vamm.
+		/// Tried to perform operation against a closed Vamm.
 		VammIsClosed,
 		/// Tried to swap assets but the amount returned was less than the minimum expected.
 		SwappedAmountLessThanMinimumLimit,
@@ -532,7 +532,7 @@ pub mod pallet {
 			todo!()
 		}
 
-		/// Performs the swap of the desired asset agains the vamm.
+		/// Performs the swap of the desired asset against the vamm.
 		///
 		/// # Overview
 		/// In order for the caller be able to swap assets in the vamm, it has
@@ -703,7 +703,7 @@ pub mod pallet {
 			// Update runtime storage.
 			VammMap::<T>::insert(&config.vamm_id, vamm_state);
 
-			// Deposit swap event into blockchain.
+			// Deposit price moved event into blockchain.
 			Self::deposit_event(Event::<T>::PriceMoved {
 				vamm_id: config.vamm_id,
 				base_asset_reserves: config.base_asset_reserves,
