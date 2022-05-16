@@ -3,6 +3,16 @@
 - [`democracy::Config`](https://docs.rs/pallet-democracy/latest/pallet_democracy/trait.Config.html)
 - [`Call`](https://docs.rs/pallet-democracy/latest/pallet_democracy/enum.Call.html)
 
+### Commit
+
+- `Hash` - `662598908902ec8879fcd6a950324ef6735ea1f6`
+- `Url` - [`url`](https://github.com/paritytech/substrate/tree/662598908902ec8879fcd6a950324ef6735ea1f6)
+- `Date`- Apr 22, 2022
+
+### Changes add to fork
+
+- `Implements Multicurrency to enable multiple assets voting`
+
 ## Overview
 
 The Democracy pallet handles the administration of general stakeholder voting.
