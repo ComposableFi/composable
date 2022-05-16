@@ -167,14 +167,14 @@ impl<T: FixedPointNumber> FixedPointMath for T {
 		//      -1           1 | Underflow
 		//       1          -1 | Underflow
 		//       1           1 | Overflow
-		let error = match self.is_negative() ^ other.is_negative() {
+		let error = || match self.is_negative() ^ other.is_negative() {
 			true => Underflow,
 			false => Overflow,
 		};
 
 		let accuracy = Self::DIV.unique_saturated_into();
-		let q = multiply_by_rational(lhs.value, rhs.value, accuracy).map_err(|_| error)?;
-		Ok(Self::from_inner(from_i129(I129 { value: q, negative }).ok_or(error)?))
+		let q = multiply_by_rational(lhs.value, rhs.value, accuracy).map_err(|_| error())?;
+		Ok(Self::from_inner(from_i129(I129 { value: q, negative }).ok_or_else(error)?))
 	}
 
 	fn try_div(&self, other: &Self) -> Result<Self, ArithmeticError> {
@@ -188,7 +188,7 @@ impl<T: FixedPointNumber> FixedPointMath for T {
 		if other.into_inner().is_zero() {
 			return Err(DivisionByZero)
 		}
-		let error = match self.is_negative() ^ other.is_negative() {
+		let error = || match self.is_negative() ^ other.is_negative() {
 			true => Underflow,
 			false => Overflow,
 		};
@@ -198,8 +198,8 @@ impl<T: FixedPointNumber> FixedPointMath for T {
 		let negative = lhs.negative != rhs.negative;
 
 		let accuracy = Self::DIV.unique_saturated_into();
-		let q = multiply_by_rational(lhs.value, accuracy, rhs.value).map_err(|_| error)?;
-		Ok(Self::from_inner(from_i129(I129 { value: q, negative }).ok_or(error)?))
+		let q = multiply_by_rational(lhs.value, accuracy, rhs.value).map_err(|_| error())?;
+		Ok(Self::from_inner(from_i129(I129 { value: q, negative }).ok_or_else(error)?))
 	}
 
 	fn try_div_rem(&self, other: &Self) -> Result<(Self, Self), ArithmeticError> {
@@ -210,16 +210,16 @@ impl<T: FixedPointNumber> FixedPointMath for T {
 		let lhs: I129 = self.into_inner().into();
 		let rhs: I129 = other.into_inner().into();
 		let negative = lhs.negative != rhs.negative;
-		let error = match self.is_negative() ^ other.is_negative() {
+		let error = || match self.is_negative() ^ other.is_negative() {
 			true => Underflow,
 			false => Overflow,
 		};
 
 		let accuracy = Self::DIV.unique_saturated_into();
-		let (q, r) = div_rem_with_acc(lhs.value, rhs.value, accuracy).map_err(|_| error)?;
+		let (q, r) = div_rem_with_acc(lhs.value, rhs.value, accuracy).map_err(|_| error())?;
 		Ok((
-			Self::from_inner(from_i129(I129 { value: q, negative }).ok_or(error)?),
-			Self::from_inner(from_i129(I129 { value: r, negative }).ok_or(error)?),
+			Self::from_inner(from_i129(I129 { value: q, negative }).ok_or_else(error)?),
+			Self::from_inner(from_i129(I129 { value: r, negative }).ok_or_else(error)?),
 		))
 	}
 }
