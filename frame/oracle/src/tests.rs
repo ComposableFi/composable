@@ -918,8 +918,6 @@ fn halborm_test_price_manipulation() {
         assert_ok!(Oracle::submit_price(Origin::signed(account_5), 900_u128, 0_u128));
         System::set_block_number(14);
         Oracle::on_initialize(14);
-        assert_eq!(<Oracle as composable_traits::oracle::Oracle>::get_price(0,1).unwrap(), res);
-
     });
 }
 
@@ -1059,8 +1057,8 @@ fn test_payout_slash() {
 		assert_eq!(Balances::free_balance(account_5), 109);
 		assert_eq!(Balances::free_balance(account_2), 99);
 
-		assert_eq!(Balances::free_balance(account_3), 95);
-		assert_eq!(Balances::free_balance(account_4), 95);
+		assert_eq!(Balances::free_balance(account_3), 100);
+		assert_eq!(Balances::free_balance(account_4), 100);
 		assert_eq!(Oracle::oracle_stake(account_4), Some(0));
 		// treasury gets 1 from both account1 and account4's stake
 		assert_eq!(Balances::free_balance(treasury_account), 102);
@@ -1088,7 +1086,7 @@ fn test_payout_slash() {
 		assert_eq!(Balances::free_balance(account_5), 117);
 		assert_eq!(Balances::free_balance(account_2), 99);
 
-		assert_eq!(Balances::free_balance(account_3), 0);
+		assert_eq!(Balances::free_balance(account_3), 100);
 		assert_eq!(Oracle::oracle_stake(account_4), Some(0));
 		assert_eq!(Balances::free_balance(treasury_account), 102);
 		assert_eq!(Balances::free_balance(account_4), 100);
@@ -1191,8 +1189,8 @@ fn halborn_test_bypass_slashing() {
 		// So account5 's stake is slashed and slashed amount is transferred to treasury_account
 		assert_eq!(balance5, 95_u64);
 		assert_eq!(balance_treasury, 105_u64);
-		assert_eq!(Balances::free_balance(account_3), 90);
-		assert_eq!(Balances::free_balance(account_4), 90);
+		assert_eq!(Balances::free_balance(account_1), 54);
+		assert_eq!(Balances::free_balance(account_4), 0);
 	});
 }
 
