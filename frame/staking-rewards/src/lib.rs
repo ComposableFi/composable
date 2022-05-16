@@ -47,7 +47,7 @@ pub mod pallet {
 		math::safe::{safe_multiply_by_rational, SafeAdd, SafeSub},
 	};
 	use composable_traits::{
-		financial_nft::{FinancialNFTProtocol, NFTClass, NFTVersion},
+		financial_nft::{FinancialNftProtocol, NftClass, NftVersion},
 		staking_rewards::{
 			Penalty, PenaltyOutcome, PositionState, Staking, StakingConfig, StakingNFT,
 			StakingReward,
@@ -78,7 +78,7 @@ pub mod pallet {
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
 	pub(crate) type BalanceOf<T> = <T as Config>::Balance;
-	pub(crate) type InstanceIdOf<T> = <T as FinancialNFTProtocol<AccountIdOf<T>>>::InstanceId;
+	pub(crate) type InstanceIdOf<T> = <T as FinancialNftProtocol<AccountIdOf<T>>>::InstanceId;
 	pub(crate) type MaxRewardAssetsOf<T> = <T as Config>::MaxRewardAssets;
 	pub(crate) type MaxStakingPresetsOf<T> = <T as Config>::MaxStakingPresets;
 	pub(crate) type RewardAssetsOf<T> = BoundedBTreeSet<AssetIdOf<T>, MaxRewardAssetsOf<T>>;
@@ -138,7 +138,7 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config:
 		frame_system::Config
-		+ FinancialNFTProtocol<AccountIdOf<Self>, ClassId = NFTClass, Version = NFTVersion>
+		+ FinancialNftProtocol<AccountIdOf<Self>, ClassId = NftClass, Version = NftVersion>
 	{
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;

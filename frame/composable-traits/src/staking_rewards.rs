@@ -1,5 +1,5 @@
 use crate::{
-	financial_nft::{NFTClass, NFTVersion},
+	financial_nft::{NftClass, NftVersion},
 	time::{DurationSeconds, Timestamp},
 };
 use codec::{Decode, Encode};
@@ -136,19 +136,19 @@ impl<AccountId, AssetId, Balance: AtLeast32BitUnsigned + Copy, Epoch: Ord, Rewar
 	}
 }
 
-impl<AccountId, AssetId, Balance, Epoch, Rewards> Get<NFTClass>
+impl<AccountId, AssetId, Balance, Epoch, Rewards> Get<NftClass>
 	for StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards>
 {
-	fn get() -> NFTClass {
-		NFTClass::STAKING
+	fn get() -> NftClass {
+		NftClass::STAKING
 	}
 }
 
-impl<AccountId, AssetId, Balance, Epoch, Rewards> Get<NFTVersion>
+impl<AccountId, AssetId, Balance, Epoch, Rewards> Get<NftVersion>
 	for StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards>
 {
-	fn get() -> NFTVersion {
-		NFTVersion::VERSION_1
+	fn get() -> NftVersion {
+		NftVersion::VERSION_1
 	}
 }
 

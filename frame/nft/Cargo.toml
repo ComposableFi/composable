@@ -32,6 +32,11 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 composable-support = { path = "../composable-support", default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
 
+[dev-dependencies]
+composable-tests-helpers = { path = "../composable-tests-helpers" }
+composable-traits = { path = "../composable-traits", features = ["test-utils"] }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+
 [features]
 default = ["std"]
 std = [
@@ -46,6 +51,7 @@ std = [
   "scale-info/std",
   "composable-traits/std",
   "composable-support/std",
+  "composable-tests-helpers/std",
 ]
 
 runtime-benchmarks = [
