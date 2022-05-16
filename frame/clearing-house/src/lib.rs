@@ -917,6 +917,10 @@ pub mod pallet {
 			Self::deposit_event(Event::FundingUpdated { market: market_id.clone(), time: now });
 			Ok(())
 		}
+
+		fn liquidate(account_id: &Self::AccountId) -> Result<(), DispatchError> {
+			todo!()
+		}
 	}
 
 	impl<T: Config> Instruments for Pallet<T> {
