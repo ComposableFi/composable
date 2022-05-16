@@ -19,10 +19,13 @@ scale-info = { version = "1.0.0", default-features = false, features = [
   "derive",
 ] }
 
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 
+composable-support = { default-features = false, path = "../../../composable-support" }
 pallet-contracts-primitives = { default-features = false, path = "../../common" }
 
 [features]
@@ -33,5 +36,6 @@ std = [
   "scale-info/std",
   "sp-std/std",
   "sp-runtime/std",
+  "frame-support/std",
   "pallet-contracts-primitives/std",
 ]

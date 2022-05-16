@@ -812,6 +812,34 @@ impl<T: Config> Pallet<T>
 where
 	T::AccountId: UncheckedFrom<T::Hash> + AsRef<[u8]>,
 {
+	pub fn bare_query(
+		origin: T::AccountId,
+		dest: T::AccountId,
+		value: TransferredAssets<T>,
+		gas_limit: Weight,
+		storage_deposit_limit: Option<BalanceOf<T>>,
+		data: Vec<u8>,
+		debug: bool,
+	) -> ContractExecResult<BalanceOf<T>> {
+		let mut debug_message = if debug { Some(Vec::new()) } else { None };
+		let output = Self::internal_query(
+			origin,
+			dest,
+			value,
+			gas_limit,
+			storage_deposit_limit,
+			data,
+			debug_message.as_mut(),
+		);
+		ContractExecResult {
+			result: output.result.map_err(|r| r.error),
+			gas_consumed: output.gas_meter.gas_consumed(),
+			gas_required: output.gas_meter.gas_required(),
+			storage_deposit: output.storage_deposit,
+			debug_message: debug_message.unwrap_or_default(),
+		}
+  }
+
 	/// Perform a call to a specified contract.
 	///
 	/// This function is similar to [`Self::call`], but doesn't perform any address lookups

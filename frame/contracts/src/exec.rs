@@ -34,8 +34,7 @@ use crate::{
 	ContractInstantiator, Error, Event, Nonce, OwnerInfoOf, Pallet as Contracts, Schedule,
 	TransferredAssets, TrieId,
 };
-use alloc::{collections::BTreeMap, string::String};
-use codec::Encode;
+use alloc::{collections::BTreeMap, string::String, format};
 use either::Either;
 use frame_support::{
 	dispatch::{DispatchError, DispatchResult, DispatchResultWithPostInfo, Dispatchable},
@@ -852,9 +851,6 @@ where
 
 		let cosmwasm_contract_addr =
 			Addr::unchecked(T::ConvertAccount::convert(contract_address.clone()));
-		let cosmwasm_sender_addr =
-			Addr::unchecked(T::ConvertAccount::convert(self.caller().clone()));
-
 		let env = Env {
 			block: BlockInfo {
 				// block number > u64 is impossible
@@ -867,6 +863,8 @@ where
 			contract: CosmwasmContractInfo { address: cosmwasm_contract_addr },
 		};
 
+		let cosmwasm_sender_addr =
+			Addr::unchecked(T::ConvertAccount::convert(self.caller().clone()));
 		let info = MessageInfo { sender: cosmwasm_sender_addr, funds };
 
 		log::debug!(target: "runtime::contracts", "Environment: {:?}", env);
@@ -920,10 +918,8 @@ where
 				}
 				for event in response.events {
 					// https://github.com/CosmWasm/wasmd/blob/ac92fdcf37388cc8dc24535f301f64395f8fb3da/x/wasm/keeper/events.go#L29
-					let mut ty_prefixed = String::from("wasm-");
-					ty_prefixed.push_str(&event.ty);
 					add_event(Right(CosmwasmEvent {
-						ty: ty_prefixed,
+						ty: format!("wasm-{}", event.ty),
 						attributes: event.attributes,
 					}));
 				}

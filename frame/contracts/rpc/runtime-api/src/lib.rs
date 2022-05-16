@@ -23,44 +23,61 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use sp_core::Bytes;
+use composable_support::rpc_helpers::SafeRpcWrapper;
 use codec::Codec;
+use frame_support::traits::Get;
 use pallet_contracts_primitives::{
 	Code, CodeUploadResult, ContractExecResult, ContractInstantiateResult, GetStorageResult,
 };
-use sp_std::vec::Vec;
+use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
 sp_api::decl_runtime_apis! {
 	/// The API to interact with contracts without using executive.
-	pub trait ContractsApi<AccountId, Balance, BlockNumber, Hash> where
+	pub trait ContractsRuntimeApi<AccountId, AssetId, Balance, Hash, MaxAssets> where
 		AccountId: Codec,
+	  AssetId: Codec + Ord,
 		Balance: Codec,
-		BlockNumber: Codec,
 		Hash: Codec,
+	  MaxAssets: Get<u32>
 	{
+		/// Perform a query from a specified account to a given contract.
+		///
+		/// See `pallet_contracts::Pallet::query`.
+		fn query(
+		  origin: AccountId,
+		  dest: AccountId,
+		  value: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
+		  gas_limit: u64,
+		  storage_deposit_limit: Option<SafeRpcWrapper<Balance>>,
+		  input_data: Bytes,
+	  ) -> ContractExecResult<SafeRpcWrapper<Balance>>;
+
 		/// Perform a call from a specified account to a given contract.
 		///
 		/// See `pallet_contracts::Pallet::call`.
 		fn call(
-			origin: AccountId,
-			dest: AccountId,
-			value: Balance,
-			gas_limit: u64,
-			storage_deposit_limit: Option<Balance>,
-			input_data: Vec<u8>,
-		) -> ContractExecResult<Balance>;
+		  origin: AccountId,
+		  dest: AccountId,
+		  value: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
+		  gas_limit: u64,
+		  storage_deposit_limit: Option<SafeRpcWrapper<Balance>>,
+		  input_data: Bytes,
+	  ) -> ContractExecResult<SafeRpcWrapper<Balance>>;
+
 
 		/// Instantiate a new contract.
 		///
 		/// See `pallet_contracts::Pallet::instantiate`.
 		fn instantiate(
 			origin: AccountId,
-			value: Balance,
-			gas_limit: u64,
-			storage_deposit_limit: Option<Balance>,
-			code: Code<Hash>,
-			data: Vec<u8>,
-			salt: Vec<u8>,
-		) -> ContractInstantiateResult<AccountId, Balance>;
+		  value: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
+		  gas_limit: u64,
+		  storage_deposit_limit: Option<SafeRpcWrapper<Balance>>,
+		  code: Code<Hash>,
+		  data: Bytes,
+		  salt: Bytes,
+	  ) -> ContractInstantiateResult<AccountId, SafeRpcWrapper<Balance>>;
 
 
 		/// Upload new code without instantiating a contract from it.
