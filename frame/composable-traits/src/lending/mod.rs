@@ -46,7 +46,7 @@ pub struct UpdateInput<LiquidationStrategyId, BlockNumber> {
 	pub liquidators: Vec<LiquidationStrategyId>,
 	pub interest_rate_model: InterestRateModel,
 	/// Count of blocks until throw error PriceIsTooOld
-	pub actual_blocks_count: BlockNumber,
+	pub max_price_age: BlockNumber,
 }
 
 impl<LiquidationStrategyId, BlockNumber>
@@ -138,7 +138,8 @@ pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationStrategyId, Bloc
 	pub borrow_asset_vault: VaultId,
 	/// The asset being used as collateral.
 	pub collateral_asset: AssetId,
-	pub actual_blocks_count: BlockNumber,
+	/// Number of blocks until invalidate oracle's price.
+	pub max_price_age: BlockNumber,
 	pub collateral_factor: MoreThanOneFixedU128,
 	pub interest_rate_model: InterestRateModel,
 	pub under_collateralized_warn_percent: Percent,

@@ -246,7 +246,7 @@ fn can_update_market() {
 			collateral_factor: market.collateral_factor,
 			under_collateralized_warn_percent: market.under_collateralized_warn_percent,
 			liquidators: market.liquidators.clone(),
-			actual_blocks_count: market.actual_blocks_count,
+			max_price_age: market.max_price_age,
 			interest_rate_model: InterestRateModel::Curve(
 				CurveModel::new(CurveModel::MAX_BASE_RATE).unwrap(),
 			),
@@ -265,7 +265,7 @@ fn can_update_market() {
 			collateral_factor: FixedU128::from_float(0.5),
 			under_collateralized_warn_percent: market.under_collateralized_warn_percent,
 			liquidators: market.liquidators,
-			actual_blocks_count: market.actual_blocks_count,
+			max_price_age: market.max_price_age,
 			interest_rate_model: InterestRateModel::Curve(
 				CurveModel::new(CurveModel::MAX_BASE_RATE).unwrap(),
 			),
@@ -1245,7 +1245,7 @@ fn current_interest_rate_test() {
 		let market = crate::Markets::<Runtime>::get(market_id).unwrap();
 		let update_input = UpdateInput {
 			collateral_factor: market.collateral_factor,
-			actual_blocks_count: market.actual_blocks_count,
+			max_price_age: market.max_price_age,
 			under_collateralized_warn_percent: market.under_collateralized_warn_percent,
 			liquidators: market.liquidators,
 			interest_rate_model: InterestRateModel::Curve(
@@ -1516,7 +1516,7 @@ fn default_create_input<AssetId, BlockNumber: sp_runtime::traits::Bounded>(
 			under_collateralized_warn_percent: default_under_collateralized_warn_percent(),
 			liquidators: vec![],
 			interest_rate_model: InterestRateModel::default(),
-			actual_blocks_count: BlockNumber::max_value(),
+			max_price_age: BlockNumber::max_value(),
 		},
 		reserved_factor: DEFAULT_MARKET_VAULT_RESERVE,
 		currency_pair,
@@ -1599,7 +1599,7 @@ fn create_market<const NORMALIZED_PRICE: u128>(
 			under_collateralized_warn_percent: default_under_collateralized_warn_percent(),
 			liquidators: vec![],
 			interest_rate_model: InterestRateModel::default(),
-			actual_blocks_count: DEFAULT_ACTUAL_BLOCKS_COUNT,
+			max_price_age: DEFAULT_ACTUAL_BLOCKS_COUNT,
 		},
 		reserved_factor,
 		currency_pair: CurrencyPair::new(collateral_asset.id(), borrow_asset.id()),

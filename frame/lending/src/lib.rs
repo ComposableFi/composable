@@ -1094,7 +1094,7 @@ pub mod pallet {
 			let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
 
 			let current_block = frame_system::Pallet::<T>::block_number();
-			let blocks_count = market.actual_blocks_count;
+			let blocks_count = market.max_price_age;
 			let edge_block = current_block.checked_sub(&blocks_count).unwrap_or_default();
 
 			// check borrow asset
@@ -1200,7 +1200,7 @@ pub mod pallet {
 
 				let market_config = MarketConfig {
 					manager,
-					actual_blocks_count: config_input.updatable.actual_blocks_count,
+					max_price_age: config_input.updatable.max_price_age,
 					borrow_asset_vault: borrow_asset_vault.clone(),
 					collateral_asset: config_input.collateral_asset(),
 					collateral_factor: config_input.updatable.collateral_factor,
