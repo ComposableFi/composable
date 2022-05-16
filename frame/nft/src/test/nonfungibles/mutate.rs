@@ -257,7 +257,8 @@ mod burn_from {
 		})
 	}
 
-	/// Error tests for [`Mutate::burn_from`], testing for [`crate::Error::InstanceNotFound`] specifically.
+	/// Error tests for [`Mutate::burn_from`], testing for [`crate::Error::InstanceNotFound`]
+	/// specifically.
 	mod not_found {
 		use composable_tests_helpers::test::helper::assert_last_event;
 		use composable_traits::financial_nft::NftClass;
