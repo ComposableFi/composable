@@ -6,6 +6,7 @@ import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
 import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
 import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
+import BN from "bn.js";
 
 /**
  * Assets Pallet Extrinsics Integration Test
@@ -30,7 +31,7 @@ describe.only("tx.assets Tests", function() {
 
   let api: ApiPromise;
   let sudoKey: KeyringPair,
-    walletBob: KeyringPair;
+    senderWallet: KeyringPair;
 
   before("Setting up the tests", async function() {
     this.timeout(60 * 1000);
@@ -44,13 +45,13 @@ describe.only("tx.assets Tests", function() {
       devWalletBob
     } = getDevWallets(newKeyring);
     sudoKey = devWalletAlice;
-    walletBob = devWalletBob;
+    senderWallet = devWalletBob.derive("/tests/assets/transferTestSenderWallet");
   });
 
   before("Providing funds for tests", async function() {
     this.timeout(5 * 60 * 1000);
     await mintAssetsToWallet(api, sudoKey, sudoKey, [1]);
-    await mintAssetsToWallet(api, walletBob, sudoKey, [1, 4]);
+    await mintAssetsToWallet(api, senderWallet, sudoKey, [1, 4]);
   });
 
   after("Closing the connection", async function() {
@@ -67,19 +68,33 @@ describe.only("tx.assets Tests", function() {
     // it(name, function) describes a single test.
     it("A wallet can `transfer` KSM to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
+
       const paraAsset = api.createType("u128", 4);
-      const paraDest = walletBob.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
+      const paraDest = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
       const paraAmount = api.createType("Balance", 100000000000);
       const paraKeepAlive = api.createType("bool", true);
 
-      const { data: [result] } = await sendAndWaitForSuccess(
+      const senderFundsBeforeTransaction =
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), senderWallet.publicKey)).toString());
+      const receiverFundsBeforeTransaction =
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraDest)).toString());
+
+      const { data: [resultAccountIdFeeWallet, resultFeeAmount] } = await sendAndWaitForSuccess(
         api,
-        walletBob,
+        senderWallet,
         api.events.balances.Deposit.is,
         api.tx.assets.transfer(paraAsset, paraDest, paraAmount, paraKeepAlive)
       );
 
-      console.debug(result);
+      const senderFundsAfterTransaction =
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), senderWallet.publicKey)).toString());
+      const receiverFundsAfterTransaction =
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraDest)).toString());
+
+      expect(senderFundsAfterTransaction.lt(senderFundsBeforeTransaction)).to.be.true;
+      expect(receiverFundsAfterTransaction
+        .eq(receiverFundsBeforeTransaction.add(new BN(paraAmount.toNumber()))))
+        .to.be.true;
     });
   });
 
@@ -91,20 +106,33 @@ describe.only("tx.assets Tests", function() {
     if (!testConfiguration.enabledTests.tx.transfer__success) return;
 
     // it(name, function) describes a single test.
-    it("A wallet can `transfer` native asset PICA to another wallet", async function() {
+    it("A wallet can `transfer_native` asset PICA to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
-      const paraDest = walletBob.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
+      const paraDest = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
       const paraAmount = api.createType("Balance", 100000000000);
       const paraKeepAlive = api.createType("bool", true);
 
-      const { data: [result] } = await sendAndWaitForSuccess(
+      const senderFundsBeforeTransaction =
+        new BN((await api.rpc.assets.balanceOf("1", senderWallet.publicKey)).toString());
+      const receiverFundsBeforeTransaction =
+        new BN((await api.rpc.assets.balanceOf("1", paraDest)).toString());
+
+      const { data: [resultAccountIdFeeWallet, resultFeeAmount] } = await sendAndWaitForSuccess(
         api,
-        walletBob,
+        senderWallet,
         api.events.balances.Deposit.is,
         api.tx.assets.transferNative(paraDest, paraAmount, paraKeepAlive)
       );
 
-      console.debug(result);
+      const senderFundsAfterTransaction =
+        new BN((await api.rpc.assets.balanceOf("1", senderWallet.publicKey)).toString());
+      const receiverFundsAfterTransaction =
+        new BN((await api.rpc.assets.balanceOf("1", paraDest)).toString());
+
+      expect(senderFundsAfterTransaction.lt(senderFundsBeforeTransaction)).to.be.true;
+      expect(receiverFundsAfterTransaction
+        .eq(receiverFundsBeforeTransaction.add(new BN(paraAmount.toNumber()))))
+        .to.be.true;
     });
   });
 
@@ -119,10 +147,15 @@ describe.only("tx.assets Tests", function() {
     it("A *sudo* wallet can `forceTransfer` KSM to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
       const paraAsset = api.createType("u128", 4);
-      const paraSource = walletBob.publicKey;
-      const paraDest = walletBob.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
+      const paraSource = senderWallet.publicKey;
+      const paraDest = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
       const paraAmount = api.createType("Balance", 100000000000);
       const paraKeepAlive = api.createType("bool", true);
+
+      const senderFundsBeforeTransaction =
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraSource)).toString());
+      const receiverFundsBeforeTransaction =
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraDest)).toString());
 
       const { data: [result] } = await sendAndWaitForSuccess(
         api,
@@ -138,8 +171,17 @@ describe.only("tx.assets Tests", function() {
           )
         )
       );
+      expect(result.isOk).to.be.true;
 
-      console.debug(result);
+      const senderFundsAfterTransaction =
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraSource)).toString());
+      const receiverFundsAfterTransaction =
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraDest)).toString());
+
+      expect(senderFundsAfterTransaction.lt(senderFundsBeforeTransaction)).to.be.true;
+      expect(receiverFundsAfterTransaction
+        .eq(receiverFundsBeforeTransaction.add(new BN(paraAmount.toNumber()))))
+        .to.be.true;
     });
   });
 
@@ -147,17 +189,22 @@ describe.only("tx.assets Tests", function() {
    * The `force_transfer_native` extrinsic transfers the blockchains native asset (PICA) from `origin` to `dest`
    * with sudo privileges.
    */
-  describe("tx.assets.transfer Tests", function() {
+  describe("tx.assets.force_transfer_native Tests", function() {
     // Check if group of tests are enabled.
     if (!testConfiguration.enabledTests.tx.transfer__success) return;
 
     // it(name, function) describes a single test.
     it("A *sudo* wallet can `force_transfer_native` token to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
-      const paraSource = walletBob.publicKey;
-      const paraDest = walletBob.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
+      const paraSource = senderWallet.publicKey;
+      const paraDest = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
       const paraAmount = api.createType("Balance", 100000000000);
       const paraKeepAlive = api.createType("bool", true);
+
+      const senderFundsBeforeTransaction =
+        new BN((await api.rpc.assets.balanceOf("1", paraSource)).toString());
+      const receiverFundsBeforeTransaction =
+        new BN((await api.rpc.assets.balanceOf("1", paraDest)).toString());
 
       const { data: [result] } = await sendAndWaitForSuccess(
         api,
@@ -172,8 +219,17 @@ describe.only("tx.assets Tests", function() {
           )
         )
       );
+      expect(result.isOk).to.be.true;
 
-      console.debug(result);
+      const senderFundsAfterTransaction =
+        new BN((await api.rpc.assets.balanceOf("1", paraSource)).toString());
+      const receiverFundsAfterTransaction =
+        new BN((await api.rpc.assets.balanceOf("1", paraDest)).toString());
+
+      expect(senderFundsAfterTransaction.lt(senderFundsBeforeTransaction)).to.be.true;
+      expect(receiverFundsAfterTransaction
+        .eq(receiverFundsBeforeTransaction.add(new BN(paraAmount.toNumber()))))
+        .to.be.true;
     });
   });
 
@@ -181,24 +237,35 @@ describe.only("tx.assets Tests", function() {
    * The `transfer_all` extrinsic transfers the remaining balance of a specified `asset` from `origin` to `dest`.
    */
   describe("tx.assets.transfer_all Tests", function() {
-    // Check if group of tests are enabled.
     if (!testConfiguration.enabledTests.tx.transfer__success) return;
 
-    // it(name, function) describes a single test.
     it("A wallet can `transfer_all` remaining KSM to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
       const paraAsset = api.createType("u128", 4);
-      const paraDest = walletBob.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
+      const paraDest = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
       const paraKeepAlive = api.createType("bool", false);
 
-      const { data: [result] } = await sendAndWaitForSuccess(
+      const senderFundsBeforeTransaction =
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), senderWallet.publicKey)).toString());
+      const receiverFundsBeforeTransaction =
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraDest)).toString());
+
+      const { data: [resultAccountIdFeeWallet, resultFeeAmount] } = await sendAndWaitForSuccess(
         api,
-        walletBob,
+        senderWallet,
         api.events.balances.Deposit.is,
         api.tx.assets.transferAll(paraAsset, paraDest, paraKeepAlive)
       );
 
-      console.debug(result);
+      const senderFundsAfterTransaction =
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), senderWallet.publicKey)).toString());
+      const receiverFundsAfterTransaction =
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraDest)).toString());
+
+      expect(senderFundsAfterTransaction.eq(new BN(0))).to.be.true;
+      expect(receiverFundsAfterTransaction
+        .eq(receiverFundsBeforeTransaction.add(senderFundsBeforeTransaction)))
+        .to.be.true;
     });
   });
 
@@ -211,19 +278,39 @@ describe.only("tx.assets Tests", function() {
     if (!testConfiguration.enabledTests.tx.transfer__success) return;
 
     // it(name, function) describes a single test.
-    it("A wallet can `transfer_all_native` tokens to another wallet", async function() {
+    it("A wallet can `transfer_all_native` PICA tokens to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
-      const paraDest = walletBob.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
+      const paraDest = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
       const paraKeepAlive = api.createType("bool", false);
 
-      const { data: [result] } = await sendAndWaitForSuccess(
+      const senderFundsBeforeTransaction =
+        new BN((await api.rpc.assets.balanceOf("1", senderWallet.publicKey)).toString());
+      const receiverFundsBeforeTransaction =
+        new BN((await api.rpc.assets.balanceOf("1", paraDest)).toString());
+
+
+      const { data: [resultAccountId, resultFeeAmount] } = await sendAndWaitForSuccess(
         api,
-        walletBob,
+        senderWallet,
         api.events.balances.Deposit.is,
         api.tx.assets.transferAllNative(paraDest, paraKeepAlive)
       );
 
-      console.debug(result);
+      const senderFundsAfterTransaction =
+        new BN((await api.rpc.assets.balanceOf("1", senderWallet.publicKey)).toString());
+      const receiverFundsAfterTransaction =
+        new BN((await api.rpc.assets.balanceOf("1", paraDest)).toString());
+
+      // ToDo (D. Roth): Get checks working!
+      console.debug("SENDER FUNDS AFTER TRANSACTION!: " + senderFundsAfterTransaction);
+
+      expect(senderFundsAfterTransaction.eq(new BN(0))).to.be.true;
+      console.debug("Receiver Funds After Transaction: " + receiverFundsAfterTransaction);
+      console.debug("Receiver Funds Before Transaction + Sender Funds Before Transaction: " + receiverFundsBeforeTransaction.add(senderFundsBeforeTransaction));
+      console.debug("Receiver Funds Before Transaction + Sender Funds Before Transaction - Fee: " + receiverFundsBeforeTransaction.add(senderFundsBeforeTransaction).sub(resultFeeAmount));
+      expect(receiverFundsAfterTransaction
+        .eq(receiverFundsBeforeTransaction.add(senderFundsBeforeTransaction)))
+        .to.be.true;
     });
   });
 
@@ -238,7 +325,7 @@ describe.only("tx.assets Tests", function() {
     it("A *sudo* wallet can `mint_initialize` a new asset to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
       const paraAmount = api.createType("u128", 100000000000);
-      const paraDest = walletBob.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
+      const paraDest = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
 
       const { data: [result] } = await sendAndWaitForSuccess(
         api,
@@ -248,8 +335,10 @@ describe.only("tx.assets Tests", function() {
           api.tx.assets.mintInitialize(paraAmount, paraDest)
         )
       );
-
-      console.debug(result);
+      expect(result.isOk).to.be.true;
+      const newAssetData = (await api.query.tokens.accounts(paraDest, null)).toHuman();
+      console.debug(newAssetData);
+      // ToDo (D. Roth): Add checks!
     });
   });
 
@@ -267,8 +356,8 @@ describe.only("tx.assets Tests", function() {
     it("A *sudo* wallet can `mint_initialize_with_governance` a new asset to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
       const paraAmount = api.createType("u128", 100000000000);
-      const paraGovernanceOrigin = walletBob.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
-      const paraDest = walletBob.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
+      const paraGovernanceOrigin = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
+      const paraDest = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
 
       const { data: [result] } = await sendAndWaitForSuccess(
         api,
@@ -278,8 +367,8 @@ describe.only("tx.assets Tests", function() {
           api.tx.assets.mintInitializeWithGovernance(paraAmount, paraGovernanceOrigin, paraDest)
         )
       );
-
-      console.debug(result);
+      expect(result.isOk).to.be.true;
+      // ToDo (D. Roth): Add checks!
     });
   });
 
@@ -294,8 +383,11 @@ describe.only("tx.assets Tests", function() {
     it("A *sudo* wallet can `mintInto` KSM to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
       const paraAsset = api.createType("u128", 4);
-      const paraAmount = api.createType("u128", 4);
-      const paraDest = walletBob.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
+      const paraAmount = api.createType("u128", 100000000000);
+      const paraDest = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
+
+      const receiverFundsBeforeTransaction =
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), senderWallet.publicKey)).toString());
 
       const { data: [result] } = await sendAndWaitForSuccess(
         api,
@@ -305,8 +397,10 @@ describe.only("tx.assets Tests", function() {
           api.tx.assets.mintInto(paraAsset, paraDest, paraAmount)
         )
       );
-
-      console.debug(result);
+      expect(result.isOk).to.be.true;
+      const receiverFundsAfterTransaction =
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), senderWallet.publicKey)).toString());
+      expect(receiverFundsAfterTransaction.eq(receiverFundsBeforeTransaction.add(paraAmount))).to.be.true;
     });
   });
 
@@ -318,11 +412,14 @@ describe.only("tx.assets Tests", function() {
     if (!testConfiguration.enabledTests.tx.transfer__success) return;
 
     // it(name, function) describes a single test.
-    it("A *sudo* wallet can `burn_from` KSM to another wallet", async function() {
+    it("A *sudo* wallet can `burn_from` KSM from another wallet", async function() {
       this.timeout(2 * 60 * 1000);
       const paraAsset = api.createType("u128", 4);
       const paraAmount = api.createType("u128", 4);
-      const paraDest = walletBob.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
+      const paraDest = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
+
+      const receiverFundsBeforeTransaction =
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), senderWallet.publicKey)).toString());
 
       const { data: [result] } = await sendAndWaitForSuccess(
         api,
@@ -332,8 +429,10 @@ describe.only("tx.assets Tests", function() {
           api.tx.assets.burnFrom(paraAsset, paraDest, paraAmount)
         )
       );
-
-      console.debug(result);
+      expect(result.isOk).to.be.true;
+      const receiverFundsAfterTransaction =
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), senderWallet.publicKey)).toString());
+      expect(receiverFundsAfterTransaction.eq(receiverFundsBeforeTransaction.sub(paraAmount))).to.be.true;
     });
   });
 });
