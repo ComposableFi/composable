@@ -54,5 +54,4 @@ Picasso ships with multiple custom made pallets such as:
 and several others you can find in the frame folder.
 
 
-
 Read more specific information in [our docs folder](docs/).

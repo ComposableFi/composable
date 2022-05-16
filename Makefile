@@ -41,8 +41,7 @@ style-check:
 
 style:
 	@rustup component add rustfmt 2> /dev/null
-	cargo install taplo-cli 2> /dev/null
-	cargo +nightly-2021-11-08 fmt --all && taplo fmt
+	./scripts/style.sh
 
 lint:
 	@rustup component add clippy 2> /dev/null
@@ -56,7 +55,7 @@ dev:
 
 # run as `make open=y run-book` to open as well
 run-book:
-	bash -c "(trap 'kill 0' SIGINT; cargo run -p extrinsics-docs-scraper --release -- --config-file-path=scraper.toml -vvv --watch & mdbook serve book/ $(if $(filter y,${open}),'--open'))"
+	bash -c "(trap 'kill 0' SIGINT; cargo run -p extrinsics-docs-scraper --release -- --config-file-path=scraper.toml -vvv --watch & mdbook serve --hostname 0.0.0.0 book/ $(if $(filter y,${open}),'--open'))"
 
 build-book:
 	cargo run -p extrinsics-docs-scraper --release -- --config-file-path=scraper.toml
@@ -157,7 +156,6 @@ define print_help_text
 "Here are the commands to help setting up composable in any environment: \n\
 	--- Dev --- \n\
 	make help                    : Display this help message. \n\
-	make vendor                  : Download dependencies into the 'vendor' folder. \n\
 	make containerize            : Bundle the compiled binary in a lean production-ready docker image. \n\
 	make install                 : Use docker-compose to startup composable alongside other needed services
 	make stop				     : Stop all current running containers

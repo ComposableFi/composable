@@ -6,4 +6,4 @@ The Composable Finance coding has been audited by renowned security auditing fir
 
 Once Trail of Bits had reviewed the code, the firm made suggestions on addressing any points of weakness, which were implemented.
 
-Suggestions and subsequent fixes resulting from the audit are available [here](https://github.com/ComposableFi/parachain-strategies/tree/main/audits) on our Github.
+Suggestions and subsequent fixes resulting from the audit are available [here](https://github.com/ComposableFi/composable/tree/main/audits) on our GitHub.

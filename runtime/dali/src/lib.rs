@@ -464,6 +464,7 @@ impl oracle::Config for Runtime {
 	type MaxPrePrices = MaxPrePrices;
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
 	type LocalAssets = CurrencyFactory;
+	type TreasuryAccount = TreasuryAccount;
 }
 
 // Parachain stuff.
@@ -952,7 +953,8 @@ impl liquidations::Config for Runtime {
 parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
 	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
-	pub OracleMarketCreationStake : Balance = 300;
+	pub OracleMarketCreationStake: Balance = 300;
+	pub const MaxLiquidationBatchSize: u32 = 1000;
 }
 
 impl lending::Config for Runtime {
@@ -971,6 +973,7 @@ impl lending::Config for Runtime {
 	type OracleMarketCreationStake = OracleMarketCreationStake;
 	type PalletId = LendingPalletId;
 	type NativeCurrency = Balances;
+	type MaxLiquidationBatchSize = MaxLiquidationBatchSize;
 	type WeightToFee = WeightToFee;
 }
 
@@ -1018,6 +1021,7 @@ impl dex_router::Config for Runtime {
 	type PoolId = PoolId;
 	type Pablo = Pablo;
 	type PalletId = DexRouterPalletID;
+	type UpdateRouteOrigin = EnsureSigned<Self::AccountId>;
 	type WeightInfo = weights::dex_router::WeightInfo<Runtime>;
 }
 
@@ -1151,6 +1155,7 @@ mod benches {
 		[liquidations, Liquidations]
 		[bonded_finance, BondedFinance]
 		//FIXME: broken with dali [lending, Lending]
+		[lending, Lending]
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
 		[dex_router, DexRouter]

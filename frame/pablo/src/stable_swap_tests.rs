@@ -3,7 +3,7 @@ use crate::{
 	common_test_functions::*,
 	mock,
 	mock::{Pablo, *},
-	pallet,
+	pallet, Error,
 	PoolConfiguration::StableSwap,
 	PoolInitConfiguration,
 };
@@ -13,11 +13,11 @@ use composable_tests_helpers::{
 };
 use composable_traits::{defi::CurrencyPair, dex::Amm};
 use frame_support::{
-	assert_noop, assert_ok,
+	assert_err, assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
 };
 use proptest::prelude::*;
-use sp_runtime::Permill;
+use sp_runtime::{DispatchError, Permill};
 
 fn create_stable_swap_pool(
 	base_asset: AssetId,
@@ -421,6 +421,36 @@ fn high_slippage() {
 		assert_ok!(Pablo::sell(Origin::signed(BOB), pool_id, USDT, bob_usdt, 0_u128, false));
 		let usdc_balance = Tokens::balance(USDC, &BOB);
 		assert!((bob_usdt - usdc_balance) > 5_u128);
+	});
+}
+
+#[test]
+fn avoid_exchange_without_liquidity() {
+	new_test_ext().execute_with(|| {
+		let unit = 1_000_000_000_000_u128;
+		let lp_fee = Permill::from_float(0.05);
+		let owner_fee = Permill::from_float(0.01); // 10% of lp fees goes to pool owner
+		let pool_init_config = PoolInitConfiguration::StableSwap {
+			owner: ALICE,
+			pair: CurrencyPair::new(USDC, USDT),
+			amplification_coefficient: 40_000,
+			fee: lp_fee,
+			owner_fee,
+		};
+		System::set_block_number(1);
+		let created_pool_id =
+			Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
+		let bob_usdt = 1000 * unit;
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(USDT, &BOB, bob_usdt));
+		assert_err!(
+			Pablo::sell(Origin::signed(BOB), created_pool_id, USDT, bob_usdt, 0_u128, false),
+			DispatchError::from(Error::<Test>::NotEnoughLiquidity)
+		);
+		assert_err!(
+			pallet::prices_for::<Test>(created_pool_id, USDC, USDT, 1 * unit),
+			DispatchError::from(Error::<Test>::NotEnoughLiquidity)
+		);
 	});
 }
 
