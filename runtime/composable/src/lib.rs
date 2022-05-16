@@ -19,9 +19,13 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+use sp_core::Bytes;
+use sp_std::collections::btree_map::BTreeMap;
+use frame_support::storage::bounded_btree_map::BoundedBTreeMap;
+use frame_support::pallet_prelude::DispatchError;
 mod weights;
 mod xcmp;
-use common::{
+use common::{MaxTransferAssets,
 	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, PoolId, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
@@ -839,6 +843,78 @@ mod benches {
 }
 
 impl_runtime_apis! {
+	impl pallet_contracts_rpc_runtime_api::ContractsRuntimeApi<Block, AccountId, CurrencyId, Balance, Hash, MaxTransferAssets>
+		for Runtime
+	{
+		fn query(
+		  origin: AccountId,
+		  dest: AccountId,
+		  value: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
+		  gas_limit: u64,
+		  storage_deposit_limit: Option<SafeRpcWrapper<Balance>>,
+		  Bytes(input_data): Bytes,
+		) -> pallet_contracts_primitives::ContractExecResult<SafeRpcWrapper<Balance>> {
+		  pallet_contracts_primitives::ContractExecResult {
+			  gas_consumed: 0,
+			  gas_required: 0,
+			  storage_deposit: pallet_contracts_primitives::StorageDeposit::Refund(SafeRpcWrapper(0)),
+			  debug_message: Vec::new(),
+			  result: Err(DispatchError::Other("unsupported"))
+		  }
+		}
+
+		fn call(
+		  origin: AccountId,
+		  dest: AccountId,
+		  value: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
+		  gas_limit: u64,
+		  storage_deposit_limit: Option<SafeRpcWrapper<Balance>>,
+		  Bytes(input_data): Bytes,
+		) -> pallet_contracts_primitives::ContractExecResult<SafeRpcWrapper<Balance>> {
+		  pallet_contracts_primitives::ContractExecResult {
+			  gas_consumed: 0,
+			  gas_required: 0,
+			  storage_deposit: pallet_contracts_primitives::StorageDeposit::Refund(SafeRpcWrapper(0)),
+			  debug_message: Vec::new(),
+			  result: Err(DispatchError::Other("unsupported"))
+		  }
+		}
+
+		fn instantiate(
+			origin: AccountId,
+			value: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
+			gas_limit: u64,
+			storage_deposit_limit: Option<SafeRpcWrapper<Balance>>,
+			code: pallet_contracts_primitives::Code<Hash>,
+		  Bytes(data): Bytes,
+		  Bytes(salt): Bytes,
+		) -> pallet_contracts_primitives::ContractInstantiateResult<AccountId, SafeRpcWrapper<Balance>> {
+		  pallet_contracts_primitives::ContractInstantiateResult {
+			  gas_consumed: 0,
+			  gas_required: 0,
+			  storage_deposit: pallet_contracts_primitives::StorageDeposit::Refund(SafeRpcWrapper(0)),
+			  debug_message: Vec::new(),
+			  result: Err(DispatchError::Other("unsupported"))
+		  }
+		}
+
+		fn upload_code(
+			origin: AccountId,
+			code: Vec<u8>,
+			storage_deposit_limit: Option<Balance>,
+		) -> pallet_contracts_primitives::CodeUploadResult<Hash, Balance>
+		{
+      Err(DispatchError::Other("unsupported"))
+		}
+
+		fn get_storage(
+			address: AccountId,
+			key: [u8; 32],
+		) -> pallet_contracts_primitives::GetStorageResult {
+      Err(pallet_contracts_primitives::ContractAccessError::DoesntExist)
+		}
+	}
+
 	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
 		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
 			SafeRpcWrapper(<Assets as frame_support::traits::fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))

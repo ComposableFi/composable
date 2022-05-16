@@ -24,11 +24,11 @@ mod xcmp;
 use orml_traits::parameter_type_with_key;
 // TODO: consider moving this to shared runtime
 pub use xcmp::{MaxInstructions, UnitWeightCost};
-
+use sp_core::Bytes;
+use sp_runtime::DispatchError;
+use frame_support::storage::bounded_btree_map::BoundedBTreeMap;
 use common::{
-	impls::DealWithFees, multi_existential_deposits, AccountId, AccountIndex, Address, Amount,
-	AuraId, Balance, BlockNumber, BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash,
-	Moment, MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, Signature,
+	  impls::DealWithFees, multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash, MaxTransferAssets, Moment, MosaicRemoteAssetId, MultiExistentialDeposits, NativeExistentialDeposit, PoolId, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
@@ -46,6 +46,7 @@ use sp_runtime::{
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
+use sp_std::collections::btree_map::BTreeMap;
 
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
@@ -1034,7 +1035,6 @@ fn deposit(items: u32, bytes: u32) -> Balance {
 }
 
 parameter_types! {
-  pub const MaxTransferAssets: u32 = 16;
 	pub DepositPerItem: Balance = deposit(1, 0);
 	pub DepositPerByte: Balance = deposit(0, 1);
 	// The lazy deletion runs inside on_initialize.
@@ -1187,7 +1187,7 @@ construct_runtime!(
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
-	Contracts: contracts::{Pallet, Call, Storage, Event<T>} = 67,
+	  Cosmwasm: contracts::{Pallet, Call, Storage, Event<T>} = 67,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
@@ -1266,7 +1266,184 @@ mod benches {
 	);
 }
 
+const CONTRACTS_DEBUG_OUTPUT: bool = true;
+
 impl_runtime_apis! {
+	impl pallet_contracts_rpc_runtime_api::ContractsRuntimeApi<Block, AccountId, CurrencyId, Balance, Hash, MaxTransferAssets>
+		for Runtime
+	{
+		fn query(
+		  origin: AccountId,
+		  dest: AccountId,
+		  value: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
+		  gas_limit: u64,
+		  storage_deposit_limit: Option<SafeRpcWrapper<Balance>>,
+		  Bytes(input_data): Bytes,
+		) -> pallet_contracts_primitives::ContractExecResult<SafeRpcWrapper<Balance>> {
+	    let value = TryInto::<BoundedBTreeMap<CurrencyId, Balance, MaxTransferAssets>>::try_into(
+        value
+          .into_iter()
+          .map(|(SafeRpcWrapper(k), SafeRpcWrapper(v))| (k, v))
+          .collect::<BTreeMap<CurrencyId, Balance>>()
+      );
+	    match value {
+		    Ok(transferred_assets) => {
+				  let pallet_contracts_primitives::ContractResult {
+            gas_consumed, gas_required, storage_deposit, debug_message, result
+          } = Cosmwasm::bare_query(
+            origin,
+            dest,
+            transferred_assets,
+            gas_limit,
+            storage_deposit_limit.map(|SafeRpcWrapper(x)| x),
+            input_data,
+            CONTRACTS_DEBUG_OUTPUT
+          );
+          let new_storage_deposit = match storage_deposit {
+            pallet_contracts_primitives::StorageDeposit::Refund(x) => pallet_contracts_primitives::StorageDeposit::Refund(SafeRpcWrapper(x)),
+            pallet_contracts_primitives::StorageDeposit::Charge(x) => pallet_contracts_primitives::StorageDeposit::Charge(SafeRpcWrapper(x)),
+          };
+          pallet_contracts_primitives::ContractResult {
+            gas_consumed,
+            gas_required,
+            storage_deposit: new_storage_deposit,
+            debug_message,
+            result
+          }
+		    },
+		    Err(_) => {
+		      pallet_contracts_primitives::ContractExecResult {
+			      gas_consumed: 0,
+			      gas_required: 0,
+			      storage_deposit: pallet_contracts_primitives::StorageDeposit::Refund(SafeRpcWrapper(0)),
+			      debug_message: Vec::new(),
+			      result: Err(DispatchError::Other("too many assets to transfer"))
+		      }
+		    }
+	    }
+		}
+
+		fn call(
+		  origin: AccountId,
+		  dest: AccountId,
+		  value: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
+		  gas_limit: u64,
+		  storage_deposit_limit: Option<SafeRpcWrapper<Balance>>,
+		  Bytes(input_data): Bytes,
+		) -> pallet_contracts_primitives::ContractExecResult<SafeRpcWrapper<Balance>> {
+	    let value = TryInto::<BoundedBTreeMap<CurrencyId, Balance, MaxTransferAssets>>::try_into(
+        value
+          .into_iter()
+          .map(|(SafeRpcWrapper(k), SafeRpcWrapper(v))| (k, v))
+          .collect::<BTreeMap<CurrencyId, Balance>>()
+      );
+	    match value {
+		    Ok(transferred_assets) => {
+				  let pallet_contracts_primitives::ContractResult {
+            gas_consumed, gas_required, storage_deposit, debug_message, result
+          } = Cosmwasm::bare_call(
+            origin,
+            dest,
+            transferred_assets,
+            gas_limit,
+            storage_deposit_limit.map(|SafeRpcWrapper(x)| x),
+            input_data,
+            CONTRACTS_DEBUG_OUTPUT
+          );
+          let new_storage_deposit = match storage_deposit {
+            pallet_contracts_primitives::StorageDeposit::Refund(x) => pallet_contracts_primitives::StorageDeposit::Refund(SafeRpcWrapper(x)),
+            pallet_contracts_primitives::StorageDeposit::Charge(x) => pallet_contracts_primitives::StorageDeposit::Charge(SafeRpcWrapper(x)),
+          };
+          pallet_contracts_primitives::ContractResult {
+            gas_consumed,
+            gas_required,
+            storage_deposit: new_storage_deposit,
+            debug_message,
+            result
+          }
+		    },
+		    Err(_) => {
+		      pallet_contracts_primitives::ContractExecResult {
+			      gas_consumed: 0,
+			      gas_required: 0,
+			      storage_deposit: pallet_contracts_primitives::StorageDeposit::Refund(SafeRpcWrapper(0)),
+			      debug_message: Vec::new(),
+			      result: Err(DispatchError::Other("too many assets to transfer"))
+		      }
+		    }
+	    }
+		}
+
+		fn instantiate(
+			origin: AccountId,
+			value: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
+			gas_limit: u64,
+			storage_deposit_limit: Option<SafeRpcWrapper<Balance>>,
+			code: pallet_contracts_primitives::Code<Hash>,
+		  Bytes(data): Bytes,
+		  Bytes(salt): Bytes,
+		) -> pallet_contracts_primitives::ContractInstantiateResult<AccountId, SafeRpcWrapper<Balance>> {
+	    let value = TryInto::<BoundedBTreeMap<CurrencyId, Balance, MaxTransferAssets>>::try_into(
+        value
+          .into_iter()
+          .map(|(SafeRpcWrapper(k), SafeRpcWrapper(v))| (k, v))
+          .collect::<BTreeMap<CurrencyId, Balance>>()
+      );
+	    match value {
+		    Ok(transferred_assets) => {
+			    let pallet_contracts_primitives::ContractResult {
+            gas_consumed, gas_required, storage_deposit, debug_message, result
+          }  = Cosmwasm::bare_instantiate(
+            origin,
+            transferred_assets,
+            gas_limit,
+            storage_deposit_limit.map(|SafeRpcWrapper(x)| x),
+            code,
+            data,
+            salt,
+            CONTRACTS_DEBUG_OUTPUT
+          );
+          let new_storage_deposit = match storage_deposit {
+            pallet_contracts_primitives::StorageDeposit::Refund(x) => pallet_contracts_primitives::StorageDeposit::Refund(SafeRpcWrapper(x)),
+            pallet_contracts_primitives::StorageDeposit::Charge(x) => pallet_contracts_primitives::StorageDeposit::Charge(SafeRpcWrapper(x)),
+          };
+          pallet_contracts_primitives::ContractResult {
+            gas_consumed,
+            gas_required,
+            storage_deposit: new_storage_deposit,
+            debug_message,
+            result
+          }
+		    },
+		    Err(_) => {
+		      pallet_contracts_primitives::ContractInstantiateResult {
+			      gas_consumed: 0,
+			      gas_required: 0,
+			      storage_deposit: pallet_contracts_primitives::StorageDeposit::Refund(SafeRpcWrapper(0)),
+			      debug_message: Vec::new(),
+			      result: Err(DispatchError::Other("too many assets to transfer"))
+		      }
+		    }
+	    }
+		}
+
+		fn upload_code(
+			origin: AccountId,
+			code: Vec<u8>,
+			storage_deposit_limit: Option<Balance>,
+		) -> pallet_contracts_primitives::CodeUploadResult<Hash, Balance>
+		{
+			Cosmwasm::bare_upload_code(origin, code, storage_deposit_limit)
+		}
+
+		fn get_storage(
+			address: AccountId,
+			key: [u8; 32],
+		) -> pallet_contracts_primitives::GetStorageResult {
+			Cosmwasm::get_storage(address, key)
+		}
+	}
+
 	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
 		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
 			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))

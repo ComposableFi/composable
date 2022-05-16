@@ -19,11 +19,15 @@ jsonrpc-derive = "18.0.0"
 serde = { version = "1", features = ["derive"] }
 
 # Substrate Dependencies
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-blockchain = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-rpc = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+
+composable-support = { default-features = false, path = "../../composable-support" }
 
 pallet-contracts-primitives = { default-features = false, path = "../common" }
 pallet-contracts-rpc-runtime-api = { default-features = false, path = "./runtime-api" }

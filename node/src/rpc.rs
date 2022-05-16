@@ -9,9 +9,10 @@ use primitives::currency::CurrencyId;
 use std::sync::Arc;
 
 use assets_rpc::{Assets, AssetsApi};
-use common::{AccountId, AccountIndex, Balance, PoolId};
+use common::{AccountId, AccountIndex, Balance, BlockNumber, Hash, MaxTransferAssets, PoolId};
 use crowdloan_rewards_rpc::{CrowdloanRewards, CrowdloanRewardsApi};
 use pablo_rpc::{Pablo, PabloApi};
+use pallet_contracts_rpc::{Contracts, ContractsApi};
 pub use sc_rpc_api::DenyUnsafe;
 use sc_transaction_pool_api::TransactionPool;
 use sp_api::ProvideRuntimeApi;
@@ -41,6 +42,14 @@ where
 	C::Api: assets_runtime_api::AssetsRuntimeApi<B, CurrencyId, AccountId, Balance>,
 	C::Api: crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<B, AccountId, Balance>,
 	C::Api: pablo_runtime_api::PabloRuntimeApi<B, PoolId, CurrencyId, Balance>,
+	C::Api: pallet_contracts_rpc::ContractsRuntimeApi<
+		B,
+		AccountId,
+		CurrencyId,
+		Balance,
+		Hash,
+		MaxTransferAssets,
+	>,
 	C::Api: BlockBuilder<B>,
 	P: TransactionPool + 'static,
 {
@@ -58,7 +67,9 @@ where
 
 	io.extend_with(CrowdloanRewardsApi::to_delegate(CrowdloanRewards::new(client.clone())));
 
-	io.extend_with(PabloApi::to_delegate(Pablo::new(client)));
+	io.extend_with(PabloApi::to_delegate(Pablo::new(client.clone())));
+
+	io.extend_with(ContractsApi::to_delegate(Contracts::new(client)));
 
 	// Extend this RPC with a custom API by using the following syntax.
 	// `YourRpcStruct` should have a reference to a client, which is needed

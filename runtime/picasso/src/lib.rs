@@ -19,17 +19,18 @@
 #[cfg(all(feature = "std", feature = "wasm-builder"))]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+use sp_core::Bytes;
 mod weights;
 mod xcmp;
+use sp_runtime::DispatchError;
+use sp_std::collections::btree_map::BTreeMap;
 pub use xcmp::{MaxInstructions, UnitWeightCost, XcmConfig};
-
 use common::{
-	impls::DealWithFees, multi_existential_deposits, AccountId, AccountIndex, Address, Amount,
-	AuraId, Balance, BlockNumber, BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash,
-	Moment, NativeExistentialDeposit, PoolId, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
-	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	  impls::DealWithFees, multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
+	BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, MultiExistentialDeposits,
+	NativeExistentialDeposit, PoolId, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
+	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION, MaxTransferAssets
 };
-
 use composable_traits::dex::PriceAggregate;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
@@ -40,13 +41,11 @@ use sp_runtime::{
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
 };
-
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, match_type, parameter_types,
@@ -923,6 +922,78 @@ mod benches {
 }
 
 impl_runtime_apis! {
+	impl pallet_contracts_rpc_runtime_api::ContractsRuntimeApi<Block, AccountId, CurrencyId, Balance, Hash, MaxTransferAssets>
+		for Runtime
+	{
+		fn query(
+		  origin: AccountId,
+		  dest: AccountId,
+		  value: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
+		  gas_limit: u64,
+		  storage_deposit_limit: Option<SafeRpcWrapper<Balance>>,
+		  Bytes(input_data): Bytes,
+		) -> pallet_contracts_primitives::ContractExecResult<SafeRpcWrapper<Balance>> {
+		  pallet_contracts_primitives::ContractExecResult {
+			  gas_consumed: 0,
+			  gas_required: 0,
+			  storage_deposit: pallet_contracts_primitives::StorageDeposit::Refund(SafeRpcWrapper(0)),
+			  debug_message: Vec::new(),
+			  result: Err(DispatchError::Other("unsupported"))
+		  }
+		}
+
+		fn call(
+		  origin: AccountId,
+		  dest: AccountId,
+		  value: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
+		  gas_limit: u64,
+		  storage_deposit_limit: Option<SafeRpcWrapper<Balance>>,
+		  Bytes(input_data): Bytes,
+		) -> pallet_contracts_primitives::ContractExecResult<SafeRpcWrapper<Balance>> {
+		  pallet_contracts_primitives::ContractExecResult {
+			  gas_consumed: 0,
+			  gas_required: 0,
+			  storage_deposit: pallet_contracts_primitives::StorageDeposit::Refund(SafeRpcWrapper(0)),
+			  debug_message: Vec::new(),
+			  result: Err(DispatchError::Other("unsupported"))
+		  }
+		}
+
+		fn instantiate(
+			origin: AccountId,
+			value: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
+			gas_limit: u64,
+			storage_deposit_limit: Option<SafeRpcWrapper<Balance>>,
+			code: pallet_contracts_primitives::Code<Hash>,
+		  Bytes(data): Bytes,
+		  Bytes(salt): Bytes,
+		) -> pallet_contracts_primitives::ContractInstantiateResult<AccountId, SafeRpcWrapper<Balance>> {
+		  pallet_contracts_primitives::ContractInstantiateResult {
+			  gas_consumed: 0,
+        gas_required: 0,
+        storage_deposit: pallet_contracts_primitives::StorageDeposit::Refund(SafeRpcWrapper(0)),
+        debug_message: Vec::new(),
+			  result: Err(DispatchError::Other("unsupported"))
+		  }
+		}
+
+		fn upload_code(
+			origin: AccountId,
+			code: Vec<u8>,
+			storage_deposit_limit: Option<Balance>,
+		) -> pallet_contracts_primitives::CodeUploadResult<Hash, Balance>
+		{
+      Err(DispatchError::Other("unsupported"))
+		}
+
+		fn get_storage(
+			address: AccountId,
+			key: [u8; 32],
+		) -> pallet_contracts_primitives::GetStorageResult {
+      Err(pallet_contracts_primitives::ContractAccessError::DoesntExist)
+		}
+	}
+
 	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
 		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
 			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))

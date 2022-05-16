@@ -31,9 +31,6 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "std")]
-use sp_rpc::number::NumberOrHex;
-
 /// Result type of a `bare_call` or `bare_instantiate` call.
 ///
 /// It contains the execution result together with some auxiliary information.
@@ -43,8 +40,6 @@ use sp_rpc::number::NumberOrHex;
 	feature = "std",
 	serde(
 		rename_all = "camelCase",
-		bound(serialize = "R: Serialize, Balance: Copy + Into<NumberOrHex>"),
-		bound(deserialize = "R: Deserialize<'de>, Balance: TryFrom<NumberOrHex>")
 	)
 )]
 pub struct ContractResult<R, Balance> {
@@ -80,7 +75,6 @@ pub struct ContractResult<R, Balance> {
 	///
 	/// The debug message is never generated during on-chain execution. It is reserved for
 	/// RPC calls.
-	#[cfg_attr(feature = "std", serde(with = "as_string"))]
 	pub debug_message: Vec<u8>,
 	/// The execution result of the wasm code.
 	pub result: R,
@@ -153,17 +147,12 @@ pub struct InstantiateReturnValue<AccountId> {
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[cfg_attr(
 	feature = "std",
-	serde(
-		rename_all = "camelCase",
-		bound(serialize = "CodeHash: Serialize, Balance: Copy + Into<NumberOrHex>"),
-		bound(deserialize = "CodeHash: Deserialize<'de>, Balance: TryFrom<NumberOrHex>")
-	)
+	serde(rename_all = "camelCase")
 )]
 pub struct CodeUploadReturnValue<CodeHash, Balance> {
 	/// The key under which the new code is stored.
 	pub code_hash: CodeHash,
 	/// The deposit that was reserved at the caller. Is zero when the code already existed.
-	#[cfg_attr(feature = "std", serde(with = "as_hex"))]
 	pub deposit: Balance,
 }
 
@@ -191,8 +180,6 @@ impl<T: Into<Vec<u8>>, Hash> From<T> for Code<Hash> {
 	feature = "std",
 	serde(
 		rename_all = "camelCase",
-		bound(serialize = "Balance: Copy + Into<NumberOrHex>"),
-		bound(deserialize = "Balance: TryFrom<NumberOrHex>")
 	)
 )]
 pub enum StorageDeposit<Balance> {
@@ -200,13 +187,11 @@ pub enum StorageDeposit<Balance> {
 	///
 	/// This means that the specified amount of balance was transferred from the involved
 	/// contracts to the call origin.
-	#[cfg_attr(feature = "std", serde(with = "as_hex"))]
 	Refund(Balance),
 	/// The transaction increased overall storage usage.
 	///
 	/// This means that the specified amount of balance was transferred from the call origin
 	/// to the contracts involved.
-	#[cfg_attr(feature = "std", serde(with = "as_hex"))]
 	Charge(Balance),
 }
 
@@ -291,44 +276,5 @@ where
 			Charge(amount) => limit.saturating_sub(*amount),
 			Refund(amount) => limit.saturating_add(*amount),
 		}
-	}
-}
-
-#[cfg(feature = "std")]
-mod as_string {
-	use super::*;
-	use serde::{ser::Error, Deserializer, Serializer};
-
-	pub fn serialize<S: Serializer>(bytes: &Vec<u8>, serializer: S) -> Result<S::Ok, S::Error> {
-		std::str::from_utf8(bytes)
-			.map_err(|e| S::Error::custom(format!("Debug buffer contains invalid UTF8: {}", e)))?
-			.serialize(serializer)
-	}
-
-	pub fn deserialize<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Vec<u8>, D::Error> {
-		Ok(String::deserialize(deserializer)?.into_bytes())
-	}
-}
-
-#[cfg(feature = "std")]
-mod as_hex {
-	use super::*;
-	use serde::{de::Error as _, Deserializer, Serializer};
-
-	pub fn serialize<S, Balance>(balance: &Balance, serializer: S) -> Result<S::Ok, S::Error>
-	where
-		S: Serializer,
-		Balance: Copy + Into<NumberOrHex>,
-	{
-		Into::<NumberOrHex>::into(*balance).serialize(serializer)
-	}
-
-	pub fn deserialize<'de, D, Balance>(deserializer: D) -> Result<Balance, D::Error>
-	where
-		D: Deserializer<'de>,
-		Balance: TryFrom<NumberOrHex>,
-	{
-		Balance::try_from(NumberOrHex::deserialize(deserializer)?)
-			.map_err(|_| D::Error::custom("Cannot decode NumberOrHex to Balance"))
 	}
 }

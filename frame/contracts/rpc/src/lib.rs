@@ -19,23 +19,25 @@
 
 use std::sync::Arc;
 
+
 use codec::Codec;
+use composable_support::rpc_helpers::SafeRpcWrapper;
+use frame_support::traits::Get;
 use jsonrpc_core::{Error, ErrorCode, Result};
+use core::{fmt::Display, str::FromStr};
 use jsonrpc_derive::rpc;
 use pallet_contracts_primitives::{
 	Code, CodeUploadResult, ContractExecResult, ContractInstantiateResult,
 };
-use serde::{Deserialize, Serialize};
+pub use pallet_contracts_rpc_runtime_api::ContractsRuntimeApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_core::{Bytes, H256};
-use sp_rpc::number::NumberOrHex;
 use sp_runtime::{
 	generic::BlockId,
 	traits::{Block as BlockT, Header as HeaderT},
 };
-
-pub use pallet_contracts_rpc_runtime_api::ContractsApi as ContractsRuntimeApi;
+use sp_std::collections::btree_map::BTreeMap;
 
 const RUNTIME_ERROR: i64 = 1;
 const CONTRACT_DOESNT_EXIST: i64 = 2;
@@ -71,49 +73,26 @@ impl From<ContractAccessError> for Error {
 	}
 }
 
-/// A struct that encodes RPC parameters required for a call to a smart-contract.
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-#[serde(deny_unknown_fields)]
-pub struct CallRequest<AccountId> {
-	origin: AccountId,
-	dest: AccountId,
-	value: NumberOrHex,
-	gas_limit: NumberOrHex,
-	storage_deposit_limit: Option<NumberOrHex>,
-	input_data: Bytes,
-}
-
-/// A struct that encodes RPC parameters required to instantiate a new smart-contract.
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-#[serde(deny_unknown_fields)]
-pub struct InstantiateRequest<AccountId, Hash> {
-	origin: AccountId,
-	value: NumberOrHex,
-	gas_limit: NumberOrHex,
-	storage_deposit_limit: Option<NumberOrHex>,
-	code: Code<Hash>,
-	data: Bytes,
-	salt: Bytes,
-}
-
-/// A struct that encodes RPC parameters required for a call to upload a new code.
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-#[serde(deny_unknown_fields)]
-pub struct CodeUploadRequest<AccountId> {
-	origin: AccountId,
-	code: Bytes,
-	storage_deposit_limit: Option<NumberOrHex>,
-}
-
 /// Contracts RPC methods.
 #[rpc]
-pub trait ContractsApi<BlockHash, BlockNumber, AccountId, Balance, Hash>
+pub trait ContractsApi<BlockHash, BlockNumber, AccountId, AssetId, Balance, Hash, MaxTransferAssets>
 where
-	Balance: Copy + TryFrom<NumberOrHex> + Into<NumberOrHex>,
+	AssetId: Ord + FromStr + Display,
+	Balance: FromStr + Display,
 {
+	/// Executes a query to a contract.
+	#[rpc(name = "cosmwasm_query")]
+	fn query(
+		&self,
+		origin: AccountId,
+		dest: AccountId,
+		value: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
+		gas_limit: u64,
+		storage_deposit_limit: Option<SafeRpcWrapper<Balance>>,
+		input_data: Bytes,
+		at: Option<BlockHash>,
+	) -> Result<ContractExecResult<SafeRpcWrapper<Balance>>>;
+
 	/// Executes a call to a contract.
 	///
 	/// This call is performed locally without submitting any transactions. Thus executing this
@@ -121,12 +100,17 @@ where
 	///
 	/// This method is useful for calling getter-like methods on contracts or to dry-run a
 	/// a contract call in order to determine the `gas_limit`.
-	#[rpc(name = "contracts_call")]
+	#[rpc(name = "cosmwasm_call")]
 	fn call(
 		&self,
-		call_request: CallRequest<AccountId>,
+		origin: AccountId,
+		dest: AccountId,
+		value: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
+		gas_limit: u64,
+		storage_deposit_limit: Option<SafeRpcWrapper<Balance>>,
+		input_data: Bytes,
 		at: Option<BlockHash>,
-	) -> Result<ContractExecResult<Balance>>;
+	) -> Result<ContractExecResult<SafeRpcWrapper<Balance>>>;
 
 	/// Instantiate a new contract.
 	///
@@ -134,12 +118,18 @@ where
 	/// is not actually created.
 	///
 	/// This method is useful for UIs to dry-run contract instantiations.
-	#[rpc(name = "contracts_instantiate")]
+	#[rpc(name = "cosmwasm_instantiate")]
 	fn instantiate(
 		&self,
-		instantiate_request: InstantiateRequest<AccountId, Hash>,
+		origin: AccountId,
+		value: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
+		gas_limit: u64,
+		storage_deposit_limit: Option<SafeRpcWrapper<Balance>>,
+		code: Code<Hash>,
+		data: Bytes,
+		salt: Bytes,
 		at: Option<BlockHash>,
-	) -> Result<ContractInstantiateResult<AccountId, Balance>>;
+	) -> Result<ContractInstantiateResult<AccountId, SafeRpcWrapper<Balance>>>;
 
 	/// Upload new code without instantiating a contract from it.
 	///
@@ -147,16 +137,18 @@ where
 	/// won't change any state.
 	///
 	/// This method is useful for UIs to dry-run code upload.
-	#[rpc(name = "contracts_upload_code")]
+	#[rpc(name = "cosmwasm_upload_code")]
 	fn upload_code(
 		&self,
-		upload_request: CodeUploadRequest<AccountId>,
+		origin: AccountId,
+		code: Vec<u8>,
+		storage_deposit_limit: Option<Balance>,
 		at: Option<BlockHash>,
 	) -> Result<CodeUploadResult<Hash, Balance>>;
 
 	/// Returns the value under a specified storage `key` in a contract given by `address` param,
 	/// or `None` if it is not set.
-	#[rpc(name = "contracts_getStorage")]
+	#[rpc(name = "cosmwasm_getStorage")]
 	fn get_storage(
 		&self,
 		address: AccountId,
@@ -177,13 +169,15 @@ impl<C, B> Contracts<C, B> {
 		Contracts { client, _marker: Default::default() }
 	}
 }
-impl<C, Block, AccountId, Balance, Hash>
+impl<C, Block, AccountId, AssetId, Balance, Hash, MaxTransferAssets>
 	ContractsApi<
 		<Block as BlockT>::Hash,
 		<<Block as BlockT>::Header as HeaderT>::Number,
 		AccountId,
+		AssetId,
 		Balance,
 		Hash,
+		MaxTransferAssets,
 	> for Contracts<C, Block>
 where
 	Block: BlockT,
@@ -191,61 +185,71 @@ where
 	C::Api: ContractsRuntimeApi<
 		Block,
 		AccountId,
+		AssetId,
 		Balance,
-		<<Block as BlockT>::Header as HeaderT>::Number,
 		Hash,
+		MaxTransferAssets,
 	>,
 	AccountId: Codec,
-	Balance: Codec + Copy + TryFrom<NumberOrHex> + Into<NumberOrHex>,
+	AssetId: Codec + Ord + Send + Sync + 'static + FromStr + Display,
+	Balance: Codec + Send + Sync + 'static + FromStr + Display,
 	Hash: Codec,
+	MaxTransferAssets: Get<u32>,
 {
+	fn query(
+		&self,
+		origin: AccountId,
+		dest: AccountId,
+		value: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
+		gas_limit: u64,
+		storage_deposit_limit: Option<SafeRpcWrapper<Balance>>,
+		input_data: Bytes,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> Result<ContractExecResult<SafeRpcWrapper<Balance>>> {
+		let api = self.client.runtime_api();
+		let at = BlockId::hash(at.unwrap_or_else(||
+			                                       // If the block hash is not supplied assume the best block.
+			                                       self.client.info().best_hash));
+		limit_gas(gas_limit)?;
+		api.query(&at, origin, dest, value, gas_limit, storage_deposit_limit, input_data)
+			.map_err(runtime_error_into_rpc_err)
+	}
+
 	fn call(
 		&self,
-		call_request: CallRequest<AccountId>,
+		origin: AccountId,
+		dest: AccountId,
+		value: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
+		gas_limit: u64,
+		storage_deposit_limit: Option<SafeRpcWrapper<Balance>>,
+		input_data: Bytes,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> Result<ContractExecResult<Balance>> {
+	) -> Result<ContractExecResult<SafeRpcWrapper<Balance>>> {
 		let api = self.client.runtime_api();
 		let at = BlockId::hash(at.unwrap_or_else(||
 			// If the block hash is not supplied assume the best block.
 			self.client.info().best_hash));
-
-		let CallRequest { origin, dest, value, gas_limit, storage_deposit_limit, input_data } =
-			call_request;
-
-		let value: Balance = decode_hex(value, "balance")?;
-		let gas_limit: Weight = decode_hex(gas_limit, "weight")?;
-		let storage_deposit_limit: Option<Balance> =
-			storage_deposit_limit.map(|l| decode_hex(l, "balance")).transpose()?;
 		limit_gas(gas_limit)?;
-
-		api.call(&at, origin, dest, value, gas_limit, storage_deposit_limit, input_data.to_vec())
+		api.call(&at, origin, dest, value, gas_limit, storage_deposit_limit, input_data)
 			.map_err(runtime_error_into_rpc_err)
 	}
 
 	fn instantiate(
 		&self,
-		instantiate_request: InstantiateRequest<AccountId, Hash>,
+		origin: AccountId,
+		value: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
+		gas_limit: u64,
+		storage_deposit_limit: Option<SafeRpcWrapper<Balance>>,
+		code: Code<Hash>,
+	  data: Bytes,
+		salt: Bytes,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> Result<ContractInstantiateResult<AccountId, Balance>> {
+	) -> Result<ContractInstantiateResult<AccountId, SafeRpcWrapper<Balance>>> {
 		let api = self.client.runtime_api();
 		let at = BlockId::hash(at.unwrap_or_else(||
 			// If the block hash is not supplied assume the best block.
 			self.client.info().best_hash));
 
-		let InstantiateRequest {
-			origin,
-			value,
-			gas_limit,
-			storage_deposit_limit,
-			code,
-			data,
-			salt,
-		} = instantiate_request;
-
-		let value: Balance = decode_hex(value, "balance")?;
-		let gas_limit: Weight = decode_hex(gas_limit, "weight")?;
-		let storage_deposit_limit: Option<Balance> =
-			storage_deposit_limit.map(|l| decode_hex(l, "balance")).transpose()?;
 		limit_gas(gas_limit)?;
 
 		api.instantiate(
@@ -255,26 +259,23 @@ where
 			gas_limit,
 			storage_deposit_limit,
 			code,
-			data.to_vec(),
-			salt.to_vec(),
+			data,
+			salt,
 		)
 		.map_err(runtime_error_into_rpc_err)
 	}
 
 	fn upload_code(
 		&self,
-		upload_request: CodeUploadRequest<AccountId>,
+		origin: AccountId,
+		code: Vec<u8>,
+		storage_deposit_limit: Option<Balance>,
 		at: Option<<Block as BlockT>::Hash>,
 	) -> Result<CodeUploadResult<Hash, Balance>> {
 		let api = self.client.runtime_api();
 		let at = BlockId::hash(at.unwrap_or_else(||
 			// If the block hash is not supplied assume the best block.
 			self.client.info().best_hash));
-
-		let CodeUploadRequest { origin, code, storage_deposit_limit } = upload_request;
-
-		let storage_deposit_limit: Option<Balance> =
-			storage_deposit_limit.map(|l| decode_hex(l, "balance")).transpose()?;
 
 		api.upload_code(&at, origin, code.to_vec(), storage_deposit_limit)
 			.map_err(runtime_error_into_rpc_err)
@@ -308,14 +309,6 @@ fn runtime_error_into_rpc_err(err: impl std::fmt::Display) -> Error {
 		message: "Runtime error".into(),
 		data: Some(err.to_string().into()),
 	}
-}
-
-fn decode_hex<H: std::fmt::Debug + Copy, T: TryFrom<H>>(from: H, name: &str) -> Result<T> {
-	from.try_into().map_err(|_| Error {
-		code: ErrorCode::InvalidParams,
-		message: format!("{:?} does not fit into the {} type", from, name),
-		data: None,
-	})
 }
 
 fn limit_gas(gas_limit: Weight) -> Result<()> {
