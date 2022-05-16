@@ -60,31 +60,31 @@ impl<T: Config> Position<T> {
 #[scale_info(skip_type_params(T))]
 #[codec(mel_bound())]
 pub struct Market<T: Config> {
-	/// The Id of the vAMM used for price discovery in the virtual market
+	/// The Id of the vAMM used for price discovery in the virtual market.
 	pub vamm_id: T::VammId,
 	/// The Id of the underlying asset (base-quote pair). A price feed from one or more oracles
-	/// must be available for this symbol
+	/// must be available for this symbol.
 	pub asset_id: T::MayBeAssetId,
-	/// Minimum margin ratio for opening a new position
+	/// Minimum margin ratio for opening a new position.
 	pub margin_ratio_initial: T::Decimal,
-	/// Margin ratio below which liquidations can occur
+	/// Margin ratio below which liquidations can occur.
 	pub margin_ratio_maintenance: T::Decimal,
 	/// Minimum amount of quote asset to exchange when opening a position. Also serves to round
-	/// a trade if it results in closing an existing position
+	/// a trade if it results in closing an existing position.
 	pub minimum_trade_size: T::Decimal,
 	/// Total position, in base asset, of all traders that are long. Must be positive. Used to
-	/// compute parameter adjustment costs and funding payments from/to the Clearing House
+	/// compute parameter adjustment costs and funding payments from/to the Clearing House.
 	pub base_asset_amount_long: T::Decimal,
 	/// Total position, in base asset, of all traders that are short. Must be negative. Used to
-	/// compute parameter adjustment costs and funding payments from/to the Clearing House
+	/// compute parameter adjustment costs and funding payments from/to the Clearing House.
 	pub base_asset_amount_short: T::Decimal,
 	/// The latest cumulative funding rate for long positions in this market. Must be updated
-	/// periodically
+	/// periodically.
 	pub cum_funding_rate_long: T::Decimal,
 	/// The latest cumulative funding rate for short positions in this market. Must be updated
-	/// periodically
+	/// periodically.
 	pub cum_funding_rate_short: T::Decimal,
-	/// Amount, in quote asset, of fees collected from trades
+	/// Amount, in quote asset, of fees collected from trades.
 	pub fee_pool: T::Balance,
 	/// The timestamp for the latest funding rate update.
 	pub funding_rate_ts: DurationSeconds,
@@ -101,7 +101,7 @@ pub struct Market<T: Config> {
 	/// Setting the funding period too short may cause nobody to trade the perpetual because
 	/// there’s too punitive of a price to pay in the case the funding rate flips sign.
 	pub funding_period: DurationSeconds,
-	/// Taker fee, in basis points, applied to all market orders
+	/// Taker fee, in basis points, applied to all market orders.
 	pub taker_fee: T::Balance,
 }
 
@@ -170,22 +170,22 @@ impl<T: Config> Default for Market<T> {
 /// Specifications for market creation
 #[derive(Encode, Decode, PartialEq, Clone, Debug, TypeInfo)]
 pub struct MarketConfig<AssetId, Balance, Decimal, VammConfig> {
-	/// Asset id of the underlying for the derivatives market
+	/// Asset id of the underlying for the derivatives market.
 	pub asset: AssetId,
-	/// Configuration for creating and initializing the vAMM for price discovery
+	/// Configuration for creating and initializing the vAMM for price discovery.
 	pub vamm_config: VammConfig,
-	/// Minimum margin ratio for opening a new position
+	/// Minimum margin ratio for opening a new position.
 	pub margin_ratio_initial: Decimal,
-	/// Margin ratio below which liquidations can occur
+	/// Margin ratio below which liquidations can occur.
 	pub margin_ratio_maintenance: Decimal,
 	/// Minimum amount of quote asset to exchange when opening a position. Also serves to round
-	/// a trade if it results in closing an existing position
+	/// a trade if it results in closing an existing position.
 	pub minimum_trade_size: Decimal,
-	/// Time span between each funding rate update
+	/// Time span between each funding rate update.
 	pub funding_frequency: DurationSeconds,
 	/// Period of time over which funding (the difference between mark and index prices) gets
 	/// paid.
 	pub funding_period: DurationSeconds,
-	/// Taker fee, in basis points, applied to all market orders
+	/// Taker fee, in basis points, applied to all market orders.
 	pub taker_fee: Balance,
 }
