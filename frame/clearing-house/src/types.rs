@@ -5,6 +5,8 @@ use num_traits::Zero;
 use sp_runtime::{ArithmeticError, FixedPointNumber};
 use Direction::{Long, Short};
 
+pub const BASIS_POINT_DENOMINATOR: u32 = 10_000;
+
 /// Indicates the direction of a position
 #[derive(Encode, Decode, TypeInfo, Debug, Clone, Copy, PartialEq)]
 pub enum Direction {

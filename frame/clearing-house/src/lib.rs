@@ -135,6 +135,7 @@ pub mod pallet {
 	};
 	use crate::{
 		math::{FixedPointMath, FromBalance, IntoBalance, IntoDecimal, IntoSigned, UnsignedMath},
+		types::BASIS_POINT_DENOMINATOR,
 		weights::WeightInfo,
 	};
 	use codec::FullCodec;
@@ -989,7 +990,7 @@ pub mod pallet {
 			quote_abs_amount
 				.into_balance()?
 				.try_mul(&market.taker_fee)?
-				.try_div(&10_000_u32.into())
+				.try_div(&BASIS_POINT_DENOMINATOR.into())
 		}
 
 		fn increase_position(
