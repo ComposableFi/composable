@@ -88,6 +88,7 @@ impl<AccountId: Clone> Penalty<AccountId> {
 	}
 }
 
+/// defines staking duration, rewards and early unstake penalty
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Encode, Decode, TypeInfo)]
 pub struct StakingConfig<AccountId, DurationPresets, RewardAssets> {
 	/// The possible locking duration.
@@ -98,11 +99,12 @@ pub struct StakingConfig<AccountId, DurationPresets, RewardAssets> {
 	pub early_unstake_penalty: Penalty<AccountId>,
 }
 
+/// staking typed fNFT, usually can be mapped to raw fNFT storage type 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Encode, Decode, TypeInfo)]
 pub struct StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards> {
 	/// The staked asset.
 	pub asset: AssetId,
-	/// The stake this NFT was minted for.
+	/// The original stake this NFT was minted for.
 	pub stake: Balance,
 	/// The reward epoch at which this NFT will start yielding rewards.
 	pub reward_epoch_start: Epoch,
@@ -204,7 +206,7 @@ pub trait StakingReward {
 	type AssetId;
 	type Balance;
 
-	/// Transfer a reward to the Chaos protocol.
+	/// Transfer a reward to the staking rewards protocol.
 	///
 	/// Arguments
 	///

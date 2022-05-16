@@ -295,7 +295,7 @@ pub mod pallet {
 		///
 		/// Arguments
 		///
-		/// * `origin` the origin that signed this extrinsic. Must be the owner of the NFT targeted
+		/// * `origin` the origin that signed this extrinsic. Will be the owner of the  fNFT targeted
 		///   by `instance_id`.
 		/// * `amount` the amount of tokens to stake.
 		/// * `duration` the duration for which the tokens will be staked.
@@ -339,7 +339,7 @@ pub mod pallet {
 		///
 		/// Arguments
 		///
-		/// * `origin` the origin that signed this extrinsic. Can be anyone. by `instance_id`.
+		/// * `origin` the origin that signed this extrinsic. Can be anyone.
 		/// * `instance_id` the ID of the NFT that represent our staked position.
 		/// * `to` the account in which the rewards will be transferred.
 		#[pallet::weight(10_000)]
@@ -364,14 +364,13 @@ pub mod pallet {
 			// TODO(hussein-aitlahcen): abstract per-block fold of chunk into a macro:
 			match Self::current_state() {
 				State::WaitingForEpochEnd => {
+					// NOTE: we start new epoch here, it will work well if an only if epoch time is longer than total fold time - which is most likely yes
 					Self::update_epoch();
 				},
 				State::Rewarding => {
 					let (reward_epoch, reward_epoch_start) = EndEpochSnapshot::<T>::get();
 					let result = <(FoldState<T>, Stakers<T>)>::step(
-						FoldStrategy::Chunk {
-							number_of_elements: T::ElementToProcessPerBlock::get(),
-						},
+						FoldStrategy::chunk(T::ElementToProcessPerBlock::get()),						
 						(),
 						|_, nft_id, _| {
 							let try_reward = T::try_mutate_protocol_nft(
@@ -380,7 +379,7 @@ pub mod pallet {
 									match nft.state(&reward_epoch, reward_epoch_start) {
 										PositionState::Pending => {},
 										PositionState::Expired => {
-											// TODO: move to treasury
+											// TODO: https://app.clickup.com/t/2xw5fca
 										},
 										PositionState::LockedRewarding => {
 											let shares = nft.shares();
@@ -506,7 +505,7 @@ pub mod pallet {
 			T::Time::now().as_secs()
 		}
 
-		/// The chaos protocol account. Derived from the chaos pallet id.
+		/// The staking protocol account. Derived from the staking pallet id.
 		pub(crate) fn account_id(asset: &AssetIdOf<T>) -> AccountIdOf<T> {
 			T::PalletId::get().into_sub_account(asset)
 		}
@@ -618,7 +617,7 @@ pub mod pallet {
 
 		fn unstake(instance_id: &Self::InstanceId, to: &Self::AccountId) -> DispatchResult {
 			Self::ensure_valid_interaction_state()?;
-			<Self as Staking>::claim(instance_id, to)?;
+			Self as Staking>::claim(instance_id, to)?;
 			let nft = T::get_protocol_nft::<StakingNFTOf<T>>(instance_id)?;
 			let protocol_account = Self::account_id(&nft.asset);
 			let current_epoch = Self::current_epoch();
