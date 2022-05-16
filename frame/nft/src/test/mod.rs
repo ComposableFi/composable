@@ -19,7 +19,8 @@ mod financial_nft_provider {
 	}
 }
 
-mod impls {
+/// Tests the pallet's [`frame_support::traits::tokens::nonfungibles`] traits implementations.
+mod nonfungibles {
 	use std::collections::BTreeMap;
 
 	use composable_traits::financial_nft::NftClass;
