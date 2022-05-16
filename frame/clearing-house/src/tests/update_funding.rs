@@ -59,15 +59,19 @@ prop_compose! {
 		alice_position in Just(alice_position),
 		net_position in balance_in_open_interval(alice_position / 3, alice_position),
 	) -> (Balance, Balance) {
+		// Assuming a taker fee of 1% and a funding rate of 5% in favor of Alice's position, the net
+		// position should be at least one third of Alice's position for funding to be capped
+		// (for Alice). Derivation:
 		// alice_position = bob_position + net_position
 		// fees = (alice_position + bob_position) * 1%
 		//      = 2 * bob_position * 1% + net_position * 1%
 		// bob_funding = (alice_position - net_position) * 5%
 		// alice_funding = alice_position * 5%
-		//               > 2 * (alice_position - net_position) * 1% + net_position * 1%
+		//               > bob_funding + fees
+		//               = 2 * (alice_position - net_position) * 1% + net_position * 1%
 		//                 + (alice_position - net_position) * 5%
 		//               = alice_position * 7% - net_position * 6%
-		// <=> net_position > alice_position / 3
+		//               <=> net_position > alice_position / 3
 		(alice_position, alice_position - net_position)
 	}
 }
