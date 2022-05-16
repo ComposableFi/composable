@@ -1066,7 +1066,6 @@ fn liquidation() {
 fn test_liquidation_offchain_worker() {
 	const PHRASE: &str =
 		"news slush supreme milk chapter athlete soap sausage put clutch what kitten";
-
 	// Create key store and transaction pool for testing environment.
 	let (pool, pool_state) = testing::TestTransactionPoolExt::new();
 	let keystore = KeyStore::new();
@@ -1076,7 +1075,6 @@ fn test_liquidation_offchain_worker() {
 		Some(&format!("{}/mergenchi", PHRASE)),
 	)
 	.unwrap();
-
 	// Create externalities, register transaction pool and key store in the externalities.
 	let mut ext = new_test_ext();
 	ext.register_extension(TransactionPoolExt::new(pool));
@@ -1084,7 +1082,6 @@ fn test_liquidation_offchain_worker() {
 	ext.execute_with(|| {
 		let manager = *ALICE;
 		let lender = *CHARLIE;
-
 		// Create a market with BTC as collateral asset and USDT as borrow asset.
 		// Initial collateral asset price is 50_000 USDT. Market's collateral factor equals two.
 		// It means that borrow supposed to be undercolateraized when

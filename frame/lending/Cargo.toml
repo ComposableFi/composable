@@ -22,8 +22,10 @@ version = "3.0.0"
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+frame-executive = { default-features = false, git = "https://github.com/paritytech/substrate", features = ["try-runtime"] , branch = "polkadot-v0.9.18" }
 pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.18" }
 pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.18" }
+sp-application-crypto = { default-features = false, git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.18" }
 
 composable-support = { default-features = false, path = "../composable-support" }
 composable-traits = { default-features = false, path = "../composable-traits" }
@@ -43,6 +45,7 @@ num-traits = { version = "0.2.14", default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
+rand = { version = "0.7.2", optional = true }
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
@@ -61,6 +64,7 @@ pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "
 proptest = "1.0"
 serde = { version = '1.0.136' }
 smallvec = "1.7.0"
+rand = { version = "0.7.2"}
 
 [features]
 default = ["std"]
@@ -81,6 +85,7 @@ std = [
   "xcm/std",
   "cumulus-pallet-xcm/std",
   "sp-keystore",
+  "sp-application-crypto",
 ]
 
 runtime-benchmarks = [
