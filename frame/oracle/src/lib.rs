@@ -804,7 +804,6 @@ pub mod pallet {
 			// because pre_prices.len() limited by u32
 			// (type of AssetsInfo::<T>::get(asset_id).max_answers).
 			if pre_prices.len() as u32 >= asset_info.min_answers {
-				// if let Some(price) = Self::get_median_price(&pre_prices) {
 				if let Some(price) = Self::calculate_price(&pre_prices, &asset_info) {
 					Prices::<T>::insert(asset_id, Price { price, block });
 					PriceHistory::<T>::try_mutate(asset_id, |prices| -> DispatchResult {
@@ -886,14 +885,14 @@ pub mod pallet {
 			}
 		}
 
-        pub fn calculate_price(
-            prices: &[PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>],
-            asset_info: &AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
-        ) -> Option<T::PriceValue> {
-            let median_price = Self::get_median_price(prices)?;
-            let mut sum_of_price = T::PriceValue::zero();
-            let mut number_of_prices = 0_u32;
-            for answer in prices {
+		pub fn calculate_price(
+			prices: &[PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>],
+			asset_info: &AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
+		) -> Option<T::PriceValue> {
+			let median_price = Self::get_median_price(prices)?;
+			let mut sum_of_price = T::PriceValue::zero();
+			let mut number_of_prices = 0_u32;
+			for answer in prices {
 				let accuracy: Percent = if answer.price < median_price {
 					PerThing::from_rational(answer.price, median_price)
 				} else {
@@ -901,17 +900,17 @@ pub mod pallet {
 					PerThing::from_rational(adjusted_number, median_price)
 				};
 				let min_accuracy = asset_info.threshold;
-                // consider all prices which are with in threshold of median_price
-                if accuracy >= min_accuracy {
-                    sum_of_price += answer.price;
-                    number_of_prices += 1;
-                }
-            } 
-            if number_of_prices == 0 {
-                return None;
-            }
-            Some(sum_of_price / number_of_prices.into())
-        }
+				// consider all prices which are with in threshold of median_price
+				if accuracy >= min_accuracy {
+					sum_of_price += answer.price;
+					number_of_prices += 1;
+				}
+			}
+			if number_of_prices == 0 {
+				return None
+			}
+			Some(sum_of_price / number_of_prices.into())
+		}
 
 		pub fn check_requests() {
 			for (i, asset_info) in AssetsInfo::<T>::iter() {

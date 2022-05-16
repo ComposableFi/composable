@@ -858,19 +858,19 @@ fn submit_price_fails_stake_less_than_asset_slash() {
 
 fn halborm_test_price_manipulation() {
 	new_test_ext().execute_with(|| {
-        const ASSET_ID : u128 = 0;
-        const MIN_ANSWERS: u32 = 3;
-        const MAX_ANSWERS: u32 = 5;
-        const THRESHOLD : Percent = Percent::from_percent(80);
-        const BLOCK_INTERVAL: u64 = 5;
-        const REWARD: u64 = 5;
-        const SLASH: u64 = 5;
+		const ASSET_ID: u128 = 0;
+		const MIN_ANSWERS: u32 = 3;
+		const MAX_ANSWERS: u32 = 5;
+		const THRESHOLD: Percent = Percent::from_percent(80);
+		const BLOCK_INTERVAL: u64 = 5;
+		const REWARD: u64 = 5;
+		const SLASH: u64 = 5;
 
-        let root_account = get_root_account();
-        let account_1 = get_account_1();
-        let account_3 = get_account_3();
-        let account_4 = get_account_4();
-        let account_5 = get_account_5();
+		let root_account = get_root_account();
+		let account_1 = get_account_1();
+		let account_3 = get_account_3();
+		let account_4 = get_account_4();
+		let account_5 = get_account_5();
 
 		let asset_info = AssetInfo {
 			threshold: Percent::from_percent(80),
@@ -880,45 +880,44 @@ fn halborm_test_price_manipulation() {
 			reward: REWARD,
 			slash: SLASH,
 		};
-        assert_ok!(
-            Oracle::add_asset_and_info(
-                Origin::signed(root_account), 
-                ASSET_ID, 
-                Validated::new(THRESHOLD).unwrap(),
-                Validated::new(MIN_ANSWERS).unwrap(),
-                Validated::new(MAX_ANSWERS).unwrap(),
-                Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL).unwrap(), 
-                REWARD,
-                SLASH)
-        );
-        System::set_block_number(6);
-        assert_ok!(Oracle::set_signer(Origin::signed(account_3), account_1));
-        assert_ok!(Oracle::set_signer(Origin::signed(account_1), account_3));
-        assert_ok!(Oracle::set_signer(Origin::signed(account_4), account_5));
-        assert_ok!(Oracle::set_signer(Origin::signed(account_5), account_4));
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(root_account),
+			ASSET_ID,
+			Validated::new(THRESHOLD).unwrap(),
+			Validated::new(MIN_ANSWERS).unwrap(),
+			Validated::new(MAX_ANSWERS).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(BLOCK_INTERVAL).unwrap(),
+			REWARD,
+			SLASH
+		));
+		System::set_block_number(6);
+		assert_ok!(Oracle::set_signer(Origin::signed(account_3), account_1));
+		assert_ok!(Oracle::set_signer(Origin::signed(account_1), account_3));
+		assert_ok!(Oracle::set_signer(Origin::signed(account_4), account_5));
+		assert_ok!(Oracle::set_signer(Origin::signed(account_5), account_4));
 
-        assert_ok!(Oracle::add_stake(Origin::signed(account_1), 50));
-        assert_ok!(Oracle::add_stake(Origin::signed(account_3), 50));
-        assert_ok!(Oracle::add_stake(Origin::signed(account_4), 50));
-        assert_ok!(Oracle::add_stake(Origin::signed(account_5), 50));
+		assert_ok!(Oracle::add_stake(Origin::signed(account_1), 50));
+		assert_ok!(Oracle::add_stake(Origin::signed(account_3), 50));
+		assert_ok!(Oracle::add_stake(Origin::signed(account_4), 50));
+		assert_ok!(Oracle::add_stake(Origin::signed(account_5), 50));
 
-        // Scenario 1: >50% of Oracles are malicious
-        assert_ok!(Oracle::submit_price(Origin::signed(account_1), 100_u128, 0_u128));
-        assert_ok!(Oracle::submit_price(Origin::signed(account_3), 690_u128, 0_u128));
-        assert_ok!(Oracle::submit_price(Origin::signed(account_4), 900_u128, 0_u128));
-        assert_ok!(Oracle::submit_price(Origin::signed(account_5), 900_u128, 0_u128));
-        System::set_block_number(7);
-        Oracle::on_initialize(7);
-        System::set_block_number(13);
-        // Scenario 2: 50% of Oracles are malicious
-        // These prices prices will not be consider
-        assert_ok!(Oracle::submit_price(Origin::signed(account_1), 100_u128, 0_u128));
-        assert_ok!(Oracle::submit_price(Origin::signed(account_3), 100_u128, 0_u128));
-        assert_ok!(Oracle::submit_price(Origin::signed(account_4), 900_u128, 0_u128));
-        assert_ok!(Oracle::submit_price(Origin::signed(account_5), 900_u128, 0_u128));
-        System::set_block_number(14);
-        Oracle::on_initialize(14);
-    });
+		// Scenario 1: >50% of Oracles are malicious
+		assert_ok!(Oracle::submit_price(Origin::signed(account_1), 100_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(Origin::signed(account_3), 690_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(Origin::signed(account_4), 900_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(Origin::signed(account_5), 900_u128, 0_u128));
+		System::set_block_number(7);
+		Oracle::on_initialize(7);
+		System::set_block_number(13);
+		// Scenario 2: 50% of Oracles are malicious
+		// These prices prices will not be consider
+		assert_ok!(Oracle::submit_price(Origin::signed(account_1), 100_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(Origin::signed(account_3), 100_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(Origin::signed(account_4), 900_u128, 0_u128));
+		assert_ok!(Oracle::submit_price(Origin::signed(account_5), 900_u128, 0_u128));
+		System::set_block_number(14);
+		Oracle::on_initialize(14);
+	});
 }
 
 #[test]
