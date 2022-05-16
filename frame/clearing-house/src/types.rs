@@ -1,8 +1,8 @@
-use crate::Config;
+use crate::{math::FixedPointMath, Config};
 use composable_traits::time::DurationSeconds;
 use frame_support::pallet_prelude::{Decode, Encode, MaxEncodedLen, TypeInfo};
 use num_traits::Zero;
-use sp_runtime::FixedPointNumber;
+use sp_runtime::{ArithmeticError, FixedPointNumber};
 use Direction::{Long, Short};
 
 /// Indicates the direction of a position
@@ -116,6 +116,30 @@ impl<T: Config> Market<T> {
 			Long => self.base_asset_amount_long,
 			Short => self.base_asset_amount_short,
 		}
+	}
+
+	pub fn add_base_asset_amount(
+		&mut self,
+		amount: &T::Decimal,
+		direction: Direction,
+	) -> Result<(), ArithmeticError> {
+		match direction {
+			Long => self.base_asset_amount_long.try_add_mut(amount)?,
+			Short => self.base_asset_amount_short.try_add_mut(amount)?,
+		};
+		Ok(())
+	}
+
+	pub fn sub_base_asset_amount(
+		&mut self,
+		amount: &T::Decimal,
+		direction: Direction,
+	) -> Result<(), ArithmeticError> {
+		match direction {
+			Long => self.base_asset_amount_long.try_sub_mut(amount)?,
+			Short => self.base_asset_amount_short.try_sub_mut(amount)?,
+		};
+		Ok(())
 	}
 }
 

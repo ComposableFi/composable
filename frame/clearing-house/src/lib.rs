@@ -1010,13 +1010,7 @@ pub mod pallet {
 				Direction::Short => quote_abs_amount_decimal.neg(),
 			})?;
 
-			// TODO(0xangelo): refactor and move to Market<T> impl
-			match direction {
-				Direction::Long =>
-					market.base_asset_amount_long.try_add_mut(&base_delta_decimal)?,
-				Direction::Short =>
-					market.base_asset_amount_short.try_add_mut(&base_delta_decimal)?,
-			};
+			market.add_base_asset_amount(&base_delta_decimal, direction)?;
 
 			Ok(base_swapped)
 		}
@@ -1052,13 +1046,7 @@ pub mod pallet {
 			position.base_asset_amount.try_add_mut(&base_delta_decimal)?;
 			position.quote_asset_notional_amount.try_sub_mut(&entry_value)?;
 
-			// TODO(0xangelo): refactor and move to Market<T> impl
-			match direction {
-				Direction::Long =>
-					market.base_asset_amount_short.try_add_mut(&base_delta_decimal)?,
-				Direction::Short =>
-					market.base_asset_amount_long.try_add_mut(&base_delta_decimal)?,
-			};
+			market.add_base_asset_amount(&base_delta_decimal, direction.opposite())?;
 
 			Ok((base_swapped, entry_value, exit_value))
 		}
@@ -1088,13 +1076,7 @@ pub mod pallet {
 				Direction::Short => quote_amount_decimal.neg(),
 			};
 
-			// TODO(0xangelo): refactor and move to Market<T> impl
-			match position_direction {
-				Direction::Long =>
-					market.base_asset_amount_long.try_sub_mut(&position.base_asset_amount)?,
-				Direction::Short =>
-					market.base_asset_amount_short.try_sub_mut(&position.base_asset_amount)?,
-			};
+			market.sub_base_asset_amount(&position.base_asset_amount, position_direction)?;
 
 			positions.swap_remove(position_index);
 
@@ -1127,14 +1109,8 @@ pub mod pallet {
 				Direction::Short => *abs_base_asset_value,
 			};
 
-			// TODO(0xangelo): refactor and move to Market<T> impl
 			// Account for the implicit position closing
-			match direction {
-				Direction::Long =>
-					market.base_asset_amount_short.try_sub_mut(&position.base_asset_amount)?,
-				Direction::Short =>
-					market.base_asset_amount_long.try_sub_mut(&position.base_asset_amount)?,
-			};
+			market.sub_base_asset_amount(&position.base_asset_amount, direction.opposite())?;
 
 			position
 				.base_asset_amount
@@ -1146,13 +1122,7 @@ pub mod pallet {
 			// Update to account for direction change
 			position.last_cum_funding = market.cum_funding_rate(direction);
 
-			// TODO(0xangelo): refactor and move to Market<T> impl
-			match direction {
-				Direction::Long =>
-					market.base_asset_amount_long.try_add_mut(&position.base_asset_amount)?,
-				Direction::Short =>
-					market.base_asset_amount_short.try_add_mut(&position.base_asset_amount)?,
-			};
+			market.add_base_asset_amount(&position.base_asset_amount, direction)?;
 
 			Ok((base_swapped, entry_value, exit_value))
 		}
