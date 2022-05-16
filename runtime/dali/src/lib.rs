@@ -66,7 +66,6 @@ pub use frame_support::{
 
 use crate::xcmp::XcmRouter;
 use codec::{Codec, Encode, EncodeLike};
-use composable_traits::assets::Asset;
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
 use frame_system::EnsureSigned;

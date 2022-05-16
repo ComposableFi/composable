@@ -58,7 +58,6 @@ pub use frame_support::{
 };
 
 use codec::{Codec, Encode, EncodeLike};
-use composable_traits::assets::Asset;
 use frame_support::traits::{EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
 use scale_info::TypeInfo;

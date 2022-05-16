@@ -93,8 +93,8 @@ transaction-payment-rpc-runtime-api = {package = "pallet-transaction-payment-rpc
 # local RPCs
 assets-runtime-api = {path = '../../frame/assets/runtime-api', default-features = false}
 crowdloan-rewards-runtime-api = {path = '../../frame/crowdloan-rewards/runtime-api', default-features = false}
+lending-runtime-api = {path = '../../frame/lending/runtime-api', default-features = false}
 pablo-runtime-api = {path = '../../frame/pablo/runtime-api', default-features = false}
-
 # Used for runtime benchmarking
 codec = {package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
   "derive",
@@ -257,5 +257,6 @@ std = [
   "simnode-apis/std",
   "pablo/std",
   "dex-router/std",
+  "lending-runtime-api/std",
 ]
 wasm-builder = []

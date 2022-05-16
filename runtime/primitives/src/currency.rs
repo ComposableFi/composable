@@ -4,14 +4,12 @@ use composable_traits::{assets::Asset, currency::Exponent};
 use core::{fmt::Display, ops::Div, str::FromStr};
 use scale_info::TypeInfo;
 use sp_runtime::{
-	sp_std::{ops::Deref, vec::Vec},
+	sp_std::{ops::Deref, vec, vec::Vec},
 	RuntimeDebug,
 };
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-use sp_runtime::sp_std::ops::Deref;
-use sp_std::{vec, vec::Vec};
 /// Trait used to write generalized code over well know currencies
 /// We use const to allow for match on these
 /// Allows to have reuse of code amids runtime and cross relay transfers in future.
