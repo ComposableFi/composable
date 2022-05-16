@@ -7,10 +7,7 @@ use crate::{
 	tests::{as_inner, zero_to_one_open_interval, Market, Position},
 	Direction,
 };
-use composable_traits::{
-	clearing_house::Instruments,
-	time::{DurationSeconds, ONE_HOUR},
-};
+use composable_traits::{clearing_house::Instruments, time::DurationSeconds};
 use frame_support::{assert_noop, assert_ok, assert_storage_noop};
 use proptest::prelude::*;
 use sp_runtime::{traits::Zero, FixedI128, FixedPointNumber};
@@ -79,7 +76,6 @@ prop_compose! {
 		cum_funding_rate in bounded_decimal(),
 		funding_rate_ts in any_duration(),
 		(funding_frequency, funding_period) in funding_params(),
-		taker_fee in Just(10),
 	) -> Market {
 		Market {
 			vamm_id,
@@ -87,13 +83,12 @@ prop_compose! {
 			margin_ratio_initial,
 			margin_ratio_maintenance,
 			minimum_trade_size,
-			net_base_asset_amount: 0.into(),
-			cum_funding_rate,
-			fee_pool: 0,
+			cum_funding_rate_long: cum_funding_rate,
+			cum_funding_rate_short: cum_funding_rate,
 			funding_rate_ts,
 			funding_frequency,
 			funding_period,
-			taker_fee
+			..Default::default()
 		}
 	}
 }
@@ -175,19 +170,11 @@ proptest! {
 			quote_asset_notional_amount: quote_amount.into(),
 			last_cum_funding: 0.into(),
 		};
+		let cum_funding_rate = position.last_cum_funding + cum_funding_delta;
 		let market = Market {
-			vamm_id: 0,
-			asset_id: 0,
-			margin_ratio_initial: (1, 10).into(),
-			margin_ratio_maintenance: (625, 10_000).into(),
-			minimum_trade_size: (1, 10_000).into(),
-			net_base_asset_amount: 0.into(),
-			cum_funding_rate: position.last_cum_funding + cum_funding_delta,
-			fee_pool: 0,
-			funding_rate_ts: 0,
-			funding_frequency: ONE_HOUR,
-			funding_period: ONE_HOUR,
-			taker_fee: 0,
+			cum_funding_rate_long: cum_funding_rate,
+			cum_funding_rate_short: cum_funding_rate,
+			..Default::default()
 		};
 
 		ExtBuilder::default().build().execute_with(|| {
