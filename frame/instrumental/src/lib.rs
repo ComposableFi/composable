@@ -88,7 +88,7 @@ pub mod pallet {
 	};
 
 	use composable_traits::{
-		instrumental::{Instrumental, InstrumentalProtocolStrategy, InstrumentalVaultConfig},
+		instrumental::{Instrumental, InstrumentalDynamicStrategy, InstrumentalProtocolStrategy, InstrumentalVaultConfig},
 		vault::{Deposit as Duration, FundsAvailability, StrategicVault, Vault, VaultConfig},
 	};
 	use composable_support::validation::Validated;
@@ -167,7 +167,14 @@ pub mod pallet {
 			VaultId = Self::VaultId,
 		>;
 
-		type InstrumentalStrategy: InstrumentalProtocolStrategy;
+		type InstrumentalStrategy: InstrumentalDynamicStrategy<
+			AssetId = Self::AssetId,
+			AccountId = Self::AccountId,
+		> + InstrumentalProtocolStrategy<
+			AssetId = Self::AssetId,
+			AccountId = Self::AccountId,
+			VaultId = Self::VaultId,
+		>;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
@@ -502,9 +509,7 @@ pub mod pallet {
 
 			// TODO: (Nevin)
 			//  - obtain the optimum strategies account_id
-			
-			// let strategy_account_id = Self::InstrumentalStrategy::best_strategy_for_asset(asset_id)
-			let strategy_account_id = manager.clone();
+			let strategy_account_id = T::InstrumentalStrategy::get_optimum_strategy_for(asset_id)?;
 			let strategies: BTreeMap<T::AccountId, Perquintill> = BTreeMap::from([
 				(strategy_account_id, config.percent_deployable)
 			]);

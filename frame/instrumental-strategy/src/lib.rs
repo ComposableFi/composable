@@ -16,19 +16,20 @@ pub mod pallet {
 	use crate::weights::WeightInfo;
 
 	use composable_traits::{
-		instrumental::InstrumentalProtocolStrategy,
+		instrumental::{InstrumentalDynamicStrategy, InstrumentalProtocolStrategy},
 		vault::StrategicVault
 	};
 
 	use frame_support::{
 		pallet_prelude::*,
+		PalletId,
 		storage::bounded_btree_set::BoundedBTreeSet,
 		transactional,
 	};
 
 	use sp_runtime::{
 		traits::{
-			AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
+			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
 		},
 	};
 
@@ -104,6 +105,7 @@ pub mod pallet {
 		//  - ideally something like: type WhitelistedStrategies: Get<[dyn InstrumentalProtocolStrategy]>;
 
 		type PabloStrategy: InstrumentalProtocolStrategy<
+			AccountId = Self::AccountId,
 			AssetId = Self::AssetId,
 			VaultId = Self::VaultId
 		>;
@@ -111,6 +113,9 @@ pub mod pallet {
 		/// The maximum number of vaults that can be associated with this strategy.
 		#[pallet::constant]
 		type MaxAssociatedVaults: Get<u32>;
+
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
 	}
 
 	// -------------------------------------------------------------------------------------------
@@ -174,8 +179,10 @@ pub mod pallet {
 	// TODO: (Nevin)
 	//  - create InstrumentalStrategy trait
 
-	impl<T: Config> Pallet<T> {
-
+	impl<T: Config> InstrumentalDynamicStrategy for Pallet<T> {
+		type AccountId = T::AccountId;
+		type AssetId = T::AssetId;
+		
 		// TODO: (Nevin)
 		//  - we need a way to store a vector of all strategies that are whitelisted
 
@@ -185,6 +192,10 @@ pub mod pallet {
 		// >] {
 		// 	vec![&T::PabloStrategy]
 		// }
+
+		fn get_optimum_strategy_for(asset: T::AssetId) -> Result<T::AccountId, DispatchError> {
+			Ok(T::PabloStrategy::account_id())
+		}
 	}
 
 	// -------------------------------------------------------------------------------------------
@@ -192,8 +203,13 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 
 	impl<T: Config> InstrumentalProtocolStrategy for Pallet<T> {
+		type AccountId = T::AccountId;
 		type AssetId = T::AssetId;
 		type VaultId = T::VaultId;
+
+		fn account_id() -> Self::AccountId {
+			T::PalletId::get().into_account()
+		}
 
 		#[transactional]
 		fn associate_vault(vault_id: &Self::VaultId) -> DispatchResult {
