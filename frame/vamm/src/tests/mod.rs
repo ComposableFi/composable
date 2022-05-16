@@ -15,6 +15,8 @@ use proptest::prelude::*;
 pub mod compute_invariant;
 pub mod create_vamm;
 pub mod get_price;
+pub mod get_price_base_asset;
+pub mod get_price_quote_asset;
 pub mod move_price;
 pub mod swap_asset;
 pub mod swap_base_asset;
@@ -182,7 +184,21 @@ prop_compose! {
 }
 
 fn any_sane_asset_amount() -> RangeInclusive<u128> {
-	1_000_000_000_000_000_000..=1_000_000_000_000_000_000_000_000_000_000_u128
+	// From 1 to 1 trilion.
+	10_u128.pow(18)..=10_u128.pow(30)
+}
+
+#[allow(dead_code)]
+fn limited_peg(x: u128) -> RangeInclusive<u128> {
+	1..=(u128::MAX / x)
+}
+
+prop_compose! {
+	fn asset_times_peg_dont_overflow()(
+		asset in any_sane_asset_amount()
+	)(peg in limited_peg(asset), asset in Just(asset)) -> (u128, u128) {
+		(asset, peg)
+	}
 }
 
 fn any_vamm_id() -> RangeInclusive<VammId> {
