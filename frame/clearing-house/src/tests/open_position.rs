@@ -667,7 +667,7 @@ proptest! {
 	}
 
 	#[test]
-	fn margin_ration_takes_unrealized_funding_into_account(direction in any_direction()) {
+	fn margin_ratio_takes_unrealized_funding_into_account(direction in any_direction()) {
 		let mut config = valid_market_config();
 		config.funding_frequency = ONE_HOUR;
 		config.funding_period = ONE_HOUR;
