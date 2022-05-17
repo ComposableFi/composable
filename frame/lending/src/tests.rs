@@ -1,23 +1,24 @@
-//! Test for Lending. Runtime is almost real.
-//! TODO: cover testing events - so make sure that each even is handled at least once
 //! (events can be obtained from System pallet as in banchmarking.rs before this commit)
 //! TODO: OCW of liquidations (like in Oracle)
 //! TODO: test on small numbers via proptests - detect edge case what is minimal amounts it starts
 //! to accure(and miminal block delta), and maximal amounts when it overflows
-
-use composable_traits::lending::{Lending as LendingTrait, RepayStrategy, TotalDebtWithInterest};
-use std::ops::{Div, Mul};
 
 use crate::{
 	self as pallet_lending, accrue_interest_internal, currency::*, mocks::*,
 	models::borrower_data::BorrowerData, setup::assert_last_event, AccruedInterest, Error,
 	MarketIndex,
 };
-use composable_support::validation::TryIntoValidated;
+use composable_support::validation::{TryIntoValidated, Validated};
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok, test};
 use composable_traits::{
-	defi::{CurrencyPair, LiftedFixedBalance, MoreThanOneFixedU128, Rate, ZeroToOneFixedU128},
-	lending::{math::*, CreateInput, UpdateInput, UpdateInputVaild},
+	defi::{
+		CurrencyPair, DeFiEngine, LiftedFixedBalance, MoreThanOneFixedU128, Rate,
+		ZeroToOneFixedU128,
+	},
+	lending::{
+		math::*, CreateInput, CurrencyPairIsNotSame, Lending as LendingTrait, MarketModelValid,
+		RepayStrategy, TotalDebtWithInterest, UpdateInput, UpdateInputVaild,
+	},
 	oracle,
 	time::SECONDS_PER_YEAR_NAIVE,
 	vault::{self, Deposit, VaultConfig},
@@ -34,9 +35,10 @@ use proptest::{prelude::*, test_runner::TestRunner};
 use sp_arithmetic::assert_eq_error_rate;
 use sp_core::U256;
 use sp_runtime::{
-	ArithmeticError, DispatchError, FixedPointNumber, FixedU128, ModuleError, Percent, Perquintill,
+	traits::Printable, ArithmeticError, DispatchError, FixedPointNumber, FixedU128, ModuleError,
+	Percent, Perquintill,
 };
-
+use std::ops::{Div, Mul};
 const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
 const DEFAULT_MARKET_VAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
 const DEFAULT_COLLATERAL_FACTOR: u128 = 2;
@@ -1024,7 +1026,7 @@ fn test_repay_total_debt() {
 #[test]
 fn liquidation() {
 	new_test_ext().execute_with(|| {
-		let (market_id, vault) = create_market::<50_000>(
+		let (market_id, vault) = create_market::<50_000, Lending, Tokens>(
 			USDT::instance(),
 			BTC::instance(),
 			*ALICE,
@@ -1081,7 +1083,7 @@ fn liquidation() {
 fn test_warn_soon_under_collateralized() {
 	new_test_ext().execute_with(|| {
 		const NORMALIZED_UNITS: u128 = 50_000;
-		let (market, vault) = create_market::<NORMALIZED_UNITS>(
+		let (market, vault) = create_market::<NORMALIZED_UNITS, Lending, Tokens>(
 			USDT::instance(),
 			BTC::instance(),
 			*ALICE,
@@ -1422,7 +1424,7 @@ fn default_create_input<AssetId>(
 }
 
 /// Returns a "default" value (`10%`) for the under collateralized warn percentage.
-fn default_under_collateralized_warn_percent() -> Percent {
+pub fn default_under_collateralized_warn_percent() -> Percent {
 	Percent::from_float(0.10)
 }
 
@@ -1461,7 +1463,9 @@ fn create_simple_vault(
 }
 
 /// Creates a market with the given values and initializes some state.
-///
+/// This generalized  function use  LendingTrait's create() method.
+/// Thus, event is not emitted.
+//
 /// State initialized:
 ///
 /// - Price of the `borrow_asset` is set to `NORMALIZED::ONE`
@@ -1478,18 +1482,23 @@ fn create_simple_vault(
 /// # Panics
 ///
 /// Panics on any errors. Only for use in testing.
-fn create_market<const NORMALIZED_PRICE: u128>(
+pub fn create_market<const NORMALIZED_PRICE: u128, LendingType, TokensType>(
 	borrow_asset: RuntimeCurrency,
 	collateral_asset: RuntimeCurrency,
-	manager: AccountId,
+	manager: LendingType::AccountId,
 	reserved_factor: Perquintill,
 	collateral_factor: MoreThanOneFixedU128,
-) -> (MarketIndex, VaultId) {
+) -> (LendingType::MarketId, LendingType::VaultId)
+where
+	LendingType: LendingTrait + DeFiEngine<MayBeAssetId = u128>,
+	TokensType: Mutate<LendingType::AccountId>
+		+ Inspect<LendingType::AccountId, AssetId = u128, Balance = u128>,
+{
 	set_price(borrow_asset.id(), NORMALIZED::ONE);
 	set_price(collateral_asset.id(), NORMALIZED::units(NORMALIZED_PRICE));
 
-	Tokens::mint_into(borrow_asset.id(), &manager, borrow_asset.units(1000)).unwrap();
-	Tokens::mint_into(collateral_asset.id(), &manager, collateral_asset.units(100)).unwrap();
+	TokensType::mint_into(borrow_asset.id(), &manager, borrow_asset.units(1000)).unwrap();
+	TokensType::mint_into(collateral_asset.id(), &manager, collateral_asset.units(100)).unwrap();
 
 	let config = CreateInput {
 		updatable: UpdateInput {
@@ -1502,26 +1511,16 @@ fn create_market<const NORMALIZED_PRICE: u128>(
 		currency_pair: CurrencyPair::new(collateral_asset.id(), borrow_asset.id()),
 	};
 
-	Lending::create_market(Origin::signed(manager), config.try_into_validated().unwrap()).unwrap();
+	let validated: Validated<_, (MarketModelValid, CurrencyPairIsNotSame)> =
+		config.try_into_validated().unwrap();
+	let k = LendingType::create(manager, validated.value());
 
-	let system_events = System::events();
-	if let Some(EventRecord {
-		event:
-			Event::Lending(crate::Event::<Runtime>::MarketCreated {
-				market_id,
-				vault_id,
-				manager: _,
-				currency_pair: _,
-			}),
-		..
-	}) = system_events.last()
-	{
-		(*market_id, *vault_id)
-	} else {
-		panic!(
-			"System::events() did not contain the market creation event. Found {:#?}",
-			system_events
-		)
+	match k {
+		Ok(pair) => return pair,
+		Err(error) => {
+			error.print();
+			panic!("Market was not created due to the previous error")
+		},
 	}
 }
 
@@ -1543,7 +1542,7 @@ fn create_simple_vaulted_market(
 ) -> ((MarketIndex, VaultId), CurrencyId) {
 	let (_, VaultInfo { lp_token_id, .. }) = create_simple_vault(borrow_asset, manager);
 
-	let market = create_market::<50_000>(
+	let market = create_market::<50_000, Lending, Tokens>(
 		borrow_asset,
 		RuntimeCurrency::new(lp_token_id, 12),
 		manager,
@@ -1560,7 +1559,7 @@ fn create_simple_vaulted_market(
 ///
 /// See [`create_market()`] for more information.
 fn create_simple_market() -> (MarketIndex, VaultId) {
-	create_market::<50_000>(
+	create_market::<50_000, Lending, Tokens>(
 		USDT::instance(),
 		BTC::instance(),
 		*ALICE,
@@ -1591,7 +1590,7 @@ fn mint_and_deposit_collateral<T: crate::Config>(
 
 /// Asserts that the outcome of an extrinsic is `Ok`, and that the last event is the specified
 /// event.
-fn assert_extrinsic_event<T: crate::Config>(
+pub fn assert_extrinsic_event<T: crate::Config>(
 	result: DispatchResultWithPostInfo,
 	event: <T as crate::Config>::Event,
 ) {

@@ -1,29 +1,20 @@
-use crate::{currency::*, mocks_offchain::*, setup::assert_last_event, MarketIndex};
+use crate::{currency::*, mocks_offchain::*};
 use codec::Decode;
-use composable_support::validation::TryIntoValidated;
 use composable_tests_helpers::test;
-use composable_traits::{
-	defi::{CurrencyPair, MoreThanOneFixedU128},
-	lending::{math::InterestRateModel, CreateInput, UpdateInput},
-};
-use frame_support::{assert_ok, dispatch::DispatchResultWithPostInfo, traits::fungibles::Mutate};
-use frame_system::EventRecord;
-use pallet_liquidations;
+use composable_traits::defi::MoreThanOneFixedU128;
+use frame_support::{assert_ok, traits::fungibles::Mutate};
 use sp_core::{
 	offchain::{testing, TransactionPoolExt},
 	H256,
 };
-use sp_runtime::{
-	testing::Digest, traits::Header as HeaderTrait, FixedPointNumber, Percent, Perquintill,
-};
-
+use sp_runtime::{testing::Digest, traits::Header as HeaderTrait, FixedPointNumber, Perquintill};
 const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
 
 #[test]
 fn test_liquidation_offchain_worker() {
 	let account_id = *ALICE;
-	let authority_id = wrapper::UintAuthorityIdWrapper::from(account_id);
-	wrapper::UintAuthorityIdWrapper::set_all_keys(vec![authority_id]);
+	let authority_id = authority_id_wrapper::UintAuthorityIdWrapper::from(account_id);
+	authority_id_wrapper::UintAuthorityIdWrapper::set_all_keys(vec![authority_id]);
 	// Create externalities, register transaction pool and key store in the externalities.
 	let mut ext = new_test_ext();
 	let (pool, pool_state) = testing::TestTransactionPoolExt::new();
@@ -35,7 +26,7 @@ fn test_liquidation_offchain_worker() {
 		// Initial collateral asset price is 50_000 USDT. Market's collateral factor equals two.
 		// It means that borrow supposed to be undercolateraized when
 		// borrowed amount is higher then one half of collateral amount in terms of USDT.
-		let (market_id, vault) = create_market::<50_000>(
+		let (market_id, vault) = crate::tests::create_market::<50_000, Lending, Tokens>(
 			USDT::instance(),
 			BTC::instance(),
 			manager,
@@ -46,7 +37,7 @@ fn test_liquidation_offchain_worker() {
 		// Deposit collateral.
 		let collateral_value = BTC::units(1);
 		assert_ok!(Tokens::mint_into(BTC::ID, &manager, collateral_value));
-		assert_extrinsic_event::<Runtime>(
+		crate::tests::assert_extrinsic_event::<Runtime>(
 			Lending::deposit_collateral(Origin::signed(manager), market_id, collateral_value),
 			Event::Lending(crate::Event::CollateralDeposited {
 				sender: manager,
@@ -61,7 +52,7 @@ fn test_liquidation_offchain_worker() {
 		test::block::process_and_progress_blocks::<Lending, Runtime>(1);
 		// Borrow 20_000 USDT.
 		let borrowed_value = USDT::units(20_000);
-		assert_extrinsic_event::<Runtime>(
+		crate::tests::assert_extrinsic_event::<Runtime>(
 			Lending::borrow(Origin::signed(manager), market_id, borrowed_value),
 			Event::Lending(crate::Event::Borrowed {
 				sender: manager,
@@ -69,7 +60,6 @@ fn test_liquidation_offchain_worker() {
 				market_id,
 			}),
 		);
-
 		// Emulate situation when collateral price has fallen down
 		// from 50_000 USDT to 38_000 USDT.
 		// Now the borrow is undercolateraized since market's collateral factor equals two.
@@ -80,7 +70,6 @@ fn test_liquidation_offchain_worker() {
 			Header::new(2, H256::default(), H256::default(), [69u8; 32].into(), Digest::default());
 		// Execute off-chain worker
 		Executive::offchain_worker(&header);
-		// Check if corresponded liquidation transaction has been placed in the pool
 		let tx = pool_state.write().transactions.pop().unwrap();
 		assert!(pool_state.read().transactions.is_empty());
 		let tx = Extrinsic::decode(&mut &*tx).unwrap();
@@ -97,64 +86,4 @@ fn test_liquidation_offchain_worker() {
 		let event = pallet_liquidations::Event::PositionWasSentToLiquidation {};
 		System::assert_has_event(Event::Liquidations(event));
 	});
-}
-
-// HELPERS
-fn default_under_collateralized_warn_percent() -> Percent {
-	Percent::from_float(0.10)
-}
-
-fn create_market<const NORMALIZED_PRICE: u128>(
-	borrow_asset: RuntimeCurrency,
-	collateral_asset: RuntimeCurrency,
-	manager: AccountId,
-	reserved_factor: Perquintill,
-	collateral_factor: MoreThanOneFixedU128,
-) -> (MarketIndex, VaultId) {
-	set_price(borrow_asset.id(), NORMALIZED::ONE);
-	set_price(collateral_asset.id(), NORMALIZED::units(NORMALIZED_PRICE));
-
-	Tokens::mint_into(borrow_asset.id(), &manager, borrow_asset.units(1000)).unwrap();
-	Tokens::mint_into(collateral_asset.id(), &manager, collateral_asset.units(100)).unwrap();
-
-	let config = CreateInput {
-		updatable: UpdateInput {
-			collateral_factor,
-			under_collateralized_warn_percent: default_under_collateralized_warn_percent(),
-			liquidators: vec![],
-			interest_rate_model: InterestRateModel::default(),
-		},
-		reserved_factor,
-		currency_pair: CurrencyPair::new(collateral_asset.id(), borrow_asset.id()),
-	};
-
-	Lending::create_market(Origin::signed(manager), config.try_into_validated().unwrap()).unwrap();
-
-	let system_events = System::events();
-	if let Some(EventRecord {
-		event:
-			Event::Lending(crate::Event::<Runtime>::MarketCreated {
-				market_id,
-				vault_id,
-				manager: _,
-				currency_pair: _,
-			}),
-		..
-	}) = system_events.last()
-	{
-		(*market_id, *vault_id)
-	} else {
-		panic!(
-			"System::events() did not contain the market creation event. Found {:#?}",
-			system_events
-		)
-	}
-}
-
-fn assert_extrinsic_event<T: crate::Config>(
-	result: DispatchResultWithPostInfo,
-	event: <T as crate::Config>::Event,
-) {
-	assert_ok!(result);
-	assert_last_event::<T>(event);
 }

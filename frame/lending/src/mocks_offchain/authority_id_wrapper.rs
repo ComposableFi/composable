@@ -28,7 +28,6 @@ use std::{cell::RefCell, ops::Deref};
 	MaxEncodedLen,
 	TypeInfo,
 )]
-
 // The wrapper was added since AppCrypto is not implemented for UintAuthorityId
 pub struct UintAuthorityIdWrapper(pub UintAuthorityId);
 
