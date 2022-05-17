@@ -15,6 +15,7 @@ use crate::{
 // -------------------------------------------------------------------------------------------------
 
 #[test]
+#[ignore = "unimplemented"]
 fn cant_fully_liquidate_if_above_maintenance_margin_ratio_by_pnl() {
 	let mut config = valid_market_config();
 	config.margin_ratio_initial = 1.into(); // 1x max leverage
@@ -54,6 +55,7 @@ fn cant_fully_liquidate_if_above_maintenance_margin_ratio_by_pnl() {
 }
 
 #[test]
+#[ignore = "unimplemented"]
 fn cant_fully_liquidate_if_above_maintenance_margin_ratio_by_funding() {
 	let mut config = valid_market_config();
 	config.funding_frequency = 60;
@@ -98,3 +100,43 @@ fn cant_fully_liquidate_if_above_maintenance_margin_ratio_by_funding() {
 		);
 	});
 }
+
+#[test]
+#[ignore = "unimplemented"]
+fn can_liquidate_if_below_maintenance_margin_ratio_by_pnl() {
+	let mut config = valid_market_config();
+	config.margin_ratio_initial = 1.into(); // 1x max leverage
+	config.margin_ratio_maintenance = (65, 1_000).into(); // 6.5% MMR
+	config.taker_fee = 0;
+	// TODO(0xangelo): set a liquidation fee
+
+	let margins = vec![(ALICE, 100), (BOB, 0)];
+	traders_in_one_market_context(config, margins, |market_id| {
+		VammPallet::set_price(Some(100.into()));
+
+		// Alice opens a position
+		assert_ok!(
+			<TestPallet as ClearingHouse>::open_position(
+				&ALICE,
+				&market_id,
+				Direction::Long,
+				100,
+				1,
+			),
+			1
+		);
+
+		// Price moves so that Alice's account is at 6% margin ratio
+		VammPallet::set_price(Some(6.into())); // 100 -> 6
+		assert_ok!(TestPallet::liquidate(Origin::signed(BOB), ALICE));
+
+		// Bob get a liquidation fee
+		assert!(TestPallet::get_margin(&BOB).unwrap() > 0);
+
+		// TODO(0xangelo): check Insurance Fund balance
+	});
+}
+
+// TODO(0xangelo): position in market with highest margin requirement gets liquidated first. Set it
+// up so that if the position in the market with lowest margin requirement gets liquidated first,
+// the other one would have to be liquidated too
