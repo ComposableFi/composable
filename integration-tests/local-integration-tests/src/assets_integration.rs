@@ -31,7 +31,7 @@ fn assets_registry_works_well_for_ratios() {
 			RawOrigin::Root.into(),
 			CurrencyId(42),
 			XcmAssetLocation(MultiLocation::new(1, X1(Parachain(666)))),
-			Ratio::checked_from_integer(10),
+			Ratio::checked_from_integer::<u128>(10),
 			None,
 		)
 		.unwrap();
@@ -80,7 +80,7 @@ fn assets_registry_works_for_identity() {
 			RawOrigin::Root.into(),
 			identity_asset,
 			remote,
-			Ratio::checked_from_integer(1),
+			Ratio::checked_from_integer::<u128>(1),
 			None,
 		));
 	});
@@ -99,7 +99,7 @@ fn assets_registry_works_for_identity() {
 			RawOrigin::Root.into(),
 			identity_asset,
 			remote,
-			Ratio::checked_from_integer(1),
+			Ratio::checked_from_integer::<u128>(1),
 			None,
 		));
 	});

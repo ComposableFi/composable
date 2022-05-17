@@ -781,7 +781,7 @@ fn sibling_trap_assets_works() {
 			RawOrigin::Root.into(),
 			any_asset,
 			remote,
-			Ratio::checked_from_integer(1),
+			Ratio::checked_from_integer::<u128>(1),
 			None
 		));
 		balance

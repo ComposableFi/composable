@@ -13,7 +13,7 @@ use picasso_runtime as sibling_runtime;
 use picasso_runtime as other_runtime;
 
 use frame_support::traits::GenesisBuild;
-use polkadot_primitives::v1::{BlockNumber, MAX_CODE_SIZE, MAX_POV_SIZE};
+use polkadot_primitives::v2::{BlockNumber, MAX_CODE_SIZE, MAX_POV_SIZE};
 use polkadot_runtime_parachains::configuration::HostConfiguration;
 use primitives::currency::CurrencyId;
 use sp_runtime::traits::AccountIdConversion;
