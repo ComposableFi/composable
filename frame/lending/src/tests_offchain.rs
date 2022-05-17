@@ -1,56 +1,25 @@
-#![allow(unused_imports)]
-use composable_traits::lending::{Lending as LendingTrait, RepayStrategy, TotalDebtWithInterest};
-use frame_benchmarking::Zero;
-use sp_application_crypto::Pair;
-use std::ops::{Div, Mul};
-
-use crate::{
-	self as pallet_lending, accrue_interest_internal, currency::*, mocks_offchain::*,
-	models::borrower_data::BorrowerData, setup::assert_last_event, AccruedInterest, Error,
-	MarketIndex,
-};
-use codec::{Decode, Encode};
-use composable_support::validation::{TryIntoValidated, Validated};
-use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
+use crate::{currency::*, mocks_offchain::*, setup::assert_last_event, MarketIndex};
+use codec::Decode;
+use composable_support::validation::TryIntoValidated;
 use composable_traits::{
-	defi::{CurrencyPair, LiftedFixedBalance, MoreThanOneFixedU128, Rate, ZeroToOneFixedU128},
-	lending::{self, math::*, CreateInput, UpdateInput},
-	oracle,
-	time::SECONDS_PER_YEAR_NAIVE,
-	vault::{self, Deposit, VaultConfig},
+	defi::{CurrencyPair, MoreThanOneFixedU128},
+	lending::{math::InterestRateModel, CreateInput, UpdateInput},
 };
-use frame_support::{
-	assert_err, assert_noop, assert_ok,
-	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, PostDispatchInfo},
-	traits::{
-		fungibles::{Inspect, Mutate},
-		OffchainWorker, OnFinalize, OnInitialize,
-	},
-	weights::Pays,
-};
-use frame_system::{EventRecord, Phase};
+use frame_support::{assert_ok, dispatch::DispatchResultWithPostInfo, traits::fungibles::Mutate};
+use frame_system::EventRecord;
 use pallet_liquidations;
-use pallet_vault::models::VaultInfo;
-use proptest::{prelude::*, test_runner::TestRunner};
-use sp_arithmetic::assert_eq_error_rate;
 use sp_core::{
-	crypto::Dummy,
-	offchain::{testing, OffchainWorkerExt, TransactionPoolExt},
-	H256, U256,
+	offchain::{testing, TransactionPoolExt},
+	H256,
 };
-use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
 use sp_runtime::{
-	testing::{Digest, Header as HeaderType, UintAuthorityId},
-	traits::{Block, Header as HeaderTrait},
-	ArithmeticError, DispatchError, FixedPointNumber, FixedU128, ModuleError, Percent, Perquintill,
-	RuntimeAppPublic,
+	testing::Digest, traits::Header as HeaderTrait, FixedPointNumber, Percent, Perquintill,
 };
-use std::sync::Arc;
 
 const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
 
 #[test]
-fn test_liquidation_executed_offchain_worker() {
+fn test_liquidation_offchain_worker() {
 	let account_id = *ALICE;
 	let authority_id = wrapper::UintAuthorityIdWrapper::from(account_id);
 	wrapper::UintAuthorityIdWrapper::set_all_keys(vec![authority_id]);
