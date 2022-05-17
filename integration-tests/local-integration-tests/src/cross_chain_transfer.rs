@@ -122,9 +122,10 @@ fn transfer_to_relay_chain() {
 	});
 
 	KusamaRelay::execute_with(|| {
+		//old value 2999893333340
 		assert_eq!(
 			kusama_runtime::Balances::free_balance(&AccountId::from(BOB)),
-			2999893333340 // 3 * PICA - fee
+			2999834059328 // 3 * PICA - fee
 		);
 	});
 }
@@ -594,9 +595,10 @@ fn unspent_xcm_fee_is_returned_correctly() {
 		// 	2 * CurrencyId::unit::<Balance>()
 		// );
 		// Unspent fund from the 1 dollar XCM fee is returned to the sovereign account.
+		//old value 8_999_626_666_690
 		assert_eq!(
 			kusama_runtime::Balances::free_balance(&parachain_account.clone()),
-			1_000 * CurrencyId::unit::<Balance>() + 8_999_626_666_690
+			1_000 * CurrencyId::unit::<Balance>() + 8_999_419_207_648
 		);
 	});
 }
