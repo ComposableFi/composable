@@ -129,9 +129,13 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 
-	pub use crate::types::{Direction, Market, MarketConfig, Position};
+	pub use crate::types::{
+		Direction::{self as Direction, Long, Short},
+		Market, MarketConfig, Position,
+	};
 	use crate::{
-		math::{FromBalance, IntoBalance, IntoDecimal, IntoSigned, TryMath},
+		math::{FixedPointMath, FromBalance, IntoBalance, IntoDecimal, IntoSigned, UnsignedMath},
+		types::BASIS_POINT_DENOMINATOR,
 		weights::WeightInfo,
 	};
 	use codec::FullCodec;
@@ -151,10 +155,7 @@ pub mod pallet {
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use num_traits::Signed;
 	use sp_runtime::{
-		traits::{
-			AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating,
-			Zero,
-		},
+		traits::{AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, One, Saturating, Zero},
 		ArithmeticError, FixedPointNumber, FixedPointOperand,
 	};
 	use sp_std::{cmp::Ordering, fmt::Debug, ops::Neg};
@@ -240,7 +241,7 @@ pub mod pallet {
 		type VammConfig: Clone + Debug + FullCodec + MaxEncodedLen + PartialEq + TypeInfo;
 
 		/// Virtual automated market maker identifier; usually an integer
-		type VammId: Clone + Copy + FullCodec + MaxEncodedLen + TypeInfo;
+		type VammId: Clone + Copy + FullCodec + MaxEncodedLen + TypeInfo + Zero;
 
 		/// Weight information for this pallet's extrinsics
 		type WeightInfo: WeightInfo;
@@ -435,7 +436,7 @@ pub mod pallet {
 		///   House
 		///
 		/// ## Assumptions or Requirements
-		/// The collateral type must be supported, i.e., contained in [`CollateralTypes`].
+		/// The collateral type must be supported, i.e., the one contained in [`CollateralType`].
 		///
 		/// ## Emits
 		/// * [`MarginAdded`](Event::<T>::MarginAdded)
@@ -587,6 +588,12 @@ pub mod pallet {
 		/// This should be called periodically for each market so that subsequent calculations of
 		/// unrealized funding for each position are up-to-date.
 		///
+		/// If there's Long-Short imbalance in the market, funding payments may be transferred
+		/// between the market Fee Pool and the Clearing House. This is done symbolically by
+		/// updating the Fee Pool and cumulative funding rate attributes of the market. The latter
+		/// influences the unrealized funding of all traders. Settlement of the unrealized funding
+		/// is done by traders via other extrinsics.
+		///
 		/// ![](https://www.plantuml.com/plantuml/svg/FOqx2iCm40Nxd28vWFtwL8P0xh6MrfPWzM4_vFenAL8DmnIpcPDwDBazQayIcKFbNjodFO6pUebzJQFXDTeSHhlmkoBz1KeViAN2YaEfCP8mQUtdKaOO8rSwbPeXPYRdvOYUhxfEeVxxRjppnIy0)
 		///
 		/// ## Parameters
@@ -594,7 +601,10 @@ pub mod pallet {
 		///
 		/// ## Assumptions or Requirements
 		///
-		/// TODO(0xangelo)
+		/// Each market has a [`funding_frequency`](Market::<T>::funding_frequency) which defines
+		/// the minimum time between calls to this extrinsic. If one attempts to call this before
+		/// `funding_frequency` has elapsed since the last funding update, the transaction will
+		/// fail.
 		///
 		/// ## Emits
 		///
@@ -602,7 +612,10 @@ pub mod pallet {
 		///
 		/// ## State Changes
 		///
-		/// TODO(0xangelo)
+		/// [`Markets`] is updated, specifically the [`Market`] attributes:
+		/// - [`cum_funding_rate`](Market::<T>::cum_funding_rate)
+		/// - [`funding_rate_ts`](Market::<T>::funding_rate_ts)
+		/// - [`fee_pool`](Market::<T>::fee_pool), if there's Long-Short imbalance
 		///
 		/// ## Errors
 		///
@@ -611,7 +624,7 @@ pub mod pallet {
 		///
 		/// ## Weight/Runtime
 		///
-		/// TODO(0xangelo)
+		/// `O(1)`
 		#[pallet::weight(<T as Config>::WeightInfo::update_funding())]
 		pub fn update_funding(origin: OriginFor<T>, market_id: T::MarketId) -> DispatchResult {
 			ensure_signed(origin)?;
@@ -643,11 +656,11 @@ pub mod pallet {
 			);
 
 			// Assuming stablecoin collateral and all markets quoted in dollars
-			let pallet_acc = T::PalletId::get().into_sub_account("Collateral");
+			let pallet_acc = Self::get_collateral_account();
 			T::Assets::transfer(asset_id, account_id, &pallet_acc, amount, true)?;
 
 			let old_margin = Self::get_margin(&account_id).unwrap_or_else(T::Balance::zero);
-			let new_margin = old_margin.checked_add(&amount).ok_or(ArithmeticError::Overflow)?;
+			let new_margin = old_margin.try_add(&amount)?;
 			AccountsMargin::<T>::insert(&account_id, new_margin);
 
 			Self::deposit_event(Event::MarginAdded {
@@ -692,11 +705,13 @@ pub mod pallet {
 					margin_ratio_initial: config.margin_ratio_initial,
 					margin_ratio_maintenance: config.margin_ratio_maintenance,
 					minimum_trade_size: config.minimum_trade_size,
-					net_base_asset_amount: Zero::zero(),
+					base_asset_amount_long: Zero::zero(),
+					base_asset_amount_short: Zero::zero(),
 					fee_pool: Zero::zero(),
 					funding_frequency: config.funding_frequency,
 					funding_period: config.funding_period,
-					cum_funding_rate: Zero::zero(),
+					cum_funding_rate_long: Zero::zero(),
+					cum_funding_rate_short: Zero::zero(),
 					funding_rate_ts: T::UnixTime::now().as_secs(),
 					taker_fee: config.taker_fee,
 				};
@@ -730,7 +745,7 @@ pub mod pallet {
 
 			let mut positions = Self::get_positions(&account_id);
 			let (position, position_index) =
-				Self::get_or_create_position(&mut positions, market_id, &market)?;
+				Self::get_or_create_position(&mut positions, market_id, &market, direction)?;
 			let position_direction = position.direction().unwrap_or(direction);
 
 			let mut margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
@@ -743,7 +758,7 @@ pub mod pallet {
 			if direction == position_direction {
 				base_swapped = Self::increase_position(
 					position,
-					&market,
+					&mut market,
 					direction,
 					&quote_abs_amount_decimal,
 					base_asset_amount_limit,
@@ -767,7 +782,7 @@ pub mod pallet {
 					match quote_abs_amount_decimal.cmp(&abs_base_asset_value) {
 						Ordering::Less => Self::decrease_position(
 							position,
-							&market,
+							&mut market,
 							direction,
 							&quote_abs_amount_decimal,
 							base_asset_amount_limit,
@@ -776,7 +791,7 @@ pub mod pallet {
 							&mut positions,
 							position_index,
 							position_direction,
-							&market,
+							&mut market,
 							quote_abs_amount_decimal.into_balance()?,
 						)?,
 						Ordering::Greater => {
@@ -786,7 +801,7 @@ pub mod pallet {
 
 							Self::reverse_position(
 								position,
-								&market,
+								&mut market,
 								direction,
 								&quote_abs_amount_decimal,
 								base_asset_amount_limit,
@@ -803,13 +818,13 @@ pub mod pallet {
 
 			// Charge fees
 			let fee = Self::fee_for_trade(&market, &quote_abs_amount_decimal)?;
-			margin = margin.checked_sub(&fee).ok_or(ArithmeticError::Underflow)?;
-			market.fee_pool = market.fee_pool.checked_add(&fee).ok_or(ArithmeticError::Overflow)?;
+			margin.try_sub_mut(&fee)?;
+			market.fee_pool.try_add_mut(&fee)?;
 
 			// Check account risk
 			if is_risk_increasing {
 				ensure!(
-					Self::is_above_imr(&positions, margin)?,
+					Self::meets_initial_margin_ratio(&positions, margin)?,
 					Error::<T>::InsufficientCollateral
 				);
 			}
@@ -817,7 +832,6 @@ pub mod pallet {
 			// Update storage
 			AccountsMargin::<T>::insert(account_id, margin);
 			Positions::<T>::insert(account_id, positions);
-			Self::update_market_after_trade(&mut market, base_swapped, direction)?;
 			Markets::<T>::insert(market_id, market);
 
 			Self::deposit_event(Event::TradeExecuted {
@@ -843,33 +857,60 @@ pub mod pallet {
 			// Pay funding
 			// net position sign | funding rate sign | transfer
 			// --------------------------------------------------------------
-			//                -1 |                -1 | Collateral -> IF
+			//                -1 |                -1 | Collateral -> Fee Pool
 			//                -1 |                 1 | Fee Pool -> Collateral
 			//                 1 |                -1 | Fee Pool -> Collateral
-			//                 1 |                 1 | Collateral -> IF
+			//                 1 |                 1 | Collateral -> Fee Pool
 			//                 - |                 0 | n/a
 			//                 0 |                 - | n/a
+			let net_base_asset_amount =
+				market.base_asset_amount_long.try_add(&market.base_asset_amount_short)?;
 			let funding_rate = <Self as Instruments>::funding_rate(&market)?;
-			if !(funding_rate.is_zero() | market.net_base_asset_amount.is_zero()) {
-				let amount = funding_rate.try_mul(&market.net_base_asset_amount)?.into_balance()?;
+			let mut funding_rate_long = funding_rate;
+			let mut funding_rate_short = funding_rate;
 
-				if funding_rate.is_positive() == market.net_base_asset_amount.is_positive() {
-					T::Assets::transfer(
-						CollateralType::<T>::get().ok_or(Error::<T>::NoCollateralTypeSet)?,
-						&T::PalletId::get().into_sub_account("Collateral"),
-						&T::PalletId::get().into_sub_account("Insurance"),
-						amount,
-						false,
-					)?;
+			if !(funding_rate.is_zero() | net_base_asset_amount.is_zero()) {
+				let uncapped_funding = funding_rate.try_mul(&net_base_asset_amount)?;
+
+				if uncapped_funding.is_positive() {
+					// Fee Pool receives funding
+					market.fee_pool.try_add_mut(&uncapped_funding.into_balance()?)?;
 				} else {
-					// TODO(0xangelo): should we cap the funding rate if the funding pool isn't deep
-					// enough?
-					market.fee_pool = market.fee_pool.saturating_sub(amount);
+					// Fee Pool pays funding
+					// TODO(0xangelo): set limits for
+					// - total Fee Pool usage (reserve some funds for other operations)
+					// - Fee Pool usage for funding payments per call to `update_funding`
+					let usable_fees: T::Decimal = -market.fee_pool.into_decimal()?;
+					let mut capped_funding = sp_std::cmp::max(uncapped_funding, usable_fees);
+
+					// Since we're dealing with negatives, we check if the uncapped funding is
+					// *smaller* (greater in absolute terms) than the capped one
+					if capped_funding > uncapped_funding {
+						// Total funding paid to one side is the sum of the funding paid by the
+						// opposite side plus the complement from the Fee Pool
+						let excess;
+						if net_base_asset_amount.is_positive() {
+							let counterparty_funding = usable_fees
+								.try_sub(&funding_rate.try_mul(&market.base_asset_amount_short)?)?;
+							(funding_rate_long, excess) =
+								counterparty_funding.try_div_rem(&market.base_asset_amount_long)?;
+						} else {
+							let counterparty_funding = funding_rate
+								.try_mul(&market.base_asset_amount_long)?
+								.try_sub(&usable_fees)?;
+							(funding_rate_short, excess) = counterparty_funding
+								.try_div_rem(&market.base_asset_amount_short)?;
+						}
+						capped_funding.try_sub_mut(&excess)?;
+					}
+
+					market.fee_pool.try_sub_mut(&capped_funding.into_balance()?)?;
 				};
 			}
 
 			// Update market state
-			market.cum_funding_rate.try_add_mut(&funding_rate)?;
+			market.cum_funding_rate_long.try_add_mut(&funding_rate_long)?;
+			market.cum_funding_rate_short.try_add_mut(&funding_rate_short)?;
 			market.funding_rate_ts = now;
 			Markets::<T>::insert(market_id, market);
 
@@ -905,8 +946,14 @@ pub mod pallet {
 			market: &Self::Market,
 			position: &Self::Position,
 		) -> Result<Self::Decimal, DispatchError> {
-			let cum_funding_delta = market.cum_funding_rate.try_sub(&position.last_cum_funding)?;
-			Ok(cum_funding_delta.try_mul(&position.base_asset_amount)?)
+			if let Some(direction) = position.direction() {
+				let cum_funding_delta =
+					market.cum_funding_rate(direction).try_sub(&position.last_cum_funding)?;
+				let payment = cum_funding_delta.try_mul(&position.base_asset_amount)?;
+				Ok(payment.neg())
+			} else {
+				Ok(Zero::zero())
+			}
 		}
 	}
 
@@ -921,16 +968,17 @@ pub mod pallet {
 			market: &Market<T>,
 			margin: &mut T::Balance,
 		) -> Result<(), DispatchError> {
-			let cum_rate = market.cum_funding_rate.try_sub(&position.last_cum_funding)?;
-			let payment = cum_rate.try_mul(&position.base_asset_amount)?;
-			if payment.is_positive() {
-				*margin = margin
-					.checked_add(&payment.into_balance()?)
-					.ok_or(ArithmeticError::Overflow)?;
-			} else if payment.is_negative() {
-				// TODO(0xangelo): can we have bad debt from unrealized funding if user wasn't
-				// liquidated in time?
-				*margin = margin.saturating_sub(payment.into_balance()?);
+			if let Some(direction) = position.direction() {
+				let payment = <Self as Instruments>::unrealized_funding(market, position)?;
+				if payment.is_positive() {
+					margin.try_add_mut(&payment.into_balance()?)?;
+				} else if payment.is_negative() {
+					// TODO(0xangelo): can we have bad debt from unrealized funding if user wasn't
+					// liquidated in time?
+					*margin = margin.saturating_sub(payment.into_balance()?);
+				}
+
+				position.last_cum_funding = market.cum_funding_rate(direction);
 			}
 			Ok(())
 		}
@@ -941,71 +989,49 @@ pub mod pallet {
 		) -> Result<T::Balance, ArithmeticError> {
 			quote_abs_amount
 				.into_balance()?
-				.checked_mul(&market.taker_fee)
-				.ok_or(ArithmeticError::Overflow)?
-				.checked_div(&10_000_u32.into())
-				.ok_or(ArithmeticError::DivisionByZero)
-		}
-
-		fn update_market_after_trade(
-			market: &mut Market<T>,
-			base_asset_swapped: T::Balance,
-			direction: Direction,
-		) -> Result<(), DispatchError> {
-			let base_amount_decimal: T::Decimal = base_asset_swapped.into_decimal()?;
-			market.net_base_asset_amount.try_add_mut(&match direction {
-				Direction::Long => base_amount_decimal,
-				Direction::Short => base_amount_decimal.neg(),
-			})?;
-			Ok(())
+				.try_mul(&market.taker_fee)?
+				.try_div(&BASIS_POINT_DENOMINATOR.into())
 		}
 
 		fn increase_position(
 			position: &mut Position<T>,
-			market: &Market<T>,
+			market: &mut Market<T>,
 			direction: Direction,
 			quote_abs_amount_decimal: &T::Decimal,
 			base_asset_amount_limit: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
-			let base_swapped = T::Vamm::swap(&SwapConfigOf::<T> {
-				vamm_id: market.vamm_id,
-				asset: AssetType::Quote,
-				input_amount: quote_abs_amount_decimal.into_balance()?,
-				direction: match direction {
-					Direction::Long => VammDirection::Add,
-					Direction::Short => VammDirection::Remove,
-				},
-				output_amount_limit: base_asset_amount_limit,
+			let base_swapped = Self::swap_quote(
+				market,
+				direction,
+				quote_abs_amount_decimal,
+				base_asset_amount_limit,
+			)?;
+			let base_delta_decimal = Self::decimal_from_swapped(base_swapped, direction)?;
+
+			position.base_asset_amount.try_add_mut(&base_delta_decimal)?;
+			position.quote_asset_notional_amount.try_add_mut(&match direction {
+				Long => *quote_abs_amount_decimal,
+				Short => quote_abs_amount_decimal.neg(),
 			})?;
 
-			position
-				.base_asset_amount
-				.try_add_mut(&Self::decimal_from_swapped(base_swapped, direction)?)?;
-			position.quote_asset_notional_amount.try_add_mut(&match direction {
-				Direction::Long => *quote_abs_amount_decimal,
-				Direction::Short => quote_abs_amount_decimal.neg(),
-			})?;
+			market.add_base_asset_amount(&base_delta_decimal, direction)?;
 
 			Ok(base_swapped)
 		}
 
 		fn decrease_position(
 			position: &mut Position<T>,
-			market: &Market<T>,
+			market: &mut Market<T>,
 			direction: Direction,
 			quote_abs_amount_decimal: &T::Decimal,
 			base_asset_amount_limit: T::Balance,
 		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
-			let base_swapped = T::Vamm::swap(&SwapConfigOf::<T> {
-				vamm_id: market.vamm_id,
-				asset: AssetType::Quote,
-				input_amount: quote_abs_amount_decimal.into_balance()?,
-				direction: match direction {
-					Direction::Long => VammDirection::Add,
-					Direction::Short => VammDirection::Remove,
-				},
-				output_amount_limit: base_asset_amount_limit,
-			})?;
+			let base_swapped = Self::swap_quote(
+				market,
+				direction,
+				quote_abs_amount_decimal,
+				base_asset_amount_limit,
+			)?;
 			let base_delta_decimal = Self::decimal_from_swapped(base_swapped, direction)?;
 
 			// Compute proportion of quote asset notional amount closed
@@ -1017,12 +1043,14 @@ pub mod pallet {
 			// Trade direction is opposite of position direction, so we compute the exit value
 			// accordingly
 			let exit_value = match direction {
-				Direction::Long => quote_abs_amount_decimal.neg(),
-				Direction::Short => *quote_abs_amount_decimal,
+				Long => quote_abs_amount_decimal.neg(),
+				Short => *quote_abs_amount_decimal,
 			};
 
 			position.base_asset_amount.try_add_mut(&base_delta_decimal)?;
 			position.quote_asset_notional_amount.try_sub_mut(&entry_value)?;
+
+			market.add_base_asset_amount(&base_delta_decimal, direction.opposite())?;
 
 			Ok((base_swapped, entry_value, exit_value))
 		}
@@ -1031,30 +1059,28 @@ pub mod pallet {
 			positions: &mut BoundedVec<Position<T>, T::MaxPositions>,
 			position_index: usize,
 			position_direction: Direction,
-			market: &Market<T>,
+			market: &mut Market<T>,
 			quote_asset_amount_limit: T::Balance,
 		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
 			// This should always succeed if called by <Self as ClearingHouse>::open_position
 			let position = positions.get(position_index).ok_or(Error::<T>::PositionNotFound)?;
 
 			let base_swapped = position.base_asset_amount.into_balance()?;
-			let quote_swapped = T::Vamm::swap(&SwapConfigOf::<T> {
-				vamm_id: market.vamm_id,
-				asset: AssetType::Base,
-				input_amount: base_swapped,
-				direction: match position_direction {
-					Direction::Long => VammDirection::Add,
-					Direction::Short => VammDirection::Remove,
-				},
-				output_amount_limit: quote_asset_amount_limit,
-			})?;
+			let quote_swapped = Self::swap_base(
+				market,
+				position_direction,
+				base_swapped,
+				quote_asset_amount_limit,
+			)?;
 
 			let entry_value = position.quote_asset_notional_amount;
 			let quote_amount_decimal: T::Decimal = quote_swapped.into_decimal()?;
 			let exit_value = match position_direction {
-				Direction::Long => quote_amount_decimal,
-				Direction::Short => quote_amount_decimal.neg(),
+				Long => quote_amount_decimal,
+				Short => quote_amount_decimal.neg(),
 			};
+
+			market.sub_base_asset_amount(&position.base_asset_amount, position_direction)?;
 
 			positions.swap_remove(position_index);
 
@@ -1063,22 +1089,18 @@ pub mod pallet {
 
 		fn reverse_position(
 			position: &mut Position<T>,
-			market: &Market<T>,
+			market: &mut Market<T>,
 			direction: Direction,
 			quote_abs_amount_decimal: &T::Decimal,
 			base_asset_amount_limit: T::Balance,
 			abs_base_asset_value: &T::Decimal,
 		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
-			let base_swapped = T::Vamm::swap(&SwapConfigOf::<T> {
-				vamm_id: market.vamm_id,
-				asset: AssetType::Quote,
-				input_amount: quote_abs_amount_decimal.into_balance()?,
-				direction: match direction {
-					Direction::Long => VammDirection::Add,
-					Direction::Short => VammDirection::Remove,
-				},
-				output_amount_limit: base_asset_amount_limit,
-			})?;
+			let base_swapped = Self::swap_quote(
+				market,
+				direction,
+				quote_abs_amount_decimal,
+				base_asset_amount_limit,
+			)?;
 
 			// Since reversing is equivalent to closing a position and then opening a
 			// new one in the opposite direction, all of the current position's PnL is
@@ -1087,17 +1109,24 @@ pub mod pallet {
 			// Trade direction is opposite of position direction, so we compute the exit value
 			// accordingly
 			let exit_value = match direction {
-				Direction::Long => abs_base_asset_value.neg(),
-				Direction::Short => *abs_base_asset_value,
+				Long => abs_base_asset_value.neg(),
+				Short => *abs_base_asset_value,
 			};
+
+			// Account for the implicit position closing
+			market.sub_base_asset_amount(&position.base_asset_amount, direction.opposite())?;
 
 			position
 				.base_asset_amount
 				.try_add_mut(&Self::decimal_from_swapped(base_swapped, direction)?)?;
 			position.quote_asset_notional_amount = exit_value.try_add(&match direction {
-				Direction::Long => *quote_abs_amount_decimal,
-				Direction::Short => quote_abs_amount_decimal.neg(),
+				Long => *quote_abs_amount_decimal,
+				Short => quote_abs_amount_decimal.neg(),
 			})?;
+			// Update to account for direction change
+			position.last_cum_funding = market.cum_funding_rate(direction);
+
+			market.add_base_asset_amount(&position.base_asset_amount, direction)?;
 
 			Ok((base_swapped, entry_value, exit_value))
 		}
@@ -1105,7 +1134,7 @@ pub mod pallet {
 
 	// Helper functions - validity checks
 	impl<T: Config> Pallet<T> {
-		fn is_above_imr(
+		fn meets_initial_margin_ratio(
 			positions: &BoundedVec<Position<T>, T::MaxPositions>,
 			margin: T::Balance,
 		) -> Result<bool, DispatchError> {
@@ -1123,6 +1152,10 @@ pub mod pallet {
 
 					// Add PnL
 					equity.try_add_mut(&value.try_sub(&position.quote_asset_notional_amount)?)?;
+					// Add unrealized funding
+					equity.try_add_mut(&<Self as Instruments>::unrealized_funding(
+						&market, position,
+					)?)?;
 				}
 			}
 
@@ -1132,14 +1165,55 @@ pub mod pallet {
 
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
+		fn to_vamm_direction(direction: Direction) -> VammDirection {
+			match direction {
+				Long => VammDirection::Add,
+				Short => VammDirection::Remove,
+			}
+		}
+
+		fn swap_base(
+			market: &Market<T>,
+			direction: Direction,
+			base_amount: T::Balance,
+			quote_limit: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
+			T::Vamm::swap(&SwapConfigOf::<T> {
+				vamm_id: market.vamm_id,
+				asset: AssetType::Base,
+				input_amount: base_amount,
+				direction: Self::to_vamm_direction(direction),
+				output_amount_limit: quote_limit,
+			})
+		}
+
+		fn swap_quote(
+			market: &Market<T>,
+			direction: Direction,
+			quote_abs_decimal: &T::Decimal,
+			base_limit: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
+			T::Vamm::swap(&SwapConfigOf::<T> {
+				vamm_id: market.vamm_id,
+				asset: AssetType::Quote,
+				input_amount: quote_abs_decimal.into_balance()?,
+				direction: Self::to_vamm_direction(direction),
+				output_amount_limit: base_limit,
+			})
+		}
+
+		fn get_collateral_account() -> T::AccountId {
+			T::PalletId::get().into_sub_account("Collateral")
+		}
+
 		fn decimal_from_swapped(
 			swapped: T::Balance,
 			direction: Direction,
 		) -> Result<T::Decimal, DispatchError> {
 			let abs: T::Decimal = swapped.into_decimal()?;
 			Ok(match direction {
-				Direction::Long => abs,
-				Direction::Short => abs.neg(),
+				Long => abs,
+				Short => abs.neg(),
 			})
 		}
 
@@ -1147,17 +1221,18 @@ pub mod pallet {
 			positions: &'a mut BoundedVec<Position<T>, T::MaxPositions>,
 			market_id: &T::MarketId,
 			market: &Market<T>,
+			direction: Direction,
 		) -> Result<(&'a mut Position<T>, usize), DispatchError> {
 			Ok(match positions.iter().position(|p| p.market_id == *market_id) {
 				Some(index) =>
-					(positions.get_mut(index).expect("Item succesfully found above"), index),
+					(positions.get_mut(index).expect("Item successfully found above"), index),
 				None => {
 					positions
 						.try_push(Position::<T> {
 							market_id: market_id.clone(),
 							base_asset_amount: Zero::zero(),
 							quote_asset_notional_amount: Zero::zero(),
-							last_cum_funding: market.cum_funding_rate,
+							last_cum_funding: market.cum_funding_rate(direction),
 						})
 						.map_err(|_| Error::<T>::MaxPositionsExceeded)?;
 					let index = positions.len() - 1;
@@ -1178,10 +1253,7 @@ pub mod pallet {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Base,
 				input_amount: position.base_asset_amount.into_balance()?,
-				direction: match position_direction {
-					Direction::Long => VammDirection::Add,
-					Direction::Short => VammDirection::Remove,
-				},
+				direction: Self::to_vamm_direction(position_direction),
 			})?;
 
 			Self::decimal_from_swapped(sim_swapped, position_direction)
@@ -1207,7 +1279,7 @@ pub mod pallet {
 			let abs_pnl = pnl.into_balance()?;
 
 			Ok(match pnl.is_positive() {
-				true => margin.checked_add(&abs_pnl).ok_or(ArithmeticError::Overflow)?,
+				true => margin.try_add(&abs_pnl)?,
 				false => margin.saturating_sub(abs_pnl),
 			})
 		}
