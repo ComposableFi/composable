@@ -1,15 +1,13 @@
 use serde::{Deserialize, Serialize};
 use sp_application_crypto::BoundToRuntimeAppPublic;
-use sp_core::{
-	crypto::{key_types, ByteArray, CryptoType, Dummy},
-	U256,
-};
+use sp_core::crypto::{key_types, ByteArray, CryptoType, Dummy};
+	
 pub use sp_core::{sr25519, H256};
 use sp_runtime::{
 	codec::{Decode, Encode, MaxEncodedLen},
 	scale_info::TypeInfo,
 	testing::{TestSignature, UintAuthorityId},
-	traits::{IdentifyAccount, OpaqueKeys, Verify},
+	traits::{IdentifyAccount, OpaqueKeys},
 	CryptoTypeId, KeyTypeId,
 };
 use std::{cell::RefCell, ops::Deref};
@@ -42,15 +40,20 @@ impl From<u64> for UintAuthorityIdWrapper {
 
 impl From<UintAuthorityIdWrapper> for u64 {
 	fn from(id: UintAuthorityIdWrapper) -> u64 {
-		id.0 .0
+		id.0.0
 	}
+}
+
+impl From<UintAuthorityIdWrapper> for UintAuthorityId {
+    fn from(id: UintAuthorityIdWrapper) -> UintAuthorityId {
+        id.0
+    }
 }
 
 impl UintAuthorityIdWrapper {
 	/// Convert this authority ID into a public key.
 	pub fn to_public_key<T: ByteArray>(&self) -> T {
-		let bytes: [u8; 32] = U256::from(self.0 .0).into();
-		T::from_slice(&bytes).unwrap()
+        self.0.to_public_key()
 	}
 }
 
@@ -60,11 +63,8 @@ impl CryptoType for UintAuthorityIdWrapper {
 
 impl AsRef<[u8]> for UintAuthorityIdWrapper {
 	fn as_ref(&self) -> &[u8] {
-		unsafe {
-			let byte: *const _ = &(self.0 .0 as _);
-			std::slice::from_raw_parts(byte, std::mem::size_of::<u64>())
-		}
-	}
+	    self.0.as_ref()	
+    }
 }
 
 thread_local! {
@@ -73,8 +73,10 @@ thread_local! {
 
 impl UintAuthorityIdWrapper {
 	/// Set the list of keys returned by the runtime call for all keys of that type.
-	pub fn set_all_keys<T: Into<UintAuthorityIdWrapper>>(keys: impl IntoIterator<Item = T>) {
-		ALL_KEYS.with(|l| *l.borrow_mut() = keys.into_iter().map(Into::into).collect())
+	pub fn set_all_keys<T: Into<UintAuthorityIdWrapper>>(keys: impl IntoIterator<Item = T>)
+        where UintAuthorityId: From<T>,
+    {
+		UintAuthorityId::set_all_keys(keys);
 	}
 }
 
@@ -84,25 +86,29 @@ impl sp_application_crypto::RuntimeAppPublic for UintAuthorityIdWrapper {
 
 	type Signature = TestSignature;
 
-	fn all() -> Vec<Self> {
-		ALL_KEYS.with(|l| l.borrow().clone())
+	fn all() -> Vec<Self>{
+        let authority_id_vec = UintAuthorityId::all();	
+        let mut self_vec = Vec::new();
+        for i in 0..authority_id_vec.len() {
+            self_vec.push(Self(authority_id_vec.get(i).unwrap().clone()));
+        }
+        self_vec
 	}
 
-	fn generate_pair(_: Option<Vec<u8>>) -> Self {
-		use rand::RngCore;
-		Self(UintAuthorityId(rand::thread_rng().next_u64()))
+	fn generate_pair(input: Option<Vec<u8>>) -> Self {
+        Self(UintAuthorityId::generate_pair(input))
 	}
 
 	fn sign<M: AsRef<[u8]>>(&self, msg: &M) -> Option<Self::Signature> {
-		Some(TestSignature(self.0 .0, msg.as_ref().to_vec()))
+	    self.0.sign(msg)	
 	}
 
 	fn verify<M: AsRef<[u8]>>(&self, msg: &M, signature: &Self::Signature) -> bool {
-		Verify::verify(signature, msg.as_ref(), &self.0 .0)
+	    self.0.verify(msg, signature)	
 	}
 
 	fn to_raw_vec(&self) -> Vec<u8> {
-		AsRef::<[u8]>::as_ref(self).to_vec()
+	    self.0.to_raw_vec()	
 	}
 }
 
@@ -110,15 +116,16 @@ impl OpaqueKeys for UintAuthorityIdWrapper {
 	type KeyTypeIdProviders = ();
 
 	fn key_ids() -> &'static [KeyTypeId] {
-		&[key_types::DUMMY]
+        UintAuthorityId::key_ids()	
+    }
+
+	fn get_raw(&self, key_type_id: KeyTypeId) -> &[u8] {
+		self.0.get_raw(key_type_id)
+
 	}
 
-	fn get_raw(&self, _: KeyTypeId) -> &[u8] {
-		self.as_ref()
-	}
-
-	fn get<T: Decode>(&self, _: KeyTypeId) -> Option<T> {
-		self.using_encoded(|mut x| T::decode(&mut x)).ok()
+	fn get<T: Decode>(&self, key_type_id: KeyTypeId) -> Option<T> {
+	    self.0.get(key_type_id)	
 	}
 }
 
@@ -127,7 +134,7 @@ impl BoundToRuntimeAppPublic for UintAuthorityIdWrapper {
 }
 
 impl IdentifyAccount for UintAuthorityIdWrapper {
-	type AccountId = u64;
+	type AccountId = <UintAuthorityId as IdentifyAccount>::AccountId; 
 
 	fn into_account(self) -> Self::AccountId {
 		self.0 .0
@@ -136,7 +143,6 @@ impl IdentifyAccount for UintAuthorityIdWrapper {
 
 impl Deref for UintAuthorityIdWrapper {
 	type Target = [u8];
-
 	fn deref(&self) -> &Self::Target {
 		&self.as_ref()
 	}
@@ -148,3 +154,4 @@ impl frame_system::offchain::AppCrypto<UintAuthorityIdWrapper, TestSignature>
 	type GenericSignature = TestSignature;
 	type GenericPublic = Self;
 }
+
