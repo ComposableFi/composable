@@ -405,6 +405,9 @@ pub mod pallet {
 		NoPriceFeedForAsset,
 		/// Raised when trying to fetch a position from the positions vector with an invalid index
 		PositionNotFound,
+		/// Attempted to liquidate a user's account but it has sufficient collateral to back its
+		/// positions.
+		SufficientCollateral,
 		/// Raised when creating a new position with quote asset amount less than the market's
 		/// minimum trade size
 		TradeSizeTooSmall,
@@ -670,6 +673,7 @@ pub mod pallet {
 		///
 		/// ## Errors
 		///
+		/// - [`SufficientCollateral`](Error::<T>::SufficientCollateral)
 		/// TODO(0xangelo)
 		///
 		/// ## Weight/Runtime
