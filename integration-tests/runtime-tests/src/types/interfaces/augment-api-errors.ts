@@ -13,11 +13,8 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     assetsRegistry: {
-      ForeignAssetIdAlreadyUsed: AugmentedError<ApiType>;
-      ForeignAssetIdNotFound: AugmentedError<ApiType>;
-      LocalAssetIdAlreadyUsed: AugmentedError<ApiType>;
-      LocalAssetIdNotFound: AugmentedError<ApiType>;
-      OnlyAllowedForAdmins: AugmentedError<ApiType>;
+      AssetNotFound: AugmentedError<ApiType>;
+      ForeignAssetAlreadyRegistered: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -173,14 +170,140 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-    constantProductDex: {
-      CannotRespectMinimumRequested: AugmentedError<ApiType>;
-      InvalidAmount: AugmentedError<ApiType>;
-      InvalidFees: AugmentedError<ApiType>;
-      InvalidPair: AugmentedError<ApiType>;
-      MissingAmount: AugmentedError<ApiType>;
-      PairMismatch: AugmentedError<ApiType>;
-      PoolNotFound: AugmentedError<ApiType>;
+    cosmwasm: {
+      /**
+       * Code removal was denied because the code is still in use by at least one contract.
+       **/
+      CodeInUse: AugmentedError<ApiType>;
+      /**
+       * No code could be found at the supplied code hash.
+       **/
+      CodeNotFound: AugmentedError<ApiType>;
+      /**
+       * The contract's code was found to be invalid during validation or instrumentation.
+       * A more detailed error can be found on the node console if debug messages are enabled
+       * or in the debug buffer which is returned to RPC clients.
+       **/
+      CodeRejected: AugmentedError<ApiType>;
+      /**
+       * The code supplied to `instantiate_with_code` exceeds the limit specified in the
+       * current schedule.
+       **/
+      CodeTooLarge: AugmentedError<ApiType>;
+      /**
+       * No contract was found at the specified address.
+       **/
+      ContractNotFound: AugmentedError<ApiType>;
+      /**
+       * The contract ran to completion but decided to revert its storage changes.
+       * Please note that this error is only returned from extrinsics. When called directly
+       * or via RPC an `Ok` will be returned. In this case the caller needs to inspect the flags
+       * to determine whether a reversion has taken place.
+       **/
+      ContractReverted: AugmentedError<ApiType>;
+      /**
+       * Contract trapped during execution.
+       **/
+      ContractTrapped: AugmentedError<ApiType>;
+      /**
+       * The debug message specified to `seal_debug_message` does contain invalid UTF-8.
+       **/
+      DebugMessageInvalidUTF8: AugmentedError<ApiType>;
+      /**
+       * Input passed to a contract API function failed to decode as expected type.
+       **/
+      DecodingFailed: AugmentedError<ApiType>;
+      /**
+       * Removal of a contract failed because the deletion queue is full.
+       * 
+       * This can happen when calling `seal_terminate`.
+       * The queue is filled by deleting contracts and emptied by a fixed amount each block.
+       * Trying again during another block is the only way to resolve this issue.
+       **/
+      DeletionQueueFull: AugmentedError<ApiType>;
+      /**
+       * A contract with the same AccountId already exists.
+       **/
+      DuplicateContract: AugmentedError<ApiType>;
+      /**
+       * The topics passed to `seal_deposit_events` contains at least one duplicate.
+       **/
+      DuplicateTopics: AugmentedError<ApiType>;
+      /**
+       * `seal_call` forwarded this contracts input. It therefore is no longer available.
+       **/
+      InputForwarded: AugmentedError<ApiType>;
+      /**
+       * Invalid combination of flags supplied to `seal_call` or `seal_delegate_call`.
+       **/
+      InvalidCallFlags: AugmentedError<ApiType>;
+      /**
+       * A new schedule must have a greater version than the current one.
+       **/
+      InvalidScheduleVersion: AugmentedError<ApiType>;
+      /**
+       * Performing a call was denied because the calling depth reached the limit
+       * of what is specified in the schedule.
+       **/
+      MaxCallDepthReached: AugmentedError<ApiType>;
+      /**
+       * The chain does not provide a chain extension. Calling the chain extension results
+       * in this error. Note that this usually  shouldn't happen as deploying such contracts
+       * is rejected.
+       **/
+      NoChainExtension: AugmentedError<ApiType>;
+      /**
+       * A buffer outside of sandbox memory was passed to a contract API function.
+       **/
+      OutOfBounds: AugmentedError<ApiType>;
+      /**
+       * The executed contract exhausted its gas limit.
+       **/
+      OutOfGas: AugmentedError<ApiType>;
+      /**
+       * The output buffer supplied to a contract API call was too small.
+       **/
+      OutputBufferTooSmall: AugmentedError<ApiType>;
+      /**
+       * The subject passed to `seal_random` exceeds the limit.
+       **/
+      RandomSubjectTooLong: AugmentedError<ApiType>;
+      /**
+       * A call tried to invoke a contract that is flagged as non-reentrant.
+       **/
+      ReentranceDenied: AugmentedError<ApiType>;
+      /**
+       * More storage was created than allowed by the storage deposit limit.
+       **/
+      StorageDepositLimitExhausted: AugmentedError<ApiType>;
+      /**
+       * Origin doesn't have enough balance to pay the required storage deposits.
+       **/
+      StorageDepositNotEnoughFunds: AugmentedError<ApiType>;
+      /**
+       * A contract self destructed in its constructor.
+       * 
+       * This can be triggered by a call to `seal_terminate`.
+       **/
+      TerminatedInInstantiate: AugmentedError<ApiType>;
+      /**
+       * Termination of a contract is not allowed while the contract is already
+       * on the call stack. Can be triggered by `seal_terminate`.
+       **/
+      TerminatedWhileReentrant: AugmentedError<ApiType>;
+      /**
+       * The amount of topics passed to `seal_deposit_events` exceeds the limit.
+       **/
+      TooManyTopics: AugmentedError<ApiType>;
+      /**
+       * Performing the requested transfer failed. Probably because there isn't enough
+       * free balance in the sender's account.
+       **/
+      TransferFailed: AugmentedError<ApiType>;
+      /**
+       * The size defined in `T::MaxValueSize` was exceeded.
+       **/
+      ValueTooLarge: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -269,6 +392,7 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     currencyFactory: {
+      AssetNotFound: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -388,6 +512,32 @@ declare module '@polkadot/api-base/types/errors' {
        * Invalid upper bound.
        **/
       WrongUpperBound: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    dexRouter: {
+      /**
+       * Can not respect minimum amount requested.
+       **/
+      CanNotRespectMinAmountRequested: AugmentedError<ApiType>;
+      /**
+       * Number of hops in route exceeded maximum limit.
+       **/
+      MaxHopsExceeded: AugmentedError<ApiType>;
+      /**
+       * For given asset pair no route found.
+       **/
+      NoRouteFound: AugmentedError<ApiType>;
+      /**
+       * Unexpected node found while route validation.
+       **/
+      UnexpectedNodeFoundWhileValidation: AugmentedError<ApiType>;
+      /**
+       * Unsupported operation.
+       **/
+      UnsupportedOperation: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -533,20 +683,43 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     lending: {
-      /**
-       * Only assets for which we can track price are supported
-       **/
-      AssetNotSupportedByOracle: AugmentedError<ApiType>;
       AssetPriceNotFound: AugmentedError<ApiType>;
+      /**
+       * Borrow and repay in the same block (flashloans) are not allowed.
+       **/
       BorrowAndRepayInSameBlockIsNotSupported: AugmentedError<ApiType>;
+      /**
+       * Only assets that have a known price are supported.
+       **/
+      BorrowAssetNotSupportedByOracle: AugmentedError<ApiType>;
       BorrowDoesNotExist: AugmentedError<ApiType>;
       BorrowerDataCalculationFailed: AugmentedError<ApiType>;
       BorrowIndexDoesNotExist: AugmentedError<ApiType>;
       BorrowRateDoesNotExist: AugmentedError<ApiType>;
+      BorrowRentDoesNotExist: AugmentedError<ApiType>;
       CannotRepayMoreThanBorrowAmount: AugmentedError<ApiType>;
+      /**
+       * Repaying more than once in the same block is not allowed.
+       **/
+      CannotRepayMoreThanOnceInSameBlock: AugmentedError<ApiType>;
+      /**
+       * Cannot repay the total amount of debt when partially repaying.
+       **/
+      CannotRepayMoreThanTotalDebt: AugmentedError<ApiType>;
+      /**
+       * A market with a borrow balance of `0` was attempted to be repaid.
+       **/
+      CannotRepayZeroBalance: AugmentedError<ApiType>;
       CannotWithdrawFromProvidedBorrowAccount: AugmentedError<ApiType>;
+      /**
+       * Only assets that have a known price are supported.
+       **/
+      CollateralAssetNotSupportedByOracle: AugmentedError<ApiType>;
       CollateralDepositFailed: AugmentedError<ApiType>;
-      CollateralFactorIsLessOrEqualOne: AugmentedError<ApiType>;
+      /**
+       * The collateral factor for a market must be mroe than one.
+       **/
+      CollateralFactorMustBeMoreThanOne: AugmentedError<ApiType>;
       ExceedLendingCount: AugmentedError<ApiType>;
       InvalidTimestampOnBorrowRequest: AugmentedError<ApiType>;
       LiquidationFailed: AugmentedError<ApiType>;
@@ -558,16 +731,22 @@ declare module '@polkadot/api-base/types/errors' {
       MarketDoesNotExist: AugmentedError<ApiType>;
       MarketIsClosing: AugmentedError<ApiType>;
       NotEnoughBorrowAsset: AugmentedError<ApiType>;
-      NotEnoughCollateral: AugmentedError<ApiType>;
-      NotEnoughCollateralToBorrowAmount: AugmentedError<ApiType>;
+      NotEnoughCollateralToBorrow: AugmentedError<ApiType>;
+      /**
+       * Attempted to withdraw more collateral than the account has in the market.
+       **/
+      NotEnoughCollateralToWithdraw: AugmentedError<ApiType>;
       NotEnoughRent: AugmentedError<ApiType>;
       Overflow: AugmentedError<ApiType>;
       /**
        * borrow assets should have enough value as per oracle
        **/
       PriceOfInitialBorrowVaultShouldBeGreaterThanZero: AugmentedError<ApiType>;
-      RepayAmountMustBeGraterThanZero: AugmentedError<ApiType>;
+      RepayAmountMustBeGreaterThanZero: AugmentedError<ApiType>;
       TransferFailed: AugmentedError<ApiType>;
+      /**
+       * Attempted to update a market owned by someone else.
+       **/
       Unauthorized: AugmentedError<ApiType>;
       Underflow: AugmentedError<ApiType>;
       /**
@@ -575,24 +754,17 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       VaultNotFound: AugmentedError<ApiType>;
       /**
+       * The market would go under collateralized if the requested amount of collateral was
+       * withdrawn.
+       **/
+      WouldGoUnderCollateralized: AugmentedError<ApiType>;
+      /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
     };
     liquidations: {
       NoLiquidationEngineFound: AugmentedError<ApiType>;
-      /**
-       * Generic error
-       **/
-      [key: string]: AugmentedError<ApiType>;
-    };
-    liquidityBootstrapping: {
-      CannotRespectMinimumRequested: AugmentedError<ApiType>;
-      InvalidAmount: AugmentedError<ApiType>;
-      InvalidSaleState: AugmentedError<ApiType>;
-      MustBeOwner: AugmentedError<ApiType>;
-      PairMismatch: AugmentedError<ApiType>;
-      PoolNotFound: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -806,6 +978,7 @@ declare module '@polkadot/api-base/types/errors' {
       InvalidSaleState: AugmentedError<ApiType>;
       MissingAmount: AugmentedError<ApiType>;
       MustBeOwner: AugmentedError<ApiType>;
+      NoLpTokenForLbp: AugmentedError<ApiType>;
       PairMismatch: AugmentedError<ApiType>;
       PoolConfigurationNotSupported: AugmentedError<ApiType>;
       PoolNotFound: AugmentedError<ApiType>;
@@ -987,19 +1160,6 @@ declare module '@polkadot/api-base/types/errors' {
        * No keys are associated with this account.
        **/
       NoKeys: AugmentedError<ApiType>;
-      /**
-       * Generic error
-       **/
-      [key: string]: AugmentedError<ApiType>;
-    };
-    stableSwapDex: {
-      AmpFactorMustBeGreaterThanZero: AugmentedError<ApiType>;
-      AssetAmountMustBePositiveNumber: AugmentedError<ApiType>;
-      CannotRespectMinimumRequested: AugmentedError<ApiType>;
-      InvalidFees: AugmentedError<ApiType>;
-      InvalidPair: AugmentedError<ApiType>;
-      PairMismatch: AugmentedError<ApiType>;
-      PoolNotFound: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

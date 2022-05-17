@@ -2,10 +2,11 @@
 /* eslint-disable */
 
 import type { CustomRpcBalance, CustomRpcCurrencyId } from '@composable/types/interfaces/common';
+import type { Code } from '@composable/types/interfaces/cosmwasm';
 import type { PalletPabloPoolId, PalletPabloPriceAggregate } from '@composable/types/interfaces/pablo';
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
 import type { Metadata, StorageKey } from '@polkadot/types';
-import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, u32, u64 } from '@polkadot/types-codec';
+import type { BTreeMap, Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, u32, u64 } from '@polkadot/types-codec';
 import type { AnyNumber, Codec } from '@polkadot/types-codec/types';
 import type { ExtrinsicOrHash, ExtrinsicStatus } from '@polkadot/types/interfaces/author';
 import type { EpochAuthorship } from '@polkadot/types/interfaces/babe';
@@ -162,6 +163,20 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        * Upload new code without instantiating a contract from it
        **/
       uploadCode: AugmentedRpc<(uploadRequest: CodeUploadRequest | { origin?: any; code?: any; storageDepositLimit?: any } | string | Uint8Array, at?: BlockHash | string | Uint8Array) => Observable<CodeUploadResult>>;
+    };
+    cosmwasm: {
+      /**
+       * Call a contract
+       **/
+      call: AugmentedRpc<(origin: AccountId32 | string | Uint8Array, dest: AccountId32 | string | Uint8Array, value: BTreeMap<CustomRpcCurrencyId, CustomRpcBalance>, gas_limit: u64 | AnyNumber | Uint8Array, storage_deposit_limit: Option<CustomRpcBalance> | null | object | string | Uint8Array, data: Bytes | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<ContractExecResult>>;
+      /**
+       * Instantiate a contract
+       **/
+      instantiate: AugmentedRpc<(origin: AccountId32 | string | Uint8Array, value: BTreeMap<CustomRpcCurrencyId, CustomRpcBalance>, gas_limit: u64 | AnyNumber | Uint8Array, storage_deposit_limit: Option<CustomRpcBalance> | null | object | string | Uint8Array, code: Code | { Upload: any } | { Existing: any } | string | Uint8Array, data: Bytes | string | Uint8Array, salt: Bytes | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<ContractInstantiateResult>>;
+      /**
+       * Query a contract
+       **/
+      query: AugmentedRpc<(origin: AccountId32 | string | Uint8Array, dest: AccountId32 | string | Uint8Array, value: BTreeMap<CustomRpcCurrencyId, CustomRpcBalance>, gas_limit: u64 | AnyNumber | Uint8Array, storage_deposit_limit: Option<CustomRpcBalance> | null | object | string | Uint8Array, data: Bytes | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<ContractExecResult>>;
     };
     crowdloanRewards: {
       /**

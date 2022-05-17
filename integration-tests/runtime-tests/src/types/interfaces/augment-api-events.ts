@@ -12,10 +12,8 @@ import type { FrameSupportTokensMiscBalanceStatus, FrameSupportWeightsDispatchIn
 declare module '@polkadot/api-base/types/events' {
   export interface AugmentedEvents<ApiType extends ApiTypes> {
     assetsRegistry: {
-      AssetMetadataUpdated: AugmentedEvent<ApiType, [u128]>;
-      AssetsMappingCandidateUpdated: AugmentedEvent<ApiType, [u128, u128]>;
-      ForeignAdminUpdated: AugmentedEvent<ApiType, [AccountId32]>;
-      LocalAdminUpdated: AugmentedEvent<ApiType, [AccountId32]>;
+      AssetRegistered: AugmentedEvent<ApiType, [u128, ComposableTraitsXcmAssetsXcmAssetLocation]>;
+      AssetUpdated: AugmentedEvent<ApiType, [u128, ComposableTraitsXcmAssetsXcmAssetLocation]>;
       /**
        * Generic event
        **/
@@ -116,23 +114,36 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
-    constantProductDex: {
+    cosmwasm: {
       /**
-       * Liquidity added into the pool `T::PoolId` by `T::AccountId`.
+       * A code with the specified hash was removed.
        **/
-      LiquidityAdded: AugmentedEvent<ApiType, [u128, AccountId32, u128, u128, u128]>;
+      CodeRemoved: AugmentedEvent<ApiType, [H256]>;
       /**
-       * Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
+       * Code with the specified hash has been stored.
        **/
-      LiquidityRemoved: AugmentedEvent<ApiType, [u128, AccountId32, u128, u128, u128]>;
+      CodeStored: AugmentedEvent<ApiType, [H256]>;
       /**
-       * Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
+       * A contract's code was updated.
        **/
-      PoolCreated: AugmentedEvent<ApiType, [u128, AccountId32]>;
+      ContractCodeUpdated: AugmentedEvent<ApiType, [AccountId32, H256, H256]>;
       /**
-       * Token exchange happened.
+       * A custom event emitted by the contract.
        **/
-      Swapped: AugmentedEvent<ApiType, [AccountId32, u128, u128, u128, u128, u128, u128]>;
+      ContractEmitted: AugmentedEvent<ApiType, [AccountId32, Bytes]>;
+      /**
+       * Contract deployed by address at the specified address.
+       **/
+      Instantiated: AugmentedEvent<ApiType, [AccountId32, AccountId32]>;
+      /**
+       * Contract has been removed.
+       * 
+       * # Note
+       * 
+       * The only way for a contract to be removed and emitting this event is by calling
+       * `seal_terminate`.
+       **/
+      Terminated: AugmentedEvent<ApiType, [AccountId32, AccountId32]>;
       /**
        * Generic event
        **/
@@ -323,6 +334,15 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
+    dexRouter: {
+      RouteAdded: AugmentedEvent<ApiType, [AccountId32, u128, u128, Vec<u128>]>;
+      RouteDeleted: AugmentedEvent<ApiType, [AccountId32, u128, u128, Vec<u128>]>;
+      RouteUpdated: AugmentedEvent<ApiType, [AccountId32, u128, u128, Vec<u128>, Vec<u128>]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     dmpQueue: {
       /**
        * Downward message executed with the given outcome.
@@ -452,6 +472,10 @@ declare module '@polkadot/api-base/types/events' {
        **/
       Borrowed: AugmentedEvent<ApiType, [AccountId32, u32, u128]>;
       /**
+       * Event emitted when user repays borrow of beneficiary in given market.
+       **/
+      BorrowRepaid: AugmentedEvent<ApiType, [AccountId32, u32, AccountId32, u128]>;
+      /**
        * Event emitted when collateral is deposited.
        **/
       CollateralDeposited: AugmentedEvent<ApiType, [AccountId32, u32, u128]>;
@@ -469,13 +493,9 @@ declare module '@polkadot/api-base/types/events' {
       MarketCreated: AugmentedEvent<ApiType, [u32, u64, AccountId32, ComposableTraitsDefiCurrencyPairCurrencyId]>;
       MarketUpdated: AugmentedEvent<ApiType, [u32, ComposableTraitsLendingUpdateInput]>;
       /**
-       * Event emitted when user repays borrow of beneficiary in given market.
+       * Event emitted to warn that loan may go under collateralized soon.
        **/
-      RepaidBorrow: AugmentedEvent<ApiType, [AccountId32, u32, AccountId32, u128]>;
-      /**
-       * Event emitted to warn that loan may go under collaterized soon.
-       **/
-      SoonMayUnderCollaterized: AugmentedEvent<ApiType, [u32, AccountId32]>;
+      MayGoUnderCollateralizedSoon: AugmentedEvent<ApiType, [u32, AccountId32]>;
       /**
        * Generic event
        **/
@@ -483,28 +503,6 @@ declare module '@polkadot/api-base/types/events' {
     };
     liquidations: {
       PositionWasSentToLiquidation: AugmentedEvent<ApiType, []>;
-      /**
-       * Generic event
-       **/
-      [key: string]: AugmentedEvent<ApiType>;
-    };
-    liquidityBootstrapping: {
-      /**
-       * Liquidity added into the pool `T::PoolId`.
-       **/
-      LiquidityAdded: AugmentedEvent<ApiType, [u128, u128, u128]>;
-      /**
-       * Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
-       **/
-      PoolCreated: AugmentedEvent<ApiType, [u128, AccountId32]>;
-      /**
-       * The sale ended, the funds repatriated and the pool deleted.
-       **/
-      PoolDeleted: AugmentedEvent<ApiType, [u128, u128, u128]>;
-      /**
-       * Token exchange happened.
-       **/
-      Swapped: AugmentedEvent<ApiType, [u128, AccountId32, u128, u128, u128, u128]>;
       /**
        * Generic event
        **/
@@ -647,7 +645,7 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
        **/
-      PoolCreated: AugmentedEvent<ApiType, [u128, AccountId32]>;
+      PoolCreated: AugmentedEvent<ApiType, [u128, AccountId32, ComposableTraitsDefiCurrencyPairCurrencyId]>;
       /**
        * The sale ended, the funds repatriated and the pool deleted.
        **/
@@ -655,7 +653,7 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * Token exchange happened.
        **/
-      Swapped: AugmentedEvent<ApiType, [u128, AccountId32, u128, u128, u128, u128, u128]>;
+      Swapped: AugmentedEvent<ApiType, [u128, AccountId32, u128, u128, u128, u128, u128, u128]>;
       /**
        * Generic event
        **/
@@ -861,28 +859,6 @@ declare module '@polkadot/api-base/types/events' {
        * block number as the type might suggest.
        **/
       NewSession: AugmentedEvent<ApiType, [u32]>;
-      /**
-       * Generic event
-       **/
-      [key: string]: AugmentedEvent<ApiType>;
-    };
-    stableSwapDex: {
-      /**
-       * Liquidity added into the pool `T::PoolId` by `T::AccountId`.
-       **/
-      LiquidityAdded: AugmentedEvent<ApiType, [AccountId32, u128, u128, u128, u128]>;
-      /**
-       * Liquidity removed from pool `T::PoolId` by `T::AccountId` in balanced way.
-       **/
-      LiquidityRemoved: AugmentedEvent<ApiType, [AccountId32, u128, u128, u128, u128]>;
-      /**
-       * Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
-       **/
-      PoolCreated: AugmentedEvent<ApiType, [AccountId32, u128]>;
-      /**
-       * Token exchange happened.
-       **/
-      Swapped: AugmentedEvent<ApiType, [AccountId32, u128, u128, u128, u128, u128, u128]>;
       /**
        * Generic event
        **/
