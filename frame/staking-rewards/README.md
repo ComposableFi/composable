@@ -103,7 +103,7 @@ Can be made only during epoch, but not during epoch transitions (for scalability
 
 #### Extend positions
 
-User can extend position with amount or  with time.
+User can extend position with amount or with time.
 
 Can extending is not acted on current epoch, but merged during transitions.
 
