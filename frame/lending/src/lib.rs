@@ -77,7 +77,7 @@ pub mod pallet {
 			math::{self, *},
 			BorrowAmountOf, CollateralLpAmountOf, CreateInput, CurrencyPairIsNotSame, Lending,
 			MarketConfig, MarketModelValid, RepayStrategy, TotalDebtWithInterest, UpdateInput,
-			UpdateInputVaild,
+			UpdateInputValid,
 		},
 		liquidation::Liquidation,
 		oracle::Oracle,
@@ -636,7 +636,7 @@ pub mod pallet {
 			market_id: MarketIndex,
 			input: Validated<
 				UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>,
-				UpdateInputVaild,
+				UpdateInputValid,
 			>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;

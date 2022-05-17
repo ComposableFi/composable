@@ -21,7 +21,7 @@ use composable_support::validation::{TryIntoValidated, Validated};
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok};
 use composable_traits::{
 	defi::{CurrencyPair, LiftedFixedBalance, MoreThanOneFixedU128, Rate, ZeroToOneFixedU128},
-	lending::{self, math::*, CreateInput, UpdateInput, UpdateInputVaild},
+	lending::{self, math::*, CreateInput, UpdateInput, UpdateInputValid},
 	oracle,
 	time::SECONDS_PER_YEAR_NAIVE,
 	vault::{self, Deposit, VaultConfig},
@@ -271,7 +271,7 @@ fn can_update_market() {
 			),
 		};
 		assert_err!(
-			update_input.try_into_validated::<UpdateInputVaild>(),
+			update_input.try_into_validated::<UpdateInputValid>(),
 			"collateral factor must be >= 1"
 		);
 	})

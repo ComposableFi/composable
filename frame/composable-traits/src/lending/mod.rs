@@ -33,7 +33,7 @@ pub type CollateralLpAmountOf<T> = <T as DeFiEngine>::Balance;
 pub type BorrowAmountOf<T> = <T as DeFiEngine>::Balance;
 
 #[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
-pub struct UpdateInputVaild;
+pub struct UpdateInputValid;
 
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq)]
 pub struct UpdateInput<LiquidationStrategyId, BlockNumber> {
@@ -50,7 +50,7 @@ pub struct UpdateInput<LiquidationStrategyId, BlockNumber> {
 }
 
 impl<LiquidationStrategyId, BlockNumber>
-	Validate<UpdateInput<LiquidationStrategyId, BlockNumber>, UpdateInputVaild> for UpdateInputVaild
+	Validate<UpdateInput<LiquidationStrategyId, BlockNumber>, UpdateInputValid> for UpdateInputValid
 {
 	fn validate(
 		update_input: UpdateInput<LiquidationStrategyId, BlockNumber>,
@@ -94,7 +94,7 @@ impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
 	fn validate(
 		create_input: CreateInput<LiquidationStrategyId, Asset, BlockNumber>,
 	) -> Result<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, &'static str> {
-		let updatable = create_input.updatable.try_into_validated::<UpdateInputVaild>()?.value();
+		let updatable = create_input.updatable.try_into_validated::<UpdateInputValid>()?.value();
 
 		Ok(CreateInput { updatable, ..create_input })
 	}
