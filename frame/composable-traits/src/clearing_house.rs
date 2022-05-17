@@ -99,8 +99,12 @@ pub trait ClearingHouse {
 	/// opening a position) are liquidated first.
 	///
 	/// # Parameters
-	/// - `account_id`: the user's account Id
-	fn liquidate(account_id: &Self::AccountId) -> Result<(), DispatchError>;
+	/// - `liquidator_id`: the liquidator's account Id
+	/// - `user_id`: the user's account Id
+	fn liquidate(
+		liquidator_id: &Self::AccountId,
+		user_id: &Self::AccountId,
+	) -> Result<(), DispatchError>;
 }
 
 /// Exposes functionality for querying funding-related quantities of synthetic instruments

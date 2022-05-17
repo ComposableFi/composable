@@ -918,7 +918,10 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn liquidate(account_id: &Self::AccountId) -> Result<(), DispatchError> {
+		fn liquidate(
+			liquidator_id: &Self::AccountId,
+			user_id: &Self::AccountId,
+		) -> Result<(), DispatchError> {
 			todo!()
 		}
 	}
