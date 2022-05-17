@@ -86,10 +86,10 @@ pub trait ClearingHouse {
 	/// - `market_id`: the perpetuals market Id
 	fn update_funding(market_id: &Self::MarketId) -> Result<(), DispatchError>;
 
-	/// Liquidates a user's account, realizing their PnL and funding payments.
+	/// Liquidates a user's account if below margin requirements.
 	///
 	/// Note that both unrealized PnL and funding payments contribute to an account being brought
-	/// below the maintenance margin ratio.
+	/// below the maintenance margin ratio. Liquidation realizes a user's PnL and funding payments.
 	///
 	/// Liquidation can be either full or partial. In the former case, positions are closed
 	/// entirely, while in the latter, they are partially closed until the account is brought back
