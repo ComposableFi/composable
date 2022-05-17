@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc b2908ece4ce0d66a87b6c052a70d6d052fb0ffe4ac3008bb01bb3ea8501ccd29 # shrinks to asset_id = 1, (balance1, balance2) = (1000, 1000)
+cc 2745aa6c768c4646bbdff7f6dacc30774ed774bc5fc04675a9944d1d7b26af09 # shrinks to asset_id = 1, (balance1, balance2) = (6148914691236517136, 1000)

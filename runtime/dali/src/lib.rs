@@ -725,7 +725,7 @@ impl democracy::Config for Runtime {
 	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
 }
 
-impl multicurrency_democracy::Config for Runtime {
+impl multitenant_democracy::Config for Runtime {
 	type Proposal = Call;
 	type Event = Event;
 	type Balance = Balance;
@@ -762,7 +762,7 @@ impl multicurrency_democracy::Config for Runtime {
 
 	type PreimageByteDeposit = PreimageByteDeposit;
 	type Scheduler = Scheduler;
-	type WeightInfo = weights::multicurrency_democracy::WeightInfo<Runtime>;
+	type WeightInfo = weights::multitenant_democracy::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -1130,7 +1130,7 @@ construct_runtime!(
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
-		MultiCurrencyDemocracy: multicurrency_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 101,
+		MultiCurrencyDemocracy: multitenant_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 101,
 	}
 );
 

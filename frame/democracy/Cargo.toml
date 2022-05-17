@@ -4,7 +4,7 @@ description = "FRAME pallet for democracy with multi currency support"
 edition = "2021"
 homepage = "https://composable.finance"
 license = "Apache-2.0"
-name = "pallet-multicurrency-democracy"
+name = "pallet-multitenant-democracy"
 readme = "README.md"
 version = "0.0.1"
 
@@ -19,7 +19,6 @@ composable-traits = {default-features = false, path = "../composable-traits"}
 frame-benchmarking = {default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
 frame-support = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
 frame-system = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
-orml-tokens = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b5d4ce1d08fb54c0007c2055653892d2c93a92e", default-features = false}
 orml-traits = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b5d4ce1d08fb54c0007c2055653892d2c93a92e", default-features = false}
 scale-info = {version = "2.1.1", default-features = false, features = [
   "derive",
@@ -30,10 +29,12 @@ sp-runtime = {default-features = false, git = "https://github.com/paritytech/sub
 sp-std = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
 
 [dev-dependencies]
+orml-tokens = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b5d4ce1d08fb54c0007c2055653892d2c93a92e", default-features = false}
 pallet-balances = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
 pallet-governance-registry = {path = "../governance-registry"}
 pallet-preimage = {package = "pallet-preimage", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
 pallet-scheduler = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
+proptest = "1.0"
 sp-core = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
 
 [features]
@@ -54,7 +55,6 @@ std = [
   "frame-support/std",
   "sp-runtime/std",
   "frame-system/std",
-  "orml-tokens/std",
   "orml-traits/std",
 ]
 try-runtime = ["frame-support/try-runtime"]
