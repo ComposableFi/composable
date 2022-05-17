@@ -1463,7 +1463,7 @@ fn create_simple_vault(
 }
 
 /// Creates a market with the given values and initializes some state.
-/// This generalized  function use  LendingTrait's create() method.
+/// This generalized function use LendingTrait's `create` method.
 /// Thus, event is not emitted.
 //
 /// State initialized:
