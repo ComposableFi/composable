@@ -35,7 +35,7 @@ composable-traits = { path = "../composable-traits", default-features = false }
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
 composable-traits = { path = "../composable-traits", features = ["test-utils"] }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
 
 [features]
 default = ["std"]
