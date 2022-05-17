@@ -11,7 +11,7 @@ use frame_support::{
 };
 use scale_info::TypeInfo;
 use sp_runtime::{DispatchError, TokenError};
-use sp_std::collections::btree_map::BTreeMap;
+use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
 // TODO: use BiBoundedVec to avoid for safety - it is easy to grow, but not easy to shrink (needs
 // migration)
