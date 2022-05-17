@@ -64,7 +64,7 @@ mod tests {
 	use frame_system::{limits, EnsureRoot};
 	use num_traits::Zero;
 	use orml_traits::parameter_type_with_key;
-	use polkadot_primitives::v1::AccountId;
+	use polkadot_primitives::v2::AccountId;
 	use primitives::currency::CurrencyId;
 	use sp_core::H256;
 	use sp_runtime::{

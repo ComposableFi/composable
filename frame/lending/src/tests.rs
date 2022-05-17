@@ -175,7 +175,7 @@ fn accrue_interest_induction() {
 #[test]
 fn accrue_interest_plotter() {
 	let (optimal, ref mut interest_rate_model) = new_jump_model();
-	let borrow_index = MoreThanOneFixedU128::checked_from_integer(1).unwrap();
+	let borrow_index = MoreThanOneFixedU128::checked_from_integer::<u128>(1).unwrap();
 	let total_issued = 10_000_000_000;
 	let accrued_debt = 0;
 	let total_borrows = total_issued - accrued_debt;
@@ -202,7 +202,7 @@ fn accrue_interest_plotter() {
 		accrue_interest_internal::<Runtime, InterestRateModel>(
 			optimal,
 			interest_rate_model,
-			Rate::checked_from_integer(1).unwrap(),
+			Rate::checked_from_integer::<u128>(1).unwrap(),
 			TOTAL_BLOCKS * MILLISECS_PER_BLOCK,
 			total_borrows,
 		)
@@ -969,7 +969,7 @@ fn test_repay_partial_amount() {
 				post_info: PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },
 				error: DispatchError::Module(ModuleError {
 					index: 8,
-					error: 34,
+					error: [34,0,0,0],
 					message: Some(Error::<Runtime>::CannotRepayMoreThanTotalDebt.into(),),
 				}),
 			},
