@@ -10,7 +10,7 @@ use composable_traits::{
 };
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{Everything, GenesisBuild, OnFinalize, OnInitialize, OnRuntimeUpgrade},
+	traits::{Everything, GenesisBuild, OnRuntimeUpgrade},
 	weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
 	PalletId,
 };
@@ -60,7 +60,6 @@ pub type TestExtrinsic = TestXt<Call, MockedExtension<Runtime>>;
 pub type TestBlock = Block<TestExtrinsic>;
 pub type Balance = u128;
 pub type Amount = i128;
-pub type BlockNumber = u64;
 pub type VaultId = u64;
 pub type Signature = TestSignature;
 pub type LiquidationStrategyId = u32;
@@ -482,28 +481,6 @@ pub fn process_block_with_execution(extrinsic: TestExtrinsic) {
 	Executive::apply_extrinsic(extrinsic).unwrap().unwrap();
 }
 
-/// Processes the specified amount alls [`next_block()`] and then calls
-/// [`Lending::finalize`](OnFinalize::on_finalize).
-pub fn process_and_progress_blocks(blocks_to_process: usize) {
-	(0..blocks_to_process).for_each(|_| {
-		let new_block = next_block();
-		Lending::on_finalize(new_block);
-	})
-}
-
-/// Progresses to the next block, initializes the block with
-/// [`Lending::on_initialize`](OnInitialize::on_initialize), and then sets the timestamp to where it
-/// should be for the block. Returns the next block.
-pub fn next_block() -> BlockNumber {
-	let next_block = System::block_number()
-		.safe_add(&1)
-		.expect("hit the numeric limit for block number");
-	System::set_block_number(next_block);
-	Timestamp::set_timestamp(MILLISECS_PER_BLOCK * next_block);
-	Lending::on_initialize(next_block);
-
-	next_block
-}
 
 #[derive(Encode, Decode, Clone, Eq, PartialEq, Debug, TypeInfo)]
 pub struct MockedExtension<T>(core::marker::PhantomData<T>);

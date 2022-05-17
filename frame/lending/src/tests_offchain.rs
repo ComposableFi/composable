@@ -15,6 +15,7 @@ use sp_core::{
 use sp_runtime::{
 	testing::Digest, traits::Header as HeaderTrait, FixedPointNumber, Percent, Perquintill,
 };
+use composable_tests_helpers::test;
 
 const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
 
@@ -57,7 +58,7 @@ fn test_liquidation_offchain_worker() {
 		let vault_value = USDT::units(100_000_000);
 		assert_ok!(Tokens::mint_into(USDT::ID, &lender, vault_value));
 		assert_ok!(Vault::deposit(Origin::signed(lender), vault, vault_value));
-		process_and_progress_blocks(1);
+		test::block::process_and_progress_blocks::<Lending, Runtime>(1);
 		// Borrow 20_000 USDT.
 		let borrowed_value = USDT::units(20_000);
 		assert_extrinsic_event::<Runtime>(
