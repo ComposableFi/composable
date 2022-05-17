@@ -1,7 +1,7 @@
 [package]
 authors = ["Composable Developers"]
 description = "FRAME pallet for democracy with multi currency support"
-edition = "2018"
+edition = "2021"
 homepage = "https://composable.finance"
 license = "Apache-2.0"
 name = "pallet-democracy"

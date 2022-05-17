@@ -1,6 +1,6 @@
 [package]
 authors = ["Composable Developers"]
-edition = "2018"
+edition = "2021"
 homepage = "https://composable.finance"
 name = "faucet-server"
 version = "0.1.0"
@@ -24,7 +24,7 @@ serde_urlencoded = "0.7.1"
 sha2 = "0.10.2"
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
 structopt = "0.3.26"
-substrate-xt = { git = "https://github.com/polytope-labs/substrate-xt", rev = "cc9ce2d8651c2d140ae45f1de67faf792c5cda96" }
+substrate-xt = { git = "https://github.com/polytope-labs/substrate-xt", rev = "ca6bcf124b3afbd8e84a53275f9b674bfd6cd19e" }
 tide = "0.17.0-beta.1"
 tokio = { version = "0.3.7", features = ["macros", "rt-multi-thread"] }
 utils-common = { path = "../common" }

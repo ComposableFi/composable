@@ -1,6 +1,6 @@
 [package]
 authors = ["Composable Developers"]
-edition = "2018"
+edition = "2021"
 homepage = "https://composable.finance"
 name = "parachain-utils"
 version = "0.1.0"
@@ -29,7 +29,7 @@ structopt = "0.3.23"
 sudo = { package = "pallet-sudo", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
 
 common = { package = "common", path = "../../runtime/common" }
-substrate-xt = { git = "https://github.com/polytope-labs/substrate-xt", rev = "cc9ce2d8651c2d140ae45f1de67faf792c5cda96" }
+substrate-xt = { git = "https://github.com/polytope-labs/substrate-xt", rev = "ca6bcf124b3afbd8e84a53275f9b674bfd6cd19e" }
 
 utils-common = { path = "../common" }
 

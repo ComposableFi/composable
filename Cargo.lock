@@ -14183,7 +14183,7 @@ dependencies = [
 [[package]]
 name = "substrate-xt"
 version = "0.1.0"
-source = "git+https://github.com/polytope-labs/substrate-xt?rev=cc9ce2d8651c2d140ae45f1de67faf792c5cda96#cc9ce2d8651c2d140ae45f1de67faf792c5cda96"
+source = "git+https://github.com/polytope-labs/substrate-xt?rev=ca6bcf124b3afbd8e84a53275f9b674bfd6cd19e#ca6bcf124b3afbd8e84a53275f9b674bfd6cd19e"
 dependencies = [
  "frame-system",
  "futures 0.3.21",
