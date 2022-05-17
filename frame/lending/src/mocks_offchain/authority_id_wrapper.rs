@@ -87,12 +87,7 @@ impl sp_application_crypto::RuntimeAppPublic for UintAuthorityIdWrapper {
 	type Signature = TestSignature;
 
 	fn all() -> Vec<Self> {
-		let authority_id_vec = UintAuthorityId::all();
-		let mut self_vec = Vec::new();
-		for i in 0..authority_id_vec.len() {
-			self_vec.push(Self(authority_id_vec.get(i).unwrap().clone()));
-		}
-		self_vec
+		UintAuthorityId::all().into_iter().map(Self).collect()
 	}
 
 	fn generate_pair(input: Option<Vec<u8>>) -> Self {
