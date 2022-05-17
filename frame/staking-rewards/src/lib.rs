@@ -9,7 +9,7 @@
 		clippy::panic
 	)
 )] // allow in tests
-#![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![deny(
 	bad_style,
@@ -44,6 +44,7 @@ mod mock;
 pub mod pallet {
 	use composable_support::{
 		abstractions::block_fold::{BlockFold, FoldStorage, FoldStrategy},
+		collections::vec::bounded::BiBoundedVec,
 		math::safe::{safe_multiply_by_rational, SafeAdd, SafeSub},
 	};
 	use composable_traits::{
@@ -275,6 +276,8 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Enable a protocol staking configuration.
 		///
+		/// Minimal staking duration must be larger or equal to epoch.
+		///
 		/// Arguments
 		///
 		/// * `origin` the origin that signed this extrinsic, must be `T::GovernanceOrigin`.
@@ -295,8 +298,8 @@ pub mod pallet {
 		///
 		/// Arguments
 		///
-		/// * `origin` the origin that signed this extrinsic. Will be the owner of the  fNFT targeted
-		///   by `instance_id`.
+		/// * `origin` the origin that signed this extrinsic. Will be the owner of the  fNFT
+		///   targeted by `instance_id`.
 		/// * `amount` the amount of tokens to stake.
 		/// * `duration` the duration for which the tokens will be staked.
 		/// * `keep_alive` whether to keep the caller account alive or not.
@@ -356,6 +359,47 @@ pub mod pallet {
 			<Self as Staking>::claim(&instance_id, &to)?;
 			Ok(().into())
 		}
+
+		/// Splits fNFT position into several chunks with various amounts, but with same exposure.
+		/// fNFT splitted earns reward in current epoch proportial to split.
+		/// Can split only at  `State::WaitingForEpochEnd` state.
+		///
+		/// `origin` - owner of fNFT
+		/// `amounts` - amount of in each fNFT, sum must equal to current stake.
+		///
+		///  raises event of NFT `SplitCreation`
+		#[pallet::weight(10_000)]
+		pub fn split(
+			origin: OriginFor<T>,
+			asset: InstanceIdOf<T>,
+			amounts: BiBoundedVec<T::Balance, 2, 16>,
+		) -> DispatchResult {
+			Err(DispatchError::Other("no implemented. TODO: call split on fnft provider"))
+		}
+
+		/// Extends fNFT position stake. Applied only to next epoch.
+		#[pallet::weight(10_000)]
+		pub fn extend_stake(
+			origin: OriginFor<T>,
+			instance_id: InstanceIdOf<T>,
+			balance: T::Balance,
+		) -> DispatchResult {
+			Err(DispatchError::Other("no implemented. TODO: insert update for next fold"))
+		}
+
+		/// Extends stake duration.
+		/// `duration` - if none, then extend current duration from start. If more than current
+		/// duration, takes some time from new duration.
+		///
+		/// Fails if `duration` extensions does not fits allowed.
+		#[pallet::weight(10_000)]
+		pub fn extend_duration(
+			origin: OriginFor<T>,
+			instance_id: InstanceIdOf<T>,
+			duration: Option<DurationSeconds>,
+		) -> DispatchResult {
+			Err(DispatchError::Other("no implemented. TODO: insert update for next fold").into())
+		}
 	}
 
 	#[pallet::hooks]
@@ -364,13 +408,14 @@ pub mod pallet {
 			// TODO(hussein-aitlahcen): abstract per-block fold of chunk into a macro:
 			match Self::current_state() {
 				State::WaitingForEpochEnd => {
-					// NOTE: we start new epoch here, it will work well if an only if epoch time is longer than total fold time - which is most likely yes
+					// NOTE: we start new epoch here, it will work well if an only if epoch time is
+					// longer than total fold time - which is most likely yes
 					Self::update_epoch();
 				},
 				State::Rewarding => {
 					let (reward_epoch, reward_epoch_start) = EndEpochSnapshot::<T>::get();
 					let result = <(FoldState<T>, Stakers<T>)>::step(
-						FoldStrategy::chunk(T::ElementToProcessPerBlock::get()),						
+						FoldStrategy::new_chunk(T::ElementToProcessPerBlock::get()),
 						(),
 						|_, nft_id, _| {
 							let try_reward = T::try_mutate_protocol_nft(
@@ -424,6 +469,7 @@ pub mod pallet {
 					}
 				},
 				State::Registering => {
+					// TODO: extend adding extensions to exisitng nfts
 					let result = <(FoldState<T>, PendingStakers<T>)>::step(
 						FoldStrategy::Chunk {
 							number_of_elements: T::ElementToProcessPerBlock::get(),
@@ -617,7 +663,7 @@ pub mod pallet {
 
 		fn unstake(instance_id: &Self::InstanceId, to: &Self::AccountId) -> DispatchResult {
 			Self::ensure_valid_interaction_state()?;
-			Self as Staking>::claim(instance_id, to)?;
+			<Self as Staking>::claim(instance_id, to)?;
 			let nft = T::get_protocol_nft::<StakingNFTOf<T>>(instance_id)?;
 			let protocol_account = Self::account_id(&nft.asset);
 			let current_epoch = Self::current_epoch();

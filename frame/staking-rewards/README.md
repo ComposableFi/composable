@@ -84,3 +84,57 @@ User may stake amount and get fNFT, but it will not start earn until next epoch 
 After each epoch end, there is short period of time it takes to collect rewards and put new fNFTs into rewarding state.
 
 During epoch user are protected from dilution made by other users which stake.
+
+### Positions operations
+
+
+
+#### Split positions
+
+Allows to split positons without paying penalty.
+
+If user had fNFT with MONTH lock total, with 2 weeks already passed with 100 tokens.
+
+It can split fNFT into several parts, examples 20, 30, 40 tokens. Each of which will be same lock duraion and time lock passed.
+
+Splitting will not loose rewards for ongoing epoch.
+
+Can be made only during epoch, but not during epoch transitions (for scalability and corretness reasons).
+
+#### Extend positions
+
+User can extend position with amount or  with time.
+
+Can extending is not acted on current epoch, but merged during transitions.
+
+##### Amount
+
+Adds amount to stake. Diminishes time it would take until penalty by value calculated as follows:
+
+```python
+original_amount = 100
+new_amount = 10000
+duration = 100
+passed = 50
+after_penalized = 0.5 # part of amount remaining after early withdraw
+total = after_penalized * original_amount + new_amount
+remaining = (after_penalized * original_amount * (duration-passed) +  new_amount * duration  ) / total
+print(remaining) # reduced penalized remaining time, so it is better than create new fNFT but not as good as if it was staked originally so much 
+```
+
+#### Time
+
+Can extend time of lock to same time or extended.
+
+Examle,
+If position was MONTH and passed two weeks. Can extend it to MONTH or longer.
+In case of extending to MONTH, two weeks are zeroed.
+In case of extending to YEAR, 2 weeks passed retained in position.
+
+```python
+previous_lock = 10
+new_lock = 20
+passed_time = 2
+rolling = min(new_lock - previous_lock, passed_time)
+print(rolling) # time it moves to new lock
+```

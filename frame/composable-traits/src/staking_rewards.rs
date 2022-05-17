@@ -99,7 +99,7 @@ pub struct StakingConfig<AccountId, DurationPresets, RewardAssets> {
 	pub early_unstake_penalty: Penalty<AccountId>,
 }
 
-/// staking typed fNFT, usually can be mapped to raw fNFT storage type 
+/// staking typed fNFT, usually can be mapped to raw fNFT storage type
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Encode, Decode, TypeInfo)]
 pub struct StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards> {
 	/// The staked asset.

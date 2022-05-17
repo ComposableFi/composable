@@ -26,7 +26,7 @@ pub enum FoldStrategy {
 }
 
 impl FoldStrategy {
-	pub new chunks(number_of_elements:u32) -> Self {
+	pub fn new_chunk(number_of_elements: u32) -> Self {
 		Self::Chunk { number_of_elements }
 	}
 }

@@ -44,8 +44,10 @@ pub mod pallet {
 	use composable_support::math::safe::SafeAdd;
 	use std::collections::BTreeSet;
 
-	use composable_support::{math::safe::SafeAdd, collections::vec::bounded::BiBoundedVec};
-	use composable_traits::financial_nft::{FinancialNFTProvider, NFTClass};
+	use composable_support::{collections::vec::bounded::BiBoundedVec, math::safe::SafeAdd};
+	use composable_traits::financial_nft::{
+		AttributeKey, AttributeValue, FinancialNFTProvider, NFTClass,
+	};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
@@ -58,9 +60,6 @@ pub mod pallet {
 
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	pub(crate) type NftInstanceId = u128;
-	// TODO: use BiBoundedVec to avoid for safety - it is easy to grow, but not easy to shrink (needs migration)
-	pub type AttributeKey = Vec<u8>; //TODO: len 1 to 64
-	pub type AttributeValue = Vec<u8>; //TODO: len from 0 to 2048
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
@@ -236,15 +235,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// actually burns sNFT and creates new NFTs.
-		/// uses bases shared metadata and override as described by `overrides`
-		/// count `overrides` is equal to count of splits
-		/// raises event of NFT split-creation 
-		fn split(instance: &Self::InstanceId, overrides: BiBoundedVec<BTreeSet<AttributeKey, AttributeValue>, 1, 16>) -> Result<BiBoundedVec<Self::InstanceId, 1, 16>, DispatchError> {
-			Err(DispatchError::Other("no implemented"))
-		}
-
-		fn burn(class: &Self::ClassId, instance: &Self::InstanceId) -> DispatchResult {
+		fn burn_from(class: &Self::ClassId, instance: &Self::InstanceId) -> DispatchResult {
 			Instance::<T>::try_mutate_exists((class, instance), |entry| -> DispatchResult {
 				match entry {
 					Some((owner, _)) => {
@@ -322,6 +313,16 @@ pub mod pallet {
 	}
 
 	impl<T: Config> FinancialNftProvider<AccountIdOf<T>> for Pallet<T> {
+		/// actually burns sNFT and creates new NFTs.
+		/// uses bases shared metadata and override as described by `overrides`
+		/// count `overrides` is equal to count of splits
+		fn split(
+			_instance: &Self::InstanceId,
+			_overrides: BiBoundedVec<BTreeMap<AttributeKey, AttributeValue>, 1, 16>,
+		) -> Result<BiBoundedVec<Self::InstanceId, 1, 16>, DispatchError> {
+			Err(DispatchError::Other("no implemented"))
+		}
+
 		fn mint_nft<K: Encode, V: Encode>(
 			class: &Self::ClassId,
 			who: &AccountIdOf<T>,
