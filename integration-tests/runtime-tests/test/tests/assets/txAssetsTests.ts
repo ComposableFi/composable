@@ -317,7 +317,7 @@ describe.only("tx.assets Tests", function() {
   /**
    * The `mint_initialize` extrinsic creates a new asset & mints a defined `amount` into the `dest` wallet.
    */
-  describe.only("tx.assets.mint_initialize Tests", function() {
+  describe("tx.assets.mint_initialize Tests", function() {
     // Check if group of tests are enabled.
     if (!testConfiguration.enabledTests.tx.transfer__success) return;
 
@@ -336,9 +336,22 @@ describe.only("tx.assets Tests", function() {
         )
       );
       expect(result.isOk).to.be.true;
-      const newAssetData = (await api.query.tokens.accounts(paraDest, null)).toHuman();
-      console.debug(newAssetData);
-      // ToDo (D. Roth): Add checks!
+
+      // Verifying everything
+      const newAssetData = (await api.query.currencyFactory.assetIdRanges());
+      /*
+       * From the list of available (unused) asset IDs we subtract `1` to get the latest created asset.
+       * Seems like a weird way to get the asset ID, since there is `tokens.accounts` or `tokens.totalIssuance`
+       * which look promising in the PolkadotJS web interface.
+       * Though they don't seem to work because if I query these,
+       * for some reason the asset ID gets stripped out of the result.
+       *
+       * Please ignore the ts-ignore, it's annoyed about `ranges` not being defined.
+       */
+      // @ts-ignore
+      const newAssetId = new BN(newAssetData.ranges[1].current.toString()).sub(new BN(1));
+      const amountNewAssetAfterMinting = await api.query.tokens.accounts(paraDest, newAssetId);
+      expect(amountNewAssetAfterMinting.free.eq(paraAmount)).to.be.true;
     });
   });
 
@@ -368,7 +381,14 @@ describe.only("tx.assets Tests", function() {
         )
       );
       expect(result.isOk).to.be.true;
-      // ToDo (D. Roth): Add checks!
+
+      // Verifying everything, please take a look at above's test case for further information.
+      // Querying the list of available asset IDs
+      const newAssetData = (await api.query.currencyFactory.assetIdRanges());
+      // @ts-ignore
+      const newAssetId = new BN(newAssetData.ranges[1].current.toString()).sub(new BN(1));
+      const amountNewAssetAfterMinting = await api.query.tokens.accounts(paraDest, newAssetId);
+      expect(amountNewAssetAfterMinting.free.eq(paraAmount)).to.be.true;
     });
   });
 
@@ -387,7 +407,7 @@ describe.only("tx.assets Tests", function() {
       const paraDest = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
 
       const receiverFundsBeforeTransaction =
-        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), senderWallet.publicKey)).toString());
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraDest)).toString());
 
       const { data: [result] } = await sendAndWaitForSuccess(
         api,
@@ -399,9 +419,7 @@ describe.only("tx.assets Tests", function() {
       );
       expect(result.isOk).to.be.true;
       const receiverFundsAfterTransaction =
-        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), senderWallet.publicKey)).toString());
-      console.debug(receiverFundsAfterTransaction);
-      console.debug(receiverFundsBeforeTransaction.add(paraAmount));
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraDest)).toString());
       expect(receiverFundsAfterTransaction.eq(receiverFundsBeforeTransaction.add(paraAmount))).to.be.true;
     });
   });
@@ -417,11 +435,11 @@ describe.only("tx.assets Tests", function() {
     it("A *sudo* wallet can `burn_from` KSM from another wallet", async function() {
       this.timeout(2 * 60 * 1000);
       const paraAsset = api.createType("u128", 4);
-      const paraAmount = api.createType("u128", 4);
+      const paraAmount = api.createType("u128", 50000000000);
       const paraDest = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
 
       const receiverFundsBeforeTransaction =
-        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), senderWallet.publicKey)).toString());
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraDest)).toString());
 
       const { data: [result] } = await sendAndWaitForSuccess(
         api,
@@ -433,9 +451,7 @@ describe.only("tx.assets Tests", function() {
       );
       expect(result.isOk).to.be.true;
       const receiverFundsAfterTransaction =
-        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), senderWallet.publicKey)).toString());
-      console.debug(receiverFundsAfterTransaction);
-      console.debug(receiverFundsBeforeTransaction.sub(paraAmount));
+        new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraDest)).toString());
       expect(receiverFundsAfterTransaction.eq(receiverFundsBeforeTransaction.sub(paraAmount))).to.be.true;
     });
   });
