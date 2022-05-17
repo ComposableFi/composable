@@ -281,6 +281,8 @@ impl pallet_oracle::Config for Runtime {
 	type MaxPrePrices = MinU32;
 	type WeightInfo = ();
 	type LocalAssets = Decimals;
+
+	type TreasuryAccount = RootAccount;
 }
 
 impl DeFiComposableConfig for Runtime {
@@ -388,6 +390,7 @@ parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
 	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
 	pub OracleMarketCreationStake: Balance = NORMALIZED::ONE;
+	pub const MaxLiquidationBatchSize: u32 = 5;
 }
 
 parameter_types! {
@@ -423,7 +426,7 @@ impl pallet_lending::Config for Runtime {
 	type LiquidationStrategyId = LiquidationStrategyId;
 	type PalletId = LendingPalletId;
 	type OracleMarketCreationStake = OracleMarketCreationStake;
-
+	type MaxLiquidationBatchSize = MaxLiquidationBatchSize;
 	type WeightToFee = WeightToFee;
 }
 
