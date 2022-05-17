@@ -27,6 +27,7 @@ use sp_runtime::{FixedI128, FixedPointNumber, FixedU128};
 pub mod add_margin;
 pub mod create_market;
 pub mod instruments;
+pub mod liquidate;
 pub mod open_position;
 pub mod update_funding;
 
