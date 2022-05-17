@@ -1,6 +1,7 @@
 use crate::{currency::*, mocks_offchain::*, setup::assert_last_event, MarketIndex};
 use codec::Decode;
 use composable_support::validation::TryIntoValidated;
+use composable_tests_helpers::test;
 use composable_traits::{
 	defi::{CurrencyPair, MoreThanOneFixedU128},
 	lending::{math::InterestRateModel, CreateInput, UpdateInput},
@@ -15,7 +16,6 @@ use sp_core::{
 use sp_runtime::{
 	testing::Digest, traits::Header as HeaderTrait, FixedPointNumber, Percent, Perquintill,
 };
-use composable_tests_helpers::test;
 
 const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
 

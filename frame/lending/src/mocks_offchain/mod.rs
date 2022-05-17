@@ -481,7 +481,6 @@ pub fn process_block_with_execution(extrinsic: TestExtrinsic) {
 	Executive::apply_extrinsic(extrinsic).unwrap().unwrap();
 }
 
-
 #[derive(Encode, Decode, Clone, Eq, PartialEq, Debug, TypeInfo)]
 pub struct MockedExtension<T>(core::marker::PhantomData<T>);
 
