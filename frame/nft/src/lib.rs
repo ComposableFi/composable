@@ -41,12 +41,9 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use composable_support::math::safe::SafeAdd;
-	use std::collections::BTreeSet;
-
 	use composable_support::{collections::vec::bounded::BiBoundedVec, math::safe::SafeAdd};
 	use composable_traits::financial_nft::{
-		AttributeKey, AttributeValue, FinancialNFTProvider, NFTClass,
+		AttributeKey, AttributeValue, FinancialNftProvider, NftClass,
 	};
 	use frame_support::{
 		pallet_prelude::*,
