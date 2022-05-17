@@ -45,6 +45,7 @@
 //! - [`create_market`](Call::create_market)
 //! - [`open_position`](Call::open_position)
 //! - [`update_funding`](Call::update_funding)
+//! - [`liquidate`](Call::liquidate)
 //!
 //! ### Implemented Functions
 //!
@@ -52,6 +53,7 @@
 //! - [`create_market`](pallet/struct.Pallet.html#method.create_market-1)
 //! - [`open_position`](pallet/struct.Pallet.html#method.open_position-1)
 //! - [`update_funding`](pallet/struct.Pallet.html#method.update_funding-1)
+//! - [`liquidate`](pallet/struct.Pallet.html#method.liquidate-1)
 //! - [`funding_rate`](Pallet::funding_rate)
 //! - [`unrealized_funding`](Pallet::unrealized_funding)
 //!
@@ -629,6 +631,54 @@ pub mod pallet {
 		pub fn update_funding(origin: OriginFor<T>, market_id: T::MarketId) -> DispatchResult {
 			ensure_signed(origin)?;
 			<Self as ClearingHouse>::update_funding(&market_id)?;
+			Ok(())
+		}
+
+		/// Liquidates a user's account if below margin requirements.
+		///
+		/// # Overview
+		///
+		/// Liquidation can be either full or partial. In the former case, positions are closed
+		/// entirely, while in the latter, they are partially closed until the account is brought
+		/// back above the initial margin requirement.
+		///
+		/// Note that both unrealized PnL and funding payments contribute to an account being
+		/// brought below the maintenance margin ratio. Liquidation realizes a user's PnL and
+		/// funding payments.
+		///
+		/// Positions in markets with the highest margin requirements (i.e., the lowest max leverage
+		/// for opening a position) are liquidated first.
+		///
+		/// The caller of the function, the 'liquidator', may be credited with a liquidation fee in
+		/// their account, which can withdrawn via another extrinsic.
+		///
+		/// ## Parameters
+		///
+		/// - `user_id`: the account Id of the user to be liquidated
+		///
+		/// ## Assumptions or Requirements
+		///
+		/// TODO(0xangelo)
+		///
+		/// ## Emits
+		///
+		/// TODO(0xangelo)
+		///
+		/// ## State Changes
+		///
+		/// TODO(0xangelo)
+		///
+		/// ## Errors
+		///
+		/// TODO(0xangelo)
+		///
+		/// ## Weight/Runtime
+		///
+		/// TODO(0xangelo)
+		#[pallet::weight(<T as Config>::WeightInfo::liquidate())]
+		pub fn liquidate(origin: OriginFor<T>, user_id: T::AccountId) -> DispatchResult {
+			let liquidator_id = ensure_signed(origin)?;
+			<Self as ClearingHouse>::liquidate(&liquidator_id, &user_id)?;
 			Ok(())
 		}
 	}
