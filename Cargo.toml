@@ -274,3 +274,4 @@ substrate-test-utils-derive = { git = "https://github.com/composableFi/substrate
 substrate-test-utils-test-crate = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
 substrate-wasm-builder = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
 try-runtime-cli = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
+substrate-xt = { git = "https://github.com/polytope-labs/substrate-xt", rev = "cc9ce2d8651c2d140ae45f1de67faf792c5cda96" }
