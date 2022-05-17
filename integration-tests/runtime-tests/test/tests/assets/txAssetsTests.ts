@@ -317,7 +317,7 @@ describe.only("tx.assets Tests", function() {
   /**
    * The `mint_initialize` extrinsic creates a new asset & mints a defined `amount` into the `dest` wallet.
    */
-  describe("tx.assets.mint_initialize Tests", function() {
+  describe.only("tx.assets.mint_initialize Tests", function() {
     // Check if group of tests are enabled.
     if (!testConfiguration.enabledTests.tx.transfer__success) return;
 
@@ -400,6 +400,8 @@ describe.only("tx.assets Tests", function() {
       expect(result.isOk).to.be.true;
       const receiverFundsAfterTransaction =
         new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), senderWallet.publicKey)).toString());
+      console.debug(receiverFundsAfterTransaction);
+      console.debug(receiverFundsBeforeTransaction.add(paraAmount));
       expect(receiverFundsAfterTransaction.eq(receiverFundsBeforeTransaction.add(paraAmount))).to.be.true;
     });
   });
@@ -432,6 +434,8 @@ describe.only("tx.assets Tests", function() {
       expect(result.isOk).to.be.true;
       const receiverFundsAfterTransaction =
         new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), senderWallet.publicKey)).toString());
+      console.debug(receiverFundsAfterTransaction);
+      console.debug(receiverFundsBeforeTransaction.sub(paraAmount));
       expect(receiverFundsAfterTransaction.eq(receiverFundsBeforeTransaction.sub(paraAmount))).to.be.true;
     });
   });
