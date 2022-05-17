@@ -126,7 +126,7 @@ print(remaining) # reduced penalized remaining time, so it is better than create
 
 Can extend time of lock to same time or extended.
 
-Examle,
+For example,
 If position was MONTH and passed two weeks. Can extend it to MONTH or longer.
 In case of extending to MONTH, two weeks are zeroed.
 In case of extending to YEAR, 2 weeks passed retained in position.
