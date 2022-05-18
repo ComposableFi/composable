@@ -44,7 +44,7 @@ pub trait Vamm {
 	fn create(config: &Self::VammConfig) -> Result<Self::VammId, DispatchError>;
 
 	/// Performs swap of assets.
-	fn swap(config: &Self::SwapConfig) -> Result<Self::Balance, DispatchError>;
+	fn swap(config: &Self::SwapConfig) -> Result<SwapOutput<Self::Balance>, DispatchError>;
 
 	/// Performs swap simulation.
 	fn swap_simulation(config: &Self::SwapSimulationConfig)
@@ -116,4 +116,12 @@ pub struct MovePriceConfig<VammId, Balance> {
 	pub vamm_id: VammId,
 	pub base_asset_reserves: Balance,
 	pub quote_asset_reserves: Balance,
+}
+
+/// Specify the return type for [`Vamm::swap`].
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct SwapOutput<Balance> {
+	pub output: Balance,
+	pub negative: bool,
 }
