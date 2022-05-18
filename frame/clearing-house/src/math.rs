@@ -415,18 +415,21 @@ fn div_rem_with_acc(mut a: u128, mut b: u128, mut acc: u128) -> Result<(u128, u1
 			// `b`, because `a.checked_mul(acc)` has failed, hence `aa` must be at least one limb
 			// bigger than `b`. In this case, returning zero is defensive-only and div should
 			// always return Some.
-			let (q, _) = aa.div(&b_num, false).unwrap_or((Zero::zero(), Zero::zero()));
-			//   ^ q = aa - b + 1 >= 2 limbs
+			let (q, r) = aa.clone().div(&b_num, true).unwrap_or((Zero::zero(), Zero::zero()));
+			//   ^  ^ r = b limbs
+			//   | q = aa - b + 1 >= 2 limbs
+
 			// We can't project the remainder of `aa.div` above back to the original accuracy
 			// because:
 			// q = (a * acc) // b
 			// r = (a * acc) % b
 			// a = (q * b + r) // acc >= (q * b) // acc + r // acc
 			//
-			// So we first compute `b * q // acc` (what we would get by multiplying the underlying
-			// fixed point numbers)
-			let mut bq = b_num.mul(&q); // bq = b + q = aa + 1 > b + 1, c + 1 limbs
-			bq.lstrip(); // ?
+			// So we first compute `a_ = b * q // acc` (what we would get by multiplying the
+			// underlying fixed point numbers)
+			let mut bq = aa.sub(&r).expect("remainder is always less than the dividend; qed");
+			//      ^^ aa limbs
+			bq.lstrip(); // >= aa - 1 limbs
 			let a_: u128 = if acc_num.len() == 1 {
 				bq.div_unit(acc as biguint::Single)
 			} else {
@@ -435,17 +438,17 @@ fn div_rem_with_acc(mut a: u128, mut b: u128, mut acc: u128) -> Result<(u128, u1
 					.expect(
 						"Both `bq` and `acc_num` are stripped. \
 							 If `acc_num` is single-limbed, the previous branch would handle it. \
-							 If `bq` isn't at least one limb bigger than `acc_num`, then `bq` is \
-							 at least one limb smaller than `aa`. But then ",
+							 If `bq` isn't at least one limb bigger than `acc_num`, then ...",
 					)
 					.0
 			}
 			.try_into()
-			.expect("multiplication by quotient is less or equal than original value; qed");
+			.expect("quotient times divisor is less or equal than original value; qed");
+
 			// Then we compute the residual
 			let r = a
 				.checked_sub(a_)
-				.expect("remainder of `a / _` is always less than or equal to a; qed");
+				.expect("remainder of division is always less than or equal to the dividend; qed");
 
 			(q, r)
 		};
