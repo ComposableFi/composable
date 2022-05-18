@@ -1,8 +1,8 @@
 // std
-use polkadot_service::CollatorPair;
 use std::{sync::Arc, time::Duration};
+
 // Cumulus Imports
-use common::OpaqueBlock as Block;
+use common::OpaqueBlock;
 use cumulus_client_cli::CollatorOptions;
 use cumulus_client_consensus_aura::{AuraConsensus, BuildAuraConsensusParams, SlotProportion};
 use cumulus_client_network::BlockAnnounceValidator;
@@ -13,13 +13,9 @@ use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
 use cumulus_relay_chain_rpc_interface::RelayChainRPCInterface;
+use polkadot_service::CollatorPair;
 
 // Substrate Imports
-use crate::{
-	client::{Client, FullBackend, FullClient},
-	rpc,
-	runtime::HostRuntimeApis,
-};
 use sc_client_api::ExecutorProvider;
 use sc_executor::NativeExecutionDispatch;
 use sc_service::{Configuration, PartialComponents, Role, TFullBackend, TaskManager};
@@ -29,6 +25,12 @@ use sp_api::ConstructRuntimeApi;
 use sp_core::crypto::KeyTypeId;
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::PrefixedMemoryDB;
+
+use crate::{
+	client::{Client, FullBackend, FullClient},
+	rpc,
+	runtime::{assets::ExtendWithAssetsApi, BaseHostRuntimeApis, ConstructRuntimeApis},
+};
 
 pub struct PicassoExecutor;
 
@@ -76,6 +78,14 @@ impl sc_executor::NativeExecutionDispatch for DaliExecutor {
 	}
 }
 
+pub enum Executor {
+	Picasso(PicassoExecutor),
+	#[cfg(feature = "composable")]
+	Composable(ComposableExecutor),
+	#[cfg(feature = "dali")]
+	Dali(DaliExecutor),
+}
+
 /// Starts a `ServiceBuilder` for a full service.
 ///
 /// Use this macro if you don't actually need the full service, but just the builder in order to
@@ -87,7 +97,7 @@ pub fn new_chain_ops(
 	(
 		Arc<Client>,
 		Arc<FullBackend>,
-		sc_consensus::BasicQueue<Block, PrefixedMemoryDB<BlakeTwo256>>,
+		sc_consensus::BasicQueue<OpaqueBlock, PrefixedMemoryDB<BlakeTwo256>>,
 		TaskManager,
 	),
 	sc_service::Error,
@@ -137,18 +147,19 @@ pub fn new_partial<RuntimeApi, Executor>(
 		FullClient<RuntimeApi, Executor>,
 		FullBackend,
 		(),
-		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
-		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>,
+		sc_consensus::DefaultImportQueue<OpaqueBlock, FullClient<RuntimeApi, Executor>>,
+		sc_transaction_pool::FullPool<OpaqueBlock, FullClient<RuntimeApi, Executor>>,
 		(Option<Telemetry>, Option<TelemetryWorkerHandle>),
 	>,
 	sc_service::Error,
 >
 where
 	RuntimeApi:
-		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
-	RuntimeApi::RuntimeApi:
-		HostRuntimeApis<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
-	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
+		ConstructRuntimeApi<OpaqueBlock, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi::RuntimeApi: BaseHostRuntimeApis<
+		StateBackend = sc_client_api::StateBackendFor<FullBackend, OpaqueBlock>,
+	>,
+	sc_client_api::StateBackendFor<FullBackend, OpaqueBlock>: sp_api::StateBackend<BlakeTwo256>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 {
 	let telemetry = config
@@ -170,7 +181,7 @@ where
 	);
 
 	let (client, backend, keystore_container, task_manager) =
-		sc_service::new_full_parts::<Block, RuntimeApi, _>(
+		sc_service::new_full_parts::<OpaqueBlock, RuntimeApi, _>(
 			config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 			executor,
@@ -251,6 +262,11 @@ pub async fn start_node(
 	Ok(task_manager)
 }
 
+use polkadot_service::BlockT;
+use sc_client_api::StateBackendFor;
+use sc_transaction_pool::FullPool;
+use sp_api::StateBackend;
+
 /// Start a node with the given parachain `Configuration` and relay chain `Configuration`.
 ///
 /// This is the actual implementation that is abstract over the executor and the runtime api.
@@ -262,12 +278,14 @@ async fn start_node_impl<RuntimeApi, Executor>(
 	id: ParaId,
 ) -> sc_service::error::Result<TaskManager>
 where
+	// Block: BlockT,
+	RuntimeApi: ConstructRuntimeApis<RuntimeApi, Executor>,
 	RuntimeApi:
-		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
-	RuntimeApi::RuntimeApi:
-		HostRuntimeApis<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
-	sc_client_api::StateBackendFor<TFullBackend<Block>, Block>: sp_api::StateBackend<BlakeTwo256>,
-	Executor: sc_executor::NativeExecutionDispatch + 'static,
+		ConstructRuntimeApi<OpaqueBlock, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi::RuntimeApi: BaseHostRuntimeApis<StateBackend = StateBackendFor<FullBackend, OpaqueBlock>>
+		+ ExtendWithAssetsApi<RuntimeApi, Executor>,
+	StateBackendFor<FullBackend, OpaqueBlock>: StateBackend<BlakeTwo256>,
+	Executor: NativeExecutionDispatch + 'static,
 {
 	if matches!(parachain_config.role, Role::Light) {
 		return Err("Light client not supported!".into())
@@ -354,9 +372,12 @@ where
 				deny_unsafe,
 			};
 
+			// let _: () = client;
 			Ok(rpc::create(deps))
 		})
 	};
+
+	// let _: () = task_manager;
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
 		rpc_extensions_builder,
@@ -484,14 +505,15 @@ pub fn parachain_build_import_queue<RuntimeApi, Executor>(
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
 ) -> Result<
-	sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
+	sc_consensus::DefaultImportQueue<OpaqueBlock, FullClient<RuntimeApi, Executor>>,
 	sc_service::Error,
 >
 where
 	RuntimeApi:
-		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
-	RuntimeApi::RuntimeApi:
-		HostRuntimeApis<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
+		ConstructRuntimeApi<OpaqueBlock, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi::RuntimeApi: BaseHostRuntimeApis<
+		StateBackend = sc_client_api::StateBackendFor<FullBackend, OpaqueBlock>,
+	>,
 	Executor: NativeExecutionDispatch + 'static,
 {
 	let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
