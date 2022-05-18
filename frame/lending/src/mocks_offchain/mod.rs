@@ -61,6 +61,7 @@ pub type TestBlock = Block<TestExtrinsic>;
 pub type Balance = u128;
 pub type Amount = i128;
 pub type VaultId = u64;
+pub type MarketId = crate::MarketIndex;
 pub type Signature = TestSignature;
 pub type LiquidationStrategyId = u32;
 pub type OrderId = u32;

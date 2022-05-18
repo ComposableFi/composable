@@ -22,11 +22,15 @@ fn test_liquidation_offchain_worker() {
 	ext.execute_with(|| {
 		let manager = *ALICE;
 		let lender = *CHARLIE;
+		// ALICE is also borrower who's borrow going to be liquidated
+		let risky_borrower = *ALICE;
+		// BOB is reliable borrower who's borrow should not be liquidated
+		let reliable_borrower = *BOB;
 		// Create a market with BTC as collateral asset and USDT as borrow asset.
 		// Initial collateral asset price is 50_000 USDT. Market's collateral factor equals two.
 		// It means that borrow supposed to be undercolateraized when
 		// borrowed amount is higher then one half of collateral amount in terms of USDT.
-		let (market_id, vault) = crate::tests::create_market::<50_000, Lending, Tokens>(
+		let (market_id, vault_id) = crate::tests::create_market::<50_000, Lending, Tokens>(
 			USDT::instance(),
 			BTC::instance(),
 			manager,
@@ -34,35 +38,22 @@ fn test_liquidation_offchain_worker() {
 			MoreThanOneFixedU128::saturating_from_integer::<u128>(2),
 		);
 
-		// Deposit collateral.
-		let collateral_value = BTC::units(1);
-		assert_ok!(Tokens::mint_into(BTC::ID, &manager, collateral_value));
-		crate::tests::assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(Origin::signed(manager), market_id, collateral_value),
-			Event::Lending(crate::Event::CollateralDeposited {
-				sender: manager,
-				amount: collateral_value,
-				market_id,
-			}),
-		);
 		// Deposit USDT in the vault.
 		let vault_value = USDT::units(100_000_000);
 		assert_ok!(Tokens::mint_into(USDT::ID, &lender, vault_value));
-		assert_ok!(Vault::deposit(Origin::signed(lender), vault, vault_value));
+		assert_ok!(Vault::deposit(Origin::signed(lender), vault_id, vault_value));
 		test::block::process_and_progress_blocks::<Lending, Runtime>(1);
-		// Borrow 20_000 USDT.
-		let borrowed_value = USDT::units(20_000);
-		crate::tests::assert_extrinsic_event::<Runtime>(
-			Lending::borrow(Origin::signed(manager), market_id, borrowed_value),
-			Event::Lending(crate::Event::Borrowed {
-				sender: manager,
-				amount: borrowed_value,
-				market_id,
-			}),
-		);
+		// Deposit 1 BTC collateral from risky borrower account.
+		mint_and_deposit_collateral(risky_borrower, market_id, BTC::units(1));
+		// Risky borrower borrows 20_000 USDT.
+		borrow(risky_borrower, market_id, USDT::units(20_000));
+		// Deposit 100 BTC collateral from reliable borrower account.
+		mint_and_deposit_collateral(reliable_borrower, market_id, BTC::units(100));
+		// Reliable borrower borrows 20_000 USDT.
+		borrow(reliable_borrower, market_id, USDT::units(20_000));
 		// Emulate situation when collateral price has fallen down
 		// from 50_000 USDT to 38_000 USDT.
-		// Now the borrow is undercolateraized since market's collateral factor equals two.
+		// Now the risky borrow is undercolateraized since market's collateral factor equals two.
 		// Therefore, one BTC can cover only 19_000 of 20_0000 borrowed USDT.
 		set_price(BTC::ID, NORMALIZED::units(38_000));
 		// Header for the fake block to execute off-chain worker
@@ -71,19 +62,66 @@ fn test_liquidation_offchain_worker() {
 		// Execute off-chain worker
 		Executive::offchain_worker(&header);
 		let tx = pool_state.write().transactions.pop().unwrap();
+		// Check that we have had only one transaction since reliable borrow should not be
+		// liquidated
 		assert!(pool_state.read().transactions.is_empty());
 		let tx = Extrinsic::decode(&mut &*tx).unwrap();
+		// Check that it is transaction which leads to the risky borrow liquidation.
 		assert_eq!(
 			tx.call,
-			Call::Lending(crate::Call::liquidate { market_id, borrowers: vec![manager.clone()] })
+			Call::Lending(crate::Call::liquidate { market_id, borrowers: vec![risky_borrower] })
 		);
 		process_block_with_execution(tx);
+
+		// @mikolaichuk: These are extra checks since we have checked that only one liquidation
+		// transaction was executed.
+		// Check that events for the risky borrow were emitted
 		// Check event from Lending pallet
 		let event =
-			crate::Event::LiquidationInitiated { market_id, borrowers: vec![manager.clone()] };
+			crate::Event::LiquidationInitiated { market_id, borrowers: vec![risky_borrower] };
 		System::assert_has_event(Event::Lending(event));
 		// Check event from Liquidations pallet
 		let event = pallet_liquidations::Event::PositionWasSentToLiquidation {};
 		System::assert_has_event(Event::Liquidations(event));
+		// Check that events for the reliable borrow were not emitted
+		// Check event from Lending pallet
+		let event = crate::Event::<Runtime>::LiquidationInitiated {
+			market_id,
+			borrowers: vec![reliable_borrower],
+		};
+		assert_no_event(Event::Lending(event));
+		// Check that Liquidations pallet emitted only one event
+		let event =
+			Event::Liquidations(pallet_liquidations::Event::PositionWasSentToLiquidation {});
+		assert!(System::events().iter().filter(|record| record.event == event).count() == 1);
 	});
+}
+
+// @mikolaichuk: Keep these helpers here until tests been refactored in terms of helpers
+// parametrization
+fn mint_and_deposit_collateral(
+	borrower: AccountId,
+	market_id: MarketId,
+	collateral_value: Balance,
+) {
+	assert_ok!(Tokens::mint_into(BTC::ID, &borrower, collateral_value));
+	crate::tests::assert_extrinsic_event::<Runtime>(
+		Lending::deposit_collateral(Origin::signed(borrower), market_id, collateral_value),
+		Event::Lending(crate::Event::CollateralDeposited {
+			sender: borrower,
+			amount: collateral_value,
+			market_id,
+		}),
+	);
+}
+
+fn borrow(borrower: AccountId, market_id: MarketId, amount: Balance) {
+	crate::tests::assert_extrinsic_event::<Runtime>(
+		Lending::borrow(Origin::signed(borrower), market_id, amount),
+		Event::Lending(crate::Event::Borrowed { sender: borrower, amount, market_id }),
+	);
+}
+
+fn assert_no_event(event: Event) {
+	assert!(System::events().iter().all(|record| record.event != event));
 }

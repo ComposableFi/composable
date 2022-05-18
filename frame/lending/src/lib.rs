@@ -327,7 +327,19 @@ pub mod pallet {
 				return
 			}
 			for (market_id, account, _) in DebtIndex::<T>::iter() {
-				// TODO: check that it should liquidate before liquidations
+				//Check that it should liquidate before liquidations
+				let should_be_liquidated =
+					match Self::should_liquidate(&market_id, &account) {
+						Ok(status) => status,
+						Err(error) => {
+							log::error!("Liquidation necessity check failed, market_id: {:?}, account: {:?},
+                                        error: {:?}", market_id, account, error);
+							false
+						},
+					};
+				if !should_be_liquidated {
+					continue
+				}
 				let results = signer.send_signed_transaction(|_account| Call::liquidate {
 					market_id,
 					borrowers: vec![account.clone()],
