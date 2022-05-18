@@ -30,7 +30,7 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `multicurrency democracy`.
 pub struct WeightInfo<T>(PhantomData<T>);
 
-impl<T: frame_system::Config> multicurrency_democracy::WeightInfo for WeightInfo<T> {
+impl<T: frame_system::Config> multitenant_democracy::WeightInfo for WeightInfo<T> {
 	// Storage: Democracy PublicPropCount (r:1 w:1)
 	// Storage: Democracy PublicProps (r:1 w:1)
 	// Storage: Democracy Blacklist (r:1 w:0)

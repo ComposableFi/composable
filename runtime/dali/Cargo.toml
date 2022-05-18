@@ -81,7 +81,7 @@ governance-registry = {package = "pallet-governance-registry", path = "../../fra
 lending = {package = "pallet-lending", path = "../../frame/lending", default-features = false}
 liquidations = {package = "pallet-liquidations", path = "../../frame/liquidations", default-features = false}
 mosaic = {package = "pallet-mosaic", path = "../../frame/mosaic", default-features = false}
-multicurrency-democracy = {package = "pallet-multicurrency-democracy", path = "../../frame/democracy", default-features = false}
+multicurrency-democracy = {package = "pallet-multitenant-democracy", path = "../../frame/democracy", default-features = false}
 oracle = {package = "pallet-oracle", path = "../../frame/oracle", default-features = false}
 pablo = {package = "pallet-pablo", path = "../../frame/pablo", default-features = false}
 primitives = {path = "../primitives", default-features = false}
@@ -94,6 +94,7 @@ transaction-payment-rpc-runtime-api = {package = "pallet-transaction-payment-rpc
 # local RPCs
 assets-runtime-api = {path = '../../frame/assets/runtime-api', default-features = false}
 crowdloan-rewards-runtime-api = {path = '../../frame/crowdloan-rewards/runtime-api', default-features = false}
+lending-runtime-api = {path = '../../frame/lending/runtime-api', default-features = false}
 pablo-runtime-api = {path = '../../frame/pablo/runtime-api', default-features = false}
 
 # Used for runtime benchmarking

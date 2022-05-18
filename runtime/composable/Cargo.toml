@@ -51,7 +51,7 @@ crowdloan-rewards = {package = "pallet-crowdloan-rewards", path = '../../frame/c
 democracy = {package = "pallet-democracy", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.18"}
 indices = {package = "pallet-indices", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.18"}
 membership = {package = "pallet-membership", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.18"}
-multicurrency-democracy = {package = "pallet-multicurrency-democracy", path = "../../frame/democracy", default-features = false}
+multitenant-democracy = {package = "pallet-multitenant-democracy", path = "../../frame/democracy", default-features = false}
 orml-tokens = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b5d4ce1d08fb54c0007c2055653892d2c93a92e", default-features = false}
 orml-traits = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b5d4ce1d08fb54c0007c2055653892d2c93a92e", default-features = false}
 preimage = {package = "pallet-preimage", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.18"}
@@ -156,7 +156,7 @@ runtime-benchmarks = [
   "utility/runtime-benchmarks",
   "vault/runtime-benchmarks",
   "common/runtime-benchmarks",
-  "multicurrency-democracy/runtime-benchmarks",
+  "multitenant-democracy/runtime-benchmarks",
 ]
 std = [
   "codec/std",
@@ -225,5 +225,5 @@ std = [
   "pablo-runtime-api/std",
   "crowdloan-rewards-runtime-api/std",
   "simnode-apis/std",
-  "multicurrency-democracy/std",
+  "multitenant-democracy/std",
 ]
