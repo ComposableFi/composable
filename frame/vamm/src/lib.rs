@@ -508,10 +508,10 @@ pub mod pallet {
 			// Get Vamm state.
 			let vamm_state = Self::get_vamm_state(&vamm_id)?;
 
-			let quote_asset_reserves_decimal =
-				DecimalOf::<T>::from_inner(vamm_state.quote_asset_reserves);
 			let base_asset_reserves_decimal =
 				DecimalOf::<T>::from_inner(vamm_state.base_asset_reserves);
+			let quote_asset_reserves_decimal =
+				DecimalOf::<T>::from_inner(vamm_state.quote_asset_reserves);
 			let peg_multiplier_decimal = DecimalOf::<T>::from_inner(vamm_state.peg_multiplier);
 
 			match asset_type {
