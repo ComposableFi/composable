@@ -183,9 +183,17 @@ prop_compose! {
 	}
 }
 
+fn min_sane_balance() -> u128 {
+	10_u128.pow(18)
+}
+
+fn max_sane_balance() -> u128 {
+	10_u128.pow(30)
+}
+
 fn any_sane_asset_amount() -> RangeInclusive<u128> {
 	// From 1 to 1 trilion.
-	10_u128.pow(18)..=10_u128.pow(30)
+	min_sane_balance()..=max_sane_balance()
 }
 
 #[allow(dead_code)]
@@ -198,6 +206,24 @@ prop_compose! {
 		asset in any_sane_asset_amount()
 	)(peg in limited_peg(asset), asset in Just(asset)) -> (u128, u128) {
 		(asset, peg)
+	}
+}
+
+prop_compose! {
+	fn any_sane_base_quote_peg()(
+		(asset1, peg) in asset_times_peg_dont_overflow()
+	) (
+		peg in Just(peg),
+		asset1 in Just(asset1),
+		// asset2 in Just(peg),
+		asset2 in limited_peg(asset1),
+		first_asset_is_base in any::<bool>()
+	) -> (u128, u128, u128) {
+		if first_asset_is_base {
+			(asset1, asset2, peg)
+		} else {
+			(asset2, asset1, peg)
+		}
 	}
 }
 

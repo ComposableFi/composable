@@ -2,13 +2,13 @@ use crate::{
 	mock::{Balance, ExtBuilder, MockRuntime, System, TestPallet, VammId},
 	pallet::{Error, Event, VammMap},
 	tests::{
-		any_vamm_state, balance_range_low, balance_range_upper_half, get_swap_config,
-		get_vamm_state, multiple_swaps, run_to_block, then_and_now, RUN_CASES,
+		any_sane_base_quote_peg, any_vamm_state, balance_range_low, balance_range_upper_half,
+		get_swap_config, get_vamm_state, multiple_swaps, run_to_block, then_and_now, RUN_CASES,
 	},
 	VammState,
 };
-use composable_traits::vamm::{AssetType, Direction, SwapConfig, Vamm as VammTrait};
-use frame_support::{assert_noop, assert_ok};
+use composable_traits::vamm::{AssetType, Direction, SwapConfig, SwapOutput, Vamm as VammTrait};
+use frame_support::{assert_noop, assert_ok, assert_storage_noop};
 use proptest::prelude::*;
 use sp_core::U256;
 use sp_runtime::traits::Zero;
@@ -97,9 +97,7 @@ proptest! {
 	fn swap_asset_suceeds_emitting_event(
 		mut vamm_state in get_vamm_state(Default::default()),
 		mut swap_config in get_swap_config(Default::default()),
-		base in balance_range_low(),
-		quote in balance_range_low(),
-		peg in balance_range_low(),
+		(base, quote, peg) in any_sane_base_quote_peg(),
 	) {
 		// Ensure vamm is open before start operation to swap assets.
 		vamm_state.closed = None;
@@ -123,20 +121,22 @@ proptest! {
 
 			let swap = TestPallet::swap(&swap_config);
 
-			// TODO(Cardosaum): Remove this `if let Ok()...` block and migrate
-			// to use `assert_ok!(swap)`. this is just a hack until all swap
-			// operations are fixed.
-			if let Ok(swap) = swap {
-				System::assert_last_event(
-					Event::Swapped {
-						vamm_id: swap_config.vamm_id,
-						input_amount: swap_config.input_amount,
-						output_amount: swap,
-						input_asset_type: swap_config.asset,
-						direction: swap_config.direction,
-					}.into()
-				);
-			}
+			match swap {
+				Ok(_) => {
+					System::assert_last_event(
+						Event::Swapped {
+							vamm_id: swap_config.vamm_id,
+							input_amount: swap_config.input_amount,
+							output_amount: swap.unwrap(),
+							input_asset_type: swap_config.asset,
+							direction: swap_config.direction,
+						}.into()
+					);
+				},
+				 _ => {
+					 assert_storage_noop!(swap);
+				 },
+			};
 		})
 	}
 }
@@ -173,7 +173,7 @@ fn swap_add_base() {
 		let swap = TestPallet::swap(&swap_config);
 		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
 
-		assert_ok!(swap, 16_666_666_666_667);
+		assert_ok!(swap, SwapOutput { output: 16_666_666_666_667, negative: false });
 		assert_eq!(
 			vamm_after_swap.unwrap(),
 			VammState {
@@ -219,7 +219,7 @@ fn swap_remove_base() {
 		let swap = TestPallet::swap(&swap_config);
 		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
 
-		assert_ok!(swap, 50_000_000_000_000);
+		assert_ok!(swap, SwapOutput { output: 50_000_000_000_000, negative: false });
 		assert_eq!(
 			vamm_after_swap.unwrap(),
 			VammState {
@@ -265,7 +265,7 @@ fn swap_add_quote() {
 		let swap = TestPallet::swap(&swap_config);
 		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
 
-		assert_ok!(swap, 39_215_686_275);
+		assert_ok!(swap, SwapOutput { output: 39_215_686_275, negative: false });
 		assert_eq!(
 			vamm_after_swap.unwrap(),
 			VammState {
@@ -279,11 +279,7 @@ fn swap_add_quote() {
 	})
 }
 
-// TODO(Cardosaum): fix code when try to remove quote.
-// as of now all calls for this instance return Ok(0), which essentially would
-// be a no-op.
 #[test]
-#[ignore = "to be implemented"]
 fn swap_remove_quote() {
 	let base_u256 = U256::from(2_u128) * U256::exp10(12);
 	let quote_u256 = U256::from(50_u128) * U256::exp10(12);
@@ -312,16 +308,15 @@ fn swap_remove_quote() {
 	}
 	.build()
 	.execute_with(|| {
-		// let vamm_before_swap = VammMap::<MockRuntime>::get(0);
 		let swap = TestPallet::swap(&swap_config);
 		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
 
-		assert_ok!(swap, 39_215_686_275);
+		assert_ok!(swap, SwapOutput { output: 800_320_128, negative: true });
 		assert_eq!(
 			vamm_after_swap.unwrap(),
 			VammState {
-				base_asset_reserves: 1_960_784_313_725,
-				quote_asset_reserves: 51_000_000_000_000,
+				base_asset_reserves: 2_000_800_320_128,
+				quote_asset_reserves: 49_980_000_000_000,
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
