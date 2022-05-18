@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - releases
+  pull_request:
+    types: [labeled, synchronize, opened, reopened]
 
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}

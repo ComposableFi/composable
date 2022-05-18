@@ -5,6 +5,8 @@ on:
   push:
     tags: 
       - '*'
+  pull_request:
+    types: [labeled, synchronize, opened, reopened]
       
 env:
   DOCKER_USER_OPTION: '$UID:$GID'

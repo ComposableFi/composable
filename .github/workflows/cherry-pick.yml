@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    types: [labeled, synchronize, opened, reopened]
 
 jobs:
   cherry-pick-commits:
