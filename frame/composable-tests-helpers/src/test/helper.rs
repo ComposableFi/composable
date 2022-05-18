@@ -1,3 +1,6 @@
+use composable_support::math::safe::SafeSub;
+use frame_support::{assert_ok, dispatch::DispatchResultWithPostInfo};
+use frame_system::{Config, EventRecord};
 use sp_runtime::{FixedPointNumber, FixedU128};
 
 /// Default is percent
@@ -33,4 +36,43 @@ pub fn acceptable_computation_error(
 
 pub fn default_acceptable_computation_error(x: u128, y: u128) -> Result<(), FixedU128> {
 	acceptable_computation_error(x, y, DEFAULT_PRECISION, DEFAULT_EPSILON)
+}
+
+/// Asserts that the last event in the runtime is the expected event.
+pub fn assert_last_event<Runtime: Config>(generic_event: <Runtime as Config>::Event) {
+	let events = frame_system::Pallet::<Runtime>::events();
+	let system_event: <Runtime as frame_system::Config>::Event = generic_event.into();
+	// compare to the last event record
+	let EventRecord { event, .. } = &events.last().expect("No events present!");
+	assert_eq!(event, &system_event);
+}
+
+/// Asserts the event wasn't dispatched.
+pub fn assert_no_event<Runtime: Config>(event: <Runtime as Config>::Event) {
+	assert!(frame_system::Pallet::<Runtime>::events()
+		.iter()
+		.all(|record| record.event != event));
+}
+
+/// Asserts that the outcome of an extrinsic is `Ok`, and that the last event is the specified
+/// event.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// assert_extrinsic_event::<Runtime>(
+///     Pallet::extrinsic(..),
+///     Event::Pallet(pallet::Event::<Runtime>::SomethingHappened {
+///         ..
+///     }),
+/// );
+pub fn assert_extrinsic_event<
+	Runtime: Config,
+	Event: Into<<Runtime as frame_system::Config>::Event>,
+>(
+	result: DispatchResultWithPostInfo,
+	event: Event,
+) {
+	assert_ok!(result);
+	assert_last_event::<Runtime>(event.into());
 }

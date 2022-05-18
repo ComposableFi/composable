@@ -208,11 +208,11 @@ jobs:
         run: |
           hadolint --version
           total_exit_code=0
-          while IFS= read -r file; do
+          for file in $(find . -name "Dockerfile" -or -name "*.dockerfile"); do
             echo "=== $file ==="
             hadolint --config .hadolint.yaml $file || total_exit_code=$?
             echo ""
-          done << (find . -name "Dockerfile")
+          done
           exit $total_exit_code
 
       - name: Remark
@@ -226,9 +226,9 @@ jobs:
             remark-lint-no-dead-urls
 
           total_exit_code=0
-          while IFS= read -r file; do
+          for file in $(find . -name "*.md" -not -path "*/node_modules/*" -not -path "./.github/*"); do
               ./node_modules/.bin/remark -f $file || total_exit_code=$?
-          done << (find . -name "*.md" -not -path "*/node_modules/*" -not -path "./.github/*")
+          done
           exit $total_exit_code
 
       - name: mdbook
@@ -251,7 +251,7 @@ jobs:
         run: |
           cargo +nightly install -f cargo-deny
           # start from minimal dependency crate
-          cargo +nightly deny --manifest-path ./frame/composable-support/Cargo.toml check Ban
+          cargo +nightly deny --manifest-path ./frame/composable-support/Cargo.toml check ban
 
       - name: Cargo udeps
         continue-on-error: true # Often this turns gives false positives, due to the different ways that Substrate uses features.

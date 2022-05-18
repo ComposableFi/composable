@@ -11,8 +11,7 @@ use frame_support::{
 use scale_info::TypeInfo;
 use sp_runtime::{DispatchError, TokenError};
 
-pub trait FinancialNFTProvider<AccountId>: Create<AccountId> + Mutate<AccountId> {
-	///
+pub trait FinancialNftProvider<AccountId>: Create<AccountId> + Mutate<AccountId> {
 	/// Mint an NFT instance with initial (key, value) attribute in the given account.
 	///
 	/// Arguments
@@ -28,8 +27,8 @@ pub trait FinancialNFTProvider<AccountId>: Create<AccountId> + Mutate<AccountId>
 	fn mint_nft<K: Encode, V: Encode>(
 		class: &Self::ClassId,
 		who: &AccountId,
-		key: &K,
-		value: &V,
+		version: &K,
+		nft_data: &V,
 	) -> Result<Self::InstanceId, DispatchError>;
 }
 
@@ -37,7 +36,7 @@ pub trait FinancialNFTProvider<AccountId>: Create<AccountId> + Mutate<AccountId>
 ///
 /// The interface will always fully serialize/deserialize the NFT type with the NFT::Version as
 /// single attribute key.
-pub trait FinancialNFTProtocol<AccountId: Eq> {
+pub trait FinancialNftProtocol<AccountId: Eq> {
 	/// Abstract type of a class id.
 	type ClassId: FullCodec + TypeInfo;
 
@@ -49,7 +48,7 @@ pub trait FinancialNFTProtocol<AccountId: Eq> {
 	type Version: FullCodec + TypeInfo;
 
 	/// NFT provider from which we load/store NFT's.
-	type NFTProvider: FinancialNFTProvider<
+	type NFTProvider: FinancialNftProvider<
 		AccountId,
 		ClassId = Self::ClassId,
 		InstanceId = Self::InstanceId,
@@ -172,10 +171,20 @@ pub trait FinancialNFTProtocol<AccountId: Eq> {
 	Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Encode, Decode, MaxEncodedLen, TypeInfo,
 )]
 #[repr(transparent)]
-pub struct NFTClass(u8);
+pub struct NftClass(u8);
 
-impl NFTClass {
-	pub const STAKING: NFTClass = NFTClass(1);
+#[cfg(feature = "test-utils")]
+impl NftClass {
+	/// Create a new [`NftClass`].
+	///
+	/// Will not necessarilly be a well-known class; only for use in testing.
+	pub fn new(inner: u8) -> Self {
+		NftClass(inner)
+	}
+}
+
+impl NftClass {
+	pub const STAKING: NftClass = NftClass(1);
 }
 
 /// Default Version type used for NFTs.
@@ -183,8 +192,8 @@ impl NFTClass {
 	Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Encode, Decode, MaxEncodedLen, TypeInfo,
 )]
 #[repr(transparent)]
-pub struct NFTVersion(u8);
+pub struct NftVersion(u8);
 
-impl NFTVersion {
-	pub const VERSION_1: NFTVersion = NFTVersion(1);
+impl NftVersion {
+	pub const VERSION_1: NftVersion = NftVersion(1);
 }

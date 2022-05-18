@@ -161,6 +161,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 			(get_account_1(), 100),
 			(get_root_account(), 100),
 			(get_account_4(), 100),
+			(get_account_3(), 100),
 			(get_account_5(), 100),
 			(get_treasury_account(), 100),
 		],

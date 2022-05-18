@@ -1,6 +1,6 @@
 use crate::*;
 use composable_traits::{
-	financial_nft::{FinancialNFTProtocol, NFTClass, NFTVersion},
+	financial_nft::{FinancialNftProtocol, NftClass, NftVersion},
 	time::DurationSeconds,
 };
 use frame_support::{
@@ -42,8 +42,8 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>} = 1,
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
-		NFT: pallet_nft::{Pallet, Storage, Event<T>},
-	  StakingRewards: crate::{Pallet, Storage, Call, Event<T>},
+		NFT: pallet_nft::{Pallet, Storage , Event<T>},
+		StakingRewards: crate::{Pallet, Storage, Call, Event<T>},
 	}
 );
 
@@ -86,10 +86,10 @@ impl pallet_nft::Config for Test {
 
 parameter_types! {
 	pub const StakingRewardPalletId: PalletId = PalletId(*b"pal_stkr");
-  pub const MaxStakingPresets: u32 = 10;
-  pub const MaxRewardAssets: u32 = 10;
-  pub const EpochDuration: DurationSeconds = MILLISECS_PER_BLOCK * REWARD_EPOCH_DURATION_BLOCK / 1000;
-  pub const ElementToProcessPerBlock: u32 = 100;
+	pub const MaxStakingPresets: u32 = 10;
+	pub const MaxRewardAssets: u32 = 10;
+	pub const EpochDuration: DurationSeconds = MILLISECS_PER_BLOCK * REWARD_EPOCH_DURATION_BLOCK / 1000;
+	pub const ElementToProcessPerBlock: u32 = 100;
 }
 
 impl Config for Test {
@@ -106,10 +106,10 @@ impl Config for Test {
 	type ElementToProcessPerBlock = ElementToProcessPerBlock;
 }
 
-impl FinancialNFTProtocol<AccountId> for Test {
-	type ClassId = NFTClass;
+impl FinancialNftProtocol<AccountId> for Test {
+	type ClassId = NftClass;
 	type InstanceId = InstanceId;
-	type Version = NFTVersion;
+	type Version = NftVersion;
 	type NFTProvider = NFT;
 }
 

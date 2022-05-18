@@ -34,14 +34,15 @@
 	unused_extern_crates
 )]
 
+#[cfg(test)]
+mod test;
+
 pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use std::collections::BTreeSet;
-
 	use composable_support::math::safe::SafeAdd;
-	use composable_traits::financial_nft::{FinancialNFTProvider, NFTClass};
+	use composable_traits::financial_nft::{FinancialNftProvider, NftClass};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
@@ -50,13 +51,18 @@ pub mod pallet {
 		},
 	};
 	use sp_runtime::traits::Zero;
-	use sp_std::collections::btree_map::BTreeMap;
+	use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
-	pub(crate) type NFTInstanceId = u128;
+	pub(crate) type NftInstanceId = u128;
 
 	#[pallet::event]
-	pub enum Event<T: Config> {}
+	#[pallet::generate_deposit(pub (crate) fn deposit_event)]
+	pub enum Event<T: Config> {
+		NftCreated { class_id: NftClass, instance_id: NftInstanceId },
+		NftBurned { class_id: NftClass, instance_id: NftInstanceId },
+		NftTransferred { class_id: NftClass, instance_id: NftInstanceId, to: AccountIdOf<T> },
+	}
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -78,39 +84,40 @@ pub mod pallet {
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
+	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
+	pub type NftId<T: Config> =
+		StorageMap<_, Blake2_128Concat, NftClass, NftInstanceId, ValueQuery, NftIdOnEmpty<T>>;
+
 	#[pallet::type_value]
-	pub fn NFTCountOnEmpty<T: Config>() -> NFTInstanceId {
+	pub fn NftIdOnEmpty<T: Config>() -> NftInstanceId {
 		Zero::zero()
 	}
-
-	#[pallet::storage]
-	#[pallet::getter(fn nft_count)]
-	#[allow(clippy::disallowed_types)]
-	pub type NFTCount<T: Config> =
-		StorageMap<_, Blake2_128Concat, NFTClass, NFTInstanceId, ValueQuery, NFTCountOnEmpty<T>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn instance)]
 	pub type Instance<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
-		(NFTClass, NFTInstanceId),
+		(NftClass, NftInstanceId),
 		(AccountIdOf<T>, BTreeMap<Vec<u8>, Vec<u8>>),
 		OptionQuery,
 	>;
 
+	/// Map of NFT classes to all of the instances of that class.
 	#[pallet::storage]
 	#[pallet::getter(fn class_instances)]
 	pub type ClassInstances<T: Config> =
-		StorageMap<_, Blake2_128Concat, NFTClass, BTreeSet<NFTInstanceId>, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, NftClass, BTreeSet<NftInstanceId>, OptionQuery>;
 
+	/// All the NFTs owned by an account.
 	#[pallet::storage]
 	#[pallet::getter(fn owner_instances)]
 	pub type OwnerInstances<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
 		AccountIdOf<T>,
-		BTreeSet<(NFTClass, NFTInstanceId)>,
+		BTreeSet<(NftClass, NftInstanceId)>,
 		OptionQuery,
 	>;
 
@@ -119,17 +126,30 @@ pub mod pallet {
 	pub type Class<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
-		NFTClass,
+		NftClass,
+		// (who, admin, data)
 		(AccountIdOf<T>, AccountIdOf<T>, BTreeMap<Vec<u8>, Vec<u8>>),
 		OptionQuery,
 	>;
 
+	impl<T: Config> Pallet<T> {
+		pub(crate) fn get_next_nft_id(
+			class: &<Self as Inspect<AccountIdOf<T>>>::ClassId,
+		) -> Result<u128, DispatchError> {
+			NftId::<T>::try_mutate(class, |x| -> Result<u128, DispatchError> {
+				let id = *x;
+				*x = x.safe_add(&1)?;
+				Ok(id)
+			})
+		}
+	}
+
 	impl<T: Config> Inspect<AccountIdOf<T>> for Pallet<T> {
-		type ClassId = NFTClass;
-		type InstanceId = NFTInstanceId;
+		type ClassId = NftClass;
+		type InstanceId = NftInstanceId;
 
 		fn owner(class: &Self::ClassId, instance: &Self::InstanceId) -> Option<AccountIdOf<T>> {
-			Self::instance((class, instance)).map(|(owner, _)| owner)
+			Instance::<T>::get((class, instance)).map(|(owner, _)| owner)
 		}
 
 		fn attribute(
@@ -137,11 +157,12 @@ pub mod pallet {
 			instance: &Self::InstanceId,
 			key: &[u8],
 		) -> Option<Vec<u8>> {
-			Instance::<T>::get((class, instance)).and_then(|(_, nft)| nft.get(key).cloned())
+			Instance::<T>::get((class, instance))
+				.and_then(|(_, instance_attributes)| instance_attributes.get(key).cloned())
 		}
 
 		fn class_attribute(class: &Self::ClassId, key: &[u8]) -> Option<Vec<u8>> {
-			Class::<T>::get(class).and_then(|(_, _, class)| class.get(key).cloned())
+			Class::<T>::get(class).and_then(|(_, _, attributes)| attributes.get(key).cloned())
 		}
 	}
 
@@ -151,7 +172,7 @@ pub mod pallet {
 			who: &AccountIdOf<T>,
 			admin: &AccountIdOf<T>,
 		) -> DispatchResult {
-			ensure!(Self::class(class).is_none(), Error::<T>::ClassAlreadyExists);
+			ensure!(Class::<T>::get(class).is_none(), Error::<T>::ClassAlreadyExists);
 			Class::<T>::insert(class, (who, admin, BTreeMap::<Vec<u8>, Vec<u8>>::new()));
 			Ok(())
 		}
@@ -166,12 +187,26 @@ pub mod pallet {
 			Instance::<T>::try_mutate((class, instance), |entry| match entry {
 				Some((owner, _)) => {
 					OwnerInstances::<T>::mutate(owner.clone(), |x| match x {
-						Some(instances) => {
-							instances.remove(&(*class, *instance));
+						Some(owner_instances) => {
+							let was_previously_owned = owner_instances.remove(&(*class, *instance));
+							debug_assert!(was_previously_owned);
+							Ok(())
 						},
-						None => {},
-					});
+						// theoretically, this branch should never be reached
+						None => Err(Error::<T>::InstanceNotFound),
+					})?;
+
+					OwnerInstances::<T>::mutate(
+						destination.clone(),
+						insert_or_init_and_insert((*class, *instance)),
+					);
 					*owner = destination.clone();
+
+					Self::deposit_event(Event::NftTransferred {
+						class_id: *class,
+						instance_id: *instance,
+						to: destination.clone(),
+					});
 					Ok(())
 				},
 				None => Err(Error::<T>::InstanceNotFound.into()),
@@ -187,22 +222,11 @@ pub mod pallet {
 		) -> DispatchResult {
 			ensure!(Self::instance((class, instance)).is_none(), Error::<T>::InstanceAlreadyExists);
 			Instance::<T>::insert((class, instance), (who, BTreeMap::<Vec<u8>, Vec<u8>>::new()));
-			ClassInstances::<T>::mutate(class, |x| match x {
-				Some(instances) => {
-					instances.insert(*instance);
-				},
-				None => {
-					*x = Some(BTreeSet::<_>::from([*instance]));
-				},
-			});
-			OwnerInstances::<T>::mutate(who, |x| match x {
-				Some(instances) => {
-					instances.insert((*class, *instance));
-				},
-				None => {
-					*x = Some(BTreeSet::<(NFTClass, NFTInstanceId)>::from([(*class, *instance)]));
-				},
-			});
+			ClassInstances::<T>::mutate(class, insert_or_init_and_insert(*instance));
+			OwnerInstances::<T>::mutate(who, insert_or_init_and_insert((*class, *instance)));
+
+			Self::deposit_event(Event::NftCreated { class_id: *class, instance_id: *instance });
+
 			Ok(())
 		}
 
@@ -214,7 +238,9 @@ pub mod pallet {
 							Some(instances) => {
 								instances.remove(&(*class, *instance));
 							},
-							None => {},
+							None => {
+								debug_assert!(false, "unreachable")
+							},
 						});
 						*entry = None;
 						Ok(())
@@ -226,8 +252,13 @@ pub mod pallet {
 				Some(instances) => {
 					instances.remove(instance);
 				},
-				None => {},
+				None => {
+					debug_assert!(false, "unreachable")
+				},
 			});
+
+			Self::deposit_event(Event::NftBurned { class_id: *class, instance_id: *instance });
+
 			Ok(())
 		}
 
@@ -276,21 +307,30 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> FinancialNFTProvider<AccountIdOf<T>> for Pallet<T> {
+	impl<T: Config> FinancialNftProvider<AccountIdOf<T>> for Pallet<T> {
 		fn mint_nft<K: Encode, V: Encode>(
 			class: &Self::ClassId,
 			who: &AccountIdOf<T>,
 			key: &K,
 			value: &V,
 		) -> Result<Self::InstanceId, DispatchError> {
-			let instance = NFTCount::<T>::try_mutate(class, |x| -> Result<u128, DispatchError> {
-				let id = *x;
-				*x = x.safe_add(&1)?;
-				Ok(id)
-			})?;
+			let instance = Self::get_next_nft_id(&NftClass::STAKING)?;
 			Self::mint_into(class, &instance, who)?;
 			Self::set_typed_attribute(class, &instance, key, value)?;
 			Ok(instance)
+		}
+	}
+
+	/// Returns a closure that inserts the given value into the contained set, initializing the set
+	/// if the `Option` is `None`.
+	fn insert_or_init_and_insert<T: Ord>(t: T) -> impl FnOnce(&'_ mut Option<BTreeSet<T>>) -> () {
+		move |x: &mut Option<BTreeSet<T>>| match x {
+			Some(instances) => {
+				instances.insert(t);
+			},
+			None => {
+				x.replace([t].into());
+			},
 		}
 	}
 }
