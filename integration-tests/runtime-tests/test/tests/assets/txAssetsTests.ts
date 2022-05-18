@@ -99,7 +99,7 @@ describe("tx.assets Tests", function() {
    * The `transfer_native` extrinsic transfers the blockchains native asset (PICA) from `origin` to `dest`.
    */
   describe("tx.assets.transferNative Tests", function() {
-    if (!testConfiguration.enabledTests.tx.transfer__success) return;
+    if (!testConfiguration.enabledTests.tx.transferNative__success) return;
 
     it("A wallet can `transfer_native` asset PICA to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
@@ -144,7 +144,7 @@ describe("tx.assets Tests", function() {
    * The `force_transfer` extrinsic transfers any `asset` from `origin` to `dest` with sudo privileges.
    */
   describe("tx.assets.forceTransfer Tests", function() {
-    if (!testConfiguration.enabledTests.tx.transfer__success) return;
+    if (!testConfiguration.enabledTests.tx.forceTransfer__success) return;
 
     it("A *sudo* wallet can `forceTransfer` KSM to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
@@ -193,7 +193,7 @@ describe("tx.assets Tests", function() {
    * with sudo privileges.
    */
   describe("tx.assets.force_transfer_native Tests", function() {
-    if (!testConfiguration.enabledTests.tx.transfer__success) return;
+    if (!testConfiguration.enabledTests.tx.forceTransferNative__success) return;
 
     it("A *sudo* wallet can `force_transfer_native` token to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
@@ -239,7 +239,7 @@ describe("tx.assets Tests", function() {
    * The `transfer_all` extrinsic transfers the remaining balance of a specified `asset` from `origin` to `dest`.
    */
   describe("tx.assets.transfer_all Tests", function() {
-    if (!testConfiguration.enabledTests.tx.transfer__success) return;
+    if (!testConfiguration.enabledTests.tx.transferAll__success) return;
 
     it("A wallet can `transfer_all` remaining KSM to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
@@ -279,7 +279,7 @@ describe("tx.assets Tests", function() {
    * from `origin` to `dest`.
    */
   describe("tx.assets.transfer_all_native Tests", function() {
-    if (!testConfiguration.enabledTests.tx.transfer__success) return;
+    if (!testConfiguration.enabledTests.tx.transferAllNative__success) return;
 
     it("A wallet can `transfer_all_native` PICA tokens to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
@@ -326,7 +326,7 @@ describe("tx.assets Tests", function() {
    * The `mint_initialize` extrinsic creates a new asset & mints a defined `amount` into the `dest` wallet.
    */
   describe("tx.assets.mint_initialize Tests", function() {
-    if (!testConfiguration.enabledTests.tx.transfer__success) return;
+    if (!testConfiguration.enabledTests.tx.mintInitialize) return;
 
     it("A *sudo* wallet can `mint_initialize` a new asset to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
@@ -369,7 +369,7 @@ describe("tx.assets Tests", function() {
    * > In general the governance_origin should be generated from the pallet id.
    */
   describe("tx.assets.mint_initialize_with_governance Tests", function() {
-    if (!testConfiguration.enabledTests.tx.transfer__success) return;
+    if (!testConfiguration.enabledTests.tx.mintInitializeWithGovernance) return;
 
     it("A *sudo* wallet can `mint_initialize_with_governance` a new asset to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
@@ -400,7 +400,7 @@ describe("tx.assets Tests", function() {
    * The `mint_into` extrinsic mints `amount` of `asset_id` into `dest` wallet.
    */
   describe("tx.assets.mint_into Tests", function() {
-    if (!testConfiguration.enabledTests.tx.transfer__success) return;
+    if (!testConfiguration.enabledTests.tx.mintInto) return;
 
     it("A *sudo* wallet can `mintInto` KSM to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
@@ -433,7 +433,7 @@ describe("tx.assets Tests", function() {
    */
   describe("tx.assets.burn_from Tests", function() {
     // Check if group of tests are enabled.
-    if (!testConfiguration.enabledTests.tx.transfer__success) return;
+    if (!testConfiguration.enabledTests.tx.burnFrom) return;
 
     // it(name, function) describes a single test.
     it("A *sudo* wallet can `burn_from` KSM from another wallet", async function() {
