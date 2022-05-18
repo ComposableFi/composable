@@ -36,12 +36,7 @@ use serde::{Deserialize, Serialize};
 /// It contains the execution result together with some auxiliary information.
 #[derive(Eq, PartialEq, Encode, Decode, RuntimeDebug)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[cfg_attr(
-	feature = "std",
-	serde(
-		rename_all = "camelCase",
-	)
-)]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase",))]
 pub struct ContractResult<R, Balance> {
 	/// How much gas was consumed during execution.
 	pub gas_consumed: u64,
@@ -145,10 +140,7 @@ pub struct InstantiateReturnValue<AccountId> {
 /// The result of succesfully uploading a contract.
 #[derive(PartialEq, Eq, Encode, Decode, RuntimeDebug)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[cfg_attr(
-	feature = "std",
-	serde(rename_all = "camelCase")
-)]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub struct CodeUploadReturnValue<CodeHash, Balance> {
 	/// The key under which the new code is stored.
 	pub code_hash: CodeHash,
@@ -176,12 +168,7 @@ impl<T: Into<Vec<u8>>, Hash> From<T> for Code<Hash> {
 /// The amount of balance that was either charged or refunded in order to pay for storage.
 #[derive(Eq, PartialEq, Ord, PartialOrd, Encode, Decode, RuntimeDebug, Clone)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-#[cfg_attr(
-	feature = "std",
-	serde(
-		rename_all = "camelCase",
-	)
-)]
+#[cfg_attr(feature = "std", serde(rename_all = "camelCase",))]
 pub enum StorageDeposit<Balance> {
 	/// The transaction reduced storage consumption.
 	///
