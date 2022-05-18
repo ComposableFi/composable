@@ -76,6 +76,7 @@ describe.only("tx.assets Tests", function() {
 
       const senderFundsBeforeTransaction =
         new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), senderWallet.publicKey)).toString());
+      expect(senderFundsBeforeTransaction.gt(new BN(0))).to.be.true;
       const receiverFundsBeforeTransaction =
         new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraDest)).toString());
 
@@ -114,6 +115,7 @@ describe.only("tx.assets Tests", function() {
 
       const senderFundsBeforeTransaction =
         new BN((await api.rpc.assets.balanceOf("1", senderWallet.publicKey)).toString());
+      expect(senderFundsBeforeTransaction.gt(new BN(0))).to.be.true;
       const receiverFundsBeforeTransaction =
         new BN((await api.rpc.assets.balanceOf("1", paraDest)).toString());
 
@@ -154,6 +156,7 @@ describe.only("tx.assets Tests", function() {
 
       const senderFundsBeforeTransaction =
         new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraSource)).toString());
+      expect(senderFundsBeforeTransaction.gt(new BN(0))).to.be.true;
       const receiverFundsBeforeTransaction =
         new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraDest)).toString());
 
@@ -203,6 +206,7 @@ describe.only("tx.assets Tests", function() {
 
       const senderFundsBeforeTransaction =
         new BN((await api.rpc.assets.balanceOf("1", paraSource)).toString());
+      expect(senderFundsBeforeTransaction.gt(new BN(0))).to.be.true;
       const receiverFundsBeforeTransaction =
         new BN((await api.rpc.assets.balanceOf("1", paraDest)).toString());
 
@@ -247,6 +251,7 @@ describe.only("tx.assets Tests", function() {
 
       const senderFundsBeforeTransaction =
         new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), senderWallet.publicKey)).toString());
+      expect(senderFundsBeforeTransaction.gt(new BN(0))).to.be.true;
       const receiverFundsBeforeTransaction =
         new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraDest)).toString());
 
@@ -274,10 +279,8 @@ describe.only("tx.assets Tests", function() {
    * from `origin` to `dest`.
    */
   describe("tx.assets.transfer_all_native Tests", function() {
-    // Check if group of tests are enabled.
     if (!testConfiguration.enabledTests.tx.transfer__success) return;
 
-    // it(name, function) describes a single test.
     it("A wallet can `transfer_all_native` PICA tokens to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
       const paraDest = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
@@ -285,14 +288,14 @@ describe.only("tx.assets Tests", function() {
 
       const senderFundsBeforeTransaction =
         new BN((await api.rpc.assets.balanceOf("1", senderWallet.publicKey)).toString());
+      expect(senderFundsBeforeTransaction.gt(new BN(0))).to.be.true;
       const receiverFundsBeforeTransaction =
         new BN((await api.rpc.assets.balanceOf("1", paraDest)).toString());
 
-
-      const { data: [resultAccountId, resultFeeAmount] } = await sendAndWaitForSuccess(
+      const { data: [resultAccountId, resultAccountId2, resultTransferAmount] } = await sendAndWaitForSuccess(
         api,
         senderWallet,
-        api.events.balances.Deposit.is,
+        api.events.balances.Transfer.is,
         api.tx.assets.transferAllNative(paraDest, paraKeepAlive)
       );
 
@@ -301,15 +304,20 @@ describe.only("tx.assets Tests", function() {
       const receiverFundsAfterTransaction =
         new BN((await api.rpc.assets.balanceOf("1", paraDest)).toString());
 
-      // ToDo (D. Roth): Get checks working!
-      console.debug("SENDER FUNDS AFTER TRANSACTION!: " + senderFundsAfterTransaction);
-
+      /*
+      Verifying everything:
+      - Make sure the old wallet has 0 funds left.
+      - Make sure the wallet sending funds is correct.
+      - Make sure the wallet receiving funds is correct.
+      - Make sure the wallet receiving funds, received the correct amount reported by the event.
+       */
       expect(senderFundsAfterTransaction.eq(new BN(0))).to.be.true;
-      console.debug("Receiver Funds After Transaction: " + receiverFundsAfterTransaction);
-      console.debug("Receiver Funds Before Transaction + Sender Funds Before Transaction: " + receiverFundsBeforeTransaction.add(senderFundsBeforeTransaction));
-      console.debug("Receiver Funds Before Transaction + Sender Funds Before Transaction - Fee: " + receiverFundsBeforeTransaction.add(senderFundsBeforeTransaction).sub(resultFeeAmount));
+      expect(resultAccountId.toString())
+        .to.be.equal(api.createType("AccountId32", senderWallet.publicKey).toString());
+      expect(resultAccountId2.toString())
+        .to.be.equal(api.createType("AccountId32", paraDest).toString());
       expect(receiverFundsAfterTransaction
-        .eq(receiverFundsBeforeTransaction.add(senderFundsBeforeTransaction)))
+        .eq(receiverFundsBeforeTransaction.add(resultTransferAmount)))
         .to.be.true;
     });
   });
@@ -383,7 +391,6 @@ describe.only("tx.assets Tests", function() {
       expect(result.isOk).to.be.true;
 
       // Verifying everything, please take a look at above's test case for further information.
-      // Querying the list of available asset IDs
       const newAssetData = (await api.query.currencyFactory.assetIdRanges());
       // @ts-ignore
       const newAssetId = new BN(newAssetData.ranges[1].current.toString()).sub(new BN(1));
