@@ -107,6 +107,14 @@ pub mod pallet {
 	#[pallet::getter(fn _price)]
 	pub type Price<T: Config> = StorageValue<_, T::Decimal, OptionQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn _twap_of)]
+	pub type Twaps<T: Config> = StorageMap<_, Twox64Concat, T::VammId, T::Decimal>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn _price_of)]
+	pub type Prices<T: Config> = StorageMap<_, Twox64Concat, T::VammId, T::Decimal>;
+
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Trait Implementations
 	// ----------------------------------------------------------------------------------------------------
@@ -136,7 +144,9 @@ pub mod pallet {
 		}
 
 		fn get_twap(vamm: &Self::VammId) -> Result<Self::Decimal, DispatchError> {
-			if let Some(twap) = Self::hardcoded_twap() {
+			if let Some(twap) = Self::_twap_of(vamm) {
+				Ok(twap)
+			} else if let Some(twap) = Self::hardcoded_twap() {
 				Ok(twap)
 			} else {
 				Err(Error::<T>::FailedToCalculateTwap.into())
@@ -144,9 +154,12 @@ pub mod pallet {
 		}
 
 		fn swap(config: &Self::SwapConfig) -> Result<Self::Balance, DispatchError> {
-			match Self::_price() {
-				Some(price) => Self::get_value(config.input_amount, &config.asset, price),
-				None => Err(Error::<T>::FailedToExecuteSwap.into()),
+			if let Some(price) = Self::_price_of(&config.vamm_id) {
+				Self::get_value(config.input_amount, &config.asset, price)
+			} else if let Some(price) = Self::_price() {
+				Self::get_value(config.input_amount, &config.asset, price)
+			} else {
+				Err(Error::<T>::FailedToExecuteSwap.into())
 			}
 		}
 
@@ -175,8 +188,24 @@ pub mod pallet {
 			Price::<T>::set(price)
 		}
 
+		pub fn set_price_of(vamm_id: &T::VammId, price: Option<T::Decimal>) {
+			if let Some(p) = price {
+				Prices::<T>::insert(vamm_id, p);
+			} else {
+				Prices::<T>::remove(vamm_id);
+			}
+		}
+
 		pub fn set_twap(twap: Option<T::Decimal>) {
 			Twap::<T>::set(twap)
+		}
+
+		pub fn set_twap_of(vamm_id: &T::VammId, twap: Option<T::Decimal>) {
+			if let Some(t) = twap {
+				Twaps::<T>::insert(vamm_id, t);
+			} else {
+				Twaps::<T>::remove(vamm_id);
+			}
 		}
 
 		pub fn get_value(
