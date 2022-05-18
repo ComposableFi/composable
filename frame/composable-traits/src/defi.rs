@@ -96,6 +96,22 @@ impl<AssetId: PartialEq> PartialEq for CurrencyPair<AssetId> {
 
 impl<AssetId: PartialEq> Eq for CurrencyPair<AssetId> {}
 
+impl<AssetId: Ord> Ord for CurrencyPair<AssetId> {
+	fn cmp(&self, other: &Self) -> core::cmp::Ordering {
+		let base_ordering = self.base.cmp(&other.base);
+		if base_ordering.is_eq() {
+			return self.quote.cmp(&other.quote)
+		}
+		base_ordering
+	}
+}
+
+impl<AssetId: Ord> PartialOrd for CurrencyPair<AssetId> {
+	fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+		Some(self.cmp(other))
+	}
+}
+
 impl<AssetId: Copy + PartialEq> CurrencyPair<AssetId> {
 	pub fn swap(&self) -> Self {
 		Self { base: self.quote, quote: self.base }

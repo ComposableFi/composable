@@ -37,7 +37,7 @@ pub mod pallet {
 		traits::{CheckedAdd, One, Zero},
 		DispatchResult,
 	};
-	use sp_std::vec::Vec;
+	use sp_std::{collections::btree_set::BTreeSet, vec::Vec};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -118,6 +118,8 @@ pub mod pallet {
 		CanNotRespectMinAmountRequested,
 		/// Unsupported operation.
 		UnsupportedOperation,
+		/// Route with possible loop is not allowed.
+		LoopSuspectedInRouteWhileValidation,
 	}
 
 	#[pallet::event]
@@ -275,6 +277,7 @@ pub mod pallet {
 			sp_std::if_std! {
 				println!("asset_pair.quote {:?} , asset_pair.base {:?}", asset_pair.quote, asset_pair.base);
 			}
+			let mut pair_set = BTreeSet::<CurrencyPair<T::AssetId>>::new();
 			route
 				.iter()
 				// starting with asset_pair.quote, make sure current node's quote
@@ -284,6 +287,11 @@ pub mod pallet {
 						|pair| -> Result<T::AssetId, DispatchError> {
 							sp_std::if_std! {
 								println!("pool_id {:?} pair.quote {:?} pair.base {:?} val {:?}", *iter, pair.quote, pair.base, val);
+							}
+							if pair_set.contains(&pair) {
+								return Err(Error::<T>::LoopSuspectedInRouteWhileValidation.into())
+							} else {
+								pair_set.insert(pair);
 							}
 							if pair.quote == val {
 								Ok(pair.base)

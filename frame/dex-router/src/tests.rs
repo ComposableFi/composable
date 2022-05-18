@@ -169,29 +169,28 @@ fn halborn_hal11_route_with_cycle() {
 
 		let dex_route =
 			vec![create_usdt_usdc_pool(), create_usdc_usdt_pool(), create_usdt_usdc_pool()];
-		assert_ok!(DexRouter::update_route(
-			Origin::signed(ALICE),
-			currency_pair,
-			Some(dex_route.clone().try_into().unwrap())
-		));
-		assert_eq!(DexRouter::get_route(currency_pair), Some((dex_route.clone(), false)));
-		assert_eq!(DexRouter::get_route(currency_pair.swap()), Some((dex_route, true)));
-
-		// remove previous root
-		assert_ok!(DexRouter::update_route(Origin::signed(ALICE), currency_pair, None));
+		assert_noop!(
+			DexRouter::update_route(
+				Origin::signed(ALICE),
+				currency_pair,
+				Some(dex_route.clone().try_into().unwrap())
+			),
+			Error::<Test>::LoopSuspectedInRouteWhileValidation,
+		);
 		// An other variant, where same pool is used twice
 		let currency_pair = CurrencyPair { base: USDT, quote: USDC };
 		assert_eq!(DexRouter::get_route(currency_pair), None);
 		let usdt_usdc_pool = create_usdt_usdc_pool();
 		let usdc_usdt_pool = create_usdc_usdt_pool();
 		let dex_route = vec![usdt_usdc_pool, usdc_usdt_pool, usdt_usdc_pool];
-		assert_ok!(DexRouter::update_route(
-			Origin::signed(ALICE),
-			currency_pair,
-			Some(dex_route.clone().try_into().unwrap())
-		));
-		assert_eq!(DexRouter::get_route(currency_pair), Some((dex_route.clone(), false)));
-		assert_eq!(DexRouter::get_route(currency_pair.swap()), Some((dex_route, true)));
+		assert_noop!(
+			DexRouter::update_route(
+				Origin::signed(ALICE),
+				currency_pair,
+				Some(dex_route.clone().try_into().unwrap())
+			),
+			Error::<Test>::LoopSuspectedInRouteWhileValidation,
+		);
 	});
 }
 
