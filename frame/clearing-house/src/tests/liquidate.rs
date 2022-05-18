@@ -1,7 +1,7 @@
 use composable_traits::clearing_house::ClearingHouse;
 use frame_support::{assert_noop, assert_ok};
 
-use super::{traders_in_one_market_context, valid_market_config};
+use super::{multi_market_and_trader_context, traders_in_one_market_context, valid_market_config};
 use crate::{
 	mock::{
 		accounts::{ALICE, BOB},
@@ -137,6 +137,123 @@ fn can_liquidate_if_below_maintenance_margin_ratio_by_pnl() {
 	});
 }
 
-// TODO(0xangelo): position in market with highest margin requirement gets liquidated first. Set it
-// up so that if the position in the market with lowest margin requirement gets liquidated first,
-// the other one would have to be liquidated too
+#[test]
+#[ignore = "unimplemented"]
+fn position_in_market_with_greatest_margin_requirement_gets_liquidated_first() {
+	let mut config = valid_market_config();
+	config.margin_ratio_initial = (1, 2).into();
+	config.margin_ratio_maintenance = (20, 100).into();
+	config.taker_fee = 0;
+	let mut configs = vec![config.clone()];
+	config.margin_ratio_maintenance = (36, 100).into();
+	configs.push(config);
+
+	let margins = vec![(ALICE, 100), (BOB, 0)];
+	multi_market_and_trader_context(configs, margins, |market_ids| {
+		// Alice opens position in market 0
+		let market_0 = TestPallet::get_market(&market_ids[0]).unwrap();
+		VammPallet::set_price_of(&market_0.vamm_id, Some(100.into()));
+		assert_ok!(<TestPallet as ClearingHouse>::open_position(
+			&ALICE,
+			&market_ids[0],
+			Direction::Long,
+			100,
+			1
+		));
+
+		// Alice opens position in market 1
+		let market_1 = TestPallet::get_market(&market_ids[1]).unwrap();
+		VammPallet::set_price_of(&market_1.vamm_id, Some(100.into()));
+		assert_ok!(<TestPallet as ClearingHouse>::open_position(
+			&ALICE,
+			&market_ids[0],
+			Direction::Long,
+			100,
+			1
+		));
+
+		// Market 0:
+		// - Margin requirement at price 60 = 12
+		// - PnL = -40
+		VammPallet::set_price_of(&market_0.vamm_id, Some(60.into()));
+		// Market 1:
+		// - Margin requirement at price 70 = 25.2
+		// - PnL = -30
+		VammPallet::set_price_of(&market_1.vamm_id, Some(70.into()));
+		// Total:
+		// - margin = 100 - 70 = 30
+		// - margin required = 37.2
+		// Margin required after closing the position in market
+		// - 0: 12
+		// - 1: 25.2
+		// Thus, closing either position would bring the account above the MMR (assuming no fees to
+		// neither the Insurance Fund nor the liquidator)
+
+		// Bob liquidates Alice's account
+		assert_ok!(TestPallet::liquidate(Origin::signed(BOB), ALICE));
+
+		// We expect Alice's position in market 1 to be fully liquidated, since it has the highest
+		// margin requirement, but the one in market 0 to be left open.
+		let positions = TestPallet::get_positions(&ALICE);
+		assert_eq!(positions.len(), 1);
+		assert_eq!(positions[0].market_id, market_ids[0]);
+	});
+}
+
+#[test]
+#[ignore = "unimplemented"]
+fn above_water_position_can_protect_underwater_position() {
+	let mut config = valid_market_config();
+	config.margin_ratio_initial = (1, 2).into();
+	config.margin_ratio_maintenance = (20, 100).into();
+	config.taker_fee = 0;
+	let mut configs = vec![config.clone()];
+	config.margin_ratio_maintenance = (20, 100).into();
+	configs.push(config);
+
+	let margins = vec![(ALICE, 100), (BOB, 0)];
+	multi_market_and_trader_context(configs, margins, |market_ids| {
+		// Alice opens position in market 0
+		let market_0 = TestPallet::get_market(&market_ids[0]).unwrap();
+		VammPallet::set_price_of(&market_0.vamm_id, Some(100.into()));
+		assert_ok!(<TestPallet as ClearingHouse>::open_position(
+			&ALICE,
+			&market_ids[0],
+			Direction::Long,
+			100,
+			1,
+		));
+
+		// Alice opens position in market 1
+		let market_1 = TestPallet::get_market(&market_ids[1]).unwrap();
+		VammPallet::set_price_of(&market_1.vamm_id, Some(100.into()));
+		assert_ok!(<TestPallet as ClearingHouse>::open_position(
+			&ALICE,
+			&market_ids[1],
+			Direction::Long,
+			100,
+			1,
+		));
+
+		// In this example, both markets are equal in MMR. If we had just opened a 100 USDC long on
+		// one market with 50 collateral, the liquidation threshold would be at price 62.5. However,
+		// since we have two positions, one's margin surplus can cover for the other's deficit
+		// Market 0 at price 65:
+		// - margin requirement = 13
+		// - Pnl = -35
+		VammPallet::set_price_of(&market_0.vamm_id, Some(65.into()));
+		// Market 1 at price 60:
+		// - margin requirement = 12
+		// - Pnl = -40
+		VammPallet::set_price_of(&market_1.vamm_id, Some(60.into()));
+		// Total:
+		// - margin = 100 - 75 = 25
+		// - margin required = 25
+
+		// Bob tries to liquidate Alice's account but fails
+		assert_noop!(
+			TestPallet::liquidate(Origin::signed(BOB), ALICE),
+			Error::<Runtime>::SufficientCollateral
+		);
+	});
+}
