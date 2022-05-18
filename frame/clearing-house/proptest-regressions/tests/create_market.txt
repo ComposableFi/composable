@@ -1,0 +1,7 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 44c4a74e9b0cf9ef05490c11c8a4446e9bf10ef9c11c2ce819451b4cc1276185 # shrinks to (margin_ratio_initial, margin_ratio_maintenance) = (FixedI128(1.000000000000000000), FixedI128(0.514042628035060928))

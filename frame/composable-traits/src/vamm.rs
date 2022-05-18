@@ -3,6 +3,7 @@
 //! Common traits and data structures for vamm implementation.
 use frame_support::pallet_prelude::*;
 use sp_arithmetic::traits::Unsigned;
+use sp_core::U256;
 use sp_runtime::FixedPointNumber;
 
 #[cfg(feature = "std")]
@@ -43,11 +44,15 @@ pub trait Vamm {
 	fn create(config: &Self::VammConfig) -> Result<Self::VammId, DispatchError>;
 
 	/// Performs swap of assets.
-	fn swap(config: &Self::SwapConfig) -> Result<Self::Balance, DispatchError>;
+	fn swap(config: &Self::SwapConfig) -> Result<SwapOutput<Self::Balance>, DispatchError>;
 
 	/// Performs swap simulation.
 	fn swap_simulation(config: &Self::SwapSimulationConfig)
 		-> Result<Self::Balance, DispatchError>;
+
+	/// Sets the amount of base and quote asset reserves, modifying the
+	/// invariant of the desired vamm.
+	fn move_price(config: &Self::MovePriceConfig) -> Result<U256, DispatchError>;
 
 	/// Get the quote asset mark price for the specified vamm.
 	fn get_price(
@@ -109,6 +114,14 @@ pub enum Direction {
 #[derive(Copy, Clone, Debug)]
 pub struct MovePriceConfig<VammId, Balance> {
 	pub vamm_id: VammId,
-	pub base_asset_reserve: Balance,
-	pub quote_asset_reserve: Balance,
+	pub base_asset_reserves: Balance,
+	pub quote_asset_reserves: Balance,
+}
+
+/// Specify the return type for [`Vamm::swap`].
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct SwapOutput<Balance> {
+	pub output: Balance,
+	pub negative: bool,
 }

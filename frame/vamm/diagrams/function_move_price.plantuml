@@ -1,0 +1,20 @@
+@startuml
+skinparam responseMessageBelowArrow true
+'autoactivate on
+!theme mars
+
+participant "Client" as client
+participant "Vamm" as vamm
+database "Storage" as svamm
+database "Blockchain" as bc
+
+client -> vamm++: Move price request
+vamm -[#green]> svamm++: Get vamm
+svamm --> vamm--: vamm
+vamm -> vamm: Sanity checks
+vamm -> vamm: Update asset reserves
+vamm -> vamm: Update invariant
+vamm -[#red]> svamm: Store updated vamm state
+vamm -[#red]->o bc: Deposit price moved event
+vamm --> client--: New invariant
+@enduml

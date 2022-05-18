@@ -11,7 +11,7 @@ proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
 	#[allow(clippy::disallowed_methods)]
-	fn create_vamm(
+	fn create_vamm_correctly_returns_vamm_state(
 		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve()
 	) {
 		ExtBuilder::default().build().execute_with(|| {

@@ -1,14 +1,14 @@
 use crate::{
-	mock::{Balance, ExtBuilder, MockRuntime, System, TestPallet},
+	mock::{Balance, ExtBuilder, MockRuntime, System, TestPallet, VammId},
 	pallet::{Error, Event, VammMap},
 	tests::{
-		any_vamm_state, balance_range_low, balance_range_upper_half, get_swap_config,
-		get_vamm_state, multiple_swaps, run_to_block, then_and_now, RUN_CASES,
+		any_sane_base_quote_peg, any_vamm_state, balance_range_low, balance_range_upper_half,
+		get_swap_config, get_vamm_state, multiple_swaps, run_to_block, then_and_now, RUN_CASES,
 	},
 	VammState,
 };
-use composable_traits::vamm::{AssetType, Direction, SwapConfig, Vamm as VammTrait};
-use frame_support::{assert_noop, assert_ok};
+use composable_traits::vamm::{AssetType, Direction, SwapConfig, SwapOutput, Vamm as VammTrait};
+use frame_support::{assert_noop, assert_ok, assert_storage_noop};
 use proptest::prelude::*;
 use sp_core::U256;
 use sp_runtime::traits::Zero;
@@ -45,7 +45,7 @@ proptest! {
 		// set to close, doing this we ensure we can't make swaps due to the
 		// vamm be closed.
 		vamm_state.closed = Some(close);
-		swap_config.vamm_id = 0;
+		swap_config.vamm_id = VammId::zero();
 
 		ExtBuilder {
 			vamm_count: 1,
@@ -77,7 +77,7 @@ proptest! {
 		swap_config.input_amount = 0;
 
 		swap_config.output_amount_limit = limit;
-		swap_config.vamm_id = 0;
+		swap_config.vamm_id = VammId::zero();
 
 		ExtBuilder {
 			vamm_count: 1,
@@ -97,9 +97,7 @@ proptest! {
 	fn swap_asset_suceeds_emitting_event(
 		mut vamm_state in get_vamm_state(Default::default()),
 		mut swap_config in get_swap_config(Default::default()),
-		base in balance_range_low(),
-		quote in balance_range_low(),
-		peg in balance_range_low(),
+		(base, quote, peg) in any_sane_base_quote_peg(),
 	) {
 		// Ensure vamm is open before start operation to swap assets.
 		vamm_state.closed = None;
@@ -112,7 +110,7 @@ proptest! {
 		// Disable output limit check
 		swap_config.output_amount_limit = Balance::zero();
 
-		swap_config.vamm_id = 0;
+		swap_config.vamm_id = VammId::zero();
 
 		ExtBuilder {
 			vamm_count: 1,
@@ -123,17 +121,22 @@ proptest! {
 
 			let swap = TestPallet::swap(&swap_config);
 
-			if let Ok(swap) = swap {
-				System::assert_last_event(
-					Event::Swapped {
-						vamm_id: swap_config.vamm_id,
-						input_amount: swap_config.input_amount,
-						output_amount: swap,
-						input_asset_type: swap_config.asset,
-						direction: swap_config.direction,
-					}.into()
-				);
-			}
+			match swap {
+				Ok(_) => {
+					System::assert_last_event(
+						Event::Swapped {
+							vamm_id: swap_config.vamm_id,
+							input_amount: swap_config.input_amount,
+							output_amount: swap.unwrap(),
+							input_asset_type: swap_config.asset,
+							direction: swap_config.direction,
+						}.into()
+					);
+				},
+				 _ => {
+					 assert_storage_noop!(swap);
+				 },
+			};
 		})
 	}
 }
@@ -154,39 +157,33 @@ fn swap_add_base() {
 
 	ExtBuilder {
 		vamm_count: 1,
-		vamms: vec![
-			// Initial state
-			(
-				0,
-				VammState {
-					base_asset_reserves: base_u256.as_u128(),
-					quote_asset_reserves: quote_u256.as_u128(),
-					peg_multiplier: 1,
-					invariant,
-					closed: None,
-				},
-			),
-			// Expected final state
-			(
-				1,
-				VammState {
-					base_asset_reserves: 3_000_000_000_000,
-					quote_asset_reserves: 33_333_333_333_333,
-					peg_multiplier: 1,
-					invariant,
-					closed: None,
-				},
-			),
-		],
+		vamms: vec![(
+			0,
+			VammState {
+				base_asset_reserves: base_u256.as_u128(),
+				quote_asset_reserves: quote_u256.as_u128(),
+				peg_multiplier: 1,
+				invariant,
+				closed: None,
+			},
+		)],
 	}
 	.build()
 	.execute_with(|| {
 		let swap = TestPallet::swap(&swap_config);
 		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
-		let vamm_expected = VammMap::<MockRuntime>::get(1);
 
-		assert_eq!(swap, Ok(16_666_666_666_667));
-		assert_eq!(vamm_after_swap, vamm_expected);
+		assert_ok!(swap, SwapOutput { output: 16_666_666_666_667, negative: false });
+		assert_eq!(
+			vamm_after_swap.unwrap(),
+			VammState {
+				base_asset_reserves: 3_000_000_000_000,
+				quote_asset_reserves: 33_333_333_333_333,
+				peg_multiplier: 1,
+				invariant,
+				closed: None,
+			}
+		);
 	})
 }
 
@@ -206,39 +203,33 @@ fn swap_remove_base() {
 
 	ExtBuilder {
 		vamm_count: 1,
-		vamms: vec![
-			// Initial state
-			(
-				0,
-				VammState {
-					base_asset_reserves: base_u256.as_u128(),
-					quote_asset_reserves: quote_u256.as_u128(),
-					peg_multiplier: 1,
-					invariant,
-					closed: None,
-				},
-			),
-			// Expected final state
-			(
-				1,
-				VammState {
-					base_asset_reserves: 1_000_000_000_000,
-					quote_asset_reserves: 100_000_000_000_000,
-					peg_multiplier: 1,
-					invariant,
-					closed: None,
-				},
-			),
-		],
+		vamms: vec![(
+			0,
+			VammState {
+				base_asset_reserves: base_u256.as_u128(),
+				quote_asset_reserves: quote_u256.as_u128(),
+				peg_multiplier: 1,
+				invariant,
+				closed: None,
+			},
+		)],
 	}
 	.build()
 	.execute_with(|| {
 		let swap = TestPallet::swap(&swap_config);
 		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
-		let vamm_expected = VammMap::<MockRuntime>::get(1);
 
-		assert_eq!(swap, Ok(50_000_000_000_000));
-		assert_eq!(vamm_after_swap, vamm_expected);
+		assert_ok!(swap, SwapOutput { output: 50_000_000_000_000, negative: false });
+		assert_eq!(
+			vamm_after_swap.unwrap(),
+			VammState {
+				base_asset_reserves: 1_000_000_000_000,
+				quote_asset_reserves: 100_000_000_000_000,
+				peg_multiplier: 1,
+				invariant,
+				closed: None,
+			}
+		);
 	})
 }
 
@@ -258,47 +249,37 @@ fn swap_add_quote() {
 
 	ExtBuilder {
 		vamm_count: 1,
-		vamms: vec![
-			// Initial state
-			(
-				0,
-				VammState {
-					base_asset_reserves: base_u256.as_u128(),
-					quote_asset_reserves: quote_u256.as_u128(),
-					peg_multiplier: 1,
-					invariant,
-					closed: None,
-				},
-			),
-			// Expected final state
-			(
-				1,
-				VammState {
-					base_asset_reserves: 1_960_784_313_725,
-					quote_asset_reserves: 51_000_000_000_000,
-					peg_multiplier: 1,
-					invariant,
-					closed: None,
-				},
-			),
-		],
+		vamms: vec![(
+			0,
+			VammState {
+				base_asset_reserves: base_u256.as_u128(),
+				quote_asset_reserves: quote_u256.as_u128(),
+				peg_multiplier: 1,
+				invariant,
+				closed: None,
+			},
+		)],
 	}
 	.build()
 	.execute_with(|| {
 		let swap = TestPallet::swap(&swap_config);
 		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
-		let vamm_expected = VammMap::<MockRuntime>::get(1);
 
-		assert_eq!(swap, Ok(39_215_686_275));
-		assert_eq!(vamm_after_swap, vamm_expected);
+		assert_ok!(swap, SwapOutput { output: 39_215_686_275, negative: false });
+		assert_eq!(
+			vamm_after_swap.unwrap(),
+			VammState {
+				base_asset_reserves: 1_960_784_313_725,
+				quote_asset_reserves: 51_000_000_000_000,
+				peg_multiplier: 1,
+				invariant,
+				closed: None,
+			}
+		);
 	})
 }
 
-// TODO(Cardosaum): fix code when try to remove quote.
-// as of now all calls for this instance return Ok(0), which essentially would
-// be a no-op.
 #[test]
-#[ignore = "to be implemented"]
 fn swap_remove_quote() {
 	let base_u256 = U256::from(2_u128) * U256::exp10(12);
 	let quote_u256 = U256::from(50_u128) * U256::exp10(12);
@@ -314,40 +295,33 @@ fn swap_remove_quote() {
 
 	ExtBuilder {
 		vamm_count: 1,
-		vamms: vec![
-			// Initial state
-			(
-				0,
-				VammState {
-					base_asset_reserves: base_u256.as_u128(),
-					quote_asset_reserves: quote_u256.as_u128(),
-					peg_multiplier: 1,
-					invariant,
-					closed: None,
-				},
-			),
-			// Expected final state
-			(
-				1,
-				VammState {
-					base_asset_reserves: 1_960_784_313_725,
-					quote_asset_reserves: 51_000_000_000_000,
-					peg_multiplier: 1,
-					invariant,
-					closed: None,
-				},
-			),
-		],
+		vamms: vec![(
+			0,
+			VammState {
+				base_asset_reserves: base_u256.as_u128(),
+				quote_asset_reserves: quote_u256.as_u128(),
+				peg_multiplier: 1,
+				invariant,
+				closed: None,
+			},
+		)],
 	}
 	.build()
 	.execute_with(|| {
-		let vamm_before_swap = VammMap::<MockRuntime>::get(0);
 		let swap = TestPallet::swap(&swap_config);
 		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
-		let vamm_expected = VammMap::<MockRuntime>::get(1);
 
-		assert_eq!(swap, Ok(39_215_686_275));
-		assert_eq!(vamm_after_swap, vamm_expected);
+		assert_ok!(swap, SwapOutput { output: 800_320_128, negative: true });
+		assert_eq!(
+			vamm_after_swap.unwrap(),
+			VammState {
+				base_asset_reserves: 2_000_800_320_128,
+				quote_asset_reserves: 49_980_000_000_000,
+				peg_multiplier: 1,
+				invariant,
+				closed: None,
+			}
+		);
 	})
 }
 
@@ -385,7 +359,6 @@ proptest! {
 			let invariant_delta = invariant_before.max(invariant_after)
 				- invariant_before.min(invariant_after);
 
-			assert_eq!(invariant_delta / vamm_state.invariant, U256::zero());
 			assert!(invariant_delta <= invariant_epsilon);
 		});
 	}
@@ -427,7 +400,6 @@ proptest! {
 			let invariant_delta = invariant_before.max(invariant_after)
 				- invariant_before.min(invariant_after);
 
-			assert_eq!(invariant_delta / vamm_state.invariant, U256::zero());
 			assert!(invariant_delta <= invariant_epsilon);
 		});
 
@@ -470,7 +442,6 @@ proptest! {
 			let invariant_delta = invariant_before.max(invariant_after)
 				- invariant_before.min(invariant_after);
 
-			assert_eq!(invariant_delta / vamm_state.invariant, U256::zero());
 			assert!(invariant_delta <= invariant_epsilon);
 		});
 	}

@@ -79,9 +79,12 @@ package "pallet-clearing-house" {
             Decimal margin_ratio_initial
             Decimal margin_ratio_maintenance
             Decimal minimum_trade_size
+            Decimal net_base_asset_amount
+            Balance fee_pool
             Duration funding_frequency
             Duration funding_period
             Duration funding_rate_ts
+            Balance taker_fee
         }
     }
 }

@@ -5,6 +5,7 @@ pub trait WeightInfo {
 	fn add_margin() -> Weight;
 	fn create_market() -> Weight;
 	fn open_position() -> Weight;
+	fn update_funding() -> Weight;
 }
 
 /// Weights for `pallet_clearing_house` using the Substrate node and recommended hardware.
@@ -21,6 +22,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn open_position() -> Weight {
 		1_000_u32.into()
 	}
+
+	fn update_funding() -> Weight {
+		1_000_u32.into()
+	}
 }
 
 // For backwards compatibility and tests
@@ -34,6 +39,10 @@ impl WeightInfo for () {
 	}
 
 	fn open_position() -> Weight {
+		1_000_u32.into()
+	}
+
+	fn update_funding() -> Weight {
 		1_000_u32.into()
 	}
 }

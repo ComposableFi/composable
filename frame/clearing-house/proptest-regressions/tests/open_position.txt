@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 1470150209ed1613e9854838f373890c970ae4c970e90d19112a55fdf910ef3d # shrinks to direction = Long
+cc 598045f9cd4e3692eba545605147173d2089d033edda25c3bad0d3f6f19b61be # shrinks to direction = Long, max_leverage_percent = 100, percentf = FixedU128(0.010000000000000000)

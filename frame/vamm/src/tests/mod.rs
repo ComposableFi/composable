@@ -1,15 +1,23 @@
 #![allow(clippy::disallowed_methods)] // Allow use of .unwrap() in tests
 
+use std::ops::RangeInclusive;
+
 use crate::{
 	mock::{Balance, MockRuntime, Origin, System, TestPallet, Timestamp},
 	pallet::{self, VammState},
 };
-use composable_traits::vamm::{AssetType, Direction, SwapConfig, Vamm as VammTrait, VammConfig};
+use composable_traits::vamm::{
+	AssetType, Direction, MovePriceConfig, SwapConfig, Vamm as VammTrait,
+};
 use frame_support::pallet_prelude::Hooks;
 use proptest::prelude::*;
 
+pub mod compute_invariant;
 pub mod create_vamm;
 pub mod get_price;
+pub mod get_price_base_asset;
+pub mod get_price_quote_asset;
+pub mod move_price;
 pub mod swap_asset;
 pub mod swap_base_asset;
 pub mod swap_quote_asset;
@@ -31,6 +39,21 @@ fn run_to_block(n: u64) {
 		System::on_initialize(System::block_number());
 		Timestamp::on_initialize(System::block_number());
 	}
+}
+
+#[allow(dead_code)]
+fn run_for_seconds(seconds: u64) {
+	// Not using an equivalent run_to_block call here because it causes the tests to slow down
+	// drastically
+	if System::block_number() > 0 {
+		Timestamp::on_finalize(System::block_number());
+		System::on_finalize(System::block_number());
+	}
+	System::set_block_number(System::block_number() + 1);
+	// Time is set in milliseconds, so we multiply the seconds by 1_000
+	let _ = Timestamp::set(Origin::none(), Timestamp::now() + 1_000 * seconds);
+	System::on_initialize(System::block_number());
+	Timestamp::on_initialize(System::block_number());
 }
 
 type Decimal = <MockRuntime as pallet::Config>::Decimal;
@@ -160,13 +183,52 @@ prop_compose! {
 	}
 }
 
+fn min_sane_balance() -> u128 {
+	10_u128.pow(18)
+}
+
+fn max_sane_balance() -> u128 {
+	10_u128.pow(30)
+}
+
+fn any_sane_asset_amount() -> RangeInclusive<u128> {
+	// From 1 to 1 trilion.
+	min_sane_balance()..=max_sane_balance()
+}
+
+#[allow(dead_code)]
+fn limited_peg(x: u128) -> RangeInclusive<u128> {
+	1..=(u128::MAX / x)
+}
+
 prop_compose! {
-	// TODO(Cardosaum): create as_balance and as_inner functions
-	fn any_sane_asset_amount()(
-		x in 1_000_000_000_000_000_000..=1_000_000_000_000_000_000_000_000_000_000_u128
-	) -> u128 {
-		x
+	fn asset_times_peg_dont_overflow()(
+		asset in any_sane_asset_amount()
+	)(peg in limited_peg(asset), asset in Just(asset)) -> (u128, u128) {
+		(asset, peg)
 	}
+}
+
+prop_compose! {
+	fn any_sane_base_quote_peg()(
+		(asset1, peg) in asset_times_peg_dont_overflow()
+	) (
+		peg in Just(peg),
+		asset1 in Just(asset1),
+		// asset2 in Just(peg),
+		asset2 in limited_peg(asset1),
+		first_asset_is_base in any::<bool>()
+	) -> (u128, u128, u128) {
+		if first_asset_is_base {
+			(asset1, asset2, peg)
+		} else {
+			(asset2, asset1, peg)
+		}
+	}
+}
+
+fn any_vamm_id() -> RangeInclusive<VammId> {
+	VammId::MIN..=VammId::MAX
 }
 
 prop_compose! {
@@ -184,6 +246,20 @@ prop_compose! {
 				base, quote
 			).unwrap(),
 			closed,
+		}
+	}
+}
+
+prop_compose! {
+	fn any_move_price_config()(
+		vamm_id in any_vamm_id(),
+		base_asset_reserves in any_sane_asset_amount(),
+		quote_asset_reserves in any_sane_asset_amount(),
+	) -> MovePriceConfig<VammId, Balance> {
+		MovePriceConfig {
+			vamm_id,
+			base_asset_reserves,
+			quote_asset_reserves,
 		}
 	}
 }
@@ -276,7 +352,7 @@ fn multiple_swap_configs(max_swaps: usize) -> Vec<BoxedStrategy<SwapConfig<VammI
 
 prop_compose! {
 	fn multiple_swaps()(
-		swaps_count in 100..1000_usize
+		swaps_count in 1_000..100_000_usize
 	) (
 		swaps in multiple_swap_configs(swaps_count)
 	) -> Vec<SwapConfig<VammId, Balance>> {
