@@ -1088,7 +1088,7 @@ pub mod pallet {
 		}
 
 		/// Check is price actual yet
-		fn ensure_price(market: &MarketConfigOf<T>) -> Result<(), DispatchError> {
+		fn ensure_price_is_recent(market: &MarketConfigOf<T>) -> Result<(), DispatchError> {
 			use sp_runtime::traits::CheckedSub as _;
 
 			let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
@@ -1345,7 +1345,7 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let market = Self::get_market(market_id)?;
 
-			Self::ensure_price(&market)?;
+			Self::ensure_price_is_recent(&market)?;
 
 			let MarketAssets { borrow_asset, debt_asset: debt_asset_id } =
 				Self::get_assets_for_market(market_id)?;
