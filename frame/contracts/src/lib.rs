@@ -838,7 +838,7 @@ where
 			storage_deposit: output.storage_deposit,
 			debug_message: debug_message.unwrap_or_default(),
 		}
-  }
+	}
 
 	/// Perform a call to a specified contract.
 	///

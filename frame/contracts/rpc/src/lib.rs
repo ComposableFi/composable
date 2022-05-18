@@ -19,12 +19,11 @@
 
 use std::sync::Arc;
 
-
 use codec::Codec;
 use composable_support::rpc_helpers::SafeRpcWrapper;
+use core::{fmt::Display, str::FromStr};
 use frame_support::traits::Get;
 use jsonrpc_core::{Error, ErrorCode, Result};
-use core::{fmt::Display, str::FromStr};
 use jsonrpc_derive::rpc;
 use pallet_contracts_primitives::{
 	Code, CodeUploadResult, ContractExecResult, ContractInstantiateResult,
@@ -182,14 +181,7 @@ impl<C, Block, AccountId, AssetId, Balance, Hash, MaxTransferAssets>
 where
 	Block: BlockT,
 	C: Send + Sync + 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
-	C::Api: ContractsRuntimeApi<
-		Block,
-		AccountId,
-		AssetId,
-		Balance,
-		Hash,
-		MaxTransferAssets,
-	>,
+	C::Api: ContractsRuntimeApi<Block, AccountId, AssetId, Balance, Hash, MaxTransferAssets>,
 	AccountId: Codec,
 	AssetId: Codec + Ord + Send + Sync + 'static + FromStr + Display,
 	Balance: Codec + Send + Sync + 'static + FromStr + Display,
@@ -241,7 +233,7 @@ where
 		gas_limit: u64,
 		storage_deposit_limit: Option<SafeRpcWrapper<Balance>>,
 		code: Code<Hash>,
-	  data: Bytes,
+		data: Bytes,
 		salt: Bytes,
 		at: Option<<Block as BlockT>::Hash>,
 	) -> Result<ContractInstantiateResult<AccountId, SafeRpcWrapper<Balance>>> {
@@ -252,17 +244,8 @@ where
 
 		limit_gas(gas_limit)?;
 
-		api.instantiate(
-			&at,
-			origin,
-			value,
-			gas_limit,
-			storage_deposit_limit,
-			code,
-			data,
-			salt,
-		)
-		.map_err(runtime_error_into_rpc_err)
+		api.instantiate(&at, origin, value, gas_limit, storage_deposit_limit, code, data, salt)
+			.map_err(runtime_error_into_rpc_err)
 	}
 
 	fn upload_code(

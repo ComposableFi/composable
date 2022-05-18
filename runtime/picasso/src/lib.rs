@@ -22,15 +22,14 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 use sp_core::Bytes;
 mod weights;
 mod xcmp;
-use sp_runtime::DispatchError;
-use sp_std::collections::btree_map::BTreeMap;
-pub use xcmp::{MaxInstructions, UnitWeightCost, XcmConfig};
 use common::{
-	  impls::DealWithFees, multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, MultiExistentialDeposits,
-	NativeExistentialDeposit, PoolId, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
-	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION, MaxTransferAssets
+	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
+	BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash, MaxTransferAssets, Moment,
+	MultiExistentialDeposits, NativeExistentialDeposit, PoolId, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
+use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::dex::PriceAggregate;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
@@ -39,14 +38,16 @@ use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Zero},
 	transaction_validity::{TransactionSource, TransactionValidity},
-	ApplyExtrinsicResult,
+	ApplyExtrinsicResult, DispatchError,
 };
-use composable_support::rpc_helpers::SafeRpcWrapper;
-use sp_std::prelude::*;
+use sp_std::{collections::btree_map::BTreeMap, prelude::*};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
+pub use xcmp::{MaxInstructions, UnitWeightCost, XcmConfig};
 // A few exports that help ease life for downstream crates.
+use codec::Encode;
+use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
 pub use frame_support::{
 	construct_runtime, match_type, parameter_types,
 	traits::{
@@ -970,9 +971,9 @@ impl_runtime_apis! {
 		) -> pallet_contracts_primitives::ContractInstantiateResult<AccountId, SafeRpcWrapper<Balance>> {
 		  pallet_contracts_primitives::ContractInstantiateResult {
 			  gas_consumed: 0,
-        gas_required: 0,
-        storage_deposit: pallet_contracts_primitives::StorageDeposit::Refund(SafeRpcWrapper(0)),
-        debug_message: Vec::new(),
+		gas_required: 0,
+		storage_deposit: pallet_contracts_primitives::StorageDeposit::Refund(SafeRpcWrapper(0)),
+		debug_message: Vec::new(),
 			  result: Err(DispatchError::Other("unsupported"))
 		  }
 		}
@@ -983,14 +984,14 @@ impl_runtime_apis! {
 			storage_deposit_limit: Option<Balance>,
 		) -> pallet_contracts_primitives::CodeUploadResult<Hash, Balance>
 		{
-      Err(DispatchError::Other("unsupported"))
+	  Err(DispatchError::Other("unsupported"))
 		}
 
 		fn get_storage(
 			address: AccountId,
 			key: [u8; 32],
 		) -> pallet_contracts_primitives::GetStorageResult {
-      Err(pallet_contracts_primitives::ContractAccessError::DoesntExist)
+	  Err(pallet_contracts_primitives::ContractAccessError::DoesntExist)
 		}
 	}
 

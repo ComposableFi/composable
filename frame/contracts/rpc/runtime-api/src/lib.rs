@@ -23,13 +23,13 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use sp_core::Bytes;
-use composable_support::rpc_helpers::SafeRpcWrapper;
 use codec::Codec;
+use composable_support::rpc_helpers::SafeRpcWrapper;
 use frame_support::traits::Get;
 use pallet_contracts_primitives::{
 	Code, CodeUploadResult, ContractExecResult, ContractInstantiateResult, GetStorageResult,
 };
+use sp_core::Bytes;
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
 sp_api::decl_runtime_apis! {
