@@ -251,7 +251,7 @@ jobs:
         run: |
           cargo +nightly install -f cargo-deny
           # start from minimal dependency crate
-          cargo +nightly deny --manifest-path ./frame/composable-support/Cargo.toml check Ban
+          cargo +nightly deny --manifest-path ./frame/composable-support/Cargo.toml check ban
 
       - name: Cargo udeps
         continue-on-error: true # Often this turns gives false positives, due to the different ways that Substrate uses features.
