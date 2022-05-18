@@ -113,7 +113,6 @@ describe("tx.assets Tests", function() {
       const receiverFundsBeforeTransaction =
         new BN((await api.rpc.assets.balanceOf("1", paraDest)).toString());
 
-      // We ignore the results of the transaction here, since  we don't use it for verification.
       const { data: [resultAccountId, resultAccountId2, resultTransferAmount] } = await sendAndWaitForSuccess(
         api,
         senderWallet,
