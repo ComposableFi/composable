@@ -405,10 +405,14 @@ fn xcm_transfer_execution_barrier_trader_works() {
 		DepositAsset { assets: All.into(), max_assets: 1, beneficiary: Here.into() },
 	]);
 	KusamaRelay::execute_with(|| {
-		let r = pallet_xcm::Pallet::<kusama_runtime::Runtime>::send(
-			kusama_runtime::Origin::signed(ALICE.into()),
-			Box::new(Parachain(THIS_PARA_ID).into().into()),
-			Box::new(xcm::VersionedXcm::from(message)),
+		use kusama_runtime::*;
+		let r = pallet_xcm::Pallet::<Runtime>::send_xcm(
+			X1(Junction::AccountId32 {
+				network: NetworkId::Any,
+				id: ALICE.into(),
+			}),
+			Parachain(THIS_PARA_ID).into(),
+			message,
 		);
 		assert_ok!(r);
 	});
