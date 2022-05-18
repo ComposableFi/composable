@@ -666,6 +666,8 @@ proptest! {
 		});
 	}
 
+	// TODO(0xangelo): cannot reverse into dust position (< min_trade_size)
+
 	#[test]
 	fn margin_ratio_takes_unrealized_funding_into_account(direction in any_direction()) {
 		let mut config = valid_market_config();
