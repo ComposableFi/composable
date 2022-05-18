@@ -1,3 +1,4 @@
+/* eslint @typescript-eslint/ban-ts-comment: "off" */
 import { expect } from "chai";
 import { ApiPromise } from "@polkadot/api";
 import testConfiguration from "./test_configuration.json";
@@ -23,9 +24,7 @@ import BN from "bn.js";
  * - Mint Into
  * - Burn From
  */
-// describe(name, function) groups all query tests for the system pallet.
 describe.only("tx.assets Tests", function() {
-  // Check if group of tests are enabled.
   if (!testConfiguration.enabledTests.tx.enabled)
     return;
 
@@ -35,11 +34,9 @@ describe.only("tx.assets Tests", function() {
 
   before("Setting up the tests", async function() {
     this.timeout(60 * 1000);
-    // `getNewConnection()` establishes a new connection to the chain and gives us the ApiPromise & a Keyring.
     const { newClient, newKeyring } = await getNewConnection();
     api = newClient;
 
-    // Using `getDevWallets(Keyring)` we're able to get a dict of all developer wallets.
     const {
       devWalletAlice,
       devWalletBob
@@ -62,10 +59,8 @@ describe.only("tx.assets Tests", function() {
    * The `transfer` extrinsic transfers any `asset` from `origin` to `dest`.
    */
   describe("tx.assets.transfer Tests", function() {
-    // Check if group of tests are enabled.
     if (!testConfiguration.enabledTests.tx.transfer__success) return;
 
-    // it(name, function) describes a single test.
     it("A wallet can `transfer` KSM to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
 
@@ -80,7 +75,8 @@ describe.only("tx.assets Tests", function() {
       const receiverFundsBeforeTransaction =
         new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraDest)).toString());
 
-      const { data: [resultAccountIdFeeWallet, resultFeeAmount] } = await sendAndWaitForSuccess(
+      // We ignore the results of the transaction here, since  we don't use it for verification.
+      await sendAndWaitForSuccess(
         api,
         senderWallet,
         api.events.balances.Deposit.is,
@@ -103,10 +99,8 @@ describe.only("tx.assets Tests", function() {
    * The `transfer_native` extrinsic transfers the blockchains native asset (PICA) from `origin` to `dest`.
    */
   describe("tx.assets.transferNative Tests", function() {
-    // Check if group of tests are enabled.
     if (!testConfiguration.enabledTests.tx.transfer__success) return;
 
-    // it(name, function) describes a single test.
     it("A wallet can `transfer_native` asset PICA to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
       const paraDest = senderWallet.derive("/tests/assets/transferTestReceiverWallet1").publicKey;
@@ -119,10 +113,11 @@ describe.only("tx.assets Tests", function() {
       const receiverFundsBeforeTransaction =
         new BN((await api.rpc.assets.balanceOf("1", paraDest)).toString());
 
-      const { data: [resultAccountIdFeeWallet, resultFeeAmount] } = await sendAndWaitForSuccess(
+      // We ignore the results of the transaction here, since  we don't use it for verification.
+      const { data: [resultAccountId, resultAccountId2, resultTransferAmount] } = await sendAndWaitForSuccess(
         api,
         senderWallet,
-        api.events.balances.Deposit.is,
+        api.events.balances.Transfer.is,
         api.tx.assets.transferNative(paraDest, paraAmount, paraKeepAlive)
       );
 
@@ -135,6 +130,13 @@ describe.only("tx.assets Tests", function() {
       expect(receiverFundsAfterTransaction
         .eq(receiverFundsBeforeTransaction.add(new BN(paraAmount.toNumber()))))
         .to.be.true;
+      expect(resultAccountId.toString())
+        .to.be.equal(api.createType("AccountId32", senderWallet.publicKey).toString());
+      expect(resultAccountId2.toString())
+        .to.be.equal(api.createType("AccountId32", paraDest).toString());
+      expect(receiverFundsAfterTransaction
+        .eq(receiverFundsBeforeTransaction.add(resultTransferAmount)))
+        .to.be.true;
     });
   });
 
@@ -142,10 +144,8 @@ describe.only("tx.assets Tests", function() {
    * The `force_transfer` extrinsic transfers any `asset` from `origin` to `dest` with sudo privileges.
    */
   describe("tx.assets.forceTransfer Tests", function() {
-    // Check if group of tests are enabled.
     if (!testConfiguration.enabledTests.tx.transfer__success) return;
 
-    // it(name, function) describes a single test.
     it("A *sudo* wallet can `forceTransfer` KSM to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
       const paraAsset = api.createType("u128", 4);
@@ -193,10 +193,8 @@ describe.only("tx.assets Tests", function() {
    * with sudo privileges.
    */
   describe("tx.assets.force_transfer_native Tests", function() {
-    // Check if group of tests are enabled.
     if (!testConfiguration.enabledTests.tx.transfer__success) return;
 
-    // it(name, function) describes a single test.
     it("A *sudo* wallet can `force_transfer_native` token to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
       const paraSource = senderWallet.publicKey;
@@ -255,13 +253,15 @@ describe.only("tx.assets Tests", function() {
       const receiverFundsBeforeTransaction =
         new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraDest)).toString());
 
-      const { data: [resultAccountIdFeeWallet, resultFeeAmount] } = await sendAndWaitForSuccess(
+      // We ignore the results of the transaction here, since  we don't use it for verification.
+      await sendAndWaitForSuccess(
         api,
         senderWallet,
         api.events.balances.Deposit.is,
         api.tx.assets.transferAll(paraAsset, paraDest, paraKeepAlive)
       );
 
+      // Verification
       const senderFundsAfterTransaction =
         new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), senderWallet.publicKey)).toString());
       const receiverFundsAfterTransaction =
@@ -326,10 +326,8 @@ describe.only("tx.assets Tests", function() {
    * The `mint_initialize` extrinsic creates a new asset & mints a defined `amount` into the `dest` wallet.
    */
   describe("tx.assets.mint_initialize Tests", function() {
-    // Check if group of tests are enabled.
     if (!testConfiguration.enabledTests.tx.transfer__success) return;
 
-    // it(name, function) describes a single test.
     it("A *sudo* wallet can `mint_initialize` a new asset to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
       const paraAmount = api.createType("u128", 100000000000);
@@ -346,7 +344,7 @@ describe.only("tx.assets Tests", function() {
       expect(result.isOk).to.be.true;
 
       // Verifying everything
-      const newAssetData = (await api.query.currencyFactory.assetIdRanges());
+      const newAssetData = await api.query.currencyFactory.assetIdRanges();
       /*
        * From the list of available (unused) asset IDs we subtract `1` to get the latest created asset.
        * Seems like a weird way to get the asset ID, since there is `tokens.accounts` or `tokens.totalIssuance`
@@ -355,6 +353,7 @@ describe.only("tx.assets Tests", function() {
        * for some reason the asset ID gets stripped out of the result.
        *
        * Please ignore the ts-ignore, it's annoyed about `ranges` not being defined.
+       * Trust me, I dislike this as much as you do!
        */
       // @ts-ignore
       const newAssetId = new BN(newAssetData.ranges[1].current.toString()).sub(new BN(1));
@@ -370,10 +369,8 @@ describe.only("tx.assets Tests", function() {
    * > In general the governance_origin should be generated from the pallet id.
    */
   describe("tx.assets.mint_initialize_with_governance Tests", function() {
-    // Check if group of tests are enabled.
     if (!testConfiguration.enabledTests.tx.transfer__success) return;
 
-    // it(name, function) describes a single test.
     it("A *sudo* wallet can `mint_initialize_with_governance` a new asset to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
       const paraAmount = api.createType("u128", 100000000000);
@@ -403,10 +400,8 @@ describe.only("tx.assets Tests", function() {
    * The `mint_into` extrinsic mints `amount` of `asset_id` into `dest` wallet.
    */
   describe("tx.assets.mint_into Tests", function() {
-    // Check if group of tests are enabled.
     if (!testConfiguration.enabledTests.tx.transfer__success) return;
 
-    // it(name, function) describes a single test.
     it("A *sudo* wallet can `mintInto` KSM to another wallet", async function() {
       this.timeout(2 * 60 * 1000);
       const paraAsset = api.createType("u128", 4);
@@ -424,6 +419,8 @@ describe.only("tx.assets Tests", function() {
           api.tx.assets.mintInto(paraAsset, paraDest, paraAmount)
         )
       );
+
+      // Verification
       expect(result.isOk).to.be.true;
       const receiverFundsAfterTransaction =
         new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraDest)).toString());
@@ -456,6 +453,8 @@ describe.only("tx.assets Tests", function() {
           api.tx.assets.burnFrom(paraAsset, paraDest, paraAmount)
         )
       );
+
+      // Verification
       expect(result.isOk).to.be.true;
       const receiverFundsAfterTransaction =
         new BN((await api.rpc.assets.balanceOf(paraAsset.toString(), paraDest)).toString());
