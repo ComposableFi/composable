@@ -18,60 +18,162 @@
 //! The tests for the public proposal queue.
 
 use super::*;
+use frame_support::traits::{fungible::Mutate as FungibleMutet, fungibles::Mutate};
 
-#[test]
-fn backing_for_should_work() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(propose_set_balance_and_note(1, 2, 2));
-		assert_ok!(propose_set_balance_and_note(1, 4, 4));
-		assert_ok!(propose_set_balance_and_note(1, 3, 3));
-		assert_eq!(Democracy::backing_for(0), Some(2));
-		assert_eq!(Democracy::backing_for(1), Some(4));
-		assert_eq!(Democracy::backing_for(2), Some(3));
-	});
-}
+proptest! {
+	#![proptest_config(ProptestConfig::with_cases(1000))]
 
-#[test]
-fn deposit_for_proposals_should_be_taken() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(propose_set_balance_and_note(1, 2, 5));
-		assert_ok!(Democracy::second(Origin::signed(2), 0, u32::MAX));
-		assert_ok!(Democracy::second(Origin::signed(5), 0, u32::MAX));
-		assert_ok!(Democracy::second(Origin::signed(5), 0, u32::MAX));
-		assert_ok!(Democracy::second(Origin::signed(5), 0, u32::MAX));
-		assert_eq!(Balances::free_balance(1), 5);
-		assert_eq!(Balances::free_balance(2), 15);
-		assert_eq!(Balances::free_balance(5), 35);
-	});
-}
+	#[test]
+	fn poor_proposer_should_not_work(
+	   asset_id in valid_asset_id(),
+	   (balance_a, balance_b) in valid_amounts_without_overflow_2()) {
+		new_test_ext().execute_with(|| {
+			assert_noop!(propose_set_balance(BOB, asset_id, balance_a, balance_b), BalancesError::<Test, _>::InsufficientBalance);
+		});
+	}
 
-#[test]
-fn deposit_for_proposals_should_be_returned() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(propose_set_balance_and_note(1, 2, 5));
-		assert_ok!(Democracy::second(Origin::signed(2), 0, u32::MAX));
-		assert_ok!(Democracy::second(Origin::signed(5), 0, u32::MAX));
-		assert_ok!(Democracy::second(Origin::signed(5), 0, u32::MAX));
-		assert_ok!(Democracy::second(Origin::signed(5), 0, u32::MAX));
-		fast_forward_to(3);
-		assert_eq!(Balances::free_balance(1), 10);
-		assert_eq!(Balances::free_balance(2), 20);
-		assert_eq!(Balances::free_balance(5), 50);
-	});
-}
+	#[test]
+	fn proposal_with_deposit_below_minimum_should_not_work(
+		asset_id in valid_asset_id(),
+		balance in valid_amounts_without_overflow_1()) {
+		new_test_ext().execute_with(|| {
+			assert_noop!(propose_set_balance(BOB, asset_id, balance, 0), Error::<Test>::ValueLow);
+		});
+	}
 
-#[test]
-fn proposal_with_deposit_below_minimum_should_not_work() {
-	new_test_ext().execute_with(|| {
-		assert_noop!(propose_set_balance(1, 2, 0), Error::<Test>::ValueLow);
-	});
-}
+	#[test]
+	fn invalid_seconds_upper_bound_should_not_work(
+		asset_id in valid_asset_id(),
+		(balance1, balance2) in valid_amounts_without_overflow_2()) {
+		new_test_ext().execute_with(|| {
+			Balances::mint_into(&BOB, (balance1 + balance2)).expect("always can mint in test");
+			assert_ok!(propose_set_balance_and_note_2(BOB, asset_id, balance1 / 2 ,  balance2 / 2));
+			assert_noop!(Democracy::second(Origin::signed(CHARLIE), 0, 0), Error::<Test>::WrongUpperBound);
+		});
+	}
 
-#[test]
-fn poor_proposer_should_not_work() {
-	new_test_ext().execute_with(|| {
-		assert_noop!(propose_set_balance(1, 2, 11), BalancesError::<Test, _>::InsufficientBalance);
-	});
+	#[test]
+	fn backing_for_should_work(
+		asset_id in valid_asset_id(),
+		(balance1, balance2, balance3) in valid_amounts_without_overflow_3()) {
+		new_test_ext().execute_with(|| {
+			Balances::mint_into(&BOB, ((balance1 / 3) + (balance2 / 3) + (balance3 / 3) )).expect("always can mint in test");
+			assert_ok!(propose_set_balance_and_note_2(BOB, asset_id, balance1 / 3, balance1 / 3));
+			assert_ok!(propose_set_balance_and_note_2(BOB, asset_id, balance2 / 3, balance2 / 3));
+			assert_ok!(propose_set_balance_and_note_2(BOB, asset_id, balance3 / 3, balance3 / 3));
+			assert_eq!(Democracy::backing_for(0), Some(balance1 / 3));
+			assert_eq!(Democracy::backing_for(1), Some(balance2 / 3));
+			assert_eq!(Democracy::backing_for(2), Some(balance3 / 3));
+		});
+	}
+
+	#[test]
+	fn deposit_for_proposals_should_be_taken(
+		asset_id in valid_asset_id(),
+		balance in valid_amounts_without_overflow_1()) {
+		new_test_ext().execute_with(|| {
+			Balances::mint_into(&ALICE, balance / 3).expect("always can mint in test");
+			Balances::mint_into(&BOB, balance / 3).expect("always can mint in test");
+			Balances::mint_into(&DARWIN, balance / 5 ).expect("always can mint in test");
+			let free_balance_1 = Balances::free_balance(ALICE);
+			let free_balance_2 = Balances::free_balance(BOB);
+			let free_balance_3 = Balances::free_balance(DARWIN);
+			assert_ok!(propose_set_balance_and_note_2(ALICE, asset_id, balance / 10, balance / 10));
+			assert_ok!(Democracy::second(Origin::signed(BOB), 0, u32::MAX));
+			assert_ok!(Democracy::second(Origin::signed(BOB), 0, u32::MAX));
+			assert_ok!(Democracy::second(Origin::signed(BOB), 0, u32::MAX));
+			assert_ok!(Democracy::second(Origin::signed(DARWIN), 0, u32::MAX));
+			assert_eq!(Balances::free_balance(ALICE), free_balance_1 - (balance / 10) );
+			assert_eq!(Balances::free_balance(BOB), free_balance_2 - (balance / 10) * 3 );
+			assert_eq!(Balances::free_balance(DARWIN), free_balance_3- (balance / 10) );
+		});
+	}
+
+	#[test]
+	fn deposit_for_proposals_should_be_returned(
+		asset_id in valid_asset_id(),
+		balance in valid_amounts_without_overflow_1()) {
+		new_test_ext().execute_with(|| {
+			Balances::mint_into(&ALICE, balance / 3).expect("always can mint in test");
+			Balances::mint_into(&BOB, balance / 5).expect("always can mint in test");
+			Balances::mint_into(&DARWIN, balance / 3 ).expect("always can mint in test");
+			assert_ok!(propose_set_balance_and_note_2(ALICE, asset_id, balance / 10, balance / 10));
+			assert_ok!(Democracy::second(Origin::signed(BOB), 0, u32::MAX));
+			assert_ok!(Democracy::second(Origin::signed(DARWIN), 0, u32::MAX));
+			assert_ok!(Democracy::second(Origin::signed(DARWIN), 0, u32::MAX));
+			assert_ok!(Democracy::second(Origin::signed(DARWIN), 0, u32::MAX));
+			let free_balance_1 = Balances::free_balance(ALICE);
+			let free_balance_2 = Balances::free_balance(BOB);
+			let free_balance_3 = Balances::free_balance(DARWIN);
+			fast_forward_to(3);
+			assert_eq!(Balances::free_balance(ALICE), free_balance_1 + (balance / 10));
+			assert_eq!(Balances::free_balance(BOB), free_balance_2 + (balance / 10));
+			assert_eq!(Balances::free_balance(DARWIN), free_balance_3 + ((balance / 10) * 3));
+		});
+	}
+
+	#[test]
+	fn blacklisting_should_work(
+		asset_id in valid_asset_id(),
+		balance1 in valid_amounts_without_overflow_1()) {
+		new_test_ext().execute_with(|| {
+			System::set_block_number(0);
+			let hash = set_balance_proposal_hash( balance1 / 4);
+			Balances::mint_into(&DARWIN, balance1 / 2).expect("always can mint in test");
+			assert_ok!(propose_set_balance_and_note_2(DARWIN, asset_id, balance1 / 4, balance1 / 4));
+			assert_ok!(propose_set_balance_and_note_2(DARWIN, asset_id, balance1 / 5, balance1 / 5));
+			assert_noop!(
+				Democracy::blacklist(Origin::signed(DARWIN), hash.clone(), asset_id, None),
+				BadOrigin
+			);
+			assert_ok!(Democracy::blacklist(Origin::root(), hash, asset_id, None));
+			assert_eq!(Democracy::backing_for(0), None);
+			assert_eq!(Democracy::backing_for(1), Some(balance1 / 5));
+			assert_noop!(propose_set_balance_and_note_2(DARWIN, asset_id, balance1 / 4, balance1 / 4), Error::<Test>::ProposalBlacklisted);
+			fast_forward_to(2);
+			let hash = set_balance_proposal_hash(balance1 / 5);
+			assert_ok!(Democracy::referendum_status(0));
+			assert_ok!(Democracy::blacklist(Origin::root(), hash, asset_id, Some(0)));
+			assert_noop!(Democracy::referendum_status(0), Error::<Test>::ReferendumInvalid);
+		});
+	}
+
+	#[test]
+	fn runners_up_should_come_after(
+		asset_id in valid_asset_id(),
+		balance1 in valid_amounts_without_overflow_1()) {
+		new_test_ext().execute_with(|| {
+			System::set_block_number(0);
+			Balances::mint_into(&BOB, balance1 / 2).expect("always can mint in test");
+			Tokens::mint_into(asset_id, &BOB, balance1).expect("always can mint in test");
+			assert_ok!(propose_set_balance_and_note_2(BOB,asset_id, balance1 / 10, balance1 / 10));
+			assert_ok!(propose_set_balance_and_note_2(BOB,asset_id, balance1 / 15, balance1/ 15));
+			assert_ok!(propose_set_balance_and_note_2(BOB,asset_id, balance1 / 30, balance1 / 30));
+			fast_forward_to(2);
+			assert_ok!(Democracy::vote(Origin::signed(BOB), 0, aye(BOB)));
+			fast_forward_to(4);
+			assert_ok!(Democracy::vote(Origin::signed(BOB), 1, aye(BOB)));
+			fast_forward_to(6);
+			assert_ok!(Democracy::vote(Origin::signed(BOB), 2, aye(BOB)));
+		});
+	}
+
+	#[test]
+	fn cancel_proposal_should_work(
+		asset_id in valid_asset_id(),
+		balance1 in valid_amounts_without_overflow_1()) {
+		new_test_ext().execute_with(|| {
+			System::set_block_number(0);
+			Balances::mint_into(&BOB, balance1 / 2).expect("always can mint in test");
+			assert_ok!(propose_set_balance_and_note_2(BOB,asset_id, balance1 / 10, balance1 / 10));
+			assert_ok!(propose_set_balance_and_note_2(BOB,asset_id, balance1 / 15, balance1/ 15));
+			assert_noop!(Democracy::cancel_proposal(Origin::signed(1), 0), BadOrigin);
+			assert_ok!(Democracy::cancel_proposal(Origin::root(), 0));
+			assert_eq!(Democracy::backing_for(0), None);
+			assert_eq!(Democracy::backing_for(1), Some(balance1 / 15));
+		});
+	}
+
 }
 
 #[test]
@@ -82,71 +184,5 @@ fn poor_seconder_should_not_work() {
 			Democracy::second(Origin::signed(1), 0, u32::MAX),
 			BalancesError::<Test, _>::InsufficientBalance
 		);
-	});
-}
-
-#[test]
-fn invalid_seconds_upper_bound_should_not_work() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(propose_set_balance_and_note(1, 2, 5));
-		assert_noop!(Democracy::second(Origin::signed(2), 0, 0), Error::<Test>::WrongUpperBound);
-	});
-}
-
-#[test]
-fn cancel_proposal_should_work() {
-	new_test_ext().execute_with(|| {
-		System::set_block_number(0);
-		assert_ok!(propose_set_balance_and_note(1, 2, 2));
-		assert_ok!(propose_set_balance_and_note(1, 4, 4));
-		assert_noop!(Democracy::cancel_proposal(Origin::signed(1), 0), BadOrigin);
-		assert_ok!(Democracy::cancel_proposal(Origin::root(), 0));
-		assert_eq!(Democracy::backing_for(0), None);
-		assert_eq!(Democracy::backing_for(1), Some(4));
-	});
-}
-
-#[test]
-fn blacklisting_should_work() {
-	new_test_ext().execute_with(|| {
-		System::set_block_number(0);
-		let hash = set_balance_proposal_hash(2);
-
-		assert_ok!(propose_set_balance_and_note(1, 2, 2));
-		assert_ok!(propose_set_balance_and_note(1, 4, 4));
-
-		assert_noop!(
-			Democracy::blacklist(Origin::signed(1), hash.clone(), DEFAULT_ASSET, None),
-			BadOrigin
-		);
-		assert_ok!(Democracy::blacklist(Origin::root(), hash, DEFAULT_ASSET, None));
-
-		assert_eq!(Democracy::backing_for(0), None);
-		assert_eq!(Democracy::backing_for(1), Some(4));
-
-		assert_noop!(propose_set_balance_and_note(1, 2, 2), Error::<Test>::ProposalBlacklisted);
-
-		fast_forward_to(2);
-
-		let hash = set_balance_proposal_hash(4);
-		assert_ok!(Democracy::referendum_status(0));
-		assert_ok!(Democracy::blacklist(Origin::root(), hash, DEFAULT_ASSET, Some(0)));
-		assert_noop!(Democracy::referendum_status(0), Error::<Test>::ReferendumInvalid);
-	});
-}
-
-#[test]
-fn runners_up_should_come_after() {
-	new_test_ext().execute_with(|| {
-		System::set_block_number(0);
-		assert_ok!(propose_set_balance_and_note(1, 2, 2));
-		assert_ok!(propose_set_balance_and_note(1, 4, 4));
-		assert_ok!(propose_set_balance_and_note(1, 3, 3));
-		fast_forward_to(2);
-		assert_ok!(Democracy::vote(Origin::signed(1), 0, aye(1)));
-		fast_forward_to(4);
-		assert_ok!(Democracy::vote(Origin::signed(1), 1, aye(1)));
-		fast_forward_to(6);
-		assert_ok!(Democracy::vote(Origin::signed(1), 2, aye(1)));
 	});
 }

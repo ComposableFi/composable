@@ -20,6 +20,8 @@
 use super::*;
 use frame_support::storage::{migration, unhashed};
 
+use frame_support::traits::{fungible::Mutate as FungibleMutet, fungibles::Mutate};
+
 #[test]
 fn test_decode_compact_u32_at() {
 	new_test_ext().execute_with(|| {

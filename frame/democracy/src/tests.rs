@@ -31,12 +31,18 @@ use frame_support::{
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use orml_traits::parameter_type_with_key;
 use pallet_balances::{BalanceLock, Error as BalancesError};
+use proptest::prelude::*;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BadOrigin, BlakeTwo256, IdentityLookup},
 	Perbill,
 };
+
+use crate::mocks::test::{
+	AccountId, AssetId, Balance, ALICE, BOB, CHARLIE, DARWIN, JEREMY, MINIMUM_BALANCE,
+};
+
 mod cancellation;
 mod decoders;
 mod delegation;
@@ -47,10 +53,6 @@ mod preimage;
 mod public_proposals;
 mod scheduling;
 mod voting;
-
-type Balance = u64;
-type AccountId = u64;
-type AssetId = u128;
 
 const AYE: Vote = Vote { aye: true, conviction: Conviction::None };
 const NAY: Vote = Vote { aye: false, conviction: Conviction::None };
@@ -333,15 +335,36 @@ fn set_balance_proposal_id(value: u64) -> ProposalId<H256, AssetId> {
 	ProposalId { hash: h, asset_id: DEFAULT_ASSET }
 }
 
-fn set_balance_proposal_hash_and_note(value: u64) -> ProposalId<H256, AssetId> {
+fn set_balance_proposal_id_2(asset_id: AssetId, value: u64) -> ProposalId<H256, AssetId> {
 	let p = set_balance_proposal(value);
 	let h = BlakeTwo256::hash(&p[..]);
-	match Democracy::note_preimage(Origin::signed(6), p, DEFAULT_ASSET) {
+	ProposalId { hash: h, asset_id }
+}
+
+fn set_balance_proposal_hash_and_note(value: u64) -> ProposalId<H256, AssetId> {
+	set_balance_proposal_hash_and_note_2(value, DEFAULT_ASSET)
+}
+
+fn set_balance_proposal_hash_and_note_2(
+	value: u64,
+	asset_id: AssetId,
+) -> ProposalId<H256, AssetId> {
+	let p = set_balance_proposal(value);
+	set_balance_proposal_hash_and_note_3(value, asset_id, p)
+}
+
+fn set_balance_proposal_hash_and_note_3(
+	value: u64,
+	asset_id: AssetId,
+	encoded_proposal: Vec<u8>,
+) -> ProposalId<H256, AssetId> {
+	let h = BlakeTwo256::hash(&encoded_proposal[..]);
+	match Democracy::note_preimage(Origin::signed(6), encoded_proposal, asset_id) {
 		Ok(_) => (),
 		Err(x) if x == Error::<Test>::DuplicatePreimage.into() => (),
 		Err(x) => panic!("{:?}", x),
 	}
-	ProposalId { hash: h, asset_id: DEFAULT_ASSET }
+	ProposalId { hash: h, asset_id }
 }
 
 fn set_balance_proposal_hash_and_note_and_asset(
@@ -358,12 +381,22 @@ fn set_balance_proposal_hash_and_note_and_asset(
 	ProposalId { hash: h, asset_id }
 }
 
-fn propose_set_balance(who: u64, value: u64, delay: u64) -> DispatchResult {
-	Democracy::propose(Origin::signed(who), set_balance_proposal_hash(value), DEFAULT_ASSET, delay)
+fn propose_set_balance(who: u64, asset_id: AssetId, value: u64, delay: u64) -> DispatchResult {
+	Democracy::propose(Origin::signed(who), set_balance_proposal_hash(value), asset_id, delay)
 }
 
 fn propose_set_balance_and_note(who: u64, value: u64, delay: u64) -> DispatchResult {
 	let id = set_balance_proposal_hash_and_note(value);
+	Democracy::propose(Origin::signed(who), id.hash, id.asset_id, delay)
+}
+
+fn propose_set_balance_and_note_2(
+	who: u64,
+	asset_id: AssetId,
+	value: u64,
+	delay: u64,
+) -> DispatchResult {
+	let id = set_balance_proposal_hash_and_note_2(value, asset_id);
 	Democracy::propose(Origin::signed(who), id.hash, id.asset_id, delay)
 }
 
@@ -414,4 +447,35 @@ fn big_nay(who: u64) -> AccountVote<u64> {
 
 fn tally(r: ReferendumIndex) -> Tally<u64> {
 	Democracy::referendum_status(r).unwrap().tally
+}
+
+prop_compose! {
+	fn valid_asset_id()
+	(x in DEFAULT_ASSET..AssetId::MAX) -> AssetId {
+		x
+	}
+}
+
+prop_compose! {
+	fn valid_amounts_without_overflow_1()
+		(x in MINIMUM_BALANCE..Balance::MAX) -> Balance {
+		x
+	}
+}
+
+prop_compose! {
+	fn valid_amounts_without_overflow_2()
+		(x in MINIMUM_BALANCE..Balance::MAX / 2,
+		 y in MINIMUM_BALANCE..Balance::MAX / 2) -> (Balance, Balance) {
+			(x, y)
+	}
+}
+
+prop_compose! {
+	fn valid_amounts_without_overflow_3()
+		(x in MINIMUM_BALANCE..Balance::MAX / 2,
+		 y in MINIMUM_BALANCE..Balance::MAX / 2,
+		 z in MINIMUM_BALANCE..Balance::MAX / 2) -> (Balance, Balance, Balance) {
+			(x, y, z)
+	}
 }

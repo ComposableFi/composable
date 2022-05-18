@@ -34,6 +34,7 @@ pallet-balances = {git = "https://github.com/paritytech/substrate", branch = "po
 pallet-governance-registry = {path = "../governance-registry"}
 pallet-preimage = {package = "pallet-preimage", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
 pallet-scheduler = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
+proptest = "1.0"
 sp-core = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
 
 [features]

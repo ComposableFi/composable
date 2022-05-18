@@ -11,7 +11,7 @@
 
 ### Changes add to fork
 
-- Implemeted Multi Currency to enable multiple assets voting
+- `Implements Multicurrency to enable multiple assets voting`
 
 ## Overview
 
