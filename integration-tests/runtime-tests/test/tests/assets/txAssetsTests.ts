@@ -24,7 +24,7 @@ import BN from "bn.js";
  * - Mint Into
  * - Burn From
  */
-describe.only("tx.assets Tests", function() {
+describe("tx.assets Tests", function() {
   if (!testConfiguration.enabledTests.tx.enabled)
     return;
 
