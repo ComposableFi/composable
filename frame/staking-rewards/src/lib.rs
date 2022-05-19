@@ -134,6 +134,7 @@ pub mod pallet {
 		EpochNotFound,
 		PalletIsBusy,
 		ImpossibleState,
+		OnlyOwnerOfPositionCanDoThis
 	}
 
 	#[pallet::config]
@@ -260,7 +261,12 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn pending_stakers)]
 	pub type PendingStakers<T: Config> =
-		StorageMap<_, Twox64Concat, InstanceIdOf<T>, (), OptionQuery>;
+	StorageMap<_, Twox64Concat, InstanceIdOf<T>, (), OptionQuery>;
+	
+	/// amount of assets which will be added to position on next epoch
+	#[pallet::storage]
+	#[pallet::getter(fn amount_extensions)]
+	pub type PendingAmountExtensions<T:Config> = StorageMap<_, Twox64Concat, InstanceIdOf<T>, T::Balance , OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn staking_configurations)]
@@ -379,12 +385,25 @@ pub mod pallet {
 
 		/// Extends fNFT position stake. Applied only to next epoch.
 		#[pallet::weight(10_000)]
+		#[transactional]
 		pub fn extend_stake(
 			_origin: OriginFor<T>,
 			_instance_id: InstanceIdOf<T>,
 			_balance: T::Balance,
 		) -> DispatchResult {
-			Err(DispatchError::Other("no implemented. TODO: insert update for next fold"))
+			let owner = ensure_signed(origin)?;
+			let position = <T::NFTProvider as FinancialNftProtocol>::get_protocol_nft::<StakingNFTOf<T>>(&instance_id)?;
+			ensure!(
+				position.owner == owner,
+				Error::<T>::OnlyOwnerOfPositionCanDoThis,
+			);
+			let protocol_account = Self::account_id(&nft.asset);
+			T::Assets::transfer(position.asset,  &owner, &protocol_account, balance, false)?;
+			PendingAmountExtensions::<T>::try_mutate_exists(instance_id, |x| {
+				*x = Some(x.unwrap_or_default().safe_add(&balance)?);				
+				Ok(())
+			});
+			Ok(().into())
 		}
 
 		/// Extends stake duration.
