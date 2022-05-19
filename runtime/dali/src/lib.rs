@@ -21,6 +21,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 mod weights;
 mod xcmp;
 
+use lending::MarketId;
 use orml_traits::parameter_type_with_key;
 // TODO: consider moving this to shared runtime
 pub use xcmp::{MaxInstructions, UnitWeightCost};
@@ -33,7 +34,7 @@ use common::{
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use composable_traits::dex::PriceAggregate;
+use composable_traits::{defi::Rate, dex::PriceAggregate};
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -1163,6 +1164,12 @@ mod benches {
 }
 
 impl_runtime_apis! {
+	impl lending_runtime_api::LendingRuntimeApi<Block, MarketId> for Runtime {
+		fn current_interest_rate(market_id: MarketId) -> SafeRpcWrapper<Rate> {
+			todo!()
+		}
+	}
+
 	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
 		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
 			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))

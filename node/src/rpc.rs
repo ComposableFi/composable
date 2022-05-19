@@ -6,7 +6,7 @@
 #![warn(missing_docs)]
 
 use frame_benchmarking::frame_support::CloneNoBound;
-use polkadot_service::{BlockT, ConstructRuntimeApi, NativeExecutionDispatch};
+use polkadot_service::{ConstructRuntimeApi, NativeExecutionDispatch};
 use sc_client_api::StateBackendFor;
 use std::sync::Arc;
 
@@ -14,13 +14,15 @@ use common::OpaqueBlock;
 pub use sc_rpc_api::DenyUnsafe;
 use sc_transaction_pool::FullPool;
 use sp_api::{ProvideRuntimeApi, StateBackend};
-use sp_block_builder::BlockBuilder;
 use sp_blockchain::{HeaderBackend, HeaderMetadata};
 use sp_runtime::traits::BlakeTwo256;
 
 use crate::{
 	client::{FullBackend, FullClient},
-	runtime::{assets::ExtendWithAssetsApi, BaseHostRuntimeApis},
+	runtime::{
+		assets::ExtendWithAssetsApi, crowdloan_rewards::ExtendWithCrowdloanRewardsApi,
+		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi, BaseHostRuntimeApis,
+	},
 };
 
 /// Full client dependencies.
@@ -42,8 +44,6 @@ pub fn create<RuntimeApi, Executor>(
 	>,
 ) -> jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>
 where
-	// Block: BlockT,
-	// RuntimeApi: ConstructRuntimeApis<RuntimeApi, Executor>,
 	RuntimeApi:
 		ConstructRuntimeApi<OpaqueBlock, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi:
@@ -57,8 +57,12 @@ where
 		+ Send
 		+ Sync
 		+ Sized,
-	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api: BaseHostRuntimeApis<StateBackend = StateBackendFor<FullBackend, OpaqueBlock>>
-		+ ExtendWithAssetsApi<RuntimeApi, Executor>,
+	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api:
+		BaseHostRuntimeApis<StateBackend = StateBackendFor<FullBackend, OpaqueBlock>>
+			+ ExtendWithAssetsApi<RuntimeApi, Executor>
+			+ ExtendWithCrowdloanRewardsApi<RuntimeApi, Executor>
+			+ ExtendWithPabloApi<RuntimeApi, Executor>
+			+ ExtendWithLendingApi<RuntimeApi, Executor>,
 {
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
@@ -80,7 +84,20 @@ where
 		deps.clone(),
 	);
 
-	// io.extend_with(CrowdloanRewardsApi::to_delegate(CrowdloanRewards::new(client.clone())));
+	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_crowdloan_rewards_api(
+		&mut io,
+		deps.clone(),
+	);
+
+	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_pablo_api(
+		&mut io,
+		deps.clone(),
+	);
+
+	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_lending_api(
+		&mut io,
+		deps.clone(),
+	);
 
 	// io.extend_with(PabloApi::to_delegate(Pablo::new(client)));
 

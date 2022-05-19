@@ -29,7 +29,10 @@ use sp_trie::PrefixedMemoryDB;
 use crate::{
 	client::{Client, FullBackend, FullClient},
 	rpc,
-	runtime::{assets::ExtendWithAssetsApi, BaseHostRuntimeApis},
+	runtime::{
+		assets::ExtendWithAssetsApi, crowdloan_rewards::ExtendWithCrowdloanRewardsApi,
+		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi, BaseHostRuntimeApis,
+	},
 };
 
 pub struct PicassoExecutor;
@@ -283,7 +286,10 @@ where
 	RuntimeApi:
 		ConstructRuntimeApi<OpaqueBlock, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: BaseHostRuntimeApis<StateBackend = StateBackendFor<FullBackend, OpaqueBlock>>
-		+ ExtendWithAssetsApi<RuntimeApi, Executor>,
+		+ ExtendWithAssetsApi<RuntimeApi, Executor>
+		+ ExtendWithCrowdloanRewardsApi<RuntimeApi, Executor>
+		+ ExtendWithPabloApi<RuntimeApi, Executor>
+		+ ExtendWithLendingApi<RuntimeApi, Executor>,
 	StateBackendFor<FullBackend, OpaqueBlock>: StateBackend<BlakeTwo256>,
 	Executor: NativeExecutionDispatch + 'static,
 {

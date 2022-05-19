@@ -43,36 +43,26 @@ where
 {
 }
 
-// pub trait ConstructRuntimeApis<RuntimeApi, Executor>
-// where
-// 	// Block: BlockT,
-// 	RuntimeApi:
-// 		ConstructRuntimeApi<OpaqueBlock, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
-// 	RuntimeApi::RuntimeApi:
-// 		BaseHostRuntimeApis<StateBackend = StateBackendFor<FullBackend, OpaqueBlock>>,
-// 	StateBackendFor<FullBackend, OpaqueBlock>: StateBackend<BlakeTwo256>,
-// 	Executor: NativeExecutionDispatch + 'static,
-// 	FullClient<RuntimeApi, Executor>: ProvideRuntimeApi<OpaqueBlock>
-// 		+ HeaderBackend<OpaqueBlock>
-// 		+ HeaderMetadata<OpaqueBlock, Error = sp_blockchain::Error>
-// 		+ 'static
-// 		+ Send
-// 		+ Sync
-// 		+ Sized,
-// 	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api:
-// BaseHostRuntimeApis<StateBackend = StateBackendFor<FullBackend, OpaqueBlock>>
-// 		+ ExtendWithAssetsApi<RuntimeApi, Executor>,
-// {
-// }
+// TODO: Use a macro for the boilerplate
 
 #[cfg(feature = "dali")]
 pub mod dali {
 	use assets_rpc::{Assets, AssetsApi};
 	use common::OpaqueBlock;
+	use crowdloan_rewards_rpc::{CrowdloanRewards, CrowdloanRewardsApi};
+	use lending_rpc::{Lending, LendingApi};
+	use pablo_rpc::{Pablo, PabloApi};
 	use polkadot_service::NativeExecutionDispatch;
 	use sc_transaction_pool::FullPool;
 
-	use crate::{client::FullClient, rpc::FullDeps, runtime::assets::ExtendWithAssetsApi};
+	use crate::{
+		client::FullClient,
+		rpc::FullDeps,
+		runtime::{
+			assets::ExtendWithAssetsApi, crowdloan_rewards::ExtendWithCrowdloanRewardsApi,
+			lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi,
+		},
+	};
 
 	impl<Executor> ExtendWithAssetsApi<dali_runtime::RuntimeApi, Executor>
 		for dali_runtime::RuntimeApiImpl<OpaqueBlock, FullClient<dali_runtime::RuntimeApi, Executor>>
@@ -89,15 +79,74 @@ pub mod dali {
 			io.extend_with(AssetsApi::to_delegate(Assets::new(deps.client.clone())));
 		}
 	}
+
+	impl<Executor> ExtendWithCrowdloanRewardsApi<dali_runtime::RuntimeApi, Executor>
+		for dali_runtime::RuntimeApiImpl<OpaqueBlock, FullClient<dali_runtime::RuntimeApi, Executor>>
+	where
+		Executor: NativeExecutionDispatch + 'static,
+	{
+		fn extend_with_crowdloan_rewards_api(
+			io: &mut jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>,
+			deps: FullDeps<
+				FullClient<dali_runtime::RuntimeApi, Executor>,
+				FullPool<OpaqueBlock, FullClient<dali_runtime::RuntimeApi, Executor>>,
+			>,
+		) {
+			io.extend_with(CrowdloanRewardsApi::to_delegate(CrowdloanRewards::new(
+				deps.client.clone(),
+			)));
+		}
+	}
+
+	impl<Executor> ExtendWithPabloApi<dali_runtime::RuntimeApi, Executor>
+		for dali_runtime::RuntimeApiImpl<OpaqueBlock, FullClient<dali_runtime::RuntimeApi, Executor>>
+	where
+		Executor: NativeExecutionDispatch + 'static,
+	{
+		fn extend_with_pablo_api(
+			io: &mut jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>,
+			deps: FullDeps<
+				FullClient<dali_runtime::RuntimeApi, Executor>,
+				FullPool<OpaqueBlock, FullClient<dali_runtime::RuntimeApi, Executor>>,
+			>,
+		) {
+			io.extend_with(PabloApi::to_delegate(Pablo::new(deps.client.clone())));
+		}
+	}
+
+	impl<Executor> ExtendWithLendingApi<dali_runtime::RuntimeApi, Executor>
+		for dali_runtime::RuntimeApiImpl<OpaqueBlock, FullClient<dali_runtime::RuntimeApi, Executor>>
+	where
+		Executor: NativeExecutionDispatch + 'static,
+	{
+		fn extend_with_lending_api(
+			io: &mut jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>,
+			deps: FullDeps<
+				FullClient<dali_runtime::RuntimeApi, Executor>,
+				FullPool<OpaqueBlock, FullClient<dali_runtime::RuntimeApi, Executor>>,
+			>,
+		) {
+			io.extend_with(LendingApi::to_delegate(Lending::new(deps.client.clone())));
+		}
+	}
 }
 
 pub mod picasso {
 	use assets_rpc::{Assets, AssetsApi};
 	use common::OpaqueBlock;
+	use crowdloan_rewards_rpc::{CrowdloanRewards, CrowdloanRewardsApi};
+	use pablo_rpc::{Pablo, PabloApi};
 	use polkadot_service::NativeExecutionDispatch;
 	use sc_transaction_pool::FullPool;
 
-	use crate::{client::FullClient, rpc::FullDeps, runtime::assets::ExtendWithAssetsApi};
+	use crate::{
+		client::FullClient,
+		rpc::FullDeps,
+		runtime::{
+			assets::ExtendWithAssetsApi, crowdloan_rewards::ExtendWithCrowdloanRewardsApi,
+			lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi,
+		},
+	};
 
 	impl<Executor> ExtendWithAssetsApi<picasso_runtime::RuntimeApi, Executor>
 		for picasso_runtime::RuntimeApiImpl<OpaqueBlock, FullClient<picasso_runtime::RuntimeApi, Executor>>
@@ -114,17 +163,75 @@ pub mod picasso {
 			io.extend_with(AssetsApi::to_delegate(Assets::new(deps.client.clone())));
 		}
 	}
+
+	impl<Executor> ExtendWithCrowdloanRewardsApi<picasso_runtime::RuntimeApi, Executor>
+		for picasso_runtime::RuntimeApiImpl<OpaqueBlock, FullClient<picasso_runtime::RuntimeApi, Executor>>
+	where
+		Executor: NativeExecutionDispatch + 'static,
+	{
+		fn extend_with_crowdloan_rewards_api(
+			io: &mut jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>,
+			deps: FullDeps<
+				FullClient<picasso_runtime::RuntimeApi, Executor>,
+				FullPool<OpaqueBlock, FullClient<picasso_runtime::RuntimeApi, Executor>>,
+			>,
+		) {
+			io.extend_with(CrowdloanRewardsApi::to_delegate(CrowdloanRewards::new(
+				deps.client.clone(),
+			)));
+		}
+	}
+
+	impl<Executor> ExtendWithPabloApi<picasso_runtime::RuntimeApi, Executor>
+		for picasso_runtime::RuntimeApiImpl<OpaqueBlock, FullClient<picasso_runtime::RuntimeApi, Executor>>
+	where
+		Executor: NativeExecutionDispatch + 'static,
+	{
+		fn extend_with_pablo_api(
+			io: &mut jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>,
+			deps: FullDeps<
+				FullClient<picasso_runtime::RuntimeApi, Executor>,
+				FullPool<OpaqueBlock, FullClient<picasso_runtime::RuntimeApi, Executor>>,
+			>,
+		) {
+			io.extend_with(PabloApi::to_delegate(Pablo::new(deps.client.clone())));
+		}
+	}
+
+	impl<Executor> ExtendWithLendingApi<picasso_runtime::RuntimeApi, Executor>
+		for picasso_runtime::RuntimeApiImpl<OpaqueBlock, FullClient<picasso_runtime::RuntimeApi, Executor>>
+	where
+		Executor: NativeExecutionDispatch + 'static,
+	{
+		fn extend_with_lending_api(
+			io: &mut jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>,
+			deps: FullDeps<
+				FullClient<picasso_runtime::RuntimeApi, Executor>,
+				FullPool<OpaqueBlock, FullClient<picasso_runtime::RuntimeApi, Executor>>,
+			>,
+		) {
+		}
+	}
 }
 
 #[cfg(feature = "composable")]
 mod composable {
 	use assets_rpc::{Assets, AssetsApi};
 	use common::OpaqueBlock;
+	use crowdloan_rewards_rpc::{CrowdloanRewards, CrowdloanRewardsApi};
+	use pablo_rpc::{Pablo, PabloApi};
 	use polkadot_service::NativeExecutionDispatch;
 
 	use sc_transaction_pool::FullPool;
 
-	use crate::{client::FullClient, rpc::FullDeps, runtime::assets::ExtendWithAssetsApi};
+	use crate::{
+		client::FullClient,
+		rpc::FullDeps,
+		runtime::{
+			assets::ExtendWithAssetsApi, crowdloan_rewards::ExtendWithCrowdloanRewardsApi,
+			lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi,
+		},
+	};
 
 	impl<Executor> ExtendWithAssetsApi<composable_runtime::RuntimeApi, Executor>
 		for composable_runtime::RuntimeApiImpl<
@@ -141,6 +248,61 @@ mod composable {
 			>,
 		) {
 			io.extend_with(AssetsApi::to_delegate(Assets::new(deps.client.clone())));
+		}
+	}
+
+	impl<Executor> ExtendWithCrowdloanRewardsApi<composable_runtime::RuntimeApi, Executor>
+		for composable_runtime::RuntimeApiImpl<
+			OpaqueBlock,
+			FullClient<composable_runtime::RuntimeApi, Executor>,
+		> where
+		Executor: NativeExecutionDispatch + 'static,
+	{
+		fn extend_with_crowdloan_rewards_api(
+			io: &mut jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>,
+			deps: FullDeps<
+				FullClient<composable_runtime::RuntimeApi, Executor>,
+				FullPool<OpaqueBlock, FullClient<composable_runtime::RuntimeApi, Executor>>,
+			>,
+		) {
+			io.extend_with(CrowdloanRewardsApi::to_delegate(CrowdloanRewards::new(
+				deps.client.clone(),
+			)));
+		}
+	}
+
+	impl<Executor> ExtendWithPabloApi<composable_runtime::RuntimeApi, Executor>
+		for composable_runtime::RuntimeApiImpl<
+			OpaqueBlock,
+			FullClient<composable_runtime::RuntimeApi, Executor>,
+		> where
+		Executor: NativeExecutionDispatch + 'static,
+	{
+		fn extend_with_pablo_api(
+			io: &mut jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>,
+			deps: FullDeps<
+				FullClient<composable_runtime::RuntimeApi, Executor>,
+				FullPool<OpaqueBlock, FullClient<composable_runtime::RuntimeApi, Executor>>,
+			>,
+		) {
+			io.extend_with(PabloApi::to_delegate(Pablo::new(deps.client.clone())));
+		}
+	}
+
+	impl<Executor> ExtendWithLendingApi<composable_runtime::RuntimeApi, Executor>
+		for composable_runtime::RuntimeApiImpl<
+			OpaqueBlock,
+			FullClient<composable_runtime::RuntimeApi, Executor>,
+		> where
+		Executor: NativeExecutionDispatch + 'static,
+	{
+		fn extend_with_lending_api(
+			io: &mut jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>,
+			deps: FullDeps<
+				FullClient<composable_runtime::RuntimeApi, Executor>,
+				FullPool<OpaqueBlock, FullClient<composable_runtime::RuntimeApi, Executor>>,
+			>,
+		) {
 		}
 	}
 }
@@ -212,7 +374,83 @@ pub mod crowdloan_rewards {
 		/// The default implementation does nothing, to allow for usage with runtimes that don't
 		/// implement the API.
 		fn extend_with_crowdloan_rewards_api(
-			_io: jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>,
+			_io: &mut jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>,
+			_deps: FullDeps<
+				FullClient<RuntimeApi, Executor>,
+				FullPool<OpaqueBlock, FullClient<RuntimeApi, Executor>>,
+			>,
+		) {
+		}
+	}
+}
+
+pub mod pablo {
+	use common::OpaqueBlock;
+	use polkadot_cli::ProvideRuntimeApi;
+	use polkadot_service::HeaderBackend;
+	use sc_transaction_pool::FullPool;
+	use sp_blockchain::HeaderMetadata;
+
+	use crate::{client::FullClient, rpc::FullDeps, runtime::BaseHostRuntimeApis};
+
+	pub trait ExtendWithPabloApi<RuntimeApi, Executor>
+	where
+		FullClient<RuntimeApi, Executor>: ProvideRuntimeApi<OpaqueBlock>
+			+ HeaderBackend<OpaqueBlock>
+			+ HeaderMetadata<OpaqueBlock, Error = sp_blockchain::Error>
+			+ 'static
+			+ Send
+			+ Sync
+			+ Sized,
+		<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api:
+			BaseHostRuntimeApis,
+		Executor: sc_executor::NativeExecutionDispatch,
+		RuntimeApi: Send + Sync,
+	{
+		/// Extends the given [`jsonrpc_core::MetaIoHandler`] with the [`PabloApi`] runtime api.
+		///
+		/// The default implementation does nothing, to allow for usage with runtimes that don't
+		/// implement the API.
+		fn extend_with_pablo_api(
+			_io: &mut jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>,
+			_deps: FullDeps<
+				FullClient<RuntimeApi, Executor>,
+				FullPool<OpaqueBlock, FullClient<RuntimeApi, Executor>>,
+			>,
+		) {
+		}
+	}
+}
+
+pub mod lending {
+	use common::OpaqueBlock;
+	use polkadot_cli::ProvideRuntimeApi;
+	use polkadot_service::HeaderBackend;
+	use sc_transaction_pool::FullPool;
+	use sp_blockchain::HeaderMetadata;
+
+	use crate::{client::FullClient, rpc::FullDeps, runtime::BaseHostRuntimeApis};
+
+	pub trait ExtendWithLendingApi<RuntimeApi, Executor>
+	where
+		FullClient<RuntimeApi, Executor>: ProvideRuntimeApi<OpaqueBlock>
+			+ HeaderBackend<OpaqueBlock>
+			+ HeaderMetadata<OpaqueBlock, Error = sp_blockchain::Error>
+			+ 'static
+			+ Send
+			+ Sync
+			+ Sized,
+		<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api:
+			BaseHostRuntimeApis,
+		Executor: sc_executor::NativeExecutionDispatch,
+		RuntimeApi: Send + Sync,
+	{
+		/// Extends the given [`jsonrpc_core::MetaIoHandler`] with the [`PabloApi`] runtime api.
+		///
+		/// The default implementation does nothing, to allow for usage with runtimes that don't
+		/// implement the API.
+		fn extend_with_lending_api(
+			_io: &mut jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>,
 			_deps: FullDeps<
 				FullClient<RuntimeApi, Executor>,
 				FullPool<OpaqueBlock, FullClient<RuntimeApi, Executor>>,
