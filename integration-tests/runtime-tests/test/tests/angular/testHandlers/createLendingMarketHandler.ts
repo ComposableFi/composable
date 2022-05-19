@@ -16,11 +16,11 @@ export async function createLendingMarketHandler(
   const input = api.createType('ComposableTraitsLendingCreateInput', {
     updatable: api.createType('ComposableTraitsLendingUpdateInput', {
       collateralFactor: collateralFactor,
-      underCollaterializedWarnPercent: underCollateralizedWarnPercent,
+      underCollateralizedWarnPercent: underCollateralizedWarnPercent,
       liquidators: liquidators,
       interestRateModel: interestRateModel,
-      currencyPair: currencyPair
     }),
+    currencyPair: currencyPair,
     reservedFactor: reservedFactor
   });
 

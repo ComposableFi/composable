@@ -31,8 +31,9 @@ import { createLendingMarketHandler } from "@composabletests/tests/angular/testH
 import { depositCollateralHandler } from "@composabletests/tests/angular/testHandlers/depositCollateralHandler";
 import { borrowHandler } from "@composabletests/tests/angular/testHandlers/borrowHandler";
 import { withdrawCollateralHandler } from "@composabletests/tests/angular/testHandlers/withdrawCollateralHandler";
+import BN from "bn.js";
 
-describe("Lending Tests", function() {
+describe.only("Lending Tests", function() {
   if (!testConfiguration.enabled)
     return;
   let oracleId: number,
@@ -77,6 +78,10 @@ describe("Lending Tests", function() {
     await api.disconnect();
   });
 
+  /**
+   * Angular requires a set-up and working Oracle.
+   * We do this within this test block
+   */
   describe("Lending Tests - Oracle Setup", function() {
     before("Before Lending Tests: Create asset vault", async function() {
       if (!testConfiguration.enabledTests.runBeforeCreateAssetVault)
@@ -257,29 +262,6 @@ describe("Lending Tests", function() {
     });
   });
 
-  describe("Liquidation Strategy Success Tests", function() {
-    it("Can create liquidation strategy (DutchAuction, LinearDecrease)", async function() {
-      if (!testConfiguration.enabledTests.canCreateLiquidationStrategy.createLiquidationStrategyDutchAuctionLinearDecrease)
-        this.skip();
-      // Setting timeout to 2 minutes.
-      this.timeout(2 * 60 * 1000);
-      const configuration = api.createType("PalletLiquidationsLiquidationStrategyConfiguration", {
-        DutchAuction: api.createType("ComposableTraitsTimeTimeReleaseFunction", {
-          LinearDecrease: api.createType("ComposableTraitsTimeLinearDecrease", {
-            total: api.createType("u64", 1)
-          })
-        }),
-        UniswapV2: "Null",
-        XcmDex: "Null"
-      });
-
-      // Transaction
-      const { data: [result] } = await createLiquidationStrategyHandler(api, sudoKey, configuration);
-
-      // ToDo (D. Roth): Add Check!
-    });
-  });
-
   describe("Before Lending Tests: Submit Oracle Prices", function() {
     it("Submit new price to oracle for base asset", async function() {
       if (!testConfiguration.enabledTests.runBeforeSubmitPriceOracle)
@@ -318,31 +300,75 @@ describe("Lending Tests", function() {
     });
   });
 
-  describe("Lending Market Creation Success Tests", function() {
-    it("Can create lending market (Curve Interest Rate Model)", async function() {
-      if (!testConfiguration.enabledTests.canCreateLendingMarket.createMarketCurveInterestRateModel)
-        this.skip();
-      this.retries(1);
+  describe.only("Lending Market Creation Success Tests", function() {
+    it("Can create lending market (Jump Interest Rate Model)", async function() {
+      if (!testConfiguration.enabledTests.canCreateLendingMarket.createMarketCurveInterestRateModel) this.skip();
       // Setting timeout to 2 minutes.
       this.timeout(8 * 60 * 1000);
+
+      const paraCollateralFactor = api.createType('u128', 2);
+      const paraUnderCollateralizedWarnPercent = api.createType("Percent", 10);
+      const paraLiquidators = api.createType("Vec<u32>", []);
+      const paraInterestRateModel = api.createType("ComposableTraitsLendingMathInterestRateModel", { // Interest Rate Model
+        jump: api.createType('ComposableTraitsLendingMathJumpModel',{
+          baseRate: api.createType("u128", 2),
+          jumpRate: api.createType("u128", 1),
+          fullRate: api.createType("u128", 10),
+          targetUtilization: api.createType("Percent", 80)
+        })
+      });
+      const paraCurrencyPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", { // Currency Pair
+        base: api.createType("u128", 1000), // Borrow Asset
+        quote: api.createType("u128", 2000) // Collateral Asset
+      });
+      const paraReservedFactor = api.createType("Perquintill", new BN("1000000000000"));//new BN("100_000_000_000_000_000"));
 
       // Transaction | ToDo (D. Roth): Cleanup!
       const result = await createLendingMarketHandler(
         api,
-        oracleSignerWallet, // Wallet
-        BigInt(2000000000000000000), // collerateralFactor
-        api.createType("Percent", 10), // underCollaterializedWarnPercent
-        api.createType("Vec<u32>", []), // liquidators
-        api.createType("ComposableTraitsLendingMathInterestRateModel", { // Interest Rate Model
-          curve: api.createType("ComposableTraitsLendingMathCurveModel", { // Curve Model
-            baseRate: api.createType("u128", 1)
-          })
-        }),
-        api.createType("ComposableTraitsDefiCurrencyPair", { // Currency Pair
-          base: api.createType("u128", 1000), // Borrow Asset
-          quote: api.createType("u128", 2000) // Collateral Asset
-        }),
-        api.createType("Perquintill", 1) // reservedFactor
+        oracleSignerWallet,
+        paraCollateralFactor,
+        paraUnderCollateralizedWarnPercent,
+        paraLiquidators,
+        paraInterestRateModel,
+        paraCurrencyPair,
+        paraReservedFactor
+      );
+
+      // ToDo (D. Roth): Verification!
+      console.debug(result.toString());
+      await waitForBlocks(api, 3);
+    });
+
+    it("Can create lending market (Curve Interest Rate Model)", async function() {
+      if (!testConfiguration.enabledTests.canCreateLendingMarket.createMarketCurveInterestRateModel)
+        this.skip();
+      // Setting timeout to 2 minutes.
+      this.timeout(8 * 60 * 1000);
+      const paraCollateralFactor = api.createType('u128', 2);
+      const paraUnderCollateralizedWarnPercent = api.createType("Percent", 10);
+      const paraLiquidators = api.createType("Vec<u32>", []);
+      const paraInterestRateModel = api.createType("ComposableTraitsLendingMathInterestRateModel", { // Interest Rate Model
+        curve: api.createType("ComposableTraitsLendingMathCurveModel", { // Curve Model
+          baseRate: api.createType("u128", 20)
+        })
+      });
+      const paraCurrencyPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", { // Currency Pair
+        base: api.createType("u128", 1000), // Borrow Asset
+        quote: api.createType("u128", 2000) // Collateral Asset
+      });
+      const paraReservedFactor = api.createType("Perquintill", 1000000000000);//new BN("100_000_000_000_000_000"));
+
+      // Transaction | ToDo (D. Roth): Cleanup!
+      const result = await createLendingMarketHandler(
+        api,
+        oracleSignerWallet,
+        paraCollateralFactor,
+        paraUnderCollateralizedWarnPercent,
+        paraLiquidators,
+        paraInterestRateModel,
+        paraCurrencyPair,
+        paraReservedFactor
       );
 
       // ToDo (D. Roth): Verification!
