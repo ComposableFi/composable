@@ -76,10 +76,7 @@ impl<T: Config> StableSwap<T> {
 		asset_id: T::AssetId,
 		amount: T::Balance,
 	) -> Result<T::Balance, DispatchError> {
-		ensure!(
-			asset_id == pool.pair.base || asset_id == pool.pair.quote,
-			Error::<T>::InvalidAsset
-		);
+		ensure!(pool.pair.contains(asset_id), Error::<T>::InvalidAsset);
 		let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
 		let pool_base_aum = T::Assets::balance(pair.base, pool_account);
 		let pool_quote_aum = T::Assets::balance(pair.quote, pool_account);
