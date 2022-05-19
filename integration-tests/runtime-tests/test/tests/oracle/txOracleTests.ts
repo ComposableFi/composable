@@ -44,6 +44,11 @@ describe("tx.oracle Tests", function() {
     signedWallet = devWalletAlice.derive("/oracleSigner");
     controllerWallet = devWalletAlice;
   });
+
+  after("Closing the connection", async function() {
+    await api.disconnect();
+  });
+
   /**
    * oracle.addAssetAndInfo Success Tests
    *
