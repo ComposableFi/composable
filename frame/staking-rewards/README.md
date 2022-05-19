@@ -83,11 +83,9 @@ User may stake amount and get fNFT, but it will not start earn until next epoch 
 
 After each epoch end, there is short period of time it takes to collect rewards and put new fNFTs into rewarding state.
 
-During epoch user are protected from dilution made by other users which stake.
+During epoch users are protected from dilution made by other users who stake.
 
 ### Positions operations
-
-
 
 #### Split positions
 
