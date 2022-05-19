@@ -60,6 +60,7 @@ mod assets_integration;
 mod helpers;
 pub mod prelude;
 mod relaychain;
+#[cfg(feature = "dali")]
 #[cfg(test)]
 mod transact_calls;
 
