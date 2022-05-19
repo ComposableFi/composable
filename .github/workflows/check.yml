@@ -122,7 +122,7 @@ jobs:
           RUST_BACKTRACE: full
         run: |
           cargo build --release -p composable --features=runtime-benchmarks
-          ./target/release/composable benchmark \
+          ./target/release/composable benchmark pallet \
             --chain="${{ matrix.runtime }}" \
             --execution=wasm \
             --wasm-execution=compiled \
