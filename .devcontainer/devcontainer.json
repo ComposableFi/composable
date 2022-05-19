@@ -33,7 +33,7 @@
 		"terminal.integrated.defaultProfile.linux": "zsh",
 		"rust-analyzer.rustfmt.enableRangeFormatting": true,
 		"[rust]": {
-			"editor.defaultFormatter": "matklad.rust-analyzer",
+			"editor.defaultFormatter": "rust-lang.rust-analyzer",
 			"editor.formatOnSave": true
 		},
 		"editor.quickSuggestions": {
@@ -56,7 +56,7 @@
 		"yzhang.markdown-all-in-one",
 		"vadimcn.vscode-lldb",
 		"mutantdino.resourcemonitor",
-		"matklad.rust-analyzer",
+		"rust-lang.rust-analyzer",
 		"tamasfe.even-better-toml",
 		"serayuzgur.crates",
 		"ms-azuretools.vscode-docker",
