@@ -271,6 +271,19 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type CollateralType<T: Config> = StorageValue<_, AssetIdOf<T>, OptionQuery>;
 
+	/// Ratio of user's margin to be seized as fees upon a full liquidation event
+	#[pallet::storage]
+	#[pallet::getter(fn full_liquidation_penalty)]
+	#[allow(clippy::disallowed_types)]
+	pub type FullLiquidationPenalty<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
+
+	/// Ratio of full liquidation fees for compensating the liquidator
+	#[pallet::storage]
+	#[pallet::getter(fn full_liquidation_penalty_liquidator_share)]
+	#[allow(clippy::disallowed_types)]
+	pub type FullLiquidationPenaltyLiquidatorShare<T: Config> =
+		StorageValue<_, T::Decimal, ValueQuery>;
+
 	/// Maps [AccountId](frame_system::Config::AccountId) to its collateral
 	/// [Balance](DeFiComposableConfig::Balance), if set.
 	#[pallet::storage]
