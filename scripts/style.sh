@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /usr/bin/env bash
 
 maybe_taplo=`whereis taplo` 
 if [[ ${maybe_taplo} = "taplo: " ]]; then 
