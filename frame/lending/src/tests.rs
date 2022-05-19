@@ -45,7 +45,7 @@ use std::ops::{Div, Mul};
 const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
 const DEFAULT_MARKET_VAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
 const DEFAULT_COLLATERAL_FACTOR: u128 = 2;
-const DEFAULT_ACTUAL_BLOCKS_COUNT: u64 = 1020;
+const DEFAULT_MAX_PRICE_AGE: u64 = 1020;
 
 type SystemAccountIdOf<T> = <T as frame_system::Config>::AccountId;
 type SystemOriginOf<T> = <T as frame_system::Config>::Origin;
@@ -556,7 +556,7 @@ fn old_price() {
 
 		// skip blocks
 		test::block::process_and_progress_blocks::<Lending, Runtime>(
-			DEFAULT_ACTUAL_BLOCKS_COUNT as usize + 1,
+			DEFAULT_MAX_PRICE_AGE as usize + 1,
 		);
 
 		// Try to borrow by SECOND_PRICE
@@ -574,7 +574,7 @@ fn old_price() {
 
 		// skip blocks
 		test::block::process_and_progress_blocks::<Lending, Runtime>(
-			DEFAULT_ACTUAL_BLOCKS_COUNT as usize + 1,
+			DEFAULT_MAX_PRICE_AGE as usize + 1,
 		);
 
 		// Set BTC price
@@ -589,7 +589,7 @@ fn old_price() {
 
 		// skip blocks
 		test::block::process_and_progress_blocks::<Lending, Runtime>(
-			DEFAULT_ACTUAL_BLOCKS_COUNT as usize + 1,
+			DEFAULT_MAX_PRICE_AGE as usize + 1,
 		);
 
 		// Try to repay by SECOND_PRICE
@@ -1620,7 +1620,7 @@ where
 			under_collateralized_warn_percent: default_under_collateralized_warn_percent(),
 			liquidators: vec![],
 			interest_rate_model: InterestRateModel::default(),
-			max_price_age: DEFAULT_ACTUAL_BLOCKS_COUNT,
+			max_price_age: DEFAULT_MAX_PRICE_AGE,
 		},
 		reserved_factor,
 		currency_pair: CurrencyPair::new(collateral_asset.id(), borrow_asset.id()),
