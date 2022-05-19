@@ -112,7 +112,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * If Some(0), than price can be anything greater or equal to zero.
        * If Some(MAX), than actually it forbids transfers.
        **/
-      setMinFee: AugmentedSubmittable<(targetParachainId: u32 | AnyNumber | Uint8Array, assetId: ComposableTraitsXcmAssetsXcmAssetLocation | { parents?: any; interior?: any } | string | Uint8Array, minimalAmount: Option<u128> | null | object | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, ComposableTraitsXcmAssetsXcmAssetLocation, Option<u128>]>;
+      setMinFee: AugmentedSubmittable<(targetParachainId: u32 | AnyNumber | Uint8Array, foreignAssetId: ComposableTraitsXcmAssetsXcmAssetLocation | { parents?: any; interior?: any } | string | Uint8Array, amount: Option<u128> | null | object | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, ComposableTraitsXcmAssetsXcmAssetLocation, Option<u128>]>;
       /**
        * Given well existing asset, update its remote information.
        * Use with caution as it allow reroute assets location.
