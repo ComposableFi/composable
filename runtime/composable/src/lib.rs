@@ -60,7 +60,7 @@ pub use frame_support::{
 use codec::{Codec, Encode, EncodeLike};
 use frame_support::{
 	traits::{EqualPrivilegeOnly, OnRuntimeUpgrade},
-	weights::{ConstantMultiplier},
+	weights::ConstantMultiplier,
 };
 use frame_system as system;
 use scale_info::TypeInfo;

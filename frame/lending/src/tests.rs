@@ -969,7 +969,7 @@ fn test_repay_partial_amount() {
 				post_info: PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },
 				error: DispatchError::Module(ModuleError {
 					index: 8,
-					error: [34,0,0,0],
+					error: [34, 0, 0, 0],
 					message: Some(Error::<Runtime>::CannotRepayMoreThanTotalDebt.into(),),
 				}),
 			},

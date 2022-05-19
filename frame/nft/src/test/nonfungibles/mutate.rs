@@ -291,7 +291,11 @@ mod burn_from {
 			new_test_ext().execute_with(|| {
 				let [_new_nft_ids @ .., last_nft_minted] = mint_many_nfts_and_assert::<10>(ALICE);
 				assert_noop!(
-					Pallet::<MockRuntime>::burn(&NftClass::STAKING, &(last_nft_minted + 1), Some(&ALICE)),
+					Pallet::<MockRuntime>::burn(
+						&NftClass::STAKING,
+						&(last_nft_minted + 1),
+						Some(&ALICE)
+					),
 					DispatchError::from(crate::Error::<MockRuntime>::InstanceNotFound)
 				);
 			})
@@ -303,7 +307,11 @@ mod burn_from {
 			new_test_ext().execute_with(|| {
 				let [nft_to_burn, _new_nft_ids @ ..] = mint_many_nfts_and_assert::<10>(ALICE);
 
-				assert_ok!(Pallet::<MockRuntime>::burn(&NftClass::STAKING, &nft_to_burn, Some(&ALICE)));
+				assert_ok!(Pallet::<MockRuntime>::burn(
+					&NftClass::STAKING,
+					&nft_to_burn,
+					Some(&ALICE)
+				));
 				assert_last_event::<MockRuntime>(Event::Nft(crate::Event::NftBurned {
 					class_id: NftClass::STAKING,
 					instance_id: nft_to_burn,
@@ -322,7 +330,11 @@ mod burn_from {
 			new_test_ext().execute_with(|| {
 				let nft_to_burn = mint_nft_and_assert();
 
-				assert_ok!(Pallet::<MockRuntime>::burn(&NftClass::STAKING, &nft_to_burn, Some(&ALICE)));
+				assert_ok!(Pallet::<MockRuntime>::burn(
+					&NftClass::STAKING,
+					&nft_to_burn,
+					Some(&ALICE)
+				));
 				assert_last_event::<MockRuntime>(Event::Nft(crate::Event::NftBurned {
 					class_id: NftClass::STAKING,
 					instance_id: nft_to_burn,

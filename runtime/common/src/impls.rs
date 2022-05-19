@@ -1,5 +1,4 @@
-use frame_support::traits::{Currency, OnUnbalanced};
-use frame_support::traits::Imbalance;
+use frame_support::traits::{Currency, Imbalance, OnUnbalanced};
 
 pub type NegativeImbalance<T> =
 	<balances::Pallet<T> as Currency<<T as frame_system::Config>::AccountId>>::NegativeImbalance;

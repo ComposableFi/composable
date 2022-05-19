@@ -66,7 +66,7 @@ pub use frame_support::{
 use codec::{Codec, Encode, EncodeLike};
 use frame_support::{
 	traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade},
-	weights::ConstantMultiplier
+	weights::ConstantMultiplier,
 };
 use frame_system as system;
 use frame_system::EnsureSigned;

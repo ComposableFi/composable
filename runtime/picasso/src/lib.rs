@@ -56,8 +56,8 @@ pub use frame_support::{
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
-		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
-		WeightToFeePolynomial, ConstantMultiplier,
+		ConstantMultiplier, DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient,
+		WeightToFeeCoefficients, WeightToFeePolynomial,
 	},
 	PalletId, StorageValue,
 };
