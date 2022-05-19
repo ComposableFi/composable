@@ -150,6 +150,10 @@ impl<T: Config> LiquidityBootstrapping<T> {
 		asset_id: T::AssetId,
 		amount: T::Balance,
 	) -> Result<T::Balance, DispatchError> {
+		ensure!(
+			asset_id == pool.pair.base || asset_id == pool.pair.quote,
+			Error::<T>::InvalidAsset
+		);
 		let pair = if asset_id == pool.pair.base { pool.pair.swap() } else { pool.pair };
 		let current_block = frame_system::Pallet::<T>::current_block_number();
 		let (_, base_amount) =

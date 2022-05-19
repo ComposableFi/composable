@@ -64,6 +64,10 @@ impl<T: Config> Uniswap<T> {
 		asset_id: T::AssetId,
 		amount: T::Balance,
 	) -> Result<T::Balance, DispatchError> {
+		ensure!(
+			asset_id == pool.pair.base || asset_id == pool.pair.quote,
+			Error::<T>::InvalidAsset
+		);
 		let amount = T::Convert::convert(amount);
 		let half_weight = Permill::from_percent(50);
 		let pool_base_aum = T::Convert::convert(T::Assets::balance(pool.pair.base, pool_account));
@@ -160,6 +164,7 @@ impl<T: Config> Uniswap<T> {
 		quote_amount: T::Balance,
 		apply_fees: bool,
 	) -> Result<(T::Balance, T::Balance, T::Balance, T::Balance), DispatchError> {
+		ensure!(pair == pool.pair, Error::<T>::PairMismatch);
 		let pool_base_aum = T::Convert::convert(T::Assets::balance(pair.base, pool_account));
 		let pool_quote_aum = T::Convert::convert(T::Assets::balance(pair.quote, pool_account));
 		let quote_amount = T::Convert::convert(quote_amount);

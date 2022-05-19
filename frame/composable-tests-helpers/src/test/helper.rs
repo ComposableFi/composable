@@ -1,4 +1,3 @@
-use composable_support::math::safe::SafeSub;
 use frame_support::{assert_ok, dispatch::DispatchResultWithPostInfo};
 use frame_system::{Config, EventRecord};
 use sp_runtime::{FixedPointNumber, FixedU128};
