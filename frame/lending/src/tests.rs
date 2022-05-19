@@ -8,16 +8,16 @@ use crate::{
 	models::borrower_data::BorrowerData, setup::assert_last_event, AccruedInterest, Error,
 	MarketIndex,
 };
-use composable_support::validation::{TryIntoValidated, Validated};
+use composable_support::validation::TryIntoValidated;
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok, test};
 use composable_traits::{
 	defi::{
-		CurrencyPair, DeFiEngine, LiftedFixedBalance, MoreThanOneFixedU128, Rate,
+		CurrencyPair, DeFiComposableConfig, LiftedFixedBalance, MoreThanOneFixedU128, Rate,
 		ZeroToOneFixedU128,
 	},
 	lending::{
-		math::*, CreateInput, CurrencyPairIsNotSame, Lending as LendingTrait, MarketModelValid,
-		RepayStrategy, TotalDebtWithInterest, UpdateInput, UpdateInputVaild,
+		math::*, CreateInput, Lending as LendingTrait, RepayStrategy, TotalDebtWithInterest,
+		UpdateInput, UpdateInputVaild,
 	},
 	oracle,
 	time::SECONDS_PER_YEAR_NAIVE,
@@ -26,7 +26,10 @@ use composable_traits::{
 use frame_support::{
 	assert_err, assert_noop, assert_ok,
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, PostDispatchInfo},
-	traits::fungibles::{Inspect, Mutate},
+	traits::{
+		fungibles::{Inspect, Mutate},
+		OriginTrait,
+	},
 	weights::Pays,
 };
 use frame_system::{EventRecord, Phase};
@@ -35,13 +38,17 @@ use proptest::{prelude::*, test_runner::TestRunner};
 use sp_arithmetic::assert_eq_error_rate;
 use sp_core::U256;
 use sp_runtime::{
-	traits::Printable, ArithmeticError, DispatchError, FixedPointNumber, FixedU128, ModuleError,
-	Percent, Perquintill,
+	ArithmeticError, DispatchError, FixedPointNumber, FixedU128, ModuleError, Percent, Perquintill,
 };
 use std::ops::{Div, Mul};
+
 const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
 const DEFAULT_MARKET_VAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
 const DEFAULT_COLLATERAL_FACTOR: u128 = 2;
+
+type SystemAccountId<R> = <R as frame_system::Config>::AccountId;
+type SystemOrigin<R> = <R as frame_system::Config>::Origin;
+type SystemEvent<R> = <R as frame_system::Config>::Event;
 
 #[test]
 fn accrue_interest_base_cases() {
@@ -203,7 +210,6 @@ fn accrue_interest_plotter() {
 
 	#[cfg(feature = "visualization")]
 	{
-		use plotters::prelude::*;
 		let area =
 			BitMapBackend::new("./accrue_interest_plotter.png", (1024, 768)).into_drawing_area();
 		area.fill(&WHITE).unwrap();
@@ -459,7 +465,7 @@ fn test_borrow_repay_in_same_block() {
 			Error::<Runtime>::BorrowAndRepayInSameBlockIsNotSupported,
 		);
 
-		assert_no_event(Event::Lending(crate::Event::BorrowRepaid {
+		assert_no_event::<Runtime>(Event::Lending(crate::Event::BorrowRepaid {
 			sender: *ALICE,
 			market_id,
 			beneficiary: *ALICE,
@@ -576,7 +582,7 @@ fn borrow_flow() {
 			Error::<Runtime>::NotEnoughCollateralToBorrow
 		);
 
-		assert_no_event(Event::Lending(crate::Event::Borrowed {
+		assert_no_event::<Runtime>(Event::Lending(crate::Event::Borrowed {
 			sender: *ALICE,
 			amount: original_limit,
 			market_id: market,
@@ -596,7 +602,7 @@ fn borrow_flow() {
 			Error::<Runtime>::InvalidTimestampOnBorrowRequest
 		);
 
-		assert_no_event(Event::Lending(crate::Event::Borrowed {
+		assert_no_event::<Runtime>(Event::Lending(crate::Event::Borrowed {
 			sender: *ALICE,
 			amount: USDT::ONE,
 			market_id: market,
@@ -623,7 +629,7 @@ fn borrow_flow() {
 			Error::<Runtime>::NotEnoughCollateralToBorrow
 		);
 
-		assert_no_event(Event::Lending(crate::Event::Borrowed {
+		assert_no_event::<Runtime>(Event::Lending(crate::Event::Borrowed {
 			sender: *ALICE,
 			amount: alice_limit * 100,
 			market_id: market,
@@ -667,7 +673,7 @@ fn vault_takes_part_of_borrow_so_cannot_withdraw() {
 			),
 			Error::<Runtime>::NotEnoughBorrowAsset
 		);
-		assert_no_event(Event::Lending(pallet_lending::Event::<Runtime>::Borrowed {
+		assert_no_event::<Runtime>(Event::Lending(pallet_lending::Event::<Runtime>::Borrowed {
 			sender: *ALICE,
 			market_id,
 			amount: deposit_btc + initial_total_cash,
@@ -715,9 +721,9 @@ fn test_liquidate_multiple() {
 	new_test_ext().execute_with(|| {
 		let (market, _vault) = create_simple_market();
 
-		mint_and_deposit_collateral::<Runtime>(&*ALICE, BTC::units(100), market, BTC::ID);
-		mint_and_deposit_collateral::<Runtime>(&*BOB, BTC::units(100), market, BTC::ID);
-		mint_and_deposit_collateral::<Runtime>(&*CHARLIE, BTC::units(100), market, BTC::ID);
+		mint_and_deposit_collateral::<Runtime>(*ALICE, BTC::units(100), market, BTC::ID);
+		mint_and_deposit_collateral::<Runtime>(*BOB, BTC::units(100), market, BTC::ID);
+		mint_and_deposit_collateral::<Runtime>(*CHARLIE, BTC::units(100), market, BTC::ID);
 		match Lending::liquidate(Origin::signed(*ALICE), market, vec![*ALICE, *BOB, *CHARLIE]) {
 			Ok(_) => {
 				println!("ok!")
@@ -739,7 +745,7 @@ fn test_liquidate_multiple() {
 			let raw_account_id = U256::from(i);
 			raw_account_id.to_little_endian(&mut bytes);
 			let account_id = AccountId::from_raw(bytes);
-			mint_and_deposit_collateral::<Runtime>(&account_id, BTC::units(100), market, BTC::ID);
+			mint_and_deposit_collateral::<Runtime>(account_id, BTC::units(100), market, BTC::ID);
 			borrowers.push(account_id);
 		}
 		assert_noop!(
@@ -760,12 +766,7 @@ fn test_repay_partial_amount() {
 
 		let (market_index, vault_id) = create_simple_market();
 
-		mint_and_deposit_collateral::<Runtime>(
-			&*ALICE,
-			alice_balance,
-			market_index,
-			COLLATERAL::ID,
-		);
+		mint_and_deposit_collateral::<Runtime>(*ALICE, alice_balance, market_index, COLLATERAL::ID);
 
 		let borrow_asset_deposit = BORROW::units(1_000_000);
 		assert_ok!(Tokens::mint_into(BORROW::ID, &CHARLIE, borrow_asset_deposit));
@@ -872,7 +873,7 @@ fn test_repay_partial_amount() {
 			},
 		);
 
-		assert_no_event(Event::Lending(crate::Event::BorrowRepaid {
+		assert_no_event::<Runtime>(Event::Lending(crate::Event::BorrowRepaid {
 			sender: *ALICE,
 			market_id: market_index,
 			beneficiary: *ALICE,
@@ -1026,7 +1027,7 @@ fn test_repay_total_debt() {
 #[test]
 fn liquidation() {
 	new_test_ext().execute_with(|| {
-		let (market_id, vault) = create_market::<50_000, Lending, Tokens>(
+		let (market_id, vault) = create_market::<50_000, Runtime>(
 			USDT::instance(),
 			BTC::instance(),
 			*ALICE,
@@ -1083,7 +1084,7 @@ fn liquidation() {
 fn test_warn_soon_under_collateralized() {
 	new_test_ext().execute_with(|| {
 		const NORMALIZED_UNITS: u128 = 50_000;
-		let (market, vault) = create_market::<NORMALIZED_UNITS, Lending, Tokens>(
+		let (market, vault) = create_market::<NORMALIZED_UNITS, Runtime>(
 			USDT::instance(),
 			BTC::instance(),
 			*ALICE,
@@ -1322,7 +1323,7 @@ proptest! {
 					amount: amount + 1,
 					market_id: market,
 				});
-			assert_no_event(event);
+			assert_no_event::<Runtime>(event);
 
 			Ok(())
 		})?;
@@ -1463,8 +1464,6 @@ fn create_simple_vault(
 }
 
 /// Creates a market with the given values and initializes some state.
-/// This generalized function use LendingTrait's `create` method.
-/// Thus, event is not emitted.
 //
 /// State initialized:
 ///
@@ -1482,23 +1481,33 @@ fn create_simple_vault(
 /// # Panics
 ///
 /// Panics on any errors. Only for use in testing.
-pub fn create_market<const NORMALIZED_PRICE: u128, LendingType, TokensType>(
+pub fn create_market<const NORMALIZED_PRICE: u128, R>(
 	borrow_asset: RuntimeCurrency,
 	collateral_asset: RuntimeCurrency,
-	manager: LendingType::AccountId,
+	manager: SystemAccountId<R>,
 	reserved_factor: Perquintill,
 	collateral_factor: MoreThanOneFixedU128,
-) -> (LendingType::MarketId, LendingType::VaultId)
+) -> (MarketIndex, R::VaultId)
 where
-	LendingType: LendingTrait + DeFiEngine<MayBeAssetId = u128>,
-	TokensType: Mutate<LendingType::AccountId>
-		+ Inspect<LendingType::AccountId, AssetId = u128, Balance = u128>,
+	R: frame_system::Config
+		+ crate::Config
+		+ DeFiComposableConfig<MayBeAssetId = u128>
+		+ orml_tokens::Config<CurrencyId = u128, Balance = u128>,
+	SystemOrigin<R>: OriginTrait<AccountId = SystemAccountId<R>>,
+	SystemEvent<R>: TryInto<crate::Event<R>>,
+	<SystemEvent<R> as TryInto<crate::Event<R>>>::Error: std::fmt::Debug,
 {
 	set_price(borrow_asset.id(), NORMALIZED::ONE);
 	set_price(collateral_asset.id(), NORMALIZED::units(NORMALIZED_PRICE));
 
-	TokensType::mint_into(borrow_asset.id(), &manager, borrow_asset.units(1000)).unwrap();
-	TokensType::mint_into(collateral_asset.id(), &manager, collateral_asset.units(100)).unwrap();
+	orml_tokens::Pallet::<R>::mint_into(borrow_asset.id(), &manager, borrow_asset.units(1000))
+		.unwrap();
+	orml_tokens::Pallet::<R>::mint_into(
+		collateral_asset.id(),
+		&manager,
+		collateral_asset.units(100),
+	)
+	.unwrap();
 
 	let config = CreateInput {
 		updatable: UpdateInput {
@@ -1511,16 +1520,25 @@ where
 		currency_pair: CurrencyPair::new(collateral_asset.id(), borrow_asset.id()),
 	};
 
-	let validated: Validated<_, (MarketModelValid, CurrencyPairIsNotSame)> =
-		config.try_into_validated().unwrap();
-	let k = LendingType::create(manager, validated.value());
-
-	match k {
-		Ok(pair) => return pair,
-		Err(error) => {
-			error.print();
-			panic!("Market was not created due to the previous error")
-		},
+	crate::Pallet::<R>::create_market(
+		SystemOrigin::<R>::signed(manager),
+		config.try_into_validated().unwrap(),
+	)
+	.unwrap();
+	let system_events = frame_system::Pallet::<R>::events();
+	let last_system_event = system_events.last().expect("There are no events in System::events()");
+	let pallet_event: crate::Event<R> = last_system_event
+		.event
+		.clone()
+		.try_into()
+		.expect("Market was not created due to System::Event => crate::Event conversion error");
+	if let crate::Event::<R>::MarketCreated { market_id, vault_id, .. } = pallet_event {
+		(market_id, vault_id)
+	} else {
+		panic!(
+			"There is no market creation event in System::events(). Found: {:#?}",
+			system_events
+		);
 	}
 }
 
@@ -1542,7 +1560,7 @@ fn create_simple_vaulted_market(
 ) -> ((MarketIndex, VaultId), CurrencyId) {
 	let (_, VaultInfo { lp_token_id, .. }) = create_simple_vault(borrow_asset, manager);
 
-	let market = create_market::<50_000, Lending, Tokens>(
+	let market = create_market::<50_000, Runtime>(
 		borrow_asset,
 		RuntimeCurrency::new(lp_token_id, 12),
 		manager,
@@ -1559,7 +1577,7 @@ fn create_simple_vaulted_market(
 ///
 /// See [`create_market()`] for more information.
 fn create_simple_market() -> (MarketIndex, VaultId) {
-	create_market::<50_000, Lending, Tokens>(
+	create_market::<50_000, Runtime>(
 		USDT::instance(),
 		BTC::instance(),
 		*ALICE,
@@ -1573,19 +1591,33 @@ fn create_simple_market() -> (MarketIndex, VaultId) {
 ///
 /// Panics on any errors and checks that the last event was `CollateralDeposited` with the correct/
 /// expected values.
-fn mint_and_deposit_collateral<T: crate::Config>(
-	account: &sp_core::sr25519::Public,
+pub fn mint_and_deposit_collateral<R>(
+	account: SystemAccountId<R>,
 	balance: u128,
 	market_index: MarketIndex,
 	asset_id: u128,
-) {
-	assert_ok!(Tokens::mint_into(asset_id, account, balance));
-	assert_ok!(Lending::deposit_collateral(Origin::signed(*account), market_index, balance));
-	assert_last_event::<Runtime>(Event::Lending(crate::Event::<Runtime>::CollateralDeposited {
+) where
+	R: frame_system::Config
+		+ crate::Config
+		+ orml_tokens::Config<CurrencyId = u128, Balance = u128>
+		+ DeFiComposableConfig<Balance = u128>,
+	SystemAccountId<R>: Copy,
+	SystemOrigin<R>: OriginTrait<AccountId = R::AccountId>,
+	SystemEvent<R>: From<crate::Event<R>>,
+{
+	assert_ok!(orml_tokens::Pallet::<R>::mint_into(asset_id, &account, balance));
+	assert_ok!(crate::Pallet::<R>::deposit_collateral(
+		SystemOrigin::<R>::signed(account),
+		market_index,
+		balance
+	));
+	let event = crate::Event::<R>::CollateralDeposited {
 		market_id: market_index,
 		amount: balance,
-		sender: *account,
-	}))
+		sender: account,
+	};
+	let system_event: <R as crate::Config>::Event = event.into();
+	assert_last_event::<R>(system_event);
 }
 
 /// Asserts that the outcome of an extrinsic is `Ok`, and that the last event is the specified
@@ -1599,6 +1631,9 @@ pub fn assert_extrinsic_event<T: crate::Config>(
 }
 
 /// Asserts the event wasn't dispatched.
-fn assert_no_event(event: crate::mocks::Event) {
-	assert!(System::events().iter().all(|record| record.event != event));
+pub fn assert_no_event<R>(event: R::Event)
+where
+	R: frame_system::Config,
+{
+	assert!(frame_system::Pallet::<R>::events().iter().all(|record| record.event != event));
 }
