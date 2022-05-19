@@ -24,7 +24,9 @@ mod xcmp;
 use orml_traits::parameter_type_with_key;
 // TODO: consider moving this to shared runtime
 use common::{
-	  impls::DealWithFees, multi_existential_deposits, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber, BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash, MaxTransferAssets, Moment, MosaicRemoteAssetId, MultiExistentialDeposits, NativeExistentialDeposit, PoolId, Signature,
+	impls::DealWithFees, multi_existential_deposits, AccountId, AccountIndex, Address, Amount,
+	AuraId, Balance, BlockNumber, BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash,
+	MaxTransferAssets, Moment, MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };

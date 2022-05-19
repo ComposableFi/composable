@@ -23,9 +23,9 @@ use sp_core::Bytes;
 mod weights;
 mod xcmp;
 use common::{
-	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash, MaxTransferAssets, Moment,
-	MultiExistentialDeposits, NativeExistentialDeposit, PoolId, Signature,
+	impls::DealWithFees, multi_existential_deposits, AccountId, AccountIndex, Address, Amount,
+	AuraId, Balance, BlockNumber, BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash,
+	MaxTransferAssets, Moment, NativeExistentialDeposit, PoolId, Signature,
 	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
@@ -46,7 +46,7 @@ use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
 pub use xcmp::{MaxInstructions, UnitWeightCost, XcmConfig};
 // A few exports that help ease life for downstream crates.
-use codec::Encode;
+use codec::{Codec, Encode, EncodeLike};
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
 pub use frame_support::{
 	construct_runtime, match_type, parameter_types,
@@ -61,9 +61,6 @@ pub use frame_support::{
 	},
 	PalletId, StorageValue,
 };
-
-use codec::{Codec, Encode, EncodeLike};
-use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
 use scale_info::TypeInfo;
 use sp_runtime::AccountId32;
