@@ -25,6 +25,12 @@ pub enum FoldStrategy {
 	Chunk { number_of_elements: u32 },
 }
 
+impl FoldStrategy {
+	pub fn new_chunk(number_of_elements: u32) -> Self {
+		Self::Chunk { number_of_elements }
+	}
+}
+
 /// Block folding state, storing the intermediate/final state as well as the previously iterated
 /// key.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Encode, Decode, MaxEncodedLen, TypeInfo)]

@@ -2,7 +2,7 @@
 //! Allows to add new assets internally. User facing mutating API is provided by other pallets.
 #![cfg_attr(
 	not(test),
-	warn(
+	deny(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
@@ -11,9 +11,9 @@
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
+#![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![warn(
+#![deny(
 	bad_style,
 	bare_trait_objects,
 	const_err,
@@ -41,8 +41,10 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use composable_support::math::safe::SafeAdd;
-	use composable_traits::financial_nft::{FinancialNftProvider, NftClass};
+	use composable_support::{collections::vec::bounded::BiBoundedVec, math::safe::SafeAdd};
+	use composable_traits::financial_nft::{
+		AttributeKey, AttributeValue, FinancialNftProvider, NftClass,
+	};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
@@ -308,6 +310,16 @@ pub mod pallet {
 	}
 
 	impl<T: Config> FinancialNftProvider<AccountIdOf<T>> for Pallet<T> {
+		/// actually burns sNFT and creates new NFTs.
+		/// uses bases shared metadata and override as described by `overrides`
+		/// count `overrides` is equal to count of splits
+		fn split(
+			_instance: &Self::InstanceId,
+			_overrides: BiBoundedVec<BTreeMap<AttributeKey, AttributeValue>, 1, 16>,
+		) -> Result<BiBoundedVec<Self::InstanceId, 1, 16>, DispatchError> {
+			Err(DispatchError::Other("no implemented"))
+		}
+
 		fn mint_nft<K: Encode, V: Encode>(
 			class: &Self::ClassId,
 			who: &AccountIdOf<T>,

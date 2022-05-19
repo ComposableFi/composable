@@ -1,4 +1,5 @@
 use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
+use composable_support::collections::vec::bounded::BiBoundedVec;
 use core::fmt::Debug;
 use frame_support::{
 	dispatch::DispatchResult,
@@ -10,6 +11,12 @@ use frame_support::{
 };
 use scale_info::TypeInfo;
 use sp_runtime::{DispatchError, TokenError};
+use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
+
+// TODO: use BiBoundedVec to avoid for safety - it is easy to grow, but not easy to shrink (needs
+// migration)
+pub type AttributeKey = Vec<u8>; //TODO: len 1 to 64
+pub type AttributeValue = Vec<u8>; //TODO: len from 0 to 2048
 
 pub trait FinancialNftProvider<AccountId>: Create<AccountId> + Mutate<AccountId> {
 	/// Mint an NFT instance with initial (key, value) attribute in the given account.
@@ -30,6 +37,11 @@ pub trait FinancialNftProvider<AccountId>: Create<AccountId> + Mutate<AccountId>
 		version: &K,
 		nft_data: &V,
 	) -> Result<Self::InstanceId, DispatchError>;
+
+	fn split(
+		instance: &Self::InstanceId,
+		overrides: BiBoundedVec<BTreeMap<AttributeKey, AttributeValue>, 1, 16>,
+	) -> Result<BiBoundedVec<Self::InstanceId, 1, 16>, DispatchError>;
 }
 
 /// Default interface used to interact with financial NFTs through a NFT provider.
