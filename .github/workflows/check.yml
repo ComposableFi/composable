@@ -123,7 +123,7 @@ jobs:
         run: |
           cargo build --release -p composable --features=runtime-benchmarks
           ./target/release/composable benchmark \
-            -- --chain="${{ matrix.runtime }}" \
+            --chain="${{ matrix.runtime }}" \
             --execution=wasm \
             --wasm-execution=compiled \
             --pallet="*" \
