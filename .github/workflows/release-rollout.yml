@@ -10,6 +10,7 @@ jobs:
       - linux
       - X64
       - ansible-runner
+    if: github.event.pull_request.draft == false
     steps:
     - name: Clean up
       continue-on-error: true

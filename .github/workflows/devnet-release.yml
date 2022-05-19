@@ -5,7 +5,7 @@ on:
     branches:
       - main
   pull_request:
-    types: [labeled, synchronize, opened, reopened]
+    types: [review_requested, ready_for_review]
 
 jobs:
   deploy-devnet:
@@ -13,6 +13,7 @@ jobs:
     concurrency:
       group: deploy-devnet
       cancel-in-progress: false
+    if: github.event.pull_request.draft == false
     steps:
     - uses: actions/checkout@v2
 

@@ -4,7 +4,7 @@ on:
     branches:
       - releases
   pull_request:
-    types: [labeled, synchronize, opened, reopened]
+    types: [review_requested, ready_for_review]
 
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
@@ -17,6 +17,7 @@ jobs:
       - sre
     strategy:
       fail-fast: true
+    if: github.event.pull_request.draft == false
     steps:
       - name: Clean up
         continue-on-error: true

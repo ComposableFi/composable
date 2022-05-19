@@ -2,13 +2,14 @@ name: LabelValidator
 
 on:
   pull_request:
-     types: [opened, reopened, labeled, unlabeled, synchronize]
+     types: [review_requested, ready_for_review]
      branches: 
        - releases
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
     steps:
     - name: Checkout
       uses: actions/checkout@v2
