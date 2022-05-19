@@ -142,7 +142,7 @@ print(rolling) # time it moves to new lock
 
 ### Compounding
 
-If fNFT has staked asset as reward asset, it should be first in list of assets.
+If fNFT has staked asset as reward asset, it is subject to compounding.
 
 Reward is staked too and increases users' share to earn more reward.
 

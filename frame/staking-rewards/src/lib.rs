@@ -426,11 +426,12 @@ pub mod pallet {
 										PositionState::Expired => {
 											// TODO: https://app.clickup.com/t/2xw5fca
 										},
-										PositionState::LockedRewarding => {
+										PositionState::LockedRewarding => {			
+											// TODO: return here increased share if one of assets is same as staked								
 											let shares = nft.shares();
 											for (reward_asset, pending_reward) in
 												nft.pending_rewards.clone().into_iter()
-											{
+											{												
 												let total_shares =
 													Self::total_shares((nft.asset, reward_asset));
 												let reward = EpochRewards::<T>::get(
@@ -443,6 +444,7 @@ pub mod pallet {
 													reward,
 													total_shares,
 												)?;
+												// TODO: if adding asset which is staked, increase total
 												nft.pending_rewards
 													.try_insert(
 														reward_asset,
