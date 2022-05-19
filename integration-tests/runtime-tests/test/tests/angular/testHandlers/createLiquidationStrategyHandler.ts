@@ -1,8 +1,11 @@
 import {sendAndWaitForSuccess} from "@composable/utils/polkadotjs";
+import { KeyringPair } from "@polkadot/keyring/types";
+import { ApiPromise } from "@polkadot/api";
 
 
 export async function createLiquidationStrategyHandler(
-  sudoKey,
+  api: ApiPromise,
+  sudoKey: KeyringPair,
   configuration
 ) {
   return await sendAndWaitForSuccess(

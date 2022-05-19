@@ -1,8 +1,10 @@
 import {sendAndWaitForSuccess, waitForBlocks} from "@composable/utils/polkadotjs";
+import { ApiPromise } from "@polkadot/api";
 
 
 export async function handleLendingVaultSetup(
-  vaultAssetId,
+  api: ApiPromise,
+  vaultAssetId: number,
   reserved,
   vaultManagerWallet,
   strategies,

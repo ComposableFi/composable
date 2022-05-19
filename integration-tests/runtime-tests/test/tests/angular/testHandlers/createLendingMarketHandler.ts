@@ -1,10 +1,13 @@
 import {sendAndWaitForSuccess} from "@composable/utils/polkadotjs";
+import { KeyringPair } from "@polkadot/keyring/types";
+import { ApiPromise } from "@polkadot/api";
 
-
+// ToDo: Add types!
 export async function createLendingMarketHandler(
-  wallet,
+  api: ApiPromise,
+  wallet:KeyringPair,
   collateralFactor,
-  underCollaterializedWarnPercent,
+  underCollateralizedWarnPercent,
   liquidators,
   interestRateModel,
   currencyPair,
@@ -13,7 +16,7 @@ export async function createLendingMarketHandler(
   const input = api.createType('ComposableTraitsLendingCreateInput', {
     updatable: api.createType('ComposableTraitsLendingUpdateInput', {
       collateralFactor: collateralFactor,
-      underCollaterializedWarnPercent: underCollaterializedWarnPercent,
+      underCollaterializedWarnPercent: underCollateralizedWarnPercent,
       liquidators: liquidators,
       interestRateModel: interestRateModel,
       currencyPair: currencyPair
@@ -26,7 +29,6 @@ export async function createLendingMarketHandler(
     wallet,
     api.events.treasury.Deposit.is,
     api.tx.lending.createMarket(input),
-    false,
-    true
+    false
   );
 }
