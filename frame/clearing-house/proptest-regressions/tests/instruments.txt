@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc d25bd3df86b5ccbffcec99b4eca32ef80ee285d4ac9a097487ca6e7669c88de8 # shrinks to (market, position) = (Market { vamm_id: 0, asset_id: 0, margin_ratio_initial: FixedI128(0.071480872327345456), margin_ratio_maintenance: FixedI128(0.068199279702715096), minimum_trade_size: FixedI128(0.000000000000000000), net_base_asset_amount: FixedI128(0.000000000000000000), cum_funding_rate: FixedI128(0.000000000000000000), fee_pool: 0, funding_rate_ts: 0, funding_frequency: 919440919, funding_period: 3148165706656, taker_fee: 10 }, Position { market_id: 2393935106918460834, base_asset_amount: FixedI128(-850575365.425153901960105770), quote_asset_notional_amount: FixedI128(-414888223.561940863508746641), last_cum_funding: FixedI128(559600387.520457754423841868) })
+cc 882d9c640cd1e5058630cb24f580b00860580cbc48f7ed1845bdf80cc71e635d # shrinks to (market, position) = (Market { vamm_id: 0, asset_id: 0, margin_ratio_initial: FixedI128(0.100000000000000000), margin_ratio_maintenance: FixedI128(0.062500000000000000), minimum_trade_size: FixedI128(0.000100000000000000), net_base_asset_amount: FixedI128(0.000000000000000000), cum_funding_rate: FixedI128(-0.100000000000000000), fee_pool: 0, funding_rate_ts: 0, funding_frequency: 3600, funding_period: 3600, taker_fee: 0 }, Position { market_id: 0, base_asset_amount: FixedI128(10.000000000000000000), quote_asset_notional_amount: FixedI128(100.000000000000000000), last_cum_funding: FixedI128(0.000000000000000000) })

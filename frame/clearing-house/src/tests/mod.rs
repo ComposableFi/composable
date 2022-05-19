@@ -1,15 +1,18 @@
 // Allow use of .unwrap() in tests and unused Results from function calls
 #![allow(clippy::disallowed_methods, unused_must_use)]
 
-use crate::mock::{
-	self as mock,
-	accounts::{AccountId, ALICE},
-	assets::{AssetId, DOT, USDC},
-	runtime::{
-		Balance, ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime,
-		System as SystemPallet, TestPallet, Timestamp as TimestampPallet, Vamm as VammPallet,
-		VammId,
+use crate::{
+	mock::{
+		self as mock,
+		accounts::{AccountId, ALICE},
+		assets::{AssetId, DOT, USDC},
+		runtime::{
+			Balance, ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime,
+			System as SystemPallet, TestPallet, Timestamp as TimestampPallet, Vamm as VammPallet,
+			VammId,
+		},
 	},
+	Markets,
 };
 use composable_traits::{
 	clearing_house::{ClearingHouse, Instruments},
@@ -30,6 +33,9 @@ pub mod update_funding;
 // ----------------------------------------------------------------------------------------------------
 //                                             Setup
 // ----------------------------------------------------------------------------------------------------
+
+pub const BALANCE_LOWER_BOUND: Balance = FixedU128::DIV / 10_u128.pow(12); // 1 / (1 trillion)
+pub const BALANCE_UPPER_BOUND: Balance = 10_u128.pow(12) * FixedU128::DIV; // 1 trillion
 
 type Market = <TestPallet as Instruments>::Market;
 type MarketConfig = <TestPallet as ClearingHouse>::MarketConfig;
@@ -96,9 +102,17 @@ fn as_inner<T: Into<FixedI128>>(value: T) -> i128 {
 	f.into_inner()
 }
 
-fn as_uinner<T: Into<FixedU128>>(value: T) -> u128 {
-	let f: FixedU128 = value.into();
-	f.into_inner()
+pub fn set_fee_pool_depth(market_id: &MarketId, depth: Balance) {
+	fn set_depth(market: &mut Option<Market>, d: Balance) -> Result<(), ()> {
+		if let Some(m) = market {
+			m.fee_pool = d;
+			Ok(())
+		} else {
+			Err(())
+		}
+	}
+
+	Markets::<Runtime>::try_mutate(market_id, |m| set_depth(m, depth)).unwrap();
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -146,6 +160,24 @@ fn with_trading_context<R>(
 
 	with_market_context(ext_builder, config, |market_id| {
 		TestPallet::add_margin(Origin::signed(ALICE), USDC, margin);
+
+		execute(market_id)
+	})
+}
+
+fn traders_in_one_market_context<R>(
+	config: MarketConfig,
+	margins: Vec<(AccountId, Balance)>,
+	execute: impl FnOnce(MarketId) -> R,
+) -> R {
+	let balances: Vec<(AccountId, AssetId, Balance)> =
+		margins.iter().map(|&(a, m)| (a, USDC, m)).collect();
+	let ext_builder = ExtBuilder { balances, ..Default::default() };
+
+	with_market_context(ext_builder, config, |market_id| {
+		for (acc, margin) in margins {
+			TestPallet::add_margin(Origin::signed(acc), USDC, margin);
+		}
 
 		execute(market_id)
 	})
@@ -259,9 +291,7 @@ prop_compose! {
 
 prop_compose! {
 	// Anywhere from 1 / (1 trillion) to 1 trillion
-	fn any_balance()(
-		balance in as_uinner((1, 10_u128.pow(12)))..=as_uinner(10_u128.pow(12))
-	) -> Balance {
+	fn any_balance()(balance in BALANCE_LOWER_BOUND..=BALANCE_UPPER_BOUND) -> Balance {
 		balance
 	}
 }
