@@ -1,8 +1,8 @@
 #![cfg_attr(
 	not(any(test, feature = "runtime-benchmarks")),
 	deny(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -31,7 +31,9 @@
 	while_true,
 	trivial_casts,
 	trivial_numeric_casts,
-	unused_extern_crates
+	unused_extern_crates,
+	dead_code,
+	unused_must_use
 )]
 
 /// this must be singleton
@@ -44,7 +46,7 @@ pub fn env_logger_init() {
 mod kusama_test_net;
 
 #[cfg(test)]
-mod xcm_tests;
+mod low_level_xcm_orml_tests;
 
 #[cfg(test)]
 mod cross_chain_transfer;
@@ -53,8 +55,13 @@ mod cross_chain_transfer;
 mod runtime_tests;
 
 #[cfg(test)]
+mod assets_integration;
+#[cfg(test)]
 mod helpers;
 pub mod prelude;
 mod relaychain;
 #[cfg(test)]
 mod transact_calls;
+
+#[cfg(test)]
+mod statemine;

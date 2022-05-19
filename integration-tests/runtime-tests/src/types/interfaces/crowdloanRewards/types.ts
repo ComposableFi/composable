@@ -1,6 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
+import type { ComposableTraitsDefiCurrencyPairCurrencyId, CurrencyId } from '@composable/types/interfaces/common';
 import type { Enum, Null, Struct, bool, u128, u32 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { EthereumAccountId } from '@polkadot/types/interfaces/eth';
@@ -10,6 +11,12 @@ import type { AccountId32, Balance, Permill } from '@polkadot/types/interfaces/r
 
 /** @name CommonMosaicRemoteAssetId */
 export interface CommonMosaicRemoteAssetId extends Null {}
+
+/** @name ComposableSupportEthereumAddress */
+export interface ComposableSupportEthereumAddress extends Null {}
+
+/** @name ComposableTraitsAssetsBasicAssetMetadata */
+export interface ComposableTraitsAssetsBasicAssetMetadata extends Null {}
 
 /** @name ComposableTraitsAssetsXcmAssetLocation */
 export interface ComposableTraitsAssetsXcmAssetLocation extends Null {}
@@ -27,7 +34,7 @@ export interface ComposableTraitsBondedFinanceBondDuration extends Struct {
 /** @name ComposableTraitsBondedFinanceBondOffer */
 export interface ComposableTraitsBondedFinanceBondOffer extends Struct {
   readonly beneficiary: AccountId32;
-  readonly asset: u128;
+  readonly asset: CurrencyId;
   readonly bondPrice: u128;
   readonly nbOfBonds: u128;
   readonly maturity: ComposableTraitsBondedFinanceBondDuration;
@@ -37,19 +44,13 @@ export interface ComposableTraitsBondedFinanceBondOffer extends Struct {
 
 /** @name ComposableTraitsBondedFinanceBondOfferReward */
 export interface ComposableTraitsBondedFinanceBondOfferReward extends Struct {
-  readonly asset: u128;
+  readonly asset: CurrencyId;
   readonly amount: u128;
   readonly maturity: u32;
 }
 
 /** @name ComposableTraitsCallFilterCallFilterEntry */
 export interface ComposableTraitsCallFilterCallFilterEntry extends Null {}
-
-/** @name ComposableTraitsDefiCurrencyPair */
-export interface ComposableTraitsDefiCurrencyPair extends Struct {
-  readonly base: u128;
-  readonly quote: u128;
-}
 
 /** @name ComposableTraitsDefiSell */
 export interface ComposableTraitsDefiSell extends Null {}
@@ -63,14 +64,14 @@ export interface ComposableTraitsDexConsantProductPoolInfo extends Null {}
 /** @name ComposableTraitsDexConstantProductPoolInfo */
 export interface ComposableTraitsDexConstantProductPoolInfo extends Struct {
   readonly owner: AccountId32;
-  readonly pair: {
-    readonly base: u128;
-    readonly quote: u128;
-  } & Struct;
+  readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
   readonly lpToken: u128;
   readonly fee: Permill;
   readonly ownerFee: Permill;
 }
+
+/** @name ComposableTraitsDexDexRoute */
+export interface ComposableTraitsDexDexRoute extends Null {}
 
 /** @name ComposableTraitsDexStableSwapPoolInfo */
 export interface ComposableTraitsDexStableSwapPoolInfo extends Null {}
@@ -83,6 +84,9 @@ export interface ComposableTraitsLendingCreateInput extends Null {}
 
 /** @name ComposableTraitsLendingMarketConfig */
 export interface ComposableTraitsLendingMarketConfig extends Null {}
+
+/** @name ComposableTraitsLendingRepayStrategy */
+export interface ComposableTraitsLendingRepayStrategy extends Null {}
 
 /** @name ComposableTraitsLendingUpdateInput */
 export interface ComposableTraitsLendingUpdateInput extends Null {}
@@ -98,6 +102,12 @@ export interface ComposableTraitsVaultVaultConfig extends Null {}
 
 /** @name ComposableTraitsVestingVestingSchedule */
 export interface ComposableTraitsVestingVestingSchedule extends Null {}
+
+/** @name ComposableTraitsXcmAssetsForeignMetadata */
+export interface ComposableTraitsXcmAssetsForeignMetadata extends Null {}
+
+/** @name ComposableTraitsXcmAssetsXcmAssetLocation */
+export interface ComposableTraitsXcmAssetsXcmAssetLocation extends Null {}
 
 /** @name CumulusPalletDmpQueueConfigData */
 export interface CumulusPalletDmpQueueConfigData extends Null {}
@@ -251,7 +261,15 @@ export interface PalletMosaicNetworkInfo extends Struct {
 }
 
 /** @name PalletMosaicRelayerStaleRelayer */
-export interface PalletMosaicRelayerStaleRelayer extends Null {}
+export interface PalletMosaicRelayerStaleRelayer extends Struct {
+  readonly relayer: {
+    readonly current: AccountId32;
+    readonly next: {
+    readonly ttl: u32;
+    readonly account: AccountId32;
+  } & Struct;
+  } & Struct;
+}
 
 /** @name PalletOracleAssetInfo */
 export interface PalletOracleAssetInfo extends Null {}
@@ -300,6 +318,9 @@ export interface PolkadotPrimitivesV1PersistedValidationData extends PersistedVa
 
 /** @name SpConsensusAuraSr25519AppSr25519Public */
 export interface SpConsensusAuraSr25519AppSr25519Public extends Null {}
+
+/** @name SpTrieStorageProof */
+export interface SpTrieStorageProof extends Null {}
 
 /** @name XcmVersionedMultiAsset */
 export interface XcmVersionedMultiAsset extends Null {}

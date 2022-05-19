@@ -12,7 +12,7 @@ impl Get<u32> for MaxRanges {
 	fn get() -> u32 {
 		const MAX: u32 = 256;
 		// BoundedVec will panic if this variant isn't upheld.
-		#[allow(clippy::disallowed_method, clippy::unwrap_used)]
+		#[allow(clippy::disallowed_methods, clippy::unwrap_used)]
 		{
 			debug_assert!(isize::try_from(MAX).unwrap() < isize::MAX);
 		}
@@ -37,7 +37,7 @@ where
 	pub fn new() -> Self {
 		let mut ranges = Self { ranges: BoundedVec::default() };
 
-		#[allow(clippy::disallowed_method)]
+		#[allow(clippy::disallowed_methods)]
 		if Self::bounds() >= 3 {
 			ranges.add(Range::lp_tokens()).expect("capacitiy is sufficient, qed");
 			ranges.add(Range::tokens()).expect("capacitiy is sufficient, qed");

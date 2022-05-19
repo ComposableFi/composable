@@ -2,15 +2,15 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::too_many_arguments)]
 pub use pallet::*;
@@ -23,7 +23,7 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-#[cfg(feature = "runtime-benchmarks")]
+#[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
 pub mod weights;
 
@@ -32,10 +32,16 @@ pub mod pallet {
 	use crate::validation::{ValidBlockInterval, ValidMaxAnswer, ValidMinAnswers, ValidThreshhold};
 	pub use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
-	use composable_support::validation::Validated;
+	use composable_support::{
+		abstractions::{
+			nonce::{Increment, Nonce},
+			utils::{increment::SafeIncrement, start_at::ZeroInit},
+		},
+		math::safe::SafeDiv,
+		validation::Validated,
+	};
 	use composable_traits::{
 		currency::LocalAssets,
-		math::SafeDiv,
 		oracle::{Oracle, Price},
 	};
 	use core::ops::{Div, Mul};
@@ -43,7 +49,7 @@ pub mod pallet {
 		dispatch::{DispatchResult, DispatchResultWithPostInfo},
 		pallet_prelude::*,
 		traits::{
-			Currency, EnsureOrigin,
+			BalanceStatus, Currency, EnsureOrigin,
 			ExistenceRequirement::{AllowDeath, KeepAlive},
 			ReservableCurrency,
 		},
@@ -147,6 +153,8 @@ pub mod pallet {
 		type MaxAnswerBound: Get<u32>;
 		/// Upper bound for total assets available for the oracle
 		type MaxAssetsCount: Get<u32>;
+		/// Slashed stakes are transfered to treasury.
+		type TreasuryAccount: Get<Self::AccountId>;
 
 		#[pallet::constant]
 		type MaxHistory: Get<u32>;
@@ -159,7 +167,7 @@ pub mod pallet {
 		type LocalAssets: LocalAssets<Self::AssetId>;
 	}
 
-	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo)]
+	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo, Clone)]
 	pub struct Withdraw<Balance, BlockNumber> {
 		pub stake: Balance,
 		pub unlock_block: BlockNumber,
@@ -191,9 +199,10 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn assets_count)]
-	#[allow(clippy::disallowed_type)] // Default asset count of 0 is valid in this context
+	#[allow(clippy::disallowed_types)] // Default asset count of 0 is valid in this context
 	/// Total amount of assets
-	pub type AssetsCount<T: Config> = StorageValue<_, u32, ValueQuery>;
+	pub type AssetsCount<T: Config> =
+		StorageValue<_, u32, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn signer_to_controller)]
@@ -230,7 +239,7 @@ pub mod pallet {
 	// REVIEW: (benluelo) I think there's probably a better way to use this with an OptionQuery,
 	// instead of checking against defaults.
 	/// Price for an asset and blocknumber asset was updated at
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)]
 	pub type Prices<T: Config> = StorageMap<
 		_,
 		Blake2_128Concat,
@@ -241,7 +250,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn price_history)]
-	#[allow(clippy::disallowed_type)] // default history for an asset is an empty list, which is valid in this context.
+	#[allow(clippy::disallowed_types)] // default history for an asset is an empty list, which is valid in this context.
 	/// Price for an asset and blocknumber asset was updated at
 	pub type PriceHistory<T: Config> = StorageMap<
 		_,
@@ -253,7 +262,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn pre_prices)]
-	#[allow(clippy::disallowed_type)] // default history for an asset is an empty list, which is valid in this context.
+	#[allow(clippy::disallowed_types)] // default history for an asset is an empty list, which is valid in this context.
 	/// Temporary prices before aggregated
 	pub type PrePrices<T: Config> = StorageMap<
 		_,
@@ -265,9 +274,6 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn asset_info)]
-	// FIXME: Temporary fix to get CI to pass, separate PRs will be made per pallet to refactor to
-	// use OptionQuery instead
-	#[allow(clippy::disallowed_type)]
 	/// Information about asset, including precision threshold and max/min answers
 	pub type AssetsInfo<T: Config> = StorageMap<
 		_,
@@ -488,7 +494,7 @@ pub mod pallet {
 
 			let current_asset_info = Self::asset_info(asset_id);
 			if current_asset_info.is_none() {
-				AssetsCount::<T>::mutate(|a| *a += 1);
+				AssetsCount::<T>::increment()?;
 			}
 
 			AssetsInfo::<T>::insert(asset_id, asset_info);
@@ -555,6 +561,7 @@ pub mod pallet {
 			let block = frame_system::Pallet::<T>::block_number();
 			let unlock_block = block + T::StakeLock::get();
 			let stake = Self::oracle_stake(signer.clone()).ok_or(Error::<T>::NoStake)?;
+			ensure!(stake > BalanceOf::<T>::zero(), Error::<T>::NoStake);
 			let withdrawal = Withdraw { stake, unlock_block };
 			OracleStake::<T>::remove(&signer);
 			DeclaredWithdraws::<T>::insert(signer.clone(), withdrawal);
@@ -607,8 +614,9 @@ pub mod pallet {
 					),
 				Error::<T>::NotEnoughStake
 			);
-
 			let asset_info = Self::asset_info(asset_id).ok_or(Error::<T>::InvalidAssetId)?;
+			ensure!(author_stake >= asset_info.slash, Error::<T>::NotEnoughStake);
+
 			PrePrices::<T>::try_mutate(asset_id, |current_prices| -> Result<(), DispatchError> {
 				// There can convert current_prices.len() to u32 safely
 				// because current_prices.len() limited by u32
@@ -688,11 +696,25 @@ pub mod pallet {
 				let min_accuracy = asset_info.threshold;
 				if accuracy < min_accuracy {
 					let slash_amount = asset_info.slash;
-					let try_slash = T::Currency::can_slash(&answer.who, slash_amount);
-					if !try_slash {
-						log::warn!("Failed to slash {:?}", answer.who);
+					let new_amount_staked = Self::oracle_stake(answer.who.clone())
+						.unwrap_or_else(|| 0_u32.into())
+						.saturating_sub(slash_amount);
+					OracleStake::<T>::insert(&answer.who, new_amount_staked);
+					let result = T::Currency::repatriate_reserved(
+						&answer.who,
+						&T::TreasuryAccount::get(),
+						slash_amount,
+						BalanceStatus::Free,
+					);
+					match result {
+						Ok(remaning_val) =>
+							if remaning_val > BalanceOf::<T>::zero() {
+								log::warn!("Only slashed {:?}", slash_amount - remaning_val);
+							},
+						Err(e) => {
+							log::warn!("Failed to slash {:?} due to {:?}", answer.who, e);
+						},
 					}
-					T::Currency::slash(&answer.who, slash_amount);
 					Self::deposit_event(Event::UserSlashed(
 						answer.who.clone(),
 						asset_id,
@@ -782,7 +804,7 @@ pub mod pallet {
 			// because pre_prices.len() limited by u32
 			// (type of AssetsInfo::<T>::get(asset_id).max_answers).
 			if pre_prices.len() as u32 >= asset_info.min_answers {
-				if let Some(price) = Self::get_median_price(&pre_prices) {
+				if let Some(price) = Self::calculate_price(&pre_prices, &asset_info) {
 					Prices::<T>::insert(asset_id, Price { price, block });
 					PriceHistory::<T>::try_mutate(asset_id, |prices| -> DispatchResult {
 						if prices.len() as u32 >= T::MaxHistory::get() {
@@ -861,6 +883,33 @@ pub mod pallet {
 				#[allow(clippy::indexing_slicing)] // mid is less than the len (len/2)
 				Some(numbers[mid])
 			}
+		}
+
+		pub fn calculate_price(
+			prices: &[PrePrice<T::PriceValue, T::BlockNumber, T::AccountId>],
+			asset_info: &AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
+		) -> Option<T::PriceValue> {
+			let median_price = Self::get_median_price(prices)?;
+			let mut sum_of_price = T::PriceValue::zero();
+			let mut number_of_prices = 0_u32;
+			for answer in prices {
+				let accuracy: Percent = if answer.price < median_price {
+					PerThing::from_rational(answer.price, median_price)
+				} else {
+					let adjusted_number = median_price.saturating_sub(answer.price - median_price);
+					PerThing::from_rational(adjusted_number, median_price)
+				};
+				let min_accuracy = asset_info.threshold;
+				// consider all prices which are with in threshold of median_price
+				if accuracy >= min_accuracy {
+					sum_of_price += answer.price;
+					number_of_prices += 1;
+				}
+			}
+			if number_of_prices == 0 {
+				return None
+			}
+			Some(sum_of_price / number_of_prices.into())
 		}
 
 		pub fn check_requests() {

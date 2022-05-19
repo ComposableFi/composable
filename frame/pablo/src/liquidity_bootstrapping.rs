@@ -3,8 +3,11 @@ use crate::{
 	PoolConfiguration, PoolCount, Pools,
 };
 use composable_maths::dex::constant_product::{compute_out_given_in, compute_spot_price};
-use composable_support::validation::{Validate, Validated};
-use composable_traits::{currency::LocalAssets, defi::CurrencyPair, dex::SaleState, math::SafeAdd};
+use composable_support::{
+	math::safe::SafeAdd,
+	validation::{Validate, Validated},
+};
+use composable_traits::{currency::LocalAssets, defi::CurrencyPair, dex::SaleState};
 use frame_support::{
 	pallet_prelude::*,
 	traits::fungibles::{Inspect, Transfer},
@@ -163,7 +166,7 @@ impl<T: Config> LiquidityBootstrapping<T> {
 		quote_amount: T::Balance,
 		_: T::Balance,
 		keep_alive: bool,
-	) -> Result<T::Balance, DispatchError> {
+	) -> Result<(T::Balance, T::Balance, T::Balance), DispatchError> {
 		let current_block = frame_system::Pallet::<T>::current_block_number();
 		Self::ensure_sale_state(&pool, current_block, SaleState::NotStarted)?;
 
@@ -175,7 +178,7 @@ impl<T: Config> LiquidityBootstrapping<T> {
 		T::Assets::transfer(pool.pair.base, who, &pool_account, base_amount, keep_alive)?;
 		T::Assets::transfer(pool.pair.quote, who, &pool_account, quote_amount, keep_alive)?;
 
-		Ok(T::Balance::zero())
+		Ok((base_amount, quote_amount, T::Balance::zero()))
 	}
 
 	#[transactional]

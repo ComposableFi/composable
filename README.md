@@ -11,6 +11,13 @@
 
 Picasso is our custom built Kusama parachain, based on the substrate framework.
 
+## Documentation
+
+To learn more about our ecosystem, vision, and product specifics - visit our 
+[mdbook](https://dali.devnets.composablefinance.ninja).
+
+You can also find our cargo docs [here](https://dali.devnets.composablefinance.ninja/doc).
+
 ## Install
 
 For linux, FreeBSD, OpenBSD and macOS:
@@ -45,7 +52,6 @@ Picasso ships with multiple custom made pallets such as:
 [Apollo](frame/oracle/README.md)
 
 and several others you can find in the frame folder.
-
 
 
 Read more specific information in [our docs folder](docs/).

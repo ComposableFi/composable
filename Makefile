@@ -22,6 +22,13 @@ build:
 clean:
 	@cargo clean
 
+.PHONY: build-release
+build-release:
+	cargo build --locked --features with-all-runtime --profile production --workspace --exclude runtime-integration-tests --exclude e2e-tests --exclude test-service
+
+bench:
+	./scripts/benchmark.sh
+
 test:
 	@cargo test $(TESTS) --offline --lib -- --color=always --nocapture
 
@@ -34,8 +41,7 @@ style-check:
 
 style:
 	@rustup component add rustfmt 2> /dev/null
-	cargo install taplo-cli 2> /dev/null
-	cargo +nightly-2021-11-08 fmt --all && taplo fmt
+	./scripts/style.sh
 
 lint:
 	@rustup component add clippy 2> /dev/null
@@ -46,6 +52,14 @@ udeps:
 
 dev:
 	cargo run
+
+# run as `make open=y run-book` to open as well
+run-book:
+	bash -c "(trap 'kill 0' SIGINT; cargo run -p extrinsics-docs-scraper --release -- --config-file-path=scraper.toml -vvv --watch & mdbook serve --hostname 0.0.0.0 book/ $(if $(filter y,${open}),'--open'))"
+
+build-book:
+	cargo run -p extrinsics-docs-scraper --release -- --config-file-path=scraper.toml
+	mdbook build book/
 
 .PHONY: version
 version:
@@ -96,11 +110,19 @@ push-mmr-polkadot:
 
 containerize-ci-linux:
 	@docker build -f docker/ci-linux.dockerfile \
-		-t ${REPO}/ci-linux:production  \
+		-t ${REPO}/ci-linux:2022-04-18  \
 		.
 
 push-ci-linux:
-	@docker push ${REPO}/ci-linux:production
+	@docker push ${REPO}/ci-linux:2022-04-18
+
+containerize-base-ci-linux:
+	@docker build -f docker/base-ci-linux.dockerfile \
+		-t ${REPO}/base-ci-linux:1.60.0  \
+		.
+
+push-base-ci-linux:
+	@docker push ${REPO}/base-ci-linux:1.60.0
 
 stop:
 	@docker-compose down
@@ -116,7 +138,7 @@ endif
 
 .PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release push-release
 .PHONY: containerize-composable-sandbox push-composable-sandbox containerize-mmr-polkadot push-mmr-polkadot
-.PHONY: containerize-ci-linux push-ci-linux
+.PHONY: containerize-ci-linux push-ci-linux containerize-base-ci-linux push-base-ci-linux
 
 #----------------------------------------------------------------------
 # UTILITY FUNCTIONS TO remove
@@ -134,7 +156,6 @@ define print_help_text
 "Here are the commands to help setting up composable in any environment: \n\
 	--- Dev --- \n\
 	make help                    : Display this help message. \n\
-	make vendor                  : Download dependencies into the 'vendor' folder. \n\
 	make containerize            : Bundle the compiled binary in a lean production-ready docker image. \n\
 	make install                 : Use docker-compose to startup composable alongside other needed services
 	make stop				     : Stop all current running containers

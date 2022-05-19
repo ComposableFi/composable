@@ -2,80 +2,50 @@
 //! positive side effects
 
 use super::*;
-use crate::{self as pallet_assets_registry, Pallet as AssetsRegistry};
-use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
-use frame_system::{EventRecord, RawOrigin};
+use crate::{self as pallet_assets_registry};
+
+#[allow(unused_imports)]
+use crate::Pallet as AssetsRegistry;
+
+use codec::{Decode, Encode};
+use composable_traits::{defi::Ratio, xcm::assets::XcmAssetLocation};
+use frame_benchmarking::{benchmarks, impl_benchmark_test_suite};
+use frame_system::RawOrigin;
 use sp_std::prelude::*;
-
-const SEED: u32 = 0;
-
-#[allow(dead_code)]
-pub fn assert_last_event<T: pallet_assets_registry::Config>(generic_event: <T as Config>::Event) {
-	let events = frame_system::Pallet::<T>::events();
-	let system_event: <T as frame_system::Config>::Event = generic_event.into();
-	// compare to the last event record
-	let EventRecord { event, .. } = &events[events.len() - 1];
-	assert_eq!(event, &system_event);
-}
 
 benchmarks! {
 	where_clause {
 		where
-			T: pallet_assets_registry::Config + frame_system::Config
+			T: pallet_assets_registry::Config + frame_system::Config,
+			<T as pallet_assets_registry::Config>::Balance : From<u64>,
 	}
 
-	set_local_admin {
-		let local_admin: T::AccountId = account("local_admin", 0, SEED);
-	} : _(RawOrigin::Root, local_admin.clone())
-	verify {
-		assert_last_event::<T>(Event::LocalAdminUpdated(local_admin).into())
-	}
+	register_asset {
+		let location = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..]).unwrap();
+		let ed = 42_u64.into();
+		let ratio = Ratio::from_inner(123);
+		let decimals = 3;
 
-	set_foreign_admin {
-		let foreign_admin: T::AccountId = account("foreign_admin", 0, SEED);
-	} : _(RawOrigin::Root, foreign_admin.clone())
-	verify {
-		assert_last_event::<T>(Event::ForeignAdminUpdated(foreign_admin).into())
-	}
+	}: _(RawOrigin::Root, location, ed, Some(ratio), Some(decimals))
 
-	approve_assets_mapping_candidate {
-		let root = RawOrigin::Root.into();
-		let local_admin: T::AccountId = account("local_admin", 0, SEED);
-		let (local_asset_id, foreign_asset_id, location, decimals): (T::LocalAssetId, T::ForeignAssetId, T::Location, u8) =
-			(1.into(), 100.into(), Default::default(), 12);
-		AssetsRegistry::<T>::set_local_admin(root, local_admin.clone()).expect("Could not set local admin");
-	}: _(RawOrigin::Signed(local_admin), local_asset_id, foreign_asset_id, location, decimals)
-	verify {
-		assert_last_event::<T>(Event::AssetsMappingCandidateUpdated { local_asset_id, foreign_asset_id }.into())
-	}
+	update_asset {
+		let location = T::ForeignAssetId::decode(&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..]).unwrap();
+		let ed = 42_u64.into();
+		let ratio = Ratio::from_inner(123);
+		let decimals = 3;
 
-	set_metadata {
-		let root: <T as frame_system::Config>::Origin = RawOrigin::Root.into();
-		let local_admin: T::AccountId = account("local_admin", 0, SEED);
-		let foreign_admin: T::AccountId = account("foreign_admin", 0, SEED);
-		let (local_asset_id, foreign_asset_id, location, decimals): (T::LocalAssetId, T::ForeignAssetId, T::Location, u8) =
-			(1.into(), 100.into(), Default::default(), 12);
-		let foreign_metadata = ForeignMetadata { decimals };
-		AssetsRegistry::<T>::set_local_admin(root.clone(), local_admin.clone()).expect("Could not set local admin");
-		AssetsRegistry::<T>::set_foreign_admin(root, foreign_admin.clone()).expect("Could not set foreign admin");
-		AssetsRegistry::<T>::approve_assets_mapping_candidate(
-			RawOrigin::Signed(local_admin.clone()).into(),
-			local_asset_id,
-			foreign_asset_id,
-			location.clone(),
-			decimals
-		).expect("Could not approve assets mapping candidate");
-		AssetsRegistry::<T>::approve_assets_mapping_candidate(
-			RawOrigin::Signed(foreign_admin).into(),
-			local_asset_id,
-			foreign_asset_id,
-			location,
-			decimals
-		).expect("Could not approve assets mapping candidate");
-	}: _(RawOrigin::Signed(local_admin), local_asset_id, foreign_metadata)
-	verify {
-		assert_last_event::<T>(Event::AssetMetadataUpdated(local_asset_id).into())
-	}
+		AssetsRegistry::<T>::register_asset(RawOrigin::Root.into(), location.clone(), ed, Some(ratio), Some(decimals)).unwrap();
+
+		let local_asset_id = AssetsRegistry::<T>::from_foreign_asset(location.clone()).unwrap();
+
+	}: _(RawOrigin::Root, local_asset_id, location, Some(Ratio::from_inner(123)), Some(3))
+
+	set_min_fee {
+		let target_parachain_id = 100u32.into();
+		let foreign_asset_id = Default::default();
+		let balance = 100_500.into();
+
+	}: _(RawOrigin::Root, target_parachain_id, foreign_asset_id, Some(balance))
 }
 
-impl_benchmark_test_suite!(AssetsRegistry, crate::mock::new_test_ext(), crate::mock::Test);
+impl_benchmark_test_suite!(AssetsRegistry, crate::runtime::new_test_ext(), crate::runtime::Runtime);

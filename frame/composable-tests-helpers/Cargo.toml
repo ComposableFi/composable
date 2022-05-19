@@ -9,21 +9,32 @@ version = "0.0.1"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-scale-info = { version = "1.0", default-features = false, features = [
+composable-support = { default-features = false, path = "../composable-support" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
-serde = { version = "1", optional = true }
-sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-
+serde = { version = "1.0.136", optional = true }
+sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 
 [dependencies.codec]
 default-features = false
 features = ["derive"]
 package = "parity-scale-codec"
-version = "2.0.0"
+version = "3.0.0"
 
 [features]
 default = ["std"]
-std = ["serde", "codec/std", "sp-runtime/std", "scale-info/std"]
+std = [
+  "serde",
+  "codec/std",
+  "sp-runtime/std",
+  "scale-info/std",
+  "frame-support/std",
+  "frame-system/std",
+  "composable-support/std",
+]

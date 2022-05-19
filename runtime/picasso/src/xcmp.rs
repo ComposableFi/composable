@@ -3,11 +3,11 @@
 #![allow(unused_imports)] // allow until v2 xcm released (instead creating 2 runtimes)
 use super::*; // recursive dependency onto runtime
 use codec::{Decode, Encode};
-use common::xcmp::*;
+use common::{xcmp::*, PriceConverter};
 use composable_traits::{
-	assets::{RemoteAssetRegistry, XcmAssetLocation},
 	defi::Ratio,
 	oracle::MinimalOracle,
+	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
 };
 use cumulus_primitives_core::{IsSystem, ParaId};
 use frame_support::{
@@ -22,7 +22,11 @@ use frame_support::{
 	},
 	PalletId, RuntimeDebug,
 };
-use orml_traits::{location::Reserve, parameter_type_with_key, MultiCurrency};
+use orml_traits::{
+	location::{AbsoluteReserveProvider, RelativeReserveProvider, Reserve},
+	parameter_type_with_key, MultiCurrency,
+};
+
 use orml_xcm_support::{
 	DepositToAlternative, IsNativeConcrete, MultiCurrencyAdapter, MultiNativeAsset, OnDepositFail,
 };
@@ -150,44 +154,25 @@ pub type LocalAssetTransactor = MultiCurrencyAdapter<
 	DepositToAlternative<TreasuryAccount, Tokens, CurrencyId, AccountId, Balance>,
 >;
 
-pub struct PriceConverter;
-
-impl MinimalOracle for PriceConverter {
-	type AssetId = CurrencyId;
-
-	type Balance = Balance;
-
-	fn get_price_inverse(
-		asset_id: Self::AssetId,
-		amount: Self::Balance,
-	) -> Result<Self::Balance, sp_runtime::DispatchError> {
-		match asset_id {
-			CurrencyId::PICA => Ok(amount),
-			CurrencyId::KSM => Ok(amount / 10),
-			CurrencyId::kUSD => Ok(amount / 10),
-			_ => Err(DispatchError::Other("cannot pay with given weight")),
-		}
-	}
-}
 pub struct RelayReserveFromParachain;
 impl FilterAssetLocation for RelayReserveFromParachain {
 	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
 		// NOTE: In Acala there is not such thing
 		// if asset is KSM and send from some parachain then allow for  that
-		asset.reserve() == Some(MultiLocation::parent()) &&
+		AbsoluteReserveProvider::reserve(asset) == Some(MultiLocation::parent()) &&
 			matches!(origin, MultiLocation { parents: 1, interior: X1(Parachain(_)) })
 	}
 }
 
 type IsReserveAssetLocationFilter =
-	(DebugMultiNativeAsset, MultiNativeAsset, RelayReserveFromParachain);
+	(DebugMultiNativeAsset, MultiNativeAsset<AbsoluteReserveProvider>, RelayReserveFromParachain);
 
 type AssetsIdConverter =
 	CurrencyIdConvert<AssetsRegistry, CurrencyId, ParachainInfo, StaticAssetsMap>;
 
 pub type Trader = TransactionFeePoolTrader<
 	AssetsIdConverter,
-	PriceConverter,
+	PriceConverter<AssetsRegistry>,
 	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
 	WeightToFee,
 >;
@@ -234,7 +219,7 @@ impl<
 
 pub type CaptureAssetTrap = CaptureDropAssets<
 	ToTreasury<AssetsIdConverter, crate::Assets, TreasuryAccount>,
-	PriceConverter,
+	PriceConverter<AssetsRegistry>,
 	AssetsIdConverter,
 >;
 
@@ -265,12 +250,21 @@ parameter_types! {
 }
 
 parameter_type_with_key! {
-	pub ParachainMinFee: |location: MultiLocation| -> u128 {
+	pub ParachainMinFee: |location: MultiLocation| -> Balance {
 		#[allow(clippy::match_ref_pats)] // false positive
+		#[allow(clippy::match_single_binding)]
 		match (location.parents, location.first_interior()) {
-			// (1, Some(Parachain(2))) => 40,
-			_ => 0,
-		}
+			// relay KSM
+			(1, None) => 400_000_000_000,
+
+			// if amount is not enough, it should be trapped by target chain or discarded as spam, so bear the risk
+			// we use Acala's team XTokens which are opinionated - PANIC in case of zero
+			(1, Some(Parachain(id)))  =>  {
+				let location = XcmAssetLocation::new(location.clone());
+				AssetsRegistry::min_xcm_fee(ParaId::from(*id), location).unwrap_or(u128::MAX)
+			},
+			_ => u128::MAX,
+			}
 	};
 }
 
@@ -287,6 +281,8 @@ impl orml_xtokens::Config for Runtime {
 	type LocationInverter = LocationInverter<Ancestry>;
 	type MaxAssetsForTransfer = MaxAssetsForTransfer;
 	type MinXcmFee = ParachainMinFee;
+	type MultiLocationsFilter = Everything;
+	type ReserveProvider = AbsoluteReserveProvider;
 }
 
 impl orml_unknown_tokens::Config for Runtime {
@@ -351,12 +347,13 @@ impl<Origin: OriginTrait> ConvertOrigin<Origin> for SystemParachainAsSuperuser<O
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = XcmExecutor<XcmConfig>;
-	type VersionWrapper = ();
+	type VersionWrapper = RelayerXcm;
 	type ChannelInfo = ParachainSystem;
 	type ControllerOrigin = EnsureRootOrHalfCouncil;
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	// NOTE: we could consider allowance for some chains (see Acala tests ports  PRs)
 	type ExecuteOverweightOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = cumulus_pallet_xcmp_queue::weights::SubstrateWeight<Self>;
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {

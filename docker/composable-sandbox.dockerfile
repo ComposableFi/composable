@@ -1,4 +1,4 @@
-FROM composablefi/ci-linux:production as builder
+FROM composablefi/ci-linux:2022-04-18 as builder
 
 COPY . /build
 WORKDIR /build
@@ -9,7 +9,7 @@ RUN cargo build --release
 
 FROM composablefi/mmr-polkadot:latest as mmr-polkadot
 
-FROM debian:11-slim
+FROM ubuntu:21.10
 LABEL description="Docker image with Composable"
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -21,7 +21,7 @@ RUN groupadd -g 1000 service && useradd -m -s /bin/sh -g 1000 -G service service
 	curl -fsSL https://deb.nodesource.com/setup_17.x | bash - && \
 	apt-get update && apt-get install -y --no-install-recommends nodejs && \
 	npm install --global npm yarn && \
-	curl https://github.com/galacticcouncil/Basilisk-node/releases/download/v7.0.0/basilisk -Lo /apps/Basilisk-node/target/release/basilisk && \
+	curl https://github.com/galacticcouncil/Basilisk-node/releases/download/v7.0.1/basilisk -Lo /apps/Basilisk-node/target/release/basilisk && \
 	chmod +x /apps/Basilisk-node/target/release/basilisk && \
 	apt-get clean && \
 	find /var/lib/apt/lists/ -type f -not -name lock -delete;

@@ -1,5 +1,7 @@
-use crate::math::{SafeDiv, SafeMul};
-use composable_support::validation::{Validate, Validated};
+use composable_support::{
+	math::safe::{SafeDiv, SafeMul},
+	validation::{Validate, Validated},
+};
 use frame_support::{pallet_prelude::*, traits::Get};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::Zero, ArithmeticError};

@@ -1,8 +1,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -21,16 +21,19 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 mod weights;
 mod xcmp;
 
+use orml_traits::parameter_type_with_key;
 // TODO: consider moving this to shared runtime
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
 use common::{
-	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, MosaicRemoteAssetId,
-	MultiExistentialDeposits, NativeExistentialDeposit, Signature, AVERAGE_ON_INITIALIZE_RATIO,
-	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	impls::DealWithFees, multi_existential_deposits, AccountId, AccountIndex, Address, Amount,
+	AuraId, Balance, BlockNumber, BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash,
+	Moment, MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
+use composable_traits::dex::PriceAggregate;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -60,14 +63,16 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 
-use codec::Encode;
+use codec::{Codec, Encode, EncodeLike};
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
 use frame_system::EnsureSigned;
 use scale_info::TypeInfo;
+use sp_runtime::AccountId32;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
+use sp_std::fmt::Debug;
 use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
@@ -123,6 +128,13 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
 	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
+}
+
+parameter_type_with_key! {
+	// Minimum amount an account has to hold to stay in state
+	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
+		multi_existential_deposits::<AssetsRegistry>(currency_id)
+	};
 }
 
 parameter_types! {
@@ -452,6 +464,7 @@ impl oracle::Config for Runtime {
 	type MaxPrePrices = MaxPrePrices;
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
 	type LocalAssets = CurrencyFactory;
+	type TreasuryAccount = TreasuryAccount;
 }
 
 // Parachain stuff.
@@ -759,18 +772,18 @@ impl currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRootOrHalfCouncil;
-	type ReserveOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
+	type Balance = Balance;
 }
 
 impl assets_registry::Config for Runtime {
 	type Event = Event;
 	type LocalAssetId = CurrencyId;
-	type ForeignAssetId = CurrencyId;
-	type Location = composable_traits::assets::XcmAssetLocation;
-	type UpdateAdminOrigin = EnsureRootOrHalfCouncil;
-	type LocalAdminOrigin = assets_registry::EnsureLocalAdmin<Runtime>;
-	type ForeignAdminOrigin = assets_registry::EnsureForeignAdmin<Runtime>;
+	type CurrencyFactory = CurrencyFactory;
+	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
+	type UpdateAssetRegistryOrigin = EnsureRootOrHalfCouncil;
+	type ParachainOrGovernanceOrigin = EnsureRootOrHalfCouncil;
+	type Balance = Balance;
 	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 }
 
@@ -940,7 +953,8 @@ impl liquidations::Config for Runtime {
 parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
 	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
-	pub OracleMarketCreationStake : Balance = 300;
+	pub OracleMarketCreationStake: Balance = 300;
+	pub const MaxLiquidationBatchSize: u32 = 1000;
 }
 
 impl lending::Config for Runtime {
@@ -952,73 +966,15 @@ impl lending::Config for Runtime {
 	type MultiCurrency = Assets;
 	type Liquidation = Liquidations;
 	type UnixTime = Timestamp;
-	type MaxLendingCount = MaxLendingCount;
+	type MaxMarketCount = MaxLendingCount;
 	type AuthorityId = oracle::crypto::BathurstStId;
 	type WeightInfo = weights::lending::WeightInfo<Runtime>;
 	type LiquidationStrategyId = u32;
 	type OracleMarketCreationStake = OracleMarketCreationStake;
 	type PalletId = LendingPalletId;
 	type NativeCurrency = Balances;
+	type MaxLiquidationBatchSize = MaxLiquidationBatchSize;
 	type WeightToFee = WeightToFee;
-}
-
-pub type PoolId = u128;
-
-parameter_types! {
-  pub const ConstantProductPalletId: PalletId = PalletId(*b"pal_cnst");
-}
-
-impl uniswap_v2::Config for Runtime {
-	type Event = Event;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type CurrencyFactory = CurrencyFactory;
-	type Assets = Assets;
-	type Convert = ConvertInto;
-	type PoolId = PoolId;
-	type PalletId = ConstantProductPalletId;
-	type WeightInfo = weights::uniswap_v2::WeightInfo<Runtime>;
-}
-
-parameter_types! {
-  pub const StableSwapPalletId: PalletId = PalletId(*b"pal_stab");
-}
-
-impl curve_amm::Config for Runtime {
-	type Event = Event;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type CurrencyFactory = CurrencyFactory;
-	type Assets = Assets;
-	type Convert = ConvertInto;
-	type PoolId = PoolId;
-	type PalletId = StableSwapPalletId;
-	type WeightInfo = weights::curve_amm::WeightInfo<Runtime>;
-}
-
-parameter_types! {
-  pub LBPId: PalletId = PalletId(*b"pall_lbp");
-  pub MinSaleDuration: BlockNumber = DAYS;
-  pub MaxSaleDuration: BlockNumber = 30 * DAYS;
-  pub MaxInitialWeight: Permill = Permill::from_percent(95);
-  pub MinFinalWeight: Permill = Permill::from_percent(5);
-}
-
-impl liquidity_bootstrapping::Config for Runtime {
-	type Event = Event;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type Convert = ConvertInto;
-	type Assets = Tokens;
-	type PoolId = PoolId;
-	type LocalAssets = CurrencyFactory;
-	type PalletId = LBPId;
-	type MinSaleDuration = MinSaleDuration;
-	type MaxSaleDuration = MaxSaleDuration;
-	type MaxInitialWeight = MaxInitialWeight;
-	type MinFinalWeight = MinFinalWeight;
-	type WeightInfo = weights::liquidity_bootstrapping::WeightInfo<Runtime>;
-	type AdminOrigin = EnsureRootOrHalfCouncil;
 }
 
 parameter_types! {
@@ -1049,6 +1005,24 @@ impl pablo::Config for Runtime {
 	type TWAPInterval = TWAPInterval;
 	type Time = Timestamp;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+	#[derive(TypeInfo, codec::MaxEncodedLen, codec::Encode)]
+	pub const MaxHopsCount: u32 = 4;
+	pub DexRouterPalletID: PalletId = PalletId(*b"dex_rout");
+}
+
+impl dex_router::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type MaxHopsInRoute = MaxHopsCount;
+	type PoolId = PoolId;
+	type Pablo = Pablo;
+	type PalletId = DexRouterPalletID;
+	type UpdateRouteOrigin = EnsureSigned<Self::AccountId>;
+	type WeightInfo = weights::dex_router::WeightInfo<Runtime>;
 }
 
 construct_runtime!(
@@ -1109,10 +1083,8 @@ construct_runtime!(
 		Mosaic: mosaic::{Pallet, Call, Storage, Event<T>} = 62,
 		Liquidations: liquidations::{Pallet, Call, Storage, Event<T>} = 63,
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
-		ConstantProductDex: uniswap_v2::{Pallet, Call, Storage, Event<T>} = 65,
-		StableSwapDex: curve_amm::{Pallet, Call, Storage, Event<T>} = 66,
-		LiquidityBootstrapping: liquidity_bootstrapping::{Pallet, Call, Storage, Event<T>} = 67,
-		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 68,
+		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
+		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
 );
@@ -1183,18 +1155,17 @@ mod benches {
 		[liquidations, Liquidations]
 		[bonded_finance, BondedFinance]
 		//FIXME: broken with dali [lending, Lending]
-		[uniswap_v2, ConstantProductDex]
-		[curve_amm, StableSwapDex]
-		[liquidity_bootstrapping, LiquidityBootstrapping]
+		[lending, Lending]
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
+		[dex_router, DexRouter]
 	);
 }
 
 impl_runtime_apis! {
 	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
-		fn balance_of(asset_id: SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
-			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id.0, &account_id))
+		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
+			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
 	}
 
@@ -1204,6 +1175,34 @@ impl_runtime_apis! {
 				crowdloan_rewards::amount_available_to_claim_for::<Runtime>(account_id)
 					.unwrap_or_else(|_| Balance::zero())
 			)
+		}
+	}
+
+	impl pablo_runtime_api::PabloRuntimeApi<Block, PoolId, CurrencyId, Balance> for Runtime {
+		fn prices_for(
+			pool_id: PoolId,
+			base_asset_id: CurrencyId,
+			quote_asset_id: CurrencyId,
+			amount: Balance
+		) -> PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
+			pablo::prices_for::<Runtime>(
+				pool_id,
+				base_asset_id,
+				quote_asset_id,
+				amount
+			)
+			.map(|p| PriceAggregate{
+				pool_id: SafeRpcWrapper(p.pool_id),
+				base_asset_id: SafeRpcWrapper(p.base_asset_id),
+				quote_asset_id: SafeRpcWrapper(p.quote_asset_id),
+				spot_price: SafeRpcWrapper(p.spot_price)
+			})
+			.unwrap_or_else(|_| PriceAggregate{
+				pool_id: SafeRpcWrapper(pool_id),
+				base_asset_id: SafeRpcWrapper(base_asset_id),
+				quote_asset_id: SafeRpcWrapper(quote_asset_id),
+				spot_price: SafeRpcWrapper(0_u128)
+			})
 		}
 	}
 
@@ -1313,14 +1312,17 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime {
+	impl<Call, AccountId> simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime
+		where
+			Call: Codec,
+			AccountId: Codec + EncodeLike<AccountId32> + Into<AccountId32> + Clone+ PartialEq + TypeInfo + Debug,
+	{
 		fn create_transaction(call: Call, signer: AccountId) -> Vec<u8> {
 			use sp_runtime::{
 				generic::Era, MultiSignature,
 				traits::StaticLookup,
 			};
 			use sp_core::sr25519;
-
 			let nonce = frame_system::Pallet::<Runtime>::account_nonce(signer.clone());
 			let extra = (
 				system::CheckNonZeroSender::<Runtime>::new(),
@@ -1332,11 +1334,14 @@ impl_runtime_apis! {
 				system::CheckWeight::<Runtime>::new(),
 				transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
 			);
-
 			let signature = MultiSignature::from(sr25519::Signature([0_u8;64]));
-			let address = AccountIdLookup::unlookup(signer);
-			let ext = UncheckedExtrinsic::new_signed(call, address, signature, extra);
-
+			let address = AccountIdLookup::unlookup(signer.into());
+			let ext = generic::UncheckedExtrinsic::<Address, Call, Signature, SignedExtra>::new_signed(
+				call,
+				address,
+				signature,
+				extra,
+			);
 			ext.encode()
 		}
 	}
