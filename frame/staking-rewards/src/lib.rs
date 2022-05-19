@@ -361,7 +361,7 @@ pub mod pallet {
 		}
 
 		/// Splits fNFT position into several chunks with various amounts, but with same exposure.
-		/// fNFT splitted earns reward in current epoch proportial to split.
+		/// fNFT splitted earns reward in current epoch proportional to split.
 		/// Can split only at  `State::WaitingForEpochEnd` state.
 		///
 		/// `origin` - owner of fNFT
