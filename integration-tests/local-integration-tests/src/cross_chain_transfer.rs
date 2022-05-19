@@ -407,10 +407,7 @@ fn xcm_transfer_execution_barrier_trader_works() {
 	KusamaRelay::execute_with(|| {
 		use kusama_runtime::*;
 		let r = pallet_xcm::Pallet::<Runtime>::send_xcm(
-			X1(Junction::AccountId32 {
-				network: NetworkId::Any,
-				id: ALICE.into(),
-			}),
+			X1(Junction::AccountId32 { network: NetworkId::Any, id: ALICE.into() }),
 			Parachain(THIS_PARA_ID).into(),
 			message,
 		);
