@@ -8047,6 +8047,7 @@ dependencies = [
  "composable-support",
  "composable-tests-helpers",
  "composable-traits",
+ "env_logger",
  "frame-benchmarking",
  "frame-support",
  "frame-system",

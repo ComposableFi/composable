@@ -9,7 +9,7 @@ This pallet allow us to reward users for staking certain assets.
 - claiming reward at any time while the NFT has not expired
 - unstaking early, resulting in penalty applied
 - unstaking once the NFT expired
-- User owns fNFT, fNFT owns rewards. Hence selling fNFT is selling rewards to.
+- User owns fNFT, fNFT owns rewards. Hence selling fNFT is selling rewards too.
 
 ### Configuring an asset as being rewardable
 
@@ -106,7 +106,7 @@ Can be made only during epoch, but not during epoch transitions (for scalability
 
 User can extend position with amount or with time.
 
-Can extending is not acted on current epoch, but merged during transitions.
+Extending is not acted on current epoch, but merged during transitions.
 
 ##### Amount
 
@@ -149,6 +149,8 @@ Reward is staked too and increases users' share to earn more reward.
 User may claim reward without penalty any time he wants.
 
 When user claims whole fNFT,  he also claims rewards unconditionally. Original stake is penalized, but rewards are not.
+
+Rewarded amount is not subject to multiplier until locked.
 
 Example,
 10k pica staked, after 1 month, the fNFT holds 1k PICA rewards because you are holding the fNFT - the user should be able to have compound function, and then extract the rewards.

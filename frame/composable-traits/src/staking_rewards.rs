@@ -5,20 +5,26 @@ use crate::{
 use codec::{Decode, Encode};
 use composable_support::math::safe::SafeSub;
 use core::fmt::Debug;
-use frame_support::{dispatch::DispatchResult, traits::Get};
+use frame_support::{
+	dispatch::DispatchResult, storage::bounded_btree_map::BoundedBTreeMap, traits::Get,
+};
 use scale_info::TypeInfo;
 use sp_runtime::{
-	traits::{AtLeast32BitUnsigned, Zero},
-	DispatchError, Perbill, SaturatedConversion,
+	traits::{AtLeast32BitUnsigned, Saturating, Zero},
+	DispatchError, Perbill,
 };
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Encode, Decode, TypeInfo)]
 pub enum PositionState {
-	/// The position is not being rewarded yet and waiting for the next epoch.
+	/// The position is not being rewarded yet
+	/// and waiting for the next epoch to be included in `LockedRewarding` state.
 	Pending,
 	/// The position is currently locked and being rewarded.
+	/// If locked period ends, it goes to `LockedRewarding`.
+	/// Can be moved out of posistion with possible penalty.
 	LockedRewarding,
 	/// The position expired but still being rewarded.
+	/// Can be moved from position without penalty or extended.
 	Expired,
 }
 
@@ -104,13 +110,13 @@ pub struct StakingConfig<AccountId, DurationPresets, RewardAssets> {
 pub struct StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards> {
 	/// The staked asset.
 	pub asset: AssetId,
-	/// The original stake this NFT was minted for.
+	/// The original stake this NFT was minted for or updated NFT with increased stake amount.
 	pub stake: Balance,
 	/// The reward epoch at which this NFT will start yielding rewards.
 	pub reward_epoch_start: Epoch,
 	/// List of reward asset/pending rewards.
 	pub pending_rewards: Rewards,
-	/// The date at which this NFT was minted.
+	/// The date at which this NFT was minted or to wich lock was extended too.
 	pub lock_date: Timestamp,
 	/// The duration for which this NFT stake was locked.
 	pub lock_duration: DurationSeconds,
@@ -120,13 +126,15 @@ pub struct StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards> {
 	pub reward_multiplier: Perbill,
 }
 
+/// implemented by instances which know their share of something biggers
+pub trait Shares {
+	type Balance;
+	fn shares(&self) -> Self::Balance;
+}
+
 impl<AccountId, AssetId, Balance: AtLeast32BitUnsigned + Copy, Epoch: Ord, Rewards>
 	StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards>
 {
-	pub fn shares(&self) -> u128 {
-		self.reward_multiplier.mul_floor(self.stake.saturated_into::<u128>())
-	}
-
 	pub fn state(&self, epoch: &Epoch, epoch_start: Timestamp) -> PositionState {
 		if self.lock_date.saturating_add(self.lock_duration) < epoch_start {
 			PositionState::Expired
@@ -135,6 +143,21 @@ impl<AccountId, AssetId, Balance: AtLeast32BitUnsigned + Copy, Epoch: Ord, Rewar
 		} else {
 			PositionState::LockedRewarding
 		}
+	}
+}
+
+impl<
+		AccountId,
+		AssetId: PartialEq + Ord,
+		Balance: AtLeast32BitUnsigned + Copy + Zero + Saturating,
+		Epoch: Ord,
+		S: frame_support::traits::Get<u32>,
+	> Shares for StakingNFT<AccountId, AssetId, Balance, Epoch, BoundedBTreeMap<AssetId, Balance, S>>
+{
+	type Balance = Balance;
+	fn shares(&self) -> Balance {
+		let compound = *self.pending_rewards.get(&self.asset).unwrap_or(&Balance::zero());
+		self.reward_multiplier.mul_floor(self.stake).saturating_add(compound)
 	}
 }
 
@@ -197,7 +220,11 @@ pub trait Staking {
 	/// * `instance_id` the ID uniquely identifiying the NFT from which we will compute the
 	///   available rewards.
 	/// * `to` the account to transfer the rewards to.
-	fn claim(instance_id: &Self::InstanceId, to: &Self::AccountId) -> DispatchResult;
+	/// Return amount if reward asset which was staked asset claimed.
+	fn claim(
+		instance_id: &Self::InstanceId,
+		to: &Self::AccountId,
+	) -> Result<(Self::AssetId, Self::Balance), DispatchError>;
 }
 
 pub trait StakingReward {
