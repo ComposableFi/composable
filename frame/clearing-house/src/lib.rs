@@ -1276,8 +1276,12 @@ pub mod pallet {
 			})
 		}
 
-		fn get_collateral_account() -> T::AccountId {
+		pub fn get_collateral_account() -> T::AccountId {
 			T::PalletId::get().into_sub_account("Collateral")
+		}
+
+		pub fn get_insurance_account() -> T::AccountId {
+			T::PalletId::get().into_sub_account("Insurance")
 		}
 
 		fn decimal_from_swapped(
