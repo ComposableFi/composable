@@ -96,9 +96,13 @@ impl<AssetId: PartialEq> PartialEq for CurrencyPair<AssetId> {
 
 impl<AssetId: PartialEq> Eq for CurrencyPair<AssetId> {}
 
-impl<AssetId: Copy> CurrencyPair<AssetId> {
+impl<AssetId: Copy + PartialEq> CurrencyPair<AssetId> {
 	pub fn swap(&self) -> Self {
 		Self { base: self.quote, quote: self.base }
+	}
+
+	pub fn contains(&self, asset_id: AssetId) -> bool {
+		self.base == asset_id || self.quote == asset_id
 	}
 }
 

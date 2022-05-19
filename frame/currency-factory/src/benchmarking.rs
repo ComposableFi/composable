@@ -5,7 +5,7 @@ use super::*;
 #[allow(unused_imports)]
 use crate::Pallet as CurrencyFactory;
 use crate::{self as currency_factory};
-use codec::{Decode, Encode};
+use codec::Decode;
 use composable_traits::{
 	assets::BasicAssetMetadata,
 	currency::{CurrencyFactory as DeFiCurrencyFactory, RangeId},
