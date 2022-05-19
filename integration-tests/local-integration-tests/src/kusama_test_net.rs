@@ -178,7 +178,7 @@ pub fn picasso_ext(parachain_id: u32) -> sp_io::TestExternalities {
 	}
 	.assimilate_storage(&mut storage)
 	.unwrap();
-
+	#[cfg(feature = "dali")]
 	<liquidations::GenesisConfig as GenesisBuild<Runtime>>::assimilate_storage(
 		&liquidations::GenesisConfig {},
 		&mut storage,
