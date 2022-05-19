@@ -29,7 +29,7 @@ use sp_trie::PrefixedMemoryDB;
 use crate::{
 	client::{Client, FullBackend, FullClient},
 	rpc,
-	runtime::{assets::ExtendWithAssetsApi, BaseHostRuntimeApis, ConstructRuntimeApis},
+	runtime::{assets::ExtendWithAssetsApi, BaseHostRuntimeApis},
 };
 
 pub struct PicassoExecutor;
@@ -279,7 +279,7 @@ async fn start_node_impl<RuntimeApi, Executor>(
 ) -> sc_service::error::Result<TaskManager>
 where
 	// Block: BlockT,
-	RuntimeApi: ConstructRuntimeApis<RuntimeApi, Executor>,
+	// RuntimeApi: ConstructRuntimeApis<RuntimeApi, Executor>,
 	RuntimeApi:
 		ConstructRuntimeApi<OpaqueBlock, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: BaseHostRuntimeApis<StateBackend = StateBackendFor<FullBackend, OpaqueBlock>>

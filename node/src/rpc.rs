@@ -20,7 +20,7 @@ use sp_runtime::traits::BlakeTwo256;
 
 use crate::{
 	client::{FullBackend, FullClient},
-	runtime::{assets::ExtendWithAssetsApi, BaseHostRuntimeApis, ConstructRuntimeApis},
+	runtime::{assets::ExtendWithAssetsApi, BaseHostRuntimeApis},
 };
 
 /// Full client dependencies.
@@ -43,7 +43,7 @@ pub fn create<RuntimeApi, Executor>(
 ) -> jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>
 where
 	// Block: BlockT,
-	RuntimeApi: ConstructRuntimeApis<RuntimeApi, Executor>,
+	// RuntimeApi: ConstructRuntimeApis<RuntimeApi, Executor>,
 	RuntimeApi:
 		ConstructRuntimeApi<OpaqueBlock, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi:
@@ -58,8 +58,7 @@ where
 		+ Sync
 		+ Sized,
 	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api: BaseHostRuntimeApis<StateBackend = StateBackendFor<FullBackend, OpaqueBlock>>
-		+ ExtendWithAssetsApi<RuntimeApi, Executor>
-		+ BlockBuilder<OpaqueBlock>,
+		+ ExtendWithAssetsApi<RuntimeApi, Executor>,
 {
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
 	use substrate_frame_rpc_system::{FullSystem, SystemApi};
