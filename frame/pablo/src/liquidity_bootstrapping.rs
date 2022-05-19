@@ -4,10 +4,14 @@ use crate::{
 };
 use composable_maths::dex::constant_product::{compute_out_given_in, compute_spot_price};
 use composable_support::{
-	math::safe::SafeAdd,
+	math::safe::{SafeAdd, SafeSub},
 	validation::{Validate, Validated},
 };
-use composable_traits::{currency::LocalAssets, defi::CurrencyPair, dex::SaleState};
+use composable_traits::{
+	currency::LocalAssets,
+	defi::CurrencyPair,
+	dex::{Fee, SaleState},
+};
 use frame_support::{
 	pallet_prelude::*,
 	traits::fungibles::{Inspect, Transfer},
@@ -118,30 +122,25 @@ impl<T: Config> LiquidityBootstrapping<T> {
 		current_block: BlockNumberFor<T>,
 		quote_amount: BalanceOf<T>,
 		apply_fees: bool,
-	) -> Result<(BalanceOf<T>, BalanceOf<T>), DispatchError> {
+	) -> Result<(Fee<AssetIdOf<T>, BalanceOf<T>>, BalanceOf<T>), DispatchError> {
 		Self::ensure_sale_state(&pool, current_block, SaleState::Ongoing)?;
-
 		ensure!(pair == pool.pair, Error::<T>::PairMismatch);
 		ensure!(!quote_amount.is_zero(), Error::<T>::InvalidAmount);
 
 		let weights = pool.sale.current_weights(current_block)?;
-
 		let (wo, wi) = if pair.base == pool.pair.base { weights } else { (weights.1, weights.0) };
-
-		let ai = T::Convert::convert(quote_amount);
-		let (ai_minus_fees, fees) = if apply_fees {
-			let fees = pool.fee.mul_floor(ai);
-			// Safe as fees is a fraction of ai
-			(ai - fees, fees)
+		let fee = if apply_fees {
+			pool.fee_config.calculate_fees(pair.quote, quote_amount)
 		} else {
-			(ai, 0)
+			Fee::<T::AssetId, T::Balance>::zero(pair.quote)
 		};
+
 		let bi = T::Convert::convert(T::Assets::balance(pair.quote, pool_account));
 		let bo = T::Convert::convert(T::Assets::balance(pair.base, pool_account));
-
-		let base_amount = compute_out_given_in(wi, wo, bi, bo, ai_minus_fees)?;
-
-		Ok((T::Convert::convert(fees), T::Convert::convert(base_amount)))
+		let ai_except_fees = quote_amount.safe_sub(&fee.fee)?;
+		let base_amount =
+			compute_out_given_in(wi, wo, bi, bo, T::Convert::convert(ai_except_fees))?;
+		Ok((fee, T::Convert::convert(base_amount)))
 	}
 
 	pub(crate) fn get_exchange_value(

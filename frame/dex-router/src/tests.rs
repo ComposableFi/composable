@@ -30,7 +30,7 @@ fn create_curve_amm_pool(
 		owner: ALICE,
 		pair: assets,
 		amplification_coefficient: amp_coeff,
-		fee,
+		fee_config: fee,
 		owner_fee: admin_fee,
 	};
 	let p = Pablo::do_create_pool(init_config);
@@ -63,7 +63,7 @@ fn create_constant_product_amm_pool(
 	let init_config = PoolInitConfiguration::ConstantProduct {
 		owner: ALICE,
 		pair: assets,
-		fee,
+		fee_config: fee,
 		owner_fee: admin_fee,
 	};
 	// Create Pablo pool

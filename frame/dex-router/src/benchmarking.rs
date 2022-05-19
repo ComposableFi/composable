@@ -27,7 +27,7 @@ where
 		owner: owner.clone(),
 		pair: CurrencyPair::new(usdc, usdt),
 		amplification_coefficient: 5_u16,
-		fee: Permill::zero(),
+		fee_config: Permill::zero(),
 		owner_fee: Permill::zero(),
 	};
 	let usdc_usdt = pallet_pablo::Pallet::<T>::do_create_pool(usdc_usdt_config).unwrap();
@@ -70,7 +70,7 @@ where
 	let pica_ksm_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
 		owner: owner.clone(),
 		pair: CurrencyPair::new(pica, ksm),
-		fee: Permill::zero(),
+		fee_config: Permill::zero(),
 		owner_fee: Permill::zero(),
 	};
 	let pica_ksm = pallet_pablo::Pallet::<T>::do_create_pool(pica_ksm_config).unwrap();
@@ -96,7 +96,7 @@ where
 	let ksm_eth_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
 		owner: owner.clone(),
 		pair: CurrencyPair::new(ksm, eth),
-		fee: Permill::zero(),
+		fee_config: Permill::zero(),
 		owner_fee: Permill::zero(),
 	};
 	let ksm_eth = pallet_pablo::Pallet::<T>::do_create_pool(ksm_eth_config).unwrap();
@@ -123,7 +123,7 @@ where
 	let eth_usdc_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
 		owner: owner.clone(),
 		pair: CurrencyPair::new(eth, usdc),
-		fee: Permill::zero(),
+		fee_config: Permill::zero(),
 		owner_fee: Permill::zero(),
 	};
 	let eth_usdc = pallet_pablo::Pallet::<T>::do_create_pool(eth_usdc_config).unwrap();
@@ -151,7 +151,7 @@ where
 		owner: owner.clone(),
 		pair: CurrencyPair::new(usdc, usdt),
 		amplification_coefficient: 5_u16,
-		fee: Permill::zero(),
+		fee_config: Permill::zero(),
 		owner_fee: Permill::zero(),
 	};
 	let usdc_usdt = pallet_pablo::Pallet::<T>::do_create_pool(usdc_usdt_config).unwrap();

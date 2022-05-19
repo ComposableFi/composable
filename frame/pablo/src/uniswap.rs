@@ -6,7 +6,7 @@ use composable_support::math::safe::{safe_multiply_by_rational, SafeAdd, SafeSub
 use composable_traits::{
 	currency::{CurrencyFactory, RangeId},
 	defi::CurrencyPair,
-	dex::ConstantProductPoolInfo,
+	dex::{ConstantProductPoolInfo, Fee, FeeConfig},
 };
 use frame_support::{
 	pallet_prelude::*,
@@ -14,8 +14,8 @@ use frame_support::{
 	transactional,
 };
 use sp_runtime::{
-	traits::{CheckedAdd, Convert, One, Zero},
-	ArithmeticError, Permill,
+	traits::{Convert, One, Zero},
+	Permill,
 };
 
 // Uniswap
@@ -26,14 +26,11 @@ impl<T: Config> Uniswap<T> {
 	pub(crate) fn do_create_pool(
 		who: &T::AccountId,
 		pair: CurrencyPair<T::AssetId>,
-		fee: Permill,
-		owner_fee: Permill,
+		fee_config: FeeConfig,
 	) -> Result<T::PoolId, DispatchError> {
 		// NOTE(hussein-aitlahcen): do we allow such pair?
 		ensure!(pair.base != pair.quote, Error::<T>::InvalidPair);
-
-		let total_fees = fee.checked_add(&owner_fee).ok_or(ArithmeticError::Overflow)?;
-		ensure!(total_fees < Permill::one(), Error::<T>::InvalidFees);
+		ensure!(fee_config.fee_rate < Permill::one(), Error::<T>::InvalidFees);
 
 		let lp_token = T::CurrencyFactory::create(RangeId::LP_TOKENS, T::Balance::default())?;
 
@@ -47,8 +44,7 @@ impl<T: Config> Uniswap<T> {
 						owner: who.clone(),
 						pair,
 						lp_token,
-						fee,
-						owner_fee,
+						fee_config,
 					}),
 				);
 				*pool_count = pool_id.safe_add(&T::PoolId::one())?;
@@ -160,23 +156,19 @@ impl<T: Config> Uniswap<T> {
 		pair: CurrencyPair<T::AssetId>,
 		quote_amount: T::Balance,
 		apply_fees: bool,
-	) -> Result<(T::Balance, T::Balance, T::Balance, T::Balance), DispatchError> {
+	) -> Result<(T::Balance, T::Balance, Fee<T::AssetId, T::Balance>), DispatchError> {
 		ensure!(pair == pool.pair, Error::<T>::PairMismatch);
 		let pool_base_aum = T::Convert::convert(T::Assets::balance(pair.base, pool_account));
 		let pool_quote_aum = T::Convert::convert(T::Assets::balance(pair.quote, pool_account));
-		let quote_amount = T::Convert::convert(quote_amount);
 
-		let (lp_fee, owner_fee) = if apply_fees {
-			let lp_fee = pool.fee.mul_floor(quote_amount);
-			// owner_fee is computed based on lp_fee
-			let owner_fee = pool.owner_fee.mul_floor(lp_fee);
-			(lp_fee, owner_fee)
+		let fee = if apply_fees {
+			pool.fee_config.calculate_fees(pair.quote, quote_amount)
 		} else {
-			(0, 0)
+			Fee::<T::AssetId, T::Balance>::zero(pair.quote)
 		};
 		// Charging fees "on the way in"
 		// https://balancer.gitbook.io/balancer/core-concepts/protocol/index#out-given-in
-		let quote_amount_excluding_lp_fee = quote_amount.safe_sub(&lp_fee)?;
+		let quote_amount_excluding_lp_fee = T::Convert::convert(quote_amount.safe_sub(&fee.fee)?);
 		let half_weight = Permill::from_percent(50);
 		let base_amount = compute_out_given_in(
 			half_weight,
@@ -190,8 +182,7 @@ impl<T: Config> Uniswap<T> {
 		Ok((
 			T::Convert::convert(base_amount),
 			T::Convert::convert(quote_amount_excluding_lp_fee),
-			T::Convert::convert(lp_fee),
-			T::Convert::convert(owner_fee),
+			fee,
 		))
 	}
 }

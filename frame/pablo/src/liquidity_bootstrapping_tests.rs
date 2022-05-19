@@ -9,7 +9,7 @@ use composable_support::validation::Validated;
 use composable_tests_helpers::test::helper::default_acceptable_computation_error;
 use composable_traits::{
 	defi::CurrencyPair,
-	dex::{LiquidityBootstrappingPoolInfo, Sale},
+	dex::{FeeConfig, LiquidityBootstrappingPoolInfo, Sale},
 };
 use frame_support::{
 	assert_noop, assert_ok,
@@ -31,7 +31,11 @@ pub fn valid_pool(
 		owner,
 		pair,
 		sale: Sale { start, end, initial_weight, final_weight },
-		fee,
+		fee_config: FeeConfig {
+			fee_rate: fee,
+			owner_fee_rate: Permill::zero(),
+			protocol_fee_rate: Permill::zero(),
+		},
 	})
 	.expect("impossible; qed;")
 }
@@ -56,7 +60,11 @@ fn with_pool<T>(
 		owner,
 		pair,
 		sale: Sale { start: random_start, end, initial_weight, final_weight },
-		fee,
+		fee_config: FeeConfig {
+			fee_rate: fee,
+			owner_fee_rate: Permill::zero(),
+			protocol_fee_rate: Permill::zero(),
+		},
 	})
 	.expect("impossible; qed;");
 	new_test_ext().execute_with(|| -> T {
@@ -205,7 +213,7 @@ mod buy {
 				assert_has_event::<Test, _>(|e| {
 					matches!(
 					    e.event,
-				        mock::Event::Pablo(crate::Event::Swapped { pool_id, fee_asset, .. }) if pool_id == created_pool_id && fee_asset == USDT)
+				        mock::Event::Pablo(crate::Event::Swapped { pool_id, fee, .. }) if pool_id == created_pool_id && fee.asset_id == USDT)
 				});
 				let price =
 					pallet::prices_for::<Test>(created_pool_id, PROJECT_TOKEN, USDT, 1 * unit)
@@ -352,7 +360,11 @@ mod invalid_pool {
 				owner,
 				pair,
 				sale: Sale { start, end, initial_weight, final_weight },
-				fee,
+				fee_config: FeeConfig {
+					fee_rate: fee,
+					owner_fee_rate: Permill::zero(),
+					protocol_fee_rate: Permill::zero()
+				},
 			})
 			.is_err());
 		});
@@ -373,7 +385,11 @@ mod invalid_pool {
 				owner,
 				pair,
 				sale: Sale { start, end, initial_weight, final_weight },
-				fee,
+				fee_config: FeeConfig {
+					fee_rate: fee,
+					owner_fee_rate: Permill::zero(),
+					protocol_fee_rate: Permill::zero()
+				},
 			})
 			.is_err());
 		});
@@ -394,7 +410,11 @@ mod invalid_pool {
 				owner,
 				pair,
 				sale: Sale { start, end, initial_weight, final_weight },
-				fee,
+				fee_config: FeeConfig {
+					fee_rate: fee,
+					owner_fee_rate: Permill::zero(),
+					protocol_fee_rate: Permill::zero()
+				},
 			})
 			.is_err());
 		});
@@ -414,7 +434,11 @@ mod invalid_pool {
 				owner,
 				pair,
 				sale: Sale { start, end, initial_weight, final_weight },
-				fee,
+				fee_config: FeeConfig {
+					fee_rate: fee,
+					owner_fee_rate: Permill::zero(),
+					protocol_fee_rate: Permill::zero()
+				}
 			})
 			.is_err());
 		});
@@ -435,7 +459,11 @@ mod invalid_pool {
 				owner,
 				pair,
 				sale: Sale { start, end, initial_weight, final_weight },
-				fee,
+				fee_config: FeeConfig {
+					fee_rate: fee,
+					owner_fee_rate: Permill::zero(),
+					protocol_fee_rate: Permill::zero()
+				}
 			})
 			.is_err());
 		});
@@ -456,7 +484,11 @@ mod invalid_pool {
 				owner,
 				pair,
 				sale: Sale { start, end, initial_weight, final_weight },
-				fee,
+				fee_config: FeeConfig {
+					fee_rate: fee,
+					owner_fee_rate: Permill::zero(),
+					protocol_fee_rate: Permill::zero()
+				}
 			})
 			.is_err());
 		});
@@ -484,7 +516,7 @@ mod visualization {
 					initial_weight: Permill::from_percent(92),
 					final_weight: Permill::from_percent(50),
 				},
-				fee: Permill::from_perthousand(1),
+				fee_config: Permill::from_perthousand(1),
 			};
 			let pool_id =
 				Pablo::do_create_pool(&owner, PoolInitConfiguration::LiquidityBootstrapping(pool))
