@@ -39,6 +39,7 @@ mod tests;
 
 #[cfg(test)]
 mod mock;
+pub mod math;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -74,6 +75,8 @@ pub mod pallet {
 		ArithmeticError, Perbill, SaturatedConversion,
 	};
 	use sp_std::collections::btree_map::BTreeMap;
+
+use crate::math::honest_stake_increase;
 
 	pub(crate) type EpochId = u128;
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -432,6 +435,7 @@ pub mod pallet {
 					Self::update_epoch();
 				},
 				State::Rewarding => {
+					let now = T::Time::now().as_secs();
 					let (reward_epoch, reward_epoch_start) = EndEpochSnapshot::<T>::get();
 					let result = <(FoldState<T>, Stakers<T>)>::step(
 						FoldStrategy::new_chunk(T::ElementToProcessPerBlock::get()),
@@ -476,6 +480,14 @@ pub mod pallet {
 														)?,
 													)
 													.map_err(|_| ArithmeticError::Overflow)?;
+												if let Some(amount) = PendingAmountExtensions::<T>::take(&nft_id) {
+													nft.stake = nft.stake.safe_add(&amount)?;
+												}
+
+												if let Some(amount) = PendingAmountExtensions::<T>::take(&nft_id) {
+													nft.lock_date += honest_stake_increase(nft.early_unstake_penalty.value, nft.stake, amount, nft.lock_duration, now - nft.lock_date).unwrap();
+													nft.stake = nft.stake.safe_add(&amount)?;
+												}
 											}
 										},
 									}
@@ -491,8 +503,7 @@ pub mod pallet {
 						CurrentState::<T>::set(State::Registering);
 					}
 				},
-				State::Registering => {
-					// TODO: extend adding extensions to exisitng nfts
+				State::Registering => {	
 					let result = <(FoldState<T>, PendingStakers<T>)>::step(
 						FoldStrategy::Chunk {
 							number_of_elements: T::ElementToProcessPerBlock::get(),
