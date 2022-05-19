@@ -46,7 +46,11 @@ mod models;
 #[cfg(test)]
 mod mocks;
 #[cfg(test)]
+mod mocks_offchain;
+#[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod tests_offchain;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
@@ -152,6 +156,7 @@ pub mod pallet {
 		use frame_system::offchain;
 		use sp_core::sr25519::{self, Signature as Sr25519Signature};
 		use sp_runtime::{app_crypto::app_crypto, traits::Verify, MultiSignature, MultiSigner};
+
 		app_crypto!(sr25519, KEY_TYPE);
 
 		pub struct TestAuthId;
@@ -197,7 +202,6 @@ pub mod pallet {
 			<Self as DeFiComposableConfig>::MayBeAssetId,
 			Self::Balance,
 		>;
-
 		type MultiCurrency: Transfer<
 				Self::AccountId,
 				Balance = Self::Balance,
@@ -310,32 +314,41 @@ pub mod pallet {
 				log::warn!("No signer");
 				return
 			}
+			for (market_id, account, _) in DebtIndex::<T>::iter() {
+				//Check that it should liquidate before liquidations
+				let should_be_liquidated =
+					match Self::should_liquidate(&market_id, &account) {
+						Ok(status) => status,
+						Err(error) => {
+							log::error!("Liquidation necessity check failed, market_id: {:?}, account: {:?},
+                                        error: {:?}", market_id, account, error);
+							false
+						},
+					};
+				if !should_be_liquidated {
+					continue
+				}
+				let results = signer.send_signed_transaction(|_account| Call::liquidate {
+					market_id,
+					borrowers: vec![account.clone()],
+				});
 
-			DebtIndex::<T>::iter()
-				.filter(|(market_id, account, _)| {
-					Self::should_liquidate(&market_id, &account).is_ok()
-				})
-				.for_each(|(market_id, account, _)| {
-					signer
-						.send_signed_transaction(|_account| Call::liquidate {
+				for (_acc, res) in &results {
+					match res {
+						Ok(()) => log::info!(
+							"Liquidation succeed, market_id: {:?}, account: {:?}",
 							market_id,
-							borrowers: vec![account.clone()],
-						})
-						.iter()
-						.for_each(|(_acc, res)| match res {
-							Ok(()) => log::info!(
-								"Liquidation succeed, market_id: {:?}, account: {:?}",
-								market_id,
-								account
-							),
-							Err(e) => log::error!(
-								"Liquidation failed, market_id: {:?}, account: {:?}, error: {:?}",
-								market_id,
-								account,
-								e
-							),
-						})
-				})
+							account
+						),
+						Err(e) => log::error!(
+							"Liquidation failed, market_id: {:?}, account: {:?}, error: {:?}",
+							market_id,
+							account,
+							e,
+						),
+					}
+				}
+			}
 		}
 	}
 
@@ -455,7 +468,7 @@ pub mod pallet {
 			market_id: MarketIndex,
 			borrowers: Vec<T::AccountId>,
 		},
-		/// Event emitted to warn that loan may go under collateralized soon.
+		/// Event emitted to warn that loan may go under collaterlized soon.
 		MayGoUnderCollateralizedSoon {
 			market_id: MarketIndex,
 			account: T::AccountId,

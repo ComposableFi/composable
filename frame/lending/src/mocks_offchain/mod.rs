@@ -1,71 +1,90 @@
 use self::currency::CurrencyId;
 pub use self::currency::*;
 use crate::{self as pallet_lending, *};
+use composable_support::math::safe::SafeAdd;
 use composable_traits::{
 	currency::{Exponent, LocalAssets},
 	defi::DeFiComposableConfig,
 	governance::{GovernanceRegistry, SignedRawOrigin},
 	oracle::Price,
 };
-
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{Everything, GenesisBuild},
+	traits::{Everything, GenesisBuild, OnRuntimeUpgrade},
 	weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
 	PalletId,
 };
-use frame_system::{EnsureRoot, EnsureSignedBy};
-use hex_literal::hex;
+use frame_system::{ChainContext, EnsureRoot, EnsureSignedBy};
 use once_cell::sync::Lazy;
 use orml_traits::{parameter_type_with_key, GetByKey};
 use smallvec::smallvec;
 use sp_arithmetic::traits::Zero;
-use sp_core::{sr25519::Signature, H256};
 use sp_runtime::{
-	testing::{Header, TestXt},
 	traits::{
-		BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify,
+		BlakeTwo256, ConvertInto, Extrinsic as ExtrinsicT, Header as HeaderTrait, IdentifyAccount,
+		IdentityLookup,
 	},
 	DispatchError, Perbill,
 };
 use xcm::latest::SendXcm;
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
-type Block = frame_system::mocking::MockBlock<Runtime>;
+use codec::{Decode, Encode};
+use scale_info::TypeInfo;
+use sp_runtime::{
+	traits::{Dispatchable, SignedExtension},
+	transaction_validity::TransactionValidityError,
+};
+
+use authority_id_wrapper::*;
+use sp_runtime::testing::{Block, Digest, Header as HeaderType, TestSignature, TestXt, H256};
+
+pub mod authority_id_wrapper;
+
+pub struct CustomOnRuntimeUpgrade;
+impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
+	fn on_runtime_upgrade() -> frame_support::weights::Weight {
+		100
+	}
+}
+
+pub type Executive = frame_executive::Executive<
+	Runtime,
+	TestBlock,
+	ChainContext<Runtime>,
+	Runtime,
+	AllPalletsWithSystem,
+	CustomOnRuntimeUpgrade,
+>;
+
+pub type TestExtrinsic = TestXt<Call, MockedExtension<Runtime>>;
+pub type TestBlock = Block<TestExtrinsic>;
 pub type Balance = u128;
 pub type Amount = i128;
-pub type BlockNumber = u64;
 pub type VaultId = u64;
-
+pub type MarketId = crate::models::market_index::MarketIndex;
+pub type Signature = TestSignature;
 pub type LiquidationStrategyId = u32;
 pub type OrderId = u32;
-
+pub type AuthorityId = UintAuthorityIdWrapper;
+pub type AccountId = <AuthorityId as IdentifyAccount>::AccountId;
+pub type Public = AuthorityId;
+pub type Header = HeaderType;
 parameter_types! {
 	pub const LiquidationsPalletId : PalletId = PalletId(*b"liqd_tns");
 }
 
-pub const MINIMUM_BALANCE: Balance = 1_000_000;
-
-pub static ALICE: Lazy<AccountId> = Lazy::new(|| {
-	AccountId::from_raw(hex!("0000000000000000000000000000000000000000000000000000000000000000"))
-});
-pub static BOB: Lazy<AccountId> = Lazy::new(|| {
-	AccountId::from_raw(hex!("0000000000000000000000000000000000000000000000000000000000000001"))
-});
-pub static CHARLIE: Lazy<AccountId> = Lazy::new(|| {
-	AccountId::from_raw(hex!("0000000000000000000000000000000000000000000000000000000000000002"))
-});
+pub static ALICE: Lazy<AccountId> = Lazy::new(|| 0);
+pub static BOB: Lazy<AccountId> = Lazy::new(|| 1);
+pub static CHARLIE: Lazy<AccountId> = Lazy::new(|| 2);
 #[allow(dead_code)]
-pub static UNRESERVED: Lazy<AccountId> = Lazy::new(|| {
-	AccountId::from_raw(hex!("0000000000000000000000000000000000000000000000000000000000000003"))
-});
+pub static UNRESERVED: Lazy<AccountId> = Lazy::new(|| 3);
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
 	pub enum Runtime where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
+		Block = TestBlock,
+		NodeBlock = TestBlock,
+		UncheckedExtrinsic = TestExtrinsic,
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
@@ -158,7 +177,7 @@ parameter_types! {
 	pub const MinimumDeposit: Balance = 0;
 	pub const MinimumWithdrawal: Balance = 0;
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
-	pub const TombstoneDuration: u64 = 42;
+  pub const TombstoneDuration: u64 = 42;
 }
 
 impl pallet_vault::Config for Runtime {
@@ -213,15 +232,10 @@ impl<CurrencyId, AccountId> GovernanceRegistry<CurrencyId, AccountId> for NoopRe
 	fn set(_k: CurrencyId, _value: SignedRawOrigin<AccountId>) {}
 }
 
-impl<CurrencyId>
-	GetByKey<
-		CurrencyId,
-		Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError>,
-	> for NoopRegistry
+impl<CurrencyId> GetByKey<CurrencyId, Result<SignedRawOrigin<AccountId>, sp_runtime::DispatchError>>
+	for NoopRegistry
 {
-	fn get(
-		_k: &CurrencyId,
-	) -> Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError> {
+	fn get(_k: &CurrencyId) -> Result<SignedRawOrigin<AccountId>, sp_runtime::DispatchError> {
 		Ok(SignedRawOrigin::Root)
 	}
 }
@@ -256,7 +270,7 @@ impl pallet_oracle::Config for Runtime {
 	type Currency = Assets;
 	type AssetId = CurrencyId;
 	type PriceValue = Balance;
-	type AuthorityId = pallet_oracle::crypto::BathurstStId;
+	type AuthorityId = AuthorityId;
 	type MinStake = MinBalance;
 	type StakeLock = MinU64;
 	type StalePrice = MinU64;
@@ -267,6 +281,7 @@ impl pallet_oracle::Config for Runtime {
 	type MaxPrePrices = MinU32;
 	type WeightInfo = ();
 	type LocalAssets = Decimals;
+
 	type TreasuryAccount = RootAccount;
 }
 
@@ -342,11 +357,10 @@ impl pallet_liquidations::Config for Runtime {
 	type XcmSender = XcmFake;
 }
 
-pub type Extrinsic = TestXt<Call, ()>;
-pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
+pub type Extrinsic = TestExtrinsic;
 
 impl frame_system::offchain::SigningTypes for Runtime {
-	type Public = <Signature as Verify>::Signer;
+	type Public = Public;
 	type Signature = Signature;
 }
 
@@ -364,11 +378,11 @@ where
 {
 	fn create_transaction<C: frame_system::offchain::AppCrypto<Self::Public, Self::Signature>>(
 		call: Call,
-		_public: <Signature as Verify>::Signer,
+		_public: Public,
 		_account: AccountId,
 		nonce: u64,
 	) -> Option<(Call, <Extrinsic as ExtrinsicT>::SignaturePayload)> {
-		Some((call, (nonce, ())))
+		Some((call, (nonce, MockedExtension::new())))
 	}
 }
 
@@ -407,13 +421,12 @@ impl pallet_lending::Config for Runtime {
 	type Liquidation = Liquidations;
 	type UnixTime = Timestamp;
 	type MaxMarketCount = MaxLendingCount;
-	type AuthorityId = crypto::TestAuthId;
+	type AuthorityId = AuthorityId;
 	type WeightInfo = ();
 	type LiquidationStrategyId = LiquidationStrategyId;
 	type PalletId = LendingPalletId;
 	type OracleMarketCreationStake = OracleMarketCreationStake;
 	type MaxLiquidationBatchSize = MaxLiquidationBatchSize;
-
 	type WeightToFee = WeightToFee;
 }
 
@@ -448,4 +461,52 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		Timestamp::set_timestamp(MILLISECS_PER_BLOCK);
 	});
 	ext
+}
+
+// BLOCK HELPERS
+
+pub fn process_block_with_execution(extrinsic: TestExtrinsic) {
+	let block_number = System::block_number()
+		.safe_add(&1)
+		.expect("Hit the numeric limit for block number");
+	let header = Header::new(
+		block_number,
+		H256::default(),
+		H256::default(),
+		[69u8; 32].into(),
+		Digest::default(),
+	);
+	Executive::initialize_block(&header);
+	Timestamp::set_timestamp(MILLISECS_PER_BLOCK * block_number);
+	System::set_block_number(block_number);
+	Executive::apply_extrinsic(extrinsic).unwrap().unwrap();
+}
+
+#[derive(Encode, Decode, Clone, Eq, PartialEq, Debug, TypeInfo)]
+pub struct MockedExtension<T>(core::marker::PhantomData<T>);
+
+impl<T> MockedExtension<T> {
+	pub fn new() -> Self {
+		MockedExtension(core::marker::PhantomData)
+	}
+}
+
+impl<T: Config + Send + Sync + std::fmt::Debug + TypeInfo> SignedExtension for MockedExtension<T> {
+	type AccountId = AccountId;
+	type Call = Call;
+	type AdditionalSigned = ();
+	type Pre = ();
+	const IDENTIFIER: &'static str = "MockedExtension";
+	fn additional_signed(&self) -> Result<Self::AdditionalSigned, TransactionValidityError> {
+		Ok(())
+	}
+	fn pre_dispatch(
+		self,
+		_who: &Self::AccountId,
+		_call: &Self::Call,
+		_info: &<Self::Call as Dispatchable>::Info,
+		_len: usize,
+	) -> Result<Self::Pre, TransactionValidityError> {
+		Ok(())
+	}
 }
