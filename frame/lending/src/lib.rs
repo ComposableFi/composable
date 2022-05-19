@@ -63,7 +63,13 @@ mod repay_borrow;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::{models::{borrower_data::BorrowerData, market_index::{MarketId, MarketIndex}}, weights::WeightInfo};
+	use crate::{
+		models::{
+			borrower_data::BorrowerData,
+			market_index::{MarketId, MarketIndex},
+		},
+		weights::WeightInfo,
+	};
 
 	use codec::Codec;
 	use composable_support::{
@@ -72,7 +78,7 @@ pub mod pallet {
 	};
 	use composable_traits::{
 		currency::CurrencyFactory,
-		defi::{*, validate::MoreThanOne},
+		defi::{validate::MoreThanOne, *},
 		lending::{
 			math::{self, *},
 			BorrowAmountOf, CollateralLpAmountOf, CreateInput, CurrencyPairIsNotSame, Lending,
@@ -306,27 +312,28 @@ pub mod pallet {
 			}
 
 			DebtIndex::<T>::iter()
-				.filter(|(market_id, account, _)| Self::should_liquidate(&market_id, &account).is_ok())
+				.filter(|(market_id, account, _)| {
+					Self::should_liquidate(&market_id, &account).is_ok()
+				})
 				.for_each(|(market_id, account, _)| {
-					signer.send_signed_transaction(|_account| Call::liquidate {
-						market_id,
-						borrowers: vec![account.clone()],
-					})
+					signer
+						.send_signed_transaction(|_account| Call::liquidate {
+							market_id,
+							borrowers: vec![account.clone()],
+						})
 						.iter()
-						.for_each(|(_acc, res)| {
-							match res {
-								Ok(()) => log::info!(
-									"Liquidation succeed, market_id: {:?}, account: {:?}",
-									market_id,
-									account
-								),
-								Err(e) => log::error!(
-									"Liquidation failed, market_id: {:?}, account: {:?}, error: {:?}",
-									market_id,
-									account,
-									e
-								),
-							}
+						.for_each(|(_acc, res)| match res {
+							Ok(()) => log::info!(
+								"Liquidation succeed, market_id: {:?}, account: {:?}",
+								market_id,
+								account
+							),
+							Err(e) => log::error!(
+								"Liquidation failed, market_id: {:?}, account: {:?}, error: {:?}",
+								market_id,
+								account,
+								e
+							),
 						})
 				})
 		}
@@ -401,8 +408,6 @@ pub mod pallet {
 		BorrowRentDoesNotExist,
 
 		MaxLiquidationBatchSizeExceeded,
-
-		AlreadyBorrowed,
 	}
 
 	#[pallet::event]
@@ -723,8 +728,13 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			let keep_alive = true;
-			let amount_repaid =
-				<Self as Lending>::repay_borrow(&market_id, &sender, &beneficiary, amount, keep_alive)?;
+			let amount_repaid = <Self as Lending>::repay_borrow(
+				&market_id,
+				&sender,
+				&beneficiary,
+				amount,
+				keep_alive,
+			)?;
 			Self::deposit_event(Event::<T>::BorrowRepaid {
 				sender,
 				market_id,
@@ -787,16 +797,15 @@ pub mod pallet {
 				account_total_debt_with_interest,
 			)?;
 
-			let borrower =
-				BorrowerData::new(
-					collateral_balance_value,
-					borrow_balance_value,
-					market
-						.collateral_factor
-						.try_into_validated()
-						.map_err(|_| Error::<T>::CollateralFactorIsNotValid)?, /* TODO: Use a proper error mesage */
-					market.under_collateralized_warn_percent,
-				);
+			let borrower = BorrowerData::new(
+				collateral_balance_value,
+				borrow_balance_value,
+				market
+					.collateral_factor
+					.try_into_validated()
+					.map_err(|_| Error::<T>::CollateralFactorIsNotValid)?,
+				market.under_collateralized_warn_percent,
+			);
 
 			Ok(borrower)
 		}
@@ -1120,7 +1129,11 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
 			ensure!(
-				config_input.updatable.collateral_factor.try_into_validated::<MoreThanOne>().is_ok(),
+				config_input
+					.updatable
+					.collateral_factor
+					.try_into_validated::<MoreThanOne>()
+					.is_ok(),
 				Error::<T>::CollateralFactorIsNotValid
 			);
 

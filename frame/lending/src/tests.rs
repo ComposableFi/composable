@@ -12,8 +12,12 @@ use frame_benchmarking::Zero;
 use std::ops::{Div, Mul};
 
 use crate::{
-	self as pallet_lending, accrue_interest_internal, currency::*, mocks::*,
-	models::{borrower_data::BorrowerData, market_index::MarketIndex}, setup::assert_last_event, AccruedInterest, Error,
+	self as pallet_lending, accrue_interest_internal,
+	currency::*,
+	mocks::*,
+	models::{borrower_data::BorrowerData, market_index::MarketIndex},
+	setup::assert_last_event,
+	AccruedInterest, Error,
 };
 use codec::{Decode, Encode};
 use composable_support::validation::{TryIntoValidated, Validated};
