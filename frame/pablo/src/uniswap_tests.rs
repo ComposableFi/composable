@@ -410,8 +410,11 @@ fn cannot_swap_between_wrong_pairs() {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
-			fee: lp_fee,
-			owner_fee,
+			fee_config: FeeConfig {
+				fee_rate: lp_fee,
+				owner_fee_rate: owner_fee,
+				protocol_fee_rate: Permill::zero(),
+			},
 		};
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
@@ -452,8 +455,11 @@ fn cannot_get_exchange_value_for_wrong_asset() {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
-			fee: lp_fee,
-			owner_fee,
+			fee_config: FeeConfig {
+				fee_rate: lp_fee,
+				owner_fee_rate: owner_fee,
+				protocol_fee_rate: Permill::zero(),
+			},
 		};
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
