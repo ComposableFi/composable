@@ -299,12 +299,12 @@ impl WeightToFeePolynomial for DutchAuctionsMocks {
 pub struct XcmFake;
 impl Into<Result<cumulus_pallet_xcm::Origin, XcmFake>> for XcmFake {
 	fn into(self) -> Result<cumulus_pallet_xcm::Origin, XcmFake> {
-		todo!("please test via local-integration-tests")
+		unimplemented!("please test via local-integration-tests")
 	}
 }
 impl From<Origin> for XcmFake {
 	fn from(_: Origin) -> Self {
-		todo!("please test via local-integration-tests")
+		unimplemented!("please test via local-integration-tests")
 	}
 }
 impl SendXcm for XcmFake {
@@ -312,7 +312,7 @@ impl SendXcm for XcmFake {
 		_destination: impl Into<xcm::latest::MultiLocation>,
 		_message: xcm::latest::Xcm<()>,
 	) -> xcm::latest::SendResult {
-		todo!("please test via local-integration-tests")
+		unimplemented!("please test via local-integration-tests")
 	}
 }
 

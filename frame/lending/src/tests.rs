@@ -46,9 +46,9 @@ const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
 const DEFAULT_MARKET_VAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
 const DEFAULT_COLLATERAL_FACTOR: u128 = 2;
 
-type SystemAccountId<R> = <R as frame_system::Config>::AccountId;
-type SystemOrigin<R> = <R as frame_system::Config>::Origin;
-type SystemEvent<R> = <R as frame_system::Config>::Event;
+type SystemAccountIdOf<T> = <T as frame_system::Config>::AccountId;
+type SystemOriginOf<T> = <T as frame_system::Config>::Origin;
+type SystemEventOf<T> = <T as frame_system::Config>::Event;
 
 #[test]
 fn accrue_interest_base_cases() {
@@ -1481,28 +1481,29 @@ fn create_simple_vault(
 /// # Panics
 ///
 /// Panics on any errors. Only for use in testing.
-pub fn create_market<const NORMALIZED_PRICE: u128, R>(
+/// some model with sane parameter
+pub fn create_market<const NORMALIZED_PRICE: u128, T>(
 	borrow_asset: RuntimeCurrency,
 	collateral_asset: RuntimeCurrency,
-	manager: SystemAccountId<R>,
+	manager: SystemAccountIdOf<T>,
 	reserved_factor: Perquintill,
 	collateral_factor: MoreThanOneFixedU128,
-) -> (MarketIndex, R::VaultId)
+) -> (MarketIndex, T::VaultId)
 where
-	R: frame_system::Config
+	T: frame_system::Config
 		+ crate::Config
 		+ DeFiComposableConfig<MayBeAssetId = u128>
 		+ orml_tokens::Config<CurrencyId = u128, Balance = u128>,
-	SystemOrigin<R>: OriginTrait<AccountId = SystemAccountId<R>>,
-	SystemEvent<R>: TryInto<crate::Event<R>>,
-	<SystemEvent<R> as TryInto<crate::Event<R>>>::Error: std::fmt::Debug,
+	SystemOriginOf<T>: OriginTrait<AccountId = SystemAccountIdOf<T>>,
+	SystemEventOf<T>: TryInto<crate::Event<T>>,
+	<SystemEventOf<T> as TryInto<crate::Event<T>>>::Error: std::fmt::Debug,
 {
 	set_price(borrow_asset.id(), NORMALIZED::ONE);
 	set_price(collateral_asset.id(), NORMALIZED::units(NORMALIZED_PRICE));
 
-	orml_tokens::Pallet::<R>::mint_into(borrow_asset.id(), &manager, borrow_asset.units(1000))
+	orml_tokens::Pallet::<T>::mint_into(borrow_asset.id(), &manager, borrow_asset.units(1000))
 		.unwrap();
-	orml_tokens::Pallet::<R>::mint_into(
+	orml_tokens::Pallet::<T>::mint_into(
 		collateral_asset.id(),
 		&manager,
 		collateral_asset.units(100),
@@ -1520,19 +1521,19 @@ where
 		currency_pair: CurrencyPair::new(collateral_asset.id(), borrow_asset.id()),
 	};
 
-	crate::Pallet::<R>::create_market(
-		SystemOrigin::<R>::signed(manager),
+	crate::Pallet::<T>::create_market(
+		SystemOriginOf::<T>::signed(manager),
 		config.try_into_validated().unwrap(),
 	)
 	.unwrap();
-	let system_events = frame_system::Pallet::<R>::events();
+	let system_events = frame_system::Pallet::<T>::events();
 	let last_system_event = system_events.last().expect("There are no events in System::events()");
-	let pallet_event: crate::Event<R> = last_system_event
+	let pallet_event: crate::Event<T> = last_system_event
 		.event
 		.clone()
 		.try_into()
 		.expect("Market was not created due to System::Event => crate::Event conversion error");
-	if let crate::Event::<R>::MarketCreated { market_id, vault_id, .. } = pallet_event {
+	if let crate::Event::<T>::MarketCreated { market_id, vault_id, .. } = pallet_event {
 		(market_id, vault_id)
 	} else {
 		panic!(
@@ -1542,7 +1543,6 @@ where
 	}
 }
 
-/// some model with sane parameter
 fn new_jump_model() -> (Percent, InterestRateModel) {
 	let base_rate = Rate::saturating_from_rational(2, 100);
 	let jump_rate = Rate::saturating_from_rational(10, 100);
@@ -1591,33 +1591,33 @@ fn create_simple_market() -> (MarketIndex, VaultId) {
 ///
 /// Panics on any errors and checks that the last event was `CollateralDeposited` with the correct/
 /// expected values.
-pub fn mint_and_deposit_collateral<R>(
-	account: SystemAccountId<R>,
+pub fn mint_and_deposit_collateral<T>(
+	account: SystemAccountIdOf<T>,
 	balance: u128,
 	market_index: MarketIndex,
 	asset_id: u128,
 ) where
-	R: frame_system::Config
+	T: frame_system::Config
 		+ crate::Config
 		+ orml_tokens::Config<CurrencyId = u128, Balance = u128>
 		+ DeFiComposableConfig<Balance = u128>,
-	SystemAccountId<R>: Copy,
-	SystemOrigin<R>: OriginTrait<AccountId = R::AccountId>,
-	SystemEvent<R>: From<crate::Event<R>>,
+	SystemAccountIdOf<T>: Copy,
+	SystemOriginOf<T>: OriginTrait<AccountId = T::AccountId>,
+	SystemEventOf<T>: From<crate::Event<T>>,
 {
-	assert_ok!(orml_tokens::Pallet::<R>::mint_into(asset_id, &account, balance));
-	assert_ok!(crate::Pallet::<R>::deposit_collateral(
-		SystemOrigin::<R>::signed(account),
+	assert_ok!(orml_tokens::Pallet::<T>::mint_into(asset_id, &account, balance));
+	assert_ok!(crate::Pallet::<T>::deposit_collateral(
+		SystemOriginOf::<T>::signed(account),
 		market_index,
 		balance
 	));
-	let event = crate::Event::<R>::CollateralDeposited {
+	let event = crate::Event::<T>::CollateralDeposited {
 		market_id: market_index,
 		amount: balance,
 		sender: account,
 	};
-	let system_event: <R as crate::Config>::Event = event.into();
-	assert_last_event::<R>(system_event);
+	let system_event: <T as crate::Config>::Event = event.into();
+	assert_last_event::<T>(system_event);
 }
 
 /// Asserts that the outcome of an extrinsic is `Ok`, and that the last event is the specified
@@ -1631,9 +1631,9 @@ pub fn assert_extrinsic_event<T: crate::Config>(
 }
 
 /// Asserts the event wasn't dispatched.
-pub fn assert_no_event<R>(event: R::Event)
+pub fn assert_no_event<T>(event: T::Event)
 where
-	R: frame_system::Config,
+	T: frame_system::Config,
 {
-	assert!(frame_system::Pallet::<R>::events().iter().all(|record| record.event != event));
+	assert!(frame_system::Pallet::<T>::events().iter().all(|record| record.event != event));
 }
