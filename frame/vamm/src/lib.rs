@@ -45,6 +45,10 @@
 //!
 //! * [`create`](pallet/struct.Pallet.html#method.create): Creates a new vamm,
 //! returning it's Id.
+//! * [`swap`](pallet/struct.Pallet.html#method.swap): Performs swap of a
+//! * [`move_price`](pallet/struct.Pallet.html#method.move_price): Changes
+//! amount of base and quote assets in reserve, essentially changing the
+//! invariant.
 //!
 //! ### Runtime Storage Objects
 //!
@@ -117,15 +121,20 @@ pub mod pallet {
 
 	use codec::{Codec, FullCodec};
 	use composable_traits::vamm::{
-		AssetType, Direction, SwapConfig, SwapSimulationConfig, Vamm, VammConfig,
+		AssetType, Direction, MovePriceConfig, SwapConfig, SwapOutput, SwapSimulationConfig, Vamm,
+		VammConfig,
 	};
-	use frame_support::{pallet_prelude::*, sp_std::fmt::Debug, transactional, Blake2_128Concat};
+	use frame_support::{
+		pallet_prelude::*, sp_std::fmt::Debug, traits::UnixTime, transactional, Blake2_128Concat,
+	};
 	use num_integer::Integer;
 	use sp_arithmetic::traits::Unsigned;
+	use sp_core::U256;
 	use sp_runtime::{
 		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Zero},
 		ArithmeticError, FixedPointNumber,
 	};
+	use std::cmp::Ordering;
 
 	#[cfg(feature = "std")]
 	use serde::{Deserialize, Serialize};
@@ -164,17 +173,6 @@ pub mod pallet {
 			+ Unsigned
 			+ Zero;
 
-		/// Timestamp to be used for twap calculations and market closing.
-		type Timestamp: Default
-			+ Clone
-			+ Copy
-			+ Debug
-			+ FullCodec
-			+ MaxEncodedLen
-			+ MaybeSerializeDeserialize
-			+ PartialEq
-			+ TypeInfo;
-
 		/// The Balance type used by the pallet for bookkeeping. `Config::Convert` is used for
 		/// conversions to `u128`, which are used in the computations.
 		type Balance: Default
@@ -197,6 +195,21 @@ pub mod pallet {
 
 		/// The Integer type used by the pallet for computing swaps.
 		type Integer: Integer;
+
+		/// Type representing the current time.
+		type Moment: Default
+			+ Codec
+			+ TypeInfo
+			+ Debug
+			+ AtLeast32BitUnsigned
+			+ Copy
+			+ Clone
+			+ MaxEncodedLen
+			+ MaybeSerializeDeserialize
+			+ Into<u64>;
+
+		/// Implementation for querying the current Unix timestamp
+		type TimeProvider: UnixTime;
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -205,12 +218,14 @@ pub mod pallet {
 
 	type BalanceOf<T> = <T as Config>::Balance;
 	type DecimalOf<T> = <T as Config>::Decimal;
-	type TimestampOf<T> = <T as Config>::Timestamp;
 	type VammIdOf<T> = <T as Config>::VammId;
+	type MomentOf<T> = <T as Config>::Moment;
+	type SwapOutputOf<T> = SwapOutput<BalanceOf<T>>;
 	type SwapConfigOf<T> = SwapConfig<VammIdOf<T>, BalanceOf<T>>;
 	type SwapSimulationConfigOf<T> = SwapSimulationConfig<VammIdOf<T>, BalanceOf<T>>;
+	type MovePriceConfigOf<T> = MovePriceConfig<VammIdOf<T>, BalanceOf<T>>;
 	type VammConfigOf<T> = VammConfig<BalanceOf<T>>;
-	type VammStateOf<T> = VammState<BalanceOf<T>, TimestampOf<T>>;
+	type VammStateOf<T> = VammState<BalanceOf<T>, MomentOf<T>>;
 
 	/// Represents the direction a of a position.
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
@@ -222,7 +237,7 @@ pub mod pallet {
 	/// Data relating to the state of a virtual market.
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug)]
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-	pub struct VammState<Balance, Timestamp> {
+	pub struct VammState<Balance, Moment> {
 		/// The total amount of base asset present in the vamm.
 		pub base_asset_reserves: Balance,
 
@@ -232,6 +247,9 @@ pub mod pallet {
 		/// The magnitude of the quote asset reserve.
 		pub peg_multiplier: Balance,
 
+		/// The invariant `K`.
+		pub invariant: U256,
+
 		/// Whether this market is closed or not.
 		///
 		/// This variable function as a signal to allow pallets who uses the
@@ -240,7 +258,7 @@ pub mod pallet {
 		/// as normal, but if the value is `Some(timestamp)` it means the market
 		/// is flaged to be closed and the closing action will take (or took)
 		/// effect at the time `timestamp`.
-		pub closed: Option<Timestamp>,
+		pub closed: Option<Moment>,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -274,6 +292,21 @@ pub mod pallet {
 	pub enum Event<T: Config> {
 		/// Emitted after a successful call to the [`create`](Pallet::create) function.
 		Created { vamm_id: VammIdOf<T>, state: VammStateOf<T> },
+		/// Emitted after a successfull call to the [`swap`](Pallet::swap) function.
+		Swapped {
+			vamm_id: VammIdOf<T>,
+			input_amount: BalanceOf<T>,
+			output_amount: SwapOutputOf<T>,
+			input_asset_type: AssetType,
+			direction: Direction,
+		},
+		/// Emitted after a successful call to the [`move_price`](Pallet::move_price) function.
+		PriceMoved {
+			vamm_id: VammIdOf<T>,
+			base_asset_reserves: BalanceOf<T>,
+			quote_asset_reserves: BalanceOf<T>,
+			invariant: U256,
+		},
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -287,6 +320,8 @@ pub mod pallet {
 		BaseAssetReserveIsZero,
 		/// Tried to set [`quote_asset_reserves`](VammState) to zero.
 		QuoteAssetReserveIsZero,
+		/// Computed Invariant is zero.
+		InvariantIsZero,
 		/// Tried to set [`peg_multiplier`](VammState) to zero.
 		PegMultiplierIsZero,
 		/// Tried to access an invalid [`VammId`](Config::VammId).
@@ -299,6 +334,17 @@ pub mod pallet {
 		/// Tried to add some amount of asset to Vamm but it would exceeds the
 		/// supported maximum value.
 		TradeExtrapolatesMaximumSupportedAmount,
+		/// Tried to perform operation against a closed Vamm.
+		VammIsClosed,
+		/// Tried to swap assets but the amount returned was less than the minimum expected.
+		SwappedAmountLessThanMinimumLimit,
+		/// Tried to derive invariant from base and quote asset, but the
+		/// computation was not successful.
+		FailedToDeriveInvariantFromBaseAndQuoteAsset,
+		/// Tried to perform swap operation but it would drain all base asset reserves.
+		BaseAssetReservesWouldBeCompletelyDrained,
+		/// Tried to perform swap operation but it would drain all quote asset reserves.
+		QuoteAssetReservesWouldBeCompletelyDrained,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -315,7 +361,7 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub vamm_count: VammIdOf<T>,
-		pub vamms: Vec<(VammIdOf<T>, VammState<BalanceOf<T>, TimestampOf<T>>)>,
+		pub vamms: Vec<(VammIdOf<T>, VammStateOf<T>)>,
 	}
 
 	#[cfg(feature = "std")]
@@ -345,6 +391,7 @@ pub mod pallet {
 		type SwapConfig = SwapConfigOf<T>;
 		type SwapSimulationConfig = SwapSimulationConfigOf<T>;
 		type VammConfig = VammConfigOf<T>;
+		type MovePriceConfig = MovePriceConfigOf<T>;
 		type VammId = VammIdOf<T>;
 
 		/// Creates a new virtual automated market maker.
@@ -379,18 +426,24 @@ pub mod pallet {
 		/// Updates [`VammMap`] storage map and [`VammCounter`] storage value.
 		///
 		/// ## Errors
+		/// * [`Error::<T>::BaseAssetReserveIsZero`]
+		/// * [`Error::<T>::QuoteAssetReserveIsZero`]
+		/// * [`Error::<T>::InvariantIsZero`]
+		/// * [`Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset`]
 		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
 		///
 		/// # Runtime
 		/// `O(1)`
 		#[transactional]
 		fn create(config: &VammConfigOf<T>) -> Result<VammIdOf<T>, DispatchError> {
-			// TODO: (Matheus)
+			// TODO(Cardosaum)
 			// How to ensure that the caller has the right privileges?
 			// (eg. How to ensure the caller is the Clearing House, and not anyone else?)
-			ensure!(!config.base_asset_reserves.is_zero(), Error::<T>::BaseAssetReserveIsZero);
-			ensure!(!config.quote_asset_reserves.is_zero(), Error::<T>::QuoteAssetReserveIsZero);
+
 			ensure!(!config.peg_multiplier.is_zero(), Error::<T>::PegMultiplierIsZero);
+
+			let invariant =
+				Self::compute_invariant(config.base_asset_reserves, config.quote_asset_reserves)?;
 
 			VammCounter::<T>::try_mutate(|next_id| {
 				let id = *next_id;
@@ -398,6 +451,7 @@ pub mod pallet {
 					base_asset_reserves: config.base_asset_reserves,
 					quote_asset_reserves: config.quote_asset_reserves,
 					peg_multiplier: config.peg_multiplier,
+					invariant,
 					closed: Default::default(),
 				};
 
@@ -451,14 +505,13 @@ pub mod pallet {
 			vamm_id: VammIdOf<T>,
 			asset_type: AssetType,
 		) -> Result<DecimalOf<T>, DispatchError> {
-			// Requested vamm must exist.
-			ensure!(VammMap::<T>::contains_key(vamm_id), Error::<T>::VammDoesNotExist);
+			// Get Vamm state.
+			let vamm_state = Self::get_vamm_state(&vamm_id)?;
 
-			let vamm_state = VammMap::<T>::get(vamm_id).ok_or(Error::<T>::FailToRetrieveVamm)?;
-			let quote_asset_reserves_decimal =
-				DecimalOf::<T>::from_inner(vamm_state.quote_asset_reserves);
 			let base_asset_reserves_decimal =
 				DecimalOf::<T>::from_inner(vamm_state.base_asset_reserves);
+			let quote_asset_reserves_decimal =
+				DecimalOf::<T>::from_inner(vamm_state.quote_asset_reserves);
 			let peg_multiplier_decimal = DecimalOf::<T>::from_inner(vamm_state.peg_multiplier);
 
 			match asset_type {
@@ -481,16 +534,335 @@ pub mod pallet {
 			todo!()
 		}
 
+		/// Performs the swap of the desired asset against the vamm.
+		///
+		/// # Overview
+		/// In order for the caller be able to swap assets in the vamm, it has
+		/// to request it to the Vamm Pallet. The pallet will perform all needed
+		/// checks to ensure the swap is a valid one and then, using the
+		/// corresponding function it was configured to, will compute the amount
+		/// of assets the caller will recieve.
+		///
+		/// In the current state the only function available to perform these
+		/// computations is the CFMM `x * y = k`.
+		///
+		/// ![](https://www.plantuml.com/plantuml/svg/FSq_giCm383n_PtYzGBHtYbGw3MA8YknmPAD_ZJNR-ZGwUCtVQi7MgJqlrjJwbauhV_NYEbt0CDpELhKtDBPQ6Ymna93u35a3iUjyxC1_G3iLDbWDnI6Duf0QNXSSjXJAThGbvyubzbHlz-LjLpz0000)
+		///
+		/// ## Parameters
+		///  - `config`: Specification for swaps.
+		///
+		/// ## Returns
+		/// The amount of the other asset the caller will receive as a
+		/// result of the swap.
+		///
+		/// E.g. If the caller swaps _quote_ asset, it will receive some amount
+		/// of _base_ asset (and vice-versa).
+		///
+		/// ## Assumptions or Requirements
+		/// * The requested [`VammId`](Config::VammId) must exists
+		/// * The desired swap amount can not exceed the maximum supported value
+		/// for the Vamm
+		/// * The desired swap amount must result in at least
+		/// [`output_amount_limit`](composable_traits::vamm::SwapConfig)
+		///
+		/// ## Emits
+		/// * [`Swaped`](Event::<T>::Swapped)
+		///
+		/// ## State Changes
+		/// Updates [`VammMap`] storage map.
+		///
+		/// ## Errors
+		/// * [`Error::<T>::VammDoesNotExist`]
+		/// * [`Error::<T>::FailToRetrieveVamm`]
+		/// * [`Error::<T>::VammIsClosed`]
+		/// * [`Error::<T>::InsufficientFundsForTrade`]
+		/// * [`Error::<T>::TradeExtrapolatesMaximumSupportedAmount`]
+		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
+		/// * [`ArithmeticError::Underflow`](sp_runtime::ArithmeticError)
+		/// * [`ArithmeticError::DivisionByZero`](sp_runtime::ArithmeticError)
+		///
+		/// # Runtime
+		/// `O(1)`
+		#[transactional]
+		fn swap(config: &SwapConfigOf<T>) -> Result<SwapOutputOf<T>, DispatchError> {
+			// Get Vamm state.
+			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
+
+			// Perform required sanity checks.
+			Self::swap_sanity_check(config, &vamm_state)?;
+
+			// Delegate swap to helper functions.
+			let amount_swapped = match config.asset {
+				AssetType::Quote => Self::swap_quote_asset(config, &mut vamm_state),
+				AssetType::Base => Self::swap_base_asset(config, &mut vamm_state),
+			}?;
+
+			// Ensure swapped amount is valid.
+			ensure!(
+				amount_swapped.output >= config.output_amount_limit,
+				Error::<T>::SwappedAmountLessThanMinimumLimit
+			);
+
+			// Ensure both quote and base assets weren't completely drained from vamm.
+			ensure!(
+				!vamm_state.base_asset_reserves.is_zero(),
+				Error::<T>::BaseAssetReservesWouldBeCompletelyDrained
+			);
+			ensure!(
+				!vamm_state.quote_asset_reserves.is_zero(),
+				Error::<T>::QuoteAssetReservesWouldBeCompletelyDrained
+			);
+
+			// TODO(Cardosaum): Write one more `ensure!` block regarding
+			// amount_swapped negative or positive?
+
+			// Update runtime storage
+			VammMap::<T>::insert(&config.vamm_id, vamm_state);
+
+			// Deposit swap event into blockchain
+			Self::deposit_event(Event::<T>::Swapped {
+				vamm_id: config.vamm_id,
+				input_amount: config.input_amount,
+				output_amount: amount_swapped,
+				input_asset_type: config.asset,
+				direction: config.direction,
+			});
+
+			// Return total swapped asset
+			Ok(amount_swapped)
+		}
+
 		#[allow(unused_variables)]
-		fn swap(config: &SwapConfigOf<T>) -> Result<BalanceOf<T>, DispatchError> {
-			// Sanity checks
-			// 1) Requested vamm must exists and be retrievable.
-			ensure!(VammMap::<T>::contains_key(config.vamm_id), Error::<T>::VammDoesNotExist);
-			let vamm_state =
-				VammMap::<T>::get(config.vamm_id).ok_or(Error::<T>::FailToRetrieveVamm)?;
+		fn swap_simulation(
+			config: &SwapSimulationConfigOf<T>,
+		) -> Result<BalanceOf<T>, DispatchError> {
+			todo!()
+		}
+
+		/// Moves the price of a vamm to the desired values of
+		/// [`base`](VammState) and [`quote`](VammState) asset reserves.
+		///
+		/// # Overview
+		/// In order for the caller to modify the
+		/// [`base`](VammState::base_asset_reserves) and
+		/// [`quote`](VammState::quote_asset_reserves) asset reserves,
+		/// essentialy modifying the invariant `k` of the function `x * y = k`,
+		/// it has to request it to the Vamm Pallet. The pallet will perform the
+		/// needed validity checks and, if everything succeeds, a
+		/// [`PriceMoved`](Event::<T>::PriceMoved) event will be deposited on
+		/// the blockchain warning the state change for the vamm and the asset
+		/// reserves of the vamm and it's invariant will change accordingly.
+		///
+		/// ![](https://www.plantuml.com/plantuml/svg/FSqz3i8m343XdLF01UgTgH8IrwXSrsqYnKxadt9zAWQcfszwimTQfBJReogrt3YjtKl4y2U0uMSwQfHSqzceQx36H5tWrMLqnxNnkmBz0UnKs60t58OJHM2hU5nos5CfQjT5-idBi4eyZORwky-iszKl)
+		///
+		/// ## Parameters:
+		/// * [`config`](composable_traits::vamm::MovePriceConfig):
+		/// Specification for moving the price of the vamm.
+		///
+		/// ## Returns
+		/// This function returns the calculated invariant `K` if successful.
+		///
+		/// ## Assumptions or Requirements
+		/// In order to move the price of a vamm we need to ensure that some properties hold:
+		/// * The passed [`VammId`](Config::VammId) must be valid
+		/// * The desired vamm must be open. (See the [`closed`](VammState)
+		/// field for more information).
+		/// * Both [`base`](VammState::base_asset_reserves) and
+		/// [`quote`](VammState::quote_asset_reserves) must be greater than
+		/// zero.
+		///
+		/// ## Emits
+		/// * [`PriceMoved`](Event::<T>::PriceMoved)
+		///
+		/// ## State Changes
+		/// Updates:
+		/// * [`VammMap`], modifying both base and quote asset reserves as well
+		/// as the invariant.
+		///
+		/// ## Errors
+		/// * [`Error::<T>::VammDoesNotExist`]
+		/// * [`Error::<T>::FailToRetrieveVamm`]
+		/// * [`Error::<T>::VammIsClosed`]
+		/// * [`Error::<T>::BaseAssetReserveIsZero`]
+		/// * [`Error::<T>::QuoteAssetReserveIsZero`]
+		/// * [`Error::<T>::InvariantIsZero`]
+		/// * [`Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset`]
+		///
+		/// # Runtime
+		/// `O(1)`
+		#[transactional]
+		fn move_price(config: &Self::MovePriceConfig) -> Result<U256, DispatchError> {
+			// Get Vamm state.
+			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
+			// TODO(Cardosaum): Try to move from using function
+			// Self::is_vamm_closed to Vamm.is_closed method
+			ensure!(!Self::is_vamm_closed(&vamm_state), Error::<T>::VammIsClosed);
+
+			let invariant =
+				Self::compute_invariant(config.base_asset_reserves, config.quote_asset_reserves)?;
+
+			vamm_state.base_asset_reserves = config.base_asset_reserves;
+			vamm_state.quote_asset_reserves = config.quote_asset_reserves;
+			vamm_state.invariant = invariant;
+
+			// Update runtime storage.
+			VammMap::<T>::insert(&config.vamm_id, vamm_state);
+
+			// Deposit price moved event into blockchain.
+			Self::deposit_event(Event::<T>::PriceMoved {
+				vamm_id: config.vamm_id,
+				base_asset_reserves: config.base_asset_reserves,
+				quote_asset_reserves: config.quote_asset_reserves,
+				invariant,
+			});
+
+			// Return new invariant.
+			Ok(invariant)
+		}
+	}
+
+	// ----------------------------------------------------------------------------------------------------
+	//                              Helper Functions
+	// ----------------------------------------------------------------------------------------------------
+
+	// Helper types - core functionality
+	struct CalculateSwapAsset<T: Config> {
+		output_amount: BalanceOf<T>,
+		input_amount: BalanceOf<T>,
+	}
+
+	// Helper functions - core functionality
+	impl<T: Config> Pallet<T> {
+		fn swap_quote_asset(
+			config: &SwapConfigOf<T>,
+			vamm_state: &mut VammStateOf<T>,
+		) -> Result<SwapOutputOf<T>, DispatchError> {
+			let quote_asset_reserve_amount = config
+				.input_amount
+				.checked_div(&vamm_state.peg_multiplier)
+				.ok_or(ArithmeticError::DivisionByZero)?;
+
+			let initial_base_asset_reserve = vamm_state.base_asset_reserves;
+			let swap_amount = Self::calculate_swap_asset(
+				&quote_asset_reserve_amount,
+				&vamm_state.quote_asset_reserves,
+				&config.direction,
+				vamm_state,
+			)?;
+
+			vamm_state.base_asset_reserves = swap_amount.output_amount;
+			vamm_state.quote_asset_reserves = swap_amount.input_amount;
+
+			match initial_base_asset_reserve.cmp(&swap_amount.output_amount) {
+				Ordering::Less => Ok(SwapOutput {
+					output: swap_amount
+						.output_amount
+						.checked_sub(&initial_base_asset_reserve)
+						.ok_or(ArithmeticError::Underflow)?,
+					negative: true,
+				}),
+				_ => Ok(SwapOutput {
+					output: initial_base_asset_reserve
+						.checked_sub(&swap_amount.output_amount)
+						.ok_or(ArithmeticError::Underflow)?,
+					negative: false,
+				}),
+			}
+		}
+
+		fn swap_base_asset(
+			config: &SwapConfigOf<T>,
+			vamm_state: &mut VammStateOf<T>,
+		) -> Result<SwapOutputOf<T>, DispatchError> {
+			let initial_quote_asset_reserve = vamm_state.quote_asset_reserves;
+			let swap_amount = Self::calculate_swap_asset(
+				&config.input_amount,
+				&vamm_state.base_asset_reserves,
+				&config.direction,
+				vamm_state,
+			)?;
+
+			vamm_state.base_asset_reserves = swap_amount.input_amount;
+			vamm_state.quote_asset_reserves = swap_amount.output_amount;
+
+			Ok(SwapOutput {
+				output: Self::calculate_quote_asset_amount_swapped(
+					&initial_quote_asset_reserve,
+					&swap_amount.output_amount,
+					&config.direction,
+					vamm_state,
+				)?,
+				negative: false,
+			})
+		}
+
+		fn calculate_swap_asset(
+			swap_amount: &BalanceOf<T>,
+			input_asset_amount: &BalanceOf<T>,
+			direction: &Direction,
+			vamm_state: &VammStateOf<T>,
+		) -> Result<CalculateSwapAsset<T>, DispatchError> {
+			let new_input_amount = match direction {
+				Direction::Add => {
+					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?
+				},
+
+				Direction::Remove => {
+					input_asset_amount.checked_sub(swap_amount).ok_or(ArithmeticError::Underflow)?
+				},
+			};
+			let new_input_amount_u256 = Self::balance_to_u256(new_input_amount)?;
+
+			// TODO(Cardosaum): Maybe it would be worth to create another sanity
+			// check in the helper function tracking the inputs and verify if
+			// they would result in a division by zero? (Doing this we could
+			// present a better error message for the caller).
+			let new_output_amount_u256 = vamm_state
+				.invariant
+				.checked_div(new_input_amount_u256)
+				.ok_or(ArithmeticError::DivisionByZero)?;
+			let new_output_amount = Self::u256_to_balance(new_output_amount_u256)?;
+
+			Ok(CalculateSwapAsset {
+				input_amount: new_input_amount,
+				output_amount: new_output_amount,
+			})
+		}
+
+		fn calculate_quote_asset_amount_swapped(
+			quote_asset_reserve_before: &BalanceOf<T>,
+			quote_asset_reserve_after: &BalanceOf<T>,
+			direction: &Direction,
+			vamm_state: &VammStateOf<T>,
+		) -> Result<BalanceOf<T>, DispatchError> {
+			let quote_asset_reserve_change = match direction {
+				Direction::Add => quote_asset_reserve_before
+					.checked_sub(quote_asset_reserve_after)
+					.ok_or(ArithmeticError::Underflow)?,
+				Direction::Remove => quote_asset_reserve_after
+					.checked_sub(quote_asset_reserve_before)
+					.ok_or(ArithmeticError::Underflow)?,
+			};
+
+			let quote_asset_amount = quote_asset_reserve_change
+				.checked_mul(&vamm_state.peg_multiplier)
+				.ok_or(ArithmeticError::Overflow)?;
+
+			Ok(quote_asset_amount)
+		}
+	}
+
+	// Helper functions - validity checks
+	impl<T: Config> Pallet<T> {
+		fn swap_sanity_check(
+			config: &SwapConfigOf<T>,
+			vamm_state: &VammStateOf<T>,
+		) -> Result<(), DispatchError> {
+			// We must ensure that the vamm is not closed before perfoming any swap.
+			ensure!(!Self::is_vamm_closed(vamm_state), Error::<T>::VammIsClosed);
 
 			match config.direction {
-				// 2) If we intend to remove some asset amount from vamm, we must
+				// If we intend to remove some asset amount from vamm, we must
 				// have sufficient funds for it.
 				Direction::Remove => match config.asset {
 					AssetType::Base => ensure!(
@@ -503,7 +875,7 @@ pub mod pallet {
 					),
 				},
 
-				// 3) If we intend to add some asset amount to the vamm, the
+				// If we intend to add some asset amount to the vamm, the
 				// final amount must not overflow.
 				Direction::Add => match config.asset {
 					AssetType::Base => ensure!(
@@ -515,41 +887,63 @@ pub mod pallet {
 						Error::<T>::TradeExtrapolatesMaximumSupportedAmount
 					),
 				},
-			}
+			};
 
-			// Delegate swap to helper functions.
-			match config.asset {
-				AssetType::Quote => Self::swap_quote_asset(config),
-				AssetType::Base => todo!(),
-			}
-		}
-
-		#[allow(unused_variables)]
-		fn swap_simulation(
-			config: &SwapSimulationConfigOf<T>,
-		) -> Result<BalanceOf<T>, DispatchError> {
-			todo!()
+			Ok(())
 		}
 	}
-
-	// ----------------------------------------------------------------------------------------------------
-	//                              Helper Functions
-	// ----------------------------------------------------------------------------------------------------
-
-	// Helper functions - core functionality
-	impl<T: Config> Pallet<T> {}
-
-	// Helper functions - validity checks
-	impl<T: Config> Pallet<T> {}
 
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
-		fn swap_quote_asset(config: &SwapConfigOf<T>) -> Result<BalanceOf<T>, DispatchError> {
-			todo!()
+		fn get_vamm_state(vamm_id: &VammIdOf<T>) -> Result<VammStateOf<T>, DispatchError> {
+			// Requested vamm must exists and be retrievable.
+			ensure!(VammMap::<T>::contains_key(vamm_id), Error::<T>::VammDoesNotExist);
+			let vamm_state = VammMap::<T>::get(vamm_id).ok_or(Error::<T>::FailToRetrieveVamm)?;
+			Ok(vamm_state)
+		}
+
+		fn is_vamm_closed(vamm_state: &VammStateOf<T>) -> bool {
+			let now = T::TimeProvider::now().as_secs();
+			match vamm_state.closed {
+				Some(timestamp) => now >= Into::<u64>::into(timestamp),
+				None => false,
+			}
+		}
+
+		fn balance_to_u128(value: BalanceOf<T>) -> Result<u128, DispatchError> {
+			Ok(TryInto::<u128>::try_into(value).ok().ok_or(ArithmeticError::Overflow)?)
+		}
+
+		fn balance_to_u256(value: BalanceOf<T>) -> Result<U256, DispatchError> {
+			Ok(U256::from(Self::balance_to_u128(value)?))
+		}
+
+		fn u256_to_u128(value: U256) -> Result<u128, DispatchError> {
+			Ok(TryInto::<u128>::try_into(value).ok().ok_or(ArithmeticError::Overflow)?)
+		}
+
+		fn u256_to_balance(value: U256) -> Result<BalanceOf<T>, DispatchError> {
+			Ok(Self::u256_to_u128(value)?.try_into().ok().ok_or(ArithmeticError::Overflow)?)
+		}
+
+		pub fn compute_invariant(
+			base: BalanceOf<T>,
+			quote: BalanceOf<T>,
+		) -> Result<U256, DispatchError> {
+			// Neither base nor quote asset are allowed to be zero since it
+			// would mean the invariant would also be zero.
+			ensure!(!base.is_zero(), Error::<T>::BaseAssetReserveIsZero);
+			ensure!(!quote.is_zero(), Error::<T>::QuoteAssetReserveIsZero);
+
+			let base_u256 = Self::balance_to_u256(base)?;
+			let quote_u256 = Self::balance_to_u256(quote)?;
+			let invariant = base_u256
+				.checked_mul(quote_u256)
+				.ok_or(Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset)?;
+
+			ensure!(!invariant.is_zero(), Error::<T>::InvariantIsZero);
+
+			Ok(invariant)
 		}
 	}
 }
-
-// ----------------------------------------------------------------------------------------------------
-//                                              Unit Tests
-// ----------------------------------------------------------------------------------------------------

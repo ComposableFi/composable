@@ -1,0 +1,9 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc b7ab52963e87e1f3b8e020e7a20bc109937dfae12a4f02bcb950fe5d0f1af243 # shrinks to mut vamm_state = VammState { base_asset_reserves: 1, quote_asset_reserves: 1, peg_multiplier: 1, closed: Some(1) }, mut swap_config = SwapConfig { vamm_id: 0, asset: Base, input_amount: 1, direction: Add, output_amount_limit: 1 }, input_amount = 170141183460469231731687303715884105727, base_asset_reserves = 170141183460469231731687303715884105727
+cc c3403c98dd4535200f126bcced60271bdd926d9704e81fc6b9d23290c85d9a83 # shrinks to mut vamm_state = VammState { base_asset_reserves: 1, quote_asset_reserves: 1, peg_multiplier: 1, closed: Some(1) }, mut swap_config = SwapConfig { vamm_id: 0, asset: Base, input_amount: 1, direction: Remove, output_amount_limit: 1 }, input_amount = 170141183460469231731687303715884105727, base_asset_reserves = 1
+cc 0de9acfc52720632ad70cabd727b5bed77b6206b36953f2ecef8c7d7fdfd851c # shrinks to mut vamm_state = VammState { base_asset_reserves: 1, quote_asset_reserves: 1, peg_multiplier: 1, closed: None }, mut swap_config = SwapConfig { vamm_id: 0, asset: Base, input_amount: 1, direction: Add, output_amount_limit: 1 }, input_amount = 170141183460469231731687303715884105727, base_asset_reserves = 170141183460469231731687303715884105727

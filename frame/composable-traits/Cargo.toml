@@ -12,6 +12,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
 xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.17" }
@@ -41,6 +42,7 @@ std = [
   "codec/std",
   "frame-support/std",
   "frame-system/std",
+  "sp-core/std",
   "sp-runtime/std",
   "sp-std/std",
   "scale-info/std",
