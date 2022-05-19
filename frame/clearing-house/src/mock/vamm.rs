@@ -189,11 +189,9 @@ pub mod pallet {
 		}
 
 		pub fn set_price_of(vamm_id: &T::VammId, price: Option<T::Decimal>) {
-			if let Some(p) = price {
-				Prices::<T>::insert(vamm_id, p);
-			} else {
-				Prices::<T>::remove(vamm_id);
-			}
+			Prices::<T>::mutate_exists(vamm_id, |p| {
+				*p = price;
+			});
 		}
 
 		pub fn set_twap(twap: Option<T::Decimal>) {
@@ -201,11 +199,9 @@ pub mod pallet {
 		}
 
 		pub fn set_twap_of(vamm_id: &T::VammId, twap: Option<T::Decimal>) {
-			if let Some(t) = twap {
-				Twaps::<T>::insert(vamm_id, t);
-			} else {
-				Twaps::<T>::remove(vamm_id);
-			}
+			Twaps::<T>::mutate_exists(vamm_id, |t| {
+				*t = twap;
+			});
 		}
 
 		pub fn get_value(
