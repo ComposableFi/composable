@@ -110,7 +110,7 @@ pub struct StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards> {
 	pub reward_epoch_start: Epoch,
 	/// List of reward asset/pending rewards.
 	pub pending_rewards: Rewards,
-	/// The date at which this NFT was minted.
+	/// The date at which this NFT was minted or to wich lock was extended too.
 	pub lock_date: Timestamp,
 	/// The duration for which this NFT stake was locked.
 	pub lock_duration: DurationSeconds,
