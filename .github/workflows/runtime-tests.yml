@@ -1,9 +1,10 @@
 name: Runtime Tests
 
 on:
-  # push: # we will uncomment it after we will fix issues with the verification system
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - main
+      - andor0/add-runtime-tests-in-ci # tmp
 
 jobs:
   tests:
