@@ -21,6 +21,7 @@
 	],
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
+		"workbench.iconTheme": "vscode-icons",
 		"lldb.executable": "/usr/bin/lldb",
 		// VS Code don't watch files under ./target
 		"files.watcherExclude": {
@@ -39,7 +40,14 @@
 			"other": true,
 			"comments": false,
 			"strings": true
-		}
+		},
+		"workbench.tree.indent": 16,
+		"explorer.compactFolders": false,
+		"githubPullRequests.fileListLayout": "tree",
+		"vsicons.dontShowNewVersionMessage": true,
+		"window.autoDetectColorScheme": true,
+		"workbench.preferredLightColorTheme": "GitHub Light",
+		"workbench.preferredDarkColorTheme": "GitHub Dark",
 	},
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
@@ -56,11 +64,13 @@
 		"eamodio.gitlens",
 		"ms-vscode.makefile-tools",
 		"ms-vsliveshare.vsliveshare",
-		"tomoki1207.pdf"
+		"tomoki1207.pdf",
+		"vscode-icons-team.vscode-icons",
+		"GitHub.github-vscode-theme"
 	],
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
-	"onCreateCommand": "cd /workspaces/composable/scripts/polkadot-launch && yarn",
+	"onCreateCommand": "cd /workspaces/composable/scripts/polkadot-launch && yarn && cd /workspaces/composable/integration-tests/runtime-tests && npm install",
 	"postCreateCommand": "mkdir -p /workspaces/polkadot/target/release && cp /polkadot-binary/polkadot /workspaces/polkadot/target/release/polkadot",
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
