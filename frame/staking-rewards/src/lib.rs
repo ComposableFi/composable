@@ -361,7 +361,7 @@ pub mod pallet {
 		}
 
 		/// Splits fNFT position into several chunks with various amounts, but with same exposure.
-		/// fNFT splitted earns reward in current epoch proportial to split.
+		/// fNFT splitted earns reward in current epoch proportional to split.
 		/// Can split only at  `State::WaitingForEpochEnd` state.
 		///
 		/// `origin` - owner of fNFT
@@ -427,6 +427,8 @@ pub mod pallet {
 											// TODO: https://app.clickup.com/t/2xw5fca
 										},
 										PositionState::LockedRewarding => {
+											// TODO: return here increased share if one of assets is
+											// same as staked
 											let shares = nft.shares();
 											for (reward_asset, pending_reward) in
 												nft.pending_rewards.clone().into_iter()
@@ -443,6 +445,8 @@ pub mod pallet {
 													reward,
 													total_shares,
 												)?;
+												// TODO: if adding asset which is staked, increase
+												// total
 												nft.pending_rewards
 													.try_insert(
 														reward_asset,
