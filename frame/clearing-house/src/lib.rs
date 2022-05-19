@@ -12,19 +12,31 @@
 //!
 //! ### Terminology
 //!
-//! * **Trader**: Primary user of the public extrinsics of the pallet
-//! * **Derivative**: A financial instrument which derives its value from another asset, a.k.a. the
+//! - **Trader**: Primary user of the public extrinsics of the pallet
+//! - **Derivative**: A financial instrument which derives its value from another asset, a.k.a. the
 //!   _underlying_.
-//! * **Perpetual contract**: A derivative product that allows a trader to have exposure to the underlying's price without owning it. See [The Cartoon Guide to Perps](https://www.paradigm.xyz/2021/03/the-cartoon-guide-to-perps) for intuitions.
-//! * **Market**: Perpetual contracts market, where users trade virtual tokens mirroring the
+//! - **Perpetual contract**: A derivative product that allows a trader to have exposure to the
+//!   underlying's price without owning it. See
+//!   [The Cartoon Guide to Perps](https://www.paradigm.xyz/2021/03/the-cartoon-guide-to-perps)
+//!   for intuitions.
+//! - **Market**: Perpetual contracts market, where users trade virtual tokens mirroring the
 //!   base-quote asset pair of spot markets. A.k.a. a virtual market.
-//! * **VAMM**: Virtual automated market maker allowing price discovery in virtual markets based on
+//! - **VAMM**: Virtual automated market maker allowing price discovery in virtual markets based on
 //!   the supply of virtual base/quote assets.
-//! * **Position**: Amount of a particular virtual asset owned by a trader. Implies debt (positive
+//! - **Position**: Amount of a particular virtual asset owned by a trader. Implies debt (positive
 //!   or negative) to the Clearing House.
-//! * **Collateral**: 'Real' asset(s) backing the trader's position(s), ensuring he/she can pay back
+//! - **Collateral**: 'Real' asset(s) backing the trader's position(s), ensuring he/she can pay back
 //!   the Clearing House.
-//! * **IMR**: acronym for 'Initial Margin Ratio'
+//! - **`PnL`**: Profit and Loss, i.e., the difference between the current/exit and entry prices of
+//!   a position
+//! - **Margin**: A user's equity in a group of positions, i.e., it's collateral + total unrealized
+//!   `PnL` + total unrealized funding payments
+//! - **Margin ratio**: The ratio of the user's margin to his total position value. May be measured
+//!   using either index (oracle) or mark (VAMM) prices
+//! - **IMR**: Acronym for 'Initial Margin Ratio'. The mininum allowable margin ratio resulting from
+//!   opening new positions. Inversely proportional to the maximum leverage of an account
+//! - **MMR**: Acronym for 'Maintenance Margin Ratio'. The margin ratio below which a full
+//!   liquidation of a user's account can be triggered by a liquidator
 //!
 //! ### Goals
 //!
