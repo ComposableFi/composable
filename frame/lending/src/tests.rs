@@ -13,8 +13,7 @@ use std::ops::{Div, Mul};
 
 use crate::{
 	self as pallet_lending, accrue_interest_internal, currency::*, mocks::*,
-	models::borrower_data::BorrowerData, setup::assert_last_event, AccruedInterest, Error,
-	MarketIndex,
+	models::{borrower_data::BorrowerData, market_index::MarketIndex}, setup::assert_last_event, AccruedInterest, Error,
 };
 use codec::{Decode, Encode};
 use composable_support::validation::{TryIntoValidated, Validated};
@@ -338,7 +337,7 @@ fn can_create_valid_market() {
         //  Check if corresponded event was emitted
 		let currency_pair = input.currency_pair;
         // Market id and vault id values are defined via previous logic.
-        let market_id = pallet_lending::pallet::MarketIndex::new(1);
+        let market_id = MarketIndex::new(1);
         let vault_id = 1;
 	    let market_created_event = crate::Event::MarketCreated {market_id, vault_id, manager, currency_pair};
         System::assert_has_event(Event::Lending(market_created_event));
@@ -449,6 +448,7 @@ fn test_borrow_repay_in_same_block() {
 		);
 		let alice_repay_amount =
 			Lending::total_debt_with_interest(&market_id, &ALICE).unwrap().unwrap_or_zero();
+		let keep_alive = true;
 		// MINT required BTC so that ALICE and BOB can repay the borrow.
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, alice_repay_amount - (limit_normalized / 4)));
 		assert_noop!(
@@ -466,6 +466,7 @@ fn test_borrow_repay_in_same_block() {
 			market_id,
 			beneficiary: *ALICE,
 			amount: alice_repay_amount,
+			keep_alive,
 		}));
 	});
 }
@@ -761,6 +762,7 @@ fn test_repay_partial_amount() {
 		let alice_balance = COLLATERAL::ONE;
 
 		let (market_index, vault_id) = create_simple_market();
+		let keep_alive = true;
 
 		mint_and_deposit_collateral::<Runtime>(
 			&*ALICE,
@@ -822,6 +824,7 @@ fn test_repay_partial_amount() {
 				market_id: market_index,
 				beneficiary: *ALICE,
 				amount: BORROW::units(1) / 10_000,
+				keep_alive,
 			}),
 		);
 
@@ -841,6 +844,7 @@ fn test_repay_partial_amount() {
 				market_id: market_index,
 				beneficiary: *ALICE,
 				amount: BORROW::units(1) / 10_000,
+				keep_alive,
 			}),
 		);
 
@@ -868,7 +872,7 @@ fn test_repay_partial_amount() {
 				post_info: PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },
 				error: DispatchError::Module(ModuleError {
 					index: 8,
-					error: 34,
+					error: 31,
 					message: Some(Error::<Runtime>::CannotRepayMoreThanTotalDebt.into(),),
 				}),
 			},
@@ -879,6 +883,7 @@ fn test_repay_partial_amount() {
 			market_id: market_index,
 			beneficiary: *ALICE,
 			amount: alice_total_debt_with_interest + 1,
+			keep_alive,
 		}));
 
 		assert_extrinsic_event::<Runtime>(
@@ -893,6 +898,7 @@ fn test_repay_partial_amount() {
 				market_id: market_index,
 				beneficiary: *ALICE,
 				amount: alice_total_debt_with_interest,
+				keep_alive,
 			}),
 		);
 
@@ -973,6 +979,7 @@ fn test_repay_total_debt() {
 				.unwrap_amount();
 		let bob_total_debt_with_interest =
 			Lending::total_debt_with_interest(&market_index, &BOB).unwrap().unwrap_amount();
+		let keep_alive = true;
 
 		assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, alice_total_debt_with_interest));
 		assert_ok!(Tokens::mint_into(USDT::ID, &BOB, bob_total_debt_with_interest));
@@ -991,6 +998,7 @@ fn test_repay_total_debt() {
 					market_id: market_index,
 					beneficiary: *ALICE,
 					amount: alice_total_debt_with_interest,
+					keep_alive,
 				}),
 			);
 
@@ -1014,6 +1022,7 @@ fn test_repay_total_debt() {
 					market_id: market_index,
 					beneficiary: *BOB,
 					amount: bob_total_debt_with_interest,
+					keep_alive,
 				}),
 			);
 

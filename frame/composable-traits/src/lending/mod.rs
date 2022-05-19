@@ -288,6 +288,8 @@ pub trait Lending: DeFiEngine {
 	fn create(
 		manager: Self::AccountId,
 		config: CreateInput<Self::LiquidationStrategyId, Self::MayBeAssetId>,
+		ed: Self::Balance,
+		keep_alive: bool,
 	) -> Result<(Self::MarketId, Self::VaultId), DispatchError>;
 
 	/// [`AccountId`][Self::AccountId] of the market instance
@@ -346,6 +348,7 @@ pub trait Lending: DeFiEngine {
 		from: &Self::AccountId,
 		beneficiary: &Self::AccountId,
 		repay_amount: RepayStrategy<BorrowAmountOf<Self>>,
+		keep_alive: bool,
 	) -> Result<BorrowAmountOf<Self>, DispatchError>;
 
 	/// The total amount borrowed from the given market, excluding interest.

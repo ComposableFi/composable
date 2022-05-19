@@ -4,7 +4,7 @@
 #![warn(unused_imports)]
 
 use super::{setup::*, *};
-use crate::{self as pallet_lending, Pallet as Lending};
+use crate::{self as pallet_lending, models::market_index::MarketIndex, Pallet as Lending};
 use composable_support::validation::TryIntoValidated;
 use composable_traits::{
 	defi::{CurrencyPair, DeFiComposableConfig},
