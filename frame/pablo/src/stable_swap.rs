@@ -76,6 +76,7 @@ impl<T: Config> StableSwap<T> {
 		asset_id: T::AssetId,
 		amount: T::Balance,
 	) -> Result<T::Balance, DispatchError> {
+		ensure!(pool.pair.contains(asset_id), Error::<T>::InvalidAsset);
 		let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
 		let pool_base_aum = T::Assets::balance(pair.base, pool_account);
 		let pool_quote_aum = T::Assets::balance(pair.quote, pool_account);
@@ -110,11 +111,12 @@ impl<T: Config> StableSwap<T> {
 	pub fn do_compute_swap(
 		pool: &StableSwapPoolInfo<T::AccountId, T::AssetId>,
 		pool_account: &T::AccountId,
+		pair: CurrencyPair<T::AssetId>,
 		quote_amount: T::Balance,
 		apply_fees: bool,
 	) -> Result<(T::Balance, T::Balance, T::Balance, T::Balance), DispatchError> {
-		let base_amount =
-			Self::get_exchange_value(pool, pool_account, pool.pair.base, quote_amount)?;
+		ensure!(pair == pool.pair, Error::<T>::PairMismatch);
+		let base_amount = Self::get_exchange_value(pool, pool_account, pair.base, quote_amount)?;
 		let base_amount_u: u128 = T::Convert::convert(base_amount);
 
 		let (lp_fee, owner_fee) = if apply_fees {

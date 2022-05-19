@@ -52,7 +52,7 @@ fn simple() {
 
 		assert_eq!(
 			Instance::<MockRuntime>::get(&(NftClass::STAKING, created_nft_id)),
-			Some((BOB, BTreeMap::from([(1u32.encode(), 1u32.encode())]))),
+			Some((BOB, BTreeMap::from([(1_u32.encode(), 1_u32.encode())]))),
 			"owner of transfered NFT should be BOB after transfer"
 		);
 

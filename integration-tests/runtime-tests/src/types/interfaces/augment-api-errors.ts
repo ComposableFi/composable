@@ -558,6 +558,10 @@ declare module '@polkadot/api-base/types/errors' {
       BorrowIndexDoesNotExist: AugmentedError<ApiType>;
       BorrowRateDoesNotExist: AugmentedError<ApiType>;
       BorrowRentDoesNotExist: AugmentedError<ApiType>;
+      /**
+       * Can't allow amount 0 as collateral.
+       **/
+      CannotDepositZeroCollateral: AugmentedError<ApiType>;
       CannotRepayMoreThanBorrowAmount: AugmentedError<ApiType>;
       /**
        * Repaying more than once in the same block is not allowed.
@@ -591,6 +595,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       MarketDoesNotExist: AugmentedError<ApiType>;
       MarketIsClosing: AugmentedError<ApiType>;
+      MaxLiquidationBatchSizeExceeded: AugmentedError<ApiType>;
       NotEnoughBorrowAsset: AugmentedError<ApiType>;
       NotEnoughCollateralToBorrow: AugmentedError<ApiType>;
       /**
@@ -840,8 +845,8 @@ declare module '@polkadot/api-base/types/errors' {
       MissingAmount: AugmentedError<ApiType>;
       MustBeOwner: AugmentedError<ApiType>;
       NoLpTokenForLbp: AugmentedError<ApiType>;
+      NotEnoughLiquidity: AugmentedError<ApiType>;
       PairMismatch: AugmentedError<ApiType>;
-      PoolConfigurationNotSupported: AugmentedError<ApiType>;
       PoolNotFound: AugmentedError<ApiType>;
       /**
        * Generic error

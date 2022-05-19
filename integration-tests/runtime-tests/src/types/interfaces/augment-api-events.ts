@@ -14,6 +14,7 @@ declare module '@polkadot/api-base/types/events' {
     assetsRegistry: {
       AssetRegistered: AugmentedEvent<ApiType, [u128, ComposableTraitsXcmAssetsXcmAssetLocation]>;
       AssetUpdated: AugmentedEvent<ApiType, [u128, ComposableTraitsXcmAssetsXcmAssetLocation]>;
+      MinFeeUpdated: AugmentedEvent<ApiType, [u32, ComposableTraitsXcmAssetsXcmAssetLocation, Option<u128>]>;
       /**
        * Generic event
        **/

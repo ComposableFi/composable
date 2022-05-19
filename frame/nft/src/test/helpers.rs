@@ -25,7 +25,7 @@ use crate::{
 /// NOTE: Only call once per test!
 pub(crate) fn mint_nft_and_assert() -> NftInstanceId {
 	let created_nft_id =
-		Pallet::<MockRuntime>::mint_nft(&NftClass::STAKING, &ALICE, &1u32, &1u32).unwrap();
+		Pallet::<MockRuntime>::mint_nft(&NftClass::STAKING, &ALICE, &1_u32, &1_u32).unwrap();
 
 	assert_last_event::<MockRuntime>(Event::Nft(NftEvent::NftCreated {
 		class_id: NftClass::STAKING,
@@ -46,7 +46,7 @@ pub(crate) fn mint_nft_and_assert() -> NftInstanceId {
 
 	assert_eq!(
 		Instance::<MockRuntime>::get(&(NftClass::STAKING, created_nft_id)).unwrap(),
-		(ALICE, BTreeMap::from([(1u32.encode(), 1u32.encode())])),
+		(ALICE, BTreeMap::from([(1_u32.encode(), 1_u32.encode())])),
 		"owner should be ALICE"
 	);
 
