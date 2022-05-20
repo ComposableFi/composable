@@ -1167,7 +1167,7 @@ impl_runtime_apis! {
 	impl lending_runtime_api::LendingRuntimeApi<Block, MarketId> for Runtime {
 		fn current_interest_rate(market_id: MarketId) -> SafeRpcWrapper<Rate> {
 			SafeRpcWrapper(
-				lending::BorrowIndex::<T>::get(market_id)
+				lending::BorrowIndex::<Runtime>::get(market_id)
 					.unwrap_or_else(Rate::zero)
 			)
 		}

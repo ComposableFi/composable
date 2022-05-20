@@ -378,12 +378,9 @@ where
 				deny_unsafe,
 			};
 
-			// let _: () = client;
 			Ok(rpc::create(deps))
 		})
 	};
-
-	// let _: () = task_manager;
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
 		rpc_extensions_builder,
