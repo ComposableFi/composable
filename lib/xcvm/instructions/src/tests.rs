@@ -1,4 +1,7 @@
-use crate::{network::XCVMNetwork, protocols::Stableswap, types::AbiEncoded, XCVMContractBuilder};
+use crate::{
+	instruction::XCVMInstruction, network::XCVMNetwork, protocols::Stableswap, types::AbiEncoded,
+	XCVMContractBuilder,
+};
 
 #[test]
 fn test() {
