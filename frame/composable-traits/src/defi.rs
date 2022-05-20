@@ -164,6 +164,31 @@ impl<AssetId: PartialEq> AsRef<[AssetId]> for CurrencyPair<AssetId> {
 	}
 }
 
+#[cfg(test)]
+mod test_currency_pair {
+	use super::*;
+	#[test]
+	fn test_cmp_for_currency_pair() {
+		let pair1: CurrencyPair<u8> = CurrencyPair::new(0_u8, 1_u8);
+		let pair2: CurrencyPair<u8> = CurrencyPair::new(1_u8, 2_u8);
+		let pair3: CurrencyPair<u8> = CurrencyPair::new(0_u8, 1_u8);
+		let pair4: CurrencyPair<u8> = CurrencyPair::new(1_u8, 0_u8);
+		assert_eq!(pair1.cmp(&pair2), core::cmp::Ordering::Less);
+		assert_eq!(pair1.cmp(&pair4), core::cmp::Ordering::Less);
+		assert_eq!(pair1.cmp(&pair3), core::cmp::Ordering::Equal);
+		assert_eq!(pair2.cmp(&pair1), core::cmp::Ordering::Greater);
+		assert_eq!(pair2.cmp(&pair1.swap()), core::cmp::Ordering::Greater);
+		assert_eq!(pair2.cmp(&pair3), core::cmp::Ordering::Greater);
+		assert_eq!(pair2.cmp(&pair4), core::cmp::Ordering::Greater);
+		assert_eq!(pair3.cmp(&pair1), core::cmp::Ordering::Equal);
+		assert_eq!(pair3.cmp(&pair2), core::cmp::Ordering::Less);
+		assert_eq!(pair3.cmp(&pair4), core::cmp::Ordering::Less);
+		assert_eq!(pair4.cmp(&pair1), core::cmp::Ordering::Greater);
+		assert_eq!(pair4.cmp(&pair2), core::cmp::Ordering::Less);
+		assert_eq!(pair4.cmp(&pair3), core::cmp::Ordering::Greater);
+	}
+}
+
 /// type parameters for traits in pure defi area
 pub trait DeFiEngine {
 	/// The asset ID type

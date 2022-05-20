@@ -119,7 +119,7 @@ pub mod pallet {
 		/// Unsupported operation.
 		UnsupportedOperation,
 		/// Route with possible loop is not allowed.
-		LoopSuspectedInRouteWhileValidation,
+		LoopSuspectedInRouteUpdate,
 	}
 
 	#[pallet::event]
@@ -288,10 +288,8 @@ pub mod pallet {
 							sp_std::if_std! {
 								println!("pool_id {:?} pair.quote {:?} pair.base {:?} val {:?}", *iter, pair.quote, pair.base, val);
 							}
-							if pair_set.contains(&pair) {
-								return Err(Error::<T>::LoopSuspectedInRouteWhileValidation.into())
-							} else {
-								pair_set.insert(pair);
+							if !pair_set.insert(pair) {
+								return Err(Error::<T>::LoopSuspectedInRouteUpdate.into())
 							}
 							if pair.quote == val {
 								Ok(pair.base)

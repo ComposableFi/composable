@@ -175,7 +175,7 @@ fn halborn_hal11_route_with_cycle() {
 				currency_pair,
 				Some(dex_route.clone().try_into().unwrap())
 			),
-			Error::<Test>::LoopSuspectedInRouteWhileValidation,
+			Error::<Test>::LoopSuspectedInRouteUpdate
 		);
 		// An other variant, where same pool is used twice
 		let currency_pair = CurrencyPair { base: USDT, quote: USDC };
@@ -189,7 +189,7 @@ fn halborn_hal11_route_with_cycle() {
 				currency_pair,
 				Some(dex_route.clone().try_into().unwrap())
 			),
-			Error::<Test>::LoopSuspectedInRouteWhileValidation,
+			Error::<Test>::LoopSuspectedInRouteUpdate,
 		);
 	});
 }
