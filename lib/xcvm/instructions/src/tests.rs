@@ -5,12 +5,11 @@ use crate::{
 
 #[test]
 fn test() {
-	let _ =
-		XCVMContractBuilder::<XCVMNetwork, XCVMInstruction<XCVMNetwork, AbiEncoded, (), ()>>::from(
-			XCVMNetwork::PICASSO,
-		)
-		.call(Stableswap::new((), ()))
-		.bridge(XCVMNetwork::ETHEREUM, ())
-		.call(Stableswap::new((), ()))
-		.transfer((), ());
+	let _ = XCVMContractBuilder::<XCVMNetwork, XCVMInstruction<XCVMNetwork, _, (), ()>>::from(
+		XCVMNetwork::PICASSO,
+	)
+	.call(Stableswap::new((), ()))
+	.bridge(XCVMNetwork::ETHEREUM, ())
+	.call(Stableswap::new((), ()))
+	.transfer((), ());
 }
