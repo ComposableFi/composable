@@ -18,11 +18,11 @@ jobs:
     - name: Wait when the node will be started
       timeout-minutes: 5
       run: |
-        ./scripts/wait_polkadot_launch.sh
+        ./scripts/wait_for_polkadot_launch.sh
 
     - name: Run Test
       run: |
-        docker run --rm -v$(pwd):/build -e "NODE_ENDPOINT=ws://composable:9944" --workdir /build --network beefy-client_default composablefi/ci-linux:production cargo test
+        docker run --rm -v$(pwd):/build -e "NODE_ENDPOINT=ws://composable:9944" --workdir /build --network beefy_client_network composablefi/ci-linux:production cargo test
 
     - name: Cleanup
       run: docker-compose down --remove-orphans

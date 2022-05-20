@@ -5,3 +5,9 @@ services:
     image: composablefi/composable-sandbox
     ports:
       - "9944:9944"
+    networks:
+    - beefy_client
+
+networks:
+  beefy_client:
+    name: beefy_client_network
