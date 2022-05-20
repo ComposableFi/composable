@@ -281,8 +281,6 @@ async fn start_node_impl<RuntimeApi, Executor>(
 	id: ParaId,
 ) -> sc_service::error::Result<TaskManager>
 where
-	// Block: BlockT,
-	// RuntimeApi: ConstructRuntimeApis<RuntimeApi, Executor>,
 	RuntimeApi:
 		ConstructRuntimeApi<OpaqueBlock, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: BaseHostRuntimeApis<StateBackend = StateBackendFor<FullBackend, OpaqueBlock>>
