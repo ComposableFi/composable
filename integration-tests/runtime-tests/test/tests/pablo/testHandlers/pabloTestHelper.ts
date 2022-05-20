@@ -63,7 +63,12 @@ export async function addFundstoThePool(
   walletId: KeyringPair,
   baseAmount: bigint,
   quoteAmount: bigint
-): Promise<any> {
+): Promise<{
+  returnedLPTokens: u128;
+  baseAdded: u128;
+  quoteAdded: u128;
+  walletIdResult: AccountId32
+} > {
   const pool = api.createType("u128", poolId)
   const baseAmountParam = api.createType('u128', baseAmount);
   const quoteAmountParam = api.createType('u128', quoteAmount);
@@ -92,7 +97,13 @@ export async function buyFromPool(
   walletId: KeyringPair,
   assetId: number,
   amountToBuy: bigint
-): Promise<any> {
+): Promise<{
+  accountId: AccountId32;
+  ownerFee: u128;
+  expectedConversion: bigint;
+  quoteAmount: u128;
+  baseAmount: u128
+} > {
   const poolIdParam = api.createType('u128', poolId);
   const assetIdParam = api.createType('u128', assetId);
   const amountParam = api.createType('u128', amountToBuy);
@@ -176,7 +187,7 @@ export async function swapTokenPairs(
   quoteAssetId: number,
   quoteAmount: bigint,
   minReceiveAmount = 0
-): Promise<any> {
+): Promise<{returnedBaseAmount: u128; returnedQuoteAmount: u128}> {
   const poolIdParam = api.createType('u128', poolId);
   const currencyPair = api.createType('ComposableTraitsDefiCurrencyPairCurrencyId', {
     base: api.createType('CurrencyId', baseAssetId),
@@ -253,7 +264,7 @@ export async function rpcPriceFor(
   poolId: PalletPabloPoolId,
   baseAssetId: CustomRpcCurrencyId,
   quoteAssetId: CustomRpcCurrencyId
-) {
+){
   return await api.rpc.pablo.pricesFor(
     poolId,
     baseAssetId,
@@ -267,7 +278,7 @@ export async function getPoolAddress(
   walletId: KeyringPair,
   baseAmount: bigint,
   quoteAmount: bigint
-): Promise<any> {
+): Promise<string> {
   const pool = api.createType("u128", poolId)
   const baseAmountParam = api.createType('u128', baseAmount);
   const quoteAmountParam = api.createType('u128', quoteAmount);
@@ -292,8 +303,13 @@ export async function getPoolBalance(api: ApiPromise, poolAddress: string, asset
   return free;
 }
 
-export async function transferTokens(api: ApiPromise, sender: KeyringPair, receiver: KeyringPair, assetId: number, amount: bigint)
-  : Promise<string> {
+export async function transferTokens(
+  api: ApiPromise,
+  sender: KeyringPair,
+  receiver: KeyringPair,
+  assetId: number,
+  amount: bigint
+) : Promise<string> {
   const {data: [, accountId,]} = await sendAndWaitForSuccess(
     api,
     sender,
@@ -363,7 +379,7 @@ export async function createLBPool(
 export async function createMultipleLBPools(
   api: ApiPromise,
   wallet: KeyringPair,
-) {
+) :Promise<void>{
   const tx = [];
   for (let i = 0; i < 500; i++) {
     const owner = wallet.derive("/test/ConstantProduct/deriveWallet");
@@ -431,7 +447,7 @@ export async function createStableSwapPool(
 export async function createMultipleStableSwapPools(
   api: ApiPromise,
   wallet: KeyringPair,
-){
+): Promise<void>{
   const tx = [];
   for(let i=0; i<50; i++){
     const owner = wallet.derive("/test/ConstantProduct/deriveWallet");

@@ -27,20 +27,16 @@ describe("tx.constantProductDex Tests", function () {
     return;
   }
   this.timeout(2 * 60 * 1000);
+  let api: ApiPromise;
   let walletId1: KeyringPair, walletId2: KeyringPair, walletId3: KeyringPair, sudoKey: KeyringPair;
   let poolId: number, poolId2: number,
     baseAssetId: number, baseAsset2: number,
     quoteAssetId: number, falseQuoteAsset: number,
-    walletLpTokens: bigint,
-    baseAmount: bigint,
-    quoteAmount: bigint,
-    fee: number,
-    ownerFee: number,
-    transferredTokens: BN,
-    walletId1Account: string,
-    walletId2Account: string,
-    poolAddress: string,
-    api: ApiPromise;
+    fee: number, ownerFee: number;
+  let walletLpTokens: bigint, baseAmount: bigint, quoteAmount: bigint;
+  let transferredTokens : BN;
+  let walletId1Account: string, walletId2Account: string, poolAddress: string;
+
 
   before("Initialize variables", async function () {
     const {newClient, newKeyring} = await getNewConnection();
@@ -58,8 +54,9 @@ describe("tx.constantProductDex Tests", function () {
     falseQuoteAsset = 23;
     baseAmount = Pica(250000);
     quoteAmount = Pica(250000);
+    //sets the fee to 1.00%/Type Permill
     fee = 10000;
-    //sets the owner fee to 1.00%/Type Permill
+    //sets the owner fee to 5.00%/Type Permill
     ownerFee = 50000;
   });
 
