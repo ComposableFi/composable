@@ -20,20 +20,13 @@ impl<Assets> XCVMProtocol for Stableswap<Assets> {
 	}
 }
 
-#[derive(Copy, Clone)]
-pub enum XCVMSubstrateChain {
-	Picasso,
-}
+#[repr(transparent)]
+pub struct XCVMNetwork(u8);
 
-#[derive(Copy, Clone)]
-pub enum XCVMCosmChain {
-	Terra,
-}
-
-#[derive(Copy, Clone)]
-pub enum XCVMNetwork {
-	Substrate(XCVMSubstrateChain),
-	Cosmos(XCVMCosmChain),
+impl XCVMNetwork {
+	pub const HERE: XCVMNetwork = XCVMNetwork(0);
+	pub const PICASSO: XCVMNetwork = XCVMNetwork(1);
+	pub const ETHEREUM: XCVMNetwork = XCVMNetwork(2);
 }
 
 #[derive(Clone)]
