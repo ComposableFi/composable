@@ -260,8 +260,8 @@ fn add_lp_imbalanced() {
 		// tokens as owner fee.
 		let alice_usdc = Tokens::balance(USDC, &ALICE);
 		let alice_usdt = Tokens::balance(USDT, &ALICE);
-		assert!(alice_usdt != 0);
-		assert!(alice_usdc != 0);
+		assert_eq!(alice_usdt, 0);
+		assert_eq!(alice_usdc, 0);
 	});
 }
 

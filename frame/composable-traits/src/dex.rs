@@ -1,3 +1,4 @@
+use sp_std::ops::Mul;
 use crate::{currency::BalanceLike, defi::CurrencyPair};
 use codec::{Decode, Encode, MaxEncodedLen};
 use composable_support::math::safe::{SafeAdd, SafeSub};
@@ -14,7 +15,6 @@ use sp_runtime::{
 	ArithmeticError, DispatchError, Permill,
 };
 use sp_std::vec::Vec;
-use std::ops::Mul;
 
 /// Trait for automated market maker.
 pub trait Amm {

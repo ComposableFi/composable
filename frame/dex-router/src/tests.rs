@@ -10,6 +10,7 @@ use frame_support::{
 };
 use pallet_pablo::{Error as PabloError, PoolInitConfiguration};
 use sp_runtime::Permill;
+use composable_traits::dex::FeeConfig;
 
 // Create Amm pool with given amounts added as liquidity to the pool.
 fn create_curve_amm_pool(
@@ -30,8 +31,11 @@ fn create_curve_amm_pool(
 		owner: ALICE,
 		pair: assets,
 		amplification_coefficient: amp_coeff,
-		fee_config: fee,
-		owner_fee: admin_fee,
+		fee_config: FeeConfig {
+			fee_rate: fee,
+			owner_fee_rate: admin_fee,
+			protocol_fee_rate: Permill::zero()
+		},
 	};
 	let p = Pablo::do_create_pool(init_config);
 	assert_ok!(&p);
@@ -63,8 +67,11 @@ fn create_constant_product_amm_pool(
 	let init_config = PoolInitConfiguration::ConstantProduct {
 		owner: ALICE,
 		pair: assets,
-		fee_config: fee,
-		owner_fee: admin_fee,
+		fee_config: FeeConfig {
+			fee_rate: fee,
+			owner_fee_rate: admin_fee,
+			protocol_fee_rate: Permill::zero()
+		},
 	};
 	// Create Pablo pool
 	let p = Pablo::do_create_pool(init_config);

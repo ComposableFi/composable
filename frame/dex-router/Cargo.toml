@@ -53,6 +53,7 @@ std = [
   "frame-support/std",
   "frame-system/std",
   "sp-runtime/std",
+  "composable-tests-helpers/std",
 ]
 
 runtime-benchmarks = [
