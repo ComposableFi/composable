@@ -14,7 +14,6 @@ declare module '@polkadot/api-base/types/events' {
     assetsRegistry: {
       AssetRegistered: AugmentedEvent<ApiType, [u128, ComposableTraitsXcmAssetsXcmAssetLocation]>;
       AssetUpdated: AugmentedEvent<ApiType, [u128, ComposableTraitsXcmAssetsXcmAssetLocation]>;
-      MinFeeUpdated: AugmentedEvent<ApiType, [u32, ComposableTraitsXcmAssetsXcmAssetLocation, Option<u128>]>;
       /**
        * Generic event
        **/
@@ -110,6 +109,41 @@ declare module '@polkadot/api-base/types/events' {
       NewCandidacyBond: AugmentedEvent<ApiType, [u128]>;
       NewDesiredCandidates: AugmentedEvent<ApiType, [u32]>;
       NewInvulnerables: AugmentedEvent<ApiType, [Vec<AccountId32>]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    cosmwasm: {
+      /**
+       * A code with the specified hash was removed.
+       **/
+      CodeRemoved: AugmentedEvent<ApiType, [H256]>;
+      /**
+       * Code with the specified hash has been stored.
+       **/
+      CodeStored: AugmentedEvent<ApiType, [H256]>;
+      /**
+       * A contract's code was updated.
+       **/
+      ContractCodeUpdated: AugmentedEvent<ApiType, [AccountId32, H256, H256]>;
+      /**
+       * A custom event emitted by the contract.
+       **/
+      ContractEmitted: AugmentedEvent<ApiType, [AccountId32, Bytes]>;
+      /**
+       * Contract deployed by address at the specified address.
+       **/
+      Instantiated: AugmentedEvent<ApiType, [AccountId32, AccountId32]>;
+      /**
+       * Contract has been removed.
+       * 
+       * # Note
+       * 
+       * The only way for a contract to be removed and emitting this event is by calling
+       * `seal_terminate`.
+       **/
+      Terminated: AugmentedEvent<ApiType, [AccountId32, AccountId32]>;
       /**
        * Generic event
        **/

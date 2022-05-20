@@ -73,6 +73,7 @@ call-filter = { package = "pallet-call-filter", path = "../../frame/call-filter"
 common = { path = "../common", default-features = false }
 composable-support = { path = '../../frame/composable-support', default-features = false }
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
+contracts = { package = "pallet-contracts", path = "../../frame/contracts", default-features = false }
 crowdloan-rewards = { package = "pallet-crowdloan-rewards", path = '../../frame/crowdloan-rewards', default-features = false }
 currency-factory = { package = "pallet-currency-factory", path = "../../frame/currency-factory", default-features = false }
 dex-router = { package = "pallet-dex-router", path = "../../frame/dex-router", default-features = false }
@@ -95,6 +96,8 @@ transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rp
 assets-runtime-api = { path = '../../frame/assets/runtime-api', default-features = false }
 crowdloan-rewards-runtime-api = { path = '../../frame/crowdloan-rewards/runtime-api', default-features = false }
 pablo-runtime-api = { path = '../../frame/pablo/runtime-api', default-features = false }
+pallet-contracts-primitives = { path = "../../frame/contracts/common", default-features = false }
+pallet-contracts-rpc-runtime-api = { path = "../../frame/contracts/rpc/runtime-api", default-features = false }
 
 # Used for runtime benchmarking
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
@@ -132,6 +135,9 @@ orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-l
 
 # simnode support
 simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, branch = "seun-polkadot-v0.9.18" }
+
+# Cosmwasm addresses conversions
+hex = { version = "0.4", default-features = false, features = ["alloc"] }
 
 
 [build-dependencies]
@@ -255,6 +261,8 @@ std = [
   "assets-runtime-api/std",
   "pablo-runtime-api/std",
   "crowdloan-rewards-runtime-api/std",
+  "pablo-runtime-api/std",
+  "pallet-contracts-rpc-runtime-api/std",
   "liquidations/std",
   "simnode-apis/std",
   "pablo/std",

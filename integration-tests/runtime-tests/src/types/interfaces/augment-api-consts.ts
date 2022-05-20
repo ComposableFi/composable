@@ -74,6 +74,68 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    cosmwasm: {
+      /**
+       * The maximum number of contracts that can be pending for deletion.
+       * 
+       * When a contract is deleted by calling `seal_terminate` it becomes inaccessible
+       * immediately, but the deletion of the storage items it has accumulated is performed
+       * later. The contract is put into the deletion queue. This defines how many
+       * contracts can be queued up at the same time. If that limit is reached `seal_terminate`
+       * will fail. The action must be retried in a later block in that case.
+       * 
+       * The reasons for limiting the queue depth are:
+       * 
+       * 1. The queue is in storage in order to be persistent between blocks. We want to limit
+       * the amount of storage that can be consumed.
+       * 2. The queue is stored in a vector and needs to be decoded as a whole when reading
+       * it at the end of each block. Longer queues take more weight to decode and hence
+       * limit the amount of items that can be deleted per block.
+       **/
+      deletionQueueDepth: u32 & AugmentedConst<ApiType>;
+      /**
+       * The maximum amount of weight that can be consumed per block for lazy trie removal.
+       * 
+       * The amount of weight that is dedicated per block to work on the deletion queue. Larger
+       * values allow more trie keys to be deleted in each block but reduce the amount of
+       * weight that is left for transactions. See [`Self::DeletionQueueDepth`] for more
+       * information about the deletion queue.
+       **/
+      deletionWeightLimit: u64 & AugmentedConst<ApiType>;
+      /**
+       * The amount of balance a caller has to pay for each byte of storage.
+       * 
+       * # Note
+       * 
+       * Changing this value for an existing chain might need a storage migration.
+       **/
+      depositPerByte: u128 & AugmentedConst<ApiType>;
+      /**
+       * The amount of balance a caller has to pay for each storage item.
+       * 
+       * # Note
+       * 
+       * Changing this value for an existing chain might need a storage migration.
+       **/
+      depositPerItem: u128 & AugmentedConst<ApiType>;
+      /**
+       * The maximum number of assets a user is able to transfer before calling a contract.
+       **/
+      maxTransferAssets: u32 & AugmentedConst<ApiType>;
+      /**
+       * The native asset id, used to extract the native asset from the transferred assets in
+       * order to construct the gas meter.
+       **/
+      nativeAssetId: u128 & AugmentedConst<ApiType>;
+      /**
+       * Cost schedule and limits.
+       **/
+      schedule: PalletContractsSchedule & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     crowdloanRewards: {
       /**
        * The AccountId of this pallet.

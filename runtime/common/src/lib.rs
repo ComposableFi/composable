@@ -193,6 +193,8 @@ fn native_existential_deposit() -> Balance {
 parameter_types! {
 	/// Existential deposit (ED for short) is minimum amount an account has to hold to stay in state.
 	pub NativeExistentialDeposit: Balance = native_existential_deposit();
+  /// Max transfer assets for contracts
+  pub const MaxTransferAssets: u32 = 16;
 }
 
 #[cfg(feature = "runtime-benchmarks")]

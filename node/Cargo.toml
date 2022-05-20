@@ -32,6 +32,8 @@ crowdloan-rewards-rpc = { path = "../frame/crowdloan-rewards/rpc" }
 crowdloan-rewards-runtime-api = { path = "../frame/crowdloan-rewards/runtime-api" }
 pablo-rpc = { path = "../frame/pablo/rpc" }
 pablo-runtime-api = { path = "../frame/pablo/runtime-api" }
+pallet-contracts-rpc = { path = "../frame/contracts/rpc/" }
+pallet-contracts-rpc-runtime-api = { path = "../frame/contracts/rpc/runtime-api" }
 
 # FRAME Dependencies
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
