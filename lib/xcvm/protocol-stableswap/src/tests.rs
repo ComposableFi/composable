@@ -1,8 +1,6 @@
 use alloc::vec;
 use alloc::vec::Vec;
-use xcvm_instructions::{
-	AbiEncoded, XCVMContractBuilder, XCVMInstruction, XCVMNetwork, XCVMProtocol,
-};
+use xcvm_core::{AbiEncoded, XCVMContractBuilder, XCVMInstruction, XCVMNetwork, XCVMProtocol};
 
 use crate::Stableswap;
 
