@@ -4,3 +4,6 @@ edition = "2021"
 homepage = "https://composable.finance"
 name = "xcvm-instructions"
 version = "0.1.0"
+
+[dependencies]
+ethabi = "17.0.0"
