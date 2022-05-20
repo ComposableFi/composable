@@ -178,15 +178,18 @@ impl<T: Config> StableSwap<T> {
 				T::Convert::convert(d0),
 			)?);
 
+			// differences from the ideal balances to be used in fee calculation
 			let base_difference = Self::abs_difference(ideal_base_balance, new_base_amount)?;
 			let quote_difference = Self::abs_difference(ideal_quote_balance, new_quote_amount)?;
-
 			let base_fee = updated_fee_config.calculate_fees(pool.pair.base, base_difference);
 			let quote_fee = updated_fee_config.calculate_fees(pool.pair.quote, quote_difference);
+
+			// Substract fees from calculated base/quote amounts to allow for fees
 			let new_base_balance = new_base_amount.safe_sub(&base_fee.fee)?;
 			let new_quote_balance = new_quote_amount.safe_sub(&quote_fee.fee)?;
 
 			let d2 = Self::get_invariant(new_base_balance, new_quote_balance, amp)?;
+			// minted LP is propotional to the delta of the pool invariant caused by imbalanced liquidity
 			let mint_amount = T::Convert::convert(safe_multiply_by_rational(
 				T::Convert::convert(lp_issued),
 				T::Convert::convert(d2.safe_sub(&d0)?),
