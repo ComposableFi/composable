@@ -23,7 +23,8 @@ pub struct XCVMContractBuilder<Network, Instruction> {
 	instructions: Vec<Instruction>,
 }
 
-impl<Network, AbiEncoded, Account, Assets> XCVMContractBuilder<Network, AbiEncoded, Account, Assets>
+impl<Network, AbiEncoded, Account, Assets>
+	XCVMContractBuilder<Network, XCVMInstruction<Network, AbiEncoded, Account, Assets>>
 where
 	Network: Copy,
 {
