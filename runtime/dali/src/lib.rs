@@ -46,6 +46,7 @@ use sp_runtime::{
 	ApplyExtrinsicResult,
 };
 
+use composable_traits::assets::Asset;
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
@@ -63,7 +64,12 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 
+<<<<<<< HEAD
 use codec::{Codec, Encode, EncodeLike};
+=======
+use codec::Encode;
+>>>>>>> 021e3c66 (cargo fmt)
+use composable_traits::assets::Asset;
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
 use frame_system::EnsureSigned;
@@ -79,8 +85,11 @@ use system::{
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
 pub use xcmp::XcmConfig;
+<<<<<<< HEAD
 
 use crate::xcmp::XcmRouter;
+=======
+>>>>>>> 021e3c66 (cargo fmt)
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -1166,6 +1175,10 @@ impl_runtime_apis! {
 	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
 		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
 			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
+		}
+
+		fn list_assets() -> Vec<Asset> {
+			CurrencyId::list_assets()
 		}
 	}
 

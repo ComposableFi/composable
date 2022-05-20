@@ -19,6 +19,24 @@ export default {
       ],
       type: "CustomRpcBalance"
     },
+    listAssets: {
+      description: "Lists assets.",
+      params: [
+        {
+          name: "at",
+          type: "Hash",
+          isOptional: true,
+        },
+      ],
+      type: "Vec<Asset>"
+    },
   },
-  types: {}
+  types: {
+    CurrencyId: "u128",
+    AssetsBalance: "u128",
+    Asset: {
+       name: "Vec<u8>",
+       id: "u64"
+    }
+  },
 };

@@ -19,6 +19,7 @@ sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 # local
 assets-runtime-api = { path = "../runtime-api" }
 composable-support = { path = "../../composable-support" }
+composable-traits = { path = "../../composable-traits", default-features = false }
 
 # SCALE
 codec = { default-features = false, features = [

@@ -2,8 +2,11 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use composable_support::collections::vec::bounded::BiBoundedVec;
 use scale_info::TypeInfo;
+
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
+use sp_std::vec::Vec;
+
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct BasicAssetMetadata {
@@ -18,4 +21,11 @@ impl BasicAssetMetadata {
 			name: BiBoundedVec::try_from(name.to_vec()).ok()?,
 		})
 	}
+}
+
+#[derive(Decode, Encode, Debug, Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct Asset {
+	pub name: Vec<u8>,
+	pub id: u64,
 }

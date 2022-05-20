@@ -1,4 +1,9 @@
+<<<<<<< HEAD
 use common::{AccountId, Balance, Index, OpaqueBlock as Block, PoolId};
+=======
+use common::{AccountId, Balance, Index, OpaqueBlock as Block};
+use composable_traits::assets::Asset;
+>>>>>>> 021e3c66 (cargo fmt)
 use primitives::currency::CurrencyId;
 use sp_runtime::traits::BlakeTwo256;
 
@@ -9,7 +14,7 @@ pub trait HostRuntimeApis:
 	+ sp_block_builder::BlockBuilder<Block>
 	+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 	+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
-	+ assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance>
+	+ assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance, Asset>
 	+ crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance>
 	+ pablo_runtime_api::PabloRuntimeApi<Block, PoolId, CurrencyId, Balance>
 	+ sp_api::Metadata<Block>
@@ -30,7 +35,7 @@ where
 		+ sp_block_builder::BlockBuilder<Block>
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
-		+ assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance>
+		+ assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance, Asset>
 		+ crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance>
 		+ pablo_runtime_api::PabloRuntimeApi<Block, PoolId, CurrencyId, Balance>
 		+ sp_api::Metadata<Block>

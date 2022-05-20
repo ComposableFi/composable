@@ -1,6 +1,6 @@
 //! CurrencyId implementation
 use codec::{CompactAs, Decode, Encode, MaxEncodedLen};
-use composable_traits::currency::Exponent;
+use composable_traits::{assets::Asset, currency::Exponent};
 use core::{fmt::Display, ops::Div, str::FromStr};
 use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
@@ -8,7 +8,7 @@ use sp_runtime::RuntimeDebug;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
 use sp_runtime::sp_std::ops::Deref;
-
+use sp_std::{vec, vec::Vec};
 /// Trait used to write generalized code over well know currencies
 /// We use const to allow for match on these
 /// Allows to have reuse of code amids runtime and cross relay transfers in future.
@@ -60,6 +60,7 @@ impl WellKnownCurrency for CurrencyId {
 }
 
 impl CurrencyId {
+	// NOTE: Make sure to update list_assets when adding or removing assets
 	pub const INVALID: CurrencyId = CurrencyId(0);
 	/// Runtime native token Kusama
 	pub const PICA: CurrencyId = CurrencyId(1);
@@ -83,6 +84,15 @@ impl CurrencyId {
 	}
 	pub fn milli<T: From<u64> + Div<Output = T>>() -> T {
 		Self::unit::<T>() / T::from(1000_u64)
+	}
+	pub fn list_assets() -> Vec<Asset> {
+		vec![
+			Asset { id: CurrencyId::PICA.0 as u64, name: b"PICA".to_vec() },
+			Asset { id: CurrencyId::LAYR.0 as u64, name: b"LAYR".to_vec() },
+			Asset { id: CurrencyId::CROWD_LOAN.0 as u64, name: b"CROWD_LOAN".to_vec() },
+			Asset { id: CurrencyId::KSM.0 as u64, name: b"KSM".to_vec() },
+			Asset { id: CurrencyId::kUSD.0 as u64, name: b"kUSD".to_vec() },
+		]
 	}
 }
 
