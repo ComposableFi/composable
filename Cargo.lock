@@ -10568,7 +10568,7 @@ name = "protocol-stableswap"
 version = "0.1.0"
 dependencies = [
  "ethabi",
- "xcvm-instructions",
+ "xcvm-core",
 ]
 
 [[package]]
@@ -16061,7 +16061,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "xcvm-instructions"
+name = "xcvm-core"
 version = "0.1.0"
 dependencies = [
  "ethabi",

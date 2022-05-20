@@ -2,7 +2,7 @@
 
 extern crate alloc;
 
-use xcvm_instructions::{AbiEncoded, XCVMNetwork, XCVMProtocol};
+use xcvm_core::{AbiEncoded, XCVMNetwork, XCVMProtocol};
 
 use ethabi::{encode, ethereum_types::H160, Token};
 

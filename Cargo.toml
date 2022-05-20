@@ -42,7 +42,7 @@ members = [
   "simnode/simnode-node",
   "simnode/simnode-tests",
   "simnode/common",
-  "lib/xcvm/instructions",
+  "lib/xcvm/core",
   "lib/xcvm/protocol-stableswap"
 ]
 
