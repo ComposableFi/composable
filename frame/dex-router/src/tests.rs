@@ -2,7 +2,7 @@ use crate::{mock::*, Error};
 use composable_tests_helpers::test::helper::acceptable_computation_error;
 use composable_traits::{
 	defi::CurrencyPair,
-	dex::{Amm as AmmTrait, DexRouter as DexRouterTrait},
+	dex::{Amm as AmmTrait, DexRouter as DexRouterTrait, FeeConfig},
 };
 use frame_support::{
 	assert_noop, assert_ok,
@@ -10,7 +10,6 @@ use frame_support::{
 };
 use pallet_pablo::{Error as PabloError, PoolInitConfiguration};
 use sp_runtime::Permill;
-use composable_traits::dex::FeeConfig;
 
 // Create Amm pool with given amounts added as liquidity to the pool.
 fn create_curve_amm_pool(
@@ -34,7 +33,7 @@ fn create_curve_amm_pool(
 		fee_config: FeeConfig {
 			fee_rate: fee,
 			owner_fee_rate: admin_fee,
-			protocol_fee_rate: Permill::zero()
+			protocol_fee_rate: Permill::zero(),
 		},
 	};
 	let p = Pablo::do_create_pool(init_config);
@@ -70,7 +69,7 @@ fn create_constant_product_amm_pool(
 		fee_config: FeeConfig {
 			fee_rate: fee,
 			owner_fee_rate: admin_fee,
-			protocol_fee_rate: Permill::zero()
+			protocol_fee_rate: Permill::zero(),
 		},
 	};
 	// Create Pablo pool
