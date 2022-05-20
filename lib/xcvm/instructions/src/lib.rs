@@ -4,38 +4,15 @@ use alloc::vec::Vec;
 
 extern crate alloc;
 
-pub trait XCVMProtocol {
-	fn serialize(&self, network: XCVMNetwork) -> Vec<u8>;
-}
+pub mod instruction;
+pub mod network;
+pub mod protocol;
+pub mod protocols;
 
-#[derive(Copy, Clone)]
-pub struct Stableswap<Assets>(Assets, Assets);
-
-impl<Assets> XCVMProtocol for Stableswap<Assets> {
-	fn serialize(&self, network: XCVMNetwork) -> Vec<u8> {
-		match network {
-			XCVMNetwork::PICASSO => todo!("hardcoded"),
-			XCVMNetwork::ETHEREUM => todo!("hardcoded"),
-			_ => todo!("handle error of invalid network id"),
-		}
-	}
-}
-
-#[derive(Copy, Clone, PartialEq, Eq)]
-#[repr(transparent)]
-pub struct XCVMNetwork(u8);
-
-impl XCVMNetwork {
-	pub const PICASSO: XCVMNetwork = XCVMNetwork(1);
-	pub const ETHEREUM: XCVMNetwork = XCVMNetwork(2);
-}
-
-#[derive(Clone)]
-pub enum XCVMInstruction<Account, Assets> {
-	Transfer(Account, Assets),
-	Bridge(XCVMNetwork, Assets),
-	Call(Vec<u8>),
-}
+use crate::instruction::XCVMInstruction;
+use crate::network::XCVMNetwork;
+use crate::protocol::XCVMProtocol;
+use crate::protocols::Stableswap;
 
 #[derive(Clone)]
 pub struct XCVMContractBuilder<Account, Assets> {
@@ -68,8 +45,8 @@ impl<Account, Assets> XCVMContractBuilder<Account, Assets> {
 #[test]
 fn test() {
 	let _ = XCVMContractBuilder::<(), ()>::here()
-		.call(Stableswap((), ()))
-		.bridge(XCVMNetwork::Cosmos(XCVMCosmChain::Terra), ())
-		.call(Stableswap((), ()))
+		.call(Stableswap::new((), ()))
+		.bridge(XCVMNetwork::ETHEREUM, ())
+		.call(Stableswap::new((), ()))
 		.transfer((), ());
 }

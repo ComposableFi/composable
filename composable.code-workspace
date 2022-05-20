@@ -7,5 +7,10 @@
             "path": "integration-tests/runtime-tests"
         }
     ],
-    "settings": {}
+    "settings": {
+        "cSpell.words": [
+            "Stableswap",
+            "XCVM"
+        ]
+    }
 }
