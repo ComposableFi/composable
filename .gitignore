@@ -47,3 +47,20 @@ result
 
 # devnet nodes logs
 *.log
+
+
+
+solidity/node_modules
+solidity/artifacts
+solidity/cache
+solidity/.idea
+solidity/tenderly.yaml
+solidity/.vs/*
+solidity/.DS_Store
+solidity/.openzeppelin
+solidity/deployments/*
+solidity/.yarnrc
+solidity/.yarn
+solidity/.yarn.lock
+solidity/yarn-error.log
+
