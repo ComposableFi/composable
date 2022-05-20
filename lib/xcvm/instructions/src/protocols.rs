@@ -1,6 +1,6 @@
 use crate::network::XCVMNetwork;
 use crate::protocol::XCVMProtocol;
-use alloc::vec::Vec;
+use crate::types::AbiEncoded;
 
 #[derive(Copy, Clone)]
 pub struct Stableswap<Assets> {
@@ -14,8 +14,8 @@ impl<Assets> Stableswap<Assets> {
 	}
 }
 
-impl<Assets> XCVMProtocol for Stableswap<Assets> {
-	fn serialize(&self, network: XCVMNetwork) -> Vec<u8> {
+impl<Assets> XCVMProtocol<XCVMNetwork, AbiEncoded> for Stableswap<Assets> {
+	fn serialize(&self, network: XCVMNetwork) -> AbiEncoded {
 		match network {
 			XCVMNetwork::PICASSO => todo!("hardcoded"),
 			XCVMNetwork::ETHEREUM => todo!("hardcoded"),
