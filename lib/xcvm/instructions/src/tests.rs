@@ -1,4 +1,4 @@
-use crate::{types::AbiEncoded, XCVMContractBuilder, XCVMInstruction, XCVMNetwork, XCVMProtocol};
+use crate::{AbiEncoded, XCVMContractBuilder, XCVMInstruction, XCVMNetwork, XCVMProtocol};
 use alloc::vec;
 
 #[test]

@@ -1,27 +1,20 @@
-use crate::{types::AbiEncoded, XCVMContractBuilder, XCVMInstruction, XCVMNetwork, XCVMProtocol};
 use alloc::vec;
+use alloc::vec::Vec;
+use xcvm_instructions::{
+	AbiEncoded, XCVMContractBuilder, XCVMInstruction, XCVMNetwork, XCVMProtocol,
+};
+
+use crate::Stableswap;
 
 #[test]
 fn test() {
-	struct DummyProtocol;
-
-	impl XCVMProtocol<XCVMNetwork, AbiEncoded> for DummyProtocol {
-		fn serialize(&self, network: XCVMNetwork) -> AbiEncoded {
-			match network {
-				XCVMNetwork::PICASSO => AbiEncoded::empty(),
-				XCVMNetwork::ETHEREUM => AbiEncoded::from(vec![4]),
-				_ => todo!("handle error of invalid network id"),
-			}
-		}
-	}
-
 	let contract =
 		XCVMContractBuilder::<XCVMNetwork, XCVMInstruction<XCVMNetwork, _, (), ()>>::from(
 			XCVMNetwork::PICASSO,
 		)
-		.call(DummyProtocol)
+		.call(Stableswap::<()>::new((), ()))
 		.bridge(XCVMNetwork::ETHEREUM, ())
-		.call(DummyProtocol)
+		.call(Stableswap::<()>::new((), ()))
 		.transfer((), ());
 
 	assert_eq!(
@@ -29,7 +22,10 @@ fn test() {
 		vec![
 			XCVMInstruction::Call(AbiEncoded::empty()),
 			XCVMInstruction::Bridge(XCVMNetwork::ETHEREUM, ()),
-			XCVMInstruction::Call(AbiEncoded::from(vec![4])),
+			XCVMInstruction::Call(AbiEncoded::from(vec![
+				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+				0, 0, 0, 0
+			])),
 			XCVMInstruction::Transfer((), ()),
 		]
 	);

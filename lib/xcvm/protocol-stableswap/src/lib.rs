@@ -1,8 +1,12 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
 use xcvm_instructions::{AbiEncoded, XCVMNetwork, XCVMProtocol};
 
 use ethabi::{encode, ethereum_types::H160, Token};
+
+mod tests;
 
 #[derive(Copy, Clone)]
 pub struct Stableswap<Assets> {

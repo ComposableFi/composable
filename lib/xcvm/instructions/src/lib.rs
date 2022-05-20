@@ -17,8 +17,8 @@ pub use crate::types::AbiEncoded;
 
 #[derive(Clone)]
 pub struct XCVMContractBuilder<Network, Instruction> {
-	network: Network,
-	instructions: Vec<Instruction>,
+	pub network: Network,
+	pub instructions: Vec<Instruction>,
 }
 
 impl<Network, AbiEncoded, Account, Assets>
