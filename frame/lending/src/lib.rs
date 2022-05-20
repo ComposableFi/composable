@@ -889,7 +889,7 @@ pub mod pallet {
 				let deposit = T::WeightToFee::calc(&T::WeightInfo::liquidate(2));
 				<T as Config>::NativeCurrency::transfer(
 					borrowing_account,
-					&market_account,
+					market_account,
 					deposit,
 					true,
 				)?;
@@ -1411,7 +1411,7 @@ pub mod pallet {
 				LastBlockTimestamp::<T>::get(),
 			);
 
-			Self::take_borrow_rent_exactly_once(&market_id, &borrowing_account, &market_account)?;
+			Self::take_borrow_rent_exactly_once(market_id, borrowing_account, &market_account)?;
 
 			Ok(())
 		}
