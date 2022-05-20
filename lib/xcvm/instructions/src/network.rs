@@ -1,4 +1,4 @@
-#[derive(Copy, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
 #[repr(transparent)]
 pub struct XCVMNetwork(u8);
 
