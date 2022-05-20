@@ -67,4 +67,16 @@ impl<T: frame_system::Config> dutch_auction::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
+
+	fn xcm_sell() -> Weight {
+		(95_821_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(7 as Weight))
+			.saturating_add(T::DbWeight::get().writes(6 as Weight))
+	}
+
+	fn add_configuration() -> Weight {
+		(95_821_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(7 as Weight))
+			.saturating_add(T::DbWeight::get().writes(6 as Weight))
+	}
 }
