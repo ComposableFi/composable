@@ -189,7 +189,8 @@ impl<T: Config> StableSwap<T> {
 			let new_quote_balance = new_quote_amount.safe_sub(&quote_fee.fee)?;
 
 			let d2 = Self::get_invariant(new_base_balance, new_quote_balance, amp)?;
-			// minted LP is propotional to the delta of the pool invariant caused by imbalanced liquidity
+			// minted LP is propotional to the delta of the pool invariant caused by imbalanced
+			// liquidity
 			let mint_amount = T::Convert::convert(safe_multiply_by_rational(
 				T::Convert::convert(lp_issued),
 				T::Convert::convert(d2.safe_sub(&d0)?),
