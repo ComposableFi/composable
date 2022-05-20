@@ -43,6 +43,7 @@ members = [
   "simnode/simnode-tests",
   "simnode/common",
   "lib/xcvm/instructions",
+  "lib/xcvm/protocol-stableswap"
 ]
 
 [profile.release]

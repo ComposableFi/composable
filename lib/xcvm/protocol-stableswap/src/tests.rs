@@ -29,7 +29,7 @@ fn test() {
 		vec![
 			XCVMInstruction::Call(AbiEncoded::empty()),
 			XCVMInstruction::Bridge(XCVMNetwork::ETHEREUM, ()),
-			XCVMInstruction::Call(AbiEncoded::empty()),
+			XCVMInstruction::Call(AbiEncoded::from(vec![4])),
 			XCVMInstruction::Transfer((), ()),
 		]
 	);
