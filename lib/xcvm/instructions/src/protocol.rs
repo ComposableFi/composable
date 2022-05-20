@@ -1,6 +1,3 @@
-use crate::network::XCVMNetwork;
-use alloc::vec::Vec;
-
-pub trait XCVMProtocol {
-	fn serialize(&self, network: XCVMNetwork) -> Vec<u8>;
+pub trait XCVMProtocol<Network, AbiEncoded> {
+	fn serialize(&self, network: Network) -> AbiEncoded;
 }

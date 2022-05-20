@@ -8,21 +8,27 @@ pub mod instruction;
 pub mod network;
 pub mod protocol;
 pub mod protocols;
+pub mod tests;
+pub mod types;
 
 use crate::instruction::XCVMInstruction;
 use crate::network::XCVMNetwork;
 use crate::protocol::XCVMProtocol;
 use crate::protocols::Stableswap;
+use crate::types::AbiEncoded;
 
 #[derive(Clone)]
-pub struct XCVMContractBuilder<Account, Assets> {
-	network: XCVMNetwork,
-	instructions: Vec<XCVMInstruction<Account, Assets>>,
+pub struct XCVMContractBuilder<Network, Instruction> {
+	network: Network,
+	instructions: Vec<Instruction>,
 }
 
-impl<Account, Assets> XCVMContractBuilder<Account, Assets> {
-	pub fn here() -> Self {
-		XCVMContractBuilder { network: XCVMNetwork::PICASSO, instructions: Vec::new() }
+impl<Network, AbiEncoded, Account, Assets> XCVMContractBuilder<Network, AbiEncoded, Account, Assets>
+where
+	Network: Copy,
+{
+	pub fn from(network: Network) -> Self {
+		XCVMContractBuilder { network, instructions: Vec::new() }
 	}
 
 	pub fn transfer(&mut self, account: Account, assets: Assets) -> &mut Self {
@@ -30,23 +36,14 @@ impl<Account, Assets> XCVMContractBuilder<Account, Assets> {
 		self
 	}
 
-	pub fn bridge(&mut self, network: XCVMNetwork, assets: Assets) -> &mut Self {
+	pub fn bridge(&mut self, network: Network, assets: Assets) -> &mut Self {
 		self.network = network;
 		self.instructions.push(XCVMInstruction::Bridge(network, assets));
 		self
 	}
 
-	pub fn call(&mut self, protocol: impl XCVMProtocol) -> &mut Self {
+	pub fn call(&mut self, protocol: impl XCVMProtocol<Network, AbiEncoded>) -> &mut Self {
 		self.instructions.push(XCVMInstruction::Call(protocol.serialize(self.network)));
 		self
 	}
-}
-
-#[test]
-fn test() {
-	let _ = XCVMContractBuilder::<(), ()>::here()
-		.call(Stableswap::new((), ()))
-		.bridge(XCVMNetwork::ETHEREUM, ())
-		.call(Stableswap::new((), ()))
-		.transfer((), ());
 }
