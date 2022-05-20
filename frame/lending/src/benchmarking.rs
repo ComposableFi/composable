@@ -30,6 +30,7 @@ fn create_market_from_raw_origin<T: Config>(
 	input: CreateInput<
 		<T as Config>::LiquidationStrategyId,
 		<T as DeFiComposableConfig>::MayBeAssetId,
+		<T as frame_system::Config>::BlockNumber,
 	>,
 ) -> MarketIndex {
 	Lending::<T>::create_market(origin.clone().into(), input.try_into_validated().unwrap())
@@ -43,9 +44,10 @@ fn lending_benchmarking_setup<T: Config + pallet_oracle::Config>() -> LendingBen
 	let caller: <T as frame_system::Config>::AccountId = whitelisted_caller::<T::AccountId>();
 	let origin: RawOrigin<<T as frame_system::Config>::AccountId> = whitelisted_origin::<T>();
 	let bank: BalanceOf<T> = 10_000_000_000_000_u64.into();
+	let max_price_age = 10_000_u32.try_into().unwrap_or_default();
 
 	let pair = setup_currency_pair::<T>(&caller, bank);
-	let input = create_market_config::<T>(pair.base, pair.quote);
+	let input = create_market_config::<T>(pair.base, pair.quote, max_price_age);
 
 	LendingBenchmarkingSetup { caller, origin, bank, pair, input }
 }
@@ -58,6 +60,7 @@ pub struct LendingBenchmarkingSetup<T: Config> {
 	input: CreateInput<
 		<T as Config>::LiquidationStrategyId,
 		<T as DeFiComposableConfig>::MayBeAssetId,
+		<T as frame_system::Config>::BlockNumber,
 	>,
 }
 
@@ -86,7 +89,7 @@ benchmarks! {
 		} = lending_benchmarking_setup::<T>();
 
 		let pair = setup_currency_pair::<T>(&caller, bank);
-		let input = create_market_config::<T>(pair.base, pair.quote).try_into_validated().unwrap();
+		let input = create_market_config::<T>(pair.base, pair.quote, Default::default()).try_into_validated().unwrap();
 	}: _(origin, input)
 
 	deposit_collateral {
