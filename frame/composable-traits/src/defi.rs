@@ -98,6 +98,9 @@ impl<AssetId: PartialEq> Eq for CurrencyPair<AssetId> {}
 
 impl<AssetId: Ord> Ord for CurrencyPair<AssetId> {
 	fn cmp(&self, other: &Self) -> core::cmp::Ordering {
+		if self.eq(other) {
+			return core::cmp::Ordering::Equal
+		}
 		let base_ordering = self.base.cmp(&other.base);
 		if base_ordering.is_eq() {
 			return self.quote.cmp(&other.quote)
@@ -174,7 +177,7 @@ mod test_currency_pair {
 		let pair3: CurrencyPair<u8> = CurrencyPair::new(0_u8, 1_u8);
 		let pair4: CurrencyPair<u8> = CurrencyPair::new(1_u8, 0_u8);
 		assert_eq!(pair1.cmp(&pair2), core::cmp::Ordering::Less);
-		assert_eq!(pair1.cmp(&pair4), core::cmp::Ordering::Less);
+		assert_eq!(pair1.cmp(&pair4), core::cmp::Ordering::Equal);
 		assert_eq!(pair1.cmp(&pair3), core::cmp::Ordering::Equal);
 		assert_eq!(pair2.cmp(&pair1), core::cmp::Ordering::Greater);
 		assert_eq!(pair2.cmp(&pair1.swap()), core::cmp::Ordering::Greater);
@@ -182,10 +185,10 @@ mod test_currency_pair {
 		assert_eq!(pair2.cmp(&pair4), core::cmp::Ordering::Greater);
 		assert_eq!(pair3.cmp(&pair1), core::cmp::Ordering::Equal);
 		assert_eq!(pair3.cmp(&pair2), core::cmp::Ordering::Less);
-		assert_eq!(pair3.cmp(&pair4), core::cmp::Ordering::Less);
-		assert_eq!(pair4.cmp(&pair1), core::cmp::Ordering::Greater);
+		assert_eq!(pair3.cmp(&pair4), core::cmp::Ordering::Equal);
+		assert_eq!(pair4.cmp(&pair1), core::cmp::Ordering::Equal);
 		assert_eq!(pair4.cmp(&pair2), core::cmp::Ordering::Less);
-		assert_eq!(pair4.cmp(&pair3), core::cmp::Ordering::Greater);
+		assert_eq!(pair4.cmp(&pair3), core::cmp::Ordering::Equal);
 	}
 }
 

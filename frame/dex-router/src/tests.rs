@@ -191,6 +191,16 @@ fn halborn_hal11_route_with_cycle() {
 			),
 			Error::<Test>::LoopSuspectedInRouteUpdate,
 		);
+
+		let dex_route = vec![usdt_usdc_pool, usdc_usdt_pool];
+		assert_noop!(
+			DexRouter::update_route(
+				Origin::signed(ALICE),
+				CurrencyPair::new(USDC, USDC),
+				Some(dex_route.clone().try_into().unwrap())
+			),
+			Error::<Test>::LoopSuspectedInRouteUpdate,
+		);
 	});
 }
 
