@@ -12,10 +12,7 @@ pub mod tests;
 pub mod types;
 
 use crate::instruction::XCVMInstruction;
-use crate::network::XCVMNetwork;
 use crate::protocol::XCVMProtocol;
-use crate::protocols::Stableswap;
-use crate::types::AbiEncoded;
 
 #[derive(Clone)]
 pub struct XCVMContractBuilder<Network, Instruction> {
