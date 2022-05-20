@@ -15,7 +15,7 @@ step towards the goal of having a more robust code.
 ## Introduction
 
 Most of the time, we, developers, are used to a wide variety of tests flavors
-(UNIT, integration...). But we rarely back any of them with a
+(unit, integration...). But we rarely back any of them with a
 property/invariant. Although writing these tests is already a mark of quality,
 it is not sufficient and lacks meaning. Adding to that the fact that we highly
 likely implement them using arbitrary, usually well-known values, they lose the
