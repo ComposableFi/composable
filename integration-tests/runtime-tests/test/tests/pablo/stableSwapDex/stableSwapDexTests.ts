@@ -29,7 +29,7 @@ describe("StableSwapDex Test Suite", function () {
   let api: ApiPromise;
   let walletId1: KeyringPair, walletId2: KeyringPair, sudoKey: KeyringPair, walletId3: KeyringPair;
   let baseStableAssetId: number, quoteStableAssetId: number, ampCoefficient: number, poolId1: number,
-    poolId2: number, quoteStableAssetId2: number;
+    poolId2: number, quoteStableAssetId2: number, falseQuoteAssetId: number;
   let baseAssetAmount: bigint, quoteAssetAmount: bigint, lpTokens: bigint;
   let fee: number, ownerFee: number;
   let spotPrice1: number, spotPrice2: number;
@@ -46,6 +46,7 @@ describe("StableSwapDex Test Suite", function () {
     baseStableAssetId = 11;
     quoteStableAssetId = 12;
     quoteStableAssetId2 = 13;
+    falseQuoteAssetId = 21;
     ampCoefficient = 24;
     baseAssetAmount = Pica(250000);
     quoteAssetAmount = Pica(250000);
@@ -105,26 +106,6 @@ describe("StableSwapDex Test Suite", function () {
       );
       expect(result.resultPoolId).to.be.a("number");
     });
-
-    it("Can create multiple pools with random assetIds, fee, owner fee and ampCoefficients", async function () {
-      this.skip();
-      await createMultipleStableSwapPools(api, walletId2);
-      const prePoolCount = (await api.query.pablo.poolCount()).toNumber();
-      expect((await api.query.pablo.poolCount()).toNumber()).to.be.equal(500 + prePoolCount);
-    });
-
-    it("Can create stableswap pool", async function () {
-      const result = await createStableSwapPool(
-        api,
-        walletId2,
-        walletId2,
-        1000,
-        2000,
-        ampCoefficient + 500000,
-        400000,
-        50000
-      );
-    });
   });
 
   describe("StableSwapDex Add Liquidity Tests", async function () {
@@ -155,7 +136,7 @@ describe("StableSwapDex Test Suite", function () {
     });
 
     it("Given that users have sufficient funds, User1 can add liquidity and the amount added not adjusted by " +
-      "Constantproduct Formula if asset amounts are close to eachother", async function () {
+      "Constantproduct Formula", async function () {
       const result = await addFundstoThePool(api, poolId1, walletId1, Pica(100), Pica(500));
       expect(result.quoteAdded.toBigInt()).to.be.equal(Pica(500));
     });
@@ -188,8 +169,15 @@ describe("StableSwapDex Test Suite", function () {
 
     it("Given that users have sufficient funds in their balance, User2 can't buy a not listed" +
       " asset in the pool", async function () {
-      await buyFromPool(api, poolId1, walletId2, 30, Pica(30)).catch(e =>
-        expect(e.message).to.contain("Overflow")
+      await buyFromPool(api, poolId1, walletId2, falseQuoteAssetId, Pica(30)).catch(e =>
+        expect(e.message).to.contain("InvalidAsset")
+      );
+    });
+
+    it("Given that users have sufficient funds in their balance, User2 can't sell a not listed" +
+      " asset in the pool", async function () {
+      await sellToPool(api, poolId1, walletId2, falseQuoteAssetId, Pica(30)).catch(e =>
+        expect(e.message).to.contain("InvalidAsset")
       );
     });
 
@@ -253,7 +241,7 @@ describe("StableSwapDex Test Suite", function () {
 
     it("Given that users have sufficient funds, User1 can't swap two tokens not listed in the pool", async function () {
       //Expected behavior is to reject with error
-      await swapTokenPairs(api, poolId1, walletId1, baseStableAssetId, quoteStableAssetId2, Pica(50)).catch(e =>
+      await swapTokenPairs(api, poolId1, walletId1, baseStableAssetId, falseQuoteAssetId, Pica(50)).catch(e =>
         expect(e.message).to.contain("Mismatch"));
     });
   });

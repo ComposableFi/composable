@@ -192,7 +192,7 @@ describe("LiquidityBootsrapping Pool Test Suite", function () {
     it("Given that users have sufficient funds, user1 can't buy an asset not listed in the pool",
       async function () {
         await buyFromPool(api, poolId1, walletId2, quoteAssetId2, Pica(10)).catch(e =>
-          expect(e.message).to.contain("Mismatch")
+          expect(e.message).to.contain("InvalidAsset")
         );
     });
 
@@ -203,7 +203,7 @@ describe("LiquidityBootsrapping Pool Test Suite", function () {
 
     it("User can't buy more than the amount available in the pool", async function () {
       await buyFromPool(api, poolId2, walletId2, baseAssetId, Pica("4000")).catch(e =>
-        expect(e.message).to.contain("arithmetic"));
+        expect(e.message).to.contain("InvalidAsset"))
     });
 
     it("User1 can swap from the pool once the sale started", async function () {

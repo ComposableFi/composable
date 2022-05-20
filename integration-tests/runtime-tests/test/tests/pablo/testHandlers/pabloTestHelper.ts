@@ -442,7 +442,7 @@ export async function createMultipleStableSwapPools(
           base: api.createType("u128", Math.floor(Math.random()*10000)),
           quote: api.createType("u128", Math.floor(Math.random()*10000))
         }),
-        amplification_coefficient: api.createType('u16', Math.floor(Math.random()*100000)),
+        amplification_coefficient: api.createType('u16', Math.floor(Math.random()*20000)),
         fee: api.createType("Permill", Math.floor(Math.random()*990000)),
         ownerFee: api.createType("Permill", Math.floor(Math.random()*990000))
       }});
