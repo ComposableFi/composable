@@ -7,12 +7,13 @@ extern crate alloc;
 pub mod instruction;
 pub mod network;
 pub mod protocol;
-pub mod protocols;
 pub mod tests;
 pub mod types;
 
-use crate::instruction::XCVMInstruction;
-use crate::protocol::XCVMProtocol;
+pub use crate::instruction::XCVMInstruction;
+pub use crate::network::XCVMNetwork;
+pub use crate::protocol::XCVMProtocol;
+pub use crate::types::AbiEncoded;
 
 #[derive(Clone)]
 pub struct XCVMContractBuilder<Network, Instruction> {
@@ -29,18 +30,18 @@ where
 		XCVMContractBuilder { network, instructions: Vec::new() }
 	}
 
-	pub fn transfer(&mut self, account: Account, assets: Assets) -> &mut Self {
+	pub fn transfer(mut self, account: Account, assets: Assets) -> Self {
 		self.instructions.push(XCVMInstruction::Transfer(account, assets));
 		self
 	}
 
-	pub fn bridge(&mut self, network: Network, assets: Assets) -> &mut Self {
+	pub fn bridge(mut self, network: Network, assets: Assets) -> Self {
 		self.network = network;
 		self.instructions.push(XCVMInstruction::Bridge(network, assets));
 		self
 	}
 
-	pub fn call(&mut self, protocol: impl XCVMProtocol<Network, AbiEncoded>) -> &mut Self {
+	pub fn call(mut self, protocol: impl XCVMProtocol<Network, AbiEncoded>) -> Self {
 		self.instructions.push(XCVMInstruction::Call(protocol.serialize(self.network)));
 		self
 	}

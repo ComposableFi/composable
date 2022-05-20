@@ -1,6 +1,6 @@
-use crate::network::XCVMNetwork;
-use crate::protocol::XCVMProtocol;
-use crate::types::AbiEncoded;
+#![cfg_attr(not(feature = "std"), no_std)]
+
+use xcvm_instructions::{AbiEncoded, XCVMNetwork, XCVMProtocol};
 
 use ethabi::{encode, ethereum_types::H160, Token};
 

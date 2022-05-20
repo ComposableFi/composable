@@ -1,0 +1,10 @@
+[package]
+name = "protocol-stableswap"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+xcvm-instructions = { path = "../instructions" }
+ethabi = "17.0.0"
