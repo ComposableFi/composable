@@ -46,7 +46,11 @@ mod models;
 #[cfg(test)]
 mod mocks;
 #[cfg(test)]
+mod mocks_offchain;
+#[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod tests_offchain;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
@@ -156,7 +160,6 @@ pub mod pallet {
 		handle_must_liquidate: u32,
 	}
 
-	//pub const PALLET_ID: PalletId = PalletId(*b"Lending!");
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"lend");
 	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"lend");
 
@@ -165,6 +168,7 @@ pub mod pallet {
 		use frame_system::offchain;
 		use sp_core::sr25519::{self, Signature as Sr25519Signature};
 		use sp_runtime::{app_crypto::app_crypto, traits::Verify, MultiSignature, MultiSigner};
+
 		app_crypto!(sr25519, KEY_TYPE);
 
 		pub struct TestAuthId;
@@ -210,7 +214,6 @@ pub mod pallet {
 			<Self as DeFiComposableConfig>::MayBeAssetId,
 			Self::Balance,
 		>;
-
 		type MultiCurrency: Transfer<
 				Self::AccountId,
 				Balance = Self::Balance,
@@ -324,7 +327,19 @@ pub mod pallet {
 				return
 			}
 			for (market_id, account, _) in DebtIndex::<T>::iter() {
-				// TODO: check that it should liquidate before liquidations
+				//Check that it should liquidate before liquidations
+				let should_be_liquidated =
+					match Self::should_liquidate(&market_id, &account) {
+						Ok(status) => status,
+						Err(error) => {
+							log::error!("Liquidation necessity check failed, market_id: {:?}, account: {:?},
+                                        error: {:?}", market_id, account, error);
+							false
+						},
+					};
+				if !should_be_liquidated {
+					continue
+				}
 				let results = signer.send_signed_transaction(|_account| Call::liquidate {
 					market_id,
 					borrowers: vec![account.clone()],
@@ -368,7 +383,7 @@ pub mod pallet {
 		CollateralDepositFailed,
 		MarketCollateralWasNotDepositedByAccount,
 
-		/// The collateral factor for a market must be mroe than one.
+		/// The collateral factor for a market must be more than one.
 		CollateralFactorMustBeMoreThanOne,
 		/// Can't allow amount 0 as collateral.
 		CannotDepositZeroCollateral,
@@ -473,7 +488,7 @@ pub mod pallet {
 			market_id: MarketIndex,
 			borrowers: Vec<T::AccountId>,
 		},
-		/// Event emitted to warn that loan may go under collateralized soon.
+		/// Event emitted to warn that loan may go under collaterlized soon.
 		MayGoUnderCollateralizedSoon {
 			market_id: MarketIndex,
 			account: T::AccountId,

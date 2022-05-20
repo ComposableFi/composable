@@ -21,6 +21,7 @@
 	],
 	// Set *default* container specific settings.json values on container create.
 	"settings": {
+		"workbench.colorTheme": "GitHub Dark",
 		"workbench.iconTheme": "vscode-icons",
 		"lldb.executable": "/usr/bin/lldb",
 		// VS Code don't watch files under ./target
@@ -33,7 +34,7 @@
 		"terminal.integrated.defaultProfile.linux": "zsh",
 		"rust-analyzer.rustfmt.enableRangeFormatting": true,
 		"[rust]": {
-			"editor.defaultFormatter": "matklad.rust-analyzer",
+			"editor.defaultFormatter": "rust-lang.rust-analyzer",
 			"editor.formatOnSave": true
 		},
 		"editor.quickSuggestions": {
@@ -48,6 +49,8 @@
 		"window.autoDetectColorScheme": true,
 		"workbench.preferredLightColorTheme": "GitHub Light",
 		"workbench.preferredDarkColorTheme": "GitHub Dark",
+		"editor.inlineSuggest.enabled": true,
+		"git.autofetch": true
 	},
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
@@ -56,7 +59,7 @@
 		"yzhang.markdown-all-in-one",
 		"vadimcn.vscode-lldb",
 		"mutantdino.resourcemonitor",
-		"matklad.rust-analyzer",
+		"rust-lang.rust-analyzer",
 		"tamasfe.even-better-toml",
 		"serayuzgur.crates",
 		"ms-azuretools.vscode-docker",
