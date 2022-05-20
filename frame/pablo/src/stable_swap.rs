@@ -163,6 +163,7 @@ impl<T: Config> StableSwap<T> {
 			// And this formula leads to exactly that equality
 			// fee = pool.fee * n_coins / (4 * (n_coins - 1))
 			// pool supports only two coins.
+			// https://ethereum.stackexchange.com/questions/124850/curve-amm-how-is-fee-calculated-when-adding-liquidity
 			let share: Permill = Permill::from_rational(2_u32, 4_u32);
 			let updated_fee_config = pool.fee_config.mul(share);
 
@@ -181,7 +182,7 @@ impl<T: Config> StableSwap<T> {
 			let quote_difference = Self::abs_difference(ideal_quote_balance, new_quote_amount)?;
 
 			let base_fee = updated_fee_config.calculate_fees(pool.pair.base, base_difference);
-			let quote_fee = updated_fee_config.calculate_fees(pool.pair.base, quote_difference);
+			let quote_fee = updated_fee_config.calculate_fees(pool.pair.quote, quote_difference);
 			let new_base_balance = new_base_amount.safe_sub(&base_fee.fee)?;
 			let new_quote_balance = new_quote_amount.safe_sub(&quote_fee.fee)?;
 
@@ -201,7 +202,6 @@ impl<T: Config> StableSwap<T> {
 		};
 
 		ensure!(mint_amount >= min_mint_amount, Error::<T>::CannotRespectMinimumRequested);
-
 		T::Assets::transfer(pool.pair.base, who, &pool_account, base_amount, keep_alive)?;
 		T::Assets::transfer(pool.pair.quote, who, &pool_account, quote_amount, keep_alive)?;
 		T::Assets::mint_into(pool.lp_token, who, mint_amount)?;

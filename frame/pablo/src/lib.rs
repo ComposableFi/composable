@@ -720,22 +720,9 @@ pub mod pallet {
 							min_mint_amount,
 							keep_alive,
 						)?;
-					// owner's fee is transferred upfront.
-					// TODO refactor
-					T::Assets::transfer(
-						info.pair.base,
-						&pool_account,
-						&info.owner,
-						base_fee.owner_fee,
-						keep_alive,
-					)?;
-					T::Assets::transfer(
-						info.pair.quote,
-						&pool_account,
-						&info.owner,
-						quote_fee.owner_fee,
-						keep_alive,
-					)?;
+					// imbalance fees
+					Self::disburse_fees(&pool_account, &info.owner, &base_fee)?;
+					Self::disburse_fees(&pool_account, &info.owner, &quote_fee)?;
 					(added_base_amount, added_quote_amount, minted_lp)
 				},
 				PoolConfiguration::ConstantProduct(info) => Uniswap::<T>::add_liquidity(
