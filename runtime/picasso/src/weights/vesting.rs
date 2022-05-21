@@ -35,9 +35,9 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: Timestamp Now (r:1 w:0)
 	fn claim(s: u32, ) -> Weight {
-		(54_842_000 as Weight)
-			// Standard Error: 6_000
-			.saturating_add((2_571_000 as Weight).saturating_mul(s as Weight))
+		(63_108_000 as Weight)
+			// Standard Error: 5_000
+			.saturating_add((2_540_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -47,7 +47,7 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:2 w:1)
 	// Storage: Tokens Locks (r:1 w:1)
 	fn vested_transfer() -> Weight {
-		(111_157_000 as Weight)
+		(115_613_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
@@ -56,9 +56,9 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Vesting VestingSchedules (r:0 w:1)
 	fn update_vesting_schedules(s: u32, ) -> Weight {
-		(56_979_000 as Weight)
+		(59_801_000 as Weight)
 			// Standard Error: 1_000
-			.saturating_add((128_000 as Weight).saturating_mul(s as Weight))
+			.saturating_add((137_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
@@ -68,9 +68,9 @@ impl<T: frame_system::Config> vesting::WeightInfo for WeightInfo<T> {
 	// Storage: System Account (r:1 w:1)
 	// Storage: Timestamp Now (r:1 w:0)
 	fn claim_for(s: u32, ) -> Weight {
-		(57_094_000 as Weight)
-			// Standard Error: 4_000
-			.saturating_add((2_283_000 as Weight).saturating_mul(s as Weight))
+		(59_771_000 as Weight)
+			// Standard Error: 3_000
+			.saturating_add((2_333_000 as Weight).saturating_mul(s as Weight))
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
