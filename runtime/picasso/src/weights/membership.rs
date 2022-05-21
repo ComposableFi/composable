@@ -35,9 +35,9 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 	// Storage: Council Members (r:0 w:1)
 	// Storage: Council Prime (r:0 w:1)
 	fn add_member(m: u32, ) -> Weight {
-		(29_166_000 as Weight)
-			// Standard Error: 12_000
-			.saturating_add((143_000 as Weight).saturating_mul(m as Weight))
+		(29_780_000 as Weight)
+			// Standard Error: 10_000
+			.saturating_add((135_000 as Weight).saturating_mul(m as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -47,9 +47,9 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 	// Storage: Council Members (r:0 w:1)
 	// Storage: Council Prime (r:0 w:1)
 	fn remove_member(m: u32, ) -> Weight {
-		(37_052_000 as Weight)
+		(37_033_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((72_000 as Weight).saturating_mul(m as Weight))
+			.saturating_add((78_000 as Weight).saturating_mul(m as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -59,9 +59,9 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 	// Storage: Council Members (r:0 w:1)
 	// Storage: Council Prime (r:0 w:1)
 	fn swap_member(m: u32, ) -> Weight {
-		(37_063_000 as Weight)
+		(37_367_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((92_000 as Weight).saturating_mul(m as Weight))
+			.saturating_add((102_000 as Weight).saturating_mul(m as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -71,9 +71,9 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 	// Storage: Council Members (r:0 w:1)
 	// Storage: Council Prime (r:0 w:1)
 	fn reset_member(m: u32, ) -> Weight {
-		(37_274_000 as Weight)
+		(38_036_000 as Weight)
 			// Standard Error: 1_000
-			.saturating_add((268_000 as Weight).saturating_mul(m as Weight))
+			.saturating_add((281_000 as Weight).saturating_mul(m as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -83,9 +83,9 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 	// Storage: Council Members (r:0 w:1)
 	// Storage: Council Prime (r:0 w:1)
 	fn change_key(m: u32, ) -> Weight {
-		(38_777_000 as Weight)
-			// Standard Error: 1_000
-			.saturating_add((89_000 as Weight).saturating_mul(m as Weight))
+		(38_942_000 as Weight)
+			// Standard Error: 0
+			.saturating_add((99_000 as Weight).saturating_mul(m as Weight))
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
@@ -93,18 +93,18 @@ impl<T: frame_system::Config> membership::WeightInfo for WeightInfo<T> {
 	// Storage: CouncilMembership Prime (r:0 w:1)
 	// Storage: Council Prime (r:0 w:1)
 	fn set_prime(m: u32, ) -> Weight {
-		(10_108_000 as Weight)
+		(10_221_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((43_000 as Weight).saturating_mul(m as Weight))
+			.saturating_add((51_000 as Weight).saturating_mul(m as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: CouncilMembership Prime (r:0 w:1)
 	// Storage: Council Prime (r:0 w:1)
 	fn clear_prime(m: u32, ) -> Weight {
-		(3_734_000 as Weight)
+		(3_679_000 as Weight)
 			// Standard Error: 0
-			.saturating_add((1_000 as Weight).saturating_mul(m as Weight))
+			.saturating_add((2_000 as Weight).saturating_mul(m as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 }

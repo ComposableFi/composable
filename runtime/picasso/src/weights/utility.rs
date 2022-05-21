@@ -31,22 +31,22 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 	fn batch(c: u32, ) -> Weight {
-		(33_238_000 as Weight)
-			// Standard Error: 4_000
-			.saturating_add((7_395_000 as Weight).saturating_mul(c as Weight))
+		(33_165_000 as Weight)
+			// Standard Error: 3_000
+			.saturating_add((7_243_000 as Weight).saturating_mul(c as Weight))
 	}
 	fn as_derivative() -> Weight {
-		(4_604_000 as Weight)
+		(4_366_000 as Weight)
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	fn batch_all(c: u32, ) -> Weight {
-		(30_764_000 as Weight)
-			// Standard Error: 3_000
-			.saturating_add((7_911_000 as Weight).saturating_mul(c as Weight))
+		(13_342_000 as Weight)
+			// Standard Error: 5_000
+			.saturating_add((7_901_000 as Weight).saturating_mul(c as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	fn dispatch_as() -> Weight {
-		(19_925_000 as Weight)
+		(20_150_000 as Weight)
 	}
 }
