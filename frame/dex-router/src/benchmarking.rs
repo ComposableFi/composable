@@ -72,6 +72,7 @@ where
 		owner: owner.clone(),
 		pair: CurrencyPair::new(pica, ksm),
 		fee_config: FeeConfig::zero(),
+		base_weight: Permill::from_percent(50),
 	};
 	let pica_ksm = pallet_pablo::Pallet::<T>::do_create_pool(pica_ksm_config).unwrap();
 	// 100 pica == 1 ksm
@@ -97,6 +98,7 @@ where
 		owner: owner.clone(),
 		pair: CurrencyPair::new(ksm, eth),
 		fee_config: FeeConfig::zero(),
+		base_weight: Permill::from_percent(50),
 	};
 	let ksm_eth = pallet_pablo::Pallet::<T>::do_create_pool(ksm_eth_config).unwrap();
 	// 10 ksm == 1 eth
@@ -123,6 +125,7 @@ where
 		owner: owner.clone(),
 		pair: CurrencyPair::new(eth, usdc),
 		fee_config: FeeConfig::zero(),
+		base_weight: Permill::from_percent(50),
 	};
 	let eth_usdc = pallet_pablo::Pallet::<T>::do_create_pool(eth_usdc_config).unwrap();
 	// 1 eth = 200 usdc

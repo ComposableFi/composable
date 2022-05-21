@@ -42,6 +42,7 @@ fn create_pool(
 			owner_fee_rate: protocol_fee,
 			protocol_fee_rate: Permill::zero(),
 		},
+		base_weight: Permill::from_percent(50),
 	};
 	System::set_block_number(1);
 	let actual_pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
@@ -84,6 +85,7 @@ fn test() {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
 			fee_config: FeeConfig::zero(),
+			base_weight: Permill::from_percent(50),
 		};
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
 
@@ -175,6 +177,7 @@ fn add_remove_lp() {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
 			fee_config: FeeConfig::zero(),
+			base_weight: Permill::from_percent(50),
 		};
 		let unit = 1_000_000_000_000_u128;
 		let initial_btc = 1_00_u128 * unit;
@@ -244,6 +247,7 @@ fn add_lp_with_min_mint_amount() {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
 			fee_config: FeeConfig::zero(),
+			base_weight: Permill::from_percent(50),
 		};
 		let unit = 1_000_000_000_000_u128;
 		let initial_btc = 1_00_u128 * unit;
@@ -277,6 +281,7 @@ fn remove_lp_failure() {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
 			fee_config: FeeConfig::zero(),
+			base_weight: Permill::from_percent(50),
 		};
 		let unit = 1_000_000_000_000_u128;
 		let initial_btc = 1_00_u128 * unit;
@@ -301,6 +306,7 @@ fn exchange_failure() {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
 			fee_config: FeeConfig::zero(),
+			base_weight: Permill::from_percent(50),
 		};
 		let exchange_base_amount = 100 * unit;
 		common_exchange_failure(pool_init_config, initial_usdt, initial_btc, exchange_base_amount)
@@ -389,6 +395,7 @@ fn avoid_exchange_without_liquidity() {
 				owner_fee_rate: owner_fee,
 				protocol_fee_rate: Permill::zero(),
 			},
+			base_weight: Permill::from_percent(50),
 		};
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
@@ -415,6 +422,7 @@ fn cannot_swap_between_wrong_pairs() {
 				owner_fee_rate: owner_fee,
 				protocol_fee_rate: Permill::zero(),
 			},
+			base_weight: Permill::from_percent(50),
 		};
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
@@ -460,6 +468,7 @@ fn cannot_get_exchange_value_for_wrong_asset() {
 				owner_fee_rate: owner_fee,
 				protocol_fee_rate: Permill::zero(),
 			},
+			base_weight: Permill::from_percent(50),
 		};
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");

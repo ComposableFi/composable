@@ -71,6 +71,7 @@ fn create_constant_product_amm_pool(
 			owner_fee_rate: admin_fee,
 			protocol_fee_rate: Permill::zero(),
 		},
+		base_weight: Permill::from_percent(50),
 	};
 	// Create Pablo pool
 	let p = Pablo::do_create_pool(init_config);

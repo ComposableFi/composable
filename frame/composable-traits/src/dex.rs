@@ -233,6 +233,10 @@ pub struct ConstantProductPoolInfo<AccountId, AssetId> {
 	pub lp_token: AssetId,
 	/// Amount of the fee pool charges for the exchange
 	pub fee_config: FeeConfig,
+	/// The weight of the base asset. Must hold `1 = base_weight + quote_weight`
+	pub base_weight: Permill,
+	/// The weight of the quote asset. Must hold `1 = base_weight + quote_weight`
+	pub quote_weight: Permill,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
