@@ -11,7 +11,6 @@ use composable_traits::{
 use frame_support::{
 	pallet_prelude::*,
 	traits::fungibles::{Inspect, Mutate, Transfer},
-	transactional,
 };
 use sp_runtime::{
 	traits::{Convert, One, Zero},
@@ -22,7 +21,6 @@ use sp_runtime::{
 pub(crate) struct Uniswap<T>(PhantomData<T>);
 
 impl<T: Config> Uniswap<T> {
-	#[transactional]
 	pub(crate) fn do_create_pool(
 		who: &T::AccountId,
 		pair: CurrencyPair<T::AssetId>,
@@ -112,7 +110,6 @@ impl<T: Config> Uniswap<T> {
 		Ok((base_amount, quote_amount, lp_token_to_mint))
 	}
 
-	#[transactional]
 	pub(crate) fn remove_liquidity(
 		who: &T::AccountId,
 		pool: ConstantProductPoolInfo<T::AccountId, T::AssetId>,

@@ -15,7 +15,6 @@ use composable_traits::{
 use frame_support::{
 	pallet_prelude::*,
 	traits::fungibles::{Inspect, Transfer},
-	transactional,
 };
 use frame_system::pallet_prelude::BlockNumberFor;
 use sp_runtime::traits::{BlockNumberProvider, Convert, One, Zero};
@@ -157,7 +156,6 @@ impl<T: Config> LiquidityBootstrapping<T> {
 		Ok(base_amount)
 	}
 
-	#[transactional]
 	pub(crate) fn add_liquidity(
 		who: &T::AccountId,
 		pool: LiquidityBootstrappingPoolInfoOf<T>,
@@ -181,7 +179,6 @@ impl<T: Config> LiquidityBootstrapping<T> {
 		Ok((base_amount, quote_amount, T::Balance::zero()))
 	}
 
-	#[transactional]
 	pub(crate) fn remove_liquidity(
 		who: &T::AccountId,
 		pool_id: T::PoolId,
