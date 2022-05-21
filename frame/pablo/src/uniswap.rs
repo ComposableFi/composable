@@ -27,7 +27,9 @@ impl<T: Config> Uniswap<T> {
 		fee_config: FeeConfig,
 		base_weight: Permill,
 	) -> Result<T::PoolId, DispatchError> {
-		ensure!(base_weight < Permill::one(), Error::<T>::WeightsMustBeNonZero);
+		// TODO(hussein-aitlahcen): refactor all those checks using Validated
+		ensure!(base_weight != Permill::zero(), Error::<T>::WeightsMustBeNonZero);
+		ensure!(base_weight < Permill::one(), Error::<T>::WeightsMustSumToOne);
 		ensure!(pair.base != pair.quote, Error::<T>::InvalidPair);
 		ensure!(fee_config.fee_rate < Permill::one(), Error::<T>::InvalidFees);
 

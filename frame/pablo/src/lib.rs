@@ -233,6 +233,7 @@ pub mod pallet {
 		MissingAmount,
 		NoLpTokenForLbp,
 		WeightsMustBeNonZero,
+		WeightsMustSumToOne,
 	}
 
 	#[pallet::config]
@@ -556,24 +557,15 @@ pub mod pallet {
 					fee_config: fee,
 				} => (
 					owner.clone(),
-					StableSwap::<T>::do_create_pool(
-						&owner,
+					StableSwap::<T>::do_create_pool(&owner, pair, amplification_coefficient, fee)?,
+					pair,
+				),
+				PoolInitConfiguration::ConstantProduct { owner, pair, fee_config, base_weight } =>
+					(
+						owner.clone(),
+						Uniswap::<T>::do_create_pool(&owner, pair, fee_config, base_weight)?,
 						pair,
-						amplification_coefficient,
-						fee,
-					)?,
-					pair,
-				),
-				PoolInitConfiguration::ConstantProduct {
-					owner,
-					pair,
-					fee,
-					base_weight,
-				} => (
-					owner.clone(),
-					Uniswap::<T>::do_create_pool(&owner, pair, fee, owner_fee, base_weight)?,
-					pair,
-				),
+					),
 				PoolInitConfiguration::LiquidityBootstrapping(pool_config) => {
 					let validated_pool_config = Validated::new(pool_config.clone())?;
 					(

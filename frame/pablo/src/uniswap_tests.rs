@@ -9,7 +9,7 @@ use crate::{
 };
 use composable_support::math::safe::safe_multiply_by_rational;
 use composable_tests_helpers::{
-	prop_assert_ok,
+	prop_assert_noop, prop_assert_ok,
 	test::helper::{acceptable_computation_error, default_acceptable_computation_error},
 };
 use composable_traits::{
@@ -493,6 +493,19 @@ fn cannot_get_exchange_value_for_wrong_asset() {
 	});
 }
 
+#[test]
+fn weights_zero() {
+	new_test_ext().execute_with(|| {
+		let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			owner: ALICE,
+			pair: CurrencyPair::new(BTC, USDT),
+			fee_config: FeeConfig::zero(),
+			base_weight: Permill::zero(),
+		};
+		assert_noop!(Pablo::do_create_pool(pool_init_config), Error::<Test>::WeightsMustBeNonZero);
+	});
+}
+
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(10000))]
 	#[test]
@@ -569,32 +582,71 @@ proptest! {
 	fn swap_proptest(
 		usdt_value in 1..u32::MAX,
 	) {
-	new_test_ext().execute_with(|| {
-		let unit = 1_000_000_000_000_u128;
-		let initial_btc = 1_000_000_000_000_u128 * unit;
-		let btc_price = 45_000_u128;
-		let initial_usdt = initial_btc * btc_price;
-		let usdt_value = usdt_value as u128 * unit;
-		let pool_id = create_pool(
-			BTC,
-			USDT,
-			initial_btc,
-			initial_usdt,
-			Permill::from_float(0.025),
-			Permill::zero(),
-		);
-		let pool = get_pool(pool_id);
-		prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
-		prop_assert_ok!(Pablo::swap(Origin::signed(BOB), pool_id, CurrencyPair::new(BTC, USDT), usdt_value, 0, false));
-		let usdt_value_after_fee = usdt_value - pool.fee_config.fee_rate.mul_floor(usdt_value);
-		let ratio = initial_btc as f64 / initial_usdt as f64;
-		let expected_btc_value = ratio * usdt_value_after_fee as f64;
-		let expected_btc_value = expected_btc_value as u128;
-		let bob_btc = Tokens::balance(BTC, &BOB);
-		prop_assert_ok!(default_acceptable_computation_error(bob_btc, expected_btc_value));
-		Ok(())
-	})?;
-}
+	  new_test_ext().execute_with(|| {
+		  let unit = 1_000_000_000_000_u128;
+		  let initial_btc = 1_000_000_000_000_u128 * unit;
+		  let btc_price = 45_000_u128;
+		  let initial_usdt = initial_btc * btc_price;
+		  let usdt_value = usdt_value as u128 * unit;
+		  let pool_id = create_pool(
+			  BTC,
+			  USDT,
+			  initial_btc,
+			  initial_usdt,
+			  Permill::from_float(0.025),
+			  Permill::zero(),
+		  );
+		  let pool = get_pool(pool_id);
+		  prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
+		  prop_assert_ok!(Pablo::swap(Origin::signed(BOB), pool_id, CurrencyPair::new(BTC, USDT), usdt_value, 0, false));
+		  let usdt_value_after_fee = usdt_value - pool.fee_config.fee_rate.mul_floor(usdt_value);
+		  let ratio = initial_btc as f64 / initial_usdt as f64;
+		  let expected_btc_value = ratio * usdt_value_after_fee as f64;
+		  let expected_btc_value = expected_btc_value as u128;
+		  let bob_btc = Tokens::balance(BTC, &BOB);
+		  prop_assert_ok!(default_acceptable_computation_error(bob_btc, expected_btc_value));
+		  Ok(())
+	  })?;
+  }
+
+	#[test]
+	fn weights_sum_to_one(
+		base_weight_in_percent in 1..100u32,
+	) {
+	  new_test_ext().execute_with(|| {
+		  let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			  owner: ALICE,
+			  pair: CurrencyPair::new(BTC, USDT),
+			  fee_config: FeeConfig::zero(),
+			  base_weight: Permill::from_percent(base_weight_in_percent),
+		  };
+		  let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool is valid");
+
+		  let pool = get_pool(pool_id);
+
+		  prop_assert_eq!(Permill::one(), pool.base_weight + pool.quote_weight);
+
+		  Ok(())
+	  })?;
+  }
+
+	#[test]
+	fn weights_sum_to_more_than_one(
+		base_weight_in_percent in 100..u32::MAX,
+	) {
+	  new_test_ext().execute_with(|| {
+		  let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			  owner: ALICE,
+			  pair: CurrencyPair::new(BTC, USDT),
+			  fee_config: FeeConfig::zero(),
+			  base_weight: Permill::from_percent(base_weight_in_percent),
+		  };
+
+		  prop_assert_noop!(Pablo::do_create_pool(pool_init_config), Error::<Test>::WeightsMustSumToOne);
+
+		  Ok(())
+	  })?;
+  }
 }
 
 mod twap {

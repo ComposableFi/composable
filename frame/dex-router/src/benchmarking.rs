@@ -7,6 +7,7 @@ use composable_traits::{
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::traits::fungibles::Mutate;
 use frame_system::RawOrigin;
+use sp_runtime::Permill;
 use sp_std::{vec, vec::Vec};
 
 fn create_single_node_pool<T>() -> (
