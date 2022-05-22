@@ -889,7 +889,7 @@ pub mod pallet {
 			block_number: T::BlockNumber,
 		) -> InitializeBlockCallCounters {
 			let mut call_counters = InitializeBlockCallCounters::default();
-			with_transaction(|| {
+			let _ = with_transaction(|| {
 				let now = Self::now();
 				call_counters.now += 1;
 
