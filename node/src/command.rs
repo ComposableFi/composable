@@ -288,46 +288,62 @@ pub fn run() -> Result<()> {
 						     You can enable it with `--features runtime-benchmarks`."
 							.into())
 					},
-				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
-					if cfg!(feature = "composable") {
-						let partials = new_partial::<
-							composable_runtime::RuntimeApi,
-							ComposableExecutor,
-						>(&config)?;
-						cmd.run(partials.client)
-					} else if cfg!(feature = "dali") {
-						let partials =
-							new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(&config)?;
-						cmd.run(partials.client)
-					} else {
-						let partials =
-							new_partial::<picasso_runtime::RuntimeApi, PicassoExecutor>(&config)?;
-						cmd.run(partials.client)
-					}
-				}),
-				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
-					if cfg!(feature = "composable") {
-						let partials = new_partial::<
-							composable_runtime::RuntimeApi,
-							ComposableExecutor,
-						>(&config)?;
-						let db = partials.backend.expose_db();
-						let storage = partials.backend.expose_storage();
-						cmd.run(config, partials.client, db, storage)
-					} else if cfg!(feature = "dali") {
-						let partials =
-							new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(&config)?;
-						let db = partials.backend.expose_db();
-						let storage = partials.backend.expose_storage();
-						cmd.run(config, partials.client, db, storage)
-					} else {
-						let partials =
-							new_partial::<picasso_runtime::RuntimeApi, PicassoExecutor>(&config)?;
-						let db = partials.backend.expose_db();
-						let storage = partials.backend.expose_storage();
-						cmd.run(config, partials.client, db, storage)
-					}
-				}),
+				BenchmarkCmd::Block(cmd) =>
+					runner.sync_run(|config| match config.chain_spec.id() {
+						id if id.contains("picasso") => {
+							let partials = new_partial::<
+								picasso_runtime::RuntimeApi,
+								PicassoExecutor,
+							>(&config)?;
+							cmd.run(partials.client)
+						},
+						#[cfg(feature = "dali")]
+						id if id.contains("dali") => {
+							let partials =
+								new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(&config)?;
+							cmd.run(partials.client)
+						},
+						#[cfg(feature = "composable")]
+						id if id.contains("composable") => {
+							let partials = new_partial::<
+								composable_runtime::RuntimeApi,
+								ComposableExecutor,
+							>(&config)?;
+							cmd.run(partials.client)
+						},
+						id => panic!("Unknown Chain: {}", id),
+					}),
+				BenchmarkCmd::Storage(cmd) =>
+					runner.sync_run(|config| match config.chain_spec.id() {
+						id if id.contains("picasso") => {
+							let partials = new_partial::<
+								picasso_runtime::RuntimeApi,
+								PicassoExecutor,
+							>(&config)?;
+							let db = partials.backend.expose_db();
+							let storage = partials.backend.expose_storage();
+							cmd.run(config, partials.client, db, storage)
+						},
+						#[cfg(feature = "dali")]
+						id if id.contains("dali") => {
+							let partials =
+								new_partial::<dali_runtime::RuntimeApi, DaliExecutor>(&config)?;
+							let db = partials.backend.expose_db();
+							let storage = partials.backend.expose_storage();
+							cmd.run(config, partials.client, db, storage)
+						},
+						#[cfg(feature = "composable")]
+						id if id.contains("composable") => {
+							let partials = new_partial::<
+								composable_runtime::RuntimeApi,
+								ComposableExecutor,
+							>(&config)?;
+							let db = partials.backend.expose_db();
+							let storage = partials.backend.expose_storage();
+							cmd.run(config, partials.client, db, storage)
+						},
+						id => panic!("Unknown Chain: {}", id),
+					}),
 				BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
 			}
 		},
