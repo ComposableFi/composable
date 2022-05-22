@@ -122,6 +122,7 @@ pallet-lottery = { git = "https://github.com/composableFi/substrate", branch = "
 pallet-membership = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
 pallet-mmr = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
 pallet-mmr-rpc = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
+pallet-mmr-primitives = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
 pallet-multisig = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
 pallet-nicks = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
 pallet-node-authorization = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
