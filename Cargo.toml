@@ -24,7 +24,11 @@ runtime-benchmarks = ["composable-node/runtime-benchmarks"]
 std = ["composable-node/std"]
 
 [workspace]
-exclude = ["frame/transaction-fee", "utils/extrinsics-docs-scraper", "integration-tests"]
+exclude = [
+  "frame/transaction-fee",
+  "utils/extrinsics-docs-scraper",
+  "integration-tests",
+]
 members = [
   "frame/*",
   "integration-tests/local-integration-tests",
@@ -121,8 +125,8 @@ pallet-indices = { git = "https://github.com/composableFi/substrate", branch = "
 pallet-lottery = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
 pallet-membership = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
 pallet-mmr = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
-pallet-mmr-rpc = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
 pallet-mmr-primitives = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
+pallet-mmr-rpc = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
 pallet-multisig = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
 pallet-nicks = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
 pallet-node-authorization = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
