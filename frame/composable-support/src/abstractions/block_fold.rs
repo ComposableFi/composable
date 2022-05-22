@@ -95,12 +95,14 @@ where
 				let r = iterator.try_fold(
 					(0_u32, current_state),
 					|(processed, state), (key, value)| {
-						let next_state = f(state, key.clone(), value);
 						/* NOTE(hussein-aitlahcen):
-						   The above `iter_from` is expected a previous key, the iterator start AFTER the provided previous key.
-						   This mean we need to actually process the current item before returning his key as `previous_key`, otherwise it would be skipped by the next iteration.
-						   Do not refactor this by moving the above line inside the if.
-						*/
+						The above `iter_from` is expecting a `previous` key, the iterator start AFTER the provided previous key.
+						This mean we need to actually process the current item before returning his key as `previous_key`, otherwise it would be skipped by the next iteration.
+						Conclusion: do not refactor this by moving the below line inside the if.
+						 */
+						let next_state = f(state, key.clone(), value);
+						// NOTE(hussein-aitlahcen): related to previous comment, we need to subtract
+						// one as we always start by processing one element
 						if processed == number_of_elements.saturating_sub(1) {
 							Err((next_state, key))
 						} else {
