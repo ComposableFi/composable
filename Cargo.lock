@@ -10564,14 +10564,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "protocol-stableswap"
-version = "0.1.0"
-dependencies = [
- "ethabi",
- "xcvm-core",
-]
-
-[[package]]
 name = "psm"
 version = "0.1.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -16065,6 +16057,14 @@ name = "xcvm-core"
 version = "0.1.0"
 dependencies = [
  "ethabi",
+]
+
+[[package]]
+name = "xcvm-protocols"
+version = "0.1.0"
+dependencies = [
+ "ethabi",
+ "xcvm-core",
 ]
 
 [[package]]

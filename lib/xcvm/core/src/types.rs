@@ -18,3 +18,9 @@ impl From<Vec<u8>> for AbiEncoded {
 		AbiEncoded::new(payload)
 	}
 }
+
+impl Into<Vec<u8>> for AbiEncoded {
+	fn into(self) -> Vec<u8> {
+		self.0
+	}
+}

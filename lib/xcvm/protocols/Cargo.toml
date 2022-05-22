@@ -1,0 +1,10 @@
+[package]
+authors = ["Composable Developers"]
+edition = "2021"
+homepage = "https://composable.finance"
+name = "xcvm-protocols"
+version = "0.1.0"
+
+[dependencies]
+ethabi = "17.0.0"
+xcvm-core = { path = "../core" }
