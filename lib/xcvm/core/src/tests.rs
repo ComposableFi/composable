@@ -5,7 +5,7 @@ use alloc::vec;
 fn test() {
 	struct DummyProtocol;
 
-	impl XCVMProtocol<XCVMNetwork, AbiEncoded> for DummyProtocol {
+	impl XCVMProtocol<XCVMNetwork> for DummyProtocol {
 		fn serialize(&self, network: XCVMNetwork) -> AbiEncoded {
 			match network {
 				XCVMNetwork::PICASSO => AbiEncoded::empty(),

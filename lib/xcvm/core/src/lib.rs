@@ -1,19 +1,17 @@
-#![cfg_attr(not(feature = "std"), no_std)]
-
-use alloc::vec::Vec;
+#![no_std]
 
 extern crate alloc;
 
 pub mod instruction;
 pub mod network;
 pub mod protocol;
-pub mod tests;
 pub mod types;
 
-pub use crate::instruction::XCVMInstruction;
-pub use crate::network::XCVMNetwork;
-pub use crate::protocol::XCVMProtocol;
-pub use crate::types::AbiEncoded;
+#[cfg(test)]
+mod tests;
+
+pub use crate::{instruction::*, network::*, protocol::*, types::*};
+use alloc::vec::Vec;
 
 #[derive(Clone)]
 pub struct XCVMContractBuilder<Network, Instruction> {
@@ -21,10 +19,10 @@ pub struct XCVMContractBuilder<Network, Instruction> {
 	pub instructions: Vec<Instruction>,
 }
 
-impl<Network, AbiEncoded, Account, Assets>
-	XCVMContractBuilder<Network, XCVMInstruction<Network, AbiEncoded, Account, Assets>>
+impl<Network, Account, Assets>
+	XCVMContractBuilder<Network, XCVMInstruction<Network, Network::EncodedCall, Account, Assets>>
 where
-	Network: Copy,
+	Network: Copy + Callable,
 {
 	pub fn from(network: Network) -> Self {
 		XCVMContractBuilder { network, instructions: Vec::new() }
@@ -41,7 +39,7 @@ where
 		self
 	}
 
-	pub fn call(mut self, protocol: impl XCVMProtocol<Network, AbiEncoded>) -> Self {
+	pub fn call(mut self, protocol: impl XCVMProtocol<Network>) -> Self {
 		self.instructions.push(XCVMInstruction::Call(protocol.serialize(self.network)));
 		self
 	}

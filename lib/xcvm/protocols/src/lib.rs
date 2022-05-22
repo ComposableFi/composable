@@ -1,12 +1,12 @@
-#![cfg_attr(not(feature = "std"), no_std)]
+#![no_std]
 
 extern crate alloc;
 
-use xcvm_core::{AbiEncoded, XCVMNetwork, XCVMProtocol};
+#[cfg(test)]
+mod tests;
 
 use ethabi::{encode, ethereum_types::H160, Token};
-
-mod tests;
+use xcvm_core::{AbiEncoded, XCVMNetwork, XCVMProtocol};
 
 #[derive(Copy, Clone)]
 pub struct Stableswap<Assets> {
@@ -20,7 +20,7 @@ impl<Assets> Stableswap<Assets> {
 	}
 }
 
-impl<Assets> XCVMProtocol<XCVMNetwork, AbiEncoded> for Stableswap<Assets> {
+impl<Assets> XCVMProtocol<XCVMNetwork> for Stableswap<Assets> {
 	fn serialize(&self, network: XCVMNetwork) -> AbiEncoded {
 		match network {
 			XCVMNetwork::PICASSO => AbiEncoded::empty(),
