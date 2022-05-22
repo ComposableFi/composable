@@ -1477,7 +1477,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm 0.9.19",
+ "xcm",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -1664,7 +1664,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "xcm 0.9.19",
+ "xcm",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -1722,7 +1722,7 @@ dependencies = [
  "sp-arithmetic",
  "sp-runtime",
  "sp-std",
- "xcm 0.9.19",
+ "xcm",
 ]
 
 [[package]]
@@ -2354,7 +2354,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm 0.9.19",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -2385,7 +2385,7 @@ dependencies = [
  "sp-std",
  "sp-trie",
  "sp-version",
- "xcm 0.9.19",
+ "xcm",
 ]
 
 [[package]]
@@ -2427,7 +2427,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm 0.9.19",
+ "xcm",
 ]
 
 [[package]]
@@ -2445,7 +2445,7 @@ dependencies = [
  "scale-info",
  "sp-runtime",
  "sp-std",
- "xcm 0.9.19",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -2463,7 +2463,7 @@ dependencies = [
  "serde",
  "sp-runtime",
  "sp-std",
- "xcm 0.9.19",
+ "xcm",
 ]
 
 [[package]]
@@ -2532,7 +2532,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "sp-trie",
- "xcm 0.9.19",
+ "xcm",
 ]
 
 [[package]]
@@ -2745,7 +2745,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "xcm 0.9.19",
+ "xcm",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -5021,7 +5021,7 @@ dependencies = [
  "sp-version",
  "static_assertions",
  "substrate-wasm-builder",
- "xcm 0.9.19",
+ "xcm",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -5812,7 +5812,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "statemine-runtime",
- "xcm 0.9.19",
+ "xcm",
  "xcm-builder",
  "xcm-emulator",
  "xcm-executor",
@@ -6618,7 +6618,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm 0.9.19",
+ "xcm",
 ]
 
 [[package]]
@@ -6633,7 +6633,7 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-std",
- "xcm 0.9.19",
+ "xcm",
 ]
 
 [[package]]
@@ -6660,7 +6660,7 @@ dependencies = [
  "parity-scale-codec",
  "sp-runtime",
  "sp-std",
- "xcm 0.9.19",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -6680,7 +6680,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm 0.9.19",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -6807,7 +6807,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm 0.9.19",
+ "xcm",
 ]
 
 [[package]]
@@ -7278,7 +7278,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm 0.9.19",
+ "xcm",
 ]
 
 [[package]]
@@ -7470,7 +7470,7 @@ dependencies = [
  "sp-keystore",
  "sp-runtime",
  "sp-std",
- "xcm 0.9.18",
+ "xcm",
 ]
 
 [[package]]
@@ -7503,7 +7503,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm 0.9.19",
+ "xcm",
 ]
 
 [[package]]
@@ -7597,7 +7597,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm 0.9.19",
+ "xcm",
 ]
 
 [[package]]
@@ -7755,7 +7755,7 @@ dependencies = [
  "serde",
  "sp-runtime",
  "sp-std",
- "xcm 0.9.19",
+ "xcm",
 ]
 
 [[package]]
@@ -8190,7 +8190,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-std",
- "xcm 0.9.19",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -8207,7 +8207,7 @@ dependencies = [
  "scale-info",
  "sp-runtime",
  "sp-std",
- "xcm 0.9.19",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -8247,7 +8247,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "substrate-wasm-builder",
- "xcm 0.9.19",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -8668,7 +8668,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "xcm 0.9.19",
+ "xcm",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -9688,7 +9688,7 @@ dependencies = [
  "sp-version",
  "static_assertions",
  "substrate-wasm-builder",
- "xcm 0.9.19",
+ "xcm",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -9737,7 +9737,7 @@ dependencies = [
  "sp-staking",
  "sp-std",
  "static_assertions",
- "xcm 0.9.19",
+ "xcm",
 ]
 
 [[package]]
@@ -9803,7 +9803,7 @@ dependencies = [
  "sp-staking",
  "sp-std",
  "static_assertions",
- "xcm 0.9.19",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -10041,7 +10041,7 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-runtime",
- "xcm 0.9.19",
+ "xcm",
 ]
 
 [[package]]
@@ -10793,7 +10793,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "xcm 0.9.19",
+ "xcm",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -13475,7 +13475,7 @@ dependencies = [
  "sp-transaction-pool",
  "sp-version",
  "substrate-wasm-builder",
- "xcm 0.9.19",
+ "xcm",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -15366,7 +15366,7 @@ dependencies = [
  "sp-version",
  "substrate-wasm-builder",
  "westend-runtime-constants",
- "xcm 0.9.19",
+ "xcm",
  "xcm-builder",
  "xcm-executor",
 ]
@@ -15545,19 +15545,6 @@ dependencies = [
 
 [[package]]
 name = "xcm"
-version = "0.9.18"
-source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.18#9ed0c98204d25eaad8a6b40248daee8e6a40d111"
-dependencies = [
- "derivative",
- "impl-trait-for-tuples",
- "log 0.4.17",
- "parity-scale-codec",
- "scale-info",
- "xcm-procedural 0.1.0 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.18)",
-]
-
-[[package]]
-name = "xcm"
 version = "0.9.19"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.19#f00a2772497aadddf75b8b4b475843ea0d910c48"
 dependencies = [
@@ -15566,7 +15553,7 @@ dependencies = [
  "log 0.4.17",
  "parity-scale-codec",
  "scale-info",
- "xcm-procedural 0.1.0 (git+https://github.com/paritytech/polkadot?branch=release-v0.9.19)",
+ "xcm-procedural",
 ]
 
 [[package]]
@@ -15585,7 +15572,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm 0.9.19",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -15609,7 +15596,7 @@ dependencies = [
  "polkadot-runtime-parachains",
  "sp-io",
  "sp-std",
- "xcm 0.9.19",
+ "xcm",
  "xcm-executor",
 ]
 
@@ -15628,18 +15615,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "xcm 0.9.19",
-]
-
-[[package]]
-name = "xcm-procedural"
-version = "0.1.0"
-source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.18#9ed0c98204d25eaad8a6b40248daee8e6a40d111"
-dependencies = [
- "Inflector",
- "proc-macro2 1.0.39",
- "quote 1.0.18",
- "syn 1.0.95",
+ "xcm",
 ]
 
 [[package]]

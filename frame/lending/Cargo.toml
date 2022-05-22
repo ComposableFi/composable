@@ -40,7 +40,7 @@ sp-io = { default-features = false, git = "https://github.com/paritytech/substra
 sp-keystore = { default-features = false, version = "0.12.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.19", optional = true }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
-xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.18" }
+xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.19" }
 
 log = { version = "0.4.14", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
