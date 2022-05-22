@@ -50,14 +50,14 @@ pub mod pallet {
 	use composable_traits::{
 		financial_nft::{FinancialNftProtocol, NftClass, NftVersion},
 		staking_rewards::{
-			Penalty, PenaltyOutcome, PositionState, Staking, StakingConfig, StakingNFT,
-			StakingReward,
+			Penalty, PenaltyOutcome, PositionState, Staking, StakingConfig, StakingLock,
+			StakingNFT, StakingReward,
 		},
 		time::{DurationSeconds, Timestamp},
 	};
 	use frame_support::{
 		pallet_prelude::*,
-		storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet},
+		storage::bounded_btree_map::BoundedBTreeMap,
 		traits::{
 			fungibles::{
 				Inspect as FungiblesInspect, Mutate as FungiblesMutate,
@@ -73,7 +73,6 @@ pub mod pallet {
 		traits::{AccountIdConversion, Zero},
 		ArithmeticError, Perbill, SaturatedConversion,
 	};
-	use sp_std::collections::btree_map::BTreeMap;
 
 	pub(crate) type EpochId = u128;
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -82,15 +81,14 @@ pub mod pallet {
 	pub(crate) type InstanceIdOf<T> = <T as FinancialNftProtocol<AccountIdOf<T>>>::InstanceId;
 	pub(crate) type MaxRewardAssetsOf<T> = <T as Config>::MaxRewardAssets;
 	pub(crate) type MaxStakingPresetsOf<T> = <T as Config>::MaxStakingPresets;
-	pub(crate) type RewardAssetsOf<T> = BoundedBTreeSet<AssetIdOf<T>, MaxRewardAssetsOf<T>>;
 	pub(crate) type DurationPresetsOf<T> =
-		BoundedBTreeMap<DurationSeconds, Perbill, MaxStakingPresetsOf<T>>;
+		BoundedBTreeMap<Option<DurationSeconds>, Perbill, MaxStakingPresetsOf<T>>;
 	pub(crate) type RewardsOf<T> =
 		BoundedBTreeMap<AssetIdOf<T>, BalanceOf<T>, MaxRewardAssetsOf<T>>;
+	pub(crate) type StakingLockOf<T> = StakingLock<AccountIdOf<T>>;
 	pub(crate) type StakingNFTOf<T> =
 		StakingNFT<AccountIdOf<T>, AssetIdOf<T>, BalanceOf<T>, EpochId, RewardsOf<T>>;
-	pub(crate) type StakingConfigOf<T> =
-		StakingConfig<AccountIdOf<T>, DurationPresetsOf<T>, RewardAssetsOf<T>>;
+	pub(crate) type StakingConfigOf<T> = StakingConfig<AccountIdOf<T>, DurationPresetsOf<T>>;
 	pub(crate) type EpochDurationOf<T> = <T as Config>::EpochDuration;
 	#[allow(dead_code)]
 	pub(crate) type PenaltyOf<T> = Penalty<AccountIdOf<T>>;
@@ -108,10 +106,16 @@ pub mod pallet {
 		/// An asset has been configured for staking.
 		Configured { asset: AssetIdOf<T>, configuration: StakingConfigOf<T> },
 		/// A user staked his protocol asset. Yield a NFT represeting his position.
-		Staked { who: AccountIdOf<T>, stake: BalanceOf<T>, nft: InstanceIdOf<T> },
+		Staked {
+			who: AccountIdOf<T>,
+			asset: AssetIdOf<T>,
+			stake: BalanceOf<T>,
+			nft: InstanceIdOf<T>,
+		},
 		/// A user unstaked his protocol asset.
 		Unstaked {
 			to: AccountIdOf<T>,
+			asset: AssetIdOf<T>,
 			stake: BalanceOf<T>,
 			penalty: BalanceOf<T>,
 			nft: InstanceIdOf<T>,
@@ -147,7 +151,7 @@ pub mod pallet {
 		/// The ID that uniquely identify an asset.
 		type AssetId: AssetId + Ord;
 
-		type Balance: Balance + TryFrom<u128>;
+		type Balance: Balance + Ord + TryFrom<u128>;
 
 		/// The underlying currency system.
 		type Assets: FungiblesInspect<
@@ -210,8 +214,8 @@ pub mod pallet {
 	pub type CurrentEpoch<T: Config> = StorageValue<_, u128, ValueQuery, EpochOnEmpty<T>>;
 
 	#[pallet::type_value]
-	pub fn EpochRewardOnEmpty<T: Config>() -> BalanceOf<T> {
-		BalanceOf::<T>::zero()
+	pub fn EpochRewardOnEmpty<T: Config>() -> RewardsOf<T> {
+		RewardsOf::<T>::new()
 	}
 
 	#[pallet::storage]
@@ -219,13 +223,18 @@ pub mod pallet {
 	pub type EpochRewards<T: Config> = StorageDoubleMap<
 		_,
 		Twox64Concat,
-		(EpochId, AssetIdOf<T>),
+		EpochId,
 		Twox64Concat,
 		AssetIdOf<T>,
-		BalanceOf<T>,
+		RewardsOf<T>,
 		ValueQuery,
 		EpochRewardOnEmpty<T>,
 	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn pending_epoch_rewards)]
+	pub type PendingEpochRewards<T: Config> =
+		StorageMap<_, Twox64Concat, AssetIdOf<T>, RewardsOf<T>, ValueQuery, EpochRewardOnEmpty<T>>;
 
 	#[pallet::type_value]
 	pub fn SharesOnEmpty<T: Config>() -> u128 {
@@ -234,14 +243,8 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn total_shares)]
-	pub type TotalShares<T: Config> = StorageMap<
-		_,
-		Twox64Concat,
-		(AssetIdOf<T>, AssetIdOf<T>),
-		u128,
-		ValueQuery,
-		SharesOnEmpty<T>,
-	>;
+	pub type TotalShares<T: Config> =
+		StorageMap<_, Twox64Concat, AssetIdOf<T>, u128, ValueQuery, SharesOnEmpty<T>>;
 
 	#[pallet::type_value]
 	pub fn RewardStateOnEmpty<T: Config>() -> (EpochId, Timestamp) {
@@ -309,7 +312,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			asset: AssetIdOf<T>,
 			amount: BalanceOf<T>,
-			duration: Timestamp,
+			duration: Option<Timestamp>,
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let from = ensure_signed(origin)?;
@@ -405,9 +408,21 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(_: T::BlockNumber) -> Weight {
-			// TODO(hussein-aitlahcen): abstract per-block fold of chunk into a macro:
+			/* TODO(hussein-aitlahcen): abstract per-block fold of chunk into a macro,
+			i.e. ability to lift a rust `for .. in .. { e }` expression into a state machine such that
+			the for is executed over blocks
+			*/
 			match Self::current_state() {
 				State::WaitingForEpochEnd => {
+					// NOTE(hussein-aitlahcen): this case is present to allow any protocol to
+					// execute `transfer_rewar` while the pallet is rewarding, i.e. buffering the
+					// rewards. Usually, it will take 1 block to drain the pending rewards to the
+					// current epoch rewards. This should be empty after 1 block in the new epoch.
+					for (reward_asset, pending_rewards) in PendingEpochRewards::<T>::drain() {
+						EpochRewards::<T>::mutate(Self::current_epoch(), reward_asset, |rewards| {
+							*rewards = pending_rewards
+						});
+					}
 					// NOTE: we start new epoch here, it will work well if an only if epoch time is
 					// longer than total fold time - which is most likely yes
 					Self::update_epoch();
@@ -426,27 +441,26 @@ pub mod pallet {
 										PositionState::Expired => {
 											// TODO: https://app.clickup.com/t/2xw5fca
 										},
-										PositionState::LockedRewarding => {
+										PositionState::Rewarding => {
 											let shares = nft.shares();
-											for (reward_asset, pending_reward) in
-												nft.pending_rewards.clone().into_iter()
-											{
-												let total_shares =
-													Self::total_shares((nft.asset, reward_asset));
-												let reward = EpochRewards::<T>::get(
-													(reward_epoch, nft.asset),
-													reward_asset,
-												)
-												.saturated_into();
+											let rewards =
+												EpochRewards::<T>::get(reward_epoch, nft.asset);
+											let total_shares = Self::total_shares(nft.asset);
+											for (reward_asset, reward) in rewards {
 												let reward_shares = safe_multiply_by_rational(
 													shares,
-													reward,
+													reward.saturated_into(),
 													total_shares,
 												)?;
+												let collected_rewards = nft
+													.pending_rewards
+													.get(&reward_asset)
+													.copied()
+													.unwrap_or(BalanceOf::<T>::zero());
 												nft.pending_rewards
 													.try_insert(
 														reward_asset,
-														pending_reward.safe_add(
+														collected_rewards.safe_add(
 															&reward_shares.try_into().map_err(
 																|_| ArithmeticError::Overflow,
 															)?,
@@ -478,16 +492,11 @@ pub mod pallet {
 						|_, nft_id, _| {
 							let nft = T::get_protocol_nft::<StakingNFTOf<T>>(&nft_id)
 								.expect("impossible; qed");
-							for reward_asset in nft.pending_rewards.keys() {
-								TotalShares::<T>::mutate(
-									(nft.asset, reward_asset),
-									|total_shares| {
-										*total_shares = total_shares
-											.checked_add(nft.shares())
-											.expect("impossible; qed;");
-									},
-								);
-							}
+							TotalShares::<T>::mutate(nft.asset, |total_shares| {
+								*total_shares = total_shares
+									.checked_add(nft.shares())
+									.expect("impossible; qed;");
+							});
 							Stakers::<T>::insert(nft_id, ());
 						},
 					);
@@ -515,14 +524,16 @@ pub mod pallet {
 				Some(epoch_start) => {
 					let delta = now.checked_sub(*epoch_start).expect("back to the future; qed;");
 					if delta > EpochDurationOf::<T>::get() {
-						*epoch_start = now;
 						Self::on_new_epoch();
+						// Must update the epoch start after a new epoch has been started as we take
+						// a snapshot of the previous epoch start.
+						*epoch_start = now;
 					}
 				},
 				None => {
-					*entry = Some(now);
 					// NOTE(hussein-aitlahcen): on pallet initialization, new epoch is directly
 					// started.
+					*entry = Some(now);
 					Self::on_new_epoch();
 				},
 			});
@@ -590,14 +601,21 @@ pub mod pallet {
 			// Transfer the reward locally.
 			let protocol_account = Self::account_id(asset);
 			T::Assets::transfer(*reward_asset, from, &protocol_account, amount, keep_alive)?;
-			EpochRewards::<T>::try_mutate(
-				(Self::current_epoch(), *asset),
-				reward_asset,
-				|collected_amount| -> DispatchResult {
-					*collected_amount = collected_amount.safe_add(&amount)?;
-					Ok(())
-				},
-			)?;
+			let f = |rewards: &mut RewardsOf<T>| -> DispatchResult {
+				let already_collected =
+					rewards.get(&reward_asset).copied().unwrap_or(BalanceOf::<T>::zero());
+				let new_collected = already_collected.safe_add(&amount)?;
+				rewards
+					.try_insert(*reward_asset, new_collected)
+					.map_err(|_| Error::<T>::TooManyRewardAssets)?;
+				Ok(())
+			};
+			match Self::current_state() {
+				State::WaitingForEpochEnd =>
+					EpochRewards::<T>::try_mutate(Self::current_epoch(), asset, f),
+				State::Rewarding | State::Registering =>
+					PendingEpochRewards::<T>::try_mutate(asset, f),
+			}?;
 			Self::deposit_event(Event::<T>::NewReward {
 				rewarded_asset: *asset,
 				reward_asset: *reward_asset,
@@ -617,7 +635,7 @@ pub mod pallet {
 			asset: &Self::AssetId,
 			from: &Self::AccountId,
 			amount: Self::Balance,
-			duration: DurationSeconds,
+			duration: Option<DurationSeconds>,
 			keep_alive: bool,
 		) -> Result<Self::InstanceId, DispatchError> {
 			Self::ensure_valid_interaction_state()?;
@@ -632,22 +650,19 @@ pub mod pallet {
 			// Actually create the NFT representing the user position.
 			let now = Self::now();
 			let next_epoch = Self::epoch_next()?;
-			// Initialize pending rewards to 0.
-			let pending_rewards = config
-				.reward_assets
-				.into_iter()
-				.map(|x| (x, BalanceOf::<T>::zero()))
-				.collect::<BTreeMap<_, _>>()
-				.try_into()
-				.map_err(|_| Error::<T>::ImpossibleState)?;
+			// Initialize pending rewards.
+			let pending_rewards = RewardsOf::<T>::new();
+			let lock = duration.map(|lock_duration| StakingLockOf::<T> {
+				duration: lock_duration,
+				early_unstake_penalty: config.early_unstake_penalty,
+			});
 			let nft: StakingNFTOf<T> = StakingNFT {
 				asset: *asset,
 				stake: amount,
 				reward_epoch_start: next_epoch,
 				pending_rewards,
-				lock_date: now,
-				lock_duration: duration,
-				early_unstake_penalty: config.early_unstake_penalty,
+				mint_date: now,
+				lock,
 				reward_multiplier,
 			};
 			let instance_id = T::mint_protocol_nft(from, &nft)?;
@@ -655,6 +670,7 @@ pub mod pallet {
 			// Trigger event
 			Self::deposit_event(Event::<T>::Staked {
 				who: from.clone(),
+				asset: *asset,
 				stake: amount,
 				nft: instance_id,
 			});
@@ -675,30 +691,23 @@ pub mod pallet {
 					PendingStakers::<T>::remove(instance_id);
 					Ok(PenaltyOutcome::NotApplied { amount: nft.stake })
 				},
-				PositionState::LockedRewarding => {
+				PositionState::Rewarding => {
 					// Decrement total shares.
-					for reward_asset in nft.pending_rewards.keys() {
-						TotalShares::<T>::try_mutate(
-							(nft.asset, reward_asset),
-							|total_shares| -> DispatchResult {
-								*total_shares = total_shares.safe_sub(&nft.shares())?;
-								Ok(())
-							},
-						)?;
-					}
-					nft.early_unstake_penalty.penalize::<BalanceOf<T>>(nft.stake)
+					TotalShares::<T>::try_mutate(nft.asset, |total_shares| -> DispatchResult {
+						*total_shares = total_shares.safe_sub(&nft.shares())?;
+						Ok(())
+					})?;
+					nft.lock
+						.and_then(|lock| lock.early_unstake_penalty)
+						.map(|penalty| penalty.penalize::<BalanceOf<T>>(nft.stake))
+						.unwrap_or(Ok(PenaltyOutcome::NotApplied { amount: nft.stake }))
 				},
 				PositionState::Expired => {
 					// Decrement total shares.
-					for reward_asset in nft.pending_rewards.keys() {
-						TotalShares::<T>::try_mutate(
-							(nft.asset, reward_asset),
-							|total_shares| -> DispatchResult {
-								*total_shares = total_shares.safe_sub(&nft.shares())?;
-								Ok(())
-							},
-						)?;
-					}
+					TotalShares::<T>::try_mutate(nft.asset, |total_shares| -> DispatchResult {
+						*total_shares = total_shares.safe_sub(&nft.shares())?;
+						Ok(())
+					})?;
 					Ok(PenaltyOutcome::NotApplied { amount: nft.stake })
 				},
 			}?;
@@ -732,6 +741,7 @@ pub mod pallet {
 			// Trigger event
 			Self::deposit_event(Event::<T>::Unstaked {
 				to: to.clone(),
+				asset: nft.asset,
 				stake: nft.stake,
 				penalty: penalty_outcome.penalty_amount().unwrap_or(Zero::zero()),
 				nft: *instance_id,

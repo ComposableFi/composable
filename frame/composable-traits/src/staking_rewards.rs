@@ -16,9 +16,9 @@ use sp_runtime::{
 pub enum PositionState {
 	/// The position is not being rewarded yet and waiting for the next epoch.
 	Pending,
-	/// The position is currently locked and being rewarded.
-	LockedRewarding,
-	/// The position expired but still being rewarded.
+	/// The position is yielding rewards.
+	Rewarding,
+	/// The position has expired.
 	Expired,
 }
 
@@ -88,15 +88,22 @@ impl<AccountId: Clone> Penalty<AccountId> {
 	}
 }
 
+/// defines lock duration and optional unstake penalty
+#[derive(Debug, PartialEq, Eq, Copy, Clone, Encode, Decode, TypeInfo)]
+pub struct StakingLock<AccountId> {
+	/// The duration for which this NFT stake is locked.
+	pub duration: DurationSeconds,
+	/// The penalty applied if a staker unstake before the end date.
+	pub early_unstake_penalty: Option<Penalty<AccountId>>,
+}
+
 /// defines staking duration, rewards and early unstake penalty
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Encode, Decode, TypeInfo)]
-pub struct StakingConfig<AccountId, DurationPresets, RewardAssets> {
+pub struct StakingConfig<AccountId, DurationPresets> {
 	/// The possible locking duration.
 	pub duration_presets: DurationPresets,
-	/// The assets we can reward stakers with.
-	pub reward_assets: RewardAssets,
 	/// The penalty applied if a staker unstake before the end date.
-	pub early_unstake_penalty: Penalty<AccountId>,
+	pub early_unstake_penalty: Option<Penalty<AccountId>>,
 }
 
 /// staking typed fNFT, usually can be mapped to raw fNFT storage type
@@ -111,11 +118,9 @@ pub struct StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards> {
 	/// List of reward asset/pending rewards.
 	pub pending_rewards: Rewards,
 	/// The date at which this NFT was minted.
-	pub lock_date: Timestamp,
-	/// The duration for which this NFT stake was locked.
-	pub lock_duration: DurationSeconds,
-	/// The penalty applied if a staker unstake before the end date.
-	pub early_unstake_penalty: Penalty<AccountId>,
+	pub mint_date: Timestamp,
+	/// The optional locking properties.
+	pub lock: Option<StakingLock<AccountId>>,
 	/// The reward multiplier.
 	pub reward_multiplier: Perbill,
 }
@@ -128,12 +133,12 @@ impl<AccountId, AssetId, Balance: AtLeast32BitUnsigned + Copy, Epoch: Ord, Rewar
 	}
 
 	pub fn state(&self, epoch: &Epoch, epoch_start: Timestamp) -> PositionState {
-		if self.lock_date.saturating_add(self.lock_duration) < epoch_start {
-			PositionState::Expired
-		} else if self.reward_epoch_start > *epoch {
-			PositionState::Pending
-		} else {
-			PositionState::LockedRewarding
+		match self.lock {
+			Some(StakingLock { duration, .. })
+				if self.mint_date.saturating_add(duration) < epoch_start =>
+				PositionState::Expired,
+			_ if self.reward_epoch_start > *epoch => PositionState::Pending,
+			_ => PositionState::Rewarding,
 		}
 	}
 }
@@ -176,7 +181,7 @@ pub trait Staking {
 		asset: &Self::AssetId,
 		from: &Self::AccountId,
 		amount: Self::Balance,
-		duration: DurationSeconds,
+		duration: Option<DurationSeconds>,
 		keep_alive: bool,
 	) -> Result<Self::InstanceId, DispatchError>;
 

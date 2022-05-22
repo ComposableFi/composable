@@ -14,7 +14,7 @@ use frame_support::{
 	traits::fungibles::{Inspect, Mutate},
 };
 use sp_runtime::{DispatchError, Perbill, TokenError};
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::BTreeMap;
 
 pub const TREASURY: AccountId = 0;
 pub const ALICE: AccountId = 1;
@@ -41,18 +41,17 @@ fn run_to_duration(duration: DurationSeconds) {
 	run_to_block(duration_to_block(duration))
 }
 
-fn configure_pica(early_unstake_penalty: PenaltyOf<Test>) -> StakingConfigOf<Test> {
+fn configure_pica(early_unstake_penalty: Option<PenaltyOf<Test>>) -> StakingConfigOf<Test> {
 	let config = StakingConfig {
-		duration_presets: [(WEEK, Perbill::from_float(0.5)), (MONTH, Perbill::from_float(1.0))]
-			.into_iter()
-			.collect::<BTreeMap<_, _>>()
-			.try_into()
-			.expect("impossible; qed;"),
-		reward_assets: [BTC, LTC, ETH]
-			.into_iter()
-			.collect::<BTreeSet<_>>()
-			.try_into()
-			.expect("impossible; qed;"),
+		duration_presets: [
+			(None, Perbill::from_float(0.1)),
+			(Some(WEEK), Perbill::from_float(0.5)),
+			(Some(MONTH), Perbill::from_float(1.0)),
+		]
+		.into_iter()
+		.collect::<BTreeMap<_, _>>()
+		.try_into()
+		.expect("impossible; qed;"),
 		early_unstake_penalty,
 	};
 	assert_ok!(StakingRewards::configure(Origin::root(), PICA, config.clone()));
@@ -61,7 +60,7 @@ fn configure_pica(early_unstake_penalty: PenaltyOf<Test>) -> StakingConfigOf<Tes
 
 fn configure_default_pica() -> StakingConfigOf<Test> {
 	let penalty = Penalty { value: Perbill::from_float(0.5), beneficiary: TREASURY };
-	configure_pica(penalty)
+	configure_pica(Some(penalty))
 }
 
 fn advance_state_machine() {
@@ -115,9 +114,14 @@ mod hook_state {
 				.iter()
 				.map(|account| {
 					assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, account, stake));
-					let nft_id =
-						<StakingRewards as Staking>::stake(&PICA, account, stake, WEEK, false)
-							.expect("impossible; qed;");
+					let nft_id = <StakingRewards as Staking>::stake(
+						&PICA,
+						account,
+						stake,
+						Some(WEEK),
+						false,
+					)
+					.expect("impossible; qed;");
 					assert!(StakingRewards::pending_stakers(nft_id).is_some());
 					assert!(StakingRewards::stakers(nft_id).is_none());
 					nft_id
@@ -140,7 +144,13 @@ mod hook_state {
 			let nb_of_accounts = 1000;
 			(account_start..account_start + nb_of_accounts).for_each(|account| {
 				assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &account, stake));
-				assert_ok!(<StakingRewards as Staking>::stake(&PICA, &account, stake, WEEK, false));
+				assert_ok!(<StakingRewards as Staking>::stake(
+					&PICA,
+					&account,
+					stake,
+					Some(WEEK),
+					false
+				));
 			});
 			assert_eq!(PendingStakers::<Test>::iter().count(), nb_of_accounts as usize);
 			assert_eq!(Stakers::<Test>::iter().count(), 0);
@@ -186,19 +196,14 @@ mod configure {
 			let penalty = Penalty { value: Perbill::from_float(0.5), beneficiary: TREASURY };
 			let config = StakingConfig {
 				duration_presets: [
-					(WEEK, Perbill::from_float(0.5)),
-					(MONTH, Perbill::from_float(1.0)),
+					(Some(WEEK), Perbill::from_float(0.5)),
+					(Some(MONTH), Perbill::from_float(1.0)),
 				]
 				.into_iter()
 				.collect::<BTreeMap<_, _>>()
 				.try_into()
 				.expect("impossible; qed;"),
-				reward_assets: [BTC, LTC, ETH]
-					.into_iter()
-					.collect::<BTreeSet<_>>()
-					.try_into()
-					.expect("impossible; qed;"),
-				early_unstake_penalty: penalty,
+				early_unstake_penalty: Some(penalty),
 			};
 			assert_ok!(StakingRewards::configure(Origin::root(), PICA, config));
 		});
@@ -210,19 +215,14 @@ mod configure {
 			let penalty = Penalty { value: Perbill::from_float(0.5), beneficiary: TREASURY };
 			let config = StakingConfig {
 				duration_presets: [
-					(WEEK, Perbill::from_float(0.5)),
-					(MONTH, Perbill::from_float(1.0)),
+					(Some(WEEK), Perbill::from_float(0.5)),
+					(Some(MONTH), Perbill::from_float(1.0)),
 				]
 				.into_iter()
 				.collect::<BTreeMap<_, _>>()
 				.try_into()
 				.expect("impossible; qed;"),
-				reward_assets: [BTC, LTC, ETH]
-					.into_iter()
-					.collect::<BTreeSet<_>>()
-					.try_into()
-					.expect("impossible; qed;"),
-				early_unstake_penalty: penalty,
+				early_unstake_penalty: Some(penalty),
 			};
 			assert_ok!(StakingRewards::configure(Origin::root(), PICA, config.clone()));
 			assert_ok!(StakingRewards::configure(Origin::root(), PICA, config));
@@ -235,19 +235,14 @@ mod configure {
 			let penalty = Penalty { value: Perbill::from_float(0.5), beneficiary: TREASURY };
 			let config = StakingConfig {
 				duration_presets: [
-					(WEEK, Perbill::from_float(0.5)),
-					(MONTH, Perbill::from_float(1.0)),
+					(Some(WEEK), Perbill::from_float(0.5)),
+					(Some(MONTH), Perbill::from_float(1.0)),
 				]
 				.into_iter()
 				.collect::<BTreeMap<_, _>>()
 				.try_into()
 				.expect("impossible; qed;"),
-				reward_assets: [BTC, LTC, ETH]
-					.into_iter()
-					.collect::<BTreeSet<_>>()
-					.try_into()
-					.expect("impossible; qed;"),
-				early_unstake_penalty: penalty,
+				early_unstake_penalty: Some(penalty),
 			};
 			assert_noop!(
 				StakingRewards::configure(Origin::signed(ALICE), PICA, config),
@@ -267,10 +262,12 @@ mod stake {
 			let stake = 1_000_000_000_000;
 			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
 			advance_state_machine();
-			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
-				.expect("impossible; qed;");
+			let instance_id =
+				<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, Some(WEEK), false)
+					.expect("impossible; qed;");
 			System::assert_last_event(Event::StakingRewards(crate::Event::Staked {
 				who: ALICE,
+				asset: PICA,
 				stake,
 				nft: instance_id,
 			}));
@@ -284,9 +281,23 @@ mod stake {
 			let stake = 1_000_000_000_000;
 			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
 			assert_noop!(
-				<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, DAY, false),
+				<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, Some(DAY), false),
 				Error::<Test>::InvalidDurationPreset
 			);
+		});
+	}
+
+	#[test]
+	fn zero_lock_ok() {
+		new_test_ext().execute_with(|| {
+			configure_default_pica();
+			let stake = 1_000_000_000_000;
+			let duration = None;
+			let initial_total_shares = StakingRewards::total_shares(PICA);
+			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
+			assert_ok!(<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, duration, false));
+			let final_total_shares = StakingRewards::total_shares(PICA);
+			assert_eq!(initial_total_shares, final_total_shares);
 		});
 	}
 
@@ -295,11 +306,11 @@ mod stake {
 		new_test_ext().execute_with(|| {
 			configure_default_pica();
 			let stake = 1_000_000_000_000;
-			let duration = WEEK;
-			let initial_total_shares = StakingRewards::total_shares((PICA, BTC));
+			let duration = Some(WEEK);
+			let initial_total_shares = StakingRewards::total_shares(PICA);
 			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
 			assert_ok!(<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, duration, false));
-			let final_total_shares = StakingRewards::total_shares((PICA, BTC));
+			let final_total_shares = StakingRewards::total_shares(PICA);
 			assert_eq!(initial_total_shares, final_total_shares);
 		});
 	}
@@ -310,8 +321,9 @@ mod stake {
 			configure_default_pica();
 			let stake = 1_000_000_000_000;
 			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
-			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
-				.expect("impossible; qed;");
+			let instance_id =
+				<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, Some(WEEK), false)
+					.expect("impossible; qed;");
 			assert!(StakingRewards::pending_stakers(instance_id).is_some());
 			assert!(StakingRewards::stakers(instance_id).is_none());
 		});
@@ -322,18 +334,18 @@ mod stake {
 		new_test_ext().execute_with(|| {
 			let config = configure_default_pica();
 			let stake = 1_000_000_000_000;
-			let duration = WEEK;
+			let duration = Some(WEEK);
 			let shares = config
 				.duration_presets
 				.get(&duration)
 				.expect("impossible; qed;")
 				.mul_floor(stake);
 			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
-			let initial_total_shares = StakingRewards::total_shares((PICA, BTC));
+			let initial_total_shares = StakingRewards::total_shares(PICA);
 			assert_ok!(<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, duration, false));
 			// Enter new epoch
 			advance_state_machine();
-			let final_total_shares = StakingRewards::total_shares((PICA, BTC));
+			let final_total_shares = StakingRewards::total_shares(PICA);
 			let delta_total_shares =
 				final_total_shares.checked_sub(initial_total_shares).expect("impossible; qed;");
 			assert_eq!(delta_total_shares, shares);
@@ -348,11 +360,12 @@ mod unstake {
 	fn owner_can_unstake() {
 		new_test_ext().execute_with(|| {
 			let penalty = Penalty { value: Perbill::from_float(0.5), beneficiary: TREASURY };
-			configure_pica(penalty);
+			configure_pica(Some(penalty));
 			let stake = 1_000_000_000_000;
 			assert_ok!(Tokens::mint_into(PICA, &ALICE, stake));
-			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
-				.expect("impossible; qed;");
+			let instance_id =
+				<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, Some(WEEK), false)
+					.expect("impossible; qed;");
 			assert_ok!(<StakingRewards as Staking>::unstake(&instance_id, &ALICE));
 		});
 	}
@@ -361,11 +374,12 @@ mod unstake {
 	fn non_owner_cant_unstake() {
 		new_test_ext().execute_with(|| {
 			let penalty = Penalty { value: Perbill::from_float(0.5), beneficiary: TREASURY };
-			configure_pica(penalty);
+			configure_pica(Some(penalty));
 			let stake = 1_000_000_000_000;
 			assert_ok!(Tokens::mint_into(PICA, &ALICE, stake));
-			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
-				.expect("impossible; qed;");
+			let instance_id =
+				<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, Some(WEEK), false)
+					.expect("impossible; qed;");
 			assert_noop!(
 				StakingRewards::unstake(Origin::signed(BOB), instance_id, ALICE),
 				DispatchError::BadOrigin
@@ -377,15 +391,17 @@ mod unstake {
 	fn generate_event() {
 		new_test_ext().execute_with(|| {
 			let penalty = Penalty { value: Perbill::from_float(0.5), beneficiary: TREASURY };
-			configure_pica(penalty);
+			configure_pica(Some(penalty));
 			let stake = 1_000_000_000_000;
 			assert_ok!(Tokens::mint_into(PICA, &ALICE, stake));
-			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
-				.expect("impossible; qed;");
+			let instance_id =
+				<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, Some(WEEK), false)
+					.expect("impossible; qed;");
 			advance_state_machine();
 			assert_ok!(<StakingRewards as Staking>::unstake(&instance_id, &ALICE));
 			System::assert_last_event(Event::StakingRewards(crate::Event::Unstaked {
 				to: ALICE,
+				asset: PICA,
 				stake,
 				penalty: penalty.value.mul_floor(stake),
 				nft: instance_id,
@@ -394,13 +410,38 @@ mod unstake {
 	}
 
 	#[test]
-	fn early_unstake_before_epoch_doesnt_apply_penalty() {
+	fn early_unstake_before_registration_doesnt_apply_penalty() {
 		new_test_ext().execute_with(|| {
 			configure_default_pica();
 			let stake = 1_000_000_000_000;
 			assert_ok!(Tokens::mint_into(PICA, &ALICE, stake));
-			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
+			let instance_id =
+				<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, Some(WEEK), false)
+					.expect("impossible; qed;");
+			assert_ok!(<StakingRewards as Staking>::unstake(&instance_id, &ALICE));
+			assert_eq!(Tokens::balance(PICA, &ALICE), stake);
+		});
+	}
+
+	#[test]
+	fn early_unstake_no_penalty_if_no_lock() {
+		new_test_ext().execute_with(|| {
+			// Configure null penalty
+			let config = StakingConfig {
+				duration_presets: [(None, Perbill::from_float(1.))]
+					.into_iter()
+					.collect::<BTreeMap<_, _>>()
+					.try_into()
+					.expect("impossible; qed;"),
+				early_unstake_penalty: None,
+			};
+			assert_ok!(StakingRewards::configure(Origin::root(), PICA, config.clone()));
+			let stake = 1_000_000_000_000;
+			assert_ok!(Tokens::mint_into(PICA, &ALICE, stake));
+			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, None, false)
 				.expect("impossible; qed;");
+			// Enter into first epoch
+			advance_state_machine();
 			assert_ok!(<StakingRewards as Staking>::unstake(&instance_id, &ALICE));
 			assert_eq!(Tokens::balance(PICA, &ALICE), stake);
 		});
@@ -410,15 +451,44 @@ mod unstake {
 	fn early_unstake_apply_penalty() {
 		new_test_ext().execute_with(|| {
 			let penalty = Penalty { value: Perbill::from_float(0.5), beneficiary: TREASURY };
-			configure_pica(penalty);
+			configure_pica(Some(penalty));
 			let stake = 1_000_000_000_000;
 			assert_ok!(Tokens::mint_into(PICA, &ALICE, stake));
-			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
-				.expect("impossible; qed;");
+			let instance_id =
+				<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, Some(WEEK), false)
+					.expect("impossible; qed;");
 			// Enter into first epoch
 			advance_state_machine();
 			assert_ok!(<StakingRewards as Staking>::unstake(&instance_id, &ALICE));
 			assert_eq!(Tokens::balance(PICA, &ALICE), penalty.value.mul_floor(stake));
+		});
+	}
+
+	#[test]
+	fn early_unstake_no_penalty_if_null_penalty() {
+		new_test_ext().execute_with(|| {
+			// Configure null penalty
+			let config = StakingConfig {
+				duration_presets: [
+					(Some(WEEK), Perbill::from_float(0.5)),
+					(Some(MONTH), Perbill::from_float(1.0)),
+				]
+				.into_iter()
+				.collect::<BTreeMap<_, _>>()
+				.try_into()
+				.expect("impossible; qed;"),
+				early_unstake_penalty: None,
+			};
+			assert_ok!(StakingRewards::configure(Origin::root(), PICA, config.clone()));
+			let stake = 1_000_000_000_000;
+			assert_ok!(Tokens::mint_into(PICA, &ALICE, stake));
+			let instance_id =
+				<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, Some(WEEK), false)
+					.expect("impossible; qed;");
+			// Enter into first epoch
+			advance_state_machine();
+			assert_ok!(<StakingRewards as Staking>::unstake(&instance_id, &ALICE));
+			assert_eq!(Tokens::balance(PICA, &ALICE), stake);
 		});
 	}
 
@@ -428,8 +498,9 @@ mod unstake {
 			configure_default_pica();
 			let stake = 1_000_000_000_000;
 			assert_ok!(Tokens::mint_into(PICA, &ALICE, stake));
-			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
-				.expect("impossible; qed;");
+			let instance_id =
+				<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, Some(WEEK), false)
+					.expect("impossible; qed;");
 			run_to_duration(WEEK + MINUTE);
 			assert_ok!(<StakingRewards as Staking>::unstake(&instance_id, &ALICE));
 			assert_eq!(Tokens::balance(PICA, &ALICE), stake);
@@ -440,11 +511,12 @@ mod unstake {
 	fn penalty_goes_to_beneficiary() {
 		new_test_ext().execute_with(|| {
 			let penalty = Penalty { value: Perbill::from_float(0.5), beneficiary: TREASURY };
-			configure_pica(penalty);
+			configure_pica(Some(penalty));
 			let stake = 1_000_000_000_000;
 			assert_ok!(Tokens::mint_into(PICA, &ALICE, stake));
-			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
-				.expect("impossible; qed;");
+			let instance_id =
+				<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, Some(WEEK), false)
+					.expect("impossible; qed;");
 			advance_state_machine();
 			assert_ok!(<StakingRewards as Staking>::unstake(&instance_id, &ALICE));
 			let penalty_amount = penalty.value.mul_floor(stake);
@@ -499,35 +571,70 @@ mod transfer_reward {
 	}
 
 	#[test]
-	fn increment_collected_rewards() {
+	fn increment_epoch_rewards_when_waiting_for_epoch_end() {
 		new_test_ext().execute_with(|| {
 			configure_default_pica();
+			let stake_asset = PICA;
 			let reward_asset = BTC;
 			let reward = 1_000_000_000_000;
 			assert_ok!(Tokens::mint_into(reward_asset, &TREASURY, reward));
 			assert_eq!(
-				StakingRewards::epoch_rewards((StakingRewards::current_epoch(), PICA), BTC),
-				0
+				StakingRewards::epoch_rewards(StakingRewards::current_epoch(), stake_asset)
+					.get(&reward_asset),
+				None
 			);
 			assert_eq!(
-				StakingRewards::epoch_rewards((StakingRewards::current_epoch(), PICA), LTC),
-				0
+				StakingRewards::epoch_rewards(StakingRewards::current_epoch(), stake_asset)
+					.get(&LTC),
+				None
 			);
+			advance_state_machine();
+			assert_eq!(StakingRewards::current_state(), State::WaitingForEpochEnd);
 			assert_ok!(StakingRewards::transfer_reward(
-				&PICA,
+				&stake_asset,
 				&reward_asset,
 				&TREASURY,
 				reward,
 				false
 			));
 			assert_eq!(
-				StakingRewards::epoch_rewards((StakingRewards::current_epoch(), PICA), BTC),
-				reward.into()
+				StakingRewards::epoch_rewards(StakingRewards::current_epoch(), stake_asset)
+					.get(&reward_asset)
+					.copied(),
+				Some(reward)
 			);
 			assert_eq!(
-				StakingRewards::epoch_rewards((StakingRewards::current_epoch(), PICA), LTC),
-				0
+				StakingRewards::epoch_rewards(StakingRewards::current_epoch(), stake_asset)
+					.get(&LTC),
+				None
 			);
+		});
+	}
+
+	#[test]
+	fn increment_pending_epoch_rewards_when_rewarding() {
+		new_test_ext().execute_with(|| {
+			configure_default_pica();
+			let stake_asset = PICA;
+			let reward_asset = BTC;
+			let reward = 1_000_000_000_000;
+			assert_ok!(Tokens::mint_into(reward_asset, &TREASURY, reward));
+			assert_eq!(StakingRewards::pending_epoch_rewards(stake_asset).get(&BTC), None);
+			assert_eq!(StakingRewards::pending_epoch_rewards(stake_asset).get(&LTC), None);
+			process_block(0);
+			assert_eq!(StakingRewards::current_state(), State::Rewarding);
+			assert_ok!(StakingRewards::transfer_reward(
+				&stake_asset,
+				&reward_asset,
+				&TREASURY,
+				reward,
+				false
+			));
+			assert_eq!(
+				StakingRewards::pending_epoch_rewards(stake_asset).get(&reward_asset).copied(),
+				Some(reward)
+			);
+			assert_eq!(StakingRewards::pending_epoch_rewards(stake_asset).get(&LTC), None);
 		});
 	}
 
@@ -537,19 +644,14 @@ mod transfer_reward {
 			let penalty = Penalty { value: Perbill::from_float(0.5), beneficiary: TREASURY };
 			let config = StakingConfig {
 				duration_presets: [
-					(WEEK, Perbill::from_float(0.5)),
-					(MONTH, Perbill::from_float(1.0)),
+					(Some(WEEK), Perbill::from_float(0.5)),
+					(Some(MONTH), Perbill::from_float(1.0)),
 				]
 				.into_iter()
 				.collect::<BTreeMap<_, _>>()
 				.try_into()
 				.expect("impossible; qed;"),
-				reward_assets: [BTC, LTC, ETH]
-					.into_iter()
-					.collect::<BTreeSet<_>>()
-					.try_into()
-					.expect("impossible; qed;"),
-				early_unstake_penalty: penalty,
+				early_unstake_penalty: Some(penalty),
 			};
 			assert_ok!(StakingRewards::configure(Origin::root(), PICA, config.clone()));
 			assert_ok!(StakingRewards::configure(Origin::root(), LAYR, config));
@@ -580,7 +682,7 @@ mod claim {
 		new_test_ext().execute_with(|| {
 			let fake_instance_id = 0;
 			assert_noop!(
-				<StakingRewards as Staking>::claim(&fake_instance_id, &ALICE,),
+				<StakingRewards as Staking>::claim(&fake_instance_id, &ALICE),
 				DispatchError::Token(TokenError::UnknownAsset)
 			);
 		});
@@ -592,10 +694,11 @@ mod claim {
 			configure_default_pica();
 			let stake = 1_000_000_000_000;
 			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
-			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
-				.expect("impossible; qed;");
+			let instance_id =
+				<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, Some(WEEK), false)
+					.expect("impossible; qed;");
 			process_block(REWARD_EPOCH_DURATION_BLOCK);
-			assert_ok!(StakingRewards::claim(Origin::signed(ALICE), instance_id, ALICE,));
+			assert_ok!(StakingRewards::claim(Origin::signed(ALICE), instance_id, ALICE));
 		});
 	}
 
@@ -605,11 +708,64 @@ mod claim {
 			configure_default_pica();
 			let stake = 1_000_000_000_000;
 			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
-			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
-				.expect("impossible; qed;");
+			let instance_id =
+				<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, Some(WEEK), false)
+					.expect("impossible; qed;");
 			process_block(REWARD_EPOCH_DURATION_BLOCK);
-			assert_ok!(StakingRewards::claim(Origin::signed(TREASURY), instance_id, TREASURY,));
-			assert_ok!(StakingRewards::claim(Origin::signed(ALICE), instance_id, ALICE,));
+			assert_ok!(StakingRewards::claim(Origin::signed(TREASURY), instance_id, TREASURY));
+			assert_ok!(StakingRewards::claim(Origin::signed(ALICE), instance_id, ALICE));
+		});
+	}
+}
+
+mod usecase {
+	use super::*;
+
+	#[test]
+	fn stake_transfer_reward_claim_unstake() {
+		new_test_ext().execute_with(|| {
+			configure_default_pica();
+			let stake_asset = PICA;
+			let stake = 1_000_000_000_000_u128;
+			let reward_asset = LTC;
+			let reward = 0xC0DEBABE_u128 * 1_000_000_000_000_u128;
+			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(stake_asset, &ALICE, stake));
+			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(reward_asset, &TREASURY, reward));
+			let instance_id =
+				<StakingRewards as Staking>::stake(&stake_asset, &ALICE, stake, Some(WEEK), false)
+					.expect("impossible; qed;");
+			// Advance to rewarding state
+			run_to_block(1);
+			assert_eq!(StakingRewards::current_state(), State::Rewarding);
+			// Transfer while rewarding => pending rewards
+			assert_ok!(StakingRewards::transfer_reward(
+				&stake_asset,
+				&reward_asset,
+				&TREASURY,
+				reward,
+				false
+			));
+			assert_eq!(
+				StakingRewards::pending_epoch_rewards(stake_asset).get(&reward_asset).copied(),
+				Some(reward)
+			);
+			// Pending rewards become rewards
+			run_to_duration(MINUTE);
+			assert_eq!(
+				StakingRewards::epoch_rewards(StakingRewards::current_epoch(), stake_asset)
+					.get(&reward_asset)
+					.copied(),
+				Some(reward)
+			);
+			// End epoch to complete
+			run_to_duration(2 * MINUTE);
+			assert_eq!(StakingRewards::current_state(), State::WaitingForEpochEnd);
+			assert_ok!(StakingRewards::claim(Origin::signed(ALICE), instance_id, ALICE));
+			assert_eq!(Tokens::balance(reward_asset, &ALICE), reward);
+			// Go to lock completion
+			run_to_duration(WEEK + MINUTE);
+			assert_ok!(<StakingRewards as Staking>::unstake(&instance_id, &ALICE));
+			assert_eq!(Tokens::balance(stake_asset, &ALICE), stake);
 		});
 	}
 }
