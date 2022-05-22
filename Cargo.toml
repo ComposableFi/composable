@@ -51,7 +51,6 @@ panic = "unwind"
 inherits = "release"
 lto = true
 
-
 [patch."https://github.com/paritytech/substrate"]
 beefy-gadget = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
 beefy-gadget-rpc = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.19" }
