@@ -2,12 +2,14 @@
 authors = ["Composable Developers"]
 edition = "2021"
 homepage = "https://composable.finance"
-name = "xcvm-core"
+name = "xcvm-protobuf"
 version = "0.1.0"
 
 [dependencies]
-ethabi = "17.0.0"
 prost = { version = "0.10", default-features = false, features = [
   "prost-derive",
 ] }
-prost-types = { version = "0.10", default-features = false }
+xcvm-core = { path = "../core" }
+
+[build-dependencies]
+prost-build = { version = "0.10" }

@@ -6,23 +6,26 @@ fn test() {
 	struct DummyProtocol;
 
 	impl XCVMProtocol<XCVMNetwork> for DummyProtocol {
-		fn serialize(&self, network: XCVMNetwork) -> AbiEncoded {
+		type Error = ();
+		fn serialize(&self, network: XCVMNetwork) -> Result<AbiEncoded, ()> {
 			match network {
-				XCVMNetwork::PICASSO => AbiEncoded::empty(),
-				XCVMNetwork::ETHEREUM => AbiEncoded::from(vec![4]),
-				_ => todo!("handle error of invalid network id"),
+				XCVMNetwork::PICASSO => Ok(AbiEncoded::empty()),
+				XCVMNetwork::ETHEREUM => Ok(AbiEncoded::from(vec![4])),
+				_ => Err(()),
 			}
 		}
 	}
 
-	let contract =
-		XCVMContractBuilder::<XCVMNetwork, XCVMInstruction<XCVMNetwork, _, (), ()>>::from(
+	let contract = || -> Result<_, ()> {
+		Ok(XCVMContractBuilder::<XCVMNetwork, XCVMInstruction<XCVMNetwork, _, (), ()>>::from(
 			XCVMNetwork::PICASSO,
 		)
-		.call(DummyProtocol)
+		.call(DummyProtocol)?
 		.bridge(XCVMNetwork::ETHEREUM, ())
-		.call(DummyProtocol)
-		.transfer((), ());
+		.call(DummyProtocol)?
+		.transfer((), ()))
+	}()
+	.expect("valid contract");
 
 	assert_eq!(
 		contract.instructions,

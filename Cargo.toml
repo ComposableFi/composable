@@ -44,6 +44,7 @@ members = [
   "simnode/common",
   "lib/xcvm/core",
   "lib/xcvm/protocols",
+  "lib/xcvm/protobuf",
 ]
 
 [profile.release]

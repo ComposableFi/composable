@@ -1,6 +1,6 @@
 use alloc::vec::Vec;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 #[repr(transparent)]
 pub struct AbiEncoded(Vec<u8>);
 

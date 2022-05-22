@@ -6,7 +6,7 @@ pub trait Callable {
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 #[repr(transparent)]
-pub struct XCVMNetwork(u8);
+pub struct XCVMNetwork(u32);
 
 impl XCVMNetwork {
 	pub const PICASSO: XCVMNetwork = XCVMNetwork(1);
@@ -15,4 +15,16 @@ impl XCVMNetwork {
 
 impl Callable for XCVMNetwork {
 	type EncodedCall = AbiEncoded;
+}
+
+impl Into<u32> for XCVMNetwork {
+	fn into(self) -> u32 {
+		self.0
+	}
+}
+
+impl From<u32> for XCVMNetwork {
+	fn from(network: u32) -> Self {
+		XCVMNetwork(network)
+	}
 }
