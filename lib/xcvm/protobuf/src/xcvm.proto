@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package xcvm;
+
+message Instructions {
+  repeated Instruction instructions = 1;
+}
+
+message Instruction {
+  oneof instruction {
+    Transfer transfer = 1;
+    Bridge bridge = 2;
+    Call call = 3;
+  }
+}
+
+message Transfer {
+  Account destination = 1;
+  // (Asset, Amount)
+  map<uint32, uint64> assets = 2;
+}
+
+message Bridge {
+  uint32 network = 1;
+  // (Asset, Amount)
+  map<uint32, uint64> assets = 2;
+}
+
+message Call {
+  bytes payload = 1;
+}
+
+message Account {
+  oneof account {
+    string named = 1;
+    bytes addressed = 2;
+  }
+}

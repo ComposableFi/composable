@@ -39,8 +39,13 @@ where
 		self
 	}
 
-	pub fn call(mut self, protocol: impl XCVMProtocol<Network>) -> Self {
-		self.instructions.push(XCVMInstruction::Call(protocol.serialize(self.network)));
-		self
+	pub fn call<T>(mut self, protocol: T) -> Result<Self, T::Error>
+	where
+		T: XCVMProtocol<Network>,
+	{
+		protocol.serialize(self.network).map(|encoded_call| {
+			self.instructions.push(XCVMInstruction::Call(encoded_call));
+			self
+		})
 	}
 }
