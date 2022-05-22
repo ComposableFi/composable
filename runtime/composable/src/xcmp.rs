@@ -12,7 +12,7 @@ use composable_traits::{
 use core::marker::PhantomData;
 use cumulus_primitives_core::{IsSystem, ParaId};
 use frame_support::{
-	construct_runtime, log, match_type, parameter_types,
+	construct_runtime, log, match_types, parameter_types,
 	traits::{
 		Contains, Everything, KeyOwnerProofSystem, Nothing, OriginTrait, PalletInfoAccess,
 		Randomness, StorageInfo,
@@ -59,7 +59,7 @@ parameter_types! {
 }
 
 // here we should add any partner network for zero cost transactions
-match_type! {
+match_types! {
 	pub type SpecParachain: impl Contains<MultiLocation> = {
 		MultiLocation { parents: 1, interior: X1(Parachain(2000)) } |
 			MultiLocation { parents: 1, interior: X1(Parachain(3000)) }

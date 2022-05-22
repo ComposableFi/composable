@@ -49,7 +49,7 @@ use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
-	construct_runtime, match_type, parameter_types,
+	construct_runtime, parameter_types,
 	traits::{
 		ConstBool, ConstU128, ConstU16, ConstU32, Contains, Everything, KeyOwnerProofSystem,
 		Nothing, Randomness, StorageInfo,
