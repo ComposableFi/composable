@@ -22,7 +22,7 @@ pub trait ClearingHouse {
 	/// Specification for market creation
 	type MarketConfig;
 
-	/// Add margin to a user's account
+	/// Deposit collateral to a user's account
 	///
 	/// Assumes margin account is unique to each wallet address, i.e., there's only one margin
 	/// account per user.
@@ -31,7 +31,7 @@ pub trait ClearingHouse {
 	/// - `account_id`: the trader's margin account Id
 	/// - `asset_id`: the type of asset to deposit as collateral
 	/// - `amount`: the amount of collateral
-	fn add_margin(
+	fn deposit_collateral(
 		account_id: &Self::AccountId,
 		asset_id: Self::AssetId,
 		amount: Self::Balance,

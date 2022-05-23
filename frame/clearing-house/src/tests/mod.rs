@@ -24,9 +24,9 @@ use frame_support::{assert_err, assert_ok, pallet_prelude::Hooks};
 use proptest::prelude::*;
 use sp_runtime::{FixedI128, FixedPointNumber, FixedU128};
 
-pub mod add_margin;
 pub mod comp;
 pub mod create_market;
+pub mod deposit_collateral;
 pub mod instruments;
 pub mod liquidate;
 pub mod open_position;
@@ -178,7 +178,7 @@ fn multi_market_and_trader_context<R>(
 
 	with_markets_context(ext_builder, configs, |market_ids| {
 		for (acc, margin) in margins {
-			TestPallet::add_margin(Origin::signed(acc), USDC, margin);
+			TestPallet::deposit_collateral(Origin::signed(acc), USDC, margin);
 		}
 
 		execute(market_ids)
@@ -228,13 +228,21 @@ impl RunToBlock for sp_io::TestExternalities {
 }
 
 trait MarginInitializer {
-	fn add_margin(self, account_id: &AccountId, asset_id: AssetId, amount: Balance) -> Self;
+	fn deposit_collateral(self, account_id: &AccountId, asset_id: AssetId, amount: Balance)
+		-> Self;
 }
 
 impl MarginInitializer for sp_io::TestExternalities {
-	fn add_margin(mut self, account_id: &AccountId, asset_id: AssetId, amount: Balance) -> Self {
+	fn deposit_collateral(
+		mut self,
+		account_id: &AccountId,
+		asset_id: AssetId,
+		amount: Balance,
+	) -> Self {
 		self.execute_with(|| {
-			assert_ok!(<TestPallet as ClearingHouse>::add_margin(account_id, asset_id, amount));
+			assert_ok!(<TestPallet as ClearingHouse>::deposit_collateral(
+				account_id, asset_id, amount
+			));
 		});
 
 		self

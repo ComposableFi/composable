@@ -147,9 +147,9 @@ fn can_liquidate_if_below_maintenance_margin_ratio_by_pnl() {
 		// Bob liquidates Alice's account
 		assert_ok!(TestPallet::liquidate(Origin::signed(BOB), ALICE));
 		// Alice's entire collateral is seized as fees in a full liquidation
-		assert_eq!(TestPallet::get_margin(&ALICE).unwrap(), 0);
+		assert_eq!(TestPallet::get_collateral(&ALICE).unwrap(), 0);
 		// Bob gets half of Alice's collateral as a fee
-		let bob_collateral = TestPallet::get_margin(&BOB).unwrap();
+		let bob_collateral = TestPallet::get_collateral(&BOB).unwrap();
 		assert_eq!(bob_collateral, as_balance(2));
 
 		// Insurance Fund balance gets the rest of the liquidation fee
@@ -296,7 +296,7 @@ fn fees_are_proportional_to_base_asset_value_liquidated() {
 		assert_eq!(positions[0].market_id, market0_id);
 		// Bob should receive an amount of fees proportional to the amount of base asset value
 		// closed
-		assert!(approx_eq_lower(TestPallet::get_margin(&BOB).unwrap(), as_balance(60)));
+		assert!(approx_eq_lower(TestPallet::get_collateral(&BOB).unwrap(), as_balance(60)));
 	});
 }
 

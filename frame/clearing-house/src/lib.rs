@@ -53,7 +53,7 @@
 //!
 //! ### Extrinsics
 //!
-//! - [`add_margin`](Call::add_margin)
+//! - [`deposit_collateral`](Call::deposit_collateral)
 //! - [`create_market`](Call::create_market)
 //! - [`open_position`](Call::open_position)
 //! - [`update_funding`](Call::update_funding)
@@ -61,7 +61,7 @@
 //!
 //! ### Implemented Functions
 //!
-//! - [`add_margin`](pallet/struct.Pallet.html#method.add_margin-1)
+//! - [`deposit_collateral`](pallet/struct.Pallet.html#method.deposit_collateral-1)
 //! - [`create_market`](pallet/struct.Pallet.html#method.create_market-1)
 //! - [`open_position`](pallet/struct.Pallet.html#method.open_position-1)
 //! - [`update_funding`](pallet/struct.Pallet.html#method.update_funding-1)
@@ -299,8 +299,8 @@ pub mod pallet {
 	/// Maps [AccountId](frame_system::Config::AccountId) to its collateral
 	/// [Balance](DeFiComposableConfig::Balance), if set.
 	#[pallet::storage]
-	#[pallet::getter(fn get_margin)]
-	pub type AccountsMargin<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, T::Balance>;
+	#[pallet::getter(fn get_collateral)]
+	pub type Collateral<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, T::Balance>;
 
 	/// Maps [AccountId](frame_system::Config::AccountId) to its respective [Positions](Position),
 	/// as a vector.
@@ -451,7 +451,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Adds margin to a trader's account.
+		/// Deposit collateral to a trader's account.
 		///
 		/// # Overview
 		/// A user has to have enough margin to open new positions
@@ -472,8 +472,8 @@ pub mod pallet {
 		/// * [`MarginAdded`](Event::<T>::MarginAdded)
 		///
 		/// ## State Changes
-		/// Updates the [`AccountsMargin`] storage map. If an account does not exist in
-		/// [`AccountsMargin`], it is created and initialized with 0 margin.
+		/// Updates the [`Collateral`] storage map. If an account does not exist in
+		/// [`Collateral`], it is created and initialized with 0 margin.
 		///
 		/// ## Errors
 		/// * [`UnsupportedCollateralType`](Error::<T>::UnsupportedCollateralType)
@@ -481,13 +481,13 @@ pub mod pallet {
 		/// # Weight/Runtime
 		/// `O(1)`
 		#[pallet::weight(<T as Config>::WeightInfo::add_margin())]
-		pub fn add_margin(
+		pub fn deposit_collateral(
 			origin: OriginFor<T>,
 			asset_id: AssetIdOf<T>,
 			amount: T::Balance,
 		) -> DispatchResult {
 			let account_id = ensure_signed(origin)?;
-			<Self as ClearingHouse>::add_margin(&account_id, asset_id, amount)?;
+			<Self as ClearingHouse>::deposit_collateral(&account_id, asset_id, amount)?;
 			Ok(())
 		}
 
@@ -576,7 +576,7 @@ pub mod pallet {
 		/// ## State Changes
 		///
 		/// The following storage items may be modified:
-		/// - [`AccountsMargin`]: if trade decreases, closes, or reverses a position, its PnL is
+		/// - [`Collateral`]: if trade decreases, closes, or reverses a position, its PnL is
 		///   realized
 		/// - [`Positions`]: a new entry may be added or an existing one updated/removed
 		///
@@ -724,7 +724,7 @@ pub mod pallet {
 		type MarketId = T::MarketId;
 		type MarketConfig = MarketConfigOf<T>;
 
-		fn add_margin(
+		fn deposit_collateral(
 			account_id: &Self::AccountId,
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
@@ -738,9 +738,9 @@ pub mod pallet {
 			let pallet_acc = Self::get_collateral_account();
 			T::Assets::transfer(asset_id, account_id, &pallet_acc, amount, true)?;
 
-			let old_margin = Self::get_margin(&account_id).unwrap_or_else(T::Balance::zero);
-			let new_margin = old_margin.try_add(&amount)?;
-			AccountsMargin::<T>::insert(&account_id, new_margin);
+			let old_collateral = Self::get_collateral(&account_id).unwrap_or_else(T::Balance::zero);
+			let new_collateral = old_collateral.try_add(&amount)?;
+			Collateral::<T>::insert(&account_id, new_collateral);
 
 			Self::deposit_event(Event::MarginAdded {
 				account: account_id.clone(),
@@ -827,9 +827,9 @@ pub mod pallet {
 				Self::get_or_create_position(&mut positions, market_id, &market, direction)?;
 			let position_direction = position.direction().unwrap_or(direction);
 
-			let mut margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
+			let mut collateral = Self::get_collateral(account_id).unwrap_or_else(T::Balance::zero);
 			// Settle funding for position before any modifications
-			Self::settle_funding(position, &market, &mut margin)?;
+			Self::settle_funding(position, &market, &mut collateral)?;
 
 			// Whether or not the trade increases the risk exposure of the account
 			let mut is_risk_increasing = false;
@@ -892,24 +892,24 @@ pub mod pallet {
 				let pnl = exit_value.try_sub(&entry_value)?;
 				// Realize PnL
 				// TODO(0xangelo): properly handle bad debt incurred by large negative PnL
-				margin = Self::update_margin_with_pnl(&margin, &pnl)?;
+				collateral = Self::update_margin_with_pnl(&collateral, &pnl)?;
 			}
 
 			// Charge fees
 			let fee = Self::fee_for_trade(&market, &quote_abs_amount_decimal)?;
-			margin.try_sub_mut(&fee)?;
+			collateral.try_sub_mut(&fee)?;
 			market.fee_pool.try_add_mut(&fee)?;
 
 			// Check account risk
 			if is_risk_increasing {
 				ensure!(
-					Self::meets_initial_margin_ratio(&positions, margin)?,
+					Self::meets_initial_margin_ratio(&positions, collateral)?,
 					Error::<T>::InsufficientCollateral
 				);
 			}
 
 			// Update storage
-			AccountsMargin::<T>::insert(account_id, margin);
+			Collateral::<T>::insert(account_id, collateral);
 			Positions::<T>::insert(account_id, positions);
 			Markets::<T>::insert(market_id, market);
 
@@ -1012,8 +1012,8 @@ pub mod pallet {
 			let insurance_fee = fees.try_sub(&liquidator_fee)?;
 
 			if !liquidator_fee.is_zero() {
-				let col = Self::get_margin(liquidator_id).unwrap_or_else(Zero::zero);
-				AccountsMargin::<T>::insert(liquidator_id, col.try_add(&liquidator_fee)?);
+				let col = Self::get_collateral(liquidator_id).unwrap_or_else(Zero::zero);
+				Collateral::<T>::insert(liquidator_id, col.try_add(&liquidator_fee)?);
 			}
 			if !insurance_fee.is_zero() {
 				let asset_id = CollateralType::<T>::get().ok_or(Error::<T>::NoCollateralTypeSet)?;
@@ -1117,7 +1117,7 @@ pub mod pallet {
 		/// - Updates the [`markets`](Markets) of closed positions (according to changes in
 		///   [`Self::close_position_in_market`]).
 		/// - Removes closed [`positions`](Positions)
-		/// - Updates the user's account [`margin`](AccountsMargin)
+		/// - Updates the user's account [`collateral`](Collateral)
 		///
 		/// ## Returns
 		///
@@ -1126,7 +1126,7 @@ pub mod pallet {
 			user_id: &T::AccountId,
 			summary: AccountSummary<T>,
 		) -> Result<T::Balance, DispatchError> {
-			let mut collateral = Self::get_margin(user_id).unwrap_or_else(Zero::zero);
+			let mut collateral = Self::get_collateral(user_id).unwrap_or_else(Zero::zero);
 			let mut margin: T::Decimal = Self::updated_balance(
 				&collateral,
 				&summary.unrealized_pnl.try_add(&summary.unrealized_funding)?,
@@ -1177,7 +1177,7 @@ pub mod pallet {
 			}
 
 			Positions::<T>::insert(user_id, positions);
-			AccountsMargin::<T>::insert(user_id, collateral);
+			Collateral::<T>::insert(user_id, collateral);
 
 			Ok(fees)
 		}

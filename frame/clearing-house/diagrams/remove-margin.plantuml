@@ -4,7 +4,7 @@
 actor "Trader" as user
 participant "Clearing\nHouse" as ch
 participant "Risk\nEngine" as risk
-database "AccountsMargin" as accs
+database "Collateral" as accs
 database "Positions" as positions
 database "Markets" as mkts
 participant "vAMM/\nOracle" as price
@@ -25,7 +25,7 @@ ch -> ch: ensure requested amount <\nfree collateral
 
 == Storage updates ==
 
-ch -[#red]> accs : reduce margin by requested amount
+ch -[#red]> accs : reduce collateral by requested amount
 
 == Asset transfers ==
 

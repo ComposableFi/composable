@@ -5,7 +5,7 @@ actor "User/Bot" as user
 participant "Clearing\nHouse" as ch
 participant "RiskEngine" as risk
 database "Positions" as positions
-database "AccountsMargin" as accs
+database "Collateral" as accs
 database "Markets" as mkts
 participant "vAMM" as vamm
 collections "Collateral\naccount" as vault
@@ -20,9 +20,9 @@ check oracle
 guard rails?
 end note
 
-ch -> risk ++: ensure below MMR
+ch -> risk ++: ensure below MMR/PMR
     risk -> risk ++: compute\nmargin ratio
-        risk -[#green]> accs : get margin
+        risk -[#green]> accs : get collateral
         risk -[#green]> positions : get all user positions
         risk -[#green]> mkts : get all markets\ninvested
         risk -> vamm : get prices

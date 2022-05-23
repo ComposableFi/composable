@@ -7,7 +7,7 @@ use crate::{
 			TestPallet, TestPalletId,
 		},
 	},
-	pallet::{AccountsMargin, Error, Event},
+	pallet::{Collateral, Error, Event},
 	tests::run_to_block,
 };
 use frame_support::{assert_noop, assert_ok, traits::fungibles::Inspect};
@@ -23,7 +23,7 @@ fn add_margin_returns_transfer_error() {
 	ExtBuilder::default().build().execute_with(|| {
 		let origin = Origin::signed(ALICE);
 		assert_noop!(
-			TestPallet::add_margin(origin, USDC, 1_000_u32.into()),
+			TestPallet::deposit_collateral(origin, USDC, 1_000_u32.into()),
 			TokenError::<Runtime>::BalanceTooLow
 		);
 	});
@@ -36,7 +36,7 @@ fn deposit_unsupported_collateral_returns_error() {
 		.execute_with(|| {
 			let origin = Origin::signed(ALICE);
 			assert_noop!(
-				TestPallet::add_margin(origin, PICA, 1_000_u32.into()),
+				TestPallet::deposit_collateral(origin, PICA, 1_000_u32.into()),
 				Error::<Runtime>::UnsupportedCollateralType
 			);
 		});
@@ -53,13 +53,13 @@ fn deposit_supported_collateral_succeeds() {
 			let amount: Balance = 1_000;
 
 			let before = (
-				AccountsMargin::<Runtime>::get(&account).unwrap_or_default(),
+				Collateral::<Runtime>::get(&account).unwrap_or_default(),
 				<AssetsPallet as Inspect<AccountId>>::balance(USDC, &ALICE),
 			);
-			assert_ok!(TestPallet::add_margin(Origin::signed(account), asset, amount));
+			assert_ok!(TestPallet::deposit_collateral(Origin::signed(account), asset, amount));
 
 			let after = (
-				AccountsMargin::<Runtime>::get(&account).unwrap_or_default(),
+				Collateral::<Runtime>::get(&account).unwrap_or_default(),
 				<AssetsPallet as Inspect<AccountId>>::balance(USDC, &ALICE),
 			);
 			assert_eq!(after.0 - before.0, amount);

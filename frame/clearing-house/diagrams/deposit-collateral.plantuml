@@ -1,12 +1,12 @@
-@startuml Add margin
+@startuml Deposit collateral
 !theme mars
 
 actor "Trader" as user
 participant "Clearing\nHouse" as CH
-database "AccountsMargin" as CHS
+database "Collateral" as CHS
 collections "Collateral\naccount" as Acc
 
-user -> CH : add margin
+user -> CH : deposit collateral
 
 CH -> CH : ensure collateral is supported
 
@@ -15,13 +15,9 @@ CH -> CH ++: Deposit collateral
     user -> Acc : collateral
 return
 
-CH -[#green]> CHS : get/create margin account
+CH -[#green]> CHS : get/create collateral account
 
-note right CH
-settle funding payments?
-end note
-
-CH -[#red]> CHS : update margin amount
+CH -[#red]> CHS : update collateral amount
 
 ?<-o CH : emit event
 @enduml
