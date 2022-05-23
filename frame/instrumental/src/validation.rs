@@ -38,7 +38,7 @@ pub struct ValidateVaultDoesNotExist<T> {
 	_marker: PhantomData<T>,
 }
 
-impl<T: Config> Validate<InstrumentalVaultConfigFor<T>, ValidateVaultDoesNotExist<T>> 
+impl<T: Config> Validate<InstrumentalVaultConfigFor<T>, ValidateVaultDoesNotExist<T>>
 	for ValidateVaultDoesNotExist<T>
 {
 	fn validate(
