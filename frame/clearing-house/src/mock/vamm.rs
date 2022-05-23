@@ -12,13 +12,14 @@ pub mod pallet {
 		vamm::{AssetType, SwapConfig, SwapSimulationConfig, Vamm},
 	};
 	use frame_support::pallet_prelude::*;
-	use num_traits::CheckedDiv;
+	use num_traits::{CheckedDiv, One};
 	use scale_info::TypeInfo;
 	use sp_arithmetic::traits::Unsigned;
 	use sp_runtime::{
 		traits::{Saturating, Zero},
 		ArithmeticError, FixedPointNumber,
 	};
+	use sp_std::ops::Add;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                    Declaration Of The Pallet Type
@@ -34,10 +35,13 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: DeFiComposableConfig + frame_system::Config {
-		type VammId: Clone
+		type VammId: Add
+			+ Clone
+			+ Copy
 			+ FullCodec
 			+ MaxEncodedLen
 			+ MaybeSerializeDeserialize
+			+ One
 			+ TypeInfo
 			+ Unsigned;
 		type Decimal: FixedPointNumber<Inner = Self::Balance>
@@ -67,7 +71,7 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
-			NextVammId::<T>::set(self.vamm_id.clone());
+			NextVammId::<T>::set(self.vamm_id);
 			Twap::<T>::set(self.twap);
 		}
 	}
@@ -130,6 +134,7 @@ pub mod pallet {
 
 		fn create(config: &Self::VammConfig) -> Result<Self::VammId, DispatchError> {
 			if let Some(id) = Self::vamm_id() {
+				NextVammId::<T>::set(Some(id + One::one()));
 				Ok(id)
 			} else {
 				Err(Error::<T>::FailedToCreateVamm.into())
