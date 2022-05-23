@@ -1,10 +1,3 @@
-use crate as pallet_instrumental;
-
-use pallet_instrumental::mock::{
-	account_id::{AccountId, ADMIN},
-	currency::{CurrencyId, PICA},
-};
-
 use composable_traits::governance::{GovernanceRegistry, SignedRawOrigin};
 use frame_support::{
 	ord_parameter_types, parameter_types,
@@ -12,14 +5,18 @@ use frame_support::{
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
-
+use orml_traits::{parameter_type_with_key, GetByKey};
+use pallet_instrumental::mock::{
+	account_id::{AccountId, ADMIN},
+	currency::{CurrencyId, PICA},
+};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{ConvertInto, IdentityLookup},
 };
 
-use orml_traits::{parameter_type_with_key, GetByKey};
+use crate as pallet_instrumental;
 
 pub type BlockNumber = u64;
 pub type Balance = u128;

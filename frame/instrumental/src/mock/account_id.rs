@@ -1,7 +1,6 @@
+use hex_literal::hex;
 use sp_core::sr25519::{Public, Signature};
 use sp_runtime::traits::{IdentifyAccount, Verify};
-
-use hex_literal::hex;
 
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 

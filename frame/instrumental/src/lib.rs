@@ -73,11 +73,9 @@ pub mod pallet {
 	//                                   Imports and Dependencies
 	// -------------------------------------------------------------------------------------------
 
-	use crate::{validation::{ValidateVaultDoesNotExist, ValidateVaultExists}, weights::WeightInfo};
+	use std::collections::BTreeMap;
 
-	use frame_support::{pallet_prelude::*, transactional, PalletId};
-	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
-
+	use codec::{Codec, FullCodec};
 	use composable_support::validation::Validated;
 	use composable_traits::{
 		instrumental::{
@@ -86,17 +84,20 @@ pub mod pallet {
 		},
 		vault::{Deposit as Duration, FundsAvailability, StrategicVault, Vault, VaultConfig},
 	};
-
+	use frame_support::{pallet_prelude::*, transactional, PalletId};
+	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::{
 		traits::{
 			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
 		},
 		ArithmeticError, Perquintill,
 	};
-
-	use codec::{Codec, FullCodec};
 	use sp_std::fmt::Debug;
-	use std::collections::BTreeMap;
+
+	use crate::{
+		validation::{ValidateVaultDoesNotExist, ValidateVaultExists},
+		weights::WeightInfo,
+	};
 
 	// -------------------------------------------------------------------------------------------
 	//                                Declaration Of The Pallet Type
@@ -419,7 +420,7 @@ pub mod pallet {
 			// Requirement 1) The asset must have an associated vault
 			match Validated::new(asset) {
 				Ok(validated_asset) => Self::do_add_liquidity(issuer, validated_asset, amount),
-				Err(_) => Err(Error::<T>::AssetDoesNotHaveAnAssociatedVault.into())
+				Err(_) => Err(Error::<T>::AssetDoesNotHaveAnAssociatedVault.into()),
 			}
 		}
 
@@ -447,7 +448,7 @@ pub mod pallet {
 			// Requirement 1) The asset must have an associated vault
 			match Validated::new(asset) {
 				Ok(validated_asset) => Self::do_remove_liquidity(issuer, validated_asset, amount),
-				Err(_) => Err(Error::<T>::AssetDoesNotHaveAnAssociatedVault.into())
+				Err(_) => Err(Error::<T>::AssetDoesNotHaveAnAssociatedVault.into()),
 			}
 		}
 	}
@@ -489,8 +490,8 @@ pub mod pallet {
 		#[transactional]
 		fn do_add_liquidity(
 			issuer: &T::AccountId,
-			asset: Validated<&T::AssetId,  ValidateVaultExists<T>>,
-			amount: T::Balance
+			asset: Validated<&T::AssetId, ValidateVaultExists<T>>,
+			amount: T::Balance,
 		) -> Result<(), DispatchError> {
 			let vault_id: T::VaultId = Self::asset_vault(&asset.value())
 				.ok_or(Error::<T>::AssetDoesNotHaveAnAssociatedVault)?;
@@ -503,8 +504,8 @@ pub mod pallet {
 		#[transactional]
 		fn do_remove_liquidity(
 			issuer: &T::AccountId,
-			asset: Validated<&T::AssetId,  ValidateVaultExists<T>>,
-			amount: T::Balance
+			asset: Validated<&T::AssetId, ValidateVaultExists<T>>,
+			amount: T::Balance,
 		) -> Result<(), DispatchError> {
 			let vault_id: T::VaultId = Self::asset_vault(&asset.value())
 				.ok_or(Error::<T>::AssetDoesNotHaveAnAssociatedVault)?;

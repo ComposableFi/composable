@@ -1,12 +1,12 @@
+// use crate::mock::strategies::*;
+use composable_traits::instrumental::InstrumentalProtocolStrategy;
+use frame_support::{assert_noop, assert_ok};
+
 use crate::mock::runtime::{
 	ExtBuilder, InstrumentalStrategy, MockRuntime, PabloStrategy, VaultId, MAX_ASSOCIATED_VAULTS,
 };
 #[allow(unused_imports)]
 use crate::pallet::Error;
-// use crate::mock::strategies::*;
-
-use composable_traits::instrumental::InstrumentalProtocolStrategy;
-use frame_support::{assert_noop, assert_ok};
 
 // use frame_support::{assert_ok, assert_noop};
 

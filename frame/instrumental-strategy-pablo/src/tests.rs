@@ -1,12 +1,11 @@
+use composable_traits::instrumental::InstrumentalProtocolStrategy;
+use frame_support::{assert_noop, assert_ok};
+
 use crate::mock::runtime::{
 	Event, ExtBuilder, MockRuntime, PabloStrategy, System, VaultId, MAX_ASSOCIATED_VAULTS,
 };
 #[allow(unused_imports)]
 use crate::{pallet, pallet::Error};
-
-use composable_traits::instrumental::InstrumentalProtocolStrategy;
-
-use frame_support::{assert_noop, assert_ok};
 
 // -----------------------------------------------------------------------------------------------
 //                                         Associate Vault

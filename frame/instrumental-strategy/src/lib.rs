@@ -13,23 +13,20 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 	//                                   Imports and Dependencies
 	// -------------------------------------------------------------------------------------------
-	use crate::weights::WeightInfo;
-
+	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		instrumental::{InstrumentalDynamicStrategy, InstrumentalProtocolStrategy},
 		vault::StrategicVault,
 	};
-
 	use frame_support::{
 		pallet_prelude::*, storage::bounded_btree_set::BoundedBTreeSet, transactional, PalletId,
 	};
-
 	use sp_runtime::traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
 	};
-
-	use codec::{Codec, FullCodec};
 	use sp_std::fmt::Debug;
+
+	use crate::weights::WeightInfo;
 
 	// -------------------------------------------------------------------------------------------
 	//                                Declaration Of The Pallet Type

@@ -96,7 +96,6 @@ pub mod defs {
 }
 
 pub use defs::*;
-
 use proptest::{
 	prop_oneof,
 	strategy::{Just, Strategy},

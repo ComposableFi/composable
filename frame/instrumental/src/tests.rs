@@ -1,5 +1,7 @@
-#[cfg(test)]
-use crate::{pallet, pallet::AssetVault, pallet::Error};
+use composable_traits::vault::Vault as VaultTrait;
+use frame_support::{assert_noop, assert_ok, assert_storage_noop, traits::fungibles::Inspect};
+use itertools::Itertools;
+use proptest::prelude::*;
 
 use crate::mock::{
 	account_id::{pick_account, AccountId, ADMIN},
@@ -9,13 +11,8 @@ use crate::mock::{
 		Assets, Balance, Event, ExtBuilder, Instrumental, MockRuntime, Origin, System, Vault,
 	},
 };
-
-use composable_traits::vault::Vault as VaultTrait;
-
-use frame_support::{assert_noop, assert_ok, assert_storage_noop, traits::fungibles::Inspect};
-
-use itertools::Itertools;
-use proptest::prelude::*;
+#[cfg(test)]
+use crate::{pallet, pallet::AssetVault, pallet::Error};
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Prop_compose

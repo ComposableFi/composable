@@ -1,15 +1,14 @@
+use composable_traits::{instrumental::InstrumentalVaultConfig, vault::VaultConfig};
+use frame_support::{
+	assert_ok, sp_std::collections::btree_map::BTreeMap, traits::fungibles::Mutate,
+};
+use sp_runtime::Perquintill;
+
 use super::{
 	account_id::{AccountId, ADMIN},
 	currency::{CurrencyId, USDC},
 	runtime::{Assets, Balance, Instrumental, Origin},
 };
-
-use composable_traits::{instrumental::InstrumentalVaultConfig, vault::VaultConfig};
-
-use frame_support::{
-	assert_ok, sp_std::collections::btree_map::BTreeMap, traits::fungibles::Mutate,
-};
-use sp_runtime::Perquintill;
 
 // ----------------------------------------------------------------------------------------------------
 //                                    InstrumentalVaultConfigBuilder

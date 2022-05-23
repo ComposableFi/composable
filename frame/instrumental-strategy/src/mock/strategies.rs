@@ -25,10 +25,9 @@ pub mod defined_strategies {
 	#![allow(non_camel_case_types)]
 	#![allow(unused)]
 
-	use super::super::runtime::AccountId;
-
-	use super::Strategy;
 	use frame_support::PalletId;
+
+	use super::{super::runtime::AccountId, Strategy};
 
 	pub const PABLO_STRATEGY: Strategy = Strategy::new(PalletId(*b"stratpab"));
 }

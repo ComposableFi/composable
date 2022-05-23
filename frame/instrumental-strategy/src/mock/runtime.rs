@@ -1,15 +1,13 @@
-use crate as pallet_instrumental_strategy;
-
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system::EnsureRoot;
-
+use orml_traits::parameter_type_with_key;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{ConvertInto, IdentityLookup},
 };
 
-use orml_traits::parameter_type_with_key;
+use crate as pallet_instrumental_strategy;
 
 pub type AccountId = u128;
 pub type Amount = i128;
