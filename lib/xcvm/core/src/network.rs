@@ -1,10 +1,12 @@
+use codec::{Encode, Decode, MaxEncodedLen};
+use scale_info::TypeInfo;
 use crate::AbiEncoded;
 
 pub trait Callable {
 	type EncodedCall;
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, Debug, Encode, Decode, MaxEncodedLen, TypeInfo)]
 #[repr(transparent)]
 pub struct XCVMNetwork(u32);
 

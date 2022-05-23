@@ -31,8 +31,5 @@ message Call {
 }
 
 message Account {
-  oneof account {
-    string named = 1;
-    bytes addressed = 2;
-  }
+  bytes addressed = 2;
 }

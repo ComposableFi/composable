@@ -1,6 +1,8 @@
+use codec::{Encode, Decode};
+use scale_info::TypeInfo;
 use alloc::vec::Vec;
 
-#[derive(Clone, PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo)]
 #[repr(transparent)]
 pub struct AbiEncoded(Vec<u8>);
 
