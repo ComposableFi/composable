@@ -12,17 +12,42 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Prepare a test environment
-      run: docker-compose up -d
+    - name: Build a Composable collator
+    - run: |
+        cd scripts/polkadot-launch
+        git clone -b main https://github.com/ComposableFi/composable
+        cd composable
+        docker run --rm -v$(pwd):/build --workdir /build composablefi/ci-linux:2022-04-18 cargo build --release
+        target/release/composable --version
 
-    - name: Wait when the node will be started
-      timeout-minutes: 5
+    - name: Build a Polkadot relay chain
       run: |
-        ./scripts/wait_for_polkadot_launch.sh
+        cd scripts/polkadot-launch
+        git clone -b mmr-polkadot-v0.9.22 https://github.com/composableFi/polkadot
+        cd polkadot
+        docker run --rm -v$(pwd):/build --workdir /build composablefi/ci-linux:2022-04-18 cargo build --release
+        ./target/release/polkadot --version
+
+    - name: Run polkadot-launch
+      timeout-minutes: 5
+      env:
+        LOG_FILE: /tmp/polka-launch/polka-launch.log
+      run: |
+        npm install --global yarn
+        yarn
+        yarn composable > "${LOG_FILE}" 2>&1 &
+
+        # wait for polka-launch
+        while IFS="" read -r string; do
+          echo $string
+          matched_string=$(echo "$string" | grep "POLKADOT LAUNCH COMPLETE")
+          if [ -z "${matched_string}" ]; then
+            true
+          else
+            break
+          fi
+        done < <(tail -f "${LOG_FILE}")
 
     - name: Run Test
       run: |
-        docker run --rm -v$(pwd):/build -e "NODE_ENDPOINT=ws://composable:9944" --workdir /build --network beefy_client_network composablefi/ci-linux:production cargo test
-
-    - name: Cleanup
-      run: docker-compose down --remove-orphans
+        docker run --rm -v$(pwd):/build -e "NODE_ENDPOINT=ws://composable:9944" --workdir /build --network beefy_client_network composablefi/ci-linux:2022-04-18 cargo test
