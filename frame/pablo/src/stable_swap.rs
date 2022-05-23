@@ -70,7 +70,7 @@ impl<T: Config> StableSwap<T> {
 		pool: &StableSwapPoolInfo<T::AccountId, T::AssetId>,
 		pool_account: &T::AccountId,
 		asset_id: T::AssetId,
-		amount: T::Balance,
+		quote_amount: T::Balance,
 	) -> Result<T::Balance, DispatchError> {
 		ensure!(pool.pair.contains(asset_id), Error::<T>::InvalidAsset);
 		let pair = if asset_id == pool.pair.base { pool.pair } else { pool.pair.swap() };
@@ -82,7 +82,7 @@ impl<T: Config> StableSwap<T> {
 		);
 		let amp = T::Convert::convert(pool.amplification_coefficient.into());
 		let d = Self::get_invariant(pool_base_aum, pool_quote_aum, amp)?;
-		let new_quote_amount = pool_quote_aum.safe_add(&amount)?;
+		let new_quote_amount = pool_quote_aum.safe_add(&quote_amount)?;
 		let new_base_amount = T::Convert::convert(compute_base(
 			T::Convert::convert(new_quote_amount),
 			T::Convert::convert(amp),
@@ -112,12 +112,11 @@ impl<T: Config> StableSwap<T> {
 		apply_fees: bool,
 	) -> Result<(T::Balance, T::Balance, Fee<T::AssetId, T::Balance>), DispatchError> {
 		ensure!(pair == pool.pair, Error::<T>::PairMismatch);
-		let base_amount =
-			Self::get_exchange_value(pool, pool_account, pool.pair.base, quote_amount)?;
+		let base_amount = Self::get_exchange_value(pool, pool_account, pair.base, quote_amount)?;
 		let fee = if apply_fees {
-			pool.fee_config.calculate_fees(pool.pair.base, base_amount)
+			pool.fee_config.calculate_fees(pair.base, base_amount)
 		} else {
-			Fee::<T::AssetId, T::Balance>::zero(pool.pair.base)
+			Fee::<T::AssetId, T::Balance>::zero(pair.base)
 		};
 
 		let base_amount_excluding_fees = base_amount.safe_sub(&fee.fee)?;

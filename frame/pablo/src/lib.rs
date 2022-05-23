@@ -678,21 +678,25 @@ pub mod pallet {
 		fn get_exchange_value(
 			pool_id: Self::PoolId,
 			asset_id: Self::AssetId,
-			amount: Self::Balance,
+			quote_amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
-				PoolConfiguration::StableSwap(info) =>
-					StableSwap::<T>::get_exchange_value(&info, &pool_account, asset_id, amount),
+				PoolConfiguration::StableSwap(info) => StableSwap::<T>::get_exchange_value(
+					&info,
+					&pool_account,
+					asset_id,
+					quote_amount,
+				),
 				PoolConfiguration::ConstantProduct(info) =>
-					Uniswap::<T>::get_exchange_value(&info, &pool_account, asset_id, amount),
+					Uniswap::<T>::get_exchange_value(&info, &pool_account, asset_id, quote_amount),
 				PoolConfiguration::LiquidityBootstrapping(info) =>
 					LiquidityBootstrapping::<T>::get_exchange_value(
 						info,
 						pool_account,
 						asset_id,
-						amount,
+						quote_amount,
 					),
 			}
 		}
