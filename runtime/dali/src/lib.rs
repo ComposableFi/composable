@@ -21,7 +21,7 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 mod weights;
 mod xcmp;
 
-use lending::MarketIndex;
+use lending::MarketId;
 use orml_traits::parameter_type_with_key;
 // TODO: consider moving this to shared runtime
 pub use xcmp::{MaxInstructions, UnitWeightCost};
@@ -1164,11 +1164,13 @@ mod benches {
 }
 
 impl_runtime_apis! {
-	impl lending_runtime_api::LendingRuntimeApi<Block, MarketIndex> for Runtime {
-		fn current_interest_rate(market_index: MarketIndex) -> SafeRpcWrapper<Rate> {
+	impl lending_runtime_api::LendingRuntimeApi<Block, MarketId> for Runtime {
+		fn current_interest_rate(_market_id: MarketId) -> SafeRpcWrapper<Rate> {
 			SafeRpcWrapper(
-				lending::BorrowIndex::<Runtime>::get(market_index)
-					.unwrap_or_else(Rate::zero)
+				// TODO: Actually implement this
+				Rate::zero()
+				// lending::BorrowIndex::<Runtime>::get(market_id)
+				// 	.unwrap_or_else(Rate::zero)
 			)
 		}
 	}
