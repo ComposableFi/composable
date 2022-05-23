@@ -24,7 +24,7 @@ jobs:
           PREFIX: book/
           NESTING_LEVEL: 3
     outputs:
-      matrix: ${{ steps.check-changes.outputs.matrix }}
+      matrix: ${{ steps.check-changes.outputs.paths }}
       changed: ${{ steps.check-changes.outputs.changed }}
   apply:
     name: Apply changes
@@ -40,7 +40,6 @@ jobs:
       - uses: actions/checkout@v2
       # Create kubeconfig env var
       - name: Run Lint Code
-        uses: #npm lint github action
-      - name: Run kubctl apply
-        working-directory: book/${{ matrix.target }}
+        uses: stefanoeb/eslint-action@1.0.2 #npm lint github action
+        working-directory: book/${{ paths.target }}
         run: npm run lint

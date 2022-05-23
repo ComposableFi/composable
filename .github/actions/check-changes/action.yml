@@ -1,5 +1,5 @@
-name: Check chnaged files in repo
-description: Outputs a file/folder that a chnage has been detected on
+name: Check changes to files in composable repo
+description: Outputs a file/folder that a change has been detected on
 inputs:
   HEAD:
     description: PR head SHA
@@ -15,16 +15,16 @@ inputs:
     required: true
     default: "2"
 outputs:
-  matrix:
-    description: Change matrix
-    value: ${{ steps.check-changes.outputs.matrix }}
+  paths:
+    description: Change paths
+    value: ${{ steps.check-changes.outputs.paths }}
   changed:
     description: Whether or not there were changes to objects under prefix
     value: ${{ steps.check-changes.outputs.changed }}
 runs:
   using: composite
   steps:
-    - name: Create matrix
+    - name: Create paths
       env:
         BASE: ${{ inputs.BASE }}
         HEAD: ${{ inputs.HEAD }}

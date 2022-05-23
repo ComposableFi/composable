@@ -10,5 +10,5 @@ if [ -n "${CHANGED_PATHS}" ];then
     CHANGED="true"
 fi
 echo "::set-output name=changed::${CHANGED}"
-echo "::set-output name=matrix::{\"include\": [${CHANGED_PATHS}]}"
+echo "::set-output name=paths::{\"include\": [${CHANGED_PATHS}]}"
 exit 0
