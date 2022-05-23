@@ -7,16 +7,16 @@ use core::marker::PhantomData;
 use sp_runtime::Perquintill;
 
 // -----------------------------------------------------------------------------------------------
-//                                    ValidateVaultDoesExists                                   
+//                                    ValidateVaultExists                                   
 // -----------------------------------------------------------------------------------------------
 
 #[derive(Clone, Copy)]
-pub struct ValidateVaultDoesExists<T> {
+pub struct ValidateVaultExists<T> {
 	_marker: PhantomData<T>,
 }
 
-impl<T: Config> Validate<&T::AssetId,  ValidateVaultDoesExists<T>> 
-	for ValidateVaultDoesExists<T> 
+impl<T: Config> Validate<&T::AssetId,  ValidateVaultExists<T>> 
+	for ValidateVaultExists<T> 
 {
 	fn validate(
 		input: &T::AssetId,

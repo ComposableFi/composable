@@ -75,7 +75,7 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 
 	use crate::weights::WeightInfo;
-	use crate::validation::{ValidateVaultDoesNotExist, ValidateVaultDoesExists};
+	use crate::validation::{ValidateVaultDoesNotExist, ValidateVaultExists};
 
 	use frame_support::{
 		pallet_prelude::*,
@@ -446,7 +446,7 @@ pub mod pallet {
 			amount: Self::Balance
 		) -> Result<(), DispatchError> {
 			// Requirement 1) The asset must have an associated vault
-			match Validated::<&T::AssetId, ValidateVaultDoesExists<T>>::new(asset) {
+			match Validated::<&T::AssetId, ValidateVaultExists<T>>::new(asset) {
 				Ok(validated_asset) => Self::do_add_liquidity(issuer, validated_asset, amount),
 				Err(_) => Err(Error::<T>::AssetDoesNotHaveAnAssociatedVault.into())
 			}
@@ -474,7 +474,7 @@ pub mod pallet {
 			amount: Self::Balance
 		) -> Result<(), DispatchError> {
 			// Requirement 1) The asset must have an associated vault
-			match Validated::<&T::AssetId, ValidateVaultDoesExists<T>>::new(asset) {
+			match Validated::<&T::AssetId, ValidateVaultExists<T>>::new(asset) {
 				Ok(validated_asset) => Self::do_remove_liquidity(issuer, validated_asset, amount),
 				Err(_) => Err(Error::<T>::AssetDoesNotHaveAnAssociatedVault.into())
 			}
@@ -525,7 +525,7 @@ pub mod pallet {
 		#[transactional]
 		fn do_add_liquidity(
 			issuer: &T::AccountId,
-			asset: Validated<&T::AssetId,  ValidateVaultDoesExists<T>>,
+			asset: Validated<&T::AssetId,  ValidateVaultExists<T>>,
 			amount: T::Balance
 		) -> Result<(), DispatchError> {
 			let vault_id: T::VaultId = Self::asset_vault(&asset.value())
@@ -539,7 +539,7 @@ pub mod pallet {
 		#[transactional]
 		fn do_remove_liquidity(
 			issuer: &T::AccountId,
-			asset: Validated<&T::AssetId,  ValidateVaultDoesExists<T>>,
+			asset: Validated<&T::AssetId,  ValidateVaultExists<T>>,
 			amount: T::Balance
 		) -> Result<(), DispatchError> {
 			let vault_id: T::VaultId = Self::asset_vault(&asset.value())
