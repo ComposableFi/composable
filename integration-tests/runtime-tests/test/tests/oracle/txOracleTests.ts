@@ -196,8 +196,8 @@ describe("tx.oracle Tests", function () {
   describe("tx.reclaimStake Success Test", function () {
     if (!testConfiguration.enabledTests.reclaimStake__success.enabled) return;
     let unlockBlock;
-    // Timeout set to 15 minutes
-    this.timeout(15 * 60 * 1000);
+    // Timeout set to 30 minutes
+    this.timeout(30 * 60 * 1000);
     this.slow(1200000);
     it("Can reclaim stake", async function () {
       if (!testConfiguration.enabledTests.reclaimStake__success.reclaim1) this.skip();
