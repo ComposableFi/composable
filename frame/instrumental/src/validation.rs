@@ -7,6 +7,29 @@ use core::marker::PhantomData;
 use sp_runtime::Perquintill;
 
 // -----------------------------------------------------------------------------------------------
+//                                    ValidateVaultExists                                   
+// -----------------------------------------------------------------------------------------------
+
+#[derive(Clone, Copy)]
+pub struct ValidateVaultExists<T> {
+	_marker: PhantomData<T>,
+}
+
+impl<T: Config> Validate<&T::AssetId,  ValidateVaultExists<T>> 
+	for ValidateVaultExists<T> 
+{
+	fn validate(
+		input: &T::AssetId,
+	) -> Result<&T::AssetId, &'static str> {
+	if !AssetVault::<T>::contains_key(input) {
+		return Err("Vault Doesn't Exist")
+	}
+
+	Ok(input)
+	}
+}
+
+// -----------------------------------------------------------------------------------------------
 //                                    ValidateVaultDoesNotExist                                   
 // -----------------------------------------------------------------------------------------------
 
