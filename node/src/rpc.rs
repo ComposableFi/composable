@@ -99,8 +99,6 @@ where
 		deps.clone(),
 	);
 
-	// io.extend_with(PabloApi::to_delegate(Pablo::new(client)));
-
 	// Extend this RPC with a custom API by using the following syntax.
 	// `YourRpcStruct` should have a reference to a client, which is needed
 	// to call into the runtime.
@@ -108,7 +106,3 @@ where
 
 	io
 }
-
-// + assets_runtime_api::AssetsRuntimeApi<B, CurrencyId, AccountId, Balance>
-// + crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<B, AccountId, Balance>
-// + pablo_runtime_api::PabloRuntimeApi<B, PoolId, CurrencyId, Balance>,
