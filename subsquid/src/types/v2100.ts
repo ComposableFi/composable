@@ -8,3 +8,11 @@ export interface CurrencyPair {
 }
 
 export type CurrencyId = bigint
+
+export interface Fee {
+  fee: bigint
+  lpFee: bigint
+  ownerFee: bigint
+  protocolFee: bigint
+  assetId: CurrencyId
+}

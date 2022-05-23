@@ -9,7 +9,7 @@ import * as ss58 from "@subsquid/ss58";
 import {get, getLatestPoolByPoolId, getOrCreate} from "./dbHelper";
 import {Account, PabloPool, PabloPoolAsset, PabloTransaction, PabloTransactionType} from "./model";
 import Big from "big.js";
-import {CurrencyPair} from "./types/v2100";
+import {CurrencyPair, Fee} from "./types/v2100";
 
 function createTransaction(
     ctx: EventHandlerContext,
@@ -296,19 +296,18 @@ interface SwappedEvent {
     who: Uint8Array,
     baseAsset: bigint,
     quoteAsset: bigint,
-    feeAsset: bigint,
     baseAmount: bigint,
     quoteAmount: bigint,
-    fee: bigint
+    fee: Fee
 }
 
 function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
     if (event.isV2100) {
-        const {poolId, who, baseAsset, quoteAsset, feeAsset, baseAmount, quoteAmount, fee} = event.asV2100;
-        return {poolId, who, baseAsset, quoteAsset, feeAsset, baseAmount, quoteAmount, fee};
+        const {poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee} = event.asV2100;
+        return {poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee};
     } else {
-        const {poolId, who, baseAsset, quoteAsset, feeAsset, baseAmount, quoteAmount, fee} = event.asLatest;
-        return {poolId, who, baseAsset, quoteAsset, feeAsset, baseAmount, quoteAmount, fee};
+        const {poolId, who, baseAsset, quoteAsset,  baseAmount, quoteAmount, fee} = event.asLatest;
+        return {poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee};
     }
 }
 
@@ -351,7 +350,7 @@ export async function processSwappedEvent(ctx: EventHandlerContext, event: Pablo
             // for reverse exchange "default quote" (included as the base amount in the evt) amount leaves the pool
             baseAsset.totalLiquidity += swappedEvt.quoteAmount;
             quoteAsset.totalLiquidity -= swappedEvt.baseAmount;
-            quoteAsset.totalLiquidity -= swappedEvt.fee;
+            quoteAsset.totalLiquidity -= swappedEvt.fee.fee;
          } else {
             console.debug('Normal swap');
             // volume
@@ -361,11 +360,11 @@ export async function processSwappedEvent(ctx: EventHandlerContext, event: Pablo
 
             // for normal exchange "default quote" amount gets into the pool
             baseAsset.totalLiquidity -= swappedEvt.baseAmount;
-            baseAsset.totalLiquidity -= swappedEvt.fee;
+            baseAsset.totalLiquidity -= swappedEvt.fee.fee;
             quoteAsset.totalLiquidity += swappedEvt.quoteAmount;
         }
         // fee and liquidity
-        const fee = calculateFeeInQuoteAsset(spotPrice, quoteAsset.assetId, swappedEvt.feeAsset, swappedEvt.fee);
+        const fee = calculateFeeInQuoteAsset(spotPrice, quoteAsset.assetId, swappedEvt.fee.assetId, swappedEvt.fee.fee);
         pool.totalLiquidity = Big(pool.totalLiquidity)
             .sub(fee)
             .toString();
