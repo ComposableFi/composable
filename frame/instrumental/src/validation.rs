@@ -1,13 +1,13 @@
-use crate::pallet::{AssetVault, Config, InstrumentalVaultConfigFor};
-
-use composable_traits::instrumental::InstrumentalVaultConfig;
-use composable_support::validation::Validate;
-
 use core::marker::PhantomData;
+
+use composable_support::validation::Validate;
+use composable_traits::instrumental::InstrumentalVaultConfig;
 use sp_runtime::Perquintill;
 
+use crate::pallet::{AssetVault, Config, InstrumentalVaultConfigFor};
+
 // -----------------------------------------------------------------------------------------------
-//                                    ValidateVaultExists                                   
+//                                    ValidateVaultExists
 // -----------------------------------------------------------------------------------------------
 
 #[derive(Clone, Copy)]
@@ -15,22 +15,18 @@ pub struct ValidateVaultExists<T> {
 	_marker: PhantomData<T>,
 }
 
-impl<T: Config> Validate<&T::AssetId,  ValidateVaultExists<T>> 
-	for ValidateVaultExists<T> 
-{
-	fn validate(
-		input: &T::AssetId,
-	) -> Result<&T::AssetId, &'static str> {
-	if !AssetVault::<T>::contains_key(input) {
-		return Err("Vault Doesn't Exist")
-	}
+impl<T: Config> Validate<&T::AssetId, ValidateVaultExists<T>> for ValidateVaultExists<T> {
+	fn validate(input: &T::AssetId) -> Result<&T::AssetId, &'static str> {
+		if !AssetVault::<T>::contains_key(input) {
+			return Err("Vault Doesn't Exist")
+		}
 
-	Ok(input)
+		Ok(input)
 	}
 }
 
 // -----------------------------------------------------------------------------------------------
-//                                    ValidateVaultDoesNotExist                                   
+//                                    ValidateVaultDoesNotExist
 // -----------------------------------------------------------------------------------------------
 
 #[derive(Clone, Copy)]
@@ -45,8 +41,8 @@ impl<T: Config> Validate<InstrumentalVaultConfigFor<T>, ValidateVaultDoesNotExis
 		input: InstrumentalVaultConfig<T::AssetId, Perquintill>,
 	) -> Result<InstrumentalVaultConfig<T::AssetId, Perquintill>, &'static str> {
 		if AssetVault::<T>::contains_key(input.asset_id) {
-            return Err("Vault Already Exists")
-        }
+			return Err("Vault Already Exists")
+		}
 
 		Ok(input)
 	}
