@@ -11,33 +11,26 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	// -------------------------------------------------------------------------------------------
-	//                                   Imports and Dependencies                                
+	//                                   Imports and Dependencies
 	// -------------------------------------------------------------------------------------------
 	use crate::weights::WeightInfo;
 
 	use frame_support::{
-		pallet_prelude::*,
-		PalletId,
-		storage::bounded_btree_set::BoundedBTreeSet,
-		transactional, dispatch::DispatchResult
+		dispatch::DispatchResult, pallet_prelude::*, storage::bounded_btree_set::BoundedBTreeSet,
+		transactional, PalletId,
 	};
 
-	use sp_runtime::{
-		traits::{
-			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
-		},
+	use sp_runtime::traits::{
+		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
 	};
 
-	use composable_traits::{
-		instrumental::InstrumentalProtocolStrategy,
-		vault::StrategicVault
-	};
+	use composable_traits::{instrumental::InstrumentalProtocolStrategy, vault::StrategicVault};
 
-	use sp_std::fmt::Debug;
 	use codec::{Codec, FullCodec};
+	use sp_std::fmt::Debug;
 
 	// -------------------------------------------------------------------------------------------
-	//                                Declaration Of The Pallet Type                              
+	//                                Declaration Of The Pallet Type
 	// -------------------------------------------------------------------------------------------
 
 	#[pallet::pallet]
@@ -45,7 +38,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	// -------------------------------------------------------------------------------------------
-	//                                         Config Trait                                       
+	//                                         Config Trait
 	// -------------------------------------------------------------------------------------------
 
 	// Configure the pallet by specifying the parameters and types on which it depends.
@@ -98,7 +91,7 @@ pub mod pallet {
 			AssetId = Self::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
-			VaultId = Self::VaultId
+			VaultId = Self::VaultId,
 		>;
 
 		/// The maximum number of vaults that can be associated with this strategy.
@@ -110,11 +103,11 @@ pub mod pallet {
 	}
 
 	// -------------------------------------------------------------------------------------------
-    //                                         Pallet Types                                       
+	//                                         Pallet Types
 	// -------------------------------------------------------------------------------------------
 
 	// -------------------------------------------------------------------------------------------
-    //                                       Runtime  Storage                                     
+	//                                       Runtime  Storage
 	// -------------------------------------------------------------------------------------------
 
 	#[pallet::storage]
@@ -123,7 +116,7 @@ pub mod pallet {
 		StorageValue<_, BoundedBTreeSet<T::VaultId, T::MaxAssociatedVaults>, ValueQuery>;
 
 	// -------------------------------------------------------------------------------------------
-    //                                        Runtime Events                                      
+	//                                        Runtime Events
 	// -------------------------------------------------------------------------------------------
 
 	#[pallet::event]
@@ -137,7 +130,7 @@ pub mod pallet {
 	}
 
 	// -------------------------------------------------------------------------------------------
-    //                                        Runtime Errors                                      
+	//                                        Runtime Errors
 	// -------------------------------------------------------------------------------------------
 
 	#[pallet::error]
@@ -148,21 +141,21 @@ pub mod pallet {
 	}
 
 	// -------------------------------------------------------------------------------------------
-    //                                            Hooks                                                
+	//                                            Hooks
 	// -------------------------------------------------------------------------------------------
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
 	// -------------------------------------------------------------------------------------------
-    //                                          Extrinsics                                         
+	//                                          Extrinsics
 	// -------------------------------------------------------------------------------------------
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {}
 
 	// -------------------------------------------------------------------------------------------
-    //                                      Protocol Strategy                                     
+	//                                      Protocol Strategy
 	// -------------------------------------------------------------------------------------------
 
 	impl<T: Config> InstrumentalProtocolStrategy for Pallet<T> {
@@ -179,22 +172,23 @@ pub mod pallet {
 			AssociatedVaults::<T>::try_mutate(|vaults| -> DispatchResult {
 				ensure!(!vaults.contains(vault_id), Error::<T>::VaultAlreadyAssociated);
 
-				vaults.try_insert(*vault_id)
+				vaults
+					.try_insert(*vault_id)
 					.map_err(|_| Error::<T>::TooManyAssociatedStrategies)?;
 
-				Self::deposit_event(Event::AssociatedVault{ vault_id: *vault_id });
+				Self::deposit_event(Event::AssociatedVault { vault_id: *vault_id });
 
 				Ok(())
 			})
 		}
-		
+
 		fn rebalance() -> DispatchResult {
 			AssociatedVaults::<T>::try_mutate(|vaults| -> DispatchResult {
 				vaults.iter().for_each(|vault_id| {
 					if Self::do_rebalance(vault_id).is_ok() {
-						Self::deposit_event(Event::RebalancedVault{ vault_id: *vault_id });
+						Self::deposit_event(Event::RebalancedVault { vault_id: *vault_id });
 					} else {
-						Self::deposit_event(Event::UnableToRebalanceVault{ vault_id: *vault_id });
+						Self::deposit_event(Event::UnableToRebalanceVault { vault_id: *vault_id });
 					}
 				});
 
@@ -208,21 +202,19 @@ pub mod pallet {
 	}
 
 	// -------------------------------------------------------------------------------------------
-    //                                   Low Level Functionality                                  
+	//                                   Low Level Functionality
 	// -------------------------------------------------------------------------------------------
-	
+
 	impl<T: Config> Pallet<T> {
-		
 		#[transactional]
 		fn do_rebalance(_vault_id: &T::VaultId) -> DispatchResult {
 			Ok(())
 		}
-
 	}
 }
 
 // -----------------------------------------------------------------------------------------------
-//                                             Unit Tests                                         
+//                                             Unit Tests
 // -----------------------------------------------------------------------------------------------
 
 #[cfg(test)]
