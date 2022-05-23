@@ -57,7 +57,6 @@
 //! ## Related Modules
 //!
 //! - [`Vault Pallet`](../pallet_vault/index.html)
-//!
 
 #[cfg(test)]
 mod tests;
@@ -514,12 +513,10 @@ pub mod pallet {
 			//  - this can be done in a better way
 			let vault_account = T::Vault::account_id(&vault_id);
 			match <T::Vault as StrategicVault>::available_funds(&vault_id, &vault_account)? {
-				FundsAvailability::Withdrawable(balance) if balance >= amount => {
-					<T::Vault as StrategicVault>::withdraw(&vault_id, issuer, amount)
-				},
-				FundsAvailability::MustLiquidate => {
-					<T::Vault as StrategicVault>::withdraw(&vault_id, issuer, amount)
-				},
+				FundsAvailability::Withdrawable(balance) if balance >= amount =>
+					<T::Vault as StrategicVault>::withdraw(&vault_id, issuer, amount),
+				FundsAvailability::MustLiquidate =>
+					<T::Vault as StrategicVault>::withdraw(&vault_id, issuer, amount),
 				_ => Err(Error::<T>::NotEnoughLiquidity.into()),
 			}
 			.map_err(|_| Error::<T>::NotEnoughLiquidity)?;
