@@ -6,12 +6,12 @@ name = "xcvm-core"
 version = "0.1.0"
 
 [dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
 ethabi = "17.0.0"
 prost = { version = "0.10", default-features = false, features = [
   "prost-derive",
 ] }
 prost-types = { version = "0.10", default-features = false }
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
