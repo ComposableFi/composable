@@ -20,7 +20,7 @@
 //! ### Actors
 //!
 //! - users: Instrumentals users lie in the Ethereum ecosystem and interact (indirectly) with this
-//!     pallet through the [`Instrumental Finance`](https://www.instrumental.finance/) frontend.
+//!   pallet through the [`Instrumental Finance`](https://www.instrumental.finance/) frontend.
 //!
 //! - Instrumental: The Ethereum-native smart contracts provide the core functionality for
 //!   Instrumental.
