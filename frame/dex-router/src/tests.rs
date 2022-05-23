@@ -2,7 +2,7 @@ use crate::{mock::*, Error};
 use composable_tests_helpers::test::helper::acceptable_computation_error;
 use composable_traits::{
 	defi::CurrencyPair,
-	dex::{Amm as AmmTrait, DexRouter as DexRouterTrait},
+	dex::{Amm as AmmTrait, DexRouter as DexRouterTrait, FeeConfig},
 };
 use frame_support::{
 	assert_noop, assert_ok,
@@ -30,8 +30,11 @@ fn create_curve_amm_pool(
 		owner: ALICE,
 		pair: assets,
 		amplification_coefficient: amp_coeff,
-		fee,
-		owner_fee: admin_fee,
+		fee_config: FeeConfig {
+			fee_rate: fee,
+			owner_fee_rate: admin_fee,
+			protocol_fee_rate: Permill::zero(),
+		},
 	};
 	let p = Pablo::do_create_pool(init_config);
 	assert_ok!(&p);
@@ -63,8 +66,11 @@ fn create_constant_product_amm_pool(
 	let init_config = PoolInitConfiguration::ConstantProduct {
 		owner: ALICE,
 		pair: assets,
-		fee,
-		owner_fee: admin_fee,
+		fee_config: FeeConfig {
+			fee_rate: fee,
+			owner_fee_rate: admin_fee,
+			protocol_fee_rate: Permill::zero(),
+		},
 	};
 	// Create Pablo pool
 	let p = Pablo::do_create_pool(init_config);

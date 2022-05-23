@@ -5,7 +5,7 @@ use crate::{
 };
 use composable_traits::{
 	defi::CurrencyPair,
-	dex::{Amm, LiquidityBootstrappingPoolInfo, Sale},
+	dex::{Amm, FeeConfig, LiquidityBootstrappingPoolInfo, Sale},
 };
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
@@ -22,7 +22,16 @@ fn stable_swap_init_config<T: Config>(
 	fee: Permill,
 	owner_fee: Permill,
 ) -> PoolInitConfigurationOf<T> {
-	PoolInitConfiguration::StableSwap { owner, pair, amplification_coefficient, fee, owner_fee }
+	PoolInitConfiguration::StableSwap {
+		owner,
+		pair,
+		amplification_coefficient,
+		fee_config: FeeConfig {
+			fee_rate: fee,
+			owner_fee_rate: owner_fee,
+			protocol_fee_rate: Permill::zero(),
+		},
+	}
 }
 
 fn create_stable_swap_pool<T: Config>(
@@ -77,7 +86,11 @@ benchmarks! {
 				initial_weight: Permill::from_percent(92),
 				final_weight: Permill::from_percent(50),
 			},
-			  fee
+			fee_config: FeeConfig {
+					fee_rate: fee,
+					owner_fee_rate: Permill::zero(),
+					protocol_fee_rate: Permill::zero()
+			}
 		};
 	  }: create(RawOrigin::Signed(owner), PoolInitConfiguration::LiquidityBootstrapping(pool))
 
@@ -111,7 +124,11 @@ benchmarks! {
 				initial_weight: Permill::from_percent(92),
 				final_weight: Permill::from_percent(50),
 			},
-			  fee
+			fee_config: FeeConfig {
+					fee_rate: fee,
+					owner_fee_rate: Permill::zero(),
+					protocol_fee_rate: Permill::zero()
+			}
 		};
 		let pool_id = Pablo::<T>::do_create_pool(
 			PoolInitConfiguration::LiquidityBootstrapping(pool)
@@ -167,7 +184,11 @@ benchmarks! {
 				initial_weight: Permill::from_percent(92),
 				final_weight: Permill::from_percent(50),
 			},
-			  fee
+			fee_config: FeeConfig {
+					fee_rate: fee,
+					owner_fee_rate: Permill::zero(),
+					protocol_fee_rate: Permill::zero()
+			}
 		};
 		let pool_id = Pablo::<T>::do_create_pool(
 			PoolInitConfiguration::LiquidityBootstrapping(pool)

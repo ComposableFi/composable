@@ -14,7 +14,7 @@ use composable_tests_helpers::{
 };
 use composable_traits::{
 	defi::CurrencyPair,
-	dex::{Amm, ConstantProductPoolInfo},
+	dex::{Amm, ConstantProductPoolInfo, FeeConfig},
 };
 use frame_support::{
 	assert_noop, assert_ok,
@@ -37,8 +37,11 @@ fn create_pool(
 	let pool_init_config = PoolInitConfiguration::ConstantProduct {
 		owner: ALICE,
 		pair: CurrencyPair::new(base_asset, quote_asset),
-		fee: lp_fee,
-		owner_fee: protocol_fee,
+		fee_config: FeeConfig {
+			fee_rate: lp_fee,
+			owner_fee_rate: protocol_fee,
+			protocol_fee_rate: Permill::zero(),
+		},
 	};
 	System::set_block_number(1);
 	let actual_pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
@@ -80,8 +83,7 @@ fn test() {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
-			fee: Permill::zero(),
-			owner_fee: Permill::zero(),
+			fee_config: FeeConfig::zero(),
 		};
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
 
@@ -172,8 +174,7 @@ fn add_remove_lp() {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
-			fee: Permill::zero(),
-			owner_fee: Permill::zero(),
+			fee_config: FeeConfig::zero(),
 		};
 		let unit = 1_000_000_000_000_u128;
 		let initial_btc = 1_00_u128 * unit;
@@ -242,8 +243,7 @@ fn add_lp_with_min_mint_amount() {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
-			fee: Permill::zero(),
-			owner_fee: Permill::zero(),
+			fee_config: FeeConfig::zero(),
 		};
 		let unit = 1_000_000_000_000_u128;
 		let initial_btc = 1_00_u128 * unit;
@@ -276,8 +276,7 @@ fn remove_lp_failure() {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
-			fee: Permill::zero(),
-			owner_fee: Permill::zero(),
+			fee_config: FeeConfig::zero(),
 		};
 		let unit = 1_000_000_000_000_u128;
 		let initial_btc = 1_00_u128 * unit;
@@ -301,8 +300,7 @@ fn exchange_failure() {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
-			fee: Permill::zero(),
-			owner_fee: Permill::zero(),
+			fee_config: FeeConfig::zero(),
 		};
 		let exchange_base_amount = 100 * unit;
 		common_exchange_failure(pool_init_config, initial_usdt, initial_btc, exchange_base_amount)
@@ -386,8 +384,11 @@ fn avoid_exchange_without_liquidity() {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
-			fee: lp_fee,
-			owner_fee,
+			fee_config: FeeConfig {
+				fee_rate: lp_fee,
+				owner_fee_rate: owner_fee,
+				protocol_fee_rate: Permill::zero(),
+			},
 		};
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
@@ -409,8 +410,11 @@ fn cannot_swap_between_wrong_pairs() {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
-			fee: lp_fee,
-			owner_fee,
+			fee_config: FeeConfig {
+				fee_rate: lp_fee,
+				owner_fee_rate: owner_fee,
+				protocol_fee_rate: Permill::zero(),
+			},
 		};
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
@@ -451,8 +455,11 @@ fn cannot_get_exchange_value_for_wrong_asset() {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
-			fee: lp_fee,
-			owner_fee,
+			fee_config: FeeConfig {
+				fee_rate: lp_fee,
+				owner_fee_rate: owner_fee,
+				protocol_fee_rate: Permill::zero(),
+			},
 		};
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
@@ -570,7 +577,7 @@ proptest! {
 		let pool = get_pool(pool_id);
 		prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
 		prop_assert_ok!(Pablo::swap(Origin::signed(BOB), pool_id, CurrencyPair::new(BTC, USDT), usdt_value, 0, false));
-		let usdt_value_after_fee = usdt_value - pool.fee.mul_floor(usdt_value);
+		let usdt_value_after_fee = usdt_value - pool.fee_config.fee_rate.mul_floor(usdt_value);
 		let ratio = initial_btc as f64 / initial_usdt as f64;
 		let expected_btc_value = ratio * usdt_value_after_fee as f64;
 		let expected_btc_value = expected_btc_value as u128;

@@ -11,7 +11,10 @@ use composable_tests_helpers::{
 	prop_assert_ok,
 	test::helper::{acceptable_computation_error, default_acceptable_computation_error},
 };
-use composable_traits::{defi::CurrencyPair, dex::Amm};
+use composable_traits::{
+	defi::CurrencyPair,
+	dex::{Amm, FeeConfig},
+};
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Mutate},
@@ -32,8 +35,11 @@ fn create_stable_swap_pool(
 		owner: ALICE,
 		pair: CurrencyPair::new(base_asset, quote_asset),
 		amplification_coefficient: amplification_factor,
-		fee: lp_fee,
-		owner_fee,
+		fee_config: FeeConfig {
+			fee_rate: lp_fee,
+			owner_fee_rate: owner_fee,
+			protocol_fee_rate: Permill::zero(),
+		},
 	};
 	System::set_block_number(1);
 	let actual_pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
@@ -69,8 +75,7 @@ fn test_amp_zero_pool_creation_failure() {
 			owner: ALICE,
 			pair: CurrencyPair::new(USDC, USDT),
 			amplification_coefficient: 0_u16,
-			fee: Permill::zero(),
-			owner_fee: Permill::zero(),
+			fee_config: FeeConfig::zero(),
 		};
 		assert_noop!(
 			Pablo::do_create_pool(pool_init_config),
@@ -86,8 +91,7 @@ fn test_dex_demo() {
 			owner: ALICE,
 			pair: CurrencyPair::new(USDC, USDT),
 			amplification_coefficient: 100_u16,
-			fee: Permill::zero(),
-			owner_fee: Permill::zero(),
+			fee_config: FeeConfig::zero(),
 		};
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
 		let pool = Pablo::pools(pool_id).expect("pool not found");
@@ -167,8 +171,7 @@ fn add_remove_lp() {
 			owner: ALICE,
 			pair: CurrencyPair::new(USDC, USDT),
 			amplification_coefficient: 10_u16,
-			fee: Permill::zero(),
-			owner_fee: Permill::zero(),
+			fee_config: FeeConfig::zero(),
 		};
 		let unit = 1_000_000_000_000_u128;
 		let initial_usdt = 1_000_000_000_000_u128 * unit;
@@ -257,8 +260,8 @@ fn add_lp_imbalanced() {
 		// tokens as owner fee.
 		let alice_usdc = Tokens::balance(USDC, &ALICE);
 		let alice_usdt = Tokens::balance(USDT, &ALICE);
-		assert!(alice_usdt != 0);
-		assert!(alice_usdc != 0);
+		assert_eq!(alice_usdt, 118749999985968);
+		assert_eq!(alice_usdc, 118750000014031);
 	});
 }
 
@@ -270,8 +273,7 @@ fn add_lp_with_min_mint_amount() {
 			owner: ALICE,
 			pair: CurrencyPair::new(USDC, USDT),
 			amplification_coefficient: 10_u16,
-			fee: Permill::zero(),
-			owner_fee: Permill::zero(),
+			fee_config: FeeConfig::zero(),
 		};
 		let unit = 1_000_000_000_000_u128;
 		let initial_usdt = 1_000_000_000_000_u128 * unit;
@@ -307,8 +309,7 @@ fn remove_lp_failure() {
 			owner: ALICE,
 			pair: CurrencyPair::new(USDC, USDT),
 			amplification_coefficient: 10_u16,
-			fee: Permill::zero(),
-			owner_fee: Permill::zero(),
+			fee_config: FeeConfig::zero(),
 		};
 		let bob_usdc = 1000 * unit;
 		let bob_usdt = 1000 * unit;
@@ -329,8 +330,7 @@ fn exchange_failure() {
 			owner: ALICE,
 			pair: CurrencyPair::new(USDC, USDT),
 			amplification_coefficient: 10_u16,
-			fee: Permill::zero(),
-			owner_fee: Permill::zero(),
+			fee_config: FeeConfig::zero(),
 		};
 		common_exchange_failure(pool_init_config, initial_usdc, initial_usdt, exchange_base_amount);
 	});
@@ -374,7 +374,7 @@ fn fees() {
 		assert_has_event::<Test, _>(
 			|e| matches!(
 				e.event,
-				mock::Event::Pablo(crate::Event::Swapped { pool_id, fee_asset, .. }) if pool_id == created_pool_id && fee_asset == USDC),
+				mock::Event::Pablo(crate::Event::Swapped { pool_id, fee, .. }) if pool_id == created_pool_id && fee.asset_id == USDC),
 		);
 		let usdc_balance = Tokens::balance(USDC, &BOB);
 		// received usdc should bob_usdt - lp_fee
@@ -434,8 +434,11 @@ fn avoid_exchange_without_liquidity() {
 			owner: ALICE,
 			pair: CurrencyPair::new(USDC, USDT),
 			amplification_coefficient: 40_000,
-			fee: lp_fee,
-			owner_fee,
+			fee_config: FeeConfig {
+				fee_rate: lp_fee,
+				owner_fee_rate: owner_fee,
+				protocol_fee_rate: Permill::zero(),
+			},
 		};
 		System::set_block_number(1);
 		let created_pool_id =
@@ -464,8 +467,11 @@ fn cannot_swap_between_wrong_pairs() {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
 			amplification_coefficient: 40_000,
-			fee: lp_fee,
-			owner_fee,
+			fee_config: FeeConfig {
+				fee_rate: lp_fee,
+				owner_fee_rate: owner_fee,
+				protocol_fee_rate: Permill::zero(),
+			},
 		};
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
@@ -507,8 +513,11 @@ fn cannot_get_exchange_value_for_wrong_asset() {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
 			amplification_coefficient: 40_000,
-			fee: lp_fee,
-			owner_fee,
+			fee_config: FeeConfig {
+				fee_rate: lp_fee,
+				owner_fee_rate: owner_fee,
+				protocol_fee_rate: Permill::zero(),
+			},
 		};
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
@@ -642,7 +651,7 @@ proptest! {
 		prop_assert_ok!(Tokens::mint_into(USDT, &BOB, value));
 		prop_assert_ok!(Pablo::swap(Origin::signed(BOB), pool_id, CurrencyPair::new(USDC, USDT),
  value, 0, false)); 		let bob_usdc = Tokens::balance(USDC, &BOB);
-		let expected_usdc =  value - pool.fee.mul_floor(value);
+		let expected_usdc =  value - pool.fee_config.fee_rate.mul_floor(value);
 		prop_assert_ok!(default_acceptable_computation_error(bob_usdc, expected_usdc));
 		Ok(())
 	})?;
