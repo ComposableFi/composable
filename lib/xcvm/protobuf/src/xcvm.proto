@@ -17,13 +17,13 @@ message Instruction {
 message Transfer {
   Account destination = 1;
   // (Asset, Amount)
-  map<uint32, uint64> assets = 2;
+  map<uint32, U128> assets = 2;
 }
 
 message Bridge {
   uint32 network = 1;
   // (Asset, Amount)
-  map<uint32, uint64> assets = 2;
+  map<uint32, U128> assets = 2;
 }
 
 message Call {
@@ -32,4 +32,12 @@ message Call {
 
 message Account {
   bytes addressed = 2;
+}
+
+message U128 {
+  bytes bytes = 1;
+}
+
+message U256 {
+  bytes bytes = 1;
 }

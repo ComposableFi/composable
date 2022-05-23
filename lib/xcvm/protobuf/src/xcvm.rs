@@ -25,16 +25,16 @@ pub struct Transfer {
     #[prost(message, optional, tag="1")]
     pub destination: ::core::option::Option<Account>,
     /// (Asset, Amount)
-    #[prost(btree_map="uint32, uint64", tag="2")]
-    pub assets: ::prost::alloc::collections::BTreeMap<u32, u64>,
+    #[prost(btree_map="uint32, message", tag="2")]
+    pub assets: ::prost::alloc::collections::BTreeMap<u32, U128>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Bridge {
     #[prost(uint32, tag="1")]
     pub network: u32,
     /// (Asset, Amount)
-    #[prost(btree_map="uint32, uint64", tag="2")]
-    pub assets: ::prost::alloc::collections::BTreeMap<u32, u64>,
+    #[prost(btree_map="uint32, message", tag="2")]
+    pub assets: ::prost::alloc::collections::BTreeMap<u32, U128>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Call {
@@ -45,4 +45,14 @@ pub struct Call {
 pub struct Account {
     #[prost(bytes="vec", tag="2")]
     pub addressed: ::prost::alloc::vec::Vec<u8>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct U128 {
+    #[prost(bytes="vec", tag="1")]
+    pub bytes: ::prost::alloc::vec::Vec<u8>,
+}
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct U256 {
+    #[prost(bytes="vec", tag="1")]
+    pub bytes: ::prost::alloc::vec::Vec<u8>,
 }

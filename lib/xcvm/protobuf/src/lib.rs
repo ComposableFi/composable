@@ -2,16 +2,30 @@
 
 extern crate alloc;
 
-use alloc::{collections::BTreeMap, string::String, vec::Vec};
+pub mod xcvm;
+
+use alloc::{collections::BTreeMap, vec::Vec};
+pub use xcvm::*;
 use xcvm_core::XCVMInstruction;
 
-include!("xcvm.rs");
+impl From<u128> for U128 {
+	fn from(x: u128) -> Self {
+		U128 { bytes: x.to_le_bytes().to_vec() }
+	}
+}
+
+impl TryInto<u128> for U128 {
+	type Error = ();
+	fn try_into(self) -> Result<u128, Self::Error> {
+		Ok(u128::from_le_bytes(TryInto::<[u8; 16]>::try_into(self.bytes).map_err(|_| ())?))
+	}
+}
 
 impl<
 		TNetwork: Into<u32>,
 		TAbiEncoded: Into<Vec<u8>>,
 		TAccount: Into<Vec<u8>>,
-		TAssets: Into<BTreeMap<u32, u64>>,
+		TAssets: Into<BTreeMap<u32, u128>>,
 	> From<XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>> for Instruction
 {
 	fn from(instruction: XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>) -> Self {
@@ -20,13 +34,21 @@ impl<
 				XCVMInstruction::Transfer(destination, assets) => {
 					instruction::Instruction::Transfer(Transfer {
 						destination: Some(Account { addressed: destination.into() }),
-						assets: assets.into(),
+						assets: assets
+							.into()
+							.into_iter()
+							.map(|(asset, amount)| (asset, amount.into()))
+							.collect(),
 					})
 				},
 				XCVMInstruction::Bridge(network, assets) => {
 					instruction::Instruction::Bridge(Bridge {
 						network: network.into(),
-						assets: assets.into(),
+						assets: assets
+							.into()
+							.into_iter()
+							.map(|(asset, amount)| (asset, amount.into()))
+							.collect(),
 					})
 				},
 				XCVMInstruction::Call(payload) => {
@@ -40,8 +62,8 @@ impl<
 impl<
 		TNetwork: From<u32>,
 		TAbiEncoded: From<Vec<u8>>,
-		TAccount: From<Vec<u8>> + From<String>,
-		TAssets: From<BTreeMap<u32, u64>>,
+		TAccount: From<Vec<u8>>,
+		TAssets: From<BTreeMap<u32, u128>>,
 	> TryFrom<Instruction> for XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>
 {
 	type Error = ();
@@ -51,9 +73,23 @@ impl<
 				instruction::Instruction::Transfer(Transfer {
 					destination: Some(Account { addressed }),
 					assets,
-				}) => Ok(XCVMInstruction::Transfer(addressed.into(), assets.into())),
+				}) => Ok(XCVMInstruction::Transfer(
+					addressed.into(),
+					assets
+						.into_iter()
+						.map(|(asset, amount)| Ok((asset, amount.try_into()?)))
+						.collect::<Result<BTreeMap<u32, u128>, ()>>()?
+						.into(),
+				)),
 				instruction::Instruction::Bridge(Bridge { network, assets }) => {
-					Ok(XCVMInstruction::Bridge(network.into(), assets.into()))
+					Ok(XCVMInstruction::Bridge(
+						network.into(),
+						assets
+							.into_iter()
+							.map(|(asset, amount)| Ok((asset, amount.try_into()?)))
+						  .collect::<Result<BTreeMap<u32, u128>, ()>>()?
+							.into(),
+					))
 				},
 				instruction::Instruction::Call(Call { payload }) => {
 					Ok(XCVMInstruction::Call(payload.into()))
@@ -87,7 +123,7 @@ mod tests {
 		let contract = || -> Result<_, ()> {
 			Ok(XCVMContractBuilder::<
 				XCVMNetwork,
-				XCVMInstruction<XCVMNetwork, _, Vec<u8>, BTreeMap<u32, u64>>,
+				XCVMInstruction<XCVMNetwork, _, Vec<u8>, BTreeMap<u32, u128>>,
 			>::from(XCVMNetwork::PICASSO)
 			.call(DummyProtocol)?
 			.bridge(XCVMNetwork::ETHEREUM, BTreeMap::from([(0x1337, 20_000)]))
