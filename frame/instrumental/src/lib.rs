@@ -235,9 +235,6 @@ pub mod pallet {
 		///     has an associated vault.
 		VaultAlreadyExists,
 
-		/// This error is thrown when action is called for an asset which doesn't have a vault
-		VaultDoesntExist,
-
 		/// This error is thrown when a vault is trying to be created with a `strategies` 
 		///     `Perquintill` value outside of the range [0, 1].
 		InvalidDeployablePercent,
@@ -449,14 +446,10 @@ pub mod pallet {
 			amount: Self::Balance
 		) -> Result<(), DispatchError> {
 			// Requirement 1) The asset must have an associated vault
-			ensure!(
-				AssetVault::<T>::contains_key(asset),
-				Error::<T>::AssetDoesNotHaveAnAssociatedVault
-			);
-
-			Self::do_add_liquidity(issuer, asset, amount)?;
-
-			Ok(())
+			match Validated::new(asset) {
+				Ok(validated_asset) => Self::do_add_liquidity(issuer, validated_asset, amount)?,
+				Err(_) => Err(Error::<T>::AssetDoesNotHaveAnAssociatedVault.into())
+			}
 		}
 	
 		/// Remove assets from its underlying vault.
@@ -481,14 +474,10 @@ pub mod pallet {
 			amount: Self::Balance
 		) -> Result<(), DispatchError> {
 			// Requirement 1) The asset must have an associated vault
-			ensure!(
-				AssetVault::<T>::contains_key(asset),
-				Error::<T>::AssetDoesNotHaveAnAssociatedVault
-			);
-
-			Self::do_remove_liquidity(issuer, asset, amount)?;
-
-			Ok(())
+			match Validated::new(asset) {
+				Ok(validated_asset) => Self::do_remove_liquidity(issuer, validated_asset, amount)?,
+				Err(_) => Err(Error::<T>::AssetDoesNotHaveAnAssociatedVault.into())
+			}
 		}
 	}
 
@@ -536,7 +525,7 @@ pub mod pallet {
 		#[transactional]
 		fn do_add_liquidity(
 			issuer: &T::AccountId,
-			asset: &T::AssetId,
+			asset: Validate<&T::AssetId,  ValidateVaultDoesExists<T>>,
 			amount: T::Balance
 		) -> Result<(), DispatchError> {
 			let vault_id: T::VaultId = Self::asset_vault(asset)
@@ -550,7 +539,7 @@ pub mod pallet {
 		#[transactional]
 		fn do_remove_liquidity(
 			issuer: &T::AccountId,
-			asset: &T::AssetId,
+			asset: Validate<&T::AssetId,  ValidateVaultDoesExists<T>>,
 			amount: T::Balance
 		) -> Result<(), DispatchError> {
 			let vault_id: T::VaultId = Self::asset_vault(asset)

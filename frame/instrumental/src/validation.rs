@@ -16,12 +16,12 @@ pub struct ValidateVaultDoesExists<T> {
 	_marker: PhantomData<T>,
 }
 
-impl<T: Config> Validate<AssetId,  ValidateVaultDoesExists<T>> 
+impl<T: Config> Validate<&T::AssetId,  ValidateVaultDoesExists<T>> 
 	for ValidateVaultDoesExists<T> 
 {
 	fn validate(
-		input: AssetId,
-	) -> Result<AssetId, &'static str>
+		input: &T::AssetId,
+	) -> Result<&T::AssetId, &'static str>
 	if !AssetVault::<T>::contains_key(input) {
 		return Err("Vault Doesn't Exist")
 	}
