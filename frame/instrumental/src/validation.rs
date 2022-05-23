@@ -1,4 +1,4 @@
-use crate::pallet::{AssetVault, Config, InstrumentalVaultConfigFor, AssetId};
+use crate::pallet::{AssetVault, Config, InstrumentalVaultConfigFor};
 
 use composable_traits::instrumental::InstrumentalVaultConfig;
 use composable_support::validation::Validate;
@@ -7,9 +7,8 @@ use core::marker::PhantomData;
 use sp_runtime::Perquintill;
 
 // -----------------------------------------------------------------------------------------------
-//                                    ValidateVaultDoesNotExist                                   
+//                                    ValidateVaultDoesExists                                   
 // -----------------------------------------------------------------------------------------------
-
 
 #[derive(Clone, Copy)]
 pub struct ValidateVaultDoesExists<T> {
@@ -21,21 +20,25 @@ impl<T: Config> Validate<&T::AssetId,  ValidateVaultDoesExists<T>>
 {
 	fn validate(
 		input: &T::AssetId,
-	) -> Result<&T::AssetId, &'static str>
+	) -> Result<&T::AssetId, &'static str> {
 	if !AssetVault::<T>::contains_key(input) {
 		return Err("Vault Doesn't Exist")
 	}
 
 	Ok(input)
+	}
 }
 
+// -----------------------------------------------------------------------------------------------
+//                                    ValidateVaultDoesNotExist                                   
+// -----------------------------------------------------------------------------------------------
 
 #[derive(Clone, Copy)]
 pub struct ValidateVaultDoesNotExist<T> {
 	_marker: PhantomData<T>,
 }
 
-impl<T: Config> Validate<InstrumentalVaultConfigFor<T>, ValidateVaultDoesNotExist<T>>
+impl<T: Config> Validate<InstrumentalVaultConfigFor<T>, ValidateVaultDoesNotExist<T>> 
 	for ValidateVaultDoesNotExist<T>
 {
 	fn validate(

@@ -418,7 +418,7 @@ pub mod pallet {
 		fn create(
 			config: InstrumentalVaultConfigFor<T>
 		) -> Result<Self::VaultId, DispatchError> {
-			match Validated::new(config) {
+			match Validated::<InstrumentalVaultConfigFor<T>, ValidateVaultDoesNotExist<T>>::new(config) {
 				Ok(validated_config) => Self::do_create(validated_config),
 				Err(_) => Err(Error::<T>::VaultAlreadyExists.into())
 			}
@@ -446,8 +446,8 @@ pub mod pallet {
 			amount: Self::Balance
 		) -> Result<(), DispatchError> {
 			// Requirement 1) The asset must have an associated vault
-			match Validated::new(asset) {
-				Ok(validated_asset) => Self::do_add_liquidity(issuer, validated_asset, amount)?,
+			match Validated::<&T::AssetId, ValidateVaultDoesExists<T>>::new(asset) {
+				Ok(validated_asset) => Self::do_add_liquidity(issuer, validated_asset, amount),
 				Err(_) => Err(Error::<T>::AssetDoesNotHaveAnAssociatedVault.into())
 			}
 		}
@@ -474,8 +474,8 @@ pub mod pallet {
 			amount: Self::Balance
 		) -> Result<(), DispatchError> {
 			// Requirement 1) The asset must have an associated vault
-			match Validated::new(asset) {
-				Ok(validated_asset) => Self::do_remove_liquidity(issuer, validated_asset, amount)?,
+			match Validated::<&T::AssetId, ValidateVaultDoesExists<T>>::new(asset) {
+				Ok(validated_asset) => Self::do_remove_liquidity(issuer, validated_asset, amount),
 				Err(_) => Err(Error::<T>::AssetDoesNotHaveAnAssociatedVault.into())
 			}
 		}
@@ -525,10 +525,10 @@ pub mod pallet {
 		#[transactional]
 		fn do_add_liquidity(
 			issuer: &T::AccountId,
-			asset: Validate<&T::AssetId,  ValidateVaultDoesExists<T>>,
+			asset: Validated<&T::AssetId,  ValidateVaultDoesExists<T>>,
 			amount: T::Balance
 		) -> Result<(), DispatchError> {
-			let vault_id: T::VaultId = Self::asset_vault(asset)
+			let vault_id: T::VaultId = Self::asset_vault(&asset.value())
 				.ok_or(Error::<T>::AssetDoesNotHaveAnAssociatedVault)?;
 
 			<T::Vault as StrategicVault>::deposit(&vault_id, issuer, amount)?;
@@ -539,10 +539,10 @@ pub mod pallet {
 		#[transactional]
 		fn do_remove_liquidity(
 			issuer: &T::AccountId,
-			asset: Validate<&T::AssetId,  ValidateVaultDoesExists<T>>,
+			asset: Validated<&T::AssetId,  ValidateVaultDoesExists<T>>,
 			amount: T::Balance
 		) -> Result<(), DispatchError> {
-			let vault_id: T::VaultId = Self::asset_vault(asset)
+			let vault_id: T::VaultId = Self::asset_vault(&asset.value())
 				.ok_or(Error::<T>::AssetDoesNotHaveAnAssociatedVault)?;
 
 			// TODO: (Nevin)
