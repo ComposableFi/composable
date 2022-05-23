@@ -5,34 +5,31 @@ use super::runtime::AccountId;
 
 #[derive(Clone, Copy)]
 pub struct Strategy {
-    pub pallet_id: PalletId,
+	pub pallet_id: PalletId,
 }
 
 impl Strategy {
-    const fn new(pallet_id: PalletId) -> Strategy {
-        Strategy {
-            pallet_id,
-        }
-    }
+	const fn new(pallet_id: PalletId) -> Strategy {
+		Strategy { pallet_id }
+	}
 
-    pub fn account_id(self: Strategy) -> AccountId {
-        self.pallet_id.into_account_truncating()
-    }
+	pub fn account_id(self: Strategy) -> AccountId {
+		self.pallet_id.into_account_truncating()
+	}
 }
 
 // separate module so that the `allow` attribute isn't applied to the entirety of the Strategy
 // module.
 pub mod defined_strategies {
 	#![allow(clippy::upper_case_acronyms)]
-    #![allow(non_camel_case_types)]
-    #![allow(unused)]
+	#![allow(non_camel_case_types)]
+	#![allow(unused)]
 
-    use super::super::runtime::AccountId;
-
-    use super::Strategy;
 	use frame_support::PalletId;
 
-    pub const PABLO_STRATEGY: Strategy = Strategy::new(PalletId(*b"stratpab"));
+	use super::{super::runtime::AccountId, Strategy};
+
+	pub const PABLO_STRATEGY: Strategy = Strategy::new(PalletId(*b"stratpab"));
 }
 
 pub use defined_strategies::*;

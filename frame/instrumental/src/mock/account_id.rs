@@ -1,11 +1,6 @@
-use sp_runtime::{
-	traits::{IdentifyAccount, Verify}
-};
-use sp_core::{
-	sr25519::{Public, Signature}
-};
-
 use hex_literal::hex;
+use sp_core::sr25519::{Public, Signature};
+use sp_runtime::traits::{IdentifyAccount, Verify};
 
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
@@ -22,15 +17,12 @@ pub static DAVE: Public =
 pub static EVEN: Public =
 	Public(hex!("0000000000000000000000000000000000000000000000000000000000000005"));
 
-use proptest::{prop_oneof, strategy::{Just, Strategy}};
+use proptest::{
+	prop_oneof,
+	strategy::{Just, Strategy},
+};
 
 #[allow(dead_code)]
 pub fn pick_account() -> impl Strategy<Value = AccountId> {
-	prop_oneof![
-		Just(ALICE),
-		Just(BOB),
-		Just(CHARLIE),
-		Just(DAVE),
-		Just(EVEN),
-	]
+	prop_oneof![Just(ALICE), Just(BOB), Just(CHARLIE), Just(DAVE), Just(EVEN),]
 }

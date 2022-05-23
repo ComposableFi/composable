@@ -11,33 +11,25 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	// -------------------------------------------------------------------------------------------
-	//                                   Imports and Dependencies                                
+	//                                   Imports and Dependencies
 	// -------------------------------------------------------------------------------------------
-	use crate::weights::WeightInfo;
-
+	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		instrumental::{InstrumentalDynamicStrategy, InstrumentalProtocolStrategy},
-		vault::StrategicVault
+		vault::StrategicVault,
 	};
-
 	use frame_support::{
-		pallet_prelude::*,
-		PalletId,
-		storage::bounded_btree_set::BoundedBTreeSet,
-		transactional,
+		pallet_prelude::*, storage::bounded_btree_set::BoundedBTreeSet, transactional, PalletId,
 	};
-
-	use sp_runtime::{
-		traits::{
-			AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
-		},
+	use sp_runtime::traits::{
+		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
 	};
-
-	use codec::{Codec, FullCodec};
 	use sp_std::fmt::Debug;
 
+	use crate::weights::WeightInfo;
+
 	// -------------------------------------------------------------------------------------------
-	//                                Declaration Of The Pallet Type                              
+	//                                Declaration Of The Pallet Type
 	// -------------------------------------------------------------------------------------------
 
 	#[pallet::pallet]
@@ -45,7 +37,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	// -------------------------------------------------------------------------------------------
-	//                                         Config Trait                                       
+	//                                         Config Trait
 	// -------------------------------------------------------------------------------------------
 
 	// Configure the pallet by specifying the parameters and types on which it depends.
@@ -55,7 +47,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		type WeightInfo: WeightInfo;
-		
+
 		/// The Balance type used by the pallet for bookkeeping. `Config::Convert` is used for
 		/// conversions to `u128`, which are used in the computations.
 		type Balance: Default
@@ -97,17 +89,18 @@ pub mod pallet {
 			AssetId = Self::AssetId,
 			Balance = Self::Balance,
 			AccountId = Self::AccountId,
-			VaultId = Self::VaultId
+			VaultId = Self::VaultId,
 		>;
 
 		// TODO: (Nevin)
 		//  - try to make the connection to substrategies a vec of InstrumentalProtocolStrategy
-		//  - ideally something like: type WhitelistedStrategies: Get<[dyn InstrumentalProtocolStrategy]>;
+		//  - ideally something like: type WhitelistedStrategies: Get<[dyn
+		//    InstrumentalProtocolStrategy]>;
 
 		type PabloStrategy: InstrumentalProtocolStrategy<
 			AccountId = Self::AccountId,
 			AssetId = Self::AssetId,
-			VaultId = Self::VaultId
+			VaultId = Self::VaultId,
 		>;
 
 		/// The maximum number of vaults that can be associated with this strategy.
@@ -119,11 +112,11 @@ pub mod pallet {
 	}
 
 	// -------------------------------------------------------------------------------------------
-    //                                         Pallet Types                                       
+	//                                         Pallet Types
 	// -------------------------------------------------------------------------------------------
 
 	// -------------------------------------------------------------------------------------------
-    //                                       Runtime  Storage                                     
+	//                                       Runtime  Storage
 	// -------------------------------------------------------------------------------------------
 
 	// TODO: (Nevin)
@@ -138,7 +131,7 @@ pub mod pallet {
 	//  - we need a way of mapping a vault_id to its associated strategy
 
 	// -------------------------------------------------------------------------------------------
-    //                                        Runtime Events                                      
+	//                                        Runtime Events
 	// -------------------------------------------------------------------------------------------
 
 	#[pallet::event]
@@ -148,32 +141,32 @@ pub mod pallet {
 	}
 
 	// -------------------------------------------------------------------------------------------
-    //                                        Runtime Errors                                      
+	//                                        Runtime Errors
 	// -------------------------------------------------------------------------------------------
 
 	#[pallet::error]
 	pub enum Error<T> {
 		VaultAlreadyAssociated,
 
-		TooManyAssociatedStrategies
+		TooManyAssociatedStrategies,
 	}
 
 	// -------------------------------------------------------------------------------------------
-    //                                            Hooks                                           
+	//                                            Hooks
 	// -------------------------------------------------------------------------------------------
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {}
 
 	// -------------------------------------------------------------------------------------------
-    //                                          Extrinsics                                        
+	//                                          Extrinsics
 	// -------------------------------------------------------------------------------------------
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {}
 
 	// -------------------------------------------------------------------------------------------
-    //                                Instrumental Dynamic Strategy                               
+	//                                Instrumental Dynamic Strategy
 	// -------------------------------------------------------------------------------------------
 
 	// TODO: (Nevin)
@@ -182,7 +175,7 @@ pub mod pallet {
 	impl<T: Config> InstrumentalDynamicStrategy for Pallet<T> {
 		type AccountId = T::AccountId;
 		type AssetId = T::AssetId;
-		
+
 		// TODO: (Nevin)
 		//  - we need a way to store a vector of all strategies that are whitelisted
 
@@ -199,7 +192,7 @@ pub mod pallet {
 	}
 
 	// -------------------------------------------------------------------------------------------
-    //                                      Protocol Strategy                                     
+	//                                      Protocol Strategy
 	// -------------------------------------------------------------------------------------------
 
 	impl<T: Config> InstrumentalProtocolStrategy for Pallet<T> {
@@ -214,30 +207,31 @@ pub mod pallet {
 		#[transactional]
 		fn associate_vault(vault_id: &Self::VaultId) -> DispatchResult {
 			// TODO: (Nevin)
-			//  - cycle through all whitelisted strategies and associate the vault with the
-			//    strategy with the highest earning apy
+			//  - cycle through all whitelisted strategies and associate the vault with the strategy
+			//    with the highest earning apy
 
 			// let asset_id = T::Vault::asset_id(vault_id)?;
-			
+
 			// let optimum_strategy = Self::get_strategies().iter()
-			// 	.max_by_key(|strategy| strategy.get_apy(asset_id)?);	
-			
+			// 	.max_by_key(|strategy| strategy.get_apy(asset_id)?);
+
 			// optimum_strategy.associate_vault(vault_id)?;
 
 			AssociatedVaults::<T>::try_mutate(|vaults| {
 				ensure!(!vaults.contains(vault_id), Error::<T>::VaultAlreadyAssociated);
 
-				vaults.try_insert(*vault_id)
+				vaults
+					.try_insert(*vault_id)
 					.map_err(|_| Error::<T>::TooManyAssociatedStrategies)?;
 
 				T::PabloStrategy::associate_vault(vault_id)?;
 
-				Self::deposit_event(Event::AssociatedVault{ vault_id: *vault_id });
+				Self::deposit_event(Event::AssociatedVault { vault_id: *vault_id });
 
 				Ok(())
 			})
 		}
-		
+
 		fn rebalance() -> DispatchResult {
 			Ok(())
 		}
@@ -245,22 +239,21 @@ pub mod pallet {
 		fn get_apy(asset: Self::AssetId) -> Result<u128, DispatchError> {
 			// TODO: (Nevin)
 			//  - cycle through all whitelisted strategies and return highest available apy
-			
+
 			// let optimum_apy = Self::get_strategies()
 			// 	.iter()
 			// 	.map(|strategy| strategy.get_apy(asset))
 			// 	.max();
-			
+
 			// Ok(optimum_apy)
 
 			T::PabloStrategy::get_apy(asset)
 		}
 	}
-
 }
 
 // -----------------------------------------------------------------------------------------------
-//                                             Unit Tests                                         
+//                                             Unit Tests
 // -----------------------------------------------------------------------------------------------
 
 #[cfg(test)]
