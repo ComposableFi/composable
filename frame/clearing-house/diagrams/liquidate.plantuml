@@ -39,10 +39,10 @@ return
 
 == Asset transfers ==
 
-alt Bad debt
-    ch -> insurance : reimburse Clearing House
-    insurance -> vault : collateral
-else Seize collateral
+'alt Bad debt
+'    ch -> insurance : reimburse Clearing House
+'    insurance -> vault : collateral
+group Seize collateral
     ch -> vault : transfer to Insurance Fund
     vault -> insurance : collateral
 end
