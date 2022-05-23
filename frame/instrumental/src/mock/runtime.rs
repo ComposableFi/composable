@@ -1,26 +1,22 @@
-use crate as pallet_instrumental;
-
-use pallet_instrumental::mock::currency::{CurrencyId, PICA};
-use pallet_instrumental::mock::account_id::{AccountId, ADMIN};
-
 use composable_traits::governance::{GovernanceRegistry, SignedRawOrigin};
-use frame_system::{EnsureRoot, EnsureSignedBy};
 use frame_support::{
-	ord_parameter_types,
-	parameter_types,
-	PalletId,
+	ord_parameter_types, parameter_types,
 	traits::{Everything, GenesisBuild},
+	PalletId,
 };
-
+use frame_system::{EnsureRoot, EnsureSignedBy};
+use orml_traits::{parameter_type_with_key, GetByKey};
+use pallet_instrumental::mock::{
+	account_id::{AccountId, ADMIN},
+	currency::{CurrencyId, PICA},
+};
+use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{ConvertInto, IdentityLookup}
-};
-use sp_core::{
-	H256,
+	traits::{ConvertInto, IdentityLookup},
 };
 
-use orml_traits::{GetByKey, parameter_type_with_key};
+use crate as pallet_instrumental;
 
 pub type BlockNumber = u64;
 pub type Balance = u128;
@@ -29,11 +25,11 @@ pub type Amount = i128;
 
 pub const VAULT_PALLET_ID: PalletId = PalletId(*b"cubic___");
 pub const NATIVE_ASSET: CurrencyId = PICA::ID;
-	
+
 pub const MAX_ASSOCIATED_VAULTS: u32 = 10;
 
 // ----------------------------------------------------------------------------------------------------
-//                                                Config                                               
+//                                                Config
 // ----------------------------------------------------------------------------------------------------
 
 parameter_types! {
@@ -68,7 +64,7 @@ impl frame_system::Config for MockRuntime {
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                                Balances                                               
+//                                                Balances
 // ----------------------------------------------------------------------------------------------------
 
 parameter_types! {
@@ -88,7 +84,7 @@ impl pallet_balances::Config for MockRuntime {
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                                Tokens                                               
+//                                                Tokens
 // ----------------------------------------------------------------------------------------------------
 
 parameter_type_with_key! {
@@ -110,7 +106,7 @@ impl orml_tokens::Config for MockRuntime {
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                           Currency Factory                                          
+//                                           Currency Factory
 // ----------------------------------------------------------------------------------------------------
 
 impl pallet_currency_factory::Config for MockRuntime {
@@ -122,7 +118,7 @@ impl pallet_currency_factory::Config for MockRuntime {
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                                Assets                                               
+//                                                Assets
 // ----------------------------------------------------------------------------------------------------
 
 ord_parameter_types! {
@@ -165,7 +161,7 @@ impl pallet_assets::Config for MockRuntime {
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                                Vault                                                
+//                                                Vault
 // ----------------------------------------------------------------------------------------------------
 
 parameter_types! {
@@ -176,7 +172,7 @@ parameter_types! {
 	pub const MinimumDeposit: Balance = 0;
 	pub const MinimumWithdrawal: Balance = 0;
 	pub const VaultPalletId: PalletId = VAULT_PALLET_ID;
-  	pub const TombstoneDuration: u64 = 42;
+	  pub const TombstoneDuration: u64 = 42;
 }
 
 impl pallet_vault::Config for MockRuntime {
@@ -200,7 +196,7 @@ impl pallet_vault::Config for MockRuntime {
 }
 
 // -----------------------------------------------------------------------------------------------
-//                                   Instrumental Pablo Strategy                                  
+//                                   Instrumental Pablo Strategy
 // -----------------------------------------------------------------------------------------------
 
 parameter_types! {
@@ -220,7 +216,7 @@ impl instrumental_strategy_pablo::Config for MockRuntime {
 }
 
 // -----------------------------------------------------------------------------------------------
-//                                      Instrumental Strategy                                    
+//                                      Instrumental Strategy
 // -----------------------------------------------------------------------------------------------
 
 parameter_types! {
@@ -240,7 +236,7 @@ impl instrumental_strategy::Config for MockRuntime {
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                             Instrumental                                            
+//                                             Instrumental
 // ----------------------------------------------------------------------------------------------------
 
 parameter_types! {
@@ -259,7 +255,7 @@ impl pallet_instrumental::Config for MockRuntime {
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                           Construct Runtime                                         
+//                                           Construct Runtime
 // ----------------------------------------------------------------------------------------------------
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
@@ -293,8 +289,9 @@ pub struct ExtBuilder {
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let mut storage = frame_system::GenesisConfig::default().build_storage::<MockRuntime>().unwrap();
-		
+		let mut storage =
+			frame_system::GenesisConfig::default().build_storage::<MockRuntime>().unwrap();
+
 		pallet_balances::GenesisConfig::<MockRuntime> { balances: self.native_balances }
 			.assimilate_storage(&mut storage)
 			.unwrap();
@@ -306,7 +303,12 @@ impl ExtBuilder {
 		storage.into()
 	}
 
-	pub fn initialize_balance(mut self, user: AccountId, asset: CurrencyId, balance: Balance) -> ExtBuilder {
+	pub fn initialize_balance(
+		mut self,
+		user: AccountId,
+		asset: CurrencyId,
+		balance: Balance,
+	) -> ExtBuilder {
 		if asset == NATIVE_ASSET {
 			self.native_balances.push((user, balance));
 		} else {
@@ -316,17 +318,18 @@ impl ExtBuilder {
 		self
 	}
 
-	pub fn initialize_balances(mut self, balances: Vec<(AccountId, CurrencyId, Balance)>) -> ExtBuilder {
-		balances.into_iter()
-		    .for_each(|(account, asset, balance)| {
-				if asset == NATIVE_ASSET {
-					self.native_balances.push((account, balance));
-				} else {
-					self.balances.push((account, asset, balance));
-				}
-			});
+	pub fn initialize_balances(
+		mut self,
+		balances: Vec<(AccountId, CurrencyId, Balance)>,
+	) -> ExtBuilder {
+		balances.into_iter().for_each(|(account, asset, balance)| {
+			if asset == NATIVE_ASSET {
+				self.native_balances.push((account, balance));
+			} else {
+				self.balances.push((account, asset, balance));
+			}
+		});
 
 		self
 	}
-
 }

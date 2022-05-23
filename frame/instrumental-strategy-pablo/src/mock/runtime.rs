@@ -1,18 +1,13 @@
-use crate as pallet_pablo_strategy;
-
-use frame_support::{
-	parameter_types,
-	traits::Everything, PalletId,
-};
+use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system::EnsureRoot;
-
+use orml_traits::parameter_type_with_key;
+use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{ConvertInto, IdentityLookup}
+	traits::{ConvertInto, IdentityLookup},
 };
-use sp_core::H256;
 
-use orml_traits::parameter_type_with_key;
+use crate as pallet_pablo_strategy;
 
 pub type AccountId = u128;
 pub type Amount = i128;
@@ -26,7 +21,7 @@ pub type VaultId = u64;
 pub const MAX_ASSOCIATED_VAULTS: u32 = 10;
 
 // -----------------------------------------------------------------------------------------------
-//                                             Config                                             
+//                                             Config
 // -----------------------------------------------------------------------------------------------
 
 parameter_types! {
@@ -61,7 +56,7 @@ impl frame_system::Config for MockRuntime {
 }
 
 // -----------------------------------------------------------------------------------------------
-//                                             Balances                                           
+//                                             Balances
 // -----------------------------------------------------------------------------------------------
 
 parameter_types! {
@@ -81,7 +76,7 @@ impl pallet_balances::Config for MockRuntime {
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                                Tokens                                               
+//                                                Tokens
 // ----------------------------------------------------------------------------------------------------
 
 parameter_type_with_key! {
@@ -103,7 +98,7 @@ impl orml_tokens::Config for MockRuntime {
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                           Currency Factory                                          
+//                                           Currency Factory
 // ----------------------------------------------------------------------------------------------------
 
 impl pallet_currency_factory::Config for MockRuntime {
@@ -115,7 +110,7 @@ impl pallet_currency_factory::Config for MockRuntime {
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                                Vault                                                
+//                                                Vault
 // ----------------------------------------------------------------------------------------------------
 
 parameter_types! {
@@ -126,7 +121,7 @@ parameter_types! {
 	pub const MinimumDeposit: Balance = 0;
 	pub const MinimumWithdrawal: Balance = 0;
 	pub const VaultPalletId: PalletId = VAULT_PALLET_ID;
-  	pub const TombstoneDuration: u64 = 42;
+	  pub const TombstoneDuration: u64 = 42;
 }
 
 impl pallet_vault::Config for MockRuntime {
@@ -150,7 +145,7 @@ impl pallet_vault::Config for MockRuntime {
 }
 
 // -----------------------------------------------------------------------------------------------
-//                                   Instrumental Pablo Strategy                                  
+//                                   Instrumental Pablo Strategy
 // -----------------------------------------------------------------------------------------------
 
 parameter_types! {
@@ -170,7 +165,7 @@ impl pallet_pablo_strategy::Config for MockRuntime {
 }
 
 // -----------------------------------------------------------------------------------------------
-//                                        Construct Runtime                                      
+//                                        Construct Runtime
 // -----------------------------------------------------------------------------------------------
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
@@ -194,12 +189,11 @@ frame_support::construct_runtime!(
 );
 
 // -----------------------------------------------------------------------------------------------
-//                                      Externalities Builder                                     
+//                                      Externalities Builder
 // -----------------------------------------------------------------------------------------------
 
 #[derive(Default)]
-pub struct ExtBuilder {
-}
+pub struct ExtBuilder {}
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {

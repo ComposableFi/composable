@@ -18,6 +18,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 // For backwards compatibility and tests
 impl WeightInfo for () {
 	fn test() -> Weight {
-        10_000 as Weight
-    }
+		10_000 as Weight
+	}
 }

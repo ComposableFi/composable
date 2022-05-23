@@ -1,6 +1,6 @@
 pub type CurrencyId = u128;
 
-/// # Note: 
+/// # Note:
 ///
 /// I was having issues add pallet_lending as a dev-dependency, so this
 /// is a copy of pallet_lending::currency::Currency.
@@ -26,7 +26,7 @@ pub struct Currency<const ID: CurrencyId, const EXPONENT: u8> {}
 impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	#![allow(unused)]
 
-    /// The exponent of the currency. Specifies the precision level; can be thought of as the number
+	/// The exponent of the currency. Specifies the precision level; can be thought of as the number
 	/// of decimal points in base 10.
 	///
 	/// A [`Currency`] with an EXPONENT of `0` has no decimals and is the exact same as a [`u128`].
@@ -38,7 +38,7 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	///   no decimal precision.
 	/// - any value higher than `38` does not make sense (`10^39 > 2^128`) and will automatically
 	///   saturate at [`u128::MAX`].
-    pub const EXPONENT: u8 = EXPONENT;
+	pub const EXPONENT: u8 = EXPONENT;
 
 	/// The id of the currency. This is fairly arbitrary, and is only used to differentiate between
 	/// different currencies.
@@ -58,7 +58,7 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	/// // saturates at u128::MAX
 	/// assert_eq!(ACOIN::units(u128::MAX), u128::MAX);
 	/// ```
-    pub fn units(ones: u128) -> u128 {
+	pub fn units(ones: u128) -> u128 {
 		ones.saturating_mul(Self::one())
 	}
 
@@ -72,7 +72,7 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	/// type ACOIN = Currency<12345, 10>;
 	/// assert_eq!(ACOIN::one(), 10_000_000_000);
 	/// ```
-    pub const fn one() -> u128 {
+	pub const fn one() -> u128 {
 		10_u128.pow(Self::EXPONENT as u32)
 	}
 }
@@ -81,7 +81,7 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 // module.
 pub mod defs {
 	#![allow(clippy::upper_case_acronyms)]
-    #![allow(unused)]
+	#![allow(unused)]
 
 	use super::Currency;
 
@@ -96,16 +96,12 @@ pub mod defs {
 }
 
 pub use defs::*;
-
-use proptest::{prop_oneof, strategy::{Just, Strategy}};
+use proptest::{
+	prop_oneof,
+	strategy::{Just, Strategy},
+};
 
 #[allow(dead_code)]
 pub fn pick_currency() -> impl Strategy<Value = CurrencyId> {
-	prop_oneof![
-		Just(BTC::ID),
-		Just(USDC::ID),
-		Just(LAYR::ID),
-		Just(CROWDLOAN::ID),
-		Just(KSM::ID),
-	]
+	prop_oneof![Just(BTC::ID), Just(USDC::ID), Just(LAYR::ID), Just(CROWDLOAN::ID), Just(KSM::ID),]
 }
