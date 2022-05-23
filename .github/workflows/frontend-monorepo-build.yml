@@ -1,0 +1,46 @@
+name: Lint Check for Changed Paths
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+        - main
+jobs:
+  check-change:
+    name: Check Changes
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - sre
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - id: check-changes
+        uses: ./.github/actions/check-changes
+        with:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.sha }}
+          PREFIX: book/
+          NESTING_LEVEL: 3
+    outputs:
+      matrix: ${{ steps.check-changes.outputs.matrix }}
+      changed: ${{ steps.check-changes.outputs.changed }}
+  apply:
+    name: Apply changes
+    needs:
+      - check-changes
+    if: fromJson(needs.check-changes.outputs.changed)
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+      - sre
+    steps:
+      - uses: actions/checkout@v2
+      # Create kubeconfig env var
+      - name: Run Lint Code
+        uses: #npm lint github action
+      - name: Run kubctl apply
+        working-directory: book/${{ matrix.target }}
+        run: npm run lint
