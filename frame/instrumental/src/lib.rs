@@ -418,7 +418,7 @@ pub mod pallet {
 		fn create(
 			config: InstrumentalVaultConfigFor<T>
 		) -> Result<Self::VaultId, DispatchError> {
-			match Validated::<InstrumentalVaultConfigFor<T>, ValidateVaultDoesNotExist<T>>::new(config) {
+			match Validated::new(config) {
 				Ok(validated_config) => Self::do_create(validated_config),
 				Err(_) => Err(Error::<T>::VaultAlreadyExists.into())
 			}
@@ -446,7 +446,7 @@ pub mod pallet {
 			amount: Self::Balance
 		) -> Result<(), DispatchError> {
 			// Requirement 1) The asset must have an associated vault
-			match Validated::<&T::AssetId, ValidateVaultExists<T>>::new(asset) {
+			match Validated::new(asset) {
 				Ok(validated_asset) => Self::do_add_liquidity(issuer, validated_asset, amount),
 				Err(_) => Err(Error::<T>::AssetDoesNotHaveAnAssociatedVault.into())
 			}
@@ -474,7 +474,7 @@ pub mod pallet {
 			amount: Self::Balance
 		) -> Result<(), DispatchError> {
 			// Requirement 1) The asset must have an associated vault
-			match Validated::<&T::AssetId, ValidateVaultExists<T>>::new(asset) {
+			match Validated::new(asset) {
 				Ok(validated_asset) => Self::do_remove_liquidity(issuer, validated_asset, amount),
 				Err(_) => Err(Error::<T>::AssetDoesNotHaveAnAssociatedVault.into())
 			}
