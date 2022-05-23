@@ -1127,7 +1127,7 @@ pub mod pallet {
 			summary: AccountSummary<T>,
 		) -> Result<T::Balance, DispatchError> {
 			let mut collateral = Self::get_margin(user_id).unwrap_or_else(Zero::zero);
-			let margin: T::Decimal = Self::updated_balance(
+			let mut margin: T::Decimal = Self::updated_balance(
 				&collateral,
 				&summary.unrealized_pnl.try_add(&summary.unrealized_funding)?,
 			)?
@@ -1141,10 +1141,11 @@ pub mod pallet {
 
 			ensure!(margin < margin_requirement, Error::<T>::SufficientCollateral);
 
+			let mut positions = BoundedVec::<Position<T>, T::MaxPositions>::default();
+			let maximum_fee = Self::full_liquidation_penalty().try_mul(&margin)?;
+			let mut fees = T::Balance::zero();
 			// Sort positions from greatest to lowest margin requirement
 			positions_summary.sort_by_key(|(_, _, info)| info.margin_requirement_maintenance.neg());
-			let mut positions = BoundedVec::<Position<T>, T::MaxPositions>::default();
-			let mut base_asset_value_closed = T::Decimal::zero();
 			for (mut market, position, info) in positions_summary {
 				if margin < margin_requirement {
 					Self::close_position_in_market(
@@ -1153,27 +1154,27 @@ pub mod pallet {
 						&mut market,
 						info.base_asset_value.into_balance()?,
 					)?;
-
 					Markets::<T>::insert(&position.market_id, market);
 
+					let base_asset_value_share =
+						info.base_asset_value.try_div(&base_asset_value)?;
+					let fee_decimal = base_asset_value_share.try_mul(&maximum_fee)?;
+					margin.try_sub_mut(&fee_decimal)?;
 					margin_requirement.try_sub_mut(&info.margin_requirement_maintenance)?;
-					let realized_amount = info.unrealized_pnl.try_add(&info.unrealized_funding)?;
-					// margin.try_sub_mut(&realized_amount)?;
-					collateral = Self::updated_balance(&collateral, &realized_amount)?;
-					base_asset_value_closed.try_add_mut(&info.base_asset_value)?;
+					fees.try_add_mut(&fee_decimal.into_balance()?)?;
+					collateral = Self::updated_balance(
+						&collateral,
+						&info
+							.unrealized_pnl
+							.try_add(&info.unrealized_funding)?
+							.try_sub(&fee_decimal)?,
+					)?;
 				} else {
 					positions
 						.try_push(position)
 						.expect("resulting vector is at most as large as the original; qed");
 				}
 			}
-
-			// TODO(0xangelo): compute fees incrementaly to ensure margin requirement is met
-			let fees = margin
-				.try_mul(&base_asset_value_closed.try_div(&base_asset_value)?)?
-				.try_mul(&Self::full_liquidation_penalty())?
-				.into_balance()?;
-			collateral.try_sub_mut(&fees)?;
 
 			Positions::<T>::insert(user_id, positions);
 			AccountsMargin::<T>::insert(user_id, collateral);
