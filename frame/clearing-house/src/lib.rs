@@ -694,16 +694,23 @@ pub mod pallet {
 		///
 		/// ## State Changes
 		///
-		/// TODO(0xangelo)
+		/// - Updates the [`markets`](Markets) of closed positions (according to changes in
+		///   [`Self::close_position_in_market`]).
+		/// - Removes closed [`positions`](Positions)
+		/// - Updates the user's account [`collateral`](Collateral)
+		/// - Updates the liquidator's account [`collateral`](Collateral) if fees are due
+		/// - Transfers collateral from collateral account to Insurance Fund account if fees apply
 		///
 		/// ## Errors
 		///
 		/// - [`SufficientCollateral`](Error::<T>::SufficientCollateral)
-		/// TODO(0xangelo)
+		/// - [`NoCollateralTypeSet`](Error::<T>::NoCollateralTypeSet)
+		/// - [`ArithmeticError`]
 		///
 		/// ## Weight/Runtime
 		///
-		/// TODO(0xangelo)
+		/// `O(n * log(n))` worst case, where `n` is the number of positions of the target user.
+		/// This is due to the ordering of positions by margin requirement.
 		#[pallet::weight(<T as Config>::WeightInfo::liquidate())]
 		pub fn liquidate(origin: OriginFor<T>, user_id: T::AccountId) -> DispatchResult {
 			let liquidator_id = ensure_signed(origin)?;
