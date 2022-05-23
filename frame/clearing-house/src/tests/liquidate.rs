@@ -22,7 +22,6 @@ use crate::{
 // -------------------------------------------------------------------------------------------------
 
 #[test]
-#[ignore = "unimplemented"]
 fn cant_fully_liquidate_if_above_maintenance_margin_ratio_by_pnl() {
 	let mut config = valid_market_config();
 	config.margin_ratio_initial = (1, 2).into(); // 2x max leverage
@@ -67,7 +66,6 @@ fn cant_fully_liquidate_if_above_maintenance_margin_ratio_by_pnl() {
 }
 
 #[test]
-#[ignore = "unimplemented"]
 fn cant_fully_liquidate_if_above_maintenance_margin_ratio_by_funding() {
 	let mut config = valid_market_config();
 	config.funding_frequency = 60;
@@ -114,18 +112,18 @@ fn cant_fully_liquidate_if_above_maintenance_margin_ratio_by_funding() {
 }
 
 #[test]
-#[ignore = "unimplemented"]
 fn can_liquidate_if_below_maintenance_margin_ratio_by_pnl() {
 	let mut config = valid_market_config();
 	config.margin_ratio_initial = (1, 2).into(); // 2x max leverage
-	config.margin_ratio_maintenance = (65, 1_000).into(); // 6.5% MMR
+	config.margin_ratio_maintenance = (6, 100).into(); // 6% MMR
 	config.taker_fee = 0;
 
 	let margins = vec![(ALICE, as_balance(100)), (BOB, 0)];
 	traders_in_one_market_context(config, margins, |market_id| {
-		FullLiquidationPenalty::<Runtime>::set(1.into()); // 100% of margin goes to fees
-												  // 20% of liquidation fee to liquidator
-		FullLiquidationPenaltyLiquidatorShare::<Runtime>::set((1, 5).into());
+		// 100% of liquidated amount goes to fees
+		FullLiquidationPenalty::<Runtime>::set(1.into());
+		// 50% of liquidation fee to liquidator
+		FullLiquidationPenaltyLiquidatorShare::<Runtime>::set((1, 2).into());
 
 		// Alice opens a position
 		VammPallet::set_price(Some(100.into()));
@@ -138,12 +136,12 @@ fn can_liquidate_if_below_maintenance_margin_ratio_by_pnl() {
 		));
 
 		// Price moves so that Alice's account is below the IMR
-		VammPallet::set_price(Some(53.into()));
-		// 100 -> 53
-		// At price 53:
-		// - margin requirement = 6
-		// - PnL = -94
-		// - margin = 100 - 94 = 6
+		VammPallet::set_price(Some(52.into()));
+		// 100 -> 52
+		// At price 52:
+		// - margin requirement = 6.24
+		// - PnL = -96
+		// - margin = 100 - 96 = 4
 
 		// Bob liquidates Alice's account and gets a fee
 		assert_ok!(TestPallet::liquidate(Origin::signed(BOB), ALICE));
@@ -153,12 +151,11 @@ fn can_liquidate_if_below_maintenance_margin_ratio_by_pnl() {
 		// Insurance Fund balance gets the rest of the liquidation fee
 		// bob_collateral + insurance_fund = margin
 		let insurance_fund = AssetsPallet::balance(USDC, &TestPallet::get_insurance_account());
-		assert_eq!(bob_collateral + insurance_fund, as_balance(6));
+		assert_eq!(bob_collateral + insurance_fund, as_balance(4));
 	});
 }
 
 #[test]
-#[ignore = "unimplemented"]
 fn position_in_market_with_greatest_margin_requirement_gets_liquidated_first() {
 	let mut config = valid_market_config();
 	config.margin_ratio_initial = (1, 2).into();
@@ -170,23 +167,25 @@ fn position_in_market_with_greatest_margin_requirement_gets_liquidated_first() {
 
 	let margins = vec![(ALICE, as_balance(100)), (BOB, 0)];
 	multi_market_and_trader_context(configs, margins, |market_ids| {
+		let (market0_id, market1_id) = (market_ids[0], market_ids[1]);
+
 		// Alice opens position in market 0
-		let market_0 = TestPallet::get_market(&market_ids[0]).unwrap();
+		let market_0 = TestPallet::get_market(&market0_id).unwrap();
 		VammPallet::set_price_of(&market_0.vamm_id, Some(100.into()));
 		assert_ok!(<TestPallet as ClearingHouse>::open_position(
 			&ALICE,
-			&market_ids[0],
+			&market0_id,
 			Direction::Long,
 			as_balance(100),
 			as_balance(1)
 		));
 
 		// Alice opens position in market 1
-		let market_1 = TestPallet::get_market(&market_ids[1]).unwrap();
+		let market_1 = TestPallet::get_market(&market1_id).unwrap();
 		VammPallet::set_price_of(&market_1.vamm_id, Some(100.into()));
 		assert_ok!(<TestPallet as ClearingHouse>::open_position(
 			&ALICE,
-			&market_ids[0],
+			&market1_id,
 			Direction::Long,
 			as_balance(100),
 			as_balance(1)
@@ -204,24 +203,25 @@ fn position_in_market_with_greatest_margin_requirement_gets_liquidated_first() {
 		// - margin = 100 - 70 = 30
 		// - margin required = 37.2
 		// Margin required after closing the position in market
-		// - 0: 12
-		// - 1: 25.2
+		// - 0: 25.2
+		// - 1: 12
 		// Thus, closing either position would bring the account above the MMR (assuming no fees to
 		// neither the Insurance Fund nor the liquidator)
 
 		// Bob liquidates Alice's account
+		// 0% of liquidated amount goes to fees
+		FullLiquidationPenalty::<Runtime>::set(0.into());
 		assert_ok!(TestPallet::liquidate(Origin::signed(BOB), ALICE));
 
 		// We expect Alice's position in market 1 to be fully liquidated, since it has the highest
 		// margin requirement, but the one in market 0 to be left open.
 		let positions = TestPallet::get_positions(&ALICE);
 		assert_eq!(positions.len(), 1);
-		assert_eq!(positions[0].market_id, market_ids[0]);
+		assert_eq!(positions[0].market_id, market0_id);
 	});
 }
 
 #[test]
-#[ignore = "unimplemented"]
 fn above_water_position_can_protect_underwater_position() {
 	let mut config = valid_market_config();
 	config.margin_ratio_initial = (1, 2).into();
@@ -233,23 +233,25 @@ fn above_water_position_can_protect_underwater_position() {
 
 	let margins = vec![(ALICE, as_balance(100)), (BOB, 0)];
 	multi_market_and_trader_context(configs, margins, |market_ids| {
+		let (market0_id, market1_id) = (market_ids[0], market_ids[1]);
+
 		// Alice opens position in market 0
-		let market_0 = TestPallet::get_market(&market_ids[0]).unwrap();
+		let market_0 = TestPallet::get_market(&market0_id).unwrap();
 		VammPallet::set_price_of(&market_0.vamm_id, Some(100.into()));
 		assert_ok!(<TestPallet as ClearingHouse>::open_position(
 			&ALICE,
-			&market_ids[0],
+			&market0_id,
 			Direction::Long,
 			as_balance(100),
 			as_balance(1),
 		));
 
 		// Alice opens position in market 1
-		let market_1 = TestPallet::get_market(&market_ids[1]).unwrap();
+		let market_1 = TestPallet::get_market(&market1_id).unwrap();
 		VammPallet::set_price_of(&market_1.vamm_id, Some(100.into()));
 		assert_ok!(<TestPallet as ClearingHouse>::open_position(
 			&ALICE,
-			&market_ids[1],
+			&market1_id,
 			Direction::Long,
 			as_balance(100),
 			as_balance(1),
