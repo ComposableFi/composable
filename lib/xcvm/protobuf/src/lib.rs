@@ -17,20 +17,21 @@ impl<
 	fn from(instruction: XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>) -> Self {
 		Instruction {
 			instruction: Some(match instruction {
-				XCVMInstruction::Transfer(destination, assets) =>
+				XCVMInstruction::Transfer(destination, assets) => {
 					instruction::Instruction::Transfer(Transfer {
-						destination: Some(Account {
-							account: Some(account::Account::Addressed(destination.into())),
-						}),
+						destination: Some(Account { addressed: destination.into() }),
 						assets: assets.into(),
-					}),
-				XCVMInstruction::Bridge(network, assets) =>
+					})
+				},
+				XCVMInstruction::Bridge(network, assets) => {
 					instruction::Instruction::Bridge(Bridge {
 						network: network.into(),
 						assets: assets.into(),
-					}),
-				XCVMInstruction::Call(payload) =>
-					instruction::Instruction::Call(Call { payload: payload.into() }),
+					})
+				},
+				XCVMInstruction::Call(payload) => {
+					instruction::Instruction::Call(Call { payload: payload.into() })
+				},
 			}),
 		}
 	}
@@ -48,19 +49,15 @@ impl<
 		instruction
 			.map(|instruction| match instruction {
 				instruction::Instruction::Transfer(Transfer {
-					destination:
-						Some(Account { account: Some(account::Account::Addressed(destination)) }),
+					destination: Some(Account { addressed }),
 					assets,
-				}) => Ok(XCVMInstruction::Transfer(destination.into(), assets.into())),
-				instruction::Instruction::Transfer(Transfer {
-					destination:
-						Some(Account { account: Some(account::Account::Named(destination)) }),
-					assets,
-				}) => Ok(XCVMInstruction::Transfer(destination.into(), assets.into())),
-				instruction::Instruction::Bridge(Bridge { network, assets }) =>
-					Ok(XCVMInstruction::Bridge(network.into(), assets.into())),
-				instruction::Instruction::Call(Call { payload }) =>
-					Ok(XCVMInstruction::Call(payload.into())),
+				}) => Ok(XCVMInstruction::Transfer(addressed.into(), assets.into())),
+				instruction::Instruction::Bridge(Bridge { network, assets }) => {
+					Ok(XCVMInstruction::Bridge(network.into(), assets.into()))
+				},
+				instruction::Instruction::Call(Call { payload }) => {
+					Ok(XCVMInstruction::Call(payload.into()))
+				},
 				_ => Err(()),
 			})
 			.unwrap_or(Err(()))

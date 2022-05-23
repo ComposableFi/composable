@@ -43,16 +43,6 @@ pub struct Call {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Account {
-    #[prost(oneof="account::Account", tags="1, 2")]
-    pub account: ::core::option::Option<account::Account>,
-}
-/// Nested message and enum types in `Account`.
-pub mod account {
-    #[derive(Clone, PartialEq, ::prost::Oneof)]
-    pub enum Account {
-        #[prost(string, tag="1")]
-        Named(::prost::alloc::string::String),
-        #[prost(bytes, tag="2")]
-        Addressed(::prost::alloc::vec::Vec<u8>),
-    }
+    #[prost(bytes="vec", tag="2")]
+    pub addressed: ::prost::alloc::vec::Vec<u8>,
 }

@@ -8534,6 +8534,8 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "xcvm-core",
+ "xcvm-protobuf",
 ]
 
 [[package]]
@@ -16112,8 +16114,10 @@ name = "xcvm-core"
 version = "0.1.0"
 dependencies = [
  "ethabi",
+ "parity-scale-codec",
  "prost 0.10.3",
  "prost-types 0.10.1",
+ "scale-info",
 ]
 
 [[package]]

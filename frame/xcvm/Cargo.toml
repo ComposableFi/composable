@@ -9,19 +9,11 @@ version = "0.0.1"
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
-[dependencies.codec]
-default-features = false
-features = ["derive", "max-encoded-len"]
-package = "parity-scale-codec"
-version = "3.0.0"
-
 [dependencies]
-# FRAME
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 
-# substrate primitives
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
@@ -31,14 +23,12 @@ sp-io = { default-features = false, git = "https://github.com/paritytech/substra
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 
-# local
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
+
 composable-traits = { path = "../composable-traits", default-features = false }
 
-# [dev-dependencies]
-# composable-tests-helpers = { version = "0.0.1", path = "../composable-tests-helpers" }
-# frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-# pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-# proptest = "1.0.0"
+xcvm-core = { path = "../../lib/xcvm/core", default-features = false }
+xcvm-protobuf = { path = "../../lib/xcvm/protobuf", default-features = false }
 
 [features]
 default = ["std"]
