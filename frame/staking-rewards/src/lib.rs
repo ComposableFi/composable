@@ -401,9 +401,10 @@ pub mod pallet {
 			T::Assets::transfer(position.asset,  &owner, &protocol_account, balance, false)?;
 			PendingAmountExtensions::<T>::mutate_exists(instance_id, |x| {
 				let increased = x.unwrap_or_default().safe_add(&balance);
-				*x = Some(increased?);				
+				*x = Some(increased?);			
 				increased
-			});
+			})?;
+			log::info!("heeeyyyyyy{:?}", PendingAmountExtensions::<T>::get(&instance_id));
 			Ok(().into())
 		}
 
@@ -446,6 +447,7 @@ pub mod pallet {
 										PositionState::Pending => {},
 										PositionState::Expired => {
 											// TODO: https://app.clickup.com/t/2xw5fca
+											log::warn!("Expired: {:?}", &nft);
 										},
 										PositionState::LockedRewarding => {
 											// TODO: return here increased share if one of assets is
@@ -468,6 +470,7 @@ pub mod pallet {
 												)?;
 												// TODO: if adding asset which is staked, increase
 												// total
+												
 												nft.pending_rewards
 													.try_insert(
 														reward_asset,
@@ -477,8 +480,10 @@ pub mod pallet {
 															)?,
 														)?,
 													)
-													.map_err(|_| ArithmeticError::Overflow)?;												
+													.map_err(|_| ArithmeticError::Overflow)?;											
+													log::error!("asdasdasdasddasdsa");
 												if let Some(amount) = PendingAmountExtensions::<T>::take(&nft_id) {
+													log::error!("qwewqewqewqwqeqwe");
 													let time_lock = honest_locked_stake_increase(
 														nft.early_unstake_penalty.value, 
 														nft.stake.into(), 
@@ -486,9 +491,7 @@ pub mod pallet {
 														nft.lock_duration.into(),
 														 (now - nft.lock_date).into())
 														 .ok_or(Error::<T>::CannotIncreaseStakedAmountBecauseOfLimitedArithmetic)?;
-
-													nft.lock_date = nft.lock_date.safe_add(&time_lock)?;
-													
+														 nft.lock_date = nft.lock_date.safe_add(&time_lock)?;														 
 														 nft.stake = nft.stake.safe_add(&amount)?;
 												}
 											}

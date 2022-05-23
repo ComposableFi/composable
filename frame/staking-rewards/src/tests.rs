@@ -15,10 +15,12 @@ use frame_support::{
 };
 use sp_runtime::{DispatchError, Perbill, TokenError};
 use std::collections::{BTreeMap, BTreeSet};
+use crate as staking_rewards_pallet; // trick to share tests accross benchmarks and simulators
 
 pub const TREASURY: AccountId = 0;
 pub const ALICE: AccountId = 1;
 pub const BOB: AccountId = 2;
+pub const CHARLIE: AccountId = 3;
 
 pub const BTC: AssetId = 1;
 pub const LTC: AssetId = 2;
@@ -259,7 +261,9 @@ mod configure {
 }
 
 mod stake {
-	use super::*;
+	use composable_traits::financial_nft::FinancialNftProtocol;
+
+use super::*;
 
 	#[test]
 	fn just_works() {
@@ -343,23 +347,24 @@ mod stake {
 
 	#[test]
 	fn increase_staked_amount_increases_lock() {
+		env_logger::builder().is_test(true).try_init();
 		new_test_ext().execute_with(|| {
 			let config = configure_default_pica();
-			let stake = 1_000_000_000_000;
+			let equal_stake = 1_000_000_000_000;
 			let duration = WEEK;
-			let shares = config
-				.duration_presets
-				.get(&duration)
-				.expect("impossible; qed;")
-				.mul_floor(stake);
-			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
-			let initial_total_shares = StakingRewards::total_shares((PICA, BTC));
-			assert_ok!(<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, duration, false));			 
-			advance_state_machine();
-			let final_total_shares = StakingRewards::total_shares((PICA, BTC));
-			let delta_total_shares =
-				final_total_shares.checked_sub(initial_total_shares).expect("impossible; qed;");
-			assert_eq!(delta_total_shares, shares);
+			<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, equal_stake).unwrap();
+			<Tokens as Mutate<AccountId>>::mint_into(PICA, &BOB, equal_stake).unwrap();			
+			<Tokens as Mutate<AccountId>>::mint_into(PICA, &CHARLIE, equal_stake).unwrap();			
+			let alice_position = <StakingRewards as Staking>::stake(&PICA, &ALICE, equal_stake / 3, duration, false).expect("test");			 			
+			let bob_position = <StakingRewards as Staking>::stake(&PICA, &BOB, equal_stake / 3, duration, false).expect("test");			 			
+			let bob_position = <StakingRewards as Staking>::stake(&PICA, &BOB, equal_stake / 3, duration, false).expect("test");			 			
+			run_to_block(1);
+			assert_ok!(StakingRewards::extend_stake(Origin::signed(ALICE), alice_position, equal_stake / 3));			
+			run_to_block(10);
+			let updated_alice_position = <Test as  FinancialNftProtocol<AccountId>>::get_protocol_nft::<staking_rewards_pallet::StakingNFTOf<Test>>(&alice_position).unwrap();
+			let updated_bob_position = <Test as  FinancialNftProtocol<AccountId>>::get_protocol_nft::<staking_rewards_pallet::StakingNFTOf<Test>>(&bob_position).unwrap();
+			assert!(updated_alice_position.stake > updated_bob_position.stake);
+			assert!(updated_alice_position.lock_date > updated_bob_position.lock_date);
 		});
 	}
 }
