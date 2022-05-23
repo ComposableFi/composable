@@ -13,7 +13,7 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Build a Composable collator
-    - run: |
+      run: |
         cd scripts/polkadot-launch
         git clone -b main https://github.com/ComposableFi/composable
         cd composable
