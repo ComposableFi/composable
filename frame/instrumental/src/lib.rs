@@ -75,7 +75,7 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 
 	use crate::weights::WeightInfo;
-	use crate::validation::ValidateVaultDoesNotExist;
+	use crate::validation::{ValidateVaultDoesNotExist, ValidateVaultDoesExists};
 
 	use frame_support::{
 		pallet_prelude::*,
@@ -234,6 +234,9 @@ pub mod pallet {
 		/// This error is thrown when a vault is trying to be created for an asset that already
 		///     has an associated vault.
 		VaultAlreadyExists,
+
+		/// This error is thrown when action is called for an asset which doesn't have a vault
+		VaultDoesntExist,
 
 		/// This error is thrown when a vault is trying to be created with a `strategies` 
 		///     `Perquintill` value outside of the range [0, 1].
