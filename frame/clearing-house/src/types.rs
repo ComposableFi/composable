@@ -55,6 +55,34 @@ impl<T: Config> Position<T> {
 	}
 }
 
+pub struct PositionInfo<T: Config> {
+	pub direction: Direction,
+	pub margin_requirement_maintenance: T::Decimal,
+	pub base_asset_value: T::Decimal,
+	pub unrealized_pnl: T::Decimal,
+	pub unrealized_funding: T::Decimal,
+}
+
+pub struct AccountSummary<T: Config> {
+	pub margin_requirement_maintenance: T::Decimal,
+	pub base_asset_value: T::Decimal,
+	pub unrealized_pnl: T::Decimal,
+	pub unrealized_funding: T::Decimal,
+	pub positions_summary: Vec<(Market<T>, Position<T>, PositionInfo<T>)>,
+}
+
+impl<T: Config> Default for AccountSummary<T> {
+	fn default() -> Self {
+		Self {
+			margin_requirement_maintenance: T::Decimal::zero(),
+			base_asset_value: T::Decimal::zero(),
+			unrealized_pnl: T::Decimal::zero(),
+			unrealized_funding: T::Decimal::zero(),
+			positions_summary: Default::default(),
+		}
+	}
+}
+
 /// Data relating to a perpetual contracts market
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug)]
 #[scale_info(skip_type_params(T))]
