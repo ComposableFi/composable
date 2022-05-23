@@ -49,7 +49,7 @@ impl substrate_simnode::ChainInfo for ChainInfo {
 			pool: deps.pool,
 			deny_unsafe: deps.deny_unsafe,
 		};
-		node::rpc::create::<_, _, Self::Block>(full_deps)
+		node::rpc::create::<composable_runtime::RuntimeApi, ExecutorDispatch>(full_deps)
 	}
 
 	fn signed_extras(from: <Self::Runtime as system::Config>::AccountId) -> Self::SignedExtras {

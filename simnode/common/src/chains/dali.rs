@@ -1,4 +1,5 @@
 use crate::cli::ComposableCli;
+use node::service::DaliExecutor;
 use parachain_inherent::ParachainInherentData;
 use sc_consensus_manual_seal::consensus::timestamp::SlotTimestampProvider;
 use sc_service::TFullBackend;
@@ -49,7 +50,7 @@ impl substrate_simnode::ChainInfo for ChainInfo {
 			pool: deps.pool,
 			deny_unsafe: deps.deny_unsafe,
 		};
-		node::rpc::create::<_, _, Self::Block>(full_deps)
+		node::rpc::create::<dali_runtime::RuntimeApi, _>(full_deps)
 	}
 
 	fn signed_extras(from: <Self::Runtime as system::Config>::AccountId) -> Self::SignedExtras {
