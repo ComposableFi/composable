@@ -5,6 +5,7 @@
 pub use pallet::*;
 
 pub mod models;
+pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -38,7 +39,7 @@ pub mod pallet {
 			AccountIdConversion, AtLeast32Bit, AtLeast32BitUnsigned, CheckedAdd, CheckedMul,
 			CheckedSub, Convert, One, Saturating, Verify, Zero,
 		},
-		AccountId32, DispatchErrorWithPostInfo, MultiSignature, Perbill,
+		AccountId32, DispatchErrorWithPostInfo, MultiSignature,
 	};
 	use sp_std::vec::Vec;
 
@@ -596,7 +597,7 @@ pub mod pallet {
 			airdrop_id: Self::AirdropId,
 			recipients: Self::RecipientCollection,
 		) -> DispatchResult {
-			let mut airdrop = Self::get_airdrop(airdrop_id)?;
+			let airdrop = Self::get_airdrop(airdrop_id)?;
 
             ensure!(airdrop.creator == origin_id, Error::<T>::NotAirdropCreator);
 
@@ -616,6 +617,7 @@ pub mod pallet {
 					.safe_sub(&T::Stake::get())?;
 			// Total amount of funds to be required by this Airdrop
 			let total_funds = airdrop.total_funds.safe_add(&transaction_funds)?;
+            let total_recipients = airdrop.total_recipients.safe_add(&transaction_recipients)?;
 
 			// If the airdrop can't support the total amount of claimable funds
 			if current_funds < total_funds {
@@ -643,9 +645,13 @@ pub mod pallet {
 			});
 
 			// Update Airdrop statistics
-			airdrop.total_funds = total_funds;
-			airdrop.total_recipients =
-				airdrop.total_recipients.safe_add(&transaction_recipients)?;
+            Airdrops::<T>::try_mutate(airdrop_id, |airdrop| {
+                airdrop.as_mut().map(|airdrop| {
+                    airdrop.total_funds = total_funds;
+                    airdrop.total_recipients = total_recipients;
+                    Ok(())
+                }).unwrap_or_else(|| Err(Error::<T>::AirdropDoesNotExist))
+            })?;
 
 			Ok(())
 		}
