@@ -4,14 +4,20 @@
 
 pub use pallet::*;
 
+pub mod benchmarking;
 pub mod models;
 pub mod weights;
+
+mod mocks;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use std::fmt::Debug;
 
-	use crate::models::{Airdrop, AirdropState, Proof, RecipientFund, RemoteAccount};
+	use crate::{
+        models::{Airdrop, AirdropState, Proof, RecipientFund, RemoteAccount},
+        weights::WeightInfo,
+    };
 	use codec::{Codec, FullCodec, MaxEncodedLen};
 	use composable_support::{
 		abstractions::{
@@ -162,6 +168,9 @@ pub mod pallet {
 		/// The stake required to craete an Airdrop
 		#[pallet::constant]
 		type Stake: Get<BalanceOf<Self>>;
+
+        /// The implementation of extrinsic weights.
+        type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
@@ -213,7 +222,7 @@ pub mod pallet {
         /// block, the Airdrop will be scheduled to start automatically.
 		///
 		/// Can be called by any signed origin.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::create_airdrop(1))]
 		#[transactional]
 		pub fn create_airdrop(origin: OriginFor<T>, start_at: Option<MomentOf<T>>, vesting_schedule: MomentOf<T>) -> DispatchResult {
             let creator = ensure_signed(origin)?;
@@ -225,7 +234,7 @@ pub mod pallet {
 		/// provided adress will receive.
 		///
 		/// Only callable by the origin that created the Airdrop.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::add_recipient(10_000))]
 		#[transactional]
 		pub fn add_recipient(origin: OriginFor<T>, airdrop_id: T::AirdropId, recipients: Vec<(RemoteAccountOf<T>, BalanceOf<T>, bool)>) -> DispatchResult {
             let origin_id = ensure_signed(origin)?;
@@ -236,7 +245,7 @@ pub mod pallet {
 		/// Remove a recipient from an Airdrop.
 		///
 		/// Only callable by the origin that created the Airdrop.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::remove_recipient(10_000))]
 		#[transactional]
 		pub fn remove_recipient(origin: OriginFor<T>, airdrop_id: T::AirdropId, recipient: RemoteAccountOf<T>) -> DispatchResult {
             let origin_id = ensure_signed(origin)?;
@@ -250,7 +259,7 @@ pub mod pallet {
 		///
 		/// # Errors
 		/// * If the Airdrop has been configured to start after a certain timestamp
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::enable_airdrop(1))]
 		#[transactional]
 		pub fn enable_airdrop(origin: OriginFor<T>, airdrop_id: T::AirdropId) -> DispatchResult {
             let origin_id = ensure_signed(origin)?;
@@ -261,7 +270,7 @@ pub mod pallet {
 		/// Stop an Airdrop.
 		///
 		/// Only callable by the origin that created the Airdrop.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::disable_airdrop(1))]
 		#[transactional]
 		pub fn disable_airdrop(origin: OriginFor<T>, airdrop_id: T::AirdropId) -> DispatchResult {
             let origin_id = ensure_signed(origin)?;
@@ -275,7 +284,7 @@ pub mod pallet {
 		/// If no more funds are left to claim, the Airdrop will be removed.
 		///
 		/// Callable by any origin.
-		#[pallet::weight(10_000)]
+		#[pallet::weight(<T as Config>::WeightInfo::claim(1))]
 		#[transactional]
 		pub fn claim(
 			origin: OriginFor<T>,
@@ -317,7 +326,7 @@ pub mod pallet {
 		///
 		/// # Errors
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
-		pub(crate) fn get_airdrop(airdrop_id: T::AirdropId) -> Result<AirdropOf<T>, DispatchError> {
+		pub(crate) fn get_airdrop(airdrop_id: &T::AirdropId) -> Result<AirdropOf<T>, DispatchError> {
 			Airdrops::<T>::try_get(airdrop_id).map_err(|_| Error::<T>::AirdropDoesNotExist.into())
 		}
 
@@ -328,7 +337,7 @@ pub mod pallet {
 		pub(crate) fn get_airdrop_state(
 			airdrop_id: T::AirdropId,
 		) -> Result<AirdropState, DispatchError> {
-			let airdrop = Self::get_airdrop(airdrop_id)?;
+			let airdrop = Self::get_airdrop(&airdrop_id)?;
 
 			if airdrop.disabled {
 				return Ok(AirdropState::Disabled)
@@ -456,7 +465,7 @@ pub mod pallet {
 			start: T::Moment,
 		) -> DispatchResult {
 			// Airdrop exist and hasn't started
-			let mut airdrop = Self::get_airdrop(airdrop_id)?;
+			let mut airdrop = Self::get_airdrop(&airdrop_id)?;
 			ensure!(airdrop.start.is_none(), Error::<T>::AirdropAlreadyStarted);
 
 			// Start is valid
@@ -506,7 +515,7 @@ pub mod pallet {
 		/// Removes an Airdrop and associated data from the pallet iff all funds have been recorded
 		/// as claimed.
 		pub(crate) fn prune_airdrop(airdrop_id: T::AirdropId) -> Result<bool, DispatchError> {
-			let airdrop = Self::get_airdrop(airdrop_id)?;
+			let airdrop = Self::get_airdrop(&airdrop_id)?;
 			let airdrop_account = Self::get_airdrop_account_id(airdrop_id);
 
 			if airdrop.total_funds > airdrop.claimed_funds {
@@ -597,7 +606,7 @@ pub mod pallet {
 			airdrop_id: Self::AirdropId,
 			recipients: Self::RecipientCollection,
 		) -> DispatchResult {
-			let airdrop = Self::get_airdrop(airdrop_id)?;
+			let airdrop = Self::get_airdrop(&airdrop_id)?;
 
             ensure!(airdrop.creator == origin_id, Error::<T>::NotAirdropCreator);
 
@@ -669,7 +678,7 @@ pub mod pallet {
 			airdrop_id: Self::AirdropId,
 			recipient: Self::Recipient,
 		) -> DispatchResult {
-            let airdrop = Self::get_airdrop(airdrop_id)?;
+            let airdrop = Self::get_airdrop(&airdrop_id)?;
             ensure!(airdrop.creator == origin_id, Error::<T>::NotAirdropCreator);
 
 			let airdrop_account = Self::get_airdrop_account_id(airdrop_id);
@@ -720,7 +729,7 @@ pub mod pallet {
             origin_id: Self::AccountId,
             airdrop_id: Self::AirdropId
         ) -> DispatchResult {
-            let airdrop = Self::get_airdrop(airdrop_id)?;
+            let airdrop = Self::get_airdrop(&airdrop_id)?;
             ensure!(airdrop.creator == origin_id, Error::<T>::NotAirdropCreator);
 
 			Self::start_airdrop_at(airdrop_id, T::Time::now())?;
@@ -737,7 +746,7 @@ pub mod pallet {
             origin_id: Self::AccountId,
             airdrop_id: Self::AirdropId
         ) -> Result<Self::Balance, DispatchError> {
-            let airdrop = Self::get_airdrop(airdrop_id)?;
+            let airdrop = Self::get_airdrop(&airdrop_id)?;
             ensure!(airdrop.creator == origin_id, Error::<T>::NotAirdropCreator);
 
 			let unclaimed_funds = Airdrops::<T>::try_mutate(airdrop_id, |airdrop| {
