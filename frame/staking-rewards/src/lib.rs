@@ -75,8 +75,7 @@ pub mod pallet {
 		ArithmeticError, Perbill, SaturatedConversion,
 	};
 	use sp_std::collections::btree_map::BTreeMap;
-
-//use crate::math::honest_stake_increase;
+	use crate::math::honest_locked_stake_increase;
 
 	pub(crate) type EpochId = u128;
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -137,7 +136,8 @@ pub mod pallet {
 		EpochNotFound,
 		PalletIsBusy,
 		ImpossibleState,
-		OnlyOwnerOfPositionCanDoThis
+		OnlyOwnerOfPositionCanDoThis,
+		CannotIncreaseStakedAmountBecauseOfLimitedArithmetic,
 	}
 
 	#[pallet::config]
@@ -151,7 +151,7 @@ pub mod pallet {
 		/// The ID that uniquely identify an asset.
 		type AssetId: AssetId + Ord;
 
-		type Balance: Balance + TryFrom<u128>;
+		type Balance: Balance + TryFrom<u128> + Into<u128>;
 
 		/// The underlying currency system.
 		type Assets: FungiblesInspect<
@@ -479,15 +479,17 @@ pub mod pallet {
 													)
 													.map_err(|_| ArithmeticError::Overflow)?;												
 												if let Some(amount) = PendingAmountExtensions::<T>::take(&nft_id) {
-													// nft.lock_date 
-													// += 
-													// honest_stake_increase(
-													// 	nft.early_unstake_penalty.value, 
-													// 	nft.stake, 
-													// 	amount, nft.lock_duration,
-													// 	 now - nft.lock_date)
-													// 	 .try_into();
-													nft.stake = nft.stake.safe_add(&amount)?;
+													let time_lock = honest_locked_stake_increase(
+														nft.early_unstake_penalty.value, 
+														nft.stake.into(), 
+														amount.into(), 
+														nft.lock_duration.into(),
+														 (now - nft.lock_date).into())
+														 .ok_or(Error::<T>::CannotIncreaseStakedAmountBecauseOfLimitedArithmetic)?;
+
+													nft.lock_date = nft.lock_date.safe_add(&time_lock)?;
+													
+														 nft.stake = nft.stake.safe_add(&amount)?;
 												}
 											}
 										},

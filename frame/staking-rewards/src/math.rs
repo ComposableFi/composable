@@ -7,7 +7,7 @@ use sp_std::num::TryFromIntError;
 type Balance = u128;
 
 // keep in sync with python math
-pub fn honest_stake_increase(after_penalized: Perbill, original_amount: Balance, new_amount : Balance, duration: DurationSeconds, passed : DurationSeconds ) -> Option<DurationSeconds> {
+pub fn honest_locked_stake_increase(after_penalized: Perbill, original_amount: Balance, new_amount : Balance, duration: DurationSeconds, passed : DurationSeconds ) -> Option<DurationSeconds> {
    let  penalized_amount = after_penalized.mul_ceil(original_amount); // really we want to consider more original staking to reduce error in time
    let total = penalized_amount.checked_add(new_amount)?;
    let remaining = duration.checked_sub(passed)?;
@@ -21,7 +21,7 @@ pub fn honest_stake_increase(after_penalized: Perbill, original_amount: Balance,
 mod tests {
     use sp_runtime::Perbill;
 
-    use crate::math::honest_stake_increase;
+    use crate::math::honest_locked_stake_increase;
 
     #[test]
     fn with_zero_time_passed_staking_gives_same_time() {
@@ -30,7 +30,7 @@ mod tests {
        let duration = 1_000;
        let passed = 0;
        let after_penalized = Perbill::from_rational(50_u32, 100_u32);
-       let remaining = honest_stake_increase(after_penalized, original_amount, new_amount,  duration, passed).unwrap();
+       let remaining = honest_locked_stake_increase(after_penalized, original_amount, new_amount,  duration, passed).unwrap();
        assert_eq!(remaining, 1000, "does not allows to reduce duration doing staking");
     }
 
@@ -41,7 +41,7 @@ mod tests {
       let duration = 1_000;
       let passed = 500;
       let after_penalized = Perbill::from_rational(50_u32, 100_u32);
-      let remaining = honest_stake_increase(after_penalized, original_amount, new_amount,  duration, passed).unwrap();
+      let remaining = honest_locked_stake_increase(after_penalized, original_amount, new_amount,  duration, passed).unwrap();
       assert_eq!(remaining, 998, "rounded up from 997.5124378109452");
    }
 } 

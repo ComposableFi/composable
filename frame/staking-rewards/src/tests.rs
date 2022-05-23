@@ -64,6 +64,7 @@ fn configure_default_pica() -> StakingConfigOf<Test> {
 	configure_pica(penalty)
 }
 
+/// Enter new epoch
 fn advance_state_machine() {
 	run_to_block(3);
 }
@@ -332,6 +333,28 @@ mod stake {
 			let initial_total_shares = StakingRewards::total_shares((PICA, BTC));
 			assert_ok!(<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, duration, false));
 			// Enter new epoch
+			advance_state_machine();
+			let final_total_shares = StakingRewards::total_shares((PICA, BTC));
+			let delta_total_shares =
+				final_total_shares.checked_sub(initial_total_shares).expect("impossible; qed;");
+			assert_eq!(delta_total_shares, shares);
+		});
+	}
+
+	#[test]
+	fn increase_staked_amount_increases_lock() {
+		new_test_ext().execute_with(|| {
+			let config = configure_default_pica();
+			let stake = 1_000_000_000_000;
+			let duration = WEEK;
+			let shares = config
+				.duration_presets
+				.get(&duration)
+				.expect("impossible; qed;")
+				.mul_floor(stake);
+			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
+			let initial_total_shares = StakingRewards::total_shares((PICA, BTC));
+			assert_ok!(<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, duration, false));			 
 			advance_state_machine();
 			let final_total_shares = StakingRewards::total_shares((PICA, BTC));
 			let delta_total_shares =
