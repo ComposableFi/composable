@@ -49,7 +49,7 @@ pub mod pallet {
 		math::safe::{safe_multiply_by_rational, SafeAdd, SafeSub},
 	};
 	use composable_traits::{
-		financial_nft::{FinancialNftProtocol, NftClass, NftVersion},
+		financial_nft::{FinancialNftProtocol, NftClass, NftVersion, FinancialNftProvider},
 		staking_rewards::{
 			Penalty, PenaltyOutcome, PositionState, Staking, StakingConfig, StakingNFT,
 			StakingReward,
@@ -76,7 +76,7 @@ pub mod pallet {
 	};
 	use sp_std::collections::btree_map::BTreeMap;
 
-use crate::math::honest_stake_increase;
+//use crate::math::honest_stake_increase;
 
 	pub(crate) type EpochId = u128;
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -390,21 +390,19 @@ use crate::math::honest_stake_increase;
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn extend_stake(
-			_origin: OriginFor<T>,
-			_instance_id: InstanceIdOf<T>,
-			_balance: T::Balance,
+			origin: OriginFor<T>,
+			instance_id: InstanceIdOf<T>,
+			balance: T::Balance,
 		) -> DispatchResult {
 			let owner = ensure_signed(origin)?;
-			let position = <T::NFTProvider as FinancialNftProtocol>::get_protocol_nft::<StakingNFTOf<T>>(&instance_id)?;
-			ensure!(
-				position.owner == owner,
-				Error::<T>::OnlyOwnerOfPositionCanDoThis,
-			);
-			let protocol_account = Self::account_id(&nft.asset);
+			let position = T::get_protocol_nft::<StakingNFTOf<T>>(&instance_id)?;
+			T::ensure_protocol_nft_owner::<StakingNFTOf<T>>(&owner, &instance_id)?;			
+			let protocol_account = Self::account_id(&position.asset);
 			T::Assets::transfer(position.asset,  &owner, &protocol_account, balance, false)?;
-			PendingAmountExtensions::<T>::try_mutate_exists(instance_id, |x| {
-				*x = Some(x.unwrap_or_default().safe_add(&balance)?);				
-				Ok(())
+			PendingAmountExtensions::<T>::mutate_exists(instance_id, |x| {
+				let increased = x.unwrap_or_default().safe_add(&balance);
+				*x = Some(increased?);				
+				increased
 			});
 			Ok(().into())
 		}
@@ -479,13 +477,16 @@ use crate::math::honest_stake_increase;
 															)?,
 														)?,
 													)
-													.map_err(|_| ArithmeticError::Overflow)?;
+													.map_err(|_| ArithmeticError::Overflow)?;												
 												if let Some(amount) = PendingAmountExtensions::<T>::take(&nft_id) {
-													nft.stake = nft.stake.safe_add(&amount)?;
-												}
-
-												if let Some(amount) = PendingAmountExtensions::<T>::take(&nft_id) {
-													nft.lock_date += honest_stake_increase(nft.early_unstake_penalty.value, nft.stake, amount, nft.lock_duration, now - nft.lock_date).unwrap();
+													// nft.lock_date 
+													// += 
+													// honest_stake_increase(
+													// 	nft.early_unstake_penalty.value, 
+													// 	nft.stake, 
+													// 	amount, nft.lock_duration,
+													// 	 now - nft.lock_date)
+													// 	 .try_into();
 													nft.stake = nft.stake.safe_add(&amount)?;
 												}
 											}
