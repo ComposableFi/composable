@@ -25,6 +25,7 @@ use proptest::prelude::*;
 use sp_runtime::{FixedI128, FixedPointNumber, FixedU128};
 
 pub mod add_margin;
+pub mod comp;
 pub mod create_market;
 pub mod instruments;
 pub mod liquidate;

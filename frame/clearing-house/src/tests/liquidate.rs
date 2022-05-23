@@ -2,7 +2,8 @@ use composable_traits::clearing_house::ClearingHouse;
 use frame_support::{assert_noop, assert_ok, traits::tokens::fungibles::Inspect};
 
 use super::{
-	as_balance, multi_market_and_trader_context, traders_in_one_market_context, valid_market_config,
+	as_balance, comp::approx_eq_lower, multi_market_and_trader_context,
+	traders_in_one_market_context, valid_market_config,
 };
 use crate::{
 	mock::{
@@ -143,10 +144,13 @@ fn can_liquidate_if_below_maintenance_margin_ratio_by_pnl() {
 		// - PnL = -96
 		// - margin = 100 - 96 = 4
 
-		// Bob liquidates Alice's account and gets a fee
+		// Bob liquidates Alice's account
 		assert_ok!(TestPallet::liquidate(Origin::signed(BOB), ALICE));
+		// Alice's entire collateral is seized as fees in a full liquidation
+		assert_eq!(TestPallet::get_margin(&ALICE).unwrap(), 0);
+		// Bob gets half of Alice's collateral as a fee
 		let bob_collateral = TestPallet::get_margin(&BOB).unwrap();
-		assert!(bob_collateral > 0);
+		assert_eq!(bob_collateral, as_balance(2));
 
 		// Insurance Fund balance gets the rest of the liquidation fee
 		// bob_collateral + insurance_fund = margin
@@ -218,6 +222,150 @@ fn position_in_market_with_greatest_margin_requirement_gets_liquidated_first() {
 		let positions = TestPallet::get_positions(&ALICE);
 		assert_eq!(positions.len(), 1);
 		assert_eq!(positions[0].market_id, market0_id);
+	});
+}
+
+#[test]
+fn fees_are_proportional_to_base_asset_value_liquidated() {
+	let mut config = valid_market_config();
+	config.margin_ratio_initial = (1, 2).into();
+	config.margin_ratio_maintenance = (15, 100).into();
+	config.taker_fee = 0;
+	let mut configs = vec![config.clone()];
+	config.margin_ratio_maintenance = (20, 100).into();
+	configs.push(config);
+
+	let margins = vec![(ALICE, as_balance(450)), (BOB, 0)];
+	multi_market_and_trader_context(configs, margins, |market_ids| {
+		let (market0_id, market1_id) = (market_ids[0], market_ids[1]);
+
+		// Alice opens position in market 0
+		let market_0 = TestPallet::get_market(&market0_id).unwrap();
+		VammPallet::set_price_of(&market_0.vamm_id, Some(100.into()));
+		assert_ok!(<TestPallet as ClearingHouse>::open_position(
+			&ALICE,
+			&market0_id,
+			Direction::Long,
+			as_balance(300),
+			as_balance(3)
+		));
+
+		// Alice opens position in market 1
+		let market_1 = TestPallet::get_market(&market1_id).unwrap();
+		VammPallet::set_price_of(&market_1.vamm_id, Some(100.into()));
+		assert_ok!(<TestPallet as ClearingHouse>::open_position(
+			&ALICE,
+			&market1_id,
+			Direction::Long,
+			as_balance(600),
+			as_balance(6)
+		));
+
+		// Market 0 at price 60:
+		// - Base asset value = 180
+		// - Margin requirement = 27
+		// - PnL = -120
+		VammPallet::set_price_of(&market_0.vamm_id, Some(60.into()));
+		// Market 1 at price 60:
+		// - Base asset value = 360
+		// - Margin requirement = 72
+		// - PnL = -240
+		VammPallet::set_price_of(&market_1.vamm_id, Some(60.into()));
+		// Total:
+		// - margin = 450 - 360 = 90
+		// - margin required = 99
+
+		// 100% of liquidated collateral goes to fees
+		FullLiquidationPenalty::<Runtime>::set(1.into());
+		// 100% of liquidation fees go to liquidator
+		FullLiquidationPenaltyLiquidatorShare::<Runtime>::set(1.into());
+		// Liquidation fee for closing
+		// - 0: (180 / 540) * margin = 30
+		// - 1: (360 / 540) * margin = 60
+		// Margin after closing
+		// - 0: 90 - 30 = 60
+		// - 1: 90 - 60 = 30
+		// Margin required after closing
+		// - 0: 72
+		// - 1: 27
+		assert_ok!(TestPallet::liquidate(Origin::signed(BOB), ALICE));
+		let positions = TestPallet::get_positions(&ALICE);
+		// Position 1 should get liquidated due to its higher margin requirement, leaving position 0
+		// with enough margin to keep it alive, even after fees
+		assert_eq!(positions.len(), 1);
+		assert_eq!(positions[0].market_id, market0_id);
+		// Bob should receive an amount of fees proportional to the amount of base asset value
+		// closed
+		assert!(approx_eq_lower(TestPallet::get_margin(&BOB).unwrap(), as_balance(60)));
+	});
+}
+
+#[test]
+fn fees_decrease_margin_for_remaining_positions() {
+	let mut config = valid_market_config();
+	config.margin_ratio_initial = (1, 2).into();
+	config.margin_ratio_maintenance = (20, 100).into();
+	config.taker_fee = 0;
+	let mut configs = vec![config.clone()];
+	config.margin_ratio_maintenance = (30, 100).into();
+	configs.push(config);
+
+	let margins = vec![(ALICE, as_balance(100)), (BOB, 0)];
+	multi_market_and_trader_context(configs, margins, |market_ids| {
+		let (market0_id, market1_id) = (market_ids[0], market_ids[1]);
+
+		// Alice opens position in market 0
+		let market_0 = TestPallet::get_market(&market0_id).unwrap();
+		VammPallet::set_price_of(&market_0.vamm_id, Some(100.into()));
+		assert_ok!(<TestPallet as ClearingHouse>::open_position(
+			&ALICE,
+			&market0_id,
+			Direction::Long,
+			as_balance(50),
+			as_balance(1) / 2
+		));
+
+		// Alice opens position in market 1
+		let market_1 = TestPallet::get_market(&market1_id).unwrap();
+		VammPallet::set_price_of(&market_1.vamm_id, Some(100.into()));
+		assert_ok!(<TestPallet as ClearingHouse>::open_position(
+			&ALICE,
+			&market1_id,
+			Direction::Long,
+			as_balance(150),
+			as_balance(15) / 10
+		));
+
+		// Market 0 at price 60:
+		// - Base asset value = 30
+		// - Margin requirement = 6
+		// - PnL = -20
+		VammPallet::set_price_of(&market_0.vamm_id, Some(60.into()));
+		// Market 1 at price 60:
+		// - Base asset value = 90
+		// - Margin requirement = 27
+		// - PnL = -60
+		VammPallet::set_price_of(&market_1.vamm_id, Some(60.into()));
+		// Total:
+		// - margin = 100 - 80 = 20
+		// - margin required = 33
+
+		// 100% of liquidated collateral goes to fees
+		FullLiquidationPenalty::<Runtime>::set(1.into());
+		// Liquidation fee for closing
+		// - 0: (30 / 120) * margin = 5
+		// - 1: (90 / 120) * margin = 15
+		// Margin after closing
+		// - 0: 20 - 5 = 15
+		// - 1: 20 - 15 = 5
+		// Margin required after closing
+		// - 0: 27
+		// - 1: 6
+		// Thus, because of the fees, both positions will be liquidated, whereas if there were no
+		// fees, only the position in market 1 would need to be liquidated
+		assert_ok!(TestPallet::liquidate(Origin::signed(BOB), ALICE));
+		let positions = TestPallet::get_positions(&ALICE);
+		assert_eq!(positions.len(), 0);
 	});
 }
 
