@@ -72,7 +72,7 @@ where
 	io.extend_with(SystemApi::to_delegate(FullSystem::new(
 		deps.client.clone(),
 		deps.pool.clone(),
-		deps.deny_unsafe.clone(),
+		deps.deny_unsafe,
 	)));
 
 	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(
@@ -96,7 +96,7 @@ where
 
 	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_lending_api(
 		&mut io,
-		deps.clone(),
+		deps,
 	);
 
 	// Extend this RPC with a custom API by using the following syntax.

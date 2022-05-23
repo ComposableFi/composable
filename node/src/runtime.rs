@@ -142,20 +142,20 @@ define_trait! {
 		#[cfg(feature = "composable")]
 		impl for composable_runtime {
 			fn (io, deps) {
-				io.extend_with(AssetsApi::to_delegate(Assets::new(deps.client.clone())));
+				io.extend_with(AssetsApi::to_delegate(Assets::new(deps.client)));
 			}
 		}
 
 		impl for picasso_runtime {
 			fn (io, deps) {
-				io.extend_with(AssetsApi::to_delegate(Assets::new(deps.client.clone())));
+				io.extend_with(AssetsApi::to_delegate(Assets::new(deps.client)));
 			}
 		}
 
 		#[cfg(feature = "dali")]
 		impl for dali_runtime {
 			fn (io, deps) {
-				io.extend_with(AssetsApi::to_delegate(Assets::new(deps.client.clone())));
+				io.extend_with(AssetsApi::to_delegate(Assets::new(deps.client)));
 			}
 		}
 	}
@@ -168,20 +168,20 @@ define_trait! {
 		#[cfg(feature = "composable")]
 		impl for composable_runtime {
 			fn (io, deps) {
-				io.extend_with(CrowdloanRewardsApi::to_delegate(CrowdloanRewards::new(deps.client.clone())));
+				io.extend_with(CrowdloanRewardsApi::to_delegate(CrowdloanRewards::new(deps.client)));
 			}
 		}
 
 		impl for picasso_runtime {
 			fn (io, deps) {
-				io.extend_with(CrowdloanRewardsApi::to_delegate(CrowdloanRewards::new(deps.client.clone())));
+				io.extend_with(CrowdloanRewardsApi::to_delegate(CrowdloanRewards::new(deps.client)));
 			}
 		}
 
 		#[cfg(feature = "dali")]
 		impl for dali_runtime {
 			fn (io, deps) {
-				io.extend_with(CrowdloanRewardsApi::to_delegate(CrowdloanRewards::new(deps.client.clone())));
+				io.extend_with(CrowdloanRewardsApi::to_delegate(CrowdloanRewards::new(deps.client)));
 			}
 		}
 	}
@@ -194,20 +194,20 @@ define_trait! {
 		#[cfg(feature = "composable")]
 		impl for composable_runtime {
 			fn (io, deps) {
-				io.extend_with(PabloApi::to_delegate(Pablo::new(deps.client.clone())));
+				io.extend_with(PabloApi::to_delegate(Pablo::new(deps.client)));
 			}
 		}
 
 		impl for picasso_runtime {
 			fn (io, deps) {
-				io.extend_with(PabloApi::to_delegate(Pablo::new(deps.client.clone())));
+				io.extend_with(PabloApi::to_delegate(Pablo::new(deps.client)));
 			}
 		}
 
 		#[cfg(feature = "dali")]
 		impl for dali_runtime {
 			fn (io, deps) {
-				io.extend_with(PabloApi::to_delegate(Pablo::new(deps.client.clone())));
+				io.extend_with(PabloApi::to_delegate(Pablo::new(deps.client)));
 			}
 		}
 	}
@@ -225,7 +225,7 @@ define_trait! {
 		#[cfg(feature = "dali")]
 		impl for dali_runtime {
 			fn (io, deps) {
-				io.extend_with(LendingApi::to_delegate(Lending::new(deps.client.clone())));
+				io.extend_with(LendingApi::to_delegate(Lending::new(deps.client)));
 			}
 		}
 	}

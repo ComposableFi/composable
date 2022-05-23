@@ -16,11 +16,11 @@ use cumulus_relay_chain_rpc_interface::RelayChainRPCInterface;
 use polkadot_service::CollatorPair;
 
 // Substrate Imports
-use sc_client_api::ExecutorProvider;
+use sc_client_api::{ExecutorProvider, StateBackendFor};
 use sc_executor::NativeExecutionDispatch;
-use sc_service::{Configuration, PartialComponents, Role, TFullBackend, TaskManager};
+use sc_service::{Configuration, PartialComponents, Role, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
-use sp_api::ConstructRuntimeApi;
+use sp_api::{ConstructRuntimeApi, StateBackend};
 #[cfg(feature = "ocw")]
 use sp_core::crypto::KeyTypeId;
 use sp_runtime::traits::BlakeTwo256;
@@ -264,11 +264,6 @@ pub async fn start_node(
 
 	Ok(task_manager)
 }
-
-use polkadot_service::BlockT;
-use sc_client_api::StateBackendFor;
-use sc_transaction_pool::FullPool;
-use sp_api::StateBackend;
 
 /// Start a node with the given parachain `Configuration` and relay chain `Configuration`.
 ///
