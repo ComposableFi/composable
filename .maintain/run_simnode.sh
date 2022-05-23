@@ -23,7 +23,7 @@ YDATE=$(date -d yesterday +'%m-%d-%Y')
 
 run_simnode() {
   CHAIN="$1"
-  echo "Running simnode for $CHAIN "
+  echo "Running simnode for $CHAIN"
   FILENAME=$YDATE.zip
   GS_BUCKET="$CHAIN-data-store"
   sudo gsutil cp gs://$GS_BUCKET/"$FILENAME" .
