@@ -37,19 +37,20 @@ pub use pallet::*;
 #[cfg(test)]
 mod tests;
 
+pub mod math;
 #[cfg(test)]
 mod mock;
-pub mod math;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use crate::math::honest_locked_stake_increase;
 	use composable_support::{
 		abstractions::block_fold::{BlockFold, FoldStorage, FoldStrategy},
 		collections::vec::bounded::BiBoundedVec,
 		math::safe::{safe_multiply_by_rational, SafeAdd, SafeSub},
 	};
 	use composable_traits::{
-		financial_nft::{FinancialNftProtocol, NftClass, NftVersion, FinancialNftProvider},
+		financial_nft::{FinancialNftProtocol, FinancialNftProvider, NftClass, NftVersion},
 		staking_rewards::{
 			Penalty, PenaltyOutcome, PositionState, Staking, StakingConfig, StakingNFT,
 			StakingReward,
@@ -75,7 +76,6 @@ pub mod pallet {
 		ArithmeticError, Perbill, SaturatedConversion,
 	};
 	use sp_std::collections::btree_map::BTreeMap;
-	use crate::math::honest_locked_stake_increase;
 
 	pub(crate) type EpochId = u128;
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -264,12 +264,13 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn pending_stakers)]
 	pub type PendingStakers<T: Config> =
-	StorageMap<_, Twox64Concat, InstanceIdOf<T>, (), OptionQuery>;
-	
+		StorageMap<_, Twox64Concat, InstanceIdOf<T>, (), OptionQuery>;
+
 	/// amount of assets which will be added to position on next epoch
 	#[pallet::storage]
 	#[pallet::getter(fn amount_extensions)]
-	pub type PendingAmountExtensions<T:Config> = StorageMap<_, Twox64Concat, InstanceIdOf<T>, T::Balance , OptionQuery>;
+	pub type PendingAmountExtensions<T: Config> =
+		StorageMap<_, Twox64Concat, InstanceIdOf<T>, T::Balance, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn staking_configurations)]
@@ -396,12 +397,12 @@ pub mod pallet {
 		) -> DispatchResult {
 			let owner = ensure_signed(origin)?;
 			let position = T::get_protocol_nft::<StakingNFTOf<T>>(&instance_id)?;
-			T::ensure_protocol_nft_owner::<StakingNFTOf<T>>(&owner, &instance_id)?;			
+			T::ensure_protocol_nft_owner::<StakingNFTOf<T>>(&owner, &instance_id)?;
 			let protocol_account = Self::account_id(&position.asset);
-			T::Assets::transfer(position.asset,  &owner, &protocol_account, balance, false)?;
+			T::Assets::transfer(position.asset, &owner, &protocol_account, balance, false)?;
 			PendingAmountExtensions::<T>::mutate_exists(instance_id, |x| {
 				let increased = x.unwrap_or_default().safe_add(&balance);
-				*x = Some(increased?);			
+				*x = Some(increased?);
 				increased
 			})?;
 			log::info!("heeeyyyyyy{:?}", PendingAmountExtensions::<T>::get(&instance_id));
@@ -470,7 +471,7 @@ pub mod pallet {
 												)?;
 												// TODO: if adding asset which is staked, increase
 												// total
-												
+
 												nft.pending_rewards
 													.try_insert(
 														reward_asset,
@@ -480,19 +481,20 @@ pub mod pallet {
 															)?,
 														)?,
 													)
-													.map_err(|_| ArithmeticError::Overflow)?;											
-													log::error!("asdasdasdasddasdsa");
-												if let Some(amount) = PendingAmountExtensions::<T>::take(&nft_id) {
-													log::error!("qwewqewqewqwqeqwe");
+													.map_err(|_| ArithmeticError::Overflow)?;
+												if let Some(amount) =
+													PendingAmountExtensions::<T>::take(&nft_id)
+												{
 													let time_lock = honest_locked_stake_increase(
-														nft.early_unstake_penalty.value, 
-														nft.stake.into(), 
-														amount.into(), 
+														nft.early_unstake_penalty.value,
+														nft.stake.into(),
+														amount.into(),
 														nft.lock_duration.into(),
 														 (now - nft.lock_date).into())
 														 .ok_or(Error::<T>::CannotIncreaseStakedAmountBecauseOfLimitedArithmetic)?;
-														 nft.lock_date = nft.lock_date.safe_add(&time_lock)?;														 
-														 nft.stake = nft.stake.safe_add(&amount)?;
+													nft.lock_date =
+														nft.lock_date.safe_add(&time_lock)?;
+													nft.stake = nft.stake.safe_add(&amount)?;
 												}
 											}
 										},
@@ -509,7 +511,7 @@ pub mod pallet {
 						CurrentState::<T>::set(State::Registering);
 					}
 				},
-				State::Registering => {	
+				State::Registering => {
 					let result = <(FoldState<T>, PendingStakers<T>)>::step(
 						FoldStrategy::Chunk {
 							number_of_elements: T::ElementToProcessPerBlock::get(),

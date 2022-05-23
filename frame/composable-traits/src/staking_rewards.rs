@@ -104,7 +104,7 @@ pub struct StakingConfig<AccountId, DurationPresets, RewardAssets> {
 pub struct StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards> {
 	/// The staked asset.
 	pub asset: AssetId,
-	/// The original stake this NFT was minted for.
+	/// The original stake this NFT was minted for or updated NFT with increased stake amount.
 	pub stake: Balance,
 	/// The reward epoch at which this NFT will start yielding rewards.
 	pub reward_epoch_start: Epoch,

@@ -1,3 +1,4 @@
+use crate as staking_rewards_pallet;
 use crate::{
 	mock::{
 		new_test_ext, process_block, run_to_block, AccountId, AssetId, BlockNumber, Event, Origin,
@@ -14,8 +15,7 @@ use frame_support::{
 	traits::fungibles::{Inspect, Mutate},
 };
 use sp_runtime::{DispatchError, Perbill, TokenError};
-use std::collections::{BTreeMap, BTreeSet};
-use crate as staking_rewards_pallet; // trick to share tests accross benchmarks and simulators
+use std::collections::{BTreeMap, BTreeSet}; // trick to share tests accross benchmarks and simulators
 
 pub const TREASURY: AccountId = 0;
 pub const ALICE: AccountId = 1;
@@ -263,7 +263,7 @@ mod configure {
 mod stake {
 	use composable_traits::financial_nft::FinancialNftProtocol;
 
-use super::*;
+	use super::*;
 
 	#[test]
 	fn just_works() {
@@ -353,18 +353,87 @@ use super::*;
 			let equal_stake = 1_000_000_000_000;
 			let duration = WEEK;
 			<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, equal_stake).unwrap();
-			<Tokens as Mutate<AccountId>>::mint_into(PICA, &BOB, equal_stake).unwrap();			
-			<Tokens as Mutate<AccountId>>::mint_into(PICA, &CHARLIE, equal_stake).unwrap();			
-			let alice_position = <StakingRewards as Staking>::stake(&PICA, &ALICE, equal_stake / 3, duration, false).expect("test");			 			
-			let bob_position = <StakingRewards as Staking>::stake(&PICA, &BOB, equal_stake / 3, duration, false).expect("test");			 			
-			let bob_position = <StakingRewards as Staking>::stake(&PICA, &BOB, equal_stake / 3, duration, false).expect("test");			 			
-			run_to_block(1);
-			assert_ok!(StakingRewards::extend_stake(Origin::signed(ALICE), alice_position, equal_stake / 3));			
-			run_to_block(10);
-			let updated_alice_position = <Test as  FinancialNftProtocol<AccountId>>::get_protocol_nft::<staking_rewards_pallet::StakingNFTOf<Test>>(&alice_position).unwrap();
-			let updated_bob_position = <Test as  FinancialNftProtocol<AccountId>>::get_protocol_nft::<staking_rewards_pallet::StakingNFTOf<Test>>(&bob_position).unwrap();
-			assert!(updated_alice_position.stake > updated_bob_position.stake);
-			assert!(updated_alice_position.lock_date > updated_bob_position.lock_date);
+			<Tokens as Mutate<AccountId>>::mint_into(PICA, &BOB, equal_stake).unwrap();
+			<Tokens as Mutate<AccountId>>::mint_into(PICA, &CHARLIE, equal_stake).unwrap();
+
+			/// make rase amid 3 players and ensure they positions related
+			let alice_position =
+				<StakingRewards as Staking>::stake(&PICA, &ALICE, equal_stake / 3, duration, false)
+					.expect("test");
+			let bob_position =
+				<StakingRewards as Staking>::stake(&PICA, &BOB, equal_stake / 3, duration, false)
+					.expect("test");
+			let charlie_position = <StakingRewards as Staking>::stake(
+				&PICA,
+				&CHARLIE,
+				equal_stake / 3,
+				duration,
+				false,
+			)
+			.expect("test");
+
+			assert_ok!(StakingRewards::extend_stake(
+				Origin::signed(CHARLIE),
+				charlie_position,
+				equal_stake / 3
+			));
+			run_to_block(10); // ensure that position is not applied right away
+
+			let updated_charlie_position =
+				<Test as FinancialNftProtocol<AccountId>>::get_protocol_nft::<
+					staking_rewards_pallet::StakingNFTOf<Test>,
+				>(&charlie_position)
+				.unwrap();
+			let updated_alice_position =
+				<Test as FinancialNftProtocol<AccountId>>::get_protocol_nft::<
+					staking_rewards_pallet::StakingNFTOf<Test>,
+				>(&alice_position)
+				.unwrap();
+			assert!(updated_charlie_position.stake > updated_alice_position.stake);
+
+			assert_ok!(Tokens::mint_into(BTC, &TREASURY, 1_000_000_000));
+			assert_ok!(StakingRewards::transfer_reward(
+				&PICA,
+				&BTC,
+				&TREASURY,
+				1_000_000_000,
+				false
+			));
+
+			assert_ok!(StakingRewards::extend_stake(
+				Origin::signed(ALICE),
+				alice_position,
+				equal_stake / 3
+			));
+			run_to_block(15); // ensure that we got extensions consumed during rewarding period
+			let updated_alice_position =
+				<Test as FinancialNftProtocol<AccountId>>::get_protocol_nft::<
+					staking_rewards_pallet::StakingNFTOf<Test>,
+				>(&alice_position)
+				.unwrap();
+			let updated_bob_position =
+				<Test as FinancialNftProtocol<AccountId>>::get_protocol_nft::<
+					staking_rewards_pallet::StakingNFTOf<Test>,
+				>(&bob_position)
+				.unwrap();
+			let updated_charlie_position =
+				<Test as FinancialNftProtocol<AccountId>>::get_protocol_nft::<
+					staking_rewards_pallet::StakingNFTOf<Test>,
+				>(&charlie_position)
+				.unwrap();
+			assert!(
+				updated_alice_position.stake > updated_bob_position.stake,
+				"Extending extends stake"
+			);
+			assert!(
+				updated_alice_position.lock_date > updated_bob_position.lock_date,
+				"Extending rewards increases lock time using specific rules"
+			);
+			assert!(
+				updated_charlie_position.pending_rewards[&BTC] >
+					updated_alice_position.pending_rewards[&BTC],
+				"Charlie extended rewards to earlier and so he got more rewards"
+			);
 		});
 	}
 }
