@@ -1,0 +1,35 @@
+name: Check changes to files in composable repo
+description: Outputs a file/folder that a change has been detected on
+inputs:
+  HEAD:
+    description: PR head SHA
+    required: true
+  BASE:
+    description: PR's base repo SHA
+    required: true
+  PREFIX:
+    description: Path to folder
+    required: true
+  NESTING_LEVEL:
+    description: Number of subfolders to cd into when listing changed objects
+    required: true
+    default: "2"
+outputs:
+  paths:
+    description: Change paths
+    value: ${{ steps.check-changes.outputs.paths }}
+  changed:
+    description: Whether or not there were changes to objects under prefix
+    value: ${{ steps.check-changes.outputs.changed }}
+runs:
+  using: composite
+  steps:
+    - name: Create paths
+      env:
+        BASE: ${{ inputs.BASE }}
+        HEAD: ${{ inputs.HEAD }}
+        PREFIX: ${{ inputs.PREFIX }}
+        NESTING_LEVEL: ${{ inputs.NESTING_LEVEL }}
+      id: check-changes
+      shell: bash
+      run: ./.github/lib/check-changes.sh
