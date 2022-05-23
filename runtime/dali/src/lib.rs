@@ -41,7 +41,8 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero,
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, ConvertInto,
+		Zero,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
@@ -1168,7 +1169,7 @@ impl_runtime_apis! {
 		fn current_interest_rate(_market_id: MarketId) -> SafeRpcWrapper<Rate> {
 			SafeRpcWrapper(
 				// TODO: Actually implement this
-				Rate::zero()
+				Rate::max_value()
 				// lending::BorrowIndex::<Runtime>::get(market_id)
 				// 	.unwrap_or_else(Rate::zero)
 			)
