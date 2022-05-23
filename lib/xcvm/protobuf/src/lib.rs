@@ -31,7 +31,7 @@ impl<
 	fn from(instruction: XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>) -> Self {
 		Instruction {
 			instruction: Some(match instruction {
-				XCVMInstruction::Transfer(destination, assets) => {
+				XCVMInstruction::Transfer(destination, assets) =>
 					instruction::Instruction::Transfer(Transfer {
 						destination: Some(Account { addressed: destination.into() }),
 						assets: assets
@@ -39,9 +39,8 @@ impl<
 							.into_iter()
 							.map(|(asset, amount)| (asset, amount.into()))
 							.collect(),
-					})
-				},
-				XCVMInstruction::Bridge(network, assets) => {
+					}),
+				XCVMInstruction::Bridge(network, assets) =>
 					instruction::Instruction::Bridge(Bridge {
 						network: network.into(),
 						assets: assets
@@ -49,11 +48,9 @@ impl<
 							.into_iter()
 							.map(|(asset, amount)| (asset, amount.into()))
 							.collect(),
-					})
-				},
-				XCVMInstruction::Call(payload) => {
-					instruction::Instruction::Call(Call { payload: payload.into() })
-				},
+					}),
+				XCVMInstruction::Call(payload) =>
+					instruction::Instruction::Call(Call { payload: payload.into() }),
 			}),
 		}
 	}
@@ -81,19 +78,17 @@ impl<
 						.collect::<Result<BTreeMap<u32, u128>, ()>>()?
 						.into(),
 				)),
-				instruction::Instruction::Bridge(Bridge { network, assets }) => {
+				instruction::Instruction::Bridge(Bridge { network, assets }) =>
 					Ok(XCVMInstruction::Bridge(
 						network.into(),
 						assets
 							.into_iter()
 							.map(|(asset, amount)| Ok((asset, amount.try_into()?)))
-						  .collect::<Result<BTreeMap<u32, u128>, ()>>()?
+							.collect::<Result<BTreeMap<u32, u128>, ()>>()?
 							.into(),
-					))
-				},
-				instruction::Instruction::Call(Call { payload }) => {
-					Ok(XCVMInstruction::Call(payload.into()))
-				},
+					)),
+				instruction::Instruction::Call(Call { payload }) =>
+					Ok(XCVMInstruction::Call(payload.into())),
 				_ => Err(()),
 			})
 			.unwrap_or(Err(()))

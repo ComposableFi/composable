@@ -1,6 +1,6 @@
-use codec::{Encode, Decode};
-use scale_info::TypeInfo;
 use alloc::vec::Vec;
+use codec::{Decode, Encode};
+use scale_info::TypeInfo;
 
 #[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo)]
 #[repr(transparent)]

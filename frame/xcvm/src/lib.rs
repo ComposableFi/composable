@@ -37,12 +37,13 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::storage::bounded_btree_map::BoundedBTreeMap;
-	use frame_support::traits::tokens::AssetId;
 	use frame_support::{
 		pallet_prelude::*,
-		traits::fungibles::{Inspect as FungiblesInspect, Transfer as FungiblesTransfer},
-		traits::tokens::Balance,
+		storage::bounded_btree_map::BoundedBTreeMap,
+		traits::{
+			fungibles::{Inspect as FungiblesInspect, Transfer as FungiblesTransfer},
+			tokens::{AssetId, Balance},
+		},
 	};
 	use frame_system::pallet_prelude::*;
 	use xcvm_core::{AbiEncoded, XCVMInstruction, XCVMNetwork};

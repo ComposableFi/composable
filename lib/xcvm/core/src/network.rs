@@ -1,6 +1,6 @@
-use codec::{Encode, Decode, MaxEncodedLen};
-use scale_info::TypeInfo;
 use crate::AbiEncoded;
+use codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 
 pub trait Callable {
 	type EncodedCall;
