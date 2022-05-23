@@ -28,10 +28,7 @@ impl<Assets, Options> Stableswap<Assets, Options> {
 	pub fn ethereum_prototype() -> Function {
 		Function {
 			name: "swap".to_owned(),
-			inputs: vec![
-				Param { name: "a".to_owned(), kind: ParamType::Uint(32), internal_type: None },
-				Param { name: "b".to_owned(), kind: ParamType::Bool, internal_type: None },
-			],
+			inputs: vec![],
 			outputs: vec![],
 			constant: None,
 			state_mutability: StateMutability::Payable,
@@ -92,8 +89,12 @@ mod tests {
 				XCVMInstruction::Call(AbiEncoded::empty()),
 				XCVMInstruction::Bridge(XCVMNetwork::ETHEREUM, ()),
 				XCVMInstruction::Call(AbiEncoded::from(vec![
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 74, 17, 213, 238, 170, 194, 142, 195,
+					246, 29, 16, 13, 175, 77, 64, 71, 31, 24, 82, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0, 0,
 					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-					0, 0, 0, 0, 0, 0
+					4, 129, 25, 192, 101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, 0, 0, 0, 0, 0, 0, 0, 0
 				])),
 				XCVMInstruction::Transfer((), ()),
 			]

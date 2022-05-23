@@ -24,6 +24,7 @@ pub mod instruction {
 pub struct Transfer {
     #[prost(message, optional, tag="1")]
     pub destination: ::core::option::Option<Account>,
+    /// (Asset, Amount)
     #[prost(btree_map="uint32, uint64", tag="2")]
     pub assets: ::prost::alloc::collections::BTreeMap<u32, u64>,
 }
@@ -31,6 +32,7 @@ pub struct Transfer {
 pub struct Bridge {
     #[prost(uint32, tag="1")]
     pub network: u32,
+    /// (Asset, Amount)
     #[prost(btree_map="uint32, uint64", tag="2")]
     pub assets: ::prost::alloc::collections::BTreeMap<u32, u64>,
 }
