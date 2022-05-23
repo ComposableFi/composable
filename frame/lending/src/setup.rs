@@ -88,13 +88,19 @@ pub(crate) fn setup_currency_pair<T: Config + pallet_oracle::Config + DeFiCompos
 pub(crate) fn create_market_config<T: Config>(
 	collateral_asset: <T as DeFiComposableConfig>::MayBeAssetId,
 	borrow_asset: <T as DeFiComposableConfig>::MayBeAssetId,
-) -> CreateInput<<T as Config>::LiquidationStrategyId, <T as DeFiComposableConfig>::MayBeAssetId> {
+	max_price_age: <T as frame_system::Config>::BlockNumber,
+) -> CreateInput<
+	<T as Config>::LiquidationStrategyId,
+	<T as DeFiComposableConfig>::MayBeAssetId,
+	<T as frame_system::Config>::BlockNumber,
+> {
 	CreateInput {
 		updatable: UpdateInput {
 			collateral_factor: MoreThanOneFixedU128::saturating_from_rational(200_u128, 100_u128),
 			under_collateralized_warn_percent: Percent::from_percent(10),
 			liquidators: Default::default(),
 			interest_rate_model: InterestRateModel::default(),
+			max_price_age,
 		},
 		reserved_factor: Perquintill::from_percent(10),
 		currency_pair: CurrencyPair::new(collateral_asset, borrow_asset),

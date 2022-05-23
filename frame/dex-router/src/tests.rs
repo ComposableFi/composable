@@ -94,6 +94,19 @@ fn create_usdt_usdc_pool() -> PoolId {
 	create_curve_amm_pool(assets, amounts, amp_coeff, fee, admin_fee)
 }
 
+fn create_usdc_usdt_pool() -> PoolId {
+	let unit = 1_000_000_000_000_u128;
+	// usdc usdt have same price which is 1 USD
+	let initial_usdc = 1_000_000_000 * unit;
+	let initial_usdt = 1_000_000_000 * unit;
+	let amp_coeff = 100;
+	let fee = Permill::zero();
+	let admin_fee = Permill::zero();
+	let assets = CurrencyPair::new(USDC, USDT);
+	let amounts = vec![initial_usdc, initial_usdt];
+	create_curve_amm_pool(assets, amounts, amp_coeff, fee, admin_fee)
+}
+
 fn create_usdt_dai_pool() -> PoolId {
 	let unit = 1_000_000_000_000_u128;
 	// usdc usdt have same price which is 1 USD
@@ -145,6 +158,49 @@ fn get_route_tests() {
 		));
 		assert_eq!(DexRouter::get_route(currency_pair), Some((dex_route.clone(), false)));
 		assert_eq!(DexRouter::get_route(currency_pair.swap()), Some((dex_route, true)));
+	});
+}
+
+#[test]
+fn halborn_hal11_route_with_cycle() {
+	new_test_ext().execute_with(|| {
+		let currency_pair = CurrencyPair { base: USDT, quote: USDC };
+		assert_eq!(DexRouter::get_route(currency_pair), None);
+
+		let dex_route =
+			vec![create_usdt_usdc_pool(), create_usdc_usdt_pool(), create_usdt_usdc_pool()];
+		assert_noop!(
+			DexRouter::update_route(
+				Origin::signed(ALICE),
+				currency_pair,
+				Some(dex_route.clone().try_into().unwrap())
+			),
+			Error::<Test>::LoopSuspectedInRouteUpdate
+		);
+		// An other variant, where same pool is used twice
+		let currency_pair = CurrencyPair { base: USDT, quote: USDC };
+		assert_eq!(DexRouter::get_route(currency_pair), None);
+		let usdt_usdc_pool = create_usdt_usdc_pool();
+		let usdc_usdt_pool = create_usdc_usdt_pool();
+		let dex_route = vec![usdt_usdc_pool, usdc_usdt_pool, usdt_usdc_pool];
+		assert_noop!(
+			DexRouter::update_route(
+				Origin::signed(ALICE),
+				currency_pair,
+				Some(dex_route.clone().try_into().unwrap())
+			),
+			Error::<Test>::LoopSuspectedInRouteUpdate,
+		);
+
+		let dex_route = vec![usdt_usdc_pool, usdc_usdt_pool];
+		assert_noop!(
+			DexRouter::update_route(
+				Origin::signed(ALICE),
+				CurrencyPair::new(USDC, USDC),
+				Some(dex_route.clone().try_into().unwrap())
+			),
+			Error::<Test>::LoopSuspectedInRouteUpdate,
+		);
 	});
 }
 

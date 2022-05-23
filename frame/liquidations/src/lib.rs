@@ -258,7 +258,6 @@ pub mod pallet {
 								"as for now, only auction liquidators implemented",
 							)),
 					};
-
 					if let Ok(order_id) = result {
 						Self::deposit_event(Event::<T>::PositionWasSentToLiquidation {});
 						return Ok(order_id)

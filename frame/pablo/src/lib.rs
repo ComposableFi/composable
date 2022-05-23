@@ -227,6 +227,7 @@ pub mod pallet {
 		MustBeOwner,
 		InvalidSaleState,
 		InvalidAmount,
+		InvalidAsset,
 		CannotRespectMinimumRequested,
 		AssetAmountMustBePositiveNumber,
 		InvalidPair,
@@ -835,12 +836,15 @@ pub mod pallet {
 			let pool_account = Self::account_id(&pool_id);
 			let (base_amount, fees, fee_asset_id) = match pool {
 				PoolConfiguration::StableSwap(info) => {
-					// /!\ NOTE(hussein-aitlahcen): after this check, do not use pool.pair as the
-					// provided pair might have been swapped
-					ensure!(pair == info.pair, Error::<T>::PairMismatch);
 					// NOTE: lp_fees includes owner_fees.
 					let (base_amount_excluding_fees, quote_amount, lp_fees, owner_fees) =
-						StableSwap::<T>::do_compute_swap(&info, &pool_account, quote_amount, true)?;
+						StableSwap::<T>::do_compute_swap(
+							&info,
+							&pool_account,
+							pair,
+							quote_amount,
+							true,
+						)?;
 
 					ensure!(
 						base_amount_excluding_fees >= min_receive,
