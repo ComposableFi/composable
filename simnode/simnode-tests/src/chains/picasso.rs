@@ -6,7 +6,6 @@ use std::error::Error;
 /// run all integration tests
 pub fn run() -> Result<(), Box<dyn Error>> {
 	substrate_simnode::parachain_node::<ChainInfo, _, _>(|node| async move {
-		// test code-substitute for picasso, by authoring blocks past the launch period
 		// test runtime upgrades
 		let code = picasso_runtime::WASM_BINARY.ok_or("Picasso wasm not available")?.to_vec();
 		tests::runtime_upgrade::parachain_runtime_upgrades(&node, code).await?;
