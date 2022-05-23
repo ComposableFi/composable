@@ -189,15 +189,6 @@ pub trait Staking {
 	/// * `to` the account to transfer the final claimed rewards to.
 	fn unstake(instance_id: &Self::InstanceId, to: &Self::AccountId) -> DispatchResult;
 
-	/// Unstake an actual staked position, represented by a NFT.
-	///
-	/// Arguments
-	///
-	/// * `instance_id` the ID uniquely identifiying the NFT from which we will compute the
-	///   available rewards.
-	/// * `to` the account to transfer the final claimed rewards to.
-	fn unstake(instance_id: &Self::InstanceId, to: &Self::AccountId) -> DispatchResult;
-
 	/// Claim the current rewards.
 	///
 	/// Arguments
