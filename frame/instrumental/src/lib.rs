@@ -1,9 +1,9 @@
 //! # Instrumental Pallet
 //!
-//! This pallet will house the logic required by [`Instrumental Finance`]
-//! (https://www.instrumental.finance/); Instrumental will speak to this pallet through the Mosaic
-//! Pallet. This pallet will be responsible for sending assets into their associated vaults and
-//! specifying which strategies should be set for each vault.
+//! This pallet will house the logic required by [`Instrumental Finance`](https://www.instrumental.finance/);
+//! Instrumental will speak to this pallet through the Mosaic Pallet. This pallet will be
+//! responsible for sending assets into their associated vaults and specifying which strategies
+//! should be set for each vault.
 //!
 //! ## Overview
 //!
