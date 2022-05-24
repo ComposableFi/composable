@@ -1,4 +1,4 @@
-use alloc::vec::Vec;
+use alloc::collections::VecDeque;
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 
@@ -7,5 +7,5 @@ pub enum XCVMInstruction<Network, AbiEncoded, Account, Assets> {
 	Transfer(Account, Assets),
 	Bridge(Network, Assets),
 	Call(AbiEncoded),
-	Spawn(Network, Vec<XCVMInstruction<Network, AbiEncoded, Account, Assets>>),
+	Spawn(Network, VecDeque<XCVMInstruction<Network, AbiEncoded, Account, Assets>>),
 }

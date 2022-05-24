@@ -44,6 +44,7 @@ pub mod pallet {
 			fungibles::{Inspect as FungiblesInspect, Transfer as FungiblesTransfer},
 			tokens::{AssetId, Balance},
 		},
+		transactional,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::*};
 	use xcvm_core::*;
@@ -65,7 +66,6 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		InvalidProgramEncoding,
-		InstructionPointerOutOfRange,
 		UnknownAsset,
 		InvalidCallEncoding,
 		CallFailed,
@@ -96,12 +96,13 @@ pub mod pallet {
 		AccountIdOf<T>: TryFrom<Vec<u8>>,
 	{
 		#[pallet::weight(10_000)]
+		#[transactional]
 		pub fn execute(
 			origin: OriginFor<T>,
 			program: BoundedVec<u8, T::MaxProgramSize>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin.clone())?;
-			let program = xcvm_protobuf::decode::<
+			let XCVMProgram { mut instructions } = xcvm_protobuf::decode::<
 				XCVMNetwork,
 				<XCVMNetwork as Callable>::EncodedCall,
 				AccountIdOf<T>,
@@ -109,60 +110,47 @@ pub mod pallet {
 			>(program.as_ref())
 			.map_err(|_| Error::<T>::InvalidProgramEncoding)?;
 
-			let instructions = program.instructions;
-			let mut ip = program.instruction_pointer as usize;
-
-			while ip < instructions.len() {
-				if let Some(instruction) = instructions.get(ip) {
-					match instruction {
-						XCVMInstruction::Transfer(to, XCVMTransfer { assets }) => {
-							for (&asset, &amount) in assets {
-								let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
-									.map_err(|_| Error::<T>::UnknownAsset)?;
-								T::Assets::transfer(
-									concrete_asset,
-									&who,
-									to,
-									amount.saturated_into(),
-									false,
-								)?;
-							}
-						},
-						XCVMInstruction::Call(abi) => {
-							// decoded abi
-							let payload: Vec<u8> = abi.clone().into();
-							let call = <T::Dispatchable as Decode>::decode(&mut &payload[..])
-								.map_err(|_| Error::<T>::InvalidCallEncoding)?;
-							call.dispatch(origin.clone()).map_err(|_| Error::<T>::CallFailed)?;
-						},
-						XCVMInstruction::Bridge(network, XCVMTransfer { assets }) => {
-							for (&asset, &amount) in assets {
-								let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
-									.map_err(|_| Error::<T>::UnknownAsset)?;
-								// TODO: mosaic
-							}
-							Self::deposit_event(Event::<T>::Spawn {
-								network: *network,
-								program: XCVMProgram {
-									instructions: instructions.clone(),
-									instruction_pointer: (ip + 1) as u32,
-								},
-							})
-						},
-						XCVMInstruction::Spawn(network, program) =>
-							Self::deposit_event(Event::<T>::Spawn {
-								network: *network,
-								program: XCVMProgram {
-									instructions: program.clone(),
-									instruction_pointer: 0,
-								},
-							}),
-					}
-				} else {
-					return Err(Error::<T>::InstructionPointerOutOfRange.into())
+			while let Some(instruction) = instructions.pop_front() {
+				match instruction.clone() {
+					XCVMInstruction::Transfer(to, XCVMTransfer { assets }) => {
+						for (asset, amount) in assets {
+							let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
+								.map_err(|_| Error::<T>::UnknownAsset)?;
+							T::Assets::transfer(
+								concrete_asset,
+								&who,
+								&to,
+								amount.saturated_into(),
+								false,
+							)?;
+						}
+					},
+					XCVMInstruction::Call(abi) => {
+						let payload: Vec<u8> = abi.clone().into();
+						let call = <T::Dispatchable as Decode>::decode(&mut &payload[..])
+							.map_err(|_| Error::<T>::InvalidCallEncoding)?;
+						call.dispatch(origin.clone()).map_err(|_| Error::<T>::CallFailed)?;
+					},
+					XCVMInstruction::Bridge(network, XCVMTransfer { assets }) => {
+						for (asset, amount) in assets {
+							let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
+								.map_err(|_| Error::<T>::UnknownAsset)?;
+							// TODO: mosaic
+						}
+						Self::deposit_event(Event::<T>::Spawn {
+							network,
+							program: XCVMProgram { instructions: instructions.clone() },
+						});
+					},
+					XCVMInstruction::Spawn(network, program) =>
+						Self::deposit_event(Event::<T>::Spawn {
+							network,
+							program: XCVMProgram { instructions: program.clone() },
+						}),
 				}
-				ip += 1;
+				Self::deposit_event(Event::<T>::Executed { instruction })
 			}
+
 			Ok(().into())
 		}
 	}

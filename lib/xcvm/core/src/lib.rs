@@ -10,13 +10,12 @@ mod protocol;
 mod types;
 
 pub use crate::{asset::*, instruction::*, network::*, program::*, protocol::*, types::*};
-use alloc::vec::Vec;
+use alloc::collections::VecDeque;
 
 #[derive(Clone)]
 pub struct XCVMProgramBuilder<Network, Instruction> {
 	pub network: Network,
-	pub instructions: Vec<Instruction>,
-	pub instruction_pointer: u32,
+	pub instructions: VecDeque<Instruction>,
 }
 
 impl<Network, Account, Assets>
@@ -25,17 +24,17 @@ where
 	Network: Copy + Callable,
 {
 	pub fn from(network: Network) -> Self {
-		XCVMProgramBuilder { network, instructions: Vec::new(), instruction_pointer: 0 }
+		XCVMProgramBuilder { network, instructions: VecDeque::new() }
 	}
 
 	pub fn transfer(mut self, account: Account, assets: Assets) -> Self {
-		self.instructions.push(XCVMInstruction::Transfer(account, assets));
+		self.instructions.push_back(XCVMInstruction::Transfer(account, assets));
 		self
 	}
 
 	pub fn bridge(mut self, network: Network, assets: Assets) -> Self {
 		self.network = network;
-		self.instructions.push(XCVMInstruction::Bridge(network, assets));
+		self.instructions.push_back(XCVMInstruction::Bridge(network, assets));
 		self
 	}
 
@@ -44,25 +43,18 @@ where
 		T: XCVMProtocol<Network>,
 	{
 		protocol.serialize(self.network).map(|encoded_call| {
-			self.instructions.push(XCVMInstruction::Call(encoded_call));
+			self.instructions.push_back(XCVMInstruction::Call(encoded_call));
 			self
 		})
-	}
-
-	pub fn with_instruction_pointer(mut self, instruction_pointer: u32) -> Self {
-		self.instruction_pointer = instruction_pointer;
-		self
 	}
 
 	pub fn build(
 		self,
 	) -> XCVMProgram<XCVMInstruction<Network, Network::EncodedCall, Account, Assets>> {
-		XCVMProgram {
-			instructions: self.instructions,
-			instruction_pointer: self.instruction_pointer,
-		}
+		XCVMProgram { instructions: self.instructions }
 	}
 }
+
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -127,12 +119,12 @@ mod tests {
 
 		assert_eq!(
 			contract.instructions,
-			vec![
+			VecDeque::from(vec![
 				XCVMInstruction::Call(AbiEncoded::from(vec![202, 254, 186, 190])),
 				XCVMInstruction::Bridge(XCVMNetwork::ETHEREUM, ()),
 				XCVMInstruction::Call(AbiEncoded::from(vec![222, 173, 192, 222])),
 				XCVMInstruction::Transfer((), ()),
-			]
+			])
 		);
 	}
 }
