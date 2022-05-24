@@ -9,6 +9,8 @@ jobs:
   tests:
     name: Composable Test
     runs-on: [ubuntu-latest]
+    container:
+      image: composablefi/ci-linux:2022-04-18
     steps:
     - uses: actions/checkout@v2
 
@@ -17,7 +19,7 @@ jobs:
         cd scripts/polkadot-launch
         git clone -b main https://github.com/ComposableFi/composable
         cd composable
-        docker run --rm -v$(pwd):/build --workdir /build composablefi/ci-linux:2022-04-18 cargo build --release
+        cargo build --release
         target/release/composable --version
 
     - name: Build a Polkadot relay chain
@@ -25,7 +27,7 @@ jobs:
         cd scripts/polkadot-launch
         git clone -b mmr-polkadot-v0.9.22 https://github.com/composableFi/polkadot
         cd polkadot
-        docker run --rm -v$(pwd):/build --workdir /build composablefi/ci-linux:2022-04-18 cargo build --release
+        cargo build --release
         ./target/release/polkadot --version
 
     - name: Run polkadot-launch
@@ -49,6 +51,8 @@ jobs:
         done < <(tail -f "${LOG_FILE}")
 
     - name: Run Test
+      env:
+        NODE_ENDPOINT: "ws://composable:9944"
       run: |
-        docker run --rm -v$(pwd):/build -e "NODE_ENDPOINT=ws://composable:9944" --workdir /build --network beefy_client_network composablefi/ci-linux:2022-04-18 cargo test
+        cargo test
 
