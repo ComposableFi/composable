@@ -71,7 +71,7 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		ProgramNotWellFormed,
+		InvalidProgramEncoding,
 		InstructionPointerOutOfRange,
 	}
 
@@ -114,7 +114,7 @@ pub mod pallet {
 				AccountIdOf<T>,
 				BTreeMap<u32, u128>,
 			>(program.as_ref())
-			.map_err(|_| Error::<T>::ProgramNotWellFormed)?;
+			.map_err(|_| Error::<T>::InvalidProgramEncoding)?;
 
 			let instructions = program.instructions;
 			let mut ip = program.instruction_pointer;
@@ -122,9 +122,15 @@ pub mod pallet {
 			while ip < instructions.len() as u32 {
 				if let Some(instruction) = instructions.get(ip as usize) {
 					match instruction {
-						XCVMInstruction::Transfer(to, assets) => {},
-						XCVMInstruction::Call(abi) => {},
-						XCVMInstruction::Bridge(network, assets) => {},
+						XCVMInstruction::Transfer(to, assets) => {
+							// T::Assets::transfer(origin, to.clone(), assets.clone())?;
+						},
+						XCVMInstruction::Call(abi) => {
+							// decoded abi
+						},
+						XCVMInstruction::Bridge(network, assets) => {
+							// mosaic?
+						},
 					}
 				} else {
 					return Err(Error::<T>::InstructionPointerOutOfRange.into());
