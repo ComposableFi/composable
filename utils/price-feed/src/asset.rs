@@ -1,10 +1,8 @@
-use serde::Serialize;
+use primitives::currency::CurrencyId;
 use std::{
 	collections::{HashMap, HashSet},
 	convert::TryFrom,
 	fmt::Display,
-	num::ParseIntError,
-	str::FromStr,
 };
 
 custom_derive! {
@@ -21,51 +19,23 @@ pub const VALID_PRICE_QUOTE_ASSETS: &[Asset] = &[Asset::USDT, Asset::USDC];
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct AssetPair(pub Asset, pub Asset);
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize)]
-#[repr(transparent)]
-pub struct AssetIndex(u128);
-
-impl core::fmt::Display for AssetIndex {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		write!(f, "{}", self.0)
-	}
-}
-
-pub enum AssetIndexError {
-	NotANumber(ParseIntError),
-	AssetNotFound,
-}
-
 lazy_static! {
 	/*
 	  The map of valid asset we are allowed to ask price for.
 	  We must not swap two indexes.
 	*/
-	pub static ref INDEX_TO_ASSET: HashMap<AssetIndex, Asset> = [
-		(primitives::currency::CurrencyId::KSM.0, Asset::KSM),
-		(18_u128, Asset::USDT),
-		(19_u128, Asset::USDC),
+	pub static ref INDEX_TO_ASSET: HashMap<CurrencyId, Asset> = [
+		(primitives::currency::CurrencyId::KSM, Asset::KSM),
+		(primitives::currency::CurrencyId::USDT, Asset::USDT),
+		(primitives::currency::CurrencyId::USDC, Asset::USDC),
 	]
 	.iter()
-	.map(|&(i, a)| (AssetIndex(i), a))
+	.map(|&(i, a)| (i, a))
 	.collect();
-	pub static ref ASSET_TO_INDEX: HashMap<Asset, AssetIndex> =
+	pub static ref ASSET_TO_INDEX: HashMap<Asset, CurrencyId> =
 		INDEX_TO_ASSET.iter().map(|(&i, &a)| (a, i)).collect();
 	pub static ref VALID_ASSETS: HashSet<Asset> =
 		INDEX_TO_ASSET.values().copied().collect();
-}
-
-impl FromStr for AssetIndex {
-	type Err = AssetIndexError;
-	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		let asset_pair_index =
-			AssetIndex(FromStr::from_str(s).map_err(AssetIndexError::NotANumber)?);
-		if INDEX_TO_ASSET.contains_key(&asset_pair_index) {
-			Ok(asset_pair_index)
-		} else {
-			Err(AssetIndexError::AssetNotFound)
-		}
-	}
 }
 
 impl AssetPair {
@@ -80,17 +50,17 @@ impl AssetPair {
 	}
 }
 
-impl TryFrom<Asset> for AssetIndex {
+impl TryFrom<Asset> for CurrencyId {
 	type Error = ();
-	fn try_from(asset: Asset) -> Result<AssetIndex, Self::Error> {
+	fn try_from(asset: Asset) -> Result<CurrencyId, Self::Error> {
 		ASSET_TO_INDEX.get(&asset).copied().ok_or(())
 	}
 }
 
-impl TryFrom<AssetIndex> for Asset {
+impl TryFrom<CurrencyId> for Asset {
 	type Error = ();
-	fn try_from(asset_index: AssetIndex) -> Result<Asset, Self::Error> {
-		INDEX_TO_ASSET.get(&asset_index).copied().ok_or(())
+	fn try_from(currency_index: CurrencyId) -> Result<Asset, Self::Error> {
+		INDEX_TO_ASSET.get(&currency_index).copied().ok_or(())
 	}
 }
 
