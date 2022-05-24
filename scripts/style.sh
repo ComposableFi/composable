@@ -2,34 +2,6 @@
 
 NIGHTLY_VERSION="2022-04-18"
 
-cargo_fmt() {
-    rustfmt_check=""
-    rustfmt_verbose=""
-
-    if [[ $1 = "check" ]]; then
-        rustfmt_check="-- --check"
-    fi
-
-    if [[ $2 = "verbose" ]]; then
-        rustfmt_verbose="--verbose"
-    fi
-
-    cargo +nightly-${NIGHTLY_VERSION} fmt --all ${rustfmt_verbose} ${rustfmt_check}
-}
-
-taplo_fmt() {
-    taplo_verbose=""
-    if [[ $2 = "verbose" ]]; then
-        taplo_verbose="--verbose"
-    fi
-
-    if [[ $1 = "check" ]]; then
-        taplo check ${taplo_verbose}
-    else
-        taplo fmt ${taplo_verbose}
-    fi
-}
-
 usage() {
     cat <<EOF
 Formats all the code in the repository.
@@ -44,14 +16,56 @@ Options:
 EOF
 }
 
+# Global configuration variiables, read by all the formatting functions
+check=""
+verbose=""
+
+cargo_fmt() {
+    rustfmt_check=""
+    rustfmt_verbose=""
+
+    if [[ ${check} = "check" ]]; then
+        rustfmt_check="-- --check"
+    fi
+
+    if [[ ${verbose} = "verbose" ]]; then
+        rustfmt_verbose="--verbose"
+    fi
+
+    cargo +nightly-${NIGHTLY_VERSION} fmt --all ${rustfmt_verbose} ${rustfmt_check}
+}
+
+taplo_fmt() {
+    taplo_verbose=""
+    if [[ ${verbose} = "verbose" ]]; then
+        taplo_verbose="--verbose"
+    fi
+
+    if [[ ${check} = "check" ]]; then
+        taplo check ${taplo_verbose}
+    else
+        taplo fmt ${taplo_verbose}
+    fi
+}
+
+prettier_fmt() {
+    # NOTE: Prettier doesn't support verbose output
+    cd integration-tests/runtime-tests
+
+    if [[ ${check} = "check" ]]; then
+        npx prettier --check .
+    else
+        npx prettier --write .
+    fi
+
+    cd ../..
+}
+
 # install taplo if it isn't already
 maybe_taplo=$(whereis taplo)
 if [[ ${maybe_taplo} = "taplo: " ]]; then
     cargo install taplo-cli 2>/dev/null
 fi
-
-check=""
-verbose=""
 
 for arg in "$@"; do
     case $arg in
@@ -75,3 +89,4 @@ done
 
 cargo_fmt ${check} ${verbose}
 taplo_fmt ${check} ${verbose}
+prettier_fmt ${check} ${verbose}
