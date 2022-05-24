@@ -337,6 +337,7 @@ export async function processSwappedEvent(ctx: EventHandlerContext, event: Pablo
         if (quoteAsset == undefined) {
             throw new Error('quoteAsset not found');
         }
+        let feesLeavingPool = swappedEvt.fee.fee - swappedEvt.fee.lpFee;
         let spotPrice = isReverse
             ? Big(swappedEvt.baseAmount.toString()).div(Big(swappedEvt.quoteAmount.toString()))
             : Big(swappedEvt.quoteAmount.toString()).div(Big(swappedEvt.baseAmount.toString()));
@@ -350,7 +351,7 @@ export async function processSwappedEvent(ctx: EventHandlerContext, event: Pablo
             // for reverse exchange "default quote" (included as the base amount in the evt) amount leaves the pool
             baseAsset.totalLiquidity += swappedEvt.quoteAmount;
             quoteAsset.totalLiquidity -= swappedEvt.baseAmount;
-            quoteAsset.totalLiquidity -= swappedEvt.fee.fee;
+            quoteAsset.totalLiquidity -= feesLeavingPool;
          } else {
             console.debug('Normal swap');
             // volume
@@ -360,14 +361,14 @@ export async function processSwappedEvent(ctx: EventHandlerContext, event: Pablo
 
             // for normal exchange "default quote" amount gets into the pool
             baseAsset.totalLiquidity -= swappedEvt.baseAmount;
-            baseAsset.totalLiquidity -= swappedEvt.fee.fee;
+            baseAsset.totalLiquidity -= feesLeavingPool;
             quoteAsset.totalLiquidity += swappedEvt.quoteAmount;
         }
         // fee and liquidity
-        const fee = calculateFeeInQuoteAsset(spotPrice, quoteAsset.assetId, swappedEvt.fee.assetId, swappedEvt.fee.fee);
         pool.totalLiquidity = Big(pool.totalLiquidity)
-            .sub(fee)
+            .sub(calculateFeeInQuoteAsset(spotPrice, quoteAsset.assetId, swappedEvt.fee.assetId, feesLeavingPool))
             .toString();
+        const fee = calculateFeeInQuoteAsset(spotPrice, quoteAsset.assetId, swappedEvt.fee.assetId, swappedEvt.fee.fee);
         pool.totalFees = Big(pool.totalFees)
             .add(fee)
             .toString();
