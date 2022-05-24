@@ -1,6 +1,6 @@
 use crate::{
-    self as pallet_airdrop,
-    models::{Proof, RemoteAccount}
+	self as pallet_airdrop,
+	models::{Proof, RemoteAccount},
 };
 use codec::Encode;
 use composable_support::types::{EcdsaSignature, EthereumAddress};
@@ -12,7 +12,7 @@ use frame_system as system;
 use sp_core::{ed25519, keccak_256, Pair, H256};
 use sp_runtime::{
 	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
-	AccountId32
+	AccountId32,
 };
 use sp_std::vec::Vec;
 
@@ -33,15 +33,14 @@ pub const VESTING_STEP: Moment = 3600 * 24 * 7;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
 type Block = frame_system::mocking::MockBlock<MockRuntime>;
 
-
 parameter_types! {
-    pub const BlockHashCount: u32 = 250;
-    pub const MaxConsumers: u32 = 10;
-    pub const MaxOverFlow: u32 = 10;
+	pub const BlockHashCount: u32 = 250;
+	pub const MaxConsumers: u32 = 10;
+	pub const MaxOverFlow: u32 = 10;
 }
 
 impl system::Config for MockRuntime {
-    type Origin = Origin;
+	type Origin = Origin;
 	type Index = u64;
 	type BlockNumber = BlockNumber;
 	type Call = Call;
@@ -68,7 +67,7 @@ impl system::Config for MockRuntime {
 }
 
 impl pallet_balances::Config for MockRuntime {
-    type Balance = Balance;
+	type Balance = Balance;
 	type Event = Event;
 	type DustRemoval = ();
 	type ExistentialDeposit = ();
@@ -80,79 +79,81 @@ impl pallet_balances::Config for MockRuntime {
 }
 
 parameter_types! {
-    pub const AirdropPalletId: PalletId = PalletId(*b"pal_aird");
-    pub const Prefix: &'static [u8] = PROOF_PREFIX;
-    pub const Stake: Balance = 10_000;
-    pub const VestingStep: Moment = VESTING_STEP;
+	pub const AirdropPalletId: PalletId = PalletId(*b"pal_aird");
+	pub const Prefix: &'static [u8] = PROOF_PREFIX;
+	pub const Stake: Balance = 10_000;
+	pub const VestingStep: Moment = VESTING_STEP;
 }
 
 impl pallet_airdrop::Config for MockRuntime {
-    type AirdropId = AirdropId;
-    type Balance = Balance;
-    type Convert = ConvertInto;
-    type Event = Event;
-    type Moment = Moment;
-    type RelayChainAccountId = RelayChainAccountId;
-    type RecipientFundAsset = Balances;
-    type Time = Timestamp;
-    type PalletId = AirdropPalletId;
-    type Prefix = Prefix;
-    type Stake = Stake;
-    type WeightInfo = ();
+	type AirdropId = AirdropId;
+	type Balance = Balance;
+	type Convert = ConvertInto;
+	type Event = Event;
+	type Moment = Moment;
+	type RelayChainAccountId = RelayChainAccountId;
+	type RecipientFundAsset = Balances;
+	type Time = Timestamp;
+	type PalletId = AirdropPalletId;
+	type Prefix = Prefix;
+	type Stake = Stake;
+	type WeightInfo = ();
 }
 
 parameter_types! {
-    pub const MinimumPeriod: u64 = 6000;
+	pub const MinimumPeriod: u64 = 6000;
 }
 
 impl pallet_timestamp::Config for MockRuntime {
-    type MinimumPeriod = MinimumPeriod;
-    type Moment = Moment;
-    type OnTimestampSet = ();
-    type WeightInfo = ();
+	type MinimumPeriod = MinimumPeriod;
+	type Moment = Moment;
+	type OnTimestampSet = ();
+	type WeightInfo = ();
 }
 
 construct_runtime!(
-    pub enum MockRuntime where
-        Block = Block, 
-        NodeBlock = Block,
-        UncheckedExtrinsic = UncheckedExtrinsic 
-    {
-        System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
-        Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
+	pub enum MockRuntime where
+		Block = Block,
+		NodeBlock = Block,
+		UncheckedExtrinsic = UncheckedExtrinsic
+	{
+		System: frame_system::{Pallet, Call, Storage, Config, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
 		Balances: pallet_balances::{Pallet, Storage, Event<T>, Config<T>},
-        Airdrop: pallet_airdrop::{Pallet, Storage, Call, Event<T>}
-    }
+		Airdrop: pallet_airdrop::{Pallet, Storage, Call, Event<T>}
+	}
 );
 
 #[derive(Default)]
 pub struct ExtBuilder {
-    pub(crate) balances: Vec<(AccountId, Balance)>,
+	pub(crate) balances: Vec<(AccountId, Balance)>,
 }
 
 impl ExtBuilder {
-    pub fn build(self) -> sp_io::TestExternalities {
-        let mut storage = frame_system::GenesisConfig::default().build_storage::<MockRuntime>().unwrap();
-        pallet_balances::GenesisConfig::<MockRuntime> { balances: self.balances }
-            .assimilate_storage(&mut storage)
-            .unwrap();
-        storage.into()
-    }
+	pub fn build(self) -> sp_io::TestExternalities {
+		let mut storage =
+			frame_system::GenesisConfig::default().build_storage::<MockRuntime>().unwrap();
+		pallet_balances::GenesisConfig::<MockRuntime> { balances: self.balances }
+			.assimilate_storage(&mut storage)
+			.unwrap();
+		storage.into()
+	}
 }
 
 #[derive(Clone)]
 pub enum ClaimKey {
-    Relay(RelayKey),
-    Eth(EthKey),
+	Relay(RelayKey),
+	Eth(EthKey),
 }
 
 impl ClaimKey {
-    pub fn as_remote_public(&self) -> RemoteAccount<RelayChainAccountId> {
-        match self {
-            ClaimKey::Relay(relay_account) => RemoteAccount::RelayChain(relay_account.public().into()),
-            ClaimKey::Eth(eth_account) => RemoteAccount::Ethereum(ethereum_address(eth_account)),
-        }
-    }
+	pub fn as_remote_public(&self) -> RemoteAccount<RelayChainAccountId> {
+		match self {
+			ClaimKey::Relay(relay_account) =>
+				RemoteAccount::RelayChain(relay_account.public().into()),
+			ClaimKey::Eth(eth_account) => RemoteAccount::Ethereum(ethereum_address(eth_account)),
+		}
+	}
 
 	pub fn proof(self, reward_account: AccountId32) -> Proof<[u8; 32]> {
 		match self {
@@ -161,7 +162,11 @@ impl ClaimKey {
 		}
 	}
 
-	pub fn claim(&self, airdrop_id: AirdropId, reward_account: AccountId) -> DispatchResultWithPostInfo {
+	pub fn claim(
+		&self,
+		airdrop_id: AirdropId,
+		reward_account: AccountId,
+	) -> DispatchResultWithPostInfo {
 		let proof = match self {
 			ClaimKey::Relay(relay_account) => relay_proof(relay_account, reward_account.clone()),
 			ClaimKey::Eth(ethereum_account) =>
@@ -246,4 +251,3 @@ pub fn generate_accounts(count: u64) -> Vec<(AccountId, ClaimKey)> {
 	x.append(&mut y);
 	x
 }
-

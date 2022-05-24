@@ -16,9 +16,9 @@ pub mod pallet {
 	use std::fmt::Debug;
 
 	use crate::{
-        models::{Airdrop, AirdropState, Proof, RecipientFund, RemoteAccount},
-        weights::WeightInfo,
-    };
+		models::{Airdrop, AirdropState, Proof, RecipientFund, RemoteAccount},
+		weights::WeightInfo,
+	};
 	use codec::{Codec, FullCodec, MaxEncodedLen};
 	use composable_support::{
 		abstractions::{
@@ -98,7 +98,7 @@ pub mod pallet {
 		AirdropDoesNotExist,
 		AirdropIsNotEnabled,
 		BackToTheFuture,
-        NotAirdropCreator,
+		NotAirdropCreator,
 		NothingToClaim,
 		RecipientAlreadyClaimed,
 		RecipientNotFound,
@@ -170,8 +170,8 @@ pub mod pallet {
 		#[pallet::constant]
 		type Stake: Get<BalanceOf<Self>>;
 
-        /// The implementation of extrinsic weights.
-        type WeightInfo: WeightInfo;
+		/// The implementation of extrinsic weights.
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
@@ -218,17 +218,21 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Create a new Airdrop. This requires that the user puts down a stake in PICA.
-        ///
-        /// If `start_at` is `Some(MomentOf<T>)` and the `MomentOf<T>` is greater than the current
-        /// block, the Airdrop will be scheduled to start automatically.
+		///
+		/// If `start_at` is `Some(MomentOf<T>)` and the `MomentOf<T>` is greater than the current
+		/// block, the Airdrop will be scheduled to start automatically.
 		///
 		/// Can be called by any signed origin.
 		#[pallet::weight(<T as Config>::WeightInfo::create_airdrop(1))]
 		#[transactional]
-		pub fn create_airdrop(origin: OriginFor<T>, start_at: Option<MomentOf<T>>, vesting_schedule: MomentOf<T>) -> DispatchResult {
-            let creator = ensure_signed(origin)?;
+		pub fn create_airdrop(
+			origin: OriginFor<T>,
+			start_at: Option<MomentOf<T>>,
+			vesting_schedule: MomentOf<T>,
+		) -> DispatchResult {
+			let creator = ensure_signed(origin)?;
 
-            <Self as AirdropManagement>::create_airdrop(creator, start_at, vesting_schedule)
+			<Self as AirdropManagement>::create_airdrop(creator, start_at, vesting_schedule)
 		}
 
 		/// Add one or more recipients to the Airdrop, specifying the token amount that each
@@ -237,10 +241,14 @@ pub mod pallet {
 		/// Only callable by the origin that created the Airdrop.
 		#[pallet::weight(<T as Config>::WeightInfo::add_recipient(10_000))]
 		#[transactional]
-		pub fn add_recipient(origin: OriginFor<T>, airdrop_id: T::AirdropId, recipients: Vec<(RemoteAccountOf<T>, BalanceOf<T>, bool)>) -> DispatchResult {
-            let origin_id = ensure_signed(origin)?;
+		pub fn add_recipient(
+			origin: OriginFor<T>,
+			airdrop_id: T::AirdropId,
+			recipients: Vec<(RemoteAccountOf<T>, BalanceOf<T>, bool)>,
+		) -> DispatchResult {
+			let origin_id = ensure_signed(origin)?;
 
-            <Self as AirdropManagement>::add_recipient(origin_id, airdrop_id, recipients)
+			<Self as AirdropManagement>::add_recipient(origin_id, airdrop_id, recipients)
 		}
 
 		/// Remove a recipient from an Airdrop.
@@ -248,10 +256,14 @@ pub mod pallet {
 		/// Only callable by the origin that created the Airdrop.
 		#[pallet::weight(<T as Config>::WeightInfo::remove_recipient(10_000))]
 		#[transactional]
-		pub fn remove_recipient(origin: OriginFor<T>, airdrop_id: T::AirdropId, recipient: RemoteAccountOf<T>) -> DispatchResult {
-            let origin_id = ensure_signed(origin)?;
+		pub fn remove_recipient(
+			origin: OriginFor<T>,
+			airdrop_id: T::AirdropId,
+			recipient: RemoteAccountOf<T>,
+		) -> DispatchResult {
+			let origin_id = ensure_signed(origin)?;
 
-            <Self as AirdropManagement>::remove_recipient(origin_id, airdrop_id, recipient)
+			<Self as AirdropManagement>::remove_recipient(origin_id, airdrop_id, recipient)
 		}
 
 		/// Start an Airdrop.
@@ -263,9 +275,9 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::enable_airdrop(1))]
 		#[transactional]
 		pub fn enable_airdrop(origin: OriginFor<T>, airdrop_id: T::AirdropId) -> DispatchResult {
-            let origin_id = ensure_signed(origin)?;
+			let origin_id = ensure_signed(origin)?;
 
-            <Self as AirdropManagement>::enable_airdrop(origin_id, airdrop_id)
+			<Self as AirdropManagement>::enable_airdrop(origin_id, airdrop_id)
 		}
 
 		/// Stop an Airdrop.
@@ -274,10 +286,10 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::disable_airdrop(1))]
 		#[transactional]
 		pub fn disable_airdrop(origin: OriginFor<T>, airdrop_id: T::AirdropId) -> DispatchResult {
-            let origin_id = ensure_signed(origin)?;
+			let origin_id = ensure_signed(origin)?;
 
-            <Self as AirdropManagement>::disable_airdrop(origin_id, airdrop_id)?;
-            Ok(())
+			<Self as AirdropManagement>::disable_airdrop(origin_id, airdrop_id)?;
+			Ok(())
 		}
 
 		/// Claim recipient funds from an Airdrop.
@@ -293,27 +305,25 @@ pub mod pallet {
 			reward_account: T::AccountId,
 			proof: ProofOf<T>,
 		) -> DispatchResultWithPostInfo {
-            let remote_account = Self::get_remote_account(proof, &reward_account, T::Prefix::get())?;
+			let remote_account =
+				Self::get_remote_account(proof, &reward_account, T::Prefix::get())?;
 
-            match Associations::<T>::get(airdrop_id, reward_account.clone()) {
-                // Confirm association matches
-                Some(associated_account) => {
-                    ensure!(
-                        associated_account == remote_account,
-                        Error::<T>::InvalidProof
-                    );
-                },
-                // If no association exist, create a new one
-                None => {
-                    Associations::<T>::insert(
-                        airdrop_id,
-                        reward_account.clone(),
-                        remote_account.clone(),
-                    );
-                },
-            }
+			match Associations::<T>::get(airdrop_id, reward_account.clone()) {
+				// Confirm association matches
+				Some(associated_account) => {
+					ensure!(associated_account == remote_account, Error::<T>::InvalidProof);
+				},
+				// If no association exist, create a new one
+				None => {
+					Associations::<T>::insert(
+						airdrop_id,
+						reward_account.clone(),
+						remote_account.clone(),
+					);
+				},
+			}
 
-            <Self as AirdropManagement>::claim(airdrop_id, remote_account, reward_account)
+			<Self as AirdropManagement>::claim(airdrop_id, remote_account, reward_account)
 		}
 	}
 
@@ -327,7 +337,9 @@ pub mod pallet {
 		///
 		/// # Errors
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
-		pub(crate) fn get_airdrop(airdrop_id: &T::AirdropId) -> Result<AirdropOf<T>, DispatchError> {
+		pub(crate) fn get_airdrop(
+			airdrop_id: &T::AirdropId,
+		) -> Result<AirdropOf<T>, DispatchError> {
 			Airdrops::<T>::try_get(airdrop_id).map_err(|_| Error::<T>::AirdropDoesNotExist.into())
 		}
 
@@ -603,13 +615,13 @@ pub mod pallet {
 		/// If a recipient is already a member of an Airdrop, their previous entry will be
 		/// replaced for that Airdrop.
 		fn add_recipient(
-            origin_id: Self::AccountId,
+			origin_id: Self::AccountId,
 			airdrop_id: Self::AirdropId,
 			recipients: Self::RecipientCollection,
 		) -> DispatchResult {
 			let airdrop = Self::get_airdrop(&airdrop_id)?;
 
-            ensure!(airdrop.creator == origin_id, Error::<T>::NotAirdropCreator);
+			ensure!(airdrop.creator == origin_id, Error::<T>::NotAirdropCreator);
 
 			// Calculate total funds and recipients local to this transaction
 			let (transaction_funds, transaction_recipients) = recipients.iter().try_fold(
@@ -627,7 +639,7 @@ pub mod pallet {
 					.safe_sub(&T::Stake::get())?;
 			// Total amount of funds to be required by this Airdrop
 			let total_funds = airdrop.total_funds.safe_add(&transaction_funds)?;
-            let total_recipients = airdrop.total_recipients.safe_add(&transaction_recipients)?;
+			let total_recipients = airdrop.total_recipients.safe_add(&transaction_recipients)?;
 
 			// If the airdrop can't support the total amount of claimable funds
 			if current_funds < total_funds {
@@ -655,13 +667,16 @@ pub mod pallet {
 			});
 
 			// Update Airdrop statistics
-            Airdrops::<T>::try_mutate(airdrop_id, |airdrop| {
-                airdrop.as_mut().map(|airdrop| {
-                    airdrop.total_funds = total_funds;
-                    airdrop.total_recipients = total_recipients;
-                    Ok(())
-                }).unwrap_or_else(|| Err(Error::<T>::AirdropDoesNotExist))
-            })?;
+			Airdrops::<T>::try_mutate(airdrop_id, |airdrop| {
+				airdrop
+					.as_mut()
+					.map(|airdrop| {
+						airdrop.total_funds = total_funds;
+						airdrop.total_recipients = total_recipients;
+						Ok(())
+					})
+					.unwrap_or_else(|| Err(Error::<T>::AirdropDoesNotExist))
+			})?;
 
 			Ok(())
 		}
@@ -675,12 +690,12 @@ pub mod pallet {
 		/// * `RecipientNotFound` - No recipient associated with the remote_account could be found.
 		/// * `RecipientAlreadyClaimed` - The recipient has already began claiming their funds.
 		fn remove_recipient(
-            origin_id: Self::AccountId,
+			origin_id: Self::AccountId,
 			airdrop_id: Self::AirdropId,
 			recipient: Self::Recipient,
 		) -> DispatchResult {
-            let airdrop = Self::get_airdrop(&airdrop_id)?;
-            ensure!(airdrop.creator == origin_id, Error::<T>::NotAirdropCreator);
+			let airdrop = Self::get_airdrop(&airdrop_id)?;
+			ensure!(airdrop.creator == origin_id, Error::<T>::NotAirdropCreator);
 
 			let airdrop_account = Self::get_airdrop_account_id(airdrop_id);
 			let recipient_fund = Self::get_recipient_fund(airdrop_id, recipient.clone())?;
@@ -712,9 +727,9 @@ pub mod pallet {
 
 			RecipientFunds::<T>::remove(airdrop_id, recipient);
 
-            if Self::prune_airdrop(airdrop_id)? {
-                Self::deposit_event(Event::AirdropEnded { airdrop_id, at: T::Time::now() })
-            }
+			if Self::prune_airdrop(airdrop_id)? {
+				Self::deposit_event(Event::AirdropEnded { airdrop_id, at: T::Time::now() })
+			}
 
 			Ok(())
 		}
@@ -727,11 +742,11 @@ pub mod pallet {
 		/// start
 		/// * `BackToTheFuture` - The provided `start` has already passed
 		fn enable_airdrop(
-            origin_id: Self::AccountId,
-            airdrop_id: Self::AirdropId
-        ) -> DispatchResult {
-            let airdrop = Self::get_airdrop(&airdrop_id)?;
-            ensure!(airdrop.creator == origin_id, Error::<T>::NotAirdropCreator);
+			origin_id: Self::AccountId,
+			airdrop_id: Self::AirdropId,
+		) -> DispatchResult {
+			let airdrop = Self::get_airdrop(&airdrop_id)?;
+			ensure!(airdrop.creator == origin_id, Error::<T>::NotAirdropCreator);
 
 			Self::start_airdrop_at(airdrop_id, T::Time::now())?;
 			Ok(())
@@ -744,11 +759,11 @@ pub mod pallet {
 		/// # Errors
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
 		fn disable_airdrop(
-            origin_id: Self::AccountId,
-            airdrop_id: Self::AirdropId
-        ) -> Result<Self::Balance, DispatchError> {
-            let airdrop = Self::get_airdrop(&airdrop_id)?;
-            ensure!(airdrop.creator == origin_id, Error::<T>::NotAirdropCreator);
+			origin_id: Self::AccountId,
+			airdrop_id: Self::AirdropId,
+		) -> Result<Self::Balance, DispatchError> {
+			let airdrop = Self::get_airdrop(&airdrop_id)?;
+			ensure!(airdrop.creator == origin_id, Error::<T>::NotAirdropCreator);
 
 			let unclaimed_funds = Airdrops::<T>::try_mutate(airdrop_id, |airdrop| {
 				airdrop
@@ -757,10 +772,10 @@ pub mod pallet {
 						let at = T::Time::now();
 						let unclaimed_funds = airdrop.total_funds - airdrop.claimed_funds;
 
-                        // REVEIW: Checking each recipient fund to see if they have started
-                        // cliaming could prove to be expensive. Should we instead require that all
-                        // funds be claimed for an airdrop to end?
-                        // sets claimed funds equal to total funds so the airdrop can be pruned
+						// REVEIW: Checking each recipient fund to see if they have started
+						// cliaming could prove to be expensive. Should we instead require that all
+						// funds be claimed for an airdrop to end?
+						// sets claimed funds equal to total funds so the airdrop can be pruned
 						airdrop.disabled = true;
 						airdrop.claimed_funds = airdrop.total_funds;
 
@@ -783,7 +798,7 @@ pub mod pallet {
 			reward_account: Self::AccountId,
 		) -> DispatchResultWithPostInfo {
 			let airdrop_account = Self::get_airdrop_account_id(airdrop_id);
-			let (available_to_claim, recipient_fund)=
+			let (available_to_claim, recipient_fund) =
 				RecipientFunds::<T>::try_mutate(airdrop_id, remote_account.clone(), |fund| {
 					fund.as_mut()
 						.map(|fund| {
@@ -824,15 +839,15 @@ pub mod pallet {
 					.unwrap_or_else(|| Err(Error::<T>::AirdropDoesNotExist))
 			})?;
 
-            if Self::prune_airdrop(airdrop_id)? {
-                Self::deposit_event(Event::AirdropEnded { airdrop_id, at: T::Time::now() })
-            }
+			if Self::prune_airdrop(airdrop_id)? {
+				Self::deposit_event(Event::AirdropEnded { airdrop_id, at: T::Time::now() })
+			}
 
-            if recipient_fund.funded_claim {
-                return Ok(Pays::No.into())
-            }
+			if recipient_fund.funded_claim {
+				return Ok(Pays::No.into())
+			}
 
-            Ok(Pays::Yes.into())
+			Ok(Pays::Yes.into())
 		}
 	}
 

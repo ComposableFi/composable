@@ -24,29 +24,26 @@ pub trait AirdropManagement {
 
 	/// Add one or more recipients to an Airdrop.
 	fn add_recipient(
-        origin_id: Self::AccountId,
+		origin_id: Self::AccountId,
 		airdrop_id: Self::AirdropId,
 		recipients: Self::RecipientCollection,
 	) -> DispatchResult;
 
 	/// Remove a recipient from an Airdrop.
 	fn remove_recipient(
-        origin_id: Self::AccountId,
-        airdrop_id: Self::AirdropId, 
-        recipient: Self::Recipient
-    ) -> DispatchResult;
+		origin_id: Self::AccountId,
+		airdrop_id: Self::AirdropId,
+		recipient: Self::Recipient,
+	) -> DispatchResult;
 
 	/// Start an Airdrop.
-	fn enable_airdrop(
-        origin_id: Self::AccountId,
-        airdrop_id: Self::AirdropId
-    ) -> DispatchResult;
+	fn enable_airdrop(origin_id: Self::AccountId, airdrop_id: Self::AirdropId) -> DispatchResult;
 
 	/// Stop an Airdrop.
 	fn disable_airdrop(
-        origin_id: Self::AccountId,
-        airdrop_id: Self::AirdropId
-    ) -> Result<Self::Balance, DispatchError>;
+		origin_id: Self::AccountId,
+		airdrop_id: Self::AirdropId,
+	) -> Result<Self::Balance, DispatchError>;
 
 	/// Claim a recipient reward from an Airdrop.
 	fn claim(
