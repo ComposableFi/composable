@@ -10,12 +10,12 @@ use crate::{
 		accounts::{ALICE, BOB},
 		assets::USDC,
 		runtime::{
-			Assets as AssetsPallet, Oracle as OraclePallet, Origin, Runtime, TestPallet,
-			Vamm as VammPallet,
+			Assets as AssetsPallet, Oracle as OraclePallet, Origin, Runtime,
+			System as SystemPallet, TestPallet, Vamm as VammPallet,
 		},
 	},
 	tests::run_for_seconds,
-	Direction, Error, FullLiquidationPenalty, FullLiquidationPenaltyLiquidatorShare,
+	Direction, Error, Event, FullLiquidationPenalty, FullLiquidationPenaltyLiquidatorShare,
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -157,6 +157,8 @@ fn can_liquidate_if_below_maintenance_margin_ratio_by_pnl() {
 		// bob_collateral + insurance_fund = margin
 		let insurance_fund = AssetsPallet::balance(USDC, &TestPallet::get_insurance_account());
 		assert_eq!(bob_collateral + insurance_fund, as_balance(4));
+
+		SystemPallet::assert_last_event(Event::FullLiquidation { user: ALICE }.into());
 	});
 }
 

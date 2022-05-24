@@ -396,6 +396,11 @@ pub mod pallet {
 			/// Timestamp of the funding rate update.
 			time: DurationSeconds,
 		},
+		/// Account fully liquidated.
+		FullLiquidation {
+			/// Id of the liquidated user.
+			user: T::AccountId,
+		},
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -1039,6 +1044,7 @@ pub mod pallet {
 				)?;
 			}
 
+			Self::deposit_event(Event::<T>::FullLiquidation { user: user_id.clone() });
 			Ok(())
 		}
 	}
