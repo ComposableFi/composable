@@ -705,8 +705,7 @@ pub mod pallet {
 		///
 		/// ## State Changes
 		///
-		/// - Updates the [`markets`](Markets) of closed positions (according to changes in
-		///   [`Self::close_position_in_market`]).
+		/// - Updates the base asset amount of the [`markets`](Markets) of closed positions.
 		/// - Removes closed [`positions`](Positions)
 		/// - Updates the user's account [`collateral`](Collateral)
 		/// - Updates the liquidator's account [`collateral`](Collateral) if fees are due
