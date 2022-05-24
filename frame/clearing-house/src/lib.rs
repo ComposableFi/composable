@@ -684,7 +684,7 @@ pub mod pallet {
 		/// for opening a position) are liquidated first.
 		///
 		/// The caller of the function, the 'liquidator', may be credited with a liquidation fee in
-		/// their account, which can withdrawn via another extrinsic.
+		/// their account, which can be withdrawn via another extrinsic.
 		///
 		/// ## Parameters
 		///
