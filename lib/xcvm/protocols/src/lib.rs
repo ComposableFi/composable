@@ -68,12 +68,12 @@ impl<Assets, Options> XCVMProtocol<XCVMNetwork> for Stableswap<Assets, Options> 
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use xcvm_core::{XCVMContractBuilder, XCVMInstruction};
+	use xcvm_core::{XCVMInstruction, XCVMProgramBuilder};
 
 	#[test]
 	fn test() {
 		let contract = || -> Result<_, StableswapError> {
-			Ok(XCVMContractBuilder::<XCVMNetwork, XCVMInstruction<XCVMNetwork, _, (), ()>>::from(
+			Ok(XCVMProgramBuilder::<XCVMNetwork, XCVMInstruction<XCVMNetwork, _, (), ()>>::from(
 				XCVMNetwork::PICASSO,
 			)
 			.call(Stableswap::<(), ()>::new((), (), ()))?

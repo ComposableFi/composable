@@ -2,27 +2,29 @@
 
 extern crate alloc;
 
-pub mod instruction;
-pub mod network;
-pub mod protocol;
-pub mod types;
+mod instruction;
+mod network;
+mod program;
+mod protocol;
+mod types;
 
-pub use crate::{instruction::*, network::*, protocol::*, types::*};
+pub use crate::{instruction::*, network::*, program::*, protocol::*, types::*};
 use alloc::vec::Vec;
 
 #[derive(Clone)]
-pub struct XCVMContractBuilder<Network, Instruction> {
+pub struct XCVMProgramBuilder<Network, Instruction> {
 	pub network: Network,
 	pub instructions: Vec<Instruction>,
+	pub instruction_pointer: u32,
 }
 
 impl<Network, Account, Assets>
-	XCVMContractBuilder<Network, XCVMInstruction<Network, Network::EncodedCall, Account, Assets>>
+	XCVMProgramBuilder<Network, XCVMInstruction<Network, Network::EncodedCall, Account, Assets>>
 where
 	Network: Copy + Callable,
 {
 	pub fn from(network: Network) -> Self {
-		XCVMContractBuilder { network, instructions: Vec::new() }
+		XCVMProgramBuilder { network, instructions: Vec::new(), instruction_pointer: 0 }
 	}
 
 	pub fn transfer(mut self, account: Account, assets: Assets) -> Self {
@@ -45,8 +47,21 @@ where
 			self
 		})
 	}
-}
 
+	pub fn with_instruction_pointer(mut self, instruction_pointer: u32) -> Self {
+		self.instruction_pointer = instruction_pointer;
+		self
+	}
+
+	pub fn build(
+		self,
+	) -> XCVMProgram<XCVMInstruction<Network, Network::EncodedCall, Account, Assets>> {
+		XCVMProgram {
+			instructions: self.instructions,
+			instruction_pointer: self.instruction_pointer,
+		}
+	}
+}
 #[cfg(test)]
 mod tests {
 	use super::*;
@@ -99,7 +114,7 @@ mod tests {
 		}
 
 		let contract = || -> Result<_, ContractBuildError> {
-			Ok(XCVMContractBuilder::<XCVMNetwork, XCVMInstruction<XCVMNetwork, _, (), ()>>::from(
+			Ok(XCVMProgramBuilder::<XCVMNetwork, XCVMInstruction<XCVMNetwork, _, (), ()>>::from(
 				XCVMNetwork::PICASSO,
 			)
 			.call(DummyProtocol1)?

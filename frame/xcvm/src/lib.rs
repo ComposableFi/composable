@@ -46,7 +46,7 @@ pub mod pallet {
 		},
 	};
 	use frame_system::pallet_prelude::*;
-	use xcvm_core::{AbiEncoded, XCVMInstruction, XCVMNetwork};
+	use xcvm_core::{AbiEncoded, XCVMInstruction, XCVMNetwork, XCVMProgram};
 
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -59,7 +59,8 @@ pub mod pallet {
 		AccountIdOf<T>,
 		BoundedBTreeMap<AssetIdOf<T>, BalanceOf<T>, MaxTransferAssetsOf<T>>,
 	>;
-	pub(crate) type XCVMInstructionsOf<T> = BoundedVec<XCVMInstructionOf<T>, MaxInstructionsOf<T>>;
+	pub(crate) type XCVMInstructionsOf<T> = Vec<XCVMInstructionOf<T>>;
+	pub(crate) type XCVMProgramOf<T> = XCVMProgram<XCVMInstructionsOf<T>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -68,7 +69,10 @@ pub mod pallet {
 	}
 
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		ProgramNotWellFormed,
+		InstructionPointerOutOfRange,
+	}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -80,6 +84,7 @@ pub mod pallet {
 		type Balance: Balance;
 		type MaxTransferAssets: Get<u32>;
 		type MaxInstructions: Get<u32>;
+		type MaxProgramSize: Get<u32>;
 	}
 
 	#[pallet::pallet]
@@ -91,8 +96,30 @@ pub mod pallet {
 		#[pallet::weight(10_000)]
 		pub fn execute(
 			origin: OriginFor<T>,
-			instructions: XCVMInstructionsOf<T>,
+			program: BoundedVec<u8, T::MaxProgramSize>,
 		) -> DispatchResultWithPostInfo {
+			let program = xcvm_protobuf::decode::<
+				XCVMNetwork,
+				XCVMNetwork::EncodedCall,
+				T::AccountId,
+				BTreeMap<u32, u128>,
+			>(program.as_ref())?;
+
+			let instructions = program.instructions.into_inner();
+			let mut ip = program.instruction_pointer;
+
+			while ip < instructions.len() {
+				if let Some(instruction) = instructions.get(ip) {
+					match instruction {
+						XCVMInstruction::Transfer(to, assets) => {},
+						XCVMInstruction::Call(abi) => {},
+						XCVMInstruction::Bridge(network, assets) => {},
+					}
+				} else {
+					return Err(Error::<T>::InstructionPointerOutOfRange.into());
+				}
+				ip += 1;
+			}
 			Ok(().into())
 		}
 	}

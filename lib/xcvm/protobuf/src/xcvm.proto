@@ -2,6 +2,11 @@ syntax = "proto3";
 
 package xcvm;
 
+message Program {
+  Instructions instructions = 1;
+  uint32 instruction_pointer = 2;
+}
+
 message Instructions {
   repeated Instruction instructions = 1;
 }
