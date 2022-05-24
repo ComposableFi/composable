@@ -6,7 +6,7 @@
   "type": "commonjs",
   "scripts": {
     "prepare": "npm run compile",
-    "start": "npm run test",
+    "start": "npm run compile && npm run test",
     "compile": "tsc -p . --declaration",
     "live_compile": "tsc -p . -w",
     "lint": "eslint 'test/**/*.ts' 'src/**/*.ts' --fix-dry-run ",
