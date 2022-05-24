@@ -31,7 +31,10 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 common = { path = "../../runtime/common" }
 composable-runtime = { path = "../../runtime/composable" }
 dali-runtime = { path = "../../runtime/dali" }
-node = { package = "composable-node", path = "../../node", features = ["dali", "composable"] }
+node = { package = "composable-node", path = "../../node", features = [
+  "dali",
+  "composable",
+] }
 picasso-runtime = { path = "../../runtime/picasso" }
 simnode-common = { path = "../common" }
 
