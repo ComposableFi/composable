@@ -53,7 +53,7 @@ prettier_fmt() {
     prettier_verbose=""
 
     if [[ ${verbose} = "verbose" ]]; then
-        prettier_verbose="--loglevel=debug"
+        prettier_verbose="--loglevel=log"
     else
         prettier_verbose="--loglevel=warn"
     fi
