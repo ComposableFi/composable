@@ -324,12 +324,12 @@ prop_compose! {
 	}
 }
 
-fn swap_config_add_only() -> BoxedStrategy<SwapConfig<VammId, Balance>> {
+fn swap_config() -> BoxedStrategy<SwapConfig<VammId, Balance>> {
 	(
 		Just(0_u128),
 		prop_oneof![Just(AssetType::Base), Just(AssetType::Quote)],
 		1_000_000_000..=1_000_000_000_000_000_u128,
-		Just(Direction::Add),
+		prop_oneof![Just(Direction::Add), Just(Direction::Remove)],
 		Just(0_u128),
 	)
 		.prop_map(|(vamm_id, asset, input_amount, direction, output_amount_limit)| SwapConfig {
@@ -345,7 +345,7 @@ fn swap_config_add_only() -> BoxedStrategy<SwapConfig<VammId, Balance>> {
 fn multiple_swap_configs(max_swaps: usize) -> Vec<BoxedStrategy<SwapConfig<VammId, Balance>>> {
 	let mut swaps = Vec::with_capacity(max_swaps);
 	for _ in 0..max_swaps {
-		swaps.push(swap_config_add_only());
+		swaps.push(swap_config());
 	}
 	swaps
 }

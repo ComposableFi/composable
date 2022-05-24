@@ -2,13 +2,13 @@ use crate::{
 	mock::{Balance, ExtBuilder, MockRuntime, System, TestPallet, VammId},
 	pallet::{Error, Event, VammMap},
 	tests::{
-		any_sane_base_quote_peg, any_vamm_state, balance_range_low, balance_range_upper_half,
-		get_swap_config, get_vamm_state, multiple_swaps, run_to_block, then_and_now, RUN_CASES,
+		any_vamm_state, balance_range_upper_half, get_swap_config, get_vamm_state, multiple_swaps,
+		run_to_block, swap_config, then_and_now, RUN_CASES,
 	},
 	VammState,
 };
 use composable_traits::vamm::{AssetType, Direction, SwapConfig, SwapOutput, Vamm as VammTrait};
-use frame_support::{assert_noop, assert_ok, assert_storage_noop};
+use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 use sp_core::U256;
 use sp_runtime::traits::Zero;
@@ -95,17 +95,11 @@ proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
 	fn swap_asset_suceeds_emitting_event(
-		mut vamm_state in get_vamm_state(Default::default()),
-		mut swap_config in get_swap_config(Default::default()),
-		(base, quote, peg) in any_sane_base_quote_peg(),
+		mut vamm_state in any_vamm_state(),
+		mut swap_config in swap_config(),
 	) {
 		// Ensure vamm is open before start operation to swap assets.
 		vamm_state.closed = None;
-
-		// Ensure values won't overflow when computing swap.
-		vamm_state.base_asset_reserves = base;
-		vamm_state.quote_asset_reserves = quote;
-		vamm_state.peg_multiplier = peg;
 
 		// Disable output limit check
 		swap_config.output_amount_limit = Balance::zero();
@@ -120,23 +114,17 @@ proptest! {
 			run_to_block(1);
 
 			let swap = TestPallet::swap(&swap_config);
+			assert_ok!(swap);
 
-			match swap {
-				Ok(_) => {
-					System::assert_last_event(
-						Event::Swapped {
-							vamm_id: swap_config.vamm_id,
-							input_amount: swap_config.input_amount,
-							output_amount: swap.unwrap(),
-							input_asset_type: swap_config.asset,
-							direction: swap_config.direction,
-						}.into()
-					);
-				},
-				 _ => {
-					 assert_storage_noop!(swap);
-				 },
-			};
+			System::assert_last_event(
+				Event::Swapped {
+					vamm_id: swap_config.vamm_id,
+					input_amount: swap_config.input_amount,
+					output_amount: swap.unwrap(),
+					input_asset_type: swap_config.asset,
+					direction: swap_config.direction,
+				}.into()
+			);
 		})
 	}
 }
@@ -170,6 +158,9 @@ fn swap_add_base() {
 	}
 	.build()
 	.execute_with(|| {
+		// For event emission
+		run_to_block(1);
+
 		let swap = TestPallet::swap(&swap_config);
 		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
 
@@ -183,6 +174,17 @@ fn swap_add_base() {
 				invariant,
 				closed: None,
 			}
+		);
+
+		System::assert_last_event(
+			Event::Swapped {
+				vamm_id: swap_config.vamm_id,
+				input_amount: swap_config.input_amount,
+				output_amount: swap.unwrap(),
+				input_asset_type: swap_config.asset,
+				direction: swap_config.direction,
+			}
+			.into(),
 		);
 	})
 }
@@ -216,6 +218,9 @@ fn swap_remove_base() {
 	}
 	.build()
 	.execute_with(|| {
+		// For event emission
+		run_to_block(1);
+
 		let swap = TestPallet::swap(&swap_config);
 		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
 
@@ -229,6 +234,17 @@ fn swap_remove_base() {
 				invariant,
 				closed: None,
 			}
+		);
+
+		System::assert_last_event(
+			Event::Swapped {
+				vamm_id: swap_config.vamm_id,
+				input_amount: swap_config.input_amount,
+				output_amount: swap.unwrap(),
+				input_asset_type: swap_config.asset,
+				direction: swap_config.direction,
+			}
+			.into(),
 		);
 	})
 }
@@ -262,6 +278,9 @@ fn swap_add_quote() {
 	}
 	.build()
 	.execute_with(|| {
+		// For event emission
+		run_to_block(1);
+
 		let swap = TestPallet::swap(&swap_config);
 		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
 
@@ -275,6 +294,17 @@ fn swap_add_quote() {
 				invariant,
 				closed: None,
 			}
+		);
+
+		System::assert_last_event(
+			Event::Swapped {
+				vamm_id: swap_config.vamm_id,
+				input_amount: swap_config.input_amount,
+				output_amount: swap.unwrap(),
+				input_asset_type: swap_config.asset,
+				direction: swap_config.direction,
+			}
+			.into(),
 		);
 	})
 }
@@ -308,6 +338,9 @@ fn swap_remove_quote() {
 	}
 	.build()
 	.execute_with(|| {
+		// For event emission
+		run_to_block(1);
+
 		let swap = TestPallet::swap(&swap_config);
 		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
 
@@ -322,13 +355,24 @@ fn swap_remove_quote() {
 				closed: None,
 			}
 		);
+
+		System::assert_last_event(
+			Event::Swapped {
+				vamm_id: swap_config.vamm_id,
+				input_amount: swap_config.input_amount,
+				output_amount: swap.unwrap(),
+				input_asset_type: swap_config.asset,
+				direction: swap_config.direction,
+			}
+			.into(),
+		);
 	})
 }
 
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(1))]
 	#[test]
-	fn multiple_swaps_dont_diverge_from_original_invariant_both_base_and_quote(
+	fn multiple_swaps_dont_diverge_from_original_invariant(
 		mut vamm_state in any_vamm_state(),
 		swap_config in multiple_swaps()
 	) {
