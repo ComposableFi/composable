@@ -37,6 +37,7 @@ pub trait WellKnownCurrency {
 	Ord,
 	TypeInfo,
 	CompactAs,
+	Hash,
 )]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[repr(transparent)]
