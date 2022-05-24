@@ -31,18 +31,12 @@ use frame_support::{
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use orml_traits::parameter_type_with_key;
 use pallet_balances::{BalanceLock, Error as BalancesError};
-use proptest::prelude::*;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BadOrigin, BlakeTwo256, IdentityLookup},
 	Perbill,
 };
-
-use crate::mocks::test::{
-	AccountId, AssetId, Balance, ALICE, BOB, CHARLIE, DARWIN, JEREMY, MINIMUM_BALANCE,
-};
-
 mod cancellation;
 mod decoders;
 mod delegation;
@@ -53,6 +47,10 @@ mod preimage;
 mod public_proposals;
 mod scheduling;
 mod voting;
+
+type Balance = u64;
+type AccountId = u64;
+type AssetId = u64;
 
 const AYE: Vote = Vote { aye: true, conviction: Conviction::None };
 const NAY: Vote = Vote { aye: false, conviction: Conviction::None };
@@ -87,6 +85,7 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
+		Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>},
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
@@ -101,7 +100,7 @@ impl Contains<Call> for BaseFilter {
 }
 
 parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: u128| -> Balance {
+	pub ExistentialDeposits: |_currency_id: u64| -> Balance {
 		Zero::zero()
 	};
 }
@@ -110,7 +109,7 @@ impl orml_tokens::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
 	type Amount = i128;
-	type CurrencyId = u128;
+	type CurrencyId = u64;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
@@ -152,7 +151,7 @@ impl frame_system::Config for Test {
 parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * BlockWeights::get().max_block;
 	pub const MaxScheduledPerBlock: u32 = 50;
-	pub const NoPreimagePostponement: Option<u64> = Some(10);
+    pub const NoPreimagePostponement: Option<u64> = Some(10);
 }
 
 impl pallet_scheduler::Config for Test {
@@ -166,13 +165,18 @@ impl pallet_scheduler::Config for Test {
 	type WeightInfo = ();
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type PreimageProvider = ();
-	type NoPreimagePostponement = ();
+	type NoPreimagePostponement = NoPreimagePostponement;
+}
+
+parameter_types! {
+	pub const ExistentialDeposit: Balance = 1;
+	pub const MaxLocks: u32 = 50;
 }
 
 impl pallet_balances::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
-	type MaxLocks = MaxLocks;
+	type MaxLocks =MaxLocks;
 	type Balance = Balance;
 	type Event = Event;
 	type DustRemoval = ();
@@ -203,10 +207,10 @@ impl SortedMembers<u64> for OneToFive {
 
 impl Config for Test {
 	type Balance = u64;
-	type AssetId = u128;
+	type AssetId = u64;
 	type Proposal = Call;
 	type Event = Event;
-	type NativeCurrency = pallet_balances::Pallet<Self>;
+	type NativeCurrency = Balances;
 	type Currency = Tokens;
 	type EnactmentPeriod = ConstU64<2>;
 	type LaunchPeriod = ConstU64<2>;
@@ -235,38 +239,53 @@ impl Config for Test {
 	type MaxProposals = ConstU32<100>;
 }
 
+parameter_types! {
+	pub const PreimageMaxSize: u32 = 4096 * 1024;
+	pub PreimageBaseDeposit: Balance = 1;
+}
+
+impl pallet_preimage::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type ManagerOrigin = EnsureRoot<AccountId>;
+	type MaxSize = PreimageMaxSize;
+	type BaseDeposit = PreimageBaseDeposit;
+	type ByteDeposit = PreimageByteDeposit;
+	type WeightInfo = ();
+}
+
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
 	pallet_balances::GenesisConfig::<Test> {
-		balances: vec![(0, 100), (1, 10), (2, 20), (3, 30), (4, 40), (5, 50), (6, 60)],
+		balances: vec![(0, 100),(1, 10), (2, 20), (3, 30), (4, 40), (5, 50), (6, 60)],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
 	pallet_democracy::GenesisConfig::<Test>::default()
 		.assimilate_storage(&mut t)
 		.unwrap();
-
+	
 	orml_tokens::GenesisConfig::<Test> {
-		balances: vec![
-			(1, DEFAULT_ASSET, 10),
-			(2, DEFAULT_ASSET, 20),
-			(3, DEFAULT_ASSET, 30),
-			(4, DEFAULT_ASSET, 40),
-			(5, DEFAULT_ASSET, 50),
-			(6, DEFAULT_ASSET, 60),
-			(1, DOT_ASSET, 10),
-			(2, DOT_ASSET, 20),
-			(3, DOT_ASSET, 30),
-			(4, DOT_ASSET, 40),
-			(5, DOT_ASSET, 50),
-			(6, DOT_ASSET, 60),
-			(1, X_ASSET, 100),
-			(2, X_ASSET, 200),
-			(3, X_ASSET, 300),
-			(4, X_ASSET, 400),
-			(5, X_ASSET, 500),
-			(6, X_ASSET, 600),
-		],
+			balances: vec![
+				(1, DEFAULT_ASSET, 10),
+				(2, DEFAULT_ASSET, 20),
+				(3, DEFAULT_ASSET, 30),
+				(4, DEFAULT_ASSET, 40),
+				(5, DEFAULT_ASSET, 50),
+				(6, DEFAULT_ASSET, 60),
+				(1, DOT_ASSET, 10),
+				(2, DOT_ASSET, 20),
+				(3, DOT_ASSET, 30),
+				(4, DOT_ASSET, 40),
+				(5, DOT_ASSET, 50),
+				(6, DOT_ASSET, 60),
+				(1, X_ASSET, 100),
+				(2, X_ASSET, 200),
+				(3, X_ASSET, 300),
+				(4, X_ASSET, 400),
+				(5, X_ASSET, 500),
+				(6, X_ASSET, 600),
+			],
 	}
 	.assimilate_storage(&mut t)
 	.unwrap();
@@ -314,36 +333,15 @@ fn set_balance_proposal_id(value: u64) -> ProposalId<H256, AssetId> {
 	ProposalId { hash: h, asset_id: DEFAULT_ASSET }
 }
 
-fn set_balance_proposal_id_2(asset_id: AssetId, value: u64) -> ProposalId<H256, AssetId> {
+fn set_balance_proposal_hash_and_note(value: u64) -> ProposalId<H256, AssetId> {
 	let p = set_balance_proposal(value);
 	let h = BlakeTwo256::hash(&p[..]);
-	ProposalId { hash: h, asset_id }
-}
-
-fn set_balance_proposal_hash_and_note(value: u64) -> ProposalId<H256, AssetId> {
-	set_balance_proposal_hash_and_note_2(value, DEFAULT_ASSET)
-}
-
-fn set_balance_proposal_hash_and_note_2(
-	value: u64,
-	asset_id: AssetId,
-) -> ProposalId<H256, AssetId> {
-	let p = set_balance_proposal(value);
-	set_balance_proposal_hash_and_note_3(value, asset_id, p)
-}
-
-fn set_balance_proposal_hash_and_note_3(
-	value: u64,
-	asset_id: AssetId,
-	encoded_proposal: Vec<u8>,
-) -> ProposalId<H256, AssetId> {
-	let h = BlakeTwo256::hash(&encoded_proposal[..]);
-	match Democracy::note_preimage(Origin::signed(6), encoded_proposal, asset_id) {
+	match Democracy::note_preimage(Origin::signed(6), p, DEFAULT_ASSET) {
 		Ok(_) => (),
 		Err(x) if x == Error::<Test>::DuplicatePreimage.into() => (),
 		Err(x) => panic!("{:?}", x),
 	}
-	ProposalId { hash: h, asset_id }
+	ProposalId { hash: h, asset_id: DEFAULT_ASSET }
 }
 
 fn set_balance_proposal_hash_and_note_and_asset(
@@ -360,22 +358,12 @@ fn set_balance_proposal_hash_and_note_and_asset(
 	ProposalId { hash: h, asset_id }
 }
 
-fn propose_set_balance(who: u64, asset_id: AssetId, value: u64, delay: u64) -> DispatchResult {
-	Democracy::propose(Origin::signed(who), set_balance_proposal_hash(value), asset_id, delay)
+fn propose_set_balance(who: u64, value: u64, delay: u64) -> DispatchResult {
+	Democracy::propose(Origin::signed(who), set_balance_proposal_hash(value), DEFAULT_ASSET, delay)
 }
 
 fn propose_set_balance_and_note(who: u64, value: u64, delay: u64) -> DispatchResult {
 	let id = set_balance_proposal_hash_and_note(value);
-	Democracy::propose(Origin::signed(who), id.hash, id.asset_id, delay)
-}
-
-fn propose_set_balance_and_note_2(
-	who: u64,
-	asset_id: AssetId,
-	value: u64,
-	delay: u64,
-) -> DispatchResult {
-	let id = set_balance_proposal_hash_and_note_2(value, asset_id);
 	Democracy::propose(Origin::signed(who), id.hash, id.asset_id, delay)
 }
 
@@ -388,6 +376,7 @@ fn propose_set_balance_and_note_and_asset(
 	let id = set_balance_proposal_hash_and_note_and_asset(value, asset_id);
 	Democracy::propose(Origin::signed(who), id.hash, id.asset_id, delay)
 }
+
 
 fn next_block() {
 	System::set_block_number(System::block_number() + 1);

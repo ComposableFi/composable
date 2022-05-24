@@ -149,20 +149,8 @@
 //! - `cancel_queued` - Cancels a proposal that is queued for enactment.
 //! - `clear_public_proposal` - Removes all public proposals.
 
-#![cfg_attr(
-	not(test),
-	warn(
-		clippy::disallowed_methods,
-		clippy::disallowed_types,
-		clippy::indexing_slicing,
-		clippy::todo,
-		clippy::unwrap_used,
-		clippy::panic
-	)
-)] // allow in tests
 #![recursion_limit = "256"]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![allow(clippy::type_complexity)]
 
 use codec::{Codec, Decode, Encode, FullCodec, Input};
 use frame_support::{
@@ -218,7 +206,6 @@ pub type PropIndex = u32;
 /// A referendum index.
 pub type ReferendumIndex = u32;
 
-#[allow(type_alias_bounds)]
 type BalanceOf<T: Config> = T::Balance;
 
 type NegativeImbalanceOf<T> = <<T as Config>::NativeCurrency as Currency<
@@ -241,7 +228,7 @@ pub enum PreimageStatus<AccountId, Balance, BlockNumber> {
 }
 
 impl<AccountId, Balance, BlockNumber> PreimageStatus<AccountId, Balance, BlockNumber> {
-	fn to_missing_expiry(&self) -> Option<&BlockNumber> {
+	fn to_missing_expiry(self) -> Option<BlockNumber> {
 		match self {
 			PreimageStatus::Missing(expiry) => Some(expiry),
 			_ => None,
@@ -296,8 +283,8 @@ pub mod pallet {
 			+ core::fmt::Debug
 			+ Default
 			+ TypeInfo
-			+ From<u128>
-			+ Into<u128>;
+			+ From<u64>
+			+ Into<u64>;
 
 		/// Currency type for this pallet.
 		type NativeCurrency: ReservableCurrency<Self::AccountId, Balance = Self::Balance>
@@ -430,13 +417,11 @@ pub mod pallet {
 	/// The number of (public) proposals that have been made so far.
 	#[pallet::storage]
 	#[pallet::getter(fn public_prop_count)]
-	#[allow(clippy::disallowed_types)]
 	pub type PublicPropCount<T> = StorageValue<_, PropIndex, ValueQuery>;
 
 	/// The public proposals. Unsorted. The second item is the proposal's hash.
 	#[pallet::storage]
 	#[pallet::getter(fn public_props)]
-	#[allow(clippy::disallowed_types)]
 	pub type PublicProps<T: Config> = StorageValue<
 		_,
 		Vec<(PropIndex, ProposalId<T::Hash, T::AssetId>, T::AccountId)>,
@@ -466,14 +451,12 @@ pub mod pallet {
 	/// The next free referendum index, aka the number of referenda started so far.
 	#[pallet::storage]
 	#[pallet::getter(fn referendum_count)]
-	#[allow(clippy::disallowed_types)]
 	pub type ReferendumCount<T> = StorageValue<_, ReferendumIndex, ValueQuery>;
 
 	/// The lowest referendum index representing an unbaked referendum. Equal to
 	/// `ReferendumCount` if there isn't a unbaked referendum.
 	#[pallet::storage]
 	#[pallet::getter(fn lowest_unbaked)]
-	#[allow(clippy::disallowed_types)]
 	pub type LowestUnbaked<T> = StorageValue<_, ReferendumIndex, ValueQuery>;
 
 	/// Information concerning any given referendum.
@@ -493,7 +476,6 @@ pub mod pallet {
 	///
 	/// TWOX-NOTE: SAFE as `AccountId`s are crypto hashes anyway.
 	#[pallet::storage]
-	#[allow(clippy::disallowed_types)]
 	pub type VotingOf<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
@@ -507,7 +489,6 @@ pub mod pallet {
 	// TODO: There should be any number of tabling origins, not just public and "external"
 	// (council). https://github.com/paritytech/substrate/issues/5322
 	#[pallet::storage]
-	#[allow(clippy::disallowed_types)]
 	pub type LastTabledWasExternal<T> = StorageValue<_, bool, ValueQuery>;
 
 	/// The referendum to be tabled whenever it would be valid to table an external proposal.
@@ -530,7 +511,6 @@ pub mod pallet {
 
 	/// Record of all proposals that have been subject to emergency cancellation.
 	#[pallet::storage]
-	#[allow(clippy::disallowed_types)]
 	pub type Cancellations<T: Config> =
 		StorageMap<_, Identity, ProposalId<T::Hash, T::AssetId>, bool, ValueQuery>;
 
@@ -906,10 +886,12 @@ pub mod pallet {
 			// - `InstantAllowed` is `true` and `origin` is `InstantOrigin`.
 			let maybe_ensure_instant = if voting_period < T::FastTrackVotingPeriod::get() {
 				Some(origin)
-			} else if let Err(origin) = T::FastTrackOrigin::try_origin(origin) {
-				Some(origin)
 			} else {
-				None
+				if let Err(origin) = T::FastTrackOrigin::try_origin(origin) {
+					Some(origin)
+				} else {
+					None
+				}
 			};
 
 			if let Some(ensure_instant) = maybe_ensure_instant {
@@ -1054,7 +1036,7 @@ pub mod pallet {
 		///   voted on. Weight is charged as if maximum votes.
 		// NOTE: weight must cover an incorrect voting of origin with max votes, this is ensure
 		// because a valid delegation cover decoding a direct voting with max votes.
-		#[pallet::weight(T::WeightInfo::undelegate(T::MaxVotes::get()))]
+		#[pallet::weight(T::WeightInfo::undelegate(T::MaxVotes::get().into()))]
 		pub fn undelegate(
 			origin: OriginFor<T>,
 			asset_id: T::AssetId,
@@ -1236,7 +1218,7 @@ pub mod pallet {
 			asset_id: T::AssetId,
 		) -> DispatchResult {
 			ensure_signed(origin)?;
-			Self::update_lock(&target, asset_id)?;
+			Self::update_lock(&target, asset_id);
 			Ok(())
 		}
 
@@ -1490,41 +1472,26 @@ impl<T: Config> Pallet<T> {
 		vote: AccountVote<BalanceOf<T>>,
 	) -> DispatchResult {
 		let mut status = Self::referendum_status(ref_index)?;
-		ensure!(
-			vote.balance() <= T::Currency::free_balance(status.proposal_id.asset_id, who),
-			Error::<T>::InsufficientFunds
-		);
-		VotingOf::<T>::try_mutate(
-			(who, status.proposal_id.asset_id),
-			|voting| -> DispatchResult {
-				if let Voting::Direct { ref mut votes, delegations, .. } = voting {
-					match votes.binary_search_by_key(&ref_index, |i| i.0) {
-						Ok(i) => {
-							let prev_vote = votes.get_mut(i).ok_or(Error::<T>::InvalidIndex)?;
-							// Shouldn't be possible to fail, but we handle it gracefully.
-							status.tally.remove(prev_vote.1).ok_or(ArithmeticError::Underflow)?;
-							if let Some(approve) = prev_vote.1.as_standard() {
-								status.tally.reduce(approve, *delegations);
-							}
-							let _ = sp_std::mem::replace(&mut prev_vote.1, vote);
-						},
-						Err(i) => {
-							ensure!(
-								votes.len() as u32 <= T::MaxVotes::get(),
-								Error::<T>::MaxVotesReached
-							);
-							votes.insert(i, (ref_index, vote));
-						},
-					}
-					Self::deposit_event(Event::<T>::Voted { voter: who.clone(), ref_index, vote });
-					// Shouldn't be possible to fail, but we handle it gracefully.
-					status.tally.add(vote).ok_or(ArithmeticError::Overflow)?;
-					if let Some(approve) = vote.as_standard() {
-						status.tally.increase(approve, *delegations);
-					}
-					Ok(())
-				} else {
-					Err(Error::<T>::AlreadyDelegating.into())
+		ensure!(vote.balance() <= T::Currency::free_balance(status.proposal_id.asset_id,who), Error::<T>::InsufficientFunds);
+		VotingOf::<T>::try_mutate((who, status.proposal_id.asset_id),
+         |voting| -> DispatchResult {
+			if let Voting::Direct { ref mut votes, delegations, .. } = voting {
+				match votes.binary_search_by_key(&ref_index, |i| i.0) {
+					Ok(i) => {
+						// Shouldn't be possible to fail, but we handle it gracefully.
+						status.tally.remove(votes[i].1).ok_or(ArithmeticError::Underflow)?;
+						if let Some(approve) = votes[i].1.as_standard() {
+							status.tally.reduce(approve, *delegations);
+						}
+						votes[i].1 = vote;
+					},
+					Err(i) => {
+						ensure!(
+							votes.len() as u32 <= T::MaxVotes::get(),
+							Error::<T>::MaxVotesReached
+						);
+						votes.insert(i, (ref_index, vote));
+					},
 				}
 			},
 		)?;
@@ -1558,15 +1525,14 @@ impl<T: Config> Pallet<T> {
 						ensure!(matches!(scope, UnvoteScope::Any), Error::<T>::NoPermission);
 						let prev_vote = votes.get_mut(i).ok_or(Error::<T>::InvalidIndex)?;
 						// Shouldn't be possible to fail, but we handle it gracefully.
-						status.tally.remove(prev_vote.1).ok_or(ArithmeticError::Underflow)?;
-						if let Some(approve) = prev_vote.1.as_standard() {
+						status.tally.remove(votes[i].1).ok_or(ArithmeticError::Underflow)?;
+						if let Some(approve) = votes[i].1.as_standard() {
 							status.tally.reduce(approve, *delegations);
 						}
 						ReferendumInfoOf::<T>::insert(ref_index, ReferendumInfo::Ongoing(status));
 					},
 					Some(ReferendumInfo::Finished { end, approved }) => {
-						let prev_vote = votes.get_mut(i).ok_or(Error::<T>::InvalidIndex)?;
-						if let Some((lock_periods, balance)) = prev_vote.1.locked_if(approved) {
+						if let Some((lock_periods, balance)) = votes[i].1.locked_if(approved) {
 							let unlock_at = end.saturating_add(
 								T::VoteLockingPeriod::get().saturating_mul(lock_periods.into()),
 							);
@@ -1748,17 +1714,16 @@ impl<T: Config> Pallet<T> {
 
 	/// Rejig the lock on an account. It will never get more stringent (since that would indicate
 	/// a security hole) but may be reduced from what they are currently.
-	fn update_lock(who: &T::AccountId, asset_id: T::AssetId) -> Result<(), DispatchError> {
+	fn update_lock(who: &T::AccountId, asset_id: T::AssetId) {
 		let lock_needed = VotingOf::<T>::mutate((who, asset_id), |voting| {
 			voting.rejig(frame_system::Pallet::<T>::block_number());
 			voting.locked_balance()
 		});
 		if lock_needed.is_zero() {
-			T::Currency::remove_lock(DEMOCRACY_ID, asset_id, who)?;
+			T::Currency::remove_lock(DEMOCRACY_ID, asset_id, who);
 		} else {
-			T::Currency::set_lock(DEMOCRACY_ID, asset_id, who, lock_needed)?;
+			T::Currency::set_lock(DEMOCRACY_ID, asset_id, who, lock_needed);
 		}
-		Ok(())
 	}
 
 	/// Start a referendum
@@ -1995,9 +1960,10 @@ impl<T: Config> Pallet<T> {
 		// To decode the enum variant we only need the first byte.
 		let mut buf = [0u8; 1];
 		let key = <Preimages<T>>::hashed_key_for(proposal_id);
-		let bytes = sp_io::storage::read(&key, &mut buf, 0).ok_or(Error::<T>::NotImminent)?;
+		let bytes =
+			sp_io::storage::read(&key, &mut buf, 0).ok_or_else(|| Error::<T>::NotImminent)?;
 		// The value may be smaller that 1 byte.
-		let mut input = buf.get(0..buf.len().min(bytes as usize)).ok_or(Error::<T>::CastFail)?;
+		let mut input = &buf[0..buf.len().min(bytes as usize)];
 
 		match input.read_byte() {
 			Ok(0) => Ok(()), // PreimageStatus::Missing is variant 0
@@ -2025,9 +1991,10 @@ impl<T: Config> Pallet<T> {
 		// * at most 5 bytes to decode a `Compact<u32>`
 		let mut buf = [0u8; 6];
 		let key = <Preimages<T>>::hashed_key_for(proposal_id);
-		let bytes = sp_io::storage::read(&key, &mut buf, 0).ok_or(Error::<T>::PreimageMissing)?;
+		let bytes =
+			sp_io::storage::read(&key, &mut buf, 0).ok_or_else(|| Error::<T>::PreimageMissing)?;
 		// The value may be smaller that 6 bytes.
-		let mut input = buf.get(0..buf.len().min(bytes as usize)).ok_or(Error::<T>::CastFail)?;
+		let mut input = &buf[0..buf.len().min(bytes as usize)];
 
 		match input.read_byte() {
 			Ok(1) => (), // Check that input exists and is second variant.
@@ -2111,9 +2078,9 @@ impl<T: Config> Pallet<T> {
 fn decode_compact_u32_at(key: &[u8]) -> Option<u32> {
 	// `Compact<u32>` takes at most 5 bytes.
 	let mut buf = [0u8; 5];
-	let bytes = sp_io::storage::read(key, &mut buf, 0)?;
+	let bytes = sp_io::storage::read(&key, &mut buf, 0)?;
 	// The value may be smaller than 5 bytes.
-	let mut input = buf.get(0..buf.len().min(bytes as usize))?;
+	let mut input = &buf[0..buf.len().min(bytes as usize)];
 	match codec::Compact::<u32>::decode(&mut input) {
 		Ok(c) => Some(c.0),
 		Err(_) => {

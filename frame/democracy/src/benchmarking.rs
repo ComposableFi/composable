@@ -23,10 +23,12 @@ use frame_benchmarking::{account, benchmarks, whitelist_account};
 use frame_support::{
 	assert_noop, assert_ok,
 	codec::Decode,
-	traits::{schedule::DispatchTime, EnsureOrigin, Get, OnInitialize, UnfilteredDispatchable},
+	traits::{
+		schedule::DispatchTime, Currency, EnsureOrigin, Get, OnInitialize, UnfilteredDispatchable,
+	},
 };
 use frame_system::{Pallet as System, RawOrigin};
-use sp_runtime::traits::{BadOrigin, One};
+use sp_runtime::traits::{BadOrigin, Bounded, One};
 
 use crate::Pallet as Democracy;
 
@@ -51,27 +53,19 @@ fn add_proposal<T: Config>(n: u32) -> Result<T::Hash, &'static str> {
 	let other = funded_account::<T>("proposer", n);
 	let value = T::MinimumDeposit::get();
 	let proposal_hash: T::Hash = T::Hashing::hash_of(&n);
-	let asset_id = DOT_ASSET;
 
-	Democracy::<T>::propose(
-		RawOrigin::Signed(other).into(),
-		proposal_hash,
-		asset_id.into(),
-		value.into(),
-	)?;
+	Democracy::<T>::propose(RawOrigin::Signed(other).into(), proposal_hash, value.into())?;
 
 	Ok(proposal_hash)
 }
 
 fn add_referendum<T: Config>(n: u32) -> Result<ReferendumIndex, &'static str> {
-	let asset_id = DOT_ASSET.into();
 	let proposal_hash: T::Hash = T::Hashing::hash_of(&n);
 	let vote_threshold = VoteThreshold::SimpleMajority;
-	let proposal_id = ProposalId { hash: proposal_hash, asset_id };
 
 	Democracy::<T>::inject_referendum(
 		T::LaunchPeriod::get(),
-		proposal_id,
+		proposal_hash,
 		vote_threshold,
 		0u32.into(),
 	);
@@ -105,7 +99,7 @@ benchmarks! {
 		let proposal_hash: T::Hash = T::Hashing::hash_of(&0);
 		let value = T::MinimumDeposit::get();
 		whitelist_account!(caller);
-	}: _(RawOrigin::Signed(caller), proposal_hash, asset_id, value.into())
+	}: _(RawOrigin::Signed(caller), proposal_hash, value.into())
 	verify {
 		assert_eq!(Democracy::<T>::public_props().len(), p as usize, "Proposals not created.");
 	}
@@ -136,14 +130,13 @@ benchmarks! {
 
 		let caller = funded_account::<T>("caller", 0);
 		let account_vote = account_vote::<T>(100u32.into());
-		let asset_id = T::AssetId::from(DOT_ASSET);
 
 		// We need to create existing direct votes
 		for i in 0 .. r {
 			let ref_idx = add_referendum::<T>(i)?;
 			Democracy::<T>::vote(RawOrigin::Signed(caller.clone()).into(), ref_idx, account_vote.clone())?;
 		}
-		let votes = match VotingOf::<T>::get((&caller, asset_id)) {
+		let votes = match VotingOf::<T>::get(&caller) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -153,7 +146,7 @@ benchmarks! {
 		whitelist_account!(caller);
 	}: vote(RawOrigin::Signed(caller.clone()), referendum_index, account_vote)
 	verify {
-		let votes = match VotingOf::<T>::get((&caller, asset_id)) {
+		let votes = match VotingOf::<T>::get(&caller) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -165,14 +158,13 @@ benchmarks! {
 
 		let caller = funded_account::<T>("caller", 0);
 		let account_vote = account_vote::<T>(100u32.into());
-		let asset_id = T::AssetId::from(DOT_ASSET);
 
 		// We need to create existing direct votes
 		for i in 0 ..=r {
 			let ref_idx = add_referendum::<T>(i)?;
 			Democracy::<T>::vote(RawOrigin::Signed(caller.clone()).into(), ref_idx, account_vote.clone())?;
 		}
-		let votes = match VotingOf::<T>::get((&caller, asset_id)) {
+		let votes = match VotingOf::<T>::get(&caller) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -187,7 +179,7 @@ benchmarks! {
 		whitelist_account!(caller);
 	}: vote(RawOrigin::Signed(caller.clone()), referendum_index, new_vote)
 	verify {
-		let votes = match VotingOf::<T>::get((&caller, asset_id)) {
+		let votes = match VotingOf::<T>::get(&caller) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -223,17 +215,16 @@ benchmarks! {
 		}
 		// We should really add a lot of seconds here, but we're not doing it elsewhere.
 
-		let asset_id = DOT_ASSET.into();
 		// Place our proposal in the external queue, too.
 		let hash = T::Hashing::hash_of(&0);
 		assert_ok!(
-			Democracy::<T>::external_propose(T::ExternalOrigin::successful_origin(), hash.clone(), asset_id)
+			Democracy::<T>::external_propose(T::ExternalOrigin::successful_origin(), hash.clone())
 		);
 		let origin = T::BlacklistOrigin::successful_origin();
 		// Add a referendum of our proposal.
 		let referendum_index = add_referendum::<T>(0)?;
 		assert_ok!(Democracy::<T>::referendum_status(referendum_index));
-	}: _<T::Origin>(origin, hash, asset_id, Some(referendum_index))
+	}: _<T::Origin>(origin, hash, Some(referendum_index))
 	verify {
 		// Referendum has been canceled
 		assert_noop!(
@@ -258,7 +249,7 @@ benchmarks! {
 			proposal_hash,
 			(T::BlockNumber::zero(), addresses),
 		);
-	}: _<T::Origin>(origin, proposal_hash, asset_id)
+	}: _<T::Origin>(origin, proposal_hash)
 	verify {
 		// External proposal created
 		ensure!(<NextExternal<T>>::exists(), "External proposal didn't work");
@@ -267,8 +258,7 @@ benchmarks! {
 	external_propose_majority {
 		let origin = T::ExternalMajorityOrigin::successful_origin();
 		let proposal_hash = T::Hashing::hash_of(&0);
-		let asset_id = T::AssetId::from(DOT_ASSET);
-	}: _<T::Origin>(origin, proposal_hash, asset_id)
+	}: _<T::Origin>(origin, proposal_hash)
 	verify {
 		// External proposal created
 		ensure!(<NextExternal<T>>::exists(), "External proposal didn't work");
@@ -286,15 +276,13 @@ benchmarks! {
 	fast_track {
 		let origin_propose = T::ExternalDefaultOrigin::successful_origin();
 		let proposal_hash: T::Hash = T::Hashing::hash_of(&0);
-		let asset_id = T::AssetId::from(DOT_ASSET);
-
-		Democracy::<T>::external_propose_default(origin_propose, proposal_hash.clone(), asset_id)?;
+		Democracy::<T>::external_propose_default(origin_propose, proposal_hash.clone())?;
 
 		// NOTE: Instant origin may invoke a little bit more logic, but may not always succeed.
 		let origin_fast_track = T::FastTrackOrigin::successful_origin();
 		let voting_period = T::FastTrackVotingPeriod::get();
 		let delay = 0u32;
-	}: _<T::Origin>(origin_fast_track, proposal_hash, asset_id, voting_period.into(), delay.into())
+	}: _<T::Origin>(origin_fast_track, proposal_hash, voting_period.into(), delay.into())
 	verify {
 		assert_eq!(Democracy::<T>::referendum_count(), 1, "referendum not created")
 	}
@@ -304,25 +292,23 @@ benchmarks! {
 		let v in 0 .. MAX_VETOERS as u32;
 
 		let proposal_hash: T::Hash = T::Hashing::hash_of(&v);
-		let asset_id = T::AssetId::from(DOT_ASSET);
-		let proposal_id = ProposalId { hash: proposal_hash, asset_id};
 
 		let origin_propose = T::ExternalDefaultOrigin::successful_origin();
-		Democracy::<T>::external_propose_default(origin_propose, proposal_hash.clone(), asset_id)?;
+		Democracy::<T>::external_propose_default(origin_propose, proposal_hash.clone())?;
 
 		let mut vetoers: Vec<T::AccountId> = Vec::new();
 		for i in 0 .. v {
 			vetoers.push(account::<T::AccountId>("vetoer", i, SEED));
 		}
 		vetoers.sort();
-		Blacklist::<T>::insert(proposal_id, (T::BlockNumber::zero(), vetoers));
+		Blacklist::<T>::insert(proposal_hash, (T::BlockNumber::zero(), vetoers));
 
 		let origin = T::VetoOrigin::successful_origin();
 		ensure!(NextExternal::<T>::get().is_some(), "no external proposal");
-	}: _<T::Origin>(origin, proposal_hash, asset_id)
+	}: _<T::Origin>(origin, proposal_hash)
 	verify {
 		assert!(NextExternal::<T>::get().is_none());
-		let (_, new_vetoers) = <Blacklist<T>>::get(&proposal_id).ok_or("no blacklist")?;
+		let (_, new_vetoers) = <Blacklist<T>>::get(&proposal_hash).ok_or("no blacklist")?;
 		assert_eq!(new_vetoers.len(), (v + 1) as usize, "vetoers not added");
 	}
 
@@ -366,9 +352,7 @@ benchmarks! {
 
 		let origin = T::ExternalMajorityOrigin::successful_origin();
 		let proposal_hash = T::Hashing::hash_of(&r);
-		let asset_id = T::AssetId::from(DOT_ASSET);
-
-		let call = Call::<T>::external_propose_majority { proposal_hash, asset_id };
+		let call = Call::<T>::external_propose_majority { proposal_hash };
 		call.dispatch_bypass_filter(origin)?;
 		// External proposal created
 		ensure!(<NextExternal<T>>::exists(), "External proposal didn't work");
@@ -494,7 +478,6 @@ benchmarks! {
 
 		let initial_balance: BalanceOf<T> = 100u32.into();
 		let delegated_balance: BalanceOf<T> = 1000u32.into();
-		let asset_id = T::AssetId::from(DOT_ASSET);
 
 		let caller = funded_account::<T>("caller", 0);
 		// Caller will initially delegate to `old_delegate`
@@ -502,11 +485,10 @@ benchmarks! {
 		Democracy::<T>::delegate(
 			RawOrigin::Signed(caller.clone()).into(),
 			old_delegate.clone(),
-			asset_id,
 			Conviction::Locked1x,
 			delegated_balance,
 		)?;
-		let (target, balance) = match VotingOf::<T>::get((&caller, asset_id)) {
+		let (target, balance) = match VotingOf::<T>::get(&caller) {
 			Voting::Delegating { target, balance, .. } => (target, balance),
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -520,7 +502,7 @@ benchmarks! {
 			let ref_idx = add_referendum::<T>(i)?;
 			Democracy::<T>::vote(RawOrigin::Signed(new_delegate.clone()).into(), ref_idx, account_vote.clone())?;
 		}
-		let votes = match VotingOf::<T>::get((&new_delegate, asset_id)) {
+		let votes = match VotingOf::<T>::get(&new_delegate) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -528,13 +510,13 @@ benchmarks! {
 		whitelist_account!(caller);
 	}: _(RawOrigin::Signed(caller.clone()), new_delegate.clone(), Conviction::Locked1x, delegated_balance)
 	verify {
-		let (target, balance) = match VotingOf::<T>::get((&caller, asset_id)) {
+		let (target, balance) = match VotingOf::<T>::get(&caller) {
 			Voting::Delegating { target, balance, .. } => (target, balance),
 			_ => return Err("Votes are not direct".into()),
 		};
 		assert_eq!(target, new_delegate, "delegation target didn't work");
 		assert_eq!(balance, delegated_balance, "delegation balance didn't work");
-		let delegations = match VotingOf::<T>::get((&new_delegate, asset_id)) {
+		let delegations = match VotingOf::<T>::get(&new_delegate) {
 			Voting::Direct { delegations, .. } => delegations,
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -546,7 +528,6 @@ benchmarks! {
 
 		let initial_balance: BalanceOf<T> = 100u32.into();
 		let delegated_balance: BalanceOf<T> = 1000u32.into();
-		let asset_id = T::AssetId::from(DOT_ASSET);
 
 		let caller = funded_account::<T>("caller", 0);
 		// Caller will delegate
@@ -554,11 +535,10 @@ benchmarks! {
 		Democracy::<T>::delegate(
 			RawOrigin::Signed(caller.clone()).into(),
 			the_delegate.clone(),
-			asset_id,
 			Conviction::Locked1x,
 			delegated_balance,
 		)?;
-		let (target, balance) = match VotingOf::<T>::get((&caller, asset_id)) {
+		let (target, balance) = match VotingOf::<T>::get(&caller) {
 			Voting::Delegating { target, balance, .. } => (target, balance),
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -574,16 +554,16 @@ benchmarks! {
 				account_vote.clone()
 			)?;
 		}
-		let votes = match VotingOf::<T>::get((&the_delegate, asset_id)) {
+		let votes = match VotingOf::<T>::get(&the_delegate) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
 		assert_eq!(votes.len(), r as usize, "Votes were not recorded.");
 		whitelist_account!(caller);
-	}: _(RawOrigin::Signed(caller.clone()), asset_id)
+	}: _(RawOrigin::Signed(caller.clone()))
 	verify {
 		// Voting should now be direct
-		match VotingOf::<T>::get((&caller, asset_id)) {
+		match VotingOf::<T>::get(&caller) {
 			Voting::Direct { .. } => (),
 			_ => return Err("undelegation failed".into()),
 		}
@@ -600,15 +580,11 @@ benchmarks! {
 
 		let caller = funded_account::<T>("caller", 0);
 		let encoded_proposal = vec![1; b as usize];
-		let asset_id = T::AssetId::from(DOT_ASSET);
-
 		whitelist_account!(caller);
-	}: _(RawOrigin::Signed(caller), encoded_proposal.clone(), asset_id)
+	}: _(RawOrigin::Signed(caller), encoded_proposal.clone())
 	verify {
 		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
-		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
-
-		match Preimages::<T>::get(proposal_id) {
+		match Preimages::<T>::get(proposal_hash) {
 			Some(PreimageStatus::Available { .. }) => (),
 			_ => return Err("preimage not available".into())
 		}
@@ -621,22 +597,16 @@ benchmarks! {
 		// d + 1 to include the one we are testing
 		let encoded_proposal = vec![1; b as usize];
 		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
-		let asset_id = T::AssetId::from(DOT_ASSET);
-		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
-
 		let block_number = T::BlockNumber::one();
 		Preimages::<T>::insert(&proposal_hash, PreimageStatus::Missing(block_number));
 
 		let caller = funded_account::<T>("caller", 0);
 		let encoded_proposal = vec![1; b as usize];
 		whitelist_account!(caller);
-	}: _(RawOrigin::Signed(caller), encoded_proposal.clone(), asset_id)
+	}: _(RawOrigin::Signed(caller), encoded_proposal.clone())
 	verify {
 		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
-		let asset_id = T::AssetId::from(DOT_ASSET);
-		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
-
-		match Preimages::<T>::get(proposal_id) {
+		match Preimages::<T>::get(proposal_hash) {
 			Some(PreimageStatus::Available { .. }) => (),
 			_ => return Err("preimage not available".into())
 		}
@@ -648,27 +618,22 @@ benchmarks! {
 
 		let encoded_proposal = vec![1; b as usize];
 		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
-		let asset_id = T::AssetId::from(DOT_ASSET);
-		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
 
 		let submitter = funded_account::<T>("submitter", b);
-		Democracy::<T>::note_preimage(RawOrigin::Signed(submitter.clone()).into(), encoded_proposal.clone(), asset_id)?;
+		Democracy::<T>::note_preimage(RawOrigin::Signed(submitter.clone()).into(), encoded_proposal.clone())?;
 
 		// We need to set this otherwise we get `Early` error.
 		let block_number = T::VotingPeriod::get() + T::EnactmentPeriod::get() + T::BlockNumber::one();
 		System::<T>::set_block_number(block_number.into());
 
-		assert!(Preimages::<T>::contains_key(proposal_id));
+		assert!(Preimages::<T>::contains_key(proposal_hash));
 
 		let caller = funded_account::<T>("caller", 0);
 		whitelist_account!(caller);
 	}: _(RawOrigin::Signed(caller), proposal_hash.clone(), u32::MAX)
 	verify {
 		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
-		let asset_id = T::AssetId::from(DOT_ASSET);
-		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
-
-		assert!(!Preimages::<T>::contains_key(proposal_id));
+		assert!(!Preimages::<T>::contains_key(proposal_hash));
 	}
 
 	// Test when unlock will remove locks
@@ -679,21 +644,19 @@ benchmarks! {
 		// Populate votes so things are locked
 		let base_balance: BalanceOf<T> = 100u32.into();
 		let small_vote = account_vote::<T>(base_balance);
-
-		let asset_id = T::AssetId::from(DOT_ASSET);
 		// Vote and immediately unvote
 		for i in 0 .. r {
 			let ref_idx = add_referendum::<T>(i)?;
 			Democracy::<T>::vote(RawOrigin::Signed(locker.clone()).into(), ref_idx, small_vote.clone())?;
-			Democracy::<T>::remove_vote(RawOrigin::Signed(locker.clone()).into(), asset_id, ref_idx)?;
+			Democracy::<T>::remove_vote(RawOrigin::Signed(locker.clone()).into(), ref_idx)?;
 		}
 
 		let caller = funded_account::<T>("caller", 0);
 		whitelist_account!(caller);
-	}: unlock(RawOrigin::Signed(caller), locker.clone(), asset_id)
+	}: unlock(RawOrigin::Signed(caller), locker.clone())
 	verify {
 		// Note that we may want to add a `get_lock` api to actually verify
-		let voting = VotingOf::<T>::get((&locker, asset_id));
+		let voting = VotingOf::<T>::get(&locker);
 		assert_eq!(voting.locked_balance(), BalanceOf::<T>::zero());
 	}
 
@@ -701,7 +664,6 @@ benchmarks! {
 	unlock_set {
 		let r in 1 .. MAX_REFERENDUMS;
 
-		let asset_id = T::AssetId::from(DOT_ASSET);
 		let locker = funded_account::<T>("locker", 0);
 		// Populate votes so things are locked
 		let base_balance: BalanceOf<T> = 100u32.into();
@@ -716,28 +678,28 @@ benchmarks! {
 		let referendum_index = add_referendum::<T>(r)?;
 		Democracy::<T>::vote(RawOrigin::Signed(locker.clone()).into(), referendum_index, big_vote)?;
 
-		let votes = match VotingOf::<T>::get((&locker, asset_id)) {
+		let votes = match VotingOf::<T>::get(&locker) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
 		assert_eq!(votes.len(), (r + 1) as usize, "Votes were not recorded.");
 
-		let voting = VotingOf::<T>::get((&locker, asset_id));
+		let voting = VotingOf::<T>::get(&locker);
 		assert_eq!(voting.locked_balance(), base_balance * 10u32.into());
 
 		Democracy::<T>::remove_vote(RawOrigin::Signed(locker.clone()).into(), referendum_index)?;
 
 		let caller = funded_account::<T>("caller", 0);
 		whitelist_account!(caller);
-	}: unlock(RawOrigin::Signed(caller), locker.clone(), asset_id)
+	}: unlock(RawOrigin::Signed(caller), locker.clone())
 	verify {
-		let votes = match VotingOf::<T>::get((&locker, asset_id)) {
+		let votes = match VotingOf::<T>::get(&locker) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
 		assert_eq!(votes.len(), r as usize, "Vote was not removed");
 
-		let voting = VotingOf::<T>::get((&locker, asset_id));
+		let voting = VotingOf::<T>::get(&locker);
 		// Note that we may want to add a `get_lock` api to actually verify
 		assert_eq!(voting.locked_balance(), base_balance);
 	}
@@ -753,7 +715,7 @@ benchmarks! {
 			Democracy::<T>::vote(RawOrigin::Signed(caller.clone()).into(), ref_idx, account_vote.clone())?;
 		}
 
-		let votes = match VotingOf::<T>::get((&caller, asset_id)) {
+		let votes = match VotingOf::<T>::get(&caller) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -763,7 +725,7 @@ benchmarks! {
 		whitelist_account!(caller);
 	}: _(RawOrigin::Signed(caller.clone()), referendum_index)
 	verify {
-		let votes = match VotingOf::<T>::get((&caller, asset_id)) {
+		let votes = match VotingOf::<T>::get(&caller) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -776,14 +738,13 @@ benchmarks! {
 
 		let caller = funded_account::<T>("caller", r);
 		let account_vote = account_vote::<T>(100u32.into());
-		let asset_id = T::AssetId::from(DOT_ASSET);
 
 		for i in 0 .. r {
 			let ref_idx = add_referendum::<T>(i)?;
 			Democracy::<T>::vote(RawOrigin::Signed(caller.clone()).into(), ref_idx, account_vote.clone())?;
 		}
 
-		let votes = match VotingOf::<T>::get((&caller, asset_id)) {
+		let votes = match VotingOf::<T>::get(&caller) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -793,7 +754,7 @@ benchmarks! {
 		whitelist_account!(caller);
 	}: _(RawOrigin::Signed(caller.clone()), caller.clone(), referendum_index)
 	verify {
-		let votes = match VotingOf::<T>::get((&caller, asset_id)) {
+		let votes = match VotingOf::<T>::get(&caller) {
 			Voting::Direct { votes, .. } => votes,
 			_ => return Err("Votes are not direct".into()),
 		};
@@ -805,21 +766,18 @@ benchmarks! {
 		// Num of bytes in encoded proposal
 		let b in 0 .. MAX_BYTES;
 
-		let asset_id = T::AssetId::from(DOT_ASSET);
-
 		let proposer = funded_account::<T>("proposer", 0);
 		let raw_call = Call::note_preimage { encoded_proposal: vec![1; b as usize] };
 		let generic_call: T::Proposal = raw_call.into();
 		let encoded_proposal = generic_call.encode();
-
 		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
-		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
+		Democracy::<T>::note_preimage(RawOrigin::Signed(proposer).into(), encoded_proposal)?;
 
 		match Preimages::<T>::get(proposal_hash) {
 			Some(PreimageStatus::Available { .. }) => (),
 			_ => return Err("preimage not available".into())
 		}
-	}: enact_proposal(RawOrigin::Root, proposal_id, 0)
+	}: enact_proposal(RawOrigin::Root, proposal_hash, 0)
 	verify {
 		// Fails due to mismatched origin
 		assert_last_event::<T>(Event::<T>::Executed { ref_index: 0, result: Err(BadOrigin.into()) }.into());
@@ -834,17 +792,14 @@ benchmarks! {
 		// Random invalid bytes
 		let encoded_proposal = vec![200; b as usize];
 		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);
-		let asset_id = T::AssetId::from(DOT_ASSET);
-		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
+		Democracy::<T>::note_preimage(RawOrigin::Signed(proposer).into(), encoded_proposal)?;
 
-		Democracy::<T>::note_preimage(RawOrigin::Signed(proposer).into(), encoded_proposal, asset_id)?;
-
-		match Preimages::<T>::get(proposal_id) {
+		match Preimages::<T>::get(proposal_hash) {
 			Some(PreimageStatus::Available { .. }) => (),
 			_ => return Err("preimage not available".into())
 		}
 		let origin = RawOrigin::Root.into();
-		let call = Call::<T>::enact_proposal { proposal_id, index: 0 }.encode();
+		let call = Call::<T>::enact_proposal { proposal_hash, index: 0 }.encode();
 	}: {
 		assert_eq!(
 			<Call<T> as Decode>::decode(&mut &*call)
