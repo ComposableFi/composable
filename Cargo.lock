@@ -1618,7 +1618,7 @@ dependencies = [
  "pallet-governance-registry",
  "pallet-indices",
  "pallet-membership",
- "pallet-multicurrency-democracy",
+ "pallet-multitenant-democracy",
  "pallet-oracle",
  "pallet-preimage",
  "pallet-randomness-collective-flip",
@@ -2660,6 +2660,7 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "hex-literal",
+ "lending-runtime-api",
  "orml-tokens",
  "orml-traits",
  "orml-unknown-tokens",
@@ -2687,8 +2688,8 @@ dependencies = [
  "pallet-liquidations",
  "pallet-membership",
  "pallet-mosaic",
- "pallet-multicurrency-democracy",
  "pallet-multisig",
+ "pallet-multitenant-democracy",
  "pallet-oracle",
  "pallet-pablo",
  "pallet-preimage",
@@ -7772,7 +7773,22 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-multicurrency-democracy"
+name = "pallet-multisig"
+version = "4.0.0-dev"
+source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.18#e7d5134f1b37b25c81ce3b8aa6f5ea1ccf592b3d"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-multitenant-democracy"
 version = "0.0.1"
 dependencies = [
  "composable-traits",
@@ -7790,21 +7806,6 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "pallet-multisig"
-version = "4.0.0-dev"
-source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.18#e7d5134f1b37b25c81ce3b8aa6f5ea1ccf592b3d"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "parity-scale-codec",
- "scale-info",
  "sp-io",
  "sp-runtime",
  "sp-std",
@@ -8860,8 +8861,8 @@ dependencies = [
  "pallet-identity",
  "pallet-indices",
  "pallet-membership",
- "pallet-multicurrency-democracy",
  "pallet-multisig",
+ "pallet-multitenant-democracy",
  "pallet-preimage",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",

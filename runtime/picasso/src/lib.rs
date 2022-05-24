@@ -723,7 +723,7 @@ impl democracy::Config for Runtime {
 	type WeightInfo = weights::democracy::WeightInfo<Runtime>;
 }
 
-impl multicurrency_democracy::Config for Runtime {
+impl multitenant_democracy::Config for Runtime {
 	type Proposal = Call;
 	type Event = Event;
 	type Balance = Balance;
@@ -760,7 +760,7 @@ impl multicurrency_democracy::Config for Runtime {
 
 	type PreimageByteDeposit = PreimageByteDeposit;
 	type Scheduler = Scheduler;
-	type WeightInfo = weights::multicurrency_democracy::WeightInfo<Runtime>;
+	type WeightInfo = weights::multitenant_democracy::WeightInfo<Runtime>;
 }
 
 impl currency_factory::Config for Runtime {
@@ -892,7 +892,7 @@ construct_runtime!(
 		Vesting: vesting::{Call, Event<T>, Pallet, Storage} = 57,
 		BondedFinance: bonded_finance::{Call, Event<T>, Pallet, Storage} = 58,
 		AssetsRegistry: assets_registry::{Pallet, Call, Storage, Event<T>} = 59,
-		MultiCurrencyDemocracy: multicurrency_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 60,
+		MultiCurrencyDemocracy: multitenant_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 60,
 	}
 );
 
