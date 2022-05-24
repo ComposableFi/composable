@@ -16,6 +16,7 @@ message Instruction {
     Transfer transfer = 1;
     Bridge bridge = 2;
     Call call = 3;
+    Spawn spawn = 4;
   }
 }
 
@@ -33,6 +34,11 @@ message Bridge {
 
 message Call {
   bytes payload = 1;
+}
+
+message Spawn {
+  uint32 network = 1;
+  repeated Instruction program = 2;
 }
 
 message Account {
