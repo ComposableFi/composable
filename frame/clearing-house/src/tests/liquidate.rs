@@ -180,6 +180,54 @@ fn can_liquidate_if_below_maintenance_margin_ratio_by_pnl() {
 }
 
 #[test]
+fn underwater_accounts_imply_no_liquidation_fees() {
+	let mut config = valid_market_config();
+	config.margin_ratio_initial = (1, 2).into(); // 2x max leverage
+	config.margin_ratio_maintenance = (6, 100).into(); // 6% MMR
+	config.taker_fee = 0;
+
+	let margins = vec![(ALICE, as_balance(100)), (BOB, 0)];
+	traders_in_one_market_context(config, margins, |market_id| {
+		// 100% of liquidated amount goes to fees
+		FullLiquidationPenalty::<Runtime>::set(1.into());
+		// 50% of liquidation fee to liquidator
+		FullLiquidationPenaltyLiquidatorShare::<Runtime>::set((1, 2).into());
+
+		// Alice opens a position
+		VammPallet::set_price(Some(100.into()));
+		assert_ok!(<TestPallet as ClearingHouse>::open_position(
+			&ALICE,
+			&market_id,
+			Direction::Long,
+			as_balance(200),
+			as_balance(2),
+		));
+
+		// Price moves so that Alice's account is negative
+		VammPallet::set_price(Some(48.into()));
+		// 100 -> 48
+		// At price 48:
+		// - Base asset value = 96
+		// - margin requirement = 5.76
+		// - PnL = -104
+		// - margin = 100 - 104 = -4
+
+		// Bob liquidates Alice's account
+		assert_ok!(TestPallet::liquidate(Origin::signed(BOB), ALICE));
+		// Alice's entire collateral is seized to pay her PnL
+		assert_eq!(TestPallet::get_collateral(&ALICE).unwrap(), 0);
+		// Bob doesn't get any fees since there's no collateral left
+		let bob_collateral = TestPallet::get_collateral(&BOB).unwrap();
+		assert_eq!(bob_collateral, 0);
+		// Insurance Fund balance gets nothing for the same reason above
+		let insurance_fund = AssetsPallet::balance(USDC, &TestPallet::get_insurance_account());
+		assert_eq!(insurance_fund, 0);
+
+		SystemPallet::assert_last_event(Event::FullLiquidation { user: ALICE }.into());
+	});
+}
+
+#[test]
 fn position_in_market_with_greatest_margin_requirement_gets_liquidated_first() {
 	let mut config = valid_market_config();
 	config.margin_ratio_initial = (1, 2).into();
