@@ -16,20 +16,17 @@ import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
 import { KeyringPair } from "@polkadot/keyring/types";
 
-
 /**
  * Contains all TX tests for the pallet:
  * bondedFinance
  */
-describe("tx.bondedFinance Tests", function() {
-  if (!testConfiguration.enabledTests.enabled)
-    return;
+describe("tx.bondedFinance Tests", function () {
+  if (!testConfiguration.enabledTests.enabled) return;
   let api: ApiPromise;
-  let walletAlice: KeyringPair,
-    walletBob: KeyringPair;
+  let walletAlice: KeyringPair, walletBob: KeyringPair;
   let bondOfferId1: number, bondOfferId2: number;
 
-  before("Setting up tests", async function() {
+  before("Setting up tests", async function () {
     this.timeout(60 * 1000);
     const { newClient, newKeyring } = await getNewConnection();
     api = newClient;
@@ -38,29 +35,27 @@ describe("tx.bondedFinance Tests", function() {
     walletBob = devWalletBob;
   });
 
-  before("mint assets into the wallet", async function() {
+  before("mint assets into the wallet", async function () {
     this.timeout(2 * 60 * 1000);
     await mintAssetsToWallet(api, walletAlice, walletAlice, [4]);
     await mintAssetsToWallet(api, walletBob, walletAlice, [4]);
   });
 
-  after("Closing the connection", async function() {
+  after("Closing the connection", async function () {
     await api.disconnect();
   });
 
   /**
    * bondedFinance.offer(...) Success Tests
    */
-  describe("tx.bondedFinance.offer & .bond Success Tests", function() {
-    if (!testConfiguration.enabledTests.offer_bond__success.enabled)
-      return;
+  describe("tx.bondedFinance.offer & .bond Success Tests", function () {
+    if (!testConfiguration.enabledTests.offer_bond__success.enabled) return;
     // Timeout set to 2 minutes
     this.timeout(2 * 60 * 1000);
 
     // #1 Create offer using Alice's wallet.
-    it("Can create a new offer", async function() {
-      if (!testConfiguration.enabledTests.offer_bond__success.create1)
-        this.skip();
+    it("Can create a new offer", async function () {
+      if (!testConfiguration.enabledTests.offer_bond__success.create1) this.skip();
       const requestParameters = {
         beneficiary: walletAlice.publicKey,
         asset: api.createType("u128", 4),
@@ -73,15 +68,16 @@ describe("tx.bondedFinance Tests", function() {
           maturity: api.createType("u32", 1)
         }
       };
-      const { data: [result] } = await txBondedFinanceOfferSuccessTest(api, walletAlice, requestParameters);
+      const {
+        data: [result]
+      } = await txBondedFinanceOfferSuccessTest(api, walletAlice, requestParameters);
       expect(result.toNumber()).to.be.a("number");
       bondOfferId1 = result.toNumber();
     });
 
     // #2 Create offer using Bob's wallet.
-    it("Can create a second new offer", async function() {
-      if (!testConfiguration.enabledTests.offer_bond__success.create2)
-        this.skip();
+    it("Can create a second new offer", async function () {
+      if (!testConfiguration.enabledTests.offer_bond__success.create2) this.skip();
       const requestParameters = {
         beneficiary: walletBob.publicKey,
         asset: api.createType("u128", 4),
@@ -94,7 +90,9 @@ describe("tx.bondedFinance Tests", function() {
           maturity: api.createType("u32", 1)
         }
       };
-      const { data: [result] } = await txBondedFinanceOfferSuccessTest(api, walletBob, requestParameters);
+      const {
+        data: [result]
+      } = await txBondedFinanceOfferSuccessTest(api, walletBob, requestParameters);
       expect(result.toNumber()).to.be.a("number");
       bondOfferId2 = result.toNumber();
     });
@@ -103,12 +101,13 @@ describe("tx.bondedFinance Tests", function() {
      * bondedFinance.bond(offerId:u64, nbOfBonds:u128) Tests
      */
     // #3 Bob can bond to the offer Alice has created.
-    it("Can bond to newly created offer", async function() {
-      if (!testConfiguration.enabledTests.offer_bond__success.bond)
-        this.skip();
+    it("Can bond to newly created offer", async function () {
+      if (!testConfiguration.enabledTests.offer_bond__success.bond) this.skip();
       const offerId = api.createType("u64", bondOfferId1);
       const nbOfBonds = api.createType("u128", 1);
-      const { data: [result] } = await txBondedFinanceBondSuccessTest(api, walletBob, offerId, nbOfBonds);
+      const {
+        data: [result]
+      } = await txBondedFinanceBondSuccessTest(api, walletBob, offerId, nbOfBonds);
       expect(result.toNumber()).to.be.equal(bondOfferId1);
     });
   });
@@ -117,15 +116,13 @@ describe("tx.bondedFinance Tests", function() {
    * Runs all tx FAILURE tests for the bondedFinance pallet.
    */
   // #4 Alice can't create am offer with the bond price too low.
-  describe("tx.bondedFinance.offer Failure Tests", function() {
-    if (!testConfiguration.enabledTests.offer_bond__failure.enabled)
-      return;
+  describe("tx.bondedFinance.offer Failure Tests", function () {
+    if (!testConfiguration.enabledTests.offer_bond__failure.enabled) return;
     // Timeout set to 2 minutes
     this.timeout(2 * 60 * 1000);
 
-    it("Should not be able to create offer (bondPrice < MIN_VESTED_TRANSFER)", async function() {
-      if (!testConfiguration.enabledTests.offer_bond__failure.create_offer_price_lt_MIN_VESTED_TRANSFER)
-        this.skip();
+    it("Should not be able to create offer (bondPrice < MIN_VESTED_TRANSFER)", async function () {
+      if (!testConfiguration.enabledTests.offer_bond__failure.create_offer_price_lt_MIN_VESTED_TRANSFER) this.skip();
       const requestParameters = {
         beneficiary: walletAlice.publicKey,
         asset: api.createType("u128", 4),
@@ -139,13 +136,13 @@ describe("tx.bondedFinance Tests", function() {
         }
       };
       await txBondedFinanceOfferFailureTest(api, walletAlice, requestParameters).catch(e =>
-        expect(e).to.be.an("Error"));
+        expect(e).to.be.an("Error")
+      );
     });
 
     // #5 Alice can't create offer with the reward amount too low.
-    it("Should not be able to create offer (reward.amount < MinReward)", async function() {
-      if (!testConfiguration.enabledTests.offer_bond__failure.create_offer_reward_amt_lt_MinReward)
-        this.skip();
+    it("Should not be able to create offer (reward.amount < MinReward)", async function () {
+      if (!testConfiguration.enabledTests.offer_bond__failure.create_offer_reward_amt_lt_MinReward) this.skip();
       const requestParameters = {
         beneficiary: walletAlice.publicKey,
         asset: api.createType("u128", 4),
@@ -159,13 +156,13 @@ describe("tx.bondedFinance Tests", function() {
         }
       };
       await txBondedFinanceOfferFailureTest(api, walletAlice, requestParameters).catch(e =>
-        expect(e).to.be.an("Error"));
+        expect(e).to.be.an("Error")
+      );
     });
 
     // #6 Alice can't create offer with the reward asset not existing.
-    it("Should not be able to create offer (reward.asset does not exist)", async function() {
-      if (!testConfiguration.enabledTests.offer_bond__failure.create_offer_reward_asset_not_exist)
-        this.skip();
+    it("Should not be able to create offer (reward.asset does not exist)", async function () {
+      if (!testConfiguration.enabledTests.offer_bond__failure.create_offer_reward_asset_not_exist) this.skip();
       const requestParameters = {
         beneficiary: walletAlice.publicKey,
         asset: api.createType("u128", 4),
@@ -179,7 +176,8 @@ describe("tx.bondedFinance Tests", function() {
         }
       };
       await txBondedFinanceOfferFailureTest(api, walletAlice, requestParameters).catch(e =>
-        expect(e).to.be.an("Error"));
+        expect(e).to.be.an("Error")
+      );
     });
   });
 
@@ -187,17 +185,14 @@ describe("tx.bondedFinance Tests", function() {
    * Runs FAILURE tests for bondedFinance.cancel(offerId)
    */
   // #7 Should not be able to cancel offer that doesn't exist
-  describe("tx.bondedFinance.cancel Failure Tests", function() {
-    if (!testConfiguration.enabledTests.cancel_failure.enabled)
-      return;
+  describe("tx.bondedFinance.cancel Failure Tests", function () {
+    if (!testConfiguration.enabledTests.cancel_failure.enabled) return;
     // Timeout set to 2 minutes
     this.timeout(2 * 60 * 1000);
-    it("Should not be able to cancel offer that doesn't exist", async function() {
-      if (!testConfiguration.enabledTests.cancel_failure.cancel_offer_not_exist)
-        this.skip();
+    it("Should not be able to cancel offer that doesn't exist", async function () {
+      if (!testConfiguration.enabledTests.cancel_failure.cancel_offer_not_exist) this.skip();
       const offerId = 1337;
-      await txBondedFinanceCancelFailureTest(api, walletAlice, offerId).catch(e =>
-        expect(e).to.be.an("Error"));
+      await txBondedFinanceCancelFailureTest(api, walletAlice, offerId).catch(e => expect(e).to.be.an("Error"));
     });
   });
 
@@ -205,24 +200,25 @@ describe("tx.bondedFinance Tests", function() {
    * Runs SUCCESS tests for bondedFinance.cancel(offerId)
    */
   // #8 Alice should be able to cancel her offer.
-  describe("tx.bondedFinance.cancel Success Tests", function() {
-    if (!testConfiguration.enabledTests.cancel_success.enabled)
-      return;
+  describe("tx.bondedFinance.cancel Success Tests", function () {
+    if (!testConfiguration.enabledTests.cancel_success.enabled) return;
     // Timeout set to 2 minutes
     this.timeout(2 * 60 * 1000);
-    it("Can cancel offer created in first bondedFinance.offer test by creator", async function() {
-      if (!testConfiguration.enabledTests.cancel_success.cancel_by_creator)
-        this.skip();
-      const { data: [result] } = await txBondedFinanceCancelSuccessTest(api, walletAlice, bondOfferId1);
+    it("Can cancel offer created in first bondedFinance.offer test by creator", async function () {
+      if (!testConfiguration.enabledTests.cancel_success.cancel_by_creator) this.skip();
+      const {
+        data: [result]
+      } = await txBondedFinanceCancelSuccessTest(api, walletAlice, bondOfferId1);
       expect(result.toNumber()).to.be.a("number");
       expect(result.toNumber()).to.be.equal(bondOfferId1);
     });
 
     // #9 A sudo command should be able to cancel an offer.
-    it("Can sudo (diff. account) cancel offer created in second bondedFinance.offer", async function() {
-      if (!testConfiguration.enabledTests.cancel_success.cancel_by_sudo)
-        this.skip();
-      const { data: [result] } = await txBondedFinanceCancelSudoSuccessTest(api, walletAlice, bondOfferId2);
+    it("Can sudo (diff. account) cancel offer created in second bondedFinance.offer", async function () {
+      if (!testConfiguration.enabledTests.cancel_success.cancel_by_sudo) this.skip();
+      const {
+        data: [result]
+      } = await txBondedFinanceCancelSudoSuccessTest(api, walletAlice, bondOfferId2);
       expect(result.isOk).to.be.true;
     });
   });

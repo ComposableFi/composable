@@ -2,7 +2,6 @@ import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
 import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
 
-
 /**
  * Tests tx.oracle.addAssetAndInfo with provided parameters that should succeed.
  * @param api Connect ApiPromise
@@ -31,15 +30,7 @@ export async function txOracleAddAssetAndInfoSuccessTest(
     sudoKey,
     api.events.sudo.Sudid.is,
     api.tx.sudo.sudo(
-      api.tx.oracle.addAssetAndInfo(
-        assetId,
-        threshold,
-        minAnswers,
-        maxAnswers,
-        blockInterval,
-        reward,
-        slash
-      )
+      api.tx.oracle.addAssetAndInfo(assetId, threshold, minAnswers, maxAnswers, blockInterval, reward, slash)
     )
   );
 }

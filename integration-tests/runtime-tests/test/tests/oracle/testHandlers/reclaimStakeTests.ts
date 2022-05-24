@@ -7,10 +7,7 @@ import { KeyringPair } from "@polkadot/keyring/types";
  * @param api Connected ApiPromise
  * @param controller KeyringPair which is a controller.
  */
-export async function txOracleReclaimStakeSuccessTest(
-  api: ApiPromise,
-  controller: KeyringPair
-) {
+export async function txOracleReclaimStakeSuccessTest(api: ApiPromise, controller: KeyringPair) {
   return await sendAndWaitForSuccess(
     api,
     controller,

@@ -3,17 +3,12 @@ env:
   es2021: true
 extends:
   - "plugin:@typescript-eslint/recommended"
-parser: '@typescript-eslint/parser'
+parser: "@typescript-eslint/parser"
 parserOptions:
   project: ["./tsconfig.json"]
   ecmaVersion: 2020
   sourceType: module
 plugins:
-  - '@typescript-eslint'
+  - "@typescript-eslint"
 rules: {}
-ignorePatterns: [
-  "src/**/*.d.ts",
-  "src/**/*.js",
-  "test/**/*.d.ts",
-  "test/**/*.js",
-]
+ignorePatterns: ["src/**/*.d.ts", "src/**/*.js", "test/**/*.d.ts", "test/**/*.js"]
