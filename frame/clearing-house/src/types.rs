@@ -109,7 +109,7 @@ pub struct Market<T: Config> {
 	/// paid.
 	///
 	/// Setting the funding period too long may cause the perpetual to start trading at a
-	/// very dislocated price to the index because there’s less of an incentive for basis
+	/// very dislocated price to the index because there's less of an incentive for basis
 	/// arbitrageurs to push the prices back in line since they would have to carry the basis
 	/// risk for a longer period of time.
 	///
