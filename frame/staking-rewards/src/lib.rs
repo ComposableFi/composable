@@ -396,8 +396,8 @@ pub mod pallet {
 			balance: T::Balance,
 		) -> DispatchResult {
 			let owner = ensure_signed(origin)?;
-			let position = T::get_protocol_nft::<StakingNFTOf<T>>(&instance_id)?;
 			T::ensure_protocol_nft_owner::<StakingNFTOf<T>>(&owner, &instance_id)?;
+			let position = T::get_protocol_nft::<StakingNFTOf<T>>(&instance_id)?;
 			let protocol_account = Self::account_id(&position.asset);
 			T::Assets::transfer(position.asset, &owner, &protocol_account, balance, false)?;
 			PendingAmountExtensions::<T>::mutate_exists(instance_id, |x| {
@@ -411,15 +411,23 @@ pub mod pallet {
 		/// Extends stake duration.
 		/// `duration` - if none, then extend current duration from start. If more than current
 		/// duration, takes some time from new duration.
+		/// 
+		/// 
 		///
 		/// Fails if `duration` extensions does not fits allowed.
 		#[pallet::weight(10_000)]
 		pub fn extend_duration(
-			_origin: OriginFor<T>,
-			_instance_id: InstanceIdOf<T>,
-			_duration: Option<DurationSeconds>,
+			origin: OriginFor<T>,
+			instance_id: InstanceIdOf<T>,
+			duration: Option<DurationSeconds>,
 		) -> DispatchResult {
 			Err(DispatchError::Other("no implemented. TODO: insert update for next fold").into())
+			let owner = ensure_signed(origin)?;
+			T::ensure_protocol_nft_owner::<StakingNFTOf<T>>(&owner, &instance_id)?;
+			let position = T::get_protocol_nft::<StakingNFTOf<T>>(&instance_id)?;
+			match (position.)
+
+			Ok(())
 		}
 	}
 
@@ -533,6 +541,15 @@ pub mod pallet {
 						},
 					);
 					if let BlockFold::Done { .. } = result {
+						// NOTE: 
+						// other design would be to `take` in batches and having A/B storages					 
+						// 1. make A to be acitve to inser new pending stakers
+						// 2. drain B in batches
+						// 3. switch A/B
+						// 
+						// in this case removing will be more eager and streaming (good)
+						// and fold would have simpler state (no need to recall previous and know when done)
+						// but will need to store `bool` value for A/B and split storage PendingStakersA and PendingStakersB
 						PendingStakers::<T>::remove_all(None);
 						CurrentState::<T>::set(State::WaitingForEpochEnd);
 					}
