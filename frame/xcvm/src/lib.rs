@@ -96,6 +96,7 @@ pub mod pallet {
 			Balance = BalanceOf<Self>,
 			BlockNumber = Self::BlockNumber,
 		>;
+		type ControlOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	#[pallet::pallet]
@@ -118,6 +119,28 @@ pub mod pallet {
 	where
 		AccountIdOf<T>: TryFrom<Vec<u8>> + Into<Vec<u8>>,
 	{
+		#[pallet::weight(10_000)]
+		pub fn set_satellite(
+			origin: OriginFor<T>,
+			network: XCVMNetwork,
+			address: AddressOf<T>,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::ControlOrigin::ensure_origin(origin)?;
+			SatelliteAddress::<T>::insert(network, address);
+			Ok(().into())
+		}
+
+		#[pallet::weight(10_000)]
+		pub fn set_network(
+			origin: OriginFor<T>,
+			network: XCVMNetwork,
+			network_id: NetworkIdOf<T>,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::ControlOrigin::ensure_origin(origin)?;
+			NetworkMapping::<T>::insert(network, network_id);
+			Ok(().into())
+		}
+
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn execute(
