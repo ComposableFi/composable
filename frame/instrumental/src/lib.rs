@@ -162,6 +162,10 @@ pub mod pallet {
 				VaultId = Self::VaultId,
 			>;
 
+		/// The id used as the
+		/// [`AccountId`](composable_traits::instrumental::Instrumental::AccountId) of the vault.
+		/// This should be unique across all pallets to avoid name collisions with other pallets and
+		/// vaults.
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 	}
