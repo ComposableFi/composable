@@ -1,13 +1,14 @@
 use assets_runtime_api::AssetsRuntimeApi;
 use codec::Codec;
 use composable_support::rpc_helpers::SafeRpcWrapper;
+use composable_traits::assets::Asset;
 use core::{fmt::Display, str::FromStr};
 use jsonrpc_core::{Error as RpcError, ErrorCode, Result as RpcResult};
 use jsonrpc_derive::rpc;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
-use sp_std::sync::Arc;
+use sp_std::{sync::Arc, vec::Vec};
 
 #[rpc]
 pub trait AssetsApi<BlockHash, AssetId, AccountId, Balance>
@@ -22,6 +23,9 @@ where
 		account: AccountId,
 		at: Option<BlockHash>,
 	) -> RpcResult<SafeRpcWrapper<Balance>>;
+
+	#[rpc(name = "assets_listAssets")]
+	fn list_assets(&self, at: Option<BlockHash>) -> RpcResult<Vec<Asset>>;
 }
 
 pub struct Assets<C, Block> {
@@ -62,6 +66,25 @@ where
 		}));
 
 		let runtime_api_result = api.balance_of(&at, asset_id, account_id);
+		// TODO(benluelo): Review what error message & code to use
+		runtime_api_result.map_err(|e| {
+			RpcError {
+				code: ErrorCode::ServerError(9876), // No real reason for this value
+				message: "Something wrong".into(),
+				data: Some(format!("{:?}", e).into()),
+			}
+		})
+	}
+
+	fn list_assets(&self, at: Option<<Block as BlockT>::Hash>) -> RpcResult<Vec<Asset>> {
+		let api = self.client.runtime_api();
+
+		let at = BlockId::hash(at.unwrap_or_else(|| {
+			// If the block hash is not supplied assume the best block.
+			self.client.info().best_hash
+		}));
+
+		let runtime_api_result = api.list_assets(&at);
 		// TODO(benluelo): Review what error message & code to use
 		runtime_api_result.map_err(|e| {
 			RpcError {

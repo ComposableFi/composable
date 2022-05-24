@@ -67,5 +67,12 @@ export default {
       quoteAssetId: "CustomRpcCurrencyId",
       spotPrice: "CustomRpcBalance",
     },
+    ComposableTraitsDexFee: {
+      fee: "u128",
+      lp_fee: "u128",
+      owner_fee: "u128",
+      protocol_fee: "u128",
+      asset_id: "u128",
+    }
   },
 };

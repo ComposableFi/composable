@@ -1,13 +1,15 @@
 //! CurrencyId implementation
 use codec::{CompactAs, Decode, Encode, MaxEncodedLen};
-use composable_traits::currency::Exponent;
+use composable_traits::{assets::Asset, currency::Exponent};
 use core::{fmt::Display, ops::Div, str::FromStr};
 use scale_info::TypeInfo;
-use sp_runtime::RuntimeDebug;
+use sp_runtime::{
+	sp_std::{ops::Deref, vec::Vec},
+	RuntimeDebug,
+};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
-use sp_runtime::sp_std::ops::Deref;
 
 /// Trait used to write generalized code over well know currencies
 /// We use const to allow for match on these
@@ -78,11 +80,24 @@ impl CurrencyId {
 	pub const fn decimals() -> Exponent {
 		12
 	}
+
 	pub fn unit<T: From<u64>>() -> T {
 		T::from(10_u64.pow(Self::decimals()))
 	}
+
 	pub fn milli<T: From<u64> + Div<Output = T>>() -> T {
 		Self::unit::<T>() / T::from(1000_u64)
+	}
+
+	pub fn list_assets() -> Vec<Asset> {
+		[
+			Asset { id: CurrencyId::PICA.0 as u64, name: b"PICA".to_vec() },
+			Asset { id: CurrencyId::LAYR.0 as u64, name: b"LAYR".to_vec() },
+			Asset { id: CurrencyId::CROWD_LOAN.0 as u64, name: b"CROWD_LOAN".to_vec() },
+			Asset { id: CurrencyId::KSM.0 as u64, name: b"KSM".to_vec() },
+			Asset { id: CurrencyId::kUSD.0 as u64, name: b"kUSD".to_vec() },
+		]
+		.to_vec()
 	}
 }
 

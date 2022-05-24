@@ -2,8 +2,17 @@
 /* eslint-disable */
 
 import type { ComposableTraitsDefiCurrencyPairCurrencyId, CustomRpcBalance, CustomRpcCurrencyId, SafeRpcWrapper } from '@composable/types/interfaces/common';
-import type { Enum, Null, Struct, u16 } from '@polkadot/types-codec';
+import type { Enum, Null, Struct, u128, u16 } from '@polkadot/types-codec';
 import type { AccountId32, BlockNumber, Permill } from '@polkadot/types/interfaces/runtime';
+
+/** @name ComposableTraitsDexFee */
+export interface ComposableTraitsDexFee extends Struct {
+  readonly fee: u128;
+  readonly lp_fee: u128;
+  readonly owner_fee: u128;
+  readonly protocol_fee: u128;
+  readonly asset_id: u128;
+}
 
 /** @name PalletPabloPoolConfiguration */
 export interface PalletPabloPoolConfiguration extends Enum {
