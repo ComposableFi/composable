@@ -405,7 +405,6 @@ pub mod pallet {
 				*x = Some(increased?);
 				increased
 			})?;
-			log::info!("heeeyyyyyy{:?}", PendingAmountExtensions::<T>::get(&instance_id));
 			Ok(().into())
 		}
 
@@ -448,7 +447,7 @@ pub mod pallet {
 										PositionState::Pending => {},
 										PositionState::Expired => {
 											// TODO: https://app.clickup.com/t/2xw5fca
-											log::warn!("Expired: {:?}", &nft);
+											log::into!("Expired: {:?}", &nft);
 										},
 										PositionState::LockedRewarding => {
 											// TODO: return here increased share if one of assets is
