@@ -71,3 +71,5 @@ fn deposit_supported_collateral_succeeds() {
 			SystemPallet::assert_last_event(Event::MarginAdded { account, asset, amount }.into());
 		})
 }
+
+// TODO(0xangelo): depositing 0 collateral should fail
