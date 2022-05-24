@@ -35,7 +35,7 @@ jobs:
       env:
         LOG_FILE: /tmp/polka-launch/polka-launch.log
       run: |
-        sudo apt install npm
+        apt install npm
         npm install --global yarn
         yarn
         yarn composable > "${LOG_FILE}" 2>&1 &
