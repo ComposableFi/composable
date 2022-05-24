@@ -4,7 +4,7 @@ description = "FRAME pallet for democracy with multi currency support"
 edition = "2018"
 homepage = "https://composable.finance"
 license = "Apache-2.0"
-name = "pallet-democracy"
+name = "pallet-multicurrency-democracy"
 readme = "README.md"
 version = "0.0.1"
 
@@ -27,9 +27,9 @@ serde = { version = "1.0.136", optional = true, features = ["derive"] }
 sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b5d4ce1d08fb54c0007c2055653892d2c93a92e", default-features = false }
 
 [dev-dependencies]
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b5d4ce1d08fb54c0007c2055653892d2c93a92e", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 pallet-governance-registry = { path = "../governance-registry" }
 pallet-preimage = { package = "pallet-preimage", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }

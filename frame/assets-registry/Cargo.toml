@@ -3,7 +3,7 @@ authors = ["Composable Developers"]
 edition = "2021"
 homepage = "https://composable.finance"
 name = "pallet-assets-registry"
-version = "0.1.0"
+version = "0.0.1"
 
 
 [package.metadata.docs.rs]
@@ -35,11 +35,12 @@ log = { version = "0.4.14", default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
+pallet-currency-factory = { path = "../currency-factory", default-features = false }
 
 [dev-dependencies]
 frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-pallet-currency-factory = { path = "../currency-factory", default-features = false }
+
 
 [features]
 default = ["std"]

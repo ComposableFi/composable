@@ -49,9 +49,9 @@ fn split_vote_cancellation_should_work() {
 		let r = begin_referendum();
 		let v = AccountVote::Split { aye: 30, nay: 20 };
 		assert_ok!(Democracy::vote(Origin::signed(5), r, v));
-		assert_ok!(Democracy::remove_vote(Origin::signed(5), DEFAULT_ASSET, r));
+		assert_ok!(Democracy::remove_vote(Origin::signed(5), r));
 		assert_eq!(tally(r), Tally { ayes: 0, nays: 0, turnout: 0 });
-		assert_ok!(Democracy::unlock(Origin::signed(5), 5, DEFAULT_ASSET));
+		assert_ok!(Democracy::unlock(Origin::signed(5), 5));
 		assert_eq!(Balances::locks(5), vec![]);
 	});
 }
@@ -73,7 +73,7 @@ fn single_proposal_should_work() {
 			Democracy::referendum_status(0),
 			Ok(ReferendumStatus {
 				end: 4,
-				proposal_id: set_balance_proposal_hash_and_note(2),
+				proposal_hash: set_balance_proposal_hash_and_note(2),
 				threshold: VoteThreshold::SuperMajorityApprove,
 				delay: 2,
 				tally: Tally { ayes: 1, nays: 0, turnout: 10 },
@@ -149,7 +149,7 @@ fn controversial_low_turnout_voting_should_work() {
 fn passing_low_turnout_voting_should_work() {
 	new_test_ext().execute_with(|| {
 		assert_eq!(Balances::free_balance(42), 0);
-		assert_eq!(Balances::total_issuance(), 310);
+		assert_eq!(Balances::total_issuance(), 210);
 
 		let r = Democracy::inject_referendum(
 			2,

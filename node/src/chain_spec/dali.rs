@@ -70,5 +70,6 @@ pub fn genesis_config(
 		council: Default::default(),
 		democracy: Default::default(),
 		treasury: Default::default(),
+		multi_currency_democracy: Default::default(),
 	}
 }
