@@ -52,11 +52,12 @@ fn cant_fully_liquidate_if_above_maintenance_margin_ratio_by_pnl() {
 		);
 
 		// Price moves so that Alice's account is at exactly 10% margin ratio
-		VammPallet::set_price(Some(50.into())); // 100 -> 50
-										// At price 50:
-										// - margin required = 5
-										// - PnL = -50
-										// - margin = 5
+		// 100 -> 50
+		VammPallet::set_price(Some(50.into()));
+		// At price 50:
+		// - margin required = 5
+		// - PnL = -50
+		// - margin = 5
 
 		// Still not liquidatable; just enough collateral
 		assert_noop!(
