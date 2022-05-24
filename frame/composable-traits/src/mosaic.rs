@@ -1,6 +1,9 @@
 //! Traits used in the implementation of the Mosaic pallet.
 
+use codec::FullCodec;
 use frame_support::dispatch::DispatchResultWithPostInfo;
+use scale_info::TypeInfo;
+use sp_runtime::DispatchError;
 
 /// Trait containing the business logic relevant to managing the Relayer of the Mosaic pallet.
 pub trait RelayerInterface {
@@ -68,9 +71,12 @@ pub trait RelayerInterface {
 /// Trait containing relevant business logic for outgoing transactions.
 pub trait TransferTo {
 	type AccountId;
+	type NetworkId: Clone + PartialEq + Eq + core::fmt::Debug + FullCodec + TypeInfo;
+	type Address: Clone + PartialEq + Eq + core::fmt::Debug + FullCodec + TypeInfo;
 	type AssetId;
 	type Balance;
 	type BlockNumber;
+	type TxId: Clone + PartialEq + Eq + core::fmt::Debug + FullCodec + TypeInfo;
 
 	/// Claims user funds from outgoing transactions in the event the Relayer has not picked the
 	/// funds up.
@@ -84,11 +90,13 @@ pub trait TransferTo {
 	/// Creates an outgoing transaction request.
 	fn transfer_to(
 		caller: Self::AccountId,
+		network_id: Self::NetworkId,
+		address: Self::Address,
 		asset_id: Self::AssetId,
 		amount: Self::Balance,
 		keep_alive: bool,
 		now: Self::BlockNumber,
-	) -> DispatchResultWithPostInfo;
+	) -> Result<Self::TxId, DispatchError>;
 }
 
 /// Trait containing relevant business logic for incoming transactions.

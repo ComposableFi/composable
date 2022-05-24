@@ -456,34 +456,16 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
-			ensure!(AssetsInfo::<T>::contains_key(asset_id), Error::<T>::UnsupportedAsset);
-			let remote_asset_id = Self::get_remote_mapping(asset_id, network_id.clone())?;
-			let network_info =
-				NetworkInfos::<T>::get(network_id.clone()).ok_or(Error::<T>::UnsupportedNetwork)?;
-			ensure!(network_info.enabled, Error::<T>::NetworkDisabled);
-			ensure!(network_info.max_transfer_size >= amount, Error::<T>::ExceedsMaxTransferSize);
-			ensure!(network_info.min_transfer_size <= amount, Error::<T>::BelowMinTransferSize);
-
 			let now = <frame_system::Pallet<T>>::block_number();
-
 			<Pallet<T> as TransferTo>::transfer_to(
 				caller.clone(),
+				network_id,
+				address,
 				asset_id,
 				amount,
 				keep_alive,
 				now,
 			)?;
-
-			let id = generate_id::<T>(&caller, &network_id, &asset_id, &address, &amount, &now);
-			Self::deposit_event(Event::<T>::TransferOut {
-				id,
-				to: address,
-				amount,
-				asset_id,
-				network_id,
-				remote_asset_id,
-			});
-
 			Ok(().into())
 		}
 
@@ -959,9 +941,12 @@ pub mod pallet {
 
 	impl<T: Config> TransferTo for Pallet<T> {
 		type AccountId = AccountIdOf<T>;
+		type NetworkId = NetworkIdOf<T>;
+		type Address = EthereumAddress;
 		type AssetId = AssetIdOf<T>;
 		type Balance = BalanceOf<T>;
 		type BlockNumber = BlockNumberOf<T>;
+		type TxId = Id;
 
 		fn claim_stale_to(
 			caller: Self::AccountId,
@@ -1008,11 +993,21 @@ pub mod pallet {
 
 		fn transfer_to(
 			caller: Self::AccountId,
+			network_id: Self::NetworkId,
+			address: Self::Address,
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
 			keep_alive: bool,
 			now: Self::BlockNumber,
-		) -> DispatchResultWithPostInfo {
+		) -> Result<Self::TxId, DispatchError> {
+			ensure!(AssetsInfo::<T>::contains_key(asset_id), Error::<T>::UnsupportedAsset);
+			let remote_asset_id = Self::get_remote_mapping(asset_id, network_id.clone())?;
+			let network_info =
+				NetworkInfos::<T>::get(network_id.clone()).ok_or(Error::<T>::UnsupportedNetwork)?;
+			ensure!(network_info.enabled, Error::<T>::NetworkDisabled);
+			ensure!(network_info.max_transfer_size >= amount, Error::<T>::ExceedsMaxTransferSize);
+			ensure!(network_info.min_transfer_size <= amount, Error::<T>::BelowMinTransferSize);
+
 			T::Assets::transfer(
 				asset_id,
 				&caller,
@@ -1024,7 +1019,7 @@ pub mod pallet {
 			let lock_until = now.safe_add(&TimeLockPeriod::<T>::get())?;
 
 			OutgoingTransactions::<T>::try_mutate(
-				caller,
+				caller.clone(),
 				asset_id,
 				|tx| -> Result<(), DispatchError> {
 					match tx.as_mut() {
@@ -1040,7 +1035,17 @@ pub mod pallet {
 				},
 			)?;
 
-			Ok(().into())
+			let id = generate_id::<T>(&caller, &network_id, &asset_id, &address, &amount, &now);
+			Self::deposit_event(Event::<T>::TransferOut {
+				id,
+				to: address,
+				amount,
+				asset_id,
+				network_id,
+				remote_asset_id,
+			});
+
+			Ok(id)
 		}
 	}
 
