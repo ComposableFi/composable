@@ -2,11 +2,31 @@
 
 extern crate alloc;
 
-pub mod xcvm;
+mod xcvm;
 
 use alloc::{collections::BTreeMap, vec::Vec};
-pub use xcvm::*;
-use xcvm_core::XCVMInstruction;
+pub use prost::{DecodeError, Message};
+use xcvm::*;
+pub use xcvm_core::*;
+
+pub enum DecodingFailure {
+	Protobuf(DecodeError),
+	Isomorphism,
+}
+
+pub fn decode<
+	TNetwork: From<u32>,
+	TAbiEncoded: From<Vec<u8>>,
+	TAccount: From<Vec<u8>>,
+	TAssets: From<BTreeMap<u32, u128>>,
+>(
+	buffer: &[u8],
+) -> Result<XCVMProgram<XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>>, DecodingFailure>
+{
+	Program::decode(buffer)
+		.map_err(DecodingFailure::Protobuf)
+		.and_then(|x| TryInto::try_into(x).map_err(|_| DecodingFailure::Isomorphism))
+}
 
 impl From<u128> for U128 {
 	fn from(x: u128) -> Self {
@@ -26,12 +46,58 @@ impl<
 		TAbiEncoded: Into<Vec<u8>>,
 		TAccount: Into<Vec<u8>>,
 		TAssets: Into<BTreeMap<u32, u128>>,
+	> From<XCVMProgram<XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>>> for Program
+{
+	fn from(
+		XCVMProgram { instructions, instruction_pointer }: XCVMProgram<
+			XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>,
+		>,
+	) -> Self {
+		Program {
+			instructions: Some(Instructions {
+				instructions: instructions.into_iter().map(Into::<Instruction>::into).collect(),
+			}),
+			instruction_pointer,
+		}
+	}
+}
+
+impl<
+		TNetwork: From<u32>,
+		TAbiEncoded: From<Vec<u8>>,
+		TAccount: From<Vec<u8>>,
+		TAssets: From<BTreeMap<u32, u128>>,
+	> TryFrom<Program> for XCVMProgram<XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>>
+{
+	type Error = ();
+	fn try_from(
+		Program { instructions, instruction_pointer }: Program,
+	) -> Result<Self, Self::Error> {
+		instructions
+			.map(|Instructions { instructions }| {
+				Ok(XCVMProgram {
+					instructions: instructions
+						.into_iter()
+						.map(TryInto::<XCVMInstruction<_, _, _, _>>::try_into)
+						.collect::<Result<Vec<_>, _>>()?,
+					instruction_pointer,
+				})
+			})
+			.unwrap_or(Err(()))
+	}
+}
+
+impl<
+		TNetwork: Into<u32>,
+		TAbiEncoded: Into<Vec<u8>>,
+		TAccount: Into<Vec<u8>>,
+		TAssets: Into<BTreeMap<u32, u128>>,
 	> From<XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>> for Instruction
 {
 	fn from(instruction: XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>) -> Self {
 		Instruction {
 			instruction: Some(match instruction {
-				XCVMInstruction::Transfer(destination, assets) =>
+				XCVMInstruction::Transfer(destination, assets) => {
 					instruction::Instruction::Transfer(Transfer {
 						destination: Some(Account { addressed: destination.into() }),
 						assets: assets
@@ -39,8 +105,9 @@ impl<
 							.into_iter()
 							.map(|(asset, amount)| (asset, amount.into()))
 							.collect(),
-					}),
-				XCVMInstruction::Bridge(network, assets) =>
+					})
+				},
+				XCVMInstruction::Bridge(network, assets) => {
 					instruction::Instruction::Bridge(Bridge {
 						network: network.into(),
 						assets: assets
@@ -48,9 +115,11 @@ impl<
 							.into_iter()
 							.map(|(asset, amount)| (asset, amount.into()))
 							.collect(),
-					}),
-				XCVMInstruction::Call(payload) =>
-					instruction::Instruction::Call(Call { payload: payload.into() }),
+					})
+				},
+				XCVMInstruction::Call(payload) => {
+					instruction::Instruction::Call(Call { payload: payload.into() })
+				},
 			}),
 		}
 	}
@@ -78,7 +147,7 @@ impl<
 						.collect::<Result<BTreeMap<u32, u128>, ()>>()?
 						.into(),
 				)),
-				instruction::Instruction::Bridge(Bridge { network, assets }) =>
+				instruction::Instruction::Bridge(Bridge { network, assets }) => {
 					Ok(XCVMInstruction::Bridge(
 						network.into(),
 						assets
@@ -86,9 +155,11 @@ impl<
 							.map(|(asset, amount)| Ok((asset, amount.try_into()?)))
 							.collect::<Result<BTreeMap<u32, u128>, ()>>()?
 							.into(),
-					)),
-				instruction::Instruction::Call(Call { payload }) =>
-					Ok(XCVMInstruction::Call(payload.into())),
+					))
+				},
+				instruction::Instruction::Call(Call { payload }) => {
+					Ok(XCVMInstruction::Call(payload.into()))
+				},
 				_ => Err(()),
 			})
 			.unwrap_or(Err(()))
@@ -99,7 +170,7 @@ impl<
 mod tests {
 	use super::*;
 	use alloc::vec;
-	use xcvm_core::{AbiEncoded, XCVMContractBuilder, XCVMNetwork, XCVMProtocol};
+	use xcvm_core::{AbiEncoded, XCVMNetwork, XCVMProgramBuilder, XCVMProtocol};
 
 	#[test]
 	fn isomorphism() {
@@ -116,7 +187,7 @@ mod tests {
 		}
 
 		let contract = || -> Result<_, ()> {
-			Ok(XCVMContractBuilder::<
+			Ok(XCVMProgramBuilder::<
 				XCVMNetwork,
 				XCVMInstruction<XCVMNetwork, _, Vec<u8>, BTreeMap<u32, u128>>,
 			>::from(XCVMNetwork::PICASSO)
