@@ -19,6 +19,22 @@ export default {
       ],
       type: "CustomRpcBalance"
     },
+    listAssets: {
+      description: "Lists the available recognized assets for the runtime.",
+      params: [
+        {
+          name: "at",
+          type: "Hash",
+          isOptional: true,
+        },
+      ],
+      type: "Vec<Asset>"
+    },
   },
-  types: {}
+  types: {
+    Asset: {
+      name: "Vec<u8>",
+      id: "u64"
+    }
+  }
 };

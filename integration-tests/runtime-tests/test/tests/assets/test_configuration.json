@@ -2,7 +2,8 @@
   "enabledTests": {
     "rpc": {
       "enabled": true,
-      "balanceOf__success": true
+      "balanceOf__success": true,
+      "listAssets__success": true
     },
     "tx": {
       "enabled": true,

@@ -1447,7 +1447,7 @@ declare module '@polkadot/api-base/types/submittable' {
       /**
        * owner must be very careful calling this
        **/
-      updateMarket: AugmentedSubmittable<(marketId: u32 | AnyNumber | Uint8Array, input: ComposableTraitsLendingUpdateInput | { collateralFactor?: any; underCollateralizedWarnPercent?: any; liquidators?: any; interestRateModel?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, ComposableTraitsLendingUpdateInput]>;
+      updateMarket: AugmentedSubmittable<(marketId: u32 | AnyNumber | Uint8Array, input: ComposableTraitsLendingUpdateInput | { collateralFactor?: any; underCollateralizedWarnPercent?: any; liquidators?: any; interestRateModel?: any; maxPriceAge?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, ComposableTraitsLendingUpdateInput]>;
       /**
        * Withdraw collateral from market.
        * - `origin` : Sender of this extrinsic.

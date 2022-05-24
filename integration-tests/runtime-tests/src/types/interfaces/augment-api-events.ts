@@ -3,6 +3,7 @@
 
 import type { ComposableTraitsDefiCurrencyPairCurrencyId } from '@composable/types/interfaces/common';
 import type { CommonMosaicRemoteAssetId, ComposableSupportEthereumAddress, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsLendingUpdateInput, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVestingVestingSchedule, ComposableTraitsXcmAssetsXcmAssetLocation, FrameSupportScheduleLookupError, PalletCrowdloanRewardsModelsRemoteAccount, PalletCurrencyFactoryRangesRange, PalletDemocracyVoteAccountVote, PalletDemocracyVoteThreshold, PalletDutchAuctionSellOrder, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo } from '@composable/types/interfaces/crowdloanRewards';
+import type { ComposableTraitsDexFee } from '@composable/types/interfaces/pablo';
 import type { ApiTypes } from '@polkadot/api-base/types';
 import type { Bytes, Null, Option, Result, U8aFixed, Vec, bool, u128, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
@@ -619,7 +620,7 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * Token exchange happened.
        **/
-      Swapped: AugmentedEvent<ApiType, [u128, AccountId32, u128, u128, u128, u128, u128, u128]>;
+      Swapped: AugmentedEvent<ApiType, [u128, AccountId32, u128, u128, u128, u128, ComposableTraitsDexFee]>;
       /**
        * Generic event
        **/

@@ -1,6 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
+import type { Asset } from '@composable/types/interfaces/assets';
 import type { CustomRpcBalance, CustomRpcCurrencyId } from '@composable/types/interfaces/common';
 import type { PalletPabloPoolId, PalletPabloPriceAggregate } from '@composable/types/interfaces/pablo';
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
@@ -34,6 +35,10 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        * Balance available for the specified account for the specified asset.
        **/
       balanceOf: AugmentedRpc<(asset: CustomRpcCurrencyId | string, account: AccountId32 | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<CustomRpcBalance>>;
+      /**
+       * Lists the available recognized assets for the runtime.
+       **/
+      listAssets: AugmentedRpc<(at?: Hash | string | Uint8Array) => Observable<Vec<Asset>>>;
     };
     author: {
       /**
