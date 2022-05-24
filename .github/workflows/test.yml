@@ -36,6 +36,7 @@ jobs:
         DEBIAN_FRONTEND: noninteractive
         LOG_FILE: /tmp/polka-launch/polka-launch.log
       run: |
+        mkdir -p /tmp/polka-launch
         apt update -y
         apt install -y -y --no-install-recommends npm
         npm install --global yarn
