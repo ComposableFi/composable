@@ -279,17 +279,17 @@ pub mod pallet {
 	//                                     Runtime Storage
 	// ---------------------------------------------------------------------------------------------
 
-	/// Supported collateral asset id
+	/// Supported collateral asset id.
 	#[pallet::storage]
 	pub type CollateralType<T: Config> = StorageValue<_, AssetIdOf<T>, OptionQuery>;
 
-	/// Ratio of user's margin to be seized as fees upon a full liquidation event
+	/// Ratio of user's margin to be seized as fees upon a full liquidation event.
 	#[pallet::storage]
 	#[pallet::getter(fn full_liquidation_penalty)]
 	#[allow(clippy::disallowed_types)]
 	pub type FullLiquidationPenalty<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
 
-	/// Ratio of full liquidation fees for compensating the liquidator
+	/// Ratio of full liquidation fees for compensating the liquidator.
 	#[pallet::storage]
 	#[pallet::getter(fn full_liquidation_penalty_liquidator_share)]
 	#[allow(clippy::disallowed_types)]
@@ -325,7 +325,7 @@ pub mod pallet {
 	#[allow(clippy::disallowed_types)]
 	pub type MarketCount<T: Config> = StorageValue<_, T::MarketId, ValueQuery>;
 
-	/// Maps [MarketId](Config::MarketId) to the corresponding virtual [Market] specs
+	/// Maps [MarketId](Config::MarketId) to the corresponding virtual [Market] specs.
 	#[pallet::storage]
 	#[pallet::getter(fn get_market)]
 	pub type Markets<T: Config> = StorageMap<_, Blake2_128Concat, T::MarketId, Market<T>>;
@@ -336,7 +336,7 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		/// Genesis accepted collateral asset type
+		/// Genesis accepted collateral asset type.
 		pub collateral_type: Option<AssetIdOf<T>>,
 	}
 
@@ -362,38 +362,38 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Margin successfully added to account
+		/// Margin successfully added to account.
 		MarginAdded {
-			/// Account id that received the deposit
+			/// Account id that received the deposit.
 			account: T::AccountId,
-			/// Asset type deposited
+			/// Asset type deposited.
 			asset: AssetIdOf<T>,
-			/// Amount of asset deposited
+			/// Amount of asset deposited.
 			amount: T::Balance,
 		},
-		/// New virtual market successfully created
+		/// New virtual market successfully created.
 		MarketCreated {
-			/// Id for the newly created market
+			/// Id for the newly created market.
 			market: T::MarketId,
-			/// Id of the underlying asset
+			/// Id of the underlying asset.
 			asset: AssetIdOf<T>,
 		},
-		/// New trade successfully executed
+		/// New trade successfully executed.
 		TradeExecuted {
-			/// Id of the market
+			/// Id of the market.
 			market: T::MarketId,
-			/// Direction of the trade (long/short)
+			/// Direction of the trade (long/short).
 			direction: Direction,
-			/// Notional amount of quote asset exchanged
+			/// Notional amount of quote asset exchanged.
 			quote: T::Balance,
-			/// Amount of base asset exchanged
+			/// Amount of base asset exchanged.
 			base: T::Balance,
 		},
-		/// Market funding rate successfully updated
+		/// Market funding rate successfully updated.
 		FundingUpdated {
-			/// Id of the market
+			/// Id of the market.
 			market: T::MarketId,
-			/// Timestamp of the funding rate update
+			/// Timestamp of the funding rate update.
 			time: DurationSeconds,
 		},
 	}
@@ -406,42 +406,43 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		/// Attempted to create a new market but the funding period is not a multiple of the
-		/// funding frequency
+		/// funding frequency.
 		FundingPeriodNotMultipleOfFrequency,
 		/// Attempted to create a new market but the initial margin ratio is less than or equal to
-		/// the maintenance one
+		/// the maintenance one.
 		InitialMarginRatioLessThanMaintenance,
-		/// Raised when opening a risk-increasing position that takes the account below the IMR
+		/// Raised when opening a risk-increasing position that takes the account below the IMR.
 		InsufficientCollateral,
 		/// Attempted to create a new market but either the initial margin ratio is outside (0, 1]
-		/// or the maintenance margin ratio is outside (0, 1)
+		/// or the maintenance margin ratio is outside (0, 1).
 		InvalidMarginRatioRequirement,
-		/// Raised when querying a market with an invalid or nonexistent market Id
+		/// Raised when querying a market with an invalid or nonexistent market Id.
 		MarketIdNotFound,
 		/// Raised when creating a new position but exceeding the maximum number of positions for
-		/// an account
+		/// an account.
 		MaxPositionsExceeded,
-		/// Attempted to create a new market but the minimum trade size is negative
+		/// Attempted to create a new market but the minimum trade size is negative.
 		NegativeMinimumTradeSize,
-		/// An operation required the asset id of a valid collateral type but none were registered
+		/// An operation required the asset id of a valid collateral type but none were registered.
 		NoCollateralTypeSet,
 		/// Attempted to create a new market but the underlying asset is not supported by the
-		/// oracle
+		/// oracle.
 		NoPriceFeedForAsset,
-		/// Raised when trying to fetch a position from the positions vector with an invalid index
+		/// Raised when trying to fetch a position from the positions vector with an invalid index.
 		PositionNotFound,
 		/// Attempted to liquidate a user's account but it has sufficient collateral to back its
 		/// positions.
 		SufficientCollateral,
 		/// Raised when creating a new position with quote asset amount less than the market's
-		/// minimum trade size
+		/// minimum trade size.
 		TradeSizeTooSmall,
-		/// User attempted to deposit an unsupported asset type as collateral in its margin account
+		/// User attempted to deposit an unsupported asset type as collateral in its margin
+		/// account.
 		UnsupportedCollateralType,
 		/// Raised when trying to update the funding rate for a market before its funding frequency
-		/// has passed since its last update
+		/// has passed since its last update.
 		UpdatingFundingTooEarly,
-		/// Attempted to create a new market but the funding period or frequency is 0 seconds long
+		/// Attempted to create a new market but the funding period or frequency is 0 seconds long.
 		ZeroLengthFundingPeriodOrFrequency,
 	}
 
@@ -532,7 +533,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Opens a position in a market
+		/// Opens a position in a market.
 		///
 		/// # Overview
 		///
@@ -611,7 +612,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Update the funding rate for a market
+		/// Update the funding rate for a market.
 		///
 		/// # Overview
 		///
@@ -695,7 +696,7 @@ pub mod pallet {
 		///
 		/// ## Emits
 		///
-		/// TODO(0xangelo)
+		/// - [`FullLiquidation`](Event::<T>::FullLiquidation)
 		///
 		/// ## State Changes
 		///
@@ -1122,7 +1123,7 @@ pub mod pallet {
 			Ok(summary)
 		}
 
-		/// Fully liquidates the user's positions until his account is brought back above the MMR
+		/// Fully liquidates the user's positions until his account is brought back above the MMR.
 		///
 		/// ## Storage modifications
 		///
