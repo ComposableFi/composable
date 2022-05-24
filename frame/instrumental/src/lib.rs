@@ -47,8 +47,8 @@
 //!
 //! ### Runtime Storage Objects
 //!
-//! - [`AssetVault`](AssetVault): Mapping of an `AssetId` to the underlying Cubic Vault's `VaultId`
-//!   that is responsible for enforcing the asset's strategy.
+//! - [`AssetVault`]: Mapping of an [`AssetId`](Config::AssetId) to the underlying Cubic Vault's
+//!   [`VaultId`](Config::VaultId) that is responsible for enforcing the asset's strategy.
 //!
 //! ## Usage
 //!
@@ -132,7 +132,8 @@ pub mod pallet {
 			+ AtLeast32BitUnsigned
 			+ Zero;
 
-		/// The `AssetId` used by the pallet. Corresponds to the Ids used by the Currency pallet.
+		/// The [`AssetId`](Config::AssetId) used by the pallet. Corresponds to the Ids used by the
+		/// Currency pallet.
 		type AssetId: FullCodec
 			+ MaxEncodedLen
 			+ Eq
@@ -143,7 +144,8 @@ pub mod pallet {
 			+ Default
 			+ TypeInfo;
 
-		/// The `VaultId` used by the pallet. Corresponds to the Ids used by the Vault pallet.
+		/// The [`VaultId`](Config::VaultId) used by the pallet. Corresponds to the Ids used by the
+		/// Vault pallet.
 		type VaultId: Clone + Codec + MaxEncodedLen + Debug + PartialEq + Default + Parameter;
 
 		type Vault: StrategicVault<
@@ -175,7 +177,8 @@ pub mod pallet {
 	//                                       Runtime  Storage
 	// -------------------------------------------------------------------------------------------
 
-	/// Stores the `VaultId` that corresponds to a specific `AssetId`.
+	/// Stores the [`VaultId`](Config::VaultId) that corresponds to a specific
+	/// [`AssetId`](Config::AssetId).
 	#[pallet::storage]
 	#[pallet::getter(fn asset_vault)]
 	pub type AssetVault<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, T::VaultId>;
@@ -191,11 +194,11 @@ pub mod pallet {
 		Created { vault_id: T::VaultId, config: InstrumentalVaultConfigFor<T> },
 
 		/// Emitted after a successful call to the [`add_liquidity`](Pallet::add_liquidity)
-		///     extrinsic.
+		/// extrinsic.
 		AddedLiquidity { asset: T::AssetId, amount: T::Balance },
 
 		/// Emitted after a successful call to the [`remove_liquidity`](Pallet::remove_liquidity)
-		///     extrinsic.
+		/// extrinsic.
 		RemovedLiquidity { asset: T::AssetId, amount: T::Balance },
 	}
 
@@ -205,20 +208,21 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// This error is thrown when a vault is trying to be created for an asset that already
-		///     has an associated vault.
+		/// This error is thrown when a vault is trying to be created for an asset that already has
+		/// an associated vault.
 		VaultAlreadyExists,
 
 		/// This error is thrown when a vault is trying to be created with a `strategies`
-		///     `Perquintill` value outside of the range [0, 1].
+		/// [`Perquintill`](sp_runtime::Perquintill) value outside of the range [0, 1].
 		InvalidDeployablePercent,
 
-		/// This error is thrown when a user tries to call add_liquidity or remove_liquidity on
-		///     an asset that does not have an associated vault (yet).
+		/// This error is thrown when a user tries to call [`add_liquidity`](Pallet::add_liquidity)
+		/// or [`remove_liquidity`](Pallet::remove_liquidity) on an asset that does not have an
+		/// associated vault (yet).
 		AssetDoesNotHaveAnAssociatedVault,
 
 		/// This error is thrown if a user tries to withdraw an amount of assets that is currently
-		///     not held in the specified vault.
+		/// not held in the specified vault.
 		NotEnoughLiquidity,
 	}
 
@@ -235,27 +239,34 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Create an underlying vault and save a reference to its 'VaultId'.
+		/// Create an underlying vault and save a reference to its [`VaultId`](Config::VaultId).
 		///
 		/// # Overview
 		///
 		/// ## Parameters
-		/// - `origin`: `Origin` type representing the origin of this dispatch.
-		/// - `config`: the `InstrumentalVaultConfig` of the underlying vault to create.
+		/// - `origin`: [`Origin`](frame_system::pallet::Config::Origin) type representing the
+		///   origin of this dispatch.
+		/// - `config`: the [`InstrumentalVaultConfig`] of the underlying vault to create.
 		///
 		/// ## Requirements
+		///
 		/// 1. the call must have been signed by the issuer.
-		/// 2. 'config.asset_id' must not correspond to a preexisting Instrumental vault.
+		/// 2. [`config.asset_id`](InstrumentalVaultConfig) must not correspond to a
+		/// preexisting Instrumental vault.
 		///
 		/// ## Emits
-		/// - [`Event::Created`](Event::Created)
+		///
+		/// - [`Event::Created`]
 		///
 		/// ## State Changes
-		/// - [`AssetVault`](AssetVault): a mapping between the parameter `asset` and the created
-		///   vault's `VaultId` is stored.
+		///
+		/// - [`AssetVault`]: a mapping between the parameter `asset` and the created vault's
+		///   [`VaultId`](Config::VaultId) is stored.
 		///
 		/// ## Errors
-		/// - `VaultAlreadyExists`: there already exists an underlying vault for `asset`.
+		///
+		/// - [`VaultAlreadyExists`](Error::VaultAlreadyExists): there already exists an underlying
+		///   vault for `asset`.
 		///
 		/// # Examples
 		///
@@ -282,19 +293,25 @@ pub mod pallet {
 		/// # Overview
 		///
 		/// ## Parameters
-		/// - `origin`: `Origin` type representing the origin of this dispatch.
-		/// - `asset`: the `AssetId` of the asset to deposit.
+		///
+		/// - `origin`: [`Origin`](frame_system::pallet::Config::Origin) type representing the
+		///   origin of this dispatch.
+		/// - `asset`: the [`AssetId`](Config::AssetId) of the asset to deposit.
 		/// - `amount`: the amount of `asset` to deposit.
 		///
 		/// ## Requirements
+		///
 		/// 1. The call must have been signed by the issuer.
 		/// 2. There must be a vault associated with `asset`.
 		///
 		/// ## Emits
-		/// - [`Event::AddedLiquidity`](Event::AddedLiquidity)
+		///
+		/// - [`Event::AddedLiquidity`]
 		///
 		/// ## Errors
-		/// - `AssetDoesNotHaveAnAssociatedVault`: no vault has been created for `asset`.
+		///
+		/// - [`AssetDoesNotHaveAnAssociatedVault`](Error::AssetDoesNotHaveAnAssociatedVault): no
+		///   vault has been created for `asset`.
 		///
 		/// # Examples
 		///
@@ -320,19 +337,25 @@ pub mod pallet {
 		/// # Overview
 		///
 		/// ## Parameters
-		/// - `origin`: `Origin` type representing the origin of this dispatch.
-		/// - `asset`: the `AssetId` of the asset to withdraw.
+		///
+		/// - `origin`: [`Origin`](frame_system::pallet::Config::Origin) type representing the
+		///   origin of this dispatch.
+		/// - `asset`: the [`AssetId`](Config::AssetId) of the asset to withdraw.
 		/// - `amount`: the amount of `asset` to withdraw.
 		///
 		/// ## Requirements
+		///
 		/// 1. The call must have been signed by the issuer.
 		/// 2. There must be a vault associated with `asset`.
 		///
 		/// ## Emits
-		/// - [`Event::RemovedLiquidity`](Event::RemovedLiquidity)
+		///
+		/// - [`Event::RemovedLiquidity`]
 		///
 		/// ## Errors
-		/// - `AssetDoesNotHaveAnAssociatedVault`: no vault has been created for `asset`.
+		///
+		/// - [`AssetDoesNotHaveAnAssociatedVault`](Error::AssetDoesNotHaveAnAssociatedVault): no
+		///   vault has been created for `asset`.
 		///
 		/// # Examples
 		///
@@ -370,22 +393,28 @@ pub mod pallet {
 			T::PalletId::get().into_account_truncating()
 		}
 
-		/// Create an underlying vault and save a reference to its 'VaultId'.
+		/// Create an underlying vault and save a reference to its [`VaultId`](Config::VaultId).
 		///
 		/// # Overview
 		///
 		/// ## Parameters
-		/// - `config`: the `InstrumentalVaultConfig` of the underlying vault to create.
+		///
+		/// - `config`: the [`InstrumentalVaultConfig`] of the underlying vault to create.
 		///
 		/// ## Requirements
-		/// 1. 'config.asset_id' must not correspond to a preexisting Instrumental vault.
+		///
+		/// 1. [`config.asset_id`](InstrumentalVaultConfig) must not correspond to a preexisting
+		/// Instrumental vault.
 		///
 		/// ## State Changes
-		/// - [`AssetVault`](AssetVault): a mapping between the parameter `asset` and the created
-		///   vault's `VaultId` is stored.
+		///
+		/// - [`AssetVault`]: a mapping between the parameter `asset` and the created vault's
+		///   [`VaultId`](Config::VaultId) is stored.
 		///
 		/// ## Errors
-		/// - `VaultAlreadyExists`: their already exists an underlying vault for `asset`.
+		///
+		/// - [`VaultAlreadyExists`](Error::VaultAlreadyExists): their already exists an underlying
+		///   vault for `asset`.
 		///
 		/// # Runtime: O(TBD)
 		fn create(config: InstrumentalVaultConfigFor<T>) -> Result<Self::VaultId, DispatchError> {
@@ -400,15 +429,21 @@ pub mod pallet {
 		/// # Overview
 		///
 		/// ## Parameters
-		/// - `issuer`: the 'AccountId' of the user who issued the request
-		/// - `asset`: the `AssetId` of the asset to deposit.
+		///
+		/// - `issuer`: the [`AccountId`](composable_traits::instrumental::Instrumental::AccountId)
+		///   of the user who issued the request
+		/// - `asset`: the [`AssetId`](composable_traits::instrumental::Instrumental::AssetId) of
+		///   the asset to deposit.
 		/// - `amount`: the amount of `asset` to deposit.
 		///
 		/// ## Requirements
+		///
 		/// 1. There must be a vault associated with `asset`.
 		///
 		/// ## Errors
-		/// - `AssetDoesNotHaveAnAssociatedVault`: no vault has been created for `asset`.
+		///
+		/// - [`AssetDoesNotHaveAnAssociatedVault`](Error::AssetDoesNotHaveAnAssociatedVault): no
+		///   vault has been created for `asset`.
 		///
 		/// # Runtime: O(TBD)
 		fn add_liquidity(
@@ -428,15 +463,18 @@ pub mod pallet {
 		/// # Overview
 		///
 		/// ## Parameters
-		/// - `issuer`: the 'AccountId' of the user who issued the request
-		/// - `asset`: the `AssetId` of the asset to withdraw.
+		/// - `issuer`: the [`AccountId`](composable_traits::instrumental::Instrumental::AccountId)
+		///   of the user who issued the request
+		/// - `asset`: the [`AssetId`](composable_traits::instrumental::Instrumental::AssetId) of
+		///   the asset to withdraw.
 		/// - `amount`: the amount of `asset` to withdraw.
 		///
 		/// ## Requirements
 		/// 1. There must be a vault associated with `asset`.
 		///
 		/// ## Errors
-		/// - `AssetDoesNotHaveAnAssociatedVault`: no vault has been created for `asset`.
+		/// - [`AssetDoesNotHaveAnAssociatedVault`](Error::AssetDoesNotHaveAnAssociatedVault): no
+		///   vault has been created for `asset`.
 		///
 		/// # Runtime: O(TBD)
 		fn remove_liquidity(
