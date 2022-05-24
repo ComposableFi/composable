@@ -8,6 +8,7 @@ pub mod benchmarking;
 pub mod models;
 pub mod weights;
 
+#[cfg(test)]
 mod mocks;
 
 #[frame_support::pallet]
