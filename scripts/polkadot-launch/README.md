@@ -33,8 +33,8 @@ Need to do to run 4 relay chain nodes and 1 Composable's collator:
 	```
 
 URLs:
-* `https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9945#/explorer` is the 1st Relay Chain node
-* `https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9988#/explorer` is the 1st Composable's collator
+* [the 1st Relay Chain node](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/explorer)
+* [the 1st Composable collator](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9988#/explorer)
 
 # Run Composable's and Basilisk's parachains
 
@@ -62,7 +62,7 @@ Need to do to run 4 relay chain nodes, 2 Composable's collators and 2 Basilisk's
 
 	```bash
 	mkdir -p ../../../Basilisk-node/target/release
-	curl https://github.com/galacticcouncil/Basilisk-node/releases/download/v7.0.0/basilisk -Lo ../../../Basilisk-node/target/release/basilisk
+	curl https://github.com/galacticcouncil/Basilisk-node/releases/download/v7.0.1/basilisk -Lo ../../../Basilisk-node/target/release/basilisk
 	chmod +x ../../../Basilisk-node/target/release/basilisk
 	../../../Basilisk-node/target/release/basilisk --version
 	```
@@ -79,15 +79,15 @@ Need to do to run 4 relay chain nodes, 2 Composable's collators and 2 Basilisk's
 	yarn composable_and_basilisk
 	```
 
-
-## Run  Kusama relay + Dali parachain + Hydra paracahin in Docker via Polka launcher
+# Run  Kusama relay + Dali parachain + Hydra paracahin in Docker via [polkadot-launch](https://github.com/paritytech/polkadot-launch)
 
 Build via `sandbox docker` job in Actions into latest and git hash.
 
 ```
 cargo make start-devnet-docker
 ```
+
 URLs:
-* [Relay]https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/explorer) is the 1st Relay Chain node
-* [Composable Dali](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9988#/explorer) is the 1st Composable's collator
-* [Basilisk](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9998#/explorer) is the 1st Basilisk's collator
+* [the 1st Relay Chain node](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/explorer)
+* [the 1st Composable collator](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9988#/explorer)
+* [the 1st Basilisk collator](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9998#/explorer)

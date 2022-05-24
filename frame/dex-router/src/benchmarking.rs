@@ -1,10 +1,13 @@
 use super::*;
 use crate::{self as pallet_dex_router, Pallet as DexRouter};
-use composable_traits::{defi::CurrencyPair, dex::Amm};
+use composable_traits::{
+	defi::CurrencyPair,
+	dex::{Amm, FeeConfig},
+};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::traits::fungibles::Mutate;
 use frame_system::RawOrigin;
-use sp_arithmetic::Permill;
+use sp_runtime::Permill;
 use sp_std::{vec, vec::Vec};
 
 fn create_single_node_pool<T>() -> (
@@ -27,8 +30,7 @@ where
 		owner: owner.clone(),
 		pair: CurrencyPair::new(usdc, usdt),
 		amplification_coefficient: 5_u16,
-		fee: Permill::zero(),
-		owner_fee: Permill::zero(),
+		fee_config: FeeConfig::zero(),
 	};
 	let usdc_usdt = pallet_pablo::Pallet::<T>::do_create_pool(usdc_usdt_config).unwrap();
 	sp_std::if_std! {
@@ -70,8 +72,8 @@ where
 	let pica_ksm_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
 		owner: owner.clone(),
 		pair: CurrencyPair::new(pica, ksm),
-		fee: Permill::zero(),
-		owner_fee: Permill::zero(),
+		fee_config: FeeConfig::zero(),
+		base_weight: Permill::from_percent(50),
 	};
 	let pica_ksm = pallet_pablo::Pallet::<T>::do_create_pool(pica_ksm_config).unwrap();
 	// 100 pica == 1 ksm
@@ -96,8 +98,8 @@ where
 	let ksm_eth_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
 		owner: owner.clone(),
 		pair: CurrencyPair::new(ksm, eth),
-		fee: Permill::zero(),
-		owner_fee: Permill::zero(),
+		fee_config: FeeConfig::zero(),
+		base_weight: Permill::from_percent(50),
 	};
 	let ksm_eth = pallet_pablo::Pallet::<T>::do_create_pool(ksm_eth_config).unwrap();
 	// 10 ksm == 1 eth
@@ -123,8 +125,8 @@ where
 	let eth_usdc_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
 		owner: owner.clone(),
 		pair: CurrencyPair::new(eth, usdc),
-		fee: Permill::zero(),
-		owner_fee: Permill::zero(),
+		fee_config: FeeConfig::zero(),
+		base_weight: Permill::from_percent(50),
 	};
 	let eth_usdc = pallet_pablo::Pallet::<T>::do_create_pool(eth_usdc_config).unwrap();
 	// 1 eth = 200 usdc
@@ -151,8 +153,7 @@ where
 		owner: owner.clone(),
 		pair: CurrencyPair::new(usdc, usdt),
 		amplification_coefficient: 5_u16,
-		fee: Permill::zero(),
-		owner_fee: Permill::zero(),
+		fee_config: FeeConfig::zero(),
 	};
 	let usdc_usdt = pallet_pablo::Pallet::<T>::do_create_pool(usdc_usdt_config).unwrap();
 	sp_std::if_std! {
@@ -196,8 +197,8 @@ benchmarks! {
 	// benchmarks inserting new route
 	update_route {
 		let (currency_pair, dex_route) = create_pools_route::<T>();
-		let owner : <T as frame_system::Config>::AccountId= whitelisted_caller();
-	} : _(RawOrigin::Signed(owner), currency_pair, Some(dex_route.clone().try_into().unwrap()))
+		// let owner : <T as frame_system::Config>::AccountId= whitelisted_caller();
+	} : _(RawOrigin::Root, currency_pair, Some(dex_route.clone().try_into().unwrap()))
 
 	exchange {
 		let unit = 1_000_000_000_000_u128;
@@ -207,7 +208,7 @@ benchmarks! {
 		let origin = RawOrigin::Signed(owner.clone());
 		let pica : <T as pallet_pablo::Config>::AssetId = 100_u128.into();
 		<T as pallet_pablo::Config>::Assets::mint_into(pica, &owner, pica_amount.into()).expect("Mint pica failed");
-		pallet_dex_router::Pallet::<T>::update_route(origin.clone().into(), currency_pair, Some(dex_route.clone().try_into().unwrap())).expect("update route failed");
+		pallet_dex_router::Pallet::<T>::update_route(RawOrigin::Root.into(), currency_pair, Some(dex_route.clone().try_into().unwrap())).expect("update route failed");
 		// exchange 1000 PICA via route
 	} : _(origin, currency_pair.swap(), (1000_u128 * unit).into(), 0_u128.into())
 
@@ -219,7 +220,7 @@ benchmarks! {
 		let origin = RawOrigin::Signed(owner.clone());
 		let usdc : <T as pallet_pablo::Config>::AssetId = 104_u128.into();
 		<T as pallet_pablo::Config>::Assets::mint_into(usdc, &owner, usdc_amount.into()).expect("Mint usdc failed");
-		pallet_dex_router::Pallet::<T>::update_route(origin.clone().into(), currency_pair, Some(dex_route.clone().try_into().unwrap())).expect("update route failed");
+		pallet_dex_router::Pallet::<T>::update_route(RawOrigin::Root.into(), currency_pair, Some(dex_route.clone().try_into().unwrap())).expect("update route failed");
 		// buy 100 PICA via route
 	} : _(origin, currency_pair, (100_u128 * unit).into(), 0_u128.into())
 
@@ -232,7 +233,7 @@ benchmarks! {
 		let origin = RawOrigin::Signed(owner.clone());
 		let usdc : <T as pallet_pablo::Config>::AssetId = 104_u128.into();
 		<T as pallet_pablo::Config>::Assets::mint_into(usdc, &owner, usdc_amount.into()).expect("Mint usdc failed");
-		pallet_dex_router::Pallet::<T>::update_route(origin.clone().into(), currency_pair, Some(dex_route.clone().try_into().unwrap())).expect("update route failed");
+		pallet_dex_router::Pallet::<T>::update_route(RawOrigin::Root.into(), currency_pair, Some(dex_route.clone().try_into().unwrap())).expect("update route failed");
 		// sell 1000 usdc via route
 	} : _(origin, currency_pair, (1000_u128 * unit).into(), 0_u128.into())
 
@@ -244,7 +245,7 @@ benchmarks! {
 		let usdc_amount = 1000 * unit;
 		let usdt_amount = 1000 * unit;
 		let origin = RawOrigin::Signed(owner.clone());
-		pallet_dex_router::Pallet::<T>::update_route(origin.clone().into(), currency_pair, Some(dex_route.clone().try_into().unwrap())).expect("update route failed");
+		pallet_dex_router::Pallet::<T>::update_route(RawOrigin::Root.into(), currency_pair, Some(dex_route.clone().try_into().unwrap())).expect("update route failed");
 	} : _(origin, currency_pair, usdc_amount.into(), usdt_amount.into(), 0_u128.into(), false)
 
 	remove_liquidity {
@@ -255,7 +256,7 @@ benchmarks! {
 		let usdc_amount = 1000 * unit;
 		let usdt_amount = 1000 * unit;
 		let origin = RawOrigin::Signed(owner.clone());
-		pallet_dex_router::Pallet::<T>::update_route(origin.clone().into(), currency_pair, Some(dex_route.clone().try_into().unwrap())).expect("update route failed");
+		pallet_dex_router::Pallet::<T>::update_route(RawOrigin::Root.into(), currency_pair, Some(dex_route.clone().try_into().unwrap())).expect("update route failed");
 		pallet_dex_router::Pallet::<T>::add_liquidity(origin.clone().into(), currency_pair, usdc_amount.into(), usdt_amount.into(), 0_u128.into(), false).expect("add_liquidity failed");
 		// remove 1 lp_token
 	} : _(origin, currency_pair, 1_u128.into(), 0_u128.into(), 0_u128.into())

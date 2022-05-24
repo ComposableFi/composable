@@ -30,7 +30,7 @@ use common::{
 	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 
-use composable_traits::dex::PriceAggregate;
+use composable_traits::{assets::Asset, dex::PriceAggregate};
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -42,7 +42,6 @@ use sp_runtime::{
 };
 
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use composable_traits::assets::Asset;
 use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;

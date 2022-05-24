@@ -69,7 +69,8 @@
 		"ms-vsliveshare.vsliveshare",
 		"tomoki1207.pdf",
 		"vscode-icons-team.vscode-icons",
-		"GitHub.github-vscode-theme"
+		"GitHub.github-vscode-theme",
+		"esbenp.prettier-vscode"
 	],
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],

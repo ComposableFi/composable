@@ -43,12 +43,15 @@ export async function txBondedFinanceCancelFailureTest(api: ApiPromise, wallet: 
  * @param {u64|number} offerId
  * @return Transaction event.
  */
-export async function txBondedFinanceCancelSudoSuccessTest(api: ApiPromise, wallet: IKeyringPair, offerId: u64 | number) {
+export async function txBondedFinanceCancelSudoSuccessTest(
+  api: ApiPromise,
+  wallet: IKeyringPair,
+  offerId: u64 | number
+) {
   return await sendAndWaitForSuccess(
     api,
     wallet,
-    api.events.sudo.Sudid.is, api.tx.sudo.sudo(
-      api.tx.bondedFinance.cancel(offerId)
-    )
+    api.events.sudo.Sudid.is,
+    api.tx.sudo.sudo(api.tx.bondedFinance.cancel(offerId))
   );
 }

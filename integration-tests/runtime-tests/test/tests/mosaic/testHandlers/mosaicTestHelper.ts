@@ -7,7 +7,6 @@ import {
 } from "@composable/types/interfaces";
 import { ApiPromise } from "@polkadot/api";
 
-
 export class TxMosaicTests {
   /**
    * Makes a transaction to set the relayer.
@@ -32,7 +31,11 @@ export class TxMosaicTests {
    * @param {KeyringPair} startRelayerWallet Initial relayer wallet.
    * @param {string} newRelayerWalletAddress Relayer wallet address to be set to.
    */
-  public static async testRotateRelayer(api: ApiPromise, startRelayerWallet: KeyringPair, newRelayerWalletAddress: string) {
+  public static async testRotateRelayer(
+    api: ApiPromise,
+    startRelayerWallet: KeyringPair,
+    newRelayerWalletAddress: string
+  ) {
     const paramTtl = api.createType("u32", 90);
     return await sendAndWaitForSuccess(
       api,
@@ -50,7 +53,12 @@ export class TxMosaicTests {
    * @param {number} networkId ID of the network to be set to.
    * @param {PalletMosaicNetworkInfo} networkInfo Object with information of the network.
    */
-  public static async testSetNetwork(api: ApiPromise, walletId: KeyringPair, networkId: number, networkInfo: PalletMosaicNetworkInfo) {
+  public static async testSetNetwork(
+    api: ApiPromise,
+    walletId: KeyringPair,
+    networkId: number,
+    networkInfo: PalletMosaicNetworkInfo
+  ) {
     return await sendAndWaitForSuccess(
       api,
       walletId,
@@ -192,10 +200,7 @@ export class TxMosaicTests {
       api,
       wallet,
       api.events.mosaic.TransferAccepted.is,
-      api.tx.mosaic.acceptTransfer(senderWallet.address,
-        networkId,
-        remoteAssetId,
-        amount)
+      api.tx.mosaic.acceptTransfer(senderWallet.address, networkId, remoteAssetId, amount)
     );
   }
 

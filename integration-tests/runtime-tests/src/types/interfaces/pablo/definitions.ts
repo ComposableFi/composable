@@ -22,11 +22,11 @@ export default {
         {
           name: "at",
           type: "Hash",
-          isOptional: true,
+          isOptional: true
         }
       ],
       type: "PalletPabloPriceAggregate"
-    },
+    }
   },
   types: {
     PalletPabloPoolInitConfiguration: "PalletPabloPoolConfiguration",
@@ -54,7 +54,7 @@ export default {
             initial_weight: "Permill",
             final_weight: "Permill"
           },
-          fee: "Permill",
+          fee: "Permill"
         }
       }
     },
@@ -65,7 +65,14 @@ export default {
       poolId: "PalletPabloPoolId",
       baseAssetId: "CustomRpcCurrencyId",
       quoteAssetId: "CustomRpcCurrencyId",
-      spotPrice: "CustomRpcBalance",
+      spotPrice: "CustomRpcBalance"
     },
-  },
+    ComposableTraitsDexFee: {
+      fee: "u128",
+      lp_fee: "u128",
+      owner_fee: "u128",
+      protocol_fee: "u128",
+      asset_id: "u128"
+    }
+  }
 };

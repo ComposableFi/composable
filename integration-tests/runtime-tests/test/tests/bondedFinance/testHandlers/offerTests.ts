@@ -14,17 +14,18 @@ export async function txBondedFinanceOfferSuccessTest(
   api: ApiPromise,
   wallet: IKeyringPair,
   requestParameters: {
-    beneficiary: Uint8Array,
-    asset: u128,
-    bondPrice: u128,
-    nbOfBonds: u128,
-    maturity: { Finite: { returnIn: u32 } },
+    beneficiary: Uint8Array;
+    asset: u128;
+    bondPrice: u128;
+    nbOfBonds: u128;
+    maturity: { Finite: { returnIn: u32 } };
     reward: {
-      asset: u128,
-      amount: u128,
-      maturity: u32
-    }
-  }) {
+      asset: u128;
+      amount: u128;
+      maturity: u32;
+    };
+  }
+) {
   return await sendAndWaitForSuccess(
     api,
     wallet,

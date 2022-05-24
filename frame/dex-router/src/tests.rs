@@ -2,10 +2,11 @@ use crate::{mock::*, Error};
 use composable_tests_helpers::test::helper::acceptable_computation_error;
 use composable_traits::{
 	defi::CurrencyPair,
-	dex::{Amm as AmmTrait, DexRouter as DexRouterTrait},
+	dex::{Amm as AmmTrait, DexRouter as DexRouterTrait, FeeConfig},
 };
 use frame_support::{
 	assert_noop, assert_ok,
+	error::BadOrigin,
 	traits::fungibles::{Inspect, Mutate},
 };
 use pallet_pablo::{Error as PabloError, PoolInitConfiguration};
@@ -30,8 +31,11 @@ fn create_curve_amm_pool(
 		owner: ALICE,
 		pair: assets,
 		amplification_coefficient: amp_coeff,
-		fee,
-		owner_fee: admin_fee,
+		fee_config: FeeConfig {
+			fee_rate: fee,
+			owner_fee_rate: admin_fee,
+			protocol_fee_rate: Permill::zero(),
+		},
 	};
 	let p = Pablo::do_create_pool(init_config);
 	assert_ok!(&p);
@@ -63,8 +67,12 @@ fn create_constant_product_amm_pool(
 	let init_config = PoolInitConfiguration::ConstantProduct {
 		owner: ALICE,
 		pair: assets,
-		fee,
-		owner_fee: admin_fee,
+		fee_config: FeeConfig {
+			fee_rate: fee,
+			owner_fee_rate: admin_fee,
+			protocol_fee_rate: Permill::zero(),
+		},
+		base_weight: Permill::from_percent(50),
 	};
 	// Create Pablo pool
 	let p = Pablo::do_create_pool(init_config);
@@ -152,12 +160,31 @@ fn get_route_tests() {
 
 		let dex_route = vec![create_usdc_eth_pool(), create_usdt_usdc_pool()];
 		assert_ok!(DexRouter::update_route(
-			Origin::signed(ALICE),
+			Origin::root(),
 			currency_pair,
 			Some(dex_route.clone().try_into().unwrap())
 		));
 		assert_eq!(DexRouter::get_route(currency_pair), Some((dex_route.clone(), false)));
 		assert_eq!(DexRouter::get_route(currency_pair.swap()), Some((dex_route, true)));
+	});
+}
+
+#[test]
+fn update_route_origin_tests() {
+	new_test_ext().execute_with(|| {
+		let currency_pair = CurrencyPair { base: USDT, quote: ETH };
+		assert_eq!(DexRouter::get_route(currency_pair), None);
+
+		let dex_route = vec![create_usdc_eth_pool(), create_usdt_usdc_pool()];
+		// only UpdateRouteOrigin can update the route which is set to EnsureRoot in mock.
+		assert_noop!(
+			DexRouter::update_route(
+				Origin::signed(ALICE),
+				currency_pair,
+				Some(dex_route.clone().try_into().unwrap())
+			),
+			BadOrigin
+		);
 	});
 }
 
@@ -171,7 +198,7 @@ fn halborn_hal11_route_with_cycle() {
 			vec![create_usdt_usdc_pool(), create_usdc_usdt_pool(), create_usdt_usdc_pool()];
 		assert_noop!(
 			DexRouter::update_route(
-				Origin::signed(ALICE),
+				Origin::root(),
 				currency_pair,
 				Some(dex_route.clone().try_into().unwrap())
 			),
@@ -185,7 +212,7 @@ fn halborn_hal11_route_with_cycle() {
 		let dex_route = vec![usdt_usdc_pool, usdc_usdt_pool, usdt_usdc_pool];
 		assert_noop!(
 			DexRouter::update_route(
-				Origin::signed(ALICE),
+				Origin::root(),
 				currency_pair,
 				Some(dex_route.clone().try_into().unwrap())
 			),
@@ -195,7 +222,7 @@ fn halborn_hal11_route_with_cycle() {
 		let dex_route = vec![usdt_usdc_pool, usdc_usdt_pool];
 		assert_noop!(
 			DexRouter::update_route(
-				Origin::signed(ALICE),
+				Origin::root(),
 				CurrencyPair::new(USDC, USDC),
 				Some(dex_route.clone().try_into().unwrap())
 			),
@@ -213,7 +240,7 @@ fn update_route_tests() {
 		// insert
 		let dex_route = vec![create_usdc_eth_pool(), create_usdt_usdc_pool()];
 		assert_ok!(DexRouter::update_route(
-			Origin::signed(ALICE),
+			Origin::root(),
 			currency_pair,
 			Some(dex_route.clone().try_into().unwrap())
 		));
@@ -222,14 +249,14 @@ fn update_route_tests() {
 		// update
 		let dex_route = vec![create_dai_eth_pool(), create_usdt_dai_pool()];
 		assert_ok!(DexRouter::update_route(
-			Origin::signed(ALICE),
+			Origin::root(),
 			currency_pair,
 			Some(dex_route.clone().try_into().unwrap())
 		));
 		assert_eq!(DexRouter::get_route(currency_pair), Some((dex_route, false)));
 
 		// delete
-		assert_ok!(DexRouter::update_route(Origin::signed(ALICE), currency_pair, None));
+		assert_ok!(DexRouter::update_route(Origin::root(), currency_pair, None));
 		assert_eq!(DexRouter::get_route(currency_pair), None);
 
 		// invalid route, case #1
@@ -240,7 +267,7 @@ fn update_route_tests() {
 		];
 		assert_noop!(
 			DexRouter::update_route(
-				Origin::signed(ALICE),
+				Origin::root(),
 				currency_pair,
 				Some(dex_route.try_into().unwrap())
 			),
@@ -251,7 +278,7 @@ fn update_route_tests() {
 		let dex_route = vec![create_usdt_usdc_pool(), create_usdc_eth_pool()];
 		assert_noop!(
 			DexRouter::update_route(
-				Origin::signed(ALICE),
+				Origin::root(),
 				currency_pair,
 				Some(dex_route.try_into().unwrap())
 			),
@@ -262,7 +289,7 @@ fn update_route_tests() {
 		let dex_route = vec![create_usdc_eth_pool()];
 		assert_noop!(
 			DexRouter::update_route(
-				Origin::signed(ALICE),
+				Origin::root(),
 				currency_pair,
 				Some(dex_route.try_into().unwrap())
 			),
@@ -272,7 +299,7 @@ fn update_route_tests() {
 		// route with a single pool.
 		let dex_route = vec![create_usdt_usdc_pool()];
 		assert_ok!(DexRouter::update_route(
-			Origin::signed(ALICE),
+			Origin::root(),
 			CurrencyPair::new(USDT, USDC),
 			Some(dex_route.clone().try_into().unwrap())
 		));
@@ -286,7 +313,7 @@ fn exchange_tests() {
 		let currency_pair = CurrencyPair { base: USDT, quote: ETH };
 		let dex_route = vec![create_usdc_eth_pool(), create_usdt_usdc_pool()];
 		assert_ok!(DexRouter::update_route(
-			Origin::signed(ALICE),
+			Origin::root(),
 			currency_pair,
 			Some(dex_route.try_into().unwrap())
 		));
@@ -345,7 +372,7 @@ fn buy_test() {
 		// USDT/USDC
 		// USDT/ETH
 		assert_ok!(DexRouter::update_route(
-			Origin::signed(ALICE),
+			Origin::root(),
 			currency_pair,
 			Some(dex_route.try_into().unwrap())
 		));
@@ -406,7 +433,7 @@ fn unsupported_operation_test() {
 		// USDT/USDC
 		// USDT/ETH
 		assert_ok!(DexRouter::update_route(
-			Origin::signed(ALICE),
+			Origin::root(),
 			currency_pair,
 			Some(dex_route.try_into().unwrap())
 		));
@@ -442,7 +469,7 @@ fn single_pool_route_test() {
 		let dex_route = vec![create_usdc_eth_pool()];
 		// USDC/ETH
 		assert_ok!(DexRouter::update_route(
-			Origin::signed(ALICE),
+			Origin::root(),
 			currency_pair,
 			Some(dex_route.clone().try_into().unwrap())
 		));

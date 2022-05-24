@@ -17,7 +17,7 @@ use composable_traits::{
 	},
 	lending::{
 		math::*, CreateInput, Lending as LendingTrait, RepayStrategy, TotalDebtWithInterest,
-		UpdateInput, UpdateInputVaild,
+		UpdateInput, UpdateInputValid,
 	},
 	oracle,
 	time::SECONDS_PER_YEAR_NAIVE,
@@ -45,6 +45,7 @@ use std::ops::{Div, Mul};
 const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
 const DEFAULT_MARKET_VAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
 const DEFAULT_COLLATERAL_FACTOR: u128 = 2;
+const DEFAULT_MAX_PRICE_AGE: u64 = 1020;
 
 type SystemAccountIdOf<T> = <T as frame_system::Config>::AccountId;
 type SystemOriginOf<T> = <T as frame_system::Config>::Origin;
@@ -249,6 +250,7 @@ fn can_update_market() {
 			collateral_factor: market.collateral_factor,
 			under_collateralized_warn_percent: market.under_collateralized_warn_percent,
 			liquidators: market.liquidators.clone(),
+			max_price_age: market.max_price_age,
 			interest_rate_model: InterestRateModel::Curve(
 				CurveModel::new(CurveModel::MAX_BASE_RATE).unwrap(),
 			),
@@ -267,12 +269,13 @@ fn can_update_market() {
 			collateral_factor: FixedU128::from_float(0.5),
 			under_collateralized_warn_percent: market.under_collateralized_warn_percent,
 			liquidators: market.liquidators,
+			max_price_age: market.max_price_age,
 			interest_rate_model: InterestRateModel::Curve(
 				CurveModel::new(CurveModel::MAX_BASE_RATE).unwrap(),
 			),
 		};
 		assert_err!(
-			update_input.try_into_validated::<UpdateInputVaild>(),
+			update_input.try_into_validated::<UpdateInputValid>(),
 			"collateral factor must be >= 1"
 		);
 	})
@@ -501,6 +504,105 @@ fn test_borrow_math() {
 }
 
 #[test]
+fn old_price() {
+	new_test_ext().execute_with(|| {
+		// Create market
+
+		const FIRST_PRICE: u128 = 10;
+		const BORROW_AMOUNT: u128 = 30;
+		const SECOND_PRICE: u128 = 3;
+
+		let (market, vault) = create_market::<FIRST_PRICE, Runtime>(
+			USDT::instance(),
+			BTC::instance(),
+			*ALICE,
+			DEFAULT_MARKET_VAULT_RESERVE,
+			MoreThanOneFixedU128::saturating_from_integer(DEFAULT_COLLATERAL_FACTOR),
+		);
+
+		// Borrow amount
+		let borrow_amount = USDT::units(BORROW_AMOUNT);
+
+		assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, borrow_amount));
+		assert_ok!(Vault::deposit(Origin::signed(*ALICE), vault, borrow_amount * 2));
+
+		// Set BTC price
+		set_price(BTC::ID, BTC::ONE.mul(FIRST_PRICE));
+
+		let collateral_amount = get_price(USDT::ID, borrow_amount) // get price of USDT
+			.mul(BTC::ONE) // multiply to BTC ONE
+			.div(get_price(BTC::ID, BTC::ONE)) // divide at one BTC price
+			.mul(DEFAULT_COLLATERAL_FACTOR);
+
+		// Mint BTC tokens for ALICE
+		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, collateral_amount));
+
+		// Deposit BTC on the market
+		assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral_amount));
+
+		// Set BTC price
+		set_price(BTC::ID, BTC::ONE.mul(SECOND_PRICE));
+		set_price(USDT::ID, USDT::ONE);
+
+		// Try to borrow by SECOND_PRICE
+		assert_noop!(
+			Lending::borrow(Origin::signed(*ALICE), market, borrow_amount),
+			Error::<Runtime>::NotEnoughCollateralToBorrow
+		);
+
+		// Set BTC price
+		set_price(BTC::ID, BTC::ONE.mul(FIRST_PRICE));
+		set_price(USDT::ID, USDT::ONE);
+
+		// skip blocks
+		test::block::process_and_progress_blocks::<Lending, Runtime>(
+			DEFAULT_MAX_PRICE_AGE as usize + 1,
+		);
+
+		// Try to borrow by SECOND_PRICE
+		assert_noop!(
+			Lending::borrow(Origin::signed(*ALICE), market, borrow_amount),
+			Error::<Runtime>::PriceTooOld
+		);
+
+		// Refresh price
+		set_price(BTC::ID, BTC::ONE.mul(FIRST_PRICE));
+		set_price(USDT::ID, USDT::ONE);
+
+		// Try to borrow by FIRST_PRICE
+		assert_ok!(Lending::borrow(Origin::signed(*ALICE), market, borrow_amount),);
+
+		// skip blocks
+		test::block::process_and_progress_blocks::<Lending, Runtime>(
+			DEFAULT_MAX_PRICE_AGE as usize + 1,
+		);
+
+		// Set BTC price
+		set_price(BTC::ID, BTC::ONE.mul(SECOND_PRICE));
+		set_price(USDT::ID, USDT::ONE);
+
+		// Try to borrow by SECOND_PRICE
+		assert_noop!(
+			Lending::borrow(Origin::signed(*ALICE), market, borrow_amount),
+			Error::<Runtime>::NotEnoughCollateralToBorrow
+		);
+
+		// skip blocks
+		test::block::process_and_progress_blocks::<Lending, Runtime>(
+			DEFAULT_MAX_PRICE_AGE as usize + 1,
+		);
+
+		// Try to repay by SECOND_PRICE
+		assert_ok!(Lending::repay_borrow(
+			Origin::signed(*ALICE),
+			market,
+			*ALICE,
+			RepayStrategy::PartialAmount(borrow_amount)
+		),);
+	});
+}
+
+#[test]
 fn borrow_flow() {
 	new_test_ext().execute_with(|| {
 		let (market, vault) = create_simple_market();
@@ -608,7 +710,7 @@ fn borrow_flow() {
 			market_id: market,
 		}));
 
-		test::block::process_and_progress_blocks::<Lending, Runtime>(10001);
+		test::block::process_and_progress_blocks::<Lending, Runtime>(20);
 
 		assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, collateral_amount));
 
@@ -1148,6 +1250,7 @@ fn current_interest_rate_test() {
 		let market = crate::Markets::<Runtime>::get(market_id).unwrap();
 		let update_input = UpdateInput {
 			collateral_factor: market.collateral_factor,
+			max_price_age: market.max_price_age,
 			under_collateralized_warn_percent: market.under_collateralized_warn_percent,
 			liquidators: market.liquidators,
 			interest_rate_model: InterestRateModel::Curve(
@@ -1409,15 +1512,16 @@ proptest! {
 // HELPERS
 
 /// Creates a "default" [`CreateInput`], with the specified [`CurrencyPair`].
-fn default_create_input<AssetId>(
+fn default_create_input<AssetId, BlockNumber: sp_runtime::traits::Bounded>(
 	currency_pair: CurrencyPair<AssetId>,
-) -> CreateInput<u32, AssetId> {
+) -> CreateInput<u32, AssetId, BlockNumber> {
 	CreateInput {
 		updatable: UpdateInput {
 			collateral_factor: default_collateral_factor(),
 			under_collateralized_warn_percent: default_under_collateralized_warn_percent(),
 			liquidators: vec![],
 			interest_rate_model: InterestRateModel::default(),
+			max_price_age: BlockNumber::max_value(),
 		},
 		reserved_factor: DEFAULT_MARKET_VAULT_RESERVE,
 		currency_pair,
@@ -1490,7 +1594,7 @@ pub fn create_market<const NORMALIZED_PRICE: u128, T>(
 	collateral_factor: MoreThanOneFixedU128,
 ) -> (MarketIndex, T::VaultId)
 where
-	T: frame_system::Config
+	T: frame_system::Config<BlockNumber = u64>
 		+ crate::Config
 		+ DeFiComposableConfig<MayBeAssetId = u128>
 		+ orml_tokens::Config<CurrencyId = u128, Balance = u128>,
@@ -1516,6 +1620,7 @@ where
 			under_collateralized_warn_percent: default_under_collateralized_warn_percent(),
 			liquidators: vec![],
 			interest_rate_model: InterestRateModel::default(),
+			max_price_age: DEFAULT_MAX_PRICE_AGE,
 		},
 		reserved_factor,
 		currency_pair: CurrencyPair::new(collateral_asset.id(), borrow_asset.id()),

@@ -1,7 +1,10 @@
-use crate::defi::CurrencyPair;
+use crate::{currency::BalanceLike, defi::CurrencyPair};
 use codec::{Decode, Encode, MaxEncodedLen};
 use composable_support::math::safe::{SafeAdd, SafeSub};
-use frame_support::{traits::Get, BoundedVec, RuntimeDebug};
+use frame_support::{
+	traits::{tokens::AssetId as AssetIdLike, Get},
+	BoundedVec, RuntimeDebug,
+};
 use scale_info::TypeInfo;
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -10,7 +13,7 @@ use sp_runtime::{
 	traits::{CheckedMul, CheckedSub},
 	ArithmeticError, DispatchError, Permill,
 };
-use sp_std::vec::Vec;
+use sp_std::{ops::Mul, vec::Vec};
 
 /// Trait for automated market maker.
 pub trait Amm {
@@ -101,6 +104,88 @@ pub trait Amm {
 	) -> Result<Self::Balance, DispatchError>;
 }
 
+/// Pool Fees
+#[derive(
+	Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, Eq, Copy, RuntimeDebug,
+)]
+pub struct Fee<AssetId, Balance> {
+	// total fee
+	pub fee: Balance,
+	/// Amount of the fee pool charges for the exchange, this goes to liquidity providers.
+	pub lp_fee: Balance,
+	/// Amount of the fee that goes out to the owner of the pool
+	pub owner_fee: Balance,
+	/// Amount of the protocol fees(for PBLO holders) out of owner_fees.
+	pub protocol_fee: Balance,
+	/// assetId of the fees
+	pub asset_id: AssetId,
+}
+
+impl<AssetId: AssetIdLike, Balance: BalanceLike> Fee<AssetId, Balance> {
+	pub fn zero(asset_id: AssetId) -> Self {
+		Fee {
+			fee: Balance::zero(),
+			lp_fee: Balance::zero(),
+			owner_fee: Balance::zero(),
+			protocol_fee: Balance::zero(),
+			asset_id,
+		}
+	}
+}
+
+/// Pool Fee Config
+#[derive(
+	Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, Eq, Copy, RuntimeDebug,
+)]
+pub struct FeeConfig {
+	/// Amount of the fee pool charges for the exchange, this goes to liquidity provider.
+	pub fee_rate: Permill,
+	/// Amount of the fee that goes out to the owner of the pool
+	pub owner_fee_rate: Permill,
+	/// Amount of the protocol fees(for PBLO holders) out of owner_fees.
+	pub protocol_fee_rate: Permill,
+}
+
+impl FeeConfig {
+	pub fn zero() -> Self {
+		FeeConfig {
+			fee_rate: Permill::zero(),
+			owner_fee_rate: Permill::zero(),
+			protocol_fee_rate: Permill::zero(),
+		}
+	}
+
+	pub fn calculate_fees<AssetId: AssetIdLike, Balance: BalanceLike>(
+		&self,
+		asset_id: AssetId,
+		amount: Balance,
+	) -> Fee<AssetId, Balance> {
+		let fee: Balance = self.fee_rate.mul_floor(amount);
+		let owner_fee: Balance = self.owner_fee_rate.mul_floor(fee);
+		let protocol_fee: Balance = self.protocol_fee_rate.mul_floor(owner_fee);
+		Fee {
+			fee,
+			// safe as the values are calculated as per million
+			lp_fee: fee - owner_fee,
+			owner_fee: owner_fee - protocol_fee,
+			protocol_fee,
+			asset_id,
+		}
+	}
+}
+
+impl Mul<Permill> for FeeConfig {
+	type Output = Self;
+
+	fn mul(self, rhs: Permill) -> Self::Output {
+		FeeConfig {
+			fee_rate: self.fee_rate.mul(rhs),
+			owner_fee_rate: self.owner_fee_rate,
+			protocol_fee_rate: self.protocol_fee_rate,
+		}
+	}
+}
+
 /// Pool type
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, Eq, RuntimeDebug)]
 pub struct StableSwapPoolInfo<AccountId, AssetId> {
@@ -113,9 +198,7 @@ pub struct StableSwapPoolInfo<AccountId, AssetId> {
 	/// Initial amplification coefficient
 	pub amplification_coefficient: u16,
 	/// Amount of the fee pool charges for the exchange, this goes to liquidity provider.
-	pub fee: Permill,
-	/// Amount of the fee goes to owner of the pool
-	pub owner_fee: Permill,
+	pub fee_config: FeeConfig,
 }
 
 /// Describes a simple exchanges which does not allow advanced configurations such as slippage.
@@ -149,9 +232,11 @@ pub struct ConstantProductPoolInfo<AccountId, AssetId> {
 	/// AssetId of LP token
 	pub lp_token: AssetId,
 	/// Amount of the fee pool charges for the exchange
-	pub fee: Permill,
-	/// Amount of the fee goes to owner of the pool
-	pub owner_fee: Permill,
+	pub fee_config: FeeConfig,
+	/// The weight of the base asset. Must hold `1 = base_weight + quote_weight`
+	pub base_weight: Permill,
+	/// The weight of the quote asset. Must hold `1 = base_weight + quote_weight`
+	pub quote_weight: Permill,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -241,7 +326,7 @@ pub struct LiquidityBootstrappingPoolInfo<AccountId, AssetId, BlockNumber> {
 	/// Sale period of the LBP.
 	pub sale: Sale<BlockNumber>,
 	/// Trading fees.
-	pub fee: Permill,
+	pub fee_config: FeeConfig,
 }
 
 /// Describes route for DEX.
@@ -251,12 +336,11 @@ pub enum DexRoute<PoolId, MaxHops: Get<u32>> {
 	Direct(BoundedVec<PoolId, MaxHops>),
 }
 
-pub trait DexRouter<AccountId, AssetId, PoolId, Balance, MaxHops> {
+pub trait DexRouter<AssetId, PoolId, Balance, MaxHops> {
 	/// If route is `None` then delete existing entry for `asset_pair`
 	/// If route is `Some` and no entry exist for `asset_pair` then add new entry
 	/// else update existing entry.
 	fn update_route(
-		who: &AccountId,
 		asset_pair: CurrencyPair<AssetId>,
 		route: Option<BoundedVec<PoolId, MaxHops>>,
 	) -> Result<(), DispatchError>;
@@ -273,4 +357,44 @@ pub struct PriceAggregate<PoolId, AssetId, Balance> {
 	pub base_asset_id: AssetId,
 	pub quote_asset_id: AssetId,
 	pub spot_price: Balance, // prices based on any other stat such as TWAP goes here..
+}
+
+#[cfg(test)]
+mod tests {
+	use crate::dex::{Fee, FeeConfig};
+	use sp_arithmetic::Permill;
+	use std::ops::Mul;
+
+	#[test]
+	fn calculate_fee() {
+		const UNIT: u128 = 1_000_000_000_000_u128;
+		let amount = 1_000_000_u128 * UNIT;
+		let f = FeeConfig {
+			fee_rate: Permill::from_percent(1),
+			owner_fee_rate: Permill::from_percent(1),
+			protocol_fee_rate: Permill::from_percent(1),
+		};
+		assert_eq!(
+			f.calculate_fees(1, amount),
+			Fee {
+				fee: 10000 * UNIT,
+				lp_fee: 9900 * UNIT,
+				owner_fee: 99 * UNIT,
+				protocol_fee: 1 * UNIT,
+				asset_id: 1
+			}
+		);
+
+		let f2 = f.mul(Permill::from_percent(50));
+		assert_eq!(
+			f2.calculate_fees(1, amount),
+			Fee {
+				fee: 5000000000000000,
+				lp_fee: 4950000000000000,
+				owner_fee: 49500000000000,
+				protocol_fee: 500000000000,
+				asset_id: 1
+			}
+		);
+	}
 }

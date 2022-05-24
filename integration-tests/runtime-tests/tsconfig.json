@@ -13,19 +13,11 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "baseUrl": "./",
-    "paths":{
-      "@composable/*": [
-        "./src/*"
-      ],
-      "@composabletests/*": [
-        "./test/*"
-      ],
-      "@polkadot/api/augment": [
-        "./src/types/interfaces/augment-api.ts"
-      ],
-      "@polkadot/types/augment": [
-        "./src/types/interfaces/augment-types.ts"
-      ]
+    "paths": {
+      "@composable/*": ["./src/*"],
+      "@composabletests/*": ["./test/*"],
+      "@polkadot/api/augment": ["./src/types/interfaces/augment-api.ts"],
+      "@polkadot/types/augment": ["./src/types/interfaces/augment-types.ts"]
     }
   },
   "include": [

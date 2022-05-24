@@ -1,0 +1,11 @@
+{
+  "constantProductTests": {
+    "enabled": true
+  },
+  "stableSwapTests": {
+    "enabled": true
+  },
+  "liquidityBootstrappingTests": {
+    "enabled": true
+  }
+}

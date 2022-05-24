@@ -1,9 +1,9 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes } from '@polkadot/api-base/types';
+import type { ApiTypes } from "@polkadot/api-base/types";
 
-declare module '@polkadot/api-base/types/errors' {
+declare module "@polkadot/api-base/types/errors" {
   export interface AugmentedErrors<ApiType extends ApiTypes> {
     assets: {
       CannotSetNewCurrencyToRegistry: AugmentedError<ApiType>;
@@ -384,6 +384,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       CanNotRespectMinAmountRequested: AugmentedError<ApiType>;
       /**
+       * Route with possible loop is not allowed.
+       **/
+      LoopSuspectedInRouteUpdate: AugmentedError<ApiType>;
+      /**
        * Number of hops in route exceeded maximum limit.
        **/
       MaxHopsExceeded: AugmentedError<ApiType>;
@@ -582,7 +586,7 @@ declare module '@polkadot/api-base/types/errors' {
       CollateralAssetNotSupportedByOracle: AugmentedError<ApiType>;
       CollateralDepositFailed: AugmentedError<ApiType>;
       /**
-       * The collateral factor for a market must be mroe than one.
+       * The collateral factor for a market must be more than one.
        **/
       CollateralFactorMustBeMoreThanOne: AugmentedError<ApiType>;
       ExceedLendingCount: AugmentedError<ApiType>;
@@ -608,6 +612,7 @@ declare module '@polkadot/api-base/types/errors' {
        * borrow assets should have enough value as per oracle
        **/
       PriceOfInitialBorrowVaultShouldBeGreaterThanZero: AugmentedError<ApiType>;
+      PriceTooOld: AugmentedError<ApiType>;
       RepayAmountMustBeGreaterThanZero: AugmentedError<ApiType>;
       TransferFailed: AugmentedError<ApiType>;
       /**
@@ -839,6 +844,7 @@ declare module '@polkadot/api-base/types/errors' {
       AssetAmountMustBePositiveNumber: AugmentedError<ApiType>;
       CannotRespectMinimumRequested: AugmentedError<ApiType>;
       InvalidAmount: AugmentedError<ApiType>;
+      InvalidAsset: AugmentedError<ApiType>;
       InvalidFees: AugmentedError<ApiType>;
       InvalidPair: AugmentedError<ApiType>;
       InvalidSaleState: AugmentedError<ApiType>;
@@ -1048,7 +1054,7 @@ declare module '@polkadot/api-base/types/errors' {
       CallFiltered: AugmentedError<ApiType>;
       /**
        * Failed to extract the runtime version from the new runtime.
-       * 
+       *
        * Either calling `Core_version` or decoding `RuntimeVersion` failed.
        **/
       FailedToExtractRuntimeVersion: AugmentedError<ApiType>;

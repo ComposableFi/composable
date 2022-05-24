@@ -101,9 +101,9 @@ export function sendUnsignedAndWaitFor<T extends AnyTuple>(
   call: SubmittableExtrinsic<"promise">,
   intendedToFail: boolean
 ): Promise<IEvent<T>> {
-  return new Promise<IEvent<T>>(function(resolve, reject) {
+  return new Promise<IEvent<T>>(function (resolve, reject) {
     call
-      .send(function(res) {
+      .send(function (res) {
         const { dispatchError, status } = res;
         if (dispatchError) {
           if (dispatchError.isModule) {
@@ -115,8 +115,7 @@ export function sendUnsignedAndWaitFor<T extends AnyTuple>(
           }
         }
         if (status.isInBlock || status.isFinalized) {
-          if (res.events.find(e => filter(e.event)) == undefined)
-            return reject(status.toString());
+          if (res.events.find(e => filter(e.event)) == undefined) return reject(status.toString());
           const event = res.events.find(e => filter(e.event)).event;
           if (filter(event)) {
             resolve(event);
@@ -125,7 +124,7 @@ export function sendUnsignedAndWaitFor<T extends AnyTuple>(
           }
         }
       })
-      .catch(function(e) {
+      .catch(function (e) {
         reject(Error(e.stack));
       });
   });
@@ -147,9 +146,9 @@ export function sendAndWaitFor<T extends AnyTuple>(
   call: SubmittableExtrinsic<"promise">,
   intendedToFail: boolean
 ): Promise<IEvent<T>> {
-  return new Promise<IEvent<T>>(function(resolve, reject) {
+  return new Promise<IEvent<T>>(function (resolve, reject) {
     call
-      .signAndSend(sender, { nonce: -1 }, function(res) {
+      .signAndSend(sender, { nonce: -1 }, function (res) {
         const { dispatchError, status } = res;
         if (dispatchError) {
           if (dispatchError.isModule) {
@@ -158,41 +157,36 @@ export function sendAndWaitFor<T extends AnyTuple>(
             const { docs, name, section } = decoded;
             if (intendedToFail) {
               const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event))
-                resolve(event);
+              if (filter(event)) resolve(event);
             }
             reject(Error(`${section}.${name}: ${docs.join(" ")}`));
           } else {
             if (intendedToFail) {
               const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event))
-                resolve(event);
+              if (filter(event)) resolve(event);
             }
             reject(Error(dispatchError.toString()));
           }
         }
         if (status.isInBlock || status.isFinalized) {
-          if (res.events.find(e => filter(e.event)) == undefined)
-            return reject(status.toString());
+          if (res.events.find(e => filter(e.event)) == undefined) return reject(status.toString());
           const event = res.events.find(e => filter(e.event)).event;
           if (filter(event)) {
             if (intendedToFail) {
               const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event))
-                reject(event);
+              if (filter(event)) reject(event);
             }
             resolve(event);
           } else {
             if (intendedToFail) {
               const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event))
-                resolve(event);
+              if (filter(event)) resolve(event);
             }
             reject(Error("1014: Priority is too low:"));
           }
         }
       })
-      .catch(function(e) {
+      .catch(function (e) {
         reject(Error(e.stack));
       });
   });
@@ -214,9 +208,10 @@ export function sendAndWaitForWithBatch<T extends AnyTuple>(
   call: SubmittableExtrinsic<"promise">[],
   intendedToFail: boolean
 ): Promise<IEvent<T>> {
-  return new Promise<IEvent<T>>(function(resolve, reject) {
-    api.tx.utility.batch(call)
-      .signAndSend(sender, { nonce: -1 }, function(res) {
+  return new Promise<IEvent<T>>(function (resolve, reject) {
+    api.tx.utility
+      .batch(call)
+      .signAndSend(sender, { nonce: -1 }, function (res) {
         const { dispatchError, status } = res;
         if (dispatchError) {
           if (dispatchError.isModule) {
@@ -225,41 +220,36 @@ export function sendAndWaitForWithBatch<T extends AnyTuple>(
             const { docs, name, section } = decoded;
             if (intendedToFail) {
               const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event))
-                resolve(event);
+              if (filter(event)) resolve(event);
             }
             reject(Error(`${section}.${name}: ${docs.join(" ")}`));
           } else {
             if (intendedToFail) {
               const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event))
-                resolve(event);
+              if (filter(event)) resolve(event);
             }
             reject(Error(dispatchError.toString()));
           }
         }
         if (status.isInBlock || status.isFinalized) {
-          if (res.events.find(e => filter(e.event)) == undefined)
-            return reject(status.toString());
+          if (res.events.find(e => filter(e.event)) == undefined) return reject(status.toString());
           const event = res.events.find(e => filter(e.event)).event;
           if (filter(event)) {
             if (intendedToFail) {
               const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event))
-                reject(event);
+              if (filter(event)) reject(event);
             }
             resolve(event);
           } else {
             if (intendedToFail) {
               const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event))
-                resolve(event);
+              if (filter(event)) resolve(event);
             }
             reject(Error("1014: Priority is too low:"));
           }
         }
       })
-      .catch(function(e) {
+      .catch(function (e) {
         reject(Error(e.stack));
       });
   });

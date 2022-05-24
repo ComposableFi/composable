@@ -83,7 +83,7 @@ pub mod pallet {
 		>;
 
 		/// Required origin to update route operations.
-		type UpdateRouteOrigin: EnsureOrigin<Self::Origin, Success = Self::AccountId>;
+		type UpdateRouteOrigin: EnsureOrigin<Self::Origin>;
 
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
@@ -126,19 +126,16 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		RouteAdded {
-			who: T::AccountId,
 			x_asset_id: T::AssetId,
 			y_asset_id: T::AssetId,
 			route: Vec<T::PoolId>,
 		},
 		RouteDeleted {
-			who: T::AccountId,
 			x_asset_id: T::AssetId,
 			y_asset_id: T::AssetId,
 			route: Vec<T::PoolId>,
 		},
 		RouteUpdated {
-			who: T::AccountId,
 			x_asset_id: T::AssetId,
 			y_asset_id: T::AssetId,
 			old_route: Vec<T::PoolId>,
@@ -156,14 +153,13 @@ pub mod pallet {
 			asset_pair: CurrencyPair<T::AssetId>,
 			route: Option<BoundedVec<T::PoolId, T::MaxHopsInRoute>>,
 		) -> DispatchResult {
-			let who = T::UpdateRouteOrigin::ensure_origin(origin)?;
+			T::UpdateRouteOrigin::ensure_origin(origin)?;
 			let _ = <Self as DexRouter<
-				T::AccountId,
 				T::AssetId,
 				T::PoolId,
 				T::Balance,
 				T::MaxHopsInRoute,
-			>>::update_route(&who, asset_pair, route)?;
+			>>::update_route(asset_pair, route)?;
 			Ok(())
 		}
 
@@ -310,7 +306,6 @@ pub mod pallet {
 		}
 
 		fn do_update_route(
-			who: &T::AccountId,
 			asset_pair: CurrencyPair<T::AssetId>,
 			route: BoundedVec<T::PoolId, T::MaxHopsInRoute>,
 		) -> Result<(), DispatchError> {
@@ -324,7 +319,6 @@ pub mod pallet {
 						DexRoutes::<T>::remove(asset_pair.base, asset_pair.quote);
 					}
 					Event::RouteUpdated {
-						who: who.clone(),
 						x_asset_id: asset_pair.base,
 						y_asset_id: asset_pair.quote,
 						old_route,
@@ -332,7 +326,6 @@ pub mod pallet {
 					}
 				},
 				None => Event::RouteAdded {
-					who: who.clone(),
 					x_asset_id: asset_pair.base,
 					y_asset_id: asset_pair.quote,
 					route: route.to_vec(),
@@ -343,10 +336,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn do_delete_route(
-			who: &T::AccountId,
-			asset_pair: CurrencyPair<T::AssetId>,
-		) -> Result<(), DispatchError> {
+		fn do_delete_route(asset_pair: CurrencyPair<T::AssetId>) -> Result<(), DispatchError> {
 			let mut base_asset = asset_pair.base;
 			let mut quote_asset = asset_pair.quote;
 			if let Some((to_be_deleted_route, reverse)) = Self::get_route(asset_pair) {
@@ -356,7 +346,6 @@ pub mod pallet {
 				}
 				DexRoutes::<T>::remove(base_asset, quote_asset);
 				Self::deposit_event(Event::RouteDeleted {
-					who: who.clone(),
 					x_asset_id: base_asset,
 					y_asset_id: quote_asset,
 					route: to_be_deleted_route,
@@ -366,18 +355,15 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> DexRouter<T::AccountId, T::AssetId, T::PoolId, T::Balance, T::MaxHopsInRoute>
-		for Pallet<T>
-	{
+	impl<T: Config> DexRouter<T::AssetId, T::PoolId, T::Balance, T::MaxHopsInRoute> for Pallet<T> {
 		#[transactional]
 		fn update_route(
-			who: &T::AccountId,
 			asset_pair: CurrencyPair<T::AssetId>,
 			route: Option<BoundedVec<T::PoolId, T::MaxHopsInRoute>>,
 		) -> Result<(), DispatchError> {
 			match route {
-				Some(bounded_route) => Self::do_update_route(who, asset_pair, bounded_route)?,
-				None => Self::do_delete_route(who, asset_pair)?,
+				Some(bounded_route) => Self::do_update_route(asset_pair, bounded_route)?,
+				None => Self::do_delete_route(asset_pair)?,
 			}
 			Ok(())
 		}
