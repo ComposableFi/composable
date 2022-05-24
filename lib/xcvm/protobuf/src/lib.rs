@@ -8,7 +8,7 @@ use alloc::{
 	collections::{BTreeMap, VecDeque},
 	vec::Vec,
 };
-pub use prost::{DecodeError, Message};
+pub use prost::{DecodeError, EncodeError, Message};
 use xcvm::*;
 pub use xcvm_core::*;
 
@@ -29,6 +29,17 @@ pub fn decode<
 	Program::decode(buffer)
 		.map_err(DecodingFailure::Protobuf)
 		.and_then(|x| TryInto::try_into(x).map_err(|_| DecodingFailure::Isomorphism))
+}
+
+pub fn encode<
+	TNetwork: Into<u32>,
+	TAbiEncoded: Into<Vec<u8>>,
+	TAccount: Into<Vec<u8>>,
+	TAssets: Into<BTreeMap<u32, u128>>,
+>(
+	program: XCVMProgram<XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>>,
+) -> Vec<u8> {
+	Program::encode_to_vec(&program.into())
 }
 
 impl From<u128> for U128 {

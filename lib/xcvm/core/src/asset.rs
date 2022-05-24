@@ -44,3 +44,12 @@ impl From<BTreeMap<u32, u128>> for XCVMTransfer {
 		}
 	}
 }
+
+impl Into<BTreeMap<u32, u128>> for XCVMTransfer {
+	fn into(self) -> BTreeMap<u32, u128> {
+		self.assets
+			.into_iter()
+			.map(|(XCVMAsset(asset), amount)| (asset, amount))
+			.collect()
+	}
+}

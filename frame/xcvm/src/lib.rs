@@ -37,6 +37,7 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use composable_traits::mosaic::TransferTo;
 	use frame_support::{
 		pallet_prelude::*,
 		sp_runtime::{traits::Dispatchable, SaturatedConversion},
@@ -52,15 +53,18 @@ pub mod pallet {
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
 	pub(crate) type BalanceOf<T> = <T as Config>::Balance;
+	pub(crate) type BridgeOf<T> = <T as Config>::Bridge;
+	pub(crate) type BridgeTxIdOf<T> = <BridgeOf<T> as TransferTo>::TxId;
+	pub(crate) type NetworkIdOf<T> = <BridgeOf<T> as TransferTo>::NetworkId;
+	pub(crate) type AddressOf<T> = <BridgeOf<T> as TransferTo>::Address;
 	pub(crate) type XCVMInstructionOf<T> =
 		XCVMInstruction<XCVMNetwork, AbiEncoded, AccountIdOf<T>, XCVMTransfer>;
-	pub(crate) type XCVMProgramOf<T> = XCVMProgram<XCVMInstructionOf<T>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		Executed { instruction: XCVMInstructionOf<T> },
-		Spawn { network: XCVMNetwork, program: XCVMProgramOf<T> },
+		Spawn { network: XCVMNetwork, network_txs: Vec<BridgeTxIdOf<T>>, program: Vec<u8> },
 	}
 
 	#[pallet::error]
@@ -69,6 +73,8 @@ pub mod pallet {
 		UnknownAsset,
 		InvalidCallEncoding,
 		CallFailed,
+		UnknownNetwork,
+		MissingNetworkSatellite,
 	}
 
 	#[pallet::config]
@@ -84,16 +90,33 @@ pub mod pallet {
 			> + FungiblesTransfer<AccountIdOf<Self>>;
 		type Balance: Balance;
 		type MaxProgramSize: Get<u32>;
+		type Bridge: TransferTo<
+			AccountId = AccountIdOf<Self>,
+			AssetId = AssetIdOf<Self>,
+			Balance = BalanceOf<Self>,
+			BlockNumber = Self::BlockNumber,
+		>;
 	}
 
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
+
+	#[pallet::storage]
+	#[pallet::getter(fn satellite_address)]
+	pub type SatelliteAddress<T: Config> =
+		StorageMap<_, Blake2_128Concat, XCVMNetwork, AddressOf<T>>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn network_mapping)]
+	pub type NetworkMapping<T: Config> =
+		StorageMap<_, Blake2_128Concat, XCVMNetwork, NetworkIdOf<T>>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T>
 	where
-		AccountIdOf<T>: TryFrom<Vec<u8>>,
+		AccountIdOf<T>: TryFrom<Vec<u8>> + Into<Vec<u8>>,
 	{
 		#[pallet::weight(10_000)]
 		#[transactional]
@@ -132,20 +155,42 @@ pub mod pallet {
 						call.dispatch(origin.clone()).map_err(|_| Error::<T>::CallFailed)?;
 					},
 					XCVMInstruction::Bridge(network, XCVMTransfer { assets }) => {
-						for (asset, amount) in assets {
-							let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
-								.map_err(|_| Error::<T>::UnknownAsset)?;
-							// TODO: mosaic
-						}
+						let bridge_network_id =
+							NetworkMapping::<T>::get(network).ok_or(Error::<T>::UnknownNetwork)?;
+						let network_satellite = SatelliteAddress::<T>::get(network)
+							.ok_or(Error::<T>::MissingNetworkSatellite)?;
+						let now = frame_system::Pallet::<T>::block_number();
+						let network_txs = assets
+							.into_iter()
+							.map(|(asset, amount)| {
+								let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
+									.map_err(|_| Error::<T>::UnknownAsset)?;
+								BridgeOf::<T>::transfer_to(
+									who.clone(),
+									bridge_network_id.clone(),
+									network_satellite.clone(),
+									concrete_asset,
+									amount.saturated_into(),
+									false,
+									now,
+								)
+							})
+							.collect::<Result<Vec<_>, _>>()?;
 						Self::deposit_event(Event::<T>::Spawn {
 							network,
-							program: XCVMProgram { instructions: instructions.clone() },
+							network_txs,
+							program: xcvm_protobuf::encode(XCVMProgram {
+								instructions: instructions.clone(),
+							}),
 						});
 					},
 					XCVMInstruction::Spawn(network, program) =>
 						Self::deposit_event(Event::<T>::Spawn {
 							network,
-							program: XCVMProgram { instructions: program.clone() },
+							network_txs: Vec::new(),
+							program: xcvm_protobuf::encode(XCVMProgram {
+								instructions: program.clone(),
+							}),
 						}),
 				}
 				Self::deposit_event(Event::<T>::Executed { instruction })
