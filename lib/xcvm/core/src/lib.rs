@@ -2,13 +2,14 @@
 
 extern crate alloc;
 
+mod asset;
 mod instruction;
 mod network;
 mod program;
 mod protocol;
 mod types;
 
-pub use crate::{instruction::*, network::*, program::*, protocol::*, types::*};
+pub use crate::{asset::*, instruction::*, network::*, program::*, protocol::*, types::*};
 use alloc::vec::Vec;
 
 #[derive(Clone)]

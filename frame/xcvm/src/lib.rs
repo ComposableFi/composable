@@ -39,61 +39,50 @@ pub use pallet::*;
 pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
-		storage::bounded_btree_map::BoundedBTreeMap,
+		sp_runtime::{traits::Dispatchable, SaturatedConversion},
 		traits::{
 			fungibles::{Inspect as FungiblesInspect, Transfer as FungiblesTransfer},
 			tokens::{AssetId, Balance},
 		},
 	};
-	use frame_system::pallet_prelude::*;
-	use xcvm_core::{AbiEncoded, Callable, XCVMInstruction, XCVMNetwork, XCVMProgram};
+	use frame_system::{ensure_signed, pallet_prelude::*};
+	use xcvm_core::*;
 
-	pub(crate) type AccountIdOf<T> = <T as Config>::AccountId;
+	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
 	pub(crate) type BalanceOf<T> = <T as Config>::Balance;
-	pub(crate) type MaxTransferAssetsOf<T> = <T as Config>::MaxTransferAssets;
-	pub(crate) type MaxInstructionsOf<T> = <T as Config>::MaxInstructions;
-	pub(crate) type XCVMInstructionOf<T> = XCVMInstruction<
-		XCVMNetwork,
-		AbiEncoded,
-		AccountIdOf<T>,
-		BoundedBTreeMap<AssetIdOf<T>, BalanceOf<T>, MaxTransferAssetsOf<T>>,
-	>;
-	pub(crate) type XCVMInstructionsOf<T> = Vec<XCVMInstructionOf<T>>;
-	pub(crate) type XCVMProgramOf<T> = XCVMProgram<XCVMInstructionsOf<T>>;
-	use sp_std::collections::btree_map::BTreeMap;
+	pub(crate) type XCVMInstructionOf<T> =
+		XCVMInstruction<XCVMNetwork, AbiEncoded, AccountIdOf<T>, XCVMTransfer>;
+	pub(crate) type XCVMProgramOf<T> = XCVMProgram<XCVMInstructionOf<T>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		Executed { instruction: XCVMInstructionOf<T> },
+		Spawn { network: XCVMNetwork, program: XCVMProgramOf<T> },
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
 		InvalidProgramEncoding,
 		InstructionPointerOutOfRange,
+		UnknownAsset,
+		InvalidCallEncoding,
+		CallFailed,
 	}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type AccountId: Parameter
-			+ MaybeSerializeDeserialize
-			+ Ord
-			+ MaxEncodedLen
-			+ TryFrom<Vec<u8>>;
-
-		type AssetId: AssetId + Ord;
+		type Dispatchable: Parameter + Dispatchable<Origin = Self::Origin>;
+		type AssetId: AssetId + Ord + TryFrom<XCVMAsset>;
 		type Assets: FungiblesInspect<
 				AccountIdOf<Self>,
 				AssetId = AssetIdOf<Self>,
 				Balance = BalanceOf<Self>,
-			> + FungiblesTransfer<Self>;
+			> + FungiblesTransfer<AccountIdOf<Self>>;
 		type Balance: Balance;
-		type MaxTransferAssets: Get<u32>;
-		type MaxInstructions: Get<u32>;
 		type MaxProgramSize: Get<u32>;
 	}
 
@@ -102,38 +91,75 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
+	impl<T: Config> Pallet<T>
+	where
+		AccountIdOf<T>: TryFrom<Vec<u8>>,
+	{
 		#[pallet::weight(10_000)]
 		pub fn execute(
 			origin: OriginFor<T>,
 			program: BoundedVec<u8, T::MaxProgramSize>,
 		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin.clone())?;
 			let program = xcvm_protobuf::decode::<
 				XCVMNetwork,
 				<XCVMNetwork as Callable>::EncodedCall,
 				AccountIdOf<T>,
-				BTreeMap<u32, u128>,
+				XCVMTransfer,
 			>(program.as_ref())
 			.map_err(|_| Error::<T>::InvalidProgramEncoding)?;
 
 			let instructions = program.instructions;
-			let mut ip = program.instruction_pointer;
+			let mut ip = program.instruction_pointer as usize;
 
-			while ip < instructions.len() as u32 {
-				if let Some(instruction) = instructions.get(ip as usize) {
+			while ip < instructions.len() {
+				if let Some(instruction) = instructions.get(ip) {
 					match instruction {
-						XCVMInstruction::Transfer(to, assets) => {
-							// T::Assets::transfer(origin, to.clone(), assets.clone())?;
+						XCVMInstruction::Transfer(to, XCVMTransfer { assets }) => {
+							for (&asset, &amount) in assets {
+								let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
+									.map_err(|_| Error::<T>::UnknownAsset)?;
+								T::Assets::transfer(
+									concrete_asset,
+									&who,
+									to,
+									amount.saturated_into(),
+									false,
+								)?;
+							}
 						},
 						XCVMInstruction::Call(abi) => {
 							// decoded abi
+							let payload: Vec<u8> = abi.clone().into();
+							let call = <T::Dispatchable as Decode>::decode(&mut &payload[..])
+								.map_err(|_| Error::<T>::InvalidCallEncoding)?;
+							call.dispatch(origin.clone()).map_err(|_| Error::<T>::CallFailed)?;
 						},
-						XCVMInstruction::Bridge(network, assets) => {
-							// mosaic?
+						XCVMInstruction::Bridge(network, XCVMTransfer { assets }) => {
+							for (&asset, &amount) in assets {
+								let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
+									.map_err(|_| Error::<T>::UnknownAsset)?;
+								// TODO: mosaic
+							}
+							Self::deposit_event(Event::<T>::Spawn {
+								network: *network,
+								program: XCVMProgram {
+									instructions: instructions.clone(),
+									instruction_pointer: (ip + 1) as u32,
+								},
+							})
 						},
+						XCVMInstruction::Spawn(network, program) =>
+							Self::deposit_event(Event::<T>::Spawn {
+								network: *network,
+								program: XCVMProgram {
+									instructions: program.clone(),
+									instruction_pointer: 0,
+								},
+							}),
 					}
 				} else {
-					return Err(Error::<T>::InstructionPointerOutOfRange.into());
+					return Err(Error::<T>::InstructionPointerOutOfRange.into())
 				}
 				ip += 1;
 			}
