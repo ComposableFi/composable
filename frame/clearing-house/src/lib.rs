@@ -1193,9 +1193,9 @@ pub mod pallet {
 							.try_sub(&fee_decimal)?,
 					)?;
 				} else {
-					positions
-						.try_push(position)
-						.expect("resulting vector is at most as large as the original; qed");
+					// AccountSummary::positions_summary isn't constrained to be shorter than the
+					// maximum number of positions, so we keep the error checking here.
+					positions.try_push(position).map_err(|_| Error::<T>::MaxPositionsExceeded)?;
 				}
 			}
 
