@@ -262,6 +262,7 @@ mod configure {
 
 mod stake {
 	use composable_traits::financial_nft::FinancialNftProtocol;
+	use frame_support::{assert_err, assert_err_ignore_postinfo};
 
 	use super::*;
 
@@ -346,7 +347,7 @@ mod stake {
 	}
 
 	#[test]
-	fn increase_staked_amount_increases_lock() {
+	fn extend_staked_amount_increases_lock() {
 		env_logger::builder().is_test(true).try_init();
 		new_test_ext().execute_with(|| {
 			let config = configure_default_pica();
@@ -434,6 +435,70 @@ mod stake {
 					updated_alice_position.pending_rewards[&BTC],
 				"Charlie extended rewards to earlier and so he got more rewards"
 			);
+		});
+	}
+
+	#[test]
+	fn extend_stake_lock_duration_possible() {
+		env_logger::builder().is_test(true).try_init();
+		new_test_ext().execute_with(|| {
+			let config = configure_default_pica();
+			let equal_stake = 1_000_000_000_000;
+			let duration = WEEK;
+			<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, equal_stake).unwrap();
+
+			/// make rase amid 3 players and ensure they positions related
+			let alice_position_id =
+				<StakingRewards as Staking>::stake(&PICA, &ALICE, equal_stake / 3, duration, false)
+					.expect("test");
+
+					let original_alice_position =
+					<Test as FinancialNftProtocol<AccountId>>::get_protocol_nft::<
+						staking_rewards_pallet::StakingNFTOf<Test>,
+					>(&alice_position_id)
+					.unwrap();
+					run_to_block(1);
+
+					assert_ok!(StakingRewards::extend_duration(
+						Origin::signed(ALICE),
+						alice_position_id,
+						Some(WEEK),
+					));
+
+			let updated_alice_position =
+			<Test as FinancialNftProtocol<AccountId>>::get_protocol_nft::<
+				staking_rewards_pallet::StakingNFTOf<Test>,
+			>(&alice_position_id)
+			.unwrap();
+			assert_eq!(updated_alice_position, original_alice_position, "Extension of duration is not applied immidetely");
+			run_to_block(10);
+			let updated_alice_position =
+			<Test as FinancialNftProtocol<AccountId>>::get_protocol_nft::<
+				staking_rewards_pallet::StakingNFTOf<Test>,
+			>(&alice_position_id)
+			.unwrap();
+			assert_ne!(updated_alice_position, original_alice_position, "Extension of duration applied in new epoch");
+			assert!(updated_alice_position.lock_date >  original_alice_position.lock_date);
+
+			// Can extend to larger period
+			assert_ok!(StakingRewards::extend_duration(
+				Origin::signed(ALICE),
+				alice_position_id,
+				Some(MONTH),
+			));
+			run_to_block(20);
+			let updated_alice_position =
+			<Test as FinancialNftProtocol<AccountId>>::get_protocol_nft::<
+				staking_rewards_pallet::StakingNFTOf<Test>,
+			>(&alice_position_id)
+			.unwrap();
+			assert_eq!(updated_alice_position.lock_duration, MONTH);
+
+			assert_err!(StakingRewards::extend_duration(
+				Origin::signed(ALICE),
+				alice_position_id,
+				Some(WEEK),
+			),   staking_rewards_pallet::Error::<Test>::NewLockDurationMustBeEqualOrBiggerThanPreviousLockDuration);
 		});
 	}
 }

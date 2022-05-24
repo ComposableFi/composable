@@ -14,11 +14,15 @@ use sp_runtime::{
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Encode, Decode, TypeInfo)]
 pub enum PositionState {
-	/// The position is not being rewarded yet and waiting for the next epoch.
+	/// The position is not being rewarded yet
+	/// and waiting for the next epoch to be included in `LockedRewarding` state.
 	Pending,
 	/// The position is currently locked and being rewarded.
+	/// If locked period ends, it goes to `LockedRewarding`.
+	/// Can be moved out of posistion with possible penalty.
 	LockedRewarding,
 	/// The position expired but still being rewarded.
+	/// Can be moved from position without penalty or extended.
 	Expired,
 }
 

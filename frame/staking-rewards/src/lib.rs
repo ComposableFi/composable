@@ -50,7 +50,7 @@ pub mod pallet {
 		math::safe::{safe_multiply_by_rational, SafeAdd, SafeSub},
 	};
 	use composable_traits::{
-		financial_nft::{FinancialNftProtocol, FinancialNftProvider, NftClass, NftVersion},
+		financial_nft::{FinancialNftProtocol, NftClass, NftVersion},
 		staking_rewards::{
 			Penalty, PenaltyOutcome, PositionState, Staking, StakingConfig, StakingNFT,
 			StakingReward,
@@ -138,7 +138,7 @@ pub mod pallet {
 		ImpossibleState,
 		OnlyOwnerOfPositionCanDoThis,
 		CannotIncreaseStakedAmountBecauseOfLimitedArithmetic,
-		NewLockDurationMustBeEqualOrBiggerThanPreviousLockDuration
+		NewLockDurationMustBeEqualOrBiggerThanPreviousLockDuration,
 	}
 
 	#[pallet::config]
@@ -277,7 +277,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn pending_duration_extensions)]
 	pub type PendingDurationExtensions<T: Config> =
-		StorageMap<_, Twox64Concat, InstanceIdOf<T>, DurationSeconds, OptionQuery>;		
+		StorageMap<_, Twox64Concat, InstanceIdOf<T>, DurationSeconds, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn staking_configurations)]
@@ -395,6 +395,9 @@ pub mod pallet {
 		}
 
 		/// Extends fNFT position stake. Applied only to next epoch.
+		///
+		/// Is better then unstake and restake more in case of penalty.
+		/// But not incetivises to making many many small stakes one on other to game over system.
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn extend_stake(
@@ -421,6 +424,7 @@ pub mod pallet {
 		///
 		/// Fails if `duration` extensions does not fits allowed.
 		#[pallet::weight(10_000)]
+		#[transactional]
 		pub fn extend_duration(
 			origin: OriginFor<T>,
 			instance_id: InstanceIdOf<T>,
@@ -439,9 +443,8 @@ pub mod pallet {
 				.duration_presets
 				.get(&duration)
 				.ok_or(Error::<T>::InvalidDurationPreset)?;
-			
-			
-			//match (position.)
+
+			PendingDurationExtensions::<T>::insert(instance_id, duration);
 
 			Ok(().into())
 		}
@@ -504,25 +507,44 @@ pub mod pallet {
 															)?,
 														)?,
 													)
-													.map_err(|_| ArithmeticError::Overflow)?;												
+													.map_err(|_| ArithmeticError::Overflow)?;
 											}
 										},
 									}
-									/// we execute these things regardless of fNFT state
+									// we execute these things regardless of fNFT state
+									// TODO: decide what is better for system - duration then
+									// amount, or else
 									if let Some(amount) =
-									PendingAmountExtensions::<T>::take(&nft_id)
-								{
-									let time_lock = honest_locked_stake_increase(
+										PendingAmountExtensions::<T>::take(&nft_id)
+									{
+										let time_lock = honest_locked_stake_increase(
 										nft.early_unstake_penalty.value,
 										nft.stake.into(),
 										amount.into(),
 										nft.lock_duration.into(),
 										 (now - nft.lock_date).into())
 										 .ok_or(Error::<T>::CannotIncreaseStakedAmountBecauseOfLimitedArithmetic)?;
-									nft.lock_date =
-										nft.lock_date.safe_add(&time_lock)?;
-									nft.stake = nft.stake.safe_add(&amount)?;
-								}
+										nft.lock_date = nft.lock_date.safe_add(&time_lock)?;
+										nft.stake = nft.stake.safe_add(&amount)?;
+									}
+
+									if let Some(new_lock) =
+										PendingDurationExtensions::<T>::take(&nft_id)
+									{
+										// keep in sync with python code
+										// NOTE: relies on fact that now always >= any other
+										// possible date NOTE: and the new lock was validated to be
+										// on input >= old lock
+										let rolling = honest_lock_extensions(
+											now,
+											nft.lock_date,
+											new_lock,
+											nft.lock_duration,
+										);
+										nft.lock_date = now - rolling;
+										nft.lock_duration = new_lock;
+									}
+
 									Ok(())
 								},
 							);
@@ -559,15 +581,16 @@ pub mod pallet {
 						},
 					);
 					if let BlockFold::Done { .. } = result {
-						// NOTE: 
-						// other design would be to `take` in batches and having A/B storages					 
+						// NOTE:
+						// other design would be to `take` in batches and having A/B storages
 						// 1. make A to be acitve to inser new pending stakers
 						// 2. drain B in batches
 						// 3. switch A/B
-						// 
+						//
 						// in this case removing will be more eager and streaming (good)
-						// and fold would have simpler state (no need to recall previous and know when done)
-						// but will need to store `bool` value for A/B and split storage PendingStakersA and PendingStakersB
+						// and fold would have simpler state (no need to recall previous and know
+						// when done) but will need to store `bool` value for A/B and split storage
+						// PendingStakersA and PendingStakersB
 						PendingStakers::<T>::remove_all(None);
 						CurrentState::<T>::set(State::WaitingForEpochEnd);
 					}
@@ -575,6 +598,12 @@ pub mod pallet {
 			}
 			0
 		}
+	}
+
+	fn honest_lock_extensions(now: u64, lock_date: u64, new_lock: u64, previous_lock: u64) -> u64 {
+		let passed_time = now - lock_date;
+		let rolling = passed_time.min(new_lock - previous_lock);
+		rolling
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -696,7 +725,8 @@ pub mod pallet {
 			duration: DurationSeconds,
 			keep_alive: bool,
 		) -> Result<Self::InstanceId, DispatchError> {
-			// NOTE: could use A/B queues and avoid protocol interuption because of background states
+			// NOTE: could use A/B queues and avoid protocol interuption because of background
+			// states
 			Self::ensure_valid_interaction_state()?;
 			let config = Self::get_config(asset)?;
 			let reward_multiplier = *config
