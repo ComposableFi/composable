@@ -10,7 +10,7 @@ participant "vAMM" as vamm
 participant "Risk\nEngine" as risk
 database "Markets" as mkts
 database "Positions" as positions
-database "AccountsMargin" as accs
+database "Collateral" as accs
 collections "Collateral\naccount" as vault
 
 user -> ch : open position
@@ -60,7 +60,7 @@ end note
 'RiskEngine
 ch -> risk ++: ""above_initial_margin_ratio""
     risk -> risk ++: compute\nmargin ratio
-        risk -[#green]> accs : get margin
+        risk -[#green]> accs : get collateral
         risk -[#green]> positions : get all user positions
         risk -[#green]> mkts : get all markets\ninvested
         risk -> vamm : get prices

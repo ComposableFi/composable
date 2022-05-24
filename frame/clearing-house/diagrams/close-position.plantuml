@@ -9,7 +9,7 @@ participant "vAMM" as vamm
 participant "Risk\nEngine" as risk
 database "Markets" as mkts
 database "Positions" as positions
-database "AccountsMargin" as accs
+database "Collateral" as accs
 collections "Collateral\naccount" as vault
 collections "Fees\naccount" as fees
 

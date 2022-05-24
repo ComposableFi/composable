@@ -24,9 +24,11 @@ use frame_support::{assert_err, assert_ok, pallet_prelude::Hooks};
 use proptest::prelude::*;
 use sp_runtime::{FixedI128, FixedPointNumber, FixedU128};
 
-pub mod add_margin;
+pub mod comp;
 pub mod create_market;
+pub mod deposit_collateral;
 pub mod instruments;
+pub mod liquidate;
 pub mod open_position;
 pub mod update_funding;
 
@@ -124,12 +126,8 @@ fn with_market_context<R>(
 	config: MarketConfig,
 	execute: impl FnOnce(MarketId) -> R,
 ) -> R {
-	let mut ext = ext_builder.build().run_to_block(1);
-	let market_id = ext.execute_with(|| {
-		<sp_io::TestExternalities as MarketInitializer>::create_market_helper(Some(config))
-	});
-
-	ext.execute_with(|| execute(market_id))
+	let configs = vec![config];
+	with_markets_context(ext_builder, configs, |market_ids| execute(market_ids[0]))
 }
 
 fn with_markets_context<R>(
@@ -137,18 +135,17 @@ fn with_markets_context<R>(
 	configs: Vec<MarketConfig>,
 	execute: impl FnOnce(Vec<MarketId>) -> R,
 ) -> R {
-	let mut ext = ext_builder.build().run_to_block(1);
-	let market_ids = ext.execute_with(|| {
-		let mut ids = Vec::<_>::new();
-		for config in configs {
-			ids.push(<sp_io::TestExternalities as MarketInitializer>::create_market_helper(Some(
-				config,
-			)));
-		}
-		ids
-	});
+	let mut ext = ext_builder.build();
 
-	ext.execute_with(|| execute(market_ids))
+	ext.execute_with(|| {
+		run_to_block(1);
+		let ids: Vec<_> = configs
+			.into_iter()
+			.map(|c| <sp_io::TestExternalities as MarketInitializer>::create_market_helper(Some(c)))
+			.collect();
+
+		execute(ids)
+	})
 }
 
 fn with_trading_context<R>(
@@ -156,13 +153,9 @@ fn with_trading_context<R>(
 	margin: Balance,
 	execute: impl FnOnce(MarketId) -> R,
 ) -> R {
-	let ext_builder = ExtBuilder { balances: vec![(ALICE, USDC, margin)], ..Default::default() };
-
-	with_market_context(ext_builder, config, |market_id| {
-		TestPallet::add_margin(Origin::signed(ALICE), USDC, margin);
-
-		execute(market_id)
-	})
+	let configs = vec![config];
+	let margins = vec![(ALICE, margin)];
+	multi_market_and_trader_context(configs, margins, |market_ids| execute(market_ids[0]))
 }
 
 fn traders_in_one_market_context<R>(
@@ -170,16 +163,25 @@ fn traders_in_one_market_context<R>(
 	margins: Vec<(AccountId, Balance)>,
 	execute: impl FnOnce(MarketId) -> R,
 ) -> R {
+	let configs = vec![config];
+	multi_market_and_trader_context(configs, margins, |market_ids| execute(market_ids[0]))
+}
+
+fn multi_market_and_trader_context<R>(
+	configs: Vec<MarketConfig>,
+	margins: Vec<(AccountId, Balance)>,
+	execute: impl FnOnce(Vec<MarketId>) -> R,
+) -> R {
 	let balances: Vec<(AccountId, AssetId, Balance)> =
 		margins.iter().map(|&(a, m)| (a, USDC, m)).collect();
 	let ext_builder = ExtBuilder { balances, ..Default::default() };
 
-	with_market_context(ext_builder, config, |market_id| {
+	with_markets_context(ext_builder, configs, |market_ids| {
 		for (acc, margin) in margins {
-			TestPallet::add_margin(Origin::signed(acc), USDC, margin);
+			TestPallet::deposit_collateral(Origin::signed(acc), USDC, margin);
 		}
 
-		execute(market_id)
+		execute(market_ids)
 	})
 }
 
@@ -226,13 +228,21 @@ impl RunToBlock for sp_io::TestExternalities {
 }
 
 trait MarginInitializer {
-	fn add_margin(self, account_id: &AccountId, asset_id: AssetId, amount: Balance) -> Self;
+	fn deposit_collateral(self, account_id: &AccountId, asset_id: AssetId, amount: Balance)
+		-> Self;
 }
 
 impl MarginInitializer for sp_io::TestExternalities {
-	fn add_margin(mut self, account_id: &AccountId, asset_id: AssetId, amount: Balance) -> Self {
+	fn deposit_collateral(
+		mut self,
+		account_id: &AccountId,
+		asset_id: AssetId,
+		amount: Balance,
+	) -> Self {
 		self.execute_with(|| {
-			assert_ok!(<TestPallet as ClearingHouse>::add_margin(account_id, asset_id, amount));
+			assert_ok!(<TestPallet as ClearingHouse>::deposit_collateral(
+				account_id, asset_id, amount
+			));
 		});
 
 		self

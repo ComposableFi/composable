@@ -55,11 +55,42 @@ impl<T: Config> Position<T> {
 	}
 }
 
+pub struct PositionInfo<T: Config> {
+	pub direction: Direction,
+	pub margin_requirement_maintenance: T::Decimal,
+	pub base_asset_value: T::Decimal,
+	pub unrealized_pnl: T::Decimal,
+	pub unrealized_funding: T::Decimal,
+}
+
+pub struct AccountSummary<T: Config> {
+	pub margin_requirement_maintenance: T::Decimal,
+	pub base_asset_value: T::Decimal,
+	pub unrealized_pnl: T::Decimal,
+	pub unrealized_funding: T::Decimal,
+	pub positions_summary: Vec<(Market<T>, Position<T>, PositionInfo<T>)>,
+}
+
+impl<T: Config> Default for AccountSummary<T> {
+	fn default() -> Self {
+		Self {
+			margin_requirement_maintenance: T::Decimal::zero(),
+			base_asset_value: T::Decimal::zero(),
+			unrealized_pnl: T::Decimal::zero(),
+			unrealized_funding: T::Decimal::zero(),
+			positions_summary: Default::default(),
+		}
+	}
+}
+
 /// Data relating to a perpetual contracts market
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug)]
 #[scale_info(skip_type_params(T))]
 #[codec(mel_bound())]
 pub struct Market<T: Config> {
+	// ---------------------------------------------------------------------------------------------
+	//                                         Static
+	// ---------------------------------------------------------------------------------------------
 	/// The Id of the vAMM used for price discovery in the virtual market.
 	pub vamm_id: T::VammId,
 	/// The Id of the underlying asset (base-quote pair). A price feed from one or more oracles
@@ -72,6 +103,24 @@ pub struct Market<T: Config> {
 	/// Minimum amount of quote asset to exchange when opening a position. Also serves to round
 	/// a trade if it results in closing an existing position.
 	pub minimum_trade_size: T::Decimal,
+	/// The time span between each funding rate update.
+	pub funding_frequency: DurationSeconds,
+	/// Period of time over which funding (the difference between mark and index prices) gets
+	/// paid.
+	///
+	/// Setting the funding period too long may cause the perpetual to start trading at a
+	/// very dislocated price to the index because there's less of an incentive for basis
+	/// arbitrageurs to push the prices back in line since they would have to carry the basis
+	/// risk for a longer period of time.
+	///
+	/// Setting the funding period too short may cause nobody to trade the perpetual because
+	/// there’s too punitive of a price to pay in the case the funding rate flips sign.
+	pub funding_period: DurationSeconds,
+	/// Taker fee, in basis points, applied to all market orders.
+	pub taker_fee: T::Balance,
+	// ---------------------------------------------------------------------------------------------
+	//                                         Dynamic
+	// ---------------------------------------------------------------------------------------------
 	/// Total position, in base asset, of all traders that are long. Must be positive. Used to
 	/// compute parameter adjustment costs and funding payments from/to the Clearing House.
 	pub base_asset_amount_long: T::Decimal,
@@ -88,21 +137,6 @@ pub struct Market<T: Config> {
 	pub fee_pool: T::Balance,
 	/// The timestamp for the latest funding rate update.
 	pub funding_rate_ts: DurationSeconds,
-	/// The time span between each funding rate update.
-	pub funding_frequency: DurationSeconds,
-	/// Period of time over which funding (the difference between mark and index prices) gets
-	/// paid.
-	///
-	/// Setting the funding period too long may cause the perpetual to start trading at a
-	/// very dislocated price to the index because there’s less of an incentive for basis
-	/// arbitrageurs to push the prices back in line since they would have to carry the basis
-	/// risk for a longer period of time.
-	///
-	/// Setting the funding period too short may cause nobody to trade the perpetual because
-	/// there’s too punitive of a price to pay in the case the funding rate flips sign.
-	pub funding_period: DurationSeconds,
-	/// Taker fee, in basis points, applied to all market orders.
-	pub taker_fee: T::Balance,
 }
 
 impl<T: Config> Market<T> {

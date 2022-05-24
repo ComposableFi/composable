@@ -31,7 +31,7 @@ fn cross_margin_context<R>(
 	let ext_builder = ExtBuilder { balances: vec![(ALICE, USDC, margin)], ..Default::default() };
 
 	with_markets_context(ext_builder, configs, |market_ids| {
-		TestPallet::add_margin(Origin::signed(ALICE), USDC, margin);
+		TestPallet::deposit_collateral(Origin::signed(ALICE), USDC, margin);
 
 		execute(market_ids)
 	})
@@ -93,7 +93,7 @@ fn fails_to_open_position_if_market_id_invalid() {
 	ExtBuilder { balances: vec![(ALICE, USDC, quote_amount)], ..Default::default() }
 		.build()
 		.init_market(&mut market_id, None)
-		.add_margin(&ALICE, USDC, quote_amount)
+		.deposit_collateral(&ALICE, USDC, quote_amount)
 		.execute_with(|| {
 			// Current price = quote_amount / base_amount_limit
 			VammPallet::set_price(Some((quote_amount, base_amount_limit).into()));
@@ -189,7 +189,7 @@ proptest! {
 			assert_eq!(position.last_cum_funding, market.cum_funding_rate(direction));
 
 			// Ensure fees are deducted from margin
-			assert_eq!(TestPallet::get_margin(&ALICE), Some(quote_amount));
+			assert_eq!(TestPallet::get_collateral(&ALICE), Some(quote_amount));
 
 			// Ensure market state is updated:
 			// - net position
@@ -328,7 +328,7 @@ proptest! {
 			let sign = match direction { Direction::Long => -1, _ => 1 };
 			let payment = sign * (rate * quote_amount as i128) / 10_000;
 			let margin = quote_amount as i128  + payment; // Initial margin minus fees + funding
-			assert_eq!(TestPallet::get_margin(&ALICE), Some(margin as u128));
+			assert_eq!(TestPallet::get_collateral(&ALICE), Some(margin as u128));
 		});
 	}
 
@@ -373,7 +373,7 @@ proptest! {
 			let margin = quote_amount as i128;
 			let pnl = sign * (new_base_value as i128) - sign * margin;
 			assert_eq!(
-				TestPallet::get_margin(&ALICE).unwrap(),
+				TestPallet::get_collateral(&ALICE).unwrap(),
 				(margin + pnl).max(0) as u128
 			);
 		});
@@ -430,7 +430,7 @@ proptest! {
 			let entry_value = percentf.saturating_mul_int(quote_amount);
 			let pnl = sign * (base_value_to_close as i128) - sign * (entry_value as i128);
 			assert_eq!(
-				TestPallet::get_margin(&ALICE).unwrap(),
+				TestPallet::get_collateral(&ALICE).unwrap(),
 				(quote_amount as i128 + pnl).max(0) as u128
 			);
 
@@ -502,7 +502,7 @@ proptest! {
 			let margin = quote_amount as i128;
 			let pnl = sign * (new_base_value as i128) - sign * margin;
 			assert_eq!(
-				TestPallet::get_margin(&ALICE).unwrap(),
+				TestPallet::get_collateral(&ALICE).unwrap(),
 				(margin + pnl).max(0) as u128
 			);
 
@@ -665,6 +665,8 @@ proptest! {
 			);
 		});
 	}
+
+	// TODO(0xangelo): cannot reverse into dust position (< min_trade_size)
 
 	#[test]
 	fn margin_ratio_takes_unrealized_funding_into_account(direction in any_direction()) {

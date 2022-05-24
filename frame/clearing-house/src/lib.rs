@@ -12,19 +12,31 @@
 //!
 //! ### Terminology
 //!
-//! * **Trader**: Primary user of the public extrinsics of the pallet
-//! * **Derivative**: A financial instrument which derives its value from another asset, a.k.a. the
+//! - **Trader**: Primary user of the public extrinsics of the pallet
+//! - **Derivative**: A financial instrument which derives its value from another asset, a.k.a. the
 //!   _underlying_.
-//! * **Perpetual contract**: A derivative product that allows a trader to have exposure to the underlying's price without owning it. See [The Cartoon Guide to Perps](https://www.paradigm.xyz/2021/03/the-cartoon-guide-to-perps) for intuitions.
-//! * **Market**: Perpetual contracts market, where users trade virtual tokens mirroring the
+//! - **Perpetual contract**: A derivative product that allows a trader to have exposure to the
+//!   underlying's price without owning it. See
+//!   [The Cartoon Guide to Perps](https://www.paradigm.xyz/2021/03/the-cartoon-guide-to-perps)
+//!   for intuitions.
+//! - **Market**: Perpetual contracts market, where users trade virtual tokens mirroring the
 //!   base-quote asset pair of spot markets. A.k.a. a virtual market.
-//! * **VAMM**: Virtual automated market maker allowing price discovery in virtual markets based on
+//! - **VAMM**: Virtual automated market maker allowing price discovery in virtual markets based on
 //!   the supply of virtual base/quote assets.
-//! * **Position**: Amount of a particular virtual asset owned by a trader. Implies debt (positive
+//! - **Position**: Amount of a particular virtual asset owned by a trader. Implies debt (positive
 //!   or negative) to the Clearing House.
-//! * **Collateral**: 'Real' asset(s) backing the trader's position(s), ensuring he/she can pay back
+//! - **Collateral**: 'Real' asset(s) backing the trader's position(s), ensuring he/she can pay back
 //!   the Clearing House.
-//! * **IMR**: acronym for 'Initial Margin Ratio'
+//! - **`PnL`**: Profit and Loss, i.e., the difference between the current/exit and entry prices of
+//!   a position
+//! - **Margin**: A user's equity in a group of positions, i.e., it's collateral + total unrealized
+//!   `PnL` + total unrealized funding payments
+//! - **Margin ratio**: The ratio of the user's margin to his total position value. May be measured
+//!   using either index (oracle) or mark (VAMM) prices
+//! - **IMR**: Acronym for 'Initial Margin Ratio'. The mininum allowable margin ratio resulting from
+//!   opening new positions. Inversely proportional to the maximum leverage of an account
+//! - **MMR**: Acronym for 'Maintenance Margin Ratio'. The margin ratio below which a full
+//!   liquidation of a user's account can be triggered by a liquidator
 //!
 //! ### Goals
 //!
@@ -41,17 +53,19 @@
 //!
 //! ### Extrinsics
 //!
-//! - [`add_margin`](Call::add_margin)
+//! - [`deposit_collateral`](Call::deposit_collateral)
 //! - [`create_market`](Call::create_market)
 //! - [`open_position`](Call::open_position)
 //! - [`update_funding`](Call::update_funding)
+//! - [`liquidate`](Call::liquidate)
 //!
 //! ### Implemented Functions
 //!
-//! - [`add_margin`](pallet/struct.Pallet.html#method.add_margin-1)
+//! - [`deposit_collateral`](pallet/struct.Pallet.html#method.deposit_collateral-1)
 //! - [`create_market`](pallet/struct.Pallet.html#method.create_market-1)
 //! - [`open_position`](pallet/struct.Pallet.html#method.open_position-1)
 //! - [`update_funding`](pallet/struct.Pallet.html#method.update_funding-1)
+//! - [`liquidate`](pallet/struct.Pallet.html#method.liquidate-1)
 //! - [`funding_rate`](Pallet::funding_rate)
 //! - [`unrealized_funding`](Pallet::unrealized_funding)
 //!
@@ -125,9 +139,9 @@ mod benchmarking;
 
 #[frame_support::pallet]
 pub mod pallet {
-	// ----------------------------------------------------------------------------------------------------
-	//                                       Imports and Dependencies
-	// ----------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
+	//                                Imports and Dependencies
+	// ---------------------------------------------------------------------------------------------
 
 	pub use crate::types::{
 		Direction::{self as Direction, Long, Short},
@@ -135,7 +149,7 @@ pub mod pallet {
 	};
 	use crate::{
 		math::{FixedPointMath, FromBalance, IntoBalance, IntoDecimal, IntoSigned, UnsignedMath},
-		types::BASIS_POINT_DENOMINATOR,
+		types::{AccountSummary, PositionInfo, BASIS_POINT_DENOMINATOR},
 		weights::WeightInfo,
 	};
 	use codec::FullCodec;
@@ -160,16 +174,16 @@ pub mod pallet {
 	};
 	use sp_std::{cmp::Ordering, fmt::Debug, ops::Neg};
 
-	// ----------------------------------------------------------------------------------------------------
-	//                                       Declaration Of The Pallet Type
-	// ----------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
+	//                             Declaration Of The Pallet Type
+	// ---------------------------------------------------------------------------------------------
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 
-	// ----------------------------------------------------------------------------------------------------
-	//                                             Config Trait
-	// ----------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
+	//                                      Config Trait
+	// ---------------------------------------------------------------------------------------------
 
 	// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -247,9 +261,9 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 	}
 
-	// ----------------------------------------------------------------------------------------------------
-	//                                           Pallet Types
-	// ----------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
+	//                                      Pallet Types
+	// ---------------------------------------------------------------------------------------------
 
 	type AssetIdOf<T> = <T as DeFiComposableConfig>::MayBeAssetId;
 	type BalanceOf<T> = <T as DeFiComposableConfig>::Balance;
@@ -261,19 +275,32 @@ pub mod pallet {
 	type MarketConfigOf<T> =
 		MarketConfig<AssetIdOf<T>, BalanceOf<T>, DecimalOf<T>, VammConfigOf<T>>;
 
-	// ----------------------------------------------------------------------------------------------------
-	//                                           Runtime Storage
-	// ----------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
+	//                                     Runtime Storage
+	// ---------------------------------------------------------------------------------------------
 
-	/// Supported collateral asset id
+	/// Supported collateral asset id.
 	#[pallet::storage]
 	pub type CollateralType<T: Config> = StorageValue<_, AssetIdOf<T>, OptionQuery>;
+
+	/// Ratio of user's margin to be seized as fees upon a full liquidation event.
+	#[pallet::storage]
+	#[pallet::getter(fn full_liquidation_penalty)]
+	#[allow(clippy::disallowed_types)]
+	pub type FullLiquidationPenalty<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
+
+	/// Ratio of full liquidation fees for compensating the liquidator.
+	#[pallet::storage]
+	#[pallet::getter(fn full_liquidation_penalty_liquidator_share)]
+	#[allow(clippy::disallowed_types)]
+	pub type FullLiquidationPenaltyLiquidatorShare<T: Config> =
+		StorageValue<_, T::Decimal, ValueQuery>;
 
 	/// Maps [AccountId](frame_system::Config::AccountId) to its collateral
 	/// [Balance](DeFiComposableConfig::Balance), if set.
 	#[pallet::storage]
-	#[pallet::getter(fn get_margin)]
-	pub type AccountsMargin<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, T::Balance>;
+	#[pallet::getter(fn get_collateral)]
+	pub type Collateral<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, T::Balance>;
 
 	/// Maps [AccountId](frame_system::Config::AccountId) to its respective [Positions](Position),
 	/// as a vector.
@@ -298,18 +325,18 @@ pub mod pallet {
 	#[allow(clippy::disallowed_types)]
 	pub type MarketCount<T: Config> = StorageValue<_, T::MarketId, ValueQuery>;
 
-	/// Maps [MarketId](Config::MarketId) to the corresponding virtual [Market] specs
+	/// Maps [MarketId](Config::MarketId) to the corresponding virtual [Market] specs.
 	#[pallet::storage]
 	#[pallet::getter(fn get_market)]
 	pub type Markets<T: Config> = StorageMap<_, Blake2_128Concat, T::MarketId, Market<T>>;
 
-	// ----------------------------------------------------------------------------------------------------
-	//                                         Genesis Configuration
-	// ----------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
+	//                                  Genesis Configuration
+	// ---------------------------------------------------------------------------------------------
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
-		/// Genesis accepted collateral asset type
+		/// Genesis accepted collateral asset type.
 		pub collateral_type: Option<AssetIdOf<T>>,
 	}
 
@@ -327,101 +354,112 @@ pub mod pallet {
 		}
 	}
 
-	// ----------------------------------------------------------------------------------------------------
-	//                                             Runtime Events
-	// ----------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
+	//                                     Runtime Events
+	// ---------------------------------------------------------------------------------------------
 
 	// Pallets use events to inform users when important changes are made.
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Margin successfully added to account
+		/// Margin successfully added to account.
 		MarginAdded {
-			/// Account id that received the deposit
+			/// Account id that received the deposit.
 			account: T::AccountId,
-			/// Asset type deposited
+			/// Asset type deposited.
 			asset: AssetIdOf<T>,
-			/// Amount of asset deposited
+			/// Amount of asset deposited.
 			amount: T::Balance,
 		},
-		/// New virtual market successfully created
+		/// New virtual market successfully created.
 		MarketCreated {
-			/// Id for the newly created market
+			/// Id for the newly created market.
 			market: T::MarketId,
-			/// Id of the underlying asset
+			/// Id of the underlying asset.
 			asset: AssetIdOf<T>,
 		},
-		/// New trade successfully executed
+		/// New trade successfully executed.
 		TradeExecuted {
-			/// Id of the market
+			/// Id of the market.
 			market: T::MarketId,
-			/// Direction of the trade (long/short)
+			/// Direction of the trade (long/short).
 			direction: Direction,
-			/// Notional amount of quote asset exchanged
+			/// Notional amount of quote asset exchanged.
 			quote: T::Balance,
-			/// Amount of base asset exchanged
+			/// Amount of base asset exchanged.
 			base: T::Balance,
 		},
-		/// Market funding rate successfully updated
+		/// Market funding rate successfully updated.
 		FundingUpdated {
-			/// Id of the market
+			/// Id of the market.
 			market: T::MarketId,
-			/// Timestamp of the funding rate update
+			/// Timestamp of the funding rate update.
 			time: DurationSeconds,
+		},
+		/// Account fully liquidated.
+		FullLiquidation {
+			/// Id of the liquidated user.
+			user: T::AccountId,
 		},
 	}
 
-	// ----------------------------------------------------------------------------------------------------
-	//                                             Runtime Errors
-	// ----------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
+	//                                     Runtime Errors
+	// ---------------------------------------------------------------------------------------------
 
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
 		/// Attempted to create a new market but the funding period is not a multiple of the
-		/// funding frequency
+		/// funding frequency.
 		FundingPeriodNotMultipleOfFrequency,
 		/// Attempted to create a new market but the initial margin ratio is less than or equal to
-		/// the maintenance one
+		/// the maintenance one.
 		InitialMarginRatioLessThanMaintenance,
-		/// Raised when opening a risk-increasing position that takes the account below the IMR
+		/// Raised when opening a risk-increasing position that takes the account below the IMR.
 		InsufficientCollateral,
 		/// Attempted to create a new market but either the initial margin ratio is outside (0, 1]
-		/// or the maintenance margin ratio is outside (0, 1)
+		/// or the maintenance margin ratio is outside (0, 1).
 		InvalidMarginRatioRequirement,
-		/// Raised when querying a market with an invalid or nonexistent market Id
+		/// Raised when querying a market with an invalid or nonexistent market Id.
 		MarketIdNotFound,
 		/// Raised when creating a new position but exceeding the maximum number of positions for
-		/// an account
+		/// an account.
 		MaxPositionsExceeded,
-		/// Attempted to create a new market but the minimum trade size is negative
+		/// Attempted to create a new market but the minimum trade size is negative.
 		NegativeMinimumTradeSize,
-		/// An operation required the asset id of a valid collateral type but none were registered
+		/// An operation required the asset id of a valid collateral type but none were registered.
 		NoCollateralTypeSet,
 		/// Attempted to create a new market but the underlying asset is not supported by the
-		/// oracle
+		/// oracle.
 		NoPriceFeedForAsset,
-		/// Raised when trying to fetch a position from the positions vector with an invalid index
+		/// Raised when trying to fetch a position from the positions vector with an invalid index.
 		PositionNotFound,
+		/// Attempted to liquidate a user's account but it has sufficient collateral to back its
+		/// positions.
+		SufficientCollateral,
 		/// Raised when creating a new position with quote asset amount less than the market's
-		/// minimum trade size
+		/// minimum trade size.
 		TradeSizeTooSmall,
-		/// User attempted to deposit an unsupported asset type as collateral in its margin account
+		/// User attempted to deposit an unsupported asset type as collateral in its margin
+		/// account.
 		UnsupportedCollateralType,
 		/// Raised when trying to update the funding rate for a market before its funding frequency
-		/// has passed since its last update
+		/// has passed since its last update.
 		UpdatingFundingTooEarly,
-		/// Attempted to create a new market but the funding period or frequency is 0 seconds long
+		/// Raised when trying to liquidate a user with no open positions.
+		UserHasNoPositions,
+		/// Attempted to create a new market but the funding period or frequency is 0 seconds long.
 		ZeroLengthFundingPeriodOrFrequency,
 	}
 
-	// ----------------------------------------------------------------------------------------------------
-	//                                             Extrinsics
-	// ----------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
+	//                                       Extrinsics
+	// ---------------------------------------------------------------------------------------------
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Adds margin to a trader's account.
+		/// Deposit collateral to a trader's account.
 		///
 		/// # Overview
 		/// A user has to have enough margin to open new positions
@@ -442,8 +480,8 @@ pub mod pallet {
 		/// * [`MarginAdded`](Event::<T>::MarginAdded)
 		///
 		/// ## State Changes
-		/// Updates the [`AccountsMargin`] storage map. If an account does not exist in
-		/// [`AccountsMargin`], it is created and initialized with 0 margin.
+		/// Updates the [`Collateral`] storage map. If an account does not exist in
+		/// [`Collateral`], it is created and initialized with 0 margin.
 		///
 		/// ## Errors
 		/// * [`UnsupportedCollateralType`](Error::<T>::UnsupportedCollateralType)
@@ -451,13 +489,13 @@ pub mod pallet {
 		/// # Weight/Runtime
 		/// `O(1)`
 		#[pallet::weight(<T as Config>::WeightInfo::add_margin())]
-		pub fn add_margin(
+		pub fn deposit_collateral(
 			origin: OriginFor<T>,
 			asset_id: AssetIdOf<T>,
 			amount: T::Balance,
 		) -> DispatchResult {
 			let account_id = ensure_signed(origin)?;
-			<Self as ClearingHouse>::add_margin(&account_id, asset_id, amount)?;
+			<Self as ClearingHouse>::deposit_collateral(&account_id, asset_id, amount)?;
 			Ok(())
 		}
 
@@ -502,7 +540,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Opens a position in a market
+		/// Opens a position in a market.
 		///
 		/// # Overview
 		///
@@ -546,7 +584,7 @@ pub mod pallet {
 		/// ## State Changes
 		///
 		/// The following storage items may be modified:
-		/// - [`AccountsMargin`]: if trade decreases, closes, or reverses a position, its PnL is
+		/// - [`Collateral`]: if trade decreases, closes, or reverses a position, its PnL is
 		///   realized
 		/// - [`Positions`]: a new entry may be added or an existing one updated/removed
 		///
@@ -581,7 +619,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Update the funding rate for a market
+		/// Update the funding rate for a market.
 		///
 		/// # Overview
 		///
@@ -631,11 +669,72 @@ pub mod pallet {
 			<Self as ClearingHouse>::update_funding(&market_id)?;
 			Ok(())
 		}
+
+		/// Liquidates a user's account if below margin requirements.
+		///
+		/// # Overview
+		///
+		/// Liquidation can be either full or partial. In the former case, positions are closed
+		/// entirely, while in the latter, they are partially closed until the account is brought
+		/// back above the initial margin requirement.
+		///
+		/// Note that both unrealized PnL and funding payments contribute to an account being
+		/// brought below the maintenance margin ratio. Liquidation realizes a user's PnL and
+		/// funding payments.
+		///
+		/// Positions in markets with the highest margin requirements (i.e., the lowest max leverage
+		/// for opening a position) are liquidated first.
+		///
+		/// The caller of the function, the 'liquidator', may be credited with a liquidation fee in
+		/// their account, which can be withdrawn via another extrinsic.
+		///
+		/// ## Parameters
+		///
+		/// - `user_id`: the account Id of the user to be liquidated
+		///
+		/// ## Assumptions or Requirements
+		///
+		/// ### For full liquidation
+		///
+		/// The user's margin ration must be stricly less than the combined margin ratios of all the
+		/// markets in which it has open positions in. In other words, the user's margin (collateral
+		/// + total unrealized pnl + total unrealized funding) must be strictly less than the sum of
+		/// margin requirements (MMR * base asset value) for each market it has an open position in.
+		///
+		/// ## Emits
+		///
+		/// - [`FullLiquidation`](Event::<T>::FullLiquidation)
+		///
+		/// ## State Changes
+		///
+		/// - Updates the base asset amount of the [`markets`](Markets) of closed positions
+		/// - Removes closed [`positions`](Positions)
+		/// - Updates the user's account [`collateral`](Collateral)
+		/// - Updates the liquidator's account [`collateral`](Collateral) if fees are due
+		/// - Transfers collateral from collateral account to Insurance Fund account if fees apply
+		///
+		/// ## Errors
+		///
+		/// - [`UserHasNoPositions`](Error::<T>::UserHasNoPositions)
+		/// - [`SufficientCollateral`](Error::<T>::SufficientCollateral)
+		/// - [`NoCollateralTypeSet`](Error::<T>::NoCollateralTypeSet)
+		/// - [`ArithmeticError`]
+		///
+		/// ## Weight/Runtime
+		///
+		/// `O(n * log(n))` worst case, where `n` is the number of positions of the target user.
+		/// This is due to the ordering of positions by margin requirement.
+		#[pallet::weight(<T as Config>::WeightInfo::liquidate())]
+		pub fn liquidate(origin: OriginFor<T>, user_id: T::AccountId) -> DispatchResult {
+			let liquidator_id = ensure_signed(origin)?;
+			<Self as ClearingHouse>::liquidate(&liquidator_id, &user_id)?;
+			Ok(())
+		}
 	}
 
-	// ----------------------------------------------------------------------------------------------------
-	//                                           Trait Implementations
-	// ----------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
+	//                                  Trait Implementations
+	// ---------------------------------------------------------------------------------------------
 
 	impl<T: Config> ClearingHouse for Pallet<T> {
 		type AccountId = T::AccountId;
@@ -645,7 +744,7 @@ pub mod pallet {
 		type MarketId = T::MarketId;
 		type MarketConfig = MarketConfigOf<T>;
 
-		fn add_margin(
+		fn deposit_collateral(
 			account_id: &Self::AccountId,
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
@@ -659,9 +758,9 @@ pub mod pallet {
 			let pallet_acc = Self::get_collateral_account();
 			T::Assets::transfer(asset_id, account_id, &pallet_acc, amount, true)?;
 
-			let old_margin = Self::get_margin(&account_id).unwrap_or_else(T::Balance::zero);
-			let new_margin = old_margin.try_add(&amount)?;
-			AccountsMargin::<T>::insert(&account_id, new_margin);
+			let old_collateral = Self::get_collateral(&account_id).unwrap_or_else(T::Balance::zero);
+			let new_collateral = old_collateral.try_add(&amount)?;
+			Collateral::<T>::insert(&account_id, new_collateral);
 
 			Self::deposit_event(Event::MarginAdded {
 				account: account_id.clone(),
@@ -748,9 +847,9 @@ pub mod pallet {
 				Self::get_or_create_position(&mut positions, market_id, &market, direction)?;
 			let position_direction = position.direction().unwrap_or(direction);
 
-			let mut margin = Self::get_margin(account_id).unwrap_or_else(T::Balance::zero);
+			let mut collateral = Self::get_collateral(account_id).unwrap_or_else(T::Balance::zero);
 			// Settle funding for position before any modifications
-			Self::settle_funding(position, &market, &mut margin)?;
+			Self::settle_funding(position, &market, &mut collateral)?;
 
 			// Whether or not the trade increases the risk exposure of the account
 			let mut is_risk_increasing = false;
@@ -813,24 +912,24 @@ pub mod pallet {
 				let pnl = exit_value.try_sub(&entry_value)?;
 				// Realize PnL
 				// TODO(0xangelo): properly handle bad debt incurred by large negative PnL
-				margin = Self::update_margin_with_pnl(&margin, &pnl)?;
+				collateral = Self::update_margin_with_pnl(&collateral, &pnl)?;
 			}
 
 			// Charge fees
 			let fee = Self::fee_for_trade(&market, &quote_abs_amount_decimal)?;
-			margin.try_sub_mut(&fee)?;
+			collateral.try_sub_mut(&fee)?;
 			market.fee_pool.try_add_mut(&fee)?;
 
 			// Check account risk
 			if is_risk_increasing {
 				ensure!(
-					Self::meets_initial_margin_ratio(&positions, margin)?,
+					Self::meets_initial_margin_ratio(&positions, collateral)?,
 					Error::<T>::InsufficientCollateral
 				);
 			}
 
 			// Update storage
-			AccountsMargin::<T>::insert(account_id, margin);
+			Collateral::<T>::insert(account_id, collateral);
 			Positions::<T>::insert(account_id, positions);
 			Markets::<T>::insert(market_id, market);
 
@@ -845,7 +944,7 @@ pub mod pallet {
 
 		#[transactional]
 		fn update_funding(market_id: &Self::MarketId) -> Result<(), DispatchError> {
-			let mut market = Markets::<T>::get(market_id).ok_or(Error::<T>::MarketIdNotFound)?;
+			let mut market = Self::try_get_market(market_id)?;
 
 			// Check that enough time has passed since last update
 			let now = T::UnixTime::now().as_secs();
@@ -917,6 +1016,41 @@ pub mod pallet {
 			Self::deposit_event(Event::FundingUpdated { market: market_id.clone(), time: now });
 			Ok(())
 		}
+
+		#[transactional]
+		fn liquidate(
+			liquidator_id: &Self::AccountId,
+			user_id: &Self::AccountId,
+		) -> Result<(), DispatchError> {
+			let positions = Self::get_positions(user_id);
+			ensure!(positions.len() > 0, Error::<T>::UserHasNoPositions);
+
+			let summary = Self::summarize_account_state(positions)?;
+			let fees = Self::fully_liquidate_account(user_id, summary)?;
+
+			// Charge fees
+			let liquidator_fee =
+				Self::full_liquidation_penalty_liquidator_share().saturating_mul_int(fees);
+			let insurance_fee = fees.try_sub(&liquidator_fee)?;
+
+			if !liquidator_fee.is_zero() {
+				let col = Self::get_collateral(liquidator_id).unwrap_or_else(Zero::zero);
+				Collateral::<T>::insert(liquidator_id, col.try_add(&liquidator_fee)?);
+			}
+			if !insurance_fee.is_zero() {
+				let asset_id = CollateralType::<T>::get().ok_or(Error::<T>::NoCollateralTypeSet)?;
+				T::Assets::transfer(
+					asset_id,
+					&Self::get_collateral_account(),
+					&Self::get_insurance_account(),
+					insurance_fee,
+					false,
+				)?;
+			}
+
+			Self::deposit_event(Event::<T>::FullLiquidation { user: user_id.clone() });
+			Ok(())
+		}
 	}
 
 	impl<T: Config> Instruments for Pallet<T> {
@@ -957,12 +1091,120 @@ pub mod pallet {
 		}
 	}
 
-	// ----------------------------------------------------------------------------------------------------
-	//                                           Helper Functions
-	// ----------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
+	//                                    Helper Functions
+	// ---------------------------------------------------------------------------------------------
 
 	// Helper functions - core functionality
 	impl<T: Config> Pallet<T> {
+		fn summarize_account_state(
+			positions: BoundedVec<Position<T>, T::MaxPositions>,
+		) -> Result<AccountSummary<T>, DispatchError> {
+			let mut summary = AccountSummary::<T>::default();
+			for position in positions {
+				let market = Self::try_get_market(&position.market_id)?;
+				if let Some(direction) = position.direction() {
+					// should always succeed
+					let (position_notional, pnl) =
+						Self::abs_position_notional_and_pnl(&market, &position, direction)?;
+
+					let margin_requirement =
+						position_notional.try_mul(&market.margin_ratio_maintenance)?;
+					let info = PositionInfo::<T> {
+						direction,
+						margin_requirement_maintenance: margin_requirement,
+						base_asset_value: position_notional,
+						unrealized_pnl: pnl,
+						unrealized_funding: <Self as Instruments>::unrealized_funding(
+							&market, &position,
+						)?,
+					};
+
+					summary
+						.margin_requirement_maintenance
+						.try_add_mut(&info.margin_requirement_maintenance)?;
+					summary.base_asset_value.try_add_mut(&info.base_asset_value)?;
+					summary.unrealized_pnl.try_add_mut(&info.unrealized_pnl)?;
+					summary.unrealized_funding.try_add_mut(&info.unrealized_funding)?;
+					summary.positions_summary.push((market, position, info));
+				}
+			}
+
+			Ok(summary)
+		}
+
+		/// Fully liquidates the user's positions until his account is brought back above the MMR.
+		///
+		/// ## Storage modifications
+		///
+		/// - Updates the [`markets`](Markets) of closed positions (according to changes in
+		///   [`Self::close_position_in_market`]).
+		/// - Removes closed [`positions`](Positions)
+		/// - Updates the user's account [`collateral`](Collateral)
+		///
+		/// ## Returns
+		///
+		/// The total liquidation fee
+		fn fully_liquidate_account(
+			user_id: &T::AccountId,
+			summary: AccountSummary<T>,
+		) -> Result<T::Balance, DispatchError> {
+			let mut collateral = Self::get_collateral(user_id).unwrap_or_else(Zero::zero);
+			let mut margin = Self::updated_balance(
+				&collateral,
+				&summary.unrealized_pnl.try_add(&summary.unrealized_funding)?,
+			)?
+			.into_decimal()?;
+			let AccountSummary::<T> {
+				margin_requirement_maintenance: mut margin_requirement,
+				base_asset_value,
+				mut positions_summary,
+				..
+			} = summary;
+
+			ensure!(margin < margin_requirement, Error::<T>::SufficientCollateral);
+
+			let mut positions = BoundedVec::<Position<T>, T::MaxPositions>::default();
+			let maximum_fee = Self::full_liquidation_penalty().try_mul(&margin)?;
+			let mut fees = T::Balance::zero();
+			// Sort positions from greatest to lowest margin requirement
+			positions_summary.sort_by_key(|(_, _, info)| info.margin_requirement_maintenance.neg());
+			for (mut market, position, info) in positions_summary {
+				if margin < margin_requirement {
+					Self::close_position_in_market(
+						&position,
+						info.direction,
+						&mut market,
+						info.base_asset_value.into_balance()?,
+					)?;
+					Markets::<T>::insert(&position.market_id, market);
+
+					let base_asset_value_share =
+						info.base_asset_value.try_div(&base_asset_value)?;
+					let fee_decimal = base_asset_value_share.try_mul(&maximum_fee)?;
+					margin.try_sub_mut(&fee_decimal)?;
+					margin_requirement.try_sub_mut(&info.margin_requirement_maintenance)?;
+					fees.try_add_mut(&fee_decimal.into_balance()?)?;
+					collateral = Self::updated_balance(
+						&collateral,
+						&info
+							.unrealized_pnl
+							.try_add(&info.unrealized_funding)?
+							.try_sub(&fee_decimal)?,
+					)?;
+				} else {
+					// AccountSummary::positions_summary isn't constrained to be shorter than the
+					// maximum number of positions, so we keep the error checking here.
+					positions.try_push(position).map_err(|_| Error::<T>::MaxPositionsExceeded)?;
+				}
+			}
+
+			Positions::<T>::insert(user_id, positions);
+			Collateral::<T>::insert(user_id, collateral);
+
+			Ok(fees)
+		}
+
 		fn settle_funding(
 			position: &mut Position<T>,
 			market: &Market<T>,
@@ -970,14 +1212,9 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			if let Some(direction) = position.direction() {
 				let payment = <Self as Instruments>::unrealized_funding(market, position)?;
-				if payment.is_positive() {
-					margin.try_add_mut(&payment.into_balance()?)?;
-				} else if payment.is_negative() {
-					// TODO(0xangelo): can we have bad debt from unrealized funding if user wasn't
-					// liquidated in time?
-					*margin = margin.saturating_sub(payment.into_balance()?);
-				}
-
+				// TODO(0xangelo): can we have bad debt from unrealized funding if user wasn't
+				// liquidated in time?
+				*margin = Self::updated_balance(margin, &payment)?;
 				position.last_cum_funding = market.cum_funding_rate(direction);
 			}
 			Ok(())
@@ -1064,7 +1301,22 @@ pub mod pallet {
 		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
 			// This should always succeed if called by <Self as ClearingHouse>::open_position
 			let position = positions.get(position_index).ok_or(Error::<T>::PositionNotFound)?;
+			let close_result = Self::close_position_in_market(
+				position,
+				position_direction,
+				market,
+				quote_asset_amount_limit,
+			)?;
+			positions.swap_remove(position_index);
+			Ok(close_result)
+		}
 
+		fn close_position_in_market(
+			position: &Position<T>,
+			position_direction: Direction,
+			market: &mut Market<T>,
+			quote_asset_amount_limit: T::Balance,
+		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
 			let base_swapped = position.base_asset_amount.into_balance()?;
 			let quote_swapped = Self::swap_base(
 				market,
@@ -1081,9 +1333,6 @@ pub mod pallet {
 			};
 
 			market.sub_base_asset_amount(&position.base_asset_amount, position_direction)?;
-
-			positions.swap_remove(position_index);
-
 			Ok((base_swapped, entry_value, exit_value))
 		}
 
@@ -1143,8 +1392,7 @@ pub mod pallet {
 			for position in positions.iter() {
 				if let Some(direction) = position.direction() {
 					// Should always succeed
-					let market = Markets::<T>::get(&position.market_id)
-						.ok_or(Error::<T>::MarketIdNotFound)?;
+					let market = Self::try_get_market(&position.market_id)?;
 					let value = Self::base_asset_value(&market, position, direction)?;
 					let abs_value = value.saturating_abs();
 
@@ -1165,6 +1413,10 @@ pub mod pallet {
 
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
+		fn try_get_market(market_id: &T::MarketId) -> Result<Market<T>, DispatchError> {
+			Markets::<T>::get(market_id).ok_or_else(|| Error::<T>::MarketIdNotFound.into())
+		}
+
 		fn to_vamm_direction(direction: Direction) -> VammDirection {
 			match direction {
 				Long => VammDirection::Add,
@@ -1202,8 +1454,12 @@ pub mod pallet {
 			})
 		}
 
-		fn get_collateral_account() -> T::AccountId {
+		pub fn get_collateral_account() -> T::AccountId {
 			T::PalletId::get().into_sub_account("Collateral")
+		}
+
+		pub fn get_insurance_account() -> T::AccountId {
+			T::PalletId::get().into_sub_account("Insurance")
 		}
 
 		fn decimal_from_swapped(
@@ -1244,6 +1500,16 @@ pub mod pallet {
 			})
 		}
 
+		fn abs_position_notional_and_pnl(
+			market: &Market<T>,
+			position: &Position<T>,
+			position_direction: Direction,
+		) -> Result<(T::Decimal, T::Decimal), DispatchError> {
+			let position_notional = Self::base_asset_value(market, position, position_direction)?;
+			let pnl = position_notional.try_sub(&position.quote_asset_notional_amount)?;
+			Ok((position_notional.saturating_abs(), pnl))
+		}
+
 		fn base_asset_value(
 			market: &Market<T>,
 			position: &Position<T>,
@@ -1272,16 +1538,23 @@ pub mod pallet {
 			Ok(())
 		}
 
+		fn updated_balance(
+			balance: &T::Balance,
+			delta: &T::Decimal,
+		) -> Result<T::Balance, DispatchError> {
+			let abs_delta = delta.into_balance()?;
+
+			Ok(match delta.is_positive() {
+				true => balance.try_add(&abs_delta)?,
+				false => balance.saturating_sub(abs_delta),
+			})
+		}
+
 		fn update_margin_with_pnl(
 			margin: &T::Balance,
 			pnl: &T::Decimal,
 		) -> Result<T::Balance, DispatchError> {
-			let abs_pnl = pnl.into_balance()?;
-
-			Ok(match pnl.is_positive() {
-				true => margin.try_add(&abs_pnl)?,
-				false => margin.saturating_sub(abs_pnl),
-			})
+			Self::updated_balance(margin, pnl)
 		}
 	}
 }

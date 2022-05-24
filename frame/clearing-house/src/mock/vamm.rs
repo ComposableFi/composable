@@ -12,13 +12,14 @@ pub mod pallet {
 		vamm::{AssetType, SwapConfig, SwapSimulationConfig, Vamm},
 	};
 	use frame_support::pallet_prelude::*;
-	use num_traits::CheckedDiv;
+	use num_traits::{CheckedDiv, One};
 	use scale_info::TypeInfo;
 	use sp_arithmetic::traits::Unsigned;
 	use sp_runtime::{
 		traits::{Saturating, Zero},
 		ArithmeticError, FixedPointNumber,
 	};
+	use sp_std::ops::Add;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                    Declaration Of The Pallet Type
@@ -34,10 +35,13 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: DeFiComposableConfig + frame_system::Config {
-		type VammId: Clone
+		type VammId: Add
+			+ Clone
+			+ Copy
 			+ FullCodec
 			+ MaxEncodedLen
 			+ MaybeSerializeDeserialize
+			+ One
 			+ TypeInfo
 			+ Unsigned;
 		type Decimal: FixedPointNumber<Inner = Self::Balance>
@@ -67,7 +71,7 @@ pub mod pallet {
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
-			NextVammId::<T>::set(self.vamm_id.clone());
+			NextVammId::<T>::set(self.vamm_id);
 			Twap::<T>::set(self.twap);
 		}
 	}
@@ -107,6 +111,14 @@ pub mod pallet {
 	#[pallet::getter(fn _price)]
 	pub type Price<T: Config> = StorageValue<_, T::Decimal, OptionQuery>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn _twap_of)]
+	pub type Twaps<T: Config> = StorageMap<_, Twox64Concat, T::VammId, T::Decimal>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn _price_of)]
+	pub type Prices<T: Config> = StorageMap<_, Twox64Concat, T::VammId, T::Decimal>;
+
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Trait Implementations
 	// ----------------------------------------------------------------------------------------------------
@@ -122,6 +134,7 @@ pub mod pallet {
 
 		fn create(config: &Self::VammConfig) -> Result<Self::VammId, DispatchError> {
 			if let Some(id) = Self::vamm_id() {
+				NextVammId::<T>::set(Some(id + One::one()));
 				Ok(id)
 			} else {
 				Err(Error::<T>::FailedToCreateVamm.into())
@@ -136,7 +149,9 @@ pub mod pallet {
 		}
 
 		fn get_twap(vamm: &Self::VammId) -> Result<Self::Decimal, DispatchError> {
-			if let Some(twap) = Self::hardcoded_twap() {
+			if let Some(twap) = Self::_twap_of(vamm) {
+				Ok(twap)
+			} else if let Some(twap) = Self::hardcoded_twap() {
 				Ok(twap)
 			} else {
 				Err(Error::<T>::FailedToCalculateTwap.into())
@@ -144,9 +159,12 @@ pub mod pallet {
 		}
 
 		fn swap(config: &Self::SwapConfig) -> Result<Self::Balance, DispatchError> {
-			match Self::_price() {
-				Some(price) => Self::get_value(config.input_amount, &config.asset, price),
-				None => Err(Error::<T>::FailedToExecuteSwap.into()),
+			if let Some(price) = Self::_price_of(&config.vamm_id) {
+				Self::get_value(config.input_amount, &config.asset, price)
+			} else if let Some(price) = Self::_price() {
+				Self::get_value(config.input_amount, &config.asset, price)
+			} else {
+				Err(Error::<T>::FailedToExecuteSwap.into())
 			}
 		}
 
@@ -175,8 +193,20 @@ pub mod pallet {
 			Price::<T>::set(price)
 		}
 
+		pub fn set_price_of(vamm_id: &T::VammId, price: Option<T::Decimal>) {
+			Prices::<T>::mutate_exists(vamm_id, |p| {
+				*p = price;
+			});
+		}
+
 		pub fn set_twap(twap: Option<T::Decimal>) {
 			Twap::<T>::set(twap)
+		}
+
+		pub fn set_twap_of(vamm_id: &T::VammId, twap: Option<T::Decimal>) {
+			Twaps::<T>::mutate_exists(vamm_id, |t| {
+				*t = twap;
+			});
 		}
 
 		pub fn get_value(

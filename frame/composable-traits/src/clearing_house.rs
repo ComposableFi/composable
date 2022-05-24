@@ -22,7 +22,7 @@ pub trait ClearingHouse {
 	/// Specification for market creation
 	type MarketConfig;
 
-	/// Add margin to a user's account
+	/// Deposit collateral to a user's account
 	///
 	/// Assumes margin account is unique to each wallet address, i.e., there's only one margin
 	/// account per user.
@@ -31,7 +31,7 @@ pub trait ClearingHouse {
 	/// - `account_id`: the trader's margin account Id
 	/// - `asset_id`: the type of asset to deposit as collateral
 	/// - `amount`: the amount of collateral
-	fn add_margin(
+	fn deposit_collateral(
 		account_id: &Self::AccountId,
 		asset_id: Self::AssetId,
 		amount: Self::Balance,
@@ -85,6 +85,26 @@ pub trait ClearingHouse {
 	/// # Parameters
 	/// - `market_id`: the perpetuals market Id
 	fn update_funding(market_id: &Self::MarketId) -> Result<(), DispatchError>;
+
+	/// Liquidates a user's account if below margin requirements.
+	///
+	/// Note that both unrealized PnL and funding payments contribute to an account being brought
+	/// below the maintenance margin ratio. Liquidation realizes a user's PnL and funding payments.
+	///
+	/// Liquidation can be either full or partial. In the former case, positions are closed
+	/// entirely, while in the latter, they are partially closed until the account is brought back
+	/// above the initial margin requirement.
+	///
+	/// Positions in markets with the highest margin requirements (i.e., the lowest max leverage for
+	/// opening a position) are liquidated first.
+	///
+	/// # Parameters
+	/// - `liquidator_id`: the liquidator's account Id
+	/// - `user_id`: the user's account Id
+	fn liquidate(
+		liquidator_id: &Self::AccountId,
+		user_id: &Self::AccountId,
+	) -> Result<(), DispatchError>;
 }
 
 /// Exposes functionality for querying funding-related quantities of synthetic instruments

@@ -53,7 +53,7 @@ package "pallet-clearing-house" {
     }
 
     database "Clearing House Storage" {
-        map "AccountsMargin" as MarginAccounts <<StorageMap>> {
+        map "Collateral" as MarginAccounts <<StorageMap>> {
             AccountId => Balance collateral
         }
 
