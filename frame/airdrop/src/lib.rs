@@ -4,17 +4,15 @@
 
 pub use pallet::*;
 
-pub mod benchmarking;
 pub mod models;
 pub mod weights;
-
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
 #[cfg(test)]
 mod mocks;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use std::fmt::Debug;
-
 	use crate::{
 		models::{Airdrop, AirdropState, Proof, RecipientFund, RemoteAccount},
 		weights::WeightInfo,
@@ -48,7 +46,7 @@ pub mod pallet {
 		},
 		AccountId32, DispatchErrorWithPostInfo, MultiSignature,
 	};
-	use sp_std::vec::Vec;
+	use sp_std::{fmt::Debug, vec::Vec};
 
 	/// [`AccountId`](frame_system::Config::AccountId) as configured by the pallet.
 	pub type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
