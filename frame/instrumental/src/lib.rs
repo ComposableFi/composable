@@ -534,7 +534,7 @@ pub mod pallet {
 			asset: Validated<&T::AssetId, ValidateVaultExists<T>>,
 			amount: T::Balance,
 		) -> Result<(), DispatchError> {
-			let vault_id: T::VaultId = Self::asset_vault(&asset.value())
+			let vault_id: T::VaultId = Self::asset_vault(asset.value())
 				.ok_or(Error::<T>::AssetDoesNotHaveAnAssociatedVault)?;
 
 			<T::Vault as StrategicVault>::deposit(&vault_id, issuer, amount)?;
@@ -548,7 +548,7 @@ pub mod pallet {
 			asset: Validated<&T::AssetId, ValidateVaultExists<T>>,
 			amount: T::Balance,
 		) -> Result<(), DispatchError> {
-			let vault_id: T::VaultId = Self::asset_vault(&asset.value())
+			let vault_id: T::VaultId = Self::asset_vault(asset.value())
 				.ok_or(Error::<T>::AssetDoesNotHaveAnAssociatedVault)?;
 
 			// TODO: (Nevin)
