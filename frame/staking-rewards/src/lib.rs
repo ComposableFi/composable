@@ -447,7 +447,7 @@ pub mod pallet {
 										PositionState::Pending => {},
 										PositionState::Expired => {
 											// TODO: https://app.clickup.com/t/2xw5fca
-											log::into!("Expired: {:?}", &nft);
+											log::info!("Expired: {:?}", &nft);
 										},
 										PositionState::LockedRewarding => {
 											// TODO: return here increased share if one of assets is
