@@ -1,3 +1,4 @@
+use crate::uniswap::Uniswap;
 #[cfg(test)]
 use crate::{
 	common_test_functions::*,
@@ -14,7 +15,7 @@ use composable_tests_helpers::{
 };
 use composable_traits::{
 	defi::CurrencyPair,
-	dex::{Amm, ConstantProductPoolInfo},
+	dex::{Amm, ConstantProductPoolInfo, FeeConfig},
 };
 use frame_support::{
 	assert_noop, assert_ok,
@@ -25,8 +26,6 @@ use frame_support::{
 };
 use proptest::prelude::*;
 use sp_runtime::{traits::IntegerSquareRoot, DispatchError, Permill};
-use composable_traits::dex::FeeConfig;
-use crate::uniswap::Uniswap;
 
 fn create_pool(
 	base_asset: AssetId,
@@ -38,8 +37,16 @@ fn create_pool(
 ) -> PoolId {
 	System::set_block_number(1);
 	let actual_pool_id = Uniswap::<Test>::do_create_pool(
-		&ALICE, CurrencyPair::new(base_asset, quote_asset),
-		FeeConfig {fee_rate: lp_fee, owner_fee_rate: protocol_fee, protocol_fee_rate: Permill::zero()}, Permill::from_percent(50)).expect("pool creation failed");
+		&ALICE,
+		CurrencyPair::new(base_asset, quote_asset),
+		FeeConfig {
+			fee_rate: lp_fee,
+			owner_fee_rate: protocol_fee,
+			protocol_fee_rate: Permill::zero(),
+		},
+		Permill::from_percent(50),
+	)
+	.expect("pool creation failed");
 
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(base_asset, &ALICE, base_amount));

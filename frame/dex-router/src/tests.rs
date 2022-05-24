@@ -58,7 +58,12 @@ fn create_constant_product_amm_pool(
 	assert_ok!(Tokens::mint_into(base, &BOB, amounts[0]));
 	assert_ok!(Tokens::mint_into(quote, &BOB, amounts[1]));
 
-	let init_config = PoolInitConfiguration::ConstantProduct { owner: ALICE, pair: assets, fee, base_weight: Permill::from_percent(50) };
+	let init_config = PoolInitConfiguration::ConstantProduct {
+		owner: ALICE,
+		pair: assets,
+		fee,
+		base_weight: Permill::from_percent(50),
+	};
 	// Create Pablo pool
 	let p = Pablo::do_create_pool(init_config);
 	assert_ok!(&p);

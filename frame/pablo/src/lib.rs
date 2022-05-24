@@ -569,7 +569,12 @@ pub mod pallet {
 				),
 				PoolInitConfiguration::ConstantProduct { owner, pair, fee, base_weight } => (
 					owner.clone(),
-					Uniswap::<T>::do_create_pool(&owner, pair, FeeConfig::default_from(fee), base_weight)?,
+					Uniswap::<T>::do_create_pool(
+						&owner,
+						pair,
+						FeeConfig::default_from(fee),
+						base_weight,
+					)?,
 					pair,
 				),
 				PoolInitConfiguration::LiquidityBootstrapping(pool_config) => {
