@@ -49,13 +49,19 @@ taplo_fmt() {
 }
 
 prettier_fmt() {
-    # NOTE: Prettier doesn't support verbose output
     cd integration-tests/runtime-tests
+    prettier_verbose=""
+
+    if [[ ${verbose} = "verbose" ]]; then
+        prettier_verbose="--loglevel=debug"
+    else
+        prettier_verbose="--loglevel=warn"
+    fi
 
     if [[ ${check} = "check" ]]; then
-        npx prettier --check .
+        npx prettier --check ${prettier_verbose} .
     else
-        npx prettier --write .
+        npx prettier --write ${prettier_verbose} .
     fi
 
     cd ../..
