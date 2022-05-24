@@ -1023,7 +1023,7 @@ impl dex_router::Config for Runtime {
 	type PoolId = PoolId;
 	type Pablo = Pablo;
 	type PalletId = DexRouterPalletID;
-	type UpdateRouteOrigin = EnsureSigned<Self::AccountId>;
+	type UpdateRouteOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::dex_router::WeightInfo<Runtime>;
 }
 
