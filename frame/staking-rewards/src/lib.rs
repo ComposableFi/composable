@@ -138,6 +138,7 @@ pub mod pallet {
 		ImpossibleState,
 		OnlyOwnerOfPositionCanDoThis,
 		CannotIncreaseStakedAmountBecauseOfLimitedArithmetic,
+		NewLockDurationMustBeEqualOrBiggerThanPreviousLockDuration
 	}
 
 	#[pallet::config]
@@ -268,9 +269,15 @@ pub mod pallet {
 
 	/// amount of assets which will be added to position on next epoch
 	#[pallet::storage]
-	#[pallet::getter(fn amount_extensions)]
+	#[pallet::getter(fn pending_amount_extensions)]
 	pub type PendingAmountExtensions<T: Config> =
 		StorageMap<_, Twox64Concat, InstanceIdOf<T>, T::Balance, OptionQuery>;
+
+	/// time to extend position with
+	#[pallet::storage]
+	#[pallet::getter(fn pending_duration_extensions)]
+	pub type PendingDurationExtensions<T: Config> =
+		StorageMap<_, Twox64Concat, InstanceIdOf<T>, DurationSeconds, OptionQuery>;		
 
 	#[pallet::storage]
 	#[pallet::getter(fn staking_configurations)]
@@ -411,8 +418,6 @@ pub mod pallet {
 		/// Extends stake duration.
 		/// `duration` - if none, then extend current duration from start. If more than current
 		/// duration, takes some time from new duration.
-		/// 
-		/// 
 		///
 		/// Fails if `duration` extensions does not fits allowed.
 		#[pallet::weight(10_000)]
@@ -421,13 +426,24 @@ pub mod pallet {
 			instance_id: InstanceIdOf<T>,
 			duration: Option<DurationSeconds>,
 		) -> DispatchResult {
-			Err(DispatchError::Other("no implemented. TODO: insert update for next fold").into())
 			let owner = ensure_signed(origin)?;
 			T::ensure_protocol_nft_owner::<StakingNFTOf<T>>(&owner, &instance_id)?;
 			let position = T::get_protocol_nft::<StakingNFTOf<T>>(&instance_id)?;
-			match (position.)
+			let config = Self::get_config(&position.asset)?;
+			let duration = duration.unwrap_or(position.lock_duration);
+			ensure!(
+				position.lock_duration <= duration,
+				Error::<T>::NewLockDurationMustBeEqualOrBiggerThanPreviousLockDuration
+			);
+			let _exists = *config
+				.duration_presets
+				.get(&duration)
+				.ok_or(Error::<T>::InvalidDurationPreset)?;
+			
+			
+			//match (position.)
 
-			Ok(())
+			Ok(().into())
 		}
 	}
 
@@ -455,7 +471,7 @@ pub mod pallet {
 										PositionState::Pending => {},
 										PositionState::Expired => {
 											// TODO: https://app.clickup.com/t/2xw5fca
-											log::into!("Expired: {:?}", &nft);
+											//log::info!("Expired: {:?}", &nft);
 										},
 										PositionState::LockedRewarding => {
 											// TODO: return here increased share if one of assets is
@@ -488,27 +504,29 @@ pub mod pallet {
 															)?,
 														)?,
 													)
-													.map_err(|_| ArithmeticError::Overflow)?;
-												if let Some(amount) =
-													PendingAmountExtensions::<T>::take(&nft_id)
-												{
-													let time_lock = honest_locked_stake_increase(
-														nft.early_unstake_penalty.value,
-														nft.stake.into(),
-														amount.into(),
-														nft.lock_duration.into(),
-														 (now - nft.lock_date).into())
-														 .ok_or(Error::<T>::CannotIncreaseStakedAmountBecauseOfLimitedArithmetic)?;
-													nft.lock_date =
-														nft.lock_date.safe_add(&time_lock)?;
-													nft.stake = nft.stake.safe_add(&amount)?;
-												}
+													.map_err(|_| ArithmeticError::Overflow)?;												
 											}
 										},
 									}
+									/// we execute these things regardless of fNFT state
+									if let Some(amount) =
+									PendingAmountExtensions::<T>::take(&nft_id)
+								{
+									let time_lock = honest_locked_stake_increase(
+										nft.early_unstake_penalty.value,
+										nft.stake.into(),
+										amount.into(),
+										nft.lock_duration.into(),
+										 (now - nft.lock_date).into())
+										 .ok_or(Error::<T>::CannotIncreaseStakedAmountBecauseOfLimitedArithmetic)?;
+									nft.lock_date =
+										nft.lock_date.safe_add(&time_lock)?;
+									nft.stake = nft.stake.safe_add(&amount)?;
+								}
 									Ok(())
 								},
 							);
+
 							if let Err(e) = try_reward {
 								log::warn!("Failed to reward NFT: {:?}, message: {:?}", nft_id, e);
 							}
@@ -678,6 +696,7 @@ pub mod pallet {
 			duration: DurationSeconds,
 			keep_alive: bool,
 		) -> Result<Self::InstanceId, DispatchError> {
+			// NOTE: could use A/B queues and avoid protocol interuption because of background states
 			Self::ensure_valid_interaction_state()?;
 			let config = Self::get_config(asset)?;
 			let reward_multiplier = *config
