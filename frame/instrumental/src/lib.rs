@@ -119,8 +119,7 @@ pub mod pallet {
 
 		type WeightInfo: WeightInfo;
 
-		/// The Balance type used by the pallet for bookkeeping. `Config::Convert` is used for
-		/// conversions to `u128`, which are used in the computations.
+		/// The [`Balance`](Config::Balance) type used by the pallet for bookkeeping.
 		type Balance: Default
 			+ Parameter
 			+ Codec
