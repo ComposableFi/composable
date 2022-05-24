@@ -34,7 +34,7 @@ package = "parity-scale-codec"
 version = "3.0.0"
 
 [dev-dependencies]
-composable-tests-helpers = {path = "../composable-tests-helpers", default-features = false}
+composable-tests-helpers = {path = "../composable-tests-helpers"}
 frame-benchmarking = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
 orml-tokens = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b5d4ce1d08fb54c0007c2055653892d2c93a92e"}
 orml-traits = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b5d4ce1d08fb54c0007c2055653892d2c93a92e", default-features = false}
@@ -50,8 +50,7 @@ std = [
   "scale-info/std",
   "frame-support/std",
   "frame-system/std",
-  "sp-runtime/std",
-  "composable-tests-helpers/std",
+  "sp-runtime/std", # "composable-tests-helpers/std",
 ]
 
 runtime-benchmarks = [

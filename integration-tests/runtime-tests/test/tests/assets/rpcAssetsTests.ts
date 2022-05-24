@@ -5,8 +5,9 @@ import { ApiPromise } from "@polkadot/api";
 import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
 
-describe("rpc.assets Tests", function () {
-  if (!testConfiguration.enabledTests.rpc.enabled) return;
+describe("rpc.assets Tests", function() {
+  if (!testConfiguration.enabledTests.rpc.enabled)
+    return;
   let api: ApiPromise;
   let walletBobPublicKey: string;
 
@@ -45,9 +46,7 @@ describe("rpc.assets Tests", function () {
     const kUSD_amount = await RpcAssetsTests.rpcAssetsTest(api, kUSD, walletBobPublicKey);
     expect(parseInt(kUSD_amount.toString())).to.be.equals(0);
   });
-
 });
-
 export class RpcAssetsTests {
   public static async rpcAssetsTest(apiClient: ApiPromise, assetId: SafeRpcWrapper, publicKey: string | Uint8Array) {
     return await apiClient.rpc.assets.balanceOf(assetId, publicKey);
