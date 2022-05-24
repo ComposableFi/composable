@@ -447,6 +447,8 @@ pub mod pallet {
 		/// Raised when trying to update the funding rate for a market before its funding frequency
 		/// has passed since its last update.
 		UpdatingFundingTooEarly,
+		/// Raised when trying to liquidate a user with no open positions.
+		UserHasNoPositions,
 		/// Attempted to create a new market but the funding period or frequency is 0 seconds long.
 		ZeroLengthFundingPeriodOrFrequency,
 	}
@@ -713,6 +715,7 @@ pub mod pallet {
 		///
 		/// ## Errors
 		///
+		/// - [`UserHasNoPositions`](Error::<T>::UserHasNoPositions)
 		/// - [`SufficientCollateral`](Error::<T>::SufficientCollateral)
 		/// - [`NoCollateralTypeSet`](Error::<T>::NoCollateralTypeSet)
 		/// - [`ArithmeticError`]
@@ -1019,8 +1022,10 @@ pub mod pallet {
 			liquidator_id: &Self::AccountId,
 			user_id: &Self::AccountId,
 		) -> Result<(), DispatchError> {
-			let summary = Self::summarize_account_state(user_id)?;
+			let positions = Self::get_positions(user_id);
+			ensure!(positions.len() > 0, Error::<T>::UserHasNoPositions);
 
+			let summary = Self::summarize_account_state(positions)?;
 			let fees = Self::fully_liquidate_account(user_id, summary)?;
 
 			// Charge fees
@@ -1093,10 +1098,10 @@ pub mod pallet {
 	// Helper functions - core functionality
 	impl<T: Config> Pallet<T> {
 		fn summarize_account_state(
-			account_id: &T::AccountId,
+			positions: BoundedVec<Position<T>, T::MaxPositions>,
 		) -> Result<AccountSummary<T>, DispatchError> {
 			let mut summary = AccountSummary::<T>::default();
-			for position in Self::get_positions(account_id) {
+			for position in positions {
 				let market = Self::try_get_market(&position.market_id)?;
 				if let Some(direction) = position.direction() {
 					// should always succeed

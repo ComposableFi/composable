@@ -23,6 +23,23 @@ use crate::{
 // -------------------------------------------------------------------------------------------------
 
 #[test]
+fn cant_liquidate_user_with_no_open_positions() {
+	let config = valid_market_config();
+	let margins = vec![(ALICE, 0), (BOB, 0)];
+
+	// Set everything as usual, except that ALICE doesn't open any positions
+	traders_in_one_market_context(config, margins, |_| {
+		VammPallet::set_price(Some(1.into()));
+
+		// Bob can't liquidate Alice
+		assert_noop!(
+			TestPallet::liquidate(Origin::signed(BOB), ALICE),
+			Error::<Runtime>::UserHasNoPositions
+		);
+	});
+}
+
+#[test]
 fn cant_fully_liquidate_if_above_maintenance_margin_ratio_by_pnl() {
 	let mut config = valid_market_config();
 	config.margin_ratio_initial = (1, 2).into(); // 2x max leverage
