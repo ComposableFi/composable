@@ -686,7 +686,12 @@ pub mod pallet {
 		///
 		/// ## Assumptions or Requirements
 		///
-		/// TODO(0xangelo)
+		/// ### For full liquidation
+		///
+		/// The user's margin ration must be stricly less than the combined margin ratios of all the
+		/// markets in which it has open positions in. In other words, the user's margin (collateral
+		/// + total unrealized pnl + total unrealized funding) must be strictly less than the sum of
+		/// margin requirements (MMR * base asset value) for each market it has an open position in.
 		///
 		/// ## Emits
 		///
