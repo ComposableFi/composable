@@ -16,8 +16,8 @@ pub enum DecodingFailure {
 
 pub fn decode<
 	TNetwork: From<u32>,
-	TAbiEncoded: From<Vec<u8>>,
-	TAccount: From<Vec<u8>>,
+	TAbiEncoded: TryFrom<Vec<u8>>,
+	TAccount: TryFrom<Vec<u8>>,
 	TAssets: From<BTreeMap<u32, u128>>,
 >(
 	buffer: &[u8],
@@ -64,8 +64,8 @@ impl<
 
 impl<
 		TNetwork: From<u32>,
-		TAbiEncoded: From<Vec<u8>>,
-		TAccount: From<Vec<u8>>,
+		TAbiEncoded: TryFrom<Vec<u8>>,
+		TAccount: TryFrom<Vec<u8>>,
 		TAssets: From<BTreeMap<u32, u128>>,
 	> TryFrom<Program> for XCVMProgram<XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>>
 {
@@ -127,8 +127,8 @@ impl<
 
 impl<
 		TNetwork: From<u32>,
-		TAbiEncoded: From<Vec<u8>>,
-		TAccount: From<Vec<u8>>,
+		TAbiEncoded: TryFrom<Vec<u8>>,
+		TAccount: TryFrom<Vec<u8>>,
 		TAssets: From<BTreeMap<u32, u128>>,
 	> TryFrom<Instruction> for XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>
 {
@@ -140,7 +140,7 @@ impl<
 					destination: Some(Account { addressed }),
 					assets,
 				}) => Ok(XCVMInstruction::Transfer(
-					addressed.into(),
+					addressed.try_into().map_err(|_| ())?,
 					assets
 						.into_iter()
 						.map(|(asset, amount)| Ok((asset, amount.try_into()?)))
@@ -158,7 +158,7 @@ impl<
 					))
 				},
 				instruction::Instruction::Call(Call { payload }) => {
-					Ok(XCVMInstruction::Call(payload.into()))
+					Ok(XCVMInstruction::Call(payload.try_into().map_err(|_| ())?))
 				},
 				_ => Err(()),
 			})

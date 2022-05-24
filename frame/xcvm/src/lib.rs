@@ -46,9 +46,9 @@ pub mod pallet {
 		},
 	};
 	use frame_system::pallet_prelude::*;
-	use xcvm_core::{AbiEncoded, XCVMInstruction, XCVMNetwork, XCVMProgram};
+	use xcvm_core::{AbiEncoded, Callable, XCVMInstruction, XCVMNetwork, XCVMProgram};
 
-	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
+	pub(crate) type AccountIdOf<T> = <T as Config>::AccountId;
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
 	pub(crate) type BalanceOf<T> = <T as Config>::Balance;
 	pub(crate) type MaxTransferAssetsOf<T> = <T as Config>::MaxTransferAssets;
@@ -61,6 +61,7 @@ pub mod pallet {
 	>;
 	pub(crate) type XCVMInstructionsOf<T> = Vec<XCVMInstructionOf<T>>;
 	pub(crate) type XCVMProgramOf<T> = XCVMProgram<XCVMInstructionsOf<T>>;
+	use sp_std::collections::btree_map::BTreeMap;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -78,9 +79,18 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type AccountId: Parameter
+			+ MaybeSerializeDeserialize
+			+ Ord
+			+ MaxEncodedLen
+			+ TryFrom<Vec<u8>>;
+
 		type AssetId: AssetId + Ord;
-		type Assets: FungiblesInspect<Self::AccountId, AssetId = AssetIdOf<Self>, Balance = BalanceOf<Self>>
-			+ FungiblesTransfer<Self::AccountId>;
+		type Assets: FungiblesInspect<
+				AccountIdOf<Self>,
+				AssetId = AssetIdOf<Self>,
+				Balance = BalanceOf<Self>,
+			> + FungiblesTransfer<Self>;
 		type Balance: Balance;
 		type MaxTransferAssets: Get<u32>;
 		type MaxInstructions: Get<u32>;
@@ -100,16 +110,17 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let program = xcvm_protobuf::decode::<
 				XCVMNetwork,
-				XCVMNetwork::EncodedCall,
-				T::AccountId,
+				<XCVMNetwork as Callable>::EncodedCall,
+				AccountIdOf<T>,
 				BTreeMap<u32, u128>,
-			>(program.as_ref())?;
+			>(program.as_ref())
+			.map_err(|_| Error::<T>::ProgramNotWellFormed)?;
 
-			let instructions = program.instructions.into_inner();
+			let instructions = program.instructions;
 			let mut ip = program.instruction_pointer;
 
-			while ip < instructions.len() {
-				if let Some(instruction) = instructions.get(ip) {
+			while ip < instructions.len() as u32 {
+				if let Some(instruction) = instructions.get(ip as usize) {
 					match instruction {
 						XCVMInstruction::Transfer(to, assets) => {},
 						XCVMInstruction::Call(abi) => {},
