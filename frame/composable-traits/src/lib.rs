@@ -30,4 +30,3 @@ pub mod staking_rewards;
 pub mod time;
 pub mod vault;
 pub mod vesting;
-pub mod xcm;

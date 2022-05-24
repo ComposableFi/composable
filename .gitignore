@@ -47,3 +47,5 @@ result
 
 # devnet nodes logs
 *.log
+integration-tests/runtime-tests/**/*.js
+integration-tests/runtime-tests/**/*d.ts

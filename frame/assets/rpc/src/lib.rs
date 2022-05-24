@@ -11,7 +11,7 @@ use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use sp_std::{sync::Arc, vec::Vec};
 
 #[rpc]
-pub trait AssetsApi<BlockHash, AssetId, AccountId, Balance>
+pub trait AssetsApi<BlockHash, AssetId, AccountId, Balance, Asset>
 where
 	AssetId: FromStr + Display,
 	Balance: FromStr + Display,
@@ -39,9 +39,9 @@ impl<C, M> Assets<C, M> {
 	}
 }
 
-impl<C, Block, AssetId, AccountId, Balance>
-	AssetsApi<<Block as BlockT>::Hash, AssetId, AccountId, Balance>
-	for Assets<C, (Block, AssetId, AccountId, Balance)>
+impl<C, Block, AssetId, AccountId, Balance, Asset>
+	AssetsApi<<Block as BlockT>::Hash, AssetId, AccountId, Balance, Asset>
+	for Assets<C, (Block, AssetId, AccountId, Balance, Asset)>
 where
 	Block: BlockT,
 	AssetId: Send + Sync + 'static + Codec + FromStr + Display,
@@ -50,7 +50,7 @@ where
 	C: Send + Sync + 'static,
 	C: ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block>,
-	C::Api: AssetsRuntimeApi<Block, AssetId, AccountId, Balance>,
+	C::Api: AssetsRuntimeApi<Block, AssetId, AccountId, Balance, Asset>,
 {
 	fn balance_of(
 		&self,
@@ -79,13 +79,10 @@ where
 	fn list_assets(&self, at: Option<<Block as BlockT>::Hash>) -> RpcResult<Vec<Asset>> {
 		let api = self.client.runtime_api();
 
-		let at = BlockId::hash(at.unwrap_or_else(|| {
-			// If the block hash is not supplied assume the best block.
-			self.client.info().best_hash
-		}));
+		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
 
 		let runtime_api_result = api.list_assets(&at);
-		// TODO(benluelo): Review what error message & code to use
+
 		runtime_api_result.map_err(|e| {
 			RpcError {
 				code: ErrorCode::ServerError(9876), // No real reason for this value

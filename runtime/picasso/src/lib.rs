@@ -62,7 +62,8 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 
-use codec::{Codec, Encode, EncodeLike};
+use codec::Encode;
+use composable_traits::assets::Asset;
 use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
 use frame_system as system;
 use scale_info::TypeInfo;

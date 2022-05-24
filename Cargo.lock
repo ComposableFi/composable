@@ -1499,6 +1499,7 @@ dependencies = [
  "clap 3.1.12",
  "common",
  "composable-runtime",
+ "composable-traits",
  "crowdloan-rewards-rpc",
  "crowdloan-rewards-runtime-api",
  "cumulus-client-cli",
@@ -10237,6 +10238,7 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-runtime",
+ "sp-std",
  "xcm",
 ]
 

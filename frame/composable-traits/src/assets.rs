@@ -2,10 +2,10 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use composable_support::collections::vec::bounded::BiBoundedVec;
 use scale_info::TypeInfo;
-use sp_std::vec::Vec;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
+use sp_std::vec::Vec;
 
 #[derive(Debug, Encode, Decode, Clone, PartialEq, Eq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]

@@ -46,19 +46,14 @@ describe("rpc.assets Tests", function () {
     expect(parseInt(kUSD_amount.toString())).to.be.equals(0);
   });
 
-  it("rpc.assets.listAssets Tests", async function () {
-    if (!testConfiguration.enabledTests.rpc.listAssets__success) this.skip();
+  it('rpc.assets.listAssets Tests', async function () {
+    if (!testConfiguration.enabledTests.rpc.listAssets__success)
+        this.skip();
     const result = await RpcAssetsTests.rpcListAssetsTest(api);
-    expect(result).to.have.lengthOf(5);
-    result.every(i => expect(i).to.have.all.keys("id", "name"));
-    expect(result.map(e => e.id.toNumber())).to.include.members([1, 2, 3, 4, 129]);
-    expect(result.map(e => hex_to_ascii(e.name.toString()))).to.include.members([
-      "PICA",
-      "LAYR",
-      "CROWD_LOAN",
-      "KSM",
-      "kUSD"
-    ]);
+    expect(result).to.have.lengthOf(5); 
+    result.every((i) => expect(i).to.have.all.keys('id','name'))
+    expect(result.map(e=>(e.id.toNumber()))).to.include.members([ 1, 2, 3, 4, 129 ]);
+    expect(result.map(e=>(hex_to_ascii(e.name.toString())))).to.include.members([ 'PICA', 'LAYR', 'CROWD_LOAN', 'KSM', 'kUSD' ]);
   });
 });
 
@@ -66,18 +61,19 @@ export class RpcAssetsTests {
   public static async rpcAssetsTest(apiClient: ApiPromise, assetId: SafeRpcWrapper, publicKey: string | Uint8Array) {
     return await apiClient.rpc.assets.balanceOf(assetId, publicKey);
   }
-
   public static async rpcListAssetsTest(apiClient: ApiPromise) {
     return await apiClient.rpc.assets.listAssets();
   }
 }
 
-function hex_to_ascii(str1: string) {
-  var hex = str1.toString();
-  var str = "";
-  //skip 0x
-  for (var n = 2; n < hex.length; n += 2) {
-    str += String.fromCharCode(parseInt(hex.substr(n, 2), 16));
-  }
-  return str;
-}
+function hex_to_ascii(str1: string)
+ {
+	var hex  = str1.toString();
+	var str = '';
+    //skip 0x
+	for (var n = 2; n < hex.length; n += 2) {
+		str += String.fromCharCode(parseInt(hex.substr(n, 2), 16));
+	}
+	return str;
+ }
+

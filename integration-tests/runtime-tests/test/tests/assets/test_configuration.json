@@ -4,19 +4,6 @@
       "enabled": true,
       "balanceOf__success": true,
       "listAssets__success": true
-    },
-    "tx": {
-      "enabled": true,
-      "transfer__success": true,
-      "transferNative__success": true,
-      "forceTransfer__success": true,
-      "forceTransferNative__success": true,
-      "transferAll__success": true,
-      "transferAllNative__success": true,
-      "mintInitialize": true,
-      "mintInitializeWithGovernance": true,
-      "mintInto": true,
-      "burnFrom": true
     }
   }
 }
