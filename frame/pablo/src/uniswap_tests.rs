@@ -9,7 +9,7 @@ use crate::{
 };
 use composable_support::math::safe::safe_multiply_by_rational;
 use composable_tests_helpers::{
-	prop_assert_ok,
+	prop_assert_noop, prop_assert_ok,
 	test::helper::{acceptable_computation_error, default_acceptable_computation_error},
 };
 use composable_traits::{
@@ -42,6 +42,7 @@ fn create_pool(
 			owner_fee_rate: protocol_fee,
 			protocol_fee_rate: Permill::zero(),
 		},
+		base_weight: Permill::from_percent(50),
 	};
 	System::set_block_number(1);
 	let actual_pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
@@ -84,6 +85,7 @@ fn test() {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
 			fee_config: FeeConfig::zero(),
+			base_weight: Permill::from_percent(50),
 		};
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
 
@@ -175,6 +177,7 @@ fn add_remove_lp() {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
 			fee_config: FeeConfig::zero(),
+			base_weight: Permill::from_percent(50),
 		};
 		let unit = 1_000_000_000_000_u128;
 		let initial_btc = 1_00_u128 * unit;
@@ -244,6 +247,7 @@ fn add_lp_with_min_mint_amount() {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
 			fee_config: FeeConfig::zero(),
+			base_weight: Permill::from_percent(50),
 		};
 		let unit = 1_000_000_000_000_u128;
 		let initial_btc = 1_00_u128 * unit;
@@ -277,6 +281,7 @@ fn remove_lp_failure() {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
 			fee_config: FeeConfig::zero(),
+			base_weight: Permill::from_percent(50),
 		};
 		let unit = 1_000_000_000_000_u128;
 		let initial_btc = 1_00_u128 * unit;
@@ -301,6 +306,7 @@ fn exchange_failure() {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
 			fee_config: FeeConfig::zero(),
+			base_weight: Permill::from_percent(50),
 		};
 		let exchange_base_amount = 100 * unit;
 		common_exchange_failure(pool_init_config, initial_usdt, initial_btc, exchange_base_amount)
@@ -389,6 +395,7 @@ fn avoid_exchange_without_liquidity() {
 				owner_fee_rate: owner_fee,
 				protocol_fee_rate: Permill::zero(),
 			},
+			base_weight: Permill::from_percent(50),
 		};
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
@@ -415,6 +422,7 @@ fn cannot_swap_between_wrong_pairs() {
 				owner_fee_rate: owner_fee,
 				protocol_fee_rate: Permill::zero(),
 			},
+			base_weight: Permill::from_percent(50),
 		};
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
@@ -460,6 +468,7 @@ fn cannot_get_exchange_value_for_wrong_asset() {
 				owner_fee_rate: owner_fee,
 				protocol_fee_rate: Permill::zero(),
 			},
+			base_weight: Permill::from_percent(50),
 		};
 		System::set_block_number(1);
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
@@ -484,108 +493,160 @@ fn cannot_get_exchange_value_for_wrong_asset() {
 	});
 }
 
+#[test]
+fn weights_zero() {
+	new_test_ext().execute_with(|| {
+		let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			owner: ALICE,
+			pair: CurrencyPair::new(BTC, USDT),
+			fee_config: FeeConfig::zero(),
+			base_weight: Permill::zero(),
+		};
+		assert_noop!(Pablo::do_create_pool(pool_init_config), Error::<Test>::WeightsMustBeNonZero);
+	});
+}
+
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(10000))]
 	#[test]
 	fn buy_sell_proptest(
 		btc_value in 1..u32::MAX,
 	) {
-	new_test_ext().execute_with(|| {
-		let unit = 1_000_000_000_000_u128;
-		let initial_btc = 1_000_000_000_000_u128 * unit;
-		let btc_price = 45_000_u128;
-		let initial_usdt = initial_btc * btc_price;
-		let btc_value = btc_value as u128 * unit;
-		let usdt_value = btc_value * btc_price;
-		let pool_id = create_pool(
-			BTC,
-			USDT,
-			initial_btc,
-			initial_usdt,
-			Permill::zero(),
-			Permill::zero(),
-		);
-		prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
-		prop_assert_ok!(Pablo::sell(Origin::signed(BOB), pool_id, USDT, usdt_value, 0_u128, false));
-		let bob_btc = Tokens::balance(BTC, &BOB);
-		// mint extra BTC equal to slippage so that original amount of USDT can be buy back
-		prop_assert_ok!(Tokens::mint_into(BTC, &BOB, btc_value - bob_btc));
-		prop_assert_ok!(Pablo::buy(Origin::signed(BOB), pool_id, USDT, usdt_value, 0_u128, false));
-		let bob_usdt = Tokens::balance(USDT, &BOB);
-		let slippage = usdt_value -  bob_usdt;
-		let slippage_percentage = slippage as f64 * 100.0_f64 / usdt_value as f64;
-		prop_assert!(slippage_percentage < 1.0_f64);
-		Ok(())
-	})?;
+	  new_test_ext().execute_with(|| {
+		  let unit = 1_000_000_000_000_u128;
+		  let initial_btc = 1_000_000_000_000_u128 * unit;
+		  let btc_price = 45_000_u128;
+		  let initial_usdt = initial_btc * btc_price;
+		  let btc_value = btc_value as u128 * unit;
+		  let usdt_value = btc_value * btc_price;
+		  let pool_id = create_pool(
+			  BTC,
+			  USDT,
+			  initial_btc,
+			  initial_usdt,
+			  Permill::zero(),
+			  Permill::zero(),
+		  );
+		  prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
+		  prop_assert_ok!(Pablo::sell(Origin::signed(BOB), pool_id, USDT, usdt_value, 0_u128, false));
+		  let bob_btc = Tokens::balance(BTC, &BOB);
+		  // mint extra BTC equal to slippage so that original amount of USDT can be buy back
+		  prop_assert_ok!(Tokens::mint_into(BTC, &BOB, btc_value - bob_btc));
+		  prop_assert_ok!(Pablo::buy(Origin::signed(BOB), pool_id, USDT, usdt_value, 0_u128, false));
+		  let bob_usdt = Tokens::balance(USDT, &BOB);
+		  let slippage = usdt_value -  bob_usdt;
+		  let slippage_percentage = slippage as f64 * 100.0_f64 / usdt_value as f64;
+		  prop_assert!(slippage_percentage < 1.0_f64);
+		  Ok(())
+	  })?;
 	}
 
 	#[test]
 	fn add_remove_liquidity_proptest(
 		btc_value in 1..u32::MAX,
 	) {
-	new_test_ext().execute_with(|| {
-		let unit = 1_000_000_000_000_u128;
-		let initial_btc = 1_000_000_000_000_u128 * unit;
-		let btc_price = 45_000_u128;
-		let initial_usdt = initial_btc * btc_price;
-		let btc_value = btc_value as u128 * unit;
-		let usdt_value = btc_value * btc_price;
-		let pool_id = create_pool(
-			BTC,
-			USDT,
-			initial_btc,
-			initial_usdt,
-			Permill::zero(),
-			Permill::zero(),
-		);
-		let pool = get_pool(pool_id);
-		prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
-		prop_assert_ok!(Tokens::mint_into(BTC, &BOB, btc_value));
-		prop_assert_ok!(Pablo::add_liquidity(Origin::signed(BOB), pool_id, btc_value, usdt_value, 0, false));
-		let term1 = initial_usdt.integer_sqrt_checked().expect("integer_sqrt failed");
-		let term2 = initial_btc.integer_sqrt_checked().expect("integer_sqrt failed");
-		let expected_lp_tokens = safe_multiply_by_rational(term1, btc_value, term2).expect("multiply_by_rational failed");
-		let lp_token = Tokens::balance(pool.lp_token, &BOB);
-		prop_assert_ok!(default_acceptable_computation_error(expected_lp_tokens, lp_token));
-		prop_assert_ok!(Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp_token, 0, 0));
-		let btc_value_redeemed = Tokens::balance(BTC, &BOB);
-		let usdt_value_redeemed = Tokens::balance(USDT, &BOB);
-		prop_assert_ok!(default_acceptable_computation_error(btc_value_redeemed, btc_value));
-		prop_assert_ok!(default_acceptable_computation_error(usdt_value_redeemed, usdt_value));
-		Ok(())
-	})?;
+	  new_test_ext().execute_with(|| {
+		  let unit = 1_000_000_000_000_u128;
+		  let initial_btc = 1_000_000_000_000_u128 * unit;
+		  let btc_price = 45_000_u128;
+		  let initial_usdt = initial_btc * btc_price;
+		  let btc_value = btc_value as u128 * unit;
+		  let usdt_value = btc_value * btc_price;
+		  let pool_id = create_pool(
+			  BTC,
+			  USDT,
+			  initial_btc,
+			  initial_usdt,
+			  Permill::zero(),
+			  Permill::zero(),
+		  );
+		  let pool = get_pool(pool_id);
+		  prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
+		  prop_assert_ok!(Tokens::mint_into(BTC, &BOB, btc_value));
+		  prop_assert_ok!(Pablo::add_liquidity(Origin::signed(BOB), pool_id, btc_value, usdt_value, 0, false));
+		  let term1 = initial_usdt.integer_sqrt_checked().expect("integer_sqrt failed");
+		  let term2 = initial_btc.integer_sqrt_checked().expect("integer_sqrt failed");
+		  let expected_lp_tokens = safe_multiply_by_rational(term1, btc_value, term2).expect("multiply_by_rational failed");
+		  let lp_token = Tokens::balance(pool.lp_token, &BOB);
+		  prop_assert_ok!(default_acceptable_computation_error(expected_lp_tokens, lp_token));
+		  prop_assert_ok!(Pablo::remove_liquidity(Origin::signed(BOB), pool_id, lp_token, 0, 0));
+		  let btc_value_redeemed = Tokens::balance(BTC, &BOB);
+		  let usdt_value_redeemed = Tokens::balance(USDT, &BOB);
+		  prop_assert_ok!(default_acceptable_computation_error(btc_value_redeemed, btc_value));
+		  prop_assert_ok!(default_acceptable_computation_error(usdt_value_redeemed, usdt_value));
+		  Ok(())
+	  })?;
 	}
 
 	#[test]
 	fn swap_proptest(
 		usdt_value in 1..u32::MAX,
 	) {
-	new_test_ext().execute_with(|| {
-		let unit = 1_000_000_000_000_u128;
-		let initial_btc = 1_000_000_000_000_u128 * unit;
-		let btc_price = 45_000_u128;
-		let initial_usdt = initial_btc * btc_price;
-		let usdt_value = usdt_value as u128 * unit;
-		let pool_id = create_pool(
-			BTC,
-			USDT,
-			initial_btc,
-			initial_usdt,
-			Permill::from_float(0.025),
-			Permill::zero(),
-		);
-		let pool = get_pool(pool_id);
-		prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
-		prop_assert_ok!(Pablo::swap(Origin::signed(BOB), pool_id, CurrencyPair::new(BTC, USDT), usdt_value, 0, false));
-		let usdt_value_after_fee = usdt_value - pool.fee_config.fee_rate.mul_floor(usdt_value);
-		let ratio = initial_btc as f64 / initial_usdt as f64;
-		let expected_btc_value = ratio * usdt_value_after_fee as f64;
-		let expected_btc_value = expected_btc_value as u128;
-		let bob_btc = Tokens::balance(BTC, &BOB);
-		prop_assert_ok!(default_acceptable_computation_error(bob_btc, expected_btc_value));
-		Ok(())
-	})?;
-}
+	  new_test_ext().execute_with(|| {
+		  let unit = 1_000_000_000_000_u128;
+		  let initial_btc = 1_000_000_000_000_u128 * unit;
+		  let btc_price = 45_000_u128;
+		  let initial_usdt = initial_btc * btc_price;
+		  let usdt_value = usdt_value as u128 * unit;
+		  let pool_id = create_pool(
+			  BTC,
+			  USDT,
+			  initial_btc,
+			  initial_usdt,
+			  Permill::from_float(0.025),
+			  Permill::zero(),
+		  );
+		  let pool = get_pool(pool_id);
+		  prop_assert_ok!(Tokens::mint_into(USDT, &BOB, usdt_value));
+		  prop_assert_ok!(Pablo::swap(Origin::signed(BOB), pool_id, CurrencyPair::new(BTC, USDT), usdt_value, 0, false));
+		  let usdt_value_after_fee = usdt_value - pool.fee_config.fee_rate.mul_floor(usdt_value);
+		  let ratio = initial_btc as f64 / initial_usdt as f64;
+		  let expected_btc_value = ratio * usdt_value_after_fee as f64;
+		  let expected_btc_value = expected_btc_value as u128;
+		  let bob_btc = Tokens::balance(BTC, &BOB);
+		  prop_assert_ok!(default_acceptable_computation_error(bob_btc, expected_btc_value));
+		  Ok(())
+	  })?;
+  }
+
+	#[test]
+	fn weights_sum_to_one(
+		base_weight_in_percent in 1..100u32,
+	) {
+	  new_test_ext().execute_with(|| {
+		  let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			  owner: ALICE,
+			  pair: CurrencyPair::new(BTC, USDT),
+			  fee_config: FeeConfig::zero(),
+			  base_weight: Permill::from_percent(base_weight_in_percent),
+		  };
+		  let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool is valid");
+
+		  let pool = get_pool(pool_id);
+
+		  prop_assert_eq!(Permill::one(), pool.base_weight + pool.quote_weight);
+
+		  Ok(())
+	  })?;
+  }
+
+	#[test]
+	fn weights_sum_to_more_than_one(
+		base_weight_in_percent in 100..u32::MAX,
+	) {
+	  new_test_ext().execute_with(|| {
+		  let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			  owner: ALICE,
+			  pair: CurrencyPair::new(BTC, USDT),
+			  fee_config: FeeConfig::zero(),
+			  base_weight: Permill::from_percent(base_weight_in_percent),
+		  };
+
+		  prop_assert_noop!(Pablo::do_create_pool(pool_init_config), Error::<Test>::WeightsMustSumToOne);
+
+		  Ok(())
+	  })?;
+  }
 }
 
 mod twap {

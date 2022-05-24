@@ -113,6 +113,7 @@ pub mod pallet {
 			owner: AccountId,
 			pair: CurrencyPair<AssetId>,
 			fee_config: FeeConfig,
+			base_weight: Permill,
 		},
 		LiquidityBootstrapping(LiquidityBootstrappingPoolInfo<AccountId, AssetId, BlockNumber>),
 	}
@@ -231,6 +232,8 @@ pub mod pallet {
 		AmpFactorMustBeGreaterThanZero,
 		MissingAmount,
 		NoLpTokenForLbp,
+		WeightsMustBeNonZero,
+		WeightsMustSumToOne,
 	}
 
 	#[pallet::config]
@@ -557,8 +560,12 @@ pub mod pallet {
 					StableSwap::<T>::do_create_pool(&owner, pair, amplification_coefficient, fee)?,
 					pair,
 				),
-				PoolInitConfiguration::ConstantProduct { owner, pair, fee_config: fee } =>
-					(owner.clone(), Uniswap::<T>::do_create_pool(&owner, pair, fee)?, pair),
+				PoolInitConfiguration::ConstantProduct { owner, pair, fee_config, base_weight } =>
+					(
+						owner.clone(),
+						Uniswap::<T>::do_create_pool(&owner, pair, fee_config, base_weight)?,
+						pair,
+					),
 				PoolInitConfiguration::LiquidityBootstrapping(pool_config) => {
 					let validated_pool_config = Validated::new(pool_config.clone())?;
 					(
