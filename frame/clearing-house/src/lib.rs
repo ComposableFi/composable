@@ -1150,7 +1150,7 @@ pub mod pallet {
 			summary: AccountSummary<T>,
 		) -> Result<T::Balance, DispatchError> {
 			let mut collateral = Self::get_collateral(user_id).unwrap_or_else(Zero::zero);
-			let mut margin: T::Decimal = Self::updated_balance(
+			let mut margin = Self::updated_balance(
 				&collateral,
 				&summary.unrealized_pnl.try_add(&summary.unrealized_funding)?,
 			)?
