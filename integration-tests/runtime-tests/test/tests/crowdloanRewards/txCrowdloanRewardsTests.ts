@@ -10,7 +10,6 @@ import { ApiPromise } from "@polkadot/api";
 import { getNewConnection } from "@composable/utils/connectionHelper";
 import { getDevWallets } from "@composable/utils/walletHelper";
 
-
 /**
  * Task order list:
  *  1. Provide funds to crowdloan pallet
@@ -19,9 +18,8 @@ import { getDevWallets } from "@composable/utils/walletHelper";
  *  4. Associate a picassso account (which also claims)
  *  5. Claiming more rewards.
  */
-describe("CrowdloanRewards Tests", function() {
-  if (!testConfiguration.enabledTests.tx.enabled)
-    return;
+describe("CrowdloanRewards Tests", function () {
+  if (!testConfiguration.enabledTests.tx.enabled) return;
 
   let api: ApiPromise;
 
@@ -40,7 +38,7 @@ describe("CrowdloanRewards Tests", function() {
    * We also identify if this chain had already tests run on it.
    * And if so, we skip the populate() and initialize() tests.
    */
-  before("Setting up tests", async function() {
+  before("Setting up tests", async function () {
     this.timeout(60 * 1000);
     const { newClient, newKeyring } = await getNewConnection();
     api = newClient;
@@ -64,13 +62,13 @@ describe("CrowdloanRewards Tests", function() {
       i++;
     }
     if (onExistingChain)
-      console.info("tx.crowdloanRewards Tests: Detected already configured chain! " +
-        "Skipping populate() & initialize().");
+      console.info(
+        "tx.crowdloanRewards Tests: Detected already configured chain! " + "Skipping populate() & initialize()."
+      );
   });
 
-  before("Providing funds to Alice & our imaginary contributor wallet", async function() {
-    if (!testConfiguration.enabledTests.tx.setup.provideAssets)
-      this.skip();
+  before("Providing funds to Alice & our imaginary contributor wallet", async function () {
+    if (!testConfiguration.enabledTests.tx.setup.provideAssets) this.skip();
     // 2 minutes timeout
     this.timeout(60 * 2 * 1000);
     await mintAssetsToWallet(api, sudoKey, sudoKey, [1]);
@@ -78,7 +76,7 @@ describe("CrowdloanRewards Tests", function() {
     await mintAssetsToWallet(api, contributorEthRewardAccount, sudoKey, [1]);
   });
 
-  after("Closing the connection", async function() {
+  after("Closing the connection", async function () {
     await api.disconnect();
   });
 
@@ -88,9 +86,8 @@ describe("CrowdloanRewards Tests", function() {
    * This is a SUDO call! Though the checks are within the handler function, due to multiple transaction being sent
    * within a for loop.
    */
-  it("Can populate the list of contributors", async function() {
-    if (!testConfiguration.enabledTests.tx.populate_success.populate1 || onExistingChain)
-      this.skip();
+  it("Can populate the list of contributors", async function () {
+    if (!testConfiguration.enabledTests.tx.populate_success.populate1 || onExistingChain) this.skip();
     // 5 minutes timeout
     this.timeout(5 * 60 * 1000);
     const testContributorRelayChainObject = await TxCrowdloanRewardsTests.txCrowdloanRewardsPopulateTest(
@@ -106,12 +103,13 @@ describe("CrowdloanRewards Tests", function() {
    *
    * This is a SUDO call and is checked with `.isOk`.
    */
-  it("Can initialize the crowdloan", async function() {
-    if (!testConfiguration.enabledTests.tx.initialize_success.initialize1 || onExistingChain)
-      this.skip();
+  it("Can initialize the crowdloan", async function () {
+    if (!testConfiguration.enabledTests.tx.initialize_success.initialize1 || onExistingChain) this.skip();
     // 2 minutes timeout
     this.timeout(60 * 2 * 1000);
-    const { data: [result] } = await TxCrowdloanRewardsTests.txCrowdloanRewardsInitializeTest(api, sudoKey);
+    const {
+      data: [result]
+    } = await TxCrowdloanRewardsTests.txCrowdloanRewardsInitializeTest(api, sudoKey);
     expect(result.isOk).to.be.true;
   });
 
@@ -125,33 +123,29 @@ describe("CrowdloanRewards Tests", function() {
    * 1. The public key of the remote wallet.
    * 2. The public key of the transacting wallet.
    */
-  it("Can associate a picasso account", async function() {
-    if (!testConfiguration.enabledTests.tx.associate_success.associate1)
-      this.skip();
+  it("Can associate a picasso account", async function () {
+    if (!testConfiguration.enabledTests.tx.associate_success.associate1) this.skip();
     // 2 minutes timeout
     this.timeout(60 * 20 * 1000);
     await Promise.all([
-      TxCrowdloanRewardsTests.txCrowdloanRewardsEthAssociateTest(
-        api,
-        contributorEth,
-        contributorEthRewardAccount
-      ),
-      TxCrowdloanRewardsTests.txCrowdloanRewardsRelayAssociateTests(
-        api,
-        contributor,
-        contributorRewardAccount
-      )
-    ]).then(function(
-      [
-        { data: [result1Request1, result2Request1] },
-        { data: [result1Request2, result2Request2] }
-      ]) {
+      TxCrowdloanRewardsTests.txCrowdloanRewardsEthAssociateTest(api, contributorEth, contributorEthRewardAccount),
+      TxCrowdloanRewardsTests.txCrowdloanRewardsRelayAssociateTests(api, contributor, contributorRewardAccount)
+    ]).then(function ([
+      {
+        data: [result1Request1, result2Request1]
+      },
+      {
+        data: [result1Request2, result2Request2]
+      }
+    ]) {
       expect(result1Request1).to.not.be.an("Error");
       expect(result1Request2).to.not.be.an("Error");
-      expect(result2Request1.toString()).to.be
-        .equal(api.createType("AccountId32", contributorEthRewardAccount.publicKey).toString());
-      expect(result2Request2.toString()).to.be
-        .equal(api.createType("AccountId32", contributorRewardAccount.publicKey).toString());
+      expect(result2Request1.toString()).to.be.equal(
+        api.createType("AccountId32", contributorEthRewardAccount.publicKey).toString()
+      );
+      expect(result2Request2.toString()).to.be.equal(
+        api.createType("AccountId32", contributorRewardAccount.publicKey).toString()
+      );
     });
   });
 
@@ -164,57 +158,56 @@ describe("CrowdloanRewards Tests", function() {
    * 2. The public key of the transacting wallet.
    * 3. The claimed amount.
    */
-  it("KSM contributor can claim the crowdloan reward", async function() {
-    if (!testConfiguration.enabledTests.tx.claim_success.claim1 || onExistingChain)
-      this.skip();
+  it("KSM contributor can claim the crowdloan reward", async function () {
+    if (!testConfiguration.enabledTests.tx.claim_success.claim1 || onExistingChain) this.skip();
     // 2 minutes timeout
     this.timeout(60 * 2 * 1000);
-    const { data: [resultRemoteAccountId, resultAccountId, resultClaimedAmount] }
-      = await TxCrowdloanRewardsTests.txCrowdloanRewardsClaimTest(api, contributorRewardAccount);
+    const {
+      data: [resultRemoteAccountId, resultAccountId, resultClaimedAmount]
+    } = await TxCrowdloanRewardsTests.txCrowdloanRewardsClaimTest(api, contributorRewardAccount);
     expect(resultRemoteAccountId).to.not.be.an("Error");
     expect(resultClaimedAmount).to.be.a.bignumber;
     expect(resultClaimedAmount.toNumber()).to.be.greaterThan(0);
-    expect(resultAccountId.toString()).to.be
-      .equal(api.createType("AccountId32", contributorRewardAccount.publicKey).toString());
+    expect(resultAccountId.toString()).to.be.equal(
+      api.createType("AccountId32", contributorRewardAccount.publicKey).toString()
+    );
   });
 
-  it("ETH contributor can claim the crowdloan reward", async function() {
-    if (!testConfiguration.enabledTests.tx.claim_success.claim1 || onExistingChain)
-      this.skip();
+  it("ETH contributor can claim the crowdloan reward", async function () {
+    if (!testConfiguration.enabledTests.tx.claim_success.claim1 || onExistingChain) this.skip();
     // 2 minutes timeout
     this.timeout(60 * 2 * 1000);
-    const { data: [resultRemoteAccountId, resultAccountId, resultClaimedAmount] }
-      = await TxCrowdloanRewardsTests.txCrowdloanRewardsClaimTest(api, contributorEthRewardAccount);
+    const {
+      data: [resultRemoteAccountId, resultAccountId, resultClaimedAmount]
+    } = await TxCrowdloanRewardsTests.txCrowdloanRewardsClaimTest(api, contributorEthRewardAccount);
     expect(resultRemoteAccountId).to.not.be.an("Error");
     expect(resultClaimedAmount).to.be.a.bignumber;
-    expect(resultAccountId.toString()).to.be
-      .equal(api.createType("AccountId32", contributorEthRewardAccount.publicKey).toString());
+    expect(resultAccountId.toString()).to.be.equal(
+      api.createType("AccountId32", contributorEthRewardAccount.publicKey).toString()
+    );
   });
 
-  describe("Crowdloan Failure Tests", function() {
-    if (!testConfiguration.enabledTests.tx.failure_tests.enabled)
-      return;
+  describe("Crowdloan Failure Tests", function () {
+    if (!testConfiguration.enabledTests.tx.failure_tests.enabled) return;
     /***
      * Here we try to re- associate the same contributor wallets,
      * even though they're already associated.
      */
-    it("Can not re- associate the same picasso account", async function() {
-      if (!testConfiguration.enabledTests.tx.failure_tests.associate_failure.associate1)
-        this.skip();
+    it("Can not re- associate the same picasso account", async function () {
+      if (!testConfiguration.enabledTests.tx.failure_tests.associate_failure.associate1) this.skip();
       // 2 minutes timeout
       this.timeout(60 * 2 * 1000);
       await Promise.all([
-        TxCrowdloanRewardsTests.txCrowdloanRewardsEthAssociateTest(
-          api,
-          contributorEth,
-          walletCharlie
-        ),
-        TxCrowdloanRewardsTests.txCrowdloanRewardsRelayAssociateTests(
-          api,
-          contributor,
-          walletCharlie
-        )
-      ]).then(function([{ data: [result] }, { data: [result2] }]) {
+        TxCrowdloanRewardsTests.txCrowdloanRewardsEthAssociateTest(api, contributorEth, walletCharlie),
+        TxCrowdloanRewardsTests.txCrowdloanRewardsRelayAssociateTests(api, contributor, walletCharlie)
+      ]).then(function ([
+        {
+          data: [result]
+        },
+        {
+          data: [result2]
+        }
+      ]) {
         expect(result).to.be.an("Error");
         expect(result2).to.be.an("Error");
       });

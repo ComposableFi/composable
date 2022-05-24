@@ -37,7 +37,7 @@ docs: build
 
 style-check:
 	@rustup component add rustfmt 2> /dev/null
-	cargo +nightly fmt --all -- --check
+	./scripts/style.sh --check --verbose
 
 style:
 	@rustup component add rustfmt 2> /dev/null

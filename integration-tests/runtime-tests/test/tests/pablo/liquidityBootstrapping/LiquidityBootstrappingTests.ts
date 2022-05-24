@@ -1,15 +1,18 @@
-import {KeyringPair} from "@polkadot/keyring/types";
-import {mintAssetsToWallet, Pica} from "@composable/utils/mintingHelper";
-import {expect} from "chai";
-import {getNewConnection} from "@composable/utils/connectionHelper";
-import {getDevWallets} from "@composable/utils/walletHelper";
-import {ApiPromise} from "@polkadot/api";
-import {sendAndWaitForSuccess} from "@composable/utils/polkadotjs";
+import { KeyringPair } from "@polkadot/keyring/types";
+import { mintAssetsToWallet, Pica } from "@composable/utils/mintingHelper";
+import { expect } from "chai";
+import { getNewConnection } from "@composable/utils/connectionHelper";
+import { getDevWallets } from "@composable/utils/walletHelper";
+import { ApiPromise } from "@polkadot/api";
+import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
 import {
   addFundstoThePool,
   buyFromPool,
-  createLBPool, createMultipleLBPools,
-  rpcPriceFor, sellToPool, swapTokenPairs
+  createLBPool,
+  createMultipleLBPools,
+  rpcPriceFor,
+  sellToPool,
+  swapTokenPairs
 } from "@composabletests/tests/pablo/testHandlers/pabloTestHelper";
 import testConfiguration from "@composabletests/tests/pablo/liquidityBootstrapping/test_configuration.json";
 import pabloTestConfiguration from "../testHandlers/test_configuration.json";
@@ -21,7 +24,7 @@ import pabloTestConfiguration from "../testHandlers/test_configuration.json";
  */
 
 describe("LiquidityBootsrapping Pool Test Suite", function () {
-  if(!pabloTestConfiguration.liquidityBootstrappingTests.enabled){
+  if (!pabloTestConfiguration.liquidityBootstrappingTests.enabled) {
     console.log("Liquidity Bootstrapping Tests are being skipped...");
     return;
   }
@@ -34,9 +37,9 @@ describe("LiquidityBootsrapping Pool Test Suite", function () {
   let startTime: number, endTime: number, initialWeight: number, finalWeight: number;
 
   before("Given that users have sufficient balance", async function () {
-    const {newClient, newKeyring} = await getNewConnection();
+    const { newClient, newKeyring } = await getNewConnection();
     api = newClient;
-    const {devWalletAlice, devWalletEve, devWalletFerdie} = getDevWallets(newKeyring);
+    const { devWalletAlice, devWalletEve, devWalletFerdie } = getDevWallets(newKeyring);
     walletId1 = devWalletFerdie.derive("/test/lbpTests/wallet1");
     walletId2 = devWalletEve.derive("/test/lbpTests/wallet2");
     sudoKey = devWalletAlice;
@@ -65,7 +68,7 @@ describe("LiquidityBootsrapping Pool Test Suite", function () {
     await api.disconnect();
   });
 
-  describe("LiquidityBootstrapping CreatePool and AddLiquidity Tests", async function() {
+  describe("LiquidityBootstrapping CreatePool and AddLiquidity Tests", async function () {
     if (!testConfiguration.enabledTests.createPoolAndAddLiquidityTests.enabled) {
       console.log("LiquidityBootsrapping createPool and addLiquidity tests are being skipped...");
       return;
@@ -112,21 +115,24 @@ describe("LiquidityBootsrapping Pool Test Suite", function () {
     });
 
     it("Given that the pool created, Owner can enable twap", async function () {
-      const {data: [result]} = await sendAndWaitForSuccess(
+      const {
+        data: [result]
+      } = await sendAndWaitForSuccess(
         api,
         sudoKey,
         api.events.sudo.Sudid.is,
-        api.tx.sudo.sudo(
-          api.tx.pablo.enableTwap(api.createType("u128", poolId1))
-        )
+        api.tx.sudo.sudo(api.tx.pablo.enableTwap(api.createType("u128", poolId1)))
       );
       expect(result.isOk).to.be.true;
     });
 
     it("Given that the LB pool has liquidity in the pool, before the sale started, it returns 0 spot price", async function () {
-      const rpcRes = await rpcPriceFor(api, api.createType("PalletPabloPoolId", poolId1),
+      const rpcRes = await rpcPriceFor(
+        api,
+        api.createType("PalletPabloPoolId", poolId1),
         api.createType("CustomRpcCurrencyId", baseAssetId),
-        api.createType("CustomRpcCurrencyId", quoteAssetId));
+        api.createType("CustomRpcCurrencyId", quoteAssetId)
+      );
       expect(rpcRes.spotPrice.toString()).to.be.equal("0");
     });
 
@@ -142,44 +148,47 @@ describe("LiquidityBootsrapping Pool Test Suite", function () {
       expect((await api.query.pablo.poolCount()).toNumber()).to.be.equal(500 + prePoolCount);
     });
 
-    it("The users can't create LB Pools with invalid params " +
-      "{initial weight>95, end weight<5, saleDuration<7200, saleDuration>216000", async function () {
-      const weights = [950001, 49999];
-      const durations = [7100, 216001];
-      for (const weight of weights) {
-        await createLBPool(
-          api,
-          walletId1,
-          walletId1,
-          baseAssetId,
-          quoteAssetId,
-          startTime,
-          endTime,
-          weight,
-          50001,
-          fee
-        ).catch(e => expect(e.message).to.contain("Other"));
+    it(
+      "The users can't create LB Pools with invalid params " +
+        "{initial weight>95, end weight<5, saleDuration<7200, saleDuration>216000",
+      async function () {
+        const weights = [950001, 49999];
+        const durations = [7100, 216001];
+        for (const weight of weights) {
+          await createLBPool(
+            api,
+            walletId1,
+            walletId1,
+            baseAssetId,
+            quoteAssetId,
+            startTime,
+            endTime,
+            weight,
+            50001,
+            fee
+          ).catch(e => expect(e.message).to.contain("Other"));
+        }
+        for (const duration of durations) {
+          await createLBPool(
+            api,
+            walletId1,
+            walletId1,
+            baseAssetId,
+            quoteAssetId,
+            startTime,
+            startTime + duration,
+            initialWeight,
+            finalWeight,
+            fee
+          ).catch(e => expect(e.message).to.contain("Other"));
+        }
       }
-      for (const duration of durations) {
-        await createLBPool(
-          api,
-          walletId1,
-          walletId1,
-          baseAssetId,
-          quoteAssetId,
-          startTime,
-          startTime + duration,
-          initialWeight,
-          finalWeight,
-          fee
-        ).catch(e => expect(e.message).to.contain("Other"));
-      }
-    });
+    );
   });
 
-  describe("LiquidityBootstrapping buy sell and swap tests" , async function() {
+  describe("LiquidityBootstrapping buy sell and swap tests", async function () {
     if (!testConfiguration.enabledTests.buySellandSwapTests.enabled) {
-      console.log("LiquidityBootsrapping buy,sell and swap tests are being skipped...")
+      console.log("LiquidityBootsrapping buy,sell and swap tests are being skipped...");
       return;
     }
     this.timeout(3 * 60 * 1000);
@@ -189,11 +198,10 @@ describe("LiquidityBootsrapping Pool Test Suite", function () {
       expect(result.baseAmount.toBn()).to.be.bignumber.closeTo(Pica(30).toString(), Pica(10).toString());
     });
 
-    it("Given that users have sufficient funds, user1 can't buy an asset not listed in the pool",
-      async function () {
-        await buyFromPool(api, poolId1, walletId2, quoteAssetId2, Pica(10)).catch(e =>
-          expect(e.message).to.contain("InvalidAsset")
-        );
+    it("Given that users have sufficient funds, user1 can't buy an asset not listed in the pool", async function () {
+      await buyFromPool(api, poolId1, walletId2, quoteAssetId2, Pica(10)).catch(e =>
+        expect(e.message).to.contain("InvalidAsset")
+      );
     });
 
     it("User1 can sell to the pool once the sale started", async function () {
@@ -203,7 +211,8 @@ describe("LiquidityBootsrapping Pool Test Suite", function () {
 
     it("User can't buy more than the amount available in the pool", async function () {
       await buyFromPool(api, poolId2, walletId2, baseAssetId, Pica("4000")).catch(e =>
-        expect(e.message).to.contain("InvalidAsset"))
+        expect(e.message).to.contain("InvalidAsset")
+      );
     });
 
     it("User1 can swap from the pool once the sale started", async function () {
@@ -217,4 +226,4 @@ describe("LiquidityBootsrapping Pool Test Suite", function () {
       );
     });
   });
-})
+});

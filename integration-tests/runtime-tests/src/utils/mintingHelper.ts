@@ -24,11 +24,11 @@ export async function mintAssetsToWallet(
   for (const asset of assetIDs) {
     const pAsset = api.createType("u128", asset);
     balancesBefore.push(parseInt((await api.rpc.assets.balanceOf(pAsset.toString(), wallet.publicKey)).toString()));
-    tx.push(api.tx.sudo.sudo(
-      api.tx.assets.mintInto(pAsset, wallet.publicKey, amount)
-    ));
+    tx.push(api.tx.sudo.sudo(api.tx.assets.mintInto(pAsset, wallet.publicKey, amount)));
   }
-  const { data: [result] } = await sendWithBatchAndWaitForSuccess(api, sudoKey, api.events.sudo.Sudid.is, tx, false);
+  const {
+    data: [result]
+  } = await sendWithBatchAndWaitForSuccess(api, sudoKey, api.events.sudo.Sudid.is, tx, false);
   expect(result.isOk).to.be.true;
   for (let i = 0; i < assetIDs.length; i++) {
     const newBalance = await api.rpc.assets.balanceOf(assetIDs[i].toString(), wallet.publicKey);
@@ -42,6 +42,6 @@ export async function mintAssetsToWallet(
  * @param Accepts either string or number
  * @returns valid tokens with 12 decimals omitted
  */
-export function Pica(value: string | number){
-  return BigInt(value)*BigInt(10**12);
+export function Pica(value: string | number) {
+  return BigInt(value) * BigInt(10 ** 12);
 }

@@ -19,12 +19,12 @@ import { KeyringPair } from "@polkadot/keyring/types";
  * } all devnet wallets
  */
 export function getDevWallets(keyring: Keyring): {
-  devWalletAlice: KeyringPair,
-  devWalletBob: KeyringPair,
-  devWalletCharlie: KeyringPair,
-  devWalletDave: KeyringPair,
-  devWalletEve: KeyringPair,
-  devWalletFerdie: KeyringPair
+  devWalletAlice: KeyringPair;
+  devWalletBob: KeyringPair;
+  devWalletCharlie: KeyringPair;
+  devWalletDave: KeyringPair;
+  devWalletEve: KeyringPair;
+  devWalletFerdie: KeyringPair;
 } {
   return {
     devWalletAlice: <KeyringPair>keyring.addFromUri("//Alice"),

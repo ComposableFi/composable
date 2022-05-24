@@ -4,7 +4,6 @@ import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
 import { ApiPromise } from "@polkadot/api";
 import { KeyringPair } from "@polkadot/keyring/types";
 
-
 /**
  * Provides funds for Oracle tests.
  * @param api Connect ApiPromise
@@ -18,18 +17,8 @@ export async function runBeforeTxOracleAddStake(
   wallet1: KeyringPair,
   wallet2: KeyringPair
 ) {
-  await mintAssetsToWallet(
-    api,
-    wallet1,
-    sudoKey,
-    [1]
-  );
-  await mintAssetsToWallet(
-    api,
-    wallet2,
-    sudoKey,
-    [1]
-  );
+  await mintAssetsToWallet(api, wallet1, sudoKey, [1]);
+  await mintAssetsToWallet(api, wallet2, sudoKey, [1]);
 }
 
 /**
@@ -38,11 +27,7 @@ export async function runBeforeTxOracleAddStake(
  * @param sender Connected API Promise w/ sudo rights.
  * @param {u128} stake Staking amount.
  */
-export async function txOracleAddStakeSuccessTest(
-  api: ApiPromise,
-  sender: KeyringPair,
-  stake: u128
-) {
+export async function txOracleAddStakeSuccessTest(api: ApiPromise, sender: KeyringPair, stake: u128) {
   return await sendAndWaitForSuccess(
     api,
     sender,

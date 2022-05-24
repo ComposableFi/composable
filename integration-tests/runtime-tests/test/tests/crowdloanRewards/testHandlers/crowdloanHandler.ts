@@ -8,9 +8,7 @@ import { expect } from "chai";
 import Web3 from "web3";
 import { ApiPromise } from "@polkadot/api";
 
-
-const toHexString = bytes =>
-  Array.prototype.map.call(bytes, x => ("0" + (x & 0xFF).toString(16)).slice(-2)).join("");
+const toHexString = bytes => Array.prototype.map.call(bytes, x => ("0" + (x & 0xff).toString(16)).slice(-2)).join("");
 
 // The prefix is defined as pallet config
 const proofMessage = (account: IKeyringPair, isEth = false) =>
@@ -51,9 +49,7 @@ export class TxCrowdloanRewardsTests {
       api,
       sudoKey,
       api.events.sudo.Sudid.is,
-      api.tx.sudo.sudo(
-        api.tx.crowdloanRewards.initialize()
-      )
+      api.tx.sudo.sudo(api.tx.crowdloanRewards.initialize())
     );
   }
 
@@ -65,19 +61,21 @@ export class TxCrowdloanRewardsTests {
    * @param {KeyringPair} sudoKey Wallet with sudo rights.
    * @param testContributorWallet KSM Wallet of contributor to populate with.
    */
-  public static async txCrowdloanRewardsPopulateTest(api: ApiPromise, sudoKey: KeyringPair, testContributorWallet: KeyringPair) {
+  public static async txCrowdloanRewardsPopulateTest(
+    api: ApiPromise,
+    sudoKey: KeyringPair,
+    testContributorWallet: KeyringPair
+  ) {
     const vesting48weeks = api.createType("u32", 100800);
     let contributors: Array<[PalletCrowdloanRewardsModelsRemoteAccount, u128, u32]> = [];
     // Before we go through all the contributors, we inject our test wallet at the very beginning.
     const testContributorReward = api.createType("u128", 1_000_000_000_000);
-    const testContriborRelayChainObject = api.createType(
-      "PalletCrowdloanRewardsModelsRemoteAccount",
-      { RelayChain: testContributorWallet.publicKey }
-    );
-    const testContributorEthChainObject = api.createType(
-      "PalletCrowdloanRewardsModelsRemoteAccount",
-      { Ethereum: ethAccount(1).address }
-    );
+    const testContriborRelayChainObject = api.createType("PalletCrowdloanRewardsModelsRemoteAccount", {
+      RelayChain: testContributorWallet.publicKey
+    });
+    const testContributorEthChainObject = api.createType("PalletCrowdloanRewardsModelsRemoteAccount", {
+      Ethereum: ethAccount(1).address
+    });
     contributors.push([testContriborRelayChainObject, testContributorReward, vesting48weeks]);
     contributors.push([testContributorEthChainObject, testContributorReward, vesting48weeks]);
     // Iterating through our list of contributors
@@ -87,34 +85,32 @@ export class TxCrowdloanRewardsTests {
       let remoteAccountObject: PalletCrowdloanRewardsModelsRemoteAccount;
       // Creating either an ethereum or ksm contributor object.
       if (key.startsWith("0x"))
-        remoteAccountObject =
-          api.createType("PalletCrowdloanRewardsModelsRemoteAccount",
-            { Ethereum: key });
+        remoteAccountObject = api.createType("PalletCrowdloanRewardsModelsRemoteAccount", { Ethereum: key });
       else
-        remoteAccountObject =
-          api.createType("PalletCrowdloanRewardsModelsRemoteAccount",
-            { RelayChain: api.createType("AccountId32", key) });
+        remoteAccountObject = api.createType("PalletCrowdloanRewardsModelsRemoteAccount", {
+          RelayChain: api.createType("AccountId32", key)
+        });
       // Preparing our contributor object and adding it to the list of contributors to be populated.
       // This should be (value * 10^8) if I'm correct. But this lead to integer overflows.
       const currentContributorAmount = parseInt((parseFloat(value) * Math.pow(10, 6)).toFixed(0));
       amount += currentContributorAmount;
-      contributors.push([
-        remoteAccountObject,
-        api.createType("u128", currentContributorAmount),
-        vesting48weeks
-      ]);
+      contributors.push([remoteAccountObject, api.createType("u128", currentContributorAmount), vesting48weeks]);
 
       // Every 2500th iteration we send our list of contributors, else we'd break the block data size limit.
       if (i % 2500 == 0 && i != 0) {
         // Providing funds since calling `populate` verifies that the pallet funds are equal to contributor amount.
-        const { data: [provideFundsResult] } = await TxCrowdloanRewardsTests.beforeCrowdloanTestsProvideFunds(
+        const {
+          data: [provideFundsResult]
+        } = await TxCrowdloanRewardsTests.beforeCrowdloanTestsProvideFunds(
           api,
           sudoKey,
           api.createType("u128", amount)
         );
         expect(provideFundsResult).to.not.be.undefined;
         // Actual population step.
-        const { data: [result] } = await TxCrowdloanRewardsTests.txCrowdloanRewardsPopulateTestHandler(api, sudoKey, contributors);
+        const {
+          data: [result]
+        } = await TxCrowdloanRewardsTests.txCrowdloanRewardsPopulateTestHandler(api, sudoKey, contributors);
         expect(result.isOk).to.be.true;
         amount = 0;
         contributors = [];
@@ -135,9 +131,7 @@ export class TxCrowdloanRewardsTests {
       api,
       sudoKey,
       api.events.sudo.Sudid.is,
-      api.tx.sudo.sudo(
-        api.tx.crowdloanRewards.populate(contributors)
-      )
+      api.tx.sudo.sudo(api.tx.crowdloanRewards.populate(contributors))
     );
   }
 
@@ -147,7 +141,11 @@ export class TxCrowdloanRewardsTests {
    * @param {KeyringPair} contributor The contributor relay chain wallet public key.
    * @param {KeyringPair} contributorRewardAccount The wallet the contributor wants to receive their PICA to.
    */
-  public static async txCrowdloanRewardsRelayAssociateTests(api: ApiPromise, contributor: KeyringPair, contributorRewardAccount) {
+  public static async txCrowdloanRewardsRelayAssociateTests(
+    api: ApiPromise,
+    contributor: KeyringPair,
+    contributorRewardAccount
+  ) {
     // arbitrary, user defined reward account
     const proof = contributor.sign(proofMessage(contributorRewardAccount));
     return await sendUnsignedAndWaitForSuccess(
@@ -155,8 +153,7 @@ export class TxCrowdloanRewardsTests {
       api.events.crowdloanRewards.Associated.is,
       api.tx.crowdloanRewards.associate(
         contributorRewardAccount.publicKey,
-        api.createType("PalletCrowdloanRewardsModelsProof",
-          { RelayChain: [contributor.publicKey, { Sr25519: proof }] })
+        api.createType("PalletCrowdloanRewardsModelsProof", { RelayChain: [contributor.publicKey, { Sr25519: proof }] })
       )
     );
   }

@@ -26,7 +26,9 @@ export async function getNewConnection() {
   const endpoint = "ws://" + (process.env.ENDPOINT ?? "127.0.0.1:9988");
   const provider = new WsProvider(endpoint);
   const apiOptions: ApiOptions = {
-    provider, types, rpc
+    provider,
+    types,
+    rpc
   };
   const newClient = await ApiPromise.create(apiOptions);
 

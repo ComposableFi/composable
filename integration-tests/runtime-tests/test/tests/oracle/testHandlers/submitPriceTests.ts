@@ -10,12 +10,7 @@ import { u128 } from "@polkadot/types-codec";
  * @param price Price to be submitted.
  * @param assetId Specifies asset id.
  */
-export async function txOracleSubmitPriceSuccessTest(
-  api: ApiPromise,
-  signer: KeyringPair,
-  price: u128,
-  assetId: u128
-) {
+export async function txOracleSubmitPriceSuccessTest(api: ApiPromise, signer: KeyringPair, price: u128, assetId: u128) {
   return await sendAndWaitForSuccess(
     api,
     signer,

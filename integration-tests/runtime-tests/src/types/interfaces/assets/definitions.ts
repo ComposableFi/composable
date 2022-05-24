@@ -14,8 +14,8 @@ export default {
         {
           name: "at",
           type: "Hash",
-          isOptional: true,
-        },
+          isOptional: true
+        }
       ],
       type: "CustomRpcBalance"
     },
@@ -25,11 +25,11 @@ export default {
         {
           name: "at",
           type: "Hash",
-          isOptional: true,
-        },
+          isOptional: true
+        }
       ],
       type: "Vec<Asset>"
-    },
+    }
   },
   types: {
     Asset: {
