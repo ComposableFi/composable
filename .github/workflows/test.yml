@@ -33,9 +33,11 @@ jobs:
     - name: Run polkadot-launch
       timeout-minutes: 5
       env:
+        DEBIAN_FRONTEND: noninteractive
         LOG_FILE: /tmp/polka-launch/polka-launch.log
       run: |
-        apt install npm
+        apt update -y
+        apt install -y -y --no-install-recommends npm
         npm install --global yarn
         yarn
         yarn composable > "${LOG_FILE}" 2>&1 &
