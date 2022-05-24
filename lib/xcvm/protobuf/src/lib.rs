@@ -4,7 +4,10 @@ extern crate alloc;
 
 mod xcvm;
 
-use alloc::{collections::BTreeMap, vec::Vec};
+use alloc::{
+	collections::{BTreeMap, VecDeque},
+	vec::Vec,
+};
 pub use prost::{DecodeError, Message};
 use xcvm::*;
 pub use xcvm_core::*;
@@ -49,7 +52,7 @@ impl<
 	> From<XCVMProgram<XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>>> for Program
 {
 	fn from(
-		XCVMProgram { instructions, instruction_pointer }: XCVMProgram<
+		XCVMProgram { instructions }: XCVMProgram<
 			XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>,
 		>,
 	) -> Self {
@@ -57,7 +60,6 @@ impl<
 			instructions: Some(Instructions {
 				instructions: instructions.into_iter().map(Into::<Instruction>::into).collect(),
 			}),
-			instruction_pointer,
 		}
 	}
 }
@@ -70,17 +72,14 @@ impl<
 	> TryFrom<Program> for XCVMProgram<XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>>
 {
 	type Error = ();
-	fn try_from(
-		Program { instructions, instruction_pointer }: Program,
-	) -> Result<Self, Self::Error> {
+	fn try_from(Program { instructions }: Program) -> Result<Self, Self::Error> {
 		instructions
 			.map(|Instructions { instructions }| {
 				Ok(XCVMProgram {
 					instructions: instructions
 						.into_iter()
 						.map(TryInto::<XCVMInstruction<_, _, _, _>>::try_into)
-						.collect::<Result<Vec<_>, _>>()?,
-					instruction_pointer,
+						.collect::<Result<VecDeque<_>, _>>()?,
 				})
 			})
 			.unwrap_or(Err(()))
@@ -166,7 +165,7 @@ impl<
 						program
 							.into_iter()
 							.map(TryInto::try_into)
-							.collect::<Result<Vec<_>, _>>()?,
+							.collect::<Result<VecDeque<_>, _>>()?,
 					)),
 				instruction::Instruction::Transfer(Transfer { destination: None, .. }) => Err(()),
 			})
@@ -214,7 +213,7 @@ mod tests {
 				.into_iter()
 				.map(Into::<Instruction>::into)
 				.map(TryFrom::<Instruction>::try_from)
-				.collect::<Result<Vec<_>, _>>()
+				.collect::<Result<VecDeque<_>, _>>()
 		);
 	}
 }

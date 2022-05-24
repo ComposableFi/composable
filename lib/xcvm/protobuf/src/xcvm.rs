@@ -2,8 +2,6 @@
 pub struct Program {
 	#[prost(message, optional, tag = "1")]
 	pub instructions: ::core::option::Option<Instructions>,
-	#[prost(uint32, tag = "2")]
-	pub instruction_pointer: u32,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Instructions {
