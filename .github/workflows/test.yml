@@ -21,7 +21,7 @@ jobs:
         cd composable
         curl https://github.com/ComposableFi/composable/releases/download/v2.2.1/composable -Lo ./target/release/composable
         chmod +x target/release/composable
-        target/release/composable --version
+        ./target/release/composable --version
 
     - name: Build a Polkadot relay chain
       run: |

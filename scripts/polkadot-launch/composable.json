@@ -54,7 +54,7 @@
   },
   "parachains": [
     {
-      "bin": "../../target/release/composable",
+      "bin": "./composable/target/release/composable",
       "chain": "dali-dev",
       "nodes": [
         {
