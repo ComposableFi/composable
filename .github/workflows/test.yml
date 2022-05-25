@@ -18,6 +18,7 @@ jobs:
       run: |
         cd scripts/polkadot-launch
         mkdir -p composable/target/release
+        cd composable
         curl https://github.com/ComposableFi/composable/releases/download/v2.2.1/composable -Lo ./target/release/composable
         chmod +x target/release/composable
         target/release/composable --version
