@@ -4492,7 +4492,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "instrumental-strategy-pablo",
- "log 0.4.14",
+ "log 0.4.17",
  "orml-tokens",
  "orml-traits",
  "pallet-balances",
@@ -4502,10 +4502,10 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-arithmetic",
- "sp-core 4.1.0-dev",
+ "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.19)",
  "sp-io",
  "sp-runtime",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.16)",
+ "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.19)",
 ]
 
 [[package]]
@@ -4516,7 +4516,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "log 0.4.14",
+ "log 0.4.17",
  "orml-tokens",
  "orml-traits",
  "pallet-balances",
@@ -4527,10 +4527,10 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-arithmetic",
- "sp-core 4.1.0-dev",
+ "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.19)",
  "sp-io",
  "sp-runtime",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.16)",
+ "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.19)",
 ]
 
 [[package]]
@@ -14095,7 +14095,7 @@ dependencies = [
 [[package]]
 name = "substrate-state-trie-migration-rpc"
 version = "4.0.0-dev"
-source = "git+https://github.com/paritytech/substrate.git?branch=polkadot-v0.9.19#174735ea1bb5fc4513519c45181d8df63d86f613"
+source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.19#174735ea1bb5fc4513519c45181d8df63d86f613"
 dependencies = [
  "jsonrpc-core",
  "jsonrpc-core-client",
