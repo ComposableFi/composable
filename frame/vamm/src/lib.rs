@@ -47,8 +47,12 @@
 //! returning it's Id.
 //! * [`swap`](pallet/struct.Pallet.html#method.swap): Performs swap of a
 //! * [`move_price`](pallet/struct.Pallet.html#method.move_price): Changes
-//! amount of base and quote assets in reserve, essentially changing the
-//! invariant.
+//! amount of [`base`](VammState::base_asset_reserves) and
+//! [`quote`](VammState::quote_asset_reserves) assets in reserve, essentially
+//! changing the invariant.
+//! * [`get_price`](pallet/struct.Pallet.html#method.get_price): Gets the
+//! current price of the [`base`](VammState::base_asset_reserves) or
+//! [`quote`](VammState::quote_asset_reserves) asset in a vamm.
 //!
 //! ### Runtime Storage Objects
 //!
@@ -316,9 +320,11 @@ pub mod pallet {
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Tried to set [`base_asset_reserves`](VammState) to zero.
+		/// Tried to set [`base_asset_reserves`](VammState::base_asset_reserves)
+		/// to zero.
 		BaseAssetReserveIsZero,
-		/// Tried to set [`quote_asset_reserves`](VammState) to zero.
+		/// Tried to set
+		/// [`quote_asset_reserves`](VammState::quote_asset_reserves) to zero.
 		QuoteAssetReserveIsZero,
 		/// Computed Invariant is zero.
 		InvariantIsZero,
@@ -338,12 +344,14 @@ pub mod pallet {
 		VammIsClosed,
 		/// Tried to swap assets but the amount returned was less than the minimum expected.
 		SwappedAmountLessThanMinimumLimit,
-		/// Tried to derive invariant from base and quote asset, but the
+		/// Tried to derive invariant from [`base`](VammState::base_asset_reserves) and
+		/// [`quote`](VammState::quote_asset_reserves) asset, but the
 		/// computation was not successful.
 		FailedToDeriveInvariantFromBaseAndQuoteAsset,
-		/// Tried to perform swap operation but it would drain all base asset reserves.
+		/// Tried to perform swap operation but it would drain all [`base`](VammState::base_asset_reserves) asset reserves.
 		BaseAssetReservesWouldBeCompletelyDrained,
-		/// Tried to perform swap operation but it would drain all quote asset reserves.
+		/// Tried to perform swap operation but it would drain all
+		/// [`quote`](VammState::quote_asset_reserves) asset reserves.
 		QuoteAssetReservesWouldBeCompletelyDrained,
 	}
 
@@ -407,16 +415,23 @@ pub mod pallet {
 		/// ![](https://www.plantuml.com/plantuml/svg/NP2nJiCm48PtFyNH1L2L5yXGbROB0on8x5VdLsibjiFT9NbzQaE4odRIz-dp-VPgB3R5mMaVqiZ2aGGwvgHuWofVSC2GbnUHl93916V11j0dnqXUm1PoSeyyMMPlOMO3vUGUx8e8YYpgtCXYmOUHaz7cE0Gasn0h-JhUuzAjSBuDhcFZCojeys5P-09wAi9pDVIVSXYox_sLGwhux9txUO6QNSrjjoqToyfriHv6Wgy9QgxGOjNalRJ2PfTloPPE6BC68r-TRYrXHlfJVx_MD2szOrcTrvFR8tNbsjy0)
 		///
 		/// ## Parameters:
-		/// - `base_asset_reserves`: The amount of base asset
-		/// - `quote_asset_reserves`: The amount of quote asset
-		/// - `peg_multiplier`: The constant multiplier responsible to balance quote and base asset
+		/// - `base_asset_reserves`: The amount of
+		/// [`base`](VammState::base_asset_reserves) asset
+		/// - `quote_asset_reserves`: The amount of
+		/// [`quote`](VammState::quote_asset_reserves) asset
+		/// - `peg_multiplier`: The constant multiplier responsible to balance
+		/// [`quote`](VammState::quote_asset_reserves) and
+		/// [`base`](VammState::base_asset_reserves)
+		/// asset
 		///
 		/// ## Returns
 		/// The new vamm's id, if successful.
 		///
 		/// ## Assumptions or Requirements
-		/// In order to create a valid vamm, we need to ensure that both base and quote asset
-		/// reserves, as well as the peg_multiplier, are non-zero. Every parameter must be greater
+		/// In order to create a valid vamm, we need to ensure that both
+		/// [`base`](VammState::base_asset_reserves) and
+		/// [`quote`](VammState::quote_asset_reserves) asset reserves, as well
+		/// as the peg_multiplier, are non-zero. Every parameter must be greater
 		/// than zero.
 		///
 		/// ## Emits
@@ -477,11 +492,13 @@ pub mod pallet {
 		/// ## Parameters
 		///  - `vamm_id`: The ID of the desired vamm to query.
 		///  - `asset_type`: The desired asset type to get info about. (either
-		///  __base__ or __quote__)
+		///  [`base`](VammState::base_asset_reserves) or
+		///  [`quote`](VammState::quote_asset_reserves))
 		///
 		/// ## Returns
-		/// The price of __base__ asset in relation to __quote__
-		/// (or vice-versa).
+		/// The price of [`base`](VammState::base_asset_reserves) asset in
+		/// relation to [`quote`](VammState::quote_asset_reserves) (or
+		/// vice-versa).
 		///
 		/// ## Assumptions or Requirements
 		/// In order to consult the current price for an asset, we need to
@@ -555,8 +572,9 @@ pub mod pallet {
 		/// The amount of the other asset the caller will receive as a
 		/// result of the swap.
 		///
-		/// E.g. If the caller swaps _quote_ asset, it will receive some amount
-		/// of _base_ asset (and vice-versa).
+		/// E.g. If the caller swaps [`quote`](VammState::quote_asset_reserves)
+		/// asset, it will receive some amount of
+		/// [`base`](VammState::base_asset_reserves) asset (and vice-versa).
 		///
 		/// ## Assumptions or Requirements
 		/// * The requested [`VammId`](Config::VammId) must exists
@@ -640,7 +658,8 @@ pub mod pallet {
 		}
 
 		/// Moves the price of a vamm to the desired values of
-		/// [`base`](VammState) and [`quote`](VammState) asset reserves.
+		/// [`base`](VammState::base_asset_reserves) and
+		/// [`quote`](VammState::quote_asset_reserves) asset reserves.
 		///
 		/// # Overview
 		/// In order for the caller to modify the
@@ -676,8 +695,10 @@ pub mod pallet {
 		///
 		/// ## State Changes
 		/// Updates:
-		/// * [`VammMap`], modifying both base and quote asset reserves as well
-		/// as the invariant.
+		/// * [`VammMap`], modifying both
+		/// [`base`](VammState::base_asset_reserves) and
+		/// [`quote`](VammState::quote_asset_reserves) asset reserves as well as
+		/// the invariant.
 		///
 		/// ## Errors
 		/// * [`Error::<T>::VammDoesNotExist`]
