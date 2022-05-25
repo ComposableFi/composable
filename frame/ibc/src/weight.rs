@@ -3,11 +3,8 @@ use core::marker::PhantomData;
 use frame_support::pallet_prelude::Weight;
 use ibc::core::{
 	ics02_client::{client_type::ClientType, msgs::ClientMsg},
-	ics03_connection::msgs::ConnectionMsg,
-	ics04_channel::{
-		context::ChannelReader,
-		msgs::{ChannelMsg, PacketMsg},
-	},
+	ics03_connection::{context::ConnectionReader, msgs::ConnectionMsg},
+	ics04_channel::msgs::{ChannelMsg, PacketMsg},
 	ics24_host::identifier::ClientId,
 	ics26_routing::msgs::Ics26Envelope,
 };

@@ -37,8 +37,8 @@ treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/s
 
 composable-support = { path = "../../frame/composable-support", default-features = false }
 composable-traits = { path = "../../frame/composable-traits", default-features = false }
-num-traits = { version = "0.2.14", default-features = false }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "238828ac2bafe498a2a071317639e9404d6f6994", default-features = false }
+num-traits = { version = "0.2.15", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "e65be8747f4c5245721d281c93746fa17a06f924", default-features = false }
 primitives = { path = "../primitives", default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",

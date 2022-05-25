@@ -3,7 +3,6 @@
 use ibc::{
 	core::{
 		ics04_channel::packet::{Packet, Sequence},
-		ics05_port::capabilities::Capability,
 		ics24_host::identifier::{ChannelId, PortId},
 	},
 	timestamp::Timestamp,
@@ -18,7 +17,6 @@ pub struct SendPacketData {
 	pub timeout_height_offset: u64,
 	/// This value should be represent nano seconds
 	pub timeout_timestamp_offset: u64,
-	pub capability: Capability,
 	pub port_id: Vec<u8>,
 	pub channel_id: Vec<u8>,
 	pub dest_port_id: Vec<u8>,

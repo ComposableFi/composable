@@ -10,10 +10,6 @@ use ibc::{
 			msgs::chan_open_init::{MsgChannelOpenInit, TYPE_URL as CHANNEL_OPEN_INIT_TYPE_URL},
 			packet::{Packet, Sequence},
 		},
-		ics05_port::{
-			capabilities::{PortCapability, PortCapabilityType, TypedCapability},
-			context::{PortKeeper, PortReader},
-		},
 		ics24_host::{
 			identifier::*,
 			path::{
@@ -623,11 +619,6 @@ where
 		let sequence = Sequence::from(next_seq_send);
 		let source_port =
 			port_id_from_bytes(port_id.clone()).map_err(|_| IbcHandlerError::SendPacketError)?;
-		let typed_cap: TypedCapability<PortCapabilityType> = data.capability.into();
-		let port_cap: PortCapability = typed_cap.into();
-		if !ctx.authenticate(source_port.clone(), &port_cap) {
-			return Err(IbcHandlerError::InvalidCapability)
-		}
 		let source_channel = channel_id_from_bytes(channel_id.clone())
 			.map_err(|_| IbcHandlerError::SendPacketError)?;
 		let destination_port =
@@ -665,21 +656,11 @@ where
 		Ok(())
 	}
 
-	fn bind_port(port_id: PortId) -> Result<PortCapability, IbcHandlerError> {
-		let mut ctx = crate::routing::Context::<T>::new();
-		let port_cap = ctx.bind_port(port_id).map_err(|_| IbcHandlerError::BindPortError)?;
-		Ok(port_cap)
-	}
-
 	fn open_channel(
 		port_id: PortId,
-		capability: PortCapability,
 		channel_end: ChannelEnd,
 	) -> Result<ChannelId, IbcHandlerError> {
 		let mut ctx = crate::routing::Context::<T>::new();
-		if !ctx.authenticate(port_id.clone(), &capability) {
-			return Err(IbcHandlerError::ChannelInitError)
-		}
 		let channel_counter =
 			ctx.channel_counter().map_err(|_| IbcHandlerError::ChannelInitError)?;
 		let channel_id = ChannelId::new(channel_counter);

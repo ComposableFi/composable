@@ -12,7 +12,6 @@ use ibc::{
 			context::{ClientKeeper, ClientReader},
 			error::Error as ICS02Error,
 		},
-		ics03_connection::context::ConnectionReader,
 		ics24_host::identifier::ClientId,
 	},
 	timestamp::Timestamp,
@@ -150,8 +149,7 @@ where
 	}
 
 	fn host_consensus_state(&self, height: Height) -> Result<AnyConsensusState, ICS02Error> {
-		ConnectionReader::host_consensus_state(self, height)
-			.map_err(|_| ICS02Error::implementation_specific())
+		Err(ICS02Error::implementation_specific())
 	}
 
 	fn pending_host_consensus_state(&self) -> Result<AnyConsensusState, ICS02Error> {

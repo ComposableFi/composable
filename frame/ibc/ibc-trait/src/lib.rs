@@ -4,7 +4,6 @@ use frame_support::{weights::Weight, RuntimeDebug};
 use ibc::core::{
 	ics02_client::client_type::ClientType,
 	ics04_channel::{channel::ChannelEnd, msgs::acknowledgement::Acknowledgement, packet::Packet},
-	ics05_port::capabilities::PortCapability,
 	ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
 };
 use ibc_primitives::SendPacketData;
@@ -17,7 +16,6 @@ pub enum Error {
 	BindPortError,
 	ChannelInitError,
 	DecodingError,
-	InvalidCapability,
 	ErrorDecodingPrefix,
 }
 
@@ -33,12 +31,7 @@ pub struct OpenChannelParams {
 
 pub trait IbcTrait {
 	fn send_packet(data: SendPacketData) -> Result<(), Error>;
-	fn bind_port(port_id: PortId) -> Result<PortCapability, Error>;
-	fn open_channel(
-		port_id: PortId,
-		capability: PortCapability,
-		channel_end: ChannelEnd,
-	) -> Result<ChannelId, Error>;
+	fn open_channel(port_id: PortId, channel_end: ChannelEnd) -> Result<ChannelId, Error>;
 }
 
 pub trait CallbackWeight {

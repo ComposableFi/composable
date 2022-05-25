@@ -11,7 +11,6 @@ use ibc::{
 			packet::Packet,
 			Version,
 		},
-		ics05_port::capabilities::{Capability as RawCapability, ChannelCapability},
 		ics24_host::identifier::{ChannelId, ConnectionId, PortId},
 		ics26_routing::context::{
 			Acknowledgement as GenericAcknowledgement, Module, ModuleOutput, OnRecvPacketAck,
@@ -51,7 +50,6 @@ pub struct SendPingParams {
 // `construct_runtime`.
 #[frame_support::pallet]
 pub mod pallet {
-	use sp_std::str::FromStr;
 	// Import various types used to declare pallet in scope.
 	use super::*;
 	use frame_support::pallet_prelude::*;
@@ -81,21 +79,6 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(0)]
-		pub fn bind_ibc_port(origin: OriginFor<T>) -> DispatchResult {
-			ensure_root(origin)?;
-			if Capability::<T>::get().is_some() {
-				return Err(Error::<T>::PortAlreadyBound.into())
-			}
-			let port_id = PortId::from_str(PORT_ID).map_err(|_| Error::<T>::ErrorBindingPort)?;
-			let capability =
-				T::IbcHandler::bind_port(port_id).map_err(|_| Error::<T>::ErrorBindingPort)?;
-			let cap = capability.index();
-			Capability::<T>::put(cap);
-			Self::deposit_event(Event::<T>::PortBound);
-			Ok(())
-		}
-
 		#[pallet::weight(0)]
 		pub fn open_channel(origin: OriginFor<T>, params: OpenChannelParams) -> DispatchResult {
 			ensure_root(origin)?;
@@ -128,11 +111,8 @@ pub mod pallet {
 
 			let port_id = port_id_from_bytes(PORT_ID.as_bytes().to_vec())
 				.map_err(|_| Error::<T>::ChannelInitError)?;
-			let capability = Capability::<T>::get().ok_or(Error::<T>::MissingPortCapability)?;
-			let capability = RawCapability::from(capability);
-			let channel_id =
-				T::IbcHandler::open_channel(port_id.clone(), capability.into(), channel_end)
-					.map_err(|_| Error::<T>::ChannelInitError)?;
+			let channel_id = T::IbcHandler::open_channel(port_id.clone(), channel_end)
+				.map_err(|_| Error::<T>::ChannelInitError)?;
 			Self::deposit_event(Event::<T>::ChannelOpened {
 				channel_id: channel_id.to_string().as_bytes().to_vec(),
 				port_id: port_id.as_bytes().to_vec(),
@@ -143,13 +123,10 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn send_ping(origin: OriginFor<T>, params: SendPingParams) -> DispatchResult {
 			ensure_root(origin)?;
-			let capability = Capability::<T>::get().ok_or(Error::<T>::MissingPortCapability)?;
-			let capability = RawCapability::from(capability);
 			let send_packet = SendPacketData {
 				data: params.data,
 				timeout_height_offset: params.timeout_height_offset,
 				timeout_timestamp_offset: params.timeout_timestamp_offset,
-				capability,
 				port_id: PORT_ID.as_bytes().to_vec(),
 				channel_id: params.channel_id,
 				dest_port_id: params.dest_port_id,
@@ -164,8 +141,6 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Port for pallet has been bound
-		PortBound,
 		/// A send packet has been registered
 		PacketSent,
 		/// A channel has been opened
@@ -173,34 +148,17 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
-	/// Port Capability
-	pub type Capability<T> = StorageValue<_, u64, OptionQuery>;
-
-	#[pallet::storage]
 	/// A vector of Vec<channel_id>
 	pub type Channels<T> = StorageValue<_, Vec<Vec<u8>>, ValueQuery>;
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Error generating port id
-		ErrorBindingPort,
-		/// Port already bound
-		PortAlreadyBound,
 		/// Invalid params passed
 		InvalidParams,
 		/// Error opening channel
 		ChannelInitError,
-		/// Missing port capability
-		MissingPortCapability,
 		/// Error registering packet
 		PacketSendError,
-	}
-
-	impl<T: Config> Pallet<T> {
-		#[cfg(feature = "runtime-benchmarks")]
-		pub fn set_capability(cap: u64) {
-			Capability::<T>::put(cap);
-		}
 	}
 }
 
@@ -237,7 +195,6 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 		_connection_hops: &[ConnectionId],
 		_port_id: &PortId,
 		_channel_id: &ChannelId,
-		_channel_cap: &ChannelCapability,
 		_counterparty: &Counterparty,
 		_version: &Version,
 	) -> Result<(), Ics04Error> {
@@ -252,7 +209,6 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 		_connection_hops: &[ConnectionId],
 		port_id: &PortId,
 		channel_id: &ChannelId,
-		_channel_cap: &ChannelCapability,
 		counterparty: &Counterparty,
 		counterparty_version: &Version,
 	) -> Result<Version, Ics04Error> {

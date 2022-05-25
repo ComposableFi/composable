@@ -190,11 +190,6 @@ pub mod pallet {
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<(Vec<u8>, Vec<u8>)>, ValueQuery>;
 
 	#[pallet::storage]
-	/// capability_name => capability
-	pub type Capabilities<T: Config> =
-		CountedStorageMap<_, Blake2_128Concat, Vec<u8>, u64, OptionQuery>;
-
-	#[pallet::storage]
 	/// (port_identifier, channel_identifier) => Sequence
 	pub type NextSequenceSend<T: Config> =
 		StorageDoubleMap<_, Blake2_128Concat, Vec<u8>, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;

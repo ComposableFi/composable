@@ -1,27 +1,19 @@
 use super::*;
-use core::{ops::Deref, str::FromStr, time::Duration};
+use core::{str::FromStr, time::Duration};
 use frame_support::traits::Get;
 use scale_info::prelude::string::ToString;
 
 use crate::routing::Context;
 use ibc::{
 	core::{
-		ics02_client::{
-			client_consensus::AnyConsensusState, client_state::AnyClientState,
-			context::ClientReader,
-		},
-		ics03_connection::{connection::ConnectionEnd, context::ConnectionReader},
 		ics04_channel::{
 			channel::ChannelEnd,
+			commitment::{AcknowledgementCommitment, PacketCommitment as PacketCommitmentType},
 			context::{ChannelKeeper, ChannelReader},
 			error::Error as ICS04Error,
 			packet::{Receipt, Sequence},
 		},
-		ics05_port::{
-			capabilities::ChannelCapability, context::PortReader, error::Error as Ics05Error,
-		},
 		ics24_host::identifier::{ChannelId, ClientId, ConnectionId, PortId},
-		ics26_routing::context::ModuleId,
 	},
 	timestamp::Timestamp,
 	Height,
@@ -31,7 +23,6 @@ use tendermint_proto::Protobuf;
 impl<T: Config + Sync + Send> ChannelReader for Context<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
-	Self: ConnectionReader + ClientReader,
 {
 	/// Returns the ChannelEnd for the given `port_id` and `chan_id`.
 	fn channel_end(&self, port_channel_id: &(PortId, ChannelId)) -> Result<ChannelEnd, ICS04Error> {
@@ -49,12 +40,6 @@ where
 		})?;
 		log::trace!("in channel : [channel_end] >> channel_end = {:?}", channel_end);
 		Ok(channel_end)
-	}
-
-	/// Returns the ConnectionState for the given identifier `connection_id`.
-	fn connection_end(&self, connection_id: &ConnectionId) -> Result<ConnectionEnd, ICS04Error> {
-		ConnectionReader::connection_end(self, connection_id)
-			.map_err(|_| ICS04Error::connection_not_open(connection_id.clone()))
 	}
 
 	fn connection_channels(
@@ -87,37 +72,6 @@ where
 			return Ok(result)
 		} else {
 			Err(ICS04Error::connection_not_open(conn_id.clone()))
-		}
-	}
-
-	/// Returns the ClientState for the given identifier `client_id`. Necessary dependency towards
-	/// proof verification.
-	fn client_state(&self, client_id: &ClientId) -> Result<AnyClientState, ICS04Error> {
-		ClientReader::client_state(self, client_id)
-			.map_err(|_| ICS04Error::implementation_specific())
-	}
-
-	fn client_consensus_state(
-		&self,
-		client_id: &ClientId,
-		height: Height,
-	) -> Result<AnyConsensusState, ICS04Error> {
-		ClientReader::consensus_state(self, client_id, height)
-			.map_err(|_| ICS04Error::implementation_specific())
-	}
-
-	fn authenticated_capability(&self, port_id: &PortId) -> Result<ChannelCapability, ICS04Error> {
-		match PortReader::lookup_module_by_port(self, port_id) {
-			Ok((.., key)) =>
-				if !PortReader::authenticate(self, port_id.clone(), &key) {
-					Err(ICS04Error::invalid_port_capability())
-				} else {
-					let key = key.deref().clone();
-					Ok(key.into())
-				},
-			Err(e) if e.detail() == Ics05Error::unknown_port(port_id.clone()).detail() =>
-				Err(ICS04Error::no_port_capability(port_id.clone())),
-			Err(_) => Err(ICS04Error::implementation_specific()),
 		}
 	}
 
@@ -160,7 +114,7 @@ where
 	fn get_packet_commitment(
 		&self,
 		key: &(PortId, ChannelId, Sequence),
-	) -> Result<String, ICS04Error> {
+	) -> Result<PacketCommitmentType, ICS04Error> {
 		let seq = u64::from(key.2);
 
 		if <PacketCommitment<T>>::contains_key((
@@ -170,10 +124,8 @@ where
 		)) {
 			let data =
 				<PacketCommitment<T>>::get((key.0.as_bytes(), key.1.to_string().as_bytes(), seq));
-			let data =
-				String::from_utf8(data).map_err(|_| ICS04Error::implementation_specific())?;
 			log::trace!("in channel : [get_packet_commitment] >> packet_commitment = {:?}", data);
-			Ok(data)
+			Ok(data.into())
 		} else {
 			log::trace!(
 				"in channel : [get_packet_commitment] >> read get packet commitment return None"
@@ -208,7 +160,7 @@ where
 	fn get_packet_acknowledgement(
 		&self,
 		key: &(PortId, ChannelId, Sequence),
-	) -> Result<String, ICS04Error> {
+	) -> Result<AcknowledgementCommitment, ICS04Error> {
 		let seq = u64::from(key.2);
 
 		if <Acknowledgements<T>>::contains_key((
@@ -216,14 +168,13 @@ where
 			key.1.to_string().as_bytes(),
 			seq,
 		)) {
-			let data =
+			let ack =
 				<Acknowledgements<T>>::get((key.0.as_bytes(), key.1.to_string().as_bytes(), seq));
-			let ack = String::from_utf8(data).map_err(|_| ICS04Error::implementation_specific())?;
 			log::trace!(
 				"in channel : [get_packet_acknowledgement] >> packet_acknowledgement = {:?}",
 				ack
 			);
-			Ok(ack)
+			Ok(ack.into())
 		} else {
 			log::trace!(
 				"in channel : [get_packet_acknowledgement] >> get acknowledgement not found"
@@ -233,35 +184,8 @@ where
 	}
 
 	/// A hashing function for packet commitments
-	fn hash(&self, value: String) -> String {
-		let r = sp_io::hashing::sha2_256(value.as_bytes());
-
-		let mut tmp = String::new();
-		for item in r.iter() {
-			tmp.push_str(&format!("{:02x}", item));
-		}
-		log::trace!("in channel: [hash] >> result = {:?}", tmp.clone());
-		tmp
-	}
-
-	/// Returns the current height of the local chain.
-	fn host_height(&self) -> Height {
-		ConnectionReader::host_current_height(self)
-	}
-
-	/// Returns the current timestamp of the local chain.
-	fn host_timestamp(&self) -> Timestamp {
-		ClientReader::host_timestamp(self)
-	}
-
-	fn host_consensus_state(&self, height: Height) -> Result<AnyConsensusState, ICS04Error> {
-		ConnectionReader::host_consensus_state(self, height)
-			.map_err(|_| ICS04Error::implementation_specific())
-	}
-
-	fn pending_host_consensus_state(&self) -> Result<AnyConsensusState, ICS04Error> {
-		ClientReader::pending_host_consensus_state(self)
-			.map_err(|_| ICS04Error::implementation_specific())
+	fn hash(&self, value: Vec<u8>) -> Vec<u8> {
+		sp_io::hashing::sha2_256(&*value).to_vec()
 	}
 
 	fn client_update_time(
@@ -304,17 +228,6 @@ where
 		let expected = T::ExpectedBlockTime::get();
 		Duration::from_nanos(expected)
 	}
-
-	fn lookup_module_by_channel(
-		&self,
-		_channel_id: &ChannelId,
-		port_id: &PortId,
-	) -> Result<(ModuleId, ChannelCapability), ICS04Error> {
-		let (module_id, cap) =
-			self.lookup_module_by_port(port_id).map_err(|_| ICS04Error::route_not_found())?;
-		let cap = cap.deref().clone();
-		Ok((module_id, ChannelCapability::from(cap)))
-	}
 }
 
 impl<T: Config + Sync + Send> ChannelKeeper for Context<T>
@@ -324,17 +237,12 @@ where
 	fn store_packet_commitment(
 		&mut self,
 		key: (PortId, ChannelId, Sequence),
-		timestamp: Timestamp,
-		heigh: Height,
-		data: Vec<u8>,
+		commitment: PacketCommitmentType,
 	) -> Result<(), ICS04Error> {
-		let input = format!("{:?},{:?},{:?}", timestamp, heigh, data);
 		let seq = u64::from(key.2);
-
-		// insert packet commitment key-value
 		<PacketCommitment<T>>::insert(
 			(key.0.as_bytes().to_vec(), key.1.to_string().as_bytes().to_vec(), seq),
-			ChannelReader::hash(self, input).as_bytes(),
+			commitment.into_vec(),
 		);
 
 		Ok(())
@@ -378,15 +286,14 @@ where
 	fn store_packet_acknowledgement(
 		&mut self,
 		key: (PortId, ChannelId, Sequence),
-		ack: Vec<u8>,
+		ack_commitment: AcknowledgementCommitment,
 	) -> Result<(), ICS04Error> {
-		let ack = format!("{:?}", ack);
 		let seq = u64::from(key.2);
 
 		// store packet acknowledgement key-value
 		<Acknowledgements<T>>::insert(
 			(key.0.as_bytes().to_vec(), key.1.to_string().as_bytes().to_vec(), seq),
-			ChannelReader::hash(self, ack).encode(),
+			ack_commitment.into_vec(),
 		);
 
 		Ok(())
