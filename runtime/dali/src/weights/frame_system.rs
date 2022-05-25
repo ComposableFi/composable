@@ -58,7 +58,7 @@ impl<T: frame_system::Config> frame_system::WeightInfo for WeightInfo<T> {
 	fn kill_storage(i: u32, ) -> Weight {
 		(1_256_000 as Weight)
 			// Standard Error: 1_000
-			.saturating_add((637_000 as Weight).saturating_mul(i as Weight))
+			.saturating_add((657_000 as Weight).saturating_mul(i as Weight))
 			.saturating_add(T::DbWeight::get().writes((1 as Weight).saturating_mul(i as Weight)))
 	}
 	// Storage: Skipped Metadata (r:0 w:0)
