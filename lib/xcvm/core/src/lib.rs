@@ -32,10 +32,16 @@ where
 		self
 	}
 
-	pub fn bridge(mut self, network: Network, assets: Assets) -> Self {
-		self.network = network;
-		self.instructions.push_back(XCVMInstruction::Bridge(network, assets));
-		self
+	pub fn spawn<F, E>(mut self, network: Network, assets: Assets, f: F) -> Result<Self, E>
+	where
+		F: FnOnce(Self) -> Result<Self, E>,
+	{
+		self.instructions.push_back(XCVMInstruction::Spawn(
+			network,
+			assets,
+			f(Self::from(network))?.build().instructions,
+		));
+		Ok(self)
 	}
 
 	pub fn call<T>(mut self, protocol: T) -> Result<Self, T::Error>
@@ -69,8 +75,8 @@ mod tests {
 			type Error = DummyProtocol1Error;
 			fn serialize(&self, network: XCVMNetwork) -> Result<AbiEncoded, Self::Error> {
 				match network {
-					XCVMNetwork::PICASSO => Ok(AbiEncoded::from(vec![0xCA, 0xFE, 0xBA, 0xBE])),
-					XCVMNetwork::ETHEREUM => Ok(AbiEncoded::from(vec![0xDE, 0xAD, 0xC0, 0xDE])),
+					XCVMNetwork::PICASSO => Ok(AbiEncoded::from(vec![0xCA, 0xFE, 0xBE, 0xEF])),
+					XCVMNetwork::ETHEREUM => Ok(AbiEncoded::from(vec![0xC0, 0xDE, 0xC0, 0xDE])),
 					_ => Err(DummyProtocol1Error),
 				}
 			}
@@ -91,39 +97,48 @@ mod tests {
 		}
 
 		#[derive(Debug)]
-		enum ContractBuildError {
+		enum ProgramBuildError {
 			DummyProtocol1(DummyProtocol1Error),
 			DummyProtocol2(DummyProtocol2Error),
 		}
-		impl From<DummyProtocol1Error> for ContractBuildError {
+		impl From<DummyProtocol1Error> for ProgramBuildError {
 			fn from(x: DummyProtocol1Error) -> Self {
-				ContractBuildError::DummyProtocol1(x)
+				ProgramBuildError::DummyProtocol1(x)
 			}
 		}
-		impl From<DummyProtocol2Error> for ContractBuildError {
+		impl From<DummyProtocol2Error> for ProgramBuildError {
 			fn from(x: DummyProtocol2Error) -> Self {
-				ContractBuildError::DummyProtocol2(x)
+				ProgramBuildError::DummyProtocol2(x)
 			}
 		}
 
-		let contract = || -> Result<_, ContractBuildError> {
-			Ok(XCVMProgramBuilder::<XCVMNetwork, XCVMInstruction<XCVMNetwork, _, (), ()>>::from(
+		let program = || -> Result<_, ProgramBuildError> {
+			XCVMProgramBuilder::<XCVMNetwork, XCVMInstruction<XCVMNetwork, _, (), ()>>::from(
 				XCVMNetwork::PICASSO,
 			)
 			.call(DummyProtocol1)?
-			.bridge(XCVMNetwork::ETHEREUM, ())
-			.call(DummyProtocol2)?
-			.transfer((), ()))
+			.spawn::<_, ProgramBuildError>(XCVMNetwork::ETHEREUM, (), |child| {
+				Ok(child.call(DummyProtocol2)?.call(DummyProtocol1)?.transfer((), ()))
+			})
 		}()
-		.expect("valid contract");
+		.expect("valid program");
 
 		assert_eq!(
-			contract.instructions,
-			VecDeque::from(vec![
-				XCVMInstruction::Call(AbiEncoded::from(vec![202, 254, 186, 190])),
-				XCVMInstruction::Bridge(XCVMNetwork::ETHEREUM, ()),
-				XCVMInstruction::Call(AbiEncoded::from(vec![222, 173, 192, 222])),
-				XCVMInstruction::Transfer((), ()),
+			program.instructions,
+			VecDeque::from([
+        // Protocol 1 on picasso
+				XCVMInstruction::Call(AbiEncoded::from(vec![202, 254, 190, 239])),
+				XCVMInstruction::Spawn(
+					XCVMNetwork::ETHEREUM,
+					(),
+					VecDeque::from([
+            // Protocol 2 on eth
+						XCVMInstruction::Call(AbiEncoded::from(vec![222, 173, 192, 222])),
+            // Protocol 1 on eth, different encoding than on previous network
+						XCVMInstruction::Call(AbiEncoded::from(vec![192, 222, 192, 222])),
+						XCVMInstruction::Transfer((), ())
+					])
+				),
 			])
 		);
 	}

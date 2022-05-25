@@ -20,7 +20,7 @@ pub enum DecodingFailure {
 pub fn decode<
 	TNetwork: From<u32>,
 	TAbiEncoded: TryFrom<Vec<u8>>,
-	TAccount: TryFrom<Vec<u8>>,
+	TAccount: for<'a> TryFrom<&'a [u8]>,
 	TAssets: From<BTreeMap<u32, u128>>,
 >(
 	buffer: &[u8],
@@ -34,7 +34,7 @@ pub fn decode<
 pub fn encode<
 	TNetwork: Into<u32>,
 	TAbiEncoded: Into<Vec<u8>>,
-	TAccount: Into<Vec<u8>>,
+	TAccount: AsRef<[u8]>,
 	TAssets: Into<BTreeMap<u32, u128>>,
 >(
 	program: XCVMProgram<XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>>,
@@ -58,7 +58,7 @@ impl TryInto<u128> for U128 {
 impl<
 		TNetwork: Into<u32>,
 		TAbiEncoded: Into<Vec<u8>>,
-		TAccount: Into<Vec<u8>>,
+		TAccount: AsRef<[u8]>,
 		TAssets: Into<BTreeMap<u32, u128>>,
 	> From<XCVMProgram<XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>>> for Program
 {
@@ -78,7 +78,7 @@ impl<
 impl<
 		TNetwork: From<u32>,
 		TAbiEncoded: TryFrom<Vec<u8>>,
-		TAccount: TryFrom<Vec<u8>>,
+		TAccount: for<'a> TryFrom<&'a [u8]>,
 		TAssets: From<BTreeMap<u32, u128>>,
 	> TryFrom<Program> for XCVMProgram<XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>>
 {
@@ -100,7 +100,7 @@ impl<
 impl<
 		TNetwork: Into<u32>,
 		TAbiEncoded: Into<Vec<u8>>,
-		TAccount: Into<Vec<u8>>,
+		TAccount: AsRef<[u8]>,
 		TAssets: Into<BTreeMap<u32, u128>>,
 	> From<XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>> for Instruction
 {
@@ -109,16 +109,7 @@ impl<
 			instruction: Some(match instruction {
 				XCVMInstruction::Transfer(destination, assets) =>
 					instruction::Instruction::Transfer(Transfer {
-						destination: Some(Account { addressed: destination.into() }),
-						assets: assets
-							.into()
-							.into_iter()
-							.map(|(asset, amount)| (asset, amount.into()))
-							.collect(),
-					}),
-				XCVMInstruction::Bridge(network, assets) =>
-					instruction::Instruction::Bridge(Bridge {
-						network: network.into(),
+						destination: Some(Account { addressed: destination.as_ref().to_vec() }),
 						assets: assets
 							.into()
 							.into_iter()
@@ -127,9 +118,14 @@ impl<
 					}),
 				XCVMInstruction::Call(payload) =>
 					instruction::Instruction::Call(Call { payload: payload.into() }),
-				XCVMInstruction::Spawn(network, program) =>
+				XCVMInstruction::Spawn(network, assets, program) =>
 					instruction::Instruction::Spawn(Spawn {
 						network: network.into(),
+						assets: assets
+							.into()
+							.into_iter()
+							.map(|(asset, amount)| (asset, amount.into()))
+							.collect(),
 						program: program.into_iter().map(Into::into).collect(),
 					}),
 			}),
@@ -140,7 +136,7 @@ impl<
 impl<
 		TNetwork: From<u32>,
 		TAbiEncoded: TryFrom<Vec<u8>>,
-		TAccount: TryFrom<Vec<u8>>,
+		TAccount: for<'a> TryFrom<&'a [u8]>,
 		TAssets: From<BTreeMap<u32, u128>>,
 	> TryFrom<Instruction> for XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>
 {
@@ -152,27 +148,23 @@ impl<
 					destination: Some(Account { addressed }),
 					assets,
 				}) => Ok(XCVMInstruction::Transfer(
-					addressed.try_into().map_err(|_| ())?,
+					(&addressed[..]).try_into().map_err(|_| ())?,
 					assets
 						.into_iter()
 						.map(|(asset, amount)| Ok((asset, amount.try_into()?)))
 						.collect::<Result<BTreeMap<u32, u128>, ()>>()?
 						.into(),
 				)),
-				instruction::Instruction::Bridge(Bridge { network, assets }) =>
-					Ok(XCVMInstruction::Bridge(
+				instruction::Instruction::Call(Call { payload }) =>
+					Ok(XCVMInstruction::Call(payload.try_into().map_err(|_| ())?)),
+				instruction::Instruction::Spawn(Spawn { network, assets, program }) =>
+					Ok(XCVMInstruction::Spawn(
 						network.into(),
 						assets
 							.into_iter()
 							.map(|(asset, amount)| Ok((asset, amount.try_into()?)))
 							.collect::<Result<BTreeMap<u32, u128>, ()>>()?
 							.into(),
-					)),
-				instruction::Instruction::Call(Call { payload }) =>
-					Ok(XCVMInstruction::Call(payload.try_into().map_err(|_| ())?)),
-				instruction::Instruction::Spawn(Spawn { network, program }) =>
-					Ok(XCVMInstruction::Spawn(
-						network.into(),
 						program
 							.into_iter()
 							.map(TryInto::try_into)
@@ -204,22 +196,24 @@ mod tests {
 			}
 		}
 
-		let contract = || -> Result<_, ()> {
+		let program = || -> Result<_, ()> {
 			Ok(XCVMProgramBuilder::<
 				XCVMNetwork,
 				XCVMInstruction<XCVMNetwork, _, Vec<u8>, BTreeMap<u32, u128>>,
 			>::from(XCVMNetwork::PICASSO)
 			.call(DummyProtocol)?
-			.bridge(XCVMNetwork::ETHEREUM, BTreeMap::from([(0x1337, 20_000)]))
-			.call(DummyProtocol)?
-			.transfer(vec![0xBE, 0xEF], BTreeMap::from([(0, 10_000)])))
+			.spawn(XCVMNetwork::ETHEREUM, BTreeMap::from([(0x1337, 20_000)]), |child| {
+				Ok(child
+					.call(DummyProtocol)?
+					.transfer(vec![0xBE, 0xEF], BTreeMap::from([(0, 10_000)])))
+			}))
 		}()
-		.expect("valid contract");
+		.expect("valid program");
 
 		// f^-1 . f = id
 		assert_eq!(
-			Ok(contract.instructions.clone()),
-			contract
+			Ok(program.instructions.clone()),
+			program
 				.instructions
 				.into_iter()
 				.map(Into::<Instruction>::into)

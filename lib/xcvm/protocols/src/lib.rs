@@ -5,7 +5,7 @@ extern crate alloc;
 use core::str::FromStr;
 
 use alloc::{borrow::ToOwned, vec};
-use ethabi::{encode, ethereum_types::H160, Function, Param, ParamType, StateMutability, Token};
+use ethabi::{encode, ethereum_types::H160, Function, StateMutability, Token};
 use xcvm_core::{AbiEncoded, XCVMNetwork, XCVMProtocol};
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -68,36 +68,42 @@ impl<Assets, Options> XCVMProtocol<XCVMNetwork> for Stableswap<Assets, Options> 
 #[cfg(test)]
 mod tests {
 	use super::*;
+	use alloc::collections::VecDeque;
 	use xcvm_core::{XCVMInstruction, XCVMProgramBuilder};
 
 	#[test]
 	fn test() {
-		let contract = || -> Result<_, StableswapError> {
-			Ok(XCVMProgramBuilder::<XCVMNetwork, XCVMInstruction<XCVMNetwork, _, (), ()>>::from(
+		let program = || -> Result<_, StableswapError> {
+			XCVMProgramBuilder::<XCVMNetwork, XCVMInstruction<XCVMNetwork, _, (), ()>>::from(
 				XCVMNetwork::PICASSO,
 			)
 			.call(Stableswap::<(), ()>::new((), (), ()))?
-			.bridge(XCVMNetwork::ETHEREUM, ())
-			.call(Stableswap::<(), ()>::new((), (), ()))?
-			.transfer((), ()))
+			.spawn::<_, StableswapError>(XCVMNetwork::ETHEREUM, (), |child| {
+				Ok(child.call(Stableswap::<(), ()>::new((), (), ()))?.transfer((), ()))
+			})
 		}()
-		.expect("valid contract");
+		.expect("valid program");
 
 		assert_eq!(
-			contract.instructions,
-			vec![
+			program.instructions,
+			VecDeque::from([
 				XCVMInstruction::Call(AbiEncoded::empty()),
-				XCVMInstruction::Bridge(XCVMNetwork::ETHEREUM, ()),
-				XCVMInstruction::Call(AbiEncoded::from(vec![
-					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 74, 17, 213, 238, 170, 194, 142, 195,
-					246, 29, 16, 13, 175, 77, 64, 71, 31, 24, 82, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0, 0,
-					0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-					4, 129, 25, 192, 101, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-					0, 0, 0, 0, 0, 0, 0, 0, 0
-				])),
-				XCVMInstruction::Transfer((), ()),
-			]
+				XCVMInstruction::Spawn(
+					XCVMNetwork::ETHEREUM,
+					(),
+					VecDeque::from([
+						XCVMInstruction::Call(AbiEncoded::from(vec![
+							0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 74, 17, 213, 238, 170, 194,
+							142, 195, 246, 29, 16, 13, 175, 77, 64, 71, 31, 24, 82, 0, 0, 0, 0, 0,
+							0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+							0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+							0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 129, 25, 192, 101, 0, 0, 0, 0, 0,
+							0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+						])),
+						XCVMInstruction::Transfer((), ())
+					])
+				),
+			])
 		);
 	}
 }

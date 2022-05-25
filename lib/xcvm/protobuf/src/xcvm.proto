@@ -13,7 +13,6 @@ message Instructions {
 message Instruction {
   oneof instruction {
     Transfer transfer = 1;
-    Bridge bridge = 2;
     Call call = 3;
     Spawn spawn = 4;
   }
@@ -25,19 +24,15 @@ message Transfer {
   map<uint32, U128> assets = 2;
 }
 
-message Bridge {
-  uint32 network = 1;
-  // (Asset, Amount)
-  map<uint32, U128> assets = 2;
-}
-
 message Call {
   bytes payload = 1;
 }
 
 message Spawn {
   uint32 network = 1;
-  repeated Instruction program = 2;
+  // (Asset, Amount)
+  map<uint32, U128> assets = 2;
+  repeated Instruction program = 3;
 }
 
 message Account {

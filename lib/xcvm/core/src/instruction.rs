@@ -5,7 +5,6 @@ use scale_info::TypeInfo;
 #[derive(Clone, PartialEq, Eq, Debug, Encode, Decode, TypeInfo)]
 pub enum XCVMInstruction<Network, AbiEncoded, Account, Assets> {
 	Transfer(Account, Assets),
-	Bridge(Network, Assets),
 	Call(AbiEncoded),
-	Spawn(Network, VecDeque<XCVMInstruction<Network, AbiEncoded, Account, Assets>>),
+	Spawn(Network, Assets, VecDeque<XCVMInstruction<Network, AbiEncoded, Account, Assets>>),
 }

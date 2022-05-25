@@ -48,6 +48,7 @@ pub mod pallet {
 		transactional,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::*};
+	use sp_std::vec::Vec;
 	use xcvm_core::*;
 
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -64,8 +65,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		Executed { instruction: XCVMInstructionOf<T> },
-		Bridge { network: XCVMNetwork, network_txs: Vec<BridgeTxIdOf<T>>, program: Vec<u8> },
-		Spawn { network: XCVMNetwork, program: Vec<u8> },
+		Spawn { network: XCVMNetwork, network_txs: Vec<BridgeTxIdOf<T>>, program: Vec<u8> },
 	}
 
 	#[pallet::error]
@@ -118,7 +118,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T>
 	where
-		AccountIdOf<T>: TryFrom<Vec<u8>> + Into<Vec<u8>>,
+		AccountIdOf<T>: for<'a> TryFrom<&'a [u8]> + AsRef<[u8]>,
 	{
 		#[pallet::weight(10_000)]
 		pub fn set_satellite(
@@ -157,7 +157,7 @@ pub mod pallet {
 			>(program.as_ref())
 			.map_err(|_| Error::<T>::InvalidProgramEncoding)?;
 
-			'a: while let Some(instruction) = instructions.pop_front() {
+			while let Some(instruction) = instructions.pop_front() {
 				match instruction.clone() {
 					XCVMInstruction::Transfer(to, XCVMTransfer { assets }) => {
 						for (asset, amount) in assets {
@@ -178,7 +178,7 @@ pub mod pallet {
 							.map_err(|_| Error::<T>::InvalidCallEncoding)?;
 						call.dispatch(origin.clone()).map_err(|_| Error::<T>::CallFailed)?;
 					},
-					XCVMInstruction::Bridge(network, XCVMTransfer { assets }) => {
+					XCVMInstruction::Spawn(network, XCVMTransfer { assets }, child_program) => {
 						let bridge_network_id =
 							NetworkMapping::<T>::get(network).ok_or(Error::<T>::UnknownNetwork)?;
 						let network_satellite = SatelliteAddress::<T>::get(network)
@@ -200,21 +200,14 @@ pub mod pallet {
 								)
 							})
 							.collect::<Result<Vec<_>, _>>()?;
-						Self::deposit_event(Event::<T>::Bridge {
-							network,
-							network_txs,
-							program: xcvm_protobuf::encode(XCVMProgram { instructions }),
-						});
-						// we hop to next network, stop here.
-						break 'a
-					},
-					XCVMInstruction::Spawn(network, program) =>
 						Self::deposit_event(Event::<T>::Spawn {
 							network,
+							network_txs,
 							program: xcvm_protobuf::encode(XCVMProgram {
-								instructions: program.clone(),
+								instructions: child_program,
 							}),
-						}),
+						});
+					},
 				}
 				Self::deposit_event(Event::<T>::Executed { instruction })
 			}
