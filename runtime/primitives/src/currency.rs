@@ -37,6 +37,7 @@ pub trait WellKnownCurrency {
 	Ord,
 	TypeInfo,
 	CompactAs,
+	Hash,
 )]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 #[repr(transparent)]
@@ -75,6 +76,8 @@ impl CurrencyId {
 	/// Karura stable coin(Karura Dollar), not native.
 	#[allow(non_upper_case_globals)]
 	pub const kUSD: CurrencyId = CurrencyId(129);
+	pub const USDT: CurrencyId = CurrencyId(130);
+	pub const USDC: CurrencyId = CurrencyId(131);
 
 	#[inline(always)]
 	pub const fn decimals() -> Exponent {

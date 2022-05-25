@@ -24,3 +24,4 @@ tokio = { version = "1.18.0", features = ["full"] }
 tokio-stream = "0.1.8"
 url = "1.7.2"
 warp = "0.3.2"
+primitives = {path = "../../runtime/primitives"}

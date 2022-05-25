@@ -10042,6 +10042,7 @@ dependencies = [
  "jsonrpc-core",
  "lazy_static",
  "log 0.4.17",
+ "primitives",
  "serde",
  "serde_json",
  "signal-hook",
