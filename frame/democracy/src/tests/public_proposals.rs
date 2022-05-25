@@ -115,11 +115,8 @@ fn blacklisting_should_work() {
 		assert_ok!(propose_set_balance_and_note(1, 2, 2));
 		assert_ok!(propose_set_balance_and_note(1, 4, 4));
 
-		assert_noop!(
-			Democracy::blacklist(Origin::signed(1), hash.clone(), DEFAULT_ASSET, None),
-			BadOrigin
-		);
-		assert_ok!(Democracy::blacklist(Origin::root(), hash, DEFAULT_ASSET, None));
+		assert_noop!(Democracy::blacklist(Origin::signed(1), hash.clone(), None), BadOrigin);
+		assert_ok!(Democracy::blacklist(Origin::root(), hash, None));
 
 		assert_eq!(Democracy::backing_for(0), None);
 		assert_eq!(Democracy::backing_for(1), Some(4));
@@ -130,7 +127,7 @@ fn blacklisting_should_work() {
 
 		let hash = set_balance_proposal_hash(4);
 		assert_ok!(Democracy::referendum_status(0));
-		assert_ok!(Democracy::blacklist(Origin::root(), hash, DEFAULT_ASSET, Some(0)));
+		assert_ok!(Democracy::blacklist(Origin::root(), hash, Some(0)));
 		assert_noop!(Democracy::referendum_status(0), Error::<Test>::ReferendumInvalid);
 	});
 }

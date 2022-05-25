@@ -4,7 +4,7 @@ description = "FRAME pallet for democracy with multi currency support"
 edition = "2021"
 homepage = "https://composable.finance"
 license = "Apache-2.0"
-name = "pallet-democracy"
+name = "pallet-multicurrency-democracy"
 readme = "README.md"
 version = "0.0.1"
 
@@ -19,18 +19,18 @@ composable-traits = {default-features = false, path = "../composable-traits"}
 frame-benchmarking = {default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 frame-support = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 frame-system = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+orml-tokens = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b5d4ce1d08fb54c0007c2055653892d2c93a92e", default-features = false}
 orml-traits = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "238828ac2bafe498a2a071317639e9404d6f6994", default-features = false}
 scale-info = {version = "2.1.1", default-features = false, features = [
   "derive",
 ]}
 serde = {version = "1.0.136", optional = true, features = ["derive"]}
-sp-io = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
-sp-runtime = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
-sp-std = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+sp-io = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
+sp-runtime = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
+sp-std = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
 
 [dev-dependencies]
-orml-tokens = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "238828ac2bafe498a2a071317639e9404d6f6994", default-features = false}
-pallet-balances = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
+pallet-balances = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18"}
 pallet-governance-registry = {path = "../governance-registry"}
 pallet-preimage = {package = "pallet-preimage", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 pallet-scheduler = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
