@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "composable": "rm -rf /tmp/polkadot-launch && polkadot-launch composable.json"
+    "composable": "polkadot-launch composable.json"
   },
   "keywords": [],
   "author": "",
