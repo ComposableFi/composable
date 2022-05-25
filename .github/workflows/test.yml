@@ -45,8 +45,8 @@ jobs:
         npm install --global yarn
 
         yarn
-        yarn composable > "${LOG_FILE}" 2>&1 &
-        # yarn composable
+        # yarn composable > "${LOG_FILE}" 2>&1 &
+        yarn composable
 
         # wait for polka-launch
         echo "wait for polka-launch"
