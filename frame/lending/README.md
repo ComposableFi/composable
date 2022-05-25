@@ -23,3 +23,4 @@ Lending is executed after Vault. On block initialization. If can withdraw from V
 Borrowing is not allowed if we must liquidate (the vault is expecting the strategy to be liquidated) or if we market have enough funds or if have not enough collateral.
 
 When repaying, we do not transfer the amount back to the vault. This is done within the pallet hooks on each block update.. It actually allows to use some deposit asset by other transactions in same block to borrow.
+

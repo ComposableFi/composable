@@ -477,7 +477,7 @@ pub mod pallet {
 		},
 		/// Event emitted when a liquidation is initiated for a loan.
 		LiquidationInitiated { market_id: MarketIndex, borrowers: Vec<T::AccountId> },
-		/// Event emitted to warn that loan may go under collateralized soon.
+		/// Event emitted to warn that loan may go under collaterlized soon.
 		MayGoUnderCollateralizedSoon { market_id: MarketIndex, account: T::AccountId },
 	}
 
@@ -889,7 +889,7 @@ pub mod pallet {
 			block_number: T::BlockNumber,
 		) -> InitializeBlockCallCounters {
 			let mut call_counters = InitializeBlockCallCounters::default();
-			with_transaction(|| {
+			let _ = with_transaction(|| {
 				let now = Self::now();
 				call_counters.now += 1;
 
@@ -945,7 +945,7 @@ pub mod pallet {
 
 				if errors.peek().is_none() {
 					LastBlockTimestamp::<T>::put(now);
-					TransactionOutcome::Commit(1000)
+					TransactionOutcome::Commit(Ok(1000))
 				} else {
 					errors.for_each(|e| {
 						log::error!(
@@ -954,7 +954,9 @@ pub mod pallet {
 							e
 						)
 					});
-					TransactionOutcome::Rollback(0)
+					TransactionOutcome::Rollback(Err(DispatchError::Other(
+						"failed to initialize block",
+					)))
 				}
 			});
 			call_counters

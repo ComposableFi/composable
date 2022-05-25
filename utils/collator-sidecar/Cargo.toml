@@ -1,6 +1,6 @@
 [package]
 authors = ["Composable Developers"]
-edition = "2018"
+edition = "2021"
 homepage = "https://composable.finance"
 name = "collator-sidecar"
 version = "0.1.0"

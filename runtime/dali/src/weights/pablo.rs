@@ -8,6 +8,7 @@
 // Executed Command:
 // ./target/release/composable
 // benchmark
+// pallet
 // --chain=dali-dev
 // --execution=wasm
 // --wasm-execution=compiled
@@ -29,6 +30,7 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `pablo`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: CurrencyFactory AssetIdRanges (r:1 w:1)
 	// Storage: Pablo PoolCount (r:1 w:1)
 	// Storage: CurrencyFactory AssetEd (r:0 w:1)
@@ -38,6 +40,7 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Pablo PoolCount (r:1 w:1)
 	// Storage: Pablo Pools (r:0 w:1)
 	fn create_lbp() -> Weight {
@@ -45,6 +48,7 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Pablo Pools (r:1 w:0)
 	// Storage: Tokens Accounts (r:5 w:5)
 	// Storage: Tokens TotalIssuance (r:1 w:1)
@@ -55,6 +59,7 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(8 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Pablo Pools (r:1 w:0)
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: System Account (r:1 w:1)
@@ -64,6 +69,7 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Pablo Pools (r:1 w:0)
 	// Storage: Tokens Accounts (r:5 w:5)
 	// Storage: Tokens TotalIssuance (r:1 w:1)
@@ -74,6 +80,7 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Pablo Pools (r:1 w:1)
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: System Account (r:1 w:1)
@@ -83,6 +90,7 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Pablo Pools (r:1 w:0)
 	// Storage: Tokens Accounts (r:5 w:5)
 	// Storage: System Account (r:2 w:1)
@@ -92,6 +100,7 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Pablo Pools (r:1 w:0)
 	// Storage: Tokens Accounts (r:5 w:5)
 	// Storage: System Account (r:2 w:1)
@@ -101,6 +110,7 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Pablo Pools (r:1 w:0)
 	// Storage: Tokens Accounts (r:5 w:5)
 	// Storage: System Account (r:2 w:1)

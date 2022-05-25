@@ -1,13 +1,10 @@
 use super::*;
 use crate::{self as pallet_dex_router, Pallet as DexRouter};
-use composable_traits::{
-	defi::CurrencyPair,
-	dex::{Amm, FeeConfig},
-};
+use composable_traits::{defi::CurrencyPair, dex::Amm};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::traits::fungibles::Mutate;
 use frame_system::RawOrigin;
-use sp_runtime::Permill;
+use sp_arithmetic::Permill;
 use sp_std::{vec, vec::Vec};
 
 fn create_single_node_pool<T>() -> (
@@ -30,7 +27,7 @@ where
 		owner: owner.clone(),
 		pair: CurrencyPair::new(usdc, usdt),
 		amplification_coefficient: 5_u16,
-		fee_config: FeeConfig::zero(),
+		fee: Permill::zero(),
 	};
 	let usdc_usdt = pallet_pablo::Pallet::<T>::do_create_pool(usdc_usdt_config).unwrap();
 	sp_std::if_std! {
@@ -72,7 +69,7 @@ where
 	let pica_ksm_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
 		owner: owner.clone(),
 		pair: CurrencyPair::new(pica, ksm),
-		fee_config: FeeConfig::zero(),
+		fee: Permill::zero(),
 		base_weight: Permill::from_percent(50),
 	};
 	let pica_ksm = pallet_pablo::Pallet::<T>::do_create_pool(pica_ksm_config).unwrap();
@@ -98,7 +95,7 @@ where
 	let ksm_eth_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
 		owner: owner.clone(),
 		pair: CurrencyPair::new(ksm, eth),
-		fee_config: FeeConfig::zero(),
+		fee: Permill::zero(),
 		base_weight: Permill::from_percent(50),
 	};
 	let ksm_eth = pallet_pablo::Pallet::<T>::do_create_pool(ksm_eth_config).unwrap();
@@ -125,7 +122,7 @@ where
 	let eth_usdc_config = pallet_pablo::PoolInitConfiguration::ConstantProduct {
 		owner: owner.clone(),
 		pair: CurrencyPair::new(eth, usdc),
-		fee_config: FeeConfig::zero(),
+		fee: Permill::zero(),
 		base_weight: Permill::from_percent(50),
 	};
 	let eth_usdc = pallet_pablo::Pallet::<T>::do_create_pool(eth_usdc_config).unwrap();
@@ -153,7 +150,7 @@ where
 		owner: owner.clone(),
 		pair: CurrencyPair::new(usdc, usdt),
 		amplification_coefficient: 5_u16,
-		fee_config: FeeConfig::zero(),
+		fee: Permill::zero(),
 	};
 	let usdc_usdt = pallet_pablo::Pallet::<T>::do_create_pool(usdc_usdt_config).unwrap();
 	sp_std::if_std! {

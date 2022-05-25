@@ -8,6 +8,7 @@
 // Executed Command:
 // ./target/release/composable
 // benchmark
+// pallet
 // --chain=dali-dev
 // --execution=wasm
 // --wasm-execution=compiled
@@ -29,6 +30,7 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `dex_router`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Pablo Pools (r:4 w:0)
 	// Storage: DexRouter DexRoutes (r:2 w:1)
 	fn update_route() -> Weight {
@@ -36,6 +38,7 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(6 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: DexRouter DexRoutes (r:2 w:0)
 	// Storage: Pablo Pools (r:4 w:0)
 	// Storage: Tokens Accounts (r:13 w:13)
@@ -46,6 +49,7 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(27 as Weight))
 			.saturating_add(T::DbWeight::get().writes(17 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: DexRouter DexRoutes (r:1 w:0)
 	// Storage: Pablo Pools (r:4 w:0)
 	// Storage: Tokens Accounts (r:13 w:13)
@@ -56,6 +60,7 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(26 as Weight))
 			.saturating_add(T::DbWeight::get().writes(17 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: DexRouter DexRoutes (r:1 w:0)
 	// Storage: Pablo Pools (r:4 w:0)
 	// Storage: Tokens Accounts (r:13 w:13)
@@ -66,6 +71,7 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(26 as Weight))
 			.saturating_add(T::DbWeight::get().writes(17 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: DexRouter DexRoutes (r:1 w:0)
 	// Storage: Pablo Pools (r:1 w:0)
 	// Storage: Tokens Accounts (r:5 w:5)
@@ -77,6 +83,7 @@ impl<T: frame_system::Config> dex_router::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(10 as Weight))
 			.saturating_add(T::DbWeight::get().writes(8 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: DexRouter DexRoutes (r:1 w:0)
 	// Storage: Pablo Pools (r:1 w:0)
 	// Storage: Tokens Accounts (r:3 w:1)

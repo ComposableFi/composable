@@ -8,6 +8,7 @@
 // Executed Command:
 // ./target/release/composable
 // benchmark
+// pallet
 // --chain=composable-dev
 // --execution=wasm
 // --wasm-execution=compiled
@@ -139,10 +140,6 @@ impl<T: frame_system::Config> collective::WeightInfo for WeightInfo<T> {
 	// Storage: Council Proposals (r:1 w:1)
 	fn close_approved(b: u32, m: u32, p: u32, ) -> Weight {
 		(69_267_000 as Weight)
-			// Standard Error: 1_000
-			.saturating_add((14_000 as Weight).saturating_mul(b as Weight))
-			// Standard Error: 15_000
-			.saturating_add((50_000 as Weight).saturating_mul(m as Weight))
 			// Standard Error: 15_000
 			.saturating_add((488_000 as Weight).saturating_mul(p as Weight))
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))

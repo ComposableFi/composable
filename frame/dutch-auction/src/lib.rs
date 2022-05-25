@@ -263,6 +263,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		// TODO: benchmarking
 		/// Inserts or replaces auction configuration.
 		/// Already running auctions are not updated.
 		#[pallet::weight(T::WeightInfo::add_configuration())]
@@ -334,6 +335,7 @@ pub mod pallet {
 			Ok(Pays::No.into())
 		}
 
+		// TODO: benchmark
 		// TODO: make API for call this as liquidation engine
 		// TODO: so make pallet trait for having this call
 		#[pallet::weight(<T as Config>::WeightInfo::xcm_sell())]

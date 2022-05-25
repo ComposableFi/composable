@@ -155,6 +155,14 @@ impl FeeConfig {
 		}
 	}
 
+	pub fn default_from(trading_fee: Permill) -> Self {
+		FeeConfig {
+			fee_rate: trading_fee,
+			owner_fee_rate: Permill::from_percent(20),
+			protocol_fee_rate: Permill::from_percent(100),
+		}
+	}
+
 	pub fn calculate_fees<AssetId: AssetIdLike, Balance: BalanceLike>(
 		&self,
 		asset_id: AssetId,
@@ -381,6 +389,18 @@ mod tests {
 				lp_fee: 9900 * UNIT,
 				owner_fee: 99 * UNIT,
 				protocol_fee: 1 * UNIT,
+				asset_id: 1
+			}
+		);
+
+		let f_default = FeeConfig::default_from(Permill::from_perthousand(3));
+		assert_eq!(
+			f_default.calculate_fees(1, amount),
+			Fee {
+				fee: 3000 * UNIT,
+				lp_fee: 2400 * UNIT,
+				owner_fee: 0 * UNIT,
+				protocol_fee: 600 * UNIT,
 				asset_id: 1
 			}
 		);

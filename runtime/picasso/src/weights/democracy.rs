@@ -8,6 +8,7 @@
 // Executed Command:
 // ./target/release/composable
 // benchmark
+// pallet
 // --chain=picasso-dev
 // --execution=wasm
 // --wasm-execution=compiled

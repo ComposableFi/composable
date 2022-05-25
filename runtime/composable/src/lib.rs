@@ -44,10 +44,9 @@ use sp_std::prelude::*;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use sp_version::RuntimeVersion;
-
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
-	construct_runtime, match_type, parameter_types,
+	construct_runtime, parameter_types,
 	traits::{Contains, Everything, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -58,7 +57,10 @@ pub use frame_support::{
 };
 
 use codec::{Codec, Encode, EncodeLike};
-use frame_support::traits::{EqualPrivilegeOnly, OnRuntimeUpgrade};
+use frame_support::{
+	traits::{EqualPrivilegeOnly, OnRuntimeUpgrade},
+	weights::ConstantMultiplier,
+};
 use frame_system as system;
 use scale_info::TypeInfo;
 use sp_runtime::AccountId32;
@@ -105,7 +107,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 1001,
+	spec_version: 1002,
 	impl_version: 2,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -292,11 +294,11 @@ impl WeightToFeePolynomial for WeightToFee {
 impl transaction_payment::Config for Runtime {
 	type OnChargeTransaction =
 		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 }
 
 impl sudo::Config for Runtime {

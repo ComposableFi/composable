@@ -232,7 +232,11 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn burn_from(class: &Self::ClassId, instance: &Self::InstanceId) -> DispatchResult {
+		fn burn(
+			class: &Self::ClassId,
+			instance: &Self::InstanceId,
+			_maybe_check_owner: Option<&AccountIdOf<T>>,
+		) -> DispatchResult {
 			Instance::<T>::try_mutate_exists((class, instance), |entry| -> DispatchResult {
 				match entry {
 					Some((owner, _)) => {

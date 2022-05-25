@@ -11,7 +11,7 @@ use composable_traits::{
 };
 use cumulus_primitives_core::{IsSystem, ParaId};
 use frame_support::{
-	construct_runtime, ensure, log, match_type, parameter_types,
+	construct_runtime, ensure, log, parameter_types,
 	traits::{
 		Contains, Everything, KeyOwnerProofSystem, Nothing, OriginTrait, Randomness, StorageInfo,
 	},

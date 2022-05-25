@@ -8,6 +8,7 @@
 // Executed Command:
 // ./target/release/composable
 // benchmark
+// pallet
 // --chain=dali-dev
 // --execution=wasm
 // --wasm-execution=compiled
@@ -29,6 +30,7 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `lending`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> lending::WeightInfo for WeightInfo<T> {
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Oracle Prices (r:2 w:0)
 	// Storage: Lending LendingCount (r:1 w:1)
 	// Storage: Vault VaultCount (r:1 w:1)
@@ -47,6 +49,7 @@ impl<T: frame_system::Config> lending::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(14 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Lending Markets (r:1 w:0)
 	// Storage: Lending AccountCollateral (r:1 w:1)
 	// Storage: Tokens Accounts (r:2 w:2)
@@ -56,6 +59,7 @@ impl<T: frame_system::Config> lending::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Lending Markets (r:1 w:0)
 	// Storage: Lending AccountCollateral (r:1 w:1)
 	// Storage: Vault Vaults (r:1 w:0)
@@ -69,6 +73,7 @@ impl<T: frame_system::Config> lending::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(10 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Lending Markets (r:1 w:0)
 	// Storage: Vault Vaults (r:1 w:0)
 	// Storage: Oracle Prices (r:2 w:0)
@@ -88,6 +93,7 @@ impl<T: frame_system::Config> lending::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(20 as Weight))
 			.saturating_add(T::DbWeight::get().writes(8 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Lending BorrowTimestamp (r:1 w:1)
 	// Storage: Lending LastBlockTimestamp (r:1 w:0)
 	// Storage: Lending DebtTokenForMarket (r:1 w:0)
@@ -104,6 +110,7 @@ impl<T: frame_system::Config> lending::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(14 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Lending Markets (r:1 w:0)
 	// Storage: Lending AccountCollateral (r:1 w:0)
 	// Storage: Oracle Prices (r:2 w:0)

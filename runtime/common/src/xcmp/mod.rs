@@ -13,7 +13,7 @@ use frame_support::{
 };
 use num_traits::Zero;
 use orml_traits::location::{AbsoluteReserveProvider, Reserve};
-use polkadot_primitives::v1::Id;
+use polkadot_primitives::v2::Id;
 use primitives::currency::{CurrencyId, WellKnownCurrency};
 use sp_runtime::traits::Convert;
 use sp_std::marker::PhantomData;

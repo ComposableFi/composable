@@ -8,6 +8,7 @@
 // Executed Command:
 // ./target/release/composable
 // benchmark
+// pallet
 // --chain=dali-dev
 // --execution=wasm
 // --wasm-execution=compiled
@@ -47,12 +48,14 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Mosaic AssetsInfo (r:1 w:1)
 	fn set_budget() -> Weight {
 		(28_027_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Mosaic AssetsInfo (r:1 w:0)
 	// Storage: Mosaic LocalToRemoteAsset (r:1 w:0)
 	// Storage: Mosaic NetworkInfos (r:1 w:0)
@@ -65,6 +68,7 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(8 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Mosaic Relayer (r:1 w:0)
 	// Storage: Mosaic RemoteToLocalAsset (r:1 w:0)
 	// Storage: Mosaic OutgoingTransactions (r:1 w:1)
@@ -74,6 +78,7 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Mosaic OutgoingTransactions (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn claim_stale_to() -> Weight {
@@ -96,6 +101,7 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 		(2_858_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Mosaic Relayer (r:1 w:0)
 	// Storage: Mosaic RemoteToLocalAsset (r:1 w:0)
 	// Storage: Mosaic IncomingTransactions (r:1 w:1)

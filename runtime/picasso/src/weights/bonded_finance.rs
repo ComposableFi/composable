@@ -8,6 +8,7 @@
 // Executed Command:
 // ./target/release/composable
 // benchmark
+// pallet
 // --chain=picasso-dev
 // --execution=wasm
 // --wasm-execution=compiled
@@ -29,6 +30,7 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `bonded_finance`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> bonded_finance::WeightInfo for WeightInfo<T> {
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: BondedFinance BondOfferCount (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	// Storage: Tokens Accounts (r:2 w:2)
@@ -38,6 +40,7 @@ impl<T: frame_system::Config> bonded_finance::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: BondedFinance BondOffers (r:1 w:1)
 	// Storage: Tokens Accounts (r:4 w:4)
 	// Storage: System Account (r:2 w:2)
@@ -48,6 +51,7 @@ impl<T: frame_system::Config> bonded_finance::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(11 as Weight))
 			.saturating_add(T::DbWeight::get().writes(11 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: BondedFinance BondOffers (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn cancel() -> Weight {

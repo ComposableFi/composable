@@ -8,6 +8,7 @@
 // Executed Command:
 // ./target/release/composable
 // benchmark
+// pallet
 // --chain=picasso-dev
 // --execution=wasm
 // --wasm-execution=compiled
@@ -37,6 +38,7 @@ impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 	fn as_derivative() -> Weight {
 		(5_026_000 as Weight)
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	fn batch_all(c: u32, ) -> Weight {
 		(61_077_000 as Weight)
 			// Standard Error: 4_000

@@ -8,6 +8,7 @@
 // Executed Command:
 // ./target/release/composable
 // benchmark
+// pallet
 // --chain=dali-dev
 // --execution=wasm
 // --wasm-execution=compiled
@@ -30,6 +31,7 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> assets_registry::WeightInfo for WeightInfo<T> {
 	// Storage: AssetsRegistry ForeignToLocal (r:1 w:1)
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: CurrencyFactory AssetIdRanges (r:1 w:1)
 	// Storage: AssetsRegistry AssetRatio (r:1 w:1)
 	// Storage: CurrencyFactory AssetEd (r:0 w:1)

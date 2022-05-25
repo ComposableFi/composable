@@ -2,7 +2,7 @@ use crate::{mock::*, Error};
 use composable_tests_helpers::test::helper::acceptable_computation_error;
 use composable_traits::{
 	defi::CurrencyPair,
-	dex::{Amm as AmmTrait, DexRouter as DexRouterTrait, FeeConfig},
+	dex::{Amm as AmmTrait, DexRouter as DexRouterTrait},
 };
 use frame_support::{
 	assert_noop, assert_ok,
@@ -18,7 +18,6 @@ fn create_curve_amm_pool(
 	amounts: Vec<Balance>,
 	amp_coeff: u16,
 	fee: Permill,
-	admin_fee: Permill,
 ) -> PoolId {
 	let base = assets.base;
 	let quote = assets.quote;
@@ -31,11 +30,7 @@ fn create_curve_amm_pool(
 		owner: ALICE,
 		pair: assets,
 		amplification_coefficient: amp_coeff,
-		fee_config: FeeConfig {
-			fee_rate: fee,
-			owner_fee_rate: admin_fee,
-			protocol_fee_rate: Permill::zero(),
-		},
+		fee,
 	};
 	let p = Pablo::do_create_pool(init_config);
 	assert_ok!(&p);
@@ -55,7 +50,6 @@ fn create_constant_product_amm_pool(
 	assets: CurrencyPair<AssetId>,
 	amounts: Vec<Balance>,
 	fee: Permill,
-	admin_fee: Permill,
 ) -> PoolId {
 	let base = assets.base;
 	let quote = assets.quote;
@@ -67,11 +61,7 @@ fn create_constant_product_amm_pool(
 	let init_config = PoolInitConfiguration::ConstantProduct {
 		owner: ALICE,
 		pair: assets,
-		fee_config: FeeConfig {
-			fee_rate: fee,
-			owner_fee_rate: admin_fee,
-			protocol_fee_rate: Permill::zero(),
-		},
+		fee,
 		base_weight: Permill::from_percent(50),
 	};
 	// Create Pablo pool
@@ -96,10 +86,9 @@ fn create_usdt_usdc_pool() -> PoolId {
 	let initial_usdt = 1_000_000_000 * unit;
 	let amp_coeff = 100;
 	let fee = Permill::zero();
-	let admin_fee = Permill::zero();
 	let assets = CurrencyPair::new(USDT, USDC);
 	let amounts = vec![initial_usdt, initial_usdc];
-	create_curve_amm_pool(assets, amounts, amp_coeff, fee, admin_fee)
+	create_curve_amm_pool(assets, amounts, amp_coeff, fee)
 }
 
 fn create_usdc_usdt_pool() -> PoolId {
@@ -109,10 +98,9 @@ fn create_usdc_usdt_pool() -> PoolId {
 	let initial_usdt = 1_000_000_000 * unit;
 	let amp_coeff = 100;
 	let fee = Permill::zero();
-	let admin_fee = Permill::zero();
 	let assets = CurrencyPair::new(USDC, USDT);
 	let amounts = vec![initial_usdc, initial_usdt];
-	create_curve_amm_pool(assets, amounts, amp_coeff, fee, admin_fee)
+	create_curve_amm_pool(assets, amounts, amp_coeff, fee)
 }
 
 fn create_usdt_dai_pool() -> PoolId {
@@ -122,10 +110,9 @@ fn create_usdt_dai_pool() -> PoolId {
 	let initial_usdt = 1_000_000_000 * unit;
 	let amp_coeff = 100;
 	let fee = Permill::zero();
-	let admin_fee = Permill::zero();
 	let assets = CurrencyPair::new(USDT, DAI);
 	let amounts = vec![initial_usdt, initial_dai];
-	create_curve_amm_pool(assets, amounts, amp_coeff, fee, admin_fee)
+	create_curve_amm_pool(assets, amounts, amp_coeff, fee)
 }
 
 fn create_usdc_eth_pool() -> PoolId {
@@ -134,10 +121,9 @@ fn create_usdc_eth_pool() -> PoolId {
 	let eth_balance = 1_000_000_000 * unit;
 	let usdc_balance = eth_price * eth_balance;
 	let fee = Permill::zero();
-	let admin_fee = Permill::zero();
 	let assets = CurrencyPair::new(USDC, ETH);
 	let amounts = vec![usdc_balance, eth_balance];
-	create_constant_product_amm_pool(assets, amounts, fee, admin_fee)
+	create_constant_product_amm_pool(assets, amounts, fee)
 }
 
 fn create_dai_eth_pool() -> PoolId {
@@ -146,10 +132,9 @@ fn create_dai_eth_pool() -> PoolId {
 	let eth_balance = 1_000_000_000 * unit;
 	let dai_balance = eth_price * eth_balance;
 	let fee = Permill::zero();
-	let admin_fee = Permill::zero();
 	let assets = CurrencyPair::new(DAI, ETH);
 	let amounts = vec![dai_balance, eth_balance];
-	create_constant_product_amm_pool(assets, amounts, fee, admin_fee)
+	create_constant_product_amm_pool(assets, amounts, fee)
 }
 
 #[test]
