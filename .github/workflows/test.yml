@@ -44,6 +44,7 @@ jobs:
         yarn composable > "${LOG_FILE}" 2>&1 &
 
         # wait for polka-launch
+        echo "wait for polka-launch"
         while true; do
           sleep 1
             stdout=$(tail -n 1 "${LOG_FILE}" | grep "POLKADOT LAUNCH COMPLETE")
@@ -53,6 +54,7 @@ jobs:
               break
             fi
         done
+        echo "wait for polka-launch"
 
 #        while IFS="" read -r string; do
 #          echo $string
