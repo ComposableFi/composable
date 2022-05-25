@@ -340,7 +340,7 @@ pub mod validate {
 			let zero = FixedU128::zero();
 			let less_than_one = FixedU128::checked_from_rational(1, 10).unwrap();
 			let one = FixedU128::one();
-			let more_than_one = FixedU128::checked_from_integer(100_000).unwrap();
+			let more_than_one = FixedU128::checked_from_integer::<u128>(100_000).unwrap();
 
 			assert!(zero.try_into_validated::<OneOrMore>().is_err());
 			assert!(less_than_one.try_into_validated::<OneOrMore>().is_err());
@@ -353,7 +353,7 @@ pub mod validate {
 			let zero = FixedU128::zero();
 			let less_than_one = FixedU128::checked_from_rational(1, 10).unwrap();
 			let one = FixedU128::one();
-			let more_than_one = FixedU128::checked_from_integer(100_000).unwrap();
+			let more_than_one = FixedU128::checked_from_integer::<u128>(100_000).unwrap();
 
 			assert!(zero.try_into_validated::<MoreThanOne>().is_err());
 			assert!(less_than_one.try_into_validated::<MoreThanOne>().is_err());

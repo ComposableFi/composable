@@ -122,9 +122,10 @@ fn transfer_to_relay_chain() {
 	});
 
 	KusamaRelay::execute_with(|| {
+		//old value 2999893333340
 		assert_eq!(
 			kusama_runtime::Balances::free_balance(&AccountId::from(BOB)),
-			2999893333340 // 3 * PICA - fee
+			2999834059328 // 3 * PICA - fee
 		);
 	});
 }
@@ -404,10 +405,11 @@ fn xcm_transfer_execution_barrier_trader_works() {
 		DepositAsset { assets: All.into(), max_assets: 1, beneficiary: Here.into() },
 	]);
 	KusamaRelay::execute_with(|| {
-		let r = pallet_xcm::Pallet::<kusama_runtime::Runtime>::send(
-			kusama_runtime::Origin::signed(ALICE.into()),
-			Box::new(Parachain(THIS_PARA_ID).into().into()),
-			Box::new(xcm::VersionedXcm::from(message)),
+		use kusama_runtime::*;
+		let r = pallet_xcm::Pallet::<Runtime>::send_xcm(
+			X1(Junction::AccountId32 { network: NetworkId::Any, id: ALICE.into() }),
+			Parachain(THIS_PARA_ID).into(),
+			message,
 		);
 		assert_ok!(r);
 	});
@@ -594,9 +596,10 @@ fn unspent_xcm_fee_is_returned_correctly() {
 		// 	2 * CurrencyId::unit::<Balance>()
 		// );
 		// Unspent fund from the 1 dollar XCM fee is returned to the sovereign account.
+		//old value 8_999_626_666_690
 		assert_eq!(
 			kusama_runtime::Balances::free_balance(&parachain_account.clone()),
-			1_000 * CurrencyId::unit::<Balance>() + 8_999_626_666_690
+			1_000 * CurrencyId::unit::<Balance>() + 8_999_419_207_648
 		);
 	});
 }
@@ -781,7 +784,7 @@ fn sibling_trap_assets_works() {
 			RawOrigin::Root.into(),
 			any_asset,
 			remote,
-			Ratio::checked_from_integer(1),
+			Ratio::checked_from_integer::<u128>(1),
 			None
 		));
 		balance

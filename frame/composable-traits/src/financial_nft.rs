@@ -174,7 +174,8 @@ pub trait FinancialNftProtocol<AccountId: Eq> {
 	where
 		NFT: Get<Self::ClassId>,
 	{
-		Self::NFTProvider::burn_from(&NFT::get(), instance_id)
+		let owner = Self::NFTProvider::owner(&NFT::get(), instance_id);
+		Self::NFTProvider::burn(&NFT::get(), instance_id, owner.as_ref())
 	}
 }
 

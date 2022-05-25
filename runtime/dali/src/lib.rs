@@ -55,7 +55,7 @@ use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
-	construct_runtime, match_type, parameter_types,
+	construct_runtime, parameter_types,
 	traits::{Contains, Everything, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -66,7 +66,10 @@ pub use frame_support::{
 };
 
 use codec::{Codec, Encode, EncodeLike};
-use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
+use frame_support::{
+	traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade},
+	weights::ConstantMultiplier,
+};
 use frame_system as system;
 use frame_system::EnsureSigned;
 use scale_info::TypeInfo;
@@ -119,7 +122,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 2100,
+	spec_version: 2200,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -350,11 +353,11 @@ impl WeightToFeePolynomial for WeightToFee {
 impl transaction_payment::Config for Runtime {
 	type OnChargeTransaction =
 		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 }
 
 impl sudo::Config for Runtime {
