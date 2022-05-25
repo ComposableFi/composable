@@ -72,7 +72,8 @@ pub mod pallet {
 			+ Default
 			+ TypeInfo;
 
-		/// The `VaultId` used by the pallet. Corresponds to the Ids used by the Vault pallet.
+		/// The [`VaultId`](Config::VaultId) used by the pallet. Corresponds to the Ids used by the
+		/// Vault pallet.
 		type VaultId: FullCodec
 			+ MaxEncodedLen
 			+ Eq
