@@ -237,13 +237,18 @@ pub mod pallet {
 		u128::zero()
 	}
 
+	/// stores total shares,
+	/// false than even epoch is rewarding
+	/// true than odd epoch is rewarding
 	#[pallet::storage]
 	#[pallet::getter(fn total_shares)]
-	pub type TotalShares<T: Config> = StorageMap<
+	pub type TotalShares<T: Config> = StorageDoubleMap<
 		_,
 		Twox64Concat,
 		(AssetIdOf<T>, AssetIdOf<T>),
-		u128,
+		Twox64Concat,
+		bool,
+		T::Balance,
 		ValueQuery,
 		SharesOnEmpty<T>,
 	>;
