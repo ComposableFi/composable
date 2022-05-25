@@ -20,31 +20,16 @@ fn stable_swap_init_config<T: Config>(
 	pair: CurrencyPair<T::AssetId>,
 	amplification_coefficient: u16,
 	fee: Permill,
-	owner_fee: Permill,
 ) -> PoolInitConfigurationOf<T> {
-	PoolInitConfiguration::StableSwap {
-		owner,
-		pair,
-		amplification_coefficient,
-		fee_config: FeeConfig {
-			fee_rate: fee,
-			owner_fee_rate: owner_fee,
-			protocol_fee_rate: Permill::zero(),
-		},
-	}
+	PoolInitConfiguration::StableSwap { owner, pair, amplification_coefficient, fee }
 }
 
 fn create_stable_swap_pool<T: Config>(
 	owner: T::AccountId,
 	pair: CurrencyPair<T::AssetId>,
 ) -> T::PoolId {
-	let stable_swap_pool_init = stable_swap_init_config::<T>(
-		owner.clone(),
-		pair,
-		1000_u16,
-		Permill::from_percent(1),
-		Permill::from_percent(1),
-	);
+	let stable_swap_pool_init =
+		stable_swap_init_config::<T>(owner.clone(), pair, 1000_u16, Permill::from_percent(1));
 	Pablo::<T>::do_create_pool(stable_swap_pool_init).expect("impossible; qed;")
 }
 
@@ -67,7 +52,7 @@ benchmarks! {
 		let amplification_factor = 100_u16;
 		let fee = Permill::from_percent(1);
 		let protocol_fee = Permill::from_percent(1);
-		let stable_swap_pool_init = stable_swap_init_config::<T>(owner.clone(), pair, amplification_factor, fee, protocol_fee);
+		let stable_swap_pool_init = stable_swap_init_config::<T>(owner.clone(), pair, amplification_factor, fee);
 	  } : _(RawOrigin::Signed(owner), stable_swap_pool_init)
 
 	create_lbp {

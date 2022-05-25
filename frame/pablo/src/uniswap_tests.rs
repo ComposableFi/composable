@@ -1,3 +1,4 @@
+use crate::uniswap::Uniswap;
 #[cfg(test)]
 use crate::{
 	common_test_functions::*,
@@ -34,21 +35,18 @@ fn create_pool(
 	lp_fee: Permill,
 	protocol_fee: Permill,
 ) -> PoolId {
-	let pool_init_config = PoolInitConfiguration::ConstantProduct {
-		owner: ALICE,
-		pair: CurrencyPair::new(base_asset, quote_asset),
-		fee_config: FeeConfig {
+	System::set_block_number(1);
+	let actual_pool_id = Uniswap::<Test>::do_create_pool(
+		&ALICE,
+		CurrencyPair::new(base_asset, quote_asset),
+		FeeConfig {
 			fee_rate: lp_fee,
 			owner_fee_rate: protocol_fee,
 			protocol_fee_rate: Permill::zero(),
 		},
-		base_weight: Permill::from_percent(50),
-	};
-	System::set_block_number(1);
-	let actual_pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
-	assert_has_event::<Test, _>(
-		|e| matches!(e.event, mock::Event::Pablo(crate::Event::PoolCreated { pool_id, .. }) if pool_id == actual_pool_id),
-	);
+		Permill::from_percent(50),
+	)
+	.expect("pool creation failed");
 
 	// Mint the tokens
 	assert_ok!(Tokens::mint_into(base_asset, &ALICE, base_amount));
@@ -84,7 +82,7 @@ fn test() {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
-			fee_config: FeeConfig::zero(),
+			fee: Permill::zero(),
 			base_weight: Permill::from_percent(50),
 		};
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
@@ -176,7 +174,7 @@ fn add_remove_lp() {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
-			fee_config: FeeConfig::zero(),
+			fee: Permill::zero(),
 			base_weight: Permill::from_percent(50),
 		};
 		let unit = 1_000_000_000_000_u128;
@@ -246,7 +244,7 @@ fn add_lp_with_min_mint_amount() {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
-			fee_config: FeeConfig::zero(),
+			fee: Permill::zero(),
 			base_weight: Permill::from_percent(50),
 		};
 		let unit = 1_000_000_000_000_u128;
@@ -280,7 +278,7 @@ fn remove_lp_failure() {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
-			fee_config: FeeConfig::zero(),
+			fee: Permill::zero(),
 			base_weight: Permill::from_percent(50),
 		};
 		let unit = 1_000_000_000_000_u128;
@@ -305,7 +303,7 @@ fn exchange_failure() {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
-			fee_config: FeeConfig::zero(),
+			fee: Permill::zero(),
 			base_weight: Permill::from_percent(50),
 		};
 		let exchange_base_amount = 100 * unit;
@@ -386,15 +384,10 @@ fn avoid_exchange_without_liquidity() {
 	new_test_ext().execute_with(|| {
 		let unit = 1_000_000_000_000_u128;
 		let lp_fee = Permill::from_float(0.05);
-		let owner_fee = Permill::from_float(0.01);
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
-			fee_config: FeeConfig {
-				fee_rate: lp_fee,
-				owner_fee_rate: owner_fee,
-				protocol_fee_rate: Permill::zero(),
-			},
+			fee: lp_fee,
 			base_weight: Permill::from_percent(50),
 		};
 		System::set_block_number(1);
@@ -413,15 +406,10 @@ fn cannot_swap_between_wrong_pairs() {
 	new_test_ext().execute_with(|| {
 		let unit = 1_000_000_000_000_u128;
 		let lp_fee = Permill::from_float(0.05);
-		let owner_fee = Permill::from_float(0.01);
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
-			fee_config: FeeConfig {
-				fee_rate: lp_fee,
-				owner_fee_rate: owner_fee,
-				protocol_fee_rate: Permill::zero(),
-			},
+			fee: lp_fee,
 			base_weight: Permill::from_percent(50),
 		};
 		System::set_block_number(1);
@@ -459,15 +447,10 @@ fn cannot_get_exchange_value_for_wrong_asset() {
 	new_test_ext().execute_with(|| {
 		let unit = 1_000_000_000_000_u128;
 		let lp_fee = Permill::from_float(0.05);
-		let owner_fee = Permill::from_float(0.01);
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
-			fee_config: FeeConfig {
-				fee_rate: lp_fee,
-				owner_fee_rate: owner_fee,
-				protocol_fee_rate: Permill::zero(),
-			},
+			fee: lp_fee,
 			base_weight: Permill::from_percent(50),
 		};
 		System::set_block_number(1);
@@ -499,7 +482,7 @@ fn weights_zero() {
 		let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			owner: ALICE,
 			pair: CurrencyPair::new(BTC, USDT),
-			fee_config: FeeConfig::zero(),
+			fee: Permill::zero(),
 			base_weight: Permill::zero(),
 		};
 		assert_noop!(Pablo::do_create_pool(pool_init_config), Error::<Test>::WeightsMustBeNonZero);
@@ -617,7 +600,7 @@ proptest! {
 		  let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			  owner: ALICE,
 			  pair: CurrencyPair::new(BTC, USDT),
-			  fee_config: FeeConfig::zero(),
+			fee: Permill::zero(),
 			  base_weight: Permill::from_percent(base_weight_in_percent),
 		  };
 		  let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool is valid");
@@ -638,7 +621,7 @@ proptest! {
 		  let pool_init_config = PoolInitConfiguration::ConstantProduct {
 			  owner: ALICE,
 			  pair: CurrencyPair::new(BTC, USDT),
-			  fee_config: FeeConfig::zero(),
+			fee: Permill::zero(),
 			  base_weight: Permill::from_percent(base_weight_in_percent),
 		  };
 

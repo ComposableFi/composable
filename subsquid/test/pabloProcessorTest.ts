@@ -17,6 +17,7 @@ import {
 } from "../src/types/events";
 import {randomFill, randomUUID} from "crypto";
 import Big from "big.js";
+import {CurrencyId, Fee} from "../src/types/v2100";
 
 const UNIT = 1_000_000_000_000;
 
@@ -163,10 +164,9 @@ function createPoolDeletedEvent() {
 function createSwappedEvent(
     baseAsset?: bigint,
     quoteAsset?: bigint,
-    feeAsset?: bigint,
     baseAmount?: bigint,
     quoteAmount?: bigint,
-    fee?: bigint
+    fee?: Fee
 ) {
     let eventMock = mock(PabloSwappedEvent);
     let who = createAccount();
@@ -175,10 +175,15 @@ function createSwappedEvent(
         who: who,
         baseAsset: baseAsset || BigInt(1),
         quoteAsset: quoteAsset || BigInt(4),
-        feeAsset: feeAsset || BigInt(4),
         baseAmount: baseAmount || BigInt(100 * UNIT),
         quoteAmount: quoteAmount || BigInt(25 * UNIT),
-        fee: fee || BigInt(UNIT)
+        fee: fee || {
+            fee: BigInt(UNIT),
+            lpFee: BigInt(UNIT),
+            ownerFee: BigInt(0),
+            protocolFee: BigInt(0),
+            assetId: BigInt(4)
+        }
     };
     when(eventMock.asV2100).thenReturn(evt);
     when(eventMock.asLatest).thenReturn(evt);
@@ -507,7 +512,7 @@ describe('Swapped Tests', function () {
             BigInt(1),
             3,
             BigInt(4),
-            '19999000000000000',
+            '20000000000000000',
             '25000000000000',
             '1000000000000'
         );
@@ -517,7 +522,7 @@ describe('Swapped Tests', function () {
             ctx.event.id + '-' +    '1-1',
             BigInt(1),
             BigInt(1),
-            BigInt(9899 * UNIT),
+            BigInt(9900 * UNIT),
             BigInt(100 * UNIT)
         );
         const [assetTwoArg] = capture(storeMock.save).byCallIndex(2);
@@ -555,10 +560,15 @@ describe('Swapped Tests', function () {
         let {who, event} = createSwappedEvent(
             BigInt(4),
             BigInt(1),
-            BigInt(1),
             BigInt(12 * UNIT),
             BigInt(25 * UNIT),
-            BigInt(UNIT)
+            {
+                fee: BigInt(UNIT),
+                lpFee: BigInt(UNIT),
+                ownerFee: BigInt(0),
+                protocolFee: BigInt(0),
+                assetId: BigInt(1),
+            }
         );
 
         // when
@@ -575,7 +585,7 @@ describe('Swapped Tests', function () {
             BigInt(1),
             3,
             BigInt(4),
-            '19999520000000000',
+            '20000000000000000',
             '12000000000000',
             '480000000000'
         );
@@ -593,7 +603,7 @@ describe('Swapped Tests', function () {
             ctx.event.id + '-' + '1-4',
             BigInt(4),
             BigInt(1),
-            BigInt(9987 * UNIT),
+            BigInt(9988 * UNIT),
             BigInt(12 * UNIT)
         );
         verify(storeMock.save(anyOfClass(PabloTransaction))).once();
