@@ -2,8 +2,8 @@ use composable_traits::clearing_house::ClearingHouse;
 use frame_support::{assert_noop, assert_ok, traits::tokens::fungibles::Inspect};
 
 use super::{
-	as_balance, comp::approx_eq_lower, multi_market_and_trader_context,
-	traders_in_one_market_context, valid_market_config,
+	as_balance, comp::approx_eq_lower, multi_market_and_trader_context, run_for_seconds,
+	traders_in_one_market_context, MarketConfig,
 };
 use crate::{
 	mock::{
@@ -14,7 +14,6 @@ use crate::{
 			System as SystemPallet, TestPallet, Vamm as VammPallet,
 		},
 	},
-	tests::run_for_seconds,
 	Direction, Error, Event, FullLiquidationPenalty, FullLiquidationPenaltyLiquidatorShare,
 };
 
@@ -24,7 +23,7 @@ use crate::{
 
 #[test]
 fn cant_liquidate_user_with_no_open_positions() {
-	let config = valid_market_config();
+	let config = MarketConfig::default();
 	let margins = vec![(ALICE, 0), (BOB, 0)];
 
 	// Set everything as usual, except that ALICE doesn't open any positions
@@ -41,10 +40,12 @@ fn cant_liquidate_user_with_no_open_positions() {
 
 #[test]
 fn cant_fully_liquidate_if_above_maintenance_margin_ratio_by_pnl() {
-	let mut config = valid_market_config();
-	config.margin_ratio_initial = (1, 2).into(); // 2x max leverage
-	config.margin_ratio_maintenance = (1, 10).into(); // 10% MMR
-	config.taker_fee = 0;
+	let config = MarketConfig {
+		margin_ratio_initial: (1, 2).into(),      // 2x max leverage
+		margin_ratio_maintenance: (1, 10).into(), // 10% MMR
+		taker_fee: 0,
+		..Default::default()
+	};
 
 	let margins = vec![(ALICE, as_balance(55)), (BOB, 0)];
 	traders_in_one_market_context(config, margins, |market_id| {
@@ -86,12 +87,14 @@ fn cant_fully_liquidate_if_above_maintenance_margin_ratio_by_pnl() {
 
 #[test]
 fn cant_fully_liquidate_if_above_maintenance_margin_ratio_by_funding() {
-	let mut config = valid_market_config();
-	config.funding_frequency = 60;
-	config.funding_period = 60;
-	config.margin_ratio_initial = (1, 2).into(); // 2x max leverage
-	config.margin_ratio_maintenance = (7, 100).into(); // 7% MMR
-	config.taker_fee = 0;
+	let config = MarketConfig {
+		funding_frequency: 60,
+		funding_period: 60,
+		margin_ratio_initial: (1, 2).into(),       // 2x max leverage
+		margin_ratio_maintenance: (7, 100).into(), // 7% MMR
+		taker_fee: 0,
+		..Default::default()
+	};
 
 	let margins = vec![(ALICE, as_balance(50)), (BOB, 0)];
 	traders_in_one_market_context(config, margins, |market_id| {
@@ -132,10 +135,12 @@ fn cant_fully_liquidate_if_above_maintenance_margin_ratio_by_funding() {
 
 #[test]
 fn can_liquidate_if_below_maintenance_margin_ratio_by_pnl() {
-	let mut config = valid_market_config();
-	config.margin_ratio_initial = (1, 2).into(); // 2x max leverage
-	config.margin_ratio_maintenance = (6, 100).into(); // 6% MMR
-	config.taker_fee = 0;
+	let config = MarketConfig {
+		margin_ratio_initial: (1, 2).into(),       // 2x max leverage
+		margin_ratio_maintenance: (6, 100).into(), // 6% MMR
+		taker_fee: 0,
+		..Default::default()
+	};
 
 	let margins = vec![(ALICE, as_balance(100)), (BOB, 0)];
 	traders_in_one_market_context(config, margins, |market_id| {
@@ -181,10 +186,12 @@ fn can_liquidate_if_below_maintenance_margin_ratio_by_pnl() {
 
 #[test]
 fn underwater_accounts_imply_no_liquidation_fees() {
-	let mut config = valid_market_config();
-	config.margin_ratio_initial = (1, 2).into(); // 2x max leverage
-	config.margin_ratio_maintenance = (6, 100).into(); // 6% MMR
-	config.taker_fee = 0;
+	let config = MarketConfig {
+		margin_ratio_initial: (1, 2).into(),       // 2x max leverage
+		margin_ratio_maintenance: (6, 100).into(), // 6% MMR
+		taker_fee: 0,
+		..Default::default()
+	};
 
 	let margins = vec![(ALICE, as_balance(100)), (BOB, 0)];
 	traders_in_one_market_context(config, margins, |market_id| {
@@ -229,13 +236,14 @@ fn underwater_accounts_imply_no_liquidation_fees() {
 
 #[test]
 fn position_in_market_with_greatest_margin_requirement_gets_liquidated_first() {
-	let mut config = valid_market_config();
-	config.margin_ratio_initial = (1, 2).into();
-	config.margin_ratio_maintenance = (20, 100).into();
-	config.taker_fee = 0;
-	let mut configs = vec![config.clone()];
-	config.margin_ratio_maintenance = (36, 100).into();
-	configs.push(config);
+	let config0 = MarketConfig {
+		margin_ratio_initial: (1, 2).into(),
+		margin_ratio_maintenance: (20, 100).into(),
+		taker_fee: 0,
+		..Default::default()
+	};
+	let config1 = MarketConfig { margin_ratio_maintenance: (36, 100).into(), ..config0.clone() };
+	let configs = vec![config0, config1];
 
 	let margins = vec![(ALICE, as_balance(100)), (BOB, 0)];
 	multi_market_and_trader_context(configs, margins, |market_ids| {
@@ -295,13 +303,14 @@ fn position_in_market_with_greatest_margin_requirement_gets_liquidated_first() {
 
 #[test]
 fn fees_are_proportional_to_base_asset_value_liquidated() {
-	let mut config = valid_market_config();
-	config.margin_ratio_initial = (1, 2).into();
-	config.margin_ratio_maintenance = (15, 100).into();
-	config.taker_fee = 0;
-	let mut configs = vec![config.clone()];
-	config.margin_ratio_maintenance = (20, 100).into();
-	configs.push(config);
+	let config0 = MarketConfig {
+		margin_ratio_initial: (1, 2).into(),
+		margin_ratio_maintenance: (15, 100).into(),
+		taker_fee: 0,
+		..Default::default()
+	};
+	let config1 = MarketConfig { margin_ratio_maintenance: (20, 100).into(), ..config0.clone() };
+	let configs = vec![config0, config1];
 
 	let margins = vec![(ALICE, as_balance(450)), (BOB, 0)];
 	multi_market_and_trader_context(configs, margins, |market_ids| {
@@ -370,13 +379,14 @@ fn fees_are_proportional_to_base_asset_value_liquidated() {
 
 #[test]
 fn fees_decrease_margin_for_remaining_positions() {
-	let mut config = valid_market_config();
-	config.margin_ratio_initial = (1, 2).into();
-	config.margin_ratio_maintenance = (20, 100).into();
-	config.taker_fee = 0;
-	let mut configs = vec![config.clone()];
-	config.margin_ratio_maintenance = (30, 100).into();
-	configs.push(config);
+	let config0 = MarketConfig {
+		margin_ratio_initial: (1, 2).into(),
+		margin_ratio_maintenance: (20, 100).into(),
+		taker_fee: 0,
+		..Default::default()
+	};
+	let config1 = MarketConfig { margin_ratio_maintenance: (30, 100).into(), ..config0.clone() };
+	let configs = vec![config0, config1];
 
 	let margins = vec![(ALICE, as_balance(100)), (BOB, 0)];
 	multi_market_and_trader_context(configs, margins, |market_ids| {
@@ -439,13 +449,14 @@ fn fees_decrease_margin_for_remaining_positions() {
 
 #[test]
 fn above_water_position_can_protect_underwater_position() {
-	let mut config = valid_market_config();
-	config.margin_ratio_initial = (1, 2).into();
-	config.margin_ratio_maintenance = (20, 100).into();
-	config.taker_fee = 0;
-	let mut configs = vec![config.clone()];
-	config.margin_ratio_maintenance = (20, 100).into();
-	configs.push(config);
+	let config0 = MarketConfig {
+		margin_ratio_initial: (1, 2).into(),
+		margin_ratio_maintenance: (20, 100).into(),
+		taker_fee: 0,
+		..Default::default()
+	};
+	let config1 = MarketConfig { margin_ratio_maintenance: (20, 100).into(), ..config0.clone() };
+	let configs = vec![config0, config1];
 
 	let margins = vec![(ALICE, as_balance(100)), (BOB, 0)];
 	multi_market_and_trader_context(configs, margins, |market_ids| {

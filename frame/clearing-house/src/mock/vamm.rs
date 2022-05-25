@@ -93,7 +93,7 @@ pub mod pallet {
 	//                                             Pallet Types
 	// ----------------------------------------------------------------------------------------------------
 
-	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq)]
+	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq, Default)]
 	pub struct VammConfig;
 
 	pub struct MovePriceConfig;

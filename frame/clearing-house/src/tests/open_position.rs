@@ -9,9 +9,8 @@ use crate::{
 	},
 	pallet::{Config, Direction, Error, Event},
 	tests::{
-		any_price, as_balance, run_for_seconds, set_fee_pool_depth,
-		valid_market_config as base_market_config, with_markets_context, with_trading_context,
-		MarginInitializer, MarketConfig, MarketInitializer,
+		any_price, as_balance, run_for_seconds, set_fee_pool_depth, with_markets_context,
+		with_trading_context, MarginInitializer, MarketConfig, MarketInitializer,
 	},
 };
 use composable_traits::{clearing_house::ClearingHouse, time::ONE_HOUR};
@@ -50,9 +49,7 @@ fn valid_base_asset_amount_limit() -> Balance {
 }
 
 fn valid_market_config() -> MarketConfig {
-	let mut config = base_market_config();
-	config.taker_fee = 0;
-	config
+	MarketConfig { taker_fee: 0, ..Default::default() }
 }
 
 // ----------------------------------------------------------------------------------------------------
