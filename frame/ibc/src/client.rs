@@ -149,9 +149,23 @@ where
 	}
 
 	fn host_consensus_state(&self, height: Height) -> Result<AnyConsensusState, ICS02Error> {
-		Err(ICS02Error::implementation_specific())
+		let bounded_map = CommitmentRoot::<T>::get();
+		let local_state = bounded_map
+			.get(&height.revision_height)
+			.ok_or_else(|| ICS02Error::implementation_specific())?;
+		let timestamp = ibc::timestamp::Timestamp::from_nanoseconds(local_state.timestamp)
+			.map_err(|_| ICS02Error::implementation_specific())?;
+		let timestamp =
+			timestamp.into_tm_time().ok_or_else(|| ICS02Error::implementation_specific())?;
+		let consensus_state = ibc::clients::ics11_beefy::consensus_state::ConsensusState {
+			timestamp,
+			root: local_state.root.clone().into(),
+		};
+
+		Ok(AnyConsensusState::Beefy(consensus_state))
 	}
 
+	// We should remove this function upstream, not needed in any case
 	fn pending_host_consensus_state(&self) -> Result<AnyConsensusState, ICS02Error> {
 		Err(ICS02Error::implementation_specific())
 	}
