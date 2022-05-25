@@ -17,9 +17,9 @@ jobs:
     - name: Build a Composable collator
       run: |
         cd scripts/polkadot-launch
-        git clone -b main https://github.com/ComposableFi/composable
-        cd composable
-        cargo build --release
+        mkdir -p composable/target/release
+        curl https://github.com/ComposableFi/composable/releases/download/v2.2.1/composable -Lo ./target/release/composable
+        chmod +x target/release/composable
         target/release/composable --version
 
     - name: Build a Polkadot relay chain
@@ -36,14 +36,13 @@ jobs:
         DEBIAN_FRONTEND: noninteractive
         LOG_FILE: /tmp/polka-launch/polka-launch.log
       run: |
+        cd scripts/polkadot-launch
         mkdir -p /tmp/polka-launch
         curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
         apt update -y
         apt install -y --no-install-recommends nodejs npm
         npm install --global yarn
 
-        old_pwd=$(pwd)
-        cd scripts/polkadot-launch
         yarn
         yarn composable > "${LOG_FILE}" 2>&1 &
         # yarn composable
@@ -65,8 +64,6 @@ jobs:
         done
         echo "wait for polka-launch"
 
-        cd "$(old_pwd)"
-
 #        while IFS="" read -r string; do
 #          echo $string
 #          matched_string=$(echo "$string" | grep "POLKADOT LAUNCH COMPLETE")
@@ -82,4 +79,3 @@ jobs:
         NODE_ENDPOINT: "ws://composable:9944"
       run: |
         cargo test
-
