@@ -64,7 +64,8 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		Executed { instruction: XCVMInstructionOf<T> },
-		Spawn { network: XCVMNetwork, network_txs: Vec<BridgeTxIdOf<T>>, program: Vec<u8> },
+		Bridge { network: XCVMNetwork, network_txs: Vec<BridgeTxIdOf<T>>, program: Vec<u8> },
+		Spawn { network: XCVMNetwork, program: Vec<u8> },
 	}
 
 	#[pallet::error]
@@ -199,7 +200,7 @@ pub mod pallet {
 								)
 							})
 							.collect::<Result<Vec<_>, _>>()?;
-						Self::deposit_event(Event::<T>::Spawn {
+						Self::deposit_event(Event::<T>::Bridge {
 							network,
 							network_txs,
 							program: xcvm_protobuf::encode(XCVMProgram {
@@ -210,7 +211,6 @@ pub mod pallet {
 					XCVMInstruction::Spawn(network, program) =>
 						Self::deposit_event(Event::<T>::Spawn {
 							network,
-							network_txs: Vec::new(),
 							program: xcvm_protobuf::encode(XCVMProgram {
 								instructions: program.clone(),
 							}),
