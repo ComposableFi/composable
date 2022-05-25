@@ -41,7 +41,7 @@ jobs:
         mkdir -p /tmp/polka-launch
         curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
         apt update -y
-        apt install -y --no-install-recommends nodejs npm
+        apt install -y --no-install-recommends nodejs
         npm install --global yarn
 
         yarn
