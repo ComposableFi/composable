@@ -26,11 +26,11 @@ pub use xcmp::{MaxInstructions, UnitWeightCost, XcmConfig};
 use common::{
 	impls::DealWithFees, multi_existential_deposits, AccountId, AccountIndex, Address, Amount,
 	AuraId, Balance, BlockNumber, BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash,
-	Moment, NativeExistentialDeposit, PoolId, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
+	Moment, NativeExistentialDeposit, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
 	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 
-use composable_traits::{assets::Asset, dex::PriceAggregate};
+use composable_traits::assets::Asset;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
