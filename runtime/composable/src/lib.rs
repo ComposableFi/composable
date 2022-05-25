@@ -861,23 +861,6 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pablo_runtime_api::PabloRuntimeApi<Block, PoolId, CurrencyId, Balance> for Runtime {
-		fn prices_for(
-			pool_id: PoolId,
-			base_asset_id: CurrencyId,
-			quote_asset_id: CurrencyId,
-			_amount: Balance
-		) -> PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
-			// TODO Dummy impl at the moment: fix when pablo is integrated into the composable runtime
-			PriceAggregate {
-				pool_id: SafeRpcWrapper(pool_id),
-				base_asset_id: SafeRpcWrapper(base_asset_id),
-				quote_asset_id: SafeRpcWrapper(quote_asset_id),
-				spot_price: SafeRpcWrapper(0_u128)
-			}
-		}
-	}
-
 	impl sp_api::Core<Block> for Runtime {
 		fn version() -> RuntimeVersion {
 			VERSION

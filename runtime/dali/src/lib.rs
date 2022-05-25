@@ -34,7 +34,11 @@ use common::{
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use composable_traits::{assets::Asset, defi::Rate, dex::PriceAggregate};
+use composable_traits::{
+	assets::Asset,
+	defi::Rate,
+	dex::{Amm, PriceAggregate},
+};
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -1223,6 +1227,18 @@ impl_runtime_apis! {
 				quote_asset_id: SafeRpcWrapper(quote_asset_id),
 				spot_price: SafeRpcWrapper(0_u128)
 			})
+		}
+
+		fn lp_tokens_received_for_liquidity_provided(
+			pool_id: SafeRpcWrapper<PoolId>,
+			base_asset_amount: SafeRpcWrapper<Balance>,
+			quote_asset_amount: SafeRpcWrapper<Balance>,
+		) -> SafeRpcWrapper<Balance> {
+			SafeRpcWrapper(<Pablo as Amm>::amount_of_lp_token_for_added_liquidity(
+				pool_id.0,
+				base_asset_amount.0,
+				quote_asset_amount.0,
+			).unwrap_or_else(|_|Zero::zero()))
 		}
 	}
 

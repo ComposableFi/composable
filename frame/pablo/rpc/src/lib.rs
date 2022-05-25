@@ -28,6 +28,15 @@ where
 	) -> RpcResult<
 		PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
 	>;
+
+	#[rpc(name = "pablo_lpTokensReceivedForLiquidityProvided")]
+	fn lp_tokens_received_for_liquidity_provided(
+		&self,
+		pool_id: SafeRpcWrapper<PoolId>,
+		base_asset_amount: SafeRpcWrapper<Balance>,
+		quote_asset_amount: SafeRpcWrapper<Balance>,
+		at: Option<BlockHash>,
+	) -> RpcResult<SafeRpcWrapper<Balance>>;
 }
 
 pub struct Pablo<C, Block> {
@@ -70,6 +79,33 @@ where
 		// calling ../../runtime-api
 		let runtime_api_result =
 			api.prices_for(&at, pool_id.0, base_asset_id.0, quote_asset_id.0, amount.0);
+		runtime_api_result.map_err(|e| {
+			RpcError {
+				code: ErrorCode::ServerError(9876), // No real reason for this value
+				message: "Something wrong".into(),
+				data: Some(format!("{:?}", e).into()),
+			}
+		})
+	}
+
+	fn lp_tokens_received_for_liquidity_provided(
+		&self,
+		pool_id: SafeRpcWrapper<PoolId>,
+		base_asset_amount: SafeRpcWrapper<Balance>,
+		quote_asset_amount: SafeRpcWrapper<Balance>,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<SafeRpcWrapper<Balance>> {
+		let api = self.client.runtime_api();
+
+		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
+
+		// calling ../../runtime-api
+		let runtime_api_result = api.lp_tokens_received_for_liquidity_provided(
+			&at,
+			pool_id,
+			base_asset_amount,
+			quote_asset_amount,
+		);
 		runtime_api_result.map_err(|e| {
 			RpcError {
 				code: ErrorCode::ServerError(9876), // No real reason for this value

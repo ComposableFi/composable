@@ -125,7 +125,7 @@ impl<T: Config> StableSwap<T> {
 
 	pub fn add_liquidity(
 		who: &T::AccountId,
-		pool: StableSwapPoolInfo<T::AccountId, T::AssetId>,
+		pool_info: StableSwapPoolInfo<T::AccountId, T::AssetId>,
 		pool_account: T::AccountId,
 		base_amount: T::Balance,
 		quote_amount: T::Balance,
@@ -144,70 +144,17 @@ impl<T: Config> StableSwap<T> {
 		let zero = T::Balance::zero();
 		ensure!(base_amount > zero, Error::<T>::AssetAmountMustBePositiveNumber);
 		ensure!(quote_amount > zero, Error::<T>::AssetAmountMustBePositiveNumber);
-		// pool supports only 2 assets
-		let pool_base_aum = T::Assets::balance(pool.pair.base, &pool_account);
-		let pool_quote_aum = T::Assets::balance(pool.pair.quote, &pool_account);
-
-		let lp_issued = T::Assets::total_issuance(pool.lp_token);
-		let amp = T::Convert::convert(pool.amplification_coefficient.into());
-		let d0 = Self::get_invariant(pool_base_aum, pool_quote_aum, amp)?;
-		let new_base_amount = pool_base_aum.safe_add(&base_amount)?;
-		let new_quote_amount = pool_quote_aum.safe_add(&quote_amount)?;
-		let d1 = Self::get_invariant(new_base_amount, new_quote_amount, amp)?;
-		ensure!(d1 > d0, Error::<T>::AssetAmountMustBePositiveNumber);
-
-		let (mint_amount, base_fee, quote_fee) = if lp_issued > zero {
-			// Deposit x + withdraw y should charge about same
-			// fees as a swap. Otherwise, one could exchange w/o paying fees.
-			// And this formula leads to exactly that equality
-			// fee = pool.fee * n_coins / (4 * (n_coins - 1))
-			// pool supports only two coins.
-			// https://ethereum.stackexchange.com/questions/124850/curve-amm-how-is-fee-calculated-when-adding-liquidity
-			let share: Permill = Permill::from_rational(2_u32, 4_u32);
-			let updated_fee_config = pool.fee_config.mul(share);
-
-			let ideal_base_balance = T::Convert::convert(safe_multiply_by_rational(
-				T::Convert::convert(d1),
-				T::Convert::convert(pool_base_aum),
-				T::Convert::convert(d0),
-			)?);
-			let ideal_quote_balance = T::Convert::convert(safe_multiply_by_rational(
-				T::Convert::convert(d1),
-				T::Convert::convert(pool_quote_aum),
-				T::Convert::convert(d0),
-			)?);
-
-			// differences from the ideal balances to be used in fee calculation
-			let base_difference = Self::abs_difference(ideal_base_balance, new_base_amount)?;
-			let quote_difference = Self::abs_difference(ideal_quote_balance, new_quote_amount)?;
-			let base_fee = updated_fee_config.calculate_fees(pool.pair.base, base_difference);
-			let quote_fee = updated_fee_config.calculate_fees(pool.pair.quote, quote_difference);
-
-			// Substract fees from calculated base/quote amounts to allow for fees
-			let new_base_balance = new_base_amount.safe_sub(&base_fee.fee)?;
-			let new_quote_balance = new_quote_amount.safe_sub(&quote_fee.fee)?;
-
-			let d2 = Self::get_invariant(new_base_balance, new_quote_balance, amp)?;
-			// minted LP is propotional to the delta of the pool invariant caused by imbalanced
-			// liquidity
-			let mint_amount = T::Convert::convert(safe_multiply_by_rational(
-				T::Convert::convert(lp_issued),
-				T::Convert::convert(d2.safe_sub(&d0)?),
-				T::Convert::convert(d0),
-			)?);
-			(mint_amount, base_fee, quote_fee)
-		} else {
-			(
-				d1,
-				Fee::<T::AssetId, T::Balance>::zero(pool.pair.base),
-				Fee::<T::AssetId, T::Balance>::zero(pool.pair.quote),
-			)
-		};
+		let (mint_amount, base_fee, quote_fee) = Self::calculate_mint_amount_and_fees(
+			&pool_info,
+			&pool_account,
+			&base_amount,
+			&quote_amount,
+		)?;
 
 		ensure!(mint_amount >= min_mint_amount, Error::<T>::CannotRespectMinimumRequested);
-		T::Assets::transfer(pool.pair.base, who, &pool_account, base_amount, keep_alive)?;
-		T::Assets::transfer(pool.pair.quote, who, &pool_account, quote_amount, keep_alive)?;
-		T::Assets::mint_into(pool.lp_token, who, mint_amount)?;
+		T::Assets::transfer(pool_info.pair.base, who, &pool_account, base_amount, keep_alive)?;
+		T::Assets::transfer(pool_info.pair.quote, who, &pool_account, quote_amount, keep_alive)?;
+		T::Assets::mint_into(pool_info.lp_token, who, mint_amount)?;
 		Ok((base_amount, quote_amount, mint_amount, base_fee, quote_fee))
 	}
 
@@ -252,5 +199,85 @@ impl<T: Config> StableSwap<T> {
 		T::Assets::transfer(pool.pair.quote, &pool_account, who, quote_amount, false)?;
 		T::Assets::burn_from(pool.lp_token, who, lp_amount)?;
 		Ok((base_amount, quote_amount, total_issuance))
+	}
+
+	pub(crate) fn calculate_mint_amount_and_fees(
+		pool_info: &StableSwapPoolInfo<T::AccountId, T::AssetId>,
+		pool_account: &T::AccountId,
+		base_amount: &T::Balance,
+		quote_amount: &T::Balance,
+	) -> Result<(T::Balance, Fee<T::AssetId, T::Balance>, Fee<T::AssetId, T::Balance>), DispatchError>
+	{
+		let pool_base_aum = T::Assets::balance(pool_info.pair.base, &pool_account);
+		let pool_quote_aum = T::Assets::balance(pool_info.pair.quote, &pool_account);
+
+		let total_lp_issued = T::Assets::total_issuance(pool_info.lp_token);
+
+		let amplification_coefficient =
+			T::Convert::convert(pool_info.amplification_coefficient.into());
+
+		let d0 = Self::get_invariant(pool_base_aum, pool_quote_aum, amplification_coefficient)?;
+
+		let new_base_amount = pool_base_aum.safe_add(&base_amount)?;
+		let new_quote_amount = pool_quote_aum.safe_add(&quote_amount)?;
+
+		let d1 = Self::get_invariant(new_base_amount, new_quote_amount, amplification_coefficient)?;
+
+		// REVIEW: Is this necessary with previous `AssetAmountMustBePositiveNumber` checks?
+		ensure!(d1 > d0, Error::<T>::AssetAmountMustBePositiveNumber);
+
+		let (mint_amount, base_fee, quote_fee) = if total_lp_issued > T::Balance::zero() {
+			// Deposit x + withdraw y should charge about same
+			// fees as a swap. Otherwise, one could exchange w/o paying fees.
+			// And this formula leads to exactly that equality
+			// fee = pool.fee * n_coins / (4 * (n_coins - 1))
+			// pool supports only two coins.
+			// https://ethereum.stackexchange.com/questions/124850/curve-amm-how-is-fee-calculated-when-adding-liquidity
+			let share: Permill = Permill::from_rational(2_u32, 4_u32);
+			let updated_fee_config = pool_info.fee_config.mul(share);
+
+			let ideal_base_balance = T::Convert::convert(safe_multiply_by_rational(
+				T::Convert::convert(d1),
+				T::Convert::convert(pool_base_aum),
+				T::Convert::convert(d0),
+			)?);
+			let ideal_quote_balance = T::Convert::convert(safe_multiply_by_rational(
+				T::Convert::convert(d1),
+				T::Convert::convert(pool_quote_aum),
+				T::Convert::convert(d0),
+			)?);
+
+			// differences from the ideal balances to be used in fee calculation
+			let base_difference = Self::abs_difference(ideal_base_balance, new_base_amount)?;
+			let quote_difference = Self::abs_difference(ideal_quote_balance, new_quote_amount)?;
+			let base_fee = updated_fee_config.calculate_fees(pool_info.pair.base, base_difference);
+			let quote_fee =
+				updated_fee_config.calculate_fees(pool_info.pair.quote, quote_difference);
+
+			// Substract fees from calculated base/quote amounts to allow for fees
+			let new_base_balance = new_base_amount.safe_sub(&base_fee.fee)?;
+			let new_quote_balance = new_quote_amount.safe_sub(&quote_fee.fee)?;
+
+			let d2 = Self::get_invariant(
+				new_base_balance,
+				new_quote_balance,
+				amplification_coefficient,
+			)?;
+			// minted LP is propotional to the delta of the pool invariant caused by imbalanced
+			// liquidity
+			let mint_amount = T::Convert::convert(safe_multiply_by_rational(
+				T::Convert::convert(total_lp_issued),
+				T::Convert::convert(d2.safe_sub(&d0)?),
+				T::Convert::convert(d0),
+			)?);
+			(mint_amount, base_fee, quote_fee)
+		} else {
+			(
+				d1,
+				Fee::<T::AssetId, T::Balance>::zero(pool_info.pair.base),
+				Fee::<T::AssetId, T::Balance>::zero(pool_info.pair.quote),
+			)
+		};
+		Ok((mint_amount, base_fee, quote_fee))
 	}
 }

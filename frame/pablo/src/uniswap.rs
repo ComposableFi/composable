@@ -108,7 +108,7 @@ impl<T: Config> Uniswap<T> {
 			T::Convert::convert(T::Assets::balance(pool.pair.quote, &pool_account));
 
 		let lp_total_issuance = T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
-		let (quote_amount, lp_token_to_mint) = compute_deposit_lp(
+		let (quote_amount, amount_of_lp_token_to_mint) = compute_deposit_lp(
 			lp_total_issuance,
 			T::Convert::convert(base_amount),
 			T::Convert::convert(quote_amount),
@@ -116,15 +116,18 @@ impl<T: Config> Uniswap<T> {
 			pool_quote_aum,
 		)?;
 		let quote_amount = T::Convert::convert(quote_amount);
-		let lp_token_to_mint = T::Convert::convert(lp_token_to_mint);
+		let amount_of_lp_token_to_mint = T::Convert::convert(amount_of_lp_token_to_mint);
 
 		ensure!(quote_amount > T::Balance::zero(), Error::<T>::InvalidAmount);
-		ensure!(lp_token_to_mint >= min_mint_amount, Error::<T>::CannotRespectMinimumRequested);
+		ensure!(
+			amount_of_lp_token_to_mint >= min_mint_amount,
+			Error::<T>::CannotRespectMinimumRequested
+		);
 
 		T::Assets::transfer(pool.pair.base, who, &pool_account, base_amount, keep_alive)?;
 		T::Assets::transfer(pool.pair.quote, who, &pool_account, quote_amount, keep_alive)?;
-		T::Assets::mint_into(pool.lp_token, who, lp_token_to_mint)?;
-		Ok((base_amount, quote_amount, lp_token_to_mint))
+		T::Assets::mint_into(pool.lp_token, who, amount_of_lp_token_to_mint)?;
+		Ok((base_amount, quote_amount, amount_of_lp_token_to_mint))
 	}
 
 	pub(crate) fn remove_liquidity(
