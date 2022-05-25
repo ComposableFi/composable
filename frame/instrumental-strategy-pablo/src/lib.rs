@@ -59,7 +59,8 @@ pub mod pallet {
 			+ AtLeast32BitUnsigned
 			+ Zero;
 
-		/// The `AssetId` used by the pallet. Corresponds to the Ids used by the Currency pallet.
+		/// The [`AssetId`](Config::AssetId) used by the pallet. Corresponds to the Ids used by the
+		/// Currency pallet.
 		type AssetId: FullCodec
 			+ MaxEncodedLen
 			+ Eq
@@ -70,7 +71,8 @@ pub mod pallet {
 			+ Default
 			+ TypeInfo;
 
-		/// The `VaultId` used by the pallet. Corresponds to the Ids used by the Vault pallet.
+		/// The [`VaultId`](Config::VaultId) used by the pallet. Corresponds to the Ids used by the
+		/// Vault pallet.
 		type VaultId: FullCodec
 			+ MaxEncodedLen
 			+ Eq
