@@ -165,6 +165,9 @@ pub trait StakingConfiguration {
 	/// Arguments
 	///
 	/// * `asset` the protocol asset to configure staking for.
+	/// * `duration_presets` the durations for which staking is allowed.
+	/// * `reward_assets` the reward assets.
+	/// * `early_unstake_penalty` the panely for unstaking early.
 	fn configure(
 		asset: Self::AssetId,
 		duration_presets: BTreeMap<DurationSeconds, Perbill>,
