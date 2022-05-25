@@ -112,8 +112,8 @@ impl orml_tokens::Config for MockRuntime {
 impl pallet_currency_factory::Config for MockRuntime {
 	type Event = Event;
 	type AssetId = CurrencyId;
+	type Balance = Balance;
 	type AddOrigin = EnsureRoot<AccountId>;
-	type ReserveOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
 }
 
