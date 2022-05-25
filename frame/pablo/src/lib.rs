@@ -94,7 +94,7 @@ pub mod pallet {
 	};
 	use composable_support::validation::Validated;
 	use composable_traits::{
-		currency::{AssetIdLike, BalanceLike},
+		currency::BalanceLike,
 		dex::FeeConfig,
 		staking_rewards::{Penalty, StakingConfiguration},
 		time::DurationSeconds,
@@ -611,14 +611,16 @@ pub mod pallet {
 			};
 			T::StakingConfiguration::configure(
 				lp_token,
-				// Hard coded for now
+				// TODO (vim) Hard coded for now
 				[(WEEK, Perbill::from_float(0.5)), (MONTH, Perbill::from_float(1.0))].into(),
+				// TODO (vim) : Consider the case of having change the rewarded assets after the
+				// NFTs have already been created for a given asset by stakers
 				BTreeSet::from([CurrencyId::PBLO.into(), CurrencyId::PICA.into()]),
 				Penalty {
 					value: Perbill::from_float(0.5),
 					beneficiary: Self::account_id(&pool_id),
 				},
-			);
+			)?;
 			Self::deposit_event(Event::<T>::PoolCreated { owner, pool_id, assets: pair });
 			Ok(pool_id)
 		}

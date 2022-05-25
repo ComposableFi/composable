@@ -88,6 +88,8 @@ fn test() {
 		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
 
 		let pool = get_pool(pool_id);
+		// check if the LP staking configuration has been created
+		assert_ok!(StakingRewards::get_config(&pool.lp_token));
 
 		let current_product = |a| {
 			let balance_btc = Tokens::balance(BTC, &a);

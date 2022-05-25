@@ -98,6 +98,8 @@ fn test_dex_demo() {
 			StableSwap(pool) => pool,
 			_ => panic!("expected stable_swap pool"),
 		};
+		// check if the LP staking configuration has been created
+		assert_ok!(StakingRewards::get_config(&pool.lp_token));
 
 		let unit = 1_000_000_000_000_u128;
 		let usdc_price = 1 * unit;

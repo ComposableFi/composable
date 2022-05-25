@@ -560,9 +560,7 @@ pub mod pallet {
 			T::PalletId::get().into_sub_account(asset)
 		}
 
-		pub(crate) fn get_config(
-			asset: &AssetIdOf<T>,
-		) -> Result<StakingConfigOf<T>, DispatchError> {
+		pub fn get_config(asset: &AssetIdOf<T>) -> Result<StakingConfigOf<T>, DispatchError> {
 			StakingConfigurations::<T>::get(asset).ok_or(Error::<T>::NotConfigured.into())
 		}
 
@@ -664,6 +662,8 @@ pub mod pallet {
 			let now = Self::now();
 			let next_epoch = Self::epoch_next()?;
 			// Initialize pending rewards to 0.
+			// TODO (vim) : Consider the case of having change the rewarded assets after the NFTs
+			// have already been created for a given asset by stakers
 			let pending_rewards = config
 				.reward_assets
 				.into_iter()
