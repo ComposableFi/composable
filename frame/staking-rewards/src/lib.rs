@@ -361,7 +361,7 @@ pub mod pallet {
 		}
 
 		/// Splits fNFT position into several chunks with various amounts, but with same exposure.
-		/// fNFT splitted earns reward in current epoch proportial to split.
+		/// fNFT splitted earns reward in current epoch proportional to split.
 		/// Can split only at  `State::WaitingForEpochEnd` state.
 		///
 		/// `origin` - owner of fNFT
@@ -370,9 +370,9 @@ pub mod pallet {
 		///  raises event of NFT `SplitCreation`
 		#[pallet::weight(10_000)]
 		pub fn split(
-			origin: OriginFor<T>,
-			asset: InstanceIdOf<T>,
-			amounts: BiBoundedVec<T::Balance, 2, 16>,
+			_origin: OriginFor<T>,
+			_asset: InstanceIdOf<T>,
+			_amounts: BiBoundedVec<T::Balance, 2, 16>,
 		) -> DispatchResult {
 			Err(DispatchError::Other("no implemented. TODO: call split on fnft provider"))
 		}
@@ -380,9 +380,9 @@ pub mod pallet {
 		/// Extends fNFT position stake. Applied only to next epoch.
 		#[pallet::weight(10_000)]
 		pub fn extend_stake(
-			origin: OriginFor<T>,
-			instance_id: InstanceIdOf<T>,
-			balance: T::Balance,
+			_origin: OriginFor<T>,
+			_instance_id: InstanceIdOf<T>,
+			_balance: T::Balance,
 		) -> DispatchResult {
 			Err(DispatchError::Other("no implemented. TODO: insert update for next fold"))
 		}
@@ -394,9 +394,9 @@ pub mod pallet {
 		/// Fails if `duration` extensions does not fits allowed.
 		#[pallet::weight(10_000)]
 		pub fn extend_duration(
-			origin: OriginFor<T>,
-			instance_id: InstanceIdOf<T>,
-			duration: Option<DurationSeconds>,
+			_origin: OriginFor<T>,
+			_instance_id: InstanceIdOf<T>,
+			_duration: Option<DurationSeconds>,
 		) -> DispatchResult {
 			Err(DispatchError::Other("no implemented. TODO: insert update for next fold").into())
 		}
@@ -427,6 +427,8 @@ pub mod pallet {
 											// TODO: https://app.clickup.com/t/2xw5fca
 										},
 										PositionState::LockedRewarding => {
+											// TODO: return here increased share if one of assets is
+											// same as staked
 											let shares = nft.shares();
 											for (reward_asset, pending_reward) in
 												nft.pending_rewards.clone().into_iter()
@@ -443,6 +445,8 @@ pub mod pallet {
 													reward,
 													total_shares,
 												)?;
+												// TODO: if adding asset which is staked, increase
+												// total
 												nft.pending_rewards
 													.try_insert(
 														reward_asset,
