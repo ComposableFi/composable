@@ -48,9 +48,9 @@ jobs:
           sleep 1
             stdout=$(tail -n 1 "${LOG_FILE}" | grep "POLKADOT LAUNCH COMPLETE")
             if [ -z "$stdout" ]; then
-                true
+              true
             else
-                exit 0
+              break
             fi
         done
 
