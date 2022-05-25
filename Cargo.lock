@@ -12971,16 +12971,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sp_math"
-version = "0.1.0"
-dependencies = [
- "num-traits",
- "parity-scale-codec",
- "sp-arithmetic",
- "sp-std",
-]
-
-[[package]]
 name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
