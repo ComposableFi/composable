@@ -2,7 +2,9 @@ version: "3.9"
 
 services:
   composable:
-    image: composablefi/composable-sandbox
+    build:
+      context: ../../
+      dockerfile: docker/composable-sandbox.dockerfile
     ports:
       - "9988:9988"
   integration-tests:
