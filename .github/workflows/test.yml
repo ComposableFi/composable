@@ -40,6 +40,9 @@ jobs:
         apt update -y
         apt install -y -y --no-install-recommends npm
         npm install --global yarn
+
+        old_pwd=$(pwd)
+        cd scripts/polkadot-launch
         yarn
         yarn composable > "${LOG_FILE}" 2>&1 &
         # yarn composable
@@ -60,6 +63,8 @@ jobs:
           fi
         done
         echo "wait for polka-launch"
+
+        cd "$(old_pwd)"
 
 #        while IFS="" read -r string; do
 #          echo $string
