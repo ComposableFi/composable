@@ -1,6 +1,6 @@
 // This file is part of Substrate.
 
-// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.
+// Copyright (C) 2017-2021 Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,11 +23,13 @@ use codec::Encode;
 use frame_support::{
 	assert_noop, assert_ok, ord_parameter_types, parameter_types,
 	traits::{
-		ConstU32, ConstU64, Contains, EqualPrivilegeOnly, GenesisBuild, OnInitialize, SortedMembers,
+		ConstU32, ConstU64, Contains, EqualPrivilegeOnly, Everything, GenesisBuild, OnInitialize,
+		SortedMembers,
 	},
 	weights::Weight,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
+use orml_traits::parameter_type_with_key;
 use pallet_balances::{BalanceLock, Error as BalancesError};
 use proptest::prelude::*;
 use sp_core::H256;
@@ -56,6 +58,13 @@ const AYE: Vote = Vote { aye: true, conviction: Conviction::None };
 const NAY: Vote = Vote { aye: false, conviction: Conviction::None };
 const BIG_AYE: Vote = Vote { aye: true, conviction: Conviction::Locked1x };
 const BIG_NAY: Vote = Vote { aye: false, conviction: Conviction::Locked1x };
+// Multi Currency Assets
+const DEFAULT_ASSET: AssetId = 1;
+const DOT_ASSET: AssetId = 2;
+const X_ASSET: AssetId = 3;
+const Y_ASSET: AssetId = 4;
+
+const MAX_PROPOSALS: u32 = 100;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -76,6 +85,8 @@ frame_support::construct_runtime!(
 	{
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
+		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
+		Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>},
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>},
 	}
@@ -87,24 +98,6 @@ impl Contains<Call> for BaseFilter {
 	fn contains(call: &Call) -> bool {
 		!matches!(call, &Call::Balances(pallet_balances::Call::set_balance { .. }))
 	}
-}
-
-parameter_type_with_key! {
-	pub ExistentialDeposits: |_currency_id: u64| -> Balance {
-		Zero::zero()
-	};
-}
-
-impl orml_tokens::Config for Test {
-	type Event = Event;
-	type Balance = Balance;
-	type Amount = i128;
-	type CurrencyId = u64;
-	type WeightInfo = ();
-	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = ();
-	type MaxLocks = MaxLocks;
-	type DustRemovalWhitelist = Everything;
 }
 
 parameter_types! {
@@ -140,6 +133,8 @@ impl frame_system::Config for Test {
 }
 parameter_types! {
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * BlockWeights::get().max_block;
+	pub const MaxScheduledPerBlock: u32 = 50;
+  pub const NoPreimagePostponement: Option<u64> = Some(10);
 }
 
 impl pallet_scheduler::Config for Test {
@@ -148,19 +143,51 @@ impl pallet_scheduler::Config for Test {
 	type PalletsOrigin = OriginCaller;
 	type Call = Call;
 	type MaximumWeight = MaximumSchedulerWeight;
+	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type ScheduleOrigin = EnsureRoot<u64>;
 	type MaxScheduledPerBlock = ();
 	type WeightInfo = ();
-	type OriginPrivilegeCmp = EqualPrivilegeOnly;
-	type PreimageProvider = ();
+	type PreimageProvider = Preimage;
 	type NoPreimagePostponement = NoPreimagePostponement;
+}
+
+parameter_types! {
+	pub const PreimageMaxSize: u32 = 4096 * 1024;
+	pub PreimageBaseDeposit: Balance = 1;
+}
+
+impl pallet_preimage::Config for Test {
+	type Event = Event;
+	type Currency = Balances;
+	type ManagerOrigin = EnsureRoot<AccountId>;
+	type MaxSize = PreimageMaxSize;
+	type BaseDeposit = PreimageBaseDeposit;
+	type ByteDeposit = PreimageByteDeposit;
+	type WeightInfo = ();
+}
+
+parameter_type_with_key! {
+	pub ExistentialDeposits: |_currency_id: u128| -> Balance {
+		Zero::zero()
+	};
+}
+
+impl orml_tokens::Config for Test {
+	type Event = Event;
+	type Balance = Balance;
+	type Amount = i128;
+	type CurrencyId = u128;
+	type WeightInfo = ();
+	type ExistentialDeposits = ExistentialDeposits;
+	type OnDust = ();
+	type MaxLocks = MaxLocks;
+	type DustRemovalWhitelist = Everything;
 }
 
 parameter_types! {
 	pub const ExistentialDeposit: Balance = 1;
 	pub const MaxLocks: u32 = 50;
 }
-
 impl pallet_balances::Config for Test {
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
@@ -173,8 +200,18 @@ impl pallet_balances::Config for Test {
 	type WeightInfo = ();
 }
 parameter_types! {
+	pub const LaunchPeriod: u64 = 2;
+	pub const VotingPeriod: u64 = 2;
+	pub const FastTrackVotingPeriod: u64 = 2;
+	pub const MinimumDeposit: u64 = 1;
+	pub const EnactmentPeriod: u64 = 2;
+	pub const VoteLockingPeriod: u64 = 3;
+	pub const CooloffPeriod: u64 = 2;
+	pub const MaxVotes: u32 = 100;
+	pub const MaxProposals: u32 = MAX_PROPOSALS;
 	pub static PreimageByteDeposit: u64 = 0;
 	pub static InstantAllowed: bool = false;
+	pub const TreasuryAccount: AccountId = 0;
 }
 ord_parameter_types! {
 	pub const One: u64 = 1;
@@ -198,13 +235,14 @@ impl Config for Test {
 	type AssetId = u128;
 	type Proposal = Call;
 	type Event = Event;
-	type Currency = pallet_balances::Pallet<Self>;
-	type EnactmentPeriod = ConstU64<2>;
-	type LaunchPeriod = ConstU64<2>;
-	type VotingPeriod = ConstU64<2>;
-	type VoteLockingPeriod = ConstU64<3>;
-	type FastTrackVotingPeriod = ConstU64<2>;
-	type MinimumDeposit = ConstU64<1>;
+	type NativeCurrency = Balances;
+	type Currency = Tokens;
+	type EnactmentPeriod = EnactmentPeriod;
+	type LaunchPeriod = LaunchPeriod;
+	type VotingPeriod = VotingPeriod;
+	type VoteLockingPeriod = VoteLockingPeriod;
+	type FastTrackVotingPeriod = FastTrackVotingPeriod;
+	type MinimumDeposit = MinimumDeposit;
 	type ExternalOrigin = EnsureSignedBy<Two, u64>;
 	type ExternalMajorityOrigin = EnsureSignedBy<Three, u64>;
 	type ExternalDefaultOrigin = EnsureSignedBy<One, u64>;
@@ -213,17 +251,17 @@ impl Config for Test {
 	type BlacklistOrigin = EnsureRoot<u64>;
 	type CancelProposalOrigin = EnsureRoot<u64>;
 	type VetoOrigin = EnsureSignedBy<OneToFive, u64>;
-	type CooloffPeriod = ConstU64<2>;
+	type CooloffPeriod = CooloffPeriod;
 	type PreimageByteDeposit = PreimageByteDeposit;
-	type Slash = ();
 	type InstantOrigin = EnsureSignedBy<Six, u64>;
 	type InstantAllowed = InstantAllowed;
 	type Scheduler = Scheduler;
-	type MaxVotes = ConstU32<100>;
+	type MaxVotes = MaxVotes;
 	type OperationalPreimageOrigin = EnsureSignedBy<Six, u64>;
 	type PalletsOrigin = OriginCaller;
+	type Slash = ();
 	type WeightInfo = ();
-	type MaxProposals = ConstU32<100>;
+	type MaxProposals = MaxProposals;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

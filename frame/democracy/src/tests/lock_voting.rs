@@ -386,8 +386,8 @@ fn lock_voting_should_work() {
 		assert_ok!(Democracy::unlock(Origin::signed(1), 2, DEFAULT_ASSET));
 		assert_eq!(Tokens::locks(&2, DEFAULT_ASSET)[0].amount, 20);
 		fast_forward_to(26);
-		assert_ok!(Democracy::unlock(Origin::signed(1), 2));
-		assert_eq!(Balances::locks(2), vec![]);
+		assert_ok!(Democracy::unlock(Origin::signed(1), 2, DEFAULT_ASSET));
+		assert_eq!(Tokens::locks(&2, DEFAULT_ASSET).len(), 0);
 	});
 }
 

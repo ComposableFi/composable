@@ -80,12 +80,7 @@ fn instant_referendum_works() {
 			Democracy::fast_track(Origin::signed(5), id.hash, id.asset_id, 3, 2),
 			Error::<Test>::ProposalMissing
 		);
-		assert_ok!(Democracy::external_propose_majority(
-			Origin::signed(3),
-			set_balance_proposal_hash_and_note(2)
-		));
-		assert_noop!(Democracy::fast_track(Origin::signed(1), h, 3, 2), BadOrigin);
-		assert_noop!(Democracy::fast_track(Origin::signed(5), h, 1, 0), BadOrigin);
+		assert_ok!(Democracy::external_propose_majority(Origin::signed(3), id.hash, id.asset_id));
 		assert_noop!(
 			Democracy::fast_track(Origin::signed(1), id.hash, id.asset_id, 3, 2),
 			BadOrigin

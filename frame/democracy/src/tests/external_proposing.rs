@@ -233,10 +233,8 @@ proptest! {
 fn external_and_public_interleaving_works() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(0);
-		assert_ok!(Democracy::external_propose(
-			Origin::signed(2),
-			set_balance_proposal_hash_and_note(1),
-		));
+		let id = set_balance_proposal_hash_and_note(1);
+		assert_ok!(Democracy::external_propose(Origin::signed(2), id.hash, id.asset_id));
 		assert_ok!(propose_set_balance_and_note(6, 2, 2));
 
 		fast_forward_to(2);
@@ -322,8 +320,8 @@ fn external_and_public_interleaving_works() {
 		// replenish public again
 		assert_ok!(propose_set_balance_and_note(6, 6, 2));
 		// cancel external
-		let h = set_balance_proposal_hash_and_note(7);
-		assert_ok!(Democracy::veto_external(Origin::signed(3), h));
+		let id = set_balance_proposal_hash_and_note(7);
+		assert_ok!(Democracy::veto_external(Origin::signed(3), id.hash, id.asset_id));
 
 		fast_forward_to(12);
 

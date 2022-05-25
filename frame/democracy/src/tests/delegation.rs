@@ -165,7 +165,13 @@ fn conviction_should_be_honored_in_delegation() {
 	new_test_ext().execute_with(|| {
 		let r = begin_referendum();
 		// Delegate and vote.
-		assert_ok!(Democracy::delegate(Origin::signed(2), 1, Conviction::Locked6x, 20));
+		assert_ok!(Democracy::delegate(
+			Origin::signed(2),
+			1,
+			DEFAULT_ASSET,
+			Conviction::Locked6x,
+			20
+		));
 		assert_ok!(Democracy::vote(Origin::signed(1), r, aye(1)));
 		// Delegated vote is huge.
 		assert_eq!(tally(r), Tally { ayes: 121, nays: 0, turnout: 30 });
@@ -196,7 +202,13 @@ fn redelegation_keeps_lock() {
 	new_test_ext().execute_with(|| {
 		let r = begin_referendum();
 		// Delegate and vote.
-		assert_ok!(Democracy::delegate(Origin::signed(2), 1, Conviction::Locked6x, 20));
+		assert_ok!(Democracy::delegate(
+			Origin::signed(2),
+			1,
+			DEFAULT_ASSET,
+			Conviction::Locked6x,
+			20
+		));
 		assert_ok!(Democracy::vote(Origin::signed(1), r, aye(1)));
 		// Delegated vote is huge.
 		assert_eq!(tally(r), Tally { ayes: 121, nays: 0, turnout: 30 });
@@ -204,27 +216,27 @@ fn redelegation_keeps_lock() {
 		let mut prior_lock = vote::PriorLock::default();
 
 		// Locked balance of delegator exists
-		assert_eq!(VotingOf::<Test>::get(2).locked_balance(), 20);
-		assert_eq!(VotingOf::<Test>::get(2).prior(), &prior_lock);
+		assert_eq!(VotingOf::<Test>::get((2, DEFAULT_ASSET)).locked_balance(), 20);
+		assert_eq!(VotingOf::<Test>::get((2, DEFAULT_ASSET)).prior(), &prior_lock);
 
 		// Delegate someone else at a lower conviction and amount
-		assert_ok!(Democracy::delegate(Origin::signed(2), 3, Conviction::None, 10));
+		assert_ok!(Democracy::delegate(Origin::signed(2), 3, DEFAULT_ASSET, Conviction::None, 10));
 
 		// 6x prior should appear w/ locked balance.
 		prior_lock.accumulate(98, 20);
-		assert_eq!(VotingOf::<Test>::get(2).prior(), &prior_lock);
-		assert_eq!(VotingOf::<Test>::get(2).locked_balance(), 20);
+		assert_eq!(VotingOf::<Test>::get((2, DEFAULT_ASSET)).prior(), &prior_lock);
+		assert_eq!(VotingOf::<Test>::get((2, DEFAULT_ASSET)).locked_balance(), 20);
 		// Unlock shouldn't work
-		assert_ok!(Democracy::unlock(Origin::signed(2), 2));
-		assert_eq!(VotingOf::<Test>::get(2).prior(), &prior_lock);
-		assert_eq!(VotingOf::<Test>::get(2).locked_balance(), 20);
+		assert_ok!(Democracy::unlock(Origin::signed(2), 2, DEFAULT_ASSET));
+		assert_eq!(VotingOf::<Test>::get((2, DEFAULT_ASSET)).prior(), &prior_lock);
+		assert_eq!(VotingOf::<Test>::get((2, DEFAULT_ASSET)).locked_balance(), 20);
 
 		fast_forward_to(100);
 
 		// Now unlock can remove the prior lock and reduce the locked amount.
-		assert_eq!(VotingOf::<Test>::get(2).prior(), &prior_lock);
-		assert_ok!(Democracy::unlock(Origin::signed(2), 2));
-		assert_eq!(VotingOf::<Test>::get(2).prior(), &vote::PriorLock::default());
-		assert_eq!(VotingOf::<Test>::get(2).locked_balance(), 10);
+		assert_eq!(VotingOf::<Test>::get((2, DEFAULT_ASSET)).prior(), &prior_lock);
+		assert_ok!(Democracy::unlock(Origin::signed(2), 2, DEFAULT_ASSET));
+		assert_eq!(VotingOf::<Test>::get((2, DEFAULT_ASSET)).prior(), &vote::PriorLock::default());
+		assert_eq!(VotingOf::<Test>::get((2, DEFAULT_ASSET)).locked_balance(), 10);
 	});
 }
