@@ -29,7 +29,7 @@ jobs:
 #        cd polkadot
 #        cargo build --release
 #        ./target/release/polkadot --version
-#
+
     - name: Run polkadot-launch
       timeout-minutes: 5
       env:
@@ -44,16 +44,6 @@ jobs:
         yarn composable > "${LOG_FILE}" 2>&1 &
 
         # wait for polka-launch
-#        while IFS="" read -r string; do
-#          echo $string
-#          matched_string=$(echo "$string" | grep "POLKADOT LAUNCH COMPLETE")
-#          if [ -z "${matched_string}" ]; then
-#            true
-#          else
-#            break
-#          fi
-#        done < <(tail -f "${LOG_FILE}")
-#
         while true; do
           sleep 1
             stdout=$(tail -n 1 "${LOG_FILE}" | grep "POLKADOT LAUNCH COMPLETE")
@@ -63,6 +53,16 @@ jobs:
                 exit 0
             fi
         done
+
+#        while IFS="" read -r string; do
+#          echo $string
+#          matched_string=$(echo "$string" | grep "POLKADOT LAUNCH COMPLETE")
+#          if [ -z "${matched_string}" ]; then
+#            true
+#          else
+#            break
+#          fi
+#        done < <(tail -f "${LOG_FILE}")
 
     - name: Run Test
       env:
