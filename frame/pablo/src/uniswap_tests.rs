@@ -36,7 +36,7 @@ fn create_pool(
 	protocol_fee: Permill,
 ) -> PoolId {
 	System::set_block_number(1);
-	let actual_pool_id = Uniswap::<Test>::do_create_pool(
+	let (actual_pool_id, _) = Uniswap::<Test>::do_create_pool(
 		&ALICE,
 		CurrencyPair::new(base_asset, quote_asset),
 		FeeConfig {

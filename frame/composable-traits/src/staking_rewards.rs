@@ -5,6 +5,7 @@ use crate::{
 use codec::{Decode, Encode};
 use composable_support::math::safe::SafeSub;
 use core::fmt::Debug;
+use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 use frame_support::{dispatch::DispatchResult, traits::Get};
 use scale_info::TypeInfo;
 use sp_runtime::{
@@ -152,6 +153,24 @@ impl<AccountId, AssetId, Balance, Epoch, Rewards> Get<NftVersion>
 	fn get() -> NftVersion {
 		NftVersion::VERSION_1
 	}
+}
+
+/// Interface for protocol staking configuration.
+pub trait StakingConfiguration {
+	type AssetId;
+	type AccountId;
+
+	/// Configure staking for the given `asset` using the provided `configuration`.
+	///
+	/// Arguments
+	///
+	/// * `asset` the protocol asset to configure staking for.
+	fn configure(
+		asset: Self::AssetId,
+		duration_presets: BTreeMap<DurationSeconds, Perbill>,
+		reward_assets: BTreeSet<Self::AssetId>,
+		early_unstake_penalty: Penalty<Self::AccountId>
+	) -> Result<(), DispatchError>;
 }
 
 /// Interface for protocol staking.

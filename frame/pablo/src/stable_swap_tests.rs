@@ -34,7 +34,7 @@ fn create_stable_swap_pool(
 	owner_fee: Permill,
 ) -> PoolId {
 	System::set_block_number(1);
-	let actual_pool_id = SS::<Test>::do_create_pool(
+	let (actual_pool_id, _) = SS::<Test>::do_create_pool(
 		&ALICE,
 		CurrencyPair::new(base_asset, quote_asset),
 		amplification_factor,

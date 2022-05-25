@@ -78,6 +78,7 @@ pub mod pallet {
 		},
 	};
 	use core::fmt::Debug;
+	use sp_std::collections::{btree_set::BTreeSet};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
@@ -97,11 +98,21 @@ pub mod pallet {
 		ensure_signed,
 		pallet_prelude::{BlockNumberFor, OriginFor},
 	};
+	use sp_arithmetic::Perbill;
 	use sp_runtime::{
 		traits::{AccountIdConversion, BlockNumberProvider, Convert, One, Zero},
 		ArithmeticError, FixedPointNumber, Permill,
 	};
 	use sp_std::vec::Vec;
+	use composable_traits::staking_rewards::{Penalty, StakingConfiguration};
+	use composable_traits::time::DurationSeconds;
+	use primitives::currency::CurrencyId;
+
+	pub const MINUTE: DurationSeconds = 60;
+	pub const HOUR: DurationSeconds = 60 * MINUTE;
+	pub const DAY: DurationSeconds = 24 * HOUR;
+	pub const WEEK: DurationSeconds = 7 * DAY;
+	pub const MONTH: DurationSeconds = 30 * DAY;
 
 	#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
 	pub enum PoolInitConfiguration<AccountId, AssetId, BlockNumber> {
@@ -316,6 +327,9 @@ pub mod pallet {
 
 		/// Time provider.
 		type Time: Time;
+
+		/// Staking configuration provider
+		type StakingConfiguration: StakingConfiguration<AssetId=Self::AssetId, AccountId=Self::AccountId>;
 
 		/// The interval between TWAP computations.
 		#[pallet::constant]
@@ -553,7 +567,7 @@ pub mod pallet {
 		pub fn do_create_pool(
 			init_config: PoolInitConfigurationOf<T>,
 		) -> Result<T::PoolId, DispatchError> {
-			let (owner, pool_id, pair) = match init_config {
+			let (owner, (pool_id, lp_token), pair) = match init_config {
 				PoolInitConfiguration::StableSwap {
 					owner,
 					pair,
@@ -588,6 +602,15 @@ pub mod pallet {
 					)
 				},
 			};
+			T::StakingConfiguration::configure(
+				lp_token,
+					// Hard coded for now
+				[(WEEK, Perbill::from_float(0.5)), (MONTH, Perbill::from_float(1.0))].into(),
+				BTreeSet::from([CurrencyId::PBLO, CurrencyId::PICA.into()]),
+				Penalty {
+					value: Perbill::from_float(0.5), beneficiary: Self::account_id(&pool_id)
+				}
+			);
 			Self::deposit_event(Event::<T>::PoolCreated { owner, pool_id, assets: pair });
 			Ok(pool_id)
 		}

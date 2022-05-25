@@ -26,7 +26,7 @@ impl<T: Config> Uniswap<T> {
 		pair: CurrencyPair<T::AssetId>,
 		fee_config: FeeConfig,
 		base_weight: Permill,
-	) -> Result<T::PoolId, DispatchError> {
+	) -> Result<(T::PoolId, T::AssetId), DispatchError> {
 		// TODO(hussein-aitlahcen): refactor all those checks using Validated
 		ensure!(base_weight != Permill::zero(), Error::<T>::WeightsMustBeNonZero);
 		ensure!(base_weight < Permill::one(), Error::<T>::WeightsMustSumToOne);
@@ -56,7 +56,7 @@ impl<T: Config> Uniswap<T> {
 				Ok(pool_id)
 			})?;
 
-		Ok(pool_id)
+		Ok((pool_id, lp_token))
 	}
 
 	pub(crate) fn get_exchange_value(

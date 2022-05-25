@@ -24,7 +24,7 @@ impl<T: Config> StableSwap<T> {
 		pair: CurrencyPair<T::AssetId>,
 		amp_coeff: u16,
 		fee: FeeConfig,
-	) -> Result<T::PoolId, DispatchError> {
+	) -> Result<(T::PoolId, T::AssetId), DispatchError> {
 		ensure!(amp_coeff > 0, Error::<T>::AmpFactorMustBeGreaterThanZero);
 		ensure!(pair.base != pair.quote, Error::<T>::InvalidPair);
 		ensure!(fee.fee_rate < Permill::one(), Error::<T>::InvalidFees);
@@ -49,7 +49,7 @@ impl<T: Config> StableSwap<T> {
 				Ok(pool_id)
 			})?;
 
-		Ok(pool_id)
+		Ok((pool_id, lp_token))
 	}
 
 	fn get_invariant(

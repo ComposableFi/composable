@@ -13,6 +13,8 @@ use sp_runtime::{
 	Permill,
 };
 use system::EnsureRoot;
+use composable_traits::{time::DurationSeconds};
+use composable_traits::financial_nft::{FinancialNftProtocol, NftClass, NftVersion};
 
 pub type CurrencyId = u128;
 pub type BlockNumber = u64;
@@ -24,6 +26,9 @@ pub const USDC: CurrencyId = 4;
 pub const PROJECT_TOKEN: AssetId = 1;
 pub const TWAP_INTERVAL: Moment = 10;
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
+
+/// One minute in term of block
+pub const REWARD_EPOCH_DURATION_BLOCK: BlockNumber = 60_000 / MILLISECS_PER_BLOCK;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -40,6 +45,8 @@ frame_support::construct_runtime!(
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
+		StakingRewards: pallet_staking_rewards::{Pallet, Call, Storage, Event<T>},
+		NFT: pallet_nft::{Pallet, Storage , Event<T>},
 	}
 );
 
@@ -121,6 +128,41 @@ impl orml_tokens::Config for Test {
 }
 
 parameter_types! {
+	pub const StakingRewardPalletId: PalletId = PalletId(*b"pal_stkr");
+	pub const MaxStakingPresets: u32 = 10;
+	pub const MaxRewardAssets: u32 = 10;
+	pub const EpochDuration: DurationSeconds = MILLISECS_PER_BLOCK * REWARD_EPOCH_DURATION_BLOCK / 1000;
+	pub const ElementToProcessPerBlock: u32 = 100;
+}
+
+impl pallet_staking_rewards::Config for Test {
+	type Event = Event;
+	type AssetId = AssetId;
+	type Balance = Balance;
+	type Assets = Tokens;
+	type Time = Timestamp;
+	type GovernanceOrigin = EnsureRoot<AccountId>;
+	type PalletId = StakingRewardPalletId;
+	type MaxStakingPresets = MaxStakingPresets;
+	type MaxRewardAssets = MaxRewardAssets;
+	type EpochDuration = EpochDuration;
+	type ElementToProcessPerBlock = ElementToProcessPerBlock;
+}
+
+pub type InstanceId = u128;
+
+impl FinancialNftProtocol<AccountId> for Test {
+	type ClassId = NftClass;
+	type InstanceId = InstanceId;
+	type Version = NftVersion;
+	type NFTProvider = NFT;
+}
+
+impl pallet_nft::Config for Test {
+	type Event = Event;
+}
+
+parameter_types! {
 	pub Precision: u128 = 100_u128;
 	pub TestPalletID : PalletId = PalletId(*b"pablo_pa");
 	pub MinSaleDuration: BlockNumber = 3600 / 12;
@@ -160,6 +202,7 @@ impl pablo::Config for Test {
 	type Time = Timestamp;
 	type TWAPInterval = TWAPInterval;
 	type WeightInfo = ();
+	type StakingConfiguration = StakingRewards;
 }
 
 // Build genesis storage according to the mock runtime.

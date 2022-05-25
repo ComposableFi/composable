@@ -64,7 +64,7 @@ pub(crate) struct LiquidityBootstrapping<T>(PhantomData<T>);
 impl<T: Config> LiquidityBootstrapping<T> {
 	pub(crate) fn do_create_pool(
 		pool: Validated<LiquidityBootstrappingPoolInfoOf<T>, PoolIsValid<T>>,
-	) -> Result<T::PoolId, DispatchError> {
+	) -> Result<(T::PoolId, T::AssetId), DispatchError> {
 		let pool_id =
 			PoolCount::<T>::try_mutate(|pool_count| -> Result<T::PoolId, DispatchError> {
 				let pool_id = *pool_count;
@@ -76,7 +76,7 @@ impl<T: Config> LiquidityBootstrapping<T> {
 				Ok(pool_id)
 			})?;
 
-		Ok(pool_id)
+		Ok((pool_id, T::AssetId::default()))
 	}
 
 	fn ensure_sale_state(

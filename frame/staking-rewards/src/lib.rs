@@ -42,6 +42,7 @@ mod mock;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use std::collections::BTreeSet;
 	use composable_support::{
 		abstractions::block_fold::{BlockFold, FoldStorage, FoldStrategy},
 		collections::vec::bounded::BiBoundedVec,
@@ -73,7 +74,9 @@ pub mod pallet {
 		traits::{AccountIdConversion, Zero},
 		ArithmeticError, Perbill, SaturatedConversion,
 	};
+	use sp_runtime::traits::CheckedConversion;
 	use sp_std::collections::btree_map::BTreeMap;
+	use composable_traits::staking_rewards::StakingConfiguration;
 
 	pub(crate) type EpochId = u128;
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -289,8 +292,7 @@ pub mod pallet {
 			configuration: StakingConfigOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::GovernanceOrigin::ensure_origin(origin)?;
-			StakingConfigurations::<T>::insert(asset, configuration.clone());
-			Self::deposit_event(Event::<T>::Configured { asset, configuration });
+			Self::set_configuration(asset, configuration);
 			Ok(().into())
 		}
 
@@ -577,6 +579,11 @@ pub mod pallet {
 			}
 			Ok(())
 		}
+
+		fn set_configuration(asset: T::AssetId, configuration: StakingConfigOf<T>) {
+			StakingConfigurations::<T>::insert(asset, configuration.clone());
+			Self::deposit_event(Event::<T>::Configured { asset, configuration });
+		}
 	}
 
 	impl<T: Config> StakingReward for Pallet<T> {
@@ -607,6 +614,26 @@ pub mod pallet {
 				reward_asset: *reward_asset,
 				amount,
 			});
+			Ok(())
+		}
+	}
+
+	impl<T: Config> StakingConfiguration for Pallet<T> {
+		type AssetId = AssetIdOf<T>;
+		type AccountId = AccountIdOf<T>;
+
+		fn configure(asset: Self::AssetId,
+					 duration_presets: BTreeMap<DurationSeconds, Perbill>,
+					 reward_assets: BTreeSet<Self::AssetId>,
+					 early_unstake_penalty: Penalty<Self::AccountId>) -> Result<(), DispatchError> {
+			let configuration: StakingConfigOf<T> = StakingConfig {
+				duration_presets: BoundedBTreeMap::checked_from(duration_presets)
+					.ok_or("Allowed length for duration_presets exceeded")?,
+				reward_assets: BoundedBTreeSet::checked_from(reward_assets)
+					.ok_or("Allowed length for reward_assets exceeded")?,
+				early_unstake_penalty
+			};
+			Self::set_configuration(asset, configuration);
 			Ok(())
 		}
 	}

@@ -79,6 +79,9 @@ impl CurrencyId {
 	pub const USDT: CurrencyId = CurrencyId(130);
 	pub const USDC: CurrencyId = CurrencyId(131);
 
+	/// Protocol Tokens
+	pub const PBLO: CurrencyId = CurrencyId(201);
+
 	#[inline(always)]
 	pub const fn decimals() -> Exponent {
 		12
@@ -99,6 +102,7 @@ impl CurrencyId {
 			Asset { id: CurrencyId::CROWD_LOAN.0 as u64, name: b"CROWD_LOAN".to_vec() },
 			Asset { id: CurrencyId::KSM.0 as u64, name: b"KSM".to_vec() },
 			Asset { id: CurrencyId::kUSD.0 as u64, name: b"kUSD".to_vec() },
+			Asset { id: CurrencyId::PBLO.0 as u64, name: b"PBLO".to_vec() },
 		]
 		.to_vec()
 	}

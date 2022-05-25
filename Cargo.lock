@@ -7824,6 +7824,8 @@ dependencies = [
  "orml-tokens",
  "orml-traits",
  "pallet-currency-factory",
+ "pallet-nft",
+ "pallet-staking-rewards",
  "pallet-timestamp",
  "parity-scale-codec",
  "proptest",
