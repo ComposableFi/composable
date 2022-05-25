@@ -208,8 +208,8 @@ impl<T: Config> StableSwap<T> {
 		quote_amount: &T::Balance,
 	) -> Result<(T::Balance, Fee<T::AssetId, T::Balance>, Fee<T::AssetId, T::Balance>), DispatchError>
 	{
-		let pool_base_aum = T::Assets::balance(pool_info.pair.base, &pool_account);
-		let pool_quote_aum = T::Assets::balance(pool_info.pair.quote, &pool_account);
+		let pool_base_aum = T::Assets::balance(pool_info.pair.base, pool_account);
+		let pool_quote_aum = T::Assets::balance(pool_info.pair.quote, pool_account);
 
 		let total_lp_issued = T::Assets::total_issuance(pool_info.lp_token);
 
@@ -218,8 +218,8 @@ impl<T: Config> StableSwap<T> {
 
 		let d0 = Self::get_invariant(pool_base_aum, pool_quote_aum, amplification_coefficient)?;
 
-		let new_base_amount = pool_base_aum.safe_add(&base_amount)?;
-		let new_quote_amount = pool_quote_aum.safe_add(&quote_amount)?;
+		let new_base_amount = pool_base_aum.safe_add(base_amount)?;
+		let new_quote_amount = pool_quote_aum.safe_add(quote_amount)?;
 
 		let d1 = Self::get_invariant(new_base_amount, new_quote_amount, amplification_coefficient)?;
 
