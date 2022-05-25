@@ -7,7 +7,7 @@ version = "0.1.0"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
-ethabi = "17.0.0"
+ethabi = { version = "17.0.0", default-features = false }
 prost = { version = "0.10", default-features = false, features = [
   "prost-derive",
 ] }
