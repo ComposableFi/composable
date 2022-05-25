@@ -157,7 +157,7 @@ pub mod pallet {
 			>(program.as_ref())
 			.map_err(|_| Error::<T>::InvalidProgramEncoding)?;
 
-			while let Some(instruction) = instructions.pop_front() {
+			'a: while let Some(instruction) = instructions.pop_front() {
 				match instruction.clone() {
 					XCVMInstruction::Transfer(to, XCVMTransfer { assets }) => {
 						for (asset, amount) in assets {
@@ -203,10 +203,10 @@ pub mod pallet {
 						Self::deposit_event(Event::<T>::Bridge {
 							network,
 							network_txs,
-							program: xcvm_protobuf::encode(XCVMProgram {
-								instructions: instructions.clone(),
-							}),
+							program: xcvm_protobuf::encode(XCVMProgram { instructions }),
 						});
+						// we hop to next network, stop here.
+						break 'a
 					},
 					XCVMInstruction::Spawn(network, program) =>
 						Self::deposit_event(Event::<T>::Spawn {
