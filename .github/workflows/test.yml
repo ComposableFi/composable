@@ -14,21 +14,21 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-#    - name: Build a Composable collator
-#      run: |
-#        cd scripts/polkadot-launch
-#        git clone -b main https://github.com/ComposableFi/composable
-#        cd composable
-#        cargo build --release
-#        target/release/composable --version
-#
-#    - name: Build a Polkadot relay chain
-#      run: |
-#        cd scripts/polkadot-launch
-#        git clone -b mmr-polkadot-v0.9.22 https://github.com/composableFi/polkadot
-#        cd polkadot
-#        cargo build --release
-#        ./target/release/polkadot --version
+    - name: Build a Composable collator
+      run: |
+        cd scripts/polkadot-launch
+        git clone -b main https://github.com/ComposableFi/composable
+        cd composable
+        cargo build --release
+        target/release/composable --version
+
+    - name: Build a Polkadot relay chain
+      run: |
+        cd scripts/polkadot-launch
+        git clone -b mmr-polkadot-v0.9.22 https://github.com/composableFi/polkadot
+        cd polkadot
+        cargo build --release
+        ./target/release/polkadot --version
 
     - name: Run polkadot-launch
       timeout-minutes: 5
