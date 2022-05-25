@@ -2,11 +2,10 @@ version: "3.9"
 
 services:
   composable:
-    build:
-      context: ../../
-      dockerfile: docker/composable-sandbox.dockerfile
+    image: composablefi/composable-sandbox:latest
     ports:
       - "9988:9988"
+      - "9944:9944"
   integration-tests:
     image: node:bullseye
     command: ./DockerRun.sh
