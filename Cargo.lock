@@ -4524,9 +4524,9 @@ dependencies = [
  "frame-support",
  "frame-system",
  "instrumental-strategy-pablo",
- "log 0.4.14",
- "orml-tokens",
- "orml-traits",
+ "log 0.4.17",
+ "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=238828ac2bafe498a2a071317639e9404d6f6994)",
+ "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=238828ac2bafe498a2a071317639e9404d6f6994)",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-vault",
@@ -4534,10 +4534,10 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-arithmetic",
- "sp-core 4.1.0-dev",
+ "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22)",
  "sp-io",
  "sp-runtime",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.16)",
+ "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22)",
 ]
 
 [[package]]
@@ -4548,9 +4548,9 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
- "log 0.4.14",
- "orml-tokens",
- "orml-traits",
+ "log 0.4.17",
+ "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=238828ac2bafe498a2a071317639e9404d6f6994)",
+ "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=238828ac2bafe498a2a071317639e9404d6f6994)",
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-instrumental",
@@ -4559,10 +4559,10 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-arithmetic",
- "sp-core 4.1.0-dev",
+ "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22)",
  "sp-io",
  "sp-runtime",
- "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.16)",
+ "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22)",
 ]
 
 [[package]]
