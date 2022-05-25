@@ -1,6 +1,10 @@
 #![cfg(test)]
 
 use crate as pablo;
+use composable_traits::{
+	financial_nft::{FinancialNftProtocol, NftClass, NftVersion},
+	time::DurationSeconds,
+};
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
 use frame_system::EnsureSigned;
@@ -13,8 +17,6 @@ use sp_runtime::{
 	Permill,
 };
 use system::EnsureRoot;
-use composable_traits::{time::DurationSeconds};
-use composable_traits::financial_nft::{FinancialNftProtocol, NftClass, NftVersion};
 
 pub type CurrencyId = u128;
 pub type BlockNumber = u64;

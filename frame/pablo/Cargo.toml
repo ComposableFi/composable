@@ -23,6 +23,7 @@ frame-benchmarking = { default-features = false, optional = true, git = "https:/
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 log = { version = "0.4.14", default-features = false }
+primitives = { path = "../../runtime/primitives", default-features = false }
 rust_decimal = { version = "1", default-features = false, features = ["maths"] }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
@@ -39,8 +40,8 @@ frame-benchmarking = { default-features = false, git = "https://github.com/parit
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b" }
 pallet-currency-factory = { path = "../currency-factory" }
-pallet-staking-rewards = { path = "../staking-rewards" }
 pallet-nft = { path = "../nft" }
+pallet-staking-rewards = { path = "../staking-rewards" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 proptest = { version = "1.0" }
 

@@ -42,7 +42,6 @@ mod mock;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use std::collections::BTreeSet;
 	use composable_support::{
 		abstractions::block_fold::{BlockFold, FoldStorage, FoldStrategy},
 		collections::vec::bounded::BiBoundedVec,
@@ -51,8 +50,8 @@ pub mod pallet {
 	use composable_traits::{
 		financial_nft::{FinancialNftProtocol, NftClass, NftVersion},
 		staking_rewards::{
-			Penalty, PenaltyOutcome, PositionState, Staking, StakingConfig, StakingNFT,
-			StakingReward,
+			Penalty, PenaltyOutcome, PositionState, Staking, StakingConfig, StakingConfiguration,
+			StakingNFT, StakingReward,
 		},
 		time::{DurationSeconds, Timestamp},
 	};
@@ -71,12 +70,11 @@ pub mod pallet {
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::{
-		traits::{AccountIdConversion, Zero},
+		traits::{AccountIdConversion, CheckedConversion, Zero},
 		ArithmeticError, Perbill, SaturatedConversion,
 	};
-	use sp_runtime::traits::CheckedConversion;
 	use sp_std::collections::btree_map::BTreeMap;
-	use composable_traits::staking_rewards::StakingConfiguration;
+	use std::collections::BTreeSet;
 
 	pub(crate) type EpochId = u128;
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -622,16 +620,18 @@ pub mod pallet {
 		type AssetId = AssetIdOf<T>;
 		type AccountId = AccountIdOf<T>;
 
-		fn configure(asset: Self::AssetId,
-					 duration_presets: BTreeMap<DurationSeconds, Perbill>,
-					 reward_assets: BTreeSet<Self::AssetId>,
-					 early_unstake_penalty: Penalty<Self::AccountId>) -> Result<(), DispatchError> {
+		fn configure(
+			asset: Self::AssetId,
+			duration_presets: BTreeMap<DurationSeconds, Perbill>,
+			reward_assets: BTreeSet<Self::AssetId>,
+			early_unstake_penalty: Penalty<Self::AccountId>,
+		) -> Result<(), DispatchError> {
 			let configuration: StakingConfigOf<T> = StakingConfig {
 				duration_presets: BoundedBTreeMap::checked_from(duration_presets)
 					.ok_or("Allowed length for duration_presets exceeded")?,
 				reward_assets: BoundedBTreeSet::checked_from(reward_assets)
 					.ok_or("Allowed length for reward_assets exceeded")?,
-				early_unstake_penalty
+				early_unstake_penalty,
 			};
 			Self::set_configuration(asset, configuration);
 			Ok(())

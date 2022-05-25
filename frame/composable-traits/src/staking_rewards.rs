@@ -5,13 +5,13 @@ use crate::{
 use codec::{Decode, Encode};
 use composable_support::math::safe::SafeSub;
 use core::fmt::Debug;
-use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 use frame_support::{dispatch::DispatchResult, traits::Get};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, Zero},
 	DispatchError, Perbill, SaturatedConversion,
 };
+use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Encode, Decode, TypeInfo)]
 pub enum PositionState {
@@ -169,7 +169,7 @@ pub trait StakingConfiguration {
 		asset: Self::AssetId,
 		duration_presets: BTreeMap<DurationSeconds, Perbill>,
 		reward_assets: BTreeSet<Self::AssetId>,
-		early_unstake_penalty: Penalty<Self::AccountId>
+		early_unstake_penalty: Penalty<Self::AccountId>,
 	) -> Result<(), DispatchError>;
 }
 
