@@ -2,9 +2,7 @@ use alloc::collections::BTreeMap;
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 
-#[derive(
-	Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo,
-)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo)]
 #[repr(transparent)]
 pub struct XCVMAsset(u32);
 

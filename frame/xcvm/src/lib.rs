@@ -60,11 +60,12 @@ pub mod pallet {
 	pub(crate) type AddressOf<T> = <BridgeOf<T> as TransferTo>::Address;
 	pub(crate) type XCVMInstructionOf<T> =
 		XCVMInstruction<XCVMNetwork, AbiEncoded, AccountIdOf<T>, XCVMTransfer>;
+	pub(crate) type XCVMProgramOf<T> = XCVMProgram<XCVMInstructionOf<T>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		Executed { instruction: XCVMInstructionOf<T> },
+		Execute { program: XCVMProgramOf<T> },
 		Spawn { network: XCVMNetwork, network_txs: Vec<BridgeTxIdOf<T>>, program: Vec<u8> },
 	}
 
@@ -149,7 +150,7 @@ pub mod pallet {
 			program: BoundedVec<u8, T::MaxProgramSize>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin.clone())?;
-			let XCVMProgram { mut instructions } = xcvm_protobuf::decode::<
+			let mut program = xcvm_protobuf::decode::<
 				XCVMNetwork,
 				<XCVMNetwork as Callable>::EncodedCall,
 				AccountIdOf<T>,
@@ -157,8 +158,10 @@ pub mod pallet {
 			>(program.as_ref())
 			.map_err(|_| Error::<T>::InvalidProgramEncoding)?;
 
-			while let Some(instruction) = instructions.pop_front() {
-				match instruction.clone() {
+			Self::deposit_event(Event::<T>::Execute { program: program.clone() });
+
+			while let Some(instruction) = program.instructions.pop_front() {
+				match instruction {
 					XCVMInstruction::Transfer(to, XCVMTransfer { assets }) => {
 						for (asset, amount) in assets {
 							let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
@@ -177,6 +180,11 @@ pub mod pallet {
 						let call = <T::Dispatchable as Decode>::decode(&mut &payload[..])
 							.map_err(|_| Error::<T>::InvalidCallEncoding)?;
 						call.dispatch(origin.clone()).map_err(|_| Error::<T>::CallFailed)?;
+					},
+					// If we want to spawn something from the same network, assume it's synchronous
+					XCVMInstruction::Spawn(XCVMNetwork::PICASSO, _, mut child_program) => {
+						child_program.append(&mut program.instructions);
+						program.instructions = child_program;
 					},
 					XCVMInstruction::Spawn(network, XCVMTransfer { assets }, child_program) => {
 						let bridge_network_id =
@@ -209,7 +217,6 @@ pub mod pallet {
 						});
 					},
 				}
-				Self::deposit_event(Event::<T>::Executed { instruction })
 			}
 
 			Ok(().into())

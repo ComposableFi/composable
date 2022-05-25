@@ -86,10 +86,10 @@ pub mod pallet {
 			+ PartialEq;
 
 		/// A type representing a network ID.
-		type NetworkId: FullCodec + MaxEncodedLen + TypeInfo + Clone + Debug + PartialEq;
+		type NetworkId: FullCodec + MaxEncodedLen + TypeInfo + Clone + Debug + PartialEq + Eq;
 
 		/// A type representing a remote asset ID.
-		type RemoteAssetId: FullCodec + MaxEncodedLen + TypeInfo + Clone + Debug + PartialEq;
+		type RemoteAssetId: FullCodec + MaxEncodedLen + TypeInfo + Clone + Debug + PartialEq + Eq;
 
 		/// Origin capable of setting the relayer. Inteded to be RootOrHalfCouncil, as it is also
 		/// used as the origin capable of stopping attackers.

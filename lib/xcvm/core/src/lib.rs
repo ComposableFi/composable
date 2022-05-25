@@ -44,14 +44,16 @@ where
 		Ok(self)
 	}
 
-	pub fn call<T>(mut self, protocol: T) -> Result<Self, T::Error>
+	pub fn call_raw(mut self, encoded_call: Network::EncodedCall) -> Self {
+		self.instructions.push_back(XCVMInstruction::Call(encoded_call));
+		self
+	}
+
+	pub fn call<T>(self, protocol: T) -> Result<Self, T::Error>
 	where
 		T: XCVMProtocol<Network>,
 	{
-		protocol.serialize(self.network).map(|encoded_call| {
-			self.instructions.push_back(XCVMInstruction::Call(encoded_call));
-			self
-		})
+		protocol.serialize(self.network).map(|encoded_call| self.call_raw(encoded_call))
 	}
 
 	pub fn build(
@@ -126,15 +128,15 @@ mod tests {
 		assert_eq!(
 			program.instructions,
 			VecDeque::from([
-        // Protocol 1 on picasso
+				// Protocol 1 on picasso
 				XCVMInstruction::Call(AbiEncoded::from(vec![202, 254, 190, 239])),
 				XCVMInstruction::Spawn(
 					XCVMNetwork::ETHEREUM,
 					(),
 					VecDeque::from([
-            // Protocol 2 on eth
+						// Protocol 2 on eth
 						XCVMInstruction::Call(AbiEncoded::from(vec![222, 173, 192, 222])),
-            // Protocol 1 on eth, different encoding than on previous network
+						// Protocol 1 on eth, different encoding than on previous network
 						XCVMInstruction::Call(AbiEncoded::from(vec![192, 222, 192, 222])),
 						XCVMInstruction::Transfer((), ())
 					])

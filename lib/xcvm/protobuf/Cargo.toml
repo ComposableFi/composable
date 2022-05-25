@@ -11,5 +11,8 @@ prost = { version = "0.10", default-features = false, features = [
 ] }
 xcvm-core = { path = "../core" }
 
+[dev-dependencies]
+hex = { version = "0.4" }
+
 [build-dependencies]
 prost-build = { version = "0.10" }

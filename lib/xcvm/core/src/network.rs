@@ -6,9 +6,7 @@ pub trait Callable {
 	type EncodedCall;
 }
 
-#[derive(
-	Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo,
-)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo)]
 #[repr(transparent)]
 pub struct XCVMNetwork(u32);
 

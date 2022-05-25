@@ -12,6 +12,7 @@ pub use prost::{DecodeError, EncodeError, Message};
 use xcvm::*;
 pub use xcvm_core::*;
 
+#[derive(Clone, Debug)]
 pub enum DecodingFailure {
 	Protobuf(DecodeError),
 	Isomorphism,
@@ -183,7 +184,7 @@ mod tests {
 	use xcvm_core::{AbiEncoded, XCVMNetwork, XCVMProgramBuilder, XCVMProtocol};
 
 	#[test]
-	fn isomorphism() {
+	fn type_isomorphism() {
 		struct DummyProtocol;
 		impl XCVMProtocol<XCVMNetwork> for DummyProtocol {
 			type Error = ();
@@ -197,7 +198,7 @@ mod tests {
 		}
 
 		let program = || -> Result<_, ()> {
-			Ok(XCVMProgramBuilder::<
+			XCVMProgramBuilder::<
 				XCVMNetwork,
 				XCVMInstruction<XCVMNetwork, _, Vec<u8>, BTreeMap<u32, u128>>,
 			>::from(XCVMNetwork::PICASSO)
@@ -206,7 +207,7 @@ mod tests {
 				Ok(child
 					.call(DummyProtocol)?
 					.transfer(vec![0xBE, 0xEF], BTreeMap::from([(0, 10_000)])))
-			}))
+			})
 		}()
 		.expect("valid program");
 
@@ -220,5 +221,53 @@ mod tests {
 				.map(TryFrom::<Instruction>::try_from)
 				.collect::<Result<VecDeque<_>, _>>()
 		);
+	}
+
+	#[test]
+	fn encoding_isomorphism() {
+		let program = || -> Result<_, ()> {
+			Ok(XCVMProgramBuilder::<
+				XCVMNetwork,
+				XCVMInstruction<XCVMNetwork, _, Vec<u8>, BTreeMap<u32, u128>>,
+			>::from(XCVMNetwork::PICASSO)
+			.spawn::<_, ()>(XCVMNetwork::ETHEREUM, BTreeMap::from([(0x1337, 20_000)]), |child| {
+				Ok(child.transfer(vec![0xBE, 0xEF], BTreeMap::from([(0, 10_000)])))
+			})?
+			.build())
+		}()
+		.expect("valid program");
+		assert_eq!(program.clone(), decode(&encode(program)).expect("must decode"));
+	}
+
+	#[test]
+	fn test_program() {
+		// Transfer to Alice/Bob and redispatch the same program from itself, without the redispatch
+		let program = || -> Result<_, ()> {
+			Ok(XCVMProgramBuilder::<
+				XCVMNetwork,
+				XCVMInstruction<XCVMNetwork, _, [u8; 32], BTreeMap<u32, u128>>,
+			>::from(XCVMNetwork::PICASSO)
+			.transfer(
+				hex::decode("d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d")
+					.expect("valid")
+					.try_into()
+					.expect("32 bytes"),
+				BTreeMap::from([(XCVMAsset::PICA.into(), 1337000000000000)]),
+			)
+			.transfer(
+				hex::decode("8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48")
+					.expect("valid")
+					.try_into()
+					.expect("32 bytes"),
+				BTreeMap::from([(XCVMAsset::PICA.into(), 1336000000000000)]),
+			)
+      .call_raw(hex::decode("44020d020a80010a3e0a3c0a221220d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d1216080112120a1000901092febf040000000000000000000a3e0a3c0a2212208eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a481216080112120a1000806bbd15bf04000000000000000000").expect("valid call").into())
+		  .build())
+		}()
+		.expect("valid program");
+		assert_eq!(
+      "0a90020a3e0a3c0a221220d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d1216080112120a1000901092febf040000000000000000000a3e0a3c0a2212208eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a481216080112120a1000806bbd15bf040000000000000000000a8d011a8a010a870144020d020a80010a3e0a3c0a221220d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d1216080112120a1000901092febf040000000000000000000a3e0a3c0a2212208eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a481216080112120a1000806bbd15bf04000000000000000000",
+      hex::encode(encode(program))
+    );
 	}
 }
