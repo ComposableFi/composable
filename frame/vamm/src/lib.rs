@@ -492,7 +492,9 @@ pub mod pallet {
 			})
 		}
 
-		/// Gets the current price of the __base__ or __quote__ asset in a vamm.
+		/// Gets the current price of the
+		/// [`base`](VammState::base_asset_reserves) or
+		/// [`quote`](VammState::quote_asset_reserves) asset in a vamm.
 		///
 		/// # Overview
 		/// In order for the caller to know what the current price of an asset
