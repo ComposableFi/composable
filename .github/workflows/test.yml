@@ -49,22 +49,23 @@ jobs:
         # yarn composable
 
         # wait for polka-launch
-        echo "wait for polka-launch"
-        while true; do
-          sleep 1
-          echo "====="
-          echo "====="
-          echo "====="
-          cat "${LOG_FILE}"
-          stdout=$(tail -n 1 "${LOG_FILE}" | grep "POLKADOT LAUNCH COMPLETE")
-          if [ -z "$stdout" ]; then
-            true
-          else
-            break
-          fi
-        done
-        echo "wait for polka-launch"
-
+        sleep 240
+#        echo "wait for polka-launch"
+#        while true; do
+#          sleep 1
+#          echo "====="
+#          echo "====="
+#          echo "====="
+#          cat "${LOG_FILE}"
+#          stdout=$(tail -n 1 "${LOG_FILE}" | grep "POLKADOT LAUNCH COMPLETE")
+#          if [ -z "$stdout" ]; then
+#            true
+#          else
+#            break
+#          fi
+#        done
+#        echo "wait for polka-launch"
+#
 #        while IFS="" read -r string; do
 #          echo $string
 #          matched_string=$(echo "$string" | grep "POLKADOT LAUNCH COMPLETE")
