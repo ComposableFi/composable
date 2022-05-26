@@ -80,19 +80,19 @@ mod hook_state {
 	fn state_machine_is_well_formed() {
 		new_test_ext().execute_with(|| {
 			// State machine constant over block number
-			assert_eq!(StakingRewards::current_state(), State::WaitingForEpochEnd);
+			assert_eq!(StakingRewards::current_state(), State::Running);
 			process_block(0);
 			assert_eq!(StakingRewards::current_state(), State::Rewarding);
 			process_block(0);
 			assert_eq!(StakingRewards::current_state(), State::Registering);
 			process_block(0);
-			assert_eq!(StakingRewards::current_state(), State::WaitingForEpochEnd);
+			assert_eq!(StakingRewards::current_state(), State::Running);
 			process_block(0);
-			assert_eq!(StakingRewards::current_state(), State::WaitingForEpochEnd);
+			assert_eq!(StakingRewards::current_state(), State::Running);
 			process_block(0);
-			assert_eq!(StakingRewards::current_state(), State::WaitingForEpochEnd);
+			assert_eq!(StakingRewards::current_state(), State::Running);
 			process_block(0);
-			assert_eq!(StakingRewards::current_state(), State::WaitingForEpochEnd);
+			assert_eq!(StakingRewards::current_state(), State::Running);
 		});
 	}
 
@@ -100,7 +100,7 @@ mod hook_state {
 	fn generate_event() {
 		new_test_ext().execute_with(|| {
 			// State machine constant over block number
-			assert_eq!(StakingRewards::current_state(), State::WaitingForEpochEnd);
+			assert_eq!(StakingRewards::current_state(), State::Running);
 			process_block(1);
 			System::assert_last_event(Event::StakingRewards(crate::Event::NewEpoch {
 				id: StakingRewards::current_epoch(),
@@ -163,7 +163,7 @@ mod hook_state {
 			assert_eq!(Stakers::<Test>::iter().count(), nb_of_accounts as usize);
 			run_to_block(System::block_number() + 1);
 			assert_eq!(PendingStakers::<Test>::iter().count(), 0);
-			assert_eq!(StakingRewards::current_state(), State::WaitingForEpochEnd);
+			assert_eq!(StakingRewards::current_state(), State::Running);
 		});
 	}
 }

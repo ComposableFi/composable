@@ -77,6 +77,7 @@ pub mod pallet {
 	};
 	use sp_std::collections::btree_map::BTreeMap;
 
+	type ShareAmount  = u128;
 	pub(crate) type EpochId = u128;
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -99,9 +100,12 @@ pub mod pallet {
 
 	#[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
 	pub enum State {
-		WaitingForEpochEnd,
-		Rewarding,
-		Registering,
+		/// epoch runs, all operations to modify stakes will be handled in `Accounting`
+		Running,
+		/// stakes rewarded, changes to per assets stakes will be handled in `Accounting` 
+		Distributing,
+		/// working with pending operations, registering new stakers and asset total increases
+		Accounting,
 	}
 
 	#[pallet::event]
@@ -190,7 +194,7 @@ pub mod pallet {
 
 	#[pallet::type_value]
 	pub fn StateOnEmpty<T: Config>() -> State {
-		State::WaitingForEpochEnd
+		State::Running
 	}
 
 	#[pallet::storage]
@@ -233,8 +237,8 @@ pub mod pallet {
 	>;
 
 	#[pallet::type_value]
-	pub fn SharesOnEmpty<T: Config>() -> T::Balance {
-		T::Balance::zero()
+	pub fn SharesOnEmpty<T: Config>() -> ShareAmount {
+		ShareAmount::zero()
 	}
 
 	//// active running total shares
@@ -244,7 +248,7 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		AssetIdOf<T>,
-		T::Balance,
+		ShareAmount,
 		ValueQuery,
 		SharesOnEmpty<T>,
 	>;
@@ -256,7 +260,7 @@ pub mod pallet {
 		_,
 		Twox64Concat,
 		AssetIdOf<T>,
-		T::Balance,
+		ShareAmount,
 		ValueQuery,
 		SharesOnEmpty<T>,
 	>;	
@@ -285,6 +289,28 @@ pub mod pallet {
 	#[pallet::getter(fn pending_amount_extensions)]
 	pub type PendingAmountExtensions<T: Config> =
 		StorageMap<_, Twox64Concat, InstanceIdOf<T>, T::Balance, OptionQuery>;
+
+
+								// NOTE:
+						// other design would be to `take` in batches and having A/B storages
+						// 1. make A to be acitve to inser new pending stakers
+						// 2. drain B in batches
+						// 3. switch A/B
+						//
+						// in this case removing will be more eager and streaming (good)
+						// and fold would have simpler state (no need to recall previous and know
+						// when done) but will need to store `bool` value for A/B and split storage
+						// PendingStakersA and PendingStakersB
+		// NOTE: could use A/B queues and avoid protocol interuption because of background
+			// states
+		
+							// there are several designs 
+							// 1. make fold composable over N storages
+							// 2. make on storage have multi pending
+							// because there is no need to access pending by index, so can have one execution queue for all
+						enum PendingOperations<T> {
+							Stake( InstanceIdOf<T>)
+						}
 
 	/// time to extend position with
 	#[pallet::storage]
@@ -469,7 +495,7 @@ pub mod pallet {
 		fn on_initialize(_: T::BlockNumber) -> Weight {
 			// TODO(hussein-aitlahcen): abstract per-block fold of chunk into a macro:
 			match Self::current_state() {
-				State::WaitingForEpochEnd => {
+				State::Running => {
 					// NOTE: we start new epoch here, it will work well if an only if epoch time is
 					// longer than total fold time - which is most likely yes
 					Self::update_epoch();
@@ -523,7 +549,9 @@ pub mod pallet {
 													)
 													.map_err(|_| ArithmeticError::Overflow)?;
 												if reward_asset == nft.asset {
-													
+													PendingTotalShares::<T>::mutate(nft.asset, |total_shares| {
+														*total_shares += reward_shares.into();
+													});
 												}
 											}
 										},
@@ -542,6 +570,9 @@ pub mod pallet {
 										 (now - nft.lock_date).into())
 										 .ok_or(Error::<T>::CannotIncreaseStakedAmountBecauseOfLimitedArithmetic)?;
 										nft.lock_date = nft.lock_date.safe_add(&time_lock)?;
+										PendingTotalShares::<T>::mutate(nft.asset, |total_shares| {
+											*total_shares += amount.into();
+										});
 										nft.stake = nft.stake.safe_add(&amount)?;
 									}
 
@@ -597,19 +628,10 @@ pub mod pallet {
 						},
 					);
 					if let BlockFold::Done { .. } = registering_result {
-						// NOTE:
-						// other design would be to `take` in batches and having A/B storages
-						// 1. make A to be acitve to inser new pending stakers
-						// 2. drain B in batches
-						// 3. switch A/B
-						//
-						// in this case removing will be more eager and streaming (good)
-						// and fold would have simpler state (no need to recall previous and know
-						// when done) but will need to store `bool` value for A/B and split storage
-						// PendingStakersA and PendingStakersB
+
 						panic!("swithc epochs here");
 						PendingStakers::<T>::remove_all(None);
-						CurrentState::<T>::set(State::WaitingForEpochEnd);
+						CurrentState::<T>::set(State::Running);
 					}
 				},
 			}
@@ -627,7 +649,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub(crate) fn ensure_valid_interaction_state() -> DispatchResult {
 			match Self::current_state() {
-				State::WaitingForEpochEnd => Ok(()),
+				State::Running => Ok(()),
 				State::Rewarding | State::Registering => Err(Error::<T>::PalletIsBusy.into()),
 			}
 		}
@@ -744,8 +766,6 @@ pub mod pallet {
 			duration: DurationSeconds,
 			keep_alive: bool,
 		) -> Result<Self::InstanceId, DispatchError> {
-			// NOTE: could use A/B queues and avoid protocol interuption because of background
-			// states
 			Self::ensure_valid_interaction_state()?;
 			let config = Self::get_config(asset)?;
 			let reward_multiplier = *config
