@@ -42,7 +42,7 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::Event) {
 }
 
 fn add_proposal<T: Config>(n: u32) -> Result<T::Hash, &'static str> {
-	let other = account("proposer", n, SEED);
+	let other: T::AccountId = account("proposer", n, SEED);
 	let value = T::MinimumDeposit::get();
 	let proposal_hash: T::Hash = T::Hashing::hash_of(&n);
 	let asset_id = DOT_ASSET;
@@ -99,7 +99,7 @@ benchmarks! {
 
 		// let asset_id = DOT_ASSET;
 		let asset_id = T::AssetId::from(DOT_ASSET);
-		let caller = account("caller", 0, SEED);
+		let caller: T::AccountId = account("caller", 0, SEED);
 		let proposal_hash: T::Hash = T::Hashing::hash_of(&0);
 		let value = T::MinimumDeposit::get();
 		whitelist_account!(caller);
@@ -111,12 +111,12 @@ benchmarks! {
 	second {
 		let s in 0 .. MAX_SECONDERS;
 
-		let caller = account("caller", 0, SEED);
+		let caller: T::AccountId = account("caller", 0, SEED);
 		let proposal_hash = add_proposal::<T>(s)?;
 
 		// Create s existing "seconds"
 		for i in 0 .. s {
-			let seconder = account("seconder", i, SEED);
+			let seconder: T::AccountId = account("seconder", i, SEED);
 			Democracy::<T>::second(RawOrigin::Signed(seconder).into(), 0, u32::MAX)?;
 		}
 
@@ -132,7 +132,7 @@ benchmarks! {
 	vote_new {
 		let r in 1 .. MAX_REFERENDUMS;
 
-		let caller = account("caller", 0, SEED);
+		let caller: T::AccountId = account("caller", 0, SEED);
 		let account_vote = account_vote::<T>(100u32.into());
 		let asset_id = T::AssetId::from(DOT_ASSET);
 
@@ -161,7 +161,7 @@ benchmarks! {
 	vote_existing {
 		let r in 1 .. MAX_REFERENDUMS;
 
-		let caller =  account("caller", 0, SEED);
+		let caller: T::AccountId= account("caller", 0, SEED);
 		let account_vote = account_vote::<T>(100u32.into());
 		let asset_id = T::AssetId::from(DOT_ASSET);
 
@@ -496,7 +496,7 @@ benchmarks! {
 		let delegated_balance: BalanceOf<T> = 1000u32.into();
 		let asset_id = T::AssetId::from(DOT_ASSET);
 
-		let caller = account("caller", 0, SEED);
+		let caller: T::AccountId = account("caller", 0, SEED);
 		// Caller will initially delegate to `old_delegate`
 		let old_delegate: T::AccountId = account("old_delegate", r, SEED);
 		Democracy::<T>::delegate(
@@ -548,7 +548,7 @@ benchmarks! {
 		let delegated_balance: BalanceOf<T> = 1000u32.into();
 		let asset_id = T::AssetId::from(DOT_ASSET);
 
-		let caller = account("caller", 0, SEED);
+		let caller: T::AccountId = account("caller", 0, SEED);
 		// Caller will delegate
 		let the_delegate: T::AccountId = account("delegate", r, SEED);
 		Democracy::<T>::delegate(
@@ -598,7 +598,7 @@ benchmarks! {
 		// Num of bytes in encoded proposal
 		let b in 0 .. MAX_BYTES;
 
-		let caller = account("caller", 0, SEED);
+		let caller: T::AccountId = account("caller", 0, SEED);
 		let encoded_proposal = vec![1; b as usize];
 		let asset_id = T::AssetId::from(DOT_ASSET);
 
@@ -627,7 +627,7 @@ benchmarks! {
 		let block_number = T::BlockNumber::one();
 		Preimages::<T>::insert(proposal_id, PreimageStatus::Missing(block_number));
 
-		let caller = account("caller", 0, SEED);
+		let caller: T::AccountId = account("caller", 0, SEED);
 		let encoded_proposal = vec![1; b as usize];
 		whitelist_account!(caller);
 	}: _(RawOrigin::Signed(caller), encoded_proposal.clone(), asset_id)
@@ -651,7 +651,7 @@ benchmarks! {
 		let asset_id = T::AssetId::from(DOT_ASSET);
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
 
-		let submitter = account("submitter", b, SEED);
+		let submitter: T::AccountId = account("submitter", b, SEED);
 		Democracy::<T>::note_preimage(RawOrigin::Signed(submitter.clone()).into(), encoded_proposal.clone(), asset_id)?;
 
 		// We need to set this otherwise we get `Early` error.
@@ -660,7 +660,7 @@ benchmarks! {
 
 		assert!(Preimages::<T>::contains_key(proposal_id));
 
-		let caller = account("caller", 0, SEED);
+		let caller: T::AccountId = account("caller", 0, SEED);
 		whitelist_account!(caller);
 	}: _(RawOrigin::Signed(caller), proposal_hash.clone(),asset_id, u32::MAX)
 	verify {
@@ -675,7 +675,7 @@ benchmarks! {
 	unlock_remove {
 		let r in 1 .. MAX_REFERENDUMS;
 
-		let locker =  account("locker", 0, SEED);
+		let locker: T::AccountId =  account("locker", 0, SEED);
 		// Populate votes so things are locked
 		let base_balance: BalanceOf<T> = 100u32.into();
 		let small_vote = account_vote::<T>(base_balance);
@@ -688,7 +688,7 @@ benchmarks! {
 			Democracy::<T>::remove_vote(RawOrigin::Signed(locker.clone()).into(), asset_id, ref_idx)?;
 		}
 
-		let caller = account("caller", 0, SEED);
+		let caller: T::AccountId = account("caller", 0, SEED);
 		whitelist_account!(caller);
 	}: unlock(RawOrigin::Signed(caller), locker.clone(), asset_id)
 	verify {
@@ -702,7 +702,7 @@ benchmarks! {
 		let r in 1 .. MAX_REFERENDUMS;
 
 		let asset_id = T::AssetId::from(DOT_ASSET);
-		let locker = account("locker", 0, SEED);
+		let locker: T::AccountId = account("locker", 0, SEED);
 		// Populate votes so things are locked
 		let base_balance: BalanceOf<T> = 100u32.into();
 		let small_vote = account_vote::<T>(base_balance);
@@ -727,7 +727,7 @@ benchmarks! {
 
 		Democracy::<T>::remove_vote(RawOrigin::Signed(locker.clone()).into(), asset_id, referendum_index)?;
 
-		let caller = account("caller", 0, SEED);
+		let caller: T::AccountId = account("caller", 0, SEED);
 		whitelist_account!(caller);
 	}: unlock(RawOrigin::Signed(caller), locker.clone(), asset_id)
 	verify {
@@ -745,7 +745,7 @@ benchmarks! {
 	remove_vote {
 		let r in 1 .. MAX_REFERENDUMS;
 
-		let caller = account("caller", 0, SEED);
+		let caller: T::AccountId = account("caller", 0, SEED);
 		let account_vote = account_vote::<T>(100u32.into());
 
 		let asset_id = T::AssetId::from(DOT_ASSET);
@@ -777,7 +777,7 @@ benchmarks! {
 	remove_other_vote {
 		let r in 1 .. MAX_REFERENDUMS;
 
-		let caller = account("caller", r, SEED);
+		let caller: T::AccountId = account("caller", r, SEED);
 		let account_vote = account_vote::<T>(100u32.into());
 		let asset_id = T::AssetId::from(DOT_ASSET);
 
@@ -810,7 +810,7 @@ benchmarks! {
 
 		let asset_id = T::AssetId::from(DOT_ASSET);
 
-		let proposer = account("proposer", 0, SEED);
+		let proposer: T::AccountId = account("proposer", 0, SEED);
 		let raw_call = Call::note_preimage { encoded_proposal: vec![1; b as usize], asset_id: asset_id };
 		let generic_call: T::Proposal = raw_call.into();
 		let encoded_proposal = generic_call.encode();
@@ -836,7 +836,7 @@ benchmarks! {
 		// Num of bytes in encoded proposal
 		let b in 0 .. MAX_BYTES;
 
-		let proposer = account("proposer", 0, SEED);
+		let proposer: T::AccountId = account("proposer", 0, SEED);
 		// Random invalid bytes
 		let encoded_proposal = vec![200; b as usize];
 		let proposal_hash = T::Hashing::hash(&encoded_proposal[..]);

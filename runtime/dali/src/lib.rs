@@ -770,6 +770,7 @@ impl multitenant_democracy::Config for Runtime {
 	type PreimageByteDeposit = PreimageByteDeposit;
 	type Scheduler = Scheduler;
 	type WeightInfo = weights::multitenant_democracy::WeightInfo<Runtime>;
+	type GovernanceRegistry = GovernanceRegistry;
 }
 
 impl multitenant_democracy::Config for Runtime {
@@ -881,7 +882,7 @@ impl assets_registry::Config for Runtime {
 impl governance_registry::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
-	type WeightInfo = ();
+	type WeightInfo = weights::governance_registry::WeightInfo<Runtime>;
 }
 
 impl assets::Config for Runtime {

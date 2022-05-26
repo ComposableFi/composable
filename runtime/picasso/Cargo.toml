@@ -126,7 +126,6 @@ orml-xtokens = {git = "https://github.com/open-web3-stack/open-runtime-module-li
 
 # simnode support
 simnode-apis = {package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, rev = "a1e52d5ae48282834c89dd61e88e6db47d05108f"}
-
 [build-dependencies]
 substrate-wasm-builder = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 
