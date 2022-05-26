@@ -152,7 +152,7 @@ pub mod pallet {
 		/// The ID that uniquely identify an asset.
 		type AssetId: AssetId + Ord;
 
-		type Balance: Balance + TryFrom<u128> + Into<u128> + CheckedAdd;
+		type Balance: Balance + TryFrom<u128> + Into<u128> + CheckedAdd + Copy;
 
 		/// The underlying currency system.
 		type Assets: FungiblesInspect<
@@ -505,7 +505,7 @@ pub mod pallet {
 												)
 												.saturated_into();
 												let reward_shares = safe_multiply_by_rational(
-													shares,
+													shares.into(),
 													reward,
 													total_shares.into(),
 												)?;
@@ -588,7 +588,7 @@ pub mod pallet {
 									nft.asset,
 									|total_shares| {
 										*total_shares = total_shares
-											.checked_add(nft.shares())
+											.checked_add(&nft.shares())
 											.expect("impossible; qed;");
 									},
 								);
@@ -651,7 +651,7 @@ pub mod pallet {
 			});
 		}
 
-		pub(crate) fn son_new_epoch() {
+		pub(crate) fn on_new_epoch() {
 			// Store current epoch snapshot.
 			EndEpochSnapshot::<T>::set((Self::current_epoch(), Self::epoch_start()));
 			// Increment epoch.
