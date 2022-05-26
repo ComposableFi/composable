@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - andor0/add-runtime-tests-in-ci # tmp
 
 jobs:
   tests:
