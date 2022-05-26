@@ -53,7 +53,7 @@ pub mod pallet {
 		financial_nft::{FinancialNftProtocol, NftClass, NftVersion},
 		staking_rewards::{
 			Penalty, PenaltyOutcome, PositionState, Staking, StakingConfig, StakingNFT,
-			StakingReward,
+			StakingReward, Shares,
 		},
 		time::{DurationSeconds, Timestamp},
 	};
@@ -72,7 +72,7 @@ pub mod pallet {
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::{
-		traits::{AccountIdConversion, Zero},
+		traits::{AccountIdConversion, Zero, CheckedAdd},
 		ArithmeticError, Perbill, SaturatedConversion,
 	};
 	use sp_std::collections::btree_map::BTreeMap;
@@ -152,7 +152,7 @@ pub mod pallet {
 		/// The ID that uniquely identify an asset.
 		type AssetId: AssetId + Ord;
 
-		type Balance: Balance + TryFrom<u128> + Into<u128>;
+		type Balance: Balance + TryFrom<u128> + Into<u128> + CheckedAdd;
 
 		/// The underlying currency system.
 		type Assets: FungiblesInspect<
@@ -233,8 +233,8 @@ pub mod pallet {
 	>;
 
 	#[pallet::type_value]
-	pub fn SharesOnEmpty<T: Config>() -> u128 {
-		u128::zero()
+	pub fn SharesOnEmpty<T: Config>() -> T::Balance {
+		T::Balance::zero()
 	}
 
 	//// active running total shares
@@ -423,7 +423,7 @@ pub mod pallet {
 			let position = T::get_protocol_nft::<StakingNFTOf<T>>(&instance_id)?;
 			let protocol_account = Self::account_id(&position.asset);
 			T::Assets::transfer(position.asset, &owner, &protocol_account, balance, false)?;
-			PendingTotalShares::<T>::
+			//PendingTotalShares::<T>::
 			PendingAmountExtensions::<T>::mutate_exists(instance_id, |x| {
 				let increased = x.unwrap_or_default().safe_add(&balance);
 				*x = Some(increased?);
@@ -507,7 +507,7 @@ pub mod pallet {
 												let reward_shares = safe_multiply_by_rational(
 													shares,
 													reward,
-													total_shares,
+													total_shares.into(),
 												)?;
 												// TODO: if adding asset which is staked, increase
 												// total
@@ -803,28 +803,24 @@ pub mod pallet {
 				},
 				PositionState::LockedRewarding => {
 					// Decrement total shares.
-					for reward_asset in nft.pending_rewards.keys() {
-						TotalShares::<T>::try_mutate(
-							(nft.asset, reward_asset),
+						RunningTotalShares::<T>::mutate(
+							nft.asset,
 							|total_shares| -> DispatchResult {
 								*total_shares = total_shares.safe_sub(&nft.shares())?;
 								Ok(())
 							},
-						)?;
-					}
+						)?;					
 					nft.early_unstake_penalty.penalize::<BalanceOf<T>>(nft.stake)
 				},
 				PositionState::Expired => {
 					// Decrement total shares.
-					for reward_asset in nft.pending_rewards.keys() {
-						TotalShares::<T>::try_mutate(
-							(nft.asset, reward_asset),
+						RunningTotalShares::<T>::try_mutate(
+							nft.asset,
 							|total_shares| -> DispatchResult {
 								*total_shares = total_shares.safe_sub(&nft.shares())?;
 								Ok(())
 							},
-						)?;
-					}
+						)?;					
 					Ok(PenaltyOutcome::NotApplied { amount: nft.stake })
 				},
 			}?;

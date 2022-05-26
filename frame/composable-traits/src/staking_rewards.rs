@@ -125,15 +125,15 @@ pub struct StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards> {
 }
 
 /// implemented by instances which know their share of something biggers
-trait Shares {
-	fn shares(&self) -> u128;
+pub trait Shares {
+	type Balance;
+	fn shares(&self) -> Balance;
 }
-
 
 impl<AccountId, AssetId, Balance: AtLeast32BitUnsigned + Copy, Epoch: Ord, Rewards>
 	StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards>
 {
-	fn state(&self, epoch: &Epoch, epoch_start: Timestamp) -> PositionState {
+	pub fn state(&self, epoch: &Epoch, epoch_start: Timestamp) -> PositionState {
 		if self.lock_date.saturating_add(self.lock_duration) < epoch_start {
 			PositionState::Expired
 		} else if self.reward_epoch_start > *epoch {
@@ -147,9 +147,10 @@ impl<AccountId, AssetId, Balance: AtLeast32BitUnsigned + Copy, Epoch: Ord, Rewar
 impl<AccountId, AssetId : PartialEq + Ord, Balance: AtLeast32BitUnsigned + Copy + Zero, Epoch: Ord, S: frame_support::traits::Get<u32>> Shares for 
 	StakingNFT<AccountId, AssetId, Balance, Epoch,  BoundedBTreeMap<AssetId, Balance, S>>
 {
-	fn shares(& self) -> u128 {
+	type Balance = Balance;
+	fn shares(& self) -> Balance {
 		let compound = *self.pending_rewards.get(&self.asset).unwrap_or(&Balance::zero());
-		self.reward_multiplier.mul_floor(self.stake.saturated_into::<u128>()).saturating_add(compound)
+		self.reward_multiplier.mul_floor(self.stake.saturated_into::<u128>()).saturating_add(compound.saturated_into::<u128>())
 	}
 }
 
