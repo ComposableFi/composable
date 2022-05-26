@@ -212,7 +212,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn current_epoch)]
-	pub type CurrentEpoch<T: Config> = StorageValue<_, u128, ValueQuery, EpochOnEmpty<T>>;
+	pub type CurrentEpoch<T: Config> = StorageValue<_, EpochId, ValueQuery, EpochOnEmpty<T>>;
 
 	#[pallet::type_value]
 	pub fn EpochRewardOnEmpty<T: Config>() -> BalanceOf<T> {
@@ -237,21 +237,30 @@ pub mod pallet {
 		u128::zero()
 	}
 
-	/// stores total shares,
-	/// false than even epoch is operation and odd epoch is updated
+	//// stores total shares,
+	//// false than even epoch is operation and odd epoch is updated
 	/// true than odd epoch is rewarding and even epoch is updated
 	#[pallet::storage]
-	#[pallet::getter(fn total_shares)]
-	pub type TotalShares<T: Config> = StorageDoubleMap<
+	#[pallet::getter(fn odd_total_shares)]
+	pub type OddTotalShares<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
-		(AssetIdOf<T>, AssetIdOf<T>),
-		Twox64Concat,
-		bool,
+		AssetIdOf<T>,
 		T::Balance,
 		ValueQuery,
 		SharesOnEmpty<T>,
 	>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn even_total_shares)]
+	pub type EvenTotalShares<T: Config> = StorageMap<
+		_,
+		Twox64Concat,
+		AssetIdOf<T>,
+		T::Balance,
+		ValueQuery,
+		SharesOnEmpty<T>,
+	>;	
 
 	#[pallet::type_value]
 	pub fn RewardStateOnEmpty<T: Config>() -> (EpochId, Timestamp) {
@@ -489,7 +498,7 @@ pub mod pallet {
 												nft.pending_rewards.clone().into_iter()
 											{
 												let total_shares =
-													Self::total_shares((nft.asset, reward_asset));
+													Self::total_shares(nft.asset);
 												let reward = EpochRewards::<T>::get(
 													(reward_epoch, nft.asset),
 													reward_asset,
@@ -606,6 +615,7 @@ pub mod pallet {
 		}
 	}
 
+	
 	fn honest_lock_extensions(now: u64, lock_date: u64, new_lock: u64, previous_lock: u64) -> u64 {
 		let passed_time = now - lock_date;
 		let rolling = passed_time.min(new_lock - previous_lock);
@@ -639,7 +649,7 @@ pub mod pallet {
 			});
 		}
 
-		pub(crate) fn on_new_epoch() {
+		pub(crate) fn son_new_epoch() {
 			// Store current epoch snapshot.
 			EndEpochSnapshot::<T>::set((Self::current_epoch(), Self::epoch_start()));
 			// Increment epoch.
@@ -684,6 +694,13 @@ pub mod pallet {
 			}
 			Ok(())
 		}
+
+		fn total_shares(asset_id: T::AssetId) -> Balance {
+			if CurrentEpoch
+			Self::total_shares(nft.asset);
+
+		}
+
 	}
 
 	impl<T: Config> StakingReward for Pallet<T> {
