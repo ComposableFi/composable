@@ -10,7 +10,7 @@ use crate::{
 	pallet::{Config, Direction, Error, Event},
 	tests::{
 		any_price, as_balance, run_for_seconds, set_fee_pool_depth, with_markets_context,
-		with_trading_context, CollateralInitializer, MarketConfig, MarketInitializer,
+		with_trading_context, MarketConfig,
 	},
 };
 use composable_traits::{clearing_house::ClearingHouse, time::ONE_HOUR};
@@ -83,29 +83,24 @@ prop_compose! {
 
 #[test]
 fn fails_to_open_position_if_market_id_invalid() {
-	let mut market_id: MarketId = 0;
 	let quote_amount = valid_quote_asset_amount();
 	let base_amount_limit = valid_base_asset_amount_limit();
 
-	ExtBuilder { balances: vec![(ALICE, USDC, quote_amount)], ..Default::default() }
-		.build()
-		.init_market(&mut market_id, None)
-		.deposit_collateral(&ALICE, USDC, quote_amount)
-		.execute_with(|| {
-			// Current price = quote_amount / base_amount_limit
-			VammPallet::set_price(Some((quote_amount, base_amount_limit).into()));
+	with_trading_context(MarketConfig::default(), quote_amount, |market_id| {
+		// Current price = quote_amount / base_amount_limit
+		VammPallet::set_price(Some((quote_amount, base_amount_limit).into()));
 
-			assert_noop!(
-				TestPallet::open_position(
-					Origin::signed(ALICE),
-					market_id + 1,
-					Direction::Long,
-					quote_amount,
-					base_amount_limit
-				),
-				Error::<Runtime>::MarketIdNotFound,
-			);
-		})
+		assert_noop!(
+			TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id + 1,
+				Direction::Long,
+				quote_amount,
+				base_amount_limit
+			),
+			Error::<Runtime>::MarketIdNotFound,
+		);
+	});
 }
 
 #[test]
