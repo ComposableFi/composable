@@ -318,7 +318,7 @@ fn from_i129<N: FixedPointOperand>(n: I129) -> Option<N> {
 
 /// Modification of [`sp_arithmetic::helpers_128bits::multiply_by_rational`] that does not modify
 /// the quotient of the last division
-fn multiply_by_rational(mut a: u128, mut b: u128, mut c: u128) -> Result<u128, &'static str> {
+pub fn multiply_by_rational(mut a: u128, mut b: u128, mut c: u128) -> Result<u128, &'static str> {
 	if a.is_zero() || b.is_zero() {
 		return Ok(0)
 	}
@@ -370,7 +370,11 @@ fn multiply_by_rational(mut a: u128, mut b: u128, mut c: u128) -> Result<u128, &
 
 /// Fixed point division with remainder using the underlying integers (`a` and `b`) and the
 /// precision (`acc`) of the fixed point implementation.
-fn div_rem_with_acc(mut a: u128, mut b: u128, mut acc: u128) -> Result<(u128, u128), &'static str> {
+pub fn div_rem_with_acc(
+	mut a: u128,
+	mut b: u128,
+	mut acc: u128,
+) -> Result<(u128, u128), &'static str> {
 	if a.is_zero() || acc.is_zero() {
 		return Ok((Zero::zero(), Zero::zero()))
 	}
@@ -393,10 +397,12 @@ fn div_rem_with_acc(mut a: u128, mut b: u128, mut acc: u128) -> Result<(u128, u1
 	}
 
 	if let Some(x) = a.checked_mul(acc) {
+		// Branch 1
 		// This is the safest way to go. Try it.
 		let q = x / b;
 		Ok((q, a - (b * q) / acc))
 	} else {
+		// Branch 2
 		// [`to_big_uint`] strips leading zeroes
 		let a_num = to_big_uint(a); // a limbs
 		let b_num = to_big_uint(b); // b limbs
@@ -405,10 +411,26 @@ fn div_rem_with_acc(mut a: u128, mut b: u128, mut acc: u128) -> Result<(u128, u1
 		let mut aa = a_num.mul(&acc_num); // a + c limbs
 		aa.lstrip(); // b,c < aa <= a + c limbs, since a.checked_mul(acc) failed
 		let (mut q, r) = if b_num.len() == 1 {
+			// Branch 2a
 			// PROOF: if `b_num.len() == 1` then `b` fits in one limb.
-			// TODO(0xangelo): verify that the remainder for this type of division is indeed 0
-			(aa.div_unit(b as biguint::Single), Zero::zero())
+			let q = aa.clone().div_unit(b as biguint::Single);
+			let mut bq = b_num.mul(&q);
+			bq.lstrip();
+			let a_: u128 = if acc_num.len() == 1 {
+				bq.div_unit(acc as biguint::Single)
+			} else {
+				// 1 < c limbs
+				// TODO(0xangelo): prove this?
+				bq.div(&acc_num, false).expect("TODO").0
+			}
+			.try_into()
+			.expect("quotient times divisor is less than or equal to the dividend; qed");
+			// Then we compute the residual
+			let r =
+				a.checked_sub(a_).expect("remainder is less than or equal to the dividend; qed");
+			(q, r)
 		} else {
+			// Branch 2b
 			// 1 < b limbs
 			// PROOF: both `aa` and `b` cannot have leading zero limbs; if length of `b` is 1,
 			// the previous branch would handle. Also, if `aa` for sure has a bigger size than
@@ -427,13 +449,14 @@ fn div_rem_with_acc(mut a: u128, mut b: u128, mut acc: u128) -> Result<(u128, u1
 			//
 			// So we first compute `a_ = b * q // acc` (what we would get by multiplying the
 			// underlying fixed point numbers)
-			let mut bq = aa.sub(&r).expect("remainder is always less than the dividend; qed");
+			let mut bq = aa.sub(&r).expect("remainder is less than or equal to the dividend; qed");
 			//      ^^ aa limbs
 			bq.lstrip(); // >= aa - 1 limbs
 			let a_: u128 = if acc_num.len() == 1 {
 				bq.div_unit(acc as biguint::Single)
 			} else {
 				// 1 < c limbs
+				// TODO(0xangelo): prove this?
 				bq.div(&acc_num, false)
 					.expect(
 						"Both `bq` and `acc_num` are stripped. \
@@ -443,12 +466,11 @@ fn div_rem_with_acc(mut a: u128, mut b: u128, mut acc: u128) -> Result<(u128, u1
 					.0
 			}
 			.try_into()
-			.expect("quotient times divisor is less or equal than original value; qed");
+			.expect("quotient times divisor is less than or equal to the dividend; qed");
 
 			// Then we compute the residual
-			let r = a
-				.checked_sub(a_)
-				.expect("remainder of division is always less than or equal to the dividend; qed");
+			let r =
+				a.checked_sub(a_).expect("remainder is less than or equal to the dividend; qed");
 
 			(q, r)
 		};
