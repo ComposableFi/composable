@@ -423,6 +423,7 @@ pub mod pallet {
 			let position = T::get_protocol_nft::<StakingNFTOf<T>>(&instance_id)?;
 			let protocol_account = Self::account_id(&position.asset);
 			T::Assets::transfer(position.asset, &owner, &protocol_account, balance, false)?;
+			PendingTotalShares::<T>::
 			PendingAmountExtensions::<T>::mutate_exists(instance_id, |x| {
 				let increased = x.unwrap_or_default().safe_add(&balance);
 				*x = Some(increased?);
@@ -497,7 +498,7 @@ pub mod pallet {
 												nft.pending_rewards.clone().into_iter()
 											{
 												let total_shares =
-													Self::total_shares(nft.asset);
+													Self::running_total_shares(nft.asset);
 												let reward = EpochRewards::<T>::get(
 													(reward_epoch, nft.asset),
 													reward_asset,
@@ -521,6 +522,9 @@ pub mod pallet {
 														)?,
 													)
 													.map_err(|_| ArithmeticError::Overflow)?;
+												if reward_asset == nft.asset {
+													
+												}
 											}
 										},
 									}
@@ -572,7 +576,7 @@ pub mod pallet {
 					}
 				},
 				State::Registering => {
-					let result = <(FoldState<T>, PendingStakers<T>)>::step(
+					let registering_result = <(FoldState<T>, PendingStakers<T>)>::step(
 						FoldStrategy::Chunk {
 							number_of_elements: T::ElementToProcessPerBlock::get(),
 						},
@@ -580,20 +584,19 @@ pub mod pallet {
 						|_, nft_id, _| {
 							let nft = T::get_protocol_nft::<StakingNFTOf<T>>(&nft_id)
 								.expect("impossible; qed");
-							for reward_asset in nft.pending_rewards.keys() {
-								TotalShares::<T>::mutate(
-									(nft.asset, reward_asset),
+								RunningTotalShares::<T>::mutate(
+									nft.asset,
 									|total_shares| {
 										*total_shares = total_shares
 											.checked_add(nft.shares())
 											.expect("impossible; qed;");
 									},
 								);
-							}
+							
 							Stakers::<T>::insert(nft_id, ());
 						},
 					);
-					if let BlockFold::Done { .. } = result {
+					if let BlockFold::Done { .. } = registering_result {
 						// NOTE:
 						// other design would be to `take` in batches and having A/B storages
 						// 1. make A to be acitve to inser new pending stakers
