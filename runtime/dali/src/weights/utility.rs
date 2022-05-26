@@ -54,4 +54,7 @@ impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 	fn dispatch_as() -> Weight {
 		(20_264_000 as Weight)
 	}
+	fn force_batch(_: u32) -> Weight {
+		0 as Weight
+	}
 }

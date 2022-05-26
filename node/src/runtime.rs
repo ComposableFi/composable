@@ -1,9 +1,9 @@
-use assets_rpc::{Assets, AssetsApi};
+use assets_rpc::{Assets, AssetsApiServer};
 use common::{AccountId, Balance, Index, OpaqueBlock};
-use crowdloan_rewards_rpc::{CrowdloanRewards, CrowdloanRewardsApi};
+use crowdloan_rewards_rpc::{CrowdloanRewards, CrowdloanRewardsApiServer};
 use cumulus_primitives_core::CollectCollationInfo;
-use lending_rpc::{Lending, LendingApi};
-use pablo_rpc::{Pablo, PabloApi};
+use lending_rpc::{Lending, LendingApiServer};
+use pablo_rpc::{Pablo, PabloApiServer};
 use pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi;
 use sp_api::{ApiExt, Metadata, StateBackend};
 use sp_block_builder::BlockBuilder;
@@ -60,7 +60,7 @@ macro_rules! define_trait {
 					impl for $runtime_module:ident {
 						$(
 							fn ($io: ident, $deps: ident) {
-								$content:expr;
+								$content:expr
 							}
 						)?
 					}
@@ -97,12 +97,13 @@ macro_rules! define_trait {
 					#[doc=" The default implementation does nothing, to allow for usage with runtimes that don't"]
 					#[doc=" implement the API."]
 					fn $fn(
-						_io: &mut jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>,
+						_io: &mut jsonrpsee::RpcModule<()>,
 						_deps: FullDeps<
 							FullClient<RuntimeApi, Executor>,
 							FullPool<OpaqueBlock, FullClient<RuntimeApi, Executor>>,
 						>,
-					) {
+					) -> Result<(), jsonrpsee::core::Error> {
+						Ok(())
 					}
 				}
 			}
@@ -118,13 +119,13 @@ macro_rules! define_trait {
 				{
 					$(
 						fn $fn(
-							$io: &mut jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>,
+							$io: &mut jsonrpsee::RpcModule<()>,
 							$deps: crate::rpc::FullDeps<
 								crate::client::FullClient<$runtime_module::RuntimeApi, Executor>,
 								sc_transaction_pool::FullPool<OpaqueBlock, crate::client::FullClient<$runtime_module::RuntimeApi, Executor>>,
 							>,
-						) {
-							$content;
+						) -> Result<(), jsonrpsee::core::Error> {
+							$content
 						}
 					)?
 				}
@@ -142,46 +143,46 @@ define_trait! {
 		#[cfg(feature = "composable")]
 		impl for composable_runtime {
 			fn (io, deps) {
-				io.extend_with(AssetsApi::to_delegate(Assets::new(deps.client)));
+				io.merge(Assets::new(deps.client).into_rpc())
 			}
 		}
 
 		impl for picasso_runtime {
 			fn (io, deps) {
-				io.extend_with(AssetsApi::to_delegate(Assets::new(deps.client)));
+				io.merge(Assets::new(deps.client).into_rpc())
 			}
 		}
 
 		#[cfg(feature = "dali")]
 		impl for dali_runtime {
 			fn (io, deps) {
-				io.extend_with(AssetsApi::to_delegate(Assets::new(deps.client)));
+				io.merge(Assets::new(deps.client).into_rpc())
 			}
 		}
 	}
 
 	mod crowdloan_rewards {
 		pub trait ExtendWithCrowdloanRewardsApi {
-			fn extend_with_crowdloan_rewards_api(io, deps);
+			fn extend_with_crowdloan_rewards_api(io, deps) ;
 		}
 
 		#[cfg(feature = "composable")]
 		impl for composable_runtime {
 			fn (io, deps) {
-				io.extend_with(CrowdloanRewardsApi::to_delegate(CrowdloanRewards::new(deps.client)));
+				io.merge(CrowdloanRewards::new(deps.client).into_rpc())
 			}
 		}
 
 		impl for picasso_runtime {
 			fn (io, deps) {
-				io.extend_with(CrowdloanRewardsApi::to_delegate(CrowdloanRewards::new(deps.client)));
+				io.merge(CrowdloanRewards::new(deps.client).into_rpc())
 			}
 		}
 
 		#[cfg(feature = "dali")]
 		impl for dali_runtime {
 			fn (io, deps) {
-				io.extend_with(CrowdloanRewardsApi::to_delegate(CrowdloanRewards::new(deps.client)));
+				io.merge(CrowdloanRewards::new(deps.client).into_rpc())
 			}
 		}
 	}
@@ -199,7 +200,7 @@ define_trait! {
 		#[cfg(feature = "dali")]
 		impl for dali_runtime {
 			fn (io, deps) {
-				io.extend_with(PabloApi::to_delegate(Pablo::new(deps.client)));
+				io.merge(Pablo::new(deps.client).into_rpc())
 			}
 		}
 	}
@@ -217,7 +218,7 @@ define_trait! {
 		#[cfg(feature = "dali")]
 		impl for dali_runtime {
 			fn (io, deps) {
-				io.extend_with(LendingApi::to_delegate(Lending::new(deps.client)));
+				io.merge(Lending::new(deps.client).into_rpc())
 			}
 		}
 	}

@@ -31,4 +31,4 @@ parachain-inherent = { package = "cumulus-primitives-parachain-inherent", git = 
 picasso-runtime = { path = "../../runtime/picasso" }
 
 derive_more = "0.99.17"
-jsonrpc-core = "18.0"
+jsonrpsee = { version = "0.13.0", features = ["server", "macros"] }

@@ -504,6 +504,7 @@ parameter_types! {
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
 }
 
+type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
@@ -513,6 +514,8 @@ impl orml_tokens::Config for Runtime {
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
+	type ReserveIdentifier = ReserveIdentifier;
+	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 

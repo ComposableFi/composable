@@ -1314,8 +1314,12 @@ pub mod pallet {
 			let market_account = Self::account_id(market_id);
 
 			ensure!(
-				<T as Config>::MultiCurrency::can_deposit(market.collateral_asset, account, amount, false) ==
-					DepositConsequence::Success,
+				<T as Config>::MultiCurrency::can_deposit(
+					market.collateral_asset,
+					account,
+					amount,
+					false
+				) == DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
 			ensure!(
