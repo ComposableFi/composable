@@ -238,8 +238,8 @@ pub mod pallet {
 	}
 
 	/// stores total shares,
-	/// false than even epoch is rewarding
-	/// true than odd epoch is rewarding
+	/// false than even epoch is operation and odd epoch is updated
+	/// true than odd epoch is rewarding and even epoch is updated
 	#[pallet::storage]
 	#[pallet::getter(fn total_shares)]
 	pub type TotalShares<T: Config> = StorageDoubleMap<
@@ -596,6 +596,7 @@ pub mod pallet {
 						// and fold would have simpler state (no need to recall previous and know
 						// when done) but will need to store `bool` value for A/B and split storage
 						// PendingStakersA and PendingStakersB
+						panic!("swithc epochs here");
 						PendingStakers::<T>::remove_all(None);
 						CurrentState::<T>::set(State::WaitingForEpochEnd);
 					}
