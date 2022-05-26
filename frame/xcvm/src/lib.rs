@@ -56,12 +56,16 @@ pub mod pallet {
 	pub(crate) type BalanceOf<T> = <T as Config>::Balance;
 	pub(crate) type BridgeOf<T> = <T as Config>::Bridge;
 	pub(crate) type BridgeTxIdOf<T> = <BridgeOf<T> as TransferTo>::TxId;
-	pub(crate) type NetworkIdOf<T> = <BridgeOf<T> as TransferTo>::NetworkId;
-	pub(crate) type AddressOf<T> = <BridgeOf<T> as TransferTo>::Address;
+	pub(crate) type BridgeNetworkIdOf<T> = <BridgeOf<T> as TransferTo>::NetworkId;
+	pub(crate) type BridgeAddressOf<T> = <BridgeOf<T> as TransferTo>::Address;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+		SatelliteSet {
+			network: XCVMNetwork,
+			satellite: (BridgeNetworkIdOf<T>, BridgeAddressOf<T>),
+		},
 		Executed {
 			program: XCVMProgram<XCVMInstruction<XCVMNetwork, AbiEncoded, Vec<u8>, XCVMTransfer>>,
 		},
@@ -112,7 +116,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn satellite)]
 	pub type Satellite<T: Config> =
-		StorageMap<_, Blake2_128Concat, XCVMNetwork, (NetworkIdOf<T>, AddressOf<T>)>;
+		StorageMap<_, Blake2_128Concat, XCVMNetwork, (BridgeNetworkIdOf<T>, BridgeAddressOf<T>)>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T>
@@ -123,10 +127,11 @@ pub mod pallet {
 		pub fn set_satellite(
 			origin: OriginFor<T>,
 			network: XCVMNetwork,
-			satellite: (NetworkIdOf<T>, AddressOf<T>),
+			satellite: (BridgeNetworkIdOf<T>, BridgeAddressOf<T>),
 		) -> DispatchResultWithPostInfo {
 			let _ = T::ControlOrigin::ensure_origin(origin)?;
-			Satellite::<T>::insert(network, satellite);
+			Satellite::<T>::insert(network, satellite.clone());
+			Self::deposit_event(Event::<T>::SatelliteSet { network, satellite });
 			Ok(().into())
 		}
 
