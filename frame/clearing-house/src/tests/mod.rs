@@ -13,7 +13,7 @@ use crate::{
 		},
 		vamm::VammConfig,
 	},
-	MarketConfig as MarketConfigGeneric, Markets,
+	Config, Market as MarketGeneric, MarketConfig as MarketConfigGeneric, Markets,
 };
 use composable_traits::{
 	clearing_house::{ClearingHouse, Instruments},
@@ -23,7 +23,7 @@ use composable_traits::{
 };
 use frame_support::{assert_err, assert_ok, pallet_prelude::Hooks};
 use proptest::prelude::*;
-use sp_runtime::{FixedI128, FixedPointNumber, FixedU128};
+use sp_runtime::{traits::Zero, FixedI128, FixedPointNumber, FixedU128};
 
 pub mod comp;
 pub mod create_market;
@@ -203,6 +203,27 @@ impl Default for MarketConfigGeneric<AssetId, Balance, Decimal, VammConfig> {
 			funding_frequency: ONE_HOUR,
 			funding_period: ONE_HOUR * 24,
 			taker_fee: 10, // 0.1%
+		}
+	}
+}
+
+impl<T: Config> Default for MarketGeneric<T> {
+	fn default() -> Self {
+		Self {
+			vamm_id: Zero::zero(),
+			asset_id: Default::default(),
+			margin_ratio_initial: Default::default(),
+			margin_ratio_maintenance: Default::default(),
+			minimum_trade_size: Default::default(),
+			base_asset_amount_long: Default::default(),
+			base_asset_amount_short: Default::default(),
+			cum_funding_rate_long: Default::default(),
+			cum_funding_rate_short: Default::default(),
+			fee_pool: Default::default(),
+			funding_rate_ts: Default::default(),
+			funding_frequency: Default::default(),
+			funding_period: Default::default(),
+			taker_fee: Default::default(),
 		}
 	}
 }
