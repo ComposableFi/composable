@@ -246,12 +246,12 @@ impl RunToBlock for sp_io::TestExternalities {
 	}
 }
 
-trait MarginInitializer {
+trait CollateralInitializer {
 	fn deposit_collateral(self, account_id: &AccountId, asset_id: AssetId, amount: Balance)
 		-> Self;
 }
 
-impl MarginInitializer for sp_io::TestExternalities {
+impl CollateralInitializer for sp_io::TestExternalities {
 	fn deposit_collateral(
 		mut self,
 		account_id: &AccountId,

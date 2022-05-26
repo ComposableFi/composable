@@ -10,7 +10,7 @@ use crate::{
 	pallet::{Config, Direction, Error, Event},
 	tests::{
 		any_price, as_balance, run_for_seconds, set_fee_pool_depth, with_markets_context,
-		with_trading_context, MarginInitializer, MarketConfig, MarketInitializer,
+		with_trading_context, CollateralInitializer, MarketConfig, MarketInitializer,
 	},
 };
 use composable_traits::{clearing_house::ClearingHouse, time::ONE_HOUR};
