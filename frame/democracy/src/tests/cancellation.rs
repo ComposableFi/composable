@@ -26,12 +26,12 @@ proptest! {
 	#[test]
 	fn cancel_referendum_should_work(
 	asset_id in valid_asset_id(),
-	balance1 in valid_amounts_without_overflow_1()) {
+	balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
-			Tokens::mint_into(asset_id, &BOB, balance1 / 2).expect("always can mint in test");
+			Tokens::mint_into(asset_id, &BOB, balance / 2).expect("always can mint in test");
 			let r = Democracy::inject_referendum(
 				2,
-				set_balance_proposal_hash_and_note_2(balance1, asset_id),
+				set_balance_proposal_hash_and_note_2(balance, asset_id),
 				VoteThreshold::SuperMajorityApprove,
 				0,
 			);
@@ -52,12 +52,12 @@ proptest! {
 	#[test]
 	fn cancel_queued_should_work(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
 			System::set_block_number(0);
-			Balances::mint_into(&BOB, balance1 / 2).expect("always can mint in test");
-			Tokens::mint_into(asset_id, &BOB, balance1).expect("always can mint in test");
-			assert_ok!(propose_set_balance_and_note_2(BOB, asset_id,  balance1 / 100, balance1 / 100));
+			Balances::mint_into(&BOB, balance / 2).expect("always can mint in test");
+			Tokens::mint_into(asset_id, &BOB, balance).expect("always can mint in test");
+			assert_ok!(propose_set_balance_and_note_2(BOB, asset_id,  balance / 100, balance / 100));
 
 			// start of 2 => next referendum scheduled.
 			fast_forward_to(2);
@@ -77,12 +77,12 @@ proptest! {
 	#[test]
 	fn emergency_cancel_should_work(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
 			System::set_block_number(0);
 			let r = Democracy::inject_referendum(
 				2,
-				set_balance_proposal_hash_and_note_2(balance1, asset_id),
+				set_balance_proposal_hash_and_note_2(balance, asset_id),
 				VoteThreshold::SuperMajorityApprove,
 				2,
 			);
@@ -96,7 +96,7 @@ proptest! {
 
 			let r = Democracy::inject_referendum(
 				2,
-				set_balance_proposal_hash_and_note_2(balance1, asset_id),
+				set_balance_proposal_hash_and_note_2(balance, asset_id),
 				VoteThreshold::SuperMajorityApprove,
 				2,
 			);

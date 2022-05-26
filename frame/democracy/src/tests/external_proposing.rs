@@ -26,14 +26,14 @@ proptest! {
 	#[test]
 	fn veto_external_works(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
 			System::set_block_number(0);
-			let id = set_balance_proposal_hash_and_note_2(balance1, asset_id);
+			let id = set_balance_proposal_hash_and_note_2(balance, asset_id);
 			assert_ok!(Democracy::external_propose(Origin::signed(2), id.hash, id.asset_id,));
 			assert!(<NextExternal<Test>>::exists());
 
-			let id = set_balance_proposal_hash_and_note_2(balance1, asset_id);
+			let id = set_balance_proposal_hash_and_note_2(balance, asset_id);
 			assert_ok!(Democracy::veto_external(Origin::signed(3), id.hash, id.asset_id));
 			// cancelled.
 			assert!(!<NextExternal<Test>>::exists());
@@ -41,7 +41,7 @@ proptest! {
 			assert_noop!(
 				Democracy::external_propose(
 					Origin::signed(2),
-					set_balance_proposal_hash(balance1),
+					set_balance_proposal_hash(balance),
 					asset_id
 				),
 				Error::<Test>::ProposalBlacklisted
@@ -52,7 +52,7 @@ proptest! {
 			assert_noop!(
 				Democracy::external_propose(
 					Origin::signed(2),
-					set_balance_proposal_hash(balance1),
+					set_balance_proposal_hash(balance),
 					asset_id
 				),
 				Error::<Test>::ProposalBlacklisted
@@ -60,7 +60,7 @@ proptest! {
 
 			fast_forward_to(2);
 			// works; as we're out of the cooloff period.
-			let id = set_balance_proposal_hash_and_note_2(balance1, asset_id);
+			let id = set_balance_proposal_hash_and_note_2(balance, asset_id);
 			assert_ok!(Democracy::external_propose(Origin::signed(2), id.hash, id.asset_id,));
 			assert!(<NextExternal<Test>>::exists());
 
@@ -80,13 +80,13 @@ proptest! {
 			assert_noop!(
 				Democracy::external_propose(
 					Origin::signed(2),
-					set_balance_proposal_hash(balance1),
+					set_balance_proposal_hash(balance),
 					asset_id
 				),
 				Error::<Test>::ProposalBlacklisted
 			);
 			// different proposal works fine.
-			let id = set_balance_proposal_hash_and_note_2(balance1 / 2, asset_id);
+			let id = set_balance_proposal_hash_and_note_2(balance / 2, asset_id);
 			assert_ok!(Democracy::external_propose(Origin::signed(2), id.hash, id.asset_id,));
 		});
 	}
@@ -94,15 +94,15 @@ proptest! {
 	#[test]
 	fn external_blacklisting_should_work(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
 			System::set_block_number(0);
-			Balances::mint_into(&2, balance1 / 100).expect("always can mint in test");
-			Tokens::mint_into(asset_id, &2, balance1 / 2).expect("always can mint in test");
+			Balances::mint_into(&2, balance / 100).expect("always can mint in test");
+			Tokens::mint_into(asset_id, &2, balance / 2).expect("always can mint in test");
 
-			let id = set_balance_proposal_hash_and_note_2(balance1, asset_id);
+			let id = set_balance_proposal_hash_and_note_2(balance, asset_id);
 			assert_ok!(Democracy::external_propose(Origin::signed(2), id.hash, id.asset_id));
-			 let hash = set_balance_proposal_hash(balance1);
+			 let hash = set_balance_proposal_hash(balance);
 			assert_ok!(Democracy::blacklist(Origin::root(), hash, asset_id, None));
 			fast_forward_to(2);
 			assert_noop!(Democracy::referendum_status(0), Error::<Test>::ReferendumInvalid);
@@ -117,21 +117,21 @@ proptest! {
 	#[test]
 	fn external_default_referendum_works(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
 			System::set_block_number(0);
-			Balances::mint_into(&3, balance1 / 100).expect("always can mint in test");
-			Tokens::mint_into(asset_id, &3, balance1 / 2).expect("always can mint in test");
+			Balances::mint_into(&3, balance / 100).expect("always can mint in test");
+			Tokens::mint_into(asset_id, &3, balance / 2).expect("always can mint in test");
 			assert_noop!(
 				Democracy::external_propose_default(
 					Origin::signed(3),
-					set_balance_proposal_hash(balance1),
+					set_balance_proposal_hash(balance),
 					asset_id
 				),
 				BadOrigin,
 			);
 
-			let id = set_balance_proposal_hash_and_note_2(balance1, asset_id);
+			let id = set_balance_proposal_hash_and_note_2(balance, asset_id);
 			assert_ok!(Democracy::external_propose_default(Origin::signed(1), id.hash, id.asset_id));
 			fast_forward_to(2);
 			assert_eq!(
@@ -139,7 +139,7 @@ proptest! {
 				Ok(ReferendumStatus {
 					end: 4,
 					proposal_id: ProposalId {
-						hash: set_balance_proposal_hash(balance1),
+						hash: set_balance_proposal_hash(balance),
 						asset_id: asset_id
 					},
 					threshold: VoteThreshold::SuperMajorityAgainst,
@@ -152,11 +152,11 @@ proptest! {
 	#[test]
 	fn external_majority_referendum_works(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
 			System::set_block_number(0);
-			Balances::mint_into(&3, balance1 / 100).expect("always can mint in test");
-			Tokens::mint_into(asset_id, &3, balance1 / 2).expect("always can mint in test");
+			Balances::mint_into(&3, balance / 100).expect("always can mint in test");
+			Tokens::mint_into(asset_id, &3, balance / 2).expect("always can mint in test");
 			assert_noop!(
 				Democracy::external_propose_majority(
 					Origin::signed(1),
@@ -166,7 +166,7 @@ proptest! {
 				BadOrigin,
 			);
 
-			let id = set_balance_proposal_hash_and_note_2(balance1, asset_id);
+			let id = set_balance_proposal_hash_and_note_2(balance, asset_id);
 			assert_ok!(Democracy::external_propose_majority(Origin::signed(3), id.hash, id.asset_id));
 			fast_forward_to(2);
 			assert_eq!(
@@ -174,7 +174,7 @@ proptest! {
 				Ok(ReferendumStatus {
 					end: 4,
 					proposal_id: ProposalId {
-						hash: set_balance_proposal_hash(balance1),
+						hash: set_balance_proposal_hash(balance),
 						asset_id: asset_id
 					},
 					threshold: VoteThreshold::SimpleMajority,
@@ -188,25 +188,25 @@ proptest! {
 	#[test]
 	fn external_referendum_works(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
 			System::set_block_number(0);
-			Balances::mint_into(&3, balance1 / 100).expect("always can mint in test");
-			Tokens::mint_into(asset_id, &3, balance1 / 2).expect("always can mint in test");
+			Balances::mint_into(&3, balance / 100).expect("always can mint in test");
+			Tokens::mint_into(asset_id, &3, balance / 2).expect("always can mint in test");
 			assert_noop!(
 				Democracy::external_propose(
 					Origin::signed(1),
-					set_balance_proposal_hash(balance1),
+					set_balance_proposal_hash(balance),
 					asset_id
 				),
 				BadOrigin,
 			);
-			let id = set_balance_proposal_hash_and_note_2(balance1, asset_id);
+			let id = set_balance_proposal_hash_and_note_2(balance, asset_id);
 			assert_ok!(Democracy::external_propose(Origin::signed(2), id.hash, id.asset_id));
 			assert_noop!(
 				Democracy::external_propose(
 					Origin::signed(2),
-					set_balance_proposal_hash(balance1),
+					set_balance_proposal_hash(balance),
 					asset_id
 				),
 				Error::<Test>::DuplicateProposal
@@ -217,7 +217,7 @@ proptest! {
 				Ok(ReferendumStatus {
 					end: 4,
 					proposal_id: ProposalId {
-						hash: set_balance_proposal_hash(balance1),
+						hash: set_balance_proposal_hash(balance),
 						asset_id: asset_id
 					},
 					threshold: VoteThreshold::SuperMajorityApprove,

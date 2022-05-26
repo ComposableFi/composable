@@ -175,7 +175,7 @@ use frame_support::{
 	},
 	weights::Weight,
 };
-use orml_traits::{MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
+use orml_traits::{GetByKey, MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{
@@ -192,6 +192,7 @@ mod types;
 mod vote;
 mod vote_threshold;
 pub mod weights;
+use composable_traits::governance::{GovernanceRegistry, SignedRawOrigin};
 pub use conviction::Conviction;
 pub use pallet::*;
 pub use types::{Delegations, ProposalId, ReferendumInfo, ReferendumStatus, Tally, UnvoteScope};
@@ -313,6 +314,9 @@ pub mod pallet {
 				Balance = Self::Balance,
 				CurrencyId = Self::AssetId,
 			>;
+
+		type GovernanceRegistry: GetByKey<Self::AssetId, Result<SignedRawOrigin<Self::AccountId>, DispatchError>>
+			+ GovernanceRegistry<Self::AssetId, Self::AccountId>;
 
 		/// The period between a proposal being approved and enacted.
 		///
@@ -1851,10 +1855,9 @@ impl<T: Config> Pallet<T> {
 					deposit,
 				});
 
-				let res = proposal
-					.dispatch(frame_system::RawOrigin::Root.into())
-					.map(|_| ())
-					.map_err(|e| e.error);
+				let signed_raw_origin = T::GovernanceRegistry::get(&proposal_id.asset_id)?;
+				let raw_origin: frame_system::RawOrigin<T::AccountId> = signed_raw_origin.into();
+				let res = proposal.dispatch(raw_origin.into()).map(|_| ()).map_err(|e| e.error);
 				Self::deposit_event(Event::<T>::Executed { ref_index: index, result: res });
 
 				Ok(())

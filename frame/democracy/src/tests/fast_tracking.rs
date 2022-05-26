@@ -58,13 +58,13 @@ proptest! {
 	#[test]
 	fn fast_track_referendum_fails_when_no_simple_majority(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
 			System::set_block_number(0);
 			let id = set_balance_proposal_hash_and_note_2(2, asset_id);
 			assert_ok!(Democracy::external_propose(Origin::signed(CHARLIE), id.hash, id.asset_id));
 			assert_noop!(
-				Democracy::fast_track(Origin::signed(5), id.hash, id.asset_id, balance1 , balance1 / 10),
+				Democracy::fast_track(Origin::signed(5), id.hash, id.asset_id, balance , balance / 10),
 				Error::<Test>::NotSimpleMajority
 			);
 		});
