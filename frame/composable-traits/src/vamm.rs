@@ -61,8 +61,10 @@ pub trait Vamm {
 	) -> Result<Self::Decimal, DispatchError>;
 
 	/// Compute the time-weighted average price of a virtual AMM.
-	#[allow(unused_variables)]
-	fn get_twap(vamm_id: &Self::VammId) -> Result<Self::Decimal, DispatchError>;
+	fn get_twap(
+		vamm_id: &Self::VammId,
+		asset_type: AssetType,
+	) -> Result<Self::Decimal, DispatchError>;
 }
 
 /// Specify a common encapsulation layer for the [`create`](Vamm::create) function.

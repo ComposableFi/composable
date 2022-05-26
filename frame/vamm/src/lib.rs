@@ -22,6 +22,7 @@
 //!
 //! * **VAMM:** Acronym for Virtual Automated Market Maker.
 //! * **CFMM:** Acronym for Constant Function Market Maker.
+//! * **TWAP:** Acronym for Time Weighted Average Price.
 //!
 //! ### Goals
 //!
@@ -239,7 +240,7 @@ pub mod pallet {
 	}
 
 	/// Data relating to the state of a virtual market.
-	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug)]
+	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug, Default)]
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 	pub struct VammState<Balance, Moment> {
 		/// The total amount of base asset present in the vamm.
@@ -263,6 +264,18 @@ pub mod pallet {
 		/// is flaged to be closed and the closing action will take (or took)
 		/// effect at the time `timestamp`.
 		pub closed: Option<Moment>,
+
+		// TODO(Cardosaum): Write description for this field.
+		pub base_asset_twap: Balance,
+
+		// TODO(Cardosaum): Write description for this field.
+		pub base_asset_twap_timestamp: Moment,
+
+		// TODO(Cardosaum): Write description for this field.
+		pub quote_asset_twap: Balance,
+
+		// TODO(Cardosaum): Write description for this field.
+		pub quote_asset_twap_timestamp: Moment,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -467,7 +480,7 @@ pub mod pallet {
 					quote_asset_reserves: config.quote_asset_reserves,
 					peg_multiplier: config.peg_multiplier,
 					invariant,
-					closed: Default::default(),
+					..Default::default()
 				};
 
 				VammMap::<T>::insert(&id, vamm_state);
@@ -546,9 +559,60 @@ pub mod pallet {
 			}
 		}
 
-		#[allow(unused_variables)]
-		fn get_twap(vamm_id: &VammIdOf<T>) -> Result<DecimalOf<T>, DispatchError> {
-			todo!()
+		/// Returns the time weighted average price of the desired asset.
+		///
+		/// # Overview
+		/// In order for the caller to know which is the time weighted average
+		/// price of the desired asset, it has to request it to the Vamm Pallet.
+		/// The pallet will query the runtime storage and return the desired
+		/// twap.
+		///
+		/// ![](https://www.plantuml.com/plantuml/svg/FSqz3i8m343XdLF01UgTgH8IrwXSrsqYnKxa7tfzAWQcfszwimTQfBJReogrt3YjtKl4y2U0uJaTDKgkwMpKDLXZeYxmwZAwuzhuNO7-07OgRB0R2iC7HM2hU5nos5CfQjVbu5ZYn36DXlfxpwpRrIy0)
+		///
+		/// ## Parameters
+		///  - [`vamm_id`](Config::VammId): The ID of the desired vamm to query.
+		///  - [`asset_type`](composable_traits::vamm::AssetType): The desired
+		///  asset type to get info about.
+		///
+		/// ## Returns
+		/// The twap for the specified asset.
+		///
+		/// ## Assumptions or Requirements
+		/// * The requested [`VammId`](Config::VammId) must exists
+		/// * The requested Vamm must be open.
+		///
+		/// For more information about how to know if a Vamm is open or not,
+		/// please have a look in the variable [`closed`](VammState::closed).
+		///
+		/// ## Emits
+		/// No event is emitted for this function.
+		///
+		/// ## State Changes
+		/// This function does not mutate runtime storage.
+		///
+		/// ## Errors
+		/// * [`Error::<T>::VammDoesNotExist`]
+		/// * [`Error::<T>::FailToRetrieveVamm`]
+		/// * [`Error::<T>::VammIsClosed`]
+		///
+		/// # Runtime
+		/// `O(1)`
+		#[transactional]
+		fn get_twap(
+			vamm_id: &VammIdOf<T>,
+			asset_type: AssetType,
+		) -> Result<DecimalOf<T>, DispatchError> {
+			// Sanity Checks
+			// 1) Vamm must exist
+			let vamm_state = Self::get_vamm_state(vamm_id)?;
+
+			// 2) Vamm must be open
+			ensure!(!Self::is_vamm_closed(&vamm_state), Error::<T>::VammIsClosed);
+
+			match asset_type {
+				AssetType::Base => Ok(DecimalOf::<T>::from_inner(vamm_state.base_asset_twap)),
+				AssetType::Quote => Ok(DecimalOf::<T>::from_inner(vamm_state.quote_asset_twap)),
+			}
 		}
 
 		/// Performs the swap of the desired asset against the vamm.
