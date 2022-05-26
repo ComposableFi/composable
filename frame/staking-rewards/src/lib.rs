@@ -237,12 +237,10 @@ pub mod pallet {
 		u128::zero()
 	}
 
-	//// stores total shares,
-	//// false than even epoch is operation and odd epoch is updated
-	/// true than odd epoch is rewarding and even epoch is updated
+	//// active running total shares
 	#[pallet::storage]
-	#[pallet::getter(fn odd_total_shares)]
-	pub type OddTotalShares<T: Config> = StorageMap<
+	#[pallet::getter(fn running_total_shares)]
+	pub type RunningTotalShares<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
 		AssetIdOf<T>,
@@ -251,9 +249,10 @@ pub mod pallet {
 		SharesOnEmpty<T>,
 	>;
 
+	/// pending total shares to be applied on next run
 	#[pallet::storage]
-	#[pallet::getter(fn even_total_shares)]
-	pub type EvenTotalShares<T: Config> = StorageMap<
+	#[pallet::getter(fn pending_total_shares)]
+	pub type PendingTotalShares<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
 		AssetIdOf<T>,
@@ -693,12 +692,6 @@ pub mod pallet {
 				nft.pending_rewards.remove(&reward_asset);
 			}
 			Ok(())
-		}
-
-		fn total_shares(asset_id: T::AssetId) -> Balance {
-			if CurrentEpoch
-			Self::total_shares(nft.asset);
-
 		}
 
 	}
