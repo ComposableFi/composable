@@ -177,8 +177,8 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 
-mod mocks;
 mod conviction;
+mod mocks;
 mod types;
 mod vote;
 mod vote_threshold;
