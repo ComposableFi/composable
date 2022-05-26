@@ -192,17 +192,9 @@ define_trait! {
 		}
 
 		#[cfg(feature = "composable")]
-		impl for composable_runtime {
-			fn (io, deps) {
-				io.extend_with(PabloApi::to_delegate(Pablo::new(deps.client)));
-			}
-		}
+		impl for composable_runtime {}
 
-		impl for picasso_runtime {
-			fn (io, deps) {
-				io.extend_with(PabloApi::to_delegate(Pablo::new(deps.client)));
-			}
-		}
+		impl for picasso_runtime {}
 
 		#[cfg(feature = "dali")]
 		impl for dali_runtime {

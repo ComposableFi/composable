@@ -88,7 +88,9 @@ pub mod pallet {
 	};
 
 	use crate::liquidity_bootstrapping::LiquidityBootstrapping;
-	use composable_maths::dex::price::compute_initial_price_cumulative;
+	use composable_maths::dex::{
+		constant_product::compute_deposit_lp, price::compute_initial_price_cumulative,
+	};
 	use composable_support::validation::Validated;
 	use composable_traits::{currency::BalanceLike, dex::FeeConfig};
 	use frame_system::{
@@ -688,6 +690,45 @@ pub mod pallet {
 			match pool {
 				PoolConfiguration::StableSwap(info) => Ok(info.lp_token),
 				PoolConfiguration::ConstantProduct(info) => Ok(info.lp_token),
+				PoolConfiguration::LiquidityBootstrapping(_) =>
+					Err(Error::<T>::NoLpTokenForLbp.into()),
+			}
+		}
+
+		fn amount_of_lp_token_for_added_liquidity(
+			pool_id: Self::PoolId,
+			base_amount: Self::Balance,
+			quote_amount: Self::Balance,
+		) -> Result<Self::Balance, DispatchError> {
+			let pool = Self::get_pool(pool_id)?;
+			let pool_account = Self::account_id(&pool_id);
+			match pool {
+				PoolConfiguration::StableSwap(pool) =>
+					StableSwap::<T>::calculate_mint_amount_and_fees(
+						&pool,
+						&pool_account,
+						&base_amount,
+						&quote_amount,
+					)
+					.map(|x| x.0),
+				PoolConfiguration::ConstantProduct(pool) => {
+					let pool_base_aum =
+						T::Convert::convert(T::Assets::balance(pool.pair.base, &pool_account));
+					let pool_quote_aum =
+						T::Convert::convert(T::Assets::balance(pool.pair.quote, &pool_account));
+
+					let lp_total_issuance =
+						T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
+					let (_, amount_of_lp_token_to_mint) = compute_deposit_lp(
+						lp_total_issuance,
+						T::Convert::convert(base_amount),
+						T::Convert::convert(quote_amount),
+						pool_base_aum,
+						pool_quote_aum,
+					)?;
+
+					Ok(T::Convert::convert(amount_of_lp_token_to_mint))
+				},
 				PoolConfiguration::LiquidityBootstrapping(_) =>
 					Err(Error::<T>::NoLpTokenForLbp.into()),
 			}
