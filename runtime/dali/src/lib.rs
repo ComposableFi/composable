@@ -1234,11 +1234,14 @@ impl_runtime_apis! {
 			base_asset_amount: SafeRpcWrapper<Balance>,
 			quote_asset_amount: SafeRpcWrapper<Balance>,
 		) -> SafeRpcWrapper<Balance> {
-			SafeRpcWrapper(<Pablo as Amm>::amount_of_lp_token_for_added_liquidity(
-				pool_id.0,
-				base_asset_amount.0,
-				quote_asset_amount.0,
-			).unwrap_or_else(|_|Zero::zero()))
+			SafeRpcWrapper(
+				<Pablo as Amm>::amount_of_lp_token_for_added_liquidity(
+					pool_id.0,
+					base_asset_amount.0,
+					quote_asset_amount.0,
+				)
+				.unwrap_or_else(|_| Zero::zero())
+			)
 		}
 	}
 
