@@ -29,8 +29,8 @@ where
 		PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
 	>;
 
-	#[rpc(name = "pablo_lpTokensReceivedForLiquidityProvided")]
-	fn lp_tokens_received_for_liquidity_provided(
+	#[rpc(name = "pablo_expectedLpTokensGivenLiquidity")]
+	fn expected_lp_tokens_given_liquidity(
 		&self,
 		pool_id: SafeRpcWrapper<PoolId>,
 		base_asset_amount: SafeRpcWrapper<Balance>,
@@ -88,7 +88,7 @@ where
 		})
 	}
 
-	fn lp_tokens_received_for_liquidity_provided(
+	fn expected_lp_tokens_given_liquidity(
 		&self,
 		pool_id: SafeRpcWrapper<PoolId>,
 		base_asset_amount: SafeRpcWrapper<Balance>,
@@ -100,7 +100,7 @@ where
 		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
 
 		// calling ../../runtime-api
-		let runtime_api_result = api.lp_tokens_received_for_liquidity_provided(
+		let runtime_api_result = api.expected_lp_tokens_given_liquidity(
 			&at,
 			pool_id,
 			base_asset_amount,

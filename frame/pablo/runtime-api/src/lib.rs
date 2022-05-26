@@ -24,7 +24,7 @@ sp_api::decl_runtime_apis! {
 			amount: Balance
 		) -> PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>;
 
-		fn lp_tokens_received_for_liquidity_provided(
+		fn expected_lp_tokens_given_liquidity(
 			pool_id: SafeRpcWrapper<PoolId>,
 			base_asset_amount: SafeRpcWrapper<Balance>,
 			quote_asset_amount: SafeRpcWrapper<Balance>,

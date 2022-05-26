@@ -1229,7 +1229,7 @@ impl_runtime_apis! {
 			})
 		}
 
-		fn lp_tokens_received_for_liquidity_provided(
+		fn expected_lp_tokens_given_liquidity(
 			pool_id: SafeRpcWrapper<PoolId>,
 			base_asset_amount: SafeRpcWrapper<Balance>,
 			quote_asset_amount: SafeRpcWrapper<Balance>,
