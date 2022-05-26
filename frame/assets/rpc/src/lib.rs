@@ -3,20 +3,23 @@ use codec::Codec;
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::assets::Asset;
 use core::{fmt::Display, str::FromStr};
-use jsonrpc_core::{Error as RpcError, ErrorCode, Result as RpcResult};
-use jsonrpc_derive::rpc;
+use jsonrpsee::{
+	core::{Error as RpcError, RpcResult},
+	proc_macros::rpc,
+	types::{error::CallError, ErrorObject},
+};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use sp_std::{sync::Arc, vec::Vec};
 
-#[rpc]
+#[rpc(client, server)]
 pub trait AssetsApi<BlockHash, AssetId, AccountId, Balance>
 where
 	AssetId: FromStr + Display,
 	Balance: FromStr + Display,
 {
-	#[rpc(name = "assets_balanceOf")]
+	#[method(name = "assets_balanceOf")]
 	fn balance_of(
 		&self,
 		currency: SafeRpcWrapper<AssetId>,
@@ -24,7 +27,7 @@ where
 		at: Option<BlockHash>,
 	) -> RpcResult<SafeRpcWrapper<Balance>>;
 
-	#[rpc(name = "assets_listAssets")]
+	#[method(name = "assets_listAssets")]
 	fn list_assets(&self, at: Option<BlockHash>) -> RpcResult<Vec<Asset>>;
 }
 
@@ -40,7 +43,7 @@ impl<C, M> Assets<C, M> {
 }
 
 impl<C, Block, AssetId, AccountId, Balance>
-	AssetsApi<<Block as BlockT>::Hash, AssetId, AccountId, Balance>
+	AssetsApiServer<<Block as BlockT>::Hash, AssetId, AccountId, Balance>
 	for Assets<C, (Block, AssetId, AccountId, Balance)>
 where
 	Block: BlockT,
@@ -68,11 +71,11 @@ where
 		let runtime_api_result = api.balance_of(&at, asset_id, account_id);
 		// TODO(benluelo): Review what error message & code to use
 		runtime_api_result.map_err(|e| {
-			RpcError {
-				code: ErrorCode::ServerError(9876), // No real reason for this value
-				message: "Something wrong".into(),
-				data: Some(format!("{:?}", e).into()),
-			}
+			RpcError::Call(CallError::Custom(ErrorObject::owned(
+				9876,
+				"Something wrong",
+				Some(format!("{:?}", e)),
+			)))
 		})
 	}
 
@@ -87,11 +90,11 @@ where
 		let runtime_api_result = api.list_assets(&at);
 		// TODO(benluelo): Review what error message & code to use
 		runtime_api_result.map_err(|e| {
-			RpcError {
-				code: ErrorCode::ServerError(9876), // No real reason for this value
-				message: "Something wrong".into(),
-				data: Some(format!("{:?}", e).into()),
-			}
+			RpcError::Call(CallError::Custom(ErrorObject::owned(
+				9876,
+				"Something wrong",
+				Some(format!("{:?}", e)),
+			)))
 		})
 	}
 }

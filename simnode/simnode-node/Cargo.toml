@@ -8,6 +8,6 @@ version = "0.1.0"
 [dependencies]
 common = { package = "simnode-common", path = "../common" }
 node = { package = "composable-node", path = "../../node", features = ["dali"] }
-substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", rev = "a1e52d5ae48282834c89dd61e88e6db47d05108f" }
+substrate-simnode = { git = "https://github.com/polytope-labs/substrate-simnode", rev = "3cbc70755b1f285c15c01747f915fc7a69662119" }
 
-sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19" }
+sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
