@@ -44,21 +44,24 @@ proptest! {
 	#[test]
 	fn no_locks_without_conviction_should_work(
 	  asset_id in valid_asset_id(),
-	  balance1 in valid_amounts_without_overflow_1()) {
+	  balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
+			crate::tests::GovernanceRegistry::grant_root(Origin::root(), asset_id).unwrap();
 			System::set_block_number(0);
-			Tokens::mint_into(asset_id, &1, balance1 / 10).expect("always can mint in test");
+			Tokens::mint_into(asset_id, &1, balance / 10).expect("always can mint in test");
 			let r = Democracy::inject_referendum(
 				2,
-				set_balance_proposal_hash_and_note_2(balance1, asset_id),
+				set_balance_proposal_hash_and_note_2(balance, asset_id),
 				VoteThreshold::SuperMajorityApprove,
 				0,
 			);
-			assert_ok!(Democracy::vote(Origin::signed(1), r, aye(0, balance1 / 10)));
+			assert_ok!(Democracy::vote(Origin::signed(1), r, aye(0, balance / 10)));
 
 			fast_forward_to(2);
 
-			assert_eq!(Balances::free_balance(42), balance1);
+			dbg!("balance {} balance  {}", Balances::free_balance(42), balance);
+
+			assert_eq!(Balances::free_balance(42), balance);
 			assert_ok!(Democracy::remove_other_vote(Origin::signed(2), 1, asset_id, r));
 			assert_ok!(Democracy::unlock(Origin::signed(2), 1, asset_id));
 			assert_eq!(Balances::locks(1), vec![]);
@@ -68,11 +71,11 @@ proptest! {
    #[test]
 	fn prior_lockvotes_should_be_enforced(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
-			Tokens::mint_into(asset_id, &1, balance1 / 10).expect("always can mint in test");
-			Tokens::mint_into(asset_id, &5, balance1 / 10).expect("always can mint in test");
-			let r = setup_three_referenda_2(balance1 / 10,asset_id );
+			Tokens::mint_into(asset_id, &1, balance / 10).expect("always can mint in test");
+			Tokens::mint_into(asset_id, &5, balance / 10).expect("always can mint in test");
+			let r = setup_three_referenda_2(balance / 10,asset_id );
 			// r.0 locked 10 until 2 + 8 * 3 = #26
 			// r.1 locked 20 until 2 + 4 * 3 = #14
 			// r.2 locked 50 until 2 + 2 * 3 = #8
@@ -116,17 +119,17 @@ proptest! {
 	#[test]
 	fn locks_should_persist_from_delegation_to_voting(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
 			System::set_block_number(0);
-			Tokens::mint_into(DEFAULT_ASSET, &1, balance1 / 2).expect("always can mint in test");
-			Tokens::mint_into(DEFAULT_ASSET, &5, balance1 / 2).expect("always can mint in test");
+			Tokens::mint_into(DEFAULT_ASSET, &1, balance / 2).expect("always can mint in test");
+			Tokens::mint_into(DEFAULT_ASSET, &5, balance / 2).expect("always can mint in test");
 			assert_ok!(Democracy::delegate(
 				Origin::signed(5),
 				1,
 				DEFAULT_ASSET,
 				Conviction::Locked5x,
-				balance1 / 10
+				balance / 10
 			));
 			assert_ok!(Democracy::undelegate(Origin::signed(5), DEFAULT_ASSET));
 			// locked 5 until 16 * 3 = #48
@@ -161,14 +164,14 @@ proptest! {
 	#[test]
 	fn locks_should_persist_from_voting_to_delegation(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
-			Balances::mint_into(&5, balance1 / 10).expect("always can mint in test");
-			Tokens::mint_into(asset_id, &5, balance1 ).expect("always can mint in test");
+			Balances::mint_into(&5, balance / 10).expect("always can mint in test");
+			Tokens::mint_into(asset_id, &5, balance ).expect("always can mint in test");
 			System::set_block_number(0);
 			let r = Democracy::inject_referendum(
 				2,
-				set_balance_proposal_hash_and_note_2(balance1, asset_id),
+				set_balance_proposal_hash_and_note_2(balance, asset_id),
 				VoteThreshold::SimpleMajority,
 				0,
 			);
@@ -182,17 +185,17 @@ proptest! {
 				1,
 				asset_id,
 				Conviction::Locked3x,
-				balance1
+				balance
 			));
 			// locked 20.
-			assert_eq!(Tokens::locks(&5, asset_id)[0].amount, balance1 );
+			assert_eq!(Tokens::locks(&5, asset_id)[0].amount, balance );
 
 			assert_ok!(Democracy::undelegate(Origin::signed(5), asset_id));
 			// locked 20 until #14
 
 			fast_forward_to(13);
 			assert_ok!(Democracy::unlock(Origin::signed(5), 5, asset_id));
-			assert_eq!(Tokens::locks(&5, asset_id)[0].amount, balance1);
+			assert_eq!(Tokens::locks(&5, asset_id)[0].amount, balance);
 
 			fast_forward_to(14);
 			assert_ok!(Democracy::unlock(Origin::signed(5), 5, asset_id));
@@ -211,11 +214,11 @@ proptest! {
 	#[test]
 	fn multi_consolidation_of_lockvotes_should_be_conservative(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
-			Balances::mint_into(&5, balance1 / 10).expect("always can mint in test");
-			Tokens::mint_into(asset_id, &5, balance1 ).expect("always can mint in test");
-			let r = setup_three_referenda_2(balance1, asset_id);
+			Balances::mint_into(&5, balance / 10).expect("always can mint in test");
+			Tokens::mint_into(asset_id, &5, balance ).expect("always can mint in test");
+			let r = setup_three_referenda_2(balance, asset_id);
 			// r.0 locked 10 until 2 + 8 * 3 = #26
 			// r.1 locked 20 until 2 + 4 * 3 = #14
 			// r.2 locked 50 until 2 + 2 * 3 = #8
@@ -242,11 +245,11 @@ proptest! {
 	#[test]
 	fn single_consolidation_of_lockvotes_should_work_as_before(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
-			Balances::mint_into(&5, balance1 / 10).expect("always can mint in test");
-			Tokens::mint_into(asset_id, &5, balance1 ).expect("always can mint in test");
-			let r = setup_three_referenda_2(balance1, asset_id);
+			Balances::mint_into(&5, balance / 10).expect("always can mint in test");
+			Tokens::mint_into(asset_id, &5, balance ).expect("always can mint in test");
+			let r = setup_three_referenda_2(balance, asset_id);
 			// r.0 locked 10 until 2 + 8 * 3 = #26
 			// r.1 locked 20 until 2 + 4 * 3 = #14
 			// r.2 locked 50 until 2 + 2 * 3 = #8
@@ -281,6 +284,7 @@ proptest! {
 #[test]
 fn lock_voting_should_work_with_delegation() {
 	new_test_ext().execute_with(|| {
+		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		let r = Democracy::inject_referendum(
 			2,
 			set_balance_proposal_hash_and_note(2),
@@ -311,6 +315,7 @@ fn lock_voting_should_work_with_delegation() {
 #[test]
 fn lock_voting_should_work() {
 	new_test_ext().execute_with(|| {
+		crate::tests::GovernanceRegistry::grant_root(Origin::root(), DEFAULT_ASSET).unwrap();
 		System::set_block_number(0);
 		let r = Democracy::inject_referendum(
 			2,

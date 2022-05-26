@@ -115,23 +115,23 @@ proptest! {
 	#[test]
 	fn blacklisting_should_work(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
 			System::set_block_number(0);
-			let hash = set_balance_proposal_hash( balance1 / 4);
-			Balances::mint_into(&DARWIN, balance1 / 2).expect("always can mint in test");
-			assert_ok!(propose_set_balance_and_note_2(DARWIN, asset_id, balance1 / 4, balance1 / 4));
-			assert_ok!(propose_set_balance_and_note_2(DARWIN, asset_id, balance1 / 5, balance1 / 5));
+			let hash = set_balance_proposal_hash( balance / 4);
+			Balances::mint_into(&DARWIN, balance / 2).expect("always can mint in test");
+			assert_ok!(propose_set_balance_and_note_2(DARWIN, asset_id, balance / 4, balance / 4));
+			assert_ok!(propose_set_balance_and_note_2(DARWIN, asset_id, balance / 5, balance / 5));
 			assert_noop!(
 				Democracy::blacklist(Origin::signed(DARWIN), hash.clone(), asset_id, None),
 				BadOrigin
 			);
 			assert_ok!(Democracy::blacklist(Origin::root(), hash, asset_id, None));
 			assert_eq!(Democracy::backing_for(0), None);
-			assert_eq!(Democracy::backing_for(1), Some(balance1 / 5));
-			assert_noop!(propose_set_balance_and_note_2(DARWIN, asset_id, balance1 / 4, balance1 / 4), Error::<Test>::ProposalBlacklisted);
+			assert_eq!(Democracy::backing_for(1), Some(balance / 5));
+			assert_noop!(propose_set_balance_and_note_2(DARWIN, asset_id, balance / 4, balance / 4), Error::<Test>::ProposalBlacklisted);
 			fast_forward_to(2);
-			let hash = set_balance_proposal_hash(balance1 / 5);
+			let hash = set_balance_proposal_hash(balance / 5);
 			assert_ok!(Democracy::referendum_status(0));
 			assert_ok!(Democracy::blacklist(Origin::root(), hash, asset_id, Some(0)));
 			assert_noop!(Democracy::referendum_status(0), Error::<Test>::ReferendumInvalid);
@@ -141,14 +141,14 @@ proptest! {
 	#[test]
 	fn runners_up_should_come_after(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
 			System::set_block_number(0);
-			Balances::mint_into(&BOB, balance1 / 2).expect("always can mint in test");
-			Tokens::mint_into(asset_id, &BOB, balance1).expect("always can mint in test");
-			assert_ok!(propose_set_balance_and_note_2(BOB,asset_id, balance1 / 10, balance1 / 10));
-			assert_ok!(propose_set_balance_and_note_2(BOB,asset_id, balance1 / 15, balance1/ 15));
-			assert_ok!(propose_set_balance_and_note_2(BOB,asset_id, balance1 / 30, balance1 / 30));
+			Balances::mint_into(&BOB, balance / 2).expect("always can mint in test");
+			Tokens::mint_into(asset_id, &BOB, balance).expect("always can mint in test");
+			assert_ok!(propose_set_balance_and_note_2(BOB,asset_id, balance / 10, balance / 10));
+			assert_ok!(propose_set_balance_and_note_2(BOB,asset_id, balance / 15, balance/ 15));
+			assert_ok!(propose_set_balance_and_note_2(BOB,asset_id, balance / 30, balance / 30));
 			fast_forward_to(2);
 			assert_ok!(Democracy::vote(Origin::signed(BOB), 0, aye(BOB)));
 			fast_forward_to(4);
@@ -161,16 +161,16 @@ proptest! {
 	#[test]
 	fn cancel_proposal_should_work(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
 			System::set_block_number(0);
-			Balances::mint_into(&BOB, balance1 / 2).expect("always can mint in test");
-			assert_ok!(propose_set_balance_and_note_2(BOB,asset_id, balance1 / 10, balance1 / 10));
-			assert_ok!(propose_set_balance_and_note_2(BOB,asset_id, balance1 / 15, balance1/ 15));
+			Balances::mint_into(&BOB, balance / 2).expect("always can mint in test");
+			assert_ok!(propose_set_balance_and_note_2(BOB,asset_id, balance / 10, balance / 10));
+			assert_ok!(propose_set_balance_and_note_2(BOB,asset_id, balance / 15, balance/ 15));
 			assert_noop!(Democracy::cancel_proposal(Origin::signed(1), 0), BadOrigin);
 			assert_ok!(Democracy::cancel_proposal(Origin::root(), 0));
 			assert_eq!(Democracy::backing_for(0), None);
-			assert_eq!(Democracy::backing_for(1), Some(balance1 / 15));
+			assert_eq!(Democracy::backing_for(1), Some(balance / 15));
 		});
 	}
 

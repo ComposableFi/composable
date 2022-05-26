@@ -27,12 +27,12 @@ proptest! {
 	#[test]
 	fn missing_preimage_should_fail(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
-			Tokens::mint_into(asset_id, &BOB, balance1 / 2).expect("always can mint in test");
+			Tokens::mint_into(asset_id, &BOB, balance / 2).expect("always can mint in test");
 			let r = Democracy::inject_referendum(
 				2,
-				set_balance_proposal_id_2(asset_id, balance1),
+				set_balance_proposal_id_2(asset_id, balance),
 				VoteThreshold::SuperMajorityApprove,
 				0,
 			);
@@ -48,10 +48,11 @@ proptest! {
 	#[test]
 	fn preimage_deposit_should_be_required_and_returned(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext_execute_with_cond(|operational| {
-			Balances::mint_into(&BOB, balance1 / 100).expect("always can mint in test");
-			Tokens::mint_into(asset_id, &BOB, balance1 / 2).expect("always can mint in test");
+			crate::tests::GovernanceRegistry::grant_root(Origin::root(), asset_id).unwrap();
+			Balances::mint_into(&BOB, balance / 100).expect("always can mint in test");
+			Tokens::mint_into(asset_id, &BOB, balance / 2).expect("always can mint in test");
 			// fee of 100 is too much.
 			PREIMAGE_BYTE_DEPOSIT.with(|v| *v.borrow_mut() = 100);
 			assert_noop!(
@@ -64,12 +65,12 @@ proptest! {
 			);
 			// fee of 1 is reasonable.
 			PREIMAGE_BYTE_DEPOSIT.with(|v| *v.borrow_mut() = 1);
-			let p = set_balance_proposal(balance1);
+			let p = set_balance_proposal(balance);
 
 			let r = Democracy::inject_referendum(
 				2,
 				//set_balance_proposal_hash_and_note(2),
-				set_balance_proposal_hash_and_note_3(balance1, asset_id, p.clone()),
+				set_balance_proposal_hash_and_note_3(balance, asset_id, p.clone()),
 				VoteThreshold::SuperMajorityApprove,
 				0,
 			);
@@ -85,17 +86,17 @@ proptest! {
 
 			assert_eq!(Balances::reserved_balance(6), 0);
 			assert_eq!(Balances::free_balance(6), 60);
-			assert_eq!(Balances::free_balance(42), balance1);
+			assert_eq!(Balances::free_balance(42), balance);
 		});
 	}
 
 	#[test]
 	fn preimage_deposit_should_be_reapable_earlier_by_owner(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext_execute_with_cond(|operational| {
 			PREIMAGE_BYTE_DEPOSIT.with(|v| *v.borrow_mut() = 1);
-			let encoded_proposal = set_balance_proposal(balance1);
+			let encoded_proposal = set_balance_proposal(balance);
 			assert_ok!(if operational {
 				Democracy::note_preimage_operational(
 					Origin::signed(6),
@@ -103,7 +104,7 @@ proptest! {
 					asset_id,
 				)
 			} else {
-				Democracy::note_preimage(Origin::signed(6), set_balance_proposal(balance1), asset_id)
+				Democracy::note_preimage(Origin::signed(6), set_balance_proposal(balance), asset_id)
 			});
 
 			let deposit = Balance::from(encoded_proposal.len() as u32)
@@ -115,7 +116,7 @@ proptest! {
 			assert_noop!(
 				Democracy::reap_preimage(
 					Origin::signed(6),
-					set_balance_proposal_hash(balance1),
+					set_balance_proposal_hash(balance),
 					asset_id,
 					u32::MAX
 				),
@@ -124,7 +125,7 @@ proptest! {
 			next_block();
 			assert_ok!(Democracy::reap_preimage(
 				Origin::signed(6),
-				set_balance_proposal_hash(balance1),
+				set_balance_proposal_hash(balance),
 				asset_id,
 				u32::MAX
 			));
@@ -137,12 +138,12 @@ proptest! {
 	#[test]
 	fn preimage_deposit_should_be_reapable(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext_execute_with_cond(|operational| {
 			assert_noop!(
 				Democracy::reap_preimage(
 					Origin::signed(5),
-					set_balance_proposal_hash(balance1),
+					set_balance_proposal_hash(balance),
 					asset_id,
 					u32::MAX
 				),
@@ -150,7 +151,7 @@ proptest! {
 			);
 
 			PREIMAGE_BYTE_DEPOSIT.with(|v| *v.borrow_mut() = 1);
-			let encoded_proposal = set_balance_proposal(balance1);
+			let encoded_proposal = set_balance_proposal(balance);
 
 			let free_balance6 = Balances::free_balance(6);
 			let free_balance5 = Balances::free_balance(5);
@@ -176,7 +177,7 @@ proptest! {
 			assert_noop!(
 				Democracy::reap_preimage(
 					Origin::signed(5),
-					set_balance_proposal_hash(balance1),
+					set_balance_proposal_hash(balance),
 					asset_id,
 					u32::MAX
 				),
@@ -186,7 +187,7 @@ proptest! {
 			next_block();
 			assert_ok!(Democracy::reap_preimage(
 				Origin::signed(5),
-				set_balance_proposal_hash(balance1),
+				set_balance_proposal_hash(balance),
 				asset_id,
 				u32::MAX
 			));
@@ -199,14 +200,15 @@ proptest! {
 	#[test]
 	fn noting_imminent_preimage_for_free_should_work(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext_execute_with_cond(|operational| {
-			Tokens::mint_into(asset_id, &BOB, balance1 / 2).expect("always can mint in test");
+			crate::tests::GovernanceRegistry::grant_root(Origin::root(), asset_id).unwrap();
+			Tokens::mint_into(asset_id, &BOB, balance / 2).expect("always can mint in test");
 			PREIMAGE_BYTE_DEPOSIT.with(|v| *v.borrow_mut() = 1);
 
 			let r = Democracy::inject_referendum(
 				2,
-				set_balance_proposal_id_2(asset_id, balance1),
+				set_balance_proposal_id_2(asset_id, balance),
 				VoteThreshold::SuperMajorityApprove,
 				1,
 			);
@@ -216,13 +218,13 @@ proptest! {
 				if operational {
 					Democracy::note_imminent_preimage_operational(
 						Origin::signed(6),
-						set_balance_proposal(balance1),
+						set_balance_proposal(balance),
 						asset_id,
 					)
 				} else {
 					Democracy::note_imminent_preimage(
 						Origin::signed(6),
-						set_balance_proposal(balance1),
+						set_balance_proposal(balance),
 						asset_id,
 					)
 				},
@@ -234,27 +236,27 @@ proptest! {
 			// Now we're in the dispatch queue it's all good.
 			assert_ok!(Democracy::note_imminent_preimage(
 				Origin::signed(6),
-				set_balance_proposal(balance1),
+				set_balance_proposal(balance),
 				asset_id
 			));
 
 			next_block();
 
-			assert_eq!(Balances::free_balance(42), balance1);
+			assert_eq!(Balances::free_balance(42), balance);
 		});
 	}
 
 	#[test]
 	fn note_imminent_preimage_can_only_be_successful_once(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
-			Tokens::mint_into(asset_id, &BOB, balance1 / 2).expect("always can mint in test");
+			Tokens::mint_into(asset_id, &BOB, balance / 2).expect("always can mint in test");
 			PREIMAGE_BYTE_DEPOSIT.with(|v| *v.borrow_mut() = 1);
 
 			let r = Democracy::inject_referendum(
 				2,
-				set_balance_proposal_id_2(asset_id, balance1),
+				set_balance_proposal_id_2(asset_id, balance),
 				VoteThreshold::SuperMajorityApprove,
 				1,
 			);
@@ -264,7 +266,7 @@ proptest! {
 			// First time works
 			assert_ok!(Democracy::note_imminent_preimage(
 				Origin::signed(6),
-				set_balance_proposal(balance1),
+				set_balance_proposal(balance),
 				asset_id
 			));
 
@@ -272,7 +274,7 @@ proptest! {
 			assert_noop!(
 				Democracy::note_imminent_preimage(
 					Origin::signed(6),
-					set_balance_proposal(balance1),
+					set_balance_proposal(balance),
 					asset_id
 				),
 				Error::<Test>::DuplicatePreimage
@@ -282,7 +284,7 @@ proptest! {
 			assert_noop!(
 				Democracy::note_imminent_preimage(
 					Origin::signed(5),
-					set_balance_proposal(balance1),
+					set_balance_proposal(balance),
 					asset_id
 				),
 				Error::<Test>::DuplicatePreimage
@@ -293,11 +295,11 @@ proptest! {
 	#[test]
 	fn reaping_imminent_preimage_should_fail(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
-			Tokens::mint_into(asset_id, &BOB, balance1 / 2).expect("always can mint in test");
-			let encoded_proposal = set_balance_proposal(balance1);
-			let h = set_balance_proposal_hash_and_note_3(balance1, asset_id,encoded_proposal );
+			Tokens::mint_into(asset_id, &BOB, balance / 2).expect("always can mint in test");
+			let encoded_proposal = set_balance_proposal(balance);
+			let h = set_balance_proposal_hash_and_note_3(balance, asset_id,encoded_proposal );
 			let r = Democracy::inject_referendum(3, h, VoteThreshold::SuperMajorityApprove, 1);
 			assert_ok!(Democracy::vote(Origin::signed(1), r, aye(1)));
 			next_block();
@@ -305,7 +307,7 @@ proptest! {
 			assert_noop!(
 				Democracy::reap_preimage(
 					Origin::signed(6),
-					set_balance_proposal_hash(balance1),
+					set_balance_proposal_hash(balance),
 					asset_id,
 					u32::MAX
 				),

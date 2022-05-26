@@ -26,12 +26,13 @@ proptest! {
 	#[test]
 	fn simple_passing_should_work(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
-			Tokens::mint_into(asset_id, &BOB, balance1 / 2).expect("always can mint in test");
+			crate::tests::GovernanceRegistry::grant_root(Origin::root(), asset_id).unwrap();
+			Tokens::mint_into(asset_id, &BOB, balance / 2).expect("always can mint in test");
 			let r = Democracy::inject_referendum(
 				2,
-				set_balance_proposal_hash_and_note_2( balance1, asset_id),
+				set_balance_proposal_hash_and_note_2( balance, asset_id),
 				VoteThreshold::SuperMajorityApprove,
 				0,
 			);
@@ -41,19 +42,19 @@ proptest! {
 			next_block();
 			next_block();
 			assert_eq!(Democracy::lowest_unbaked(), 1);
-			assert_eq!(Balances::free_balance(42), balance1);
+			assert_eq!(Balances::free_balance(42), balance);
 		});
 	}
 
 	#[test]
 	fn simple_failing_should_work(
 		asset_id in valid_asset_id(),
-		balance1 in valid_amounts_without_overflow_1()) {
+		balance in valid_amounts_without_overflow_1()) {
 		new_test_ext().execute_with(|| {
-			Tokens::mint_into(asset_id, &BOB, balance1 / 2).expect("always can mint in test");
+			Tokens::mint_into(asset_id, &BOB, balance / 2).expect("always can mint in test");
 			let r = Democracy::inject_referendum(
 				2,
-				set_balance_proposal_hash_and_note_2(balance1, asset_id),
+				set_balance_proposal_hash_and_note_2(balance, asset_id),
 				VoteThreshold::SuperMajorityApprove,
 				0,
 			);
@@ -72,6 +73,7 @@ proptest! {
 		asset_id in valid_asset_id(),
 		(balance1, balance2) in valid_amounts_without_overflow_2()) {
 		new_test_ext().execute_with(|| {
+			crate::tests::GovernanceRegistry::grant_root(Origin::root(), asset_id).unwrap();
 			Tokens::mint_into(asset_id, &BOB, balance1 / 2).expect("always can mint in test");
 			let r1 = Democracy::inject_referendum(
 				3,
@@ -105,6 +107,7 @@ proptest! {
 		asset_id in valid_asset_id(),
 		(balance1, balance2) in valid_amounts_without_overflow_2()) {
 		new_test_ext().execute_with(|| {
+			crate::tests::GovernanceRegistry::grant_root(Origin::root(), asset_id).unwrap();
 			Tokens::mint_into(asset_id, &1, balance1 / 10).expect("always can mint in test");
 			Tokens::mint_into(asset_id, &2, balance1 / 10).expect("always can mint in test");
 			Tokens::mint_into(asset_id, &3, balance1 / 10).expect("always can mint in test");
@@ -138,6 +141,7 @@ proptest! {
 		asset_id in valid_asset_id(),
 		(balance1, balance2, balance3) in valid_amounts_without_overflow_3()) {
 		new_test_ext().execute_with(|| {
+			crate::tests::GovernanceRegistry::grant_root(Origin::root(), asset_id).unwrap();
 			Tokens::mint_into(asset_id, &BOB, balance1).expect("always can mint in test");
 			let r1 = Democracy::inject_referendum(
 				3,

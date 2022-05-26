@@ -89,6 +89,7 @@ frame_support::construct_runtime!(
 		Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>},
 		Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>},
 		Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>},
+		GovernanceRegistry: pallet_governance_registry::{Pallet, Call, Storage, Event<T>}
 	}
 );
 
@@ -262,6 +263,13 @@ impl Config for Test {
 	type Slash = ();
 	type WeightInfo = ();
 	type MaxProposals = MaxProposals;
+	type GovernanceRegistry = GovernanceRegistry;
+}
+
+impl pallet_governance_registry::Config for Test {
+	type AssetId = AssetId;
+	type WeightInfo = ();
+	type Event = Event;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
