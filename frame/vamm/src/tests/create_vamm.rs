@@ -27,7 +27,7 @@ proptest! {
 					quote_asset_reserves,
 					peg_multiplier,
 					invariant,
-					closed: Default::default(),
+					..Default::default()
 			};
 
 			let vamm_created_ok = TestPallet::create(

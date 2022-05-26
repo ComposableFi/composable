@@ -35,8 +35,8 @@ proptest! {
 					 base_asset_reserves,
 					 quote_asset_reserves,
 					 peg_multiplier,
-					 invariant: Default::default(),
-					 closed: None})]
+					 ..Default::default()
+				 })]
 		}.build().execute_with(|| {
 			let quote_peg = quote_asset_reserves_decimal.checked_mul(&peg_multiplier_decimal);
 
@@ -78,8 +78,8 @@ proptest! {
 					 base_asset_reserves,
 					 quote_asset_reserves,
 					 peg_multiplier,
-					 invariant: Default::default(),
-					 closed: None})]
+					 ..Default::default()
+				 })]
 		}.build().execute_with(|| {
 			let base_peg = base_asset_reserves_decimal.checked_mul(&peg_multiplier_decimal);
 

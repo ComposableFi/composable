@@ -175,6 +175,7 @@ proptest! {
 						move_price_config.quote_asset_reserves
 					).unwrap(),
 					closed: vamm_state.closed,
+					..Default::default()
 				}
 			);
 		})
