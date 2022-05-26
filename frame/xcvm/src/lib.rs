@@ -58,25 +58,28 @@ pub mod pallet {
 	pub(crate) type BridgeTxIdOf<T> = <BridgeOf<T> as TransferTo>::TxId;
 	pub(crate) type NetworkIdOf<T> = <BridgeOf<T> as TransferTo>::NetworkId;
 	pub(crate) type AddressOf<T> = <BridgeOf<T> as TransferTo>::Address;
-	pub(crate) type XCVMInstructionOf<T> =
-		XCVMInstruction<XCVMNetwork, AbiEncoded, AccountIdOf<T>, XCVMTransfer>;
-	pub(crate) type XCVMProgramOf<T> = XCVMProgram<XCVMInstructionOf<T>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		Execute { program: XCVMProgramOf<T> },
-		Spawn { network: XCVMNetwork, network_txs: Vec<BridgeTxIdOf<T>>, program: Vec<u8> },
+		Executed {
+			program: XCVMProgram<XCVMInstruction<XCVMNetwork, AbiEncoded, Vec<u8>, XCVMTransfer>>,
+		},
+		Spawn {
+			network: XCVMNetwork,
+			network_txs: Vec<BridgeTxIdOf<T>>,
+			program: Vec<u8>,
+		},
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
 		InvalidProgramEncoding,
 		UnknownAsset,
+		MalformedAccount,
 		InvalidCallEncoding,
 		CallFailed,
 		UnknownNetwork,
-		MissingNetworkSatellite,
 	}
 
 	#[pallet::config]
@@ -107,14 +110,9 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
-	#[pallet::getter(fn satellite_address)]
-	pub type SatelliteAddress<T: Config> =
-		StorageMap<_, Blake2_128Concat, XCVMNetwork, AddressOf<T>>;
-
-	#[pallet::storage]
-	#[pallet::getter(fn network_mapping)]
-	pub type NetworkMapping<T: Config> =
-		StorageMap<_, Blake2_128Concat, XCVMNetwork, NetworkIdOf<T>>;
+	#[pallet::getter(fn satellite)]
+	pub type Satellite<T: Config> =
+		StorageMap<_, Blake2_128Concat, XCVMNetwork, (NetworkIdOf<T>, AddressOf<T>)>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T>
@@ -125,21 +123,10 @@ pub mod pallet {
 		pub fn set_satellite(
 			origin: OriginFor<T>,
 			network: XCVMNetwork,
-			address: AddressOf<T>,
+			satellite: (NetworkIdOf<T>, AddressOf<T>),
 		) -> DispatchResultWithPostInfo {
 			let _ = T::ControlOrigin::ensure_origin(origin)?;
-			SatelliteAddress::<T>::insert(network, address);
-			Ok(().into())
-		}
-
-		#[pallet::weight(10_000)]
-		pub fn set_network(
-			origin: OriginFor<T>,
-			network: XCVMNetwork,
-			network_id: NetworkIdOf<T>,
-		) -> DispatchResultWithPostInfo {
-			let _ = T::ControlOrigin::ensure_origin(origin)?;
-			NetworkMapping::<T>::insert(network, network_id);
+			Satellite::<T>::insert(network, satellite);
 			Ok(().into())
 		}
 
@@ -153,16 +140,18 @@ pub mod pallet {
 			let mut program = xcvm_protobuf::decode::<
 				XCVMNetwork,
 				<XCVMNetwork as Callable>::EncodedCall,
-				AccountIdOf<T>,
+				Vec<u8>,
 				XCVMTransfer,
 			>(program.as_ref())
 			.map_err(|_| Error::<T>::InvalidProgramEncoding)?;
 
-			Self::deposit_event(Event::<T>::Execute { program: program.clone() });
+			let program_copy = program.clone();
 
 			while let Some(instruction) = program.instructions.pop_front() {
 				match instruction {
 					XCVMInstruction::Transfer(to, XCVMTransfer { assets }) => {
+						let to = AccountIdOf::<T>::try_from(&to[..])
+							.map_err(|_| Error::<T>::MalformedAccount)?;
 						for (asset, amount) in assets {
 							let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
 								.map_err(|_| Error::<T>::UnknownAsset)?;
@@ -187,10 +176,8 @@ pub mod pallet {
 						program.instructions = child_program;
 					},
 					XCVMInstruction::Spawn(network, XCVMTransfer { assets }, child_program) => {
-						let bridge_network_id =
-							NetworkMapping::<T>::get(network).ok_or(Error::<T>::UnknownNetwork)?;
-						let network_satellite = SatelliteAddress::<T>::get(network)
-							.ok_or(Error::<T>::MissingNetworkSatellite)?;
+						let (bridge_network_id, network_satellite) =
+							Satellite::<T>::get(network).ok_or(Error::<T>::UnknownNetwork)?;
 						let now = frame_system::Pallet::<T>::block_number();
 						let network_txs = assets
 							.into_iter()
@@ -218,6 +205,8 @@ pub mod pallet {
 					},
 				}
 			}
+
+			Self::deposit_event(Event::<T>::Executed { program: program_copy });
 
 			Ok(().into())
 		}

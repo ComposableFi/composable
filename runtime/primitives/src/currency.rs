@@ -4,6 +4,7 @@ use composable_traits::currency::Exponent;
 use core::{fmt::Display, ops::Div, str::FromStr};
 use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
+use xcvm_core::XCVMAsset;
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -74,6 +75,10 @@ impl CurrencyId {
 	#[allow(non_upper_case_globals)]
 	pub const kUSD: CurrencyId = CurrencyId(129);
 
+	pub const ETH: CurrencyId = CurrencyId(130);
+	pub const USDT: CurrencyId = CurrencyId(131);
+	pub const USDC: CurrencyId = CurrencyId(132);
+
 	#[inline(always)]
 	pub const fn decimals() -> Exponent {
 		12
@@ -113,6 +118,19 @@ impl From<u128> for CurrencyId {
 	#[inline]
 	fn from(raw: u128) -> Self {
 		CurrencyId(raw)
+	}
+}
+
+impl TryFrom<XCVMAsset> for CurrencyId {
+	type Error = ();
+	fn try_from(value: XCVMAsset) -> Result<Self, Self::Error> {
+		match value {
+			XCVMAsset::PICA => Ok(CurrencyId::PICA),
+			XCVMAsset::ETH => Ok(CurrencyId::ETH),
+			XCVMAsset::USDT => Ok(CurrencyId::USDT),
+			XCVMAsset::USDC => Ok(CurrencyId::USDC),
+			_ => Err(()),
+		}
 	}
 }
 

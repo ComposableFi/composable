@@ -87,6 +87,7 @@ pablo = { package = "pallet-pablo", path = "../../frame/pablo", default-features
 primitives = { path = "../primitives", default-features = false }
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
+xcvm = { package = "pallet-xcvm", path = "../../frame/xcvm", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.18" }
@@ -139,6 +140,8 @@ simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/pol
 # Cosmwasm addresses conversions
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
 
+# XCVM
+xcvm-core = { path = "../../lib/xcvm/core/", default-features = false }
 
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
@@ -176,6 +179,7 @@ runtime-benchmarks = [
   "utility/runtime-benchmarks",
   "vault/runtime-benchmarks",
   "vesting/runtime-benchmarks",
+  "xcvm/runtime-benchmarks",
   "assets/runtime-benchmarks",
   "bonded-finance/runtime-benchmarks",
   "dutch-auction/runtime-benchmarks",
@@ -253,6 +257,7 @@ std = [
   "dutch-auction/std",
   "lending/std",
   "vesting/std",
+  "xcvm/std",
   "mosaic/std",
   "preimage/std",
   "membership/std",

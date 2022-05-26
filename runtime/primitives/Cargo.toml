@@ -21,6 +21,8 @@ serde = { version = '1.0.136', optional = true, features = ['derive'] }
 sp-runtime = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.18" }
 xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, optional = true, branch = "release-v0.9.18" }
 
+xcvm-core = { path = "../../lib/xcvm/core" }
+
 
 [features]
 default = ["std"]

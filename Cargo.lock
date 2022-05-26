@@ -2705,6 +2705,7 @@ dependencies = [
  "pallet-vault",
  "pallet-vesting 0.0.1",
  "pallet-xcm",
+ "pallet-xcvm",
  "parachain-info",
  "parity-scale-codec",
  "polkadot-parachain",
@@ -2727,6 +2728,7 @@ dependencies = [
  "xcm",
  "xcm-builder",
  "xcm-executor",
+ "xcvm-core",
 ]
 
 [[package]]
@@ -10398,6 +10400,7 @@ dependencies = [
  "serde",
  "sp-runtime",
  "xcm",
+ "xcvm-core",
 ]
 
 [[package]]
@@ -10554,9 +10557,9 @@ dependencies = [
 
 [[package]]
 name = "prost-build"
-version = "0.10.3"
+version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "65a1118354442de7feb8a2a76f3d80ef01426bd45542c8c1fdffca41a758f846"
+checksum = "8ae5a4388762d5815a9fc0dea33c56b021cdc8dde0c55e0c9ca57197254b0cab"
 dependencies = [
  "bytes 1.1.0",
  "cfg-if 1.0.0",
@@ -16124,8 +16127,9 @@ dependencies = [
 name = "xcvm-protobuf"
 version = "0.1.0"
 dependencies = [
+ "hex",
  "prost 0.10.3",
- "prost-build 0.10.3",
+ "prost-build 0.10.4",
  "xcvm-core",
 ]
 

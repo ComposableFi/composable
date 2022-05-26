@@ -1048,13 +1048,6 @@ parameter_types! {
 		)) / 5) as u32;
 	pub Schedule: contracts::Schedule<Runtime> = {
 		let mut schedule = contracts::Schedule::<Runtime>::default();
-		// We decided to **temporarily* increase the default allowed contract size here
-		// (the default is `128 * 1024`).
-		//
-		// Our reasoning is that a number of people ran into `CodeTooLarge` when trying
-		// to deploy their contracts. We are currently introducing a number of optimizations
-		// into ink! which should bring the contract sizes lower. In the meantime we don't
-		// want to pose additional friction on developers.
 		schedule.limits.code_len = 512 * 1024;
 		schedule
 	};
@@ -1064,6 +1057,7 @@ use alloc::{format, string::String};
 use core::str::FromStr;
 extern crate alloc;
 
+// TODO: SS58 better than hex for users I guess
 pub struct CosmwasmAccount;
 impl Convert<String, Result<AccountId, ()>> for CosmwasmAccount {
 	fn convert(a: String) -> Result<AccountId, ()> {
@@ -1127,6 +1121,21 @@ impl contracts::Config for Runtime {
 	type ConvertAsset = CosmwasmCoin;
 }
 
+parameter_types! {
+	pub const MaxProgramSize: u32 = 1024;
+}
+
+impl xcvm::Config for Runtime {
+	type Event = Event;
+	type Dispatchable = Call;
+	type AssetId = CurrencyId;
+	type Assets = Assets;
+	type Balance = Balance;
+	type MaxProgramSize = MaxProgramSize;
+	type Bridge = Mosaic;
+	type ControlOrigin = EnsureRootOrHalfCouncil;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1188,6 +1197,7 @@ construct_runtime!(
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
 	  Cosmwasm: contracts::{Pallet, Call, Storage, Event<T>} = 67,
+	XCVM: xcvm::{Pallet, Call, Storage, Event<T>} = 68,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}

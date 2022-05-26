@@ -270,4 +270,41 @@ mod tests {
       hex::encode(encode(program))
     );
 	}
+
+	#[test]
+	fn test_cross_chain_program() {
+		// Transfer to Alice/Bob and redispatch
+		let program = || -> Result<_, ()> {
+			Ok(XCVMProgramBuilder::<
+				XCVMNetwork,
+				XCVMInstruction<XCVMNetwork, _, Vec<u8>, BTreeMap<u32, u128>>,
+			>::from(XCVMNetwork::PICASSO)
+			.transfer(
+				hex::decode("d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d")
+					.expect("valid"),
+				BTreeMap::from([(XCVMAsset::PICA.into(), 1337000000000000)]),
+			)
+			.transfer(
+				hex::decode("8eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a48")
+					.expect("valid"),
+				BTreeMap::from([(XCVMAsset::PICA.into(), 1336000000000000)]),
+			)
+			.spawn::<_, ()>(
+				XCVMNetwork::ETHEREUM,
+				BTreeMap::from([(XCVMAsset::PICA.into(), 1000000000000)]),
+				|child| {
+					Ok(child.transfer(
+						vec![1u8; 20],
+						BTreeMap::from([(XCVMAsset::PICA.into(), 1000000000000)]),
+					))
+				},
+			)?
+			.build())
+		}()
+		.expect("valid program");
+		assert_eq!(
+      "0ad2010a3e0a3c0a221220d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d1216080112120a1000901092febf040000000000000000000a3e0a3c0a2212208eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a481216080112120a1000806bbd15bf040000000000000000000a50224e08021216080112120a100010a5d4e800000000000000000000001a320a300a16121401010101010101010101010101010101010101011216080112120a100010a5d4e80000000000000000000000",
+      hex::encode(encode(program))
+    );
+	}
 }
