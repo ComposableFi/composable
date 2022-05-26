@@ -53,6 +53,7 @@ indices = {package = "pallet-indices", git = "https://github.com/paritytech/subs
 membership = {package = "pallet-membership", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.19"}
 orml-tokens = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "238828ac2bafe498a2a071317639e9404d6f6994", default-features = false}
 orml-traits = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "238828ac2bafe498a2a071317639e9404d6f6994", default-features = false}
+pablo-runtime-api = {path = '../../frame/pablo/runtime-api', default-features = false}
 preimage = {package = "pallet-preimage", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.19"}
 randomness-collective-flip = {package = "pallet-randomness-collective-flip", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.19"}
 scheduler = {package = "pallet-scheduler", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.19"}
@@ -63,7 +64,6 @@ timestamp = {package = "pallet-timestamp", git = "https://github.com/paritytech/
 transaction-payment = {package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.19"}
 treasury = {package = "pallet-treasury", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.19"}
 utility = {package = "pallet-utility", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.19"}
-
 # local modules
 assets = {package = "pallet-assets", path = '../../frame/assets', default-features = false}
 assets-registry = {package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false, optional = true}
@@ -84,8 +84,6 @@ transaction-payment-rpc-runtime-api = {package = "pallet-transaction-payment-rpc
 # local RPCs
 assets-runtime-api = {path = '../../frame/assets/runtime-api', default-features = false}
 crowdloan-rewards-runtime-api = {path = '../../frame/crowdloan-rewards/runtime-api', default-features = false}
-pablo-runtime-api = {path = '../../frame/pablo/runtime-api', default-features = false}
-
 # Used for runtime benchmarking
 codec = {package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
   "derive",

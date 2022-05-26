@@ -149,20 +149,8 @@
 //! - `cancel_queued` - Cancels a proposal that is queued for enactment.
 //! - `clear_public_proposal` - Removes all public proposals.
 
-#![cfg_attr(
-	not(test),
-	warn(
-		clippy::disallowed_methods,
-		clippy::disallowed_types,
-		clippy::indexing_slicing,
-		clippy::todo,
-		clippy::unwrap_used,
-		clippy::panic
-	)
-)] // allow in tests
 #![recursion_limit = "256"]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![allow(clippy::type_complexity)]
 
 use codec::{Codec, Decode, Encode, FullCodec, Input};
 use frame_support::{
@@ -175,8 +163,11 @@ use frame_support::{
 	},
 	weights::Weight,
 };
+
 use orml_traits::{GetByKey, MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
 use scale_info::TypeInfo;
+
+use composable_traits::governance::{GovernanceRegistry, SignedRawOrigin};
 use sp_runtime::{
 	traits::{
 		AtLeast32BitUnsigned, Bounded, CheckedAdd, CheckedMul, CheckedSub, Dispatchable, Hash,
@@ -186,13 +177,12 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 
+mod mocks;
 mod conviction;
-pub mod mocks;
 mod types;
 mod vote;
 mod vote_threshold;
 pub mod weights;
-use composable_traits::governance::{GovernanceRegistry, SignedRawOrigin};
 pub use conviction::Conviction;
 pub use pallet::*;
 pub use types::{Delegations, ProposalId, ReferendumInfo, ReferendumStatus, Tally, UnvoteScope};
@@ -206,7 +196,7 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 
-pub const DEMOCRACY_ID: LockIdentifier = *b"democrac";
+const DEMOCRACY_ID: LockIdentifier = *b"democrac";
 
 /// The maximum number of vetoers on a single proposal used to compute Weight.
 ///
@@ -250,13 +240,14 @@ impl<AccountId, Balance, BlockNumber> PreimageStatus<AccountId, Balance, BlockNu
 	}
 }
 
-// A value placed in storage that represents the current version of the Democracy storage.
-// This value is used by the `on_runtime_upgrade` logic to determine whether we run
-// storage migration logic.
 #[derive(Encode, Decode, Clone, Copy, PartialEq, Eq, RuntimeDebug, TypeInfo)]
 enum Releases {
 	V1,
 }
+
+// A value placed in storage that represents the current version of the Democracy storage.
+// This value is used by the `on_runtime_upgrade` logic to determine whether we run
+// storage migration logic.
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -274,36 +265,11 @@ pub mod pallet {
 		type Proposal: Parameter + Dispatchable<Origin = Self::Origin> + From<Call<Self>>;
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
-		type Balance: Default
-			+ Parameter
-			+ Codec
-			+ MaxEncodedLen
-			+ Copy
-			+ Ord
-			+ CheckedAdd
-			+ CheckedSub
-			+ CheckedMul
-			+ Saturating
-			+ AtLeast32BitUnsigned
-			+ Zero
-			+ TypeInfo;
-
-		type AssetId: FullCodec
-			+ MaxEncodedLen
-			+ Eq
-			+ PartialEq
-			+ Copy
-			+ MaybeSerializeDeserialize
-			+ core::fmt::Debug
-			+ Default
-			+ TypeInfo
-			+ From<u128>
-			+ Into<u128>;
-
 		/// Currency type for this pallet.
 		type NativeCurrency: ReservableCurrency<Self::AccountId, Balance = Self::Balance>
 			+ LockableCurrency<Self::AccountId, Moment = Self::BlockNumber, Balance = Self::Balance>;
 
+		/// Multicurrency type
 		type Currency: MultiCurrency<Self::AccountId, Balance = Self::Balance, CurrencyId = Self::AssetId>
 			+ MultiLockableCurrency<
 				Self::AccountId,
@@ -314,9 +280,6 @@ pub mod pallet {
 				Balance = Self::Balance,
 				CurrencyId = Self::AssetId,
 			>;
-
-		type GovernanceRegistry: GetByKey<Self::AssetId, Result<SignedRawOrigin<Self::AccountId>, DispatchError>>
-			+ GovernanceRegistry<Self::AssetId, Self::AccountId>;
 
 		/// The period between a proposal being approved and enacted.
 		///
@@ -427,6 +390,35 @@ pub mod pallet {
 		/// The maximum number of public proposals that can exist at any time.
 		#[pallet::constant]
 		type MaxProposals: Get<u32>;
+
+		type Balance: Default
+			+ Parameter
+			+ Codec
+			+ MaxEncodedLen
+			+ Copy
+			+ Ord
+			+ CheckedAdd
+			+ CheckedSub
+			+ CheckedMul
+			+ Saturating
+			+ AtLeast32BitUnsigned
+			+ Zero
+			+ TypeInfo;
+
+		type AssetId: FullCodec
+			+ MaxEncodedLen
+			+ Eq
+			+ PartialEq
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ core::fmt::Debug
+			+ Default
+			+ TypeInfo
+			+ From<u128>
+			+ Into<u128>;
+
+		type GovernanceRegistry: GetByKey<Self::AssetId, Result<SignedRawOrigin<Self::AccountId>, DispatchError>>
+			+ GovernanceRegistry<Self::AssetId, Self::AccountId>;
 	}
 
 	// TODO: Refactor public proposal queue into its own pallet.
