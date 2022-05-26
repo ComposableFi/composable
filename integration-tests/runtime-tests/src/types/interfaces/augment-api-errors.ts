@@ -697,6 +697,10 @@ declare module '@polkadot/api-base/types/errors' {
       BorrowIndexDoesNotExist: AugmentedError<ApiType>;
       BorrowRateDoesNotExist: AugmentedError<ApiType>;
       BorrowRentDoesNotExist: AugmentedError<ApiType>;
+      /**
+       * Can't allow amount 0 as collateral.
+       **/
+      CannotDepositZeroCollateral: AugmentedError<ApiType>;
       CannotRepayMoreThanBorrowAmount: AugmentedError<ApiType>;
       /**
        * Repaying more than once in the same block is not allowed.
@@ -974,12 +978,14 @@ declare module '@polkadot/api-base/types/errors' {
       AssetAmountMustBePositiveNumber: AugmentedError<ApiType>;
       CannotRespectMinimumRequested: AugmentedError<ApiType>;
       InvalidAmount: AugmentedError<ApiType>;
+      InvalidAsset: AugmentedError<ApiType>;
       InvalidFees: AugmentedError<ApiType>;
       InvalidPair: AugmentedError<ApiType>;
       InvalidSaleState: AugmentedError<ApiType>;
       MissingAmount: AugmentedError<ApiType>;
       MustBeOwner: AugmentedError<ApiType>;
       NoLpTokenForLbp: AugmentedError<ApiType>;
+      NotEnoughLiquidity: AugmentedError<ApiType>;
       PairMismatch: AugmentedError<ApiType>;
       PoolNotFound: AugmentedError<ApiType>;
       /**
@@ -1447,6 +1453,17 @@ declare module '@polkadot/api-base/types/errors' {
        * Provided weight is possibly not enough to execute the message.
        **/
       WeightOverLimit: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    xcvm: {
+      CallFailed: AugmentedError<ApiType>;
+      InvalidCallEncoding: AugmentedError<ApiType>;
+      InvalidProgramEncoding: AugmentedError<ApiType>;
+      UnknownAsset: AugmentedError<ApiType>;
+      UnknownNetwork: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

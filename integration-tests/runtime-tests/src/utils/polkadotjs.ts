@@ -215,7 +215,7 @@ export function sendAndWaitForWithBatch<T extends AnyTuple>(
   intendedToFail: boolean
 ): Promise<IEvent<T>> {
   return new Promise<IEvent<T>>(function(resolve, reject) {
-    api.tx.utility.batch(call)
+    api.tx.utility.batchAll(call)
       .signAndSend(sender, { nonce: -1 }, function(res) {
         const { dispatchError, status } = res;
         if (dispatchError) {

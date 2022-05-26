@@ -14,6 +14,7 @@ declare module '@polkadot/api-base/types/events' {
     assetsRegistry: {
       AssetRegistered: AugmentedEvent<ApiType, [u128, ComposableTraitsXcmAssetsXcmAssetLocation]>;
       AssetUpdated: AugmentedEvent<ApiType, [u128, ComposableTraitsXcmAssetsXcmAssetLocation]>;
+      MinFeeUpdated: AugmentedEvent<ApiType, [u32, ComposableTraitsXcmAssetsXcmAssetLocation, Option<u128>]>;
       /**
        * Generic event
        **/
@@ -1097,6 +1098,14 @@ declare module '@polkadot/api-base/types/events' {
        * An HRMP message was sent to a sibling parachain.
        **/
       XcmpMessageSent: AugmentedEvent<ApiType, [Option<H256>]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    xcvm: {
+      Executed: AugmentedEvent<ApiType, [XcvmCoreProgramXcvmProgram]>;
+      Spawn: AugmentedEvent<ApiType, [u32, Vec<H256>, Bytes]>;
       /**
        * Generic event
        **/
