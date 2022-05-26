@@ -3,14 +3,14 @@
 //!
 //! THIS FILE WAS AUTO-GENERATED USING THE SUBSTRATE BENCHMARK CLI VERSION 4.0.0-dev
 //! DATE: 2022-05-26, STEPS: `50`, REPEAT: 20, LOW RANGE: `[]`, HIGH RANGE: `[]`
-//! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("composable-dev"), DB CACHE: 1024
+//! EXECUTION: Some(Wasm), WASM-EXECUTION: Compiled, CHAIN: Some("picasso-dev"), DB CACHE: 1024
 
 // Executed Command:
 // ./target/release/composable
 // benchmark
 // pallet
 // --chain
-// composable-dev
+// picasso-dev
 // --execution
 // wasm
 // --wasm-execution
@@ -24,7 +24,7 @@
 // --repeat
 // 20
 // --output
-// ./runtime/composable/src/weights
+// ./runtime/picasso/src/weights
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
@@ -39,23 +39,23 @@ impl<T: frame_system::Config> treasury::WeightInfo for WeightInfo<T> {
 	// Storage: Treasury ProposalCount (r:1 w:1)
 	// Storage: Treasury Proposals (r:0 w:1)
 	fn propose_spend() -> Weight {
-		(19_000_000 as Weight)
+		(21_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: Treasury Proposals (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn reject_proposal() -> Weight {
-		(31_000_000 as Weight)
+		(33_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
 	// Storage: Treasury Proposals (r:1 w:0)
 	// Storage: Treasury Approvals (r:1 w:1)
 	fn approve_proposal(p: u32, ) -> Weight {
-		(5_829_000 as Weight)
+		(6_378_000 as Weight)
 			// Standard Error: 2_000
-			.saturating_add((48_000 as Weight).saturating_mul(p as Weight))
+			.saturating_add((56_000 as Weight).saturating_mul(p as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -69,9 +69,9 @@ impl<T: frame_system::Config> treasury::WeightInfo for WeightInfo<T> {
 	// Storage: Treasury Approvals (r:1 w:1)
 	// Storage: Treasury Proposals (r:1 w:1)
 	fn on_initialize_proposals(p: u32, ) -> Weight {
-		(25_297_000 as Weight)
-			// Standard Error: 40_000
-			.saturating_add((31_906_000 as Weight).saturating_mul(p as Weight))
+		(26_655_000 as Weight)
+			// Standard Error: 13_000
+			.saturating_add((32_541_000 as Weight).saturating_mul(p as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().reads((3 as Weight).saturating_mul(p as Weight)))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
