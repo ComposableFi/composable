@@ -25,4 +25,4 @@ jobs:
 
     - name: Checker
       run: |
-        cargo check --no-default-features
+        cargo +nightly check --no-default-features --target=wasm32-unknown-unknown

@@ -1,5 +1,8 @@
+//! Light client error definition
+
 use sp_std::prelude::*;
-#[derive(sp_std::fmt::Debug, PartialEq, Eq)]
+#[derive(sp_std::fmt::Debug, PartialEq, Eq, derive_more::From)]
+/// Error definition for the light client
 pub enum BeefyClientError {
     /// Failed to read a value from storage
     StorageReadError,
@@ -21,4 +24,6 @@ pub enum BeefyClientError {
     InvalidAuthorityProof,
     /// Invalid merkle proof
     InvalidMerkleProof,
+    /// Mmr Error
+    MmrVerificationError(mmr_lib::Error),
 }
