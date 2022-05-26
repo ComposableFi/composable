@@ -25,8 +25,8 @@ impl<T: Config + Send + Sync> PortKeeper for Context<T> {
 	/// Since we are using statically defined ports and module Ids, this is not neccessary.
 	fn bind_module_to_port(
 		&mut self,
-		module_id: ModuleId,
-		port_id: PortId,
+		_module_id: ModuleId,
+		_port_id: PortId,
 	) -> Result<(), ICS05Error> {
 		Ok(())
 	}

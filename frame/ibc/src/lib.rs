@@ -4,6 +4,9 @@
 #![allow(non_camel_case_types)]
 #![allow(dead_code)]
 
+//! Pallet IBC
+//! Implements the core ibc features for substrate runtimes.
+
 extern crate core;
 
 use codec::{Decode, Encode};
@@ -19,8 +22,9 @@ use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
 mod channel;
 mod client;
 mod connection;
+mod host_functions;
 mod port;
-mod routing;
+pub mod routing;
 
 pub const IBC_DIGEST_ID: [u8; 4] = *b"/IBC";
 
@@ -72,6 +76,7 @@ mod mock;
 mod tests;
 
 mod impls;
+pub mod runtime_interface;
 pub mod weight;
 pub mod weights;
 
@@ -332,7 +337,7 @@ pub mod pallet {
 
 			let result = messages
 				.into_iter()
-				.map(|msg| ibc::core::ics26_routing::handler::deliver(&mut ctx, msg))
+				.map(|msg| ibc::core::ics26_routing::handler::deliver::<_, host_functions::HostFunctions>(&mut ctx, msg))
 				.collect::<Result<Vec<_>, _>>()
 				.map_err(|e| {
 					log::info!("{:?}", e);

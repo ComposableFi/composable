@@ -671,7 +671,7 @@ where
 			type_url: CHANNEL_OPEN_INIT_TYPE_URL.to_string(),
 			value,
 		};
-		ibc::core::ics26_routing::handler::deliver(&mut ctx, msg)
+		ibc::core::ics26_routing::handler::deliver::<_, crate::host_functions::HostFunctions>(&mut ctx, msg)
 			.map_err(|_| IbcHandlerError::ChannelInitError)?;
 		Ok(channel_id)
 	}
