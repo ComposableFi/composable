@@ -9,22 +9,16 @@
 // ./target/release/composable
 // benchmark
 // pallet
-// --chain
-// picasso-dev
-// --execution
-// wasm
-// --wasm-execution
-// compiled
-// --pallet
-// utility
-// --extrinsic
-// *
-// --steps
-// 50
-// --repeat
-// 20
-// --output
-// ./runtime/picasso/src/weights
+// --chain=picasso-dev
+// --execution=wasm
+// --wasm-execution=compiled
+// --pallet=*
+// --extrinsic=*
+// --steps=50
+// --repeat=20
+// --output=runtime/picasso/src/weights
+// --log
+// error
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
@@ -37,27 +31,27 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 	fn batch(c: u32, ) -> Weight {
-		(24_237_000 as Weight)
-			// Standard Error: 5_000
-			.saturating_add((3_615_000 as Weight).saturating_mul(c as Weight))
+		(40_544_000 as Weight)
+			// Standard Error: 3_000
+			.saturating_add((7_729_000 as Weight).saturating_mul(c as Weight))
 	}
 	fn as_derivative() -> Weight {
-		(2_000_000 as Weight)
+		(4_440_000 as Weight)
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	fn batch_all(c: u32, ) -> Weight {
-		(8_231_000 as Weight)
+		(42_542_000 as Weight)
 			// Standard Error: 3_000
-			.saturating_add((3_870_000 as Weight).saturating_mul(c as Weight))
+			.saturating_add((8_410_000 as Weight).saturating_mul(c as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	fn dispatch_as() -> Weight {
-		(9_000_000 as Weight)
+		(20_563_000 as Weight)
 	}
 	fn force_batch(c: u32, ) -> Weight {
-		(10_497_000 as Weight)
-			// Standard Error: 1_000
-			.saturating_add((3_643_000 as Weight).saturating_mul(c as Weight))
+		(26_978_000 as Weight)
+			// Standard Error: 3_000
+			.saturating_add((7_767_000 as Weight).saturating_mul(c as Weight))
 	}
 }

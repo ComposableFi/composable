@@ -9,22 +9,16 @@
 // ./target/release/composable
 // benchmark
 // pallet
-// --chain
-// dali-dev
-// --execution
-// wasm
-// --wasm-execution
-// compiled
-// --pallet
-// treasury
-// --extrinsic
-// *
-// --steps
-// 50
-// --repeat
-// 20
-// --output
-// ./runtime/dali/src/weights
+// --chain=dali-dev
+// --execution=wasm
+// --wasm-execution=compiled
+// --pallet=*
+// --extrinsic=*
+// --steps=50
+// --repeat=20
+// --output=runtime/dali/src/weights
+// --log
+// error
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
@@ -39,29 +33,29 @@ impl<T: frame_system::Config> treasury::WeightInfo for WeightInfo<T> {
 	// Storage: Treasury ProposalCount (r:1 w:1)
 	// Storage: Treasury Proposals (r:0 w:1)
 	fn propose_spend() -> Weight {
-		(22_000_000 as Weight)
+		(51_434_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: Treasury Proposals (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn reject_proposal() -> Weight {
-		(34_000_000 as Weight)
+		(77_539_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
 	// Storage: Treasury Proposals (r:1 w:0)
 	// Storage: Treasury Approvals (r:1 w:1)
 	fn approve_proposal(p: u32, ) -> Weight {
-		(6_413_000 as Weight)
-			// Standard Error: 2_000
-			.saturating_add((64_000 as Weight).saturating_mul(p as Weight))
+		(16_322_000 as Weight)
+			// Standard Error: 4_000
+			.saturating_add((282_000 as Weight).saturating_mul(p as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Treasury Approvals (r:1 w:1)
 	fn remove_approval() -> Weight {
-		(4_000_000 as Weight)
+		(9_662_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -69,9 +63,9 @@ impl<T: frame_system::Config> treasury::WeightInfo for WeightInfo<T> {
 	// Storage: Treasury Approvals (r:1 w:1)
 	// Storage: Treasury Proposals (r:1 w:1)
 	fn on_initialize_proposals(p: u32, ) -> Weight {
-		(24_827_000 as Weight)
-			// Standard Error: 45_000
-			.saturating_add((32_986_000 as Weight).saturating_mul(p as Weight))
+		(69_157_000 as Weight)
+			// Standard Error: 52_000
+			.saturating_add((70_493_000 as Weight).saturating_mul(p as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().reads((3 as Weight).saturating_mul(p as Weight)))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))

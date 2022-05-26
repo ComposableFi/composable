@@ -9,22 +9,16 @@
 // ./target/release/composable
 // benchmark
 // pallet
-// --chain
-// dali-dev
-// --execution
-// wasm
-// --wasm-execution
-// compiled
-// --pallet
-// utility
-// --extrinsic
-// *
-// --steps
-// 50
-// --repeat
-// 20
-// --output
-// ./runtime/dali/src/weights
+// --chain=dali-dev
+// --execution=wasm
+// --wasm-execution=compiled
+// --pallet=*
+// --extrinsic=*
+// --steps=50
+// --repeat=20
+// --output=runtime/dali/src/weights
+// --log
+// error
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
@@ -38,33 +32,33 @@ pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	fn batch(c: u32, ) -> Weight {
-		(12_103_000 as Weight)
-			// Standard Error: 2_000
-			.saturating_add((4_524_000 as Weight).saturating_mul(c as Weight))
+		(30_915_000 as Weight)
+			// Standard Error: 3_000
+			.saturating_add((9_833_000 as Weight).saturating_mul(c as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	fn as_derivative() -> Weight {
-		(4_000_000 as Weight)
+		(9_205_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	fn batch_all(c: u32, ) -> Weight {
-		(17_277_000 as Weight)
+		(32_689_000 as Weight)
 			// Standard Error: 3_000
-			.saturating_add((4_762_000 as Weight).saturating_mul(c as Weight))
+			.saturating_add((10_477_000 as Weight).saturating_mul(c as Weight))
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	fn dispatch_as() -> Weight {
-		(9_000_000 as Weight)
+		(20_405_000 as Weight)
 	}
 	// Storage: CallFilter DisabledCalls (r:1 w:0)
 	fn force_batch(c: u32, ) -> Weight {
-		(11_344_000 as Weight)
-			// Standard Error: 2_000
-			.saturating_add((4_528_000 as Weight).saturating_mul(c as Weight))
+		(27_734_000 as Weight)
+			// Standard Error: 3_000
+			.saturating_add((9_808_000 as Weight).saturating_mul(c as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 	}
 }
