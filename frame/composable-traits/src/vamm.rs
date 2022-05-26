@@ -60,7 +60,7 @@ pub trait Vamm {
 		asset_type: AssetType,
 	) -> Result<Self::Decimal, DispatchError>;
 
-	/// Compute the time-weighted average price of a virtual AMM.
+	/// Queries the runtime storage and returns the twap for the desired asset.
 	fn get_twap(
 		vamm_id: &Self::VammId,
 		asset_type: AssetType,
