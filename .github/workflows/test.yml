@@ -78,6 +78,6 @@ jobs:
 
     - name: Run Test
       env:
-        NODE_ENDPOINT: "ws://composable:9944"
+        NODE_ENDPOINT: "ws://127.0.0.1:9988"
       run: |
         cargo test
