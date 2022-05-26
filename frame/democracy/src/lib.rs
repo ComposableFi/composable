@@ -424,12 +424,14 @@ pub mod pallet {
 	// TODO: Refactor public proposal queue into its own pallet.
 	// https://github.com/paritytech/substrate/issues/5322
 	/// The number of (public) proposals that have been made so far.
+	/// The commit from which this code is forked makes use of ValueQuery for this storage
 	#[pallet::storage]
 	#[pallet::getter(fn public_prop_count)]
 	#[allow(clippy::disallowed_types)]
 	pub type PublicPropCount<T> = StorageValue<_, PropIndex, ValueQuery>;
 
 	/// The public proposals. Unsorted. The second item is the proposal's hash.
+	/// The commit from which this code is forked makes use of ValueQuery for this storage
 	#[pallet::storage]
 	#[pallet::getter(fn public_props)]
 	#[allow(clippy::disallowed_types)]
@@ -460,6 +462,7 @@ pub mod pallet {
 	>;
 
 	/// The next free referendum index, aka the number of referenda started so far.
+	/// The commit from which this code is forked makes use of ValueQuery for this storage
 	#[pallet::storage]
 	#[pallet::getter(fn referendum_count)]
 	#[allow(clippy::disallowed_types)]
@@ -467,6 +470,7 @@ pub mod pallet {
 
 	/// The lowest referendum index representing an unbaked referendum. Equal to
 	/// `ReferendumCount` if there isn't a unbaked referendum.
+	/// The commit from which this code is forked makes use of ValueQuery for this storage
 	#[pallet::storage]
 	#[pallet::getter(fn lowest_unbaked)]
 	#[allow(clippy::disallowed_types)]
@@ -502,6 +506,7 @@ pub mod pallet {
 	/// proposal.
 	// TODO: There should be any number of tabling origins, not just public and "external"
 	// (council). https://github.com/paritytech/substrate/issues/5322
+	/// The commit from which this code is forked makes use of ValueQuery for this storage
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
 	pub type LastTabledWasExternal<T> = StorageValue<_, bool, ValueQuery>;
@@ -525,6 +530,7 @@ pub mod pallet {
 	>;
 
 	/// Record of all proposals that have been subject to emergency cancellation.
+    /// The commit from which this code is forked makes use of ValueQuery for this storage
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
 	pub type Cancellations<T: Config> =
