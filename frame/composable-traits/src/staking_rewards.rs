@@ -5,7 +5,7 @@ use crate::{
 use codec::{Decode, Encode};
 use composable_support::math::safe::SafeSub;
 use core::fmt::Debug;
-use frame_support::{dispatch::DispatchResult, traits::Get};
+use frame_support::{dispatch::DispatchResult, traits::Get, storage::bounded_btree_map::BoundedBTreeMap};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, Zero},
@@ -124,14 +124,16 @@ pub struct StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards> {
 	pub reward_multiplier: Perbill,
 }
 
+/// implemented by instances which know their share of something biggers
+trait Shares {
+	fn shares(&self) -> u128;
+}
+
+
 impl<AccountId, AssetId, Balance: AtLeast32BitUnsigned + Copy, Epoch: Ord, Rewards>
 	StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards>
 {
-	pub fn shares(&self) -> u128 {
-		self.reward_multiplier.mul_floor(self.stake.saturated_into::<u128>())
-	}
-
-	pub fn state(&self, epoch: &Epoch, epoch_start: Timestamp) -> PositionState {
+	fn state(&self, epoch: &Epoch, epoch_start: Timestamp) -> PositionState {
 		if self.lock_date.saturating_add(self.lock_duration) < epoch_start {
 			PositionState::Expired
 		} else if self.reward_epoch_start > *epoch {
@@ -139,6 +141,15 @@ impl<AccountId, AssetId, Balance: AtLeast32BitUnsigned + Copy, Epoch: Ord, Rewar
 		} else {
 			PositionState::LockedRewarding
 		}
+	}
+}
+
+impl<AccountId, AssetId : PartialEq + Ord, Balance: AtLeast32BitUnsigned + Copy + Zero, Epoch: Ord, S: frame_support::traits::Get<u32>> Shares for 
+	StakingNFT<AccountId, AssetId, Balance, Epoch,  BoundedBTreeMap<AssetId, Balance, S>>
+{
+	fn shares(& self) -> u128 {
+		let compound = *self.pending_rewards.get(&self.asset).unwrap_or(&Balance::zero());
+		self.reward_multiplier.mul_floor(self.stake.saturated_into::<u128>()).saturating_add(compound)
 	}
 }
 
