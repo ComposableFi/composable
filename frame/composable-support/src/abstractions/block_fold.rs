@@ -141,6 +141,8 @@ mod tests {
  
 	#[test]
 	fn proves_partial_drain_possible() {
+		/// based on tests from frame_support, but there is no such test to show off partial drain
+		/// and docs does not tell that drain happens iff you iterate element, not just by calling drain
 		TestExternalities::default().execute_with(|| {
 			frame_support::generate_storage_alias! {
 				QueueModule,

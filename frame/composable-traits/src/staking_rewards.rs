@@ -8,7 +8,7 @@ use core::fmt::Debug;
 use frame_support::{dispatch::DispatchResult, traits::Get, storage::bounded_btree_map::BoundedBTreeMap};
 use scale_info::TypeInfo;
 use sp_runtime::{
-	traits::{AtLeast32BitUnsigned, Zero},
+	traits::{AtLeast32BitUnsigned, Zero, Saturating},
 	DispatchError, Perbill, SaturatedConversion,
 };
 
@@ -127,7 +127,7 @@ pub struct StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards> {
 /// implemented by instances which know their share of something biggers
 pub trait Shares {
 	type Balance;
-	fn shares(&self) -> Balance;
+	fn shares(&self) -> Self::Balance;
 }
 
 impl<AccountId, AssetId, Balance: AtLeast32BitUnsigned + Copy, Epoch: Ord, Rewards>
@@ -144,13 +144,13 @@ impl<AccountId, AssetId, Balance: AtLeast32BitUnsigned + Copy, Epoch: Ord, Rewar
 	}
 }
 
-impl<AccountId, AssetId : PartialEq + Ord, Balance: AtLeast32BitUnsigned + Copy + Zero, Epoch: Ord, S: frame_support::traits::Get<u32>> Shares for 
+impl<AccountId, AssetId : PartialEq + Ord, Balance: AtLeast32BitUnsigned + Copy + Zero + Saturating, Epoch: Ord, S: frame_support::traits::Get<u32>> Shares for 
 	StakingNFT<AccountId, AssetId, Balance, Epoch,  BoundedBTreeMap<AssetId, Balance, S>>
 {
 	type Balance = Balance;
 	fn shares(& self) -> Balance {
 		let compound = *self.pending_rewards.get(&self.asset).unwrap_or(&Balance::zero());
-		self.reward_multiplier.mul_floor(self.stake.saturated_into::<u128>()).saturating_add(compound.saturated_into::<u128>())
+		self.reward_multiplier.mul_floor(self.stake).saturating_add(compound)
 	}
 }
 

@@ -108,8 +108,11 @@ pub mod pallet {
 		/// epoch runs, cannot modify active positions, only append modification queues
 		Running,
 		/// stakes positins rewarded` 
-		Distributing,
+		Distributing,		
+		// TODO: decide what is better first- duration or amount
+		/// amount is added regardless of position state						
 		PendingAmounts,	
+		/// time extended  regardless of position state
 		PendingDurations,
 		/// working with pending operations, registerin new stakers and asset total increases
 		/// Processed by `fold` as updates are done in place
@@ -561,41 +564,28 @@ pub mod pallet {
 					let mut any = false;
 					for (nft_id,amount)  in PendingAmountExtensions::<T>::drain().take(T::ElementToProcessPerBlock::get() as usize) {
 						any = true;
-						<PendingAmountExtensions<T>>::mutate_exists(&nft_id, |value| {
-							if let Some(mut value) = value {
-								value += amount;
-							}
-							Some(())
-						});
-
-						// 						we execute these things regardless of fNFT state
-						// TODO: decide what is better for system - duration then
-						// amount, or else
-
-						if let Some(amount) =
-							PendingAmountExtensions::<T>::get_mut(&nft_id)
-						{
-							let time_lock = honest_locked_stake_increase(
-							nft.early_unstake_penalty.value,
-							nft.stake.into(),
-							amount.into(),
-							nft.lock_duration.into(),
-								(now - nft.lock_date).into())
-								.ok_or(Error::<T>::CannotIncreaseStakedAmountBecauseOfLimitedArithmetic)?;
-							nft.lock_date = nft.lock_date.safe_add(&time_lock)?;
-							PendingTotalShares::<T>::mutate(nft.asset, |total_shares| {
-								*total_shares += amount.into();
-							});
-							// NOTE: best effort 
-							nft.stake = nft.stake.saturating_add(&amount);
-						}
+						T::try_mutate_protocol_nft(&nft_id,  | nft | {
+								let time_lock = honest_locked_stake_increase(
+								nft.early_unstake_penalty.value,
+								nft.stake.into(),
+								amount.into(),
+								nft.lock_duration.into(),
+									(now - nft.lock_date).into())
+									.ok_or(Error::<T>::CannotIncreaseStakedAmountBecauseOfLimitedArithmetic)?;
+								nft.lock_date = nft.lock_date.safe_add(&time_lock)?;
+								PendingTotalShares::<T>::mutate(nft.asset, |total_shares| {
+									*total_shares += amount.into();
+								});
+								// NOTE: best effort 
+								nft.stake = nft.stake.saturating_add(&amount);
+							Ok(())
+						});						
 					}
 					if any == false {
 						CurrentState::<T>::set(State::PendingDurations);
 					}
 				},
 				State::PendingDurations => {
-					// TODO: develop `drain_limit(T::ElementToProcessPerBlock::get()) which wraps iterator like interface
 					let mut batch = T::ElementToProcessPerBlock::get();
 					let mut any = false;
 					// while batch > 0 && let Some((nft_id,amount)) = PendingAmountExtensions::<T>::drain() {
