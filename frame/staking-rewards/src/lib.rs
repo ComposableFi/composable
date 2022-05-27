@@ -52,8 +52,8 @@ pub mod pallet {
 	use composable_traits::{
 		financial_nft::{FinancialNftProtocol, NftClass, NftVersion},
 		staking_rewards::{
-			Penalty, PenaltyOutcome, PositionState, Staking, StakingConfig, StakingNFT,
-			StakingReward, Shares,
+			Penalty, PenaltyOutcome, PositionState, Shares, Staking, StakingConfig, StakingNFT,
+			StakingReward,
 		},
 		time::{DurationSeconds, Timestamp},
 	};
@@ -72,12 +72,12 @@ pub mod pallet {
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::{
-		traits::{AccountIdConversion, Zero, CheckedAdd},
+		traits::{AccountIdConversion, CheckedAdd, Saturating, Zero},
 		ArithmeticError, Perbill, SaturatedConversion,
 	};
 	use sp_std::collections::btree_map::BTreeMap;
 
-	type ShareAmount  = u128;
+	type ShareAmount = u128;
 	pub(crate) type EpochId = u128;
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
@@ -97,27 +97,27 @@ pub mod pallet {
 	pub(crate) type EpochDurationOf<T> = <T as Config>::EpochDuration;
 	#[allow(dead_code)]
 	pub(crate) type PenaltyOf<T> = Penalty<AccountIdOf<T>>;
-	
-			
-	// NOTE:	
+
+	// NOTE:
 	// some state processed by batched brain, as these just merged into main collections
 	// some states are processed by fold, because updates happens in place
-	// fold can be made drain if to use A/B storages and drain one and fill other depending on epoch index mod 2
+	// fold can be made drain if to use A/B storages and drain one and fill other depending on epoch
+	// index mod 2
 	#[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
 	pub enum State {
 		/// epoch runs, cannot modify active positions, only append modification queues
 		Running,
-		/// stakes positins rewarded` 
-		Distributing,		
+		/// stakes positins rewarded`
+		Distributing,
 		// TODO: decide what is better first- duration or amount
-		/// amount is added regardless of position state						
-		PendingAmounts,	
+		/// amount is added regardless of position state
+		PendingAmounts,
 		/// time extended  regardless of position state
 		PendingDurations,
 		/// working with pending operations, registerin new stakers and asset total increases
 		/// Processed by `fold` as updates are done in place
 		PendingStakers,
-		PendingShares,	
+		PendingShares,
 	}
 
 	#[pallet::event]
@@ -150,7 +150,7 @@ pub mod pallet {
 		ClaimRequireRestake,
 		AlreadyTagged,
 		EpochNotFound,
-	
+
 		CanUnstakeOnlyDuringEpoch,
 		ImpossibleState,
 		OnlyOwnerOfPositionCanDoThis,
@@ -216,7 +216,8 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn fold_over_stakers)]
-	pub type StakersFoldState<T: Config> = StorageValue<_, BlockFold<(), InstanceIdOf<T>>, OptionQuery>;
+	pub type StakersFoldState<T: Config> =
+		StorageValue<_, BlockFold<(), InstanceIdOf<T>>, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn current_epoch_start)]
@@ -257,26 +258,14 @@ pub mod pallet {
 	//// active running total shares
 	#[pallet::storage]
 	#[pallet::getter(fn running_total_shares)]
-	pub type RunningTotalShares<T: Config> = StorageMap<
-		_,
-		Twox64Concat,
-		AssetIdOf<T>,
-		ShareAmount,
-		ValueQuery,
-		SharesOnEmpty<T>,
-	>;
+	pub type RunningTotalShares<T: Config> =
+		StorageMap<_, Twox64Concat, AssetIdOf<T>, ShareAmount, ValueQuery, SharesOnEmpty<T>>;
 
 	/// pending total shares to be applied on next run
 	#[pallet::storage]
 	#[pallet::getter(fn pending_total_shares)]
-	pub type PendingTotalShares<T: Config> = StorageMap<
-		_,
-		Twox64Concat,
-		AssetIdOf<T>,
-		ShareAmount,
-		ValueQuery,
-		SharesOnEmpty<T>,
-	>;	
+	pub type PendingTotalShares<T: Config> =
+		StorageMap<_, Twox64Concat, AssetIdOf<T>, ShareAmount, ValueQuery, SharesOnEmpty<T>>;
 
 	#[pallet::type_value]
 	pub fn RewardStateOnEmpty<T: Config>() -> (EpochId, Timestamp) {
@@ -483,6 +472,7 @@ pub mod pallet {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<T::BlockNumber> for Pallet<T> {
 		fn on_initialize(_: T::BlockNumber) -> Weight {
+			let now = T::Time::now().as_secs();
 			// TODO(hussein-aitlahcen): abstract per-block fold of chunk into a macro:
 			match Self::current_state() {
 				State::Running => {
@@ -491,7 +481,6 @@ pub mod pallet {
 					Self::update_epoch();
 				},
 				State::Distributing => {
-					let now = T::Time::now().as_secs();
 					let (reward_epoch, reward_epoch_start) = EndEpochSnapshot::<T>::get();
 					let result = <(StakersFoldState<T>, Stakers<T>)>::step(
 						FoldStrategy::new_chunk(T::ElementToProcessPerBlock::get()),
@@ -525,8 +514,6 @@ pub mod pallet {
 													reward,
 													total_shares.into(),
 												)?;
-												// TODO: if adding asset which is staked, increase
-												// total
 
 												nft.pending_rewards
 													.try_insert(
@@ -539,10 +526,14 @@ pub mod pallet {
 													)
 													.map_err(|_| ArithmeticError::Overflow)?;
 												if reward_asset == nft.asset {
-													PendingTotalShares::<T>::mutate(nft.asset, |total_shares| {
-														let reward_shares:u128 = reward_shares.into();
-														*total_shares += reward_shares;
-													});
+													PendingTotalShares::<T>::mutate(
+														nft.asset,
+														|total_shares| {
+															let reward_shares: u128 =
+																reward_shares.into();
+															*total_shares += reward_shares;
+														},
+													);
 												}
 											}
 										},
@@ -562,53 +553,62 @@ pub mod pallet {
 				},
 				State::PendingAmounts => {
 					let mut any = false;
-					for (nft_id,amount)  in PendingAmountExtensions::<T>::drain().take(T::ElementToProcessPerBlock::get() as usize) {
+					for (nft_id, amount) in PendingAmountExtensions::<T>::drain()
+						.take(T::ElementToProcessPerBlock::get() as usize)
+					{
 						any = true;
-						T::try_mutate_protocol_nft(&nft_id,  | nft | {
-								let time_lock = honest_locked_stake_increase(
+						T::try_mutate_protocol_nft(&nft_id, |nft: &mut StakingNFTOf<T>|  -> DispatchResult{
+							let old_shares = nft.shares();
+							let time_lock = honest_locked_stake_increase(
 								nft.early_unstake_penalty.value,
 								nft.stake.into(),
 								amount.into(),
 								nft.lock_duration.into(),
-									(now - nft.lock_date).into())
-									.ok_or(Error::<T>::CannotIncreaseStakedAmountBecauseOfLimitedArithmetic)?;
-								nft.lock_date = nft.lock_date.safe_add(&time_lock)?;
-								PendingTotalShares::<T>::mutate(nft.asset, |total_shares| {
-									*total_shares += amount.into();
-								});
-								// NOTE: best effort 
-								nft.stake = nft.stake.saturating_add(&amount);
+								(now - nft.lock_date).into(),
+							)?;
+							nft.lock_date = nft.lock_date.safe_add(&time_lock)?;
+							let new_shares = nft.shares();
+							let amount = new_shares - old_shares;
+							PendingTotalShares::<T>::mutate(nft.asset, |total_shares| {
+								*total_shares += amount.into();
+							});
+							// NOTE: best effort
+							nft.stake = nft.stake.safe_add(&amount)?;
 							Ok(())
-						});						
+						});
 					}
 					if any == false {
 						CurrentState::<T>::set(State::PendingDurations);
 					}
 				},
 				State::PendingDurations => {
-					let mut batch = T::ElementToProcessPerBlock::get();
 					let mut any = false;
-					// while batch > 0 && let Some((nft_id,amount)) = PendingAmountExtensions::<T>::drain() {
-					// 	batch-=1;
-					// 	any = true;
-					// }
-
-				// 	if let Some(new_lock) =
-				// 	PendingDurationExtensions::<T>::take(&nft_id)
-				// {
-				// 	// keep in sync with python code
-				// 	// NOTE: relies on fact that now always >= any other
-				// 	// possible date NOTE: and the new lock was validated to be
-				// 	// on input >= old lock
-				// 	let rolling = honest_lock_extensions(
-				// 		now,
-				// 		nft.lock_date,
-				// 		new_lock,
-				// 		nft.lock_duration,
-				// 	);
-				// 	nft.lock_date = now - rolling;
-				// 	nft.lock_duration = new_lock;
-				// }
+					for (nft_id, new_lock) in PendingDurationExtensions::<T>::drain()
+						.take(T::ElementToProcessPerBlock::get() as usize)
+					{
+						any = true;
+						T::try_mutate_protocol_nft(&nft_id, |nft: &mut StakingNFTOf<T>| -> DispatchResult{
+							// keep in sync with python code
+							// NOTE: relies on fact that now always >= any other
+							// possible date NOTE: and the new lock was validated to be
+							// on input >= old lock
+							let rolling = honest_lock_extensions(
+								now,
+								nft.lock_date,
+								new_lock,
+								nft.lock_duration,
+							)?;
+							let old_shares = nft.shares();
+							nft.lock_date = now - rolling;
+							nft.lock_duration = new_lock;
+							let new_shares = nft.shares();
+							let amount = new_shares - old_shares;
+							PendingTotalShares::<T>::mutate(nft.asset, |total_shares| {
+								*total_shares += amount.into();
+							});
+							Ok(())
+						});
+					}
 
 					if any == false {
 						CurrentState::<T>::set(State::PendingStakers);
@@ -623,15 +623,12 @@ pub mod pallet {
 						|_, nft_id, _| {
 							let nft = T::get_protocol_nft::<StakingNFTOf<T>>(&nft_id)
 								.expect("impossible; qed");
-								RunningTotalShares::<T>::mutate(
-									nft.asset,
-									|total_shares| {
-										*total_shares = total_shares
-											.checked_add(nft.shares().into())
-											.expect("impossible; qed;");
-									},
-								);
-							
+							RunningTotalShares::<T>::mutate(nft.asset, |total_shares| {
+								*total_shares = total_shares
+									.checked_add(nft.shares().into())
+									.expect("impossible; qed;");
+							});
+
 							Stakers::<T>::insert(nft_id, ());
 						},
 					);
@@ -641,28 +638,27 @@ pub mod pallet {
 					}
 				},
 				State::PendingShares => {
-					// TODO: develop `drain_limit(T::ElementToProcessPerBlock::get()) which wraps iterator like interface
+					// TODO: develop `drain_limit(T::ElementToProcessPerBlock::get()) which wraps
+					// iterator like interface
 					let mut batch = T::ElementToProcessPerBlock::get();
 					let mut any = false;
-					// while batch > 0 && let Some((asset,amount)) = PendingTotalShares::<T>::drain() {
-					// 	batch-=1;
+					// while batch > 0 && let Some((asset,amount)) =
+					// PendingTotalShares::<T>::drain() { 	batch-=1;
 					// 	any = true;
 					// }
 					if any == false {
 						CurrentState::<T>::set(State::Running);
 					}
 				},
-				
 			}
 			0
 		}
 	}
 
-	
-	fn honest_lock_extensions(now: u64, lock_date: u64, new_lock: u64, previous_lock: u64) -> u64 {
+	fn honest_lock_extensions(now: u64, lock_date: u64, new_lock: u64, previous_lock: u64) -> Result<u64, ArithmeticError> {
 		let passed_time = now - lock_date;
-		let rolling = passed_time.min(new_lock - previous_lock);
-		rolling
+		let rolling = passed_time.min(new_lock.safe_sub(&previous_lock)?);
+		Ok(rolling)
 	}
 
 	impl<T: Config> Pallet<T> {
@@ -737,7 +733,6 @@ pub mod pallet {
 			}
 			Ok(())
 		}
-
 	}
 
 	impl<T: Config> StakingReward for Pallet<T> {
@@ -810,7 +805,7 @@ pub mod pallet {
 				reward_epoch_start: next_epoch,
 				pending_rewards,
 				lock_date: now,
-				lock_duration: duration,				
+				lock_duration: duration,
 				early_unstake_penalty: config.early_unstake_penalty,
 				reward_multiplier,
 			};
@@ -841,24 +836,21 @@ pub mod pallet {
 				},
 				PositionState::LockedRewarding => {
 					// Decrement total shares.
-						RunningTotalShares::<T>::mutate(
-							nft.asset,
-							|total_shares| -> DispatchResult {
-								*total_shares = total_shares.safe_sub(&nft.shares().into())?;
-								Ok(())
-							},
-						)?;					
+					RunningTotalShares::<T>::mutate(nft.asset, |total_shares| -> DispatchResult {
+						*total_shares = total_shares.safe_sub(&nft.shares().into())?;
+						Ok(())
+					})?;
 					nft.early_unstake_penalty.penalize::<BalanceOf<T>>(nft.stake)
 				},
 				PositionState::Expired => {
 					// Decrement total shares.
-						RunningTotalShares::<T>::try_mutate(
-							nft.asset,
-							|total_shares| -> DispatchResult {
-								*total_shares = total_shares.safe_sub(&nft.shares().into())?;
-								Ok(())
-							},
-						)?;					
+					RunningTotalShares::<T>::try_mutate(
+						nft.asset,
+						|total_shares| -> DispatchResult {
+							*total_shares = total_shares.safe_sub(&nft.shares().into())?;
+							Ok(())
+						},
+					)?;
 					Ok(PenaltyOutcome::NotApplied { amount: nft.stake })
 				},
 			}?;
