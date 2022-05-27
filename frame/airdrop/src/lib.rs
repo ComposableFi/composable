@@ -1,4 +1,5 @@
 #![doc = include_str!("../README.md")]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 // TODO: mock, test, weights
 
@@ -6,7 +7,7 @@ pub use pallet::*;
 
 pub mod models;
 pub mod weights;
-#[cfg(feature = "runtime-benchmarks")]
+
 mod benchmarking;
 #[cfg(test)]
 mod mocks;
