@@ -580,7 +580,7 @@ pub mod pallet {
 		/// The twap for the specified asset.
 		///
 		/// ## Assumptions or Requirements
-		/// * The requested [`VammId`](Config::VammId) must exists
+		/// * The requested [`VammId`](Config::VammId) must exist.
 		/// * The requested Vamm must be open.
 		///
 		/// For more information about how to know if a Vamm is open or not,
