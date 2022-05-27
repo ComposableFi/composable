@@ -84,6 +84,7 @@
 #![cfg_attr(
 	not(test),
 	warn(
+		clippy::dbg_macro,
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
