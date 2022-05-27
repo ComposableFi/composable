@@ -24,7 +24,7 @@
 // --repeat
 // 20
 // --output
-// ./frame/ibc/src/weights
+// ./runtime/dali/src/weights
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
@@ -35,7 +35,7 @@ use sp_std::marker::PhantomData;
 
 /// Weight functions for `pallet_ibc`.
 pub struct WeightInfo<T>(PhantomData<T>);
-impl<T: frame_system::Config> crate::WeightInfo for WeightInfo<T> {
+impl<T: frame_system::Config> pallet_ibc::WeightInfo for WeightInfo<T> {
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Ibc CounterForClients (r:1 w:1)
 	// Storage: Timestamp Now (r:1 w:0)

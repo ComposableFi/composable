@@ -66,6 +66,7 @@ where
 			+ ExtendWithPabloApi<RuntimeApi, Executor>
 			+ ExtendWithLendingApi<RuntimeApi, Executor>,
 {
+	use ibc_rpc::{IbcApiServer, IbcRpcHandler};
 	use pallet_transaction_payment_rpc::{TransactionPaymentApiServer, TransactionPaymentRpc};
 	use substrate_frame_rpc_system::{SystemApiServer, SystemRpc};
 
@@ -75,10 +76,7 @@ where
 
 	io.merge(TransactionPaymentRpc::new(deps.client.clone()).into_rpc())?;
 
-	io.extend_with(ibc_rpc::IbcApi::to_delegate(ibc_rpc::IbcRpcHandler::new(
-		deps.client.clone(),
-		deps.chain_props,
-	)));
+	io.merge(IbcRpcHandler::new(deps.client.clone(), deps.chain_props.clone()).into_rpc())?;
 
 	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_assets_api(
 		&mut io,

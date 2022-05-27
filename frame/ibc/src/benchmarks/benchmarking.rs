@@ -7,7 +7,7 @@ use crate::{
 	pallet::Pallet as PalletIbc, Any, Config,
 };
 use core::str::FromStr;
-use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
+use frame_benchmarking::{benchmarks, whitelisted_caller};
 use frame_support::traits::Hooks;
 use frame_system::RawOrigin;
 use ibc::{
@@ -871,5 +871,3 @@ benchmarks! {
 		assert_eq!(commitment_roots.len(), 1);
 	}
 }
-
-// impl_benchmark_test_suite!(PalletIbc, crate::mock::new_test_ext(), crate::mock::Test,);

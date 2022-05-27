@@ -83,7 +83,6 @@ mod tests;
 mod impls;
 pub mod runtime_interface;
 pub mod weight;
-pub mod weights;
 pub use weight::WeightInfo;
 
 #[frame_support::pallet]
