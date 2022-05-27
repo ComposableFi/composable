@@ -318,9 +318,9 @@ dependencies = [
 
 [[package]]
 name = "async-io"
-version = "1.6.0"
+version = "1.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a811e6a479f2439f0c04038796b5cfb3d2ad56c230e0f2d3f7b04d68cfee607b"
+checksum = "e5e18f61464ae81cde0a23e713ae8fd299580c54d697a35820cfd0625b8b0e07"
 dependencies = [
  "concurrent-queue",
  "futures-lite",
@@ -594,9 +594,9 @@ checksum = "904dfeac50f3cdaba28fc6f57fdcddb75f49ed61346676a78c4ffe55877802fd"
 
 [[package]]
 name = "beef"
-version = "0.5.1"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bed554bd50246729a1ec158d08aa3235d1b69d94ad120ebe187e28894787e736"
+checksum = "3a8241f3ebb85c056b509d4327ad0358fbbba6ffb340bf388f26350aeda225b1"
 dependencies = [
  "serde",
 ]
@@ -2723,6 +2723,7 @@ dependencies = [
  "pallet-collective",
  "pallet-crowdloan-rewards",
  "pallet-currency-factory",
+ "pallet-democracy 0.0.1",
  "pallet-democracy 4.0.0-dev",
  "pallet-dex-router",
  "pallet-dutch-auction",
@@ -4895,9 +4896,9 @@ dependencies = [
 
 [[package]]
 name = "keccak"
-version = "0.1.0"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "67c21572b4949434e4fc1e1978b99c5f77064153c59d998bf13ecd96fb5ecba7"
+checksum = "f9b7d56ba4a8344d6be9729995e6b06f928af29998cdf79fe390cbf6b1fee838"
 
 [[package]]
 name = "kernel32-sys"
@@ -5319,7 +5320,7 @@ dependencies = [
  "libp2p-core",
  "libp2p-swarm",
  "log 0.4.17",
- "lru 0.7.5",
+ "lru 0.7.6",
  "prost",
  "prost-build",
  "smallvec 1.8.0",
@@ -5907,9 +5908,9 @@ dependencies = [
 
 [[package]]
 name = "lru"
-version = "0.7.5"
+version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32613e41de4c47ab04970c348ca7ae7382cf116625755af070b008a15516a889"
+checksum = "8015d95cb7b2ddd3c0d32ca38283ceb1eea09b4713ee380bceb942d85a244228"
 dependencies = [
  "hashbrown 0.11.2",
 ]
@@ -6587,9 +6588,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.11.0"
+version = "1.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7b10983b38c53aebdf33f542c6275b0f58a238129d00c4ae0e6fb59738d783ca"
+checksum = "7709cef83f0c1f58f666e746a08b21e0085f7440fa6a29cc194d68aac97a4225"
 
 [[package]]
 name = "opaque-debug"
@@ -6755,9 +6756,9 @@ dependencies = [
 
 [[package]]
 name = "os_str_bytes"
-version = "6.0.1"
+version = "6.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "029d8d0b2f198229de29dca79676f2738ff952edf3fde542eb8bf94d8c21b435"
+checksum = "21326818e99cfe6ce1e524c2a805c189a99b5ae555a35d19f9a284b427d86afa"
 
 [[package]]
 name = "owning_ref"
@@ -8899,7 +8900,7 @@ dependencies = [
  "derive_more",
  "fatality",
  "futures 0.3.21",
- "lru 0.7.5",
+ "lru 0.7.6",
  "parity-scale-codec",
  "polkadot-erasure-coding",
  "polkadot-node-network-protocol",
@@ -8921,7 +8922,7 @@ source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.22#17c7
 dependencies = [
  "fatality",
  "futures 0.3.21",
- "lru 0.7.5",
+ "lru 0.7.6",
  "parity-scale-codec",
  "polkadot-erasure-coding",
  "polkadot-node-network-protocol",
@@ -9043,7 +9044,7 @@ dependencies = [
  "derive_more",
  "fatality",
  "futures 0.3.21",
- "lru 0.7.5",
+ "lru 0.7.6",
  "parity-scale-codec",
  "polkadot-erasure-coding",
  "polkadot-node-network-protocol",
@@ -9141,7 +9142,7 @@ dependencies = [
  "futures 0.3.21",
  "futures-timer",
  "kvdb",
- "lru 0.7.5",
+ "lru 0.7.6",
  "merlin",
  "parity-scale-codec",
  "polkadot-node-jaeger",
@@ -9272,7 +9273,7 @@ dependencies = [
  "fatality",
  "futures 0.3.21",
  "kvdb",
- "lru 0.7.5",
+ "lru 0.7.6",
  "parity-scale-codec",
  "polkadot-node-primitives",
  "polkadot-node-subsystem",
@@ -9501,7 +9502,7 @@ dependencies = [
  "futures 0.3.21",
  "itertools",
  "kvdb",
- "lru 0.7.5",
+ "lru 0.7.6",
  "metered-channel",
  "parity-db",
  "parity-scale-codec",
@@ -9530,7 +9531,7 @@ source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.22#17c7
 dependencies = [
  "futures 0.3.21",
  "futures-timer",
- "lru 0.7.5",
+ "lru 0.7.6",
  "parity-util-mem",
  "parking_lot 0.12.0",
  "polkadot-node-metrics",
@@ -9881,7 +9882,7 @@ dependencies = [
  "kusama-runtime",
  "kvdb",
  "kvdb-rocksdb",
- "lru 0.7.5",
+ "lru 0.7.6",
  "pallet-babe",
  "pallet-im-online",
  "pallet-staking",
@@ -11577,7 +11578,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22#616d33ea23bab86cafffaf116fc607b6790fb4eb"
 dependencies = [
  "lazy_static",
- "lru 0.7.5",
+ "lru 0.7.6",
  "parity-scale-codec",
  "parking_lot 0.12.0",
  "sc-executor-common",
@@ -11762,7 +11763,7 @@ dependencies = [
  "linked-hash-map",
  "linked_hash_set",
  "log 0.4.17",
- "lru 0.7.5",
+ "lru 0.7.6",
  "parity-scale-codec",
  "parking_lot 0.12.0",
  "pin-project 1.0.10",
@@ -11815,7 +11816,7 @@ dependencies = [
  "futures-timer",
  "libp2p",
  "log 0.4.17",
- "lru 0.7.5",
+ "lru 0.7.6",
  "sc-network",
  "sp-runtime",
  "substrate-prometheus-endpoint",
@@ -11833,7 +11834,7 @@ dependencies = [
  "futures 0.3.21",
  "libp2p",
  "log 0.4.17",
- "lru 0.7.5",
+ "lru 0.7.6",
  "parity-scale-codec",
  "prost",
  "prost-build",
@@ -12985,7 +12986,7 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22#
 dependencies = [
  "futures 0.3.21",
  "log 0.4.17",
- "lru 0.7.5",
+ "lru 0.7.6",
  "parity-scale-codec",
  "parking_lot 0.12.0",
  "sp-api",
@@ -13607,9 +13608,9 @@ checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
 
 [[package]]
 name = "ss58-registry"
-version = "1.18.0"
+version = "1.20.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ceb8b72a924ccfe7882d0e26144c114503760a4d1248bb5cd06c8ab2d55404cc"
+checksum = "5e1e7c268f5610088463d23188fc9e764cda491784360e5e4ea3a8ce1e0e2ac9"
 dependencies = [
  "Inflector",
  "num-format",
@@ -14100,9 +14101,9 @@ checksum = "55937e1799185b12863d447f42597ed69d9928686b8d88a1df17376a097d8369"
 
 [[package]]
 name = "target-lexicon"
-version = "0.12.3"
+version = "0.12.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7fa7e55043acb85fca6b3c01485a2eeb6b69c5d21002e273c79e465f43b7ac1"
+checksum = "c02424087780c9b71cc96799eaeddff35af2bc513278cda5c99fc1f5d026d3c1"
 
 [[package]]
 name = "tempfile"
@@ -14620,7 +14621,7 @@ dependencies = [
  "ahash",
  "lazy_static",
  "log 0.4.17",
- "lru 0.7.5",
+ "lru 0.7.6",
  "tracing-core",
 ]
 

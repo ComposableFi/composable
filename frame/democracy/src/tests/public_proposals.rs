@@ -1,6 +1,6 @@
 // This file is part of Substrate.
 
-// Copyright (C) 2017-2021 Parity Technologies (UK) Ltd.
+// Copyright (C) 2017-2022 Parity Technologies (UK) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,20 +35,6 @@ fn backing_for_should_work() {
 fn deposit_for_proposals_should_be_taken() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(propose_set_balance_and_note(1, 2, 5));
-		assert_ok!(Democracy::second(Origin::signed(2), 0, u32::MAX));
-		assert_ok!(Democracy::second(Origin::signed(5), 0, u32::MAX));
-		assert_ok!(Democracy::second(Origin::signed(5), 0, u32::MAX));
-		assert_ok!(Democracy::second(Origin::signed(5), 0, u32::MAX));
-		assert_eq!(Balances::free_balance(1), 5);
-		assert_eq!(Balances::free_balance(2), 15);
-		assert_eq!(Balances::free_balance(5), 35);
-	});
-}
-
-#[test]
-fn deposit_for_proposals_with_asset_should_be_taken() {
-	new_test_ext().execute_with(|| {
-		assert_ok!(propose_set_balance_and_note_and_asset(1, 2, DOT_ASSET, 5));
 		assert_ok!(Democracy::second(Origin::signed(2), 0, u32::MAX));
 		assert_ok!(Democracy::second(Origin::signed(5), 0, u32::MAX));
 		assert_ok!(Democracy::second(Origin::signed(5), 0, u32::MAX));
@@ -129,8 +115,8 @@ fn blacklisting_should_work() {
 		assert_ok!(propose_set_balance_and_note(1, 2, 2));
 		assert_ok!(propose_set_balance_and_note(1, 4, 4));
 
-		assert_noop!(Democracy::blacklist(Origin::signed(1), hash, DEFAULT_ASSET, None), BadOrigin);
-		assert_ok!(Democracy::blacklist(Origin::root(), hash, DEFAULT_ASSET, None));
+		assert_noop!(Democracy::blacklist(Origin::signed(1), hash.clone(), None), BadOrigin);
+		assert_ok!(Democracy::blacklist(Origin::root(), hash, None));
 
 		assert_eq!(Democracy::backing_for(0), None);
 		assert_eq!(Democracy::backing_for(1), Some(4));
@@ -141,7 +127,7 @@ fn blacklisting_should_work() {
 
 		let hash = set_balance_proposal_hash(4);
 		assert_ok!(Democracy::referendum_status(0));
-		assert_ok!(Democracy::blacklist(Origin::root(), hash, DEFAULT_ASSET, Some(0)));
+		assert_ok!(Democracy::blacklist(Origin::root(), hash, Some(0)));
 		assert_noop!(Democracy::referendum_status(0), Error::<Test>::ReferendumInvalid);
 	});
 }
