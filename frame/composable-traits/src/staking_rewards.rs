@@ -12,7 +12,7 @@ use sp_runtime::{
 	DispatchError, Perbill, SaturatedConversion,
 };
 use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
-use std::marker::PhantomData;
+use sp_std::marker::PhantomData;
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Encode, Decode, TypeInfo)]
 pub enum PositionState {
