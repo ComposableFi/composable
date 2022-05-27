@@ -674,7 +674,7 @@ dependencies = [
 [[package]]
 name = "beefy-generic-client"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/beefy-client?branch=david/refactor-traits#84f0afc9a692015a7a08618afd26474e4a92c557"
+source = "git+https://github.com/ComposableFi/beefy-client?branch=master#c8ef22e646f9eb33d66ac83e6fdad808b76aa4ed"
 dependencies = [
  "beefy-primitives",
  "ckb-merkle-mountain-range",
@@ -1586,6 +1586,7 @@ dependencies = [
  "pablo-runtime-api",
  "pallet-assets 0.0.1",
  "pallet-crowdloan-rewards",
+ "pallet-ibc",
  "pallet-transaction-payment-rpc",
  "pallet-transaction-payment-rpc-runtime-api",
  "parity-scale-codec",
@@ -4468,7 +4469,7 @@ dependencies = [
 [[package]]
 name = "ibc"
 version = "0.14.1"
-source = "git+https://github.com/ComposableFi/ibc-rs?branch=master#008ed066faf51120b9a9e7071fac829a129e599d"
+source = "git+https://github.com/ComposableFi/ibc-rs?branch=master#635ff9812ab06f4475768c42eccb07f7daacd642"
 dependencies = [
  "beefy-generic-client",
  "beefy-primitives",
@@ -4505,7 +4506,7 @@ dependencies = [
  "derive_more",
  "flex-error",
  "ibc-proto",
- "ics23 0.8.0-alpha",
+ "ics23",
  "num-traits",
  "parity-scale-codec",
  "prost 0.10.4",
@@ -4544,7 +4545,7 @@ dependencies = [
 [[package]]
 name = "ibc-proto"
 version = "0.17.1"
-source = "git+https://github.com/ComposableFi/ibc-rs?branch=master#008ed066faf51120b9a9e7071fac829a129e599d"
+source = "git+https://github.com/ComposableFi/ibc-rs?branch=master#635ff9812ab06f4475768c42eccb07f7daacd642"
 dependencies = [
  "base64 0.13.0",
  "bytes 1.1.0",
@@ -4610,22 +4611,6 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-std 4.0.0",
-]
-
-[[package]]
-name = "ics23"
-version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d454cc0a22bd556cc3d3c69f9d75a392a36244634840697a4b9eb81bc5c8ae0"
-dependencies = [
- "anyhow",
- "bytes 1.1.0",
- "hex",
- "prost 0.9.0",
- "ripemd160",
- "sha2 0.9.9",
- "sha3 0.9.1",
- "sp-std 3.0.0",
 ]
 
 [[package]]
@@ -7861,14 +7846,14 @@ dependencies = [
  "ibc-primitives",
  "ibc-proto",
  "ibc-trait",
- "ics23 0.7.0",
+ "ics23",
  "log 0.4.17",
  "pallet-balances",
  "pallet-ibc-ping",
  "pallet-timestamp",
  "parachain-info",
  "parity-scale-codec",
- "prost 0.9.0",
+ "prost 0.10.4",
  "scale-info",
  "serde",
  "sha2 0.9.9",
@@ -13391,11 +13376,11 @@ checksum = "cc47a29ce97772ca5c927f75bac34866b16d64e07f330c3248e2d7226623901b"
 [[package]]
 name = "simple-iavl"
 version = "0.1.0"
-source = "git+https://github.com/Wizdave97/simple-avl#cde3b7f7bba68ba3ec36bb278af5f2c15e24392a"
+source = "git+https://github.com/Wizdave97/simple-avl#2e19515bd19a87db4abd9a3b6affc7541dd6e56d"
 dependencies = [
  "bytes 1.1.0",
- "ics23 0.7.0",
- "sha2 0.9.9",
+ "ics23",
+ "sha2 0.10.2",
  "tendermint",
 ]
 
@@ -15560,7 +15545,7 @@ version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4ee73e6e4924fe940354b8d4d98cad5231175d615cd855b758adc658c0aac6a0"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.3",
  "rand 0.6.5",
  "static_assertions",

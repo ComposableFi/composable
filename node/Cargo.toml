@@ -24,6 +24,7 @@ picasso-runtime = { path = "../runtime/picasso" }
 primitives = { path = "../runtime/primitives" }
 ibc-runtime-api = { path = "../frame/ibc/ibc-runtime-api" }
 ibc-rpc = { path = "../frame/ibc/ibc-rpc" }
+pallet-ibc = { path = "../frame/ibc" }
 
 pallet-assets = { path = "../frame/assets" }
 pallet-crowdloan-rewards = { path = "../frame/crowdloan-rewards" }

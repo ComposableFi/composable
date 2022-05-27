@@ -11,9 +11,14 @@ extern crate core;
 
 use codec::{Decode, Encode};
 use frame_system::ensure_signed;
+use ibc::core::ics03_connection::msgs::conn_open_init::TYPE_URL as CONNECTION_OPEN_INIT_TYPE_URL;
 pub use pallet::*;
 use scale_info::{
-	prelude::{format, string::String, vec},
+	prelude::{
+		format,
+		string::{String, ToString},
+		vec,
+	},
 	TypeInfo,
 };
 use sp_runtime::RuntimeDebug;
@@ -37,7 +42,7 @@ pub struct Any {
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ConnectionParams {
 	/// A vector of (identifer, features) all encoded as Utf8 string bytes
-	pub versions: Vec<(Vec<u8>, Vec<Vec<u8>>)>,
+	pub version: (Vec<u8>, Vec<Vec<u8>>),
 	/// Utf8 client_id bytes
 	pub client_id: Vec<u8>,
 	/// Counterparty client id
@@ -64,7 +69,7 @@ pub struct IbcConsensusState {
 
 impl Default for IbcConsensusState {
 	fn default() -> Self {
-		Self { timestamp: 0, root: vec![] }
+		Self { timestamp: 1, root: vec![] }
 	}
 }
 
@@ -79,6 +84,7 @@ mod impls;
 pub mod runtime_interface;
 pub mod weight;
 pub mod weights;
+pub use weight::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -90,19 +96,21 @@ pub mod pallet {
 		traits::{Currency, UnixTime},
 	};
 	use frame_system::pallet_prelude::*;
-	use ibc::core::{
-		ics03_connection::{
-			connection::{ConnectionEnd, Counterparty, State},
-			context::ConnectionKeeper,
-			version::Version,
+	use ibc::{
+		core::{
+			ics03_connection::{
+				connection::Counterparty, msgs::conn_open_init::MsgConnectionOpenInit,
+				version::Version,
+			},
+			ics23_commitment::commitment::CommitmentPrefix,
 		},
-		ics23_commitment::commitment::CommitmentPrefix,
-		ics24_host::identifier::ConnectionId,
+		signer::Signer,
 	};
 
-	use crate::weight::WeightInfo;
+	use crate::host_functions::HostFunctions;
 	use ibc_trait::client_id_from_bytes;
 	use sp_runtime::{generic::DigestItem, SaturatedConversion};
+	use tendermint_proto::Protobuf;
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
@@ -337,10 +345,14 @@ pub mod pallet {
 
 			let result = messages
 				.into_iter()
-				.map(|msg| ibc::core::ics26_routing::handler::deliver::<_, host_functions::HostFunctions>(&mut ctx, msg))
+				.map(|msg| {
+					ibc::core::ics26_routing::handler::deliver::<_, host_functions::HostFunctions>(
+						&mut ctx, msg,
+					)
+				})
 				.collect::<Result<Vec<_>, _>>()
 				.map_err(|e| {
-					log::info!("{:?}", e);
+					log::error!("{:?}", e);
 					Error::<T>::ProcessingError
 				})?;
 
@@ -360,38 +372,41 @@ pub mod pallet {
 			}
 			let client_id =
 				client_id_from_bytes(params.client_id).map_err(|_| Error::<T>::DecodingError)?;
-			let connection_id = ConnectionId::new(Connections::<T>::count() as u64);
 			let counterparty_client_id = client_id_from_bytes(params.counterparty_client_id)
 				.map_err(|_| Error::<T>::DecodingError)?;
-			let versions = params
-				.versions
+			let identifier = params.version.0;
+			let features = params.version.1;
+			let identifier =
+				String::from_utf8(identifier).map_err(|_| Error::<T>::DecodingError)?;
+			let features = features
 				.into_iter()
-				.map(|(identifier, features)| {
-					let identifier =
-						String::from_utf8(identifier).map_err(|_| Error::<T>::DecodingError)?;
-					let features = features
-						.into_iter()
-						.map(|feat| String::from_utf8(feat))
-						.collect::<Result<Vec<_>, _>>()
-						.map_err(|_| Error::<T>::DecodingError)?;
-					let raw_version =
-						ibc_proto::ibc::core::connection::v1::Version { identifier, features };
-					let version: Version =
-						raw_version.try_into().map_err(|_| Error::<T>::DecodingError)?;
-					Ok(version)
-				})
-				.collect::<Result<Vec<_>, Error<T>>>()?;
+				.map(|feat| String::from_utf8(feat))
+				.collect::<Result<Vec<_>, _>>()
+				.map_err(|_| Error::<T>::DecodingError)?;
+			let raw_version =
+				ibc_proto::ibc::core::connection::v1::Version { identifier, features };
+			let version: Version = raw_version.try_into().map_err(|_| Error::<T>::DecodingError)?;
+
 			let commitment_prefix: CommitmentPrefix =
 				params.commitment_prefix.try_into().map_err(|_| Error::<T>::DecodingError)?;
 			let counterparty = Counterparty::new(counterparty_client_id, None, commitment_prefix);
-			let delay = core::time::Duration::from_nanos(params.delay_period);
-			let connection_end =
-				ConnectionEnd::new(State::Init, client_id.clone(), counterparty, versions, delay);
+			let delay_period = core::time::Duration::from_nanos(params.delay_period);
+			let value = MsgConnectionOpenInit {
+				client_id,
+				counterparty,
+				version: Some(version),
+				delay_period,
+				signer: Signer::new(""),
+			}
+			.encode_vec()
+			.unwrap();
+			let msg = ibc_proto::google::protobuf::Any {
+				type_url: CONNECTION_OPEN_INIT_TYPE_URL.to_string(),
+				value,
+			};
 			let mut ctx = routing::Context::<T>::new();
-			ctx.store_connection(connection_id.clone(), &connection_end)
-				.map_err(|_| Error::<T>::Other)?;
-			ctx.store_connection_to_client(connection_id, &client_id)
-				.map_err(|_| Error::<T>::Other)?;
+			ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg)
+				.map_err(|_| Error::<T>::ProcessingError)?;
 			Self::deposit_event(Event::<T>::ConnectionInitiated);
 			Ok(())
 		}

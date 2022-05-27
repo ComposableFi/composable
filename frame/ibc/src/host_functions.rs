@@ -18,7 +18,9 @@ impl HostFunctionsProvider for HostFunctions {
 	}
 
 	fn secp256k1_ecdsa_recover_compressed(signature: &[u8; 65], msg: &[u8; 32]) -> Option<Vec<u8>> {
-		sp_io::crypto::secp256k1_ecdsa_recover_compressed(signature, msg).ok().map(|pub_key| pub_key.to_vec())
+		sp_io::crypto::secp256k1_ecdsa_recover_compressed(signature, msg)
+			.ok()
+			.map(|pub_key| pub_key.to_vec())
 	}
 
 	fn ed25519_recover(_signature: &[u8; 64], _value: &[u8; 32]) -> Option<Vec<u8>> {

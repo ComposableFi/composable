@@ -34,7 +34,7 @@ fn initialize_connection() {
 		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
 		let msg = MsgCreateAnyClient::new(
 			AnyClientState::Mock(mock_client_state),
-			AnyConsensusState::Mock(mock_cs_state),
+			Some(AnyConsensusState::Mock(mock_cs_state)),
 			Signer::new("relayer"),
 		)
 		.unwrap()
@@ -46,13 +46,13 @@ fn initialize_connection() {
 		assert_ok!(Ibc::deliver(Origin::signed(1u64).into(), vec![msg]));
 
 		let params = ConnectionParams {
-			versions: vec![(
+			version: (
 				"1".as_bytes().to_vec(),
 				vec![
 					Order::Ordered.as_str().as_bytes().to_vec(),
 					Order::Unordered.as_str().as_bytes().to_vec(),
 				],
-			)],
+			),
 			client_id: client_id.as_bytes().to_vec(),
 			counterparty_client_id: counterparty_client_id.as_bytes().to_vec(),
 			commitment_prefix: "ibc".as_bytes().to_vec(),
@@ -66,15 +66,13 @@ fn initialize_connection() {
 #[test]
 fn should_open_a_channel() {
 	new_test_ext().execute_with(|| {
-		assert_ok!(Ping::bind_ibc_port(Origin::root()));
-
 		let mock_client_state = MockClientState::new(MockHeader::default());
 		let mock_cs_state = MockConsensusState::new(MockHeader::default());
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
 		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
 		let msg = MsgCreateAnyClient::new(
 			AnyClientState::Mock(mock_client_state),
-			AnyConsensusState::Mock(mock_cs_state),
+			Some(AnyConsensusState::Mock(mock_cs_state)),
 			Signer::new("relayer"),
 		)
 		.unwrap()
@@ -86,13 +84,13 @@ fn should_open_a_channel() {
 		assert_ok!(Ibc::deliver(Origin::signed(1u64).into(), vec![msg]));
 
 		let params = ConnectionParams {
-			versions: vec![(
+			version: (
 				"1".as_bytes().to_vec(),
 				vec![
 					Order::Ordered.as_str().as_bytes().to_vec(),
 					Order::Unordered.as_str().as_bytes().to_vec(),
 				],
-			)],
+			),
 			client_id: client_id.as_bytes().to_vec(),
 			counterparty_client_id: counterparty_client_id.as_bytes().to_vec(),
 			commitment_prefix: "ibc".as_bytes().to_vec(),
@@ -117,7 +115,6 @@ fn should_open_a_channel() {
 fn should_send_ping_packet() {
 	let mut ext = new_test_ext();
 	ext.execute_with(|| {
-		assert_ok!(Ping::bind_ibc_port(Origin::root()));
 		frame_system::Pallet::<Test>::set_block_number(1u32.into());
 
 		let mock_client_state = MockClientState::new(MockHeader::new(Height::new(0, 1)));
@@ -126,7 +123,7 @@ fn should_send_ping_packet() {
 		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
 		let msg = MsgCreateAnyClient::new(
 			AnyClientState::Mock(mock_client_state),
-			AnyConsensusState::Mock(mock_cs_state),
+			Some(AnyConsensusState::Mock(mock_cs_state)),
 			Signer::new("relayer"),
 		)
 		.unwrap()
@@ -138,13 +135,13 @@ fn should_send_ping_packet() {
 		assert_ok!(Ibc::deliver(Origin::signed(1u64).into(), vec![msg]));
 
 		let params = ConnectionParams {
-			versions: vec![(
+			version: (
 				"1".as_bytes().to_vec(),
 				vec![
 					Order::Ordered.as_str().as_bytes().to_vec(),
 					Order::Unordered.as_str().as_bytes().to_vec(),
 				],
-			)],
+			),
 			client_id: client_id.as_bytes().to_vec(),
 			counterparty_client_id: counterparty_client_id.as_bytes().to_vec(),
 			commitment_prefix: "ibc".as_bytes().to_vec(),
@@ -153,6 +150,7 @@ fn should_send_ping_packet() {
 
 		assert_ok!(Ibc::initiate_connection(Origin::root(), params));
 
+		crate::Pallet::<Test>::insert_default_consensus_state(1);
 		// Acknowledge connection so it's state is open
 		let value = conn_open_ack::MsgConnectionOpenAck {
 			connection_id: ConnectionId::new(0),

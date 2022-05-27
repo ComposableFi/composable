@@ -70,7 +70,10 @@ pub struct DaliExecutor;
 
 #[cfg(feature = "dali")]
 impl sc_executor::NativeExecutionDispatch for DaliExecutor {
-	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+	type ExtendHostFunctions = (
+		frame_benchmarking::benchmarking::HostFunctions,
+		pallet_ibc::runtime_interface::trie::HostFunctions,
+	);
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		dali_runtime::api::dispatch(method, data)

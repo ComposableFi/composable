@@ -2,10 +2,16 @@ use crate::{routing::Context, Config};
 use core::{str::FromStr, time::Duration};
 use frame_support::traits::Get;
 use ibc::{
-	clients::ics07_tendermint::{
-		client_state::{AllowUpdate, ClientState as TendermintClientState},
-		consensus_state::ConsensusState,
-		header::Header,
+	clients::{
+		ics07_tendermint::{
+			client_state::{AllowUpdate, ClientState as TendermintClientState},
+			consensus_state::ConsensusState,
+			header::Header,
+		},
+		ics11_beefy::{
+			client_state::ClientState as BeefyClientState,
+			consensus_state::ConsensusState as BeefyConsensusState,
+		},
 	},
 	core::{
 		ics02_client::{
@@ -119,6 +125,23 @@ pub fn create_mock_state() -> (TendermintClientState, ConsensusState) {
 	(mock_client_state, mock_cs_state)
 }
 
+pub fn create_mock_beefy_client_state() -> (BeefyClientState, BeefyConsensusState) {
+	let client_state = BeefyClientState {
+		chain_id: Default::default(),
+		mmr_root_hash: Default::default(),
+		latest_beefy_height: 1,
+		frozen_height: None,
+		beefy_activation_block: 0,
+		authority: Default::default(),
+		next_authority_set: Default::default(),
+	};
+
+	let timestamp = ibc::timestamp::Timestamp::from_nanoseconds(1).unwrap();
+	let timestamp = timestamp.into_tm_time().unwrap();
+	let cs_state = BeefyConsensusState { timestamp, root: vec![].into() };
+	(client_state, cs_state)
+}
+
 pub fn create_client_update() -> MsgUpdateAnyClient {
 	MsgUpdateAnyClient {
 		client_id: ClientId::new(ClientType::Tendermint, 0).unwrap(),
@@ -137,7 +160,7 @@ pub fn create_client_update() -> MsgUpdateAnyClient {
 // Creates a MsgConnectionOpenTry from a tendermint chain submitted to a substrate chain
 pub fn create_conn_open_try<T: Config>() -> (ConsensusState, MsgConnectionOpenTry) {
 	let client_id = ClientId::new(ClientType::Tendermint, 0).unwrap();
-	let counterparty_client_id = ClientId::new(ClientType::Tendermint, 1).unwrap();
+	let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
 	let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
 	let chain_a_counterparty = Counterparty::new(
 		counterparty_client_id.clone(),
@@ -155,7 +178,8 @@ pub fn create_conn_open_try<T: Config>() -> (ConsensusState, MsgConnectionOpenTr
 		vec![ConnVersion::default()],
 		delay_period,
 	);
-	let (client_state, cs_state) = create_mock_state();
+	crate::Pallet::<T>::insert_default_consensus_state(1);
+	let (client_state, cs_state) = create_mock_beefy_client_state();
 	let consensus_path = format!(
 		"{}",
 		ClientConsensusStatePath {
@@ -170,13 +194,11 @@ pub fn create_conn_open_try<T: Config>() -> (ConsensusState, MsgConnectionOpenTr
 	let client_path = format!("{}", ClientStatePath(counterparty_client_id)).as_bytes().to_vec();
 	let path = format!("{}", ConnectionsPath(ConnectionId::new(1))).as_bytes().to_vec();
 	avl_tree.insert(path.clone(), connection_end.encode_vec().unwrap());
-	avl_tree.insert(
-		consensus_path.clone(),
-		AnyConsensusState::Tendermint(cs_state).encode_vec().unwrap(),
-	);
+	avl_tree
+		.insert(consensus_path.clone(), AnyConsensusState::Beefy(cs_state).encode_vec().unwrap());
 	avl_tree.insert(
 		client_path.clone(),
-		AnyClientState::Tendermint(client_state.clone()).encode_vec().unwrap(),
+		AnyClientState::Beefy(client_state.clone()).encode_vec().unwrap(),
 	);
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
@@ -223,7 +245,7 @@ pub fn create_conn_open_try<T: Config>() -> (ConsensusState, MsgConnectionOpenTr
 		MsgConnectionOpenTry {
 			previous_connection_id: Some(ConnectionId::new(0)),
 			client_id,
-			client_state: Some(AnyClientState::Tendermint(client_state)),
+			client_state: Some(AnyClientState::Beefy(client_state)),
 			counterparty: chain_a_counterparty,
 			counterparty_versions: vec![ConnVersion::default()],
 			proofs: Proofs::new(
@@ -248,7 +270,7 @@ pub fn create_conn_open_try<T: Config>() -> (ConsensusState, MsgConnectionOpenTr
 
 pub fn create_conn_open_ack<T: Config>() -> (ConsensusState, MsgConnectionOpenAck) {
 	let client_id = ClientId::new(ClientType::Tendermint, 0).unwrap();
-	let counterparty_client_id = ClientId::new(ClientType::Tendermint, 1).unwrap();
+	let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
 	let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
 	let delay_period = core::time::Duration::from_nanos(1000);
 	let chain_b_connection_counterparty =
@@ -261,8 +283,8 @@ pub fn create_conn_open_ack<T: Config>() -> (ConsensusState, MsgConnectionOpenAc
 		vec![ConnVersion::default()],
 		delay_period,
 	);
-
-	let (client_state, cs_state) = create_mock_state();
+	crate::Pallet::<T>::insert_default_consensus_state(1);
+	let (client_state, cs_state) = create_mock_beefy_client_state();
 	let consensus_path = format!(
 		"{}",
 		ClientConsensusStatePath {
@@ -277,13 +299,11 @@ pub fn create_conn_open_ack<T: Config>() -> (ConsensusState, MsgConnectionOpenAc
 	let client_path = format!("{}", ClientStatePath(counterparty_client_id)).as_bytes().to_vec();
 	let path = format!("{}", ConnectionsPath(ConnectionId::new(1))).as_bytes().to_vec();
 	avl_tree.insert(path.clone(), connection_end.encode_vec().unwrap());
-	avl_tree.insert(
-		consensus_path.clone(),
-		AnyConsensusState::Tendermint(cs_state).encode_vec().unwrap(),
-	);
+	avl_tree
+		.insert(consensus_path.clone(), AnyConsensusState::Beefy(cs_state).encode_vec().unwrap());
 	avl_tree.insert(
 		client_path.clone(),
-		AnyClientState::Tendermint(client_state.clone()).encode_vec().unwrap(),
+		AnyClientState::Beefy(client_state.clone()).encode_vec().unwrap(),
 	);
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
@@ -330,7 +350,7 @@ pub fn create_conn_open_ack<T: Config>() -> (ConsensusState, MsgConnectionOpenAc
 		MsgConnectionOpenAck {
 			connection_id: ConnectionId::new(0),
 			counterparty_connection_id: ConnectionId::new(1),
-			client_state: Some(AnyClientState::Tendermint(client_state)),
+			client_state: Some(AnyClientState::Beefy(client_state)),
 			proofs: Proofs::new(
 				buf.try_into().unwrap(),
 				Some(client_buf.try_into().unwrap()),
@@ -353,7 +373,7 @@ pub fn create_conn_open_ack<T: Config>() -> (ConsensusState, MsgConnectionOpenAc
 
 pub fn create_conn_open_confirm<T: Config>() -> (ConsensusState, MsgConnectionOpenConfirm) {
 	let client_id = ClientId::new(ClientType::Tendermint, 0).unwrap();
-	let counterparty_client_id = ClientId::new(ClientType::Tendermint, 1).unwrap();
+	let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
 	let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
 	let delay_period = core::time::Duration::from_nanos(1000);
 	let chain_b_connection_counterparty =
@@ -366,8 +386,8 @@ pub fn create_conn_open_confirm<T: Config>() -> (ConsensusState, MsgConnectionOp
 		vec![ConnVersion::default()],
 		delay_period,
 	);
-
-	let (.., cs_state) = create_mock_state();
+	crate::Pallet::<T>::insert_default_consensus_state(1);
+	let (.., cs_state) = create_mock_beefy_client_state();
 	let consensus_path = format!(
 		"{}",
 		ClientConsensusStatePath {
@@ -381,10 +401,8 @@ pub fn create_conn_open_confirm<T: Config>() -> (ConsensusState, MsgConnectionOp
 
 	let path = format!("{}", ConnectionsPath(ConnectionId::new(1))).as_bytes().to_vec();
 	avl_tree.insert(path.clone(), connection_end.encode_vec().unwrap());
-	avl_tree.insert(
-		consensus_path.clone(),
-		AnyConsensusState::Tendermint(cs_state).encode_vec().unwrap(),
-	);
+	avl_tree
+		.insert(consensus_path.clone(), AnyConsensusState::Beefy(cs_state).encode_vec().unwrap());
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
@@ -690,11 +708,8 @@ where
 			.unwrap(),
 	};
 	let ctx = Context::<T>::new();
-	let input =
-		format!("{:?},{:?},{:?}", packet.timeout_timestamp, packet.timeout_height, packet.data);
-	let mut commitment_bytes = Vec::new();
-	let commitment = ctx.hash(input);
-	prost::Message::encode(&commitment, &mut commitment_bytes).unwrap();
+	let commitment =
+		ctx.packet_commitment(packet.data.clone(), packet.timeout_height, packet.timeout_timestamp);
 	let mut avl_tree = create_avl();
 	let path = format!(
 		"{}",
@@ -702,7 +717,7 @@ where
 	)
 	.as_bytes()
 	.to_vec();
-	avl_tree.insert(path.clone(), commitment_bytes);
+	avl_tree.insert(path.clone(), commitment.into_vec());
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
@@ -761,20 +776,17 @@ where
 			.unwrap(),
 	};
 	let mut ctx = Context::<T>::new();
-	ctx.store_packet_commitment(
-		(port_id.clone(), ChannelId::new(0), 1.into()),
-		packet.timeout_timestamp.clone(),
-		packet.timeout_height.clone(),
-		data,
-	)
-	.unwrap();
+	let commitment = ctx.packet_commitment(data, packet.timeout_height, packet.timeout_timestamp);
+	ctx.store_packet_commitment((port_id.clone(), ChannelId::new(0), 1.into()), commitment)
+		.unwrap();
+	let ack_commitment = ctx.ack_commitment(ack.clone().into());
 
 	let mut avl_tree = create_avl();
 	let path =
 		format!("{}", AcksPath { port_id, channel_id: ChannelId::new(0), sequence: 1.into() })
 			.as_bytes()
 			.to_vec();
-	avl_tree.insert(path.clone(), ack.clone());
+	avl_tree.insert(path.clone(), ack_commitment.into_vec());
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
@@ -831,13 +843,9 @@ where
 			.unwrap(),
 	};
 	let mut ctx = Context::<T>::new();
-	ctx.store_packet_commitment(
-		(port_id.clone(), ChannelId::new(0), 1.into()),
-		packet.timeout_timestamp.clone(),
-		packet.timeout_height.clone(),
-		data,
-	)
-	.unwrap();
+	let commitment = ctx.packet_commitment(data, packet.timeout_height, packet.timeout_timestamp);
+	ctx.store_packet_commitment((port_id.clone(), ChannelId::new(0), 1.into()), commitment)
+		.unwrap();
 
 	let mut avl_tree = create_avl();
 	let path = format!("{}", SeqRecvsPath(port_id, ChannelId::new(0))).as_bytes().to_vec();

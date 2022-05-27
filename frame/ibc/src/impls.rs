@@ -575,6 +575,18 @@ where
 	}
 }
 
+impl<T: Config> Pallet<T> {
+	#[cfg(any(test, feature = "runtime-benchmarks"))]
+	pub fn insert_default_consensus_state(height: u64) {
+		let state = IbcConsensusState::default();
+		CommitmentRoot::<T>::try_mutate::<_, (), _>(|val| {
+			val.try_insert(height, state).unwrap();
+			Ok(())
+		})
+		.unwrap();
+	}
+}
+
 impl<T: Config + Send + Sync> IbcTrait for Pallet<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
@@ -671,8 +683,10 @@ where
 			type_url: CHANNEL_OPEN_INIT_TYPE_URL.to_string(),
 			value,
 		};
-		ibc::core::ics26_routing::handler::deliver::<_, crate::host_functions::HostFunctions>(&mut ctx, msg)
-			.map_err(|_| IbcHandlerError::ChannelInitError)?;
+		ibc::core::ics26_routing::handler::deliver::<_, crate::host_functions::HostFunctions>(
+			&mut ctx, msg,
+		)
+		.map_err(|_| IbcHandlerError::ChannelInitError)?;
 		Ok(channel_id)
 	}
 }

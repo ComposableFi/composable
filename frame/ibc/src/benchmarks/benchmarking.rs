@@ -3,8 +3,8 @@
 #[allow(unused)]
 use super::super::*;
 use crate::{
-	benchmarks::tendermint_benchmark_utils::*, pallet::Pallet as PalletIbc, routing::Context, Any,
-	Config,
+	benchmarks::tendermint_benchmark_utils::*, host_functions::HostFunctions,
+	pallet::Pallet as PalletIbc, Any, Config,
 };
 use core::str::FromStr;
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
@@ -55,7 +55,6 @@ use ibc::{
 	},
 	signer::Signer,
 };
-use ibc_trait::IbcTrait;
 use scale_info::prelude::string::ToString;
 use sp_std::vec;
 use tendermint_proto::Protobuf;
@@ -73,7 +72,7 @@ benchmarks! {
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
 		let msg = MsgCreateAnyClient::new(
 			AnyClientState::Tendermint(mock_client_state),
-			AnyConsensusState::Tendermint(mock_cs_state),
+			Some(AnyConsensusState::Tendermint(mock_cs_state)),
 			Signer::new("relayer"),
 		)
 		.unwrap()
@@ -100,7 +99,7 @@ benchmarks! {
 		let mock_client_state = AnyClientState::Tendermint(mock_client_state);
 		let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
+		let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
 		ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
 		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
@@ -118,13 +117,13 @@ benchmarks! {
 	}
 
 	// create connection
-	connection_init {
+	connection_open_init {
 		let mut ctx = routing::Context::<T>::new();
 		let (mock_client_state, mock_cs_state) = create_mock_state();
 		let mock_client_state = AnyClientState::Tendermint(mock_client_state);
 		let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
+		let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
 		ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
 		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
@@ -160,7 +159,7 @@ benchmarks! {
 		let mock_client_state = AnyClientState::Tendermint(mock_client_state);
 		let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
+		let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
 		ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
 		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
@@ -181,7 +180,7 @@ benchmarks! {
 		// the proofs that will be submitted
 		let value = create_client_update().encode_vec().unwrap();
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
-		ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
 
 		let (cs_state, value) = create_conn_open_try::<T>();
 		// Update consensus state with the new root that we'll enable proofs to be correctly verified
@@ -194,45 +193,44 @@ benchmarks! {
 		assert_eq!(connection_end.state, State::TryOpen);
 	}
 
-	// Commenting this out pending bug-fix in ibc-rs
 	// connection open ack
-	// conn_open_ack_tendermint {
-	// 	let mut ctx = routing::Context::<T>::new();
-	// 	let now: <T as pallet_timestamp::Config>::Moment = TIMESTAMP.saturating_mul(1000);
-	// 	pallet_timestamp::Pallet::<T>::set_timestamp(now);
-	// 	let (mock_client_state, mock_cs_state) = create_mock_state();
-	// 	let mock_client_state = AnyClientState::Tendermint(mock_client_state);
-	// 	let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
-	// 	let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-	// 	let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
-	// 	ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
-	// 	ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
-	// 	ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
-	//	// Create a connection end and put in storage
-	// 	// Successful processing of a connection open confirm message requires a compatible connection end with state INIT or TRYOPEN
-	// 	// to exist on the local chain
-	// 	let connection_id = ConnectionId::new(0);
-	// 	let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
-	// 	let delay_period = core::time::Duration::from_nanos(1000);
-	// 	let connection_counterparty = Counterparty::new(counterparty_client_id, Some(ConnectionId::new(1)), commitment_prefix);
-	// 	let connection_end = ConnectionEnd::new(State::Init, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
-	//
-	// 	ctx.store_connection(connection_id.clone(), &connection_end).unwrap();
-	// 	ctx.store_connection_to_client(connection_id, &client_id).unwrap();
-	//
-	// 	let value = create_client_update().encode_vec().unwrap();
-	// 	let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
-	// 	ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
-	//
-	// 	let (cs_state, value) = create_conn_open_ack::<T>();
-	// 	ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
-	// 	let caller: T::AccountId = whitelisted_caller();
-	// 	let msg = Any { type_url: CONN_OPEN_ACK_TYPE_URL.as_bytes().to_vec(), value: value.encode_vec().unwrap() };
-	// }: deliver(RawOrigin::Signed(caller), vec![msg])
-	// verify {
-	// 	let connection_end = ConnectionReader::connection_end(&ctx, &ConnectionId::new(0)).unwrap();
-	// 	assert_eq!(connection_end.state, State::Open);
-	// }
+	conn_open_ack_tendermint {
+		let mut ctx = routing::Context::<T>::new();
+		let now: <T as pallet_timestamp::Config>::Moment = TIMESTAMP.saturating_mul(1000);
+		pallet_timestamp::Pallet::<T>::set_timestamp(now);
+		let (mock_client_state, mock_cs_state) = create_mock_state();
+		let mock_client_state = AnyClientState::Tendermint(mock_client_state);
+		let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
+		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
+		let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
+		ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
+		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
+		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
+		// Create a connection end and put in storage
+		// Successful processing of a connection open confirm message requires a compatible connection end with state INIT or TRYOPEN
+		// to exist on the local chain
+		let connection_id = ConnectionId::new(0);
+		let commitment_prefix: CommitmentPrefix = "ibc".as_bytes().to_vec().try_into().unwrap();
+		let delay_period = core::time::Duration::from_nanos(1000);
+		let connection_counterparty = Counterparty::new(counterparty_client_id, Some(ConnectionId::new(1)), commitment_prefix);
+		let connection_end = ConnectionEnd::new(State::Init, client_id.clone(), connection_counterparty, vec![ConnVersion::default()], delay_period);
+
+		ctx.store_connection(connection_id.clone(), &connection_end).unwrap();
+		ctx.store_connection_to_client(connection_id, &client_id).unwrap();
+
+		let value = create_client_update().encode_vec().unwrap();
+		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
+
+		let (cs_state, value) = create_conn_open_ack::<T>();
+		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
+		let caller: T::AccountId = whitelisted_caller();
+		let msg = Any { type_url: CONN_OPEN_ACK_TYPE_URL.as_bytes().to_vec(), value: value.encode_vec().unwrap() };
+	}: deliver(RawOrigin::Signed(caller), vec![msg])
+	verify {
+		let connection_end = ConnectionReader::connection_end(&ctx, &ConnectionId::new(0)).unwrap();
+		assert_eq!(connection_end.state, State::Open);
+	}
 
 	// connection open confirm
 	conn_open_confirm_tendermint {
@@ -243,7 +241,7 @@ benchmarks! {
 		let mock_client_state = AnyClientState::Tendermint(mock_client_state);
 		let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
+		let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
 		ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
 		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
@@ -264,7 +262,7 @@ benchmarks! {
 		// the proofs that will be submitted
 		let value = create_client_update().encode_vec().unwrap();
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
-		ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
 
 		let (cs_state, value) = create_conn_open_confirm::<T>();
 		// Update consensus state with the new root that we'll enable proofs to be correctly verified
@@ -285,7 +283,7 @@ benchmarks! {
 		let mock_client_state = AnyClientState::Tendermint(mock_client_state);
 		let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
+		let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
 		ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
 		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
@@ -314,9 +312,6 @@ benchmarks! {
 			signer: Signer::new("relayer")
 		}.encode_vec().unwrap();
 
-		let capability = PalletIbc::<T>::bind_port(port_id).unwrap();
-		pallet_ibc_ping::Pallet::<T>::set_capability(capability.index());
-
 		let caller: T::AccountId = whitelisted_caller();
 		let msg = Any { type_url: CHAN_OPEN_TYPE_URL.as_bytes().to_vec(), value };
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
@@ -333,7 +328,7 @@ benchmarks! {
 		let mock_client_state = AnyClientState::Tendermint(mock_client_state);
 		let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
+		let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
 		ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
 		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
@@ -351,11 +346,9 @@ benchmarks! {
 		let value = create_client_update().encode_vec().unwrap();
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
-		// Register a port id
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
+
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
-		let capability = PalletIbc::<T>::bind_port(port_id.clone()).unwrap();
-		pallet_ibc_ping::Pallet::<T>::set_capability(capability.index());
 
 		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
 		// Create a channel end with a INIT state
@@ -375,7 +368,7 @@ benchmarks! {
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: CHAN_OPEN_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
 
 		let (cs_state, value) = create_chan_open_try();
 		// Update consensus root for light client
@@ -400,7 +393,7 @@ benchmarks! {
 		let mock_client_state = AnyClientState::Tendermint(mock_client_state);
 		let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
+		let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
 		ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
 		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
@@ -417,11 +410,9 @@ benchmarks! {
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
-		let capability = PalletIbc::<T>::bind_port(port_id.clone()).unwrap();
-		pallet_ibc_ping::Pallet::<T>::set_capability(capability.index());
 
 		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
@@ -440,7 +431,7 @@ benchmarks! {
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: CHAN_OPEN_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
 
 		let (cs_state, value) = create_chan_open_ack();
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
@@ -464,7 +455,7 @@ benchmarks! {
 		let mock_client_state = AnyClientState::Tendermint(mock_client_state);
 		let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
+		let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
 		ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
 		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
@@ -481,11 +472,9 @@ benchmarks! {
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
-		let capability = PalletIbc::<T>::bind_port(port_id.clone()).unwrap();
-		pallet_ibc_ping::Pallet::<T>::set_capability(capability.index());
 
 		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
@@ -521,7 +510,7 @@ benchmarks! {
 		let mock_client_state = AnyClientState::Tendermint(mock_client_state);
 		let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
+		let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
 		ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
 		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
@@ -538,11 +527,9 @@ benchmarks! {
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
-		let capability = PalletIbc::<T>::bind_port(port_id.clone()).unwrap();
-		pallet_ibc_ping::Pallet::<T>::set_capability(capability.index());
 
 		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
@@ -577,7 +564,7 @@ benchmarks! {
 		let mock_client_state = AnyClientState::Tendermint(mock_client_state);
 		let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
+		let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
 		ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
 		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
@@ -594,11 +581,9 @@ benchmarks! {
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
-		let capability = PalletIbc::<T>::bind_port(port_id.clone()).unwrap();
-		pallet_ibc_ping::Pallet::<T>::set_capability(capability.index());
 
 		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
@@ -638,7 +623,7 @@ benchmarks! {
 		let mock_client_state = AnyClientState::Tendermint(mock_client_state);
 		let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
+		let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
 		ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
 		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
@@ -655,13 +640,8 @@ benchmarks! {
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
-
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
-		let capability = PalletIbc::<T>::bind_port(port_id.clone()).unwrap();
-		pallet_ibc_ping::Pallet::<T>::set_capability(capability.index());
-
-
 		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::Open,
@@ -705,7 +685,7 @@ benchmarks! {
 		let mock_client_state = AnyClientState::Tendermint(mock_client_state);
 		let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
+		let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
 		ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
 		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
@@ -722,13 +702,9 @@ benchmarks! {
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
-		let capability = PalletIbc::<T>::bind_port(port_id.clone()).unwrap();
-		pallet_ibc_ping::Pallet::<T>::set_capability(capability.index());
-
-
 		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::Open,
@@ -769,7 +745,7 @@ benchmarks! {
 		let mock_client_state = AnyClientState::Tendermint(mock_client_state);
 		let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
 		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-		let counterparty_client_id = ClientId::new(mock_client_state.client_type(), 1).unwrap();
+		let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
 		ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
 		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
@@ -786,13 +762,9 @@ benchmarks! {
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
-		ibc::core::ics26_routing::handler::deliver(&mut ctx, msg).unwrap();
+		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
 
 		let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
-		let capability = PalletIbc::<T>::bind_port(port_id.clone()).unwrap();
-		pallet_ibc_ping::Pallet::<T>::set_capability(capability.index());
-
-
 		let counterparty_channel = ibc::core::ics04_channel::channel::Counterparty::new(port_id.clone(), Some(ChannelId::new(0)));
 		let channel_end = ChannelEnd::new(
 			ibc::core::ics04_channel::channel::State::Open,
@@ -827,17 +799,17 @@ benchmarks! {
 
 	on_finalize {
 		// counter for clients
-		let a in 1..1000;
+		let a in 1..50;
 		// counter for connections
-		let b in 1..1000;
+		let b in 1..50;
 		// counter for channels
-		let c in 1..1000;
+		let c in 1..50;
 		// counter for packet commitments
-		let d in 1..1000;
+		let d in 1..50;
 		// counter for packet acknowledgements
-		let e in 1..1000;
+		let e in 1..50;
 		// counter for packet receipts
-		let f in 1..1000;
+		let f in 1..50;
 		let mut ctx = crate::routing::Context::<T>::new();
 		for i in 1..a {
 			let (mock_client_state, mock_cs_state) = create_mock_state();
