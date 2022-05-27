@@ -266,7 +266,7 @@ pub mod pallet {
 		// TODO: benchmarking
 		/// Inserts or replaces auction configuration.
 		/// Already running auctions are not updated.
-		#[pallet::weight(T::WeightInfo::add_configuration())]
+		#[pallet::weight(10_000)]
 		pub fn add_configuration(
 			origin: OriginFor<T>,
 			configuration_id: ConfigurationId,
@@ -338,7 +338,7 @@ pub mod pallet {
 		// TODO: benchmark
 		// TODO: make API for call this as liquidation engine
 		// TODO: so make pallet trait for having this call
-		#[pallet::weight(<T as Config>::WeightInfo::xcm_sell())]
+		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn xcm_sell(
 			origin: OriginFor<T>,
