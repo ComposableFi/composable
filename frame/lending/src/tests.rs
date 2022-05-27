@@ -591,7 +591,8 @@ fn test_borrow_repay_in_same_block() {
 				Origin::signed(*ALICE),
 				market_id,
 				*ALICE,
-				RepayStrategy::PartialAmount(alice_repay_amount)
+				RepayStrategy::PartialAmount(alice_repay_amount),
+				false,
 			),
 			Error::<Runtime>::BorrowAndRepayInSameBlockIsNotSupported,
 		);
@@ -725,7 +726,8 @@ fn old_price() {
 			Origin::signed(*ALICE),
 			market,
 			*ALICE,
-			RepayStrategy::PartialAmount(borrow_amount)
+			RepayStrategy::PartialAmount(borrow_amount),
+			false,
 		),);
 	});
 }
@@ -1045,6 +1047,7 @@ fn test_repay_partial_amount() {
 				market_index,
 				*ALICE,
 				RepayStrategy::PartialAmount(BORROW::units(1) / 10_000),
+				false,
 			),
 			Event::Lending(crate::Event::<Runtime>::BorrowRepaid {
 				sender: *ALICE,
@@ -1064,6 +1067,7 @@ fn test_repay_partial_amount() {
 				market_index,
 				*ALICE,
 				RepayStrategy::PartialAmount(BORROW::units(1) / 10_000),
+				false,
 			),
 			Event::Lending(crate::Event::<Runtime>::BorrowRepaid {
 				sender: *ALICE,
@@ -1091,7 +1095,8 @@ fn test_repay_partial_amount() {
 				Origin::signed(*ALICE),
 				market_index,
 				*ALICE,
-				RepayStrategy::PartialAmount(alice_total_debt_with_interest + 1)
+				RepayStrategy::PartialAmount(alice_total_debt_with_interest + 1),
+				false,
 			),
 			DispatchErrorWithPostInfo {
 				post_info: PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },
@@ -1116,6 +1121,7 @@ fn test_repay_partial_amount() {
 				market_index,
 				*ALICE,
 				RepayStrategy::PartialAmount(alice_total_debt_with_interest),
+				false,
 			),
 			Event::Lending(crate::Event::<Runtime>::BorrowRepaid {
 				sender: *ALICE,
@@ -1214,6 +1220,7 @@ fn test_repay_total_debt() {
 					market_index,
 					*ALICE,
 					RepayStrategy::TotalDebt,
+					false,
 				),
 				Event::Lending(crate::Event::<Runtime>::BorrowRepaid {
 					sender: *ALICE,
@@ -1237,6 +1244,7 @@ fn test_repay_total_debt() {
 					market_index,
 					*BOB,
 					RepayStrategy::TotalDebt,
+					false,
 				),
 				Event::Lending(crate::Event::<Runtime>::BorrowRepaid {
 					sender: *BOB,

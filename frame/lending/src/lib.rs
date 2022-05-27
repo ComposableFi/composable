@@ -747,10 +747,11 @@ pub mod pallet {
 			market_id: MarketIndex,
 			beneficiary: T::AccountId,
 			amount: RepayStrategy<T::Balance>,
+			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			let amount_repaid =
-				<Self as Lending>::repay_borrow(&market_id, &sender, &beneficiary, amount)?;
+				<Self as Lending>::repay_borrow(&market_id, &sender, &beneficiary, amount, keep_alive)?;
 			Self::deposit_event(Event::<T>::BorrowRepaid {
 				sender,
 				market_id,
@@ -1456,7 +1457,7 @@ pub mod pallet {
 			from: &Self::AccountId,
 			beneficiary: &Self::AccountId,
 			total_repay_amount: RepayStrategy<BorrowAmountOf<Self>>,
-			// TODO: add keep_alive
+			keep_alive: bool,
 		) -> Result<BorrowAmountOf<Self>, DispatchError> {
 			use crate::repay_borrow::{pay_interest, repay_principal};
 
@@ -1502,7 +1503,7 @@ pub mod pallet {
 						from,
 						&market_account,
 						beneficiary_interest_on_market,
-						true,
+						keep_alive,
 					)?;
 
 					// release and burn debt token from beneficiary and transfer borrow asset to
@@ -1514,7 +1515,7 @@ pub mod pallet {
 						&market_account,
 						beneficiary,
 						beneficiary_borrow_asset_principal,
-						true,
+						keep_alive,
 					)?;
 
 					beneficiary_total_debt_with_interest
@@ -1555,7 +1556,7 @@ pub mod pallet {
 							.checked_mul_int::<u128>(partial_repay_amount.into())
 							.ok_or(ArithmeticError::Overflow)?
 							.into(),
-						true,
+						keep_alive,
 					)?;
 
 					// release and burn debt token from beneficiary and transfer borrow asset to
@@ -1570,7 +1571,7 @@ pub mod pallet {
 							.checked_mul_int::<u128>(partial_repay_amount.into())
 							.ok_or(ArithmeticError::Overflow)?
 							.into(),
-						true,
+						keep_alive,
 					)?;
 
 					// the above will short circuit if amount cannot be paid, so if this is reached

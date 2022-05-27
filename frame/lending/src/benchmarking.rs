@@ -169,7 +169,7 @@ benchmarks! {
 
 		produce_block::<T>(42_u32.into(),4200_u64.into());
 		produce_block::<T>(43_u32.into(),4300_u64.into());
-	}: _(origin, market_id, caller, RepayStrategy::TotalDebt)
+	}: _(origin, market_id, caller, RepayStrategy::TotalDebt, false)
 
 	liquidate {
 		let b in 1..T::MaxLiquidationBatchSize::get();
