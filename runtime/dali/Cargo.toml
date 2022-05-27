@@ -52,8 +52,8 @@ identity = {package = "pallet-identity", git = "https://github.com/paritytech/su
 indices = {package = "pallet-indices", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22"}
 membership = {package = "pallet-membership", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22"}
 multisig = {package = "pallet-multisig", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22"}
-orml-tokens = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "238828ac2bafe498a2a071317639e9404d6f6994", default-features = false}
-orml-traits = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "238828ac2bafe498a2a071317639e9404d6f6994", default-features = false}
+orml-tokens = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b", default-features = false}
+orml-traits = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b", default-features = false}
 preimage = {package = "pallet-preimage", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22"}
 randomness-collective-flip = {package = "pallet-randomness-collective-flip", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22"}
 scheduler = {package = "pallet-scheduler", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22"}
@@ -127,9 +127,9 @@ xcm-builder = {git = "https://github.com/paritytech/polkadot", default-features 
 xcm-executor = {git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.22"}
 
 # orml XCM support
-orml-unknown-tokens = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "238828ac2bafe498a2a071317639e9404d6f6994", default-features = false}
-orml-xcm-support = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "238828ac2bafe498a2a071317639e9404d6f6994", default-features = false}
-orml-xtokens = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "238828ac2bafe498a2a071317639e9404d6f6994", default-features = false}
+orml-unknown-tokens = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b", default-features = false}
+orml-xcm-support = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b", default-features = false}
+orml-xtokens = {git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b", default-features = false}
 
 # simnode support
 simnode-apis = {package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, rev = "a1e52d5ae48282834c89dd61e88e6db47d05108f"}

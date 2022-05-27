@@ -183,6 +183,8 @@ impl orml_tokens::Config for Test {
 	type OnDust = ();
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = Everything;
+	type MaxReserves = ConstU32<2>;
+	type ReserveIdentifier = [u8; 8];
 }
 
 parameter_types! {
@@ -340,7 +342,6 @@ fn set_balance_proposal_is_correctly_filtered_out() {
 		assert!(!<Test as frame_system::Config>::BaseCallFilter::contains(&call));
 	}
 }
-
 
 fn set_balance_proposal_hash(value: u64) -> H256 {
 	BlakeTwo256::hash(&set_balance_proposal(value)[..])

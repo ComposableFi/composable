@@ -27,45 +27,25 @@
 use frame_support::{traits::Get, weights::Weight};
 use sp_std::marker::PhantomData;
 
-/// Weight functions for `utility`.
+/// Weight functions for `governance_registry`.
 pub struct WeightInfo<T>(PhantomData<T>);
-impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
-    fn set() -> Weight {
-		(83_205_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
-	}
-
-	fn grant_root() -> Weight {
-		(83_205_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
-	}
-
-	fn remove() -> Weight {
-		(83_205_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(4 as Weight))
-			.saturating_add(T::DbWeight::get().writes(4 as Weight))
-	}
-}
-
-// For backwards compatibility and tests
-impl WeightInfo for () {
+impl<T: frame_system::Config> governance_registry::WeightInfo for WeightInfo<T> {
+   
 	fn set() -> Weight {
 		(83_205_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 
 	fn grant_root() -> Weight {
 		(83_205_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 
 	fn remove() -> Weight {
 		(83_205_000 as Weight)
-			.saturating_add(RocksDbWeight::get().reads(4 as Weight))
-			.saturating_add(RocksDbWeight::get().writes(4 as Weight))
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 }

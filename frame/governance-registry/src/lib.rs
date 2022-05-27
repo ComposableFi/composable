@@ -21,6 +21,7 @@
 pub use pallet::*;
 
 pub mod weights;
+pub use weights::WeightInfo;
 
 #[cfg(test)]
 mod mock;
