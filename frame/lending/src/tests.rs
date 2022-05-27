@@ -546,7 +546,12 @@ fn test_borrow_repay_in_same_block() {
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, collateral_amount));
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(Origin::signed(*ALICE), market_id, collateral_amount, false),
+			Lending::deposit_collateral(
+				Origin::signed(*ALICE),
+				market_id,
+				collateral_amount,
+				false,
+			),
 			Event::Lending(crate::Event::CollateralDeposited {
 				sender: *ALICE,
 				amount: collateral_amount,
@@ -667,7 +672,12 @@ fn old_price() {
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, collateral_amount));
 
 		// Deposit BTC on the market
-		assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral_amount, false));
+		assert_ok!(Lending::deposit_collateral(
+			Origin::signed(*ALICE),
+			market,
+			collateral_amount,
+			false
+		));
 
 		// Set BTC price
 		set_price(BTC::ID, BTC::ONE.mul(SECOND_PRICE));
@@ -744,7 +754,12 @@ fn borrow_flow() {
 			.div(get_price(BTC::ID, BTC::ONE));
 
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, collateral_amount));
-		assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral_amount, false));
+		assert_ok!(Lending::deposit_collateral(
+			Origin::signed(*ALICE),
+			market,
+			collateral_amount,
+			false
+		));
 		let event = Event::Lending(crate::Event::CollateralDeposited {
 			sender: *ALICE,
 			amount: collateral_amount,
@@ -1333,7 +1348,12 @@ fn test_warn_soon_under_collateralized() {
 		// dbg!(&Vault::vault_info(vault));
 		let two_btc_amount = BTC::units(2);
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, two_btc_amount));
-		assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, two_btc_amount, false));
+		assert_ok!(Lending::deposit_collateral(
+			Origin::signed(*ALICE),
+			market,
+			two_btc_amount,
+			false
+		));
 		let event = Event::Lending(crate::Event::CollateralDeposited {
 			sender: *ALICE,
 			amount: two_btc_amount,
@@ -1413,7 +1433,12 @@ fn zero_amount_collateral_deposit() {
 		set_price(USDT::ID, 1);
 		let collateral_amount = 0;
 		assert_noop!(
-			<Lending as LendingTrait>::deposit_collateral(&market_id, &BOB, collateral_amount, false),
+			<Lending as LendingTrait>::deposit_collateral(
+				&market_id,
+				&BOB,
+				collateral_amount,
+				false
+			),
 			Error::<Runtime>::CannotDepositZeroCollateral
 		);
 	})

@@ -751,8 +751,13 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			let amount_repaid =
-				<Self as Lending>::repay_borrow(&market_id, &sender, &beneficiary, amount, keep_alive)?;
+			let amount_repaid = <Self as Lending>::repay_borrow(
+				&market_id,
+				&sender,
+				&beneficiary,
+				amount,
+				keep_alive,
+			)?;
 			Self::deposit_event(Event::<T>::BorrowRepaid {
 				sender,
 				market_id,
