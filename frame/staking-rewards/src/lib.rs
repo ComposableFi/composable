@@ -437,7 +437,6 @@ pub mod pallet {
 			let position = T::get_protocol_nft::<StakingNFTOf<T>>(&instance_id)?;
 			let protocol_account = Self::account_id(&position.asset);
 			T::Assets::transfer(position.asset, &owner, &protocol_account, balance, false)?;
-			//PendingTotalShares::<T>::
 			PendingAmountExtensions::<T>::mutate_exists(instance_id, |x| {
 				let increased = x.unwrap_or_default().safe_add(&balance);
 				*x = Some(increased?);
@@ -545,23 +544,6 @@ pub mod pallet {
 											}
 										},
 									}
-									if let Some(new_lock) =
-										PendingDurationExtensions::<T>::take(&nft_id)
-									{
-										// keep in sync with python code
-										// NOTE: relies on fact that now always >= any other
-										// possible date NOTE: and the new lock was validated to be
-										// on input >= old lock
-										let rolling = honest_lock_extensions(
-											now,
-											nft.lock_date,
-											new_lock,
-											nft.lock_duration,
-										);
-										nft.lock_date = now - rolling;
-										nft.lock_duration = new_lock;
-									}
-
 									Ok(())
 								},
 							);
@@ -576,36 +558,37 @@ pub mod pallet {
 					}
 				},
 				State::PendingAmounts => {
-					// TODO: develop `drain_limit(T::ElementToProcessPerBlock::get()) which wraps iterator like interface
-					let mut batch = T::ElementToProcessPerBlock::get();
 					let mut any = false;
-					for (nft_id,amount)  in PendingAmountExtensions::<T>::drain() {
-						batch-=1;
+					for (nft_id,amount)  in PendingAmountExtensions::<T>::drain().take(T::ElementToProcessPerBlock::get() as usize) {
 						any = true;
-						if batch == 0 {
-							break;
-						}
+						<PendingAmountExtensions<T>>::mutate_exists(&nft_id, |value| {
+							if let Some(mut value) = value {
+								value += amount;
+							}
+							Some(())
+						});
 
-						// we execute these things regardless of fNFT state
+						// 						we execute these things regardless of fNFT state
 						// TODO: decide what is better for system - duration then
 						// amount, or else
-						//<Stakers<T>>::mutat
-						// if let Some(amount) =
-						// 	PendingAmountExtensions::<T>::get_mut(&nft_id)
-						// {
-						// 	let time_lock = honest_locked_stake_increase(
-						// 	nft.early_unstake_penalty.value,
-						// 	nft.stake.into(),
-						// 	amount.into(),
-						// 	nft.lock_duration.into(),
-						// 		(now - nft.lock_date).into())
-						// 		.ok_or(Error::<T>::CannotIncreaseStakedAmountBecauseOfLimitedArithmetic)?;
-						// 	nft.lock_date = nft.lock_date.safe_add(&time_lock)?;
-						// 	PendingTotalShares::<T>::mutate(nft.asset, |total_shares| {
-						// 		*total_shares += amount.into();
-						// 	});
-						// 	nft.stake = nft.stake.safe_add(&amount)?;
-						// }
+
+						if let Some(amount) =
+							PendingAmountExtensions::<T>::get_mut(&nft_id)
+						{
+							let time_lock = honest_locked_stake_increase(
+							nft.early_unstake_penalty.value,
+							nft.stake.into(),
+							amount.into(),
+							nft.lock_duration.into(),
+								(now - nft.lock_date).into())
+								.ok_or(Error::<T>::CannotIncreaseStakedAmountBecauseOfLimitedArithmetic)?;
+							nft.lock_date = nft.lock_date.safe_add(&time_lock)?;
+							PendingTotalShares::<T>::mutate(nft.asset, |total_shares| {
+								*total_shares += amount.into();
+							});
+							// NOTE: best effort 
+							nft.stake = nft.stake.saturating_add(&amount);
+						}
 					}
 					if any == false {
 						CurrentState::<T>::set(State::PendingDurations);
@@ -619,6 +602,24 @@ pub mod pallet {
 					// 	batch-=1;
 					// 	any = true;
 					// }
+
+				// 	if let Some(new_lock) =
+				// 	PendingDurationExtensions::<T>::take(&nft_id)
+				// {
+				// 	// keep in sync with python code
+				// 	// NOTE: relies on fact that now always >= any other
+				// 	// possible date NOTE: and the new lock was validated to be
+				// 	// on input >= old lock
+				// 	let rolling = honest_lock_extensions(
+				// 		now,
+				// 		nft.lock_date,
+				// 		new_lock,
+				// 		nft.lock_duration,
+				// 	);
+				// 	nft.lock_date = now - rolling;
+				// 	nft.lock_duration = new_lock;
+				// }
+
 					if any == false {
 						CurrentState::<T>::set(State::PendingStakers);
 					}
