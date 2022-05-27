@@ -778,11 +778,11 @@ pub mod pallet {
 			);
 			// Unwrapped because of upper check.
 			// Perhaps borrowers ids should be in the bounded vector.
-			let borrowers =
-				BoundedVec::<_, T::MaxLiquidationBatchSize>::try_from(borrowers).unwrap();
+			let borrowers = BoundedVec::<_, T::MaxLiquidationBatchSize>::try_from(borrowers)
+				.unwrap_or(BoundedVec::default());
 			let subjected_borrowers = Self::liquidate_internal(&sender, &market_id, borrowers)?;
 			// if at least one borrower was affected then liquidation been initiated
-			if subjected_borrowers.len() != 0 {
+			if !subjected_borrowers.is_empty() {
 				Self::deposit_event(Event::LiquidationInitiated {
 					market_id,
 					borrowers: subjected_borrowers,
@@ -940,8 +940,7 @@ pub mod pallet {
 
 				// If storage transaction succeeded,
 				// push borrower to the output vector
-
-				if let Ok(_) = storage_transaction_succeeded {
+				if storage_transaction_succeeded.is_ok() {
 					subjected_borrowers.push(account.clone());
 				}
 			}
