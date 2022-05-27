@@ -779,7 +779,7 @@ pub mod pallet {
 			// Unwrapped because of upper check.
 			// Perhaps borrowers ids should be in the bounded vector.
 			let borrowers = BoundedVec::<_, T::MaxLiquidationBatchSize>::try_from(borrowers)
-				.unwrap_or(BoundedVec::default());
+				.unwrap_or_default();
 			let subjected_borrowers = Self::liquidate_internal(&sender, &market_id, borrowers)?;
 			// if at least one borrower was affected then liquidation been initiated
 			if !subjected_borrowers.is_empty() {
@@ -935,7 +935,7 @@ pub mod pallet {
 							error );
 						return TransactionOutcome::Rollback(liquidation_response_result)
 					}
-					return TransactionOutcome::Commit(Ok(()))
+					TransactionOutcome::Commit(Ok(()))
 				});
 
 				// If storage transaction succeeded,
