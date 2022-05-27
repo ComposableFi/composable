@@ -147,7 +147,8 @@ pub mod pallet {
 		ClaimRequireRestake,
 		AlreadyTagged,
 		EpochNotFound,
-		PalletIsBusy,
+	
+		CanUnstakeOnlyDuringEpoch,
 		ImpossibleState,
 		OnlyOwnerOfPositionCanDoThis,
 		CannotIncreaseStakedAmountBecauseOfLimitedArithmetic,
@@ -537,32 +538,13 @@ pub mod pallet {
 													.map_err(|_| ArithmeticError::Overflow)?;
 												if reward_asset == nft.asset {
 													PendingTotalShares::<T>::mutate(nft.asset, |total_shares| {
-														*total_shares += reward_shares.into();
+														let reward_shares:u128 = reward_shares.into();
+														*total_shares += reward_shares;
 													});
 												}
 											}
 										},
 									}
-									// we execute these things regardless of fNFT state
-									// TODO: decide what is better for system - duration then
-									// amount, or else
-									if let Some(amount) =
-										PendingAmountExtensions::<T>::take(&nft_id)
-									{
-										let time_lock = honest_locked_stake_increase(
-										nft.early_unstake_penalty.value,
-										nft.stake.into(),
-										amount.into(),
-										nft.lock_duration.into(),
-										 (now - nft.lock_date).into())
-										 .ok_or(Error::<T>::CannotIncreaseStakedAmountBecauseOfLimitedArithmetic)?;
-										nft.lock_date = nft.lock_date.safe_add(&time_lock)?;
-										PendingTotalShares::<T>::mutate(nft.asset, |total_shares| {
-											*total_shares += amount.into();
-										});
-										nft.stake = nft.stake.safe_add(&amount)?;
-									}
-
 									if let Some(new_lock) =
 										PendingDurationExtensions::<T>::take(&nft_id)
 									{
@@ -590,47 +572,59 @@ pub mod pallet {
 						},
 					);
 					if let BlockFold::Done { .. } = result {
-						CurrentState::<T>::set(State::Compounding);
+						CurrentState::<T>::set(State::PendingAmounts);
 					}
 				},
-				State::Compounding => {
+				State::PendingAmounts => {
 					// TODO: develop `drain_limit(T::ElementToProcessPerBlock::get()) which wraps iterator like interface
 					let mut batch = T::ElementToProcessPerBlock::get();
 					let mut any = false;
-					while batch > 0 && let Some((asset,amount)) = PendingTotalShares::<T>::drain() {
+					for (nft_id,amount)  in PendingAmountExtensions::<T>::drain() {
 						batch-=1;
 						any = true;
-					}
-					if any == false {
-						CurrentState::<T>::set(State::ExtendingStakes);
-					}
-				},
-				State::ExtendingStakes => {
-					// TODO: develop `drain_limit(T::ElementToProcessPerBlock::get()) which wraps iterator like interface
-					let mut batch = T::ElementToProcessPerBlock::get();
-					let mut any = false;
-					while batch > 0 && let Some((nft_id,amount)) = PendingAmountExtensions::<T>::drain() {
-						batch-=1;
-						any = true;
+						if batch == 0 {
+							break;
+						}
+
+						// we execute these things regardless of fNFT state
+						// TODO: decide what is better for system - duration then
+						// amount, or else
+						//<Stakers<T>>::mutat
+						// if let Some(amount) =
+						// 	PendingAmountExtensions::<T>::get_mut(&nft_id)
+						// {
+						// 	let time_lock = honest_locked_stake_increase(
+						// 	nft.early_unstake_penalty.value,
+						// 	nft.stake.into(),
+						// 	amount.into(),
+						// 	nft.lock_duration.into(),
+						// 		(now - nft.lock_date).into())
+						// 		.ok_or(Error::<T>::CannotIncreaseStakedAmountBecauseOfLimitedArithmetic)?;
+						// 	nft.lock_date = nft.lock_date.safe_add(&time_lock)?;
+						// 	PendingTotalShares::<T>::mutate(nft.asset, |total_shares| {
+						// 		*total_shares += amount.into();
+						// 	});
+						// 	nft.stake = nft.stake.safe_add(&amount)?;
+						// }
 					}
 					if any == false {
 						CurrentState::<T>::set(State::PendingDurations);
 					}
 				},
-				State::ExtendingStakes => {
+				State::PendingDurations => {
 					// TODO: develop `drain_limit(T::ElementToProcessPerBlock::get()) which wraps iterator like interface
 					let mut batch = T::ElementToProcessPerBlock::get();
 					let mut any = false;
-					while batch > 0 && let Some((nft_id,amount)) = PendingAmountExtensions::<T>::drain() {
-						batch-=1;
-						any = true;
-					}
+					// while batch > 0 && let Some((nft_id,amount)) = PendingAmountExtensions::<T>::drain() {
+					// 	batch-=1;
+					// 	any = true;
+					// }
 					if any == false {
 						CurrentState::<T>::set(State::PendingStakers);
 					}
 				},
 				State::PendingStakers => {
-					let result = <(FoldState<T>, PendingStakers<T>)>::step(
+					let result = <(StakersFoldState<T>, PendingStakers<T>)>::step(
 						FoldStrategy::Chunk {
 							number_of_elements: T::ElementToProcessPerBlock::get(),
 						},
@@ -642,7 +636,7 @@ pub mod pallet {
 									nft.asset,
 									|total_shares| {
 										*total_shares = total_shares
-											.checked_add(&nft.shares())
+											.checked_add(nft.shares().into())
 											.expect("impossible; qed;");
 									},
 								);
@@ -652,9 +646,22 @@ pub mod pallet {
 					);
 					if let BlockFold::Done { .. } = result {
 						PendingStakers::<T>::remove_all(None);
+						CurrentState::<T>::set(State::PendingShares);
+					}
+				},
+				State::PendingShares => {
+					// TODO: develop `drain_limit(T::ElementToProcessPerBlock::get()) which wraps iterator like interface
+					let mut batch = T::ElementToProcessPerBlock::get();
+					let mut any = false;
+					// while batch > 0 && let Some((asset,amount)) = PendingTotalShares::<T>::drain() {
+					// 	batch-=1;
+					// 	any = true;
+					// }
+					if any == false {
 						CurrentState::<T>::set(State::Running);
 					}
 				},
+				
 			}
 			0
 		}
@@ -668,10 +675,10 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub(crate) fn ensure_valid_interaction_state() -> DispatchResult {
+		pub(crate) fn ensure_unstake() -> DispatchResult {
 			match Self::current_state() {
 				State::Running => Ok(()),
-				State::Rewarding | State::Registering => Err(Error::<T>::PalletIsBusy.into()),
+				_ => Err(Error::<T>::CanUnstakeOnlyDuringEpoch.into()),
 			}
 		}
 
@@ -700,7 +707,7 @@ pub mod pallet {
 			// Increment epoch.
 			CurrentEpoch::<T>::mutate(|x| *x = *x + 1);
 			// Set rewarding state, i.e. rewarding previous epoch.
-			CurrentState::<T>::set(State::Rewarding);
+			CurrentState::<T>::set(State::Distributing);
 			// Notify.
 			Self::deposit_event(Event::<T>::NewEpoch { id: Self::current_epoch() });
 		}
@@ -787,9 +794,6 @@ pub mod pallet {
 			duration: DurationSeconds,
 			keep_alive: bool,
 		) -> Result<Self::InstanceId, DispatchError> {
-			// NOTE: could use A/B queues and avoid protocol interuption because of background
-			// states
-			Self::ensure_valid_interaction_state()?;
 			let config = Self::get_config(asset)?;
 			let reward_multiplier = *config
 				.duration_presets
@@ -815,7 +819,7 @@ pub mod pallet {
 				reward_epoch_start: next_epoch,
 				pending_rewards,
 				lock_date: now,
-				lock_duration: duration,
+				lock_duration: duration,				
 				early_unstake_penalty: config.early_unstake_penalty,
 				reward_multiplier,
 			};
@@ -831,7 +835,7 @@ pub mod pallet {
 		}
 
 		fn unstake(instance_id: &Self::InstanceId, to: &Self::AccountId) -> DispatchResult {
-			Self::ensure_valid_interaction_state()?;
+			Self::ensure_unstake()?;
 			<Self as Staking>::claim(instance_id, to)?;
 			let nft = T::get_protocol_nft::<StakingNFTOf<T>>(instance_id)?;
 			let protocol_account = Self::account_id(&nft.asset);
@@ -849,7 +853,7 @@ pub mod pallet {
 						RunningTotalShares::<T>::mutate(
 							nft.asset,
 							|total_shares| -> DispatchResult {
-								*total_shares = total_shares.safe_sub(&nft.shares())?;
+								*total_shares = total_shares.safe_sub(&nft.shares().into())?;
 								Ok(())
 							},
 						)?;					
@@ -860,7 +864,7 @@ pub mod pallet {
 						RunningTotalShares::<T>::try_mutate(
 							nft.asset,
 							|total_shares| -> DispatchResult {
-								*total_shares = total_shares.safe_sub(&nft.shares())?;
+								*total_shares = total_shares.safe_sub(&nft.shares().into())?;
 								Ok(())
 							},
 						)?;					
