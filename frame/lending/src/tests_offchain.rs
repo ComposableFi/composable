@@ -74,7 +74,7 @@ fn test_liquidation_offchain_worker() {
 			tx.call,
 			Call::Lending(crate::Call::liquidate { market_id, borrowers: vec![risky_borrower] })
 		);
-        process_block_with_execution(tx);
+		process_block_with_execution(tx);
 		// Check that events for the risky borrow were emitted
 		// Check event from Lending pallet
 		let event =

@@ -926,22 +926,22 @@ pub mod pallet {
 				// Wrap liquidate position request in a storage transaction.
 				// So, in the case of any error state's changes will not be committed
 				let storage_transaction_succeeded = with_transaction(|| {
-					let liquidation_response_result = Self::liquidate_position(liquidator, &market_pair, borrow_asset, account);
-                    if let Err(error) = liquidation_response_result
-					{
+					let liquidation_response_result =
+						Self::liquidate_position(liquidator, &market_pair, borrow_asset, account);
+					if let Err(error) = liquidation_response_result {
 						log::error!("Creation of liquidation request for position {:?} {:?} was failed: {:?}",
 							market_id,
 							account,
 							error );
-						return TransactionOutcome::Rollback(liquidation_response_result);
+						return TransactionOutcome::Rollback(liquidation_response_result)
 					}
-					return TransactionOutcome::Commit(Ok(()));
+					return TransactionOutcome::Commit(Ok(()))
 				});
 
 				// If storage transaction succeeded,
 				// push borrower to the output vector
-				
-                if let Ok(_) = storage_transaction_succeeded {
+
+				if let Ok(_) = storage_transaction_succeeded {
 					subjected_borrowers.push(account.clone());
 				}
 			}
