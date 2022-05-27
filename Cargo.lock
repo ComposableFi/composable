@@ -2789,6 +2789,7 @@ dependencies = [
  "orml-xcm-support",
  "orml-xtokens",
  "pablo-runtime-api",
+ "pallet-airdrop",
  "pallet-assets 0.0.1",
  "pallet-assets-registry",
  "pallet-aura",
@@ -7141,6 +7142,7 @@ version = "0.0.1"
 dependencies = [
  "composable-support",
  "composable-traits",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "hex",
