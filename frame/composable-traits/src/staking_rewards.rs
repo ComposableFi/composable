@@ -12,6 +12,7 @@ use sp_runtime::{
 	DispatchError, Perbill, SaturatedConversion,
 };
 use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
+use std::marker::PhantomData;
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Encode, Decode, TypeInfo)]
 pub enum PositionState {
@@ -177,10 +178,10 @@ pub trait StakingConfiguration {
 }
 
 /// TODO remove no-op implementation once runtimes have integrated the pallet-staking-rewards
-pub struct NoopStaking;
-impl StakingConfiguration for NoopStaking {
-	type AssetId = u128;
-	type AccountId = u128;
+pub struct NoopStaking<AssetId, AccountId>(PhantomData<AssetId>, PhantomData<AccountId>);
+impl<AssetId, AccountId> StakingConfiguration for NoopStaking<AssetId, AccountId> {
+	type AssetId = AssetId;
+	type AccountId = AccountId;
 
 	fn configure(
 		_: Self::AssetId,

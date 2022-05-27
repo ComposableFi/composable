@@ -178,7 +178,7 @@ impl pallet_pablo::Config for Test {
 	type Time = Timestamp;
 	type TWAPInterval = TWAPInterval;
 	type WeightInfo = ();
-	type StakingConfiguration = NoopStaking;
+	type StakingConfiguration = NoopStaking<Self::AssetId, Self::AccountId>;
 }
 
 parameter_types! {

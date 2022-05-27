@@ -1020,7 +1020,7 @@ impl pablo::Config for Runtime {
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
 	// TODO set pallet-staking-rewards below as the impl, once that pallet is integrated to the
 	// runtime
-	type StakingConfiguration = NoopStaking;
+	type StakingConfiguration = NoopStaking<Self::AssetId, Self::AccountId>;
 }
 
 parameter_types! {
