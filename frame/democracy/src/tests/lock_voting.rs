@@ -58,9 +58,6 @@ proptest! {
 			assert_ok!(Democracy::vote(Origin::signed(1), r, aye(0, balance / 10)));
 
 			fast_forward_to(2);
-
-			dbg!("balance {} balance  {}", Balances::free_balance(42), balance);
-
 			assert_eq!(Balances::free_balance(42), balance);
 			assert_ok!(Democracy::remove_other_vote(Origin::signed(2), 1, asset_id, r));
 			assert_ok!(Democracy::unlock(Origin::signed(2), 1, asset_id));

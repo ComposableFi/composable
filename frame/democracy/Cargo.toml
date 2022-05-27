@@ -30,13 +30,13 @@ sp-runtime = {default-features = false, git = "https://github.com/paritytech/sub
 sp-std = {default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 
 [dev-dependencies]
+composable-tests-helpers = {path = "../composable-tests-helpers"}
 pallet-balances = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 pallet-governance-registry = {path = "../governance-registry"}
 pallet-preimage = {package = "pallet-preimage", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 pallet-scheduler = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
 proptest = "1.0"
 sp-core = {git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.19"}
-
 [features]
 default = ["std"]
 runtime-benchmarks = [
