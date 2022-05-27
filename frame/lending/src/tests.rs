@@ -1856,7 +1856,7 @@ where
 	SystemEventOf<T>: TryInto<crate::Event<T>>,
 	<SystemEventOf<T> as TryInto<crate::Event<T>>>::Error: std::fmt::Debug,
 {
-	create_market::<50_000, T>(
+	create_market::<T, 50_000>(
 		USDT::instance(),
 		BTC::instance(),
 		manager,
