@@ -85,3 +85,47 @@ jobs:
         SLACK_FOOTER: ""
         MSG_MINIMAL: true
 
+  composable-client-release:
+    concurrency:
+      group: composable-${{ github.ref }}
+      cancel-in-progress: true
+    strategy: 
+      fail-fast: true
+    runs-on: 
+        - self-hosted
+        - linux
+        - X64
+        - ansible-runner
+    needs: [picasso-client-release]
+    steps:
+    - name: Clean up
+      continue-on-error: true
+      run: |
+        sudo chown -R $USER:$USER $GITHUB_WORKSPACE && sudo chmod -R 777 /home/runner/_work/_tool/node/16.14.0
+        docker system prune --force --all --volumes
+
+    - uses: actions/checkout@v2
+      with: 
+        fetch-depth: 0
+
+    - name: Set env
+      run: |
+        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
+
+    - name: Run ansible playbook
+      working-directory: "./.maintain/playbooks"
+      run: |
+        ansible-playbook -l _environment_composable /opt/ansible/inventory/client-upgrade.yml -i /opt/ansible/inventory/composable-gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
+
+    - name: Notify sre-tasks slack channel
+      uses: rtCamp/action-slack-notify@v2
+      env:
+        SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        SLACK_CHANNEL: releases
+        SLACK_USERNAME: Github Actions
+        SLACK_ICON: https://avatars.githubusercontent.com/u/44036562?s=200&v=4
+        SLACK_TITLE: A new composable client for Composable ${{ env.RELEASE_VERSION }} has been rolled out 
+        SLACK_MESSAGE: "https://telemetry.polkadot.io/#list/0x6811a339673c9daa897944dcdac99c6e2939cc88245ed21951a0a3c9a2be75bc"
+        SLACK_FOOTER: ""
+        MSG_MINIMAL: true
+
