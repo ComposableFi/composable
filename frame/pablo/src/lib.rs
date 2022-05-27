@@ -605,7 +605,7 @@ pub mod pallet {
 			};
 			if lp_token_opt.is_some() {
 				T::StakingConfiguration::configure(
-					lp_token_opt.unwrap(),
+					lp_token_opt.expect("impossible; qed;"),
 					// TODO (vim) Hard coded for now
 					[(ONE_WEEK, Perbill::from_float(0.5)), (ONE_MONTH, Perbill::from_float(1.0))]
 						.into(),
