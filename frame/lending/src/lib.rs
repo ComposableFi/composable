@@ -76,7 +76,7 @@ pub mod pallet {
 	};
 	use composable_traits::{
 		currency::CurrencyFactory,
-		defi::*,
+		defi::{DeFiComposableConfig, *},
 		lending::{
 			math::{self, *},
 			BorrowAmountOf, CollateralLpAmountOf, CreateInput, CurrencyPairIsNotSame, Lending,
@@ -759,10 +759,11 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Check if borrow for `borrower` account is required to be liquidated, initiate
+		/// Check if borrows for the `borrowers` accounts are required to be liquidated, initiate
 		/// liquidation.
 		/// - `origin` : Sender of this extrinsic.
 		/// - `market_id` : Market index from which `borrower` has taken borrow.
+		/// - `borrowers` : Vector of borrowers accounts' ids.
 		#[pallet::weight(<T as Config>::WeightInfo::liquidate(borrowers.len() as u32))]
 		#[transactional]
 		pub fn liquidate(
@@ -775,8 +776,18 @@ pub mod pallet {
 				borrowers.len() <= T::MaxLiquidationBatchSize::get() as usize,
 				Error::<T>::MaxLiquidationBatchSizeExceeded
 			);
-			Self::liquidate_internal(&sender, &market_id, borrowers.clone())?;
-			Self::deposit_event(Event::LiquidationInitiated { market_id, borrowers });
+			// Unwrapped because of upper check.
+			// Perhaps borrowers ids should be in the bounded vector.
+			let borrowers =
+				BoundedVec::<_, T::MaxLiquidationBatchSize>::try_from(borrowers).unwrap();
+			let subjected_borrowers = Self::liquidate_internal(&sender, &market_id, borrowers)?;
+			// if at least one borrower was affected then liquidation been initiated
+			if subjected_borrowers.len() != 0 {
+				Self::deposit_event(Event::LiquidationInitiated {
+					market_id,
+					borrowers: subjected_borrowers,
+				});
+			}
 			Ok(().into())
 		}
 	}
@@ -797,7 +808,7 @@ pub mod pallet {
 			market_id: &<Self as Lending>::MarketId,
 			account: &<Self as DeFiEngine>::AccountId,
 		) -> Result<BorrowerData, DispatchError> {
-			let market = Self::get_market(market_id)?;
+			let (_, market) = Self::get_market(market_id)?;
 
 			let collateral_balance_value = Self::get_price(
 				market.collateral_asset,
@@ -845,41 +856,94 @@ pub mod pallet {
 			Ok(should_warn)
 		}
 
+		/// Initiate liquidation of individual position for particular borrower within mentioned
+		/// market. Returns 'Ok(())' in the case of successful initiation, 'Err(DispatchError)' in
+		/// the opposite case.
+		/// - `liquidator` : Liquidator's account id.
+		/// - `market_pair` : Index and configuration of the market from which tokens were borrowed.
+		/// - `account` : Borrower's account id whose debt are going to be liquidated.
+		fn liquidate_position(
+			liquidator: &<Self as DeFiEngine>::AccountId,
+			market_pair: &(&<Self as Lending>::MarketId, MarketConfigOf<T>),
+			borrow_asset: <T as DeFiComposableConfig>::MayBeAssetId,
+			account: &<Self as DeFiEngine>::AccountId,
+		) -> Result<(), DispatchError> {
+			let (market_id, market) = market_pair;
+			if Self::should_liquidate(market_id, account)? {
+				let collateral_to_liquidate = Self::collateral_of_account(market_id, account)?;
+
+				let source_target_account = Self::account_id(market_id);
+
+				let unit_price =
+					T::Oracle::get_ratio(CurrencyPair::new(market.collateral_asset, borrow_asset))?;
+
+				let sell = Sell::new(
+					market.collateral_asset,
+					borrow_asset,
+					collateral_to_liquidate,
+					unit_price,
+				);
+				T::Liquidation::liquidate(
+					&source_target_account,
+					sell,
+					market.liquidators.clone(),
+				)?;
+				// TODO: @mikolaichuk: Justify why is it fine to move borrow rent
+				// to liquidator's account, given that the position is not liquidated yet.
+				if let Some(deposit) = BorrowRent::<T>::get(market_id, account) {
+					let market_account = Self::account_id(market_id);
+					<T as Config>::NativeCurrency::transfer(
+						&market_account,
+						liquidator,
+						deposit,
+						false,
+					)?;
+				}
+			} else {
+				return Err(DispatchError::Other(
+					"Tried liquidate position which is not supposed to be liquidated",
+				))
+			}
+			Ok(())
+		}
+
+		/// Liquidates position for each borrower in the vector within mentioned market.
+		/// Returns a vector of borrowers' account ids whose positions were requested to
+		/// be liquidated.
+		/// - `liquidator` : Liquidator's account id.
+		/// - `market_id` : Market index from which `borrowers` has taken borrow.
+		/// - `borrowers` : Vector of borrowers whose debts are going to be liquidated.
 		pub fn liquidate_internal(
 			liquidator: &<Self as DeFiEngine>::AccountId,
 			market_id: &<Self as Lending>::MarketId,
-			borrowers: Vec<<Self as DeFiEngine>::AccountId>,
-		) -> Result<(), DispatchError> {
+			borrowers: BoundedVec<<Self as DeFiEngine>::AccountId, T::MaxLiquidationBatchSize>,
+		) -> Result<Vec<<Self as DeFiEngine>::AccountId>, DispatchError> {
+			// Vector of borrowers whose positions are involved in the liquidation process.
+			let mut subjected_borrowers: Vec<<Self as DeFiEngine>::AccountId> = Vec::new();
+			let market_pair = Self::get_market(market_id)?;
+			let borrow_asset = T::Vault::asset_id(&market_pair.1.borrow_asset_vault)?;
 			for account in borrowers.iter() {
-				if Self::should_liquidate(market_id, account)? {
-					let market = Self::get_market(market_id)?;
-					let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
-					let collateral_to_liquidate = Self::collateral_of_account(market_id, account)?;
-					let source_target_account = Self::account_id(market_id);
-					let unit_price = T::Oracle::get_ratio(CurrencyPair::new(
-						market.collateral_asset,
-						borrow_asset,
-					))?;
-					let sell = Sell::new(
-						market.collateral_asset,
-						borrow_asset,
-						collateral_to_liquidate,
-						unit_price,
-					);
-					T::Liquidation::liquidate(&source_target_account, sell, market.liquidators)?;
-
-					if let Some(deposit) = BorrowRent::<T>::get(market_id, account) {
-						let market_account = Self::account_id(market_id);
-						<T as Config>::NativeCurrency::transfer(
-							&market_account,
-							liquidator,
-							deposit,
-							false,
-						)?;
+				// Wrap liquidate position request in a storage transaction.
+				// So, in the case of any error state's changes will not be committed
+				let storage_transaction_succeeded = with_transaction(|| {
+					if let Err(error) =
+						Self::liquidate_position(liquidator, &market_pair, borrow_asset, account)
+					{
+						log::error!("Creation of liquidation request for position {:?} {:?} was failed: {:?}",
+							market_id,
+							account,
+							error );
+						return TransactionOutcome::Rollback(false)
 					}
+					return TransactionOutcome::Commit(true)
+				});
+				// If storage transaction succeeded,
+				// push borrower to the output vector
+				if storage_transaction_succeeded {
+					subjected_borrowers.push(account.clone());
 				}
 			}
-			Ok(())
+			Ok(subjected_borrowers)
 		}
 	}
 
@@ -1022,8 +1086,8 @@ pub mod pallet {
 		pub(crate) fn get_assets_for_market(
 			market_id: &MarketIndex,
 		) -> Result<MarketAssets<T>, DispatchError> {
-			let borrow_asset =
-				T::Vault::asset_id(&Self::get_market(market_id)?.borrow_asset_vault)?;
+			let (_, market) = Self::get_market(market_id)?;
+			let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
 			let debt_asset =
 				DebtTokenForMarket::<T>::get(market_id).ok_or(Error::<T>::MarketDoesNotExist)?;
 
@@ -1033,8 +1097,14 @@ pub mod pallet {
 
 	// private helper functions
 	impl<T: Config> Pallet<T> {
-		fn get_market(market_id: &MarketIndex) -> Result<MarketConfigOf<T>, DispatchError> {
-			Markets::<T>::get(market_id).ok_or_else(|| Error::<T>::MarketDoesNotExist.into())
+		/// Returns pair of market's id and market (as 'MarketConfing') via market's id
+		/// - `market_id` : Market index as a key in 'Markets' storage
+		fn get_market(
+			market_id: &MarketIndex,
+		) -> Result<(&MarketIndex, MarketConfigOf<T>), DispatchError> {
+			Markets::<T>::get(market_id)
+				.map(|market| (market_id, market))
+				.ok_or_else(|| Error::<T>::MarketDoesNotExist.into())
 		}
 
 		fn get_price(
@@ -1252,7 +1322,7 @@ pub mod pallet {
 			amount: CollateralLpAmountOf<Self>,
 		) -> Result<(), DispatchError> {
 			ensure!(amount > Self::Balance::zero(), Error::<T>::CannotDepositZeroCollateral);
-			let market = Self::get_market(market_id)?;
+			let (_, market) = Self::get_market(market_id)?;
 			let market_account = Self::account_id(market_id);
 
 			AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
@@ -1277,7 +1347,7 @@ pub mod pallet {
 			account: &Self::AccountId,
 			amount: CollateralLpAmountOf<Self>,
 		) -> Result<(), DispatchError> {
-			let market = Self::get_market(market_id)?;
+			let (_, market) = Self::get_market(market_id)?;
 
 			let collateral_balance = AccountCollateral::<T>::try_get(market_id, account)
 				// REVIEW: Perhaps don't default to zero
@@ -1360,7 +1430,7 @@ pub mod pallet {
 			borrowing_account: &Self::AccountId,
 			amount_to_borrow: BorrowAmountOf<Self>,
 		) -> Result<(), DispatchError> {
-			let market = Self::get_market(market_id)?;
+			let (_, market) = Self::get_market(market_id)?;
 
 			Self::ensure_price_is_recent(&market)?;
 
@@ -1678,7 +1748,7 @@ pub mod pallet {
 		fn total_available_to_be_borrowed(
 			market_id: &Self::MarketId,
 		) -> Result<Self::Balance, DispatchError> {
-			let market = Self::get_market(market_id)?;
+			let (_, market) = Self::get_market(market_id)?;
 			let borrow_asset_id = T::Vault::asset_id(&market.borrow_asset_vault)?;
 			Ok(<T as Config>::MultiCurrency::balance(borrow_asset_id, &Self::account_id(market_id)))
 		}
@@ -1744,7 +1814,7 @@ pub mod pallet {
 			market_id: &Self::MarketId,
 			borrow_amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			let market = Self::get_market(market_id)?;
+			let (_, market) = Self::get_market(market_id)?;
 			let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
 			let borrow_amount_value = Self::get_price(borrow_asset, borrow_amount)?;
 
