@@ -308,6 +308,7 @@ fn can_create_valid_market() {
 		let should_have_failed = Lending::create_market(
 			Origin::signed(*ALICE),
 			config.clone().try_into_validated().unwrap(),
+			false,
 		);
 
 		assert!(
@@ -333,7 +334,134 @@ fn can_create_valid_market() {
 		let origin = Origin::signed(manager);
         let input = config.clone().try_into_validated().unwrap();
 
-		let should_be_created = Lending::create_market(origin, input.clone());
+		let should_be_created = Lending::create_market(origin, input.clone(), false);
+
+		assert!(
+			matches!(should_be_created, Ok(PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },)),
+			"Market creation should have succeeded, since ALICE now has BTC.
+			Market creation result was {:#?}",
+			should_be_created,
+		);
+
+        //  Check if corresponded event was emitted
+		let currency_pair = input.currency_pair;
+        // Market id and vault id values are defined via previous logic.
+        let market_id = pallet_lending::pallet::MarketIndex::new(1);
+        let vault_id = 1;
+	    let market_created_event = crate::Event::MarketCreated {market_id, vault_id, manager, currency_pair};
+        System::assert_has_event(Event::Lending(market_created_event));
+
+		let initial_pool_size = Lending::calculate_initial_pool_size(BORROW_ASSET_ID).unwrap();
+		let alice_balance_after_market_creation = Tokens::balance(BORROW_ASSET_ID, &*ALICE);
+
+		assert_eq!(
+			alice_balance_after_market_creation,
+			INITIAL_BORROW_ASSET_AMOUNT - initial_pool_size,
+			"ALICE should have 'paid' the inital_pool_size into the market vault.
+			alice_balance_after_market_creation: {alice_balance_after_market_creation}
+			initial_pool_size: {initial_pool_size}",
+			alice_balance_after_market_creation = alice_balance_after_market_creation,
+			initial_pool_size = initial_pool_size,
+		);
+
+		let system_events = System::events();
+
+		match &*system_events {
+			[_, _, _, EventRecord {
+				topics: event_topics,
+				phase: Phase::Initialization,
+				event:
+					Event::Lending(crate::Event::MarketCreated {
+						currency_pair:
+							CurrencyPair { base: COLLATERAL_ASSET_ID, quote: BORROW_ASSET_ID },
+						market_id: created_market_id @ MarketIndex(1),
+						vault_id: created_vault_id @ 1,
+						manager: event_manager,
+					}),
+			}] if event_manager == &*ALICE && event_topics.is_empty() => {
+				assert_eq!(
+					Lending::total_available_to_be_borrowed(&created_market_id).unwrap(),
+					initial_pool_size,
+					"The market should have {} in it.",
+					initial_pool_size,
+				);
+
+				assert_eq!(
+					<Vault as vault::Vault>::asset_id(&created_vault_id).unwrap(),
+					BORROW_ASSET_ID,
+					"The created market vault should be backed by the borrow asset"
+				);
+
+				// REVIEW: Review this test
+				let alice_total_debt_with_interest = Tokens::balance(Lending::get_assets_for_market(&created_market_id).unwrap().debt_asset, &ALICE);
+				assert_eq!(
+					alice_total_debt_with_interest,
+					0,
+					"The borrowed balance of ALICE should be 0. Found {:#?}",
+					alice_total_debt_with_interest
+				);
+			},
+			_ => panic!(
+				"Unexpected value for System::events(); found {:#?}",
+				system_events
+			),
+		}
+	});
+}
+
+#[test]
+fn can_create_valid_market_with_keep_alive() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1); // ensure block is non-zero
+
+		/// The amount of the borrow asset to mint into ALICE.
+		const INITIAL_BORROW_ASSET_AMOUNT: u128 = 10_u128.pow(30);
+
+		const BORROW_ASSET_ID: u128 = BTC::ID;
+		const COLLATERAL_ASSET_ID: u128 = USDT::ID;
+		const EXPECTED_AMOUNT_OF_BORROW_ASSET: u128 = 50_000 * USDT::ONE;
+
+		let config = default_create_input(CurrencyPair::new(COLLATERAL_ASSET_ID, BORROW_ASSET_ID));
+
+		set_price(BORROW_ASSET_ID, EXPECTED_AMOUNT_OF_BORROW_ASSET);
+		set_price(COLLATERAL_ASSET_ID, USDT::ONE);
+
+		let price = <Oracle as oracle::Oracle>::get_price(BORROW_ASSET_ID, BTC::ONE)
+			.expect("impossible")
+			.price;
+
+		assert_eq!(price, EXPECTED_AMOUNT_OF_BORROW_ASSET);
+
+		let should_have_failed = Lending::create_market(
+			Origin::signed(*ALICE),
+			config.clone().try_into_validated().unwrap(),
+			true,
+		);
+
+		assert!(
+			matches!(
+				should_have_failed,
+				Err(DispatchErrorWithPostInfo {
+					post_info: PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },
+					error: DispatchError::Module(ModuleError {
+						index: _, // not important in mock runtime
+						error: _, // not important in mock runtime
+						message: Some(error)
+					}),
+				}) if Into::<&'static str>::into(orml_tokens::Error::<Runtime>::BalanceTooLow) == error
+			),
+			"Creating a market with insufficient funds should fail, with the error message being \"BalanceTooLow\".
+			The other fields are also checked to make sure any changes are tested and accounted for, perhaps one of those fields changed?
+			Market creation result was {:#?}",
+			should_have_failed
+		);
+
+		Tokens::mint_into(BORROW_ASSET_ID, &*ALICE, INITIAL_BORROW_ASSET_AMOUNT).unwrap();
+        let manager = *ALICE;
+		let origin = Origin::signed(manager);
+        let input = config.clone().try_into_validated().unwrap();
+
+		let should_be_created = Lending::create_market(origin, input.clone(), true);
 
 		assert!(
 			matches!(should_be_created, Ok(PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },)),
@@ -1688,6 +1816,7 @@ where
 	crate::Pallet::<T>::create_market(
 		SystemOriginOf::<T>::signed(manager),
 		config.try_into_validated().unwrap(),
+		false,
 	)
 	.unwrap();
 	let system_events = frame_system::Pallet::<T>::events();
