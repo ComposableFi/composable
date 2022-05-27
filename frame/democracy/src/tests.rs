@@ -341,6 +341,7 @@ fn set_balance_proposal_is_correctly_filtered_out() {
 	}
 }
 
+
 fn set_balance_proposal_hash(value: u64) -> H256 {
 	BlakeTwo256::hash(&set_balance_proposal(value)[..])
 }
@@ -465,6 +466,14 @@ fn tally(r: ReferendumIndex) -> Tally<u64> {
 	Democracy::referendum_status(r).unwrap().tally
 }
 
+fn aye_with_asset_id(who: u64, asset_id: AssetId) -> AccountVote<u64> {
+	AccountVote::Standard { vote: AYE, balance: Tokens::free_balance(asset_id, &who) }
+}
+
+fn nay_with_asset_id(who: u64, asset_id: AssetId) -> AccountVote<u64> {
+	AccountVote::Standard { vote: NAY, balance: Tokens::free_balance(asset_id, &who) }
+}
+
 prop_compose! {
 	fn valid_asset_id()
 	(x in DEFAULT_ASSET..AssetId::MAX) -> AssetId {
@@ -494,4 +503,12 @@ prop_compose! {
 		 z in MINIMUM_BALANCE..Balance::MAX / 2) -> (Balance, Balance, Balance) {
 			(x, y, z)
 	}
+}
+
+prop_compose! {
+	fn valid_amounts_without_overflow_4()
+		 (x in (MINIMUM_BALANCE..(Balance::MAX / 4) - 10),
+		 y in (MINIMUM_BALANCE..(Balance::MAX / 4) - 10)) -> (Balance, Balance, Balance) {
+			(x, y, x + y)
+		}
 }

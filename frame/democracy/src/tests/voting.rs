@@ -20,6 +20,17 @@
 use super::*;
 
 #[test]
+fn overvoting_should_fail() {
+	new_test_ext().execute_with(|| {
+		let r = begin_referendum();
+		assert_noop!(
+			Democracy::vote(Origin::signed(1), r, aye(2)),
+			Error::<Test>::InsufficientFunds
+		);
+	});
+}
+
+#[test]
 fn split_voting_should_work() {
 	new_test_ext().execute_with(|| {
 		let r = begin_referendum();
@@ -29,17 +40,6 @@ fn split_voting_should_work() {
 		assert_ok!(Democracy::vote(Origin::signed(5), r, v));
 
 		assert_eq!(tally(r), Tally { ayes: 3, nays: 2, turnout: 50 });
-	});
-}
-
-#[test]
-fn overvoting_should_fail() {
-	new_test_ext().execute_with(|| {
-		let r = begin_referendum();
-		assert_noop!(
-			Democracy::vote(Origin::signed(1), r, aye(2)),
-			Error::<Test>::InsufficientFunds
-		);
 	});
 }
 

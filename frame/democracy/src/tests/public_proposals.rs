@@ -19,6 +19,8 @@
 
 use super::*;
 use frame_support::traits::{fungible::Mutate as FungibleMutet, fungibles::Mutate};
+use orml_traits::{ MultiLockableCurrency};
+use composable_tests_helpers::prop_assert_ok;
 
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(1000))]
@@ -156,6 +158,37 @@ proptest! {
 			fast_forward_to(6);
 			assert_ok!(Democracy::vote(Origin::signed(BOB), 2, aye(BOB)));
 		});
+	}
+
+	#[test]
+	fn propose_and_vote_and_remove_vote_should_work(
+		asset_id in valid_asset_id(),
+		(balance1, balance2, sum_balance) in valid_amounts_without_overflow_4()) {
+		new_test_ext().execute_with(|| {
+			System::set_block_number(0);
+			Balances::mint_into(&BOB, sum_balance).expect("always can mint in test");
+		    assert_ok!(propose_set_balance_and_note_2(BOB,asset_id, balance1, balance1)); 
+
+			fast_forward_to(2);		 
+			assert_noop!(Democracy::vote(Origin::signed(DARWIN), 0, AccountVote::Standard { balance: balance1, vote: AYE }), Error::<Test>::InsufficientFunds);
+
+			Tokens::mint_into(asset_id, &DARWIN, sum_balance).expect("always can mint in test");
+
+			assert_ok!(Tokens::ensure_can_withdraw(asset_id, &DARWIN, sum_balance));
+			// vote 1
+			assert_ok!(Democracy::vote(Origin::signed(DARWIN), 0, AccountVote::Standard { balance: balance1, vote: AYE }));
+			prop_assert!(Tokens::ensure_can_withdraw(asset_id, &DARWIN, sum_balance).is_err());
+			prop_assert_ok!(Tokens::ensure_can_withdraw(asset_id, &DARWIN, sum_balance - balance1));
+			// vote 2
+			assert_ok!(Democracy::vote(Origin::signed(DARWIN), 0, AccountVote::Standard { balance: balance1 + balance2, vote: AYE }));
+			prop_assert!(Tokens::ensure_can_withdraw(asset_id, &DARWIN, sum_balance - balance1).is_err());
+			assert_ok!(Tokens::ensure_can_withdraw(asset_id, &DARWIN, sum_balance - (balance1 + balance2)));
+			//remove vote
+			assert_ok!(Democracy::remove_vote(Origin::signed(DARWIN), asset_id, 0));
+			assert_ok!(Democracy::unlock(Origin::signed(DARWIN), DARWIN,  asset_id));
+			assert_ok!(Tokens::ensure_can_withdraw(asset_id, &DARWIN, sum_balance));
+			Ok(()) 
+		})?;
 	}
 
 	#[test]
