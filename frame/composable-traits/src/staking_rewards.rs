@@ -11,8 +11,10 @@ use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, Zero},
 	DispatchError, Perbill, SaturatedConversion,
 };
-use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
-use sp_std::marker::PhantomData;
+use sp_std::{
+	collections::{btree_map::BTreeMap, btree_set::BTreeSet},
+	marker::PhantomData,
+};
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Encode, Decode, TypeInfo)]
 pub enum PositionState {
