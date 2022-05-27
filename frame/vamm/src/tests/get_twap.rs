@@ -56,11 +56,7 @@ proptest! {
 			// In order to check if vamm is closed or not we must simulate time
 			// passing.
 			run_for_seconds(
-				if let Some(t) = vamm_state.closed {
-					t + 1
-				} else {
-					1
-				}
+				match vamm_state.closed {Some(t) => t+1, _ => 1}
 			);
 
 			assert_noop!(
