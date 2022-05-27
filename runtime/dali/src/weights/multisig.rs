@@ -88,7 +88,7 @@ impl<T: frame_system::Config> multisig::WeightInfo for WeightInfo<T> {
 			// Standard Error: 231_000
 			.saturating_add((1_178_000 as Weight).saturating_mul(s as Weight))
 			// Standard Error: 0
-			.saturating_add((5_000 as Weight).saturating_mul(z as Weight))
+			.saturating_add((4_000 as Weight).saturating_mul(z as Weight))
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}

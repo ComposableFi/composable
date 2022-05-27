@@ -47,4 +47,9 @@ impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 	fn dispatch_as() -> Weight {
 		(20_388_000 as Weight)
 	}
+	fn force_batch(c: u32, ) -> Weight {
+		(26_978_000 as Weight)
+			// Standard Error: 3_000
+			.saturating_add((7_767_000 as Weight).saturating_mul(c as Weight))
+	}
 }

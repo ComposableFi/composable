@@ -92,7 +92,7 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Pablo Pools (r:1 w:0)
-	// Storage: Tokens Accounts (r:5 w:5)
+	// Storage: Tokens Accounts (r:4 w:4)
 	// Storage: System Account (r:2 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn buy() -> Weight {
@@ -102,7 +102,7 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Pablo Pools (r:1 w:0)
-	// Storage: Tokens Accounts (r:5 w:5)
+	// Storage: Tokens Accounts (r:4 w:4)
 	// Storage: System Account (r:2 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn sell() -> Weight {
@@ -112,7 +112,7 @@ impl<T: frame_system::Config> pablo::WeightInfo for WeightInfo<T> {
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Pablo Pools (r:1 w:0)
-	// Storage: Tokens Accounts (r:5 w:5)
+	// Storage: Tokens Accounts (r:4 w:4)
 	// Storage: System Account (r:2 w:1)
 	// Storage: Pablo PriceCumulativeState (r:1 w:1)
 	fn swap() -> Weight {

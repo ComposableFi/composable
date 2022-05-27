@@ -233,7 +233,7 @@ impl PythFeed {
 			.map_err(|_| FeedError::ChannelIsBroken)?;
 
 		for &asset in assets.iter() {
-			if let Some(asset_pair) = AssetPair::new(asset, Asset::USD) {
+			if let Some(asset_pair) = AssetPair::new(asset, Asset::USDT) {
 				pyth.subscribe_to_asset(keep_running.clone(), &sink, &asset_pair)
 					.await
 					.expect("failed to subscribe to asset");

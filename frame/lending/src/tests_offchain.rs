@@ -30,7 +30,7 @@ fn test_liquidation_offchain_worker() {
 		// Initial collateral asset price is 50_000 USDT. Market's collateral factor equals two.
 		// It means that borrow supposed to be undercolateraized when
 		// borrowed amount is higher then one half of collateral amount in terms of USDT.
-		let (market_id, vault_id) = crate::tests::create_market::<50_000, Runtime>(
+		let (market_id, vault_id) = crate::tests::create_market::<Runtime, 50_000>(
 			USDT::instance(),
 			BTC::instance(),
 			manager,

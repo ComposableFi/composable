@@ -1,118 +1,41 @@
-use serde::Serialize;
+use primitives::currency::CurrencyId;
 use std::{
 	collections::{HashMap, HashSet},
 	convert::TryFrom,
 	fmt::Display,
-	num::ParseIntError,
-	str::FromStr,
 };
 
 custom_derive! {
 	#[derive(EnumFromStr, Copy, Clone, PartialEq, Eq, Hash, Debug)]
 	pub enum Asset {
-		BTC,
-		ETH,
-		LTC,
-		DOGE,
-		SOL,
-		LUNA,
-		AAPL,
-		BNB,
-		TSLA,
-		BCH,
-		SRM,
-		AMZN,
-		GOOG,
-		NFLX,
-		XAU,
-		AMC,
-		SPY,
-		GME,
-		GE,
-		QQQ,
+		KSM,
 		USDT,
 		USDC,
-		GBP,
-		EUR,
-		USD,
-		ADA,
-		DOT
 	}
 }
 
-pub const VALID_PRICE_QUOTE_ASSETS: &[Asset] = &[Asset::USD, Asset::USDT, Asset::USDC];
+pub const VALID_PRICE_QUOTE_ASSETS: &[Asset] = &[Asset::USDT, Asset::USDC];
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct AssetPair(pub Asset, pub Asset);
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize)]
-#[repr(transparent)]
-pub struct AssetIndex(u8);
-
-impl core::fmt::Display for AssetIndex {
-	fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
-		write!(f, "{}", self.0)
-	}
-}
-
-pub enum AssetIndexError {
-	NotANumber(ParseIntError),
-	AssetNotFound,
-}
 
 lazy_static! {
 	/*
 	  The map of valid asset we are allowed to ask price for.
 	  We must not swap two indexes.
 	*/
-	pub static ref INDEX_TO_ASSET: HashMap<AssetIndex, Asset> = [
-		(0, Asset::BTC),
-		(1, Asset::ETH),
-		(2, Asset::LTC),
-		(3, Asset::DOGE),
-		(4, Asset::SOL),
-		(5, Asset::LUNA),
-		(6, Asset::AAPL),
-		(7, Asset::BNB),
-		(6, Asset::TSLA),
-		(7, Asset::BCH),
-		(8, Asset::SRM),
-		(9, Asset::AMZN),
-		(10, Asset::GOOG),
-		(11, Asset::NFLX),
-		(12, Asset::XAU),
-		(13, Asset::AMC),
-		(14, Asset::SPY),
-		(15, Asset::GME),
-		(16, Asset::GE),
-		(17, Asset::QQQ),
-		(18, Asset::USDT),
-		(19, Asset::USDC),
-		(20, Asset::GBP),
-		(21, Asset::EUR),
-		(22, Asset::ADA),
-		(23, Asset::DOT),
+	pub static ref INDEX_TO_ASSET: HashMap<CurrencyId, Asset> = [
+		(primitives::currency::CurrencyId::KSM, Asset::KSM),
+		(primitives::currency::CurrencyId::USDT, Asset::USDT),
+		(primitives::currency::CurrencyId::USDC, Asset::USDC),
 	]
 	.iter()
-	.map(|&(i, a)| (AssetIndex(i), a))
+	.map(|&(i, a)| (i, a))
 	.collect();
-	pub static ref ASSET_TO_INDEX: HashMap<Asset, AssetIndex> =
+	pub static ref ASSET_TO_INDEX: HashMap<Asset, CurrencyId> =
 		INDEX_TO_ASSET.iter().map(|(&i, &a)| (a, i)).collect();
 	pub static ref VALID_ASSETS: HashSet<Asset> =
 		INDEX_TO_ASSET.values().copied().collect();
-}
-
-impl FromStr for AssetIndex {
-	type Err = AssetIndexError;
-	fn from_str(s: &str) -> Result<Self, Self::Err> {
-		let asset_pair_index =
-			AssetIndex(FromStr::from_str(s).map_err(AssetIndexError::NotANumber)?);
-		if INDEX_TO_ASSET.contains_key(&asset_pair_index) {
-			Ok(asset_pair_index)
-		} else {
-			Err(AssetIndexError::AssetNotFound)
-		}
-	}
 }
 
 impl AssetPair {
@@ -121,24 +44,23 @@ impl AssetPair {
 	*/
 	pub fn new(x: Asset, y: Asset) -> Option<Self> {
 		match (x, y) {
-			(Asset::USD, _) => None,
 			(_, y) if VALID_PRICE_QUOTE_ASSETS.contains(&y) => Some(AssetPair(x, y)),
 			_ => None,
 		}
 	}
 }
 
-impl TryFrom<Asset> for AssetIndex {
+impl TryFrom<Asset> for CurrencyId {
 	type Error = ();
-	fn try_from(asset: Asset) -> Result<AssetIndex, Self::Error> {
+	fn try_from(asset: Asset) -> Result<CurrencyId, Self::Error> {
 		ASSET_TO_INDEX.get(&asset).copied().ok_or(())
 	}
 }
 
-impl TryFrom<AssetIndex> for Asset {
+impl TryFrom<CurrencyId> for Asset {
 	type Error = ();
-	fn try_from(asset_index: AssetIndex) -> Result<Asset, Self::Error> {
-		INDEX_TO_ASSET.get(&asset_index).copied().ok_or(())
+	fn try_from(currency_index: CurrencyId) -> Result<Asset, Self::Error> {
+		INDEX_TO_ASSET.get(&currency_index).copied().ok_or(())
 	}
 }
 

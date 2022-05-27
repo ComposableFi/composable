@@ -40,15 +40,13 @@ impl substrate_simnode::ChainInfo for ChainInfo {
 	);
 	type SignedExtras = picasso_runtime::SignedExtra;
 	type Cli = ComposableCli;
-	fn create_rpc_io_handler<SC>(
-		deps: RpcHandlerArgs<Self, SC>,
-	) -> jsonrpc_core::MetaIoHandler<sc_rpc::Metadata> {
+	fn create_rpc_io_handler<SC>(deps: RpcHandlerArgs<Self, SC>) -> jsonrpsee::RpcModule<()> {
 		let full_deps = node::rpc::FullDeps {
 			client: deps.client,
 			pool: deps.pool,
 			deny_unsafe: deps.deny_unsafe,
 		};
-		node::rpc::create(full_deps)
+		node::rpc::create(full_deps).expect("Rpc to be initialized")
 	}
 
 	fn signed_extras(from: <Self::Runtime as system::Config>::AccountId) -> Self::SignedExtras {

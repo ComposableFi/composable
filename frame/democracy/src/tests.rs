@@ -183,6 +183,8 @@ impl orml_tokens::Config for Test {
 	type OnDust = ();
 	type MaxLocks = MaxLocks;
 	type DustRemovalWhitelist = Everything;
+	type MaxReserves = ConstU32<2>;
+	type ReserveIdentifier = [u8; 8];
 }
 
 parameter_types! {
