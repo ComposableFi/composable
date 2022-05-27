@@ -98,14 +98,30 @@ pub mod pallet {
 	#[allow(dead_code)]
 	pub(crate) type PenaltyOf<T> = Penalty<AccountIdOf<T>>;
 
+
+	
+							// NOTE:
+						// other design would be to `take` in batches and having A/B storages
+						// 1. make A to be acitve to inser new pending stakers
+						// 2. drain B in batches
+						// 3. switch A/B
+						//
+						// in this case removing will be more eager and streaming (good)
+						// and fold would have simpler state (no need to recall previous and know
+						// when done) but will need to store `bool` value for A/B and split storage
+						// PendingStakersA and PendingStakersB
+						panic!("swithc epochs here");
+
 	#[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
 	pub enum State {
-		/// epoch runs, all operations to modify stakes will be handled in `Accounting`
+		/// epoch runs, cannot modify active positions, only append modification queues
 		Running,
-		/// stakes rewarded, changes to per assets stakes will be handled in `Accounting` 
+		/// stakes positins rewarded` 
 		Distributing,
-		/// working with pending operations, registering new stakers and asset total increases
-		Accounting,
+		ExtendingTime,
+		ExtendingStakes,	
+		/// working with pending operations, registerin new stakers and asset total increases
+		PendingStakers,
 	}
 
 	#[pallet::event]
@@ -289,28 +305,6 @@ pub mod pallet {
 	#[pallet::getter(fn pending_amount_extensions)]
 	pub type PendingAmountExtensions<T: Config> =
 		StorageMap<_, Twox64Concat, InstanceIdOf<T>, T::Balance, OptionQuery>;
-
-
-								// NOTE:
-						// other design would be to `take` in batches and having A/B storages
-						// 1. make A to be acitve to inser new pending stakers
-						// 2. drain B in batches
-						// 3. switch A/B
-						//
-						// in this case removing will be more eager and streaming (good)
-						// and fold would have simpler state (no need to recall previous and know
-						// when done) but will need to store `bool` value for A/B and split storage
-						// PendingStakersA and PendingStakersB
-		// NOTE: could use A/B queues and avoid protocol interuption because of background
-			// states
-		
-							// there are several designs 
-							// 1. make fold composable over N storages
-							// 2. make on storage have multi pending
-							// because there is no need to access pending by index, so can have one execution queue for all
-						enum PendingOperations<T> {
-							Stake( InstanceIdOf<T>)
-						}
 
 	/// time to extend position with
 	#[pallet::storage]
@@ -500,7 +494,7 @@ pub mod pallet {
 					// longer than total fold time - which is most likely yes
 					Self::update_epoch();
 				},
-				State::Rewarding => {
+				State::Distributing => {
 					let now = T::Time::now().as_secs();
 					let (reward_epoch, reward_epoch_start) = EndEpochSnapshot::<T>::get();
 					let result = <(FoldState<T>, Stakers<T>)>::step(
@@ -606,7 +600,7 @@ pub mod pallet {
 						CurrentState::<T>::set(State::Registering);
 					}
 				},
-				State::Registering => {
+				State::PendingStakers => {
 					let registering_result = <(FoldState<T>, PendingStakers<T>)>::step(
 						FoldStrategy::Chunk {
 							number_of_elements: T::ElementToProcessPerBlock::get(),
@@ -628,8 +622,6 @@ pub mod pallet {
 						},
 					);
 					if let BlockFold::Done { .. } = registering_result {
-
-						panic!("swithc epochs here");
 						PendingStakers::<T>::remove_all(None);
 						CurrentState::<T>::set(State::Running);
 					}
@@ -766,6 +758,8 @@ pub mod pallet {
 			duration: DurationSeconds,
 			keep_alive: bool,
 		) -> Result<Self::InstanceId, DispatchError> {
+			// NOTE: could use A/B queues and avoid protocol interuption because of background
+			// states
 			Self::ensure_valid_interaction_state()?;
 			let config = Self::get_config(asset)?;
 			let reward_multiplier = *config
