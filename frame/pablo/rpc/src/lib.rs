@@ -2,22 +2,25 @@ use codec::Codec;
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::dex::PriceAggregate;
 use core::{fmt::Display, str::FromStr};
-use jsonrpc_core::{Error as RpcError, ErrorCode, Result as RpcResult};
-use jsonrpc_derive::rpc;
+use jsonrpsee::{
+	core::{Error as RpcError, RpcResult},
+	proc_macros::rpc,
+	types::{error::CallError, ErrorObject},
+};
 use pablo_runtime_api::PabloRuntimeApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use sp_std::sync::Arc;
 
-#[rpc]
+#[rpc(client, server)]
 pub trait PabloApi<BlockHash, PoolId, AssetId, Balance>
 where
 	PoolId: FromStr + Display,
 	AssetId: FromStr + Display,
 	Balance: FromStr + Display,
 {
-	#[rpc(name = "pablo_pricesFor")]
+	#[method(name = "pablo_pricesFor")]
 	fn prices_for(
 		&self,
 		pool_id: SafeRpcWrapper<PoolId>,
@@ -29,7 +32,7 @@ where
 		PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
 	>;
 
-	#[rpc(name = "pablo_expectedLpTokensGivenLiquidity")]
+	#[method(name = "pablo_expectedLpTokensGivenLiquidity")]
 	fn expected_lp_tokens_given_liquidity(
 		&self,
 		pool_id: SafeRpcWrapper<PoolId>,
@@ -50,7 +53,8 @@ impl<C, M> Pablo<C, M> {
 	}
 }
 
-impl<C, Block, PoolId, AssetId, Balance> PabloApi<<Block as BlockT>::Hash, PoolId, AssetId, Balance>
+impl<C, Block, PoolId, AssetId, Balance>
+	PabloApiServer<<Block as BlockT>::Hash, PoolId, AssetId, Balance>
 	for Pablo<C, (Block, PoolId, AssetId, Balance)>
 where
 	Block: BlockT,
@@ -80,11 +84,11 @@ where
 		let runtime_api_result =
 			api.prices_for(&at, pool_id.0, base_asset_id.0, quote_asset_id.0, amount.0);
 		runtime_api_result.map_err(|e| {
-			RpcError {
-				code: ErrorCode::ServerError(9876), // No real reason for this value
-				message: "Something wrong".into(),
-				data: Some(format!("{:?}", e).into()),
-			}
+			RpcError::Call(CallError::Custom(ErrorObject::owned(
+				9876,
+				"Something wrong",
+				Some(format!("{:?}", e)),
+			)))
 		})
 	}
 
@@ -107,11 +111,11 @@ where
 			quote_asset_amount,
 		);
 		runtime_api_result.map_err(|e| {
-			RpcError {
-				code: ErrorCode::ServerError(9876), // No real reason for this value
-				message: "Something wrong".into(),
-				data: Some(format!("{:?}", e).into()),
-			}
+			RpcError::Call(CallError::Custom(ErrorObject::owned(
+				9876,
+				"Something wrong",
+				Some(format!("{:?}", e)),
+			)))
 		})
 	}
 }

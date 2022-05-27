@@ -366,7 +366,7 @@ fn can_create_valid_market() {
 		let system_events = System::events();
 
 		match &*system_events {
-			[_, _, _, EventRecord {
+			[_, _, _, _, _, EventRecord {
 				topics: event_topics,
 				phase: Phase::Initialization,
 				event:

@@ -344,7 +344,8 @@ pub fn run() -> Result<()> {
 						},
 						id => panic!("Unknown Chain: {}", id),
 					}),
-				BenchmarkCmd::Overhead(_) => Err("Unsupported benchmarking command".into()),
+				BenchmarkCmd::Overhead(_) | BenchmarkCmd::Machine(_) =>
+					Err("Unsupported benchmarking command".into()),
 			}
 		},
 		None => {
