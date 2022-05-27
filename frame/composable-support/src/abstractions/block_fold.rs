@@ -133,3 +133,36 @@ impl<S, K> BlockFold<S, K> {
 		BlockFold::Init { strategy, state }
 	}
 }
+
+#[cfg(test)]
+mod tests {
+    use frame_support::{StoragePrefixedMap, Twox64Concat, StorageMap};
+    use sp_io::TestExternalities;
+ 
+	#[test]
+	fn proves_partial_drain_possible() {
+		TestExternalities::default().execute_with(|| {
+			frame_support::generate_storage_alias! {
+				QueueModule,
+				QueueStorageMap => Map<(u64, Twox64Concat), u64>
+			}
+			QueueStorageMap::insert(1,1);
+			QueueStorageMap::insert(2,2);
+			QueueStorageMap::insert(3,3);
+			QueueStorageMap::insert(4,4);
+
+			{
+				let mut drain = QueueStorageMap::drain();
+				assert_eq!(drain.next(), Some((3,3)));
+				assert_eq!(drain.next(), Some((4,4)));
+				drop(drain);
+			}
+			{
+				let mut drain = QueueStorageMap::drain();
+				assert_eq!(drain.next(), Some((1,1)));
+				assert_eq!(drain.next(), Some((2,2)));
+				assert_eq!(drain.next(), None);
+			}
+		});
+	}
+} 

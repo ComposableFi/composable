@@ -97,31 +97,24 @@ pub mod pallet {
 	pub(crate) type EpochDurationOf<T> = <T as Config>::EpochDuration;
 	#[allow(dead_code)]
 	pub(crate) type PenaltyOf<T> = Penalty<AccountIdOf<T>>;
-
-
 	
-							// NOTE:
-						// other design would be to `take` in batches and having A/B storages
-						// 1. make A to be acitve to inser new pending stakers
-						// 2. drain B in batches
-						// 3. switch A/B
-						//
-						// in this case removing will be more eager and streaming (good)
-						// and fold would have simpler state (no need to recall previous and know
-						// when done) but will need to store `bool` value for A/B and split storage
-						// PendingStakersA and PendingStakersB
-						panic!("swithc epochs here");
-
+			
+	// NOTE:	
+	// some state processed by batched brain, as these just merged into main collections
+	// some states are processed by fold, because updates happens in place
+	// fold can be made drain if to use A/B storages and drain one and fill other depending on epoch index mod 2
 	#[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
 	pub enum State {
 		/// epoch runs, cannot modify active positions, only append modification queues
 		Running,
 		/// stakes positins rewarded` 
 		Distributing,
-		ExtendingTime,
-		ExtendingStakes,	
+		PendingAmounts,	
+		PendingDurations,
 		/// working with pending operations, registerin new stakers and asset total increases
+		/// Processed by `fold` as updates are done in place
 		PendingStakers,
+		PendingShares,	
 	}
 
 	#[pallet::event]
@@ -219,7 +212,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn fold_over_stakers)]
-	pub type FoldState<T: Config> = StorageValue<_, BlockFold<(), InstanceIdOf<T>>, OptionQuery>;
+	pub type StakersFoldState<T: Config> = StorageValue<_, BlockFold<(), InstanceIdOf<T>>, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn current_epoch_start)]
@@ -497,7 +490,7 @@ pub mod pallet {
 				State::Distributing => {
 					let now = T::Time::now().as_secs();
 					let (reward_epoch, reward_epoch_start) = EndEpochSnapshot::<T>::get();
-					let result = <(FoldState<T>, Stakers<T>)>::step(
+					let result = <(StakersFoldState<T>, Stakers<T>)>::step(
 						FoldStrategy::new_chunk(T::ElementToProcessPerBlock::get()),
 						(),
 						|_, nft_id, _| {
@@ -592,16 +585,52 @@ pub mod pallet {
 							);
 
 							if let Err(e) = try_reward {
-								log::warn!("Failed to reward NFT: {:?}, message: {:?}", nft_id, e);
+								log::error!("Failed to reward NFT: {:?}, message: {:?}", nft_id, e);
 							}
 						},
 					);
 					if let BlockFold::Done { .. } = result {
-						CurrentState::<T>::set(State::Registering);
+						CurrentState::<T>::set(State::Compounding);
+					}
+				},
+				State::Compounding => {
+					// TODO: develop `drain_limit(T::ElementToProcessPerBlock::get()) which wraps iterator like interface
+					let mut batch = T::ElementToProcessPerBlock::get();
+					let mut any = false;
+					while batch > 0 && let Some((asset,amount)) = PendingTotalShares::<T>::drain() {
+						batch-=1;
+						any = true;
+					}
+					if any == false {
+						CurrentState::<T>::set(State::ExtendingStakes);
+					}
+				},
+				State::ExtendingStakes => {
+					// TODO: develop `drain_limit(T::ElementToProcessPerBlock::get()) which wraps iterator like interface
+					let mut batch = T::ElementToProcessPerBlock::get();
+					let mut any = false;
+					while batch > 0 && let Some((nft_id,amount)) = PendingAmountExtensions::<T>::drain() {
+						batch-=1;
+						any = true;
+					}
+					if any == false {
+						CurrentState::<T>::set(State::PendingDurations);
+					}
+				},
+				State::ExtendingStakes => {
+					// TODO: develop `drain_limit(T::ElementToProcessPerBlock::get()) which wraps iterator like interface
+					let mut batch = T::ElementToProcessPerBlock::get();
+					let mut any = false;
+					while batch > 0 && let Some((nft_id,amount)) = PendingAmountExtensions::<T>::drain() {
+						batch-=1;
+						any = true;
+					}
+					if any == false {
+						CurrentState::<T>::set(State::PendingStakers);
 					}
 				},
 				State::PendingStakers => {
-					let registering_result = <(FoldState<T>, PendingStakers<T>)>::step(
+					let result = <(FoldState<T>, PendingStakers<T>)>::step(
 						FoldStrategy::Chunk {
 							number_of_elements: T::ElementToProcessPerBlock::get(),
 						},
@@ -621,7 +650,7 @@ pub mod pallet {
 							Stakers::<T>::insert(nft_id, ());
 						},
 					);
-					if let BlockFold::Done { .. } = registering_result {
+					if let BlockFold::Done { .. } = result {
 						PendingStakers::<T>::remove_all(None);
 						CurrentState::<T>::set(State::Running);
 					}
