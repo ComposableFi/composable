@@ -197,7 +197,6 @@ pub trait Staking {
 	/// * `instance_id` the ID uniquely identifiying the NFT from which we will compute the
 	///   available rewards.
 	/// * `to` the account to transfer the rewards to.
-	/// * `strategy` the strategy used to claim the rewards.
 	fn claim(instance_id: &Self::InstanceId, to: &Self::AccountId) -> DispatchResult;
 }
 

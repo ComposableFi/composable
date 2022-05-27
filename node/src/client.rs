@@ -160,6 +160,14 @@ impl sc_client_api::BlockBackend<Block> for Client {
 	) -> sp_blockchain::Result<bool> {
 		match_client!(self, has_indexed_transaction(hash))
 	}
+
+	fn requires_full_sync(&self) -> bool {
+		match self {
+			Self::Picasso(client) => client.requires_full_sync(),
+			Self::Dali(client) => client.requires_full_sync(),
+			Self::Composable(client) => client.requires_full_sync(),
+		}
+	}
 }
 
 impl sc_client_api::StorageProvider<Block, FullBackend> for Client {

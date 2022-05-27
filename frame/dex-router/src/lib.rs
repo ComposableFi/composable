@@ -422,6 +422,22 @@ pub mod pallet {
 			}
 		}
 
+		fn amount_of_lp_token_for_added_liquidity(
+			pool_id: Self::PoolId,
+			base_amount: Self::Balance,
+			quote_amount: Self::Balance,
+		) -> Result<Self::Balance, DispatchError> {
+			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
+			match route[..] {
+				[pool_id] => T::Pablo::amount_of_lp_token_for_added_liquidity(
+					pool_id,
+					base_amount,
+					quote_amount,
+				),
+				_ => Err(Error::<T>::UnsupportedOperation.into()),
+			}
+		}
+
 		#[transactional]
 		fn exchange(
 			who: &Self::AccountId,

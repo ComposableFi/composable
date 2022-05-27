@@ -628,11 +628,12 @@ pub mod pallet {
 		pub fn create_market(
 			origin: OriginFor<T>,
 			input: Validated<CreateInputOf<T>, (MarketModelValid, CurrencyPairIsNotSame)>,
+			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let input = input.value();
 			let pair = input.currency_pair;
-			let (market_id, vault_id) = Self::create(who.clone(), input)?;
+			let (market_id, vault_id) = Self::create(who.clone(), input, keep_alive)?;
 			Self::deposit_event(Event::<T>::MarketCreated {
 				market_id,
 				vault_id,
@@ -1154,7 +1155,7 @@ pub mod pallet {
 				Self::MayBeAssetId,
 				Self::BlockNumber,
 			>,
-			// TODO: add keep_alive
+			keep_alive: bool,
 		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
 			// TODO: Replace with `Validate`
 			ensure!(
@@ -1216,7 +1217,7 @@ pub mod pallet {
 					&manager,
 					&Self::account_id(&market_id),
 					initial_pool_size,
-					false, // TODO: Replace with keep_alive parameter
+					keep_alive,
 				)?;
 
 				let market_config = MarketConfig {
@@ -1314,8 +1315,12 @@ pub mod pallet {
 			let market_account = Self::account_id(market_id);
 
 			ensure!(
-				<T as Config>::MultiCurrency::can_deposit(market.collateral_asset, account, amount) ==
-					DepositConsequence::Success,
+				<T as Config>::MultiCurrency::can_deposit(
+					market.collateral_asset,
+					account,
+					amount,
+					false
+				) == DepositConsequence::Success,
 				Error::<T>::TransferFailed
 			);
 			ensure!(

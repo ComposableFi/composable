@@ -170,6 +170,7 @@ parameter_type_with_key! {
 	};
 }
 
+type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
@@ -179,6 +180,8 @@ impl orml_tokens::Config for Test {
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
 	type MaxLocks = MaxLocks;
+	type ReserveIdentifier = ReserveIdentifier;
+	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
 }
 

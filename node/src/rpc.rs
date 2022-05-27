@@ -44,7 +44,7 @@ pub fn create<RuntimeApi, Executor>(
 		FullClient<RuntimeApi, Executor>,
 		FullPool<OpaqueBlock, FullClient<RuntimeApi, Executor>>,
 	>,
-) -> jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>
+) -> Result<jsonrpsee::RpcModule<()>, jsonrpsee::core::Error>
 where
 	RuntimeApi:
 		ConstructRuntimeApi<OpaqueBlock, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
@@ -66,20 +66,14 @@ where
 			+ ExtendWithPabloApi<RuntimeApi, Executor>
 			+ ExtendWithLendingApi<RuntimeApi, Executor>,
 {
-	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
-	use substrate_frame_rpc_system::{FullSystem, SystemApi};
+	use pallet_transaction_payment_rpc::{TransactionPaymentApiServer, TransactionPaymentRpc};
+	use substrate_frame_rpc_system::{SystemApiServer, SystemRpc};
 
-	let mut io = jsonrpc_core::MetaIoHandler::default();
+	let mut io = jsonrpsee::RpcModule::new(());
 
-	io.extend_with(SystemApi::to_delegate(FullSystem::new(
-		deps.client.clone(),
-		deps.pool.clone(),
-		deps.deny_unsafe,
-	)));
+	io.merge(SystemRpc::new(deps.client.clone(), deps.pool.clone(), deps.deny_unsafe).into_rpc())?;
 
-	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(
-		deps.client.clone(),
-	)));
+	io.merge(TransactionPaymentRpc::new(deps.client.clone()).into_rpc())?;
 
 	io.extend_with(ibc_rpc::IbcApi::to_delegate(ibc_rpc::IbcRpcHandler::new(
 		deps.client.clone(),
@@ -89,27 +83,27 @@ where
 	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_assets_api(
 		&mut io,
 		deps.clone(),
-	);
+	)?;
 
 	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_crowdloan_rewards_api(
 		&mut io,
 		deps.clone(),
-	);
+	)?;
 
 	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_pablo_api(
 		&mut io,
 		deps.clone(),
-	);
+	)?;
 
 	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_lending_api(
 		&mut io,
 		deps,
-	);
+	)?;
 
 	// Extend this RPC with a custom API by using the following syntax.
 	// `YourRpcStruct` should have a reference to a client, which is needed
 	// to call into the runtime.
-	// `io.extend_with(YourRpcTrait::to_delegate(YourRpcStruct::new(ReferenceToClient, ...)));`
+	// `io.merge(YourRpcStruct::new(ReferenceToClient, ...).into_rpc());`
 
-	io
+	Ok(io)
 }

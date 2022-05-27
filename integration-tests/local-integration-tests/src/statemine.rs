@@ -112,7 +112,7 @@ fn this_chain_statemine_transfers_back_and_forth_work() {
 		assert!(accounted_native_balance <= new_balance);
 		//old value 10016522666636
 		assert_eq!(
-			10016463392624, /* approximately this UNIT + asset_amount - FEE_WEIGHT - FEE_KUSAMA
+			10016599690386, /* approximately this UNIT + asset_amount - FEE_WEIGHT - FEE_KUSAMA
 			                 * - FEE_STATEMINE - FEE_WEIGHT, */
 			new_balance,
 		);
