@@ -10,7 +10,7 @@ pub struct Instructions {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Instruction {
-    #[prost(oneof="instruction::Instruction", tags="1, 3, 4")]
+    #[prost(oneof="instruction::Instruction", tags="1, 2, 3")]
     pub instruction: ::core::option::Option<instruction::Instruction>,
 }
 /// Nested message and enum types in `Instruction`.
@@ -19,9 +19,9 @@ pub mod instruction {
     pub enum Instruction {
         #[prost(message, tag="1")]
         Transfer(super::Transfer),
-        #[prost(message, tag="3")]
+        #[prost(message, tag="2")]
         Call(super::Call),
-        #[prost(message, tag="4")]
+        #[prost(message, tag="3")]
         Spawn(super::Spawn),
     }
 }
@@ -50,7 +50,7 @@ pub struct Spawn {
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Account {
-    #[prost(bytes="vec", tag="2")]
+    #[prost(bytes="vec", tag="1")]
     pub addressed: ::prost::alloc::vec::Vec<u8>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]

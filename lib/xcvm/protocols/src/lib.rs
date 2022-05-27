@@ -2,11 +2,10 @@
 
 extern crate alloc;
 
+use alloc::{borrow::ToOwned, vec, vec::Vec};
 use core::str::FromStr;
-
-use alloc::{borrow::ToOwned, vec};
 use ethabi::{encode, ethereum_types::H160, Function, StateMutability, Token};
-use xcvm_core::{AbiEncoded, XCVMNetwork, XCVMProtocol};
+use xcvm_core::{XCVMNetwork, XCVMProtocol};
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum SlippageLimit {
@@ -44,9 +43,9 @@ pub enum StableswapError {
 
 impl<Assets, Options> XCVMProtocol<XCVMNetwork> for Stableswap<Assets, Options> {
 	type Error = StableswapError;
-	fn serialize(&self, network: XCVMNetwork) -> Result<AbiEncoded, Self::Error> {
+	fn serialize(&self, network: XCVMNetwork) -> Result<Vec<u8>, Self::Error> {
 		match network {
-			XCVMNetwork::PICASSO => Ok(AbiEncoded::empty()),
+			XCVMNetwork::PICASSO => Ok(vec![]),
 			XCVMNetwork::ETHEREUM => {
 				let uniswap_v3_contract_address =
 					H160::from_str("0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852")
@@ -87,22 +86,25 @@ mod tests {
 		assert_eq!(
 			program.instructions,
 			VecDeque::from([
-				XCVMInstruction::Call(AbiEncoded::empty()),
-				XCVMInstruction::Spawn(
-					XCVMNetwork::ETHEREUM,
-					(),
-					VecDeque::from([
-						XCVMInstruction::Call(AbiEncoded::from(vec![
-							0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 74, 17, 213, 238, 170, 194,
-							142, 195, 246, 29, 16, 13, 175, 77, 64, 71, 31, 24, 82, 0, 0, 0, 0, 0,
-							0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-							0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-							0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 129, 25, 192, 101, 0, 0, 0, 0, 0,
-							0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-						])),
-						XCVMInstruction::Transfer((), ())
+				XCVMInstruction::Call { encoded: vec![] },
+				XCVMInstruction::Spawn {
+					network: XCVMNetwork::ETHEREUM,
+					assets: (),
+					program: VecDeque::from([
+						XCVMInstruction::Call {
+							encoded: vec![
+								0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 74, 17, 213, 238, 170, 194,
+								142, 195, 246, 29, 16, 13, 175, 77, 64, 71, 31, 24, 82, 0, 0, 0, 0,
+								0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+								0, 0, 0, 0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+								0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 129, 25, 192, 101,
+								0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+								0, 0, 0, 0, 0, 0
+							]
+						},
+						XCVMInstruction::Transfer { to: (), assets: () }
 					])
-				),
+				},
 			])
 		);
 	}

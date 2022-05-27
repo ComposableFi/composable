@@ -13,8 +13,8 @@ message Instructions {
 message Instruction {
   oneof instruction {
     Transfer transfer = 1;
-    Call call = 3;
-    Spawn spawn = 4;
+    Call call = 2;
+    Spawn spawn = 3;
   }
 }
 
@@ -36,7 +36,7 @@ message Spawn {
 }
 
 message Account {
-  bytes addressed = 2;
+  bytes addressed = 1;
 }
 
 message U128 {

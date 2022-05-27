@@ -47,8 +47,8 @@ pub mod pallet {
 		},
 		transactional,
 	};
-	use frame_system::{ensure_signed, pallet_prelude::*};
-	use sp_std::vec::Vec;
+	use frame_system::{ensure_signed, pallet_prelude::*, RawOrigin};
+	use sp_std::{collections::vec_deque::VecDeque, vec::Vec};
 	use xcvm_core::*;
 
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -57,21 +57,26 @@ pub mod pallet {
 	pub(crate) type BridgeOf<T> = <T as Config>::Bridge;
 	pub(crate) type BridgeTxIdOf<T> = <BridgeOf<T> as TransferTo>::TxId;
 	pub(crate) type BridgeNetworkIdOf<T> = <BridgeOf<T> as TransferTo>::NetworkId;
-	pub(crate) type BridgeAddressOf<T> = <BridgeOf<T> as TransferTo>::Address;
+	pub(crate) type ForeignAddress<T> = <BridgeOf<T> as TransferTo>::Address;
+	pub(crate) type SatelliteOf<T> = (BridgeNetworkIdOf<T>, ForeignAddress<T>);
+
+	pub(crate) type Program =
+		XCVMProgram<VecDeque<XCVMInstruction<XCVMNetwork, Vec<u8>, Vec<u8>, XCVMTransfer>>>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		SatelliteSet {
 			network: XCVMNetwork,
-			satellite: (BridgeNetworkIdOf<T>, BridgeAddressOf<T>),
+			satellite: SatelliteOf<T>,
 		},
 		Executed {
-			program: XCVMProgram<XCVMInstruction<XCVMNetwork, AbiEncoded, Vec<u8>, XCVMTransfer>>,
+			program: Program,
 		},
 		Spawn {
 			network: XCVMNetwork,
 			network_txs: Vec<BridgeTxIdOf<T>>,
+			who: AccountIdOf<T>,
 			program: Vec<u8>,
 		},
 	}
@@ -115,8 +120,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn satellite)]
-	pub type Satellite<T: Config> =
-		StorageMap<_, Blake2_128Concat, XCVMNetwork, (BridgeNetworkIdOf<T>, BridgeAddressOf<T>)>;
+	pub type Satellite<T: Config> = StorageMap<_, Blake2_128Concat, XCVMNetwork, SatelliteOf<T>>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T>
@@ -127,7 +131,7 @@ pub mod pallet {
 		pub fn set_satellite(
 			origin: OriginFor<T>,
 			network: XCVMNetwork,
-			satellite: (BridgeNetworkIdOf<T>, BridgeAddressOf<T>),
+			satellite: SatelliteOf<T>,
 		) -> DispatchResultWithPostInfo {
 			let _ = T::ControlOrigin::ensure_origin(origin)?;
 			Satellite::<T>::insert(network, satellite.clone());
@@ -137,24 +141,38 @@ pub mod pallet {
 
 		#[pallet::weight(10_000)]
 		#[transactional]
+		pub fn execute_typed(origin: OriginFor<T>, program: Program) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin.clone())?;
+			Self::do_execute(who, program)
+		}
+
+		#[pallet::weight(10_000)]
+		#[transactional]
 		pub fn execute(
 			origin: OriginFor<T>,
 			program: BoundedVec<u8, T::MaxProgramSize>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin.clone())?;
-			let mut program = xcvm_protobuf::decode::<
+			let program = xcvm_protobuf::decode::<
 				XCVMNetwork,
 				<XCVMNetwork as Callable>::EncodedCall,
 				Vec<u8>,
 				XCVMTransfer,
 			>(program.as_ref())
 			.map_err(|_| Error::<T>::InvalidProgramEncoding)?;
+			Self::do_execute(who, program)
+		}
+	}
 
+	impl<T: Config> Pallet<T>
+	where
+		AccountIdOf<T>: for<'a> TryFrom<&'a [u8]> + AsRef<[u8]>,
+	{
+		fn do_execute(who: AccountIdOf<T>, mut program: Program) -> DispatchResultWithPostInfo {
 			let program_copy = program.clone();
-
 			while let Some(instruction) = program.instructions.pop_front() {
 				match instruction {
-					XCVMInstruction::Transfer(to, XCVMTransfer { assets }) => {
+					XCVMInstruction::Transfer { to, assets: XCVMTransfer { assets } } => {
 						let to = AccountIdOf::<T>::try_from(&to[..])
 							.map_err(|_| Error::<T>::MalformedAccount)?;
 						for (asset, amount) in assets {
@@ -169,18 +187,27 @@ pub mod pallet {
 							)?;
 						}
 					},
-					XCVMInstruction::Call(abi) => {
-						let payload: Vec<u8> = abi.clone().into();
+					XCVMInstruction::Call { encoded } => {
+						let payload: Vec<u8> = encoded.into();
 						let call = <T::Dispatchable as Decode>::decode(&mut &payload[..])
 							.map_err(|_| Error::<T>::InvalidCallEncoding)?;
-						call.dispatch(origin.clone()).map_err(|_| Error::<T>::CallFailed)?;
+						call.dispatch(RawOrigin::Signed(who.clone()).into())
+							.map_err(|e| e.error)?;
 					},
 					// If we want to spawn something from the same network, assume it's synchronous
-					XCVMInstruction::Spawn(XCVMNetwork::PICASSO, _, mut child_program) => {
+					XCVMInstruction::Spawn {
+						network: XCVMNetwork::PICASSO,
+						assets: _,
+						program: mut child_program,
+					} => {
 						child_program.append(&mut program.instructions);
 						program.instructions = child_program;
 					},
-					XCVMInstruction::Spawn(network, XCVMTransfer { assets }, child_program) => {
+					XCVMInstruction::Spawn {
+						network,
+						assets: XCVMTransfer { assets },
+						program: child_program,
+					} => {
 						let (bridge_network_id, network_satellite) =
 							Satellite::<T>::get(network).ok_or(Error::<T>::UnknownNetwork)?;
 						let now = frame_system::Pallet::<T>::block_number();
@@ -203,6 +230,7 @@ pub mod pallet {
 						Self::deposit_event(Event::<T>::Spawn {
 							network,
 							network_txs,
+							who: who.clone(),
 							program: xcvm_protobuf::encode(XCVMProgram {
 								instructions: child_program,
 							}),
@@ -210,9 +238,7 @@ pub mod pallet {
 					},
 				}
 			}
-
 			Self::deposit_event(Event::<T>::Executed { program: program_copy });
-
 			Ok(().into())
 		}
 	}

@@ -1,4 +1,4 @@
-use crate::AbiEncoded;
+use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 
@@ -16,7 +16,7 @@ impl XCVMNetwork {
 }
 
 impl Callable for XCVMNetwork {
-	type EncodedCall = AbiEncoded;
+	type EncodedCall = Vec<u8>;
 }
 
 impl Into<u32> for XCVMNetwork {

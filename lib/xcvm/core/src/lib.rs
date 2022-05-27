@@ -7,9 +7,8 @@ mod instruction;
 mod network;
 mod program;
 mod protocol;
-mod types;
 
-pub use crate::{asset::*, instruction::*, network::*, program::*, protocol::*, types::*};
+pub use crate::{asset::*, instruction::*, network::*, program::*, protocol::*};
 use alloc::collections::VecDeque;
 
 #[derive(Clone)]
@@ -27,8 +26,8 @@ where
 		XCVMProgramBuilder { network, instructions: VecDeque::new() }
 	}
 
-	pub fn transfer(mut self, account: Account, assets: Assets) -> Self {
-		self.instructions.push_back(XCVMInstruction::Transfer(account, assets));
+	pub fn transfer(mut self, to: Account, assets: Assets) -> Self {
+		self.instructions.push_back(XCVMInstruction::Transfer { to, assets });
 		self
 	}
 
@@ -36,16 +35,16 @@ where
 	where
 		F: FnOnce(Self) -> Result<Self, E>,
 	{
-		self.instructions.push_back(XCVMInstruction::Spawn(
+		self.instructions.push_back(XCVMInstruction::Spawn {
 			network,
 			assets,
-			f(Self::from(network))?.build().instructions,
-		));
+			program: f(Self::from(network))?.build().instructions,
+		});
 		Ok(self)
 	}
 
-	pub fn call_raw(mut self, encoded_call: Network::EncodedCall) -> Self {
-		self.instructions.push_back(XCVMInstruction::Call(encoded_call));
+	pub fn call_raw(mut self, encoded: Network::EncodedCall) -> Self {
+		self.instructions.push_back(XCVMInstruction::Call { encoded });
 		self
 	}
 
@@ -58,7 +57,7 @@ where
 
 	pub fn build(
 		self,
-	) -> XCVMProgram<XCVMInstruction<Network, Network::EncodedCall, Account, Assets>> {
+	) -> XCVMProgram<VecDeque<XCVMInstruction<Network, Network::EncodedCall, Account, Assets>>> {
 		XCVMProgram { instructions: self.instructions }
 	}
 }
@@ -66,7 +65,7 @@ where
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use alloc::vec;
+	use alloc::{vec, vec::Vec};
 
 	#[test]
 	fn test() {
@@ -75,10 +74,10 @@ mod tests {
 		struct DummyProtocol1Error;
 		impl XCVMProtocol<XCVMNetwork> for DummyProtocol1 {
 			type Error = DummyProtocol1Error;
-			fn serialize(&self, network: XCVMNetwork) -> Result<AbiEncoded, Self::Error> {
+			fn serialize(&self, network: XCVMNetwork) -> Result<Vec<u8>, Self::Error> {
 				match network {
-					XCVMNetwork::PICASSO => Ok(AbiEncoded::from(vec![0xCA, 0xFE, 0xBE, 0xEF])),
-					XCVMNetwork::ETHEREUM => Ok(AbiEncoded::from(vec![0xC0, 0xDE, 0xC0, 0xDE])),
+					XCVMNetwork::PICASSO => Ok(vec![0xCA, 0xFE, 0xBE, 0xEF]),
+					XCVMNetwork::ETHEREUM => Ok(vec![0xC0, 0xDE, 0xC0, 0xDE]),
 					_ => Err(DummyProtocol1Error),
 				}
 			}
@@ -89,10 +88,10 @@ mod tests {
 		struct DummyProtocol2Error;
 		impl XCVMProtocol<XCVMNetwork> for DummyProtocol2 {
 			type Error = DummyProtocol2Error;
-			fn serialize(&self, network: XCVMNetwork) -> Result<AbiEncoded, Self::Error> {
+			fn serialize(&self, network: XCVMNetwork) -> Result<Vec<u8>, Self::Error> {
 				match network {
-					XCVMNetwork::PICASSO => Ok(AbiEncoded::from(vec![0xCA, 0xFE, 0xBA, 0xBE])),
-					XCVMNetwork::ETHEREUM => Ok(AbiEncoded::from(vec![0xDE, 0xAD, 0xC0, 0xDE])),
+					XCVMNetwork::PICASSO => Ok(vec![0xCA, 0xFE, 0xBA, 0xBE]),
+					XCVMNetwork::ETHEREUM => Ok(vec![0xDE, 0xAD, 0xC0, 0xDE]),
 					_ => Err(DummyProtocol2Error),
 				}
 			}
@@ -129,19 +128,19 @@ mod tests {
 			program.instructions,
 			VecDeque::from([
 				// Protocol 1 on picasso
-				XCVMInstruction::Call(AbiEncoded::from(vec![202, 254, 190, 239])),
-				XCVMInstruction::Spawn(
-					XCVMNetwork::ETHEREUM,
-					(),
-					VecDeque::from([
+				XCVMInstruction::Call { encoded: vec![202, 254, 190, 239] },
+				XCVMInstruction::Spawn {
+					network: XCVMNetwork::ETHEREUM,
+					assets: (),
+					program: VecDeque::from([
 						// Protocol 2 on eth
-						XCVMInstruction::Call(AbiEncoded::from(vec![222, 173, 192, 222])),
+						XCVMInstruction::Call { encoded: vec![222, 173, 192, 222] },
 						// Protocol 1 on eth, different encoding than on previous network
-						XCVMInstruction::Call(AbiEncoded::from(vec![192, 222, 192, 222])),
-						XCVMInstruction::Transfer((), ())
+						XCVMInstruction::Call { encoded: vec![192, 222, 192, 222] },
+						XCVMInstruction::Transfer { to: (), assets: () }
 					])
-				),
-			])
+				}
+			]),
 		);
 	}
 }
