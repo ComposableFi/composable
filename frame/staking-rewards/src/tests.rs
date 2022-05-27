@@ -6,7 +6,7 @@ use crate::{
 	Error, PenaltyOf, StakingConfigOf, State,
 };
 use composable_traits::{
-	staking_rewards::{Penalty, Staking, StakingConfig, StakingReward},
+	staking_rewards::{Penalty, Staking, StakingConfig, StakingConfiguration, StakingReward},
 	time::DurationSeconds,
 };
 use frame_support::{
@@ -252,6 +252,73 @@ mod configure {
 			assert_noop!(
 				StakingRewards::configure(Origin::signed(ALICE), PICA, config),
 				DispatchError::BadOrigin
+			);
+		});
+	}
+
+	#[test]
+	fn configure_as_staking_configuration() {
+		new_test_ext().execute_with(|| {
+			let penalty = Penalty { value: Perbill::from_float(0.5), beneficiary: TREASURY };
+			let config = StakingConfig {
+				duration_presets: [
+					(WEEK, Perbill::from_float(0.5)),
+					(MONTH, Perbill::from_float(1.0)),
+					(1, Perbill::from_float(1.0)),
+					(2, Perbill::from_float(1.0)),
+					(3, Perbill::from_float(1.0)),
+					(4, Perbill::from_float(1.0)),
+					(5, Perbill::from_float(1.0)),
+					(6, Perbill::from_float(1.0)),
+					(7, Perbill::from_float(1.0)),
+					(8, Perbill::from_float(1.0)),
+					(9, Perbill::from_float(1.0)),
+				]
+				.into_iter()
+				.collect::<BTreeMap<_, _>>()
+				.try_into()
+				.expect("impossible; qed;"),
+				reward_assets: [BTC, LTC, ETH]
+					.into_iter()
+					.collect::<BTreeSet<_>>()
+					.try_into()
+					.expect("impossible; qed;"),
+				early_unstake_penalty: penalty.clone(),
+			};
+			assert_noop!(
+				<StakingRewards as StakingConfiguration>::configure(
+					PICA,
+					config.duration_presets,
+					config.reward_assets,
+					config.early_unstake_penalty
+				),
+				DispatchError::Other("Allowed length for duration_presets exceeded")
+			);
+
+			let config2 = StakingConfig {
+				duration_presets: [
+					(WEEK, Perbill::from_float(0.5)),
+					(MONTH, Perbill::from_float(1.0)),
+				]
+				.into_iter()
+				.collect::<BTreeMap<_, _>>()
+				.try_into()
+				.expect("impossible; qed;"),
+				reward_assets: [BTC, LTC, ETH, 11, 22, 33, 44, 55, 66, 77, 88, 99]
+					.into_iter()
+					.collect::<BTreeSet<_>>()
+					.try_into()
+					.expect("impossible; qed;"),
+				early_unstake_penalty: penalty,
+			};
+			assert_noop!(
+				<StakingRewards as StakingConfiguration>::configure(
+					PICA,
+					config2.duration_presets,
+					config2.reward_assets,
+					config2.early_unstake_penalty
+				),
+				DispatchError::Other("Allowed length for reward_assets exceeded")
 			);
 		});
 	}

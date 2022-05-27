@@ -1,4 +1,5 @@
 use crate as dex_router;
+use composable_traits::staking_rewards::NoopStaking;
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system as system;
 use orml_traits::parameter_type_with_key;
@@ -177,6 +178,7 @@ impl pallet_pablo::Config for Test {
 	type Time = Timestamp;
 	type TWAPInterval = TWAPInterval;
 	type WeightInfo = ();
+	type StakingConfiguration = NoopStaking;
 }
 
 parameter_types! {

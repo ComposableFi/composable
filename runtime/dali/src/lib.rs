@@ -70,6 +70,7 @@ pub use frame_support::{
 };
 
 use codec::{Codec, Encode, EncodeLike};
+use composable_traits::staking_rewards::{NoopStaking, StakingConfiguration};
 use frame_support::{
 	traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade},
 	weights::ConstantMultiplier,
@@ -1017,6 +1018,9 @@ impl pablo::Config for Runtime {
 	type TWAPInterval = TWAPInterval;
 	type Time = Timestamp;
 	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
+	// TODO set pallet-staking-rewards below as the impl, once that pallet is integrated to the
+	// runtime
+	type StakingConfiguration = NoopStaking;
 }
 
 parameter_types! {

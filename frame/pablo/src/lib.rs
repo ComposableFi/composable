@@ -97,7 +97,7 @@ pub mod pallet {
 		currency::BalanceLike,
 		dex::FeeConfig,
 		staking_rewards::{Penalty, StakingConfiguration},
-		time::DurationSeconds,
+		time::{ONE_MONTH, ONE_WEEK},
 	};
 	use frame_system::{
 		ensure_signed,
@@ -110,12 +110,6 @@ pub mod pallet {
 		ArithmeticError, FixedPointNumber, Permill,
 	};
 	use sp_std::vec::Vec;
-
-	pub const MINUTE: DurationSeconds = 60;
-	pub const HOUR: DurationSeconds = 60 * MINUTE;
-	pub const DAY: DurationSeconds = 24 * HOUR;
-	pub const WEEK: DurationSeconds = 7 * DAY;
-	pub const MONTH: DurationSeconds = 30 * DAY;
 
 	#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
 	pub enum PoolInitConfiguration<AccountId, AssetId, BlockNumber> {
@@ -574,7 +568,7 @@ pub mod pallet {
 		pub fn do_create_pool(
 			init_config: PoolInitConfigurationOf<T>,
 		) -> Result<T::PoolId, DispatchError> {
-			let (owner, (pool_id, lp_token), pair) = match init_config {
+			let (owner, (pool_id, lp_token_opt), pair) = match init_config {
 				PoolInitConfiguration::StableSwap {
 					owner,
 					pair,
@@ -609,18 +603,21 @@ pub mod pallet {
 					)
 				},
 			};
-			T::StakingConfiguration::configure(
-				lp_token,
-				// TODO (vim) Hard coded for now
-				[(WEEK, Perbill::from_float(0.5)), (MONTH, Perbill::from_float(1.0))].into(),
-				// TODO (vim) : Consider the case of having change the rewarded assets after the
-				// NFTs have already been created for a given asset by stakers
-				BTreeSet::from([CurrencyId::PBLO.into(), CurrencyId::PICA.into()]),
-				Penalty {
-					value: Perbill::from_float(0.5),
-					beneficiary: Self::account_id(&pool_id),
-				},
-			)?;
+			if lp_token_opt.is_some() {
+				T::StakingConfiguration::configure(
+					lp_token_opt.unwrap(),
+					// TODO (vim) Hard coded for now
+					[(ONE_WEEK, Perbill::from_float(0.5)), (ONE_MONTH, Perbill::from_float(1.0))]
+						.into(),
+					// TODO (vim) : Consider the case of having change the rewarded assets after
+					// the NFTs have already been created for a given asset by stakers
+					BTreeSet::from([CurrencyId::PBLO.into(), CurrencyId::PICA.into()]),
+					Penalty {
+						value: Perbill::from_float(0.5),
+						beneficiary: Self::account_id(&pool_id),
+					},
+				)?;
+			}
 			Self::deposit_event(Event::<T>::PoolCreated { owner, pool_id, assets: pair });
 			Ok(pool_id)
 		}

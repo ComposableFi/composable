@@ -176,6 +176,22 @@ pub trait StakingConfiguration {
 	) -> Result<(), DispatchError>;
 }
 
+/// TODO remove no-op implementation once runtimes have integrated the pallet-staking-rewards
+pub struct NoopStaking;
+impl StakingConfiguration for NoopStaking {
+	type AssetId = u128;
+	type AccountId = u128;
+
+	fn configure(
+		_: Self::AssetId,
+		_: BTreeMap<DurationSeconds, Perbill>,
+		_: BTreeSet<Self::AssetId>,
+		_: Penalty<Self::AccountId>,
+	) -> Result<(), DispatchError> {
+		Ok(())
+	}
+}
+
 /// Interface for protocol staking.
 pub trait Staking {
 	type AccountId;
