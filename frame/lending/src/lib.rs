@@ -685,9 +685,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			market_id: MarketIndex,
 			amount: T::Balance,
+			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
-			<Self as Lending>::deposit_collateral(&market_id, &sender, amount)?;
+			<Self as Lending>::deposit_collateral(&market_id, &sender, amount, keep_alive)?;
 			Self::deposit_event(Event::<T>::CollateralDeposited { sender, market_id, amount });
 			Ok(().into())
 		}
@@ -1252,6 +1253,7 @@ pub mod pallet {
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
 			amount: CollateralLpAmountOf<Self>,
+			keep_alive: bool,
 		) -> Result<(), DispatchError> {
 			ensure!(amount > Self::Balance::zero(), Error::<T>::CannotDepositZeroCollateral);
 			let market = Self::get_market(market_id)?;
@@ -1269,7 +1271,7 @@ pub mod pallet {
 				account,
 				&market_account,
 				amount,
-				true,
+				keep_alive,
 			)?;
 			Ok(())
 		}
