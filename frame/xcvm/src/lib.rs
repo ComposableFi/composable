@@ -150,6 +150,18 @@ pub mod pallet {
 		#[transactional]
 		pub fn execute(
 			origin: OriginFor<T>,
+			program: XCVMProgram<
+				VecDeque<XCVMInstruction<XCVMNetwork, Vec<u8>, Vec<u8>, XCVMTransfer>>,
+			>,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin.clone())?;
+			Self::do_execute(who, program)
+		}
+
+		#[pallet::weight(10_000)]
+		#[transactional]
+		pub fn execute_protobuf(
+			origin: OriginFor<T>,
 			program: BoundedVec<u8, T::MaxProgramSize>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin.clone())?;
