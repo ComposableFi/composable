@@ -68,7 +68,7 @@ fn configure_default_pica() -> StakingConfigOf<Test> {
 
 /// Enter new epoch
 fn advance_state_machine() {
-	run_to_block(3);
+	run_to_block(8);
 }
 
 mod initialize {
@@ -381,7 +381,7 @@ mod stake {
 				charlie_position,
 				equal_stake / 3
 			));
-			run_to_block(10); // ensure that position is not applied right away
+			run_to_block(18); // ensure that position is not applied right away
 
 			let updated_charlie_position =
 				<Test as FinancialNftProtocol<AccountId>>::get_protocol_nft::<
@@ -409,7 +409,7 @@ mod stake {
 				alice_position,
 				equal_stake / 3
 			));
-			run_to_block(15); // ensure that we got extensions consumed during rewarding period
+			run_to_block(27); // ensure that we got extensions consumed during rewarding period
 			let updated_alice_position =
 				<Test as FinancialNftProtocol<AccountId>>::get_protocol_nft::<
 					staking_rewards_pallet::StakingNFTOf<Test>,
@@ -443,7 +443,7 @@ mod stake {
 
 	#[test]
 	fn extend_stake_lock_duration_possible() {
-		env_logger::builder().is_test(true).try_init();
+		env_logger::builder().is_test(true).try_init().unwrap();
 		new_test_ext().execute_with(|| {
 			let config = configure_default_pica();
 			let equal_stake = 1_000_000_000_000;
@@ -507,7 +507,9 @@ mod stake {
 }
 
 mod unstake {
-	use super::*;
+	use crate::mock::ElementToProcessPerBlock;
+
+use super::*;
 
 	#[test]
 	fn owner_can_unstake() {
@@ -547,7 +549,7 @@ mod unstake {
 			assert_ok!(Tokens::mint_into(PICA, &ALICE, stake));
 			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
 				.expect("impossible; qed;");
-			advance_state_machine();
+			run_to_block(8);
 			assert_ok!(<StakingRewards as Staking>::unstake(&instance_id, &ALICE));
 			System::assert_last_event(Event::StakingRewards(crate::Event::Unstaked {
 				to: ALICE,
@@ -593,9 +595,11 @@ mod unstake {
 			configure_default_pica();
 			let stake = 1_000_000_000_000;
 			assert_ok!(Tokens::mint_into(PICA, &ALICE, stake));
-			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
+			let lock = WEEK;
+			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, lock, false)
 				.expect("impossible; qed;");
-			run_to_duration(WEEK + MINUTE);
+			run_to_duration(lock + (ElementToProcessPerBlock::get() as u64) + 4);
+			assert_eq!(StakingRewards::current_state(), State::Running);
 			assert_ok!(<StakingRewards as Staking>::unstake(&instance_id, &ALICE));
 			assert_eq!(Tokens::balance(PICA, &ALICE), stake);
 		});
@@ -616,6 +620,13 @@ mod unstake {
 			assert_eq!(Tokens::balance(PICA, &TREASURY), penalty_amount);
 		});
 	}
+
+	#[ignore = "until "]
+	#[test]
+	fn unstake_reduces_total_shares_in_case_reward_is_staking_asset() {
+		unimplemented!()
+	}
+
 }
 
 mod transfer_reward {
@@ -776,5 +787,12 @@ mod claim {
 			assert_ok!(StakingRewards::claim(Origin::signed(TREASURY), instance_id, TREASURY,));
 			assert_ok!(StakingRewards::claim(Origin::signed(ALICE), instance_id, ALICE,));
 		});
+
+	#[ignore = "until "]
+	#[test]
+	fn claim_reduces_total_shares_in_case_reward_is_staking_asset() {
+		unimplemented!()
+	}
+
 	}
 }

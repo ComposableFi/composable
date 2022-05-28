@@ -150,7 +150,6 @@ pub mod pallet {
 		ClaimRequireRestake,
 		AlreadyTagged,
 		EpochNotFound,
-
 		CanUnstakeOnlyDuringEpoch,
 		ImpossibleState,
 		OnlyOwnerOfPositionCanDoThis,
@@ -392,7 +391,16 @@ pub mod pallet {
 			// Only the owner is able to select an arbitrary `to` account.
 			let nft_owner = T::get_protocol_nft_owner::<StakingNFTOf<T>>(&instance_id)?;
 			let to = if nft_owner == who { to } else { nft_owner };
-			<Self as Staking>::claim(&instance_id, &to)?;
+			let (asset, compound) = <Self as Staking>::claim(&instance_id, &to)?;
+			if compound > T::Balance::zero() {
+			RunningTotalShares::<T>::try_mutate(
+				asset,
+				|total_shares| -> DispatchResult {
+					*total_shares = total_shares.safe_sub(&compound.into())?;
+					Ok(())
+				},
+			)?;
+			}
 			Ok(().into())
 		}
 
@@ -474,7 +482,7 @@ pub mod pallet {
 		fn on_initialize(_: T::BlockNumber) -> Weight {
 			let now = T::Time::now().as_secs();
 			let mut any = false;
-			// TODO(hussein-aitlahcen): abstract per-block fold of chunk into a macro:
+			// NOTE: we may waste some blocks from time to time, becuase there will be zero items in queue, that can be optimized if needed			
 			match Self::current_state() {
 				State::Running => {
 					// NOTE: we start new epoch here, it will work well if an only if epoch time is
@@ -483,6 +491,7 @@ pub mod pallet {
 				},
 				State::Distributing => {
 					let (reward_epoch, reward_epoch_start) = EndEpochSnapshot::<T>::get();
+					// TODO: abstract per-block fold of chunk into a macro
 					let result = <(StakersFoldState<T>, Stakers<T>)>::step(
 						FoldStrategy::new_chunk(T::ElementToProcessPerBlock::get()),
 						(),
@@ -567,11 +576,10 @@ pub mod pallet {
 								(now - nft.lock_date).into(),
 							)?;
 							nft.lock_date = nft.lock_date.safe_add(&time_lock)?;
+							nft.stake = nft.stake.safe_add(&amount)?;
 							let new_shares = nft.shares();
 							let amount = new_shares - old_shares;
 							pending_total_shares_add::<T>(nft.asset, amount);
-							// NOTE: best effort
-							nft.stake = nft.stake.safe_add(&amount)?;
 							Ok(())
 						});
 					}
@@ -609,8 +617,7 @@ pub mod pallet {
 						CurrentState::<T>::set(State::PendingStakers);
 					}
 				},
-				State::PendingStakers => {
-					
+				State::PendingStakers => {					
 					for (nft_id, _) in <PendingStakers<T>>::drain().take(T::ElementToProcessPerBlock::get() as usize) {
 						any = true;
 						let nft = T::get_protocol_nft::<StakingNFTOf<T>>(&nft_id)
@@ -657,7 +664,7 @@ fn pending_total_shares_add<T:Config>(id: <T as Config>::AssetId, amount : <T as
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub(crate) fn ensure_unstake() -> DispatchResult {
+		pub(crate) fn ensure_can_unstake() -> DispatchResult {
 			match Self::current_state() {
 				State::Running => Ok(()),
 				_ => Err(Error::<T>::CanUnstakeOnlyDuringEpoch.into()),
@@ -720,13 +727,17 @@ fn pending_total_shares_add<T:Config>(id: <T as Config>::AssetId, amount : <T as
 		pub(crate) fn collect_rewards(
 			nft: &mut StakingNFTOf<T>,
 			to: &AccountIdOf<T>,
-		) -> DispatchResult {
+		) -> Result<(T::AssetId, T::Balance), DispatchError> {
 			let protocol_account = Self::account_id(&nft.asset);
+			let mut compound = T::Balance::zero();
 			for (reward_asset, reward) in nft.pending_rewards.clone() {
+				if nft.asset == reward_asset {
+					compound += reward;
+				}
 				T::Assets::transfer(reward_asset, &protocol_account, to, reward, false)?;
 				nft.pending_rewards.remove(&reward_asset);
 			}
-			Ok(())
+			Ok((nft.asset, compound))
 		}
 	}
 
@@ -816,8 +827,7 @@ fn pending_total_shares_add<T:Config>(id: <T as Config>::AssetId, amount : <T as
 		}
 
 		fn unstake(instance_id: &Self::InstanceId, to: &Self::AccountId) -> DispatchResult {
-			Self::ensure_unstake()?;
-			<Self as Staking>::claim(instance_id, to)?;
+			Self::ensure_can_unstake()?;
 			let nft = T::get_protocol_nft::<StakingNFTOf<T>>(instance_id)?;
 			let protocol_account = Self::account_id(&nft.asset);
 			let current_epoch = Self::current_epoch();
@@ -874,6 +884,7 @@ fn pending_total_shares_add<T:Config>(id: <T as Config>::AssetId, amount : <T as
 					T::Assets::transfer(nft.asset, &protocol_account, &to, amount, false)?;
 				},
 			}
+			<Self as Staking>::claim(instance_id, to)?;
 			// Actually burn the NFT from the storage.
 			T::burn_protocol_nft::<StakingNFTOf<T>>(instance_id)?;
 			// Trigger event
@@ -886,10 +897,9 @@ fn pending_total_shares_add<T:Config>(id: <T as Config>::AssetId, amount : <T as
 			Ok(())
 		}
 
-		fn claim(instance_id: &Self::InstanceId, to: &Self::AccountId) -> DispatchResult {
-			T::try_mutate_protocol_nft(instance_id, |nft: &mut StakingNFTOf<T>| -> DispatchResult {
-				Self::collect_rewards(nft, to)?;
-				Ok(())
+		fn claim(instance_id: &Self::InstanceId, to: &Self::AccountId) -> Result<(T::AssetId, T::Balance), DispatchError> {
+			T::try_mutate_protocol_nft(instance_id, |nft: &mut StakingNFTOf<T>| -> Result<(T::AssetId, T::Balance), DispatchError> {
+				Self::collect_rewards(nft, to)
 			})
 		}
 	}
