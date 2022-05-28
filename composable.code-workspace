@@ -9,9 +9,26 @@
     ],
     "settings": {
         "cSpell.words": [
+            "autofetch",
+            "azuretools",
+            "clippy",
+            "eamodio",
+            "fsevenm",
+            "mutantdino",
+            "polkadot",
             "prost",
+            "PTRACE",
+            "resourcemonitor",
+            "rustfmt",
+            "seccomp",
+            "serayuzgur",
             "Stableswap",
-            "XCVM"
+            "tamasfe",
+            "tomoki",
+            "vadimcn",
+            "vsicons",
+            "XCVM",
+            "yzhang"
         ]
     }
 }
