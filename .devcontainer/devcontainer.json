@@ -49,6 +49,7 @@
 		"window.autoDetectColorScheme": true,
 		"workbench.preferredLightColorTheme": "GitHub Light",
 		"workbench.preferredDarkColorTheme": "GitHub Dark",
+		"workbench.startupEditor": "none",
 		"editor.inlineSuggest.enabled": true,
 		"git.autofetch": true
 	},
