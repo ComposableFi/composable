@@ -12,6 +12,7 @@
             "autofetch",
             "azuretools",
             "clippy",
+            "Dispatchable",
             "eamodio",
             "fsevenm",
             "mutantdino",
