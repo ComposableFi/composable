@@ -82,9 +82,9 @@ mod hook_state {
 			// State machine constant over block number
 			assert_eq!(StakingRewards::current_state(), State::Running);
 			process_block(0);
-			assert_eq!(StakingRewards::current_state(), State::Rewarding);
+			assert_eq!(StakingRewards::current_state(), State::Distributing);
 			process_block(0);
-			assert_eq!(StakingRewards::current_state(), State::Registering);
+			assert_eq!(StakingRewards::current_state(), State::PendingStakers);
 			process_block(0);
 			assert_eq!(StakingRewards::current_state(), State::Running);
 			process_block(0);
@@ -147,9 +147,10 @@ mod hook_state {
 			});
 			assert_eq!(PendingStakers::<Test>::iter().count(), nb_of_accounts as usize);
 			assert_eq!(Stakers::<Test>::iter().count(), 0);
-			run_to_block(1);
-			assert_eq!(StakingRewards::current_state(), State::Rewarding);
-			run_to_block(2);
+			assert!( (ElementToProcessPerBlock::get() as u128) <  nb_of_accounts);
+			run_to_block(4);
+			assert_eq!(StakingRewards::current_state(), State::PendingStakers);
+			run_to_block(1);			
 			let block_start = System::block_number() + 1;
 			let block_end =
 				block_start + (nb_of_accounts as u64 / ElementToProcessPerBlock::get() as u64);
@@ -161,7 +162,7 @@ mod hook_state {
 				);
 			});
 			assert_eq!(Stakers::<Test>::iter().count(), nb_of_accounts as usize);
-			run_to_block(System::block_number() + 1);
+			run_to_block(System::block_number() + 3);
 			assert_eq!(PendingStakers::<Test>::iter().count(), 0);
 			assert_eq!(StakingRewards::current_state(), State::Running);
 		});
@@ -302,10 +303,10 @@ mod stake {
 			configure_default_pica();
 			let stake = 1_000_000_000_000;
 			let duration = WEEK;
-			let initial_total_shares = StakingRewards::total_shares((PICA, BTC));
+			let initial_total_shares = StakingRewards::running_total_shares(PICA);
 			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
 			assert_ok!(<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, duration, false));
-			let final_total_shares = StakingRewards::total_shares((PICA, BTC));
+			let final_total_shares = StakingRewards::running_total_shares(PICA);
 			assert_eq!(initial_total_shares, final_total_shares);
 		});
 	}
@@ -335,11 +336,11 @@ mod stake {
 				.expect("impossible; qed;")
 				.mul_floor(stake);
 			assert_ok!(<Tokens as Mutate<AccountId>>::mint_into(PICA, &ALICE, stake));
-			let initial_total_shares = StakingRewards::total_shares((PICA, BTC));
+			let initial_total_shares = StakingRewards::running_total_shares(PICA);
 			assert_ok!(<StakingRewards as Staking>::stake(&PICA, &ALICE, stake, duration, false));
 			// Enter new epoch
 			advance_state_machine();
-			let final_total_shares = StakingRewards::total_shares((PICA, BTC));
+			let final_total_shares = StakingRewards::running_total_shares(PICA);
 			let delta_total_shares =
 				final_total_shares.checked_sub(initial_total_shares).expect("impossible; qed;");
 			assert_eq!(delta_total_shares, shares);

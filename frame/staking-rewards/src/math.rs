@@ -1,6 +1,6 @@
-use composable_support::math::safe::{SafeMul, SafeAdd, SafeDiv, SafeSub};
+use composable_support::math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub};
 use composable_traits::time::DurationSeconds;
-use sp_runtime::{Perbill, ArithmeticError};
+use sp_runtime::{ArithmeticError, Perbill};
 use sp_std::convert::TryInto;
 type Balance = u128;
 
@@ -17,8 +17,8 @@ pub fn honest_locked_stake_increase(
 	let remaining = duration.safe_sub(&passed)?;
 	let bonus_time = penalized_amount.safe_mul(&(remaining as u128))?;
 	let new_time = new_amount.safe_mul(&(duration as u128))?;
-	let new_remaining_time = (duration as u128)
-		.min(bonus_time.safe_add(&new_time)?.safe_div(&total)?.safe_add(&1)?);
+	let new_remaining_time =
+		(duration as u128).min(bonus_time.safe_add(&new_time)?.safe_div(&total)?.safe_add(&1)?);
 	new_remaining_time.try_into().ok().ok_or_else(|| ArithmeticError::Overflow)
 }
 
