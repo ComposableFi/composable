@@ -19,9 +19,9 @@ impl Callable for XCVMNetwork {
 	type EncodedCall = Vec<u8>;
 }
 
-impl Into<u32> for XCVMNetwork {
-	fn into(self) -> u32 {
-		self.0
+impl From<XCVMNetwork> for u32 {
+	fn from(network: XCVMNetwork) -> u32 {
+		network.0
 	}
 }
 
