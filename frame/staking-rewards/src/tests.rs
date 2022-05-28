@@ -71,7 +71,7 @@ fn advance_state_machine() {
 	run_to_block(3);
 }
 
-mod hook_state {
+mod initialize {
 	use crate::{mock::ElementToProcessPerBlock, PendingStakers, Stakers};
 
 	use super::*;
@@ -84,11 +84,13 @@ mod hook_state {
 			process_block(0);
 			assert_eq!(StakingRewards::current_state(), State::Distributing);
 			process_block(0);
+			assert_eq!(StakingRewards::current_state(), State::PendingAmounts);
+			process_block(0);
+			assert_eq!(StakingRewards::current_state(), State::PendingDurations);
+			process_block(0);
 			assert_eq!(StakingRewards::current_state(), State::PendingStakers);
 			process_block(0);
-			assert_eq!(StakingRewards::current_state(), State::Running);
-			process_block(0);
-			assert_eq!(StakingRewards::current_state(), State::Running);
+			assert_eq!(StakingRewards::current_state(), State::PendingShares);
 			process_block(0);
 			assert_eq!(StakingRewards::current_state(), State::Running);
 			process_block(0);
@@ -579,7 +581,7 @@ mod unstake {
 			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
 				.expect("impossible; qed;");
 			// Enter into first epoch
-			advance_state_machine();
+			run_to_block(8);
 			assert_ok!(<StakingRewards as Staking>::unstake(&instance_id, &ALICE));
 			assert_eq!(Tokens::balance(PICA, &ALICE), penalty.value.mul_floor(stake));
 		});
