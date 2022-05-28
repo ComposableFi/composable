@@ -78,13 +78,13 @@ impl Region {
 	/// contract and this can be used to detect problems in the standard library of the contract.
 	pub fn validate(&self) -> Result<(), MemoryError> {
 		if self.offset == 0 {
-			return Err(MemoryError::RegionIsNull)
+			return Err(MemoryError::RegionIsNull);
 		}
 		if self.length > self.capacity {
-			return Err(MemoryError::RegionInconsistent)
+			return Err(MemoryError::RegionInconsistent);
 		}
 		if self.capacity > (u32::MAX - self.offset) {
-			return Err(MemoryError::RegionInconsistent)
+			return Err(MemoryError::RegionInconsistent);
 		}
 		Ok(())
 	}
@@ -99,9 +99,9 @@ pub enum MemoryError {
 	MemoryReadFailure,
 }
 
-impl Into<DispatchError> for MemoryError {
-	fn into(self) -> DispatchError {
-		DispatchError::Other(match self {
+impl From<MemoryError> for DispatchError {
+	fn from(val: MemoryError) -> Self {
+		DispatchError::Other(match val {
 			MemoryError::RegionLengthMismatch => "region length mismatch",
 			MemoryError::RegionIsNull => "region is null",
 			MemoryError::RegionInconsistent => "region is inconsistent",
@@ -204,7 +204,7 @@ pub trait SandboxMemory: Sized + Clone {
 	fn read_region(&self, ptr: u32, max_length: usize) -> Result<Vec<u8>, MemoryError> {
 		let region = self.get_region(ptr)?;
 		if region.length > max_length as u32 {
-			return Err(MemoryError::RegionLengthMismatch)
+			return Err(MemoryError::RegionLengthMismatch);
 		}
 		log::debug!(target: "runtime::contracts", "Region: {:?}", region);
 		let mut data = vec![0u8; region.length as usize];
@@ -221,7 +221,7 @@ pub trait SandboxMemory: Sized + Clone {
 		let mut region = self.get_region(ptr)?;
 		let region_capacity = region.capacity as usize;
 		if data.len() > region_capacity {
-			return Err(MemoryError::RegionLengthMismatch)
+			return Err(MemoryError::RegionLengthMismatch);
 		}
 		log::debug!(target: "runtime::contracts", "Region: {:?}", region);
 		self.set(region.offset, data).map_err(|_| MemoryError::MemoryWriteFailure)?;

@@ -297,8 +297,8 @@ impl WeightToFeePolynomial for DutchAuctionsMocks {
 }
 
 pub struct XcmFake;
-impl Into<Result<cumulus_pallet_xcm::Origin, XcmFake>> for XcmFake {
-	fn into(self) -> Result<cumulus_pallet_xcm::Origin, XcmFake> {
+impl From<XcmFake> for Result<cumulus_pallet_xcm::Origin, XcmFake> {
+	fn from(val: XcmFake) -> Self {
 		todo!("please test via local-integration-tests")
 	}
 }

@@ -17,9 +17,9 @@ impl XCVMAsset {
 	pub const UST: XCVMAsset = XCVMAsset(0xDEADC0DE);
 }
 
-impl Into<u32> for XCVMAsset {
-	fn into(self) -> u32 {
-		self.0
+impl From<XCVMAsset> for u32 {
+	fn from(val: XCVMAsset) -> Self {
+		val.0
 	}
 }
 
@@ -43,9 +43,9 @@ impl From<BTreeMap<u32, u128>> for XCVMTransfer {
 	}
 }
 
-impl Into<BTreeMap<u32, u128>> for XCVMTransfer {
-	fn into(self) -> BTreeMap<u32, u128> {
-		self.assets
+impl From<XCVMTransfer> for BTreeMap<u32, u128> {
+	fn from(val: XCVMTransfer) -> Self {
+		val.assets
 			.into_iter()
 			.map(|(XCVMAsset(asset), amount)| (asset, amount))
 			.collect()
