@@ -3,3 +3,9 @@ status = [
     "substrate-test-coverage", 
     "substrate-runtime-benchmark",
     ]
+required_approvals = 2
+cut_body_after = "## Checklist"    
+delete_merged_branches = true
+use_codeowners = true
+update_base_for_deletes = true
+up_to_date_approvals = true
