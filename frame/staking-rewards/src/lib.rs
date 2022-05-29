@@ -429,12 +429,13 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			instance_id: InstanceIdOf<T>,
 			balance: T::Balance,
+			keep_alive: bool,
 		) -> DispatchResult {
 			let owner = ensure_signed(origin)?;
 			T::ensure_protocol_nft_owner::<StakingNFTOf<T>>(&owner, &instance_id)?;
 			let position = T::get_protocol_nft::<StakingNFTOf<T>>(&instance_id)?;
 			let protocol_account = Self::account_id(&position.asset);
-			T::Assets::transfer(position.asset, &owner, &protocol_account, balance, false)?;
+			T::Assets::transfer(position.asset, &owner, &protocol_account, balance, keep_alive)?;
 			PendingAmountExtensions::<T>::mutate_exists(instance_id, |x| {
 				let increased = x.unwrap_or_default().safe_add(&balance);
 				*x = Some(increased?);

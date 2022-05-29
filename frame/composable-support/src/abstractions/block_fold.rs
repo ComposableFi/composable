@@ -134,7 +134,7 @@ impl<S, K> BlockFold<S, K> {
 	}
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "std"))]
 mod tests {
 	use frame_support::{StorageMap, StoragePrefixedMap, Twox64Concat};
 	use sp_io::TestExternalities;
