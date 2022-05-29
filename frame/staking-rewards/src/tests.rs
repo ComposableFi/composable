@@ -379,7 +379,8 @@ mod stake {
 			assert_ok!(StakingRewards::extend_stake(
 				Origin::signed(CHARLIE),
 				charlie_position,
-				equal_stake / 3
+				equal_stake / 3,
+				false,
 			));
 			run_to_block(18); // ensure that position is not applied right away
 
@@ -407,7 +408,8 @@ mod stake {
 			assert_ok!(StakingRewards::extend_stake(
 				Origin::signed(ALICE),
 				alice_position,
-				equal_stake / 3
+				equal_stake / 3,
+				false,
 			));
 			run_to_block(27); // ensure that we got extensions consumed during rewarding period
 			let updated_alice_position =

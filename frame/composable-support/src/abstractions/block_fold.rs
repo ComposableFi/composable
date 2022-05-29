@@ -136,7 +136,7 @@ impl<S, K> BlockFold<S, K> {
 
 #[cfg(all(test, feature = "std"))]
 mod tests {
-	use frame_support::{StorageMap, StoragePrefixedMap, Twox64Concat};
+	use frame_support::{Identity, StorageMap, StoragePrefixedMap};
 	use sp_io::TestExternalities;
 
 	#[test]
@@ -147,7 +147,7 @@ mod tests {
 		TestExternalities::default().execute_with(|| {
 			frame_support::generate_storage_alias! {
 				QueueModule,
-				QueueStorageMap => Map<(u64, Twox64Concat), u64>
+				QueueStorageMap => Map<(Identity, u64), u64>
 			}
 			QueueStorageMap::insert(1, 1);
 			QueueStorageMap::insert(2, 2);
