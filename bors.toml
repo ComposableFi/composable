@@ -1,0 +1,5 @@
+status = [
+    "substrate-check", 
+    "substrate-test-coverage", 
+    "substrate-runtime-benchmark",
+    ]
