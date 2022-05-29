@@ -204,7 +204,6 @@ sc-transaction-pool = { git = "https://github.com/composableFi/substrate", branc
 sc-transaction-pool-api = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.22" }
 sc-utils = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.22" }
 sp-api = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.22" }
-sp-mmr-primitives = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.22" }
 sp-api-proc-macro = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.22" }
 sp-api-test = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.22" }
 sp-application-crypto = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.22" }
@@ -233,6 +232,7 @@ sp-io = { git = "https://github.com/composableFi/substrate", branch = "polkadot-
 sp-keyring = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.22" }
 sp-keystore = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.22" }
 sp-maybe-compressed-blob = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.22" }
+sp-mmr-primitives = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.22" }
 sp-npos-elections = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.22" }
 sp-npos-elections-fuzzer = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.22" }
 sp-offchain = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.22" }
