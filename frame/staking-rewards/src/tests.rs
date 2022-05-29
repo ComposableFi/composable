@@ -71,6 +71,10 @@ fn advance_state_machine() {
 	run_to_block(8);
 }
 
+fn setup_log() {
+	let _fails_on_ci = env_logger::builder().is_test(true).try_init();
+}
+
 mod initialize {
 	use crate::{mock::ElementToProcessPerBlock, PendingStakers, Stakers};
 
@@ -351,7 +355,7 @@ mod stake {
 
 	#[test]
 	fn extend_staked_amount_increases_lock() {
-		env_logger::builder().is_test(true).try_init().expect("in test");
+		setup_log();
 		new_test_ext().execute_with(|| {
 			let _config = configure_default_pica();
 			let equal_stake = 1_000_000_000_000;
@@ -445,7 +449,7 @@ mod stake {
 
 	#[test]
 	fn extend_stake_lock_duration_possible() {
-		env_logger::builder().is_test(true).try_init().expect("test");
+		setup_log();
 		new_test_ext().execute_with(|| {
 			let _config = configure_default_pica();
 			let equal_stake = 1_000_000_000_000;
