@@ -5,11 +5,13 @@ use crate::{
 use codec::{Decode, Encode};
 use composable_support::math::safe::SafeSub;
 use core::fmt::Debug;
-use frame_support::{dispatch::DispatchResult, traits::Get, storage::bounded_btree_map::BoundedBTreeMap};
+use frame_support::{
+	dispatch::DispatchResult, storage::bounded_btree_map::BoundedBTreeMap, traits::Get,
+};
 use scale_info::TypeInfo;
 use sp_runtime::{
-	traits::{AtLeast32BitUnsigned, Zero, Saturating},
-	DispatchError, Perbill, SaturatedConversion,
+	traits::{AtLeast32BitUnsigned, Saturating, Zero},
+	DispatchError, Perbill,
 };
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Encode, Decode, TypeInfo)]
@@ -144,11 +146,16 @@ impl<AccountId, AssetId, Balance: AtLeast32BitUnsigned + Copy, Epoch: Ord, Rewar
 	}
 }
 
-impl<AccountId, AssetId : PartialEq + Ord, Balance: AtLeast32BitUnsigned + Copy + Zero + Saturating, Epoch: Ord, S: frame_support::traits::Get<u32>> Shares for 
-	StakingNFT<AccountId, AssetId, Balance, Epoch,  BoundedBTreeMap<AssetId, Balance, S>>
+impl<
+		AccountId,
+		AssetId: PartialEq + Ord,
+		Balance: AtLeast32BitUnsigned + Copy + Zero + Saturating,
+		Epoch: Ord,
+		S: frame_support::traits::Get<u32>,
+	> Shares for StakingNFT<AccountId, AssetId, Balance, Epoch, BoundedBTreeMap<AssetId, Balance, S>>
 {
 	type Balance = Balance;
-	fn shares(& self) -> Balance {
+	fn shares(&self) -> Balance {
 		let compound = *self.pending_rewards.get(&self.asset).unwrap_or(&Balance::zero());
 		self.reward_multiplier.mul_floor(self.stake).saturating_add(compound)
 	}
@@ -213,7 +220,11 @@ pub trait Staking {
 	/// * `instance_id` the ID uniquely identifiying the NFT from which we will compute the
 	///   available rewards.
 	/// * `to` the account to transfer the rewards to.
-	fn claim(instance_id: &Self::InstanceId, to: &Self::AccountId) -> DispatchResult;
+	/// Return amount if reward asset which was staked asset claimed.
+	fn claim(
+		instance_id: &Self::InstanceId,
+		to: &Self::AccountId,
+	) -> Result<(Self::AssetId, Self::Balance), DispatchError>;
 }
 
 pub trait StakingReward {

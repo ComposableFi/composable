@@ -19,7 +19,7 @@ pub fn honest_locked_stake_increase(
 	let new_time = new_amount.safe_mul(&(duration as u128))?;
 	let new_remaining_time =
 		(duration as u128).min(bonus_time.safe_add(&new_time)?.safe_div(&total)?.safe_add(&1)?);
-	new_remaining_time.try_into().ok().ok_or_else(|| ArithmeticError::Overflow)
+	new_remaining_time.try_into().ok().ok_or(ArithmeticError::Overflow)
 }
 
 #[cfg(test)]
@@ -42,7 +42,7 @@ mod tests {
 			duration,
 			passed,
 		)
-		.unwrap();
+		.expect("valid parameters");
 		assert_eq!(remaining, 1000, "does not allows to reduce duration doing staking");
 	}
 
@@ -60,7 +60,7 @@ mod tests {
 			duration,
 			passed,
 		)
-		.unwrap();
+		.expect("valid parameters");
 		assert_eq!(remaining, 998, "rounded up from 997.5124378109452");
 	}
 }

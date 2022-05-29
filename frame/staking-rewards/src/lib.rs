@@ -9,9 +9,10 @@
 		clippy::panic
 	)
 )] // allow in tests
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
+#![warn(clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![deny(
+	clippy::unseparated_literal_suffix,
 	bad_style,
 	bare_trait_objects,
 	const_err,
@@ -72,7 +73,7 @@ pub mod pallet {
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::{
-		traits::{AccountIdConversion, CheckedAdd, Saturating, Zero},
+		traits::{AccountIdConversion, CheckedAdd, Zero},
 		ArithmeticError, Perbill, SaturatedConversion,
 	};
 	use sp_std::collections::btree_map::BTreeMap;
@@ -393,13 +394,10 @@ pub mod pallet {
 			let to = if nft_owner == who { to } else { nft_owner };
 			let (asset, compound) = <Self as Staking>::claim(&instance_id, &to)?;
 			if compound > T::Balance::zero() {
-			RunningTotalShares::<T>::try_mutate(
-				asset,
-				|total_shares| -> DispatchResult {
+				RunningTotalShares::<T>::try_mutate(asset, |total_shares| -> DispatchResult {
 					*total_shares = total_shares.safe_sub(&compound.into())?;
 					Ok(())
-				},
-			)?;
+				})?;
 			}
 			Ok(().into())
 		}
@@ -442,7 +440,7 @@ pub mod pallet {
 				*x = Some(increased?);
 				increased
 			})?;
-			Ok(().into())
+			Ok(())
 		}
 
 		/// Extends stake duration.
@@ -473,7 +471,7 @@ pub mod pallet {
 
 			PendingDurationExtensions::<T>::insert(instance_id, duration);
 
-			Ok(().into())
+			Ok(())
 		}
 	}
 
@@ -482,7 +480,8 @@ pub mod pallet {
 		fn on_initialize(_: T::BlockNumber) -> Weight {
 			let now = T::Time::now().as_secs();
 			let mut any = false;
-			// NOTE: we may waste some blocks from time to time, becuase there will be zero items in queue, that can be optimized if needed			
+			// NOTE: we may waste some blocks from time to time, becuase there will be zero items in
+			// queue, that can be optimized if needed
 			match Self::current_state() {
 				State::Running => {
 					// NOTE: we start new epoch here, it will work well if an only if epoch time is
@@ -522,7 +521,7 @@ pub mod pallet {
 												let reward_shares = safe_multiply_by_rational(
 													shares.into(),
 													reward,
-													total_shares.into(),
+													total_shares,
 												)?;
 
 												nft.pending_rewards
@@ -539,8 +538,7 @@ pub mod pallet {
 													PendingTotalShares::<T>::mutate(
 														nft.asset,
 														|total_shares| {
-															let reward_shares: u128 =
-																reward_shares.into();
+															let reward_shares: u128 = reward_shares;
 															*total_shares += reward_shares;
 														},
 													);
@@ -561,27 +559,33 @@ pub mod pallet {
 						CurrentState::<T>::set(State::PendingAmounts);
 					}
 				},
-				State::PendingAmounts => {					
+				State::PendingAmounts => {
 					for (nft_id, amount) in PendingAmountExtensions::<T>::drain()
 						.take(T::ElementToProcessPerBlock::get() as usize)
 					{
 						any = true;
-						T::try_mutate_protocol_nft(&nft_id, |nft: &mut StakingNFTOf<T>|  -> DispatchResult{
-							let old_shares = nft.shares();
-							let time_lock = honest_locked_stake_increase(
-								nft.early_unstake_penalty.value,
-								nft.stake.into(),
-								amount.into(),
-								nft.lock_duration.into(),
-								(now - nft.lock_date).into(),
-							)?;
-							nft.lock_date = nft.lock_date.safe_add(&time_lock)?;
-							nft.stake = nft.stake.safe_add(&amount)?;
-							let new_shares = nft.shares();
-							let amount = new_shares - old_shares;
-							pending_total_shares_add::<T>(nft.asset, amount);
-							Ok(())
-						});
+						let result = T::try_mutate_protocol_nft(
+							&nft_id,
+							|nft: &mut StakingNFTOf<T>| -> DispatchResult {
+								let old_shares = nft.shares();
+								let time_lock = honest_locked_stake_increase(
+									nft.early_unstake_penalty.value,
+									nft.stake.into(),
+									amount.into(),
+									nft.lock_duration,
+									now - nft.lock_date,
+								)?;
+								nft.lock_date = nft.lock_date.safe_add(&time_lock)?;
+								nft.stake = nft.stake.safe_add(&amount)?;
+								let new_shares = nft.shares();
+								let amount = new_shares - old_shares;
+								pending_total_shares_add::<T>(nft.asset, amount);
+								Ok(())
+							},
+						);
+						if let Err(error) = result {
+							log::error!("staking protocol failed with {:?}", error);
+						}
 					}
 					if !any {
 						CurrentState::<T>::set(State::PendingDurations);
@@ -592,54 +596,63 @@ pub mod pallet {
 						.take(T::ElementToProcessPerBlock::get() as usize)
 					{
 						any = true;
-						T::try_mutate_protocol_nft(&nft_id, |nft: &mut StakingNFTOf<T>| -> DispatchResult{
-							// keep in sync with python code
-							// NOTE: relies on fact that now always >= any other
-							// possible date NOTE: and the new lock was validated to be
-							// on input >= old lock
-							let rolling = honest_lock_extensions(
-								now,
-								nft.lock_date,
-								new_lock,
-								nft.lock_duration,
-							)?;
-							let old_shares = nft.shares();
-							nft.lock_date = now - rolling;
-							nft.lock_duration = new_lock;
-							let new_shares = nft.shares();
-							let amount = new_shares - old_shares;
-							pending_total_shares_add::<T>(nft.asset, amount);
-							Ok(())
-						});
+						let result = T::try_mutate_protocol_nft(
+							&nft_id,
+							|nft: &mut StakingNFTOf<T>| -> DispatchResult {
+								// keep in sync with python code
+								// NOTE: relies on fact that now always >= any other
+								// possible date NOTE: and the new lock was validated to be
+								// on input >= old lock
+								let rolling = honest_lock_extensions(
+									now,
+									nft.lock_date,
+									new_lock,
+									nft.lock_duration,
+								)?;
+								let old_shares = nft.shares();
+								nft.lock_date = now - rolling;
+								nft.lock_duration = new_lock;
+								let new_shares = nft.shares();
+								let amount = new_shares - old_shares;
+								pending_total_shares_add::<T>(nft.asset, amount);
+								Ok(())
+							},
+						);
+						if let Err(error) = result {
+							log::error!("staking protocol failed with {:?}", error);
+						}
 					}
 
 					if !any {
 						CurrentState::<T>::set(State::PendingStakers);
 					}
 				},
-				State::PendingStakers => {					
-					for (nft_id, _) in <PendingStakers<T>>::drain().take(T::ElementToProcessPerBlock::get() as usize) {
+				State::PendingStakers => {
+					for (nft_id, _) in <PendingStakers<T>>::drain()
+						.take(T::ElementToProcessPerBlock::get() as usize)
+					{
 						any = true;
 						let nft = T::get_protocol_nft::<StakingNFTOf<T>>(&nft_id)
-						.expect("impossible; qed");
+							.expect("impossible; qed");
 						pending_total_shares_add::<T>(nft.asset, nft.shares());
 						Stakers::<T>::insert(nft_id, ());
 					}
-					
+
 					if !any {
 						CurrentState::<T>::set(State::PendingShares);
 					}
 				},
 				State::PendingShares => {
-					for (asset_id, amount)  in <PendingTotalShares<T>>::drain().take(T::ElementToProcessPerBlock::get() as usize) {
+					for (asset_id, amount) in <PendingTotalShares<T>>::drain()
+						.take(T::ElementToProcessPerBlock::get() as usize)
+					{
 						any = true;
 						RunningTotalShares::<T>::mutate(asset_id, |total_shares| {
-							*total_shares = total_shares
-								.checked_add(amount)
-								.expect("impossible; qed;");
+							*total_shares =
+								total_shares.checked_add(amount).expect("impossible; qed;");
 						});
 					}
-					
+
 					if !any {
 						CurrentState::<T>::set(State::Running);
 					}
@@ -649,15 +662,21 @@ pub mod pallet {
 		}
 	}
 
-fn pending_total_shares_add<T:Config>(id: <T as Config>::AssetId, amount : <T as Config>::Balance) {
-    PendingTotalShares::<T>::mutate(id, |total_shares| {
-								    *total_shares = total_shares
-									    .checked_add(amount.into())
-									    .expect("impossible; qed;");
-							    });
-}
+	fn pending_total_shares_add<T: Config>(
+		id: <T as Config>::AssetId,
+		amount: <T as Config>::Balance,
+	) {
+		PendingTotalShares::<T>::mutate(id, |total_shares| {
+			*total_shares = total_shares.checked_add(amount.into()).expect("impossible; qed;");
+		});
+	}
 
-	fn honest_lock_extensions(now: u64, lock_date: u64, new_lock: u64, previous_lock: u64) -> Result<u64, ArithmeticError> {
+	fn honest_lock_extensions(
+		now: u64,
+		lock_date: u64,
+		new_lock: u64,
+		previous_lock: u64,
+	) -> Result<u64, ArithmeticError> {
 		let passed_time = now - lock_date;
 		let rolling = passed_time.min(new_lock.safe_sub(&previous_lock)?);
 		Ok(rolling)
@@ -694,7 +713,7 @@ fn pending_total_shares_add<T:Config>(id: <T as Config>::AssetId, amount : <T as
 			// Store current epoch snapshot.
 			EndEpochSnapshot::<T>::set((Self::current_epoch(), Self::epoch_start()));
 			// Increment epoch.
-			CurrentEpoch::<T>::mutate(|x| *x = *x + 1);
+			CurrentEpoch::<T>::mutate(|x| *x += 1);
 			// Set rewarding state, i.e. rewarding previous epoch.
 			CurrentState::<T>::set(State::Distributing);
 			// Notify.
@@ -721,7 +740,7 @@ fn pending_total_shares_add<T:Config>(id: <T as Config>::AssetId, amount : <T as
 		pub(crate) fn get_config(
 			asset: &AssetIdOf<T>,
 		) -> Result<StakingConfigOf<T>, DispatchError> {
-			StakingConfigurations::<T>::get(asset).ok_or(Error::<T>::NotConfigured.into())
+			StakingConfigurations::<T>::get(asset).ok_or_else(|| Error::<T>::NotConfigured.into())
 		}
 
 		pub(crate) fn collect_rewards(
@@ -865,13 +884,7 @@ fn pending_total_shares_add<T:Config>(id: <T as Config>::AssetId, amount : <T as
 					amount_penalty,
 					penalty_beneficiary,
 				} => {
-					T::Assets::transfer(
-						nft.asset,
-						&protocol_account,
-						&to,
-						amount_remaining,
-						false,
-					)?;
+					T::Assets::transfer(nft.asset, &protocol_account, to, amount_remaining, false)?;
 					T::Assets::transfer(
 						nft.asset,
 						&protocol_account,
@@ -881,7 +894,7 @@ fn pending_total_shares_add<T:Config>(id: <T as Config>::AssetId, amount : <T as
 					)?;
 				},
 				PenaltyOutcome::NotApplied { amount } => {
-					T::Assets::transfer(nft.asset, &protocol_account, &to, amount, false)?;
+					T::Assets::transfer(nft.asset, &protocol_account, to, amount, false)?;
 				},
 			}
 			<Self as Staking>::claim(instance_id, to)?;
@@ -891,16 +904,22 @@ fn pending_total_shares_add<T:Config>(id: <T as Config>::AssetId, amount : <T as
 			Self::deposit_event(Event::<T>::Unstaked {
 				to: to.clone(),
 				stake: nft.stake,
-				penalty: penalty_outcome.penalty_amount().unwrap_or(Zero::zero()),
+				penalty: penalty_outcome.penalty_amount().unwrap_or_else(Zero::zero),
 				nft: *instance_id,
 			});
 			Ok(())
 		}
 
-		fn claim(instance_id: &Self::InstanceId, to: &Self::AccountId) -> Result<(T::AssetId, T::Balance), DispatchError> {
-			T::try_mutate_protocol_nft(instance_id, |nft: &mut StakingNFTOf<T>| -> Result<(T::AssetId, T::Balance), DispatchError> {
-				Self::collect_rewards(nft, to)
-			})
+		fn claim(
+			instance_id: &Self::InstanceId,
+			to: &Self::AccountId,
+		) -> Result<(T::AssetId, T::Balance), DispatchError> {
+			T::try_mutate_protocol_nft(
+				instance_id,
+				|nft: &mut StakingNFTOf<T>| -> Result<(T::AssetId, T::Balance), DispatchError> {
+					Self::collect_rewards(nft, to)
+				},
+			)
 		}
 	}
 }
