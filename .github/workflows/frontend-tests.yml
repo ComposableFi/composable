@@ -5,6 +5,9 @@ on:
       - main
     paths:
       - frontend/*
+  push:
+    paths:
+      - frontend/*
 
 jobs:
   tests_pablo:
