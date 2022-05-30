@@ -1,12 +1,18 @@
 # Composable Github Action Workflow Code Owners
 
 # These owners will be the default owners for everything in the repo
-# Any change inside this directory will require approval from @haroldsphinx and @seunlanlege
+# Any change inside this directory will require approval from senior maintainers
 
-# .github/ @haroldsphinx @seunlanlege
+# CI and deployment related files
+.github/ @haroldsphinx @seunlanlege
 docker/ @haroldsphinx @seunlanlege
-runtime/ @seunlanlege
-node/ @seunlanlege
-book/ @0xbrainjar2
-
 Makefile @haroldsphinx
+
+# Parachain related files
+frame/*/rpc/ @benluelo
+frame/*/runtime-api @benluelo
+runtime/ @seunlanlege @hussein-aitlahcen @kaiserkarel @vimukthi-git
+node/ @seunlanlege @hussein-aitlahcen @kaiserkarel @vimukthi-git
+
+# Gitbook
+book/ @0xbrainjar2
