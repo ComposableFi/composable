@@ -981,17 +981,21 @@ fn test_liquidate_multiple() {
 		// Emulate situation when collateral price has fallen down
 		// from 50_000 USDT to 38_000 USDT.
 		set_price(BTC::ID, NORMALIZED::units(38_000));
+		let borrowers = vec![first_borrower, second_borrower, third_borrower];
 		assert_extrinsic_event::<Runtime>(
-			Lending::liquidate(
-				Origin::signed(manager),
-				market_id.clone(),
-				vec![first_borrower, second_borrower, third_borrower],
-			),
+			Lending::liquidate(Origin::signed(manager), market_id.clone(), borrowers.clone()),
 			Event::Lending(crate::Event::LiquidationInitiated {
 				market_id,
-				borrowers: vec![first_borrower, second_borrower, third_borrower],
+				borrowers: borrowers.clone(),
 			}),
 		);
+		// Check if cleanup was done correctly
+		borrowers.iter().for_each(|borrower| {
+			assert!(!crate::DebtIndex::<Runtime>::contains_key(market_id, borrower))
+		});
+		borrowers.iter().for_each(|borrower| {
+			assert!(!crate::BorrowTimestamp::<Runtime>::contains_key(market_id, borrower))
+		});
 	})
 }
 
@@ -1069,6 +1073,11 @@ fn test_liquidation_storage_transcation_rollback() {
 				borrowers: vec![normal_borrower],
 			}),
 		);
+		// Check if cleanup was done correctly
+		assert!(crate::DebtIndex::<Runtime>::contains_key(market_id, borrower_with_a_twist));
+		assert!(crate::BorrowTimestamp::<Runtime>::contains_key(market_id, borrower_with_a_twist));
+		assert!(!crate::DebtIndex::<Runtime>::contains_key(market_id, normal_borrower));
+		assert!(!crate::BorrowTimestamp::<Runtime>::contains_key(market_id, normal_borrower));
 	})
 }
 
@@ -1394,6 +1403,9 @@ fn liquidation() {
 				borrowers: vec![*ALICE],
 			}),
 		);
+		// Check if cleanup was done correctly
+		assert!(!crate::DebtIndex::<Runtime>::contains_key(market_id, *ALICE));
+		assert!(!crate::BorrowTimestamp::<Runtime>::contains_key(market_id, *ALICE));
 	});
 }
 

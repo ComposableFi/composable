@@ -940,9 +940,12 @@ pub mod pallet {
 				});
 
 				// If storage transaction succeeded,
-				// push borrower to the output vector
+				// push borrower to the output vector,
+				// remove debt records from storages.
 				if storage_transaction_succeeded.is_ok() {
 					subjected_borrowers.push(account.clone());
+					BorrowTimestamp::<T>::remove(market_id, account);
+					DebtIndex::<T>::remove(market_id, account);
 				}
 			}
 			Ok(subjected_borrowers)
