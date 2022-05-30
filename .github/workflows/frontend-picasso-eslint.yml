@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  node_test:
+  Lint suggestions:
     runs-on: ubuntu-latest
 
     steps:
@@ -36,10 +36,9 @@ jobs:
         continue-on-error: false
       - name: Annotate Code Linting Results
         uses: ataylorme/eslint-annotate-action@1.2.0
-        working-directory: frontend/ui-picasso
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
-          report-json: "app/eslint_report.json"
+          report-json: "frontend/ui-picasso/app/eslint_report.json"
       - name: Upload ESLint report
         uses: actions/upload-artifact@v2
         with:
