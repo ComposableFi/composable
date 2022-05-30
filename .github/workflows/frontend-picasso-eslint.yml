@@ -1,9 +1,10 @@
 name: Frontend - Checks - ESLint
 
 on:
+  push:
+    paths:
+      - 'frontend/ui-picasso/**'
   pull_request:
-    - paths:
-        - 'frontend/**/*.*'
     branches:
       - main
 
