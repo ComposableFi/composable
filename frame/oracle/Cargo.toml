@@ -61,7 +61,6 @@ std = [
   "sp-core/std",
   "sp-std/std",
   "scale-info/std",
-  "serde_json/std"
 ]
 
 runtime-benchmarks = [
