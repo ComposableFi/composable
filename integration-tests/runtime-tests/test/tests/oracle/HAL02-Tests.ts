@@ -215,7 +215,7 @@ describe("HAL02 [Oracle] Tests", function () {
   });
 
   describe("HAL02: Test Scenarios", function () {
-    it("HAL02: Scenario 1: 50% of Oracles are malicious", async function () {
+    it("HAL02: Scenario 1: Oracle stake of malicious actor should get slashed", async function () {
       this.timeout(10 * 60 * 1000);
 
       const correctPrice = api.createType("u128", 100);
