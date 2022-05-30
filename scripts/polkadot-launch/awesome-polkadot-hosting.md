@@ -8,7 +8,7 @@ To run, any chain needs:
 - and, either relay setup or what relay to use
 - and other utilitary setup like logging, metrics
 - private keys in keystore 
-- logical netwrok connectivty allowance (bridges)
+- logical network connectivity allowance (bridges)
 
 There are guides and tools which help to make life easier
 
