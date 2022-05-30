@@ -9,12 +9,13 @@ pub mod pallet {
 	use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
 	use composable_traits::{
 		defi::DeFiComposableConfig,
-		vamm::{AssetType, SwapConfig, SwapSimulationConfig, Vamm},
+		vamm::{AssetType, Direction, SwapConfig, SwapOutput, SwapSimulationConfig, Vamm},
 	};
 	use frame_support::pallet_prelude::*;
 	use num_traits::{CheckedDiv, One};
 	use scale_info::TypeInfo;
 	use sp_arithmetic::traits::Unsigned;
+	use sp_core::U256;
 	use sp_runtime::{
 		traits::{Saturating, Zero},
 		ArithmeticError, FixedPointNumber,
@@ -92,8 +93,12 @@ pub mod pallet {
 	//                                             Pallet Types
 	// ----------------------------------------------------------------------------------------------------
 
-	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq)]
+	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq, Default)]
 	pub struct VammConfig;
+
+	pub struct MovePriceConfig;
+
+	pub type SwapOutputOf<T> = SwapOutput<<T as DeFiComposableConfig>::Balance>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Runtime  Storage
@@ -127,6 +132,7 @@ pub mod pallet {
 	impl<T: Config> Vamm for Pallet<T> {
 		type Balance = T::Balance;
 		type Decimal = T::Decimal;
+		type MovePriceConfig = MovePriceConfig;
 		type SwapConfig = SwapConfig<Self::VammId, Self::Balance>;
 		type SwapSimulationConfig = SwapSimulationConfig<Self::VammId, Self::Balance>;
 		type VammConfig = VammConfig;
@@ -145,7 +151,7 @@ pub mod pallet {
 			vamm_id: Self::VammId,
 			asset_type: AssetType,
 		) -> Result<Self::Decimal, DispatchError> {
-			todo!()
+			unimplemented!()
 		}
 
 		fn get_twap(
@@ -161,11 +167,18 @@ pub mod pallet {
 			}
 		}
 
-		fn swap(config: &Self::SwapConfig) -> Result<Self::Balance, DispatchError> {
+		fn swap(config: &Self::SwapConfig) -> Result<SwapOutputOf<T>, DispatchError> {
+			let negative = config.direction == Direction::Remove;
 			if let Some(price) = Self::_price_of(&config.vamm_id) {
-				Self::get_value(config.input_amount, &config.asset, price)
+				Ok(SwapOutputOf::<T> {
+					output: Self::get_value(config.input_amount, &config.asset, price)?,
+					negative,
+				})
 			} else if let Some(price) = Self::_price() {
-				Self::get_value(config.input_amount, &config.asset, price)
+				Ok(SwapOutputOf::<T> {
+					output: Self::get_value(config.input_amount, &config.asset, price)?,
+					negative,
+				})
 			} else {
 				Err(Error::<T>::FailedToExecuteSwap.into())
 			}
@@ -176,14 +189,19 @@ pub mod pallet {
 		) -> Result<Self::Balance, DispatchError> {
 			let Self::SwapSimulationConfig { vamm_id, asset, input_amount, direction } =
 				config.clone();
-			<Self as Vamm>::swap(&Self::SwapConfig {
+			let swap_output = <Self as Vamm>::swap(&Self::SwapConfig {
 				vamm_id,
 				asset,
 				input_amount,
 				direction,
 				output_amount_limit: 0_u32.into(),
 			})
-			.map_err(|_| Error::<T>::FailedToSimulateSwap.into())
+			.map_err(|_| Error::<T>::FailedToSimulateSwap)?;
+			Ok(swap_output.output)
+		}
+
+		fn move_price(config: &Self::MovePriceConfig) -> Result<U256, DispatchError> {
+			unimplemented!()
 		}
 	}
 

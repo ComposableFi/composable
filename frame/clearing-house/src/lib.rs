@@ -84,6 +84,7 @@
 #![cfg_attr(
 	not(test),
 	warn(
+		clippy::dbg_macro,
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
@@ -1430,13 +1431,14 @@ pub mod pallet {
 			base_amount: T::Balance,
 			quote_limit: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
-			T::Vamm::swap(&SwapConfigOf::<T> {
+			Ok(T::Vamm::swap(&SwapConfigOf::<T> {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Base,
 				input_amount: base_amount,
 				direction: Self::to_vamm_direction(direction),
 				output_amount_limit: quote_limit,
-			})
+			})?
+			.output)
 		}
 
 		fn swap_quote(
@@ -1445,13 +1447,14 @@ pub mod pallet {
 			quote_abs_decimal: &T::Decimal,
 			base_limit: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
-			T::Vamm::swap(&SwapConfigOf::<T> {
+			Ok(T::Vamm::swap(&SwapConfigOf::<T> {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Quote,
 				input_amount: quote_abs_decimal.into_balance()?,
 				direction: Self::to_vamm_direction(direction),
 				output_amount_limit: base_limit,
-			})
+			})?
+			.output)
 		}
 
 		pub fn get_collateral_account() -> T::AccountId {

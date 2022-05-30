@@ -7,12 +7,13 @@ use crate::{
 		accounts::{AccountId, ALICE},
 		assets::{AssetId, DOT, USDC},
 		runtime::{
-			Balance, ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime,
+			Balance, Decimal, ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime,
 			System as SystemPallet, TestPallet, Timestamp as TimestampPallet, Vamm as VammPallet,
 			VammId,
 		},
+		vamm::VammConfig,
 	},
-	Markets,
+	Config, Market as MarketGeneric, MarketConfig as MarketConfigGeneric, Markets,
 };
 use composable_traits::{
 	clearing_house::{ClearingHouse, Instruments},
@@ -22,13 +23,14 @@ use composable_traits::{
 };
 use frame_support::{assert_err, assert_ok, pallet_prelude::Hooks};
 use proptest::prelude::*;
-use sp_runtime::{FixedI128, FixedPointNumber, FixedU128};
+use sp_runtime::{traits::Zero, FixedI128, FixedPointNumber, FixedU128};
 
 pub mod comp;
 pub mod create_market;
 pub mod deposit_collateral;
 pub mod instruments;
 pub mod liquidate;
+pub mod math;
 pub mod open_position;
 pub mod update_funding;
 
@@ -44,7 +46,6 @@ type MarketConfig = <TestPallet as ClearingHouse>::MarketConfig;
 type Position = <TestPallet as Instruments>::Position;
 type SwapConfig = <VammPallet as Vamm>::SwapConfig;
 type SwapSimulationConfig = <VammPallet as Vamm>::SwapSimulationConfig;
-type VammConfig = mock::vamm::VammConfig;
 
 impl Default for ExtBuilder {
 	fn default() -> Self {
@@ -186,26 +187,45 @@ fn multi_market_and_trader_context<R>(
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                          Valid Inputs
+//                                          Default Inputs
 // ----------------------------------------------------------------------------------------------------
 
-fn valid_vamm_config() -> VammConfig {
-	VammConfig {}
+impl Default for MarketConfigGeneric<AssetId, Balance, Decimal, VammConfig> {
+	fn default() -> Self {
+		Self {
+			asset: DOT,
+			vamm_config: Default::default(),
+			// 10x max leverage to open a position
+			margin_ratio_initial: FixedI128::from_float(0.1),
+			// liquidate when above 50x leverage
+			margin_ratio_maintenance: FixedI128::from_float(0.02),
+			// 'One cent' of the quote asset
+			minimum_trade_size: FixedI128::from_float(0.01),
+			funding_frequency: ONE_HOUR,
+			funding_period: ONE_HOUR * 24,
+			taker_fee: 10, // 0.1%
+		}
+	}
 }
 
-fn valid_market_config() -> MarketConfig {
-	MarketConfig {
-		asset: DOT,
-		vamm_config: valid_vamm_config(),
-		// 10x max leverage to open a position
-		margin_ratio_initial: FixedI128::from_float(0.1),
-		// liquidate when above 50x leverage
-		margin_ratio_maintenance: FixedI128::from_float(0.02),
-		// 'One cent' of the quote asset
-		minimum_trade_size: FixedI128::from_float(0.01),
-		funding_frequency: ONE_HOUR,
-		funding_period: ONE_HOUR * 24,
-		taker_fee: 10, // 0.1%
+impl<T: Config> Default for MarketGeneric<T> {
+	fn default() -> Self {
+		Self {
+			vamm_id: Zero::zero(),
+			asset_id: Default::default(),
+			margin_ratio_initial: Default::default(),
+			margin_ratio_maintenance: Default::default(),
+			minimum_trade_size: Default::default(),
+			base_asset_amount_long: Default::default(),
+			base_asset_amount_short: Default::default(),
+			cum_funding_rate_long: Default::default(),
+			cum_funding_rate_short: Default::default(),
+			fee_pool: Default::default(),
+			funding_rate_ts: Default::default(),
+			funding_frequency: Default::default(),
+			funding_period: Default::default(),
+			taker_fee: Default::default(),
+		}
 	}
 }
 
@@ -227,12 +247,12 @@ impl RunToBlock for sp_io::TestExternalities {
 	}
 }
 
-trait MarginInitializer {
+trait CollateralInitializer {
 	fn deposit_collateral(self, account_id: &AccountId, asset_id: AssetId, amount: Balance)
 		-> Self;
 }
 
-impl MarginInitializer for sp_io::TestExternalities {
+impl CollateralInitializer for sp_io::TestExternalities {
 	fn deposit_collateral(
 		mut self,
 		account_id: &AccountId,
@@ -256,11 +276,7 @@ trait MarketInitializer {
 		T: Iterator<Item = Option<MarketConfig>>;
 
 	fn create_market_helper(config: Option<MarketConfig>) -> MarketId {
-		<TestPallet as ClearingHouse>::create_market(&match config {
-			Some(c) => c,
-			None => valid_market_config(),
-		})
-		.unwrap()
+		<TestPallet as ClearingHouse>::create_market(&config.unwrap_or_default()).unwrap()
 	}
 }
 
@@ -371,7 +387,7 @@ proptest! {
 	#[test]
 	fn mock_vamm_created_id_reflects_genesis_config(vamm_id in any::<Option<VammId>>()) {
 		ExtBuilder { vamm_id , ..Default::default() }.build().execute_with(|| {
-			let created = VammPallet::create(&valid_vamm_config());
+			let created = VammPallet::create(&VammConfig::default());
 			match vamm_id {
 				Some(id) => assert_ok!(created, id),
 				None => assert_err!(created, mock::vamm::Error::<Runtime>::FailedToCreateVamm),

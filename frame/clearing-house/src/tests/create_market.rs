@@ -2,49 +2,18 @@ use crate::{
 	mock::{
 		self as mock,
 		accounts::ALICE,
-		assets::DOT,
 		runtime::{
 			ExtBuilder, Origin, Runtime, System as SystemPallet, TestPallet,
 			Timestamp as TimestampPallet,
 		},
 	},
 	pallet::{Error, Event, Markets},
-	tests::{as_inner, run_to_block},
+	tests::{as_inner, run_to_block, MarketConfig},
 };
-use composable_traits::{
-	clearing_house::ClearingHouse,
-	time::{DurationSeconds, ONE_HOUR},
-};
+use composable_traits::time::{DurationSeconds, ONE_HOUR};
 use frame_support::{assert_noop, assert_ok, traits::UnixTime};
 use proptest::prelude::*;
 use sp_runtime::{FixedI128, FixedPointNumber};
-
-type MarketConfig = <TestPallet as ClearingHouse>::MarketConfig;
-type VammConfig = mock::vamm::VammConfig;
-
-// ----------------------------------------------------------------------------------------------------
-//                                          Valid Inputs
-// ----------------------------------------------------------------------------------------------------
-
-fn valid_vamm_config() -> VammConfig {
-	VammConfig {}
-}
-
-fn valid_market_config() -> MarketConfig {
-	MarketConfig {
-		asset: DOT,
-		vamm_config: valid_vamm_config(),
-		// 10x max leverage to open a position
-		margin_ratio_initial: FixedI128::from_float(0.1),
-		// liquidate when above 50x leverage
-		margin_ratio_maintenance: FixedI128::from_float(0.02),
-		// 'One cent' of the quote asset
-		minimum_trade_size: FixedI128::from_float(0.01),
-		funding_frequency: ONE_HOUR,
-		funding_period: ONE_HOUR * 24,
-		taker_fee: 10,
-	}
-}
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Prop Compose
@@ -126,7 +95,7 @@ fn create_first_market_succeeds() {
 		let old_count = TestPallet::market_count();
 		let block_time_now = <TimestampPallet as UnixTime>::now().as_secs();
 
-		let config = valid_market_config();
+		let config = MarketConfig::default();
 		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config.clone()));
 
 		// Ensure first market id is 0 (we know its type since it's defined in the mock runtime)
@@ -166,7 +135,7 @@ fn can_create_two_markets_with_same_config() {
 		let block_time_now = <TimestampPallet as UnixTime>::now().as_secs();
 
 		for _ in 0..2 {
-			assert_ok!(TestPallet::create_market(Origin::signed(ALICE), valid_market_config()));
+			assert_ok!(TestPallet::create_market(Origin::signed(ALICE), Default::default()));
 
 			assert_eq!(TestPallet::get_market(count).unwrap().funding_rate_ts, block_time_now);
 			count += 1;
@@ -180,7 +149,7 @@ fn fails_to_create_market_for_unsupported_asset_by_oracle() {
 		.build()
 		.execute_with(|| {
 			assert_noop!(
-				TestPallet::create_market(Origin::signed(ALICE), valid_market_config()),
+				TestPallet::create_market(Origin::signed(ALICE), Default::default()),
 				Error::<Runtime>::NoPriceFeedForAsset
 			);
 		})
@@ -190,7 +159,7 @@ fn fails_to_create_market_for_unsupported_asset_by_oracle() {
 fn fails_to_create_market_if_fails_to_create_vamm() {
 	ExtBuilder { vamm_id: None, ..Default::default() }.build().execute_with(|| {
 		assert_noop!(
-			TestPallet::create_market(Origin::signed(ALICE), valid_market_config()),
+			TestPallet::create_market(Origin::signed(ALICE), Default::default()),
 			mock::vamm::Error::<Runtime>::FailedToCreateVamm
 		);
 	})
@@ -200,9 +169,11 @@ proptest! {
 	#[test]
 	fn fails_to_create_market_if_funding_period_is_not_multiple_of_frequency(rem in 1..ONE_HOUR) {
 		ExtBuilder::default().build().execute_with(|| {
-			let mut config = valid_market_config();
-			config.funding_frequency = ONE_HOUR;
-			config.funding_period = ONE_HOUR * 2 + rem;
+			let config = MarketConfig {
+				funding_frequency: ONE_HOUR,
+				funding_period: ONE_HOUR * 2 + rem,
+				..Default::default()
+			};
 			assert_noop!(
 				TestPallet::create_market(Origin::signed(ALICE), config),
 				Error::<Runtime>::FundingPeriodNotMultipleOfFrequency
@@ -221,9 +192,7 @@ proptest! {
 		]
 	) {
 		ExtBuilder::default().build().execute_with(|| {
-			let mut config = valid_market_config();
-			config.funding_frequency = funding_frequency;
-			config.funding_period = funding_period;
+			let config = MarketConfig { funding_frequency, funding_period, ..Default::default() };
 			assert_noop!(
 				TestPallet::create_market(Origin::signed(ALICE), config),
 				Error::<Runtime>::ZeroLengthFundingPeriodOrFrequency
@@ -242,9 +211,11 @@ proptest! {
 		]
 	) {
 		ExtBuilder::default().build().execute_with(|| {
-			let mut config = valid_market_config();
-			config.margin_ratio_initial = margin_ratio_initial;
-			config.margin_ratio_maintenance = margin_ratio_maintenance;
+			let config = MarketConfig {
+				margin_ratio_initial,
+				margin_ratio_maintenance,
+				..Default::default()
+			};
 			assert_noop!(
 				TestPallet::create_market(Origin::signed(ALICE), config),
 				Error::<Runtime>::InvalidMarginRatioRequirement
@@ -259,9 +230,11 @@ proptest! {
 		(margin_ratio_initial, margin_ratio_maintenance) in initial_le_maintenance_margin_ratio()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
-			let mut config = valid_market_config();
-			config.margin_ratio_initial = margin_ratio_initial;
-			config.margin_ratio_maintenance = margin_ratio_maintenance;
+			let config = MarketConfig {
+				margin_ratio_initial,
+				margin_ratio_maintenance,
+				..Default::default()
+			};
 			assert_noop!(
 				TestPallet::create_market(Origin::signed(ALICE), config),
 				Error::<Runtime>::InitialMarginRatioLessThanMaintenance
@@ -276,8 +249,10 @@ proptest! {
 		inner in as_inner(-1_000_000_000)..0
 	) {
 		ExtBuilder::default().build().execute_with(|| {
-			let mut config = valid_market_config();
-			config.minimum_trade_size = FixedI128::from_inner(inner);
+			let config = MarketConfig {
+				minimum_trade_size: FixedI128::from_inner(inner),
+				..Default::default()
+			};
 			assert_noop!(
 				TestPallet::create_market(Origin::signed(ALICE), config),
 				Error::<Runtime>::NegativeMinimumTradeSize
@@ -289,8 +264,7 @@ proptest! {
 #[test]
 fn can_create_market_with_zero_minimum_trade_size() {
 	ExtBuilder::default().build().execute_with(|| {
-		let mut config = valid_market_config();
-		config.minimum_trade_size = 0.into();
+		let config = MarketConfig { minimum_trade_size: 0.into(), ..Default::default() };
 		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));
 	})
 }
@@ -298,8 +272,7 @@ fn can_create_market_with_zero_minimum_trade_size() {
 #[test]
 fn can_create_market_with_zero_taker_fees() {
 	ExtBuilder::default().build().execute_with(|| {
-		let mut config = valid_market_config();
-		config.taker_fee = 0;
+		let config = MarketConfig { taker_fee: 0, ..Default::default() };
 		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));
 	})
 }

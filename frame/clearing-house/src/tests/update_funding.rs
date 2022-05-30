@@ -1,6 +1,6 @@
 use super::{
 	any_balance, any_price, run_for_seconds, set_fee_pool_depth, traders_in_one_market_context,
-	valid_market_config, with_market_context, with_trading_context, Balance, Position,
+	with_market_context, with_trading_context, Balance, MarketConfig, Position,
 };
 use crate::{
 	math::{FixedPointMath, FromBalance, FromUnsigned, IntoDecimal},
@@ -93,8 +93,7 @@ proptest! {
 
 	#[test]
 	fn enforces_funding_frequency(seconds in seconds_lt(ONE_HOUR)) {
-		let mut config = valid_market_config();
-		config.funding_frequency = ONE_HOUR;
+		let config = MarketConfig { funding_frequency: ONE_HOUR, ..Default::default() };
 
 		with_market_context(ExtBuilder::default(), config, |market_id| {
 			run_for_seconds(seconds);
@@ -112,8 +111,7 @@ proptest! {
 
 	#[test]
 	fn updates_market_state(vamm_twap in any_price()) {
-		let mut config = valid_market_config();
-		config.funding_frequency = ONE_HOUR;
+		let config = MarketConfig { funding_frequency: ONE_HOUR, ..Default::default() };
 
 		with_market_context(ExtBuilder::default(), config, |market_id| {
 			let old_market = TestPallet::get_market(&market_id).unwrap();
@@ -151,10 +149,12 @@ proptest! {
 
 	#[test]
 	fn clearing_house_receives_funding(net_position in any_balance()) {
-		let mut config = valid_market_config();
-		config.funding_frequency = ONE_HOUR;
-		config.funding_period = ONE_HOUR;
-		config.taker_fee = 0;
+		let config = MarketConfig {
+			funding_frequency: ONE_HOUR,
+			funding_period: ONE_HOUR,
+			taker_fee: 0,
+			..Default::default()
+		};
 
 		with_trading_context(config, net_position, |market_id| {
 			VammPallet::set_price(Some(1.into()));
@@ -183,10 +183,12 @@ proptest! {
 
 	#[test]
 	fn clearing_house_pays_funding_uncapped(net_position in any_balance()) {
-		let mut config = valid_market_config();
-		config.funding_frequency = ONE_HOUR;
-		config.funding_period = ONE_HOUR;
-		config.taker_fee = 100; // 1%
+		let config = MarketConfig {
+			funding_frequency: ONE_HOUR,
+			funding_period: ONE_HOUR,
+			taker_fee: 100, // 1%
+			..Default::default()
+		};
 		let fee = net_position / 100;
 
 		with_trading_context(config.clone(), net_position + fee, |market_id| {
@@ -217,11 +219,13 @@ proptest! {
 	fn clearing_house_pays_funding_capped(
 		(alice_position, bob_position) in long_short_amounts_for_capped_funding()
 	) {
-		let mut config = valid_market_config();
-		config.funding_frequency = ONE_HOUR;
-		config.funding_period = ONE_HOUR;
-		config.minimum_trade_size = 0.into();
-		config.taker_fee = 100; // 1%
+		let config = MarketConfig {
+			funding_frequency: ONE_HOUR,
+			funding_period: ONE_HOUR,
+			minimum_trade_size: 0.into(),
+			taker_fee: 100, // 1%
+			..Default::default()
+		};
 
 		let fees = (alice_position / 100, bob_position / 100);
 		let margins = vec![(ALICE, alice_position + fees.0), (BOB, bob_position + fees.1)];

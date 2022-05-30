@@ -1,5 +1,6 @@
+use num_integer::Integer;
 use num_traits::{CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Signed, Unsigned, Zero};
-use sp_arithmetic::{biguint, helpers_128bit::to_big_uint};
+use sp_core::U256;
 use sp_runtime::{
 	traits::UniqueSaturatedInto,
 	ArithmeticError,
@@ -216,7 +217,7 @@ impl<T: FixedPointNumber> FixedPointMath for T {
 		};
 
 		let accuracy = Self::DIV.unique_saturated_into();
-		let (q, r) = div_rem_with_acc(lhs.value, rhs.value, accuracy).map_err(|_| error())?;
+		let (q, r) = div_mod_with_acc(lhs.value, rhs.value, accuracy).map_err(|_| error())?;
 		Ok((
 			Self::from_inner(from_i129(I129 { value: q, negative }).ok_or_else(error)?),
 			Self::from_inner(from_i129(I129 { value: r, negative }).ok_or_else(error)?),
@@ -316,13 +317,19 @@ fn from_i129<N: FixedPointOperand>(n: I129) -> Option<N> {
 	}
 }
 
-/// Modification of [`sp_arithmetic::helpers_128bits::multiply_by_rational`] that does not modify
-/// the quotient of the last division
-fn multiply_by_rational(mut a: u128, mut b: u128, mut c: u128) -> Result<u128, &'static str> {
+/// Alterative to [`sp_arithmetic::helpers_128bits::multiply_by_rational`] that does not modify
+/// the quotient of the last division and uses U256 as a backend if necessary
+pub fn multiply_by_rational(
+	mut a: u128,
+	mut b: u128,
+	mut c: u128,
+) -> Result<u128, ArithmeticError> {
 	if a.is_zero() || b.is_zero() {
 		return Ok(0)
 	}
-	c = c.max(1);
+	if c.is_zero() {
+		return Err(DivisionByZero)
+	}
 
 	// a and b are interchangeable by definition in this function. It always helps to assume the
 	// bigger of which is being multiplied by a `0 < b/c < 1`. Hence, a should be the bigger and
@@ -344,43 +351,29 @@ fn multiply_by_rational(mut a: u128, mut b: u128, mut c: u128) -> Result<u128, &
 		// This is the safest way to go. Try it.
 		Ok(x / c)
 	} else {
-		let a_num = to_big_uint(a);
-		let b_num = to_big_uint(b);
-		let c_num = to_big_uint(c);
+		let a_256: U256 = a.into();
+		let b_256: U256 = b.into();
+		let c_256: U256 = c.into();
 
-		let mut ab = a_num * b_num;
-		ab.lstrip();
-		let mut q = if c_num.len() == 1 {
-			// PROOF: if `c_num.len() == 1` then `c` fits in one limb.
-			// TODO(0xangelo): verify that the remainder for this type of division is indeed 0
-			ab.div_unit(c as biguint::Single)
-		} else {
-			// PROOF: both `ab` and `c` cannot have leading zero limbs; if length of `c` is 1,
-			// the previous branch would handle. Also, if ab for sure has a bigger size than
-			// c, because `a.checked_mul(b)` has failed, hence ab must be at least one limb
-			// bigger than c. In this case, returning zero is defensive-only and div should
-			// always return Some.
-			let (q, _) = ab.div(&c_num, false).unwrap_or((Zero::zero(), Zero::zero()));
-			q
-		};
-		q.lstrip();
-		Ok(q.try_into().map_err(|_| "result cannot fit in u128")?)
+		let ab = a_256 * b_256;
+		let q = ab / c_256; // Safe because `c` isnt zero
+		Ok(q.try_into().map_err(|_| Overflow)?)
 	}
 }
 
 /// Fixed point division with remainder using the underlying integers (`a` and `b`) and the
-/// precision (`acc`) of the fixed point implementation.
-fn div_rem_with_acc(mut a: u128, mut b: u128, mut acc: u128) -> Result<(u128, u128), &'static str> {
+/// precision (`acc`) of the fixed point implementation. Uses [`U256`] in case intermediate
+/// operations overflow [`u128`]
+pub fn div_mod_with_acc(
+	mut a: u128,
+	mut b: u128,
+	mut acc: u128,
+) -> Result<(u128, u128), ArithmeticError> {
 	if a.is_zero() || acc.is_zero() {
 		return Ok((Zero::zero(), Zero::zero()))
 	}
-	b = b.max(1);
-
-	// a and acc are interchangeable by definition in this function. It always helps to assume the
-	// bigger of which is being multiplied by a `0 < acc/b < 1`. Hence, a should be the bigger and
-	// acc the smaller one.
-	if acc > a {
-		sp_std::mem::swap(&mut a, &mut acc);
+	if b.is_zero() {
+		return Err(DivisionByZero)
 	}
 
 	// Attempt to perform the division first
@@ -392,67 +385,31 @@ fn div_rem_with_acc(mut a: u128, mut b: u128, mut acc: u128) -> Result<(u128, u1
 		b = 1;
 	}
 
-	if let Some(x) = a.checked_mul(acc) {
+	// We can't project the remainder of `aa / b` below back to the original accuracy because:
+	// q = (a * acc) // b
+	// r = (a * acc) % b
+	// a = (q * b + r) // acc >= (q * b) // acc + r // acc
+	//
+	// So we first compute `a_ = b * q // acc` (what we would get by multiplying the
+	// underlying fixed point numbers) then compute the residual `r = a - a_`
+	if let Some(aa) = a.checked_mul(acc) {
 		// This is the safest way to go. Try it.
-		let q = x / b;
-		Ok((q, a - (b * q) / acc))
+		let (q, r) = aa.div_rem(&b);
+		Ok((q, a - (aa - r) / acc))
 	} else {
-		// [`to_big_uint`] strips leading zeroes
-		let a_num = to_big_uint(a); // a limbs
-		let b_num = to_big_uint(b); // b limbs
-		let acc_num = to_big_uint(acc); // c limbs
+		let a_256: U256 = a.into();
+		let b_256: U256 = b.into();
+		let acc_256: U256 = acc.into();
 
-		let mut aa = a_num.mul(&acc_num); // a + c limbs
-		aa.lstrip(); // b,c < aa <= a + c limbs, since a.checked_mul(acc) failed
-		let (mut q, r) = if b_num.len() == 1 {
-			// PROOF: if `b_num.len() == 1` then `b` fits in one limb.
-			// TODO(0xangelo): verify that the remainder for this type of division is indeed 0
-			(aa.div_unit(b as biguint::Single), Zero::zero())
-		} else {
-			// 1 < b limbs
-			// PROOF: both `aa` and `b` cannot have leading zero limbs; if length of `b` is 1,
-			// the previous branch would handle. Also, if `aa` for sure has a bigger size than
-			// `b`, because `a.checked_mul(acc)` has failed, hence `aa` must be at least one limb
-			// bigger than `b`. In this case, returning zero is defensive-only and div should
-			// always return Some.
-			let (q, r) = aa.clone().div(&b_num, true).unwrap_or((Zero::zero(), Zero::zero()));
-			//   ^  ^ r = b limbs
-			//   | q = aa - b + 1 >= 2 limbs
-
-			// We can't project the remainder of `aa.div` above back to the original accuracy
-			// because:
-			// q = (a * acc) // b
-			// r = (a * acc) % b
-			// a = (q * b + r) // acc >= (q * b) // acc + r // acc
-			//
-			// So we first compute `a_ = b * q // acc` (what we would get by multiplying the
-			// underlying fixed point numbers)
-			let mut bq = aa.sub(&r).expect("remainder is always less than the dividend; qed");
-			//      ^^ aa limbs
-			bq.lstrip(); // >= aa - 1 limbs
-			let a_: u128 = if acc_num.len() == 1 {
-				bq.div_unit(acc as biguint::Single)
-			} else {
-				// 1 < c limbs
-				bq.div(&acc_num, false)
-					.expect(
-						"Both `bq` and `acc_num` are stripped. \
-							 If `acc_num` is single-limbed, the previous branch would handle it. \
-							 If `bq` isn't at least one limb bigger than `acc_num`, then ...",
-					)
-					.0
-			}
+		let aa = a_256 * acc_256; // Safe since `a` and `acc` were originally `u128`
+		let (q, r) = aa.div_mod(b_256); // Safe because `b` is not zero
+		let bq = aa - r; // Safe because remainder is less than or equal to the dividend
+		let a_: u128 = (bq / acc_256)
 			.try_into()
-			.expect("quotient times divisor is less or equal than original value; qed");
-
-			// Then we compute the residual
-			let r = a
-				.checked_sub(a_)
-				.expect("remainder of division is always less than or equal to the dividend; qed");
-
-			(q, r)
-		};
-		q.lstrip();
-		Ok((q.try_into().map_err(|_| "result cannot fit in u128")?, r))
+			.expect("quotient times divisor is less than or equal to the dividend; qed");
+		Ok((
+			q.try_into().map_err(|_| Overflow)?,
+			a - a_, // Safe because a = (q * b + r) // acc >= (q * b) // acc
+		))
 	}
 }
