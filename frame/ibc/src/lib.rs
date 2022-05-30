@@ -159,11 +159,13 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// client_id => ClientState
 	pub type ClientStates<T: Config> =
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// client_id, height => ConsensusState
 	pub type ConsensusStates<T: Config> = StorageDoubleMap<
 		_,
@@ -176,6 +178,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// client_id , Height => Height
 	pub type ClientUpdateHeight<T: Config> = StorageDoubleMap<
 		_,
@@ -188,6 +191,7 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// client_id , Height => Timestamp
 	pub type ClientUpdateTime<T: Config> = StorageDoubleMap<
 		_,
@@ -200,14 +204,17 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// connection_id => ConnectionEnd
 	pub type Connections<T: Config> =
 		CountedStorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	pub type ChannelCounter<T: Config> = StorageValue<_, u32, ValueQuery>;
 
 	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// (port_identifier, channel_identifier) => ChannelEnd
 	pub type Channels<T: Config> = StorageDoubleMap<
 		_,
@@ -220,51 +227,61 @@ pub mod pallet {
 	>;
 
 	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// connection_identifier => Vec<(port_id, channel_id)>
 	pub type ChannelsConnection<T: Config> =
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<(Vec<u8>, Vec<u8>)>, ValueQuery>;
 
 	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// (port_identifier, channel_identifier) => Sequence
 	pub type NextSequenceSend<T: Config> =
 		StorageDoubleMap<_, Blake2_128Concat, Vec<u8>, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;
 
 	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// (port_identifier, channel_identifier) => Sequence
 	pub type NextSequenceRecv<T: Config> =
 		StorageDoubleMap<_, Blake2_128Concat, Vec<u8>, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;
 
 	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// (port_identifier, channel_identifier) = Sequence
 	pub type NextSequenceAck<T: Config> =
 		StorageDoubleMap<_, Blake2_128Concat, Vec<u8>, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;
 
 	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// (port_identifier, channel_identifier, Sequence) => Hash
 	pub type Acknowledgements<T: Config> =
 		CountedStorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// clientId => ClientType
 	pub type Clients<T: Config> =
 		CountedStorageMap<_, Blake2_128Concat, Vec<u8>, Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// client_id => Vec<Connection_id>
 	pub type ConnectionClient<T: Config> =
 		StorageMap<_, Blake2_128Concat, Vec<u8>, Vec<Vec<u8>>, ValueQuery>;
 
 	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// (port_id, channel_id, sequence) => receipt
 	pub type PacketReceipt<T: Config> =
 		CountedStorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// (port_id, channel_id, sequence) => hash
 	pub type PacketCommitment<T: Config> =
 		CountedStorageMap<_, Blake2_128Concat, (Vec<u8>, Vec<u8>, u64), Vec<u8>, ValueQuery>;
 
 	#[pallet::storage]
+	#[allow(clippy::disallowed_types)]
 	/// height => IbcConsensusState
 	pub type CommitmentRoot<T: Config> =
 		StorageValue<_, BoundedBTreeMap<u64, IbcConsensusState, ConstU32<250>>, ValueQuery>;
@@ -304,6 +321,7 @@ pub mod pallet {
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T>
 	where
 		u32: From<<T as frame_system::Config>::BlockNumber>,
+		T: Send + Sync,
 	{
 		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
 			<T as Config>::WeightInfo::on_finalize(
@@ -351,7 +369,7 @@ pub mod pallet {
 		u32: From<<T as frame_system::Config>::BlockNumber>,
 		T: Send + Sync,
 	{
-		#[pallet::weight(crate::weight::deliver::<T>(&messages))]
+		#[pallet::weight(crate::weight::deliver::<T>(messages))]
 		#[frame_support::transactional]
 		pub fn deliver(origin: OriginFor<T>, messages: Vec<Any>) -> DispatchResult {
 			let _sender = ensure_signed(origin)?;
@@ -384,6 +402,7 @@ pub mod pallet {
 		}
 		#[pallet::weight(0)]
 		#[frame_support::transactional]
+		#[allow(clippy::disallowed_methods)]
 		pub fn initiate_connection(
 			origin: OriginFor<T>,
 			params: ConnectionParams,
@@ -402,7 +421,7 @@ pub mod pallet {
 				String::from_utf8(identifier).map_err(|_| Error::<T>::DecodingError)?;
 			let features = features
 				.into_iter()
-				.map(|feat| String::from_utf8(feat))
+				.map(String::from_utf8)
 				.collect::<Result<Vec<_>, _>>()
 				.map_err(|_| Error::<T>::DecodingError)?;
 			let raw_version =
@@ -421,7 +440,7 @@ pub mod pallet {
 				signer: Signer::new(""),
 			}
 			.encode_vec()
-			.unwrap();
+			.unwrap(); // Unwrap will not fail, this message is valid
 			let msg = ibc_proto::google::protobuf::Any {
 				type_url: CONNECTION_OPEN_INIT_TYPE_URL.to_string(),
 				value,

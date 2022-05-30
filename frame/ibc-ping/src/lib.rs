@@ -137,10 +137,6 @@ pub mod pallet {
 		ChannelOpened { channel_id: Vec<u8>, port_id: Vec<u8> },
 	}
 
-	#[pallet::storage]
-	/// A vector of Vec<channel_id>
-	pub type Channels<T> = StorageValue<_, Vec<Vec<u8>>, ValueQuery>;
-
 	#[pallet::error]
 	pub enum Error<T> {
 		/// Invalid params passed
@@ -155,6 +151,12 @@ pub mod pallet {
 #[derive(Clone)]
 pub struct IbcHandler<T: Config>(PhantomData<T>);
 
+impl<T: Config> Default for IbcHandler<T> {
+	fn default() -> Self {
+		Self(PhantomData::default())
+	}
+}
+
 pub struct PingAcknowledgement(Vec<u8>);
 
 impl AsRef<[u8]> for PingAcknowledgement {
@@ -168,12 +170,6 @@ impl GenericAcknowledgement for PingAcknowledgement {}
 impl<T: Config> core::fmt::Debug for IbcHandler<T> {
 	fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
 		write!(f, "pallet-ibc-ping")
-	}
-}
-
-impl<T: Config> IbcHandler<T> {
-	pub fn new() -> Self {
-		IbcHandler(PhantomData::default())
 	}
 }
 
@@ -286,8 +282,8 @@ impl<T: Config + Send + Sync> Module for IbcHandler<T> {
 }
 
 pub struct WeightHandler<T: Config>(PhantomData<T>);
-impl<T: Config> WeightHandler<T> {
-	pub fn new() -> Self {
+impl<T: Config> Default for WeightHandler<T> {
+	fn default() -> Self {
 		Self(PhantomData::default())
 	}
 }

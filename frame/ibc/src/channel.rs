@@ -69,7 +69,7 @@ where
 				"in channel : [connection_channels] >> Vector<(PortId, ChannelId)> =  {:?}",
 				result
 			);
-			return Ok(result)
+			Ok(result)
 		} else {
 			Err(ICS04Error::connection_not_open(conn_id.clone()))
 		}

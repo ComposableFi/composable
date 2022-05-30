@@ -12,9 +12,15 @@ pub struct Context<T: Config> {
 	router: IbcRouter<T>,
 }
 
+impl<T: Config + Send + Sync> Default for Context<T> {
+	fn default() -> Self {
+		Self { _pd: PhantomData::default(), router: IbcRouter::default() }
+	}
+}
+
 impl<T: Config + Send + Sync> Context<T> {
 	pub fn new() -> Self {
-		Self { _pd: PhantomData::default(), router: IbcRouter::new() }
+		Self::default()
 	}
 }
 
@@ -23,9 +29,9 @@ pub struct IbcRouter<T: Config> {
 	pallet_ibc_ping: pallet_ibc_ping::IbcHandler<T>,
 }
 
-impl<T: Config + Send + Sync> IbcRouter<T> {
-	fn new() -> Self {
-		Self { pallet_ibc_ping: pallet_ibc_ping::IbcHandler::<T>::new() }
+impl<T: Config> Default for IbcRouter<T> {
+	fn default() -> Self {
+		Self { pallet_ibc_ping: pallet_ibc_ping::IbcHandler::<T>::default() }
 	}
 }
 

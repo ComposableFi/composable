@@ -51,9 +51,15 @@ where
 		Ok(count as u64)
 	}
 
+	#[allow(clippy::disallowed_methods)]
 	fn commitment_prefix(&self) -> CommitmentPrefix {
 		log::trace!("in connection : [commitment_prefix] >> CommitmentPrefix = {:?}", "ibc");
-		T::CONNECTION_PREFIX.to_vec().try_into().unwrap()
+		// If this conversion fails it means the runtime was not configured well
+		T::CONNECTION_PREFIX
+			.to_vec()
+			.try_into()
+			.map_err(|_| panic!("Connection prefix supplied in pallet runtime config is invalid"))
+			.unwrap()
 	}
 }
 

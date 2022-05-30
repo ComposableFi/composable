@@ -6,6 +6,9 @@ on:
   push:
     branches:
       - main
+      # bors related branches. Please do not remove.
+      - staging
+      - trying      
   pull_request:
     branches:
       - main

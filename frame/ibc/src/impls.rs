@@ -1,9 +1,13 @@
 use super::*;
+use crate::routing::Context;
 use codec::{Decode, Encode};
 use frame_support::traits::Currency;
 use ibc::{
 	core::{
-		ics02_client::{client_consensus::AnyConsensusState, client_state::AnyClientState},
+		ics02_client::{
+			client_consensus::AnyConsensusState, client_state::AnyClientState,
+			context::ClientReader,
+		},
 		ics04_channel::{
 			channel::ChannelEnd,
 			context::{ChannelKeeper, ChannelReader},
@@ -40,6 +44,7 @@ use tendermint_proto::Protobuf;
 
 impl<T: Config> Pallet<T>
 where
+	T: Send + Sync,
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
 	pub fn build_trie_inputs() -> Result<Vec<(Vec<u8>, Vec<u8>)>, Error<T>> {
@@ -103,12 +108,10 @@ where
 			let channel_id =
 				channel_id_from_bytes(channel).map_err(|_| Error::<T>::DecodingError)?;
 			let port_id = port_id_from_bytes(port).map_err(|_| Error::<T>::DecodingError)?;
-			let channel_path = format!("{}", ChannelEndsPath(port_id.clone(), channel_id.clone()));
-			let next_seq_send_path =
-				format!("{}", SeqSendsPath(port_id.clone(), channel_id.clone()));
-			let next_seq_recv_path =
-				format!("{}", SeqRecvsPath(port_id.clone(), channel_id.clone()));
-			let next_seq_ack_path = format!("{}", SeqAcksPath(port_id.clone(), channel_id.clone()));
+			let channel_path = format!("{}", ChannelEndsPath(port_id.clone(), channel_id));
+			let next_seq_send_path = format!("{}", SeqSendsPath(port_id.clone(), channel_id));
+			let next_seq_recv_path = format!("{}", SeqRecvsPath(port_id.clone(), channel_id));
+			let next_seq_ack_path = format!("{}", SeqAcksPath(port_id.clone(), channel_id));
 			let next_seq_send_key =
 				apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![next_seq_send_path])
 					.map_err(|_| Error::<T>::DecodingError)?;
@@ -192,11 +195,11 @@ where
 		port_id: Vec<u8>,
 	) -> Result<QueryChannelResponse, Error<T>> {
 		let channel = Channels::<T>::get(port_id.clone(), channel_id.clone());
-		let port_id = port_id_from_bytes(port_id.clone()).map_err(|_| Error::<T>::DecodingError)?;
+		let port_id = port_id_from_bytes(port_id).map_err(|_| Error::<T>::DecodingError)?;
 		let channel_id =
-			channel_id_from_bytes(channel_id.clone()).map_err(|_| Error::<T>::DecodingError)?;
+			channel_id_from_bytes(channel_id).map_err(|_| Error::<T>::DecodingError)?;
 
-		let channel_path = format!("{}", ChannelEndsPath(port_id.clone(), channel_id.clone()));
+		let channel_path = format!("{}", ChannelEndsPath(port_id, channel_id));
 		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![channel_path])
 			.map_err(|_| Error::<T>::DecodingError)?;
 
@@ -255,8 +258,7 @@ where
 			height
 		};
 		let consensus_state = ConsensusStates::<T>::get(client_id.clone(), height.clone());
-		let client_id =
-			client_id_from_bytes(client_id.clone()).map_err(|_| Error::<T>::DecodingError)?;
+		let client_id = client_id_from_bytes(client_id).map_err(|_| Error::<T>::DecodingError)?;
 
 		let height = ibc::Height::decode(&*height).map_err(|_| Error::<T>::DecodingError)?;
 		let consensus_path = ClientConsensusStatePath {
@@ -334,7 +336,7 @@ where
 
 	/// Get all channels bound to this connection
 	pub fn connection_channels(connection_id: Vec<u8>) -> Result<QueryChannelsResponse, Error<T>> {
-		let identifiers = ChannelsConnection::<T>::get(connection_id.clone());
+		let identifiers = ChannelsConnection::<T>::get(connection_id);
 
 		let channels = identifiers
 			.into_iter()
@@ -480,7 +482,7 @@ where
 		let receipt_path = format!("{}", ReceiptsPath { port_id, channel_id, sequence });
 		let key = apply_prefix_and_encode(T::CONNECTION_PREFIX, vec![receipt_path])
 			.map_err(|_| Error::<T>::DecodingError)?;
-		let receipt = if &receipt == "Ok" { true } else { false };
+		let receipt = &receipt == "Ok";
 		Ok(QueryPacketReceiptResponse { receipt, trie_key: key, height: host_height::<T>() })
 	}
 
@@ -492,10 +494,9 @@ where
 		let client_state_decoded =
 			AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
 		let height = client_state_decoded.latest_height();
-		let client_id =
-			client_id_from_bytes(client_id.clone()).map_err(|_| Error::<T>::DecodingError)?;
-		let connection_id = connection_id_from_bytes(connection_id.clone())
-			.map_err(|_| Error::<T>::DecodingError)?;
+		let client_id = client_id_from_bytes(client_id).map_err(|_| Error::<T>::DecodingError)?;
+		let connection_id =
+			connection_id_from_bytes(connection_id).map_err(|_| Error::<T>::DecodingError)?;
 		let prefix = T::CONNECTION_PREFIX;
 		let connection_path = format!("{}", ConnectionsPath(connection_id));
 		let consensus_path = ClientConsensusStatePath {
@@ -503,7 +504,7 @@ where
 			epoch: height.revision_number,
 			height: height.revision_height,
 		};
-		let client_state_path = format!("{}", ClientStatePath(client_id.clone()));
+		let client_state_path = format!("{}", ClientStatePath(client_id));
 		let consensus_path = format!("{}", consensus_path);
 		let client_state_key = apply_prefix_and_encode(prefix, vec![client_state_path])
 			.map_err(|_| Error::<T>::DecodingError)?;
@@ -565,13 +566,17 @@ where
 				.unwrap_or_default();
 		sequences
 			.into_iter()
-			.map(|seq| {
-				offchain_packets
-					.get(&seq)
-					.map(|packet_ref| packet_ref.clone())
-					.ok_or(Error::<T>::Other)
-			})
+			.map(|seq| offchain_packets.get(&seq).cloned().ok_or(Error::<T>::Other))
 			.collect()
+	}
+
+	pub fn host_consensus_state(height: u32) -> Option<Vec<u8>> {
+		let ctx = Context::<T>::new();
+		// revision number is not used in this case so it's fine to use zero
+		let height = ibc::Height::new(0, height as u64);
+		ctx.host_consensus_state(height)
+			.ok()
+			.and_then(|cs_state| cs_state.encode_vec().ok())
 	}
 }
 
@@ -668,6 +673,7 @@ where
 		Ok(())
 	}
 
+	#[allow(clippy::disallowed_methods)]
 	fn open_channel(
 		port_id: PortId,
 		channel_end: ChannelEnd,
@@ -676,6 +682,7 @@ where
 		let channel_counter =
 			ctx.channel_counter().map_err(|_| IbcHandlerError::ChannelInitError)?;
 		let channel_id = ChannelId::new(channel_counter);
+		// This unwrap here cannot fail
 		let value = MsgChannelOpenInit { port_id, channel: channel_end, signer: Signer::new("") }
 			.encode_vec()
 			.unwrap();
