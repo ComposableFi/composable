@@ -159,7 +159,7 @@ where
 			timestamp.into_tm_time().ok_or_else(|| ICS02Error::implementation_specific())?;
 		let consensus_state = ibc::clients::ics11_beefy::consensus_state::ConsensusState {
 			timestamp,
-			root: local_state.root.clone().into(),
+			root: local_state.commitment_root.clone().into(),
 		};
 
 		Ok(AnyConsensusState::Beefy(consensus_state))

@@ -85,14 +85,14 @@ pub struct IbcConsensusState {
 	/// Timestamp at which this state root was generated in nanoseconds
 	pub timestamp: u64,
 	/// IBC Commitment root
-	pub root: Vec<u8>,
+	pub commitment_root: Vec<u8>,
 }
 
 impl Default for IbcConsensusState {
 	// Using a default value of 1 for timestamp because using 0 will generate an
 	// error when converting to an ibc::Timestamp in tests and benchmarks
 	fn default() -> Self {
-		Self { timestamp: 1, root: vec![] }
+		Self { timestamp: 1, commitment_root: vec![] }
 	}
 }
 
@@ -321,7 +321,7 @@ pub mod pallet {
 			if let Ok(root) = root {
 				let height = crate::impls::host_height::<T>();
 				let timestamp = T::TimeProvider::now().as_nanos().saturated_into::<u64>();
-				let ibc_cs = IbcConsensusState { timestamp, root: root.clone() };
+				let ibc_cs = IbcConsensusState { timestamp, commitment_root: root.clone() };
 				let _ = CommitmentRoot::<T>::try_mutate::<_, (), _>(|val| {
 					if let Err((height, ibc_cs)) = val.try_insert(height, ibc_cs) {
 						let first_key = val.keys().cloned().next();
