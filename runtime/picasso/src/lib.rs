@@ -26,11 +26,11 @@ pub use xcmp::{MaxInstructions, UnitWeightCost, XcmConfig};
 use common::{
 	impls::DealWithFees, multi_existential_deposits, AccountId, AccountIndex, Address, Amount,
 	AuraId, Balance, BlockNumber, BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash,
-	Moment, NativeExistentialDeposit, PoolId, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
+	Moment, NativeExistentialDeposit, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
 	MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 
-use composable_traits::{assets::Asset, dex::PriceAggregate};
+use composable_traits::assets::Asset;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -110,7 +110,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 1200,
+	spec_version: 1300,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -554,6 +554,7 @@ parameter_types! {
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
 }
 
+type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
@@ -563,6 +564,8 @@ impl orml_tokens::Config for Runtime {
 	type ExistentialDeposits = MultiExistentialDeposits;
 	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
+	type ReserveIdentifier = ReserveIdentifier;
+	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
@@ -939,23 +942,6 @@ impl_runtime_apis! {
 				crowdloan_rewards::amount_available_to_claim_for::<Runtime>(account_id)
 					.unwrap_or_else(|_| Balance::zero())
 			)
-		}
-	}
-
-	impl pablo_runtime_api::PabloRuntimeApi<Block, PoolId, CurrencyId, Balance> for Runtime {
-		fn prices_for(
-			pool_id: PoolId,
-			base_asset_id: CurrencyId,
-			quote_asset_id: CurrencyId,
-			_amount: Balance
-		) -> PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
-			// TODO Dummy impl at the moment: fix when pablo is integrated into the picasso runtime
-			PriceAggregate {
-				pool_id: SafeRpcWrapper(pool_id),
-				base_asset_id: SafeRpcWrapper(base_asset_id),
-				quote_asset_id: SafeRpcWrapper(quote_asset_id),
-				spot_price: SafeRpcWrapper(0_u128)
-			}
 		}
 	}
 

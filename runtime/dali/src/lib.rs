@@ -34,7 +34,11 @@ use common::{
 	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use composable_traits::{assets::Asset, defi::Rate, dex::PriceAggregate};
+use composable_traits::{
+	assets::Asset,
+	defi::Rate,
+	dex::{Amm, PriceAggregate},
+};
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
@@ -122,7 +126,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 2200,
+	spec_version: 2300,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -565,6 +569,7 @@ parameter_types! {
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
 }
 
+type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
@@ -574,6 +579,8 @@ impl orml_tokens::Config for Runtime {
 	type ExistentialDeposits = MultiExistentialDeposits;
 	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
+	type ReserveIdentifier = ReserveIdentifier;
+	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
@@ -1223,6 +1230,21 @@ impl_runtime_apis! {
 				quote_asset_id: SafeRpcWrapper(quote_asset_id),
 				spot_price: SafeRpcWrapper(0_u128)
 			})
+		}
+
+		fn expected_lp_tokens_given_liquidity(
+			pool_id: SafeRpcWrapper<PoolId>,
+			base_asset_amount: SafeRpcWrapper<Balance>,
+			quote_asset_amount: SafeRpcWrapper<Balance>,
+		) -> SafeRpcWrapper<Balance> {
+			SafeRpcWrapper(
+				<Pablo as Amm>::amount_of_lp_token_for_added_liquidity(
+					pool_id.0,
+					base_asset_amount.0,
+					quote_asset_amount.0,
+				)
+				.unwrap_or_else(|_| Zero::zero())
+			)
 		}
 	}
 

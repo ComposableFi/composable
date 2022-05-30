@@ -33,7 +33,7 @@ fn create_market_from_raw_origin<T: Config>(
 		<T as frame_system::Config>::BlockNumber,
 	>,
 ) -> MarketIndex {
-	Lending::<T>::create_market(origin.clone().into(), input.try_into_validated().unwrap())
+	Lending::<T>::create_market(origin.clone().into(), input.try_into_validated().unwrap(), false)
 		.unwrap();
 
 	// FIXME: This ain't ideal
@@ -90,7 +90,7 @@ benchmarks! {
 
 		let pair = setup_currency_pair::<T>(&caller, bank);
 		let input = create_market_config::<T>(pair.base, pair.quote, Default::default()).try_into_validated().unwrap();
-	}: _(origin, input)
+	}: _(origin, input, false)
 
 	deposit_collateral {
 		let LendingBenchmarkingSetup {

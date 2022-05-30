@@ -123,6 +123,7 @@ parameter_type_with_key! {
 	};
 }
 
+type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
 	type Balance = u64;
 	type Event = Event;
@@ -132,6 +133,8 @@ impl orml_tokens::Config for Runtime {
 	type WeightInfo = ();
 	type CurrencyId = CurrencyId;
 	type DustRemovalWhitelist = Everything;
+	type ReserveIdentifier = ReserveIdentifier;
+	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type ExistentialDeposits = ExistentialDeposits;
 }
 

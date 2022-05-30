@@ -295,6 +295,7 @@ pub trait Lending: DeFiEngine {
 	fn create(
 		manager: Self::AccountId,
 		config: CreateInput<Self::LiquidationStrategyId, Self::MayBeAssetId, Self::BlockNumber>,
+		keep_alive: bool,
 	) -> Result<(Self::MarketId, Self::VaultId), DispatchError>;
 
 	/// [`AccountId`][Self::AccountId] of the market instance
