@@ -19,8 +19,7 @@ jobs:
           node-version: 16
           always-auth: true
           registry-url: 'https://registry.npmjs.org'
-      - run: yarn install --ignore-scripts
-        working_directory: "frontend/ui-picasso"
+      - run: yarn --cwd frontend/ui-picasso install --ignore-scripts
         env:
           CI: true
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
