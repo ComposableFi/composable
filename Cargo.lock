@@ -5775,6 +5775,7 @@ dependencies = [
 name = "local-integration-tests"
 version = "0.1.0"
 dependencies = [
+ "base58",
  "common",
  "composable-traits",
  "cumulus-pallet-aura-ext",
@@ -5794,6 +5795,7 @@ dependencies = [
  "frame-system",
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
+ "hex",
  "hex-literal",
  "kusama-runtime",
  "num-traits",

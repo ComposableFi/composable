@@ -121,7 +121,9 @@ dali-runtime = { package = "dali-runtime", path = "../../runtime/dali", default-
 picasso-runtime = { package = "picasso-runtime", path = "../../runtime/picasso", default-features = false, optional = true }
 
 [dev-dependencies]
+base58 = "0.2"
 env_logger = "0.9.0"
+hex = "0.4.3"
 
 [features]
 dali = ["std", "develop", "local-integration-tests"]
