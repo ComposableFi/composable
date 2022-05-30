@@ -207,6 +207,11 @@ proptest! {
 		let config = MarketConfig { funding_frequency: ONE_HOUR, ..Default::default() };
 
 		with_market_context(ExtBuilder::default(), config, |market_id| {
+			// update rate at exact multiple of funding frequency
+			run_to_time(ONE_HOUR);
+			assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
+
+			// try updating before the expected wait time
 			run_for_seconds(seconds);
 			assert_noop!(
 				TestPallet::update_funding(Origin::signed(ALICE), market_id),
