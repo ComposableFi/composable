@@ -780,7 +780,7 @@ pub mod pallet {
 			let vault_aum = Self::assets_under_management(vault_id)?;
 			if vault_aum.is_zero() {
 				ensure!(
-					T::Currency::can_deposit(vault.lp_token_id, from, amount) ==
+					T::Currency::can_deposit(vault.lp_token_id, from, amount, false) ==
 						DepositConsequence::Success,
 					Error::<T>::MintFailed
 				);
@@ -811,7 +811,7 @@ pub mod pallet {
 				ensure!(lp > T::Balance::zero(), Error::<T>::InsufficientCreationDeposit);
 
 				ensure!(
-					T::Currency::can_deposit(vault.lp_token_id, from, lp) ==
+					T::Currency::can_deposit(vault.lp_token_id, from, lp, false) ==
 						DepositConsequence::Success,
 					Error::<T>::MintFailed
 				);

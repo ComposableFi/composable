@@ -126,7 +126,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 2200,
+	spec_version: 2300,
 	impl_version: 1,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -569,6 +569,7 @@ parameter_types! {
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
 }
 
+type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
@@ -578,6 +579,8 @@ impl orml_tokens::Config for Runtime {
 	type ExistentialDeposits = MultiExistentialDeposits;
 	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
+	type ReserveIdentifier = ReserveIdentifier;
+	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 

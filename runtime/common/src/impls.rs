@@ -187,6 +187,7 @@ mod tests {
 		};
 	}
 
+	type ReserveIdentifier = [u8; 8];
 	impl orml_tokens::Config for Test {
 		type Event = Event;
 		type Balance = Balance;
@@ -196,6 +197,8 @@ mod tests {
 		type ExistentialDeposits = ExistentialDeposits;
 		type OnDust = ();
 		type MaxLocks = ();
+		type ReserveIdentifier = ReserveIdentifier;
+		type MaxReserves = frame_support::traits::ConstU32<2>;
 		type DustRemovalWhitelist = Everything;
 	}
 

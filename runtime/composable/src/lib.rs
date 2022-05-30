@@ -107,7 +107,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 1100,
+	spec_version: 1200,
 	impl_version: 2,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
@@ -504,6 +504,7 @@ parameter_types! {
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
 }
 
+type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
@@ -513,6 +514,8 @@ impl orml_tokens::Config for Runtime {
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
+	type ReserveIdentifier = ReserveIdentifier;
+	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 

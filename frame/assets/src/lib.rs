@@ -689,8 +689,12 @@ pub mod pallet {
 				<<T as Config>::NativeCurrency>::reducible_balance(who, keep_alive)
 			}
 
-			fn can_deposit(who: &T::AccountId, amount: Self::Balance) -> DepositConsequence {
-				<<T as Config>::NativeCurrency>::can_deposit(who, amount)
+			fn can_deposit(
+				who: &T::AccountId,
+				amount: Self::Balance,
+				mint: bool,
+			) -> DepositConsequence {
+				<<T as Config>::NativeCurrency>::can_deposit(who, amount, mint)
 			}
 
 			fn can_withdraw(
@@ -984,11 +988,12 @@ pub mod pallet {
 				asset: Self::AssetId,
 				who: &T::AccountId,
 				amount: Self::Balance,
+				mint: bool,
 			) -> DepositConsequence {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::can_deposit(who, amount)
+					return <<T as Config>::NativeCurrency>::can_deposit(who, amount, mint)
 				}
-				<<T as Config>::MultiCurrency>::can_deposit(asset, who, amount)
+				<<T as Config>::MultiCurrency>::can_deposit(asset, who, amount, mint)
 			}
 
 			fn can_withdraw(
