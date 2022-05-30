@@ -946,11 +946,9 @@ pub mod pallet {
 		#[transactional]
 		fn update_funding(market_id: &Self::MarketId) -> Result<(), DispatchError> {
 			let mut market = Self::try_get_market(market_id)?;
-
-			// Check that enough time has passed since last update
 			let now = T::UnixTime::now().as_secs();
 			ensure!(
-				now - market.funding_rate_ts >= market.funding_frequency,
+				Self::is_funding_update_time(&market, now)?,
 				Error::<T>::UpdatingFundingTooEarly
 			);
 
@@ -1384,6 +1382,35 @@ pub mod pallet {
 
 	// Helper functions - validity checks
 	impl<T: Config> Pallet<T> {
+		fn is_funding_update_time(
+			market: &Market<T>,
+			now: DurationSeconds,
+		) -> Result<bool, DispatchError> {
+			let funding_frequency = market.funding_frequency;
+			let mut next_update_wait = funding_frequency;
+
+			if funding_frequency > 0 {
+				// Usual update times are at multiples of funding frequency
+				// Safe since funding frequency is positive
+				let last_update_delay = market.funding_rate_ts.rem_euclid(funding_frequency);
+
+				if last_update_delay > 0 {
+					let max_delay_for_not_skipping = funding_frequency.try_div(&3)?;
+
+					next_update_wait = if last_update_delay > max_delay_for_not_skipping {
+						// Skip update at the next multiple of funding frequency
+						funding_frequency.try_mul(&2)?.try_sub(&last_update_delay)?
+					} else {
+						// Allow update at the next multiple of funding frequency
+						funding_frequency.try_sub(&last_update_delay)?
+					};
+				}
+			}
+
+			// Check that enough time has passed since last update
+			Ok(now.try_sub(&market.funding_rate_ts)? >= next_update_wait)
+		}
+
 		fn meets_initial_margin_ratio(
 			positions: &BoundedVec<Position<T>, T::MaxPositions>,
 			margin: T::Balance,
