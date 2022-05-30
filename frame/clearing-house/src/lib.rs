@@ -1065,7 +1065,7 @@ pub mod pallet {
 			let oracle_twap = Self::Decimal::checked_from_rational(nonnormalized_oracle_twap, 100)
 				.ok_or(ArithmeticError::Overflow)?;
 
-			let vamm_twap: Self::Decimal = T::Vamm::get_twap(&market.vamm_id)
+			let vamm_twap: Self::Decimal = T::Vamm::get_twap(&market.vamm_id, AssetType::Base)
 				.and_then(|p| p.into_signed().map_err(|e| e.into()))?;
 
 			let price_spread = vamm_twap.try_sub(&oracle_twap)?;

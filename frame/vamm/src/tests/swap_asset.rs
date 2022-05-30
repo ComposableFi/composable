@@ -153,6 +153,7 @@ fn swap_add_base() {
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
+				..Default::default()
 			},
 		)],
 	}
@@ -173,6 +174,7 @@ fn swap_add_base() {
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
+				..Default::default()
 			}
 		);
 
@@ -213,6 +215,7 @@ fn swap_remove_base() {
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
+				..Default::default()
 			},
 		)],
 	}
@@ -233,6 +236,7 @@ fn swap_remove_base() {
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
+				..Default::default()
 			}
 		);
 
@@ -273,6 +277,7 @@ fn swap_add_quote() {
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
+				..Default::default()
 			},
 		)],
 	}
@@ -293,6 +298,7 @@ fn swap_add_quote() {
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
+				..Default::default()
 			}
 		);
 
@@ -333,6 +339,7 @@ fn swap_remove_quote() {
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
+				..Default::default()
 			},
 		)],
 	}
@@ -353,6 +360,7 @@ fn swap_remove_quote() {
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
+				..Default::default()
 			}
 		);
 
