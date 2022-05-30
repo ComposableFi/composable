@@ -14,16 +14,16 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Get specific changed files
-          id: changed-files-specific
-          uses: tj-actions/changed-files@v21
-          with:
-            files: |
-              frontend/ui-pablo
+        id: changed-files-specific
+        uses: tj-actions/changed-files@v21
+        with:
+          files: |
+            frontend/ui-pablo
 
       - name: no_changed_files_skip
-          id: no_changed_files
-          if: steps.changed-files-specific.outputs.any_changed == 'false'
-          run: exit 1;
+        id: no_changed_files
+        if: steps.changed-files-specific.outputs.any_changed == 'false'
+        run: exit 1;
 
 
       - name: Install dependencies
@@ -40,16 +40,16 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Get specific changed files
-          id: changed-files-specific
-          uses: tj-actions/changed-files@v21
-          with:
-            files: |
-              frontend/ui-picasso
+        id: changed-files-specific
+        uses: tj-actions/changed-files@v21
+        with:
+          files: |
+            frontend/ui-picasso
 
       - name: no_changed_files_skip
-          id: no_changed_files
-          if: steps.changed-files-specific.outputs.any_changed == 'false'
-          run: exit 1;
+        id: no_changed_files
+        if: steps.changed-files-specific.outputs.any_changed == 'false'
+        run: exit 1;
 
 
       - name: Install dependencies
