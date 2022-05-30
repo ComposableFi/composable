@@ -12,6 +12,8 @@ on:
       - staging
       - trying      
   pull_request:
+    paths-ignore:
+      - frontend/**
     branches:
       - main
       - develop
