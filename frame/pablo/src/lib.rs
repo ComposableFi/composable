@@ -607,13 +607,16 @@ pub mod pallet {
 				T::StakingConfiguration::configure(
 					lp_token_opt.expect("impossible; qed;"),
 					// TODO (vim) Hard coded for now
-					[(ONE_WEEK, Perbill::from_float(0.5)), (ONE_MONTH, Perbill::from_float(1.0))]
-						.into(),
+					[
+						(ONE_WEEK, Perbill::from_percent(50)),
+						(ONE_MONTH, Perbill::from_percent(100)),
+					]
+					.into(),
 					// TODO (vim) : Consider the case of having change the rewarded assets after
 					// the NFTs have already been created for a given asset by stakers
 					BTreeSet::from([CurrencyId::PBLO.into(), CurrencyId::PICA.into()]),
 					Penalty {
-						value: Perbill::from_float(0.5),
+						value: Perbill::from_percent(50),
 						beneficiary: Self::account_id(&pool_id),
 					},
 				)?;

@@ -70,7 +70,7 @@ pub use frame_support::{
 };
 
 use codec::{Codec, Encode, EncodeLike};
-use composable_traits::staking_rewards::{NoopStaking, StakingConfiguration};
+use composable_traits::staking_rewards::NoopStaking;
 use frame_support::{
 	traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade},
 	weights::ConstantMultiplier,
