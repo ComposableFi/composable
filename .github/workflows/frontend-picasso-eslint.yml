@@ -1,4 +1,4 @@
-name: Frontend - Checks - ESLint
+name: Frontend (Picasso) - Checks - ESLint
 
 on:
   push:
