@@ -1,0 +1,13 @@
+@startuml
+skinparam responseMessageBelowArrow true
+!theme mars
+
+participant "Client" as client
+participant "Vamm" as vamm
+database "Storage" as svamm
+
+client -> vamm++: Get twap request
+vamm -[#green]> svamm++: Get vamm
+svamm --> vamm--: vamm state
+vamm --> client--: twap
+@enduml

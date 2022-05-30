@@ -17,6 +17,7 @@ pub mod create_vamm;
 pub mod get_price;
 pub mod get_price_base_asset;
 pub mod get_price_quote_asset;
+pub mod get_twap;
 pub mod move_price;
 pub mod swap_asset;
 pub mod swap_base_asset;
@@ -25,6 +26,10 @@ pub mod swap_quote_asset;
 // ----------------------------------------------------------------------------------------------------
 //                                             Setup
 // ----------------------------------------------------------------------------------------------------
+
+type Decimal = <MockRuntime as pallet::Config>::Decimal;
+type VammTimestamp = <MockRuntime as pallet::Config>::Moment;
+type VammId = <TestPallet as VammTrait>::VammId;
 
 #[allow(dead_code)]
 fn run_to_block(n: u64) {
@@ -55,10 +60,6 @@ fn run_for_seconds(seconds: u64) {
 	System::on_initialize(System::block_number());
 	Timestamp::on_initialize(System::block_number());
 }
-
-type Decimal = <MockRuntime as pallet::Config>::Decimal;
-type VammTimestamp = <MockRuntime as pallet::Config>::Moment;
-type VammId = <TestPallet as VammTrait>::VammId;
 
 #[derive(Default)]
 struct TestVammState<Balance, VammTimestamp> {
@@ -246,6 +247,7 @@ prop_compose! {
 				base, quote
 			).unwrap(),
 			closed,
+			..Default::default()
 		}
 	}
 }
@@ -267,8 +269,11 @@ prop_compose! {
 prop_compose! {
 	fn get_vamm_state(config: TestVammState<Balance, VammTimestamp>)(
 		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve(),
-		closed in prop_oneof![timestamp().prop_map(Some), Just(None)]
-
+		closed in prop_oneof![timestamp().prop_map(Some), Just(None)],
+		base_asset_twap in balance_range(),
+		base_asset_twap_timestamp in timestamp(),
+		quote_asset_twap in balance_range(),
+		quote_asset_twap_timestamp in timestamp(),
 	) -> VammState<Balance, VammTimestamp> {
 		let invariant = match (
 			config.base_asset_reserves,
@@ -292,6 +297,10 @@ prop_compose! {
 			closed: config
 				.closed
 				.unwrap_or(closed),
+			base_asset_twap,
+			base_asset_twap_timestamp,
+			quote_asset_twap,
+			quote_asset_twap_timestamp,
 		}
 	}
 }

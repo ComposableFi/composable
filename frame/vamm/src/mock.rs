@@ -158,6 +158,4 @@ impl ExtBuilder {
 
 		storage.into()
 	}
-
-	// pub fn initialize_vamm(mut self, )
 }

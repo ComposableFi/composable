@@ -179,29 +179,6 @@ impl<T: Config> Market<T> {
 	}
 }
 
-// For testing purposes
-#[cfg(feature = "std")]
-impl<T: Config> Default for Market<T> {
-	fn default() -> Self {
-		Self {
-			vamm_id: Zero::zero(),
-			asset_id: Default::default(),
-			margin_ratio_initial: Default::default(),
-			margin_ratio_maintenance: Default::default(),
-			minimum_trade_size: Default::default(),
-			base_asset_amount_long: Default::default(),
-			base_asset_amount_short: Default::default(),
-			cum_funding_rate_long: Default::default(),
-			cum_funding_rate_short: Default::default(),
-			fee_pool: Default::default(),
-			funding_rate_ts: Default::default(),
-			funding_frequency: Default::default(),
-			funding_period: Default::default(),
-			taker_fee: Default::default(),
-		}
-	}
-}
-
 /// Specifications for market creation
 #[derive(Encode, Decode, PartialEq, Clone, Debug, TypeInfo)]
 pub struct MarketConfig<AssetId, Balance, Decimal, VammConfig> {

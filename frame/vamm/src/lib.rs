@@ -22,6 +22,7 @@
 //!
 //! * **VAMM:** Acronym for Virtual Automated Market Maker.
 //! * **CFMM:** Acronym for Constant Function Market Maker.
+//! * **TWAP:** Acronym for Time Weighted Average Price.
 //!
 //! ### Goals
 //!
@@ -47,8 +48,12 @@
 //! returning it's Id.
 //! * [`swap`](pallet/struct.Pallet.html#method.swap): Performs swap of a
 //! * [`move_price`](pallet/struct.Pallet.html#method.move_price): Changes
-//! amount of base and quote assets in reserve, essentially changing the
-//! invariant.
+//! amount of [`base`](VammState::base_asset_reserves) and
+//! [`quote`](VammState::quote_asset_reserves) assets in reserve, essentially
+//! changing the invariant.
+//! * [`get_price`](pallet/struct.Pallet.html#method.get_price): Gets the
+//! current price of the [`base`](VammState::base_asset_reserves) or
+//! [`quote`](VammState::quote_asset_reserves) asset in a vamm.
 //!
 //! ### Runtime Storage Objects
 //!
@@ -235,7 +240,7 @@ pub mod pallet {
 	}
 
 	/// Data relating to the state of a virtual market.
-	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug)]
+	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug, Default)]
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 	pub struct VammState<Balance, Moment> {
 		/// The total amount of base asset present in the vamm.
@@ -259,6 +264,18 @@ pub mod pallet {
 		/// is flaged to be closed and the closing action will take (or took)
 		/// effect at the time `timestamp`.
 		pub closed: Option<Moment>,
+
+		// TODO(Cardosaum): Write description for this field.
+		pub base_asset_twap: Balance,
+
+		// TODO(Cardosaum): Write description for this field.
+		pub base_asset_twap_timestamp: Moment,
+
+		// TODO(Cardosaum): Write description for this field.
+		pub quote_asset_twap: Balance,
+
+		// TODO(Cardosaum): Write description for this field.
+		pub quote_asset_twap_timestamp: Moment,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -316,9 +333,11 @@ pub mod pallet {
 	// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Tried to set [`base_asset_reserves`](VammState) to zero.
+		/// Tried to set [`base_asset_reserves`](VammState::base_asset_reserves)
+		/// to zero.
 		BaseAssetReserveIsZero,
-		/// Tried to set [`quote_asset_reserves`](VammState) to zero.
+		/// Tried to set
+		/// [`quote_asset_reserves`](VammState::quote_asset_reserves) to zero.
 		QuoteAssetReserveIsZero,
 		/// Computed Invariant is zero.
 		InvariantIsZero,
@@ -338,12 +357,15 @@ pub mod pallet {
 		VammIsClosed,
 		/// Tried to swap assets but the amount returned was less than the minimum expected.
 		SwappedAmountLessThanMinimumLimit,
-		/// Tried to derive invariant from base and quote asset, but the
+		/// Tried to derive invariant from [`base`](VammState::base_asset_reserves) and
+		/// [`quote`](VammState::quote_asset_reserves) asset, but the
 		/// computation was not successful.
 		FailedToDeriveInvariantFromBaseAndQuoteAsset,
-		/// Tried to perform swap operation but it would drain all base asset reserves.
+		/// Tried to perform swap operation but it would drain all
+		/// [`base`](VammState::base_asset_reserves) asset reserves.
 		BaseAssetReservesWouldBeCompletelyDrained,
-		/// Tried to perform swap operation but it would drain all quote asset reserves.
+		/// Tried to perform swap operation but it would drain all
+		/// [`quote`](VammState::quote_asset_reserves) asset reserves.
 		QuoteAssetReservesWouldBeCompletelyDrained,
 	}
 
@@ -407,16 +429,23 @@ pub mod pallet {
 		/// ![](https://www.plantuml.com/plantuml/svg/NP2nJiCm48PtFyNH1L2L5yXGbROB0on8x5VdLsibjiFT9NbzQaE4odRIz-dp-VPgB3R5mMaVqiZ2aGGwvgHuWofVSC2GbnUHl93916V11j0dnqXUm1PoSeyyMMPlOMO3vUGUx8e8YYpgtCXYmOUHaz7cE0Gasn0h-JhUuzAjSBuDhcFZCojeys5P-09wAi9pDVIVSXYox_sLGwhux9txUO6QNSrjjoqToyfriHv6Wgy9QgxGOjNalRJ2PfTloPPE6BC68r-TRYrXHlfJVx_MD2szOrcTrvFR8tNbsjy0)
 		///
 		/// ## Parameters:
-		/// - `base_asset_reserves`: The amount of base asset
-		/// - `quote_asset_reserves`: The amount of quote asset
-		/// - `peg_multiplier`: The constant multiplier responsible to balance quote and base asset
+		/// - `base_asset_reserves`: The amount of
+		/// [`base`](VammState::base_asset_reserves) asset
+		/// - `quote_asset_reserves`: The amount of
+		/// [`quote`](VammState::quote_asset_reserves) asset
+		/// - `peg_multiplier`: The constant multiplier responsible to balance
+		/// [`quote`](VammState::quote_asset_reserves) and
+		/// [`base`](VammState::base_asset_reserves)
+		/// asset
 		///
 		/// ## Returns
 		/// The new vamm's id, if successful.
 		///
 		/// ## Assumptions or Requirements
-		/// In order to create a valid vamm, we need to ensure that both base and quote asset
-		/// reserves, as well as the peg_multiplier, are non-zero. Every parameter must be greater
+		/// In order to create a valid vamm, we need to ensure that both
+		/// [`base`](VammState::base_asset_reserves) and
+		/// [`quote`](VammState::quote_asset_reserves) asset reserves, as well
+		/// as the peg_multiplier, are non-zero. Every parameter must be greater
 		/// than zero.
 		///
 		/// ## Emits
@@ -452,7 +481,7 @@ pub mod pallet {
 					quote_asset_reserves: config.quote_asset_reserves,
 					peg_multiplier: config.peg_multiplier,
 					invariant,
-					closed: Default::default(),
+					..Default::default()
 				};
 
 				VammMap::<T>::insert(&id, vamm_state);
@@ -464,7 +493,9 @@ pub mod pallet {
 			})
 		}
 
-		/// Gets the current price of the __base__ or __quote__ asset in a vamm.
+		/// Gets the current price of the
+		/// [`base`](VammState::base_asset_reserves) or
+		/// [`quote`](VammState::quote_asset_reserves) asset in a vamm.
 		///
 		/// # Overview
 		/// In order for the caller to know what the current price of an asset
@@ -477,11 +508,13 @@ pub mod pallet {
 		/// ## Parameters
 		///  - `vamm_id`: The ID of the desired vamm to query.
 		///  - `asset_type`: The desired asset type to get info about. (either
-		///  __base__ or __quote__)
+		///  [`base`](VammState::base_asset_reserves) or
+		///  [`quote`](VammState::quote_asset_reserves))
 		///
 		/// ## Returns
-		/// The price of __base__ asset in relation to __quote__
-		/// (or vice-versa).
+		/// The price of [`base`](VammState::base_asset_reserves) asset in
+		/// relation to [`quote`](VammState::quote_asset_reserves) (or
+		/// vice-versa).
 		///
 		/// ## Assumptions or Requirements
 		/// In order to consult the current price for an asset, we need to
@@ -529,9 +562,60 @@ pub mod pallet {
 			}
 		}
 
-		#[allow(unused_variables)]
-		fn get_twap(vamm_id: &VammIdOf<T>) -> Result<DecimalOf<T>, DispatchError> {
-			todo!()
+		/// Returns the time weighted average price of the desired asset.
+		///
+		/// # Overview
+		/// In order for the caller to know which is the time weighted average
+		/// price of the desired asset, it has to request it to the Vamm Pallet.
+		/// The pallet will query the runtime storage and return the desired
+		/// twap.
+		///
+		/// ![](https://www.plantuml.com/plantuml/svg/FSqz3i8m343XdLF01UgTgH8IrwXSrsqYnKxa7tfzAWQcfszwimTQfBJReogrt3YjtKl4y2U0uJaTDKgkwMpKDLXZeYxmwZAwuzhuNO7-07OgRB0R2iC7HM2hU5nos5CfQjVbu5ZYn36DXlfxpwpRrIy0)
+		///
+		/// ## Parameters
+		///  - [`vamm_id`](Config::VammId): The ID of the desired vamm to query.
+		///  - [`asset_type`](composable_traits::vamm::AssetType): The desired
+		///  asset type to get info about.
+		///
+		/// ## Returns
+		/// The twap for the specified asset.
+		///
+		/// ## Assumptions or Requirements
+		/// * The requested [`VammId`](Config::VammId) must exist.
+		/// * The requested Vamm must be open.
+		///
+		/// For more information about how to know if a Vamm is open or not,
+		/// please have a look in the variable [`closed`](VammState::closed).
+		///
+		/// ## Emits
+		/// No event is emitted for this function.
+		///
+		/// ## State Changes
+		/// This function does not mutate runtime storage.
+		///
+		/// ## Errors
+		/// * [`Error::<T>::VammDoesNotExist`]
+		/// * [`Error::<T>::FailToRetrieveVamm`]
+		/// * [`Error::<T>::VammIsClosed`]
+		///
+		/// # Runtime
+		/// `O(1)`
+		#[transactional]
+		fn get_twap(
+			vamm_id: &VammIdOf<T>,
+			asset_type: AssetType,
+		) -> Result<DecimalOf<T>, DispatchError> {
+			// Sanity Checks
+			// 1) Vamm must exist
+			let vamm_state = Self::get_vamm_state(vamm_id)?;
+
+			// 2) Vamm must be open
+			ensure!(!Self::is_vamm_closed(&vamm_state), Error::<T>::VammIsClosed);
+
+			match asset_type {
+				AssetType::Base => Ok(DecimalOf::<T>::from_inner(vamm_state.base_asset_twap)),
+				AssetType::Quote => Ok(DecimalOf::<T>::from_inner(vamm_state.quote_asset_twap)),
+			}
 		}
 
 		/// Performs the swap of the desired asset against the vamm.
@@ -555,8 +639,9 @@ pub mod pallet {
 		/// The amount of the other asset the caller will receive as a
 		/// result of the swap.
 		///
-		/// E.g. If the caller swaps _quote_ asset, it will receive some amount
-		/// of _base_ asset (and vice-versa).
+		/// E.g. If the caller swaps [`quote`](VammState::quote_asset_reserves)
+		/// asset, it will receive some amount of
+		/// [`base`](VammState::base_asset_reserves) asset (and vice-versa).
 		///
 		/// ## Assumptions or Requirements
 		/// * The requested [`VammId`](Config::VammId) must exists
@@ -640,7 +725,8 @@ pub mod pallet {
 		}
 
 		/// Moves the price of a vamm to the desired values of
-		/// [`base`](VammState) and [`quote`](VammState) asset reserves.
+		/// [`base`](VammState::base_asset_reserves) and
+		/// [`quote`](VammState::quote_asset_reserves) asset reserves.
 		///
 		/// # Overview
 		/// In order for the caller to modify the
@@ -676,8 +762,10 @@ pub mod pallet {
 		///
 		/// ## State Changes
 		/// Updates:
-		/// * [`VammMap`], modifying both base and quote asset reserves as well
-		/// as the invariant.
+		/// * [`VammMap`], modifying both
+		/// [`base`](VammState::base_asset_reserves) and
+		/// [`quote`](VammState::quote_asset_reserves) asset reserves as well as
+		/// the invariant.
 		///
 		/// ## Errors
 		/// * [`Error::<T>::VammDoesNotExist`]
@@ -803,13 +891,11 @@ pub mod pallet {
 			vamm_state: &VammStateOf<T>,
 		) -> Result<CalculateSwapAsset<T>, DispatchError> {
 			let new_input_amount = match direction {
-				Direction::Add => {
-					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?
-				},
+				Direction::Add =>
+					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?,
 
-				Direction::Remove => {
-					input_asset_amount.checked_sub(swap_amount).ok_or(ArithmeticError::Underflow)?
-				},
+				Direction::Remove =>
+					input_asset_amount.checked_sub(swap_amount).ok_or(ArithmeticError::Underflow)?,
 			};
 			let new_input_amount_u256 = Self::balance_to_u256(new_input_amount)?;
 
