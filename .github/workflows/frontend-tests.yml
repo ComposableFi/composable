@@ -1,0 +1,30 @@
+name: 'Frontend - jest tests'
+on:
+  pull_request:
+    branches:
+      - main
+      - releases
+jobs:
+  tests_pablo:
+    name: 'Run Pablo tests'
+    paths:
+      - 'frontend/ui-pablo/**'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: yarn --ignore-scripts --cwd frontend/ui-pablo install
+      - name: Run Pablo tests
+        run: yarn --cwd frontend/ui-pablo test
+  tests_picasso:
+    name: "Run Picasso tests"
+    tests_pablo:
+      paths:
+        - 'frontend/ui-pablo/**'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: yarn --ignore-scripts --cwd frontend/ui-pablo install
+      - name: Run Pablo tests
+        run: yarn --cwd frontend/ui-pablo test
