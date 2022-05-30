@@ -889,8 +889,6 @@ pub mod pallet {
 					sell,
 					market.liquidators.clone(),
 				)?;
-				// TODO: @mikolaichuk: Justify why is it fine to move borrow rent
-				// to liquidator's account, given that the position is not liquidated yet.
 				if let Some(deposit) = BorrowRent::<T>::get(market_id, account) {
 					let market_account = Self::account_id(market_id);
 					<T as Config>::NativeCurrency::transfer(
@@ -908,9 +906,8 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Liquidates position for each borrower in the vector within mentioned market.
-		/// Returns a vector of borrowers' account ids whose positions were requested to
-		/// be liquidated.
+		/// Liquidates debt for each borrower in the vector within mentioned market.
+		/// Returns a vector of borrowers' account ids whose debts were liquidated.
 		/// - `liquidator` : Liquidator's account id.
 		/// - `market_id` : Market index from which `borrowers` has taken borrow.
 		/// - `borrowers` : Vector of borrowers whose debts are going to be liquidated.
@@ -930,7 +927,7 @@ pub mod pallet {
 					let liquidation_response_result =
 						Self::liquidate_position(liquidator, &market_pair, borrow_asset, account);
 					if let Err(error) = liquidation_response_result {
-						log::error!("Creation of liquidation request for position {:?} {:?} was failed: {:?}",
+						log::warn!("Creation of liquidation request for position {:?} {:?} was failed: {:?}",
 							market_id,
 							account,
 							error );
