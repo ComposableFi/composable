@@ -1,4 +1,4 @@
-name: ESLint
+name: Frontend - Checks - ESLint
 
 on:
   pull_request:
