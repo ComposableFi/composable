@@ -4,8 +4,6 @@ name: CI Check
 
 on:
   push:
-    paths-ignore:
-      - frontend/**
     branches:
       - main
       # bors related branches. Please do not remove.
@@ -14,6 +12,7 @@ on:
   pull_request:
     paths-ignore:
       - frontend/**
+      - .github/**
     branches:
       - main
       - develop
