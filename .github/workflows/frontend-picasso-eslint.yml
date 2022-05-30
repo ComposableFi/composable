@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  Lint suggestions:
+  Lint_Suggestions:
     runs-on: ubuntu-latest
 
     steps:
