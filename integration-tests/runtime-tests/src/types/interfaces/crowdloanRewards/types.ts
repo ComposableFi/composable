@@ -77,7 +77,16 @@ export interface ComposableTraitsDexDexRoute extends Null {}
 export interface ComposableTraitsDexStableSwapPoolInfo extends Null {}
 
 /** @name ComposableTraitsGovernanceSignedRawOrigin */
-export interface ComposableTraitsGovernanceSignedRawOrigin extends Null {}
+export interface ComposableTraitsGovernanceSignedRawOrigin extends Enum {
+  readonly isRoot: boolean;
+  readonly isSigned: boolean;
+  readonly asSigned: AccountId32;
+  readonly isIsSigned: boolean;
+  readonly asIsSigned: bool;
+  readonly isAsSigned: boolean;
+  readonly asAsSigned: AccountId32;
+  readonly type: 'Root' | 'Signed' | 'IsSigned' | 'AsSigned';
+}
 
 /** @name ComposableTraitsLendingCreateInput */
 export interface ComposableTraitsLendingCreateInput extends Null {}
@@ -171,6 +180,9 @@ export interface OrmlTokensAccountData extends Struct {
 
 /** @name OrmlTokensBalanceLock */
 export interface OrmlTokensBalanceLock extends Null {}
+
+/** @name OrmlTokensReserveData */
+export interface OrmlTokensReserveData extends Null {}
 
 /** @name PalletAssetsRegistryCandidateStatus */
 export interface PalletAssetsRegistryCandidateStatus extends Null {}
