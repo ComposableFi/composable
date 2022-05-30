@@ -108,7 +108,8 @@ pub struct WeightRouter<T: Config>(PhantomData<T>);
 impl<T: Config> WeightRouter<T> {
 	pub fn get_weight(port_id: &str) -> Option<Box<dyn CallbackWeight>> {
 		match port_id {
-			pallet_ibc_ping::PORT_ID => Some(Box::new(pallet_ibc_ping::WeightHandler::<T>::new())),
+			pallet_ibc_ping::PORT_ID =>
+				Some(Box::new(pallet_ibc_ping::WeightHandler::<T>::default())),
 			_ => None,
 		}
 	}
@@ -121,18 +122,18 @@ pub fn channel_client<T: Config>(channel_id: &[u8], port_id: &[u8]) -> Result<Cl
 			if let Some((client_id, ..)) = ConnectionClient::<T>::iter()
 				.find(|(.., connection_ids)| connection_ids.contains(&connection_id))
 			{
-				return Ok(client_id_from_bytes(client_id).map_err(|_| Error::<T>::Other)?)
+				return client_id_from_bytes(client_id).map_err(|_| Error::<T>::Other)
 			}
 		}
 	}
 	Err(Error::<T>::Other)
 }
 
-pub(crate) fn deliver<T: Config + Send + Sync>(msgs: &Vec<Any>) -> Weight
+pub(crate) fn deliver<T: Config + Send + Sync>(msgs: &[Any]) -> Weight
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
 {
-	msgs.into_iter()
+	msgs.iter()
 		.filter_map(|msg| {
 			let type_url = String::from_utf8(msg.type_url.clone()).unwrap_or_default();
 			let msg = ibc_proto::google::protobuf::Any { type_url, value: msg.value.clone() };
@@ -246,7 +247,7 @@ where
 				Ics26Envelope::Ics4ChannelMsg(msgs) => match msgs {
 					ChannelMsg::ChannelOpenInit(channel_msg) => {
 						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str())
-							.unwrap_or(Box::new(()));
+							.unwrap_or_else(|| Box::new(()));
 						let cb_weight = cb.on_chan_open_init();
 						let lc_verification_weight =
 							match channel_msg.channel.connection_hops.get(0) {
@@ -278,7 +279,7 @@ where
 					},
 					ChannelMsg::ChannelOpenTry(channel_msg) => {
 						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str())
-							.unwrap_or(Box::new(()));
+							.unwrap_or_else(|| Box::new(()));
 						let cb_weight = cb.on_chan_open_try();
 						let lc_verification_weight =
 							match channel_msg.channel.connection_hops.get(0) {
@@ -309,7 +310,7 @@ where
 					},
 					ChannelMsg::ChannelOpenAck(channel_msg) => {
 						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str())
-							.unwrap_or(Box::new(()));
+							.unwrap_or_else(|| Box::new(()));
 						let cb_weight =
 							cb.on_chan_open_ack(&channel_msg.port_id, &channel_msg.channel_id);
 						let lc_verification_weight = match channel_client::<T>(
@@ -337,7 +338,7 @@ where
 					},
 					ChannelMsg::ChannelOpenConfirm(channel_msg) => {
 						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str())
-							.unwrap_or(Box::new(()));
+							.unwrap_or_else(|| Box::new(()));
 						let cb_weight =
 							cb.on_chan_open_confirm(&channel_msg.port_id, &channel_msg.channel_id);
 						let lc_verification_weight = match channel_client::<T>(
@@ -365,7 +366,7 @@ where
 					},
 					ChannelMsg::ChannelCloseInit(channel_msg) => {
 						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str())
-							.unwrap_or(Box::new(()));
+							.unwrap_or_else(|| Box::new(()));
 						let cb_weight =
 							cb.on_chan_close_init(&channel_msg.port_id, &channel_msg.channel_id);
 						let lc_verification_weight = match channel_client::<T>(
@@ -394,7 +395,7 @@ where
 					},
 					ChannelMsg::ChannelCloseConfirm(channel_msg) => {
 						let cb = WeightRouter::<T>::get_weight(channel_msg.port_id.as_str())
-							.unwrap_or(Box::new(()));
+							.unwrap_or_else(|| Box::new(()));
 						let cb_weight =
 							cb.on_chan_close_confirm(&channel_msg.port_id, &channel_msg.channel_id);
 						let lc_verification_weight = match channel_client::<T>(
@@ -426,7 +427,7 @@ where
 						let cb = WeightRouter::<T>::get_weight(
 							packet_msg.packet.destination_port.as_str(),
 						)
-						.unwrap_or(Box::new(()));
+						.unwrap_or_else(|| Box::new(()));
 						let cb_weight = cb.on_recv_packet(&packet_msg.packet);
 						let lc_verification_weight = match channel_client::<T>(
 							packet_msg.packet.destination_port.as_bytes(),
@@ -458,7 +459,7 @@ where
 						let cb = WeightRouter::<T>::get_weight(
 							packet_msg.packet.destination_port.as_str(),
 						)
-						.unwrap_or(Box::new(()));
+						.unwrap_or_else(|| Box::new(()));
 						let cb_weight = cb.on_acknowledgement_packet(
 							&packet_msg.packet,
 							&packet_msg.acknowledgement,
@@ -495,7 +496,7 @@ where
 						let cb = WeightRouter::<T>::get_weight(
 							packet_msg.packet.destination_port.as_str(),
 						)
-						.unwrap_or(Box::new(()));
+						.unwrap_or_else(|| Box::new(()));
 						let cb_weight = cb.on_timeout_packet(&packet_msg.packet);
 						let lc_verification_weight = match channel_client::<T>(
 							packet_msg.packet.destination_port.as_bytes(),
@@ -527,7 +528,7 @@ where
 						let cb = WeightRouter::<T>::get_weight(
 							packet_msg.packet.destination_port.as_str(),
 						)
-						.unwrap_or(Box::new(()));
+						.unwrap_or_else(|| Box::new(()));
 						let cb_weight = cb.on_timeout_packet(&packet_msg.packet);
 						let lc_verification_weight = match channel_client::<T>(
 							packet_msg.packet.destination_port.as_bytes(),

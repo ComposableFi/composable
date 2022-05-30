@@ -31,7 +31,7 @@ where
 			let data =
 				String::from_utf8(data).map_err(|_| ICS02Error::implementation_specific())?;
 			match ClientType::from_str(&data) {
-				Err(_err) => Err(ICS02Error::unknown_client_type(format!("{}", data))),
+				Err(_err) => Err(ICS02Error::unknown_client_type(data.to_string())),
 				Ok(val) => {
 					log::trace!("in client : [client_type] >> client_type : {:?}", val);
 					Ok(val)
@@ -63,7 +63,7 @@ where
 			height
 		);
 
-		let native_height = height.clone();
+		let native_height = height;
 		let height = height.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
 		let value = <ConsensusStates<T>>::get(client_id.as_bytes(), height);
 
@@ -131,13 +131,15 @@ where
 
 		Ok(None)
 	}
-
+	#[allow(clippy::disallowed_methods)]
 	fn host_timestamp(&self) -> Timestamp {
 		use frame_support::traits::UnixTime;
 		use sp_runtime::traits::SaturatedConversion;
 		let time = T::TimeProvider::now();
 		let ts = Timestamp::from_nanoseconds(time.as_nanos().saturated_into::<u64>())
 			.map_err(|e| panic!("{:?}, caused by {:?} from pallet timestamp_pallet", e, time));
+		// If timestamp is invalid after the genesis block then there's a major error in pallet
+		// timestamp
 		ts.unwrap()
 	}
 
@@ -152,11 +154,10 @@ where
 		let bounded_map = CommitmentRoot::<T>::get();
 		let local_state = bounded_map
 			.get(&height.revision_height)
-			.ok_or_else(|| ICS02Error::implementation_specific())?;
+			.ok_or_else(ICS02Error::implementation_specific)?;
 		let timestamp = ibc::timestamp::Timestamp::from_nanoseconds(local_state.timestamp)
 			.map_err(|_| ICS02Error::implementation_specific())?;
-		let timestamp =
-			timestamp.into_tm_time().ok_or_else(|| ICS02Error::implementation_specific())?;
+		let timestamp = timestamp.into_tm_time().ok_or_else(ICS02Error::implementation_specific)?;
 		let consensus_state = ibc::clients::ics11_beefy::consensus_state::ConsensusState {
 			timestamp,
 			root: local_state.commitment_root.clone().into(),

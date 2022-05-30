@@ -481,7 +481,7 @@ where
 
 		let at = BlockId::Hash(block_hash);
 		let result: Vec<u8> =
-			api.host_consensus_state(&at).ok().flatten().ok_or_else(|| {
+			api.host_consensus_state(&at, height).ok().flatten().ok_or_else(|| {
 				runtime_error_into_rpc_error("Error querying host consensus state")
 			})?;
 		let consensus_state = AnyConsensusState::decode_vec(&result)
