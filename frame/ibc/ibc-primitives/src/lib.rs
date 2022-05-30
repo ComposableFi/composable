@@ -15,7 +15,7 @@ use sp_std::vec::Vec;
 pub struct SendPacketData {
 	pub data: Vec<u8>,
 	pub timeout_height_offset: u64,
-	/// This value should be represent nano seconds
+	/// This value should represent nano seconds
 	pub timeout_timestamp_offset: u64,
 	pub port_id: Vec<u8>,
 	pub channel_id: Vec<u8>,
