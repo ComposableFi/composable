@@ -3,8 +3,8 @@ on:
   pull_request:
     branches:
       - main
-  paths:
-    - frontend/*
+    paths:
+      - frontend/*
 
 jobs:
   tests_pablo:
