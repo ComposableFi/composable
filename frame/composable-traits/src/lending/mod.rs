@@ -306,6 +306,7 @@ pub trait Lending: DeFiEngine {
 		market_id: &Self::MarketId,
 		account_id: &Self::AccountId,
 		amount: CollateralLpAmountOf<Self>,
+		keep_alive: bool,
 	) -> Result<(), DispatchError>;
 
 	/// Withdraw a part/total of previously deposited collateral.
@@ -354,6 +355,7 @@ pub trait Lending: DeFiEngine {
 		from: &Self::AccountId,
 		beneficiary: &Self::AccountId,
 		repay_amount: RepayStrategy<BorrowAmountOf<Self>>,
+		keep_alive: bool,
 	) -> Result<BorrowAmountOf<Self>, DispatchError>;
 
 	/// The total amount borrowed from the given market, excluding interest.

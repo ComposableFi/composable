@@ -104,7 +104,7 @@ benchmarks! {
 		let amount: BalanceOf<T> = 1_000_000_u64.into();
 
 		let market_id = create_market_from_raw_origin::<T>(origin.clone(), input);
-	}: _(origin, market_id, amount)
+	}: _(origin, market_id, amount, false)
 
 	withdraw_collateral {
 		let LendingBenchmarkingSetup {
@@ -120,7 +120,7 @@ benchmarks! {
 
 		let market_id = create_market_from_raw_origin::<T>(origin.clone(), input);
 
-		Lending::<T>::deposit_collateral(origin.clone().into(), market_id, amount).unwrap();
+		Lending::<T>::deposit_collateral(origin.clone().into(), market_id, amount, false).unwrap();
 	}: _(origin, market_id, part)
 
 	borrow {
@@ -141,7 +141,7 @@ benchmarks! {
 
 		<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&Lending::<T>::account_id(&market_id), 10_000_000_000_000_u64.into()).unwrap();
 
-		Lending::<T>::deposit_collateral(origin.clone().into(), market_id, amount).unwrap();
+		Lending::<T>::deposit_collateral(origin.clone().into(), market_id, amount, false).unwrap();
 	}: _(origin, market_id, part)
 
 	repay_borrow {
@@ -164,12 +164,12 @@ benchmarks! {
 
 		<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&Lending::<T>::account_id(&market_id), 10_000_000_000_000_u64.into()).unwrap();
 
-		Lending::<T>::deposit_collateral(origin.clone().into(), market_id, amount).unwrap();
+		Lending::<T>::deposit_collateral(origin.clone().into(), market_id, amount, false).unwrap();
 		Lending::<T>::borrow(origin.clone().into(), market_id, part).unwrap();
 
 		produce_block::<T>(42_u32.into(),4200_u64.into());
 		produce_block::<T>(43_u32.into(),4300_u64.into());
-	}: _(origin, market_id, caller, RepayStrategy::TotalDebt)
+	}: _(origin, market_id, caller, RepayStrategy::TotalDebt, false)
 
 	liquidate {
 		let b in 1..T::MaxLiquidationBatchSize::get();
@@ -193,7 +193,7 @@ benchmarks! {
 		for i in 0..b {
 			let borrower = whitelisted_caller();
 			<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&borrower, 10_000_000_000_000_u64.into()).unwrap();
-			Lending::<T>::deposit_collateral(RawOrigin::Signed(borrower.clone()).into(), market_id, amount).unwrap();
+			Lending::<T>::deposit_collateral(RawOrigin::Signed(borrower.clone()).into(), market_id, amount, false).unwrap();
 			borrowers.push(borrower);
 		}
 	}: _(origin, market_id, borrowers)
@@ -225,7 +225,7 @@ benchmarks! {
 
 		<pallet_balances::Pallet::<T> as fungible::Mutate<T::AccountId>>::mint_into(&Lending::<T>::account_id(&market_id), 10_000_000_000_000_u64.into()).unwrap();
 
-		Lending::<T>::deposit_collateral(origin.clone().into(), market_id, amount).unwrap();
+		Lending::<T>::deposit_collateral(origin.clone().into(), market_id, amount, false).unwrap();
 		Lending::<T>::borrow(origin.into(), market_id, part).unwrap();
 
 		for block in 0..x {
@@ -294,7 +294,7 @@ benchmarks! {
 
 		let market_id = create_market_from_raw_origin::<T>(origin.clone(), input);
 
-		Lending::<T>::deposit_collateral(origin.into(), market_id, amount).unwrap();
+		Lending::<T>::deposit_collateral(origin.into(), market_id, amount, false).unwrap();
 
 		let market_config = Markets::<T>::try_get(market_id).unwrap();
 		let account = Lending::<T>::account_id(&market_id);
@@ -322,7 +322,7 @@ benchmarks! {
 
 		let market_id = create_market_from_raw_origin::<T>(origin.clone(), input);
 
-		Lending::<T>::deposit_collateral(origin.into(), market_id, amount).unwrap();
+		Lending::<T>::deposit_collateral(origin.into(), market_id, amount, false).unwrap();
 		let market_config = Markets::<T>::try_get(market_id).unwrap();
 		let account = &Lending::<T>::account_id(&market_id);
 
@@ -349,7 +349,7 @@ benchmarks! {
 
 		let market_id = create_market_from_raw_origin::<T>(origin.clone(), input);
 
-		Lending::<T>::deposit_collateral(origin.into(), market_id, amount).unwrap();
+		Lending::<T>::deposit_collateral(origin.into(), market_id, amount, false).unwrap();
 
 		let market_config = Markets::<T>::try_get(market_id).unwrap();
 		let account = &Lending::<T>::account_id(&market_id);
