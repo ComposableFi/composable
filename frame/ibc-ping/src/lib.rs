@@ -25,8 +25,8 @@ use sp_std::{marker::PhantomData, prelude::*, vec};
 // Re-export pallet items so that they can be accessed from the crate namespace.
 pub use pallet::*;
 
-pub const MODULE_ID: &'static str = "PalletIbcPing";
-pub const PORT_ID: &'static str = "ping";
+pub const MODULE_ID: &str = "PalletIbcPing";
+pub const PORT_ID: &str = "ping";
 
 #[derive(
 	Clone,
@@ -82,17 +82,7 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		pub fn open_channel(origin: OriginFor<T>, params: OpenChannelParams) -> DispatchResult {
 			ensure_root(origin)?;
-			let state = match params.state {
-				0 => State::Uninitialized,
-				1 => State::Init,
-				_ => return Err(Error::<T>::InvalidParams.into()),
-			};
-			let order = match params.order {
-				0 => Order::None,
-				1 => Order::Unordered,
-				2 => Order::Ordered,
-				_ => return Err(Error::<T>::InvalidParams.into()),
-			};
+			let order: Order = (&params).try_into().map_err(|_| Error::<T>::InvalidParams)?;
 
 			let connection_id = connection_id_from_bytes(params.connection_id)
 				.map_err(|_| Error::<T>::InvalidParams)?;
@@ -102,7 +92,7 @@ pub mod pallet {
 				.map_err(|_| Error::<T>::InvalidParams)?;
 			let counterparty = Counterparty::new(counterparty_port_id, None);
 			let channel_end = ChannelEnd::new(
-				state,
+				State::Init,
 				order,
 				counterparty,
 				vec![connection_id],

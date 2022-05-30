@@ -100,7 +100,6 @@ fn should_open_a_channel() {
 		assert_ok!(Ibc::initiate_connection(Origin::root(), params));
 
 		let params = OpenChannelParams {
-			state: 1,
 			order: 1,
 			connection_id: "connection-0".as_bytes().to_vec(),
 			counterparty_port_id: "ping".as_bytes().to_vec(),
@@ -181,7 +180,6 @@ fn should_send_ping_packet() {
 		assert_ok!(Ibc::deliver(Origin::signed(1u64).into(), vec![msg]));
 
 		let params = OpenChannelParams {
-			state: 1,
 			order: 1,
 			connection_id: "connection-0".as_bytes().to_vec(),
 			counterparty_port_id: "ping".as_bytes().to_vec(),

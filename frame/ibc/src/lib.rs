@@ -2,12 +2,31 @@
 #![allow(unreachable_patterns)]
 #![allow(clippy::type_complexity)]
 #![allow(non_camel_case_types)]
-#![allow(dead_code)]
+#![deny(
+	unused_imports,
+	clippy::useless_conversion,
+	bad_style,
+	bare_trait_objects,
+	const_err,
+	improper_ctypes,
+	non_shorthand_field_patterns,
+	no_mangle_generic_items,
+	overflowing_literals,
+	path_statements,
+	patterns_in_fns_without_body,
+	private_in_public,
+	unconditional_recursion,
+	unused_allocation,
+	unused_comparisons,
+	unused_parens,
+	while_true,
+	trivial_casts,
+	trivial_numeric_casts,
+	unused_extern_crates
+)]
 
 //! Pallet IBC
 //! Implements the core ibc features for substrate runtimes.
-
-extern crate core;
 
 use codec::{Decode, Encode};
 use frame_system::ensure_signed;
@@ -39,10 +58,11 @@ pub struct Any {
 	pub value: Vec<u8>,
 }
 
+pub(crate) type RawVersion = (Vec<u8>, Vec<Vec<u8>>);
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct ConnectionParams {
 	/// A vector of (identifer, features) all encoded as Utf8 string bytes
-	pub version: (Vec<u8>, Vec<Vec<u8>>),
+	pub version: RawVersion,
 	/// Utf8 client_id bytes
 	pub client_id: Vec<u8>,
 	/// Counterparty client id
@@ -60,6 +80,7 @@ impl From<ibc_proto::google::protobuf::Any> for Any {
 }
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
+/// Ibc consensus state values
 pub struct IbcConsensusState {
 	/// Timestamp at which this state root was generated in nanoseconds
 	pub timestamp: u64,
@@ -68,6 +89,8 @@ pub struct IbcConsensusState {
 }
 
 impl Default for IbcConsensusState {
+	// Using a default value of 1 for timestamp because using 0 will generate an
+	// error when converting to an ibc::Timestamp in tests and benchmarks
 	fn default() -> Self {
 		Self { timestamp: 1, root: vec![] }
 	}
@@ -284,12 +307,12 @@ pub mod pallet {
 	{
 		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
 			<T as Config>::WeightInfo::on_finalize(
-				Clients::<T>::count() as u32,
-				Connections::<T>::count() as u32,
+				Clients::<T>::count(),
+				Connections::<T>::count(),
 				ChannelCounter::<T>::get(),
-				PacketCommitment::<T>::count() as u32,
-				Acknowledgements::<T>::count() as u32,
-				PacketReceipt::<T>::count() as u32,
+				PacketCommitment::<T>::count(),
+				Acknowledgements::<T>::count(),
+				PacketReceipt::<T>::count(),
 			)
 		}
 
