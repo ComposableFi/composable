@@ -870,38 +870,35 @@ pub mod pallet {
 			account: &<Self as DeFiEngine>::AccountId,
 		) -> Result<(), DispatchError> {
 			let (market_id, market) = market_pair;
-			if Self::should_liquidate(market_id, account)? {
-				let collateral_to_liquidate = Self::collateral_of_account(market_id, account)?;
+			ensure!(
+				Self::should_liquidate(market_id, account)?,
+				DispatchError::Other(
+					"Tried liquidate position which is not supposed to be liquidated"
+				)
+			);
 
-				let source_target_account = Self::account_id(market_id);
+			let collateral_to_liquidate = Self::collateral_of_account(market_id, account)?;
 
-				let unit_price =
-					T::Oracle::get_ratio(CurrencyPair::new(market.collateral_asset, borrow_asset))?;
+			let source_target_account = Self::account_id(market_id);
 
-				let sell = Sell::new(
-					market.collateral_asset,
-					borrow_asset,
-					collateral_to_liquidate,
-					unit_price,
-				);
-				T::Liquidation::liquidate(
-					&source_target_account,
-					sell,
-					market.liquidators.clone(),
+			let unit_price =
+				T::Oracle::get_ratio(CurrencyPair::new(market.collateral_asset, borrow_asset))?;
+
+			let sell = Sell::new(
+				market.collateral_asset,
+				borrow_asset,
+				collateral_to_liquidate,
+				unit_price,
+			);
+			T::Liquidation::liquidate(&source_target_account, sell, market.liquidators.clone())?;
+			if let Some(deposit) = BorrowRent::<T>::get(market_id, account) {
+				let market_account = Self::account_id(market_id);
+				<T as Config>::NativeCurrency::transfer(
+					&market_account,
+					liquidator,
+					deposit,
+					false,
 				)?;
-				if let Some(deposit) = BorrowRent::<T>::get(market_id, account) {
-					let market_account = Self::account_id(market_id);
-					<T as Config>::NativeCurrency::transfer(
-						&market_account,
-						liquidator,
-						deposit,
-						false,
-					)?;
-				}
-			} else {
-				return Err(DispatchError::Other(
-					"Tried liquidate position which is not supposed to be liquidated",
-				))
 			}
 			Ok(())
 		}
