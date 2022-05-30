@@ -4,7 +4,7 @@ To run, any chain needs:
 
 - genesis state (to be shared with cluster of nodes which form consensus)
 - runtime to execute (logic of)
-- bootsrap networking information (which nodes to connect)
+- bootstrap networking information (which nodes to connect)
 - and, either relay setup or what relay to use
 - and other utilitary setup like loggin, metrics
 - private keys in keystore 
