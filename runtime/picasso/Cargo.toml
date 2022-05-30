@@ -201,7 +201,7 @@ std = [
   "assets-runtime-api/std",
   "pablo-runtime-api/std",
   "crowdloan-rewards-runtime-api/std",
-  "simnode-apis/std"
+  "simnode-apis/std",
 ]
 wasm-builder = []
 
