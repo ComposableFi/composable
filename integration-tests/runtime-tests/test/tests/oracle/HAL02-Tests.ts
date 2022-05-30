@@ -19,18 +19,16 @@ import testConfiguration from "./test_configuration.json";
  *
  * Issue description, Quote:
  * [...]
- * To prevent malivious Oracles from manipulating the asset's price,
- * every proposal which would not be in the acceptable range results
- * in a slash of Oracle balance. However, two scenarios are possible
- * where this mechanism can be exploited.
+ * If the proposed price is not in the valid range from the newly chosen price (defined per asset),
+ * Oracle, who submitted that price, would lose a portion of its tokens.
  *
- * Suppose exactly half of the proposed prices would be malicious,
- * i.e., substantially increasing of decreasing an asset's price.
- * In that case, all Oracles might get slashes, regardless if they
- * submitted a plausible price or not.
+ * However, the tokens are not subtracted from the staked balance but the free balance.
+ * If there is no free balance in the user's account, slash would not be completed.
  *
- * On the other hand, if most of the proposed prices were malicious,
- * then such a situation would result in legitimate Oracles getting slashed.
+ * For example a malicious Oracle might stake all of its tokens. Then Oracle
+ * might send an invalid price proposal, manipulating the market. In such
+ * a scenario, an Oracle pallet would not be able to punish the malicious Oracle,
+ * who then may unstake the tokens and receive the initially staked tokens without penalties.
  *
  */
 describe("HAL02 [Oracle] Tests", function () {
@@ -280,6 +278,9 @@ describe("HAL02 [Oracle] Tests", function () {
         expect(result1AccountID.toString()).to.equal(api.createType("AccountId32", walletHAL02_1.publicKey).toString());
         expect(result2AccountID.toString()).to.equal(api.createType("AccountId32", walletHAL02_2.publicKey).toString());
         expect(result3AccountID.toString()).to.equal(api.createType("AccountId32", walletHAL02_3.publicKey).toString());
+
+        // Waiting a few blocks to make sure the slashing took place.
+        await waitForBlocks(api, 3);
 
         const balanceWallet1AfterTransaction = new BN(
           (await api.rpc.assets.balanceOf(asset.toString(), walletHAL02_1.publicKey)).toString()
