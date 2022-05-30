@@ -1,0 +1,23 @@
+name: 'Frontend - (Pablo) jest tests'
+on:
+  pull_request:
+    branches:
+      - main
+      - releases
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: borales/actions-yarn@v2.3.0
+        with:
+          working-directory: "frontend/ui-pablo"
+          cmd: install # will run `yarn install` command
+      - uses: ArtiomTr/jest-coverage-report-action@v2
+        with:
+          working-directory: frontend/ui-pablo/app
+          test-script: yarn test
+          package-manager: yarn
+          threshold: 5
+          skip-step: install
