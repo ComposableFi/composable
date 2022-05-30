@@ -4,6 +4,8 @@ name: CI Check
 
 on:
   push:
+    paths:
+      - "!frontend/**"
     branches:
       - main
       # bors related branches. Please do not remove.
