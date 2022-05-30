@@ -121,7 +121,7 @@ pub fn channel_client<T: Config>(channel_id: &[u8], port_id: &[u8]) -> Result<Cl
 			if let Some((client_id, ..)) = ConnectionClient::<T>::iter()
 				.find(|(.., connection_ids)| connection_ids.contains(&connection_id))
 			{
-				return Ok(client_id_from_bytes(client_id).map_err(|_| Error::<T>::Other)?)
+				return Ok(client_id_from_bytes(client_id).map_err(|_| Error::<T>::Other)?);
 			}
 		}
 	}
@@ -147,25 +147,21 @@ where
 					ClientMsg::CreateClient(msg) => {
 						let client_type = msg.client_state.client_type();
 						match client_type {
-							ClientType::Tendermint =>
-								<T as Config>::WeightInfo::create_tendermint_client(),
+							ClientType::Tendermint => {
+								<T as Config>::WeightInfo::create_tendermint_client()
+							},
 							_ => Weight::default(),
 						}
 					},
 					ClientMsg::UpdateClient(msg) => {
-						let client_type_str = msg.client_id.as_str().rsplit_once('-');
-						if let Some((client_type_str, ..)) = client_type_str {
-							if let Ok(client_type) = ClientType::from_str(client_type_str) {
-								match client_type {
-									ClientType::Tendermint =>
-										<T as Config>::WeightInfo::update_tendermint_client(),
-									_ => Weight::default(),
-								}
-							} else {
-								Weight::default()
-							}
-						} else {
-							Weight::default()
+						let client_type = msg.client_id.as_str().rsplit_once('-').and_then(
+							|(client_type_str, ..)| ClientType::from_str(client_type_str).ok(),
+						);
+						match client_type {
+							Some(ClientType::Tendermint) => {
+								<T as Config>::WeightInfo::update_tendermint_client()
+							},
+							_ => Weight::default(),
 						}
 					},
 					ClientMsg::Misbehaviour(_) => Weight::default(),
@@ -173,73 +169,55 @@ where
 				},
 				Ics26Envelope::Ics3Msg(msgs) => match msgs {
 					ConnectionMsg::ConnectionOpenInit(msg) => {
-						let client_type_str = msg.client_id.as_str().rsplit_once('-');
-						if let Some((client_type_str, ..)) = client_type_str {
-							if let Ok(client_type) = ClientType::from_str(client_type_str) {
-								match client_type {
-									ClientType::Tendermint =>
-										<T as Config>::WeightInfo::connection_open_init(),
-									_ => Weight::default(),
-								}
-							} else {
-								Weight::default()
-							}
-						} else {
-							Weight::default()
+						let client_type = msg.client_id.as_str().rsplit_once('-').and_then(
+							|(client_type_str, ..)| ClientType::from_str(client_type_str).ok(),
+						);
+						match client_type {
+							Some(ClientType::Tendermint) => {
+								<T as Config>::WeightInfo::connection_open_init()
+							},
+							_ => Weight::default(),
 						}
 					},
 					ConnectionMsg::ConnectionOpenTry(msg) => {
-						let client_type_str = msg.client_id.as_str().rsplit_once('-');
-						if let Some((client_type_str, ..)) = client_type_str {
-							if let Ok(client_type) = ClientType::from_str(client_type_str) {
-								match client_type {
-									ClientType::Tendermint =>
-										<T as Config>::WeightInfo::conn_try_open_tendermint(),
-									_ => Weight::default(),
-								}
-							} else {
-								Weight::default()
-							}
-						} else {
-							Weight::default()
+						let client_type = msg.client_id.as_str().rsplit_once('-').and_then(
+							|(client_type_str, ..)| ClientType::from_str(client_type_str).ok(),
+						);
+						match client_type {
+							Some(ClientType::Tendermint) => {
+								<T as Config>::WeightInfo::conn_try_open_tendermint()
+							},
+							_ => Weight::default(),
 						}
 					},
 					ConnectionMsg::ConnectionOpenAck(msg) => {
 						let connection_id = msg.connection_id;
-						let ctx = crate::routing::Context::<T>::new();
+						let ctx = routing::Context::<T>::new();
 						let connection_end = ctx.connection_end(&connection_id).unwrap_or_default();
-						let client_type_str = connection_end.client_id().as_str().rsplit_once('-');
-						if let Some((client_type_str, ..)) = client_type_str {
-							if let Ok(client_type) = ClientType::from_str(client_type_str) {
-								match client_type {
-									ClientType::Tendermint =>
-										<T as Config>::WeightInfo::conn_open_ack_tendermint(),
-									_ => Weight::default(),
-								}
-							} else {
-								Weight::default()
-							}
-						} else {
-							Weight::default()
+						let client_type =
+							connection_end.client_id().as_str().rsplit_once('-').and_then(
+								|(client_type_str, ..)| ClientType::from_str(client_type_str).ok(),
+							);
+						match client_type {
+							Some(ClientType::Tendermint) => {
+								<T as Config>::WeightInfo::conn_open_ack_tendermint()
+							},
+							_ => Weight::default(),
 						}
 					},
 					ConnectionMsg::ConnectionOpenConfirm(msg) => {
 						let connection_id = msg.connection_id;
-						let ctx = crate::routing::Context::<T>::new();
+						let ctx = routing::Context::<T>::new();
 						let connection_end = ctx.connection_end(&connection_id).unwrap_or_default();
-						let client_type_str = connection_end.client_id().as_str().rsplit_once('-');
-						if let Some((client_type_str, ..)) = client_type_str {
-							if let Ok(client_type) = ClientType::from_str(client_type_str) {
-								match client_type {
-									ClientType::Tendermint =>
-										<T as Config>::WeightInfo::conn_try_open_tendermint(),
-									_ => Weight::default(),
-								}
-							} else {
-								Weight::default()
-							}
-						} else {
-							Weight::default()
+						let client_type =
+							connection_end.client_id().as_str().rsplit_once('-').and_then(
+								|(client_type_str, ..)| ClientType::from_str(client_type_str).ok(),
+							);
+						match client_type {
+							Some(ClientType::Tendermint) => {
+								<T as Config>::WeightInfo::conn_open_confirm_tendermint()
+							},
+							_ => Weight::default(),
 						}
 					},
 				},
@@ -251,25 +229,21 @@ where
 						let lc_verification_weight =
 							match channel_msg.channel.connection_hops.get(0) {
 								Some(connection_id) => {
-									let ctx = crate::routing::Context::<T>::new();
+									let ctx = routing::Context::<T>::new();
 									let connection_end =
 										ctx.connection_end(connection_id).unwrap_or_default();
-									let client_type_str =
-										connection_end.client_id().as_str().rsplit_once('-');
-									if let Some((client_type_str, ..)) = client_type_str {
-										if let Ok(client_type) =
-											ClientType::from_str(client_type_str)
-										{
-											match client_type {
-												ClientType::Tendermint =>
-													<T as Config>::WeightInfo::channel_open_init(),
-												_ => Weight::default(),
-											}
-										} else {
-											Weight::default()
-										}
-									} else {
-										Weight::default()
+									let client_type = connection_end
+										.client_id()
+										.as_str()
+										.rsplit_once('-')
+										.and_then(|(client_type_str, ..)| {
+											ClientType::from_str(client_type_str).ok()
+										});
+									match client_type {
+										Some(ClientType::Tendermint) => {
+											<T as Config>::WeightInfo::channel_open_init()
+										},
+										_ => Weight::default(),
 									}
 								},
 								None => Weight::default(),
@@ -283,24 +257,21 @@ where
 						let lc_verification_weight =
 							match channel_msg.channel.connection_hops.get(0) {
 								Some(connection_id) => {
-									let ctx = crate::routing::Context::<T>::new();
+									let ctx = routing::Context::<T>::new();
 									let connection_end =
 										ctx.connection_end(connection_id).unwrap_or_default();
-									let client_type_str =
-										connection_end.client_id().as_str().rsplit_once('-');
-									if let Some((client_type_str, ..)) = client_type_str {
-										if let Ok(client_type) =
-											ClientType::from_str(client_type_str)
-										{
-											match client_type {
-											ClientType::Tendermint => <T as Config>::WeightInfo::channel_open_try_tendermint(),
-											_ => Weight::default()
-										}
-										} else {
-											Weight::default()
-										}
-									} else {
-										Weight::default()
+									let client_type = connection_end
+										.client_id()
+										.as_str()
+										.rsplit_once('-')
+										.and_then(|(client_type_str, ..)| {
+											ClientType::from_str(client_type_str).ok()
+										});
+									match client_type {
+										Some(ClientType::Tendermint) => {
+											<T as Config>::WeightInfo::channel_open_try_tendermint()
+										},
+										_ => Weight::default(),
 									}
 								},
 								None => Weight::default(),
@@ -317,18 +288,16 @@ where
 							channel_msg.channel_id.to_string().as_bytes(),
 						) {
 							Ok(client_id) => {
-								let client_type_str = client_id.as_str().rsplit_once('-');
-								if let Some((client_type_str, ..)) = client_type_str {
-									if let Ok(client_type) = ClientType::from_str(client_type_str) {
-										match client_type {
-												ClientType::Tendermint => <T as Config>::WeightInfo::channel_open_ack_tendermint(),
-												_ => Weight::default()
-											}
-									} else {
-										Weight::default()
-									}
-								} else {
-									Weight::default()
+								let client_type = client_id.as_str().rsplit_once('-').and_then(
+									|(client_type_str, ..)| {
+										ClientType::from_str(client_type_str).ok()
+									},
+								);
+								match client_type {
+									Some(ClientType::Tendermint) => {
+										<T as Config>::WeightInfo::channel_open_ack_tendermint()
+									},
+									_ => Weight::default(),
 								}
 							},
 							Err(_) => Weight::default(),
@@ -345,18 +314,16 @@ where
 							channel_msg.channel_id.to_string().as_bytes(),
 						) {
 							Ok(client_id) => {
-								let client_type_str = client_id.as_str().rsplit_once('-');
-								if let Some((client_type_str, ..)) = client_type_str {
-									if let Ok(client_type) = ClientType::from_str(client_type_str) {
-										match client_type {
-											ClientType::Tendermint => <T as Config>::WeightInfo::channel_open_confirm_tendermint(),
-											_ => Weight::default()
-										}
-									} else {
-										Weight::default()
-									}
-								} else {
-									Weight::default()
+								let client_type = client_id.as_str().rsplit_once('-').and_then(
+									|(client_type_str, ..)| {
+										ClientType::from_str(client_type_str).ok()
+									},
+								);
+								match client_type {
+									Some(ClientType::Tendermint) => {
+										<T as Config>::WeightInfo::channel_open_confirm_tendermint()
+									},
+									_ => Weight::default(),
 								}
 							},
 							Err(_) => Weight::default(),
@@ -373,19 +340,16 @@ where
 							channel_msg.channel_id.to_string().as_bytes(),
 						) {
 							Ok(client_id) => {
-								let client_type_str = client_id.as_str().rsplit_once('-');
-								if let Some((client_type_str, ..)) = client_type_str {
-									if let Ok(client_type) = ClientType::from_str(client_type_str) {
-										match client_type {
-											ClientType::Tendermint =>
-												<T as Config>::WeightInfo::channel_close_init(),
-											_ => Weight::default(),
-										}
-									} else {
-										Weight::default()
-									}
-								} else {
-									Weight::default()
+								let client_type = client_id.as_str().rsplit_once('-').and_then(
+									|(client_type_str, ..)| {
+										ClientType::from_str(client_type_str).ok()
+									},
+								);
+								match client_type {
+									Some(ClientType::Tendermint) => {
+										<T as Config>::WeightInfo::channel_close_init()
+									},
+									_ => Weight::default(),
 								}
 							},
 							Err(_) => Weight::default(),
@@ -397,27 +361,24 @@ where
 							.unwrap_or(Box::new(()));
 						let cb_weight =
 							cb.on_chan_close_confirm(&channel_msg.port_id, &channel_msg.channel_id);
-						let lc_verification_weight = match channel_client::<T>(
-							channel_msg.port_id.as_bytes(),
-							channel_msg.channel_id.to_string().as_bytes(),
-						) {
-							Ok(client_id) => {
-								let client_type_str = client_id.as_str().rsplit_once('-');
-								if let Some((client_type_str, ..)) = client_type_str {
-									if let Ok(client_type) = ClientType::from_str(client_type_str) {
-										match client_type {
-											ClientType::Tendermint => <T as Config>::WeightInfo::channel_close_confirm_tendermint(),
-											_ => Weight::default()
-										}
-									} else {
-										Weight::default()
-									}
-								} else {
-									Weight::default()
+						let lc_verification_weight =
+							match channel_client::<T>(
+								channel_msg.port_id.as_bytes(),
+								channel_msg.channel_id.to_string().as_bytes(),
+							) {
+								Ok(client_id) => {
+									let client_type = client_id.as_str().rsplit_once('-').and_then(
+										|(client_type_str, ..)| {
+											ClientType::from_str(client_type_str).ok()
+										},
+									);
+									match client_type {
+									Some(ClientType::Tendermint) => <T as Config>::WeightInfo::channel_close_confirm_tendermint(),
+									_ => Weight::default()
 								}
-							},
-							Err(_) => Weight::default(),
-						};
+								},
+								Err(_) => Weight::default(),
+							};
 						cb_weight.saturating_add(lc_verification_weight)
 					},
 				},
@@ -433,21 +394,18 @@ where
 							packet_msg.packet.destination_channel.to_string().as_bytes(),
 						) {
 							Ok(client_id) => {
-								let client_type_str = client_id.as_str().rsplit_once('-');
-								if let Some((client_type_str, ..)) = client_type_str {
-									if let Ok(client_type) = ClientType::from_str(client_type_str) {
-										match client_type {
-											ClientType::Tendermint =>
-												<T as Config>::WeightInfo::recv_packet_tendermint(
-													packet_msg.packet.data.len() as u32,
-												),
-											_ => Weight::default(),
-										}
-									} else {
-										Weight::default()
-									}
-								} else {
-									Weight::default()
+								let client_type = client_id.as_str().rsplit_once('-').and_then(
+									|(client_type_str, ..)| {
+										ClientType::from_str(client_type_str).ok()
+									},
+								);
+								match client_type {
+									Some(ClientType::Tendermint) => {
+										<T as Config>::WeightInfo::recv_packet_tendermint(
+											packet_msg.packet.data.len() as u32,
+										)
+									},
+									_ => Weight::default(),
 								}
 							},
 							Err(_) => Weight::default(),
@@ -468,23 +426,19 @@ where
 							packet_msg.packet.destination_channel.to_string().as_bytes(),
 						) {
 							Ok(client_id) => {
-								let client_type_str = client_id.as_str().rsplit_once('-');
-								if let Some((client_type_str, ..)) = client_type_str {
-									if let Ok(client_type) = ClientType::from_str(client_type_str) {
-										match client_type {
-											ClientType::Tendermint =>
-												<T as Config>::WeightInfo::ack_packet_tendermint(
-													packet_msg.packet.data.len() as u32,
-													packet_msg.acknowledgement.into_bytes().len()
-														as u32,
-												),
-											_ => Weight::default(),
-										}
-									} else {
-										Weight::default()
-									}
-								} else {
-									Weight::default()
+								let client_type = client_id.as_str().rsplit_once('-').and_then(
+									|(client_type_str, ..)| {
+										ClientType::from_str(client_type_str).ok()
+									},
+								);
+								match client_type {
+									Some(ClientType::Tendermint) => {
+										<T as Config>::WeightInfo::ack_packet_tendermint(
+											packet_msg.packet.data.len() as u32,
+											packet_msg.acknowledgement.into_bytes().len() as u32,
+										)
+									},
+									_ => Weight::default(),
 								}
 							},
 							Err(_) => Weight::default(),
@@ -502,21 +456,18 @@ where
 							packet_msg.packet.destination_channel.to_string().as_bytes(),
 						) {
 							Ok(client_id) => {
-								let client_type_str = client_id.as_str().rsplit_once('-');
-								if let Some((client_type_str, ..)) = client_type_str {
-									if let Ok(client_type) = ClientType::from_str(client_type_str) {
-										match client_type {
-											ClientType::Tendermint =>
-												<T as Config>::WeightInfo::timeout_packet_tendermint(
-													packet_msg.packet.data.len() as u32,
-												),
-											_ => Weight::default(),
-										}
-									} else {
-										Weight::default()
-									}
-								} else {
-									Weight::default()
+								let client_type = client_id.as_str().rsplit_once('-').and_then(
+									|(client_type_str, ..)| {
+										ClientType::from_str(client_type_str).ok()
+									},
+								);
+								match client_type {
+									Some(ClientType::Tendermint) => {
+										<T as Config>::WeightInfo::timeout_packet_tendermint(
+											packet_msg.packet.data.len() as u32,
+										)
+									},
+									_ => Weight::default(),
 								}
 							},
 							Err(_) => Weight::default(),
@@ -534,21 +485,18 @@ where
 							packet_msg.packet.destination_channel.to_string().as_bytes(),
 						) {
 							Ok(client_id) => {
-								let client_type_str = client_id.as_str().rsplit_once('-');
-								if let Some((client_type_str, ..)) = client_type_str {
-									if let Ok(client_type) = ClientType::from_str(client_type_str) {
-										match client_type {
-											ClientType::Tendermint =>
-												<T as Config>::WeightInfo::timeout_packet_tendermint(
-													packet_msg.packet.data.len() as u32,
-												),
-											_ => Weight::default(),
-										}
-									} else {
-										Weight::default()
-									}
-								} else {
-									Weight::default()
+								let client_type = client_id.as_str().rsplit_once('-').and_then(
+									|(client_type_str, ..)| {
+										ClientType::from_str(client_type_str).ok()
+									},
+								);
+								match client_type {
+									Some(ClientType::Tendermint) => {
+										<T as Config>::WeightInfo::timeout_packet_tendermint(
+											packet_msg.packet.data.len() as u32,
+										)
+									},
+									_ => Weight::default(),
 								}
 							},
 							Err(_) => Weight::default(),
