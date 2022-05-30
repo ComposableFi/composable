@@ -1,6 +1,7 @@
 use super::{
-	any_balance, any_price, run_for_seconds, set_fee_pool_depth, traders_in_one_market_context,
-	with_market_context, with_trading_context, Balance, MarketConfig, Position,
+	any_balance, any_price, run_for_seconds, run_to_time, set_fee_pool_depth,
+	traders_in_one_market_context, with_market_context, with_trading_context, Balance,
+	MarketConfig, Position,
 };
 use crate::{
 	math::{FixedPointMath, FromBalance, FromUnsigned, IntoDecimal},
@@ -21,9 +22,9 @@ use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 use sp_runtime::{FixedI128, FixedU128};
 
-// ----------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
 //                                             Helpers
-// ----------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
 
 fn get_position(account: &AccountId, market_id: &MarketId) -> Position {
 	TestPallet::get_positions(account)
@@ -32,9 +33,119 @@ fn get_position(account: &AccountId, market_id: &MarketId) -> Position {
 		.unwrap()
 }
 
-// ----------------------------------------------------------------------------------------------------
-//                                             Prop Compose
-// ----------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+//                                           Unit tests
+// -------------------------------------------------------------------------------------------------
+
+#[test]
+fn late_update_has_same_weight_as_normal_update() {
+	let config = MarketConfig {
+		funding_frequency: ONE_HOUR,
+		funding_period: ONE_HOUR * 24,
+		..Default::default()
+	};
+
+	with_market_context(ExtBuilder::default(), config, |market_id| {
+		// `with_market_context` creates the market at block 1 with timestamp 1s
+		let market_t0 = TestPallet::get_market(&market_id).unwrap();
+
+		// Set mark-index price divergence
+		OraclePallet::set_twap(Some(10_000)); // 100 in cents
+		VammPallet::set_twap(Some(150.into()));
+
+		// hack: set fee pool depth so as not to worry about capped funding rates
+		set_fee_pool_depth(&market_id, Balance::MAX);
+
+		// Update after normal interval
+		run_for_seconds(ONE_HOUR);
+		assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
+
+		// Get delta of normal update
+		let market_t1 = TestPallet::get_market(&market_id).unwrap();
+		let delta_0 = market_t1.cum_funding_rate(Direction::Long) -
+			market_t0.cum_funding_rate(Direction::Long);
+
+		// Update after prolongued interval (keeping mark-index divergence the same)
+		run_for_seconds(ONE_HOUR * 2);
+		assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
+
+		// Assert delta is equal to delta of normal update
+		let market_t2 = TestPallet::get_market(&market_id).unwrap();
+		let delta_1 = market_t2.cum_funding_rate(Direction::Long) -
+			market_t1.cum_funding_rate(Direction::Long);
+		assert_eq!(delta_0, delta_1);
+	});
+}
+
+#[test]
+fn late_update_may_push_next_update_time_to_later() {
+	let config = MarketConfig {
+		funding_frequency: ONE_HOUR,
+		funding_period: ONE_HOUR * 24,
+		..Default::default()
+	};
+
+	with_market_context(ExtBuilder::default(), config, |market_id| {
+		// Set mark-index price divergence
+		OraclePallet::set_twap(Some(10_000)); // 100 in cents
+		VammPallet::set_twap(Some(150.into()));
+
+		// hack: set fee pool depth so as not to worry about capped funding rates
+		set_fee_pool_depth(&market_id, Balance::MAX);
+
+		// Update after more than 1 third of the frequency past the usual frequency time
+		run_to_time(ONE_HOUR + ONE_HOUR / 3 + 1);
+		assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
+
+		// Try updating at next usual frequency time
+		run_to_time(ONE_HOUR * 2);
+		assert_noop!(
+			TestPallet::update_funding(Origin::signed(ALICE), market_id),
+			Error::<Runtime>::UpdatingFundingTooEarly
+		);
+
+		// Try updating before the frequency time after that
+		run_to_time(ONE_HOUR * 2 + ONE_HOUR / 2);
+		assert_noop!(
+			TestPallet::update_funding(Origin::signed(ALICE), market_id),
+			Error::<Runtime>::UpdatingFundingTooEarly
+		);
+
+		// Update at the right frequency time
+		run_to_time(ONE_HOUR * 3);
+		assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
+	});
+}
+
+#[test]
+fn late_update_may_not_interfere_with_next_update_time() {
+	let config = MarketConfig {
+		funding_frequency: ONE_HOUR,
+		funding_period: ONE_HOUR * 24,
+		..Default::default()
+	};
+
+	with_market_context(ExtBuilder::default(), config, |market_id| {
+		// Set mark-index price divergence
+		OraclePallet::set_twap(Some(10_000)); // 100 in cents
+		VammPallet::set_twap(Some(150.into()));
+
+		// hack: set fee pool depth so as not to worry about capped funding rates
+		set_fee_pool_depth(&market_id, Balance::MAX);
+
+		// Update after less than 1 third of the frequency past the usual frequency time
+		run_to_time(ONE_HOUR + ONE_HOUR / 3 - 1);
+		assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
+
+		// Successfully update at next usual frequency time
+		run_to_time(ONE_HOUR * 2);
+		assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
+	});
+}
+
+// -------------------------------------------------------------------------------------------------
+//                                          Prop compose
+// -------------------------------------------------------------------------------------------------
 
 prop_compose! {
 	fn seconds_lt(upper_bound: DurationSeconds)(
@@ -76,9 +187,9 @@ prop_compose! {
 	}
 }
 
-// ----------------------------------------------------------------------------------------------------
-//                                            Update Funding
-// ----------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+//                                         Property tests
+// -------------------------------------------------------------------------------------------------
 
 proptest! {
 	#[test]
@@ -107,13 +218,11 @@ proptest! {
 		});
 	}
 
-	// TODO(0xangelo): what to expect if a lot of time has passed since the last update?
-
 	#[test]
 	fn updates_market_state(vamm_twap in any_price()) {
 		let config = MarketConfig { funding_frequency: ONE_HOUR, ..Default::default() };
 
-		with_market_context(ExtBuilder::default(), config, |market_id| {
+		with_market_context(ExtBuilder::default(), config.clone(), |market_id| {
 			let old_market = TestPallet::get_market(&market_id).unwrap();
 
 			run_for_seconds(ONE_HOUR);
@@ -128,8 +237,7 @@ proptest! {
 			let new_market = TestPallet::get_market(&market_id).unwrap();
 			let delta = FixedI128::from_unsigned(vamm_twap).unwrap()
 				- FixedI128::from_unsigned(oracle_twap).unwrap();
-			let update_weight: FixedI128 =
-				(old_market.funding_frequency, old_market.funding_period).into();
+			let update_weight: FixedI128 = (config.funding_frequency, config.funding_period).into();
 
 			assert_eq!(new_market.funding_rate_ts, old_market.funding_rate_ts + ONE_HOUR);
 			for direction in [Direction::Long, Direction::Short] {

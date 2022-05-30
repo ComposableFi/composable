@@ -93,6 +93,19 @@ fn run_for_seconds(seconds: DurationSeconds) {
 	TimestampPallet::on_initialize(SystemPallet::block_number());
 }
 
+fn run_to_time(seconds: DurationSeconds) {
+	// It's up to the caller to choose a time that is greater than the current one
+	if SystemPallet::block_number() > 0 {
+		TimestampPallet::on_finalize(SystemPallet::block_number());
+		SystemPallet::on_finalize(SystemPallet::block_number());
+	}
+	SystemPallet::set_block_number(SystemPallet::block_number() + 1);
+	// Time is set in milliseconds, so we multiply the seconds by 1_000
+	let _ = TimestampPallet::set(Origin::none(), 1_000 * seconds);
+	SystemPallet::on_initialize(SystemPallet::block_number());
+	TimestampPallet::on_initialize(SystemPallet::block_number());
+}
+
 /// Return the balance representation of the input value, according to the precision of the fixed
 /// point implementation
 fn as_balance<T: Into<FixedI128>>(value: T) -> u128 {
