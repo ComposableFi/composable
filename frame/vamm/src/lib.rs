@@ -361,7 +361,8 @@ pub mod pallet {
 		/// [`quote`](VammState::quote_asset_reserves) asset, but the
 		/// computation was not successful.
 		FailedToDeriveInvariantFromBaseAndQuoteAsset,
-		/// Tried to perform swap operation but it would drain all [`base`](VammState::base_asset_reserves) asset reserves.
+		/// Tried to perform swap operation but it would drain all
+		/// [`base`](VammState::base_asset_reserves) asset reserves.
 		BaseAssetReservesWouldBeCompletelyDrained,
 		/// Tried to perform swap operation but it would drain all
 		/// [`quote`](VammState::quote_asset_reserves) asset reserves.
@@ -890,13 +891,11 @@ pub mod pallet {
 			vamm_state: &VammStateOf<T>,
 		) -> Result<CalculateSwapAsset<T>, DispatchError> {
 			let new_input_amount = match direction {
-				Direction::Add => {
-					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?
-				},
+				Direction::Add =>
+					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?,
 
-				Direction::Remove => {
-					input_asset_amount.checked_sub(swap_amount).ok_or(ArithmeticError::Underflow)?
-				},
+				Direction::Remove =>
+					input_asset_amount.checked_sub(swap_amount).ok_or(ArithmeticError::Underflow)?,
 			};
 			let new_input_amount_u256 = Self::balance_to_u256(new_input_amount)?;
 
