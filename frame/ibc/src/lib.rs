@@ -150,7 +150,7 @@ pub mod pallet {
 		const CONNECTION_PREFIX: &'static [u8];
 		#[pallet::constant]
 		type ExpectedBlockTime: Get<u64>;
-		type WeightInfo: crate::weight::WeightInfo;
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::pallet]
@@ -283,7 +283,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
 	/// height => IbcConsensusState
-	pub type CommitmentRoot<T: Config> =
+	pub type HostConsensusStates<T: Config> =
 		StorageValue<_, BoundedBTreeMap<u64, IbcConsensusState, ConstU32<250>>, ValueQuery>;
 
 	#[pallet::event]
@@ -323,24 +323,14 @@ pub mod pallet {
 		u32: From<<T as frame_system::Config>::BlockNumber>,
 		T: Send + Sync,
 	{
-		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
-			<T as Config>::WeightInfo::on_finalize(
-				Clients::<T>::count(),
-				Connections::<T>::count(),
-				ChannelCounter::<T>::get(),
-				PacketCommitment::<T>::count(),
-				Acknowledgements::<T>::count(),
-				PacketReceipt::<T>::count(),
-			)
-		}
-
 		fn on_finalize(_n: BlockNumberFor<T>) {
 			let root = Pallet::<T>::extract_ibc_state_root();
 			if let Ok(root) = root {
-				let height = crate::impls::host_height::<T>();
+				let height = impls::host_height::<T>();
 				let timestamp = T::TimeProvider::now().as_nanos().saturated_into::<u64>();
 				let ibc_cs = IbcConsensusState { timestamp, commitment_root: root.clone() };
-				let _ = CommitmentRoot::<T>::try_mutate::<_, (), _>(|val| {
+				let _ = HostConsensusStates::<T>::try_mutate::<_, (), _>(|val| {
+					// TODO: prune before inserting.
 					if let Err((height, ibc_cs)) = val.try_insert(height, ibc_cs) {
 						let first_key = val.keys().cloned().next();
 						if let Some(key) = first_key {
@@ -353,6 +343,17 @@ pub mod pallet {
 				let log = DigestItem::Consensus(IBC_DIGEST_ID, root);
 				<frame_system::Pallet<T>>::deposit_log(log);
 			}
+		}
+
+		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
+			<T as Config>::WeightInfo::on_finalize(
+				Clients::<T>::count(),
+				Connections::<T>::count(),
+				ChannelCounter::<T>::get(),
+				PacketCommitment::<T>::count(),
+				Acknowledgements::<T>::count(),
+				PacketReceipt::<T>::count(),
+			)
 		}
 
 		fn offchain_worker(_n: BlockNumberFor<T>) {
@@ -386,9 +387,7 @@ pub mod pallet {
 			let result = messages
 				.into_iter()
 				.map(|msg| {
-					ibc::core::ics26_routing::handler::deliver::<_, host_functions::HostFunctions>(
-						&mut ctx, msg,
-					)
+					ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg)
 				})
 				.collect::<Result<Vec<_>, _>>()
 				.map_err(|e| {
@@ -397,6 +396,7 @@ pub mod pallet {
 				})?;
 
 			log::trace!("result: {:?}", result);
+			// todo: deposit actual ibc events
 			Self::deposit_event(Event::<T>::ProcessedIBCMessages);
 			Ok(())
 		}

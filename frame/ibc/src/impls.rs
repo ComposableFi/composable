@@ -584,7 +584,7 @@ impl<T: Config> Pallet<T> {
 	#[cfg(any(test, feature = "runtime-benchmarks"))]
 	pub fn insert_default_consensus_state(height: u64) {
 		let state = IbcConsensusState::default();
-		CommitmentRoot::<T>::try_mutate::<_, (), _>(|val| {
+		HostConsensusStates::<T>::try_mutate::<_, (), _>(|val| {
 			val.try_insert(height, state).unwrap();
 			Ok(())
 		})

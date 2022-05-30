@@ -148,9 +148,8 @@ where
 					ClientMsg::CreateClient(msg) => {
 						let client_type = msg.client_state.client_type();
 						match client_type {
-							ClientType::Tendermint => {
-								<T as Config>::WeightInfo::create_tendermint_client()
-							},
+							ClientType::Tendermint =>
+								<T as Config>::WeightInfo::create_tendermint_client(),
 							_ => Weight::default(),
 						}
 					},
@@ -159,9 +158,8 @@ where
 							|(client_type_str, ..)| ClientType::from_str(client_type_str).ok(),
 						);
 						match client_type {
-							Some(ClientType::Tendermint) => {
-								<T as Config>::WeightInfo::update_tendermint_client()
-							},
+							Some(ClientType::Tendermint) =>
+								<T as Config>::WeightInfo::update_tendermint_client(),
 							_ => Weight::default(),
 						}
 					},
@@ -174,9 +172,8 @@ where
 							|(client_type_str, ..)| ClientType::from_str(client_type_str).ok(),
 						);
 						match client_type {
-							Some(ClientType::Tendermint) => {
-								<T as Config>::WeightInfo::connection_open_init()
-							},
+							Some(ClientType::Tendermint) =>
+								<T as Config>::WeightInfo::connection_open_init(),
 							_ => Weight::default(),
 						}
 					},
@@ -185,9 +182,8 @@ where
 							|(client_type_str, ..)| ClientType::from_str(client_type_str).ok(),
 						);
 						match client_type {
-							Some(ClientType::Tendermint) => {
-								<T as Config>::WeightInfo::conn_try_open_tendermint()
-							},
+							Some(ClientType::Tendermint) =>
+								<T as Config>::WeightInfo::conn_try_open_tendermint(),
 							_ => Weight::default(),
 						}
 					},
@@ -200,9 +196,8 @@ where
 								|(client_type_str, ..)| ClientType::from_str(client_type_str).ok(),
 							);
 						match client_type {
-							Some(ClientType::Tendermint) => {
-								<T as Config>::WeightInfo::conn_open_ack_tendermint()
-							},
+							Some(ClientType::Tendermint) =>
+								<T as Config>::WeightInfo::conn_open_ack_tendermint(),
 							_ => Weight::default(),
 						}
 					},
@@ -215,9 +210,8 @@ where
 								|(client_type_str, ..)| ClientType::from_str(client_type_str).ok(),
 							);
 						match client_type {
-							Some(ClientType::Tendermint) => {
-								<T as Config>::WeightInfo::conn_open_confirm_tendermint()
-							},
+							Some(ClientType::Tendermint) =>
+								<T as Config>::WeightInfo::conn_open_confirm_tendermint(),
 							_ => Weight::default(),
 						}
 					},
@@ -241,9 +235,8 @@ where
 											ClientType::from_str(client_type_str).ok()
 										});
 									match client_type {
-										Some(ClientType::Tendermint) => {
-											<T as Config>::WeightInfo::channel_open_init()
-										},
+										Some(ClientType::Tendermint) =>
+											<T as Config>::WeightInfo::channel_open_init(),
 										_ => Weight::default(),
 									}
 								},
@@ -269,9 +262,8 @@ where
 											ClientType::from_str(client_type_str).ok()
 										});
 									match client_type {
-										Some(ClientType::Tendermint) => {
-											<T as Config>::WeightInfo::channel_open_try_tendermint()
-										},
+										Some(ClientType::Tendermint) =>
+											<T as Config>::WeightInfo::channel_open_try_tendermint(),
 										_ => Weight::default(),
 									}
 								},
@@ -295,9 +287,8 @@ where
 									},
 								);
 								match client_type {
-									Some(ClientType::Tendermint) => {
-										<T as Config>::WeightInfo::channel_open_ack_tendermint()
-									},
+									Some(ClientType::Tendermint) =>
+										<T as Config>::WeightInfo::channel_open_ack_tendermint(),
 									_ => Weight::default(),
 								}
 							},
@@ -321,9 +312,8 @@ where
 									},
 								);
 								match client_type {
-									Some(ClientType::Tendermint) => {
-										<T as Config>::WeightInfo::channel_open_confirm_tendermint()
-									},
+									Some(ClientType::Tendermint) =>
+										<T as Config>::WeightInfo::channel_open_confirm_tendermint(),
 									_ => Weight::default(),
 								}
 							},
@@ -347,9 +337,8 @@ where
 									},
 								);
 								match client_type {
-									Some(ClientType::Tendermint) => {
-										<T as Config>::WeightInfo::channel_close_init()
-									},
+									Some(ClientType::Tendermint) =>
+										<T as Config>::WeightInfo::channel_close_init(),
 									_ => Weight::default(),
 								}
 							},
@@ -401,11 +390,10 @@ where
 									},
 								);
 								match client_type {
-									Some(ClientType::Tendermint) => {
+									Some(ClientType::Tendermint) =>
 										<T as Config>::WeightInfo::recv_packet_tendermint(
 											packet_msg.packet.data.len() as u32,
-										)
-									},
+										),
 									_ => Weight::default(),
 								}
 							},
@@ -433,12 +421,11 @@ where
 									},
 								);
 								match client_type {
-									Some(ClientType::Tendermint) => {
+									Some(ClientType::Tendermint) =>
 										<T as Config>::WeightInfo::ack_packet_tendermint(
 											packet_msg.packet.data.len() as u32,
 											packet_msg.acknowledgement.into_bytes().len() as u32,
-										)
-									},
+										),
 									_ => Weight::default(),
 								}
 							},
@@ -463,11 +450,10 @@ where
 									},
 								);
 								match client_type {
-									Some(ClientType::Tendermint) => {
+									Some(ClientType::Tendermint) =>
 										<T as Config>::WeightInfo::timeout_packet_tendermint(
 											packet_msg.packet.data.len() as u32,
-										)
-									},
+										),
 									_ => Weight::default(),
 								}
 							},
@@ -492,11 +478,10 @@ where
 									},
 								);
 								match client_type {
-									Some(ClientType::Tendermint) => {
+									Some(ClientType::Tendermint) =>
 										<T as Config>::WeightInfo::timeout_packet_tendermint(
 											packet_msg.packet.data.len() as u32,
-										)
-									},
+										),
 									_ => Weight::default(),
 								}
 							},
