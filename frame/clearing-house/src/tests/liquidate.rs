@@ -87,12 +87,13 @@ fn cant_liquidate_if_above_partial_margin_ratio_by_pnl() {
 }
 
 #[test]
-fn cant_fully_liquidate_if_above_maintenance_margin_ratio_by_funding() {
+fn cant_liquidate_if_above_partial_margin_ratio_by_funding() {
 	let config = MarketConfig {
 		funding_frequency: 60,
 		funding_period: 60,
 		margin_ratio_initial: (1, 2).into(),       // 2x max leverage
-		margin_ratio_maintenance: (7, 100).into(), // 7% MMR
+		margin_ratio_maintenance: (5, 100).into(), // 5% MMR
+		margin_ratio_partial: (7, 100).into(),     // 7% PMR
 		taker_fee: 0,
 		..Default::default()
 	};
@@ -135,10 +136,11 @@ fn cant_fully_liquidate_if_above_maintenance_margin_ratio_by_funding() {
 }
 
 #[test]
-fn can_liquidate_if_below_maintenance_margin_ratio_by_pnl() {
+fn can_fully_liquidate_if_below_maintenance_margin_ratio_by_pnl() {
 	let config = MarketConfig {
 		margin_ratio_initial: (1, 2).into(),       // 2x max leverage
 		margin_ratio_maintenance: (6, 100).into(), // 6% MMR
+		margin_ratio_partial: (10, 100).into(),    // 10% PMR
 		taker_fee: 0,
 		..Default::default()
 	};
@@ -190,6 +192,7 @@ fn underwater_accounts_imply_no_liquidation_fees() {
 	let config = MarketConfig {
 		margin_ratio_initial: (1, 2).into(),       // 2x max leverage
 		margin_ratio_maintenance: (6, 100).into(), // 6% MMR
+		margin_ratio_partial: (20, 100).into(),    // 20% PMR
 		taker_fee: 0,
 		..Default::default()
 	};
@@ -240,6 +243,7 @@ fn position_in_market_with_greatest_margin_requirement_gets_liquidated_first() {
 	let config0 = MarketConfig {
 		margin_ratio_initial: (1, 2).into(),
 		margin_ratio_maintenance: (20, 100).into(),
+		margin_ratio_partial: (40, 100).into(),
 		taker_fee: 0,
 		..Default::default()
 	};
@@ -307,6 +311,7 @@ fn fees_are_proportional_to_base_asset_value_liquidated() {
 	let config0 = MarketConfig {
 		margin_ratio_initial: (1, 2).into(),
 		margin_ratio_maintenance: (15, 100).into(),
+		margin_ratio_partial: (25, 100).into(),
 		taker_fee: 0,
 		..Default::default()
 	};
@@ -383,6 +388,7 @@ fn fees_decrease_margin_for_remaining_positions() {
 	let config0 = MarketConfig {
 		margin_ratio_initial: (1, 2).into(),
 		margin_ratio_maintenance: (20, 100).into(),
+		margin_ratio_partial: (40, 100).into(),
 		taker_fee: 0,
 		..Default::default()
 	};
@@ -451,8 +457,9 @@ fn fees_decrease_margin_for_remaining_positions() {
 #[test]
 fn above_water_position_can_protect_underwater_position() {
 	let config0 = MarketConfig {
-		margin_ratio_initial: (1, 2).into(),
-		margin_ratio_maintenance: (20, 100).into(),
+		margin_ratio_initial: (50, 100).into(),
+		margin_ratio_maintenance: (10, 100).into(),
+		margin_ratio_partial: (25, 100).into(),
 		taker_fee: 0,
 		..Default::default()
 	};
