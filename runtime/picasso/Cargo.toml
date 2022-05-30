@@ -126,10 +126,6 @@ orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-l
 # simnode support
 simnode-apis = { package = "simnode-runtime-apis", git = "https://github.com/polytope-labs/substrate-simnode", default-features = false, rev = "920d5d7a0329f2791e11930d2c4f96d9ce50b160" }
 
-# ibc support
-ibc-runtime-api = { path = "../../frame/ibc/ibc-runtime-api", default-features = false }
-ibc-primitives = { path = "../../frame/ibc/ibc-primitives", default-features = false }
-
 [build-dependencies]
 substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 
@@ -205,9 +201,7 @@ std = [
   "assets-runtime-api/std",
   "pablo-runtime-api/std",
   "crowdloan-rewards-runtime-api/std",
-  "simnode-apis/std",
-  "ibc-runtime-api/std",
-  "ibc-primitives/std",
+  "simnode-apis/std"
 ]
 wasm-builder = []
 

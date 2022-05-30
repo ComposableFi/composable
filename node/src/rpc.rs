@@ -21,7 +21,8 @@ use crate::{
 	client::{FullBackend, FullClient},
 	runtime::{
 		assets::ExtendWithAssetsApi, crowdloan_rewards::ExtendWithCrowdloanRewardsApi,
-		lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi, BaseHostRuntimeApis,
+		ibc::ExtendWithIbcApi, lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi,
+		BaseHostRuntimeApis,
 	},
 };
 
@@ -64,9 +65,9 @@ where
 			+ ExtendWithAssetsApi<RuntimeApi, Executor>
 			+ ExtendWithCrowdloanRewardsApi<RuntimeApi, Executor>
 			+ ExtendWithPabloApi<RuntimeApi, Executor>
-			+ ExtendWithLendingApi<RuntimeApi, Executor>,
+			+ ExtendWithLendingApi<RuntimeApi, Executor>
+			+ ExtendWithIbcApi<RuntimeApi, Executor>,
 {
-	use ibc_rpc::{IbcApiServer, IbcRpcHandler};
 	use pallet_transaction_payment_rpc::{TransactionPaymentApiServer, TransactionPaymentRpc};
 	use substrate_frame_rpc_system::{SystemApiServer, SystemRpc};
 
@@ -75,8 +76,6 @@ where
 	io.merge(SystemRpc::new(deps.client.clone(), deps.pool.clone(), deps.deny_unsafe).into_rpc())?;
 
 	io.merge(TransactionPaymentRpc::new(deps.client.clone()).into_rpc())?;
-
-	io.merge(IbcRpcHandler::new(deps.client.clone(), deps.chain_props.clone()).into_rpc())?;
 
 	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_assets_api(
 		&mut io,
@@ -95,7 +94,11 @@ where
 
 	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_lending_api(
 		&mut io,
-		deps,
+		deps.clone(),
+	)?;
+
+	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_ibc_api(
+		&mut io, deps,
 	)?;
 
 	// Extend this RPC with a custom API by using the following syntax.
