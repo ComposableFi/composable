@@ -787,11 +787,14 @@ pub mod pallet {
 				config.margin_ratio_initial > T::Decimal::zero() &&
 					config.margin_ratio_initial <= T::Decimal::one() &&
 					config.margin_ratio_maintenance > T::Decimal::zero() &&
-					config.margin_ratio_maintenance < T::Decimal::one(),
+					config.margin_ratio_maintenance < T::Decimal::one() &&
+					config.margin_ratio_partial > T::Decimal::zero() &&
+					config.margin_ratio_partial < T::Decimal::one(),
 				Error::<T>::InvalidMarginRatioRequirement
 			);
 			ensure!(
-				config.margin_ratio_initial > config.margin_ratio_maintenance,
+				config.margin_ratio_initial > config.margin_ratio_partial &&
+					config.margin_ratio_partial > config.margin_ratio_maintenance,
 				Error::<T>::InvalidMarginRatioOrdering
 			);
 			ensure!(
