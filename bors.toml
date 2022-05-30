@@ -1,8 +1,9 @@
 status = [
-    "substrate-check", 
-    "substrate-test-coverage", 
-    "substrate-runtime-benchmark",
-    ]
+    "Check Benchmarks", 
+    "Unit Tests (With Coverage)", 
+    "Unit Tests",
+    "Linters",
+]
 required_approvals = 2
 cut_body_after = "## Checklist"    
 delete_merged_branches = true
