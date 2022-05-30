@@ -98,8 +98,10 @@ pub struct Market<T: Config> {
 	pub asset_id: T::MayBeAssetId,
 	/// Minimum margin ratio for opening a new position.
 	pub margin_ratio_initial: T::Decimal,
-	/// Margin ratio below which liquidations can occur.
+	/// Margin ratio below which full liquidations can occur.
 	pub margin_ratio_maintenance: T::Decimal,
+	/// Margin ratio below which partial liquidations can occur.
+	pub margin_ratio_partial: T::Decimal,
 	/// Minimum amount of quote asset to exchange when opening a position. Also serves to round
 	/// a trade if it results in closing an existing position.
 	pub minimum_trade_size: T::Decimal,
@@ -188,8 +190,10 @@ pub struct MarketConfig<AssetId, Balance, Decimal, VammConfig> {
 	pub vamm_config: VammConfig,
 	/// Minimum margin ratio for opening a new position.
 	pub margin_ratio_initial: Decimal,
-	/// Margin ratio below which liquidations can occur.
+	/// Margin ratio below which full liquidations can occur.
 	pub margin_ratio_maintenance: Decimal,
+	/// Margin ratio below which partial liquidations can occur.
+	pub margin_ratio_partial: Decimal,
 	/// Minimum amount of quote asset to exchange when opening a position. Also serves to round
 	/// a trade if it results in closing an existing position.
 	pub minimum_trade_size: Decimal,

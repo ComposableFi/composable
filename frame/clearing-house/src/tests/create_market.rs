@@ -50,7 +50,7 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn invalid_initial_margin_ratio()(
+	fn invalid_imr()(
 		decimal in prop_oneof![decimal_le_zero(), decimal_gt_one()]
 	) -> FixedI128 {
 		decimal
@@ -58,7 +58,7 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn invalid_maintenance_margin_ratio()(
+	fn invalid_mmr()(
 		decimal in prop_oneof![decimal_le_zero(), decimal_ge_one()]
 	) -> FixedI128 {
 		decimal
@@ -66,6 +66,15 @@ prop_compose! {
 }
 
 prop_compose! {
+	fn invalid_pmr()(
+		decimal in prop_oneof![decimal_le_zero(), decimal_ge_one()]
+	) -> FixedI128 {
+		decimal
+	}
+}
+
+prop_compose! {
+	// 0 < _ <= input
 	fn decimal_gt_zero_le_input(input: FixedI128)(
 		inner in 1..=input.into_inner()
 	) -> FixedI128 {
@@ -74,13 +83,71 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn initial_le_maintenance_margin_ratio()(
-		maint in decimal_gt_zero_lt_one()
+	// lower < _ < upper
+	fn decimal_in_exclusive_range(lower: FixedI128, upper: FixedI128)(
+		inner in (lower.into_inner() + 1)..upper.into_inner()
+	) -> FixedI128 {
+		FixedI128::from_inner(inner)
+	}
+}
+
+prop_compose! {
+	// lower < smaller < bigger < upper
+	fn distinct_decimal_pair_in_exclusive_range(lower: FixedI128, upper: FixedI128)(
+		// leave at least one value for smaller decimal
+		bigger in decimal_in_exclusive_range(FixedI128::from_inner(lower.into_inner() + 1), upper)
 	)(
-		initial in decimal_gt_zero_le_input(maint),
-		maintenance in Just(maint)
+		bigger in Just(bigger),
+		smaller in decimal_in_exclusive_range(lower, bigger),
 	) -> (FixedI128, FixedI128) {
-		(initial, maintenance)
+		(smaller, bigger)
+	}
+}
+
+prop_compose! {
+	fn initial_le_partial_margin_ratio()(
+		(maint, partial) in distinct_decimal_pair_in_exclusive_range(0.into(), 1.into())
+	)(
+		initial in decimal_gt_zero_le_input(partial),
+		(maint, partial) in Just((maint, partial)),
+	) -> (FixedI128, FixedI128, FixedI128) {
+		(initial, maint, partial)
+	}
+}
+
+prop_compose! {
+	// lower < _ <= upper
+	fn decimal_in_half_inclusive_range(lower: FixedI128, upper: FixedI128)(
+		inner in (lower.into_inner() + 1)..=upper.into_inner()
+	) -> FixedI128 {
+		FixedI128::from_inner(inner)
+	}
+}
+
+prop_compose! {
+	// lower < smaller < bigger <= upper
+	fn distinct_decimal_pair_in_half_inclusive_range(lower: FixedI128, upper: FixedI128)(
+		// leave at least one value for smaller decimal
+		bigger in decimal_in_half_inclusive_range(
+			FixedI128::from_inner(lower.into_inner() + 1),
+			upper
+		)
+	)(
+		bigger in Just(bigger),
+		smaller in decimal_in_exclusive_range(lower, bigger),
+	) -> (FixedI128, FixedI128) {
+		(smaller, bigger)
+	}
+}
+
+prop_compose! {
+	fn partial_le_maintenance_margin_ratio()(
+		(maint, initial) in distinct_decimal_pair_in_half_inclusive_range(0.into(), 1.into())
+	)(
+		(initial, maint) in Just((initial, maint)),
+		partial in decimal_in_half_inclusive_range(0.into(), maint)
+	) -> (FixedI128, FixedI128, FixedI128) {
+		(initial, maint, partial)
 	}
 }
 
@@ -204,16 +271,21 @@ proptest! {
 proptest! {
 	#[test]
 	fn fails_to_create_market_if_margin_ratios_not_in_valid_range(
-		(margin_ratio_initial, margin_ratio_maintenance) in prop_oneof![
-			(decimal_gt_zero_le_one(), invalid_maintenance_margin_ratio()),
-			(invalid_maintenance_margin_ratio(), decimal_gt_zero_lt_one()),
-			(invalid_maintenance_margin_ratio(), invalid_maintenance_margin_ratio())
+		(margin_ratio_initial, margin_ratio_maintenance, margin_ratio_partial) in prop_oneof![
+			(decimal_gt_zero_le_one(), decimal_gt_zero_lt_one(), invalid_pmr()),
+			(decimal_gt_zero_le_one(), invalid_mmr(),            decimal_gt_zero_lt_one()),
+			(decimal_gt_zero_le_one(), invalid_mmr(),            invalid_pmr()),
+			(invalid_mmr(),            decimal_gt_zero_lt_one(), decimal_gt_zero_lt_one()),
+			(invalid_mmr(),            decimal_gt_zero_lt_one(), invalid_pmr()),
+			(invalid_mmr(),            invalid_mmr(),            decimal_gt_zero_lt_one()),
+			(invalid_mmr(),            invalid_mmr(),            invalid_pmr()),
 		]
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			let config = MarketConfig {
 				margin_ratio_initial,
 				margin_ratio_maintenance,
+				margin_ratio_partial,
 				..Default::default()
 			};
 			assert_noop!(
@@ -226,18 +298,41 @@ proptest! {
 
 proptest! {
 	#[test]
-	fn fails_to_create_market_if_initial_margin_ratio_le_maintenance(
-		(margin_ratio_initial, margin_ratio_maintenance) in initial_le_maintenance_margin_ratio()
+	fn fails_to_create_market_if_initial_margin_ratio_le_partial(
+		(margin_ratio_initial, margin_ratio_maintenance, margin_ratio_partial)
+			in initial_le_partial_margin_ratio()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			let config = MarketConfig {
 				margin_ratio_initial,
 				margin_ratio_maintenance,
+				margin_ratio_partial,
 				..Default::default()
 			};
 			assert_noop!(
 				TestPallet::create_market(Origin::signed(ALICE), config),
-				Error::<Runtime>::InitialMarginRatioLessThanMaintenance
+				Error::<Runtime>::InvalidMarginRatioOrdering
+			);
+		})
+	}
+}
+
+proptest! {
+	#[test]
+	fn fails_to_create_market_if_partial_margin_ratio_le_maintenance(
+		(margin_ratio_initial, margin_ratio_maintenance, margin_ratio_partial)
+			in partial_le_maintenance_margin_ratio()
+	) {
+		ExtBuilder::default().build().execute_with(|| {
+			let config = MarketConfig {
+				margin_ratio_initial,
+				margin_ratio_maintenance,
+				margin_ratio_partial,
+				..Default::default()
+			};
+			assert_noop!(
+				TestPallet::create_market(Origin::signed(ALICE), config),
+				Error::<Runtime>::InvalidMarginRatioOrdering
 			);
 		})
 	}

@@ -210,8 +210,10 @@ impl Default for MarketConfigGeneric<AssetId, Balance, Decimal, VammConfig> {
 			vamm_config: Default::default(),
 			// 10x max leverage to open a position
 			margin_ratio_initial: FixedI128::from_float(0.1),
-			// liquidate when above 50x leverage
+			// fully liquidate when above 50x leverage
 			margin_ratio_maintenance: FixedI128::from_float(0.02),
+			// partially liquidate when above 25x leverage
+			margin_ratio_partial: FixedI128::from_float(0.04),
 			// 'One cent' of the quote asset
 			minimum_trade_size: FixedI128::from_float(0.01),
 			funding_frequency: ONE_HOUR,
@@ -228,6 +230,7 @@ impl<T: Config> Default for MarketGeneric<T> {
 			asset_id: Default::default(),
 			margin_ratio_initial: Default::default(),
 			margin_ratio_maintenance: Default::default(),
+			margin_ratio_partial: Default::default(),
 			minimum_trade_size: Default::default(),
 			base_asset_amount_long: Default::default(),
 			base_asset_amount_short: Default::default(),

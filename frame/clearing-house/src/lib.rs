@@ -36,7 +36,9 @@
 //! - **IMR**: Acronym for 'Initial Margin Ratio'. The mininum allowable margin ratio resulting from
 //!   opening new positions. Inversely proportional to the maximum leverage of an account
 //! - **MMR**: Acronym for 'Maintenance Margin Ratio'. The margin ratio below which a full
-//!   liquidation of a user's account can be triggered by a liquidator
+//!   liquidation of a user's account can be triggered by a liquidator (permissionless)
+//! - **PMR**: Acronym for 'Partial Margin Ratio'. The margin ratio below which a partial
+//!   liquidation of a user's account can be triggered by a liquidator (permissionless)
 //!
 //! ### Goals
 //!
@@ -414,11 +416,11 @@ pub mod pallet {
 		/// Attempted to create a new market but the funding period is not a multiple of the
 		/// funding frequency.
 		FundingPeriodNotMultipleOfFrequency,
-		/// Attempted to create a new market but the initial margin ratio is less than or equal to
-		/// the maintenance one.
-		InitialMarginRatioLessThanMaintenance,
 		/// Raised when opening a risk-increasing position that takes the account below the IMR.
 		InsufficientCollateral,
+		/// Attempted to create a new market but the ordering initial > partial > maintenance is
+		/// broken.
+		InvalidMarginRatioOrdering,
 		/// Attempted to create a new market but either the initial margin ratio is outside (0, 1]
 		/// or the maintenance margin ratio is outside (0, 1).
 		InvalidMarginRatioRequirement,
@@ -790,7 +792,7 @@ pub mod pallet {
 			);
 			ensure!(
 				config.margin_ratio_initial > config.margin_ratio_maintenance,
-				Error::<T>::InitialMarginRatioLessThanMaintenance
+				Error::<T>::InvalidMarginRatioOrdering
 			);
 			ensure!(
 				config.minimum_trade_size >= T::Decimal::zero(),
@@ -804,6 +806,7 @@ pub mod pallet {
 					vamm_id: T::Vamm::create(&config.vamm_config)?,
 					margin_ratio_initial: config.margin_ratio_initial,
 					margin_ratio_maintenance: config.margin_ratio_maintenance,
+					margin_ratio_partial: config.margin_ratio_partial,
 					minimum_trade_size: config.minimum_trade_size,
 					base_asset_amount_long: Zero::zero(),
 					base_asset_amount_short: Zero::zero(),

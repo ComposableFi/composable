@@ -39,15 +39,16 @@ fn cant_liquidate_user_with_no_open_positions() {
 }
 
 #[test]
-fn cant_fully_liquidate_if_above_maintenance_margin_ratio_by_pnl() {
+fn cant_liquidate_if_above_partial_margin_ratio_by_pnl() {
 	let config = MarketConfig {
 		margin_ratio_initial: (1, 2).into(),      // 2x max leverage
 		margin_ratio_maintenance: (1, 10).into(), // 10% MMR
+		margin_ratio_partial: (2, 10).into(),     // 20% PMR
 		taker_fee: 0,
 		..Default::default()
 	};
 
-	let margins = vec![(ALICE, as_balance(55)), (BOB, 0)];
+	let margins = vec![(ALICE, as_balance(52)), (BOB, 0)];
 	traders_in_one_market_context(config, margins, |market_id| {
 		VammPallet::set_price(Some(100.into()));
 
@@ -69,13 +70,13 @@ fn cant_fully_liquidate_if_above_maintenance_margin_ratio_by_pnl() {
 			Error::<Runtime>::SufficientCollateral
 		);
 
-		// Price moves so that Alice's account is at exactly 10% margin ratio
-		// 100 -> 50
-		VammPallet::set_price(Some(50.into()));
-		// At price 50:
-		// - margin required = 5
-		// - PnL = -50
-		// - margin = 5
+		// Price moves so that Alice's account is at exactly 20% margin ratio
+		// 100 -> 60
+		VammPallet::set_price(Some(60.into()));
+		// At price 60:
+		// - margin required = 12
+		// - PnL = -40
+		// - margin = 12
 
 		// Still not liquidatable; just enough collateral
 		assert_noop!(
