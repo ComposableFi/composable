@@ -25,18 +25,18 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Yarn lint - Lint
         run: yarn lint
-        working_directory: "frontend/ui-picasso"
+        working-directory: frontend/ui-picasso
       - name: Save Code Linting Report JSON
         # npm script for ESLint
         # eslint --output-file eslint_report.json --format json src
         # See https://eslint.org/docs/user-guide/command-line-interface#options
         run: yarn lint:report
-        working_directory: "frontend/ui-picasso"
+        working-directory: "frontend/ui-picasso"
         # Continue to the next step even if this fails
         continue-on-error: false
       - name: Annotate Code Linting Results
         uses: ataylorme/eslint-annotate-action@1.2.0
-        working_directory: "frontend/ui-picasso"
+        working-directory: frontend/ui-picasso
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
           report-json: "app/eslint_report.json"
