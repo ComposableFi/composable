@@ -202,6 +202,11 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
+    #[pallet::storage]
+    #[pallet::getter(fn total_airdrop_recipients)]
+	#[allow(clippy::disallowed_types)] // Allow `farme_support::pallet_prelude::ValueQuery`
+    pub type TotalAirdropRecipients<T: Config> = StorageMap<_, Blake2_128Concat, T::AirdropId, u32, ValueQuery>;
+
 	/// Recipient funds of Airdrops stored by the pallet.
 	#[pallet::storage]
 	#[pallet::getter(fn recipient_funds)]
@@ -223,7 +228,7 @@ pub mod pallet {
 		/// block, the Airdrop will be scheduled to start automatically.
 		///
 		/// Can be called by any signed origin.
-		#[pallet::weight(<T as Config>::WeightInfo::create_airdrop(1))]
+		#[pallet::weight(<T as Config>::WeightInfo::create_airdrop())]
 		#[transactional]
 		pub fn create_airdrop(
 			origin: OriginFor<T>,
@@ -272,7 +277,7 @@ pub mod pallet {
 		///
 		/// # Errors
 		/// * If the Airdrop has been configured to start after a certain timestamp
-		#[pallet::weight(<T as Config>::WeightInfo::enable_airdrop(1))]
+		#[pallet::weight(<T as Config>::WeightInfo::enable_airdrop())]
 		#[transactional]
 		pub fn enable_airdrop(origin: OriginFor<T>, airdrop_id: T::AirdropId) -> DispatchResult {
 			let origin_id = ensure_signed(origin)?;
@@ -283,7 +288,7 @@ pub mod pallet {
 		/// Stop an Airdrop.
 		///
 		/// Only callable by the origin that created the Airdrop.
-		#[pallet::weight(<T as Config>::WeightInfo::disable_airdrop(1))]
+		#[pallet::weight(<T as Config>::WeightInfo::disable_airdrop())]
 		#[transactional]
 		pub fn disable_airdrop(origin: OriginFor<T>, airdrop_id: T::AirdropId) -> DispatchResult {
 			let origin_id = ensure_signed(origin)?;
@@ -477,17 +482,23 @@ pub mod pallet {
 			airdrop_id: T::AirdropId,
 			start: T::Moment,
 		) -> DispatchResult {
-			// Airdrop exist and hasn't started
-			let mut airdrop = Self::get_airdrop(&airdrop_id)?;
-			ensure!(airdrop.start.is_none(), Error::<T>::AirdropAlreadyStarted);
-
 			// Start is valid
 			let now = T::Time::now();
 			ensure!(start >= now, Error::<T>::BackToTheFuture);
+			// Airdrop exist and hasn't started
+			let airdrop = Self::get_airdrop(&airdrop_id)?;
+			ensure!(airdrop.start.is_none(), Error::<T>::AirdropAlreadyStarted);
 
 			// Update Airdrop
-			airdrop.start = Some(start);
-			Airdrops::<T>::insert(airdrop_id, airdrop);
+            Airdrops::<T>::try_mutate(airdrop_id, |airdrop| {
+				airdrop
+					.as_mut()
+					.map(|airdrop| {
+			            airdrop.start = Some(start);
+						Ok(())
+					})
+					.unwrap_or_else(|| Err(Error::<T>::AirdropDoesNotExist))
+			})?;
 
 			Self::deposit_event(Event::AirdropStarted { airdrop_id, at: start });
 
@@ -620,7 +631,6 @@ pub mod pallet {
 			recipients: Self::RecipientCollection,
 		) -> DispatchResult {
 			let airdrop = Self::get_airdrop(&airdrop_id)?;
-
 			ensure!(airdrop.creator == origin_id, Error::<T>::NotAirdropCreator);
 
 			// Calculate total funds and recipients local to this transaction
@@ -665,6 +675,10 @@ pub mod pallet {
 					},
 				);
 			});
+
+            TotalAirdropRecipients::<T>::mutate(airdrop_id, |total_airdrop_recipients| {
+                *total_airdrop_recipients = total_recipients;
+            });
 
 			// Update Airdrop statistics
 			Airdrops::<T>::try_mutate(airdrop_id, |airdrop| {
@@ -716,6 +730,10 @@ pub mod pallet {
 					})
 					.unwrap_or_else(|| Err(Error::<T>::AirdropDoesNotExist))
 			})?;
+
+            TotalAirdropRecipients::<T>::mutate(airdrop_id, |total_airdrop_recipients| {
+                *total_airdrop_recipients -= 1;
+            });
 
 			// Refund Airdrop creator for the recipient fund's value
 			T::RecipientFundAsset::transfer(
