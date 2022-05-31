@@ -111,7 +111,7 @@ pub mod pallet {
 		/// stakes positins rewarded`
 		/// Processed by `fold` as updates are done in place
 		Distributing,
-		// TODO: decide what is better first- duration or amount
+		// TODO: decide what is better the first duration or
 		/// amount is added regardless of position state
 		PendingAmounts,
 		/// time extended regardless of position state
