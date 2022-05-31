@@ -16,3 +16,6 @@ node/ @seunlanlege @hussein-aitlahcen @kaiserkarel @vimukthi-git
 
 # Gitbook
 book/ @0xbrainjar2
+
+# Runtime Integration Tests
+integration-tests/runtime-tests/ @Dom-Roth
