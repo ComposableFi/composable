@@ -114,7 +114,7 @@ pub mod pallet {
 		// TODO: decide what is better first- duration or amount
 		/// amount is added regardless of position state
 		PendingAmounts,
-		/// time extended  regardless of position state
+		/// time extended regardless of position state
 		PendingDurations,
 		/// working with pending operations, registering new stakers and asset total increases
 		PendingStakers,
