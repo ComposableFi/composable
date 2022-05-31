@@ -17,5 +17,7 @@ jobs:
       - uses: actions/setup-node@v3
       - with:
           node-version: '16'
-      - run: yarn --cwd frontend/ui-picasso install
-      - run: yarn --cwd frontend/ui-picasso test
+      - run: yarn install
+        working-directory: frontend/ui-picasso
+      - run: yarn test
+        working-directory: frontend/ui-picasso

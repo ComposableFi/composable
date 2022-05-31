@@ -5,9 +5,9 @@ on:
       - main
     paths:
       - 'frontend/ui-pablo/*'
-    push:
-      paths:
-        - 'frontend/ui-pablo/*'
+  push:
+    paths:
+      - 'frontend/ui-pablo/*'
 
 jobs:
   coverage:
@@ -17,5 +17,7 @@ jobs:
       - uses: actions/setup-node@v3
       - with:
           node-version: '16'
-      - run: yarn --cwd frontend/ui-pablo install
-      - run: yarn --cwd frontend/ui-pablo test
+      - run: yarn install
+        working-directory: frontend/ui-pablo
+      - run: yarn test
+        working-directory: frontend/ui-pablo
