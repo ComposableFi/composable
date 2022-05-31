@@ -53,7 +53,10 @@ pub mod pallet {
 		},
 	};
 	use sp_runtime::traits::Zero;
-	use sp_std::{collections::{btree_map::BTreeMap, btree_set::BTreeSet}, vec::Vec};
+	use sp_std::{
+		collections::{btree_map::BTreeMap, btree_set::BTreeSet},
+		vec::Vec,
+	};
 
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
 	pub(crate) type NftInstanceId = u128;

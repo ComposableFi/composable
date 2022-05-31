@@ -69,7 +69,7 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 
-use codec::{Codec, Encode, EncodeLike};
+use codec::{Codec, Decode, Encode, EncodeLike, MaxEncodedLen};
 use frame_support::{
 	traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade},
 	weights::ConstantMultiplier,
@@ -682,6 +682,28 @@ impl utility::Config for Runtime {
 }
 
 parameter_types! {
+	pub MaxProxies : u32 = 4;
+	pub MaxPending : u32 = 32;
+	// just make dali simple to proxy
+	pub ProxyPrice: Balance = 0;
+}
+
+impl pallet_proxy::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type Currency = Assets;
+	type ProxyType = ();
+	type ProxyDepositBase = ProxyPrice;
+	type ProxyDepositFactor = ProxyPrice;
+	type MaxProxies = MaxProxies;
+	type WeightInfo = ();
+	type MaxPending = MaxPending;
+	type CallHasher = BlakeTwo256;
+	type AnnouncementDepositBase = ProxyPrice;
+	type AnnouncementDepositFactor = ProxyPrice;
+}
+
+parameter_types! {
 	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
 	pub const VotingPeriod: BlockNumber = 5 * DAYS;
 	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
@@ -815,6 +837,48 @@ impl assets::Config for Runtime {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 	type GovernanceRegistry = GovernanceRegistry;
+}
+
+impl pallet_nft::Config for Runtime {
+	type Event = Event;
+}
+
+#[derive(
+	PartialEq, Eq, Copy, Clone, Encode, Decode, MaxEncodedLen, TypeInfo, frame_support::RuntimeDebug,
+)]
+pub struct EpochDuration;
+impl frame_support::traits::Get<u64> for EpochDuration {
+	fn get() -> u64 {
+		5 * composable_traits::time::ONE_MINUTE
+	}
+}
+
+parameter_types! {
+	pub const StakingRewardsId: PalletId = PalletId(*b"stk_rwrd");
+	pub const MaxStakingPresets: u32  =  4;
+	pub const MaxRewardAssets: u32  =  4;
+	pub const ElementToProcessPerBlock: u32 = 16;
+}
+
+impl composable_traits::financial_nft::FinancialNftProtocol<AccountId> for Runtime {
+	type ClassId = composable_traits::financial_nft::NftClass;
+	type InstanceId = common::NftInstanceId;
+	type Version = composable_traits::financial_nft::NftVersion;
+	type NFTProvider = Nft;
+}
+
+impl pallet_staking_rewards::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type Assets = Assets;
+	type Time = Timestamp;
+	type GovernanceOrigin = EnsureRootOrHalfCouncil;
+	type PalletId = StakingRewardsId;
+	type MaxStakingPresets = MaxStakingPresets;
+	type MaxRewardAssets = MaxRewardAssets;
+	type EpochDuration = EpochDuration;
+	type ElementToProcessPerBlock = ElementToProcessPerBlock;
 }
 
 parameter_types! {
@@ -1072,6 +1136,7 @@ construct_runtime!(
 		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
 		Utility: utility::{Pallet, Call, Event} = 35,
 		Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
+		Proxy: pallet_proxy = 37,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
@@ -1097,6 +1162,8 @@ construct_runtime!(
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
+		Nft : pallet_nft = 67,
+		StakingRewards : pallet_staking_rewards = 68,
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}
 );
@@ -1166,11 +1233,14 @@ mod benches {
 		[mosaic, Mosaic]
 		[liquidations, Liquidations]
 		[bonded_finance, BondedFinance]
-		//FIXME: broken with dali [lending, Lending]
 		[lending, Lending]
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
 		[dex_router, DexRouter]
+		[pallet_proxy, Proxy]
+		// TODO: add after benchmarks added
+		//[pallet_nft, Nft]
+		//[pallet_staking_rewards, StakingRewards]
 	);
 }
 

@@ -64,6 +64,7 @@ timestamp = { package = "pallet-timestamp", git = "https://github.com/paritytech
 transaction-payment = { package = "pallet-transaction-payment", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22" }
 treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22" }
 utility = { package = "pallet-utility", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22" }
+pallet-proxy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22" }
 
 # local modules
 assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }
@@ -187,6 +188,7 @@ runtime-benchmarks = [
   "common/runtime-benchmarks",
   "pallet-staking-rewards/runtime-benchmarks",
   "pallet-nft/runtime-benchmarks",
+  "pallet-proxy/runtime-benchmarks",
 ]
 std = [
   "codec/std",
@@ -268,6 +270,7 @@ std = [
   "dex-router/std",
   "pallet-staking-rewards/std",
   "pallet-nft/std",
+  "pallet-proxy/std",
   
 ]
 wasm-builder = []
