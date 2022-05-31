@@ -26,6 +26,6 @@ sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkad
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 tendermint-proto = "0.23.7"
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "f1aafc9c2231dc3c78daeb7fcbb8ee0c7041df80", default-features = false }
-ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "f1aafc9c2231dc3c78daeb7fcbb8ee0c7041df80", default-features = false}
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "198440a62d4ccc88555cfef6253d6595319b88bf", default-features = false }
+ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "198440a62d4ccc88555cfef6253d6595319b88bf", default-features = false}
 ibc-runtime-api = { path = "../ibc-runtime-api" }
