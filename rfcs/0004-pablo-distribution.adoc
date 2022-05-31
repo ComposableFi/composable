@@ -1,4 +1,6 @@
 = Design Proposal: Pablo Fees & Staking Rewards Distribution
+:math:
+:stem:
 :toc:
 :toclevels: 4
 :sectnums:
@@ -142,6 +144,7 @@ g -up-> UC12
 ----
 skinparam component {
   backgroundColor<<exists>> LightGreen
+  backgroundColor<<remove>> Red
 }
 
 node "Pallet-Staking-Rewards\n(Pallet-Rewards?)" {
@@ -154,21 +157,17 @@ node "Pallet-Staking-Rewards\n(Pallet-Rewards?)" {
 }
 
 [fNFT Storage/Logic] <<exists>>
-[RewardDisbursementHook] <<exists>>
+[RewardDisbursementHook] <<remove>>
 
 node "Pallet-Pablo" {
     [Pool] --> StakingReward : transfer\ntrading fees\nfor PBLO stakers
-    [Pool] --> Staking : stake LP tokes
+    [Pool] --> Staking : stake LP tokens
     [Pool] --> [Pool] : accumulate LP\ntrading fees
     [FeeConfig] --> [Pool]
 }
 
 [Pool] <<exists>>
 
-node "Pallet-Vesting" {
-    StakingReward --> [VestedTransfers]: Make vested transfer
-    [RewardAccumulationHook] --> [Claimable]: Claim available\nrewards that\nhas vested
-}
 
 node "Governance" {
     [Configuration] --> [FeeConfig]
@@ -177,11 +176,6 @@ node "Governance" {
 ----
 
 TODO: What to do for part of protocol fees that should be transferred to treasury eventually as treasury does not stake it's PBLO?
-
-*Concerns*
-
-* I think the vested transfer approach would limit us from implementing variable rate rewards as we see in other similar dex incentive schemes. So I think it's best that we just keep the reward rate as a parameter for LP/PBLO/PICA.. staking for each asset type instead of doing vested transfers
-* The staking-rewards pallet with the current setup would be a bottleneck in doing 12h or less disbursements.
 
 === Pallet-Pablo
 
@@ -415,7 +409,7 @@ Now in order to allow redeeming the above fNFT, following data structures needs 
 
 
 [#_rewardaccumulationhook]
-==== (Needs modification) RewardAccumulationHook
+==== [Needs modification] RewardAccumulationHook
 
 Following algorithm is to added as part of the existing https://github.com/ComposableFi/composable/blob/main/frame/staking-rewards/src/lib.rs#L363[block hook] in staking rewards pallet. As it is only accumulating new rewards for an upcoming epoch, the code is proposed to be run inside a new state `State:AccumulatingRewards`.
 
