@@ -36,14 +36,13 @@ export default {
           owner: "AccountId32",
           pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
           amplification_coefficient: "u16",
-          fee: "Permill",
-          ownerFee: "Permill"
+          fee: "Permill"
         },
         ConstantProduct: {
           owner: "AccountId32",
           pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
           fee: "Permill",
-          ownerFee: "Permill"
+          baseWeight: "Permill"
         },
         LiquidityBootstrapping: {
           owner: "AccountId32",
@@ -54,7 +53,11 @@ export default {
             initial_weight: "Permill",
             final_weight: "Permill"
           },
-          fee: "Permill"
+          feeConfig: {
+            feeRate: "Permill",
+            ownerFeeRate: "Permill",
+            protocolFeeRate: "Permill"
+          }
         }
       }
     },
