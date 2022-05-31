@@ -126,7 +126,7 @@ pub struct StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards> {
 	pub reward_multiplier: Perbill,
 }
 
-/// implemented by instances which know their share of something biggers
+/// implemented by instances which know their share of something bigger
 pub trait Shares {
 	type Balance;
 	fn shares(&self) -> Self::Balance;
