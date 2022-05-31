@@ -193,15 +193,8 @@ pub mod pallet {
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
 	/// client_id , Height => Timestamp
-	pub type ClientUpdateTime<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		Vec<u8>,
-		Blake2_128Concat,
-		Vec<u8>,
-		Vec<u8>,
-		ValueQuery,
-	>;
+	pub type ClientUpdateTime<T: Config> =
+		StorageDoubleMap<_, Blake2_128Concat, Vec<u8>, Blake2_128Concat, Vec<u8>, u64, ValueQuery>;
 
 	#[pallet::storage]
 	#[allow(clippy::disallowed_types)]
@@ -329,17 +322,26 @@ pub mod pallet {
 				let height = impls::host_height::<T>();
 				let timestamp = T::TimeProvider::now().as_nanos().saturated_into::<u64>();
 				let ibc_cs = IbcConsensusState { timestamp, commitment_root: root.clone() };
-				let _ = HostConsensusStates::<T>::try_mutate::<_, (), _>(|val| {
-					// TODO: prune before inserting.
+				let res = HostConsensusStates::<T>::try_mutate::<_, &'static str, _>(|val| {
+					// Try inserting the new consensus state, if the bounded map has reached it's
+					// limit this operation is a noop and just returns an error containing the
+					// values that we tried inserting if not the value is inserted successfully
+					// without any error
 					if let Err((height, ibc_cs)) = val.try_insert(height, ibc_cs) {
-						let first_key = val.keys().cloned().next();
-						if let Some(key) = first_key {
-							val.remove(&key).ok_or(())?;
-							val.try_insert(height, ibc_cs).map_err(|_| ())?;
-						}
+						// If map is full, remove the oldest consensus state
+						// Get the key to the oldest state
+						let key = val.keys().cloned().next().ok_or_else(|| "No keys in map")?;
+						// Prune the oldest consensus state.
+						val.remove(&key).ok_or_else(|| "Unable to prune map")?;
+						// Insert the new consensus state.
+						val.try_insert(height, ibc_cs)
+							.map_err(|_| "Failed to insert new consensus state")?;
 					}
 					Ok(())
 				});
+				if res.is_err() {
+					log::error!("[pallet_ibc_on_finalize]: Failed to insert new consensus state");
+				}
 				let log = DigestItem::Consensus(IBC_DIGEST_ID, root);
 				<frame_system::Pallet<T>>::deposit_log(log);
 			}
@@ -402,7 +404,6 @@ pub mod pallet {
 		}
 		#[pallet::weight(0)]
 		#[frame_support::transactional]
-		#[allow(clippy::disallowed_methods)]
 		pub fn initiate_connection(
 			origin: OriginFor<T>,
 			params: ConnectionParams,
@@ -440,7 +441,7 @@ pub mod pallet {
 				signer: Signer::new(""),
 			}
 			.encode_vec()
-			.unwrap(); // Unwrap will not fail, this message is valid
+			.map_err(|_| Error::<T>::ProcessingError)?;
 			let msg = ibc_proto::google::protobuf::Any {
 				type_url: CONNECTION_OPEN_INIT_TYPE_URL.to_string(),
 				value,

@@ -78,8 +78,9 @@ where
 			connection_end
 		);
 
-		let data =
-			connection_end.encode_vec().map_err(|_| ICS03Error::implementation_specific())?;
+		let data = connection_end.encode_vec().map_err(|e| {
+			ICS03Error::implementation_specific(format!("[store_connection]: {}", e.to_string()))
+		})?;
 		<Connections<T>>::insert(connection_id.as_bytes().to_vec(), data);
 
 		let temp = ConnectionReader::connection_end(self, &connection_id);

@@ -24,7 +24,7 @@ impl HostFunctionsProvider for HostFunctions {
 	}
 
 	fn ed25519_recover(_signature: &[u8; 64], _value: &[u8; 32]) -> Option<Vec<u8>> {
-		todo!()
+		unimplemented!()
 	}
 
 	fn verify_membership_trie_proof(

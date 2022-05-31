@@ -52,15 +52,31 @@ where
 			let mut result = vec![];
 
 			for item in port_and_channel_id {
-				let port_id =
-					String::from_utf8(item.0).map_err(|_| ICS04Error::implementation_specific())?;
-				let port_id = PortId::from_str(port_id.as_str())
-					.map_err(|_| ICS04Error::implementation_specific())?;
+				let port_id = String::from_utf8(item.0).map_err(|e| {
+					ICS04Error::implementation_specific(format!(
+						"[connection_channels]: {}",
+						e.to_string()
+					))
+				})?;
+				let port_id = PortId::from_str(port_id.as_str()).map_err(|e| {
+					ICS04Error::implementation_specific(format!(
+						"[connection_channels]: {}",
+						e.to_string()
+					))
+				})?;
 
-				let channel_id =
-					String::from_utf8(item.1).map_err(|_| ICS04Error::implementation_specific())?;
-				let channel_id = ChannelId::from_str(channel_id.as_str())
-					.map_err(|_| ICS04Error::implementation_specific())?;
+				let channel_id = String::from_utf8(item.1).map_err(|e| {
+					ICS04Error::implementation_specific(format!(
+						"[connection_channels]: {}",
+						e.to_string()
+					))
+				})?;
+				let channel_id = ChannelId::from_str(channel_id.as_str()).map_err(|e| {
+					ICS04Error::implementation_specific(format!(
+						"[connection_channels]: {}",
+						e.to_string()
+					))
+				})?;
 
 				result.push((port_id, channel_id));
 			}
@@ -143,8 +159,12 @@ where
 		if <PacketReceipt<T>>::contains_key((key.0.as_bytes(), key.1.to_string().as_bytes(), seq)) {
 			let data =
 				<PacketReceipt<T>>::get((key.0.as_bytes(), key.1.to_string().as_bytes(), seq));
-			let data =
-				String::from_utf8(data).map_err(|_| ICS04Error::implementation_specific())?;
+			let data = String::from_utf8(data).map_err(|e| {
+				ICS04Error::implementation_specific(format!(
+					"[get_packet_receipt]: {}",
+					e.to_string()
+				))
+			})?;
 			let data = match data.as_ref() {
 				"Ok" => Receipt::Ok,
 				_ => return Err(ICS04Error::packet_receipt_not_found(seq.into())),
@@ -193,14 +213,15 @@ where
 		client_id: &ClientId,
 		height: Height,
 	) -> Result<Timestamp, ICS04Error> {
-		let height = height.encode_vec().map_err(|_| ICS04Error::implementation_specific())?;
+		let height = height.encode_vec().map_err(|e| {
+			ICS04Error::implementation_specific(format!("[client_update_time]: {}", e.to_string()))
+		})?;
 		let client_id = client_id.as_bytes().to_vec();
 		let timestamp = ClientUpdateTime::<T>::get(&client_id, &height);
 
-		Timestamp::from_nanoseconds(
-			u64::decode(&mut &*timestamp).map_err(|_| ICS04Error::implementation_specific())?,
-		)
-		.map_err(|_| ICS04Error::implementation_specific())
+		Timestamp::from_nanoseconds(timestamp).map_err(|e| {
+			ICS04Error::implementation_specific(format!("[client_update_time]: {}", e.to_string()))
+		})
 	}
 
 	fn client_update_height(
@@ -208,11 +229,21 @@ where
 		client_id: &ClientId,
 		height: Height,
 	) -> Result<Height, ICS04Error> {
-		let height = height.encode_vec().map_err(|_| ICS04Error::implementation_specific())?;
+		let height = height.encode_vec().map_err(|e| {
+			ICS04Error::implementation_specific(format!(
+				"[client_update_height]: {}",
+				e.to_string()
+			))
+		})?;
 		let client_id = client_id.as_bytes().to_vec();
 		let host_height = ClientUpdateHeight::<T>::get(&client_id, &height);
 
-		Height::decode_vec(&host_height).map_err(|_| ICS04Error::implementation_specific())
+		Height::decode_vec(&host_height).map_err(|e| {
+			ICS04Error::implementation_specific(format!(
+				"[client_update_height]: {}",
+				e.to_string()
+			))
+		})
 	}
 
 	/// Returns a counter on the number of channel ids have been created thus far.
@@ -349,8 +380,9 @@ where
 		port_channel_id: (PortId, ChannelId),
 		channel_end: &ChannelEnd,
 	) -> Result<(), ICS04Error> {
-		let channel_end =
-			channel_end.encode_vec().map_err(|_| ICS04Error::implementation_specific())?;
+		let channel_end = channel_end.encode_vec().map_err(|e| {
+			ICS04Error::implementation_specific(format!("[store_channel]: {}", e.to_string()))
+		})?;
 
 		// store channels key-value
 		<Channels<T>>::insert(

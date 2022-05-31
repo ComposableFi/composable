@@ -28,8 +28,8 @@ sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch
 balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
 parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.22" }
 
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "635ff9812ab06f4475768c42eccb07f7daacd642", default-features = false }
-ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "635ff9812ab06f4475768c42eccb07f7daacd642", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "f1aafc9c2231dc3c78daeb7fcbb8ee0c7041df80", default-features = false }
+ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "f1aafc9c2231dc3c78daeb7fcbb8ee0c7041df80", default-features = false }
 tendermint-proto = { version = "0.23.7", default-features = false }
 tendermint = { version = "0.23.7", optional = true, default-features = false }
 hex-literal = { version = "0.3.4", optional = true }
@@ -47,7 +47,7 @@ serde = { version = "1.0" }
 ics23 = { version = "=0.8.0-alpha" }
 sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 chrono = "0.4.19"
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "635ff9812ab06f4475768c42eccb07f7daacd642", features = ["mocks"] }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "f1aafc9c2231dc3c78daeb7fcbb8ee0c7041df80", features = ["mocks"] }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 prost = { version = "0.10" }
 tendermint = { version = "0.23.7" }

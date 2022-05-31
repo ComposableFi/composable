@@ -28,8 +28,9 @@ where
 
 		if <Clients<T>>::contains_key(client_id.as_bytes()) {
 			let data = <Clients<T>>::get(client_id.as_bytes());
-			let data =
-				String::from_utf8(data).map_err(|_| ICS02Error::implementation_specific())?;
+			let data = String::from_utf8(data).map_err(|e| {
+				ICS02Error::implementation_specific(format!("[client_type]: {}", e.to_string()))
+			})?;
 			match ClientType::from_str(&data) {
 				Err(_err) => Err(ICS02Error::unknown_client_type(data.to_string())),
 				Ok(val) => {
@@ -64,7 +65,9 @@ where
 		);
 
 		let native_height = height;
-		let height = height.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
+		let height = height.encode_vec().map_err(|e| {
+			ICS02Error::implementation_specific(format!("[consensus_state]: {}", e.to_string()))
+		})?;
 		let value = <ConsensusStates<T>>::get(client_id.as_bytes(), height);
 
 		let any_consensus_state = AnyConsensusState::decode_vec(&*value)
@@ -85,10 +88,18 @@ where
 		let mut cs_states = ConsensusStates::<T>::iter_key_prefix(client_id.clone())
 			.map(|height| {
 				let cs_state = ConsensusStates::<T>::get(client_id.clone(), height.clone());
-				let height = Height::decode_vec(&height)
-					.map_err(|_| ICS02Error::implementation_specific())?;
-				let cs = AnyConsensusState::decode_vec(&cs_state)
-					.map_err(|_| ICS02Error::implementation_specific())?;
+				let height = Height::decode_vec(&height).map_err(|e| {
+					ICS02Error::implementation_specific(format!(
+						"[next_consensus_state]: {}",
+						e.to_string()
+					))
+				})?;
+				let cs = AnyConsensusState::decode_vec(&cs_state).map_err(|e| {
+					ICS02Error::implementation_specific(format!(
+						"[next_consensus_state]: {}",
+						e.to_string()
+					))
+				})?;
 				Ok((height, cs))
 			})
 			.collect::<Result<Vec<_>, ICS02Error>>()?;
@@ -113,10 +124,18 @@ where
 		let mut cs_states = ConsensusStates::<T>::iter_key_prefix(client_id.clone())
 			.map(|height| {
 				let cs_state = ConsensusStates::<T>::get(client_id.clone(), height.clone());
-				let height = Height::decode_vec(&height)
-					.map_err(|_| ICS02Error::implementation_specific())?;
-				let cs = AnyConsensusState::decode_vec(&cs_state)
-					.map_err(|_| ICS02Error::implementation_specific())?;
+				let height = Height::decode_vec(&height).map_err(|e| {
+					ICS02Error::implementation_specific(format!(
+						"[prev_consensus_state]: {}",
+						e.to_string()
+					))
+				})?;
+				let cs = AnyConsensusState::decode_vec(&cs_state).map_err(|e| {
+					ICS02Error::implementation_specific(format!(
+						"[prev_consensus_state]: {}",
+						e.to_string()
+					))
+				})?;
 				Ok((height, cs))
 			})
 			.collect::<Result<Vec<_>, ICS02Error>>()?;
@@ -138,8 +157,8 @@ where
 		let time = T::TimeProvider::now();
 		let ts = Timestamp::from_nanoseconds(time.as_nanos().saturated_into::<u64>())
 			.map_err(|e| panic!("{:?}, caused by {:?} from pallet timestamp_pallet", e, time));
-		// If timestamp is invalid after the genesis block then there's a major error in pallet
-		// timestamp
+		// Should not panic, if timestamp is invalid after the genesis block then there's a major
+		// error in pallet timestamp
 		ts.unwrap()
 	}
 
@@ -152,24 +171,32 @@ where
 
 	fn host_consensus_state(&self, height: Height) -> Result<AnyConsensusState, ICS02Error> {
 		let bounded_map = HostConsensusStates::<T>::get();
-		let local_state = bounded_map
-			.get(&height.revision_height)
-			.ok_or_else(ICS02Error::implementation_specific)?;
+		let local_state = bounded_map.get(&height.revision_height).ok_or_else(|| {
+			ICS02Error::implementation_specific(format!(
+				"[host_consensus_state]: consensus state not found for host at height {}",
+				height
+			))
+		})?;
 		let timestamp = Timestamp::from_nanoseconds(local_state.timestamp)
-			.map_err(|_| ICS02Error::implementation_specific())?
+			.map_err(|e| {
+				ICS02Error::implementation_specific(format!(
+					"[host_consensus_state]: {}",
+					e.to_string()
+				))
+			})?
 			.into_tm_time()
-			.ok_or_else(ICS02Error::implementation_specific)?;
+			.ok_or_else(|| {
+				ICS02Error::implementation_specific(
+					"[host_consensus_state]: Could not convert timestamp into tendermint time"
+						.to_string(),
+				)
+			})?;
 		let consensus_state = ibc::clients::ics11_beefy::consensus_state::ConsensusState {
 			timestamp,
 			root: local_state.commitment_root.clone().into(),
 		};
 
 		Ok(AnyConsensusState::Beefy(consensus_state))
-	}
-
-	// TODO:
-	fn pending_host_consensus_state(&self) -> Result<AnyConsensusState, ICS02Error> {
-		Err(ICS02Error::implementation_specific())
 	}
 
 	fn client_counter(&self) -> Result<u64, ICS02Error> {
@@ -214,7 +241,9 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 			client_state
 		);
 
-		let data = client_state.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
+		let data = client_state.encode_vec().map_err(|e| {
+			ICS02Error::implementation_specific(format!("[store_client_state]: {}", e.to_string()))
+		})?;
 		// store client states key-value
 		<ClientStates<T>>::insert(client_id.as_bytes().to_vec(), data);
 
@@ -230,10 +259,18 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		log::trace!("in client : [store_consensus_state] >> client_id: {:?}, height = {:?}, consensus_state = {:?}",
 			client_id, height, consensus_state);
 
-		let height = height.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
-		let data = consensus_state
-			.encode_vec()
-			.map_err(|_| ICS02Error::implementation_specific())?;
+		let height = height.encode_vec().map_err(|e| {
+			ICS02Error::implementation_specific(format!(
+				"[store_consensus_state]: {}",
+				e.to_string()
+			))
+		})?;
+		let data = consensus_state.encode_vec().map_err(|e| {
+			ICS02Error::implementation_specific(format!(
+				"[store_consensus_state]: {}",
+				e.to_string()
+			))
+		})?;
 		ConsensusStates::<T>::insert(client_id.as_bytes().to_vec(), height, data);
 		Ok(())
 	}
@@ -244,8 +281,10 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		height: Height,
 		timestamp: Timestamp,
 	) -> Result<(), ICS02Error> {
-		let height = height.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
-		let timestamp = timestamp.nanoseconds().encode();
+		let height = height.encode_vec().map_err(|e| {
+			ICS02Error::implementation_specific(format!("[store_update_time]: {}", e.to_string()))
+		})?;
+		let timestamp = timestamp.nanoseconds();
 		let client_id = client_id.as_bytes().to_vec();
 		ClientUpdateTime::<T>::insert(client_id, height, timestamp);
 		Ok(())
@@ -257,9 +296,12 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		height: Height,
 		host_height: Height,
 	) -> Result<(), ICS02Error> {
-		let height = height.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
-		let host_height =
-			host_height.encode_vec().map_err(|_| ICS02Error::implementation_specific())?;
+		let height = height.encode_vec().map_err(|e| {
+			ICS02Error::implementation_specific(format!("[store_update_height]: {}", e.to_string()))
+		})?;
+		let host_height = host_height.encode_vec().map_err(|e| {
+			ICS02Error::implementation_specific(format!("[store_update_height]: {}", e.to_string()))
+		})?;
 		let client_id = client_id.as_bytes().to_vec();
 		ClientUpdateHeight::<T>::insert(client_id, height, host_height);
 		Ok(())
