@@ -14,7 +14,10 @@ pub mod pallet {
 	//                                   Imports and Dependencies
 	// -------------------------------------------------------------------------------------------
 	use codec::{Codec, FullCodec};
-	use composable_traits::{instrumental::InstrumentalProtocolStrategy, vault::StrategicVault};
+	use composable_traits::{
+		instrumental::InstrumentalProtocolStrategy,
+		vault::{FundsAvailability, StrategicVault},
+	};
 	use frame_support::{
 		dispatch::DispatchResult, pallet_prelude::*, storage::bounded_btree_set::BoundedBTreeSet,
 		transactional, PalletId,
@@ -209,7 +212,20 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		#[transactional]
-		fn do_rebalance(_vault_id: &T::VaultId) -> DispatchResult {
+		fn do_rebalance(vault_id: &T::VaultId) -> DispatchResult {
+			// TODO(saruman9): should we somehow check the origin? What about permissions?
+			let task = T::Vault::available_funds(vault_id, &Self::account_id())?;
+			// TODO(saruman9): check, that Vault is associated
+			let action = match task {
+				FundsAvailability::Withdrawable(balance) => {
+					todo!();
+				},
+				FundsAvailability::Depositable(balance) => todo!(),
+				FundsAvailability::MustLiquidate => {
+					// TODO(saruman9): should we transfer all assets to Vault from strategy?
+					todo!();
+				},
+			};
 			Ok(())
 		}
 	}
