@@ -673,7 +673,6 @@ where
 		Ok(())
 	}
 
-	#[allow(clippy::disallowed_methods)]
 	fn open_channel(
 		port_id: PortId,
 		channel_end: ChannelEnd,
@@ -682,10 +681,10 @@ where
 		let channel_counter =
 			ctx.channel_counter().map_err(|_| IbcHandlerError::ChannelInitError)?;
 		let channel_id = ChannelId::new(channel_counter);
-		// This unwrap here cannot fail
+		// Signer does not matter in this case
 		let value = MsgChannelOpenInit { port_id, channel: channel_end, signer: Signer::new("") }
 			.encode_vec()
-			.unwrap();
+			.map_err(|_| IbcHandlerError::ChannelInitError)?;
 		let msg = ibc_proto::google::protobuf::Any {
 			type_url: CHANNEL_OPEN_INIT_TYPE_URL.to_string(),
 			value,

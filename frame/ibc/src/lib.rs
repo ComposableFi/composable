@@ -334,9 +334,9 @@ pub mod pallet {
 					if let Err((height, ibc_cs)) = val.try_insert(height, ibc_cs) {
 						// If map is full, remove the oldest consensus state
 						// Get the key to the oldest state
-						let key = val.keys().cloned().next().ok_or_else(|| "No keys in map")?;
+						let key = val.keys().cloned().next().ok_or("No keys in map")?;
 						// Prune the oldest consensus state.
-						val.remove(&key).ok_or_else(|| "Unable to prune map")?;
+						val.remove(&key).ok_or("Unable to prune map")?;
 						// Insert the new consensus state.
 						val.try_insert(height, ibc_cs)
 							.map_err(|_| "Failed to insert new consensus state")?;

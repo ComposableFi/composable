@@ -79,7 +79,7 @@ where
 		);
 
 		let data = connection_end.encode_vec().map_err(|e| {
-			ICS03Error::implementation_specific(format!("[store_connection]: {}", e.to_string()))
+			ICS03Error::implementation_specific(format!("[store_connection]: {}", e))
 		})?;
 		<Connections<T>>::insert(connection_id.as_bytes().to_vec(), data);
 

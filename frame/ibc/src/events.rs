@@ -4,6 +4,9 @@ use ibc::events::IbcEvent as RawIbcEvent;
 #[derive(
 	Encode, Decode, Clone, PartialEq, Eq, frame_support::RuntimeDebug, scale_info::TypeInfo,
 )]
+/// IBC events
+// Using Vec<u8> instead of String because Encode and Decode are not implemented for Strings in
+// no-std environment.
 pub enum IbcEvent {
 	/// New block
 	NewBlock { revision_height: u64, revision_number: u64 },
@@ -38,28 +41,28 @@ pub enum IbcEvent {
 		revision_height: u64,
 		revision_number: u64,
 		port_id: Vec<u8>,
-		channel_id: Vec<u8>,
+		channel_id: Option<Vec<u8>>,
 	},
 	/// Channel open confirm
 	OpenConfirmChannel {
 		revision_height: u64,
 		revision_number: u64,
 		port_id: Vec<u8>,
-		channel_id: Vec<u8>,
+		channel_id: Option<Vec<u8>>,
 	},
 	/// Channel try open
 	OpenTryChannel {
 		revision_height: u64,
 		revision_number: u64,
 		port_id: Vec<u8>,
-		channel_id: Vec<u8>,
+		channel_id: Option<Vec<u8>>,
 	},
 	/// Open ack channel
 	OpenAckChannel {
 		revision_height: u64,
 		revision_number: u64,
 		port_id: Vec<u8>,
-		channel_id: Vec<u8>,
+		channel_id: Option<Vec<u8>>,
 	},
 	/// Channel close init
 	CloseInitChannel {
@@ -69,7 +72,7 @@ pub enum IbcEvent {
 		channel_id: Vec<u8>,
 	},
 	/// Channel close confirm
-	CloseConfirmChannel { revision_height: u64, revision_number: u64, channel_id: Vec<u8> },
+	CloseConfirmChannel { revision_height: u64, revision_number: u64, channel_id: Option<Vec<u8>> },
 	/// Receive packet
 	ReceivePacket {
 		revision_height: u64,
@@ -182,49 +185,33 @@ impl From<RawIbcEvent> for IbcEvent {
 			RawIbcEvent::OpenInitChannel(ev) => IbcEvent::OpenInitChannel {
 				revision_height: ev.height().revision_height,
 				revision_number: ev.height().revision_number,
-				channel_id: {
-					if let Some(channel_id) = ev.channel_id() {
-						channel_id.to_string().as_bytes().to_vec()
-					} else {
-						"".as_bytes().to_vec()
-					}
-				},
+				channel_id: ev
+					.channel_id()
+					.map(|channel_id| channel_id.to_string().as_bytes().to_vec()),
 				port_id: ev.port_id().as_bytes().to_vec(),
 			},
 			RawIbcEvent::OpenTryChannel(ev) => IbcEvent::OpenTryChannel {
 				revision_height: ev.height().revision_height,
 				revision_number: ev.height().revision_number,
-				channel_id: {
-					if let Some(channel_id) = ev.channel_id() {
-						channel_id.to_string().as_bytes().to_vec()
-					} else {
-						"".as_bytes().to_vec()
-					}
-				},
+				channel_id: ev
+					.channel_id()
+					.map(|channel_id| channel_id.to_string().as_bytes().to_vec()),
 				port_id: ev.port_id().as_bytes().to_vec(),
 			},
 			RawIbcEvent::OpenAckChannel(ev) => IbcEvent::OpenAckChannel {
 				revision_height: ev.height().revision_height,
 				revision_number: ev.height().revision_number,
-				channel_id: {
-					if let Some(channel_id) = ev.channel_id() {
-						channel_id.to_string().as_bytes().to_vec()
-					} else {
-						"".as_bytes().to_vec()
-					}
-				},
+				channel_id: ev
+					.channel_id()
+					.map(|channel_id| channel_id.to_string().as_bytes().to_vec()),
 				port_id: ev.port_id().as_bytes().to_vec(),
 			},
 			RawIbcEvent::OpenConfirmChannel(ev) => IbcEvent::OpenConfirmChannel {
 				revision_height: ev.height().revision_height,
 				revision_number: ev.height().revision_number,
-				channel_id: {
-					if let Some(channel_id) = ev.channel_id() {
-						channel_id.to_string().as_bytes().to_vec()
-					} else {
-						"".as_bytes().to_vec()
-					}
-				},
+				channel_id: ev
+					.channel_id()
+					.map(|channel_id| channel_id.to_string().as_bytes().to_vec()),
 				port_id: ev.port_id().as_bytes().to_vec(),
 			},
 			RawIbcEvent::CloseInitChannel(ev) => IbcEvent::CloseInitChannel {
@@ -236,13 +223,9 @@ impl From<RawIbcEvent> for IbcEvent {
 			RawIbcEvent::CloseConfirmChannel(ev) => IbcEvent::CloseConfirmChannel {
 				revision_height: ev.height().revision_height,
 				revision_number: ev.height().revision_number,
-				channel_id: {
-					if let Some(channel_id) = ev.channel_id() {
-						channel_id.to_string().as_bytes().to_vec()
-					} else {
-						"".as_bytes().to_vec()
-					}
-				},
+				channel_id: ev
+					.channel_id()
+					.map(|channel_id| channel_id.to_string().as_bytes().to_vec()),
 			},
 			RawIbcEvent::SendPacket(ev) => IbcEvent::SendPacket {
 				revision_height: ev.height().revision_height,

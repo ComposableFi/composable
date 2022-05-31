@@ -53,29 +53,17 @@ where
 
 			for item in port_and_channel_id {
 				let port_id = String::from_utf8(item.0).map_err(|e| {
-					ICS04Error::implementation_specific(format!(
-						"[connection_channels]: {}",
-						e.to_string()
-					))
+					ICS04Error::implementation_specific(format!("[connection_channels]: {}", e))
 				})?;
 				let port_id = PortId::from_str(port_id.as_str()).map_err(|e| {
-					ICS04Error::implementation_specific(format!(
-						"[connection_channels]: {}",
-						e.to_string()
-					))
+					ICS04Error::implementation_specific(format!("[connection_channels]: {}", e))
 				})?;
 
 				let channel_id = String::from_utf8(item.1).map_err(|e| {
-					ICS04Error::implementation_specific(format!(
-						"[connection_channels]: {}",
-						e.to_string()
-					))
+					ICS04Error::implementation_specific(format!("[connection_channels]: {}", e))
 				})?;
 				let channel_id = ChannelId::from_str(channel_id.as_str()).map_err(|e| {
-					ICS04Error::implementation_specific(format!(
-						"[connection_channels]: {}",
-						e.to_string()
-					))
+					ICS04Error::implementation_specific(format!("[connection_channels]: {}", e))
 				})?;
 
 				result.push((port_id, channel_id));
@@ -160,10 +148,7 @@ where
 			let data =
 				<PacketReceipt<T>>::get((key.0.as_bytes(), key.1.to_string().as_bytes(), seq));
 			let data = String::from_utf8(data).map_err(|e| {
-				ICS04Error::implementation_specific(format!(
-					"[get_packet_receipt]: {}",
-					e.to_string()
-				))
+				ICS04Error::implementation_specific(format!("[get_packet_receipt]: {}", e))
 			})?;
 			let data = match data.as_ref() {
 				"Ok" => Receipt::Ok,
@@ -214,13 +199,13 @@ where
 		height: Height,
 	) -> Result<Timestamp, ICS04Error> {
 		let height = height.encode_vec().map_err(|e| {
-			ICS04Error::implementation_specific(format!("[client_update_time]: {}", e.to_string()))
+			ICS04Error::implementation_specific(format!("[client_update_time]: {}", e))
 		})?;
 		let client_id = client_id.as_bytes().to_vec();
 		let timestamp = ClientUpdateTime::<T>::get(&client_id, &height);
 
 		Timestamp::from_nanoseconds(timestamp).map_err(|e| {
-			ICS04Error::implementation_specific(format!("[client_update_time]: {}", e.to_string()))
+			ICS04Error::implementation_specific(format!("[client_update_time]: {}", e))
 		})
 	}
 
@@ -230,19 +215,13 @@ where
 		height: Height,
 	) -> Result<Height, ICS04Error> {
 		let height = height.encode_vec().map_err(|e| {
-			ICS04Error::implementation_specific(format!(
-				"[client_update_height]: {}",
-				e.to_string()
-			))
+			ICS04Error::implementation_specific(format!("[client_update_height]: {}", e))
 		})?;
 		let client_id = client_id.as_bytes().to_vec();
 		let host_height = ClientUpdateHeight::<T>::get(&client_id, &height);
 
 		Height::decode_vec(&host_height).map_err(|e| {
-			ICS04Error::implementation_specific(format!(
-				"[client_update_height]: {}",
-				e.to_string()
-			))
+			ICS04Error::implementation_specific(format!("[client_update_height]: {}", e))
 		})
 	}
 
@@ -380,9 +359,9 @@ where
 		port_channel_id: (PortId, ChannelId),
 		channel_end: &ChannelEnd,
 	) -> Result<(), ICS04Error> {
-		let channel_end = channel_end.encode_vec().map_err(|e| {
-			ICS04Error::implementation_specific(format!("[store_channel]: {}", e.to_string()))
-		})?;
+		let channel_end = channel_end
+			.encode_vec()
+			.map_err(|e| ICS04Error::implementation_specific(format!("[store_channel]: {}", e)))?;
 
 		// store channels key-value
 		<Channels<T>>::insert(
