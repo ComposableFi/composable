@@ -94,21 +94,29 @@ g -up-> UC12
 
 === Pablo Liquidity Providers
 
-. LPs MUST be able to stake their LP tokens to earn PBLO rewards.
+. LPs MUST be able to stake their LP tokens to earn rewards allocated for a particular pool.
+.. Rewards can be in terms of PBLO, PICA or any other tokens.
+.. Same pool can receive multiple types of tokens as rewards.
 . The system MUST support accumulating the LP share of Pablo trading fees.
-. Pablo trading fees(LP fee part) MUST be disbursed according to LP token share of each LP.
+. Pablo trading fees(LP fee part) MUST be disbursed according to LP token share of each LP. Fees are accumulated towards increasing liquidity in a pool while allowing LPs to redeem the fee share with their LP tokens at a preferred time.
 
 === PBLO Stakers
 
-. System MUST allow staking of PBLO.
+. System MUST allow staking of PBLO. This must be implemented through the fNFT mechanism with multiple time period unlocks being possible for users.
 . The system MUST accumulate the rewards share for PBLO holders who stake PBLO token, out of the PBLO supply allocated for them.
 . The system MUST support accumulating the (stakers) reward part of the Pablo trading fees.
+. The system must support rewards being distributed on granular basis - e.g every 6 or 12 hours.
+. The users MUST be able to claim the rewards once distributed.
+. The system SHOULD support rewards in the form of fNFTs.
 
 === PICA Stakers
 
-. System MUST allow staking of PICA.
+. System MUST allow staking of PICA. This must be implemented through the fNFT mechanism with multiple time period unlocks being possible for users.
 . The system MUST accumulate the rewards share for PICA holders who stake PICA token, out of the PICA supply allocated for them.
 . The system MUST support accumulating any token rewards other than PICA for PICA stakers.
+. The system must support rewards being distributed on granular basis - e.g every 6 or 12 hours.
+. The users MUST be able to claim the rewards once distributed.
+. The system SHOULD support rewards in the form of fNFTs.
 
 === Pablo Governance
 . Governance MUST be able to set the PBLO token reward allocation.
@@ -137,9 +145,7 @@ skinparam component {
 }
 
 node "Pallet-Staking-Rewards\n(Pallet-Rewards?)" {
-    StakingReward - [Reward Storage/Logic]
-    [RewardsConfig]
-    [RewardsConfig] --> [Reward Storage/Logic]
+    StakingReward - [Reward Logic]
     Staking - [fNFT Storage/Logic]
     Node "BatchProcess" {
         [RewardDisbursementHook]
@@ -147,27 +153,30 @@ node "Pallet-Staking-Rewards\n(Pallet-Rewards?)" {
     }
 }
 
-[Reward Storage/Logic] <<exists>>
 [fNFT Storage/Logic] <<exists>>
 [RewardDisbursementHook] <<exists>>
 
 node "Pallet-Pablo" {
-    [Pool] --> StakingReward : transfer\ntrading fees\n(for LPs and PBLO stakers)
+    [Pool] --> StakingReward : transfer\ntrading fees\nfor PBLO stakers
     [Pool] --> Staking : stake LP tokes
+    [Pool] --> [Pool] : accumulate LP\ntrading fees
     [FeeConfig] --> [Pool]
 }
 
 [Pool] <<exists>>
 
+node "Pallet-Vesting" {
+    StakingReward --> [VestedTransfers]: Make vested transfer
+    [RewardAccumulationHook] --> [Claimable]: Claim available\nrewards that\nhas vested
+}
+
 node "Governance" {
-    [Configuration] --> [RewardsConfig]
     [Configuration] --> [FeeConfig]
+    [Treasury]--> StakingReward: Transfer LP, PBLO\nor other token rewards
 }
 ----
 
-TODO: Suggest rename of staking-reward pallet to pallet-earn or pallet-rewards.
-
-TODO: What to do for part of protocol fees that should be transferred to treasury eventually?
+TODO: What to do for part of protocol fees that should be transferred to treasury eventually as treasury does not stake it's PBLO?
 
 === Pallet-Pablo
 
@@ -192,7 +201,7 @@ class FeeConfig {
 Given this,
 ----
 fee = // calculation depends on the pool type: based on the fee_rate
-owner_fee = fee * owner_fee_rate;
+owner_fee = fee * owner_fee_rate * (1 - protocol_fee_rate);
 protocol_fee = owner_fee * protocol_fee_rate;
 ----
 For all pools launched at the Picasso launch following values would be set for these configs
@@ -203,95 +212,47 @@ protocol_fee_rate = 100% // all owner fees goes to composable to be distributed 
 
 ==== LP Trading Fee Distribution
 
-Pablo needs to send the accumulated fees from trading to an account to be distributed asynchronously. It is natural to see this distribution working in a similar way to how staking rewards pallet distributes fNFT rewards. The idea behind this section is to reuse staking rewards pallet logic in distributing trading fees earnings to LPs.
+LPs trading fees are calculated and kept as part of the pool liquidity in Pablo. When LPs remove liquidity from the pool the trading fees are automatically redeemed according their pool LP ratio, check https://hackmd.io/@HaydenAdams/HJ9jLsfTz#Fee-Structure[reference]. This results in trading fee share being diluted overtime for smaller pools as follows.
 
-[#_lp_fnft_configuration]
-===== LP fNFT Configuration
+[stem]
+++++
+"After " n " trades and " m " liquidity additions,"
 
-[plantuml,images/pablo-LP-fNFT-config,png]
-----
-start
-->after pablo pool creation,
-LP token: LPT,
-base token: BASE,
-quote token: QUOTE;
-:staking_rewards::configure(
-...
-asset: LPT,
-configuration: (
-    duration_presets: NO_END,
-    reward_assets: [BASE, QUOTE]),
-    early_unstake_penaly: 0
-);
-stop
-----
+"trading fees" = sum a_n
 
-The interface for the configurations does not currently exist on staking_rewards pallet, hence it has to be implemented.
+"total liquidity" = sum l_m
 
-[#_lp_fnft_creation_when_receiving_lp_tokens_for_adding_liquidity]
-===== LP fNFT Creation When Receiving LP Tokens for Adding Liquidity
+"fees and liquidity returned for an LP amount l" = l / (sum l_m) * (sum l_m + sum a_n)
 
-[plantuml,images/pablo-fNFT-add-liquidity,png]
-----
-start
-->add_liquidty, mint_lp=x, token=LPT // LP tokens;
-:staking_rewards::stake(
-asset=LPT,
-from=lp_account_id,
-amount=x,
-duration=NO_END,
-keep_alive=false
-);
-stop
-----
+= l + l / (sum l_m) * sum a_n
 
-[#_lp_fnft_resizing_or_unstaking_when_burning_lp_tokens_for_removing_liquidity]
-===== LP fNFT Resizing or Unstaking When Burning LP Tokens for Removing Liquidity
+"trading fees received" = x = l / (sum l_m) * sum a_n
 
-[plantuml,images/pablo-fNFT-remove-liquidity,png]
-----
-start
-->remove_liquidity, burnt_lp=x, token=LPT // LP tokens;
-if (fNFT.stake == x) then (yes)
-:staking_rewards::unstake(
-instance_id=fNFT_Id
-to=lp_account_id
-);
-else (no)
-:staking_rewards::resize(???);
-endif
-stop
-----
+"When pool size " sum l_m " increases the amount of trading fees received " x " reduces for a particular LP position."
 
-Resizing interface does not exist, it is expected to be added soon.
+"For large pool sizes of " sum l_m " (steady state) this effect is negligible, hence it's a good enough strategy to distribute fees."
 
-[#_trading_fee_distribution]
-===== Trading Fee Distribution
+"But if required this effect can be negated by increasing the trading fee by a " delta a_n " while at the same time subtracting it from the total fees paid out already to liquidity providers as follows,"
 
-This reuses existing fNFT logic to distribute fees accrued for LPs.
+"New trading fee " = x_(adjusted) = l / (sum l_m) * (sum a_n + delta a_n)
 
-[plantuml,images/pablo-fNFT-fee-distro,png]
-----
-start
-->after Pablo swap,
-fee=x,
-fee token=QUOTE,
-LP token = LPT,
-from = transaction_origin;
-:StakingReward::transfer_reward(
-asset=LPT,
-reward_asset: QUOTE
-from=transaction_origin,
-amount=x,
-keep_alive=false
-);
-stop
-----
+"For " r_(th) " liquidity provider,"
+
+delta a = (sum_(r+1) l_m) / (sum l_r) * sum a_n
+
+= x_(adjusted) = l_(r) / (sum_(r+1) l_m + sum l_r) * (sum a_n + (sum_(r+1) l_m) / (sum l_r) * sum a_n )
+
+= l_r / (sum l_r) * sum a_n
+
+"With this adjusted value all later additions to LP shares have been negated when receiving fees for earlier LPs."
+
+
+++++
 
 [#_pblo_staker_trading_fee_distribution]
 ==== PBLO Staker Trading Fee Distribution
 
-This is the reward a `PBLO` staker receives from the trading fees of Pablo pools. It is equal to the protocol fee charged on Pablo pools. This can be accomplished by calling the already exisiting `StakingReward.transfer_reward` interface as follows. According to product there is also a need to convert whatever the fee asset in to PBLO to create a demand/additional value for PBLO.
+This is the reward a `PBLO` staker receives from the trading fees of Pablo pools. It is equal to the protocol fee charged on Pablo pools. This can be accomplished by calling the already existing `StakingReward.transfer_reward` interface as follows. According to product there is also a need to convert whatever the fee asset in to PBLO to create a demand/additional value for PBLO.
 
 [plantuml,images/pablo-fNFT-pblo-staking-fee-distro,png]
 ----
@@ -316,95 +277,27 @@ Will it need a change in https://github.com/ComposableFi/composable/blob/main/fr
 
 === Pallet Staking Rewards
 
-This section covers how the staking rewards are distributed using the https://github.com/ComposableFi/composable/tree/main/frame/staking-rewards[staking rewards pallet].
+This section covers how the staking rewards are distributed using the https://github.com/ComposableFi/composable/tree/main/frame/staking-rewards[staking rewards pallet] and https://github.com/ComposableFi/composable/tree/main/frame/vesting[vesting pallet].
 
-[#_staking_reward_calculation]
-==== Staking Reward Calculation
+==== Creating LP/PICA/PBLO/Other Token Staking Reward Pools
 
-PBLO and PICA allocation for stakers needs to be disbursed to the relevant stakers by some process.
-The token distribution works as follows,
+In order to create the necessary reward pool as well as the rewarding rate for stakers the vested transfers model can be used. Following interface (trait function) plus an extrinsic that can execute it using the governance origin would be the solution.
 
+[source,rust]
 ----
-// these are set by governance
-staking reward allocation = a (say in token X)
-reward_rate = r (per epoch?)
-// Assuming there are only 3 Pablo pools named lp1, lp2, lp3
-lp1 reward allocation rate = LP1
-lp2 reward allocation rate = LP2
-lp3 reward allocation rate = LP3
+include::../frame/composable-traits/src/staking_rewards.rs[lines=205..228]
 
-// given above
-LP1 staking total reward per epoch = a * r * LP1
-LP2 staking total reward per epoch = a * r * LP2
-LP3 staking total reward per epoch = a * r * LP3
-main token(eg: PBLO) staking total reward per epoch = a * r * (1 - LP1 - LP2 - LP3)
-----
-
-As this logic is common to all rewardable tokens in the system like PBLO, PICA or KSM, hence it is proposed here to add the reward calculation and disbursement logic in staking-rewards pallet.
-
-==== PICA/PBLO Token Staking
-
-[#_rewardconfig]
-===== RewardConfig
-
-This is a configuration data structure stored in staking rewards pallet per rewarded asset so that <<_staking_reward_calculation>> can take place.
-
-[plantuml,images/staking-reward-config,png]
-----
-class RewardConfig {
-    +reward_asset: AssetId
-    +reward_rate: Permill
-}
-----
-
-[#_governance_sets_the_rewardconfig_and_transfers_the_reward_allocation]
-===== Governance Sets the RewardConfig and Transfers the Reward Allocation
-
-Following are new extrinsic in the staking rewards pallet that is to be called by the governance origin to transfer reward allocation.
-
-[plantuml,images/staking-rewards-set-reward-allocation-token-x,png]
-----
-start
-:staking_rewards::configure_reward_rate(
 ...
-asset=X,
-reward_rate=r
-);
-:staking_rewards::transfer_reward_allocation(
-...
-asset=X,
-from=treasury_acc?,
-amount=alloc_x,
-keep_alive=false
-);
-stop
 ----
 
-The account that is transferred-to has to be *a dedicated account* in staking rewards pallet that tracks the staking reward allocation in a given token.This is not to mix these allocations with the already transferred rewards in the staking rewards pallet account.
+===== Processing Transfer of Vested Reward
 
 
-[#_governance_sets_the_pablo_pool_lp_staking_reward_allocation]
-===== Governance Sets the Pablo Pool LP Staking Reward Allocation
-
-Following is a new extrinsic in the staking rewards pallet that is to be called by the governance origin to transfer pool LP reward allocation per pool.Refer <<_staking_reward_calculation>>.
-
-[plantuml,images/staking-rewards-set-lp-reward-allocation,png]
-----
-start
-:staking_rewards::configure_per_staked_asset_reward_allocation(
-...
-asset: X,
-reward_allocation=LPX
-);
-stop
-----
-
-Note that the extrinsic itself is agnostic to Pablo specifics.Therefore, it can be used to specify reward allocation for any other asset that is to be incentivized to be staked.A list data structure `perAssetRewardAllocation` can be used to store this value in storage.
 
 [#_rewardaccumulationhook]
-===== RewardAccumulationHook
+==== RewardAccumulationHook
 
-Following algorithm is to added as part of the existing https://github.com/ComposableFi/composable/blob/main/frame/staking-rewards/src/lib.rs#L363[block hook] in staking rewards pallet.As it is only accumulating new rewards for an upcoming epoch, the code is proposed to be run inside a new state `State:AccumulatingRewards`.
+Following algorithm is to added as part of the existing https://github.com/ComposableFi/composable/blob/main/frame/staking-rewards/src/lib.rs#L363[block hook] in staking rewards pallet. As it is only accumulating new rewards for an upcoming epoch, the code is proposed to be run inside a new state `State:AccumulatingRewards`.
 
 [plantuml,images/staking-rewards-reward-accumulation-hook,png]
 ----
@@ -445,17 +338,10 @@ This algorithm runs in `O(staked_asset_type_count * rewarded_asset_type_count)`.
 === Pallet Pablo: LP Fee + Staking Changes
 
 - [ ] Implement <<_feeconfig>> on pallet-pablo across all 3 types of pools.
-- [ ] Expose interface for <<_lp_fnft_configuration>>.
-- [ ] Implement <<_lp_fnft_creation_when_receiving_lp_tokens_for_adding_liquidity>>.
-- [ ] Implement <<_lp_fnft_resizing_or_unstaking_when_burning_lp_tokens_for_removing_liquidity>>.
-- [ ] Implement <<_trading_fee_distribution>>.
 - [ ] Implement <<_pblo_staker_trading_fee_distribution>>.
 
 === Pallet Staking Rewards: PICA/PBLO Staking Related Changes
 
-- [ ] Implement <<_rewardconfig>>.
-- [ ] Implement extrinsic for <<_governance_sets_the_rewardconfig_and_transfers_the_reward_allocation>>
-- [ ] Implement extrinsic for <<_governance_sets_the_pablo_pool_lp_staking_reward_allocation>>.
 - [ ] Implement <<_rewardaccumulationhook>>.
 
 [appendix]
