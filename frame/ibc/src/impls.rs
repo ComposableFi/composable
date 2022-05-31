@@ -76,7 +76,8 @@ where
 				&String::from_utf8(client_id).map_err(|_| Error::<T>::DecodingError)?,
 			)
 			.map_err(|_| Error::<T>::DecodingError)?;
-			let height = ibc::Height::decode(&*height).map_err(|_| Error::<T>::DecodingError)?;
+			let height =
+				ibc::Height::decode(&mut &*height).map_err(|_| Error::<T>::DecodingError)?;
 			let consensus_path = ClientConsensusStatePath {
 				client_id,
 				epoch: height.revision_number,
@@ -260,7 +261,7 @@ where
 		let consensus_state = ConsensusStates::<T>::get(client_id.clone(), height.clone());
 		let client_id = client_id_from_bytes(client_id).map_err(|_| Error::<T>::DecodingError)?;
 
-		let height = ibc::Height::decode(&*height).map_err(|_| Error::<T>::DecodingError)?;
+		let height = ibc::Height::decode(&mut &*height).map_err(|_| Error::<T>::DecodingError)?;
 		let consensus_path = ClientConsensusStatePath {
 			client_id,
 			epoch: height.revision_number,

@@ -46,6 +46,7 @@ use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
 mod channel;
 mod client;
 mod connection;
+mod errors;
 mod events;
 mod host_functions;
 mod port;
@@ -289,6 +290,8 @@ pub mod pallet {
 		ConnectionInitiated,
 		/// Raw Ibc events
 		IbcEvents { events: Vec<crate::events::IbcEvent> },
+		/// Ibc errors
+		IbcErrors { errors: Vec<crate::errors::IbcError> },
 	}
 
 	/// Errors inform users that something went wrong.
@@ -390,21 +393,25 @@ pub mod pallet {
 				})
 				.collect::<Result<Vec<ibc_proto::google::protobuf::Any>, Error<T>>>()?;
 
-			let result = messages
-				.into_iter()
-				.map(|msg| {
-					ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg)
-				})
-				.collect::<Result<Vec<_>, _>>()
-				.map_err(|e| {
-					log::error!("{:?}", e);
-					Error::<T>::ProcessingError
-				})?;
-			let events = result.into_iter().fold(vec![], |mut acc, (events, ..)| {
-				acc.extend_from_slice(&events);
-				acc
-			});
+			let (events, logs, errors) = messages.into_iter().fold(
+				(vec![], vec![], vec![]),
+				|(mut events, mut logs, mut errors), msg| {
+					match ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(
+						&mut ctx, msg,
+					) {
+						Ok((temp_events, temp_logs)) => {
+							events.extend_from_slice(&temp_events);
+							logs.extend_from_slice(&temp_logs);
+						},
+						Err(e) => errors.push(e),
+					}
+					(events, logs, errors)
+				},
+			);
+
+			log::trace!("[pallet_ibc_deliver]: logs: {:?}", logs);
 			Self::deposit_event(events.into());
+			Self::deposit_event(errors.into());
 			Ok(())
 		}
 		#[pallet::weight(0)]
