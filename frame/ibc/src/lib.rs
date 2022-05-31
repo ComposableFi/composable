@@ -46,6 +46,7 @@ use sp_std::{marker::PhantomData, prelude::*, str::FromStr};
 mod channel;
 mod client;
 mod connection;
+mod events;
 mod host_functions;
 mod port;
 pub mod routing;
@@ -286,7 +287,10 @@ pub mod pallet {
 		ProcessedIBCMessages,
 		/// Initiated a new connection
 		ConnectionInitiated,
+		/// Raw Ibc events
+		IbcEvents { events: Vec<crate::events::IbcEvent> },
 	}
+
 	/// Errors inform users that something went wrong.
 	#[pallet::error]
 	pub enum Error<T> {
@@ -396,10 +400,11 @@ pub mod pallet {
 					log::error!("{:?}", e);
 					Error::<T>::ProcessingError
 				})?;
-
-			log::trace!("result: {:?}", result);
-			// todo: deposit actual ibc events
-			Self::deposit_event(Event::<T>::ProcessedIBCMessages);
+			let events = result.into_iter().fold(vec![], |mut acc, (events, ..)| {
+				acc.extend_from_slice(&events);
+				acc
+			});
+			Self::deposit_event(events.into());
 			Ok(())
 		}
 		#[pallet::weight(0)]
