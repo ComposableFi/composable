@@ -481,7 +481,7 @@ pub mod pallet {
 		fn on_initialize(_: T::BlockNumber) -> Weight {
 			let now = T::Time::now().as_secs();
 			let mut any = false;
-			// NOTE: we may waste some blocks from time to time, becuase there will be zero items in
+			// NOTE: we may waste some blocks from time to time, because there will be zero items in
 			// queue, that can be optimized if needed
 			match Self::current_state() {
 				State::Running => {
