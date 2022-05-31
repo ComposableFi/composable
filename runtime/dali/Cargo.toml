@@ -87,6 +87,10 @@ primitives = { path = "../primitives", default-features = false }
 vault = { package = "pallet-vault", path = "../../frame/vault", default-features = false }
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
 
+pallet-staking-rewards= { path = "../../frame/staking-rewards", default-features = false }
+pallet-nft= { path = "../../frame/nft", default-features = false }
+
+
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22" }
 transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22" }
@@ -181,6 +185,8 @@ runtime-benchmarks = [
   "pablo/runtime-benchmarks",
   "dex-router/runtime-benchmarks",
   "common/runtime-benchmarks",
+  "pallet-staking-rewards/runtime-benchmarks",
+  "pallet-nft/runtime-benchmarks",
 ]
 std = [
   "codec/std",
@@ -260,5 +266,8 @@ std = [
   "simnode-apis/std",
   "pablo/std",
   "dex-router/std",
+  "pallet-staking-rewards/std",
+  "pallet-nft/std",
+  
 ]
 wasm-builder = []
