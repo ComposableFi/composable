@@ -4,7 +4,7 @@
 use super::super::*;
 use crate::{
 	benchmarks::tendermint_benchmark_utils::*, host_functions::HostFunctions,
-	pallet::Pallet as PalletIbc, Any, Config,
+	pallet::Pallet as PalletIbc, Any, Config, HostConsensusStates,
 };
 use core::str::FromStr;
 use frame_benchmarking::{benchmarks, whitelisted_caller};
@@ -867,7 +867,7 @@ benchmarks! {
 
 	}: { PalletIbc::<T>::on_finalize(0u32.into())}
 	verify {
-		let commitment_roots = CommitmentRoot::<T>::get();
+		let commitment_roots = HostConsensusStates::<T>::get();
 		assert_eq!(commitment_roots.len(), 1);
 	}
 }
