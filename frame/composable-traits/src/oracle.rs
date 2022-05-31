@@ -96,6 +96,8 @@ pub trait Oracle {
 		weighting: Vec<Self::Balance>,
 	) -> Result<Self::Balance, DispatchError>;
 
+	fn depth_of_history(of: Self::AssetId) -> usize;
+
 	/// How much of `quote` for unit `base` Oracle suggests to take.
 	/// Up to oracle how it decides ratio.
 	/// If there is no direct trading pair, can estimate via common pair (to which all currencies

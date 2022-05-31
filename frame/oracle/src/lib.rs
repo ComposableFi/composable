@@ -411,6 +411,10 @@ pub mod pallet {
 			Self::get_twap(of, weighting)
 		}
 
+		fn depth_of_history(asset_id: T::AssetId) -> usize {
+			Self::price_history(asset_id).len()
+		}
+
 		fn get_ratio(
 			pair: composable_traits::defi::CurrencyPair<Self::AssetId>,
 		) -> Result<sp_runtime::FixedU128, DispatchError> {

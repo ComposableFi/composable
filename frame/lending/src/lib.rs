@@ -1117,9 +1117,18 @@ pub mod pallet {
 			asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
 			amount: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
-			<T::Oracle as Oracle>::get_price(asset_id, amount)
-				.map(|p| p.price)
-				.map_err(|_| Error::<T>::AssetPriceNotFound.into())
+			const WINDOW: usize = 3;
+			let prices_length = <T::Oracle as Oracle>::depth_of_history(asset_id);
+			if prices_length == 0 {
+				<T::Oracle as Oracle>::get_price(asset_id, amount)
+					.map(|p| p.price)
+					.map_err(|_| Error::<T>::AssetPriceNotFound.into())
+			} else {
+				let weights_length = if prices_length < WINDOW { prices_length } else { WINDOW };
+				// make flat weights
+				let weights = vec![(100_u128 / (weights_length as u128)).into(); weights_length];
+				<T::Oracle as Oracle>::get_twap(asset_id, weights)
+			}
 		}
 
 		/// Some of these checks remain to provide better errors. See [this clickup task](task) for
