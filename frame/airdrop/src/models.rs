@@ -55,7 +55,6 @@ pub enum Proof<AccountId> {
 
 /// Remote account that is associated with a local account.
 #[derive(Hash, Clone, PartialEq, Eq, RuntimeDebug, Encode, Decode, MaxEncodedLen, TypeInfo)]
-#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 pub enum RemoteAccount<AccountId> {
 	RelayChain(AccountId),
 	Ethereum(EthereumAddress),

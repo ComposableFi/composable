@@ -1,3 +1,5 @@
+#![cfg(test)]
+
 use crate::{
 	self as pallet_airdrop,
 	models::{Proof, RemoteAccount},
@@ -26,7 +28,6 @@ pub type BlockNumber = u32;
 pub type Moment = u64;
 pub type RelayChainAccountId = [u8; 32];
 
-pub const ALICE: AccountId = AccountId32::new([0_u8; 32]);
 pub const PROOF_PREFIX: &[u8] = b"picasso-";
 pub const VESTING_STEP: Moment = 3600 * 24 * 7;
 
