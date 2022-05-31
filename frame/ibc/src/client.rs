@@ -29,7 +29,10 @@ where
 		if <Clients<T>>::contains_key(client_id.as_bytes()) {
 			let data = <Clients<T>>::get(client_id.as_bytes());
 			let data = String::from_utf8(data).map_err(|e| {
-				ICS02Error::implementation_specific(format!("[client_type]: {}", e))
+				ICS02Error::implementation_specific(format!(
+					"[client_type]: error decoding client type bytes to string {}",
+					e
+				))
 			})?;
 			match ClientType::from_str(&data) {
 				Err(_err) => Err(ICS02Error::unknown_client_type(data.to_string())),
@@ -66,7 +69,10 @@ where
 
 		let native_height = height;
 		let height = height.encode_vec().map_err(|e| {
-			ICS02Error::implementation_specific(format!("[consensus_state]: {}", e))
+			ICS02Error::implementation_specific(format!(
+				"[consensus_state]: error encoding height to bytes {}",
+				e
+			))
 		})?;
 		let value = <ConsensusStates<T>>::get(client_id.as_bytes(), height);
 
@@ -89,10 +95,16 @@ where
 			.map(|height| {
 				let cs_state = ConsensusStates::<T>::get(client_id.clone(), height.clone());
 				let height = Height::decode_vec(&height).map_err(|e| {
-					ICS02Error::implementation_specific(format!("[next_consensus_state]: {}", e))
+					ICS02Error::implementation_specific(format!(
+						"[next_consensus_state]: error decoding height from bytes {}",
+						e
+					))
 				})?;
 				let cs = AnyConsensusState::decode_vec(&cs_state).map_err(|e| {
-					ICS02Error::implementation_specific(format!("[next_consensus_state]: {}", e))
+					ICS02Error::implementation_specific(format!(
+						"[next_consensus_state]: error decoding consensus state from bytes {}",
+						e
+					))
 				})?;
 				Ok((height, cs))
 			})
@@ -119,10 +131,16 @@ where
 			.map(|height| {
 				let cs_state = ConsensusStates::<T>::get(client_id.clone(), height.clone());
 				let height = Height::decode_vec(&height).map_err(|e| {
-					ICS02Error::implementation_specific(format!("[prev_consensus_state]: {}", e))
+					ICS02Error::implementation_specific(format!(
+						"[prev_consensus_state]: error decoding height: {}",
+						e
+					))
 				})?;
 				let cs = AnyConsensusState::decode_vec(&cs_state).map_err(|e| {
-					ICS02Error::implementation_specific(format!("[prev_consensus_state]: {}", e))
+					ICS02Error::implementation_specific(format!(
+						"[prev_consensus_state]: error decoding consensus state: {}",
+						e
+					))
 				})?;
 				Ok((height, cs))
 			})
@@ -167,7 +185,10 @@ where
 		})?;
 		let timestamp = Timestamp::from_nanoseconds(local_state.timestamp)
 			.map_err(|e| {
-				ICS02Error::implementation_specific(format!("[host_consensus_state]: {}", e))
+				ICS02Error::implementation_specific(format!(
+					"[host_consensus_state]: error decoding timestamp{}",
+					e
+				))
 			})?
 			.into_tm_time()
 			.ok_or_else(|| {
@@ -227,7 +248,10 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		);
 
 		let data = client_state.encode_vec().map_err(|e| {
-			ICS02Error::implementation_specific(format!("[store_client_state]: {}", e))
+			ICS02Error::implementation_specific(format!(
+				"[store_client_state]: error encoding client state {}",
+				e
+			))
 		})?;
 		// store client states key-value
 		<ClientStates<T>>::insert(client_id.as_bytes().to_vec(), data);
@@ -245,10 +269,16 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 			client_id, height, consensus_state);
 
 		let height = height.encode_vec().map_err(|e| {
-			ICS02Error::implementation_specific(format!("[store_consensus_state]: {}", e))
+			ICS02Error::implementation_specific(format!(
+				"[store_consensus_state]: error encoding height {}",
+				e
+			))
 		})?;
 		let data = consensus_state.encode_vec().map_err(|e| {
-			ICS02Error::implementation_specific(format!("[store_consensus_state]: {}", e))
+			ICS02Error::implementation_specific(format!(
+				"[store_consensus_state]: error encoding consensus state {}",
+				e
+			))
 		})?;
 		ConsensusStates::<T>::insert(client_id.as_bytes().to_vec(), height, data);
 		Ok(())
@@ -261,7 +291,10 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		timestamp: Timestamp,
 	) -> Result<(), ICS02Error> {
 		let height = height.encode_vec().map_err(|e| {
-			ICS02Error::implementation_specific(format!("[store_update_time]: {}", e))
+			ICS02Error::implementation_specific(format!(
+				"[store_update_time]: error encoding height {}",
+				e
+			))
 		})?;
 		let timestamp = timestamp.nanoseconds();
 		let client_id = client_id.as_bytes().to_vec();
@@ -276,10 +309,16 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		host_height: Height,
 	) -> Result<(), ICS02Error> {
 		let height = height.encode_vec().map_err(|e| {
-			ICS02Error::implementation_specific(format!("[store_update_height]: {}", e))
+			ICS02Error::implementation_specific(format!(
+				"[store_update_height]: error encoding height {}",
+				e
+			))
 		})?;
 		let host_height = host_height.encode_vec().map_err(|e| {
-			ICS02Error::implementation_specific(format!("[store_update_height]: {}", e))
+			ICS02Error::implementation_specific(format!(
+				"[store_update_height]: error encoding host height {}",
+				e
+			))
 		})?;
 		let client_id = client_id.as_bytes().to_vec();
 		ClientUpdateHeight::<T>::insert(client_id, height, host_height);
