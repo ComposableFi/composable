@@ -178,6 +178,11 @@ node "Governance" {
 
 TODO: What to do for part of protocol fees that should be transferred to treasury eventually as treasury does not stake it's PBLO?
 
+*Concerns*
+
+* I think the vested transfer approach would limit us from implementing variable rate rewards as we see in other similar dex incentive schemes. So I think it's best that we just keep the reward rate as a parameter for LP/PBLO/PICA.. staking for each asset type instead of doing vested transfers
+* The staking-rewards pallet with the current setup would be a bottleneck in doing 12h or less disbursements.
+
 === Pallet-Pablo
 
 In order to 1. support LP staking 2. LP trading fee distribution and 3. PBLO staking reward using trading fees, following changes are proposed for https://github.com/ComposableFi/composable/tree/main/frame/pablo[Pallet-Pablo].
@@ -275,23 +280,86 @@ stop
 
 Will it need a change in https://github.com/ComposableFi/composable/blob/main/frame/composable-traits/src/staking_rewards.rs#L96[this] ?
 
-=== Pallet Staking Rewards
+=== Pallet Staking Rewards - LP/PICA/PBLO/Other Token Staking Reward Pools
 
-This section covers how the staking rewards are distributed using the https://github.com/ComposableFi/composable/tree/main/frame/staking-rewards[staking rewards pallet] and https://github.com/ComposableFi/composable/tree/main/frame/vesting[vesting pallet].
+This section covers how the staking rewards are distributed using the https://github.com/ComposableFi/composable/tree/main/frame/staking-rewards[staking rewards pallet].
 
-==== Creating LP/PICA/PBLO/Other Token Staking Reward Pools
+==== Analysis of Reward Pool Calculations
 
-In order to create the necessary reward pool as well as the rewarding rate for stakers the vested transfers model can be used. Following interface (trait function) plus an extrinsic that can execute it using the governance origin would be the solution.
+In order to create the necessary reward pool as well as the rewarding rate for stakers the following model can be used. It tries to address the following constraints
+
+. Allow addition of new stakers at anytime to a pool, start earning immediate rewards
+. Allow more realtime calculation of rewards on-demand for a given pool for a given user.
+. Allow shorter reward pool calculation epoch with the use of the reward rate.
+. Allow specification of reward rate for a pool (even setting a dynamically changing rate)
+. Allow expansion of rewards pools realtime.
+
+[stem]
+++++
+"Let's define the following terms for a given staking reward pool,"
+
+"Pre-defined reward rate (say per second)" = r
+
+"Pre-defined reward calculation epoch in seconds" = t
+
+"Reward per calculation epoch" = r.t
+
+"Previous total reward pool before the current epoch" = P
+
+"Assuming there is a per epoch calculation which adds to the pool,"
+"the total reward pool for the current epoc,"
+
+P_(current) = P + rt
+
+"Existing staker(n) reward,"
+
+x _n = P_(current) . s_n / (sum s_n)
+
+------------------------------------------------
+
+"When adding a new staker n+1, existing stakers(n) reward would be,"
+
+x_n = P_(current) . s_n / (sum s_(n+1))
+
+"As this is less than what is expected above, an adjustment " delta P " to total reward pool can be made to allow realtime reward calculations,"
+
+delta P = P_(current) . s_(n+1) / (sum s_n)
+
+x_n = (P_(current) + delta P) . s_n / (sum s_(n+1))
+
+x_n = P_(current) . (1 + s_(n+1) / (sum s_n)) . s_n / (sum s_(n+1))
+
+x _n = P_(current) . s_n / (sum s_n)
+
+"**Therefore existing staker receives the same reward as before.**"
+
+
+"To compensate for this new adjustment, a reduction " d_n " of reward for each staker needs to be tracked,"
+
+x_(n+1) = P_(current) . s_(n+1) / (sum s_(n+1)) - d_n
+
+d_n = "Any reduction in reward including already claimed"
+
+------------------------------------------------
+
+"When adding a new reward to the pool the calculations remain the same other than,"
+
+P_(current) = P + rt + P_(added)
+
+"Since already claimed rewards("d_n") are tracked for each staker, "
+
+"they can always claim the new reward share from " P_(added) " later."
+
+++++
+
+==== Data Structures
+
+Staking rewards pallet already uses the fNFT data structure,
 
 [source,rust]
 ----
-include::../frame/composable-traits/src/staking_rewards.rs[lines=205..228]
 
-...
 ----
-
-===== Processing Transfer of Vested Reward
-
 
 
 [#_rewardaccumulationhook]
