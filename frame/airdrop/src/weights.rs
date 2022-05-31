@@ -6,16 +6,16 @@ use frame_support::{
 use sp_std::marker::PhantomData;
 
 pub trait WeightInfo {
-	fn create_airdrop(x: u32) -> Weight;
+	fn create_airdrop() -> Weight;
 	fn add_recipient(x: u32) -> Weight;
 	fn remove_recipient(x: u32) -> Weight;
-	fn enable_airdrop(x: u32) -> Weight;
-	fn disable_airdrop(x: u32) -> Weight;
+	fn enable_airdrop() -> Weight;
+	fn disable_airdrop() -> Weight;
 	fn claim(x: u32) -> Weight;
 }
 
 impl WeightInfo for () {
-	fn create_airdrop(_x: u32) -> Weight {
+	fn create_airdrop() -> Weight {
 		0 as Weight
 	}
 
@@ -27,11 +27,11 @@ impl WeightInfo for () {
 		0 as Weight
 	}
 
-	fn enable_airdrop(_x: u32) -> Weight {
+	fn enable_airdrop() -> Weight {
 		0 as Weight
 	}
 
-	fn disable_airdrop(_x: u32) -> Weight {
+	fn disable_airdrop() -> Weight {
 		0 as Weight
 	}
 
