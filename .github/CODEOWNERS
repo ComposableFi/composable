@@ -4,7 +4,7 @@
 # Any change inside this directory will require approval from senior maintainers
 
 # CI and deployment related files
-.github/ @haroldsphinx @seunlanlege
+.github/ @haroldsphinx @seunlanlege @kaiserkarel @hussein-aitlahcen
 docker/ @haroldsphinx @seunlanlege
 Makefile @haroldsphinx
 
