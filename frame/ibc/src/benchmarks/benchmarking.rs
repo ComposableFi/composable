@@ -110,7 +110,6 @@ benchmarks! {
 		let caller: T::AccountId = whitelisted_caller();
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
 	verify {
-		assert_last_event::<T>(Event::<T>::ProcessedIBCMessages.into());
 		let client_state = ClientStates::<T>::get(client_id.as_bytes().to_vec());
 		let client_state = AnyClientState::decode_vec(&*client_state).unwrap();
 		assert_eq!(client_state.latest_height(), Height::new(0, 2));
@@ -145,7 +144,6 @@ benchmarks! {
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
 	verify {
 		assert_eq!(ConnectionClient::<T>::get(client_id.as_bytes().to_vec()).len(), 1);
-		assert_last_event::<T>(Event::<T>::ProcessedIBCMessages.into())
 	}
 
 
