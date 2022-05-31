@@ -25,7 +25,7 @@ message Transfer {
 }
 
 message Call {
-  bytes payload = 1;
+  bytes encoded = 1;
 }
 
 message Spawn {
@@ -36,13 +36,13 @@ message Spawn {
 }
 
 message Account {
-  bytes addressed = 1;
+  bytes encoded = 1;
 }
 
 message U128 {
-  bytes bytes = 1;
+  bytes encoded = 1;
 }
 
 message U256 {
-  bytes bytes = 1;
+  bytes encoded = 1;
 }

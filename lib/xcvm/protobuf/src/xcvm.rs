@@ -36,7 +36,7 @@ pub struct Transfer {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Call {
     #[prost(bytes="vec", tag="1")]
-    pub payload: ::prost::alloc::vec::Vec<u8>,
+    pub encoded: ::prost::alloc::vec::Vec<u8>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Spawn {
@@ -51,15 +51,15 @@ pub struct Spawn {
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Account {
     #[prost(bytes="vec", tag="1")]
-    pub addressed: ::prost::alloc::vec::Vec<u8>,
+    pub encoded: ::prost::alloc::vec::Vec<u8>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct U128 {
     #[prost(bytes="vec", tag="1")]
-    pub bytes: ::prost::alloc::vec::Vec<u8>,
+    pub encoded: ::prost::alloc::vec::Vec<u8>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct U256 {
     #[prost(bytes="vec", tag="1")]
-    pub bytes: ::prost::alloc::vec::Vec<u8>,
+    pub encoded: ::prost::alloc::vec::Vec<u8>,
 }

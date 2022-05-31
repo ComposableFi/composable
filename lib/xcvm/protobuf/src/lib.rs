@@ -47,14 +47,14 @@ pub fn encode<
 
 impl From<u128> for U128 {
 	fn from(x: u128) -> Self {
-		U128 { bytes: x.to_le_bytes().to_vec() }
+		U128 { encoded: x.to_le_bytes().to_vec() }
 	}
 }
 
 impl TryInto<u128> for U128 {
 	type Error = ();
 	fn try_into(self) -> Result<u128, Self::Error> {
-		Ok(u128::from_le_bytes(TryInto::<[u8; 16]>::try_into(self.bytes).map_err(|_| ())?))
+		Ok(u128::from_le_bytes(TryInto::<[u8; 16]>::try_into(self.encoded).map_err(|_| ())?))
 	}
 }
 
@@ -114,7 +114,7 @@ impl<
 			instruction: Some(match instruction {
 				XCVMInstruction::Transfer { to: destination, assets } =>
 					instruction::Instruction::Transfer(Transfer {
-						destination: Some(Account { addressed: destination.as_ref().to_vec() }),
+						destination: Some(Account { encoded: destination.as_ref().to_vec() }),
 						assets: assets
 							.into()
 							.into_iter()
@@ -122,7 +122,7 @@ impl<
 							.collect(),
 					}),
 				XCVMInstruction::Call { encoded } =>
-					instruction::Instruction::Call(Call { payload: encoded.into() }),
+					instruction::Instruction::Call(Call { encoded: encoded.into() }),
 				XCVMInstruction::Spawn { network, assets, program } =>
 					instruction::Instruction::Spawn(Spawn {
 						network: network.into(),
@@ -150,18 +150,18 @@ impl<
 		instruction
 			.map(|instruction| match instruction {
 				instruction::Instruction::Transfer(Transfer {
-					destination: Some(Account { addressed }),
+					destination: Some(Account { encoded }),
 					assets,
 				}) => Ok(XCVMInstruction::Transfer {
-					to: (&addressed[..]).try_into().map_err(|_| ())?,
+					to: (&encoded[..]).try_into().map_err(|_| ())?,
 					assets: assets
 						.into_iter()
 						.map(|(asset, amount)| Ok((asset, amount.try_into()?)))
 						.collect::<Result<BTreeMap<u32, u128>, ()>>()?
 						.into(),
 				}),
-				instruction::Instruction::Call(Call { payload }) =>
-					Ok(XCVMInstruction::Call { encoded: payload.try_into().map_err(|_| ())? }),
+				instruction::Instruction::Call(Call { encoded }) =>
+					Ok(XCVMInstruction::Call { encoded: encoded.try_into().map_err(|_| ())? }),
 				instruction::Instruction::Spawn(Spawn { network, assets, program }) =>
 					Ok(XCVMInstruction::Spawn {
 						network: network.into(),
