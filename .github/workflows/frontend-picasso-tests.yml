@@ -1,0 +1,21 @@
+name: 'Frontend (Picasso) Checks - Tests'
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'frontend/ui-picasso/*'
+  push:
+    paths:
+      - 'frontend/ui-picasso/*'
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - with:
+          node-version: '16'
+      - run: yarn --cwd frontend/ui-picasso install
+      - run: yarn --cwd frontend/ui-picasso test
