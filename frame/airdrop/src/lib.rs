@@ -8,8 +8,8 @@ pub use pallet::*;
 pub mod models;
 pub mod weights;
 
+#[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
-#[cfg(test)]
 mod mocks;
 
 #[frame_support::pallet]
@@ -30,8 +30,8 @@ pub mod pallet {
 	use composable_traits::airdrop::AirdropManagement;
 	use frame_support::{
 		dispatch::PostDispatchInfo,
-		pallet_prelude::{MaybeSerializeDeserialize, OptionQuery, ValueQuery, *},
-		traits::{
+		pallet_prelude::*,
+ 		traits::{
 			fungible::{Inspect, Transfer},
 			Time,
 		},
@@ -179,6 +179,7 @@ pub mod pallet {
 	/// The counter used to identify Airdrops.
 	#[pallet::storage]
 	#[pallet::getter(fn airdrop_count)]
+    #[allow(clippy::disallowed_types)] // Allow `farme_support::pallet_prelude::ValueQuery`
 	pub type AirdropCount<T: Config> =
 		StorageValue<_, T::AirdropId, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 
@@ -628,7 +629,7 @@ pub mod pallet {
 				|(transaction_funds, transaction_recipients),
 				 (_, funds, _)|
 				 -> Result<(T::Balance, u32), DispatchError> {
-					Ok((transaction_funds.safe_add(&funds)?, transaction_recipients.safe_add(&1)?))
+					Ok((transaction_funds.safe_add(funds)?, transaction_recipients.safe_add(&1)?))
 				},
 			)?;
 
@@ -798,7 +799,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let airdrop_account = Self::get_airdrop_account_id(airdrop_id);
 			let (available_to_claim, recipient_fund) =
-				RecipientFunds::<T>::try_mutate(airdrop_id, remote_account.clone(), |fund| {
+				RecipientFunds::<T>::try_mutate(airdrop_id, remote_account, |fund| {
 					fund.as_mut()
 						.map(|fund| {
 							let should_have_claimed =
@@ -815,7 +816,7 @@ pub mod pallet {
 							// Update Airdrop and fund status
 							(*fund).claimed = fund.claimed.saturating_add(available_to_claim);
 
-							Ok((available_to_claim, fund.clone()))
+							Ok((available_to_claim, *fund))
 						})
 						.unwrap_or_else(|| Err(Error::<T>::RecipientNotFound))
 				})?;
