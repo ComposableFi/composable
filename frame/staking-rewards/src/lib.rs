@@ -116,7 +116,7 @@ pub mod pallet {
 		PendingAmounts,
 		/// time extended  regardless of position state
 		PendingDurations,
-		/// working with pending operations, registerin new stakers and asset total increases
+		/// working with pending operations, registering new stakers and asset total increases
 		PendingStakers,
 		PendingShares,
 	}
