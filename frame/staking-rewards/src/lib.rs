@@ -108,7 +108,7 @@ pub mod pallet {
 	pub enum State {
 		/// epoch runs, cannot modify active positions, only append modification queues
 		Running,
-		/// stakes positins rewarded`
+		/// stakes positions rewarded`
 		/// Processed by `fold` as updates are done in place
 		Distributing,
 		// TODO: decide what is better the first duration or
