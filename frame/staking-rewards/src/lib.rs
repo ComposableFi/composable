@@ -156,6 +156,7 @@ pub mod pallet {
 		OnlyOwnerOfPositionCanDoThis,
 		CannotIncreaseStakedAmountBecauseOfLimitedArithmetic,
 		NewLockDurationMustBeEqualOrBiggerThanPreviousLockDuration,
+		OnlyPositionOwnerCanClaim,
 	}
 
 	#[pallet::config]
@@ -390,15 +391,17 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			// Only the owner is able to select an arbitrary `to` account.
-			let nft_owner = T::get_protocol_nft_owner::<StakingNFTOf<T>>(&instance_id)?;
-			let to = if nft_owner == who { to } else { nft_owner };
 			let (asset, compound) = <Self as Staking>::claim(&instance_id, &to)?;
+			let nft_owner = T::get_protocol_nft_owner::<StakingNFTOf<T>>(&instance_id)?;
+			ensure!(nft_owner == who, Error::<T>::OnlyPositionOwnerCanClaim,);
+
 			if compound > T::Balance::zero() {
 				RunningTotalShares::<T>::try_mutate(asset, |total_shares| -> DispatchResult {
 					*total_shares = total_shares.safe_sub(&compound.into())?;
 					Ok(())
 				})?;
 			}
+
 			Ok(().into())
 		}
 
@@ -431,6 +434,7 @@ pub mod pallet {
 			balance: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResult {
+			// TODO: consider attack adding near zero stake each block, preventing stream to finish
 			let owner = ensure_signed(origin)?;
 			T::ensure_protocol_nft_owner::<StakingNFTOf<T>>(&owner, &instance_id)?;
 			let position = T::get_protocol_nft::<StakingNFTOf<T>>(&instance_id)?;

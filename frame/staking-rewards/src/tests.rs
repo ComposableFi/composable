@@ -754,6 +754,8 @@ mod transfer_reward {
 }
 
 mod claim {
+	use frame_support::assert_err;
+
 	use super::*;
 
 	#[test]
@@ -781,7 +783,7 @@ mod claim {
 	}
 
 	#[test]
-	fn anyone_can_claim() {
+	fn anyone_cannot_claim() {
 		new_test_ext().execute_with(|| {
 			configure_default_pica();
 			let stake = 1_000_000_000_000;
@@ -789,7 +791,10 @@ mod claim {
 			let instance_id = <StakingRewards as Staking>::stake(&PICA, &ALICE, stake, WEEK, false)
 				.expect("impossible; qed;");
 			process_block(REWARD_EPOCH_DURATION_BLOCK);
-			assert_ok!(StakingRewards::claim(Origin::signed(TREASURY), instance_id, TREASURY,));
+			assert_err!(
+				StakingRewards::claim(Origin::signed(TREASURY), instance_id, TREASURY,),
+				Error::<Test>::OnlyPositionOwnerCanClaim
+			);
 			assert_ok!(StakingRewards::claim(Origin::signed(ALICE), instance_id, ALICE,));
 		});
 	}
