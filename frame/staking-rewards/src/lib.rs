@@ -425,7 +425,7 @@ pub mod pallet {
 		/// Extends fNFT position stake. Applied only to next epoch.
 		///
 		/// Is better then unstake and restake more in case of penalty.
-		/// But not incentivises to making many small stakes one on other to game over system.
+		/// But this may incentivize making many small stakes one on top of each other to game the system.
 		#[pallet::weight(10_000)]
 		#[transactional]
 		pub fn extend_stake(
