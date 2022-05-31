@@ -1,9 +1,10 @@
 #![cfg(feature = "runtime-benchmarks")]
 
 use super::*;
-use crate::Pallet as Airdrop;
-use crate::models::{Proof, RemoteAccount};
-use crate::{AccountIdOf, Call, Config, Pallet, ProofOf, RemoteAccountOf};
+use crate::{
+	models::{Proof, RemoteAccount},
+	AccountIdOf, Call, Config, Pallet as Airdrop, Pallet, ProofOf, RemoteAccountOf,
+};
 use composable_support::types::{EcdsaSignature, EthereumAddress};
 use composable_traits::airdrop::AirdropManagement;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
@@ -36,10 +37,10 @@ pub enum ClaimKey {
 }
 
 impl ClaimKey {
-	pub fn as_remote_public<T>(&self) -> RemoteAccountOf<T> 
-    where
-        T: Config<RelayChainAccountId = [u8; 32]>,
-    {
+	pub fn as_remote_public<T>(&self) -> RemoteAccountOf<T>
+	where
+		T: Config<RelayChainAccountId = [u8; 32]>,
+	{
 		match self {
 			ClaimKey::Relay(relay_account) =>
 				RemoteAccount::RelayChain(*(relay_account.public().as_array_ref())),
@@ -47,10 +48,10 @@ impl ClaimKey {
 		}
 	}
 
-	pub fn proof<T>(self, reward_account: AccountIdOf<T>) -> ProofOf<T> 
-    where
-        T: Config<RelayChainAccountId = [u8; 32]>,
-    {
+	pub fn proof<T>(self, reward_account: AccountIdOf<T>) -> ProofOf<T>
+	where
+		T: Config<RelayChainAccountId = [u8; 32]>,
+	{
 		match self {
 			ClaimKey::Relay(relay) => relay_proof::<T>(&relay, reward_account),
 			ClaimKey::Eth(eth) => ethereum_proof::<T>(&eth, reward_account),
@@ -58,9 +59,9 @@ impl ClaimKey {
 	}
 }
 
-fn relay_proof<T>(relay_account: &RelayKey, reward_account: AccountIdOf<T>) -> ProofOf<T> 
-where 
-    T: Config<RelayChainAccountId = [u8; 32]>,
+fn relay_proof<T>(relay_account: &RelayKey, reward_account: AccountIdOf<T>) -> ProofOf<T>
+where
+	T: Config<RelayChainAccountId = [u8; 32]>,
 {
 	let mut msg = b"<Bytes>".to_vec();
 	msg.append(&mut PROOF_PREFIX.to_vec());
@@ -69,12 +70,9 @@ where
 	Proof::RelayChain(*(relay_account.public().as_array_ref()), relay_account.sign(&msg).into())
 }
 
-pub fn ethereum_proof<T>(
-	ethereum_account: &EthKey,
-	reward_account: AccountIdOf<T>,
-) -> ProofOf<T> 
-where 
-    T: Config<RelayChainAccountId = [u8; 32]>,
+pub fn ethereum_proof<T>(ethereum_account: &EthKey, reward_account: AccountIdOf<T>) -> ProofOf<T>
+where
+	T: Config<RelayChainAccountId = [u8; 32]>,
 {
 	let msg = keccak_256(
 		&Airdrop::<T>::ethereum_signable_message(
@@ -102,16 +100,16 @@ pub fn ethereum_address(secret: &EthKey) -> EthereumAddress {
 	res
 }
 
-pub fn relay_generate<T>(count: u64) -> Vec<(AccountIdOf<T>, ClaimKey)> 
+pub fn relay_generate<T>(count: u64) -> Vec<(AccountIdOf<T>, ClaimKey)>
 where
-    T: Config<RelayChainAccountId = [u8; 32]>,
+	T: Config<RelayChainAccountId = [u8; 32]>,
 {
 	let seed: u128 = 12345678901234567890123456789012;
 	(0..count)
 		.map(|i| {
 			let account_id = account("recipient", i as u32, 0xCAFEBABE);
 			(
-                account_id,
+				account_id,
 				ClaimKey::Relay(ed25519::Pair::from_seed(&keccak_256(
 					&[(&(seed + i as u128)).to_le_bytes(), (&(seed + i as u128)).to_le_bytes()]
 						.concat(),
@@ -121,24 +119,21 @@ where
 		.collect()
 }
 
-pub fn ethereum_generate<T>(count: u64) -> Vec<(AccountIdOf<T>, ClaimKey)> 
+pub fn ethereum_generate<T>(count: u64) -> Vec<(AccountIdOf<T>, ClaimKey)>
 where
-    T: Config<RelayChainAccountId = [u8; 32]>,
+	T: Config<RelayChainAccountId = [u8; 32]>,
 {
 	(0..count)
 		.map(|i| {
 			let account_id = account("recipient", i as u32, 0xCAFEBABE);
-			(
-				account_id,
-				ClaimKey::Eth(EthKey::parse(&keccak_256(&i.to_le_bytes())).unwrap()),
-			)
+			(account_id, ClaimKey::Eth(EthKey::parse(&keccak_256(&i.to_le_bytes())).unwrap()))
 		})
 		.collect()
 }
 
-pub fn generate_accounts<T>(count: u64) -> Vec<(AccountIdOf<T>, ClaimKey)> 
+pub fn generate_accounts<T>(count: u64) -> Vec<(AccountIdOf<T>, ClaimKey)>
 where
-    T: Config<RelayChainAccountId = [u8; 32]>,
+	T: Config<RelayChainAccountId = [u8; 32]>,
 {
 	let mut x = relay_generate::<T>(count / 2);
 	let mut y = ethereum_generate::<T>(count / 2);
@@ -147,22 +142,22 @@ where
 }
 
 benchmarks! {
-    where_clause {
-        where 
-            T: Config<RelayChainAccountId = [u8; 32]>,
-            BalanceOf<T>: From<u128>,
-    }
+	where_clause {
+		where
+			T: Config<RelayChainAccountId = [u8; 32]>,
+			BalanceOf<T>: From<u128>,
+	}
 
 	create_airdrop_benchmark {
 		let x in 100..1000;
-        let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
+		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
 	}: create_airdrop(RawOrigin::Signed(creator), None, VESTING_STEP.into())
 
 	add_recipient_benchmark {
 		let x in 100..1000;
 		let accounts: Vec<(RemoteAccountOf<T>, BalanceOf<T>, bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), false)).collect();
 		let airdrop_id = T::AirdropId::one();
-        let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
+		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
 		<Airdrop<T> as AirdropManagement>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 	}: add_recipient(RawOrigin::Signed(creator), airdrop_id, accounts)
 
@@ -170,7 +165,7 @@ benchmarks! {
 		let x in 100..1000;
 		let accounts: Vec<(RemoteAccountOf<T>, BalanceOf<T>, bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), false)).collect();
 		let airdrop_id = T::AirdropId::one();
-        let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
+		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
 		<Airdrop<T> as AirdropManagement>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 		<Airdrop<T> as AirdropManagement>::add_recipient(creator.clone(), airdrop_id, accounts.clone())?;
 	}: remove_recipient(RawOrigin::Signed(creator), airdrop_id, accounts[0 as usize].0.clone())
@@ -179,8 +174,8 @@ benchmarks! {
 		let x in 100..1000;
 		let accounts = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), false)).collect();
 		let airdrop_id = T::AirdropId::one();
-        let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
-		<Airdrop<T> as AirdropManagement>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?; 
+		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
+		<Airdrop<T> as AirdropManagement>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 		<Airdrop<T> as AirdropManagement>::add_recipient(creator.clone(), airdrop_id, accounts)?;
 	}: enable_airdrop(RawOrigin::Signed(creator), airdrop_id)
 
@@ -188,7 +183,7 @@ benchmarks! {
 		let x in 100..1000;
 		let accounts = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), false)).collect();
 		let airdrop_id = T::AirdropId::one();
-        let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
+		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
 		<Airdrop<T> as AirdropManagement>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 		<Airdrop<T> as AirdropManagement>::add_recipient(creator.clone(), airdrop_id, accounts)?;
 	}: disable_airdrop(RawOrigin::Signed(creator), airdrop_id)
@@ -198,12 +193,16 @@ benchmarks! {
 		let accounts = generate_accounts::<T>(x as _);
 		let remote_accounts = accounts.clone().into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), false)).collect();
 		let airdrop_id = T::AirdropId::one();
-        let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
+		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
 		<Airdrop<T> as AirdropManagement>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 		<Airdrop<T> as AirdropManagement>::add_recipient(creator, airdrop_id, remote_accounts)?;
-        let reward_account = AccountIdOf::<T>::from(accounts[0 as usize].0.clone().into());
+		let reward_account = AccountIdOf::<T>::from(accounts[0 as usize].0.clone().into());
 		System::<T>::set_block_number(VESTING_PERIOD.into());
 	}: claim(RawOrigin::None, airdrop_id, reward_account, accounts[0 as usize].1.clone().proof::<T>(accounts[0 as usize].0.clone()))
 }
 
-impl_benchmark_test_suite!(Airdrop, crate::mocks::ExtBuilder::default().build(), crate::mocks::MockRuntime);
+impl_benchmark_test_suite!(
+	Airdrop,
+	crate::mocks::ExtBuilder::default().build(),
+	crate::mocks::MockRuntime
+);

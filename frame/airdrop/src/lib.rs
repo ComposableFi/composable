@@ -31,7 +31,7 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::PostDispatchInfo,
 		pallet_prelude::*,
- 		traits::{
+		traits::{
 			fungible::{Inspect, Transfer},
 			Time,
 		},
@@ -179,7 +179,7 @@ pub mod pallet {
 	/// The counter used to identify Airdrops.
 	#[pallet::storage]
 	#[pallet::getter(fn airdrop_count)]
-    #[allow(clippy::disallowed_types)] // Allow `farme_support::pallet_prelude::ValueQuery`
+	#[allow(clippy::disallowed_types)] // Allow `farme_support::pallet_prelude::ValueQuery`
 	pub type AirdropCount<T: Config> =
 		StorageValue<_, T::AirdropId, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 
