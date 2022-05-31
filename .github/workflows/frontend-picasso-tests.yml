@@ -1,4 +1,4 @@
-name: 'Frontend (Picasso) Checks - Tests'
+name: "Frontend (Picasso) Checks - Tests"
 on:
   pull_request:
     branches:
@@ -14,10 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-      - with:
-          node-version: '16'
-      - run: yarn install
+      - name: Install modules
+        run: yarn install
         working-directory: frontend/ui-picasso
-      - run: yarn test
+      - name: Run tests
+        run: yarn test
         working-directory: frontend/ui-picasso
+        env:
+          - name: CI
+            value: true
+          - name: COVERAGE
+            value: true
