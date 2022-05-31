@@ -375,35 +375,35 @@ This data structure can be modified to support the RP approach by adding/adjusti
 [source,rust]
 ----
 pub struct StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards> {
-/// The staked asset.
-pub asset: AssetId,
-/// The original stake this NFT was minted for.
-/// Used for calculating the pool share.
-pub stake: Balance,
+    /// The staked asset.
+    pub asset: AssetId,
+    /// The original stake this NFT was minted for.
+    /// Used for calculating the pool share.
+    pub stake: Balance,
 
-/// New: Pool share received for this NFT
-pub share: Balance,
+    /// New: Pool share received for this NFT
+    pub share: Balance,
 
-/// New: reduced rewards for the fNFT (d_n)
-pub reduction: Balance,
+    /// New: reduced rewards for the fNFT (d_n)
+    pub reduction: Balance,
 
-/// The reward epoch at which this NFT will start yielding rewards. This is no longer needed.
-/// pub reward_epoch_start: Epoch,
+    /// The reward epoch at which this NFT will start yielding rewards. This is no longer needed.
+    /// pub reward_epoch_start: Epoch,
 
-/// List of reward asset/pending rewards. This is no longer needed as pending rewards are pooled
-/// pub pending_rewards: Rewards,
+    /// List of reward asset/pending rewards. This is no longer needed as pending rewards are pooled
+    /// pub pending_rewards: Rewards,
 
-/// The date at which this NFT was minted.
-pub lock_date: Timestamp,
+    /// The date at which this NFT was minted.
+    pub lock_date: Timestamp,
 
-/// The duration for which this NFT stake was locked.
-pub lock_duration: DurationSeconds,
+    /// The duration for which this NFT stake was locked.
+    pub lock_duration: DurationSeconds,
 
-/// The penalty applied if a staker unstake before the end date.
-pub early_unstake_penalty: Penalty<AccountId>,
+    /// The penalty applied if a staker unstake before the end date.
+    pub early_unstake_penalty: Penalty<AccountId>,
 
-/// The reward multiplier. Can remove this and calculate the extra shares a user gets based on the multiplier
-/// pub reward_multiplier: Perbill,
+    /// The reward multiplier. Can remove this and calculate the extra shares a user gets based on the multiplier
+    /// pub reward_multiplier: Perbill,
 }
 ----
 
