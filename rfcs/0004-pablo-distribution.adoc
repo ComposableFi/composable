@@ -375,6 +375,9 @@ This data structure can be modified to support the RP approach by adding/adjusti
 [source,rust]
 ----
 pub struct StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards> {
+    /// Reward Pool ID from which pool to allocate rewards for this
+    pub reward_pool_id: ID,
+
     /// The staked asset.
     pub asset: AssetId,
     /// The original stake this NFT was minted for.
@@ -407,8 +410,12 @@ pub struct StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards> {
 }
 ----
 
+Now in order to allow redeeming the above fNFT, following data structures needs to be tracked,
+
+
+
 [#_rewardaccumulationhook]
-==== RewardAccumulationHook
+==== (Needs modification) RewardAccumulationHook
 
 Following algorithm is to added as part of the existing https://github.com/ComposableFi/composable/blob/main/frame/staking-rewards/src/lib.rs#L363[block hook] in staking rewards pallet. As it is only accumulating new rewards for an upcoming epoch, the code is proposed to be run inside a new state `State:AccumulatingRewards`.
 
