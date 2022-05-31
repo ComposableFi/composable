@@ -11,7 +11,6 @@
   ],
   "private": true,
   "scripts": {
-    "prepare": "husky install",
     "start": "yarn --cwd app dev",
     "build": "yarn --cwd app build",
     "storybook": "yarn --cwd storybook storybook",

@@ -16,7 +16,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Install modules
-        run: yarn install
+        run: yarn install --no-scripts
         working-directory: frontend/ui-picasso
 
       - name: Run tests
