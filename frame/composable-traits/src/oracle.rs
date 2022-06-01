@@ -92,10 +92,12 @@ pub trait Oracle {
 
 	/// Time Weighted Average Price
 	fn get_twap(
-		of: Self::AssetId,
+		asset_id: Self::AssetId,
 		weighting: Vec<Self::Balance>,
+		amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
 
+	/// Length of price history
 	fn depth_of_history(of: Self::AssetId) -> usize;
 
 	/// How much of `quote` for unit `base` Oracle suggests to take.

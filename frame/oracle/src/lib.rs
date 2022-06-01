@@ -405,10 +405,20 @@ pub mod pallet {
 		}
 
 		fn get_twap(
-			of: Self::AssetId,
+			asset_id: Self::AssetId,
 			weighting: Vec<Self::Balance>,
+			amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			Self::get_twap(of, weighting)
+			let price = Self::get_twap(asset_id, weighting)?;
+			let unit = 10_u128
+				.checked_pow(Self::LocalAssets::decimals(asset_id)?)
+				.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
+			let price = multiply_by_rational(price.into(), amount.into(), unit)
+				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
+			let price = price
+				.try_into()
+				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
+			Ok(price)
 		}
 
 		fn depth_of_history(asset_id: T::AssetId) -> usize {

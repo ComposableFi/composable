@@ -1113,6 +1113,7 @@ pub mod pallet {
 				.ok_or_else(|| Error::<T>::MarketDoesNotExist.into())
 		}
 
+		/// Get TWAP from oracle. If history of prices is empty then return latest price.
 		fn get_price(
 			asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
 			amount: T::Balance,
@@ -1127,7 +1128,7 @@ pub mod pallet {
 				let weights_length = if prices_length < WINDOW { prices_length } else { WINDOW };
 				// make flat weights
 				let weights = vec![(100_u128 / (weights_length as u128)).into(); weights_length];
-				<T::Oracle as Oracle>::get_twap(asset_id, weights)
+				<T::Oracle as Oracle>::get_twap(asset_id, weights, amount)
 			}
 		}
 
