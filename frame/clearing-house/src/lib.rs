@@ -703,18 +703,19 @@ pub mod pallet {
 		/// ![](https://www.plantuml.com/plantuml/svg/FOsxhG91303pLyMZ0CuvqKb8zE7pcbrBtW_-YFOv4H2DPfBPFT0Yk_vTP91cuJJzRn7BRm1LekMnqUnmdtrDnqFv8K0_0SCti5DZWwTXPo1bD1drscOwGn6iPtTGUQKK3DwMulWkTnxbv0S0)
 		///
 		/// Liquidation can be either full or partial. In the former case, positions are closed
-		/// entirely, while in the latter, they are partially closed until the account is brought
-		/// back above the initial margin requirement.
+		/// entirely, while in the latter, they are partially closed. Both proceed by
+		/// closing/reducing positions until the account is brought back above the
+		/// maintenance/partial margin requirement.
 		///
-		/// Note that both unrealized PnL and funding payments contribute to an account being
-		/// brought below the maintenance margin ratio. Liquidation realizes a user's PnL and
-		/// funding payments.
+		/// Note that both unrealized PnL and funding payments contribute to an account's margin
+		/// (and thus its MMR/PMR). Liquidation (either full or partial) realizes a position's PnL
+		/// and funding payments.
 		///
-		/// Positions in markets with the highest margin requirements (i.e., the lowest max leverage
-		/// for opening a position) are liquidated first.
+		/// Positions in markets with the highest margin requirements (i.e., higher MMR/PMR) are
+		/// liquidated first.
 		///
 		/// The caller of the function, the 'liquidator', may be credited with a liquidation fee in
-		/// their account, which can be withdrawn via another extrinsic.
+		/// their account, which can be withdrawn via TODO(0xangelo).
 		///
 		/// ## Parameters
 		///
@@ -722,12 +723,23 @@ pub mod pallet {
 		///
 		/// ## Assumptions or Requirements
 		///
+		/// Users with no open positions can't be liquidated and if tried will raise an error.
+		///
 		/// ### For full liquidation
 		///
-		/// The user's margin ration must be stricly less than the combined margin ratios of all the
-		/// markets in which it has open positions in. In other words, the user's margin (collateral
-		/// + total unrealized pnl + total unrealized funding) must be strictly less than the sum of
-		/// margin requirements (MMR * base asset value) for each market it has an open position in.
+		/// The user's margin ratio must be stricly less than the combined maintenance margin ratios
+		/// of all the markets in which it has open positions in. In other words, the user's margin
+		/// (collateral + total unrealized pnl + total unrealized funding) must be strictly less
+		/// than the sum of margin requirements (MMR * base asset value) for each market it has an
+		/// open position in.
+		///
+		/// ### For partial liquidation
+		///
+		/// The user's margin ration must be stricly less than the combined partial margin ratios of
+		/// all the markets in which it has open positions in. In other words, the user's margin
+		/// (collateral + total unrealized pnl + total unrealized funding) must be strictly less
+		/// than the sum of margin requirements (PMR * base asset value) for each market it has an
+		/// open position in.
 		///
 		/// ## Emits
 		///
