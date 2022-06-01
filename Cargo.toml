@@ -1,0 +1,14 @@
+[package]
+name = "ibc-relayer"
+version = "0.1.0"
+edition = "2021"
+authors = [""]
+
+[[bin]]
+name = "ibc-relayer"
+path = "./bin/main.rs"
+
+[dependencies]
+futures = "0.3.21"
+tokio = "1.18.2"
+async-trait = "0.1.53"
