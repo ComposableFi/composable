@@ -778,18 +778,6 @@ pub mod pallet {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			<T as Config>::redeemable_assets_for_given_lp_tokens(pool, pool_account, lp_amount)
-			// match pool {
-			// PoolConfiguration::ConstantProduct(pool) => {
-			// Uniswap::<T>::redeemable_assets_for_given_lp_tokens(pool, pool_account, lp_amount)
-			// },
-			// PoolConfiguration::StableSwap(pool) => {
-
-			// 		Err(Error::<T>::NoLpTokenForLbp.into())
-			// },
-			// PoolConfiguration::LiquidityBootstrapping(_) => {
-			// 		Err(Error::<T>::NoLpTokenForLbp.into())
-			// }
-			// }
 		}
 
 		fn get_exchange_value(
@@ -906,8 +894,6 @@ pub mod pallet {
 							lp_amount,
 							base_amount,
 							quote_amount,
-							// min_base_amount,
-							// min_quote_amount,
 						)?;
 					Self::update_twap(pool_id)?;
 					Self::deposit_event(Event::<T>::LiquidityRemoved {
@@ -926,8 +912,6 @@ pub mod pallet {
 						lp_amount,
 						base_amount,
 						quote_amount,
-						// min_base_amount,
-						// min_quote_amount,
 					)?;
 					Self::update_twap(pool_id)?;
 					Self::deposit_event(Event::<T>::LiquidityRemoved {
