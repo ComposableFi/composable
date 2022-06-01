@@ -1,4 +1,4 @@
-# UI-Template
+# UI-Picasso
 
 [![ESLint](https://github.com/ComposableFi/ui-picasso/actions/workflows/eslint.yml/badge.svg?branch=dev)](https://github.com/ComposableFi/ui-picasso/actions/workflows/eslint.yml)
 
