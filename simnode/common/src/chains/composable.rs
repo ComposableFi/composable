@@ -46,6 +46,7 @@ impl substrate_simnode::ChainInfo for ChainInfo {
 			client: deps.client,
 			pool: deps.pool,
 			deny_unsafe: deps.deny_unsafe,
+			chain_props: Default::default(),
 		};
 		node::rpc::create::<composable_runtime::RuntimeApi, ExecutorDispatch>(full_deps)
 			.expect("Rpc to be initialized")

@@ -1,0 +1,92 @@
+[package]
+name = "pallet-ibc"
+version = "0.0.1"
+authors = ["Composable Developers"]
+homepage = "https://composable.finance"
+edition = "2021"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+log = { version = "0.4.0", default-features = false }
+scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
+
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false, optional = true }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false, optional = true }
+simple-iavl = { git = "https://github.com/Wizdave97/simple-avl", default-features = false, optional = true }
+prost = { version = "0.10", default-features = false, optional = true }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
+sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
+sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
+balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
+parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.22" }
+
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "198440a62d4ccc88555cfef6253d6595319b88bf", default-features = false }
+ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "198440a62d4ccc88555cfef6253d6595319b88bf", default-features = false }
+tendermint-proto = { version = "0.23.7", default-features = false }
+tendermint = { version = "0.23.7", optional = true, default-features = false }
+hex-literal = { version = "0.3.4", optional = true }
+ics23 = { version = "=0.8.0-alpha", default-features = false, optional = true}
+
+# local deps
+ibc-primitives = { path = "ibc-primitives", default-features = false }
+pallet-ibc-ping = { path = "../ibc-ping", default-features = false }
+ibc-trait = { path = "ibc-trait", default-features = false }
+
+[dev-dependencies]
+hex = '0.4.0'
+sha2 = '0.9.3'
+serde = { version = "1.0" }
+ics23 = { version = "=0.8.0-alpha" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+chrono = "0.4.19"
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "198440a62d4ccc88555cfef6253d6595319b88bf", features = ["mocks"] }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+prost = { version = "0.10" }
+tendermint = { version = "0.23.7" }
+simple-iavl = { git = "https://github.com/Wizdave97/simple-avl" }
+hex-literal = { version = "0.3.4" }
+
+[features]
+default = ['std']
+std = [
+	'codec/std',
+	'log/std',
+	"scale-info/std",
+	"frame-benchmarking/std",
+	'frame-support/std',
+	'frame-system/std',
+	'sp-runtime/std',
+	'sp-core/std',
+	'sp-std/std',
+	'sp-io/std',
+	'ibc/std',
+	'ibc-proto/std',
+	'ibc-primitives/std',
+	'balances/std',
+	"pallet-ibc-ping/std",
+	"ibc-trait/std",
+	"parachain-info/std",
+	"sp-runtime-interface/std",
+]
+
+runtime-benchmarks = [
+	"frame-benchmarking",
+	"frame-system/runtime-benchmarks",
+	"tendermint",
+	"hex-literal",
+	"pallet-timestamp",
+	"pallet-ibc-ping/runtime-benchmarks",
+	"simple-iavl",
+	"ics23",
+	"prost"
+]
+
+try-runtime = ["frame-support/try-runtime"]
