@@ -23,37 +23,25 @@ Table of Contents
         -   [5.2.1. FeeConfig](#_feeconfig)
         -   [5.2.2. LP Trading Fee
             Distribution](#_lp_trading_fee_distribution)
-            -   [5.2.2.1. LP fNFT
-                Configuration](#_lp_fnft_configuration)
-            -   [5.2.2.2. LP fNFT Creation When Receiving LP Tokens for
-                Adding
-                Liquidity](#_lp_fnft_creation_when_receiving_lp_tokens_for_adding_liquidity)
-            -   [5.2.2.3. LP fNFT Resizing or Unstaking When Burning LP
-                Tokens for Removing
-                Liquidity](#_lp_fnft_resizing_or_unstaking_when_burning_lp_tokens_for_removing_liquidity)
-            -   [5.2.2.4. Trading Fee
-                Distribution](#_trading_fee_distribution)
         -   [5.2.3. PBLO Staker Trading Fee
             Distribution](#_pblo_staker_trading_fee_distribution)
-    -   [5.3. Pallet Staking Rewards](#_pallet_staking_rewards)
-        -   [5.3.1. Staking Reward
-            Calculation](#_staking_reward_calculation)
-        -   [5.3.2. PICA/PBLO Token Staking](#_picapblo_token_staking)
-            -   [5.3.2.1. RewardConfig](#_rewardconfig)
-            -   [5.3.2.2. Governance Sets the RewardConfig and Transfers
-                the Reward
-                Allocation](#_governance_sets_the_rewardconfig_and_transfers_the_reward_allocation)
-            -   [5.3.2.3. Governance Sets the Pablo Pool LP Staking
-                Reward
-                Allocation](#_governance_sets_the_pablo_pool_lp_staking_reward_allocation)
-            -   [5.3.2.4.
-                RewardAccumulationHook](#_rewardaccumulationhook)
+    -   [5.3. Pallet Staking Rewards - LP/PICA/PBLO/Other Token Staking
+        Reward
+        Pools](#_pallet_staking_rewards_lppicapbloother_token_staking_reward_pools)
+        -   [5.3.1. Analysis of Reward
+            Calculations](#_analysis_of_reward_calculations)
+        -   [5.3.2. Data Structures](#_data_structures)
+        -   [5.3.3. Staking](#_staking)
+        -   [5.3.4. \[Needs modification\]
+            RewardAccumulationHook](#_rewardaccumulationhook)
 -   [6. Implementation](#_implementation)
     -   [6.1. Pallet Pablo: LP Fee + Staking
         Changes](#_pallet_pablo_lp_fee_staking_changes)
     -   [6.2. Pallet Staking Rewards: PICA/PBLO Staking Related
         Changes](#_pallet_staking_rewards_picapblo_staking_related_changes)
--   [Appendix A: Fee Distribution Q&A](#_fee_distribution_qa)
+-   [Appendix A: Trading Fee Inflation to Avoid Dilution of
+    LPs](#_trading_fee_inflation_to_avoid_dilution_of_lps)
+-   [7. Fee Distribution Q&A](#_fee_distribution_qa)
 
 ## 1. Abstract
 
@@ -63,7 +51,7 @@ discussions about the subject.
 
 `TODO summarise the mechanism`
 
-## 2. Background
+## 2.Background
 
 ### 2.1. PBLO Token Initial Distribution
 
@@ -114,23 +102,32 @@ addressed in the context of this proposal.
 Following is a summary of use cases omitting the UI specific use cases
 for brevity.
 
-<img src="images/pablo-distribution-users.png" width="523" height="1182" alt="pablo distribution users" />
+<img src="images/images/pablo-distribution-users.png" width="523" height="1182" alt="pablo distribution users" />
 
 ## 4. Requirements
 
 ### 4.1. Pablo Liquidity Providers
 
-1.  LPs MUST be able to stake their LP tokens to earn PBLO rewards.
+1.  LPs MUST be able to stake their LP tokens to earn rewards allocated
+    for a particular pool.
+
+    1.  Rewards can be in terms of PBLO, PICA or any other tokens.
+
+    2.  Same pool can receive multiple types of tokens as rewards.
 
 2.  The system MUST support accumulating the LP share of Pablo trading
     fees.
 
 3.  Pablo trading fees(LP fee part) MUST be disbursed according to LP
-    token share of each LP.
+    token share of each LP. Fees are accumulated towards increasing
+    liquidity in a pool while allowing LPs to redeem the fee share with
+    their LP tokens at a preferred time.
 
 ### 4.2. PBLO Stakers
 
-1.  System MUST allow staking of PBLO.
+1.  System MUST allow staking of PBLO. This must be implemented through
+    the fNFT mechanism with multiple time period unlocks being possible
+    for users.
 
 2.  The system MUST accumulate the rewards share for PBLO holders who
     stake PBLO token, out of the PBLO supply allocated for them.
@@ -138,15 +135,31 @@ for brevity.
 3.  The system MUST support accumulating the (stakers) reward part of
     the Pablo trading fees.
 
+4.  The system must support rewards being distributed on granular
+    basis - e.g every 6 or 12 hours.
+
+5.  The users MUST be able to claim the rewards once distributed.
+
+6.  The system SHOULD support rewards in the form of fNFTs.
+
 ### 4.3. PICA Stakers
 
-1.  System MUST allow staking of PICA.
+1.  System MUST allow staking of PICA. This must be implemented through
+    the fNFT mechanism with multiple time period unlocks being possible
+    for users.
 
 2.  The system MUST accumulate the rewards share for PICA holders who
     stake PICA token, out of the PICA supply allocated for them.
 
 3.  The system MUST support accumulating any token rewards other than
     PICA for PICA stakers.
+
+4.  The system must support rewards being distributed on granular
+    basis - e.g every 6 or 12 hours.
+
+5.  The users MUST be able to claim the rewards once distributed.
+
+6.  The system SHOULD support rewards in the form of fNFTs.
 
 ### 4.4. Pablo Governance
 
@@ -192,13 +205,10 @@ for brevity.
 
 ### 5.1. System Overview
 
-<img src="images/pablo-distribution-verview.png" width="984" height="731" alt="pablo distribution verview" />
-
-TODO: Suggest rename of staking-reward pallet to pallet-earn or
-pallet-rewards.
+<img src="images/images/pablo-distribution-verview.png" width="977" height="807" alt="pablo distribution verview" />
 
 TODO: What to do for part of protocol fees that should be transferred to
-treasury eventually?
+treasury eventually as treasury does not stake it’s PBLO?
 
 ### 5.2. Pallet-Pablo
 
@@ -216,14 +226,14 @@ abstraction over all fees that could be charged on a pool to allow for
 extension. At this time a 100% of the owner fee should be defined as a
 new field `protocol_fee`.
 
-<img src="images/pablo-fee-config.png" width="196" height="106" alt="pablo fee config" />
+<img src="images/images/pablo-fee-config.png" width="224" height="116" alt="pablo fee config" />
 
 **Existing code must be modified to use this data structure**.
 
 Given this,
 
     fee = // calculation depends on the pool type: based on the fee_rate
-    owner_fee = fee * owner_fee_rate;
+    owner_fee = fee * owner_fee_rate * (1 - protocol_fee_rate);
     protocol_fee = owner_fee * protocol_fee_rate;
 
 For all pools launched at the Picasso launch following values would be
@@ -234,166 +244,313 @@ set for these configs
 
 #### 5.2.2. LP Trading Fee Distribution
 
-Pablo needs to send the accumulated fees from trading to an account to
-be distributed asynchronously. It is natural to see this distribution
-working in a similar way to how staking rewards pallet distributes fNFT
-rewards. The idea behind this section is to reuse staking rewards pallet
-logic in distributing trading fees earnings to LPs.
+LPs trading fees are calculated and kept as part of the pool liquidity
+in Pablo. When LPs remove liquidity from the pool the trading fees are
+automatically redeemed according their pool LP ratio, check
+[reference](https://hackmd.io/@HaydenAdams/HJ9jLsfTz#Fee-Structure).
+This results in trading fee share being diluted overtime for smaller
+pools as follows.
 
-##### 5.2.2.1. LP fNFT Configuration
+After <img src="images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>
+trades and <img src="images/stem-0e51a2dede42189d77627c4d742822c3.png" width="13" height="6" alt="stem 0e51a2dede42189d77627c4d742822c3" /></span>
+liquidity additions,
 
-<img src="images/pablo-LP-fNFT-config.png" width="288" height="299" alt="pablo LP fNFT config" />
+trading fees <img src="images/stem-82f81e776a24846a08157aa3f917012b.png" width="45" height="12" alt="stem 82f81e776a24846a08157aa3f917012b" /></span>
 
-The interface for the configurations does not currently exist on
-staking\_rewards pallet, hence it has to be implemented.
+total liquidity <img src="images/stem-0f1df372dc50dc67fc225a13b75dd233.png" width="45" height="12" alt="stem 0f1df372dc50dc67fc225a13b75dd233" /></span>
 
-##### 5.2.2.2. LP fNFT Creation When Receiving LP Tokens for Adding Liquidity
+fees and liquidity returned for an LP amount <img src="images/stem-2daffc703b015a8c1fc11715b5e9a27d.png" width="142" height="19" alt="stem 2daffc703b015a8c1fc11715b5e9a27d" /></span>
 
-<img src="images/pablo-fNFT-add-liquidity.png" width="381" height="247" alt="pablo fNFT add liquidity" />
+<img src="images/stem-35912508e8bf41c1a7f94b93abcec3aa.png" width="98" height="19" alt="stem 35912508e8bf41c1a7f94b93abcec3aa" /></span>
 
-##### 5.2.2.3. LP fNFT Resizing or Unstaking When Burning LP Tokens for Removing Liquidity
+trading fees received <img src="images/stem-acbc3160f2b6a5977e6ac719418e0581.png" width="106" height="19" alt="stem acbc3160f2b6a5977e6ac719418e0581" /></span>
 
-<img src="images/pablo-fNFT-remove-liquidity.png" width="524" height="269" alt="pablo fNFT remove liquidity" />
+"When pool size <img src="images/stem-c8165429df4fe2a9cc08c1a6949ead7c.png" width="30" height="12" alt="stem c8165429df4fe2a9cc08c1a6949ead7c" /></span>
+increases the amount of trading fees received <img src="images/stem-332cc365a4987aacce0ead01b8bdcc0b.png" width="9" height="6" alt="stem 332cc365a4987aacce0ead01b8bdcc0b" /></span>
+reduces for a particular LP position.
 
-Resizing interface does not exist, it is expected to be added soon.
+For large pool sizes of <img src="images/stem-c8165429df4fe2a9cc08c1a6949ead7c.png" width="30" height="12" alt="stem c8165429df4fe2a9cc08c1a6949ead7c" /></span>
+(steady state) this effect is negligible, hence it’s a good enough
+strategy to distribute fees.
 
-##### 5.2.2.4. Trading Fee Distribution
-
-This reuses existing fNFT logic to distribute fees accrued for LPs.
-
-<img src="images/pablo-fNFT-fee-distro.png" width="284" height="298" alt="pablo fNFT fee distro" />
+But if required this effect can be negated by increasing the trading fee
+by a <img src="images/stem-e64be84a4eef601683d61de156018075.png" width="24" height="10" alt="stem e64be84a4eef601683d61de156018075" /></span>
+while at the same time subtracting it from the total fees paid out
+already to liquidity providers. Refer [Trading Fee Inflation to Avoid
+Dilution of LPs](#_trading_fee_inflation_to_avoid_dilution_of_lps).
 
 #### 5.2.3. PBLO Staker Trading Fee Distribution
 
 This is the reward a `PBLO` staker receives from the trading fees of
 Pablo pools. It is equal to the protocol fee charged on Pablo pools.
-This can be accomplished by calling the already exisiting
+This can be accomplished by calling the already existing
 `StakingReward.transfer_reward` interface as follows. According to
 product there is also a need to convert whatever the fee asset in to
 PBLO to create a demand/additional value for PBLO.
 
-<img src="images/pablo-fNFT-pblo-staking-fee-distro.png" width="510" height="352" alt="pablo fNFT pblo staking fee distro" />
+<img src="images/images/pablo-fNFT-pblo-staking-fee-distro.png" width="510" height="346" alt="pablo fNFT pblo staking fee distro" />
 
 Will it need a change in
 [this](https://github.com/ComposableFi/composable/blob/main/frame/composable-traits/src/staking_rewards.rs#L96)
 ?
 
-### 5.3. Pallet Staking Rewards
+### 5.3. Pallet Staking Rewards - LP/PICA/PBLO/Other Token Staking Reward Pools
 
 This section covers how the staking rewards are distributed using the
 [staking rewards
 pallet](https://github.com/ComposableFi/composable/tree/main/frame/staking-rewards).
 
-#### 5.3.1. Staking Reward Calculation
+#### 5.3.1. Analysis of Reward Calculations
 
-PBLO and PICA allocation for stakers needs to be disbursed to the
-relevant stakers by some process. The token distribution works as
-follows,
+In order to create the necessary reward pool as well as the rewarding
+rate for stakers the following model can be used. It tries to address
+the following constraints
 
-    // these are set by governance
-    staking reward allocation = a (say in token X)
-    reward_rate = r (per epoch?)
-    // Assuming there are only 3 Pablo pools named lp1, lp2, lp3
-    lp1 reward allocation rate = LP1
-    lp2 reward allocation rate = LP2
-    lp3 reward allocation rate = LP3
+1.  Allow <span id="rate">specification of the reward rate for a
+    pool</span> (even setting a dynamically changing rate)
 
-    // given above
-    LP1 staking total reward per epoch = a * r * LP1
-    LP2 staking total reward per epoch = a * r * LP2
-    LP3 staking total reward per epoch = a * r * LP3
-    main token(eg: PBLO) staking total reward per epoch = a * r * (1 - LP1 - LP2 - LP3)
+2.  Allow addition of new stakers at anytime to a pool, start earning
+    immediate rewards
 
-As this logic is common to all rewardable tokens in the system like
-PBLO, PICA or KSM, hence it is proposed here to add the reward
-calculation and disbursement logic in staking-rewards pallet.
+3.  Allow more realtime calculation of rewards on-demand for a given
+    pool for a given user.
 
-#### 5.3.2. PICA/PBLO Token Staking
+4.  Allow shorter reward pool calculation epoch with the use of the
+    reward rate.
 
-##### 5.3.2.1. RewardConfig
+5.  Allow expansion of rewards pools realtime.
 
-This is a configuration data structure stored in staking rewards pallet
-per rewarded asset so that [Staking Reward
-Calculation](#_staking_reward_calculation) can take place.
+6.  Allow compounding of staked position when the rewarded asset is the
+    same as staked.
 
-<img src="images/staking-reward-config.png" width="174" height="93" alt="staking reward config" />
+7.  Allow extending of staked position in time and amount.
 
-##### 5.3.2.2. Governance Sets the RewardConfig and Transfers the Reward Allocation
+To analyze the requirement fully, let’s define the following terms for a
+given staking reward pool,
 
-Following are new extrinsic in the staking rewards pallet that is to be
-called by the governance origin to transfer reward allocation.
+Pre-defined reward rate (say per second) <img src="images/stem-6fb32a8803a6d58cd54908033a2556f9.png" width="23" height="6" alt="stem 6fb32a8803a6d58cd54908033a2556f9" /></span>
 
-<img src="images/staking-rewards-set-reward-allocation-token-x.png" width="328" height="335" alt="staking rewards set reward allocation token x" />
+Pre-defined reward calculation epoch in seconds <img src="images/stem-6184b58307a1dc90934a6a7051a42ceb.png" width="22" height="8" alt="stem 6184b58307a1dc90934a6a7051a42ceb" /></span>
 
-The account that is transferred-to has to be **a dedicated account** in
-staking rewards pallet that tracks the staking reward allocation in a
-given token.This is not to mix these allocations with the already
-transferred rewards in the staking rewards pallet account.
+Reward per calculation epoch <img src="images/stem-b219ff7e7a0df744c99c2e11229a1ded.png" width="33" height="8" alt="stem b219ff7e7a0df744c99c2e11229a1ded" /></span>
 
-##### 5.3.2.3. Governance Sets the Pablo Pool LP Staking Reward Allocation
+Previous total reward pool before the current epoch <img src="images/stem-53fadade13e71b863963af9a23b28b71.png" width="25" height="8" alt="stem 53fadade13e71b863963af9a23b28b71" /></span>
 
-Following is a new extrinsic in the staking rewards pallet that is to be
-called by the governance origin to transfer pool LP reward allocation
-per pool.Refer [Staking Reward
-Calculation](#_staking_reward_calculation).
+Assuming there is a per epoch calculation which adds to the pool, the
+total reward pool for the current epoc,
 
-<img src="images/staking-rewards-set-lp-reward-allocation.png" width="454" height="197" alt="staking rewards set lp reward allocation" />
+<img src="images/stem-667bfb2c3da043fcfff3288c44c1cc6e.png" width="103" height="10" alt="stem 667bfb2c3da043fcfff3288c44c1cc6e" /></span>
 
-Note that the extrinsic itself is agnostic to Pablo specifics.Therefore,
-it can be used to specify reward allocation for any other asset that is
-to be incentivized to be staked.A list data structure
-`perAssetRewardAllocation` can be used to store this value in storage.
+Reward pool shares for <img src="images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>
+stakers,
 
-##### 5.3.2.4. RewardAccumulationHook
+<img src="images/stem-df3438a6dae343911942f03a3f3e1150.png" width="52" height="12" alt="stem df3438a6dae343911942f03a3f3e1150" /></span>
+
+Where <img src="images/stem-39e8c7852cdbd74b28d331353778e128.png" width="21" height="9" alt="stem 39e8c7852cdbd74b28d331353778e128" /></span>
+staker share is <img src="images/stem-aabe1517ce1102595512b736cbf264bb.png" width="14" height="7" alt="stem aabe1517ce1102595512b736cbf264bb" /></span>
+
+Existing <img src="images/stem-39e8c7852cdbd74b28d331353778e128.png" width="21" height="9" alt="stem 39e8c7852cdbd74b28d331353778e128" /></span>
+staker reward,
+
+<img src="images/stem-e1359ae7d0fae29ebf9e42efcaa5536e.png" width="111" height="18" alt="stem e1359ae7d0fae29ebf9e42efcaa5536e" /></span>
+
+When adding a new staker <img src="images/stem-0b46f732c83c0e66067b0e50c2156089.png" width="29" height="8" alt="stem 0b46f732c83c0e66067b0e50c2156089" /></span>,
+existing stakers(<img src="images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>)
+reward would be,
+
+<img src="images/stem-569c4bf984a23f18046277fd561e89a3.png" width="126" height="20" alt="stem 569c4bf984a23f18046277fd561e89a3" /></span>
+
+As this is less than what is expected above, an adjustment " delta P "
+to total reward pool can be made to allow realtime reward calculations,
+
+<img src="images/stem-8e958a64c877dcda40b652878c6c6768.png" width="119" height="20" alt="stem 8e958a64c877dcda40b652878c6c6768" /></span>
+
+<img src="images/stem-38d917fea7c6a7a47eb1aa77edd4da97.png" width="169" height="20" alt="stem 38d917fea7c6a7a47eb1aa77edd4da97" /></span>
+
+<img src="images/stem-5fcfbc0bc69ee8b8f356ce2bbfb42002.png" width="190" height="22" alt="stem 5fcfbc0bc69ee8b8f356ce2bbfb42002" /></span>
+
+<img src="images/stem-e1359ae7d0fae29ebf9e42efcaa5536e.png" width="111" height="18" alt="stem e1359ae7d0fae29ebf9e42efcaa5536e" /></span>
+
+**Therefore, the existing staker receives the same reward as before**
+
+To compensate for this new adjustment, a reduction <img src="images/stem-07339e44a856d82b36d7c6a422050796.png" width="32" height="11" alt="stem 07339e44a856d82b36d7c6a422050796" /></span>
+of reward for each staker needs to be tracked,
+
+<img src="images/stem-8e2d62ca6683a868dc73546e8cc13e75.png" width="189" height="21" alt="stem 8e2d62ca6683a868dc73546e8cc13e75" /></span>
+
+In general,
+
+<img src="images/stem-0f2f030a4f8a3c172e968af2768a3ec8.png" width="349" height="11" alt="stem 0f2f030a4f8a3c172e968af2768a3ec8" /></span>
+
+When adding a new reward to the pool the calculations remain the same
+other than increasing the reward pool as follows,
+
+<img src="images/stem-26132ac9393fe54200c2208dc9244ea4.png" width="160" height="11" alt="stem 26132ac9393fe54200c2208dc9244ea4" /></span>
+
+Since already claimed rewards(<img src="images/stem-7c4ec4f9c189cb8f3edb39740e43c33f.png" width="16" height="10" alt="stem 7c4ec4f9c189cb8f3edb39740e43c33f" /></span>)
+are tracked for each staker, they can always claim the new reward share
+from <img src="images/stem-32efe856de4078991a47242cc1d89349.png" width="43" height="11" alt="stem 32efe856de4078991a47242cc1d89349" /></span>
+later.
+
+To compound the reward for stakers the pool total reward can be i
+
+As this method uses a reward pooling based approach to calculate the
+rewards for each staker out of it on-demand, rest of the document refers
+to this as the "reward pooling(**RP**) based approach".
+
+#### 5.3.2. Data Structures
+
+Staking rewards pallet already uses the following fNFT data structure,
+
+    /// staking typed fNFT, usually can be mapped to raw fNFT storage type
+    #[derive(Debug, PartialEq, Eq, Copy, Clone, Encode, Decode, TypeInfo)]
+    pub struct StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards> {
+        /// The staked asset.
+        pub asset: AssetId,
+        /// The original stake this NFT was minted for.
+        pub stake: Balance,
+        /// The reward epoch at which this NFT will start yielding rewards.
+        pub reward_epoch_start: Epoch,
+        /// List of reward asset/pending rewards.
+        pub pending_rewards: Rewards,
+        /// The date at which this NFT was minted.
+        pub lock_date: Timestamp,
+        /// The duration for which this NFT stake was locked.
+        pub lock_duration: DurationSeconds,
+        /// The penalty applied if a staker unstake before the end date.
+        pub early_unstake_penalty: Penalty<AccountId>,
+        /// The reward multiplier.
+        pub reward_multiplier: Perbill,
+    }
+
+This data structure can be modified to support the RP approach by
+adding/adjusting/removing some fields.
+
+    pub struct StakingNFT<RewardPoolId, AccountId, AssetId, Balance> {
+        /// [Adding] Reward Pool ID from which pool to allocate rewards for this
+        pub reward_pool_id: RewardPoolId,
+
+        /// The staked asset.
+        pub asset: AssetId,
+        /// The original stake this NFT was minted for.
+        /// Used for calculating the pool share.
+        pub stake: Balance,
+
+        /// [Adding] Pool share received for this NFT
+        pub share: Balance,
+
+        /// [Adding] reduced rewards for the fNFT (d_n)
+        pub reduction: Balance,
+
+        /// [Removing] The reward epoch at which this NFT will start yielding rewards. This is no longer needed.
+        /// pub reward_epoch_start: Epoch,
+
+        /// [Removing] List of reward asset/pending rewards. This is no longer needed as pending rewards are pooled
+        /// pub pending_rewards: Rewards,
+
+        /// The date at which this NFT was minted.
+        pub lock_date: Timestamp,
+
+        /// The duration for which this NFT stake was locked.
+        pub lock_duration: DurationSeconds,
+
+        /// The penalty applied if a staker unstake before the end date.
+        pub early_unstake_penalty: Penalty<AccountId>,
+
+        /// [Removing] The reward multiplier. Can remove this and calculate the extra shares a user gets based on the multiplier
+        /// pub reward_multiplier: Perbill,
+    }
+
+Now in order to allow redeeming the above fNFT, following data
+structures needs to be tracked in the staking rewards pallet,
+
+    /// Total reward for a particular asset
+    pub struct Reward<AssetId, Balance, BlockNumber> {
+
+        pub asset_id: AssetId,
+
+        /// Total rewards including inflation for adjusting for new stakers joining the pool. All stakers
+        /// in a pool are eligible to receive a part of this value based on their share of the pool.
+        pub total_rewards: Balance,
+
+        /// A book keeping field to track the actual total reward without the reward inflation caused
+        /// by new stakers joining the pool.
+        pub actual_total_rewards: Balance,
+
+        /// Upper bound on the `actual_total_rewards`.
+        pub max_rewards: Balance,
+
+        /// The rewarding rate that increases the pool `total_reward` (and `actual_total_reward`)
+        /// at a given time.
+        pub reward_rate: Perbill,
+    }
+
+    /// Track the total reward pool for a particular staker incentive scheme. eg: A Pablo Dex LP incentive
+    pub struct RewardsPool<AccountId, AssetId, Balance, BlockNumber> {
+
+        /// Reward pool indexed by the accountId that holds the rewarded assets
+        pub reward_pool_id: AccountId,
+
+        /// rewards accumulated
+        pub rewards: BtreeSet<Reward<AssetId, Balance, BlockNumber>>,
+
+        /// Total shares distributed among stakers
+        pub total_shares: Balance,
+    }
+
+Following sections describe the algorithms for various operations on the
+rewards pool based on these data structures.
+
+#### 5.3.3. Staking
+
+<img src="images/images/staking.png" width="49" height="82" alt="staking" />
+
+#### 5.3.4. \[Needs modification\] RewardAccumulationHook
 
 Following algorithm is to added as part of the existing [block
 hook](https://github.com/ComposableFi/composable/blob/main/frame/staking-rewards/src/lib.rs#L363)
-in staking rewards pallet.As it is only accumulating new rewards for an
+in staking rewards pallet. As it is only accumulating new rewards for an
 upcoming epoch, the code is proposed to be run inside a new state
 `State:AccumulatingRewards`.
 
-<img src="images/staking-rewards-reward-accumulation-hook.png" width="1001" height="931" alt="staking rewards reward accumulation hook" />
+<img src="images/images/staking-rewards-reward-accumulation-hook.png" width="995" height="925" alt="staking rewards reward accumulation hook" />
 
 This algorithm runs in
 `O(staked_asset_type_count * rewarded_asset_type_count)`.
 
-## 6. Implementation
+6. Implementation
+-----------------
 
 ### 6.1. Pallet Pablo: LP Fee + Staking Changes
 
 -   ❏ Implement [FeeConfig](#_feeconfig) on pallet-pablo across all 3
     types of pools.
 
--   ❏ Expose interface for [LP fNFT
-    Configuration](#_lp_fnft_configuration).
-
--   ❏ Implement [LP fNFT Creation When Receiving LP Tokens for Adding
-    Liquidity](#_lp_fnft_creation_when_receiving_lp_tokens_for_adding_liquidity).
-
--   ❏ Implement [LP fNFT Resizing or Unstaking When Burning LP Tokens
-    for Removing
-    Liquidity](#_lp_fnft_resizing_or_unstaking_when_burning_lp_tokens_for_removing_liquidity).
-
--   ❏ Implement [Trading Fee Distribution](#_trading_fee_distribution).
-
 -   ❏ Implement [PBLO Staker Trading Fee
     Distribution](#_pblo_staker_trading_fee_distribution).
 
 ### 6.2. Pallet Staking Rewards: PICA/PBLO Staking Related Changes
 
--   ❏ Implement [RewardConfig](#_rewardconfig).
+-   ❏ Implement [\[Needs modification\]
+    RewardAccumulationHook](#_rewardaccumulationhook).
 
--   ❏ Implement extrinsic for [Governance Sets the RewardConfig and
-    Transfers the Reward
-    Allocation](#_governance_sets_the_rewardconfig_and_transfers_the_reward_allocation)
+## Appendix A: Trading Fee Inflation to Avoid Dilution of LPs
 
--   ❏ Implement extrinsic for [Governance Sets the Pablo Pool LP Staking
-    Reward
-    Allocation](#_governance_sets_the_pablo_pool_lp_staking_reward_allocation).
+New trading fee <img src="images/stem-88ffccf5d7e5534d6a1c8255ea6f8491.png" width="203" height="19" alt="stem 88ffccf5d7e5534d6a1c8255ea6f8491" /></span>
 
--   ❏ Implement [RewardAccumulationHook](#_rewardaccumulationhook).
+For <img src="images/stem-64bf6f450600e539b13faa38cda05cdd.png" width="20" height="9" alt="stem 64bf6f450600e539b13faa38cda05cdd" /></span>
+liquidity provider,
 
-## Appendix A: Fee Distribution Q&A
+<img src="images/stem-361b0e678ae955263b9781486d18e96a.png" width="120" height="22" alt="stem 361b0e678ae955263b9781486d18e96a" /></span>
+
+<img src="images/stem-b7581568f93412c6c936184a45f8ac21.png" width="324" height="23" alt="stem b7581568f93412c6c936184a45f8ac21" /></span>
+
+<img src="images/stem-baea3c4f49ab8e93ff2c4cd2067b5364.png" width="78" height="20" alt="stem baea3c4f49ab8e93ff2c4cd2067b5364" /></span>
+
+With this adjusted value all later additions to LP shares have been
+negated when receiving fees for earlier LPs.
+
+## 7. Fee Distribution Q&A
 
 Based on the current setup following questions arise when deciding on
 the distribution of these fees to relevant liquidity providers, owners
@@ -444,4 +601,4 @@ fNFT at the time of LP event might make sense. i.e fNFT represents the
 LP position on the pool as well as the rewards position for PBLO tokens
 for LPs.
 
-Last updated 2022-05-18 08:30:50 +0200
+Last updated 2022-06-01 21:56:59 +0200

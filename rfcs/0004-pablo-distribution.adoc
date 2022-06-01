@@ -1,6 +1,8 @@
 = Design Proposal: Pablo Fees & Staking Rewards Distribution
 :math:
 :stem:
+:imagesoutdir: images
+:imagesdir: images
 :toc:
 :toclevels: 4
 :sectnums:
@@ -213,40 +215,23 @@ protocol_fee_rate = 100% // all owner fees goes to composable to be distributed 
 
 LPs trading fees are calculated and kept as part of the pool liquidity in Pablo. When LPs remove liquidity from the pool the trading fees are automatically redeemed according their pool LP ratio, check https://hackmd.io/@HaydenAdams/HJ9jLsfTz#Fee-Structure[reference]. This results in trading fee share being diluted overtime for smaller pools as follows.
 
-[stem]
-++++
-"After " n " trades and " m " liquidity additions,"
+After stem:[n] trades and stem:[m] liquidity additions,
 
-"trading fees" = sum a_n
+trading fees stem:[= sum a_n]
 
-"total liquidity" = sum l_m
+total liquidity stem:[= sum l_m]
 
-"fees and liquidity returned for an LP amount l" = l / (sum l_m) * (sum l_m + sum a_n)
+fees and liquidity returned for an LP amount stem:[l = l / (sum l_m) * (sum l_m + sum a_n)]
 
-= l + l / (sum l_m) * sum a_n
+stem:[= l + l / (sum l_m) * sum a_n]
 
-"trading fees received" = x = l / (sum l_m) * sum a_n
+trading fees received stem:[= x = l / (sum l_m) * sum a_n]
 
-"When pool size " sum l_m " increases the amount of trading fees received " x " reduces for a particular LP position."
+"When pool size stem:[sum l_m] increases the amount of trading fees received stem:[x] reduces for a particular LP position.
 
-"For large pool sizes of " sum l_m " (steady state) this effect is negligible, hence it's a good enough strategy to distribute fees."
+For large pool sizes of stem:[sum l_m] (steady state) this effect is negligible, hence it's a good enough strategy to distribute fees.
 
-"But if required this effect can be negated by increasing the trading fee by a " delta a_n " while at the same time subtracting it from the total fees paid out already to liquidity providers as follows,"
-
-"New trading fee " = x_(adjusted) = l / (sum l_m) * (sum a_n + delta a_n)
-
-"For " r_(th) " liquidity provider,"
-
-delta a = (sum_(r+1) l_m) / (sum l_r) * sum a_n
-
-= x_(adjusted) = l_(r) / (sum_(r+1) l_m + sum l_r) * (sum a_n + (sum_(r+1) l_m) / (sum l_r) * sum a_n )
-
-= l_r / (sum l_r) * sum a_n
-
-"With this adjusted value all later additions to LP shares have been negated when receiving fees for earlier LPs."
-
-
-++++
+But if required this effect can be negated by increasing the trading fee by a stem:[delta a_n] while at the same time subtracting it from the total fees paid out already to liquidity providers. Refer <<_trading_fee_inflation_to_avoid_dilution_of_lps>>.
 
 [#_pblo_staker_trading_fee_distribution]
 ==== PBLO Staker Trading Fee Distribution
@@ -282,77 +267,70 @@ This section covers how the staking rewards are distributed using the https://gi
 
 In order to create the necessary reward pool as well as the rewarding rate for stakers the following model can be used. It tries to address the following constraints
 
+. Allow [#rate]#specification of the reward rate for a pool# (even setting a dynamically changing rate)
 . Allow addition of new stakers at anytime to a pool, start earning immediate rewards
 . Allow more realtime calculation of rewards on-demand for a given pool for a given user.
 . Allow shorter reward pool calculation epoch with the use of the reward rate.
-. Allow specification of reward rate for a pool (even setting a dynamically changing rate)
 . Allow expansion of rewards pools realtime.
+. Allow compounding of staked position when the rewarded asset is the same as staked.
+. Allow extending of staked position in time and amount.
 
-[stem]
-++++
-"Let's define the following terms for a given staking reward pool,"
+To analyze the requirement fully, let's define the following terms for a given staking reward pool,
 
-"Pre-defined reward rate (say per second)" = r
+Pre-defined reward rate (say per second) stem:[= r]
 
-"Pre-defined reward calculation epoch in seconds" = t
+Pre-defined reward calculation epoch in seconds stem:[= t]
 
-"Reward per calculation epoch" = r.t
+Reward per calculation epoch stem:[= r.t]
 
-"Previous total reward pool before the current epoch" = P
+Previous total reward pool before the current epoch stem:[= P]
 
-"Assuming there is a per epoch calculation which adds to the pool,"
-"the total reward pool for the current epoc,"
+Assuming there is a per epoch calculation which adds to the pool,
+the total reward pool for the current epoc,
 
-P_(current) = P + rt
+stem:[P_(current) = P + rt]
 
-"Reward pool shares for n stakers"
+Reward pool shares for stem:[n] stakers,
 
-= sum (s_n)
+stem:[= sum (s_n)]
 
-"Where " n_(th) " staker share is " s_n
+Where stem:[n_(th)] staker share is stem:[s_n]
 
-"Existing " n_(th) " staker reward,"
+Existing stem:[n_(th)] staker reward,
 
-x _n = P_(current) . s_n / (sum s_n)
+stem:[x _n = P_(current) . s_n / (sum s_n)]
 
-------------------------------------------------
+When adding a new staker stem:[n+1], existing stakers(stem:[n]) reward would be,
 
-"When adding a new staker n+1, existing stakers(n) reward would be,"
+stem:[x_n = P_(current) . s_n / (sum s_(n+1))]
 
-x_n = P_(current) . s_n / (sum s_(n+1))
+As this is less than what is expected above, an adjustment " delta P " to total reward pool can be made to allow realtime reward calculations,
 
-"As this is less than what is expected above, an adjustment " delta P " to total reward pool can be made to allow realtime reward calculations,"
+stem:[delta P = P_(current) . s_(n+1) / (sum s_n)]
 
-delta P = P_(current) . s_(n+1) / (sum s_n)
+stem:[x_n = (P_(current) + delta P) . s_n / (sum s_(n+1))]
 
-x_n = (P_(current) + delta P) . s_n / (sum s_(n+1))
+stem:[x_n = P_(current) . (1 + s_(n+1) / (sum s_n)) . s_n / (sum s_(n+1))]
 
-x_n = P_(current) . (1 + s_(n+1) / (sum s_n)) . s_n / (sum s_(n+1))
+stem:[x _n = P_(current) . s_n / (sum s_n)]
 
-x _n = P_(current) . s_n / (sum s_n)
+**Therefore, the existing staker receives the same reward as before **
 
-"**Therefore existing staker receives the same reward as before.**"
+To compensate for this new adjustment, a reduction stem:[d_(n + 1)] of reward for each staker needs to be tracked,
 
+stem:[x_(n+1) = P_(current) . s_(n+1) / (sum s_(n+1)) - d_(n+1)]
 
-"To compensate for this new adjustment, a reduction " d_(n + 1) " of reward for each staker needs to be tracked,"
+In general,
 
-x_(n+1) = P_(current) . s_(n+1) / (sum s_(n+1)) - d_(n+1)
+stem:[d_n = "Any reduction in reward including already claimed"]
 
-"In general"
+When adding a new reward to the pool the calculations remain the same other than increasing the reward pool as follows,
 
-d_n = "Any reduction in reward including already claimed"
+stem:[P_(current) = P + rt + P_(added)]
 
-------------------------------------------------
+Since already claimed rewards(stem:[d_n]) are tracked for each staker, they can always claim the new reward share from stem:[P_(added)] later.
 
-"When adding a new reward to the pool the calculations remain the same other than,"
-
-P_(current) = P + rt + P_(added)
-
-"Since already claimed rewards("d_n") are tracked for each staker, "
-
-"they can always claim the new reward share from " P_(added) " later."
-
-++++
+To compound the reward for stakers the pool total reward can be i
 
 As this method uses a reward pooling based approach to calculate the rewards for each staker out of it on-demand, rest of the document refers to this as the "reward pooling(*RP*) based approach".
 
@@ -368,9 +346,9 @@ This data structure can be modified to support the RP approach by adding/adjusti
 
 [source,rust]
 ----
-pub struct StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards> {
-    /// Reward Pool ID from which pool to allocate rewards for this
-    pub reward_pool_id: ID,
+pub struct StakingNFT<RewardPoolId, AccountId, AssetId, Balance> {
+    /// [Adding] Reward Pool ID from which pool to allocate rewards for this
+    pub reward_pool_id: RewardPoolId,
 
     /// The staked asset.
     pub asset: AssetId,
@@ -378,16 +356,16 @@ pub struct StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards> {
     /// Used for calculating the pool share.
     pub stake: Balance,
 
-    /// New: Pool share received for this NFT
+    /// [Adding] Pool share received for this NFT
     pub share: Balance,
 
-    /// New: reduced rewards for the fNFT (d_n)
+    /// [Adding] reduced rewards for the fNFT (d_n)
     pub reduction: Balance,
 
-    /// The reward epoch at which this NFT will start yielding rewards. This is no longer needed.
+    /// [Removing] The reward epoch at which this NFT will start yielding rewards. This is no longer needed.
     /// pub reward_epoch_start: Epoch,
 
-    /// List of reward asset/pending rewards. This is no longer needed as pending rewards are pooled
+    /// [Removing] List of reward asset/pending rewards. This is no longer needed as pending rewards are pooled
     /// pub pending_rewards: Rewards,
 
     /// The date at which this NFT was minted.
@@ -399,13 +377,61 @@ pub struct StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards> {
     /// The penalty applied if a staker unstake before the end date.
     pub early_unstake_penalty: Penalty<AccountId>,
 
-    /// The reward multiplier. Can remove this and calculate the extra shares a user gets based on the multiplier
+    /// [Removing] The reward multiplier. Can remove this and calculate the extra shares a user gets based on the multiplier
     /// pub reward_multiplier: Perbill,
 }
 ----
 
-Now in order to allow redeeming the above fNFT, following data structures needs to be tracked,
+Now in order to allow redeeming the above fNFT, following data structures needs to be tracked in the staking rewards pallet,
 
+[source,rust]
+----
+
+/// Total reward for a particular asset
+pub struct Reward<AssetId, Balance, BlockNumber> {
+
+    pub asset_id: AssetId,
+
+    /// Total rewards including inflation for adjusting for new stakers joining the pool. All stakers
+    /// in a pool are eligible to receive a part of this value based on their share of the pool.
+    pub total_rewards: Balance,
+
+    /// A book keeping field to track the actual total reward without the reward inflation caused
+    /// by new stakers joining the pool.
+    pub actual_total_rewards: Balance,
+
+    /// Upper bound on the `actual_total_rewards`.
+    pub max_rewards: Balance,
+
+    /// The rewarding rate that increases the pool `total_reward` (and `actual_total_reward`)
+    /// at a given time.
+    pub reward_rate: Perbill,
+}
+
+/// Track the total reward pool for a particular staker incentive scheme. eg: A Pablo Dex LP incentive
+pub struct RewardsPool<AccountId, AssetId, Balance, BlockNumber> {
+
+    /// Reward pool indexed by the accountId that holds the rewarded assets
+    pub reward_pool_id: AccountId,
+
+    /// rewards accumulated
+    pub rewards: BtreeSet<Reward<AssetId, Balance, BlockNumber>>,
+
+    /// Total shares distributed among stakers
+    pub total_shares: Balance,
+}
+----
+
+Following sections describe the algorithms for various operations on the rewards pool based on these data structures.
+
+==== Staking
+
+[plantuml,images/staking,png]
+----
+start
+
+stop
+----
 
 
 [#_rewardaccumulationhook]
@@ -458,7 +484,22 @@ This algorithm runs in `O(staked_asset_type_count * rewarded_asset_type_count)`.
 
 - [ ] Implement <<_rewardaccumulationhook>>.
 
+[#_trading_fee_inflation_to_avoid_dilution_of_lps]
 [appendix]
+== Trading Fee Inflation to Avoid Dilution of LPs
+
+New trading fee stem:[= x_(adjusted) = l / (sum l_m) * (sum a_n + delta a_n)]
+
+For stem:[r_(th)] liquidity provider,
+
+stem:[delta a = (sum_(r+1) l_m) / (sum l_r) * sum a_n]
+
+stem:[= x_(adjusted) = l_(r) / (sum_(r+1) l_m + sum l_r) * (sum a_n + (sum_(r+1) l_m) / (sum l_r) * sum a_n )]
+
+stem:[= l_r / (sum l_r) * sum a_n]
+
+With this adjusted value all later additions to LP shares have been negated when receiving fees for earlier LPs.
+
 == Fee Distribution Q&A
 
 Based on the current setup following questions arise when deciding on the distribution of these fees to relevant liquidity providers, owners and stakers.
