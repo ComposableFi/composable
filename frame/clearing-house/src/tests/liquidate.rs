@@ -203,7 +203,7 @@ fn can_partially_liquidate_if_below_partial_margin_ratio_by_pnl() {
 		// - PnL realized = PnL / 4 = -6.25
 		// - collateral seized = margin / 4 = 6.25
 		// - liquidator share = 3.125
-		// - resulting collateral = 43.75
+		// - resulting collateral = 37.5
 		// - base asset remaining = 5 * 3 / 4 = 3.75
 		// - entry value remaining = 500 * 3 / 4 = 375
 		// - base asset value = 95 * 3.75 = 356.25
@@ -211,7 +211,7 @@ fn can_partially_liquidate_if_below_partial_margin_ratio_by_pnl() {
 		// - margin requirement (partial) = 22.266
 		// - margin requirement (full) = 14.25
 		// Thus, Alice's account is brought back above the PMR
-		assert_eq!(TestPallet::get_collateral(&ALICE).unwrap(), as_balance((4375, 100)));
+		assert_eq!(TestPallet::get_collateral(&ALICE).unwrap(), as_balance((375, 10)));
 		assert_eq!(TestPallet::get_collateral(&BOB).unwrap(), as_balance((3125, 1000)));
 		assert_eq!(
 			AssetsPallet::balance(USDC, &TestPallet::get_insurance_account()),
