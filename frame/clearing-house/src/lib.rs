@@ -299,6 +299,25 @@ pub mod pallet {
 	pub type FullLiquidationPenaltyLiquidatorShare<T: Config> =
 		StorageValue<_, T::Decimal, ValueQuery>;
 
+	/// Ratio of user's margin to be seized as fees upon a partial liquidation event.
+	#[pallet::storage]
+	#[pallet::getter(fn partial_liquidation_penalty)]
+	#[allow(clippy::disallowed_types)]
+	pub type PartialLiquidationPenalty<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
+
+	/// Ratio of position's base asset to close in a partial liquidation.
+	#[pallet::storage]
+	#[pallet::getter(fn partial_liquidation_close_ratio)]
+	#[allow(clippy::disallowed_types)]
+	pub type PartialLiquidationCloseRatio<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
+
+	/// Ratio of partial liquidation fees for compensating the liquidator.
+	#[pallet::storage]
+	#[pallet::getter(fn partial_liquidation_penalty_liquidator_share)]
+	#[allow(clippy::disallowed_types)]
+	pub type PartialLiquidationPenaltyLiquidatorShare<T: Config> =
+		StorageValue<_, T::Decimal, ValueQuery>;
+
 	/// Maps [AccountId](frame_system::Config::AccountId) to its collateral
 	/// [Balance](DeFiComposableConfig::Balance), if set.
 	#[pallet::storage]
@@ -401,6 +420,11 @@ pub mod pallet {
 		},
 		/// Account fully liquidated.
 		FullLiquidation {
+			/// Id of the liquidated user.
+			user: T::AccountId,
+		},
+		/// Account partially liquidated.
+		PartialLiquidation {
 			/// Id of the liquidated user.
 			user: T::AccountId,
 		},
@@ -707,6 +731,7 @@ pub mod pallet {
 		/// ## Emits
 		///
 		/// - [`FullLiquidation`](Event::<T>::FullLiquidation)
+		/// - [`PartialLiquidation`](Event::<T>::PartialLiquidation)
 		///
 		/// ## State Changes
 		///

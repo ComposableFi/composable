@@ -1,5 +1,6 @@
 use composable_traits::clearing_house::ClearingHouse;
 use frame_support::{assert_noop, assert_ok, traits::tokens::fungibles::Inspect};
+use sp_runtime::FixedI128;
 
 use super::{
 	as_balance, comp::approx_eq_lower, multi_market_and_trader_context, run_for_seconds,
@@ -15,7 +16,33 @@ use crate::{
 		},
 	},
 	Direction, Error, Event, FullLiquidationPenalty, FullLiquidationPenaltyLiquidatorShare,
+	PartialLiquidationCloseRatio, PartialLiquidationPenalty,
+	PartialLiquidationPenaltyLiquidatorShare,
 };
+
+// -------------------------------------------------------------------------------------------------
+//                                            Helpers
+// -------------------------------------------------------------------------------------------------
+
+fn set_full_liquidation_penalty(decimal: FixedI128) {
+	FullLiquidationPenalty::<Runtime>::set(decimal);
+}
+
+fn set_liquidator_share_full(decimal: FixedI128) {
+	FullLiquidationPenaltyLiquidatorShare::<Runtime>::set(decimal);
+}
+
+fn set_partial_liquidation_penalty(decimal: FixedI128) {
+	PartialLiquidationPenalty::<Runtime>::set(decimal);
+}
+
+fn set_partial_liquidation_close(decimal: FixedI128) {
+	PartialLiquidationCloseRatio::<Runtime>::set(decimal);
+}
+
+fn set_liquidator_share_partial(decimal: FixedI128) {
+	PartialLiquidationPenaltyLiquidatorShare::<Runtime>::set(decimal);
+}
 
 // -------------------------------------------------------------------------------------------------
 //                                           Unit Tests
@@ -136,6 +163,70 @@ fn cant_liquidate_if_above_partial_margin_ratio_by_funding() {
 }
 
 #[test]
+fn can_partially_liquidate_if_below_partial_margin_ratio_by_pnl() {
+	let config = MarketConfig {
+		margin_ratio_initial: (10, 100).into(),     // 10x leverage
+		margin_ratio_maintenance: (4, 100).into(),  // 25x leverage
+		margin_ratio_partial: (625, 10_000).into(), // 16x leverage
+		taker_fee: 0,
+		..Default::default()
+	};
+
+	let margins = vec![(ALICE, as_balance(50)), (BOB, 0)];
+	traders_in_one_market_context(config, margins, |market_id| {
+		set_partial_liquidation_penalty((25, 100).into());
+		set_partial_liquidation_close((25, 100).into());
+		set_liquidator_share_partial((50, 100).into());
+
+		// Alice opens a position
+		VammPallet::set_price(Some(100.into()));
+		assert_ok!(<TestPallet as ClearingHouse>::open_position(
+			&ALICE,
+			&market_id,
+			Direction::Long,
+			as_balance(500),
+			as_balance(5)
+		));
+
+		// Price moves so that Alice's account is below the PMR
+		VammPallet::set_price(Some(95.into()));
+		// 100 -> 95
+		// - margin requirement (partial) = 29.688
+		// - margin requirement (full) = 19
+		// - PnL = 475 - 500 = -25
+		// - margin = 50 - 25 = 25
+
+		// Bob liquidates Alice's account
+		assert_ok!(TestPallet::liquidate(Origin::signed(BOB), ALICE));
+		// 25% of Alice's position is closed
+		// - PnL realized = PnL / 4 = -6.25
+		// - collateral seized = margin / 4 = 6.25
+		// - liquidator share = 3.125
+		// - resulting collateral = 43.75
+		// - base asset remaining = 5 * 3 / 4 = 3.75
+		// - entry value remaining = 500 * 3 / 4 = 375
+		// - base asset value = 95 * 3.75 = 356.25
+		// - resulting margin = 43.75 + (356.25 - 375) = 25
+		// - margin requirement (partial) = 22.266
+		// - margin requirement (full) = 14.25
+		// Thus, Alice's account is brought back above the PMR
+		assert_eq!(TestPallet::get_collateral(&ALICE).unwrap(), as_balance((4375, 100)));
+		assert_eq!(TestPallet::get_collateral(&BOB).unwrap(), as_balance((3125, 1000)));
+		assert_eq!(
+			AssetsPallet::balance(USDC, &TestPallet::get_insurance_account()),
+			as_balance((3125, 1000))
+		);
+		SystemPallet::assert_last_event(Event::PartialLiquidation { user: ALICE }.into());
+	});
+}
+
+#[test]
+#[ignore = "TODO"]
+fn partial_liquidation_realizes_funding_payments() {
+	todo!()
+}
+
+#[test]
 fn can_fully_liquidate_if_below_maintenance_margin_ratio_by_pnl() {
 	let config = MarketConfig {
 		margin_ratio_initial: (1, 2).into(),       // 2x max leverage
@@ -148,9 +239,9 @@ fn can_fully_liquidate_if_below_maintenance_margin_ratio_by_pnl() {
 	let margins = vec![(ALICE, as_balance(100)), (BOB, 0)];
 	traders_in_one_market_context(config, margins, |market_id| {
 		// 100% of liquidated amount goes to fees
-		FullLiquidationPenalty::<Runtime>::set(1.into());
+		set_full_liquidation_penalty(1.into());
 		// 50% of liquidation fee to liquidator
-		FullLiquidationPenaltyLiquidatorShare::<Runtime>::set((1, 2).into());
+		set_liquidator_share_full((1, 2).into());
 
 		// Alice opens a position
 		VammPallet::set_price(Some(100.into()));
@@ -200,9 +291,9 @@ fn underwater_accounts_imply_no_liquidation_fees() {
 	let margins = vec![(ALICE, as_balance(100)), (BOB, 0)];
 	traders_in_one_market_context(config, margins, |market_id| {
 		// 100% of liquidated amount goes to fees
-		FullLiquidationPenalty::<Runtime>::set(1.into());
+		set_full_liquidation_penalty(1.into());
 		// 50% of liquidation fee to liquidator
-		FullLiquidationPenaltyLiquidatorShare::<Runtime>::set((1, 2).into());
+		set_liquidator_share_full((1, 2).into());
 
 		// Alice opens a position
 		VammPallet::set_price(Some(100.into()));
@@ -295,7 +386,7 @@ fn position_in_market_with_greatest_margin_requirement_gets_liquidated_first() {
 
 		// Bob liquidates Alice's account
 		// 0% of liquidated amount goes to fees
-		FullLiquidationPenalty::<Runtime>::set(0.into());
+		set_full_liquidation_penalty(0.into());
 		assert_ok!(TestPallet::liquidate(Origin::signed(BOB), ALICE));
 
 		// We expect Alice's position in market 1 to be fully liquidated, since it has the highest
@@ -359,9 +450,9 @@ fn fees_are_proportional_to_base_asset_value_liquidated() {
 		// - margin required = 99
 
 		// 100% of liquidated collateral goes to fees
-		FullLiquidationPenalty::<Runtime>::set(1.into());
+		set_full_liquidation_penalty(1.into());
 		// 100% of liquidation fees go to liquidator
-		FullLiquidationPenaltyLiquidatorShare::<Runtime>::set(1.into());
+		set_liquidator_share_full(1.into());
 		// Liquidation fee for closing
 		// - 0: (180 / 540) * margin = 30
 		// - 1: (360 / 540) * margin = 60
@@ -436,7 +527,7 @@ fn fees_decrease_margin_for_remaining_positions() {
 		// - margin required = 33
 
 		// 100% of liquidated collateral goes to fees
-		FullLiquidationPenalty::<Runtime>::set(1.into());
+		set_full_liquidation_penalty(1.into());
 		// Liquidation fee for closing
 		// - 0: (30 / 120) * margin = 5
 		// - 1: (90 / 120) * margin = 15
