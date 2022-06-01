@@ -54,16 +54,6 @@ To sync the cloned repository with the remote repository, run the following comm
 $ yarn sync
 ```
 
-# Development
-
-## Quickstart
-
-To create a next.js project using this template, run the following command:
-
-```bash
-$ yarn create next-app --example "https://github.com/advancedblockchain/ui-template"
-```
-
 ## Testing
 
 There are two ways to test your application:
@@ -81,7 +71,7 @@ There are two ways to test your application:
 
 There are multiple scripts ready to use on your first tryout.
 
-- `yarn dev` to launch the development server
+- `yarn start` to launch the development server
 - `yarn build` to build production
 - `yarn lint` to run the linter
 
