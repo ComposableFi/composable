@@ -700,6 +700,8 @@ pub mod pallet {
 		///
 		/// # Overview
 		///
+		/// ![](https://www.plantuml.com/plantuml/svg/FOsxhG91303pLyMZ0CuvqKb8zE7pcbrBtW_-YFOv4H2DPfBPFT0Yk_vTP91cuJJzRn7BRm1LekMnqUnmdtrDnqFv8K0_0SCti5DZWwTXPo1bD1drscOwGn6iPtTGUQKK3DwMulWkTnxbv0S0)
+		///
 		/// Liquidation can be either full or partial. In the former case, positions are closed
 		/// entirely, while in the latter, they are partially closed until the account is brought
 		/// back above the initial margin requirement.
