@@ -7,8 +7,7 @@ use sp_runtime::DispatchError;
 #[derive(Default)]
 pub struct Validated<T, U, E> {
     value: T,
-	_marker: PhantomData<U>,
-    _error_marker:  PhantomData<E>,
+	_marker: PhantomData<(U, E)>,
 }
 
 impl<T, U, E> Clone for Validated<T, U, E> 
