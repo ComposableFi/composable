@@ -200,8 +200,6 @@ pub struct AccountSummary<T: Config> {
 	pub margin_requirement_maintenance: T::Decimal,
 	pub margin_requirement_partial: T::Decimal,
 	pub base_asset_value: T::Decimal,
-	pub unrealized_pnl: T::Decimal,
-	pub unrealized_funding: T::Decimal,
 	pub positions_summary: Vec<(Market<T>, Position<T>, PositionInfo<T>)>,
 }
 
@@ -213,8 +211,6 @@ impl<T: Config> AccountSummary<T> {
 			margin_requirement_maintenance: Zero::zero(),
 			margin_requirement_partial: Zero::zero(),
 			base_asset_value: Zero::zero(),
-			unrealized_pnl: Zero::zero(),
-			unrealized_funding: Zero::zero(),
 			positions_summary: Default::default(),
 		})
 	}
@@ -233,8 +229,6 @@ impl<T: Config> AccountSummary<T> {
 			.try_add_mut(&info.margin_requirement_maintenance)?;
 		self.margin_requirement_partial.try_add_mut(&info.margin_requirement_partial)?;
 		self.base_asset_value.try_add_mut(&info.base_asset_value)?;
-		self.unrealized_pnl.try_add_mut(&info.unrealized_pnl)?;
-		self.unrealized_funding.try_add_mut(&info.unrealized_funding)?;
 		self.positions_summary.push((market, position, info));
 		Ok(())
 	}
