@@ -44,7 +44,7 @@ Edit `.env.local` with the valid credentials.
 Then, run the following command:
 
 ```bash
-$ yarn dev
+$ yarn start
 ```
 
 # Sync
