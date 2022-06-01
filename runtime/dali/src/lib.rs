@@ -1293,6 +1293,17 @@ impl_runtime_apis! {
 				.unwrap_or_else(|_| Zero::zero())
 			)
 		}
+
+	fn redeemable_assets_for_given_lp_tokens(
+		pool_id: SafeRpcWrapper<PoolId>,
+		lp_amount: SafeRpcWrapper<Balance>
+	) -> (SafeRpcWrapper<Balance>, SafeRpcWrapper<Balance>) {
+			let (base, quote) = <Pablo as Amm>::redeemable_assets_for_given_lp_tokens(pool_id.0, lp_amount.0)
+			.unwrap_or_else(|_| (Zero::zero(), Zero::zero()));
+		(SafeRpcWrapper(base), SafeRpcWrapper(quote))
+
+	}
+
 	}
 
 	impl sp_api::Core<Block> for Runtime {

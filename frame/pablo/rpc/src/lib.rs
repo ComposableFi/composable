@@ -40,6 +40,14 @@ where
 		quote_asset_amount: SafeRpcWrapper<Balance>,
 		at: Option<BlockHash>,
 	) -> RpcResult<SafeRpcWrapper<Balance>>;
+
+	#[method(name = "pablo_redeemableAssetForGivenLpTokens")]
+	fn redeemable_assets_for_given_lp_tokens(
+		&self,
+		pool_id: SafeRpcWrapper<PoolId>,
+		lp_amount: SafeRpcWrapper<Balance>,
+		at: Option<BlockHash>,
+	) -> RpcResult<(SafeRpcWrapper<Balance>, SafeRpcWrapper<Balance>)>;
 }
 
 pub struct Pablo<C, Block> {
@@ -110,6 +118,27 @@ where
 			base_asset_amount,
 			quote_asset_amount,
 		);
+		runtime_api_result.map_err(|e| {
+			RpcError::Call(CallError::Custom(ErrorObject::owned(
+				9876,
+				"Something wrong",
+				Some(format!("{:?}", e)),
+			)))
+		})
+	}
+
+	fn redeemable_assets_for_given_lp_tokens(
+		&self,
+		pool_id: SafeRpcWrapper<PoolId>,
+		lp_amount: SafeRpcWrapper<Balance>,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<(SafeRpcWrapper<Balance>, SafeRpcWrapper<Balance>)> {
+		let api = self.client.runtime_api();
+
+		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
+
+		// calling ../../runtime-api
+		let runtime_api_result = api.redeemable_assets_for_given_lp_tokens(&at, pool_id, lp_amount);
 		runtime_api_result.map_err(|e| {
 			RpcError::Call(CallError::Custom(ErrorObject::owned(
 				9876,

@@ -29,5 +29,10 @@ sp_api::decl_runtime_apis! {
 			base_asset_amount: SafeRpcWrapper<Balance>,
 			quote_asset_amount: SafeRpcWrapper<Balance>,
 		) -> SafeRpcWrapper<Balance>;
+
+	fn redeemable_assets_for_given_lp_tokens(
+		pool_id: SafeRpcWrapper<PoolId>,
+		lp_amount: SafeRpcWrapper<Balance>
+	) -> (SafeRpcWrapper<Balance>, SafeRpcWrapper<Balance>);
 	}
 }

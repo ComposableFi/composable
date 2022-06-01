@@ -438,6 +438,17 @@ pub mod pallet {
 			}
 		}
 
+		fn redeemable_assets_for_given_lp_tokens(
+			pool_id: Self::PoolId,
+			lp_amount: Self::Balance,
+		) -> Result<(Self::Balance, Self::Balance), DispatchError> {
+			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
+			match route[..] {
+				[pool_id] => T::Pablo::redeemable_assets_for_given_lp_tokens(pool_id, lp_amount),
+				_ => Err(Error::<T>::UnsupportedOperation.into()),
+			}
+		}
+
 		#[transactional]
 		fn exchange(
 			who: &Self::AccountId,
