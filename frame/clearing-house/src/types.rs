@@ -1,8 +1,11 @@
-use crate::{math::FixedPointMath, Config};
+use crate::{
+	math::{FixedPointMath, IntoDecimal},
+	Config,
+};
 use composable_traits::time::DurationSeconds;
 use frame_support::pallet_prelude::{Decode, Encode, MaxEncodedLen, TypeInfo};
 use num_traits::Zero;
-use sp_runtime::{ArithmeticError, FixedPointNumber};
+use sp_runtime::{ArithmeticError, DispatchError, FixedPointNumber};
 use Direction::{Long, Short};
 
 pub const BASIS_POINT_DENOMINATOR: u32 = 10_000;
@@ -51,34 +54,6 @@ impl<T: Config> Position<T> {
 			Some(Long)
 		} else {
 			Some(Short)
-		}
-	}
-}
-
-pub struct PositionInfo<T: Config> {
-	pub direction: Direction,
-	pub margin_requirement_maintenance: T::Decimal,
-	pub base_asset_value: T::Decimal,
-	pub unrealized_pnl: T::Decimal,
-	pub unrealized_funding: T::Decimal,
-}
-
-pub struct AccountSummary<T: Config> {
-	pub margin_requirement_maintenance: T::Decimal,
-	pub base_asset_value: T::Decimal,
-	pub unrealized_pnl: T::Decimal,
-	pub unrealized_funding: T::Decimal,
-	pub positions_summary: Vec<(Market<T>, Position<T>, PositionInfo<T>)>,
-}
-
-impl<T: Config> Default for AccountSummary<T> {
-	fn default() -> Self {
-		Self {
-			margin_requirement_maintenance: T::Decimal::zero(),
-			base_asset_value: T::Decimal::zero(),
-			unrealized_pnl: T::Decimal::zero(),
-			unrealized_funding: T::Decimal::zero(),
-			positions_summary: Default::default(),
 		}
 	}
 }
@@ -204,4 +179,63 @@ pub struct MarketConfig<AssetId, Balance, Decimal, VammConfig> {
 	pub funding_period: DurationSeconds,
 	/// Taker fee, in basis points, applied to all market orders.
 	pub taker_fee: Balance,
+}
+
+// -------------------------------------------------------------------------------------------------
+//                                          Liquidations
+// -------------------------------------------------------------------------------------------------
+
+pub struct PositionInfo<T: Config> {
+	pub direction: Direction,
+	pub margin_requirement_maintenance: T::Decimal,
+	pub margin_requirement_partial: T::Decimal,
+	pub base_asset_value: T::Decimal,
+	pub unrealized_pnl: T::Decimal,
+	pub unrealized_funding: T::Decimal,
+}
+
+pub struct AccountSummary<T: Config> {
+	pub collateral: T::Balance,
+	pub margin: T::Decimal,
+	pub margin_requirement_maintenance: T::Decimal,
+	pub margin_requirement_partial: T::Decimal,
+	pub base_asset_value: T::Decimal,
+	pub unrealized_pnl: T::Decimal,
+	pub unrealized_funding: T::Decimal,
+	pub positions_summary: Vec<(Market<T>, Position<T>, PositionInfo<T>)>,
+}
+
+impl<T: Config> AccountSummary<T> {
+	pub fn new(collateral: T::Balance) -> Result<Self, DispatchError> {
+		Ok(Self {
+			collateral,
+			margin: collateral.into_decimal()?,
+			margin_requirement_maintenance: Zero::zero(),
+			margin_requirement_partial: Zero::zero(),
+			base_asset_value: Zero::zero(),
+			unrealized_pnl: Zero::zero(),
+			unrealized_funding: Zero::zero(),
+			positions_summary: Default::default(),
+		})
+	}
+
+	pub fn update(
+		&mut self,
+		market: Market<T>,
+		position: Position<T>,
+		info: PositionInfo<T>,
+	) -> Result<(), DispatchError> {
+		self.margin = self
+			.margin
+			.try_add(&info.unrealized_funding.try_add(&info.unrealized_pnl)?)?
+			.max(Zero::zero());
+		self.margin_requirement_maintenance
+			.try_add_mut(&info.margin_requirement_maintenance)?;
+		self.margin_requirement_partial.try_add_mut(&info.margin_requirement_partial)?;
+		self.base_asset_value.try_add_mut(&info.base_asset_value)?;
+		self.unrealized_pnl.try_add_mut(&info.unrealized_pnl)?;
+		self.unrealized_funding.try_add_mut(&info.unrealized_funding)?;
+		self.positions_summary.push((market, position, info));
+		Ok(())
+	}
 }

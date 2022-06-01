@@ -1055,13 +1055,21 @@ pub mod pallet {
 			let positions = Self::get_positions(user_id);
 			ensure!(positions.len() > 0, Error::<T>::UserHasNoPositions);
 
-			let summary = Self::summarize_account_state(positions)?;
-			let fees = Self::fully_liquidate_account(user_id, summary)?;
+			let summary = Self::summarize_account_state(user_id, positions)?;
 
-			// Charge fees
-			let liquidator_fee =
-				Self::full_liquidation_penalty_liquidator_share().saturating_mul_int(fees);
-			let insurance_fee = fees.try_sub(&liquidator_fee)?;
+			let liquidator_fee: T::Balance;
+			let insurance_fee: T::Balance;
+			let event: Event<T>;
+			if summary.margin < summary.margin_requirement_maintenance {
+				(liquidator_fee, insurance_fee) = Self::fully_liquidate_account(user_id, summary)?;
+				event = Event::<T>::FullLiquidation { user: user_id.clone() };
+			} else if summary.margin < summary.margin_requirement_partial {
+				(liquidator_fee, insurance_fee) =
+					Self::partially_liquidate_account(user_id, summary)?;
+				event = Event::<T>::PartialLiquidation { user: user_id.clone() };
+			} else {
+				return Err(Error::<T>::SufficientCollateral.into())
+			}
 
 			if !liquidator_fee.is_zero() {
 				let col = Self::get_collateral(liquidator_id).unwrap_or_else(Zero::zero);
@@ -1078,7 +1086,7 @@ pub mod pallet {
 				)?;
 			}
 
-			Self::deposit_event(Event::<T>::FullLiquidation { user: user_id.clone() });
+			Self::deposit_event(event);
 			Ok(())
 		}
 	}
@@ -1128,42 +1136,42 @@ pub mod pallet {
 	// Helper functions - core functionality
 	impl<T: Config> Pallet<T> {
 		fn summarize_account_state(
+			account_id: &T::AccountId,
 			positions: BoundedVec<Position<T>, T::MaxPositions>,
 		) -> Result<AccountSummary<T>, DispatchError> {
-			let mut summary = AccountSummary::<T>::default();
+			let collateral = Self::get_collateral(account_id).unwrap_or_else(Zero::zero);
+
+			let mut summary = AccountSummary::<T>::new(collateral)?;
 			for position in positions {
 				let market = Self::try_get_market(&position.market_id)?;
 				if let Some(direction) = position.direction() {
 					// should always succeed
-					let (position_notional, pnl) =
+					let (base_asset_value, unrealized_pnl) =
 						Self::abs_position_notional_and_pnl(&market, &position, direction)?;
 
-					let margin_requirement =
-						position_notional.try_mul(&market.margin_ratio_maintenance)?;
 					let info = PositionInfo::<T> {
 						direction,
-						margin_requirement_maintenance: margin_requirement,
-						base_asset_value: position_notional,
-						unrealized_pnl: pnl,
+						margin_requirement_maintenance: base_asset_value
+							.try_mul(&market.margin_ratio_maintenance)?,
+						margin_requirement_partial: base_asset_value
+							.try_mul(&market.margin_ratio_partial)?,
+						base_asset_value,
+						unrealized_pnl,
 						unrealized_funding: <Self as Instruments>::unrealized_funding(
 							&market, &position,
 						)?,
 					};
 
-					summary
-						.margin_requirement_maintenance
-						.try_add_mut(&info.margin_requirement_maintenance)?;
-					summary.base_asset_value.try_add_mut(&info.base_asset_value)?;
-					summary.unrealized_pnl.try_add_mut(&info.unrealized_pnl)?;
-					summary.unrealized_funding.try_add_mut(&info.unrealized_funding)?;
-					summary.positions_summary.push((market, position, info));
+					summary.update(market, position, info)?;
 				}
 			}
 
 			Ok(summary)
 		}
 
-		/// Fully liquidates the user's positions until his account is brought back above the MMR.
+		/// Fully liquidates the user's positions until its account is brought above the MMR.
+		///
+		/// This function does **not** check if the account is below the MMR beforehand.
 		///
 		/// ## Storage modifications
 		///
@@ -1174,25 +1182,19 @@ pub mod pallet {
 		///
 		/// ## Returns
 		///
-		/// The total liquidation fee
+		/// The liquidator's and insurance fund's fees
 		fn fully_liquidate_account(
 			user_id: &T::AccountId,
 			summary: AccountSummary<T>,
-		) -> Result<T::Balance, DispatchError> {
-			let mut collateral = Self::get_collateral(user_id).unwrap_or_else(Zero::zero);
-			let mut margin = Self::updated_balance(
-				&collateral,
-				&summary.unrealized_pnl.try_add(&summary.unrealized_funding)?,
-			)?
-			.into_decimal()?;
+		) -> Result<(T::Balance, T::Balance), DispatchError> {
 			let AccountSummary::<T> {
+				mut collateral,
+				mut margin,
 				margin_requirement_maintenance: mut margin_requirement,
 				base_asset_value,
 				mut positions_summary,
 				..
 			} = summary;
-
-			ensure!(margin < margin_requirement, Error::<T>::SufficientCollateral);
 
 			let mut positions = BoundedVec::<Position<T>, T::MaxPositions>::default();
 			let maximum_fee = Self::full_liquidation_penalty().try_mul(&margin)?;
@@ -1229,10 +1231,25 @@ pub mod pallet {
 				}
 			}
 
+			// Charge fees
+			let liquidator_fee =
+				Self::full_liquidation_penalty_liquidator_share().saturating_mul_int(fees);
+			let insurance_fee = fees.try_sub(&liquidator_fee)?;
+
 			Positions::<T>::insert(user_id, positions);
 			Collateral::<T>::insert(user_id, collateral);
 
-			Ok(fees)
+			Ok((liquidator_fee, insurance_fee))
+		}
+
+		/// Partially liquidates the user's positions until its account is brought above the PMR.
+		///
+		/// This function does **not** check if the account is below the PMR beforehand.
+		fn partially_liquidate_account(
+			user_id: &T::AccountId,
+			summary: AccountSummary<T>,
+		) -> Result<(T::Balance, T::Balance), DispatchError> {
+			todo!()
 		}
 
 		fn settle_funding(

@@ -550,12 +550,11 @@ fn above_water_position_can_protect_underwater_position() {
 	let config0 = MarketConfig {
 		margin_ratio_initial: (50, 100).into(),
 		margin_ratio_maintenance: (10, 100).into(),
-		margin_ratio_partial: (25, 100).into(),
+		margin_ratio_partial: (20, 100).into(),
 		taker_fee: 0,
 		..Default::default()
 	};
-	let config1 = MarketConfig { margin_ratio_maintenance: (20, 100).into(), ..config0.clone() };
-	let configs = vec![config0, config1];
+	let configs = vec![config0; 2];
 
 	let margins = vec![(ALICE, as_balance(100)), (BOB, 0)];
 	multi_market_and_trader_context(configs, margins, |market_ids| {
@@ -587,11 +586,11 @@ fn above_water_position_can_protect_underwater_position() {
 		// one market with 50 collateral, the liquidation threshold would be at price 62.5. However,
 		// since we have two positions, one's margin surplus can cover for the other's deficit
 		// Market 0 at price 65:
-		// - margin requirement = 13
+		// - margin requirement (partial) = 13
 		// - Pnl = -35
 		VammPallet::set_price_of(&market_0.vamm_id, Some(65.into()));
 		// Market 1 at price 60:
-		// - margin requirement = 12
+		// - margin requirement (partial) = 12
 		// - Pnl = -40
 		VammPallet::set_price_of(&market_1.vamm_id, Some(60.into()));
 		// Total:
