@@ -53,7 +53,7 @@ fn late_update_has_same_weight_as_normal_update() {
 		OraclePallet::set_twap(Some(10_000)); // 100 in cents
 		VammPallet::set_twap(Some(150.into()));
 
-		// hack: set fee pool depth so as not to worry about capped funding rates
+		// HACK: set fee pool depth so as not to worry about capped funding rates
 		set_fee_pool_depth(&market_id, Balance::MAX);
 
 		// Update after normal interval
@@ -90,7 +90,7 @@ fn late_update_may_push_next_update_time_to_later() {
 		OraclePallet::set_twap(Some(10_000)); // 100 in cents
 		VammPallet::set_twap(Some(150.into()));
 
-		// hack: set fee pool depth so as not to worry about capped funding rates
+		// HACK: set fee pool depth so as not to worry about capped funding rates
 		set_fee_pool_depth(&market_id, Balance::MAX);
 
 		// Update after more than 1 third of the frequency past the usual frequency time
@@ -130,7 +130,7 @@ fn late_update_may_not_interfere_with_next_update_time() {
 		OraclePallet::set_twap(Some(10_000)); // 100 in cents
 		VammPallet::set_twap(Some(150.into()));
 
-		// hack: set fee pool depth so as not to worry about capped funding rates
+		// HACK: set fee pool depth so as not to worry about capped funding rates
 		set_fee_pool_depth(&market_id, Balance::MAX);
 
 		// Update after less than 1 third of the frequency past the usual frequency time
@@ -235,7 +235,7 @@ proptest! {
 			OraclePallet::set_twap(Some(10_000)); // 100 in cents
 			let oracle_twap: FixedU128 = 100.into();
 			VammPallet::set_twap(Some(vamm_twap));
-			// Hack: set Fee Pool depth so as not to worry about capped funding rates
+			// HACK: set Fee Pool depth so as not to worry about capped funding rates
 			set_fee_pool_depth(&market_id, Balance::MAX);
 			assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
 
