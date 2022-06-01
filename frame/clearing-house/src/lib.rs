@@ -555,8 +555,7 @@ pub mod pallet {
 		///   Error::<T>::FundingPeriodNotMultipleOfFrequency)
 		/// - [`ZeroLengthFundingPeriodOrFrequency`](Error::<T>::ZeroLengthFundingPeriodOrFrequency)
 		/// - [`InvalidMarginRatioRequirement`](Error::<T>::InvalidMarginRatioRequirement)
-		/// - [`InitialMarginRatioLessThanMaintenance`](
-		///   Error::<T>::InitialMarginRatioLessThanMaintenance)
+		/// - [`InvalidMarginRatioOrdering`](Error::<T>::InvalidMarginRatioOrdering)
 		///
 		/// # Weight/Runtime
 		/// `O(1)`
