@@ -244,7 +244,7 @@ pub mod pallet {
 		/// provided adress will receive.
 		///
 		/// Only callable by the origin that created the Airdrop.
-		#[pallet::weight(<T as Config>::WeightInfo::add_recipient(10_000))]
+		#[pallet::weight(<T as Config>::WeightInfo::add_recipient(recipients.len() as u32))]
 		#[transactional]
 		pub fn add_recipient(
 			origin: OriginFor<T>,
@@ -259,7 +259,7 @@ pub mod pallet {
 		/// Remove a recipient from an Airdrop.
 		///
 		/// Only callable by the origin that created the Airdrop.
-		#[pallet::weight(<T as Config>::WeightInfo::remove_recipient(10_000))]
+		#[pallet::weight(<T as Config>::WeightInfo::remove_recipient())]
 		#[transactional]
 		pub fn remove_recipient(
 			origin: OriginFor<T>,
@@ -301,8 +301,8 @@ pub mod pallet {
 		///
 		/// If no more funds are left to claim, the Airdrop will be removed.
 		///
-		/// Callable by any origin.
-		#[pallet::weight(<T as Config>::WeightInfo::claim(1))]
+		/// Callable by any unsigned origin.
+		#[pallet::weight(<T as Config>::WeightInfo::claim(TotalAirdropRecipients::<T>::get(airdrop_id)))]
 		#[transactional]
 		pub fn claim(
 			origin: OriginFor<T>,
@@ -310,6 +310,7 @@ pub mod pallet {
 			reward_account: T::AccountId,
 			proof: ProofOf<T>,
 		) -> DispatchResultWithPostInfo {
+            ensure_none(origin)?; 
 			let remote_account =
 				Self::get_remote_account(proof, &reward_account, T::Prefix::get())?;
 
@@ -874,6 +875,7 @@ pub mod pallet {
 	/// * The Airdrop exists in the pallet's storage
 	/// * The Airdrop has been enabled / has started
 	/// * The provided proof is valid
+    /// * If an association has been created for the reward account, it matches the remote account
 	/// * The recipient has funds to claim
 	#[pallet::validate_unsigned]
 	impl<T: Config> ValidateUnsigned for Pallet<T> {
