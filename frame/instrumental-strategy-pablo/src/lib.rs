@@ -13,12 +13,14 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 	//                                   Imports and Dependencies
 	// -------------------------------------------------------------------------------------------
+	use pablo::Pools;
 	use codec::{Codec, FullCodec};
-	use composable_traits::{instrumental::InstrumentalProtocolStrategy, vault::StrategicVault};
+	use composable_traits::{instrumental::InstrumentalProtocolStrategy, 
+		vault::StrategicVault};
 	use frame_support::{
 		dispatch::DispatchResult, pallet_prelude::*, storage::bounded_btree_set::BoundedBTreeSet,
 		transactional, PalletId,
-	};
+	}; 
 	use sp_runtime::traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
 	};
@@ -103,6 +105,8 @@ pub mod pallet {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 	}
+
+	type PICA: AssetId; // DELETE(belousm) just for testing MVP
 
 	// -------------------------------------------------------------------------------------------
 	//                                         Pallet Types
@@ -210,6 +214,20 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		#[transactional]
 		fn do_rebalance(_vault_id: &T::VaultId) -> DispatchResult {
+			let task = T::Vault::available_funds(vault_id, &Self::account_id())?;
+			// TODO(belousm): check, that Vault is associated
+			let action = match task {
+				FundsAvailability::Withdrawable(balance) => {
+					// Pools.iter()
+					//      .find(|&&pool| pool)
+					todo!();
+				},
+				FundsAvailability::Depositable(balance) => todo!(),
+				FundsAvailability::MustLiquidate => {
+					// TODO(belousm): should we transfer all assets to Vault from strategy?
+					todo!();
+				},
+			};
 			Ok(())
 		}
 	}
