@@ -8,6 +8,8 @@ on:
   push:
     paths:
       - 'frontend/ui-picasso/*'
+env:
+  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
 jobs:
   tests:
