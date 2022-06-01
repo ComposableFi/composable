@@ -163,7 +163,6 @@ fn cant_liquidate_if_above_partial_margin_ratio_by_funding() {
 }
 
 #[test]
-#[ignore = "unimplemented"]
 fn can_partially_liquidate_if_below_partial_margin_ratio_by_pnl() {
 	let config = MarketConfig {
 		margin_ratio_initial: (10, 100).into(),     // 10x leverage

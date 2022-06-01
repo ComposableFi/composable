@@ -1176,13 +1176,13 @@ pub mod pallet {
 		/// ## Storage modifications
 		///
 		/// - Updates the [`markets`](Markets) of closed positions (according to changes in
-		///   [`Self::close_position_in_market`]).
+		///   [`Self::close_position_in_market`])
 		/// - Removes closed [`positions`](Positions)
 		/// - Updates the user's account [`collateral`](Collateral)
 		///
 		/// ## Returns
 		///
-		/// The liquidator's and insurance fund's fees
+		/// The fees for the liquidator and insurance fund
 		fn fully_liquidate_account(
 			user_id: &T::AccountId,
 			summary: AccountSummary<T>,
@@ -1245,11 +1245,81 @@ pub mod pallet {
 		/// Partially liquidates the user's positions until its account is brought above the PMR.
 		///
 		/// This function does **not** check if the account is below the PMR beforehand.
+		///
+		/// ## Storage modifications
+		///
+		/// - Updates the [`markets`](Markets) of decreased positions (according to changes made by
+		///   [`Self::decrease_position`])
+		/// - Updates reduced [`positions`](Positions) (according to changes made by
+		///   [`Self::decrease_position`])
+		/// - Updates the user's account [`collateral`](Collateral)
+		///
+		/// ## Returns
+		///
+		/// The fees for the liquidator and insurance fund
 		fn partially_liquidate_account(
 			user_id: &T::AccountId,
 			summary: AccountSummary<T>,
 		) -> Result<(T::Balance, T::Balance), DispatchError> {
-			todo!()
+			let AccountSummary::<T> {
+				mut collateral,
+				mut margin,
+				margin_requirement_partial: mut margin_requirement,
+				base_asset_value,
+				mut positions_summary,
+				..
+			} = summary;
+
+			let mut positions = BoundedVec::<Position<T>, T::MaxPositions>::default();
+			let mut fees = T::Balance::zero();
+			let maximum_fee = Self::partial_liquidation_penalty().try_mul(&margin)?;
+			let close_ratio = Self::partial_liquidation_close_ratio();
+			let maximum_close_value = close_ratio.try_mul(&base_asset_value)?;
+			// Sort positions from greatest to lowest margin requirement
+			positions_summary.sort_by_key(|(_, _, info)| info.margin_requirement_partial.neg());
+			for (mut market, mut position, info) in positions_summary {
+				if margin < margin_requirement {
+					Self::settle_funding(&mut position, &market, &mut collateral)?;
+
+					let base_value_to_close = close_ratio.try_mul(&info.base_asset_value)?;
+					let (_, entry_value, exit_value) = Self::decrease_position(
+						&mut position,
+						&mut market,
+						info.direction.opposite(),
+						&base_value_to_close,
+						Zero::zero(), /* No slippage control is necessary since it was already
+						               * taken into account when computing `base_asset_value` */
+					)?;
+					Markets::<T>::insert(&position.market_id, market);
+
+					let closed_share = base_value_to_close.try_div(&maximum_close_value)?;
+					let fee_decimal = closed_share.try_mul(&maximum_fee)?;
+					let requirement_freed =
+						closed_share.try_mul(&info.margin_requirement_partial)?;
+					let realized_pnl = exit_value.try_sub(&entry_value)?;
+
+					fees.try_add_mut(&fee_decimal.into_balance()?)?;
+					collateral =
+						Self::updated_balance(&collateral, &realized_pnl.try_sub(&fee_decimal)?)?;
+					margin.try_sub_mut(&fee_decimal)?;
+					margin_requirement.try_sub_mut(&requirement_freed)?;
+				}
+
+				// No positions are fully closed, so we push all.
+				// AccountSummary::positions_summary isn't constrained to be shorter than the
+				// maximum number of positions, so we keep the error checking here.
+				positions.try_push(position).map_err(|_| Error::<T>::MaxPositionsExceeded)?;
+			}
+
+			// Charge fees
+			let liquidator_fee =
+				Self::partial_liquidation_penalty_liquidator_share().saturating_mul_int(fees);
+			let insurance_fee = fees.try_sub(&liquidator_fee)?;
+
+			Positions::<T>::insert(user_id, positions);
+			Collateral::<T>::insert(user_id, collateral);
+
+			Ok((liquidator_fee, insurance_fee))
 		}
 
 		fn settle_funding(
