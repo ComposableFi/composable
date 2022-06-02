@@ -265,15 +265,16 @@ This section covers how the staking rewards are distributed using the https://gi
 
 ==== Analysis of Reward Calculations
 
-In order to create the necessary reward pool as well as the rewarding rate for stakers the following model can be used. It tries to address the following constraints
+In order to create the necessary reward pool as well as the rewarding rate for stakers the following model can be used. It tries to address the following constraints (TODO move to requirements)
 
 . Allow [#rate]#specification of the reward rate for a pool# (even setting a dynamically changing rate)
 . Allow addition of new stakers at anytime to a pool, start earning immediate rewards
 . Allow more realtime calculation of rewards on-demand for a given pool for a given user.
 . Allow shorter reward pool calculation epoch with the use of the reward rate.
 . Allow expansion of rewards pools realtime.
-. Allow compounding of staked position when the rewarded asset is the same as staked.
 . Allow extending of staked position in time and amount.
+. Allow splitting of staked position into smaller positions.
+. Allow compounding of staked position when the rewarded asset is the same as staked. Not handled at the moment. Though it is possible for users to just restake their earned assets.
 
 To analyze the requirement fully, let's define the following terms for a given staking reward pool,
 
@@ -300,7 +301,7 @@ Existing stem:[n_(th)] staker reward,
 
 stem:[x _n = P_(current) . s_n / (sum s_n)]
 
-When adding a new staker stem:[n+1], existing stakers(stem:[n]) reward would be,
+===== When adding a new staker stem:[n+1], existing stakers(stem:[n]) reward would be,
 
 stem:[x_n = P_(current) . s_n / (sum s_(n+1))]
 
@@ -316,21 +317,43 @@ stem:[x _n = P_(current) . s_n / (sum s_n)]
 
 **Therefore, the existing staker receives the same reward as before **
 
-To compensate for this new adjustment, a reduction stem:[d_(n + 1)] of reward for each staker needs to be tracked,
+To compensate for this new adjustment, a reduction stem:[d_n] of reward for each staker needs to be tracked,
 
-stem:[x_(n+1) = P_(current) . s_(n+1) / (sum s_(n+1)) - d_(n+1)]
+stem:[x_n = P_(current) . s_n / (sum s_n) - d_n] <- (1)
 
 In general,
 
 stem:[d_n = "Any reduction in reward including already claimed"]
 
-When adding a new reward to the pool the calculations remain the same other than increasing the reward pool as follows,
+===== When removing a staker from the pool the above addition step has to be reverted
+
+This can be done by subtracting the stem:[d_n] of the staker from the total pool and reducing the pool shares accordingly.
+
+===== When adding a new reward to the pool the calculations remain the same other than increasing the reward pool as follows,
 
 stem:[P_(current) = P + rt + P_(added)]
 
 Since already claimed rewards(stem:[d_n]) are tracked for each staker, they can always claim the new reward share from stem:[P_(added)] later.
 
-To compound the reward for stakers the pool total reward can be i
+===== When extending an existing position
+
+Extension of an existing staker position can be treated in the same way as adding a new staker as the following relationship holds with the new stake stem:[delta s_n] and the corresponding inflation stem:[delta d_n],
+
+new staker to add stem:[ = x_n^(add) = P_(current) . (delta s_n) / (sum s_n) - delta d_n] <- (2)
+
+Now with (1) + (2),
+
+stem:[x_n + x_n^(add) = P_(current) . (s_n + delta s_n) / (sum s_n) - d_n - delta d_n]
+
+Therefore, same computation as before with stem:[delta s_n] number of shares added to the staker position works as expected.
+
+===== When splitting an existing position
+
+As the total reward pool is not affected the splitting is just creating a new position using some ratio. If the ratio is stem:[1:k] From (1)
+
+First position stem:[x_n^1 = P_(current) . s_n / (k . sum s_n) - d_n / k]
+
+Second position stem:[x_n^2 = P_(current) . (k - 1) . s_n / (k. sum s_n) - d_n / k]
 
 As this method uses a reward pooling based approach to calculate the rewards for each staker out of it on-demand, rest of the document refers to this as the "reward pooling(*RP*) based approach".
 
@@ -471,7 +494,6 @@ repeat while (rewardConfigIndex != -1)
 stop
 ----
 
-This algorithm runs in `O(staked_asset_type_count * rewarded_asset_type_count)`.
 
 == Implementation
 
