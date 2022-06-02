@@ -1,4 +1,4 @@
-import { Input, InputProps } from "@/components";
+import { Input, InputProps } from "@ui-pablo/app/components";
 import { Box, SxProps } from "@mui/material";
 import { Story } from "@storybook/react";
 

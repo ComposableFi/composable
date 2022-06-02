@@ -3,7 +3,7 @@ import { ComponentStory } from "@storybook/react";
 import {
   RenewModal,
   RenewModalProps,
-} from "@ui-pablo/nextjs/components/Organisms/staking/UnstakeForm/RenewModal";
+} from "@ui-pablo/app/components/Organisms/staking/UnstakeForm/RenewModal";
 
 import BigNumber from "bignumber.js";
 

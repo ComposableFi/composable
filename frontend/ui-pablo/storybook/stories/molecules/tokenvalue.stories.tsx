@@ -1,6 +1,6 @@
 import { ComponentStory } from "@storybook/react";
 import { TOKENS } from "@/defi/Tokens";
-import { TokenValue } from "@/components/Molecules/TokenValue";
+import { TokenValue } from "@ui-pablo/app/components/Molecules/TokenValue";
 
 export default {
   title: "molecules/TokenValue",
