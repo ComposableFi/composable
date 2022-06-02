@@ -73,7 +73,7 @@ fn run_to_block(n: u64) {
 		}
 		SystemPallet::set_block_number(SystemPallet::block_number() + 1);
 		// Time is set in milliseconds, so at each block we increment the timestamp by 1000ms = 1s
-		let _ = TimestampPallet::set(Origin::none(), SystemPallet::block_number() * 1000);
+		let _ = TimestampPallet::set(Origin::none(), (SystemPallet::block_number() - 1) * 1000);
 		SystemPallet::on_initialize(SystemPallet::block_number());
 		TimestampPallet::on_initialize(SystemPallet::block_number());
 	}
@@ -152,7 +152,7 @@ fn with_markets_context<R>(
 	let mut ext = ext_builder.build();
 
 	ext.execute_with(|| {
-		run_to_block(1);
+		run_to_time(0);
 		let ids: Vec<_> = configs
 			.into_iter()
 			.map(|c| <sp_io::TestExternalities as MarketInitializer>::create_market_helper(Some(c)))

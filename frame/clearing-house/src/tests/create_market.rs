@@ -1,3 +1,4 @@
+use super::{as_inner, run_to_block, with_market_context, MarketConfig};
 use crate::{
 	mock::{
 		self as mock,
@@ -8,7 +9,6 @@ use crate::{
 		},
 	},
 	pallet::{Error, Event, Markets},
-	tests::{as_inner, run_to_block, MarketConfig},
 };
 use composable_traits::time::{DurationSeconds, ONE_HOUR};
 use frame_support::{assert_noop, assert_ok, traits::UnixTime};
@@ -151,9 +151,9 @@ prop_compose! {
 	}
 }
 
-// ----------------------------------------------------------------------------------------------------
-//                                             Create Market
-// ----------------------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------------------
+//                                           Unit tests
+// --------------------------------------------------------------------------------------------------
 
 #[test]
 fn create_first_market_succeeds() {
@@ -231,6 +231,34 @@ fn fails_to_create_market_if_fails_to_create_vamm() {
 		);
 	})
 }
+
+#[test]
+fn can_create_market_with_zero_minimum_trade_size() {
+	ExtBuilder::default().build().execute_with(|| {
+		let config = MarketConfig { minimum_trade_size: 0.into(), ..Default::default() };
+		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));
+	})
+}
+
+#[test]
+fn can_create_market_with_zero_taker_fees() {
+	ExtBuilder::default().build().execute_with(|| {
+		let config = MarketConfig { taker_fee: 0, ..Default::default() };
+		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));
+	})
+}
+
+#[test]
+fn market_context_helper_creates_market_at_timestamp_zero() {
+	with_market_context(ExtBuilder::default(), MarketConfig::default(), |market_id| {
+		let market = TestPallet::get_market(&market_id).unwrap();
+		assert_eq!(market.funding_rate_ts, 0);
+	})
+}
+
+// --------------------------------------------------------------------------------------------------
+//                                         Property tests
+// --------------------------------------------------------------------------------------------------
 
 proptest! {
 	#[test]
@@ -354,20 +382,4 @@ proptest! {
 			);
 		})
 	}
-}
-
-#[test]
-fn can_create_market_with_zero_minimum_trade_size() {
-	ExtBuilder::default().build().execute_with(|| {
-		let config = MarketConfig { minimum_trade_size: 0.into(), ..Default::default() };
-		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));
-	})
-}
-
-#[test]
-fn can_create_market_with_zero_taker_fees() {
-	ExtBuilder::default().build().execute_with(|| {
-		let config = MarketConfig { taker_fee: 0, ..Default::default() };
-		assert_ok!(TestPallet::create_market(Origin::signed(ALICE), config));
-	})
 }

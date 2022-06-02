@@ -46,7 +46,7 @@ fn late_update_has_same_weight_as_normal_update() {
 	};
 
 	with_market_context(ExtBuilder::default(), config, |market_id| {
-		// `with_market_context` creates the market at block 1 with timestamp 1s
+		// `with_market_context` creates the market at block 1 with timestamp 0s
 		let market_t0 = TestPallet::get_market(&market_id).unwrap();
 
 		// Set mark-index price divergence
