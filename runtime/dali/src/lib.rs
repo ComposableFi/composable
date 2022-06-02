@@ -682,6 +682,28 @@ impl utility::Config for Runtime {
 }
 
 parameter_types! {
+	pub MaxProxies : u32 = 4;
+	pub MaxPending : u32 = 32;
+	// just make dali simple to proxy
+	pub ProxyPrice: Balance = 0;
+}
+
+impl pallet_proxy::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type Currency = Assets;
+	type ProxyType = ();
+	type ProxyDepositBase = ProxyPrice;
+	type ProxyDepositFactor = ProxyPrice;
+	type MaxProxies = MaxProxies;
+	type WeightInfo = ();
+	type MaxPending = MaxPending;
+	type CallHasher = BlakeTwo256;
+	type AnnouncementDepositBase = ProxyPrice;
+	type AnnouncementDepositFactor = ProxyPrice;
+}
+
+parameter_types! {
 	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
 	pub const VotingPeriod: BlockNumber = 5 * DAYS;
 	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
@@ -1091,6 +1113,7 @@ construct_runtime!(
 		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
 		Utility: utility::{Pallet, Call, Event} = 35,
 		Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
+		Proxy: pallet_proxy = 37,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
