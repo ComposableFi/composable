@@ -349,7 +349,7 @@ fn can_fully_liquidate_if_below_maintenance_margin_ratio_by_pnl() {
 }
 
 #[test]
-fn underwater_accounts_imply_no_liquidation_fees() {
+fn negative_accounts_imply_no_liquidation_fees() {
 	let config = MarketConfig {
 		margin_ratio_initial: (1, 2).into(),       // 2x max leverage
 		margin_ratio_maintenance: (6, 100).into(), // 6% MMR
