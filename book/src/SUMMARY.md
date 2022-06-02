@@ -89,12 +89,12 @@
 - [FAQs](./faqs/faqs.md)
 
 
-# 💻 CONTRIBUTING
+# 💻 Codespaces
 
-- [Codespaces](./contributing/codespaces.md)
-  - [Getting Started](./contributing/codespaces/getting-started.md)
-  - [Using Codespaces](./contributing/codespaces/using-codespaces.md)
-- [Book](./contributing/book.md)
+- [Codespaces](./codespaces.md)
+- [Getting Started](./codespaces/getting-started.md)
+- [Using Codespaces](./codespaces/using-codespaces.md)
+  - [Book](./codespaces/book.md)
 
 # 🎨 PALLETS AND INTEGRATION GUIDES
 - [crowdloan-rewards](./pallets/crowdloan-rewards.md)
