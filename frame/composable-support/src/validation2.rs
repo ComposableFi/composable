@@ -16,8 +16,7 @@ impl<T, U, E> Clone for Validated<T, U, E>
     fn clone(&self) -> Self {
         Self { 
            value: self.value.clone(), 
-           _marker: PhantomData::<U>, 
-           _error_marker: PhantomData::<E>,
+           _marker: PhantomData::<(U,E)>, 
        } 
     }
 }
@@ -60,7 +59,7 @@ where
 {
 	pub fn new(value: T) -> Result<Self, E> {
 		match <U as Validate<T, U, E>>::validate(value) {
-			Ok(value) => Ok(Self { value, _marker: PhantomData, _error_marker: PhantomData }),
+			Ok(value) => Ok(Self { value, _marker: PhantomData}),
 			Err(e) => Err(e),
 		}
 	}
@@ -155,7 +154,7 @@ impl<T: codec::Decode, U: Validate<T, U, E>, E> codec::Decode for Validated<T, U
             Ok(value) => value, 
             Err(error) => return Err(codec::Error::from(error.into())),
         };
-		Ok(Validated { value, _marker: PhantomData, _error_marker:PhantomData})
+		Ok(Validated { value, _marker: PhantomData})
 	}
 	fn skip<I: codec::Input>(input: &mut I) -> Result<(), codec::Error> {
 		T::skip(input)
@@ -337,7 +336,7 @@ impl Error {
 		let bytes = valid.encode();
 
 		assert_eq!(
-			Ok(Validated { value: valid, _marker: PhantomData, _error_marker: PhantomData }),
+			Ok(Validated { value: valid, _marker: PhantomData}),
 			Validated::<X, CheckARangeTag, Error>::decode(&mut &bytes[..])
 		);
 	}
@@ -366,7 +365,7 @@ impl Error {
 		let valid = X { a: 0xCAFEBABE, b: 10 };
 		let bytes = valid.encode();
 		assert_eq!(
-			Ok(Validated { value: valid, _marker: PhantomData, _error_marker:PhantomData}),
+			Ok(Validated { value: valid, _marker: PhantomData}),
 			Validated::<X, CheckBRangeTag, Error>::decode(&mut &bytes[..])
 		);
 	}
@@ -384,7 +383,7 @@ impl Error {
 		let valid = X { a: 10, b: 10 };
 		let bytes = valid.encode();
 		assert_eq!(
-			Ok(Validated { value: valid, _marker: PhantomData, _error_marker:PhantomData}),
+			Ok(Validated { value: valid, _marker: PhantomData}),
 			Validated::<X, CheckABRangeTag, Error>::decode(&mut &bytes[..])
 		);
 	}
@@ -418,7 +417,7 @@ impl Error {
 		let value = X { a: 10, b: 0xDEADC0DE };
 		let bytes = value.encode();
 		assert_eq!(
-			Ok(Validated { value, _marker: PhantomData, _error_marker: PhantomData}),
+			Ok(Validated { value, _marker: PhantomData}),
 			Validated::<X, (Valid, Valid, Valid), Error>::decode(&mut &bytes[..])
 		);
 	}
@@ -435,7 +434,7 @@ impl Error {
 	#[test]
 	fn try_into_valid() {
 		let value = 42_u32.try_into_validated::<Valid>().unwrap();
-		assert_eq!(value, Validated { value: 42, _marker: PhantomData, _error_marker: PhantomData });
+		assert_eq!(value, Validated { value: 42, _marker: PhantomData});
 	}
 
 	#[test]
