@@ -13,7 +13,6 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 	//                                   Imports and Dependencies
 	// -------------------------------------------------------------------------------------------
-	use pablo::Pools;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		instrumental::InstrumentalProtocolStrategy, 
@@ -96,6 +95,13 @@ pub mod pallet {
 			VaultId = Self::VaultId,
 		>;
 
+		type Pablo: Amm<
+			AssetId = Self::AssetId,
+			Balance = Self::Balance,
+			AccountId = Self::AccountId,
+			PoolId = Self::PoolId,
+		>;
+
 		/// The maximum number of vaults that can be associated with this strategy.
 		#[pallet::constant]
 		type MaxAssociatedVaults: Get<u32>;
@@ -122,6 +128,11 @@ pub mod pallet {
 	#[pallet::getter(fn associated_vaults)]
 	pub type AssociatedVaults<T: Config> =
 		StorageValue<_, BoundedBTreeSet<T::VaultId, T::MaxAssociatedVaults>, ValueQuery>;
+
+	// TODO(belousm): where pools will be added?
+	#[pallet::storage]
+	#[pallet::getter(fn pools)]
+	pub type Pools<T: Config> = StorageMap<_, Blake2_128Concat, T::PoolId, T::Balance>;
 
 	// -------------------------------------------------------------------------------------------
 	//                                        Runtime Events
@@ -217,30 +228,30 @@ pub mod pallet {
 		#[transactional]
 		fn do_rebalance(_vault_id: &T::VaultId) -> DispatchResult {
 			let task = T::Vault::available_funds(vault_id, &Self::account_id())?;
-			// TODO(belousm): check, that Vault is associated
 			let action = match task {
 				FundsAvailability::Withdrawable(balance) => {
-					let vaults: BoundedBTreeSet<T::VaultId, T::MaxAssociatedVaults> = AssociatedVaults::<T>::get();
-					assert_eq!(vaults.contains(vault_id), true); // for MVP (then need to create Validared version of checking)
-					let vault_account = Vault::<T>::account_id(vault);
-					Pools::<T>::try_mutate(|pools| -> DispatchResult {
-						pools.iter().for_each(|pool_id| {
-							if Amm::<T>::currency_pair(pool_id).unwrap() == PICA {
-								let lp_token_amount = amount_of_lp_token_for_added_liquidity(pool_id, T::Balance.set_zero(), balance);
-								Amm::<T>::add_liquidity(&vault_account,
-														pool_id,
-													    T::Balance.set_zero(),
-														balance,
-													    lp_token_amount,
-												        true);	
-							}
-						});
-						Ok(())
+					let vault_account = T::Vault::account_id(vault_id);
+					Pools::iter_values().for_each(|pool_id| {
+						if T::Pablo::currency_pair(pool_id).unwrap() == PICA  && 
+						T::Vault::asset_id.unwrap() == PICA {
+							let lp_token_amount = amount_of_lp_token_for_added_liquidity(pool_id, balance, T::Balance.set_zero());
+							T::Pablo::add_liquidity(&vault_account,
+													pool_id,
+													balance,
+													T::Balance.set_zero(),
+													lp_token_amount,
+													true);	
+						}
+						else if T::Pablo::currency_pair(pool_id).unwrap() == PICA {
+							let lp_token_amount = amount_of_lp_token_for_added_liquidity(pool_id, T::Balance.set_zero(), balance);
+							T::Pablo::add_liquidity(&vault_account,
+													pool_id,
+													T::Balance.set_zero(),
+													balance,
+													lp_token_amount,
+													true);	
+						}
 					});
-
-					// Pools.iter()
-					//      .find(|&&pool| pool)
-					todo!();
 				},
 				FundsAvailability::Depositable(balance) => todo!(),
 				FundsAvailability::MustLiquidate => {
