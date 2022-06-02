@@ -36,7 +36,7 @@ use common::{
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::Asset,
-	defi::Rate,
+	defi::{Rate, CurrencyPair},
 	dex::{Amm, PriceAggregate, RedeemableAssets},
 };
 use primitives::currency::CurrencyId;
@@ -82,6 +82,7 @@ use sp_runtime::AccountId32;
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
 use sp_std::fmt::Debug;
+use sp_std::collections::btree_map::BTreeMap;
 use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
@@ -1297,13 +1298,15 @@ impl_runtime_apis! {
 	fn redeemable_assets_for_given_lp_tokens(
 		pool_id: SafeRpcWrapper<PoolId>,
 		lp_amount: SafeRpcWrapper<Balance>
-	) -> RedeemableAssets<SafeRpcWrapper<Balance>> {
+	) -> RedeemableAssets<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
+            let currency_pair = <Pablo as Amm>::currency_pair(pool_id.0).unwrap_or_else(|_| CurrencyPair::new(CurrencyId::INVALID, CurrencyId::INVALID) );
 			let (base, quote) = <Pablo as Amm>::redeemable_assets_for_given_lp_tokens(pool_id.0, lp_amount.0)
 			.unwrap_or_else(|_| (Zero::zero(), Zero::zero()));
 			RedeemableAssets {
-				lp_tokens : lp_amount,
-				base_assets: SafeRpcWrapper(base),
-				quote_assets: SafeRpcWrapper(quote),
+                assets: BTreeMap::from([
+                            (SafeRpcWrapper(currency_pair.base), SafeRpcWrapper(base)),
+                            (SafeRpcWrapper(currency_pair.quote), SafeRpcWrapper(quote))
+                ])
 			}
 	}
 

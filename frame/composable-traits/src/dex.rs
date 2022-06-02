@@ -13,7 +13,7 @@ use sp_runtime::{
 	traits::{CheckedMul, CheckedSub},
 	ArithmeticError, DispatchError, Permill,
 };
-use sp_std::{ops::Mul, vec::Vec};
+use sp_std::{ops::Mul, vec::Vec, collections::btree_map::BTreeMap};
 
 /// Trait for automated market maker.
 pub trait Amm {
@@ -384,10 +384,10 @@ pub struct PriceAggregate<PoolId, AssetId, Balance> {
 /// RedeemableAssets for given amount of lp tokens.
 #[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct RedeemableAssets<Balance> {
-	pub lp_tokens: Balance,
-	pub base_assets: Balance,
-	pub quote_assets: Balance,
+pub struct RedeemableAssets<AssetId, Balance> 
+    where AssetId: Ord
+{
+    pub assets: BTreeMap<AssetId, Balance>
 }
 
 #[cfg(test)]

@@ -12,7 +12,7 @@ sp_api::decl_runtime_apis! {
 	pub trait PabloRuntimeApi<PoolId, AssetId, Balance>
 	where
 		PoolId: Codec,
-		AssetId: Codec,
+		AssetId: Codec + sp_std::cmp::Ord,
 		Balance: Codec,
 	{
 		/// Retrieve the price(s) from the given pool calculated for the given `base_asset_id`
@@ -33,6 +33,6 @@ sp_api::decl_runtime_apis! {
 	fn redeemable_assets_for_given_lp_tokens(
 		pool_id: SafeRpcWrapper<PoolId>,
 		lp_amount: SafeRpcWrapper<Balance>
-	) -> RedeemableAssets<SafeRpcWrapper<Balance>>;
+	) -> RedeemableAssets<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>;
 	}
 }

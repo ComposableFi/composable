@@ -11,14 +11,14 @@ use pablo_runtime_api::PabloRuntimeApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
-use sp_std::sync::Arc;
+use sp_std::{sync::Arc, cmp::Ord};
 
 #[rpc(client, server)]
 pub trait PabloApi<BlockHash, PoolId, AssetId, Balance>
 where
 	PoolId: FromStr + Display,
-	AssetId: FromStr + Display,
-	Balance: FromStr + Display,
+	AssetId: FromStr + Display + Ord,
+ 	Balance: FromStr + Display,
 {
 	#[method(name = "pablo_pricesFor")]
 	fn prices_for(
@@ -47,7 +47,7 @@ where
 		pool_id: SafeRpcWrapper<PoolId>,
 		lp_amount: SafeRpcWrapper<Balance>,
 		at: Option<BlockHash>,
-	) -> RpcResult<RedeemableAssets<SafeRpcWrapper<Balance>>>;
+	) -> RpcResult<RedeemableAssets<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>;
 }
 
 pub struct Pablo<C, Block> {
@@ -67,7 +67,7 @@ impl<C, Block, PoolId, AssetId, Balance>
 where
 	Block: BlockT,
 	PoolId: Send + Sync + 'static + Codec + FromStr + Display,
-	AssetId: Send + Sync + 'static + Codec + FromStr + Display,
+	AssetId: Send + Sync + 'static + Codec + FromStr + Display + Ord,
 	Balance: Send + Sync + 'static + Codec + FromStr + Display,
 	C: Send + Sync + 'static,
 	C: ProvideRuntimeApi<Block>,
@@ -132,7 +132,7 @@ where
 		pool_id: SafeRpcWrapper<PoolId>,
 		lp_amount: SafeRpcWrapper<Balance>,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<RedeemableAssets<SafeRpcWrapper<Balance>>> {
+	) -> RpcResult<RedeemableAssets<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>> {
 		let api = self.client.runtime_api();
 
 		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));

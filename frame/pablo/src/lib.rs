@@ -880,12 +880,12 @@ pub mod pallet {
 				pool_account.clone(),
 				lp_amount,
 			)?;
+			match pool {
+				PoolConfiguration::StableSwap(info) => {
 			ensure!(
 				base_amount >= min_base_amount && quote_amount >= min_quote_amount,
 				Error::<T>::CannotRespectMinimumRequested
 			);
-			match pool {
-				PoolConfiguration::StableSwap(info) => {
 					let (base_amount, quote_amount, updated_lp) =
 						StableSwap::<T>::remove_liquidity(
 							who,
@@ -905,6 +905,10 @@ pub mod pallet {
 					});
 				},
 				PoolConfiguration::ConstantProduct(info) => {
+			ensure!(
+				base_amount >= min_base_amount && quote_amount >= min_quote_amount,
+				Error::<T>::CannotRespectMinimumRequested
+			);
 					let (base_amount, quote_amount, updated_lp) = Uniswap::<T>::remove_liquidity(
 						who,
 						info,
