@@ -4,7 +4,7 @@ use sp_runtime::FixedI128;
 
 use super::{
 	as_balance, comp::approx_eq_lower, multi_market_and_trader_context, run_for_seconds,
-	traders_in_one_market_context, MarketConfig,
+	run_to_time, set_fee_pool_depth, traders_in_one_market_context, MarketConfig,
 };
 use crate::{
 	mock::{
@@ -221,9 +221,79 @@ fn can_partially_liquidate_if_below_partial_margin_ratio_by_pnl() {
 }
 
 #[test]
-#[ignore = "TODO"]
 fn partial_liquidation_realizes_funding_payments() {
-	todo!()
+	let config = MarketConfig {
+		margin_ratio_initial: (10, 100).into(),     // 10x leverage
+		margin_ratio_maintenance: (4, 100).into(),  // 25x leverage
+		margin_ratio_partial: (625, 10_000).into(), // 16x leverage
+		funding_frequency: 60,
+		funding_period: 60,
+		taker_fee: 0,
+		..Default::default()
+	};
+
+	let margins = vec![(ALICE, as_balance(50)), (BOB, 0)];
+	traders_in_one_market_context(config.clone(), margins, |market_id| {
+		// Set last funding update at multiple of funding frequency
+		run_to_time(config.funding_frequency);
+		assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
+
+		set_partial_liquidation_penalty((25, 100).into());
+		set_partial_liquidation_close((25, 100).into());
+		set_liquidator_share_partial((50, 100).into());
+
+		// Alice opens a position
+		VammPallet::set_price(Some(100.into()));
+		assert_ok!(<TestPallet as ClearingHouse>::open_position(
+			&ALICE,
+			&market_id,
+			Direction::Long,
+			as_balance(500),
+			as_balance(5)
+		));
+
+		// Time passes and index price moves in favor of Alice's position
+		run_for_seconds(config.funding_frequency);
+		// Time passes and funding rates are updated
+		VammPallet::set_twap(Some(100.into()));
+		// Index price moves against Alice's position
+		OraclePallet::set_twap(Some(10060 /* 10060 cents = 100.6 */));
+		// HACK: set Fee Pool depth so as not to worry about capped funding rates
+		set_fee_pool_depth(&market_id, as_balance(1_000_000));
+		assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
+
+		// Price moves so that Alice's account is below the PMR
+		VammPallet::set_price(Some(95.into()));
+		// 100 -> 95
+		// - margin requirement (partial) = 29.688
+		// - margin requirement (full) = 19
+		// - unrealized PnL = 475 - 500 = -25
+		// - unrealized funding = (100.6 - 100) * 5 = 3
+		// - margin = 50 - 25 + 3 = 28
+
+		// Bob liquidates Alice's account
+		assert_ok!(TestPallet::liquidate(Origin::signed(BOB), ALICE));
+		// 25% of Alice's position is closed
+		// - realized PnL = PnL / 4 = -6.25
+		// - realized funding = 3
+		// - collateral seized = margin / 4 = 7
+		// - liquidator share = 3.5
+		// - resulting collateral = 50 - collateral seized + realized PnL + realized funding = 39.75
+		// - base asset remaining = 5 * 3 / 4 = 3.75
+		// - entry value remaining = 500 * 3 / 4 = 375
+		// - base asset value = 95 * 3.75 = 356.25
+		// - resulting margin = 39.75 + (356.25 - 375) = 21
+		// - margin requirement (partial) = 22.266
+		// - margin requirement (full) = 14.25
+		// Thus, Alice's account is **not** brought back above the PMR
+		assert_eq!(TestPallet::get_collateral(&ALICE).unwrap(), as_balance((3975, 100)));
+		assert_eq!(TestPallet::get_collateral(&BOB).unwrap(), as_balance((35, 10)));
+		assert_eq!(
+			AssetsPallet::balance(USDC, &TestPallet::get_insurance_account()),
+			as_balance((35, 10))
+		);
+		SystemPallet::assert_last_event(Event::PartialLiquidation { user: ALICE }.into());
+	});
 }
 
 #[test]
