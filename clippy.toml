@@ -5,6 +5,7 @@ disallowed-methods = [
 
 disallowed-types = [
   "frame_support::storage::types::ValueQuery",
-  "std::vec::Vec",
+  # reports false postives with feautes maps, so cannot add
+  #"std::vec::Vec",
 ]
 type-complexity-threshold = 5000
