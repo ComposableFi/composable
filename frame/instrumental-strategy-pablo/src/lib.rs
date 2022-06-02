@@ -228,10 +228,11 @@ pub mod pallet {
 		#[transactional]
 		fn do_rebalance(_vault_id: &T::VaultId) -> DispatchResult {
 			let task = T::Vault::available_funds(vault_id, &Self::account_id())?;
+
 			let action = match task {
 				FundsAvailability::Withdrawable(balance) => {
 					let vault_account = T::Vault::account_id(vault_id);
-					Pools::iter_values().for_each(|pool_id| {
+					Pools::iter_keys().for_each(|pool_id| {
 						if T::Pablo::currency_pair(pool_id).unwrap() == PICA  && 
 						T::Vault::asset_id.unwrap() == PICA {
 							let lp_token_amount = amount_of_lp_token_for_added_liquidity(pool_id, balance, T::Balance.set_zero());
