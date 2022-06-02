@@ -14,6 +14,7 @@ pub type Amount = i128;
 pub type BlockNumber = u64;
 pub type Balance = u128;
 pub type CurrencyId = u128;
+pub type PoolId = u128;
 
 pub const VAULT_PALLET_ID: PalletId = PalletId(*b"cubic___");
 pub type VaultId = u64;
@@ -164,7 +165,34 @@ impl pallet_pablo_strategy::Config for MockRuntime {
 	type VaultId = VaultId;
 	type Vault = Vault;
 	type MaxAssociatedVaults = MaxAssociatedVaults;
+	type PoolId = PoolId;
+	type Pablo = Pablo;
 	type PalletId = InstrumentalPabloStrategyPalletId;
+}
+
+// -----------------------------------------------------------------------------------------------
+//                                   Pablo
+// -----------------------------------------------------------------------------------------------
+
+impl pallet_pablo::Config for MockRuntime {
+		type Event = Event;
+		type AssetId = CurrencyId;
+		type Balance = Balance;
+		type Convert =
+		type CurrencyFactory =
+		type Assets =
+		type PoolId = PoolId;
+		type PalletId =
+		type LocalAssets =
+		type LbpMinSaleDuration =
+		type LbpMaxSaleDuration =
+		type LbpMaxInitialWeight =
+		type LbpMinFinalWeight =
+		type PoolCreationOrigin=
+		type EnableTwapOrigin =
+		type Time =
+		type TWAPInterval =
+		type WeightInfo = ();
 }
 
 // -----------------------------------------------------------------------------------------------
@@ -188,6 +216,8 @@ frame_support::construct_runtime!(
 
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		PabloStrategy: pallet_pablo_strategy::{Pallet, Call, Storage, Event<T>},
+
+		Pablo: pallet_pablo::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
