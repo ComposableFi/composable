@@ -1342,8 +1342,6 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			if let Some(direction) = position.direction() {
 				let payment = <Self as Instruments>::unrealized_funding(market, position)?;
-				// TODO(0xangelo): can we have bad debt from unrealized funding if user wasn't
-				// liquidated in time?
 				*margin = Self::updated_balance(margin, &payment)?;
 				position.last_cum_funding = market.cum_funding_rate(direction);
 			}
