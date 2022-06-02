@@ -10,7 +10,9 @@ pub type DurationSeconds = u64;
 /// Unix now seconds on chain
 pub type Timestamp = u64;
 
-pub const ONE_HOUR: DurationSeconds = 60 * 60;
+pub const ONE_MINUTE: DurationSeconds = 60;
+
+pub const ONE_HOUR: DurationSeconds = 60 * ONE_MINUTE;
 
 /// current notion of year will take away 1/365 from lenders and give away to borrowers (as does no
 /// accounts to length of year)
