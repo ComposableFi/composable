@@ -3,7 +3,7 @@ const path = require("path");
 const ABORT = 0;
 const CONTINUE = 1;
 const BASE_PATH = "frontend";
-const PREFIX = `picasso-`;
+const PREFIX = `pablo-`;
 const PROTECTED_BRANCHES = ["main"];
 
 function abort(message) {
