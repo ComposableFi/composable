@@ -51,6 +51,16 @@ type SystemAccountIdOf<T> = <T as frame_system::Config>::AccountId;
 type SystemOriginOf<T> = <T as frame_system::Config>::Origin;
 type SystemEventOf<T> = <T as frame_system::Config>::Event;
 
+// Bounds for configuration generic type, used in create market helpers.
+pub trait ConfigBound:
+	frame_system::Config<BlockNumber = u64>
+	+ crate::Config
+	+ DeFiComposableConfig<MayBeAssetId = u128>
+	+ orml_tokens::Config<CurrencyId = u128, Balance = u128>
+{
+}
+impl ConfigBound for Runtime {}
+
 #[test]
 fn accrue_interest_base_cases() {
 	let (optimal, ref mut interest_rate_model) = new_jump_model();
@@ -546,7 +556,12 @@ fn test_borrow_repay_in_same_block() {
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, collateral_amount));
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(Origin::signed(*ALICE), market_id, collateral_amount),
+			Lending::deposit_collateral(
+				Origin::signed(*ALICE),
+				market_id,
+				collateral_amount,
+				false,
+			),
 			Event::Lending(crate::Event::CollateralDeposited {
 				sender: *ALICE,
 				amount: collateral_amount,
@@ -591,7 +606,8 @@ fn test_borrow_repay_in_same_block() {
 				Origin::signed(*ALICE),
 				market_id,
 				*ALICE,
-				RepayStrategy::PartialAmount(alice_repay_amount)
+				RepayStrategy::PartialAmount(alice_repay_amount),
+				false,
 			),
 			Error::<Runtime>::BorrowAndRepayInSameBlockIsNotSupported,
 		);
@@ -666,7 +682,12 @@ fn old_price() {
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, collateral_amount));
 
 		// Deposit BTC on the market
-		assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral_amount));
+		assert_ok!(Lending::deposit_collateral(
+			Origin::signed(*ALICE),
+			market,
+			collateral_amount,
+			false
+		));
 
 		// Set BTC price
 		set_price(BTC::ID, BTC::ONE.mul(SECOND_PRICE));
@@ -725,7 +746,8 @@ fn old_price() {
 			Origin::signed(*ALICE),
 			market,
 			*ALICE,
-			RepayStrategy::PartialAmount(borrow_amount)
+			RepayStrategy::PartialAmount(borrow_amount),
+			false,
 		),);
 	});
 }
@@ -742,7 +764,12 @@ fn borrow_flow() {
 			.div(get_price(BTC::ID, BTC::ONE));
 
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, collateral_amount));
-		assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral_amount));
+		assert_ok!(Lending::deposit_collateral(
+			Origin::signed(*ALICE),
+			market,
+			collateral_amount,
+			false
+		));
 		let event = Event::Lending(crate::Event::CollateralDeposited {
 			sender: *ALICE,
 			amount: collateral_amount,
@@ -843,7 +870,7 @@ fn borrow_flow() {
 		assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, collateral_amount));
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral_amount),
+			Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral_amount, false),
 			Event::Lending(crate::Event::CollateralDeposited {
 				sender: *ALICE,
 				amount: collateral_amount,
@@ -888,7 +915,7 @@ fn vault_takes_part_of_borrow_so_cannot_withdraw() {
 
 		assert_ok!(Vault::deposit(Origin::signed(*ALICE), vault_id, deposit_btc));
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(Origin::signed(*ALICE), market_id, deposit_usdt),
+			Lending::deposit_collateral(Origin::signed(*ALICE), market_id, deposit_usdt, false),
 			Event::Lending(pallet_lending::Event::<Runtime>::CollateralDeposited {
 				sender: *ALICE,
 				market_id,
@@ -924,7 +951,7 @@ fn test_vault_market_can_withdraw() {
 		assert_ok!(Vault::deposit(Origin::signed(*ALICE), vault_id, borrow));
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral),
+			Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral, false),
 			Event::Lending(crate::Event::CollateralDeposited {
 				sender: *ALICE,
 				amount: collateral,
@@ -949,39 +976,125 @@ fn test_vault_market_can_withdraw() {
 #[test]
 fn test_liquidate_multiple() {
 	new_test_ext().execute_with(|| {
-		let (market, _vault) = create_simple_market();
-
-		mint_and_deposit_collateral::<Runtime>(*ALICE, BTC::units(100), market, BTC::ID);
-		mint_and_deposit_collateral::<Runtime>(*BOB, BTC::units(100), market, BTC::ID);
-		mint_and_deposit_collateral::<Runtime>(*CHARLIE, BTC::units(100), market, BTC::ID);
-		match Lending::liquidate(Origin::signed(*ALICE), market, vec![*ALICE, *BOB, *CHARLIE]) {
-			Ok(_) => {
-				println!("ok!")
-			},
-			Err(why) => {
-				panic!("{:#?}", why)
-			},
-		};
-		let event = Event::Lending(crate::Event::LiquidationInitiated {
-			market_id: market,
-			borrowers: vec![*ALICE, *BOB, *CHARLIE],
+		let manager = *ALICE;
+		let lender = *CHARLIE;
+		let first_borrower = *ALICE;
+		let second_borrower = *BOB;
+		let third_borrower = *CHARLIE;
+		let (market_id, vault_id) = create_market_for_liquidation_test::<Runtime>(manager);
+		// Deposit USDT in the vault.
+		let vault_value = USDT::units(100_000_000);
+		assert_ok!(Tokens::mint_into(USDT::ID, &lender, vault_value));
+		assert_ok!(Vault::deposit(Origin::signed(lender), vault_id, vault_value));
+		test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+		// Deposit 1 BTC collateral from borrowers' accounts.
+		mint_and_deposit_collateral::<Runtime>(first_borrower, BTC::units(1), market_id, BTC::ID);
+		mint_and_deposit_collateral::<Runtime>(second_borrower, BTC::units(1), market_id, BTC::ID);
+		mint_and_deposit_collateral::<Runtime>(third_borrower, BTC::units(1), market_id, BTC::ID);
+		// Each borrower borrows 20_000 USDT
+		borrow::<Runtime>(first_borrower, market_id, USDT::units(20_000));
+		borrow::<Runtime>(second_borrower, market_id, USDT::units(20_000));
+		borrow::<Runtime>(third_borrower, market_id, USDT::units(20_000));
+		// Emulate situation when collateral price has fallen down
+		// from 50_000 USDT to 38_000 USDT.
+		set_price(BTC::ID, NORMALIZED::units(38_000));
+		let borrowers = vec![first_borrower, second_borrower, third_borrower];
+		assert_extrinsic_event::<Runtime>(
+			Lending::liquidate(Origin::signed(manager), market_id.clone(), borrowers.clone()),
+			Event::Lending(crate::Event::LiquidationInitiated {
+				market_id,
+				borrowers: borrowers.clone(),
+			}),
+		);
+		// Check if cleanup was done correctly
+		borrowers.iter().for_each(|borrower| {
+			assert!(!crate::DebtIndex::<Runtime>::contains_key(market_id, borrower))
 		});
-		System::assert_last_event(event);
-		Lending::should_liquidate(&market, &*ALICE).unwrap();
+		borrowers.iter().for_each(|borrower| {
+			assert!(!crate::BorrowTimestamp::<Runtime>::contains_key(market_id, borrower))
+		});
+	})
+}
 
+#[test]
+fn test_max_liquidation_batch_size_exceeded() {
+	new_test_ext().execute_with(|| {
+		let manager = *ALICE;
+		let (market_id, _vault_id) = create_market_for_liquidation_test::<Runtime>(manager);
 		let mut borrowers = vec![];
 		let mut bytes = [0; 32];
 		for i in 0..=<Runtime as crate::Config>::MaxLiquidationBatchSize::get() {
 			let raw_account_id = U256::from(i);
 			raw_account_id.to_little_endian(&mut bytes);
 			let account_id = AccountId::from_raw(bytes);
-			mint_and_deposit_collateral::<Runtime>(account_id, BTC::units(100), market, BTC::ID);
+			mint_and_deposit_collateral::<Runtime>(account_id, BTC::units(100), market_id, BTC::ID);
 			borrowers.push(account_id);
 		}
+		// This test works without borrowing since liquidation batch size
+		// is checking in the beginning of Lending::liquidate() function.
 		assert_noop!(
-			Lending::liquidate(Origin::signed(*ALICE), market, borrowers),
+			Lending::liquidate(Origin::signed(*ALICE), market_id, borrowers),
 			Error::<Runtime>::MaxLiquidationBatchSizeExceeded,
 		);
+	})
+}
+
+#[test]
+fn test_liquidation_storage_transcation_rollback() {
+	new_test_ext().execute_with(|| {
+		let manager = *ALICE;
+		let lender = *CHARLIE;
+		// ALICE is borrower who's borrow going to be liquidated
+		let normal_borrower = *ALICE;
+		// BOB is borrower who's borrow should, but can not be liquidated,
+		// for some reason.
+		let borrower_with_a_twist = *BOB;
+		let (market_id, vault_id) = create_market_for_liquidation_test::<Runtime>(manager);
+		// Deposit USDT in the vault.
+		let vault_value = USDT::units(100_000_000);
+		assert_ok!(Tokens::mint_into(USDT::ID, &lender, vault_value));
+		assert_ok!(Vault::deposit(Origin::signed(lender), vault_id, vault_value));
+		test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+		// Deposit 1 BTC collateral from normal borrower account.
+		crate::tests::mint_and_deposit_collateral::<Runtime>(
+			normal_borrower,
+			BTC::units(1),
+			market_id,
+			BTC::ID,
+		);
+		// Normal borrower borrows 20_000 USDT.
+		borrow::<Runtime>(normal_borrower, market_id, USDT::units(20_000));
+		// Deposit 1 BTC collateral from "borrower with a twist" account.
+		crate::tests::mint_and_deposit_collateral::<Runtime>(
+			borrower_with_a_twist,
+			BTC::units(1),
+			market_id,
+			BTC::ID,
+		);
+		// Borrower with a twist borrows 20_000 USDT.
+		borrow::<Runtime>(borrower_with_a_twist, market_id, USDT::units(20_000));
+		// Twist: borrowers collateral is been vanished.
+		// Now it is not possible to liquidate this position.
+		crate::AccountCollateral::<Runtime>::remove(market_id, borrower_with_a_twist);
+		// Emulate situation when collateral price has fallen down
+		// from 50_000 USDT to 38_000 USDT.
+		set_price(BTC::ID, NORMALIZED::units(38_000));
+		assert_extrinsic_event::<Runtime>(
+			Lending::liquidate(
+				Origin::signed(manager),
+				market_id.clone(),
+				vec![normal_borrower, borrower_with_a_twist],
+			),
+			Event::Lending(crate::Event::LiquidationInitiated {
+				market_id,
+				borrowers: vec![normal_borrower],
+			}),
+		);
+		// Check if cleanup was done correctly
+		assert!(crate::DebtIndex::<Runtime>::contains_key(market_id, borrower_with_a_twist));
+		assert!(crate::BorrowTimestamp::<Runtime>::contains_key(market_id, borrower_with_a_twist));
+		assert!(!crate::DebtIndex::<Runtime>::contains_key(market_id, normal_borrower));
+		assert!(!crate::BorrowTimestamp::<Runtime>::contains_key(market_id, normal_borrower));
 	})
 }
 
@@ -1045,6 +1158,7 @@ fn test_repay_partial_amount() {
 				market_index,
 				*ALICE,
 				RepayStrategy::PartialAmount(BORROW::units(1) / 10_000),
+				false,
 			),
 			Event::Lending(crate::Event::<Runtime>::BorrowRepaid {
 				sender: *ALICE,
@@ -1064,6 +1178,7 @@ fn test_repay_partial_amount() {
 				market_index,
 				*ALICE,
 				RepayStrategy::PartialAmount(BORROW::units(1) / 10_000),
+				false,
 			),
 			Event::Lending(crate::Event::<Runtime>::BorrowRepaid {
 				sender: *ALICE,
@@ -1091,7 +1206,8 @@ fn test_repay_partial_amount() {
 				Origin::signed(*ALICE),
 				market_index,
 				*ALICE,
-				RepayStrategy::PartialAmount(alice_total_debt_with_interest + 1)
+				RepayStrategy::PartialAmount(alice_total_debt_with_interest + 1),
+				false,
 			),
 			DispatchErrorWithPostInfo {
 				post_info: PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },
@@ -1116,6 +1232,7 @@ fn test_repay_partial_amount() {
 				market_index,
 				*ALICE,
 				RepayStrategy::PartialAmount(alice_total_debt_with_interest),
+				false,
 			),
 			Event::Lending(crate::Event::<Runtime>::BorrowRepaid {
 				sender: *ALICE,
@@ -1141,7 +1258,7 @@ fn test_repay_total_debt() {
 		let deposit_collateral = |account, balance| {
 			assert_ok!(Tokens::mint_into(BTC::ID, account, balance));
 			assert_extrinsic_event::<Runtime>(
-				Lending::deposit_collateral(Origin::signed(*account), market_index, balance),
+				Lending::deposit_collateral(Origin::signed(*account), market_index, balance, false),
 				Event::Lending(crate::Event::<Runtime>::CollateralDeposited {
 					market_id: market_index,
 					amount: BTC::ONE,
@@ -1214,6 +1331,7 @@ fn test_repay_total_debt() {
 					market_index,
 					*ALICE,
 					RepayStrategy::TotalDebt,
+					false,
 				),
 				Event::Lending(crate::Event::<Runtime>::BorrowRepaid {
 					sender: *ALICE,
@@ -1237,6 +1355,7 @@ fn test_repay_total_debt() {
 					market_index,
 					*BOB,
 					RepayStrategy::TotalDebt,
+					false,
 				),
 				Event::Lending(crate::Event::<Runtime>::BorrowRepaid {
 					sender: *BOB,
@@ -1269,7 +1388,7 @@ fn liquidation() {
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, collateral));
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(Origin::signed(*ALICE), market_id, collateral),
+			Lending::deposit_collateral(Origin::signed(*ALICE), market_id, collateral, false),
 			Event::Lending(crate::Event::CollateralDeposited {
 				sender: *ALICE,
 				amount: collateral,
@@ -1307,6 +1426,9 @@ fn liquidation() {
 				borrowers: vec![*ALICE],
 			}),
 		);
+		// Check if cleanup was done correctly
+		assert!(!crate::DebtIndex::<Runtime>::contains_key(market_id, *ALICE));
+		assert!(!crate::BorrowTimestamp::<Runtime>::contains_key(market_id, *ALICE));
 	});
 }
 
@@ -1325,7 +1447,12 @@ fn test_warn_soon_under_collateralized() {
 		// dbg!(&Vault::vault_info(vault));
 		let two_btc_amount = BTC::units(2);
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, two_btc_amount));
-		assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, two_btc_amount));
+		assert_ok!(Lending::deposit_collateral(
+			Origin::signed(*ALICE),
+			market,
+			two_btc_amount,
+			false
+		));
 		let event = Event::Lending(crate::Event::CollateralDeposited {
 			sender: *ALICE,
 			amount: two_btc_amount,
@@ -1405,7 +1532,12 @@ fn zero_amount_collateral_deposit() {
 		set_price(USDT::ID, 1);
 		let collateral_amount = 0;
 		assert_noop!(
-			<Lending as LendingTrait>::deposit_collateral(&market_id, &BOB, collateral_amount),
+			<Lending as LendingTrait>::deposit_collateral(
+				&market_id,
+				&BOB,
+				collateral_amount,
+				false
+			),
 			Error::<Runtime>::CannotDepositZeroCollateral
 		);
 	})
@@ -1425,7 +1557,7 @@ fn market_owner_cannot_retroactively_liquidate() {
 		assert_ok!(Tokens::mint_into(BTC::ID, &BOB, collateral_amount));
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(Origin::signed(*BOB), market_id, collateral_amount),
+			Lending::deposit_collateral(Origin::signed(*BOB), market_id, collateral_amount, false),
 			Event::Lending(crate::Event::CollateralDeposited {
 				sender: *BOB,
 				amount: collateral_amount,
@@ -1566,7 +1698,7 @@ proptest! {
 			let (market, _) = create_simple_market();
 			let before = Tokens::balance( BTC::ID, &ALICE);
 			prop_assert_ok!(Tokens::mint_into( BTC::ID, &ALICE, amount));
-			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, amount));
+			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, amount, false));
 			let event =
 				Event::Lending(crate::Event::CollateralDeposited {
 					sender: *ALICE,
@@ -1594,7 +1726,7 @@ proptest! {
 		new_test_ext().execute_with(|| {
 			let (market, _vault) = create_simple_market();
 			prop_assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, amount));
-			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, amount));
+			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, amount, false));
 			let event =
 				Event::Lending(crate::Event::CollateralDeposited {
 					sender: *ALICE,
@@ -1625,7 +1757,7 @@ proptest! {
 			let ((market, _), collateral_asset) = create_simple_vaulted_market(BTC::instance(), *ALICE);
 			let before = Tokens::balance(collateral_asset, &ALICE);
 			prop_assert_ok!(Tokens::mint_into(collateral_asset, &ALICE, amount));
-			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, amount));
+			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, amount, false));
 			let event =
 				Event::Lending(crate::Event::CollateralDeposited {
 					sender: *ALICE,
@@ -1781,10 +1913,7 @@ pub fn create_market<T, const NORMALIZED_PRICE: u128>(
 	collateral_factor: MoreThanOneFixedU128,
 ) -> (MarketIndex, T::VaultId)
 where
-	T: frame_system::Config<BlockNumber = u64>
-		+ crate::Config
-		+ DeFiComposableConfig<MayBeAssetId = u128>
-		+ orml_tokens::Config<CurrencyId = u128, Balance = u128>,
+	T: ConfigBound,
 	SystemOriginOf<T>: OriginTrait<AccountId = SystemAccountIdOf<T>>,
 	SystemEventOf<T>: TryInto<crate::Event<T>>,
 	<SystemEventOf<T> as TryInto<crate::Event<T>>>::Error: std::fmt::Debug,
@@ -1870,12 +1999,43 @@ fn create_simple_vaulted_market(
 ///
 /// See [`create_market()`] for more information.
 fn create_simple_market() -> (MarketIndex, VaultId) {
-	create_market::<Runtime, 50_000>(
+	create_market_with_specific_collateral_factor::<Runtime>(DEFAULT_COLLATERAL_FACTOR, *ALICE)
+}
+
+/// Create a market with BTC as collateral asset and USDT as borrow asset.
+/// Initial collateral asset price is `50_000` USDT. Market's collateral factor equals two.
+/// It means that borrow supposed to be undercolateraized when
+/// borrowed amount is higher then one half of collateral amount in terms of USDT.
+pub fn create_market_for_liquidation_test<T>(
+	manager: T::AccountId,
+) -> (crate::MarketIndex, T::VaultId)
+where
+	T: ConfigBound,
+	SystemOriginOf<T>: OriginTrait<AccountId = SystemAccountIdOf<T>>,
+	SystemEventOf<T>: TryInto<crate::Event<T>>,
+	<SystemEventOf<T> as TryInto<crate::Event<T>>>::Error: std::fmt::Debug,
+{
+	create_market_with_specific_collateral_factor::<T>(2, manager)
+}
+
+/// Create a  market with USDT as borrow and BTC as collateral.
+/// Collateral factor should be specified
+fn create_market_with_specific_collateral_factor<T>(
+	collateral_factor: u128,
+	manager: T::AccountId,
+) -> (crate::MarketIndex, T::VaultId)
+where
+	T: ConfigBound,
+	SystemOriginOf<T>: OriginTrait<AccountId = SystemAccountIdOf<T>>,
+	SystemEventOf<T>: TryInto<crate::Event<T>>,
+	<SystemEventOf<T> as TryInto<crate::Event<T>>>::Error: std::fmt::Debug,
+{
+	create_market::<T, 50_000>(
 		USDT::instance(),
 		BTC::instance(),
-		*ALICE,
+		manager,
 		DEFAULT_MARKET_VAULT_RESERVE,
-		MoreThanOneFixedU128::saturating_from_integer(DEFAULT_COLLATERAL_FACTOR),
+		MoreThanOneFixedU128::saturating_from_integer(collateral_factor),
 	)
 }
 
@@ -1902,7 +2062,8 @@ pub fn mint_and_deposit_collateral<T>(
 	assert_ok!(crate::Pallet::<T>::deposit_collateral(
 		SystemOriginOf::<T>::signed(account),
 		market_index,
-		balance
+		balance,
+		false,
 	));
 	let event = crate::Event::<T>::CollateralDeposited {
 		market_id: market_index,
@@ -1913,6 +2074,29 @@ pub fn mint_and_deposit_collateral<T>(
 	assert_last_event::<T>(system_event);
 }
 
+/// Borrows amount of tokens from the market for particular account.
+/// Checks if corresponded event was emitted.
+pub fn borrow<T>(
+	borrower: T::AccountId,
+	market_id: crate::MarketIndex,
+	amount: <T as DeFiComposableConfig>::Balance,
+) where
+	T: ConfigBound,
+	SystemOriginOf<T>: OriginTrait<AccountId = SystemAccountIdOf<T>>,
+	SystemEventOf<T>: TryInto<crate::Event<T>>,
+	<SystemEventOf<T> as TryInto<crate::Event<T>>>::Error: std::fmt::Debug,
+{
+	crate::tests::assert_extrinsic_event::<T>(
+		crate::Pallet::<T>::borrow(
+			SystemOriginOf::<T>::signed(borrower.clone()),
+			market_id,
+			amount,
+		),
+		crate::Event::<T>::Borrowed { sender: borrower, amount, market_id }
+			.try_into()
+			.unwrap(),
+	);
+}
 /// Asserts that the outcome of an extrinsic is `Ok`, and that the last event is the specified
 /// event.
 pub fn assert_extrinsic_event<T: crate::Config>(

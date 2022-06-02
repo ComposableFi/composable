@@ -20,6 +20,7 @@ pub mod dex_router;
 pub mod lending;
 pub mod liquidations;
 pub mod pablo;
+pub mod pallet_ibc;
 pub mod session;
 pub mod timestamp;
 pub mod tokens;

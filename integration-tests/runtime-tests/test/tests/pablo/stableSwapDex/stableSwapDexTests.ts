@@ -8,7 +8,6 @@ import { ApiPromise } from "@polkadot/api";
 import {
   addFundstoThePool,
   buyFromPool,
-  createMultipleStableSwapPools,
   createStableSwapPool,
   getPoolInfo,
   getUserTokens,
@@ -88,13 +87,10 @@ describe("StableSwapDex Test Suite", function () {
         baseStableAssetId,
         quoteStableAssetId,
         ampCoefficient,
-        fee,
-        ownerFee
+        fee
       );
       poolId1 = result.resultPoolId;
       expect(result.resultPoolId).to.be.a("number");
-      const { ownFee } = await getPoolInfo(api, "StableSwap", poolId1);
-      expect(ownFee).to.be.equal(ownerFee);
     });
 
     it("Given that users have sufficient funds, User2 can create StableswapPool", async function () {
@@ -105,26 +101,14 @@ describe("StableSwapDex Test Suite", function () {
         baseStableAssetId,
         quoteStableAssetId2,
         ampCoefficient + 40000,
-        fee,
-        ownerFee
+        fee
       );
       poolId2 = result.resultPoolId;
       expect(result.resultPoolId).to.be.a("number");
-      const { ownFee } = await getPoolInfo(api, "StableSwap", poolId2);
-      expect(ownFee).to.be.equal(ownerFee);
     });
 
     it("Given that users have no funds in their wallets, they can create a StableSwap Pool", async function () {
-      const result = await createStableSwapPool(
-        api,
-        walletId2,
-        walletId2,
-        140,
-        150,
-        ampCoefficient + 40000,
-        fee,
-        ownerFee
-      );
+      const result = await createStableSwapPool(api, walletId2, walletId2, 140, 150, ampCoefficient + 40000, fee);
       expect(result.resultPoolId).to.be.a("number");
     });
   });
@@ -139,12 +123,6 @@ describe("StableSwapDex Test Suite", function () {
     it("Given that users have sufficient funds, User1 can addLiquidity to StableSwapPool", async function () {
       const result = await addFundstoThePool(api, poolId1, walletId1, baseAssetAmount, quoteAssetAmount);
       lpTokens = result.returnedLPTokens.toBigInt();
-      const rpcRes = await rpcPriceFor(
-        api,
-        api.createType("PalletPabloPoolId", poolId1),
-        api.createType("CustomRpcCurrencyId", baseStableAssetId),
-        api.createType("CustomRpcCurrencyId", quoteStableAssetId)
-      );
       expect(result.quoteAdded.toBigInt()).to.be.equal(quoteAssetAmount);
     });
 
@@ -206,8 +184,8 @@ describe("StableSwapDex Test Suite", function () {
     it(
       "Given that users have sufficient funds in their balance, User2 can't buy a not listed" + " asset in the pool",
       async function () {
-        await buyFromPool(api, poolId1, walletId2, falseQuoteAssetId, Pica(30)).catch(e =>
-          expect(e.message).to.contain("InvalidAsset")
+        await buyFromPool(api, poolId1, walletId2, falseQuoteAssetId, Pica(30)).catch(error =>
+          expect(error.message).to.contain("InvalidAsset")
         );
       }
     );
@@ -215,8 +193,8 @@ describe("StableSwapDex Test Suite", function () {
     it(
       "Given that users have sufficient funds in their balance, User2 can't sell a not listed" + " asset in the pool",
       async function () {
-        await sellToPool(api, poolId1, walletId2, falseQuoteAssetId, Pica(30)).catch(e =>
-          expect(e.message).to.contain("InvalidAsset")
+        await sellToPool(api, poolId1, walletId2, falseQuoteAssetId, Pica(30)).catch(error =>
+          expect(error.message).to.contain("InvalidAsset")
         );
       }
     );
@@ -287,8 +265,8 @@ describe("StableSwapDex Test Suite", function () {
 
     it("Given that users have sufficient funds, User1 can't swap two tokens not listed in the pool", async function () {
       //Expected behavior is to reject with error
-      await swapTokenPairs(api, poolId1, walletId1, baseStableAssetId, falseQuoteAssetId, Pica(50)).catch(e =>
-        expect(e.message).to.contain("Mismatch")
+      await swapTokenPairs(api, poolId1, walletId1, baseStableAssetId, falseQuoteAssetId, Pica(50)).catch(error =>
+        expect(error.message).to.contain("Mismatch")
       );
     });
   });
