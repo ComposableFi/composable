@@ -1,4 +1,4 @@
-import { PoolShare, PoolShareProps } from "@ui-pablo/nextjs/components/Organisms/bonds/PoolShare";
+import { PoolShare, PoolShareProps } from "@ui-pablo/app/components/Organisms/bonds/PoolShare";
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
 import BigNumber from "bignumber.js";

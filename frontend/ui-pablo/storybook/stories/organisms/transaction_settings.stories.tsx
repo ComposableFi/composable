@@ -1,8 +1,8 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { TransactionSettings, TransactionSettingsProps } from "@ui-pablo/nextjs/components";
-import { useAppDispatch } from "@ui-pablo/nextjs/hooks/store";
-import { openTransactionSettingsModal } from "@ui-pablo/nextjs/stores/ui/uiSlice";
+import { TransactionSettings, TransactionSettingsProps } from "@ui-pablo/app/components";
+import { useAppDispatch } from "@ui-pablo/app/hooks/store";
+import { openTransactionSettingsModal } from "@ui-pablo/app/stores/ui/uiSlice";
 
 
 const TransactionSettingsStories = (props: TransactionSettingsProps) => {

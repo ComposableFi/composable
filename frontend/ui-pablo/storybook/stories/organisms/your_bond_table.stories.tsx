@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { YourBondTable } from "@ui-pablo/nextjs/components";
+import { YourBondTable } from "@ui-pablo/app/components";
 
 const YourBondTableStories = () => {
   return (

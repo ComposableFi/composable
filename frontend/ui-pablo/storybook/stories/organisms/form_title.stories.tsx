@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { FormTitleProps, FormTitle } from "@ui-pablo/nextjs/components";
+import { FormTitleProps, FormTitle } from "@ui-pablo/app/components";
 
 const FormTitleStories = (props: FormTitleProps) => {
   return (

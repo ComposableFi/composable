@@ -3,7 +3,7 @@ import { ComponentStory } from "@storybook/react";
 import {
   SelectLockPeriod,
   SelectLockPeriodProps,
-} from "@ui-pablo/nextjs/components/Organisms/staking/StakeForm/SelectLockPeriod";
+} from "@ui-pablo/app/components/Organisms/staking/StakeForm/SelectLockPeriod";
 
 const SelectLockPeriodStories = (props: SelectLockPeriodProps) => {
   return (

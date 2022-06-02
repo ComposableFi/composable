@@ -1,4 +1,4 @@
-import { Label } from "@/components";
+import { Label } from "@ui-pablo/app/components";
 import { ComponentStory } from "@storybook/react";
 
 export default {

@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { AllLiquidityTableProps, AllLiquidityTable } from "@ui-pablo/nextjs/components/Organisms/AllLiquidityTable";
+import { AllLiquidityTableProps, AllLiquidityTable } from "@ui-pablo/app/components/Organisms/AllLiquidityTable";
 
 const AllLiquidityTableStories = (props: AllLiquidityTableProps) => {
   return (

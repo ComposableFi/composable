@@ -2,7 +2,7 @@ import {
   DropdownCombinedBigNumberInput, 
   DropdownCombinedInputBigNumberProps, 
   SelectProps 
-} from "@/components";
+} from "@ui-pablo/app/components";
 import BigNumber from "bignumber.js";
 import { Box, SxProps } from "@mui/material";
 import { Story } from "@storybook/react";
