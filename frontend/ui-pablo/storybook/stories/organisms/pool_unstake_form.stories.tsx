@@ -5,7 +5,7 @@ import { PoolUnstakeForm } from "@ui-pablo/app/components/Organisms";
 const PoolUnstakeFormStories = ({}) => {
   return (
     <Box>
-      <PoolUnstakeForm />
+      <PoolUnstakeForm poolId={-1} />
     </Box>
   );
 };

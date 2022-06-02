@@ -5,7 +5,7 @@ import { PoolStakingPanel } from "@ui-pablo/app/components/Organisms";
 const PoolStakingPanelStories = ({}) => {
   return (
     <Box>
-      <PoolStakingPanel />
+      <PoolStakingPanel poolId={-1} />
     </Box>
   );
 };

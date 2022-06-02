@@ -5,7 +5,7 @@ import { PoolStatistics } from "@ui-pablo/app/components/Organisms";
 const PoolStatisticsStories = ({}) => {
   return (
     <Box>
-      <PoolStatistics />
+      <PoolStatistics poolId={-1} />
     </Box>
   );
 };

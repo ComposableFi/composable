@@ -5,7 +5,7 @@ import { PoolRewardsPanel } from "@ui-pablo/app/components/Organisms";
 const PoolRewardsPanelStories = ({}) => {
   return (
     <Box>
-      <PoolRewardsPanel />
+      <PoolRewardsPanel poolId={-1} />
     </Box>
   );
 };
