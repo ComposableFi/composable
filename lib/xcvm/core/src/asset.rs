@@ -1,8 +1,22 @@
 use alloc::collections::BTreeMap;
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
+use serde::{Deserialize, Serialize};
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo)]
+#[derive(
+	Copy,
+	Clone,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Debug,
+	Encode,
+	Decode,
+	TypeInfo,
+	Serialize,
+	Deserialize,
+)]
 #[repr(transparent)]
 pub struct XCVMAsset(u32);
 
@@ -29,7 +43,9 @@ impl From<u32> for XCVMAsset {
 	}
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo)]
+#[derive(
+	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
+)]
 #[repr(transparent)]
 pub struct XCVMTransfer {
 	pub assets: BTreeMap<XCVMAsset, u128>,

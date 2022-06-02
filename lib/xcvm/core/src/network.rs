@@ -1,12 +1,26 @@
 use alloc::vec::Vec;
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
+use serde::{Deserialize, Serialize};
 
 pub trait Callable {
 	type EncodedCall;
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo)]
+#[derive(
+	Copy,
+	Clone,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Debug,
+	Encode,
+	Decode,
+	TypeInfo,
+	Serialize,
+	Deserialize,
+)]
 #[repr(transparent)]
 pub struct XCVMNetwork(u32);
 

@@ -9,7 +9,19 @@ mod program;
 mod protocol;
 
 pub use crate::{asset::*, instruction::*, network::*, program::*, protocol::*};
-use alloc::collections::VecDeque;
+use alloc::{collections::VecDeque, vec::Vec};
+
+pub fn serialize_json<T: serde::Serialize>(
+	program: &XCVMProgram<T>,
+) -> Result<Vec<u8>, serde_json::Error> {
+	serde_json::to_vec(program)
+}
+
+pub fn deserialize_json<T: serde::de::DeserializeOwned>(
+	buffer: &[u8],
+) -> Result<XCVMProgram<T>, serde_json::Error> {
+	serde_json::from_slice(buffer)
+}
 
 #[derive(Clone)]
 pub struct XCVMProgramBuilder<Network, Instruction> {
@@ -65,62 +77,71 @@ where
 #[cfg(test)]
 mod tests {
 	use super::*;
-	use alloc::{vec, vec::Vec};
+	use alloc::{collections::BTreeMap, vec};
+
+	struct DummyProtocol1;
+	#[derive(Debug)]
+	struct DummyProtocol1Error;
+	impl XCVMProtocol<XCVMNetwork> for DummyProtocol1 {
+		type Error = DummyProtocol1Error;
+		fn serialize(&self, network: XCVMNetwork) -> Result<Vec<u8>, Self::Error> {
+			match network {
+				XCVMNetwork::PICASSO => Ok(vec![0xCA, 0xFE, 0xBE, 0xEF]),
+				XCVMNetwork::ETHEREUM => Ok(vec![0xC0, 0xDE, 0xC0, 0xDE]),
+				_ => Err(DummyProtocol1Error),
+			}
+		}
+	}
+
+	struct DummyProtocol2;
+	#[derive(Debug)]
+	struct DummyProtocol2Error;
+	impl XCVMProtocol<XCVMNetwork> for DummyProtocol2 {
+		type Error = DummyProtocol2Error;
+		fn serialize(&self, network: XCVMNetwork) -> Result<Vec<u8>, Self::Error> {
+			match network {
+				XCVMNetwork::PICASSO => Ok(vec![0xCA, 0xFE, 0xBA, 0xBE]),
+				XCVMNetwork::ETHEREUM => Ok(vec![0xDE, 0xAD, 0xC0, 0xDE]),
+				_ => Err(DummyProtocol2Error),
+			}
+		}
+	}
+
+	#[derive(Debug)]
+	enum ProgramBuildError {
+		DummyProtocol1(DummyProtocol1Error),
+		DummyProtocol2(DummyProtocol2Error),
+	}
+	impl From<DummyProtocol1Error> for ProgramBuildError {
+		fn from(x: DummyProtocol1Error) -> Self {
+			ProgramBuildError::DummyProtocol1(x)
+		}
+	}
+	impl From<DummyProtocol2Error> for ProgramBuildError {
+		fn from(x: DummyProtocol2Error) -> Self {
+			ProgramBuildError::DummyProtocol2(x)
+		}
+	}
 
 	#[test]
-	fn test() {
-		struct DummyProtocol1;
-		#[derive(Debug)]
-		struct DummyProtocol1Error;
-		impl XCVMProtocol<XCVMNetwork> for DummyProtocol1 {
-			type Error = DummyProtocol1Error;
-			fn serialize(&self, network: XCVMNetwork) -> Result<Vec<u8>, Self::Error> {
-				match network {
-					XCVMNetwork::PICASSO => Ok(vec![0xCA, 0xFE, 0xBE, 0xEF]),
-					XCVMNetwork::ETHEREUM => Ok(vec![0xC0, 0xDE, 0xC0, 0xDE]),
-					_ => Err(DummyProtocol1Error),
-				}
-			}
-		}
-
-		struct DummyProtocol2;
-		#[derive(Debug)]
-		struct DummyProtocol2Error;
-		impl XCVMProtocol<XCVMNetwork> for DummyProtocol2 {
-			type Error = DummyProtocol2Error;
-			fn serialize(&self, network: XCVMNetwork) -> Result<Vec<u8>, Self::Error> {
-				match network {
-					XCVMNetwork::PICASSO => Ok(vec![0xCA, 0xFE, 0xBA, 0xBE]),
-					XCVMNetwork::ETHEREUM => Ok(vec![0xDE, 0xAD, 0xC0, 0xDE]),
-					_ => Err(DummyProtocol2Error),
-				}
-			}
-		}
-
-		#[derive(Debug)]
-		enum ProgramBuildError {
-			DummyProtocol1(DummyProtocol1Error),
-			DummyProtocol2(DummyProtocol2Error),
-		}
-		impl From<DummyProtocol1Error> for ProgramBuildError {
-			fn from(x: DummyProtocol1Error) -> Self {
-				ProgramBuildError::DummyProtocol1(x)
-			}
-		}
-		impl From<DummyProtocol2Error> for ProgramBuildError {
-			fn from(x: DummyProtocol2Error) -> Self {
-				ProgramBuildError::DummyProtocol2(x)
-			}
-		}
-
+	fn can_build() {
 		let program = || -> Result<_, ProgramBuildError> {
-			XCVMProgramBuilder::<XCVMNetwork, XCVMInstruction<XCVMNetwork, _, (), ()>>::from(
-				XCVMNetwork::PICASSO,
-			)
-			.call(DummyProtocol1)?
-			.spawn::<_, ProgramBuildError>(XCVMNetwork::ETHEREUM, (), |child| {
-				Ok(child.call(DummyProtocol2)?.call(DummyProtocol1)?.transfer((), ()))
-			})
+			Ok(XCVMProgramBuilder::<
+					XCVMNetwork,
+					XCVMInstruction<XCVMNetwork, _, (), XCVMTransfer>,
+				>::from(XCVMNetwork::PICASSO)
+				.call(DummyProtocol1)?
+				.spawn::<_, ProgramBuildError>(
+					XCVMNetwork::ETHEREUM,
+					XCVMTransfer::from(BTreeMap::new()),
+					|child| {
+						Ok(child
+							.call(DummyProtocol2)?
+							.call(DummyProtocol1)?
+							.transfer((), XCVMTransfer::from(BTreeMap::from([(1, u128::MAX)]))))
+					},
+				)?
+				.build())
 		}()
 		.expect("valid program");
 
@@ -131,16 +152,44 @@ mod tests {
 				XCVMInstruction::Call { encoded: vec![202, 254, 190, 239] },
 				XCVMInstruction::Spawn {
 					network: XCVMNetwork::ETHEREUM,
-					assets: (),
+					assets: XCVMTransfer::from(BTreeMap::new()),
 					program: VecDeque::from([
 						// Protocol 2 on eth
 						XCVMInstruction::Call { encoded: vec![222, 173, 192, 222] },
 						// Protocol 1 on eth, different encoding than on previous network
 						XCVMInstruction::Call { encoded: vec![192, 222, 192, 222] },
-						XCVMInstruction::Transfer { to: (), assets: () }
+						XCVMInstruction::Transfer {
+							to: (),
+							assets: XCVMTransfer::from(BTreeMap::from([(1, u128::MAX)]))
+						}
 					])
 				}
 			]),
 		);
+	}
+
+	#[test]
+	fn json_iso() {
+		let program = || -> Result<_, ProgramBuildError> {
+			Ok(XCVMProgramBuilder::<
+					XCVMNetwork,
+				XCVMInstruction<XCVMNetwork, _, (), XCVMTransfer>,
+				>::from(XCVMNetwork::PICASSO)
+				 .call(DummyProtocol1)?
+				 .spawn::<_, ProgramBuildError>(
+					 XCVMNetwork::ETHEREUM,
+					 XCVMTransfer::from(BTreeMap::new()),
+					 |child| {
+						 Ok(child
+							  .call(DummyProtocol2)?
+							  .call(DummyProtocol1)?
+							  .transfer((), XCVMTransfer::from(BTreeMap::from([(1, u128::MAX)]))))
+					 },
+				 )?
+				 .build())
+		}()
+		.expect("valid program");
+
+		assert_eq!(program, deserialize_json(&serialize_json(&program).unwrap()).unwrap());
 	}
 }
