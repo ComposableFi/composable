@@ -11,6 +11,8 @@ pub mod weights;
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
 mod mocks;
+#[cfg(test)]
+mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -333,6 +335,14 @@ pub mod pallet {
 		}
 	}
 
+	#[pallet::extra_constants]
+	impl<T: Config> Pallet<T> {
+		/// The AccountId of this pallet.
+		pub fn account_id() -> T::AccountId {
+			T::PalletId::get().into_account()
+		}
+	}
+
 	impl<T: Config> Pallet<T> {
 		/// Gets the account ID to be used by the Airdrop.
 		pub(crate) fn get_airdrop_account_id(airdrop_id: T::AirdropId) -> AccountIdOf<T> {
@@ -590,9 +600,6 @@ pub mod pallet {
 			let airdrop_id = AirdropCount::<T>::increment()?;
 			let airdrop_account = Self::get_airdrop_account_id(airdrop_id);
 
-			// Transfer stake into airdrop specific account.
-			T::RecipientFundAsset::transfer(&creator_id, &airdrop_account, T::Stake::get(), false)?;
-
 			// Insert newly created airdrop into pallet's list.
 			Airdrops::<T>::insert(
 				airdrop_id,
@@ -606,6 +613,9 @@ pub mod pallet {
 					disabled: false,
 				},
 			);
+
+			// Transfer stake into airdrop specific account.
+			T::RecipientFundAsset::transfer(&creator_id, &airdrop_account, T::Stake::get(), false)?;
 
 			Self::deposit_event(Event::AirdropCreated { airdrop_id, by: creator_id });
 
