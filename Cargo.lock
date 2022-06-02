@@ -2737,6 +2737,7 @@ dependencies = [
  "pallet-oracle",
  "pallet-pablo",
  "pallet-preimage",
+ "pallet-proxy",
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-session",
