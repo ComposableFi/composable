@@ -7,7 +7,8 @@ const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 export type DonutChartProps = {
   data: number[];
   labels: string[];
-  width: string;
+  width?: string;
+  height?: string;
   colors: string[];
 };
 
@@ -15,6 +16,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({
   data,
   labels,
   width,
+  height,
   colors,
 }) => {
   const theme = useTheme();
@@ -45,6 +47,7 @@ export const DonutChart: React.FC<DonutChartProps> = ({
       series={data}
       type="donut"
       width={width}
+      height={height}
     />
   );
 };

@@ -1,3 +1,4 @@
+import { PoolDetails } from "@/defi/types";
 import BigNumber from "bignumber.js";
 
 export const initPoolData = {
@@ -9,6 +10,40 @@ export const initPoolData = {
   tokenWeight2: new BigNumber(50),
   initialSwapFee: new BigNumber(0.3),
 } as const;
+
+export const selectedPoolData = {
+  tokenId1: "pica",
+  tokenId2: "ksm",
+  tokenWeight1: new BigNumber(50),
+  tokenWeight2: new BigNumber(50),
+  initialSwapFee: new BigNumber(0.3),
+  poolValue: new BigNumber(325300651),
+  poolAmount: new BigNumber(3353),
+  rewardValue: new BigNumber(500),
+  rewardsLeft: [
+    {
+      tokenId: "pablo",
+      value: new BigNumber(5000),
+    },
+    {
+      tokenId: "chaos",
+      value: new BigNumber(5200),
+    },
+  ],
+  volume: new BigNumber(325651),
+  fee24h: new BigNumber(1563),
+  apr: 14.63,
+  transactions24h: 119,
+  tvlChartData: {
+    series: [
+      [1644550600000, 20],
+      [1644560620928, 45],
+      [1644570600000, 40],
+      [1644590600000, 100],
+    ],
+    timeSlots: ["7:00am", "10:00am", "1:00pm", "3:00pm", "5:00pm"],
+  },
+} as PoolDetails;
 
 export const initSupplyData = {
   tokenId1: 'none',

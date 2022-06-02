@@ -53,4 +53,22 @@ export const DEFI_CONFIG = {
       name: "1 year",
     },
   ],
+  poolChartIntervals: [
+    {
+      symbol: "1w",
+      name: "1 week",
+    },
+    {
+      symbol: "1m",
+      name: "1 month",
+    },
+    {
+      symbol: "1y",
+      name: "1 year",
+    },
+    {
+      symbol: "All",
+      name: "all",
+    },
+  ],
 };

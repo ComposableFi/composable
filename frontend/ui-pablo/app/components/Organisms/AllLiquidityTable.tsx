@@ -70,7 +70,7 @@ export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
   const handleRowClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (flow === "user") {
-      router.push("/pool-select");
+      router.push("/pool/select");
     }
   };
 

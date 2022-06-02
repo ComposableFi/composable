@@ -55,3 +55,13 @@ export { ConnectWalletFeaturedBox } from "./ConnectWalletFeaturedBox";
 
 export { Bonds } from "./bonds";
 export { BondPortfolioChart } from "./bonds/BondPortfolioChart";
+
+export { PoolDetails } from "./pool/PoolDetails";
+export { PoolTVLChart } from "./pool/PoolDetails/PoolTVLChart";
+export { PoolStatistics } from "./pool/PoolDetails/PoolStatistics";
+export { PoolLiquidityPanel } from "./pool/PoolDetails/PoolLiquidityPanel";
+export { PoolStakingPanel } from "./pool/PoolDetails/PoolStakingPanel";
+export { PoolStakeForm } from "./pool/PoolDetails/PoolStakeForm";
+export { PoolUnstakeForm } from "./pool/PoolDetails/PoolUnstakeForm";
+export { PoolRewardsPanel } from "./pool/PoolDetails/PoolRewardsPanel";
+

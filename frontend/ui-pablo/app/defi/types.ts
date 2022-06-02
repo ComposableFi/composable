@@ -141,6 +141,24 @@ export type PoolInfo = {
   createdAt?: number;
 };
 
+export type PoolDetails = {
+  tokenId1: TokenId;
+  tokenId2: TokenId;
+  tokenWeight1: BigNumber;
+  tokenWeight2: BigNumber;
+  initialSwapFee: BigNumber;
+  createdAt?: number;
+  poolValue: BigNumber;
+  poolAmount: BigNumber;
+  rewardValue: BigNumber;
+  rewardsLeft: {tokenId: TokenId, value: BigNumber}[],
+  volume: BigNumber,
+  fee24h: BigNumber,
+  apr: number,
+  transactions24h: number,
+  tvlChartData: PoolTVLChartData,
+};
+
 export type TransactionSettings = {
   tolerance: number,
   deadline: number,
@@ -154,4 +172,14 @@ export type XPablo = {
   multiplier: number;
   amount: BigNumber;
   withdrawableAmount: BigNumber;
-}
+};
+
+export type PoolTVLChartData = {
+  series: [number, number][],
+  timeSlots: string[],
+};
+
+export type PoolLiquidityChartData = {
+  series: number[],
+  labels: string[],
+};

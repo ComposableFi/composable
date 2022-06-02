@@ -40,7 +40,7 @@ const MENU_ITEMS: MenuItemType[] = [
     path: "/pool",
     icon: dynamic(() => import("@mui/icons-material/AttachMoney")),
     status: "active",
-    matches: ["/pool", "/pool/add-liquidity", "/pool-select", "/pool/create-pool"],
+    matches: ["/pool", "/pool/add-liquidity", "/pool/select", "/pool/create-pool"],
   },
   {
     label: "Bond",
