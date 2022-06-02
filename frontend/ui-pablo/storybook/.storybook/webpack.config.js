@@ -54,6 +54,7 @@ module.exports = ({ config }) => {
     "@/stores": path.resolve(__dirname, "..", "..", "app", "stores"),
     "@/store": path.resolve(__dirname, "..", "..", "app", "store"),
     "@/defi": path.resolve(__dirname, "..", "..", "app", "defi"),
+    "@/updaters": path.resolve(__dirname, "..", "..", "app", "updaters")
   };
 
   return config;
