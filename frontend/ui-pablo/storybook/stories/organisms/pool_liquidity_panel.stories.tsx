@@ -5,7 +5,7 @@ import { PoolLiquidityPanel } from "@ui-pablo/app/components/Organisms";
 const PoolLiquidityPanelStories = ({}) => {
   return (
     <Box>
-      <PoolLiquidityPanel />
+      <PoolLiquidityPanel poolId={-1} />
     </Box>
   );
 };

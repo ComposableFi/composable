@@ -5,7 +5,7 @@ import { PoolTVLChart } from "@ui-pablo/app/components/Organisms";
 const PoolTVLChartStories = ({}) => {
   return (
     <Box>
-      <PoolTVLChart />
+      <PoolTVLChart poolId={-1} />
     </Box>
   );
 };
