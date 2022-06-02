@@ -21,37 +21,30 @@ import {
 import { BoxProps } from "@mui/system";
 import BigNumber from "bignumber.js";
 import { useRouter } from "next/router";
-import { useSnackbar } from "notistack";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
-import { YourPosition } from "../YourPosition";
 import { ConfirmingModal } from "./ConfirmingModal";
 import { PreviewDetails } from "./PreviewDetails";
+import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
+import { getAsset } from "@/defi/polkadot/Assets";
+import { AssetId } from "@/defi/polkadot/types";
 
 export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const theme = useTheme();
   const router = useRouter();
   const dispatch = useDispatch();
 
-  const drawerWidth = theme.custom.drawerWidth.desktop;
+  const { baseAsset, quoteAsset, pooledAmountBase, pooledAmountQuote } =
+    useRemoveLiquidityState();
 
-  const {
-    tokenId1,
-    tokenId2,
-    pooledAmount1,
-    pooledAmount2,
-    amount,
-    share,
-    price1,
-    price2,
-  } = useAppSelector((state) => state.pool.currentLiquidity);
+  const { share } = useAppSelector((state) => state.pool.currentLiquidity);
 
   const isConfirmingModalOpen = useAppSelector(
     (state) => state.ui.isConfirmingModalOpen
   );
 
-  const token1 = getToken(tokenId1 as TokenId);
-  const token2 = getToken(tokenId2 as TokenId);
+  const baseAss = getAsset(baseAsset as AssetId) ?? undefined;
+  const quoteAss = getAsset(quoteAsset as AssetId) ?? undefined;
 
   const [percentage, setPercentage] = useState<number>(0);
   const [removeAmount1, setRemoveAmount1] = useState<BigNumber>(
@@ -60,18 +53,31 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const [removeAmount2, setRemoveAmount2] = useState<BigNumber>(
     new BigNumber(0)
   );
-  const [approved, setApproved] = useState<boolean>(false);
+
+  // const [approved, setApproved] = useState<boolean>(false);
   const [confirmed, setConfirmed] = useState<boolean>(false);
   const message = useAppSelector((state) => state.ui.message);
 
   useEffect(() => {
     setRemoveAmount1(
-      pooledAmount1.multipliedBy(new BigNumber(percentage / 100))
+      new BigNumber(pooledAmountBase).multipliedBy(
+        new BigNumber(percentage / 100)
+      )
     );
     setRemoveAmount2(
-      pooledAmount2.multipliedBy(new BigNumber(percentage / 100))
+      new BigNumber(pooledAmountQuote).multipliedBy(
+        new BigNumber(percentage / 100)
+      )
     );
-  }, [percentage, pooledAmount1, pooledAmount2, confirmed]);
+  }, [percentage, pooledAmountBase, pooledAmountQuote, confirmed]);
+
+  const price1 = useMemo(() => {
+    return new BigNumber(pooledAmountBase).div(pooledAmountQuote);
+  }, [pooledAmountBase, pooledAmountQuote]);
+
+  const price2 = useMemo(() => {
+    return new BigNumber(pooledAmountQuote).div(pooledAmountBase);
+  }, [pooledAmountBase, pooledAmountQuote]);
 
   const onBackHandler = () => {
     router.push("/pool");
@@ -85,8 +91,8 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
     setPercentage(newValue as number);
   };
 
-  const onRemoveHandler = () => {
-    dispatch(openConfirmingModal());
+  const onRemoveHandler = async () => {
+    dispatch(openConfirmingModal())
   };
 
   useEffect(() => {
@@ -175,15 +181,17 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
         </Box>
       </Box>
 
-      <PreviewDetails
-        mt={4}
-        tokenId1={tokenId1 as TokenId}
-        tokenId2={tokenId2 as TokenId}
-        amount1={removeAmount1}
-        amount2={removeAmount2}
-        price1={price1}
-        price2={price2}
-      />
+      {baseAss && quoteAss && (
+        <PreviewDetails
+          mt={4}
+          tokenId1={baseAss}
+          tokenId2={quoteAss}
+          amount1={removeAmount1}
+          amount2={removeAmount2}
+          price1={price1}
+          price2={price2}
+        />
+      )}
 
       {!confirmed && (
         <Box
@@ -193,7 +201,7 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           mt={4}
           gap={2}
         >
-          <Box width="50%">
+          {/* <Box width="50%">
             <Button
               variant="contained"
               size="large"
@@ -219,14 +227,14 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
                 <>Approve</>
               )}
             </Button>
-          </Box>
+          </Box> */}
 
-          <Box width="50%">
+          <Box width="100%">
             <Button
               variant="outlined"
               size="large"
               fullWidth
-              disabled={!percentage || !approved || confirmed}
+              disabled={!percentage || confirmed}
               onClick={onRemoveHandler}
             >
               {!percentage ? "Enter Amount" : "Remove"}
@@ -261,8 +269,12 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
         </>
       )}
 
-      {!confirmed && (
+      {!confirmed && baseAss && quoteAss && (
         <ConfirmingModal
+          price1={price1}
+          price2={price2}
+          baseAsset={baseAss}
+          quoteAsset={quoteAss}
           open={isConfirmingModalOpen}
           amount1={removeAmount1}
           amount2={removeAmount2}

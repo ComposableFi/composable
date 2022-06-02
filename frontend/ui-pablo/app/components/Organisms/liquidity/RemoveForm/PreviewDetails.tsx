@@ -1,17 +1,16 @@
 import React from "react";
 import { Label, BaseAsset } from "@/components/Atoms";
-import { getToken } from "@/defi/Tokens";
-import { TokenId } from "@/defi/types";
 import {
   Box,
   BoxProps,
 } from "@mui/material";
 
 import BigNumber from "bignumber.js";
+import { AssetMetadata } from "@/defi/polkadot/Assets";
 
 export type PreviewDetailsProps = {
-  tokenId1: TokenId,
-  tokenId2: TokenId,
+  tokenId1: AssetMetadata,
+  tokenId2: AssetMetadata,
   amount1: BigNumber,
   amount2: BigNumber,
   price1: BigNumber,
@@ -27,8 +26,6 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
   price2,
   ...rest
 }) => {
-  const token1 = getToken(tokenId1 as TokenId);
-  const token2 = getToken(tokenId2 as TokenId);
 
   return (
     <Box {...rest}>
@@ -40,7 +37,7 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
           },
         }}
       >
-        <BaseAsset icon={token1?.icon} label={token1?.symbol} />
+        <BaseAsset icon={tokenId1.icon} label={tokenId1?.symbol} />
       </Label>
 
       <Label
@@ -52,14 +49,14 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
           },
         }}
       >
-        <BaseAsset icon={token2?.icon} label={token2?.symbol} />
+        <BaseAsset icon={tokenId2?.icon} label={tokenId2?.symbol} />
       </Label>
 
       <Label
         mt={4}
         label={`Price`}
         BalanceProps={{
-          balance: `1 ${token2?.symbol} = ${price2} ${token1?.symbol}`,
+          balance: `1 ${tokenId2?.symbol} = ${price2} ${tokenId1?.symbol}`,
           BalanceTypographyProps: {
             variant: "body2",
           },
@@ -70,7 +67,7 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
         mt={2}
         label=""
         BalanceProps={{
-          balance: `1 ${token1?.symbol} = ${price1} ${token2?.symbol}`,
+          balance: `1 ${tokenId1?.symbol} = ${price1} ${tokenId2?.symbol}`,
           BalanceTypographyProps: {
             variant: "body2",
           },

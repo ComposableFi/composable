@@ -13,7 +13,7 @@ import { initCurrentSupply } from "@/stores/defi/pool";
 import useStore from "@/store/useStore";
 import { useDotSamaContext } from "substrate-react";
 import { AddLiquidityForm } from "@/components/Organisms/liquidity/AddForm";
-import AddLiquidityUpdater from "@/store/updaters/pools/addLiquidity/Updater";
+import AddLiquidityUpdater from "@/updaters/addLiquidity/Updater";
 
 const AddLiquidity: NextPage = () => {
 

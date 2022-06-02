@@ -13,10 +13,13 @@ import "./global.css";
 import Head from "next/head";
 import CssBaseline from "@mui/material/CssBaseline";
 import createEmotionCache from "@/styles/createEmotionCache";
-import LiquidityBootstrappingUpdater from "@/store/updaters/pools/Updater";
-import SwapsUpdater from "@/store/updaters/swaps/Updater";
-import BalancesUpdater from "@/store/updaters/balances/Updater";
-import AuctionsUpdater from "@/store/updaters/auctions/Updater";
+
+import LiquidityUpdater from "@/updaters/liquidity/Updater";
+import LiquidityBootstrappingUpdater from "@/updaters/pools/Updater";
+import SwapsUpdater from "@/updaters/swaps/Updater";
+import PoolStatsUpdater from "@/updaters/poolStats/Updater";
+import BalancesUpdater from "@/updaters/balances/Updater";
+import AuctionsUpdater from "@/updaters/auctions/Updater";
 
 import * as definitions from "@/defi/polkadot/interfaces/definitions";
 import { SnackbarProvider } from "notistack";
@@ -136,6 +139,8 @@ export default function MyApp(props: MyAppProps) {
                   <SwapsUpdater />
                   <LiquidityBootstrappingUpdater />
                   <BalancesUpdater />
+                  <LiquidityUpdater />
+                  <PoolStatsUpdater />
                 </>
                 <ExecutorProvider>
                   <Component {...pageProps} />

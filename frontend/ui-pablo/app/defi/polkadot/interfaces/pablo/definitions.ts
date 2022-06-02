@@ -27,6 +27,29 @@ export default {
       ],
       type: "PalletPabloPriceAggregate"
     },
+    expectedLpTokensGivenLiquidity: {
+      description: "Get expected amount of LP tokens when providing liquidity to a pool.",
+      params: [
+        {
+          name: "poolId",
+          type: "PalletPabloPoolId"
+        },
+        {
+          name: "baseAssetAmount",
+          type: "CustomRpcBalance"
+        },
+        {
+          name: "quoteAssetAmount",
+          type: "CustomRpcBalance"
+        },
+        {
+          name: "at",
+          type: "Hash",
+          isOptional: true,
+        }
+      ],
+      type: "CustomRpcBalance"
+    },
   },
   types: {
     PalletPabloPoolInitConfiguration: "PalletPabloPoolConfiguration",

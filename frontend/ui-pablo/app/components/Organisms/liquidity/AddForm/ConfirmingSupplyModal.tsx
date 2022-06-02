@@ -18,13 +18,13 @@ import {
 import { SupplyModalProps } from "./ConfirmSupplyModal";
 
 export const ConfirmingSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
-  baseAsset,
-  quoteAsset,
-  baseAmount,
-  quoteAmount,
+  assetOne,
+  assetTwo,
+  assetOneAmount,
+  assetTwoAmount,
   lpReceiveAmount,
-  priceBaseInQuote,
-  priceQuoteInBase,
+  priceOneInTwo,
+  priceTwoInOne,
   share,
   ...rest
 }) => {
@@ -63,7 +63,7 @@ export const ConfirmingSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
             Waiting for confirmation
           </Typography>
           <Typography variant="subtitle1" mt={2} color="text.secondary">
-            Removing {`${baseAmount}`} {baseAsset?.symbol} and {`${quoteAmount}`} {quoteAsset?.symbol}
+            Removing {`${assetOneAmount}`} {assetOne?.symbol} and {`${assetTwoAmount}`} {assetTwo?.symbol}
           </Typography>
           <Typography 
             variant="body1" 

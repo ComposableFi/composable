@@ -61,7 +61,7 @@ const ChooseTokensStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const dispatch = useDispatch();
 
   const {
-    pools: { createPool },
+    createPool
   } = useStore();
 
   const { baseAsset, quoteAsset, ammId, setSelectable, currentStep } = createPool;
