@@ -15,13 +15,15 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
+		dex::Amm,
 		instrumental::InstrumentalProtocolStrategy,
-		vault::{FundsAvailability, StrategicVault},
+		vault::{FundsAvailability, StrategicVault, Vault},
 	};
 	use frame_support::{
 		dispatch::DispatchResult, pallet_prelude::*, storage::bounded_btree_set::BoundedBTreeSet,
-		transactional, PalletId,
+		transactional, Blake2_128Concat, PalletId,
 	};
+	use scale_info::TypeInfo;
 	use sp_runtime::traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
 	};
@@ -63,7 +65,6 @@ pub mod pallet {
 			+ Zero;
 
 		/// The [`AssetId`](Config::AssetId) used by the pallet. Corresponds to the Ids used by the
-		/// Currency pallet.
 		type AssetId: FullCodec
 			+ MaxEncodedLen
 			+ Eq
@@ -95,6 +96,23 @@ pub mod pallet {
 			VaultId = Self::VaultId,
 		>;
 
+		type PoolId: FullCodec
+			+ MaxEncodedLen
+			+ Default
+			+ Debug
+			+ TypeInfo
+			+ Eq
+			+ PartialEq
+			+ Ord
+			+ Copy;
+
+		type Pablo: Amm<
+			AssetId = Self::AssetId,
+			Balance = Self::Balance,
+			AccountId = Self::AccountId,
+			PoolId = Self::PoolId,
+		>;
+
 		/// The maximum number of vaults that can be associated with this strategy.
 		#[pallet::constant]
 		type MaxAssociatedVaults: Get<u32>;
@@ -119,6 +137,11 @@ pub mod pallet {
 	#[pallet::getter(fn associated_vaults)]
 	pub type AssociatedVaults<T: Config> =
 		StorageValue<_, BoundedBTreeSet<T::VaultId, T::MaxAssociatedVaults>, ValueQuery>;
+
+	// TODO(saruman9): where pools will be added?
+	#[pallet::storage]
+	#[pallet::getter(fn pools)]
+	pub type Pools<T: Config> = StorageMap<_, Blake2_128Concat, T::PoolId, T::Balance>;
 
 	// -------------------------------------------------------------------------------------------
 	//                                        Runtime Events
@@ -215,15 +238,35 @@ pub mod pallet {
 		fn do_rebalance(vault_id: &T::VaultId) -> DispatchResult {
 			// TODO(saruman9): should we somehow check the origin? What about permissions?
 			let task = T::Vault::available_funds(vault_id, &Self::account_id())?;
-			// TODO(saruman9): check, that Vault is associated
-			let action = match task {
+			match task {
 				FundsAvailability::Withdrawable(balance) => {
-					todo!();
+					let account_id = T::Vault::account_id(vault_id);
+					// TODO(saruman9): should we choose pool by APY?
+					let pool_id = Pools::<T>::iter_keys().next().unwrap();
+					// TODO(saruman9): what is `quote_amount`, `min_mint_amount` and `keep_alive`?
+					T::Pablo::add_liquidity(
+						&account_id,
+						pool_id,
+						balance,
+						balance,
+						balance,
+						bool::default(),
+					)?;
 				},
-				FundsAvailability::Depositable(balance) => todo!(),
+				FundsAvailability::Depositable(balance) => {
+					let account_id = T::Vault::account_id(vault_id);
+					// TODO(saruman9): how we should choose the pool?
+					let (pool_id, _amount) = Pools::<T>::iter().next().unwrap();
+					// TODO(saruman9): should we use `balance` or `amount`?
+					// TODO(saruman9): what is `min_base_amount` and `min_quote_amount`?
+					T::Pablo::remove_liquidity(&account_id, pool_id, balance, balance, balance)?;
+				},
 				FundsAvailability::MustLiquidate => {
 					// TODO(saruman9): should we transfer all assets to Vault from strategy?
-					todo!();
+					let account_id = T::Vault::account_id(vault_id);
+					let (pool_id, amount) = Pools::<T>::iter().next().unwrap();
+					// TODO(saruman9): what is `min_base_amount` and `min_quote_amount`?
+					T::Pablo::remove_liquidity(&account_id, pool_id, amount, amount, amount)?;
 				},
 			};
 			Ok(())
