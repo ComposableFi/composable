@@ -131,10 +131,12 @@ where
 		.collect()
 }
 
+/// `count % 2 == 0` should hold for all x
 pub fn generate_accounts<T>(count: u64) -> Vec<(AccountIdOf<T>, ClaimKey)>
 where
 	T: Config<RelayChainAccountId = [u8; 32]>,
 {
+    assert!(count % 2 == 0, "`x % 2 == 0` should hold for all x");
 	let mut x = relay_generate::<T>(count / 2);
 	let mut y = ethereum_generate::<T>(count / 2);
 	x.append(&mut y);
