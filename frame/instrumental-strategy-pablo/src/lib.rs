@@ -15,8 +15,10 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 	use pablo::Pools;
 	use codec::{Codec, FullCodec};
-	use composable_traits::{instrumental::InstrumentalProtocolStrategy, 
-		vault::StrategicVault};
+	use composable_traits::{
+		instrumental::InstrumentalProtocolStrategy, 
+		vault::{StrategicVault, Vault},
+		dex::Amm};
 	use frame_support::{
 		dispatch::DispatchResult, pallet_prelude::*, storage::bounded_btree_set::BoundedBTreeSet,
 		transactional, PalletId,
@@ -218,6 +220,24 @@ pub mod pallet {
 			// TODO(belousm): check, that Vault is associated
 			let action = match task {
 				FundsAvailability::Withdrawable(balance) => {
+					let vaults: BoundedBTreeSet<T::VaultId, T::MaxAssociatedVaults> = AssociatedVaults::<T>::get();
+					assert_eq!(vaults.contains(vault_id), true); // for MVP (then need to create Validared version of checking)
+					let vault_account = Vault::<T>::account_id(vault);
+					Pools::<T>::try_mutate(|pools| -> DispatchResult {
+						pools.iter().for_each(|pool_id| {
+							if Amm::<T>::currency_pair(pool_id).unwrap() == PICA {
+								let lp_token_amount = amount_of_lp_token_for_added_liquidity(pool_id, T::Balance.set_zero(), balance);
+								Amm::<T>::add_liquidity(&vault_account,
+														pool_id,
+													    T::Balance.set_zero(),
+														balance,
+													    lp_token_amount,
+												        true);	
+							}
+						});
+						Ok(())
+					});
+
 					// Pools.iter()
 					//      .find(|&&pool| pool)
 					todo!();
