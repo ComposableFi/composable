@@ -29,6 +29,58 @@ jest.mock('react-apexcharts', () => {
   }
 })
 
+jest.mock("@/store/hooks/usePoolDetails", () => {
+  const BigNumber = require('bignumber.js');
+  return { usePoolDetails: jest.fn().mockImplementation(() => ({
+    poolStats: {
+      totalVolume: "0",
+      totalValueLocked: "0",
+      apr: "0",
+      _24HrFee: "0",
+      _24HrVolume: "0",
+      _24HrTransactionCount: 0,
+      dailyRewards: [],
+      _24HrFeeValue: "0",
+      _24HrVolumeValue: "0",
+      totalVolumeValue: "0",
+    },
+    baseAsset: undefined,
+    quoteAsset: undefined,
+    pool: undefined,
+    liquidityProvided: {
+      tokenAmounts: {
+        baseAmount: new BigNumber(0),
+        quoteAmount: new BigNumber(0)
+      },
+      value: {
+          baseValue: new BigNumber(0),
+          quoteValue: new BigNumber(0)
+      },
+    },
+    tokensLocked: {
+      tokenAmounts: {
+          baseAmount: new BigNumber(0),
+          quoteAmount: new BigNumber(0),
+      },
+      value: {
+          baseValue: new BigNumber(0),
+          quoteValue: new BigNumber(0),
+          totalValueLocked: new BigNumber(0),
+      },
+    },
+    lpBalance: new BigNumber(0)
+  }))}
+})
+
+jest.mock("@/store/hooks/usePoolTvlChart", () => ({
+  usePoolTvlChart: jest.fn().mockImplementation(() => ({
+    seriesIntervals: [],
+    chartSeries: [],
+    selectedInterval: "24h",
+    setSelectedInterval: jest.fn()
+  }))
+}))
+
 jest.isolateModules(() => {
   const preloadAll = require('jest-next-dynamic');
   beforeAll(async () => {
