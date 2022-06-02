@@ -54,6 +54,7 @@ membership = { package = "pallet-membership", git = "https://github.com/parityte
 multisig = { package = "pallet-multisig", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22" }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b", default-features = false }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b", default-features = false }
+pallet-proxy = { git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22" }
 preimage = { package = "pallet-preimage", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22" }
 randomness-collective-flip = { package = "pallet-randomness-collective-flip", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22" }
 scheduler = { package = "pallet-scheduler", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22" }
@@ -88,9 +89,9 @@ vault = { package = "pallet-vault", path = "../../frame/vault", default-features
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
 
 # ibc support
-pallet-ibc = { path = "../../frame/ibc", default-features = false }
-ibc-runtime-api = { path = "../../frame/ibc/ibc-runtime-api", default-features = false }
 ibc-primitives = { path = "../../frame/ibc/ibc-primitives", default-features = false }
+ibc-runtime-api = { path = "../../frame/ibc/ibc-runtime-api", default-features = false }
+pallet-ibc = { path = "../../frame/ibc", default-features = false }
 pallet-ibc-ping = { path = "../../frame/ibc-ping", default-features = false }
 
 # Used for the node template's RPCs
@@ -186,7 +187,8 @@ runtime-benchmarks = [
   "pablo/runtime-benchmarks",
   "dex-router/runtime-benchmarks",
   "common/runtime-benchmarks",
-	"pallet-ibc/runtime-benchmarks"
+  "pallet-ibc/runtime-benchmarks",
+  "pallet-proxy/runtime-benchmarks",
 ]
 std = [
   "codec/std",
@@ -268,7 +270,8 @@ std = [
   "dex-router/std",
   "pallet-ibc/std",
   "ibc-runtime-api/std",
-	"ibc-primitives/std",
-  "pallet-ibc-ping/std"
+  "ibc-primitives/std",
+  "pallet-ibc-ping/std",
+  "pallet-proxy/std",
 ]
 wasm-builder = []
