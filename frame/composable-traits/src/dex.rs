@@ -381,6 +381,15 @@ pub struct PriceAggregate<PoolId, AssetId, Balance> {
 	pub spot_price: Balance, // prices based on any other stat such as TWAP goes here..
 }
 
+/// RedeemableAssets for given amount of lp tokens.
+#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct RedeemableAssets<Balance> {
+	pub lp_tokens: Balance,
+	pub base_assets: Balance,
+	pub quote_assets: Balance,
+}
+
 #[cfg(test)]
 mod tests {
 	use crate::dex::{Fee, FeeConfig};

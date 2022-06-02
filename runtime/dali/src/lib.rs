@@ -37,7 +37,7 @@ use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::Asset,
 	defi::Rate,
-	dex::{Amm, PriceAggregate},
+	dex::{Amm, PriceAggregate, RedeemableAssets},
 };
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
@@ -1297,11 +1297,14 @@ impl_runtime_apis! {
 	fn redeemable_assets_for_given_lp_tokens(
 		pool_id: SafeRpcWrapper<PoolId>,
 		lp_amount: SafeRpcWrapper<Balance>
-	) -> (SafeRpcWrapper<Balance>, SafeRpcWrapper<Balance>) {
+	) -> RedeemableAssets<SafeRpcWrapper<Balance>> {
 			let (base, quote) = <Pablo as Amm>::redeemable_assets_for_given_lp_tokens(pool_id.0, lp_amount.0)
 			.unwrap_or_else(|_| (Zero::zero(), Zero::zero()));
-		(SafeRpcWrapper(base), SafeRpcWrapper(quote))
-
+			RedeemableAssets {
+				lp_tokens : lp_amount,
+				base_assets: SafeRpcWrapper(base),
+				quote_assets: SafeRpcWrapper(quote),
+			}
 	}
 
 	}

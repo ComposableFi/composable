@@ -4,7 +4,7 @@
 
 use codec::Codec;
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use composable_traits::dex::PriceAggregate;
+use composable_traits::dex::{PriceAggregate, RedeemableAssets};
 
 // Pablo Runtime API declaration. Implemented for each runtime at
 // `runtime/<runtime-name>/src/lib.rs`.
@@ -33,6 +33,6 @@ sp_api::decl_runtime_apis! {
 	fn redeemable_assets_for_given_lp_tokens(
 		pool_id: SafeRpcWrapper<PoolId>,
 		lp_amount: SafeRpcWrapper<Balance>
-	) -> (SafeRpcWrapper<Balance>, SafeRpcWrapper<Balance>);
+	) -> RedeemableAssets<SafeRpcWrapper<Balance>>;
 	}
 }
