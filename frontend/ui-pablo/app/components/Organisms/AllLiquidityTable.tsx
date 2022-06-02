@@ -11,17 +11,17 @@ import {
   Tooltip,
 } from "@mui/material";
 import Image from "next/image";
-import BigNumber from "bignumber.js";
 import { PairAsset } from "../Atoms";
-import { useAppDispatch, useAppSelector } from "@/hooks/store";
+import { useAppDispatch } from "@/hooks/store";
 import {
   addNextDataLiquidityPools,
-  LiquidityPoolRow,
 } from "@/stores/defi/polkadot";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { InfoOutlined, KeyboardArrowDown } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
+import { useLiquidityPoolsWithOpenPositions } from "@/store/hooks/usePoolsListWithOpenPositions";
+import { useLiquidityPoolsList } from "@/store/hooks/useLiquidityPoolsList";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -52,26 +52,28 @@ export type AllLiquidityTableProps = {
 export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
   flow,
 }) => {
-  let pools: LiquidityPoolRow[];
+  const userPools = useLiquidityPoolsWithOpenPositions();
+  const list = useLiquidityPoolsList();
+  let pools: ReturnType<typeof useLiquidityPoolsList>;
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const [startIndex, setStartIndex] = useState(0);
-  const polkaDotState = useAppSelector((state) => state.polkadot);
+
   const [showNoPools, setShowNoPools] = useState(true);
 
   if (flow === "all") {
-    pools = polkaDotState.allLiquidityPools;
+    pools = list;
   } else {
-    pools = polkaDotState.yourLiquidityPools;
+    pools = userPools;
   }
 
   const router = useRouter();
 
-  const handleRowClick = (e: React.MouseEvent) => {
+  const handleRowClick = (e: React.MouseEvent, poolId: number) => {
     e.preventDefault();
-    if (flow === "user") {
-      router.push("/pool/select");
-    }
+    // if (flow === "user") {
+      router.push(`/pool/select/${poolId}`);
+    // }
   };
 
   const handleSeeMore = () => {
@@ -84,12 +86,12 @@ export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
   }, []);
 
   useEffect(() => {
-    if (flow === "user") {
-      setTimeout(() => {
-        setShowNoPools(false);
-      }, 5000);
+    if (!userPools.length) {
+        setShowNoPools(true);
+    } else {
+      setShowNoPools(false);
     }
-  }, []);
+  }, [userPools]);
 
   if (flow === "user" && showNoPools) {
     return (
@@ -129,12 +131,14 @@ export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
           </TableHead>
           <TableBody>
             {pools.map((row, index) => (
-              <TableRow onClick={handleRowClick} key={index} sx={{cursor: "pointer"}}>
+              <TableRow onClick={e => {
+                handleRowClick(e, row.poolId)
+              }} key={index} sx={{cursor: "pointer"}}>
                 <TableCell align="left">
                   <PairAsset
                     assets={[
-                      { icon: row.token1.icon, label: row.token1.symbol },
-                      { icon: row.token2.icon, label: row.token2.symbol },
+                      { icon: row.baseAsset.icon, label: row.baseAsset.symbol },
+                      { icon: row.quoteAsset.icon, label: row.quoteAsset.symbol },
                     ]}
                     separator="/"
                   />
@@ -146,17 +150,17 @@ export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
                   <Typography variant="body2">{row.apr.toFormat()}%</Typography>
                 </TableCell>
                 <TableCell align="left">
-                  {row.rewardsLeft.map((item) => {
+                  {row.dailyRewards.map((item) => {
                     return (
-                      <Box key={item.token.id} display="flex">
+                      <Box key={item.assetId} display="flex">
                         <PairAsset
                           assets={[
                             {
-                              icon: item.token.icon,
-                              label: item.token.symbol,
+                              icon: item.icon,
+                              label: item.symbol,
                             },
                           ]}
-                          label={item.value.toFormat(2)}
+                          label={item.rewardAmount}
                         />
                       </Box>
                     );

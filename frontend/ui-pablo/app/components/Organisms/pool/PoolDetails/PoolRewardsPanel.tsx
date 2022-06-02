@@ -13,6 +13,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
+import { PoolDetailsProps } from ".";
 import { BoxWrapper } from "../../BoxWrapper";
 
 const twoColumnPageSize = {
@@ -50,7 +51,8 @@ const Item: React.FC<ItemProps> = ({
   );
 };
 
-export const PoolRewardsPanel: React.FC<BoxProps> = ({
+export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
+  poolId,
   ...boxProps
 }) => {
   const theme = useTheme();

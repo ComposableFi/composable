@@ -3,6 +3,7 @@ export const DEFI_CONFIG = {
     'pica',
     'ksm',
     'kusd',
-    'layr'
+    'layr',
+    'pablo'
   ] as const,
 };

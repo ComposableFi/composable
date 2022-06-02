@@ -20,14 +20,13 @@ import {
   openTransactionSettingsModal,
 } from "@/stores/ui/uiSlice";
 import { ConfirmSupplyModal } from "./ConfirmSupplyModal";
-import { PreviewSupplyModal } from "./PreviewSupplyModal";
+// import { PreviewSupplyModal } from "./PreviewSupplyModal";
 import { ConfirmingSupplyModal } from "./ConfirmingSupplyModal";
 import { TransactionSettings } from "../../TransactionSettings";
-import { Assets, AssetsValidForNow, getAsset } from "@/defi/polkadot/Assets";
 import { AssetId } from "@/defi/polkadot/types";
-import useStore from "@/store/useStore";
 import { YourPosition } from "../YourPosition";
 import { PoolShare } from "./PoolShare";
+import {useAddLiquidity} from "@/store/hooks/useAddLiquidity";
 
 export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const isMobile = useMobile();
@@ -35,116 +34,36 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const router = useRouter();
   const dispatch = useDispatch();
 
-  const [valid, setValid] = useState<boolean>(false);
-
   const {
-    assets,
-    addLiquidity: { pool, form, setFormField },
-  } = useStore();
-
-  const { baseAssetSelected, quoteAssetSelected, baseAmount, quoteAmount } =
-    form;
-
-  const baseAmountBn = useMemo(() => new BigNumber(baseAmount), [baseAmount]);
-  const quoteAmountBn = useMemo(
-    () => new BigNumber(quoteAmount),
-    [quoteAmount]
-  );
-
-  const assetList1 = useMemo(() => {
-    return Object.values(Assets)
-      .filter((i) => {
-        return (
-          AssetsValidForNow.includes(i.assetId) &&
-          i.assetId !== form.baseAssetSelected
-        );
-      })
-      .map((asset) => ({
-        value: asset.assetId,
-        label: asset.name,
-        shortLabel: asset.symbol,
-        icon: asset.icon,
-      }));
-  }, [baseAssetSelected]);
-
-  const assetList2 = useMemo(() => {
-    return Object.values(Assets)
-      .filter((i) => {
-        return (
-          AssetsValidForNow.includes(i.assetId) &&
-          i.assetId !== form.quoteAssetSelected
-        );
-      })
-      .map((asset) => ({
-        value: asset.assetId,
-        label: asset.name,
-        shortLabel: asset.symbol,
-        icon: asset.icon,
-      }));
-  }, [quoteAssetSelected]);
-
-  const balanceQuote = useMemo(() => {
-    if (form.quoteAssetSelected !== "none") {
-      return new BigNumber(
-        assets[form.quoteAssetSelected as AssetId].balance.picasso
-      );
-    } else {
-      return new BigNumber(0);
-    }
-  }, [form.quoteAssetSelected]);
-
-  const balanceBase = useMemo(() => {
-    if (form.baseAssetSelected !== "none") {
-      return new BigNumber(
-        assets[form.baseAssetSelected as AssetId].balance.picasso
-      );
-    } else {
-      return new BigNumber(0);
-    }
-  }, [form.baseAssetSelected]);
+    assetList1,
+    assetList2,
+    setAmount,
+    setToken,
+    share,
+    assetOneAmountBn,
+    assetTwoAmountBn,
+    assetOneMeta,
+    assetTwoMeta,
+    assetOne,
+    assetTwo,
+    balanceOne,
+    balanceTwo,
+    valid,
+    isValidToken1,
+    isValidToken2,
+    setValid,
+    invalidTokenPair,
+    canSupply,
+    lpReceiveAmount,
+    needToSelectToken
+  } = useAddLiquidity();
 
   const isConfirmSupplyModalOpen = useAppSelector(
     (state) => state.ui.isConfirmSupplyModalOpen
   );
-  const isPreviewSupplyModalOpen = useAppSelector(
-    (state) => state.ui.isPreviewSupplyModalOpen
-  );
   const isConfirmingSupplyModalOpen = useAppSelector(
     (state) => state.ui.isConfirmingSupplyModalOpen
   );
-
-  const setQuoteAmount = (v: BigNumber) => {
-    setFormField({ quoteAmount: v.toString() });
-  };
-
-  const setBaseAmount = (v: BigNumber) => {
-    setFormField({ baseAmount: v.toString() });
-  };
-
-  const setToken1 = (v: AssetId) => {
-    setFormField({ quoteAssetSelected: v });
-  };
-
-  const setToken2 = (v: AssetId) => {
-    setFormField({ baseAssetSelected: v });
-  };
-
-  const isValidToken1 = form.quoteAssetSelected != "none";
-  const isValidToken2 = form.baseAssetSelected != "none";
-
-  const needToSelectToken = () => {
-    return !isValidToken1 && !isValidToken2;
-  };
-
-  const invalidTokenPair = () => {
-    return (
-      (!isValidToken1 && isValidToken2) || (isValidToken1 && !isValidToken2)
-    );
-  };
-
-  const canSupply = () => {
-    return balanceBase.gt(baseAmountBn) && balanceQuote.gt(quoteAmountBn);
-  };
 
   const onBackHandler = () => {
     router.push("/pool");
@@ -153,39 +72,6 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const onSettingHandler = () => {
     dispatch(openTransactionSettingsModal());
   };
-
-  useEffect(() => {
-    setValid(true);
-    form.baseAssetSelected == "none" && setValid(false);
-    form.quoteAssetSelected == "none" && setValid(false);
-
-    new BigNumber(0).eq(quoteAmount) && setValid(false);
-    new BigNumber(0).eq(baseAmount) && setValid(false);
-
-    balanceQuote.lt(quoteAmount) && setValid(false);
-    balanceBase.lt(baseAmount) && setValid(false);
-  }, [form, quoteAmount, baseAmount, balanceBase, balanceQuote]);
-
-  const quoteAsset = useMemo(() => {
-    return quoteAssetSelected === "none" ? null : getAsset(quoteAssetSelected);
-  }, [form.quoteAssetSelected]);
-
-  const baseAsset = useMemo(() => {
-    return baseAssetSelected === "none" ? null : getAsset(baseAssetSelected);
-  }, [form.baseAssetSelected]);
-
-  const share = useMemo(() => {
-    let netAum = new BigNumber(pool.balance.base).plus(pool.balance.quote);
-    let netUser = new BigNumber(form.baseAmount).plus(form.quoteAmount);
-
-    if (netAum.eq(0)) {
-      return new BigNumber(100);
-    } else {
-      return new BigNumber(netUser)
-        .div(new BigNumber(netAum).plus(netUser))
-        .times(100);
-    }
-  }, [pool, form.baseAmount, form.quoteAmount]);
 
   return (
     <Box
@@ -218,24 +104,24 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
 
       <Box mt={4}>
         <DropdownCombinedBigNumberInput
-          maxValue={balanceQuote}
+          maxValue={balanceOne}
           setValid={setValid}
           noBorder
-          value={quoteAmountBn}
-          setValue={setQuoteAmount}
+          value={assetOneAmountBn}
+          setValue={setAmount("assetOneAmount")}
           InputProps={{
             disabled: !isValidToken1,
           }}
           buttonLabel={isValidToken1 ? "Max" : undefined}
           ButtonProps={{
-            onClick: () => setQuoteAmount(balanceQuote),
+            onClick: () => setAmount("assetOneAmount")(balanceOne),
             sx: {
               padding: theme.spacing(1),
             },
           }}
           CombinedSelectProps={{
-            value: quoteAssetSelected,
-            setValue: setToken1,
+            value: assetOne,
+            setValue: setToken("assetOne"),
             dropdownModal: true,
             forceHiddenLabel: isMobile ? true : false,
             options: [
@@ -257,7 +143,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
             BalanceProps: isValidToken1
               ? {
                   title: <AccountBalanceWalletIcon color="primary" />,
-                  balance: `${balanceQuote}`,
+                  balance: `${balanceOne}`,
                 }
               : undefined,
           }}
@@ -281,24 +167,24 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
 
       <Box mt={4}>
         <DropdownCombinedBigNumberInput
-          maxValue={balanceBase}
+          maxValue={balanceTwo}
           setValid={setValid}
           noBorder
-          value={baseAmountBn}
-          setValue={setBaseAmount}
+          value={assetTwoAmountBn}
+          setValue={setAmount("assetTwoAmount")}
           InputProps={{
             disabled: !isValidToken2,
           }}
           buttonLabel={isValidToken2 ? "Max" : undefined}
           ButtonProps={{
-            onClick: () => setBaseAmount(balanceBase),
+            onClick: () => setAmount("assetTwoAmount")(balanceTwo),
             sx: {
               padding: theme.spacing(1),
             },
           }}
           CombinedSelectProps={{
-            value: baseAssetSelected,
-            setValue: setToken2,
+            value: assetTwo,
+            setValue: setToken("assetTwo"),
             dropdownModal: true,
             forceHiddenLabel: isMobile ? true : false,
             options: [
@@ -320,7 +206,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
             BalanceProps: isValidToken2
               ? {
                   title: <AccountBalanceWalletIcon color="primary" />,
-                  balance: `${balanceBase}`,
+                  balance: `${balanceTwo}`,
                 }
               : undefined,
           }}
@@ -329,10 +215,10 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
 
       {valid && !invalidTokenPair() && canSupply() && (
         <PoolShare
-          baseAsset={quoteAssetSelected as AssetId}
-          quoteAsset={baseAssetSelected as AssetId}
-          price={quoteAmountBn.div(baseAmountBn)}
-          revertPrice={baseAmountBn.div(quoteAmountBn)}
+          baseAsset={assetOne as AssetId}
+          quoteAsset={assetTwo as AssetId}
+          price={assetOneAmountBn.div(assetTwoAmountBn)}
+          revertPrice={assetTwoAmountBn.div(assetOneAmountBn)}
           share={share.toNumber()}
         />
       )}
@@ -366,31 +252,31 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
       {valid && !invalidTokenPair() && canSupply() && (
         <YourPosition
           noTitle={false}
-          tokenId1={quoteAssetSelected as AssetId}
-          tokenId2={baseAssetSelected as AssetId}
-          pooledAmount1={quoteAmountBn}
-          pooledAmount2={baseAmountBn}
-          amount={new BigNumber(0)}
+          tokenId1={assetOne as AssetId}
+          tokenId2={assetTwo as AssetId}
+          pooledAmount1={assetOneAmountBn}
+          pooledAmount2={assetTwoAmountBn}
+          amount={lpReceiveAmount}
           share={share}
           mt={4}
         />
       )}
 
       <ConfirmSupplyModal
-        lpReceiveAmount={new BigNumber(0)}
-        priceBaseInQuote={baseAmountBn.div(quoteAmountBn)}
-        priceQuoteInBase={quoteAmountBn.div(baseAmountBn)}
-        baseAmount={baseAmountBn}
-        quoteAmount={quoteAmountBn}
-        baseAsset={baseAsset}
-        quoteAsset={quoteAsset}
+        lpReceiveAmount={lpReceiveAmount}
+        priceOneInTwo={assetOneAmountBn.div(assetTwoAmountBn)}
+        priceTwoInOne={assetTwoAmountBn.div(assetOneAmountBn)}
+        assetOneAmount={assetOneAmountBn}
+        assetTwoAmount={assetTwoAmountBn}
+        assetOne={assetOneMeta}
+        assetTwo={assetTwoMeta}
         share={share}
         open={isConfirmSupplyModalOpen}
       />
 
-      <PreviewSupplyModal
+      {/* <PreviewSupplyModal
         open={isPreviewSupplyModalOpen}
-        lpReceiveAmount={new BigNumber(0)}
+        lpReceiveAmount={lpReceiveAmount}
         priceBaseInQuote={baseAmountBn.div(quoteAmountBn)}
         priceQuoteInBase={quoteAmountBn.div(baseAmountBn)}
         baseAmount={baseAmountBn}
@@ -398,17 +284,17 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
         baseAsset={baseAsset}
         quoteAsset={quoteAsset}
         share={share}
-      />
+      /> */}
 
       <ConfirmingSupplyModal
         open={isConfirmingSupplyModalOpen}
-        lpReceiveAmount={new BigNumber(0)}
-        priceBaseInQuote={baseAmountBn.div(quoteAmountBn)}
-        priceQuoteInBase={quoteAmountBn.div(baseAmountBn)}
-        baseAmount={baseAmountBn}
-        quoteAmount={quoteAmountBn}
-        baseAsset={baseAsset}
-        quoteAsset={quoteAsset}
+        lpReceiveAmount={lpReceiveAmount}
+        priceOneInTwo={assetOneAmountBn.div(assetTwoAmountBn)}
+        priceTwoInOne={assetTwoAmountBn.div(assetOneAmountBn)}
+        assetOneAmount={assetOneAmountBn}
+        assetTwoAmount={assetTwoAmountBn}
+        assetOne={assetOneMeta}
+        assetTwo={assetTwoMeta}
         share={share}
       />
 

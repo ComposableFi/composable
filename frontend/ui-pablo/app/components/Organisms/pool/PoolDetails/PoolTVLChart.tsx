@@ -1,40 +1,43 @@
 import { useTheme } from "@mui/material";
 import { Chart } from "@/components/Molecules";
 import { DEFI_CONFIG } from "@/defi/config";
-import { useState } from "react";
-import { useAppSelector } from "@/hooks/store";
+import { usePoolTvlChart } from "@/store/hooks/usePoolTvlChart";
 
-export const PoolTVLChart: React.FC<{}> = ({}) => {
+export const PoolTVLChart: React.FC<{
+  poolId: number
+}> = ({ poolId }) => {
   const theme = useTheme();
-  const {series, timeSlots} = useAppSelector(
-    (state) => state.pool.selectedPool.tvlChartData
-  );
-  const intervals = DEFI_CONFIG.poolChartIntervals;
-  const [currentInterval, setCurrentInterval] = useState(
-    intervals[0]
-  );
+
+  const {
+    selectedInterval,
+    setSelectedInterval,
+    chartSeries,
+    seriesIntervals
+  } = usePoolTvlChart(poolId);
 
   const onIntervalChange = (intervalSymbol: string) => {
-    const interval = intervals.find(item => item.symbol === intervalSymbol)
-    interval && setCurrentInterval(interval);
+    const interval = DEFI_CONFIG.swapChartIntervals.find(i => i.symbol===intervalSymbol)
+    if (interval) {
+      setSelectedInterval(interval)
+    }
   };
 
   return (
     <Chart
       title="TVL"
       changeTextColor={theme.palette.common.white}
-      changeText={`Past ${currentInterval.name}`}
+      changeText={`Past ${selectedInterval.name}`}
       AreaChartProps={{
-        data: series,
+        data: chartSeries,
         height: 238,
         shorthandLabel: "Change",
         labelFormat: (n: number) => n.toFixed(),
         color: theme.palette.common.white,
       }}
       onIntervalChange={onIntervalChange}
-      intervals={intervals.map((interval) => interval.symbol)}
-      currentInterval={currentInterval.symbol}
-      timeSlots={timeSlots}
+      intervals={DEFI_CONFIG.swapChartIntervals.map((interval) => interval.symbol)}
+      currentInterval={selectedInterval.symbol}
+      timeSlots={seriesIntervals}
       sx={{background: theme.palette.gradient.secondary}}
     />
   );

@@ -6,17 +6,20 @@ import {
 } from "@mui/material";
 import { useAppSelector } from "@/hooks/store";
 import { BigNumberInput } from "@/components/Atoms";
-import { TOKENS } from "@/defi/Tokens";
 import { useState } from "react";
 import BigNumber from "bignumber.js";
 import { getTokenIdsFromSelectedPool } from "@/stores/defi/pool";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import { PoolDetailsProps } from ".";
+import { usePoolDetails } from "@/store/hooks/usePoolDetails";
 
-export const PoolStakeForm: React.FC<BoxProps> = ({
+export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
+  poolId,
   ...boxProps
 }) => {
 
   const theme = useTheme();
+  const poolDetails = usePoolDetails(poolId);
 
   const [balance] = useState<BigNumber>(new BigNumber(200.0));
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
@@ -36,7 +39,7 @@ export const PoolStakeForm: React.FC<BoxProps> = ({
     <Box {...boxProps}>
       <Box>
         <BigNumberInput
-          maxValue={balance}
+          maxValue={poolDetails.lpBalance}
           setValid={setValid}
           noBorder
           value={amount}
@@ -53,15 +56,17 @@ export const PoolStakeForm: React.FC<BoxProps> = ({
             TypographyProps: {color: "text.secondary"},
             BalanceProps: {
               title: <AccountBalanceWalletIcon color="primary" />,
-              balance: `${balance} ${TOKENS[tokenId1].symbol}/${TOKENS[tokenId2].symbol}`,
+              balance: `${balance} ${poolDetails.baseAsset?.symbol}/${poolDetails.quoteAsset?.symbol}`,
               BalanceTypographyProps: {color: "text.secondary"},
             },
           }}
           EndAdornmentAssetProps={{
-            assets: [
-              {icon: TOKENS[tokenId1].icon, label: TOKENS[tokenId1].symbol},
-              {icon: TOKENS[tokenId2].icon, label: TOKENS[tokenId2].symbol},
-            ],
+            assets: 
+            poolDetails.baseAsset && poolDetails.quoteAsset ? 
+            [
+              {icon: poolDetails.baseAsset.icon, label: poolDetails.baseAsset.symbol},
+              {icon: poolDetails.quoteAsset.icon, label: poolDetails.quoteAsset.symbol},
+            ] : [],
             separator: "/",
           }}
         />
@@ -74,7 +79,7 @@ export const PoolStakeForm: React.FC<BoxProps> = ({
           onClick={handleStake}
           disabled={!valid}
         >
-          {`Stake ${TOKENS[tokenId1].symbol}/${TOKENS[tokenId2].symbol}`}
+          {`Stake ${poolDetails.baseAsset?.symbol}/${poolDetails.quoteAsset?.symbol}`}
         </Button>
       </Box>
     </Box>
