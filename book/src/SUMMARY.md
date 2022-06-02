@@ -92,6 +92,8 @@
 # 💻 CONTRIBUTING
 
 - [Codespaces](./contributing/codespaces.md)
+  - [Getting Started](./contributing/codespaces/getting-started.md)
+  - [Using Codespaces](./contributing/codespaces/using-codespaces.md)
 - [Book](./contributing/book.md)
 
 # 🎨 PALLETS AND INTEGRATION GUIDES
