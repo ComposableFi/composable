@@ -10,3 +10,5 @@ node/ @seunlanlege
 book/ @0xbrainjar2
 
 Makefile @haroldsphinx
+
+frontend/ @ComposableFi/ui @ComposableFi/blockchain-integrations
