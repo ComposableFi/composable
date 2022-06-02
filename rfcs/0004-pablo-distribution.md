@@ -30,10 +30,30 @@ Table of Contents
         Pools](#_pallet_staking_rewards_lppicapbloother_token_staking_reward_pools)
         -   [5.3.1. Analysis of Reward
             Calculations](#_analysis_of_reward_calculations)
+            -   [5.3.1.1. When adding a new staker <span
+                class="image"><img src="images/stem-0b46f732c83c0e66067b0e50c2156089.png" width="29" height="8" alt="stem 0b46f732c83c0e66067b0e50c2156089" /></span>,
+                existing stakers(<span
+                class="image"><img src="images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>)
+                reward would
+                be,](#_when_adding_a_new_staker_n1_existing_stakersn_reward_would_be)
+            -   [5.3.1.2. When removing a staker from the pool the above
+                addition step has to be
+                reverted](#_when_removing_a_staker_from_the_pool_the_above_addition_step_has_to_be_reverted)
+            -   [5.3.1.3. When adding a new reward to the pool the
+                calculations remain the same other than increasing the
+                reward pool as
+                follows,](#_when_adding_a_new_reward_to_the_pool_the_calculations_remain_the_same_other_than_increasing_the_reward_pool_as_follows)
+            -   [5.3.1.4. When extending an existing
+                position](#_when_extending_an_existing_position)
+            -   [5.3.1.5. When splitting an existing
+                position](#_when_splitting_an_existing_position)
         -   [5.3.2. Data Structures](#_data_structures)
         -   [5.3.3. Staking](#_staking)
-        -   [5.3.4. \[Needs modification\]
-            RewardAccumulationHook](#_rewardaccumulationhook)
+        -   [5.3.4. Extend Position](#_extend_position)
+        -   [5.3.5. Split Position](#_split_position)
+        -   [5.3.6. Claim/Unstake](#_claimunstake)
+        -   [5.3.7. Update Reward Pool](#_update_reward_pool)
+        -   [5.3.8. RewardAccumulationHook](#_rewardaccumulationhook)
 -   [6. Implementation](#_implementation)
     -   [6.1. Pallet Pablo: LP Fee + Staking
         Changes](#_pallet_pablo_lp_fee_staking_changes)
@@ -51,7 +71,7 @@ discussions about the subject.
 
 `TODO summarise the mechanism`
 
-## 2.Background
+## 2. Background
 
 ### 2.1. PBLO Token Initial Distribution
 
@@ -304,7 +324,7 @@ pallet](https://github.com/ComposableFi/composable/tree/main/frame/staking-rewar
 
 In order to create the necessary reward pool as well as the rewarding
 rate for stakers the following model can be used. It tries to address
-the following constraints
+the following constraints (TODO move to requirements)
 
 1.  Allow <span id="rate">specification of the reward rate for a
     pool</span> (even setting a dynamically changing rate)
@@ -320,10 +340,13 @@ the following constraints
 
 5.  Allow expansion of rewards pools realtime.
 
-6.  Allow compounding of staked position when the rewarded asset is the
-    same as staked.
+6.  Allow extending of staked position in time and amount.
 
-7.  Allow extending of staked position in time and amount.
+7.  Allow splitting of staked position into smaller positions.
+
+8.  \[Postponed\] Allow compounding of staked position when the rewarded
+    asset is the same as staked. Not handled at the moment. Though it is
+    possible for users to just re-stake their earned assets.
 
 To analyze the requirement fully, let’s define the following terms for a
 given staking reward pool,
@@ -354,9 +377,7 @@ staker reward,
 
 <img src="images/stem-e1359ae7d0fae29ebf9e42efcaa5536e.png" width="111" height="18" alt="stem e1359ae7d0fae29ebf9e42efcaa5536e" /></span>
 
-When adding a new staker <img src="images/stem-0b46f732c83c0e66067b0e50c2156089.png" width="29" height="8" alt="stem 0b46f732c83c0e66067b0e50c2156089" /></span>,
-existing stakers(<img src="images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>)
-reward would be,
+##### 5.3.1.1. When adding a new staker <span class="image"><img src="images/stem-0b46f732c83c0e66067b0e50c2156089.png" width="29" height="8" alt="stem 0b46f732c83c0e66067b0e50c2156089" /></span>, existing stakers(<span class="image"><img src="images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>) reward would be,
 
 <img src="images/stem-569c4bf984a23f18046277fd561e89a3.png" width="126" height="20" alt="stem 569c4bf984a23f18046277fd561e89a3" /></span>
 
@@ -373,17 +394,23 @@ to total reward pool can be made to allow realtime reward calculations,
 
 **Therefore, the existing staker receives the same reward as before**
 
-To compensate for this new adjustment, a reduction <img src="images/stem-07339e44a856d82b36d7c6a422050796.png" width="32" height="11" alt="stem 07339e44a856d82b36d7c6a422050796" /></span>
+To compensate for this new adjustment, a reduction <img src="images/stem-7c4ec4f9c189cb8f3edb39740e43c33f.png" width="16" height="10" alt="stem 7c4ec4f9c189cb8f3edb39740e43c33f" /></span>
 of reward for each staker needs to be tracked,
 
-<img src="images/stem-8e2d62ca6683a868dc73546e8cc13e75.png" width="189" height="21" alt="stem 8e2d62ca6683a868dc73546e8cc13e75" /></span>
+<img src="images/stem-828ec270409cb6ff5cfc583587d0eae9.png" width="142" height="18" alt="stem 828ec270409cb6ff5cfc583587d0eae9" /></span>
+← (1)
 
 In general,
 
 <img src="images/stem-0f2f030a4f8a3c172e968af2768a3ec8.png" width="349" height="11" alt="stem 0f2f030a4f8a3c172e968af2768a3ec8" /></span>
 
-When adding a new reward to the pool the calculations remain the same
-other than increasing the reward pool as follows,
+##### 5.3.1.2. When removing a staker from the pool the above addition step has to be reverted
+
+This can be done by subtracting the <img src="images/stem-7c4ec4f9c189cb8f3edb39740e43c33f.png" width="16" height="10" alt="stem 7c4ec4f9c189cb8f3edb39740e43c33f" /></span>
+of the staker from the total pool and reducing the pool shares
+accordingly.
+
+##### 5.3.1.3. When adding a new reward to the pool the calculations remain the same other than increasing the reward pool as follows,
 
 <img src="images/stem-26132ac9393fe54200c2208dc9244ea4.png" width="160" height="11" alt="stem 26132ac9393fe54200c2208dc9244ea4" /></span>
 
@@ -392,7 +419,32 @@ are tracked for each staker, they can always claim the new reward share
 from <img src="images/stem-32efe856de4078991a47242cc1d89349.png" width="43" height="11" alt="stem 32efe856de4078991a47242cc1d89349" /></span>
 later.
 
-To compound the reward for stakers the pool total reward can be i
+##### 5.3.1.4. When extending an existing position
+
+Extension of an existing staker position can be treated in the same way
+as adding a new staker as the following relationship holds with the new
+stake <img src="images/stem-9849cee8ec3e29bf6d2ea80a64d995dd.png" width="23" height="10" alt="stem 9849cee8ec3e29bf6d2ea80a64d995dd" /></span>
+and the corresponding inflation <img src="images/stem-e7d319c4dcb739d8e91edd37454e20e8.png" width="25" height="10" alt="stem e7d319c4dcb739d8e91edd37454e20e8" /></span>,
+
+new staker to add <img src="images/stem-1b75a50a55357d9a7a8d3ecbb06df470.png" width="180" height="20" alt="stem 1b75a50a55357d9a7a8d3ecbb06df470" /></span>
+← (2)
+
+Now with (1) + (2),
+
+<img src="images/stem-6a000622e842e98de57502915826da7b.png" width="245" height="20" alt="stem 6a000622e842e98de57502915826da7b" /></span>
+
+Therefore, same computation as before with <img src="images/stem-9849cee8ec3e29bf6d2ea80a64d995dd.png" width="23" height="10" alt="stem 9849cee8ec3e29bf6d2ea80a64d995dd" /></span>
+number of shares added to the staker position works as expected.
+
+##### 5.3.1.5. When splitting an existing position
+
+As the total reward pool is not affected the splitting is just creating
+a new position using some ratio. If the ratio is <img src="images/stem-603de94498e154610e3066ec63603017.png" width="25" height="9" alt="stem 603de94498e154610e3066ec63603017" /></span>
+From (1)
+
+First position <img src="images/stem-ed2c175456fa8dcae30f92f61b3694ff.png" width="151" height="20" alt="stem ed2c175456fa8dcae30f92f61b3694ff" /></span>
+
+Second position <img src="images/stem-4cea2659857979f8b87f6775c94c8145.png" width="192" height="20" alt="stem 4cea2659857979f8b87f6775c94c8145" /></span>
 
 As this method uses a reward pooling based approach to calculate the
 rewards for each staker out of it on-demand, rest of the document refers
@@ -426,6 +478,7 @@ Staking rewards pallet already uses the following fNFT data structure,
 This data structure can be modified to support the RP approach by
 adding/adjusting/removing some fields.
 
+    /// This can possibly be renamed as `RewardPoolPosition`
     pub struct StakingNFT<RewardPoolId, AccountId, AssetId, Balance> {
         /// [Adding] Reward Pool ID from which pool to allocate rewards for this
         pub reward_pool_id: RewardPoolId,
@@ -439,8 +492,8 @@ adding/adjusting/removing some fields.
         /// [Adding] Pool share received for this NFT
         pub share: Balance,
 
-        /// [Adding] reduced rewards for the fNFT (d_n)
-        pub reduction: Balance,
+        /// [Adding] reduced rewards by asset for the fNFT (d_n)
+        pub reductions: BtreeMap<AssetId, Balance>,
 
         /// [Removing] The reward epoch at which this NFT will start yielding rewards. This is no longer needed.
         /// pub reward_epoch_start: Epoch,
@@ -475,7 +528,7 @@ structures needs to be tracked in the staking rewards pallet,
 
         /// A book keeping field to track the actual total reward without the reward inflation caused
         /// by new stakers joining the pool.
-        pub actual_total_rewards: Balance,
+        pub total_inflation: Balance,
 
         /// Upper bound on the `actual_total_rewards`.
         pub max_rewards: Balance,
@@ -503,23 +556,31 @@ rewards pool based on these data structures.
 
 #### 5.3.3. Staking
 
-<img src="images/images/staking.png" width="49" height="82" alt="staking" />
+<img src="images/images/staking.png" width="684" height="873" alt="staking" />
 
-#### 5.3.4. \[Needs modification\] RewardAccumulationHook
+#### 5.3.4. Extend Position
 
-Following algorithm is to added as part of the existing [block
-hook](https://github.com/ComposableFi/composable/blob/main/frame/staking-rewards/src/lib.rs#L363)
-in staking rewards pallet. As it is only accumulating new rewards for an
-upcoming epoch, the code is proposed to be run inside a new state
-`State:AccumulatingRewards`.
+<img src="images/images/extend-position.png" width="684" height="994" alt="extend position" />
 
-<img src="images/images/staking-rewards-reward-accumulation-hook.png" width="995" height="925" alt="staking rewards reward accumulation hook" />
+#### 5.3.5. Split Position
 
-This algorithm runs in
-`O(staked_asset_type_count * rewarded_asset_type_count)`.
+<img src="images/images/split-position.png" width="426" height="344" alt="split position" />
 
-6. Implementation
------------------
+#### 5.3.6. Claim/Unstake
+
+<img src="images/images/claim.png" width="500" height="695" alt="claim" />
+
+#### 5.3.7. Update Reward Pool
+
+<img src="images/images/update-reward-pool.png" width="508" height="476" alt="update reward pool" />
+
+#### 5.3.8. RewardAccumulationHook
+
+Following algorithm should be part of the block hook in the pallet.
+
+<img src="images/images/staking-rewards-reward-accumulation-hook.png" width="509" height="501" alt="staking rewards reward accumulation hook" />
+
+## 6. Implementation
 
 ### 6.1. Pallet Pablo: LP Fee + Staking Changes
 
@@ -531,8 +592,7 @@ This algorithm runs in
 
 ### 6.2. Pallet Staking Rewards: PICA/PBLO Staking Related Changes
 
--   ❏ Implement [\[Needs modification\]
-    RewardAccumulationHook](#_rewardaccumulationhook).
+-   ❏ Implement [RewardAccumulationHook](#_rewardaccumulationhook).
 
 ## Appendix A: Trading Fee Inflation to Avoid Dilution of LPs
 
@@ -601,4 +661,4 @@ fNFT at the time of LP event might make sense. i.e fNFT represents the
 LP position on the pool as well as the rewards position for PBLO tokens
 for LPs.
 
-Last updated 2022-06-01 21:56:59 +0200
+Last updated 2022-06-02 17:19:00 +0200
