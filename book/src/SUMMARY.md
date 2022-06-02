@@ -89,8 +89,10 @@
 - [FAQs](./faqs/faqs.md)
 
 
-# 📖 BOOK
-- [Contributing](./book/contributing.md)
+# 💻 CONTRIBUTING
+
+- [Codespaces](./contributing/codespaces.md)
+- [Book](./contributing/book.md)
 
 # 🎨 PALLETS AND INTEGRATION GUIDES
 - [crowdloan-rewards](./pallets/crowdloan-rewards.md)
