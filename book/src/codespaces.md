@@ -4,7 +4,7 @@
 
 At Composable Finance, we use [Codespaces](https://github.com/features/codespaces) in order to provide **blazing fast cloud developer environments.** This means that we all use the same [Dockerized devcontainer environment](https://github.com/ComposableFi/composable/tree/main/.devcontainer). It is moves all of the resource-intensive processing such as code compilation and analysis to the cloud, while the UI is still rendered locally, providing a **fast, responsive, and consistent user experience**.
 
-This gives us the following advantages
+This gives us the following advantages:
 
 - All configuration of developer tooling is already done for you and shared with your team. If something works for one person, it works for everyone. This ensures that you can instantly start coding. No more "It works on my machine".
 - You leverage fast (`16-core CPU`, `32GB RAM`) machines to compile and run your code. Which speeds up your compilation times, and saves you resources on your main machine.
