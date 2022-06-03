@@ -1,11 +1,11 @@
 use crate::{
-	mock::{ExtBuilder, MockRuntime, TestPallet, VammId},
+	mock::{Event, ExtBuilder, MockRuntime, System, TestPallet},
 	pallet::{self, Error},
-	tests::{get_vamm_state, run_for_seconds, RUN_CASES},
+	tests::{run_for_seconds, run_to_block},
 	VammState,
 };
 use composable_traits::vamm::{AssetType, Vamm as VammTrait};
-use frame_support::{assert_noop, assert_ok, assert_storage_noop};
+use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 
 // ----------------------------------------------------------------------------------------------------
@@ -169,44 +169,68 @@ fn update_twap_updates_twaps_correctly() {
 		funding_period: 3600,
 		..Default::default()
 	};
-	ExtBuilder { vamm_count: 1, vamms: vec![(0, vamm_state)] }
+	ExtBuilder { vamm_count: 1, vamms: vec![(vamm_id, vamm_state)] }
 		.build()
 		.execute_with(|| {
 			// For event emission
-			run_for_seconds(timestamp_greater);
-			assert_ok!(TestPallet::update_twap(0, AssetType::Base, new_twap));
+			run_to_block(timestamp_greater);
+			let asset_type = AssetType::Base;
+			assert_ok!(TestPallet::update_twap(vamm_id, asset_type, new_twap));
 			assert_eq!(
-				VammDecimal::from_inner(TestPallet::get_vamm(0).unwrap().base_asset_twap),
+				VammDecimal::from_inner(TestPallet::get_vamm(vamm_id).unwrap().base_asset_twap),
 				new_twap.unwrap()
 			);
+			System::assert_last_event(Event::TestPallet(pallet::Event::UpdatedTwap {
+				vamm_id,
+				asset_type,
+				value: new_twap.unwrap(),
+			}));
 
 			timestamp_greater += 1;
-			run_for_seconds(timestamp_greater);
-			assert_ok!(TestPallet::update_twap(0, AssetType::Quote, new_twap));
+			run_to_block(timestamp_greater);
+			let asset_type = AssetType::Quote;
+			assert_ok!(TestPallet::update_twap(vamm_id, asset_type, new_twap));
 			assert_eq!(
 				VammDecimal::from_inner(TestPallet::get_vamm(0).unwrap().quote_asset_twap),
 				new_twap.unwrap()
 			);
+			System::assert_last_event(Event::TestPallet(pallet::Event::UpdatedTwap {
+				vamm_id,
+				asset_type,
+				value: new_twap.unwrap(),
+			}));
 
 			timestamp_greater += 1;
-			run_for_seconds(timestamp_greater);
-			assert_ok!(TestPallet::update_twap(0, AssetType::Base, None));
+			run_to_block(timestamp_greater);
+			let asset_type = AssetType::Base;
+			let value = VammDecimal::from_inner(4997222222222222222);
+			assert_ok!(TestPallet::update_twap(vamm_id, asset_type, None));
 			assert_eq!(
-				VammDecimal::from_inner(TestPallet::get_vamm(0).unwrap().base_asset_twap),
-				VammDecimal::from_inner(4993055555555555555)
+				VammDecimal::from_inner(TestPallet::get_vamm(vamm_id).unwrap().base_asset_twap),
+				value
 			);
+			System::assert_last_event(Event::TestPallet(pallet::Event::UpdatedTwap {
+				vamm_id,
+				asset_type,
+				value,
+			}));
 
 			timestamp_greater += 1;
-			run_for_seconds(timestamp_greater);
-			assert_ok!(TestPallet::update_twap(0, AssetType::Quote, None));
+			run_to_block(timestamp_greater);
+			let asset_type = AssetType::Quote;
+			let value = VammDecimal::from_inner(4997222222222222222);
+			assert_ok!(TestPallet::update_twap(vamm_id, asset_type, None));
 			assert_eq!(
-				VammDecimal::from_inner(TestPallet::get_vamm(0).unwrap().quote_asset_twap),
-				VammDecimal::from_inner(4990277777777777777)
+				VammDecimal::from_inner(TestPallet::get_vamm(vamm_id).unwrap().quote_asset_twap),
+				value
 			);
+			System::assert_last_event(Event::TestPallet(pallet::Event::UpdatedTwap {
+				vamm_id,
+				asset_type,
+				value,
+			}));
 		})
 }
-
-// TODO(Cardosaum): Check Event emission.
 
 // -------------------------------------------------------------------------------------------------
 //                                           Proptests
