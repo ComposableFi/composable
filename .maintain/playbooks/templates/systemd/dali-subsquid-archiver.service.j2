@@ -16,5 +16,8 @@ ExecStart=/usr/bin/docker-compose -f {{ archiver_dir }}/docker-compose.yml up
 # Compose down, remove containers and volumes
 ExecStop=/usr/bin/docker-compose -f {{ archiver_dir }}/docker-compose.yml down -v
 
+Restart=always
+RestartSec=5
+
 [Install]
 WantedBy=multi-user.target

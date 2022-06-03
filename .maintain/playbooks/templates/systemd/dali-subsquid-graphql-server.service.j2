@@ -12,6 +12,8 @@ StandardError=syslog
 SyslogIdentifier=subsquid-graphql-server
 User={{ user }}
 Group={{ group }}
+Restart=always
+RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
