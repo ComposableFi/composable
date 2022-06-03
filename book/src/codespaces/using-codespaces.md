@@ -49,5 +49,16 @@ Once you've pushed one commit, you can open a draft pull-request with the pull-r
 
 ### PR Comments while you code
 
-You can then continue working on your PR as usual. When someone comments on a piece of code that you are editing, you will see it in-place:
+You can then continue working on your PR as usual. When someone comments on a piece of code that you are editing, you will see it in-place. Here you will be able to reply to the comment and optionally resolve the conversation:
+
+![Inline PR comment](./inline-pr-comment.png)
+*Inline PR comment*
+
+That's all you need to know in order to effectively make changes using Codespaces!
+Depending on what you want to work on, check out one of the following guides:
+
+- [Book](./book.html)
+- [Substrate](./substrate.html)
+- [Frontend](./frontend.html)
+- [Runtime Tests](./runtime-tests.html)
 

@@ -1,4 +1,5 @@
 # Getting Started
+*Quick and simple*
 
 ---
 
