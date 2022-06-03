@@ -1,0 +1,183 @@
+---
+- hosts: all
+
+  gather_facts: no
+
+  vars:
+    user: subsquid
+    group: subsquid
+    work_dir: /srv/subsquid
+
+  tasks:
+  - name: Initialization
+    block:
+    - name: Create a group
+      group:
+        name: "{{ user }}"
+        state: present
+      become: yes
+
+    - name: Create a user
+      user:
+        name: "{{ user }}"
+        state: present
+        shell: /bin/bash
+        home: "/home/{{ user }}"
+        group: "{{ group }}"
+      become: yes
+
+    - name: Create work directory
+      ansible.builtin.file:
+        path: "{{ work_dir }}"
+        state: directory
+        mode: "0755"
+        owner: "{{ user }}"
+        group: "{{ group }}"
+      become: yes
+
+    - name: Create systemd service for Subsquid
+      template:
+        src: systemd/dali-subsquid.service.j2
+        dest: /etc/systemd/system/subsquid.service
+        mode: "0644"
+      become: yes
+
+    - name: Create docker-compose.yml for Subsquid
+      template:
+        src: docker-compose/dali-subsquid.docker-compose.yml.j2
+        dest: "{{ work_dir }}/docker-compose.yml"
+        mode: "0644"
+      become: yes
+
+  - name: TLS temination for WS endpoints
+    block:
+    - name: Install nginx and certbot
+      apt:
+        pkg:
+        - certbot
+        - nginx
+        - python3-certbot-nginx
+      become: yes
+
+    - name: Remove old configs
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent 
+      become: yes
+      loop:
+      - { path: /etc/nginx/sites-enabled/subsquid-acme-challenge.conf }
+      - { path: /etc/nginx/sites-enabled/subsquid.conf }
+
+    - name: Add nginx config for ACME challenge
+      template:
+        src: nginx/dali-subsquid-acme-challenge.conf.j2
+        dest: /etc/nginx/sites-enabled/subsquid-acme-challenge.conf
+        mode: "0600"
+      become: yes
+
+    - name: Enable service nginx and ensure it is not masked
+      ansible.builtin.systemd:
+        name: nginx
+        state: started
+        enabled: yes
+        masked: no
+      become: yes
+
+    - name: Reload nginx with new config
+      shell: nginx -s reload
+      become: yes
+
+    - name: Request initial letsencrypt certificate
+      command: certbot certonly --nginx --agree-tos --non-interactive -d '{{ domain }}' -m '{{ letsencrypt_contact_email }}'
+      args:
+        creates: "/etc/letsencrypt/live/{{ domain }}/privkey.pem"
+      become: yes
+
+    - name: Add nginx config for Subsquid
+      template:
+        src: nginx/dali-subsquid.conf.j2
+        dest: /etc/nginx/sites-enabled/subsquid.conf
+        mode: "0600"
+      become: yes
+
+    - name: Reload nginx with new config
+      shell: nginx -s reload
+      become: yes
+
+    - name: Certbot renewal cronjob
+      cron: special_time=daily
+        name=certbot-renew-composable-sandbox
+        user=root
+        job="certbot certonly --nginx -d '{{ domain }}' --deploy-hook 'nginx -s reload'"
+      become: yes
+
+  - name: Install Docker
+    block:
+    - name: Remove old versions
+      apt:
+        pkg:
+        - docker
+        - docker-engine
+        - docker.io
+        - containerd
+        - runc
+        state: absent
+      become: yes
+    
+    - name: Install dependencies
+      apt:
+        pkg:
+        - nodejs
+        - ca-certificates
+        - curl
+        - gnupg
+        - lsb-release
+        update_cache: yes
+        install_recommends: no
+      become: yes
+
+    - name: Create a directory for Docker GPG key
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: "0755"
+      become: yes
+
+    - name: Download Docker GPG key
+      get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /tmp/docker.gpg
+        mode: "644"
+      become: yes
+
+    - name: Add Docker repository
+      ansible.builtin.shell: |
+        cat /tmp/docker.gpg | gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg
+        echo \
+          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+          $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+      become: yes
+
+    - name: Install new versions
+      apt:
+        pkg:
+        - docker
+        - docker.io
+        - containerd
+        - runc
+        update_cache: yes
+        install_recommends: no
+      become: yes
+
+    - name: Enable and start docker service
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+  - name: Enable and restart subsquid service
+    # Here will be a timeout if use the 'systemd' module
+    ansible.builtin.shell: |
+      systemctl restart subsquid
+      systemctl enable subsquid
+    become: yes
