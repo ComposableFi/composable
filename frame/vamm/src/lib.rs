@@ -178,8 +178,7 @@ pub mod pallet {
 			+ Unsigned
 			+ Zero;
 
-		/// The Balance type used by the pallet for bookkeeping. `Config::Convert` is used for
-		/// conversions to `u128`, which are used in the computations.
+		/// The Balance type used by the pallet for bookkeeping.
 		type Balance: Default
 			+ AtLeast32BitUnsigned
 			+ CheckedAdd
@@ -309,9 +308,11 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Emitted after a successful call to the [`create`](Pallet::create) function.
+		/// Emitted after a successful call to the [`create`](Pallet::create)
+		/// function.
 		Created { vamm_id: VammIdOf<T>, state: VammStateOf<T> },
-		/// Emitted after a successfull call to the [`swap`](Pallet::swap) function.
+		/// Emitted after a successfull call to the [`swap`](Pallet::swap)
+		/// function.
 		Swapped {
 			vamm_id: VammIdOf<T>,
 			input_amount: BalanceOf<T>,
@@ -319,13 +320,17 @@ pub mod pallet {
 			input_asset_type: AssetType,
 			direction: Direction,
 		},
-		/// Emitted after a successful call to the [`move_price`](Pallet::move_price) function.
+		/// Emitted after a successful call to the
+		/// [`move_price`](Pallet::move_price) function.
 		PriceMoved {
 			vamm_id: VammIdOf<T>,
 			base_asset_reserves: BalanceOf<T>,
 			quote_asset_reserves: BalanceOf<T>,
 			invariant: U256,
 		},
+		/// Emmited after a successful call to the
+		/// [`update_twap`](Pallet::update_twap) function.
+		UpdatedTwap { vamm_id: VammIdOf<T>, asset_type: AssetType, value: DecimalOf<T> },
 	}
 
 	// ----------------------------------------------------------------------------------------------------
