@@ -618,6 +618,54 @@ pub mod pallet {
 			}
 		}
 
+		/// Updates the time weighted average price of the desired asset.
+		///
+		/// # Overview
+		/// In order for the caller to update the time weighted average price of
+		/// the desired asset, it has to request it to the Vamm Pallet.  The
+		/// pallet will perform the needed sanity checks and update the runtime
+		/// storage whith the desired twap value, returning it in case of
+		/// success.
+		///
+		/// ![](https://www.plantuml.com/plantuml/svg/FSqz3i8m343XdLF01UgTgH8IrwXSnsqZnKxa7tfzAWQcfszwimTQfBJReogrB9pMxaV4y2U0uJdjDOvSqzceQx36H5tWrMLqnxNnkmBz0UnqiC5cA0mV585ISR_aiALIrAvBZeB1Ivmufj5GV_kPjLpz0W00)
+		///
+		/// ## Parameters
+		///  - [`vamm_id`](Config::VammId): The ID of the desired vamm to update.
+		///  - [`asset_type`](composable_traits::vamm::AssetType): The desired
+		///  asset type to update.
+		///  - `new_twap`: The optional desired value for the new asset's twap.
+		///  If the value is `None`, than the Vamm will update the twap using an
+		///  exponential moving average algorithm.
+		///
+		/// ## Returns
+		/// The new twap value for the specified asset.
+		///
+		/// ## Assumptions or Requirements
+		/// * The requested [`VammId`](Config::VammId) must exists
+		/// * The requested Vamm must be open.
+		/// * The `new_twap` value can't be zero.
+		///
+		/// For more information about how to know if a Vamm is open or not,
+		/// please have a look in the variable [`closed`](VammState::closed).
+		///
+		/// ## Emits
+		/// * [`UpdatedTwap`](Event::<T>::UpdatedTwap)
+		///
+		/// ## State Changes
+		/// Updates [`VammMap`] storage map.
+		///
+		/// ## Errors
+		/// * [`Error::<T>::VammDoesNotExist`]
+		/// * [`Error::<T>::FailToRetrieveVamm`]
+		/// * [`Error::<T>::VammIsClosed`]
+		/// * [`Error::<T>::NewTwapValueIsZero`]
+		/// * [`Error::<T>::AssetTwapTimestampIsMoreRecent`]
+		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
+		/// * [`ArithmeticError::Underflow`](sp_runtime::ArithmeticError)
+		/// * [`ArithmeticError::DivisionByZero`](sp_runtime::ArithmeticError)
+		///
+		/// # Runtime
+		/// `O(1)`
 		/// Performs the swap of the desired asset against the vamm.
 		///
 		/// # Overview
