@@ -282,7 +282,7 @@
       chdir: "{{ work_dir }}/subsquid"
     become: yes
 
-  - name: Enable and restart subsquid-processor and  subsquid-graphql-server services
+  - name: Enable and restart subsquid-processor and subsquid-graphql-server services
     # Here will be a timeout if use the 'systemd' module
     ansible.builtin.shell: |
       systemctl restart subsquid-processor
