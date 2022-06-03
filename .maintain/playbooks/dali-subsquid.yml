@@ -251,6 +251,16 @@
       state: started
     become: yes
 
+  - name: Enable and restart subsquid-archiver and subsquid-indexer-db services
+    # Here will be a timeout if use the 'systemd' module
+    ansible.builtin.shell: |
+      systemctl restart subsquid-archiver
+      systemctl enable subsquid-archiver
+
+      systemctl restart subsquid-indexer-db
+      systemctl enable subsquid-indexer-db
+    become: yes
+
   - name: Clone composable repo
     ansible.builtin.shell: |
       git clone https://github.com/ComposableFi/composable.git {{ work_dir }}
@@ -262,16 +272,6 @@
       npm run build
     args:
       chdir: "{{ work_dir }}/subsquid"
-    become: yes
-
-  - name: Enable and restart subsquid-archiver and subsquid-indexer-db services
-    # Here will be a timeout if use the 'systemd' module
-    ansible.builtin.shell: |
-      systemctl restart subsquid-archiver
-      systemctl enable subsquid-archiver
-
-      systemctl restart subsquid-indexer-db
-      systemctl enable subsquid-indexer-db
     become: yes
 
   - name: Run migrations
