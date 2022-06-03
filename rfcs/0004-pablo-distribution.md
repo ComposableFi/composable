@@ -31,9 +31,9 @@ Table of Contents
         -   [5.3.1. Analysis of Reward
             Calculations](#_analysis_of_reward_calculations)
             -   [5.3.1.1. When adding a new staker <span
-                class="image"><img src="images/stem-0b46f732c83c0e66067b0e50c2156089.png" width="29" height="8" alt="stem 0b46f732c83c0e66067b0e50c2156089" /></span>,
+                class="image"><img src="0004-pablo-distribution-assets/images/stem-0b46f732c83c0e66067b0e50c2156089.png" width="29" height="8" alt="stem 0b46f732c83c0e66067b0e50c2156089" /></span>,
                 existing stakers(<span
-                class="image"><img src="images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>)
+                class="image"><img src="0004-pablo-distribution-assets/images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>)
                 reward would
                 be,](#_when_adding_a_new_staker_n1_existing_stakersn_reward_would_be)
             -   [5.3.1.2. When removing a staker from the pool the above
@@ -122,7 +122,7 @@ addressed in the context of this proposal.
 Following is a summary of use cases omitting the UI specific use cases
 for brevity.
 
-<img src="images/images/pablo-distribution-users.png" width="523" height="1182" alt="pablo distribution users" />
+<img src="0004-pablo-distribution-assets/images/images/pablo-distribution-users.png" width="523" height="1182" alt="pablo distribution users" />
 
 ## 4. Requirements
 
@@ -225,7 +225,7 @@ for brevity.
 
 ### 5.1. System Overview
 
-<img src="images/images/pablo-distribution-verview.png" width="977" height="807" alt="pablo distribution verview" />
+<img src="0004-pablo-distribution-assets/images/images/pablo-distribution-verview.png" width="977" height="807" alt="pablo distribution verview" />
 
 TODO: What to do for part of protocol fees that should be transferred to
 treasury eventually as treasury does not stake it’s PBLO?
@@ -246,7 +246,7 @@ abstraction over all fees that could be charged on a pool to allow for
 extension. At this time a 100% of the owner fee should be defined as a
 new field `protocol_fee`.
 
-<img src="images/images/pablo-fee-config.png" width="224" height="116" alt="pablo fee config" />
+<img src="0004-pablo-distribution-assets/images/images/pablo-fee-config.png" width="224" height="116" alt="pablo fee config" />
 
 **Existing code must be modified to use this data structure**.
 
@@ -271,30 +271,30 @@ automatically redeemed according their pool LP ratio, check
 This results in trading fee share being diluted overtime for smaller
 pools as follows.
 
-After <img src="images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>
-trades and <img src="images/stem-0e51a2dede42189d77627c4d742822c3.png" width="13" height="6" alt="stem 0e51a2dede42189d77627c4d742822c3" /></span>
+After <img src="0004-pablo-distribution-assets/images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>
+trades and <img src="0004-pablo-distribution-assets/images/stem-0e51a2dede42189d77627c4d742822c3.png" width="13" height="6" alt="stem 0e51a2dede42189d77627c4d742822c3" /></span>
 liquidity additions,
 
-trading fees <img src="images/stem-82f81e776a24846a08157aa3f917012b.png" width="45" height="12" alt="stem 82f81e776a24846a08157aa3f917012b" /></span>
+trading fees <img src="0004-pablo-distribution-assets/images/stem-82f81e776a24846a08157aa3f917012b.png" width="45" height="12" alt="stem 82f81e776a24846a08157aa3f917012b" /></span>
 
-total liquidity <img src="images/stem-0f1df372dc50dc67fc225a13b75dd233.png" width="45" height="12" alt="stem 0f1df372dc50dc67fc225a13b75dd233" /></span>
+total liquidity <img src="0004-pablo-distribution-assets/images/stem-0f1df372dc50dc67fc225a13b75dd233.png" width="45" height="12" alt="stem 0f1df372dc50dc67fc225a13b75dd233" /></span>
 
-fees and liquidity returned for an LP amount <img src="images/stem-2daffc703b015a8c1fc11715b5e9a27d.png" width="142" height="19" alt="stem 2daffc703b015a8c1fc11715b5e9a27d" /></span>
+fees and liquidity returned for an LP amount <img src="0004-pablo-distribution-assets/images/stem-2daffc703b015a8c1fc11715b5e9a27d.png" width="142" height="19" alt="stem 2daffc703b015a8c1fc11715b5e9a27d" /></span>
 
-<img src="images/stem-35912508e8bf41c1a7f94b93abcec3aa.png" width="98" height="19" alt="stem 35912508e8bf41c1a7f94b93abcec3aa" /></span>
+<img src="0004-pablo-distribution-assets/images/stem-35912508e8bf41c1a7f94b93abcec3aa.png" width="98" height="19" alt="stem 35912508e8bf41c1a7f94b93abcec3aa" /></span>
 
-trading fees received <img src="images/stem-acbc3160f2b6a5977e6ac719418e0581.png" width="106" height="19" alt="stem acbc3160f2b6a5977e6ac719418e0581" /></span>
+trading fees received <img src="0004-pablo-distribution-assets/images/stem-acbc3160f2b6a5977e6ac719418e0581.png" width="106" height="19" alt="stem acbc3160f2b6a5977e6ac719418e0581" /></span>
 
-"When pool size <img src="images/stem-c8165429df4fe2a9cc08c1a6949ead7c.png" width="30" height="12" alt="stem c8165429df4fe2a9cc08c1a6949ead7c" /></span>
-increases the amount of trading fees received <img src="images/stem-332cc365a4987aacce0ead01b8bdcc0b.png" width="9" height="6" alt="stem 332cc365a4987aacce0ead01b8bdcc0b" /></span>
+"When pool size <img src="0004-pablo-distribution-assets/images/stem-c8165429df4fe2a9cc08c1a6949ead7c.png" width="30" height="12" alt="stem c8165429df4fe2a9cc08c1a6949ead7c" /></span>
+increases the amount of trading fees received <img src="0004-pablo-distribution-assets/images/stem-332cc365a4987aacce0ead01b8bdcc0b.png" width="9" height="6" alt="stem 332cc365a4987aacce0ead01b8bdcc0b" /></span>
 reduces for a particular LP position.
 
-For large pool sizes of <img src="images/stem-c8165429df4fe2a9cc08c1a6949ead7c.png" width="30" height="12" alt="stem c8165429df4fe2a9cc08c1a6949ead7c" /></span>
+For large pool sizes of <img src="0004-pablo-distribution-assets/images/stem-c8165429df4fe2a9cc08c1a6949ead7c.png" width="30" height="12" alt="stem c8165429df4fe2a9cc08c1a6949ead7c" /></span>
 (steady state) this effect is negligible, hence it’s a good enough
 strategy to distribute fees.
 
 But if required this effect can be negated by increasing the trading fee
-by a <img src="images/stem-e64be84a4eef601683d61de156018075.png" width="24" height="10" alt="stem e64be84a4eef601683d61de156018075" /></span>
+by a <img src="0004-pablo-distribution-assets/images/stem-e64be84a4eef601683d61de156018075.png" width="24" height="10" alt="stem e64be84a4eef601683d61de156018075" /></span>
 while at the same time subtracting it from the total fees paid out
 already to liquidity providers. Refer [Trading Fee Inflation to Avoid
 Dilution of LPs](#_trading_fee_inflation_to_avoid_dilution_of_lps).
@@ -308,7 +308,7 @@ This can be accomplished by calling the already existing
 product there is also a need to convert whatever the fee asset in to
 PBLO to create a demand/additional value for PBLO.
 
-<img src="images/images/pablo-fNFT-pblo-staking-fee-distro.png" width="510" height="346" alt="pablo fNFT pblo staking fee distro" />
+<img src="0004-pablo-distribution-assets/images/images/pablo-fNFT-pblo-staking-fee-distro.png" width="510" height="346" alt="pablo fNFT pblo staking fee distro" />
 
 Will it need a change in
 [this](https://github.com/ComposableFi/composable/blob/main/frame/composable-traits/src/staking_rewards.rs#L96)
@@ -351,100 +351,100 @@ the following constraints (TODO move to requirements)
 To analyze the requirement fully, let’s define the following terms for a
 given staking reward pool,
 
-Pre-defined reward rate (say per second) <img src="images/stem-6fb32a8803a6d58cd54908033a2556f9.png" width="23" height="6" alt="stem 6fb32a8803a6d58cd54908033a2556f9" /></span>
+Pre-defined reward rate (say per second) <img src="0004-pablo-distribution-assets/images/stem-6fb32a8803a6d58cd54908033a2556f9.png" width="23" height="6" alt="stem 6fb32a8803a6d58cd54908033a2556f9" /></span>
 
-Pre-defined reward calculation epoch in seconds <img src="images/stem-6184b58307a1dc90934a6a7051a42ceb.png" width="22" height="8" alt="stem 6184b58307a1dc90934a6a7051a42ceb" /></span>
+Pre-defined reward calculation epoch in seconds <img src="0004-pablo-distribution-assets/images/stem-6184b58307a1dc90934a6a7051a42ceb.png" width="22" height="8" alt="stem 6184b58307a1dc90934a6a7051a42ceb" /></span>
 
-Reward per calculation epoch <img src="images/stem-b219ff7e7a0df744c99c2e11229a1ded.png" width="33" height="8" alt="stem b219ff7e7a0df744c99c2e11229a1ded" /></span>
+Reward per calculation epoch <img src="0004-pablo-distribution-assets/images/stem-b219ff7e7a0df744c99c2e11229a1ded.png" width="33" height="8" alt="stem b219ff7e7a0df744c99c2e11229a1ded" /></span>
 
-Previous total reward pool before the current epoch <img src="images/stem-53fadade13e71b863963af9a23b28b71.png" width="25" height="8" alt="stem 53fadade13e71b863963af9a23b28b71" /></span>
+Previous total reward pool before the current epoch <img src="0004-pablo-distribution-assets/images/stem-53fadade13e71b863963af9a23b28b71.png" width="25" height="8" alt="stem 53fadade13e71b863963af9a23b28b71" /></span>
 
 Assuming there is a per epoch calculation which adds to the pool, the
 total reward pool for the current epoc,
 
-<img src="images/stem-667bfb2c3da043fcfff3288c44c1cc6e.png" width="103" height="10" alt="stem 667bfb2c3da043fcfff3288c44c1cc6e" /></span>
+<img src="0004-pablo-distribution-assets/images/stem-667bfb2c3da043fcfff3288c44c1cc6e.png" width="103" height="10" alt="stem 667bfb2c3da043fcfff3288c44c1cc6e" /></span>
 
-Reward pool shares for <img src="images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>
+Reward pool shares for <img src="0004-pablo-distribution-assets/images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>
 stakers,
 
-<img src="images/stem-df3438a6dae343911942f03a3f3e1150.png" width="52" height="12" alt="stem df3438a6dae343911942f03a3f3e1150" /></span>
+<img src="0004-pablo-distribution-assets/images/stem-df3438a6dae343911942f03a3f3e1150.png" width="52" height="12" alt="stem df3438a6dae343911942f03a3f3e1150" /></span>
 
-Where <img src="images/stem-39e8c7852cdbd74b28d331353778e128.png" width="21" height="9" alt="stem 39e8c7852cdbd74b28d331353778e128" /></span>
-staker share is <img src="images/stem-aabe1517ce1102595512b736cbf264bb.png" width="14" height="7" alt="stem aabe1517ce1102595512b736cbf264bb" /></span>
+Where <img src="0004-pablo-distribution-assets/images/stem-39e8c7852cdbd74b28d331353778e128.png" width="21" height="9" alt="stem 39e8c7852cdbd74b28d331353778e128" /></span>
+staker share is <img src="0004-pablo-distribution-assets/images/stem-aabe1517ce1102595512b736cbf264bb.png" width="14" height="7" alt="stem aabe1517ce1102595512b736cbf264bb" /></span>
 
-Existing <img src="images/stem-39e8c7852cdbd74b28d331353778e128.png" width="21" height="9" alt="stem 39e8c7852cdbd74b28d331353778e128" /></span>
+Existing <img src="0004-pablo-distribution-assets/images/stem-39e8c7852cdbd74b28d331353778e128.png" width="21" height="9" alt="stem 39e8c7852cdbd74b28d331353778e128" /></span>
 staker reward,
 
-<img src="images/stem-e1359ae7d0fae29ebf9e42efcaa5536e.png" width="111" height="18" alt="stem e1359ae7d0fae29ebf9e42efcaa5536e" /></span>
+<img src="0004-pablo-distribution-assets/images/stem-e1359ae7d0fae29ebf9e42efcaa5536e.png" width="111" height="18" alt="stem e1359ae7d0fae29ebf9e42efcaa5536e" /></span>
 
-##### 5.3.1.1. When adding a new staker <span class="image"><img src="images/stem-0b46f732c83c0e66067b0e50c2156089.png" width="29" height="8" alt="stem 0b46f732c83c0e66067b0e50c2156089" /></span>, existing stakers(<span class="image"><img src="images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>) reward would be,
+##### 5.3.1.1. When adding a new staker <span class="image"><img src="0004-pablo-distribution-assets/images/stem-0b46f732c83c0e66067b0e50c2156089.png" width="29" height="8" alt="stem 0b46f732c83c0e66067b0e50c2156089" /></span>, existing stakers(<span class="image"><img src="0004-pablo-distribution-assets/images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>) reward would be,
 
-<img src="images/stem-569c4bf984a23f18046277fd561e89a3.png" width="126" height="20" alt="stem 569c4bf984a23f18046277fd561e89a3" /></span>
+<img src="0004-pablo-distribution-assets/images/stem-569c4bf984a23f18046277fd561e89a3.png" width="126" height="20" alt="stem 569c4bf984a23f18046277fd561e89a3" /></span>
 
 As this is less than what is expected above, an adjustment " delta P "
 to total reward pool can be made to allow realtime reward calculations,
 
-<img src="images/stem-8e958a64c877dcda40b652878c6c6768.png" width="119" height="20" alt="stem 8e958a64c877dcda40b652878c6c6768" /></span>
+<img src="0004-pablo-distribution-assets/images/stem-8e958a64c877dcda40b652878c6c6768.png" width="119" height="20" alt="stem 8e958a64c877dcda40b652878c6c6768" /></span>
 
-<img src="images/stem-38d917fea7c6a7a47eb1aa77edd4da97.png" width="169" height="20" alt="stem 38d917fea7c6a7a47eb1aa77edd4da97" /></span>
+<img src="0004-pablo-distribution-assets/images/stem-38d917fea7c6a7a47eb1aa77edd4da97.png" width="169" height="20" alt="stem 38d917fea7c6a7a47eb1aa77edd4da97" /></span>
 
-<img src="images/stem-5fcfbc0bc69ee8b8f356ce2bbfb42002.png" width="190" height="22" alt="stem 5fcfbc0bc69ee8b8f356ce2bbfb42002" /></span>
+<img src="0004-pablo-distribution-assets/images/stem-5fcfbc0bc69ee8b8f356ce2bbfb42002.png" width="190" height="22" alt="stem 5fcfbc0bc69ee8b8f356ce2bbfb42002" /></span>
 
-<img src="images/stem-e1359ae7d0fae29ebf9e42efcaa5536e.png" width="111" height="18" alt="stem e1359ae7d0fae29ebf9e42efcaa5536e" /></span>
+<img src="0004-pablo-distribution-assets/images/stem-e1359ae7d0fae29ebf9e42efcaa5536e.png" width="111" height="18" alt="stem e1359ae7d0fae29ebf9e42efcaa5536e" /></span>
 
 **Therefore, the existing staker receives the same reward as before**
 
-To compensate for this new adjustment, a reduction <img src="images/stem-7c4ec4f9c189cb8f3edb39740e43c33f.png" width="16" height="10" alt="stem 7c4ec4f9c189cb8f3edb39740e43c33f" /></span>
+To compensate for this new adjustment, a reduction <img src="0004-pablo-distribution-assets/images/stem-7c4ec4f9c189cb8f3edb39740e43c33f.png" width="16" height="10" alt="stem 7c4ec4f9c189cb8f3edb39740e43c33f" /></span>
 of reward for each staker needs to be tracked,
 
-<img src="images/stem-828ec270409cb6ff5cfc583587d0eae9.png" width="142" height="18" alt="stem 828ec270409cb6ff5cfc583587d0eae9" /></span>
+<img src="0004-pablo-distribution-assets/images/stem-828ec270409cb6ff5cfc583587d0eae9.png" width="142" height="18" alt="stem 828ec270409cb6ff5cfc583587d0eae9" /></span>
 ← (1)
 
 In general,
 
-<img src="images/stem-0f2f030a4f8a3c172e968af2768a3ec8.png" width="349" height="11" alt="stem 0f2f030a4f8a3c172e968af2768a3ec8" /></span>
+<img src="0004-pablo-distribution-assets/images/stem-0f2f030a4f8a3c172e968af2768a3ec8.png" width="349" height="11" alt="stem 0f2f030a4f8a3c172e968af2768a3ec8" /></span>
 
 ##### 5.3.1.2. When removing a staker from the pool the above addition step has to be reverted
 
-This can be done by subtracting the <img src="images/stem-7c4ec4f9c189cb8f3edb39740e43c33f.png" width="16" height="10" alt="stem 7c4ec4f9c189cb8f3edb39740e43c33f" /></span>
+This can be done by subtracting the <img src="0004-pablo-distribution-assets/images/stem-7c4ec4f9c189cb8f3edb39740e43c33f.png" width="16" height="10" alt="stem 7c4ec4f9c189cb8f3edb39740e43c33f" /></span>
 of the staker from the total pool and reducing the pool shares
 accordingly.
 
 ##### 5.3.1.3. When adding a new reward to the pool the calculations remain the same other than increasing the reward pool as follows,
 
-<img src="images/stem-26132ac9393fe54200c2208dc9244ea4.png" width="160" height="11" alt="stem 26132ac9393fe54200c2208dc9244ea4" /></span>
+<img src="0004-pablo-distribution-assets/images/stem-26132ac9393fe54200c2208dc9244ea4.png" width="160" height="11" alt="stem 26132ac9393fe54200c2208dc9244ea4" /></span>
 
-Since already claimed rewards(<img src="images/stem-7c4ec4f9c189cb8f3edb39740e43c33f.png" width="16" height="10" alt="stem 7c4ec4f9c189cb8f3edb39740e43c33f" /></span>)
+Since already claimed rewards(<img src="0004-pablo-distribution-assets/images/stem-7c4ec4f9c189cb8f3edb39740e43c33f.png" width="16" height="10" alt="stem 7c4ec4f9c189cb8f3edb39740e43c33f" /></span>)
 are tracked for each staker, they can always claim the new reward share
-from <img src="images/stem-32efe856de4078991a47242cc1d89349.png" width="43" height="11" alt="stem 32efe856de4078991a47242cc1d89349" /></span>
+from <img src="0004-pablo-distribution-assets/images/stem-32efe856de4078991a47242cc1d89349.png" width="43" height="11" alt="stem 32efe856de4078991a47242cc1d89349" /></span>
 later.
 
 ##### 5.3.1.4. When extending an existing position
 
 Extension of an existing staker position can be treated in the same way
 as adding a new staker as the following relationship holds with the new
-stake <img src="images/stem-9849cee8ec3e29bf6d2ea80a64d995dd.png" width="23" height="10" alt="stem 9849cee8ec3e29bf6d2ea80a64d995dd" /></span>
-and the corresponding inflation <img src="images/stem-e7d319c4dcb739d8e91edd37454e20e8.png" width="25" height="10" alt="stem e7d319c4dcb739d8e91edd37454e20e8" /></span>,
+stake <img src="0004-pablo-distribution-assets/images/stem-9849cee8ec3e29bf6d2ea80a64d995dd.png" width="23" height="10" alt="stem 9849cee8ec3e29bf6d2ea80a64d995dd" /></span>
+and the corresponding inflation <img src="0004-pablo-distribution-assets/images/stem-e7d319c4dcb739d8e91edd37454e20e8.png" width="25" height="10" alt="stem e7d319c4dcb739d8e91edd37454e20e8" /></span>,
 
-new staker to add <img src="images/stem-1b75a50a55357d9a7a8d3ecbb06df470.png" width="180" height="20" alt="stem 1b75a50a55357d9a7a8d3ecbb06df470" /></span>
+new staker to add <img src="0004-pablo-distribution-assets/images/stem-1b75a50a55357d9a7a8d3ecbb06df470.png" width="180" height="20" alt="stem 1b75a50a55357d9a7a8d3ecbb06df470" /></span>
 ← (2)
 
 Now with (1) + (2),
 
-<img src="images/stem-6a000622e842e98de57502915826da7b.png" width="245" height="20" alt="stem 6a000622e842e98de57502915826da7b" /></span>
+<img src="0004-pablo-distribution-assets/images/stem-6a000622e842e98de57502915826da7b.png" width="245" height="20" alt="stem 6a000622e842e98de57502915826da7b" /></span>
 
-Therefore, same computation as before with <img src="images/stem-9849cee8ec3e29bf6d2ea80a64d995dd.png" width="23" height="10" alt="stem 9849cee8ec3e29bf6d2ea80a64d995dd" /></span>
+Therefore, same computation as before with <img src="0004-pablo-distribution-assets/images/stem-9849cee8ec3e29bf6d2ea80a64d995dd.png" width="23" height="10" alt="stem 9849cee8ec3e29bf6d2ea80a64d995dd" /></span>
 number of shares added to the staker position works as expected.
 
 ##### 5.3.1.5. When splitting an existing position
 
 As the total reward pool is not affected the splitting is just creating
-a new position using some ratio. If the ratio is <img src="images/stem-603de94498e154610e3066ec63603017.png" width="25" height="9" alt="stem 603de94498e154610e3066ec63603017" /></span>
+a new position using some ratio. If the ratio is <img src="0004-pablo-distribution-assets/images/stem-603de94498e154610e3066ec63603017.png" width="25" height="9" alt="stem 603de94498e154610e3066ec63603017" /></span>
 From (1)
 
-First position <img src="images/stem-ed2c175456fa8dcae30f92f61b3694ff.png" width="151" height="20" alt="stem ed2c175456fa8dcae30f92f61b3694ff" /></span>
+First position <img src="0004-pablo-distribution-assets/images/stem-ed2c175456fa8dcae30f92f61b3694ff.png" width="151" height="20" alt="stem ed2c175456fa8dcae30f92f61b3694ff" /></span>
 
-Second position <img src="images/stem-4cea2659857979f8b87f6775c94c8145.png" width="192" height="20" alt="stem 4cea2659857979f8b87f6775c94c8145" /></span>
+Second position <img src="0004-pablo-distribution-assets/images/stem-4cea2659857979f8b87f6775c94c8145.png" width="192" height="20" alt="stem 4cea2659857979f8b87f6775c94c8145" /></span>
 
 As this method uses a reward pooling based approach to calculate the
 rewards for each staker out of it on-demand, rest of the document refers
@@ -556,29 +556,29 @@ rewards pool based on these data structures.
 
 #### 5.3.3. Staking
 
-<img src="images/images/staking.png" width="684" height="873" alt="staking" />
+<img src="0004-pablo-distribution-assets/images/images/staking.png" width="684" height="873" alt="staking" />
 
 #### 5.3.4. Extend Position
 
-<img src="images/images/extend-position.png" width="684" height="994" alt="extend position" />
+<img src="0004-pablo-distribution-assets/images/images/extend-position.png" width="684" height="994" alt="extend position" />
 
 #### 5.3.5. Split Position
 
-<img src="images/images/split-position.png" width="426" height="344" alt="split position" />
+<img src="0004-pablo-distribution-assets/images/images/split-position.png" width="426" height="344" alt="split position" />
 
 #### 5.3.6. Claim/Unstake
 
-<img src="images/images/claim.png" width="500" height="695" alt="claim" />
+<img src="0004-pablo-distribution-assets/images/images/claim.png" width="500" height="695" alt="claim" />
 
 #### 5.3.7. Update Reward Pool
 
-<img src="images/images/update-reward-pool.png" width="508" height="476" alt="update reward pool" />
+<img src="0004-pablo-distribution-assets/images/images/update-reward-pool.png" width="508" height="476" alt="update reward pool" />
 
 #### 5.3.8. RewardAccumulationHook
 
 Following algorithm should be part of the block hook in the pallet.
 
-<img src="images/images/staking-rewards-reward-accumulation-hook.png" width="509" height="501" alt="staking rewards reward accumulation hook" />
+<img src="0004-pablo-distribution-assets/images/images/staking-rewards-reward-accumulation-hook.png" width="509" height="501" alt="staking rewards reward accumulation hook" />
 
 ## 6. Implementation
 
@@ -596,21 +596,21 @@ Following algorithm should be part of the block hook in the pallet.
 
 ## Appendix A: Trading Fee Inflation to Avoid Dilution of LPs
 
-New trading fee <img src="images/stem-88ffccf5d7e5534d6a1c8255ea6f8491.png" width="203" height="19" alt="stem 88ffccf5d7e5534d6a1c8255ea6f8491" /></span>
+New trading fee <img src="0004-pablo-distribution-assets/images/stem-88ffccf5d7e5534d6a1c8255ea6f8491.png" width="203" height="19" alt="stem 88ffccf5d7e5534d6a1c8255ea6f8491" /></span>
 
-For <img src="images/stem-64bf6f450600e539b13faa38cda05cdd.png" width="20" height="9" alt="stem 64bf6f450600e539b13faa38cda05cdd" /></span>
+For <img src="0004-pablo-distribution-assets/images/stem-64bf6f450600e539b13faa38cda05cdd.png" width="20" height="9" alt="stem 64bf6f450600e539b13faa38cda05cdd" /></span>
 liquidity provider,
 
-<img src="images/stem-361b0e678ae955263b9781486d18e96a.png" width="120" height="22" alt="stem 361b0e678ae955263b9781486d18e96a" /></span>
+<img src="0004-pablo-distribution-assets/images/stem-361b0e678ae955263b9781486d18e96a.png" width="120" height="22" alt="stem 361b0e678ae955263b9781486d18e96a" /></span>
 
-<img src="images/stem-b7581568f93412c6c936184a45f8ac21.png" width="324" height="23" alt="stem b7581568f93412c6c936184a45f8ac21" /></span>
+<img src="0004-pablo-distribution-assets/images/stem-b7581568f93412c6c936184a45f8ac21.png" width="324" height="23" alt="stem b7581568f93412c6c936184a45f8ac21" /></span>
 
-<img src="images/stem-baea3c4f49ab8e93ff2c4cd2067b5364.png" width="78" height="20" alt="stem baea3c4f49ab8e93ff2c4cd2067b5364" /></span>
+<img src="0004-pablo-distribution-assets/images/stem-baea3c4f49ab8e93ff2c4cd2067b5364.png" width="78" height="20" alt="stem baea3c4f49ab8e93ff2c4cd2067b5364" /></span>
 
 With this adjusted value all later additions to LP shares have been
 negated when receiving fees for earlier LPs.
 
-## 7. Fee Distribution Q&A
+## Appendix B: Fee Distribution Q&A
 
 Based on the current setup following questions arise when deciding on
 the distribution of these fees to relevant liquidity providers, owners

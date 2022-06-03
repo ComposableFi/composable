@@ -363,7 +363,7 @@ Staking rewards pallet already uses the following fNFT data structure,
 
 [source,rust]
 ----
-include::../frame/composable-traits/src/staking_rewards.rs[lines=103..122]
+include::../../frame/composable-traits/src/staking_rewards.rs[lines=103..122]
 ----
 This data structure can be modified to support the RP approach by adding/adjusting/removing some fields.
 
@@ -513,7 +513,6 @@ stop
 ----
 start
 ->assetId\npositionId\nratio;
-:rewards_pool = readStorage(assetId);
 :position = readStorage(positionId);
 :splits = split(position, ratio);
 note right: as per section 5.3.1.5
@@ -546,13 +545,16 @@ stop
 [plantuml,images/update-reward-pool,png]
 ----
 start
-->assetId\nreward_update\n;
+->assetId\nreward_update\nlast_update_timestamp;
+:elapsed_time = current_time - last_update_timestamp;
 :rewards_pool = readStorage(assetId);
 while (reward = reward_update.rewards.has_next) is (yes)
     :assert max_reward not exceeded;
     :reward.total_rewards += reward_update[reward.asset_id].amount;
+    :reward.total_rewards += elapsed_time * reward.reward_rate;
     :reward.reward_rate = reward_update[reward.asset_id].rate;
 endwhile (no)
+:last_update_timestamp = current_time;
 :save(rewards_pool);
 stop
 ----
@@ -575,6 +577,7 @@ while (assetId = stake_pools.has_next) is (yes)
     endwhile (no)
     :save(rewards_pool);
 endwhile (no)
+:last_update_timestamp = current_time;
 stop
 ----
 
@@ -605,6 +608,7 @@ stem:[= l_r / (sum l_r) * sum a_n]
 
 With this adjusted value all later additions to LP shares have been negated when receiving fees for earlier LPs.
 
+[appendix]
 == Fee Distribution Q&A
 
 Based on the current setup following questions arise when deciding on the distribution of these fees to relevant liquidity providers, owners and stakers.
