@@ -277,6 +277,9 @@ pub mod pallet {
 
 		// TODO(Cardosaum): Write description for this field.
 		pub quote_asset_twap_timestamp: Moment,
+
+		// TODO(Cardosaum): Write description for this field.
+		pub funding_period: Moment,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -848,7 +851,7 @@ pub mod pallet {
 			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
 			// TODO(Cardosaum): Try to move from using function
 			// Self::is_vamm_closed to Vamm.is_closed method
-			ensure!(!Self::is_vamm_closed(&vamm_state), Error::<T>::VammIsClosed);
+			ensure!(!Self::is_vamm_closed(&vamm_state, &None), Error::<T>::VammIsClosed);
 
 			let invariant =
 				Self::compute_invariant(config.base_asset_reserves, config.quote_asset_reserves)?;
