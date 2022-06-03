@@ -29,6 +29,19 @@
         group: "{{ group }}"
       become: yes
 
+    - name: Stop old verions of services
+      systemd:
+        name: "{{ item.name }}"
+        enabled: yes
+        state: stopped
+      loop:
+      - name: subsquid-archiver
+      - name: subsquid-indexer-db
+      - name: subsquid-processor
+      - name: subsquid-graphql-server
+      ignore_errors: yes
+      become: yes
+
     - name: Remove old installations
       ansible.builtin.file:
         path: "{{ item.path }}"
@@ -237,6 +250,7 @@
       name: docker
       enabled: yes
       state: started
+    become: yes
 
   - name: Clone composable repo
     ansible.builtin.shell: |
