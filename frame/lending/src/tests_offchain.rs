@@ -1,13 +1,15 @@
 use crate::{currency::*, mocks_offchain::*};
 use codec::Decode;
 use composable_tests_helpers::test;
-use frame_support::{assert_ok, traits::fungibles::Mutate};
+use frame_support::{assert_ok, traits::fungibles::Mutate, BoundedVec};
 use sp_core::{
 	offchain::{testing, TransactionPoolExt},
 	H256,
 };
 use sp_runtime::{testing::Digest, traits::Header as HeaderTrait};
 impl crate::tests::ConfigBound for Runtime {}
+type TestBoundedVec = BoundedVec<AccountId, MaxLiquidationBatchSize>;
+
 #[test]
 fn test_liquidation_offchain_worker() {
 	let account_id = *ALICE;
@@ -72,7 +74,10 @@ fn test_liquidation_offchain_worker() {
 		// Check that it is transaction which leads to the risky borrow liquidation.
 		assert_eq!(
 			tx.call,
-			Call::Lending(crate::Call::liquidate { market_id, borrowers: vec![risky_borrower] })
+			Call::Lending(crate::Call::liquidate {
+				market_id,
+				borrowers: TestBoundedVec::try_from(vec![risky_borrower]).unwrap()
+			})
 		);
 		process_block_with_execution(tx);
 		// Check that events for the risky borrow were emitted
