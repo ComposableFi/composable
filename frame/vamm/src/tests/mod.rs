@@ -22,6 +22,7 @@ pub mod move_price;
 pub mod swap_asset;
 pub mod swap_base_asset;
 pub mod swap_quote_asset;
+pub mod update_twap;
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Setup
@@ -301,6 +302,7 @@ prop_compose! {
 			base_asset_twap_timestamp,
 			quote_asset_twap,
 			quote_asset_twap_timestamp,
+			..Default::default()
 		}
 	}
 }
