@@ -18,6 +18,7 @@
             "autofetch",
             "azuretools",
             "clippy",
+            "Codespace",
             "Dispatchable",
             "eamodio",
             "fsevenm",

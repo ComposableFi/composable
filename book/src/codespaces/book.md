@@ -1,4 +1,4 @@
-# Contributing
+# Book
 *Thank you for investing your time in contributing to our book!*
 
 ---
@@ -9,29 +9,18 @@ The structure is simple: there is a `SUMMARY.md` which lists all of the availabl
 
 ---
 
-## Serving a local version
+## Running the book
 
-### Nix
-
-If you are using [nix](https://nixos.org/), you can run the following without installing anything:
+Open the integrated terminal in a Codespace and run the following command:
 
 ```bash
-nix develop ".#book" --command mdbook serve ./book --open
+make run-book
 ```
 
-*(If you're running Visual Studio Code, you can also simply open the repository and press `ctrl + shift + B`)*
+A browser will open showing a local copy of this book. Simply edit the contents of the `book/` directory, and your changes will be reflected live in the browser. (Despite running in the cloud, your Codespace will transparently map the ports to your localhost so that you can access the live book at `localhost:3000`.)
 
-
-
-### macOS / Linux
-
-Follow the [mdBook installation instructions](https://rust-lang.github.io/mdBook/guide/installation.html), and run the following:
-
-```bash
-mdbook serve ./book --open
-```
-
-A browser will open showing a local copy of this book. Simply edit the contents of the `book/` directory, and your changes will be reflected live in the browser.
+![Book running locally](./book-running-locally.png)
+*So meta*
 
 ---
 
