@@ -38,5 +38,5 @@ This playbook does next:
 ## Usage
 
     ```bash
-    ansible-playbook -i inventory dali-subsquid.yml -e "domain=your-domain.example.com" -e "letsencrypt_contact_email=your-email.example.com" 
+    ansible-playbook -i inventory dali-subsquid.yml -e "domain=your-domain.example.com" -e "letsencrypt_contact_email=your-email@example.com" 
     ```
