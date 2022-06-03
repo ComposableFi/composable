@@ -62,8 +62,15 @@ pub trait Vamm {
 
 	/// Queries the runtime storage and returns the twap for the desired asset.
 	fn get_twap(
-		vamm_id: &Self::VammId,
+		vamm_id: Self::VammId,
 		asset_type: AssetType,
+	) -> Result<Self::Decimal, DispatchError>;
+
+	/// Updates the twap for the desired asset, returning it if successful.
+	fn update_twap(
+		vamm_id: Self::VammId,
+		asset_type: AssetType,
+		new_twap: Option<Self::Decimal>,
 	) -> Result<Self::Decimal, DispatchError>;
 }
 
