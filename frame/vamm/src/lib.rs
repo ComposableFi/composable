@@ -592,15 +592,15 @@ pub mod pallet {
 		/// `O(1)`
 		#[transactional]
 		fn get_twap(
-			vamm_id: &VammIdOf<T>,
+			vamm_id: VammIdOf<T>,
 			asset_type: AssetType,
 		) -> Result<DecimalOf<T>, DispatchError> {
 			// Sanity Checks
 			// 1) Vamm must exist
-			let vamm_state = Self::get_vamm_state(vamm_id)?;
+			let vamm_state = Self::get_vamm_state(&vamm_id)?;
 
 			// 2) Vamm must be open
-			ensure!(!Self::is_vamm_closed(&vamm_state), Error::<T>::VammIsClosed);
+			ensure!(!Self::is_vamm_closed(&vamm_state, &None), Error::<T>::VammIsClosed);
 
 			match asset_type {
 				AssetType::Base => Ok(DecimalOf::<T>::from_inner(vamm_state.base_asset_twap)),

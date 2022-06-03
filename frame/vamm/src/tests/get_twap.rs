@@ -20,8 +20,8 @@ proptest! {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
-			assert_ok!(TestPallet::get_twap(&0, AssetType::Base));
-			assert_storage_noop!(TestPallet::get_twap(&0, AssetType::Base));
+			assert_ok!(TestPallet::get_twap(0, AssetType::Base));
+			assert_storage_noop!(TestPallet::get_twap(0, AssetType::Base));
 		})
 	}
 
@@ -35,7 +35,7 @@ proptest! {
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
 			assert_noop!(
-				TestPallet::get_twap(&vamm_id, AssetType::Base),
+				TestPallet::get_twap(vamm_id, AssetType::Base),
 				Error::<MockRuntime>::VammDoesNotExist
 			);
 		})
@@ -60,7 +60,7 @@ proptest! {
 			);
 
 			assert_noop!(
-				TestPallet::get_twap(&0, AssetType::Base),
+				TestPallet::get_twap(0, AssetType::Base),
 				Error::<MockRuntime>::VammIsClosed
 			);
 		})
@@ -77,8 +77,8 @@ proptest! {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
-			assert_ok!(TestPallet::get_twap(&0, AssetType::Quote));
-			assert_storage_noop!(TestPallet::get_twap(&0, AssetType::Quote));
+			assert_ok!(TestPallet::get_twap(0, AssetType::Quote));
+			assert_storage_noop!(TestPallet::get_twap(0, AssetType::Quote));
 		})
 	}
 
@@ -92,7 +92,7 @@ proptest! {
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
 			assert_noop!(
-				TestPallet::get_twap(&vamm_id, AssetType::Quote),
+				TestPallet::get_twap(vamm_id, AssetType::Quote),
 				Error::<MockRuntime>::VammDoesNotExist
 			);
 		})
@@ -117,7 +117,7 @@ proptest! {
 			);
 
 			assert_noop!(
-				TestPallet::get_twap(&0, AssetType::Quote),
+				TestPallet::get_twap(0, AssetType::Quote),
 				Error::<MockRuntime>::VammIsClosed
 			);
 		})
