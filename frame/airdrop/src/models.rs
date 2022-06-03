@@ -36,7 +36,7 @@ pub struct RecipientFund<Balance, Period> {
 }
 
 /// Current State of an [`Airdrop`](Airdrop).
-#[derive(Encode, Decode, PartialEq, Copy, Clone, TypeInfo, MaxEncodedLen)]
+#[derive(Debug, Encode, Decode, PartialEq, Copy, Clone, TypeInfo, MaxEncodedLen)]
 pub enum AirdropState {
 	/// The Airdrop has been created but has not started.
 	Created,

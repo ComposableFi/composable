@@ -7160,7 +7160,7 @@ dependencies = [
  "sp-io",
  "sp-keystore",
  "sp-runtime",
- "sp-std",
+ "sp-std 4.0.0",
 ]
 
 [[package]]
