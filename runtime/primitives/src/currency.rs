@@ -62,6 +62,10 @@ impl WellKnownCurrency for CurrencyId {
 	const RELAY_NATIVE: CurrencyId = CurrencyId::KSM;
 }
 
+pub trait ValidCurrency<CurrencyId> {
+	fn valid_currency_id(currency_id: CurrencyId) -> bool;
+}
+
 impl CurrencyId {
 	pub const INVALID: CurrencyId = CurrencyId(0);
 	/// Runtime native token Kusama
@@ -99,8 +103,25 @@ impl CurrencyId {
 			Asset { id: CurrencyId::CROWD_LOAN.0 as u64, name: b"CROWD_LOAN".to_vec() },
 			Asset { id: CurrencyId::KSM.0 as u64, name: b"KSM".to_vec() },
 			Asset { id: CurrencyId::kUSD.0 as u64, name: b"kUSD".to_vec() },
+			Asset { id: CurrencyId::USDT.0 as u64, name: b"USDT".to_vec() },
+			Asset { id: CurrencyId::USDC.0 as u64, name: b"USDC".to_vec() },
 		]
 		.to_vec()
+	}
+}
+
+impl ValidCurrency<CurrencyId> for CurrencyId {
+	fn valid_currency_id(currency_id: CurrencyId) -> bool {
+		match currency_id {
+			CurrencyId::PICA |
+			CurrencyId::LAYR |
+			CurrencyId::CROWD_LOAN |
+			CurrencyId::KSM |
+			CurrencyId::kUSD |
+			CurrencyId::USDT |
+			CurrencyId::USDC => true,
+			_ => false,
+		}
 	}
 }
 

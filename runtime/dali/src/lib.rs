@@ -837,6 +837,7 @@ impl assets::Config for Runtime {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 	type GovernanceRegistry = GovernanceRegistry;
+	type ValidCurrency = CurrencyId;
 }
 
 parameter_types! {

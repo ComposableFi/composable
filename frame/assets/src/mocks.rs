@@ -8,10 +8,11 @@ use frame_support::{
 use frame_system as system;
 use num_traits::Zero;
 use orml_traits::parameter_type_with_key;
+use primitives::currency::ValidCurrency;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
 };
 use system::EnsureRoot;
 
@@ -68,6 +69,18 @@ impl CurrencyFactory<AssetId, Balance> for CurrencyIdGenerator {
 	}
 }
 
+pub struct AllAssetValid;
+
+impl ValidCurrency<AssetId> for AllAssetValid {
+	fn valid_currency_id(currency_id: AssetId) -> bool {
+		if currency_id == 0 {
+			false
+		} else {
+			// all other assets in mock are valid
+			true
+		}
+	}
+}
 impl Config for Test {
 	type AssetId = AssetId;
 	type Balance = Balance;
@@ -78,6 +91,8 @@ impl Config for Test {
 	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
+	type Convert = ConvertInto;
+	type ValidCurrency = AllAssetValid;
 }
 
 parameter_types! {

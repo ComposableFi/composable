@@ -7084,6 +7084,7 @@ dependencies = [
  "pallet-balances",
  "pallet-governance-registry",
  "parity-scale-codec",
+ "primitives",
  "proptest",
  "scale-info",
  "sp-api",

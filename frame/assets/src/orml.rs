@@ -1,6 +1,6 @@
 //! Implementations of common trait definitions from [orml](https://docs.rs/orml-traits).
 
-use crate::{Config, Pallet};
+use crate::{Config, Error, Pallet};
 use frame_support::{
 	dispatch::DispatchResult,
 	pallet_prelude::MaybeSerializeDeserialize,
@@ -10,8 +10,9 @@ use frame_support::{
 };
 use num_traits::CheckedSub;
 use orml_traits::{MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
+use primitives::currency::ValidCurrency;
 use sp_runtime::{
-	traits::{AtLeast32BitUnsigned, Saturating},
+	traits::{AtLeast32BitUnsigned, Convert, Saturating},
 	ArithmeticError, DispatchError,
 };
 
@@ -31,12 +32,18 @@ where
 		if currency_id == T::NativeAssetId::get() {
 			return <<T as Config>::NativeCurrency>::minimum_balance()
 		}
+		if !T::ValidCurrency::valid_currency_id(currency_id) {
+			return T::Convert::convert(0_u64)
+		}
 		<<T as Config>::MultiCurrency>::minimum_balance(currency_id)
 	}
 
 	fn total_issuance(currency_id: Self::CurrencyId) -> Self::Balance {
 		if currency_id == T::NativeAssetId::get() {
 			return <<T as Config>::NativeCurrency>::total_issuance()
+		}
+		if !T::ValidCurrency::valid_currency_id(currency_id) {
+			return T::Convert::convert(0_u64)
 		}
 		<<T as Config>::MultiCurrency>::total_issuance(currency_id)
 	}
@@ -45,12 +52,18 @@ where
 		if currency_id == T::NativeAssetId::get() {
 			return <<T as Config>::NativeCurrency>::total_balance(who)
 		}
+		if !T::ValidCurrency::valid_currency_id(currency_id) {
+			return T::Convert::convert(0_u64)
+		}
 		<<T as Config>::MultiCurrency>::total_balance(currency_id, who)
 	}
 
 	fn free_balance(currency_id: Self::CurrencyId, who: &AccountId) -> Self::Balance {
 		if currency_id == T::NativeAssetId::get() {
 			return <<T as Config>::NativeCurrency>::free_balance(who)
+		}
+		if !T::ValidCurrency::valid_currency_id(currency_id) {
+			return T::Convert::convert(0_u64)
 		}
 		<<T as Config>::MultiCurrency>::free_balance(currency_id, who)
 	}
@@ -71,6 +84,9 @@ where
 				new_balace,
 			)
 		}
+		if !T::ValidCurrency::valid_currency_id(currency_id) {
+			return Err(Error::<T>::UnknownAsset.into())
+		}
 		<<T as Config>::MultiCurrency>::ensure_can_withdraw(currency_id, who, amount)
 	}
 
@@ -88,6 +104,9 @@ where
 				ExistenceRequirement::AllowDeath,
 			)
 		}
+		if !T::ValidCurrency::valid_currency_id(currency_id) {
+			return Err(Error::<T>::UnknownAsset.into())
+		}
 		<<T as Config>::MultiCurrency>::transfer(currency_id, from, to, amount)
 	}
 
@@ -101,6 +120,9 @@ where
 			// MultiCurrency trait.
 			<<T as Config>::NativeCurrency>::deposit_creating(who, amount);
 			return Ok(())
+		}
+		if !T::ValidCurrency::valid_currency_id(currency_id) {
+			return Err(Error::<T>::UnknownAsset.into())
 		}
 		<<T as Config>::MultiCurrency>::deposit(currency_id, who, amount)
 	}
@@ -121,12 +143,18 @@ where
 			)
 			.map(|_| ())
 		}
+		if !T::ValidCurrency::valid_currency_id(currency_id) {
+			return Err(Error::<T>::UnknownAsset.into())
+		}
 		<<T as Config>::MultiCurrency>::withdraw(currency_id, who, amount)
 	}
 
 	fn can_slash(currency_id: Self::CurrencyId, who: &AccountId, amount: Self::Balance) -> bool {
 		if currency_id == T::NativeAssetId::get() {
 			return <<T as Config>::NativeCurrency>::can_slash(who, amount)
+		}
+		if !T::ValidCurrency::valid_currency_id(currency_id) {
+			return false
 		}
 		<<T as Config>::MultiCurrency>::can_slash(currency_id, who, amount)
 	}
@@ -140,6 +168,9 @@ where
 			// Drop the imbalance, causing the total issuance to decrease, in accordance with the
 			// MultiCurrency trait.
 			return <<T as Config>::NativeCurrency>::slash(who, amount).1
+		}
+		if !T::ValidCurrency::valid_currency_id(currency_id) {
+			return T::Convert::convert(0_u64)
 		}
 		<<T as Config>::MultiCurrency>::slash(currency_id, who, amount)
 	}
@@ -166,6 +197,9 @@ where
 			<<T as Config>::NativeCurrency>::set_lock(lock_id, who, amount, WithdrawReasons::all());
 			return Ok(())
 		}
+		if !T::ValidCurrency::valid_currency_id(currency_id) {
+			return Err(Error::<T>::UnknownAsset.into())
+		}
 		<<T as Config>::MultiCurrency>::set_lock(lock_id, currency_id, who, amount)
 	}
 
@@ -184,6 +218,9 @@ where
 			);
 			return Ok(())
 		}
+		if !T::ValidCurrency::valid_currency_id(currency_id) {
+			return Err(Error::<T>::UnknownAsset.into())
+		}
 		<<T as Config>::MultiCurrency>::extend_lock(lock_id, currency_id, who, amount)
 	}
 
@@ -195,6 +232,9 @@ where
 		if currency_id == T::NativeAssetId::get() {
 			<<T as Config>::NativeCurrency>::remove_lock(lock_id, who);
 			return Ok(())
+		}
+		if !T::ValidCurrency::valid_currency_id(currency_id) {
+			return Err(Error::<T>::UnknownAsset.into())
 		}
 		<<T as Config>::MultiCurrency>::remove_lock(lock_id, currency_id, who)
 	}
@@ -213,6 +253,9 @@ where
 		if currency_id == T::NativeAssetId::get() {
 			return <<T as Config>::NativeCurrency>::can_reserve(who, amount)
 		}
+		if !T::ValidCurrency::valid_currency_id(currency_id) {
+			return false
+		}
 		<<T as Config>::MultiCurrency>::can_reserve(currency_id, who, amount)
 	}
 
@@ -226,12 +269,18 @@ where
 			// with `MultiReservableCurrency`.
 			return <<T as Config>::NativeCurrency>::slash_reserved(who, amount).1
 		}
+		if !T::ValidCurrency::valid_currency_id(currency_id) {
+			return T::Convert::convert(0_u64)
+		}
 		<<T as Config>::MultiCurrency>::slash_reserved(currency_id, who, amount)
 	}
 
 	fn reserved_balance(currency_id: Self::CurrencyId, who: &AccountId) -> Self::Balance {
 		if currency_id == T::NativeAssetId::get() {
 			return <<T as Config>::NativeCurrency>::reserved_balance(who)
+		}
+		if !T::ValidCurrency::valid_currency_id(currency_id) {
+			return T::Convert::convert(0_u64)
 		}
 		<<T as Config>::MultiCurrency>::reserved_balance(currency_id, who)
 	}
@@ -244,6 +293,9 @@ where
 		if currency_id == T::NativeAssetId::get() {
 			return <<T as Config>::NativeCurrency>::reserve(who, amount)
 		}
+		if !T::ValidCurrency::valid_currency_id(currency_id) {
+			return Err(Error::<T>::UnknownAsset.into())
+		}
 		<<T as Config>::MultiCurrency>::reserve(currency_id, who, amount)
 	}
 
@@ -254,6 +306,9 @@ where
 	) -> Self::Balance {
 		if currency_id == T::NativeAssetId::get() {
 			return <<T as Config>::NativeCurrency>::unreserve(who, amount)
+		}
+		if !T::ValidCurrency::valid_currency_id(currency_id) {
+			return T::Convert::convert(0_u64)
 		}
 		<<T as Config>::MultiCurrency>::unreserve(currency_id, who, amount)
 	}
@@ -272,6 +327,9 @@ where
 				amount,
 				status,
 			)
+		}
+		if !T::ValidCurrency::valid_currency_id(currency_id) {
+			return Err(Error::<T>::UnknownAsset.into())
 		}
 		<<T as Config>::MultiCurrency>::repatriate_reserved(
 			currency_id,
