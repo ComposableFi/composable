@@ -188,6 +188,7 @@ pub mod pallet {
 			+ CheckedSub
 			+ Codec
 			+ Copy
+			+ From<u64>
 			+ MaxEncodedLen
 			+ MaybeSerializeDeserialize
 			+ Ord
@@ -203,15 +204,16 @@ pub mod pallet {
 
 		/// Type representing the current time.
 		type Moment: Default
-			+ Codec
-			+ TypeInfo
-			+ Debug
 			+ AtLeast32BitUnsigned
-			+ Copy
 			+ Clone
+			+ Codec
+			+ Copy
+			+ Debug
+			+ From<u64>
+			+ Into<u64>
 			+ MaxEncodedLen
 			+ MaybeSerializeDeserialize
-			+ Into<u64>;
+			+ TypeInfo;
 
 		/// Implementation for querying the current Unix timestamp
 		type TimeProvider: UnixTime;
@@ -367,6 +369,12 @@ pub mod pallet {
 		/// Tried to perform swap operation but it would drain all
 		/// [`quote`](VammState::quote_asset_reserves) asset reserves.
 		QuoteAssetReservesWouldBeCompletelyDrained,
+		/// Tried to update twap for an asset, but it's last twap update was
+		/// more recent than the current time.
+		AssetTwapTimestampIsMoreRecent,
+		/// Tried to update twap for an asset, but the desired new twap value is
+		/// zero.
+		NewTwapValueIsZero,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -541,25 +549,7 @@ pub mod pallet {
 			// Get Vamm state.
 			let vamm_state = Self::get_vamm_state(&vamm_id)?;
 
-			let base_asset_reserves_decimal =
-				DecimalOf::<T>::from_inner(vamm_state.base_asset_reserves);
-			let quote_asset_reserves_decimal =
-				DecimalOf::<T>::from_inner(vamm_state.quote_asset_reserves);
-			let peg_multiplier_decimal = DecimalOf::<T>::from_inner(vamm_state.peg_multiplier);
-
-			match asset_type {
-				AssetType::Base => Ok(quote_asset_reserves_decimal
-					.checked_mul(&peg_multiplier_decimal)
-					.ok_or(ArithmeticError::Overflow)?
-					.checked_div(&base_asset_reserves_decimal)
-					.ok_or(ArithmeticError::DivisionByZero)?),
-
-				AssetType::Quote => Ok(base_asset_reserves_decimal
-					.checked_mul(&peg_multiplier_decimal)
-					.ok_or(ArithmeticError::Overflow)?
-					.checked_div(&quote_asset_reserves_decimal)
-					.ok_or(ArithmeticError::DivisionByZero)?),
-			}
+			Self::do_get_price(&vamm_state, asset_type)
 		}
 
 		/// Returns the time weighted average price of the desired asset.
@@ -666,6 +656,24 @@ pub mod pallet {
 		///
 		/// # Runtime
 		/// `O(1)`
+		fn update_twap(
+			vamm_id: VammIdOf<T>,
+			asset_type: AssetType,
+			new_twap: Option<DecimalOf<T>>,
+		) -> Result<DecimalOf<T>, DispatchError> {
+			// Sanity Checks
+			// Vamm must exist.
+			let mut vamm_state = Self::get_vamm_state(&vamm_id)?;
+
+			// Delegate update twap to internal functions.
+			match new_twap {
+				Some(new_twap) => {
+					Self::do_update_twap(vamm_id, &mut vamm_state, asset_type, new_twap, &None)
+				},
+				None => Self::update_vamm_twap(vamm_id, &mut vamm_state, asset_type, &None),
+			}
+		}
+
 		/// Performs the swap of the desired asset against the vamm.
 		///
 		/// # Overview
@@ -869,6 +877,66 @@ pub mod pallet {
 
 	// Helper functions - core functionality
 	impl<T: Config> Pallet<T> {
+		fn do_get_price(
+			vamm_state: &VammStateOf<T>,
+			asset_type: AssetType,
+		) -> Result<DecimalOf<T>, DispatchError> {
+			let base_asset_reserves_decimal =
+				DecimalOf::<T>::from_inner(vamm_state.base_asset_reserves);
+			let quote_asset_reserves_decimal =
+				DecimalOf::<T>::from_inner(vamm_state.quote_asset_reserves);
+			let peg_multiplier_decimal = DecimalOf::<T>::from_inner(vamm_state.peg_multiplier);
+
+			match asset_type {
+				AssetType::Base => Ok(quote_asset_reserves_decimal
+					.checked_mul(&peg_multiplier_decimal)
+					.ok_or(ArithmeticError::Overflow)?
+					.checked_div(&base_asset_reserves_decimal)
+					.ok_or(ArithmeticError::DivisionByZero)?),
+
+				AssetType::Quote => Ok(base_asset_reserves_decimal
+					.checked_mul(&peg_multiplier_decimal)
+					.ok_or(ArithmeticError::Overflow)?
+					.checked_div(&quote_asset_reserves_decimal)
+					.ok_or(ArithmeticError::DivisionByZero)?),
+			}
+		}
+
+		fn do_update_twap(
+			vamm_id: VammIdOf<T>,
+			vamm_state: &mut VammStateOf<T>,
+			asset_type: AssetType,
+			new_twap: DecimalOf<T>,
+			now: &Option<MomentOf<T>>,
+		) -> Result<DecimalOf<T>, DispatchError> {
+			// Sanity checks
+			Self::update_twap_sanity_check(&vamm_state, asset_type, Some(new_twap), now)?;
+
+			let now = Self::now_from_option(&now);
+			match asset_type {
+				AssetType::Base => {
+					vamm_state.base_asset_twap = new_twap.into_inner();
+					vamm_state.base_asset_twap_timestamp = now;
+				},
+				AssetType::Quote => {
+					vamm_state.quote_asset_twap = new_twap.into_inner();
+					vamm_state.quote_asset_twap_timestamp = now;
+				},
+			};
+
+			// Update runtime storage
+			VammMap::<T>::insert(&vamm_id, vamm_state.clone());
+
+			// TODO(Cardosaum): This function will execute quite frequently,
+			// isn`t it a problem to emit one new event for each function call?`
+			//
+			// Deposit swap event into blockchain
+			Self::deposit_event(Event::<T>::UpdatedTwap { vamm_id, asset_type, value: new_twap });
+
+			// Return total swapped asset
+			Ok(new_twap)
+		}
+
 		fn swap_quote_asset(
 			config: &SwapConfigOf<T>,
 			vamm_state: &mut VammStateOf<T>,
@@ -988,12 +1056,35 @@ pub mod pallet {
 
 	// Helper functions - validity checks
 	impl<T: Config> Pallet<T> {
+		fn update_twap_sanity_check(
+			vamm_state: &VammStateOf<T>,
+			asset_type: AssetType,
+			new_twap: Option<DecimalOf<T>>,
+			now: &Option<MomentOf<T>>,
+		) -> Result<(), DispatchError> {
+			// Sanity Checks
+			// 1) New desired twap value can't be zero.
+			if let Some(new_twap) = new_twap {
+				ensure!(!new_twap.is_zero(), Error::<T>::NewTwapValueIsZero);
+			}
+
+			// 2) Vamm must be open.
+			ensure!(!Self::is_vamm_closed(&vamm_state, &now), Error::<T>::VammIsClosed);
+
+			// 3) Only update asset's twap if time has passed since last update.
+			let now = Self::now_from_option(&now);
+			let asset_twap_timestamp =
+				Self::asset_twap_timestamp_from_vamm_state(vamm_state, asset_type);
+			ensure!(now > asset_twap_timestamp, Error::<T>::AssetTwapTimestampIsMoreRecent);
+
+			Ok(())
+		}
 		fn swap_sanity_check(
 			config: &SwapConfigOf<T>,
 			vamm_state: &VammStateOf<T>,
 		) -> Result<(), DispatchError> {
 			// We must ensure that the vamm is not closed before perfoming any swap.
-			ensure!(!Self::is_vamm_closed(vamm_state), Error::<T>::VammIsClosed);
+			ensure!(!Self::is_vamm_closed(vamm_state, &None), Error::<T>::VammIsClosed);
 
 			match config.direction {
 				// If we intend to remove some asset amount from vamm, we must
@@ -1029,6 +1120,81 @@ pub mod pallet {
 
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
+		fn update_vamm_twap(
+			vamm_id: VammIdOf<T>,
+			vamm_state: &mut VammStateOf<T>,
+			asset_type: AssetType,
+			now: &Option<MomentOf<T>>,
+		) -> Result<DecimalOf<T>, DispatchError> {
+			// Sanity checks
+			Self::update_twap_sanity_check(&vamm_state, asset_type, None, now)?;
+
+			let asset_twap_timestamp =
+				Self::asset_twap_timestamp_from_vamm_state(vamm_state, asset_type);
+			let asset_twap = Self::asset_twap_from_vamm_state(vamm_state, asset_type);
+			let new_twap = Self::calculate_twap(
+				now,
+				asset_twap_timestamp,
+				vamm_state.funding_period,
+				Self::do_get_price(vamm_state, asset_type)?,
+				Self::balance_to_decimal(asset_twap),
+			)?;
+
+			Self::do_update_twap(vamm_id, vamm_state, asset_type, new_twap, now)
+		}
+
+		fn calculate_twap(
+			now: &Option<MomentOf<T>>,
+			last_twap_timestamp: MomentOf<T>,
+			funding_period: MomentOf<T>,
+			new_price: DecimalOf<T>,
+			old_price: DecimalOf<T>,
+		) -> Result<DecimalOf<T>, DispatchError> {
+			let now = Self::now_from_option(now);
+			let weight_now: MomentOf<T> = std::cmp::max(
+				1_u64.into(),
+				now.checked_sub(&last_twap_timestamp)
+					.ok_or(Error::<T>::AssetTwapTimestampIsMoreRecent)?,
+			);
+
+			// TODO(Cardosaum): Won't this subtraction cause a failure everytime
+			// if we don't update twap for a long period of time?  for example,
+			// if `funding_period = 1 hour`, and we pass 2 or more hours without
+			// updating the twap, doesn't it mean we will throw an error each
+			// time we try to subtract `funding_period -  weight_now`?
+			let weight_last_twap: MomentOf<T> = std::cmp::max(
+				1_u64.into(),
+				funding_period.checked_sub(&weight_now).ok_or(ArithmeticError::Underflow)?,
+			);
+
+			Self::calculate_exponential_moving_average(
+				new_price,
+				weight_now,
+				old_price,
+				weight_last_twap,
+			)
+		}
+
+		fn calculate_exponential_moving_average(
+			x1: DecimalOf<T>,
+			w1: MomentOf<T>,
+			x2: DecimalOf<T>,
+			w2: MomentOf<T>,
+		) -> Result<DecimalOf<T>, DispatchError> {
+			let w1_decimal = Self::moment_to_decimal(w1);
+			let w2_decimal = Self::moment_to_decimal(w2);
+			let denominator =
+				w1_decimal.checked_add(&w2_decimal).ok_or(ArithmeticError::Overflow)?;
+			let xw1 = x1.checked_mul(&w1_decimal).ok_or(ArithmeticError::Overflow)?;
+			let xw2 = x2.checked_mul(&w2_decimal).ok_or(ArithmeticError::Overflow)?;
+
+			Ok(xw1
+				.checked_add(&xw2)
+				.ok_or(ArithmeticError::Overflow)?
+				.checked_div(&denominator)
+				.ok_or(ArithmeticError::DivisionByZero)?)
+		}
+
 		fn get_vamm_state(vamm_id: &VammIdOf<T>) -> Result<VammStateOf<T>, DispatchError> {
 			// Requested vamm must exists and be retrievable.
 			ensure!(VammMap::<T>::contains_key(vamm_id), Error::<T>::VammDoesNotExist);
@@ -1036,12 +1202,47 @@ pub mod pallet {
 			Ok(vamm_state)
 		}
 
-		fn is_vamm_closed(vamm_state: &VammStateOf<T>) -> bool {
-			let now = T::TimeProvider::now().as_secs();
+		fn is_vamm_closed(vamm_state: &VammStateOf<T>, now: &Option<MomentOf<T>>) -> bool {
+			let now = Self::now_from_option(&now);
 			match vamm_state.closed {
-				Some(timestamp) => now >= Into::<u64>::into(timestamp),
+				Some(timestamp) => now >= timestamp,
 				None => false,
 			}
+		}
+
+		fn asset_twap_from_vamm_state(
+			vamm_state: &VammStateOf<T>,
+			asset_type: AssetType,
+		) -> BalanceOf<T> {
+			match asset_type {
+				AssetType::Base => vamm_state.base_asset_twap,
+				AssetType::Quote => vamm_state.quote_asset_twap,
+			}
+		}
+
+		fn asset_twap_timestamp_from_vamm_state(
+			vamm_state: &VammStateOf<T>,
+			asset_type: AssetType,
+		) -> MomentOf<T> {
+			match asset_type {
+				AssetType::Base => vamm_state.base_asset_twap_timestamp,
+				AssetType::Quote => vamm_state.quote_asset_twap_timestamp,
+			}
+		}
+
+		fn now_from_option(now: &Option<MomentOf<T>>) -> MomentOf<T> {
+			match now {
+				Some(now) => *now,
+				None => T::TimeProvider::now().as_secs().into(),
+			}
+		}
+
+		fn balance_to_decimal(value: BalanceOf<T>) -> DecimalOf<T> {
+			DecimalOf::<T>::from_inner(value)
+		}
+
+		fn moment_to_decimal(value: MomentOf<T>) -> DecimalOf<T> {
+			DecimalOf::<T>::from_inner(value.into().into())
 		}
 
 		fn balance_to_u128(value: BalanceOf<T>) -> Result<u128, DispatchError> {
