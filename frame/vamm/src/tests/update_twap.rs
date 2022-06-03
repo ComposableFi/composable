@@ -154,7 +154,7 @@ fn update_twap_succeeds() {
 }
 
 #[test]
-fn update_twap_updates_twaps_correctly() {
+fn update_twap_updates_twap_correctly() {
 	let timestamp = VammTimestamp::MIN;
 	let mut timestamp_greater = VammTimestamp::MIN + 1;
 	let twap = VammBalance::from(10_u128.pow(18));
