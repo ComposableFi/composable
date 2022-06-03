@@ -1,5 +1,42 @@
 # Using Codespaces
 
+*easy peasy lemon squeezy*
+
 ---
 
-Once you're [ready to get started](./getting-started.html), using Codespaces is very easy. Simply go to our monorepo at [github.com/ComposableFi/composable](https://github.com/ComposableFi/composable) and click on the following button:
+Once you're [ready to get started](./getting-started.html), using Codespaces is very easy. Simply go to our monorepo at [github.com/ComposableFi/composable](https://github.com/ComposableFi/composable) and click on the **"Create codespace on main"** button:
+
+![Create codespace on main](./create-codespace-on-main.png)
+*Create codespace on main*
+
+Then, give your browser permission to open **Visual Studio Code**:
+
+![Open Visual Studio Code](./open-vscode-dialog.png)
+*Open Visual Studio Code*
+
+When you've opend Visual Studio Code, it is very important that you **open the Workspace**. The bad news is that this [cannot yet be done automatically](https://github.community/t/how-to-automatically-open-a-vscode-workspace/154339), but the good news is that it is very easy to do. Scroll down to the file named `composable.code-workspace`, and click on the **"Open Workspace"** button in the lower-right corner:
+
+![Open the Workspace](./open-the-workspace.png)
+*Open the Workspace*
+
+When you see `COMPOSABLE (WORKSPACE) [CODESPACES]`, you're good to go!
+
+![Opened Workspace](./opened-workspace.png)
+*Opened Workspace*
+
+## Git and GitHub integration
+
+We have deep Git and GitHub integration in our Codespace. GPG Signing is done automatically, and interacting with pull-requests is integrated in the core of the coding workflow.
+
+### Checkout a branch
+
+Checkout a new or existing branch with the branch button.
+
+![Checkout a branch](./checkout-branch.png)
+
+### Commit and push
+
+Start coding away. While coding, continually commit and push your changes with the sidebar:
+
+![Commit sidebar](./commit-sidebar.png)
+*Commit sidebar*
