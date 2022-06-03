@@ -60,7 +60,7 @@ use sp_version::RuntimeVersion;
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
 	construct_runtime, parameter_types,
-	traits::{Contains, Everything, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
+	traits::{Contains, Everything, Get, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -127,7 +127,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
 	spec_version: 2300,
-	impl_version: 1,
+	impl_version: 2,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 	state_version: 0,
@@ -682,6 +682,28 @@ impl utility::Config for Runtime {
 }
 
 parameter_types! {
+	pub MaxProxies : u32 = 4;
+	pub MaxPending : u32 = 32;
+	// just make dali simple to proxy
+	pub ProxyPrice: Balance = 0;
+}
+
+impl pallet_proxy::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type Currency = Assets;
+	type ProxyType = ();
+	type ProxyDepositBase = ProxyPrice;
+	type ProxyDepositFactor = ProxyPrice;
+	type MaxProxies = MaxProxies;
+	type WeightInfo = ();
+	type MaxPending = MaxPending;
+	type CallHasher = BlakeTwo256;
+	type AnnouncementDepositBase = ProxyPrice;
+	type AnnouncementDepositFactor = ProxyPrice;
+}
+
+parameter_types! {
 	pub const LaunchPeriod: BlockNumber = 5 * DAYS;
 	pub const VotingPeriod: BlockNumber = 5 * DAYS;
 	pub const FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
@@ -1037,6 +1059,25 @@ impl dex_router::Config for Runtime {
 	type WeightInfo = weights::dex_router::WeightInfo<Runtime>;
 }
 
+parameter_types! {
+	pub const ExpectedBlockTime: u64 = SLOT_DURATION;
+}
+
+impl pallet_ibc::Config for Runtime {
+	type TimeProvider = Timestamp;
+	type Event = Event;
+	type Currency = Balances;
+	const INDEXING_PREFIX: &'static [u8] = b"ibc";
+	const CONNECTION_PREFIX: &'static [u8] = b"ibc";
+	type ExpectedBlockTime = ExpectedBlockTime;
+	type WeightInfo = crate::weights::pallet_ibc::WeightInfo<Self>;
+}
+
+impl pallet_ibc_ping::Config for Runtime {
+	type Event = Event;
+	type IbcHandler = Ibc;
+}
+
 construct_runtime!(
 	pub enum Runtime where
 		Block = Block,
@@ -1072,6 +1113,7 @@ construct_runtime!(
 		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
 		Utility: utility::{Pallet, Call, Event} = 35,
 		Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
+		Proxy: pallet_proxy = 37,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
@@ -1098,6 +1140,10 @@ construct_runtime!(
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
+
+		// IBC Support, pallet-ibc should be the last in the list of pallets that use the ibc protocol
+		IbcPing: pallet_ibc_ping::{Pallet, Call, Storage, Event<t>} = 101,
+		Ibc: pallet_ibc::{Pallet, Call, Storage, Event<T>} = 102
 	}
 );
 
@@ -1171,6 +1217,7 @@ mod benches {
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
 		[dex_router, DexRouter]
+		[pallet_ibc, Ibc]
 	);
 }
 
@@ -1388,6 +1435,111 @@ impl_runtime_apis! {
 		}
 	}
 
+	impl ibc_runtime_api::IbcRuntimeApi<Block> for Runtime {
+		fn para_id() -> u32 {
+			<Runtime as cumulus_pallet_parachain_system::Config>::SelfParaId::get().into()
+		}
+
+		fn get_trie_inputs() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
+			Ibc::build_trie_inputs().ok()
+		}
+
+		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128> {
+			Ibc::query_balance_with_address(addr).ok()
+		}
+
+		fn query_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::OffchainPacketType>> {
+			Ibc::get_offchain_packets(channel_id, port_id, seqs).ok()
+		}
+
+		fn client_state(client_id: Vec<u8>) -> Option<ibc_primitives::QueryClientStateResponse> {
+			Ibc::client(client_id).ok()
+		}
+
+		fn host_consensus_state(height: u32) -> Option<Vec<u8>> {
+			Ibc::host_consensus_state(height)
+		}
+
+		fn client_consensus_state(client_id: Vec<u8>, client_height: Vec<u8>, latest_cs: bool) -> Option<ibc_primitives::QueryConsensusStateResponse> {
+			Ibc::consensus_state(client_height, client_id, latest_cs).ok()
+		}
+
+		fn clients() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
+			Ibc::clients().ok()
+		}
+
+		fn connection(connection_id: Vec<u8>) -> Option<ibc_primitives::QueryConnectionResponse>{
+			Ibc::connection(connection_id).ok()
+		}
+
+		fn connections() -> Option<ibc_primitives::QueryConnectionsResponse> {
+			Ibc::connections().ok()
+		}
+
+		fn connection_using_client(client_id: Vec<u8>) -> Option<Vec<ibc_primitives::IdentifiedConnection>>{
+			Ibc::connection_using_client(client_id).ok()
+		}
+
+		fn connection_handshake(client_id: Vec<u8>, connection_id: Vec<u8>) -> Option<ibc_primitives::ConnectionHandshake> {
+			Ibc::connection_handshake(client_id, connection_id).ok()
+		}
+
+		fn channel(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryChannelResponse> {
+			Ibc::channel(channel_id, port_id).ok()
+		}
+
+		fn channel_client(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::IdentifiedClientState> {
+			Ibc::channel_client(channel_id, port_id).ok()
+		}
+
+		fn connection_channels(connection_id: Vec<u8>) -> Option<ibc_primitives::QueryChannelsResponse> {
+			Ibc::connection_channels(connection_id).ok()
+		}
+
+		fn channels() -> Option<ibc_primitives::QueryChannelsResponse> {
+			Ibc::channels().ok()
+		}
+
+		fn packet_commitments(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryPacketCommitmentsResponse> {
+			Ibc::packet_commitments(channel_id, port_id).ok()
+		}
+
+		fn packet_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryPacketAcknowledgementsResponse>{
+			Ibc::packet_acknowledgements(channel_id, port_id).ok()
+		}
+
+		fn unreceived_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<u64>> {
+			Ibc::unreceived_packets(channel_id, port_id, seqs).ok()
+		}
+
+		fn unreceived_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<u64>> {
+			Ibc::unreceived_acknowledgements(channel_id, port_id, seqs).ok()
+		}
+
+		fn next_seq_recv(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryNextSequenceReceiveResponse> {
+			Ibc::next_seq_recv(channel_id, port_id).ok()
+		}
+
+		fn packet_commitment(channel_id: Vec<u8>, port_id: Vec<u8>, seq: u64) -> Option<ibc_primitives::QueryPacketCommitmentResponse> {
+			Ibc::packet_commitment(channel_id, port_id, seq).ok()
+		}
+
+		fn packet_acknowledgement(channel_id: Vec<u8>, port_id: Vec<u8>, seq: u64) -> Option<ibc_primitives::QueryPacketAcknowledgementResponse> {
+			Ibc::packet_acknowledgement(channel_id, port_id, seq).ok()
+		}
+
+		fn packet_receipt(channel_id: Vec<u8>, port_id: Vec<u8>, seq: u64) -> Option<ibc_primitives::QueryPacketReceiptResponse> {
+			Ibc::packet_receipt(channel_id, port_id, seq).ok()
+		}
+
+		fn denom_trace(_denom: Vec<u8>) -> Option<ibc_primitives::QueryDenomTraceResponse> {
+			None
+		}
+
+		fn denom_traces(_offset: Vec<u8>, _limit: u64, _height: u32) -> Option<ibc_primitives::QueryDenomTracesResponse> {
+			None
+		}
+	}
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn benchmark_metadata(extra: bool) -> (
@@ -1432,7 +1584,6 @@ impl_runtime_apis! {
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 			add_benchmarks!(params, batches);
-
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
 		}

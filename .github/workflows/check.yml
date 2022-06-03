@@ -4,12 +4,16 @@ name: CI Check
 
 on:
   push:
+    paths-ignore:
+      - frontend/**
     branches:
       - main
       # bors related branches. Please do not remove.
       - staging
       - trying      
   pull_request:
+    paths-ignore:
+      - frontend/**
     branches:
       - main
       - develop

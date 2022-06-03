@@ -20,6 +20,9 @@ serde = { version = "1.0.136", features = ["derive"] }
 common = { path = "../runtime/common" }
 composable-runtime = { path = "../runtime/composable", optional = true }
 dali-runtime = { path = "../runtime/dali", optional = true }
+ibc-rpc = { path = "../frame/ibc/ibc-rpc" }
+ibc-runtime-api = { path = "../frame/ibc/ibc-runtime-api" }
+pallet-ibc = { path = "../frame/ibc" }
 picasso-runtime = { path = "../runtime/picasso" }
 primitives = { path = "../runtime/primitives" }
 
