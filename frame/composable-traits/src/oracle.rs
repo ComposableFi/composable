@@ -3,6 +3,7 @@ use crate::{
 	defi::{CurrencyPair, Ratio},
 };
 use frame_support::{dispatch::DispatchError, pallet_prelude::*};
+use sp_runtime::Percent;
 use sp_std::vec::Vec;
 
 // block timestamped value
@@ -90,7 +91,6 @@ pub trait Oracle {
 		Self::get_price(asset, unit).map(|_| true)
 	}
 
-	/// Time Weighted Average Price
 	fn get_price_weighted(
 		asset_id: Self::AssetId,
 		amount: Self::Balance,
@@ -99,7 +99,7 @@ pub trait Oracle {
 	/// Time Weighted Average Price
 	fn get_twap(
 		asset_id: Self::AssetId,
-		weighting: Vec<Self::Balance>,
+		weighting: Vec<Percent>,
 	) -> Result<Self::Balance, DispatchError>;
 
 	/// How much of `quote` for unit `base` Oracle suggests to take.

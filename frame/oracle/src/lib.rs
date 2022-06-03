@@ -408,7 +408,8 @@ pub mod pallet {
 			} else {
 				let weights_length = if prices_length < WINDOW { prices_length } else { WINDOW };
 				// make flat weights
-				let weights = vec![(100_u128 / (weights_length as u128)).into(); weights_length];
+				let weight = Percent::from_percent(100) / weights_length;
+				let weights = vec![weight; weights_length];
 				let price = Self::get_twap(asset_id, weights)?;
 				Self::quote(asset_id, price, amount)
 			}
@@ -416,7 +417,7 @@ pub mod pallet {
 
 		fn get_twap(
 			asset_id: Self::AssetId,
-			weighting: Vec<Self::Balance>,
+			weighting: Vec<Percent>,
 		) -> Result<Self::Balance, DispatchError> {
 			Self::get_twap(asset_id, weighting)
 		}
@@ -954,19 +955,26 @@ pub mod pallet {
 		#[allow(clippy::indexing_slicing)] // to get CI to pass
 		pub fn get_twap(
 			asset_id: T::AssetId,
-			mut price_weights: Vec<T::PriceValue>,
+			price_weights: Vec<Percent>,
 		) -> Result<T::PriceValue, DispatchError> {
-			let precision: T::PriceValue = 100_u128.into();
+			let precision = Percent::from_percent(100);
 			let historical_prices = Self::price_history(asset_id);
 
 			// add an extra to account for current price not stored in history
 			ensure!(historical_prices.len() + 1 >= price_weights.len(), Error::<T>::DepthTooLarge);
 
-			let sum = Self::price_values_sum(&price_weights);
-			ensure!(sum == precision, Error::<T>::MustSumTo100);
+			let sum = price_weights
+				.iter()
+				.fold(Some(Percent::zero()), |a, b| a.and_then(|a| a.checked_add(b)));
+			ensure!(sum == Some(precision), Error::<T>::MustSumTo100);
+
+			let mut price_weights: Vec<T::PriceValue> =
+				price_weights.into_iter().map(|v| (v.deconstruct() as u128).into()).collect();
 
 			let last_weight = price_weights.pop().unwrap_or_else(|| 0_u128.into());
 			ensure!(last_weight != 0_u128.into(), Error::<T>::ArithmeticError);
+
+			let precision = (precision.deconstruct() as u128).into();
 
 			let mut weighted_prices = price_weights
 				.iter()

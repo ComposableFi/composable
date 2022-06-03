@@ -1384,13 +1384,28 @@ fn get_twap() {
 		let historic_prices = [price_1, price_2, price_3].to_vec();
 		set_historic_prices(0, historic_prices);
 
-		let twap = Oracle::get_twap(0, vec![20, 30, 50]);
+		let twap = Oracle::get_twap(
+			0,
+			vec![Percent::from_percent(20), Percent::from_percent(30), Percent::from_percent(50)],
+		);
 		// twap should be (0.2 * 100) + (0.3 * 120) + (0.5 * 101)
 		assert_eq!(twap, Ok(106));
-		let err_twap = Oracle::get_twap(0, vec![21, 30, 50]);
+		let err_twap = Oracle::get_twap(
+			0,
+			vec![Percent::from_percent(21), Percent::from_percent(30), Percent::from_percent(50)],
+		);
 		assert_eq!(err_twap, Err(Error::<Test>::MustSumTo100.into()));
 
-		let err_2_twap = Oracle::get_twap(0, vec![10, 10, 10, 10, 60]);
+		let err_2_twap = Oracle::get_twap(
+			0,
+			vec![
+				Percent::from_percent(10),
+				Percent::from_percent(10),
+				Percent::from_percent(10),
+				Percent::from_percent(10),
+				Percent::from_percent(60),
+			],
+		);
 		assert_eq!(err_2_twap, Err(Error::<Test>::DepthTooLarge.into()));
 	});
 }
