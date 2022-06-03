@@ -47,7 +47,9 @@
     "redux-localstorage-simple": "^2.4.1",
     "substrate-react": "0.1.7",
     "tiny-timer": "^1.6.0",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "immer": "^9.0.14",
+    "zustand": "^3.7.2"
   },
   "devDependencies": {
     "@babel/core": "^7.16.7",
