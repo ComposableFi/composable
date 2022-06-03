@@ -393,36 +393,32 @@ pub mod pallet {
 		) -> Result<Price<Self::Balance, Self::Timestamp>, DispatchError> {
 			let Price { price, block } =
 				Prices::<T>::try_get(asset_id).map_err(|_| Error::<T>::PriceNotFound)?;
-			let unit = 10_u128
-				.checked_pow(Self::LocalAssets::decimals(asset_id)?)
-				.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
-			let price = multiply_by_rational(price.into(), amount.into(), unit)
-				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
-			let price = price
-				.try_into()
-				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
+			let price = Self::quote(asset_id, price, amount)?;
 			Ok(Price { price, block })
+		}
+
+		fn get_price_weighted(
+			asset_id: Self::AssetId,
+			amount: Self::Balance,
+		) -> Result<Self::Balance, DispatchError> {
+			const WINDOW: usize = 3;
+			let prices_length = Self::depth_of_history(asset_id);
+			if prices_length == 0 {
+				Self::get_price(asset_id, amount).map(|p| p.price)
+			} else {
+				let weights_length = if prices_length < WINDOW { prices_length } else { WINDOW };
+				// make flat weights
+				let weights = vec![(100_u128 / (weights_length as u128)).into(); weights_length];
+				let price = Self::get_twap(asset_id, weights)?;
+				Self::quote(asset_id, price, amount)
+			}
 		}
 
 		fn get_twap(
 			asset_id: Self::AssetId,
 			weighting: Vec<Self::Balance>,
-			amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			let price = Self::get_twap(asset_id, weighting)?;
-			let unit = 10_u128
-				.checked_pow(Self::LocalAssets::decimals(asset_id)?)
-				.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
-			let price = multiply_by_rational(price.into(), amount.into(), unit)
-				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
-			let price = price
-				.try_into()
-				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
-			Ok(price)
-		}
-
-		fn depth_of_history(asset_id: T::AssetId) -> usize {
-			Self::price_history(asset_id).len()
+			Self::get_twap(asset_id, weighting)
 		}
 
 		fn get_ratio(
@@ -993,6 +989,26 @@ pub mod pallet {
 			ensure!(weighted_average != 0_u128.into(), Error::<T>::ArithmeticError);
 
 			Ok(weighted_average)
+		}
+
+		fn depth_of_history(asset_id: T::AssetId) -> usize {
+			Self::price_history(asset_id).len()
+		}
+
+		fn quote(
+			asset_id: T::AssetId,
+			price: T::PriceValue,
+			amount: T::PriceValue,
+		) -> Result<T::PriceValue, DispatchError> {
+			let unit = 10_u128
+				.checked_pow(<Self as Oracle>::LocalAssets::decimals(asset_id)?)
+				.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
+			let price = multiply_by_rational(price.into(), amount.into(), unit)
+				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
+			let price = price
+				.try_into()
+				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
+			Ok(price)
 		}
 
 		fn price_values_sum(price_values: &[T::PriceValue]) -> T::PriceValue {
