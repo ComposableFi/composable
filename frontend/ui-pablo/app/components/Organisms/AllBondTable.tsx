@@ -11,12 +11,13 @@ import {
   Tooltip,
 } from "@mui/material";
 import { BaseAsset, PairAsset } from "../Atoms";
-import { useAppDispatch, useAppSelector } from "@/hooks/store";
+import { useAppDispatch } from "@/hooks/store";
 import { addNextDataBondPools } from "@/stores/defi/polkadot";
 import React, { useEffect, useState } from "react";
 import { InfoOutlined, KeyboardArrowDown } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
 import { useRouter } from "next/router";
+import useStore from "../../store/useStore";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -41,8 +42,9 @@ export const AllBondTable: React.FC = () => {
   const theme = useTheme();
   const router = useRouter();
   const [startIndex, setStartIndex] = useState(0);
-  const pools = useAppSelector((state) => state.polkadot.allBondPools);
+  const { allBonds } = useStore();
 
+  /*TBD : add see more support for allBonds*/
   const handleSeeMore = () => {
     dispatch(addNextDataBondPools({ startIndex: startIndex + 4 }));
     setStartIndex(startIndex + 4);
@@ -52,6 +54,7 @@ export const AllBondTable: React.FC = () => {
     router.push("bond/select");
   };
 
+  /*TBD : add see more support for allBonds*/
   useEffect(() => {
     dispatch(addNextDataBondPools({ startIndex }));
   }, []);
@@ -67,7 +70,7 @@ export const AllBondTable: React.FC = () => {
                   {th.header}
                   {th.tooltip && (
                     <Tooltip arrow title={th.tooltip}>
-                      <InfoOutlined color="primary" fontSize="small"/>
+                      <InfoOutlined color="primary" fontSize="small" />
                     </Tooltip>
                   )}
                 </Box>
@@ -76,36 +79,47 @@ export const AllBondTable: React.FC = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {pools.map((pool, index) => (
+          {allBonds.map((bond, index) => (
             <TableRow
               key={index}
               onClick={handleBondClick}
               sx={{ cursor: "pointer" }}
             >
               <TableCell align="left">
-                {pool.token2 ? (
+                {bond.assetPair.token2 ? (
                   <PairAsset
                     assets={[
-                      { icon: pool.token1.icon, label: pool.token1.symbol },
-                      { icon: pool.token2.icon, label: pool.token2.symbol },
+                      {
+                        icon: bond.assetPair.token1.icon,
+                        label: bond.assetPair.token1.symbol,
+                      },
+                      {
+                        icon: bond.assetPair.token2.icon,
+                        label: bond.assetPair.token2.symbol,
+                      },
                     ]}
                     separator="/"
                   />
                 ) : (
-                  <BaseAsset label={pool.token1.symbol} icon={pool.token1.icon} />
+                  <BaseAsset
+                    label={bond.assetPair.token1.symbol}
+                    icon={bond.assetPair.token1.icon}
+                  />
                 )}
               </TableCell>
               <TableCell align="left">
-                <Typography variant="body2">${pool.price.toFormat()}</Typography>
+                <Typography variant="body2">
+                  ${bond.price.toFormat()}
+                </Typography>
               </TableCell>
               <TableCell align="left">
                 <Typography variant="body2" color="featured.main">
-                  {pool.roi.toFormat()}%
+                  {bond.roi.toFormat()}%
                 </Typography>
               </TableCell>
               <TableCell align="left">
                 <Typography variant="body2">
-                  ${pool.volume.toFormat()}
+                  ${bond.totalPurchased.toFormat()}
                 </Typography>
               </TableCell>
             </TableRow>

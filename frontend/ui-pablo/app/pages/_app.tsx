@@ -17,6 +17,7 @@ import LiquidityBootstrappingUpdater from "@/store/updaters/pools/Updater";
 import SwapsUpdater from "@/store/updaters/swaps/Updater";
 import BalancesUpdater from "@/store/updaters/balances/Updater";
 import AuctionsUpdater from "@/store/updaters/auctions/Updater";
+import BondsUpdater from "@/store/updaters/bonds/Updater";
 
 import * as definitions from "@/defi/polkadot/interfaces/definitions";
 import { SnackbarProvider } from "notistack";
@@ -133,6 +134,7 @@ export default function MyApp(props: MyAppProps) {
               >
                 <>
                   <AuctionsUpdater />
+                  <BondsUpdater />
                   <SwapsUpdater />
                   <LiquidityBootstrappingUpdater />
                   <BalancesUpdater />
