@@ -1,5 +1,5 @@
 [Unit]
-Description=Subsquid
+Description=Subsquid Processor
 Documentation=https://github.com/ComposableFi/composable/blob/main/subsquid/README.md
 After=network.target
 
@@ -9,7 +9,7 @@ ExecStart=node -r dotenv/config lib/processor.js
 WorkingDirectory={{ work_dir }}/subsquid
 StandardOutput=syslog
 StandardError=syslog
-SyslogIdentifier=subsquid
+SyslogIdentifier=subsquid-processor
 User={{ user }}
 Group={{ group }}
 

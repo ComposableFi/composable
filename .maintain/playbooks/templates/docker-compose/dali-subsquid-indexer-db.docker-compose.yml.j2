@@ -9,5 +9,5 @@ services:
       POSTGRES_DB: squid
       POSTGRES_PASSWORD: squid
     ports:
-      - "23798:5432"
+      - "{{ indexer_db_port }}:5432"
       # command: ["postgres", "-c", "log_statement=all"]

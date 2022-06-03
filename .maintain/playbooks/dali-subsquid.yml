@@ -6,10 +6,13 @@
   vars:
     user: subsquid
     group: subsquid
+
     work_dir: /srv/composable
     infra_dir: /srv/subsquid_infra
     archiver_dir: "{{ infra_dir }}/archiver"
     indexer_db_dir: "{{ infra_dir }}/indexer_db"
+
+    indexer_db_port: 23799
 
   tasks:
   - name: Initialization
@@ -277,8 +280,8 @@
 
   - name: Run migrations
     ansible.builtin.shell: |
-      npx sqd db create
-      npx sqd db migrate
+      DB_PORT={{ indexer_db_port }} npx sqd db create
+      DB_PORT={{ indexer_db_ port }} npx sqd db migrate
     args:
       chdir: "{{ work_dir }}/subsquid"
     become: yes
