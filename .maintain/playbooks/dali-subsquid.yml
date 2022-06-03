@@ -52,7 +52,7 @@
         - path: "{{ infra_dir }}"
       become: yes
 
-    - name: Create work directory
+    - name: Create directories
       ansible.builtin.file:
         path: "{{ item.path }}"
         state: directory
