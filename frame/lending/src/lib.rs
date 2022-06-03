@@ -42,6 +42,7 @@ pub mod weights;
 pub use crate::weights::WeightInfo;
 
 mod models;
+mod validation2;
 
 #[cfg(test)]
 mod mocks;
@@ -49,8 +50,8 @@ mod mocks;
 mod mocks_offchain;
 #[cfg(test)]
 mod tests;
-#[cfg(test)]
-mod tests_offchain;
+//#[cfg(test)]
+//mod tests_offchain;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
@@ -67,21 +68,26 @@ mod repay_borrow;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use crate::{models::borrower_data::BorrowerData, weights::WeightInfo};
+	use crate::{
+		models::borrower_data::BorrowerData,
+		validation2::{
+			AssetIsSupportedByOracle, CurrencyPairIsNotSame, MarketModelValid, UpdateInputValid,
+		},
+		weights::WeightInfo,
+	};
 
 	use codec::Codec;
 	use composable_support::{
 		math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub},
-		validation::{TryIntoValidated, Validated},
+		validation2::{TryIntoValidated, Validated},
 	};
 	use composable_traits::{
 		currency::CurrencyFactory,
 		defi::{DeFiComposableConfig, *},
 		lending::{
 			math::{self, *},
-			BorrowAmountOf, CollateralLpAmountOf, CreateInput, CurrencyPairIsNotSame, Lending,
-			MarketConfig, MarketModelValid, RepayStrategy, TotalDebtWithInterest, UpdateInput,
-			UpdateInputValid,
+			BorrowAmountOf, CollateralLpAmountOf, CreateInput, Lending, MarketConfig,
+			RepayStrategy, TotalDebtWithInterest, UpdateInput,
 		},
 		liquidation::Liquidation,
 		oracle::Oracle,
@@ -367,6 +373,7 @@ pub mod pallet {
 	}
 
 	#[pallet::error]
+	#[derive(PartialEq)]
 	pub enum Error<T> {
 		Overflow,
 		Underflow,
@@ -446,6 +453,10 @@ pub mod pallet {
 		MaxLiquidationBatchSizeExceeded,
 
 		PriceTooOld,
+
+		InterestRateModelIsNotValid,
+
+		BaseAndQuoteCurrenciesInPairAreSame,
 	}
 
 	#[pallet::event]
@@ -627,12 +638,15 @@ pub mod pallet {
 		#[transactional]
 		pub fn create_market(
 			origin: OriginFor<T>,
-			input: Validated<CreateInputOf<T>, (MarketModelValid, CurrencyPairIsNotSame)>,
+			input: Validated<
+				CreateInputOf<T>,
+				(MarketModelValid<T>, CurrencyPairIsNotSame<T>, AssetIsSupportedByOracle<T>),
+				DispatchError,
+			>,
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			let input = input.value();
-			let pair = input.currency_pair;
+			let pair = input.clone().value().currency_pair;
 			let (market_id, vault_id) = Self::create(who.clone(), input, keep_alive)?;
 			Self::deposit_event(Event::<T>::MarketCreated {
 				market_id,
@@ -652,7 +666,8 @@ pub mod pallet {
 			market_id: MarketIndex,
 			input: Validated<
 				UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>,
-				UpdateInputValid,
+				UpdateInputValid<T>,
+				Error<T>,
 			>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -1222,31 +1237,16 @@ pub mod pallet {
 		type MarketId = MarketIndex;
 		type BlockNumber = T::BlockNumber;
 		type LiquidationStrategyId = <T as Config>::LiquidationStrategyId;
-
-		fn create(
+		fn create<MarketModelValid, CurrencyPairIsNotSame, AssetIsSupportedByOracle, ErrorType>(
 			manager: Self::AccountId,
-			config_input: CreateInput<
-				Self::LiquidationStrategyId,
-				Self::MayBeAssetId,
-				Self::BlockNumber,
+			input: Validated<
+				CreateInputOf<T>,
+				(MarketModelValid, CurrencyPairIsNotSame, AssetIsSupportedByOracle),
+				ErrorType,
 			>,
 			keep_alive: bool,
 		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
-			// TODO: Replace with `Validate`
-			ensure!(
-				config_input.updatable.collateral_factor > 1.into(),
-				Error::<T>::CollateralFactorMustBeMoreThanOne
-			);
-
-			ensure!(
-				<T::Oracle as Oracle>::is_supported(config_input.borrow_asset())?,
-				Error::<T>::BorrowAssetNotSupportedByOracle
-			);
-			ensure!(
-				<T::Oracle as Oracle>::is_supported(config_input.collateral_asset())?,
-				Error::<T>::CollateralAssetNotSupportedByOracle
-			);
-
+			let config_input = input.value();
 			LendingCount::<T>::try_mutate(|MarketIndex(previous_market_index)| {
 				let market_id = {
 					// TODO: early mutation of `previous_market_index` value before check.

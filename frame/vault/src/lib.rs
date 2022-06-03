@@ -68,7 +68,7 @@ pub mod pallet {
 		weights::WeightInfo,
 	};
 	use codec::{Codec, FullCodec};
-	use composable_support::validation::Validated;
+	use composable_support::validation2::Validated;
 	use composable_traits::{
 		currency::RangeId,
 		defi::Rate,
@@ -474,7 +474,7 @@ pub mod pallet {
 		pub fn add_surcharge(
 			origin: OriginFor<T>,
 			dest: T::VaultId,
-			amount: Validated<BalanceOf<T>, ValidateCreationDeposit<T>>,
+			amount: Validated<BalanceOf<T>, ValidateCreationDeposit<T>, &'static str>,
 		) -> DispatchResultWithPostInfo {
 			let origin = ensure_signed(origin)?;
 
@@ -641,7 +641,11 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn do_create_vault(
 			deposit: Deposit<BalanceOf<T>, BlockNumberOf<T>>,
-			config: Validated<VaultConfig<T::AccountId, T::AssetId>, ValidateMaxStrategies<T>>,
+			config: Validated<
+				VaultConfig<T::AccountId, T::AssetId>,
+				ValidateMaxStrategies<T>,
+				&'static str,
+			>,
 		) -> Result<(T::VaultId, VaultInfo<T>), DispatchError> {
 			// 1. check config
 			// 2. lock endowment

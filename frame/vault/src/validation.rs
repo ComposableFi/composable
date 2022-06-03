@@ -1,5 +1,5 @@
 use crate::pallet::{BalanceOf, Config};
-use composable_support::validation::Validate;
+use composable_support::validation2::Validate;
 use composable_traits::vault::VaultConfig;
 use core::marker::PhantomData;
 use frame_support::traits::Get;
@@ -14,7 +14,9 @@ pub struct ValidateMaxStrategies<T> {
 	_marker: PhantomData<T>,
 }
 
-impl<T: Config> Validate<BalanceOf<T>, ValidateCreationDeposit<T>> for ValidateCreationDeposit<T> {
+impl<T: Config> Validate<BalanceOf<T>, ValidateCreationDeposit<T>, &'static str>
+	for ValidateCreationDeposit<T>
+{
 	fn validate(input: BalanceOf<T>) -> Result<BalanceOf<T>, &'static str> {
 		if input < T::CreationDeposit::get() {
 			return Err("Insufficent Creation Deposit")
@@ -24,7 +26,8 @@ impl<T: Config> Validate<BalanceOf<T>, ValidateCreationDeposit<T>> for ValidateC
 	}
 }
 
-impl<T: Config> Validate<VaultConfig<T::AccountId, T::AssetId>, ValidateMaxStrategies<T>>
+impl<T: Config>
+	Validate<VaultConfig<T::AccountId, T::AssetId>, ValidateMaxStrategies<T>, &'static str>
 	for ValidateMaxStrategies<T>
 {
 	fn validate(

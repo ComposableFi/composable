@@ -6,19 +6,17 @@ use sp_runtime::DispatchError;
 /// Validated during construction or serde.
 #[derive(Default)]
 pub struct Validated<T, U, E> {
-    value: T,
+	value: T,
 	_marker: PhantomData<(U, E)>,
 }
 
-impl<T, U, E> Clone for Validated<T, U, E> 
-    where T: Clone,
+impl<T, U, E> Clone for Validated<T, U, E>
+where
+	T: Clone,
 {
-    fn clone(&self) -> Self {
-        Self { 
-           value: self.value.clone(), 
-           _marker: PhantomData::<(U,E)>, 
-       } 
-    }
+	fn clone(&self) -> Self {
+		Self { value: self.value.clone(), _marker: PhantomData::<(U, E)> }
+	}
 }
 
 impl<T, U, E> TypeInfo for Validated<T, U, E>
@@ -52,14 +50,14 @@ where
 	}
 }
 
-impl<T, U, E> Validated<T, U, E> 
+impl<T, U, E> Validated<T, U, E>
 where
-    Validated<T, U, E>: Validate<T, U, E>,
+	Validated<T, U, E>: Validate<T, U, E>,
 	U: Validate<T, U, E>,
 {
 	pub fn new(value: T) -> Result<Self, E> {
 		match <U as Validate<T, U, E>>::validate(value) {
-			Ok(value) => Ok(Self { value, _marker: PhantomData}),
+			Ok(value) => Ok(Self { value, _marker: PhantomData }),
 			Err(e) => Err(e),
 		}
 	}
@@ -95,8 +93,6 @@ impl<T, E, U: Validate<T, U, E>> Validate<T, U, E> for Validated<T, U, E> {
 	}
 }
 
-
-
 impl<T, U, V, E> Validate<T, (U, V), E> for (U, V)
 where
 	U: Validate<T, U, E>,
@@ -116,7 +112,7 @@ where
 impl<T, U, V, W, E> Validate<T, (U, V, W), E> for (U, V, W)
 where
 	U: Validate<T, U, E>,
-    V: Validate<T, V, E>,
+	V: Validate<T, V, E>,
 	W: Validate<T, W, E>,
 {
 	#[inline(always)]
@@ -145,22 +141,21 @@ where
 	}
 }
 
-
-impl<T: codec::Decode, U: Validate<T, U, E>, E> codec::Decode for Validated<T, U, E> 
-    where E: Into<&'static str>, 
+impl<T: codec::Decode, U: Validate<T, U, E>, E> codec::Decode for Validated<T, U, E>
+where
+	E: Into<&'static str>,
 {
 	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
-        let value = match  <U as Validate<T, U, E>>::validate(T::decode(input)?) {
-            Ok(value) => value, 
-            Err(error) => return Err(codec::Error::from(error.into())),
-        };
-		Ok(Validated { value, _marker: PhantomData})
+		let value = match <U as Validate<T, U, E>>::validate(T::decode(input)?) {
+			Ok(value) => value,
+			Err(error) => return Err(codec::Error::from(error.into())),
+		};
+		Ok(Validated { value, _marker: PhantomData })
 	}
 	fn skip<I: codec::Input>(input: &mut I) -> Result<(), codec::Error> {
 		T::skip(input)
 	}
 }
-
 
 /// Originally there to have `WrapperTypeEncode` work, but now also used in order to prevent
 /// .value() calls everywhere
@@ -180,7 +175,6 @@ impl<T: codec::Encode + codec::Decode, E, U: Validate<T, U, E>> codec::WrapperTy
 	}
 */
 
-
 #[cfg(test)]
 mod test {
 	use super::*;
@@ -191,25 +185,25 @@ mod test {
 	struct ValidARange;
 	#[derive(Debug, Eq, PartialEq, Default)]
 	struct ValidBRange;
-    #[derive(Debug, Eq, PartialEq, Default, Decode, Encode)]
-    pub struct Valid;
+	#[derive(Debug, Eq, PartialEq, Default, Decode, Encode)]
+	pub struct Valid;
 
-    #[derive(Debug, Eq, PartialEq, Default, Decode, Encode)]
-    pub struct Invalid;
+	#[derive(Debug, Eq, PartialEq, Default, Decode, Encode)]
+	pub struct Invalid;
 
-    impl<T> Validate<T, Invalid, Error> for Invalid {
-	#[inline(always)]
-	fn validate(_input: T) -> Result<T, Error> {
-		Err(Error::NotValid)
-	    }
-    }
-
-impl<T> Validate<T, Valid, Error> for Valid {
-	#[inline(always)]
-	fn validate(input: T) -> Result<T, Error> {
-		Ok(input)
+	impl<T> Validate<T, Invalid, Error> for Invalid {
+		#[inline(always)]
+		fn validate(_input: T) -> Result<T, Error> {
+			Err(Error::NotValid)
+		}
 	}
-}
+
+	impl<T> Validate<T, Valid, Error> for Valid {
+		#[inline(always)]
+		fn validate(input: T) -> Result<T, Error> {
+			Ok(input)
+		}
+	}
 
 	type CheckARangeTag = (ValidARange, Valid);
 	type CheckBRangeTag = (ValidBRange, Valid);
@@ -229,28 +223,33 @@ impl<T> Validate<T, Valid, Error> for Valid {
 		a: u32,
 		b: u32,
 	}
-   #[derive(frame_support::codec::Encode,frame_support::codec::Decode,frame_support::scale_info::TypeInfo,frame_support::PalletError, Debug, PartialEq)]
-    pub enum Error {
-        NotValid,
-        OutOfRange,
-    }
-   
-impl Error {
+	#[derive(
+		frame_support::codec::Encode,
+		frame_support::codec::Decode,
+		frame_support::scale_info::TypeInfo,
+		frame_support::PalletError,
+		Debug,
+		PartialEq,
+	)]
+	pub enum Error {
+		NotValid,
+		OutOfRange,
+	}
 
-   pub fn as_str(&self) ->  & 'static str {
-      match&self {
-       Self::NotValid => "NotValid",
-        Self::OutOfRange => "OutOfRange",
-        }
-    }
- } 
- 
-    impl From<Error> for &'static str {
-    fn from(err:Error) -> &'static str {
-           err.as_str()      
-        }
-    }
- 
+	impl Error {
+		pub fn as_str(&self) -> &'static str {
+			match &self {
+				Self::NotValid => "NotValid",
+				Self::OutOfRange => "OutOfRange",
+			}
+		}
+	}
+
+	impl From<Error> for &'static str {
+		fn from(err: Error) -> &'static str {
+			err.as_str()
+		}
+	}
 
 	impl Validate<X, ValidARange, Error> for ValidARange {
 		fn validate(input: X) -> Result<X, Error> {
@@ -278,16 +277,16 @@ impl Error {
 		assert!(<ManyValidatorsTagsNestedInvalid as Validate<
 			X,
 			ManyValidatorsTagsNestedInvalid,
-            Error
+			Error,
 		>>::validate(valid)
 		.is_err());
 
 		let valid = X { a: 10, b: 10 };
-		assert_ok!(
-			<ManyValidatorsTagsNestedValid as Validate<X, ManyValidatorsTagsNestedValid, Error>>::validate(
-				valid
-			)
-		);
+		assert_ok!(<ManyValidatorsTagsNestedValid as Validate<
+			X,
+			ManyValidatorsTagsNestedValid,
+			Error,
+		>>::validate(valid));
 	}
 
 	#[test]
@@ -305,9 +304,12 @@ impl Error {
 	fn flat_validator_multiple_invalid() {
 		let value = X { a: 10, b: 0xCAFEBABE };
 
-		assert!(
-			<ManyValidatorsTagsFlatInvalid as Validate<X, ManyValidatorsTagsFlatInvalid, Error>>::validate(value).is_err()
-		);
+		assert!(<ManyValidatorsTagsFlatInvalid as Validate<
+			X,
+			ManyValidatorsTagsFlatInvalid,
+			Error,
+		>>::validate(value)
+		.is_err());
 	}
 
 	#[test]
@@ -336,7 +338,7 @@ impl Error {
 		let bytes = valid.encode();
 
 		assert_eq!(
-			Ok(Validated { value: valid, _marker: PhantomData}),
+			Ok(Validated { value: valid, _marker: PhantomData }),
 			Validated::<X, CheckARangeTag, Error>::decode(&mut &bytes[..])
 		);
 	}
@@ -365,7 +367,7 @@ impl Error {
 		let valid = X { a: 0xCAFEBABE, b: 10 };
 		let bytes = valid.encode();
 		assert_eq!(
-			Ok(Validated { value: valid, _marker: PhantomData}),
+			Ok(Validated { value: valid, _marker: PhantomData }),
 			Validated::<X, CheckBRangeTag, Error>::decode(&mut &bytes[..])
 		);
 	}
@@ -383,7 +385,7 @@ impl Error {
 		let valid = X { a: 10, b: 10 };
 		let bytes = valid.encode();
 		assert_eq!(
-			Ok(Validated { value: valid, _marker: PhantomData}),
+			Ok(Validated { value: valid, _marker: PhantomData }),
 			Validated::<X, CheckABRangeTag, Error>::decode(&mut &bytes[..])
 		);
 	}
@@ -417,7 +419,7 @@ impl Error {
 		let value = X { a: 10, b: 0xDEADC0DE };
 		let bytes = value.encode();
 		assert_eq!(
-			Ok(Validated { value, _marker: PhantomData}),
+			Ok(Validated { value, _marker: PhantomData }),
 			Validated::<X, (Valid, Valid, Valid), Error>::decode(&mut &bytes[..])
 		);
 	}
@@ -434,7 +436,7 @@ impl Error {
 	#[test]
 	fn try_into_valid() {
 		let value = 42_u32.try_into_validated::<Valid>().unwrap();
-		assert_eq!(value, Validated { value: 42, _marker: PhantomData});
+		assert_eq!(value, Validated { value: 42, _marker: PhantomData });
 	}
 
 	#[test]
@@ -444,4 +446,3 @@ impl Error {
 		assert!(value.is_err());
 	}
 }
-

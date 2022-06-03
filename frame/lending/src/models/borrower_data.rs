@@ -1,6 +1,6 @@
 use composable_support::{
 	math::safe::{SafeAdd, SafeDiv, SafeMul},
-	validation::Validated,
+	validation2::Validated,
 };
 use composable_traits::{
 	currency::MathBalance,
@@ -26,7 +26,7 @@ pub struct BorrowerData {
 	/// See [`MarketConfig::collateral_factor`] for more information.
 	///
 	/// [`MarketConfig::collateral_factor`]: composable_traits::lending::MarketConfig
-	pub collateral_factor: Validated<FixedU128, MoreThanOne>,
+	pub collateral_factor: Validated<FixedU128, MoreThanOne, &'static str>,
 	pub under_collateralized_warn_percent: Percent,
 }
 
@@ -35,7 +35,7 @@ impl BorrowerData {
 	pub fn new<T: MathBalance>(
 		collateral_balance_total_value: T,
 		borrow_balance_total_value: T,
-		collateral_factor: Validated<FixedU128, MoreThanOne>,
+		collateral_factor: Validated<FixedU128, MoreThanOne, &'static str>,
 		under_collateralized_warn_percent: Percent,
 	) -> Self {
 		Self {

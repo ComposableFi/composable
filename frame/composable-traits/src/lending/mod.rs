@@ -7,13 +7,10 @@ use crate::{
 	defi::{CurrencyPair, DeFiEngine, MoreThanOneFixedU128},
 	time::Timestamp,
 };
-use composable_support::validation::{TryIntoValidated, Validate};
+use composable_support::validation2::Validated;
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 use scale_info::TypeInfo;
-use sp_runtime::{
-	traits::{One, Zero},
-	Percent,
-};
+use sp_runtime::{traits::Zero, Percent};
 
 use self::math::*;
 
@@ -32,9 +29,6 @@ pub type CollateralLpAmountOf<T> = <T as DeFiEngine>::Balance;
 
 pub type BorrowAmountOf<T> = <T as DeFiEngine>::Balance;
 
-#[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
-pub struct UpdateInputValid;
-
 #[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq)]
 pub struct UpdateInput<LiquidationStrategyId, BlockNumber> {
 	/// Collateral factor of market
@@ -49,25 +43,6 @@ pub struct UpdateInput<LiquidationStrategyId, BlockNumber> {
 	pub max_price_age: BlockNumber,
 }
 
-impl<LiquidationStrategyId, BlockNumber>
-	Validate<UpdateInput<LiquidationStrategyId, BlockNumber>, UpdateInputValid> for UpdateInputValid
-{
-	fn validate(
-		update_input: UpdateInput<LiquidationStrategyId, BlockNumber>,
-	) -> Result<UpdateInput<LiquidationStrategyId, BlockNumber>, &'static str> {
-		if update_input.collateral_factor < MoreThanOneFixedU128::one() {
-			return Err("collateral factor must be >= 1")
-		}
-
-		let interest_rate_model = update_input
-			.interest_rate_model
-			.try_into_validated::<InteresteRateModelIsValid>()?
-			.value();
-
-		Ok(UpdateInput { interest_rate_model, ..update_input })
-	}
-}
-
 /// input to create market extrinsic
 ///
 /// Input to [`Lending::create()`].
@@ -80,39 +55,6 @@ pub struct CreateInput<LiquidationStrategyId, AssetId, BlockNumber> {
 	pub currency_pair: CurrencyPair<AssetId>,
 	/// Reserve factor of market borrow vault.
 	pub reserved_factor: Perquintill,
-}
-
-#[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
-pub struct MarketModelValid;
-#[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
-pub struct CurrencyPairIsNotSame;
-
-impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
-	Validate<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, MarketModelValid>
-	for MarketModelValid
-{
-	fn validate(
-		create_input: CreateInput<LiquidationStrategyId, Asset, BlockNumber>,
-	) -> Result<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, &'static str> {
-		let updatable = create_input.updatable.try_into_validated::<UpdateInputValid>()?.value();
-
-		Ok(CreateInput { updatable, ..create_input })
-	}
-}
-
-impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
-	Validate<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, CurrencyPairIsNotSame>
-	for CurrencyPairIsNotSame
-{
-	fn validate(
-		create_input: CreateInput<LiquidationStrategyId, Asset, BlockNumber>,
-	) -> Result<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, &'static str> {
-		if create_input.currency_pair.base == create_input.currency_pair.quote {
-			Err("currency pair must be different assets")
-		} else {
-			Ok(create_input)
-		}
-	}
 }
 
 impl<LiquidationStrategyId, AssetId: Copy, BlockNumber>
@@ -292,9 +234,13 @@ pub trait Lending: DeFiEngine {
 	/// but the lending Market would have all the lendable funds in a single vault.
 	///
 	/// Returned `MarketId` is mapped one to one with (deposit VaultId, collateral VaultId)
-	fn create(
+	fn create<V1, V2, V3, E>(
 		manager: Self::AccountId,
-		config: CreateInput<Self::LiquidationStrategyId, Self::MayBeAssetId, Self::BlockNumber>,
+		config: Validated<
+			CreateInput<Self::LiquidationStrategyId, Self::MayBeAssetId, Self::BlockNumber>,
+			(V1, V2, V3),
+			E,
+		>,
 		keep_alive: bool,
 	) -> Result<(Self::MarketId, Self::VaultId), DispatchError>;
 

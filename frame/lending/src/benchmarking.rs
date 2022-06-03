@@ -5,7 +5,7 @@
 
 use super::{setup::*, *};
 use crate::{self as pallet_lending, Pallet as Lending};
-use composable_support::validation::TryIntoValidated;
+use composable_support::validation2::TryIntoValidated;
 use composable_traits::{
 	defi::{CurrencyPair, DeFiComposableConfig},
 	lending::{CreateInput, Lending as LendingTrait, RepayStrategy},
