@@ -7,7 +7,6 @@ use crate::{
 	models::AirdropState,
 	AccountIdOf, Error,
 };
-use codec::Encode;
 use composable_support::types::{EcdsaSignature, EthereumAddress};
 use frame_support::{assert_err, assert_noop, assert_ok, traits::Currency};
 use hex_literal::hex;
