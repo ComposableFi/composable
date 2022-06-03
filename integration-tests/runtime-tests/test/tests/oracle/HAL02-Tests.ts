@@ -272,8 +272,7 @@ describe("HAL02 [Oracle] Tests", function () {
         expect(result1ReportedPrice.toNumber())
           .to.be.equal(result2ReportedPrice.toNumber())
           .to.be.equal(correctPrice.toNumber());
-        expect(result3ReportedPrice.toNumber())
-          .to.be.equal(maliciousPrice.toNumber());
+        expect(result3ReportedPrice.toNumber()).to.be.equal(maliciousPrice.toNumber());
 
         expect(result1AccountID.toString()).to.equal(api.createType("AccountId32", walletHAL02_1.publicKey).toString());
         expect(result2AccountID.toString()).to.equal(api.createType("AccountId32", walletHAL02_2.publicKey).toString());

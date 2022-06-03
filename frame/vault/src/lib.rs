@@ -87,7 +87,6 @@ pub mod pallet {
 				Transfer as TransferNative,
 			},
 			fungibles::{Inspect, Mutate, MutateHold, Transfer},
-			tokens::DepositConsequence,
 		},
 		transactional, PalletId,
 	};
@@ -781,20 +780,25 @@ pub mod pallet {
 			);
 
 			let to = Self::account_id(vault_id);
+
+			let lp = Self::do_calculate_lp_tokens_to_mint(vault_id, &vault, amount)?;
+
+			T::Currency::transfer(vault.asset_id, from, &to, amount, true)
+				.map_err(|_| Error::<T>::TransferFromFailed)?;
+			T::Currency::mint_into(vault.lp_token_id, from, lp)
+				.map_err(|_| Error::<T>::MintFailed)?;
+			Ok(lp)
+		}
+
+		fn do_calculate_lp_tokens_to_mint(
+			vault_id: &T::VaultId,
+			vault: &VaultInfo<T>,
+			amount: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
 			let vault_aum = Self::assets_under_management(vault_id)?;
 			if vault_aum.is_zero() {
-				ensure!(
-					T::Currency::can_deposit(vault.lp_token_id, from, amount, false) ==
-						DepositConsequence::Success,
-					Error::<T>::MintFailed
-				);
-
 				// No assets in the vault means we should have no outstanding LP tokens, we can thus
 				// freely mint new tokens without performing the calculation.
-				T::Currency::transfer(vault.asset_id, from, &to, amount, true)
-					.map_err(|_| Error::<T>::TransferFromFailed)?;
-				T::Currency::mint_into(vault.lp_token_id, from, amount)
-					.map_err(|_| Error::<T>::MintFailed)?;
 				Ok(amount)
 			} else {
 				// Compute how much of the underlying assets are deposited. LP tokens are allocated
@@ -813,17 +817,6 @@ pub mod pallet {
 				let lp = <T::Convert as Convert<u128, T::Balance>>::convert(lp);
 
 				ensure!(lp > T::Balance::zero(), Error::<T>::InsufficientCreationDeposit);
-
-				ensure!(
-					T::Currency::can_deposit(vault.lp_token_id, from, lp, false) ==
-						DepositConsequence::Success,
-					Error::<T>::MintFailed
-				);
-
-				T::Currency::transfer(vault.asset_id, from, &to, amount, true)
-					.map_err(|_| Error::<T>::TransferFromFailed)?;
-				T::Currency::mint_into(vault.lp_token_id, from, lp)
-					.map_err(|_| Error::<T>::MintFailed)?;
 				Ok(lp)
 			}
 		}
@@ -955,6 +948,24 @@ pub mod pallet {
 			let vault_index =
 				LpTokensToVaults::<T>::try_get(&token).map_err(|_| Error::<T>::NotVaultLpToken)?;
 			Ok(vault_index)
+		}
+
+		fn calculate_lp_tokens_to_mint(
+			vault_id: &Self::VaultId,
+			amount: Self::Balance,
+		) -> Result<Self::Balance, DispatchError> {
+			let vault = Self::vault_info(vault_id)?;
+			let lp = Self::do_calculate_lp_tokens_to_mint(vault_id, &vault, amount)?;
+			Ok(lp)
+		}
+
+		fn lp_share_value(
+			vault_id: &Self::VaultId,
+			lp_amount: Self::Balance,
+		) -> Result<Self::Balance, DispatchError> {
+			let vault = Self::vault_info(vault_id)?;
+			let amount = Self::do_lp_share_value(vault_id, &vault, lp_amount)?;
+			Ok(amount)
 		}
 	}
 

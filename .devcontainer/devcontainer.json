@@ -70,7 +70,8 @@
 		"tomoki1207.pdf",
 		"vscode-icons-team.vscode-icons",
 		"GitHub.github-vscode-theme",
-		"esbenp.prettier-vscode"
+		"streetsidesoftware.code-spell-checker",
+		"zxh404.vscode-proto3"
 	],
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
