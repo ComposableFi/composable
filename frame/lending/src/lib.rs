@@ -348,7 +348,7 @@ pub mod pallet {
 					borrowers: BoundedVec::<_, T::MaxLiquidationBatchSize>::try_from(vec![
 						account.clone()
 					])
-					.unwrap(),
+					.expect("This function never panics"),
 				});
 
 				for (_acc, res) in &results {
