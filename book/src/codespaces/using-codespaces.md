@@ -40,3 +40,14 @@ Start coding away. While coding, continually commit and push your changes with t
 
 ![Commit sidebar](./commit-sidebar.png)
 *Commit sidebar*
+
+### Open a draft pull-request
+
+Once you've pushed one commit, you can open a draft pull-request with the pull-requests sidebar. Then, you can view your PR while you are working on it:
+
+![Pull-request](./pull-request.png)
+
+### PR Comments while you code
+
+You can then continue working on your PR as usual. When someone comments on a piece of code that you are editing, you will see it in-place:
+
