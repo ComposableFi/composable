@@ -73,12 +73,3 @@ services:
     network_mode: host
     image: redis:6.0-alpine
     restart: always
-
-  indexer-db:
-    image: postgres:12
-    environment:
-      POSTGRES_DB: squid
-      POSTGRES_PASSWORD: squid
-    ports:
-      - "23798:5432"
-      # command: ["postgres", "-c", "log_statement=all"]
