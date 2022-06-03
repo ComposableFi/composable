@@ -921,9 +921,9 @@ pub mod pallet {
 			now: &Option<MomentOf<T>>,
 		) -> Result<DecimalOf<T>, DispatchError> {
 			// Sanity checks
-			Self::update_twap_sanity_check(&vamm_state, asset_type, Some(new_twap), now)?;
+			Self::update_twap_sanity_check(vamm_state, asset_type, Some(new_twap), now)?;
 
-			let now = Self::now_from_option(&now);
+			let now = Self::now_from_option(now);
 			match asset_type {
 				AssetType::Base => {
 					vamm_state.base_asset_twap = new_twap.into_inner();
@@ -936,7 +936,7 @@ pub mod pallet {
 			};
 
 			// Update runtime storage
-			VammMap::<T>::insert(&vamm_id, vamm_state.clone());
+			VammMap::<T>::insert(&vamm_id, vamm_state);
 
 			// TODO(Cardosaum): This function will execute quite frequently,
 			// isn`t it a problem to emit one new event for each function call?`
@@ -1082,10 +1082,10 @@ pub mod pallet {
 			}
 
 			// 2) Vamm must be open.
-			ensure!(!Self::is_vamm_closed(&vamm_state, &now), Error::<T>::VammIsClosed);
+			ensure!(!Self::is_vamm_closed(vamm_state, now), Error::<T>::VammIsClosed);
 
 			// 3) Only update asset's twap if time has passed since last update.
-			let now = Self::now_from_option(&now);
+			let now = Self::now_from_option(now);
 			let asset_twap_timestamp =
 				Self::asset_twap_timestamp_from_vamm_state(vamm_state, asset_type);
 			ensure!(now > asset_twap_timestamp, Error::<T>::AssetTwapTimestampIsMoreRecent);
@@ -1140,7 +1140,7 @@ pub mod pallet {
 			now: &Option<MomentOf<T>>,
 		) -> Result<DecimalOf<T>, DispatchError> {
 			// Sanity checks
-			Self::update_twap_sanity_check(&vamm_state, asset_type, None, now)?;
+			Self::update_twap_sanity_check(vamm_state, asset_type, None, now)?;
 
 			let asset_twap_timestamp =
 				Self::asset_twap_timestamp_from_vamm_state(vamm_state, asset_type);
@@ -1216,7 +1216,7 @@ pub mod pallet {
 		}
 
 		fn is_vamm_closed(vamm_state: &VammStateOf<T>, now: &Option<MomentOf<T>>) -> bool {
-			let now = Self::now_from_option(&now);
+			let now = Self::now_from_option(now);
 			match vamm_state.closed {
 				Some(timestamp) => now >= timestamp,
 				None => false,

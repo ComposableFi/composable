@@ -120,7 +120,7 @@ fn update_twap_fails_if_twap_timestamp_is_more_recent() {
 fn update_twap_succeeds() {
 	let timestamp = VammTimestamp::MIN;
 	let mut timestamp_greater = VammTimestamp::MIN + 1;
-	let twap = VammBalance::from(10_u128.pow(18));
+	let twap = 10_u128.pow(18);
 	let new_twap = Some(VammDecimal::from_inner(10_u128.pow(18) * 5));
 	let vamm_state = VammState {
 		base_asset_twap_timestamp: timestamp,
@@ -157,8 +157,9 @@ fn update_twap_succeeds() {
 fn update_twap_updates_twap_correctly() {
 	let timestamp = VammTimestamp::MIN;
 	let mut timestamp_greater = VammTimestamp::MIN + 1;
-	let twap = VammBalance::from(10_u128.pow(18));
+	let twap = 10_u128.pow(18);
 	let new_twap = Some(VammDecimal::from_inner(10_u128.pow(18) * 5));
+	let vamm_id = 0;
 	let vamm_state = VammState {
 		base_asset_twap_timestamp: timestamp,
 		quote_asset_twap_timestamp: timestamp,
