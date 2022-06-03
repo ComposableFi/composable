@@ -734,6 +734,9 @@ pub mod pallet {
 			// Get Vamm state.
 			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
 
+			// Perform twap update before swapping assets.
+			Self::update_vamm_twap(config.vamm_id, &mut vamm_state, config.asset, &None)?;
+
 			// Perform required sanity checks.
 			Self::swap_sanity_check(config, &vamm_state)?;
 
