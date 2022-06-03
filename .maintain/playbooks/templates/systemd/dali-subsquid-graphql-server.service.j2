@@ -1,0 +1,17 @@
+[Unit]
+Description=Subsquid
+Documentation=https://github.com/ComposableFi/composable/blob/main/subsquid/README.md
+After=network.target
+
+[Service]
+ExecStart=npx squid-graphql-server
+
+WorkingDirectory={{ work_dir }}/subsquid
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=subsquid
+User={{ user }}
+Group={{ group }}
+
+[Install]
+WantedBy=multi-user.target

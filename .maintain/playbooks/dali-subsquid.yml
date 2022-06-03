@@ -6,7 +6,10 @@
   vars:
     user: subsquid
     group: subsquid
-    work_dir: /srv/subsquid
+    work_dir: /srv/composable
+    infra_dir: /srv/subsquid_infra
+    archiver_dir: "{{ infra_dir }}/archiver"
+    indexer_db_dir: "{{ infra_dir }}/indexer_db"
 
   tasks:
   - name: Initialization
@@ -26,30 +29,54 @@
         group: "{{ group }}"
       become: yes
 
+    - name: Remove old installations
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent 
+      loop:
+        - path: "{{ work_dir }}"
+        - path: "{{ archiver_dir }}"
+        - path: "{{ indexer_db_dir }}"
+        - path: "{{ infra_dir }}"
+      become: yes
+
     - name: Create work directory
       ansible.builtin.file:
-        path: "{{ work_dir }}"
+        path: "{{ item.path }}"
         state: directory
         mode: "0755"
         owner: "{{ user }}"
         group: "{{ group }}"
+      loop:
+      - path: "{{ work_dir }}"
+      - path: "{{ infra_dir }}"
+      - path: "{{ archiver_dir }}"
+      - path: "{{ indexer_db_dir }}"
       become: yes
 
-    - name: Create systemd service for Subsquid
+    - name: Create new systemd services and docker-compose files
       template:
-        src: systemd/dali-subsquid.service.j2
-        dest: /etc/systemd/system/subsquid.service
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
         mode: "0644"
+      loop:
+      - src: systemd/dali-subsquid-archiver.service.j2
+        dest: /etc/systemd/system/subsquid-archiver.service
+      - src: systemd/dali-subsquid-indexer-db.service.j2
+        dest: /etc/systemd/system/subsquid-indexer-db.service
+      - src: systemd/dali-subsquid-graphql-server.service.j2
+        dest: /etc/systemd/system/subsquid-graphql-server.service
+      - src: systemd/dali-subsquid-processor.service.j2
+        dest: /etc/systemd/system/subsquid-processor.service
+
+      - src: docker-compose/dali-subsquid-archiver.docker-compose.yml.j2
+        dest: "{{ archiver_dir }}/docker-compose.yml"
+      - src: docker-compose/dali-subsquid-indexer-db.docker-compose.yml.j2
+        dest: "{{ indexer_db_dir }}/docker-compose.yml"
+
       become: yes
 
-    - name: Create docker-compose.yml for Subsquid
-      template:
-        src: docker-compose/dali-subsquid.docker-compose.yml.j2
-        dest: "{{ work_dir }}/docker-compose.yml"
-        mode: "0644"
-      become: yes
-
-  - name: TLS temination for WS endpoints
+  - name: TLS temination for HTTP endpoints
     block:
     - name: Install nginx and certbot
       apt:
@@ -59,14 +86,14 @@
         - python3-certbot-nginx
       become: yes
 
-    - name: Remove old configs
+    - name: Remove old nginx configs
       ansible.builtin.file:
         path: "{{ item.path }}"
         state: absent 
-      become: yes
       loop:
-      - { path: /etc/nginx/sites-enabled/subsquid-acme-challenge.conf }
-      - { path: /etc/nginx/sites-enabled/subsquid.conf }
+      - path: /etc/nginx/sites-enabled/subsquid-acme-challenge.conf
+      - path: /etc/nginx/sites-enabled/subsquid.conf
+      become: yes
 
     - name: Add nginx config for ACME challenge
       template:
@@ -93,14 +120,14 @@
         creates: "/etc/letsencrypt/live/{{ domain }}/privkey.pem"
       become: yes
 
-    - name: Add nginx config for Subsquid
+    - name: Add a nginx config for Subsquid
       template:
         src: nginx/dali-subsquid.conf.j2
         dest: /etc/nginx/sites-enabled/subsquid.conf
         mode: "0600"
       become: yes
 
-    - name: Reload nginx with new config
+    - name: Reload nginx with the new config
       shell: nginx -s reload
       become: yes
 
@@ -108,76 +135,146 @@
       cron: special_time=daily
         name=certbot-renew-composable-sandbox
         user=root
-        job="certbot certonly --nginx -d '{{ domain }}' --deploy-hook 'nginx -s reload'"
+        job="certbot certonly --nginx --non-interactive -d '{{ domain }}' --deploy-hook 'nginx -s reload'"
       become: yes
 
-  - name: Install Docker
+  - name: Install dependencies
     block:
-    - name: Remove old versions
+    - name: Install common dependencies
       apt:
         pkg:
-        - docker
-        - docker-engine
-        - docker.io
-        - containerd
-        - runc
-        state: absent
-      become: yes
-    
-    - name: Install dependencies
-      apt:
-        pkg:
-        - nodejs
-        - ca-certificates
-        - curl
-        - gnupg
-        - lsb-release
+        - git
         update_cache: yes
         install_recommends: no
       become: yes
 
-    - name: Create a directory for Docker GPG key
-      ansible.builtin.file:
-        path: /etc/apt/keyrings
-        state: directory
-        mode: "0755"
-      become: yes
+    - name: Install nodejs
+      block:
+      - name: Download nodejs v16 installer
+        get_url:
+          url: https://deb.nodesource.com/setup_16.x
+          dest: "/tmp/setup_node.sh"
+          mode: '0440'
+        become: yes
 
-    - name: Download Docker GPG key
-      get_url:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        dest: /tmp/docker.gpg
-        mode: "644"
-      become: yes
+      - name: Add nodejs repository
+        ansible.builtin.shell: |
+          cat /tmp/setup_node.sh | bash
+        become: yes
 
-    - name: Add Docker repository
-      ansible.builtin.shell: |
-        cat /tmp/docker.gpg | gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg
-        echo \
-          "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-          $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
-      become: yes
+      - name: Update repositories cache and install nodejs
+        apt:
+          pkg:
+          - nodejs
+          update_cache: yes
+          install_recommends: no
+        become: yes
 
-    - name: Install new versions
-      apt:
-        pkg:
-        - docker
-        - docker.io
-        - containerd
-        - runc
-        update_cache: yes
-        install_recommends: no
-      become: yes
+      - name: Update npm
+        ansible.builtin.shell: |
+          npm install -g npm@8.12.0
+        become: yes
 
-    - name: Enable and start docker service
-      systemd:
-        name: docker
-        enabled: yes
-        state: started
+    - name: Install Docker
+      block:
+      - name: Remove old versions
+        apt:
+          pkg:
+          - docker
+          - docker-engine
+          - docker.io
+          - containerd
+          - runc
+          state: absent
+        become: yes
+      
+      - name: Install Docker dependencies
+        apt:
+          pkg:
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          update_cache: yes
+          install_recommends: no
+        become: yes
 
-  - name: Enable and restart subsquid service
+      - name: Create a directory for Docker GPG key
+        ansible.builtin.file:
+          path: /etc/apt/keyrings
+          state: directory
+          mode: "0755"
+        become: yes
+
+      - name: Download Docker GPG key
+        get_url:
+          url: https://download.docker.com/linux/ubuntu/gpg
+          dest: /tmp/docker.gpg
+          mode: "644"
+        become: yes
+
+      - name: Add Docker repository
+        ansible.builtin.shell: |
+          cat /tmp/docker.gpg | gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg
+          echo \
+            "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+            $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+        become: yes
+
+      - name: Install new versions
+        apt:
+          pkg:
+          - docker
+          - docker.io
+          - containerd
+          - runc
+          update_cache: yes
+          install_recommends: no
+        become: yes
+
+  - name: Enable and start docker service
+    systemd:
+      name: docker
+      enabled: yes
+      state: started
+
+  - name: Clone composable repo
+    ansible.builtin.shell: |
+      git clone https://github.com/ComposableFi/composable.git {{ work_dir }}
+    become: yes
+
+  - name: Build subsquid
+    ansible.builtin.shell: |
+      npm ci
+      npm run build
+    args:
+      chdir: "{{ work_dir }}/subsquid"
+    become: yes
+
+  - name: Enable and restart subsquid-archiver and subsquid-indexer-db services
     # Here will be a timeout if use the 'systemd' module
     ansible.builtin.shell: |
-      systemctl restart subsquid
-      systemctl enable subsquid
+      systemctl restart subsquid-archiver
+      systemctl enable subsquid-archiver
+
+      systemctl restart subsquid-indexer-db
+      systemctl enable subsquid-indexer-db
+    become: yes
+
+  - name: Run migrations
+    ansible.builtin.shell: |
+      npx sqd db create
+      npx sqd db migrate
+    args:
+      chdir: "{{ work_dir }}/subsquid"
+    become: yes
+
+  - name: Enable and restart subsquid-processor and  subsquid-graphql-server services
+    # Here will be a timeout if use the 'systemd' module
+    ansible.builtin.shell: |
+      systemctl restart subsquid-processor
+      systemctl enable subsquid-processor
+
+      systemctl restart subsquid-graphql-server
+      systemctl enable subsquid-graphql-server
     become: yes
