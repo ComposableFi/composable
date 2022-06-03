@@ -1,5 +1,5 @@
 use composable_traits::clearing_house::ClearingHouse;
-use frame_support::{assert_noop, assert_ok, traits::tokens::fungibles::Inspect};
+use frame_support::{assert_err, assert_noop, assert_ok, traits::tokens::fungibles::Inspect};
 use sp_runtime::FixedI128;
 
 use super::{
@@ -11,7 +11,7 @@ use crate::{
 		accounts::{ALICE, BOB},
 		assets::USDC,
 		runtime::{
-			Assets as AssetsPallet, Oracle as OraclePallet, Origin, Runtime,
+			Assets as AssetsPallet, Balance, Oracle as OraclePallet, Origin, Runtime,
 			System as SystemPallet, TestPallet, Vamm as VammPallet,
 		},
 	},
@@ -42,6 +42,10 @@ fn set_partial_liquidation_close(decimal: FixedI128) {
 
 fn set_liquidator_share_partial(decimal: FixedI128) {
 	PartialLiquidationPenaltyLiquidatorShare::<Runtime>::set(decimal);
+}
+
+fn get_insurance_acc_balance() -> Balance {
+	AssetsPallet::balance(USDC, &TestPallet::get_insurance_account())
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -174,8 +178,8 @@ fn can_partially_liquidate_if_below_partial_margin_ratio_by_pnl() {
 
 	let margins = vec![(ALICE, as_balance(50)), (BOB, 0)];
 	traders_in_one_market_context(config, margins, |market_id| {
-		set_partial_liquidation_penalty((25, 100).into());
 		set_partial_liquidation_close((25, 100).into());
+		set_partial_liquidation_penalty((25, 1000).into());
 		set_liquidator_share_partial((50, 100).into());
 
 		// Alice opens a position
@@ -198,25 +202,50 @@ fn can_partially_liquidate_if_below_partial_margin_ratio_by_pnl() {
 
 		// Bob liquidates Alice's account
 		assert_ok!(TestPallet::liquidate(Origin::signed(BOB), ALICE));
+		// Reference:
+		// ```python
+		// def liquidate(account):
+		//     collateral, entry_value, base_amount = account
+		//     print("base_value:", base_value := base_amount * PRICE)
+		//     print("curr_pnl:", curr_pnl := base_value - entry_value)
+		//     print("margin:", margin := collateral + curr_pnl)
+		//
+		//     print("realized_pnl:", realized_pnl := curr_pnl * CLOSE_RATIO)
+		//     print("fees:", fees := margin * FEE_RATIO)
+		//     print("liquidator_share:", fees / 2)
+		//
+		//     new_collateral = collateral + realized_pnl - fees
+		//     new_base_amount = base_amount - base_amount * CLOSE_RATIO
+		//     new_entry_value = entry_value - entry_value * CLOSE_RATIO
+		//
+		//     new_base_value = PRICE * new_base_amountnew_pnl = new_base_value - new_entry_value
+		//     print("new_margin:", new_margin := new_collateral + new_pnl)
+		//     print("MRP:", new_base_value * 0.0625)
+		//     print("MRF:", new_base_value * 0.04)
+		//     return new_collateral, new_entry_value, new_base_amount
+		// ```
 		// 25% of Alice's position is closed
-		// - PnL realized = PnL / 4 = -6.25
-		// - collateral seized = margin / 4 = 6.25
-		// - liquidator share = 3.125
-		// - resulting collateral = 37.5
-		// - base asset remaining = 5 * 3 / 4 = 3.75
-		// - entry value remaining = 500 * 3 / 4 = 375
-		// - base asset value = 95 * 3.75 = 356.25
-		// - resulting margin = 37.5 + (356.25 - 375) = 18.75
-		// - margin requirement (partial) = 22.266
-		// - margin requirement (full) = 14.25
-		// Thus, Alice's account is **not** brought back above the PMR
-		assert_eq!(TestPallet::get_collateral(&ALICE).unwrap(), as_balance((375, 10)));
-		assert_eq!(TestPallet::get_collateral(&BOB).unwrap(), as_balance((3125, 1000)));
-		assert_eq!(
-			AssetsPallet::balance(USDC, &TestPallet::get_insurance_account()),
-			as_balance((3125, 1000))
-		);
+		// base_value: 475
+		// curr_pnl: -25
+		// margin: 25
+		// realized_pnl: -6.25
+		// fees: 0.625
+		// liquidator_share: 0.3125
+		// new_margin: 24.375
+		// MRP: 22.265625
+		// MRF: 14.25
+		// new_collateral: 43.125
+		// Thus, Alice's account is back above the PMR
+		assert_eq!(TestPallet::get_collateral(&ALICE).unwrap(), as_balance((43125, 1000)));
+		let fees = (3125, 10000);
+		assert_eq!(TestPallet::get_collateral(&BOB).unwrap(), as_balance(fees));
+		assert_eq!(get_insurance_acc_balance(), as_balance(fees));
 		SystemPallet::assert_last_event(Event::PartialLiquidation { user: ALICE }.into());
+
+		assert_err!(
+			TestPallet::liquidate(Origin::signed(BOB), ALICE),
+			Error::<Runtime>::SufficientCollateral
+		);
 	});
 }
 
@@ -238,8 +267,8 @@ fn partial_liquidation_realizes_funding_payments() {
 		run_to_time(config.funding_frequency);
 		assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
 
-		set_partial_liquidation_penalty((25, 100).into());
 		set_partial_liquidation_close((25, 100).into());
+		set_partial_liquidation_penalty((25, 1000).into());
 		set_liquidator_share_partial((50, 100).into());
 
 		// Alice opens a position
@@ -274,25 +303,27 @@ fn partial_liquidation_realizes_funding_payments() {
 		// Bob liquidates Alice's account
 		assert_ok!(TestPallet::liquidate(Origin::signed(BOB), ALICE));
 		// 25% of Alice's position is closed
-		// - realized PnL = PnL / 4 = -6.25
-		// - realized funding = 3
-		// - collateral seized = margin / 4 = 7
-		// - liquidator share = 3.5
-		// - resulting collateral = 50 - collateral seized + realized PnL + realized funding = 39.75
-		// - base asset remaining = 5 * 3 / 4 = 3.75
-		// - entry value remaining = 500 * 3 / 4 = 375
-		// - base asset value = 95 * 3.75 = 356.25
-		// - resulting margin = 39.75 + (356.25 - 375) = 21
-		// - margin requirement (partial) = 22.266
-		// - margin requirement (full) = 14.25
-		// Thus, Alice's account is **not** brought back above the PMR
-		assert_eq!(TestPallet::get_collateral(&ALICE).unwrap(), as_balance((3975, 100)));
-		assert_eq!(TestPallet::get_collateral(&BOB).unwrap(), as_balance((35, 10)));
-		assert_eq!(
-			AssetsPallet::balance(USDC, &TestPallet::get_insurance_account()),
-			as_balance((35, 10))
-		);
+		// base_value: 475
+		// curr_pnl: -25
+		// margin: 28
+		// realized_pnl: -6.25
+		// fees: 0.7
+		// liquidator_share: 0.35
+		// new_margin: 27.3
+		// MRP: 22.265625
+		// MRF: 14.25
+		// new_collateral: 46.05
+		// Thus, Alice's account is back above the PMR
+		assert_eq!(TestPallet::get_collateral(&ALICE).unwrap(), as_balance((4605, 100)));
+		let fee = (35, 100);
+		assert_eq!(TestPallet::get_collateral(&BOB).unwrap(), as_balance(fee));
+		assert_eq!(get_insurance_acc_balance(), as_balance(fee));
 		SystemPallet::assert_last_event(Event::PartialLiquidation { user: ALICE }.into());
+
+		assert_err!(
+			TestPallet::liquidate(Origin::signed(BOB), ALICE),
+			Error::<Runtime>::SufficientCollateral
+		);
 	});
 }
 
@@ -341,7 +372,7 @@ fn can_fully_liquidate_if_below_maintenance_margin_ratio_by_pnl() {
 
 		// Insurance Fund balance gets the rest of the liquidation fee
 		// bob_collateral + insurance_fund = margin
-		let insurance_fund = AssetsPallet::balance(USDC, &TestPallet::get_insurance_account());
+		let insurance_fund = get_insurance_acc_balance();
 		assert_eq!(bob_collateral + insurance_fund, as_balance(4));
 
 		SystemPallet::assert_last_event(Event::FullLiquidation { user: ALICE }.into());
@@ -392,7 +423,7 @@ fn negative_accounts_imply_no_liquidation_fees() {
 		let bob_collateral = TestPallet::get_collateral(&BOB).unwrap();
 		assert_eq!(bob_collateral, 0);
 		// Insurance Fund balance gets nothing for the same reason above
-		let insurance_fund = AssetsPallet::balance(USDC, &TestPallet::get_insurance_account());
+		let insurance_fund = get_insurance_acc_balance();
 		assert_eq!(insurance_fund, 0);
 
 		SystemPallet::assert_last_event(Event::FullLiquidation { user: ALICE }.into());
