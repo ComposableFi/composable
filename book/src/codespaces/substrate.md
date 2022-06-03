@@ -14,7 +14,7 @@ Simply scroll to the pallet you want to edit in the `frame/` directory, and star
 Open the integrated terminal, and run
 
 ```bash
-cargo test
+cargo test --workspace
 ```
 
 ## Running the full parachain and relaychain
