@@ -5,7 +5,7 @@ export const DEFAULT_DECIMALS = new BigNumber(10).pow(12);
 export const AVERAGE_BLOCK_TIME = 20 * 1000;
 export const DEFAULT_NETWORK_ID = "picasso";
 
-export const SECONDS = 60 * 1000;
+export const SECONDS = 1 * 1000;
 export const MINUTES = 60 * SECONDS;
 export const HOURS = 60 * MINUTES;
 export const DAYS = 24 * HOURS;
