@@ -72,13 +72,13 @@ jest.mock("@/store/hooks/usePoolDetails", () => {
   }))}
 })
 
-jest.mock("@/store/hooks/userPoolTvlChart", () => ({
-  usePoolTvlChart: jest.fn().mockImplementation(() => ({
-    seriesIntervals: [],
-    chartSeries: [],
-    selectedInterval: "24h",
-    setSelectedInterval: jest.fn()
-  }))
+jest.mock("@/store/hooks/usePoolTvlChart/usePoolTvlChart", () => ({
+    usePoolTvlChart: jest.fn().mockImplementation(() => ({
+      seriesIntervals: [],
+      chartSeries: [],
+      selectedInterval: "24h",
+      setSelectedInterval: jest.fn()
+    }))
 }))
 
 jest.isolateModules(() => {

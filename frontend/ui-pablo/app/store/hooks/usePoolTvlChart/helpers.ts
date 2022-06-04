@@ -3,12 +3,12 @@ import moment from "moment";
 
 export type ChartRange = "24h" | "1w" | "1m";
 
-export function generateRandomSubsquidTvlData(
+export const generateRandomSubsquidTvlData = (
   ms: number,
   limit: number = 100,
   valueMin: number = 1000,
   valueMax: number = 5000
-): [number, number][] {
+): [number, number][] => {
   const max = Date.now();
   const min = max - ms;
   let data: [number, number][] = [];
@@ -77,10 +77,10 @@ function getNextRangeGivenTimestamp(rangeTs: number, range: ChartRange): [number
  * @param range ChartRange "24h" | "1w" | "1m"
  * @returns number array ([timestamp, value])
  */
-export function processSubsquidTvlChartData(
+export const processSubsquidTvlChartData = (
   data: [number, number][],
   range: ChartRange
-): [number, number][] {
+): [number, number][] => {
   if (!data.length) return data;
   /**
    * Creating an array from set to filter out

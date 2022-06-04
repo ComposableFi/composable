@@ -1,7 +1,7 @@
 import { useTheme } from "@mui/material";
 import { Chart } from "@/components/Molecules";
 import { DEFI_CONFIG } from "@/defi/config";
-import { usePoolTvlChart } from "@/store/hooks/userPoolTvlChart";
+import { usePoolTvlChart } from "@/store/hooks/usePoolTvlChart/usePoolTvlChart";
 
 export const PoolTVLChart: React.FC<{
   poolId: number
