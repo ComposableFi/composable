@@ -72,7 +72,7 @@ jest.mock("@/store/hooks/usePoolDetails", () => {
   }))}
 })
 
-jest.mock("@/store/hooks/usePoolTvlChart", () => ({
+jest.mock("@/store/hooks/userPoolTvlChart", () => ({
   usePoolTvlChart: jest.fn().mockImplementation(() => ({
     seriesIntervals: [],
     chartSeries: [],
