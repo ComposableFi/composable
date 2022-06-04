@@ -214,6 +214,7 @@ export const onSwapAmountChange = async (
   }
 };
 
+// create newer version of this, similar to usePoolTvlChart
 export function swapTransactionsToChartSeries(
   transactions: {
     baseAssetId: number;
