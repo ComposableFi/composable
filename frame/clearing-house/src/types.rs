@@ -1,8 +1,11 @@
-use crate::{math::FixedPointMath, Config};
+use crate::{
+	math::{FixedPointMath, IntoDecimal},
+	Config,
+};
 use composable_traits::time::DurationSeconds;
 use frame_support::pallet_prelude::{Decode, Encode, MaxEncodedLen, TypeInfo};
 use num_traits::Zero;
-use sp_runtime::{ArithmeticError, FixedPointNumber};
+use sp_runtime::{ArithmeticError, DispatchError, FixedPointNumber};
 use Direction::{Long, Short};
 
 pub const BASIS_POINT_DENOMINATOR: u32 = 10_000;
@@ -55,34 +58,6 @@ impl<T: Config> Position<T> {
 	}
 }
 
-pub struct PositionInfo<T: Config> {
-	pub direction: Direction,
-	pub margin_requirement_maintenance: T::Decimal,
-	pub base_asset_value: T::Decimal,
-	pub unrealized_pnl: T::Decimal,
-	pub unrealized_funding: T::Decimal,
-}
-
-pub struct AccountSummary<T: Config> {
-	pub margin_requirement_maintenance: T::Decimal,
-	pub base_asset_value: T::Decimal,
-	pub unrealized_pnl: T::Decimal,
-	pub unrealized_funding: T::Decimal,
-	pub positions_summary: Vec<(Market<T>, Position<T>, PositionInfo<T>)>,
-}
-
-impl<T: Config> Default for AccountSummary<T> {
-	fn default() -> Self {
-		Self {
-			margin_requirement_maintenance: T::Decimal::zero(),
-			base_asset_value: T::Decimal::zero(),
-			unrealized_pnl: T::Decimal::zero(),
-			unrealized_funding: T::Decimal::zero(),
-			positions_summary: Default::default(),
-		}
-	}
-}
-
 /// Data relating to a perpetual contracts market
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug)]
 #[scale_info(skip_type_params(T))]
@@ -98,8 +73,10 @@ pub struct Market<T: Config> {
 	pub asset_id: T::MayBeAssetId,
 	/// Minimum margin ratio for opening a new position.
 	pub margin_ratio_initial: T::Decimal,
-	/// Margin ratio below which liquidations can occur.
+	/// Margin ratio below which full liquidations can occur.
 	pub margin_ratio_maintenance: T::Decimal,
+	/// Margin ratio below which partial liquidations can occur.
+	pub margin_ratio_partial: T::Decimal,
 	/// Minimum amount of quote asset to exchange when opening a position. Also serves to round
 	/// a trade if it results in closing an existing position.
 	pub minimum_trade_size: T::Decimal,
@@ -188,8 +165,10 @@ pub struct MarketConfig<AssetId, Balance, Decimal, VammConfig> {
 	pub vamm_config: VammConfig,
 	/// Minimum margin ratio for opening a new position.
 	pub margin_ratio_initial: Decimal,
-	/// Margin ratio below which liquidations can occur.
+	/// Margin ratio below which full liquidations can occur.
 	pub margin_ratio_maintenance: Decimal,
+	/// Margin ratio below which partial liquidations can occur.
+	pub margin_ratio_partial: Decimal,
 	/// Minimum amount of quote asset to exchange when opening a position. Also serves to round
 	/// a trade if it results in closing an existing position.
 	pub minimum_trade_size: Decimal,
@@ -200,4 +179,57 @@ pub struct MarketConfig<AssetId, Balance, Decimal, VammConfig> {
 	pub funding_period: DurationSeconds,
 	/// Taker fee, in basis points, applied to all market orders.
 	pub taker_fee: Balance,
+}
+
+// -------------------------------------------------------------------------------------------------
+//                                          Liquidations
+// -------------------------------------------------------------------------------------------------
+
+pub struct PositionInfo<T: Config> {
+	pub direction: Direction,
+	pub margin_requirement_maintenance: T::Decimal,
+	pub margin_requirement_partial: T::Decimal,
+	pub base_asset_value: T::Decimal,
+	pub unrealized_pnl: T::Decimal,
+	pub unrealized_funding: T::Decimal,
+}
+
+pub struct AccountSummary<T: Config> {
+	pub collateral: T::Balance,
+	pub margin: T::Decimal,
+	pub margin_requirement_maintenance: T::Decimal,
+	pub margin_requirement_partial: T::Decimal,
+	pub base_asset_value: T::Decimal,
+	pub positions_summary: Vec<(Market<T>, Position<T>, PositionInfo<T>)>,
+}
+
+impl<T: Config> AccountSummary<T> {
+	pub fn new(collateral: T::Balance) -> Result<Self, DispatchError> {
+		Ok(Self {
+			collateral,
+			margin: collateral.into_decimal()?,
+			margin_requirement_maintenance: Zero::zero(),
+			margin_requirement_partial: Zero::zero(),
+			base_asset_value: Zero::zero(),
+			positions_summary: Default::default(),
+		})
+	}
+
+	pub fn update(
+		&mut self,
+		market: Market<T>,
+		position: Position<T>,
+		info: PositionInfo<T>,
+	) -> Result<(), DispatchError> {
+		self.margin = self
+			.margin
+			.try_add(&info.unrealized_funding.try_add(&info.unrealized_pnl)?)?
+			.max(Zero::zero());
+		self.margin_requirement_maintenance
+			.try_add_mut(&info.margin_requirement_maintenance)?;
+		self.margin_requirement_partial.try_add_mut(&info.margin_requirement_partial)?;
+		self.base_asset_value.try_add_mut(&info.base_asset_value)?;
+		self.positions_summary.push((market, position, info));
+		Ok(())
+	}
 }

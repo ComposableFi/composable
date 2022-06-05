@@ -36,7 +36,9 @@
 //! - **IMR**: Acronym for 'Initial Margin Ratio'. The mininum allowable margin ratio resulting from
 //!   opening new positions. Inversely proportional to the maximum leverage of an account
 //! - **MMR**: Acronym for 'Maintenance Margin Ratio'. The margin ratio below which a full
-//!   liquidation of a user's account can be triggered by a liquidator
+//!   liquidation of a user's account can be triggered by a liquidator (permissionless)
+//! - **PMR**: Acronym for 'Partial Margin Ratio'. The margin ratio below which a partial
+//!   liquidation of a user's account can be triggered by a liquidator (permissionless)
 //!
 //! ### Goals
 //!
@@ -297,6 +299,25 @@ pub mod pallet {
 	pub type FullLiquidationPenaltyLiquidatorShare<T: Config> =
 		StorageValue<_, T::Decimal, ValueQuery>;
 
+	/// Ratio of user's margin to be seized as fees upon a partial liquidation event.
+	#[pallet::storage]
+	#[pallet::getter(fn partial_liquidation_penalty)]
+	#[allow(clippy::disallowed_types)]
+	pub type PartialLiquidationPenalty<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
+
+	/// Ratio of position's base asset to close in a partial liquidation.
+	#[pallet::storage]
+	#[pallet::getter(fn partial_liquidation_close_ratio)]
+	#[allow(clippy::disallowed_types)]
+	pub type PartialLiquidationCloseRatio<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
+
+	/// Ratio of partial liquidation fees for compensating the liquidator.
+	#[pallet::storage]
+	#[pallet::getter(fn partial_liquidation_penalty_liquidator_share)]
+	#[allow(clippy::disallowed_types)]
+	pub type PartialLiquidationPenaltyLiquidatorShare<T: Config> =
+		StorageValue<_, T::Decimal, ValueQuery>;
+
 	/// Maps [AccountId](frame_system::Config::AccountId) to its collateral
 	/// [Balance](DeFiComposableConfig::Balance), if set.
 	#[pallet::storage]
@@ -402,6 +423,11 @@ pub mod pallet {
 			/// Id of the liquidated user.
 			user: T::AccountId,
 		},
+		/// Account partially liquidated.
+		PartialLiquidation {
+			/// Id of the liquidated user.
+			user: T::AccountId,
+		},
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -414,11 +440,11 @@ pub mod pallet {
 		/// Attempted to create a new market but the funding period is not a multiple of the
 		/// funding frequency.
 		FundingPeriodNotMultipleOfFrequency,
-		/// Attempted to create a new market but the initial margin ratio is less than or equal to
-		/// the maintenance one.
-		InitialMarginRatioLessThanMaintenance,
 		/// Raised when opening a risk-increasing position that takes the account below the IMR.
 		InsufficientCollateral,
+		/// Attempted to create a new market but the ordering 'initial > partial > maintenance' is
+		/// broken.
+		InvalidMarginRatioOrdering,
 		/// Attempted to create a new market but either the initial margin ratio is outside (0, 1]
 		/// or the maintenance margin ratio is outside (0, 1).
 		InvalidMarginRatioRequirement,
@@ -529,8 +555,7 @@ pub mod pallet {
 		///   Error::<T>::FundingPeriodNotMultipleOfFrequency)
 		/// - [`ZeroLengthFundingPeriodOrFrequency`](Error::<T>::ZeroLengthFundingPeriodOrFrequency)
 		/// - [`InvalidMarginRatioRequirement`](Error::<T>::InvalidMarginRatioRequirement)
-		/// - [`InitialMarginRatioLessThanMaintenance`](
-		///   Error::<T>::InitialMarginRatioLessThanMaintenance)
+		/// - [`InvalidMarginRatioOrdering`](Error::<T>::InvalidMarginRatioOrdering)
 		///
 		/// # Weight/Runtime
 		/// `O(1)`
@@ -675,19 +700,22 @@ pub mod pallet {
 		///
 		/// # Overview
 		///
+		/// ![](https://www.plantuml.com/plantuml/svg/FOsxhG91303pLyMZ0CuvqKb8zE7pcbrBtW_-YFOv4H2DPfBPFT0Yk_vTP91cuJJzRn7BRm1LekMnqUnmdtrDnqFv8K0_0SCti5DZWwTXPo1bD1drscOwGn6iPtTGUQKK3DwMulWkTnxbv0S0)
+		///
 		/// Liquidation can be either full or partial. In the former case, positions are closed
-		/// entirely, while in the latter, they are partially closed until the account is brought
-		/// back above the initial margin requirement.
+		/// entirely, while in the latter, they are partially closed. Both proceed by
+		/// closing/reducing positions until the account is brought back above the
+		/// maintenance/partial margin requirement.
 		///
-		/// Note that both unrealized PnL and funding payments contribute to an account being
-		/// brought below the maintenance margin ratio. Liquidation realizes a user's PnL and
-		/// funding payments.
+		/// Note that both unrealized PnL and funding payments contribute to an account's margin
+		/// (and thus its MMR/PMR). Liquidation (either full or partial) realizes a position's PnL
+		/// and funding payments.
 		///
-		/// Positions in markets with the highest margin requirements (i.e., the lowest max leverage
-		/// for opening a position) are liquidated first.
+		/// Positions in markets with the highest margin requirements (i.e., higher MMR/PMR) are
+		/// liquidated first.
 		///
 		/// The caller of the function, the 'liquidator', may be credited with a liquidation fee in
-		/// their account, which can be withdrawn via another extrinsic.
+		/// their account, which can be withdrawn via TODO(0xangelo).
 		///
 		/// ## Parameters
 		///
@@ -695,16 +723,28 @@ pub mod pallet {
 		///
 		/// ## Assumptions or Requirements
 		///
+		/// Users with no open positions can't be liquidated and if tried will raise an error.
+		///
 		/// ### For full liquidation
 		///
-		/// The user's margin ration must be stricly less than the combined margin ratios of all the
-		/// markets in which it has open positions in. In other words, the user's margin (collateral
-		/// + total unrealized pnl + total unrealized funding) must be strictly less than the sum of
-		/// margin requirements (MMR * base asset value) for each market it has an open position in.
+		/// The user's margin ratio must be stricly less than the combined maintenance margin ratios
+		/// of all the markets in which it has open positions in. In other words, the user's margin
+		/// (collateral + total unrealized pnl + total unrealized funding) must be strictly less
+		/// than the sum of margin requirements (MMR * base asset value) for each market it has an
+		/// open position in.
+		///
+		/// ### For partial liquidation
+		///
+		/// The user's margin ration must be stricly less than the combined partial margin ratios of
+		/// all the markets in which it has open positions in. In other words, the user's margin
+		/// (collateral + total unrealized pnl + total unrealized funding) must be strictly less
+		/// than the sum of margin requirements (PMR * base asset value) for each market it has an
+		/// open position in.
 		///
 		/// ## Emits
 		///
 		/// - [`FullLiquidation`](Event::<T>::FullLiquidation)
+		/// - [`PartialLiquidation`](Event::<T>::PartialLiquidation)
 		///
 		/// ## State Changes
 		///
@@ -785,12 +825,15 @@ pub mod pallet {
 				config.margin_ratio_initial > T::Decimal::zero() &&
 					config.margin_ratio_initial <= T::Decimal::one() &&
 					config.margin_ratio_maintenance > T::Decimal::zero() &&
-					config.margin_ratio_maintenance < T::Decimal::one(),
+					config.margin_ratio_maintenance < T::Decimal::one() &&
+					config.margin_ratio_partial > T::Decimal::zero() &&
+					config.margin_ratio_partial < T::Decimal::one(),
 				Error::<T>::InvalidMarginRatioRequirement
 			);
 			ensure!(
-				config.margin_ratio_initial > config.margin_ratio_maintenance,
-				Error::<T>::InitialMarginRatioLessThanMaintenance
+				config.margin_ratio_initial > config.margin_ratio_partial &&
+					config.margin_ratio_partial > config.margin_ratio_maintenance,
+				Error::<T>::InvalidMarginRatioOrdering
 			);
 			ensure!(
 				config.minimum_trade_size >= T::Decimal::zero(),
@@ -804,6 +847,7 @@ pub mod pallet {
 					vamm_id: T::Vamm::create(&config.vamm_config)?,
 					margin_ratio_initial: config.margin_ratio_initial,
 					margin_ratio_maintenance: config.margin_ratio_maintenance,
+					margin_ratio_partial: config.margin_ratio_partial,
 					minimum_trade_size: config.minimum_trade_size,
 					base_asset_amount_long: Zero::zero(),
 					base_asset_amount_short: Zero::zero(),
@@ -946,11 +990,9 @@ pub mod pallet {
 		#[transactional]
 		fn update_funding(market_id: &Self::MarketId) -> Result<(), DispatchError> {
 			let mut market = Self::try_get_market(market_id)?;
-
-			// Check that enough time has passed since last update
 			let now = T::UnixTime::now().as_secs();
 			ensure!(
-				now - market.funding_rate_ts >= market.funding_frequency,
+				Self::is_funding_update_time(&market, now)?,
 				Error::<T>::UpdatingFundingTooEarly
 			);
 
@@ -1026,13 +1068,21 @@ pub mod pallet {
 			let positions = Self::get_positions(user_id);
 			ensure!(positions.len() > 0, Error::<T>::UserHasNoPositions);
 
-			let summary = Self::summarize_account_state(positions)?;
-			let fees = Self::fully_liquidate_account(user_id, summary)?;
+			let summary = Self::summarize_account_state(user_id, positions)?;
 
-			// Charge fees
-			let liquidator_fee =
-				Self::full_liquidation_penalty_liquidator_share().saturating_mul_int(fees);
-			let insurance_fee = fees.try_sub(&liquidator_fee)?;
+			let liquidator_fee: T::Balance;
+			let insurance_fee: T::Balance;
+			let event: Event<T>;
+			if summary.margin < summary.margin_requirement_maintenance {
+				(liquidator_fee, insurance_fee) = Self::fully_liquidate_account(user_id, summary)?;
+				event = Event::<T>::FullLiquidation { user: user_id.clone() };
+			} else if summary.margin < summary.margin_requirement_partial {
+				(liquidator_fee, insurance_fee) =
+					Self::partially_liquidate_account(user_id, summary)?;
+				event = Event::<T>::PartialLiquidation { user: user_id.clone() };
+			} else {
+				return Err(Error::<T>::SufficientCollateral.into())
+			}
 
 			if !liquidator_fee.is_zero() {
 				let col = Self::get_collateral(liquidator_id).unwrap_or_else(Zero::zero);
@@ -1049,7 +1099,7 @@ pub mod pallet {
 				)?;
 			}
 
-			Self::deposit_event(Event::<T>::FullLiquidation { user: user_id.clone() });
+			Self::deposit_event(event);
 			Ok(())
 		}
 	}
@@ -1099,71 +1149,65 @@ pub mod pallet {
 	// Helper functions - core functionality
 	impl<T: Config> Pallet<T> {
 		fn summarize_account_state(
+			account_id: &T::AccountId,
 			positions: BoundedVec<Position<T>, T::MaxPositions>,
 		) -> Result<AccountSummary<T>, DispatchError> {
-			let mut summary = AccountSummary::<T>::default();
+			let collateral = Self::get_collateral(account_id).unwrap_or_else(Zero::zero);
+
+			let mut summary = AccountSummary::<T>::new(collateral)?;
 			for position in positions {
 				let market = Self::try_get_market(&position.market_id)?;
 				if let Some(direction) = position.direction() {
 					// should always succeed
-					let (position_notional, pnl) =
+					let (base_asset_value, unrealized_pnl) =
 						Self::abs_position_notional_and_pnl(&market, &position, direction)?;
 
-					let margin_requirement =
-						position_notional.try_mul(&market.margin_ratio_maintenance)?;
 					let info = PositionInfo::<T> {
 						direction,
-						margin_requirement_maintenance: margin_requirement,
-						base_asset_value: position_notional,
-						unrealized_pnl: pnl,
+						margin_requirement_maintenance: base_asset_value
+							.try_mul(&market.margin_ratio_maintenance)?,
+						margin_requirement_partial: base_asset_value
+							.try_mul(&market.margin_ratio_partial)?,
+						base_asset_value,
+						unrealized_pnl,
 						unrealized_funding: <Self as Instruments>::unrealized_funding(
 							&market, &position,
 						)?,
 					};
 
-					summary
-						.margin_requirement_maintenance
-						.try_add_mut(&info.margin_requirement_maintenance)?;
-					summary.base_asset_value.try_add_mut(&info.base_asset_value)?;
-					summary.unrealized_pnl.try_add_mut(&info.unrealized_pnl)?;
-					summary.unrealized_funding.try_add_mut(&info.unrealized_funding)?;
-					summary.positions_summary.push((market, position, info));
+					summary.update(market, position, info)?;
 				}
 			}
 
 			Ok(summary)
 		}
 
-		/// Fully liquidates the user's positions until his account is brought back above the MMR.
+		/// Fully liquidates the user's positions until its account is brought above the MMR.
+		///
+		/// This function does **not** check if the account is below the MMR beforehand.
 		///
 		/// ## Storage modifications
 		///
 		/// - Updates the [`markets`](Markets) of closed positions (according to changes in
-		///   [`Self::close_position_in_market`]).
+		///   [`Self::close_position_in_market`])
 		/// - Removes closed [`positions`](Positions)
 		/// - Updates the user's account [`collateral`](Collateral)
 		///
 		/// ## Returns
 		///
-		/// The total liquidation fee
+		/// The fees for the liquidator and insurance fund
 		fn fully_liquidate_account(
 			user_id: &T::AccountId,
 			summary: AccountSummary<T>,
-		) -> Result<T::Balance, DispatchError> {
-			let mut collateral = Self::get_collateral(user_id).unwrap_or_else(Zero::zero);
-			let mut margin = Self::updated_balance(
-				&collateral,
-				&summary.unrealized_pnl.try_add(&summary.unrealized_funding)?,
-			)?
-			.into_decimal()?;
+		) -> Result<(T::Balance, T::Balance), DispatchError> {
 			let AccountSummary::<T> {
+				mut collateral,
+				mut margin,
 				margin_requirement_maintenance: mut margin_requirement,
 				base_asset_value,
 				mut positions_summary,
 				..
 			} = summary;
-
-			ensure!(margin < margin_requirement, Error::<T>::SufficientCollateral);
 
 			let mut positions = BoundedVec::<Position<T>, T::MaxPositions>::default();
 			let maximum_fee = Self::full_liquidation_penalty().try_mul(&margin)?;
@@ -1200,10 +1244,95 @@ pub mod pallet {
 				}
 			}
 
+			// Charge fees
+			let liquidator_fee =
+				Self::full_liquidation_penalty_liquidator_share().saturating_mul_int(fees);
+			let insurance_fee = fees.try_sub(&liquidator_fee)?;
+
 			Positions::<T>::insert(user_id, positions);
 			Collateral::<T>::insert(user_id, collateral);
 
-			Ok(fees)
+			Ok((liquidator_fee, insurance_fee))
+		}
+
+		/// Partially liquidates the user's positions until its account is brought above the PMR.
+		///
+		/// This function does **not** check if the account is below the PMR beforehand.
+		///
+		/// ## Storage modifications
+		///
+		/// - Updates the [`markets`](Markets) of decreased positions (according to changes made by
+		///   [`Self::decrease_position`])
+		/// - Updates reduced [`positions`](Positions) (according to changes made by
+		///   [`Self::decrease_position`])
+		/// - Updates the user's account [`collateral`](Collateral)
+		///
+		/// ## Returns
+		///
+		/// The fees for the liquidator and insurance fund
+		fn partially_liquidate_account(
+			user_id: &T::AccountId,
+			summary: AccountSummary<T>,
+		) -> Result<(T::Balance, T::Balance), DispatchError> {
+			let AccountSummary::<T> {
+				mut collateral,
+				mut margin,
+				margin_requirement_partial: mut margin_requirement,
+				base_asset_value,
+				mut positions_summary,
+				..
+			} = summary;
+
+			let mut positions = BoundedVec::<Position<T>, T::MaxPositions>::default();
+			let mut fees = T::Balance::zero();
+			let maximum_fee = Self::partial_liquidation_penalty().try_mul(&margin)?;
+			let close_ratio = Self::partial_liquidation_close_ratio();
+			let maximum_close_value = close_ratio.try_mul(&base_asset_value)?;
+			// Sort positions from greatest to lowest margin requirement
+			positions_summary.sort_by_key(|(_, _, info)| info.margin_requirement_partial.neg());
+			for (mut market, mut position, info) in positions_summary {
+				if margin < margin_requirement {
+					Self::settle_funding(&mut position, &market, &mut collateral)?;
+
+					let base_value_to_close = close_ratio.try_mul(&info.base_asset_value)?;
+					let (_, entry_value, exit_value) = Self::decrease_position(
+						&mut position,
+						&mut market,
+						info.direction.opposite(),
+						&base_value_to_close,
+						Zero::zero(), /* No slippage control is necessary since it was already
+						               * taken into account when computing `base_asset_value` */
+					)?;
+					Markets::<T>::insert(&position.market_id, market);
+
+					let closed_share = base_value_to_close.try_div(&maximum_close_value)?;
+					let fee_decimal = closed_share.try_mul(&maximum_fee)?;
+					let requirement_freed =
+						closed_share.try_mul(&info.margin_requirement_partial)?;
+					let realized_pnl = exit_value.try_sub(&entry_value)?;
+
+					fees.try_add_mut(&fee_decimal.into_balance()?)?;
+					collateral =
+						Self::updated_balance(&collateral, &realized_pnl.try_sub(&fee_decimal)?)?;
+					margin.try_sub_mut(&fee_decimal)?;
+					margin_requirement.try_sub_mut(&requirement_freed)?;
+				}
+
+				// No positions are fully closed, so we push all.
+				// AccountSummary::positions_summary isn't constrained to be shorter than the
+				// maximum number of positions, so we keep the error checking here.
+				positions.try_push(position).map_err(|_| Error::<T>::MaxPositionsExceeded)?;
+			}
+
+			// Charge fees
+			let liquidator_fee =
+				Self::partial_liquidation_penalty_liquidator_share().saturating_mul_int(fees);
+			let insurance_fee = fees.try_sub(&liquidator_fee)?;
+
+			Positions::<T>::insert(user_id, positions);
+			Collateral::<T>::insert(user_id, collateral);
+
+			Ok((liquidator_fee, insurance_fee))
 		}
 
 		fn settle_funding(
@@ -1213,8 +1342,6 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			if let Some(direction) = position.direction() {
 				let payment = <Self as Instruments>::unrealized_funding(market, position)?;
-				// TODO(0xangelo): can we have bad debt from unrealized funding if user wasn't
-				// liquidated in time?
 				*margin = Self::updated_balance(margin, &payment)?;
 				position.last_cum_funding = market.cum_funding_rate(direction);
 			}
@@ -1384,6 +1511,35 @@ pub mod pallet {
 
 	// Helper functions - validity checks
 	impl<T: Config> Pallet<T> {
+		fn is_funding_update_time(
+			market: &Market<T>,
+			now: DurationSeconds,
+		) -> Result<bool, DispatchError> {
+			let funding_frequency = market.funding_frequency;
+			let mut next_update_wait = funding_frequency;
+
+			if funding_frequency > 0 {
+				// Usual update times are at multiples of funding frequency
+				// Safe since funding frequency is positive
+				let last_update_delay = market.funding_rate_ts.rem_euclid(funding_frequency);
+
+				if last_update_delay > 0 {
+					let max_delay_for_not_skipping = funding_frequency.try_div(&3)?;
+
+					next_update_wait = if last_update_delay > max_delay_for_not_skipping {
+						// Skip update at the next multiple of funding frequency
+						funding_frequency.try_mul(&2)?.try_sub(&last_update_delay)?
+					} else {
+						// Allow update at the next multiple of funding frequency
+						funding_frequency.try_sub(&last_update_delay)?
+					};
+				}
+			}
+
+			// Check that enough time has passed since last update
+			Ok(now.try_sub(&market.funding_rate_ts)? >= next_update_wait)
+		}
+
 		fn meets_initial_margin_ratio(
 			positions: &BoundedVec<Position<T>, T::MaxPositions>,
 			margin: T::Balance,

@@ -5,3 +5,4 @@
 # It is recommended to check this file in to source control so that
 # everyone who runs the test benefits from these saved cases.
 cc 44c4a74e9b0cf9ef05490c11c8a4446e9bf10ef9c11c2ce819451b4cc1276185 # shrinks to (margin_ratio_initial, margin_ratio_maintenance) = (FixedI128(1.000000000000000000), FixedI128(0.514042628035060928))
+cc f54ac3afdb691f9b27f2a70a08553263733dbd6053d50a3ebdedc2d4dc68ddbb # shrinks to (margin_ratio_initial, margin_ratio_maintenance, margin_ratio_partial) = (FixedI128(0.000000000000000001), FixedI128(0.000000000000000001), FixedI128(-0.000000000000000001))

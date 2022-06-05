@@ -73,7 +73,7 @@ fn run_to_block(n: u64) {
 		}
 		SystemPallet::set_block_number(SystemPallet::block_number() + 1);
 		// Time is set in milliseconds, so at each block we increment the timestamp by 1000ms = 1s
-		let _ = TimestampPallet::set(Origin::none(), SystemPallet::block_number() * 1000);
+		let _ = TimestampPallet::set(Origin::none(), (SystemPallet::block_number() - 1) * 1000);
 		SystemPallet::on_initialize(SystemPallet::block_number());
 		TimestampPallet::on_initialize(SystemPallet::block_number());
 	}
@@ -89,6 +89,19 @@ fn run_for_seconds(seconds: DurationSeconds) {
 	SystemPallet::set_block_number(SystemPallet::block_number() + 1);
 	// Time is set in milliseconds, so we multiply the seconds by 1_000
 	let _ = TimestampPallet::set(Origin::none(), TimestampPallet::now() + 1_000 * seconds);
+	SystemPallet::on_initialize(SystemPallet::block_number());
+	TimestampPallet::on_initialize(SystemPallet::block_number());
+}
+
+fn run_to_time(seconds: DurationSeconds) {
+	// It's up to the caller to choose a time that is greater than the current one
+	if SystemPallet::block_number() > 0 {
+		TimestampPallet::on_finalize(SystemPallet::block_number());
+		SystemPallet::on_finalize(SystemPallet::block_number());
+	}
+	SystemPallet::set_block_number(SystemPallet::block_number() + 1);
+	// Time is set in milliseconds, so we multiply the seconds by 1_000
+	let _ = TimestampPallet::set(Origin::none(), 1_000 * seconds);
 	SystemPallet::on_initialize(SystemPallet::block_number());
 	TimestampPallet::on_initialize(SystemPallet::block_number());
 }
@@ -139,7 +152,7 @@ fn with_markets_context<R>(
 	let mut ext = ext_builder.build();
 
 	ext.execute_with(|| {
-		run_to_block(1);
+		run_to_time(0);
 		let ids: Vec<_> = configs
 			.into_iter()
 			.map(|c| <sp_io::TestExternalities as MarketInitializer>::create_market_helper(Some(c)))
@@ -197,8 +210,10 @@ impl Default for MarketConfigGeneric<AssetId, Balance, Decimal, VammConfig> {
 			vamm_config: Default::default(),
 			// 10x max leverage to open a position
 			margin_ratio_initial: FixedI128::from_float(0.1),
-			// liquidate when above 50x leverage
+			// fully liquidate when above 50x leverage
 			margin_ratio_maintenance: FixedI128::from_float(0.02),
+			// partially liquidate when above 25x leverage
+			margin_ratio_partial: FixedI128::from_float(0.04),
 			// 'One cent' of the quote asset
 			minimum_trade_size: FixedI128::from_float(0.01),
 			funding_frequency: ONE_HOUR,
@@ -215,6 +230,7 @@ impl<T: Config> Default for MarketGeneric<T> {
 			asset_id: Default::default(),
 			margin_ratio_initial: Default::default(),
 			margin_ratio_maintenance: Default::default(),
+			margin_ratio_partial: Default::default(),
 			minimum_trade_size: Default::default(),
 			base_asset_amount_long: Default::default(),
 			base_asset_amount_short: Default::default(),

@@ -3,7 +3,6 @@
 
 actor "User/Bot" as user
 participant "Clearing\nHouse" as ch
-participant "RiskEngine" as risk
 database "Positions" as positions
 database "Collateral" as accs
 database "Markets" as mkts
@@ -20,38 +19,43 @@ check oracle
 guard rails?
 end note
 
-ch -> risk ++: ensure below MMR/PMR
-    risk -> risk ++: compute\nmargin ratio
-        risk -[#green]> accs : get collateral
-        risk -[#green]> positions : get all user positions
-        risk -[#green]> mkts : get all markets\ninvested
-        risk -> vamm : get prices
+ch -> ch ++: ensure below MMR/PMR
+    ch -> ch ++: compute margin ratio
+        ch -[#green]> accs : get collateral
+        ch -[#green]> positions : get all user positions
+        loop over all positions
+            ch -[#green]> mkts : get corresponding market
+            ch -> vamm : get position value
+        end
     return
 return
 
 == Storage updates ==
 
-    ch -[#green]> positions : get all user positions
-    ch -> vamm : swap base for quote asset
-    ch -[#red]> positions : reduce/remove
-    ch -[#red]> accs : realize PnL
+loop until margin requirement met
+    ch -[#green]> positions : get next position
+    ch -> ch: settle funding payments
+    ch -> ch ++ : decrease/close position
+       ch -> vamm : swap base for quote asset
+    return
+    ch -> ch : realize PnL
     ch -[#red]> mkts : update open interest
+end
+
+ch -[#red]> positions : update
+ch -[#red]> accs : update
 
 == Asset transfers ==
-
-'alt Bad debt
-'    ch -> insurance : reimburse Clearing House
-'    insurance -> vault : collateral
-group Seize collateral
-    ch -> vault : transfer to Insurance Fund
-    vault -> insurance : collateral
-end
 
 group Pay liquidation fee
     ch -> vault : transfer to caller's ""AccountId""
     vault -> user : collateral
 end
 
+group Seize collateral
+    ch -> vault : transfer to Insurance Fund
+    vault -> insurance : collateral
+end
 
 ====
 
