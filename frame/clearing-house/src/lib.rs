@@ -442,7 +442,7 @@ pub mod pallet {
 		FundingPeriodNotMultipleOfFrequency,
 		/// Raised when opening a risk-increasing position that takes the account below the IMR.
 		InsufficientCollateral,
-		/// Attempted to create a new market but the ordering initial > partial > maintenance is
+		/// Attempted to create a new market but the ordering 'initial > partial > maintenance' is
 		/// broken.
 		InvalidMarginRatioOrdering,
 		/// Attempted to create a new market but either the initial margin ratio is outside (0, 1]
