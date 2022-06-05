@@ -1,19 +1,18 @@
 # **[Composable’s Cross-Chain Virtual Machine](https://dali.devnets.composablefinance.ninja/products/cross-chain-virtual-machine.html#cross-chain-virtual-machine)**
 
-The Composable XCVM allows for cross-ecosystem communication enabled through cross-chain smart contracts..
+The Composable XCVM allows for cross-ecosystem communication enabled through cross-chain smart contracts.
 
 
 ---
 
-The current siloed nature of DeFi hampers interoperability between layers and chains. The **Composable Cross-Chain Virtual Machine (XCVM) **will facilitate easy and accessible cross-chain-and-layer communication and is our answer to this issue. The XCVM is a single, developer-friendly interface designed to interact and orchestrate smart contract functions across the L1 and L2 blockchains connected to our liquidity-rich ecosystem. 
+The current siloed nature of DeFi hampers interoperability between layers and chains. The **Composable Cross-Chain Virtual Machine (XCVM)** will facilitate easy and accessible cross-chain-and-layer communication and is our answer to this issue. The XCVM is a single, developer-friendly interface designed to interact and orchestrate smart contract functions across the L1 and L2 blockchains connected to our liquidity-rich ecosystem. 
 
-In short, the XCVM** abstracts complexity** from the process of having to send instructions to the Routing Layer,** initiates call-backs** into smart contracts, **handles circuit failure** such as network outages, **provides finality**, and perhaps most notably, **allows for the deployment of natively cross-chain protocols and smart contracts**. Throughout this experience, we enable users to tailor their experience by maximizing for a desired parameter while minimizing ecosystem-specific decision making.
+In short, the XCVM **abstracts complexity** from the process of having to send instructions to the Routing Layer, **initiates call-backs** into smart contracts, **handles circuit failure** such as network outages, **provides finality**, and perhaps most notably, **allows for the deployment of natively cross-chain protocols and smart contracts**. Throughout this experience, we enable users to tailor their experience by maximizing for a desired parameter while minimizing ecosystem-specific decision making.
 
 We do not aim to create a new standard for cross-chain communication, which is already the object of numerous projects. Instead, the XCVM will serve as the orchestration layer for existing bridging protocols, as depicted below:
 
 ![features_order_execution_xcvm_environment](features-order-execution-xcvm-environment.jpg "Features and order execution within a XCVM environment")
-
-Features and order execution within a XCVM environment
+*Features and order execution within a XCVM environment*
 
 ---
 
