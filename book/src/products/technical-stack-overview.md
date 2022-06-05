@@ -17,14 +17,8 @@ Upon the launch of our technology, our team and community of developers are comm
 
 DeFi developers are able to leverage the existing suite of foundational pallets, such as Mosaic, Cubic, Apollo, Centauri, and more, to rapidly design, build, and launch interoperable products. Each foundational pallet provides unique and necessary DeFi functionality which can now be stacked and incorporated to make functions modular. Our infrastructure enabled ease of pallet composition and the immense flexibility of our tech stack provides each new innovation with **modular composability**.
 
-
-
-
-
-
-![technical stack overview](composable-technical-stack.jpg)
-The core components of the Composable Technical Stack. Similar to how Port Control Protocol became an essential networking fabric for the Internet, Composable’s vision is to become the entryway and fabric for interactions, transfers, and communication cross-ecosystem. The result is a Port Control Protocol-like system for blockchains.
-
+![technical_stack_overview](composable-technical-stack.jpg) 
+*The core components of the Composable Technical Stack. Similar to how Port Control Protocol became an essential networking fabric for the Internet, Composable’s vision is to become the entryway and fabric for interactions, transfers, and communication cross-ecosystem. The result is a Port Control Protocol-like system for blockchains.*
 
 ### **The Composable Application Layer**
 
