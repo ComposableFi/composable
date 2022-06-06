@@ -28,6 +28,7 @@ import { PreviewDetails } from "./PreviewDetails";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
 import useDebounce from "@/hooks/useDebounce";
 import { usePoolDetails } from "@/store/hooks/usePoolDetails";
+import { useUserProvidedLiquidityByPool } from "@/store/hooks/useUserProvidedLiquidityByPool";
 
 export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const theme = useTheme();
@@ -37,11 +38,12 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const { poolId } =
     useRemoveLiquidityState();
   const {
-    liquidityProvided,
     lpBalance,
     baseAsset,
     quoteAsset
   } = usePoolDetails(poolId)
+  
+  const liquidityProvided = useUserProvidedLiquidityByPool(poolId);
 
   const { share } = useAppSelector((state) => state.pool.currentLiquidity);
 
