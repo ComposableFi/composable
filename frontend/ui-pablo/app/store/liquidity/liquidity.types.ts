@@ -22,8 +22,9 @@ export interface LiquiditySlice {
     userLpBalances: {
         [poolId: number]: string;
     },
-    setTokenAmountInPool: (poolId: number, amounts: { baseAmount?: string; quoteAmount?: string }) => void;
-    setTokenValueInPool: (poolId: number, amounts: { baseValue?: string; quoteValue?: string }) => void;
-    setUserProvidedTokenAmountInPool: (poolId: number, amounts: { baseAmount?: string; quoteAmount?: string }) => void;
+    setTokenAmountInLiquidityPool: (poolId: number, amounts: { baseAmount?: string; quoteAmount?: string }) => void;
+    setTokenValueInLiquidityPool: (poolId: number, amounts: { baseValue?: string; quoteValue?: string }) => void;
+    setUserProvidedTokenAmountInLiquidityPool: (poolId: number, amounts: { baseAmount?: string; quoteAmount?: string }) => void;
+    updateUserProvidedTokenAmountInLiquidityPool: (poolId: number, amounts: { baseAmount?: string; quoteAmount?: string }) => void;
     setUserLpBalance: (poolId: number, balance: string) => void;
 }

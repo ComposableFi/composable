@@ -31,7 +31,7 @@ jest.mock('react-apexcharts', () => {
 
 jest.mock("@/store/hooks/useLiquidityPoolDetails", () => {
   const BigNumber = require('bignumber.js');
-  return { usePoolDetails: jest.fn().mockImplementation(() => ({
+  return { useLiquidityPoolDetails: jest.fn().mockImplementation(() => ({
     poolStats: {
       totalVolume: "0",
       totalValueLocked: "0",
