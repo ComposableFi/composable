@@ -5,7 +5,7 @@ import BigNumber from "bignumber.js";
 import { useEffect, useState } from "react";
 import { DEFAULT_NETWORK_ID } from "../../updaters/constants";
 
-export const useUserProvidedLiquidity = (
+export const useUserProvidedLiquidityByPool = (
   pool: ConstantProductPool | StableSwapPool | undefined
 ): {
   tokenAmounts: { baseAmount: BigNumber; quoteAmount: BigNumber };

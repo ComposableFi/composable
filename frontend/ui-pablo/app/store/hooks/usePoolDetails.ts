@@ -6,12 +6,11 @@ import useStore from "@/store/useStore";
 import { useSelectedAccount, useParachainApi } from "substrate-react";
 import { fetchBalanceByAssetId } from "../../updaters/balances/utils";
 import { DEFAULT_NETWORK_ID } from "../../updaters/constants";
-import { useUserProvidedLiquidity } from "./useUserProvidedLiquidity";
+import { useUserProvidedLiquidityByPool } from "./useUserProvidedLiquidityByPool";
 import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
 import { useLiquidityByPool } from "./useLiquidityByPool";
 
 export const usePoolDetails = (poolId: number) => {
-  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const { poolStats } = useStore();
 
@@ -21,7 +20,7 @@ export const usePoolDetails = (poolId: number) => {
     useState<StableSwapPool | ConstantProductPool | undefined>(undefined);
 
   const tokensLocked = useLiquidityByPool(pool);
-  const liquidityProvided = useUserProvidedLiquidity(pool);
+  const liquidityProvided = useUserProvidedLiquidityByPool(pool);
 
   const [baseAsset, setBaseAsset] =
     useState<AssetMetadata | undefined>(undefined);
@@ -52,18 +51,6 @@ export const usePoolDetails = (poolId: number) => {
     }
   }, [poolId]);
 
-  useEffect(() => {
-    if (parachainApi && selectedAccount && pool) {
-      fetchBalanceByAssetId(
-        parachainApi,
-        DEFAULT_NETWORK_ID,
-        selectedAccount.address,
-        pool.lpToken
-      ).then((lpBalance) => {
-        setLpBalance(new BigNumber(lpBalance));
-      });
-    }
-  }, [parachainApi, selectedAccount, pool]);
 
   const _poolStats = useMemo(() => {
     if (poolStats[poolId]) {
@@ -83,6 +70,21 @@ export const usePoolDetails = (poolId: number) => {
       };
     }
   }, [poolStats, poolId]);
+
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
+
+  useEffect(() => {
+    if (parachainApi && selectedAccount && pool) {
+      fetchBalanceByAssetId(
+        parachainApi,
+        DEFAULT_NETWORK_ID,
+        selectedAccount.address,
+        pool.lpToken
+      ).then((lpBalance) => {
+        setLpBalance(new BigNumber(lpBalance));
+      });
+    }
+  }, [parachainApi, selectedAccount, pool]);
 
   return {
     baseAsset,
