@@ -59,9 +59,12 @@ proptest! {
 			};
 
 			let vamm_created_ok = TestPallet::create(
-				&VammConfig{base_asset_reserves,
-						   quote_asset_reserves,
-						   peg_multiplier});
+				&VammConfig{
+					base_asset_reserves,
+					quote_asset_reserves,
+					peg_multiplier,
+					funding_period
+				});
 			let vamm_created_some = TestPallet::get_vamm(vamm_created_ok.unwrap());
 
 			assert_ok!(vamm_created_ok);
@@ -73,27 +76,35 @@ proptest! {
 
 	#[test]
 	fn create_vamm_succeeds(
-		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve()
+		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve(),
+		funding_period in  valid_funding_period()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_ok!(TestPallet::create(
-				&VammConfig{base_asset_reserves,
-						   quote_asset_reserves,
-						   peg_multiplier}));
+				&VammConfig{
+					base_asset_reserves,
+					quote_asset_reserves,
+					peg_multiplier,
+					funding_period
+				}));
 		});
 	}
 
 	#[test]
 	fn create_vamm_zero_base_asset_reserves_error(
 		base_asset_reserves in zero_reserve(),
-		(_, quote_asset_reserves, peg_multiplier) in min_max_reserve()
+		(_, quote_asset_reserves, peg_multiplier) in min_max_reserve(),
+		funding_period in  valid_funding_period()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_noop!(
 				TestPallet::create(
-					&VammConfig{base_asset_reserves,
-							   quote_asset_reserves,
-							   peg_multiplier}),
+					&VammConfig{
+						base_asset_reserves,
+						quote_asset_reserves,
+						peg_multiplier,
+						funding_period
+					}),
 				Error::<MockRuntime>::BaseAssetReserveIsZero);
 		})
 	}
@@ -101,14 +112,18 @@ proptest! {
 	#[test]
 	fn create_vamm_zero_quote_asset_reserves_error(
 		quote_asset_reserves in zero_reserve(),
-		(base_asset_reserves, _, peg_multiplier) in min_max_reserve()
+		(base_asset_reserves, _, peg_multiplier) in min_max_reserve(),
+		funding_period in  valid_funding_period()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_noop!(
 				TestPallet::create(
-					&VammConfig{base_asset_reserves,
-							quote_asset_reserves,
-							peg_multiplier}),
+					&VammConfig{
+						base_asset_reserves,
+						quote_asset_reserves,
+						peg_multiplier,
+						funding_period
+					}),
 				Error::<MockRuntime>::QuoteAssetReserveIsZero);
 		})
 	}
@@ -116,14 +131,18 @@ proptest! {
 	#[test]
 	fn create_vamm_zero_peg_multiplier_error(
 		peg_multiplier in zero_reserve(),
-		(base_asset_reserves, quote_asset_reserves, _) in min_max_reserve()
+		(base_asset_reserves, quote_asset_reserves, _) in min_max_reserve(),
+		funding_period in  valid_funding_period()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert_noop!(
 				TestPallet::create(
-					&VammConfig{base_asset_reserves,
-							   quote_asset_reserves,
-							   peg_multiplier}),
+					&VammConfig{
+						base_asset_reserves,
+						quote_asset_reserves,
+						peg_multiplier,
+						funding_period
+					}),
 				Error::<MockRuntime>::PegMultiplierIsZero);
 		})
 	}
@@ -131,16 +150,20 @@ proptest! {
 	#[test]
 	fn create_vamm_update_counter_succeeds(
 		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve(),
-		loop_times in loop_times()
+		loop_times in loop_times(),
+		funding_period in  valid_funding_period()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			let markets = TestPallet::vamm_count();
 
 			for _ in 0..loop_times {
 				assert_ok!(TestPallet::create(
-					&VammConfig{base_asset_reserves,
-							   quote_asset_reserves,
-							   peg_multiplier}));
+					&VammConfig{
+						base_asset_reserves,
+						quote_asset_reserves,
+						peg_multiplier,
+						funding_period,
+					}));
 			}
 
 			assert_eq!(TestPallet::vamm_count(), markets + loop_times);
@@ -151,14 +174,18 @@ proptest! {
 	#[allow(clippy::disallowed_methods)]
 	fn create_vamm_emits_event_succeeds(
 		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve(),
+		funding_period in  valid_funding_period()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
 
 			let vamm_created_ok = TestPallet::create(
-				&VammConfig{base_asset_reserves,
-						   quote_asset_reserves,
-						   peg_multiplier});
+				&VammConfig{
+					base_asset_reserves,
+					quote_asset_reserves,
+					peg_multiplier,
+					funding_period
+				});
 			let vamm_created = TestPallet::get_vamm(vamm_created_ok.unwrap()).unwrap();
 			assert_ok!(vamm_created_ok);
 
@@ -171,14 +198,18 @@ proptest! {
 	#[test]
 	fn create_vamm_updates_storage_map(
 		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve(),
+		funding_period in  valid_funding_period()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			assert!(!VammMap::<MockRuntime>::contains_key(0_u128));
 
 			let vamm_created_ok = TestPallet::create(
-				&VammConfig{base_asset_reserves,
-						   quote_asset_reserves,
-						   peg_multiplier});
+				&VammConfig{
+					base_asset_reserves,
+					quote_asset_reserves,
+					peg_multiplier,
+					funding_period
+				});
 			assert_ok!(vamm_created_ok);
 
 			assert!(VammMap::<MockRuntime>::contains_key(0_u128));
