@@ -77,7 +77,7 @@ function getNextRangeGivenTimestamp(rangeTs: number, range: ChartRange): [number
  * @param range ChartRange "24h" | "1w" | "1m"
  * @returns number array ([timestamp, value])
  */
-export const processSubsquidTvlChartData = (
+export const processSubsquidChartData = (
   data: [number, number][],
   range: ChartRange
 ): [number, number][] => {

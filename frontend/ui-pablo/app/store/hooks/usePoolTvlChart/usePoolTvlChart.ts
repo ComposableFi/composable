@@ -3,7 +3,7 @@ import { queryLiquidityByPoolId } from "@/updaters/liquidity/subsquid";
 import BigNumber from "bignumber.js";
 import { useState, useEffect } from "react";
 import { useLiquidityPoolDetails } from "../useLiquidityPoolDetails";
-import { processSubsquidTvlChartData } from "./helpers";
+import { processSubsquidChartData } from "./helpers";
 
 export const usePoolTvlChart = (poolId: number) => {
   const poolDetails = useLiquidityPoolDetails(poolId);
@@ -28,7 +28,7 @@ export const usePoolTvlChart = (poolId: number) => {
             ];
           });
 
-          const series = processSubsquidTvlChartData(
+          const series = processSubsquidChartData(
             data,
             selectedInterval.symbol as any
           );

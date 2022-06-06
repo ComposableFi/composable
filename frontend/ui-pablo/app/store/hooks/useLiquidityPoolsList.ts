@@ -20,7 +20,7 @@ export interface LiquidityPoolRow {
 }
 
 export const useLiquidityPoolsList = (): LiquidityPoolRow[] => {
-  const { poolStatsValue, poolLiquidity } = useStore();
+  const { poolStats, poolStatsValue, poolLiquidity } = useStore();
   const allLpRewardingPools = useAllLpTokenRewardingPools();
 
   const liquidityPoolsList = useMemo(() => {
@@ -42,6 +42,10 @@ export const useLiquidityPoolsList = (): LiquidityPoolRow[] => {
       }
       
       let dailyRewards: DailyRewards[] = [], apr = new BigNumber(0);
+      if (poolStats[pool.poolId]) {
+        dailyRewards = poolStats[pool.poolId].dailyRewards;
+        apr = new BigNumber(poolStats[pool.poolId].apr)
+      }
 
       return {
         poolId,
@@ -55,7 +59,7 @@ export const useLiquidityPoolsList = (): LiquidityPoolRow[] => {
       };
     })
 
-  }, [allLpRewardingPools.length, poolLiquidity, poolStatsValue]);
+  }, [allLpRewardingPools.length, poolLiquidity, poolStatsValue, poolStats]);
 
   return liquidityPoolsList;
 };

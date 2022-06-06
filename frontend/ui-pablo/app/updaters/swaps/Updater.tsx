@@ -25,13 +25,10 @@ const Updater = () => {
   const {
     assets,
     swaps,
-    swapsChart,
     setDexRouteSwaps,
     setPoolConstantsSwaps,
     setUserAccountBalanceSwaps,
     setPoolVariablesSwaps,
-    putSwapsChartSeries,
-    put24HourOldPrice,
     pools: {
       liquidityBootstrappingPools,
       constantProductPools,
@@ -254,13 +251,7 @@ const Updater = () => {
               parachainApi,
               swaps.poolConstants.pair,
               swaps.poolConstants.poolIndex
-            ),
-            query24hOldTransactionByPoolQuoteAsset(
-              swaps.poolConstants.poolIndex,
-              _quoteAssetId,
-              "SWAP",
-              1
-            ),
+            )
           ];
 
           Promise.all(promises).then(
@@ -268,7 +259,6 @@ const Updater = () => {
               baseAssetBalance,
               quoteAssetBalance,
               spotPrice,
-              priceChangeResponse,
             ]) => {
               if (isReversedTrade) {
                 spotPrice = new BigNumber(1).div(spotPrice as BigNumber);
@@ -280,20 +270,6 @@ const Updater = () => {
                 quoteAssetReserve: quoteAssetBalance as string,
               });
 
-              if (
-                (priceChangeResponse as any).data &&
-                (priceChangeResponse as any).data.pabloTransactions
-              ) {
-                let pc = new BigNumber(0);
-                if ((priceChangeResponse as any).data.pabloTransactions[0]) {
-                  pc = new BigNumber(
-                    (
-                      priceChangeResponse as any
-                    ).data.pabloTransactions[0].spotPrice
-                  );
-                }
-                put24HourOldPrice(pc.toString());
-              }
             }
           );
         }
@@ -306,52 +282,6 @@ const Updater = () => {
       });
     }
   }, [swaps.ui, swaps.poolConstants.poolIndex, parachainApi]);
-
-  useEffect(() => {
-    const { ui, poolConstants } = swaps;
-    if (
-      parachainApi &&
-      poolConstants.poolIndex !== -1 &&
-      isValidAssetPair(ui.baseAssetSelected, ui.quoteAssetSelected)
-    ) {
-      const _selectedQuoteAssetId = getAssetOnChainId(
-        "picasso",
-        ui.quoteAssetSelected as AssetId
-      );
-
-      if (_selectedQuoteAssetId) {
-        queryPoolTransactionsByType(poolConstants.poolIndex, "SWAP", 250).then(
-          (response) => {
-            if (
-              response.data &&
-              response.data.pabloTransactions &&
-              response.data.pabloTransactions.length
-            ) {
-              const txs = transformSwapSubsquidTx(
-                response.data.pabloTransactions,
-                _selectedQuoteAssetId
-              );
-
-              putSwapsChartSeries(
-                swapTransactionsToChartSeries(txs, swapsChart.selectedRange)
-              );
-            } else {
-              putSwapsChartSeries([]);
-            }
-          }
-        );
-      } else {
-        putSwapsChartSeries([]);
-      }
-    } else {
-      putSwapsChartSeries([]);
-    }
-  }, [
-    swaps.ui,
-    swaps.poolConstants.poolIndex,
-    parachainApi,
-    swapsChart.selectedRange,
-  ]);
 
   return null;
 };

@@ -7,15 +7,17 @@ import { useMemo } from "react";
 import { BoxProps } from "@mui/system";
 import { DEFI_CONFIG } from "@/defi/config";
 import useStore from "@/store/useStore";
-import moment from "moment";
 import { getAsset } from "@/defi/polkadot/Assets";
 import { SwapsChartRange } from "@/store/swaps/swaps.types";
 import BigNumber from "bignumber.js";
+import { useSwapsChart } from "@/store/hooks/useSwapsChart";
+import { ChartRange } from "@/store/hooks/usePoolTvlChart/helpers";
 
 const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
   const theme = useTheme();
 
-  const {swaps, swapsChart, putSwapsChartSelectedRange} = useStore();
+  const { swaps } = useStore();
+  const {selectedInterval, chartSeries, seriesIntervals, _24hourOldPrice, setSelectedInterval} = useSwapsChart();
 
   const baseAsset = useMemo(() => {
     if (swaps.ui.baseAssetSelected !== "none") {
@@ -33,25 +35,22 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
 
   const changePercent = useMemo(() => {
     if (swaps.poolVariables.spotPrice === "0") return 0 
-    if (swapsChart._24hourOldPrice === "0") return 100
-    return new BigNumber(swapsChart._24hourOldPrice).div(swaps.poolVariables.spotPrice).toNumber()
-  }, [swaps.poolVariables.spotPrice, swapsChart._24hourOldPrice]);
+    if (_24hourOldPrice.eq(0)) return 100
+    return new BigNumber(_24hourOldPrice).div(swaps.poolVariables.spotPrice).toNumber()
+  }, [swaps.poolVariables.spotPrice, _24hourOldPrice]);
 
   const intervals = DEFI_CONFIG.swapChartIntervals;
 
-  const timeSlots = useMemo(() => {
-    return swapsChart.series.map((series) => {
-      return moment.utc(series[0]).format("HH:mm")
-    })
-  }, [swapsChart.series]);
-
   const onIntervalChange = (interval: string) => {
-    putSwapsChartSelectedRange(interval as SwapsChartRange)
+    let i = intervals.find(
+      (i) => i.symbol === interval
+    )
+    if (i) setSelectedInterval(i)
   };
 
   const getCurrentInterval = () => {
     return intervals.find(
-      (interval) => interval.symbol === swapsChart.selectedRange
+      (interval) => interval.symbol === selectedInterval.symbol
     );
   };
 
@@ -106,7 +105,7 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
             : `${changePercent}% ${baseAsset ? baseAsset.symbol : ""}`
         }
         AreaChartProps={{
-          data: swapsChart.series,
+          data: chartSeries,
           height: 330,
           shorthandLabel: "Change",
           labelFormat: (n: number) => n.toFixed(),
@@ -114,8 +113,8 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
         }}
         onIntervalChange={onIntervalChange}
         intervals={intervals.map((interval) => interval.symbol)}
-        currentInterval={swapsChart.selectedRange}
-        timeSlots={timeSlots}
+        currentInterval={selectedInterval.symbol}
+        timeSlots={seriesIntervals}
       />
     </Box>
   );
