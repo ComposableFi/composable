@@ -72,7 +72,8 @@
 		"GitHub.github-vscode-theme",
 		"streetsidesoftware.code-spell-checker",
 		"zxh404.vscode-proto3",
-		"rangav.vscode-thunder-client"
+		"rangav.vscode-thunder-client",
+		"adam-bender.commit-message-editor"
 	],
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
