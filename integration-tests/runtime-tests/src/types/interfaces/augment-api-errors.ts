@@ -1462,6 +1462,7 @@ declare module '@polkadot/api-base/types/errors' {
       CallFailed: AugmentedError<ApiType>;
       InvalidCallEncoding: AugmentedError<ApiType>;
       InvalidProgramEncoding: AugmentedError<ApiType>;
+      MalformedAccount: AugmentedError<ApiType>;
       UnknownAsset: AugmentedError<ApiType>;
       UnknownNetwork: AugmentedError<ApiType>;
       /**

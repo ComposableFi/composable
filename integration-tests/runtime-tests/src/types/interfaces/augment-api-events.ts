@@ -1105,7 +1105,8 @@ declare module '@polkadot/api-base/types/events' {
     };
     xcvm: {
       Executed: AugmentedEvent<ApiType, [XcvmCoreProgramXcvmProgram]>;
-      Spawn: AugmentedEvent<ApiType, [u32, Vec<H256>, Bytes]>;
+      SatelliteSet: AugmentedEvent<ApiType, [u32, ITuple<[u32, ComposableSupportEthereumAddress]>]>;
+      Spawn: AugmentedEvent<ApiType, [u32, Vec<H256>, AccountId32, Bytes]>;
       /**
        * Generic event
        **/

@@ -11,6 +11,9 @@ import {
 import {
   expect
 } from "chai";
+import {
+  stringToU8a
+} from "@polkadot/util/string";
 
 describe('XCVM', function() {
   it('Works', async function() {
@@ -21,14 +24,12 @@ describe('XCVM', function() {
     } = await getNewConnection();
     const {
       devWalletAlice,
-      devWalletDave,
-      devWalletCharlie,
     } = getDevWallets(newKeyring);
 
     // Setup mosaic
     const sudoKey = devWalletAlice;
-    const relayer = devWalletDave;
-    const mosaicEthereumNetworkId = api.createType("u128", 0x1337);
+    const relayer = devWalletAlice;
+    const mosaicEthereumNetworkId = api.createType("u128", 7603700);
     const maxTransferSize = 1000000000000000;
     const decayer = api.createType("PalletMosaicDecayBudgetPenaltyDecayer", {
       Linear: api.createType("PalletMosaicDecayLinearDecay", {
@@ -66,6 +67,7 @@ describe('XCVM', function() {
       api.events.sudo.Sudid.is,
       api.tx.sudo.sudo(api.tx.mosaic.updateAssetMapping(localAssetId, mosaicEthereumNetworkId, remoteAssetId))
     );
+
     // Setup XCVM
     const xcvmEthereumNetworkId = 2;
     await sendAndWaitForSuccess(api, sudoKey,
@@ -77,11 +79,67 @@ describe('XCVM', function() {
         )
       )
     );
+
+    const concatU8a = (a: Uint8Array, b: Uint8Array): Uint8Array => {
+      let r = new Uint8Array(a.length + b.length);
+      r.set(a);
+      r.set(b, a.length);
+      return r;
+    };
+
+    // Send program
+    const palletTypeId = stringToU8a("modl");
+    const xcvmPalletId = api.consts.xcvm.palletId;
+
+    const programNonce = 0;
+
+    const index =
+      api.createType(
+        "(u32, AccountId)", [
+          api.createType("u32", programNonce),
+          api.createType("AccountId", devWalletAlice.addressRaw)
+        ]
+      ).toU8a();
+
+    const xcvmProgramAccount =
+      api.createType(
+        "AccountId",
+        concatU8a(concatU8a(palletTypeId, xcvmPalletId), index).slice(0, 32)
+      );
+    console.log(xcvmProgramAccount.toHuman());
+
+    const amount = 1_000_000_000_000;
     await sendAndWaitForSuccess(
       api,
-      devWalletCharlie,
+      devWalletAlice,
+      api.events.balances.Endowed.is,
+      api.tx.assets.transfer(
+        1,
+        xcvmProgramAccount,
+        amount,
+        false
+      )
+    );
+
+    await sendAndWaitForSuccess(
+      api,
+      devWalletAlice,
       api.events.xcvm.Executed.is,
-      api.tx.xcvm.execute(api.createType("Bytes", "0x0ad2010a3e0a3c0a221220d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d1216080112120a1000901092febf040000000000000000000a3e0a3c0a2212208eaf04151687736326c9fea17e25fc5287613693c912909cb226aa4794f26a481216080112120a1000806bbd15bf040000000000000000000a50224e08021216080112120a100010a5d4e800000000000000000000001a320a300a16121401010101010101010101010101010101010101011216080112120a100010a5d4e80000000000000000000000"))
+      api.tx.xcvm.execute({
+        "instructions": [{
+          "spawn": {
+            "network": 2,
+            "assets": {
+              "1": amount
+            },
+            "program": {
+              "instructions": [],
+              "nonce": programNonce + 1
+            }
+          }
+        }],
+        "nonce": programNonce
+      })
     );
     expect(true).to.be.true
   })
