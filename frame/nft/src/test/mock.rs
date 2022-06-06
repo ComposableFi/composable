@@ -28,8 +28,14 @@ frame_support::construct_runtime!(
 	}
 );
 
+parameter_types! {
+	pub const MaxProperties: u32 = 16;
+}
+
 impl crate::Config for MockRuntime {
 	type Event = Event;
+
+	type MaxProperties = MaxProperties;
 }
 
 impl pallet_timestamp::Config for MockRuntime {
