@@ -1,15 +1,12 @@
 import { AssetId } from "@/defi/polkadot/types";
 import { StoreSlice } from "../types";
-import { SwapsChartRange, SwapsSlice } from "./swaps.types";
+import { SwapsSlice } from "./swaps.types";
 import {
   putDexRoute,
   putPoolConstants,
   putUiAssetSelection,
   putUserAccountBalance,
   putPoolVariables,
-  putSwapsChartSeries,
-  putSwapsChartSelectedRange,
-  put24HourOldPrice,
 } from "./swaps.utils";
 
 const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
@@ -42,11 +39,6 @@ const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
       baseAssetSelected: "none",
     },
   },
-  swapsChart: {
-    series: [],
-    _24hourOldPrice: "0",
-    selectedRange: "24h",
-  },
   setDexRouteSwaps: (dexRoute: number[]) =>
     set((prev: SwapsSlice) => ({
       swaps: putDexRoute(prev.swaps, dexRoute),
@@ -73,18 +65,6 @@ const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
   }) =>
     set((prev: SwapsSlice) => ({
       swaps: putPoolVariables(prev.swaps, key),
-    })),
-  putSwapsChartSeries: (series: [number, number][]) =>
-    set((prev: SwapsSlice) => ({
-      swapsChart: putSwapsChartSeries(prev.swapsChart, series),
-    })),
-  putSwapsChartSelectedRange: (range: SwapsChartRange) =>
-    set((prev: SwapsSlice) => ({
-      swapsChart: putSwapsChartSelectedRange(prev.swapsChart, range),
-    })),
-  put24HourOldPrice: (price: string) =>
-    set((prev: SwapsSlice) => ({
-      swapsChart: put24HourOldPrice(prev.swapsChart, price),
     })),
 });
 

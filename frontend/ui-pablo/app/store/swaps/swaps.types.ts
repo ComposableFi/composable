@@ -40,11 +40,6 @@ export interface SwapsSlice {
       baseAssetSelected: AssetId | "none";
     };
   };
-  swapsChart: {
-    _24hourOldPrice: string;
-    selectedRange: SwapsChartRange;
-    series: [number, number][]
-  };
   setDexRouteSwaps: (dexRoute: number[]) => void;
   setUiAssetSelectionSwaps: (
     side: "base" | "quote",
@@ -76,13 +71,4 @@ export interface SwapsSlice {
     quoteAssetReserve: string | undefined;
     baseAssetReserve: string | undefined;
   }) => void;
-  putSwapsChartSeries: (
-    series: [number, number][]
-  ) => void;
-  putSwapsChartSelectedRange: (
-    range: SwapsChartRange
-  ) => void;
-  put24HourOldPrice: (
-    price: string
-  ) => void;
 }
