@@ -1,18 +1,46 @@
 use crate::{
 	mock::{Balance, Event, ExtBuilder, MockRuntime, System, TestPallet},
 	pallet::{self, Error, VammMap, VammState},
-	tests::{loop_times, min_max_reserve, zero_reserve, VammTimestamp, RUN_CASES},
+	tests::{loop_times, min_max_reserve, valid_funding_period, zero_reserve, RUN_CASES},
 };
-use composable_traits::vamm::{Vamm as VammTrait, VammConfig};
+use composable_traits::vamm::{Vamm as VammTrait, VammConfig, MINIMUM_FUNDING_PERIOD};
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
+
+// ----------------------------------------------------------------------------------------------------
+//                                           Setup
+// ----------------------------------------------------------------------------------------------------
+
+type VammTimestamp = <MockRuntime as pallet::Config>::Moment;
+type VammBalance = <MockRuntime as pallet::Config>::Balance;
+
+// -------------------------------------------------------------------------------------------------
+//                                           Unit Tests
+// -------------------------------------------------------------------------------------------------
+
+#[test]
+fn create_vamm_fail_if_funding_period_is_less_than_minimum() {
+	let vamm_state = VammConfig::<VammBalance, VammTimestamp> {
+		funding_period: (MINIMUM_FUNDING_PERIOD - 1).into(),
+		peg_multiplier: 1,
+		..Default::default()
+	};
+	ExtBuilder::default().build().execute_with(|| {
+		assert_noop!(TestPallet::create(&vamm_state), Error::<MockRuntime>::FundingPeriodTooSmall);
+	})
+}
+
+// -------------------------------------------------------------------------------------------------
+//                                           Proptests
+// -------------------------------------------------------------------------------------------------
 
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
 	#[allow(clippy::disallowed_methods)]
 	fn create_vamm_correctly_returns_vamm_state(
-		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve()
+		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve(),
+		funding_period in  valid_funding_period()
 	) {
 		ExtBuilder::default().build().execute_with(|| {
 			let vamm_counter = TestPallet::vamm_count();
