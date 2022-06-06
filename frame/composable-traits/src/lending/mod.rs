@@ -194,7 +194,8 @@ pub trait Lending: DeFiEngine {
 	type LiquidationStrategyId;
 	/// returned from extrinsic is guaranteed to be existing asset id at time of block execution
 	//type AssetId;
-
+	type ValidateMarketCreation;
+	type ValidationError;
 	/// Generates the underlying owned vault that will hold borrowable asset (may be shared with
 	/// specific set of defined collaterals). Creates market for new pair in specified vault. if
 	/// market exists under specified manager, updates its parameters `deposit` - asset users want
@@ -234,12 +235,12 @@ pub trait Lending: DeFiEngine {
 	/// but the lending Market would have all the lendable funds in a single vault.
 	///
 	/// Returned `MarketId` is mapped one to one with (deposit VaultId, collateral VaultId)
-	fn create<V1, V2, V3, E>(
+	fn create(
 		manager: Self::AccountId,
 		config: Validated<
 			CreateInput<Self::LiquidationStrategyId, Self::MayBeAssetId, Self::BlockNumber>,
-			(V1, V2, V3),
-			E,
+			Self::ValidateMarketCreation,
+			Self::ValidationError,
 		>,
 		keep_alive: bool,
 	) -> Result<(Self::MarketId, Self::VaultId), DispatchError>;

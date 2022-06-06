@@ -50,8 +50,8 @@ mod mocks;
 mod mocks_offchain;
 #[cfg(test)]
 mod tests;
-//#[cfg(test)]
-//mod tests_offchain;
+#[cfg(test)]
+mod tests_offchain;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
@@ -1237,13 +1237,12 @@ pub mod pallet {
 		type MarketId = MarketIndex;
 		type BlockNumber = T::BlockNumber;
 		type LiquidationStrategyId = <T as Config>::LiquidationStrategyId;
-		fn create<MarketModelValid, CurrencyPairIsNotSame, AssetIsSupportedByOracle, ErrorType>(
+		type ValidateMarketCreation =
+			(MarketModelValid<T>, CurrencyPairIsNotSame<T>, AssetIsSupportedByOracle<T>);
+		type ValidationError = DispatchError;
+		fn create(
 			manager: Self::AccountId,
-			input: Validated<
-				CreateInputOf<T>,
-				(MarketModelValid, CurrencyPairIsNotSame, AssetIsSupportedByOracle),
-				ErrorType,
-			>,
+			input: Validated<CreateInputOf<T>, Self::ValidateMarketCreation, Self::ValidationError>,
 			keep_alive: bool,
 		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
 			let config_input = input.value();

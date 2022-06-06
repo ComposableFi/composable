@@ -435,10 +435,10 @@ pub mod pallet {
 		type MinReward = T::MinReward;
 		type MinVestedTransfer = <T::Vesting as VestedTransfer>::MinVestedTransfer;
 		type ValidateBondOffer = ValidBondOffer<Self::MinReward, Self::MinVestedTransfer>;
-
+		type ValidationError = &'static str;
 		fn offer(
 			from: &Self::AccountId,
-			offer: Validated<BondOfferOf<T>, Self::ValidateBondOffer, &'static str>,
+			offer: Validated<BondOfferOf<T>, Self::ValidateBondOffer, Self::ValidationError>,
 			keep_alive: bool,
 		) -> Result<Self::BondOfferId, DispatchError> {
 			Self::do_offer(from, offer.value(), keep_alive)

@@ -12,14 +12,14 @@ pub trait BondedFinance {
 	type MinReward;
 	type MinVestedTransfer;
 	type ValidateBondOffer;
-
+	type ValidationError;
 	/// Create a new offer.
 	fn offer(
 		from: &Self::AccountId,
 		offer: Validated<
 			BondOffer<Self::AccountId, Self::AssetId, Self::Balance, Self::BlockNumber>,
 			Self::ValidateBondOffer,
-			&'static str,
+			Self::ValidationError,
 		>,
 		keep_alive: bool,
 	) -> Result<Self::BondOfferId, DispatchError>;
