@@ -1,5 +1,5 @@
 import React from "react";
-import { Label, BaseAsset } from "@/components/Atoms";
+import { Label, BaseAsset, PairAsset } from "@/components/Atoms";
 import {
   Box,
   BoxProps,
@@ -11,8 +11,9 @@ import { AssetMetadata } from "@/defi/polkadot/Assets";
 export type PreviewDetailsProps = {
   tokenId1: AssetMetadata,
   tokenId2: AssetMetadata,
-  amount1: BigNumber,
-  amount2: BigNumber,
+  lpToRemove: BigNumber,
+  expectedRecieveAmountToken1: BigNumber,
+  expectedRecieveAmountToken2: BigNumber,
   price1: BigNumber,
   price2: BigNumber,
 } & BoxProps;
@@ -20,8 +21,9 @@ export type PreviewDetailsProps = {
 export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
   tokenId1,
   tokenId2,
-  amount1,
-  amount2,
+  lpToRemove,
+  expectedRecieveAmountToken1,
+  expectedRecieveAmountToken2,
   price1,
   price2,
   ...rest
@@ -29,27 +31,50 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
 
   return (
     <Box {...rest}>
-      <Label
-        BalanceProps={{
-          balance: `${amount1.eq(0) ? '-' : amount1}`,
+
+      <Label BalanceProps={{
+          balance: `${lpToRemove.eq(0) ? '-' : lpToRemove}`,
           BalanceTypographyProps: {
             variant: "body1",
           },
         }}
       >
-        <BaseAsset icon={tokenId1.icon} label={tokenId1?.symbol} />
+        <PairAsset
+            assets={[
+              {
+                icon: tokenId1?.icon,
+                label: tokenId1?.symbol,
+              },
+              {
+                icon: tokenId2?.icon,
+                label: tokenId2?.symbol,
+              },
+            ]}
+            separator="/"
+        />
+      </Label>
+
+      <Label mt={3}
+        BalanceProps={{
+          balance: `${expectedRecieveAmountToken1.eq(0) ? '-' : expectedRecieveAmountToken1}`,
+          BalanceTypographyProps: {
+            variant: "body1",
+          },
+        }}
+      >
+        <BaseAsset icon={tokenId1.icon} label={`Expected ` + tokenId1?.symbol} />
       </Label>
 
       <Label
         mt={3}
         BalanceProps={{
-          balance: `${amount2.eq(0) ? '-' : amount2}`,
+          balance: `${expectedRecieveAmountToken2.eq(0) ? '-' : expectedRecieveAmountToken2}`,
           BalanceTypographyProps: {
             variant: "body1",
           },
         }}
       >
-        <BaseAsset icon={tokenId2?.icon} label={tokenId2?.symbol} />
+        <BaseAsset icon={tokenId2?.icon} label={`Expected ` + tokenId2?.symbol} />
       </Label>
 
       <Label

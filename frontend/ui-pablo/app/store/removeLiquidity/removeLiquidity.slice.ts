@@ -5,10 +5,6 @@ import { RemoveLiquiditySlice } from "./removeLiquidity.types";
 const createRemoveLiquiditySlice: StoreSlice<RemoveLiquiditySlice> = (set) => ({
     removeLiquidity: {
       poolId: -1,
-      baseAsset: "none",
-      quoteAsset: "none",
-      pooledAmountBase: "0",
-      pooledAmountQuote: "0",
       setRemoveLiquidity: (state) =>
         set((prev: RemoveLiquiditySlice) => ({
             removeLiquidity: putState(prev.removeLiquidity, state),

@@ -65,13 +65,7 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
   const handleRemoveLiquidity = () => {
     if (poolDetails.baseAsset && poolDetails.quoteAsset) {
       setRemoveLiquidity({
-        poolId: poolId,
-        baseAsset: poolDetails.baseAsset.assetId,
-        quoteAsset: poolDetails.quoteAsset.assetId,
-        pooledAmountBase:
-          poolDetails.liquidityProvided.tokenAmounts.baseAmount.toString(),
-        pooledAmountQuote:
-          poolDetails.liquidityProvided.tokenAmounts.quoteAmount.toString(),
+        poolId
       });
       router.push("/pool/remove-liquidity");
     }

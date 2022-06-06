@@ -41,11 +41,13 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
   };
 
   const getTime = () => {
-    return isActive
-      ? getFullHumanizedDateDiff(Date.now(), auction.sale.end)
-      : isEnded
-      ? "-"
-      : "Not started";
+    if (isActive) {
+      return getFullHumanizedDateDiff(Date.now(), auction.sale.end)
+    } else if (isEnded) {
+      return "-"
+    } else {
+      return "Not started";
+    }
   };
 
   const spotPrice = useAuctionSpotPrice(auction.poolId);

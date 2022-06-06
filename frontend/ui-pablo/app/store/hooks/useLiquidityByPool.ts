@@ -28,7 +28,7 @@ export const useLiquidityByPool = (
   };
 } => {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-  const { assets, liquidity } = useStore();
+  const { liquidity } = useStore();
   const [baseAmount, setBaseAmount] = useState(new BigNumber(0));
   const [quoteAmount, setQuoteAmount] = useState(new BigNumber(0));
   const [value, setValue] = useState({
@@ -63,7 +63,7 @@ export const useLiquidityByPool = (
         });
       }
     }
-  }, [pool, assets, baseAmount]);
+  }, [pool, liquidity]);
 
   return {
     tokenAmounts: {

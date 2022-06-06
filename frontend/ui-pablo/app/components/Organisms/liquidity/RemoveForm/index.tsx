@@ -26,16 +26,22 @@ import { useDispatch } from "react-redux";
 import { ConfirmingModal } from "./ConfirmingModal";
 import { PreviewDetails } from "./PreviewDetails";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
-import { getAsset } from "@/defi/polkadot/Assets";
-import { AssetId } from "@/defi/polkadot/types";
+import useDebounce from "@/hooks/useDebounce";
+import { usePoolDetails } from "@/store/hooks/usePoolDetails";
 
 export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const theme = useTheme();
   const router = useRouter();
   const dispatch = useDispatch();
 
-  const { baseAsset, quoteAsset, pooledAmountBase, pooledAmountQuote } =
+  const { poolId } =
     useRemoveLiquidityState();
+  const {
+    liquidityProvided,
+    lpBalance,
+    baseAsset,
+    quoteAsset
+  } = usePoolDetails(poolId)
 
   const { share } = useAppSelector((state) => state.pool.currentLiquidity);
 
@@ -43,41 +49,39 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
     (state) => state.ui.isConfirmingModalOpen
   );
 
-  const baseAss = getAsset(baseAsset as AssetId) ?? undefined;
-  const quoteAss = getAsset(quoteAsset as AssetId) ?? undefined;
-
   const [percentage, setPercentage] = useState<number>(0);
-  const [removeAmount1, setRemoveAmount1] = useState<BigNumber>(
+  const [expectedRemoveAmountQuote, setExpectedRemoveAmountQuote] = useState<BigNumber>(
     new BigNumber(0)
   );
-  const [removeAmount2, setRemoveAmount2] = useState<BigNumber>(
+  const [expectedRemoveAmountBase, setExpectedRemoveAmountBase] = useState<BigNumber>(
     new BigNumber(0)
   );
 
-  // const [approved, setApproved] = useState<boolean>(false);
   const [confirmed, setConfirmed] = useState<boolean>(false);
   const message = useAppSelector((state) => state.ui.message);
 
-  useEffect(() => {
-    setRemoveAmount1(
-      new BigNumber(pooledAmountBase).multipliedBy(
-        new BigNumber(percentage / 100)
-      )
-    );
-    setRemoveAmount2(
-      new BigNumber(pooledAmountQuote).multipliedBy(
-        new BigNumber(percentage / 100)
-      )
-    );
-  }, [percentage, pooledAmountBase, pooledAmountQuote, confirmed]);
+  const debouncedPercentage = useDebounce(percentage, 500);
+
+  // useEffect(() => {
+  //   setRemoveAmount1(
+  //     new BigNumber(pooledAmountBase).multipliedBy(
+  //       new BigNumber(percentage / 100)
+  //     )
+  //   );
+  //   setRemoveAmount2(
+  //     new BigNumber(pooledAmountQuote).multipliedBy(
+  //       new BigNumber(percentage / 100)
+  //     )
+  //   );
+  // }, [percentage, pooledAmountBase, pooledAmountQuote, confirmed]);
 
   const price1 = useMemo(() => {
-    return new BigNumber(pooledAmountBase).div(pooledAmountQuote);
-  }, [pooledAmountBase, pooledAmountQuote]);
+    return new BigNumber(liquidityProvided.tokenAmounts.baseAmount).div(liquidityProvided.tokenAmounts.quoteAmount);
+  }, [liquidityProvided.tokenAmounts]);
 
   const price2 = useMemo(() => {
-    return new BigNumber(pooledAmountQuote).div(pooledAmountBase);
-  }, [pooledAmountBase, pooledAmountQuote]);
+    return new BigNumber(liquidityProvided.tokenAmounts.quoteAmount).div(liquidityProvided.tokenAmounts.baseAmount);
+  }, [liquidityProvided.tokenAmounts]);
 
   const onBackHandler = () => {
     router.push("/pool");
@@ -181,13 +185,14 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
         </Box>
       </Box>
 
-      {baseAss && quoteAss && (
+      {baseAsset && quoteAsset && (
         <PreviewDetails
+          lpToRemove={lpBalance.times(debouncedPercentage).div(100)}
           mt={4}
-          tokenId1={baseAss}
-          tokenId2={quoteAss}
-          amount1={removeAmount1}
-          amount2={removeAmount2}
+          tokenId1={baseAsset}
+          tokenId2={quoteAsset}
+          expectedRecieveAmountToken1={expectedRemoveAmountBase}
+          expectedRecieveAmountToken2={expectedRemoveAmountQuote}
           price1={price1}
           price2={price2}
         />
@@ -269,15 +274,15 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
         </>
       )}
 
-      {!confirmed && baseAss && quoteAss && (
+      {!confirmed && baseAsset && quoteAsset && (
         <ConfirmingModal
           price1={price1}
           price2={price2}
-          baseAsset={baseAss}
-          quoteAsset={quoteAss}
+          baseAsset={baseAsset}
+          quoteAsset={quoteAsset}
           open={isConfirmingModalOpen}
-          amount1={removeAmount1}
-          amount2={removeAmount2}
+          amount1={expectedRemoveAmountBase}
+          amount2={expectedRemoveAmountQuote}
           setConfirmed={setConfirmed}
         />
       )}
