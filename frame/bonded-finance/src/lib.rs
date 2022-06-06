@@ -36,9 +36,11 @@ mod benchmarks;
 
 mod mock;
 mod tests;
+
+mod validation2;
 pub mod weights;
 
-pub use crate::weights::WeightInfo;
+pub use crate::{validation2::ValidBondOffer, weights::WeightInfo};
 
 pub use pallet::*;
 
@@ -51,10 +53,10 @@ pub mod pallet {
 			utils::{increment::SafeIncrement, start_at::ZeroInit},
 		},
 		math::safe::SafeAdd,
-		validation::Validated,
+		validation2::Validated,
 	};
 	use composable_traits::{
-		bonded_finance::{BondDuration, BondOffer, BondedFinance, ValidBondOffer},
+		bonded_finance::{BondDuration, BondOffer, BondedFinance},
 		vesting::{VestedTransfer, VestingSchedule, VestingWindow::BlockNumberBased},
 	};
 	use frame_support::{
@@ -74,7 +76,7 @@ pub mod pallet {
 	};
 	use sp_std::fmt::Debug;
 
-	use crate::weights::WeightInfo;
+	use crate::{validation2::ValidBondOffer, weights::WeightInfo};
 
 	pub(crate) type BlockNumberOf<T> = <T as frame_system::Config>::BlockNumber;
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -86,7 +88,6 @@ pub mod pallet {
 		<<T as Config>::NativeCurrency as FungibleInspect<AccountIdOf<T>>>::Balance;
 	pub(crate) type BondOfferOf<T> =
 		BondOffer<AccountIdOf<T>, AssetIdOf<T>, BalanceOf<T>, BlockNumberOf<T>>;
-
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
@@ -211,6 +212,7 @@ pub mod pallet {
 			offer: Validated<
 				BondOfferOf<T>,
 				ValidBondOffer<T::MinReward, <T::Vesting as VestedTransfer>::MinVestedTransfer>,
+				&'static str,
 			>,
 			keep_alive: bool,
 		) -> DispatchResult {
@@ -432,13 +434,11 @@ pub mod pallet {
 		type BondOfferId = T::BondOfferId;
 		type MinReward = T::MinReward;
 		type MinVestedTransfer = <T::Vesting as VestedTransfer>::MinVestedTransfer;
+		type ValidateBondOffer = ValidBondOffer<Self::MinReward, Self::MinVestedTransfer>;
 
 		fn offer(
 			from: &Self::AccountId,
-			offer: Validated<
-				BondOfferOf<T>,
-				ValidBondOffer<Self::MinReward, Self::MinVestedTransfer>,
-			>,
+			offer: Validated<BondOfferOf<T>, Self::ValidateBondOffer, &'static str>,
 			keep_alive: bool,
 		) -> Result<Self::BondOfferId, DispatchError> {
 			Self::do_offer(from, offer.value(), keep_alive)

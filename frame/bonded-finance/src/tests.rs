@@ -420,12 +420,11 @@ proptest! {
 #[cfg(test)]
 mod test_bond_offer {
 	use super::*;
-	use crate::BondOfferOf;
-	use composable_support::validation::Validate;
-	use composable_traits::bonded_finance::{BondDuration, ValidBondOffer};
+	use crate::{validation2::ValidBondOffer, BondOfferOf};
+	use composable_support::validation2::Validate;
+	use composable_traits::bonded_finance::BondDuration;
 	use frame_support::assert_ok;
 	use mock::Runtime;
-
 	#[test]
 	fn test_valid_offer() {
 		let valid_bond_offer = BondOfferOf::<Runtime> {
@@ -444,6 +443,7 @@ mod test_bond_offer {
 		assert_ok!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
 			BondOfferOf<Runtime>,
 			ValidBondOffer<MinReward, MinVestedTransfer>,
+			&'static str,
 		>>::validate(valid_bond_offer));
 
 		let valid_bond_offer2 = BondOfferOf::<Runtime> {
@@ -462,6 +462,7 @@ mod test_bond_offer {
 		assert_ok!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
 			BondOfferOf<Runtime>,
 			ValidBondOffer<MinReward, MinVestedTransfer>,
+			&'static str,
 		>>::validate(valid_bond_offer2));
 
 		let valid_bond_offer3 = BondOfferOf::<Runtime> {
@@ -480,6 +481,7 @@ mod test_bond_offer {
 		assert_ok!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
 			BondOfferOf<Runtime>,
 			ValidBondOffer<MinReward, MinVestedTransfer>,
+			&'static str,
 		>>::validate(valid_bond_offer3));
 	}
 
@@ -501,6 +503,7 @@ mod test_bond_offer {
 		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
 			BondOfferOf<Runtime>,
 			ValidBondOffer<MinReward, MinVestedTransfer>,
+			&'static str,
 		>>::validate(invalid)
 		.is_err());
 	}
@@ -523,6 +526,7 @@ mod test_bond_offer {
 		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
 			BondOfferOf<Runtime>,
 			ValidBondOffer<MinReward, MinVestedTransfer>,
+			&'static str,
 		>>::validate(invalid)
 		.is_err());
 	}
@@ -545,6 +549,7 @@ mod test_bond_offer {
 		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
 			BondOfferOf<Runtime>,
 			ValidBondOffer<MinReward, MinVestedTransfer>,
+			&'static str,
 		>>::validate(invalid)
 		.is_err());
 	}
@@ -567,6 +572,7 @@ mod test_bond_offer {
 		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
 			BondOfferOf<Runtime>,
 			ValidBondOffer<MinReward, MinVestedTransfer>,
+			&'static str,
 		>>::validate(invalid)
 		.is_err());
 	}
@@ -589,6 +595,7 @@ mod test_bond_offer {
 		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
 			BondOfferOf<Runtime>,
 			ValidBondOffer<MinReward, MinVestedTransfer>,
+			&'static str,
 		>>::validate(invalid)
 		.is_err());
 	}
@@ -611,6 +618,7 @@ mod test_bond_offer {
 		assert!(<ValidBondOffer<MinReward, MinVestedTransfer> as Validate<
 			BondOfferOf<Runtime>,
 			ValidBondOffer<MinReward, MinVestedTransfer>,
+			&'static str,
 		>>::validate(invalid)
 		.is_err());
 	}
