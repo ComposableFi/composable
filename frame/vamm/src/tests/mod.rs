@@ -163,7 +163,7 @@ prop_compose! {
 
 prop_compose! {
 	fn valid_funding_period()(
-		funding_period in 1..=VammTimestamp::MAX
+		funding_period in (MINIMUM_FUNDING_PERIOD+1).into()..=VammTimestamp::MAX
 	) -> VammTimestamp {
 		funding_period
 	}
@@ -241,22 +241,33 @@ fn any_vamm_id() -> RangeInclusive<VammId> {
 	VammId::MIN..=VammId::MAX
 }
 
+fn any_time() -> RangeInclusive<VammTimestamp> {
+	VammTimestamp::MIN..=VammTimestamp::MAX
+}
+
 prop_compose! {
 	fn any_vamm_state()(
-		base in any_sane_asset_amount(),
-		quote in any_sane_asset_amount(),
-		peg in 1..=100_000_u128,
-		closed in prop_oneof![timestamp().prop_map(Some), Just(None)]
+		base_asset_reserves in any_sane_asset_amount(),
+		quote_asset_reserves in any_sane_asset_amount(),
+		peg_multiplier in 1..=100_000_u128,
+		closed in prop_oneof![timestamp().prop_map(Some), Just(None)],
+		base_asset_twap_timestamp in any_time(),
+		quote_asset_twap_timestamp in any_time(),
+		funding_period in any_time()
 	) -> VammState<Balance, VammTimestamp> {
 		VammState {
-			base_asset_reserves: base,
-			quote_asset_reserves: quote,
-			peg_multiplier: peg,
+			base_asset_reserves,
+			quote_asset_reserves,
+			peg_multiplier,
 			invariant: TestPallet::compute_invariant(
-				base, quote
+				base_asset_reserves, quote_asset_reserves
 			).unwrap(),
+			base_asset_twap_timestamp,
+			quote_asset_twap_timestamp,
+			base_asset_twap: base_asset_reserves,
+			quote_asset_twap: quote_asset_reserves,
 			closed,
-			..Default::default()
+			funding_period,
 		}
 	}
 }
@@ -277,7 +288,7 @@ prop_compose! {
 
 prop_compose! {
 	fn get_vamm_state(config: TestVammState<Balance, VammTimestamp>)(
-		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in min_max_reserve(),
+		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in any_sane_base_quote_peg(),
 		closed in prop_oneof![timestamp().prop_map(Some), Just(None)],
 		base_asset_twap in balance_range(),
 		base_asset_twap_timestamp in timestamp(),
