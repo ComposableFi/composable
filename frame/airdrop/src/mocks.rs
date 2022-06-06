@@ -131,6 +131,7 @@ pub struct ExtBuilder {
 }
 
 impl ExtBuilder {
+	#[allow(clippy::disallowed_methods)] // Allow unwrap
 	pub fn build(self) -> sp_io::TestExternalities {
 		let mut storage =
 			frame_system::GenesisConfig::default().build_storage::<MockRuntime>().unwrap();

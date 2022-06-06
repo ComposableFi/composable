@@ -252,7 +252,7 @@ pub mod pallet {
 		pub fn add_recipient(
 			origin: OriginFor<T>,
 			airdrop_id: T::AirdropId,
-			recipients: Vec<(RemoteAccountOf<T>, BalanceOf<T>, bool)>,
+			recipients: Vec<(RemoteAccountOf<T>, BalanceOf<T>, MomentOf<T>, bool)>,
 		) -> DispatchResult {
 			let origin_id = ensure_signed(origin)?;
 
@@ -582,7 +582,7 @@ pub mod pallet {
 		type Balance = BalanceOf<T>;
 		type Proof = ProofOf<T>;
 		type Recipient = RemoteAccountOf<T>;
-		type RecipientCollection = Vec<(Self::Recipient, BalanceOf<T>, bool)>;
+		type RecipientCollection = Vec<(Self::Recipient, BalanceOf<T>, MomentOf<T>, bool)>;
 		type RemoteAccount = RemoteAccountOf<T>;
 		type VestingSchedule = MomentOf<T>;
 
@@ -649,7 +649,7 @@ pub mod pallet {
 			let (transaction_funds, transaction_recipients) = recipients.iter().try_fold(
 				(T::Balance::zero(), 0),
 				|(transaction_funds, transaction_recipients),
-				 (_, funds, _)|
+				 (_, funds, _, _)|
 				 -> Result<(T::Balance, u32), DispatchError> {
 					Ok((transaction_funds.safe_add(funds)?, transaction_recipients.safe_add(&1)?))
 				},
@@ -675,14 +675,14 @@ pub mod pallet {
 			}
 
 			// Populate `RecipientFunds`
-			recipients.iter().for_each(|(remote_account, funds, is_funded)| {
+			recipients.iter().for_each(|(remote_account, funds, vesting_period, is_funded)| {
 				RecipientFunds::<T>::insert(
 					airdrop_id,
 					remote_account,
 					RecipientFundOf::<T> {
 						total: *funds,
 						claimed: T::Balance::zero(),
-						vesting_period: airdrop.schedule,
+						vesting_period: *vesting_period,
 						funded_claim: *is_funded,
 					},
 				);

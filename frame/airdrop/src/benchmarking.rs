@@ -157,7 +157,7 @@ benchmarks! {
 
 	add_recipient_benchmark {
 		let x in 100..1000;
-		let accounts: Vec<(RemoteAccountOf<T>, BalanceOf<T>, bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), false)).collect();
+		let accounts: Vec<(RemoteAccountOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
 		<Airdrop<T> as AirdropManagement>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
@@ -165,7 +165,7 @@ benchmarks! {
 
 	remove_recipient_benchmark {
 		let x in 100..1000;
-		let accounts: Vec<(RemoteAccountOf<T>, BalanceOf<T>, bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), false)).collect();
+		let accounts: Vec<(RemoteAccountOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
 		<Airdrop<T> as AirdropManagement>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
@@ -174,7 +174,7 @@ benchmarks! {
 
 	enable_airdrop_benchmark {
 		let x in 100..1000;
-		let accounts = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), false)).collect();
+		let accounts: Vec<(RemoteAccountOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
 		<Airdrop<T> as AirdropManagement>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
@@ -183,7 +183,7 @@ benchmarks! {
 
 	disable_airdrop_benchmark {
 		let x in 100..1000;
-		let accounts = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), false)).collect();
+		let accounts: Vec<(RemoteAccountOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
 		<Airdrop<T> as AirdropManagement>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
@@ -193,7 +193,7 @@ benchmarks! {
 	claim_benchmark {
 		let x in 100..1000;
 		let accounts = generate_accounts::<T>(x as _);
-		let remote_accounts = accounts.clone().into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), false)).collect();
+		let remote_accounts = accounts.clone().into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
 		<Airdrop<T> as AirdropManagement>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
