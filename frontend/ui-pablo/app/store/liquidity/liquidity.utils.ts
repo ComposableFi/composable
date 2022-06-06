@@ -94,3 +94,13 @@ export const putUserProvidedTokenAmount = (
     }
   });
 };
+
+export const putUserLpBalance = (
+  liquiditySlice: LiquiditySlice["userLpBalances"],
+  poolId: number,
+  amount: string
+) => {
+  return produce(liquiditySlice, (draft) => {
+    draft[poolId] = amount;
+  })
+}
