@@ -940,7 +940,7 @@ pub mod pallet {
 
 	// Helper functions - core functionality
 	impl<T: Config> Pallet<T> {
-		fn do_get_price(
+		pub fn do_get_price(
 			vamm_state: &VammStateOf<T>,
 			asset_type: AssetType,
 		) -> Result<DecimalOf<T>, DispatchError> {
