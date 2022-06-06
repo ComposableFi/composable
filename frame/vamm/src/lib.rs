@@ -510,14 +510,22 @@ pub mod pallet {
 			let invariant =
 				Self::compute_invariant(config.base_asset_reserves, config.quote_asset_reserves)?;
 			let now = Self::now(&None);
+			let tmp_vamm_state = VammStateOf::<T> {
+				base_asset_reserves: config.base_asset_reserves,
+				quote_asset_reserves: config.quote_asset_reserves,
+				peg_multiplier: config.peg_multiplier,
+				..Default::default()
+			};
+			let base_twap = Self::do_get_price(&tmp_vamm_state, AssetType::Base)?;
+			let quote_twap = Self::do_get_price(&tmp_vamm_state, AssetType::Quote)?;
 
 			VammCounter::<T>::try_mutate(|next_id| {
 				let id = *next_id;
 				let vamm_state = VammStateOf::<T> {
 					base_asset_reserves: config.base_asset_reserves,
 					quote_asset_reserves: config.quote_asset_reserves,
-					base_asset_twap: config.base_asset_reserves,
-					quote_asset_twap: config.quote_asset_reserves,
+					base_asset_twap: base_twap.into_inner(),
+					quote_asset_twap: quote_twap.into_inner(),
 					base_asset_twap_timestamp: now,
 					quote_asset_twap_timestamp: now,
 					peg_multiplier: config.peg_multiplier,
@@ -1240,18 +1248,23 @@ pub mod pallet {
 			x2: DecimalOf<T>,
 			w2: MomentOf<T>,
 		) -> Result<DecimalOf<T>, DispatchError> {
-			let w1_decimal = Self::moment_to_decimal(w1);
-			let w2_decimal = Self::moment_to_decimal(w2);
-			let denominator =
-				w1_decimal.checked_add(&w2_decimal).ok_or(ArithmeticError::Overflow)?;
-			let xw1 = x1.checked_mul(&w1_decimal).ok_or(ArithmeticError::Overflow)?;
-			let xw2 = x2.checked_mul(&w2_decimal).ok_or(ArithmeticError::Overflow)?;
+			let w1_u256 = U256::from(w1.into());
+			let w2_u256 = U256::from(w2.into());
+			let denominator = w1_u256.checked_add(w2_u256).ok_or(ArithmeticError::Overflow)?;
+			let xw1 = Self::balance_to_u256(x1.into_inner())?
+				.checked_mul(w1_u256)
+				.ok_or(ArithmeticError::Overflow)?;
+			let xw2 = Self::balance_to_u256(x2.into_inner())?
+				.checked_mul(w2_u256)
+				.ok_or(ArithmeticError::Overflow)?;
 
-			Ok(xw1
-				.checked_add(&xw2)
+			let twap_u256 = xw1
+				.checked_add(xw2)
 				.ok_or(ArithmeticError::Overflow)?
-				.checked_div(&denominator)
-				.ok_or(ArithmeticError::DivisionByZero)?)
+				.checked_div(denominator)
+				.ok_or(ArithmeticError::DivisionByZero)?;
+			let twap = Self::balance_to_decimal(Self::u256_to_balance(twap_u256)?);
+			Ok(twap)
 		}
 
 		fn get_vamm_state(vamm_id: &VammIdOf<T>) -> Result<VammStateOf<T>, DispatchError> {
