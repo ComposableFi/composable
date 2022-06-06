@@ -5,9 +5,10 @@ mod tests;
 
 use crate::{
 	defi::{CurrencyPair, DeFiEngine, MoreThanOneFixedU128},
+	oracle::Oracle as OracleTrait,
 	time::Timestamp,
 };
-use composable_support::validation::{TryIntoValidated, Validate};
+use composable_support::validation::{TryIntoValidated, Validate, Validated};
 use frame_support::{pallet_prelude::*, sp_runtime::Perquintill, sp_std::vec::Vec};
 use scale_info::TypeInfo;
 use sp_runtime::{
@@ -56,7 +57,7 @@ impl<LiquidationStrategyId, BlockNumber>
 		update_input: UpdateInput<LiquidationStrategyId, BlockNumber>,
 	) -> Result<UpdateInput<LiquidationStrategyId, BlockNumber>, &'static str> {
 		if update_input.collateral_factor < MoreThanOneFixedU128::one() {
-			return Err("collateral factor must be >= 1")
+			return Err("Collateral factor must be more than one.")
 		}
 
 		let interest_rate_model = update_input
@@ -95,7 +96,6 @@ impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
 		create_input: CreateInput<LiquidationStrategyId, Asset, BlockNumber>,
 	) -> Result<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, &'static str> {
 		let updatable = create_input.updatable.try_into_validated::<UpdateInputValid>()?.value();
-
 		Ok(CreateInput { updatable, ..create_input })
 	}
 }
@@ -108,10 +108,41 @@ impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
 		create_input: CreateInput<LiquidationStrategyId, Asset, BlockNumber>,
 	) -> Result<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, &'static str> {
 		if create_input.currency_pair.base == create_input.currency_pair.quote {
-			Err("currency pair must be different assets")
+			Err("Base and quote currencies supposed to be different in currency pair")
 		} else {
 			Ok(create_input)
 		}
+	}
+}
+
+#[derive(RuntimeDebug, PartialEq, TypeInfo, Default)]
+pub struct AssetIsSupportedByOracle<Oracle: OracleTrait>(PhantomData<Oracle>);
+
+impl<Oracle: OracleTrait> Copy for AssetIsSupportedByOracle<Oracle> {}
+impl<Oracle: OracleTrait> Clone for AssetIsSupportedByOracle<Oracle> {
+	fn clone(&self) -> Self {
+		*self
+	}
+}
+
+impl<LiquidationStrategyId, Asset: Copy, BlockNumber, Oracle: OracleTrait<AssetId = Asset>>
+	Validate<
+		CreateInput<LiquidationStrategyId, Asset, BlockNumber>,
+		AssetIsSupportedByOracle<Oracle>,
+	> for AssetIsSupportedByOracle<Oracle>
+{
+	fn validate(
+		create_input: CreateInput<LiquidationStrategyId, Asset, BlockNumber>,
+	) -> Result<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, &'static str> {
+		ensure!(
+			Oracle::is_supported(create_input.borrow_asset())?,
+			"Borrow asset is not supported by oracle"
+		);
+		ensure!(
+			Oracle::is_supported(create_input.collateral_asset())?,
+			"Collateral asset is not supported by oracle"
+		);
+		Ok(create_input)
 	}
 }
 
@@ -127,6 +158,18 @@ impl<LiquidationStrategyId, AssetId: Copy, BlockNumber>
 
 	pub fn reserved_factor(&self) -> Perquintill {
 		self.reserved_factor
+	}
+}
+
+#[derive(RuntimeDebug, PartialEq, TypeInfo, Default, Copy, Clone)]
+pub struct BalanceGreaterThenZero;
+impl<B> Validate<B, BalanceGreaterThenZero> for BalanceGreaterThenZero
+where
+	B: Zero + PartialOrd,
+{
+	fn validate(balance: B) -> Result<B, &'static str> {
+		ensure!(balance > B::zero(), "Can not deposit zero collateral");
+		Ok(balance)
 	}
 }
 
@@ -250,8 +293,7 @@ pub trait Lending: DeFiEngine {
 	type BlockNumber;
 	/// id of dispatch used to liquidate collateral in case of undercollateralized asset
 	type LiquidationStrategyId;
-	/// returned from extrinsic is guaranteed to be existing asset id at time of block execution
-	//type AssetId;
+	type Oracle: OracleTrait;
 
 	/// Generates the underlying owned vault that will hold borrowable asset (may be shared with
 	/// specific set of defined collaterals). Creates market for new pair in specified vault. if
@@ -294,7 +336,10 @@ pub trait Lending: DeFiEngine {
 	/// Returned `MarketId` is mapped one to one with (deposit VaultId, collateral VaultId)
 	fn create(
 		manager: Self::AccountId,
-		config: CreateInput<Self::LiquidationStrategyId, Self::MayBeAssetId, Self::BlockNumber>,
+		config: Validated<
+			CreateInput<Self::LiquidationStrategyId, Self::MayBeAssetId, Self::BlockNumber>,
+			(MarketModelValid, CurrencyPairIsNotSame, AssetIsSupportedByOracle<Self::Oracle>),
+		>,
 		keep_alive: bool,
 	) -> Result<(Self::MarketId, Self::VaultId), DispatchError>;
 
@@ -305,7 +350,7 @@ pub trait Lending: DeFiEngine {
 	fn deposit_collateral(
 		market_id: &Self::MarketId,
 		account_id: &Self::AccountId,
-		amount: CollateralLpAmountOf<Self>,
+		amount: Validated<Self::Balance, BalanceGreaterThenZero>,
 		keep_alive: bool,
 	) -> Result<(), DispatchError>;
 

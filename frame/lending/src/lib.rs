@@ -79,9 +79,9 @@ pub mod pallet {
 		defi::{DeFiComposableConfig, *},
 		lending::{
 			math::{self, *},
-			BorrowAmountOf, CollateralLpAmountOf, CreateInput, CurrencyPairIsNotSame, Lending,
-			MarketConfig, MarketModelValid, RepayStrategy, TotalDebtWithInterest, UpdateInput,
-			UpdateInputValid,
+			AssetIsSupportedByOracle, BalanceGreaterThenZero, BorrowAmountOf, CollateralLpAmountOf,
+			CreateInput, CurrencyPairIsNotSame, Lending, MarketConfig, MarketModelValid,
+			RepayStrategy, TotalDebtWithInterest, UpdateInput, UpdateInputValid,
 		},
 		liquidation::Liquidation,
 		oracle::Oracle,
@@ -344,7 +344,11 @@ pub mod pallet {
 				}
 				let results = signer.send_signed_transaction(|_account| Call::liquidate {
 					market_id,
-					borrowers: vec![account.clone()],
+					// Unwrapped since we push only one borrower in the vector
+					borrowers: BoundedVec::<_, T::MaxLiquidationBatchSize>::try_from(vec![
+						account.clone()
+					])
+					.expect("This function never panics"),
 				});
 
 				for (_acc, res) in &results {
@@ -627,12 +631,14 @@ pub mod pallet {
 		#[transactional]
 		pub fn create_market(
 			origin: OriginFor<T>,
-			input: Validated<CreateInputOf<T>, (MarketModelValid, CurrencyPairIsNotSame)>,
+			input: Validated<
+				CreateInputOf<T>,
+				(MarketModelValid, CurrencyPairIsNotSame, AssetIsSupportedByOracle<T::Oracle>),
+			>,
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			let input = input.value();
-			let pair = input.currency_pair;
+			let pair = input.clone().value().currency_pair;
 			let (market_id, vault_id) = Self::create(who.clone(), input, keep_alive)?;
 			Self::deposit_event(Event::<T>::MarketCreated {
 				market_id,
@@ -684,12 +690,16 @@ pub mod pallet {
 		pub fn deposit_collateral(
 			origin: OriginFor<T>,
 			market_id: MarketIndex,
-			amount: T::Balance,
+			amount: Validated<T::Balance, BalanceGreaterThenZero>,
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			<Self as Lending>::deposit_collateral(&market_id, &sender, amount, keep_alive)?;
-			Self::deposit_event(Event::<T>::CollateralDeposited { sender, market_id, amount });
+			Self::deposit_event(Event::<T>::CollateralDeposited {
+				sender,
+				market_id,
+				amount: amount.value(),
+			});
 			Ok(().into())
 		}
 
@@ -777,17 +787,9 @@ pub mod pallet {
 		pub fn liquidate(
 			origin: OriginFor<T>,
 			market_id: MarketIndex,
-			borrowers: Vec<T::AccountId>,
+			borrowers: BoundedVec<T::AccountId, T::MaxLiquidationBatchSize>,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin.clone())?;
-			ensure!(
-				borrowers.len() <= T::MaxLiquidationBatchSize::get() as usize,
-				Error::<T>::MaxLiquidationBatchSizeExceeded
-			);
-			// Unwrapped because of upper check.
-			// Perhaps borrowers ids should be in the bounded vector.
-			let borrowers = BoundedVec::<_, T::MaxLiquidationBatchSize>::try_from(borrowers)
-				.unwrap_or_default();
 			let subjected_borrowers = Self::liquidate_internal(&sender, &market_id, borrowers)?;
 			// if at least one borrower was affected then liquidation been initiated
 			if !subjected_borrowers.is_empty() {
@@ -802,7 +804,7 @@ pub mod pallet {
 
 	// public helper functions
 	impl<T: Config> Pallet<T> {
-		/// Returns the initial pool size for a a market with `borrow_asset`. Calculated with
+		/// Returns the initial pool size for a market with `borrow_asset`. Calculated with
 		/// [`Config::OracleMarketCreationStake`].
 		pub fn calculate_initial_pool_size(
 			borrow_asset: <T::Oracle as composable_traits::oracle::Oracle>::AssetId,
@@ -1159,7 +1161,6 @@ pub mod pallet {
 
 			if !BorrowRent::<T>::contains_key(market_id, debt_owner) {
 				let deposit = T::WeightToFee::calc(&T::WeightInfo::liquidate(1));
-
 				// See note 1
 				ensure!(
 					<T as Config>::NativeCurrency::can_withdraw(debt_owner, deposit)
@@ -1211,9 +1212,7 @@ pub mod pallet {
 
 	impl<T: Config> DeFiEngine for Pallet<T> {
 		type MayBeAssetId = <T as DeFiComposableConfig>::MayBeAssetId;
-
 		type Balance = <T as DeFiComposableConfig>::Balance;
-
 		type AccountId = <T as frame_system::Config>::AccountId;
 	}
 
@@ -1222,31 +1221,17 @@ pub mod pallet {
 		type MarketId = MarketIndex;
 		type BlockNumber = T::BlockNumber;
 		type LiquidationStrategyId = <T as Config>::LiquidationStrategyId;
+		type Oracle = T::Oracle;
 
 		fn create(
 			manager: Self::AccountId,
-			config_input: CreateInput<
-				Self::LiquidationStrategyId,
-				Self::MayBeAssetId,
-				Self::BlockNumber,
+			input: Validated<
+				CreateInputOf<T>,
+				(MarketModelValid, CurrencyPairIsNotSame, AssetIsSupportedByOracle<T::Oracle>),
 			>,
 			keep_alive: bool,
 		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
-			// TODO: Replace with `Validate`
-			ensure!(
-				config_input.updatable.collateral_factor > 1.into(),
-				Error::<T>::CollateralFactorMustBeMoreThanOne
-			);
-
-			ensure!(
-				<T::Oracle as Oracle>::is_supported(config_input.borrow_asset())?,
-				Error::<T>::BorrowAssetNotSupportedByOracle
-			);
-			ensure!(
-				<T::Oracle as Oracle>::is_supported(config_input.collateral_asset())?,
-				Error::<T>::CollateralAssetNotSupportedByOracle
-			);
-
+			let config_input = input.value();
 			LendingCount::<T>::try_mutate(|MarketIndex(previous_market_index)| {
 				let market_id = {
 					// TODO: early mutation of `previous_market_index` value before check.
@@ -1325,10 +1310,10 @@ pub mod pallet {
 		fn deposit_collateral(
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
-			amount: CollateralLpAmountOf<Self>,
+			amount: Validated<CollateralLpAmountOf<Self>, BalanceGreaterThenZero>,
 			keep_alive: bool,
 		) -> Result<(), DispatchError> {
-			ensure!(amount > Self::Balance::zero(), Error::<T>::CannotDepositZeroCollateral);
+			let amount = amount.value();
 			let (_, market) = Self::get_market(market_id)?;
 			let market_account = Self::account_id(market_id);
 
