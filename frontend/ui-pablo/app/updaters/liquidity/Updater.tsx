@@ -3,16 +3,14 @@ import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 import _ from "lodash";
 import { useEffect, useMemo } from "react";
-import {
-  useParachainApi,
-  useSelectedAccount,
-} from "substrate-react";
+import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "../constants";
 import { liquidityTransactionsByAddressAndPool } from "@ui-pablo/app/updaters/pools/subsquid";
 import {
   fetchAndUpdatePoolLiquidity,
   processLiquidityTransactionsByAddress,
 } from "./utils";
+import { fetchBalanceByAssetId } from "../balances/utils";
 // import { fetchBalanceByAssetId } from "../balances/utils";
 // import { createPoolAccountId } from "@/utils/substrate";
 
@@ -25,6 +23,7 @@ const Updater = () => {
     pools,
     setTokenAmountInPool,
     setTokenValueInPool,
+    setUserLpBalance,
     setUserProvidedTokenAmountInPool,
     poolLiquidity,
   } = useStore();
@@ -84,6 +83,26 @@ const Updater = () => {
       });
     }
   }, [allPools.length, selectedAccount]);
+  /**
+   * Fetch and update LP Balances within
+   * zustand store
+   */
+  useEffect(() => {
+    if (allPools.length && selectedAccount && parachainApi) {
+      allPools.forEach((pool) => {
+        if (pool.poolId && pool.pair && pool.lpToken) {
+          fetchBalanceByAssetId(
+            parachainApi,
+            DEFAULT_NETWORK_ID,
+            selectedAccount.address,
+            pool.lpToken
+          ).then((lpBalance) => {
+            setUserLpBalance(pool.poolId as number, lpBalance);
+          });
+        }
+      });
+    }
+  }, [parachainApi, allPools.length, selectedAccount]);
   /**
    * For each pool, update zustand
    * store with value of tokens

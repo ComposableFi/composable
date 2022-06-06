@@ -11,9 +11,7 @@ import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
 import { useLiquidityByPool } from "./useLiquidityByPool";
 
 export const usePoolDetails = (poolId: number) => {
-  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-  const { poolStats } = useStore();
-
+  const { poolStats, userLpBalances } = useStore();
 
   const allLpRewardingPools = useAllLpTokenRewardingPools();
   const [pool, setPool] =
@@ -26,7 +24,6 @@ export const usePoolDetails = (poolId: number) => {
     useState<AssetMetadata | undefined>(undefined);
   const [quoteAsset, setQuoteAsset] =
     useState<AssetMetadata | undefined>(undefined);
-  const [lpBalance, setLpBalance] = useState(new BigNumber(0));
 
   useEffect(() => {
     let pool: StableSwapPool | ConstantProductPool | undefined =
@@ -47,7 +44,6 @@ export const usePoolDetails = (poolId: number) => {
       setPool(undefined);
       setBaseAsset(undefined);
       setQuoteAsset(undefined);
-      setLpBalance(new BigNumber(0));
     }
   }, [poolId]);
 
@@ -71,20 +67,14 @@ export const usePoolDetails = (poolId: number) => {
     }
   }, [poolStats, poolId]);
 
-  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-
-  useEffect(() => {
-    if (parachainApi && selectedAccount && pool) {
-      fetchBalanceByAssetId(
-        parachainApi,
-        DEFAULT_NETWORK_ID,
-        selectedAccount.address,
-        pool.lpToken
-      ).then((lpBalance) => {
-        setLpBalance(new BigNumber(lpBalance));
-      });
+  const lpBalance = useMemo(() => {
+    if (pool) {
+      if (userLpBalances[pool.poolId]) {
+        return new BigNumber(userLpBalances[pool.poolId])
+      }
     }
-  }, [parachainApi, selectedAccount, pool]);
+    return new BigNumber(0)
+  }, [pool, userLpBalances])
 
   return {
     baseAsset,
