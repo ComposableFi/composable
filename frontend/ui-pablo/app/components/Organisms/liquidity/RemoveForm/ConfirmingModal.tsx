@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { ModalProps, Modal } from "@/components/Molecules";
 import { Label, BaseAsset } from "@/components/Atoms";
-import { getToken } from "@/defi/Tokens";
-import { TokenId } from "@/defi/types";
 import {
   alpha,
   Box,
@@ -42,6 +40,7 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
   setConfirmed,
   ...rest
 }) => {
+  // WIP
   // const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   // const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   // const executor = useExecutor();
@@ -72,6 +71,7 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
   };
 
   const confirmRemoveHandler = async () => {
+    // WIP
     // if (parachainApi && executor && baseAss && quoteAss && selectedAccount) {
     //   const { baseDecimals, quoteDecimals } = getPairDecimals(
     //     baseAss.assetId,

@@ -143,9 +143,6 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     const asset = getAssetById("picasso", auction.pair.base);
     if (parachainApi && selectedAccount && executor && asset) {
       const baseDecimals = new BigNumber(10).pow(asset.decimals);
-      // const poolIdParam = parachainApi.createType("u128", auction.poolId);
-      // const assetIdParam = parachainApi.createType("u128", auction.pair.base);
-      // const keepAlive = parachainApi.createType("bool", true);
 
       const minRec = parachainApi.createType(
         "u128",
