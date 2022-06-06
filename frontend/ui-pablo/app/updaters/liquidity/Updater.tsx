@@ -26,7 +26,7 @@ const Updater = () => {
     setTokenAmountInPool,
     setTokenValueInPool,
     setUserProvidedTokenAmountInPool,
-    liquidity,
+    poolLiquidity,
   } = useStore();
   /**
    * Select pools tracking
@@ -102,9 +102,9 @@ const Updater = () => {
             pool.pair.quote
           );
 
-          if (assets[baseAssetMeta.assetId] && liquidity[pool.poolId]) {
+          if (assets[baseAssetMeta.assetId] && poolLiquidity[pool.poolId]) {
             const baseValue = new BigNumber(
-              liquidity[pool.poolId].tokenAmounts.baseAmount
+              poolLiquidity[pool.poolId].tokenAmounts.baseAmount
             )
               .times(assets[baseAssetMeta.assetId].price.toString())
               .toString();
@@ -112,9 +112,9 @@ const Updater = () => {
               baseValue,
             });
           }
-          if (assets[quoteAssetMeta.assetId] && liquidity[pool.poolId]) {
+          if (assets[quoteAssetMeta.assetId] && poolLiquidity[pool.poolId]) {
             const quoteValue = new BigNumber(
-              liquidity[pool.poolId].tokenAmounts.quoteAmount
+              poolLiquidity[pool.poolId].tokenAmounts.quoteAmount
             )
               .times(assets[quoteAssetMeta.assetId].price.toString())
               .toString();

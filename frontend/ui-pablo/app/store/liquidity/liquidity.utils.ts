@@ -3,7 +3,7 @@ import produce from "immer";
 import { LiquiditySlice } from "./liquidity.types";
 
 export const putTokenAmount = (
-  liquiditySlice: LiquiditySlice["liquidity"],
+  liquiditySlice: LiquiditySlice["poolLiquidity"],
   poolId: number,
   amount: {
     baseAmount?: string;
@@ -35,7 +35,7 @@ export const putTokenAmount = (
 };
 
 export const putTokenValue = (
-  liquiditySlice: LiquiditySlice["liquidity"],
+  liquiditySlice: LiquiditySlice["poolLiquidity"],
   poolId: number,
   value: {
     baseValue?: string;
