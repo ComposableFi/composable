@@ -3,9 +3,8 @@ import { AssetId } from "@/defi/polkadot/types";
 import BigNumber from "bignumber.js";
 import { useEffect, useState } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
-import { fetchBalanceByAssetId } from "../../updaters/balances/utils";
-import { DEFAULT_NETWORK_ID } from "../../updaters/constants";
-import { createPoolAccountId } from "../../updaters/utils";
+import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
+import { fetchBalanceByAssetId } from "@/updaters/balances/utils";
 import { DailyRewards } from "../poolStats/poolStats.types";
 import { useLiquidityPoolsList } from "./useLiquidityPoolsList";
 

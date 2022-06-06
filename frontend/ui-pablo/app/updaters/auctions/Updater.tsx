@@ -1,18 +1,17 @@
 import { useEffect } from "react";
 import { useParachainApi } from "substrate-react";
 import useStore from "@/store/useStore";
-import { subsquidClient } from "@/subsquid";
 import { getAssetById } from "@/defi/polkadot/Assets";
 import BigNumber from "bignumber.js";
 
 import { aggregateTrades, transformAuctionsTransaction } from "./utils";
 import { PoolTradeHistory } from "@/store/auctions/auctions.types";
-import { createPoolAccountId } from "../utils";
 import { fetchBalanceByAssetId } from "../balances/utils";
-import { AVERAGE_BLOCK_TIME, DEFAULT_DECIMALS } from "../constants";
+import { AVERAGE_BLOCK_TIME, DEFAULT_DECIMALS, DEFAULT_NETWORK_ID } from "../constants";
 import { queryAuctionStats } from "./subsquid";
 import { queryPoolTransactionsByType } from "../pools/subsquid";
 import { fetchSpotPrice } from "../swaps/utils";
+import { createPoolAccountId } from "@/utils/substrate";
 
 const Updater = () => {
   const {
@@ -25,7 +24,7 @@ const Updater = () => {
     putHistoryActiveLBP,
     putChartSeries,
   } = useStore();
-  const { parachainApi } = useParachainApi("picasso");
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   /**
    * Queries initiated on an Auctions
    * LBP selection
@@ -36,8 +35,8 @@ const Updater = () => {
       const { base, quote } = auctions.activeLBP.pair;
       const { start } = auctions.activeLBP.sale;
 
-      const baseAsset = getAssetById("picasso", base);
-      const quoteAsset = getAssetById("picasso", quote);
+      const baseAsset = getAssetById(DEFAULT_NETWORK_ID, base);
+      const quoteAsset = getAssetById(DEFAULT_NETWORK_ID, quote);
       const baseDecimals = baseAsset
         ? new BigNumber(10).pow(baseAsset.decimals)
         : DEFAULT_DECIMALS;
@@ -45,7 +44,7 @@ const Updater = () => {
         ? new BigNumber(10).pow(quoteAsset.decimals)
         : DEFAULT_DECIMALS;
 
-      const poolAccountId = createPoolAccountId(auctions.activeLBP.poolId);
+      const poolAccountId = createPoolAccountId(parachainApi, auctions.activeLBP.poolId);
 
       let allQueries = [
         /**
@@ -72,7 +71,7 @@ const Updater = () => {
          */
         fetchBalanceByAssetId(
           parachainApi,
-          "picasso",
+          DEFAULT_NETWORK_ID,
           poolAccountId,
           base.toString()
         ),
@@ -82,7 +81,7 @@ const Updater = () => {
          */
         fetchBalanceByAssetId(
           parachainApi,
-          "picasso",
+          DEFAULT_NETWORK_ID,
           poolAccountId,
           quote.toString()
         ),
