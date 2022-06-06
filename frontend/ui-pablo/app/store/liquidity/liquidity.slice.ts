@@ -13,11 +13,11 @@ const createLiquiditySlice: StoreSlice<LiquiditySlice> = (set) => ({
   userLpBalances: {},
   setTokenAmountInPool: (poolId: number, amounts) =>
     set((prev: LiquiditySlice) => ({
-      liquidity: putTokenAmount(prev.poolLiquidity, poolId, amounts),
+      poolLiquidity: putTokenAmount(prev.poolLiquidity, poolId, amounts),
     })),
   setTokenValueInPool: (poolId: number, value) =>
     set((prev: LiquiditySlice) => ({
-      liquidity: putTokenValue(prev.poolLiquidity, poolId, value),
+      poolLiquidity: putTokenValue(prev.poolLiquidity, poolId, value),
     })),
   setUserProvidedTokenAmountInPool: (poolId: number, amounts) =>
     set((prev: LiquiditySlice) => ({
@@ -28,9 +28,9 @@ const createLiquiditySlice: StoreSlice<LiquiditySlice> = (set) => ({
       ),
     })),
   setUserLpBalance: (poolId: number, amount) =>
-    set((prev: LiquiditySlice) => {
-      userLpBalances: putUserLpBalance(prev.userLpBalances, poolId, amount);
-    }),
+    set((prev: LiquiditySlice) => ({
+      userLpBalances: putUserLpBalance(prev.userLpBalances, poolId, amount)
+    })),
 });
 
 export default createLiquiditySlice;
