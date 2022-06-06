@@ -3,11 +3,9 @@ import { TOKENS } from "@/defi/Tokens";
 import { useAppSelector } from "@/hooks/store";
 import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
 import { useUserProvidedLiquidityByPool } from "@/store/hooks/useUserProvidedLiquidityByPool";
-import { getTokenIdsFromSelectedPool } from "@/stores/defi/pool";
 import {
   alpha,
   Box,
-  BoxProps,
   Button,
   Divider,
   Grid,
