@@ -621,10 +621,28 @@ pub mod pallet {
 		///
 		/// # Overview
 		/// In order for the caller to update the time weighted average price of
-		/// the desired asset, it has to request it to the Vamm Pallet.  The
+		/// the desired asset, it has to request it to the Vamm Pallet. The
 		/// pallet will perform the needed sanity checks and update the runtime
-		/// storage whith the desired twap value, returning it in case of
+		/// storage with the desired twap value, returning it in case of
 		/// success.
+		///
+		/// This function can also compute the new twap value using an
+		/// Exponential Moving Average algorithm rather than blindly seting it
+		/// to the value passed by the caller. In that case, the following
+		/// algorithm will be used:
+		///
+		/// $$
+		/// twap = \frac{(x_t \cdot w_t) + (x_{t-1} \cdot w_{t-1})}{w_t + w_{t-1}}
+		/// $$
+		///
+		/// Where:
+		/// * $twap$: Is the new calculated twap.
+		/// * $x_t$: Is the current price of the asset.
+		/// * $x_{t-1}$: Is the last twap price of the asset.
+		/// * $w_t$: $max(1, T_{now} - T_{last\_update})$.
+		/// * $w_{t-1}$: $max(1, $[`funding_period`](VammState::funding_period)$ - w_t)$.
+		/// * $T_{now}$: current unix timestamp (ie. seconds since the Unix epoch).
+		/// * $T_{last\_update}$: timestamp from last twap price update.
 		///
 		/// ![](https://www.plantuml.com/plantuml/svg/FSqz3i8m343XdLF01UgTgH8IrwXSnsqZnKxa7tfzAWQcfszwimTQfBJReogrB9pMxaV4y2U0uJdjDOvSqzceQx36H5tWrMLqnxNnkmBz0UnqiC5cA0mV585ISR_aiALIrAvBZeB1Ivmufj5GV_kPjLpz0W00)
 		///
