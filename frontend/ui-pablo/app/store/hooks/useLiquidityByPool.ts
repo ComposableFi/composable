@@ -28,7 +28,7 @@ export const useLiquidityByPool = (
   };
 } => {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-  const { liquidity } = useStore();
+  const { poolLiquidity } = useStore();
   const [baseAmount, setBaseAmount] = useState(new BigNumber(0));
   const [quoteAmount, setQuoteAmount] = useState(new BigNumber(0));
   const [value, setValue] = useState({
@@ -39,12 +39,12 @@ export const useLiquidityByPool = (
 
   useEffect(() => {
     if (parachainApi && pool) {
-      if (liquidity[pool.poolId]) {
+      if (poolLiquidity[pool.poolId]) {
         setBaseAmount(
-          new BigNumber(liquidity[pool.poolId].tokenAmounts.baseAmount)
+          new BigNumber(poolLiquidity[pool.poolId].tokenAmounts.baseAmount)
         );
         setQuoteAmount(
-          new BigNumber(liquidity[pool.poolId].tokenAmounts.quoteAmount)
+          new BigNumber(poolLiquidity[pool.poolId].tokenAmounts.quoteAmount)
         );
       }
     }
@@ -52,18 +52,18 @@ export const useLiquidityByPool = (
 
   useEffect(() => {
     if (pool) {
-      if (liquidity[pool.poolId]) {
-        const baseValue = new BigNumber(liquidity[pool.poolId].value.baseValue)
-        const quoteValue = new BigNumber(liquidity[pool.poolId].value.quoteValue) 
+      if (poolLiquidity[pool.poolId]) {
+        const baseValue = new BigNumber(poolLiquidity[pool.poolId].value.baseValue)
+        const quoteValue = new BigNumber(poolLiquidity[pool.poolId].value.quoteValue) 
         
         setValue({
-          baseValue: new BigNumber(liquidity[pool.poolId].value.baseValue),
-          quoteValue: new BigNumber(liquidity[pool.poolId].value.quoteValue),
+          baseValue: new BigNumber(poolLiquidity[pool.poolId].value.baseValue),
+          quoteValue: new BigNumber(poolLiquidity[pool.poolId].value.quoteValue),
           totalValueLocked: baseValue.plus(quoteValue)
         });
       }
     }
-  }, [pool, liquidity]);
+  }, [pool, poolLiquidity]);
 
   return {
     tokenAmounts: {

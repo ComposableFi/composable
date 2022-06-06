@@ -17,7 +17,7 @@ export const useLiquidityPoolsList = (): {
   dailyRewards: DailyRewards[];
   lpAssetId: string;
 }[] => {
-  const { poolStats, liquidity, assets } = useStore();
+  const { poolStats, poolLiquidity, assets } = useStore();
   const allLpRewardingPools = useAllLpTokenRewardingPools();
 
   const liquidityPools = useMemo(() => {
@@ -42,12 +42,12 @@ export const useLiquidityPoolsList = (): {
         apr = new BigNumber(0),
         dailyRewards: DailyRewards[] = [];
 
-      if (statsMap[p.poolId] && liquidity[p.poolId]) {
+      if (statsMap[p.poolId] && poolLiquidity[p.poolId]) {
         let baseLiq = new BigNumber(
-          liquidity[p.poolId].tokenAmounts.baseAmount
+          poolLiquidity[p.poolId].tokenAmounts.baseAmount
         );
         let quoteLiq = new BigNumber(
-          liquidity[p.poolId].tokenAmounts.quoteAmount
+          poolLiquidity[p.poolId].tokenAmounts.quoteAmount
         );
 
         baseLiq = new BigNumber(basePrice).times(baseLiq);
@@ -70,7 +70,7 @@ export const useLiquidityPoolsList = (): {
     });
 
     return list;
-  }, [poolStats, allLpRewardingPools.length, liquidity]);
+  }, [poolStats, allLpRewardingPools.length, poolLiquidity]);
 
   return liquidityPools;
 };

@@ -1,5 +1,5 @@
 export interface LiquiditySlice {
-    liquidity: {
+    poolLiquidity: {
         [poolId: number]: {
             tokenAmounts: {
                 baseAmount: string;
