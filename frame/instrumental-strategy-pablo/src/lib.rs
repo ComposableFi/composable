@@ -13,6 +13,7 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 	//                                   Imports and Dependencies
 	// -------------------------------------------------------------------------------------------
+	use pablo::Pools;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		instrumental::InstrumentalProtocolStrategy, 
@@ -102,6 +103,20 @@ pub mod pallet {
 			PoolId = Self::PoolId,
 		>;
 
+		// Type representing the unique ID of a pool.
+		type PoolId: FullCodec
+			+ MaxEncodedLen
+			+ Default
+			+ Debug
+			+ TypeInfo
+			+ Eq
+			+ PartialEq
+			+ Ord
+			+ Copy
+			+ Zero
+			+ One
+			+ SafeArithmetic;
+
 		/// The maximum number of vaults that can be associated with this strategy.
 		#[pallet::constant]
 		type MaxAssociatedVaults: Get<u32>;
@@ -132,7 +147,12 @@ pub mod pallet {
 	// TODO(belousm): where pools will be added?
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
-	pub type Pools<T: Config> = StorageMap<_, Blake2_128Concat, T::PoolId, T::Balance>;
+	pub type InstrumentalPools<T: Config> = StorageMap<_, 
+		Blake2_128Concat,
+		T::AssetId, // An asset whitelisted by Instrumental
+		T::PoolId   // The corresponding Pool to invest the whitelisted asset into
+	>;
+
 
 	// -------------------------------------------------------------------------------------------
 	//                                        Runtime Events
@@ -227,40 +247,53 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		#[transactional]
 		fn do_rebalance(_vault_id: &T::VaultId) -> DispatchResult {
+			let pool_id: Option<T::PoolId, _> = Self::get_pool(T::Vault::asset_id(vault_id).unwrap());
 			let task = T::Vault::available_funds(vault_id, &Self::account_id())?;
-
 			let action = match task {
 				FundsAvailability::Withdrawable(balance) => {
 					let vault_account = T::Vault::account_id(vault_id);
-					Pools::iter_keys().for_each(|pool_id| {
-						if T::Pablo::currency_pair(pool_id).unwrap() == PICA  && 
-						T::Vault::asset_id.unwrap() == PICA {
-							let lp_token_amount = amount_of_lp_token_for_added_liquidity(pool_id, balance, T::Balance.set_zero());
-							T::Pablo::add_liquidity(&vault_account,
-													pool_id,
-													balance,
-													T::Balance.set_zero(),
-													lp_token_amount,
-													true);	
-						}
-						else if T::Pablo::currency_pair(pool_id).unwrap() == PICA {
-							let lp_token_amount = amount_of_lp_token_for_added_liquidity(pool_id, T::Balance.set_zero(), balance);
-							T::Pablo::add_liquidity(&vault_account,
-													pool_id,
-													T::Balance.set_zero(),
-													balance,
-													lp_token_amount,
-													true);	
-						}
-					});
+					let lp_token_amount = amount_of_lp_token_for_added_liquidity(pool_id, T::Balance.set_zero(), balance);
+					T::Pablo::add_liquidity(&vault_account,
+											pool_id,
+											T::Balance.set_zero(),
+											balance,
+											lp_token_amount,
+											true);	
+
 				},
-				FundsAvailability::Depositable(balance) => todo!(),
+				FundsAvailability::Depositable(balance) => {
+					let vault_account = T::Vault::account_id(vault_id);
+					let lp_token_amount = amount_of_lp_token_for_added_liquidity(pool_id, T::Balance.set_zero(), balance);
+					T::Pablo::remove_liquidity(&vault_account,
+											pool_id,
+											T::Balance.set_zero(),
+											balance,
+											lp_token_amount);	
+
+				},
 				FundsAvailability::MustLiquidate => {
 					// TODO(belousm): should we transfer all assets to Vault from strategy?
 					todo!();
 				},
 			};
 			Ok(())
+		}
+
+		fn get_pool(asset_id: T::AssetId) -> Option<T::PoolId, _> {
+			match InstrumentalPools::<T>::get(asset_id).from_query_to_optional_value() {
+				Some(pool_id) => {pool_id},
+				None => {
+					Pools::<T>::iter_keys().for_each(|pool_id| {
+						if T::Pablo::currency_pair(pool_id).unwrap().quote == asset_id 
+						&& T::Pablo::currency_pair(pool_id).unwrap().base == PICA {
+							InstrumentalPools::<T>::insert(asset_id, pool_id);
+							pool_id
+						}
+					});
+					todo!(); // TODO(belousm): return other strategy pool
+				}
+			}
+
 		}
 	}
 }
