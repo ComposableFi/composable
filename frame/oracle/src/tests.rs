@@ -16,7 +16,7 @@ use sp_io::TestExternalities;
 use sp_keystore::{testing::KeyStore, KeystoreExt, SyncCryptoStore};
 use sp_runtime::{
 	traits::{BadOrigin, Zero},
-	FixedPointNumber, FixedU128, Percent, RuntimeAppPublic,
+	FixedPointNumber, FixedU128, Perbill, Percent, RuntimeAppPublic,
 };
 use std::sync::Arc;
 
@@ -25,6 +25,7 @@ use composable_support::validation::Validated;
 use composable_tests_helpers::{prop_assert_noop, prop_assert_ok};
 use proptest::prelude::*;
 
+use composable_tests_helpers::test::helper::default_acceptable_computation_error;
 use sp_core::H256;
 
 prop_compose! {
@@ -1093,6 +1094,22 @@ fn test_payout_slash() {
 }
 
 #[test]
+fn test_max_reward_per_block() {
+	new_test_ext().execute_with(|| {
+		let total_issuance = <Test as Config>::Currency::total_issuance();
+		let mut reward_rate: Perbill = Perbill::from_percent(20);
+		const BLOCKS_PER_YEAR: u64 = 365 * 24 * 60 * 60 * 1000 / MILLISECS_PER_BLOCK;
+
+		Oracle::set_reward_rate(reward_rate);
+
+		assert_ok!(default_acceptable_computation_error(
+			Oracle::max_reward_per_block().into(),
+			(total_issuance * 20 / 100 / BLOCKS_PER_YEAR).into()
+		));
+	});
+}
+
+#[test]
 fn halborn_test_bypass_slashing() {
 	new_test_ext().execute_with(|| {
 		const ASSET_ID: u128 = 0;
@@ -1102,7 +1119,9 @@ fn halborn_test_bypass_slashing() {
 		const BLOCK_INTERVAL: u64 = 5;
 		const REWARD: u64 = 5;
 		const SLASH: u64 = 5;
+		const REWARD_RATE: Perbill = Perbill::from_percent(20);
 
+		Oracle::set_reward_rate(REWARD_RATE);
 		let account_1 = get_account_1();
 		let account_2 = get_root_account();
 		let account_4 = get_account_4();

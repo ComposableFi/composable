@@ -17,6 +17,7 @@ use system::EnsureRoot;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
+type Moment = composable_traits::time::Timestamp;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
@@ -28,8 +29,22 @@ frame_support::construct_runtime!(
 		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		Oracle: pallet_oracle::{Pallet, Call, Storage, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 	}
 );
+
+pub const MILLISECS_PER_BLOCK: u64 = 12000;
+
+parameter_types! {
+	pub const MinimumPeriod: u64 = MILLISECS_PER_BLOCK / 2;
+}
+
+impl pallet_timestamp::Config for Test {
+	type Moment = Moment;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
+}
 
 // pub type StalePrice = Get<u64>;
 
@@ -149,7 +164,7 @@ impl pallet_oracle::Config for Test {
 	type MaxAssetsCount = MaxAssetsCount;
 	type MaxHistory = MaxHistory;
 	type MaxPrePrices = MaxPrePrices;
-	type WeightInfo = ();
+	type OracleWeightInfo = ();
 	type LocalAssets = ();
 	type TreasuryAccount = TreasuryAccountId;
 	type TwapWindow = TwapWindow;
@@ -163,7 +178,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 			(get_account_1(), 100),
 			(get_root_account(), 100),
 			(get_account_4(), 100),
-			(get_account_3(), 100),
+			(get_account_3(), 1_000_000_000),
 			(get_account_5(), 100),
 			(get_treasury_account(), 100),
 		],
