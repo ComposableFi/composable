@@ -4,6 +4,7 @@ package xcvm;
 
 message Program {
   Instructions instructions = 1;
+  uint32 nonce = 2;
 }
 
 message Instructions {
@@ -20,7 +21,6 @@ message Instruction {
 
 message Transfer {
   Account destination = 1;
-  // (Asset, Amount)
   map<uint32, U128> assets = 2;
 }
 
@@ -30,9 +30,8 @@ message Call {
 
 message Spawn {
   uint32 network = 1;
-  // (Asset, Amount)
   map<uint32, U128> assets = 2;
-  repeated Instruction program = 3;
+  Program program = 3;
 }
 
 message Account {

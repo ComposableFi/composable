@@ -45,9 +45,10 @@ pub mod pallet {
 			fungibles::{Inspect as FungiblesInspect, Transfer as FungiblesTransfer},
 			tokens::{AssetId, Balance},
 		},
-		transactional,
+		transactional, PalletId,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::*, RawOrigin};
+	use sp_runtime::traits::AccountIdConversion;
 	use sp_std::{collections::vec_deque::VecDeque, vec::Vec};
 	use xcvm_core::*;
 
@@ -103,14 +104,17 @@ pub mod pallet {
 				Balance = BalanceOf<Self>,
 			> + FungiblesTransfer<AccountIdOf<Self>>;
 		type Balance: Balance;
-		type MaxProgramSize: Get<u32>;
 		type Bridge: TransferTo<
 			AccountId = AccountIdOf<Self>,
 			AssetId = AssetIdOf<Self>,
 			Balance = BalanceOf<Self>,
-			BlockNumber = Self::BlockNumber,
+			BlockNumber = BlockNumberFor<Self>,
 		>;
 		type ControlOrigin: EnsureOrigin<Self::Origin>;
+		#[pallet::constant]
+		type MaxProgramSize: Get<u32>;
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
 	}
 
 	#[pallet::pallet]
@@ -141,18 +145,54 @@ pub mod pallet {
 
 		#[pallet::weight(10_000)]
 		#[transactional]
-		pub fn execute_typed(origin: OriginFor<T>, program: Program) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin.clone())?;
+		pub fn execute(
+			origin: OriginFor<T>,
+			real_origin: Option<AccountIdOf<T>>,
+			program: Program,
+		) -> DispatchResultWithPostInfo {
+			let who = match real_origin {
+				None => ensure_signed(origin.clone())?,
+				Some(real_origin) => {
+					let _ = T::ControlOrigin::ensure_origin(origin)?;
+					real_origin
+				},
+			};
 			Self::do_execute(who, program)
 		}
 
 		#[pallet::weight(10_000)]
 		#[transactional]
-		pub fn execute(
+		pub fn execute_json(
 			origin: OriginFor<T>,
+			real_origin: Option<AccountIdOf<T>>,
 			program: BoundedVec<u8, T::MaxProgramSize>,
 		) -> DispatchResultWithPostInfo {
-			let who = ensure_signed(origin.clone())?;
+			let who = match real_origin {
+				None => ensure_signed(origin.clone())?,
+				Some(real_origin) => {
+					let _ = T::ControlOrigin::ensure_origin(origin)?;
+					real_origin
+				},
+			};
+			let program = xcvm_core::deserialize_json(&program.into_inner())
+				.map_err(|_| Error::<T>::InvalidProgramEncoding)?;
+			Self::do_execute(who, program)
+		}
+
+		#[pallet::weight(10_000)]
+		#[transactional]
+		pub fn execute_protobuf(
+			origin: OriginFor<T>,
+			real_origin: Option<AccountIdOf<T>>,
+			program: BoundedVec<u8, T::MaxProgramSize>,
+		) -> DispatchResultWithPostInfo {
+			let who = match real_origin {
+				None => ensure_signed(origin.clone())?,
+				Some(real_origin) => {
+					let _ = T::ControlOrigin::ensure_origin(origin)?;
+					real_origin
+				},
+			};
 			let program = xcvm_protobuf::decode::<
 				XCVMNetwork,
 				<XCVMNetwork as Callable>::EncodedCall,
@@ -164,15 +204,23 @@ pub mod pallet {
 		}
 	}
 
+	impl<T: Config> Pallet<T> {
+		pub(crate) fn program_account(nonce: u32, who: AccountIdOf<T>) -> AccountIdOf<T> {
+			T::PalletId::get().into_sub_account((nonce, who))
+		}
+	}
+
 	impl<T: Config> Pallet<T>
 	where
 		AccountIdOf<T>: for<'a> TryFrom<&'a [u8]> + AsRef<[u8]>,
 	{
 		fn do_execute(who: AccountIdOf<T>, mut program: Program) -> DispatchResultWithPostInfo {
+			let program_account = Self::program_account(program.nonce, who.clone());
+			frame_support::log::debug!(target: "runtime::xcvm", "Program account {:?}", program_account.as_ref());
 			let program_copy = program.clone();
 			while let Some(instruction) = program.instructions.pop_front() {
 				match instruction {
-					XCVMInstruction::Transfer { to, assets: XCVMTransfer { assets } } => {
+					XCVMInstruction::Transfer { to, assets: XCVMTransfer(assets) } => {
 						let to = AccountIdOf::<T>::try_from(&to[..])
 							.map_err(|_| Error::<T>::MalformedAccount)?;
 						for (asset, amount) in assets {
@@ -180,7 +228,7 @@ pub mod pallet {
 								.map_err(|_| Error::<T>::UnknownAsset)?;
 							T::Assets::transfer(
 								concrete_asset,
-								&who,
+								&program_account,
 								&to,
 								amount.saturated_into(),
 								false,
@@ -197,15 +245,17 @@ pub mod pallet {
 					// If we want to spawn something from the same network, assume it's synchronous
 					XCVMInstruction::Spawn {
 						network: XCVMNetwork::PICASSO,
+						// we don't need to move the assets as we are just continuing
 						assets: _,
 						program: mut child_program,
 					} => {
-						child_program.append(&mut program.instructions);
-						program.instructions = child_program;
+						// prepend child instructions
+						child_program.instructions.append(&mut program.instructions);
+						program.instructions = child_program.instructions;
 					},
 					XCVMInstruction::Spawn {
 						network,
-						assets: XCVMTransfer { assets },
+						assets: XCVMTransfer(assets),
 						program: child_program,
 					} => {
 						let (bridge_network_id, network_satellite) =
@@ -217,7 +267,7 @@ pub mod pallet {
 								let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
 									.map_err(|_| Error::<T>::UnknownAsset)?;
 								BridgeOf::<T>::transfer_to(
-									who.clone(),
+									program_account.clone(),
 									bridge_network_id.clone(),
 									network_satellite.clone(),
 									concrete_asset,
@@ -230,10 +280,9 @@ pub mod pallet {
 						Self::deposit_event(Event::<T>::Spawn {
 							network,
 							network_txs,
-							who: who.clone(),
-							program: xcvm_protobuf::encode(XCVMProgram {
-								instructions: child_program,
-							}),
+							who: program_account.clone(),
+							program: xcvm_core::serialize_json(&child_program)
+								.map_err(|_| Error::<T>::InvalidProgramEncoding)?,
 						});
 					},
 				}

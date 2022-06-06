@@ -1122,7 +1122,8 @@ impl contracts::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MaxProgramSize: u32 = 1024;
+	pub const MaxProgramSize: u32 = 4096;
+	pub const XCVMPalletId: PalletId = PalletId(*b"xcvmxcvm");
 }
 
 impl xcvm::Config for Runtime {
@@ -1134,6 +1135,7 @@ impl xcvm::Config for Runtime {
 	type MaxProgramSize = MaxProgramSize;
 	type Bridge = Mosaic;
 	type ControlOrigin = EnsureRootOrHalfCouncil;
+	type PalletId = XCVMPalletId;
 }
 
 construct_runtime!(
@@ -1197,7 +1199,7 @@ construct_runtime!(
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
 	  Cosmwasm: contracts::{Pallet, Call, Storage, Event<T>} = 67,
-	XCVM: xcvm::{Pallet, Call, Storage, Event<T>} = 68,
+	  XCVM: xcvm::{Pallet, Call, Storage, Event<T>} = 68,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 	}

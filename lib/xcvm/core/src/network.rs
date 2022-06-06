@@ -22,7 +22,7 @@ pub trait Callable {
 	Deserialize,
 )]
 #[repr(transparent)]
-pub struct XCVMNetwork(u32);
+pub struct XCVMNetwork(pub u32);
 
 impl XCVMNetwork {
 	pub const PICASSO: XCVMNetwork = XCVMNetwork(1);

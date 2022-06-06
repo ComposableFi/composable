@@ -18,16 +18,14 @@ use serde::{Deserialize, Serialize};
 	Deserialize,
 )]
 #[repr(transparent)]
-pub struct XCVMAsset(u32);
+pub struct XCVMAsset(pub u32);
 
 impl XCVMAsset {
-	// Bullish
 	pub const PICA: XCVMAsset = XCVMAsset(1);
 	pub const ETH: XCVMAsset = XCVMAsset(2);
 	pub const USDT: XCVMAsset = XCVMAsset(3);
 	pub const USDC: XCVMAsset = XCVMAsset(4);
 
-	// Bearish
 	pub const UST: XCVMAsset = XCVMAsset(0xDEADC0DE);
 }
 
@@ -47,23 +45,16 @@ impl From<u32> for XCVMAsset {
 	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
 )]
 #[repr(transparent)]
-pub struct XCVMTransfer {
-	pub assets: BTreeMap<XCVMAsset, u128>,
-}
+pub struct XCVMTransfer(pub BTreeMap<XCVMAsset, u128>);
 
 impl From<BTreeMap<u32, u128>> for XCVMTransfer {
 	fn from(assets: BTreeMap<u32, u128>) -> Self {
-		XCVMTransfer {
-			assets: assets.into_iter().map(|(asset, amount)| (XCVMAsset(asset), amount)).collect(),
-		}
+		XCVMTransfer(assets.into_iter().map(|(asset, amount)| (XCVMAsset(asset), amount)).collect())
 	}
 }
 
 impl From<XCVMTransfer> for BTreeMap<u32, u128> {
-	fn from(val: XCVMTransfer) -> Self {
-		val.assets
-			.into_iter()
-			.map(|(XCVMAsset(asset), amount)| (asset, amount))
-			.collect()
+	fn from(XCVMTransfer(assets): XCVMTransfer) -> Self {
+		assets.into_iter().map(|(XCVMAsset(asset), amount)| (asset, amount)).collect()
 	}
 }

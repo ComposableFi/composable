@@ -27,6 +27,7 @@ pub fn deserialize_json<T: serde::de::DeserializeOwned>(
 pub struct XCVMProgramBuilder<Network, Instruction> {
 	pub network: Network,
 	pub instructions: VecDeque<Instruction>,
+	pub nonce: u32,
 }
 
 impl<Network, Account, Assets>
@@ -34,8 +35,8 @@ impl<Network, Account, Assets>
 where
 	Network: Copy + Callable,
 {
-	pub fn from(network: Network) -> Self {
-		XCVMProgramBuilder { network, instructions: VecDeque::new() }
+	pub fn from(network: Network, nonce: u32) -> Self {
+		XCVMProgramBuilder { network, instructions: VecDeque::new(), nonce }
 	}
 
 	pub fn transfer(mut self, to: Account, assets: Assets) -> Self {
@@ -50,7 +51,7 @@ where
 		self.instructions.push_back(XCVMInstruction::Spawn {
 			network,
 			assets,
-			program: f(Self::from(network))?.build().instructions,
+			program: f(Self::from(network, self.nonce + 1))?.build(),
 		});
 		Ok(self)
 	}
@@ -70,7 +71,7 @@ where
 	pub fn build(
 		self,
 	) -> XCVMProgram<VecDeque<XCVMInstruction<Network, Network::EncodedCall, Account, Assets>>> {
-		XCVMProgram { instructions: self.instructions }
+		XCVMProgram { instructions: self.instructions, nonce: self.nonce }
 	}
 }
 
@@ -129,7 +130,7 @@ mod tests {
 			Ok(XCVMProgramBuilder::<
 					XCVMNetwork,
 					XCVMInstruction<XCVMNetwork, _, (), XCVMTransfer>,
-				>::from(XCVMNetwork::PICASSO)
+				>::from(XCVMNetwork::PICASSO, 0)
 				.call(DummyProtocol1)?
 				.spawn::<_, ProgramBuildError>(
 					XCVMNetwork::ETHEREUM,
@@ -146,25 +147,31 @@ mod tests {
 		.expect("valid program");
 
 		assert_eq!(
-			program.instructions,
-			VecDeque::from([
-				// Protocol 1 on picasso
-				XCVMInstruction::Call { encoded: vec![202, 254, 190, 239] },
-				XCVMInstruction::Spawn {
-					network: XCVMNetwork::ETHEREUM,
-					assets: XCVMTransfer::from(BTreeMap::new()),
-					program: VecDeque::from([
-						// Protocol 2 on eth
-						XCVMInstruction::Call { encoded: vec![222, 173, 192, 222] },
-						// Protocol 1 on eth, different encoding than on previous network
-						XCVMInstruction::Call { encoded: vec![192, 222, 192, 222] },
-						XCVMInstruction::Transfer {
-							to: (),
-							assets: XCVMTransfer::from(BTreeMap::from([(1, u128::MAX)]))
+			program,
+			XCVMProgram {
+				nonce: 0,
+				instructions: VecDeque::from([
+					// Protocol 1 on picasso
+					XCVMInstruction::Call { encoded: vec![202, 254, 190, 239] },
+					XCVMInstruction::Spawn {
+						network: XCVMNetwork::ETHEREUM,
+						assets: XCVMTransfer::from(BTreeMap::new()),
+						program: XCVMProgram {
+							nonce: 1,
+							instructions: VecDeque::from([
+								// Protocol 2 on eth
+								XCVMInstruction::Call { encoded: vec![222, 173, 192, 222] },
+								// Protocol 1 on eth, different encoding than on previous network
+								XCVMInstruction::Call { encoded: vec![192, 222, 192, 222] },
+								XCVMInstruction::Transfer {
+									to: (),
+									assets: XCVMTransfer::from(BTreeMap::from([(1, u128::MAX)]))
+								}
+							])
 						}
-					])
-				}
-			]),
+					}
+				])
+			},
 		);
 	}
 
@@ -172,24 +179,19 @@ mod tests {
 	fn json_iso() {
 		let program = || -> Result<_, ProgramBuildError> {
 			Ok(XCVMProgramBuilder::<
-					XCVMNetwork,
-				XCVMInstruction<XCVMNetwork, _, (), XCVMTransfer>,
-				>::from(XCVMNetwork::PICASSO)
-				 .call(DummyProtocol1)?
-				 .spawn::<_, ProgramBuildError>(
-					 XCVMNetwork::ETHEREUM,
-					 XCVMTransfer::from(BTreeMap::new()),
-					 |child| {
-						 Ok(child
-							  .call(DummyProtocol2)?
-							  .call(DummyProtocol1)?
-							  .transfer((), XCVMTransfer::from(BTreeMap::from([(1, u128::MAX)]))))
-					 },
-				 )?
-				 .build())
+				XCVMNetwork,
+				XCVMInstruction<XCVMNetwork, Vec<u8>, Vec<u8>, XCVMTransfer>,
+			>::from(XCVMNetwork::PICASSO, 0)
+			.spawn::<_, ProgramBuildError>(
+				XCVMNetwork::ETHEREUM,
+				XCVMTransfer::from(BTreeMap::from([(1, 10_000_000_000_000u128)])),
+				|child| Ok(child),
+			)?
+			.build())
 		}()
 		.expect("valid program");
-
-		assert_eq!(program, deserialize_json(&serialize_json(&program).unwrap()).unwrap());
+		let serialized = serialize_json(&program).unwrap();
+		assert_eq!("", core::str::from_utf8(&serialized).unwrap());
+		assert_eq!(program, deserialize_json(&serialized).unwrap());
 	}
 }
