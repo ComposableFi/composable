@@ -266,19 +266,20 @@ pub mod pallet {
 		/// effect at the time `timestamp`.
 		pub closed: Option<Moment>,
 
-		// TODO(Cardosaum): Write description for this field.
+		/// The time weighted average price for [`base_asset_reserves`](VammState::base_asset_reserves).
 		pub base_asset_twap: Balance,
 
-		// TODO(Cardosaum): Write description for this field.
+		/// The time weighted average price timestamp for [`base_asset_reserves`](VammState::base_asset_reserves).
 		pub base_asset_twap_timestamp: Moment,
 
-		// TODO(Cardosaum): Write description for this field.
+		/// The time weighted average price for [`quote_asset_reserves`](VammState::quote_asset_reserves).
 		pub quote_asset_twap: Balance,
 
-		// TODO(Cardosaum): Write description for this field.
+		/// The time weighted average price timestamp for [`quote_asset_reserves`](VammState::quote_asset_reserves).
 		pub quote_asset_twap_timestamp: Moment,
 
-		// TODO(Cardosaum): Write description for this field.
+		/// The frequency with which the vamm must have it's funding rebalance.
+		/// (Used only for twap calculations.)
 		pub funding_period: Moment,
 	}
 
