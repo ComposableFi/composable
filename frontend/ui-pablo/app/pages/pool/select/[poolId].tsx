@@ -18,7 +18,8 @@ const PoolDetailsPage: NextPage = () => {
   const router = useRouter();
 
   useEffect(() => {
-    const { poolId } = router.query;
+    let poolId = Number(router.query.poolId);
+    if (!poolId || isNaN(poolId)) router.push('/pool')
     setPoolId(Number(poolId));
   }, []);
 
