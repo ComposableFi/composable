@@ -8,7 +8,6 @@ import { useAppSelector } from "@/hooks/store";
 import { BigNumberInput } from "@/components/Atoms";
 import { useState } from "react";
 import BigNumber from "bignumber.js";
-import { getTokenIdsFromSelectedPool } from "@/stores/defi/pool";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { PoolDetailsProps } from ".";
 import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
@@ -24,12 +23,6 @@ export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
   const [balance] = useState<BigNumber>(new BigNumber(200.0));
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
-  const {
-    tokenId1,
-    tokenId2,
-  } = useAppSelector(
-    getTokenIdsFromSelectedPool
-  );
 
   const handleStake = () => {
     // TODO: handle stake here
