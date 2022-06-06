@@ -1313,10 +1313,6 @@ pub mod pallet {
 			DecimalOf::<T>::from_inner(value)
 		}
 
-		fn moment_to_decimal(value: MomentOf<T>) -> DecimalOf<T> {
-			DecimalOf::<T>::from_inner(value.into().into())
-		}
-
 		fn balance_to_u128(value: BalanceOf<T>) -> Result<u128, DispatchError> {
 			Ok(TryInto::<u128>::try_into(value).ok().ok_or(ArithmeticError::Overflow)?)
 		}
