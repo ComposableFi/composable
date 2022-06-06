@@ -1,17 +1,28 @@
 import { getAssetByOnChainId } from "@/defi/polkadot/Assets";
 import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
 import useStore from "@/store/useStore";
+import { processLiquidityTransactionsByAddress } from "@/updaters/liquidity/utils";
+import { liquidityTransactionsByAddressAndPool } from "@/updaters/pools/subsquid";
 import BigNumber from "bignumber.js";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "../../updaters/constants";
+import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
 
 export const useUserProvidedLiquidityByPool = (
-  pool: ConstantProductPool | StableSwapPool | undefined
+  poolId: number,
 ): {
   tokenAmounts: { baseAmount: BigNumber; quoteAmount: BigNumber };
   value: { baseValue: BigNumber; quoteValue: BigNumber };
 } => {
-  const { assets, userProvidedLiquidity } = useStore();
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
+  const { assets, userProvidedLiquidity, setUserProvidedTokenAmountInPool } =
+    useStore();
+
+  const allPools = useAllLpTokenRewardingPools();
+  const pool = useMemo<StableSwapPool | ConstantProductPool | undefined>(() => {
+    return allPools.find(i => i.poolId === poolId)
+  }, [undefined])
 
   const [liquidityProvided, setLiquidityProvided] = useState({
     tokenAmounts: {
@@ -23,6 +34,31 @@ export const useUserProvidedLiquidityByPool = (
     baseValue: new BigNumber(0),
     quoteValue: new BigNumber(0),
   });
+
+  useEffect(() => {
+    if (pool && selectedAccount) {
+      /**
+       * this Updater effect should Move to view components or page load
+       * For each pool query the liquidity
+       * (amount of base and quote tokens)
+       * provided by connectedAccount
+       */
+      if (pool && selectedAccount) {
+        liquidityTransactionsByAddressAndPool(
+          selectedAccount.address,
+          pool.poolId
+        ).then((userLiqTransactions) => {
+          let { base, quote } = processLiquidityTransactionsByAddress(
+            userLiqTransactions.data.pabloTransactions
+          );
+          setUserProvidedTokenAmountInPool((pool as any).poolId, {
+            baseAmount: base.toString(),
+            quoteAmount: quote.toString(),
+          });
+        });
+      }
+    }
+  }, [pool, selectedAccount]);
 
   useEffect(() => {
     if (pool) {

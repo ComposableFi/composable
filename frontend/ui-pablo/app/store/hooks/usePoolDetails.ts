@@ -3,10 +3,6 @@ import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
 import BigNumber from "bignumber.js";
 import { useState, useEffect, useMemo } from "react";
 import useStore from "@/store/useStore";
-import { useSelectedAccount, useParachainApi } from "substrate-react";
-import { fetchBalanceByAssetId } from "../../updaters/balances/utils";
-import { DEFAULT_NETWORK_ID } from "../../updaters/constants";
-import { useUserProvidedLiquidityByPool } from "./useUserProvidedLiquidityByPool";
 import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
 import { useLiquidityByPool } from "./useLiquidityByPool";
 
@@ -18,7 +14,6 @@ export const usePoolDetails = (poolId: number) => {
     useState<StableSwapPool | ConstantProductPool | undefined>(undefined);
 
   const tokensLocked = useLiquidityByPool(pool);
-  const liquidityProvided = useUserProvidedLiquidityByPool(pool);
 
   const [baseAsset, setBaseAsset] =
     useState<AssetMetadata | undefined>(undefined);
@@ -81,7 +76,6 @@ export const usePoolDetails = (poolId: number) => {
     quoteAsset,
     pool,
     lpBalance,
-    liquidityProvided,
     tokensLocked,
     poolStats: _poolStats,
   };

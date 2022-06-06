@@ -1,6 +1,8 @@
 import { BaseAsset } from "@/components/Atoms";
 import { TOKENS } from "@/defi/Tokens";
 import { useAppSelector } from "@/hooks/store";
+import { usePoolDetails } from "@/store/hooks/usePoolDetails";
+import { useUserProvidedLiquidityByPool } from "@/store/hooks/useUserProvidedLiquidityByPool";
 import { getTokenIdsFromSelectedPool } from "@/stores/defi/pool";
 import {
   alpha,
@@ -13,6 +15,7 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
+import BigNumber from "bignumber.js";
 import { PoolDetailsProps } from ".";
 import { BoxWrapper } from "../../BoxWrapper";
 
@@ -22,8 +25,8 @@ const twoColumnPageSize = {
 };
 
 type ItemProps = {
-  value: string,
-  intro?: string,
+  value: string;
+  intro?: string;
 } & GridProps;
 
 const Item: React.FC<ItemProps> = ({
@@ -39,7 +42,12 @@ const Item: React.FC<ItemProps> = ({
       </Grid>
       <Grid item {...twoColumnPageSize} textAlign="right">
         {intro && (
-          <Typography variant="subtitle1" color="text.secondary" component="span" mr={2}>
+          <Typography
+            variant="subtitle1"
+            color="text.secondary"
+            component="span"
+            mr={2}
+          >
             {intro}
           </Typography>
         )}
@@ -56,22 +64,16 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
   ...boxProps
 }) => {
   const theme = useTheme();
-  const {
-    tokenId1,
-    tokenId2,
-  } = useAppSelector(getTokenIdsFromSelectedPool);
 
-  const {
-    poolAmount,
-    poolValue,
-    rewardValue,
-    rewardsLeft,
-  } = useAppSelector((state) => state.pool.selectedPool);
+  const poolDetails = usePoolDetails(poolId);
+  const userProvidedLiquidity = useUserProvidedLiquidityByPool(poolId);
 
-  const {
-    pooledAmount1,
-    pooledAmount2,
-  } = useAppSelector((state) => state.pool.currentLiquidity);
+  const { rewardValue, rewardsLeft } = useAppSelector(
+    (state) => state.pool.selectedPool
+  );
+
+  // WIP
+  const lpDeposit = new BigNumber(0);
 
   const handleClaimRewards = () => {
     // TODO: handle claim rewards
@@ -80,41 +82,56 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
   return (
     <BoxWrapper {...boxProps}>
       <Item
-        value={`$${poolValue.toFormat()}`}
-        intro={
-          `${poolAmount.toFormat()} ${TOKENS[tokenId1].symbol}/${TOKENS[tokenId2].symbol}`
-        }
+        value={`$${lpDeposit}`}
+        intro={`${lpDeposit} ${poolDetails.baseAsset?.symbol}/${
+          poolDetails.quoteAsset?.symbol
+        }`}
       >
-        <Typography variant="h6">
-          Your deposits
-        </Typography>
+        <Typography variant="h6">Your deposits</Typography>
       </Item>
-      <Item value={pooledAmount1.toFormat()} mt={4.375}>
-        <BaseAsset icon={TOKENS[tokenId1].icon} label={TOKENS[tokenId1].symbol} />
+      <Item
+        value={userProvidedLiquidity.tokenAmounts.baseAmount.toFormat()}
+        mt={4.375}
+      >
+        {poolDetails.baseAsset && (
+          <BaseAsset
+            icon={poolDetails.baseAsset.icon}
+            label={poolDetails.baseAsset.symbol}
+          />
+        )}
       </Item>
-      <Item value={pooledAmount2.toFormat()} mt={2}>
-        <BaseAsset icon={TOKENS[tokenId2].icon} label={TOKENS[tokenId2].symbol} />
+      <Item
+        value={userProvidedLiquidity.tokenAmounts.quoteAmount.toFormat()}
+        mt={2}
+      >
+        {poolDetails.quoteAsset && (
+          <BaseAsset
+            icon={poolDetails.quoteAsset.icon}
+            label={poolDetails.quoteAsset.symbol}
+          />
+        )}
       </Item>
 
       <Box mt={4}>
         <Divider
           sx={{
-            borderColor: alpha(theme.palette.common.white, theme.custom.opacity.light),
-          }} />
+            borderColor: alpha(
+              theme.palette.common.white,
+              theme.custom.opacity.light
+            ),
+          }}
+        />
       </Box>
 
-      <Item
-        mt={4}
-        mb={4}
-        value={`$${rewardValue.toFormat()}`}
-      >
-        <Typography variant="h6">
-          Your rewards
-        </Typography>
+      <Item mt={4} mb={4} value={`$${rewardValue.toFormat()}`}>
+        <Typography variant="h6">Your rewards</Typography>
       </Item>
-      {rewardsLeft.map(({tokenId, value}) => (
+      {rewardsLeft.map(({ tokenId, value }) => (
         <Item value={value.toFormat()} mt={2} key={tokenId}>
-          <BaseAsset icon={TOKENS[tokenId].icon} label={TOKENS[tokenId].symbol} />
+          <BaseAsset
+            icon={TOKENS[tokenId].icon}
+            label={TOKENS[tokenId].symbol}
+          />
         </Item>
       ))}
 
@@ -131,4 +148,3 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
     </BoxWrapper>
   );
 };
-

@@ -16,6 +16,7 @@ import { usePoolDetails } from "@/store/hooks/usePoolDetails";
 import { PoolDetailsProps } from ".";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
 import { setManualPoolSearch, setPool } from "@/store/addLiquidity/addLiquidity.slice";
+import { useUserProvidedLiquidityByPool } from "@/store/hooks/useUserProvidedLiquidityByPool";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -49,6 +50,7 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
   const theme = useTheme();
   const { setRemoveLiquidity } = useRemoveLiquidityState();
   const poolDetails = usePoolDetails(poolId);
+  const liquidityProvided = useUserProvidedLiquidityByPool(poolId)
 
   const donutChartData = useAppSelector(
     (state) => state.pool.selectedPoolLiquidityChartData
@@ -71,8 +73,8 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
     }
   };
 
-  const totalValueProvided = poolDetails.liquidityProvided.value.baseValue.plus(
-    poolDetails.liquidityProvided.value.quoteValue
+  const totalValueProvided = liquidityProvided.value.baseValue.plus(
+    liquidityProvided.value.quoteValue
   );
 
   const totalValueLocked = poolDetails.tokensLocked.value.baseValue.plus(
@@ -132,7 +134,7 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
             <Box mt={8}>
               {poolDetails.baseAsset && (
                 <Item
-                  value={poolDetails.liquidityProvided.tokenAmounts.baseAmount.toFormat()}
+                  value={liquidityProvided.tokenAmounts.baseAmount.toFormat()}
                 >
                   <BaseAsset
                     label={`Pooled ${poolDetails.baseAsset.symbol}`}
@@ -142,7 +144,7 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
               )}
               {poolDetails.quoteAsset && (
                 <Item
-                  value={poolDetails.liquidityProvided.tokenAmounts.quoteAmount.toFormat()}
+                  value={liquidityProvided.tokenAmounts.quoteAmount.toFormat()}
                   mt={4}
                 >
                   <BaseAsset

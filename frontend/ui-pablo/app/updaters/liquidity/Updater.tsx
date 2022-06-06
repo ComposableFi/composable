@@ -1,14 +1,12 @@
-import { Assets, getAssetByOnChainId } from "@/defi/polkadot/Assets";
+import { getAssetByOnChainId } from "@/defi/polkadot/Assets";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 import _ from "lodash";
 import { useEffect, useMemo } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "../constants";
-import { liquidityTransactionsByAddressAndPool } from "@ui-pablo/app/updaters/pools/subsquid";
 import {
   fetchAndUpdatePoolLiquidity,
-  processLiquidityTransactionsByAddress,
 } from "./utils";
 import { fetchBalanceByAssetId } from "../balances/utils";
 // import { fetchBalanceByAssetId } from "../balances/utils";
@@ -24,7 +22,6 @@ const Updater = () => {
     setTokenAmountInPool,
     setTokenValueInPool,
     setUserLpBalance,
-    setUserProvidedTokenAmountInPool,
     poolLiquidity,
   } = useStore();
   /**
@@ -58,31 +55,6 @@ const Updater = () => {
       });
     }
   }, [allPools.length, parachainApi]);
-  /**
-   * For each pool query the liquidity
-   * (amount of base and quote tokens)
-   * provided by connectedAccount
-   */
-  useEffect(() => {
-    if (allPools.length && selectedAccount) {
-      allPools.forEach((pool) => {
-        if (pool.poolId && pool.pair) {
-          liquidityTransactionsByAddressAndPool(
-            selectedAccount.address,
-            pool.poolId
-          ).then((userLiqTransactions) => {
-            let { base, quote } = processLiquidityTransactionsByAddress(
-              userLiqTransactions.data.pabloTransactions
-            );
-            setUserProvidedTokenAmountInPool((pool as any).poolId, {
-              baseAmount: base.toString(),
-              quoteAmount: quote.toString(),
-            });
-          });
-        }
-      });
-    }
-  }, [allPools.length, selectedAccount]);
   /**
    * Fetch and update LP Balances within
    * zustand store
@@ -147,9 +119,8 @@ const Updater = () => {
     }
   }, [allPools.length, assets]);
 
-  // const trackedTransactions = useRef<string[]>([]);
   // const extrinsicCalls = useExtrinsics();
-
+  // const trackedTransactions = useRef<string[]>([]);
   // useEffect(() => {
   //   if (
   //     parachainApi &&
