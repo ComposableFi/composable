@@ -942,7 +942,7 @@ pub mod pallet {
 			// Sanity checks
 			Self::update_twap_sanity_check(vamm_state, asset_type, Some(new_twap), now)?;
 
-			let now = Self::now_from_option(now);
+			let now = Self::now(now);
 			match asset_type {
 				AssetType::Base => {
 					vamm_state.base_asset_twap = new_twap.into_inner();
@@ -1104,7 +1104,7 @@ pub mod pallet {
 			ensure!(!Self::is_vamm_closed(vamm_state, now), Error::<T>::VammIsClosed);
 
 			// 3) Only update asset's twap if time has passed since last update.
-			let now = Self::now_from_option(now);
+			let now = Self::now(now);
 			let asset_twap_timestamp =
 				Self::asset_twap_timestamp_from_vamm_state(vamm_state, asset_type);
 			ensure!(now > asset_twap_timestamp, Error::<T>::AssetTwapTimestampIsMoreRecent);
@@ -1182,7 +1182,7 @@ pub mod pallet {
 			new_price: DecimalOf<T>,
 			old_price: DecimalOf<T>,
 		) -> Result<DecimalOf<T>, DispatchError> {
-			let now = Self::now_from_option(now);
+			let now = Self::now(now);
 			let weight_now: MomentOf<T> = std::cmp::max(
 				1_u64.into(),
 				now.checked_sub(&last_twap_timestamp)
@@ -1235,7 +1235,7 @@ pub mod pallet {
 		}
 
 		fn is_vamm_closed(vamm_state: &VammStateOf<T>, now: &Option<MomentOf<T>>) -> bool {
-			let now = Self::now_from_option(now);
+			let now = Self::now(now);
 			match vamm_state.closed {
 				Some(timestamp) => now >= timestamp,
 				None => false,
@@ -1262,7 +1262,7 @@ pub mod pallet {
 			}
 		}
 
-		fn now_from_option(now: &Option<MomentOf<T>>) -> MomentOf<T> {
+		fn now(now: &Option<MomentOf<T>>) -> MomentOf<T> {
 			match now {
 				Some(now) => *now,
 				None => T::TimeProvider::now().as_secs().into(),
