@@ -16,8 +16,8 @@ use composable_traits::{
 		ZeroToOneFixedU128,
 	},
 	lending::{
-		math::*, CreateInput, Lending as LendingTrait, RepayStrategy, TotalDebtWithInterest,
-		UpdateInput, UpdateInputValid,
+		math::*, BalanceGreaterThenZero, CreateInput, Lending as LendingTrait, RepayStrategy,
+		TotalDebtWithInterest, UpdateInput, UpdateInputValid,
 	},
 	oracle,
 	time::SECONDS_PER_YEAR_NAIVE,
@@ -561,7 +561,7 @@ fn test_borrow_repay_in_same_block() {
 			Lending::deposit_collateral(
 				Origin::signed(*ALICE),
 				market_id,
-				Validated::new(collateral_amount).unwrap(),
+				collateral_amount.try_into_validated().unwrap(),
 				false,
 			),
 			Event::Lending(crate::Event::CollateralDeposited {
@@ -687,7 +687,7 @@ fn old_price() {
 		assert_ok!(Lending::deposit_collateral(
 			Origin::signed(*ALICE),
 			market,
-			Validated::new(collateral_amount).unwrap(),
+			collateral_amount.try_into_validated().unwrap(),
 			false
 		));
 
@@ -769,7 +769,7 @@ fn borrow_flow() {
 		assert_ok!(Lending::deposit_collateral(
 			Origin::signed(*ALICE),
 			market,
-			Validated::new(collateral_amount).unwrap(),
+			collateral_amount.try_into_validated().unwrap(),
 			false
 		));
 		let event = Event::Lending(crate::Event::CollateralDeposited {
@@ -875,7 +875,7 @@ fn borrow_flow() {
 			Lending::deposit_collateral(
 				Origin::signed(*ALICE),
 				market,
-				Validated::new(collateral_amount).unwrap(),
+				collateral_amount.try_into_validated().unwrap(),
 				false,
 			),
 			Event::Lending(crate::Event::CollateralDeposited {
@@ -925,7 +925,7 @@ fn vault_takes_part_of_borrow_so_cannot_withdraw() {
 			Lending::deposit_collateral(
 				Origin::signed(*ALICE),
 				market_id,
-				Validated::new(deposit_usdt).unwrap(),
+				deposit_usdt.try_into_validated().unwrap(),
 				false,
 			),
 			Event::Lending(pallet_lending::Event::<Runtime>::CollateralDeposited {
@@ -966,7 +966,7 @@ fn test_vault_market_can_withdraw() {
 			Lending::deposit_collateral(
 				Origin::signed(*ALICE),
 				market,
-				Validated::new(collateral).unwrap(),
+				collateral.try_into_validated().unwrap(),
 				false,
 			),
 			Event::Lending(crate::Event::CollateralDeposited {
@@ -1035,7 +1035,6 @@ fn test_liquidate_multiple() {
 }
 
 #[test]
-#[should_panic]
 fn test_max_liquidation_batch_size_exceeded() {
 	new_test_ext().execute_with(|| {
 		let manager = *ALICE;
@@ -1049,16 +1048,10 @@ fn test_max_liquidation_batch_size_exceeded() {
 			mint_and_deposit_collateral::<Runtime>(account_id, BTC::units(100), market_id, BTC::ID);
 			borrowers.push(account_id);
 		}
-		// This test works without borrowing since liquidation batch size
-		// is checking in the beginning of Lending::liquidate() function.
-		assert_noop!(
-			Lending::liquidate(
-				Origin::signed(*ALICE),
-				market_id,
-				TestBoundedVec::try_from(borrowers).unwrap()
-			),
-			Error::<Runtime>::MaxLiquidationBatchSizeExceeded,
-		);
+
+		let borrowers = TestBoundedVec::try_from(borrowers);
+		// TryFrom implementation for BoundedVec emits () as error
+		assert_err!(borrowers, ());
 	})
 }
 
@@ -1284,7 +1277,7 @@ fn test_repay_total_debt() {
 				Lending::deposit_collateral(
 					Origin::signed(*account),
 					market_index,
-					Validated::new(balance).unwrap(),
+					balance.try_into_validated().unwrap(),
 					false,
 				),
 				Event::Lending(crate::Event::<Runtime>::CollateralDeposited {
@@ -1419,7 +1412,7 @@ fn liquidation() {
 			Lending::deposit_collateral(
 				Origin::signed(*ALICE),
 				market_id,
-				Validated::new(collateral).unwrap(),
+				collateral.try_into_validated().unwrap(),
 				false,
 			),
 			Event::Lending(crate::Event::CollateralDeposited {
@@ -1487,7 +1480,7 @@ fn test_warn_soon_under_collateralized() {
 		assert_ok!(Lending::deposit_collateral(
 			Origin::signed(*ALICE),
 			market,
-			Validated::new(two_btc_amount).unwrap(),
+			two_btc_amount.try_into_validated().unwrap(),
 			false
 		));
 		let event = Event::Lending(crate::Event::CollateralDeposited {
@@ -1560,18 +1553,11 @@ fn current_interest_rate_test() {
 }
 
 #[test]
-#[should_panic]
 fn zero_amount_collateral_deposit() {
 	new_test_ext().execute_with(|| {
-		System::set_block_number(1);
-		let (market_id, _vault_id) = create_simple_market();
-		let expected = 50_000;
-		set_price(BTC::ID, expected);
-		set_price(USDT::ID, 1);
-		// We should panic here since validation is failed
-		let collateral_amount = Validated::new(0).unwrap();
-		<Lending as LendingTrait>::deposit_collateral(&market_id, &BOB, collateral_amount, false)
-			.unwrap();
+		let collateral_amount: Result<Validated<u128, BalanceGreaterThenZero>, &str> =
+			0.try_into_validated();
+		assert_err!(collateral_amount, "Can not deposit zero collateral");
 	})
 }
 
@@ -1592,7 +1578,7 @@ fn market_owner_cannot_retroactively_liquidate() {
 			Lending::deposit_collateral(
 				Origin::signed(*BOB),
 				market_id,
-				Validated::new(collateral_amount).unwrap(),
+				collateral_amount.try_into_validated().unwrap(),
 				false,
 			),
 			Event::Lending(crate::Event::CollateralDeposited {
@@ -1735,7 +1721,7 @@ proptest! {
 			let (market, _) = create_simple_market();
 			let before = Tokens::balance( BTC::ID, &ALICE);
 			prop_assert_ok!(Tokens::mint_into( BTC::ID, &ALICE, amount));
-			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, Validated::new(amount).unwrap(), false));
+			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market,amount.try_into_validated().unwrap(), false));
 			let event =
 				Event::Lending(crate::Event::CollateralDeposited {
 					sender: *ALICE,
@@ -1763,7 +1749,7 @@ proptest! {
 		new_test_ext().execute_with(|| {
 			let (market, _vault) = create_simple_market();
 			prop_assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, amount));
-			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, Validated::new(amount).unwrap(), false));
+			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, amount.try_into_validated().unwrap(), false));
 			let event =
 				Event::Lending(crate::Event::CollateralDeposited {
 					sender: *ALICE,
@@ -1794,7 +1780,7 @@ proptest! {
 			let ((market, _), collateral_asset) = create_simple_vaulted_market(BTC::instance(), *ALICE);
 			let before = Tokens::balance(collateral_asset, &ALICE);
 			prop_assert_ok!(Tokens::mint_into(collateral_asset, &ALICE, amount));
-			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, Validated::new(amount).unwrap(), false));
+			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market,amount.try_into_validated().unwrap(), false));
 			let event =
 				Event::Lending(crate::Event::CollateralDeposited {
 					sender: *ALICE,
@@ -2099,7 +2085,7 @@ pub fn mint_and_deposit_collateral<T>(
 	assert_ok!(crate::Pallet::<T>::deposit_collateral(
 		SystemOriginOf::<T>::signed(account),
 		market_index,
-		Validated::new(balance).unwrap(),
+		balance.try_into_validated().unwrap(),
 		false,
 	));
 	let event = crate::Event::<T>::CollateralDeposited {

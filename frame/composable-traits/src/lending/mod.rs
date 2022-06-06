@@ -165,9 +165,9 @@ impl<B> Validate<B, BalanceGreaterThenZero> for BalanceGreaterThenZero
 where
 	B: Zero + PartialOrd,
 {
-	fn validate(ballance: B) -> Result<B, &'static str> {
-		ensure!(ballance > B::zero(), "Can not deposit zero collateral");
-		Ok(ballance)
+	fn validate(balance: B) -> Result<B, &'static str> {
+		ensure!(balance > B::zero(), "Can not deposit zero collateral");
+		Ok(balance)
 	}
 }
 
