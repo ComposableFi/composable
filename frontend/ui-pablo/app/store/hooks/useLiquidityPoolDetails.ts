@@ -5,9 +5,10 @@ import { useState, useEffect, useMemo } from "react";
 import useStore from "@/store/useStore";
 import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
 import { useLiquidityByPool } from "./useLiquidityByPool";
+import { DailyRewards } from "../poolStats/poolStats.types";
 
 export const useLiquidityPoolDetails = (poolId: number) => {
-  const { poolStats, userLpBalances } = useStore();
+  const { poolStats, poolStatsValue, userLpBalances } = useStore();
 
   const allLpRewardingPools = useAllLpTokenRewardingPools();
   const [pool, setPool] =
@@ -42,34 +43,41 @@ export const useLiquidityPoolDetails = (poolId: number) => {
     }
   }, [poolId]);
 
-
   const _poolStats = useMemo(() => {
-    if (poolStats[poolId]) {
-      return poolStats[poolId];
-    } else {
-      return {
-        totalVolume: "0",
-        totalValueLocked: "0",
-        apr: "0",
-        _24HrFee: "0",
-        _24HrVolume: "0",
-        _24HrTransactionCount: 0,
-        dailyRewards: [],
-        _24HrFeeValue: "0",
-        _24HrVolumeValue: "0",
-        totalVolumeValue: "0"
-      };
+    let _poolValue = {
+      _24HrFeeValue: "0",
+      _24HrVolumeValue: "0",
+      totalVolumeValue: "0",
+    };
+
+    let _poolStats = {
+      _24HrTransactionCount: 0,
+      dailyRewards: [] as DailyRewards[],
+      apr: "0",
+    };
+
+    if (poolStatsValue[poolId]) {
+      _poolValue = poolStatsValue[poolId];
     }
-  }, [poolStats, poolId]);
+
+    if (poolStats[poolId]) {
+      _poolStats = poolStats[poolId];
+    }
+
+    return {
+      ..._poolValue,
+      ..._poolStats,
+    };
+  }, [poolStats, poolStatsValue, poolId]);
 
   const lpBalance = useMemo(() => {
     if (pool) {
       if (userLpBalances[pool.poolId]) {
-        return new BigNumber(userLpBalances[pool.poolId])
+        return new BigNumber(userLpBalances[pool.poolId]);
       }
     }
-    return new BigNumber(0)
-  }, [pool, userLpBalances])
+    return new BigNumber(0);
+  }, [pool, userLpBalances]);
 
   return {
     baseAsset,

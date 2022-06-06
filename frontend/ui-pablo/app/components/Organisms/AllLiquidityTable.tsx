@@ -20,7 +20,7 @@ import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { InfoOutlined, KeyboardArrowDown } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
-import { useLiquidityPoolsWithOpenPositions } from "@/store/hooks/usePoolsListWithOpenPositions";
+import { useLiquidityPoolsListWithOpenPositions } from "@/store/hooks/useLiquidityPoolsListWithOpenPositions";
 import { useLiquidityPoolsList } from "@/store/hooks/useLiquidityPoolsList";
 
 const tableHeaders: TableHeader[] = [
@@ -52,7 +52,7 @@ export type AllLiquidityTableProps = {
 export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
   flow,
 }) => {
-  const userPools = useLiquidityPoolsWithOpenPositions();
+  const userPools = useLiquidityPoolsListWithOpenPositions();
   const list = useLiquidityPoolsList();
   let pools: ReturnType<typeof useLiquidityPoolsList>;
   const dispatch = useAppDispatch();
@@ -144,7 +144,7 @@ export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
                   />
                 </TableCell>
                 <TableCell align="left">
-                  <Typography variant="body2">${row.tvl.toFormat()}</Typography>
+                  <Typography variant="body2">${row.totalValueLocked.toFormat()}</Typography>
                 </TableCell>
                 <TableCell align="left">
                   <Typography variant="body2">{row.apr.toFormat()}%</Typography>
@@ -168,7 +168,7 @@ export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
                 </TableCell>
                 <TableCell align="left">
                   <Typography variant="body2">
-                    ${row.volume.toFormat()}
+                    ${row.totalVolume.toFormat()}
                   </Typography>
                 </TableCell>
               </TableRow>

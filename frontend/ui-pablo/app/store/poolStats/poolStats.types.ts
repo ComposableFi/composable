@@ -11,12 +11,14 @@ export interface DailyRewards {
 
 export interface PoolStats {
     totalVolume: string;
-    totalValueLocked: string;
-    apr: string;
     _24HrFee: string;
     _24HrVolume: string;
     _24HrTransactionCount: number;
     dailyRewards: DailyRewards[]; 
+    apr: string;
+}
+
+export interface PoolStatsValue {
     /** All of these are fetched in 
      * quote asset so price conversion
      * to USD is needed
@@ -30,5 +32,9 @@ export interface PoolStatsSlice {
     poolStats: {
         [poolId: number]: PoolStats,
     },
+    poolStatsValue: {
+        [poolId: number]: PoolStatsValue
+    },
     putPoolStats: (poolId: number, stats: Partial<PoolStats>) => void;
+    putPoolStatsValue: (poolId: number, stats: Partial<PoolStatsValue>) => void;
 }

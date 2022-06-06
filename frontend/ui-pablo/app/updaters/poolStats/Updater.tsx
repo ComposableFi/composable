@@ -14,7 +14,7 @@ import { getAssetByOnChainId } from "@/defi/polkadot/Assets";
  * @returns null
  */
 const Updater = () => {
-  const { putPoolStats, assets, poolStats } = useStore();
+  const { putPoolStats, assets, poolStats, putPoolStatsValue } = useStore();
   const { parachainApi } = useParachainApi("picasso");
 
   const allLpRewardingPools = useAllLpTokenRewardingPools();
@@ -119,7 +119,7 @@ const Updater = () => {
               .times(assets[quoteAsset.assetId].price)
               .toFixed(2);
 
-            putPoolStats(i.poolId, {
+            putPoolStatsValue(i.poolId, {
               totalVolumeValue,
               _24HrFeeValue,
               _24HrVolumeValue,
