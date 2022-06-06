@@ -126,8 +126,10 @@ impl<Oracle: OracleTrait> Clone for AssetIsSupportedByOracle<Oracle> {
 }
 
 impl<LiquidationStrategyId, Asset: Copy, BlockNumber, Oracle: OracleTrait<AssetId = Asset>>
-	Validate<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, AssetIsSupportedByOracle<Oracle>>
-	for AssetIsSupportedByOracle<Oracle>
+	Validate<
+		CreateInput<LiquidationStrategyId, Asset, BlockNumber>,
+		AssetIsSupportedByOracle<Oracle>,
+	> for AssetIsSupportedByOracle<Oracle>
 {
 	fn validate(
 		create_input: CreateInput<LiquidationStrategyId, Asset, BlockNumber>,
