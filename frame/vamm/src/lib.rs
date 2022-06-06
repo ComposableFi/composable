@@ -40,7 +40,7 @@
 //! ### Extrinsics
 //!
 //! The current implementation doesn't deal with external calls to the pallet,
-//! so there is no extrisic defined.
+//! so there is no extrinsic defined.
 //!
 //! ### Public Functions
 //!
@@ -262,7 +262,7 @@ pub mod pallet {
 		/// Vamm to set a market as "operating as normal" or "not to be used
 		/// anymore".  If the value is `None` it means the market is operating
 		/// as normal, but if the value is `Some(timestamp)` it means the market
-		/// is flaged to be closed and the closing action will take (or took)
+		/// is flagged to be closed and the closing action will take (or took)
 		/// effect at the time `timestamp`.
 		pub closed: Option<Moment>,
 
@@ -315,7 +315,7 @@ pub mod pallet {
 		/// Emitted after a successful call to the [`create`](Pallet::create)
 		/// function.
 		Created { vamm_id: VammIdOf<T>, state: VammStateOf<T> },
-		/// Emitted after a successfull call to the [`swap`](Pallet::swap)
+		/// Emitted after a successful call to the [`swap`](Pallet::swap)
 		/// function.
 		Swapped {
 			vamm_id: VammIdOf<T>,
@@ -332,7 +332,7 @@ pub mod pallet {
 			quote_asset_reserves: BalanceOf<T>,
 			invariant: U256,
 		},
-		/// Emmited after a successful call to the
+		/// Emitted after a successful call to the
 		/// [`update_twap`](Pallet::update_twap) function.
 		UpdatedTwap { vamm_id: VammIdOf<T>, asset_type: AssetType, value: DecimalOf<T> },
 	}
@@ -708,7 +708,7 @@ pub mod pallet {
 		/// to request it to the Vamm Pallet. The pallet will perform all needed
 		/// checks to ensure the swap is a valid one and then, using the
 		/// corresponding function it was configured to, will compute the amount
-		/// of assets the caller will recieve.
+		/// of assets the caller will receive.
 		///
 		/// In the current state the only function available to perform these
 		/// computations is the CFMM `x * y = k`.
@@ -734,7 +734,7 @@ pub mod pallet {
 		/// [`output_amount_limit`](composable_traits::vamm::SwapConfig)
 		///
 		/// ## Emits
-		/// * [`Swaped`](Event::<T>::Swapped)
+		/// * [`Swapped`](Event::<T>::Swapped)
 		///
 		/// ## State Changes
 		/// Updates [`VammMap`] storage map.
@@ -818,7 +818,7 @@ pub mod pallet {
 		/// In order for the caller to modify the
 		/// [`base`](VammState::base_asset_reserves) and
 		/// [`quote`](VammState::quote_asset_reserves) asset reserves,
-		/// essentialy modifying the invariant `k` of the function `x * y = k`,
+		/// essentially modifying the invariant `k` of the function `x * y = k`,
 		/// it has to request it to the Vamm Pallet. The pallet will perform the
 		/// needed validity checks and, if everything succeeds, a
 		/// [`PriceMoved`](Event::<T>::PriceMoved) event will be deposited on
