@@ -4,7 +4,7 @@
 use frame_support::pallet_prelude::*;
 use sp_arithmetic::traits::Unsigned;
 use sp_core::U256;
-use sp_runtime::FixedPointNumber;
+use sp_runtime::{traits::AtLeast32BitUnsigned, FixedPointNumber};
 
 #[cfg(feature = "std")]
 use serde::{Deserialize, Serialize};
@@ -18,11 +18,14 @@ pub trait Vamm {
 	/// The balance type for an account.
 	type Balance: Unsigned;
 
-	/// Signed fixed point number implementation
+	/// The moment type, representing a timestmap.
+	type Moment: AtLeast32BitUnsigned;
+
+	/// Signed fixed point number implementation.
 	type Decimal: FixedPointNumber<Inner = Self::Balance>;
 
 	/// Configuration for creating and initializing a new vAMM instance. May be
-	/// used in extrinsic signatures
+	/// used in extrinsic signatures.
 	type VammConfig;
 
 	/// Configuration for swap assets in a vamm.
@@ -75,13 +78,17 @@ pub trait Vamm {
 }
 
 /// Specify a common encapsulation layer for the [`create`](Vamm::create) function.
-pub struct VammConfig<Balance> {
+#[derive(Clone, Debug, Default)]
+pub struct VammConfig<Balance, Moment> {
 	/// The total amount of base assets to be set in vamm's creation.
 	pub base_asset_reserves: Balance,
 	/// The total amount of quote assets to be set in vamm's creation.
 	pub quote_asset_reserves: Balance,
 	/// The magnitude of the quote asset reserve.
 	pub peg_multiplier: Balance,
+	/// The frequency with wich the vamm must have it's funding rebalance.
+	/// (Used only for twap calculations.)
+	pub funding_period: Moment,
 }
 
 /// Specify a common encapsulation layer for the swap function.
@@ -134,3 +141,6 @@ pub struct SwapOutput<Balance> {
 	pub output: Balance,
 	pub negative: bool,
 }
+
+/// The minimum allowed value for [`funding_period`](VammState::funding_period).
+pub const MINIMUM_FUNDING_PERIOD: u32 = 10;

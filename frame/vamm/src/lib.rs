@@ -131,7 +131,7 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::vamm::{
 		AssetType, Direction, MovePriceConfig, SwapConfig, SwapOutput, SwapSimulationConfig, Vamm,
-		VammConfig,
+		VammConfig, MINIMUM_FUNDING_PERIOD,
 	};
 	use frame_support::{
 		pallet_prelude::*, sp_std::fmt::Debug, traits::UnixTime, transactional, Blake2_128Concat,
@@ -234,7 +234,7 @@ pub mod pallet {
 	type SwapConfigOf<T> = SwapConfig<VammIdOf<T>, BalanceOf<T>>;
 	type SwapSimulationConfigOf<T> = SwapSimulationConfig<VammIdOf<T>, BalanceOf<T>>;
 	type MovePriceConfigOf<T> = MovePriceConfig<VammIdOf<T>, BalanceOf<T>>;
-	type VammConfigOf<T> = VammConfig<BalanceOf<T>>;
+	type VammConfigOf<T> = VammConfig<BalanceOf<T>, MomentOf<T>>;
 	type VammStateOf<T> = VammState<BalanceOf<T>, MomentOf<T>>;
 
 	/// Represents the direction a of a position.
@@ -388,6 +388,15 @@ pub mod pallet {
 		/// Tried to update twap for an asset, but the desired new twap value is
 		/// zero.
 		NewTwapValueIsZero,
+		/// Tried to compute last twap weight. This is due to
+		/// [`funding_period`](VammState::funding_period) being less than `now -
+		/// last_twap_timestamp`.
+		FailedToComputeLastTwapWeight,
+		/// Tried to create a vamm with a
+		/// [`funding_period`](VammState::funding_period) smaller than the
+		/// minimum allowed one specified by
+		/// [`MINIMUM_FUNDING_PERIOD`](composable_traits::vamm::MINIMUM_FUNDING_PERIOD).
+		FundingPeriodTooSmall,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -430,6 +439,7 @@ pub mod pallet {
 
 	impl<T: Config> Vamm for Pallet<T> {
 		type Balance = BalanceOf<T>;
+		type Moment = MomentOf<T>;
 		type Decimal = T::Decimal;
 		type SwapConfig = SwapConfigOf<T>;
 		type SwapSimulationConfig = SwapSimulationConfigOf<T>;
@@ -480,6 +490,7 @@ pub mod pallet {
 		/// * [`Error::<T>::QuoteAssetReserveIsZero`]
 		/// * [`Error::<T>::InvariantIsZero`]
 		/// * [`Error::<T>::FailedToDeriveInvariantFromBaseAndQuoteAsset`]
+		/// * [`Error::<T>::FundingPeriodTooSmall`]
 		/// * [`ArithmeticError::Overflow`](sp_runtime::ArithmeticError)
 		///
 		/// # Runtime
@@ -491,18 +502,28 @@ pub mod pallet {
 			// (eg. How to ensure the caller is the Clearing House, and not anyone else?)
 
 			ensure!(!config.peg_multiplier.is_zero(), Error::<T>::PegMultiplierIsZero);
+			ensure!(
+				config.funding_period >= MINIMUM_FUNDING_PERIOD.into(),
+				Error::<T>::FundingPeriodTooSmall
+			);
 
 			let invariant =
 				Self::compute_invariant(config.base_asset_reserves, config.quote_asset_reserves)?;
+			let now = Self::now(&None);
 
 			VammCounter::<T>::try_mutate(|next_id| {
 				let id = *next_id;
 				let vamm_state = VammStateOf::<T> {
 					base_asset_reserves: config.base_asset_reserves,
 					quote_asset_reserves: config.quote_asset_reserves,
+					base_asset_twap: config.base_asset_reserves,
+					quote_asset_twap: config.quote_asset_reserves,
+					base_asset_twap_timestamp: now,
+					quote_asset_twap_timestamp: now,
 					peg_multiplier: config.peg_multiplier,
 					invariant,
-					..Default::default()
+					funding_period: config.funding_period,
+					closed: None,
 				};
 
 				VammMap::<T>::insert(&id, vamm_state);
@@ -1200,7 +1221,9 @@ pub mod pallet {
 			// time we try to subtract `funding_period -  weight_now`?
 			let weight_last_twap: MomentOf<T> = std::cmp::max(
 				1_u64.into(),
-				funding_period.checked_sub(&weight_now).ok_or(ArithmeticError::Underflow)?,
+				funding_period
+					.checked_sub(&weight_now)
+					.ok_or(Error::<T>::FailedToComputeLastTwapWeight)?,
 			);
 
 			Self::calculate_exponential_moving_average(
