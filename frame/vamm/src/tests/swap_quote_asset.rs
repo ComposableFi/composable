@@ -3,10 +3,10 @@ use crate::{
 	pallet::Error,
 	tests::{
 		balance_range_lower_half, balance_range_upper_half, get_swap_config, get_vamm_state,
-		TestSwapConfig, RUN_CASES,
+		run_to_block, TestSwapConfig, RUN_CASES,
 	},
 };
-use composable_traits::vamm::{AssetType, Direction, Vamm as VammTrait};
+use composable_traits::vamm::{AssetType, Direction, Vamm as VammTrait, MINIMUM_FUNDING_PERIOD};
 use frame_support::assert_noop;
 use proptest::prelude::*;
 
@@ -30,6 +30,13 @@ proptest! {
 		// Ensure vamm is open before starting operation to swap assets.
 		vamm_state.closed = None;
 
+		// Ensure we don't throw `AssetTwapTimestampIsMoreRecent` error.
+		vamm_state.base_asset_twap_timestamp = 0;
+		vamm_state.quote_asset_twap_timestamp = 0;
+
+		// Ensure we don't throw `FailedToComputeLastTwapWeight` error.
+		vamm_state.funding_period = (MINIMUM_FUNDING_PERIOD + 1).into();
+
 		vamm_state.quote_asset_reserves = quote_asset_reserves;
 		swap_config.input_amount = input_amount;
 
@@ -37,6 +44,8 @@ proptest! {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
+			// Ensure we don't throw `AssetTwapTimestampIsMoreRecent` error.
+			run_to_block(1);
 			assert_noop!(
 				TestPallet::swap(&swap_config),
 				Error::<MockRuntime>::InsufficientFundsForTrade
@@ -64,12 +73,21 @@ proptest! {
 		// Ensure vamm is open before starting operation to swap assets.
 		vamm_state.closed = None;
 
+		// Ensure we don't throw `AssetTwapTimestampIsMoreRecent` error.
+		vamm_state.base_asset_twap_timestamp = 0;
+		vamm_state.quote_asset_twap_timestamp = 0;
+
+		// Ensure we don't throw `FailedToComputeLastTwapWeight` error.
+		vamm_state.funding_period = (MINIMUM_FUNDING_PERIOD + 1).into();
+
 		swap_config.input_amount = input_amount;
 		vamm_state.quote_asset_reserves = quote_asset_reserves;
 		ExtBuilder {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
+			// Ensure we don't throw `AssetTwapTimestampIsMoreRecent` error.
+			run_to_block(1);
 			assert_noop!(
 				TestPallet::swap(&swap_config),
 				Error::<MockRuntime>::TradeExtrapolatesMaximumSupportedAmount

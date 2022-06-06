@@ -7,7 +7,7 @@ use crate::{
 	pallet::{self, VammState},
 };
 use composable_traits::vamm::{
-	AssetType, Direction, MovePriceConfig, SwapConfig, Vamm as VammTrait,
+	AssetType, Direction, MovePriceConfig, SwapConfig, Vamm as VammTrait, MINIMUM_FUNDING_PERIOD,
 };
 use frame_support::pallet_prelude::Hooks;
 use proptest::prelude::*;
