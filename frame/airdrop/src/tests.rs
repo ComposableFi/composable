@@ -266,6 +266,7 @@ mod remove_recipient_tests {
 	}
 }
 
+#[cfg(test)]
 mod enable_airdrop_tests {
 
 	use super::*;
@@ -308,6 +309,25 @@ mod enable_airdrop_tests {
 			assert_eq!(Airdrop::get_airdrop_state(1).unwrap(), AirdropState::Created);
 			assert_ok!(Airdrop::enable_airdrop(creator, 1));
 			assert_eq!(Airdrop::get_airdrop_state(1).unwrap(), AirdropState::Enabled);
+		})
+	}
+}
+
+#[cfg(test)]
+mod disable_airdrop_tests {
+	use super::*;
+
+	#[test]
+	#[allow(clippy::disallowed_methods)] // Allow unwrap
+	fn disable_airdrop_valid() {
+		let creator = Origin::signed(CREATOR);
+
+		ExtBuilder::default().build().execute_with(|| {
+			Balances::make_free_balance_be(&CREATOR, 10_000);
+			assert_ok!(Airdrop::create_airdrop(creator.clone(), None, DEFAULT_VESTING_PERIOD));
+			assert_ok!(Airdrop::enable_airdrop(creator.clone(), 1));
+			assert_eq!(Airdrop::get_airdrop_state(1).unwrap(), AirdropState::Enabled);
+			assert_ok!(Airdrop::disable_airdrop(creator, 1));
 		})
 	}
 }

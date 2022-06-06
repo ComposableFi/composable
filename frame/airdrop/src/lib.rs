@@ -204,10 +204,11 @@ pub mod pallet {
 		OptionQuery,
 	>;
 
-    #[pallet::storage]
-    #[pallet::getter(fn total_airdrop_recipients)]
+	#[pallet::storage]
+	#[pallet::getter(fn total_airdrop_recipients)]
 	#[allow(clippy::disallowed_types)] // Allow `farme_support::pallet_prelude::ValueQuery`
-    pub type TotalAirdropRecipients<T: Config> = StorageMap<_, Blake2_128Concat, T::AirdropId, u32, ValueQuery>;
+	pub type TotalAirdropRecipients<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AirdropId, u32, ValueQuery>;
 
 	/// Recipient funds of Airdrops stored by the pallet.
 	#[pallet::storage]
@@ -312,7 +313,7 @@ pub mod pallet {
 			reward_account: T::AccountId,
 			proof: ProofOf<T>,
 		) -> DispatchResultWithPostInfo {
-            ensure_none(origin)?; 
+			ensure_none(origin)?;
 			let remote_account =
 				Self::get_remote_account(proof, &reward_account, T::Prefix::get())?;
 
@@ -369,7 +370,7 @@ pub mod pallet {
 			let airdrop = Self::get_airdrop(&airdrop_id)?;
 
 			if airdrop.disabled {
-				return Ok(AirdropState::Disabled)
+				return Ok(AirdropState::Disabled);
 			}
 
 			airdrop.start.map_or(Ok(AirdropState::Created), |start| {
@@ -501,11 +502,11 @@ pub mod pallet {
 			ensure!(airdrop.start.is_none(), Error::<T>::AirdropAlreadyStarted);
 
 			// Update Airdrop
-            Airdrops::<T>::try_mutate(airdrop_id, |airdrop| {
+			Airdrops::<T>::try_mutate(airdrop_id, |airdrop| {
 				airdrop
 					.as_mut()
 					.map(|airdrop| {
-			            airdrop.start = Some(start);
+						airdrop.start = Some(start);
 						Ok(())
 					})
 					.unwrap_or_else(|| Err(Error::<T>::AirdropDoesNotExist))
@@ -530,7 +531,7 @@ pub mod pallet {
 					// If the vesting period is over, the recipient should receive the remainder of
 					// the fund
 					if vesting_point >= fund.vesting_period {
-						return Ok(fund.total)
+						return Ok(fund.total);
 					}
 
 					// The current vesting window rounded to the previous window
@@ -538,8 +539,8 @@ pub mod pallet {
 						vesting_point.saturating_sub(vesting_point % airdrop.schedule);
 
 					let should_have_claimed =
-						fund.total.saturating_mul(T::Convert::convert(vesting_window)) /
-							T::Convert::convert(fund.vesting_period);
+						fund.total.saturating_mul(T::Convert::convert(vesting_window))
+							/ T::Convert::convert(fund.vesting_period);
 
 					Ok(should_have_claimed)
 				},
@@ -554,7 +555,7 @@ pub mod pallet {
 			let airdrop_account = Self::get_airdrop_account_id(airdrop_id);
 
 			if airdrop.total_funds > airdrop.claimed_funds {
-				return Ok(false)
+				return Ok(false);
 			}
 
 			// Return remaining funds to the Airdrop creator
@@ -687,9 +688,9 @@ pub mod pallet {
 				);
 			});
 
-            TotalAirdropRecipients::<T>::mutate(airdrop_id, |total_airdrop_recipients| {
-                *total_airdrop_recipients = total_recipients;
-            });
+			TotalAirdropRecipients::<T>::mutate(airdrop_id, |total_airdrop_recipients| {
+				*total_airdrop_recipients = total_recipients;
+			});
 
 			// Update Airdrop statistics
 			Airdrops::<T>::try_mutate(airdrop_id, |airdrop| {
@@ -742,9 +743,9 @@ pub mod pallet {
 					.unwrap_or_else(|| Err(Error::<T>::AirdropDoesNotExist))
 			})?;
 
-            TotalAirdropRecipients::<T>::mutate(airdrop_id, |total_airdrop_recipients| {
-                *total_airdrop_recipients -= 1;
-            });
+			TotalAirdropRecipients::<T>::mutate(airdrop_id, |total_airdrop_recipients| {
+				*total_airdrop_recipients -= 1;
+			});
 
 			// Refund Airdrop creator for the recipient fund's value
 			T::RecipientFundAsset::transfer(
@@ -801,8 +802,8 @@ pub mod pallet {
 						let at = T::Time::now();
 						let unclaimed_funds = airdrop.total_funds - airdrop.claimed_funds;
 
-						// REVEIW: Checking each recipient fund to see if they have started
-						// cliaming could prove to be expensive. Should we instead require that all
+						// REVIEW: Checking each recipient fund to see if they have started
+						// claiming could prove to be expensive. Should we instead require that all
 						// funds be claimed for an airdrop to end?
 						// sets claimed funds equal to total funds so the airdrop can be pruned
 						airdrop.disabled = true;
@@ -873,7 +874,7 @@ pub mod pallet {
 			}
 
 			if recipient_fund.funded_claim {
-				return Ok(Pays::No.into())
+				return Ok(Pays::No.into());
 			}
 
 			Ok(Pays::Yes.into())
@@ -885,7 +886,7 @@ pub mod pallet {
 	/// * The Airdrop exists in the pallet's storage
 	/// * The Airdrop has been enabled / has started
 	/// * The provided proof is valid
-    /// * If an association has been created for the reward account, it matches the remote account
+	/// * If an association has been created for the reward account, it matches the remote account
 	/// * The recipient has funds to claim
 	#[pallet::validate_unsigned]
 	impl<T: Config> ValidateUnsigned for Pallet<T> {
@@ -902,7 +903,7 @@ pub mod pallet {
 
 				// Validity Error if the airdrop has not started
 				if airdrop_state != AirdropState::Enabled {
-					return InvalidTransaction::Custom(ValidityError::NotClaimable as u8).into()
+					return InvalidTransaction::Custom(ValidityError::NotClaimable as u8).into();
 				}
 
 				// Evaluate proof
@@ -916,13 +917,14 @@ pub mod pallet {
 
 				match Associations::<T>::get(airdrop_id, reward_account) {
 					// Validity Error if the account is already associated to another
-					Some(associated_account) =>
+					Some(associated_account) => {
 						if associated_account != remote_account {
 							return InvalidTransaction::Custom(
 								ValidityError::AlreadyAssociated as u8,
 							)
-							.into()
-						},
+							.into();
+						}
+					},
 					// Association will be created during the transaction
 					None => {},
 				}
@@ -930,8 +932,9 @@ pub mod pallet {
 				// Validity Error if there are no funds for this recipient
 				match RecipientFunds::<T>::get(airdrop_id, remote_account.clone()) {
 					None => InvalidTransaction::Custom(ValidityError::NoFunds as u8).into(),
-					Some(fund) if fund.total.is_zero() =>
-						InvalidTransaction::Custom(ValidityError::NoFunds as u8).into(),
+					Some(fund) if fund.total.is_zero() => {
+						InvalidTransaction::Custom(ValidityError::NoFunds as u8).into()
+					},
 					Some(_) => ValidTransaction::with_tag_prefix("AirdropAssociationCheck")
 						.and_provides(remote_account)
 						.build(),
