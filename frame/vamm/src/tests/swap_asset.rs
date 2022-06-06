@@ -150,6 +150,9 @@ fn swap_add_base() {
 			VammState {
 				base_asset_reserves: base_u256.as_u128(),
 				quote_asset_reserves: quote_u256.as_u128(),
+				base_asset_twap: base_u256.as_u128(),
+				quote_asset_twap: quote_u256.as_u128(),
+				funding_period: 3600,
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
@@ -163,20 +166,11 @@ fn swap_add_base() {
 		run_to_block(1);
 
 		let swap = TestPallet::swap(&swap_config);
-		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
+		let vamm_after_swap = VammMap::<MockRuntime>::get(0).unwrap();
 
 		assert_ok!(swap, SwapOutput { output: 16_666_666_666_667, negative: false });
-		assert_eq!(
-			vamm_after_swap.unwrap(),
-			VammState {
-				base_asset_reserves: 3_000_000_000_000,
-				quote_asset_reserves: 33_333_333_333_333,
-				peg_multiplier: 1,
-				invariant,
-				closed: None,
-				..Default::default()
-			}
-		);
+		assert_eq!(vamm_after_swap.base_asset_reserves, 3_000_000_000_000);
+		assert_eq!(vamm_after_swap.quote_asset_reserves, 33_333_333_333_333);
 
 		System::assert_last_event(
 			Event::Swapped {
@@ -212,6 +206,9 @@ fn swap_remove_base() {
 			VammState {
 				base_asset_reserves: base_u256.as_u128(),
 				quote_asset_reserves: quote_u256.as_u128(),
+				base_asset_twap: base_u256.as_u128(),
+				quote_asset_twap: quote_u256.as_u128(),
+				funding_period: 3600,
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
@@ -225,20 +222,11 @@ fn swap_remove_base() {
 		run_to_block(1);
 
 		let swap = TestPallet::swap(&swap_config);
-		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
+		let vamm_after_swap = VammMap::<MockRuntime>::get(0).unwrap();
 
 		assert_ok!(swap, SwapOutput { output: 50_000_000_000_000, negative: false });
-		assert_eq!(
-			vamm_after_swap.unwrap(),
-			VammState {
-				base_asset_reserves: 1_000_000_000_000,
-				quote_asset_reserves: 100_000_000_000_000,
-				peg_multiplier: 1,
-				invariant,
-				closed: None,
-				..Default::default()
-			}
-		);
+		assert_eq!(vamm_after_swap.base_asset_reserves, 1_000_000_000_000);
+		assert_eq!(vamm_after_swap.quote_asset_reserves, 100_000_000_000_000);
 
 		System::assert_last_event(
 			Event::Swapped {
@@ -274,6 +262,9 @@ fn swap_add_quote() {
 			VammState {
 				base_asset_reserves: base_u256.as_u128(),
 				quote_asset_reserves: quote_u256.as_u128(),
+				base_asset_twap: base_u256.as_u128(),
+				quote_asset_twap: quote_u256.as_u128(),
+				funding_period: 3600,
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
@@ -287,20 +278,11 @@ fn swap_add_quote() {
 		run_to_block(1);
 
 		let swap = TestPallet::swap(&swap_config);
-		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
+		let vamm_after_swap = VammMap::<MockRuntime>::get(0).unwrap();
 
 		assert_ok!(swap, SwapOutput { output: 39_215_686_275, negative: false });
-		assert_eq!(
-			vamm_after_swap.unwrap(),
-			VammState {
-				base_asset_reserves: 1_960_784_313_725,
-				quote_asset_reserves: 51_000_000_000_000,
-				peg_multiplier: 1,
-				invariant,
-				closed: None,
-				..Default::default()
-			}
-		);
+		assert_eq!(vamm_after_swap.base_asset_reserves, 1_960_784_313_725);
+		assert_eq!(vamm_after_swap.quote_asset_reserves, 51_000_000_000_000);
 
 		System::assert_last_event(
 			Event::Swapped {
@@ -336,6 +318,9 @@ fn swap_remove_quote() {
 			VammState {
 				base_asset_reserves: base_u256.as_u128(),
 				quote_asset_reserves: quote_u256.as_u128(),
+				base_asset_twap: base_u256.as_u128(),
+				quote_asset_twap: quote_u256.as_u128(),
+				funding_period: 3600,
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
@@ -349,20 +334,11 @@ fn swap_remove_quote() {
 		run_to_block(1);
 
 		let swap = TestPallet::swap(&swap_config);
-		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
+		let vamm_after_swap = VammMap::<MockRuntime>::get(0).unwrap();
 
 		assert_ok!(swap, SwapOutput { output: 800_320_128, negative: true });
-		assert_eq!(
-			vamm_after_swap.unwrap(),
-			VammState {
-				base_asset_reserves: 2_000_800_320_128,
-				quote_asset_reserves: 49_980_000_000_000,
-				peg_multiplier: 1,
-				invariant,
-				closed: None,
-				..Default::default()
-			}
-		);
+		assert_eq!(vamm_after_swap.base_asset_reserves, 2_000_800_320_128);
+		assert_eq!(vamm_after_swap.quote_asset_reserves, 49_980_000_000_000);
 
 		System::assert_last_event(
 			Event::Swapped {
