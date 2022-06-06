@@ -47,16 +47,6 @@ jest.mock("@/store/hooks/usePoolDetails", () => {
     baseAsset: undefined,
     quoteAsset: undefined,
     pool: undefined,
-    liquidityProvided: {
-      tokenAmounts: {
-        baseAmount: new BigNumber(0),
-        quoteAmount: new BigNumber(0)
-      },
-      value: {
-          baseValue: new BigNumber(0),
-          quoteValue: new BigNumber(0)
-      },
-    },
     tokensLocked: {
       tokenAmounts: {
           baseAmount: new BigNumber(0),
@@ -69,6 +59,22 @@ jest.mock("@/store/hooks/usePoolDetails", () => {
       },
     },
     lpBalance: new BigNumber(0)
+  }))}
+})
+
+jest.mock("@/store/hooks/useUserProvidedLiquidityByPool.ts", () => {
+  const BigNumber = require('bignumber.js');
+  return { useUserProvidedLiquidityByPool: jest.fn().mockImplementation(() => ({
+
+      tokenAmounts: {
+        baseAmount: new BigNumber(0),
+        quoteAmount: new BigNumber(0)
+      },
+      value: {
+          baseValue: new BigNumber(0),
+          quoteValue: new BigNumber(0)
+      },
+
   }))}
 })
 
