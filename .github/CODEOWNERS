@@ -19,6 +19,9 @@ frame/composable-traits/ @ComposableFi/parachain-finance
 frame/*/rpc/ @ComposableFi/parachain-rpc
 frame/*/runtime-api @ComposableFi/parachain-rpc
 
+# Codespaces
+.devcontainer/ @cor
+
 # Gitbook
 book/ @ComposableFi/technical-writing-reviewers
 
