@@ -1,4 +1,4 @@
-# [Composable’s Cross-Chain Virtual Machine](https://dali.devnets.composablefinance.ninja/products/cross-chain-virtual-machine.html#cross-chain-virtual-machine)
+# Composable’s Cross-Chain Virtual Machine
 
 The Composable XCVM allows for cross-ecosystem communication enabled through cross-chain smart contracts.
 
