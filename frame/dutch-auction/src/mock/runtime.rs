@@ -1,6 +1,6 @@
 use crate::{
 	self as pallet_dutch_auction,
-	mock::currency::{CurrencyId, NativeAssetId},
+	mock::currency::{CurrencyId, NativeAssetId, AllValidCurrencyId},
 	weights::SubstrateWeight,
 };
 
@@ -21,7 +21,7 @@ use sp_core::{
 };
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
+	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify, ConvertInto},
 	Perbill,
 };
 use xcm::latest::{opaque::Xcm, SendXcm};
@@ -154,6 +154,8 @@ impl pallet_assets::Config for Runtime {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = GovernanceRegistry;
+    type ValidCurrency = AllValidCurrencyId;
+    type Convert = ConvertInto;
 }
 
 impl pallet_currency_factory::Config for Runtime {

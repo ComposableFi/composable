@@ -112,16 +112,11 @@ impl CurrencyId {
 
 impl ValidCurrency<CurrencyId> for CurrencyId {
 	fn valid_currency_id(currency_id: CurrencyId) -> bool {
-		match currency_id {
-			CurrencyId::PICA |
-			CurrencyId::LAYR |
-			CurrencyId::CROWD_LOAN |
-			CurrencyId::KSM |
-			CurrencyId::kUSD |
-			CurrencyId::USDT |
-			CurrencyId::USDC => true,
-			_ => false,
-		}
+		if currency_id == CurrencyId::INVALID {
+            false
+		}  else {
+            true
+        }
 	}
 }
 
