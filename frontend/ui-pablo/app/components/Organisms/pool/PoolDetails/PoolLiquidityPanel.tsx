@@ -12,7 +12,7 @@ import { BaseAsset } from "@/components/Atoms";
 import { BoxWrapper } from "../../BoxWrapper";
 import { useRouter } from "next/router";
 import { DonutChart } from "@/components/Atoms/DonutChart";
-import { usePoolDetails } from "@/store/hooks/usePoolDetails";
+import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
 import { PoolDetailsProps } from ".";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
 import { setManualPoolSearch, setPool } from "@/store/addLiquidity/addLiquidity.slice";
@@ -49,7 +49,7 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
   const router = useRouter();
   const theme = useTheme();
   const { setRemoveLiquidity } = useRemoveLiquidityState();
-  const poolDetails = usePoolDetails(poolId);
+  const poolDetails = useLiquidityPoolDetails(poolId);
   const liquidityProvided = useUserProvidedLiquidityByPool(poolId)
 
   const donutChartData = useAppSelector(

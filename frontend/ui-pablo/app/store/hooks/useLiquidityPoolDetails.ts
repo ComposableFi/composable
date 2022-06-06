@@ -6,7 +6,7 @@ import useStore from "@/store/useStore";
 import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
 import { useLiquidityByPool } from "./useLiquidityByPool";
 
-export const usePoolDetails = (poolId: number) => {
+export const useLiquidityPoolDetails = (poolId: number) => {
   const { poolStats, userLpBalances } = useStore();
 
   const allLpRewardingPools = useAllLpTokenRewardingPools();

@@ -119,6 +119,7 @@ const Updater = () => {
     }
   }, [allPools.length, assets]);
 
+  // might add following or not
   // const extrinsicCalls = useExtrinsics();
   // const trackedTransactions = useRef<string[]>([]);
   // useEffect(() => {
@@ -150,6 +151,27 @@ const Updater = () => {
   //     }
   //   }
   // }, [extrinsicCalls, parachainApi, selectedAccount]);
+  // useEffect(() => {
+  //   if (parachainApi && selectedAccount) {
+  //     let subscription: any;
+  //     (async () => {
+  //       subscription = await parachainApi.query.system.events((events) => {
+  //         events.forEach(e => {
+  //           const isLiquidityAdded = parachainApi.events.pablo.LiquidityAdded.is(e.event);
+  //           if (isLiquidityAdded) {
+  //             console.log(e.event.data.toJSON())
+  //           }
+  //         })
+  //       })
+  //     })()
+
+  //     return () => {
+  //       console.log('cleaning up', subscription)
+  //       subscription()
+  //     }
+  //   }
+  // }, [parachainApi, selectedAccount])
+
 
   return null;
 };

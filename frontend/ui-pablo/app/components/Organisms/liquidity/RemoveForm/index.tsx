@@ -27,7 +27,7 @@ import { ConfirmingModal } from "./ConfirmingModal";
 import { PreviewDetails } from "./PreviewDetails";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
 import useDebounce from "@/hooks/useDebounce";
-import { usePoolDetails } from "@/store/hooks/usePoolDetails";
+import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
 import { useUserProvidedLiquidityByPool } from "@/store/hooks/useUserProvidedLiquidityByPool";
 
 export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
@@ -41,7 +41,7 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
     lpBalance,
     baseAsset,
     quoteAsset
-  } = usePoolDetails(poolId)
+  } = useLiquidityPoolDetails(poolId)
   
   const liquidityProvided = useUserProvidedLiquidityByPool(poolId);
 

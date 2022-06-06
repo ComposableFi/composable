@@ -6,7 +6,7 @@ import {
   Grid,
   alpha,
 } from "@mui/material";
-import { usePoolDetails } from "@/store/hooks/usePoolDetails";
+import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
 import { PoolDetailsProps } from ".";
 import { BaseAsset } from "@/components/Atoms";
 
@@ -60,7 +60,7 @@ export const PoolStatistics: React.FC<PoolDetailsProps> = ({
   const {
     poolStats,
     tokensLocked,
-  } = usePoolDetails(poolId);
+  } = useLiquidityPoolDetails(poolId);
 
   return (
     <Box {...boxProps}>

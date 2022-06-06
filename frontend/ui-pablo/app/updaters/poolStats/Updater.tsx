@@ -44,7 +44,7 @@ const Updater = () => {
             ).decimals;
           }
   
-          let yesterday = Number(pool[0].calculatedTimestamp) - 1 * 24 * 60 * 60 * 1000
+          let yesterday = Number(pool[0].calculatedTimestamp) - 1 * DAYS
   
           const yesterdayState = pool.find((i: any) => (Number(i.calculatedTimestamp) < yesterday))
 

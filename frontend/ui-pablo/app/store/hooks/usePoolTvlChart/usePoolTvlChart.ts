@@ -2,11 +2,11 @@ import { DEFI_CONFIG } from "@/defi/config";
 import { queryLiquidityByPoolId } from "@/updaters/liquidity/subsquid";
 import BigNumber from "bignumber.js";
 import { useState, useEffect } from "react";
-import { usePoolDetails } from "../usePoolDetails";
+import { useLiquidityPoolDetails } from "../useLiquidityPoolDetails";
 import { processSubsquidTvlChartData } from "./helpers";
 
 export const usePoolTvlChart = (poolId: number) => {
-  const poolDetails = usePoolDetails(poolId);
+  const poolDetails = useLiquidityPoolDetails(poolId);
 
   const [seriesIntervals, setSeriesIntervals] = useState<string[]>([]);
   const [chartSeries, setChartSeries] = useState<[number, number][]>([]);
