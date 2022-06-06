@@ -1,23 +1,11 @@
-import { AssetMetadata } from "@/defi/polkadot/Assets";
-import { AssetId } from "@/defi/polkadot/types";
 import BigNumber from "bignumber.js";
 import { useEffect, useState } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
 import { fetchBalanceByAssetId } from "@/updaters/balances/utils";
-import { DailyRewards } from "../poolStats/poolStats.types";
-import { useLiquidityPoolsList } from "./useLiquidityPoolsList";
+import { LiquidityPoolRow, useLiquidityPoolsList } from "./useLiquidityPoolsList";
 
-export const useLiquidityPoolsWithOpenPositions = (): {
-    poolId: number;
-    baseAsset: AssetMetadata;
-    quoteAsset: AssetMetadata;
-    volume: BigNumber;
-    apr: BigNumber;
-    tvl: BigNumber;
-    dailyRewards: DailyRewards[];
-    lpAssetId: string
-  }[] => {
+export const useLiquidityPoolsListWithOpenPositions = (): LiquidityPoolRow[] => {
     const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
     const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
     const allPools = useLiquidityPoolsList();
@@ -30,7 +18,7 @@ export const useLiquidityPoolsWithOpenPositions = (): {
             parachainApi,
             DEFAULT_NETWORK_ID,
             selectedAccount.address,
-            i.lpAssetId
+            i.lpTokenAssetId
           ).then((balance) => {
             if (new BigNumber(balance).gt(0)) {
               setOpenPositionsPoolIds([... openPoisitionPoolIds, i.poolId])
