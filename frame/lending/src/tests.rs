@@ -5,10 +5,10 @@
 
 use crate::{
 	self as pallet_lending, accrue_interest_internal, currency::*, mocks::*,
-	models::borrower_data::BorrowerData, setup::assert_last_event, AccruedInterest, Error,
-	MarketIndex,
+	models::borrower_data::BorrowerData, setup::assert_last_event, validation2::UpdateInputValid,
+	AccruedInterest, Error, MarketIndex,
 };
-use composable_support::validation::TryIntoValidated;
+use composable_support::validation2::TryIntoValidated;
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok, test};
 use composable_traits::{
 	defi::{
@@ -17,7 +17,7 @@ use composable_traits::{
 	},
 	lending::{
 		math::*, CreateInput, Lending as LendingTrait, RepayStrategy, TotalDebtWithInterest,
-		UpdateInput, UpdateInputValid,
+		UpdateInput,
 	},
 	oracle,
 	time::SECONDS_PER_YEAR_NAIVE,
@@ -284,9 +284,9 @@ fn can_update_market() {
 				CurveModel::new(CurveModel::MAX_BASE_RATE).unwrap(),
 			),
 		};
-		assert_err!(
-			update_input.try_into_validated::<UpdateInputValid>(),
-			"collateral factor must be >= 1"
+		assert_eq!(
+			update_input.try_into_validated::<UpdateInputValid<Runtime>>().unwrap_err(),
+			Error::<Runtime>::CollateralFactorMustBeMoreThanOne.into()
 		);
 	})
 }
@@ -1595,7 +1595,7 @@ fn market_owner_cannot_retroactively_liquidate() {
 			max_price_age: DEFAULT_MAX_PRICE_AGE,
 		};
 		// ALICE is the creater of the market.
-		let updatable = updatable.try_into_validated::<UpdateInputValid>().unwrap();
+		let updatable = updatable.try_into_validated::<UpdateInputValid<Runtime>>().unwrap();
 		assert_ok!(Lending::update_market(Origin::signed(*ALICE), market_id, updatable));
 		// BOB loan must be liquidated now.
 		assert_eq!(Lending::should_liquidate(&market_id, &BOB), Ok(true));
@@ -1882,7 +1882,6 @@ fn create_simple_vault(
 		reserved: Perquintill::from_percent(100),
 		strategies: Default::default(),
 	};
-
 	Vault::do_create_vault(Deposit::Existential, config.try_into_validated().unwrap()).unwrap()
 }
 

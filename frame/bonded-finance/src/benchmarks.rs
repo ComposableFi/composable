@@ -4,7 +4,7 @@
 use crate::Pallet as BondedFinance;
 use crate::{AssetIdOf, BalanceOf, BlockNumberOf, BondOfferOf, Call, Config, Pallet};
 use codec::Decode;
-use composable_support::validation::Validated;
+use composable_support::validation2::Validated;
 use composable_traits::bonded_finance::{BondDuration, BondOffer, BondOfferReward};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{

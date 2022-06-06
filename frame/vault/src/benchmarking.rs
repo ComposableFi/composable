@@ -2,7 +2,7 @@ use super::*;
 
 use crate::Pallet as Vault;
 use codec::{Decode, Encode, MaxEncodedLen};
-use composable_support::validation::Validated;
+use composable_support::validation2::Validated;
 use composable_traits::vault::{CapabilityVault, Deposit, Vault as VaultTrait, VaultConfig};
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{

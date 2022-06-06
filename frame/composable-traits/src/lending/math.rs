@@ -1,10 +1,7 @@
 use core::ops::Neg;
 
 use codec::{Decode, Encode};
-use composable_support::{
-	math::safe::{SafeAdd, SafeDiv, SafeMul},
-	validation::Validate,
-};
+use composable_support::math::safe::{SafeAdd, SafeDiv, SafeMul};
 use scale_info::TypeInfo;
 use sp_std::{cmp::Ordering, convert::TryInto};
 
@@ -111,33 +108,6 @@ impl InterestRateModel {
 	}
 }
 
-pub struct InteresteRateModelIsValid;
-impl Validate<InterestRateModel, InteresteRateModelIsValid> for InteresteRateModelIsValid {
-	fn validate(interest_rate_model: InterestRateModel) -> Result<InterestRateModel, &'static str> {
-		const ERROR: &str = "interest rate model is not valid";
-		match interest_rate_model {
-			InterestRateModel::Jump(x) =>
-				JumpModel::new(x.base_rate, x.jump_rate, x.full_rate, x.target_utilization)
-					.ok_or(ERROR)
-					.map(InterestRateModel::Jump),
-			InterestRateModel::Curve(x) =>
-				CurveModel::new(x.base_rate).ok_or(ERROR).map(InterestRateModel::Curve),
-			InterestRateModel::DynamicPIDController(x) => DynamicPIDControllerModel::new(
-				x.proportional_parameter,
-				x.integral_parameter,
-				x.derivative_parameter,
-				x.previous_interest_rate,
-				x.target_utilization,
-			)
-			.ok_or(ERROR)
-			.map(InterestRateModel::DynamicPIDController),
-			InterestRateModel::DoubleExponent(x) => DoubleExponentModel::new(x.coefficients)
-				.ok_or(ERROR)
-				.map(InterestRateModel::DoubleExponent),
-		}
-	}
-}
-
 // TODO: Use enum_dispatch crate
 impl InterestRate for InterestRateModel {
 	/// Calculates the current borrow interest rate
@@ -234,7 +204,7 @@ impl InterestRate for JumpModel {
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default, TypeInfo)]
 pub struct CurveModel {
-	base_rate: Rate,
+	pub base_rate: Rate,
 }
 
 impl CurveModel {
@@ -275,19 +245,19 @@ impl InterestRate for CurveModel {
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default, TypeInfo)]
 pub struct DynamicPIDControllerModel {
 	/// `kp`
-	proportional_parameter: FixedI128,
+	pub proportional_parameter: FixedI128,
 	/// `ki`
-	integral_parameter: FixedI128,
+	pub integral_parameter: FixedI128,
 	/// `kd`
-	derivative_parameter: FixedI128,
+	pub derivative_parameter: FixedI128,
 	/// `et_1`
-	previous_error_value: FixedI128,
+	pub previous_error_value: FixedI128,
 	/// `it_1`
-	previous_integral_term: FixedI128,
+	pub previous_integral_term: FixedI128,
 	/// `ir_t_1`
-	previous_interest_rate: FixedU128,
+	pub previous_interest_rate: FixedU128,
 	/// `uo`
-	target_utilization: FixedU128,
+	pub target_utilization: FixedU128,
 }
 
 impl DynamicPIDControllerModel {
@@ -377,7 +347,7 @@ const EXPECTED_COEFFICIENTS_SUM: u16 = 100;
 #[cfg_attr(feature = "std", derive(serde::Deserialize, serde::Serialize))]
 #[derive(Encode, Decode, Eq, PartialEq, Copy, Clone, RuntimeDebug, Default, TypeInfo)]
 pub struct DoubleExponentModel {
-	coefficients: [u8; 16],
+	pub coefficients: [u8; 16],
 }
 
 impl DoubleExponentModel {

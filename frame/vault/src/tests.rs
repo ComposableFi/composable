@@ -10,7 +10,7 @@ use crate::{
 	models::VaultInfo,
 	*,
 };
-use composable_support::validation::Validated;
+use composable_support::validation2::Validated;
 use composable_tests_helpers::{
 	prop_assert_acceptable_computation_error, prop_assert_ok,
 	test::helper::default_acceptable_computation_error,
