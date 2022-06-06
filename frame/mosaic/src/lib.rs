@@ -255,6 +255,7 @@ pub mod pallet {
 		/// An outgoing tx is created, and locked in the outgoing tx pool.
 		TransferOut {
 			id: Id,
+			from: AccountIdOf<T>,
 			to: EthereumAddress,
 			asset_id: AssetIdOf<T>,
 			network_id: NetworkIdOf<T>,
@@ -1038,6 +1039,7 @@ pub mod pallet {
 			let id = generate_id::<T>(&caller, &network_id, &asset_id, &address, &amount, &now);
 			Self::deposit_event(Event::<T>::TransferOut {
 				id,
+				from: caller,
 				to: address,
 				amount,
 				asset_id,
