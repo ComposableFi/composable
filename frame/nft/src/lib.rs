@@ -137,7 +137,7 @@ pub mod pallet {
 	>;
 
 	impl<T: Config> Pallet<T> {
-		pub(crate) fn get_next_nft_id(
+		pub fn get_next_nft_id(
 			class: &<Self as Inspect<AccountIdOf<T>>>::ClassId,
 		) -> Result<u128, DispatchError> {
 			NftId::<T>::try_mutate(class, |x| -> Result<u128, DispatchError> {

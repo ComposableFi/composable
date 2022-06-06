@@ -23,3 +23,5 @@ u128
 Wasm
 Xcm
 Dispatchable
+unstake
+proxied

@@ -1,6 +1,7 @@
+// TODO: make `deny`
 #![cfg_attr(
 	not(test),
-	deny(
+	warn(
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
@@ -9,9 +10,11 @@
 		clippy::panic
 	)
 )] // allow in tests
-#![deny(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
+// TODO: make `deny`
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![deny(
+// TODO: make `deny`
+#![warn(
 	bad_style,
 	bare_trait_objects,
 	const_err,

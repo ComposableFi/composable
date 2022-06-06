@@ -840,16 +840,6 @@ impl assets::Config for Runtime {
 	type CurrencyValidator = ValidateCurrencyId;
 }
 
-#[derive(
-	PartialEq, Eq, Copy, Clone, Encode, Decode, MaxEncodedLen, TypeInfo, frame_support::RuntimeDebug,
-)]
-pub struct EpochDuration;
-impl frame_support::traits::Get<u64> for EpochDuration {
-	fn get() -> u64 {
-		5 * composable_traits::time::ONE_MINUTE
-	}
-}
-
 parameter_types! {
 	  pub const CrowdloanRewardsId: PalletId = PalletId(*b"pal_crow");
 	  pub const InitialPayment: Perbill = Perbill::from_percent(25);

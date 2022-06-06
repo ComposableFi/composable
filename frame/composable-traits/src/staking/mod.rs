@@ -3,7 +3,6 @@ use crate::staking::{
 	rewards::RewardConfig,
 };
 use codec::{Decode, Encode};
-use composable_support::collections::vec::bounded::BiBoundedVec;
 
 use core::fmt::Debug;
 use frame_support::dispatch::DispatchResult;
@@ -39,15 +38,25 @@ pub trait Shares {
 	fn shares(&self) -> Self::Balance;
 }
 
+/// is unaware if concrete positions
 pub trait ProtocolStaking {
 	type AccountId;
 	type AssetId;
 	type Balance;
-	type InstanceId;
 	type PoolId;
 
-	/// adds reward to common pool share
+	/// Adds reward to common pool share.
+	/// Does not actually transfers real assets.
 	fn accumulate_reward(
+		pool: &Self::PoolId,
+		reward_currency: Self::AssetId,
+		reward_increment: Self::Balance,
+	) -> DispatchResult;
+
+	/// Transfers rewards `from` to pool.
+	/// If may be bigger than total shares.
+	fn transfer_reward(
+		from: &Self::AccountId,
 		pool: &Self::PoolId,
 		reward_currency: Self::AssetId,
 		reward_increment: Self::Balance,
@@ -59,7 +68,7 @@ pub trait Staking {
 	type AccountId;
 	type PoolId;
 	type Balance;
-	type InstanceId;
+	type PositionId;
 
 	/// Stake an amount of protocol asset. A new NFT representing the user position will be
 	/// minted.
@@ -72,19 +81,19 @@ pub trait Staking {
 	/// * `duration` the staking duration (must be one of the predefined presets). Unstaking before
 	///   the end trigger the unstake penalty.
 	/// * `keep_alive` whether to keep the `from` account alive or not while transferring the stake.
-	/// * `config_index` config index to choose for stake
-	fn create_share(
+	/// * `config_index` - reference to one of  staking configs for `pool_id`
+	fn stake(
 		who: &Self::AccountId,
-		pool: &Self::PoolId,
+		pool_id: &Self::PoolId,
 		config_index: u8,
-		add_amount: Self::Balance,
+		amount: Self::Balance,
 		keep_alive: bool,
-	) -> Result<Self::InstanceId, DispatchError>;
+	) -> Result<Self::PositionId, DispatchError>;
 
 	fn add_share(
 		who: &Self::AccountId,
-		position: Self::InstanceId,
-		add_amount: Self::Balance,
+		position: Self::PositionId,
+		amount: Self::Balance,
 		keep_alive: bool,
 	);
 
@@ -92,40 +101,41 @@ pub trait Staking {
 	///
 	/// Arguments
 	///
-	/// * `instance_id` the ID uniquely identifiying the NFT from which we will compute the
-	///   available rewards.
+	/// * `instance_id` the ID uniquely identifying the NFT from which we will compute the available
+	///   rewards.
 	/// * `to` the account to transfer the final claimed rewards to.
-	fn remove_share(
+	fn unstake(
 		who: &Self::AccountId,
-		instance_id: &Self::InstanceId,
+		instance_id: &Self::PositionId,
 		remove_amount: Self::Balance,
 	) -> DispatchResult;
 
-	fn split(
+	/// `ratio` - how much of share to retain in original position.
+	fn split_into_2(
 		who: &Self::AccountId,
-		instance_id: &Self::InstanceId,
-		amounts: BiBoundedVec<Permill, 2, 16>,
-	) -> BiBoundedVec<Self::InstanceId, 2, 16>;
+		instance_id: &Self::PositionId,
+		ratio: Permill,
+	) -> [Self::PositionId; 2];
 }
 
 pub trait StakingReward {
 	type AccountId;
 	type AssetId;
 	type Balance;
-	type InstanceId;
+	type PositionId;
 
 	/// Claim the current rewards.
 	///
 	/// Arguments
 	///
 	/// * `who` the actual account triggering this claim.
-	/// * `instance_id` the ID uniquely identifiying the NFT from which we will compute the
-	///   available rewards.
+	/// * `instance_id` the ID uniquely identifying the NFT from which we will compute the available
+	///   rewards.
 	/// * `to` the account to transfer the rewards to.
 	/// Return amount if reward asset which was staked asset claimed.
 	fn claim_rewards(
 		who: &Self::AccountId,
-		instance_id: &Self::InstanceId,
+		instance_id: &Self::PositionId,
 	) -> Result<(Self::AssetId, Self::Balance), DispatchError>;
 
 	/// Transfer a reward to the staking rewards protocol.
@@ -140,7 +150,7 @@ pub trait StakingReward {
 	///   reward.
 	fn claim_reward(
 		who: &Self::AccountId,
-		instance_id: &Self::InstanceId,
+		instance_id: &Self::PositionId,
 		amount: Self::Balance,
 		keep_alive: bool,
 	) -> DispatchResult;

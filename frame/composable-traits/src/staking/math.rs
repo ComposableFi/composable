@@ -5,7 +5,7 @@ use sp_std::convert::TryInto;
 use crate::time::DurationSeconds;
 type Balance = u128;
 
-// keep in sync with python math
+//NOTE: keep in sync with math formulas in readme.md
 pub fn honest_locked_stake_increase(
 	after_penalized: Perbill,
 	original_amount: Balance,
@@ -23,12 +23,22 @@ pub fn honest_locked_stake_increase(
 	new_remaining_time.try_into().ok().ok_or(ArithmeticError::Overflow)
 }
 
+pub fn honest_lock_extensions(
+	now: u64,
+	lock_date: u64,
+	new_lock: u64,
+	previous_lock: u64,
+) -> Result<u64, ArithmeticError> {
+	let passed_time = now - lock_date;
+	let rolling = passed_time.min(new_lock.safe_sub(&previous_lock)?);
+	Ok(rolling)
+}
+
 #[cfg(test)]
 mod tests {
-	use composable_support::math::safe::SafeSub;
-	use sp_runtime::{ArithmeticError, Perbill};
+	use sp_runtime::Perbill;
 
-	use super::honest_locked_stake_increase;
+	use super::*;
 
 	#[test]
 	fn with_zero_time_passed_staking_gives_same_time() {
@@ -46,17 +56,6 @@ mod tests {
 		)
 		.expect("valid parameters");
 		assert_eq!(remaining, 1000, "does not allows to reduce duration doing staking");
-	}
-
-	pub fn honest_lock_extensions(
-		now: u64,
-		lock_date: u64,
-		new_lock: u64,
-		previous_lock: u64,
-	) -> Result<u64, ArithmeticError> {
-		let passed_time = now - lock_date;
-		let rolling = passed_time.min(new_lock.safe_sub(&previous_lock)?);
-		Ok(rolling)
 	}
 
 	#[test]
