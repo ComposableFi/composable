@@ -19,8 +19,8 @@ const Updater = () => {
   const {
     assets,
     pools,
-    setTokenAmountInPool,
-    setTokenValueInPool,
+    setTokenAmountInLiquidityPool,
+    setTokenValueInLiquidityPool,
     setUserLpBalance,
     poolLiquidity,
   } = useStore();
@@ -48,7 +48,7 @@ const Updater = () => {
         if (pool.poolId && pool.pair) {
           fetchAndUpdatePoolLiquidity(
             pool as any,
-            setTokenAmountInPool,
+            setTokenAmountInLiquidityPool,
             parachainApi
           );
         }
@@ -99,7 +99,7 @@ const Updater = () => {
             )
               .times(assets[baseAssetMeta.assetId].price.toString())
               .toString();
-            setTokenValueInPool(pool.poolId, {
+            setTokenValueInLiquidityPool(pool.poolId, {
               baseValue,
             });
           }
@@ -110,7 +110,7 @@ const Updater = () => {
               .times(assets[quoteAssetMeta.assetId].price.toString())
               .toString();
 
-            setTokenValueInPool(pool.poolId, {
+            setTokenValueInLiquidityPool(pool.poolId, {
               quoteValue,
             });
           }

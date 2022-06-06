@@ -19,7 +19,7 @@ export const putTokenAmount = (
         },
         value: {
           baseValue: "0",
-          quoteValue: "0"
+          quoteValue: "0",
         },
       };
     }
@@ -30,6 +30,76 @@ export const putTokenAmount = (
 
     if (amount.quoteAmount) {
       draft[poolId].tokenAmounts.quoteAmount = amount.quoteAmount;
+    }
+  });
+};
+
+export const addPoolTokenAmount = (
+  liquiditySlice: LiquiditySlice["poolLiquidity"],
+  poolId: number,
+  amount: {
+    baseAmount?: string;
+    quoteAmount?: string;
+  }
+) => {
+  return produce(liquiditySlice, (draft) => {
+    if (amount.baseAmount) {
+      let prevBase = new BigNumber(0);
+      if (liquiditySlice[poolId]) {
+        prevBase = new BigNumber(
+          liquiditySlice[poolId].tokenAmounts.baseAmount
+        );
+        draft[poolId].tokenAmounts.baseAmount = prevBase
+          .plus(amount.baseAmount)
+          .toString();
+      }
+    }
+
+    if (amount.baseAmount) {
+      let prevQuote = new BigNumber(0);
+      if (liquiditySlice[poolId]) {
+        prevQuote = new BigNumber(
+          liquiditySlice[poolId].tokenAmounts.quoteAmount
+        );
+        draft[poolId].tokenAmounts.baseAmount = prevQuote
+          .plus(amount.baseAmount)
+          .toString();
+      }
+    }
+  });
+};
+
+export const removePoolTokenAmount = (
+  liquiditySlice: LiquiditySlice["poolLiquidity"],
+  poolId: number,
+  amount: {
+    baseAmount?: string;
+    quoteAmount?: string;
+  }
+) => {
+  return produce(liquiditySlice, (draft) => {
+    if (amount.baseAmount) {
+      let prevBase = new BigNumber(0);
+      if (liquiditySlice[poolId]) {
+        prevBase = new BigNumber(
+          liquiditySlice[poolId].tokenAmounts.baseAmount
+        );
+        draft[poolId].tokenAmounts.baseAmount = prevBase
+          .minus(amount.baseAmount)
+          .toString();
+      }
+    }
+
+    if (amount.baseAmount) {
+      let prevQuote = new BigNumber(0);
+      if (liquiditySlice[poolId]) {
+        prevQuote = new BigNumber(
+          liquiditySlice[poolId].tokenAmounts.quoteAmount
+        );
+        draft[poolId].tokenAmounts.baseAmount = prevQuote
+          .minus(amount.baseAmount)
+          .toString();
+      }
     }
   });
 };
@@ -55,7 +125,7 @@ export const putTokenValue = (
         },
       };
     }
-    
+
     if (value.baseValue) {
       draft[poolId].value.baseValue = value.baseValue;
     }
@@ -63,11 +133,10 @@ export const putTokenValue = (
     if (value.quoteValue) {
       draft[poolId].value.quoteValue = value.quoteValue;
     }
-
   });
 };
 
-export const putUserProvidedTokenAmount = (
+export const putUserProvidedLiquidityTokenAmount = (
   liquiditySlice: LiquiditySlice["userProvidedLiquidity"],
   poolId: number,
   amount: {
@@ -102,5 +171,40 @@ export const putUserLpBalance = (
 ) => {
   return produce(liquiditySlice, (draft) => {
     draft[poolId] = amount;
-  })
-}
+  });
+};
+
+export const updateUserProvidedLiquidityTokenAmount = (
+  liquiditySlice: LiquiditySlice["userProvidedLiquidity"],
+  poolId: number,
+  amount: {
+    baseAmount?: string;
+    quoteAmount?: string;
+  }
+) => {
+  return produce(liquiditySlice, (draft) => {
+    if (amount.baseAmount) {
+      let prevBase = new BigNumber(0);
+      if (liquiditySlice[poolId]) {
+        prevBase = new BigNumber(
+          liquiditySlice[poolId].tokenAmounts.baseAmount
+        );
+        draft[poolId].tokenAmounts.baseAmount = prevBase
+          .plus(amount.baseAmount)
+          .toString();
+      }
+    }
+
+    if (amount.baseAmount) {
+      let prevQuote = new BigNumber(0);
+      if (liquiditySlice[poolId]) {
+        prevQuote = new BigNumber(
+          liquiditySlice[poolId].tokenAmounts.quoteAmount
+        );
+        draft[poolId].tokenAmounts.baseAmount = prevQuote
+          .plus(amount.baseAmount)
+          .toString();
+      }
+    }
+  });
+};

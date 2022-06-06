@@ -8,14 +8,17 @@ import { DEFAULT_NETWORK_ID } from "../constants";
 
 export async function fetchAndUpdatePoolLiquidity(
   pool: ConstantProductPool | StableSwapPool,
-  setTokenAmountInPool:  (poolId: number, amounts: {
-    baseAmount?: string | undefined;
-    quoteAmount?: string | undefined;
-  }) => void,
+  setTokenAmountInLiquidityPool: (
+    poolId: number,
+    amounts: {
+      baseAmount?: string | undefined;
+      quoteAmount?: string | undefined;
+    }
+  ) => void,
   parachainApi: ApiPromise
 ): Promise<void> {
   try {
-    console.log('fetchAndUpdatePoolLiquidity: '+ pool.poolId)
+    console.log("fetchAndUpdatePoolLiquidity: " + pool.poolId);
     const poolAccount = createPoolAccountId(parachainApi, pool.poolId);
     const liqBase = await fetchBalanceByAssetId(
       parachainApi,
@@ -28,92 +31,86 @@ export async function fetchAndUpdatePoolLiquidity(
       DEFAULT_NETWORK_ID,
       poolAccount,
       pool.pair.quote.toString()
-    )
-    setTokenAmountInPool(pool.poolId, {
+    );
+    setTokenAmountInLiquidityPool(pool.poolId, {
       baseAmount: liqBase,
-      quoteAmount: liqQuote
-    })
+      quoteAmount: liqQuote,
+    });
   } catch (err) {
-    setTokenAmountInPool(pool.poolId, {
+    setTokenAmountInLiquidityPool(pool.poolId, {
       baseAmount: "0",
-      quoteAmount: "0"
-    })
+      quoteAmount: "0",
+    });
   }
 }
 
-export const processLiquidityTransactionsByAddress = (transactions: any[]): {base: BigNumber, quote: BigNumber} => {
-    const mapp = transactions.map(
-      (tx: {
-        baseAssetId: string;
-        baseAssetAmount: string;
-        quoteAssetAmount: string;
-        quoteAssetId: string;
-        receivedTimestamp: string;
-        transactionType: "ADD_LIQUIDITY" | "REMOVE_LIQUIDITY";
-        who: string;
-        pool: {
-          poolId: string;
-        };
-      }) => {
-        const baseAssetId = Number(tx.baseAssetId);
-        const quoteAssetId = Number(tx.quoteAssetId);
-        const receivedTimestamp = Number(tx.receivedTimestamp);
-        const poolId = Number(tx.pool.poolId);
-  
-        const bDecs = new BigNumber(10).pow(
-          getAssetByOnChainId("picasso", baseAssetId).decimals ?? 12
-        );
-        const qDecs = new BigNumber(10).pow(
-          getAssetByOnChainId("picasso", quoteAssetId).decimals ?? 12
-        );
-  
-        const baseAssetAmount = new BigNumber(tx.baseAssetAmount)
-          .div(bDecs)
-          .toString();
-        const quoteAssetAmount = new BigNumber(tx.baseAssetAmount)
-          .div(qDecs)
-          .toString();
-  
-        return {
-          transactionType: tx.transactionType,
-          baseAssetId,
-          quoteAssetId,
-          receivedTimestamp,
-          poolId,
-          baseAssetAmount,
-          quoteAssetAmount,
-        };
-      }
-    ) as {
-      transactionType: "ADD_LIQUIDITY" | "REMOVE_LIQUIDITY";
-      baseAssetId: number;
-      quoteAssetId: number;
-      receivedTimestamp: number;
-      poolId: number;
-      baseAssetAmount: string;
-      quoteAssetAmount: string;
-    }[];
-  
-    let baseProvided = mapp.reduce((p: any, c: any) => {
-      const agg = new BigNumber(p);
-      if (c.transactionType === "ADD_LIQUIDITY") {
-        return agg.plus(c.baseAssetAmount).toString();
-      } else {
-        return agg.minus(c.baseAssetAmount).toString();
-      }
-    }, "0");
-  
-    let quoteProvided = mapp.reduce((p: any, c: any) => {
-      const agg = new BigNumber(p);
-      if (c.transactionType === "ADD_LIQUIDITY") {
-        return agg.plus(c.baseAssetAmount).toString();
-      } else {
-        return agg.minus(c.baseAssetAmount).toString();
-      }
-    }, "0");
-  
+export function calcaulateProvidedLiquidity(
+  transactions: {
+    baseAssetId: string;
+    baseAssetAmount: string;
+    quoteAssetAmount: string;
+    quoteAssetId: string;
+    receivedTimestamp: string;
+    transactionType: "ADD_LIQUIDITY" | "REMOVE_LIQUIDITY";
+    who: string;
+    pool: {
+      poolId: string;
+    };
+  }[]
+): { baseAmountProvided: BigNumber; quoteAmountProvided: BigNumber } {
+  let baseAmountProvided = new BigNumber(0);
+  let quoteAmountProvided = new BigNumber(0);
+
+  if (!transactions.length) {
     return {
-      base: new BigNumber(baseProvided),
-      quote: new BigNumber(quoteProvided)
-    }
+      baseAmountProvided,
+      quoteAmountProvided,
+    };
   }
+
+  const baseAssetOnChainId = Number(transactions[0].baseAssetId);
+  const quoteAssetOnChainId = Number(transactions[0].quoteAssetId);
+  let baseAssetDecimals: number | BigNumber = 12,
+    quoteAssetDecimals: number | BigNumber = 12;
+
+  try {
+    baseAssetDecimals = getAssetByOnChainId(
+      DEFAULT_NETWORK_ID,
+      baseAssetOnChainId
+    ).decimals;
+    quoteAssetDecimals = getAssetByOnChainId(
+      DEFAULT_NETWORK_ID,
+      quoteAssetOnChainId
+    ).decimals;
+  } catch (err) {
+    baseAssetDecimals = 12;
+    quoteAssetDecimals = 12;
+    console.log(err);
+  }
+
+  baseAssetDecimals = new BigNumber(10).pow(baseAssetDecimals);
+  quoteAssetDecimals = new BigNumber(10).pow(quoteAssetDecimals);
+
+  transactions.forEach((tx) => {
+    if (tx.transactionType === "ADD_LIQUIDITY") {
+      baseAmountProvided = baseAmountProvided.plus(
+        new BigNumber(tx.baseAssetAmount).div(baseAssetDecimals)
+      );
+      quoteAmountProvided = quoteAmountProvided.plus(
+        new BigNumber(tx.quoteAssetAmount).div(quoteAssetDecimals)
+      );
+    } else if (tx.transactionType === "REMOVE_LIQUIDITY") {
+      baseAmountProvided = baseAmountProvided.minus(
+        new BigNumber(tx.baseAssetAmount).div(baseAssetDecimals)
+      );
+      quoteAmountProvided = quoteAmountProvided.minus(
+        new BigNumber(tx.quoteAssetAmount).div(quoteAssetDecimals)
+      );
+    }
+  });
+
+  return {
+    baseAmountProvided,
+    quoteAmountProvided,
+  };
+}
