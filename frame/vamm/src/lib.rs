@@ -54,6 +54,10 @@
 //! * [`get_price`](pallet/struct.Pallet.html#method.get_price): Gets the
 //! current price of the [`base`](VammState::base_asset_reserves) or
 //! [`quote`](VammState::quote_asset_reserves) asset in a vamm.
+//! * [`get_twap`](pallet/struct.Pallet.html#method.get_twap): Gets the time
+//! weighted average price of the desired asset.
+//! * [`update_twap`](pallet/struct.Pallet.html#method.update_twap): Updates the
+//! time weighted average price of the desired asset.
 //!
 //! ### Runtime Storage Objects
 //!
