@@ -89,8 +89,15 @@
 - [FAQs](./faqs/faqs.md)
 
 
-# 📖 BOOK
-- [Contributing](./book/contributing.md)
+# 💻 Codespaces
+
+- [Codespaces](./codespaces.md)
+- [Getting Started](./codespaces/getting-started.md)
+- [Using Codespaces](./codespaces/using-codespaces.md)
+  - [Book](./codespaces/book.md)
+  - [Substrate](./codespaces/substrate.md)
+  - [Frontend](./codespaces/frontend.md)
+  - [Runtime Tests](./codespaces/runtime-tests.md)
 
 # 🎨 PALLETS AND INTEGRATION GUIDES
 - [crowdloan-rewards](./pallets/crowdloan-rewards.md)
