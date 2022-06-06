@@ -49,8 +49,8 @@ fn run_to_block(n: u64) {
 
 #[allow(dead_code)]
 fn run_for_seconds(seconds: u64) {
-	// Not using an equivalent run_to_block call here because it causes the tests to slow down
-	// drastically
+	// Not using an equivalent run_to_block call here because it causes the
+	// tests to slow down drastically
 	if System::block_number() > 0 {
 		Timestamp::on_finalize(System::block_number());
 		System::on_finalize(System::block_number());
