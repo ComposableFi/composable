@@ -9,7 +9,7 @@ import {
   fetchSpotPrice,
   transformSwapSubsquidTx,
 } from "./utils";
-import { createPoolAccountId, isValidAssetPair } from "../utils";
+import { isValidAssetPair } from "../utils";
 import {
   ConstantProductPool,
   LiquidityBootstrappingPool,
@@ -19,6 +19,7 @@ import {
 import { fetchBalanceByAssetId } from "../balances/utils";
 import { query24hOldTransactionByPoolQuoteAsset } from "./subsquid";
 import { queryPoolTransactionsByType } from "../pools/subsquid";
+import { createPoolAccountId } from "@/utils/substrate";
 
 const Updater = () => {
   const {
@@ -162,7 +163,7 @@ const Updater = () => {
               }
 
               if (pool) {
-                let poolAccountId = createPoolAccountId(Number(poolId));
+                let poolAccountId = createPoolAccountId(parachainApi, Number(poolId));
 
                 let lbp = undefined;
                 let fee = new BigNumber(pool.feeConfig.feeRate);

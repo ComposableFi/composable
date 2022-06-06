@@ -8,9 +8,9 @@ import { fetchBalanceByAssetId } from "../balances/utils";
 import { DEFAULT_NETWORK_ID } from "../constants";
 import { liquidityTransactionsByAddressAndPool } from "@ui-pablo/app/updaters/pools/subsquid";
 import {
-  createPoolAccountId,
   processLiquidityTransactionsByAddress,
-} from "../utils";
+} from "./utils";
+import { createPoolAccountId } from "@/utils/substrate";
 
 const PICK = ["poolId", "pair", "lpToken"];
 
@@ -46,7 +46,7 @@ const Updater = () => {
     if (allPools.length && parachainApi) {
       allPools.forEach((pool) => {
         if (pool.poolId && pool.pair) {
-          const poolAccount = createPoolAccountId(pool.poolId);
+          const poolAccount = createPoolAccountId(parachainApi, pool.poolId);
           fetchBalanceByAssetId(
             parachainApi,
             DEFAULT_NETWORK_ID,
