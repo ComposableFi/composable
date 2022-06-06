@@ -1,7 +1,10 @@
 use crate::{
 	mock::{Event, ExtBuilder, MockRuntime, System, TestPallet},
 	pallet::{self, Error},
-	tests::{run_for_seconds, run_to_block},
+	tests::{
+		any_sane_asset_amount, any_vamm_state, get_vamm_state, run_for_seconds, run_to_block,
+		RUN_CASES,
+	},
 	VammState,
 };
 use composable_traits::vamm::{AssetType, Vamm as VammTrait};
@@ -14,15 +17,25 @@ use proptest::prelude::*;
 
 type VammTimestamp = <MockRuntime as pallet::Config>::Moment;
 type VammDecimal = <MockRuntime as pallet::Config>::Decimal;
-type VammBalance = <MockRuntime as pallet::Config>::Balance;
 
 // ----------------------------------------------------------------------------------------------------
 //                                           Prop Compose
 // ----------------------------------------------------------------------------------------------------
 
+prop_compose! {
+	fn any_new_twap()(
+		twap in any_sane_asset_amount()
+	) (
+		new_twap in prop_oneof![Just(None), Just(Some(VammDecimal::from_inner(twap)))],
+	) -> Option<VammDecimal> {
+		new_twap
+	}
+}
+
 // -------------------------------------------------------------------------------------------------
 //                                           Unit Tests
 // -------------------------------------------------------------------------------------------------
+
 #[test]
 fn update_twap_fails_if_vamm_does_not_exist() {
 	let vamm_state = VammState::default();
@@ -236,3 +249,38 @@ fn update_twap_updates_twap_correctly() {
 // -------------------------------------------------------------------------------------------------
 //                                           Proptests
 // -------------------------------------------------------------------------------------------------
+
+proptest! {
+	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
+	// #![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
+	#[test]
+	fn update_twap_proptest_succeeds(
+		vamm_state in any_vamm_state(),
+		asset_type in prop_oneof![Just(AssetType::Base), Just(AssetType::Quote)],
+		new_twap in any_new_twap()
+	) {
+		let now = vamm_state.base_asset_twap_timestamp
+							.max(vamm_state.quote_asset_twap_timestamp)
+							.saturating_add(1)
+							.min(VammTimestamp::MAX/1000);
+		let vamm_state = VammState {
+			closed: None,
+			base_asset_twap_timestamp: vamm_state.base_asset_twap_timestamp
+												 .min(now).saturating_sub(1),
+			quote_asset_twap_timestamp: vamm_state.quote_asset_twap_timestamp
+												  .min(now).saturating_sub(1),
+			funding_period: vamm_state.base_asset_twap_timestamp
+									  .max(vamm_state.quote_asset_twap_timestamp)
+									  .saturating_add(1),
+			..vamm_state
+		};
+		ExtBuilder { vamm_count: 1, vamms: vec![(0, vamm_state)] }
+			.build()
+			.execute_with(|| {
+				run_for_seconds(now);
+				assert_ok!(
+					TestPallet::update_twap(0, asset_type, new_twap),
+				);
+			})
+	}
+}
