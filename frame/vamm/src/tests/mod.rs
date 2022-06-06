@@ -162,6 +162,14 @@ prop_compose! {
 }
 
 prop_compose! {
+	fn valid_funding_period()(
+		funding_period in 1..=VammTimestamp::MAX
+	) -> VammTimestamp {
+		funding_period
+	}
+}
+
+prop_compose! {
 	fn zero_reserve()(
 		zero_reserve in ZERO_RESERVE..=ZERO_RESERVE,
 	) -> Balance {
