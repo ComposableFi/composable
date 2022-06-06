@@ -983,7 +983,7 @@ pub mod pallet {
 			VammMap::<T>::insert(&vamm_id, vamm_state);
 
 			// TODO(Cardosaum): This function will execute quite frequently,
-			// isn`t it a problem to emit one new event for each function call?`
+			// isn't it a problem to emit one new event for each function call?`
 			//
 			// Deposit swap event into blockchain
 			Self::deposit_event(Event::<T>::UpdatedTwap { vamm_id, asset_type, value: new_twap });
@@ -1140,7 +1140,7 @@ pub mod pallet {
 			config: &SwapConfigOf<T>,
 			vamm_state: &VammStateOf<T>,
 		) -> Result<(), DispatchError> {
-			// We must ensure that the vamm is not closed before perfoming any swap.
+			// We must ensure that the vamm is not closed before performing any swap.
 			ensure!(!Self::is_vamm_closed(vamm_state, &None), Error::<T>::VammIsClosed);
 
 			match config.direction {
