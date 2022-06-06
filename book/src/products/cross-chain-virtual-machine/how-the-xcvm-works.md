@@ -1,4 +1,4 @@
-# **How the XCVM works**
+# How the XCVM works
 
 ​Virtual machines are abstracted away from activities required for cross-chain operations such as security, finality in different networks, fee calculation, and provide a simple interface for developers to build on. The security and finality are dependent on the bridging technology used and fees will vary according to network traffic. 
 

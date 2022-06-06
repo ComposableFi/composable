@@ -1,7 +1,7 @@
-# **Writing Smart Contracts with CosmWasm**
+# Writing Smart Contracts with CosmWasm
 
 
-## **CosmWasm’s Advantages**
+## CosmWasm’s Advantages
 
 Composable selected CosmWasm as the developer framework for smart contract deployment on the XCVM as it offers cross-chain support, is tightly compatible with Cosmos chains, and has superior security design.
 
@@ -14,7 +14,7 @@ In terms of security, CosmWasm is designed to avoid the attack vectors found in 
 Due to these benefits, many DeFi projects have adopted CosmWasm as their smart contract framework, including notable examples like Terra, OKX, Crypto.org, and Osmosis.
 
 
-## **CosmWasm as the Developer Framework for the XCVM**
+## CosmWasm as the Developer Framework for the XCVM
 
 CosmWasm’s inter-chain contract support works hand in hand with XCVM’s interoperable smart contract functionality. Through the adoption of CosmWasm, the XCVM will be the first to bring its functionality to the DotSama ecosystem. This will enable the XCVM to combine the benefits of both ecosystems and connect CosmWasm to a broader range of DeFi ecosystems. As such, developers will be able to write smart contract for DotSama, that exist as multi-chain contracts on IBC-Cosmos. Accessible, interoperable smart contract creation is crucial for developing ecosystems, especially nascent ecosystems, that will form a considerable role in DeFi’s future. These ecosystems and protocols that exist cross-chain suffer from the fragmented liquidity of the DeFi space. As such, they need virtual machines like the XCVM that enable multi-chain contracts and cross-chain communication.
 

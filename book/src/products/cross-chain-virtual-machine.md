@@ -1,4 +1,4 @@
-# **[Composable’s Cross-Chain Virtual Machine](https://dali.devnets.composablefinance.ninja/products/cross-chain-virtual-machine.html#cross-chain-virtual-machine)**
+# [Composable’s Cross-Chain Virtual Machine](https://dali.devnets.composablefinance.ninja/products/cross-chain-virtual-machine.html#cross-chain-virtual-machine)
 
 The Composable XCVM allows for cross-ecosystem communication enabled through cross-chain smart contracts.
 
@@ -16,7 +16,7 @@ We do not aim to create a new standard for cross-chain communication, which is a
 
 ---
 
-## **The Problem in Current Interoperability Solutions**
+## The Problem in Current Interoperability Solutions
 
 **The XCVM creates an environment where smart contracts on different chains can interoperate in a** [**trustless way with finality proofs in the Centauri bridging infrastructure**](https://medium.com/composable-finance/trustless-bridging-438a6e5c917a)
 
@@ -25,7 +25,7 @@ Unlike existing iterations of blockchain virtual machines, the XCVM does not for
 During the pre XCVM era, developers who wished to create an interoperable application needed to consider the various chains they wanted their applications to operate between and narrow down their choice to just one as their native chain. Then, they must deploy their project to work with that specific chain’s virtual machine (for instance, the EVM for a project built on Ethereum). An additional burden to developers is finding an interoperability solution that works with Ethereum and the other chains they wish their applications to communicate with, integrate that solution, and use it any time there’s a need to bridge to other applications that are not on Ethereum. Further, suppose they want to deploy that project on additional chains. In that case, DeFi developers must completely recreate their projects and then link them with their existing ones - possibly many times over, depending on the number of instances they desire to create.
 
 
-## **The XCVM and its Vision for Composability**
+## The XCVM and its Vision for Composability
 
 Our vision is to create **a cross-ecosystem communication solution, top-down**. Our XCVM serves as an **orchestration layer** for existing bridging protocols. As a result, these applications can be **not just interoperable but also composable**; developers can use the XCVM to compose protocols across various existing chains to allow for maximal customization and effectiveness.
 
