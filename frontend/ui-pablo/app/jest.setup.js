@@ -29,7 +29,7 @@ jest.mock('react-apexcharts', () => {
   }
 })
 
-jest.mock("@/store/hooks/usePoolDetails", () => {
+jest.mock("@/store/hooks/useLiquidityPoolDetails", () => {
   const BigNumber = require('bignumber.js');
   return { usePoolDetails: jest.fn().mockImplementation(() => ({
     poolStats: {
@@ -65,7 +65,6 @@ jest.mock("@/store/hooks/usePoolDetails", () => {
 jest.mock("@/store/hooks/useUserProvidedLiquidityByPool.ts", () => {
   const BigNumber = require('bignumber.js');
   return { useUserProvidedLiquidityByPool: jest.fn().mockImplementation(() => ({
-
       tokenAmounts: {
         baseAmount: new BigNumber(0),
         quoteAmount: new BigNumber(0)

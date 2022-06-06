@@ -8,13 +8,13 @@ import Default from "@/components/Templates/Default";
 import { ConnectWalletFeaturedBox, Link, PageTitle } from "@/components";
 import { PoolDetails } from "@/components/Organisms/pool/PoolDetails";
 import { useDotSamaContext } from "substrate-react";
-import { usePoolDetails } from "@/store/hooks/usePoolDetails";
+import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
 
 const PoolDetailsPage: NextPage = () => {
   const [poolId, setPoolId] = useState(-1);
-  const poolDetails = usePoolDetails(poolId);
+  const poolDetails = useLiquidityPoolDetails(poolId);
   const router = useRouter();
 
   useEffect(() => {

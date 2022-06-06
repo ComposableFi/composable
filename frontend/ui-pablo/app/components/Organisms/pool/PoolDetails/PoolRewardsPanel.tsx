@@ -1,7 +1,7 @@
 import { BaseAsset } from "@/components/Atoms";
 import { TOKENS } from "@/defi/Tokens";
 import { useAppSelector } from "@/hooks/store";
-import { usePoolDetails } from "@/store/hooks/usePoolDetails";
+import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
 import { useUserProvidedLiquidityByPool } from "@/store/hooks/useUserProvidedLiquidityByPool";
 import { getTokenIdsFromSelectedPool } from "@/stores/defi/pool";
 import {
@@ -65,7 +65,7 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
 }) => {
   const theme = useTheme();
 
-  const poolDetails = usePoolDetails(poolId);
+  const poolDetails = useLiquidityPoolDetails(poolId);
   const userProvidedLiquidity = useUserProvidedLiquidityByPool(poolId);
 
   const { rewardValue, rewardsLeft } = useAppSelector(

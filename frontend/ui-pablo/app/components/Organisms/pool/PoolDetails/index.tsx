@@ -14,7 +14,6 @@ import { PoolStatistics } from "./PoolStatistics";
 import { PoolLiquidityPanel } from "./PoolLiquidityPanel";
 import { PoolStakingPanel } from "./PoolStakingPanel";
 import { PoolRewardsPanel } from "./PoolRewardsPanel";
-import { usePoolDetails } from "@/store/hooks/usePoolDetails";
 import { useRouter } from "next/router";
 
 const twoColumnPageSize = {

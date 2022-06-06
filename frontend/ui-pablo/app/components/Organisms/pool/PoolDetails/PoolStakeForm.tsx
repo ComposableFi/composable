@@ -11,7 +11,7 @@ import BigNumber from "bignumber.js";
 import { getTokenIdsFromSelectedPool } from "@/stores/defi/pool";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { PoolDetailsProps } from ".";
-import { usePoolDetails } from "@/store/hooks/usePoolDetails";
+import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
 
 export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
   poolId,
@@ -19,7 +19,7 @@ export const PoolStakeForm: React.FC<PoolDetailsProps> = ({
 }) => {
 
   const theme = useTheme();
-  const poolDetails = usePoolDetails(poolId);
+  const poolDetails = useLiquidityPoolDetails(poolId);
 
   const [balance] = useState<BigNumber>(new BigNumber(200.0));
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
