@@ -12,8 +12,8 @@ use sp_runtime::DispatchError;
 
 use crate::{
 	test::{
-		prelude::*,
 		mock::{new_test_ext, Event, MockRuntime},
+		prelude::*,
 		ALICE, BOB, CHARLIE,
 	},
 	Instance, NftInstanceId, OwnerInstances, Pallet,

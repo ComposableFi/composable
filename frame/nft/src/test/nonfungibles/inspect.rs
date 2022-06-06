@@ -5,8 +5,8 @@ use frame_support::traits::tokens::nonfungibles::Inspect;
 
 use crate::{
 	test::{
-		prelude::mint_nft_and_assert,
 		mock::{new_test_ext, MockRuntime},
+		prelude::mint_nft_and_assert,
 		ALICE,
 	},
 	Pallet,

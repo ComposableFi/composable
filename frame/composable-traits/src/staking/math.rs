@@ -1,4 +1,3 @@
-
 use composable_support::math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub};
 use sp_runtime::{ArithmeticError, Perbill};
 use sp_std::convert::TryInto;
@@ -27,7 +26,7 @@ pub fn honest_locked_stake_increase(
 #[cfg(test)]
 mod tests {
 	use composable_support::math::safe::SafeSub;
-use sp_runtime::{Perbill, ArithmeticError};
+	use sp_runtime::{ArithmeticError, Perbill};
 
 	use super::honest_locked_stake_increase;
 
@@ -59,7 +58,6 @@ use sp_runtime::{Perbill, ArithmeticError};
 		let rolling = passed_time.min(new_lock.safe_sub(&previous_lock)?);
 		Ok(rolling)
 	}
-
 
 	#[test]
 	fn with_some_time_passed_rounds_to_bigger() {

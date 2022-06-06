@@ -840,10 +840,6 @@ impl assets::Config for Runtime {
 	type CurrencyValidator = ValidateCurrencyId;
 }
 
-impl pallet_nft::Config for Runtime {
-	type Event = Event;
-}
-
 #[derive(
 	PartialEq, Eq, Copy, Clone, Encode, Decode, MaxEncodedLen, TypeInfo, frame_support::RuntimeDebug,
 )]
@@ -852,34 +848,6 @@ impl frame_support::traits::Get<u64> for EpochDuration {
 	fn get() -> u64 {
 		5 * composable_traits::time::ONE_MINUTE
 	}
-}
-
-parameter_types! {
-	pub const StakingRewardsId: PalletId = PalletId(*b"stk_rwrd");
-	pub const MaxStakingPresets: u32  =  4;
-	pub const MaxRewardAssets: u32  =  4;
-	pub const ElementToProcessPerBlock: u32 = 16;
-}
-
-impl composable_traits::financial_nft::FinancialNftProtocol<AccountId> for Runtime {
-	type ClassId = composable_traits::financial_nft::NftClass;
-	type InstanceId = common::NftInstanceId;
-	type Version = composable_traits::financial_nft::NftVersion;
-	type NFTProvider = Nft;
-}
-
-impl pallet_staking_rewards::Config for Runtime {
-	type Event = Event;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type Assets = Assets;
-	type Time = Timestamp;
-	type GovernanceOrigin = EnsureRootOrHalfCouncil;
-	type PalletId = StakingRewardsId;
-	type MaxStakingPresets = MaxStakingPresets;
-	type MaxRewardAssets = MaxRewardAssets;
-	type EpochDuration = EpochDuration;
-	type ElementToProcessPerBlock = ElementToProcessPerBlock;
 }
 
 parameter_types! {
@@ -1182,8 +1150,6 @@ construct_runtime!(
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
-		Nft : pallet_nft = 67,
-		StakingRewards : pallet_staking_rewards = 68,
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 
 		// IBC Support, pallet-ibc should be the last in the list of pallets that use the ibc protocol

@@ -41,9 +41,9 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use composable_support::{math::safe::SafeAdd};
-	use composable_traits::nft::{NftClass, ReferenceNft, Key, Value};
-use frame_support::{
+	use composable_support::math::safe::SafeAdd;
+	use composable_traits::nft::{Key, NftClass, ReferenceNft, Value};
+	use frame_support::{
 		pallet_prelude::*,
 		traits::{
 			tokens::nonfungibles::{Create, Inspect, Mutate, Transfer},
@@ -80,7 +80,7 @@ use frame_support::{
 	pub trait Config: frame_system::Config {
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		type MaxProperties : Get<u32>;
+		type MaxProperties: Get<u32>;
 	}
 
 	#[pallet::pallet]
@@ -315,26 +315,25 @@ use frame_support::{
 		}
 	}
 
-	impl<T:Config> ReferenceNft<T::AccountId> for Pallet<T> {
+	impl<T: Config> ReferenceNft<T::AccountId> for Pallet<T> {
 		type MaxProperties = T::MaxProperties;
 
-fn reference_mint_into<NFTProvider, NFT>(
-		_class: &Self::ClassId,
-		_instance: &Self::InstanceId,
-		_who: &T::AccountId,
-        reference: composable_traits::nft::Reference,
-	) -> DispatchResult {
-        Err(DispatchError::Other("no implemented"))
-    }
-	
-	fn  mint_new_into(
-		class: &Self::ClassId,
-		who: &T::AccountId,
-		properties: frame_support::BoundedBTreeMap<Key, Value, Self::MaxProperties>,
-	) -> Result<Self::InstanceId, DispatchError> {
-		Err(DispatchError::Other("no implemented"))
-    }
-		
+		fn reference_mint_into<NFTProvider, NFT>(
+			_class: &Self::ClassId,
+			_instance: &Self::InstanceId,
+			_who: &T::AccountId,
+			_reference: composable_traits::nft::Reference,
+		) -> DispatchResult {
+			Err(DispatchError::Other("no implemented"))
+		}
+
+		fn mint_new_into(
+			_class: &Self::ClassId,
+			_who: &T::AccountId,
+			_properties: frame_support::BoundedBTreeMap<Key, Value, Self::MaxProperties>,
+		) -> Result<Self::InstanceId, DispatchError> {
+			Err(DispatchError::Other("no implemented"))
+		}
 	}
 
 	/// Returns a closure that inserts the given value into the contained set, initializing the set

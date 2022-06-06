@@ -11,7 +11,7 @@ const CHARLIE: u128 = 2;
 /// Tests the pallet's
 /// [`FinancialNftProvider`][composable_traits::financial_nft::FinancialNftProvider] implementation.
 mod financial_nft_provider {
-	use crate::test::{prelude::mint_nft_and_assert, mock::new_test_ext};
+	use crate::test::{mock::new_test_ext, prelude::mint_nft_and_assert};
 
 	#[test]
 	#[ignore = "TODO: fix with updates to nft pallet"]
@@ -25,7 +25,7 @@ mod nonfungibles {
 	use std::collections::BTreeMap;
 
 	use composable_traits::nft::NftClass;
-use frame_support::traits::tokens::nonfungibles::*;
+	use frame_support::traits::tokens::nonfungibles::*;
 
 	use crate::{
 		pallet::*,

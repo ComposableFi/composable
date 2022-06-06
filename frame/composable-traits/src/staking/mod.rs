@@ -1,36 +1,34 @@
-use composable_support::collections::vec::bounded::BiBoundedVec;
-use crate::{
-	staking::lock::{LockConfig, Lock,},
+use crate::staking::{
+	lock::{Lock, LockConfig},
+	rewards::RewardConfig,
 };
 use codec::{Decode, Encode};
+use composable_support::collections::vec::bounded::BiBoundedVec;
 
 use core::fmt::Debug;
-use frame_support::{
-	dispatch::DispatchResult,
-};
+use frame_support::dispatch::DispatchResult;
 use scale_info::TypeInfo;
-use sp_runtime::{
-	DispatchError, Perbill, Permill,
-};
+use sp_runtime::{DispatchError, Perbill, Permill};
 
 pub mod lock;
 pub mod math;
-pub mod rewards;
 pub mod nft;
+pub mod rewards;
 
-#[derive(Debug, PartialEq, Eq, Copy, Clone, Encode, Decode, TypeInfo)]
-pub struct StakeConfig<DurationPresets> {
-	pub lock : Option<LockConfig<DurationPresets>>,
+#[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
+pub struct StakeConfig<DurationPresets, RewardsRate> {
+	pub lock: Option<LockConfig<DurationPresets>>,
+	pub reward: Option<RewardConfig<RewardsRate>>,
 }
 
 /// staking typed fNFT, usually can be mapped to raw fNFT storage type
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Encode, Decode, TypeInfo)]
-pub struct Stake< Balance,  Rewards> {
+pub struct Stake<Balance, Rewards> {
 	/// The original stake this NFT was minted for or updated NFT with increased stake amount.
 	pub real_stake: Balance,
 	/// List of reward asset/pending rewards.
 	pub rewards: Rewards,
-	pub lock: Option<Lock>,	
+	pub lock: Option<Lock>,
 	/// The reward multiplier.
 	pub reward_multiplier: Perbill,
 }
@@ -80,10 +78,15 @@ pub trait Staking {
 		pool: &Self::PoolId,
 		config_index: u8,
 		add_amount: Self::Balance,
-		keep_alive: bool,		
+		keep_alive: bool,
 	) -> Result<Self::InstanceId, DispatchError>;
 
-	fn add_share(who: &Self::AccountId, position: Self::InstanceId, add_amount: Self::Balance,  keep_alive: bool);
+	fn add_share(
+		who: &Self::AccountId,
+		position: Self::InstanceId,
+		add_amount: Self::Balance,
+		keep_alive: bool,
+	);
 
 	/// Unstake an actual staked position, represented by a NFT.
 	///
@@ -93,16 +96,17 @@ pub trait Staking {
 	///   available rewards.
 	/// * `to` the account to transfer the final claimed rewards to.
 	fn remove_share(
-		who: &Self::AccountId, instance_id: &Self::InstanceId, remove_amount: Self::Balance) -> DispatchResult;
-				
-		fn split(
-			who: &Self::AccountId,
-			instance_id: &Self::InstanceId,
-			amounts: BiBoundedVec<Permill, 2, 16>,
-		) ->  BiBoundedVec<Self::InstanceId, 2, 16>;
+		who: &Self::AccountId,
+		instance_id: &Self::InstanceId,
+		remove_amount: Self::Balance,
+	) -> DispatchResult;
 
+	fn split(
+		who: &Self::AccountId,
+		instance_id: &Self::InstanceId,
+		amounts: BiBoundedVec<Permill, 2, 16>,
+	) -> BiBoundedVec<Self::InstanceId, 2, 16>;
 }
-
 
 pub trait StakingReward {
 	type AccountId;
@@ -122,7 +126,7 @@ pub trait StakingReward {
 	fn claim_rewards(
 		who: &Self::AccountId,
 		instance_id: &Self::InstanceId,
-	) -> Result<(Self::AssetId, Self::Balance), DispatchError>;	
+	) -> Result<(Self::AssetId, Self::Balance), DispatchError>;
 
 	/// Transfer a reward to the staking rewards protocol.
 	///

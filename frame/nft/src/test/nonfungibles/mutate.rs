@@ -3,15 +3,15 @@ mod mint_into {
 	use std::collections::{BTreeMap, BTreeSet};
 
 	use composable_tests_helpers::test::helper::assert_last_event;
-	
+
 	use frame_support::{assert_noop, traits::tokens::nonfungibles::Mutate};
 	use sp_runtime::DispatchError;
 
 	use crate::{
 		pallet::*,
 		test::{
-			prelude::*,
 			mock::{new_test_ext, Event, MockRuntime},
+			prelude::*,
 			ALICE,
 		},
 	};
@@ -74,7 +74,7 @@ mod mint_into {
 mod set_attribute {
 	use codec::{Decode, Encode};
 	use composable_tests_helpers::test::block::process_and_progress_blocks;
-	
+
 	use frame_support::{assert_noop, traits::tokens::nonfungibles::Mutate};
 	use sp_runtime::DispatchError;
 	use std::collections::BTreeMap;
@@ -82,8 +82,8 @@ mod set_attribute {
 	use crate::{
 		pallet::*,
 		test::{
-			prelude::*,
 			mock::{new_test_ext, MockRuntime},
+			prelude::*,
 			ALICE,
 		},
 	};
@@ -184,8 +184,8 @@ mod burn_from {
 	use crate::{
 		pallet::*,
 		test::{
-			prelude::*,
 			mock::{new_test_ext, Event, MockRuntime},
+			prelude::*,
 			ALICE,
 		},
 	};
@@ -261,15 +261,15 @@ mod burn_from {
 	/// specifically.
 	mod not_found {
 		use composable_tests_helpers::test::helper::assert_last_event;
-		
+
 		use composable_traits::nft::NftClass;
-use frame_support::{assert_noop, assert_ok, traits::tokens::nonfungibles::Mutate};
+		use frame_support::{assert_noop, assert_ok, traits::tokens::nonfungibles::Mutate};
 		use sp_runtime::DispatchError;
 
 		use crate::{
 			test::{
-				prelude::{mint_many_nfts_and_assert, mint_nft_and_assert},
 				mock::{new_test_ext, Event, MockRuntime},
+				prelude::{mint_many_nfts_and_assert, mint_nft_and_assert},
 				ALICE,
 			},
 			Pallet,
