@@ -116,28 +116,28 @@ impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
 }
 
 #[derive(RuntimeDebug, PartialEq, TypeInfo, Default)]
-pub struct AssetIsSupportedByOracle<O: OracleTrait>(PhantomData<O>);
+pub struct AssetIsSupportedByOracle<Oracle: OracleTrait>(PhantomData<Oracle>);
 
-impl<O: OracleTrait> Copy for AssetIsSupportedByOracle<O> {}
-impl<O: OracleTrait> Clone for AssetIsSupportedByOracle<O> {
+impl<Oracle: OracleTrait> Copy for AssetIsSupportedByOracle<Oracle> {}
+impl<Oracle: OracleTrait> Clone for AssetIsSupportedByOracle<Oracle> {
 	fn clone(&self) -> Self {
 		*self
 	}
 }
 
-impl<LiquidationStrategyId, Asset: Copy, BlockNumber, O: OracleTrait<AssetId = Asset>>
-	Validate<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, AssetIsSupportedByOracle<O>>
-	for AssetIsSupportedByOracle<O>
+impl<LiquidationStrategyId, Asset: Copy, BlockNumber, Oracle: OracleTrait<AssetId = Asset>>
+	Validate<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, AssetIsSupportedByOracle<Oracle>>
+	for AssetIsSupportedByOracle<Oracle>
 {
 	fn validate(
 		create_input: CreateInput<LiquidationStrategyId, Asset, BlockNumber>,
 	) -> Result<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, &'static str> {
 		ensure!(
-			O::is_supported(create_input.borrow_asset())?,
+			Oracle::is_supported(create_input.borrow_asset())?,
 			"Borrow asset is not supported by oracle"
 		);
 		ensure!(
-			O::is_supported(create_input.collateral_asset())?,
+			Oracle::is_supported(create_input.collateral_asset())?,
 			"Collateral asset is not supported by oracle"
 		);
 		Ok(create_input)
