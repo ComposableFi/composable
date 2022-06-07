@@ -409,11 +409,8 @@ pub mod pallet {
 			if prices_length == 0 {
 				Self::get_price(asset_id, amount).map(|p| p.price)
 			} else {
-				let weights_length = if prices_length < Self::TwapWindow::get() as usize {
-					prices_length
-				} else {
-					Self::TwapWindow::get() as usize
-				};
+				let twap_window = Self::TwapWindow::get() as usize;
+				let weights_length = prices_length.min(twap_window);
 				// make flat weights
 				let weight = Percent::from_percent(100) / weights_length;
 				let weights = vec![weight; weights_length];
