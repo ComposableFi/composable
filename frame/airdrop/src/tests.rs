@@ -2,24 +2,33 @@ use crate::{
 	mocks::{
 		ethereum_address, generate_accounts, AccountId, Airdrop, AirdropId, Balance, Balances,
 		ClaimKey, EthKey, ExtBuilder, MockRuntime, Moment, Origin, Stake, System, Timestamp,
-		PROOF_PREFIX, VESTING_STEP,
+		PROOF_PREFIX, VESTING_STEP, STAKE,
 	},
 	models::AirdropState,
 	AccountIdOf, Error,
 };
 use composable_support::types::{EcdsaSignature, EthereumAddress};
+use composable_tests_helpers::{prop_assert_noop, prop_assert_ok};
 use frame_support::{assert_err, assert_noop, assert_ok, traits::{Currency, fungible::Inspect}};
 use hex_literal::hex;
 use sp_core::{ed25519, storage::StateVersion, Pair};
+use proptest::prelude::*;
 use sp_runtime::AccountId32;
 
 const DEFAULT_FUNDED_CLAIM: bool = false;
 const DEFAULT_NB_OF_CONTRIBUTORS: u128 = 100;
-const DEFAULT_VESTING_SCHEDULE: Moment = 3600 * 10 * 7;
+const DEFAULT_VESTING_SCHEDULE: Moment = 3600 * 24 * 7;
 const DEFAULT_VESTING_PERIOD: Moment = 3600 * 24 * 7 * 10;
 const DEFAULT_REWARD: Balance = 10_000;
 const CREATOR: AccountId = AccountId32::new([0_u8; 32]);
 const OTHER: AccountId = AccountId32::new([1_u8; 32]);
+
+prop_compose! {
+    fn vesting_point()
+    (x in 1..(DEFAULT_VESTING_PERIOD / DEFAULT_VESTING_SCHEDULE)) -> Moment {
+        x * DEFAULT_VESTING_SCHEDULE
+    }
+}
 
 fn with_recipients<R>(
 	count: u128,
@@ -32,7 +41,7 @@ fn with_recipients<R>(
 	let accounts = generate_accounts(count as _);
 	let recipients = accounts
 		.iter()
-		.map(|(_, account)| (account.as_remote_public(), reward, vesting_schedule, funded_claim))
+		.map(|(_, account)| (account.as_remote_public(), reward, vesting_period, funded_claim))
 		.collect();
 
 	ExtBuilder::default().build().execute_with(|| {
@@ -41,7 +50,7 @@ fn with_recipients<R>(
 		let start_moment = 0xCAFEBABE;
 		let set_moment = |x: Moment| Timestamp::set_timestamp(start_moment + x);
 
-		Balances::make_free_balance_be(&CREATOR, 10_000 + reward * count);
+		Balances::make_free_balance_be(&CREATOR, STAKE + reward * count);
 
 		assert_ok!(Airdrop::create_airdrop(creator.clone(), Some(start_moment), vesting_schedule));
 		assert_ok!(Airdrop::add_recipient(creator, AirdropId::from(1_u32), recipients));
@@ -76,10 +85,11 @@ mod create_airdrop {
 		let vesting_schedule = DEFAULT_VESTING_PERIOD;
 
 		ExtBuilder::default().build().execute_with(|| {
-			Balances::make_free_balance_be(&CREATOR, 10_000);
+			Balances::make_free_balance_be(&CREATOR, STAKE);
+
 			assert_ok!(Airdrop::create_airdrop(creator, start, vesting_schedule));
 			assert_eq!(Airdrop::airdrop_count(), 1);
-			assert_eq!(Balances::balance(&Airdrop::get_airdrop_account_id(1)), 10_000);
+			assert_eq!(Balances::balance(&Airdrop::get_airdrop_account_id(1)), STAKE);
 		})
 	}
 
@@ -91,10 +101,11 @@ mod create_airdrop {
 		let vesting_schedule = DEFAULT_VESTING_PERIOD;
 
 		ExtBuilder::default().build().execute_with(|| {
-			Balances::make_free_balance_be(&CREATOR, 10_000);
+			Balances::make_free_balance_be(&CREATOR, STAKE);
+
 			assert_ok!(Airdrop::create_airdrop(creator, start, vesting_schedule));
 			assert_eq!(Airdrop::airdrop_count(), 1);
-			assert_eq!(Balances::balance(&Airdrop::get_airdrop_account_id(1)), 10_000);
+			assert_eq!(Balances::balance(&Airdrop::get_airdrop_account_id(1)), STAKE);
 			assert_eq!(Airdrop::airdrops(1).unwrap().start, start);
 		})
 	}
@@ -106,8 +117,9 @@ mod create_airdrop {
 		let vesting_schedule = DEFAULT_VESTING_PERIOD;
 
 		ExtBuilder::default().build().execute_with(|| {
-			Balances::make_free_balance_be(&CREATOR, 10_000);
+			Balances::make_free_balance_be(&CREATOR, STAKE);
 			Timestamp::set_timestamp(DEFAULT_VESTING_PERIOD * 3);
+
 			assert_noop!(
 				Airdrop::create_airdrop(creator, start, vesting_schedule),
 				Error::<MockRuntime>::BackToTheFuture
@@ -135,7 +147,8 @@ mod add_recipient {
 			.collect();
 
 		ExtBuilder::default().build().execute_with(|| {
-			Balances::make_free_balance_be(&CREATOR, 10_000);
+			Balances::make_free_balance_be(&CREATOR, STAKE);
+
 			assert_ok!(Airdrop::create_airdrop(creator, start, vesting_schedule));
 			assert_noop!(
 				Airdrop::add_recipient(other, 1, recipients),
@@ -156,7 +169,8 @@ mod add_recipient {
 			.collect();
 
 		ExtBuilder::default().build().execute_with(|| {
-			Balances::make_free_balance_be(&CREATOR, 10_000);
+			Balances::make_free_balance_be(&CREATOR, STAKE);
+
 			assert_ok!(Airdrop::create_airdrop(creator.clone(), start, vesting_schedule));
 			assert_noop!(
 				Airdrop::add_recipient(creator, 1, recipients),
@@ -175,7 +189,8 @@ mod add_recipient {
 			.collect();
 
 		ExtBuilder::default().build().execute_with(|| {
-			Balances::make_free_balance_be(&CREATOR, 10_000);
+			Balances::make_free_balance_be(&CREATOR, STAKE);
+
 			assert_noop!(
 				Airdrop::add_recipient(creator, 1, recipients),
 				Error::<MockRuntime>::AirdropDoesNotExist
@@ -192,6 +207,7 @@ mod add_recipient {
 			for (_, remote_account) in accounts {
 				let recipient_fund =
 					Airdrop::recipient_funds(1, remote_account.as_remote_public()).unwrap();
+
 				assert_eq!(recipient_fund.total, DEFAULT_REWARD);
 				assert_eq!(recipient_fund.funded_claim, DEFAULT_FUNDED_CLAIM);
 			}
@@ -222,6 +238,7 @@ mod remove_recipient {
 
 		with_default_recipients(|set_moment, accounts| {
 			set_moment(DEFAULT_VESTING_PERIOD);
+
 			assert_ok!(Airdrop::claim(
 				Origin::none(),
 				1,
@@ -290,7 +307,8 @@ mod enable_airdrop {
 		let start_at = Some(DEFAULT_VESTING_PERIOD * 2);
 
 		ExtBuilder::default().build().execute_with(|| {
-			Balances::make_free_balance_be(&CREATOR, 10_000);
+			Balances::make_free_balance_be(&CREATOR, STAKE);
+
 			assert_ok!(Airdrop::create_airdrop(creator.clone(), start_at, DEFAULT_VESTING_PERIOD));
 			assert_noop!(
 				Airdrop::enable_airdrop(creator, 1),
@@ -304,6 +322,7 @@ mod enable_airdrop {
 	fn should_enable_airdrop_successfully() {
 		with_default_recipients(|set_moment, _| {
             set_moment(DEFAULT_VESTING_PERIOD * 2);
+            
             assert_eq!(Airdrop::get_airdrop_state(1).unwrap(), AirdropState::Enabled);
 		})
 	}
@@ -329,9 +348,60 @@ mod disable_airdrop {
 
 		with_default_recipients(|set_moment, _| {
             set_moment(DEFAULT_VESTING_PERIOD * 2);
+
             assert_eq!(Airdrop::get_airdrop_state(1).unwrap(), AirdropState::Enabled);
             assert_ok!(Airdrop::disable_airdrop(creator, 1));
             assert!(Airdrop::airdrops(1).is_none());
 		})
 	}
+}
+
+#[cfg(test)]
+mod claim {
+    use super::*;
+
+    #[test]
+    fn should_give_full_fund_to_recipients_at_end_of_vesting_period() {
+        with_default_recipients(|set_moment, accounts| {
+            set_moment(DEFAULT_VESTING_PERIOD);
+
+            for (local_account, remote_account) in accounts {
+                assert_ok!(remote_account.claim(1, local_account.clone()));
+                assert_eq!(Balances::balance(&local_account), DEFAULT_REWARD);
+            }
+        })  
+    }
+
+    #[test]
+    fn should_prune_airdrop_if_all_funds_are_claimed() {
+        with_default_recipients(|set_moment, accounts| {
+            set_moment(DEFAULT_VESTING_PERIOD);
+
+            for (local_account, remote_account) in accounts {
+                assert_ok!(remote_account.claim(1, local_account.clone()));
+            }
+
+            assert!(Airdrop::airdrops(1).is_none());
+        })  
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases((DEFAULT_VESTING_PERIOD / DEFAULT_VESTING_SCHEDULE) as u32))]
+
+        #[test]
+        fn should_give_fund_proportional_to_the_vesting_point(vesting_point in vesting_point()) {
+            with_default_recipients(|set_moment, accounts| {
+                let vesting_window = vesting_point.saturating_sub(vesting_point % DEFAULT_VESTING_SCHEDULE);
+                let should_have_claimed = DEFAULT_REWARD.saturating_mul(vesting_window as u128) / (DEFAULT_VESTING_PERIOD as u128);
+                set_moment(vesting_point);
+
+                for (local_account, remote_account) in accounts {
+                    prop_assert_ok!(remote_account.claim(1, local_account.clone()));
+                    prop_assert_eq!(Balances::balance(&local_account), should_have_claimed );
+                }
+                Ok(())
+            })?;
+        }
+    }
+
 }

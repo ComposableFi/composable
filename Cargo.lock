@@ -7141,6 +7141,7 @@ name = "pallet-airdrop"
 version = "0.0.1"
 dependencies = [
  "composable-support",
+ "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
@@ -7151,6 +7152,7 @@ dependencies = [
  "pallet-balances",
  "pallet-timestamp",
  "parity-scale-codec",
+ "proptest",
  "rustc-hex",
  "scale-info",
  "serde",

@@ -30,6 +30,7 @@ pub type RelayChainAccountId = [u8; 32];
 
 pub const PROOF_PREFIX: &[u8] = b"picasso-";
 pub const VESTING_STEP: Moment = 3600 * 24 * 7;
+pub const STAKE: Balance = 10_000;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
 type Block = frame_system::mocking::MockBlock<MockRuntime>;
@@ -82,7 +83,7 @@ impl pallet_balances::Config for MockRuntime {
 parameter_types! {
 	pub const AirdropPalletId: PalletId = PalletId(*b"pal_aird");
 	pub const Prefix: &'static [u8] = PROOF_PREFIX;
-	pub const Stake: Balance = 10_000;
+	pub const Stake: Balance = STAKE;
 	pub const VestingStep: Moment = VESTING_STEP;
 }
 

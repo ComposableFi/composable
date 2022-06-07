@@ -21,6 +21,7 @@ pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "p
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 serde = "1.0.136"
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+proptest = "1.0"
 
 [dependencies]
 libsecp256k1 = { version = "0.7.0", default-features = false, optional = true, features = [
@@ -52,6 +53,7 @@ rustc-hex = { version = "2.1.0", default-features = false }
 serde = { version = "1.0.136", optional = true }
 
 composable-support = { path = "../composable-support", default-features = false }
+composable-tests-helpers = { path = "../composable-tests-helpers" }
 composable-traits = { path = "../composable-traits", default-features = false }
 
 [features]
