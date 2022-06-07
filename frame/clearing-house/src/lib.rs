@@ -33,7 +33,7 @@
 //!   `PnL` + total unrealized funding payments
 //! - **Margin ratio**: The ratio of the user's margin to his total position value. May be measured
 //!   using either index (oracle) or mark (VAMM) prices
-//! - **IMR**: Acronym for 'Initial Margin Ratio'. The mininum allowable margin ratio resulting from
+//! - **IMR**: Acronym for 'Initial Margin Ratio'. The minimum allowable margin ratio resulting from
 //!   opening new positions. Inversely proportional to the maximum leverage of an account
 //! - **MMR**: Acronym for 'Maintenance Margin Ratio'. The margin ratio below which a full
 //!   liquidation of a user's account can be triggered by a liquidator (permissionless)
@@ -575,12 +575,12 @@ pub mod pallet {
 		/// - An increase in the size of an existing position, if the trade's direction matches the
 		///   existing position's one
 		/// - A decrease in the size of an existing position, if the trade's direction is counter to
-		///   the existing position's one and its magnitude is smaller than the existing postion's
+		///   the existing position's one and its magnitude is smaller than the existing position's
 		///   size
-		/// - Closing of the existing position, if the trade's direction is counter to the existion
+		/// - Closing of the existing position, if the trade's direction is counter to the existing
 		///   position's one and its magnitude is approximately the existing position's size
 		/// - Reversing of the existing position, if the trade's direction is counter to the
-		///   existion position's one and its magnitude is greater than the existing postion's size
+		///   existing position's one and its magnitude is greater than the existing position's size
 		///
 		/// ![](http://www.plantuml.com/plantuml/svg/FOuzgiD030RxTugN0zZgKna2kOUyLhm2hRJeXrm_9aMgZszWOBP8zAmXVpVM9dLGkVptp1bt0CVtUdBssYl8cscIvjfimCF6jC1TwCdGVWSeMYU7b-CWQ4BehEVIhOBWO3ml7c2JTBaCJZPTfw1-2pRIuzeF)
 		///
@@ -1111,8 +1111,8 @@ pub mod pallet {
 
 		fn funding_rate(market: &Self::Market) -> Result<Self::Decimal, DispatchError> {
 			// Oracle returns prices in USDT cents
-			let nonnormalized_oracle_twap = T::Oracle::get_twap(market.asset_id, vec![])?;
-			let oracle_twap = Self::Decimal::checked_from_rational(nonnormalized_oracle_twap, 100)
+			let unnormalized_oracle_twap = T::Oracle::get_twap(market.asset_id, vec![])?;
+			let oracle_twap = Self::Decimal::checked_from_rational(unnormalized_oracle_twap, 100)
 				.ok_or(ArithmeticError::Overflow)?;
 
 			let vamm_twap: Self::Decimal = T::Vamm::get_twap(&market.vamm_id, AssetType::Base)
