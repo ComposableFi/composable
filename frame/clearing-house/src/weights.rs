@@ -5,6 +5,7 @@ pub trait WeightInfo {
 	fn add_margin() -> Weight;
 	fn create_market() -> Weight;
 	fn open_position() -> Weight;
+	fn close_position() -> Weight;
 	fn update_funding() -> Weight;
 	fn liquidate() -> Weight;
 }
@@ -21,6 +22,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	}
 
 	fn open_position() -> Weight {
+		1_000_u32.into()
+	}
+
+	fn close_position() -> Weight {
 		1_000_u32.into()
 	}
 
@@ -44,6 +49,10 @@ impl WeightInfo for () {
 	}
 
 	fn open_position() -> Weight {
+		1_000_u32.into()
+	}
+
+	fn close_position() -> Weight {
 		1_000_u32.into()
 	}
 

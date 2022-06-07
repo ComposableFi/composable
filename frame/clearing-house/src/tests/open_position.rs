@@ -9,8 +9,8 @@ use crate::{
 	},
 	pallet::{Config, Direction, Error, Event},
 	tests::{
-		any_price, as_balance, run_for_seconds, set_fee_pool_depth, with_markets_context,
-		with_trading_context, MarketConfig,
+		any_direction, any_price, as_balance, run_for_seconds, set_fee_pool_depth,
+		with_markets_context, with_trading_context, MarketConfig,
 	},
 };
 use composable_traits::{clearing_house::ClearingHouse, time::ONE_HOUR};
@@ -56,10 +56,6 @@ fn valid_market_config() -> MarketConfig {
 //                                             Prop Compose
 // ----------------------------------------------------------------------------------------------------
 
-fn any_direction() -> impl Strategy<Value = Direction> {
-	prop_oneof![Just(Direction::Long), Just(Direction::Short)]
-}
-
 prop_compose! {
 	fn min_trade_size_and_eps(min_size: u128)(
 		eps in -(min_size as i128)..=(min_size as i128)
@@ -77,9 +73,9 @@ prop_compose! {
 	}
 }
 
-// ----------------------------------------------------------------------------------------------------
-//                                            Open Position
-// ----------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+//                                          Unit Tests
+// -------------------------------------------------------------------------------------------------
 
 #[test]
 fn fails_to_open_position_if_market_id_invalid() {
@@ -139,6 +135,10 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 		);
 	});
 }
+
+// -------------------------------------------------------------------------------------------------
+//                                        Property Tests
+// -------------------------------------------------------------------------------------------------
 
 proptest! {
 	#[test]

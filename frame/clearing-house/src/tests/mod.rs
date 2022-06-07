@@ -13,7 +13,7 @@ use crate::{
 		},
 		vamm::VammConfig,
 	},
-	Config, Market as MarketGeneric, MarketConfig as MarketConfigGeneric, Markets,
+	Config, Direction, Market as MarketGeneric, MarketConfig as MarketConfigGeneric, Markets,
 };
 use composable_traits::{
 	clearing_house::{ClearingHouse, Instruments},
@@ -25,6 +25,7 @@ use frame_support::{assert_err, assert_ok, pallet_prelude::Hooks};
 use proptest::prelude::*;
 use sp_runtime::{traits::Zero, FixedI128, FixedPointNumber, FixedU128};
 
+pub mod close_position;
 pub mod comp;
 pub mod create_market;
 pub mod deposit_collateral;
@@ -336,6 +337,10 @@ prop_compose! {
 	fn any_balance()(balance in BALANCE_LOWER_BOUND..=BALANCE_UPPER_BOUND) -> Balance {
 		balance
 	}
+}
+
+fn any_direction() -> impl Strategy<Value = Direction> {
+	prop_oneof![Just(Direction::Long), Just(Direction::Short)]
 }
 
 prop_compose! {

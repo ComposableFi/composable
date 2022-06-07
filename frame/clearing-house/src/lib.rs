@@ -428,6 +428,17 @@ pub mod pallet {
 			/// Id of the liquidated user.
 			user: T::AccountId,
 		},
+		/// Position successfully closed.
+		PositionClosed {
+			/// Id of the user.
+			user: T::AccountId,
+			/// Id of the corresponding market.
+			market: T::MarketId,
+			/// Direction of the closed position (long/short).
+			direction: Direction,
+			/// Amount of base asset closed.
+			base: T::Balance,
+		},
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -642,6 +653,47 @@ pub mod pallet {
 				quote_asset_amount,
 				base_asset_amount_limit,
 			)?;
+			Ok(())
+		}
+
+		/// Closes a position in a market.
+		///
+		/// # Overview
+		///
+		/// Sells all of the base asset in the specified market if the trader has a position in it.
+		/// This realizes the funding payments for the position.
+		///
+		/// ![]()
+		///
+		/// # Parameters
+		///
+		/// - `market_id`: the perpetuals market Id to close a position in
+		///
+		/// # Assumptions or Requirements
+		///
+		/// - The market must exist and have been initialized prior to calling this extrinsic
+		/// - The trader must have a position in the specified market
+		///
+		/// # Emits
+		///
+		/// - [`PositionClosed`](Event::<T>::PositionClosed)
+		///
+		/// # State Changes
+		///
+		/// TODO(0xangelo): add state changes
+		///
+		/// # Errors
+		///
+		/// - [`MarketIdNotFound`](Error::<T>::MarketIdNotFound)
+		/// - [`PositionNotFound`](Error::<T>::PositionNotFound)
+		///
+		/// # Weight/Runtime
+		///
+		/// TODO(0xangelo): calculate runtime
+		#[pallet::weight(<T as Config>::WeightInfo::close_position())]
+		pub fn close_position(origin: OriginFor<T>, market_id: T::MarketId) -> DispatchResult {
+			// let account_id = ensure_signed(origin)?;
+			// let _ = <Self as ClearingHouse>::close_position(&account_id, &market_id)?;
 			Ok(())
 		}
 
@@ -931,7 +983,7 @@ pub mod pallet {
 							&quote_abs_amount_decimal,
 							base_asset_amount_limit,
 						)?,
-						Ordering::Equal => Self::close_position(
+						Ordering::Equal => Self::do_close_position(
 							&mut positions,
 							position_index,
 							position_direction,
@@ -1420,7 +1472,7 @@ pub mod pallet {
 			Ok((base_swapped, entry_value, exit_value))
 		}
 
-		fn close_position(
+		fn do_close_position(
 			positions: &mut BoundedVec<Position<T>, T::MaxPositions>,
 			position_index: usize,
 			position_direction: Direction,
