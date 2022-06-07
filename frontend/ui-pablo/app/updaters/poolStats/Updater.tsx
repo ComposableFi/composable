@@ -2,11 +2,9 @@ import { useEffect } from "react";
 import BigNumber from "bignumber.js";
 import useStore from "@/store/useStore";
 import { useParachainApi } from "substrate-react";
-import { OperationResult } from "urql";
 import _ from "lodash";
-import { DAYS, DEFAULT_NETWORK_ID } from "../constants";
+import { DEFAULT_NETWORK_ID } from "../constants";
 import { useAllLpTokenRewardingPools } from "../../store/hooks/useAllLpTokenRewardingPools";
-import { queryPabloPoolById } from "../pools/subsquid";
 import { getAssetByOnChainId } from "@/defi/polkadot/Assets";
 import {
   calculatePoolStats,
