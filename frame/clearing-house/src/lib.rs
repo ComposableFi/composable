@@ -727,16 +727,16 @@ pub mod pallet {
 		///
 		/// ### For full liquidation
 		///
-		/// The user's margin ratio must be stricly less than the combined maintenance margin ratios
-		/// of all the markets in which it has open positions in. In other words, the user's margin
-		/// (collateral + total unrealized pnl + total unrealized funding) must be strictly less
-		/// than the sum of margin requirements (MMR * base asset value) for each market it has an
-		/// open position in.
+		/// The user's margin ratio must be strictly less than the combined maintenance margin
+		/// ratios of all the markets in which it has open positions in. In other words, the user's
+		/// margin (collateral + total unrealized pnl + total unrealized funding) must be strictly
+		/// less than the sum of margin requirements (MMR * base asset value) for each market it has
+		/// an open position in.
 		///
 		/// ### For partial liquidation
 		///
-		/// The user's margin ration must be stricly less than the combined partial margin ratios of
-		/// all the markets in which it has open positions in. In other words, the user's margin
+		/// The user's margin ration must be strictly less than the combined partial margin ratios
+		/// of all the markets in which it has open positions in. In other words, the user's margin
 		/// (collateral + total unrealized pnl + total unrealized funding) must be strictly less
 		/// than the sum of margin requirements (PMR * base asset value) for each market it has an
 		/// open position in.
