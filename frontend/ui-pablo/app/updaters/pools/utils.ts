@@ -1,8 +1,17 @@
 import { getAssetById } from "@/defi/polkadot/Assets";
-import { LiquidityBootstrappingPool, ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
+import {
+  LiquidityBootstrappingPool,
+  ConstantProductPool,
+  StableSwapPool,
+} from "@/store/pools/pools.types";
 import { percentageToNumber } from "@/utils/number";
+import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
-import { AVERAGE_BLOCK_TIME, DEFAULT_NETWORK_ID, DUMMY_LAUNCH_DESCRIPTION } from "../constants";
+import {
+  AVERAGE_BLOCK_TIME,
+  DEFAULT_NETWORK_ID,
+  DUMMY_LAUNCH_DESCRIPTION,
+} from "../constants";
 
 export const stringToBigNumber = (value: string): BigNumber =>
   new BigNumber(value.replaceAll(",", ""));
@@ -77,7 +86,7 @@ export const decodeCpp = (pool: any, poolId: number): ConstantProductPool => {
       ownerFeeRate: pool.feeConfig.ownerFeeRate.replace("%", ""),
       protocolFeeRate: pool.feeConfig.protocolFeeRate.replace("%", ""),
     },
-    baseWeight: pool.baseWeight.replace("%", "")
+    baseWeight: pool.baseWeight.replace("%", ""),
   };
 };
 
@@ -100,3 +109,39 @@ export const decodeSsp = (pool: any, poolId: number): StableSwapPool => {
     },
   };
 };
+
+export async function fetchPool(
+  parachainApi: ApiPromise,
+  poolId: number
+): Promise<
+  StableSwapPool | ConstantProductPool | LiquidityBootstrappingPool | null
+> {
+  try {
+    const pool = await parachainApi.query.pablo.pools(poolId);
+    const decodedPool: any = pool.toHuman();
+
+    if (!decodedPool) throw new Error("Pool with ID not found");
+
+    if ("LiquidityBootstrapping" in decodedPool) {
+      const currentBlock = await parachainApi.query.system.number();
+      const currentBlockBN = new BigNumber(currentBlock.toString());
+
+      return decodeLbp(
+        decodedPool.LiquidityBootstrapping,
+        poolId,
+        currentBlockBN
+      );
+    }
+
+    if ("ConstantProduct" in decodedPool) {
+      return decodeCpp(decodedPool.ConstantProduct, poolId);
+    }
+    if ("StableSwap" in decodedPool) {
+      return decodeSsp(decodedPool.ConstantProduct, poolId);
+    }
+
+    return null;
+  } catch (err) {
+    return null;
+  }
+}
