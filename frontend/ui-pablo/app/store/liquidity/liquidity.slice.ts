@@ -5,6 +5,7 @@ import {
   putTokenValue,
   putUserLpBalance,
   putUserProvidedLiquidityTokenAmount,
+  updateUserProvidedLiquidityTokenAmount,
 } from "./liquidity.utils";
 
 const createLiquiditySlice: StoreSlice<LiquiditySlice> = (set) => ({
@@ -29,7 +30,7 @@ const createLiquiditySlice: StoreSlice<LiquiditySlice> = (set) => ({
     })),
   updateUserProvidedTokenAmountInLiquidityPool: (poolId: number, amounts) =>
     set((prev: LiquiditySlice) => ({
-      userProvidedLiquidity: putUserProvidedLiquidityTokenAmount(
+      userProvidedLiquidity: updateUserProvidedLiquidityTokenAmount(
         prev.userProvidedLiquidity,
         poolId,
         amounts

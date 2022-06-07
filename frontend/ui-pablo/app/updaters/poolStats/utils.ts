@@ -1,4 +1,4 @@
-import { AssetMetadata, getAssetByOnChainId } from "@/defi/polkadot/Assets";
+import { getAssetByOnChainId } from "@/defi/polkadot/Assets";
 import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
 import BigNumber from "bignumber.js";
 import { DAYS, DEFAULT_NETWORK_ID } from "../constants";

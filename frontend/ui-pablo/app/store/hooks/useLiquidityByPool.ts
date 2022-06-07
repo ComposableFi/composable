@@ -26,18 +26,12 @@ export const useLiquidityByPool = (
     totalValueLocked: BigNumber;
   };
 } => {
-  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const { poolLiquidity } = useStore();
   const [baseAmount, setBaseAmount] = useState(new BigNumber(0));
   const [quoteAmount, setQuoteAmount] = useState(new BigNumber(0));
-  const [value, setValue] = useState({
-    baseValue: new BigNumber(0),
-    quoteValue: new BigNumber(0),
-    totalValueLocked: new BigNumber(0),
-  });
 
   useEffect(() => {
-    if (parachainApi && pool) {
+    if (pool) {
       if (poolLiquidity[pool.poolId]) {
         setBaseAmount(
           new BigNumber(poolLiquidity[pool.poolId].tokenAmounts.baseAmount)
@@ -47,7 +41,13 @@ export const useLiquidityByPool = (
         );
       }
     }
-  }, [pool]);
+  }, [pool, poolLiquidity]);
+
+  const [value, setValue] = useState({
+    baseValue: new BigNumber(0),
+    quoteValue: new BigNumber(0),
+    totalValueLocked: new BigNumber(0),
+  });
 
   useEffect(() => {
     if (pool) {
