@@ -1,13 +1,7 @@
 import { useEffect } from "react";
-import BigNumber from "bignumber.js";
 import useStore from "@/store/useStore";
 import { useParachainApi } from "substrate-react";
-import {
-  StableSwapPool,
-  ConstantProductPool,
-  LiquidityBootstrappingPool,
-} from "@/store/pools/pools.types";
-import { decodeCpp, decodeLbp, decodeSsp, fetchPools } from "./utils";
+import { fetchPools } from "./utils";
 import _ from "lodash";
 
 function isVerifiedPool(

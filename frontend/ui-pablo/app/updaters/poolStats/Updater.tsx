@@ -90,7 +90,7 @@ const Updater = () => {
         }
       });
     }
-  }, [assets, allLpRewardingPools.length, poolStats]);
+  }, [assets, allLpRewardingPools.length, poolStats, assets]);
 
   return null;
 };
