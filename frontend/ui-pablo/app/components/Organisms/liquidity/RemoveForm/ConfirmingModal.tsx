@@ -61,20 +61,6 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
 
   const [confirming, setConfirming] = useState<boolean>(false);
 
-  const onConfirmHandler = () => {
-    setConfirming(true);
-    setTimeout(() => {
-      dispatch(setMessage(
-        {
-          text: `Remove ${amount1} ${baseAsset.symbol} and ${amount2} ${quoteAsset.symbol}`,
-          link: "/",
-          severity: "success",
-        }
-      ));
-      setConfirmed && setConfirmed(true);
-    }, 2000);
-  };
-
   const onCloseHandler = () => {
     dispatch(closeConfirmingModal())
   };
@@ -222,7 +208,7 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
               variant="contained"
               size="large"
               fullWidth
-              onClick={onConfirmHandler}
+              onClick={confirmRemoveHandler}
             >
               Confirm
             </Button>
