@@ -663,6 +663,7 @@ pub mod pallet {
 		/// Sells all of the base asset in the specified market if the trader has a position in it.
 		/// This realizes the funding payments for the position.
 		///
+		/// TODO(0xangelo): add sequence diagram
 		/// ![]()
 		///
 		/// # Parameters
