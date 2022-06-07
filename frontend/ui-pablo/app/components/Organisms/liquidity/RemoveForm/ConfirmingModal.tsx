@@ -20,7 +20,7 @@ import BigNumber from "bignumber.js";
 import { CircularProgress } from "@/components/Atoms";
 import { AssetMetadata } from "@/defi/polkadot/Assets";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
-import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
+import { DEFAULT_DECIMALS, DEFAULT_NETWORK_ID } from "@/updaters/constants";
 import { useParachainApi, useSelectedAccount, useExecutor, getSigner } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { getPairDecimals } from "@/defi/polkadot/utils";
@@ -32,6 +32,8 @@ export type ConfirmingModalProps = {
   price2: BigNumber,
   amount1: BigNumber,
   amount2: BigNumber,
+  lpBalance: BigNumber,
+  percentage: number | string | BigNumber,
   setConfirmed?: (confirmed: boolean) => any,
 } & ModalProps;
 
@@ -42,6 +44,8 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
   price2,
   amount1,
   amount2,
+  lpBalance,
+  percentage,
   setConfirmed,
   ...rest
 }) => {
@@ -84,11 +88,12 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
       );
   
       try {
+        const lpRemoveAmount = lpBalance.times(DEFAULT_DECIMALS).times(percentage);
         const signer = await getSigner(APP_NAME, selectedAccount.address);
         executor.execute(
           parachainApi.tx.pablo.removeLiquidity(
             parachainApi.createType('u128', poolId), // Pool ID
-            parachainApi.createType('u128', poolId), // LP Receive
+            parachainApi.createType('u128', lpRemoveAmount.toString()), // LP Receive
             parachainApi.createType('u128', 0), // Min Base
             parachainApi.createType('u128', 0) // Min Quote
           ),
