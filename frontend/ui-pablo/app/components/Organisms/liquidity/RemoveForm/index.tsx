@@ -47,8 +47,6 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
     quoteAsset
   } = useLiquidityPoolDetails(poolId)
   
-  const liquidityProvided = useUserProvidedLiquidityByPool(poolId);
-
   const { share } = useAppSelector((state) => state.pool.currentLiquidity);
 
   const isConfirmingModalOpen = useAppSelector(
@@ -68,18 +66,6 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
 
   const debouncedPercentage = useDebounce(percentage, 500);
 
-  // useEffect(() => {
-  //   setRemoveAmount1(
-  //     new BigNumber(pooledAmountBase).multipliedBy(
-  //       new BigNumber(percentage / 100)
-  //     )
-  //   );
-  //   setRemoveAmount2(
-  //     new BigNumber(pooledAmountQuote).multipliedBy(
-  //       new BigNumber(percentage / 100)
-  //     )
-  //   );
-  // }, [percentage, pooledAmountBase, pooledAmountQuote, confirmed]);
   const [priceOfBase, setPriceOfBase] = useState(new BigNumber(0))
   const [priceOfQuote, setPriceOfQuote] = useState(new BigNumber(0))
 
@@ -296,6 +282,8 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
 
       {!confirmed && baseAsset && quoteAsset && (
         <ConfirmingModal
+          lpBalance={lpBalance}
+          percentage={debouncedPercentage}
           price1={priceOfBase}
           price2={priceOfQuote}
           baseAsset={baseAsset}
