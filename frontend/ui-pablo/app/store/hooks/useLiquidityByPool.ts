@@ -4,6 +4,7 @@ import {
   StableSwapPool,
 } from "@/store/pools/pools.types";
 import useStore from "@/store/useStore";
+import { fetchAndUpdatePoolLiquidity } from "@/updaters/liquidity/utils";
 import BigNumber from "bignumber.js";
 import { useState, useEffect } from "react";
 import { useParachainApi } from "substrate-react";
@@ -26,10 +27,23 @@ export const useLiquidityByPool = (
     totalValueLocked: BigNumber;
   };
 } => {
-  const { poolLiquidity } = useStore();
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const { poolLiquidity, setTokenAmountInLiquidityPool } = useStore();
   const [baseAmount, setBaseAmount] = useState(new BigNumber(0));
   const [quoteAmount, setQuoteAmount] = useState(new BigNumber(0));
-
+  /**
+   * update store with latest
+   * balance of both assets
+   */
+  useEffect(() => {
+    if (pool && parachainApi) {
+      fetchAndUpdatePoolLiquidity(pool as any, setTokenAmountInLiquidityPool, parachainApi)
+    }
+  }, [pool, parachainApi])
+  /**
+   * Use Updated balance of pool
+   * from the zustand store
+   */
   useEffect(() => {
     if (pool) {
       if (poolLiquidity[pool.poolId]) {
@@ -48,7 +62,11 @@ export const useLiquidityByPool = (
     quoteValue: new BigNumber(0),
     totalValueLocked: new BigNumber(0),
   });
-
+  /**
+   * Pass down liquidity value (in USD) 
+   * updated by
+   * liquidity updater
+   */
   useEffect(() => {
     if (pool) {
       if (poolLiquidity[pool.poolId]) {
