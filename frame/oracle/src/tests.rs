@@ -236,10 +236,6 @@ mod add_asset_and_info {
 			})?;
 		}
 
-
-
-
-
 		#[test]
 		fn cannot_exceed_max_assets_count(
 			asset_id_1 in asset_id(),
@@ -999,6 +995,9 @@ fn test_payout_slash() {
 		let account_4 = get_account_4();
 		let account_5 = get_account_5();
 		let treasury_account = get_treasury_account();
+		const REWARD_RATE: Perbill = Perbill::from_percent(20);
+
+		Oracle::set_reward_rate(REWARD_RATE);
 		assert_ok!(Oracle::set_signer(Origin::signed(account_5), account_2));
 
 		let one = PrePrice { price: 79, block: 0, who: account_1 };

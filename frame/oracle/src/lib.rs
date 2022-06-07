@@ -773,13 +773,11 @@ pub mod pallet {
 		pub fn max_reward_per_block() -> BalanceOf<T> {
 			let total_issuance = <T as Config>::Currency::total_issuance();
 			let slot_duration: u64 = <T as pallet_timestamp::Config>::MinimumPeriod::get()
-				.saturating_mul(2u32.into())
+				.saturating_mul(2_u32.into())
 				.unique_saturated_into();
 			let number_of_blocks_per_year =
 				Scale::div(SECONDS_PER_YEAR_NAIVE * 1000, slot_duration);
-			let max_reward_per_block =
-				RewardRate::<T>::get().div(number_of_blocks_per_year).mul_ceil(total_issuance);
-			max_reward_per_block
+			RewardRate::<T>::get().div(number_of_blocks_per_year).mul_ceil(total_issuance)
 		}
 
 		pub fn update_prices(block: T::BlockNumber) -> Weight {
