@@ -56,7 +56,7 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
 
       <Label mt={3}
         BalanceProps={{
-          balance: `${expectedRecieveAmountToken1.eq(0) ? '-' : expectedRecieveAmountToken1}`,
+          balance: `${expectedRecieveAmountToken1.toFormat()}`,
           BalanceTypographyProps: {
             variant: "body1",
           },
@@ -68,7 +68,7 @@ export const PreviewDetails: React.FC<PreviewDetailsProps> = ({
       <Label
         mt={3}
         BalanceProps={{
-          balance: `${expectedRecieveAmountToken2.eq(0) ? '-' : expectedRecieveAmountToken2}`,
+          balance: `${expectedRecieveAmountToken2.toFormat()}`,
           BalanceTypographyProps: {
             variant: "body1",
           },

@@ -55,7 +55,8 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
     invalidTokenPair,
     canSupply,
     lpReceiveAmount,
-    needToSelectToken
+    needToSelectToken,
+    findPoolManually
   } = useAddLiquidity();
 
   const isConfirmSupplyModalOpen = useAppSelector(
@@ -120,6 +121,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
             },
           }}
           CombinedSelectProps={{
+            disabled: !findPoolManually,
             value: assetOne,
             setValue: setToken("assetOne"),
             dropdownModal: true,
@@ -183,6 +185,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
             },
           }}
           CombinedSelectProps={{
+            disabled: !findPoolManually,
             value: assetTwo,
             setValue: setToken("assetTwo"),
             dropdownModal: true,
