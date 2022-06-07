@@ -8,6 +8,11 @@ import { DAYS, DEFAULT_NETWORK_ID } from "../constants";
 import { useAllLpTokenRewardingPools } from "../../store/hooks/useAllLpTokenRewardingPools";
 import { queryPabloPoolById } from "../pools/subsquid";
 import { getAssetByOnChainId } from "@/defi/polkadot/Assets";
+import {
+  calculatePoolStats,
+  fetchPoolStats,
+  PabloPoolStatsSquidResponse,
+} from "./utils";
 
 /**
  * Updates zustand store with all pools from pablo pallet
@@ -22,73 +27,34 @@ const Updater = () => {
   useEffect(() => {
     console.log(`[PoolStatsUpdater] Update Stats Effect (1)`);
     if (parachainApi && allLpRewardingPools.length) {
-      let promises: Promise<OperationResult<any, {}>>[] = [];
+      let promises: Promise<PabloPoolStatsSquidResponse[]>[] = [];
+
       allLpRewardingPools.forEach((pool) => {
-        promises.push(queryPabloPoolById(pool.poolId));
+        promises.push(fetchPoolStats(pool as any));
       });
 
       Promise.all(promises).then((subsquidResponses) => {
-        const pabloPools = subsquidResponses
-          .filter((i) => !!i.data && !!i.data.pabloPools)
-          .map((i) => i.data.pabloPools);
-  
-        pabloPools.forEach((pool) => {
-          const _pool = allLpRewardingPools.find(
-            (p) => p.poolId === Number(pool[0].poolId)
-          );
-          let quoteDecimals = 12;
-          if (_pool) {
-            quoteDecimals = getAssetByOnChainId(
-              DEFAULT_NETWORK_ID,
-              _pool.pair.quote
-            ).decimals;
-          }
-  
-          let yesterday = Number(pool[0].calculatedTimestamp) - 1 * DAYS
-  
-          const yesterdayState = pool.find((i: any) => (Number(i.calculatedTimestamp) < yesterday))
+        const pabloPools = subsquidResponses.filter((k) => k.length);
 
-          let _24HourVolume = new BigNumber(pool[0].totalVolume);
-          let _24HourFee = new BigNumber(pool[0].totalFees);
-          let _24HourTxCount = new BigNumber(pool[0].transactionCount);
-  
-          if (yesterdayState) {
-            _24HourVolume = new BigNumber(pool[0].totalVolume).minus(
-              yesterdayState.totalVolume
-            );
-            _24HourFee = new BigNumber(pool[0].totalFees).minus(
-              yesterdayState.totalFees
-            );
-            _24HourTxCount = new BigNumber(pool[0].transactionCount).minus(
-              yesterdayState.transactionCount
-            );
+        pabloPools.forEach((pabloPoolStates) => {
+          const poolStats = calculatePoolStats(pabloPoolStates);
+          if (poolStats) {
+            const {
+              poolId,
+              _24HrFee,
+              _24HrTransactionCount,
+              _24HrVolume,
+              totalVolume,
+            } = poolStats;
+            putPoolStats(poolId, {
+              _24HrFee,
+              _24HrTransactionCount,
+              _24HrVolume,
+              totalVolume,
+            });
           }
-  
-          _24HourFee = _24HourFee.div(new BigNumber(10).pow(quoteDecimals));
-          _24HourVolume = _24HourVolume.div(new BigNumber(10).pow(quoteDecimals));
-          let totalVolume = new BigNumber(pool[0].totalVolume).div(
-            new BigNumber(10).pow(quoteDecimals)
-          );
-  
-          putPoolStats(Number(pool[0].poolId), {
-            _24HrFee: _24HourFee.toString(),
-            _24HrVolume: _24HourVolume.toString(),
-            totalVolume: totalVolume.toString(),
-            _24HrTransactionCount: _24HourTxCount.toNumber(),
-            dailyRewards: [
-              {
-                assetId: "kusd",
-                icon: "/tokens/usd-coin-usdc.svg",
-                symbol: "KUSD",
-                name: "KUSD",
-                rewardAmount: "1000",
-                rewardAmountLeft: "1",
-              },
-            ],
-          });
         });
-        
-      })
+      });
     }
   }, [parachainApi, allLpRewardingPools]);
 
@@ -108,9 +74,7 @@ const Updater = () => {
             )
               .times(assets[quoteAsset.assetId].price)
               .toFixed(2);
-            const _24HrFeeValue = new BigNumber(
-              poolStats[i.poolId]._24HrFee
-            )
+            const _24HrFeeValue = new BigNumber(poolStats[i.poolId]._24HrFee)
               .times(assets[quoteAsset.assetId].price)
               .toFixed(2);
             const _24HrVolumeValue = new BigNumber(
