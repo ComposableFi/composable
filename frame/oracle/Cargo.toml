@@ -40,7 +40,7 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 ] }
 
 [dev-dependencies]
-composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false, features = [ "std" ] }
+composable-tests-helpers = { path = "../composable-tests-helpers" }
 frame-benchmarking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 parking_lot = "0.12.0"
