@@ -8,13 +8,14 @@ use crate::{
 	AccountIdOf, Error,
 };
 use composable_support::types::{EcdsaSignature, EthereumAddress};
-use frame_support::{assert_err, assert_noop, assert_ok, traits::Currency};
+use frame_support::{assert_err, assert_noop, assert_ok, traits::{Currency, fungible::Inspect}};
 use hex_literal::hex;
 use sp_core::{ed25519, storage::StateVersion, Pair};
 use sp_runtime::AccountId32;
 
 const DEFAULT_FUNDED_CLAIM: bool = false;
 const DEFAULT_NB_OF_CONTRIBUTORS: u128 = 100;
+const DEFAULT_VESTING_SCHEDULE: Moment = 3600 * 10 * 7;
 const DEFAULT_VESTING_PERIOD: Moment = 3600 * 24 * 7 * 10;
 const DEFAULT_REWARD: Balance = 10_000;
 const CREATOR: AccountId = AccountId32::new([0_u8; 32]);
@@ -24,13 +25,14 @@ fn with_recipients<R>(
 	count: u128,
 	reward: Balance,
 	funded_claim: bool,
+    vesting_schedule: Moment, 
 	vesting_period: Moment,
 	execute: impl FnOnce(&dyn Fn(Moment), Vec<(AccountId, ClaimKey)>) -> R,
 ) -> R {
 	let accounts = generate_accounts(count as _);
 	let recipients = accounts
 		.iter()
-		.map(|(_, account)| (account.as_remote_public(), reward, funded_claim))
+		.map(|(_, account)| (account.as_remote_public(), reward, vesting_schedule, funded_claim))
 		.collect();
 
 	ExtBuilder::default().build().execute_with(|| {
@@ -41,7 +43,7 @@ fn with_recipients<R>(
 
 		Balances::make_free_balance_be(&CREATOR, 10_000 + reward * count);
 
-		assert_ok!(Airdrop::create_airdrop(creator.clone(), Some(start_moment), vesting_period));
+		assert_ok!(Airdrop::create_airdrop(creator.clone(), Some(start_moment), vesting_schedule));
 		assert_ok!(Airdrop::add_recipient(creator, AirdropId::from(1_u32), recipients));
 
 		execute(&set_moment, accounts)
@@ -55,6 +57,7 @@ fn with_default_recipients<R>(
 		DEFAULT_NB_OF_CONTRIBUTORS,
 		DEFAULT_REWARD,
 		DEFAULT_FUNDED_CLAIM,
+        DEFAULT_VESTING_SCHEDULE,
 		DEFAULT_VESTING_PERIOD,
 		execute,
 	)
@@ -63,7 +66,6 @@ fn with_default_recipients<R>(
 #[cfg(test)]
 mod create_airdrop_tests {
 
-	use frame_support::traits::fungible::Inspect;
 
 	use super::*;
 
@@ -130,7 +132,7 @@ mod add_recipient_tests {
 		let accounts = generate_accounts(128);
 		let recipients = accounts
 			.iter()
-			.map(|(_, account)| (account.as_remote_public(), DEFAULT_REWARD, DEFAULT_FUNDED_CLAIM))
+			.map(|(_, account)| (account.as_remote_public(), DEFAULT_REWARD, DEFAULT_VESTING_PERIOD, DEFAULT_FUNDED_CLAIM))
 			.collect();
 
 		ExtBuilder::default().build().execute_with(|| {
@@ -151,7 +153,7 @@ mod add_recipient_tests {
 		let accounts = generate_accounts(128);
 		let recipients = accounts
 			.iter()
-			.map(|(_, account)| (account.as_remote_public(), DEFAULT_REWARD, DEFAULT_FUNDED_CLAIM))
+			.map(|(_, account)| (account.as_remote_public(), DEFAULT_REWARD, DEFAULT_VESTING_PERIOD, DEFAULT_FUNDED_CLAIM))
 			.collect();
 
 		ExtBuilder::default().build().execute_with(|| {
@@ -170,7 +172,7 @@ mod add_recipient_tests {
 		let accounts = generate_accounts(128);
 		let recipients = accounts
 			.iter()
-			.map(|(_, account)| (account.as_remote_public(), DEFAULT_REWARD, DEFAULT_FUNDED_CLAIM))
+			.map(|(_, account)| (account.as_remote_public(), DEFAULT_REWARD, DEFAULT_VESTING_PERIOD, DEFAULT_FUNDED_CLAIM))
 			.collect();
 
 		ExtBuilder::default().build().execute_with(|| {
@@ -275,7 +277,7 @@ mod enable_airdrop_tests {
 	fn enable_airdrop_invalid_creator() {
 		let other = Origin::signed(OTHER);
 
-		with_default_recipients(|_, accounts| {
+		with_default_recipients(|_, _| {
 			assert_noop!(
 				Airdrop::enable_airdrop(other, 1),
 				Error::<MockRuntime>::NotAirdropCreator
@@ -301,14 +303,9 @@ mod enable_airdrop_tests {
 	#[test]
 	#[allow(clippy::disallowed_methods)] // Allow unwrap
 	fn enable_airdrop_valid() {
-		let creator = Origin::signed(CREATOR);
-
-		ExtBuilder::default().build().execute_with(|| {
-			Balances::make_free_balance_be(&CREATOR, 10_000);
-			assert_ok!(Airdrop::create_airdrop(creator.clone(), None, DEFAULT_VESTING_PERIOD));
-			assert_eq!(Airdrop::get_airdrop_state(1).unwrap(), AirdropState::Created);
-			assert_ok!(Airdrop::enable_airdrop(creator, 1));
-			assert_eq!(Airdrop::get_airdrop_state(1).unwrap(), AirdropState::Enabled);
+		with_default_recipients(|set_moment, _| {
+            set_moment(DEFAULT_VESTING_PERIOD * 2);
+            assert_eq!(Airdrop::get_airdrop_state(1).unwrap(), AirdropState::Enabled);
 		})
 	}
 }
@@ -318,16 +315,24 @@ mod disable_airdrop_tests {
 	use super::*;
 
 	#[test]
+	fn disable_airdrop_invalid_creator() {
+		let other = Origin::signed(OTHER);
+
+		with_default_recipients(|_, _| {
+            assert_noop!(Airdrop::disable_airdrop(other, 1), Error::<MockRuntime>::NotAirdropCreator);
+		})
+	}
+
+	#[test]
 	#[allow(clippy::disallowed_methods)] // Allow unwrap
 	fn disable_airdrop_valid() {
 		let creator = Origin::signed(CREATOR);
 
-		ExtBuilder::default().build().execute_with(|| {
-			Balances::make_free_balance_be(&CREATOR, 10_000);
-			assert_ok!(Airdrop::create_airdrop(creator.clone(), None, DEFAULT_VESTING_PERIOD));
-			assert_ok!(Airdrop::enable_airdrop(creator.clone(), 1));
-			assert_eq!(Airdrop::get_airdrop_state(1).unwrap(), AirdropState::Enabled);
-			assert_ok!(Airdrop::disable_airdrop(creator, 1));
+		with_default_recipients(|set_moment, _| {
+            set_moment(DEFAULT_VESTING_PERIOD * 2);
+            assert_eq!(Airdrop::get_airdrop_state(1).unwrap(), AirdropState::Enabled);
+            assert_ok!(Airdrop::disable_airdrop(creator, 1));
+            assert!(Airdrop::airdrops(1).is_none());
 		})
 	}
 }
