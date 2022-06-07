@@ -194,15 +194,14 @@ pub mod defs {
 }
 
 pub use defs::*;
-use scale_info::TypeInfo;
 use primitives::currency::ValidCurrency;
+use scale_info::TypeInfo;
 
 pub type CurrencyId = u128;
 pub struct AllValidCurrencyId;
 impl ValidCurrency<CurrencyId> for AllValidCurrencyId {
-
 	fn valid_currency_id(_currency_id: CurrencyId) -> bool {
-			// all other assets in mock are valid
-			true
-    }
+		// all other assets in mock are valid
+		true
+	}
 }

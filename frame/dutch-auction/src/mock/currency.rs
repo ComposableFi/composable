@@ -13,9 +13,8 @@ parameter_types! {
 
 pub struct AllValidCurrencyId;
 impl ValidCurrency<CurrencyId> for AllValidCurrencyId {
-
 	fn valid_currency_id(_currency_id: CurrencyId) -> bool {
-			// all other assets in mock are valid
-			true
-    }
+		// all other assets in mock are valid
+		true
+	}
 }

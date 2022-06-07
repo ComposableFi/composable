@@ -113,10 +113,10 @@ impl CurrencyId {
 impl ValidCurrency<CurrencyId> for CurrencyId {
 	fn valid_currency_id(currency_id: CurrencyId) -> bool {
 		if currency_id == CurrencyId::INVALID {
-            false
-		}  else {
-            true
-        }
+			false
+		} else {
+			true
+		}
 	}
 }
 

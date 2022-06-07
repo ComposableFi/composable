@@ -20,12 +20,12 @@ use sp_core::{
 };
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify, ConvertInto},
+	traits::{BlakeTwo256, ConvertInto, IdentifyAccount, IdentityLookup, Verify},
 	Perbill,
 };
 use xcm::latest::SendXcm;
 
-use super::{governance_registry::GovernanceRegistry, currency::AllValidCurrencyId};
+use super::{currency::AllValidCurrencyId, governance_registry::GovernanceRegistry};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 pub type Block = frame_system::mocking::MockBlock<Runtime>;
@@ -155,8 +155,8 @@ impl pallet_assets::Config for Runtime {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = GovernanceRegistry;
-    type Convert = ConvertInto;
-    type ValidCurrency = AllValidCurrencyId;
+	type Convert = ConvertInto;
+	type ValidCurrency = AllValidCurrencyId;
 }
 
 impl pallet_currency_factory::Config for Runtime {
