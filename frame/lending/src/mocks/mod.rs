@@ -246,7 +246,7 @@ parameter_types! {
 	pub const MinU32: u32 = 0;
 	pub const MinU64: u64 = 0;
 
-	pub const TwapWindow: u32 = 3;
+	pub const TwapWindow: u16 = 3;
 }
 
 pub struct Decimals;

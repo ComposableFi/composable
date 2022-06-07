@@ -160,7 +160,7 @@ pub mod pallet {
 		type MaxHistory: Get<u32>;
 
 		#[pallet::constant]
-		type TwapWindow: Get<u32>;
+		type TwapWindow: Get<u16>;
 
 		#[pallet::constant]
 		type MaxPrePrices: Get<u32>;
@@ -409,7 +409,7 @@ pub mod pallet {
 			if prices_length == 0 {
 				Self::get_price(asset_id, amount).map(|p| p.price)
 			} else {
-				let twap_window = Self::TwapWindow::get() as usize;
+				let twap_window = Self::TwapWindow::get().into();
 				let weights_length = prices_length.min(twap_window);
 				// make flat weights
 				let weight = Percent::from_percent(100) / weights_length;

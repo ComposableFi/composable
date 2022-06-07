@@ -92,7 +92,7 @@ parameter_types! {
 	pub const MaxAssetsCount: u32 = 2;
 	pub const MaxHistory: u32 = 3;
 	pub const MaxPrePrices: u32 = 12;
-	pub const TwapWindow: u32 = 3;
+	pub const TwapWindow: u16 = 3;
 }
 
 ord_parameter_types! {

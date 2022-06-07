@@ -39,7 +39,7 @@ pub trait Oracle {
 	type Timestamp;
 	type LocalAssets: LocalAssets<Self::AssetId>;
 	type MaxAnswerBound: Get<u32>;
-	type TwapWindow: Get<u32>;
+	type TwapWindow: Get<u16>;
 	// type BlockNumber: From<u64>;
 	// type StalePrice: Get<Self::BlockNumber>;
 
