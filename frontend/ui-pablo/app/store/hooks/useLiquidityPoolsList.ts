@@ -25,7 +25,7 @@ export const useLiquidityPoolsList = (): LiquidityPoolRow[] => {
 
   const liquidityPoolsList = useMemo(() => {
     return allLpRewardingPools.map((pool) => {
-      const {pair,poolId} = pool;
+      const { pair, poolId } = pool;
       const baseAsset = getAssetByOnChainId(DEFAULT_NETWORK_ID, pair.base);
       const quoteAsset = getAssetByOnChainId(DEFAULT_NETWORK_ID, pair.quote);
       const lpTokenAssetId = pool.lpToken;

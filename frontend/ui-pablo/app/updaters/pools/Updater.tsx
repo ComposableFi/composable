@@ -8,13 +8,7 @@ import {
   LiquidityBootstrappingPool,
 } from "@/store/pools/pools.types";
 import { decodeCpp, decodeLbp, decodeSsp } from "./utils";
-import {
-  queryPabloPoolById,
-} from "./subsquid";
-import { OperationResult } from "urql";
 import _ from "lodash";
-import { DAYS } from "../constants";
-import { useAllLpTokenRewardingPools } from "../../store/hooks/useAllLpTokenRewardingPools";
 
 function isVerifiedPool(
   verifiedPoolIds: number[],
