@@ -31,7 +31,7 @@ import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
 import { useUserProvidedLiquidityByPool } from "@/store/hooks/useUserProvidedLiquidityByPool";
 import { fetchSpotPrice } from "@/updaters/swaps/utils";
 import { useParachainApi } from "substrate-react";
-import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
+import { DEFAULT_DECIMALS, DEFAULT_NETWORK_ID } from "@/updaters/constants";
 
 export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const theme = useTheme();
@@ -46,7 +46,7 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
     baseAsset,
     quoteAsset
   } = useLiquidityPoolDetails(poolId)
-  
+
   const { share } = useAppSelector((state) => state.pool.currentLiquidity);
 
   const isConfirmingModalOpen = useAppSelector(
@@ -86,8 +86,19 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
         })
       }
     }
-  }, [poolId, baseAsset, quoteAsset, parachainApi])
+  }, [poolId, baseAsset, quoteAsset, parachainApi]);
 
+  useEffect(() => {
+    if (parachainApi && debouncedPercentage > 0 && lpBalance.gt(0)) {
+      // const selectedLpAmount = lpBalance.times(debouncedPercentage / 100).times(DEFAULT_DECIMALS);
+      // (parachainApi.rpc as any).pablo.redeemableAssetForGivenLpTokens(poolId, selectedLpAmount).then((response) => {
+
+      // })
+    } else {
+      setExpectedRemoveAmountBase(new BigNumber(0));
+      setExpectedRemoveAmountQuote(new BigNumber(0));
+    }
+  }, [parachainApi, debouncedPercentage])
 
   const onBackHandler = () => {
     router.push("/pool");

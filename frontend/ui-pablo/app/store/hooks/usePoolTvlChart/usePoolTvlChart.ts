@@ -41,7 +41,7 @@ export const usePoolTvlChart = (poolId: number) => {
     } else {
       setChartSeries([]);
     }
-  }, [poolId, selectedInterval]);
+  }, [poolId, poolDetails.quoteAsset, selectedInterval]);
 
   return {
     selectedInterval,
