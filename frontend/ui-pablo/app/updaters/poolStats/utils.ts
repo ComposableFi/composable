@@ -60,20 +60,20 @@ export function calculatePoolStats(data: PabloPoolStatsSquidResponse[]):
   let yesterday = data[0].calculatedTimestamp - 1 * DAYS;
   const yesterdayState = data.find((i) => i.calculatedTimestamp < yesterday);
 
-  let totalVolume = new BigNumber(data[0].totalVolume);
-  let _24HourVolume = new BigNumber(data[0].totalVolume);
-  let _24HourFee = new BigNumber(data[0].totalFees);
-  let _24HourTxCount = new BigNumber(data[0].transactionCount);
+  let totalVolume = data[0].totalVolume;
+  let _24HourVolume = data[0].totalVolume;
+  let _24HourFee = data[0].totalFees;
+  let _24HourTxCount = data[0].transactionCount;
 
   if (yesterdayState) {
-    _24HourVolume = new BigNumber(data[0].totalVolume).minus(
+    _24HourTxCount = _24HourTxCount - yesterdayState.transactionCount;
+
+    _24HourVolume = data[0].totalVolume.minus(
       yesterdayState.totalVolume
     );
-    _24HourFee = new BigNumber(data[0].totalFees).minus(
+
+    _24HourFee = data[0].totalFees.minus(
       yesterdayState.totalFees
-    );
-    _24HourTxCount = new BigNumber(data[0].transactionCount).minus(
-      yesterdayState.transactionCount
     );
   }
 
@@ -81,7 +81,7 @@ export function calculatePoolStats(data: PabloPoolStatsSquidResponse[]):
     _24HrFee: _24HourFee.toString(),
     _24HrVolume: _24HourVolume.toString(),
     totalVolume: totalVolume.toString(),
-    _24HrTransactionCount: _24HourTxCount.toNumber(),
+    _24HrTransactionCount: _24HourTxCount,
     poolId: data[0].poolId,
   };
 }
