@@ -73,8 +73,8 @@ const Updater = () => {
           putPoolStats(Number(pool[0].poolId), {
             _24HrFee: _24HourFee.toString(),
             _24HrVolume: _24HourVolume.toString(),
-            _24HrTransactionCount: _24HourTxCount.toNumber(),
             totalVolume: totalVolume.toString(),
+            _24HrTransactionCount: _24HourTxCount.toNumber(),
             dailyRewards: [
               {
                 assetId: "kusd",

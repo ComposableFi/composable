@@ -63,8 +63,8 @@ export const putPoolStatsValue = (
     draft[poolId]._24HrFeeValue =
       poolStats._24HrFeeValue ?? fallbackState._24HrFeeValue;
     draft[poolId]._24HrVolumeValue =
-      poolStats._24HrFeeValue ?? fallbackState._24HrVolumeValue;
+      poolStats._24HrVolumeValue ?? fallbackState._24HrVolumeValue;
     draft[poolId].totalVolumeValue =
-      poolStats._24HrFeeValue ?? fallbackState.totalVolumeValue;
+      poolStats.totalVolumeValue ?? fallbackState.totalVolumeValue;
   });
 };

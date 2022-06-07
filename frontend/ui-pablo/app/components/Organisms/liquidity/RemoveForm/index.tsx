@@ -29,12 +29,16 @@ import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
 import useDebounce from "@/hooks/useDebounce";
 import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
 import { useUserProvidedLiquidityByPool } from "@/store/hooks/useUserProvidedLiquidityByPool";
+import { fetchSpotPrice } from "@/updaters/swaps/utils";
+import { useParachainApi } from "substrate-react";
+import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
 
 export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const theme = useTheme();
   const router = useRouter();
   const dispatch = useDispatch();
 
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const { poolId } =
     useRemoveLiquidityState();
   const {
@@ -76,14 +80,28 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   //     )
   //   );
   // }, [percentage, pooledAmountBase, pooledAmountQuote, confirmed]);
+  const [priceOfBase, setPriceOfBase] = useState(new BigNumber(0))
+  const [priceOfQuote, setPriceOfQuote] = useState(new BigNumber(0))
 
-  const price1 = useMemo(() => {
-    return new BigNumber(liquidityProvided.tokenAmounts.baseAmount).div(liquidityProvided.tokenAmounts.quoteAmount);
-  }, [liquidityProvided.tokenAmounts]);
+  useEffect(() => {
+    if (poolId !== -1 && baseAsset && quoteAsset && parachainApi) {
+      const baseAssetId = baseAsset.supportedNetwork.picasso
+      const quoteAssetId = quoteAsset.supportedNetwork.picasso
 
-  const price2 = useMemo(() => {
-    return new BigNumber(liquidityProvided.tokenAmounts.quoteAmount).div(liquidityProvided.tokenAmounts.baseAmount);
-  }, [liquidityProvided.tokenAmounts]);
+      if (baseAssetId && quoteAssetId) {
+        fetchSpotPrice(parachainApi, {
+          base: baseAssetId,
+          quote: quoteAssetId
+        }, poolId).then(basePrice => {
+          const basePriceBn = new BigNumber(basePrice);
+
+          setPriceOfBase(basePriceBn);
+          setPriceOfQuote(new BigNumber(1).div(basePriceBn));
+        })
+      }
+    }
+  }, [poolId, baseAsset, quoteAsset, parachainApi])
+
 
   const onBackHandler = () => {
     router.push("/pool");
@@ -195,8 +213,8 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           tokenId2={quoteAsset}
           expectedRecieveAmountToken1={expectedRemoveAmountBase}
           expectedRecieveAmountToken2={expectedRemoveAmountQuote}
-          price1={price1}
-          price2={price2}
+          price1={priceOfBase}
+          price2={priceOfQuote}
         />
       )}
 
@@ -278,8 +296,8 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
 
       {!confirmed && baseAsset && quoteAsset && (
         <ConfirmingModal
-          price1={price1}
-          price2={price2}
+          price1={priceOfBase}
+          price2={priceOfQuote}
           baseAsset={baseAsset}
           quoteAsset={quoteAsset}
           open={isConfirmingModalOpen}

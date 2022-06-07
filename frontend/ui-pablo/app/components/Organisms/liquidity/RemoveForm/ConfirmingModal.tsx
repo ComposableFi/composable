@@ -14,11 +14,16 @@ import CloseIcon from "@mui/icons-material/Close";
 
 import { useDispatch } from "react-redux";
 import {
-  closeConfirmingModal, setMessage,
+  closeConfirmingModal, openConfirmingModal, setMessage,
 } from "@/stores/ui/uiSlice";
 import BigNumber from "bignumber.js";
 import { CircularProgress } from "@/components/Atoms";
 import { AssetMetadata } from "@/defi/polkadot/Assets";
+import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
+import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
+import { useParachainApi, useSelectedAccount, useExecutor, getSigner } from "substrate-react";
+import { APP_NAME } from "@/defi/polkadot/constants";
+import { getPairDecimals } from "@/defi/polkadot/utils";
 
 export type ConfirmingModalProps = {
   baseAsset: AssetMetadata,
@@ -41,11 +46,11 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
   ...rest
 }) => {
   // WIP
-  // const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-  // const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-  // const executor = useExecutor();
-  // const { poolId } =
-  //   useRemoveLiquidityState();
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
+  const executor = useExecutor();
+  const { poolId } =
+    useRemoveLiquidityState();
 
   const theme = useTheme();
   const dispatch = useDispatch();
@@ -72,40 +77,41 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
 
   const confirmRemoveHandler = async () => {
     // WIP
-    // if (parachainApi && executor && baseAss && quoteAss && selectedAccount) {
-    //   const { baseDecimals, quoteDecimals } = getPairDecimals(
-    //     baseAss.assetId,
-    //     quoteAss.assetId
-    //   );
+    if (parachainApi && executor && baseAsset && quoteAsset && selectedAccount) {
+      const { baseDecimals, quoteDecimals } = getPairDecimals(
+        baseAsset.assetId,
+        quoteAsset.assetId
+      );
   
-    //   try {
-    //     const signer = await getSigner(APP_NAME, selectedAccount.address);
-    //     executor.execute(
-    //       parachainApi.tx.pablo.removeLiquidity(
-    //         poolId,
-    //         removeAmount1.times(baseDecimals).toString(),
-    //         removeAmount2.times(quoteDecimals).toString(),
-    //         0,
-    //         true
-    //       ),
-    //       selectedAccount.address,
-    //       parachainApi,
-    //       signer,
-    //       (txHash: string) => {
-    //         dispatch(openConfirmingModal());
-    //       },
-    //       (txHash: string, events) => {
-    //         console.log("Finalized ", txHash);
-    //         dispatch(closeConfirmingModal());
-    //       },
-    //       (txError) => {
-    //         console.log("Error ", txError);
-    //       }
-    //     );
-    //   } catch (err) {
-    //     console.log(err);
-    //   }
-    // }
+      try {
+        const signer = await getSigner(APP_NAME, selectedAccount.address);
+        executor.execute(
+          parachainApi.tx.pablo.removeLiquidity(
+            parachainApi.createType('u128', poolId), // Pool ID
+            parachainApi.createType('u128', poolId), // LP Receive
+            parachainApi.createType('u128', 0), // Min Base
+            parachainApi.createType('u128', 0) // Min Quote
+          ),
+          selectedAccount.address,
+          parachainApi,
+          signer,
+          (txHash: string) => {
+            dispatch(openConfirmingModal());
+          },
+          (txHash: string, events) => {
+            console.log("Finalized ", txHash);
+            dispatch(closeConfirmingModal());
+          },
+          (txError) => {
+            console.log("Error ", txError);
+            dispatch(closeConfirmingModal());
+          }
+        );
+      } catch (err) {
+        console.log(err);
+        dispatch(closeConfirmingModal());
+      }
+    }
   }
 
   return (

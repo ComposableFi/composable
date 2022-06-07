@@ -25,6 +25,7 @@ export const useAddLiquidity = () => {
   const {
     ui: { assetOne, assetTwo, assetOneAmount, assetTwoAmount },
     pool,
+    findPoolManually
   } = useAddLiquiditySlice();
 
   const {
@@ -249,5 +250,6 @@ export const useAddLiquidity = () => {
     needToSelectToken,
     invalidTokenPair,
     canSupply,
+    findPoolManually
   };
 };
