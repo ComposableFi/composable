@@ -138,10 +138,11 @@ pub mod pallet {
 	pub type AssociatedVaults<T: Config> =
 		StorageValue<_, BoundedBTreeSet<T::VaultId, T::MaxAssociatedVaults>, ValueQuery>;
 
-	// TODO(saruman9): where pools will be added?
+	// TODO(saruman9): privileged accounts should control what is most optimum strategy for an asset
+	// and also they add info about pools
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
-	pub type Pools<T: Config> = StorageMap<_, Blake2_128Concat, T::PoolId, T::Balance>;
+	pub type Pools<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, T::PoolId>;
 
 	// -------------------------------------------------------------------------------------------
 	//                                        Runtime Events
@@ -166,6 +167,10 @@ pub mod pallet {
 		VaultAlreadyAssociated,
 
 		TooManyAssociatedStrategies,
+
+		// TODO(saruman9): only for MVP version we can assume the `pool_id` is already known and
+		// exist. We should remove it in V1.
+		PoolNotFound,
 	}
 
 	// -------------------------------------------------------------------------------------------
@@ -237,37 +242,48 @@ pub mod pallet {
 		#[transactional]
 		fn do_rebalance(vault_id: &T::VaultId) -> DispatchResult {
 			// TODO(saruman9): should we somehow check the origin? What about permissions?
-			let task = T::Vault::available_funds(vault_id, &Self::account_id())?;
-			match task {
+			let asset_id = T::Vault::asset_id(vault_id)?;
+			let account_id = T::Vault::account_id(vault_id);
+			let pool_id = Self::pools(asset_id).ok_or_else(|| Error::<T>::PoolNotFound)?;
+			match T::Vault::available_funds(vault_id, &Self::account_id())? {
 				FundsAvailability::Withdrawable(balance) => {
-					let account_id = T::Vault::account_id(vault_id);
-					// TODO(saruman9): should we choose pool by APY?
-					let pool_id = Pools::<T>::iter_keys().next().unwrap();
-					// TODO(saruman9): what is `quote_amount`, `min_mint_amount` and `keep_alive`?
+					let min_mint_amount = T::Pablo::amount_of_lp_token_for_added_liquidity(
+						pool_id,
+						balance,
+						T::Balance::zero(),
+					)?;
+					// TODO(saruman9): what is `keep_alive`?
 					T::Pablo::add_liquidity(
 						&account_id,
 						pool_id,
 						balance,
-						balance,
-						balance,
+						T::Balance::zero(),
+						min_mint_amount,
 						bool::default(),
 					)?;
 				},
 				FundsAvailability::Depositable(balance) => {
-					let account_id = T::Vault::account_id(vault_id);
-					// TODO(saruman9): how we should choose the pool?
-					let (pool_id, _amount) = Pools::<T>::iter().next().unwrap();
-					// TODO(saruman9): should we use `balance` or `amount`?
-					// TODO(saruman9): what is `min_base_amount` and `min_quote_amount`?
-					T::Pablo::remove_liquidity(&account_id, pool_id, balance, balance, balance)?;
+					let lp_amount = T::Pablo::amount_of_lp_token_for_added_liquidity(
+						pool_id,
+						balance,
+						T::Balance::zero(),
+					)?;
+					T::Pablo::remove_liquidity(
+						&account_id,
+						pool_id,
+						lp_amount,
+						balance,
+						T::Balance::zero(),
+					)?;
 				},
 				FundsAvailability::MustLiquidate => {
 					// TODO(saruman9): should we transfer all assets to Vault from strategy?
-					let account_id = T::Vault::account_id(vault_id);
-					let (pool_id, amount) = Pools::<T>::iter().next().unwrap();
-					// TODO(saruman9): what is `min_base_amount` and `min_quote_amount`?
-					T::Pablo::remove_liquidity(&account_id, pool_id, amount, amount, amount)?;
+					todo!()
 				},
+				// TODO(saruman9): here should be forth case
+				// (https://app.clickup.com/t/24w8p4r?block=block-836543af-8aef-486d-9c58-67e7c78ee73f)
+				//
+				// FundsAvailability::Nothing =>
 			};
 			Ok(())
 		}
