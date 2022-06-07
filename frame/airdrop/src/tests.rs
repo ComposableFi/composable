@@ -64,13 +64,13 @@ fn with_default_recipients<R>(
 }
 
 #[cfg(test)]
-mod create_airdrop_tests {
+mod create_airdrop {
 
 
 	use super::*;
 
 	#[test]
-	fn create_valid_airdrop_no_start() {
+	fn should_create_airdrop_without_start_successfully() {
 		let creator = Origin::signed(CREATOR);
 		let start: Option<Moment> = None;
 		let vesting_schedule = DEFAULT_VESTING_PERIOD;
@@ -85,7 +85,7 @@ mod create_airdrop_tests {
 
 	#[test]
 	#[allow(clippy::disallowed_methods)] // Allow unwrap
-	fn create_valid_airdrop_with_start() {
+	fn should_create_airdrop_with_start_successfully() {
 		let creator = Origin::signed(CREATOR);
 		let start: Option<Moment> = Some(DEFAULT_VESTING_PERIOD * 2);
 		let vesting_schedule = DEFAULT_VESTING_PERIOD;
@@ -99,9 +99,8 @@ mod create_airdrop_tests {
 		})
 	}
 
-	/// bttf - BackToTheFuture
 	#[test]
-	fn create_invalid_airdrop_bttf() {
+	fn should_fail_to_create_an_airdrop_in_the_past() {
 		let creator = Origin::signed(CREATOR);
 		let start: Option<Moment> = Some(DEFAULT_VESTING_PERIOD * 2);
 		let vesting_schedule = DEFAULT_VESTING_PERIOD;
@@ -119,12 +118,12 @@ mod create_airdrop_tests {
 }
 
 #[cfg(test)]
-mod add_recipient_tests {
+mod add_recipient {
 
 	use super::*;
 
 	#[test]
-	fn add_recipient_invalid_creator() {
+	fn should_fail_to_add_recipients_if_origin_is_not_creator() {
 		let creator = Origin::signed(CREATOR);
 		let other = Origin::signed(OTHER);
 		let start: Option<Moment> = Some(DEFAULT_VESTING_PERIOD * 2);
@@ -146,7 +145,7 @@ mod add_recipient_tests {
 	}
 
 	#[test]
-	fn add_recipient_insufficient_funds() {
+	fn should_fail_to_add_recipients_if_origin_has_insufficient_funds() {
 		let creator = Origin::signed(CREATOR);
 		let start: Option<Moment> = Some(DEFAULT_VESTING_PERIOD * 2);
 		let vesting_schedule = DEFAULT_VESTING_PERIOD;
@@ -167,7 +166,7 @@ mod add_recipient_tests {
 	}
 
 	#[test]
-	fn add_recipient_airdrop_does_not_exist() {
+	fn should_fail_to_add_recipients_if_airdrop_does_not_exist() {
 		let creator = Origin::signed(CREATOR);
 		let accounts = generate_accounts(128);
 		let recipients = accounts
@@ -186,7 +185,7 @@ mod add_recipient_tests {
 
 	#[test]
 	#[allow(clippy::disallowed_methods)] // Allow unwrap
-	fn add_recipient_valid() {
+	fn should_add_recipients_successfully() {
 		with_default_recipients(|_, accounts| {
 			assert_eq!(Airdrop::total_airdrop_recipients(1), DEFAULT_NB_OF_CONTRIBUTORS as u32);
 
@@ -201,12 +200,12 @@ mod add_recipient_tests {
 }
 
 #[cfg(test)]
-mod remove_recipient_tests {
+mod remove_recipient {
 
 	use super::*;
 
 	#[test]
-	fn remove_recipient_invalid_creator() {
+	fn should_fail_to_remove_recipient_if_origin_is_not_creator() {
 		let other = Origin::signed(OTHER);
 
 		with_default_recipients(|_, accounts| {
@@ -218,7 +217,7 @@ mod remove_recipient_tests {
 	}
 
 	#[test]
-	fn remove_recipient_already_claimed() {
+	fn should_fail_to_remove_recipient_if_recipient_started_claiming() {
 		let creator = Origin::signed(CREATOR);
 
 		with_default_recipients(|set_moment, accounts| {
@@ -237,7 +236,7 @@ mod remove_recipient_tests {
 	}
 
 	#[test]
-	fn remove_recipient_trigger_prune() {
+	fn should_prune_airdrop_if_last_recipient_is_removed() {
 		let creator = Origin::signed(CREATOR);
 
 		with_default_recipients(|_, accounts| {
@@ -254,7 +253,7 @@ mod remove_recipient_tests {
 	}
 
 	#[test]
-	fn remove_recipient_valid_no_prune() {
+	fn should_remove_recipient_successfully() {
 		let creator = Origin::signed(CREATOR);
 
 		with_default_recipients(|_, accounts| {
@@ -269,12 +268,12 @@ mod remove_recipient_tests {
 }
 
 #[cfg(test)]
-mod enable_airdrop_tests {
+mod enable_airdrop {
 
 	use super::*;
 
 	#[test]
-	fn enable_airdrop_invalid_creator() {
+	fn should_fail_to_enable_airdrop_if_origin_is_not_creator() {
 		let other = Origin::signed(OTHER);
 
 		with_default_recipients(|_, _| {
@@ -286,7 +285,7 @@ mod enable_airdrop_tests {
 	}
 
 	#[test]
-	fn enable_airdrop_already_started() {
+	fn should_fail_to_enable_airdrop_if_airdrop_has_already_been_scheduled() {
 		let creator = Origin::signed(CREATOR);
 		let start_at = Some(DEFAULT_VESTING_PERIOD * 2);
 
@@ -302,7 +301,7 @@ mod enable_airdrop_tests {
 
 	#[test]
 	#[allow(clippy::disallowed_methods)] // Allow unwrap
-	fn enable_airdrop_valid() {
+	fn should_enable_airdrop_successfully() {
 		with_default_recipients(|set_moment, _| {
             set_moment(DEFAULT_VESTING_PERIOD * 2);
             assert_eq!(Airdrop::get_airdrop_state(1).unwrap(), AirdropState::Enabled);
@@ -311,11 +310,11 @@ mod enable_airdrop_tests {
 }
 
 #[cfg(test)]
-mod disable_airdrop_tests {
+mod disable_airdrop {
 	use super::*;
 
 	#[test]
-	fn disable_airdrop_invalid_creator() {
+	fn should_fail_to_disable_airdrop_if_origin_is_not_creator() {
 		let other = Origin::signed(OTHER);
 
 		with_default_recipients(|_, _| {
@@ -325,7 +324,7 @@ mod disable_airdrop_tests {
 
 	#[test]
 	#[allow(clippy::disallowed_methods)] // Allow unwrap
-	fn disable_airdrop_valid() {
+	fn should_disable_airdrop_successfully() {
 		let creator = Origin::signed(CREATOR);
 
 		with_default_recipients(|set_moment, _| {
