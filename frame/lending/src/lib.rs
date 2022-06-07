@@ -38,6 +38,7 @@
 
 pub use pallet::*;
 
+pub mod validation;
 pub mod weights;
 pub use crate::weights::WeightInfo;
 
@@ -69,6 +70,10 @@ mod repay_borrow;
 pub mod pallet {
 	use crate::{models::borrower_data::BorrowerData, weights::WeightInfo};
 
+	use crate::validation::{
+		AssetIsSupportedByOracle, BalanceGreaterThenZero, CurrencyPairIsNotSame, MarketModelValid,
+		UpdateInputValid,
+	};
 	use codec::Codec;
 	use composable_support::{
 		math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub},
@@ -79,9 +84,8 @@ pub mod pallet {
 		defi::{DeFiComposableConfig, *},
 		lending::{
 			math::{self, *},
-			AssetIsSupportedByOracle, BalanceGreaterThenZero, BorrowAmountOf, CollateralLpAmountOf,
-			CreateInput, CurrencyPairIsNotSame, Lending, MarketConfig, MarketModelValid,
-			RepayStrategy, TotalDebtWithInterest, UpdateInput, UpdateInputValid,
+			BorrowAmountOf, CollateralLpAmountOf, CreateInput, Lending, MarketConfig,
+			RepayStrategy, TotalDebtWithInterest, UpdateInput,
 		},
 		liquidation::Liquidation,
 		oracle::Oracle,
@@ -112,7 +116,6 @@ pub mod pallet {
 		Percent, Perquintill,
 	};
 	use sp_std::{fmt::Debug, vec, vec::Vec};
-
 	/// Simple type alias around [`MarketConfig`] for this pallet.
 	type MarketConfigOf<T> = MarketConfig<
 		<T as Config>::VaultId,
@@ -631,15 +634,13 @@ pub mod pallet {
 		#[transactional]
 		pub fn create_market(
 			origin: OriginFor<T>,
-			input: Validated<
-				CreateInputOf<T>,
-				(MarketModelValid, CurrencyPairIsNotSame, AssetIsSupportedByOracle<T::Oracle>),
-			>,
+			input: CreateInputOf<T>,
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			let pair = input.clone().value().currency_pair;
-			let (market_id, vault_id) = Self::create(who.clone(), input, keep_alive)?;
+			let pair = input.currency_pair;
+			let (market_id, vault_id) =
+				<Self as Lending>::create_market(who.clone(), input, keep_alive)?;
 			Self::deposit_event(Event::<T>::MarketCreated {
 				market_id,
 				vault_id,
@@ -656,29 +657,10 @@ pub mod pallet {
 		pub fn update_market(
 			origin: OriginFor<T>,
 			market_id: MarketIndex,
-			input: Validated<
-				UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>,
-				UpdateInputValid,
-			>,
+			input: UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			let input = input.value();
-			Markets::<T>::mutate(&market_id, |market| {
-				if let Some(market) = market {
-					ensure!(who == market.manager, Error::<T>::Unauthorized);
-
-					market.collateral_factor = input.collateral_factor;
-					market.interest_rate_model = input.interest_rate_model;
-					market.under_collateralized_warn_percent =
-						input.under_collateralized_warn_percent;
-					market.liquidators = input.liquidators.clone();
-					Ok(())
-				} else {
-					Err(Error::<T>::MarketDoesNotExist)
-				}
-			})?;
-			Self::deposit_event(Event::<T>::MarketUpdated { market_id, input });
-			Ok(().into())
+			<Self as Lending>::update_market(who, market_id, input)
 		}
 
 		/// Deposit collateral to market.
@@ -690,16 +672,12 @@ pub mod pallet {
 		pub fn deposit_collateral(
 			origin: OriginFor<T>,
 			market_id: MarketIndex,
-			amount: Validated<T::Balance, BalanceGreaterThenZero>,
+			amount: T::Balance,
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			<Self as Lending>::deposit_collateral(&market_id, &sender, amount, keep_alive)?;
-			Self::deposit_event(Event::<T>::CollateralDeposited {
-				sender,
-				market_id,
-				amount: amount.value(),
-			});
+			Self::deposit_event(Event::<T>::CollateralDeposited { sender, market_id, amount });
 			Ok(().into())
 		}
 
@@ -1105,6 +1083,139 @@ pub mod pallet {
 
 	// private helper functions
 	impl<T: Config> Pallet<T> {
+		fn do_create_market(
+			manager: T::AccountId,
+			input: Validated<
+				CreateInputOf<T>,
+				(MarketModelValid, CurrencyPairIsNotSame, AssetIsSupportedByOracle<T::Oracle>),
+			>,
+			keep_alive: bool,
+		) -> Result<(<Self as Lending>::MarketId, T::VaultId), DispatchError> {
+			let config_input = input.value();
+			LendingCount::<T>::try_mutate(|MarketIndex(previous_market_index)| {
+				let market_id = {
+					// TODO: early mutation of `previous_market_index` value before check.
+					*previous_market_index += 1;
+					ensure!(
+						*previous_market_index <= T::MaxMarketCount::get(),
+						Error::<T>::ExceedLendingCount
+					);
+					MarketIndex(*previous_market_index)
+				};
+
+				let borrow_asset_vault = T::Vault::create(
+					Deposit::Existential,
+					VaultConfig {
+						asset_id: config_input.borrow_asset(),
+						reserved: config_input.reserved_factor(),
+						manager: manager.clone(),
+						strategies: [(
+							Self::account_id(&market_id),
+							// Borrowable = 100% - reserved
+							// REVIEW: Review use of `saturating_sub` here - I'm pretty sure this
+							// can never error, but if `Perquintill` can be `>`
+							// `Perquintill::one()` then we might want to re-evaluate the logic
+							// here.
+							Perquintill::one().saturating_sub(config_input.reserved_factor()),
+						)]
+						.into_iter()
+						.collect(),
+					},
+				)?;
+
+				let initial_pool_size =
+					Self::calculate_initial_pool_size(config_input.borrow_asset())?;
+
+				ensure!(
+					initial_pool_size > T::Balance::zero(),
+					Error::<T>::PriceOfInitialBorrowVaultShouldBeGreaterThanZero
+				);
+
+				// transfer `initial_pool_size` worth of borrow asset from the manager to the market
+				T::MultiCurrency::transfer(
+					config_input.borrow_asset(),
+					&manager,
+					&Self::account_id(&market_id),
+					initial_pool_size,
+					keep_alive,
+				)?;
+
+				let market_config = MarketConfig {
+					manager,
+					max_price_age: config_input.updatable.max_price_age,
+					borrow_asset_vault: borrow_asset_vault.clone(),
+					collateral_asset: config_input.collateral_asset(),
+					collateral_factor: config_input.updatable.collateral_factor,
+					interest_rate_model: config_input.updatable.interest_rate_model,
+					under_collateralized_warn_percent: config_input
+						.updatable
+						.under_collateralized_warn_percent,
+					liquidators: config_input.updatable.liquidators,
+				};
+				// TODO: pass ED from API,
+				let debt_token_id = T::CurrencyFactory::reserve_lp_token_id(T::Balance::default())?;
+
+				DebtTokenForMarket::<T>::insert(market_id, debt_token_id);
+				Markets::<T>::insert(market_id, market_config);
+				BorrowIndex::<T>::insert(market_id, FixedU128::one());
+
+				Ok((market_id, borrow_asset_vault))
+			})
+		}
+		fn do_deposit_collateral(
+			market_id: &<Self as Lending>::MarketId,
+			account: &T::AccountId,
+			amount: Validated<CollateralLpAmountOf<Self>, BalanceGreaterThenZero>,
+			keep_alive: bool,
+		) -> Result<(), DispatchError> {
+			let amount = amount.value();
+			let (_, market) = Self::get_market(market_id)?;
+			let market_account = Self::account_id(market_id);
+
+			AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
+				let new_collateral_balance =
+					collateral_balance.unwrap_or_default().safe_add(&amount)?;
+				collateral_balance.replace(new_collateral_balance);
+				Result::<(), DispatchError>::Ok(())
+			})?;
+
+			<T as Config>::MultiCurrency::transfer(
+				market.collateral_asset,
+				account,
+				&market_account,
+				amount,
+				keep_alive,
+			)?;
+			Ok(())
+		}
+
+		fn do_update_market(
+			manager: T::AccountId,
+			market_id: MarketIndex,
+			input: Validated<
+				UpdateInput<T::LiquidationStrategyId, <T as frame_system::Config>::BlockNumber>,
+				UpdateInputValid,
+			>,
+		) -> DispatchResultWithPostInfo {
+			let input = input.value();
+			Markets::<T>::mutate(&market_id, |market| {
+				if let Some(market) = market {
+					ensure!(manager == market.manager, Error::<T>::Unauthorized);
+
+					market.collateral_factor = input.collateral_factor;
+					market.interest_rate_model = input.interest_rate_model;
+					market.under_collateralized_warn_percent =
+						input.under_collateralized_warn_percent;
+					market.liquidators = input.liquidators.clone();
+					Ok(())
+				} else {
+					Err(Error::<T>::MarketDoesNotExist)
+				}
+			})?;
+			Self::deposit_event(Event::<T>::MarketUpdated { market_id, input });
+			Ok(().into())
+		}
+
 		/// Returns pair of market's id and market (as 'MarketConfing') via market's id
 		/// - `market_id` : Market index as a key in 'Markets' storage
 		fn get_market(
@@ -1223,84 +1334,20 @@ pub mod pallet {
 		type LiquidationStrategyId = <T as Config>::LiquidationStrategyId;
 		type Oracle = T::Oracle;
 
-		fn create(
+		fn create_market(
 			manager: Self::AccountId,
-			input: Validated<
-				CreateInputOf<T>,
-				(MarketModelValid, CurrencyPairIsNotSame, AssetIsSupportedByOracle<T::Oracle>),
-			>,
+			input: CreateInputOf<T>,
 			keep_alive: bool,
 		) -> Result<(Self::MarketId, Self::VaultId), DispatchError> {
-			let config_input = input.value();
-			LendingCount::<T>::try_mutate(|MarketIndex(previous_market_index)| {
-				let market_id = {
-					// TODO: early mutation of `previous_market_index` value before check.
-					*previous_market_index += 1;
-					ensure!(
-						*previous_market_index <= T::MaxMarketCount::get(),
-						Error::<T>::ExceedLendingCount
-					);
-					MarketIndex(*previous_market_index)
-				};
+			Self::do_create_market(manager, input.try_into_validated()?, keep_alive)
+		}
 
-				let borrow_asset_vault = T::Vault::create(
-					Deposit::Existential,
-					VaultConfig {
-						asset_id: config_input.borrow_asset(),
-						reserved: config_input.reserved_factor(),
-						manager: manager.clone(),
-						strategies: [(
-							Self::account_id(&market_id),
-							// Borrowable = 100% - reserved
-							// REVIEW: Review use of `saturating_sub` here - I'm pretty sure this
-							// can never error, but if `Perquintill` can be `>`
-							// `Perquintill::one()` then we might want to re-evaluate the logic
-							// here.
-							Perquintill::one().saturating_sub(config_input.reserved_factor()),
-						)]
-						.into_iter()
-						.collect(),
-					},
-				)?;
-
-				let initial_pool_size =
-					Self::calculate_initial_pool_size(config_input.borrow_asset())?;
-
-				ensure!(
-					initial_pool_size > T::Balance::zero(),
-					Error::<T>::PriceOfInitialBorrowVaultShouldBeGreaterThanZero
-				);
-
-				// transfer `initial_pool_size` worth of borrow asset from the manager to the market
-				T::MultiCurrency::transfer(
-					config_input.borrow_asset(),
-					&manager,
-					&Self::account_id(&market_id),
-					initial_pool_size,
-					keep_alive,
-				)?;
-
-				let market_config = MarketConfig {
-					manager,
-					max_price_age: config_input.updatable.max_price_age,
-					borrow_asset_vault: borrow_asset_vault.clone(),
-					collateral_asset: config_input.collateral_asset(),
-					collateral_factor: config_input.updatable.collateral_factor,
-					interest_rate_model: config_input.updatable.interest_rate_model,
-					under_collateralized_warn_percent: config_input
-						.updatable
-						.under_collateralized_warn_percent,
-					liquidators: config_input.updatable.liquidators,
-				};
-				// TODO: pass ED from API,
-				let debt_token_id = T::CurrencyFactory::reserve_lp_token_id(T::Balance::default())?;
-
-				DebtTokenForMarket::<T>::insert(market_id, debt_token_id);
-				Markets::<T>::insert(market_id, market_config);
-				BorrowIndex::<T>::insert(market_id, FixedU128::one());
-
-				Ok((market_id, borrow_asset_vault))
-			})
+		fn update_market(
+			manager: Self::AccountId,
+			market_id: Self::MarketId,
+			input: UpdateInput<Self::LiquidationStrategyId, Self::BlockNumber>,
+		) -> DispatchResultWithPostInfo {
+			Self::do_update_market(manager, market_id, input.try_into_validated()?)
 		}
 
 		fn account_id(market_id: &Self::MarketId) -> Self::AccountId {
@@ -1310,28 +1357,15 @@ pub mod pallet {
 		fn deposit_collateral(
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
-			amount: Validated<CollateralLpAmountOf<Self>, BalanceGreaterThenZero>,
+			amount: CollateralLpAmountOf<Self>,
 			keep_alive: bool,
 		) -> Result<(), DispatchError> {
-			let amount = amount.value();
-			let (_, market) = Self::get_market(market_id)?;
-			let market_account = Self::account_id(market_id);
-
-			AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
-				let new_collateral_balance =
-					collateral_balance.unwrap_or_default().safe_add(&amount)?;
-				collateral_balance.replace(new_collateral_balance);
-				Result::<(), DispatchError>::Ok(())
-			})?;
-
-			<T as Config>::MultiCurrency::transfer(
-				market.collateral_asset,
+			Self::do_deposit_collateral(
+				market_id,
 				account,
-				&market_account,
-				amount,
+				amount.try_into_validated()?,
 				keep_alive,
-			)?;
-			Ok(())
+			)
 		}
 
 		fn withdraw_collateral(

@@ -26,7 +26,7 @@ fn test_liquidation_offchain_worker() {
 		let risky_borrower = *ALICE;
 		// BOB is reliable borrower who's borrow should not be liquidated
 		let reliable_borrower = *BOB;
-		// Create a market with BTC as collateral asset and USDT as borrow asset.
+		// reate a market with BTC as collateral asset and USDT as borrow asset.
 		// Initial collateral asset price is 50_000 USDT. Market's collateral factor equals two.
 		// It means that borrow supposed to be undercolateraized when
 		// borrowed amount is higher then one half of collateral amount in terms of USDT.

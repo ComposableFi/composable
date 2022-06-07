@@ -4,9 +4,13 @@
 //! to accure(and miminal block delta), and maximal amounts when it overflows
 
 use crate::{
-	self as pallet_lending, accrue_interest_internal, currency::*, mocks::*,
-	models::borrower_data::BorrowerData, setup::assert_last_event, AccruedInterest, Error,
-	MarketIndex,
+	self as pallet_lending, accrue_interest_internal,
+	currency::*,
+	mocks::*,
+	models::borrower_data::BorrowerData,
+	setup::assert_last_event,
+	validation::{BalanceGreaterThenZero, UpdateInputValid},
+	AccruedInterest, Error, MarketIndex,
 };
 use composable_support::validation::{TryIntoValidated, Validated};
 use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok, test};
@@ -16,8 +20,8 @@ use composable_traits::{
 		ZeroToOneFixedU128,
 	},
 	lending::{
-		math::*, BalanceGreaterThenZero, CreateInput, Lending as LendingTrait, RepayStrategy,
-		TotalDebtWithInterest, UpdateInput, UpdateInputValid,
+		math::*, CreateInput, Lending as LendingTrait, RepayStrategy, TotalDebtWithInterest,
+		UpdateInput,
 	},
 	oracle,
 	time::SECONDS_PER_YEAR_NAIVE,
@@ -267,8 +271,7 @@ fn can_update_market() {
 				CurveModel::new(CurveModel::MAX_BASE_RATE).unwrap(),
 			),
 		};
-		let input = update_input.clone().try_into_validated().unwrap();
-		let updated = Lending::update_market(origin, market_id, input);
+		let updated = Lending::update_market(origin, market_id, update_input.clone());
 		// check if the market was successfully updated
 		assert_ok!(updated);
 		let market_updated_event: crate::Event<Runtime> =
@@ -319,7 +322,7 @@ fn can_create_valid_market() {
 
 		let should_have_failed = Lending::create_market(
 			Origin::signed(*ALICE),
-			config.clone().try_into_validated().unwrap(),
+			config.clone(),
 			false,
 		);
 
@@ -344,9 +347,9 @@ fn can_create_valid_market() {
 		Tokens::mint_into(BORROW_ASSET_ID, &*ALICE, INITIAL_BORROW_ASSET_AMOUNT).unwrap();
         let manager = *ALICE;
 		let origin = Origin::signed(manager);
-        let input = config.clone().try_into_validated().unwrap();
+        let input = config.clone();
 
-		let should_be_created = Lending::create_market(origin, input.clone(), false);
+		let should_be_created = Lending::create_market(origin, config, false);
 
 		assert!(
 			matches!(should_be_created, Ok(PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },)),
@@ -446,7 +449,7 @@ fn can_create_valid_market_with_keep_alive() {
 
 		let should_have_failed = Lending::create_market(
 			Origin::signed(*ALICE),
-			config.clone().try_into_validated().unwrap(),
+			config.clone(),
 			true,
 		);
 
@@ -471,9 +474,9 @@ fn can_create_valid_market_with_keep_alive() {
 		Tokens::mint_into(BORROW_ASSET_ID, &*ALICE, INITIAL_BORROW_ASSET_AMOUNT).unwrap();
         let manager = *ALICE;
 		let origin = Origin::signed(manager);
-        let input = config.clone().try_into_validated().unwrap();
+        let input = config.clone();
 
-		let should_be_created = Lending::create_market(origin, input.clone(), true);
+		let should_be_created = Lending::create_market(origin, config, true);
 
 		assert!(
 			matches!(should_be_created, Ok(PostDispatchInfo { actual_weight: None, pays_fee: Pays::Yes },)),
@@ -561,7 +564,7 @@ fn test_borrow_repay_in_same_block() {
 			Lending::deposit_collateral(
 				Origin::signed(*ALICE),
 				market_id,
-				collateral_amount.try_into_validated().unwrap(),
+				collateral_amount,
 				false,
 			),
 			Event::Lending(crate::Event::CollateralDeposited {
@@ -687,7 +690,7 @@ fn old_price() {
 		assert_ok!(Lending::deposit_collateral(
 			Origin::signed(*ALICE),
 			market,
-			collateral_amount.try_into_validated().unwrap(),
+			collateral_amount,
 			false
 		));
 
@@ -769,7 +772,7 @@ fn borrow_flow() {
 		assert_ok!(Lending::deposit_collateral(
 			Origin::signed(*ALICE),
 			market,
-			collateral_amount.try_into_validated().unwrap(),
+			collateral_amount,
 			false
 		));
 		let event = Event::Lending(crate::Event::CollateralDeposited {
@@ -872,12 +875,7 @@ fn borrow_flow() {
 		assert_ok!(Tokens::mint_into(USDT::ID, &ALICE, collateral_amount));
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(
-				Origin::signed(*ALICE),
-				market,
-				collateral_amount.try_into_validated().unwrap(),
-				false,
-			),
+			Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral_amount, false),
 			Event::Lending(crate::Event::CollateralDeposited {
 				sender: *ALICE,
 				amount: collateral_amount,
@@ -922,12 +920,7 @@ fn vault_takes_part_of_borrow_so_cannot_withdraw() {
 
 		assert_ok!(Vault::deposit(Origin::signed(*ALICE), vault_id, deposit_btc));
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(
-				Origin::signed(*ALICE),
-				market_id,
-				deposit_usdt.try_into_validated().unwrap(),
-				false,
-			),
+			Lending::deposit_collateral(Origin::signed(*ALICE), market_id, deposit_usdt, false),
 			Event::Lending(pallet_lending::Event::<Runtime>::CollateralDeposited {
 				sender: *ALICE,
 				market_id,
@@ -963,12 +956,7 @@ fn test_vault_market_can_withdraw() {
 		assert_ok!(Vault::deposit(Origin::signed(*ALICE), vault_id, borrow));
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(
-				Origin::signed(*ALICE),
-				market,
-				collateral.try_into_validated().unwrap(),
-				false,
-			),
+			Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral, false),
 			Event::Lending(crate::Event::CollateralDeposited {
 				sender: *ALICE,
 				amount: collateral,
@@ -1274,12 +1262,7 @@ fn test_repay_total_debt() {
 		let deposit_collateral = |account, balance| {
 			assert_ok!(Tokens::mint_into(BTC::ID, account, balance));
 			assert_extrinsic_event::<Runtime>(
-				Lending::deposit_collateral(
-					Origin::signed(*account),
-					market_index,
-					balance.try_into_validated().unwrap(),
-					false,
-				),
+				Lending::deposit_collateral(Origin::signed(*account), market_index, balance, false),
 				Event::Lending(crate::Event::<Runtime>::CollateralDeposited {
 					market_id: market_index,
 					amount: BTC::ONE,
@@ -1409,12 +1392,7 @@ fn liquidation() {
 		assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, collateral));
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(
-				Origin::signed(*ALICE),
-				market_id,
-				collateral.try_into_validated().unwrap(),
-				false,
-			),
+			Lending::deposit_collateral(Origin::signed(*ALICE), market_id, collateral, false),
 			Event::Lending(crate::Event::CollateralDeposited {
 				sender: *ALICE,
 				amount: collateral,
@@ -1480,7 +1458,7 @@ fn test_warn_soon_under_collateralized() {
 		assert_ok!(Lending::deposit_collateral(
 			Origin::signed(*ALICE),
 			market,
-			two_btc_amount.try_into_validated().unwrap(),
+			two_btc_amount,
 			false
 		));
 		let event = Event::Lending(crate::Event::CollateralDeposited {
@@ -1542,9 +1520,7 @@ fn current_interest_rate_test() {
 				CurveModel::new(CurveModel::MAX_BASE_RATE).unwrap(),
 			),
 		};
-		let update_input = update_input.try_into_validated().unwrap();
 		assert_ok!(Lending::update_market(Origin::signed(manager), market_id, update_input));
-
 		assert_eq!(
 			crate::current_interest_rate::<Runtime>(market_id.0).unwrap(),
 			FixedU128::saturating_from_rational(1, 10)
@@ -1575,12 +1551,7 @@ fn market_owner_cannot_retroactively_liquidate() {
 		assert_ok!(Tokens::mint_into(BTC::ID, &BOB, collateral_amount));
 
 		assert_extrinsic_event::<Runtime>(
-			Lending::deposit_collateral(
-				Origin::signed(*BOB),
-				market_id,
-				collateral_amount.try_into_validated().unwrap(),
-				false,
-			),
+			Lending::deposit_collateral(Origin::signed(*BOB), market_id, collateral_amount, false),
 			Event::Lending(crate::Event::CollateralDeposited {
 				sender: *BOB,
 				amount: collateral_amount,
@@ -1618,7 +1589,6 @@ fn market_owner_cannot_retroactively_liquidate() {
 			max_price_age: DEFAULT_MAX_PRICE_AGE,
 		};
 		// ALICE is the creater of the market.
-		let updatable = updatable.try_into_validated::<UpdateInputValid>().unwrap();
 		assert_ok!(Lending::update_market(Origin::signed(*ALICE), market_id, updatable));
 		// BOB loan must be liquidated now.
 		assert_eq!(Lending::should_liquidate(&market_id, &BOB), Ok(true));
@@ -1721,7 +1691,7 @@ proptest! {
 			let (market, _) = create_simple_market();
 			let before = Tokens::balance( BTC::ID, &ALICE);
 			prop_assert_ok!(Tokens::mint_into( BTC::ID, &ALICE, amount));
-			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market,amount.try_into_validated().unwrap(), false));
+			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, amount, false));
 			let event =
 				Event::Lending(crate::Event::CollateralDeposited {
 					sender: *ALICE,
@@ -1749,7 +1719,7 @@ proptest! {
 		new_test_ext().execute_with(|| {
 			let (market, _vault) = create_simple_market();
 			prop_assert_ok!(Tokens::mint_into(BTC::ID, &ALICE, amount));
-			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, amount.try_into_validated().unwrap(), false));
+			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, amount, false));
 			let event =
 				Event::Lending(crate::Event::CollateralDeposited {
 					sender: *ALICE,
@@ -1780,7 +1750,7 @@ proptest! {
 			let ((market, _), collateral_asset) = create_simple_vaulted_market(BTC::instance(), *ALICE);
 			let before = Tokens::balance(collateral_asset, &ALICE);
 			prop_assert_ok!(Tokens::mint_into(collateral_asset, &ALICE, amount));
-			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market,amount.try_into_validated().unwrap(), false));
+			prop_assert_ok!(Lending::deposit_collateral(Origin::signed(*ALICE), market, amount , false));
 			let event =
 				Event::Lending(crate::Event::CollateralDeposited {
 					sender: *ALICE,
@@ -1965,12 +1935,7 @@ where
 		currency_pair: CurrencyPair::new(collateral_asset.id(), borrow_asset.id()),
 	};
 
-	crate::Pallet::<T>::create_market(
-		SystemOriginOf::<T>::signed(manager),
-		config.try_into_validated().unwrap(),
-		false,
-	)
-	.unwrap();
+	crate::Pallet::<T>::create_market(SystemOriginOf::<T>::signed(manager), config, false).unwrap();
 	let system_events = frame_system::Pallet::<T>::events();
 	let last_system_event = system_events.last().expect("There are no events in System::events()");
 	let pallet_event: crate::Event<T> = last_system_event
@@ -2085,7 +2050,7 @@ pub fn mint_and_deposit_collateral<T>(
 	assert_ok!(crate::Pallet::<T>::deposit_collateral(
 		SystemOriginOf::<T>::signed(account),
 		market_index,
-		balance.try_into_validated().unwrap(),
+		balance,
 		false,
 	));
 	let event = crate::Event::<T>::CollateralDeposited {
