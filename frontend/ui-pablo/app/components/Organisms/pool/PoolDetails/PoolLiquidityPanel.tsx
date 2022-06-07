@@ -87,7 +87,7 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
     <BoxWrapper {...boxProps}>
       <Grid container>
         <Grid item {...twoColumnPageSize}>
-          <Typography variant="h5">{`$${totalValueProvided.toFormat()}`}</Typography>
+          <Typography variant="h5">{`$${totalValueProvided.toFormat(2)}`}</Typography>
           <Typography variant="body1" color="text.secondary">
             Liquidity Provided
           </Typography>
@@ -134,7 +134,7 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
             <Box mt={8}>
               {poolDetails.baseAsset && (
                 <Item
-                  value={liquidityProvided.tokenAmounts.baseAmount.toFormat()}
+                  value={liquidityProvided.tokenAmounts.baseAmount.toFormat(2)}
                 >
                   <BaseAsset
                     label={`Pooled ${poolDetails.baseAsset.symbol}`}
@@ -144,7 +144,7 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
               )}
               {poolDetails.quoteAsset && (
                 <Item
-                  value={liquidityProvided.tokenAmounts.quoteAmount.toFormat()}
+                  value={liquidityProvided.tokenAmounts.quoteAmount.toFormat(2)}
                   mt={4}
                 >
                   <BaseAsset

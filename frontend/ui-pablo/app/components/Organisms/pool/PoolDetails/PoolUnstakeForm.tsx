@@ -18,7 +18,6 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
   const theme = useTheme();
   const poolDetails = useLiquidityPoolDetails(poolId);
 
-  const [balance] = useState<BigNumber>(new BigNumber(200.0));
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
 
@@ -38,7 +37,7 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
           setValue={setAmount}
           buttonLabel={"Max"}
           ButtonProps={{
-            onClick: () => setAmount(balance),
+            onClick: () => setAmount(poolDetails.lpBalance),
             sx: {
               padding: theme.spacing(1),
             },
@@ -48,7 +47,7 @@ export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
             TypographyProps: {color: "text.secondary"},
             BalanceProps: {
               title: <AccountBalanceWalletIcon color="primary" />,
-              balance: `${balance} ${poolDetails.baseAsset?.symbol}/${poolDetails.quoteAsset?.symbol}`,
+              balance: `${poolDetails.lpBalance} ${poolDetails.baseAsset?.symbol}/${poolDetails.quoteAsset?.symbol}`,
               BalanceTypographyProps: {color: "text.secondary"},
             },
           }}
