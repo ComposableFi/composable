@@ -32,7 +32,7 @@ pub trait Amm {
 
 	fn lp_token(pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError>;
 
-	/// Returns the amount of LP tokens that would be recieved by adding the given amounts of base
+	/// Returns the amount of LP tokens that would be received by adding the given amounts of base
 	/// and quote.
 	fn amount_of_lp_token_for_added_liquidity(
 		pool_id: Self::PoolId,
