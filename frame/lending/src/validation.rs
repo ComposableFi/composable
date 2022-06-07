@@ -62,15 +62,8 @@ impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
 	}
 }
 
-#[derive(RuntimeDebug, PartialEq, TypeInfo, Default)]
+#[derive(RuntimeDebug, PartialEq, TypeInfo, Default, Clone, Copy)]
 pub struct AssetIsSupportedByOracle<Oracle: OracleTrait>(PhantomData<Oracle>);
-
-impl<Oracle: OracleTrait> Copy for AssetIsSupportedByOracle<Oracle> {}
-impl<Oracle: OracleTrait> Clone for AssetIsSupportedByOracle<Oracle> {
-	fn clone(&self) -> Self {
-		*self
-	}
-}
 
 impl<LiquidationStrategyId, Asset: Copy, BlockNumber, Oracle: OracleTrait<AssetId = Asset>>
 	Validate<
