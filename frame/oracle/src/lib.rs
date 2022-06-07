@@ -160,6 +160,9 @@ pub mod pallet {
 		type MaxHistory: Get<u32>;
 
 		#[pallet::constant]
+		type TwapWindow: Get<u32>;
+
+		#[pallet::constant]
 		type MaxPrePrices: Get<u32>;
 
 		/// The weight information of this pallet.
@@ -386,6 +389,7 @@ pub mod pallet {
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
 		type LocalAssets = T::LocalAssets;
 		type MaxAnswerBound = T::MaxAnswerBound;
+		type TwapWindow = T::TwapWindow;
 
 		fn get_price(
 			asset_id: Self::AssetId,
@@ -401,12 +405,15 @@ pub mod pallet {
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			const WINDOW: usize = 3;
 			let prices_length = Self::depth_of_history(asset_id);
 			if prices_length == 0 {
 				Self::get_price(asset_id, amount).map(|p| p.price)
 			} else {
-				let weights_length = if prices_length < WINDOW { prices_length } else { WINDOW };
+				let weights_length = if prices_length < Self::TwapWindow::get() as usize {
+					prices_length
+				} else {
+					Self::TwapWindow::get() as usize
+				};
 				// make flat weights
 				let weight = Percent::from_percent(100) / weights_length;
 				let weights = vec![weight; weights_length];
