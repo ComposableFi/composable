@@ -11,14 +11,14 @@ use pablo_runtime_api::PabloRuntimeApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
-use sp_std::{sync::Arc, cmp::Ord};
+use sp_std::{cmp::Ord, sync::Arc};
 
 #[rpc(client, server)]
 pub trait PabloApi<BlockHash, PoolId, AssetId, Balance>
 where
 	PoolId: FromStr + Display,
 	AssetId: FromStr + Display + Ord,
- 	Balance: FromStr + Display,
+	Balance: FromStr + Display,
 {
 	#[method(name = "pablo_pricesFor")]
 	fn prices_for(

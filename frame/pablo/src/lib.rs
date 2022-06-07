@@ -882,10 +882,10 @@ pub mod pallet {
 			)?;
 			match pool {
 				PoolConfiguration::StableSwap(info) => {
-			ensure!(
-				base_amount >= min_base_amount && quote_amount >= min_quote_amount,
-				Error::<T>::CannotRespectMinimumRequested
-			);
+					ensure!(
+						base_amount >= min_base_amount && quote_amount >= min_quote_amount,
+						Error::<T>::CannotRespectMinimumRequested
+					);
 					let (base_amount, quote_amount, updated_lp) =
 						StableSwap::<T>::remove_liquidity(
 							who,
@@ -905,10 +905,10 @@ pub mod pallet {
 					});
 				},
 				PoolConfiguration::ConstantProduct(info) => {
-			ensure!(
-				base_amount >= min_base_amount && quote_amount >= min_quote_amount,
-				Error::<T>::CannotRespectMinimumRequested
-			);
+					ensure!(
+						base_amount >= min_base_amount && quote_amount >= min_quote_amount,
+						Error::<T>::CannotRespectMinimumRequested
+					);
 					let (base_amount, quote_amount, updated_lp) = Uniswap::<T>::remove_liquidity(
 						who,
 						info,
