@@ -23,6 +23,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
 	Perbill,
 };
+use xcm::latest::SendXcm;
 
 use super::governance_registry::GovernanceRegistry;
 
@@ -118,6 +119,7 @@ parameter_type_with_key! {
 	};
 }
 
+type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
@@ -127,6 +129,8 @@ impl orml_tokens::Config for Runtime {
 	type ExistentialDeposits = TokensExistentialDeposit;
 	type OnDust = ();
 	type MaxLocks = ();
+	type ReserveIdentifier = ReserveIdentifier;
+	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
 }
 
@@ -157,7 +161,7 @@ impl pallet_currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRoot<AccountId>;
-	type ReserveOrigin = EnsureRoot<AccountId>;
+	type Balance = Balance;
 	type WeightInfo = ();
 }
 
@@ -189,15 +193,38 @@ impl WeightToFeePolynomial for WeightToFee {
 	}
 }
 
+pub struct XcmFake;
+impl Into<Result<cumulus_pallet_xcm::Origin, XcmFake>> for XcmFake {
+	fn into(self) -> Result<cumulus_pallet_xcm::Origin, XcmFake> {
+		todo!("please test via local-integration-tests")
+	}
+}
+impl From<Origin> for XcmFake {
+	fn from(_: Origin) -> Self {
+		todo!("please test via local-integration-tests")
+	}
+}
+impl SendXcm for XcmFake {
+	fn send_xcm(
+		_destination: impl Into<xcm::latest::MultiLocation>,
+		_message: xcm::latest::Xcm<()>,
+	) -> xcm::latest::SendResult {
+		todo!("please test via local-integration-tests")
+	}
+}
+
 impl pallet_dutch_auction::Config for Runtime {
 	type Event = Event;
 	type UnixTime = Timestamp;
 	type OrderId = OrderId;
 	type MultiCurrency = Assets;
-	type WeightInfo = ();
-	type WeightToFee = WeightToFee;
+	type WeightInfo = pallet_dutch_auction::weights::SubstrateWeight<Self>;
 	type PalletId = DutchAuctionPalletId;
 	type NativeCurrency = Balances;
+	type PositionExistentialDeposit = NativeExistentialDeposit;
+	type AdminOrigin = EnsureRoot<Self::AccountId>;
+	type XcmSender = XcmFake;
+	type XcmOrigin = XcmFake;
 }
 
 parameter_types! {
@@ -205,7 +232,6 @@ parameter_types! {
 }
 
 type LiquidationStrategyId = u32;
-type ParaId = u32;
 impl pallet_liquidations::Config for Runtime {
 	type Event = Event;
 	type UnixTime = Timestamp;
@@ -214,7 +240,8 @@ impl pallet_liquidations::Config for Runtime {
 	type DutchAuction = DutchAuction;
 	type LiquidationStrategyId = LiquidationStrategyId;
 	type PalletId = LiquidationPalletId;
-	type ParachainId = ParaId;
+	type CanModifyStrategies = EnsureRoot<Self::AccountId>;
+	type XcmSender = XcmFake;
 }
 
 #[allow(dead_code)] // not really dead

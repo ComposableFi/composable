@@ -1,17 +1,19 @@
 use crate as pallet_oracle;
 use crate::*;
 use frame_support::{
-	ord_parameter_types, pallet_prelude::ConstU32, parameter_types, traits::Everything,
+	ord_parameter_types,
+	pallet_prelude::ConstU32,
+	parameter_types,
+	traits::{EnsureOneOf, Everything},
 };
 use frame_system as system;
 use frame_system::EnsureSignedBy;
-use sp_core::{sr25519::Signature, H256};
-use sp_keystore::{testing::KeyStore, SyncCryptoStore};
+use sp_core::{sr25519, sr25519::Signature, H256};
 use sp_runtime::{
 	testing::{Header, TestXt},
 	traits::{BlakeTwo256, Extrinsic as ExtrinsicT, IdentifyAccount, IdentityLookup, Verify},
-	RuntimeAppPublic,
 };
+use system::EnsureRoot;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -29,14 +31,14 @@ frame_support::construct_runtime!(
 	}
 );
 
-pub type BlockNumber = u64;
-
 // pub type StalePrice = Get<u64>;
 
 parameter_types! {
 	pub const BlockHashCount: u64 = 250;
 	pub const SS58Prefix: u8 = 42;
 }
+
+pub type BlockNumber = u64;
 
 impl system::Config for Test {
 	type BaseCallFilter = Everything;
@@ -46,7 +48,7 @@ impl system::Config for Test {
 	type Origin = Origin;
 	type Call = Call;
 	type Index = u64;
-	type BlockNumber = u64;
+	type BlockNumber = BlockNumber;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = sp_core::sr25519::Public;
@@ -69,8 +71,9 @@ parameter_types! {
 	pub const ExistentialDeposit: u64 = 1;
 }
 
+pub type Balance = u64;
 impl pallet_balances::Config for Test {
-	type Balance = u64;
+	type Balance = Balance;
 	type Event = Event;
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
@@ -92,7 +95,7 @@ parameter_types! {
 }
 
 ord_parameter_types! {
-	pub const RootAccount: AccountId = get_account_2();
+	pub const RootAccount: AccountId = get_root_account();
 }
 
 pub type Extrinsic = TestXt<Call, ()>;
@@ -125,22 +128,29 @@ where
 	}
 }
 
+pub type AssetId = u128;
+pub type PriceValue = u128;
+parameter_types! {
+ pub const TreasuryAccountId : AccountId= sr25519::Public([10u8; 32]);
+}
 impl pallet_oracle::Config for Test {
 	type Event = Event;
 	type AuthorityId = crypto::BathurstStId;
 	type Currency = Balances;
-	type AssetId = u128;
-	type PriceValue = u128;
+	type AssetId = AssetId;
+	type PriceValue = PriceValue;
 	type StakeLock = StakeLock;
 	type StalePrice = StalePrice;
 	type MinStake = MinStake;
-	type AddOracle = EnsureSignedBy<RootAccount, sp_core::sr25519::Public>;
+	type AddOracle =
+		EnsureOneOf<EnsureSignedBy<RootAccount, sp_core::sr25519::Public>, EnsureRoot<AccountId>>;
 	type MaxAnswerBound = MaxAnswerBound;
 	type MaxAssetsCount = MaxAssetsCount;
 	type MaxHistory = MaxHistory;
 	type MaxPrePrices = MaxPrePrices;
 	type WeightInfo = ();
 	type LocalAssets = ();
+	type TreasuryAccount = TreasuryAccountId;
 }
 
 // Build genesis storage according to the mock runtime.
@@ -149,69 +159,37 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	let genesis = pallet_balances::GenesisConfig::<Test> {
 		balances: vec![
 			(get_account_1(), 100),
-			(get_account_2(), 100),
+			(get_root_account(), 100),
 			(get_account_4(), 100),
+			(get_account_3(), 100),
 			(get_account_5(), 100),
+			(get_treasury_account(), 100),
 		],
 	};
 	genesis.assimilate_storage(&mut t).unwrap();
 	t.into()
 }
 
-pub fn get_account_1() -> AccountId {
-	const PHRASE: &str =
-		"elite reward rabbit exotic course desk miracle involve old surface educate direct";
-	let keystore = KeyStore::new();
-	SyncCryptoStore::sr25519_generate_new(
-		&keystore,
-		crate::crypto::Public::ID,
-		Some(&format!("{}/hunter1", PHRASE)),
-	)
-	.unwrap()
+pub const fn get_account_1() -> AccountId {
+	sr25519::Public([1u8; 32])
 }
 
-pub fn get_account_2() -> AccountId {
-	const PHRASE: &str =
-		"news slush supreme milk chapter athlete soap sausage put clutch what kitten";
-	let keystore = KeyStore::new();
-	SyncCryptoStore::sr25519_generate_new(
-		&keystore,
-		crate::crypto::Public::ID,
-		Some(&format!("{}/hunter1", PHRASE)),
-	)
-	.unwrap()
+pub const fn get_root_account() -> AccountId {
+	sr25519::Public([2u8; 32])
 }
 
-pub fn get_account_3() -> AccountId {
-	const PHRASE: &str =
-		"know keen dinner rigid attend sentence demise aunt chronic flash energy parrot";
-	let keystore = KeyStore::new();
-	SyncCryptoStore::sr25519_generate_new(
-		&keystore,
-		crate::crypto::Public::ID,
-		Some(&format!("{}/hunter1", PHRASE)),
-	)
-	.unwrap()
+pub const fn get_account_3() -> AccountId {
+	sr25519::Public([3u8; 32])
 }
 
 pub fn get_account_4() -> AccountId {
-	const PHRASE: &str = "wild fog rather logic flame media blade aerobic either toast cost damp";
-	let keystore = KeyStore::new();
-	SyncCryptoStore::sr25519_generate_new(
-		&keystore,
-		crate::crypto::Public::ID,
-		Some(&format!("{}/hunter1", PHRASE)),
-	)
-	.unwrap()
+	sr25519::Public([4u8; 32])
 }
 
 pub fn get_account_5() -> AccountId {
-	const PHRASE: &str = "topic say join drop loud labor little chest public squeeze fossil coil";
-	let keystore = KeyStore::new();
-	SyncCryptoStore::sr25519_generate_new(
-		&keystore,
-		crate::crypto::Public::ID,
-		Some(&format!("{}/hunter1", PHRASE)),
-	)
-	.unwrap()
+	sr25519::Public([5u8; 32])
+}
+
+pub fn get_treasury_account() -> AccountId {
+	sr25519::Public([10u8; 32])
 }

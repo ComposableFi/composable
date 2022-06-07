@@ -1,4 +1,4 @@
-use polkadot_primitives::v1::UpgradeGoAhead;
+use polkadot_primitives::v2::UpgradeGoAhead;
 use sc_client_api::{CallExecutor, ExecutorProvider};
 use sc_executor::NativeElseWasmExecutor;
 use sc_service::TFullCallExecutor;

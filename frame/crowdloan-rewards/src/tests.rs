@@ -5,10 +5,11 @@ use crate::{
 		CrowdloanRewards, EthKey, ExtBuilder, Moment, Origin, System, Test, Timestamp, ALICE,
 		INITIAL_PAYMENT, PROOF_PREFIX, VESTING_STEP,
 	},
-	models::{EcdsaSignature, EthereumAddress, Proof, RemoteAccount},
+	models::{Proof, RemoteAccount},
 	Error, RemoteAccountOf, RewardAmountOf, VestingPeriodOf,
 };
 use codec::Encode;
+use composable_support::types::{EcdsaSignature, EthereumAddress};
 use frame_support::{assert_noop, assert_ok, traits::Currency};
 use hex_literal::hex;
 use sp_core::{ed25519, storage::StateVersion, Pair};

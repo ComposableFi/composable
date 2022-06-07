@@ -1,3 +1,5 @@
+use crate::{self as pallet_dutch_auction, weights::*};
+
 use crate::mock::{currency::*, runtime::*};
 use composable_traits::{
 	defi::{LiftedFixedBalance, Sell, Take},
@@ -56,14 +58,18 @@ fn setup_sell() {
 		let treasury_added =
 			Assets::balance(PICA, &DutchAuctionPalletId::get().into_account()) - treasury;
 		assert!(treasury_added > 0);
-		assert!(treasury_added >= <() as crate::weights::WeightInfo>::liquidate() as u128);
+		let ask_gas = <Runtime as pallet_dutch_auction::Config>::WeightInfo::ask() as u128;
+		assert!(treasury_added >= ask_gas);
 		let reserved = Assets::reserved_balance(BTC, &ALICE);
 		assert!(not_reserved < reserved && reserved == 1);
 		let order_id = crate::OrdersIndex::<Runtime>::get();
 		assert_ne!(invalid, order_id);
-		let ask_gas = <() as crate::weights::WeightInfo>::ask() as u128;
 		let remaining_gas = Assets::balance(PICA, &ALICE);
-		assert!(gas < remaining_gas + ask_gas + treasury_added);
+		assert!(
+			gas < remaining_gas +
+				<Runtime as pallet_dutch_auction::Config>::PositionExistentialDeposit::get()
+					as u128 + treasury_added
+		);
 	});
 }
 

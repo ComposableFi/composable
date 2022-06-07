@@ -2,6 +2,18 @@
   "relaychain": {
     "bin": "../../../polkadot/target/release/polkadot",
     "chain": "rococo-local",
+    "genesis": {
+      "runtime": {
+        "runtime_genesis_config": {
+          "configuration": {
+            "config": {
+              "validation_upgrade_frequency": 2,
+              "validation_upgrade_delay": 2
+            }
+          }
+        }
+      }
+    },
     "nodes": [
       {
         "name": "alice",

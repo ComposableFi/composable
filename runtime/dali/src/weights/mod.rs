@@ -1,4 +1,5 @@
 #![allow(clippy::unnecessary_cast)]
+pub mod assets_registry;
 pub mod balances;
 pub mod bonded_finance;
 pub mod collator_selection;
@@ -15,15 +16,15 @@ pub mod mosaic;
 pub mod multisig;
 pub mod oracle;
 // pub mod scheduler;
-pub mod curve_amm;
+pub mod dex_router;
 pub mod lending;
 pub mod liquidations;
-pub mod liquidity_bootstrapping;
+pub mod pablo;
+pub mod pallet_ibc;
 pub mod session;
 pub mod timestamp;
 pub mod tokens;
 pub mod treasury;
-pub mod uniswap_v2;
 pub mod utility;
 pub mod vault;
 pub mod vesting;

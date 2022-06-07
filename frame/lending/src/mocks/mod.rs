@@ -7,9 +7,10 @@ use composable_traits::{
 	governance::{GovernanceRegistry, SignedRawOrigin},
 	oracle::Price,
 };
+
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{Everything, GenesisBuild, OnFinalize, OnInitialize},
+	traits::{Everything, GenesisBuild},
 	weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
 	PalletId,
 };
@@ -27,6 +28,7 @@ use sp_runtime::{
 	},
 	DispatchError, Perbill,
 };
+use xcm::latest::SendXcm;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 type Block = frame_system::mocking::MockBlock<Runtime>;
@@ -41,8 +43,6 @@ pub type OrderId = u32;
 parameter_types! {
 	pub const LiquidationsPalletId : PalletId = PalletId(*b"liqd_tns");
 }
-
-pub type ParachainId = u32;
 
 pub const MINIMUM_BALANCE: Balance = 1_000_000;
 
@@ -146,7 +146,7 @@ impl pallet_currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRoot<AccountId>;
-	type ReserveOrigin = EnsureRoot<AccountId>;
+	type Balance = Balance;
 	type WeightInfo = ();
 }
 
@@ -158,7 +158,7 @@ parameter_types! {
 	pub const MinimumDeposit: Balance = 0;
 	pub const MinimumWithdrawal: Balance = 0;
 	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
-  pub const TombstoneDuration: u64 = 42;
+	pub const TombstoneDuration: u64 = 42;
 }
 
 impl pallet_vault::Config for Runtime {
@@ -191,6 +191,7 @@ parameter_types! {
 	pub MaxLocks: u32 = 2;
 }
 
+type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
@@ -200,6 +201,8 @@ impl orml_tokens::Config for Runtime {
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
 	type MaxLocks = ();
+	type ReserveIdentifier = ReserveIdentifier;
+	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
 }
 
@@ -239,9 +242,9 @@ impl pallet_assets::Config for Runtime {
 }
 
 parameter_types! {
-	pub const MinBalance : Balance = 0;
-	pub const MinU32 : u32 = 0;
-	pub const MinU64 : u64 = 0;
+	pub const MinBalance: Balance = 0;
+	pub const MinU32: u32 = 0;
+	pub const MinU64: u64 = 0;
 }
 
 pub struct Decimals;
@@ -267,6 +270,7 @@ impl pallet_oracle::Config for Runtime {
 	type MaxPrePrices = MinU32;
 	type WeightInfo = ();
 	type LocalAssets = Decimals;
+	type TreasuryAccount = RootAccount;
 }
 
 impl DeFiComposableConfig for Runtime {
@@ -280,24 +284,6 @@ parameter_types! {
 
 // later will reuse mocks from that crate
 pub struct DutchAuctionsMocks;
-
-impl pallet_dutch_auction::weights::WeightInfo for DutchAuctionsMocks {
-	fn ask() -> frame_support::dispatch::Weight {
-		0
-	}
-
-	fn take() -> frame_support::dispatch::Weight {
-		0
-	}
-
-	fn liquidate() -> frame_support::dispatch::Weight {
-		0
-	}
-
-	fn known_overhead_for_on_finalize() -> frame_support::dispatch::Weight {
-		0
-	}
-}
 
 impl WeightToFeePolynomial for DutchAuctionsMocks {
 	type Balance = Balance;
@@ -313,15 +299,38 @@ impl WeightToFeePolynomial for DutchAuctionsMocks {
 	}
 }
 
+pub struct XcmFake;
+impl Into<Result<cumulus_pallet_xcm::Origin, XcmFake>> for XcmFake {
+	fn into(self) -> Result<cumulus_pallet_xcm::Origin, XcmFake> {
+		unimplemented!("please test via local-integration-tests")
+	}
+}
+impl From<Origin> for XcmFake {
+	fn from(_: Origin) -> Self {
+		unimplemented!("please test via local-integration-tests")
+	}
+}
+impl SendXcm for XcmFake {
+	fn send_xcm(
+		_destination: impl Into<xcm::latest::MultiLocation>,
+		_message: xcm::latest::Xcm<()>,
+	) -> xcm::latest::SendResult {
+		unimplemented!("please test via local-integration-tests")
+	}
+}
+
 impl pallet_dutch_auction::Config for Runtime {
 	type Event = Event;
-	type OrderId = OrderId;
 	type UnixTime = Timestamp;
+	type OrderId = OrderId;
 	type MultiCurrency = Assets;
-	type WeightInfo = DutchAuctionsMocks;
-	type NativeCurrency = Assets;
+	type WeightInfo = pallet_dutch_auction::weights::SubstrateWeight<Self>;
+	type PositionExistentialDeposit = MinimumDeposit;
 	type PalletId = DutchAuctionPalletId;
-	type WeightToFee = DutchAuctionsMocks;
+	type NativeCurrency = Balances;
+	type XcmOrigin = XcmFake;
+	type AdminOrigin = EnsureRoot<Self::AccountId>;
+	type XcmSender = XcmFake;
 }
 
 impl pallet_liquidations::Config for Runtime {
@@ -332,7 +341,8 @@ impl pallet_liquidations::Config for Runtime {
 	type OrderId = OrderId;
 	type PalletId = LiquidationsPalletId;
 	type WeightInfo = ();
-	type ParachainId = ParachainId;
+	type CanModifyStrategies = EnsureRoot<Self::AccountId>;
+	type XcmSender = XcmFake;
 }
 
 pub type Extrinsic = TestXt<Call, ()>;
@@ -368,7 +378,8 @@ where
 parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
 	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
-	pub OracleMarketCreationStake : Balance = NORMALIZED::one();
+	pub OracleMarketCreationStake: Balance = NORMALIZED::ONE;
+	pub const MaxLiquidationBatchSize: u32 = 5;
 }
 
 parameter_types! {
@@ -398,18 +409,22 @@ impl pallet_lending::Config for Runtime {
 	type CurrencyFactory = LpTokenFactory;
 	type Liquidation = Liquidations;
 	type UnixTime = Timestamp;
-	type MaxLendingCount = MaxLendingCount;
+	type MaxMarketCount = MaxLendingCount;
 	type AuthorityId = crypto::TestAuthId;
 	type WeightInfo = ();
 	type LiquidationStrategyId = LiquidationStrategyId;
 	type PalletId = LendingPalletId;
 	type OracleMarketCreationStake = OracleMarketCreationStake;
+	type MaxLiquidationBatchSize = MaxLiquidationBatchSize;
 
 	type WeightToFee = WeightToFee;
 }
 
-pub fn set_price(asset_id: CurrencyId, balance: Balance) {
-	let price = Price { price: balance, block: System::block_number() };
+/// Convenience function to set the price of an asset in [`pallet_oracle::Prices`].
+///
+/// Sets the price at the current `System::block_number()`.
+pub fn set_price(asset_id: CurrencyId, new_price: Balance) {
+	let price = Price { price: new_price, block: System::block_number() };
 	pallet_oracle::Prices::<Runtime>::insert(asset_id, price);
 }
 
@@ -432,31 +447,8 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 	let mut ext = sp_io::TestExternalities::new(storage);
 	ext.execute_with(|| {
-		System::set_block_number(0);
+		System::set_block_number(1);
 		Timestamp::set_timestamp(MILLISECS_PER_BLOCK);
 	});
 	ext
-}
-
-/// Progress to the given block, and then finalize the block.
-#[allow(dead_code)]
-pub fn run_to_block(n: BlockNumber) {
-	Lending::on_finalize(System::block_number());
-	for b in (System::block_number() + 1)..=n {
-		next_block(b);
-		if b != n {
-			Lending::on_finalize(System::block_number());
-		}
-	}
-}
-
-pub fn process_block(n: BlockNumber) {
-	next_block(n);
-	Lending::on_finalize(n);
-}
-
-pub fn next_block(n: u64) {
-	System::set_block_number(n);
-	Lending::on_initialize(n);
-	Timestamp::set_timestamp(MILLISECS_PER_BLOCK * n);
 }

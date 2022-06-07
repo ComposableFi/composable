@@ -1,19 +1,24 @@
-use composable_support::rpc_helpers::{SafeRpcWrapper, SafeRpcWrapperType};
+use codec::Codec;
+use composable_support::rpc_helpers::SafeRpcWrapper;
+use core::{fmt::Display, str::FromStr};
 use crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi;
 use frame_support::{pallet_prelude::MaybeSerializeDeserialize, Parameter};
-use jsonrpc_core::{Error as RpcError, ErrorCode, Result as RpcResult};
-use jsonrpc_derive::rpc;
+use jsonrpsee::{
+	core::{Error as RpcError, RpcResult},
+	proc_macros::rpc,
+	types::{error::CallError, ErrorObject},
+};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use sp_std::{marker::PhantomData, sync::Arc};
 
-#[rpc]
+#[rpc(client, server)]
 pub trait CrowdloanRewardsApi<BlockHash, AccountId, Balance>
 where
-	Balance: SafeRpcWrapperType,
+	Balance: FromStr + Display,
 {
-	#[rpc(name = "crowdloanRewards_amountAvailableToClaimFor")]
+	#[method(name = "crowdloanRewards_amountAvailableToClaimFor")]
 	fn amount_available_to_claim_for(
 		&self,
 		account: AccountId,
@@ -34,12 +39,13 @@ impl<C, M> CrowdloanRewards<C, M> {
 	}
 }
 
-impl<C, Block, AccountId, Balance> CrowdloanRewardsApi<<Block as BlockT>::Hash, AccountId, Balance>
+impl<C, Block, AccountId, Balance>
+	CrowdloanRewardsApiServer<<Block as BlockT>::Hash, AccountId, Balance>
 	for CrowdloanRewards<C, (Block, AccountId, Balance)>
 where
 	Block: BlockT,
 	AccountId: Send + Sync + Parameter + MaybeSerializeDeserialize + Ord + 'static,
-	Balance: Send + Sync + 'static + SafeRpcWrapperType,
+	Balance: Send + Sync + 'static + Codec + FromStr + Display,
 	C: Send + Sync + ProvideRuntimeApi<Block> + HeaderBackend<Block> + 'static,
 	C::Api: CrowdloanRewardsRuntimeApi<Block, AccountId, Balance>,
 {
@@ -57,11 +63,11 @@ where
 		let runtime_api_result = api.amount_available_to_claim_for(&at, remote_account);
 		// TODO(benluelo): Review what error message & code to use
 		runtime_api_result.map_err(|e| {
-			RpcError {
-				code: ErrorCode::ServerError(9876), // No real reason for this value
-				message: "Something wrong".into(),
-				data: Some(format!("{:?}", e).into()),
-			}
+			RpcError::Call(CallError::Custom(ErrorObject::owned(
+				9876,
+				"Something wrong",
+				Some(format!("{:?}", e)),
+			)))
 		})
 	}
 }

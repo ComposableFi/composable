@@ -62,8 +62,8 @@ parameter_types! {
 
 pub struct CurrencyIdGenerator;
 
-impl CurrencyFactory<AssetId> for CurrencyIdGenerator {
-	fn create(_: RangeId) -> Result<AssetId, sp_runtime::DispatchError> {
+impl CurrencyFactory<AssetId, Balance> for CurrencyIdGenerator {
+	fn create(_: RangeId, _: Balance) -> Result<AssetId, sp_runtime::DispatchError> {
 		Ok(1_u64)
 	}
 }
@@ -84,6 +84,7 @@ parameter_types! {
 	pub const MaxLocks: u32 = 256;
 }
 
+type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
@@ -93,6 +94,8 @@ impl orml_tokens::Config for Test {
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = ();
 	type MaxLocks = MaxLocks;
+	type ReserveIdentifier = ReserveIdentifier;
+	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
 }
 

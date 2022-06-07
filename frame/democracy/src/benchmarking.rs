@@ -255,11 +255,12 @@ benchmarks! {
 		let proposal_hash = T::Hashing::hash_of(&0);
 		let asset_id = T::AssetId::from(DOT_ASSET);
 		let proposal_id = ProposalId { hash: proposal_hash, asset_id };
+		let blacklist_account: T::AccountId = account("blacklist_account", 0, SEED);
 
 		// Add proposal to blacklist with block number 0
 		Blacklist::<T>::insert(
 			proposal_id,
-			(T::BlockNumber::zero(), vec![T::AccountId::default(); v as usize])
+			(T::BlockNumber::zero(), vec![blacklist_account; v as usize])
 		);
 	}: _<T::Origin>(origin, proposal_hash, asset_id)
 	verify {

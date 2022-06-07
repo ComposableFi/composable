@@ -52,8 +52,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -73,7 +73,7 @@ mod mocks;
 #[cfg(test)]
 mod tests;
 
-#[cfg(feature = "runtime-benchmarks")]
+#[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
 pub mod weights;
 
@@ -107,7 +107,7 @@ pub mod pallet {
 		type Balance: BalanceLike;
 		#[pallet::constant]
 		type NativeAssetId: Get<Self::AssetId>;
-		type GenerateCurrencyId: CurrencyFactory<Self::AssetId>;
+		type GenerateCurrencyId: CurrencyFactory<Self::AssetId, Self::Balance>;
 		type NativeCurrency;
 		type MultiCurrency;
 		type GovernanceRegistry: GetByKey<Self::AssetId, Result<SignedRawOrigin<Self::AccountId>, DispatchError>>
@@ -282,7 +282,8 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-			let id = T::GenerateCurrencyId::create(RangeId::TOKENS)?;
+			// TODO: pass non zero from creators
+			let id = T::GenerateCurrencyId::create(RangeId::TOKENS, T::Balance::default())?;
 			let dest = T::Lookup::lookup(dest)?;
 			<Self as Mutate<T::AccountId>>::mint_into(id, &dest, amount)?;
 			Ok(().into())
@@ -300,7 +301,7 @@ pub mod pallet {
 			dest: <T::Lookup as StaticLookup>::Source,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-			let id = T::GenerateCurrencyId::create(RangeId::TOKENS)?;
+			let id = T::GenerateCurrencyId::create(RangeId::TOKENS, T::Balance::default())?;
 			let governance_origin = T::Lookup::lookup(governance_origin)?;
 			T::GovernanceRegistry::set(id, SignedRawOrigin::Signed(governance_origin));
 			let dest = T::Lookup::lookup(dest)?;
@@ -688,8 +689,12 @@ pub mod pallet {
 				<<T as Config>::NativeCurrency>::reducible_balance(who, keep_alive)
 			}
 
-			fn can_deposit(who: &T::AccountId, amount: Self::Balance) -> DepositConsequence {
-				<<T as Config>::NativeCurrency>::can_deposit(who, amount)
+			fn can_deposit(
+				who: &T::AccountId,
+				amount: Self::Balance,
+				mint: bool,
+			) -> DepositConsequence {
+				<<T as Config>::NativeCurrency>::can_deposit(who, amount, mint)
 			}
 
 			fn can_withdraw(
@@ -983,11 +988,12 @@ pub mod pallet {
 				asset: Self::AssetId,
 				who: &T::AccountId,
 				amount: Self::Balance,
+				mint: bool,
 			) -> DepositConsequence {
 				if asset == T::NativeAssetId::get() {
-					return <<T as Config>::NativeCurrency>::can_deposit(who, amount)
+					return <<T as Config>::NativeCurrency>::can_deposit(who, amount, mint)
 				}
-				<<T as Config>::MultiCurrency>::can_deposit(asset, who, amount)
+				<<T as Config>::MultiCurrency>::can_deposit(asset, who, amount, mint)
 			}
 
 			fn can_withdraw(

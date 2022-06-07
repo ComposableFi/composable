@@ -2,31 +2,39 @@
 use std::{sync::Arc, time::Duration};
 
 // Cumulus Imports
-use common::OpaqueBlock as Block;
+use common::OpaqueBlock;
+use cumulus_client_cli::CollatorOptions;
 use cumulus_client_consensus_aura::{AuraConsensus, BuildAuraConsensusParams, SlotProportion};
 use cumulus_client_network::BlockAnnounceValidator;
 use cumulus_client_service::{
 	prepare_node_config, start_collator, start_full_node, StartCollatorParams, StartFullNodeParams,
 };
 use cumulus_primitives_core::ParaId;
-use cumulus_relay_chain_local::build_relay_chain_interface;
+use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
+use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
+use cumulus_relay_chain_rpc_interface::RelayChainRPCInterface;
+use polkadot_service::CollatorPair;
 
 // Substrate Imports
-use crate::{
-	client::{Client, FullBackend, FullClient},
-	rpc,
-	runtime::HostRuntimeApis,
-};
-use sc_client_api::ExecutorProvider;
+use sc_client_api::{ExecutorProvider, StateBackendFor};
 use sc_executor::NativeExecutionDispatch;
-use sc_service::{Configuration, PartialComponents, Role, TFullBackend, TaskManager};
+use sc_service::{Configuration, PartialComponents, Role, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
-use sp_api::ConstructRuntimeApi;
-use sp_consensus::SlotData;
+use sp_api::{ConstructRuntimeApi, StateBackend};
 #[cfg(feature = "ocw")]
 use sp_core::crypto::KeyTypeId;
 use sp_runtime::traits::BlakeTwo256;
 use sp_trie::PrefixedMemoryDB;
+
+use crate::{
+	client::{Client, FullBackend, FullClient},
+	rpc,
+	runtime::{
+		assets::ExtendWithAssetsApi, crowdloan_rewards::ExtendWithCrowdloanRewardsApi,
+		ibc::ExtendWithIbcApi, lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi,
+		BaseHostRuntimeApis,
+	},
+};
 
 pub struct PicassoExecutor;
 
@@ -63,7 +71,10 @@ pub struct DaliExecutor;
 
 #[cfg(feature = "dali")]
 impl sc_executor::NativeExecutionDispatch for DaliExecutor {
-	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+	type ExtendHostFunctions = (
+		frame_benchmarking::benchmarking::HostFunctions,
+		pallet_ibc::runtime_interface::trie::HostFunctions,
+	);
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		dali_runtime::api::dispatch(method, data)
@@ -72,6 +83,14 @@ impl sc_executor::NativeExecutionDispatch for DaliExecutor {
 	fn native_version() -> sc_executor::NativeVersion {
 		dali_runtime::native_version()
 	}
+}
+
+pub enum Executor {
+	Picasso(PicassoExecutor),
+	#[cfg(feature = "composable")]
+	Composable(ComposableExecutor),
+	#[cfg(feature = "dali")]
+	Dali(DaliExecutor),
 }
 
 /// Starts a `ServiceBuilder` for a full service.
@@ -85,7 +104,7 @@ pub fn new_chain_ops(
 	(
 		Arc<Client>,
 		Arc<FullBackend>,
-		sc_consensus::BasicQueue<Block, PrefixedMemoryDB<BlakeTwo256>>,
+		sc_consensus::BasicQueue<OpaqueBlock, PrefixedMemoryDB<BlakeTwo256>>,
 		TaskManager,
 	),
 	sc_service::Error,
@@ -135,18 +154,19 @@ pub fn new_partial<RuntimeApi, Executor>(
 		FullClient<RuntimeApi, Executor>,
 		FullBackend,
 		(),
-		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
-		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, Executor>>,
+		sc_consensus::DefaultImportQueue<OpaqueBlock, FullClient<RuntimeApi, Executor>>,
+		sc_transaction_pool::FullPool<OpaqueBlock, FullClient<RuntimeApi, Executor>>,
 		(Option<Telemetry>, Option<TelemetryWorkerHandle>),
 	>,
 	sc_service::Error,
 >
 where
 	RuntimeApi:
-		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
-	RuntimeApi::RuntimeApi:
-		HostRuntimeApis<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
-	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
+		ConstructRuntimeApi<OpaqueBlock, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi::RuntimeApi: BaseHostRuntimeApis<
+		StateBackend = sc_client_api::StateBackendFor<FullBackend, OpaqueBlock>,
+	>,
+	sc_client_api::StateBackendFor<FullBackend, OpaqueBlock>: sp_api::StateBackend<BlakeTwo256>,
 	Executor: sc_executor::NativeExecutionDispatch + 'static,
 {
 	let telemetry = config
@@ -168,7 +188,7 @@ where
 	);
 
 	let (client, backend, keystore_container, task_manager) =
-		sc_service::new_full_parts::<Block, RuntimeApi, _>(
+		sc_service::new_full_parts::<OpaqueBlock, RuntimeApi, _>(
 			config,
 			telemetry.as_ref().map(|(_, telemetry)| telemetry.handle()),
 			executor,
@@ -215,6 +235,7 @@ where
 pub async fn start_node(
 	config: Configuration,
 	polkadot_config: Configuration,
+	collator_options: CollatorOptions,
 	id: ParaId,
 ) -> sc_service::error::Result<TaskManager> {
 	let task_manager =
@@ -223,13 +244,14 @@ pub async fn start_node(
 			chain if chain.contains("composable") => crate::service::start_node_impl::<
 				composable_runtime::RuntimeApi,
 				ComposableExecutor,
-			>(config, polkadot_config, id)
+			>(config, polkadot_config, collator_options, id)
 			.await?,
 			#[cfg(feature = "dali")]
 			chain if chain.contains("dali") =>
 				crate::service::start_node_impl::<dali_runtime::RuntimeApi, DaliExecutor>(
 					config,
 					polkadot_config,
+					collator_options,
 					id,
 				)
 				.await?,
@@ -237,6 +259,7 @@ pub async fn start_node(
 				crate::service::start_node_impl::<picasso_runtime::RuntimeApi, PicassoExecutor>(
 					config,
 					polkadot_config,
+					collator_options,
 					id,
 				)
 				.await?,
@@ -253,15 +276,20 @@ pub async fn start_node(
 async fn start_node_impl<RuntimeApi, Executor>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
+	collator_options: CollatorOptions,
 	id: ParaId,
 ) -> sc_service::error::Result<TaskManager>
 where
 	RuntimeApi:
-		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
-	RuntimeApi::RuntimeApi:
-		HostRuntimeApis<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
-	sc_client_api::StateBackendFor<TFullBackend<Block>, Block>: sp_api::StateBackend<BlakeTwo256>,
-	Executor: sc_executor::NativeExecutionDispatch + 'static,
+		ConstructRuntimeApi<OpaqueBlock, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi::RuntimeApi: BaseHostRuntimeApis<StateBackend = StateBackendFor<FullBackend, OpaqueBlock>>
+		+ ExtendWithAssetsApi<RuntimeApi, Executor>
+		+ ExtendWithCrowdloanRewardsApi<RuntimeApi, Executor>
+		+ ExtendWithPabloApi<RuntimeApi, Executor>
+		+ ExtendWithLendingApi<RuntimeApi, Executor>
+		+ ExtendWithIbcApi<RuntimeApi, Executor>,
+	StateBackendFor<FullBackend, OpaqueBlock>: StateBackend<BlakeTwo256>,
+	Executor: NativeExecutionDispatch + 'static,
 {
 	if matches!(parachain_config.role, Role::Light) {
 		return Err("Light client not supported!".into())
@@ -296,12 +324,18 @@ where
 	let backend = params.backend.clone();
 	let mut task_manager = params.task_manager;
 
-	let (relay_chain_interface, collator_key) =
-		build_relay_chain_interface(polkadot_config, telemetry_worker_handle, &mut task_manager)
-			.map_err(|e| match e {
-				polkadot_service::Error::Sub(x) => x,
-				s => format!("{}", s).into(),
-			})?;
+	let (relay_chain_interface, collator_key) = build_relay_chain_interface(
+		polkadot_config,
+		&parachain_config,
+		telemetry_worker_handle,
+		&mut task_manager,
+		collator_options.clone(),
+	)
+	.await
+	.map_err(|e| match e {
+		RelayChainError::ServiceError(polkadot_service::Error::Sub(x)) => x,
+		s => s.to_string().into(),
+	})?;
 
 	let block_announce_validator = BlockAnnounceValidator::new(relay_chain_interface.clone(), id);
 
@@ -332,22 +366,24 @@ where
 		);
 	}
 
-	let rpc_extensions_builder = {
+	let rpc_builder = {
 		let client = client.clone();
 		let transaction_pool = transaction_pool.clone();
+		let chain_props = parachain_config.chain_spec.properties();
 		Box::new(move |deny_unsafe, _| {
 			let deps = rpc::FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
 				deny_unsafe,
+				chain_props: chain_props.clone(),
 			};
 
-			Ok(rpc::create(deps))
+			Ok(rpc::create(deps).expect("RPC failed to initialize"))
 		})
 	};
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
-		rpc_extensions_builder,
+		rpc_builder,
 		client: client.clone(),
 		transaction_pool: transaction_pool.clone(),
 		task_manager: &mut task_manager,
@@ -399,9 +435,9 @@ where
 							let time = sp_timestamp::InherentDataProvider::from_system_time();
 
 							let slot =
-							sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_duration(
+							sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
 								*time,
-								slot_duration.slot_duration(),
+								slot_duration,
 							);
 
 							let parachain_inherent = parachain_inherent.ok_or_else(|| {
@@ -439,7 +475,7 @@ where
 			spawner,
 			parachain_consensus,
 			import_queue,
-			collator_key,
+			collator_key: collator_key.expect("Command line arguments do not allow this. qed"),
 			relay_chain_slot_duration,
 		};
 
@@ -453,6 +489,7 @@ where
 			relay_chain_interface,
 			relay_chain_slot_duration,
 			import_queue,
+			collator_options,
 		};
 
 		start_full_node(params)?;
@@ -471,18 +508,18 @@ pub fn parachain_build_import_queue<RuntimeApi, Executor>(
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
 ) -> Result<
-	sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, Executor>>,
+	sc_consensus::DefaultImportQueue<OpaqueBlock, FullClient<RuntimeApi, Executor>>,
 	sc_service::Error,
 >
 where
 	RuntimeApi:
-		ConstructRuntimeApi<Block, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
-	RuntimeApi::RuntimeApi:
-		HostRuntimeApis<StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>,
+		ConstructRuntimeApi<OpaqueBlock, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi::RuntimeApi: BaseHostRuntimeApis<
+		StateBackend = sc_client_api::StateBackendFor<FullBackend, OpaqueBlock>,
+	>,
 	Executor: NativeExecutionDispatch + 'static,
 {
-	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
-
+	let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
 	cumulus_client_consensus_aura::import_queue::<
 		sp_consensus_aura::sr25519::AuthorityPair,
 		_,
@@ -498,9 +535,9 @@ where
 			let time = sp_timestamp::InherentDataProvider::from_system_time();
 
 			let slot =
-				sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_duration(
+				sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
 					*time,
-					slot_duration.slot_duration(),
+					slot_duration,
 				);
 
 			Ok((time, slot))
@@ -511,4 +548,24 @@ where
 		telemetry,
 	})
 	.map_err(Into::into)
+}
+
+async fn build_relay_chain_interface(
+	polkadot_config: Configuration,
+	parachain_config: &Configuration,
+	telemetry_worker_handle: Option<TelemetryWorkerHandle>,
+	task_manager: &mut TaskManager,
+	collator_options: CollatorOptions,
+) -> RelayChainResult<(Arc<(dyn RelayChainInterface + 'static)>, Option<CollatorPair>)> {
+	match collator_options.relay_chain_rpc_url {
+		Some(relay_chain_url) =>
+			Ok((Arc::new(RelayChainRPCInterface::new(relay_chain_url).await?) as Arc<_>, None)),
+		None => build_inprocess_relay_chain(
+			polkadot_config,
+			parachain_config,
+			telemetry_worker_handle,
+			task_manager,
+			None,
+		),
+	}
 }

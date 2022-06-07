@@ -1,0 +1,29 @@
+name: "Frontend (Picasso) Checks - Tests"
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'frontend/ui-picasso/*'
+  push:
+    paths:
+      - 'frontend/ui-picasso/*'
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          always-auth: true
+          registry-url: 'https://registry.npmjs.org'
+      - run: yarn install --ignore-scripts
+        working-directory: frontend/ui-picasso
+        env:
+          CI: true
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Run tests
+        run: yarn test
+        working-directory: frontend/ui-picasso

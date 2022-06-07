@@ -1,11 +1,11 @@
+import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
+import { ApiPromise } from "@polkadot/api";
+
 /**
  * Tests tx.oracle.removeStake with provided parameters that should succeed.
  * @param controller KeyringPair which is a controller.
  */
-import {sendAndWaitForSuccess} from "@composable/utils/polkadotjs";
-
-
-export async function txOracleRemoveStakeSuccessTest(controller) {
+export async function txOracleRemoveStakeSuccessTest(api: ApiPromise, controller) {
   return await sendAndWaitForSuccess(
     api,
     controller,

@@ -1,13 +1,15 @@
+#[cfg(test)]
 use crate::{
 	liquidity_bootstrapping::PoolIsValid,
+	mock,
 	mock::{Pablo, *},
-	Error, PoolInitConfiguration,
+	pallet, Error, PoolInitConfiguration,
 };
 use composable_support::validation::Validated;
 use composable_tests_helpers::test::helper::default_acceptable_computation_error;
 use composable_traits::{
 	defi::CurrencyPair,
-	dex::{LiquidityBootstrappingPoolInfo, Sale},
+	dex::{FeeConfig, LiquidityBootstrappingPoolInfo, Sale},
 };
 use frame_support::{
 	assert_noop, assert_ok,
@@ -15,7 +17,7 @@ use frame_support::{
 };
 use sp_runtime::Permill;
 
-fn valid_pool(
+pub fn valid_pool(
 ) -> Validated<LiquidityBootstrappingPoolInfo<AccountId, AssetId, BlockNumber>, PoolIsValid<Test>> {
 	let pair = CurrencyPair::new(PROJECT_TOKEN, USDT);
 	let owner = ALICE;
@@ -29,7 +31,11 @@ fn valid_pool(
 		owner,
 		pair,
 		sale: Sale { start, end, initial_weight, final_weight },
-		fee,
+		fee_config: FeeConfig {
+			fee_rate: fee,
+			owner_fee_rate: Permill::zero(),
+			protocol_fee_rate: Permill::zero(),
+		},
 	})
 	.expect("impossible; qed;")
 }
@@ -54,13 +60,17 @@ fn with_pool<T>(
 		owner,
 		pair,
 		sale: Sale { start: random_start, end, initial_weight, final_weight },
-		fee,
+		fee_config: FeeConfig {
+			fee_rate: fee,
+			owner_fee_rate: Permill::zero(),
+			protocol_fee_rate: Permill::zero(),
+		},
 	})
 	.expect("impossible; qed;");
 	new_test_ext().execute_with(|| -> T {
 		// Actually create the pool.
 		assert_ok!(Pablo::create(
-			Origin::signed(ALICE),
+			Origin::signed(owner),
 			PoolInitConfiguration::LiquidityBootstrapping(pool.value())
 		));
 
@@ -124,28 +134,6 @@ fn within_sale_with_liquidity<T>(
 	)
 }
 
-mod create {
-	use super::*;
-
-	#[test]
-	fn arbitrary_user_can_create() {
-		new_test_ext().execute_with(|| {
-			assert_ok!(Pablo::create(
-				Origin::signed(ALICE),
-				PoolInitConfiguration::LiquidityBootstrapping(valid_pool().value())
-			),);
-		});
-	}
-
-	// TODO enable with cu-23v3155
-	// #[test]
-	// fn admin_can_create() {
-	//     new_test_ext().execute_with(|| {
-	//         assert_ok!(Pablo::create(Origin::root(),
-	// PoolInitConfiguration::LiquidityBootstrapping(valid_pool().value())));     });
-	// }
-}
-
 mod sell {
 	use super::*;
 
@@ -171,7 +159,14 @@ mod sell {
 			|pool_id, pool, _, _| {
 				// Buy project token
 				assert_ok!(Tokens::mint_into(USDT, &BOB, unit));
-				assert_ok!(Pablo::sell(Origin::signed(BOB), pool_id, pool.pair.quote, unit, false));
+				assert_ok!(Pablo::sell(
+					Origin::signed(BOB),
+					pool_id,
+					pool.pair.quote,
+					unit,
+					0_u128,
+					false
+				));
 				assert_ok!(default_acceptable_computation_error(
 					Tokens::balance(PROJECT_TOKEN, &BOB),
 					unit
@@ -183,6 +178,7 @@ mod sell {
 
 mod buy {
 	use super::*;
+	use crate::common_test_functions::assert_has_event;
 
 	#[test]
 	fn can_buy_one_to_one() {
@@ -203,10 +199,26 @@ mod buy {
 			fee,
 			initial_project_tokens,
 			initial_usdt,
-			|pool_id, pool, _, _| {
+			|created_pool_id, pool, _, _| {
 				// Buy project token
 				assert_ok!(Tokens::mint_into(USDT, &BOB, unit));
-				assert_ok!(Pablo::buy(Origin::signed(BOB), pool_id, pool.pair.base, unit, false));
+				assert_ok!(Pablo::buy(
+					Origin::signed(BOB),
+					created_pool_id,
+					pool.pair.base,
+					unit,
+					0_u128,
+					false
+				));
+				assert_has_event::<Test, _>(|e| {
+					matches!(
+					    e.event,
+				        mock::Event::Pablo(crate::Event::Swapped { pool_id, fee, .. }) if pool_id == created_pool_id && fee.asset_id == USDT)
+				});
+				let price =
+					pallet::prices_for::<Test>(created_pool_id, PROJECT_TOKEN, USDT, 1 * unit)
+						.unwrap();
+				assert_eq!(price.spot_price, 1_000_000_999_997);
 				assert_ok!(default_acceptable_computation_error(
 					Tokens::balance(PROJECT_TOKEN, &BOB),
 					unit
@@ -348,7 +360,11 @@ mod invalid_pool {
 				owner,
 				pair,
 				sale: Sale { start, end, initial_weight, final_weight },
-				fee,
+				fee_config: FeeConfig {
+					fee_rate: fee,
+					owner_fee_rate: Permill::zero(),
+					protocol_fee_rate: Permill::zero()
+				},
 			})
 			.is_err());
 		});
@@ -369,7 +385,11 @@ mod invalid_pool {
 				owner,
 				pair,
 				sale: Sale { start, end, initial_weight, final_weight },
-				fee,
+				fee_config: FeeConfig {
+					fee_rate: fee,
+					owner_fee_rate: Permill::zero(),
+					protocol_fee_rate: Permill::zero()
+				},
 			})
 			.is_err());
 		});
@@ -390,7 +410,11 @@ mod invalid_pool {
 				owner,
 				pair,
 				sale: Sale { start, end, initial_weight, final_weight },
-				fee,
+				fee_config: FeeConfig {
+					fee_rate: fee,
+					owner_fee_rate: Permill::zero(),
+					protocol_fee_rate: Permill::zero()
+				},
 			})
 			.is_err());
 		});
@@ -410,7 +434,11 @@ mod invalid_pool {
 				owner,
 				pair,
 				sale: Sale { start, end, initial_weight, final_weight },
-				fee,
+				fee_config: FeeConfig {
+					fee_rate: fee,
+					owner_fee_rate: Permill::zero(),
+					protocol_fee_rate: Permill::zero()
+				}
 			})
 			.is_err());
 		});
@@ -431,7 +459,11 @@ mod invalid_pool {
 				owner,
 				pair,
 				sale: Sale { start, end, initial_weight, final_weight },
-				fee,
+				fee_config: FeeConfig {
+					fee_rate: fee,
+					owner_fee_rate: Permill::zero(),
+					protocol_fee_rate: Permill::zero()
+				}
 			})
 			.is_err());
 		});
@@ -452,7 +484,11 @@ mod invalid_pool {
 				owner,
 				pair,
 				sale: Sale { start, end, initial_weight, final_weight },
-				fee,
+				fee_config: FeeConfig {
+					fee_rate: fee,
+					owner_fee_rate: Permill::zero(),
+					protocol_fee_rate: Permill::zero()
+				}
 			})
 			.is_err());
 		});
@@ -480,7 +516,7 @@ mod visualization {
 					initial_weight: Permill::from_percent(92),
 					final_weight: Permill::from_percent(50),
 				},
-				fee: Permill::from_perthousand(1),
+				fee_config: Permill::from_perthousand(1),
 			};
 			let pool_id =
 				Pablo::do_create_pool(&owner, PoolInitConfiguration::LiquidityBootstrapping(pool))

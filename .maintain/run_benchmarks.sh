@@ -27,7 +27,7 @@ run_benchmarks() {
   # shellcheck disable=SC2068
   echo "Running benchmarks for $CHAIN"
   # shellcheck disable=SC2068
-  ./target/release/composable benchmark \
+  ./target/release/composable benchmark pallet \
     --chain="$CHAIN" \
     --execution=wasm \
     --wasm-execution=compiled \

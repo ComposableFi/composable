@@ -1,0 +1,15 @@
+frame_directory_path = "frame/"
+output_path = "book/src/pallets/"
+
+docs_root_url = "https://dali.devnets.composablefinance.ninja/doc"
+
+exclude = [
+  "transaction-fee",
+  "composable-tests-helpers",
+  "composable-traits",
+  "composable-support",
+  "composable-maths",
+  "call-filter",
+  "privilege",
+  "nft",
+]

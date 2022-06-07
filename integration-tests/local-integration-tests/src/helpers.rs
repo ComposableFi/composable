@@ -1,11 +1,10 @@
-use common::{xcmp::BaseXcmWeight, AccountId, Balance, MultiExistentialDeposits};
+use common::{xcmp::BaseXcmWeight, AccountId, Balance, NativeExistentialDeposit, PriceConverter};
+use composable_traits::{oracle::MinimalOracle, xcm::assets::AssetRatioInspect};
 use cumulus_primitives_core::ParaId;
 
-use num_traits::One;
-use orml_traits::GetByKey;
+use frame_support::log;
 use primitives::currency::CurrencyId;
 use sp_runtime::traits::AccountIdConversion;
-use support::log;
 
 use crate::{env_logger_init, kusama_test_net::SIBLING_PARA_ID, prelude::*};
 
@@ -21,8 +20,13 @@ pub fn para_account_id(id: u32) -> AccountId {
 }
 
 /// under ED, but above Weight
-pub fn under_existential_deposit(asset_id: LocalAssetId, _instruction_count: usize) -> Balance {
-	MultiExistentialDeposits::get(&asset_id).saturating_sub(Balance::one())
+pub fn under_existential_deposit<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>(
+	asset_id: LocalAssetId,
+	_instruction_count: usize,
+) -> Balance {
+	PriceConverter::<AssetsRegistry>::get_price_inverse(asset_id, NativeExistentialDeposit::get())
+		.unwrap() /
+		Balance::from(2_u128)
 }
 
 /// dumps events for debugging
@@ -46,13 +50,22 @@ pub fn sibling_account() -> AccountId {
 }
 
 /// assert amount is supported deposit amount and is above it
-pub fn assert_above_deposit(asset_id: CurrencyId, amount: Balance) -> Balance {
-	assert!(MultiExistentialDeposits::get(&asset_id) <= amount);
+pub fn assert_above_deposit<AssetsRegistry: AssetRatioInspect<AssetId = CurrencyId>>(
+	asset_id: CurrencyId,
+	amount: Balance,
+) -> Balance {
+	assert!(
+		PriceConverter::<AssetsRegistry>::get_price_inverse(
+			asset_id,
+			NativeExistentialDeposit::get()
+		)
+		.unwrap() <= amount
+	);
 	amount
 }
 
 /// weigh enough to handle any XCMP message
-pub fn enough_weigth() -> u128 {
+pub fn enough_weight() -> u128 {
 	let this_liveness_native_amount = BaseXcmWeight::get() as u128 +
 		100 * UnitWeightCost::get() as Balance * MaxInstructions::get() as Balance;
 	this_liveness_native_amount

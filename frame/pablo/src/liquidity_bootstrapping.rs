@@ -3,16 +3,22 @@ use crate::{
 	PoolConfiguration, PoolCount, Pools,
 };
 use composable_maths::dex::constant_product::{compute_out_given_in, compute_spot_price};
-use composable_support::validation::{Validate, Validated};
-use composable_traits::{currency::LocalAssets, defi::CurrencyPair, dex::SaleState, math::SafeAdd};
+use composable_support::{
+	math::safe::{SafeAdd, SafeSub},
+	validation::{Validate, Validated},
+};
+use composable_traits::{
+	currency::LocalAssets,
+	defi::CurrencyPair,
+	dex::{Fee, SaleState},
+};
 use frame_support::{
 	pallet_prelude::*,
 	traits::fungibles::{Inspect, Transfer},
-	transactional,
 };
 use frame_system::pallet_prelude::BlockNumberFor;
 use sp_runtime::traits::{BlockNumberProvider, Convert, One, Zero};
-use std::marker::PhantomData;
+use sp_std::marker::PhantomData;
 
 #[derive(Copy, Clone, Encode, Decode, MaxEncodedLen, PartialEq, Eq, TypeInfo)]
 pub struct PoolIsValid<T>(PhantomData<T>);
@@ -115,30 +121,25 @@ impl<T: Config> LiquidityBootstrapping<T> {
 		current_block: BlockNumberFor<T>,
 		quote_amount: BalanceOf<T>,
 		apply_fees: bool,
-	) -> Result<(BalanceOf<T>, BalanceOf<T>), DispatchError> {
+	) -> Result<(Fee<AssetIdOf<T>, BalanceOf<T>>, BalanceOf<T>), DispatchError> {
 		Self::ensure_sale_state(&pool, current_block, SaleState::Ongoing)?;
-
 		ensure!(pair == pool.pair, Error::<T>::PairMismatch);
 		ensure!(!quote_amount.is_zero(), Error::<T>::InvalidAmount);
 
 		let weights = pool.sale.current_weights(current_block)?;
-
 		let (wo, wi) = if pair.base == pool.pair.base { weights } else { (weights.1, weights.0) };
-
-		let ai = T::Convert::convert(quote_amount);
-		let (ai_minus_fees, fees) = if apply_fees {
-			let fees = pool.fee.mul_floor(ai);
-			// Safe as fees is a fraction of ai
-			(ai - fees, fees)
+		let fee = if apply_fees {
+			pool.fee_config.calculate_fees(pair.quote, quote_amount)
 		} else {
-			(ai, 0)
+			Fee::<T::AssetId, T::Balance>::zero(pair.quote)
 		};
-		let bi = T::Convert::convert(T::Assets::balance(pair.quote, &pool_account));
-		let bo = T::Convert::convert(T::Assets::balance(pair.base, &pool_account));
 
-		let base_amount = compute_out_given_in(wi, wo, bi, bo, ai_minus_fees)?;
-
-		Ok((T::Convert::convert(fees), T::Convert::convert(base_amount)))
+		let bi = T::Convert::convert(T::Assets::balance(pair.quote, pool_account));
+		let bo = T::Convert::convert(T::Assets::balance(pair.base, pool_account));
+		let ai_except_fees = quote_amount.safe_sub(&fee.fee)?;
+		let base_amount =
+			compute_out_given_in(wi, wo, bi, bo, T::Convert::convert(ai_except_fees))?;
+		Ok((fee, T::Convert::convert(base_amount)))
 	}
 
 	pub(crate) fn get_exchange_value(
@@ -147,6 +148,7 @@ impl<T: Config> LiquidityBootstrapping<T> {
 		asset_id: T::AssetId,
 		amount: T::Balance,
 	) -> Result<T::Balance, DispatchError> {
+		ensure!(pool.pair.contains(asset_id), Error::<T>::InvalidAsset);
 		let pair = if asset_id == pool.pair.base { pool.pair.swap() } else { pool.pair };
 		let current_block = frame_system::Pallet::<T>::current_block_number();
 		let (_, base_amount) =
@@ -154,7 +156,6 @@ impl<T: Config> LiquidityBootstrapping<T> {
 		Ok(base_amount)
 	}
 
-	#[transactional]
 	pub(crate) fn add_liquidity(
 		who: &T::AccountId,
 		pool: LiquidityBootstrappingPoolInfoOf<T>,
@@ -163,7 +164,7 @@ impl<T: Config> LiquidityBootstrapping<T> {
 		quote_amount: T::Balance,
 		_: T::Balance,
 		keep_alive: bool,
-	) -> Result<(), DispatchError> {
+	) -> Result<(T::Balance, T::Balance, T::Balance), DispatchError> {
 		let current_block = frame_system::Pallet::<T>::current_block_number();
 		Self::ensure_sale_state(&pool, current_block, SaleState::NotStarted)?;
 
@@ -175,10 +176,9 @@ impl<T: Config> LiquidityBootstrapping<T> {
 		T::Assets::transfer(pool.pair.base, who, &pool_account, base_amount, keep_alive)?;
 		T::Assets::transfer(pool.pair.quote, who, &pool_account, quote_amount, keep_alive)?;
 
-		Ok(())
+		Ok((base_amount, quote_amount, T::Balance::zero()))
 	}
 
-	#[transactional]
 	pub(crate) fn remove_liquidity(
 		who: &T::AccountId,
 		pool_id: T::PoolId,

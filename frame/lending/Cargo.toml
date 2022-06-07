@@ -16,48 +16,56 @@ normal = ["pallet-vault"]
 default-features = false
 features = ["derive"]
 package = "parity-scale-codec"
-version = "2.0.0"
+version = "3.0.0"
 
 [dependencies]
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", optional = true }
-pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17", optional = true }
-
-sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+frame-executive = { default-features = false, git = "https://github.com/paritytech/substrate", features = [
+  "try-runtime",
+], branch = "polkadot-v0.9.22" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.22" }
+pallet-timestamp = { default-features = false, git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.22" }
+sp-application-crypto = { default-features = false, git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.22" }
 
 composable-support = { default-features = false, path = "../composable-support" }
 composable-traits = { default-features = false, path = "../composable-traits" }
+cumulus-pallet-xcm = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.22" }
 pallet-oracle = { default-features = false, optional = true, path = "../oracle" }
 pallet-vault = { default-features = false, path = "../vault", optional = true }
+sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-keystore = { default-features = false, version = "0.12.0", git = "https://github.com/paritytech/substrate.git", branch = "polkadot-v0.9.22", optional = true }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.22" }
 
 log = { version = "0.4.14", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
-plotters = { version = "0.3.1", optional = true }
-scale-info = { version = "1.0", default-features = false, features = [
+rand = { version = "0.7.2", optional = true }
+scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
-frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+composable-traits = { path = "../composable-traits", features = ["test-utils"] }
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 hex-literal = "0.3.3"
 once_cell = "1.8.0"
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "9e041dc9d213f843b18b3008f32f3acabb287dcb" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b" }
 pallet-assets = { path = "../assets" }
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 pallet-currency-factory = { path = "../currency-factory" }
 pallet-dutch-auction = { path = "../dutch-auction" }
 pallet-liquidations = { path = "../liquidations" }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.17" }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 proptest = "1.0"
-serde = { version = "1.0.130" }
+rand = { version = "0.7.2" }
+serde = { version = '1.0.136' }
 smallvec = "1.7.0"
 
 [features]
@@ -76,6 +84,10 @@ std = [
   "pallet-vault/std",
   "scale-info/std",
   "pallet-oracle/std",
+  "xcm/std",
+  "cumulus-pallet-xcm/std",
+  "sp-keystore",
+  "sp-application-crypto",
 ]
 
 runtime-benchmarks = [
@@ -87,5 +99,3 @@ runtime-benchmarks = [
   "pallet-timestamp/runtime-benchmarks",
   "pallet-balances/runtime-benchmarks",
 ]
-
-visualization = ["plotters"]

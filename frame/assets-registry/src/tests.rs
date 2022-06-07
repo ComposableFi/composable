@@ -1,170 +1,166 @@
-use crate::{mock::*, *};
+use crate::{runtime::*, Error};
+use codec::{Decode, Encode};
+use composable_traits::{
+	defi::Ratio,
+	xcm::assets::{
+		AssetRatioInspect, ForeignMetadata, RemoteAssetRegistryInspect, XcmAssetLocation,
+	},
+};
 use frame_support::{assert_noop, assert_ok};
-use sp_runtime::traits::BadOrigin;
+use frame_system::RawOrigin;
 
 #[test]
-fn set_local_admin_tests() {
+fn negative_get_metadata() {
 	new_test_ext().execute_with(|| {
-		assert_eq!(AssetsRegistry::local_admin(), None);
-		assert_noop!(AssetsRegistry::set_local_admin(Origin::signed(ALICE), ALICE), BadOrigin);
+		assert_eq!(<AssetsRegistry as RemoteAssetRegistryInspect>::asset_to_remote(42), None,);
+		assert_eq!(<AssetsRegistry as AssetRatioInspect>::get_ratio(42), None,);
+	});
+}
 
-		assert_ok!(AssetsRegistry::set_local_admin(Origin::signed(ROOT), ALICE));
-		assert_eq!(AssetsRegistry::local_admin(), Some(ALICE));
+#[test]
+fn set_metadata() {
+	new_test_ext().execute_with(|| {
+		System::set_block_number(1);
+		assert_ok!(AssetsRegistry::register_asset(
+			RawOrigin::Root.into(),
+			XcmAssetLocation::RELAY_NATIVE,
+			42,
+			Some(Ratio::from_inner(123)),
+			Some(4)
+		));
+		let asset_id = System::events()
+			.iter()
+			.find_map(|x| match x.event {
+				Event::AssetsRegistry(crate::Event::<Runtime>::AssetRegistered {
+					asset_id,
+					location: _,
+				}) => Some(asset_id),
+				_ => None,
+			})
+			.unwrap();
+		assert_eq!(
+			<AssetsRegistry as RemoteAssetRegistryInspect>::asset_to_remote(asset_id),
+			Some(ForeignMetadata { decimals: Some(4), location: XcmAssetLocation::RELAY_NATIVE })
+		);
+
+		assert_eq!(
+			<AssetsRegistry as AssetRatioInspect>::get_ratio(asset_id),
+			Some(Ratio::from_inner(123)),
+		);
+
+		assert_eq!(
+			<AssetsRegistry as RemoteAssetRegistryInspect>::location_to_asset(
+				XcmAssetLocation::RELAY_NATIVE
+			),
+			Some(asset_id),
+		);
 	})
 }
 
 #[test]
-fn set_foreign_admin_tests() {
+fn register_asset() {
 	new_test_ext().execute_with(|| {
-		assert_eq!(AssetsRegistry::foreign_admin(), None);
-		assert_noop!(AssetsRegistry::set_foreign_admin(Origin::signed(BOB), BOB), BadOrigin);
-
-		assert_ok!(AssetsRegistry::set_foreign_admin(Origin::signed(ROOT), BOB));
-		assert_eq!(AssetsRegistry::foreign_admin(), Some(BOB));
-	})
-}
-
-#[test]
-fn approve_assets_mapping_candidate_tests() {
-	new_test_ext().execute_with(|| {
-		let (local_asset_id, foreign_asset_id) = (0, 100);
-		let location = XcmAssetLocation::LOCAL_NATIVE;
-		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id), None);
-		assert_eq!(AssetsRegistry::from_local_asset(foreign_asset_id), None);
-		assert_ok!(AssetsRegistry::set_local_admin(Origin::signed(ROOT), ALICE));
-		assert_ok!(AssetsRegistry::set_foreign_admin(Origin::signed(ROOT), BOB));
-		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
-			Origin::signed(ALICE),
-			local_asset_id,
-			foreign_asset_id,
-			location.clone(),
-			DECIMALS,
-		));
-		assert_eq!(
-			<AssetsMappingCandidates<Test>>::get((local_asset_id, foreign_asset_id)),
-			Some(CandidateStatus::LocalAdminApproved),
-		);
-		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
-			Origin::signed(BOB),
-			local_asset_id,
-			foreign_asset_id,
-			location.clone(),
-			DECIMALS,
-		));
-		assert_eq!(AssetsRegistry::from_local_asset(local_asset_id), Some(foreign_asset_id));
-		assert_eq!(AssetsRegistry::from_foreign_asset(foreign_asset_id), Some(local_asset_id));
-		assert_eq!(
-			AssetsRegistry::foreign_asset_metadata(local_asset_id).unwrap(),
-			ForeignMetadata { decimals: DECIMALS }
-		);
-
-		let (other_local_asset_id, other_foreign_asset_id) = (1, 101);
-		assert_noop!(
-			AssetsRegistry::approve_assets_mapping_candidate(
-				Origin::signed(ALICE),
-				other_local_asset_id,
-				foreign_asset_id,
-				location.clone(),
-				DECIMALS,
-			),
-			Error::<Test>::ForeignAssetIdAlreadyUsed,
-		);
-		assert_noop!(
-			AssetsRegistry::approve_assets_mapping_candidate(
-				Origin::signed(ALICE),
-				local_asset_id,
-				other_foreign_asset_id,
-				location.clone(),
-				DECIMALS,
-			),
-			Error::<Test>::LocalAssetIdAlreadyUsed,
-		);
-
-		assert_noop!(
-			AssetsRegistry::approve_assets_mapping_candidate(
-				Origin::signed(CHARLIE),
-				other_local_asset_id,
-				other_foreign_asset_id,
-				location.clone(),
-				DECIMALS,
-			),
-			Error::<Test>::OnlyAllowedForAdmins,
-		);
-
-		assert_eq!(AssetsRegistry::from_local_asset(other_local_asset_id), None);
-		assert_eq!(AssetsRegistry::from_foreign_asset(other_foreign_asset_id), None);
-		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
-			Origin::signed(BOB),
-			other_local_asset_id,
-			other_foreign_asset_id,
-			location.clone(),
-			DECIMALS,
-		));
-		assert_eq!(
-			<AssetsMappingCandidates<Test>>::get((other_local_asset_id, other_foreign_asset_id)),
-			Some(CandidateStatus::ForeignAdminApproved),
-		);
-		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
-			Origin::signed(ALICE),
-			other_local_asset_id,
-			other_foreign_asset_id,
-			location,
-			DECIMALS,
-		));
-		assert_eq!(
-			AssetsRegistry::from_local_asset(other_local_asset_id),
-			Some(other_foreign_asset_id)
-		);
-		assert_eq!(
-			AssetsRegistry::from_foreign_asset(other_foreign_asset_id),
-			Some(other_local_asset_id)
-		);
-		assert_eq!(
-			AssetsRegistry::foreign_asset_metadata(local_asset_id).unwrap(),
-			ForeignMetadata { decimals: DECIMALS }
+		let location = <Runtime as crate::Config>::ForeignAssetId::decode(
+			&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..],
 		)
+		.unwrap();
+		let ed = 42_u64.into();
+		let ratio = Ratio::from_inner(123);
+		let decimals = 3;
+
+		assert_eq!(AssetsRegistry::from_foreign_asset(location.clone()), None);
+
+		assert_ok!(AssetsRegistry::register_asset(
+			Origin::root(),
+			location.clone(),
+			ed,
+			Some(ratio),
+			Some(decimals)
+		));
+		let local_asset_id = AssetsRegistry::from_foreign_asset(location.clone()).unwrap();
+		assert_eq!(
+			AssetsRegistry::from_local_asset(local_asset_id),
+			Some(ForeignMetadata { decimals: Some(decimals), location: location.clone() })
+		);
+
+		assert_noop!(
+			AssetsRegistry::register_asset(
+				Origin::root(),
+				location,
+				ed,
+				Some(ratio),
+				Some(decimals)
+			),
+			Error::<Runtime>::ForeignAssetAlreadyRegistered
+		);
 	})
 }
 
 #[test]
-fn set_metadata_tests() {
+fn update_asset() {
 	new_test_ext().execute_with(|| {
-		let (local_asset_id, foreign_asset_id) = (0, 100);
-		let location = XcmAssetLocation::LOCAL_NATIVE;
-		assert_ok!(AssetsRegistry::set_local_admin(Origin::signed(ROOT), ALICE));
-		assert_ok!(AssetsRegistry::set_foreign_admin(Origin::signed(ROOT), BOB));
+		let location = <Runtime as crate::Config>::ForeignAssetId::decode(
+			&mut &XcmAssetLocation::RELAY_NATIVE.encode()[..],
+		)
+		.unwrap();
+		let ed = 42_u64.into();
+		let ratio = Ratio::from_inner(123);
+		let decimals = 3;
 
-		assert_noop!(
-			AssetsRegistry::set_metadata(
-				Origin::signed(ALICE),
-				local_asset_id,
-				ForeignMetadata { decimals: 12 }
-			),
-			Error::<Test>::LocalAssetIdNotFound
-		);
-
-		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
-			Origin::signed(ALICE),
-			local_asset_id,
-			foreign_asset_id,
+		assert_ok!(AssetsRegistry::register_asset(
+			Origin::root(),
 			location.clone(),
-			DECIMALS,
+			ed,
+			Some(ratio),
+			Some(decimals)
 		));
-		assert_ok!(AssetsRegistry::approve_assets_mapping_candidate(
-			Origin::signed(BOB),
+
+		let local_asset_id = AssetsRegistry::from_foreign_asset(location.clone()).unwrap();
+		assert_eq!(
+			AssetsRegistry::from_local_asset(local_asset_id),
+			Some(ForeignMetadata { decimals: Some(decimals), location: location.clone() })
+		);
+		assert_eq!(AssetsRegistry::asset_ratio(local_asset_id), Some(ratio));
+
+		let new_decimals = 12;
+		let new_ratio = Ratio::from_inner(456);
+		assert_ok!(AssetsRegistry::update_asset(
+			Origin::root(),
 			local_asset_id,
-			foreign_asset_id,
-			location,
-			DECIMALS,
-		));
-		assert_ok!(AssetsRegistry::set_metadata(
-			Origin::signed(ALICE),
-			local_asset_id,
-			ForeignMetadata { decimals: DECIMALS }
+			location.clone(),
+			Some(new_ratio),
+			Some(new_decimals)
 		));
 		assert_eq!(
-			AssetsRegistry::foreign_asset_metadata(local_asset_id).unwrap(),
-			ForeignMetadata { decimals: DECIMALS }
-		)
+			AssetsRegistry::from_local_asset(local_asset_id),
+			Some(ForeignMetadata { decimals: Some(new_decimals), location })
+		);
+		assert_eq!(AssetsRegistry::asset_ratio(local_asset_id), Some(new_ratio));
+	})
+}
+
+#[test]
+fn set_min_fee() {
+	new_test_ext().execute_with(|| {
+		let target_parachain_id = 100u32.into();
+		let foreign_asset_id: XcmAssetLocation = Default::default();
+		let balance = 100_500u32.into();
+
+		assert_eq!(
+			AssetsRegistry::minimal_amount(target_parachain_id, foreign_asset_id.clone()),
+			None
+		);
+
+		assert_ok!(AssetsRegistry::set_min_fee(
+			Origin::root(),
+			target_parachain_id,
+			foreign_asset_id.clone(),
+			Some(balance)
+		));
+
+		assert_eq!(
+			AssetsRegistry::minimal_amount(target_parachain_id, foreign_asset_id),
+			Some(balance)
+		);
 	})
 }
