@@ -195,14 +195,14 @@ export const updateUserProvidedLiquidityTokenAmount = (
       }
     }
 
-    if (amount.baseAmount) {
+    if (amount.quoteAmount) {
       let prevQuote = new BigNumber(0);
       if (liquiditySlice[poolId]) {
         prevQuote = new BigNumber(
           liquiditySlice[poolId].tokenAmounts.quoteAmount
         );
-        draft[poolId].tokenAmounts.baseAmount = prevQuote
-          .plus(amount.baseAmount)
+        draft[poolId].tokenAmounts.quoteAmount = prevQuote
+          .plus(amount.quoteAmount)
           .toString();
       }
     }

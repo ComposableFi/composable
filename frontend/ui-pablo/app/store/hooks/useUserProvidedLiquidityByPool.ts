@@ -54,7 +54,7 @@ export const useUserProvidedLiquidityByPool = (
    */
   const pool = useMemo<StableSwapPool | ConstantProductPool | undefined>(() => {
     return allPools.find((i) => i.poolId === poolId);
-  }, [undefined]);
+  }, [poolId]);
   /**
    * hook defaults
    */
@@ -73,6 +73,7 @@ export const useUserProvidedLiquidityByPool = (
    * from subsquid
    */
   useEffect(() => {
+    console.log('Query subsquid for user liquidity');
     if (pool && selectedAccount) {
       liquidityTransactionsByAddressAndPool(
         selectedAccount.address,
@@ -98,24 +99,21 @@ export const useUserProvidedLiquidityByPool = (
   useEffect(() => {
     if (pool) {
       if (userProvidedLiquidity[pool.poolId]) {
-        setLiquidityProvided((p) => {
-          return {
-            ...p,
-            tokenAmounts: {
-              baseAmount: new BigNumber(
-                userProvidedLiquidity[pool.poolId].tokenAmounts.baseAmount
-              ),
-              quoteAmount: new BigNumber(
-                userProvidedLiquidity[pool.poolId].tokenAmounts.quoteAmount
-              ),
-            },
-          };
+        setLiquidityProvided({
+          tokenAmounts: {
+            baseAmount: new BigNumber(
+              userProvidedLiquidity[pool.poolId].tokenAmounts.baseAmount
+            ),
+            quoteAmount: new BigNumber(
+              userProvidedLiquidity[pool.poolId].tokenAmounts.quoteAmount
+            ),
+          },
         });
       }
     }
   }, [pool, userProvidedLiquidity]);
   /**
-   * Update user base asset 
+   * Update user base asset
    * provided liquidity
    * value (in USD) in zustand store
    */
@@ -139,7 +137,7 @@ export const useUserProvidedLiquidityByPool = (
     }
   }, [pool, assets, liquidityProvided.tokenAmounts.baseAmount]);
   /**
-   * Update user quote asset 
+   * Update user quote asset
    * provided liquidity
    * value (in USD) in zustand store
    */

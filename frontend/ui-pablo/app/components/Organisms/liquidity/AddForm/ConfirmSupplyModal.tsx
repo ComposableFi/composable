@@ -25,7 +25,8 @@ import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
 import { getPairDecimals } from "@/defi/polkadot/utils";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { useSnackbar } from "notistack";
-import { useAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
+import { resetAddLiquiditySlice, useAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
+import { useRouter } from "next/router";
 
 export interface SupplyModalProps {
   assetOne: AssetMetadata | null;
@@ -52,6 +53,7 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const dispatch = useDispatch();
+  const router = useRouter();
 
   const {parachainApi} = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
@@ -101,6 +103,8 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           console.log('Finalized TX: ', txHash)
           enqueueSnackbar('Added Liquidity: ' + txHash)
           dispatch(closeConfirmingSupplyModal());
+          router.push('/pool/select/' + addLiquiditySlice.pool?.poolId)
+          resetAddLiquiditySlice();
         },
         (errorMessage: string) => {
           console.log('Tx Error:', errorMessage)

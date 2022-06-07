@@ -91,6 +91,7 @@ export function calcaulateProvidedLiquidity(
   baseAssetDecimals = new BigNumber(10).pow(baseAssetDecimals);
   quoteAssetDecimals = new BigNumber(10).pow(quoteAssetDecimals);
 
+  console.log(transactions)
   transactions.forEach((tx) => {
     if (tx.transactionType === "ADD_LIQUIDITY") {
       baseAmountProvided = baseAmountProvided.plus(
