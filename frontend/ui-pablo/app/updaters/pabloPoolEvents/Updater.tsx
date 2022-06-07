@@ -2,9 +2,9 @@ import { useEffect } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardingPools";
 import useStore from "@/store/useStore";
-import { getAssetByOnChainId } from "@/defi/polkadot/Assets";
-import { DEFAULT_NETWORK_ID } from "../constants";
-import BigNumber from "bignumber.js";
+// import { getAssetByOnChainId } from "@/defi/polkadot/Assets";
+// import { DEFAULT_NETWORK_ID } from "../constants";
+// import BigNumber from "bignumber.js";
 
 let userEventsSubscription: any;
 const Updater = () => {
@@ -12,7 +12,7 @@ const Updater = () => {
   const selectedAccount = useSelectedAccount("picasso");
   const allLpRewardingPools = useAllLpTokenRewardingPools();
   const {
-      updateUserProvidedTokenAmountInLiquidityPool
+      // updateUserProvidedTokenAmountInLiquidityPool
   } = useStore();
 
   useEffect(() => {

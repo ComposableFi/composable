@@ -1,4 +1,4 @@
-import { subsquidClient } from "@/subsquid";
+import { makeClient, subsquidClient } from "@/subsquid";
 
 export const queryPoolTransactionsByType = (
   poolId: number,
@@ -64,7 +64,7 @@ export const queryAddOrRemoveLiquidityTransactionsByUserAddress = (
 export const liquidityTransactionsByAddressAndPool = (
   who: string,
   poolId: number
-) => subsquidClient.query(`query queryAddOrRemoveLiquidityTransactionsByUserAddress {
+) => makeClient().query(`query queryAddOrRemoveLiquidityTransactionsByUserAddress {
   pabloTransactions(
     orderBy: receivedTimestamp_ASC,where: {
         who_eq: "${who}",
