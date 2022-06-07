@@ -24,6 +24,7 @@ import { DEFAULT_DECIMALS, DEFAULT_NETWORK_ID } from "@/updaters/constants";
 import { useParachainApi, useSelectedAccount, useExecutor, getSigner } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { getPairDecimals } from "@/defi/polkadot/utils";
+import { useRouter } from "next/router";
 
 export type ConfirmingModalProps = {
   baseAsset: AssetMetadata,
@@ -33,7 +34,7 @@ export type ConfirmingModalProps = {
   amount1: BigNumber,
   amount2: BigNumber,
   lpBalance: BigNumber,
-  percentage: number | string | BigNumber,
+  percentage: BigNumber,
   setConfirmed?: (confirmed: boolean) => any,
 } & ModalProps;
 
@@ -52,6 +53,7 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
   // WIP
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
+  const router = useRouter();
   const executor = useExecutor();
   const { poolId } =
     useRemoveLiquidityState();
@@ -87,20 +89,24 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
           parachainApi,
           signer,
           (txHash: string) => {
-            dispatch(openConfirmingModal());
+            setConfirming(true);
           },
           (txHash: string, events) => {
             console.log("Finalized ", txHash);
             dispatch(closeConfirmingModal());
+            setConfirming(false);
+            router.push('/pool/select/' + poolId)
           },
           (txError) => {
             console.log("Error ", txError);
             dispatch(closeConfirmingModal());
+            setConfirming(false);
           }
         );
       } catch (err) {
         console.log(err);
         dispatch(closeConfirmingModal());
+        setConfirming(false);
       }
     }
   }
@@ -234,7 +240,7 @@ export const ConfirmingModal: React.FC<ConfirmingModalProps> = ({
             Waiting for confirmation
           </Typography>
           <Typography variant="subtitle1" mt={2} color="text.secondary">
-            Removing {`${amount1}`} {baseAsset.symbol} and {`${amount2}`} {quoteAsset.symbol}
+            Removing {`${percentage.times(lpBalance)}`} {baseAsset.symbol}/{quoteAsset.symbol}
           </Typography>
           <Typography
             variant="body1"

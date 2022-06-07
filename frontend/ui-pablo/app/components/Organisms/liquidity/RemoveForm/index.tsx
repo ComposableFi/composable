@@ -294,7 +294,7 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
       {!confirmed && baseAsset && quoteAsset && (
         <ConfirmingModal
           lpBalance={lpBalance}
-          percentage={debouncedPercentage}
+          percentage={new BigNumber(debouncedPercentage).div(100)}
           price1={priceOfBase}
           price2={priceOfQuote}
           baseAsset={baseAsset}
