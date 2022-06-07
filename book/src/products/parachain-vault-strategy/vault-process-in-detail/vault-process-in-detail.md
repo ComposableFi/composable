@@ -1,26 +1,26 @@
-# **[Vault Process in Detail](https://dali.devnets.composablefinance.ninja/products/parachain-vault-strategy/vault-process-in-detail.html#vault-process-in-detail)**
+# Vault Process in Detail
 
-**For transparency, we are continuing to publicize the parachain vault approach we took when bidding for our Kusama and Polkadot parachains, as well as the infrastructure used in this process. For our Polkadot crowdloan, participation was capped at 25 million DOT and for our Kusama crowdloan, participation was capped at 200,000 KSM. **
+**For transparency, we are continuing to publicize the parachain vault approach we took when bidding for our Kusama and Polkadot parachains, as well as the infrastructure used in this process. For our Polkadot crowdloan, participation was capped at 25 million DOT and for our Kusama crowdloan, participation was capped at 200,000 KSM.**
 
 **Our crowdloan strategy improved upon existing crowdloans by offering augmented flexibility and earning opportunities for users, such as the depositing of stablecoins and enhanced incentives for participants. These strategies are no longer being implemented to support parachain procurement, as these milestones have already been achieved. Please note that the information in italicized text below is outdated for this reason:**
 
 
-## **_[General Vault Flow](https://dali.devnets.composablefinance.ninja/products/parachain-vault-strategy/vault-process-in-detail.html#general-vault-flow)_**
+## General Vault Flow
 
 
-### **_[Deposit](https://dali.devnets.composablefinance.ninja/products/parachain-vault-strategy/vault-process-in-detail.html#deposit)_**
+### Deposit
 
-![general-vault-flow-deposit](general-vault-flow-deposit.png)
+![general_vault_flow_deposit](general-vault-flow-deposit.png)
 
 _The diagram above illustrates the generic flow of all the vault strategies. The user first invests ETH or a specific stablecoin and gets back pAT. The investment is routed to specific yield farming strategies that have shown to be stable and secure._
 
 _For each one of the strategies, the detailed flow can be seen later on this page._
 
 
-### **_[Withdrawal](https://dali.devnets.composablefinance.ninja/products/parachain-vault-strategy/vault-process-in-detail.html#withdrawal)_**
+### Withdrawal
 
 
-![general-vault-flow-withdrawal](general-vault-flow-withdrawal.png)
+![general_vault-flow-withdrawal](general-vault-flow-withdrawal.png)
 
 
 _The above flow illustrates the generic withdrawal flow of all the strategies. The user returns either a portion of his or her pAT (or even the entire amount) and gets back the same token they entered with (either ETH or a specific stable coin) and 50% of the rewards obtained (in the same token they invested - ETH or a specific stable coin). The rest of the rewards (the other half) is sent to a treasury account, and funds from that treasury are later used to participate in the KSM/DOT auction._
@@ -28,25 +28,25 @@ _The above flow illustrates the generic withdrawal flow of all the strategies. T
 _At the beginning of this process, a fee is taken from each withdrawal, encouraging users to stake for a more extended period._
 
 
-## **_[Harvest Vault Flow](https://dali.devnets.composablefinance.ninja/products/parachain-vault-strategy/vault-process-in-detail.html#harvest-vault-flow)_**
+## Harvest Vault Flow
 
 
-### **_[Harvest Stablecoin Strategies](https://dali.devnets.composablefinance.ninja/products/parachain-vault-strategy/vault-process-in-detail.html#harvest-stablecoin-strategies)_**
+### Harvest Stablecoin Strategies
 
 
-#### **_[Deposit](https://dali.devnets.composablefinance.ninja/products/parachain-vault-strategy/vault-process-in-detail.html#deposit-1)_**
+#### Deposit
 
-![harvest-vault-flow-deposit](harvest-vault-flow-deposit.png)
+![harvest_vault-flow_deposit](harvest-vault-flow-deposit.png)
 
 
 _The above diagram illustrates the summarized flow for “deposit” action of what happens internally in the case of a Harvest strategy (ex: Harvest DAI or Harvest USDC). The average gas used by a deposit transaction for a stablecoin Harvest strategy is 409684. Strategies that we will release initially are Harvest Dai, Harvest Usdc, and Harvest Usdt._
 
 
-#### **_[Withdrawal](https://dali.devnets.composablefinance.ninja/products/parachain-vault-strategy/vault-process-in-detail.html#withdrawal-1)_**
+#### Withdrawal
 
 _The “withdraw” action is a bit more complex, as you can see in the diagram below:_
 
-![harvest-vault-flow-withdrawal](harvest-vault-flow-withdrawal.png)
+![harvest_vault-flow_withdrawal](harvest-vault-flow-withdrawal.png)
 
 
 _In the case of Harvest, when you withdraw from the Harvest Pool, you get back your fToken as well as Farm tokens. Also, for the same amount of fToken that you withdraw from the Harvest Vault, you might get back more Token than what you initially deposited. As an example, if you stake 100 DAI, you get back 95 fDai and after 1 year you come back with these 95 fDAI, you will probably get more than 100 DAI, as well as Farm tokens)._

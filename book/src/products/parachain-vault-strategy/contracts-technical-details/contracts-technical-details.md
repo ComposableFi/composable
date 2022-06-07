@@ -1,4 +1,4 @@
-# **[Contracts - Technical Details](https://dali.devnets.composablefinance.ninja/products/parachain-vault-strategy/contracts-technical-details.html#contracts---technical-details)**
+# Contracts - Technical Details
 
 **For transparency, we are continuing to publicize the parachain vault approach we took when bidding for our Kusama and Polkadot parachains, as well as the contracts used in this process. This strategy is no longer being implemented to support parachain procurement, as this milestone has already been achieved. Please note that the information in italicized text below is outdated for this reason:**
 
@@ -12,7 +12,7 @@ _Our options for vault strategies were as follows:_
 
 _The contracts being used to power the vaults are as follows, with definitions below:_
 
-![contracts-technical-details](contracts-technical-details.png)
+![contracts_technical_details](contracts-technical-details.png)
 
 * **_HarvestBase_** _- base contract for all strategies using Harvest as the underlying strategy_
 * **_IHarvest_** _- interface for Harvest strategies_
