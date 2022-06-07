@@ -118,7 +118,6 @@ const Updater = () => {
       });
     }
   }, [allPools.length, assets]);
-
   // might add following or not
   // const extrinsicCalls = useExtrinsics();
   // const trackedTransactions = useRef<string[]>([]);
