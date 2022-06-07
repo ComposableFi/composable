@@ -455,6 +455,7 @@ parameter_types! {
 	pub const MaxAssetsCount: u32 = 100_000;
 	pub const MaxHistory: u32 = 20;
 	pub const MaxPrePrices: u32 = 40;
+	pub const TwapWindow: u16 = 3;
 }
 
 impl oracle::Config for Runtime {
@@ -474,6 +475,7 @@ impl oracle::Config for Runtime {
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
 	type LocalAssets = CurrencyFactory;
 	type TreasuryAccount = TreasuryAccount;
+	type TwapWindow = TwapWindow;
 }
 
 // Parachain stuff.
