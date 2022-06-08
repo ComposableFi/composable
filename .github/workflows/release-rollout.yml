@@ -77,7 +77,7 @@ jobs:
       - name: Run ansible playbook
         working-directory: "./.maintain/playbooks"
         run: |
-          ansible-playbook -l _environment_mainnet client-upgrade.yml -i picasso-gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
+          ansible-playbook -l _environment_canary client-upgrade.yml -i picasso-gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
       - name: Notify sre-tasks slack channel
         uses: rtCamp/action-slack-notify@v2
         env:
@@ -118,7 +118,7 @@ jobs:
       - name: Run ansible playbook
         working-directory: "./.maintain/playbooks"
         run: |
-          ansible-playbook -l _environment_composable /opt/ansible/inventory/client-upgrade.yml -i /opt/ansible/inventory/composable-gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
+          ansible-playbook -l _environment_mainnet /opt/ansible/inventory/client-upgrade.yml -i /opt/ansible/inventory/composable-gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
       - name: Notify sre-tasks slack channel
         uses: rtCamp/action-slack-notify@v2
         env:
