@@ -5,8 +5,6 @@
 
 Through this infrastructure, some of the overarching functionalities of Cubic include:
 
-
-
 * Deposit and withdrawal management
 * Governance
 * LP token share management
