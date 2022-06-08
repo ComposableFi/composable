@@ -29,7 +29,6 @@ pub type Moment = u64;
 pub type RelayChainAccountId = [u8; 32];
 
 pub const PROOF_PREFIX: &[u8] = b"picasso-";
-pub const VESTING_STEP: Moment = 3600 * 24 * 7;
 pub const STAKE: Balance = 10_000;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<MockRuntime>;
@@ -84,7 +83,6 @@ parameter_types! {
 	pub const AirdropPalletId: PalletId = PalletId(*b"pal_aird");
 	pub const Prefix: &'static [u8] = PROOF_PREFIX;
 	pub const Stake: Balance = STAKE;
-	pub const VestingStep: Moment = VESTING_STEP;
 }
 
 impl pallet_airdrop::Config for MockRuntime {
@@ -218,6 +216,7 @@ pub fn ethereum_address(secret: &EthKey) -> EthereumAddress {
 	res
 }
 
+#[allow(clippy::disallowed_methods)] // Allow unwrap
 pub fn relay_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 	let seed: u128 = 12345678901234567890123456789012;
 	(0..count)
@@ -235,6 +234,7 @@ pub fn relay_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 		.collect()
 }
 
+#[allow(clippy::disallowed_methods)] // Allow unwrap
 pub fn ethereum_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 	(0..count)
 		.map(|i| {
