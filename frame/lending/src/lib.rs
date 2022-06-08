@@ -1204,7 +1204,7 @@ pub mod pallet {
 					ensure!(manager == market.manager, Error::<T>::Unauthorized);
 
 					ensure!(
-						input.collateral_factor > market.collateral_factor,
+						market.collateral_factor >= input.collateral_factor,
 						Error::<T>::CannotIncreaseCollateralFactorOfOpenMarket
 					);
 					market.collateral_factor = input.collateral_factor;
