@@ -9,8 +9,6 @@ import {
   fetchAndUpdatePoolLiquidity,
 } from "./utils";
 import { fetchBalanceByAssetId } from "../balances/utils";
-// import { fetchBalanceByAssetId } from "../balances/utils";
-// import { createPoolAccountId } from "@/utils/substrate";
 
 const PICK = ["poolId", "pair", "lpToken"];
 const Updater = () => {
@@ -97,7 +95,7 @@ const Updater = () => {
             const baseValue = new BigNumber(
               poolLiquidity[pool.poolId].tokenAmounts.baseAmount
             )
-              .times(assets[baseAssetMeta.assetId].price.toString())
+              .times(assets[baseAssetMeta.assetId].price)
               .toString();
             setTokenValueInLiquidityPool(pool.poolId, {
               baseValue,
@@ -107,9 +105,8 @@ const Updater = () => {
             const quoteValue = new BigNumber(
               poolLiquidity[pool.poolId].tokenAmounts.quoteAmount
             )
-              .times(assets[quoteAssetMeta.assetId].price.toString())
+              .times(assets[quoteAssetMeta.assetId].price)
               .toString();
-
             setTokenValueInLiquidityPool(pool.poolId, {
               quoteValue,
             });
@@ -118,59 +115,6 @@ const Updater = () => {
       });
     }
   }, [allPools.length, assets]);
-  // might add following or not
-  // const extrinsicCalls = useExtrinsics();
-  // const trackedTransactions = useRef<string[]>([]);
-  // useEffect(() => {
-  //   if (
-  //     parachainApi &&
-  //     selectedAccount &&
-  //     Object.values(extrinsicCalls).length > 0
-  //   ) {
-  //     const txs = Object.values(extrinsicCalls);
-
-  //     let shouldUpdate: string | null = null;
-  //     txs.forEach((tx) => {
-  //       if (
-  //         tx.sender === selectedAccount.address &&
-  //         tx.status === "isFinalized" &&
-  //         (tx.section === "dexRouter" || tx.section === "pablo") &&
-  //         !trackedTransactions.current.includes(tx.hash)
-  //       ) {
-  //         shouldUpdate = tx.hash;
-  //       }
-  //     });
-
-  //     if (shouldUpdate !== null) {
-  //       const allPromises: Promise<any>[] = [];
-
-  //       Promise.all(allPromises).then((updatedBalancesAssetList) => {
-  //         trackedTransactions.current.push(shouldUpdate as string);
-  //       });
-  //     }
-  //   }
-  // }, [extrinsicCalls, parachainApi, selectedAccount]);
-  // useEffect(() => {
-  //   if (parachainApi && selectedAccount) {
-  //     let subscription: any;
-  //     (async () => {
-  //       subscription = await parachainApi.query.system.events((events) => {
-  //         events.forEach(e => {
-  //           const isLiquidityAdded = parachainApi.events.pablo.LiquidityAdded.is(e.event);
-  //           if (isLiquidityAdded) {
-  //             console.log(e.event.data.toJSON())
-  //           }
-  //         })
-  //       })
-  //     })()
-
-  //     return () => {
-  //       console.log('cleaning up', subscription)
-  //       subscription()
-  //     }
-  //   }
-  // }, [parachainApi, selectedAccount])
-
 
   return null;
 };

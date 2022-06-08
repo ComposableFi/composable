@@ -20,47 +20,6 @@ export const queryPoolTransactionsByType = (
   }
 }`).toPromise();
 
-export const queryAssetLiquidityByPoolId = (poolId: number, assetId: number) => subsquidClient.query(`query queryAssetLiquidityByPoolId {
-  pabloPoolAssets(
-    limit: 1,
-    orderBy: calculatedTimestamp_DESC,
-    where: {
-      pool: {
-        poolId_eq: ${poolId}
-      },
-      assetId_eq: ${assetId}
-    }
-  ) {
-    pool {
-      poolId
-    }
-    totalLiquidity
-    calculatedTimestamp
-    assetId
-  }
-}`).toPromise()
-
-export const queryAddOrRemoveLiquidityTransactionsByUserAddress = (
-  who: string
-) => subsquidClient.query(`query queryAddOrRemoveLiquidityTransactionsByUserAddress {
-  pabloTransactions(
-    orderBy: receivedTimestamp_ASC,where: {
-        who_eq: "${who}",
-				transactionType_in: [ADD_LIQUIDITY,REMOVE_LIQUIDITY]
-  }) {
-    baseAssetId
-    baseAssetAmount
-    quoteAssetAmount
-    quoteAssetId
-    receivedTimestamp
-    transactionType
-    who
-    pool {
-      poolId
-    }
-  }
-}`).toPromise();
-
 export const liquidityTransactionsByAddressAndPool = (
   who: string,
   poolId: number
