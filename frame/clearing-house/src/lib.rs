@@ -1040,14 +1040,33 @@ pub mod pallet {
 			Ok(base_swapped)
 		}
 
+		#[transactional]
 		fn close_position(
 			account_id: &Self::AccountId,
 			market_id: &Self::MarketId,
 		) -> Result<Self::Balance, DispatchError> {
+			let mut collateral = Self::get_collateral(account_id).unwrap_or_else(Zero::zero);
 			let mut market = Self::get_market(market_id).ok_or(Error::<T>::MarketIdNotFound)?;
 			let mut positions = Self::get_positions(account_id);
-			let (position, position_index) = Self::try_get_position(&positions, market_id)?;
-			Ok(Zero::zero())
+			let (position, position_index) = Self::try_get_position(&mut positions, market_id)?;
+			let base_swapped = position.base_asset_amount.into_balance()?;
+
+			if let Some(direction) = position.direction() {
+				Self::settle_funding(position, &market, &mut collateral)?;
+
+				Collateral::<T>::insert(account_id, collateral);
+				Markets::<T>::insert(market_id, market);
+				Positions::<T>::insert(account_id, positions);
+
+				Self::deposit_event(Event::PositionClosed {
+					user: account_id.clone(),
+					market: market_id.clone(),
+					direction,
+					base: base_swapped,
+				});
+			}
+
+			Ok(base_swapped)
 		}
 
 		#[transactional]
@@ -1490,7 +1509,8 @@ pub mod pallet {
 			market: &mut Market<T>,
 			quote_asset_amount_limit: T::Balance,
 		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
-			// This should always succeed if called by <Self as ClearingHouse>::open_position
+			// This should always succeed if called by either <Self as ClearingHouse>::open_position
+			// or <Self as ClearingHouse>::close_position
 			let position = positions.get(position_index).ok_or(Error::<T>::PositionNotFound)?;
 			let close_result = Self::close_position_in_market(
 				position,
@@ -1638,15 +1658,15 @@ pub mod pallet {
 		}
 
 		fn try_get_position<'a>(
-			positions: &'a BoundedVec<Position<T>, T::MaxPositions>,
+			positions: &'a mut BoundedVec<Position<T>, T::MaxPositions>,
 			market_id: &T::MarketId,
-		) -> Result<(&'a Position<T>, usize), DispatchError> {
+		) -> Result<(&'a mut Position<T>, usize), DispatchError> {
 			let index = positions
 				.iter()
 				.position(|p| p.market_id == *market_id)
 				.ok_or(Error::<T>::PositionNotFound)?;
 
-			Ok((positions.get(index).expect("Item successfully found above"), index))
+			Ok((positions.get_mut(index).expect("Item successfully found above"), index))
 		}
 
 		fn to_vamm_direction(direction: Direction) -> VammDirection {
