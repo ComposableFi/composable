@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useParachainApi } from "substrate-react";
 import useStore from "@/store/useStore";
-import { getAssetById } from "@/defi/polkadot/Assets";
+import { getAssetById, getAssetByOnChainId } from "@/defi/polkadot/Assets";
 import BigNumber from "bignumber.js";
 
 import { aggregateTrades, transformAuctionsTransaction } from "./utils";
@@ -15,6 +15,7 @@ import { createPoolAccountId } from "@/utils/substrate";
 
 const Updater = () => {
   const {
+    assets,
     pools: {
       liquidityBootstrappingPools,
       setLiquidityBootstrappingPoolSpotPrice,
@@ -207,11 +208,13 @@ const Updater = () => {
         pool < liquidityBootstrappingPools.verified.length;
         pool++
       ) {
+        const quote = getAssetByOnChainId(DEFAULT_NETWORK_ID, liquidityBootstrappingPools.verified[pool].pair.quote);
         fetchSpotPrice(
           parachainApi,
           liquidityBootstrappingPools.verified[pool].pair,
           liquidityBootstrappingPools.verified[pool].poolId
         ).then((spotPrice) => {
+          if (quote && assets[quote.assetId]) spotPrice = spotPrice.times(assets[quote.assetId].price)
           setLiquidityBootstrappingPoolSpotPrice(
             liquidityBootstrappingPools.verified[pool].poolId,
             spotPrice.toFixed(4)
@@ -219,7 +222,7 @@ const Updater = () => {
         });
       }
     }
-  }, [parachainApi, liquidityBootstrappingPools.verified.length]);
+  }, [parachainApi, liquidityBootstrappingPools.verified.length, assets]);
 
   return null;
 };

@@ -1,6 +1,6 @@
 import { Assets } from "@/defi/polkadot/Assets";
 import { AssetId } from "@/defi/polkadot/types";
-import { ParachainNetworks } from "substrate-react";
+import { ParachainNetworks, RelayChainNetworks } from "substrate-react";
 import { ParachainId } from "substrate-react/dist/dotsama/types";
 import { StoreSlice } from "../types";
 import { AssetsSlice } from "./assets.types";
@@ -12,9 +12,6 @@ const EMPTY_ASSETS_MAP: AssetsSlice["assets"] = Object.entries(Assets)
       assetId: assetId,
       price: 1,
       decimals: metadata.decimals,
-      balance: Object.keys(ParachainNetworks).reduce((acc, curr) => {
-        return { ...acc, [curr]: "0" };
-      }, {}),
       symbol: metadata.symbol,
       icon: metadata.icon,
     };
@@ -26,8 +23,22 @@ const EMPTY_ASSETS_MAP: AssetsSlice["assets"] = Object.entries(Assets)
     };
   }, {} as AssetsSlice["assets"]);
 
+const EMPTY_BALANCES_MAP: AssetsSlice["assetBalances"] = Object.keys(Assets).reduce((p, c) => {
+  let zeroBalance = Object.keys(RelayChainNetworks).concat(Object.keys(ParachainNetworks)).reduce((p, c) => {
+    return {
+      ...p,
+      [c]: "0"
+    }
+  }, {})
+  return {
+    ...p,
+    [c]: zeroBalance
+  }
+}, {} as any)
+
 const createAssetsSlice: StoreSlice<AssetsSlice> = (set) => ({
   assets: EMPTY_ASSETS_MAP,
+  assetBalances: EMPTY_BALANCES_MAP,
   updateAssetPrice: (assetId: AssetId, price: number) =>
     set((prev: AssetsSlice) => ({
       assets: updateAssetPrice(prev.assets, assetId, price),
@@ -38,7 +49,7 @@ const createAssetsSlice: StoreSlice<AssetsSlice> = (set) => ({
     balance: string
   ) =>
     set((prev: AssetsSlice) => ({
-      assets: updateBalance(prev.assets, assetId, parachainId, balance),
+      assetBalances: updateBalance(prev.assetBalances, assetId, parachainId, balance),
     })),
 });
 

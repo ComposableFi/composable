@@ -37,7 +37,7 @@ export type BuyFormProps = {
 } & BoxProps;
 
 export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
-  const { assets } = useStore();
+  const { assetBalances } = useStore();
   const { extensionStatus } = useDotSamaContext();
   const { parachainApi } = useParachainApi("picasso");
   const selectedAccount = useSelectedAccount("picasso");
@@ -69,21 +69,21 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
   useEffect(() => {
     const asset = getAssetById("picasso", auction.pair.quote);
     if (asset) {
-      setBalanceQuote(new BigNumber(assets[asset.assetId].balance.picasso));
+      setBalanceQuote(new BigNumber(assetBalances[asset.assetId].picasso));
     } else {
       setBalanceQuote(new BigNumber(0));
     }
-  }, [assets, baseAsset, auction.pair.quote]);
+  }, [assetBalances, baseAsset, auction.pair.quote]);
 
   const [balanceBase, setBalanceBase] = useState(new BigNumber(0));
   useEffect(() => {
     const asset = getAssetById("picasso", auction.pair.base);
     if (asset) {
-      setBalanceBase(new BigNumber(assets[asset.assetId].balance.picasso));
+      setBalanceBase(new BigNumber(assetBalances[asset.assetId].picasso));
     } else {
       setBalanceBase(new BigNumber(0));
     }
-  }, [assets, baseAsset, auction.pair.quote]);
+  }, [assetBalances, baseAsset, auction.pair.quote]);
 
   const [valid1, setValid1] = useState<boolean>(false);
   const [valid2, setValid2] = useState<boolean>(false);
