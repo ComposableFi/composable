@@ -151,7 +151,7 @@ const initialState: PolkadotState = {
       },
     ],
   },
-  allBonds: [
+  bonds: [
     {
       token: TOKENS["ksm"],
       toToken: TOKENS["pica"],

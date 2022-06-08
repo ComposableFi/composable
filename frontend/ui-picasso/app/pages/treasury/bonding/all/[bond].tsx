@@ -19,6 +19,9 @@ import {
   roi,
   vestingPeriod,
 } from "@/stores/defi/stats/dummyData";
+import { useAppSelector } from "@/hooks/store";
+import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
+import { Updater } from "@/stores/defi/polkadot/bonds/PolkadotBondsUpdater";
 
 const standardPageSize = {
   xs: 12,
@@ -47,18 +50,76 @@ type BoxItem = {
   [key in BoxPosition]: BoxData;
 };
 
+const positionRows: PositionItem = {
+  0: {
+    label: "Your balance",
+    description: `${balance} LP`,
+  },
+  1: {
+    label: "You will get",
+    description: `${reward} CHAOS`,
+  },
+  2: {
+    label: "Max you can buy",
+    description: `${maxToBuy} CHAOS`,
+  },
+  3: {
+    label: "Vesting term",
+    description: `${vestingPeriod} days`,
+  },
+  4: {
+    label: "ROI",
+    description: `${roi}%`,
+  },
+};
+
+const confirmationRows = [
+  {
+    label: "Bonding",
+    description: `${balance} LP`,
+  },
+  {
+    label: "You will get",
+    description: `${reward} CHAOS`,
+  },
+  {
+    label: "Bond price",
+    description: `$${bondPrice}`,
+  },
+  {
+    label: "Market price",
+    description: `$${marketPrice}`,
+  },
+  {
+    label: "Discount",
+    description: `${discount}%`,
+    discountColor: discount,
+  },
+];
+
 const Bond: NextPage = () => {
   const router = useRouter();
+  const { bond } = router.query;
+  const bondOffer = useAppSelector<BondOffer>(
+    (state) => state.bonding.bonds[Number(bond) - 1]
+  );
   const theme = useTheme();
   const [open, setOpen] = useState<boolean>(false);
   const [open2nd, setOpen2nd] = useState<boolean>(false);
-  const token = router.query.token as string;
-  const toToken = router.query.toToken as string;
+  if (!bondOffer) {
+    return (
+      <Default>
+        <Updater />
+      </Default>
+    );
+  }
+  const token = bondOffer.asset.symbol;
+  const toToken = bondOffer.reward.asset.symbol;
 
   const bondBoxes: BoxItem = {
     0: {
       title: "Bond price",
-      description: `$${bondPrice}`,
+      description: `$${bondOffer.bondPrice.toFormat(0)}`,
     },
     1: {
       title: "Market price",
@@ -74,54 +135,6 @@ const Bond: NextPage = () => {
       description: `${vestingPeriod} days`,
     },
   };
-
-  const positionRows: PositionItem = {
-    0: {
-      label: "Your balance",
-      description: `${balance} LP`,
-    },
-    1: {
-      label: "You will get",
-      description: `${reward} CHAOS`,
-    },
-    2: {
-      label: "Max you can buy",
-      description: `${maxToBuy} CHAOS`,
-    },
-    3: {
-      label: "Vesting term",
-      description: `${vestingPeriod} days`,
-    },
-    4: {
-      label: "ROI",
-      description: `${roi}%`,
-    },
-  };
-
-  const confirmationRows = [
-    {
-      label: "Bonding",
-      description: `${balance} LP`,
-    },
-    {
-      label: "You will get",
-      description: `${reward} CHAOS`,
-    },
-    {
-      label: "Bond price",
-      description: `$${bondPrice}`,
-    },
-    {
-      label: "Market price",
-      description: `$${marketPrice}`,
-    },
-    {
-      label: "Discount",
-      description: `${discount}%`,
-      discountColor: discount,
-    },
-  ];
-
   const handleApprove = () => {
     setOpen(true);
     // Approve logic here
@@ -145,6 +158,7 @@ const Bond: NextPage = () => {
 
   return (
     <Default>
+      <Updater />
       <Box flexGrow={1} sx={{ mx: "auto" }} maxWidth={1032} paddingBottom={16}>
         <Grid container alignItems="center">
           <Grid item {...standardPageSize} mt={theme.spacing(9)}>
@@ -265,7 +279,7 @@ const Bond: NextPage = () => {
                 color="text.secondary"
                 mt={theme.spacing(2)}
               >
-                This bond is currently at a negative discount. <br />
+                This bond is bondOfferly at a negative discount. <br />
                 Please consider waiting until bond returns to positive discount.
               </Typography>
               <Button

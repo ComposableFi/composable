@@ -14,6 +14,7 @@ import { AllBondsTable } from "@/components/Molecules/AllBondsTable";
 import { AllBondsAsset, BondingAsset } from "@/stores/defi/polkadot";
 import { useContext } from "react";
 import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
+import { Updater } from "@/stores/defi/polkadot/bonds/PolkadotBondsUpdater";
 
 const standardPageSize = {
   xs: 12,
@@ -23,7 +24,7 @@ const TreasuryBonding: NextPage = () => {
   const theme = useTheme();
   const { extensionStatus } = useContext(ParachainContext);
   const myBondings = useAppSelector((state) => state.polkadot.myBondingAssets);
-  const allBonds = useAppSelector((state) => state.polkadot.allBonds);
+  const bonds = useAppSelector((state) => state.bonding.bonds);
   const router = useRouter();
 
   const handleActiveBondsClick = (asset: BondingAsset) => {
@@ -35,17 +36,15 @@ const TreasuryBonding: NextPage = () => {
     });
   };
 
-  const handleAllBondsClick = (asset: AllBondsAsset) => {
-    let token = asset.token.symbol;
-    let toToken = asset.toToken.symbol;
+  const goToDetails = (offerId: number) => {
     router.push({
-      pathname: `/treasury/bonding/all/${token}-${toToken}`,
-      query: { token, toToken },
+      pathname: `/treasury/bonding/all/${offerId}`,
     });
   };
 
   return (
     <Default>
+      <Updater />
       <Box flexGrow={1} sx={{ mx: "auto" }} maxWidth={1032} paddingBottom={16}>
         <Grid container spacing={4}>
           <Grid item {...standardPageSize} mt={theme.spacing(9)}>
@@ -108,10 +107,7 @@ const TreasuryBonding: NextPage = () => {
                   bgcolor={alpha(theme.palette.common.white, 0.02)}
                 >
                   <Typography mb={2}>All Bonds</Typography>
-                  <AllBondsTable
-                    assets={allBonds}
-                    onRowClick={handleAllBondsClick}
-                  />
+                  <AllBondsTable bonds={bonds} onRowClick={goToDetails} />
                 </Box>
               </Grid>
             </>

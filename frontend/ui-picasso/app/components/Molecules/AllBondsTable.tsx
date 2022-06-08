@@ -13,18 +13,20 @@ import {
 import { NoAssetsCover } from "./NoAssetsCover";
 import { TokenPairAsset } from "../Atom/TokenPairAsset";
 import { AllBondsAsset } from "@/stores/defi/polkadot";
+import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
+import { getROI } from "@/stores/defi/polkadot/bonds/utils";
 
 export type AllBondsTableProps = TableContainerProps & {
-  assets?: AllBondsAsset[];
-  onRowClick: (asset: AllBondsAsset) => void;
+  bonds?: BondOffer[];
+  onRowClick: (offerId: number) => void;
 };
 
 export const AllBondsTable: React.FC<AllBondsTableProps> = ({
-  assets,
+  bonds,
   onRowClick = () => {},
   ...rest
 }) => {
-  if (assets && assets.length > 0) {
+  if (bonds && bonds.length > 0) {
     return (
       <TableContainer {...rest}>
         <Table sx={{ minWidth: 420 }} aria-label="simple table">
@@ -37,44 +39,53 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {assets.map(({ token, toToken, price, roi, totalPurchased }) => (
-              <TableRow
-                sx={{
-                  "&:hover": {
-                    cursor: "pointer",
-                  },
-                }}
-                key={token.symbol}
-                onClick={() =>
-                  onRowClick({
-                    token,
-                    toToken,
-                    price,
-                    roi,
-                    totalPurchased,
-                  })
-                }
-              >
-                <TableCell align="left">
-                  <TokenPairAsset tokenIds={[token.id, toToken.id]} />
-                </TableCell>
-                <TableCell align="left">
-                  <Typography variant="body2">${price}</Typography>
-                </TableCell>
-                <TableCell align="left">
-                  <Typography
-                    variant="body2"
-                    color={roi < 0 ? "error.main" : "featured.lemon"}
+            {bonds.map(
+              (
+                {
+                  bondPrice,
+                  asset,
+                  price,
+                  rewardPrice,
+                  reward: { amount, asset: rewardAsset },
+                },
+                index
+              ) => {
+                const roi = getROI(rewardPrice, amount, price, bondPrice);
+                return (
+                  <TableRow
+                    sx={{
+                      "&:hover": {
+                        cursor: "pointer",
+                      },
+                    }}
+                    key={asset.symbol}
+                    onClick={() => onRowClick(index + 1)}
                   >
-                    {roi > 0 ? "+" : ""}
-                    {roi}%
-                  </Typography>
-                </TableCell>
-                <TableCell align="left">
-                  <Typography variant="body2">${totalPurchased}</Typography>
-                </TableCell>
-              </TableRow>
-            ))}
+                    <TableCell align="left">
+                      <TokenPairAsset tokenIds={[asset.id, rewardAsset.id]} />
+                    </TableCell>
+                    <TableCell align="left">
+                      <Typography variant="body2">
+                        ${price.multipliedBy(bondPrice).toFormat(0)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="left">
+                      <Typography
+                        variant="body2"
+                        color={roi.lt(0) ? "error.main" : "featured.lemon"}
+                      >
+                        {roi.gt(0) ? "+" : ""}
+                        {roi.toFormat(2)}%
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="left">
+                      {/* Uncomment once totalPurchased is clear */}
+                      {/*<Typography variant="body2">${totalPurchased}</Typography>*/}
+                    </TableCell>
+                  </TableRow>
+                );
+              }
+            )}
           </TableBody>
         </Table>
       </TableContainer>
