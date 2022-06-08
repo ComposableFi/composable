@@ -257,7 +257,7 @@ pub mod pallet {
 		fn do_rebalance(vault_id: &T::VaultId) -> DispatchResult {
 			let asset_id = T::Vault::asset_id(vault_id)?;
 			let account_id = T::Vault::account_id(vault_id);
-			let pool_id = Self::pools(asset_id).ok_or_else(|| Error::<T>::PoolNotFound)?;
+			let pool_id = Self::pools(asset_id).ok_or(Error::<T>::PoolNotFound)?;
 			let task = T::Vault::available_funds(vault_id, &Self::account_id())?;
 			match task {
 				FundsAvailability::Withdrawable(balance) => {
