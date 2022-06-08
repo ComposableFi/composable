@@ -50,10 +50,10 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 # misc
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
 rustc-hex = { version = "2.1.0", default-features = false }
-serde = { version = "1.0.136", optional = true }
+serde = { version = "1.0.136", optional = true , default-features = false }
 
 composable-support = { path = "../composable-support", default-features = false }
-composable-tests-helpers = { path = "../composable-tests-helpers" }
+composable-tests-helpers = { path = "../composable-tests-helpers", default-features = false }
 composable-traits = { path = "../composable-traits", default-features = false }
 
 [features]
