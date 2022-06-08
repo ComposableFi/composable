@@ -77,6 +77,28 @@ pub trait ClearingHouse {
 		base_asset_amount_limit: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
 
+	/// Close an existing position in a market.
+	///
+	/// This is an alternative to calling [`open_position`](Self::open_position) with an opposite
+	/// direction to the existing position, a `quote_asset_amount` equivalent to the absolute value
+	/// the position's base asset amount, and a zero `base_asset_amount_limit`.
+	///
+	/// As such, this function may be more weight-efficient than using an equivalent
+	/// [`open_position`](Self::open_position) call. On the other hand, it does not prevent
+	/// slippage.
+	///
+	/// ## Parameters
+	/// - `account_id`: the trader's margin account Id
+	/// - `market_id`: the perpetuals market Id to close a position in
+	///
+	/// ## Returns
+	/// The absolute amount of base asset exchanged. Equals the position's absolute base asset
+	/// amount.
+	fn close_position(
+		account_id: &Self::AccountId,
+		market_id: &Self::MarketId,
+	) -> Result<Self::Balance, DispatchError>;
+
 	/// Update the funding rate for a market.
 	///
 	/// This should be called periodically for each market so that subsequent calculations of

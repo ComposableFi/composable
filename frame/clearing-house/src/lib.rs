@@ -694,8 +694,8 @@ pub mod pallet {
 		/// TODO(0xangelo): calculate runtime
 		#[pallet::weight(<T as Config>::WeightInfo::close_position())]
 		pub fn close_position(origin: OriginFor<T>, market_id: T::MarketId) -> DispatchResult {
-			// let account_id = ensure_signed(origin)?;
-			// let _ = <Self as ClearingHouse>::close_position(&account_id, &market_id)?;
+			let account_id = ensure_signed(origin)?;
+			<Self as ClearingHouse>::close_position(&account_id, &market_id)?;
 			Ok(())
 		}
 
@@ -1039,6 +1039,13 @@ pub mod pallet {
 				base: base_swapped,
 			});
 			Ok(base_swapped)
+		}
+
+		fn close_position(
+			account_id: &Self::AccountId,
+			market_id: &Self::MarketId,
+		) -> Result<Self::Balance, DispatchError> {
+			todo!()
 		}
 
 		#[transactional]
