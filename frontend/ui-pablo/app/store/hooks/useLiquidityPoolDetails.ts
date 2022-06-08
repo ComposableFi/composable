@@ -6,9 +6,10 @@ import useStore from "@/store/useStore";
 import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
 import { useLiquidityByPool } from "./useLiquidityByPool";
 import { DailyRewards } from "../poolStats/poolStats.types";
+import { calculatePoolStats, fetchPoolStats } from "@/updaters/poolStats/utils";
 
 export const useLiquidityPoolDetails = (poolId: number) => {
-  const { poolStats, poolStatsValue, userLpBalances } = useStore();
+  const { poolStats, poolStatsValue, userLpBalances, putPoolStats } = useStore();
 
   const allLpRewardingPools = useAllLpTokenRewardingPools();
   const [pool, setPool] =
@@ -42,6 +43,17 @@ export const useLiquidityPoolDetails = (poolId: number) => {
       setQuoteAsset(undefined);
     }
   }, [poolId]);
+
+  useEffect(() => {
+    if (pool) {
+      fetchPoolStats(pool).then((poolStates) => {
+        const poolStats = calculatePoolStats(poolStates);
+        if (poolStats) {
+          putPoolStats(pool.poolId, poolStats)
+        }
+      })
+    }
+  }, [pool]);
 
   const _poolStats = useMemo(() => {
     let _poolValue = {
