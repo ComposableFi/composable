@@ -1,4 +1,3 @@
-
 //! (events can be obtained from System pallet as in banchmarking.rs before this commit)
 //! TODO: OCW of liquidations (like in Oracle)
 //! TODO: test on small numbers via proptests - detect edge case what is minimal amounts it starts
