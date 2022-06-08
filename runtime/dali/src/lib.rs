@@ -1299,14 +1299,15 @@ impl_runtime_apis! {
 		lp_amount: SafeRpcWrapper<Balance>
 	) -> RedeemableAssets<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
 			let currency_pair = <Pablo as Amm>::currency_pair(pool_id.0).unwrap_or_else(|_| CurrencyPair::new(CurrencyId::INVALID, CurrencyId::INVALID) );
-			let (base, quote) = <Pablo as Amm>::redeemable_assets_for_given_lp_tokens(pool_id.0, lp_amount.0)
-			.unwrap_or_else(|_| (Zero::zero(), Zero::zero()));
+			<Pablo as Amm>::redeemable_assets_for_given_lp_tokens(pool_id.0, lp_amount.0)
+			.unwrap_or_else(|_|
 			RedeemableAssets {
 				assets: BTreeMap::from([
-							(SafeRpcWrapper(currency_pair.base), SafeRpcWrapper(base)),
-							(SafeRpcWrapper(currency_pair.quote), SafeRpcWrapper(quote))
+							(SafeRpcWrapper(currency_pair.base), SafeRpcWrapper(Zero::zero())),
+							(SafeRpcWrapper(currency_pair.quote), SafeRpcWrapper(Zero::zero()))
 				])
 			}
+			)
 	}
 
 	}

@@ -2,7 +2,7 @@ use crate::{Config, Error, PoolConfiguration, PoolCount, Pools};
 use composable_maths::dex::constant_product::{
 	compute_deposit_lp, compute_in_given_out, compute_out_given_in,
 };
-use composable_support::math::safe::{safe_multiply_by_rational, SafeAdd, SafeSub};
+use composable_support::math::safe::{SafeAdd, SafeSub};
 use composable_traits::{
 	currency::{CurrencyFactory, RangeId},
 	defi::CurrencyPair,

@@ -36,7 +36,9 @@ pub trait Amm {
 	fn redeemable_assets_for_given_lp_tokens(
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
-	) -> Result<(Self::Balance, Self::Balance), DispatchError>;
+	) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError>
+	where
+		Self::AssetId: sp_std::cmp::Ord;
 
 	/// Returns the amount of LP tokens that would be recieved by adding the given amounts of base
 	/// and quote.
