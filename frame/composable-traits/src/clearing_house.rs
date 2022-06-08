@@ -3,26 +3,26 @@
 //! Common traits for clearing house implementations
 use frame_support::pallet_prelude::DispatchError;
 
-/// Exposes functionality for trading of perpetual contracts
+/// Exposes functionality for trading of perpetual contracts.
 ///
 /// Provides functionality for:
 /// * creating and stopping perpetual futures markets
 /// * leveraged trading of perpetual contracts
 pub trait ClearingHouse {
-	/// The trader's account identifier type
+	/// The trader's account identifier type.
 	type AccountId;
-	/// The asset identifier type
+	/// The asset identifier type.
 	type AssetId;
-	/// The balance type for an account
+	/// The balance type for an account.
 	type Balance;
-	/// The direction type for a position. Usually to disambiguate long and short positions
+	/// The direction type for a position. Usually to disambiguate long and short positions.
 	type Direction;
-	/// The identifier type for each market
+	/// The identifier type for each market.
 	type MarketId;
-	/// Specification for market creation
+	/// Specification for market creation.
 	type MarketConfig;
 
-	/// Deposit collateral to a user's account
+	/// Deposit collateral to a user's account.
 	///
 	/// Assumes margin account is unique to each wallet address, i.e., there's only one margin
 	/// account per user.
@@ -37,16 +37,16 @@ pub trait ClearingHouse {
 		amount: Self::Balance,
 	) -> Result<(), DispatchError>;
 
-	/// Create a new perpetuals market
+	/// Create a new perpetuals market.
 	///
 	/// ## Parameters
 	/// - `config`: specification for market creation
 	///
 	/// ## Returns
-	/// The new market's id, if successful
+	/// The new market's id, if successful.
 	fn create_market(config: &Self::MarketConfig) -> Result<Self::MarketId, DispatchError>;
 
-	/// Open a position in a market
+	/// Open a position in a market.
 	///
 	/// This may result in the following outcomes:
 	/// - Creation of a whole new position in the market, if one didn't already exist
@@ -65,10 +65,10 @@ pub trait ClearingHouse {
 	/// - `direction`: whether to long or short the base asset
 	/// - `quote_asset_amount`: the amount of exposure to the base asset in quote asset value
 	/// - `base_asset_amount_limit`: the minimum absolute amount of base asset to add to the
-	///   position. Prevents slippage
+	///   position; prevents slippage
 	///
 	/// ## Returns
-	/// The absolute amount of base asset exchanged
+	/// The absolute amount of base asset exchanged.
 	fn open_position(
 		account_id: &Self::AccountId,
 		market_id: &Self::MarketId,
@@ -77,10 +77,10 @@ pub trait ClearingHouse {
 		base_asset_amount_limit: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
 
-	/// Update the funding rate for a market
+	/// Update the funding rate for a market.
 	///
 	/// This should be called periodically for each market so that subsequent calculations of
-	/// unrealized funding for each position are up-to-date
+	/// unrealized funding for each position are up-to-date.
 	///
 	/// # Parameters
 	/// - `market_id`: the perpetuals market Id
@@ -107,21 +107,21 @@ pub trait ClearingHouse {
 	) -> Result<(), DispatchError>;
 }
 
-/// Exposes functionality for querying funding-related quantities of synthetic instruments
+/// Exposes functionality for querying funding-related quantities of synthetic instruments.
 ///
 /// Provides functions for:
 /// * querying the current funding rate for a market
 /// * computing a position's unrealized funding payments
 /// * updating the cumulative funding rate of a market
 pub trait Instruments {
-	/// Data relating to a derivatives market
+	/// Data relating to a derivatives market.
 	type Market;
-	/// Data relating to a trader's position in a market
+	/// Data relating to a trader's position in a market.
 	type Position;
-	/// Signed decimal number implementation
+	/// Signed decimal number implementation.
 	type Decimal;
 
-	/// Computes the funding rate for a derivatives market
+	/// Computes the funding rate for a derivatives market.
 	///
 	/// The funding rate is a function of the open interest and the index to mark price divergence.
 	///
@@ -129,10 +129,10 @@ pub trait Instruments {
 	/// * `market`: the derivatives market data
 	///
 	/// ## Returns
-	/// The current funding rate as a signed decimal number
+	/// The current funding rate as a signed decimal number.
 	fn funding_rate(market: &Self::Market) -> Result<Self::Decimal, DispatchError>;
 
-	/// Computes a position's unrealized funding payments
+	/// Computes a position's unrealized funding payments.
 	///
 	/// The unrealized funding may be positive or negative. In the former case, the position's owner
 	/// has a 'debt' to its counterparty (e.g., the derivative writer, the protocol, or automated
@@ -146,7 +146,7 @@ pub trait Instruments {
 	/// * `position`: the position in said market
 	///
 	/// ## Returns
-	/// The position's unrealized funding payments as a signed decimal number
+	/// The position's unrealized funding payments as a signed decimal number.
 	fn unrealized_funding(
 		market: &Self::Market,
 		position: &Self::Position,
