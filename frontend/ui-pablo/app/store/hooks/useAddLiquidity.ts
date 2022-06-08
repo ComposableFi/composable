@@ -16,7 +16,7 @@ import { useLiquidityByPool } from "./useLiquidityByPool";
 
 export const useAddLiquidity = () => {
   const {
-    assets,
+    assetBalances,
     poolStats
   } = useStore();
   const [valid, setValid] = useState<boolean>(false);
@@ -72,19 +72,19 @@ export const useAddLiquidity = () => {
 
   const balanceOne = useMemo(() => {
     if (assetOne !== "none") {
-      return new BigNumber(assets[assetOne as AssetId].balance.picasso);
+      return new BigNumber(assetBalances[assetOne as AssetId].picasso);
     } else {
       return new BigNumber(0);
     }
-  }, [assetOne, assets]);
+  }, [assetOne, assetBalances]);
 
   const balanceTwo = useMemo(() => {
     if (assetTwo !== "none") {
-      return new BigNumber(assets[assetTwo as AssetId].balance.picasso);
+      return new BigNumber(assetBalances[assetTwo as AssetId].picasso);
     } else {
       return new BigNumber(0);
     }
-  }, [assetTwo, assets]);
+  }, [assetTwo, assetBalances]);
 
   const setAmount =
     (key: "assetOneAmount" | "assetTwoAmount") => (v: BigNumber) => {
