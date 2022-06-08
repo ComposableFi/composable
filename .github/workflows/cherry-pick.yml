@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - main
+      - trigger-new-build
+
+env:
+  GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
 
 jobs:
   cherry-pick-commits:
@@ -15,11 +19,12 @@ jobs:
         node-version: "16"
 
     - name: checkout
-      uses: actions/checkout@v1
+      uses: actions/checkout@v2
       
     - name: Get commits
       id: get_commit
       run: |
+        git config --global --add safe.directory /github/workspace
         cd scripts/github && npm install
         npm run get-commit-for-pr -- --repo=composableFi/composable --commit_sha=$GITHUB_SHA
 

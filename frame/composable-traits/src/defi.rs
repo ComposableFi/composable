@@ -1,4 +1,5 @@
 //! Common codes and conventions for DeFi pallets
+
 use codec::{Codec, Decode, Encode, FullCodec, MaxEncodedLen};
 use frame_support::{pallet_prelude::MaybeSerializeDeserialize, Parameter};
 use scale_info::TypeInfo;
@@ -7,11 +8,12 @@ use sp_runtime::{
 	traits::{CheckedAdd, CheckedMul, CheckedSub, Zero},
 	ArithmeticError, DispatchError, FixedPointNumber, FixedPointOperand, FixedU128,
 };
-
 use sp_std::fmt::Debug;
 
 use crate::currency::{AssetIdLike, BalanceLike, MathBalance};
 
+/// I give `amount` into protocol, but want to some amount within `limit` back. Amount of what
+/// depends on protocol and other higher context.
 #[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Debug, Clone, PartialEq)]
 pub struct Take<Balance> {
 	/// amount of `base`
@@ -94,9 +96,32 @@ impl<AssetId: PartialEq> PartialEq for CurrencyPair<AssetId> {
 
 impl<AssetId: PartialEq> Eq for CurrencyPair<AssetId> {}
 
-impl<AssetId: Copy> CurrencyPair<AssetId> {
+impl<AssetId: Ord> Ord for CurrencyPair<AssetId> {
+	fn cmp(&self, other: &Self) -> core::cmp::Ordering {
+		if self.eq(other) {
+			return core::cmp::Ordering::Equal
+		}
+		let base_ordering = self.base.cmp(&other.base);
+		if base_ordering.is_eq() {
+			return self.quote.cmp(&other.quote)
+		}
+		base_ordering
+	}
+}
+
+impl<AssetId: Ord> PartialOrd for CurrencyPair<AssetId> {
+	fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+		Some(self.cmp(other))
+	}
+}
+
+impl<AssetId: Copy + PartialEq> CurrencyPair<AssetId> {
 	pub fn swap(&self) -> Self {
 		Self { base: self.quote, quote: self.base }
+	}
+
+	pub fn contains(&self, asset_id: AssetId) -> bool {
+		self.base == asset_id || self.quote == asset_id
 	}
 }
 
@@ -139,6 +164,31 @@ impl<AssetId: PartialEq> CurrencyPair<AssetId> {
 impl<AssetId: PartialEq> AsRef<[AssetId]> for CurrencyPair<AssetId> {
 	fn as_ref(&self) -> &[AssetId] {
 		self.as_slice()
+	}
+}
+
+#[cfg(test)]
+mod test_currency_pair {
+	use super::*;
+	#[test]
+	fn test_cmp_for_currency_pair() {
+		let pair1: CurrencyPair<u8> = CurrencyPair::new(0_u8, 1_u8);
+		let pair2: CurrencyPair<u8> = CurrencyPair::new(1_u8, 2_u8);
+		let pair3: CurrencyPair<u8> = CurrencyPair::new(0_u8, 1_u8);
+		let pair4: CurrencyPair<u8> = CurrencyPair::new(1_u8, 0_u8);
+		assert_eq!(pair1.cmp(&pair2), core::cmp::Ordering::Less);
+		assert_eq!(pair1.cmp(&pair4), core::cmp::Ordering::Equal);
+		assert_eq!(pair1.cmp(&pair3), core::cmp::Ordering::Equal);
+		assert_eq!(pair2.cmp(&pair1), core::cmp::Ordering::Greater);
+		assert_eq!(pair2.cmp(&pair1.swap()), core::cmp::Ordering::Greater);
+		assert_eq!(pair2.cmp(&pair3), core::cmp::Ordering::Greater);
+		assert_eq!(pair2.cmp(&pair4), core::cmp::Ordering::Greater);
+		assert_eq!(pair3.cmp(&pair1), core::cmp::Ordering::Equal);
+		assert_eq!(pair3.cmp(&pair2), core::cmp::Ordering::Less);
+		assert_eq!(pair3.cmp(&pair4), core::cmp::Ordering::Equal);
+		assert_eq!(pair4.cmp(&pair1), core::cmp::Ordering::Equal);
+		assert_eq!(pair4.cmp(&pair2), core::cmp::Ordering::Less);
+		assert_eq!(pair4.cmp(&pair3), core::cmp::Ordering::Equal);
 	}
 }
 
@@ -236,23 +286,92 @@ pub trait DeFiComposableConfig: frame_system::Config {
 		+ CheckedMul
 		+ CheckedSub
 		+ From<u64> // at least 64 bit
+		+ From<u128>
 		+ Zero
 		+ FixedPointOperand
 		+ Into<u128>; // cannot do From<u128>, until LiftedFixedBalance integer part is larger than 128
 			  // bit
 }
 
-/// The fixed point number from 0..to max
-pub type Rate = FixedU128;
+// TODO: Use Validate for these types.
 
-/// Is [1..MAX]
+pub mod validate {
+	use composable_support::validation::Validate;
+	use sp_runtime::{traits::One, FixedU128};
+
+	/// Ensures that the value is `>= 1`.
+	pub struct OneOrMore;
+
+	impl Validate<FixedU128, OneOrMore> for OneOrMore {
+		fn validate(input: FixedU128) -> Result<FixedU128, &'static str> {
+			if input >= FixedU128::one() {
+				Ok(input)
+			} else {
+				Err("number was less than one")
+			}
+		}
+	}
+
+	/// Ensures that the value is `> 1`.
+	pub struct MoreThanOne;
+
+	impl Validate<FixedU128, MoreThanOne> for MoreThanOne {
+		fn validate(input: FixedU128) -> Result<FixedU128, &'static str> {
+			if input > FixedU128::one() {
+				Ok(input)
+			} else {
+				Err("number was less than or equal to one")
+			}
+		}
+	}
+
+	#[cfg(test)]
+	mod test_validate_fixed_u128 {
+		use composable_support::validation::TryIntoValidated;
+		use sp_runtime::{
+			traits::{One, Zero},
+			FixedPointNumber, FixedU128,
+		};
+
+		use super::*;
+
+		#[test]
+		fn test_validate_one_or_more() {
+			let zero = FixedU128::zero();
+			let less_than_one = FixedU128::checked_from_rational(1, 10).unwrap();
+			let one = FixedU128::one();
+			let more_than_one = FixedU128::checked_from_integer::<u128>(100_000).unwrap();
+
+			assert!(zero.try_into_validated::<OneOrMore>().is_err());
+			assert!(less_than_one.try_into_validated::<OneOrMore>().is_err());
+			assert!(one.try_into_validated::<OneOrMore>().is_ok());
+			assert!(more_than_one.try_into_validated::<OneOrMore>().is_ok());
+		}
+
+		#[test]
+		fn test_validate_more_than_one() {
+			let zero = FixedU128::zero();
+			let less_than_one = FixedU128::checked_from_rational(1, 10).unwrap();
+			let one = FixedU128::one();
+			let more_than_one = FixedU128::checked_from_integer::<u128>(100_000).unwrap();
+
+			assert!(zero.try_into_validated::<MoreThanOne>().is_err());
+			assert!(less_than_one.try_into_validated::<MoreThanOne>().is_err());
+			assert!(one.try_into_validated::<MoreThanOne>().is_err());
+			assert!(more_than_one.try_into_validated::<MoreThanOne>().is_ok());
+		}
+	}
+}
+
 pub type OneOrMoreFixedU128 = FixedU128;
 
 /// The fixed point number of suggested by substrate precision
 /// Must be (1.0..MAX] because applied only to price normalized values
 pub type MoreThanOneFixedU128 = FixedU128;
+// Possible alternative to using type aliases.
+// pub struct MoreThanOneFixedU128(Validated<FixedU128, MoreThanOne>);
 
-/// Must be [0..1]
+/// Must be \[0..1\]
 pub type ZeroToOneFixedU128 = FixedU128;
 
 /// Number like of higher bits, so that amount and balance calculations are done it it with higher
@@ -263,6 +382,7 @@ pub type LiftedFixedBalance = FixedU128;
 
 /// unitless ratio of one thing to other.
 pub type Ratio = FixedU128;
+pub type Rate = FixedU128;
 
 #[cfg(test)]
 mod tests {

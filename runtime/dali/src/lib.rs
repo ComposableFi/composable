@@ -1,8 +1,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -21,24 +21,32 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 mod weights;
 mod xcmp;
 
+use lending::MarketId;
+use orml_traits::parameter_type_with_key;
 // TODO: consider moving this to shared runtime
 pub use xcmp::{MaxInstructions, UnitWeightCost};
 
 use common::{
-	impls::DealWithFees, AccountId, AccountIndex, Address, Amount, AuraId, Balance, BlockNumber,
-	BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, MosaicRemoteAssetId,
-	MultiExistentialDeposits, Signature, AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS,
-	MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
+	impls::DealWithFees, multi_existential_deposits, AccountId, AccountIndex, Address, Amount,
+	AuraId, Balance, BlockNumber, BondOfferId, CouncilInstance, EnsureRootOrHalfCouncil, Hash,
+	Moment, MosaicRemoteAssetId, NativeExistentialDeposit, PoolId, Signature,
+	AVERAGE_ON_INITIALIZE_RATIO, DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK,
+	NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use cumulus_primitives_core::ParaId;
+use composable_traits::{
+	assets::Asset,
+	defi::Rate,
+	dex::{Amm, PriceAggregate},
+};
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
 	create_runtime_str, generic, impl_opaque_keys,
 	traits::{
-		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, ConvertInto, Zero,
+		AccountIdConversion, AccountIdLookup, BlakeTwo256, Block as BlockT, Bounded, ConvertInto,
+		Zero,
 	},
 	transaction_validity::{TransactionSource, TransactionValidity},
 	ApplyExtrinsicResult,
@@ -51,8 +59,8 @@ use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
-	construct_runtime, match_type, parameter_types,
-	traits::{Contains, Everything, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
+	construct_runtime, parameter_types,
+	traits::{Contains, Everything, Get, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 		DispatchClass, IdentityFee, Weight, WeightToFeeCoefficient, WeightToFeeCoefficients,
@@ -61,19 +69,27 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 
-use codec::Encode;
-use frame_support::traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade};
+use codec::{Codec, Encode, EncodeLike};
+use frame_support::{
+	traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade},
+	weights::ConstantMultiplier,
+};
 use frame_system as system;
+use frame_system::EnsureSigned;
 use scale_info::TypeInfo;
+use sp_runtime::AccountId32;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
+use sp_std::fmt::Debug;
 use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
 use transaction_payment::{Multiplier, TargetedFeeAdjustment};
 pub use xcmp::XcmConfig;
+
+use crate::xcmp::XcmRouter;
 
 /// Opaque types. These are used by the CLI to instantiate machinery that don't need to know
 /// the specifics of the runtime. They can then be made to be agnostic over specific formats
@@ -110,10 +126,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
-	spec_version: 1000,
-	impl_version: 8,
+	spec_version: 2300,
+	impl_version: 2,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 3,
+	transaction_version: 1,
 	state_version: 0,
 };
 
@@ -121,6 +137,13 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
 	NativeVersion { runtime_version: VERSION, can_author_with: Default::default() }
+}
+
+parameter_type_with_key! {
+	// Minimum amount an account has to hold to stay in state
+	pub MultiExistentialDeposits: |currency_id: CurrencyId| -> Balance {
+		multi_existential_deposits::<AssetsRegistry>(currency_id)
+	};
 }
 
 parameter_types! {
@@ -334,11 +357,11 @@ impl WeightToFeePolynomial for WeightToFee {
 impl transaction_payment::Config for Runtime {
 	type OnChargeTransaction =
 		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 }
 
 impl sudo::Config for Runtime {
@@ -450,6 +473,7 @@ impl oracle::Config for Runtime {
 	type MaxPrePrices = MaxPrePrices;
 	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
 	type LocalAssets = CurrencyFactory;
+	type TreasuryAccount = TreasuryAccount;
 }
 
 // Parachain stuff.
@@ -545,6 +569,7 @@ parameter_types! {
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
 }
 
+type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
@@ -554,6 +579,8 @@ impl orml_tokens::Config for Runtime {
 	type ExistentialDeposits = MultiExistentialDeposits;
 	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
+	type ReserveIdentifier = ReserveIdentifier;
+	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
@@ -652,6 +679,28 @@ impl utility::Config for Runtime {
 	type Call = Call;
 	type PalletsOrigin = OriginCaller;
 	type WeightInfo = weights::utility::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+	pub MaxProxies : u32 = 4;
+	pub MaxPending : u32 = 32;
+	// just make dali simple to proxy
+	pub ProxyPrice: Balance = 0;
+}
+
+impl pallet_proxy::Config for Runtime {
+	type Event = Event;
+	type Call = Call;
+	type Currency = Assets;
+	type ProxyType = ();
+	type ProxyDepositBase = ProxyPrice;
+	type ProxyDepositFactor = ProxyPrice;
+	type MaxProxies = MaxProxies;
+	type WeightInfo = ();
+	type MaxPending = MaxPending;
+	type CallHasher = BlakeTwo256;
+	type AnnouncementDepositBase = ProxyPrice;
+	type AnnouncementDepositFactor = ProxyPrice;
 }
 
 parameter_types! {
@@ -757,18 +806,19 @@ impl currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRootOrHalfCouncil;
-	type ReserveOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
+	type Balance = Balance;
 }
 
 impl assets_registry::Config for Runtime {
 	type Event = Event;
 	type LocalAssetId = CurrencyId;
-	type ForeignAssetId = CurrencyId;
-	type Location = composable_traits::assets::XcmAssetLocation;
-	type UpdateAdminOrigin = EnsureRootOrHalfCouncil;
-	type LocalAdminOrigin = assets_registry::EnsureLocalAdmin<Runtime>;
-	type ForeignAdminOrigin = assets_registry::EnsureForeignAdmin<Runtime>;
+	type CurrencyFactory = CurrencyFactory;
+	type ForeignAssetId = composable_traits::xcm::assets::XcmAssetLocation;
+	type UpdateAssetRegistryOrigin = EnsureRootOrHalfCouncil;
+	type ParachainOrGovernanceOrigin = EnsureRootOrHalfCouncil;
+	type Balance = Balance;
+	type WeightInfo = weights::assets_registry::WeightInfo<Runtime>;
 }
 
 impl governance_registry::Config for Runtime {
@@ -887,10 +937,13 @@ impl dutch_auction::Config for Runtime {
 	type Event = Event;
 	type MultiCurrency = Assets;
 	type PalletId = DutchAuctionId;
-	type WeightToFee = WeightToFee;
 	type OrderId = u128;
 	type UnixTime = Timestamp;
 	type WeightInfo = weights::dutch_auction::WeightInfo<Runtime>;
+	type PositionExistentialDeposit = NativeExistentialDeposit;
+	type XcmOrigin = Origin;
+	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type XcmSender = XcmRouter;
 }
 
 parameter_types! {
@@ -926,14 +979,16 @@ impl liquidations::Config for Runtime {
 	type LiquidationStrategyId = LiquidationStrategyId;
 	type OrderId = OrderId;
 	type WeightInfo = weights::liquidations::WeightInfo<Runtime>;
-	type ParachainId = ParaId;
 	type PalletId = LiquidationsPalletId;
+	type CanModifyStrategies = EnsureRootOrHalfCouncil;
+	type XcmSender = XcmRouter;
 }
 
 parameter_types! {
 	pub const MaxLendingCount: u32 = 10;
 	pub LendingPalletId: PalletId = PalletId(*b"liqiudat");
-	pub OracleMarketCreationStake : Balance = 300;
+	pub OracleMarketCreationStake: Balance = 300;
+	pub const MaxLiquidationBatchSize: u32 = 1000;
 }
 
 impl lending::Config for Runtime {
@@ -945,73 +1000,82 @@ impl lending::Config for Runtime {
 	type MultiCurrency = Assets;
 	type Liquidation = Liquidations;
 	type UnixTime = Timestamp;
-	type MaxLendingCount = MaxLendingCount;
+	type MaxMarketCount = MaxLendingCount;
 	type AuthorityId = oracle::crypto::BathurstStId;
 	type WeightInfo = weights::lending::WeightInfo<Runtime>;
 	type LiquidationStrategyId = u32;
 	type OracleMarketCreationStake = OracleMarketCreationStake;
 	type PalletId = LendingPalletId;
 	type NativeCurrency = Balances;
+	type MaxLiquidationBatchSize = MaxLiquidationBatchSize;
 	type WeightToFee = WeightToFee;
 }
 
-pub type PoolId = u128;
-
 parameter_types! {
-  pub const ConstantProductPalletId: PalletId = PalletId(*b"pal_cnst");
+  pub PabloId: PalletId = PalletId(*b"pall_pab");
+  pub LbpMinSaleDuration: BlockNumber = DAYS;
+  pub LbpMaxSaleDuration: BlockNumber = 30 * DAYS;
+  pub LbpMaxInitialWeight: Permill = Permill::from_percent(95);
+  pub LbpMinFinalWeight: Permill = Permill::from_percent(5);
+  pub TWAPInterval: u64 = MILLISECS_PER_BLOCK * 10;
 }
 
-impl uniswap_v2::Config for Runtime {
+impl pablo::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
 	type Balance = Balance;
+	type Convert = ConvertInto;
 	type CurrencyFactory = CurrencyFactory;
 	type Assets = Assets;
-	type Convert = ConvertInto;
 	type PoolId = PoolId;
-	type PalletId = ConstantProductPalletId;
-	type WeightInfo = weights::uniswap_v2::WeightInfo<Runtime>;
-}
-
-parameter_types! {
-  pub const StableSwapPalletId: PalletId = PalletId(*b"pal_stab");
-}
-
-impl curve_amm::Config for Runtime {
-	type Event = Event;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type CurrencyFactory = CurrencyFactory;
-	type Assets = Assets;
-	type Convert = ConvertInto;
-	type PoolId = PoolId;
-	type PalletId = StableSwapPalletId;
-	type WeightInfo = weights::curve_amm::WeightInfo<Runtime>;
-}
-
-parameter_types! {
-  pub LBPId: PalletId = PalletId(*b"pall_lbp");
-  pub MinSaleDuration: BlockNumber = DAYS;
-  pub MaxSaleDuration: BlockNumber = 30 * DAYS;
-  pub MaxInitialWeight: Permill = Permill::from_percent(95);
-  pub MinFinalWeight: Permill = Permill::from_percent(5);
-}
-
-impl liquidity_bootstrapping::Config for Runtime {
-	type Event = Event;
-	type AssetId = CurrencyId;
-	type Balance = Balance;
-	type Convert = ConvertInto;
-	type Assets = Tokens;
-	type PoolId = PoolId;
+	type PalletId = PabloId;
 	type LocalAssets = CurrencyFactory;
-	type PalletId = LBPId;
-	type MinSaleDuration = MinSaleDuration;
-	type MaxSaleDuration = MaxSaleDuration;
-	type MaxInitialWeight = MaxInitialWeight;
-	type MinFinalWeight = MinFinalWeight;
-	type WeightInfo = weights::liquidity_bootstrapping::WeightInfo<Runtime>;
-	type AdminOrigin = EnsureRootOrHalfCouncil;
+	type LbpMinSaleDuration = LbpMinSaleDuration;
+	type LbpMaxSaleDuration = LbpMaxSaleDuration;
+	type LbpMaxInitialWeight = LbpMaxInitialWeight;
+	type LbpMinFinalWeight = LbpMinFinalWeight;
+	type PoolCreationOrigin = EnsureSigned<Self::AccountId>;
+	type EnableTwapOrigin = EnsureRootOrHalfCouncil;
+	type TWAPInterval = TWAPInterval;
+	type Time = Timestamp;
+	type WeightInfo = weights::pablo::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+	#[derive(TypeInfo, codec::MaxEncodedLen, codec::Encode)]
+	pub const MaxHopsCount: u32 = 4;
+	pub DexRouterPalletID: PalletId = PalletId(*b"dex_rout");
+}
+
+impl dex_router::Config for Runtime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type MaxHopsInRoute = MaxHopsCount;
+	type PoolId = PoolId;
+	type Pablo = Pablo;
+	type PalletId = DexRouterPalletID;
+	type UpdateRouteOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = weights::dex_router::WeightInfo<Runtime>;
+}
+
+parameter_types! {
+	pub const ExpectedBlockTime: u64 = SLOT_DURATION;
+}
+
+impl pallet_ibc::Config for Runtime {
+	type TimeProvider = Timestamp;
+	type Event = Event;
+	type Currency = Balances;
+	const INDEXING_PREFIX: &'static [u8] = b"ibc";
+	const CONNECTION_PREFIX: &'static [u8] = b"ibc";
+	type ExpectedBlockTime = ExpectedBlockTime;
+	type WeightInfo = crate::weights::pallet_ibc::WeightInfo<Self>;
+}
+
+impl pallet_ibc_ping::Config for Runtime {
+	type Event = Event;
+	type IbcHandler = Ibc;
 }
 
 construct_runtime!(
@@ -1049,6 +1113,7 @@ construct_runtime!(
 		Scheduler: scheduler::{Pallet, Call, Storage, Event<T>} = 34,
 		Utility: utility::{Pallet, Call, Event} = 35,
 		Preimage: preimage::{Pallet, Call, Storage, Event<T>} = 36,
+		Proxy: pallet_proxy = 37,
 
 		// XCM helpers.
 		XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 40,
@@ -1072,10 +1137,13 @@ construct_runtime!(
 		Mosaic: mosaic::{Pallet, Call, Storage, Event<T>} = 62,
 		Liquidations: liquidations::{Pallet, Call, Storage, Event<T>} = 63,
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
-		ConstantProductDex: uniswap_v2::{Pallet, Call, Storage, Event<T>} = 65,
-		StableSwapDex: curve_amm::{Pallet, Call, Storage, Event<T>} = 66,
-		LiquidityBootstrapping: liquidity_bootstrapping::{Pallet, Call, Storage, Event<T>} = 67,
+		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
+		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
+
+		// IBC Support, pallet-ibc should be the last in the list of pallets that use the ibc protocol
+		IbcPing: pallet_ibc_ping::{Pallet, Call, Storage, Event<t>} = 101,
+		Ibc: pallet_ibc::{Pallet, Call, Storage, Event<T>} = 102
 	}
 );
 
@@ -1145,16 +1213,33 @@ mod benches {
 		[liquidations, Liquidations]
 		[bonded_finance, BondedFinance]
 		//FIXME: broken with dali [lending, Lending]
-	  [uniswap_v2, ConstantProductDex]
-	  [curve_amm, StableSwapDex]
-	  [liquidity_bootstrapping, LiquidityBootstrapping]
+		[lending, Lending]
+		[assets_registry, AssetsRegistry]
+		[pablo, Pablo]
+		[dex_router, DexRouter]
+		[pallet_ibc, Ibc]
 	);
 }
 
 impl_runtime_apis! {
+	impl lending_runtime_api::LendingRuntimeApi<Block, MarketId> for Runtime {
+		fn current_interest_rate(_market_id: MarketId) -> SafeRpcWrapper<Rate> {
+			SafeRpcWrapper(
+				// TODO: Actually implement this
+				Rate::max_value()
+				// lending::BorrowIndex::<Runtime>::get(market_id)
+				// 	.unwrap_or_else(Rate::zero)
+			)
+		}
+	}
+
 	impl assets_runtime_api::AssetsRuntimeApi<Block, CurrencyId, AccountId, Balance> for Runtime {
-		fn balance_of(asset_id: SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
-			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id.0, &account_id))
+		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
+			SafeRpcWrapper(<Assets as fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
+		}
+
+		fn list_assets() -> Vec<Asset> {
+			CurrencyId::list_assets()
 		}
 	}
 
@@ -1163,6 +1248,49 @@ impl_runtime_apis! {
 			SafeRpcWrapper (
 				crowdloan_rewards::amount_available_to_claim_for::<Runtime>(account_id)
 					.unwrap_or_else(|_| Balance::zero())
+			)
+		}
+	}
+
+	impl pablo_runtime_api::PabloRuntimeApi<Block, PoolId, CurrencyId, Balance> for Runtime {
+		fn prices_for(
+			pool_id: PoolId,
+			base_asset_id: CurrencyId,
+			quote_asset_id: CurrencyId,
+			amount: Balance
+		) -> PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
+			pablo::prices_for::<Runtime>(
+				pool_id,
+				base_asset_id,
+				quote_asset_id,
+				amount
+			)
+			.map(|p| PriceAggregate{
+				pool_id: SafeRpcWrapper(p.pool_id),
+				base_asset_id: SafeRpcWrapper(p.base_asset_id),
+				quote_asset_id: SafeRpcWrapper(p.quote_asset_id),
+				spot_price: SafeRpcWrapper(p.spot_price)
+			})
+			.unwrap_or_else(|_| PriceAggregate{
+				pool_id: SafeRpcWrapper(pool_id),
+				base_asset_id: SafeRpcWrapper(base_asset_id),
+				quote_asset_id: SafeRpcWrapper(quote_asset_id),
+				spot_price: SafeRpcWrapper(0_u128)
+			})
+		}
+
+		fn expected_lp_tokens_given_liquidity(
+			pool_id: SafeRpcWrapper<PoolId>,
+			base_asset_amount: SafeRpcWrapper<Balance>,
+			quote_asset_amount: SafeRpcWrapper<Balance>,
+		) -> SafeRpcWrapper<Balance> {
+			SafeRpcWrapper(
+				<Pablo as Amm>::amount_of_lp_token_for_added_liquidity(
+					pool_id.0,
+					base_asset_amount.0,
+					quote_asset_amount.0,
+				)
+				.unwrap_or_else(|_| Zero::zero())
 			)
 		}
 	}
@@ -1273,14 +1401,17 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime {
+	impl<Call, AccountId> simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime
+		where
+			Call: Codec,
+			AccountId: Codec + EncodeLike<AccountId32> + Into<AccountId32> + Clone+ PartialEq + TypeInfo + Debug,
+	{
 		fn create_transaction(call: Call, signer: AccountId) -> Vec<u8> {
 			use sp_runtime::{
 				generic::Era, MultiSignature,
 				traits::StaticLookup,
 			};
 			use sp_core::sr25519;
-
 			let nonce = frame_system::Pallet::<Runtime>::account_nonce(signer.clone());
 			let extra = (
 				system::CheckNonZeroSender::<Runtime>::new(),
@@ -1292,15 +1423,123 @@ impl_runtime_apis! {
 				system::CheckWeight::<Runtime>::new(),
 				transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
 			);
-
 			let signature = MultiSignature::from(sr25519::Signature([0_u8;64]));
-			let address = AccountIdLookup::unlookup(signer);
-			let ext = UncheckedExtrinsic::new_signed(call, address, signature, extra);
-
+			let address = AccountIdLookup::unlookup(signer.into());
+			let ext = generic::UncheckedExtrinsic::<Address, Call, Signature, SignedExtra>::new_signed(
+				call,
+				address,
+				signature,
+				extra,
+			);
 			ext.encode()
 		}
 	}
 
+	impl ibc_runtime_api::IbcRuntimeApi<Block> for Runtime {
+		fn para_id() -> u32 {
+			<Runtime as cumulus_pallet_parachain_system::Config>::SelfParaId::get().into()
+		}
+
+		fn get_trie_inputs() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
+			Ibc::build_trie_inputs().ok()
+		}
+
+		fn query_balance_with_address(addr: Vec<u8>) -> Option<u128> {
+			Ibc::query_balance_with_address(addr).ok()
+		}
+
+		fn query_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<ibc_primitives::OffchainPacketType>> {
+			Ibc::get_offchain_packets(channel_id, port_id, seqs).ok()
+		}
+
+		fn client_state(client_id: Vec<u8>) -> Option<ibc_primitives::QueryClientStateResponse> {
+			Ibc::client(client_id).ok()
+		}
+
+		fn host_consensus_state(height: u32) -> Option<Vec<u8>> {
+			Ibc::host_consensus_state(height)
+		}
+
+		fn client_consensus_state(client_id: Vec<u8>, client_height: Vec<u8>, latest_cs: bool) -> Option<ibc_primitives::QueryConsensusStateResponse> {
+			Ibc::consensus_state(client_height, client_id, latest_cs).ok()
+		}
+
+		fn clients() -> Option<Vec<(Vec<u8>, Vec<u8>)>> {
+			Ibc::clients().ok()
+		}
+
+		fn connection(connection_id: Vec<u8>) -> Option<ibc_primitives::QueryConnectionResponse>{
+			Ibc::connection(connection_id).ok()
+		}
+
+		fn connections() -> Option<ibc_primitives::QueryConnectionsResponse> {
+			Ibc::connections().ok()
+		}
+
+		fn connection_using_client(client_id: Vec<u8>) -> Option<Vec<ibc_primitives::IdentifiedConnection>>{
+			Ibc::connection_using_client(client_id).ok()
+		}
+
+		fn connection_handshake(client_id: Vec<u8>, connection_id: Vec<u8>) -> Option<ibc_primitives::ConnectionHandshake> {
+			Ibc::connection_handshake(client_id, connection_id).ok()
+		}
+
+		fn channel(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryChannelResponse> {
+			Ibc::channel(channel_id, port_id).ok()
+		}
+
+		fn channel_client(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::IdentifiedClientState> {
+			Ibc::channel_client(channel_id, port_id).ok()
+		}
+
+		fn connection_channels(connection_id: Vec<u8>) -> Option<ibc_primitives::QueryChannelsResponse> {
+			Ibc::connection_channels(connection_id).ok()
+		}
+
+		fn channels() -> Option<ibc_primitives::QueryChannelsResponse> {
+			Ibc::channels().ok()
+		}
+
+		fn packet_commitments(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryPacketCommitmentsResponse> {
+			Ibc::packet_commitments(channel_id, port_id).ok()
+		}
+
+		fn packet_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryPacketAcknowledgementsResponse>{
+			Ibc::packet_acknowledgements(channel_id, port_id).ok()
+		}
+
+		fn unreceived_packets(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<u64>> {
+			Ibc::unreceived_packets(channel_id, port_id, seqs).ok()
+		}
+
+		fn unreceived_acknowledgements(channel_id: Vec<u8>, port_id: Vec<u8>, seqs: Vec<u64>) -> Option<Vec<u64>> {
+			Ibc::unreceived_acknowledgements(channel_id, port_id, seqs).ok()
+		}
+
+		fn next_seq_recv(channel_id: Vec<u8>, port_id: Vec<u8>) -> Option<ibc_primitives::QueryNextSequenceReceiveResponse> {
+			Ibc::next_seq_recv(channel_id, port_id).ok()
+		}
+
+		fn packet_commitment(channel_id: Vec<u8>, port_id: Vec<u8>, seq: u64) -> Option<ibc_primitives::QueryPacketCommitmentResponse> {
+			Ibc::packet_commitment(channel_id, port_id, seq).ok()
+		}
+
+		fn packet_acknowledgement(channel_id: Vec<u8>, port_id: Vec<u8>, seq: u64) -> Option<ibc_primitives::QueryPacketAcknowledgementResponse> {
+			Ibc::packet_acknowledgement(channel_id, port_id, seq).ok()
+		}
+
+		fn packet_receipt(channel_id: Vec<u8>, port_id: Vec<u8>, seq: u64) -> Option<ibc_primitives::QueryPacketReceiptResponse> {
+			Ibc::packet_receipt(channel_id, port_id, seq).ok()
+		}
+
+		fn denom_trace(_denom: Vec<u8>) -> Option<ibc_primitives::QueryDenomTraceResponse> {
+			None
+		}
+
+		fn denom_traces(_offset: Vec<u8>, _limit: u64, _height: u32) -> Option<ibc_primitives::QueryDenomTracesResponse> {
+			None
+		}
+	}
 	#[cfg(feature = "runtime-benchmarks")]
 	impl frame_benchmarking::Benchmark<Block> for Runtime {
 		fn benchmark_metadata(extra: bool) -> (
@@ -1345,7 +1584,6 @@ impl_runtime_apis! {
 			let mut batches = Vec::<BenchmarkBatch>::new();
 			let params = (&config, &whitelist);
 			add_benchmarks!(params, batches);
-
 			if batches.is_empty() { return Err("Benchmark not found for this pallet.".into()) }
 			Ok(batches)
 		}

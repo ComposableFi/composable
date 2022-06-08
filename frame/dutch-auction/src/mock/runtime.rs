@@ -1,6 +1,7 @@
 use crate::{
 	self as pallet_dutch_auction,
 	mock::currency::{CurrencyId, NativeAssetId},
+	weights::SubstrateWeight,
 };
 
 use composable_traits::defi::DeFiComposableConfig;
@@ -23,6 +24,7 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
 	Perbill,
 };
+use xcm::latest::{opaque::Xcm, SendXcm};
 
 use super::governance_registry::GovernanceRegistry;
 
@@ -84,7 +86,7 @@ impl frame_system::Config for Runtime {
 }
 
 parameter_types! {
-	pub const NativeExistentialDeposit: Balance = 0;
+	pub const NativeExistentialDeposit: Balance = 1_000_000_000;
 }
 
 impl pallet_balances::Config for Runtime {
@@ -118,6 +120,7 @@ parameter_type_with_key! {
 	};
 }
 
+type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
@@ -127,6 +130,8 @@ impl orml_tokens::Config for Runtime {
 	type ExistentialDeposits = TokensExistentialDeposit;
 	type OnDust = ();
 	type MaxLocks = ();
+	type ReserveIdentifier = ReserveIdentifier;
+	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
 }
 
@@ -155,7 +160,7 @@ impl pallet_currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRoot<AccountId>;
-	type ReserveOrigin = EnsureRoot<AccountId>;
+	type Balance = Balance;
 	type WeightInfo = ();
 }
 
@@ -169,33 +174,39 @@ impl DeFiComposableConfig for Runtime {
 	type Balance = Balance;
 }
 
-parameter_types! {
-	pub static WeightToFee: Balance = 1;
-}
-
-impl WeightToFeePolynomial for WeightToFee {
-	type Balance = Balance;
-
-	fn polynomial() -> WeightToFeeCoefficients<Self::Balance> {
-		let one = WeightToFeeCoefficient {
-			degree: 1,
-			coeff_frac: Perbill::zero(),
-			coeff_integer: WEIGHT_TO_FEE.with(|v| *v.borrow()),
-			negative: false,
-		};
-		smallvec![one]
-	}
-}
-
 impl pallet_dutch_auction::Config for Runtime {
 	type Event = Event;
 	type UnixTime = Timestamp;
 	type OrderId = OrderId;
 	type MultiCurrency = Assets;
-	type WeightInfo = ();
-	type WeightToFee = WeightToFee;
+	type WeightInfo = SubstrateWeight<Self>;
+	type PositionExistentialDeposit = NativeExistentialDeposit;
 	type PalletId = DutchAuctionPalletId;
 	type NativeCurrency = Balances;
+	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
+	type XcmSender = XcmFake;
+
+	type XcmOrigin = XcmFake;
+}
+
+pub struct XcmFake;
+impl Into<Result<cumulus_pallet_xcm::Origin, XcmFake>> for XcmFake {
+	fn into(self) -> Result<cumulus_pallet_xcm::Origin, XcmFake> {
+		todo!("please test via local-integration-tests")
+	}
+}
+impl From<Origin> for XcmFake {
+	fn from(_: Origin) -> Self {
+		todo!("please test via local-integration-tests")
+	}
+}
+impl SendXcm for XcmFake {
+	fn send_xcm(
+		_destination: impl Into<xcm::latest::MultiLocation>,
+		_message: xcm::latest::Xcm<()>,
+	) -> xcm::latest::SendResult {
+		todo!("please test via local-integration-tests")
+	}
 }
 
 #[allow(dead_code)] // not really dead

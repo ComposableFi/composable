@@ -5,7 +5,7 @@ export default {
       params: [
         {
           name: "asset",
-          type: "CurrencyId"
+          type: "CustomRpcCurrencyId"
         },
         {
           name: "account",
@@ -14,14 +14,27 @@ export default {
         {
           name: "at",
           type: "Hash",
-          isOptional: true,
-        },
+          isOptional: true
+        }
       ],
-      type: "AssetsBalance"
+      type: "CustomRpcBalance"
     },
+    listAssets: {
+      description: "Lists the available recognized assets for the runtime.",
+      params: [
+        {
+          name: "at",
+          type: "Hash",
+          isOptional: true
+        }
+      ],
+      type: "Vec<Asset>"
+    }
   },
   types: {
-    CurrencyId: "u128",
-    AssetsBalance: "u128",
-  },
+    Asset: {
+      name: "Vec<u8>",
+      id: "u64"
+    }
+  }
 };

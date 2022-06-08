@@ -54,6 +54,7 @@ pub type Balance = u128;
 pub type Decimal = FixedI128;
 pub type Integer = i128;
 pub type MarketId = u64;
+pub type ReserveIdentifier = [u8; 8]; // copied from 'frame/assets/src/mocks.rs'
 pub type UnsignedDecimal = FixedU128;
 pub type VammId = u64;
 
@@ -105,7 +106,7 @@ impl pallet_balances::Config for Runtime {
 	type WeightInfo = ();
 	type MaxLocks = ();
 	type MaxReserves = ();
-	type ReserveIdentifier = [u8; 8];
+	type ReserveIdentifier = ReserveIdentifier;
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -155,6 +156,8 @@ impl orml_tokens::Config for Runtime {
 	type OnDust = ();
 	type MaxLocks = ();
 	type DustRemovalWhitelist = Everything;
+	type MaxReserves = frame_support::traits::ConstU32<2>; // copied from 'frame/assets/src/mocks.rs'
+	type ReserveIdentifier = ReserveIdentifier;
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -164,8 +167,8 @@ impl orml_tokens::Config for Runtime {
 impl pallet_currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = AssetId;
+	type Balance = Balance;
 	type AddOrigin = EnsureRoot<AccountId>;
-	type ReserveOrigin = EnsureRoot<AccountId>;
 	type WeightInfo = ();
 }
 

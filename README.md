@@ -7,9 +7,17 @@
 
 
 [![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/composablefi/composable)](https://github.com/composablefi/composable/tags) [![Twitter](https://img.shields.io/badge/Twitter-gray?logo=twitter)](https://twitter.com/ComposableFin) [![Discord](https://img.shields.io/badge/Discord-gray?logo=discord)](https://discord.gg/pFZn2GCn65) [![Telegram](https://img.shields.io/badge/Telegram-gray?logo=telegram)](https://t.me/ComposableFinanceAnnouncements) [![Medium](https://img.shields.io/badge/Medium-gray?logo=medium)](https://composablefi.medium.com/)
+[![Bors enabled](https://bors.tech/images/badge_small.svg)](https://app.bors.tech/repositories/45659)
 
 
 Picasso is our custom built Kusama parachain, based on the substrate framework.
+
+## Documentation
+
+To learn more about our ecosystem, vision, and product specifics - visit our 
+[mdbook](https://dali.devnets.composablefinance.ninja).
+
+You can also find our cargo docs [here](https://dali.devnets.composablefinance.ninja/doc).
 
 ## Install
 
@@ -45,7 +53,6 @@ Picasso ships with multiple custom made pallets such as:
 [Apollo](frame/oracle/README.md)
 
 and several others you can find in the frame folder.
-
 
 
 Read more specific information in [our docs folder](docs/).

@@ -1,16 +1,16 @@
 #![cfg_attr(
 	not(test),
-	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+	deny(
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
 		clippy::panic
 	)
-)] // allow in tests#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
+)] // allow in tests#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
-#![warn(
+#![deny(
 	bad_style,
 	bare_trait_objects,
 	const_err,
@@ -29,33 +29,9 @@
 	trivial_casts,
 	unused_extern_crates
 )]
+#![doc = include_str!("../README.md")]
 
-//! Bonded Finance pallet
-//!
-//! - [`Config`]
-//! - [`Call`]
-//!
-//! ## Overview
-//!
-//! A simple pallet providing means of submitting bond offers.
-//!
-//! Alice offers some bond priced in specific assets per bond as some amount of shares.
-//! At same time she provides reward asset which will be vested into account which takes bond
-//! offers. She locks some native currency to make the offer registered.
-//!
-//! Bob bonds parts of shares from offer by transfer some asset amount desired by Alice.
-//! Bob will be vested part of reward amount during maturity period from that moment.
-//! It the end of some period Bob may or may be not be return with amount he provided to Alice -
-//! depends on how offer was setup.
-//!
-//! Alice may cancel offer and prevent new bonds on offer, she gets her native tokens back.
-//! All existing vesting periods continue to be executed.
-//!
-//! ## Interface
-//!
-//! This pallet implements the `composable_traits::bonded_finance::BondedFinance`.
-
-#[cfg(feature = "runtime-benchmarks")]
+#[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarks;
 
 mod mock;
@@ -69,10 +45,16 @@ pub use pallet::*;
 #[frame_support::pallet]
 pub mod pallet {
 	use codec::FullCodec;
-	use composable_support::validation::Validated;
+	use composable_support::{
+		abstractions::{
+			nonce::{Increment, Nonce},
+			utils::{increment::SafeIncrement, start_at::ZeroInit},
+		},
+		math::safe::SafeAdd,
+		validation::Validated,
+	};
 	use composable_traits::{
 		bonded_finance::{BondDuration, BondOffer, BondedFinance, ValidBondOffer},
-		math::SafeAdd,
 		vesting::{VestedTransfer, VestingSchedule, VestingWindow::BlockNumberBased},
 	};
 	use frame_support::{
@@ -176,6 +158,9 @@ pub mod pallet {
 		/// The minimum reward for an offer.
 		///
 		/// Must be > T::Vesting::MinVestedTransfer.
+		// NOTE: can be zero for low amount tokens. either define normalzied (e.g. to stable or
+		// native token), or better have min per bond setup (if min == total will make Sell type
+		// setup)
 		#[pallet::constant]
 		type MinReward: Get<BalanceOf<Self>>;
 
@@ -191,19 +176,12 @@ pub mod pallet {
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
-	#[pallet::type_value]
-	pub fn BondOfferOnEmpty<T: Config>() -> T::BondOfferId {
-		T::BondOfferId::zero()
-	}
-
 	/// The counter used to uniquely identify bond offers within this pallet.
 	#[pallet::storage]
 	#[pallet::getter(fn bond_offer_count)]
-	// `BondOfferOnEmpty<T>` explicitly defines the behaviour when empty, so `ValueQuery` is
-	// allowed.
-	#[allow(clippy::disallowed_type)]
+	#[allow(clippy::disallowed_types)] // nonce, ValueQuery is OK
 	pub type BondOfferCount<T: Config> =
-		StorageValue<_, T::BondOfferId, ValueQuery, BondOfferOnEmpty<T>>;
+		StorageValue<_, T::BondOfferId, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 
 	/// A mapping from offer ID to the pair: (issuer, offer)
 	#[pallet::storage]
@@ -218,11 +196,12 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Create a new offer. So later can `bond` it.
+		/// Create a new bond offer. To be `bond` to later.
 		///
 		/// The dispatch origin for this call must be _Signed_ and the sender must have the
-		/// appropriate funds.
-		/// Allow the issuer to ask for his account to be kept alive using the `keep_alive`
+		/// appropriate funds to stake the offer.
+		///
+		/// Allows the issuer to ask for their account to be kept alive using the `keep_alive`
 		/// parameter.
 		///
 		/// Emits a `NewOffer`.
@@ -241,14 +220,15 @@ pub mod pallet {
 			Ok(())
 		}
 		/// Bond to an offer.
-		/// And user should provide the number of contracts she is willing to buy.
-		/// On offer completion (a.k.a. no more contract on the offer), the `stake` put by the
-		/// creator is refunded.
+		///
+		/// The issuer should provide the number of contracts they are willing to buy.
+		/// Once there are no more contracts available on the offer, the `stake` put by the
+		/// offer creator is refunded.
 		///
 		/// The dispatch origin for this call must be _Signed_ and the sender must have the
-		/// appropriate funds.
+		/// appropriate funds to buy the desired number of contracts.
 		///
-		/// Allow the bonder to ask for his account to be kept alive using the `keep_alive`
+		/// Allows the issuer to ask for their account to be kept alive using the `keep_alive`
 		/// parameter.
 		///
 		/// Emits a `NewBond`.
@@ -265,8 +245,11 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Cancel a running offer. Blocking further bond but not cancelling the
-		/// currently vested rewards. The `stake` put by the creator is refunded.
+		/// Cancel a running offer.
+		///
+		/// Blocking further bonds but not cancelling the currently vested rewards. The `stake` put
+		/// by the offer creator is refunded.
+		///
 		/// The dispatch origin for this call must be _Signed_ and the sender must be `AdminOrigin`
 		///
 		/// Emits a `OfferCancelled`.
@@ -313,12 +296,7 @@ pub mod pallet {
 			offer: BondOfferOf<T>,
 			keep_alive: bool,
 		) -> Result<T::BondOfferId, DispatchError> {
-			let offer_id = BondOfferCount::<T>::try_mutate(
-				|offer_id| -> Result<T::BondOfferId, DispatchError> {
-					*offer_id = offer_id.safe_add(&T::BondOfferId::one())?;
-					Ok(*offer_id)
-				},
-			)?;
+			let offer_id = BondOfferCount::<T>::increment()?;
 			let offer_account = Self::account_id(offer_id);
 			T::NativeCurrency::transfer(from, &offer_account, T::Stake::get(), keep_alive)?;
 			T::Currency::transfer(
@@ -373,6 +351,7 @@ pub mod pallet {
 							keep_alive,
 						)?;
 						let current_block = frame_system::Pallet::<T>::current_block_number();
+						// Schedule the vesting of the reward.
 						T::Vesting::vested_transfer(
 							offer.reward.asset,
 							&offer_account,
@@ -388,6 +367,7 @@ pub mod pallet {
 						)?;
 						match offer.maturity {
 							BondDuration::Finite { return_in } => {
+								// Schedule the return of the bonded amount
 								T::Vesting::vested_transfer(
 									offer.asset,
 									&offer.beneficiary,

@@ -1,7 +1,7 @@
 use super::*;
 
 use crate::{decay::*, Pallet as Mosaic};
-use composable_support::validation::Validated;
+use composable_support::{types::EthereumAddress, validation::Validated};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
 	assert_ok,
@@ -72,7 +72,7 @@ benchmarks! {
 	  assert_ok!(Mosaic::<T>::set_budget(RawOrigin::Root.into(), asset_id, budget_amount, decayer.into()));
 
 		let alice = account("alice", 0, 0);
-	  let address = [0u8; 20];
+	  let address = EthereumAddress([0u8; 20]);
 		let transfer_amount: BalanceOf<T> = TRANSFER_AMOUNT.into();
 
 		assert_ok!(T::Assets::mint_into(asset_id, &alice, transfer_amount));
@@ -100,7 +100,7 @@ benchmarks! {
 	  assert_ok!(Mosaic::<T>::set_budget(RawOrigin::Root.into(), asset_id, budget_amount, decayer.into()));
 
 		let alice = account("alice", 0, 0);
-	  let address = [0u8; 20];
+	  let address = EthereumAddress([0u8; 20]);
 		let transfer_amount: BalanceOf<T> = TRANSFER_AMOUNT.into();
 
 		assert_ok!(T::Assets::mint_into(asset_id, &alice, transfer_amount));
@@ -129,7 +129,7 @@ benchmarks! {
 	  assert_ok!(Mosaic::<T>::set_budget(RawOrigin::Root.into(), asset_id, budget_amount, decayer.into()));
 
 		let alice = account("alice", 0, 0);
-	  let address = [0u8; 20];
+	  let address = EthereumAddress([0u8; 20]);
 		let transfer_amount: BalanceOf<T> = TRANSFER_AMOUNT.into();
 
 		assert_ok!(T::Assets::mint_into(asset_id, &alice, transfer_amount));
@@ -159,7 +159,7 @@ benchmarks! {
 	  assert_ok!(Mosaic::<T>::set_budget(RawOrigin::Root.into(), asset_id, budget_amount, decayer.into()));
 
 		let alice = account("alice", 0, 0);
-	  let address = [0u8; 20];
+	  let address = EthereumAddress([0u8; 20]);
 		let transfer_amount: BalanceOf<T> = TRANSFER_AMOUNT.into();
 
 		assert_ok!(T::Assets::mint_into(asset_id, &alice, transfer_amount));
@@ -195,7 +195,7 @@ benchmarks! {
 	  assert_ok!(Mosaic::<T>::set_budget(RawOrigin::Root.into(), asset_id, budget_amount, decayer.into()));
 
 		let alice = account("alice", 0, 0);
-	  let address = [0u8; 20];
+	  let address = EthereumAddress([0u8; 20]);
 		let transfer_amount: BalanceOf<T> = TRANSFER_AMOUNT.into();
 
 		assert_ok!(T::Assets::mint_into(asset_id, &alice, transfer_amount));
@@ -231,7 +231,7 @@ benchmarks! {
 	  assert_ok!(Mosaic::<T>::set_budget(RawOrigin::Root.into(), asset_id, budget_amount, decayer.into()));
 
 		let alice = account("alice", 0, 0);
-		let address = [0u8; 20];
+		let address = EthereumAddress([0u8; 20]);
 		let transfer_amount: BalanceOf<T> = TRANSFER_AMOUNT.into();
 
 		assert_ok!(T::Assets::mint_into(asset_id, &alice, transfer_amount));

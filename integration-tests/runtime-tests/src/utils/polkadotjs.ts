@@ -1,39 +1,82 @@
-import { ApiPromise } from '@polkadot/api';
-import { AnyTuple, IEvent } from '@polkadot/types/types';
-import { SubmittableExtrinsic, AddressOrPair } from '@polkadot/api/types';
-import {expect} from "chai";
+import { ApiPromise } from "@polkadot/api";
+import { AnyTuple, IEvent } from "@polkadot/types/types";
+import { SubmittableExtrinsic, AddressOrPair } from "@polkadot/api/types";
 
+/**
+ * Sends an unsigned extrinsic and waits for success.
+ * @param {ApiPromise} api Connected API Client.
+ * @param {IEvent<AnyTuple>} filter Success event to be waited for.
+ * @param {SubmittableExtrinsic<Promise>} call Extrinsic call.
+ * @param {boolean} intendedToFail If set to true the transaction is expected to fail.
+ * @returns event that fits the filter
+ */
 export async function sendUnsignedAndWaitForSuccess<T extends AnyTuple>(
   api: ApiPromise,
   filter: (event: IEvent<AnyTuple>) => event is IEvent<T>,
   call: SubmittableExtrinsic<"promise">,
-  intendedToFail=false
+  intendedToFail = false
 ): Promise<IEvent<T>> {
   return await sendUnsignedAndWaitFor(api, filter, call, intendedToFail);
 }
 
+/**
+ * Sends a signed extrinsic and waits for success.
+ * @param {ApiPromise} api Connected API Client.
+ * @param {AddressOrPair} sender Wallet initiating the transaction.
+ * @param {IEvent<AnyTuple>} filter Success event to be waited for.
+ * @param {SubmittableExtrinsic<Promise>} call Extrinsic call.
+ * @param {boolean} intendedToFail If set to true the transaction is expected to fail.
+ * @returns event that fits the filter
+ */
 export async function sendAndWaitForSuccess<T extends AnyTuple>(
   api: ApiPromise,
   sender: AddressOrPair,
   filter: (event: IEvent<AnyTuple>) => event is IEvent<T>,
   call: SubmittableExtrinsic<"promise">,
-  intendedToFail=false
+  intendedToFail = false
 ): Promise<IEvent<T>> {
   return await sendAndWaitFor(api, sender, filter, call, intendedToFail);
 }
 
-export async function waitForBlocks(n=1) {
-  return await waitForBlockHandler(n);
+/**
+ * Sends multiple signed extrinsics and waits for success
+ * @param {ApiPromise} api Connected API Client.
+ * @param {AddressOrPair} sender Wallet initiating the transaction.
+ * @param {IEvent<AnyTuple>} filter Success event to be waited for.
+ * @param {SubmittableExtrinsic<Promise>} call Extrinsic call.
+ * @param {boolean} intendedToFail If set to true the transaction is expected to fail.
+ * @returns event that fits the filter
+ */
+export async function sendWithBatchAndWaitForSuccess<T extends AnyTuple>(
+  api: ApiPromise,
+  sender: AddressOrPair,
+  filter: (event: IEvent<AnyTuple>) => event is IEvent<T>,
+  call: SubmittableExtrinsic<"promise">[],
+  intendedToFail: boolean
+): Promise<IEvent<T>> {
+  return await sendAndWaitForWithBatch(api, sender, filter, call, intendedToFail);
+}
+
+/**
+ * Waits for N amount of blocks.
+ * @param {ApiPromise} api Connected API Client.
+ * @param {number} n Amount of blocks.
+ * @return The current block number after waiting.
+ */
+export async function waitForBlocks(api: ApiPromise, n = 1) {
+  return await waitForBlockHandler(api, n);
 }
 
 /**
  * Helper to wait for n blocks.
- * @param n Block wait duration.
+ * @param {ApiPromise} api Connected API Client.
+ * @param {number} n Block wait duration.
+ * @return The current block number after waiting.
  */
-export async function waitForBlockHandler(n) {
+export async function waitForBlockHandler(api: ApiPromise, n) {
   const originBlock = await api.query.system.number();
   let currentBlock = await api.query.system.number();
-  while(currentBlock.toNumber() < originBlock.toNumber()+n) {
+  while (currentBlock.toNumber() < originBlock.toNumber() + n) {
     await sleep(3000);
     currentBlock = await api.query.system.number();
   }
@@ -56,7 +99,7 @@ export function sendUnsignedAndWaitFor<T extends AnyTuple>(
   api: ApiPromise,
   filter: (event: IEvent<AnyTuple>) => event is IEvent<T>,
   call: SubmittableExtrinsic<"promise">,
-  intendedToFail:boolean
+  intendedToFail: boolean
 ): Promise<IEvent<T>> {
   return new Promise<IEvent<T>>(function (resolve, reject) {
     call
@@ -72,8 +115,7 @@ export function sendUnsignedAndWaitFor<T extends AnyTuple>(
           }
         }
         if (status.isInBlock || status.isFinalized) {
-          if (res.events.find(e => filter(e.event)) == undefined)
-            return reject(status.toString());
+          if (res.events.find(e => filter(e.event)) == undefined) return reject(status.toString());
           const event = res.events.find(e => filter(e.event)).event;
           if (filter(event)) {
             resolve(event);
@@ -102,67 +144,113 @@ export function sendAndWaitFor<T extends AnyTuple>(
   sender: AddressOrPair,
   filter: (event: IEvent<AnyTuple>) => event is IEvent<T>,
   call: SubmittableExtrinsic<"promise">,
-  intendedToFail:boolean
+  intendedToFail: boolean
 ): Promise<IEvent<T>> {
   return new Promise<IEvent<T>>(function (resolve, reject) {
     call
-      .signAndSend(sender, {nonce: -1}, function (res) {
-        const {dispatchError, status} = res;
+      .signAndSend(sender, { nonce: -1 }, function (res) {
+        const { dispatchError, status } = res;
         if (dispatchError) {
           if (dispatchError.isModule) {
             // for module errors, we have the section indexed, lookup
             const decoded = api.registry.findMetaError(dispatchError.asModule);
-            const {docs, name, section} = decoded;
+            const { docs, name, section } = decoded;
             if (intendedToFail) {
               const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event))
-                resolve(event);
+              if (filter(event)) resolve(event);
             }
             reject(Error(`${section}.${name}: ${docs.join(" ")}`));
           } else {
             if (intendedToFail) {
               const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event))
-                resolve(event);
+              if (filter(event)) resolve(event);
             }
             reject(Error(dispatchError.toString()));
           }
         }
         if (status.isInBlock || status.isFinalized) {
-          if (res.events.find(e => filter(e.event)) == undefined)
-            return reject(status.toString());
+          if (res.events.find(e => filter(e.event)) == undefined) return reject(status.toString());
           const event = res.events.find(e => filter(e.event)).event;
           if (filter(event)) {
             if (intendedToFail) {
               const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event))
-                reject(event);
+              if (filter(event)) reject(event);
             }
             resolve(event);
           } else {
             if (intendedToFail) {
               const event = res.events.find(e => filter(e.event)).event;
-              if (filter(event))
-                resolve(event);
+              if (filter(event)) resolve(event);
             }
             reject(Error("1014: Priority is too low:"));
           }
         }
       })
-      .catch(async function (e) {
-        if (e.message.contains("1014: Priority is too low:")) {
-          // This happens when we send 2 transaction from the same wallet, at the same time.
-          // We solve it by waiting 2 seconds and retrying it.
-          await sleep(2000);
-          const {data: [result],} = await sendAndWaitFor(api, sender, filter, call, intendedToFail).catch(function (exc) {
-            reject(exc);
-            return {data:[exc]};
-          });
-          expect(result).to.not.be.an('Error');
-          resolve(result);
+      .catch(function (e) {
+        reject(Error(e.stack));
+      });
+  });
+}
+
+/**
+ * Sends multiple signed extrinsics and waits for success
+ * @param {ApiPromise} api Connected API Client.
+ * @param {AddressOrPair} sender Wallet initiating the transaction.
+ * @param {IEvent<AnyTuple>} filter Success event to be waited for.
+ * @param {SubmittableExtrinsic<Promise>} call Extrinsic call.
+ * @param {boolean} intendedToFail If set to true the transaction is expected to fail.
+ * @returns event that fits the filter
+ */
+export function sendAndWaitForWithBatch<T extends AnyTuple>(
+  api: ApiPromise,
+  sender: AddressOrPair,
+  filter: (event: IEvent<AnyTuple>) => event is IEvent<T>,
+  call: SubmittableExtrinsic<"promise">[],
+  intendedToFail: boolean
+): Promise<IEvent<T>> {
+  return new Promise<IEvent<T>>(function (resolve, reject) {
+    api.tx.utility
+      .batch(call)
+      .signAndSend(sender, { nonce: -1 }, function (res) {
+        const { dispatchError, status } = res;
+        if (dispatchError) {
+          if (dispatchError.isModule) {
+            // for module errors, we have the section indexed, lookup
+            const decoded = api.registry.findMetaError(dispatchError.asModule);
+            const { docs, name, section } = decoded;
+            if (intendedToFail) {
+              const event = res.events.find(e => filter(e.event)).event;
+              if (filter(event)) resolve(event);
+            }
+            reject(Error(`${section}.${name}: ${docs.join(" ")}`));
+          } else {
+            if (intendedToFail) {
+              const event = res.events.find(e => filter(e.event)).event;
+              if (filter(event)) resolve(event);
+            }
+            reject(Error(dispatchError.toString()));
+          }
         }
-        else
-          reject(Error(e.stack));
+        if (status.isInBlock || status.isFinalized) {
+          if (res.events.find(e => filter(e.event)) == undefined) return reject(status.toString());
+          const event = res.events.find(e => filter(e.event)).event;
+          if (filter(event)) {
+            if (intendedToFail) {
+              const event = res.events.find(e => filter(e.event)).event;
+              if (filter(event)) reject(event);
+            }
+            resolve(event);
+          } else {
+            if (intendedToFail) {
+              const event = res.events.find(e => filter(e.event)).event;
+              if (filter(event)) resolve(event);
+            }
+            reject(Error("1014: Priority is too low:"));
+          }
+        }
+      })
+      .catch(function (e) {
+        reject(Error(e.stack));
       });
   });
 }

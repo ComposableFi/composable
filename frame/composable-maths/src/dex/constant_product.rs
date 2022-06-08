@@ -1,4 +1,6 @@
-use composable_traits::math::{safe_multiply_by_rational, SafeAdd, SafeDiv, SafeMul, SafeSub};
+use composable_support::math::safe::{
+	safe_multiply_by_rational, SafeAdd, SafeDiv, SafeMul, SafeSub,
+};
 use frame_support::ensure;
 use rust_decimal::{
 	prelude::{FromPrimitive, ToPrimitive},
@@ -155,8 +157,9 @@ pub fn compute_deposit_lp(
 		let lp_to_mint = compute_first_deposit_lp(base_amount, quote_amount)?;
 		Ok((quote_amount, lp_to_mint))
 	} else {
-		let quote_amount = safe_multiply_by_rational(pool_quote_aum, base_amount, pool_base_aum)?;
+		let overwritten_quote_amount =
+			safe_multiply_by_rational(pool_quote_aum, base_amount, pool_base_aum)?;
 		let lp_to_mint = safe_multiply_by_rational(lp_total_issuance, base_amount, pool_base_aum)?;
-		Ok((quote_amount, lp_to_mint))
+		Ok((overwritten_quote_amount, lp_to_mint))
 	}
 }

@@ -1,10 +1,11 @@
 use crate::{
-	asset::{Asset, AssetIndex},
+	asset::Asset,
 	cache::{PriceCache, ThreadSafePriceCache},
 	feed::{Exponent, Price, TimeStamp, TimeStampedPrice},
 };
 use chrono::Duration;
 use futures::channel::oneshot;
+use primitives::currency::CurrencyId;
 use serde::Serialize;
 use std::{
 	collections::HashMap,
@@ -40,8 +41,8 @@ impl Frontend {
 			warp::path!("asset_id" / Asset).and(warp::get()).map(get_asset_id);
 
 		let get_price_endpoint =
-			warp::path!("price" / AssetIndex).and(warp::get()).map(move |asset_index| {
-				get_price(&prices_cache, asset_index, cache_duration, expected_exponent)
+			warp::path!("price" / CurrencyId).and(warp::get()).map(move |currency_index| {
+				get_price(&prices_cache, currency_index, cache_duration, expected_exponent)
 			});
 
 		let (shutdown_trigger, shutdown) = oneshot::channel::<()>();
@@ -60,19 +61,19 @@ impl Frontend {
 }
 
 fn get_asset_id(x: Asset) -> WithStatus<Json> {
-	match AssetIndex::try_from(x) {
-		Ok(asset_index) => reply::with_status(reply::json(&asset_index), StatusCode::OK),
+	match CurrencyId::try_from(x) {
+		Ok(currency_index) => reply::with_status(reply::json(&currency_index), StatusCode::OK),
 		Err(_) => reply::with_status(reply::json(&()), StatusCode::NOT_FOUND),
 	}
 }
 
 fn get_price(
 	prices: &ThreadSafePriceCache,
-	asset_index: AssetIndex,
+	currency_index: CurrencyId,
 	cache_duration: Duration,
 	expected_exponent: Exponent,
 ) -> WithStatus<Json> {
-	match Asset::try_from(asset_index).and_then(|asset| {
+	match Asset::try_from(currency_index).and_then(|asset| {
 		let now = TimeStamp::now();
 		prices
 			.read()
@@ -88,7 +89,7 @@ fn get_price(
 		// The oracle is expecting an object with the asset as key and it's price as value.
 		Ok(normalized_price) => reply::with_status(
 			reply::json(
-				&[(format!("{}", asset_index), normalized_price)]
+				&[(format!("{}", currency_index), normalized_price)]
 					.iter()
 					.cloned()
 					.collect::<HashMap<_, _>>(),

@@ -1,3 +1,4 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { DefinitionRpc } from "@polkadot/types/types";
 
 export default {
@@ -12,19 +13,19 @@ export default {
         {
           name: "at",
           type: "Hash",
-          isOptional: true,
+          isOptional: true
         }
       ],
       type: "Balance"
-    },
+    }
   },
   types: {
     ComposableTraitsAssetsXcmAssetLocation: "Null",
     PalletCrowdloanRewardsModelsReward: "Null",
     PalletCrowdloanRewardsModelsRemoteAccount: {
       _enum: {
-        RelayChain: 'AccountId32',
-        Ethereum: 'EthereumAccountId'
+        RelayChain: "AccountId32",
+        Ethereum: "EthereumAccountId"
       }
     },
     ComposableTraitsCallFilterCallFilterEntry: "Null",
@@ -32,7 +33,7 @@ export default {
     SpConsensusAuraSr25519AppSr25519Public: "Null",
     ComposableTraitsBondedFinanceBondOffer: {
       beneficiary: "AccountId32",
-      asset: "u128",
+      asset: "CurrencyId",
       bondPrice: "u128",
       nbOfBonds: "u128",
       maturity: "ComposableTraitsBondedFinanceBondDuration",
@@ -40,10 +41,10 @@ export default {
       keepAlive: "bool"
     },
     ComposableTraitsBondedFinanceBondDuration: {
-      Finite: {returnIn: "u32"}
+      Finite: { returnIn: "u32" }
     },
     ComposableTraitsBondedFinanceBondOfferReward: {
-      asset: "u128",
+      asset: "CurrencyId",
       amount: "u128",
       maturity: "u32"
     },
@@ -65,8 +66,8 @@ export default {
     PalletIdentityRegistrarInfo: "Null",
     PalletOracleAssetInfo: "Null",
     PalletOracleWithdraw: {
-      stake: 'u128',
-      unlockBlock: 'u32'
+      stake: "u128",
+      unlockBlock: "u32"
     },
     PalletOraclePrePrice: "Null",
     PalletOraclePrice: "Null",
@@ -78,9 +79,9 @@ export default {
     PalletSchedulerScheduledV3: "Null",
     DaliRuntimeOpaqueSessionKeys: "Null",
     OrmlTokensAccountData: {
-      free: 'u128',
-      reserved: 'u128',
-      frozen: 'u128'
+      free: "u128",
+      reserved: "u128",
+      frozen: "u128"
     },
     OrmlTokensBalanceLock: "Null",
     PalletTreasuryProposal: "Null",
@@ -94,8 +95,8 @@ export default {
     CumulusPalletXcmpQueueOutboundChannelDetails: "Null",
     PalletCrowdloanRewardsModelsProof: {
       _enum: {
-        RelayChain: '(AccountId32, MultiSignature)',
-        Ethereum: 'PalletCrowdloanRewardsModelsEcdsaSignature'
+        RelayChain: "(AccountId32, MultiSignature)",
+        Ethereum: "PalletCrowdloanRewardsModelsEcdsaSignature"
       }
     },
     PalletCrowdloanRewardsModelsEcdsaSignature: "EcdsaSignature",
@@ -108,7 +109,7 @@ export default {
     PalletIdentityJudgement: "Null",
     PalletIdentityBitFlags: "Null",
     PalletIdentityIdentityInfo: "Null",
-    CumulusPrimitivesParachainInherentParachainInherentData: 'ParachainInherentData',
+    CumulusPrimitivesParachainInherentParachainInherentData: "ParachainInherentData",
     DaliRuntimeOriginCaller: "Null",
     ComposableTraitsVaultVaultConfig: "Null",
     XcmVersionedMultiAsset: "Null",
@@ -119,16 +120,20 @@ export default {
     PalletMosaicDecayBudgetPenaltyDecayer: "Null",
     PalletAssetsRegistryForeignMetadata: "Null",
     PalletMosaicAssetInfo: "Null",
-    PalletMosaicRelayerStaleRelayer: "Null",
+    PalletMosaicRelayerStaleRelayer: {
+      relayer: {
+        current: "AccountId32",
+        next: {
+          ttl: "u32",
+          account: "AccountId32"
+        }
+      }
+    },
     FrameSupportScheduleMaybeHashed: "Null",
     FrameSupportScheduleLookupError: "Null",
     PalletCurrencyFactoryRanges: "Null",
     PalletCurrencyFactoryRangesRange: "Null",
     PalletLiquidationsLiquidationStrategyConfiguration: "Null",
-    ComposableTraitsDefiCurrencyPair: {
-      base: "u128",
-      quote: "u128"
-    },
     CommonMosaicRemoteAssetId: "Null",
     ComposableTraitsDexConsantProductPoolInfo: "Null",
     ComposableTraitsLendingMarketConfig: "Null",
@@ -139,13 +144,17 @@ export default {
     PalletLiquidityBootstrappingPool: "Null",
     ComposableTraitsDexConstantProductPoolInfo: {
       owner: "AccountId32",
-      pair: {
-        base: "u128",
-        quote: "u128"
-      },
+      pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
       lpToken: "u128",
       fee: "Permill",
       ownerFee: "Permill"
     },
-  },
+    ComposableSupportEthereumAddress: "Null",
+    ComposableTraitsAssetsBasicAssetMetadata: "Null",
+    ComposableTraitsDexDexRoute: "Null",
+    ComposableTraitsLendingRepayStrategy: "Null",
+    ComposableTraitsXcmAssetsXcmAssetLocation: "Null",
+    SpTrieStorageProof: "Null",
+    ComposableTraitsXcmAssetsForeignMetadata: "Null"
+  }
 };

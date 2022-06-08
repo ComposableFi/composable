@@ -2,16 +2,13 @@ use super::*;
 use crate::Pallet as Liquidations;
 use codec::Decode;
 use composable_traits::{
-	defi::{CurrencyPair, DeFiComposableConfig, Ratio, Sell, Take},
+	defi::{CurrencyPair, DeFiComposableConfig, Ratio, Sell},
 	liquidation::Liquidation,
 };
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::traits::{fungibles::Mutate, Currency, Get, Hooks};
 use frame_system::{pallet_prelude::BlockNumberFor, RawOrigin};
-use sp_runtime::{
-	traits::{AccountIdConversion, Saturating},
-	FixedPointNumber,
-};
+use sp_runtime::FixedPointNumber;
 use sp_std::prelude::*;
 
 pub type AssetIdOf<T> = <T as DeFiComposableConfig>::MayBeAssetId;

@@ -1,0 +1,42 @@
+{
+  "extends": [
+    "airbnb-typescript/base",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:@typescript-eslint/recommended-requiring-type-checking",
+    "plugin:eslint-comments/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "parserOptions": {
+    "project": "./tsconfig.json",
+    "warnOnUnsupportedTypeScriptVersion": false // TODO: remove after updating to eslint 8
+  },
+  "rules": {
+    // https://basarat.gitbooks.io/typescript/docs/tips/defaultIsBad.html
+    "import/prefer-default-export": "off",
+    "import/no-default-export": "error",
+    // "import/no-cycle": "off",
+    "max-classes-per-file": ["error", 5],
+    // Don't forget debugs
+    "no-console": "off",
+    // Not a big fan of constant refactoring that will happen after adding/removing 'this' from some random method
+    "class-methods-use-this": "off",
+    "id-length": [ "error", { "exceptions": [ "_", /* placeholder */ "a", /* sort */ "b", /* sort */ "i" /* loop */ ] } ],
+    // Setting fields directly seems fine for entities, makes the implementation simple
+    "no-param-reassign": "off",
+    // airbnb disallows for-of async iteration which is very questionable
+    "no-restricted-syntax": "off",
+    // airbnb disallows for-of async-await iteration which is very questionable
+    "no-await-in-loop": "off",
+    "import/no-extraneous-dependencies": "off",
+    // conveinient for class getters
+    "no-underscore-dangle": "off",
+    "@typescript-eslint/unbound-method": "warn",
+    // makes a mess
+    "@typescript-eslint/no-use-before-define": "off"
+  },
+  "ignorePatterns": [
+    "src/model/generated",
+    "src/types",
+    "db"
+  ]
+}

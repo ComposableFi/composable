@@ -2,8 +2,8 @@
 use crate::{AccountId, Balance};
 use codec::{Decode, Encode};
 use composable_traits::{
-	assets::{RemoteAssetRegistry, XcmAssetLocation},
 	oracle::MinimalOracle,
+	xcm::assets::{RemoteAssetRegistryInspect, XcmAssetLocation},
 };
 use frame_support::{
 	dispatch::Weight,
@@ -12,8 +12,8 @@ use frame_support::{
 	weights::WeightToFeePolynomial,
 };
 use num_traits::Zero;
-use orml_traits::location::Reserve;
-use polkadot_primitives::v1::Id;
+use orml_traits::location::{AbsoluteReserveProvider, Reserve};
+use polkadot_primitives::v2::Id;
 use primitives::currency::{CurrencyId, WellKnownCurrency};
 use sp_runtime::traits::Convert;
 use sp_std::marker::PhantomData;
@@ -43,6 +43,22 @@ impl ShouldExecute for XcmpDebug {
 	) -> Result<(), ()> {
 		log::trace!(target: "xcmp::should_execute", "{:?} {:?} {:?} {:?}", origin, message, max_weight, weight_credit);
 		Err(())
+	}
+}
+
+/// is used to represent this chain in various APIS
+pub struct ThisChain<T>(PhantomData<T>);
+
+impl<T: Get<Id>> ThisChain<T> {
+	pub const SELF_RECURSIVE: MultiLocation = MultiLocation { parents: 0, interior: Here };
+	pub fn self_parent() -> MultiLocation {
+		MultiLocation { parents: 1, interior: X1(Parachain(T::get().into())) }
+	}
+}
+
+impl<T: Get<Id>> Contains<MultiLocation> for ThisChain<T> {
+	fn contains(origin: &MultiLocation) -> bool {
+		origin == &Self::SELF_RECURSIVE || origin == &Self::self_parent()
 	}
 }
 
@@ -110,14 +126,19 @@ impl<
 
 		if let AssetId::Concrete(ref multi_location) = xcmp_asset_id.clone() {
 			if let Some(asset_id) = AssetConverter::convert(multi_location.clone()) {
+				// NOTE: we have som many traces cause TooExpensive (as in Acala)
+				// NOTE: no suitable error for now. Could repurpose Trap(u64), but that will violate
+				// documentation
 				let fee = WeightToFee::calc(&weight);
+				log::trace!(target : "xcmp::buy_weight", "required payment in native token is: {:?}", fee );
 				let price = PriceConverter::get_price_inverse(asset_id, fee)
 					.map_err(|_| XcmError::TooExpensive)?;
+				log::trace!(target : "xcmp::buy_weight", "amount of priceable token to pay fee{:?}", price );
 
 				let required =
 					MultiAsset { id: xcmp_asset_id.clone(), fun: Fungibility::Fungible(price) };
 
-				log::trace!(target : "xcmp::buy_weight", "{:?} {:?} ", required, payment );
+				log::trace!(target : "xcmp::buy_weight", "required priceable token {:?}; provided payment:{:?} ", required, payment );
 				let unused = payment.checked_sub(required).map_err(|_| XcmError::TooExpensive)?;
 
 				self.fee = self.fee.saturating_add(fee);
@@ -193,7 +214,7 @@ pub struct CurrencyIdConvert<AssetRegistry, WellKnownCurrency, ThisParaId, WellK
 /// converts local currency into remote,
 /// native currency is built in
 impl<
-		AssetRegistry: RemoteAssetRegistry<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
+		AssetRegistry: RemoteAssetRegistryInspect<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
 		WellKnown: WellKnownCurrency,
 		ThisParaId: Get<Id>,
 		WellKnownXcmpAssets,
@@ -208,7 +229,9 @@ impl<
 			)),
 			CurrencyId::RELAY_NATIVE => Some(MultiLocation::parent()),
 			_ =>
-				if let Some(location) = AssetRegistry::asset_to_location(id).map(Into::into) {
+				if let Some(location) =
+					AssetRegistry::asset_to_remote(id).map(|x| x.location.into())
+				{
 					Some(location)
 				} else {
 					log::trace!(
@@ -239,7 +262,7 @@ pub const RELAY_LOCATION: MultiLocation = MultiLocation { parents: 1, interior: 
 /// 2. in some well know cases remote asset id is statically typed into here (so it is okey to send
 /// their id to us) 3. and in other cases they must map on us, and than send our id to here
 impl<
-		AssetsRegistry: RemoteAssetRegistry<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
+		AssetsRegistry: RemoteAssetRegistryInspect<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
 		WellKnown: WellKnownCurrency,
 		ThisParaId: Get<Id>,
 		WellKnownXcmpAssets: XcmpAssets,
@@ -268,6 +291,7 @@ impl<
 				// TODO: support DOT via abstracting CurrencyId
 				Some(CurrencyId::RELAY_NATIVE)
 			},
+			ThisChain::<ThisParaId>::SELF_RECURSIVE => Some(CurrencyId::NATIVE),
 			MultiLocation { parents: 0, interior: X1(GeneralKey(key)) } => {
 				// adapt for reanchor canonical location: https://github.com/paritytech/polkadot/pull/4470
 				let currency_id = CurrencyId::decode(&mut &key[..]).ok()?;
@@ -295,7 +319,7 @@ impl<
 
 /// covert remote to local, usually when receiving transfer
 impl<
-		T: RemoteAssetRegistry<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
+		T: RemoteAssetRegistryInspect<AssetId = CurrencyId, AssetNativeLocation = XcmAssetLocation>,
 		WellKnown: WellKnownCurrency,
 		ThisParaId: Get<Id>,
 		WellKnownXcmpAssets: XcmpAssets,
@@ -321,7 +345,7 @@ impl FilterAssetLocation for DebugMultiNativeAsset {
 			"asset: {:?}; origin: {:?}; reserve: {:?};",
 			&asset,
 			&origin,
-			&asset.clone().reserve(),
+			AbsoluteReserveProvider::reserve(&asset.clone()),
 		);
 		false
 	}
@@ -338,13 +362,4 @@ impl<X, Y, Treasury: TakeRevenue, Z> Drop for TransactionFeePoolTrader<X, Y, Tre
 	}
 }
 
-// // here we should add any partner network for zero cost transactions
-// // 1000 is statmeing - see kusama runtime setup
-// // (1, Here) - jump 1 up, and say here - Relay
-// // (1, 1000) - jump 1 up and go to child 1000
-// match_type! {
-// 	pub type WellKnownsChains: impl Contains<MultiLocation> = {
-// 		 |
-// 			MultiLocation { parents: 1, interior: X1(Parachain(1000)) }
-// 	};
-// }
+pub const STATEMINE_PARA_ID: u32 = 1000;

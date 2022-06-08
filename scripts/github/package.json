@@ -5,13 +5,19 @@
   "license": "MIT",
   "dependencies": {
     "@actions/core": "^1.6.0",
+    "@polkadot/api": "^7.13.1",
+    "@polkadot/typegen": "^7.13.1",
     "octokit": "^1.7.1",
     "ts-node": "^10.4.0",
     "typescript": "^4.5.4",
     "yargs": "^17.3.1"
   },
   "scripts": {
+    "build": "yarn generate:defs && yarn generate:meta",
+    "generate:defs": "ts-node --skip-project node_modules/.bin/polkadot-types-from-defs --package sample-polkadotjs-typegen/interfaces --input ./picasso --endpoint ./picasso.json",
+    "generate:meta": "ts-node --skip-project node_modules/.bin/polkadot-types-from-chain --package sample-polkadotjs-typegen/interfaces --endpoint ./picasso.json --output ./picasso",
     "update-release-body": "ts-node ./update-release-body.ts",
-    "get-commit-for-pr": "ts-node ./get-commit-for-pr.ts"
+    "get-commit-for-pr": "ts-node ./get-commit-for-pr.ts",
+    "upgrade-runtime": "ts-node ./upgrade-runtime.ts"
   }
 }

@@ -1,8 +1,8 @@
 #![cfg_attr(
 	not(test),
 	warn(
-		clippy::disallowed_method,
-		clippy::disallowed_type,
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
 		clippy::indexing_slicing,
 		clippy::todo,
 		clippy::unwrap_used,
@@ -10,12 +10,12 @@
 		// clippy::panic
 	)
 )]
-#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_type)]
+#![warn(clippy::unseparated_literal_suffix, clippy::disallowed_types)]
 #![cfg_attr(not(feature = "std"), no_std)]
 // `construct_runtime!` does a lot of recursion and requires us to increase the limit to 256.
 #![recursion_limit = "256"]
 
-// Make the WASM binary available.
+// Make the WASM binary available
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
@@ -26,6 +26,7 @@ use common::{
 	CouncilInstance, EnsureRootOrHalfCouncil, Hash, Moment, Signature, AVERAGE_ON_INITIALIZE_RATIO,
 	DAYS, HOURS, MAXIMUM_BLOCK_WEIGHT, MILLISECS_PER_BLOCK, NORMAL_DISPATCH_RATIO, SLOT_DURATION,
 };
+use composable_traits::assets::Asset;
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_api::impl_runtime_apis;
@@ -45,7 +46,7 @@ use sp_version::RuntimeVersion;
 
 // A few exports that help ease life for downstream crates.
 pub use frame_support::{
-	construct_runtime, match_type, parameter_types,
+	construct_runtime, parameter_types,
 	traits::{Contains, Everything, KeyOwnerProofSystem, Nothing, Randomness, StorageInfo},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
@@ -55,12 +56,18 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 
-use codec::Encode;
-use frame_support::traits::{EqualPrivilegeOnly, OnRuntimeUpgrade};
+use codec::{Codec, Encode, EncodeLike};
+use frame_support::{
+	traits::{EqualPrivilegeOnly, OnRuntimeUpgrade},
+	weights::ConstantMultiplier,
+};
 use frame_system as system;
+use scale_info::TypeInfo;
+use sp_runtime::AccountId32;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
+use sp_std::fmt::Debug;
 use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
@@ -100,10 +107,10 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// The version of the runtime specification. A full node will not attempt to use its native
 	//   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
 	//   `spec_version`, and `authoring_version` are the same between Wasm and native.
-	spec_version: 1000,
-	impl_version: 4,
+	spec_version: 1200,
+	impl_version: 3,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 2,
+	transaction_version: 1,
 	state_version: 0,
 };
 
@@ -287,11 +294,11 @@ impl WeightToFeePolynomial for WeightToFee {
 impl transaction_payment::Config for Runtime {
 	type OnChargeTransaction =
 		transaction_payment::CurrencyAdapter<Balances, DealWithFees<Runtime>>;
-	type TransactionByteFee = TransactionByteFee;
 	type WeightToFee = WeightToFee;
 	type FeeMultiplierUpdate =
 		TargetedFeeAdjustment<Self, TargetBlockFullness, AdjustmentVariable, MinimumMultiplier>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 }
 
 impl sudo::Config for Runtime {
@@ -497,6 +504,7 @@ parameter_types! {
 	pub TreasuryAccount: AccountId = TreasuryPalletId::get().into_account();
 }
 
+type ReserveIdentifier = [u8; 8];
 impl orml_tokens::Config for Runtime {
 	type Event = Event;
 	type Balance = Balance;
@@ -506,6 +514,8 @@ impl orml_tokens::Config for Runtime {
 	type ExistentialDeposits = ExistentialDeposits;
 	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccount>;
 	type MaxLocks = MaxLocks;
+	type ReserveIdentifier = ReserveIdentifier;
+	type MaxReserves = frame_support::traits::ConstU32<2>;
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 }
 
@@ -639,9 +649,8 @@ impl currency_factory::Config for Runtime {
 	type Event = Event;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRootOrHalfCouncil;
-	type ReserveOrigin = EnsureRootOrHalfCouncil;
-	type WeightInfo = ();
-	// type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
+	type WeightInfo = weights::currency_factory::WeightInfo<Runtime>;
+	type Balance = Balance;
 }
 
 impl democracy::Config for Runtime {
@@ -839,6 +848,10 @@ impl_runtime_apis! {
 		fn balance_of(SafeRpcWrapper(asset_id): SafeRpcWrapper<CurrencyId>, account_id: AccountId) -> SafeRpcWrapper<Balance> /* Balance */ {
 			SafeRpcWrapper(<Assets as frame_support::traits::fungibles::Inspect::<AccountId>>::balance(asset_id, &account_id))
 		}
+
+		fn list_assets() -> Vec<Asset> {
+			CurrencyId::list_assets()
+		}
 	}
 
 	impl crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<Block, AccountId, Balance> for Runtime {
@@ -956,15 +969,17 @@ impl_runtime_apis! {
 		}
 	}
 
-
-	impl simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime {
+	impl<Call, AccountId> simnode_apis::CreateTransactionApi<Block, AccountId, Call> for Runtime
+		where
+			Call: Codec,
+			AccountId: Codec + EncodeLike<AccountId32> + Into<AccountId32> + Clone+ PartialEq + TypeInfo + Debug,
+	{
 		fn create_transaction(call: Call, signer: AccountId) -> Vec<u8> {
 			use sp_runtime::{
 				generic::Era, MultiSignature,
 				traits::StaticLookup,
 			};
 			use sp_core::sr25519;
-
 			let nonce = frame_system::Pallet::<Runtime>::account_nonce(signer.clone());
 			let extra = (
 				system::CheckNonZeroSender::<Runtime>::new(),
@@ -976,11 +991,14 @@ impl_runtime_apis! {
 				system::CheckWeight::<Runtime>::new(),
 				transaction_payment::ChargeTransactionPayment::<Runtime>::from(0),
 			);
-
 			let signature = MultiSignature::from(sr25519::Signature([0_u8;64]));
-			let address = AccountIdLookup::unlookup(signer);
-			let ext = UncheckedExtrinsic::new_signed(call, address, signature, extra);
-
+			let address = AccountIdLookup::unlookup(signer.into());
+			let ext = generic::UncheckedExtrinsic::<Address, Call, Signature, SignedExtra>::new_signed(
+				call,
+				address,
+				signature,
+				extra,
+			);
 			ext.encode()
 		}
 	}

@@ -1,0 +1,1 @@
+export const SNACKBAR_TIMEOUT_DURATION = 7000;

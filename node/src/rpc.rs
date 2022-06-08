@@ -5,61 +5,106 @@
 
 #![warn(missing_docs)]
 
-use primitives::currency::CurrencyId;
+use frame_benchmarking::frame_support::CloneNoBound;
+use polkadot_service::{ConstructRuntimeApi, NativeExecutionDispatch};
+use sc_client_api::StateBackendFor;
 use std::sync::Arc;
 
-use assets_rpc::{Assets, AssetsApi};
-use common::{AccountId, AccountIndex, Balance};
-use crowdloan_rewards_rpc::{CrowdloanRewards, CrowdloanRewardsApi};
+use common::OpaqueBlock;
 pub use sc_rpc_api::DenyUnsafe;
-use sc_transaction_pool_api::TransactionPool;
-use sp_api::ProvideRuntimeApi;
-use sp_block_builder::BlockBuilder;
-use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
-use sp_runtime::traits::Block;
+use sc_transaction_pool::FullPool;
+use sp_api::{ProvideRuntimeApi, StateBackend};
+use sp_blockchain::{HeaderBackend, HeaderMetadata};
+use sp_runtime::traits::BlakeTwo256;
+
+use crate::{
+	client::{FullBackend, FullClient},
+	runtime::{
+		assets::ExtendWithAssetsApi, crowdloan_rewards::ExtendWithCrowdloanRewardsApi,
+		ibc::ExtendWithIbcApi, lending::ExtendWithLendingApi, pablo::ExtendWithPabloApi,
+		BaseHostRuntimeApis,
+	},
+};
 
 /// Full client dependencies.
-pub struct FullDeps<C, P> {
+#[derive(CloneNoBound)]
+pub struct FullDeps<Client, Pool> {
 	/// The client instance to use.
-	pub client: Arc<C>,
+	pub client: Arc<Client>,
 	/// Transaction pool instance.
-	pub pool: Arc<P>,
+	pub pool: Arc<Pool>,
 	/// Whether to deny unsafe calls
 	pub deny_unsafe: DenyUnsafe,
+	/// Chain properties
+	pub chain_props: sc_chain_spec::Properties,
 }
 
 /// Instantiate all full RPC extensions.
-pub fn create<C, P, B>(deps: FullDeps<C, P>) -> jsonrpc_core::MetaIoHandler<sc_rpc::Metadata>
+pub fn create<RuntimeApi, Executor>(
+	deps: FullDeps<
+		FullClient<RuntimeApi, Executor>,
+		FullPool<OpaqueBlock, FullClient<RuntimeApi, Executor>>,
+	>,
+) -> Result<jsonrpsee::RpcModule<()>, jsonrpsee::core::Error>
 where
-	B: Block,
-	C: ProvideRuntimeApi<B>,
-	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
-	C: Send + Sync + 'static,
-	C::Api: substrate_frame_rpc_system::AccountNonceApi<B, AccountId, AccountIndex>,
-	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<B, Balance>,
-	C::Api: assets_runtime_api::AssetsRuntimeApi<B, CurrencyId, AccountId, Balance>,
-	C::Api: crowdloan_rewards_runtime_api::CrowdloanRewardsRuntimeApi<B, AccountId, Balance>,
-	C::Api: BlockBuilder<B>,
-	P: TransactionPool + 'static,
+	RuntimeApi:
+		ConstructRuntimeApi<OpaqueBlock, FullClient<RuntimeApi, Executor>> + Send + Sync + 'static,
+	RuntimeApi::RuntimeApi:
+		BaseHostRuntimeApis<StateBackend = StateBackendFor<FullBackend, OpaqueBlock>>,
+	StateBackendFor<FullBackend, OpaqueBlock>: StateBackend<BlakeTwo256>,
+	Executor: NativeExecutionDispatch + 'static,
+	FullClient<RuntimeApi, Executor>: ProvideRuntimeApi<OpaqueBlock>
+		+ HeaderBackend<OpaqueBlock>
+		+ HeaderMetadata<OpaqueBlock, Error = sp_blockchain::Error>
+		+ 'static
+		+ Send
+		+ Sync
+		+ Sized,
+	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api:
+		BaseHostRuntimeApis<StateBackend = StateBackendFor<FullBackend, OpaqueBlock>>
+			+ ExtendWithAssetsApi<RuntimeApi, Executor>
+			+ ExtendWithCrowdloanRewardsApi<RuntimeApi, Executor>
+			+ ExtendWithPabloApi<RuntimeApi, Executor>
+			+ ExtendWithLendingApi<RuntimeApi, Executor>
+			+ ExtendWithIbcApi<RuntimeApi, Executor>,
 {
-	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApi};
-	use substrate_frame_rpc_system::{FullSystem, SystemApi};
+	use pallet_transaction_payment_rpc::{TransactionPaymentApiServer, TransactionPaymentRpc};
+	use substrate_frame_rpc_system::{SystemApiServer, SystemRpc};
 
-	let mut io = jsonrpc_core::MetaIoHandler::default();
-	let FullDeps { client, pool, deny_unsafe } = deps;
+	let mut io = jsonrpsee::RpcModule::new(());
 
-	io.extend_with(SystemApi::to_delegate(FullSystem::new(client.clone(), pool, deny_unsafe)));
+	io.merge(SystemRpc::new(deps.client.clone(), deps.pool.clone(), deps.deny_unsafe).into_rpc())?;
 
-	io.extend_with(TransactionPaymentApi::to_delegate(TransactionPayment::new(client.clone())));
+	io.merge(TransactionPaymentRpc::new(deps.client.clone()).into_rpc())?;
 
-	io.extend_with(AssetsApi::to_delegate(Assets::new(client.clone())));
+	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_assets_api(
+		&mut io,
+		deps.clone(),
+	)?;
 
-	io.extend_with(CrowdloanRewardsApi::to_delegate(CrowdloanRewards::new(client)));
+	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_crowdloan_rewards_api(
+		&mut io,
+		deps.clone(),
+	)?;
+
+	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_pablo_api(
+		&mut io,
+		deps.clone(),
+	)?;
+
+	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_lending_api(
+		&mut io,
+		deps.clone(),
+	)?;
+
+	<FullClient<RuntimeApi, Executor> as ProvideRuntimeApi<OpaqueBlock>>::Api::extend_with_ibc_api(
+		&mut io, deps,
+	)?;
 
 	// Extend this RPC with a custom API by using the following syntax.
 	// `YourRpcStruct` should have a reference to a client, which is needed
 	// to call into the runtime.
-	// `io.extend_with(YourRpcTrait::to_delegate(YourRpcStruct::new(ReferenceToClient, ...)));`
+	// `io.merge(YourRpcStruct::new(ReferenceToClient, ...).into_rpc());`
 
-	io
+	Ok(io)
 }

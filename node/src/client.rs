@@ -2,7 +2,7 @@
 use crate::service::ComposableExecutor;
 #[cfg(feature = "dali")]
 use crate::service::DaliExecutor;
-use crate::{runtime::HostRuntimeApis, service::PicassoExecutor};
+use crate::{runtime::BaseHostRuntimeApis, service::PicassoExecutor};
 pub use common::{AccountId, Balance, BlockNumber, Hash, Header, Index, OpaqueBlock as Block};
 use sc_client_api::{Backend as BackendT, BlockchainEvents, KeyIterator};
 use sc_executor::NativeElseWasmExecutor;
@@ -21,11 +21,25 @@ use std::sync::Arc;
 pub type FullClient<RuntimeApi, Executor> =
 	TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<Executor>>;
 pub type FullBackend = TFullBackend<Block>;
-type PicassoClient = FullClient<picasso_runtime::RuntimeApi, PicassoExecutor>;
+pub(crate) type PicassoClient = FullClient<picasso_runtime::RuntimeApi, PicassoExecutor>;
 #[cfg(feature = "composable")]
-type ComposableClient = FullClient<composable_runtime::RuntimeApi, ComposableExecutor>;
+pub(crate) type ComposableClient = FullClient<composable_runtime::RuntimeApi, ComposableExecutor>;
 #[cfg(feature = "dali")]
-type DaliClient = FullClient<dali_runtime::RuntimeApi, DaliExecutor>;
+pub(crate) type DaliClient = FullClient<dali_runtime::RuntimeApi, DaliExecutor>;
+
+/// A client instance of Picasso.
+#[derive(Clone)]
+pub enum Client {
+	/// Picasso client type
+	Picasso(Arc<PicassoClient>),
+	/// Composable client type
+	#[cfg(feature = "composable")]
+	Composable(Arc<ComposableClient>),
+	/// Dali client type
+	#[cfg(feature = "dali")]
+	Dali(Arc<DaliClient>),
+}
+
 /// Config that abstracts over all available client implementations.
 ///
 /// For a concrete type there exists [`Client`].
@@ -41,7 +55,7 @@ where
 	Block: BlockT,
 	Backend: BackendT<Block>,
 	Backend::State: sp_api::StateBackend<BlakeTwo256>,
-	Self::Api: HostRuntimeApis<StateBackend = Backend::State>,
+	Self::Api: BaseHostRuntimeApis<StateBackend = Backend::State>,
 {
 }
 
@@ -57,21 +71,8 @@ where
 		+ Send
 		+ Sync
 		+ CallApiAt<Block, StateBackend = Backend::State>,
-	Client::Api: HostRuntimeApis<StateBackend = Backend::State>,
+	Client::Api: BaseHostRuntimeApis<StateBackend = Backend::State>,
 {
-}
-
-/// A client instance of Picasso.
-#[derive(Clone)]
-pub enum Client {
-	/// Picasso client type
-	Picasso(Arc<PicassoClient>),
-	/// Composable client type
-	#[cfg(feature = "composable")]
-	Composable(Arc<ComposableClient>),
-	/// Dali client type
-	#[cfg(feature = "dali")]
-	Dali(Arc<DaliClient>),
 }
 
 impl From<Arc<PicassoClient>> for Client {
@@ -158,6 +159,14 @@ impl sc_client_api::BlockBackend<Block> for Client {
 		hash: &<Block as BlockT>::Hash,
 	) -> sp_blockchain::Result<bool> {
 		match_client!(self, has_indexed_transaction(hash))
+	}
+
+	fn requires_full_sync(&self) -> bool {
+		match self {
+			Self::Picasso(client) => client.requires_full_sync(),
+			Self::Dali(client) => client.requires_full_sync(),
+			Self::Composable(client) => client.requires_full_sync(),
+		}
 	}
 }
 

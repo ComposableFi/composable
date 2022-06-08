@@ -1,0 +1,30 @@
+[package]
+edition = "2021"
+name = "ibc-trait"
+version = "0.1.0"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
+  "derive",
+] }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "198440a62d4ccc88555cfef6253d6595319b88bf", default-features = false }
+ibc-primitives = { path = "../ibc-primitives", default-features = false }
+scale-info = { version = "2.1.1", default-features = false, features = [
+  "derive",
+] }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18", default-features = false }
+
+[features]
+default = ["std"]
+std = [
+  "ibc/std",
+  "ibc-primitives/std",
+  "scale-info/std",
+  "codec/std",
+  "frame-support/std",
+  "sp-std/std",
+]

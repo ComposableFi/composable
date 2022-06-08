@@ -23,7 +23,7 @@ build_runtime () {
   srtool build --package "$chain"-runtime --profile release --runtime-dir runtime/"$chain"
   # subwasm for runtime metadata
   printf "\n# %s Runtime\n\n" "$(echo $chain | awk '{ print toupper(substr($0, 1, 1)) substr($0, 2) }')" >> release.md
-  INFO=$(subwasm info ./runtime/"$chain"/target/srtool/release/wbuild/"$chain"-runtime/"$chain"_runtime.compact.wasm)
+  INFO=$(subwasm info ./runtime/"$chain"/target/srtool/release/wbuild/"$chain"-runtime/"$chain"_runtime.compact.compressed.wasm)
   printf "\`\`\`\n%s\n\`\`\`\n" "$INFO" >> release.md
 }
 

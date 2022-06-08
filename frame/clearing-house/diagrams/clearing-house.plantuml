@@ -75,16 +75,19 @@ package "pallet-clearing-house" {
         class Market <<struct>> {
             AssetId asset_id
             VammId vamm_id
-            Decimal cum_funding_rate
             Decimal margin_ratio_initial
             Decimal margin_ratio_maintenance
+            Decimal margin_ratio_partial
             Decimal minimum_trade_size
-            Decimal net_base_asset_amount
-            Balance fee_pool
             Duration funding_frequency
             Duration funding_period
-            Duration funding_rate_ts
             Balance taker_fee
+            Decimal base_asset_amount_long
+            Decimal base_asset_amount_short
+            Decimal cum_funding_rate_long
+            Decimal cum_funding_rate_short
+            Balance fee_pool
+            Duration funding_rate_ts
         }
     }
 }

@@ -1,0 +1,24 @@
+name: "Frontend (Pablo) Checks - Tests"
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'frontend/ui-pablo/*'
+  push:
+    paths:
+      - 'frontend/ui-pablo/*'
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install modules
+        run: yarn install --no-scripts
+        working-directory: frontend/ui-pablo
+
+      - name: Run tests
+        run: yarn test
+        working-directory: frontend/ui-pablo

@@ -1,0 +1,43 @@
+{
+    "folders": [
+        {
+            "path": "."
+        },
+        {
+            "path": "integration-tests/runtime-tests"
+        },
+        {
+            "path": "frontend/ui-pablo"
+        },
+        {
+            "path": "frontend/ui-picasso"
+        }
+    ],
+    "settings": {
+        "cSpell.words": [
+            "autofetch",
+            "azuretools",
+            "clippy",
+            "Codespace",
+            "Dispatchable",
+            "eamodio",
+            "fsevenm",
+            "mutantdino",
+            "polkadot",
+            "prost",
+            "protobuf",
+            "PTRACE",
+            "resourcemonitor",
+            "rustfmt",
+            "seccomp",
+            "serayuzgur",
+            "Stableswap",
+            "tamasfe",
+            "tomoki",
+            "vadimcn",
+            "vsicons",
+            "XCVM",
+            "yzhang"
+        ]
+    }
+}

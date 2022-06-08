@@ -1,0 +1,80 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Compile & Run Tests",
+      "request": "launch",
+      "internalConsoleOptions": "openOnSessionStart",
+      "runtimeArgs": ["start"],
+      "runtimeExecutable": "npm",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    },
+    {
+      "args": ["--paths", "-p tsconfig.json", "--colors"],
+      "internalConsoleOptions": "openOnSessionStart",
+      "name": "Run Tests",
+      "program": "${workspaceFolder}/node_modules/ts-mocha/bin/ts-mocha",
+      "request": "launch",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node",
+      "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Compile",
+      "request": "launch",
+      "internalConsoleOptions": "openOnSessionStart",
+      "runtimeArgs": ["run-script", "compile"],
+      "runtimeExecutable": "npm",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    },
+    {
+      "name": "Live Compile",
+      "request": "launch",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "openOnSessionStart",
+      "runtimeArgs": ["run-script", "live_compile"],
+      "runtimeExecutable": "npm",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    },
+    {
+      "name": "Lint",
+      "request": "launch",
+      "internalConsoleOptions": "openOnSessionStart",
+      "runtimeArgs": ["run-script", "lint"],
+      "runtimeExecutable": "npm",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    },
+    {
+      "name": "Regenerate Types",
+      "request": "launch",
+      "internalConsoleOptions": "openOnSessionStart",
+      "runtimeArgs": ["run-script", "gen"],
+      "runtimeExecutable": "npm",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    },
+    {
+      "name": "Check Dep Updates",
+      "request": "launch",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "openOnSessionStart",
+      "runtimeArgs": ["run-script", "check_dep_updates"],
+      "runtimeExecutable": "npm",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    },
+    {
+      "name": "Delete .js files",
+      "request": "launch",
+      "internalConsoleOptions": "openOnSessionStart",
+      "runtimeArgs": ["run-script", "delete_js_artifacts"],
+      "runtimeExecutable": "npm",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    }
+  ]
+}

@@ -10,7 +10,7 @@ set -e # fail on any error
 # shellcheck disable=SC2039
 VERSIONS_FILES=(
   "picasso,picasso"
-  "dali-rococo,dali"
+#  "dali-rococo,dali"
   "composable,composable"
 )
 
@@ -23,8 +23,8 @@ YDATE=$(date -d yesterday +'%m-%d-%Y')
 
 run_simnode() {
   CHAIN="$1"
-  echo "Running simnode for $CHAIN"
-  FILENAME=cl-1-$YDATE.zip
+  echo "Running simnode for $CHAIN "
+  FILENAME=$YDATE.zip
   GS_BUCKET="$CHAIN-data-store"
   sudo gsutil cp gs://$GS_BUCKET/"$FILENAME" .
   sudo unzip -o "$FILENAME" -d /tmp/db

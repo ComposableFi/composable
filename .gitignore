@@ -22,7 +22,11 @@ node_modules
 
 .idea
 
-.vscode
+# ignore user vscode sttings
+.vscode/*
+# but include tasks
+!.vscode/tasks.json
+
 rococo-local-raw.json
 rococo-local.json
 scripts/polkadot-launch/bin/polkadot
@@ -37,3 +41,9 @@ node_modules/
 rust-toolchain.toml
 
 .benchmarkRun
+
+# nix build output
+result
+
+# devnet nodes logs
+*.log

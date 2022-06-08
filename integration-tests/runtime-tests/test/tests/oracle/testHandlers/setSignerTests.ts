@@ -1,15 +1,17 @@
-import {sendAndWaitForSuccess} from "@composable/utils/polkadotjs";
+import { sendAndWaitForSuccess } from "@composable/utils/polkadotjs";
+import { mintAssetsToWallet } from "@composable/utils/mintingHelper";
+import { KeyringPair } from "@polkadot/keyring/types";
+import { ApiPromise } from "@polkadot/api";
 
-
-export async function runBeforeTxOracleSetSigner(sudoKey, signer) {
-  return await sendAndWaitForSuccess(
-    api,
-    sudoKey,
-    api.events.sudo.Sudid.is,
-    api.tx.sudo.sudo(
-      api.tx.assets.mintInto(1, signer.publicKey, 555555555555)
-    )
-  );
+/**
+ * Provides funds for Oracle tests.
+ * @param api Connect ApiPromise
+ * @param sudoKey KeyringPair with sudo rights
+ * @param wallet1 Wallet to provide funds to
+ * @param wallet2 Wallet to provide funds to
+ */
+export async function runBeforeTxOracleSetSigner(api: ApiPromise, sudoKey: KeyringPair, signer: KeyringPair) {
+  return await mintAssetsToWallet(api, signer, sudoKey, [1]);
 }
 
 /**
@@ -17,7 +19,7 @@ export async function runBeforeTxOracleSetSigner(sudoKey, signer) {
  * @param controller Keyring which is a controller.
  * @param signer Keyring which will be set as a signer.
  */
-export async function txOracleSetSignerSuccessTest(controller, signer) {
+export async function txOracleSetSignerSuccessTest(api: ApiPromise, controller: KeyringPair, signer: KeyringPair) {
   return await sendAndWaitForSuccess(
     api,
     controller,

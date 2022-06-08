@@ -1,5 +1,7 @@
-use crate::math::{SafeDiv, SafeMul};
-use composable_support::validation::{Validate, Validated};
+use composable_support::{
+	math::safe::{SafeDiv, SafeMul},
+	validation::{Validate, Validated},
+};
 use frame_support::{pallet_prelude::*, traits::Get};
 use scale_info::TypeInfo;
 use sp_runtime::{traits::Zero, ArithmeticError};
@@ -46,8 +48,8 @@ pub enum BondDuration<BlockNumber> {
 pub struct BondOffer<AccountId, AssetId, Balance, BlockNumber> {
 	/// The account that will receive the locked assets.
 	pub beneficiary: AccountId,
-	/// Asset to be locked. Unlockable after `duration`.
-	/// Asset which `beneficiary` wants to get for his offer.
+	/// Asset to be locked. Unlockable after `maturity`.
+	/// Asset which `beneficiary` wants to get for their offer.
 	pub asset: AssetId,
 	/// Price of a bond unit in `asset`.
 	pub bond_price: Balance,
