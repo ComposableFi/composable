@@ -58,6 +58,7 @@
 //! - [`deposit_collateral`](Call::deposit_collateral)
 //! - [`create_market`](Call::create_market)
 //! - [`open_position`](Call::open_position)
+//! - [`close_position`](Call::close_position)
 //! - [`update_funding`](Call::update_funding)
 //! - [`liquidate`](Call::liquidate)
 //!
@@ -66,6 +67,7 @@
 //! - [`deposit_collateral`](pallet/struct.Pallet.html#method.deposit_collateral-1)
 //! - [`create_market`](pallet/struct.Pallet.html#method.create_market-1)
 //! - [`open_position`](pallet/struct.Pallet.html#method.open_position-1)
+//! - [`close_position`](pallet/struct.Pallet.html#method.close_position-1)
 //! - [`update_funding`](pallet/struct.Pallet.html#method.update_funding-1)
 //! - [`liquidate`](pallet/struct.Pallet.html#method.liquidate-1)
 //! - [`funding_rate`](Pallet::funding_rate)
@@ -663,8 +665,7 @@ pub mod pallet {
 		/// Sells all of the base asset in the specified market if the trader has a position in it.
 		/// This realizes the funding payments for the position.
 		///
-		/// TODO(0xangelo): add sequence diagram
-		/// ![]()
+		/// ![](https://www.plantuml.com/plantuml/svg/FSr12W8n30NGlQVG0ynaxsf0y1wPDhQ1j2b9YjUtk9ZLvp_u_CC3BMQJsuDxafbfcjnhnF0dGE6eyzoJDdXf6-fu2hqPqbN0y0lagPB1nx0H924qxcMhEfqWCvRblboTjZNZOEtx4Ep_tuDwNla3)
 		///
 		/// # Parameters
 		///
