@@ -2,14 +2,15 @@ use crate::{
 	mock::{
 		accounts::{AccountId, ALICE},
 		runtime::{
-			Balance, Origin, Runtime, System as SystemPallet, TestPallet, Vamm as VammPallet,
+			Balance, Oracle as OraclePallet, Origin, Runtime, System as SystemPallet, TestPallet,
+			Vamm as VammPallet,
 		},
 	},
 	pallet::{
 		Direction::{Long, Short},
 		Error, Event,
 	},
-	tests::{any_direction, as_balance, with_trading_context, MarketConfig},
+	tests::{any_direction, as_balance, run_for_seconds, with_trading_context, MarketConfig},
 };
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
@@ -106,6 +107,45 @@ fn should_realize_long_position_losses() {
 }
 
 #[test]
+fn should_realize_long_position_funding() {
+	let config = MarketConfig {
+		funding_frequency: 60,
+		funding_period: 60,
+		taker_fee: 0,
+		..Default::default()
+	};
+	let collateral_0 = as_balance(100);
+
+	with_trading_context(config.clone(), collateral_0, |market_id| {
+		// Alice opens a position
+		VammPallet::set_price(Some(20.into()));
+		let base = as_balance(5);
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(ALICE),
+			market_id,
+			Long,
+			as_balance(100),
+			base,
+		));
+
+		// Time passes and the index moves against Alice's position by 10%
+		run_for_seconds(config.funding_frequency);
+		OraclePallet::set_twap(Some(1_800)); // 18 in cents
+		VammPallet::set_twap(Some(20.into()));
+		assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
+
+		// Alice closes her position and pays 10% of the collateral in funding (price stays the
+		// same)
+		assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
+		assert_eq!(get_collateral(ALICE), collateral_0 - collateral_0 / 10);
+
+		SystemPallet::assert_last_event(
+			Event::PositionClosed { user: ALICE, market: market_id, direction: Long, base }.into(),
+		);
+	});
+}
+
+#[test]
 fn should_realize_short_position_gains() {
 	let config = MarketConfig { taker_fee: 0, ..Default::default() };
 	let collateral_0 = as_balance(100);
@@ -152,6 +192,45 @@ fn should_realize_short_position_losses() {
 		VammPallet::set_price(Some(10.into()));
 		assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
 		assert_eq!(get_collateral(ALICE), 0);
+
+		SystemPallet::assert_last_event(
+			Event::PositionClosed { user: ALICE, market: market_id, direction: Short, base }.into(),
+		);
+	});
+}
+
+#[test]
+fn should_realize_short_position_funding() {
+	let config = MarketConfig {
+		funding_frequency: 60,
+		funding_period: 60,
+		taker_fee: 0,
+		..Default::default()
+	};
+	let collateral_0 = as_balance(100);
+
+	with_trading_context(config.clone(), collateral_0, |market_id| {
+		// Alice opens a position
+		VammPallet::set_price(Some(5.into()));
+		let base = as_balance(20);
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(ALICE),
+			market_id,
+			Short,
+			as_balance(100),
+			base,
+		));
+
+		// Time passes and the index moves against Alice's position by 10%
+		run_for_seconds(config.funding_frequency);
+		OraclePallet::set_twap(Some(550)); // 5.5 in cents
+		VammPallet::set_twap(Some(5.into()));
+		assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
+
+		// Alice closes her position and pays 10% of the collateral in funding (price stays the
+		// same)
+		assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
+		assert_eq!(get_collateral(ALICE), collateral_0 - collateral_0 / 10);
 
 		SystemPallet::assert_last_event(
 			Event::PositionClosed { user: ALICE, market: market_id, direction: Short, base }.into(),
