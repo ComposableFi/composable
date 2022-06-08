@@ -104,7 +104,7 @@ pub mod pallet {
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ MutateHold<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>;
-
+	
 		type Pablo: Amm<
 			AssetId = Self::AssetId,
 			Balance = Self::Balance,
@@ -259,7 +259,7 @@ pub mod pallet {
 			let account_id = T::Vault::account_id(vault_id);
 			let pool_id = Self::pools(asset_id).ok_or_else(|| Error::<T>::PoolNotFound)?;
 			let task = T::Vault::available_funds(vault_id, &Self::account_id())?;
-			let action = match task {
+			match task {
 				FundsAvailability::Withdrawable(balance) => {
 					let vault_account = T::Vault::account_id(vault_id);
 					let lp_token_amount = T::Pablo::amount_of_lp_token_for_added_liquidity(
@@ -288,20 +288,19 @@ pub mod pallet {
 						pool_id,
 						lp_token_amount,
 						T::Balance::zero(),
-						balance,
+						T::Balance::zero(),
 					)?;
 				},
 				FundsAvailability::MustLiquidate => {
 					let vault_account = T::Vault::account_id(vault_id);
 					let lp_token_id = T::Pablo::lp_token(pool_id)?;
 					let balance_of_lp_token = T::Currency::balance(lp_token_id, &account_id);
-					let balance_of_asset = T::Currency::balance(asset_id, &account_id);
 					T::Pablo::remove_liquidity(
 						&vault_account,
 						pool_id,
 						balance_of_lp_token,
 						T::Balance::zero(),
-						balance_of_asset,
+						T::Balance::zero(),
 					)?;
 				},
 				FundsAvailability::Equilibrable => {
@@ -310,24 +309,6 @@ pub mod pallet {
 			};
 			Ok(())
 		}
-
-		// #[transactional]
-		// fn get_pool(asset_id: &T::AssetId) -> Result<T::PoolId, DispatchError> {
-		// 	let pica: T::AssetId;
-		// 	match InstrumentalPools::<T>::get(asset_id) {
-		// 		Some(pool_id) => Ok(pool_id),
-		// 		None => {
-		// 			Pools::<T>::iter_keys().for_each(|pool_id| {
-		// 				if T::Pablo::currency_pair(pool_id)?.quote == *asset_id &&
-		// 					T::Pablo::currency_pair(pool_id)?.base == pica {
-		// 					InstrumentalPools::<T>::insert(asset_id, pool_id);
-		// 					return Ok(pool_id)
-		// 				}
-		// 			});
-		// 			todo!(); // TODO(belousm): return other strategy pool
-		// 		},
-		// 	}
-		// }
 	}
 }
 
