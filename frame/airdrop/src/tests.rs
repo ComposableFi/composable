@@ -1,17 +1,17 @@
 use crate::{
 	mocks::{
 		ethereum_address, generate_accounts, AccountId, Airdrop, AirdropId, Balance, Balances,
-		ClaimKey, EthKey, ExtBuilder, MockRuntime, Moment, Origin, Stake, System, Timestamp,
-		PROOF_PREFIX, VESTING_STEP, STAKE,
+		ClaimKey, EthKey, ExtBuilder, MockRuntime, Moment, Origin, System, Timestamp,
+		PROOF_PREFIX, STAKE,
 	},
 	models::AirdropState,
-	AccountIdOf, Error,
+	Error,
 };
+use codec::Encode;
 use composable_support::types::{EcdsaSignature, EthereumAddress};
-use composable_tests_helpers::{prop_assert_noop, prop_assert_ok};
-use frame_support::{assert_err, assert_noop, assert_ok, traits::{Currency, fungible::Inspect}};
+use composable_tests_helpers::prop_assert_ok;
+use frame_support::{assert_noop, assert_ok, traits::{Currency, fungible::Inspect}};
 use hex_literal::hex;
-use sp_core::{ed25519, storage::StateVersion, Pair};
 use proptest::prelude::*;
 use sp_runtime::AccountId32;
 
@@ -385,6 +385,17 @@ mod claim {
         })  
     }
 
+    #[test]
+    fn should_fail_when_nothing_to_claim() {
+        with_default_recipients(|set_moment, accounts| {
+            set_moment(1);
+
+            for (local_account, remote_account) in accounts {
+                assert_noop!(remote_account.claim(1, local_account.clone()), Error::<MockRuntime>::NothingToClaim);
+            }
+        })  
+    }
+
     proptest! {
         #![proptest_config(ProptestConfig::with_cases((DEFAULT_VESTING_PERIOD / DEFAULT_VESTING_SCHEDULE) as u32))]
 
@@ -403,5 +414,32 @@ mod claim {
             })?;
         }
     }
+}
 
+#[cfg(test)]
+mod ethereum_recover {
+    use super::*;
+
+    #[test]
+	#[allow(clippy::disallowed_methods)] // Allow unwrap
+    fn should_recover_hard_coded_eth_address() {
+        let eth_address = EthereumAddress(hex!("176FD6F90730E02D2AF55681c65a115C174bA2C7"));
+        let eth_account =
+            EthKey::parse(&hex!("29134835563739bae90483ee3d80945edf2c87a9b55c9193a694291cfdf23a05"))
+                .unwrap();
+
+        assert_eq!(ethereum_address(&eth_account), eth_address);
+
+        // sign(concat("picasso-"), CREATOR) = sign(concat("picasso-", [0u8; 32]))
+        let eth_proof = EcdsaSignature(hex!("42f2fa6a3db41e6654891e4408ce56ba31fc2b4dea18e82db1c78e33a3f65a55119a23fa7b3fe7a5088197a74a0102266836bb721461b9eaef128bec120db0401c"));
+
+        // Make sure we are able to recover the address
+        let recovered_address = Airdrop::ethereum_recover(
+            PROOF_PREFIX,
+            &CREATOR.using_encoded(|x| hex::encode(x).as_bytes().to_vec()),
+            &eth_proof,
+        );
+
+        assert_eq!(Some(eth_address), recovered_address);
+    }
 }
