@@ -14,6 +14,6 @@ export async function depositCollateralHandler(
     api,
     wallet,
     api.events.lending.CollateralDeposited.is,
-    api.tx.lending.depositCollateral(marketId, amount)
+    api.tx.lending.depositCollateral(marketId, amount, true)
   );
 }

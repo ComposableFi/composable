@@ -28,7 +28,7 @@ export async function createLendingMarketHandler(
     api,
     wallet,
     api.events.treasury.Deposit.is,
-    api.tx.lending.createMarket(input),
+    api.tx.lending.createMarket(input, false),
     false
   );
 }
