@@ -98,6 +98,10 @@ pub mod pallet {
 			let asset_id = T::Vault::asset_id(&vault)?;
 			let task = T::Vault::available_funds(&vault, &Self::account_id())?;
 			let action = match task {
+				FundsAvailability::Equilibrable => {
+					let balance = T::Currency::balance(asset_id, &Self::account_id());
+					balance
+				},
 				FundsAvailability::MustLiquidate => {
 					let balance = T::Currency::balance(asset_id, &Self::account_id());
 					T::Currency::transfer(
