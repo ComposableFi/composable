@@ -971,10 +971,12 @@ pub mod pallet {
 						allocation
 							.mul_floor(<T::Convert as Convert<T::Balance, u128>>::convert(aum)),
 					);
-					if balance >= max_allowed {
+					if balance > max_allowed {
 						Ok(FundsAvailability::Depositable(balance - max_allowed))
-					} else {
+					} else if balance < max_allowed {
 						Ok(FundsAvailability::Withdrawable(max_allowed - balance))
+					} else {
+						Ok(FundsAvailability::Equilibrable)
 					}
 				},
 				(_, _) => Ok(FundsAvailability::MustLiquidate),

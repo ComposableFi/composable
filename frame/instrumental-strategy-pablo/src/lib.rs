@@ -24,9 +24,8 @@ pub mod pallet {
 		dispatch::{DispatchError, DispatchResult},
 		pallet_prelude::*,
 		storage::bounded_btree_set::BoundedBTreeSet,
+		traits::fungibles::{Inspect, Mutate, MutateHold, Transfer},
 		transactional, Blake2_128Concat, PalletId,
-		traits::{fungibles::{Inspect, Mutate, MutateHold, Transfer},
-		},
 	};
 	use sp_runtime::traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One, Zero,
@@ -304,7 +303,7 @@ pub mod pallet {
 						T::Balance::zero(),
 						balance_of_asset,
 					)?;
-				}
+				},
 				FundsAvailability::Equilibrable => {
 					();
 				},
