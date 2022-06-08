@@ -87,7 +87,7 @@ export const liquidityTransactionsByAddressAndPool = (
 }`).toPromise();
 
 
-export const queryPabloPoolById = (poolId: number) => subsquidClient.query(`query queryPabloPoolById {
+export const queryPabloPoolById = (poolId: number) => makeClient().query(`query queryPabloPoolById {
   pabloPools(orderBy: calculatedTimestamp_DESC, where: {poolId_eq: ${poolId}}) {
     totalLiquidity
     totalVolume

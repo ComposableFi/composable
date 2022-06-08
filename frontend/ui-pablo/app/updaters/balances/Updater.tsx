@@ -8,28 +8,29 @@ import {
 } from "substrate-react";
 import useStore from "@/store/useStore";
 import { fetchBalanceByAssetId } from "./utils";
+import { DEFAULT_NETWORK_ID } from "../constants";
 
 const processedTransactions: string[] = [];
 const Updater = () => {
   const { updateAssetBalance } = useStore();
-  const { parachainApi } = useParachainApi("picasso");
-  const selectedAccount = useSelectedAccount("picasso");
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const extrinsicCalls = useExtrinsics();
 
   useEffect(() => {
     if (parachainApi && selectedAccount) {
       Object.keys(Assets).forEach((asset) => {
         let assetID: string | number | null =
-          Assets[asset as AssetId].supportedNetwork["picasso"];
+          Assets[asset as AssetId].supportedNetwork[DEFAULT_NETWORK_ID];
         if (assetID) {
           assetID = assetID.toString();
           fetchBalanceByAssetId(
             parachainApi,
-            "picasso",
+            DEFAULT_NETWORK_ID,
             selectedAccount.address,
             assetID
           ).then((balance) => {
-            updateAssetBalance(asset as AssetId, "picasso", balance);
+            updateAssetBalance(asset as AssetId, DEFAULT_NETWORK_ID, balance);
           });
         }
       });
@@ -60,16 +61,16 @@ const Updater = () => {
         const allPromises = Object.keys(Assets).map((asset) => {
           return new Promise((res, rej) => {
             let assetID: string | number | null =
-              Assets[asset as AssetId].supportedNetwork["picasso"];
+              Assets[asset as AssetId].supportedNetwork[DEFAULT_NETWORK_ID];
             if (assetID) {
               assetID = assetID.toString();
               fetchBalanceByAssetId(
                 parachainApi,
-                "picasso",
+                DEFAULT_NETWORK_ID,
                 selectedAccount.address,
                 assetID
               ).then((balance) => {
-                updateAssetBalance(asset as AssetId, "picasso", balance);
+                updateAssetBalance(asset as AssetId, DEFAULT_NETWORK_ID, balance);
                 res(asset);
               });
             } else {
