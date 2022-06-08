@@ -112,7 +112,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
 
     if (swaps.dexRouter.dexRoute.length === 0) {
       setQuoteAssetAmount(new BigNumber(0));
-      setQuoteAssetAmount(new BigNumber(0));
+      setBaseAssetAmount(new BigNumber(0));
     }
   }, [swaps.dexRouter.dexRoute]);
 
