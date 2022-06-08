@@ -1044,8 +1044,9 @@ pub mod pallet {
 			account_id: &Self::AccountId,
 			market_id: &Self::MarketId,
 		) -> Result<Self::Balance, DispatchError> {
-			let mut market = Self::get_market(&market_id).ok_or(Error::<T>::MarketIdNotFound)?;
-
+			let mut market = Self::get_market(market_id).ok_or(Error::<T>::MarketIdNotFound)?;
+			let mut positions = Self::get_positions(account_id);
+			let (position, position_index) = Self::try_get_position(&positions, market_id)?;
 			Ok(Zero::zero())
 		}
 
@@ -1634,6 +1635,18 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		fn try_get_market(market_id: &T::MarketId) -> Result<Market<T>, DispatchError> {
 			Markets::<T>::get(market_id).ok_or_else(|| Error::<T>::MarketIdNotFound.into())
+		}
+
+		fn try_get_position<'a>(
+			positions: &'a BoundedVec<Position<T>, T::MaxPositions>,
+			market_id: &T::MarketId,
+		) -> Result<(&'a Position<T>, usize), DispatchError> {
+			let index = positions
+				.iter()
+				.position(|p| p.market_id == *market_id)
+				.ok_or(Error::<T>::PositionNotFound)?;
+
+			Ok((positions.get(index).expect("Item successfully found above"), index))
 		}
 
 		fn to_vamm_direction(direction: Direction) -> VammDirection {
