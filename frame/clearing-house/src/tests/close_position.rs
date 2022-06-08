@@ -289,4 +289,6 @@ proptest! {
 			assert!(collateral_1 > collateral_2); // collateral should be reduced by fees
 		});
 	}
+
+	// TODO(0xangelo): should_remove_position_from_storage
 }
