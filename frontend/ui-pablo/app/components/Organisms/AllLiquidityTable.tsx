@@ -144,10 +144,10 @@ export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
                   />
                 </TableCell>
                 <TableCell align="left">
-                  <Typography variant="body2">${row.totalValueLocked.toFormat()}</Typography>
+                  <Typography variant="body2">${row.totalValueLocked.toFixed(2)}</Typography>
                 </TableCell>
                 <TableCell align="left">
-                  <Typography variant="body2">{row.apr.toFormat()}%</Typography>
+                  <Typography variant="body2">{row.apr.toFixed(2)}%</Typography>
                 </TableCell>
                 <TableCell align="left">
                   {row.dailyRewards.map((item) => {
@@ -168,7 +168,7 @@ export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
                 </TableCell>
                 <TableCell align="left">
                   <Typography variant="body2">
-                    ${row.totalVolume.toFormat()}
+                    ${row.totalVolume.toFixed(2)}
                   </Typography>
                 </TableCell>
               </TableRow>
