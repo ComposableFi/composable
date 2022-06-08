@@ -53,11 +53,11 @@ pub trait ClearingHouse {
 	/// - An increase in the size of an existing position, if the trade's direction matches the
 	///   existing position's one
 	/// - A decrease in the size of an existing position, if the trade's direction is counter to the
-	///   existing position's one and its magnitude is smaller than the existing postion's size
-	/// - Closing of the existing position, if the trade's direction is counter to the existion
+	///   existing position's one and its magnitude is smaller than the existing position's size
+	/// - Closing of the existing position, if the trade's direction is counter to the existing
 	///   position's one and its magnitude is approximately the existing position's size
-	/// - Reversing of the existing position, if the trade's direction is counter to the existion
-	///   position's one and its magnitude is greater than the existing postion's size
+	/// - Reversing of the existing position, if the trade's direction is counter to the existing
+	///   position's one and its magnitude is greater than the existing position's size
 	///
 	/// ## Parameters
 	/// - `account_id`: the trader's margin account Id
