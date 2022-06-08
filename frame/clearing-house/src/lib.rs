@@ -1010,7 +1010,6 @@ pub mod pallet {
 
 				let pnl = exit_value.try_sub(&entry_value)?;
 				// Realize PnL
-				// TODO(0xangelo): properly handle bad debt incurred by large negative PnL
 				collateral = Self::update_margin_with_pnl(&collateral, &pnl)?;
 			}
 
