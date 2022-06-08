@@ -1044,7 +1044,9 @@ pub mod pallet {
 			account_id: &Self::AccountId,
 			market_id: &Self::MarketId,
 		) -> Result<Self::Balance, DispatchError> {
-			todo!()
+			let mut market = Self::get_market(&market_id).ok_or(Error::<T>::MarketIdNotFound)?;
+
+			Ok(Zero::zero())
 		}
 
 		#[transactional]
