@@ -167,6 +167,55 @@ fn test() {
 	});
 }
 
+#[test]
+fn test_redeemable_assets() {
+	new_test_ext().execute_with(|| {
+		let pool_init_config = PoolInitConfiguration::ConstantProduct {
+			owner: ALICE,
+			pair: CurrencyPair::new(BTC, USDT),
+			fee: Permill::zero(),
+			base_weight: Permill::from_percent(50),
+		};
+		let pool_id = Pablo::do_create_pool(pool_init_config).expect("pool creation failed");
+
+		let pool = get_pool(pool_id);
+
+		let unit = 1_000_000_000_000;
+
+		let btc_price = 45_000;
+
+		let nb_of_btc = 100;
+
+		// 100 BTC/4.5M USDT
+		let initial_btc = nb_of_btc * unit;
+		let initial_usdt = nb_of_btc * btc_price * unit;
+
+		// Mint the tokens
+		assert_ok!(Tokens::mint_into(BTC, &ALICE, initial_btc));
+		assert_ok!(Tokens::mint_into(USDT, &ALICE, initial_usdt));
+
+		// Add the liquidity
+		assert_ok!(<Pablo as Amm>::add_liquidity(
+			&ALICE,
+			pool_id,
+			initial_btc,
+			initial_usdt,
+			0,
+			false
+		));
+
+		let lp = Tokens::balance(pool.lp_token, &ALICE);
+		// if we want to redeem all lp token, it must give same values as used for add_liquidity
+		let redeemable_assets = <Pablo as Amm>::redeemable_assets_for_given_lp_tokens(pool_id, lp)
+			.expect("redeemable_assets failed");
+		let base_amount = *redeemable_assets.assets.get(&BTC).expect("Invalid asset");
+		let quote_amount = *redeemable_assets.assets.get(&USDT).expect("Invalid asset");
+
+		assert_ok!(default_acceptable_computation_error(base_amount, initial_btc));
+		assert_ok!(default_acceptable_computation_error(quote_amount, initial_usdt));
+	});
+}
+
 //- test lp mint/burn
 #[test]
 fn add_remove_lp() {

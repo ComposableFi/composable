@@ -7049,6 +7049,7 @@ dependencies = [
  "composable-traits",
  "parity-scale-codec",
  "sp-api",
+ "sp-std 4.0.0",
 ]
 
 [[package]]
