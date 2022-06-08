@@ -453,6 +453,7 @@ pub mod pallet {
 		MaxLiquidationBatchSizeExceeded,
 
 		PriceTooOld,
+		CannotIncreaseCollateralFactorOfOpenMarket,
 	}
 
 	#[pallet::event]
@@ -1202,6 +1203,10 @@ pub mod pallet {
 				if let Some(market) = market {
 					ensure!(manager == market.manager, Error::<T>::Unauthorized);
 
+					ensure!(
+						market.collateral_factor >= input.collateral_factor,
+						Error::<T>::CannotIncreaseCollateralFactorOfOpenMarket
+					);
 					market.collateral_factor = input.collateral_factor;
 					market.interest_rate_model = input.interest_rate_model;
 					market.under_collateralized_warn_percent =
