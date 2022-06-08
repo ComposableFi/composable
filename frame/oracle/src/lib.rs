@@ -412,7 +412,7 @@ pub mod pallet {
 				let twap_window = Self::TwapWindow::get().into();
 				let weights_length = prices_length.min(twap_window);
 				// make flat weights
-				let weight = Percent::from_percent(100) / weights_length;
+				let weight = Percent::from_rational(100, weights_length);
 				let weights = vec![weight; weights_length];
 				let price = Self::get_twap(asset_id, weights)?;
 				Self::quote(asset_id, price, amount)
