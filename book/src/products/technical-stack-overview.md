@@ -17,7 +17,7 @@ Upon the launch of our technology, our team and community of developers are comm
 
 DeFi developers are able to leverage the existing suite of foundational pallets, such as Mosaic, Cubic, Apollo, Centauri, and more, to rapidly design, build, and launch interoperable products. Each foundational pallet provides unique and necessary DeFi functionality which can now be stacked and incorporated to make functions modular. Our infrastructure enabled ease of pallet composition and the immense flexibility of our tech stack provides each new innovation with **modular composability**.
 
-![technical_stack_overview](./composable-technical-stack.png) 
+![technical_stack_overview](./composable-technical-stack.jpg) 
 *The core components of the Composable Technical Stack. Similar to how Port Control Protocol became an essential networking fabric for the Internet, Composable’s vision is to become the entryway and fabric for interactions, transfers, and communication cross-ecosystem. The result is a Port Control Protocol-like system for blockchains.*
 
 
@@ -35,6 +35,9 @@ The [Composable Cross-Chain Virtual Machine (XCVM)](https://dali.devnets.composa
 
  The [Routing Layer](https://dali.devnets.composablefinance.ninja/products/routing-layer.html) is our pathway execution layer that assesses all of the possibilities for a given action (e.g taking out a loan of 1,000 USDC) across all potential layers and chains and selects the optimal pathway for a user. This layer will be crypto-economically secured, with incentives provided for actors to properly select the best routes for user actions. Thus, this layer will act as a function aggregator, providing optimal services to users without them having to scour the entire expanse of the DeFi space themselves for the most promising opportunities.
 
+### The Infrastructure Layer
+The infrastructure layer consists of the dual Kusama and Polkadot parachains (Picasso and Composable) that undergird the Composable ecosystem, and its pallet architecture, which is leveraged for the development of applications. The parachains provide enhanced security, customizability and blockchain efficiency.
+The XCVM’s contract layer will be built as a pallet (Pallet — XCVM), which means developers will have the ability to write contracts that interface with and call the underlying primary, secondary and tertiary pallets hosted on our parachains.
 
 ### The Modular Transfer Availability Layer
 
