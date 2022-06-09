@@ -1,17 +1,18 @@
 use crate::{
-    mocks::*,
-    tests::{new_jump_model,create_simple_vaulted_market}, 
-    accrue_interest_internal, AccruedInterest
+	accrue_interest_internal,
+	mocks::*,
+	tests::{create_simple_vaulted_market, new_jump_model},
+	AccruedInterest,
 };
 use composable_traits::{
 	defi::{MoreThanOneFixedU128, Rate, ZeroToOneFixedU128},
 	lending::{
-        UpdateInput,
-        math::{InterestRateModel, CurveModel, InterestRate}
-    },
+		math::{CurveModel, InterestRate, InterestRateModel},
+		UpdateInput,
+	},
 	time::SECONDS_PER_YEAR_NAIVE,
 };
-use frame_support::{assert_ok, assert_err};
+use frame_support::{assert_err, assert_ok};
 use proptest::{prelude::*, test_runner::TestRunner};
 use sp_arithmetic::assert_eq_error_rate;
 use sp_runtime::{ArithmeticError, FixedPointNumber, FixedU128, Percent};
@@ -229,4 +230,3 @@ fn accrue_interest_plotter() {
 			.unwrap();
 	}
 }
-

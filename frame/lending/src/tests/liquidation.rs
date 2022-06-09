@@ -1,10 +1,11 @@
 use crate::{
-	mocks::*, Error,
+	mocks::*,
 	tests::{
 		assert_extrinsic_event, borrow, create_market, create_market_for_liquidation_test,
 		create_simple_market, get_price, mint_and_deposit_collateral, TestBoundedVec,
 		DEFAULT_COLLATERAL_FACTOR, DEFAULT_MARKET_VAULT_RESERVE, DEFAULT_MAX_PRICE_AGE,
 	},
+	Error,
 };
 use composable_tests_helpers::test;
 use composable_traits::{

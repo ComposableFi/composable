@@ -1,16 +1,17 @@
 use crate::{
-    mocks::*, Error,
-   	tests::{
-		assert_extrinsic_event, assert_no_event, 
-        create_simple_market, get_price, mint_and_deposit_collateral,
+	mocks::*,
+	tests::{
+		assert_extrinsic_event, assert_no_event, create_simple_market, get_price,
+		mint_and_deposit_collateral,
 	},
+	Error,
 };
 use composable_tests_helpers::test;
 use composable_traits::lending::{Lending as LendingTrait, RepayStrategy, TotalDebtWithInterest};
 use frame_support::{
-	assert_err, assert_ok, 
-	traits::fungibles::Mutate,
+	assert_err, assert_ok,
 	dispatch::{DispatchErrorWithPostInfo, PostDispatchInfo},
+	traits::fungibles::Mutate,
 	weights::Pays,
 };
 use sp_runtime::{DispatchError, ModuleError};
@@ -290,5 +291,3 @@ fn test_repay_total_debt() {
 		}
 	});
 }
-
-

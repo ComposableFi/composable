@@ -1,12 +1,12 @@
 use crate::{
 	mocks::*,
 	models::borrower_data::BorrowerData,
-    validation::BalanceGreaterThenZero,
 	tests::{
 		assert_extrinsic_event, assert_no_event, create_market, create_simple_market, get_price,
 		DEFAULT_COLLATERAL_FACTOR, DEFAULT_MARKET_VAULT_RESERVE,
 		DEFAULT_MARKET_VAULT_STRATEGY_SHARE, DEFAULT_MAX_PRICE_AGE,
 	},
+	validation::BalanceGreaterThenZero,
 	Error,
 };
 use composable_support::validation::{TryIntoValidated, Validated};
@@ -15,8 +15,8 @@ use composable_traits::{
 	defi::{LiftedFixedBalance, MoreThanOneFixedU128},
 	lending::{Lending as LendingTrait, RepayStrategy},
 };
+use frame_support::{assert_err, assert_noop, assert_ok, traits::fungibles::Mutate};
 use proptest::prelude::*;
-use frame_support::{assert_noop, assert_ok, assert_err, traits::fungibles::Mutate};
 use sp_runtime::{FixedPointNumber, Percent};
 use std::ops::{Div, Mul};
 
@@ -416,7 +416,7 @@ proptest! {
 		prop_assert_ok!(borrow);
 	}
 
-    #[test]
+	#[test]
 	fn calc_utilization_ratio_proptest((cash, borrow) in valid_cash_borrow()) {
 		new_test_ext().execute_with(|| {
 			prop_assert_eq!(
@@ -429,4 +429,3 @@ proptest! {
 
 
 }
-

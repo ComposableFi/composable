@@ -1,14 +1,15 @@
 use crate::{
-	self as pallet_lending, mocks::*,
+	self as pallet_lending,
+	mocks::*,
 	tests::{
-        create_simple_market, create_simple_vaulted_market, default_create_input, 
-        assert_no_event, DEFAULT_MARKET_VAULT_STRATEGY_SHARE
-    },
+		assert_no_event, create_simple_market, create_simple_vaulted_market, default_create_input,
+		DEFAULT_MARKET_VAULT_STRATEGY_SHARE,
+	},
 	validation::UpdateInputValid,
-	MarketIndex, Error,
+	Error, MarketIndex,
 };
-use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok, test};
 use composable_support::validation::TryIntoValidated;
+use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok, test};
 use composable_traits::{
 	defi::CurrencyPair,
 	lending::{
@@ -25,8 +26,8 @@ use frame_support::{
 };
 use frame_system::{EventRecord, Phase};
 use proptest::prelude::*;
-use sp_runtime::{DispatchError, FixedU128, ModuleError};
 use sp_core::U256;
+use sp_runtime::{DispatchError, FixedU128, ModuleError};
 use std::ops::Mul;
 
 #[test]
@@ -335,8 +336,6 @@ prop_compose! {
 		x
 	}
 }
-
-
 
 prop_compose! {
 	fn valid_amounts_without_overflow_2()

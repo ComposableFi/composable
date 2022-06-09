@@ -16,12 +16,12 @@ use pallet_vault::models::VaultInfo;
 use sp_runtime::{FixedPointNumber, Percent, Perquintill};
 
 pub mod borrow;
+pub mod interest;
 pub mod liquidation;
 pub mod market;
 pub mod offchain;
-pub mod vault;
-pub mod interest;
 pub mod repay;
+pub mod vault;
 
 const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
 const DEFAULT_COLLATERAL_FACTOR: u128 = 2;
