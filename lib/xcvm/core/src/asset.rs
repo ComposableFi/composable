@@ -47,9 +47,28 @@ impl From<u32> for XCVMAsset {
 #[repr(transparent)]
 pub struct XCVMTransfer(pub BTreeMap<XCVMAsset, u128>);
 
-impl From<BTreeMap<u32, u128>> for XCVMTransfer {
-	fn from(assets: BTreeMap<u32, u128>) -> Self {
-		XCVMTransfer(assets.into_iter().map(|(asset, amount)| (XCVMAsset(asset), amount)).collect())
+impl<U, V> From<BTreeMap<U, V>> for XCVMTransfer
+where
+	U: Into<XCVMAsset>,
+	V: Into<u128>,
+{
+	fn from(assets: BTreeMap<U, V>) -> Self {
+		XCVMTransfer(
+			assets
+				.into_iter()
+				.map(|(asset, amount)| (asset.into(), amount.into()))
+				.collect(),
+		)
+	}
+}
+
+impl<U, V, const K: usize> From<[(U, V); K]> for XCVMTransfer
+where
+	U: Into<XCVMAsset>,
+	V: Into<u128>,
+{
+	fn from(x: [(U, V); K]) -> Self {
+		XCVMTransfer(x.into_iter().map(|(asset, amount)| (asset.into(), amount.into())).collect())
 	}
 }
 

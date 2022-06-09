@@ -59,6 +59,9 @@ sp-sandbox = { default-features = false, path = "../sandbox" }
 
 either = { version = "1.6", default-features = false }
 
+composable-traits = { path = "../composable-traits", default-features = false }
+xcvm-core = { path = "../../lib/xcvm/core", default-features = false }
+
 [dev-dependencies]
 assert_matches = "1"
 env_logger = "0.9"

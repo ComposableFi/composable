@@ -14,11 +14,27 @@ import {
 import {
   Bytes
 } from "@polkadot/types-codec";
-import type { KeyringPair } from "@polkadot/keyring/types";
+import type {
+  KeyringPair
+} from "@polkadot/keyring/types";
+import {
+  getDevWallets
+} from "@composable/utils/walletHelper";
+import {
+  getNewConnection
+} from "@composable/utils/connectionHelper";
 
-describe('COSMWASM Tests', function() {
+describe('COSMWASM', function() {
   it('Instantiate & Call & Query', async function() {
     this.timeout(60 * 2 * 1000);
+    const {
+      newClient: api,
+      newKeyring
+    } = await getNewConnection();
+    const {
+      devWalletAlice,
+    } = getDevWallets(newKeyring);
+
 
     const code_hash = "0xd94faf9fab0baadd6daa303d98c2bc8190d7f9d2ee562663705f1a4371702eb6";
     const funds = api.createType("BTreeMap<u128, u128>", {
@@ -36,7 +52,7 @@ describe('COSMWASM Tests', function() {
 
     const query = async (contract_address: AccountId32, msg: Object): Promise<Object> => {
       const r = await api.rpc.cosmwasm.query(
-        walletAlice.address,
+        devWalletAlice.address,
         contract_address,
         api.createType("BTreeMap<CustomRpcCurrencyId, CustomRpcBalance>", {}),
         gas,
@@ -65,7 +81,7 @@ describe('COSMWASM Tests', function() {
       data: [_, contract_address]
     } = await sendAndWaitForSuccess(
       api,
-      walletAlice,
+      devWalletAlice,
       api.events.cosmwasm.Instantiated.is,
       api.tx.cosmwasm.instantiate(
         funds,
@@ -89,7 +105,7 @@ describe('COSMWASM Tests', function() {
 
     console.log("Contract instantiated at: " + contract_address);
 
-    console.log("Balance: " + (await getBalance(contract_address, walletAlice)).balance + " PICA");
+    console.log("Balance: " + (await getBalance(contract_address, devWalletAlice)).balance + " PICA");
 
     console.log("Minting PICA on alice wallet...");
 
@@ -98,7 +114,7 @@ describe('COSMWASM Tests', function() {
       data: [_a, event]
     } = await sendAndWaitForSuccess(
       api,
-      walletAlice,
+      devWalletAlice,
       api.events.cosmwasm.ContractEmitted.is,
       api.tx.cosmwasm.call(contract_address, funds, gas, null, encodeMsg("ExecuteMsg", {
         mint: {
@@ -110,14 +126,18 @@ describe('COSMWASM Tests', function() {
 
     logEvent(event);
 
-    console.log("Balance: " + (await getBalance(contract_address, walletAlice)).balance + " PICA");
+    console.log("Balance: " + (await getBalance(contract_address, devWalletAlice)).balance + " PICA");
 
     console.log("Query token info:");
-    const infos = await query(contract_address, { token_info: {} });
+    const infos = await query(contract_address, {
+      token_info: {}
+    });
     console.log(infos);
 
     console.log("Query minter:");
-    const minter = await query(contract_address, { minter: {} });
+    const minter = await query(contract_address, {
+      minter: {}
+    });
     console.log(minter);
   });
 });

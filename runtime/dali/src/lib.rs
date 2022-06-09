@@ -1119,6 +1119,7 @@ impl contracts::Config for Runtime {
 	type AddressGenerator = contracts::DefaultAddressGenerator;
 	type ConvertAccount = CosmwasmAccount;
 	type ConvertAsset = CosmwasmCoin;
+	type XCVM = XCVM;
 }
 
 parameter_types! {

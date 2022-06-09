@@ -25,7 +25,6 @@ sp-std = { default-features = false, git = "https://github.com/paritytech/substr
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
 
 composable-traits = { path = "../composable-traits", default-features = false }
-
 xcvm-core = { path = "../../lib/xcvm/core", default-features = false }
 xcvm-protobuf = { path = "../../lib/xcvm/protobuf", default-features = false }
 

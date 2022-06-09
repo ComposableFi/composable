@@ -20,14 +20,17 @@ use crate::{
 	storage::{self, Storage, WriteOutcome},
 	wasm::{
 		self,
-		cosmwasm::types::{
-			Addr, BalanceResponse, BankMsg, BankQuery, Binary, BlockInfo, Coin,
-			ContractInfo as CosmwasmContractInfo, ContractInfoResponse,
-			ContractResult as CosmwasmResult, CosmosMsg, CosmwasmExecutionResult,
-			CosmwasmQueryResult, CosmwasmReplyResult, Env, Event as CosmwasmEvent, ExecuteResult,
-			InstantiateResult, MessageInfo, QueryRequest, QueryResult, Reply, ReplyOn, ReplyResult,
-			SubMsg, SubMsgResponse, SubMsgResult, SystemResult, Timestamp, TransactionInfo,
-			WasmMsg, WasmQuery,
+		cosmwasm::{
+			types::{
+				Addr, BalanceResponse, BankMsg, BankQuery, Binary, BlockInfo, Coin,
+				ContractInfo as CosmwasmContractInfo, ContractInfoResponse,
+				ContractResult as CosmwasmResult, CosmosMsg, CosmwasmExecutionResult,
+				CosmwasmQueryResult, CosmwasmReplyResult, Env, Event as CosmwasmEvent,
+				ExecuteResult, InstantiateResult, MessageInfo, QueryRequest, QueryResult, Reply,
+				ReplyOn, ReplyResult, SubMsg, SubMsgResponse, SubMsgResult, SystemResult,
+				Timestamp, TransactionInfo, WasmMsg, WasmQuery,
+			},
+			ComposableMsg,
 		},
 	},
 	AssetIdOf, BalanceOf, CodeHash, CodeHashToId, Config, ContractInfo, ContractInfoOf,
@@ -35,6 +38,7 @@ use crate::{
 	TransferredAssets, TrieId,
 };
 use alloc::{collections::BTreeMap, format, string::String};
+use composable_traits::xcvm::XCVM;
 use either::Either;
 use frame_support::{
 	dispatch::{DispatchError, DispatchResult, DispatchResultWithPostInfo, Dispatchable},
@@ -959,15 +963,22 @@ where
 							}
 						};
 						let sub_message_result = match msg {
-							// TODO: burn?
-							CosmosMsg::Bank(BankMsg::Burn { .. }) => todo!(),
-							// TODO: custom query? probably nice using xcvm through this via
-							// dispatch
-							CosmosMsg::Custom(_) => todo!(),
+							CosmosMsg::Custom(ComposableMsg::XCVM { funds, program }) => {
+								log::debug!(target: "runtime::contracts", "CustomMsg::XCVM");
+								T::XCVM::execute(&contract_address, (funds, program))
+									.map(|_| ExecReturnValue {
+										flags: ReturnFlags::empty(),
+										data: Bytes::from(Vec::new()),
+									})
+									.map_err(|error| ExecError {
+										error,
+										origin: ErrorOrigin::Callee,
+									})
+							},
 							CosmosMsg::Wasm(wasm_msg) => match wasm_msg {
 								WasmMsg::Execute { contract_addr, msg: Binary(msg), funds } => {
-									let to = convert_addr(contract_addr)?;
 									log::debug!(target: "runtime::contracts", "WasmMsg::Execute");
+									let to = convert_addr(contract_addr)?;
 									let cached_info = self
 										.frames()
 										.find(|f| {
@@ -1020,10 +1031,23 @@ where
 									log::debug!(target: "runtime::contracts", "Do instantiate");
 									self.run_recurse(executable, msg, &mut raise_event)
 								},
-								WasmMsg::Migrate { .. } => todo!(),
-								WasmMsg::UpdateAdmin { .. } => todo!(),
-								WasmMsg::ClearAdmin { .. } => todo!(),
+								WasmMsg::Migrate { .. } => Err(ExecError {
+									error: Error::<T>::Unsupported.into(),
+									origin: ErrorOrigin::Callee,
+								}),
+								WasmMsg::UpdateAdmin { .. } => Err(ExecError {
+									error: Error::<T>::Unsupported.into(),
+									origin: ErrorOrigin::Callee,
+								}),
+								WasmMsg::ClearAdmin { .. } => Err(ExecError {
+									error: Error::<T>::Unsupported.into(),
+									origin: ErrorOrigin::Callee,
+								}),
 							},
+							CosmosMsg::Bank(BankMsg::Burn { .. }) => Err(ExecError {
+								error: Error::<T>::Unsupported.into(),
+								origin: ErrorOrigin::Callee,
+							}),
 							CosmosMsg::Bank(BankMsg::Send { to_address, amount }) => {
 								log::debug!(target: "runtime::contracts", "BankMsg::Send");
 								let to = convert_addr(to_address)?;
@@ -1042,7 +1066,7 @@ where
 									.collect::<Result<Vec<_>, _>>()
 									.map_err(|error| ExecError {
 										error,
-										origin: ErrorOrigin::Caller,
+										origin: ErrorOrigin::Callee,
 									})
 									.map(|_| ExecReturnValue {
 										flags: ReturnFlags::empty(),
@@ -1384,9 +1408,10 @@ where
 	fn query_chain(&mut self, request: QueryRequest) -> Result<Vec<u8>, DispatchError> {
 		match request {
 			// TODO: do we impl custom query?
-			QueryRequest::Custom(_) => todo!(),
+			QueryRequest::Custom(_) => Err(Error::<T>::Unsupported.into()),
 			// TODO: do we impl all balances?
-			QueryRequest::Bank(BankQuery::AllBalances { .. }) => todo!(),
+			QueryRequest::Bank(BankQuery::AllBalances { .. }) =>
+				Err(Error::<T>::Unsupported.into()),
 			QueryRequest::Bank(BankQuery::Balance { address, denom }) => {
 				let asset = T::ConvertAsset::convert(denom.clone())
 					.map_err(|_| Error::<T>::DecodingFailed)?;

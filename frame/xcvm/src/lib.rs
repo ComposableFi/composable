@@ -37,7 +37,7 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use composable_traits::mosaic::TransferTo;
+	use composable_traits::{mosaic::TransferTo, xcvm::XCVM};
 	use frame_support::{
 		pallet_prelude::*,
 		sp_runtime::{traits::Dispatchable, SaturatedConversion},
@@ -157,7 +157,7 @@ pub mod pallet {
 					real_origin
 				},
 			};
-			Self::do_execute(who, program)
+			Self::do_execute(&who, program)
 		}
 
 		#[pallet::weight(10_000)]
@@ -176,7 +176,7 @@ pub mod pallet {
 			};
 			let program = xcvm_core::deserialize_json(&program.into_inner())
 				.map_err(|_| Error::<T>::InvalidProgramEncoding)?;
-			Self::do_execute(who, program)
+			Self::do_execute(&who, program)
 		}
 
 		#[pallet::weight(10_000)]
@@ -200,7 +200,7 @@ pub mod pallet {
 				XCVMTransfer,
 			>(program.as_ref())
 			.map_err(|_| Error::<T>::InvalidProgramEncoding)?;
-			Self::do_execute(who, program)
+			Self::do_execute(&who, program)
 		}
 	}
 
@@ -210,11 +210,35 @@ pub mod pallet {
 		}
 	}
 
+	impl<T: Config> XCVM for Pallet<T>
+	where
+		AccountIdOf<T>: for<'a> TryFrom<&'a [u8]> + AsRef<[u8]>,
+	{
+		type AccountId = AccountIdOf<T>;
+		type Input = (XCVMTransfer, Program);
+		type Output = DispatchResult;
+		fn execute(who: &Self::AccountId, (XCVMTransfer(funds), program): Self::Input) -> Self::Output {
+			let program_account = Self::program_account(program.nonce, who.clone());
+			for (asset, amount) in funds {
+				let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
+					.map_err(|_| Error::<T>::UnknownAsset)?;
+				T::Assets::transfer(
+					concrete_asset,
+					&who,
+					&program_account,
+					amount.saturated_into(),
+					false,
+				)?;
+			}
+			Self::do_execute(&who, program).map(|_| ()).map_err(|e| e.error)
+		}
+	}
+
 	impl<T: Config> Pallet<T>
 	where
 		AccountIdOf<T>: for<'a> TryFrom<&'a [u8]> + AsRef<[u8]>,
 	{
-		fn do_execute(who: AccountIdOf<T>, mut program: Program) -> DispatchResultWithPostInfo {
+		fn do_execute(who: &AccountIdOf<T>, mut program: Program) -> DispatchResultWithPostInfo {
 			let program_account = Self::program_account(program.nonce, who.clone());
 			frame_support::log::debug!(target: "runtime::xcvm", "Program account {:?}", program_account.as_ref());
 			let program_copy = program.clone();

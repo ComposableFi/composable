@@ -209,9 +209,12 @@ where
 pub mod pallet {
 	use super::*;
 	use alloc::string::String;
+	use composable_traits::xcvm::XCVM;
 	use frame_support::{pallet_prelude::*, traits::tokens::AssetId, transactional};
 	use frame_system::pallet_prelude::*;
 	use sp_runtime::traits::AtLeast32Bit;
+	use sp_std::collections::vec_deque::VecDeque;
+	use xcvm_core::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -349,6 +352,15 @@ pub mod pallet {
 
 		/// The address generator used to generate the addresses of contracts.
 		type AddressGenerator: AddressGenerator<Self>;
+
+		type XCVM: XCVM<
+			AccountId = AccountIdOf<Self>,
+			Input = (
+				XCVMTransfer,
+				XCVMProgram<VecDeque<XCVMInstruction<XCVMNetwork, Vec<u8>, Vec<u8>, XCVMTransfer>>>,
+			),
+			Output = DispatchResult,
+		>;
 	}
 
 	#[pallet::pallet]
@@ -721,6 +733,8 @@ pub mod pallet {
 		/// A more detailed error can be found on the node console if debug messages are enabled
 		/// or in the debug buffer which is returned to RPC clients.
 		CodeRejected,
+		/// NOTE: TEMPORARY
+		Unsupported,
 	}
 
 	/// A mapping from an original code hash to the original code, untouched by instrumentation.
@@ -1012,12 +1026,13 @@ where
 		let mut storage_meter =
 			match StorageMeter::new(&origin, storage_deposit_limit, transferred_native) {
 				Ok(meter) => meter,
-				Err(err) =>
+				Err(err) => {
 					return InternalCallOutput {
 						result: Err(err.into()),
 						gas_meter,
 						storage_deposit: Default::default(),
-					},
+					}
+				},
 			};
 		let schedule = T::Schedule::get();
 		let result = ExecStack::<T, PrefabWasmModule<T>>::run_call(
@@ -1053,12 +1068,13 @@ where
 		let mut storage_meter =
 			match StorageMeter::new(&origin, storage_deposit_limit, transferred_native) {
 				Ok(meter) => meter,
-				Err(err) =>
+				Err(err) => {
 					return InternalCallOutput {
 						result: Err(err.into()),
 						gas_meter,
 						storage_deposit: Default::default(),
-					},
+					}
+				},
 			};
 		let schedule = T::Schedule::get();
 		let result = ExecStack::<T, PrefabWasmModule<T>>::run_query(

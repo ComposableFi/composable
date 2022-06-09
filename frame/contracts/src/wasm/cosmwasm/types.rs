@@ -3,6 +3,8 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
 
+use super::ComposableMsg;
+
 pub mod read_limits {
 	/// A mibi (mega binary)
 	const MI: usize = 1024 * 1024;
@@ -45,9 +47,9 @@ pub mod deserialization_limits {
 	pub const REQUEST_QUERY: usize = 256 * KI;
 }
 
-pub type CosmwasmExecutionResult = ContractResult<Response<Empty>>;
+pub type CosmwasmExecutionResult = ContractResult<Response<ComposableMsg>>;
 pub type CosmwasmQueryResult = ContractResult<QueryResponse>;
-pub type CosmwasmReplyResult = ContractResult<Response<Empty>>;
+pub type CosmwasmReplyResult = ContractResult<Response<ComposableMsg>>;
 
 pub type QueryResponse = Binary;
 

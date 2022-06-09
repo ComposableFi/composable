@@ -7354,6 +7354,7 @@ dependencies = [
  "assert_matches",
  "base64 0.13.0",
  "bitflags",
+ "composable-traits",
  "either",
  "env_logger 0.9.0",
  "frame-benchmarking",
@@ -7387,6 +7388,7 @@ dependencies = [
  "wasmi",
  "wasmi-validation",
  "wat",
+ "xcvm-core",
 ]
 
 [[package]]
