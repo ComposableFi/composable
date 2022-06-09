@@ -134,7 +134,7 @@
 
     - name: Add a nginx config for Subsquid
       template:
-        src: nginx/dali-subsquid.conf.j2
+        src: nginx/dev-dali-subsquid.conf.j2
         dest: /etc/nginx/sites-enabled/subsquid.conf
         mode: "0600"
       become: yes

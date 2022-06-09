@@ -37,6 +37,14 @@ This playbook does next:
 
 ## Usage
 
+### Dev environment
+
     ```bash
-    ansible-playbook -i inventory dali-subsquid.yml -e "domain=your-domain.example.com" -e "letsencrypt_contact_email=your-email@example.com" 
+    ansible-playbook -i inventory dev-dali-subsquid.yml -e "domain=your-domain.example.com" -e "letsencrypt_contact_email=your-email@example.com" 
+    ```
+
+### Prod environment
+
+    ```bash
+    ansible-playbook -i inventory prod-dali-subsquid.yml -e "domain=your-domain.example.com"
     ```
