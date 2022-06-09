@@ -1066,6 +1066,11 @@ pub mod pallet {
 				// Realize PnL
 				collateral = Self::update_margin_with_pnl(&collateral, &pnl)?;
 
+				// Charge fees
+				let fee = Self::fee_for_trade(&market, &exit_value)?;
+				collateral.try_sub_mut(&fee)?;
+				market.fee_pool.try_add_mut(&fee)?;
+
 				Collateral::<T>::insert(account_id, collateral);
 				Markets::<T>::insert(market_id, market);
 				Positions::<T>::insert(account_id, positions);
