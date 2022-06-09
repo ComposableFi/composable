@@ -1,4 +1,11 @@
-use crate::{currency::*, mocks_offchain::*};
+use crate::{
+	currency::*,
+	mocks_offchain::*,
+	tests::{
+		assert_no_event, borrow, create_market_for_liquidation_test, mint_and_deposit_collateral,
+		ConfigBound,
+	},
+};
 use codec::Decode;
 use composable_tests_helpers::test;
 use frame_support::{assert_ok, traits::fungibles::Mutate, BoundedVec};
@@ -7,8 +14,9 @@ use sp_core::{
 	H256,
 };
 use sp_runtime::{testing::Digest, traits::Header as HeaderTrait};
-impl crate::tests::ConfigBound for Runtime {}
+
 type TestBoundedVec = BoundedVec<AccountId, MaxLiquidationBatchSize>;
+impl ConfigBound for Runtime {}
 
 #[test]
 fn test_liquidation_offchain_worker() {
@@ -30,8 +38,7 @@ fn test_liquidation_offchain_worker() {
 		// Initial collateral asset price is 50_000 USDT. Market's collateral factor equals two.
 		// It means that borrow supposed to be undercolateraized when
 		// borrowed amount is higher then one half of collateral amount in terms of USDT.
-		let (market_id, vault_id) =
-			crate::tests::create_market_for_liquidation_test::<Runtime>(manager);
+		let (market_id, vault_id) = create_market_for_liquidation_test::<Runtime>(manager);
 		// Deposit USDT in the vault.
 		let vault_value = USDT::units(100_000_000);
 		assert_ok!(Tokens::mint_into(USDT::ID, &lender, vault_value));
@@ -39,23 +46,18 @@ fn test_liquidation_offchain_worker() {
 
 		test::block::process_and_progress_blocks::<Lending, Runtime>(1);
 		// Deposit 1 BTC collateral from risky borrower account.
-		crate::tests::mint_and_deposit_collateral::<Runtime>(
-			risky_borrower,
-			BTC::units(1),
-			market_id,
-			BTC::ID,
-		);
+		mint_and_deposit_collateral::<Runtime>(risky_borrower, BTC::units(1), market_id, BTC::ID);
 		// Risky borrower borrows 20_000 USDT.
-		crate::tests::borrow::<Runtime>(risky_borrower, market_id, USDT::units(20_000));
+		borrow::<Runtime>(risky_borrower, market_id, USDT::units(20_000));
 		// Deposit 100 BTC collateral from reliable borrower account.
-		crate::tests::mint_and_deposit_collateral::<Runtime>(
+		mint_and_deposit_collateral::<Runtime>(
 			reliable_borrower,
 			BTC::units(100),
 			market_id,
 			BTC::ID,
 		);
 		// Reliable borrower borrows 20_000 USDT.
-		crate::tests::borrow::<Runtime>(reliable_borrower, market_id, USDT::units(20_000));
+		borrow::<Runtime>(reliable_borrower, market_id, USDT::units(20_000));
 		// Emulate situation when collateral price has fallen down
 		// from 50_000 USDT to 38_000 USDT.
 		// Now the risky borrow is undercolateraized since market's collateral factor equals two.
@@ -94,7 +96,7 @@ fn test_liquidation_offchain_worker() {
 			market_id,
 			borrowers: vec![reliable_borrower],
 		};
-		crate::tests::assert_no_event::<Runtime>(Event::Lending(event));
+		assert_no_event::<Runtime>(Event::Lending(event));
 		// Check that Liquidations pallet emitted only one event
 		let event =
 			Event::Liquidations(pallet_liquidations::Event::PositionWasSentToLiquidation {});

@@ -50,8 +50,6 @@ mod mocks;
 mod mocks_offchain;
 #[cfg(test)]
 mod tests;
-#[cfg(test)]
-mod tests_offchain;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
