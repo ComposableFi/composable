@@ -164,7 +164,7 @@ fn should_realize_short_position_gains() {
 
 		VammPallet::set_price(Some(5.into()));
 		assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
-		assert_eq!(get_collateral(ALICE), collateral_0 + 50);
+		assert_eq!(get_collateral(ALICE), collateral_0 + as_balance(50));
 
 		SystemPallet::assert_last_event(
 			Event::PositionClosed { user: ALICE, market: market_id, direction: Short, base }.into(),
