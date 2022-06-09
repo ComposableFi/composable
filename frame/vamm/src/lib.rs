@@ -270,16 +270,20 @@ pub mod pallet {
 		/// effect at the time `timestamp`.
 		pub closed: Option<Moment>,
 
-		/// The time weighted average price for [`base_asset_reserves`](VammState::base_asset_reserves).
+		/// The time weighted average price for
+		/// [`base_asset_reserves`](VammState::base_asset_reserves).
 		pub base_asset_twap: Balance,
 
-		/// The time weighted average price timestamp for [`base_asset_reserves`](VammState::base_asset_reserves).
+		/// The time weighted average price timestamp for
+		/// [`base_asset_reserves`](VammState::base_asset_reserves).
 		pub base_asset_twap_timestamp: Moment,
 
-		/// The time weighted average price for [`quote_asset_reserves`](VammState::quote_asset_reserves).
+		/// The time weighted average price for
+		/// [`quote_asset_reserves`](VammState::quote_asset_reserves).
 		pub quote_asset_twap: Balance,
 
-		/// The time weighted average price timestamp for [`quote_asset_reserves`](VammState::quote_asset_reserves).
+		/// The time weighted average price timestamp for
+		/// [`quote_asset_reserves`](VammState::quote_asset_reserves).
 		pub quote_asset_twap_timestamp: Moment,
 
 		/// The frequency with which the vamm must have it's funding rebalance.
@@ -727,9 +731,8 @@ pub mod pallet {
 
 			// Delegate update twap to internal functions.
 			match new_twap {
-				Some(new_twap) => {
-					Self::do_update_twap(vamm_id, &mut vamm_state, asset_type, new_twap, &None)
-				},
+				Some(new_twap) =>
+					Self::do_update_twap(vamm_id, &mut vamm_state, asset_type, new_twap, &None),
 				None => Self::update_vamm_twap(vamm_id, &mut vamm_state, asset_type, &None),
 			}
 		}
@@ -1070,13 +1073,11 @@ pub mod pallet {
 			vamm_state: &VammStateOf<T>,
 		) -> Result<CalculateSwapAsset<T>, DispatchError> {
 			let new_input_amount = match direction {
-				Direction::Add => {
-					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?
-				},
+				Direction::Add =>
+					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?,
 
-				Direction::Remove => {
-					input_asset_amount.checked_sub(swap_amount).ok_or(ArithmeticError::Underflow)?
-				},
+				Direction::Remove =>
+					input_asset_amount.checked_sub(swap_amount).ok_or(ArithmeticError::Underflow)?,
 			};
 			let new_input_amount_u256 = Self::balance_to_u256(new_input_amount)?;
 
