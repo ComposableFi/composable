@@ -11,7 +11,7 @@ use crate::{
 		Error, Event,
 	},
 	tests::{
-		any_direction, as_balance, get_collateral, get_market_fee_pool, get_position,
+		any_direction, as_balance, get_collateral, get_market, get_market_fee_pool, get_position,
 		run_for_seconds, with_trading_context, MarketConfig,
 	},
 };
@@ -306,6 +306,38 @@ proptest! {
 
 			assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
 			assert!(matches!(get_position(&ALICE, &market_id), None));
+		});
+	}
+
+	#[test]
+	fn should_update_market_funding_if_possible(direction in any_direction()) {
+		let config = MarketConfig {
+			funding_frequency: 60,
+			funding_period: 60,
+			taker_fee: 0,
+			..Default::default()
+		};
+		let size = as_balance(100);
+
+		with_trading_context(config.clone(), size, |market_id| {
+			// Ensure last funding update is at time 0
+			assert_eq!(get_market(&market_id).funding_rate_ts, 0);
+
+			VammPallet::set_price(Some(10.into()));
+
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				direction,
+				size,
+				size / 10,
+			));
+
+			// Enough time passes for a funding update to be possible
+			run_for_seconds(config.funding_frequency);
+			assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
+			// Last funding update should be at time 60
+			assert_eq!(get_market(&market_id).funding_rate_ts, config.funding_frequency);
 		});
 	}
 }
