@@ -6,7 +6,7 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 
-	use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
+	use codec::{Codec, Decode, Encode, FullCodec, MaxEncodedLen};
 	use composable_traits::{
 		defi::DeFiComposableConfig,
 		vamm::{AssetType, Direction, SwapConfig, SwapOutput, SwapSimulationConfig, Vamm},
@@ -14,7 +14,7 @@ pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use num_traits::{CheckedDiv, One};
 	use scale_info::TypeInfo;
-	use sp_arithmetic::traits::Unsigned;
+	use sp_arithmetic::traits::{AtLeast32BitUnsigned, Unsigned};
 	use sp_core::U256;
 	use sp_runtime::{
 		traits::{Saturating, Zero},
@@ -50,6 +50,16 @@ pub mod pallet {
 			+ MaxEncodedLen
 			+ MaybeSerializeDeserialize
 			+ Saturating
+			+ TypeInfo;
+		type Moment: Default
+			+ AtLeast32BitUnsigned
+			+ Clone
+			+ Codec
+			+ Copy
+			+ From<u64>
+			+ Into<u64>
+			+ MaxEncodedLen
+			+ MaybeSerializeDeserialize
 			+ TypeInfo;
 	}
 
@@ -132,6 +142,7 @@ pub mod pallet {
 	impl<T: Config> Vamm for Pallet<T> {
 		type Balance = T::Balance;
 		type Decimal = T::Decimal;
+		type Moment = T::Moment;
 		type MovePriceConfig = MovePriceConfig;
 		type SwapConfig = SwapConfig<Self::VammId, Self::Balance>;
 		type SwapSimulationConfig = SwapSimulationConfig<Self::VammId, Self::Balance>;
