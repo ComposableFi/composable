@@ -559,6 +559,7 @@ pub mod pallet {
 					<T::Vault as StrategicVault>::withdraw(&vault_id, issuer, amount),
 				FundsAvailability::MustLiquidate =>
 					<T::Vault as StrategicVault>::withdraw(&vault_id, issuer, amount),
+				FundsAvailability::None => {},
 				_ => Err(Error::<T>::NotEnoughLiquidity.into()),
 			}
 			.map_err(|_| Error::<T>::NotEnoughLiquidity)?;
