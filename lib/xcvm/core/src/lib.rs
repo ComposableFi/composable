@@ -134,12 +134,12 @@ mod tests {
 				.call(DummyProtocol1)?
 				.spawn::<_, ProgramBuildError>(
 					XCVMNetwork::ETHEREUM,
-					XCVMTransfer::from(BTreeMap::new()),
+					XCVMTransfer::empty(),
 					|child| {
 						Ok(child
 							.call(DummyProtocol2)?
 							.call(DummyProtocol1)?
-							.transfer((), XCVMTransfer::from(BTreeMap::from([(1, u128::MAX)]))))
+							.transfer((), XCVMTransfer::from([(1, u128::MAX)])))
 					},
 				)?
 				.build())
@@ -155,7 +155,7 @@ mod tests {
 					XCVMInstruction::Call { encoded: vec![202, 254, 190, 239] },
 					XCVMInstruction::Spawn {
 						network: XCVMNetwork::ETHEREUM,
-						assets: XCVMTransfer::from(BTreeMap::new()),
+						assets: XCVMTransfer::empty(),
 						program: XCVMProgram {
 							nonce: 1,
 							instructions: VecDeque::from([
@@ -191,7 +191,6 @@ mod tests {
 		}()
 		.expect("valid program");
 		let serialized = serialize_json(&program).unwrap();
-		assert_eq!("", core::str::from_utf8(&serialized).unwrap());
 		assert_eq!(program, deserialize_json(&serialized).unwrap());
 	}
 }

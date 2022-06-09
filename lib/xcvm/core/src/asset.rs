@@ -49,6 +49,12 @@ impl From<u32> for XCVMAsset {
 #[repr(transparent)]
 pub struct XCVMTransfer(pub BTreeMap<XCVMAsset, u128>);
 
+impl XCVMTransfer {
+  pub fn empty() -> Self {
+    XCVMTransfer(BTreeMap::new())
+  }
+}
+
 impl<U, V> From<BTreeMap<U, V>> for XCVMTransfer
 where
 	U: Into<XCVMAsset>,
