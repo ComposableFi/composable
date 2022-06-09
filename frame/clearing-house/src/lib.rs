@@ -669,6 +669,9 @@ pub mod pallet {
 		///
 		/// ![](https://www.plantuml.com/plantuml/svg/FSr12W8n30NGlQVG0ynaxsf0y1wPDhQ1j2b9YjUtk9ZLvp_u_CC3BMQJsuDxafbfcjnhnF0dGE6eyzoJDdXf6-fu2hqPqbN0y0lagPB1nx0H924qxcMhEfqWCvRblboTjZNZOEtx4Ep_tuDwNla3)
 		///
+		/// This extrinsic also attempts to update the corresponding market's funding rate at the
+		/// end.
+		///
 		/// # Parameters
 		///
 		/// - `market_id`: the perpetuals market Id to close a position in
@@ -681,10 +684,13 @@ pub mod pallet {
 		/// # Emits
 		///
 		/// - [`PositionClosed`](Event::<T>::PositionClosed)
+		/// - [`FundingUpdated`](Event::<T>::FundingUpdated)
 		///
 		/// # State Changes
 		///
-		/// TODO(0xangelo): add state changes
+		/// - [`Collateral`]: funding settled, PnL realized, and fee charged
+		/// - [`Positions`]: the position is removed
+		/// - [`Markets`]: open interest and Fee Pool updated; may update funding rate too
 		///
 		/// # Errors
 		///
@@ -693,7 +699,8 @@ pub mod pallet {
 		///
 		/// # Weight/Runtime
 		///
-		/// TODO(0xangelo): calculate runtime
+		/// `O(n)`, where `n` is the number of open positions before the extrinsic is called. Due to
+		/// a linear search of the positions vector for the one to be closed.
 		#[pallet::weight(<T as Config>::WeightInfo::close_position())]
 		pub fn close_position(origin: OriginFor<T>, market_id: T::MarketId) -> DispatchResult {
 			let account_id = ensure_signed(origin)?;
