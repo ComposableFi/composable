@@ -46,5 +46,5 @@ This playbook does next:
 ### Prod environment
 
     ```bash
-    ansible-playbook -i inventory prod-dali-subsquid.yml -e "domain=your-domain.example.com"
+    ansible-playbook -i inventory prod-dali-subsquid.yml -e "domain=dali-subsquid.composable.finance"
     ```
