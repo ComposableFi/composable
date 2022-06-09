@@ -214,6 +214,14 @@ pub mod pallet {
 		fn move_price(config: &Self::MovePriceConfig) -> Result<U256, DispatchError> {
 			unimplemented!()
 		}
+
+		fn update_twap(
+			vamm_id: Self::VammId,
+			asset_type: AssetType,
+			new_twap: Option<Self::Decimal>,
+		) -> Result<Self::Decimal, DispatchError> {
+			unimplemented!()
+		}
 	}
 
 	// ----------------------------------------------------------------------------------------------------
