@@ -473,6 +473,8 @@ pub mod pallet {
 		/// Attempted to create a new market but the underlying asset is not supported by the
 		/// oracle.
 		NoPriceFeedForAsset,
+		/// Raised when dealing with a position that has no base asset amount.
+		NullPosition,
 		/// Raised when trying to fetch a position from the positions vector with an invalid index.
 		PositionNotFound,
 		/// Attempted to liquidate a user's account but it has sufficient collateral to back its
@@ -739,6 +741,8 @@ pub mod pallet {
 		///
 		/// - [`MarketIdNotFound`](Error::<T>::MarketIdNotFound)
 		/// - [`UpdatingFundingTooEarly`](Error::<T>::UpdatingFundingTooEarly)
+		/// - [`NullPosition`](Error::<T>::NullPosition)
+		/// - [`ArithmeticError`]
 		///
 		/// ## Weight/Runtime
 		///
@@ -1049,12 +1053,11 @@ pub mod pallet {
 			let mut market = Self::get_market(market_id).ok_or(Error::<T>::MarketIdNotFound)?;
 			let mut positions = Self::get_positions(account_id);
 			let (position, position_index) = Self::try_get_position(&mut positions, market_id)?;
-			let base_swapped = position.base_asset_amount.into_balance()?;
 
 			if let Some(direction) = position.direction() {
 				Self::settle_funding(position, &market, &mut collateral)?;
 
-				let (_, entry_value, exit_value) = Self::do_close_position(
+				let (base_swapped, entry_value, exit_value) = Self::do_close_position(
 					&mut positions,
 					position_index,
 					direction,
@@ -1081,9 +1084,13 @@ pub mod pallet {
 					direction,
 					base: base_swapped,
 				});
+				Ok(base_swapped)
+			} else {
+				// This should never happen, as the operations that modify a position (open_position
+				// and liquidate) ensure a position is removed in case the resulting base asset
+				// amount is zero. We leave this check here for defensive purposes.
+				Err(Error::<T>::NullPosition.into())
 			}
-
-			Ok(base_swapped)
 		}
 
 		#[transactional]
