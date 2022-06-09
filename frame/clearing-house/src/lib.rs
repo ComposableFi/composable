@@ -1074,6 +1074,9 @@ pub mod pallet {
 				collateral.try_sub_mut(&fee)?;
 				market.fee_pool.try_add_mut(&fee)?;
 
+				// Attempt funding rate update at the end
+				Self::do_update_funding(market_id, &mut market, T::UnixTime::now().as_secs())?;
+
 				Collateral::<T>::insert(account_id, collateral);
 				Markets::<T>::insert(market_id, market);
 				Positions::<T>::insert(account_id, positions);
@@ -1084,6 +1087,7 @@ pub mod pallet {
 					direction,
 					base: base_swapped,
 				});
+
 				Ok(base_swapped)
 			} else {
 				// This should never happen, as the operations that modify a position (open_position
@@ -1102,67 +1106,9 @@ pub mod pallet {
 				Error::<T>::UpdatingFundingTooEarly
 			);
 
-			// Pay funding
-			// net position sign | funding rate sign | transfer
-			// --------------------------------------------------------------
-			//                -1 |                -1 | Collateral -> Fee Pool
-			//                -1 |                 1 | Fee Pool -> Collateral
-			//                 1 |                -1 | Fee Pool -> Collateral
-			//                 1 |                 1 | Collateral -> Fee Pool
-			//                 - |                 0 | n/a
-			//                 0 |                 - | n/a
-			let net_base_asset_amount =
-				market.base_asset_amount_long.try_add(&market.base_asset_amount_short)?;
-			let funding_rate = <Self as Instruments>::funding_rate(&market)?;
-			let mut funding_rate_long = funding_rate;
-			let mut funding_rate_short = funding_rate;
+			Self::do_update_funding(market_id, &mut market, now)?;
 
-			if !(funding_rate.is_zero() | net_base_asset_amount.is_zero()) {
-				let uncapped_funding = funding_rate.try_mul(&net_base_asset_amount)?;
-
-				if uncapped_funding.is_positive() {
-					// Fee Pool receives funding
-					market.fee_pool.try_add_mut(&uncapped_funding.into_balance()?)?;
-				} else {
-					// Fee Pool pays funding
-					// TODO(0xangelo): set limits for
-					// - total Fee Pool usage (reserve some funds for other operations)
-					// - Fee Pool usage for funding payments per call to `update_funding`
-					let usable_fees: T::Decimal = -market.fee_pool.into_decimal()?;
-					let mut capped_funding = sp_std::cmp::max(uncapped_funding, usable_fees);
-
-					// Since we're dealing with negatives, we check if the uncapped funding is
-					// *smaller* (greater in absolute terms) than the capped one
-					if capped_funding > uncapped_funding {
-						// Total funding paid to one side is the sum of the funding paid by the
-						// opposite side plus the complement from the Fee Pool
-						let excess;
-						if net_base_asset_amount.is_positive() {
-							let counterparty_funding = usable_fees
-								.try_sub(&funding_rate.try_mul(&market.base_asset_amount_short)?)?;
-							(funding_rate_long, excess) =
-								counterparty_funding.try_div_rem(&market.base_asset_amount_long)?;
-						} else {
-							let counterparty_funding = funding_rate
-								.try_mul(&market.base_asset_amount_long)?
-								.try_sub(&usable_fees)?;
-							(funding_rate_short, excess) = counterparty_funding
-								.try_div_rem(&market.base_asset_amount_short)?;
-						}
-						capped_funding.try_sub_mut(&excess)?;
-					}
-
-					market.fee_pool.try_sub_mut(&capped_funding.into_balance()?)?;
-				};
-			}
-
-			// Update market state
-			market.cum_funding_rate_long.try_add_mut(&funding_rate_long)?;
-			market.cum_funding_rate_short.try_add_mut(&funding_rate_short)?;
-			market.funding_rate_ts = now;
 			Markets::<T>::insert(market_id, market);
-
-			Self::deposit_event(Event::FundingUpdated { market: market_id.clone(), time: now });
 			Ok(())
 		}
 
@@ -1254,6 +1200,74 @@ pub mod pallet {
 
 	// Helper functions - core functionality
 	impl<T: Config> Pallet<T> {
+		fn do_update_funding(
+			market_id: &T::MarketId,
+			market: &mut Market<T>,
+			now: DurationSeconds,
+		) -> Result<(), DispatchError> {
+			// Pay funding
+			// net position sign | funding rate sign | transfer
+			// --------------------------------------------------------------
+			//                -1 |                -1 | Collateral -> Fee Pool
+			//                -1 |                 1 | Fee Pool -> Collateral
+			//                 1 |                -1 | Fee Pool -> Collateral
+			//                 1 |                 1 | Collateral -> Fee Pool
+			//                 - |                 0 | n/a
+			//                 0 |                 - | n/a
+			let net_base_asset_amount =
+				market.base_asset_amount_long.try_add(&market.base_asset_amount_short)?;
+			let funding_rate = <Self as Instruments>::funding_rate(market)?;
+			let mut funding_rate_long = funding_rate;
+			let mut funding_rate_short = funding_rate;
+
+			if !(funding_rate.is_zero() | net_base_asset_amount.is_zero()) {
+				let uncapped_funding = funding_rate.try_mul(&net_base_asset_amount)?;
+
+				if uncapped_funding.is_positive() {
+					// Fee Pool receives funding
+					market.fee_pool.try_add_mut(&uncapped_funding.into_balance()?)?;
+				} else {
+					// Fee Pool pays funding
+					// TODO(0xangelo): set limits for
+					// - total Fee Pool usage (reserve some funds for other operations)
+					// - Fee Pool usage for funding payments per call to `update_funding`
+					let usable_fees: T::Decimal = -market.fee_pool.into_decimal()?;
+					let mut capped_funding = sp_std::cmp::max(uncapped_funding, usable_fees);
+
+					// Since we're dealing with negatives, we check if the uncapped funding is
+					// *smaller* (greater in absolute terms) than the capped one
+					if capped_funding > uncapped_funding {
+						// Total funding paid to one side is the sum of the funding paid by the
+						// opposite side plus the complement from the Fee Pool
+						let excess;
+						if net_base_asset_amount.is_positive() {
+							let counterparty_funding = usable_fees
+								.try_sub(&funding_rate.try_mul(&market.base_asset_amount_short)?)?;
+							(funding_rate_long, excess) =
+								counterparty_funding.try_div_rem(&market.base_asset_amount_long)?;
+						} else {
+							let counterparty_funding = funding_rate
+								.try_mul(&market.base_asset_amount_long)?
+								.try_sub(&usable_fees)?;
+							(funding_rate_short, excess) = counterparty_funding
+								.try_div_rem(&market.base_asset_amount_short)?;
+						}
+						capped_funding.try_sub_mut(&excess)?;
+					}
+
+					market.fee_pool.try_sub_mut(&capped_funding.into_balance()?)?;
+				};
+			}
+
+			// Update market state
+			market.cum_funding_rate_long.try_add_mut(&funding_rate_long)?;
+			market.cum_funding_rate_short.try_add_mut(&funding_rate_short)?;
+			market.funding_rate_ts = now;
+
+			Self::deposit_event(Event::FundingUpdated { market: market_id.clone(), time: now });
+			Ok(())
+		}
+
 		fn summarize_account_state(
 			account_id: &T::AccountId,
 			positions: BoundedVec<Position<T>, T::MaxPositions>,
