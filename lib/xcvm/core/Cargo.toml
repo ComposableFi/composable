@@ -7,13 +7,13 @@ version = "0.1.0"
 
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
-ethabi = { version = "17.0.0", default-features = false }
-prost = { version = "0.10", default-features = false, features = [
-  "prost-derive",
-] }
-prost-types = { version = "0.10", default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
 serde = { version = "1", default-features = false, features = ["derive"] }
 serde_json = { version = "1", default-features = false, features = ["alloc"] }
+schemars = { version = "0.8.1", optional = true }
+
+[features]
+default = []
+std = [ "dep:schemars" ]

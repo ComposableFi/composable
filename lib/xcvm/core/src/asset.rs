@@ -3,6 +3,7 @@ use codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
 	Copy,
 	Clone,
@@ -41,6 +42,7 @@ impl From<u32> for XCVMAsset {
 	}
 }
 
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
 	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
 )]

@@ -7,6 +7,7 @@ pub trait Callable {
 	type EncodedCall;
 }
 
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
 	Copy,
 	Clone,
