@@ -2,8 +2,8 @@ use crate::{
 	mock::{
 		accounts::{AccountId, ALICE},
 		runtime::{
-			Balance, Oracle as OraclePallet, Origin, Runtime, System as SystemPallet, TestPallet,
-			Vamm as VammPallet,
+			Balance, MarketId, Oracle as OraclePallet, Origin, Runtime, System as SystemPallet,
+			TestPallet, Vamm as VammPallet,
 		},
 	},
 	pallet::{
@@ -21,6 +21,10 @@ use proptest::prelude::*;
 
 fn get_collateral(account_id: AccountId) -> Balance {
 	TestPallet::get_collateral(&account_id).unwrap()
+}
+
+fn get_market_fee_pool(market_id: &MarketId) -> Balance {
+	TestPallet::get_market(market_id).unwrap().fee_pool
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -287,6 +291,9 @@ proptest! {
 			assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
 			let collateral_2 = get_collateral(ALICE);
 			assert!(collateral_1 > collateral_2); // collateral should be reduced by fees
+
+			// Market Fee Pool is increased by the difference between initial and final collateral values
+			assert_eq!(get_market_fee_pool(&market_id), collateral_0 - collateral_2);
 		});
 	}
 
