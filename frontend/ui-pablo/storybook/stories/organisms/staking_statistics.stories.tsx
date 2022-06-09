@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { StakingStatistics } from "@ui-pablo/nextjs/components/Organisms/staking/Statistics";
+import { StakingStatistics } from "@ui-pablo/app/components/Organisms/staking/Statistics";
 
 const StakingStatisticsStories = ({}) => {
   return (

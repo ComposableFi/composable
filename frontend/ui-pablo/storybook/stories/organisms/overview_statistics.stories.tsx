@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { Statistics } from "@ui-pablo/nextjs/components/Organisms/overview/Statistics";
+import { Statistics } from "@ui-pablo/app/components/Organisms/overview/Statistics";
 
 const StatisticsStories = ({}) => {
   return (

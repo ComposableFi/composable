@@ -1,6 +1,5 @@
 import { Stepper } from "@/components/Molecules";
 import { Box, useTheme, BoxProps } from "@mui/material";
-import { useAppSelector } from "@/hooks/store";
 import ChooseTokensStep from "./steps/ChooseTokensStep";
 import SetFeesStep from "./steps/SetFeesStep";
 import { useState } from "react";
@@ -13,7 +12,7 @@ const steps = ["Choose tokens", "Set fees", "Set liquidity", "Confirm pool"];
 
 export const CreatePool: React.FC<BoxProps> = ({ ...boxProps }) => {
   const theme = useTheme();
-  const { pools: { createPool: { currentStep } } } = useStore();
+  const { createPool: { currentStep } } = useStore();
   const [isSimilarPoolsStep, setIsSimilarPoolsStep] = useState<boolean>(false);
 
   const isChooseTokensStep = currentStep === 1;

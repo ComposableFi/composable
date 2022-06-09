@@ -13,46 +13,110 @@ import CloseIcon from "@mui/icons-material/Close";
 
 import { useDispatch } from "react-redux";
 import {  
+  closeConfirmingSupplyModal,
   closeConfirmSupplyModal, 
-  openPreviewSupplyModal,
+  openConfirmingSupplyModal, 
 } from "@/stores/ui/uiSlice";
 import { useAppSelector } from "@/hooks/store";
 import BigNumber from "bignumber.js";
 import { AssetMetadata } from "@/defi/polkadot/Assets";
+import { getSigner, useExecutor, useParachainApi, useSelectedAccount } from "substrate-react";
+import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
+import { getPairDecimals } from "@/defi/polkadot/utils";
+import { APP_NAME } from "@/defi/polkadot/constants";
+import { useSnackbar } from "notistack";
+import { resetAddLiquiditySlice, useAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
+import { useRouter } from "next/router";
 
 export interface SupplyModalProps {
-  baseAsset: AssetMetadata | null;
-  quoteAsset: AssetMetadata | null;
-  baseAmount: BigNumber;
-  quoteAmount: BigNumber;
+  assetOne: AssetMetadata | null;
+  assetTwo: AssetMetadata | null;
+  assetOneAmount: BigNumber;
+  assetTwoAmount: BigNumber;
   lpReceiveAmount: BigNumber;
-  priceBaseInQuote: BigNumber;
-  priceQuoteInBase: BigNumber;
+  priceOneInTwo: BigNumber;
+  priceTwoInOne: BigNumber;
   share: BigNumber;
 }
 
 export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
-  baseAsset,
-  quoteAsset,
-  baseAmount,
-  quoteAmount,
+  assetOne,
+  assetTwo,
+  assetOneAmount,
+  assetTwoAmount,
   lpReceiveAmount,
-  priceBaseInQuote,
-  priceQuoteInBase,
+  priceOneInTwo,
+  priceTwoInOne,
   share,
   ...rest
 }) => {
+  const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const dispatch = useDispatch();
+  const router = useRouter();
+
+  const {parachainApi} = useParachainApi(DEFAULT_NETWORK_ID);
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
+  const executor = useExecutor();
+
+  const addLiquiditySlice = useAddLiquiditySlice();
 
   const {
     amount,
   } = useAppSelector((state) => state.pool.currentSupply);
 
-  const confirmSupply = () => {
-    dispatch(closeConfirmSupplyModal());
-    dispatch(openPreviewSupplyModal());
-  };
+  const onConfirmSupply = async () => {
+    if (
+      selectedAccount &&
+      executor && parachainApi && selectedAccount &&
+      assetOne !== null &&
+      assetTwo !== null
+      && addLiquiditySlice.pool) {
+        dispatch(closeConfirmSupplyModal());
+        const { baseDecimals, quoteDecimals } = getPairDecimals(
+          assetOne.assetId,
+          assetTwo.assetId
+        );
+  
+        let isReverse =
+        addLiquiditySlice.pool.pair.base !==
+          assetOne.supportedNetwork.picasso;
+        const bnBase = new BigNumber(
+          isReverse ? assetTwoAmount : assetOneAmount
+        ).times(isReverse ? quoteDecimals : baseDecimals);
+        const bnQuote = new BigNumber(
+          isReverse ? assetOneAmount : assetTwoAmount
+        ).times(isReverse ? baseDecimals : quoteDecimals);
+
+      const signer = await getSigner(APP_NAME, selectedAccount.address);
+
+      executor.execute(
+        parachainApi.tx.pablo.addLiquidity(addLiquiditySlice.pool.poolId, bnBase.toString(), bnQuote.toString(), 0, true),
+        selectedAccount.address,
+        parachainApi,
+        signer,
+        (txReady: string) => {
+          dispatch(openConfirmingSupplyModal());
+          console.log('txReady', txReady)
+        },
+        (txHash: string, events) => {
+          console.log('Finalized TX: ', txHash)
+          enqueueSnackbar('Added Liquidity: ' + txHash)
+          dispatch(closeConfirmingSupplyModal());
+          router.push('/pool/select/' + addLiquiditySlice.pool?.poolId)
+          resetAddLiquiditySlice();
+        },
+        (errorMessage: string) => {
+          console.log('Tx Error:', errorMessage)
+          enqueueSnackbar('Tx Error: ' + errorMessage)
+          dispatch(closeConfirmingSupplyModal());
+        }
+      ).catch(err => {
+        dispatch(closeConfirmingSupplyModal());
+        console.log('Tx Error:', err)
+      })
+    }
+  }
 
   return (
     <Modal
@@ -91,7 +155,7 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
         </Typography>
 
         <Typography variant="body1" color="text.secondary" mt={1.75}>
-          {`LP ${baseAsset?.symbol}/${quoteAsset?.symbol} Tokens`}
+          {`LP ${assetOne?.symbol}/${assetTwo?.symbol} Tokens`}
         </Typography>
 
         <Typography variant="body2" mt={4} textAlign="center" paddingX={4.25}>
@@ -105,10 +169,10 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
 
         <Label
           mt={4}
-          label={`Pooled ${baseAsset?.symbol}`}
+          label={`Pooled ${assetOne?.symbol}`}
           BalanceProps={{
-            title: <BaseAsset icon={baseAsset?.icon} pr={priceBaseInQuote.toNumber()} />,
-            balance: `${baseAmount}`,
+            title: <BaseAsset icon={assetOne?.icon} pr={priceOneInTwo.toNumber()} />,
+            balance: `${assetOneAmount}`,
             BalanceTypographyProps: {
               variant: "body1",
             },
@@ -117,10 +181,10 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
 
         <Label
           mt={2}
-          label={`Pooled ${quoteAsset?.symbol}`}
+          label={`Pooled ${assetTwo?.symbol}`}
           BalanceProps={{
-            title: <BaseAsset icon={quoteAsset?.icon} pr={priceQuoteInBase.toNumber()} />,
-            balance: `${quoteAmount}`,
+            title: <BaseAsset icon={assetTwo?.icon} pr={priceTwoInOne.toNumber()} />,
+            balance: `${assetTwoAmount}`,
             BalanceTypographyProps: {
               variant: "body1",
             },
@@ -131,7 +195,7 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           mt={2}
           label={`Price`}
           BalanceProps={{
-            balance: `1 ${baseAsset?.symbol} = ${priceBaseInQuote} ${quoteAsset?.symbol}`,
+            balance: `1 ${assetOne?.symbol} = ${priceOneInTwo} ${assetTwo?.symbol}`,
             BalanceTypographyProps: {
               variant: "body1",
             },
@@ -142,7 +206,7 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           mt={2}
           label=""
           BalanceProps={{
-            balance: `1 ${quoteAsset?.symbol} = ${priceQuoteInBase} ${baseAsset?.symbol}`,
+            balance: `1 ${assetTwo?.symbol} = ${priceTwoInOne} ${assetOne?.symbol}`,
             BalanceTypographyProps: {
               variant: "body1",
             },
@@ -165,7 +229,7 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
             variant="contained" 
             size="large"
             fullWidth
-            onClick={confirmSupply}
+            onClick={onConfirmSupply}
           >
             Confirm supply
           </Button>

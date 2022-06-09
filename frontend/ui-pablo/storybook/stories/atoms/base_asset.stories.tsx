@@ -1,7 +1,7 @@
 import { 
   BaseAssetProps,
   BaseAsset,
-} from "@/components";
+} from "@ui-pablo/app/components";
 import { 
   Box, 
   SxProps, 

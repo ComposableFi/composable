@@ -1,6 +1,6 @@
 import React from 'react';
 import { ComponentStory, ComponentMeta } from '@storybook/react';
-import Home from '@ui-pablo/nextjs/pages';
+import Home from '@ui-pablo/app/pages';
 
 /*
  * As per Component story format, default export contains meta information

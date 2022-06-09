@@ -1,4 +1,4 @@
-import { Select, SelectProps } from "@/components";
+import { Select, SelectProps } from "@ui-pablo/app/components";
 import { Box, SxProps } from "@mui/material";
 import { Story } from "@storybook/react";
 import { useState } from "react";

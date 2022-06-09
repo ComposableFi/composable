@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { ClaimableRewards } from "@ui-pablo/nextjs/components/Organisms/staking/ClaimableRewards";
+import { ClaimableRewards } from "@ui-pablo/app/components/Organisms/staking/ClaimableRewards";
 
 const ClaimableRewardsStories = ({}) => {
   return (

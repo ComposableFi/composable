@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { PoolDetails } from "@ui-pablo/nextjs/components/Organisms";
+import { PoolDetails } from "@ui-pablo/app/components/Organisms";
 
 const PoolDetailsStories = ({}) => {
   return (

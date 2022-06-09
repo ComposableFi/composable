@@ -24,7 +24,7 @@ import moment from "moment-timezone";
 import useLiquidityBootstrappingPoolStore from "@/store/useStore";
 import { useEffect, useState } from "react";
 import { getAssetById } from "@/defi/polkadot/Assets";
-import { fetchSpotPrice } from "@/store/updaters/swaps/utils";
+import { fetchSpotPrice } from "@/updaters/swaps/utils";
 import { useParachainApi } from "substrate-react";
 
 const Auction: NextPage = () => {

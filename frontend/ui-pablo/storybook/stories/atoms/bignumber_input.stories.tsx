@@ -1,4 +1,4 @@
-import { BigNumberInput, BigNumberInputProps } from "@/components";
+import { BigNumberInput, BigNumberInputProps } from "@ui-pablo/app/components";
 import { Box, SxProps } from "@mui/material";
 import { Story } from "@storybook/react";
 import BigNumber from "bignumber.js";

@@ -9,11 +9,10 @@ import { Link } from "@/components";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
-import { initCurrentSupply } from "@/stores/defi/pool";
 import useStore from "@/store/useStore";
 import { useDotSamaContext } from "substrate-react";
 import { AddLiquidityForm } from "@/components/Organisms/liquidity/AddForm";
-import AddLiquidityUpdater from "@/store/updaters/pools/addLiquidity/Updater";
+import AddLiquidityUpdater from "@/updaters/addLiquidity/Updater";
 
 const AddLiquidity: NextPage = () => {
 
@@ -30,10 +29,6 @@ const AddLiquidity: NextPage = () => {
       Add liquidity
     </Typography>,
   ];
-
-  useEffect(() => {
-    dispatch(initCurrentSupply());
-  }, []);
 
   useEffect(() => {
     extensionStatus !== "connected" && !isPolkadotModalOpen && router.push('/pool');

@@ -1,8 +1,6 @@
 import React, { useMemo } from "react";
 import { ModalProps, Modal } from "@/components/Molecules";
 import { Label, BaseAsset } from "@/components/Atoms";
-import { getToken } from "@/defi/Tokens";
-import { TokenId } from "@/defi/types";
 import {
   alpha,
   Box,
@@ -23,12 +21,12 @@ import { YourPosition } from "../YourPosition";
 import { SupplyModalProps } from "./ConfirmSupplyModal";
 
 export const PreviewSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({ 
-  baseAsset,
-  baseAmount,
-  quoteAsset,
-  quoteAmount,
-  priceBaseInQuote,
-  priceQuoteInBase,
+  assetOne,
+  assetTwo,
+  assetOneAmount,
+  assetTwoAmount,
+  priceOneInTwo,
+  priceTwoInOne,
   lpReceiveAmount,
   share,
   ...rest }) => {
@@ -85,7 +83,7 @@ export const PreviewSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
         </Typography>
 
         <Typography variant="body1" color="text.secondary" mt={1.75}>
-          {`LP ${baseAsset?.symbol}/${quoteAsset?.symbol} Tokens`}
+          {`LP ${assetOne?.symbol}/${assetTwo?.symbol} Tokens`}
         </Typography>
 
         <Typography variant="body2" mt={4} textAlign="center" paddingX={4.25}>
@@ -101,12 +99,13 @@ export const PreviewSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           )}`}
         />
 
+          
         <Label
           mt={4}
-          label={`Pooled ${baseAsset?.symbol}`}
+          label={`Pooled ${assetOne?.symbol}`}
           BalanceProps={{
-            title: <BaseAsset icon={baseAsset?.icon} pr={1} />,
-            balance: `${quoteAmount}`,
+            title: <BaseAsset icon={assetOne?.icon} pr={1} />,
+            balance: `${assetTwoAmount}`,
             BalanceTypographyProps: {
               variant: "body1",
             },
@@ -115,10 +114,10 @@ export const PreviewSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
 
         <Label
           mt={2}
-          label={`Pooled ${quoteAsset?.symbol}`}
+          label={`Pooled ${assetTwo?.symbol}`}
           BalanceProps={{
-            title: <BaseAsset icon={quoteAsset?.icon} pr={1} />,
-            balance: `${baseAmount}`,
+            title: <BaseAsset icon={assetTwo?.icon} pr={1} />,
+            balance: `${assetOneAmount}`,
             BalanceTypographyProps: {
               variant: "body1",
             },
@@ -129,7 +128,7 @@ export const PreviewSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           mt={2}
           label={`Price`}
           BalanceProps={{
-            balance: `1 ${baseAsset?.symbol} = ${priceBaseInQuote} ${quoteAsset?.symbol}`,
+            balance: `1 ${assetOne?.symbol} = ${priceOneInTwo} ${assetTwo?.symbol}`,
             BalanceTypographyProps: {
               variant: "body1",
             },
@@ -140,7 +139,7 @@ export const PreviewSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           mt={2}
           label=""
           BalanceProps={{
-            balance: `1 ${quoteAsset?.symbol} = ${priceQuoteInBase} ${baseAsset?.symbol}`,
+            balance: `1 ${assetTwo?.symbol} = ${priceTwoInOne} ${assetOne?.symbol}`,
             BalanceTypographyProps: {
               variant: "body1",
             },
@@ -188,13 +187,13 @@ export const PreviewSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
           </Box>
         </Box>
 
-        {quoteAsset && baseAsset ? (
+        {assetTwo && assetOne ? (
           <YourPosition
             noTitle={false}
-            tokenId1={quoteAsset.assetId}
-            tokenId2={baseAsset.assetId}
-            pooledAmount1={quoteAmount}
-            pooledAmount2={baseAmount}
+            tokenId1={assetTwo.assetId}
+            tokenId2={assetOne.assetId}
+            pooledAmount1={assetTwoAmount}
+            pooledAmount2={assetOneAmount}
             amount={lpReceiveAmount}
             share={share}
             mt={4}

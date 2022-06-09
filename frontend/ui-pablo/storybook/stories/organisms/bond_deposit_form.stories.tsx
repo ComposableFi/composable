@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { DepositForm } from "@/components/Organisms/bonds/DepositForm";
+import { DepositForm } from "@ui-pablo/app/components/Organisms/bonds/DepositForm";
 import { useAppSelector } from "@/hooks/store";
 
 const DepositFormStories = () => {
