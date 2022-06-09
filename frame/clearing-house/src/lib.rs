@@ -1054,6 +1054,18 @@ pub mod pallet {
 			if let Some(direction) = position.direction() {
 				Self::settle_funding(position, &market, &mut collateral)?;
 
+				let (_, entry_value, exit_value) = Self::do_close_position(
+					&mut positions,
+					position_index,
+					direction,
+					&mut market,
+					Zero::zero(),
+				)?;
+
+				let pnl = exit_value.try_sub(&entry_value)?;
+				// Realize PnL
+				collateral = Self::update_margin_with_pnl(&collateral, &pnl)?;
+
 				Collateral::<T>::insert(account_id, collateral);
 				Markets::<T>::insert(market_id, market);
 				Positions::<T>::insert(account_id, positions);
