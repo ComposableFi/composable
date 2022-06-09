@@ -10,8 +10,12 @@ use crate::{
 		Direction::{Long, Short},
 		Error, Event,
 	},
-	tests::{any_direction, as_balance, run_for_seconds, with_trading_context, MarketConfig},
+	tests::{
+		any_direction, as_balance, get_position, run_for_seconds, with_trading_context,
+		MarketConfig,
+	},
 };
+
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 
@@ -297,5 +301,23 @@ proptest! {
 		});
 	}
 
-	// TODO(0xangelo): should_remove_position_from_storage
+	#[test]
+	fn should_remove_position_from_storage(direction in any_direction()) {
+		let config = MarketConfig::default();
+
+		with_trading_context(config, as_balance(100), |market_id| {
+			VammPallet::set_price(Some(10.into()));
+
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				direction,
+				as_balance(100),
+				as_balance(10),
+			));
+
+			assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
+			assert!(matches!(get_position(&ALICE, &market_id), None));
+		});
+	}
 }

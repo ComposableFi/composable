@@ -132,6 +132,11 @@ pub fn set_fee_pool_depth(market_id: &MarketId, depth: Balance) {
 	Markets::<Runtime>::try_mutate(market_id, |m| set_depth(m, depth)).unwrap();
 }
 
+pub fn get_position(account_id: &AccountId, market_id: &MarketId) -> Option<Position> {
+	let positions = TestPallet::get_positions(account_id);
+	positions.into_iter().find(|p| p.market_id == *market_id)
+}
+
 // ----------------------------------------------------------------------------------------------------
 //                                        Execution Contexts
 // ----------------------------------------------------------------------------------------------------
