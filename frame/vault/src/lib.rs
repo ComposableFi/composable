@@ -976,7 +976,7 @@ pub mod pallet {
 					} else if balance < max_allowed {
 						Ok(FundsAvailability::Withdrawable(max_allowed - balance))
 					} else {
-						Ok(FundsAvailability::Equilibrable)
+						Ok(FundsAvailability::None)
 					}
 				},
 				(_, _) => Ok(FundsAvailability::MustLiquidate),

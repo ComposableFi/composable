@@ -4544,6 +4544,8 @@ dependencies = [
 name = "instrumental-strategy-pablo"
 version = "0.1.0"
 dependencies = [
+ "composable-maths",
+ "composable-support",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
@@ -4554,6 +4556,7 @@ dependencies = [
  "pallet-balances",
  "pallet-currency-factory",
  "pallet-instrumental",
+ "pallet-pablo",
  "pallet-vault",
  "parity-scale-codec",
  "scale-info",
