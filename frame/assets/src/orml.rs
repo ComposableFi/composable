@@ -1,6 +1,6 @@
 //! Implementations of common trait definitions from [orml](https://docs.rs/orml-traits).
 
-use crate::{Config, Error, Pallet};
+use crate::{valid_asset, Config, Pallet};
 use frame_support::{
 	dispatch::DispatchResult,
 	pallet_prelude::MaybeSerializeDeserialize,
@@ -10,7 +10,6 @@ use frame_support::{
 };
 use num_traits::CheckedSub;
 use orml_traits::{MultiCurrency, MultiLockableCurrency, MultiReservableCurrency};
-use primitives::currency::ValidCurrency;
 use sp_runtime::{
 	traits::{AtLeast32BitUnsigned, Convert, Saturating},
 	ArithmeticError, DispatchError,
@@ -32,7 +31,7 @@ where
 		if currency_id == T::NativeAssetId::get() {
 			return <<T as Config>::NativeCurrency>::minimum_balance()
 		}
-		if !T::ValidCurrency::valid_currency_id(currency_id) {
+		if valid_asset::<T>(currency_id).is_err() {
 			return T::Convert::convert(0_u64)
 		}
 		<<T as Config>::MultiCurrency>::minimum_balance(currency_id)
@@ -42,7 +41,7 @@ where
 		if currency_id == T::NativeAssetId::get() {
 			return <<T as Config>::NativeCurrency>::total_issuance()
 		}
-		if !T::ValidCurrency::valid_currency_id(currency_id) {
+		if valid_asset::<T>(currency_id).is_err() {
 			return T::Convert::convert(0_u64)
 		}
 		<<T as Config>::MultiCurrency>::total_issuance(currency_id)
@@ -52,7 +51,7 @@ where
 		if currency_id == T::NativeAssetId::get() {
 			return <<T as Config>::NativeCurrency>::total_balance(who)
 		}
-		if !T::ValidCurrency::valid_currency_id(currency_id) {
+		if valid_asset::<T>(currency_id).is_err() {
 			return T::Convert::convert(0_u64)
 		}
 		<<T as Config>::MultiCurrency>::total_balance(currency_id, who)
@@ -62,7 +61,7 @@ where
 		if currency_id == T::NativeAssetId::get() {
 			return <<T as Config>::NativeCurrency>::free_balance(who)
 		}
-		if !T::ValidCurrency::valid_currency_id(currency_id) {
+		if valid_asset::<T>(currency_id).is_err() {
 			return T::Convert::convert(0_u64)
 		}
 		<<T as Config>::MultiCurrency>::free_balance(currency_id, who)
@@ -84,9 +83,7 @@ where
 				new_balace,
 			)
 		}
-		if !T::ValidCurrency::valid_currency_id(currency_id) {
-			return Err(Error::<T>::UnknownAsset.into())
-		}
+		valid_asset::<T>(currency_id)?;
 		<<T as Config>::MultiCurrency>::ensure_can_withdraw(currency_id, who, amount)
 	}
 
@@ -104,9 +101,7 @@ where
 				ExistenceRequirement::AllowDeath,
 			)
 		}
-		if !T::ValidCurrency::valid_currency_id(currency_id) {
-			return Err(Error::<T>::UnknownAsset.into())
-		}
+		valid_asset::<T>(currency_id)?;
 		<<T as Config>::MultiCurrency>::transfer(currency_id, from, to, amount)
 	}
 
@@ -121,9 +116,7 @@ where
 			<<T as Config>::NativeCurrency>::deposit_creating(who, amount);
 			return Ok(())
 		}
-		if !T::ValidCurrency::valid_currency_id(currency_id) {
-			return Err(Error::<T>::UnknownAsset.into())
-		}
+		valid_asset::<T>(currency_id)?;
 		<<T as Config>::MultiCurrency>::deposit(currency_id, who, amount)
 	}
 
@@ -143,9 +136,7 @@ where
 			)
 			.map(|_| ())
 		}
-		if !T::ValidCurrency::valid_currency_id(currency_id) {
-			return Err(Error::<T>::UnknownAsset.into())
-		}
+		valid_asset::<T>(currency_id)?;
 		<<T as Config>::MultiCurrency>::withdraw(currency_id, who, amount)
 	}
 
@@ -153,7 +144,7 @@ where
 		if currency_id == T::NativeAssetId::get() {
 			return <<T as Config>::NativeCurrency>::can_slash(who, amount)
 		}
-		if !T::ValidCurrency::valid_currency_id(currency_id) {
+		if valid_asset::<T>(currency_id).is_err() {
 			return false
 		}
 		<<T as Config>::MultiCurrency>::can_slash(currency_id, who, amount)
@@ -169,7 +160,7 @@ where
 			// MultiCurrency trait.
 			return <<T as Config>::NativeCurrency>::slash(who, amount).1
 		}
-		if !T::ValidCurrency::valid_currency_id(currency_id) {
+		if valid_asset::<T>(currency_id).is_err() {
 			return T::Convert::convert(0_u64)
 		}
 		<<T as Config>::MultiCurrency>::slash(currency_id, who, amount)
@@ -197,9 +188,7 @@ where
 			<<T as Config>::NativeCurrency>::set_lock(lock_id, who, amount, WithdrawReasons::all());
 			return Ok(())
 		}
-		if !T::ValidCurrency::valid_currency_id(currency_id) {
-			return Err(Error::<T>::UnknownAsset.into())
-		}
+		valid_asset::<T>(currency_id)?;
 		<<T as Config>::MultiCurrency>::set_lock(lock_id, currency_id, who, amount)
 	}
 
@@ -218,9 +207,7 @@ where
 			);
 			return Ok(())
 		}
-		if !T::ValidCurrency::valid_currency_id(currency_id) {
-			return Err(Error::<T>::UnknownAsset.into())
-		}
+		valid_asset::<T>(currency_id)?;
 		<<T as Config>::MultiCurrency>::extend_lock(lock_id, currency_id, who, amount)
 	}
 
@@ -233,9 +220,7 @@ where
 			<<T as Config>::NativeCurrency>::remove_lock(lock_id, who);
 			return Ok(())
 		}
-		if !T::ValidCurrency::valid_currency_id(currency_id) {
-			return Err(Error::<T>::UnknownAsset.into())
-		}
+		valid_asset::<T>(currency_id)?;
 		<<T as Config>::MultiCurrency>::remove_lock(lock_id, currency_id, who)
 	}
 }
@@ -253,7 +238,7 @@ where
 		if currency_id == T::NativeAssetId::get() {
 			return <<T as Config>::NativeCurrency>::can_reserve(who, amount)
 		}
-		if !T::ValidCurrency::valid_currency_id(currency_id) {
+		if valid_asset::<T>(currency_id).is_err() {
 			return false
 		}
 		<<T as Config>::MultiCurrency>::can_reserve(currency_id, who, amount)
@@ -269,7 +254,7 @@ where
 			// with `MultiReservableCurrency`.
 			return <<T as Config>::NativeCurrency>::slash_reserved(who, amount).1
 		}
-		if !T::ValidCurrency::valid_currency_id(currency_id) {
+		if valid_asset::<T>(currency_id).is_err() {
 			return T::Convert::convert(0_u64)
 		}
 		<<T as Config>::MultiCurrency>::slash_reserved(currency_id, who, amount)
@@ -279,7 +264,7 @@ where
 		if currency_id == T::NativeAssetId::get() {
 			return <<T as Config>::NativeCurrency>::reserved_balance(who)
 		}
-		if !T::ValidCurrency::valid_currency_id(currency_id) {
+		if valid_asset::<T>(currency_id).is_err() {
 			return T::Convert::convert(0_u64)
 		}
 		<<T as Config>::MultiCurrency>::reserved_balance(currency_id, who)
@@ -293,9 +278,7 @@ where
 		if currency_id == T::NativeAssetId::get() {
 			return <<T as Config>::NativeCurrency>::reserve(who, amount)
 		}
-		if !T::ValidCurrency::valid_currency_id(currency_id) {
-			return Err(Error::<T>::UnknownAsset.into())
-		}
+		valid_asset::<T>(currency_id)?;
 		<<T as Config>::MultiCurrency>::reserve(currency_id, who, amount)
 	}
 
@@ -307,7 +290,7 @@ where
 		if currency_id == T::NativeAssetId::get() {
 			return <<T as Config>::NativeCurrency>::unreserve(who, amount)
 		}
-		if !T::ValidCurrency::valid_currency_id(currency_id) {
+		if valid_asset::<T>(currency_id).is_err() {
 			return T::Convert::convert(0_u64)
 		}
 		<<T as Config>::MultiCurrency>::unreserve(currency_id, who, amount)
@@ -328,9 +311,7 @@ where
 				status,
 			)
 		}
-		if !T::ValidCurrency::valid_currency_id(currency_id) {
-			return Err(Error::<T>::UnknownAsset.into())
-		}
+		valid_asset::<T>(currency_id)?;
 		<<T as Config>::MultiCurrency>::repatriate_reserved(
 			currency_id,
 			slashed,

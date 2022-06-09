@@ -80,6 +80,7 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::weights::WeightInfo;
+	use composable_support::validation::Validate;
 	use composable_traits::{
 		currency::{AssetIdLike, BalanceLike, CurrencyFactory, RangeId},
 		governance::{GovernanceRegistry, SignedRawOrigin},
@@ -98,7 +99,8 @@ pub mod pallet {
 	};
 	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
 	use orml_traits::GetByKey;
-	use primitives::currency::ValidCurrency;
+	use primitives::currency::ValidateCurrencyId;
+	// use primitives::currency::{ValidCurrency, ValidateCurrencyId};
 	use sp_runtime::{traits::Convert, DispatchError};
 
 	#[pallet::config]
@@ -117,7 +119,8 @@ pub mod pallet {
 		/// origin of admin of this pallet
 		type AdminOrigin: EnsureOrigin<Self::Origin>;
 		type Convert: Convert<u64, Self::Balance>;
-		type ValidCurrency: ValidCurrency<Self::AssetId>;
+		// type ValidCurrency: ValidCurrency<Self::AssetId>;
+		type ValidCurrency: Validate<Self::AssetId, ValidateCurrencyId>;
 	}
 
 	#[pallet::pallet]
@@ -127,7 +130,7 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		CannotSetNewCurrencyToRegistry,
-		UnknownAsset,
+		InvalidCurrency,
 	}
 
 	#[pallet::call]
@@ -361,6 +364,14 @@ pub mod pallet {
 			},
 			Ok(frame_system::RawOrigin::Root) => Ok(()),
 			_ => Err(DispatchError::BadOrigin),
+		}
+	}
+
+	pub(crate) fn valid_asset<T: Config>(asset_id: T::AssetId) -> Result<(), DispatchError> {
+		if T::ValidCurrency::validate(asset_id).is_err() {
+			Err(Error::<T>::InvalidCurrency.into())
+		} else {
+			Ok(())
 		}
 	}
 
@@ -751,9 +762,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::set_balance(who, amount)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
-					return Err(Error::<T>::UnknownAsset.into())
-				}
+				valid_asset::<T>(asset)?;
 				<<T as Config>::MultiCurrency>::set_balance(asset, who, amount)
 			}
 
@@ -761,7 +770,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::set_total_issuance(amount)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
+				if valid_asset::<T>(asset).is_err() {
 					<<T as Config>::MultiCurrency>::set_total_issuance(asset, amount)
 				}
 			}
@@ -774,9 +783,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::decrease_balance(who, amount)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
-					return Err(Error::<T>::UnknownAsset.into())
-				}
+				valid_asset::<T>(asset)?;
 				<<T as Config>::MultiCurrency>::decrease_balance(asset, who, amount)
 			}
 
@@ -788,7 +795,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::decrease_balance_at_most(who, amount)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
+				if valid_asset::<T>(asset).is_err() {
 					return T::Convert::convert(0_u64)
 				}
 				<<T as Config>::MultiCurrency>::decrease_balance_at_most(asset, who, amount)
@@ -802,9 +809,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::increase_balance(who, amount)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
-					return Err(Error::<T>::UnknownAsset.into())
-				}
+				valid_asset::<T>(asset)?;
 				<<T as Config>::MultiCurrency>::increase_balance(asset, who, amount)
 			}
 
@@ -816,7 +821,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::increase_balance_at_most(who, amount)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
+				if valid_asset::<T>(asset).is_err() {
 					return T::Convert::convert(0_u64)
 				}
 				<<T as Config>::MultiCurrency>::increase_balance_at_most(asset, who, amount)
@@ -842,9 +847,7 @@ pub mod pallet {
 						source, dest, amount, keep_alive,
 					)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
-					return Err(Error::<T>::UnknownAsset.into())
-				}
+				valid_asset::<T>(asset)?;
 				<<T as Config>::MultiCurrency>::transfer(asset, source, dest, amount, keep_alive)
 			}
 		}
@@ -870,9 +873,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::hold(who, amount)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
-					return Err(Error::<T>::UnknownAsset.into())
-				}
+				valid_asset::<T>(asset)?;
 				<<T as Config>::MultiCurrency>::hold(asset, who, amount)
 			}
 
@@ -885,9 +886,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::release(who, amount, best_effort)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
-					return Err(Error::<T>::UnknownAsset.into())
-				}
+				valid_asset::<T>(asset)?;
 				<<T as Config>::MultiCurrency>::release(asset, who, amount, best_effort)
 			}
 
@@ -908,9 +907,7 @@ pub mod pallet {
 						on_hold,
 					)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
-					return Err(Error::<T>::UnknownAsset.into())
-				}
+				valid_asset::<T>(asset)?;
 				<<T as Config>::MultiCurrency>::transfer_held(
 					asset,
 					source,
@@ -939,9 +936,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::mint_into(who, amount)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
-					return Err(Error::<T>::UnknownAsset.into())
-				}
+				valid_asset::<T>(asset)?;
 				<<T as Config>::MultiCurrency>::mint_into(asset, who, amount)
 			}
 			fn burn_from(
@@ -952,9 +947,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::burn_from(who, amount)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
-					return Err(Error::<T>::UnknownAsset.into())
-				}
+				valid_asset::<T>(asset)?;
 				<<T as Config>::MultiCurrency>::burn_from(asset, who, amount)
 			}
 
@@ -966,9 +959,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::slash(who, amount)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
-					return Err(Error::<T>::UnknownAsset.into())
-				}
+				valid_asset::<T>(asset)?;
 				<<T as Config>::MultiCurrency>::slash(asset, who, amount)
 			}
 			fn teleport(
@@ -980,9 +971,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::teleport(source, dest, amount)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
-					return Err(Error::<T>::UnknownAsset.into())
-				}
+				valid_asset::<T>(asset)?;
 				<<T as Config>::MultiCurrency>::teleport(asset, source, dest, amount)
 			}
 		}
@@ -1001,7 +990,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::total_issuance()
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
+				if valid_asset::<T>(asset).is_err() {
 					return T::Convert::convert(0_u64)
 				}
 				<<T as Config>::MultiCurrency>::total_issuance(asset)
@@ -1011,7 +1000,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::minimum_balance()
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
+				if valid_asset::<T>(asset).is_err() {
 					return T::Convert::convert(0_u64)
 				}
 				<<T as Config>::MultiCurrency>::minimum_balance(asset)
@@ -1021,7 +1010,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::balance(who)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
+				if valid_asset::<T>(asset).is_err() {
 					return T::Convert::convert(0_u64)
 				}
 				<<T as Config>::MultiCurrency>::balance(asset, who)
@@ -1035,7 +1024,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::reducible_balance(who, keep_alive)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
+				if valid_asset::<T>(asset).is_err() {
 					return T::Convert::convert(0_u64)
 				}
 				<<T as Config>::MultiCurrency>::reducible_balance(asset, who, keep_alive)
@@ -1050,7 +1039,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::can_deposit(who, amount, mint)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
+				if valid_asset::<T>(asset).is_err() {
 					return DepositConsequence::UnknownAsset
 				}
 				<<T as Config>::MultiCurrency>::can_deposit(asset, who, amount, mint)
@@ -1064,7 +1053,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::can_withdraw(who, amount)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
+				if valid_asset::<T>(asset).is_err() {
 					return WithdrawConsequence::UnknownAsset
 				}
 				<<T as Config>::MultiCurrency>::can_withdraw(asset, who, amount)
@@ -1082,7 +1071,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::balance_on_hold(who)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
+				if valid_asset::<T>(asset).is_err() {
 					return T::Convert::convert(0_u64)
 				}
 				<<T as Config>::MultiCurrency>::balance_on_hold(asset, who)
@@ -1092,7 +1081,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::can_hold(who, amount)
 				}
-				if !T::ValidCurrency::valid_currency_id(asset) {
+				if valid_asset::<T>(asset).is_err() {
 					return false
 				}
 				<<T as Config>::MultiCurrency>::can_hold(asset, who, amount)

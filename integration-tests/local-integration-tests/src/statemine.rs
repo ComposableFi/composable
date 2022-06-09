@@ -77,7 +77,6 @@ fn this_chain_statemine_transfers_back_and_forth_work() {
 	// but due to current half fee, sender asset should at lease: FEE_WEIGHT + 2 * FEE_KUSAMA
 	let relay_native_asset_amount = 3 * FEE_WEIGHT + 3 * FEE_KUSAMA;
 	let remote_asset_id = 3451561; // magic number to avoid zero defaults and easy to find
-							   // let remote_asset_id = 131;
 	let foreign_asset_id_on_this = register_statemine_asset(remote_asset_id);
 	let accounted_native_balance = statemine_side(TEN + relay_native_asset_amount, remote_asset_id);
 

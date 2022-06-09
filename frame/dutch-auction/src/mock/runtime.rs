@@ -1,6 +1,6 @@
 use crate::{
 	self as pallet_dutch_auction,
-	mock::currency::{AllValidCurrencyId, CurrencyId, NativeAssetId},
+	mock::currency::{CurrencyId, NativeAssetId},
 	weights::SubstrateWeight,
 };
 
@@ -27,6 +27,7 @@ use sp_runtime::{
 use xcm::latest::{opaque::Xcm, SendXcm};
 
 use super::governance_registry::GovernanceRegistry;
+use primitives::currency::ValidateCurrencyId;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 pub type Block = frame_system::mocking::MockBlock<Runtime>;
@@ -154,7 +155,7 @@ impl pallet_assets::Config for Runtime {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = GovernanceRegistry;
-	type ValidCurrency = AllValidCurrencyId;
+	type ValidCurrency = ValidateCurrencyId;
 	type Convert = ConvertInto;
 }
 

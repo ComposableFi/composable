@@ -31,7 +31,7 @@ use common::{
 };
 
 use composable_traits::assets::Asset;
-use primitives::currency::CurrencyId;
+use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
@@ -242,7 +242,7 @@ impl assets::Config for Runtime {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 	type GovernanceRegistry = GovernanceRegistry;
-	type ValidCurrency = CurrencyId;
+	type ValidCurrency = ValidateCurrencyId;
 	type Convert = sp_runtime::traits::ConvertInto;
 }
 

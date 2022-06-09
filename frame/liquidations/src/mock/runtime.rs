@@ -13,6 +13,7 @@ use frame_support::{
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use hex_literal::hex;
 use orml_traits::parameter_type_with_key;
+use primitives::currency::ValidateCurrencyId;
 use smallvec::smallvec;
 use sp_core::{
 	sr25519::{Public, Signature},
@@ -25,7 +26,7 @@ use sp_runtime::{
 };
 use xcm::latest::SendXcm;
 
-use super::{currency::AllValidCurrencyId, governance_registry::GovernanceRegistry};
+use super::governance_registry::GovernanceRegistry;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
 pub type Block = frame_system::mocking::MockBlock<Runtime>;
@@ -156,7 +157,7 @@ impl pallet_assets::Config for Runtime {
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = GovernanceRegistry;
 	type Convert = ConvertInto;
-	type ValidCurrency = AllValidCurrencyId;
+	type ValidCurrency = ValidateCurrencyId;
 }
 
 impl pallet_currency_factory::Config for Runtime {

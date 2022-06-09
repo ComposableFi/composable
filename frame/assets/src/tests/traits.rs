@@ -322,7 +322,7 @@ mod multicurrency {
 			// asset_id 0 is invalid
 			assert_err!(
 				<Pallet::<Test> as MultiCurrency<AccountId>>::deposit(0, &1, 100),
-				Error::<Test>::UnknownAsset
+				Error::<Test>::InvalidCurrency
 			);
 		});
 	}

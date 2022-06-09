@@ -1,5 +1,6 @@
 //! CurrencyId implementation
 use codec::{CompactAs, Decode, Encode, MaxEncodedLen};
+use composable_support::validation::Validate;
 use composable_traits::{assets::Asset, currency::Exponent};
 use core::{fmt::Display, ops::Div, str::FromStr};
 use scale_info::TypeInfo;
@@ -62,10 +63,6 @@ impl WellKnownCurrency for CurrencyId {
 	const RELAY_NATIVE: CurrencyId = CurrencyId::KSM;
 }
 
-pub trait ValidCurrency<CurrencyId> {
-	fn valid_currency_id(currency_id: CurrencyId) -> bool;
-}
-
 impl CurrencyId {
 	pub const INVALID: CurrencyId = CurrencyId(0);
 	/// Runtime native token Kusama
@@ -110,9 +107,36 @@ impl CurrencyId {
 	}
 }
 
-impl ValidCurrency<CurrencyId> for CurrencyId {
-	fn valid_currency_id(currency_id: CurrencyId) -> bool {
-		currency_id != CurrencyId::INVALID
+#[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
+pub struct ValidateCurrencyId;
+
+impl Validate<CurrencyId, ValidateCurrencyId> for ValidateCurrencyId {
+	fn validate(input: CurrencyId) -> Result<CurrencyId, &'static str> {
+		if input != CurrencyId::INVALID {
+			Ok(input)
+		} else {
+			Err("Invalid Currency")
+		}
+	}
+}
+
+impl Validate<u64, ValidateCurrencyId> for ValidateCurrencyId {
+	fn validate(input: u64) -> Result<u64, &'static str> {
+		if input != 0_u64 {
+			Ok(input)
+		} else {
+			Err("Invalid Currency")
+		}
+	}
+}
+
+impl Validate<u128, ValidateCurrencyId> for ValidateCurrencyId {
+	fn validate(input: u128) -> Result<u128, &'static str> {
+		if input != 0_u128 {
+			Ok(input)
+		} else {
+			Err("Invalid Currency")
+		}
 	}
 }
 
