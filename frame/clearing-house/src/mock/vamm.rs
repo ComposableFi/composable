@@ -166,7 +166,7 @@ pub mod pallet {
 		}
 
 		fn get_twap(
-			vamm: &Self::VammId,
+			vamm: Self::VammId,
 			asset_type: AssetType,
 		) -> Result<Self::Decimal, DispatchError> {
 			if let Some(twap) = Self::_twap_of(vamm) {
