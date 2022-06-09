@@ -28,7 +28,8 @@ RUN wget -qO- "https://github.com/rust-analyzer/rust-analyzer/releases/download/
 # Not straight to the workspace dir because that seems to be causing issues.
 # We move it in the devcontainer.json's postCreateCommand.
 WORKDIR /polkadot-binary
-RUN wget "https://github.com/paritytech/polkadot/releases/download/v0.9.22/polkadot" && \
+# polkadot is at 0.9.18 here for xcvm
+RUN wget "https://github.com/paritytech/polkadot/releases/download/v0.9.18/polkadot" && \
     chmod +x polkadot
 
 # Add mdbook
