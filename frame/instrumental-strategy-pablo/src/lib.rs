@@ -303,9 +303,7 @@ pub mod pallet {
 						T::Balance::zero(),
 					)?;
 				},
-				FundsAvailability::Equilibrable => {
-					();
-				},
+				FundsAvailability::Equilibrable => {},
 			};
 			Ok(())
 		}
