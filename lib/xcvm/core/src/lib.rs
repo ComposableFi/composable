@@ -25,6 +25,7 @@ pub fn deserialize_json<T: serde::de::DeserializeOwned>(
 
 #[derive(Clone)]
 pub struct XCVMProgramBuilder<Network, Instruction> {
+	pub tag: Option<Vec<u8>>,
 	pub network: Network,
 	pub instructions: VecDeque<Instruction>,
 	pub nonce: u32,
@@ -35,8 +36,8 @@ impl<Network, Account, Assets>
 where
 	Network: Copy + Callable,
 {
-	pub fn from(network: Network, nonce: u32) -> Self {
-		XCVMProgramBuilder { network, instructions: VecDeque::new(), nonce }
+	pub fn from(tag: Option<Vec<u8>>, network: Network, nonce: u32) -> Self {
+		XCVMProgramBuilder { tag, network, instructions: VecDeque::new(), nonce }
 	}
 
 	pub fn transfer(mut self, to: Account, assets: Assets) -> Self {
@@ -44,14 +45,20 @@ where
 		self
 	}
 
-	pub fn spawn<F, E>(mut self, network: Network, assets: Assets, f: F) -> Result<Self, E>
+	pub fn spawn<F, E>(
+		mut self,
+		tag: Option<Vec<u8>>,
+		network: Network,
+		assets: Assets,
+		f: F,
+	) -> Result<Self, E>
 	where
 		F: FnOnce(Self) -> Result<Self, E>,
 	{
 		self.instructions.push_back(XCVMInstruction::Spawn {
 			network,
 			assets,
-			program: f(Self::from(network, self.nonce + 1))?.build(),
+			program: f(Self::from(tag, network, self.nonce + 1))?.build(),
 		});
 		Ok(self)
 	}
@@ -71,7 +78,7 @@ where
 	pub fn build(
 		self,
 	) -> XCVMProgram<VecDeque<XCVMInstruction<Network, Network::EncodedCall, Account, Assets>>> {
-		XCVMProgram { instructions: self.instructions, nonce: self.nonce }
+		XCVMProgram { tag: self.tag, instructions: self.instructions, nonce: self.nonce }
 	}
 }
 
@@ -130,9 +137,10 @@ mod tests {
 			Ok(XCVMProgramBuilder::<
 					XCVMNetwork,
 					XCVMInstruction<XCVMNetwork, _, (), XCVMTransfer>,
-				>::from(XCVMNetwork::PICASSO, 0)
+				>::from(None, XCVMNetwork::PICASSO, 0)
 				.call(DummyProtocol1)?
 				.spawn::<_, ProgramBuildError>(
+					None,
 					XCVMNetwork::ETHEREUM,
 					XCVMTransfer::empty(),
 					|child| {
@@ -149,6 +157,7 @@ mod tests {
 		assert_eq!(
 			program,
 			XCVMProgram {
+				tag: Some("Main program".as_bytes().to_vec()),
 				nonce: 0,
 				instructions: VecDeque::from([
 					// Protocol 1 on picasso
@@ -157,6 +166,7 @@ mod tests {
 						network: XCVMNetwork::ETHEREUM,
 						assets: XCVMTransfer::empty(),
 						program: XCVMProgram {
+							tag: Some("Sub program".as_bytes().to_vec()),
 							nonce: 1,
 							instructions: VecDeque::from([
 								// Protocol 2 on eth
@@ -181,8 +191,9 @@ mod tests {
 			Ok(XCVMProgramBuilder::<
 				XCVMNetwork,
 				XCVMInstruction<XCVMNetwork, Vec<u8>, Vec<u8>, XCVMTransfer>,
-			>::from(XCVMNetwork::PICASSO, 0)
+			>::from(None, XCVMNetwork::PICASSO, 0)
 			.spawn::<_, ProgramBuildError>(
+				None,
 				XCVMNetwork::ETHEREUM,
 				XCVMTransfer::from(BTreeMap::from([(1, 10_000_000_000_000u128)])),
 				|child| Ok(child),
