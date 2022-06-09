@@ -13,7 +13,7 @@ use crate::{
 		},
 		vamm::VammConfig,
 	},
-	Config, Market as MarketGeneric, MarketConfig as MarketConfigGeneric, Markets,
+	Config, Direction, Market as MarketGeneric, MarketConfig as MarketConfigGeneric, Markets,
 };
 use composable_traits::{
 	clearing_house::{ClearingHouse, Instruments},
@@ -25,6 +25,7 @@ use frame_support::{assert_err, assert_ok, pallet_prelude::Hooks};
 use proptest::prelude::*;
 use sp_runtime::{traits::Zero, FixedI128, FixedPointNumber, FixedU128};
 
+pub mod close_position;
 pub mod comp;
 pub mod create_market;
 pub mod deposit_collateral;
@@ -118,7 +119,24 @@ fn as_inner<T: Into<FixedI128>>(value: T) -> i128 {
 	f.into_inner()
 }
 
-pub fn set_fee_pool_depth(market_id: &MarketId, depth: Balance) {
+fn get_collateral(account_id: AccountId) -> Balance {
+	TestPallet::get_collateral(&account_id).unwrap()
+}
+
+fn get_position(account_id: &AccountId, market_id: &MarketId) -> Option<Position> {
+	let positions = TestPallet::get_positions(account_id);
+	positions.into_iter().find(|p| p.market_id == *market_id)
+}
+
+fn get_market(market_id: &MarketId) -> Market {
+	TestPallet::get_market(market_id).unwrap()
+}
+
+fn get_market_fee_pool(market_id: &MarketId) -> Balance {
+	TestPallet::get_market(market_id).unwrap().fee_pool
+}
+
+fn set_fee_pool_depth(market_id: &MarketId, depth: Balance) {
 	fn set_depth(market: &mut Option<Market>, d: Balance) -> Result<(), ()> {
 		if let Some(m) = market {
 			m.fee_pool = d;
@@ -336,6 +354,10 @@ prop_compose! {
 	fn any_balance()(balance in BALANCE_LOWER_BOUND..=BALANCE_UPPER_BOUND) -> Balance {
 		balance
 	}
+}
+
+fn any_direction() -> impl Strategy<Value = Direction> {
+	prop_oneof![Just(Direction::Long), Just(Direction::Short)]
 }
 
 prop_compose! {

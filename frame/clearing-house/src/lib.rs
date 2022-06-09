@@ -33,7 +33,7 @@
 //!   `PnL` + total unrealized funding payments
 //! - **Margin ratio**: The ratio of the user's margin to his total position value. May be measured
 //!   using either index (oracle) or mark (VAMM) prices
-//! - **IMR**: Acronym for 'Initial Margin Ratio'. The mininum allowable margin ratio resulting from
+//! - **IMR**: Acronym for 'Initial Margin Ratio'. The minimum allowable margin ratio resulting from
 //!   opening new positions. Inversely proportional to the maximum leverage of an account
 //! - **MMR**: Acronym for 'Maintenance Margin Ratio'. The margin ratio below which a full
 //!   liquidation of a user's account can be triggered by a liquidator (permissionless)
@@ -58,6 +58,7 @@
 //! - [`deposit_collateral`](Call::deposit_collateral)
 //! - [`create_market`](Call::create_market)
 //! - [`open_position`](Call::open_position)
+//! - [`close_position`](Call::close_position)
 //! - [`update_funding`](Call::update_funding)
 //! - [`liquidate`](Call::liquidate)
 //!
@@ -66,6 +67,7 @@
 //! - [`deposit_collateral`](pallet/struct.Pallet.html#method.deposit_collateral-1)
 //! - [`create_market`](pallet/struct.Pallet.html#method.create_market-1)
 //! - [`open_position`](pallet/struct.Pallet.html#method.open_position-1)
+//! - [`close_position`](pallet/struct.Pallet.html#method.close_position-1)
 //! - [`update_funding`](pallet/struct.Pallet.html#method.update_funding-1)
 //! - [`liquidate`](pallet/struct.Pallet.html#method.liquidate-1)
 //! - [`funding_rate`](Pallet::funding_rate)
@@ -428,6 +430,17 @@ pub mod pallet {
 			/// Id of the liquidated user.
 			user: T::AccountId,
 		},
+		/// Position successfully closed.
+		PositionClosed {
+			/// Id of the user.
+			user: T::AccountId,
+			/// Id of the corresponding market.
+			market: T::MarketId,
+			/// Direction of the closed position (long/short).
+			direction: Direction,
+			/// Amount of base asset closed.
+			base: T::Balance,
+		},
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -460,6 +473,8 @@ pub mod pallet {
 		/// Attempted to create a new market but the underlying asset is not supported by the
 		/// oracle.
 		NoPriceFeedForAsset,
+		/// Raised when dealing with a position that has no base asset amount.
+		NullPosition,
 		/// Raised when trying to fetch a position from the positions vector with an invalid index.
 		PositionNotFound,
 		/// Attempted to liquidate a user's account but it has sufficient collateral to back its
@@ -575,12 +590,12 @@ pub mod pallet {
 		/// - An increase in the size of an existing position, if the trade's direction matches the
 		///   existing position's one
 		/// - A decrease in the size of an existing position, if the trade's direction is counter to
-		///   the existing position's one and its magnitude is smaller than the existing postion's
+		///   the existing position's one and its magnitude is smaller than the existing position's
 		///   size
-		/// - Closing of the existing position, if the trade's direction is counter to the existion
+		/// - Closing of the existing position, if the trade's direction is counter to the existing
 		///   position's one and its magnitude is approximately the existing position's size
 		/// - Reversing of the existing position, if the trade's direction is counter to the
-		///   existion position's one and its magnitude is greater than the existing postion's size
+		///   existing position's one and its magnitude is greater than the existing position's size
 		///
 		/// ![](http://www.plantuml.com/plantuml/svg/FOuzgiD030RxTugN0zZgKna2kOUyLhm2hRJeXrm_9aMgZszWOBP8zAmXVpVM9dLGkVptp1bt0CVtUdBssYl8cscIvjfimCF6jC1TwCdGVWSeMYU7b-CWQ4BehEVIhOBWO3ml7c2JTBaCJZPTfw1-2pRIuzeF)
 		///
@@ -645,6 +660,54 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Closes a position in a market.
+		///
+		/// # Overview
+		///
+		/// Sells all of the base asset in the specified market if the trader has a position in it.
+		/// This realizes the funding payments for the position.
+		///
+		/// ![](https://www.plantuml.com/plantuml/svg/FSr12W8n30NGlQVG0ynaxsf0y1wPDhQ1j2b9YjUtk9ZLvp_u_CC3BMQJsuDxafbfcjnhnF0dGE6eyzoJDdXf6-fu2hqPqbN0y0lagPB1nx0H924qxcMhEfqWCvRblboTjZNZOEtx4Ep_tuDwNla3)
+		///
+		/// This extrinsic also attempts to update the corresponding market's funding rate at the
+		/// end.
+		///
+		/// # Parameters
+		///
+		/// - `market_id`: the perpetuals market Id to close a position in
+		///
+		/// # Assumptions or Requirements
+		///
+		/// - The market must exist and have been initialized prior to calling this extrinsic
+		/// - The trader must have a position in the specified market
+		///
+		/// # Emits
+		///
+		/// - [`PositionClosed`](Event::<T>::PositionClosed)
+		/// - [`FundingUpdated`](Event::<T>::FundingUpdated)
+		///
+		/// # State Changes
+		///
+		/// - [`Collateral`]: funding settled, PnL realized, and fee charged
+		/// - [`Positions`]: the position is removed
+		/// - [`Markets`]: open interest and Fee Pool updated; may update funding rate too
+		///
+		/// # Errors
+		///
+		/// - [`MarketIdNotFound`](Error::<T>::MarketIdNotFound)
+		/// - [`PositionNotFound`](Error::<T>::PositionNotFound)
+		///
+		/// # Weight/Runtime
+		///
+		/// `O(n)`, where `n` is the number of open positions before the extrinsic is called. Due to
+		/// a linear search of the positions vector for the one to be closed.
+		#[pallet::weight(<T as Config>::WeightInfo::close_position())]
+		pub fn close_position(origin: OriginFor<T>, market_id: T::MarketId) -> DispatchResult {
+			let account_id = ensure_signed(origin)?;
+			<Self as ClearingHouse>::close_position(&account_id, &market_id)?;
+			Ok(())
+		}
+
 		/// Update the funding rate for a market.
 		///
 		/// # Overview
@@ -685,6 +748,8 @@ pub mod pallet {
 		///
 		/// - [`MarketIdNotFound`](Error::<T>::MarketIdNotFound)
 		/// - [`UpdatingFundingTooEarly`](Error::<T>::UpdatingFundingTooEarly)
+		/// - [`NullPosition`](Error::<T>::NullPosition)
+		/// - [`ArithmeticError`]
 		///
 		/// ## Weight/Runtime
 		///
@@ -727,16 +792,16 @@ pub mod pallet {
 		///
 		/// ### For full liquidation
 		///
-		/// The user's margin ratio must be stricly less than the combined maintenance margin ratios
-		/// of all the markets in which it has open positions in. In other words, the user's margin
-		/// (collateral + total unrealized pnl + total unrealized funding) must be strictly less
-		/// than the sum of margin requirements (MMR * base asset value) for each market it has an
-		/// open position in.
+		/// The user's margin ratio must be strictly less than the combined maintenance margin
+		/// ratios of all the markets in which it has open positions in. In other words, the user's
+		/// margin (collateral + total unrealized pnl + total unrealized funding) must be strictly
+		/// less than the sum of margin requirements (MMR * base asset value) for each market it has
+		/// an open position in.
 		///
 		/// ### For partial liquidation
 		///
-		/// The user's margin ration must be stricly less than the combined partial margin ratios of
-		/// all the markets in which it has open positions in. In other words, the user's margin
+		/// The user's margin ration must be strictly less than the combined partial margin ratios
+		/// of all the markets in which it has open positions in. In other words, the user's margin
 		/// (collateral + total unrealized pnl + total unrealized funding) must be strictly less
 		/// than the sum of margin requirements (PMR * base asset value) for each market it has an
 		/// open position in.
@@ -931,7 +996,7 @@ pub mod pallet {
 							&quote_abs_amount_decimal,
 							base_asset_amount_limit,
 						)?,
-						Ordering::Equal => Self::close_position(
+						Ordering::Equal => Self::do_close_position(
 							&mut positions,
 							position_index,
 							position_direction,
@@ -956,7 +1021,6 @@ pub mod pallet {
 
 				let pnl = exit_value.try_sub(&entry_value)?;
 				// Realize PnL
-				// TODO(0xangelo): properly handle bad debt incurred by large negative PnL
 				collateral = Self::update_margin_with_pnl(&collateral, &pnl)?;
 			}
 
@@ -988,6 +1052,59 @@ pub mod pallet {
 		}
 
 		#[transactional]
+		fn close_position(
+			account_id: &Self::AccountId,
+			market_id: &Self::MarketId,
+		) -> Result<Self::Balance, DispatchError> {
+			let mut collateral = Self::get_collateral(account_id).unwrap_or_else(Zero::zero);
+			let mut market = Self::get_market(market_id).ok_or(Error::<T>::MarketIdNotFound)?;
+			let mut positions = Self::get_positions(account_id);
+			let (position, position_index) = Self::try_get_position(&mut positions, market_id)?;
+
+			if let Some(direction) = position.direction() {
+				Self::settle_funding(position, &market, &mut collateral)?;
+
+				let (base_swapped, entry_value, exit_value) = Self::do_close_position(
+					&mut positions,
+					position_index,
+					direction,
+					&mut market,
+					Zero::zero(),
+				)?;
+
+				let pnl = exit_value.try_sub(&entry_value)?;
+				// Realize PnL
+				collateral = Self::update_margin_with_pnl(&collateral, &pnl)?;
+
+				// Charge fees
+				let fee = Self::fee_for_trade(&market, &exit_value)?;
+				collateral.try_sub_mut(&fee)?;
+				market.fee_pool.try_add_mut(&fee)?;
+
+				// Attempt funding rate update at the end
+				Self::do_update_funding(market_id, &mut market, T::UnixTime::now().as_secs())?;
+
+				Collateral::<T>::insert(account_id, collateral);
+				Markets::<T>::insert(market_id, market);
+				Positions::<T>::insert(account_id, positions);
+
+				Self::deposit_event(Event::PositionClosed {
+					user: account_id.clone(),
+					market: market_id.clone(),
+					direction,
+					base: base_swapped,
+				});
+
+				Ok(base_swapped)
+			} else {
+				// This should never happen, as the operations that modify a position (open_position
+				// and liquidate) ensure a position is removed in case the resulting base asset
+				// amount is zero. We leave this check here for defensive purposes.
+				Err(Error::<T>::NullPosition.into())
+			}
+		}
+
+		#[transactional]
 		fn update_funding(market_id: &Self::MarketId) -> Result<(), DispatchError> {
 			let mut market = Self::try_get_market(market_id)?;
 			let now = T::UnixTime::now().as_secs();
@@ -996,67 +1113,9 @@ pub mod pallet {
 				Error::<T>::UpdatingFundingTooEarly
 			);
 
-			// Pay funding
-			// net position sign | funding rate sign | transfer
-			// --------------------------------------------------------------
-			//                -1 |                -1 | Collateral -> Fee Pool
-			//                -1 |                 1 | Fee Pool -> Collateral
-			//                 1 |                -1 | Fee Pool -> Collateral
-			//                 1 |                 1 | Collateral -> Fee Pool
-			//                 - |                 0 | n/a
-			//                 0 |                 - | n/a
-			let net_base_asset_amount =
-				market.base_asset_amount_long.try_add(&market.base_asset_amount_short)?;
-			let funding_rate = <Self as Instruments>::funding_rate(&market)?;
-			let mut funding_rate_long = funding_rate;
-			let mut funding_rate_short = funding_rate;
+			Self::do_update_funding(market_id, &mut market, now)?;
 
-			if !(funding_rate.is_zero() | net_base_asset_amount.is_zero()) {
-				let uncapped_funding = funding_rate.try_mul(&net_base_asset_amount)?;
-
-				if uncapped_funding.is_positive() {
-					// Fee Pool receives funding
-					market.fee_pool.try_add_mut(&uncapped_funding.into_balance()?)?;
-				} else {
-					// Fee Pool pays funding
-					// TODO(0xangelo): set limits for
-					// - total Fee Pool usage (reserve some funds for other operations)
-					// - Fee Pool usage for funding payments per call to `update_funding`
-					let usable_fees: T::Decimal = -market.fee_pool.into_decimal()?;
-					let mut capped_funding = sp_std::cmp::max(uncapped_funding, usable_fees);
-
-					// Since we're dealing with negatives, we check if the uncapped funding is
-					// *smaller* (greater in absolute terms) than the capped one
-					if capped_funding > uncapped_funding {
-						// Total funding paid to one side is the sum of the funding paid by the
-						// opposite side plus the complement from the Fee Pool
-						let excess;
-						if net_base_asset_amount.is_positive() {
-							let counterparty_funding = usable_fees
-								.try_sub(&funding_rate.try_mul(&market.base_asset_amount_short)?)?;
-							(funding_rate_long, excess) =
-								counterparty_funding.try_div_rem(&market.base_asset_amount_long)?;
-						} else {
-							let counterparty_funding = funding_rate
-								.try_mul(&market.base_asset_amount_long)?
-								.try_sub(&usable_fees)?;
-							(funding_rate_short, excess) = counterparty_funding
-								.try_div_rem(&market.base_asset_amount_short)?;
-						}
-						capped_funding.try_sub_mut(&excess)?;
-					}
-
-					market.fee_pool.try_sub_mut(&capped_funding.into_balance()?)?;
-				};
-			}
-
-			// Update market state
-			market.cum_funding_rate_long.try_add_mut(&funding_rate_long)?;
-			market.cum_funding_rate_short.try_add_mut(&funding_rate_short)?;
-			market.funding_rate_ts = now;
 			Markets::<T>::insert(market_id, market);
-
-			Self::deposit_event(Event::FundingUpdated { market: market_id.clone(), time: now });
 			Ok(())
 		}
 
@@ -1111,8 +1170,8 @@ pub mod pallet {
 
 		fn funding_rate(market: &Self::Market) -> Result<Self::Decimal, DispatchError> {
 			// Oracle returns prices in USDT cents
-			let nonnormalized_oracle_twap = T::Oracle::get_twap(market.asset_id, vec![])?;
-			let oracle_twap = Self::Decimal::checked_from_rational(nonnormalized_oracle_twap, 100)
+			let unnormalized_oracle_twap = T::Oracle::get_twap(market.asset_id, vec![])?;
+			let oracle_twap = Self::Decimal::checked_from_rational(unnormalized_oracle_twap, 100)
 				.ok_or(ArithmeticError::Overflow)?;
 
 			let vamm_twap: Self::Decimal = T::Vamm::get_twap(&market.vamm_id, AssetType::Base)
@@ -1148,6 +1207,74 @@ pub mod pallet {
 
 	// Helper functions - core functionality
 	impl<T: Config> Pallet<T> {
+		fn do_update_funding(
+			market_id: &T::MarketId,
+			market: &mut Market<T>,
+			now: DurationSeconds,
+		) -> Result<(), DispatchError> {
+			// Pay funding
+			// net position sign | funding rate sign | transfer
+			// --------------------------------------------------------------
+			//                -1 |                -1 | Collateral -> Fee Pool
+			//                -1 |                 1 | Fee Pool -> Collateral
+			//                 1 |                -1 | Fee Pool -> Collateral
+			//                 1 |                 1 | Collateral -> Fee Pool
+			//                 - |                 0 | n/a
+			//                 0 |                 - | n/a
+			let net_base_asset_amount =
+				market.base_asset_amount_long.try_add(&market.base_asset_amount_short)?;
+			let funding_rate = <Self as Instruments>::funding_rate(market)?;
+			let mut funding_rate_long = funding_rate;
+			let mut funding_rate_short = funding_rate;
+
+			if !(funding_rate.is_zero() | net_base_asset_amount.is_zero()) {
+				let uncapped_funding = funding_rate.try_mul(&net_base_asset_amount)?;
+
+				if uncapped_funding.is_positive() {
+					// Fee Pool receives funding
+					market.fee_pool.try_add_mut(&uncapped_funding.into_balance()?)?;
+				} else {
+					// Fee Pool pays funding
+					// TODO(0xangelo): set limits for
+					// - total Fee Pool usage (reserve some funds for other operations)
+					// - Fee Pool usage for funding payments per call to `update_funding`
+					let usable_fees: T::Decimal = -market.fee_pool.into_decimal()?;
+					let mut capped_funding = sp_std::cmp::max(uncapped_funding, usable_fees);
+
+					// Since we're dealing with negatives, we check if the uncapped funding is
+					// *smaller* (greater in absolute terms) than the capped one
+					if capped_funding > uncapped_funding {
+						// Total funding paid to one side is the sum of the funding paid by the
+						// opposite side plus the complement from the Fee Pool
+						let excess;
+						if net_base_asset_amount.is_positive() {
+							let counterparty_funding = usable_fees
+								.try_sub(&funding_rate.try_mul(&market.base_asset_amount_short)?)?;
+							(funding_rate_long, excess) =
+								counterparty_funding.try_div_rem(&market.base_asset_amount_long)?;
+						} else {
+							let counterparty_funding = funding_rate
+								.try_mul(&market.base_asset_amount_long)?
+								.try_sub(&usable_fees)?;
+							(funding_rate_short, excess) = counterparty_funding
+								.try_div_rem(&market.base_asset_amount_short)?;
+						}
+						capped_funding.try_sub_mut(&excess)?;
+					}
+
+					market.fee_pool.try_sub_mut(&capped_funding.into_balance()?)?;
+				};
+			}
+
+			// Update market state
+			market.cum_funding_rate_long.try_add_mut(&funding_rate_long)?;
+			market.cum_funding_rate_short.try_add_mut(&funding_rate_short)?;
+			market.funding_rate_ts = now;
+
+			Self::deposit_event(Event::FundingUpdated { market: market_id.clone(), time: now });
+			Ok(())
+		}
+
 		fn summarize_account_state(
 			account_id: &T::AccountId,
 			positions: BoundedVec<Position<T>, T::MaxPositions>,
@@ -1420,14 +1547,15 @@ pub mod pallet {
 			Ok((base_swapped, entry_value, exit_value))
 		}
 
-		fn close_position(
+		fn do_close_position(
 			positions: &mut BoundedVec<Position<T>, T::MaxPositions>,
 			position_index: usize,
 			position_direction: Direction,
 			market: &mut Market<T>,
 			quote_asset_amount_limit: T::Balance,
 		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
-			// This should always succeed if called by <Self as ClearingHouse>::open_position
+			// This should always succeed if called by either <Self as ClearingHouse>::open_position
+			// or <Self as ClearingHouse>::close_position
 			let position = positions.get(position_index).ok_or(Error::<T>::PositionNotFound)?;
 			let close_result = Self::close_position_in_market(
 				position,
@@ -1572,6 +1700,18 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		fn try_get_market(market_id: &T::MarketId) -> Result<Market<T>, DispatchError> {
 			Markets::<T>::get(market_id).ok_or_else(|| Error::<T>::MarketIdNotFound.into())
+		}
+
+		fn try_get_position<'a>(
+			positions: &'a mut BoundedVec<Position<T>, T::MaxPositions>,
+			market_id: &T::MarketId,
+		) -> Result<(&'a mut Position<T>, usize), DispatchError> {
+			let index = positions
+				.iter()
+				.position(|p| p.market_id == *market_id)
+				.ok_or(Error::<T>::PositionNotFound)?;
+
+			Ok((positions.get_mut(index).expect("Item successfully found above"), index))
 		}
 
 		fn to_vamm_direction(direction: Direction) -> VammDirection {

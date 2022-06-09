@@ -11,7 +11,7 @@ use Direction::{Long, Short};
 pub const BASIS_POINT_DENOMINATOR: u32 = 10_000;
 
 /// Indicates the direction of a position
-#[derive(Encode, Decode, TypeInfo, Debug, Clone, Copy, PartialEq)]
+#[derive(Encode, Decode, TypeInfo, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Direction {
 	Long,
 	Short,
