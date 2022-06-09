@@ -74,7 +74,7 @@ describe("HAL01 [Oracle] Tests", function () {
   it("HAL01: Creating oracle", async function () {
     this.timeout(2 * 60 * 1000);
     const assetId = api.createType("u128", assetID);
-    const threshold = api.createType("Percent", 40);
+    const threshold = api.createType("Percent", 80);
     const minAnswers = api.createType("u32", 3);
     const maxAnswers = api.createType("u32", 5);
     const blockInterval = api.createType("u32", 6);
