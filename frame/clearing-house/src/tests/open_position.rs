@@ -9,8 +9,8 @@ use crate::{
 	},
 	pallet::{Config, Direction, Error, Event},
 	tests::{
-		any_direction, any_price, as_balance, run_for_seconds, set_fee_pool_depth,
-		with_markets_context, with_trading_context, MarketConfig,
+		any_direction, any_price, as_balance, get_market, get_position, run_for_seconds,
+		set_fee_pool_depth, with_markets_context, with_trading_context, MarketConfig,
 	},
 };
 use composable_traits::{clearing_house::ClearingHouse, time::ONE_HOUR};
@@ -164,9 +164,8 @@ proptest! {
 			));
 
 			// Ensure a new position is created
-			let positions = TestPallet::get_positions(&ALICE);
-			assert_eq!(positions.len(), positions_before + 1);
-			let position = positions.iter().find(|p| p.market_id == market_id).unwrap();
+			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before + 1);
+			let position = get_position(&ALICE, &market_id).unwrap();
 			assert!(match direction {
 				Direction::Long => position.base_asset_amount.is_positive(),
 				Direction::Short => position.base_asset_amount.is_negative()
@@ -177,7 +176,7 @@ proptest! {
 			});
 
 			// Ensure cumulative funding is initialized to market's current
-			let market = TestPallet::get_market(&market_id).unwrap();
+			let market = get_market(&market_id);
 			assert_eq!(position.last_cum_funding, market.cum_funding_rate(direction));
 
 			// Ensure fees are deducted from margin
@@ -264,8 +263,7 @@ proptest! {
 
 			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
 
-			let market = TestPallet::get_market(&market_id).unwrap();
-			assert_eq!(market.base_asset_amount(direction), 0.into());
+			assert_eq!(get_market(&market_id).base_asset_amount(direction), 0.into());
 		});
 	}
 
@@ -382,8 +380,6 @@ proptest! {
 		let quote_amount = as_balance(100);
 
 		with_trading_context(market_config, quote_amount, |market_id| {
-			let positions_before = TestPallet::get_positions(&ALICE).len();
-
 			VammPallet::set_price(Some(10.into()));
 			let base_amount = quote_amount / 10;
 			assert_ok!(
@@ -397,6 +393,7 @@ proptest! {
 				base_amount
 			);
 
+			let positions_before = TestPallet::get_positions(&ALICE).len();
 
 			VammPallet::set_price(Some(new_price));
 			// Reduce (close) position by desired percentage
@@ -413,10 +410,8 @@ proptest! {
 				base_amount_to_close,
 			);
 
-			let positions = TestPallet::get_positions(&ALICE);
-			// Positions remains open
-			assert_eq!(positions.len(), positions_before + 1);
-
+			// Position remains open
+			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
 			// Fraction of the PnL is realized
 			let sign = match direction { Direction::Long => 1, _ => -1 };
 			let entry_value = percentf.saturating_mul_int(quote_amount);
@@ -426,7 +421,7 @@ proptest! {
 				(quote_amount as i128 + pnl).max(0) as u128
 			);
 
-			let position = positions.iter().find(|p| p.market_id == market_id).unwrap();
+			let position = get_position(&ALICE, &market_id).unwrap();
 			// Position base asset and quote asset notional are cut by percentage
 			assert_eq!(
 				position.base_asset_amount.into_inner(),
@@ -437,8 +432,7 @@ proptest! {
 				sign * ((quote_amount - entry_value) as i128)
 			);
 
-			let market = TestPallet::get_market(&market_id).unwrap();
-			assert_eq!(market.base_asset_amount(direction), position.base_asset_amount);
+			assert_eq!(get_market(&market_id).base_asset_amount(direction), position.base_asset_amount);
 		});
 	}
 
@@ -452,8 +446,6 @@ proptest! {
 		let quote_amount = as_balance(100);
 
 		with_trading_context(market_config, quote_amount, |market_id| {
-			let positions_before = TestPallet::get_positions(&ALICE).len();
-
 			VammPallet::set_price(Some(10.into()));
 			let base_amount = quote_amount / 10;
 			assert_ok!(
@@ -466,6 +458,8 @@ proptest! {
 				),
 				base_amount
 			);
+
+			let positions_before = TestPallet::get_positions(&ALICE).len();
 
 			VammPallet::set_price(Some(new_price));
 			let new_base_value = new_price.saturating_mul_int(base_amount);
@@ -499,10 +493,9 @@ proptest! {
 			);
 
 			// Position remains open
-			let positions = TestPallet::get_positions(&ALICE);
-			assert_eq!(positions.len(), positions_before + 1);
+			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
 
-			let position = positions.iter().find(|p| p.market_id == market_id).unwrap();
+			let position = get_position(&ALICE, &market_id).unwrap();
 			assert_eq!(
 				position.base_asset_amount,
 				FixedI128::from_inner(- sign * base_amount as i128)
@@ -512,7 +505,7 @@ proptest! {
 				FixedI128::from_inner(- sign * new_base_value as i128)
 			);
 
-			let market = TestPallet::get_market(&market_id).unwrap();
+			let market = get_market(&market_id);
 			assert_eq!(market.base_asset_amount(direction), 0.into());
 			assert_eq!(market.base_asset_amount(direction.opposite()), position.base_asset_amount);
 		});

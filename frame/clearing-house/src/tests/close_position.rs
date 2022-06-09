@@ -1,9 +1,9 @@
 use crate::{
 	mock::{
-		accounts::{AccountId, ALICE},
+		accounts::ALICE,
 		runtime::{
-			Balance, MarketId, Oracle as OraclePallet, Origin, Runtime, System as SystemPallet,
-			TestPallet, Vamm as VammPallet,
+			Oracle as OraclePallet, Origin, Runtime, System as SystemPallet, TestPallet,
+			Vamm as VammPallet,
 		},
 	},
 	pallet::{
@@ -11,25 +11,13 @@ use crate::{
 		Error, Event,
 	},
 	tests::{
-		any_direction, as_balance, get_position, run_for_seconds, with_trading_context,
-		MarketConfig,
+		any_direction, as_balance, get_collateral, get_market_fee_pool, get_position,
+		run_for_seconds, with_trading_context, MarketConfig,
 	},
 };
 
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
-
-// -------------------------------------------------------------------------------------------------
-//                                           Helpers
-// -------------------------------------------------------------------------------------------------
-
-fn get_collateral(account_id: AccountId) -> Balance {
-	TestPallet::get_collateral(&account_id).unwrap()
-}
-
-fn get_market_fee_pool(market_id: &MarketId) -> Balance {
-	TestPallet::get_market(market_id).unwrap().fee_pool
-}
 
 // -------------------------------------------------------------------------------------------------
 //                                          Unit Tests
