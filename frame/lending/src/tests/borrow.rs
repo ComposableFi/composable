@@ -1,24 +1,6 @@
-use crate::{
-	mocks::general::*,
-	models::borrower_data::BorrowerData,
-	tests::{
-		assert_extrinsic_event, assert_no_event, create_market, create_simple_market, get_price,
-		DEFAULT_COLLATERAL_FACTOR, DEFAULT_MARKET_VAULT_RESERVE,
-		DEFAULT_MARKET_VAULT_STRATEGY_SHARE, DEFAULT_MAX_PRICE_AGE,
-	},
-	validation::BalanceGreaterThenZero,
-	Error,
-};
-use composable_support::validation::{TryIntoValidated, Validated};
-use composable_tests_helpers::{prop_assert_ok, test};
-use composable_traits::{
-	defi::{LiftedFixedBalance, MoreThanOneFixedU128},
-	lending::{Lending as LendingTrait, RepayStrategy},
-};
-use frame_support::{assert_err, assert_noop, assert_ok, traits::fungibles::Mutate};
-use proptest::prelude::*;
-use sp_runtime::{FixedPointNumber, Percent};
-use std::ops::{Div, Mul};
+use super::prelude::*;
+use crate::{models::borrower_data::BorrowerData, validation::BalanceGreaterThenZero};
+use composable_traits::defi::LiftedFixedBalance;
 
 #[test]
 fn test_borrow_repay_in_same_block() {

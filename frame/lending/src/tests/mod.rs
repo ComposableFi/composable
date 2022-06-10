@@ -20,18 +20,19 @@ pub mod interest;
 pub mod liquidation;
 pub mod market;
 pub mod offchain;
+pub mod prelude;
 pub mod repay;
 pub mod vault;
 
-const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
-const DEFAULT_COLLATERAL_FACTOR: u128 = 2;
-const DEFAULT_MAX_PRICE_AGE: u64 = 1020;
-const DEFAULT_MARKET_VAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
+pub const DEFAULT_MARKET_VAULT_RESERVE: Perquintill = Perquintill::from_percent(10);
+pub const DEFAULT_COLLATERAL_FACTOR: u128 = 2;
+pub const DEFAULT_MAX_PRICE_AGE: u64 = 1020;
+pub const DEFAULT_MARKET_VAULT_STRATEGY_SHARE: Perquintill = Perquintill::from_percent(90);
 
 type SystemAccountIdOf<T> = <T as frame_system::Config>::AccountId;
 type SystemOriginOf<T> = <T as frame_system::Config>::Origin;
 type SystemEventOf<T> = <T as frame_system::Config>::Event;
-type TestBoundedVec = BoundedVec<AccountId, MaxLiquidationBatchSize>;
+pub type TestBoundedVec = BoundedVec<AccountId, MaxLiquidationBatchSize>;
 
 // Bounds for configuration generic type, used in create market helpers.
 pub trait ConfigBound:
@@ -67,12 +68,12 @@ pub fn default_under_collateralized_warn_percent() -> Percent {
 }
 
 /// Creates a "default" [`MoreThanOneFixedU128`], equal to [`DEFAULT_COLLATERAL_FACTOR`].
-fn default_collateral_factor() -> sp_runtime::FixedU128 {
+pub fn default_collateral_factor() -> sp_runtime::FixedU128 {
 	MoreThanOneFixedU128::saturating_from_integer(DEFAULT_COLLATERAL_FACTOR)
 }
 
 /// Helper to get the price of an asset from the Oracle, in USDT cents.
-fn get_price(asset_id: CurrencyId, amount: Balance) -> Balance {
+pub fn get_price(asset_id: CurrencyId, amount: Balance) -> Balance {
 	<Oracle as oracle::Oracle>::get_price(asset_id, amount).unwrap().price
 }
 
@@ -86,7 +87,7 @@ fn get_price(asset_id: CurrencyId, amount: Balance) -> Balance {
 /// # Panics
 ///
 /// Panics on any errors. Only for use in testing.
-fn create_simple_vault(
+pub fn create_simple_vault(
 	asset: RuntimeCurrency,
 	manager: AccountId,
 ) -> (VaultId, VaultInfo<AccountId, Balance, CurrencyId, BlockNumber>) {
@@ -185,7 +186,7 @@ fn new_jump_model() -> (Percent, InterestRateModel) {
 }
 
 /// Create a market with a USDT vault LP token as collateral.
-fn create_simple_vaulted_market(
+pub fn create_simple_vaulted_market(
 	borrow_asset: RuntimeCurrency,
 	manager: AccountId,
 ) -> ((MarketIndex, VaultId), CurrencyId) {
@@ -207,7 +208,7 @@ fn create_simple_vaulted_market(
 /// `NORMALIZED_PRICE` is set to `50_000`.
 ///
 /// See [`create_market()`] for more information.
-fn create_simple_market() -> (MarketIndex, VaultId) {
+pub fn create_simple_market() -> (MarketIndex, VaultId) {
 	create_market_with_specific_collateral_factor::<Runtime>(DEFAULT_COLLATERAL_FACTOR, *ALICE)
 }
 
@@ -229,7 +230,7 @@ where
 
 /// Create a  market with USDT as borrow and BTC as collateral.
 /// Collateral factor should be specified
-fn create_market_with_specific_collateral_factor<T>(
+pub fn create_market_with_specific_collateral_factor<T>(
 	collateral_factor: u128,
 	manager: T::AccountId,
 ) -> (crate::MarketIndex, T::VaultId)

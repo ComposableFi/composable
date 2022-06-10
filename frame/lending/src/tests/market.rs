@@ -1,34 +1,7 @@
-use crate::{
-	self as pallet_lending,
-	mocks::general::*,
-	tests::{
-		assert_no_event, create_simple_market, create_simple_vaulted_market, default_create_input,
-		DEFAULT_MARKET_VAULT_STRATEGY_SHARE,
-	},
-	validation::UpdateInputValid,
-	Error, MarketIndex,
-};
-use composable_support::validation::TryIntoValidated;
-use composable_tests_helpers::{prop_assert_acceptable_computation_error, prop_assert_ok, test};
-use composable_traits::{
-	defi::CurrencyPair,
-	lending::{
-		math::{CurveModel, InterestRateModel},
-		Lending as LendingTrait, UpdateInput,
-	},
-	oracle, vault,
-};
-use frame_support::{
-	assert_err, assert_ok,
-	dispatch::{DispatchErrorWithPostInfo, PostDispatchInfo},
-	traits::fungibles::{Inspect, Mutate},
-	weights::Pays,
-};
+use super::prelude::*;
+use crate::{tests::default_create_input, validation::UpdateInputValid, MarketIndex};
+use composable_traits::{defi::CurrencyPair, oracle, vault};
 use frame_system::{EventRecord, Phase};
-use proptest::prelude::*;
-use sp_core::U256;
-use sp_runtime::{DispatchError, FixedU128, ModuleError};
-use std::ops::Mul;
 
 #[test]
 fn can_update_market() {

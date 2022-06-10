@@ -1,12 +1,4 @@
-use crate::{
-	self as pallet_lending,
-	mocks::general::*,
-	tests::{assert_extrinsic_event, assert_no_event, create_simple_market},
-	Error,
-};
-use composable_tests_helpers::test;
-use composable_traits::lending::Lending as LendingTrait;
-use frame_support::{assert_noop, assert_ok, traits::fungibles::Mutate};
+use super::prelude::*;
 
 #[test]
 fn vault_takes_part_of_borrow_so_cannot_withdraw() {

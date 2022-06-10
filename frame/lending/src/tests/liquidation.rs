@@ -1,20 +1,5 @@
-use crate::{
-	mocks::general::*,
-	tests::{
-		assert_extrinsic_event, borrow, create_market, create_market_for_liquidation_test,
-		create_simple_market, get_price, mint_and_deposit_collateral, TestBoundedVec,
-		DEFAULT_COLLATERAL_FACTOR, DEFAULT_MARKET_VAULT_RESERVE, DEFAULT_MAX_PRICE_AGE,
-	},
-	Error,
-};
-use composable_tests_helpers::test;
-use composable_traits::{
-	defi::MoreThanOneFixedU128,
-	lending::{math::InterestRateModel, Lending as LendingTrait, UpdateInput},
-};
-use frame_support::{assert_err, assert_noop, assert_ok, traits::fungibles::Mutate};
-use sp_core::U256;
-use sp_runtime::{FixedPointNumber, Percent};
+use super::prelude::*;
+use crate::tests::{borrow, create_market_for_liquidation_test, mint_and_deposit_collateral};
 
 #[test]
 fn test_liquidate_multiple() {

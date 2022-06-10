@@ -1,21 +1,7 @@
-use crate::{
-	accrue_interest_internal,
-	mocks::general::*,
-	tests::{create_simple_vaulted_market, new_jump_model},
-	AccruedInterest,
-};
-use composable_traits::{
-	defi::{MoreThanOneFixedU128, Rate, ZeroToOneFixedU128},
-	lending::{
-		math::{CurveModel, InterestRate, InterestRateModel},
-		UpdateInput,
-	},
-	time::SECONDS_PER_YEAR_NAIVE,
-};
-use frame_support::{assert_err, assert_ok};
-use proptest::{prelude::*, test_runner::TestRunner};
+use super::prelude::*;
+use crate::{accrue_interest_internal, tests::new_jump_model, AccruedInterest};
+use composable_traits::{defi::Rate, lending::math::InterestRate, time::SECONDS_PER_YEAR_NAIVE};
 use sp_arithmetic::assert_eq_error_rate;
-use sp_runtime::{ArithmeticError, FixedPointNumber, FixedU128, Percent};
 
 #[test]
 fn current_interest_rate_test() {
