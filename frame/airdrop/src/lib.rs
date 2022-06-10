@@ -453,6 +453,9 @@ pub mod pallet {
 					);
 					Ok(RemoteAccount::RelayChain(relay_account))
 				},
+                Proof::Cosmos(cosmos_address, cosmos_proof) => {
+                    todo!()
+                },
 			}?;
 			Ok(remote_account)
 		}
