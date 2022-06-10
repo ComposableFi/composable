@@ -1481,14 +1481,16 @@ where
 						self.instantiator(&to).ok_or(Error::<T>::ContractNotFound)?,
 					);
 					// TODO: admin/pinned/ibc_port
-					let response = SystemResult::Ok(CosmwasmResult::Ok(ContractInfoResponse {
+					let response = serde_json::to_vec(&ContractInfoResponse {
 						code_id,
 						creator: instantiator,
 						admin: None,
 						pinned: false,
 						ibc_port: None,
-					}));
-					serde_json::to_vec(&response).map_err(|_| Error::<T>::DecodingFailed.into())
+					})
+					.map_err(|_| Error::<T>::DecodingFailed)?;
+					serde_json::to_vec(&SystemResult::Ok(CosmwasmResult::Ok(Binary(response))))
+						.map_err(|_| Error::<T>::DecodingFailed.into())
 				},
 			},
 		}
