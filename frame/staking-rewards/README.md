@@ -135,7 +135,7 @@ Positions may be updated only on behalf of users. In that case, they will captur
 
 ### Staking
 
-Assuming a user has a configuration for `PICA` that allows us to stake for a month, she can `stake` an amount `X`` for once month duration with the amount larger than ED.
+Assuming a user has a configuration for `PICA` that allows us to stake for a month, she can `stake` an amount `X` for once month duration with the amount larger than ED.
 The reward multiplier elevates the computed share of the staking pool, the longer you stake, the higher your share.
 Let's say we have a reward multiplier of `0.8` for a `MONTH`, if I stake `X PICA`, my share will become `X * 0.8`.
 
