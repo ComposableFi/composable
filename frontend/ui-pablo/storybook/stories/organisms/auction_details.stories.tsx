@@ -1,7 +1,7 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { AuctionDetails } from "@ui-pablo/nextjs/components/Organisms/auction/AuctionDetails";
-import useStore from "@ui-pablo/nextjs/store/useStore";
+import { AuctionDetails } from "@ui-pablo/app/components/Organisms/auction/AuctionDetails";
+import useStore from "@ui-pablo/app/store/useStore";
 
 const AuctionDetailsStories = () => {
   const {auctions} = useStore();

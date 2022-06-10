@@ -1,4 +1,4 @@
-import { LabeledSwitch, LabeledSwitchProps } from "@/components/Molecules";
+import { LabeledSwitch, LabeledSwitchProps } from "@ui-pablo/app/components/Molecules";
 import { Story } from "@storybook/react";
 import { InfoOutlined } from "@mui/icons-material";
 

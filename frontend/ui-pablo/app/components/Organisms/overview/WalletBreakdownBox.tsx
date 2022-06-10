@@ -33,7 +33,7 @@ const tableHeaders: TableHeader[] = [
 export const WalletBreakdownBox: React.FC<BoxProps> = ({
   ...boxProps
 }) => {
-  const { assets } = useStore();
+  const { assets, assetBalances } = useStore();
 
   return (
     <BoxWrapper
@@ -53,7 +53,7 @@ export const WalletBreakdownBox: React.FC<BoxProps> = ({
           </TableHead>
           <TableBody>
             {assets && Object.values(assets).map((asset) => {
-              const balance = new BigNumber(asset.balance.picasso);
+              const balance = new BigNumber(assetBalances[asset.assetId].picasso);
               return (
                 <TableRow key={asset.assetId}>
                   <TableCell align="left">

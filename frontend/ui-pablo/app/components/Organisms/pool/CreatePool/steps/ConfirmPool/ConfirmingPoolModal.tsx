@@ -8,7 +8,6 @@ import {
   useTheme,
 } from "@mui/material";
 import { useAppSelector } from "@/hooks/store";
-import { useDispatch } from "react-redux";
 
 type ConfirmingPoolModalProps = {
   poolName: string | null,

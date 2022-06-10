@@ -21,57 +21,84 @@ import {
 import { BoxProps } from "@mui/system";
 import BigNumber from "bignumber.js";
 import { useRouter } from "next/router";
-import { useSnackbar } from "notistack";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
-import { YourPosition } from "../YourPosition";
 import { ConfirmingModal } from "./ConfirmingModal";
 import { PreviewDetails } from "./PreviewDetails";
+import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
+import useDebounce from "@/hooks/useDebounce";
+import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
+import { useUserProvidedLiquidityByPool } from "@/store/hooks/useUserProvidedLiquidityByPool";
+import { fetchSpotPrice } from "@/updaters/swaps/utils";
+import { useParachainApi } from "substrate-react";
+import { DEFAULT_DECIMALS, DEFAULT_NETWORK_ID } from "@/updaters/constants";
 
 export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const theme = useTheme();
   const router = useRouter();
   const dispatch = useDispatch();
 
-  const drawerWidth = theme.custom.drawerWidth.desktop;
-
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const { poolId } =
+    useRemoveLiquidityState();
   const {
-    tokenId1,
-    tokenId2,
-    pooledAmount1,
-    pooledAmount2,
-    amount,
-    share,
-    price1,
-    price2,
-  } = useAppSelector((state) => state.pool.currentLiquidity);
+    lpBalance,
+    baseAsset,
+    quoteAsset
+  } = useLiquidityPoolDetails(poolId)
+
+  const { share } = useAppSelector((state) => state.pool.currentLiquidity);
 
   const isConfirmingModalOpen = useAppSelector(
     (state) => state.ui.isConfirmingModalOpen
   );
 
-  const token1 = getToken(tokenId1 as TokenId);
-  const token2 = getToken(tokenId2 as TokenId);
-
   const [percentage, setPercentage] = useState<number>(0);
-  const [removeAmount1, setRemoveAmount1] = useState<BigNumber>(
+  const [expectedRemoveAmountQuote, setExpectedRemoveAmountQuote] = useState<BigNumber>(
     new BigNumber(0)
   );
-  const [removeAmount2, setRemoveAmount2] = useState<BigNumber>(
+  const [expectedRemoveAmountBase, setExpectedRemoveAmountBase] = useState<BigNumber>(
     new BigNumber(0)
   );
-  const [approved, setApproved] = useState<boolean>(false);
+
   const [confirmed, setConfirmed] = useState<boolean>(false);
   const message = useAppSelector((state) => state.ui.message);
 
+  const debouncedPercentage = useDebounce(percentage, 500);
+
+  const [priceOfBase, setPriceOfBase] = useState(new BigNumber(0))
+  const [priceOfQuote, setPriceOfQuote] = useState(new BigNumber(0))
+
   useEffect(() => {
-    setRemoveAmount1(
-      pooledAmount1.multipliedBy(new BigNumber(percentage / 100))
-    );
-    setRemoveAmount2(
-      pooledAmount2.multipliedBy(new BigNumber(percentage / 100))
-    );
-  }, [percentage, pooledAmount1, pooledAmount2, confirmed]);
+    if (poolId !== -1 && baseAsset && quoteAsset && parachainApi) {
+      const baseAssetId = baseAsset.supportedNetwork.picasso
+      const quoteAssetId = quoteAsset.supportedNetwork.picasso
+
+      if (baseAssetId && quoteAssetId) {
+        fetchSpotPrice(parachainApi, {
+          base: baseAssetId,
+          quote: quoteAssetId
+        }, poolId).then(basePrice => {
+          const basePriceBn = new BigNumber(basePrice);
+
+          setPriceOfBase(basePriceBn);
+          setPriceOfQuote(new BigNumber(1).div(basePriceBn));
+        })
+      }
+    }
+  }, [poolId, baseAsset, quoteAsset, parachainApi]);
+
+  useEffect(() => {
+    if (parachainApi && debouncedPercentage > 0 && lpBalance.gt(0)) {
+      // const selectedLpAmount = lpBalance.times(debouncedPercentage / 100).times(DEFAULT_DECIMALS);
+      // (parachainApi.rpc as any).pablo.redeemableAssetForGivenLpTokens(poolId, selectedLpAmount).then((response) => {
+
+      // })
+    } else {
+      setExpectedRemoveAmountBase(new BigNumber(0));
+      setExpectedRemoveAmountQuote(new BigNumber(0));
+    }
+  }, [parachainApi, debouncedPercentage])
 
   const onBackHandler = () => {
     router.push("/pool");
@@ -85,8 +112,8 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
     setPercentage(newValue as number);
   };
 
-  const onRemoveHandler = () => {
-    dispatch(openConfirmingModal());
+  const onRemoveHandler = async () => {
+    dispatch(openConfirmingModal())
   };
 
   useEffect(() => {
@@ -175,15 +202,18 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
         </Box>
       </Box>
 
-      <PreviewDetails
-        mt={4}
-        tokenId1={tokenId1 as TokenId}
-        tokenId2={tokenId2 as TokenId}
-        amount1={removeAmount1}
-        amount2={removeAmount2}
-        price1={price1}
-        price2={price2}
-      />
+      {baseAsset && quoteAsset && (
+        <PreviewDetails
+          lpToRemove={lpBalance.times(debouncedPercentage).div(100)}
+          mt={4}
+          tokenId1={baseAsset}
+          tokenId2={quoteAsset}
+          expectedRecieveAmountToken1={expectedRemoveAmountBase}
+          expectedRecieveAmountToken2={expectedRemoveAmountQuote}
+          price1={priceOfBase}
+          price2={priceOfQuote}
+        />
+      )}
 
       {!confirmed && (
         <Box
@@ -193,7 +223,7 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           mt={4}
           gap={2}
         >
-          <Box width="50%">
+          {/* <Box width="50%">
             <Button
               variant="contained"
               size="large"
@@ -219,14 +249,14 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
                 <>Approve</>
               )}
             </Button>
-          </Box>
+          </Box> */}
 
-          <Box width="50%">
+          <Box width="100%">
             <Button
               variant="outlined"
               size="large"
               fullWidth
-              disabled={!percentage || !approved || confirmed}
+              disabled={!percentage || confirmed}
               onClick={onRemoveHandler}
             >
               {!percentage ? "Enter Amount" : "Remove"}
@@ -261,11 +291,17 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
         </>
       )}
 
-      {!confirmed && (
+      {!confirmed && baseAsset && quoteAsset && (
         <ConfirmingModal
+          lpBalance={lpBalance}
+          percentage={new BigNumber(debouncedPercentage).div(100)}
+          price1={priceOfBase}
+          price2={priceOfQuote}
+          baseAsset={baseAsset}
+          quoteAsset={quoteAsset}
           open={isConfirmingModalOpen}
-          amount1={removeAmount1}
-          amount2={removeAmount2}
+          amount1={expectedRemoveAmountBase}
+          amount2={expectedRemoveAmountQuote}
           setConfirmed={setConfirmed}
         />
       )}

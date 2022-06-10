@@ -3,7 +3,7 @@ import {
   TabsProps,
   TabItem,
   Tabs, 
-} from "@/components";
+} from "@ui-pablo/app/components";
 import { 
   Box, 
   SxProps,

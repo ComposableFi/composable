@@ -59,6 +59,17 @@ export const Assets: {
       picasso: 2,
     },
   },
+  pablo: {
+    decimals: 12,
+    assetId: "layr",
+    symbol: "LAYR",
+    icon: "/tokens/pablo.svg",
+    name: "LAYER",
+    supportedNetwork: {
+      karura: null,
+      picasso: 201,
+    },
+  }
 };
 
 export const AssetsValidForNow: AssetId[] = [
@@ -89,6 +100,18 @@ export const getAssetOnChainId = (
   assetId: AssetId
 ): number | null => {
   return Assets[assetId].supportedNetwork[network];
+}
+
+export const getAssetByOnChainId = (
+  network: ParachainId,
+  assetId: number
+): AssetMetadata => {
+  let metadata = Object.values(Assets).find(i => (
+    i.supportedNetwork[network] !== null && i.supportedNetwork[network] === assetId
+  ))
+  if (!metadata) throw new Error('Invalid On Chain ID')
+
+  return metadata;
 }
 
 export const getAssetOptions = (noneTokenLabel?: string) => ([

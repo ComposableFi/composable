@@ -32,7 +32,7 @@ import { Assets, AssetsValidForNow } from "@/defi/polkadot/Assets";
 import useStore from "@/store/useStore";
 import { AssetId } from "@/defi/polkadot/types";
 import { debounce } from "lodash";
-import { onSwapAmountChange } from "@/store/updaters/swaps/utils";
+import { onSwapAmountChange } from "@/updaters/swaps/utils";
 
 const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
@@ -112,7 +112,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
 
     if (swaps.dexRouter.dexRoute.length === 0) {
       setQuoteAssetAmount(new BigNumber(0));
-      setQuoteAssetAmount(new BigNumber(0));
+      setBaseAssetAmount(new BigNumber(0));
     }
   }, [swaps.dexRouter.dexRoute]);
 

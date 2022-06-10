@@ -42,14 +42,12 @@ const SimilarPoolsStep: React.FC<SimilarPoolsStepProps> = ({
   const dispatch = useDispatch();
 
   const {
-    pools: {
-      createPool: {
-        baseAsset,
-        quoteAsset,
-        currentStep,
-        similarPool,
-        setSelectable,
-      },
+    createPool: {
+      baseAsset,
+      quoteAsset,
+      currentStep,
+      similarPool,
+      setSelectable,
     },
   } = useStore();
 
@@ -76,7 +74,7 @@ const SimilarPoolsStep: React.FC<SimilarPoolsStepProps> = ({
   const onSettingCallback = () => {
     if (isSettingOnFlow) {
       onCloseHandler();
-      setSelectable({currentStep: currentStep + 1 })
+      setSelectable({ currentStep: currentStep + 1 });
     }
   };
 

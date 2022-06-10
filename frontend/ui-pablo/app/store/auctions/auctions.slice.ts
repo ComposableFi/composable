@@ -39,7 +39,11 @@ const PLACEHOLDER_POOL: LiquidityBootstrappingPool = {
     initialWeight: 0,
     finalWeight: 0,
   },
-  fee: "1.00%",
+  feeConfig: {
+    feeRate: "1",
+    protocolFeeRate: "1",
+    ownerFeeRate: "1"
+  },
   spotPrice: "0",
   networkId: "picasso",
   auctionDescription: [],

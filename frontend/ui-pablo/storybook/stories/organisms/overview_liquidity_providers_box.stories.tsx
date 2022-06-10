@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { LiquidityProvidersBox } from "@ui-pablo/nextjs/components/Organisms/overview/LiquidityProvidersBox";
+import { LiquidityProvidersBox } from "@ui-pablo/app/components/Organisms/overview/LiquidityProvidersBox";
 
 const LiquidityProvidersBoxStories = ({}) => {
   return (

@@ -1,16 +1,21 @@
 import { Box, BoxProps, Typography, useTheme, Grid } from "@mui/material";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import { getFullHumanizedDateDiff } from "@/utils/date";
-import { LiquidityBootstrappingPool, LiquidityBootstrappingPoolStats } from "@/store/pools/pools.types";
+import {
+  LiquidityBootstrappingPool,
+  LiquidityBootstrappingPoolStats,
+} from "@/store/pools/pools.types";
 import { nFormatter } from "@/utils/number";
 import BigNumber from "bignumber.js";
-import { getAssetById } from "@/defi/polkadot/Assets";
+import { getAssetById, getAssetByOnChainId } from "@/defi/polkadot/Assets";
 import { useMemo } from "react";
-import { useAuctionSpotPrice } from "@/store/pools/hooks";
+import { useAuctionSpotPrice } from "@/store/auctions/hooks";
+import { useAssetPrice } from "@/store/assets/hooks";
+import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
 
 export type AuctionInformationProps = {
-  auction: LiquidityBootstrappingPool,
-  stats: LiquidityBootstrappingPoolStats,
+  auction: LiquidityBootstrappingPool;
+  stats: LiquidityBootstrappingPoolStats;
 } & BoxProps;
 
 export const AuctionInformation: React.FC<AuctionInformationProps> = ({
@@ -20,8 +25,9 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
 }) => {
   const theme = useTheme();
   const currentTimestamp = Date.now();
-  const isActive: boolean = auction.sale.start <= currentTimestamp 
-                    && auction.sale.end >= currentTimestamp;
+  const isActive: boolean =
+    auction.sale.start <= currentTimestamp &&
+    auction.sale.end >= currentTimestamp;
   const isEnded: boolean = auction.sale.end < currentTimestamp;
 
   const standardPageSize = {
@@ -35,25 +41,33 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
   };
 
   const getTime = () => {
-    return (
-      isActive
-        ? getFullHumanizedDateDiff(Date.now(), auction.sale.end)
-        : (
-            isEnded
-              ? "-"
-              : "Not started"
-        )
-    );
+    if (isActive) {
+      return getFullHumanizedDateDiff(Date.now(), auction.sale.end)
+    } else if (isEnded) {
+      return "-"
+    } else {
+      return "Not started";
+    }
   };
 
   const spotPrice = useAuctionSpotPrice(auction.poolId);
+  const quoteAsset = getAssetByOnChainId(
+    DEFAULT_NETWORK_ID,
+    auction.pair.quote
+  );
+  const quoteAssetPrice = useAssetPrice(quoteAsset.assetId);
+
   let tokenRaised = useMemo(() => {
-    return new BigNumber(stats.currentBalances.quote).minus(stats.startBalances.quote);
+    return new BigNumber(stats.currentBalances.quote).minus(
+      stats.startBalances.quote
+    );
   }, [stats.currentBalances.quote, stats.startBalances.quote]);
-  
+
   let tokenSold = useMemo(() => {
-    return new BigNumber(stats.startBalances.base).minus(stats.currentBalances.base);
-  }, [stats.startBalances.base, stats.currentBalances.base])
+    return new BigNumber(stats.startBalances.base).minus(
+      stats.currentBalances.base
+    );
+  }, [stats.startBalances.base, stats.currentBalances.base]);
 
   let totalBase = useMemo(() => {
     return new BigNumber(stats.startBalances.base);
@@ -63,7 +77,7 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
     const { base } = stats.startBalances;
     if (base === "0") return "0";
 
-    return tokenSold.div(new BigNumber(base)).times(100).toFixed(2)
+    return tokenSold.div(new BigNumber(base)).times(100).toFixed(2);
   }, [stats.startBalances.base, tokenSold]);
 
   return (
@@ -74,20 +88,16 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
             Duration
           </Typography>
           <Box display="flex" alignItems="center" gap={1.75}>
-            <Typography variant="h6">
-              {auction.sale.duration} days
-            </Typography>
+            <Typography variant="h6">{auction.sale.duration} days</Typography>
             <AccessTimeRoundedIcon />
-          </Box> 
+          </Box>
         </Grid>
-        <Grid item {...standardPageSize} >
+        <Grid item {...standardPageSize}>
           <Typography variant="body1" color="text.secondary">
-            { getTimeLabel() }
+            {getTimeLabel()}
           </Typography>
           <Box display="flex" alignItems="center" gap={1.75}>
-            <Typography variant="h6">
-              { getTime() }
-            </Typography>
+            <Typography variant="h6">{getTime()}</Typography>
             <AccessTimeRoundedIcon />
           </Box>
         </Grid>
@@ -96,7 +106,11 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
             Total Volume
           </Typography>
           <Box display="flex" alignItems="center" gap={1.75}>
-            <Typography variant="h6">{stats.totalVolume}</Typography>
+            <Typography variant="h6">
+              {new BigNumber(stats.totalVolume)
+                .times(quoteAssetPrice)
+                .toFixed(2)}
+            </Typography>
           </Box>
         </Grid>
         <Grid item {...standardPageSize}>
@@ -105,8 +119,8 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
           </Typography>
           <Box display="flex" alignItems="center" gap={1.75}>
             <Typography variant="h6">
-              ${ stats.liquidity } 
-            </Typography> 
+              ${new BigNumber(stats.liquidity).times(quoteAssetPrice).toFixed(2)}
+            </Typography>
           </Box>
         </Grid>
         <Grid item {...standardPageSize}>
@@ -114,9 +128,7 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
             Price
           </Typography>
           <Box display="flex" alignItems="center" gap={1.75}>
-            <Typography variant="h6">
-              ${ spotPrice }
-            </Typography>
+            <Typography variant="h6">${spotPrice}</Typography>
           </Box>
         </Grid>
         <Grid item {...standardPageSize}>
@@ -124,14 +136,11 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
             Tokens sold
           </Typography>
           <Box display="flex" alignItems="center" gap={1.75}>
-            <Typography variant="h6">
-              { soldPercentage }%
-            </Typography>
+            <Typography variant="h6">{soldPercentage}%</Typography>
           </Box>
           <Typography variant="body1" color="text.secondary" fontWeight="bold">
-            {nFormatter(
-              tokenSold.toNumber()
-            )} of {nFormatter(totalBase.toNumber())}
+            {nFormatter(tokenSold.toNumber())} of{" "}
+            {nFormatter(totalBase.toNumber())}
           </Typography>
         </Grid>
         <Grid item {...standardPageSize}>
@@ -139,9 +148,7 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
             Funds raised
           </Typography>
           <Box display="flex" alignItems="center" gap={1.75}>
-            <Typography variant="h6">
-              { tokenRaised.toFixed(4) }
-            </Typography>
+            <Typography variant="h6">{tokenRaised.toFixed(4)}</Typography>
           </Box>
           <Typography variant="body1" color="text.secondary" fontWeight="bold">
             {getAssetById("picasso", auction.pair.quote)?.symbol}
