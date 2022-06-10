@@ -774,15 +774,3 @@ impl<'a, T: Config> gas_metering::Rules for ScheduleRules<'a, T> {
 		gas_metering::MemoryGrowCost::Free
 	}
 }
-
-#[cfg(test)]
-mod test {
-	use super::*;
-	use crate::tests::Test;
-
-	#[test]
-	fn print_test_schedule() {
-		let schedule = Schedule::<Test>::default();
-		println!("{:#?}", schedule);
-	}
-}

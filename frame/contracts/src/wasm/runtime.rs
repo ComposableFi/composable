@@ -433,8 +433,10 @@ impl<'a, E: Ext + 'a> Runtime<'a, E> {
 			Some(ExternVal::Func(func_instance)) => {
 				let cloned = self.defined_host_functions.clone();
 				let mut externals = GuestExternals { state: self, defined_host_functions: &cloned };
-				FuncInstance::invoke(&func_instance, args, &mut externals)
-					.map_err(|_| DispatchError::Other("Failed to invoke function"))
+				FuncInstance::invoke(&func_instance, args, &mut externals).map_err(|_| {
+					log::debug!(target: "runtime::contracts", "Failed to invoke function: {:?}", function);
+					DispatchError::Other("Failed to invoke function")
+				})
 			},
 			_ => Err(DispatchError::Other("Failed to find exported function")),
 		}
@@ -506,6 +508,7 @@ impl<'a, E: Ext + 'a> Runtime<'a, E> {
 		if value.len() > T::deserialize_limit() {
 			Err(DispatchError::Other("deserialization limit reached"))
 		} else {
+			log::debug!(target: "runtime::contracts", "{}", core::str::from_utf8(&value).unwrap());
 			serde_json::from_slice(&value).map_err(|_| DispatchError::Other("couldn't deserialize"))
 		}
 	}
@@ -982,15 +985,12 @@ define_env!(Env, <E: Ext>,
 	},
 
 	[env] debug(ctx, source_ptr: u32) => {
-		log::debug!(target: "runtime::contracts", "Debug");
 		ctx.charge_gas(RuntimeCosts::DebugMessage)?;
-		if ctx.ext.append_debug_buffer("") {
-			let data = ctx.memory().read_region(source_ptr, MAX_LENGTH_DEBUG as _)?;
-			let msg = core::str::from_utf8(&data)
-				.map_err(|_| <Error<E::T>>::DebugMessageInvalidUTF8)?;
-		  log::debug!(target: "runtime::contracts", "Debug message: {}", msg);
-			ctx.ext.append_debug_buffer(msg);
-		}
+		let data = ctx.memory().read_region(source_ptr, MAX_LENGTH_DEBUG as _)?;
+		let msg = core::str::from_utf8(&data)
+			.map_err(|_| <Error<E::T>>::DebugMessageInvalidUTF8)?;
+		log::debug!(target: "runtime::contracts", "Debug message: {}", msg);
+		ctx.ext.append_debug_buffer(msg);
 		Ok(())
 	},
 

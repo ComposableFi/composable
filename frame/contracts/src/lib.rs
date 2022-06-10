@@ -97,9 +97,6 @@ pub mod chain_extension;
 pub mod migration;
 pub mod weights;
 
-#[cfg(test)]
-mod tests;
-
 pub use crate::{
 	exec::Frame,
 	pallet::*,
@@ -1026,13 +1023,12 @@ where
 		let mut storage_meter =
 			match StorageMeter::new(&origin, storage_deposit_limit, transferred_native) {
 				Ok(meter) => meter,
-				Err(err) => {
+				Err(err) =>
 					return InternalCallOutput {
 						result: Err(err.into()),
 						gas_meter,
 						storage_deposit: Default::default(),
-					}
-				},
+					},
 			};
 		let schedule = T::Schedule::get();
 		let result = ExecStack::<T, PrefabWasmModule<T>>::run_call(
@@ -1068,13 +1064,12 @@ where
 		let mut storage_meter =
 			match StorageMeter::new(&origin, storage_deposit_limit, transferred_native) {
 				Ok(meter) => meter,
-				Err(err) => {
+				Err(err) =>
 					return InternalCallOutput {
 						result: Err(err.into()),
 						gas_meter,
 						storage_deposit: Default::default(),
-					}
-				},
+					},
 			};
 		let schedule = T::Schedule::get();
 		let result = ExecStack::<T, PrefabWasmModule<T>>::run_query(

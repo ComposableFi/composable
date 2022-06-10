@@ -54,14 +54,6 @@ pub struct RawContractInfo<CodeHash, Balance> {
 	pub storage_deposit: Balance,
 }
 
-impl<CodeHash, Balance> RawContractInfo<CodeHash, Balance> {
-	/// Associated child trie unique id is built from the hash part of the trie id.
-	#[cfg(test)]
-	pub fn child_trie_info(&self) -> ChildInfo {
-		child_trie_info(&self.trie_id[..])
-	}
-}
-
 /// Associated child trie unique id is built from the hash part of the trie id.
 fn child_trie_info(trie_id: &[u8]) -> ChildInfo {
 	ChildInfo::new_default(trie_id)
@@ -294,20 +286,5 @@ where
 	pub fn generate_trie_id(account_id: &AccountIdOf<T>, nonce: u64) -> TrieId {
 		let buf: Vec<_> = account_id.as_ref().iter().chain(&nonce.to_le_bytes()).cloned().collect();
 		T::Hashing::hash(&buf).as_ref().into()
-	}
-
-	/// Returns the code hash of the contract specified by `account` ID.
-	#[cfg(test)]
-	pub fn code_hash(account: &AccountIdOf<T>) -> Option<CodeHash<T>> {
-		<ContractInfoOf<T>>::get(account).map(|i| i.code_hash)
-	}
-
-	/// Fill up the queue in order to exercise the limits during testing.
-	#[cfg(test)]
-	pub fn fill_queue_with_dummies() {
-		let queue: Vec<_> = (0..T::DeletionQueueDepth::get())
-			.map(|_| DeletedContract { trie_id: vec![] })
-			.collect();
-		<DeletionQueue<T>>::put(queue);
 	}
 }
