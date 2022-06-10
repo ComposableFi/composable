@@ -1,5 +1,6 @@
 import type { NextPage } from "next";
 import Default from "@/components/Templates/Default";
+import { DEFI_CONFIG } from "@/defi/polkadot/config";
 import { useTheme, Grid, Typography, Box } from "@mui/material";
 import {
   MyAssetsTable,
@@ -11,7 +12,7 @@ import {
   Chart,
   MyBondingsTable,
 } from "@/components";
-import { useAppSelector } from "@/hooks/store";
+import { useStore } from "@/stores/root";
 import Image from "next/image";
 import { FeaturedBox, ConnectWalletFeaturedBox } from "@/components";
 import { CrowdloanRewardsFeaturedBox } from "@/components/Organisms/CrowdloanRewards/CrowdloanRewardsFeaturedBox";
@@ -21,11 +22,15 @@ import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 
 const Overview: NextPage = () => {
   const { extensionStatus } = useContext(ParachainContext);
-  const assets = useAppSelector((state) =>
-    Object.values(state.substrateBalances)
+
+  const assets = useStore(({ substrateBalances }) =>
+    DEFI_CONFIG.networkIds.map((networkId) => substrateBalances[networkId])
   );
-  const myStakings = useAppSelector((state) => state.polkadot.myStakingAssets);
-  const myBondings = useAppSelector((state) => state.polkadot.myBondingAssets);
+
+  const { myStakingAssets, myBondingAssets } = useStore(
+    ({ polkadot }) => polkadot
+  );
+
   const tabs: TabItem[] = [
     { label: "My assets" },
     { label: "My stakings", disabled: false },
@@ -117,7 +122,7 @@ const Overview: NextPage = () => {
                   alt="Pablo logo"
                 />
               </Box>
-              <MyStakingsTable assets={myStakings.pablo} />
+              <MyStakingsTable assets={myStakingAssets.pablo} />
             </TabPanel>
 
             {/* My Bondings Tab Pannels */}
@@ -125,7 +130,7 @@ const Overview: NextPage = () => {
               <Box px={2}>
                 <PageTitle title="Picasso" textAlign="left" fontSize={40} />
               </Box>
-              <MyBondingsTable assets={myBondings.picasso} />
+              <MyBondingsTable assets={myBondingAssets.picasso} />
             </TabPanel>
             <TabPanel value={tabValue} index={2}>
               <Box marginBottom={4} padding={2}>
@@ -136,7 +141,7 @@ const Overview: NextPage = () => {
                   alt="Pablo logo"
                 />
               </Box>
-              <MyBondingsTable assets={myBondings.pablo} />
+              <MyBondingsTable assets={myBondingAssets.pablo} />
             </TabPanel>
           </Grid>
         )}

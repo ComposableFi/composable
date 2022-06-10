@@ -1,5 +1,4 @@
 import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
-import { useAppSelector } from "@/hooks/store";
 import { useTheme } from "@mui/material";
 import { useRouter } from "next/router";
 import { useContext } from "react";

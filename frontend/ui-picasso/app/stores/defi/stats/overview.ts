@@ -1,5 +1,5 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { RootState } from "@/stores/root";
+import { NamedSet } from "zustand/middleware";
+import { AppState, StoreSlice } from "../../types";
 import StatsDummyData from "./dummyData";
 
 const CHART_INTERVAL = ["1h", "24h", "1w", "1m", "1y"];
@@ -61,72 +61,65 @@ const initialState: OverviewState = {
   },
 };
 
-export const statsOverviewSlice = createSlice({
-  name: "statsData",
-  initialState,
-  reducers: {
-    setTVL: (
-      state: OverviewState,
-      action: PayloadAction<OverviewData["data"][0]>
-    ) => {
-      state.overviewData.data[0] = action.payload;
+export interface StatsOverviewSlice {
+  statsOverview: OverviewState & {
+    setTVL: (data: OverviewData["data"][0]) => void;
+    setAccountHolders: (data: OverviewData["data"][1]) => void;
+    setTotalTx: (data: OverviewData["data"][2]) => void;
+    setRewardDistribution: (data: OverviewData["data"][3]) => void;
+    setTotalFees: (data: OverviewData["data"][4]) => void;
+    setEarnedStakingTvl: (data: OverviewData["data"][5]) => void;
+    setTvlInterval: (data: number) => void;
+    setDailyActiveUsersInterval: (data: number) => void;
+  };
+}
+
+export const createStatsOverviewSlice: StoreSlice<StatsOverviewSlice> = (
+  set: NamedSet<StatsOverviewSlice>
+) => ({
+  statsOverview: {
+    ...initialState,
+    setTVL: (data: OverviewData["data"][0]) => {
+      set((state: AppState) => {
+        state.statsOverview.overviewData.data[0] = data;
+      });
     },
-    setAccountHolders: (
-      state: OverviewState,
-      action: PayloadAction<OverviewData["data"][1]>
-    ) => {
-      state.overviewData.data[1] = action.payload;
+    setAccountHolders: (data: OverviewData["data"][1]) => {
+      set((state: AppState) => {
+        state.statsOverview.overviewData.data[1] = data;
+      });
     },
-    setTotalTx: (
-      state: OverviewState,
-      action: PayloadAction<OverviewData["data"][2]>
-    ) => {
-      state.overviewData.data[2] = action.payload;
+    setTotalTx: (data: OverviewData["data"][2]) => {
+      set((state: AppState) => {
+        state.statsOverview.overviewData.data[2] = data;
+      });
     },
-    setRewardDistribution: (
-      state: OverviewState,
-      action: PayloadAction<OverviewData["data"][3]>
-    ) => {
-      state.overviewData.data[3] = action.payload;
+    setRewardDistribution: (data: OverviewData["data"][3]) => {
+      set((state: AppState) => {
+        state.statsOverview.overviewData.data[3] = data;
+      });
     },
-    setTotalFees: (
-      state: OverviewState,
-      action: PayloadAction<OverviewData["data"][4]>
-    ) => {
-      state.overviewData.data[4] = action.payload;
+    setTotalFees: (data: OverviewData["data"][4]) => {
+      set((state: AppState) => {
+        state.statsOverview.overviewData.data[4] = data;
+      });
     },
-    setEarnedStakingTvl: (
-      state: OverviewState,
-      action: PayloadAction<OverviewData["data"][5]>
-    ) => {
-      state.overviewData.data[5] = action.payload;
+    setEarnedStakingTvl: (data: OverviewData["data"][5]) => {
+      set((state: AppState) => {
+        state.statsOverview.overviewData.data[5] = data;
+      });
     },
-    setTvlInterval: (state: OverviewState, action: PayloadAction<number>) => {
-      state.overviewChartData.data[0].data.pickedInterval = action.payload;
+    setTvlInterval: (data: number) => {
+      set((state: AppState) => {
+        state.statsOverview.overviewChartData.data[0].data.pickedInterval =
+          data;
+      });
     },
-    setDailyActiveUsersInterval: (
-      state: OverviewState,
-      action: PayloadAction<number>
-    ) => {
-      state.overviewChartData.data[1].data.pickedInterval = action.payload;
+    setDailyActiveUsersInterval: (data: number) => {
+      set((state: AppState) => {
+        state.statsOverview.overviewChartData.data[1].data.pickedInterval =
+          data;
+      });
     },
   },
 });
-
-export const {
-  setTVL,
-  setAccountHolders,
-  setTotalTx,
-  setRewardDistribution,
-  setTotalFees,
-  setEarnedStakingTvl,
-  setTvlInterval,
-  setDailyActiveUsersInterval,
-} = statsOverviewSlice.actions;
-
-export const selectOverviewData = (state: RootState) =>
-  state.statsOverview.overviewData;
-export const selectOverviewChartData = (state: RootState) =>
-  state.statsOverview.overviewChartData;
-
-export default statsOverviewSlice.reducer;

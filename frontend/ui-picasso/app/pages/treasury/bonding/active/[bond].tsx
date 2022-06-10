@@ -7,7 +7,7 @@ import { BondBox, Input } from "@/components";
 import Default from "@/components/Templates/Default";
 import { PageTitle } from "@/components/Molecules";
 import PositionDetailsRow from "@/components/Atom/PositionDetailsRow";
-import { useAppSelector } from "@/hooks/store";
+import { useStore } from "@/stores/root";
 import {
   bondPrice,
   discount,
@@ -31,8 +31,8 @@ const Bond: NextPage = () => {
   const theme = useTheme();
   const token = router.query.token as string;
   const toToken = router.query.toToken as string;
-  const { bond, claim } = useAppSelector(
-    (state) => state.statsTreasury.treasuryBonding
+  const { bond, claim } = useStore(
+    ({ statsTreasury }) => statsTreasury.treasuryBonding
   );
 
   const bondBoxes: BoxData[] = [

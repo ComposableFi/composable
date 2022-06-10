@@ -1,5 +1,5 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { RootState } from "@/stores/root";
+import { NamedSet } from "zustand/middleware";
+import { AppState, StoreSlice } from "../../types";
 import StatsDummyData from "./dummyData";
 
 const CHART_INTERVAL = ["1h", "24h", "1w", "1m", "1y"];
@@ -47,47 +47,40 @@ const initialState: TelemetryState = {
   },
 };
 
-export const statsTelemetrySlice = createSlice({
-  name: "telemetryData",
-  initialState,
-  reducers: {
-    setFinalizedBlock: (
-      state: TelemetryState,
-      action: PayloadAction<TelemetryData["data"][0]>
-    ) => {
-      state.telemetryData.data[0] = action.payload;
+export interface StatsTelemetrySlice {
+  statsTelemetry: TelemetryState & {
+    setFinalizedBlock: (data: TelemetryData["data"][0]) => void;
+    setAverageTime: (data: TelemetryData["data"][1]) => void;
+    setLastBlock: (data: TelemetryData["data"][2]) => void;
+    setMemPoolInterval: (data: number) => void;
+  };
+}
+
+export const createStatsTelemetrySlice: StoreSlice<StatsTelemetrySlice> = (
+  set: NamedSet<StatsTelemetrySlice>
+) => ({
+  statsTelemetry: {
+    ...initialState,
+    setFinalizedBlock: (data: TelemetryData["data"][0]) => {
+      set((state: AppState) => {
+        state.statsTelemetry.telemetryData.data[0] = data;
+      });
     },
-    setAverageTime: (
-      state: TelemetryState,
-      action: PayloadAction<TelemetryData["data"][1]>
-    ) => {
-      state.telemetryData.data[1] = action.payload;
+    setAverageTime: (data: TelemetryData["data"][1]) => {
+      set((state: AppState) => {
+        state.statsTelemetry.telemetryData.data[1] = data;
+      });
     },
-    setLastBlock: (
-      state: TelemetryState,
-      action: PayloadAction<TelemetryData["data"][2]>
-    ) => {
-      state.telemetryData.data[2] = action.payload;
+    setLastBlock: (data: TelemetryData["data"][2]) => {
+      set((state: AppState) => {
+        state.statsTelemetry.telemetryData.data[2] = data;
+      });
     },
-    setMemPoolInterval: (
-      state: TelemetryState,
-      action: PayloadAction<number>
-    ) => {
-      state.telemetryChartData.data[0].data.pickedInterval = action.payload;
+    setMemPoolInterval: (data: number) => {
+      set((state: AppState) => {
+        state.statsTelemetry.telemetryChartData.data[0].data.pickedInterval =
+          data;
+      });
     },
   },
 });
-
-export const {
-  setFinalizedBlock,
-  setAverageTime,
-  setLastBlock,
-  setMemPoolInterval,
-} = statsTelemetrySlice.actions;
-
-export const selectTelemetryData = (state: RootState) =>
-  state.statsTelemetry.telemetryData;
-export const selectTelemetryChartData = (state: RootState) =>
-  state.statsTelemetry.telemetryChartData;
-
-export default statsTelemetrySlice.reducer;

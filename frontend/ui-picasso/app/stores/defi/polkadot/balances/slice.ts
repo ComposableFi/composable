@@ -3,8 +3,8 @@ import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { TokenId, TOKENS } from "@/defi/Tokens";
 
-import { RootState } from "@/stores/root";
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { NamedSet } from "zustand/middleware";
+import { AppState, StoreSlice } from "../../../types";
 
 export interface SubstrateAsset {
   balance: string;
@@ -35,38 +35,35 @@ const initialState: { [chainId in SubstrateNetworkId]: SubstrateAsset } =
     };
   }, {} as { [chainId in SubstrateNetworkId]: SubstrateAsset });
 
-export const substrateBalancesSlice = createSlice({
-  name: "SubstrateBalances",
-  initialState,
-  reducers: {
-    updateBalance: (
-      state,
-      action: PayloadAction<{
+export interface SubstrateBalancesSlice {
+  substrateBalances: { [chainId in SubstrateNetworkId]: SubstrateAsset } & {
+    updateBalance: (data: {
+      substrateNetworkId: SubstrateNetworkId;
+      balance: string;
+    }) => void;
+    clearBalance: () => void;
+  };
+}
+
+export const createSubstrateBalancesSlice: StoreSlice<SubstrateBalancesSlice> =
+  (set: NamedSet<SubstrateBalancesSlice>) => ({
+    substrateBalances: {
+      ...initialState,
+      updateBalance: (data: {
         substrateNetworkId: SubstrateNetworkId;
         balance: string;
-      }>
-    ) => {
-      const { substrateNetworkId, balance } = action.payload;
-      state[substrateNetworkId].balance = balance;
+      }) => {
+        set((state: AppState) => {
+          const { substrateNetworkId, balance } = data;
+          state.substrateBalances[substrateNetworkId].balance = balance;
+        });
+      },
+      clearBalance: () => {
+        set((state: AppState) => {
+          DEFI_CONFIG.networkIds.forEach((network) => {
+            state.substrateBalances[network].balance = "0";
+          });
+        });
+      },
     },
-    clearBalance: (state) => {
-      const networks = Object.keys(state).map(
-        (substrateNetworkIdStr) => substrateNetworkIdStr as SubstrateNetworkId
-      );
-      for (
-        let networkIndex = 0;
-        networkIndex < networks.length;
-        networkIndex++
-      ) {
-        state[networks[networkIndex]].balance = "0";
-      }
-    },
-  },
-});
-
-export const { updateBalance, clearBalance } = substrateBalancesSlice.actions;
-
-export const selectSubstrateBalances = (state: RootState) =>
-  state.substrateBalances;
-
-export default substrateBalancesSlice.reducer;
+  });

@@ -1,7 +1,6 @@
 import { BigNumberInput, Input, Modal } from "@/components";
-import { useAppDispatch, useAppSelector } from "@/hooks/store";
 import { AssociationMode } from "@/stores/defi/polkadot/crowdloanRewards/slice";
-import { closeKSMClaimModal } from "@/stores/ui/uiSlice";
+import { useStore } from "@/stores/root";
 import {
   Box,
   Button,
@@ -45,8 +44,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
   onChange,
 }) => {
   const theme = useTheme();
-  const isClaimingKSM = useAppSelector((state) => state.ui.isClaimingKSM);
-  const dispatch = useAppDispatch();
+  const { isClaimingKSM, closeKSMClaimModal } = useStore(({ ui }) => ui);
   const atc =
     typeof availableToClaim === "number"
       ? new BigNumber(availableToClaim)
@@ -263,7 +261,7 @@ export const KSMClaimForm: React.FC<KSMClaimFormProps> = ({
         </Box>
       </Paper>
       <Modal
-        onClose={() => dispatch(closeKSMClaimModal())}
+        onClose={() => closeKSMClaimModal()}
         open={isClaimingKSM}
         maxWidth="md"
         dismissible

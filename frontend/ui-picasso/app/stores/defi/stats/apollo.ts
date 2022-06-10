@@ -1,5 +1,5 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { RootState } from "@/stores/root";
+import { NamedSet } from "zustand/middleware";
+import { AppState, StoreSlice } from "../../types";
 import StatsDummyData from "./dummyData";
 
 interface ApolloTableData {
@@ -19,21 +19,21 @@ const initialState: ApolloState = {
   assets: StatsDummyData.APOLLO.assets,
 };
 
-export const statsApolloSlice = createSlice({
-  name: "statsApollo",
-  initialState,
-  reducers: {
-    setApolloAssets: (
-      state: ApolloState,
-      action: PayloadAction<ApolloTableData>
-    ) => {
-      state.assets = { ...state.assets, ...action.payload };
+export interface StatsApolloSlice {
+  statsApollo: ApolloState & {
+    setApolloAssets: (data: ApolloTableData) => void;
+  };
+}
+
+export const createStatsApolloSlice: StoreSlice<StatsApolloSlice> = (
+  set: NamedSet<StatsApolloSlice>
+) => ({
+  statsApollo: {
+    ...initialState,
+    setApolloAssets: (data: ApolloTableData) => {
+      set((state: AppState) => {
+        state.statsApollo.assets = { ...state.statsApollo.assets, ...data };
+      });
     },
   },
 });
-
-export const { setApolloAssets } = statsApolloSlice.actions;
-
-export const selectApolloData = (state: RootState) => state.statsApollo.assets;
-
-export default statsApolloSlice.reducer;

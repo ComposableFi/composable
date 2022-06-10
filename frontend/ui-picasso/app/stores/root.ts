@@ -1,31 +1,40 @@
-import { configureStore } from "@reduxjs/toolkit";
-import uiReducer from "./ui/uiSlice";
-import metamaskReducer from "./defi/metamask";
-import substrateBalancesReducer from "./defi/polkadot/balances/slice";
-import crowdloanRewardsSlice from "./defi/polkadot/crowdloanRewards/slice";
-import transfersReducer from "./defi/transfers";
-import polkadotReducer from "./defi/polkadot";
-import stakingReducer from "./defi/staking";
-import statsOverviewReducer from "./defi/stats/overview";
-import statsTelemetryReducer from "./defi/stats/telemetry";
-import statsTreasuryReducer from "./defi/stats/treasury";
-import statsApolloReducer from "./defi/stats/apollo";
+import create, { GetState, State } from "zustand";
+import { devtools, NamedSet } from "zustand/middleware";
+import { createUISlice } from "./ui/ui";
+import {
+  createCrowdloanRewardsSlice,
+  createMetamaskSlice,
+  createPolkadotSlice,
+  createStakingSlice,
+  createStatsApolloSlice,
+  createStatsOverviewSlice,
+  createStatsTelemetrySlice,
+  createStatsTreasurySlice,
+  createSubstrateBalancesSlice,
+  createTransfersSlice,
+} from "./defi";
 
-export const store = configureStore({
-  reducer: {
-    ui: uiReducer,
-    metamask: metamaskReducer,
-    substrateBalances: substrateBalancesReducer,
-    crowdloanRewards: crowdloanRewardsSlice,
-    transfers: transfersReducer,
-    polkadot: polkadotReducer,
-    staking: stakingReducer,
-    statsOverview: statsOverviewReducer,
-    statsTelemetry: statsTelemetryReducer,
-    statsTreasury: statsTreasuryReducer,
-    statsApollo: statsApolloReducer,
-  },
-});
+import immer from "./middlewares/immer";
+import { AppState, CustomStateCreator } from "./types";
 
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+export const createStore = <TState extends State>(
+  storeCreator: CustomStateCreator<TState>
+) => {
+  return create(devtools(immer(storeCreator)));
+};
+
+export const useStore = createStore<AppState>(
+  (set: NamedSet<any>, get: GetState<any>) => ({
+    ...createUISlice(set, get),
+    ...createTransfersSlice(set, get),
+    ...createPolkadotSlice(set, get),
+    ...createMetamaskSlice(set, get),
+    ...createStakingSlice(set, get),
+    ...createStatsApolloSlice(set, get),
+    ...createStatsOverviewSlice(set, get),
+    ...createStatsTelemetrySlice(set, get),
+    ...createStatsTreasurySlice(set, get),
+    ...createSubstrateBalancesSlice(set, get),
+    ...createCrowdloanRewardsSlice(set, get),
+  })
+);

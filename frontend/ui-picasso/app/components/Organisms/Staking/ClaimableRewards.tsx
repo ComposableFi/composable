@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import { FC } from "react";
 import { TokenAsset } from "@/components";
-import { useAppSelector } from "@/hooks/store";
+import { useStore } from "@/stores/root";
 
 const boxStyles = (theme: Theme) => ({
   display: "flex",
@@ -24,9 +24,10 @@ const boxStyles = (theme: Theme) => ({
 export const ClaimableRewards: FC<{
   onClaimButtonClick: () => void;
 }> = ({ onClaimButtonClick }) => {
-  const { pica, pablo, angl } = useAppSelector(
-    (state) => state.staking.claimableRewards
+  const { pica, pablo, angl } = useStore(
+    ({ staking }) => staking.claimableRewards
   );
+
   const theme = useTheme();
 
   return (

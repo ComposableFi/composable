@@ -1,16 +1,13 @@
 import { ApiPromise } from "@polkadot/api";
 import { Signer } from "@polkadot/api/types";
-import { AnyAction, Dispatch } from "@reduxjs/toolkit";
 import BigNumber from "bignumber.js";
 import Executor from "substrate-react/dist/Executor";
 
 export class CrowdloanRewards {
   api: ApiPromise;
-  dispatch: Dispatch<AnyAction>;
 
-  constructor(api: ApiPromise, dispatch: Dispatch<AnyAction>) {
+  constructor(api: ApiPromise) {
     this.api = api;
-    this.dispatch = dispatch;
   }
   /**
    * Send association to picasso chain

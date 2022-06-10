@@ -8,7 +8,7 @@ import {
   MyBondingsTable,
   PageTitle,
 } from "@/components";
-import { useAppSelector } from "@/hooks/store";
+import { useStore } from "@/stores/root";
 import { ConnectToStakeCover } from "@/components/Molecules/ConnectToStakeCover";
 import { AllBondsTable } from "@/components/Molecules/AllBondsTable";
 import { AllBondsAsset, BondingAsset } from "@/stores/defi/polkadot";
@@ -22,8 +22,7 @@ const standardPageSize = {
 const TreasuryBonding: NextPage = () => {
   const theme = useTheme();
   const { extensionStatus } = useContext(ParachainContext);
-  const myBondings = useAppSelector((state) => state.polkadot.myBondingAssets);
-  const allBonds = useAppSelector((state) => state.polkadot.allBonds);
+  const { myBondingAssets, allBonds } = useStore(({ polkadot }) => polkadot);
   const router = useRouter();
 
   const handleActiveBondsClick = (asset: BondingAsset) => {
@@ -96,7 +95,7 @@ const TreasuryBonding: NextPage = () => {
                 >
                   <Typography mb={2}>Your Active Bonds</Typography>
                   <MyBondingsTable
-                    assets={myBondings.picasso}
+                    assets={myBondingAssets.picasso}
                     onRowClick={handleActiveBondsClick}
                   />
                 </Box>
