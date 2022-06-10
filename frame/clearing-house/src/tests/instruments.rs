@@ -4,7 +4,7 @@ use crate::{
 		assets::AssetId,
 		runtime::{ExtBuilder, MarketId, Runtime, TestPallet, VammId},
 	},
-	tests::{as_inner, zero_to_one_open_interval, Market, Position},
+	tests::{as_inner, bounded_decimal, zero_to_one_open_interval, Market, Position},
 	Direction,
 };
 use composable_traits::{clearing_house::Instruments, time::DurationSeconds};
@@ -15,14 +15,6 @@ use sp_runtime::{traits::Zero, FixedI128, FixedPointNumber};
 // ----------------------------------------------------------------------------------------------------
 //                                             Prop Compose
 // ----------------------------------------------------------------------------------------------------
-
-prop_compose! {
-	fn bounded_decimal()(
-		inner in as_inner(-1_000_000_000)..as_inner(1_000_000_000)
-	) -> FixedI128 {
-		FixedI128::from_inner(inner)
-	}
-}
 
 prop_compose! {
 	fn any_duration()(duration in any::<DurationSeconds>()) -> DurationSeconds {

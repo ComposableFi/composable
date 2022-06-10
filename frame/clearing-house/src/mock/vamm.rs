@@ -21,7 +21,7 @@ pub mod pallet {
 	};
 	use sp_std::ops::Add;
 
-	use crate::math::UnsignedMath;
+	use crate::math::{FixedPointMath, UnsignedMath};
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                    Declaration Of The Pallet Type
@@ -84,8 +84,9 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		FailedToCreateVamm,
+		FailedToCalculatePrice,
 		FailedToCalculateTwap,
+		FailedToCreateVamm,
 		FailedToExecuteSwap,
 		FailedToSimulateSwap,
 	}
@@ -112,6 +113,10 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn _price)]
 	pub type Price<T: Config> = StorageValue<_, T::Decimal, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn _price_impact_of)]
+	pub type PriceImpacts<T: Config> = StorageMap<_, Twox64Concat, T::VammId, T::Decimal>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn _price_of)]
@@ -156,7 +161,9 @@ pub mod pallet {
 			vamm_id: Self::VammId,
 			asset_type: AssetType,
 		) -> Result<Self::Decimal, DispatchError> {
-			unimplemented!()
+			Self::_price_of(&vamm_id)
+				.or_else(Self::_price)
+				.ok_or_else(|| Error::<T>::FailedToCalculatePrice.into())
 		}
 
 		fn get_twap(
@@ -184,6 +191,10 @@ pub mod pallet {
 				// This is a very crude emulation of slippage, as actual slippage also involves
 				// changing the price, for which there's not a unique way to do.
 				output.output.try_sub_mut(&slippage.saturating_mul_int(output.output))?;
+			}
+
+			if let Some(ref factor) = Self::_price_impact_of(&config.vamm_id) {
+				Self::set_price_of(&config.vamm_id, Some(price.try_mul(factor)?));
 			}
 
 			Ok(output)
@@ -217,6 +228,12 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn set_price(price: Option<T::Decimal>) {
 			Price::<T>::set(price)
+		}
+
+		pub fn set_price_impact_of(vamm_id: &T::VammId, factor: Option<T::Decimal>) {
+			PriceImpacts::<T>::mutate_exists(vamm_id, |f| {
+				*f = factor;
+			});
 		}
 
 		pub fn set_slippage(slippage: Option<T::Decimal>) {

@@ -342,6 +342,14 @@ impl MarketInitializer for sp_io::TestExternalities {
 // ----------------------------------------------------------------------------------------------------
 
 prop_compose! {
+	fn bounded_decimal()(
+		inner in as_inner(-1_000_000_000)..as_inner(1_000_000_000)
+	) -> FixedI128 {
+		FixedI128::from_inner(inner)
+	}
+}
+
+prop_compose! {
 	fn zero_to_one_open_interval()(
 		float in (0.0..1.0_f64).prop_filter("Zero not included in (0, 1)", |num| num > &0.0)
 	) -> f64 {
@@ -513,6 +521,27 @@ proptest! {
 					}
 				};
 			})
+	}
+}
+
+proptest! {
+	#[test]
+	fn can_set_price_impact_for_mock_vamm_swap(vamm_id in any::<VammId>(), factor in any_price()) {
+		ExtBuilder::default()
+			.build()
+			.execute_with(|| {
+				VammPallet::set_price_of(&vamm_id, Some(100.into()));
+				VammPallet::set_price_impact_of(&vamm_id, Some(factor));
+
+				assert_ok!(VammPallet::swap(&SwapConfig {
+					vamm_id,
+					asset: AssetType::Quote,
+					input_amount: as_balance(100),
+					direction: VammDirection::Add,
+					output_amount_limit: as_balance(1),
+				}));
+				assert_ok!(VammPallet::get_price(vamm_id, AssetType::Base), factor * 100.into());
+			});
 	}
 }
 
