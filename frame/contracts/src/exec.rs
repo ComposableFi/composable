@@ -962,6 +962,7 @@ where
 								sub_events.push(cosmwasm_event);
 							}
 						};
+						sp_io::storage::start_transaction();
 						let sub_message_result = match msg {
 							CosmosMsg::Custom(ComposableMsg::XCVM { funds, program }) => {
 								log::debug!(target: "runtime::contracts", "CustomMsg::XCVM");
