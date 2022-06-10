@@ -10,10 +10,10 @@ codec = { package = "parity-scale-codec", version = "3.0.0", default-features = 
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
+schemars = { version = "0.8.1", optional = true }
 serde = { version = "1", default-features = false, features = ["derive"] }
 serde_json = { version = "1", default-features = false, features = ["alloc"] }
-schemars = { version = "0.8.1", optional = true }
 
 [features]
 default = []
-std = [ "dep:schemars" ]
+std = ["dep:schemars"]

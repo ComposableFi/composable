@@ -1,7 +1,7 @@
-use alloc::collections::BTreeMap;
+use alloc::{collections::BTreeMap, string::ToString};
 use codec::{Decode, Encode};
 use scale_info::TypeInfo;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
 #[derive(
@@ -47,18 +47,51 @@ impl From<u32> for XCVMAsset {
 	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
 )]
 #[repr(transparent)]
-pub struct XCVMTransfer(pub BTreeMap<XCVMAsset, u128>);
+pub struct Displayed<T>(
+	#[serde(bound(serialize = "T: core::fmt::Display"))]
+	#[serde(serialize_with = "serialize_as_string")]
+	#[serde(bound(deserialize = "T: core::str::FromStr"))]
+	#[serde(deserialize_with = "deserialize_from_string")]
+	pub T,
+);
+
+fn serialize_as_string<S: Serializer, T: core::fmt::Display>(
+	t: &T,
+	serializer: S,
+) -> Result<S::Ok, S::Error> {
+	serializer.serialize_str(&t.to_string())
+}
+
+fn deserialize_from_string<'de, D: Deserializer<'de>, T: core::str::FromStr>(
+	deserializer: D,
+) -> Result<T, D::Error> {
+	let s = alloc::string::String::deserialize(deserializer)?;
+	s.parse::<T>().map_err(|_| serde::de::Error::custom("Parse from string failed"))
+}
+
+impl<T> From<T> for Displayed<T> {
+	fn from(x: T) -> Self {
+		Displayed(x)
+	}
+}
+
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(
+	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
+)]
+#[repr(transparent)]
+pub struct XCVMTransfer(pub BTreeMap<XCVMAsset, Displayed<u128>>);
 
 impl XCVMTransfer {
-  pub fn empty() -> Self {
-    XCVMTransfer(BTreeMap::new())
-  }
+	pub fn empty() -> Self {
+		XCVMTransfer(BTreeMap::new())
+	}
 }
 
 impl<U, V> From<BTreeMap<U, V>> for XCVMTransfer
 where
 	U: Into<XCVMAsset>,
-	V: Into<u128>,
+	V: Into<Displayed<u128>>,
 {
 	fn from(assets: BTreeMap<U, V>) -> Self {
 		XCVMTransfer(
@@ -73,7 +106,7 @@ where
 impl<U, V, const K: usize> From<[(U, V); K]> for XCVMTransfer
 where
 	U: Into<XCVMAsset>,
-	V: Into<u128>,
+	V: Into<Displayed<u128>>,
 {
 	fn from(x: [(U, V); K]) -> Self {
 		XCVMTransfer(x.into_iter().map(|(asset, amount)| (asset.into(), amount.into())).collect())
@@ -82,6 +115,12 @@ where
 
 impl From<XCVMTransfer> for BTreeMap<u32, u128> {
 	fn from(XCVMTransfer(assets): XCVMTransfer) -> Self {
-		assets.into_iter().map(|(XCVMAsset(asset), amount)| (asset, amount)).collect()
+		assets.into_iter().map(|(XCVMAsset(asset), amount)| (asset, amount.0)).collect()
+	}
+}
+
+impl From<XCVMTransfer> for BTreeMap<XCVMAsset, u128> {
+	fn from(XCVMTransfer(assets): XCVMTransfer) -> Self {
+		assets.into_iter().map(|(asset, amount)| (asset, amount.0)).collect()
 	}
 }

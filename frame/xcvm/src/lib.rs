@@ -217,9 +217,12 @@ pub mod pallet {
 		type AccountId = AccountIdOf<T>;
 		type Input = (XCVMTransfer, Program);
 		type Output = DispatchResult;
-		fn execute(who: &Self::AccountId, (XCVMTransfer(funds), program): Self::Input) -> Self::Output {
+		fn execute(
+			who: &Self::AccountId,
+			(XCVMTransfer(funds), program): Self::Input,
+		) -> Self::Output {
 			let program_account = Self::program_account(program.nonce, who.clone());
-			for (asset, amount) in funds {
+			for (asset, Displayed(amount)) in funds {
 				let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
 					.map_err(|_| Error::<T>::UnknownAsset)?;
 				T::Assets::transfer(
@@ -247,7 +250,7 @@ pub mod pallet {
 					XCVMInstruction::Transfer { to, assets: XCVMTransfer(assets) } => {
 						let to = AccountIdOf::<T>::try_from(&to[..])
 							.map_err(|_| Error::<T>::MalformedAccount)?;
-						for (asset, amount) in assets {
+						for (asset, Displayed(amount)) in assets {
 							let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
 								.map_err(|_| Error::<T>::UnknownAsset)?;
 							T::Assets::transfer(
@@ -287,7 +290,7 @@ pub mod pallet {
 						let now = frame_system::Pallet::<T>::block_number();
 						let network_txs = assets
 							.into_iter()
-							.map(|(asset, amount)| {
+							.map(|(asset, Displayed(amount))| {
 								let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
 									.map_err(|_| Error::<T>::UnknownAsset)?;
 								BridgeOf::<T>::transfer_to(
