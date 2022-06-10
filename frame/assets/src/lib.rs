@@ -80,7 +80,7 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::weights::WeightInfo;
-	use composable_support::validation::Validate;
+	use composable_support::validation::{Validate, Validated};
 	use composable_traits::{
 		currency::{AssetIdLike, BalanceLike, CurrencyFactory, RangeId},
 		governance::{GovernanceRegistry, SignedRawOrigin},
@@ -98,10 +98,22 @@ pub mod pallet {
 		},
 	};
 	use frame_system::{ensure_root, ensure_signed, pallet_prelude::OriginFor};
+	use num_traits::Zero;
 	use orml_traits::GetByKey;
 	use primitives::currency::ValidateCurrencyId;
-	// use primitives::currency::{ValidCurrency, ValidateCurrencyId};
 	use sp_runtime::{traits::Convert, DispatchError};
+
+	pub struct ValidateAssetId<T> {
+		_marker: PhantomData<T>,
+	}
+
+	impl<T: Config> Validate<T::AssetId, ValidateAssetId<T>> for ValidateAssetId<T> {
+		fn validate(input: T::AssetId) -> Result<T::AssetId, &'static str> {
+			T::ValidCurrency::validate(input)
+		}
+	}
+
+	pub type ValidatedAsset<T> = Validated<<T as Config>::AssetId, ValidateAssetId<T>>;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -119,7 +131,6 @@ pub mod pallet {
 		/// origin of admin of this pallet
 		type AdminOrigin: EnsureOrigin<Self::Origin>;
 		type Convert: Convert<u64, Self::Balance>;
-		// type ValidCurrency: ValidCurrency<Self::AssetId>;
 		type ValidCurrency: Validate<Self::AssetId, ValidateCurrencyId>;
 	}
 
@@ -762,7 +773,7 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::set_balance(who, amount)
 				}
-				valid_asset::<T>(asset)?;
+				ValidatedAsset::<T>::new(asset).map_err(|_| Error::<T>::InvalidCurrency)?;
 				<<T as Config>::MultiCurrency>::set_balance(asset, who, amount)
 			}
 
@@ -990,8 +1001,11 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::total_issuance()
 				}
-				if valid_asset::<T>(asset).is_err() {
-					return T::Convert::convert(0_u64)
+				// if valid_asset::<T>(asset).is_err() {
+				// 	return T::Convert::convert(0_u64)
+				// }
+				if ValidatedAsset::<T>::new(asset).is_err() {
+					return Self::Balance::zero()
 				}
 				<<T as Config>::MultiCurrency>::total_issuance(asset)
 			}
