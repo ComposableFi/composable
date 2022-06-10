@@ -12,15 +12,16 @@ pub mod pallet {
 		vamm::{AssetType, Direction, SwapConfig, SwapOutput, SwapSimulationConfig, Vamm},
 	};
 	use frame_support::pallet_prelude::*;
-	use num_traits::{CheckedDiv, One};
 	use scale_info::TypeInfo;
 	use sp_arithmetic::traits::Unsigned;
 	use sp_core::U256;
 	use sp_runtime::{
-		traits::{Saturating, Zero},
+		traits::{CheckedDiv, One, Saturating, Zero},
 		ArithmeticError, FixedPointNumber,
 	};
 	use sp_std::ops::Add;
+
+	use crate::math::UnsignedMath;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                    Declaration Of The Pallet Type
@@ -109,20 +110,24 @@ pub mod pallet {
 	pub type NextVammId<T: Config> = StorageValue<_, T::VammId, OptionQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn hardcoded_twap)]
-	pub type Twap<T: Config> = StorageValue<_, T::Decimal, OptionQuery>;
-
-	#[pallet::storage]
 	#[pallet::getter(fn _price)]
 	pub type Price<T: Config> = StorageValue<_, T::Decimal, OptionQuery>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn _twap_of)]
-	pub type Twaps<T: Config> = StorageMap<_, Twox64Concat, T::VammId, T::Decimal>;
-
-	#[pallet::storage]
 	#[pallet::getter(fn _price_of)]
 	pub type Prices<T: Config> = StorageMap<_, Twox64Concat, T::VammId, T::Decimal>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn _slippage)]
+	pub type Slippage<T: Config> = StorageValue<_, T::Decimal, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn hardcoded_twap)]
+	pub type Twap<T: Config> = StorageValue<_, T::Decimal, OptionQuery>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn _twap_of)]
+	pub type Twaps<T: Config> = StorageMap<_, Twox64Concat, T::VammId, T::Decimal>;
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Trait Implementations
@@ -158,30 +163,30 @@ pub mod pallet {
 			vamm: &Self::VammId,
 			asset_type: AssetType,
 		) -> Result<Self::Decimal, DispatchError> {
-			if let Some(twap) = Self::_twap_of(vamm) {
-				Ok(twap)
-			} else if let Some(twap) = Self::hardcoded_twap() {
-				Ok(twap)
-			} else {
-				Err(Error::<T>::FailedToCalculateTwap.into())
-			}
+			Self::_twap_of(vamm)
+				.or_else(Self::hardcoded_twap)
+				.ok_or_else(|| Error::<T>::FailedToCalculateTwap.into())
 		}
 
 		fn swap(config: &Self::SwapConfig) -> Result<SwapOutputOf<T>, DispatchError> {
 			let negative = config.direction == Direction::Remove;
-			if let Some(price) = Self::_price_of(&config.vamm_id) {
-				Ok(SwapOutputOf::<T> {
-					output: Self::get_value(config.input_amount, &config.asset, price)?,
-					negative,
-				})
-			} else if let Some(price) = Self::_price() {
-				Ok(SwapOutputOf::<T> {
-					output: Self::get_value(config.input_amount, &config.asset, price)?,
-					negative,
-				})
-			} else {
-				Err(Error::<T>::FailedToExecuteSwap.into())
+
+			let price = Self::_price_of(&config.vamm_id)
+				.or_else(Self::_price)
+				.ok_or(Error::<T>::FailedToExecuteSwap)?;
+
+			let mut output = SwapOutputOf::<T> {
+				output: Self::get_value(config.input_amount, &config.asset, price)?,
+				negative,
+			};
+
+			if let Some(ref slippage) = Self::_slippage() {
+				// This is a very crude emulation of slippage, as actual slippage also involves
+				// changing the price, for which there's not a unique way to do.
+				output.output.try_sub_mut(&slippage.saturating_mul_int(output.output))?;
 			}
+
+			Ok(output)
 		}
 
 		fn swap_simulation(
@@ -212,6 +217,10 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		pub fn set_price(price: Option<T::Decimal>) {
 			Price::<T>::set(price)
+		}
+
+		pub fn set_slippage(slippage: Option<T::Decimal>) {
+			Slippage::<T>::set(slippage)
 		}
 
 		pub fn set_price_of(vamm_id: &T::VammId, price: Option<T::Decimal>) {

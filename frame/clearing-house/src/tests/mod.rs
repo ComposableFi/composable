@@ -405,6 +405,64 @@ prop_compose! {
 // ----------------------------------------------------------------------------------------------------
 
 proptest! {
+	#[test]
+	fn can_set_global_slippage_for_mock_vamm(vamm_id in any::<VammId>()) {
+		ExtBuilder::default().build().execute_with(|| {
+			// Set arbitrary price
+			VammPallet::set_price(Some(1.into()));
+
+			// Ensure that the global slippage is set to 0.0 by default
+			let output = VammPallet::swap(&SwapConfig {
+				vamm_id,
+				asset: AssetType::Quote,
+				input_amount: as_balance(100),
+				direction: VammDirection::Add,
+				output_amount_limit: as_balance(100),
+			})
+			.unwrap();
+			assert_eq!(output.output, as_balance(100));
+
+			// Set global slippage to 0.1
+			VammPallet::set_slippage(Some((1, 10).into()));
+			let output = VammPallet::swap(&SwapConfig {
+				vamm_id,
+				asset: AssetType::Quote,
+				input_amount: as_balance(100),
+				direction: VammDirection::Add,
+				output_amount_limit: as_balance(90),
+			})
+			.unwrap();
+			// Buying base asset with slippage gets you less
+			assert_eq!(output.output, as_balance(90));
+
+			// Keep global slippage to 0.1
+			let output = VammPallet::swap(&SwapConfig {
+				vamm_id,
+				asset: AssetType::Base,
+				input_amount: as_balance(100),
+				direction: VammDirection::Add,
+				output_amount_limit: as_balance(90),
+			})
+			.unwrap();
+			// Selling base asset with slippage gets you less
+			assert_eq!(output.output, as_balance(90));
+
+			// Keep global slippage to 0.1
+			let output = VammPallet::swap(&SwapConfig {
+				vamm_id,
+				asset: AssetType::Quote,
+				input_amount: as_balance(100),
+				direction: VammDirection::Remove,
+				output_amount_limit: as_balance(90),
+			})
+			.unwrap();
+			// Shorting base asset with slippage gets you less
+			assert_eq!(output.output, as_balance(90));
+		})
+	}
+}
+
+proptest! {
 	// Can we guarantee that any::<Option<Value>> will generate at least one of `Some` and `None`?
 	#[test]
 	fn mock_oracle_asset_support_reflects_genesis_config(oracle_asset_support in any::<Option<bool>>()) {
