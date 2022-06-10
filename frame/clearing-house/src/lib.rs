@@ -1072,8 +1072,8 @@ pub mod pallet {
 					Zero::zero(),
 				)?;
 
-				let pnl = exit_value.try_sub(&entry_value)?;
 				// Realize PnL
+				let pnl = exit_value.try_sub(&entry_value)?;
 				collateral = Self::update_margin_with_pnl(&collateral, &pnl)?;
 
 				// Charge fees
