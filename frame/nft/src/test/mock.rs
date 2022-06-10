@@ -3,7 +3,7 @@
 use composable_tests_helpers::test::block::{process_and_progress_blocks, MILLISECS_PER_BLOCK};
 use frame_support::{
 	parameter_types,
-	traits::{ConstU64, Everything},
+	traits::{ConstU32, ConstU64, Everything},
 };
 use frame_system as system;
 use sp_core::H256;
@@ -28,14 +28,10 @@ frame_support::construct_runtime!(
 	}
 );
 
-parameter_types! {
-	pub const MaxProperties: u32 = 16;
-}
-
 impl crate::Config for MockRuntime {
 	type Event = Event;
 
-	type MaxProperties = MaxProperties;
+	type MaxProperties = ConstU32<16>;
 }
 
 impl pallet_timestamp::Config for MockRuntime {

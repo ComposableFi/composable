@@ -137,7 +137,7 @@ Positions may be updated only on behalf of users. In that case, they will captur
 
 Assuming a user has a configuration for `PICA` that allows us to stake for a month, she can `stake` an amount `X`` for once month duration with the amount larger than ED.
 The reward multiplier elevates the computed share of the staking pool, the longer you stake, the higher your share.
-Let's say we have a reward multiplier of`0.8`for a ``MONTH`, if I stake `X PICA`, my share will become `X * 0.8`.
+Let's say we have a reward multiplier of `0.8` for a `MONTH`, if I stake `X PICA`, my share will become `X * 0.8`.
 
 Once she staked `X` tokens, the pallet will create a `position` for an account.
 This position allows computing the user's share and the
@@ -207,7 +207,7 @@ A user may add some amount to her stake and increase its share.
 
 In case there is a time lock with share configuration not decreasing with time with early unstake penalty and reward multiplier, then the remaining time lock change incentives user to extend amount in existing position.
 
-In other cases,  the time is set to what was provided as a new lock period by the user.
+In other cases, the time is set to what was provided as a new lock period by the user.
 
 Shares are recalculated accordingly.
 
@@ -228,7 +228,7 @@ print(remaining) # reduced penalized remaining time, so it is better than create
 
 Position owner may increase lock time.
 
-It can set configure o the same time or larger possible.
+It can set configure to the same time or larger possible.
 
 She can decrease a time lock only after a position was expired.
 
@@ -278,7 +278,7 @@ A user may extend share with time lock too.
 **Examples**
 
 `10000 PICA` staked. After one month, the position holds `1000 PICA` rewards.
-A user may increase hist shares to `11000` PICA.
+A user may increase their shares to `11000` PICA.
 
 ## Notes
 

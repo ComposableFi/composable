@@ -1,11 +1,10 @@
 use codec::{Decode, Encode};
 use composable_tests_helpers::test::helper::assert_last_event;
 pub use composable_traits::nft::NftClass;
-use composable_traits::nft::{Key, Properties, ReferenceNft, Value};
+use composable_traits::nft::{Key, ReferenceNft, Value};
 use frame_support::{
 	assert_ok, bounded_btree_map,
 	traits::tokens::nonfungibles::{Inspect, Mutate},
-	BoundedBTreeMap,
 };
 use std::{
 	collections::{BTreeMap, BTreeSet},
@@ -15,7 +14,7 @@ use std::{
 use crate::{
 	pallet::{ClassInstances, Event as NftEvent, Instance, OwnerInstances},
 	test::{
-		mock::{Event, MaxProperties, MockRuntime},
+		mock::{Event, MockRuntime},
 		ALICE,
 	},
 	AccountIdOf, NftInstanceId, Pallet,

@@ -113,7 +113,7 @@ mod set_attribute {
 				&NftClass::STAKING,
 				&nft_to_add_attribute_to,
 				ALICE,
-				&[(key.clone(), value.clone())],
+				&[(key.clone(), value)],
 			);
 
 			let key2 = Key("some other key".into());

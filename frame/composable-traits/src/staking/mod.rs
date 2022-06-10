@@ -38,7 +38,7 @@ pub trait Shares {
 	fn shares(&self) -> Self::Balance;
 }
 
-/// is unaware if concrete positions
+/// is unaware of concrete positions
 pub trait ProtocolStaking {
 	type AccountId;
 	type AssetId;

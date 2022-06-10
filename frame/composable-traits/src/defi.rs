@@ -155,6 +155,7 @@ impl<AssetId: PartialEq> CurrencyPair<AssetId> {
 	pub fn as_slice(&self) -> &[AssetId] {
 		#[allow(trivial_casts)]
 		unsafe {
+			// used often and we avoid clone here
 			sp_std::slice::from_raw_parts(self as *const Self as *const AssetId, 2)
 		}
 	}
