@@ -21,5 +21,4 @@ book/ @0xbrainjar2
 frontend/ @ComposableFi/ui @ComposableFi/blockchain-integrations
 
 # Runtime Integration Tests
-integration-tests/runtime-tests/ @Dom-Roth
-
+integration-tests/runtime-tests/ @Dom-Roth @dzmitry-lahoda
