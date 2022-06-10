@@ -35,10 +35,8 @@ use sp_runtime::{
 	transaction_validity::TransactionValidityError,
 };
 
-use authority_id_wrapper::*;
+use super::authority_id_wrapper::*;
 use sp_runtime::testing::{Block, Digest, Header as HeaderType, TestSignature, TestXt, H256};
-
-pub mod authority_id_wrapper;
 
 pub struct CustomOnRuntimeUpgrade;
 impl OnRuntimeUpgrade for CustomOnRuntimeUpgrade {
