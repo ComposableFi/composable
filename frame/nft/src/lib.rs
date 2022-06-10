@@ -137,6 +137,7 @@ pub mod pallet {
 	>;
 
 	impl<T: Config> Pallet<T> {
+		#[allow(dead_code)] // for now, will fix as soon as used
 		pub(crate) fn get_next_nft_id(
 			class: &<Self as Inspect<AccountIdOf<T>>>::ClassId,
 		) -> Result<u128, DispatchError> {
