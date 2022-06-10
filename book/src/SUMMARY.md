@@ -83,7 +83,7 @@
 
 # 🩺 AUDITS AND FIXES
 - [Audit Results, Recommendations, and Remediations](./audits/audit-results-recommendations-and-remediations.md)
-- [Code Fixes](./audits/code-fixes.md)
+
 
 # ❓ FAQS
 - [FAQs](./faqs/faqs.md)

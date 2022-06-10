@@ -6,9 +6,9 @@ import {
   Grid,
   alpha,
 } from "@mui/material";
-import { useAppSelector } from "@/hooks/store";
+import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
+import { PoolDetailsProps } from ".";
 import { BaseAsset } from "@/components/Atoms";
-import { TOKENS } from "@/defi/Tokens";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -53,33 +53,32 @@ const Item: React.FC<ItemProps> = ({
   );
 }
 
-export const PoolStatistics: React.FC<BoxProps> = ({
+export const PoolStatistics: React.FC<PoolDetailsProps> = ({
+  poolId,
   ...boxProps
 }) => {
   const {
-    poolValue,
-    rewardsLeft,
-    volume,
-    fee24h,
-    apr,
-    transactions24h,
-  } = useAppSelector(
-    (state) => state.pool.selectedPool
-  );
+    poolStats,
+    tokensLocked,
+  } = useLiquidityPoolDetails(poolId);
 
   return (
     <Box {...boxProps}>
       <Grid container spacing={4}>
         <Grid item {...twoColumnPageSize}>
-          <Item label="Pool value" value={`$${poolValue.toFormat()}`} />
+          <Item label="Pool value" value={`$${
+            tokensLocked.value.baseValue.plus(
+              tokensLocked.value.quoteValue
+            )
+          }`} />
         </Grid>
         <Grid item {...twoColumnPageSize}>
           <Item label="Rewards left" py={2}>
-            {rewardsLeft.map(({tokenId, value}) => (
+            {poolStats.dailyRewards.map((asset) => (
               <BaseAsset
-                key={tokenId}
-                icon={TOKENS[tokenId].icon}
-                label={value.toFormat()}
+                key={asset.assetId}
+                icon={asset.icon}
+                label={asset.rewardAmountLeft}
                 justifyContent="center"
                 mt={0.5}
               />
@@ -87,16 +86,16 @@ export const PoolStatistics: React.FC<BoxProps> = ({
           </Item>
         </Grid>
         <Grid item {...twoColumnPageSize}>
-          <Item label="Volume (24H)" value={`$${volume.toFormat()}`} />
+          <Item label="Volume (24H)" value={`$${poolStats._24HrVolumeValue}`} />
         </Grid>
         <Grid item {...twoColumnPageSize}>
-          <Item label="Fees (24H)" value={`$${fee24h.toFormat()}`} />
+          <Item label="Fees (24H)" value={`$${poolStats._24HrFeeValue}`} />
         </Grid>
         <Grid item {...twoColumnPageSize}>
-          <Item label="APR" value={`${apr}%`} />
+          <Item label="APR" value={`${poolStats.apr}%`} />
         </Grid>
         <Grid item {...twoColumnPageSize}>
-          <Item label="Transactions (24H)" value={`${transactions24h}`} />
+          <Item label="Transactions (24H)" value={`${poolStats._24HrTransactionCount}`} />
         </Grid>
       </Grid>
     </Box>

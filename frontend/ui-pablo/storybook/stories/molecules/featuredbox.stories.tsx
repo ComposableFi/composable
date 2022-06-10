@@ -1,4 +1,4 @@
-import { FeaturedBox, FeaturedBoxProps } from "@/components";
+import { FeaturedBox, FeaturedBoxProps } from "@ui-pablo/app/components";
 import { Box, SxProps } from "@mui/material";
 import { Story } from "@storybook/react";
 

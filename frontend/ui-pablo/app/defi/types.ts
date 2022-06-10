@@ -2,6 +2,8 @@ import BigNumber from "bignumber.js";
 import { DEFI_CONFIG } from "./config";
 
 export type TokenId = typeof DEFI_CONFIG.tokenIds[number];
+export type ChartInterval = "24h" | "1m" | "1w";
+// | "1y";
 
 export type Token = {
   id: TokenId;

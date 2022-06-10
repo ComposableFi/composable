@@ -1,15 +1,11 @@
 import { Label } from "@/components/Atoms";
 import { DropdownCombinedBigNumberInput } from "@/components/Molecules";
 import { FormTitle } from "@/components/Organisms/FormTitle";
-import { Box, Button, useTheme, alpha, BoxProps, Grid, Typography, Theme, IconButton } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { Box, Button, useTheme, BoxProps, Typography, Theme, IconButton } from "@mui/material";
+import { useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
-import { useAppSelector } from "@/hooks/store";
 import { useDispatch } from "react-redux";
-import { setCurrentStep, setCurrentSupply } from "@/stores/defi/pool";
 import FormWrapper from "../FormWrapper";
-import { TokenId } from "@/defi/types";
-import { getTokenOptions } from "@/defi/Tokens";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import { useMobile } from "@/hooks/responsive";
 import { TransactionSettings } from "@/components/Organisms/TransactionSettings";
@@ -84,9 +80,8 @@ const SetLiquidityStep: React.FC<BoxProps> = ({
   const dispatch = useDispatch();
 
   const {
-    pools: {
-      createPool
-    }
+    createPool,
+    assetBalances
   } = useStore();
 
   const baseAmount = useMemo(() => {
@@ -97,10 +92,21 @@ const SetLiquidityStep: React.FC<BoxProps> = ({
     return new BigNumber(createPool.liquidity.quoteAmount)
   }, [createPool.liquidity.quoteAmount]);
 
-  const {
-    balance1,
-    balance2,
-  } = useAppSelector((state) => state.pool.currentSupply);
+  const balance1 = useMemo(() => {
+    if (createPool.baseAsset !== "none") {
+      return new BigNumber(assetBalances[createPool.baseAsset].picasso)
+    }  else {
+      return new BigNumber(0)
+    }
+  }, [assetBalances, createPool.baseAsset])
+
+  const balance2 = useMemo(() => {
+    if (createPool.quoteAsset !== "none") {
+      return new BigNumber(assetBalances[createPool.quoteAsset].picasso)
+    }  else {
+      return new BigNumber(0)
+    }
+  }, [assetBalances, createPool.quoteAsset])
 
   const [availableBalance] = useState<BigNumber>(new BigNumber(340));
 

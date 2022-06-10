@@ -1,5 +1,5 @@
 import { ComponentStory } from "@storybook/react";
-import { PageTitle } from "@/components";
+import { PageTitle } from "@ui-pablo/app/components";
 
 export default {
   title: "molecules/PageTitle",

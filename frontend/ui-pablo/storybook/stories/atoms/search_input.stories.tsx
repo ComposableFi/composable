@@ -1,4 +1,4 @@
-import { SearchInput, SearchInputProps } from "@/components";
+import { SearchInput, SearchInputProps } from "@ui-pablo/app/components";
 import { Box, SxProps } from "@mui/material";
 import { Story } from "@storybook/react";
 import { useState } from "react";

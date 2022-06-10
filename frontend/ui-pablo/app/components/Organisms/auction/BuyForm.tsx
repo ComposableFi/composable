@@ -27,7 +27,7 @@ import { getAssetById } from "@/defi/polkadot/Assets";
 import { getSigner } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import useStore from "@/store/useStore";
-import { onSwapAmountChange } from "@/store/updaters/swaps/utils";
+import { onSwapAmountChange } from "@/updaters/swaps/utils";
 import { debounce } from "lodash";
 import { ConfirmingModal } from "../swap/ConfirmingModal";
 import { useSnackbar } from "notistack";
@@ -37,7 +37,7 @@ export type BuyFormProps = {
 } & BoxProps;
 
 export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
-  const { assets } = useStore();
+  const { assetBalances } = useStore();
   const { extensionStatus } = useDotSamaContext();
   const { parachainApi } = useParachainApi("picasso");
   const selectedAccount = useSelectedAccount("picasso");
@@ -53,8 +53,8 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
   const isEnded: boolean = auction.sale.end < currentTimestamp;
 
   const isPendingBuy = usePendingExtrinsic(
-    "buy",
-    "pablo",
+    "exchange",
+    "dexRouter",
     selectedAccount ? selectedAccount.address : ""
   );
 
@@ -69,21 +69,21 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
   useEffect(() => {
     const asset = getAssetById("picasso", auction.pair.quote);
     if (asset) {
-      setBalanceQuote(new BigNumber(assets[asset.assetId].balance.picasso));
+      setBalanceQuote(new BigNumber(assetBalances[asset.assetId].picasso));
     } else {
       setBalanceQuote(new BigNumber(0));
     }
-  }, [assets, baseAsset, auction.pair.quote]);
+  }, [assetBalances, baseAsset, auction.pair.quote]);
 
   const [balanceBase, setBalanceBase] = useState(new BigNumber(0));
   useEffect(() => {
     const asset = getAssetById("picasso", auction.pair.base);
     if (asset) {
-      setBalanceBase(new BigNumber(assets[asset.assetId].balance.picasso));
+      setBalanceBase(new BigNumber(assetBalances[asset.assetId].picasso));
     } else {
       setBalanceBase(new BigNumber(0));
     }
-  }, [assets, baseAsset, auction.pair.quote]);
+  }, [assetBalances, baseAsset, auction.pair.quote]);
 
   const [valid1, setValid1] = useState<boolean>(false);
   const [valid2, setValid2] = useState<boolean>(false);
@@ -124,7 +124,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
       onSwapAmountChange(parachainApi, exchangeParams, {
         poolAccountId: "",
         poolIndex: auction.poolId,
-        fee: auction.fee.toString(),
+        fee: auction.feeConfig.feeRate.toString(),
         poolType: "LiquidityBootstrapping",
         pair: auction.pair,
         lbpConstants: undefined,
@@ -143,8 +143,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     const asset = getAssetById("picasso", auction.pair.base);
     if (parachainApi && selectedAccount && executor && asset) {
       const baseDecimals = new BigNumber(10).pow(asset.decimals);
-      const poolIdParam = parachainApi.createType("u128", auction.poolId);
-      const assetIdParam = parachainApi.createType("u128", auction.pair.base);
+
       const minRec = parachainApi.createType(
         "u128",
         minReceive.times(baseDecimals).toFixed(0)
@@ -153,19 +152,16 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
         "u128",
         baseAssetAmount.times(baseDecimals).toFixed(0)
       );
-      const keepAlive = parachainApi.createType("bool", true);
 
       try {
         const signer = await getSigner(APP_NAME, selectedAccount.address);
 
         await executor
           .execute(
-            (parachainApi.tx.pablo as any).buy(
-              poolIdParam,
-              assetIdParam,
+            parachainApi.tx.dexRouter.exchange(
+              auction.pair,
               amountParam,
-              minRec,
-              keepAlive
+              minRec
             ),
             selectedAccount.address,
             parachainApi,

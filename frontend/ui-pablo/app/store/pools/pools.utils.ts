@@ -1,13 +1,13 @@
 import {
   ConstantProductPool,
   LiquidityBootstrappingPool,
-  LiquidityPoolsSlice,
+  PoolsSlice,
   StableSwapPool,
 } from "./pools.types";
 import produce from "immer";
 
 export const putPoolsList = (
-  liquidityPoolsSlice: LiquidityPoolsSlice["pools"],
+  liquidityPoolsSlice: PoolsSlice["pools"],
   poolsList:
     | ConstantProductPool[]
     | LiquidityBootstrappingPool[]
@@ -21,26 +21,26 @@ export const putPoolsList = (
         draft.constantProductPools.verified =
           poolsList as ConstantProductPool[];
       if (!verified)
-        draft.constantProductPools.nonVerified =
+        draft.constantProductPools.unVerified =
           poolsList as ConstantProductPool[];
     } else if (poolType === "LiquidityBootstrapping") {
       if (verified)
         draft.liquidityBootstrappingPools.verified =
           poolsList as LiquidityBootstrappingPool[];
       if (!verified)
-        draft.liquidityBootstrappingPools.nonVerified =
+        draft.liquidityBootstrappingPools.unVerified =
           poolsList as LiquidityBootstrappingPool[];
     } else if (poolType === "StableSwap") {
       if (verified)
         draft.stableSwapPools.verified = poolsList as StableSwapPool[];
       if (!verified)
-        draft.stableSwapPools.nonVerified = poolsList as StableSwapPool[];
+        draft.stableSwapPools.unVerified = poolsList as StableSwapPool[];
     }
   });
 };
 
 export const putLiquidityBootstrappingPoolSpotPrice = (
-  liquidityPoolsSlice: LiquidityPoolsSlice["pools"],
+  liquidityPoolsSlice: PoolsSlice["pools"],
   poolId: number,
   spotPrice: string
 ) => {
@@ -59,15 +59,5 @@ export const putLiquidityBootstrappingPoolSpotPrice = (
     } else {
       draft.liquidityBootstrappingPools.spotPrices.push([poolId, spotPrice]);
     }
-  });
-};
-
-export const putUserLpBalance = (
-  liquidityPoolsSlice: LiquidityPoolsSlice["pools"],
-  poolId: number,
-  balance: string
-) => {
-  return produce(liquidityPoolsSlice, (draft) => {
-    draft.user.lpBalances[poolId] = balance;
   });
 };

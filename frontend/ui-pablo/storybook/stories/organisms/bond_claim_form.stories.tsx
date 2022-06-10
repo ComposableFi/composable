@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { ClaimForm } from "@/components/Organisms/bonds/ClaimForm";
+import { ClaimForm } from "@ui-pablo/app/components/Organisms/bonds/ClaimForm";
 import { useAppSelector } from "@/hooks/store";
 
 const ClaimFormStories = () => {
