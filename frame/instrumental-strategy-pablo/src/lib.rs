@@ -92,7 +92,7 @@ pub mod pallet {
 			+ Ord
 			+ TypeInfo
 			+ Into<u128>;
-
+		
 		type Vault: StrategicVault<
 			AssetId = Self::AssetId,
 			Balance = Self::Balance,
@@ -100,6 +100,7 @@ pub mod pallet {
 			VaultId = Self::VaultId,
 		>;
 
+		/// The [`Currency`](Config::Currency)
 		/// Currency is used for the assets managed by the vaults.
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
@@ -112,7 +113,7 @@ pub mod pallet {
 			PoolId = Self::PoolId,
 		>;
 
-		// Type representing the unique ID of a pool.
+		/// Type representing the unique ID of a pool.
 		type PoolId: FullCodec
 			+ MaxEncodedLen
 			+ Default
@@ -302,7 +303,7 @@ pub mod pallet {
 						T::Balance::zero(),
 					)?;
 				},
-				FundsAvailability::Equilibrable => {},
+				FundsAvailability::None => {},
 			};
 			Ok(())
 		}
