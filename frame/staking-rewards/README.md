@@ -10,7 +10,7 @@ Stakers are protected from dilution.
   - [Pool](#pool)
     - [Configuration](#configuration)
     - [Rewarding](#rewarding)
-    - [Inflation](#inflation)
+    - [Rate based rewards](#rate-based-rewards)
     - [Routing](#routing)
   - [Positions](#positions)
     - [Staking](#staking)
@@ -89,27 +89,36 @@ See pool rewards mechanics on how rewards can be distributed.
 
 ### Rewarding
 
-Only the pool owner can transfer the rewards of new assets into a pool. But anybody can transfer rewards of assets that previously were rewarded.
+Only the pool owner can transfer the rewards of new assets into a `pool rewards account`. But anybody can transfer rewards of assets that previously were rewarded.
 
 There is a limit to the possible assets' identifiers transferred as rewards. Once reached, cannot add more variety.
 
 Each total reward share increase tracks the amount which each position should get from that. New shares added do not take the amount from previous rewards. That is how `dilution protection`` works.
 
-### Inflation
+### Rate based rewards
 
-If inflation is defined in pool configuration, a batch of pools randomly is checked on each block if the inflation rate allows increasing the rewards share of specified assets in comparison with the previous increase.
+If the `reward rates` are defined in pools' configurations, a batch of pools randomly is checked on each block if the inflation rate allows increasing the rewards share of specified assets in comparison with the previous increase. If that is the case, users' rewards are increased automatically.
 
-If that is the case, shares increased and users are rewarded.
+On change of reward rate, up to current block rewards release executed before change applied.
 
-On change of inflation rate, up to current block inflation executed before change applied.
+There is a permissionless extrinsic to release rewards into a pool as these accumulated.  
 
-There is a permissionless extrinsic to release shares because inflation is accumulated.  
+A process of automatic release is capped by time, so if it was not leased with the new time, it stops operating.
+It is possible to define a reward rate that does not stop until explicitly stopped by setting it to infinity.
+If a pool owner sets the pool's rate to zero that stops automatic rewards releases to users.
 
-Inflation is capped by time, so if it does not lease with the new time, it stops operating. It is possible to define inflation which does not stop until explicitly stopped by setting it to 0.
+A pool may be configured to mint tokens same time it rewards. The default configuration does not mint
+This type of operation inflates tokens and should be used with care.
 
-A pool may be configured to mint tokens same time it rewards. Any configuration defaults to do so.
+Alternatively, a pool can be configured to incentive desired interest rate (amount of tokens released to be divided by the amount total staked) and desired staking rate (amount of staked divided by total supply) to have desired balance of staked amounts and liquidity. In this case, a rate is automatically adjusted to steer users to the desired interest rate.  This can only be defined if staked asset is the same as a rewarded asset by definition.
 
-Alternatively, a pool can be configured to incentive desired interest rate (amount of tokens minted to total supply) to have desired balance of staked amounts and liquidity. In this case, inflation is automatically adjusted to steer users to the desired interest rate.
+**Examples**
+
+The reward rate was set at 100 PICA a day, and  1000 PICA was transferred into the reward pool account.
+Each day rewards for users in the pool will be increased by 100 PICA automatically.
+In one day, users will be able to claim 100 PICA rewards according to their share.
+On day two they will be able to claim up to 200 PICA in the pool.
+Unclaimed rewards are accumulated.
 
 ### Routing
 
@@ -244,7 +253,7 @@ print(rolling) # time it moves to new lock
 
 ### Expiration
 
-If there is time locked position.
+If there is time-locked position.
 
 After the position expired, a user can unstake without penalty.
 
@@ -278,7 +287,10 @@ Potentially no implemented (yet) features:
 - zero time locks or zero penalty locks (likely works because of math, but not tested)
 - ED for pool and positions' state, so that only permissioned creation is possible
 - compounding
-- automatic inflation adjustment
+- automatic inflation adjustment like in Polkadot NPos staking
+- routing
+- no inflation, only reward pool transfer by governance automatic reward
+- decay of leverage if lock duration decreases like Gauges
 
 ## References
 

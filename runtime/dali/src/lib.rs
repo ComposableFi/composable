@@ -69,7 +69,7 @@ pub use frame_support::{
 	PalletId, StorageValue,
 };
 
-use codec::{Codec, Decode, Encode, EncodeLike, MaxEncodedLen};
+use codec::{Codec, Encode, EncodeLike};
 use frame_support::{
 	traits::{fungibles, EqualPrivilegeOnly, OnRuntimeUpgrade},
 	weights::ConstantMultiplier,

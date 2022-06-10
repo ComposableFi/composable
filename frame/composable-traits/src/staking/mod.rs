@@ -111,7 +111,7 @@ pub trait Staking {
 	) -> DispatchResult;
 
 	/// `ratio` - how much of share to retain in original position.
-	fn split_into_2(
+	fn split(
 		who: &Self::AccountId,
 		instance_id: &Self::PositionId,
 		ratio: Permill,
