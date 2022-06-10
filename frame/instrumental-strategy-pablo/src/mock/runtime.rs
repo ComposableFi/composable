@@ -189,8 +189,6 @@ frame_support::construct_runtime!(
 
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
 		PabloStrategy: pallet_pablo_strategy::{Pallet, Call, Storage, Event<T>},
-
-		Pablo: pallet_pablo::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
