@@ -1001,12 +1001,12 @@ pub mod pallet {
 				if asset == T::NativeAssetId::get() {
 					return <<T as Config>::NativeCurrency>::total_issuance()
 				}
-				// if valid_asset::<T>(asset).is_err() {
-				// 	return T::Convert::convert(0_u64)
-				// }
-				if ValidatedAsset::<T>::new(asset).is_err() {
-					return Self::Balance::zero()
+				if valid_asset::<T>(asset).is_err() {
+					return T::Convert::convert(0_u64)
 				}
+				// if ValidatedAsset::<T>::new(asset).is_err() {
+				// 	return Self::Balance::zero()
+				// }
 				<<T as Config>::MultiCurrency>::total_issuance(asset)
 			}
 

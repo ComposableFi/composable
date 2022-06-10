@@ -32,6 +32,7 @@ pub const ACCOUNT_FREE_START: AccountId = CHARLIE + 1;
 
 pub const MINIMUM_BALANCE: Balance = 1;
 
+pub const INVALID: AssetId = 0;
 pub const ASSET_1: AssetId = 1;
 pub const ASSET_2: AssetId = 2;
 pub const ASSET_FREE_START: AssetId = ASSET_2 + 1;

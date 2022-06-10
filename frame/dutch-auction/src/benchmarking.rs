@@ -31,8 +31,8 @@ fn assets<T>() -> CurrencyPair<AssetIdOf<T>>
 where
 	T: Config,
 {
-	let a = 0_u128.to_be_bytes();
-	let b = 1_u128.to_be_bytes();
+	let a = 1_u128.to_be_bytes();
+	let b = 2_u128.to_be_bytes();
 	CurrencyPair::new(
 		AssetIdOf::<T>::decode(&mut &a[..]).unwrap(),
 		AssetIdOf::<T>::decode(&mut &b[..]).unwrap(),

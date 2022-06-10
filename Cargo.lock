@@ -10433,6 +10433,7 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-runtime",
+ "sp-std 4.0.0",
  "xcm",
 ]
 
