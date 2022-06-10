@@ -1,6 +1,6 @@
 use crate::{
 	self as pallet_lending,
-	mocks::*,
+	mocks::general::*,
 	tests::{
 		assert_no_event, create_simple_market, create_simple_vaulted_market, default_create_input,
 		DEFAULT_MARKET_VAULT_STRATEGY_SHARE,

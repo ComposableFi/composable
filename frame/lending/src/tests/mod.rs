@@ -1,4 +1,4 @@
-use crate::{currency::*, mocks::*, setup::assert_last_event, MarketIndex};
+use crate::{currency::*, mocks::general::*, setup::assert_last_event, MarketIndex};
 use composable_support::validation::TryIntoValidated;
 use composable_traits::{
 	defi::{CurrencyPair, DeFiComposableConfig, MoreThanOneFixedU128, Rate},

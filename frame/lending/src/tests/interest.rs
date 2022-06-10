@@ -1,6 +1,6 @@
 use crate::{
 	accrue_interest_internal,
-	mocks::*,
+	mocks::general::*,
 	tests::{create_simple_vaulted_market, new_jump_model},
 	AccruedInterest,
 };

@@ -1,6 +1,6 @@
 use crate::{
 	currency::*,
-	mocks_offchain::*,
+	mocks::{offchain::*, authority_id_wrapper},
 	tests::{
 		assert_no_event, borrow, create_market_for_liquidation_test, mint_and_deposit_collateral,
 		ConfigBound,

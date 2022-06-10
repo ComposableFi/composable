@@ -1,5 +1,5 @@
 use crate::{
-	mocks::*,
+	mocks::general::*,
 	tests::{
 		assert_extrinsic_event, borrow, create_market, create_market_for_liquidation_test,
 		create_simple_market, get_price, mint_and_deposit_collateral, TestBoundedVec,

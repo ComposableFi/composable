@@ -47,8 +47,6 @@ mod models;
 #[cfg(test)]
 mod mocks;
 #[cfg(test)]
-mod mocks_offchain;
-#[cfg(test)]
 mod tests;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]

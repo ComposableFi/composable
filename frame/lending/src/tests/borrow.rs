@@ -1,5 +1,5 @@
 use crate::{
-	mocks::*,
+	mocks::general::*,
 	models::borrower_data::BorrowerData,
 	tests::{
 		assert_extrinsic_event, assert_no_event, create_market, create_simple_market, get_price,
