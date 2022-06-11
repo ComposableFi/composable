@@ -21,8 +21,8 @@ fn assets<T>() -> [AssetIdOf<T>; 2]
 where
 	T: Config,
 {
-	let a = 0u128.to_be_bytes();
-	let b = 1u128.to_be_bytes();
+	let a = 1u128.to_be_bytes();
+	let b = 2u128.to_be_bytes();
 	[AssetIdOf::<T>::decode(&mut &a[..]).unwrap(), AssetIdOf::<T>::decode(&mut &b[..]).unwrap()]
 }
 
