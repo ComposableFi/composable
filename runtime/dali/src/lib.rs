@@ -838,7 +838,6 @@ impl assets::Config for Runtime {
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 	type GovernanceRegistry = GovernanceRegistry;
 	type ValidCurrency = ValidateCurrencyId;
-	type Convert = sp_runtime::traits::ConvertInto;
 }
 
 parameter_types! {

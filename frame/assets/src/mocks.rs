@@ -12,7 +12,7 @@ use primitives::currency::ValidateCurrencyId;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, ConvertInto, IdentityLookup},
+	traits::{BlakeTwo256, IdentityLookup},
 };
 use system::EnsureRoot;
 
@@ -32,6 +32,7 @@ pub const ACCOUNT_FREE_START: AccountId = CHARLIE + 1;
 
 pub const MINIMUM_BALANCE: Balance = 1;
 
+#[allow(dead_code)]
 pub const INVALID: AssetId = 0;
 pub const ASSET_1: AssetId = 1;
 pub const ASSET_2: AssetId = 2;
@@ -80,7 +81,6 @@ impl Config for Test {
 	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
-	type Convert = ConvertInto;
 	type ValidCurrency = ValidateCurrencyId;
 }
 

@@ -5,26 +5,19 @@ use crate::{
 };
 
 use composable_traits::defi::DeFiComposableConfig;
-use frame_support::{
-	ord_parameter_types, parameter_types,
-	traits::Everything,
-	weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
-	PalletId,
-};
+use frame_support::{ord_parameter_types, parameter_types, traits::Everything, PalletId};
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use hex_literal::hex;
 use orml_traits::parameter_type_with_key;
-use smallvec::smallvec;
 use sp_core::{
 	sr25519::{Public, Signature},
 	H256,
 };
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, ConvertInto, IdentifyAccount, IdentityLookup, Verify},
-	Perbill,
+	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
 };
-use xcm::latest::{opaque::Xcm, SendXcm};
+use xcm::latest::SendXcm;
 
 use super::governance_registry::GovernanceRegistry;
 use primitives::currency::ValidateCurrencyId;
@@ -156,7 +149,6 @@ impl pallet_assets::Config for Runtime {
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = GovernanceRegistry;
 	type ValidCurrency = ValidateCurrencyId;
-	type Convert = ConvertInto;
 }
 
 impl pallet_currency_factory::Config for Runtime {
