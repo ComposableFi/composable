@@ -118,7 +118,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 		/// origin of admin of this pallet
 		type AdminOrigin: EnsureOrigin<Self::Origin>;
-		type ValidCurrency: Validate<Self::AssetId, ValidateCurrencyId>;
+		type CurrencyValidator: Validate<Self::AssetId, ValidateCurrencyId>;
 	}
 
 	#[pallet::pallet]
@@ -366,7 +366,7 @@ pub mod pallet {
 	}
 
 	pub(crate) fn valid_asset_id<T: Config>(asset_id: T::AssetId) -> Option<T::AssetId> {
-		T::ValidCurrency::validate(asset_id).ok()
+		T::CurrencyValidator::validate(asset_id).ok()
 	}
 
 	mod currency {

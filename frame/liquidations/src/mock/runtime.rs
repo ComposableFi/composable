@@ -156,7 +156,7 @@ impl pallet_assets::Config for Runtime {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = GovernanceRegistry;
-	type ValidCurrency = ValidateCurrencyId;
+	type CurrencyValidator = ValidateCurrencyId;
 }
 
 impl pallet_currency_factory::Config for Runtime {

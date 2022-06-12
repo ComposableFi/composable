@@ -81,7 +81,7 @@ impl Config for Test {
 	type GovernanceRegistry = GovernanceRegistry;
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRoot<AccountId>;
-	type ValidCurrency = ValidateCurrencyId;
+	type CurrencyValidator = ValidateCurrencyId;
 }
 
 parameter_types! {
