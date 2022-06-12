@@ -54,9 +54,9 @@ fn default_create_input<AssetId, BlockNumber: sp_runtime::traits::Bounded>(
 			collateral_factor: default_collateral_factor(),
 			under_collateralized_warn_percent: default_under_collateralized_warn_percent(),
 			liquidators: vec![],
-			interest_rate_model: InterestRateModel::default(),
 			max_price_age: BlockNumber::max_value(),
 		},
+		interest_rate_model: InterestRateModel::default(),
 		reserved_factor: DEFAULT_MARKET_VAULT_RESERVE,
 		currency_pair,
 	}
@@ -150,9 +150,9 @@ where
 			collateral_factor,
 			under_collateralized_warn_percent: default_under_collateralized_warn_percent(),
 			liquidators: vec![],
-			interest_rate_model: InterestRateModel::default(),
 			max_price_age: DEFAULT_MAX_PRICE_AGE,
 		},
+		interest_rate_model: InterestRateModel::default(),
 		reserved_factor,
 		currency_pair: CurrencyPair::new(collateral_asset.id(), borrow_asset.id()),
 	};
