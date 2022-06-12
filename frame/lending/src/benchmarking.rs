@@ -359,5 +359,5 @@ benchmarks! {
 		Lending::<T>::handle_must_liquidate(&market_config, &caller).unwrap()
 	}
 
-	impl_benchmark_test_suite!(Lending, crate::mocks::new_test_ext(), crate::mocks::Runtime);
+	impl_benchmark_test_suite!(Lending, crate::mocks::general::new_test_ext(), crate::mocks::general::Runtime);
 }
