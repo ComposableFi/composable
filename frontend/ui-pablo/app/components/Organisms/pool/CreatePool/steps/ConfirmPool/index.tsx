@@ -24,6 +24,7 @@ import moment from "moment-timezone";
 import { useRouter } from "next/router";
 import useStore from "@/store/useStore";
 import {
+  Assets,
   getAsset,
   getAssetById,
   getAssetOnChainId,
@@ -102,8 +103,11 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
 
   const { createdAt } = useAppSelector((state) => state.pool.currentPool);
 
-  const baseTokenUSDPrice = useAssetPrice(baseAsset as AssetId);
-  const quoteTokenUSDPrice = useAssetPrice(quoteAsset as AssetId);
+  let baseAssetOnChainId = baseAsset === "none" ? -1 : getAssetOnChainId(DEFAULT_NETWORK_ID, baseAsset)
+  let quoteAssetOnChainId = quoteAsset === "none" ? -1 : getAssetOnChainId(DEFAULT_NETWORK_ID, quoteAsset)
+
+  const baseTokenUSDPrice = useAssetPrice(baseAssetOnChainId ? baseAssetOnChainId.toString() : "0");
+  const quoteTokenUSDPrice = useAssetPrice(quoteAssetOnChainId ? quoteAssetOnChainId.toString() : "0");
 
   const [isFunding, setIsFunding] = useState<boolean>(false);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);

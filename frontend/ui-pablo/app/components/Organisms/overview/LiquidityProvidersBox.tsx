@@ -13,6 +13,7 @@ import { useAppSelector } from "@/hooks/store";
 import React from "react";
 import { TableHeader } from "@/defi/types";
 import { BoxWrapper } from "../BoxWrapper";
+import { usePoolsWithLpBalance } from "@/store/hooks/overview/usePoolsWithLpBalance";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -35,7 +36,7 @@ const tableHeaders: TableHeader[] = [
 export const LiquidityProvidersBox: React.FC<BoxProps> = ({
   ...boxProps
 }) => {
-  const providers = useAppSelector((state) => state.polkadot.yourLiquidityPools);
+  const liquidityProvided = usePoolsWithLpBalance();
 
   return (
     <BoxWrapper
@@ -54,26 +55,28 @@ export const LiquidityProvidersBox: React.FC<BoxProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {providers.map(({token1, token2, apr, volume, price}) => (
-              <TableRow key={`${token1.id}-${token2.id}`}>
+            {liquidityProvided.map(({baseAsset, quoteAsset, apr, lpPrice, totalVolume, lpBalance}) => (
+              <TableRow key={`${baseAsset?.symbol}-${quoteAsset?.symbol}`}>
                 <TableCell align="left">
+                  {baseAsset && quoteAsset && 
                   <PairAsset
                     assets={[
-                      {icon: token1.icon, label: token1.symbol},
-                      {icon: token2.icon, label: token2.symbol},
+                      {icon: baseAsset.icon, label: baseAsset.symbol},
+                      {icon: quoteAsset.icon, label: quoteAsset.symbol},
                     ]}
                     separator="/"
                   />
+                  }
                 </TableCell>
                 <TableCell align="left">
-                  <Typography variant="body1">${price ? price.toFormat(2) : " - "}</Typography>
+                  <Typography variant="body1">${lpPrice ? lpPrice.toFormat(2) : " - "}</Typography>
                 </TableCell>
                 <TableCell align="left">
-                  <Typography variant="body1">{volume.toFormat(2)}</Typography>
+                  <Typography variant="body1">{lpBalance.toFormat(2)}</Typography>
                 </TableCell>
                 <TableCell align="left">
                   <Typography variant="body1">
-                    ${price ? volume.multipliedBy(price).toFormat(2) : " - "}
+                    ${totalVolume.toFormat(2)}
                   </Typography>
                 </TableCell>
                 <TableCell align="left">

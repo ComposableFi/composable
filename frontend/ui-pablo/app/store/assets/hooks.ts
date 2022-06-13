@@ -1,13 +1,16 @@
-import { AssetId } from "@/defi/polkadot/types";
 import useStore from "../useStore";
-
-export function useAssetPrice(assetId: AssetId): number {
+/**
+ * Get price from Apollo in USD
+ * @param assetId string on chain asset id but in string
+ * @returns string
+ */
+export function useAssetPrice(assetId: string): string {
     const {
-        assets
+        apollo
     } = useStore();
-    if (assets[assetId]) {
-        return assets[assetId].price
+    if (apollo[assetId]) {
+        return apollo[assetId]
     } else {
-        return 0;
+        return "0"
     }
 }

@@ -4,8 +4,6 @@ import useStore from "@/store/useStore";
 import { useParachainApi } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "../constants";
 import { useAllLpTokenRewardingPools } from "../../store/hooks/useAllLpTokenRewardingPools";
-import { getAssetByOnChainId } from "@/defi/polkadot/Assets";
-import _ from "lodash";
 import {
   calculatePoolStats,
   fetchPoolStats,
@@ -17,8 +15,8 @@ import {
  * @returns null
  */
 const Updater = () => {
-  const { putPoolStats, assets, poolStats, putPoolStatsValue } = useStore();
-  const { parachainApi } = useParachainApi("picasso");
+  const { apollo, putPoolStats, poolStats, putPoolStatsValue } = useStore();
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
 
   const allLpRewardingPools = useAllLpTokenRewardingPools();
 
@@ -61,24 +59,23 @@ const Updater = () => {
 
     if (allLpRewardingPools.length) {
       allLpRewardingPools.forEach((i) => {
-        const quoteAsset = getAssetByOnChainId(
-          DEFAULT_NETWORK_ID,
-          i.pair.quote
-        );
-        if (quoteAsset && poolStats[i.poolId]) {
-          if (assets[quoteAsset.assetId]) {
+
+        if (poolStats[i.poolId]) {
+          let quoteId = i.pair.quote.toString();
+
+          if (apollo[quoteId]) {
             const totalVolumeValue = new BigNumber(
               poolStats[i.poolId].totalVolume
             )
-              .times(assets[quoteAsset.assetId].price)
+              .times(apollo[quoteId])
               .toFixed(2);
             const _24HrFeeValue = new BigNumber(poolStats[i.poolId]._24HrFee)
-              .times(assets[quoteAsset.assetId].price)
+              .times(apollo[quoteId])
               .toFixed(2);
             const _24HrVolumeValue = new BigNumber(
               poolStats[i.poolId]._24HrVolume
             )
-              .times(assets[quoteAsset.assetId].price)
+              .times(apollo[quoteId])
               .toFixed(2);
 
             putPoolStatsValue(i.poolId, {
@@ -90,7 +87,7 @@ const Updater = () => {
         }
       });
     }
-  }, [assets, allLpRewardingPools.length, poolStats]);
+  }, [apollo, allLpRewardingPools.length, poolStats]);
 
   return null;
 };

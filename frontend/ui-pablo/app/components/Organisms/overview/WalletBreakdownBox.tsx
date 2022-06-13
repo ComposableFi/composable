@@ -12,8 +12,8 @@ import { BaseAsset } from "@/components/Atoms";
 import React from "react";
 import { TableHeader } from "@/defi/types";
 import { BoxWrapper } from "../BoxWrapper";
-import useStore from "@/store/useStore";
-import BigNumber from "bignumber.js";
+
+import { useAssetsWithBalance } from "@/store/hooks/overview/useAssetsOverview";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -33,7 +33,7 @@ const tableHeaders: TableHeader[] = [
 export const WalletBreakdownBox: React.FC<BoxProps> = ({
   ...boxProps
 }) => {
-  const { assets, balances } = useStore();
+  const walletOverview = useAssetsWithBalance();
 
   return (
     <BoxWrapper
@@ -52,8 +52,7 @@ export const WalletBreakdownBox: React.FC<BoxProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {assets && Object.values(assets).map((asset) => {
-              const balance = new BigNumber(balances[asset.assetId].picasso);
+            {walletOverview.map((asset) => {
               return (
                 <TableRow key={asset.assetId}>
                   <TableCell align="left">
@@ -67,12 +66,12 @@ export const WalletBreakdownBox: React.FC<BoxProps> = ({
                   </TableCell>
                   <TableCell align="left">
                     <Typography variant="body1">
-                      {balance.toFormat(2)}
+                      {asset.balance.toFormat(2)}
                     </Typography>
                   </TableCell>
                   <TableCell align="left">
                     <Typography variant="body1">
-                      ${balance.multipliedBy(asset.price).toFormat(2)}
+                      ${asset.balance.multipliedBy(asset.price).toFormat(2)}
                     </Typography>
                   </TableCell>
                 </TableRow>

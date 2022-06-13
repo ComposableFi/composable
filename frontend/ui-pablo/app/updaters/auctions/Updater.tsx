@@ -15,7 +15,7 @@ import { createPoolAccountId } from "@/utils/substrate";
 
 const Updater = () => {
   const {
-    assets,
+    apollo,
     pools: {
       liquidityBootstrappingPools,
       setLiquidityBootstrappingPoolSpotPrice,
@@ -208,21 +208,23 @@ const Updater = () => {
         pool < liquidityBootstrappingPools.verified.length;
         pool++
       ) {
-        const quote = getAssetByOnChainId(DEFAULT_NETWORK_ID, liquidityBootstrappingPools.verified[pool].pair.quote);
-        fetchSpotPrice(
-          parachainApi,
-          liquidityBootstrappingPools.verified[pool].pair,
-          liquidityBootstrappingPools.verified[pool].poolId
-        ).then((spotPrice) => {
-          if (quote && assets[quote.assetId]) spotPrice = spotPrice.times(assets[quote.assetId].price)
-          setLiquidityBootstrappingPoolSpotPrice(
-            liquidityBootstrappingPools.verified[pool].poolId,
-            spotPrice.toFixed(4)
-          );
-        });
+        let quoteId = liquidityBootstrappingPools.verified[pool].pair.quote.toString()
+        if (apollo[quoteId]) {
+          fetchSpotPrice(
+            parachainApi,
+            liquidityBootstrappingPools.verified[pool].pair,
+            liquidityBootstrappingPools.verified[pool].poolId
+            ).then((spotPrice) => {
+            spotPrice = spotPrice.times(apollo[quoteId])
+            setLiquidityBootstrappingPoolSpotPrice(
+              liquidityBootstrappingPools.verified[pool].poolId,
+              spotPrice.toFixed(4)
+            );
+          });
+        }
       }
     }
-  }, [parachainApi, liquidityBootstrappingPools.verified.length, assets]);
+  }, [parachainApi, liquidityBootstrappingPools.verified.length, apollo]);
 
   return null;
 };

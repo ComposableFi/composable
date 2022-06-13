@@ -22,8 +22,6 @@ export const setApolloPrice = (
   price: string
 ) => {
   return produce(assets, (draft) => {
-    if (draft[assetId]) {
       draft[assetId] = price
-    }
   });
 };

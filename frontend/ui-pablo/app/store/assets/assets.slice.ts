@@ -1,16 +1,15 @@
 import { Assets } from "@/defi/polkadot/Assets";
 import { AssetId } from "@/defi/polkadot/types";
-import { ParachainNetworks, RelayChainNetworks } from "substrate-react";
-import { ParachainId } from "substrate-react/dist/dotsama/types";
 import { StoreSlice } from "../types";
 import { AssetsSlice } from "./assets.types";
+import { ParachainId } from "substrate-react/dist/dotsama/types";
+import { ParachainNetworks, RelayChainNetworks } from "substrate-react";
 import { setApolloPrice, updateBalance } from "./assets.utils";
 
 const EMPTY_ASSETS_MAP: AssetsSlice["assets"] = Object.entries(Assets)
   .map(([assetId, metadata]) => {
     return {
       assetId: assetId,
-      price: 1,
       decimals: metadata.decimals,
       symbol: metadata.symbol,
       icon: metadata.icon,

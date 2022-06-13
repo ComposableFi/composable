@@ -4,9 +4,7 @@ import BigNumber from "bignumber.js";
 import { useEffect, useMemo } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "../constants";
-import {
-  fetchAndUpdatePoolLiquidity,
-} from "./utils";
+import { fetchAndUpdatePoolLiquidity } from "./utils";
 import { fetchBalanceByAssetId } from "../assets/utils";
 import _ from "lodash";
 
@@ -15,6 +13,7 @@ const Updater = () => {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const {
+    apollo,
     assets,
     pools,
     setTokenAmountInLiquidityPool,
@@ -82,30 +81,24 @@ const Updater = () => {
     if (allPools.length) {
       allPools.forEach((pool) => {
         if (pool.poolId && pool.pair) {
-          const baseAssetMeta = getAssetByOnChainId(
-            DEFAULT_NETWORK_ID,
-            pool.pair.base
-          );
-          const quoteAssetMeta = getAssetByOnChainId(
-            DEFAULT_NETWORK_ID,
-            pool.pair.quote
-          );
+          let baseId = pool.pair.base.toString();
+          let quoteId = pool.pair.base.toString();
 
-          if (assets[baseAssetMeta.assetId] && poolLiquidity[pool.poolId]) {
+          if (apollo[baseId] && poolLiquidity[pool.poolId]) {
             const baseValue = new BigNumber(
               poolLiquidity[pool.poolId].tokenAmounts.baseAmount
             )
-              .times(assets[baseAssetMeta.assetId].price)
+              .times(apollo[baseId])
               .toString();
             setTokenValueInLiquidityPool(pool.poolId, {
               baseValue,
             });
           }
-          if (assets[quoteAssetMeta.assetId] && poolLiquidity[pool.poolId]) {
+          if (apollo[quoteId] && poolLiquidity[pool.poolId]) {
             const quoteValue = new BigNumber(
               poolLiquidity[pool.poolId].tokenAmounts.quoteAmount
             )
-              .times(assets[quoteAssetMeta.assetId].price)
+              .times(apollo[quoteId])
               .toString();
             setTokenValueInLiquidityPool(pool.poolId, {
               quoteValue,
@@ -114,7 +107,7 @@ const Updater = () => {
         }
       });
     }
-  }, [allPools.length, assets]);
+  }, [allPools.length, apollo]);
 
   return null;
 };
