@@ -26,7 +26,6 @@ jobs:
           FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/v2.2.0/$FILE_NAME
           wget $FILE_GITHUB_PATH
 
-      #2) если он есть то склонить репу
       - name: Clean up
         continue-on-error: true
         run: |
@@ -37,21 +36,18 @@ jobs:
           fetch-depth: 0
 
       - name: Change dir
-#        working-directory: scripts/github/   # 2.1 и зайти в путь на скрине
         run: cd scripts/github/
 
-      - name: Current dir
-        run: pwd
+      #      #3) там поставить ноде и ярн
+      - uses: borales/actions-yarn@v3.0.0
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16"
 
+      - name: Install
+        working-directory: scripts/github/   # 2.1 и зайти в путь на скрине
+        run: yarn install
 
-#      #3) там поставить ноде и ярн
-      #
-
-
-      - name: Next step check
-        run: echo "I'm here"
-#
-#      - uses: borales/actions-yarn@v3.0.0
-#      - name: Yarn installation
-#        continue-on-error: false
-#        run: yarn version
+      - name: Upgrade runtime
+        working-directory: scripts/github/   # 2.1 и зайти в путь на скрине
+        run: echo "UPGRADE RUNTIME HERE"
