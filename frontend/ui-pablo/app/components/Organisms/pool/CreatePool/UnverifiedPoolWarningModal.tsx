@@ -1,16 +1,9 @@
 import React from "react";
 import { ModalProps, Modal } from "@/components/Molecules";
-import {
-  Box,
-  Typography,
-  useTheme,
-  Button,
-} from "@mui/material";
+import { Box, Typography, useTheme, Button } from "@mui/material";
 
 import { useDispatch } from "react-redux";
-import {
-  closeConfirmingModal
-} from "@/stores/ui/uiSlice";
+import { closeConfirmingModal } from "@/stores/ui/uiSlice";
 import { WarningAmberRounded } from "@mui/icons-material";
 import useStore from "@/store/useStore";
 
@@ -20,12 +13,7 @@ export const UnverifiedPoolWarningModal: React.FC<ModalProps> = ({
   const theme = useTheme();
   const dispatch = useDispatch();
   const {
-    pools: {
-      createPool: {
-        currentStep,
-        setSelectable
-      }
-    }
+    createPool: { currentStep, setSelectable },
   } = useStore();
 
   const handleClose = () => {
@@ -38,19 +26,23 @@ export const UnverifiedPoolWarningModal: React.FC<ModalProps> = ({
   };
 
   return (
-    <Modal
-      onClose={handleClose}
-      {...modalProps}
-    >
-      <Box width={{sm: 480}} margin="auto">
+    <Modal onClose={handleClose} {...modalProps}>
+      <Box width={{ sm: 480 }} margin="auto">
         <Box textAlign="center">
-          <WarningAmberRounded sx={{fontSize: 96}} />
+          <WarningAmberRounded sx={{ fontSize: 96 }} />
         </Box>
         <Typography variant="h5" textAlign="center" mt={8}>
           Warning
         </Typography>
-        <Typography variant="subtitle1" textAlign="center" color="text.secondary" mt={2}>
-          This pool is unverified and therefore if there is no enough liquidity added to the pool, LP holders would lose their money. Do you wish to proceed?
+        <Typography
+          variant="subtitle1"
+          textAlign="center"
+          color="text.secondary"
+          mt={2}
+        >
+          This pool is unverified and therefore if there is no enough liquidity
+          added to the pool, LP holders would lose their money. Do you wish to
+          proceed?
         </Typography>
 
         <Box mt={8}>
@@ -65,12 +57,7 @@ export const UnverifiedPoolWarningModal: React.FC<ModalProps> = ({
         </Box>
 
         <Box mt={4}>
-          <Button
-            variant="text"
-            fullWidth
-            size="large"
-            onClick={handleClose}
-          >
+          <Button variant="text" fullWidth size="large" onClick={handleClose}>
             No, take me back
           </Button>
         </Box>
@@ -78,4 +65,3 @@ export const UnverifiedPoolWarningModal: React.FC<ModalProps> = ({
     </Modal>
   );
 };
-

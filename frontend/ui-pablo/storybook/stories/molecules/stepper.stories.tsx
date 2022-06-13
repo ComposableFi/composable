@@ -1,5 +1,5 @@
 import { ComponentStory } from "@storybook/react";
-import { Stepper } from "@/components";
+import { Stepper } from "@ui-pablo/app/components";
 
 export default {
   title: "molecules/Stepper",

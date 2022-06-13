@@ -1,7 +1,7 @@
 
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { NavBar } from "@ui-pablo/nextjs/components/Organisms/NavBar";
+import { NavBar } from "@ui-pablo/app/components/Organisms/NavBar";
 
 const NavBarStories = () => {
   return (

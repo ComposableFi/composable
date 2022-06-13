@@ -1,6 +1,6 @@
 import { AssetId } from "@/defi/polkadot/types";
 import produce from "immer";
-import { ParachainId } from "substrate-react/dist/dotsama/types";
+import { ParachainId, RelayChainId } from "substrate-react/dist/dotsama/types";
 import { AssetsSlice } from "./assets.types";
 
 export const updateAssetPrice = (
@@ -16,15 +16,14 @@ export const updateAssetPrice = (
 };
 
 export const updateBalance = (
-  tokens: AssetsSlice["assets"],
+  tokens: AssetsSlice["assetBalances"],
   assetId: AssetId,
-  parachainId: ParachainId,
+  chainId: ParachainId | RelayChainId,
   balance: string
 ) => {
   return produce(tokens, (draft) => {
-    if (draft[assetId]) {
-      draft[assetId].balance[parachainId] ??= "0";
-      draft[assetId].balance[parachainId] = balance;
-  }
+    if (draft[assetId] && draft[assetId][chainId]) {
+      draft[assetId][chainId] = balance;
+    }
   })
 }

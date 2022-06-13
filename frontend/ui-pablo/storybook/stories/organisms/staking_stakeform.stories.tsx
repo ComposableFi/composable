@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { StakeForm } from "@ui-pablo/nextjs/components/Organisms/staking/StakeForm";
+import { StakeForm } from "@ui-pablo/app/components/Organisms/staking/StakeForm";
 
 const StakeFormStories = ({}) => {
   return (

@@ -2,7 +2,7 @@ import {
   DropdownCombinedInput, 
   DropdownCombinedInputProps, 
   SelectProps 
-} from "@/components";
+} from "@ui-pablo/app/components";
 import { Box, SxProps } from "@mui/material";
 import { Story } from "@storybook/react";
 

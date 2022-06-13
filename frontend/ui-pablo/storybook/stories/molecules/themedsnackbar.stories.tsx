@@ -1,4 +1,4 @@
-import { ThemeResponsiveSnackbar } from "@/components";
+import { ThemeResponsiveSnackbar } from "@ui-pablo/app/components";
 import { Story } from "@storybook/react";
 import { SnackbarProvider } from "notistack";
 

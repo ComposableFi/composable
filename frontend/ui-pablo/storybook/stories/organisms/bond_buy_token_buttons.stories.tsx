@@ -1,4 +1,4 @@
-import { BuyButtons } from "@ui-pablo/nextjs/components/Organisms";
+import { BuyButtons } from "@ui-pablo/app/components/Organisms";
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
 import BigNumber from "bignumber.js";

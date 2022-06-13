@@ -70,30 +70,3 @@ export const putPoolVariables = (
     }
   });
 }
-
-export const putSwapsChartSeries = (
-  swapState: SwapsSlice["swapsChart"],
-  series: [number, number][]
-) => {
-  return produce(swapState, (draft) => {
-    draft.series = series;
-  });
-}
-
-export const putSwapsChartSelectedRange = (
-  swapState: SwapsSlice["swapsChart"],
-  range: SwapsChartRange
-) => {
-  return produce(swapState, (draft) => {
-    draft.selectedRange = range;
-  }); 
-}
-
-export const put24HourOldPrice = (
-  swapState: SwapsSlice["swapsChart"],
-  price: string
-) => {
-  return produce(swapState, (draft) => {
-    draft._24hourOldPrice = price;
-  }); 
-}

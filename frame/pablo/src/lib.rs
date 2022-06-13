@@ -68,13 +68,13 @@ pub mod pallet {
 		WeightInfo,
 	};
 	use codec::FullCodec;
-	use composable_support::math::safe::SafeArithmetic;
+	use composable_support::math::safe::{safe_multiply_by_rational, SafeArithmetic};
 	use composable_traits::{
 		currency::{CurrencyFactory, LocalAssets},
 		defi::{CurrencyPair, Rate},
 		dex::{
 			Amm, ConstantProductPoolInfo, Fee, LiquidityBootstrappingPoolInfo, PriceAggregate,
-			StableSwapPoolInfo,
+			RedeemableAssets, StableSwapPoolInfo,
 		},
 	};
 	use core::fmt::Debug;
@@ -101,7 +101,7 @@ pub mod pallet {
 		traits::{AccountIdConversion, BlockNumberProvider, Convert, One, Zero},
 		ArithmeticError, FixedPointNumber, Permill,
 	};
-	use sp_std::vec::Vec;
+	use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 
 	#[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
 	pub enum PoolInitConfiguration<AccountId, AssetId, BlockNumber> {
@@ -322,6 +322,55 @@ pub mod pallet {
 		type TWAPInterval: Get<MomentOf<Self>>;
 
 		type WeightInfo: WeightInfo;
+
+		fn redeemable_assets_for_given_lp_tokens(
+			pool: PoolConfigurationOf<Self>,
+			pool_account: Self::AccountId,
+			lp_amount: Self::Balance,
+		) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError> {
+			match pool {
+				PoolConfiguration::StableSwap(StableSwapPoolInfo { pair, lp_token, .. }) |
+				PoolConfiguration::ConstantProduct(ConstantProductPoolInfo {
+					pair,
+					lp_token,
+					..
+				}) => {
+					let pool_base_aum =
+						Self::Convert::convert(Self::Assets::balance(pair.base, &pool_account));
+					let pool_quote_aum =
+						Self::Convert::convert(Self::Assets::balance(pair.quote, &pool_account));
+					let lp_issued = Self::Assets::total_issuance(lp_token);
+
+					let base_amount = Self::Convert::convert(safe_multiply_by_rational(
+						Self::Convert::convert(lp_amount),
+						pool_base_aum,
+						Self::Convert::convert(lp_issued),
+					)?);
+					let quote_amount = Self::Convert::convert(safe_multiply_by_rational(
+						Self::Convert::convert(lp_amount),
+						pool_quote_aum,
+						Self::Convert::convert(lp_issued),
+					)?);
+					Ok(RedeemableAssets {
+						assets: BTreeMap::from([
+							(pair.base, base_amount),
+							(pair.quote, quote_amount),
+						]),
+					})
+				},
+
+				// for LBP just return 0 for both balances as it does not have LP Token
+				PoolConfiguration::LiquidityBootstrapping(LiquidityBootstrappingPoolInfo {
+					pair,
+					..
+				}) => Ok(RedeemableAssets {
+					assets: BTreeMap::from([
+						(pair.base, Self::Balance::zero()),
+						(pair.quote, Self::Balance::zero()),
+					]),
+				}),
+			}
+		}
 	}
 
 	#[pallet::pallet]
@@ -734,6 +783,15 @@ pub mod pallet {
 			}
 		}
 
+		fn redeemable_assets_for_given_lp_tokens(
+			pool_id: Self::PoolId,
+			lp_amount: Self::Balance,
+		) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError> {
+			let pool = Self::get_pool(pool_id)?;
+			let pool_account = Self::account_id(&pool_id);
+			<T as Config>::redeemable_assets_for_given_lp_tokens(pool, pool_account, lp_amount)
+		}
+
 		fn get_exchange_value(
 			pool_id: Self::PoolId,
 			asset_id: Self::AssetId,
@@ -829,16 +887,33 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
+			let redeemable_assets = <T as Config>::redeemable_assets_for_given_lp_tokens(
+				pool.clone(),
+				pool_account.clone(),
+				lp_amount,
+			)?;
 			match pool {
 				PoolConfiguration::StableSwap(info) => {
+					let base_amount = *redeemable_assets
+						.assets
+						.get(&info.pair.base)
+						.ok_or(Error::<T>::InvalidAsset)?;
+					let quote_amount = *redeemable_assets
+						.assets
+						.get(&info.pair.quote)
+						.ok_or(Error::<T>::InvalidAsset)?;
+					ensure!(
+						base_amount >= min_base_amount && quote_amount >= min_quote_amount,
+						Error::<T>::CannotRespectMinimumRequested
+					);
 					let (base_amount, quote_amount, updated_lp) =
 						StableSwap::<T>::remove_liquidity(
 							who,
 							info,
 							pool_account,
 							lp_amount,
-							min_base_amount,
-							min_quote_amount,
+							base_amount,
+							quote_amount,
 						)?;
 					Self::update_twap(pool_id)?;
 					Self::deposit_event(Event::<T>::LiquidityRemoved {
@@ -850,13 +925,25 @@ pub mod pallet {
 					});
 				},
 				PoolConfiguration::ConstantProduct(info) => {
+					let base_amount = *redeemable_assets
+						.assets
+						.get(&info.pair.base)
+						.ok_or(Error::<T>::InvalidAsset)?;
+					let quote_amount = *redeemable_assets
+						.assets
+						.get(&info.pair.quote)
+						.ok_or(Error::<T>::InvalidAsset)?;
+					ensure!(
+						base_amount >= min_base_amount && quote_amount >= min_quote_amount,
+						Error::<T>::CannotRespectMinimumRequested
+					);
 					let (base_amount, quote_amount, updated_lp) = Uniswap::<T>::remove_liquidity(
 						who,
 						info,
 						pool_account,
 						lp_amount,
-						min_base_amount,
-						min_quote_amount,
+						base_amount,
+						quote_amount,
 					)?;
 					Self::update_twap(pool_id)?;
 					Self::deposit_event(Event::<T>::LiquidityRemoved {

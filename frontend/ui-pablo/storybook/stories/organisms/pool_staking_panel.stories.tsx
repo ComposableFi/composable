@@ -1,11 +1,11 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { PoolStakingPanel } from "@ui-pablo/nextjs/components/Organisms";
+import { PoolStakingPanel } from "@ui-pablo/app/components/Organisms";
 
 const PoolStakingPanelStories = ({}) => {
   return (
     <Box>
-      <PoolStakingPanel />
+      <PoolStakingPanel poolId={-1} />
     </Box>
   );
 };

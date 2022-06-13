@@ -1,6 +1,6 @@
 import { Box, BoxProps } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { CreatePool } from "@ui-pablo/nextjs/components/Organisms/pool/CreatePool";
+import { CreatePool } from "@ui-pablo/app/components/Organisms/pool/CreatePool";
 
 const CreatePoolStories = (props: BoxProps) => {
   return (

@@ -12821,10 +12821,10 @@ stylis@4.0.13:
   resolved "https://registry.yarnpkg.com/stylis/-/stylis-4.0.13.tgz#f5db332e376d13cc84ecfe5dace9a2a51d954c91"
   integrity sha512-xGPXiFVl4YED9Jh7Euv2V220mriG9u4B2TA6Ybjc1catrstKD2PpIdU3U0RKpkVBC2EhmL/F0sPCr9vrFTNRag==
 
-substrate-react@^0.1.87:
-  version "0.1.87"
-  resolved "https://registry.yarnpkg.com/substrate-react/-/substrate-react-0.1.87.tgz#1fe1f66d8b2a13ec711957b29c268e11bd475dd3"
-  integrity sha512-j+pJns7ygImcrQ4LIY5HRNG+SLGD3u/ghGygMZwInOGd+24+m7YjQrYdp99vpyk1wQK0Kd4lDATet0PZGjYaPQ==
+substrate-react@^0.1.88:
+  version "0.1.88"
+  resolved "https://registry.yarnpkg.com/substrate-react/-/substrate-react-0.1.88.tgz#77a01a8aa03a15e689aad26bddaed5e9f24dc80f"
+  integrity sha512-4whBlAwzsdQIAUVuOiLLLLYTrBZ0RvIpBiXqBh6JIs/VHqkRZCLfyKjLyEEkohfim6g/ho1019ncA8wT2U7AcA==
   dependencies:
     "@polkadot/extension-dapp" "^0.42.9"
     immer "^9.0.12"

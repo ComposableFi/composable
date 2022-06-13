@@ -1,5 +1,5 @@
 import { ComponentStory } from "@storybook/react";
-import { NotificationBox } from "@/components";
+import { NotificationBox } from "@ui-pablo/app/components";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 export default {

@@ -1,7 +1,7 @@
 import { Story } from "@storybook/react";
 import { IconButton } from "@mui/material";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
-import { Alert, AlertProps } from "@ui-pablo/nextjs/components";
+import { Alert, AlertProps } from "@ui-pablo/app/components";
 
 const AlertStories = (props: AlertProps) => {
   return (

@@ -40,7 +40,7 @@ const SetFeesStep: React.FC<SetFeesStepProps> = ({
   const dispatch = useDispatch();
 
   const {
-    pools: { createPool },
+    createPool
   } = useStore();
 
   const [bestFee] = useState<BigNumber>(new BigNumber(0.3));
