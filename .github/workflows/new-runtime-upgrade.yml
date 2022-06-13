@@ -28,7 +28,7 @@ jobs:
 
       - name: Wget download composable_runtime.wasm
         run: |
-          wget https://github.com/ComposableFi/composable/releases/download/v2.2.0/composable_runtie.wasm
+          wget https://github.com/ComposableFi/composable/releases/download/v2.2.0/composable_runtime.wasm
 #
 #      - uses: borales/actions-yarn@v3.0.0
 #      - name: Yarn installation
