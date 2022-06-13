@@ -6,15 +6,14 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Box,
   Typography,
   TableContainerProps,
 } from "@mui/material";
 import { NoAssetsCover } from "./NoAssetsCover";
-import { TokenPairAsset } from "../Atom/TokenPairAsset";
-import { AllBondsAsset } from "@/stores/defi/polkadot";
+import { TokenPairAsset } from "@/components";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
-import { getROI } from "@/stores/defi/polkadot/bonds/utils";
+import { getROI } from "@/defi/polkadot/pallets/BondedFinance";
+import { TokenAsset } from "@/components";
 
 export type AllBondsTableProps = TableContainerProps & {
   bonds?: BondOffer[];
@@ -50,7 +49,7 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
                 },
                 index
               ) => {
-                const roi = getROI(rewardPrice, amount, price, bondPrice);
+                const roi = getROI(rewardPrice, price);
                 return (
                   <TableRow
                     sx={{
@@ -58,15 +57,24 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
                         cursor: "pointer",
                       },
                     }}
-                    key={asset.symbol}
+                    key={
+                      Array.isArray(asset)
+                        ? asset.map((a) => a.symbol).join("+")
+                        : asset.symbol
+                    }
                     onClick={() => onRowClick(index + 1)}
                   >
                     <TableCell align="left">
-                      <TokenPairAsset tokenIds={[asset.id, rewardAsset.id]} />
+                      {Array.isArray(asset) && (
+                        <TokenPairAsset tokenIds={asset.map(({ id }) => id)} />
+                      )}
+                      {!Array.isArray(asset) && (
+                        <TokenAsset tokenId={asset.id} />
+                      )}
                     </TableCell>
                     <TableCell align="left">
                       <Typography variant="body2">
-                        ${price.multipliedBy(bondPrice).toFormat(0)}
+                        ${price.toFormat(0)}
                       </Typography>
                     </TableCell>
                     <TableCell align="left">
@@ -75,7 +83,7 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
                         color={roi.lt(0) ? "error.main" : "featured.lemon"}
                       >
                         {roi.gt(0) ? "+" : ""}
-                        {roi.toFormat(2)}%
+                        {roi.toFormat(3)}%
                       </Typography>
                     </TableCell>
                     <TableCell align="left">

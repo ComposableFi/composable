@@ -3,14 +3,14 @@ import BigNumber from "bignumber.js";
 import { AccountId32 } from "@polkadot/types/interfaces/runtime";
 
 interface OfferReward {
-  asset: Token;
+  asset: Token | Token[];
   amount: BigNumber;
   maturity: BigNumber;
 }
 
 export interface BondOffer {
   beneficiary: AccountId32;
-  asset: Token;
+  asset: Token | Token[];
   bondPrice: BigNumber;
   nbOfBonds: BigNumber;
   maturity: number | "Infinite";

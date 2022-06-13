@@ -1,12 +1,13 @@
 import BigNumber from "bignumber.js";
-import { TOKENS } from "@/defi/Tokens";
+import { Token, TOKENS } from "@/defi/Tokens";
 import { AccountId32 } from "@polkadot/types/interfaces/runtime";
 import { ApiPromise } from "@polkadot/api";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { currencyIdToAssetMap } from "@/stores/defi/polkadot/bonds/constants";
 import { ComposableTraitsBondedFinanceBondOffer } from "@/defi/polkadot/interfaces";
-import { Option, u128 } from "@polkadot/types-codec";
+import { Option } from "@polkadot/types-codec";
 import { ITuple } from "@polkadot/types-codec/types";
+import { fetchAssetPrice } from "./Oracle";
 
 export function createArrayOfLength(length: number): number[] {
   return Array.from(Array(length).keys());
@@ -17,9 +18,9 @@ export function stringToBigNumber(value: string): BigNumber {
 }
 
 export async function fetchBondOfferCount(api: ApiPromise) {
-  return await api.query.bondedFinance
-    .bondOfferCount()
-    .then((countBondOffers) => new BigNumber(countBondOffers.toHuman()));
+  const countBondOffers = await api.query.bondedFinance.bondOfferCount();
+
+  return new BigNumber(countBondOffers.toHuman());
 }
 
 export async function fetchBonds(api: ApiPromise) {
@@ -57,23 +58,10 @@ export async function fetchBonds(api: ApiPromise) {
     Promise.resolve<BondOffer[]>([])
   );
 
-  console.table(allBonds);
-
   return {
     bonds: allBonds,
     bondOfferCount,
   };
-}
-
-async function fetchAssetPrice(assetId: u128, api: ApiPromise) {
-  try {
-    const prices: any = await api.query.oracle.prices(assetId); // TODO[type-gen]: replace any with proper type
-    const obj = prices.toJSON();
-    return obj ? new BigNumber(obj.price) : new BigNumber(0);
-  } catch (e) {
-    console.error("Defaulting to zero", e);
-    return new BigNumber(0);
-  }
 }
 
 async function fetchBondPrice(
@@ -90,26 +78,55 @@ async function fetchBondPrice(
 
   return [
     assetPriceResult.status === "fulfilled"
-      ? assetPriceResult.value
+      ? assetPriceResult.value.multipliedBy(
+          fromPica(stringToBigNumber(bond.bondPrice.toString()))
+        )
       : new BigNumber(0),
     rewardAssetPriceResult.status === "fulfilled"
-      ? rewardAssetPriceResult.value
+      ? rewardAssetPriceResult.value.multipliedBy(
+          fromPica(stringToBigNumber(bond.reward.amount.toString()))
+        )
       : new BigNumber(0),
   ];
+}
+
+function getAssets(asset: string): Token[] | Token {
+  const mapped = currencyIdToAssetMap[asset];
+
+  const tokens = Array.isArray(mapped)
+    ? mapped.flatMap((tokenId: string) => currencyIdToAssetMap[tokenId])
+    : mapped;
+
+  return Array.isArray(tokens)
+    ? tokens.map((token) => TOKENS[token])
+    : TOKENS[tokens];
+}
+
+export function toPica(value: number | BigNumber) {
+  const bigNumberValue =
+    typeof value === "number" ? new BigNumber(value) : value;
+
+  return bigNumberValue.multipliedBy(10 ** 12);
+}
+
+export function fromPica(value: number | BigNumber) {
+  return (typeof value === "number" ? new BigNumber(value) : value).dividedBy(
+    toPica(1)
+  );
 }
 
 function bondTransformer(beneficiary: AccountId32, bondOffer: any): BondOffer {
   return {
     beneficiary,
-    asset: TOKENS[currencyIdToAssetMap[bondOffer.asset]],
-    bondPrice: stringToBigNumber(bondOffer.bondPrice.toString()),
+    asset: getAssets(bondOffer.asset),
+    bondPrice: fromPica(stringToBigNumber(bondOffer.bondPrice.toString())),
     nbOfBonds: bondOffer.nbOfBonds,
     maturity: bondOffer.maturity.Finite
       ? bondOffer.maturity.Finite.returnIn
       : "Infinite",
     reward: {
-      asset: TOKENS[currencyIdToAssetMap[bondOffer.reward.asset]],
-      amount: stringToBigNumber(bondOffer.reward.amount.toString()),
+      asset: getAssets(bondOffer.reward.asset),
+      amount: fromPica(stringToBigNumber(bondOffer.reward.amount.toString())),
       maturity: new BigNumber(bondOffer.reward.maturity),
     },
     price: bondOffer.price,
@@ -118,17 +135,17 @@ function bondTransformer(beneficiary: AccountId32, bondOffer: any): BondOffer {
 }
 
 export function getROI(
-  rewardAssetPrice: BigNumber,
-  rewardAmount: BigNumber,
-  oraclePrice: BigNumber,
+  rewardPrice: BigNumber,
   bondPrice: BigNumber
 ): BigNumber {
-  const left = rewardAssetPrice.multipliedBy(rewardAmount).multipliedBy(100);
-
-  const right = oraclePrice.multipliedBy(bondPrice);
-  if (right.eq(0)) {
+  if (rewardPrice.eq(0)) {
     return new BigNumber(0);
   }
 
-  return left.dividedBy(right);
+  // calculate difference in percentage between bondPrice and rewardPrice
+  const diff = rewardPrice.minus(bondPrice);
+  const sum = rewardPrice.plus(bondPrice);
+  const avg = sum.dividedBy(2);
+
+  return diff.dividedBy(sum);
 }

@@ -9,7 +9,7 @@ import {
   createArrayOfLength,
   fetchBonds,
   stringToBigNumber,
-} from "@/stores/defi/polkadot/bonds/utils";
+} from "@/defi/polkadot/pallets/BondedFinance";
 import { useAppDispatch } from "@/hooks/store";
 import {
   setBondOfferCount,

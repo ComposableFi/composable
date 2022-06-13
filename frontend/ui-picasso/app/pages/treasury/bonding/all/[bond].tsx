@@ -22,6 +22,7 @@ import {
 import { useAppSelector } from "@/hooks/store";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { Updater } from "@/stores/defi/polkadot/bonds/PolkadotBondsUpdater";
+import { getROI } from "@/defi/polkadot/pallets/BondedFinance";
 
 const standardPageSize = {
   xs: 12,
@@ -113,22 +114,30 @@ const Bond: NextPage = () => {
       </Default>
     );
   }
+
+  console.log({
+    price: bondOffer.price.toFixed(),
+    reward: bondOffer.rewardPrice.toFixed(),
+  });
+
   const token = bondOffer.asset.symbol;
   const toToken = bondOffer.reward.asset.symbol;
+
+  const roi = getROI(bondOffer.rewardPrice, bondOffer.price);
 
   const bondBoxes: BoxItem = {
     0: {
       title: "Bond price",
-      description: `$${bondOffer.bondPrice.toFormat(0)}`,
+      description: `$${bondOffer.price.toFormat(0)}`,
     },
     1: {
       title: "Market price",
-      description: `$${marketPrice}`,
+      description: `$${bondOffer.rewardPrice.toFormat(0)}`,
     },
     2: {
       title: "Discount",
-      description: `${discount}%`,
-      discountColor: discount,
+      description: `${roi.toFixed(3)}%`,
+      discountColor: Number(roi.toFixed(3)),
     },
     3: {
       title: "Vesting period",
