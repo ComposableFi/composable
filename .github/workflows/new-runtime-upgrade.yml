@@ -13,27 +13,24 @@ jobs:
       - x64
       - sre
     steps:
-      - uses: borales/actions-yarn@v3.0.0
-
-      - name: Clean up
-        continue-on-error: true
-        run: |
-          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
-          docker system prune --force --all --volumes
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
+#      - name: Clean up
+#        continue-on-error: true
+#        run: |
+#          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+#          docker system prune --force --all --volumes
+#      - uses: actions/checkout@v2
+#        with:
+#          fetch-depth: 0
+#
       - name: Set env
         run: |
           echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
 
-      - name: Yarn installation
-        continue-on-error: false
-        run: yarn version
-
-
+      - name: Wget download composable_runtime.wasm
+        run: |
+          wget https://github.com/ComposableFi/composable/releases/download/v2.2.0/composable_runtie.wasm
 #
-#    - name: Install upgraded yarn
-#      run: |
-#          echo "I'm here"
+#      - uses: borales/actions-yarn@v3.0.0
+#      - name: Yarn installation
+#        continue-on-error: false
+#        run: yarn version
