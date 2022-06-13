@@ -23,7 +23,7 @@ jobs:
       - name: Wget download composable_runtime.wasm
         run: |
           FILE_NAME=composable_runtime.wasm
-          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/v.2.2.0/$FILE_NAME
+          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/v2.2.0/$FILE_NAME
           wget $FILE_GITHUB_PATH
 
       #2) если он есть то склонить репу
