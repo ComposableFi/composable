@@ -30,21 +30,22 @@ jobs:
         with:
           node-version: "16"
 
-      - name: Print release version
-        run: echo ${{ env.RELEASE_VERSION }}
+#      - name: Print release version
+#        run: echo ${{ env.RELEASE_VERSION }}
+#
+#      - name: Wget download composable_runtime.wasm
+#        run: |
+#          FILE_NAME=composable_runtime.wasm
+#          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/v2.2.0/$FILE_NAME
+#          wget $FILE_GITHUB_PATH
+      - name: Yarn show version
+        run: yarn version
 
-      - name: Wget download composable_runtime.wasm
-        run: |
-          FILE_NAME=composable_runtime.wasm
-          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/v2.2.0/$FILE_NAME
-          wget $FILE_GITHUB_PATH
-
-
-      #      #3) там поставить ноде и ярн
-      - name: Install
-        working-directory: scripts/github/   # 2.1 и зайти в путь на скрине
-        run: yarn install
-
-      - name: Upgrade runtime
-        working-directory: scripts/github/   # 2.1 и зайти в путь на скрине
-        run: echo "UPGRADE RUNTIME HERE"
+#      #      #3) там поставить ноде и ярн
+#      - name: Install
+#        working-directory: scripts/github/   # 2.1 и зайти в путь на скрине
+#        run: yarn install
+#
+#      - name: Upgrade runtime
+#        working-directory: scripts/github/   # 2.1 и зайти в путь на скрине
+#        run: echo "UPGRADE RUNTIME HERE"
