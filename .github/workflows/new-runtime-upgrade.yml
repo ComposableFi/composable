@@ -37,10 +37,6 @@ jobs:
         working-directory: scripts/github/
         run: |
           FILE_NAME=dali_runtime.wasm
-#          FILE_NAME=composable_runtime.wasm
-#               FILE_NAME=dali_runtime.wasm
-#               picasso_runtime.wasm
-#               https://github.com/ComposableFi/composable/releases/download/v2.2.0/
           FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/${RELEASE_VERSION}/${FILE_NAME}
           wget $FILE_GITHUB_PATH
 
