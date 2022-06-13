@@ -40,7 +40,7 @@ jobs:
         run: pwd
 
       - name: Change dir
-        working-directory: ./script/github
+        working-directory: scripts/github/
         run: pwd
 
       - name: Show pwd2
