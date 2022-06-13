@@ -2,15 +2,6 @@ import { useEffect } from "react";
 import useStore from "@/store/useStore";
 import { useParachainApi } from "substrate-react";
 import { fetchPools } from "./utils";
-import _ from "lodash";
-
-function isVerifiedPool(
-  verifiedPoolIds: number[],
-  pool: { poolId: number }
-): boolean {
-  return verifiedPoolIds.some((p) => p === pool.poolId);
-}
-
 /**
  * Updates zustand store with all pools from pablo pallet
  * @returns null

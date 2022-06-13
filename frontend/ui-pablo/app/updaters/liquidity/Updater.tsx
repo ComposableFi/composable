@@ -1,7 +1,6 @@
 import { getAssetByOnChainId } from "@/defi/polkadot/Assets";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
-import _ from "lodash";
 import { useEffect, useMemo } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "../constants";
@@ -9,6 +8,7 @@ import {
   fetchAndUpdatePoolLiquidity,
 } from "./utils";
 import { fetchBalanceByAssetId } from "../assets/utils";
+import _ from "lodash";
 
 const PICK = ["poolId", "pair", "lpToken"];
 const Updater = () => {
