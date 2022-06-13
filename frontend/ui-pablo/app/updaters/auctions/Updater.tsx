@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useParachainApi } from "substrate-react";
 import useStore from "@/store/useStore";
-import { getAssetById, getAssetByOnChainId } from "@/defi/polkadot/Assets";
+import { getAssetById } from "@/defi/polkadot/Assets";
 import BigNumber from "bignumber.js";
 
 import { aggregateTrades, transformAuctionsTransaction } from "./utils";
