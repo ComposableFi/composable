@@ -444,7 +444,10 @@ From (1)
 
 First position <img src="0004-pablo-distribution-assets/images/stem-ed2c175456fa8dcae30f92f61b3694ff.png" width="151" height="20" alt="stem ed2c175456fa8dcae30f92f61b3694ff" /></span>
 
-Second position <img src="0004-pablo-distribution-assets/images/stem-4cea2659857979f8b87f6775c94c8145.png" width="192" height="20" alt="stem 4cea2659857979f8b87f6775c94c8145" /></span>
+Second position <img src="0004-pablo-distribution-assets/images/stem-706fbeec167ddb5aeb84ef0c7bde2f57.png" width="192" height="20" alt="stem 706fbeec167ddb5aeb84ef0c7bde2f57" /></span>
+
+Summing these positions would give the original position(equation 1) as
+the ratio terms cancel out.
 
 As this method uses a reward pooling based approach to calculate the
 rewards for each staker out of it on-demand, rest of the document refers

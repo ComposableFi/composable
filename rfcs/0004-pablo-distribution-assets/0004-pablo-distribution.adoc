@@ -353,7 +353,9 @@ As the total reward pool is not affected the splitting is just creating a new po
 
 First position stem:[x_n^1 = P_(current) . s_n / (k . sum s_n) - d_n / k]
 
-Second position stem:[x_n^2 = P_(current) . (k - 1) . s_n / (k. sum s_n) - d_n / k]
+Second position stem:[x_n^2 = P_(current) . (k - 1) . s_n / (k. sum s_n) - (k - 1) . d_n / k]
+
+Summing these positions would give the original position(equation 1) as the ratio terms cancel out.
 
 As this method uses a reward pooling based approach to calculate the rewards for each staker out of it on-demand, rest of the document refers to this as the "reward pooling(*RP*) based approach".
 
