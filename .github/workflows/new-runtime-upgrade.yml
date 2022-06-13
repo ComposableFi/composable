@@ -47,5 +47,91 @@ jobs:
       - name: Upgrade runtime
         working-directory: scripts/github/
         run: |
-          FILE_NAME=composable_runtime.wasm
+          FILE_NAME=dali_runtime.wasm
           yarn upgrade-runtime --root_key=${{ secrets.DALI_ROOT_KEY }} --rpc_ws_url=wss://rpc.composablefinance.ninja --path=./${FILE_NAME}
+
+  composable-runtime-upgrade:
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+      - name: Set env
+        run: |
+          echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
+
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+
+      - name: Install yarn
+        run: npm install -g yarn
+
+      - name: Wget download wasm file
+        working-directory: scripts/github/
+        run: |
+          FILE_NAME=composable_runtime.wasm
+          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/${RELEASE_VERSION}/${FILE_NAME}
+          wget $FILE_GITHUB_PATH
+
+      - name: Install
+        working-directory: scripts/github/
+        run: yarn install
+
+      - name: Upgrade runtime
+        working-directory: scripts/github/
+        run: |
+          FILE_NAME=composable_runtime.wasm
+          yarn upgrade-runtime --root_key=${{ secrets.COMPOSABLE_ROOT_KEY }} --rpc_ws_url=wss://rpc.composablefinance.ninja --path=./${FILE_NAME}
+
+  picasso-runtime-upgrade:
+    runs-on:
+      - self-hosted
+      - linux
+      - x64
+      - sre
+    steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+      - name: Set env
+        run: |
+          echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
+
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+
+      - name: Install yarn
+        run: npm install -g yarn
+
+      - name: Wget download wasm file
+        working-directory: scripts/github/
+        run: |
+          FILE_NAME=picasso_runtime.wasm
+          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/${RELEASE_VERSION}/${FILE_NAME}
+          wget $FILE_GITHUB_PATH
+
+      - name: Install
+        working-directory: scripts/github/
+        run: yarn install
+
+      - name: Upgrade runtime
+        working-directory: scripts/github/
+        run: |
+          FILE_NAME=picasso_runtime.wasm
+          yarn upgrade-runtime --root_key=${{ secrets.PICASSO_ROOT_KEY }} --rpc_ws_url=wss://rpc.composablefinance.ninja --path=./${FILE_NAME}
