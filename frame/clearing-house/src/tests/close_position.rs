@@ -267,6 +267,38 @@ fn should_fail_if_pushes_index_mark_divergence_above_threshold() {
 	});
 }
 
+#[test]
+fn should_not_fail_if_index_mark_divergence_was_already_above_threshold() {
+	let config = MarketConfig { taker_fee: 0, ..Default::default() };
+
+	with_trading_context(config, as_balance(1_000_000), |market_id| {
+		// Set maximum divergence to 10%
+		set_maximum_oracle_mark_divergence((10, 100).into());
+
+		let vamm_id = &get_market(&market_id).vamm_id;
+		OraclePallet::set_price(Some(100)); // 1 in cents
+		VammPallet::set_price_of(vamm_id, Some(1.into()));
+
+		// Alice opens a position (no price impact)
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(ALICE),
+			market_id,
+			Long,
+			as_balance(1_000_000),
+			as_balance(1_000_000),
+		));
+
+		// Due to external market conditions, index-mark spread rises to >10%
+		// Relative index-mark spread:
+		// (mark - index) / index = (1.00 - 1.12) / 1.12 = -0.1071428571
+		OraclePallet::set_price(Some(112));
+
+		// Alice closes her position causing mark price to drop by 1%
+		VammPallet::set_price_impact_of(vamm_id, Some((99, 100).into()));
+		assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
+	});
+}
+
 // -------------------------------------------------------------------------------------------------
 //                                        Property Tests
 // -------------------------------------------------------------------------------------------------
