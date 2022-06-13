@@ -21,14 +21,6 @@ jobs:
         with:
           node-version: "16"
 
-      - name: Set env
-        run: |
-          echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
-
-      - name: Install
-        working-directory: scripts/github/   # 2.1 и зайти в путь на скрине
-        run: yarn install
-
 #name: "New runtime upgrade test"
 #
 #on:
