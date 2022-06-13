@@ -17,6 +17,7 @@ use frame_support::{
 use frame_system::{ChainContext, EnsureRoot, EnsureSignedBy};
 use once_cell::sync::Lazy;
 use orml_traits::{parameter_type_with_key, GetByKey};
+use primitives::currency::ValidateCurrencyId;
 use smallvec::smallvec;
 use sp_arithmetic::traits::Zero;
 use sp_runtime::{
@@ -250,6 +251,7 @@ impl pallet_assets::Config for Runtime {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = NoopRegistry;
+	type CurrencyValidator = ValidateCurrencyId;
 }
 
 parameter_types! {

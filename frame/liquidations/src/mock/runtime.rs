@@ -13,6 +13,7 @@ use frame_support::{
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use hex_literal::hex;
 use orml_traits::parameter_type_with_key;
+use primitives::currency::ValidateCurrencyId;
 use smallvec::smallvec;
 use sp_core::{
 	sr25519::{Public, Signature},
@@ -20,7 +21,7 @@ use sp_core::{
 };
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentifyAccount, IdentityLookup, Verify},
+	traits::{BlakeTwo256, ConvertInto, IdentifyAccount, IdentityLookup, Verify},
 	Perbill,
 };
 use xcm::latest::SendXcm;
@@ -155,6 +156,7 @@ impl pallet_assets::Config for Runtime {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = GovernanceRegistry;
+	type CurrencyValidator = ValidateCurrencyId;
 }
 
 impl pallet_currency_factory::Config for Runtime {
