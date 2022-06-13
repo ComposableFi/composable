@@ -8,25 +8,31 @@ on:
 jobs:
   dali-client-release:
     runs-on:
-      - ubuntu-latest
+      - self-hosted
+      - linux
+      - x64
+      - sre
     steps:
       - uses: borales/actions-yarn@v3.0.0
 
-      - name: Check yarn installation
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set env
+        run: |
+          echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
+
+      - name: Yarn installation
         continue-on-error: false
         run: yarn version
-#    - name: Clean up
-#      continue-on-error: true
-#      run: |
-#        sudo chown -R $USER:$USER $GITHUB_WORKSPACE
-#        docker system prune --force --all --volumes
-#    - uses: actions/checkout@v2
-#      with:
-#        fetch-depth: 0
-#
-#    - name: Set env
-#      run: |
-#        echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
+
+
 #
 #    - name: Install upgraded yarn
 #      run: |
