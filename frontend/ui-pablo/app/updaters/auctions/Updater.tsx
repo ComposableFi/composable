@@ -72,7 +72,6 @@ const Updater = () => {
          */
         fetchBalanceByAssetId(
           parachainApi,
-          DEFAULT_NETWORK_ID,
           poolAccountId,
           base.toString()
         ),
@@ -82,7 +81,6 @@ const Updater = () => {
          */
         fetchBalanceByAssetId(
           parachainApi,
-          DEFAULT_NETWORK_ID,
           poolAccountId,
           quote.toString()
         ),

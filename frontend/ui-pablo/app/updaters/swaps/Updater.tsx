@@ -233,13 +233,11 @@ const Updater = () => {
           let promises = [
             fetchBalanceByAssetId(
               parachainApi,
-              "picasso",
               poolAccountId,
               _baseAssetId.toString()
             ),
             fetchBalanceByAssetId(
               parachainApi,
-              "picasso",
               poolAccountId,
               _quoteAssetId.toString()
             ),

@@ -27,7 +27,6 @@ const Updater = () => {
           assetID = assetID.toString();
           fetchBalanceByAssetId(
             parachainApi,
-            DEFAULT_NETWORK_ID,
             selectedAccount.address,
             assetID
           ).then((balance) => {
@@ -67,7 +66,6 @@ const Updater = () => {
               assetID = assetID.toString();
               fetchBalanceByAssetId(
                 parachainApi,
-                DEFAULT_NETWORK_ID,
                 selectedAccount.address,
                 assetID
               ).then((balance) => {

@@ -20,7 +20,6 @@ export type AuctionPriceChartProps = {
 
 export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
   baseAsset,
-  quoteAsset,
   data,
   height,
   dateFormat,

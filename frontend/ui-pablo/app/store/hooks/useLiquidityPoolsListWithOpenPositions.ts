@@ -16,7 +16,6 @@ export const useLiquidityPoolsListWithOpenPositions = (): LiquidityPoolRow[] => 
         allPools.map(i => {
           fetchBalanceByAssetId(
             parachainApi,
-            DEFAULT_NETWORK_ID,
             selectedAccount.address,
             i.lpTokenAssetId
           ).then((balance) => {

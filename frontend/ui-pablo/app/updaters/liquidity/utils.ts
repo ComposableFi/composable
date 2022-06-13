@@ -22,13 +22,11 @@ export async function fetchAndUpdatePoolLiquidity(
     const poolAccount = createPoolAccountId(parachainApi, pool.poolId);
     const liqBase = await fetchBalanceByAssetId(
       parachainApi,
-      DEFAULT_NETWORK_ID,
       poolAccount,
       pool.pair.base.toString()
     );
     const liqQuote = await fetchBalanceByAssetId(
       parachainApi,
-      DEFAULT_NETWORK_ID,
       poolAccount,
       pool.pair.quote.toString()
     );

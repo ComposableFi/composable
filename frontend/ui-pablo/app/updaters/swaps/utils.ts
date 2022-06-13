@@ -67,13 +67,11 @@ async function calculatePriceImpactLBP(
       poolConstants.lbpConstants;
     const baseAssetReserve = await fetchBalanceByAssetId(
       api,
-      "picasso",
       poolAccountId,
       pair.base.toString()
     );
     const quoteAssetReserve = await fetchBalanceByAssetId(
       api,
-      "picasso",
       poolAccountId,
       pair.quote.toString()
     );

@@ -61,7 +61,6 @@ const Updater = () => {
         if (pool.poolId && pool.pair && pool.lpToken) {
           fetchBalanceByAssetId(
             parachainApi,
-            DEFAULT_NETWORK_ID,
             selectedAccount.address,
             pool.lpToken
           ).then((lpBalance) => {

@@ -31,6 +31,7 @@ import { onSwapAmountChange } from "@/updaters/swaps/utils";
 import { debounce } from "lodash";
 import { ConfirmingModal } from "../swap/ConfirmingModal";
 import { useSnackbar } from "notistack";
+import { toChainUnits } from "@/utils/bignumber";
 
 export type BuyFormProps = {
   auction: LiquidityBootstrappingPool;
@@ -140,17 +141,15 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
   const handler = debounce(onSwapAmountInput, 1000);
 
   const handleBuy = useCallback(async () => {
-    const asset = getAssetById("picasso", auction.pair.base);
-    if (parachainApi && selectedAccount && executor && asset) {
-      const baseDecimals = new BigNumber(10).pow(asset.decimals);
+    if (parachainApi && selectedAccount && executor) {
 
       const minRec = parachainApi.createType(
         "u128",
-        minReceive.times(baseDecimals).toFixed(0)
+        toChainUnits(minReceive)
       );
       const amountParam = parachainApi.createType(
         "u128",
-        baseAssetAmount.times(baseDecimals).toFixed(0)
+        toChainUnits(baseAssetAmount)
       );
 
       try {
