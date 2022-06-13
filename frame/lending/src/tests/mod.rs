@@ -1,4 +1,4 @@
-use crate::{currency::*, mocks::general::*, setup::assert_last_event, MarketIndex};
+use crate::{currency::*, mocks::general::*, MarketIndex};
 use composable_support::validation::TryIntoValidated;
 use composable_traits::{
 	defi::{CurrencyPair, DeFiComposableConfig, MoreThanOneFixedU128, Rate},
@@ -6,13 +6,13 @@ use composable_traits::{
 	oracle,
 	vault::{Deposit, VaultConfig},
 };
+use pallet_vault::models::VaultInfo;
 use frame_support::{
 	assert_ok,
 	dispatch::DispatchResultWithPostInfo,
 	traits::{fungibles::Mutate, OriginTrait},
 	BoundedVec,
 };
-use pallet_vault::models::VaultInfo;
 use sp_runtime::{FixedPointNumber, Percent, Perquintill};
 
 pub mod borrow;
@@ -280,8 +280,7 @@ pub fn mint_and_deposit_collateral<T>(
 		amount: balance,
 		sender: account,
 	};
-	let system_event: <T as crate::Config>::Event = event.into();
-	assert_last_event::<T>(system_event);
+    frame_system::Pallet::<T>::assert_last_event(event.into());
 }
 
 /// Borrows amount of tokens from the market for particular account.
@@ -315,7 +314,7 @@ pub fn assert_extrinsic_event<T: crate::Config>(
 	event: <T as crate::Config>::Event,
 ) {
 	assert_ok!(result);
-	assert_last_event::<T>(event);
+    frame_system::Pallet::<T>::assert_last_event(event.into());
 }
 
 /// Asserts the event wasn't dispatched.
