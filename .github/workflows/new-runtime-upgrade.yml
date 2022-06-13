@@ -33,9 +33,6 @@ jobs:
       - name: Install yarn
         run: npm install -g yarn
 
-      - name: Print release version
-        run: echo $RELEASE_VERSION
-
       - name: Wget download wasm file
         working-directory: scripts/github/
         run: |
