@@ -39,6 +39,8 @@
     - [Angular Token](./products/angular/angular-token.md)
     - [Socials](./products/angular/socials.md)
     - [Foreign Assets](./products/angular/foreign-assets.md)
+- [Cubic](./products/cubic/cubic.md)
+  - [Additional Details](./products/cubic/addtional-details.md)
 - [Parachain Vault Strategy](./products/parachain-vault-strategy.md)
     - [Vault Process in Detail](./products/parachain-vault-strategy/vault-process-in-detail/vault-process-in-detail.md)
     - [Contracts - Technical Details](./products/parachain-vault-strategy/contracts-technical-details/contracts-technical-details.md)
