@@ -300,6 +300,8 @@ fn should_not_fail_if_index_mark_divergence_was_already_above_threshold() {
 	});
 }
 
+// TODO(0xangelo): check that only available gains are realized (update collateral)
+
 // -------------------------------------------------------------------------------------------------
 //                                        Property Tests
 // -------------------------------------------------------------------------------------------------
