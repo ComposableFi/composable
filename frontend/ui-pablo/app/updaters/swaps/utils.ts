@@ -5,7 +5,7 @@ import { SwapsChartRange, SwapsSlice } from "@/store/swaps/swaps.types";
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
 import moment from "moment";
-import { fetchBalanceByAssetId } from "../balances/utils";
+import { fetchBalanceByAssetId } from "../assets/utils";
 import { DAYS, DEFAULT_DECIMALS, MINUTES } from "../constants";
 
 function takeFeeOnInputToken(poolType: LiquidityPoolType | "none"): boolean {

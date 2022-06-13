@@ -2,12 +2,10 @@ import { useEffect } from "react";
 import useStore from "@/store/useStore";
 import { useParachainApi } from "substrate-react";
 import { AssetId } from "@/defi/polkadot/types";
-import { Assets, getAssetOnChainId } from "@/defi/polkadot/Assets";
+import { Assets } from "@/defi/polkadot/Assets";
 import BigNumber from "bignumber.js";
 import {
-  swapTransactionsToChartSeries,
   fetchSpotPrice,
-  transformSwapSubsquidTx,
 } from "./utils";
 import { isValidAssetPair } from "../utils";
 import {
@@ -16,12 +14,12 @@ import {
   LiquidityPoolType,
   StableSwapPool,
 } from "@/store/pools/pools.types";
-import { fetchBalanceByAssetId } from "../balances/utils";
+import { fetchBalanceByAssetId } from "../assets/utils";
 import { createPoolAccountId } from "@/utils/substrate";
 
 const Updater = () => {
   const {
-    assetBalances,
+    balances,
     swaps,
     setDexRouteSwaps,
     setPoolConstantsSwaps,
@@ -45,11 +43,11 @@ const Updater = () => {
     if (ui.quoteAssetSelected === "none") {
       setUserAccountBalanceSwaps("quote", "0");
     } else {
-      const balance = assetBalances[ui.quoteAssetSelected as AssetId].picasso;
+      const balance = balances[ui.quoteAssetSelected as AssetId].picasso;
       setUserAccountBalanceSwaps("quote", balance);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [swaps.ui, assetBalances]);
+  }, [swaps.ui, balances]);
   /**
    * Triggered when user changes second
    * token from token list dropdown on
@@ -61,11 +59,11 @@ const Updater = () => {
     if (ui.baseAssetSelected === "none") {
       setUserAccountBalanceSwaps("base", "0");
     } else {
-      const balance = assetBalances[ui.baseAssetSelected as AssetId].picasso;
+      const balance = balances[ui.baseAssetSelected as AssetId].picasso;
       setUserAccountBalanceSwaps("base", balance);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [swaps.ui, assetBalances]);
+  }, [swaps.ui, balances]);
   /**
    * This hook is triggered when all
    * pools are fetched from the pablo pallet

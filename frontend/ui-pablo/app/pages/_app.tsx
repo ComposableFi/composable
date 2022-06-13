@@ -18,7 +18,8 @@ import LiquidityUpdater from "@/updaters/liquidity/Updater";
 import LiquidityBootstrappingUpdater from "@/updaters/pools/Updater";
 import SwapsUpdater from "@/updaters/swaps/Updater";
 import PoolStatsUpdater from "@/updaters/poolStats/Updater";
-import BalancesUpdater from "@/updaters/balances/Updater";
+import BalancesUpdater from "@/updaters/assets/balances/Updater";
+import ApolloUpdater from "@/updaters/assets/apollo/Updater";
 import AuctionsUpdater from "@/updaters/auctions/Updater";
 import PabloPoolEventsUpdater from "@/updaters/pabloPoolEvents/Updater";
 
@@ -143,6 +144,7 @@ export default function MyApp(props: MyAppProps) {
                   <LiquidityUpdater />
                   <PoolStatsUpdater />
                   <PabloPoolEventsUpdater />
+                  <ApolloUpdater />
                 </>
                 <ExecutorProvider>
                   <Component {...pageProps} />

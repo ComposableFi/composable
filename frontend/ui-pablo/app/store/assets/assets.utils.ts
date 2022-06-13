@@ -3,20 +3,8 @@ import produce from "immer";
 import { ParachainId, RelayChainId } from "substrate-react/dist/dotsama/types";
 import { AssetsSlice } from "./assets.types";
 
-export const updateAssetPrice = (
-  tokens: AssetsSlice["assets"],
-  assetId: AssetId,
-  price: number
-) => {
-  return produce(tokens, (draft) => {
-    if (draft[assetId]) {
-        draft[assetId].price = price
-    }
-    });
-};
-
 export const updateBalance = (
-  tokens: AssetsSlice["assetBalances"],
+  tokens: AssetsSlice["balances"],
   assetId: AssetId,
   chainId: ParachainId | RelayChainId,
   balance: string
@@ -27,3 +15,15 @@ export const updateBalance = (
     }
   })
 }
+
+export const setApolloPrice = (
+  assets: AssetsSlice["apollo"],
+  assetId: string,
+  price: string
+) => {
+  return produce(assets, (draft) => {
+    if (draft[assetId]) {
+      draft[assetId] = price
+    }
+  });
+};

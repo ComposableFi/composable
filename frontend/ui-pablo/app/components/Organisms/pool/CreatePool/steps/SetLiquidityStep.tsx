@@ -81,7 +81,7 @@ const SetLiquidityStep: React.FC<BoxProps> = ({
 
   const {
     createPool,
-    assetBalances
+    balances
   } = useStore();
 
   const baseAmount = useMemo(() => {
@@ -94,19 +94,19 @@ const SetLiquidityStep: React.FC<BoxProps> = ({
 
   const balance1 = useMemo(() => {
     if (createPool.baseAsset !== "none") {
-      return new BigNumber(assetBalances[createPool.baseAsset].picasso)
+      return new BigNumber(balances[createPool.baseAsset].picasso)
     }  else {
       return new BigNumber(0)
     }
-  }, [assetBalances, createPool.baseAsset])
+  }, [balances, createPool.baseAsset])
 
   const balance2 = useMemo(() => {
     if (createPool.quoteAsset !== "none") {
-      return new BigNumber(assetBalances[createPool.quoteAsset].picasso)
+      return new BigNumber(balances[createPool.quoteAsset].picasso)
     }  else {
       return new BigNumber(0)
     }
-  }, [assetBalances, createPool.quoteAsset])
+  }, [balances, createPool.quoteAsset])
 
   const [availableBalance] = useState<BigNumber>(new BigNumber(340));
 

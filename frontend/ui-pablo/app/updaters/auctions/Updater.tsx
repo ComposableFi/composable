@@ -6,7 +6,7 @@ import BigNumber from "bignumber.js";
 
 import { aggregateTrades, transformAuctionsTransaction } from "./utils";
 import { PoolTradeHistory } from "@/store/auctions/auctions.types";
-import { fetchBalanceByAssetId } from "../balances/utils";
+import { fetchBalanceByAssetId } from "../assets/utils";
 import { AVERAGE_BLOCK_TIME, DEFAULT_DECIMALS, DEFAULT_NETWORK_ID } from "../constants";
 import { queryAuctionStats } from "./subsquid";
 import { queryPoolTransactionsByType } from "../pools/subsquid";

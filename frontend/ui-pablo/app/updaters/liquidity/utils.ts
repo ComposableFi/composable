@@ -3,7 +3,7 @@ import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
 import { createPoolAccountId } from "@/utils/substrate";
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
-import { fetchBalanceByAssetId } from "../balances/utils";
+import { fetchBalanceByAssetId } from "../assets/utils";
 import { DEFAULT_NETWORK_ID } from "../constants";
 
 export async function fetchAndUpdatePoolLiquidity(

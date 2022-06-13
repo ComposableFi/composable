@@ -8,7 +8,7 @@ import { DEFAULT_NETWORK_ID } from "../constants";
 import {
   fetchAndUpdatePoolLiquidity,
 } from "./utils";
-import { fetchBalanceByAssetId } from "../balances/utils";
+import { fetchBalanceByAssetId } from "../assets/utils";
 
 const PICK = ["poolId", "pair", "lpToken"];
 const Updater = () => {

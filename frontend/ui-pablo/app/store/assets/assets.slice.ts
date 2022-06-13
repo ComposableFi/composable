@@ -4,7 +4,7 @@ import { ParachainNetworks, RelayChainNetworks } from "substrate-react";
 import { ParachainId } from "substrate-react/dist/dotsama/types";
 import { StoreSlice } from "../types";
 import { AssetsSlice } from "./assets.types";
-import { updateAssetPrice, updateBalance } from "./assets.utils";
+import { setApolloPrice, updateBalance } from "./assets.utils";
 
 const EMPTY_ASSETS_MAP: AssetsSlice["assets"] = Object.entries(Assets)
   .map(([assetId, metadata]) => {
@@ -23,7 +23,7 @@ const EMPTY_ASSETS_MAP: AssetsSlice["assets"] = Object.entries(Assets)
     };
   }, {} as AssetsSlice["assets"]);
 
-const EMPTY_BALANCES_MAP: AssetsSlice["assetBalances"] = Object.keys(Assets).reduce((p, c) => {
+const EMPTY_BALANCES_MAP: AssetsSlice["balances"] = Object.keys(Assets).reduce((p, c) => {
   let zeroBalance = Object.keys(RelayChainNetworks).concat(Object.keys(ParachainNetworks)).reduce((p, c) => {
     return {
       ...p,
@@ -38,10 +38,11 @@ const EMPTY_BALANCES_MAP: AssetsSlice["assetBalances"] = Object.keys(Assets).red
 
 const createAssetsSlice: StoreSlice<AssetsSlice> = (set) => ({
   assets: EMPTY_ASSETS_MAP,
-  assetBalances: EMPTY_BALANCES_MAP,
-  updateAssetPrice: (assetId: AssetId, price: number) =>
+  balances: EMPTY_BALANCES_MAP,
+  apollo: {},
+  updateApolloPrice: (assetId: string, price: string) =>
     set((prev: AssetsSlice) => ({
-      assets: updateAssetPrice(prev.assets, assetId, price),
+      apollo: setApolloPrice(prev.apollo, assetId, price),
     })),
   updateAssetBalance: (
     assetId: AssetId,
@@ -49,7 +50,7 @@ const createAssetsSlice: StoreSlice<AssetsSlice> = (set) => ({
     balance: string
   ) =>
     set((prev: AssetsSlice) => ({
-      assetBalances: updateBalance(prev.assetBalances, assetId, parachainId, balance),
+      balances: updateBalance(prev.balances, assetId, parachainId, balance),
     })),
 });
 

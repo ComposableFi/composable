@@ -2,7 +2,7 @@ import BigNumber from "bignumber.js";
 import { useEffect, useState } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
-import { fetchBalanceByAssetId } from "@/updaters/balances/utils";
+import { fetchBalanceByAssetId } from "@/updaters/assets/utils";
 import { LiquidityPoolRow, useLiquidityPoolsList } from "./useLiquidityPoolsList";
 
 export const useLiquidityPoolsListWithOpenPositions = (): LiquidityPoolRow[] => {
