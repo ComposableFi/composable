@@ -92,7 +92,7 @@ pub mod pallet {
 			+ Ord
 			+ TypeInfo
 			+ Into<u128>;
-		
+
 		type Vault: StrategicVault<
 			AssetId = Self::AssetId,
 			Balance = Self::Balance,

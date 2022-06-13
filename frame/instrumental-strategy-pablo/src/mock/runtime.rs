@@ -14,7 +14,6 @@ pub type Amount = i128;
 pub type BlockNumber = u64;
 pub type Balance = u128;
 pub type CurrencyId = u128;
-pub type PoolId = u128;
 
 pub const VAULT_PALLET_ID: PalletId = PalletId(*b"cubic___");
 pub type VaultId = u64;

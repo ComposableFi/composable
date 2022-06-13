@@ -58,8 +58,6 @@ mod tests;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use core::ops::AddAssign;
-
 	use crate::{
 		models::StrategyOverview,
 		rent::{self, Verdict},
@@ -77,6 +75,7 @@ pub mod pallet {
 			VaultConfig,
 		},
 	};
+	use core::ops::AddAssign;
 	use frame_support::{
 		dispatch::DispatchResultWithPostInfo,
 		ensure,
@@ -105,6 +104,7 @@ pub mod pallet {
 		ArithmeticError, DispatchError, FixedPointNumber, Perquintill,
 	};
 	use sp_std::fmt::Debug;
+	use std::cmp::Ordering;
 
 	#[allow(missing_docs)]
 	pub type AssetIdOf<T> =
@@ -971,12 +971,11 @@ pub mod pallet {
 						allocation
 							.mul_floor(<T::Convert as Convert<T::Balance, u128>>::convert(aum)),
 					);
-					if balance > max_allowed {
-						Ok(FundsAvailability::Depositable(balance - max_allowed))
-					} else if balance < max_allowed {
-						Ok(FundsAvailability::Withdrawable(max_allowed - balance))
-					} else {
-						Ok(FundsAvailability::None)
+					match balance.cmp(&max_allowed) {
+						Ordering::Less => Ok(FundsAvailability::Depositable(balance - max_allowed)),
+						Ordering::Greater =>
+							Ok(FundsAvailability::Withdrawable(max_allowed - balance)),
+						Ordering::Equal => Ok(FundsAvailability::None),
 					}
 				},
 				(_, _) => Ok(FundsAvailability::MustLiquidate),
