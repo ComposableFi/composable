@@ -13,9 +13,7 @@ jobs:
       - x64
       - sre
     steps:
-      - name: Set env
-        run: |
-          echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
+      - uses: borales/actions-yarn@v3.0.0
 
       - name: Clean up
         continue-on-error: true
@@ -25,27 +23,10 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - uses: borales/actions-yarn@v3.0.0
-      - uses: actions/setup-node@v2
-        with:
-          node-version: "16"
 
-#      - name: Print release version
-#        run: echo ${{ env.RELEASE_VERSION }}
-#
-#      - name: Wget download composable_runtime.wasm
-#        run: |
-#          FILE_NAME=composable_runtime.wasm
-#          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/v2.2.0/$FILE_NAME
-#          wget $FILE_GITHUB_PATH
-      - name: Yarn show version
+      - name: Set env
+        run: |
+          echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
+      - name: Yarn installation
+        continue-on-error: false
         run: yarn version
-
-#      #      #3) там поставить ноде и ярн
-#      - name: Install
-#        working-directory: scripts/github/   # 2.1 и зайти в путь на скрине
-#        run: yarn install
-#
-#      - name: Upgrade runtime
-#        working-directory: scripts/github/   # 2.1 и зайти в путь на скрине
-#        run: echo "UPGRADE RUNTIME HERE"
