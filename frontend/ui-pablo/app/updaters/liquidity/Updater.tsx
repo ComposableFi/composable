@@ -14,7 +14,6 @@ const Updater = () => {
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const {
     apollo,
-    assets,
     pools,
     setTokenAmountInLiquidityPool,
     setTokenValueInLiquidityPool,
