@@ -36,17 +36,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Show pwd1
-        run: pwd
-
       - name: Change dir
-        working-directory: scripts/github/
+#        working-directory: scripts/github/   # 2.1 и зайти в путь на скрине
+        run: cd scripts/github/
+
+      - name: Current dir
         run: pwd
 
-      - name: Show pwd2
-        run: pwd
-
-      # 2.1 и зайти в путь на скрине
 
 #      #3) там поставить ноде и ярн
       #
