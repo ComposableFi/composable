@@ -19,9 +19,6 @@ fn can_update_market() {
 			under_collateralized_warn_percent: market.under_collateralized_warn_percent,
 			liquidators: market.liquidators.clone(),
 			max_price_age: market.max_price_age,
-			interest_rate_model: InterestRateModel::Curve(
-				CurveModel::new(CurveModel::MAX_BASE_RATE).unwrap(),
-			),
 		};
 		let updated = Lending::update_market(origin, market_id, update_input.clone());
 		// check if the market was successfully updated
@@ -37,9 +34,6 @@ fn can_update_market() {
 			under_collateralized_warn_percent: market.under_collateralized_warn_percent,
 			liquidators: market.liquidators,
 			max_price_age: market.max_price_age,
-			interest_rate_model: InterestRateModel::Curve(
-				CurveModel::new(CurveModel::MAX_BASE_RATE).unwrap(),
-			),
 		};
 		assert_err!(
 			update_input.try_into_validated::<UpdateInputValid>(),
