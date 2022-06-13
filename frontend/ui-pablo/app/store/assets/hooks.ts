@@ -10,7 +10,6 @@ export function useAssetPrice(assetId: string): string {
     } = useStore();
     if (apollo[assetId]) {
         return apollo[assetId]
-    } else {
-        return "0"
     }
+    return "0"
 }
