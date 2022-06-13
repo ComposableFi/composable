@@ -13,15 +13,6 @@ jobs:
       - x64
       - sre
     steps:
-#      - name: Clean up
-#        continue-on-error: true
-#        run: |
-#          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
-#          docker system prune --force --all --volumes
-#      - uses: actions/checkout@v2
-#        with:
-#          fetch-depth: 0
-#
       - name: Set env
         run: |
           echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
@@ -32,15 +23,34 @@ jobs:
       - name: Wget download composable_runtime.wasm
         run: |
           FILE_NAME=composable_runtime.wasm
-          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/${{ env.RELEASE_VERSION }}/$FILE_NAME
+          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/v.2.2.0/$FILE_NAME
           wget $FILE_GITHUB_PATH
-          
-          if [ -f "$FILE_NAME" ]; then
-            echo "$FILE_NAME was downloaded completely."
-          else
-            echo "Impossible to download {$FILE_GITHUB_PATH}."
-            exit 1
-          fi
+
+      #2) если он есть то склонить репу
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Show pwd1
+        run: pwd
+
+      - name: Change dir
+        working-directory: ./script/github
+        run: pwd
+
+      - name: Show pwd2
+        run: pwd
+
+      # 2.1 и зайти в путь на скрине
+
+#      #3) там поставить ноде и ярн
+      #
+
 
       - name: Next step check
         run: echo "I'm here"
