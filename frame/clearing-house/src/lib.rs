@@ -169,7 +169,7 @@ pub mod pallet {
 		pallet_prelude::*,
 		storage::bounded_vec::BoundedVec,
 		traits::{tokens::fungibles::Transfer, GenesisBuild, UnixTime},
-		transactional, Blake2_128Concat, PalletId,
+		transactional, Blake2_128Concat, PalletId, Twox64Concat,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use num_traits::Signed;
@@ -343,6 +343,19 @@ pub mod pallet {
 		T::AccountId,
 		BoundedVec<Position<T>, T::MaxPositions>,
 		ValueQuery,
+	>;
+
+	/// Gains that were realized but cannot be withdrawn due to lack of offsetting realized losses
+	/// from other positions in the market.
+	#[pallet::storage]
+	#[pallet::getter(fn outstanding_gains)]
+	pub type OutstandingGains<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		T::AccountId,
+		Twox64Concat,
+		T::MarketId,
+		T::Balance,
 	>;
 
 	/// The number of markets, also used to generate the next market identifier.

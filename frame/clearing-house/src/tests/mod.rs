@@ -130,6 +130,10 @@ fn get_position(account_id: &AccountId, market_id: &MarketId) -> Option<Position
 	positions.into_iter().find(|p| p.market_id == *market_id)
 }
 
+fn get_outstanding_gains(account_id: AccountId, market_id: &MarketId) -> Balance {
+	TestPallet::outstanding_gains(&account_id, market_id).unwrap_or_else(Zero::zero)
+}
+
 fn get_market(market_id: &MarketId) -> Market {
 	TestPallet::get_market(market_id).unwrap()
 }

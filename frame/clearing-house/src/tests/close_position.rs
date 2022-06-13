@@ -11,8 +11,9 @@ use crate::{
 		Error, Event,
 	},
 	tests::{
-		any_direction, as_balance, get_collateral, get_market, get_market_fee_pool, get_position,
-		run_for_seconds, set_maximum_oracle_mark_divergence, with_trading_context, MarketConfig,
+		any_direction, as_balance, get_collateral, get_market, get_market_fee_pool,
+		get_outstanding_gains, get_position, run_for_seconds, set_maximum_oracle_mark_divergence,
+		with_trading_context, MarketConfig,
 	},
 };
 
@@ -67,7 +68,7 @@ fn should_realize_long_position_gains() {
 
 		VammPallet::set_price(Some(20.into()));
 		assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
-		assert_eq!(get_collateral(ALICE), collateral_0 * 2);
+		assert_eq!(get_outstanding_gains(ALICE, &market_id), collateral_0);
 
 		SystemPallet::assert_last_event(
 			Event::PositionClosed { user: ALICE, market: market_id, direction: Long, base }.into(),
@@ -160,7 +161,7 @@ fn should_realize_short_position_gains() {
 
 		VammPallet::set_price(Some(5.into()));
 		assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
-		assert_eq!(get_collateral(ALICE), collateral_0 + as_balance(50));
+		assert_eq!(get_outstanding_gains(ALICE, &market_id), as_balance(50));
 
 		SystemPallet::assert_last_event(
 			Event::PositionClosed { user: ALICE, market: market_id, direction: Short, base }.into(),
