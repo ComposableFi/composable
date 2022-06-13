@@ -24,10 +24,11 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: "16"
-      - uses: bahmutov/npm-install@v1
 
       - name: Show yarn version
+        uses:  borales/actions-yarn@v3.0.0
         run: yarn version
+
 #name: "New runtime upgrade test"
 #
 #on:
