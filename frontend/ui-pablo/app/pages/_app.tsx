@@ -21,7 +21,6 @@ import PoolStatsUpdater from "@/updaters/poolStats/Updater";
 import BalancesUpdater from "@/updaters/assets/balances/Updater";
 import ApolloUpdater from "@/updaters/assets/apollo/Updater";
 import AuctionsUpdater from "@/updaters/auctions/Updater";
-import PabloPoolEventsUpdater from "@/updaters/pabloPoolEvents/Updater";
 
 import * as definitions from "@/defi/polkadot/interfaces/definitions";
 import { SnackbarProvider } from "notistack";
@@ -143,7 +142,6 @@ export default function MyApp(props: MyAppProps) {
                   <BalancesUpdater />
                   <LiquidityUpdater />
                   <PoolStatsUpdater />
-                  <PabloPoolEventsUpdater />
                   <ApolloUpdater />
                 </>
                 <ExecutorProvider>
