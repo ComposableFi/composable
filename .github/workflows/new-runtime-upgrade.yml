@@ -18,13 +18,13 @@ jobs:
         run: |
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
-      - uses: borales/actions-yarn@v3.0.0
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
       - uses: actions/setup-node@v2
         with:
           node-version: "16"
+      - uses: borales/actions-yarn@v3.0.0
 
 #name: "New runtime upgrade test"
 #
