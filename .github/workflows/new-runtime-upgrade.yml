@@ -18,14 +18,15 @@ jobs:
         run: |
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
-          /usr/bin/docker build -t b1cbc5:d1e3eeb518c04bbebebe3fabd287b356 -f "/home/runner/_work/_actions/borales/actions-yarn/v3.0.0/Dockerfile" "/home/runner/_work/_actions/borales/actions-yarn/v3.0.0"
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - uses: borales/actions-yarn@v3.0.0
       - uses: actions/setup-node@v2
         with:
           node-version: "16"
+
+      - name: Install yarn
+        run: npm install -g yarn
 
       - name: Show yarn version
         run: yarn version
