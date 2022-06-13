@@ -28,7 +28,17 @@ jobs:
 
       - name: Wget download composable_runtime.wasm
         run: |
-          wget https://github.com/ComposableFi/composable/releases/download/v2.2.0/composable_runtime.wasm
+          VERSION=v2.2.0
+          echo "version: $VERSION"
+          wget https://github.com/ComposableFi/composable/releases/download/${VERSION}/composable_runtime.wasm
+            
+          FILE=composable_runtime.wasm
+          if [ -f "$FILE" ]; then
+            echo "$FILE exists."
+          else
+            echo "$FILE does not exist."
+            exit 1
+          fi
 #
 #      - uses: borales/actions-yarn@v3.0.0
 #      - name: Yarn installation
