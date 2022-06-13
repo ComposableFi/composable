@@ -9,7 +9,6 @@ import {
   BoxProps,
 } from "@mui/material";
 import { PairAsset } from "@/components/Atoms";
-import { useAppSelector } from "@/hooks/store";
 import React from "react";
 import { TableHeader } from "@/defi/types";
 import { BoxWrapper } from "../BoxWrapper";
