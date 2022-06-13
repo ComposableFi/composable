@@ -6,13 +6,13 @@ use composable_traits::{
 	oracle,
 	vault::{Deposit, VaultConfig},
 };
-use pallet_vault::models::VaultInfo;
 use frame_support::{
 	assert_ok,
 	dispatch::DispatchResultWithPostInfo,
 	traits::{fungibles::Mutate, OriginTrait},
 	BoundedVec,
 };
+use pallet_vault::models::VaultInfo;
 use sp_runtime::{FixedPointNumber, Percent, Perquintill};
 
 pub mod borrow;
@@ -280,7 +280,7 @@ pub fn mint_and_deposit_collateral<T>(
 		amount: balance,
 		sender: account,
 	};
-    frame_system::Pallet::<T>::assert_last_event(event.into());
+	frame_system::Pallet::<T>::assert_last_event(event.into());
 }
 
 /// Borrows amount of tokens from the market for particular account.
@@ -314,7 +314,7 @@ pub fn assert_extrinsic_event<T: crate::Config>(
 	event: <T as crate::Config>::Event,
 ) {
 	assert_ok!(result);
-    frame_system::Pallet::<T>::assert_last_event(event.into());
+	frame_system::Pallet::<T>::assert_last_event(event.into());
 }
 
 /// Asserts the event wasn't dispatched.

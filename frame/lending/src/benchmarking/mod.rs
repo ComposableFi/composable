@@ -1,7 +1,6 @@
 //! Benchmarks and sanity tests for lending. Only test that action do not error, not that produce
 //! positive side effects
 #![warn(unused_imports)]
-use setup::*;
 use super::*;
 use crate::{self as pallet_lending, Pallet as Lending};
 use composable_traits::{
@@ -15,6 +14,7 @@ use frame_support::{
 	BoundedVec,
 };
 use frame_system::RawOrigin;
+use setup::*;
 use sp_std::prelude::*;
 type BalanceOf<T> = <T as DeFiComposableConfig>::Balance;
 
