@@ -260,6 +260,7 @@ impl<T: Config> Default for MarketGeneric<T> {
 			margin_ratio_maintenance: Default::default(),
 			margin_ratio_partial: Default::default(),
 			minimum_trade_size: Default::default(),
+			available_gains: Zero::zero(),
 			base_asset_amount_long: Default::default(),
 			base_asset_amount_short: Default::default(),
 			cum_funding_rate_long: Default::default(),

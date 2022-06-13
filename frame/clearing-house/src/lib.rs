@@ -177,7 +177,11 @@ pub mod pallet {
 		traits::{AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, One, Saturating, Zero},
 		ArithmeticError, FixedPointNumber, FixedPointOperand,
 	};
-	use sp_std::{cmp::Ordering, fmt::Debug, ops::Neg};
+	use sp_std::{
+		cmp::{self, Ordering},
+		fmt::Debug,
+		ops::Neg,
+	};
 
 	// ---------------------------------------------------------------------------------------------
 	//                             Declaration Of The Pallet Type
@@ -349,14 +353,8 @@ pub mod pallet {
 	/// from other positions in the market.
 	#[pallet::storage]
 	#[pallet::getter(fn outstanding_gains)]
-	pub type OutstandingGains<T: Config> = StorageDoubleMap<
-		_,
-		Blake2_128Concat,
-		T::AccountId,
-		Twox64Concat,
-		T::MarketId,
-		T::Balance,
-	>;
+	pub type OutstandingGains<T: Config> =
+		StorageDoubleMap<_, Blake2_128Concat, T::AccountId, Twox64Concat, T::MarketId, T::Balance>;
 
 	/// The number of markets, also used to generate the next market identifier.
 	///
@@ -936,6 +934,7 @@ pub mod pallet {
 					margin_ratio_maintenance: config.margin_ratio_maintenance,
 					margin_ratio_partial: config.margin_ratio_partial,
 					minimum_trade_size: config.minimum_trade_size,
+					available_gains: Zero::zero(),
 					base_asset_amount_long: Zero::zero(),
 					base_asset_amount_short: Zero::zero(),
 					fee_pool: Zero::zero(),
@@ -1100,8 +1099,14 @@ pub mod pallet {
 				Self::check_oracle_guard_rails(&market, was_mark_index_too_divergent)?;
 
 				// Realize PnL
-				collateral =
-					Self::update_margin_with_pnl(&collateral, &exit_value.try_sub(&entry_value)?)?;
+				let mut outstanding_gains =
+					Self::outstanding_gains(account_id, market_id).unwrap_or_else(Zero::zero);
+				Self::settle_profit_and_loss(
+					&mut collateral,
+					&mut outstanding_gains,
+					&mut market,
+					exit_value.try_sub(&entry_value)?,
+				)?;
 
 				// Charge fees
 				let fee = Self::fee_for_trade(&market, &exit_value)?;
@@ -1112,6 +1117,7 @@ pub mod pallet {
 				Self::do_update_funding(market_id, &mut market, T::UnixTime::now().as_secs())?;
 
 				Collateral::<T>::insert(account_id, collateral);
+				OutstandingGains::<T>::insert(account_id, market_id, outstanding_gains);
 				Markets::<T>::insert(market_id, market);
 				Positions::<T>::insert(account_id, positions);
 
@@ -1751,6 +1757,31 @@ pub mod pallet {
 
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
+		fn settle_profit_and_loss(
+			collateral: &mut T::Balance,
+			outstanding_gains: &mut T::Balance,
+			market: &mut Market<T>,
+			pnl: T::Decimal,
+		) -> Result<(), DispatchError> {
+			if pnl.is_positive() {
+				// take the opportunity to settle any outstanding gains
+				outstanding_gains.try_add_mut(&pnl.into_balance()?)?;
+				let realized_gains = cmp::min(*outstanding_gains, market.available_gains);
+				collateral.try_add_mut(&realized_gains)?;
+				outstanding_gains.try_sub_mut(&realized_gains)?;
+				market.available_gains.try_sub_mut(&realized_gains)?;
+			} else {
+				let losses = pnl.into_balance()?;
+				let outstanding_gains_lost = cmp::min(*outstanding_gains, losses);
+				let realized_losses = losses.saturating_sub(outstanding_gains_lost);
+				collateral.try_sub_mut(&realized_losses)?;
+				outstanding_gains.try_sub_mut(&outstanding_gains_lost)?;
+				market.available_gains.try_add_mut(&realized_losses)?;
+			}
+
+			Ok(())
+		}
+
 		fn try_get_market(market_id: &T::MarketId) -> Result<Market<T>, DispatchError> {
 			Markets::<T>::get(market_id).ok_or_else(|| Error::<T>::MarketIdNotFound.into())
 		}

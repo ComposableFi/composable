@@ -98,6 +98,8 @@ pub struct Market<T: Config> {
 	// ---------------------------------------------------------------------------------------------
 	//                                         Dynamic
 	// ---------------------------------------------------------------------------------------------
+	/// The current total realized losses which haven't been claimed by traders in profit.
+	pub available_gains: T::Balance,
 	/// Total position, in base asset, of all traders that are long. Must be positive. Used to
 	/// compute parameter adjustment costs and funding payments from/to the Clearing House.
 	pub base_asset_amount_long: T::Decimal,
