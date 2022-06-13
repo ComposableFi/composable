@@ -7,11 +7,8 @@ on:
 
 jobs:
   dali-client-release:
-    runs-on: 
-      - self-hosted
-      - linux
-      - X64
-      - ansible-runner
+    runs-on:
+      - ubuntu-latest
     steps:
       - name: Clean up
         continue-on-error: false
