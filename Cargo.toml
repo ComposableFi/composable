@@ -55,6 +55,10 @@ panic = "unwind"
 inherits = "release"
 lto = true
 
+[patch.crates-io]
+# https://github.com/paritytech/parity-scale-codec/issues/348
+parity-scale-codec-derive = { git = "https://github.com/paritytech/parity-scale-codec", tag = "parity-scale-codec-derive-3.1.2" }
+
 [patch."https://github.com/paritytech/substrate"]
 beefy-gadget = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.22" }
 beefy-gadget-rpc = { git = "https://github.com/composableFi/substrate", branch = "polkadot-v0.9.22" }

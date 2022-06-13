@@ -1391,9 +1391,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "3.1.18"
+version = "3.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d2dbdf4bdacb33466e854ce889eee8dfd5729abf7ccd7664d0a2d60cd384440b"
+checksum = "a836566fa5f52f7ddf909a8a2f9029b9f78ca584cd95cf7e87f8073110f4c5c9"
 dependencies = [
  "atty",
  "bitflags",
@@ -1408,9 +1408,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "3.1.18"
+version = "3.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25320346e922cffe59c0bbc5410c8d8784509efb321488971081313cb1e1a33c"
+checksum = "986fd75d1dfd2c34eb8c9275ae38ad87ea9478c9b79e87f1801f7d866dfb1e37"
 dependencies = [
  "heck 0.4.0",
  "proc-macro-error",
@@ -1421,9 +1421,9 @@ dependencies = [
 
 [[package]]
 name = "clap_lex"
-version = "0.2.0"
+version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a37c35f1112dad5e6e0b1adaff798507497a18fceeb30cceb3bae7d1427b9213"
+checksum = "5538cd660450ebeb4234cfecf8f2284b844ffc4c50531e66d584ad5b91293613"
 dependencies = [
  "os_str_bytes",
 ]
@@ -1553,7 +1553,7 @@ version = "2.1.6"
 dependencies = [
  "assets-rpc",
  "assets-runtime-api",
- "clap 3.1.18",
+ "clap 3.2.1",
  "common",
  "composable-runtime",
  "crowdloan-rewards-rpc",
@@ -2229,7 +2229,7 @@ name = "cumulus-client-cli"
 version = "0.1.0"
 source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.22#ebdfbea0029dd3349ce0e9c758acc73acce04d18"
 dependencies = [
- "clap 3.1.18",
+ "clap 3.2.1",
  "sc-cli",
  "sc-service",
  "url 2.2.2",
@@ -3551,7 +3551,7 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22#
 dependencies = [
  "Inflector",
  "chrono",
- "clap 3.1.18",
+ "clap 3.2.1",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -4069,9 +4069,9 @@ checksum = "9b919933a397b79c37e33b77bb2aa3dc8eb6e165ad809e58ff75bc7db2e34574"
 
 [[package]]
 name = "globset"
-version = "0.4.8"
+version = "0.4.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "10463d9ff00a2a068db14231982f5132edebad0d7660cd956a1c30292dbcbfbd"
+checksum = "0a1e17342619edbc21a964c2afbeb6c820c6a2560032872f397bb97ea127bd0a"
 dependencies = [
  "aho-corasick",
  "bstr",
@@ -8690,9 +8690,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec"
-version = "3.1.3"
+version = "3.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04bc9583b5e01cc8c70d89acc9af14ef9b1c29ee3a0074b2a9eea8c0fa396690"
+checksum = "e8b44461635bbb1a0300f100a841e571e7d919c81c73075ef5d152ffdb521066"
 dependencies = [
  "arrayvec 0.7.2",
  "bitvec",
@@ -8704,9 +8704,8 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec-derive"
-version = "3.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9299338969a3d2f491d65f140b00ddec470858402f888af98e8642fb5e8965cd"
+version = "3.1.2"
+source = "git+https://github.com/paritytech/parity-scale-codec?tag=parity-scale-codec-derive-3.1.2#5aab13d31634beb3768d77c6e24f5f879d0ffc14"
 dependencies = [
  "proc-macro-crate 1.1.3",
  "proc-macro2 1.0.39",
@@ -9265,7 +9264,7 @@ name = "polkadot-cli"
 version = "0.9.22"
 source = "git+https://github.com/paritytech/polkadot?branch=release-v0.9.22#17c7b9594aedbfc644d7e6e26f7bd244e68ccf4d"
 dependencies = [
- "clap 3.1.18",
+ "clap 3.2.1",
  "frame-benchmarking-cli",
  "futures 0.3.21",
  "log 0.4.17",
@@ -9760,7 +9759,7 @@ dependencies = [
  "rand 0.8.5",
  "sc-authority-discovery",
  "sc-network",
- "strum 0.24.0",
+ "strum 0.24.1",
  "thiserror",
 ]
 
@@ -10399,7 +10398,7 @@ version = "0.1.0"
 dependencies = [
  "binance",
  "chrono",
- "clap 3.1.18",
+ "clap 3.2.1",
  "custom_derive",
  "enum_derive",
  "env_logger",
@@ -11718,7 +11717,7 @@ version = "0.10.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22#616d33ea23bab86cafffaf116fc607b6790fb4eb"
 dependencies = [
  "chrono",
- "clap 3.1.18",
+ "clap 3.2.1",
  "fdlimit",
  "futures 0.3.21",
  "hex",
@@ -14313,11 +14312,11 @@ dependencies = [
 
 [[package]]
 name = "strum"
-version = "0.24.0"
+version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e96acfc1b70604b8b2f1ffa4c57e59176c7dbb05d556c71ecd2f5498a1dee7f8"
+checksum = "063e6045c0e62079840579a7e47a355ae92f60eb74daaf156fb1e84ba164e63f"
 dependencies = [
- "strum_macros 0.24.0",
+ "strum_macros 0.24.1",
 ]
 
 [[package]]
@@ -14335,9 +14334,9 @@ dependencies = [
 
 [[package]]
 name = "strum_macros"
-version = "0.24.0"
+version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6878079b17446e4d3eba6192bb0a2950d5b14f0ed8424b852310e5a94345d0ef"
+checksum = "9550962e7cf70d9980392878dfaf1dcc3ece024f4cf3bf3c46b978d0bad61d6c"
 dependencies = [
  "heck 0.4.0",
  "proc-macro2 1.0.39",
@@ -14406,7 +14405,7 @@ name = "substrate-simnode"
 version = "0.1.0"
 source = "git+https://github.com/polytope-labs/substrate-simnode?rev=920d5d7a0329f2791e11930d2c4f96d9ce50b160#920d5d7a0329f2791e11930d2c4f96d9ce50b160"
 dependencies = [
- "clap 3.1.18",
+ "clap 3.2.1",
  "cumulus-pallet-parachain-system",
  "cumulus-primitives-parachain-inherent",
  "cumulus-test-relay-sproof-builder",
@@ -15326,7 +15325,7 @@ name = "try-runtime-cli"
 version = "0.10.0-dev"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22#616d33ea23bab86cafffaf116fc607b6790fb4eb"
 dependencies = [
- "clap 3.1.18",
+ "clap 3.2.1",
  "jsonrpsee 0.13.1",
  "log 0.4.17",
  "parity-scale-codec",
