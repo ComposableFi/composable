@@ -301,6 +301,12 @@ pub mod pallet {
 	pub type FullLiquidationPenaltyLiquidatorShare<T: Config> =
 		StorageValue<_, T::Decimal, ValueQuery>;
 
+	/// Maximum allowable absolute relative divergence between the mark and index price.
+	#[pallet::storage]
+	#[pallet::getter(fn max_price_divergence)]
+	#[allow(clippy::disallowed_types)]
+	pub type MaxPriceDivergence<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
+
 	/// Ratio of user's margin to be seized as fees upon a partial liquidation event.
 	#[pallet::storage]
 	#[pallet::getter(fn partial_liquidation_penalty)]
@@ -1067,6 +1073,9 @@ pub mod pallet {
 			if let Some(direction) = position.direction() {
 				Self::settle_funding(position, &market, &mut collateral)?;
 
+				// record mark-index price divergence before
+				let was_mark_index_too_divergent = Self::is_mark_index_too_divergent(&market)?;
+
 				let (base_swapped, entry_value, exit_value) = Self::do_close_position(
 					&mut positions,
 					position_index,
@@ -1074,6 +1083,8 @@ pub mod pallet {
 					&mut market,
 					Zero::zero(),
 				)?;
+
+				Self::check_oracle_guard_rails(&market, was_mark_index_too_divergent)?;
 
 				// Realize PnL
 				let pnl = exit_value.try_sub(&entry_value)?;
@@ -1642,6 +1653,32 @@ pub mod pallet {
 
 	// Helper functions - validity checks
 	impl<T: Config> Pallet<T> {
+		fn check_oracle_guard_rails(
+			market: &Market<T>,
+			was_mark_index_too_divergent: bool,
+		) -> Result<(), DispatchError> {
+			// Block if mark-index divergence was pushed too far
+			ensure!(
+				!Self::is_mark_index_too_divergent(market)? || was_mark_index_too_divergent,
+				Error::<T>::OracleMarkTooDivergent
+			);
+
+			Ok(())
+		}
+
+		fn is_mark_index_too_divergent(market: &Market<T>) -> Result<bool, DispatchError> {
+			let index_cents =
+				T::Oracle::get_price(market.asset_id, T::Decimal::one().into_balance()?)?.price;
+			let index = T::Decimal::checked_from_rational(index_cents, 100)
+				.ok_or(ArithmeticError::Overflow)?;
+			let mark: T::Decimal =
+				T::Vamm::get_price(market.vamm_id, AssetType::Base)?.into_signed()?;
+
+			let divergence = mark.try_sub(&index)?.try_div(&index)?;
+			let threshold = Self::max_price_divergence();
+			Ok(divergence.saturating_abs() > threshold)
+		}
+
 		fn is_funding_update_time(
 			market: &Market<T>,
 			now: DurationSeconds,

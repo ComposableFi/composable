@@ -46,20 +46,30 @@ pub mod pallet {
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
+		pub price: Option<T::Balance>,
 		pub supports_assets: Option<bool>,
 		pub twap: Option<T::Balance>,
 	}
 
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { supports_assets: Some(true), twap: Some(100_u64.into()) }
+			Self {
+				price: Some(100_u64.into()),
+				supports_assets: Some(true),
+				twap: Some(100_u64.into()),
+			}
 		}
 	}
 
 	#[pallet::genesis_build]
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
+			if let Some(price) = self.price.clone() {
+				MockPrice::<T>::set(Some(price));
+			}
+
 			SupportsAssets::<T>::set(self.supports_assets);
+
 			if let Some(twap) = self.twap.clone() {
 				Twap::<T>::set(Some(twap));
 			}

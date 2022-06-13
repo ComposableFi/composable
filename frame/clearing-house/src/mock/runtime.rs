@@ -262,6 +262,7 @@ pub struct ExtBuilder {
 	pub vamm_id: Option<VammId>,
 	pub vamm_twap: Option<UnsignedDecimal>,
 	pub oracle_asset_support: Option<bool>,
+	pub oracle_price: Option<Balance>,
 	pub oracle_twap: Option<Balance>,
 }
 
@@ -288,6 +289,7 @@ impl ExtBuilder {
 			.unwrap();
 
 		let oracle_genesis = mock_oracle::GenesisConfig {
+			price: self.oracle_price,
 			supports_assets: self.oracle_asset_support,
 			twap: self.oracle_twap,
 		};
