@@ -1,4 +1,4 @@
-name: "Release Rollout"
+name: "New runtime upgrade test"
 
 on:
   workflow_dispatch:
