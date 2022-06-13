@@ -10,7 +10,9 @@ jobs:
     runs-on:
       - ubuntu-latest
     steps:
-      - name: Clean up
+      - uses: borales/actions-yarn@v3.0.0
+
+      - name: Check yarn installation
         continue-on-error: false
         run: yarn version
 #    - name: Clean up
