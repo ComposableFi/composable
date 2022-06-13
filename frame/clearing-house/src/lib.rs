@@ -1073,7 +1073,7 @@ pub mod pallet {
 			if let Some(direction) = position.direction() {
 				Self::settle_funding(position, &market, &mut collateral)?;
 
-				// record mark-index price divergence before
+				// For checking oracle guard rails afterwards
 				let was_mark_index_too_divergent = Self::is_mark_index_too_divergent(&market)?;
 
 				let (base_swapped, entry_value, exit_value) = Self::do_close_position(
@@ -1087,8 +1087,8 @@ pub mod pallet {
 				Self::check_oracle_guard_rails(&market, was_mark_index_too_divergent)?;
 
 				// Realize PnL
-				let pnl = exit_value.try_sub(&entry_value)?;
-				collateral = Self::update_margin_with_pnl(&collateral, &pnl)?;
+				collateral =
+					Self::update_margin_with_pnl(&collateral, &exit_value.try_sub(&entry_value)?)?;
 
 				// Charge fees
 				let fee = Self::fee_for_trade(&market, &exit_value)?;
