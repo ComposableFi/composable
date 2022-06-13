@@ -17,6 +17,19 @@ jobs:
         run: |
           echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
 
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: borales/actions-yarn@v3.0.0
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+
       - name: Print release version
         run: echo ${{ env.RELEASE_VERSION }}
 
@@ -26,24 +39,8 @@ jobs:
           FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/v2.2.0/$FILE_NAME
           wget $FILE_GITHUB_PATH
 
-      - name: Clean up
-        continue-on-error: true
-        run: |
-          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
-          docker system prune --force --all --volumes
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Change dir
-        run: cd scripts/github/
 
       #      #3) там поставить ноде и ярн
-      - uses: borales/actions-yarn@v3.0.0
-      - uses: actions/setup-node@v2
-        with:
-          node-version: "16"
-
       - name: Install
         working-directory: scripts/github/   # 2.1 и зайти в путь на скрине
         run: yarn install
