@@ -51,8 +51,6 @@ mod tests;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod benchmarking;
-#[cfg(any(feature = "runtime-benchmarks", test))]
-mod setup;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
 pub mod currency;

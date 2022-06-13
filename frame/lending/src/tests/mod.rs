@@ -1,4 +1,4 @@
-use crate::{currency::*, mocks::general::*, setup::assert_last_event, MarketIndex};
+use crate::{currency::*, mocks::general::*, MarketIndex};
 use composable_support::validation::TryIntoValidated;
 use composable_traits::{
 	defi::{CurrencyPair, DeFiComposableConfig, MoreThanOneFixedU128, Rate},
@@ -280,8 +280,7 @@ pub fn mint_and_deposit_collateral<T>(
 		amount: balance,
 		sender: account,
 	};
-	let system_event: <T as crate::Config>::Event = event.into();
-	assert_last_event::<T>(system_event);
+	frame_system::Pallet::<T>::assert_last_event(event.into());
 }
 
 /// Borrows amount of tokens from the market for particular account.
@@ -315,7 +314,7 @@ pub fn assert_extrinsic_event<T: crate::Config>(
 	event: <T as crate::Config>::Event,
 ) {
 	assert_ok!(result);
-	assert_last_event::<T>(event);
+	frame_system::Pallet::<T>::assert_last_event(event.into());
 }
 
 /// Asserts the event wasn't dispatched.
