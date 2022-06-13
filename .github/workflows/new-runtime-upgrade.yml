@@ -1,7 +1,9 @@
 name: "New runtime upgrade test"
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - new-runtime-upgrade
 
 jobs:
   dali-client-release:
