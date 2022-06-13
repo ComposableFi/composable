@@ -28,8 +28,25 @@ jobs:
       - name: Install yarn
         run: npm install -g yarn
 
-      - name: Show yarn version
-        run: yarn version
+      - name: Print release version
+        run: echo ${{ env.RELEASE_VERSION }}
+
+      - name: Wget download composable_runtime.wasm
+        run: |
+          FILE_NAME=composable_runtime.wasm
+          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/v2.2.0/$FILE_NAME
+          wget $FILE_GITHUB_PATH
+
+      #      #3) там поставить ноде и ярн
+      - name: Install
+        working-directory: scripts/github/   # 2.1 и зайти в путь на скрине
+        run: yarn install
+
+      - name: Upgrade runtime
+        working-directory: scripts/github/   # 2.1 и зайти в путь на скрине
+        run: echo "UPGRADE RUNTIME HERE"
+
+
 
 #name: "New runtime upgrade test"
 #
