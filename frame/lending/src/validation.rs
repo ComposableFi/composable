@@ -21,12 +21,7 @@ impl<LiquidationStrategyId, BlockNumber>
 			return Err("Collateral factor must be more than one.")
 		}
 
-		let interest_rate_model = update_input
-			.interest_rate_model
-			.try_into_validated::<InteresteRateModelIsValid>()?
-			.value();
-
-		Ok(UpdateInput { interest_rate_model, ..update_input })
+		Ok(update_input)
 	}
 }
 
@@ -43,7 +38,12 @@ impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
 		create_input: CreateInput<LiquidationStrategyId, Asset, BlockNumber>,
 	) -> Result<CreateInput<LiquidationStrategyId, Asset, BlockNumber>, &'static str> {
 		let updatable = create_input.updatable.try_into_validated::<UpdateInputValid>()?.value();
-		Ok(CreateInput { updatable, ..create_input })
+		let interest_rate_model = create_input
+			.interest_rate_model
+			.try_into_validated::<InteresteRateModelIsValid>()?
+			.value();
+
+		Ok(CreateInput { updatable, interest_rate_model, ..create_input })
 	}
 }
 

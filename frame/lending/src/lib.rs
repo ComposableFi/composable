@@ -1141,7 +1141,7 @@ pub mod pallet {
 					borrow_asset_vault: borrow_asset_vault.clone(),
 					collateral_asset: config_input.collateral_asset(),
 					collateral_factor: config_input.updatable.collateral_factor,
-					interest_rate_model: config_input.updatable.interest_rate_model,
+					interest_rate_model: config_input.interest_rate_model,
 					under_collateralized_warn_percent: config_input
 						.updatable
 						.under_collateralized_warn_percent,
@@ -1202,7 +1202,6 @@ pub mod pallet {
 						Error::<T>::CannotIncreaseCollateralFactorOfOpenMarket
 					);
 					market.collateral_factor = input.collateral_factor;
-					market.interest_rate_model = input.interest_rate_model;
 					market.under_collateralized_warn_percent =
 						input.under_collateralized_warn_percent;
 					market.liquidators = input.liquidators.clone();
