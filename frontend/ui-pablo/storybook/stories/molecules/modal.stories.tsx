@@ -1,4 +1,4 @@
-import { Modal } from "@/components/Molecules/Modal";
+import { Modal } from "@ui-pablo/app/components/Molecules/Modal";
 import { Box, Button, Typography } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
 

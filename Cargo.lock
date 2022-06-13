@@ -7049,6 +7049,7 @@ dependencies = [
  "composable-traits",
  "parity-scale-codec",
  "sp-api",
+ "sp-std 4.0.0",
 ]
 
 [[package]]
@@ -7072,6 +7073,7 @@ dependencies = [
 name = "pallet-assets"
 version = "0.0.1"
 dependencies = [
+ "composable-support",
  "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",
@@ -7083,6 +7085,7 @@ dependencies = [
  "pallet-balances",
  "pallet-governance-registry",
  "parity-scale-codec",
+ "primitives",
  "proptest",
  "scale-info",
  "sp-api",
@@ -7585,6 +7588,7 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "polkadot-parachain",
+ "primitives",
  "proptest",
  "scale-info",
  "serde",
@@ -7846,6 +7850,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-vault",
  "parity-scale-codec",
+ "primitives",
  "proptest",
  "rand 0.7.3",
  "scale-info",
@@ -7883,6 +7888,7 @@ dependencies = [
  "pallet-dutch-auction",
  "pallet-timestamp",
  "parity-scale-codec",
+ "primitives",
  "proptest",
  "scale-info",
  "smallvec 1.8.0",
@@ -10427,6 +10433,7 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-runtime",
+ "sp-std 4.0.0",
  "xcm",
 ]
 

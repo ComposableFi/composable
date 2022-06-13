@@ -13,7 +13,7 @@ use sp_runtime::{
 	traits::{CheckedMul, CheckedSub},
 	ArithmeticError, DispatchError, Permill,
 };
-use sp_std::{ops::Mul, vec::Vec};
+use sp_std::{collections::btree_map::BTreeMap, ops::Mul, vec::Vec};
 
 /// Trait for automated market maker.
 pub trait Amm {
@@ -31,6 +31,14 @@ pub trait Amm {
 	fn currency_pair(pool_id: Self::PoolId) -> Result<CurrencyPair<Self::AssetId>, DispatchError>;
 
 	fn lp_token(pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError>;
+
+	/// Returns the amount of base & quote asset redeemable for given amount of lp token.
+	fn redeemable_assets_for_given_lp_tokens(
+		pool_id: Self::PoolId,
+		lp_amount: Self::Balance,
+	) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError>
+	where
+		Self::AssetId: sp_std::cmp::Ord;
 
 	/// Returns the amount of LP tokens that would be recieved by adding the given amounts of base
 	/// and quote.
@@ -373,6 +381,16 @@ pub struct PriceAggregate<PoolId, AssetId, Balance> {
 	pub base_asset_id: AssetId,
 	pub quote_asset_id: AssetId,
 	pub spot_price: Balance, // prices based on any other stat such as TWAP goes here..
+}
+
+/// RedeemableAssets for given amount of lp tokens.
+#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct RedeemableAssets<AssetId, Balance>
+where
+	AssetId: Ord,
+{
+	pub assets: BTreeMap<AssetId, Balance>,
 }
 
 #[cfg(test)]

@@ -36,10 +36,10 @@ use common::{
 use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::Asset,
-	defi::Rate,
-	dex::{Amm, PriceAggregate},
+	defi::{CurrencyPair, Rate},
+	dex::{Amm, PriceAggregate, RedeemableAssets},
 };
-use primitives::currency::CurrencyId;
+use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
 use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
@@ -81,7 +81,7 @@ use sp_runtime::AccountId32;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
-use sp_std::fmt::Debug;
+use sp_std::{collections::btree_map::BTreeMap, fmt::Debug};
 use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
@@ -839,6 +839,7 @@ impl assets::Config for Runtime {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureRootOrHalfCouncil;
 	type GovernanceRegistry = GovernanceRegistry;
+	type CurrencyValidator = ValidateCurrencyId;
 }
 
 parameter_types! {
@@ -1295,6 +1296,30 @@ impl_runtime_apis! {
 				.unwrap_or_else(|_| Zero::zero())
 			)
 		}
+
+	fn redeemable_assets_for_given_lp_tokens(
+		pool_id: SafeRpcWrapper<PoolId>,
+		lp_amount: SafeRpcWrapper<Balance>
+	) -> RedeemableAssets<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
+			let currency_pair = <Pablo as Amm>::currency_pair(pool_id.0).unwrap_or_else(|_| CurrencyPair::new(CurrencyId::INVALID, CurrencyId::INVALID));
+			let redeemable_assets = <Pablo as Amm>::redeemable_assets_for_given_lp_tokens(pool_id.0, lp_amount.0)
+			.unwrap_or_else(|_|
+			RedeemableAssets {
+				assets: BTreeMap::from([
+							(currency_pair.base, Zero::zero()),
+							(currency_pair.quote, Zero::zero())
+				])
+			}
+			);
+			let mut new_map = BTreeMap::new();
+			for (k,v) in redeemable_assets.assets.iter() {
+				new_map.insert(SafeRpcWrapper(*k), SafeRpcWrapper(*v));
+			}
+			RedeemableAssets{
+				assets: new_map
+			}
+	}
+
 	}
 
 	impl sp_api::Core<Block> for Runtime {

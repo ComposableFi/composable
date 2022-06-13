@@ -3,7 +3,7 @@ import { ComponentStory } from "@storybook/react";
 import {
   CheckableXPabloItemBox,
   CheckableXPabloItemBoxProps,
-} from "@ui-pablo/nextjs/components/Organisms/staking/UnstakeForm/CheckableXPabloItemBox";
+} from "@ui-pablo/app/components/Organisms/staking/UnstakeForm/CheckableXPabloItemBox";
 
 import BigNumber from "bignumber.js";
 

@@ -3,7 +3,7 @@ import { ComponentStory } from "@storybook/react";
 import {
   UnstakeModal,
   UnstakeModalProps,
-} from "@ui-pablo/nextjs/components/Organisms/staking/UnstakeForm/UnstakeModal";
+} from "@ui-pablo/app/components/Organisms/staking/UnstakeForm/UnstakeModal";
 
 import BigNumber from "bignumber.js";
 

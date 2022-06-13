@@ -1,33 +1,28 @@
 import {
   Box,
   useTheme,
-  BoxProps,
   Button,
 } from "@mui/material";
-import { useAppSelector } from "@/hooks/store";
 import { BigNumberInput } from "@/components/Atoms";
-import { TOKENS } from "@/defi/Tokens";
 import { useState } from "react";
 import BigNumber from "bignumber.js";
-import { getTokenIdsFromSelectedPool } from "@/stores/defi/pool";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import { PoolDetailsProps } from ".";
+import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
 
-export const PoolUnstakeForm: React.FC<BoxProps> = ({
+export const PoolUnstakeForm: React.FC<PoolDetailsProps> = ({
+  poolId,
   ...boxProps
 }) => {
+  
   const theme = useTheme();
+  const poolDetails = useLiquidityPoolDetails(poolId);
 
-  const [balance] = useState<BigNumber>(new BigNumber(200.0));
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
-  const {
-    tokenId1,
-    tokenId2,
-  } = useAppSelector(
-    getTokenIdsFromSelectedPool
-  );
 
-  const handleUnstake = () => {
+
+  const handleUnStake = () => {
     // TODO: handle stake here
   }
 
@@ -35,32 +30,34 @@ export const PoolUnstakeForm: React.FC<BoxProps> = ({
     <Box {...boxProps}>
       <Box>
         <BigNumberInput
-          maxValue={balance}
+          maxValue={poolDetails.lpBalance}
           setValid={setValid}
           noBorder
           value={amount}
           setValue={setAmount}
           buttonLabel={"Max"}
           ButtonProps={{
-            onClick: () => setAmount(balance),
+            onClick: () => setAmount(poolDetails.lpBalance),
             sx: {
               padding: theme.spacing(1),
             },
           }}
           LabelProps={{
-            label: "Amount to unstake",
+            label: "Amount to Unstake",
             TypographyProps: {color: "text.secondary"},
             BalanceProps: {
               title: <AccountBalanceWalletIcon color="primary" />,
-              balance: `${balance} ${TOKENS[tokenId1].symbol}/${TOKENS[tokenId2].symbol}`,
+              balance: `${poolDetails.lpBalance} ${poolDetails.baseAsset?.symbol}/${poolDetails.quoteAsset?.symbol}`,
               BalanceTypographyProps: {color: "text.secondary"},
             },
           }}
           EndAdornmentAssetProps={{
-            assets: [
-              {icon: TOKENS[tokenId1].icon, label: TOKENS[tokenId1].symbol},
-              {icon: TOKENS[tokenId2].icon, label: TOKENS[tokenId2].symbol},
-            ],
+            assets: 
+            poolDetails.baseAsset && poolDetails.quoteAsset ? 
+            [
+              {icon: poolDetails.baseAsset.icon, label: poolDetails.baseAsset.symbol},
+              {icon: poolDetails.quoteAsset.icon, label: poolDetails.quoteAsset.symbol},
+            ] : [],
             separator: "/",
           }}
         />
@@ -70,10 +67,10 @@ export const PoolUnstakeForm: React.FC<BoxProps> = ({
           variant="contained"
           size="large"
           fullWidth
-          onClick={handleUnstake}
+          onClick={handleUnStake}
           disabled={!valid}
         >
-          {`Unstake ${TOKENS[tokenId1].symbol}/${TOKENS[tokenId2].symbol}`}
+          {`Unstake ${poolDetails.baseAsset?.symbol}/${poolDetails.quoteAsset?.symbol}`}
         </Button>
       </Box>
     </Box>

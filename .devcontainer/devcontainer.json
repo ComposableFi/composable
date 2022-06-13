@@ -49,7 +49,8 @@
 		"window.autoDetectColorScheme": true,
 		"workbench.preferredLightColorTheme": "GitHub Light",
 		"workbench.preferredDarkColorTheme": "GitHub Dark",
-		"editor.inlineSuggest.enabled": true,
+		"workbench.startupEditor": "none",
+		"editor.inlineSuggest.enabled": true,			
 		"git.autofetch": true
 	},
 	// Add the IDs of extensions you want installed when the container is created.
@@ -71,7 +72,9 @@
 		"vscode-icons-team.vscode-icons",
 		"GitHub.github-vscode-theme",
 		"streetsidesoftware.code-spell-checker",
-		"zxh404.vscode-proto3"
+		"zxh404.vscode-proto3",
+		"rangav.vscode-thunder-client",
+		"adam-bender.commit-message-editor"
 	],
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],

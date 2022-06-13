@@ -1,21 +1,20 @@
 //! Benchmarks and sanity tests for lending. Only test that action do not error, not that produce
 //! positive side effects
-
 #![warn(unused_imports)]
-
 use super::{setup::*, *};
 use crate::{self as pallet_lending, Pallet as Lending};
-use composable_support::validation::TryIntoValidated;
 use composable_traits::{
 	defi::{CurrencyPair, DeFiComposableConfig},
 	lending::{CreateInput, Lending as LendingTrait, RepayStrategy},
 	vault::StrategicVault,
 };
 use frame_benchmarking::{benchmarks, whitelisted_caller};
-use frame_support::traits::{fungible, fungibles::Mutate, Get};
+use frame_support::{
+	traits::{fungible, fungibles::Mutate, Get},
+	BoundedVec,
+};
 use frame_system::RawOrigin;
 use sp_std::prelude::*;
-
 type BalanceOf<T> = <T as DeFiComposableConfig>::Balance;
 
 /// Create a market with the given origin and input.
@@ -33,8 +32,7 @@ fn create_market_from_raw_origin<T: Config>(
 		<T as frame_system::Config>::BlockNumber,
 	>,
 ) -> MarketIndex {
-	Lending::<T>::create_market(origin.clone().into(), input.try_into_validated().unwrap(), false)
-		.unwrap();
+	Lending::<T>::create_market(origin.clone().into(), input, false).unwrap();
 
 	// FIXME: This ain't ideal
 	MarketIndex::new(1)
@@ -89,7 +87,7 @@ benchmarks! {
 		} = lending_benchmarking_setup::<T>();
 
 		let pair = setup_currency_pair::<T>(&caller, bank);
-		let input = create_market_config::<T>(pair.base, pair.quote, Default::default()).try_into_validated().unwrap();
+		let input = create_market_config::<T>(pair.base, pair.quote, Default::default());
 	}: _(origin, input, false)
 
 	deposit_collateral {
@@ -104,7 +102,7 @@ benchmarks! {
 		let amount: BalanceOf<T> = 1_000_000_u64.into();
 
 		let market_id = create_market_from_raw_origin::<T>(origin.clone(), input);
-	}: _(origin, market_id, amount, false)
+	}: _(origin, market_id,amount, false)
 
 	withdraw_collateral {
 		let LendingBenchmarkingSetup {
@@ -196,7 +194,7 @@ benchmarks! {
 			Lending::<T>::deposit_collateral(RawOrigin::Signed(borrower.clone()).into(), market_id, amount, false).unwrap();
 			borrowers.push(borrower);
 		}
-	}: _(origin, market_id, borrowers)
+	}: _(origin, market_id, BoundedVec::<_,T::MaxLiquidationBatchSize>::try_from(borrowers).unwrap())
 
 	// HOOKS
 
@@ -361,5 +359,5 @@ benchmarks! {
 		Lending::<T>::handle_must_liquidate(&market_config, &caller).unwrap()
 	}
 
-	impl_benchmark_test_suite!(Lending, crate::mocks::new_test_ext(), crate::mocks::Runtime);
+	impl_benchmark_test_suite!(Lending, crate::mocks::general::new_test_ext(), crate::mocks::general::Runtime);
 }

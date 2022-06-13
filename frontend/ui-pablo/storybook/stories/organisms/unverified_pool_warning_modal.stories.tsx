@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { UnverifiedPoolWarningModal } from "@ui-pablo/nextjs/components/Organisms/pool/CreatePool/UnverifiedPoolWarningModal";
+import { UnverifiedPoolWarningModal } from "@ui-pablo/app/components/Organisms/pool/CreatePool/UnverifiedPoolWarningModal";
 
 const UnverifiedPoolWarningModalStories = () => {
   return (

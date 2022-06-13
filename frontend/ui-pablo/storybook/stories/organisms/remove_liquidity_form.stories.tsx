@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { RemoveLiquidityForm } from "@ui-pablo/nextjs/components/Organisms/liquidity/RemoveForm";
+import { RemoveLiquidityForm } from "@ui-pablo/app/components/Organisms/liquidity/RemoveForm";
 
 const RemoveLiquidityFormStories = () => {
   return (

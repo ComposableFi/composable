@@ -93,7 +93,7 @@ export const AuctionSettings: React.FC<AuctionSettingsProps> = ({
             Trading fee (collected by {baseAsset?.symbol} project)
           </Typography>
           <Typography variant="subtitle1" mt={1}>
-            {auction.fee} %
+            {auction.feeConfig.feeRate} %
           </Typography>
         </Grid>
       </Grid>

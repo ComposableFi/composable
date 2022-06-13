@@ -1,7 +1,7 @@
 import { AssetId } from "@/defi/polkadot/types";
 import { LiquidityPoolType } from "../pools/pools.types";
 
-export type SwapsChartRange = "24h" | "1w" | "1m" | "1y";
+export type SwapsChartRange = "24h" | "1w" | "1m";
 export type SwapSide = "base" | "quote";
 export interface SwapsSlice {
   swaps: {
@@ -40,11 +40,6 @@ export interface SwapsSlice {
       baseAssetSelected: AssetId | "none";
     };
   };
-  swapsChart: {
-    _24hourOldPrice: string;
-    selectedRange: SwapsChartRange;
-    series: [number, number][]
-  };
   setDexRouteSwaps: (dexRoute: number[]) => void;
   setUiAssetSelectionSwaps: (
     side: "base" | "quote",
@@ -76,13 +71,4 @@ export interface SwapsSlice {
     quoteAssetReserve: string | undefined;
     baseAssetReserve: string | undefined;
   }) => void;
-  putSwapsChartSeries: (
-    series: [number, number][]
-  ) => void;
-  putSwapsChartSelectedRange: (
-    range: SwapsChartRange
-  ) => void;
-  put24HourOldPrice: (
-    price: string
-  ) => void;
 }

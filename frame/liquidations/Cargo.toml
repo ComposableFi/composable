@@ -36,6 +36,7 @@ scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
 xcm = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.22" }
+primitives = { path = "../../runtime/primitives", default-features = false }
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }

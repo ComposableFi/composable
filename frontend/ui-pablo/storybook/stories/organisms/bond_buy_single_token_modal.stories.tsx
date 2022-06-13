@@ -1,4 +1,4 @@
-import { BuySingleTokenModal } from "@ui-pablo/nextjs/components/Organisms";
+import { BuySingleTokenModal } from "@ui-pablo/app/components/Organisms";
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
 

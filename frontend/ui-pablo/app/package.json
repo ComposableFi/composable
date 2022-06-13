@@ -1,5 +1,5 @@
 {
-  "name": "@ui-pablo/nextjs",
+  "name": "@ui-pablo/app",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -45,7 +45,7 @@
     "react-hotjar": "^4.0.0",
     "react-redux": "^7.2.6",
     "redux-localstorage-simple": "^2.4.1",
-    "substrate-react": "^0.1.87",
+    "substrate-react": "^0.1.88",
     "urql": "^2.2.0",
     "uuid": "^8.3.2"
   },

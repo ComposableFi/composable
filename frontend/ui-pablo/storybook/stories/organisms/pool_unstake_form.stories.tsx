@@ -1,11 +1,11 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { PoolUnstakeForm } from "@ui-pablo/nextjs/components/Organisms";
+import { PoolUnstakeForm } from "@ui-pablo/app/components/Organisms";
 
 const PoolUnstakeFormStories = ({}) => {
   return (
     <Box>
-      <PoolUnstakeForm />
+      <PoolUnstakeForm poolId={-1} />
     </Box>
   );
 };
