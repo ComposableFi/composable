@@ -26,6 +26,9 @@ jobs:
         run: |
           echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
 
+      - name: Print release version
+        run: echo ${{ env.RELEASE_VERSION }}
+
       - name: Wget download composable_runtime.wasm
         run: |
           VERSION=v2.2.0
