@@ -401,6 +401,7 @@ pub mod pallet {
 			Ok(Price { price, block })
 		}
 
+		/// Currently using a flat distribution of weights.
 		fn get_price_weighted(
 			asset_id: Self::AssetId,
 			amount: Self::Balance,

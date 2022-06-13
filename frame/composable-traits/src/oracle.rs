@@ -39,6 +39,7 @@ pub trait Oracle {
 	type Timestamp;
 	type LocalAssets: LocalAssets<Self::AssetId>;
 	type MaxAnswerBound: Get<u32>;
+	/// Number of prices from history for calculating TWAP and get weighted price.
 	type TwapWindow: Get<u16>;
 	// type BlockNumber: From<u64>;
 	// type StalePrice: Get<Self::BlockNumber>;
@@ -92,12 +93,14 @@ pub trait Oracle {
 		Self::get_price(asset, unit).map(|_| true)
 	}
 
+	/// Getting time weighted price for setted amount.
 	fn get_price_weighted(
 		asset_id: Self::AssetId,
 		amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
 
 	/// Time Weighted Average Price
+	/// May be used to minimize a kurtosis impact on the price.
 	fn get_twap(
 		asset_id: Self::AssetId,
 		weighting: Vec<Percent>,
