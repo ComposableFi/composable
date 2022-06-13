@@ -406,7 +406,7 @@ pub mod pallet {
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			let prices_length = Self::depth_of_history(asset_id);
+			let prices_length = Self::price_history(asset_id).len();
 			if prices_length == 0 {
 				Self::get_price(asset_id, amount).map(|p| p.price)
 			} else {
@@ -1002,10 +1002,6 @@ pub mod pallet {
 			ensure!(weighted_average != 0_u128.into(), Error::<T>::ArithmeticError);
 
 			Ok(weighted_average)
-		}
-
-		fn depth_of_history(asset_id: T::AssetId) -> usize {
-			Self::price_history(asset_id).len()
 		}
 
 		fn quote(
