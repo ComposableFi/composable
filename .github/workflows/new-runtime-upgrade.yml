@@ -1,12 +1,13 @@
-name: "New runtime upgrade test"
+name: "NodeJs runtime upgrade"
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - new-runtime-upgrade
 
 jobs:
-  dali-client-release:
+  dali-runtime-upgrade:
     runs-on:
       - self-hosted
       - linux
@@ -18,6 +19,10 @@ jobs:
         run: |
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
+      - name: Set env
+        run: |
+          echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
+
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
@@ -29,13 +34,17 @@ jobs:
         run: npm install -g yarn
 
       - name: Print release version
-        run: echo ${{ env.RELEASE_VERSION }}
+        run: echo ${RELEASE_VERSION}
 
-      - name: Wget download composable_runtime.wasm
+      - name: Wget download wasm file
         working-directory: scripts/github/
         run: |
-          FILE_NAME=composable_runtime.wasm
-          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/v2.2.0/$FILE_NAME
+          FILE_NAME=dali_runtime.wasm
+#          FILE_NAME=composable_runtime.wasm
+#               FILE_NAME=dali_runtime.wasm
+#               picasso_runtime.wasm
+#               https://github.com/ComposableFi/composable/releases/download/v2.2.0/
+          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/${RELEASE_VERSION}/${FILE_NAME}
           wget $FILE_GITHUB_PATH
 
       - name: Install
