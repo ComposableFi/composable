@@ -35,7 +35,7 @@ pub mod pallet {
 			+ MaxEncodedLen
 			+ MaybeSerializeDeserialize
 			+ TypeInfo;
-		type Timestamp;
+		type Timestamp: Default;
 		type LocalAssets: LocalAssets<Self::AssetId>;
 		type MaxAnswerBound: Get<u32>;
 	}
@@ -73,12 +73,17 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		CantCheckAssetSupport,
+		CantComputePrice,
 		CantComputeTwap,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                           Runtime  Storage
 	// ----------------------------------------------------------------------------------------------------
+
+	#[pallet::storage]
+	#[pallet::getter(fn _price)]
+	pub type MockPrice<T: Config> = StorageValue<_, T::Balance, OptionQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn supports_assets)]
@@ -112,7 +117,10 @@ pub mod pallet {
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
 		) -> Result<Price<Self::Balance, Self::Timestamp>, DispatchError> {
-			unimplemented!()
+			Ok(Price::<Self::Balance, Self::Timestamp> {
+				price: Self::_price().ok_or(Error::<T>::CantComputePrice)?,
+				block: Self::Timestamp::default(),
+			})
 		}
 
 		fn get_twap(
@@ -143,6 +151,10 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	impl<T: Config> Pallet<T> {
+		pub fn set_price(price: Option<T::Balance>) {
+			MockPrice::<T>::set(price);
+		}
+
 		pub fn set_twap(twap: Option<T::Balance>) {
 			Twap::<T>::set(twap);
 		}

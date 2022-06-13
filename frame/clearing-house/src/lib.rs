@@ -475,6 +475,9 @@ pub mod pallet {
 		NoPriceFeedForAsset,
 		/// Raised when dealing with a position that has no base asset amount.
 		NullPosition,
+		/// Raised when a trade pushes the mark price beyond the maximum allowed divergence from
+		/// the index.
+		OracleMarkTooDivergent,
 		/// Raised when trying to fetch a position from the positions vector with an invalid index.
 		PositionNotFound,
 		/// Attempted to liquidate a user's account but it has sufficient collateral to back its

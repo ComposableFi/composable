@@ -149,6 +149,10 @@ fn set_fee_pool_depth(market_id: &MarketId, depth: Balance) {
 	Markets::<Runtime>::try_mutate(market_id, |m| set_depth(m, depth)).unwrap();
 }
 
+fn set_maximum_oracle_mark_divergence(fraction: FixedI128) {
+	todo!()
+}
+
 // ----------------------------------------------------------------------------------------------------
 //                                        Execution Contexts
 // ----------------------------------------------------------------------------------------------------

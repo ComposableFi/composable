@@ -12,11 +12,11 @@ use crate::{
 	},
 	tests::{
 		any_direction, as_balance, get_collateral, get_market, get_market_fee_pool, get_position,
-		run_for_seconds, with_trading_context, MarketConfig,
+		run_for_seconds, set_maximum_oracle_mark_divergence, with_trading_context, MarketConfig,
 	},
 };
 
-use frame_support::{assert_noop, assert_ok};
+use frame_support::{assert_err, assert_noop, assert_ok};
 use proptest::prelude::*;
 
 // -------------------------------------------------------------------------------------------------
@@ -230,6 +230,39 @@ fn should_realize_short_position_funding() {
 
 		SystemPallet::assert_last_event(
 			Event::PositionClosed { user: ALICE, market: market_id, direction: Short, base }.into(),
+		);
+	});
+}
+
+#[test]
+fn should_fail_if_pushes_index_mark_divergence_above_threshold() {
+	let config = MarketConfig { taker_fee: 0, ..Default::default() };
+
+	with_trading_context(config, as_balance(1_000_000), |market_id| {
+		// Set maximum divergence to 10%
+		set_maximum_oracle_mark_divergence((10, 100).into());
+
+		let vamm_id = &get_market(&market_id).vamm_id;
+		OraclePallet::set_price(Some(100)); // 1 in cents
+		VammPallet::set_price_of(vamm_id, Some(1.into()));
+
+		// Alice opens a position (no price impact)
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(ALICE),
+			market_id,
+			Long,
+			as_balance(1_000_000),
+			as_balance(1_000_000),
+		));
+
+		// Alice tries to close her position, but it fails because it pushes the mark price too
+		// below the index Closing tanks mark to 89% of previous price
+		// Relative index-mark spread:
+		// (mark - index) / index = (0.89 - 1.00) / 1.00 = -0.11
+		VammPallet::set_price_impact_of(vamm_id, Some((89, 100).into()));
+		assert_err!(
+			TestPallet::close_position(Origin::signed(ALICE), market_id),
+			Error::<Runtime>::OracleMarkTooDivergent
 		);
 	});
 }
