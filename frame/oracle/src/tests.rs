@@ -1388,7 +1388,7 @@ fn get_twap() {
 			0,
 			vec![Percent::from_percent(20), Percent::from_percent(30), Percent::from_percent(50)],
 		);
-		// twap should be (0.2 * 100) + (0.3 * 120) + (0.5 * 101)
+		// twap should be (0.2 * 100) + (0.3 * 120) + (0.5 * 100)
 		assert_eq!(twap, Ok(106));
 		let err_twap = Oracle::get_twap(
 			0,
@@ -1407,6 +1407,37 @@ fn get_twap() {
 			],
 		);
 		assert_eq!(err_2_twap, Err(Error::<Test>::DepthTooLarge.into()));
+	});
+}
+
+#[test]
+fn get_twap_for_amount() {
+	use composable_traits::oracle::Oracle as _;
+	new_test_ext().execute_with(|| {
+		// add and request oracle id
+		let account_2 = get_root_account();
+		assert_ok!(Oracle::add_asset_and_info(
+			Origin::signed(account_2),
+			0,
+			Validated::new(Percent::from_percent(80)).unwrap(),
+			Validated::new(3).unwrap(),
+			Validated::new(5).unwrap(),
+			Validated::<BlockNumber, ValidBlockInterval<StalePrice>>::new(5).unwrap(),
+			5,
+			5
+		));
+
+		do_price_update(0, 0);
+		let price_1 = Price { price: 100, block: 20 };
+		let price_2 = Price { price: 100, block: 20 };
+		let price_3 = Price { price: 120, block: 20 };
+		let historic_prices = [price_1, price_2, price_3].to_vec();
+		set_historic_prices(0, historic_prices);
+		let amount = 10000;
+
+		let twap = Oracle::get_twap_for_amount(0, amount);
+		// twap should be (0.33 * 100) + (0.33 * 120) + (0.33 * 100)
+		assert_eq!(twap, Ok(106 * amount));
 	});
 }
 
