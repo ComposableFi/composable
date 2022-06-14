@@ -33,7 +33,7 @@ jobs:
       - name: Install yarn
         run: npm install -g yarn
 
-      - name: Wget download wasm file
+      - name: Download wasm file
         working-directory: scripts/github/
         run: |
           FILE_NAME=dali_runtime.wasm
@@ -76,7 +76,7 @@ jobs:
       - name: Install yarn
         run: npm install -g yarn
 
-      - name: Wget download wasm file
+      - name: Download wasm file
         working-directory: scripts/github/
         run: |
           FILE_NAME=composable_runtime.wasm
@@ -119,7 +119,7 @@ jobs:
       - name: Install yarn
         run: npm install -g yarn
 
-      - name: Wget download wasm file
+      - name: Download wasm file
         working-directory: scripts/github/
         run: |
           FILE_NAME=picasso_runtime.wasm
