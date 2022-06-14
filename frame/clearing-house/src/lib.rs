@@ -163,7 +163,7 @@ pub mod pallet {
 		defi::DeFiComposableConfig,
 		oracle::Oracle,
 		time::DurationSeconds,
-		vamm::{AssetType, Direction as VammDirection, SwapConfig, SwapSimulationConfig, Vamm},
+		vamm::{AssetType, SwapConfig, SwapSimulationConfig, Vamm},
 	};
 	use frame_support::{
 		pallet_prelude::*,
@@ -1798,13 +1798,6 @@ pub mod pallet {
 			Ok((positions.get_mut(index).expect("Item successfully found above"), index))
 		}
 
-		fn to_vamm_direction(direction: Direction) -> VammDirection {
-			match direction {
-				Long => VammDirection::Add,
-				Short => VammDirection::Remove,
-			}
-		}
-
 		fn swap_base(
 			market: &Market<T>,
 			direction: Direction,
@@ -1815,7 +1808,7 @@ pub mod pallet {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Base,
 				input_amount: base_amount,
-				direction: Self::to_vamm_direction(direction),
+				direction: direction.into(),
 				output_amount_limit: quote_limit,
 			})?
 			.output)
@@ -1831,7 +1824,7 @@ pub mod pallet {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Quote,
 				input_amount: quote_abs_decimal.into_balance()?,
-				direction: Self::to_vamm_direction(direction),
+				direction: direction.into(),
 				output_amount_limit: base_limit,
 			})?
 			.output)
@@ -1902,7 +1895,7 @@ pub mod pallet {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Base,
 				input_amount: position.base_asset_amount.into_balance()?,
-				direction: Self::to_vamm_direction(position_direction),
+				direction: position_direction.into(),
 			})?;
 
 			Self::decimal_from_swapped(sim_swapped, position_direction)

@@ -2,7 +2,7 @@ use crate::{
 	math::{FixedPointMath, IntoDecimal},
 	Config,
 };
-use composable_traits::time::DurationSeconds;
+use composable_traits::{time::DurationSeconds, vamm::Direction as VammDirection};
 use frame_support::pallet_prelude::{Decode, Encode, MaxEncodedLen, TypeInfo};
 use num_traits::Zero;
 use sp_runtime::{ArithmeticError, DispatchError, FixedPointNumber};
@@ -22,6 +22,15 @@ impl Direction {
 		match self {
 			Self::Long => Self::Short,
 			Self::Short => Self::Long,
+		}
+	}
+}
+
+impl From<Direction> for VammDirection {
+	fn from(direction: Direction) -> Self {
+		match direction {
+			Long => Self::Add,
+			Short => Self::Remove,
 		}
 	}
 }
