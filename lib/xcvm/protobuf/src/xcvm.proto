@@ -5,6 +5,7 @@ package xcvm;
 message Program {
   Instructions instructions = 1;
   uint32 nonce = 2;
+  bytes tag = 3;
 }
 
 message Instructions {

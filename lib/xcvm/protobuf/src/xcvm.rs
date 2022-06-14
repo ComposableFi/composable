@@ -4,6 +4,8 @@ pub struct Program {
     pub instructions: ::core::option::Option<Instructions>,
     #[prost(uint32, tag="2")]
     pub nonce: u32,
+    #[prost(bytes="vec", tag="3")]
+    pub tag: ::prost::alloc::vec::Vec<u8>,
 }
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Instructions {
