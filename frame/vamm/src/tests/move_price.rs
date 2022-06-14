@@ -164,19 +164,12 @@ proptest! {
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
 			assert_ok!(TestPallet::move_price(&move_price_config));
-			assert_eq!(
-				VammMap::<MockRuntime>::get(0).unwrap(),
-				VammState {
-					base_asset_reserves: move_price_config.base_asset_reserves,
-					quote_asset_reserves: move_price_config.quote_asset_reserves,
-					peg_multiplier: vamm_state.peg_multiplier,
-					invariant: TestPallet::compute_invariant(
-						move_price_config.base_asset_reserves,
-						move_price_config.quote_asset_reserves
-					).unwrap(),
-					closed: vamm_state.closed,
-					..Default::default()
-				}
+			let vamm_state = VammMap::<MockRuntime>::get(0).unwrap();
+			assert_eq!(vamm_state.base_asset_reserves, move_price_config.base_asset_reserves);
+			assert_eq!(vamm_state.quote_asset_reserves, move_price_config.quote_asset_reserves);
+			assert_eq!(vamm_state.invariant, TestPallet::compute_invariant(
+				move_price_config.base_asset_reserves,
+				move_price_config.quote_asset_reserves).unwrap()
 			);
 		})
 	}
