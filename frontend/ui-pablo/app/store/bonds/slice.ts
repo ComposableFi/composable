@@ -1,17 +1,34 @@
+import BigNumber from "bignumber.js";
 import { StoreSlice } from "../types";
-import { setActiveBonds, setAllBonds } from "./reducers";
-import { BondOffer, BondSlice } from "./types";
+import { addActiveBond, addBond } from "./reducers";
+import { BondOffer, BondSlice, VestingSchedule } from "./types";
 
 const createBondsSlice: StoreSlice<BondSlice> = (set) => ({
   allBonds: [],
   activeBonds: [],
-  setActiveBonds: (bondOffer: BondOffer) =>
+  addActiveBond: (
+    bondOffer: BondOffer,
+    vestingSchedule: VestingSchedule,
+    currentBlock: BigNumber,
+    currentTime: BigNumber
+  ) =>
     set((prev: BondSlice) => ({
-      activeBonds: setActiveBonds(prev.activeBonds, bondOffer),
+      activeBonds: addActiveBond(
+        prev.activeBonds,
+        bondOffer,
+        vestingSchedule,
+        currentBlock,
+        currentTime
+      ),
     })),
-  setAllBonds: (bondOffer: BondOffer) =>
+  addBond: (bondOffer: BondOffer, assetPrice: number, rewardPrice: number) =>
     set((prev: BondSlice) => ({
-      allBonds: setAllBonds(prev.allBonds, bondOffer),
+      allBonds: addBond(prev.allBonds, bondOffer, assetPrice, rewardPrice),
+    })),
+  reset: () =>
+    set(() => ({
+      allBonds: [],
+      activeBonds: [],
     })),
 });
 

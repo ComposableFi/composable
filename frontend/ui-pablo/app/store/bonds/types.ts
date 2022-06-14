@@ -5,8 +5,18 @@ import type { AccountId32 } from "@polkadot/types/interfaces/runtime";
 export interface BondSlice {
   allBonds: AllBond[];
   activeBonds: ActiveBond[];
-  setActiveBonds: (bondOffer: BondOffer) => void;
-  setAllBonds: (bondOffer: BondOffer) => void;
+  addActiveBond: (
+    bondOffer: BondOffer,
+    vestingSchedule: VestingSchedule,
+    currentBlock: BigNumber,
+    currentTime: BigNumber
+  ) => void;
+  addBond: (
+    bondOffer: BondOffer,
+    assetPrice: number,
+    rewardPrice: number
+  ) => void;
+  reset: () => void;
 }
 
 export interface BondOffer {
@@ -18,23 +28,30 @@ export interface BondOffer {
   reward: OfferReward;
 }
 
+export interface VestingSchedule {
+  perPeriod: BigNumber;
+  periodCount: BigNumber;
+  window: Window;
+  type: "block" | "moment";
+}
+
+type Window = { start: BigNumber; period: BigNumber };
+
 interface OfferReward {
   asset: Token;
   amount: BigNumber;
   maturity: BigNumber;
 }
 
-type Asset = { token1: Token; token2: Token };
-
 type ActiveBond = {
-  assetPair: Asset;
-  pending_amount: BigNumber;
-  claimable_amount: BigNumber;
-  vesting_time: number;
+  asset: Token;
+  pendingAmount: BigNumber;
+  claimableAmount: BigNumber;
+  vestingTime: string;
 };
 
 type AllBond = {
-  assetPair: Asset;
+  asset: Token;
   price: BigNumber;
   roi: BigNumber;
   totalPurchased: BigNumber;

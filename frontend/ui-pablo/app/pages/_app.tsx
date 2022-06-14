@@ -21,7 +21,7 @@ import PoolStatsUpdater from "@/updaters/poolStats/Updater";
 import BalancesUpdater from "@/updaters/balances/Updater";
 import AuctionsUpdater from "@/updaters/auctions/Updater";
 import PabloPoolEventsUpdater from "@/updaters/pabloPoolEvents/Updater";
-import BondsUpdater from "@/store/updaters/bonds/Updater";
+import BondsUpdater from "@/updaters/bonds/Updater";
 
 import * as definitions from "@/defi/polkadot/interfaces/definitions";
 import { SnackbarProvider } from "notistack";
