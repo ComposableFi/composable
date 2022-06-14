@@ -3,8 +3,6 @@ use crate::{
 	defi::{CurrencyPair, Ratio},
 };
 use frame_support::{dispatch::DispatchError, pallet_prelude::*};
-use sp_runtime::Percent;
-use sp_std::vec::Vec;
 
 // block timestamped value
 #[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo, Clone)]
