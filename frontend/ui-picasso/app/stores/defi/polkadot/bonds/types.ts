@@ -11,6 +11,7 @@ interface OfferReward {
 export interface BondOffer {
   beneficiary: AccountId32;
   asset: Token | Token[];
+  assetId: string;
   bondPrice: BigNumber;
   nbOfBonds: BigNumber;
   maturity: number | "Infinite";

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NextPage } from "next";
 import { useRouter } from "next/router";
 import { Box, Button, Grid, Stack, Typography, useTheme } from "@mui/material";
@@ -23,6 +23,10 @@ import { useAppSelector } from "@/hooks/store";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { Updater } from "@/stores/defi/polkadot/bonds/PolkadotBondsUpdater";
 import { getROI } from "@/defi/polkadot/pallets/BondedFinance";
+import { Token } from "@/defi/Tokens";
+import { fetchBalanceByAssetId } from "@/defi/polkadot/pallets/Balance";
+import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
+import BigNumber from "bignumber.js";
 
 const standardPageSize = {
   xs: 12,
@@ -98,6 +102,26 @@ const confirmationRows = [
   },
 ];
 
+function lpToSymbolPair(acc: string, token: Token) {
+  return acc.length > 0 ? acc + "-" + token.symbol : token.symbol;
+}
+
+function useAssetPrices(offer: BondOffer) {
+  const { parachainApi, chainId } = usePicassoProvider();
+  const account = useSelectedAccount();
+  const [balances, setBalances] = useState<BigNumber[]>([]);
+
+  useEffect(() => {
+    if (account && parachainApi && offer) {
+      fetchBalanceByAssetId(parachainApi, account.address, offer.assetId).then(
+        (result) => {
+          console.log(result);
+        }
+      );
+    }
+  }, [parachainApi, account, offer]);
+}
+
 const Bond: NextPage = () => {
   const router = useRouter();
   const { bond } = router.query;
@@ -107,6 +131,10 @@ const Bond: NextPage = () => {
   const theme = useTheme();
   const [open, setOpen] = useState<boolean>(false);
   const [open2nd, setOpen2nd] = useState<boolean>(false);
+  const { parachainApi, chainId } = usePicassoProvider();
+  const account = useSelectedAccount();
+
+  useAssetPrices(bondOffer);
   if (!bondOffer) {
     return (
       <Default>
@@ -115,13 +143,12 @@ const Bond: NextPage = () => {
     );
   }
 
-  console.log({
-    price: bondOffer.price.toFixed(),
-    reward: bondOffer.rewardPrice.toFixed(),
-  });
-
-  const token = bondOffer.asset.symbol;
-  const toToken = bondOffer.reward.asset.symbol;
+  const token = Array.isArray(bondOffer.asset)
+    ? bondOffer.asset.reduce(lpToSymbolPair, "")
+    : bondOffer.asset.symbol;
+  const toToken = Array.isArray(bondOffer.reward.asset)
+    ? bondOffer.reward.asset.reduce(lpToSymbolPair, "")
+    : bondOffer.reward.asset.symbol;
 
   const roi = getROI(bondOffer.rewardPrice, bondOffer.price);
 

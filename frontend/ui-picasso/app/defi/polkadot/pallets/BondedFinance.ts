@@ -111,13 +111,14 @@ export function toPica(value: number | BigNumber) {
 
 export function fromPica(value: number | BigNumber) {
   return (typeof value === "number" ? new BigNumber(value) : value).dividedBy(
-    toPica(1)
+    10 ** 12
   );
 }
 
 function bondTransformer(beneficiary: AccountId32, bondOffer: any): BondOffer {
   return {
     beneficiary,
+    assetId: bondOffer.asset.toString(),
     asset: getAssets(bondOffer.asset),
     bondPrice: fromPica(stringToBigNumber(bondOffer.bondPrice.toString())),
     nbOfBonds: bondOffer.nbOfBonds,
@@ -139,13 +140,13 @@ export function getROI(
   bondPrice: BigNumber
 ): BigNumber {
   if (rewardPrice.eq(0)) {
-    return new BigNumber(0);
+    return new BigNumber(-100);
   }
 
-  // calculate difference in percentage between bondPrice and rewardPrice
-  const diff = rewardPrice.minus(bondPrice);
-  const sum = rewardPrice.plus(bondPrice);
-  const avg = sum.dividedBy(2);
-
-  return diff.dividedBy(sum);
+  return rewardPrice
+    .minus(bondPrice)
+    .abs()
+    .dividedBy(bondPrice)
+    .multipliedBy(100)
+    .multipliedBy(rewardPrice.lt(bondPrice) ? -1 : 1);
 }
