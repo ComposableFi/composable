@@ -13,7 +13,8 @@ impl Strategy {
 		Strategy { pallet_id }
 	}
 
-	pub fn account_id(self: Strategy) -> AccountId {
+	// TODO(saruman9): remove dead code in the future?
+	pub fn _account_id(self: Strategy) -> AccountId {
 		self.pallet_id.into_account()
 	}
 }
