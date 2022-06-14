@@ -67,7 +67,7 @@ export const Select: React.FC<SelectProps> = ({
   const [open, setOpen] = React.useState<boolean>(false);
 
   useEffect(() => {
-    if (initialAsset) setValue(initialAsset);
+    if (initialAsset !== undefined) setValue(initialAsset);
   }, []);
 
   const handleKeywordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
