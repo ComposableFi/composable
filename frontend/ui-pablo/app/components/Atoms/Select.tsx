@@ -20,6 +20,7 @@ import { Option } from "../types";
 
 export type SelectProps = {
   value?: any;
+  setValue?: () => void;
   options?: Option[];
   noBorder?: boolean;
   borderRight?: boolean;
