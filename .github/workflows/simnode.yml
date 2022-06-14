@@ -2,15 +2,12 @@ name: Run Simnode
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - qa-simnode
   pull_request:
     types: [ labeled, synchronize, opened, reopened ]
     branches:
       - main
       - releases
-      
+      - qa-simnode
 
 jobs:
   simnode:
