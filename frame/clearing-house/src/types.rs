@@ -13,11 +13,14 @@ pub const BASIS_POINT_DENOMINATOR: u32 = 10_000;
 /// Indicates the direction of a position
 #[derive(Encode, Decode, TypeInfo, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Direction {
+	/// For a long position, the position is long the asset.
 	Long,
+	/// For a short position, the position is short the asset.
 	Short,
 }
 
 impl Direction {
+	/// Gives the opposite direction of the current one.
 	pub fn opposite(&self) -> Self {
 		match self {
 			Self::Long => Self::Short,
@@ -40,12 +43,12 @@ impl From<Direction> for VammDirection {
 #[scale_info(skip_type_params(T))]
 #[codec(mel_bound())]
 pub struct Position<T: Config> {
-	/// The Id of the virtual market
+	/// The Id of the virtual market.
 	pub market_id: T::MarketId,
 	/// Virtual base asset amount. Positive implies long position and negative, short.
 	pub base_asset_amount: T::Decimal,
 	/// Virtual quote asset notional amount (margin * leverage * direction) used to open the
-	/// position
+	/// position.
 	pub quote_asset_notional_amount: T::Decimal,
 	/// Last cumulative funding rate used to update this position. The market's latest
 	/// cumulative funding rate minus this gives the funding rate this position must pay. This
@@ -56,6 +59,7 @@ pub struct Position<T: Config> {
 }
 
 impl<T: Config> Position<T> {
+	/// Returns the direction of the position, if any.
 	pub fn direction(&self) -> Option<Direction> {
 		if self.base_asset_amount.is_zero() {
 			None
@@ -128,6 +132,7 @@ pub struct Market<T: Config> {
 }
 
 impl<T: Config> Market<T> {
+	/// Returns the current funding rate for positions with the given direction.
 	pub fn cum_funding_rate(&self, direction: Direction) -> T::Decimal {
 		match direction {
 			Long => self.cum_funding_rate_long,
@@ -135,6 +140,7 @@ impl<T: Config> Market<T> {
 		}
 	}
 
+	/// Returns the total base asset amount of positions with the given direction.
 	pub fn base_asset_amount(&self, direction: Direction) -> T::Decimal {
 		match direction {
 			Long => self.base_asset_amount_long,
@@ -142,6 +148,7 @@ impl<T: Config> Market<T> {
 		}
 	}
 
+	/// Adds to the total base asset amount of positions with the given direction.
 	pub fn add_base_asset_amount(
 		&mut self,
 		amount: &T::Decimal,
@@ -154,6 +161,7 @@ impl<T: Config> Market<T> {
 		Ok(())
 	}
 
+	/// Subtracts from the total base asset amount of positions with the given direction.
 	pub fn sub_base_asset_amount(
 		&mut self,
 		amount: &T::Decimal,
@@ -215,6 +223,7 @@ pub struct AccountSummary<T: Config> {
 }
 
 impl<T: Config> AccountSummary<T> {
+	/// Creates a new account summary with no positions accounted for.
 	pub fn new(collateral: T::Balance) -> Result<Self, DispatchError> {
 		Ok(Self {
 			collateral,
@@ -226,6 +235,7 @@ impl<T: Config> AccountSummary<T> {
 		})
 	}
 
+	/// Updates the account summary with the given position's info.
 	pub fn update(
 		&mut self,
 		market: Market<T>,

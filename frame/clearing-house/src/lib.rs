@@ -99,7 +99,7 @@
 	)
 )]
 // Specify linters to Clearing House Pallet.
-#![warn(clippy::unseparated_literal_suffix)]
+#![warn(clippy::unseparated_literal_suffix, missing_docs)]
 #![deny(
 	dead_code,
 	bad_style,
@@ -1830,10 +1830,12 @@ pub mod pallet {
 			.output)
 		}
 
+		/// Returns the Id of the account holding user's collateral.
 		pub fn get_collateral_account() -> T::AccountId {
 			T::PalletId::get().into_sub_account("Collateral")
 		}
 
+		/// Returns the Id of the account holding insurance funds.
 		pub fn get_insurance_account() -> T::AccountId {
 			T::PalletId::get().into_sub_account("Insurance")
 		}
