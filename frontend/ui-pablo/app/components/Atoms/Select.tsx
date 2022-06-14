@@ -20,7 +20,6 @@ import { Option } from "../types";
 
 export type SelectProps = {
   value?: any;
-  setValue?: () => void;
   options?: Option[];
   noBorder?: boolean;
   borderRight?: boolean;
@@ -68,7 +67,7 @@ export const Select: React.FC<SelectProps> = ({
   const [open, setOpen] = React.useState<boolean>(false);
 
   useEffect(() => {
-    if (initialAsset !== undefined) setValue(initialAsset);
+    if (initialAsset) setValue?.(initialAsset);
   }, []);
 
   const handleKeywordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
