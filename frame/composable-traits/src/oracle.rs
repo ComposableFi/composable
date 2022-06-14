@@ -94,16 +94,9 @@ pub trait Oracle {
 	}
 
 	/// Getting time weighted price for setted amount.
-	fn get_price_weighted(
+	fn get_twap_for_amount(
 		asset_id: Self::AssetId,
 		amount: Self::Balance,
-	) -> Result<Self::Balance, DispatchError>;
-
-	/// Time Weighted Average Price
-	/// May be used to minimize a kurtosis impact on the price.
-	fn get_twap(
-		asset_id: Self::AssetId,
-		weighting: Vec<Percent>,
 	) -> Result<Self::Balance, DispatchError>;
 
 	/// How much of `quote` for unit `base` Oracle suggests to take.

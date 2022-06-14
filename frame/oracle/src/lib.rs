@@ -402,7 +402,7 @@ pub mod pallet {
 		}
 
 		/// Currently using a flat distribution of weights.
-		fn get_price_weighted(
+		fn get_twap_for_amount(
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
@@ -418,13 +418,6 @@ pub mod pallet {
 				let price = Self::get_twap(asset_id, weights)?;
 				Self::quote(asset_id, price, amount)
 			}
-		}
-
-		fn get_twap(
-			asset_id: Self::AssetId,
-			weighting: Vec<Percent>,
-		) -> Result<Self::Balance, DispatchError> {
-			Self::get_twap(asset_id, weighting)
 		}
 
 		fn get_ratio(

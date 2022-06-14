@@ -1232,7 +1232,7 @@ pub mod pallet {
 			asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
 			amount: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
-			<T::Oracle as Oracle>::get_price_weighted(asset_id, amount)
+			<T::Oracle as Oracle>::get_twap_for_amount(asset_id, amount)
 		}
 
 		/// Some of these checks remain to provide better errors. See [this clickup task](task) for
