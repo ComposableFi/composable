@@ -25,7 +25,7 @@ pub mod pallet {
 			utils::{increment::SafeIncrement, start_at::ZeroInit},
 		},
 		math::safe::{SafeAdd, SafeSub},
-		types::{EcdsaSignature, EthereumAddress},
+		types::{EcdsaSignature, EthereumAddress, CosmosAddress},
 	};
 	use composable_traits::airdrop::AirdropManagement;
 	use frame_support::{
@@ -39,7 +39,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
-	use sp_io::hashing::keccak_256;
+    use sp_io::hashing::{keccak_256, sha2_256};
 	use sp_runtime::{
 		traits::{
 			AccountIdConversion, AtLeast32Bit, AtLeast32BitUnsigned, CheckedAdd, CheckedMul,
@@ -454,7 +454,10 @@ pub mod pallet {
 					Ok(RemoteAccount::RelayChain(relay_account))
 				},
                 Proof::Cosmos(cosmos_address, cosmos_proof) => {
-                    todo!()
+					let reward_account_encoded =
+						reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec());
+                    let cosmos_address = Self::cosmos_recover(prefix, &reward_account_encoded, cosmos_address, &cosmos_proof).ok_or(Error::<T>::InvalidProof)?;
+                    Result::<_, DispatchError>::Ok(RemoteAccount::Cosmos(cosmos_address))
                 },
 			}?;
 			Ok(remote_account)
@@ -514,6 +517,41 @@ pub mod pallet {
 
 			signed_message
 		}
+
+        /// From a signature and message, will attempt to recover a Cosmos AccAddress.
+        ///
+        /// Returns `None` if signature is invalid.
+        pub(crate) fn cosmos_recover(
+			prefix: &[u8],
+			msg: &[u8],
+            cosmos_address: CosmosAddress,
+			EcdsaSignature(sig): &EcdsaSignature,
+        ) -> Option<CosmosAddress> {
+            let msg = sha2_256(&[prefix, msg].concat());
+
+            let pub_key = match cosmos_address {
+                CosmosAddress::Secp256k1(_) => sp_io::crypto::secp256k1_ecdsa_recover_compressed(sig, &msg).ok()?,
+                CosmosAddress::Secp256r1(_) => todo!()
+            };
+
+            Some(Self::cosmos_hash(b"cosmos.sdk.AccAddress", &pub_key, cosmos_address))
+        }
+
+        /// Hashes a Cosmos public key with the account type prefix to derive a Cosmos Address
+        pub(crate) fn cosmos_hash(typ: &[u8], pub_key: &[u8; 33], cosmos_address: CosmosAddress) -> CosmosAddress {
+            match cosmos_address {
+                // Cosmos secp256k1 Addresses are expected to be 20 bytes long
+                CosmosAddress::Secp256k1(_) => {
+                    let mut address: [u8; 20] = Default::default();
+                    address.copy_from_slice(&sha2_256(&[typ, pub_key].concat())[..20]);
+                    CosmosAddress::Secp256k1(address)
+                },
+                // Cosmos secp256r1 Addresses are expected to be 32 bytes long
+                CosmosAddress::Secp256r1(_) => {
+                    CosmosAddress::Secp256r1(sha2_256(&[typ, pub_key].concat()))
+                },
+            }
+        }
 
 		/// Start an Airdrop at a given moment.
 		///
