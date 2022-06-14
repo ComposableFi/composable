@@ -328,6 +328,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             borderLeft: false,
             minWidth: isMobile ? undefined : 150,
             searchable: true,
+            initialAsset: "pica",
           }}
           LabelProps={{
             label: "From",
@@ -414,6 +415,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             borderLeft: false,
             minWidth: isMobile ? undefined : 150,
             searchable: true,
+            initialAsset: "ksm",
           }}
           LabelProps={{
             label: "To",
@@ -444,13 +446,13 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         {validTokens && (
           <>
             <Typography variant="body2">
-              1 {swaps.ui.quoteAssetSelected} = {spotPriceBn.toFixed()}{" "}
-              {swaps.ui.baseAssetSelected}
+              1 {swaps.ui.quoteAssetSelected.toUpperCase()} = {spotPriceBn.toFixed()}{" "}
+              {swaps.ui.baseAssetSelected.toUpperCase()}
             </Typography>
             <Tooltip
               title={`1 ${
-                swaps.ui.quoteAssetSelected
-              } = ${spotPriceBn.toFixed()} ${swaps.ui.baseAssetSelected}`}
+                swaps.ui.quoteAssetSelected.toUpperCase()
+              } = ${spotPriceBn.toFixed()} ${swaps.ui.baseAssetSelected.toUpperCase()}`}
               placement="top"
             >
               <InfoOutlined sx={{ color: theme.palette.primary.main }} />

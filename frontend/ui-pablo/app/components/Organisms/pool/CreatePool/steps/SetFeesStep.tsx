@@ -65,7 +65,7 @@ const SetFeesStep: React.FC<SetFeesStepProps> = ({
   };
 
   const setSwapFee = (fee: BigNumber) => {
-    createPool.setSelectable({ "swapFee": fee.toString() })
+    createPool.setSelectable({ swapFee: fee.toString() })
   }
 
   const onBackHandler = () => {
@@ -119,7 +119,6 @@ const SetFeesStep: React.FC<SetFeesStepProps> = ({
             value={initialSwapFee}
             setValue={setSwapFee}
             referenceText="%"
-            disabled
           />
         </Grid>
       </Grid>

@@ -37,7 +37,6 @@ export const AccountIndicator: React.FC<AccountIndicatorProps> = ({
         gridTemplateColumns: "24px auto 24px",
         gap: theme.spacing(2),
         flexShrink: 0,
-        minWidth: theme.spacing(31.25),
         background: alpha(theme.palette.primary.main, theme.custom.opacity.light),
         cursor: 'pointer',
         "&:hover": {
@@ -46,7 +45,7 @@ export const AccountIndicator: React.FC<AccountIndicatorProps> = ({
       }}
     >
       <Box sx={{ width: theme.spacing(3), height: theme.spacing(3) }}>
-        <Image src={icon} width="24" height="24" />
+        <Image src={icon} width="24" height="24" alt="account indicator" />
       </Box>
       {isMobile ? (
         <Circle fontSize="large" sx={{ fontSize: 28 }} />

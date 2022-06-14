@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   alpha,
   ListSubheader,
@@ -35,6 +35,7 @@ export type SelectProps = {
   forceHiddenLabel?: boolean;
   anchorEl?: HTMLElement | null;
   renderShortLabel?: boolean;
+  initialAsset?: string;
 } & InputProps;
 
 export const Select: React.FC<SelectProps> = ({
@@ -43,7 +44,7 @@ export const Select: React.FC<SelectProps> = ({
   options,
   noBorder,
   borderRight,
-  noBackground=false,
+  noBackground = false,
   borderLeft,
   minWidth,
   mobileWidth,
@@ -56,6 +57,7 @@ export const Select: React.FC<SelectProps> = ({
   forceHiddenLabel,
   anchorEl = null,
   renderShortLabel = false,
+  initialAsset,
   SelectProps,
   ...inputProps
 }) => {
@@ -64,7 +66,11 @@ export const Select: React.FC<SelectProps> = ({
   const [keyword, setKeyword] = React.useState<string>("");
   const [open, setOpen] = React.useState<boolean>(false);
 
-  const handleKewordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    if (initialAsset) setValue(initialAsset);
+  }, []);
+
+  const handleKeywordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setKeyword(event.target.value);
   };
 
@@ -78,7 +84,7 @@ export const Select: React.FC<SelectProps> = ({
       (option) => {
         let re = new RegExp(keyword, 'i');
         return value === option.value
-                || [option?.shortLabel, option.label].some(x => x && re.test(x))
+          || [option?.shortLabel, option.label].some(x => x && re.test(x))
       }
     );
   };
@@ -137,7 +143,7 @@ export const Select: React.FC<SelectProps> = ({
                     forceHiddenLabel
                       ? undefined
                       : (renderShortLabel && option.shortLabel)
-                        || option.label || option.value
+                      || option.label || option.value
                   }
                   icon={option.icon}
                   centeredLabel={centeredLabel}
@@ -155,15 +161,15 @@ export const Select: React.FC<SelectProps> = ({
         sx={{
           borderRight: borderRight
             ? `1px solid ${alpha(
-                theme.palette.common.white,
-                theme.custom.opacity.main
-              )}`
+              theme.palette.common.white,
+              theme.custom.opacity.main
+            )}`
             : undefined,
           borderLeft: borderLeft
             ? `1px solid ${alpha(
-                theme.palette.common.white,
-                theme.custom.opacity.main
-              )}`
+              theme.palette.common.white,
+              theme.custom.opacity.main
+            )}`
             : undefined,
           "& .MuiOutlinedInput-root.MuiInputBase-root": {
             background: noBackground ? 'none' : undefined,
@@ -215,7 +221,7 @@ export const Select: React.FC<SelectProps> = ({
               fullWidth
               value={keyword}
               setValue={setKeyword}
-              onChange={handleKewordChange}
+              onChange={handleKeywordChange}
               onKeyDown={(e) => e.stopPropagation()}
               onClick={(e) => e.stopPropagation()}
             />

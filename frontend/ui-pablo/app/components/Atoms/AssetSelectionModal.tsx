@@ -46,7 +46,7 @@ export const AssetSelectionModal: React.FC<AssetSelectionModalProps> = ({
   const theme = useTheme();
   const [keyword, setKeyword] = React.useState<string>("");
 
-  const handleKewordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleKeywordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setKeyword(event.target.value);
   };
 
@@ -55,7 +55,7 @@ export const AssetSelectionModal: React.FC<AssetSelectionModalProps> = ({
       (option) => {
         let re = new RegExp(keyword, 'i');
         return selected === option.value
-                || [option?.shortLabel, option.label].some(x => x && re.test(x))
+          || [option?.shortLabel, option.label].some(x => x && re.test(x))
       }
     );
   };
@@ -67,6 +67,12 @@ export const AssetSelectionModal: React.FC<AssetSelectionModalProps> = ({
 
   return (
     <Popover
+      sx={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+      anchorReference="none"
       anchorEl={anchorEl}
       onClose={onClose}
       BackdropProps={{
@@ -80,7 +86,7 @@ export const AssetSelectionModal: React.FC<AssetSelectionModalProps> = ({
             transform: 'translate(-50%, -50%) !important',
             top: '50% !important',
             left: '50% !important',
-          }: {}),
+          } : {}),
           padding: 0,
           backdropFilter: 'blur(48px)',
           borderColor: alpha(theme.palette.common.white, theme.custom.opacity.light),
@@ -105,12 +111,12 @@ export const AssetSelectionModal: React.FC<AssetSelectionModalProps> = ({
             width: '100%',
           },
           borderRadius: 1,
-          paddingTop: theme.spacing(anchorEl ? 2: 3)
+          paddingTop: theme.spacing(anchorEl ? 2 : 3)
         }}
       >
         {(!anchorEl || searchable) && (
           <Box
-            paddingX={theme.spacing(anchorEl ? 2: 4)}
+            paddingX={theme.spacing(anchorEl ? 2 : 4)}
           >
             {!anchorEl && (
               <Box
@@ -135,7 +141,7 @@ export const AssetSelectionModal: React.FC<AssetSelectionModalProps> = ({
                   fullWidth
                   value={keyword}
                   setValue={setKeyword}
-                  onChange={handleKewordChange}
+                  onChange={handleKeywordChange}
                   onKeyDown={(e) => e.stopPropagation()}
                   onClick={(e) => e.stopPropagation()}
                 />
@@ -145,8 +151,8 @@ export const AssetSelectionModal: React.FC<AssetSelectionModalProps> = ({
         )}
 
         <Box
-          mt={anchorEl ? 2: 3}
-          height={anchorEl ? 270 : 384}
+          mt={anchorEl ? 2 : 3}
+          height="auto"
           overflow="auto"
         >
           <MenuList>
