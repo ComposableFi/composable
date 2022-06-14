@@ -114,8 +114,6 @@ const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
     }
   }, [balances, createPool.quoteAsset]);
 
-  const [availableBalance] = useState<BigNumber>(new BigNumber(340));
-
   const [valid1, setValid1] = useState<boolean>(false);
   const [valid2, setValid2] = useState<boolean>(false);
 
@@ -130,7 +128,7 @@ const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
       }
     }
     return new BigNumber(0);
-  }, [createPool.baseAsset, apollo]);
+  }, [createPool.baseAsset, apollo, balance1]);
 
   const tokenToUSD2 = useMemo(() => {
     if (createPool.quoteAsset !== "none") {
@@ -257,7 +255,7 @@ const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
           {...priceLabelProps("Total", `$${usdAmount1.plus(usdAmount2)}`)}
         />
         <Label
-          {...priceLabelProps(`Available balance: $${availableBalance}`)}
+          {...priceLabelProps(`Available balance: $${tokenToUSD1.times(balance1).plus(tokenToUSD2.times(balance2)).toFixed(2)}`)}
           mt={0.5}
         />
       </Box>

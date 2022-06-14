@@ -4,7 +4,7 @@ import {
   StableSwapPool,
 } from "@/store/pools/pools.types";
 import useStore from "@/store/useStore";
-import { fetchAndUpdatePoolLiquidity } from "@/updaters/liquidity/utils";
+import { fetchAndUpdatePoolLiquidity } from "@/utils/defi";
 import BigNumber from "bignumber.js";
 import { useState, useEffect } from "react";
 import { useParachainApi } from "substrate-react";

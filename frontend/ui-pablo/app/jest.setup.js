@@ -77,7 +77,7 @@ jest.mock("@/store/hooks/useUserProvidedLiquidityByPool.ts", () => {
   }))}
 })
 
-jest.mock("@/store/hooks/usePoolTvlChart/usePoolTvlChart", () => ({
+jest.mock("@/store/hooks/usePoolTvlChart", () => ({
     usePoolTvlChart: jest.fn().mockImplementation(() => ({
       seriesIntervals: [],
       chartSeries: [],

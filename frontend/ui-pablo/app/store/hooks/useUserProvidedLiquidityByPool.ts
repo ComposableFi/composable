@@ -1,13 +1,12 @@
-import { getAssetByOnChainId } from "@/defi/polkadot/Assets";
 import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
-import useStore from "@/store/useStore";
-import { calcaulateProvidedLiquidity } from "@/updaters/liquidity/utils";
+import { calcaulateProvidedLiquidity } from "@/utils/defi";
 import { liquidityTransactionsByAddressAndPool } from "@/updaters/pools/subsquid";
-import BigNumber from "bignumber.js";
 import { useEffect, useMemo, useState } from "react";
 import { useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "../../updaters/constants";
 import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
+import useStore from "@/store/useStore";
+import BigNumber from "bignumber.js";
 /**
  * Provides the amount of liquidity
  * added by the user, and its value in

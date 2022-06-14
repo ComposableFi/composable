@@ -3,8 +3,8 @@ import BigNumber from "bignumber.js";
 import { useEffect, useMemo } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "../constants";
-import { fetchAndUpdatePoolLiquidity } from "./utils";
-import { fetchBalanceByAssetId } from "../assets/utils";
+import { fetchAndUpdatePoolLiquidity } from "@/utils/defi";
+import { fetchBalanceByAssetId } from "@/utils/defi";
 import _ from "lodash";
 
 const PICK = ["poolId", "pair", "lpToken"];
@@ -79,7 +79,7 @@ const Updater = () => {
       allPools.forEach((pool) => {
         if (pool.poolId && pool.pair) {
           let baseId = pool.pair.base.toString();
-          let quoteId = pool.pair.base.toString();
+          let quoteId = pool.pair.quote.toString();
 
           if (apollo[baseId] && poolLiquidity[pool.poolId]) {
             const baseValue = new BigNumber(
@@ -104,7 +104,7 @@ const Updater = () => {
         }
       });
     }
-  }, [allPools.length, apollo]);
+  }, [allPools.length, apollo, poolLiquidity]);
 
   return null;
 };

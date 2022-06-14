@@ -14,8 +14,8 @@ import {
   LiquidityPoolType,
   StableSwapPool,
 } from "@/store/pools/pools.types";
-import { fetchBalanceByAssetId } from "../assets/utils";
-import { createPoolAccountId } from "@/utils/substrate";
+import { fetchBalanceByAssetId } from "@/utils/defi";
+import { createPabloPoolAccountId } from "@/utils/defi";
 
 const Updater = () => {
   const {
@@ -156,7 +156,7 @@ const Updater = () => {
               }
 
               if (pool) {
-                let poolAccountId = createPoolAccountId(parachainApi, Number(poolId));
+                let poolAccountId = createPabloPoolAccountId(parachainApi, Number(poolId));
 
                 let lbp = undefined;
                 let fee = new BigNumber(pool.feeConfig.feeRate);

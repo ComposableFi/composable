@@ -1,0 +1,1 @@
+export const PALLET_TYPE_ID = "modl";

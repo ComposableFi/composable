@@ -75,7 +75,7 @@ export const LiquidityProvidersBox: React.FC<BoxProps> = ({
                 </TableCell>
                 <TableCell align="left">
                   <Typography variant="body1">
-                    ${totalVolume.toFormat(2)}
+                    ${lpPrice.times(lpBalance).toFormat(2)}
                   </Typography>
                 </TableCell>
                 <TableCell align="left">

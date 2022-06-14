@@ -6,12 +6,12 @@ import BigNumber from "bignumber.js";
 
 import { aggregateTrades, transformAuctionsTransaction } from "./utils";
 import { PoolTradeHistory } from "@/store/auctions/auctions.types";
-import { fetchBalanceByAssetId } from "../assets/utils";
+import { fetchBalanceByAssetId } from "@/utils/defi";
 import { AVERAGE_BLOCK_TIME, DEFAULT_DECIMALS, DEFAULT_NETWORK_ID } from "../constants";
 import { queryAuctionStats } from "./subsquid";
 import { queryPoolTransactionsByType } from "../pools/subsquid";
 import { fetchSpotPrice } from "../swaps/utils";
-import { createPoolAccountId } from "@/utils/substrate";
+import { createPabloPoolAccountId } from "@/utils/defi/pablo";
 
 const Updater = () => {
   const {
@@ -45,7 +45,7 @@ const Updater = () => {
         ? new BigNumber(10).pow(quoteAsset.decimals)
         : DEFAULT_DECIMALS;
 
-      const poolAccountId = createPoolAccountId(parachainApi, auctions.activeLBP.poolId);
+      const poolAccountId = createPabloPoolAccountId(parachainApi, auctions.activeLBP.poolId);
 
       let allQueries = [
         /**

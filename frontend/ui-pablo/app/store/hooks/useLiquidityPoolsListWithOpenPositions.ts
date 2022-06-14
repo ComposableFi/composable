@@ -1,35 +1,24 @@
+import { useMemo } from "react";
+import {
+  LiquidityPoolRow,
+  useLiquidityPoolsList,
+} from "./useLiquidityPoolsList";
+import useStore from "../useStore";
 import BigNumber from "bignumber.js";
-import { useEffect, useState } from "react";
-import { useParachainApi, useSelectedAccount } from "substrate-react";
-import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
-import { fetchBalanceByAssetId } from "@/updaters/assets/utils";
-import { LiquidityPoolRow, useLiquidityPoolsList } from "./useLiquidityPoolsList";
 
-export const useLiquidityPoolsListWithOpenPositions = (): LiquidityPoolRow[] => {
-    const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-    const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
+export const useLiquidityPoolsListWithOpenPositions =
+  (): LiquidityPoolRow[] => {
+    const { userLpBalances } = useStore();
     const allPools = useLiquidityPoolsList();
-    const [openPoisitionPoolIds, setOpenPositionsPoolIds] = useState<number[]>([]);
-  
-    useEffect(() => {
-      if (parachainApi && selectedAccount && allPools.length) {
-        allPools.map(i => {
-          fetchBalanceByAssetId(
-            parachainApi,
-            selectedAccount.address,
-            i.lpTokenAssetId
-          ).then((balance) => {
-            if (new BigNumber(balance).gt(0)) {
-              setOpenPositionsPoolIds([... openPoisitionPoolIds, i.poolId])
-            } else {
-              setOpenPositionsPoolIds(openPoisitionPoolIds.filter(poolId => poolId !== i.poolId))
-            }
-          })
-        })
-      } else {
-        setOpenPositionsPoolIds([]);
-      }
-    }, [selectedAccount, allPools, allPools])
 
-    return allPools.filter(pool => openPoisitionPoolIds.includes(pool.poolId))
+    const poolIds = useMemo(() => {
+      return Object.keys(userLpBalances)
+        .filter((k) => {
+          const bal = new BigNumber(userLpBalances[Number(k)]);
+          return bal.gt(0);
+        })
+        .map((i) => Number(i));
+    }, [userLpBalances]);
+
+    return allPools.filter((i) => poolIds.includes(i.poolId));
   };

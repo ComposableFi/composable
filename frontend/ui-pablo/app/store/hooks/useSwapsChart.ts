@@ -3,14 +3,14 @@ import { getAssetOnChainId } from "@/defi/polkadot/Assets";
 import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
 import { queryPoolTransactionsByType } from "@/updaters/pools/subsquid";
 import { query24hOldTransactionByPoolQuoteAsset } from "@/updaters/swaps/subsquid";
-import BigNumber from "bignumber.js";
 import { useState, useEffect } from "react";
+import BigNumber from "bignumber.js";
 
 import useStore from "../useStore";
 import {
   ChartRange,
   processSubsquidChartData,
-} from "./usePoolTvlChart/helpers";
+} from "@/utils/defi/charts";
 
 export const useSwapsChart = () => {
   const { swaps } = useStore();

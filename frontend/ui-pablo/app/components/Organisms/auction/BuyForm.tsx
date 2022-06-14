@@ -31,7 +31,7 @@ import { onSwapAmountChange } from "@/updaters/swaps/utils";
 import { debounce } from "lodash";
 import { ConfirmingModal } from "../swap/ConfirmingModal";
 import { useSnackbar } from "notistack";
-import { toChainUnits } from "@/utils/bignumber";
+import { toChainUnits } from "@/utils/defi";
 
 export type BuyFormProps = {
   auction: LiquidityBootstrappingPool;
