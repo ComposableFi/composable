@@ -740,10 +740,10 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-12.20.42.tgz#2f021733232c2130c26f9eabbdd3bfd881774733"
   integrity sha512-aI3/oo5DzyiI5R/xAhxxRzfZlWlsbbqdgxfTPkqu/Zt+23GXiJvMCyPJT4+xKSXOnLqoL8jJYMLTwvK2M3a5hw==
 
-"@types/node@^17.0.18":
-  version "17.0.18"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.18.tgz#3b4fed5cfb58010e3a2be4b6e74615e4847f1074"
-  integrity sha512-eKj4f/BsN/qcculZiRSujogjvp5O/k4lOW5m35NopjZM/QwLOR075a8pJW5hD+Rtdm2DaCVPENS6KtSQnUD6BA==
+"@types/node@^17.0.42":
+  version "17.0.42"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.42.tgz#d7e8f22700efc94d125103075c074396b5f41f9b"
+  integrity sha512-Q5BPGyGKcvQgAMbsr7qEGN/kIPN6zZecYYABeTDBizOsau+2NMdSVTar9UQw21A2+JyA2KRNDYaYrPB0Rpk2oQ==
 
 "@types/pbkdf2@^3.0.0":
   version "3.1.0"
@@ -3102,10 +3102,10 @@ picomatch@^2.0.4, picomatch@^2.2.1:
   resolved "https://registry.yarnpkg.com/picomatch/-/picomatch-2.3.1.tgz#3ba3833733646d9d3e4995946c1365a67fb07a42"
   integrity sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==
 
-polkadot-launch@^1.9.0:
-  version "1.10.0"
-  resolved "https://registry.yarnpkg.com/polkadot-launch/-/polkadot-launch-1.10.0.tgz#896a4bd2dbc7d55b273abf3fed3c1f8af0c7fc0f"
-  integrity sha512-Z+rprrJNXhap5Q3rK7IOAWMwSYgxRBxchvMb298Ns7/yZ1lO4pYAMUOTXRVtI3p1i36XRmHE4tr728fi2r6Krw==
+polkadot-launch@^2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/polkadot-launch/-/polkadot-launch-2.2.0.tgz#88937bd9d3cf4d9400283be133ac5efc16e704e5"
+  integrity sha512-ooi7PO8wZRAeXmtQjffxkM85X0RPTciob/qNK6TpxoDKvqhYm3zX0b9XItMgrD4Z0OvuzHdaJarcsi8/YHmXRQ==
   dependencies:
     "@polkadot/api" "^6.10.3"
     "@polkadot/keyring" "^8.0.5"
@@ -3699,10 +3699,10 @@ typedarray-to-buffer@^3.1.5:
   dependencies:
     is-typedarray "^1.0.0"
 
-typescript@^4.5.5:
-  version "4.5.5"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.5.5.tgz#d8c953832d28924a9e3d37c73d729c846c5896f3"
-  integrity sha512-TCTIul70LyWe6IJWT8QSYeA54WQe8EjQFU4wY52Fasj5UKx88LNYKCgBEHcOMOrFF1rKGbD8v/xcNWVUq9SymA==
+typescript@^4.7.3:
+  version "4.7.3"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.7.3.tgz#8364b502d5257b540f9de4c40be84c98e23a129d"
+  integrity sha512-WOkT3XYvrpXx4vMMqlD+8R8R37fZkjyLGlxavMc4iB8lrl8L0DeTcHbYgw/v0N/z9wAFsgBhcsF0ruoySS22mA==
 
 uint8arrays@^3.0.0:
   version "3.0.0"

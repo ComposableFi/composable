@@ -288,7 +288,6 @@ fn market_owner_cannot_retroactively_liquidate() {
 			collateral_factor,
 			under_collateralized_warn_percent: Percent::from_float(1.1),
 			liquidators: vec![],
-			interest_rate_model: InterestRateModel::default(),
 			max_price_age: DEFAULT_MAX_PRICE_AGE,
 		};
 		// ALICE is the creater of the market.

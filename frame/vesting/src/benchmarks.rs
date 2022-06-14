@@ -21,7 +21,7 @@ fn asset<T>() -> AssetIdOf<T>
 where
 	T: Config,
 {
-	let a = 0u128.to_be_bytes();
+	let a = 1u128.to_be_bytes();
 	AssetIdOf::<T>::decode(&mut &a[..]).unwrap()
 }
 
