@@ -3,11 +3,13 @@ use crate::{
 	pallet::{Error, Event, VammMap},
 	tests::{
 		any_vamm_state, balance_range_upper_half, get_swap_config, get_vamm_state, multiple_swaps,
-		run_to_block, swap_config, then_and_now, RUN_CASES,
+		run_for_seconds, run_to_block, swap_config, then_and_now, RUN_CASES,
 	},
 	VammState,
 };
-use composable_traits::vamm::{AssetType, Direction, SwapConfig, SwapOutput, Vamm as VammTrait};
+use composable_traits::vamm::{
+	AssetType, Direction, SwapConfig, SwapOutput, Vamm as VammTrait, MINIMUM_FUNDING_PERIOD,
+};
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 use sp_core::U256;
@@ -76,6 +78,13 @@ proptest! {
 		// `Overflow`, `Underflow`, etc.
 		swap_config.input_amount = 0;
 
+		// Ensure we don't throw `AssetTwapTimestampIsMoreRecent` error.
+		vamm_state.base_asset_twap_timestamp = 0;
+		vamm_state.quote_asset_twap_timestamp = 0;
+
+		// Ensure we don't throw `FailedToComputeLastTwapWeight` error.
+		vamm_state.funding_period = (MINIMUM_FUNDING_PERIOD + 1).into();
+
 		swap_config.output_amount_limit = limit;
 		swap_config.vamm_id = VammId::zero();
 
@@ -83,6 +92,8 @@ proptest! {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
+			// Ensure we don't throw `AssetTwapTimestampIsMoreRecent` error.
+			run_to_block(1);
 			assert_noop!(
 				TestPallet::swap(&swap_config),
 				Error::<MockRuntime>::SwappedAmountLessThanMinimumLimit
@@ -103,6 +114,13 @@ proptest! {
 
 		// Disable output limit check
 		swap_config.output_amount_limit = Balance::zero();
+
+		// Ensure we don't throw `AssetTwapTimestampIsMoreRecent` error.
+		vamm_state.base_asset_twap_timestamp = 0;
+		vamm_state.quote_asset_twap_timestamp = 0;
+
+		// Ensure we don't throw `FailedToComputeLastTwapWeight` error.
+		vamm_state.funding_period = (MINIMUM_FUNDING_PERIOD + 1).into();
 
 		swap_config.vamm_id = VammId::zero();
 
@@ -150,6 +168,9 @@ fn swap_add_base() {
 			VammState {
 				base_asset_reserves: base_u256.as_u128(),
 				quote_asset_reserves: quote_u256.as_u128(),
+				base_asset_twap: base_u256.as_u128(),
+				quote_asset_twap: quote_u256.as_u128(),
+				funding_period: 3600,
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
@@ -163,20 +184,11 @@ fn swap_add_base() {
 		run_to_block(1);
 
 		let swap = TestPallet::swap(&swap_config);
-		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
+		let vamm_after_swap = VammMap::<MockRuntime>::get(0).unwrap();
 
 		assert_ok!(swap, SwapOutput { output: 16_666_666_666_667, negative: false });
-		assert_eq!(
-			vamm_after_swap.unwrap(),
-			VammState {
-				base_asset_reserves: 3_000_000_000_000,
-				quote_asset_reserves: 33_333_333_333_333,
-				peg_multiplier: 1,
-				invariant,
-				closed: None,
-				..Default::default()
-			}
-		);
+		assert_eq!(vamm_after_swap.base_asset_reserves, 3_000_000_000_000);
+		assert_eq!(vamm_after_swap.quote_asset_reserves, 33_333_333_333_333);
 
 		System::assert_last_event(
 			Event::Swapped {
@@ -212,6 +224,9 @@ fn swap_remove_base() {
 			VammState {
 				base_asset_reserves: base_u256.as_u128(),
 				quote_asset_reserves: quote_u256.as_u128(),
+				base_asset_twap: base_u256.as_u128(),
+				quote_asset_twap: quote_u256.as_u128(),
+				funding_period: 3600,
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
@@ -225,20 +240,11 @@ fn swap_remove_base() {
 		run_to_block(1);
 
 		let swap = TestPallet::swap(&swap_config);
-		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
+		let vamm_after_swap = VammMap::<MockRuntime>::get(0).unwrap();
 
 		assert_ok!(swap, SwapOutput { output: 50_000_000_000_000, negative: false });
-		assert_eq!(
-			vamm_after_swap.unwrap(),
-			VammState {
-				base_asset_reserves: 1_000_000_000_000,
-				quote_asset_reserves: 100_000_000_000_000,
-				peg_multiplier: 1,
-				invariant,
-				closed: None,
-				..Default::default()
-			}
-		);
+		assert_eq!(vamm_after_swap.base_asset_reserves, 1_000_000_000_000);
+		assert_eq!(vamm_after_swap.quote_asset_reserves, 100_000_000_000_000);
 
 		System::assert_last_event(
 			Event::Swapped {
@@ -274,6 +280,9 @@ fn swap_add_quote() {
 			VammState {
 				base_asset_reserves: base_u256.as_u128(),
 				quote_asset_reserves: quote_u256.as_u128(),
+				base_asset_twap: base_u256.as_u128(),
+				quote_asset_twap: quote_u256.as_u128(),
+				funding_period: 3600,
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
@@ -287,20 +296,11 @@ fn swap_add_quote() {
 		run_to_block(1);
 
 		let swap = TestPallet::swap(&swap_config);
-		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
+		let vamm_after_swap = VammMap::<MockRuntime>::get(0).unwrap();
 
 		assert_ok!(swap, SwapOutput { output: 39_215_686_275, negative: false });
-		assert_eq!(
-			vamm_after_swap.unwrap(),
-			VammState {
-				base_asset_reserves: 1_960_784_313_725,
-				quote_asset_reserves: 51_000_000_000_000,
-				peg_multiplier: 1,
-				invariant,
-				closed: None,
-				..Default::default()
-			}
-		);
+		assert_eq!(vamm_after_swap.base_asset_reserves, 1_960_784_313_725);
+		assert_eq!(vamm_after_swap.quote_asset_reserves, 51_000_000_000_000);
 
 		System::assert_last_event(
 			Event::Swapped {
@@ -336,6 +336,9 @@ fn swap_remove_quote() {
 			VammState {
 				base_asset_reserves: base_u256.as_u128(),
 				quote_asset_reserves: quote_u256.as_u128(),
+				base_asset_twap: base_u256.as_u128(),
+				quote_asset_twap: quote_u256.as_u128(),
+				funding_period: 3600,
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
@@ -349,20 +352,11 @@ fn swap_remove_quote() {
 		run_to_block(1);
 
 		let swap = TestPallet::swap(&swap_config);
-		let vamm_after_swap = VammMap::<MockRuntime>::get(0);
+		let vamm_after_swap = VammMap::<MockRuntime>::get(0).unwrap();
 
 		assert_ok!(swap, SwapOutput { output: 800_320_128, negative: true });
-		assert_eq!(
-			vamm_after_swap.unwrap(),
-			VammState {
-				base_asset_reserves: 2_000_800_320_128,
-				quote_asset_reserves: 49_980_000_000_000,
-				peg_multiplier: 1,
-				invariant,
-				closed: None,
-				..Default::default()
-			}
-		);
+		assert_eq!(vamm_after_swap.base_asset_reserves, 2_000_800_320_128);
+		assert_eq!(vamm_after_swap.quote_asset_reserves, 49_980_000_000_000);
 
 		System::assert_last_event(
 			Event::Swapped {
@@ -387,12 +381,19 @@ proptest! {
 		// Ensure vamm is always open
 		vamm_state.closed = None;
 
+		// Ensure we don't throw `AssetTwapTimestampIsMoreRecent` error.
+		vamm_state.base_asset_twap_timestamp = 0;
+		vamm_state.quote_asset_twap_timestamp = 0;
+		let mut block_ts = 0;
+
 		ExtBuilder {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
 			let vamm_before_swap = VammMap::<MockRuntime>::get(0);
 			for x in swap_config.iter() {
+				block_ts += 1;
+				run_for_seconds(block_ts);
 				assert_ok!(TestPallet::swap(x));
 			}
 			let vamm_after_swap = VammMap::<MockRuntime>::get(0);
@@ -426,12 +427,22 @@ proptest! {
 		// Ensure vamm is always open
 		vamm_state.closed = None;
 
+		// Ensure we don't throw `AssetTwapTimestampIsMoreRecent` error.
+		vamm_state.base_asset_twap_timestamp = 0;
+		vamm_state.quote_asset_twap_timestamp = 0;
+		let mut block_ts = 0;
+
 		ExtBuilder {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
 			let vamm_before_swap = VammMap::<MockRuntime>::get(0);
 			for mut x in swap_config.iter_mut() {
+				// TODO(Cardosaum): Is this assumption valid? what if we try to
+				// execute more than one swap per second?
+				// Make sure time has passed between swaps.
+				block_ts += 1;
+				run_for_seconds(block_ts);
 				// Make swaps only for base asset
 				x.asset = AssetType::Base;
 				assert_ok!(TestPallet::swap(x));
@@ -468,12 +479,22 @@ proptest! {
 		// Ensure vamm is always open
 		vamm_state.closed = None;
 
+		// Ensure we don't throw `AssetTwapTimestampIsMoreRecent` error.
+		vamm_state.base_asset_twap_timestamp = 0;
+		vamm_state.quote_asset_twap_timestamp = 0;
+		let mut block_ts = 0;
+
 		ExtBuilder {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
 			let vamm_before_swap = VammMap::<MockRuntime>::get(0);
 			for mut x in swap_config.iter_mut() {
+				// TODO(Cardosaum): Is this assumption valid? what if we try to
+				// execute more than one swap per second?
+				// Make sure time has passed between swaps.
+				block_ts += 1;
+				run_for_seconds(block_ts);
 				// Make swaps only for quote asset
 				x.asset = AssetType::Quote;
 				assert_ok!(TestPallet::swap(x));

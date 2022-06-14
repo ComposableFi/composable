@@ -57,6 +57,7 @@ pub type MarketId = u64;
 pub type ReserveIdentifier = [u8; 8]; // copied from 'frame/assets/src/mocks.rs'
 pub type UnsignedDecimal = FixedU128;
 pub type VammId = u64;
+pub type Moment = u64;
 
 // ----------------------------------------------------------------------------------------------------
 //                                                FRAME System
@@ -203,6 +204,7 @@ impl pallet_assets::Config for Runtime {
 impl mock_vamm::Config for Runtime {
 	type VammId = VammId;
 	type Decimal = UnsignedDecimal;
+	type Moment = Moment;
 }
 
 // ----------------------------------------------------------------------------------------------------

@@ -6,14 +6,14 @@ pub mod pallet {
 	//                                       Imports and Dependencies
 	// ----------------------------------------------------------------------------------------------------
 
-	use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
+	use codec::{Codec, Decode, Encode, FullCodec, MaxEncodedLen};
 	use composable_traits::{
 		defi::DeFiComposableConfig,
 		vamm::{AssetType, Direction, SwapConfig, SwapOutput, SwapSimulationConfig, Vamm},
 	};
 	use frame_support::pallet_prelude::*;
 	use scale_info::TypeInfo;
-	use sp_arithmetic::traits::Unsigned;
+	use sp_arithmetic::traits::{AtLeast32BitUnsigned, Unsigned};
 	use sp_core::U256;
 	use sp_runtime::{
 		traits::{CheckedDiv, One, Saturating, Zero},
@@ -51,6 +51,16 @@ pub mod pallet {
 			+ MaxEncodedLen
 			+ MaybeSerializeDeserialize
 			+ Saturating
+			+ TypeInfo;
+		type Moment: Default
+			+ AtLeast32BitUnsigned
+			+ Clone
+			+ Codec
+			+ Copy
+			+ From<u64>
+			+ Into<u64>
+			+ MaxEncodedLen
+			+ MaybeSerializeDeserialize
 			+ TypeInfo;
 	}
 
@@ -142,6 +152,7 @@ pub mod pallet {
 	impl<T: Config> Vamm for Pallet<T> {
 		type Balance = T::Balance;
 		type Decimal = T::Decimal;
+		type Moment = T::Moment;
 		type MovePriceConfig = MovePriceConfig;
 		type SwapConfig = SwapConfig<Self::VammId, Self::Balance>;
 		type SwapSimulationConfig = SwapSimulationConfig<Self::VammId, Self::Balance>;
@@ -167,7 +178,7 @@ pub mod pallet {
 		}
 
 		fn get_twap(
-			vamm: &Self::VammId,
+			vamm: Self::VammId,
 			asset_type: AssetType,
 		) -> Result<Self::Decimal, DispatchError> {
 			Self::_twap_of(vamm)
@@ -217,6 +228,14 @@ pub mod pallet {
 		}
 
 		fn move_price(config: &Self::MovePriceConfig) -> Result<U256, DispatchError> {
+			unimplemented!()
+		}
+
+		fn update_twap(
+			vamm_id: Self::VammId,
+			asset_type: AssetType,
+			new_twap: Option<Self::Decimal>,
+		) -> Result<Self::Decimal, DispatchError> {
 			unimplemented!()
 		}
 	}
