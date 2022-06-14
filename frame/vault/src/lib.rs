@@ -103,8 +103,7 @@ pub mod pallet {
 		},
 		ArithmeticError, DispatchError, FixedPointNumber, Perquintill,
 	};
-	use sp_std::fmt::Debug;
-	use std::cmp::Ordering;
+	use sp_std::{cmp::Ordering, fmt::Debug};
 
 	#[allow(missing_docs)]
 	pub type AssetIdOf<T> =
@@ -972,8 +971,9 @@ pub mod pallet {
 							.mul_floor(<T::Convert as Convert<T::Balance, u128>>::convert(aum)),
 					);
 					match balance.cmp(&max_allowed) {
-						Ordering::Less => Ok(FundsAvailability::Depositable(balance - max_allowed)),
 						Ordering::Greater =>
+							Ok(FundsAvailability::Depositable(balance - max_allowed)),
+						Ordering::Less =>
 							Ok(FundsAvailability::Withdrawable(max_allowed - balance)),
 						Ordering::Equal => Ok(FundsAvailability::None),
 					}
