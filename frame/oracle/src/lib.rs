@@ -423,7 +423,9 @@ pub mod pallet {
 					.unwrap_or(precision);
 				let remainder = precision - sum;
 				if remainder != Percent::zero() {
-					weights.iter_mut().last().map(|v| *v = *v + remainder);
+					if let Some(weight) = weights.iter_mut().last() {
+						*weight = *weight + remainder
+					}
 				}
 
 				let price = Self::get_twap(asset_id, weights)?;
