@@ -1,6 +1,6 @@
 # Run Composable's parachain only
 
-Need to do to run 4 relay chain nodes and 1 Composable's collator:
+Need to do to run 2 Relay Chain nodes and 2 Composable collators:
 
 1. build a Composable's collator
 
