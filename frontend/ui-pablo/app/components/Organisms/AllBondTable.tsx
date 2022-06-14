@@ -37,27 +37,21 @@ const tableHeaders: TableHeader[] = [
   },
 ];
 
+const BOND_LIMIT_TO_SHOW = 4;
+
 export const AllBondTable: React.FC = () => {
-  const dispatch = useAppDispatch();
   const theme = useTheme();
   const router = useRouter();
-  const [startIndex, setStartIndex] = useState(0);
   const { allBonds } = useStore();
+  const [count, setCount] = useState(BOND_LIMIT_TO_SHOW);
 
-  /*TBD : add see more support for allBonds*/
   const handleSeeMore = () => {
-    dispatch(addNextDataBondPools({ startIndex: startIndex + 4 }));
-    setStartIndex(startIndex + 4);
+    setCount(count + BOND_LIMIT_TO_SHOW);
   };
 
   const handleBondClick = () => {
     router.push("bond/select");
   };
-
-  /*TBD : add see more support for allBonds*/
-  useEffect(() => {
-    dispatch(addNextDataBondPools({ startIndex }));
-  }, []);
 
   return (
     <TableContainer>
@@ -79,33 +73,14 @@ export const AllBondTable: React.FC = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {allBonds.map((bond, index) => (
+          {allBonds.slice(0, count).map((bond, index) => (
             <TableRow
               key={index}
               onClick={handleBondClick}
               sx={{ cursor: "pointer" }}
             >
               <TableCell align="left">
-                {bond.assetPair.token2 ? (
-                  <PairAsset
-                    assets={[
-                      {
-                        icon: bond.assetPair.token1.icon,
-                        label: bond.assetPair.token1.symbol,
-                      },
-                      {
-                        icon: bond.assetPair.token2.icon,
-                        label: bond.assetPair.token2.symbol,
-                      },
-                    ]}
-                    separator="/"
-                  />
-                ) : (
-                  <BaseAsset
-                    label={bond.assetPair.token1.symbol}
-                    icon={bond.assetPair.token1.icon}
-                  />
-                )}
+                {<BaseAsset label={bond.asset.symbol} icon={bond.asset.icon} />}
               </TableCell>
               <TableCell align="left">
                 <Typography variant="body2">
@@ -126,19 +101,21 @@ export const AllBondTable: React.FC = () => {
           ))}
         </TableBody>
       </Table>
-      <Box
-        onClick={handleSeeMore}
-        mt={4}
-        display="flex"
-        gap={1}
-        justifyContent="center"
-        sx={{ cursor: "pointer" }}
-      >
-        <Typography textAlign="center" variant="body2">
-          See more
-        </Typography>
-        <KeyboardArrowDown sx={{ color: theme.palette.primary.main }} />
-      </Box>
+      {allBonds.length > count && (
+        <Box
+          onClick={handleSeeMore}
+          mt={4}
+          display="flex"
+          gap={1}
+          justifyContent="center"
+          sx={{ cursor: "pointer" }}
+        >
+          <Typography textAlign="center" variant="body2">
+            See more
+          </Typography>
+          <KeyboardArrowDown sx={{ color: theme.palette.primary.main }} />
+        </Box>
+      )}
     </TableContainer>
   );
 };

@@ -86,41 +86,20 @@ export const YourBondTable: React.FC = () => {
                 sx={{ cursor: "pointer" }}
               >
                 <TableCell align="left">
-                  {bond.assetPair.token2 ? (
-                    <PairAsset
-                      assets={[
-                        {
-                          icon: bond.assetPair.token1.icon,
-                          label: bond.assetPair.token1.symbol,
-                        },
-                        {
-                          icon: bond.assetPair.token2.icon,
-                          label: bond.assetPair.token2.symbol,
-                        },
-                      ]}
-                      separator="/"
-                    />
-                  ) : (
-                    <BaseAsset
-                      label={bond.assetPair.token1.symbol}
-                      icon={bond.assetPair.token1.icon}
-                    />
-                  )}
+                  <BaseAsset label={bond.asset.symbol} icon={bond.asset.icon} />
                 </TableCell>
                 <TableCell align="left">
                   <Typography variant="body2">
-                    {bond.claimable_amount.toFormat()} CHAOS
+                    {bond.claimableAmount.toFormat()} CHAOS
                   </Typography>
                 </TableCell>
                 <TableCell align="left">
                   <Typography variant="body2">
-                    {bond.pending_amount.toFormat()} CHAOS
+                    {bond.pendingAmount.toFormat()} CHAOS
                   </Typography>
                 </TableCell>
                 <TableCell align="left">
-                  <Typography variant="body2">
-                    {bond.vesting_time} days
-                  </Typography>
+                  <Typography variant="body2">{bond.vestingTime}</Typography>
                 </TableCell>
               </TableRow>
             ))}
