@@ -1377,35 +1377,21 @@ fn get_twap() {
 			5
 		));
 
-		do_price_update(0, 0);
-		let price_1 = Price { price: 100, block: 20 };
-		let price_2 = Price { price: 100, block: 20 };
-		let price_3 = Price { price: 120, block: 20 };
+		let asset_id = 0;
+		let block = 24;
+		do_price_update(asset_id, block);
+
+		let price_1 = Price { price: 100, block: 21 };
+		let price_2 = Price { price: 100, block: 22 };
+		let price_3 = Price { price: 120, block: 23 };
 		let historic_prices = [price_1, price_2, price_3].to_vec();
-		set_historic_prices(0, historic_prices);
+		set_historic_prices(asset_id, historic_prices);
 
-		let twap = Oracle::get_twap(
-			0,
-			vec![Percent::from_percent(20), Percent::from_percent(30), Percent::from_percent(50)],
-		);
-		// twap should be (0.2 * 100) + (0.3 * 120) + (0.5 * 100)
-		assert_eq!(twap, Ok(106));
-		let err_twap = Oracle::get_twap(
-			0,
-			vec![Percent::from_percent(21), Percent::from_percent(30), Percent::from_percent(50)],
-		);
-		assert_eq!(err_twap, Err(Error::<Test>::MustSumTo100.into()));
+		let twap = Oracle::get_twap(0, 3);
+		// twap should be ((1 * 100) + (1 * 120) + (1 * 101)) / (1 + 1 + 1)
+		assert_eq!(twap, Ok(107));
 
-		let err_2_twap = Oracle::get_twap(
-			0,
-			vec![
-				Percent::from_percent(10),
-				Percent::from_percent(10),
-				Percent::from_percent(10),
-				Percent::from_percent(10),
-				Percent::from_percent(60),
-			],
-		);
+		let err_2_twap = Oracle::get_twap(0, 100);
 		assert_eq!(err_2_twap, Err(Error::<Test>::DepthTooLarge.into()));
 	});
 }
@@ -1427,16 +1413,26 @@ fn get_twap_for_amount() {
 			5
 		));
 
-		do_price_update(0, 0);
-		let price_1 = Price { price: 100, block: 20 };
-		let price_2 = Price { price: 100, block: 20 };
-		let price_3 = Price { price: 120, block: 20 };
-		let historic_prices = [price_1, price_2, price_3].to_vec();
-		set_historic_prices(0, historic_prices);
-		let amount = 10000;
+		let asset_id = 0;
+		let block = 24;
+		let account_1 = get_account_1();
 
+		for _ in 0..3 {
+			add_price_storage(120, asset_id, account_1, block);
+		}
+
+		System::set_block_number(block);
+		Oracle::on_initialize(block);
+
+		let price_1 = Price { price: 100, block: 21 };
+		let price_2 = Price { price: 100, block: 22 };
+		let price_3 = Price { price: 100, block: 23 };
+		let historic_prices = [price_1, price_2, price_3].to_vec();
+		set_historic_prices(asset_id, historic_prices);
+
+		let amount = 10_000;
 		let twap = Oracle::get_twap_for_amount(0, amount);
-		// twap should be (0.33 * 100) + (0.33 * 120) + (0.33 * 100)
+		// twap should be ((1 * 100) + (1 * 100) + (1 * 120)) / (1 + 1 + 1) * 10_000
 		assert_eq!(twap, Ok(106 * amount));
 	});
 }

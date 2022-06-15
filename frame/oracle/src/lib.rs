@@ -44,7 +44,6 @@ pub mod pallet {
 		currency::LocalAssets,
 		oracle::{Oracle, Price},
 	};
-	use core::ops::{Div, Mul};
 	use frame_support::{
 		dispatch::{DispatchResult, DispatchResultWithPostInfo},
 		pallet_prelude::*,
@@ -383,7 +382,10 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> Oracle for Pallet<T> {
+	impl<T: Config> Oracle for Pallet<T>
+	where
+		u128: From<<T as frame_system::Config>::BlockNumber>,
+	{
 		type Balance = T::PriceValue;
 		type AssetId = T::AssetId;
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
@@ -407,28 +409,11 @@ pub mod pallet {
 			amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
 			let prices_length = Self::price_history(asset_id).len();
-			if prices_length == 0 {
+			let twap_window: usize = <Self as Oracle>::TwapWindow::get().into();
+			if twap_window > prices_length + 1 {
 				Self::get_price(asset_id, amount).map(|p| p.price)
 			} else {
-				let twap_window = Self::TwapWindow::get().into();
-				let weights_length = prices_length.min(twap_window);
-				// make flat weights
-				let weight = Percent::from_rational(1, weights_length);
-				let mut weights = vec![weight; weights_length];
-				// add remainder to 100
-				let precision = Percent::from_percent(100);
-				let sum = weights
-					.iter()
-					.fold(Some(Percent::zero()), |a, b| a.and_then(|a| a.checked_add(b)))
-					.unwrap_or(precision);
-				let remainder = precision - sum;
-				if remainder != Percent::zero() {
-					if let Some(weight) = weights.iter_mut().last() {
-						*weight = *weight + remainder
-					}
-				}
-
-				let price = Self::get_twap(asset_id, weights)?;
+				let price = Self::get_twap(asset_id, twap_window)?;
 				Self::quote(asset_id, price, amount)
 			}
 		}
@@ -962,59 +947,14 @@ pub mod pallet {
 			});
 		}
 
-		// REVIEW: indexing
-		#[allow(clippy::indexing_slicing)] // to get CI to pass
-		pub fn get_twap(
-			asset_id: T::AssetId,
-			price_weights: Vec<Percent>,
-		) -> Result<T::PriceValue, DispatchError> {
-			let precision = Percent::from_percent(100);
-			let historical_prices = Self::price_history(asset_id);
-
-			// add an extra to account for current price not stored in history
-			ensure!(historical_prices.len() + 1 >= price_weights.len(), Error::<T>::DepthTooLarge);
-
-			let sum = price_weights
-				.iter()
-				.fold(Some(Percent::zero()), |a, b| a.and_then(|a| a.checked_add(b)));
-			ensure!(sum == Some(precision), Error::<T>::MustSumTo100);
-
-			let mut price_weights: Vec<T::PriceValue> =
-				price_weights.into_iter().map(|v| (v.deconstruct() as u128).into()).collect();
-
-			let last_weight = price_weights.pop().unwrap_or_else(|| 0_u128.into());
-			ensure!(last_weight != 0_u128.into(), Error::<T>::ArithmeticError);
-
-			let precision = (precision.deconstruct() as u128).into();
-
-			let mut weighted_prices = price_weights
-				.iter()
-				.enumerate()
-				.map(|(i, weight)| {
-					weight
-						.mul(
-							historical_prices[historical_prices.len() - price_weights.len() + i]
-								.price,
-						)
-						.div(precision)
-				})
-				.collect::<Vec<_>>();
-			let current_price = Self::prices(asset_id);
-			let current_weighted_price = last_weight.mul(current_price.price).div(precision);
-
-			weighted_prices.push(current_weighted_price);
-
-			let weighted_average = Self::price_values_sum(&weighted_prices);
-			ensure!(weighted_average != 0_u128.into(), Error::<T>::ArithmeticError);
-
-			Ok(weighted_average)
-		}
-
 		fn quote(
 			asset_id: T::AssetId,
 			price: T::PriceValue,
 			amount: T::PriceValue,
-		) -> Result<T::PriceValue, DispatchError> {
+		) -> Result<T::PriceValue, DispatchError>
+		where
+			u128: From<<T as frame_system::Config>::BlockNumber>,
+		{
 			let unit = 10_u128
 				.checked_pow(<Self as Oracle>::LocalAssets::decimals(asset_id)?)
 				.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
@@ -1024,12 +964,6 @@ pub mod pallet {
 				.try_into()
 				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
 			Ok(price)
-		}
-
-		fn price_values_sum(price_values: &[T::PriceValue]) -> T::PriceValue {
-			price_values
-				.iter()
-				.fold(T::PriceValue::from(0_u128), |acc, b| acc.saturating_add(*b))
 		}
 
 		// REVIEW: indexing
@@ -1159,6 +1093,73 @@ pub mod pallet {
 				_ => return None,
 			};
 			Some(price.integer as u64)
+		}
+	}
+
+	// u128: From<<T as frame_system::Config>::BlockNumber>,
+	impl<T: Config> Pallet<T>
+	where
+		u128: From<<T as frame_system::Config>::BlockNumber>,
+	{
+		pub fn get_twap(
+			asset_id: T::AssetId,
+			twap_window: usize,
+		) -> Result<T::PriceValue, DispatchError> {
+			let historical_prices = Self::price_history(asset_id);
+
+			ensure!(twap_window <= historical_prices.len() + 1, Error::<T>::DepthTooLarge);
+
+			let mut prices: Vec<_> = historical_prices
+				.iter()
+				.rev()
+				.enumerate()
+				.filter_map(|(i, price)| if i < twap_window { Some(price) } else { None })
+				.rev()
+				.collect();
+			let current_price =
+				Prices::<T>::try_get(asset_id).map_err(|_| Error::<T>::PriceNotFound)?;
+			prices.push(&current_price);
+
+			let weights: Vec<u128> = prices
+				.windows(2)
+				.map(|w| {
+					w.get(0)
+						.and_then(|a| w.get(1).map(|b| (a, b)))
+						.and_then(|(a, b)| b.block.checked_sub(&a.block))
+						.unwrap_or_default()
+						.into()
+				})
+				.collect();
+
+			let weights_sum: u128 = weights.iter().sum();
+
+			let prices_sum: u128 = prices
+				.iter()
+				// skip helper for diff calculation
+				.skip(1)
+				.map(|e| -> u128 { e.price.into() })
+				.zip(weights)
+				.filter_map(|(price, weight)| {
+					if weights_sum == 0_u128 {
+						// if all weights is eq 0 then just return price
+						Some(price)
+					} else if weight == 0_u128 {
+						// if weight is eq 0 then skip it
+						None
+					} else {
+						// otherwise muliply price and weight
+						Some(price * weight)
+					}
+				})
+				.sum();
+
+			let twap = if weights_sum == 0_u128 {
+				prices_sum / ((prices.len() - 1) as u128)
+			} else {
+				prices_sum / weights_sum
+			};
+
+			Ok(twap.into())
 		}
 	}
 }
