@@ -15,21 +15,12 @@ type ApolloTableProps = {
 
 type AssetProps = {
   symbol: string;
-  binanceValue: number;
-  pabloValue: number;
-  aggregatedValue: number;
-  apolloValue: number;
-  changeValue: number;
+  binanceValue: number | undefined;
+  apolloValue: number | undefined;
+  changeValue: number | undefined;
 };
 
-const tableHeaderTitles = [
-  "Asset",
-  "Binance",
-  "Pablo",
-  "Aggregated",
-  "Apollo",
-  "Change (24hr)",
-];
+const tableHeaderTitles = ["Asset", "Binance", "Apollo", "Change (24hr)"];
 
 export const ApolloTable: React.FC<ApolloTableProps> = ({
   assets,
@@ -55,29 +46,32 @@ export const ApolloTable: React.FC<ApolloTableProps> = ({
                   <TokenAsset tokenId={asset.symbol.toLowerCase()} />
                 </TableCell>
                 <TableCell align="left">
-                  ${formatNumber(asset.binanceValue)}
+                  {asset.binanceValue
+                    ? "$" +
+                      formatNumber(parseFloat(asset.binanceValue).toFixed(2))
+                    : "-"}
                 </TableCell>
                 <TableCell align="left">
-                  ${formatNumber(asset.pabloValue)}
-                </TableCell>
-                <TableCell align="left">
-                  ${formatNumber(asset.aggregatedValue)}
-                </TableCell>
-                <TableCell align="left">
-                  ${formatNumber(asset.apolloValue)}
+                  {asset.apolloValue
+                    ? "$" + formatNumber(asset.apolloValue.toFixed(2))
+                    : "-"}
                 </TableCell>
                 <TableCell
                   align="left"
                   sx={{
                     color:
-                      asset.changeValue > 0 ? "featured.lemon" : "error.main",
+                      asset.changeValue && asset.changeValue > 0
+                        ? "featured.lemon"
+                        : "error.main",
                   }}
                 >
-                  {formatNumberWithSymbol(
-                    asset.changeValue,
-                    asset.changeValue > 0 ? "+" : "",
-                    "%"
-                  )}
+                  {asset.changeValue
+                    ? formatNumberWithSymbol(
+                        asset.changeValue,
+                        asset.changeValue > 0 ? "+" : "",
+                        "%"
+                      )
+                    : "-"}
                 </TableCell>
               </TableRow>
             );

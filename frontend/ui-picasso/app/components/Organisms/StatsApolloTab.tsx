@@ -1,6 +1,7 @@
 import { Box } from "@mui/material";
 import { ApolloTable } from "@/components/Molecules";
 import { useAppSelector } from "@/hooks/store";
+import ApolloStatsUpdater from "@/stores/defi/stats/apolloUpdater";
 
 export const StatsApolloTab: React.FC<any> = () => {
   const apolloData = useAppSelector((state) => state.statsApollo.assets);
@@ -13,6 +14,7 @@ export const StatsApolloTab: React.FC<any> = () => {
         borderRadius: 1,
       }}
     >
+      <ApolloStatsUpdater />
       <ApolloTable assets={apolloData} />
     </Box>
   );
