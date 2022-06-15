@@ -14,6 +14,7 @@ use crate::{
 		vamm::VammConfig,
 	},
 	Config, Direction, Market as MarketGeneric, MarketConfig as MarketConfigGeneric, Markets,
+	MaxPriceDivergence,
 };
 use composable_traits::{
 	clearing_house::{ClearingHouse, Instruments},
@@ -57,6 +58,7 @@ impl Default for ExtBuilder {
 			vamm_id: Some(0_u64),
 			vamm_twap: Some(100.into()),
 			oracle_asset_support: Some(true),
+			oracle_price: Some(10_000),
 			oracle_twap: Some(10_000),
 		}
 	}
@@ -128,6 +130,10 @@ fn get_position(account_id: &AccountId, market_id: &MarketId) -> Option<Position
 	positions.into_iter().find(|p| p.market_id == *market_id)
 }
 
+fn get_outstanding_gains(account_id: AccountId, market_id: &MarketId) -> Balance {
+	TestPallet::outstanding_gains(&account_id, market_id).unwrap_or_else(Zero::zero)
+}
+
 fn get_market(market_id: &MarketId) -> Market {
 	TestPallet::get_market(market_id).unwrap()
 }
@@ -147,6 +153,10 @@ fn set_fee_pool_depth(market_id: &MarketId, depth: Balance) {
 	}
 
 	Markets::<Runtime>::try_mutate(market_id, |m| set_depth(m, depth)).unwrap();
+}
+
+fn set_maximum_oracle_mark_divergence(fraction: FixedI128) {
+	MaxPriceDivergence::<Runtime>::set(fraction);
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -237,6 +247,7 @@ impl Default for MarketConfigGeneric<AssetId, Balance, Decimal, VammConfig> {
 			funding_frequency: ONE_HOUR,
 			funding_period: ONE_HOUR * 24,
 			taker_fee: 10, // 0.1%
+			twap_period: ONE_HOUR,
 		}
 	}
 }
@@ -250,15 +261,20 @@ impl<T: Config> Default for MarketGeneric<T> {
 			margin_ratio_maintenance: Default::default(),
 			margin_ratio_partial: Default::default(),
 			minimum_trade_size: Default::default(),
+			funding_frequency: Default::default(),
+			funding_period: Default::default(),
+			taker_fee: Default::default(),
+			twap_period: Default::default(),
+			available_gains: Zero::zero(),
 			base_asset_amount_long: Default::default(),
 			base_asset_amount_short: Default::default(),
 			cum_funding_rate_long: Default::default(),
 			cum_funding_rate_short: Default::default(),
 			fee_pool: Default::default(),
 			funding_rate_ts: Default::default(),
-			funding_frequency: Default::default(),
-			funding_period: Default::default(),
-			taker_fee: Default::default(),
+			last_oracle_price: Zero::zero(),
+			last_oracle_twap: Zero::zero(),
+			last_oracle_ts: Default::default(),
 		}
 	}
 }
@@ -342,6 +358,14 @@ impl MarketInitializer for sp_io::TestExternalities {
 // ----------------------------------------------------------------------------------------------------
 
 prop_compose! {
+	fn bounded_decimal()(
+		inner in as_inner(-1_000_000_000)..as_inner(1_000_000_000)
+	) -> FixedI128 {
+		FixedI128::from_inner(inner)
+	}
+}
+
+prop_compose! {
 	fn zero_to_one_open_interval()(
 		float in (0.0..1.0_f64).prop_filter("Zero not included in (0, 1)", |num| num > &0.0)
 	) -> f64 {
@@ -405,6 +429,64 @@ prop_compose! {
 // ----------------------------------------------------------------------------------------------------
 
 proptest! {
+	#[test]
+	fn can_set_global_slippage_for_mock_vamm(vamm_id in any::<VammId>()) {
+		ExtBuilder::default().build().execute_with(|| {
+			// Set arbitrary price
+			VammPallet::set_price(Some(1.into()));
+
+			// Ensure that the global slippage is set to 0.0 by default
+			let output = VammPallet::swap(&SwapConfig {
+				vamm_id,
+				asset: AssetType::Quote,
+				input_amount: as_balance(100),
+				direction: VammDirection::Add,
+				output_amount_limit: as_balance(100),
+			})
+			.unwrap();
+			assert_eq!(output.output, as_balance(100));
+
+			// Set global slippage to 0.1
+			VammPallet::set_slippage(Some((1, 10).into()));
+			let output = VammPallet::swap(&SwapConfig {
+				vamm_id,
+				asset: AssetType::Quote,
+				input_amount: as_balance(100),
+				direction: VammDirection::Add,
+				output_amount_limit: as_balance(90),
+			})
+			.unwrap();
+			// Buying base asset with slippage gets you less
+			assert_eq!(output.output, as_balance(90));
+
+			// Keep global slippage to 0.1
+			let output = VammPallet::swap(&SwapConfig {
+				vamm_id,
+				asset: AssetType::Base,
+				input_amount: as_balance(100),
+				direction: VammDirection::Add,
+				output_amount_limit: as_balance(90),
+			})
+			.unwrap();
+			// Selling base asset with slippage gets you less
+			assert_eq!(output.output, as_balance(90));
+
+			// Keep global slippage to 0.1
+			let output = VammPallet::swap(&SwapConfig {
+				vamm_id,
+				asset: AssetType::Quote,
+				input_amount: as_balance(100),
+				direction: VammDirection::Remove,
+				output_amount_limit: as_balance(90),
+			})
+			.unwrap();
+			// Shorting base asset with slippage gets you less
+			assert_eq!(output.output, as_balance(90));
+		})
+	}
+}
+
+proptest! {
 	// Can we guarantee that any::<Option<Value>> will generate at least one of `Some` and `None`?
 	#[test]
 	fn mock_oracle_asset_support_reflects_genesis_config(oracle_asset_support in any::<Option<bool>>()) {
@@ -455,6 +537,27 @@ proptest! {
 					}
 				};
 			})
+	}
+}
+
+proptest! {
+	#[test]
+	fn can_set_price_impact_for_mock_vamm_swap(vamm_id in any::<VammId>(), factor in any_price()) {
+		ExtBuilder::default()
+			.build()
+			.execute_with(|| {
+				VammPallet::set_price_of(&vamm_id, Some(100.into()));
+				VammPallet::set_price_impact_of(&vamm_id, Some(factor));
+
+				assert_ok!(VammPallet::swap(&SwapConfig {
+					vamm_id,
+					asset: AssetType::Quote,
+					input_amount: as_balance(100),
+					direction: VammDirection::Add,
+					output_amount_limit: as_balance(1),
+				}));
+				assert_ok!(VammPallet::get_price(vamm_id, AssetType::Base), factor * 100.into());
+			});
 	}
 }
 

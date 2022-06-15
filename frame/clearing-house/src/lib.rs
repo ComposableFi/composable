@@ -99,7 +99,7 @@
 	)
 )]
 // Specify linters to Clearing House Pallet.
-#![warn(clippy::unseparated_literal_suffix)]
+#![warn(clippy::unseparated_literal_suffix, missing_docs)]
 #![deny(
 	dead_code,
 	bad_style,
@@ -163,13 +163,13 @@ pub mod pallet {
 		defi::DeFiComposableConfig,
 		oracle::Oracle,
 		time::DurationSeconds,
-		vamm::{AssetType, Direction as VammDirection, SwapConfig, SwapSimulationConfig, Vamm},
+		vamm::{AssetType, SwapConfig, SwapSimulationConfig, Vamm},
 	};
 	use frame_support::{
 		pallet_prelude::*,
 		storage::bounded_vec::BoundedVec,
 		traits::{tokens::fungibles::Transfer, GenesisBuild, UnixTime},
-		transactional, Blake2_128Concat, PalletId,
+		transactional, Blake2_128Concat, PalletId, Twox64Concat,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use num_traits::Signed;
@@ -177,7 +177,11 @@ pub mod pallet {
 		traits::{AccountIdConversion, CheckedAdd, CheckedDiv, CheckedMul, One, Saturating, Zero},
 		ArithmeticError, FixedPointNumber, FixedPointOperand,
 	};
-	use sp_std::{cmp::Ordering, fmt::Debug, ops::Neg};
+	use sp_std::{
+		cmp::{self, Ordering},
+		fmt::Debug,
+		ops::Neg,
+	};
 
 	// ---------------------------------------------------------------------------------------------
 	//                             Declaration Of The Pallet Type
@@ -301,6 +305,12 @@ pub mod pallet {
 	pub type FullLiquidationPenaltyLiquidatorShare<T: Config> =
 		StorageValue<_, T::Decimal, ValueQuery>;
 
+	/// Maximum allowable absolute relative divergence between the mark and index price.
+	#[pallet::storage]
+	#[pallet::getter(fn max_price_divergence)]
+	#[allow(clippy::disallowed_types)]
+	pub type MaxPriceDivergence<T: Config> = StorageValue<_, T::Decimal, ValueQuery>;
+
 	/// Ratio of user's margin to be seized as fees upon a partial liquidation event.
 	#[pallet::storage]
 	#[pallet::getter(fn partial_liquidation_penalty)]
@@ -338,6 +348,13 @@ pub mod pallet {
 		BoundedVec<Position<T>, T::MaxPositions>,
 		ValueQuery,
 	>;
+
+	/// Gains that were realized but cannot be withdrawn due to lack of offsetting realized losses
+	/// from other positions in the market.
+	#[pallet::storage]
+	#[pallet::getter(fn outstanding_gains)]
+	pub type OutstandingGains<T: Config> =
+		StorageDoubleMap<_, Blake2_128Concat, T::AccountId, Twox64Concat, T::MarketId, T::Balance>;
 
 	/// The number of markets, also used to generate the next market identifier.
 	///
@@ -475,6 +492,9 @@ pub mod pallet {
 		NoPriceFeedForAsset,
 		/// Raised when dealing with a position that has no base asset amount.
 		NullPosition,
+		/// Raised when a trade pushes the mark price beyond the maximum allowed divergence from
+		/// the index.
+		OracleMarkTooDivergent,
 		/// Raised when trying to fetch a position from the positions vector with an invalid index.
 		PositionNotFound,
 		/// Attempted to liquidate a user's account but it has sufficient collateral to back its
@@ -908,21 +928,26 @@ pub mod pallet {
 			MarketCount::<T>::try_mutate(|id| {
 				let market_id = id.clone();
 				let market = Market {
-					asset_id: config.asset,
 					vamm_id: T::Vamm::create(&config.vamm_config)?,
+					asset_id: config.asset,
 					margin_ratio_initial: config.margin_ratio_initial,
 					margin_ratio_maintenance: config.margin_ratio_maintenance,
 					margin_ratio_partial: config.margin_ratio_partial,
 					minimum_trade_size: config.minimum_trade_size,
-					base_asset_amount_long: Zero::zero(),
-					base_asset_amount_short: Zero::zero(),
-					fee_pool: Zero::zero(),
 					funding_frequency: config.funding_frequency,
 					funding_period: config.funding_period,
+					taker_fee: config.taker_fee,
+					twap_period: config.twap_period,
+					available_gains: Zero::zero(),
+					base_asset_amount_long: Zero::zero(),
+					base_asset_amount_short: Zero::zero(),
 					cum_funding_rate_long: Zero::zero(),
 					cum_funding_rate_short: Zero::zero(),
+					fee_pool: Zero::zero(),
 					funding_rate_ts: T::UnixTime::now().as_secs(),
-					taker_fee: config.taker_fee,
+					last_oracle_price: Zero::zero(),
+					last_oracle_twap: Zero::zero(),
+					last_oracle_ts: T::UnixTime::now().as_secs(),
 				};
 				Markets::<T>::insert(&market_id, market);
 
@@ -1064,6 +1089,12 @@ pub mod pallet {
 			if let Some(direction) = position.direction() {
 				Self::settle_funding(position, &market, &mut collateral)?;
 
+				// Update oracle TWAP *before* swapping
+				Self::update_oracle_twap(&mut market)?;
+
+				// For checking oracle guard rails afterwards
+				let was_mark_index_too_divergent = Self::is_mark_index_too_divergent(&market)?;
+
 				let (base_swapped, entry_value, exit_value) = Self::do_close_position(
 					&mut positions,
 					position_index,
@@ -1072,9 +1103,17 @@ pub mod pallet {
 					Zero::zero(),
 				)?;
 
-				let pnl = exit_value.try_sub(&entry_value)?;
+				Self::check_oracle_guard_rails(&market, was_mark_index_too_divergent)?;
+
 				// Realize PnL
-				collateral = Self::update_margin_with_pnl(&collateral, &pnl)?;
+				let mut outstanding_gains =
+					Self::outstanding_gains(account_id, market_id).unwrap_or_else(Zero::zero);
+				Self::settle_profit_and_loss(
+					&mut collateral,
+					&mut outstanding_gains,
+					&mut market,
+					exit_value.try_sub(&entry_value)?,
+				)?;
 
 				// Charge fees
 				let fee = Self::fee_for_trade(&market, &exit_value)?;
@@ -1085,6 +1124,7 @@ pub mod pallet {
 				Self::do_update_funding(market_id, &mut market, T::UnixTime::now().as_secs())?;
 
 				Collateral::<T>::insert(account_id, collateral);
+				OutstandingGains::<T>::insert(account_id, market_id, outstanding_gains);
 				Markets::<T>::insert(market_id, market);
 				Positions::<T>::insert(account_id, positions);
 
@@ -1639,6 +1679,32 @@ pub mod pallet {
 
 	// Helper functions - validity checks
 	impl<T: Config> Pallet<T> {
+		fn check_oracle_guard_rails(
+			market: &Market<T>,
+			was_mark_index_too_divergent: bool,
+		) -> Result<(), DispatchError> {
+			// Block if mark-index divergence was pushed too far
+			ensure!(
+				!Self::is_mark_index_too_divergent(market)? || was_mark_index_too_divergent,
+				Error::<T>::OracleMarkTooDivergent
+			);
+
+			Ok(())
+		}
+
+		fn is_mark_index_too_divergent(market: &Market<T>) -> Result<bool, DispatchError> {
+			let index_cents =
+				T::Oracle::get_price(market.asset_id, T::Decimal::one().into_balance()?)?.price;
+			let index = T::Decimal::checked_from_rational(index_cents, 100)
+				.ok_or(ArithmeticError::Overflow)?;
+			let mark: T::Decimal =
+				T::Vamm::get_price(market.vamm_id, AssetType::Base)?.into_signed()?;
+
+			let divergence = mark.try_sub(&index)?.try_div(&index)?;
+			let threshold = Self::max_price_divergence();
+			Ok(divergence.saturating_abs() > threshold)
+		}
+
 		fn is_funding_update_time(
 			market: &Market<T>,
 			now: DurationSeconds,
@@ -1698,6 +1764,31 @@ pub mod pallet {
 
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
+		fn settle_profit_and_loss(
+			collateral: &mut T::Balance,
+			outstanding_gains: &mut T::Balance,
+			market: &mut Market<T>,
+			pnl: T::Decimal,
+		) -> Result<(), DispatchError> {
+			if pnl.is_positive() {
+				// take the opportunity to settle any outstanding gains
+				outstanding_gains.try_add_mut(&pnl.into_balance()?)?;
+				let realized_gains = cmp::min(*outstanding_gains, market.available_gains);
+				collateral.try_add_mut(&realized_gains)?;
+				outstanding_gains.try_sub_mut(&realized_gains)?;
+				market.available_gains.try_sub_mut(&realized_gains)?;
+			} else {
+				let losses = pnl.into_balance()?;
+				let outstanding_gains_lost = cmp::min(*outstanding_gains, losses);
+				let realized_losses = losses.saturating_sub(outstanding_gains_lost);
+				collateral.try_sub_mut(&realized_losses)?;
+				outstanding_gains.try_sub_mut(&outstanding_gains_lost)?;
+				market.available_gains.try_add_mut(&realized_losses)?;
+			}
+
+			Ok(())
+		}
+
 		fn try_get_market(market_id: &T::MarketId) -> Result<Market<T>, DispatchError> {
 			Markets::<T>::get(market_id).ok_or_else(|| Error::<T>::MarketIdNotFound.into())
 		}
@@ -1714,13 +1805,6 @@ pub mod pallet {
 			Ok((positions.get_mut(index).expect("Item successfully found above"), index))
 		}
 
-		fn to_vamm_direction(direction: Direction) -> VammDirection {
-			match direction {
-				Long => VammDirection::Add,
-				Short => VammDirection::Remove,
-			}
-		}
-
 		fn swap_base(
 			market: &Market<T>,
 			direction: Direction,
@@ -1731,7 +1815,7 @@ pub mod pallet {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Base,
 				input_amount: base_amount,
-				direction: Self::to_vamm_direction(direction),
+				direction: direction.into(),
 				output_amount_limit: quote_limit,
 			})?
 			.output)
@@ -1747,16 +1831,18 @@ pub mod pallet {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Quote,
 				input_amount: quote_abs_decimal.into_balance()?,
-				direction: Self::to_vamm_direction(direction),
+				direction: direction.into(),
 				output_amount_limit: base_limit,
 			})?
 			.output)
 		}
 
+		/// Returns the Id of the account holding user's collateral.
 		pub fn get_collateral_account() -> T::AccountId {
 			T::PalletId::get().into_sub_account("Collateral")
 		}
 
+		/// Returns the Id of the account holding insurance funds.
 		pub fn get_insurance_account() -> T::AccountId {
 			T::PalletId::get().into_sub_account("Insurance")
 		}
@@ -1818,7 +1904,7 @@ pub mod pallet {
 				vamm_id: market.vamm_id,
 				asset: AssetType::Base,
 				input_amount: position.base_asset_amount.into_balance()?,
-				direction: Self::to_vamm_direction(position_direction),
+				direction: position_direction.into(),
 			})?;
 
 			Self::decimal_from_swapped(sim_swapped, position_direction)
@@ -1854,6 +1940,94 @@ pub mod pallet {
 			pnl: &T::Decimal,
 		) -> Result<T::Balance, DispatchError> {
 			Self::updated_balance(margin, pnl)
+		}
+	}
+
+	// Oracle update helpers
+	impl<T: Config> Pallet<T> {
+		fn update_oracle_twap(market: &mut Market<T>) -> Result<(), DispatchError> {
+			let mut oracle = Self::clip_around_twap(
+				&Self::oracle_price(market.asset_id)?,
+				&market.last_oracle_twap,
+			)?;
+
+			if oracle.is_positive() {
+				// Clip the current price to within 10bps of the last oracle price
+				// Use the current oracle price if first time querying it for this market
+				let last_oracle = if market.last_oracle_price.is_positive() {
+					market.last_oracle_price
+				} else {
+					oracle
+				};
+				let last_oracle_10bp =
+					last_oracle.try_div(&T::Decimal::saturating_from_integer(1000))?;
+				oracle = Self::clip(
+					oracle,
+					last_oracle.try_sub(&last_oracle_10bp)?,
+					last_oracle.try_sub(&last_oracle_10bp)?,
+				);
+
+				// TODO(0xangelo): consider further guard rails
+				// - what to do if last_oracle_twap timestamp is earlier that the last last mark
+				//   TWAP one (may happen due to oracle delays). Maybe combine the two as a
+				//   surrogate for the last TWAP?
+
+				let now = T::UnixTime::now().as_secs();
+				let since_last = cmp::max(1, now.saturating_sub(market.last_oracle_ts));
+				let from_start = cmp::max(1, market.twap_period.saturating_sub(since_last));
+
+				let new_twap = Self::weighted_average(
+					&oracle,
+					&market.last_oracle_twap,
+					&T::Decimal::saturating_from_integer(since_last),
+					&T::Decimal::saturating_from_integer(from_start),
+				)?;
+
+				market.last_oracle_price = oracle;
+				market.last_oracle_twap = new_twap;
+				market.last_oracle_ts = now;
+			}
+			Ok(())
+		}
+
+		fn oracle_price(asset_id: AssetIdOf<T>) -> Result<T::Decimal, DispatchError> {
+			let price_cents =
+				T::Oracle::get_price(asset_id, T::Decimal::one().into_balance()?)?.price;
+			T::Decimal::checked_from_rational(price_cents, 100)
+				.ok_or_else(|| ArithmeticError::Overflow.into())
+		}
+
+		fn clip_around_twap(
+			oracle: &T::Decimal,
+			twap: &T::Decimal,
+		) -> Result<T::Decimal, DispatchError> {
+			let oracle_twap_spread = oracle.try_sub(twap)?;
+			let oracle_33pct = oracle.try_div(&T::Decimal::saturating_from_integer(3))?;
+			Ok(if oracle_twap_spread.saturating_abs() > oracle_33pct {
+				if oracle > twap {
+					twap.try_add(&oracle_33pct)?
+				} else {
+					twap.try_sub(&oracle_33pct)?
+				}
+			} else {
+				*oracle
+			})
+		}
+
+		fn clip(value: T::Decimal, lower: T::Decimal, upper: T::Decimal) -> T::Decimal {
+			cmp::min(cmp::max(lower, value), upper)
+		}
+
+		fn weighted_average(
+			oracle: &T::Decimal,
+			twap: &T::Decimal,
+			since_last: &T::Decimal,
+			from_start: &T::Decimal,
+		) -> Result<T::Decimal, DispatchError> {
+			Ok(oracle
+				.try_mul(since_last)?
+				.try_add(&twap.try_mul(from_start)?)?
+				.try_div(&since_last.try_add(from_start)?)?)
 		}
 	}
 }

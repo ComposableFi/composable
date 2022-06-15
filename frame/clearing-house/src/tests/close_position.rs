@@ -1,6 +1,6 @@
 use crate::{
 	mock::{
-		accounts::ALICE,
+		accounts::{ALICE, BOB},
 		runtime::{
 			Oracle as OraclePallet, Origin, Runtime, System as SystemPallet, TestPallet,
 			Vamm as VammPallet,
@@ -11,12 +11,14 @@ use crate::{
 		Error, Event,
 	},
 	tests::{
-		any_direction, as_balance, get_collateral, get_market, get_market_fee_pool, get_position,
-		run_for_seconds, with_trading_context, MarketConfig,
+		any_direction, as_balance, get_collateral, get_market, get_market_fee_pool,
+		get_outstanding_gains, get_position, run_for_seconds, run_to_time,
+		set_maximum_oracle_mark_divergence, traders_in_one_market_context, with_trading_context,
+		Market, MarketConfig,
 	},
 };
 
-use frame_support::{assert_noop, assert_ok};
+use frame_support::{assert_err, assert_noop, assert_ok};
 use proptest::prelude::*;
 
 // -------------------------------------------------------------------------------------------------
@@ -67,7 +69,7 @@ fn should_realize_long_position_gains() {
 
 		VammPallet::set_price(Some(20.into()));
 		assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
-		assert_eq!(get_collateral(ALICE), collateral_0 * 2);
+		assert_eq!(get_outstanding_gains(ALICE, &market_id), collateral_0);
 
 		SystemPallet::assert_last_event(
 			Event::PositionClosed { user: ALICE, market: market_id, direction: Long, base }.into(),
@@ -160,7 +162,7 @@ fn should_realize_short_position_gains() {
 
 		VammPallet::set_price(Some(5.into()));
 		assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
-		assert_eq!(get_collateral(ALICE), collateral_0 + as_balance(50));
+		assert_eq!(get_outstanding_gains(ALICE, &market_id), as_balance(50));
 
 		SystemPallet::assert_last_event(
 			Event::PositionClosed { user: ALICE, market: market_id, direction: Short, base }.into(),
@@ -234,6 +236,111 @@ fn should_realize_short_position_funding() {
 	});
 }
 
+#[test]
+fn should_fail_if_pushes_index_mark_divergence_above_threshold() {
+	let config = MarketConfig { taker_fee: 0, ..Default::default() };
+
+	with_trading_context(config, as_balance(1_000_000), |market_id| {
+		// Set maximum divergence to 10%
+		set_maximum_oracle_mark_divergence((10, 100).into());
+
+		let vamm_id = &get_market(&market_id).vamm_id;
+		OraclePallet::set_price(Some(100)); // 1 in cents
+		VammPallet::set_price_of(vamm_id, Some(1.into()));
+
+		// Alice opens a position (no price impact)
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(ALICE),
+			market_id,
+			Long,
+			as_balance(1_000_000),
+			as_balance(1_000_000),
+		));
+
+		// Alice tries to close her position, but it fails because it pushes the mark price too
+		// below the index Closing tanks mark to 89% of previous price
+		// Relative index-mark spread:
+		// (mark - index) / index = (0.89 - 1.00) / 1.00 = -0.11
+		VammPallet::set_price_impact_of(vamm_id, Some((89, 100).into()));
+		assert_err!(
+			TestPallet::close_position(Origin::signed(ALICE), market_id),
+			Error::<Runtime>::OracleMarkTooDivergent
+		);
+	});
+}
+
+#[test]
+fn should_not_fail_if_index_mark_divergence_was_already_above_threshold() {
+	let config = MarketConfig { taker_fee: 0, ..Default::default() };
+
+	with_trading_context(config, as_balance(1_000_000), |market_id| {
+		// Set maximum divergence to 10%
+		set_maximum_oracle_mark_divergence((10, 100).into());
+
+		let vamm_id = &get_market(&market_id).vamm_id;
+		OraclePallet::set_price(Some(100)); // 1 in cents
+		VammPallet::set_price_of(vamm_id, Some(1.into()));
+
+		// Alice opens a position (no price impact)
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(ALICE),
+			market_id,
+			Long,
+			as_balance(1_000_000),
+			as_balance(1_000_000),
+		));
+
+		// Due to external market conditions, index-mark spread rises to >10%
+		// Relative index-mark spread:
+		// (mark - index) / index = (1.00 - 1.12) / 1.12 = -0.1071428571
+		OraclePallet::set_price(Some(112));
+
+		// Alice closes her position causing mark price to drop by 1%
+		VammPallet::set_price_impact_of(vamm_id, Some((99, 100).into()));
+		assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
+	});
+}
+
+#[test]
+fn should_only_update_collateral_with_available_gains() {
+	let config = MarketConfig { taker_fee: 0, ..Default::default() };
+	let collateral = as_balance(100);
+	let margins = vec![(ALICE, collateral), (BOB, collateral / 2)];
+
+	traders_in_one_market_context(config, margins, |market_id| {
+		VammPallet::set_price(Some(10.into()));
+
+		let base = as_balance(10);
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(ALICE),
+			market_id,
+			Long,
+			collateral,
+			base,
+		));
+
+		let base = as_balance(10);
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(BOB),
+			market_id,
+			Short,
+			collateral / 2,
+			base,
+		));
+
+		// Price moves so that Alice is up 100% and Bob is down 100%
+		VammPallet::set_price(Some(20.into()));
+		assert_ok!(TestPallet::close_position(Origin::signed(BOB), market_id));
+		assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
+
+		// Since Bob's size was lower than Alice's, even his whole collateral cannot cover Alice's
+		// gains
+		assert_eq!(get_collateral(BOB), 0);
+		assert_eq!(get_collateral(ALICE), collateral + collateral / 2);
+		assert_eq!(get_outstanding_gains(ALICE, &market_id), collateral / 2);
+	});
+}
+
 // -------------------------------------------------------------------------------------------------
 //                                        Property Tests
 // -------------------------------------------------------------------------------------------------
@@ -259,6 +366,37 @@ proptest! {
 	}
 
 	#[test]
+	fn should_update_oracle_twap(direction in any_direction()) {
+		let config = MarketConfig { twap_period: 60, ..Default::default() };
+		let collateral = as_balance(100);
+
+		with_trading_context(config.clone(), collateral, |market_id| {
+			// Alice opens a position
+			VammPallet::set_price(Some(5.into()));
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				direction,
+				collateral,
+				as_balance(20),
+			));
+
+			let Market { last_oracle_price, last_oracle_twap, .. } = get_market(&market_id);
+
+			// Time passes and ALICE closes her position
+			let now = config.twap_period / 2;
+			run_to_time(now);
+			assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
+
+			let market = get_market(&market_id);
+			// The last oracle TWAP update timestamp equals the one of the position closing
+			assert_eq!(market.last_oracle_ts, now);
+			assert_ne!(market.last_oracle_price, last_oracle_price);
+			assert_ne!(market.last_oracle_twap, last_oracle_twap);
+		});
+	}
+
+		#[test]
 	fn should_charge_fees_upon_closing(direction in any_direction(), taker_fee in 1..=1_000_u128) {
 		let config = MarketConfig {
 			taker_fee,
