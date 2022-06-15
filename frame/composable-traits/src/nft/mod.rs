@@ -12,7 +12,7 @@
 //! - NFT account produced from identity is set as owner of position
 //! - protocol providing position implements trait which allow to work with it through NFT API
 //! - position is stored in any way efficient for that
-//! - NFT stores only reference to position in protocol, example pallet identifier and some
+//! - NFT stores only reference to position in protocol, for example pallet identifier and some
 //!   monotonous identifier
 //! - during XCMP transfer, owner of NFT becomes target parachain
 //! - allow to build NFTs from lower level typed positions
