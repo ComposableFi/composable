@@ -16,7 +16,6 @@ use proptest::prelude::*;
 pub mod compute_invariant;
 pub mod create_vamm;
 pub mod get_price;
-pub mod get_price_base_asset;
 pub mod get_price_quote_asset;
 pub mod get_twap;
 pub mod move_price;
