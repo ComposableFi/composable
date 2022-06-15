@@ -1,3 +1,6 @@
+// Allow use of .unwrap() in tests and unused Results from function calls
+#![allow(clippy::disallowed_methods, unused_must_use)]
+
 use crate as pallet_vamm;
 
 use frame_support::{
@@ -145,7 +148,6 @@ pub struct ExtBuilder {
 }
 
 impl ExtBuilder {
-	#[allow(clippy::disallowed_methods)]
 	pub fn build(self) -> sp_io::TestExternalities {
 		let mut storage =
 			frame_system::GenesisConfig::default().build_storage::<MockRuntime>().unwrap();
