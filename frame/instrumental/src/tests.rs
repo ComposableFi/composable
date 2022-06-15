@@ -20,17 +20,11 @@ use crate::{
 //                                           Prop_compose
 // -------------------------------------------------------------------------------------------------
 
-#[allow(dead_code)]
 const TOTAL_NUM_OF_ASSETS: usize = 6;
-#[allow(dead_code)]
 const MINIMUM_RESERVE: Balance = 1_000;
-#[allow(dead_code)]
 const MAXIMUM_RESERVE: Balance = 1_000_000_000;
-
-#[allow(dead_code)]
 const TOTAL_NUM_OF_ACCOUNTS: usize = 5;
 
-#[allow(dead_code)]
 const NUMBER_OF_PROPTEST_CASES: u32 =
 	3u32 * TOTAL_NUM_OF_ASSETS as u32 * TOTAL_NUM_OF_ACCOUNTS as u32;
 
