@@ -14,7 +14,6 @@ pub mod pallet {
 	//                                   Imports and Dependencies
 	// -------------------------------------------------------------------------------------------
 	use codec::{Codec, FullCodec};
-	use composable_support::math::safe::SafeArithmetic;
 	use composable_traits::{
 		dex::Amm,
 		instrumental::InstrumentalProtocolStrategy,
@@ -28,7 +27,7 @@ pub mod pallet {
 		transactional, Blake2_128Concat, PalletId,
 	};
 	use sp_runtime::traits::{
-		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, One, Zero,
+		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
 	};
 	use sp_std::fmt::Debug;
 
@@ -100,7 +99,8 @@ pub mod pallet {
 			VaultId = Self::VaultId,
 		>;
 
-		/// The [`Currency`](Config::Currency)
+		/// The [`Currency`](Config::Currency).
+		///
 		/// Currency is used for the assets managed by the vaults.
 		type Currency: Transfer<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
 			+ Mutate<Self::AccountId, Balance = Self::Balance, AssetId = Self::AssetId>
@@ -122,10 +122,7 @@ pub mod pallet {
 			+ Eq
 			+ PartialEq
 			+ Ord
-			+ Copy
-			+ Zero
-			+ One
-			+ SafeArithmetic;
+			+ Copy;
 
 		/// The maximum number of vaults that can be associated with this strategy.
 		#[pallet::constant]
