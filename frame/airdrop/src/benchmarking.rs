@@ -10,7 +10,7 @@ use composable_traits::airdrop::AirdropManagement;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::pallet_prelude::*;
 use frame_system::{Pallet as System, RawOrigin};
-use sp_core::{crypto::Pair, ed25519, hashing::keccak_256};
+use sp_io::{crypto::Pair, ed25519, hashing::keccak_256};
 use sp_runtime::traits::One;
 use sp_std::prelude::*;
 
