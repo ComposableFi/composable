@@ -13,7 +13,7 @@ use crate::{
 	tests::{
 		any_direction, as_balance, get_collateral, get_market, get_market_fee_pool,
 		get_outstanding_gains, get_position, run_for_seconds, run_to_time,
-		set_maximum_oracle_mark_divergence, with_trading_context, MarketConfig,
+		set_maximum_oracle_mark_divergence, with_trading_context, Market, MarketConfig,
 	},
 };
 
@@ -342,13 +342,18 @@ proptest! {
 				as_balance(20),
 			));
 
+			let Market { last_oracle_price, last_oracle_twap, .. } = get_market(&market_id);
+
 			// Time passes and ALICE closes her position
 			let now = config.twap_period / 2;
 			run_to_time(now);
 			assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
 
+			let market = get_market(&market_id);
 			// The last oracle TWAP update timestamp equals the one of the position closing
-			assert_eq!(get_market(&market_id).last_oracle_ts, now);
+			assert_eq!(market.last_oracle_ts, now);
+			assert_ne!(market.last_oracle_price, last_oracle_price);
+			assert_ne!(market.last_oracle_twap, last_oracle_twap);
 		});
 	}
 
