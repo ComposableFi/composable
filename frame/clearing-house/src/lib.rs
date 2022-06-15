@@ -1090,7 +1090,7 @@ pub mod pallet {
 				Self::settle_funding(position, &market, &mut collateral)?;
 
 				// Update oracle TWAP *before* swapping
-				Self::update_oracle_twap(&market)?;
+				Self::update_oracle_twap(&mut market)?;
 
 				// For checking oracle guard rails afterwards
 				let was_mark_index_too_divergent = Self::is_mark_index_too_divergent(&market)?;
@@ -1764,10 +1764,6 @@ pub mod pallet {
 
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
-		fn update_oracle_twap(market: &Market<T>) -> Result<(), DispatchError> {
-			Ok(())
-		}
-
 		fn settle_profit_and_loss(
 			collateral: &mut T::Balance,
 			outstanding_gains: &mut T::Balance,
@@ -1944,6 +1940,94 @@ pub mod pallet {
 			pnl: &T::Decimal,
 		) -> Result<T::Balance, DispatchError> {
 			Self::updated_balance(margin, pnl)
+		}
+	}
+
+	// Oracle update helpers
+	impl<T: Config> Pallet<T> {
+		fn update_oracle_twap(market: &mut Market<T>) -> Result<(), DispatchError> {
+			let mut oracle = Self::clip_around_twap(
+				&Self::oracle_price(market.asset_id)?,
+				&market.last_oracle_twap,
+			)?;
+
+			if oracle.is_positive() {
+				// Clip the current price to within 10bps of the last oracle price
+				// Use the current oracle price if first time querying it for this market
+				let last_oracle = if market.last_oracle_price.is_positive() {
+					market.last_oracle_price
+				} else {
+					oracle
+				};
+				let last_oracle_10bp =
+					last_oracle.try_div(&T::Decimal::saturating_from_integer(1000))?;
+				oracle = Self::clip(
+					oracle,
+					last_oracle.try_sub(&last_oracle_10bp)?,
+					last_oracle.try_sub(&last_oracle_10bp)?,
+				);
+
+				// TODO(0xangelo): consider further guard rails
+				// - what to do if last_oracle_twap timestamp is earlier that the last last mark
+				//   TWAP one (may happen due to oracle delays). Maybe combine the two as a
+				//   surrogate for the last TWAP?
+
+				let now = T::UnixTime::now().as_secs();
+				let since_last = cmp::max(1, now.saturating_sub(market.last_oracle_ts));
+				let from_start = cmp::max(1, market.twap_period.saturating_sub(since_last));
+
+				let new_twap = Self::weighted_average(
+					&oracle,
+					&market.last_oracle_twap,
+					&T::Decimal::saturating_from_integer(since_last),
+					&T::Decimal::saturating_from_integer(from_start),
+				)?;
+
+				market.last_oracle_price = oracle;
+				market.last_oracle_twap = new_twap;
+				market.last_oracle_ts = now;
+			}
+			Ok(())
+		}
+
+		fn oracle_price(asset_id: AssetIdOf<T>) -> Result<T::Decimal, DispatchError> {
+			let price_cents =
+				T::Oracle::get_price(asset_id, T::Decimal::one().into_balance()?)?.price;
+			T::Decimal::checked_from_rational(price_cents, 100)
+				.ok_or_else(|| ArithmeticError::Overflow.into())
+		}
+
+		fn clip_around_twap(
+			oracle: &T::Decimal,
+			twap: &T::Decimal,
+		) -> Result<T::Decimal, DispatchError> {
+			let oracle_twap_spread = oracle.try_sub(twap)?;
+			let oracle_33pct = oracle.try_div(&T::Decimal::saturating_from_integer(3))?;
+			Ok(if oracle_twap_spread.saturating_abs() > oracle_33pct {
+				if oracle > twap {
+					twap.try_add(&oracle_33pct)?
+				} else {
+					twap.try_sub(&oracle_33pct)?
+				}
+			} else {
+				*oracle
+			})
+		}
+
+		fn clip(value: T::Decimal, lower: T::Decimal, upper: T::Decimal) -> T::Decimal {
+			cmp::min(cmp::max(lower, value), upper)
+		}
+
+		fn weighted_average(
+			oracle: &T::Decimal,
+			twap: &T::Decimal,
+			since_last: &T::Decimal,
+			from_start: &T::Decimal,
+		) -> Result<T::Decimal, DispatchError> {
+			Ok(oracle
+				.try_mul(since_last)?
+				.try_add(&twap.try_mul(from_start)?)?
+				.try_div(&since_last.try_add(from_start)?)?)
 		}
 	}
 }
