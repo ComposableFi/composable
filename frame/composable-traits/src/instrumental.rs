@@ -44,14 +44,17 @@ pub trait InstrumentalProtocolStrategy {
 	type AccountId: core::cmp::Ord;
 	type AssetId;
 	type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
+	type PoolId;
 
 	fn account_id() -> Self::AccountId;
 
 	fn associate_vault(vault_id: &Self::VaultId) -> Result<(), DispatchError>;
 
-	// TODO: (Kevin)
-	//  - can probably be a template method and call add_liquidity and remove_liquidity
-	//    implementations
+	fn set_pool_id_for_asset(
+		asset_id: Self::AssetId,
+		pool_id: Self::PoolId,
+	) -> Result<(), DispatchError>;
+
 	fn rebalance() -> DispatchResult;
 
 	fn get_apy(asset: Self::AssetId) -> Result<u128, DispatchError>;

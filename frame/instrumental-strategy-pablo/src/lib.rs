@@ -26,6 +26,7 @@ pub mod pallet {
 		traits::fungibles::{Inspect, Mutate, MutateHold, Transfer},
 		transactional, Blake2_128Concat, PalletId,
 	};
+	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
 	};
@@ -168,6 +169,8 @@ pub mod pallet {
 		RebalancedVault { vault_id: T::VaultId },
 
 		UnableToRebalanceVault { vault_id: T::VaultId },
+
+		Setted { asset_id: T::AssetId, pool_id: T::PoolId },
 	}
 
 	// -------------------------------------------------------------------------------------------
@@ -197,7 +200,22 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		/// Store a mapping of asset_id -> pool_id in the pools runtime storage object
+		///
+		/// Emits `Setted` event when successful.
+		#[pallet::weight(T::WeightInfo::set_pool_id_for_asset())]
+		pub fn set_pool_id_for_asset(
+			origin: OriginFor<T>,
+			asset_id: T::AssetId,
+			pool_id: T::PoolId,
+		) -> DispatchResult {
+			let who = ensure_signed(origin)?;
+			let _ =
+				<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
+			Ok(())
+		}
+	}
 
 	// -------------------------------------------------------------------------------------------
 	//                                      Protocol Strategy
@@ -207,6 +225,7 @@ pub mod pallet {
 		type AccountId = T::AccountId;
 		type AssetId = T::AssetId;
 		type VaultId = T::VaultId;
+		type PoolId = T::PoolId;
 
 		fn account_id() -> Self::AccountId {
 			T::PalletId::get().into_account()
@@ -225,6 +244,20 @@ pub mod pallet {
 
 				Ok(())
 			})
+		}
+
+		#[transactional]
+		fn set_pool_id_for_asset(
+			asset_id: T::AssetId,
+			pool_id: T::PoolId,
+		) -> Result<(), DispatchError> {
+			if Pools::<T>::contains_key(asset_id) {
+				Pools::<T>::mutate(asset_id, |_| pool_id);
+				Ok(())
+			} else {
+				Pools::<T>::insert(asset_id, pool_id);
+				Ok(())
+			}
 		}
 
 		fn rebalance() -> DispatchResult {
