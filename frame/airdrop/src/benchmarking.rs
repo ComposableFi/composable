@@ -11,7 +11,7 @@ use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::pallet_prelude::*;
 use frame_system::{Pallet as System, RawOrigin};
 use sp_core::{crypto::Pair, ed25519, hashing::keccak_256};
-use sp_runtime::{traits::One, AccountId32};
+use sp_runtime::traits::One;
 use sp_std::prelude::*;
 
 pub type EthKey = libsecp256k1::SecretKey;
@@ -119,6 +119,7 @@ where
 		.collect()
 }
 
+#[allow(clippy::disallowed_methods)] // Allow unwrap
 pub fn ethereum_generate<T>(count: u64) -> Vec<(AccountIdOf<T>, ClaimKey)>
 where
 	T: Config<RelayChainAccountId = [u8; 32]>,
@@ -136,7 +137,7 @@ pub fn generate_accounts<T>(count: u64) -> Vec<(AccountIdOf<T>, ClaimKey)>
 where
 	T: Config<RelayChainAccountId = [u8; 32]>,
 {
-    assert!(count % 2 == 0, "`x % 2 == 0` should hold for all x");
+	assert!(count % 2 == 0, "`x % 2 == 0` should hold for all x");
 	let mut x = relay_generate::<T>(count / 2);
 	let mut y = ethereum_generate::<T>(count / 2);
 	x.append(&mut y);
@@ -170,7 +171,7 @@ benchmarks! {
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
 		<Airdrop<T> as AirdropManagement>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 		<Airdrop<T> as AirdropManagement>::add_recipient(creator.clone(), airdrop_id, accounts.clone())?;
-	}: remove_recipient(RawOrigin::Signed(creator), airdrop_id, accounts[0 as usize].0.clone())
+	}: remove_recipient(RawOrigin::Signed(creator), airdrop_id, accounts[0].0.clone())
 
 	enable_airdrop_benchmark {
 		let x in 100..1000;
@@ -198,9 +199,9 @@ benchmarks! {
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
 		<Airdrop<T> as AirdropManagement>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 		<Airdrop<T> as AirdropManagement>::add_recipient(creator, airdrop_id, remote_accounts)?;
-		let reward_account = AccountIdOf::<T>::from(accounts[0 as usize].0.clone().into());
+		let reward_account = accounts[0].0.clone();
 		System::<T>::set_block_number(VESTING_PERIOD.into());
-	}: claim(RawOrigin::None, airdrop_id, reward_account, accounts[0 as usize].1.clone().proof::<T>(accounts[0 as usize].0.clone()))
+	}: claim(RawOrigin::None, airdrop_id, reward_account, accounts[0].1.clone().proof::<T>(accounts[0].0.clone()))
 }
 
 impl_benchmark_test_suite!(

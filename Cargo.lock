@@ -7172,6 +7172,7 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "proptest",
+ "rand_core 0.6.3",
  "rustc-hex",
  "scale-info",
  "serde",

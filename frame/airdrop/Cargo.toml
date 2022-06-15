@@ -21,6 +21,7 @@ libsecp256k1 = { version = "0.7.0" }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 proptest = "1.0"
+rand_core = { version = "0.6.3", features = ["getrandom"] }
 serde = "1.0.136"
 sp-keystore = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 

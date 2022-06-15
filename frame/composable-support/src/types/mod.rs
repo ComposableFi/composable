@@ -8,12 +8,14 @@ use sp_runtime::RuntimeDebug;
 ///
 /// Cosmos supports both secp256k1 & secp256r1 for transaction authentication.
 /// Public Keys for both are in the ECDSA 33-byte compressed format.
-#[derive(Clone, Copy, Decode, Encode, Eq, Hash, MaxEncodedLen, PartialEq, RuntimeDebug, TypeInfo)]
+#[derive(
+	Clone, Copy, Decode, Encode, Eq, Hash, MaxEncodedLen, PartialEq, RuntimeDebug, TypeInfo,
+)]
 pub enum CosmosAddress {
-    /// Address length will be 20 bytes long
-    Secp256k1([u8; 33]),
-    /// Address length will be 32 bytes long
-    Secp256r1([u8; 33]),
+	/// Address length will be 20 bytes long
+	Secp256k1([u8; 33]),
+	/// Address length will be 32 bytes long
+	Secp256r1([u8; 33]),
 }
 
 /// Raw ethereum address.
@@ -61,9 +63,9 @@ impl<'de> frame_support::Deserialize<'de> for EthereumAddress {
 pub struct CosmosEcdsaSignature(pub [u8; 64]);
 
 impl PartialEq for CosmosEcdsaSignature {
-    fn eq(&self, other: &Self) -> bool {
-        self.0[..] == other.0[..]
-    }
+	fn eq(&self, other: &Self) -> bool {
+		self.0[..] == other.0[..]
+	}
 }
 
 impl sp_std::fmt::Debug for CosmosEcdsaSignature {
@@ -89,9 +91,11 @@ impl sp_std::fmt::Debug for EcdsaSignature {
 }
 
 impl From<CosmosEcdsaSignature> for EcdsaSignature {
-    fn from(item: CosmosEcdsaSignature) -> Self {
-        let mut signature: [u8; 65] = [0; 65];
-        signature.copy_from_slice(&item.0);
-        EcdsaSignature(signature)
-    }
+	fn from(item: CosmosEcdsaSignature) -> Self {
+		let mut sig = item.0.to_vec();
+		sig.push(0);
+		let mut signature: [u8; 65] = [0; 65];
+		signature.copy_from_slice(sig.as_slice());
+		EcdsaSignature(signature)
+	}
 }

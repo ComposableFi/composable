@@ -250,7 +250,7 @@ pub fn ethereum_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 
 /// `count % 2 == 0` should hold for all x
 pub fn generate_accounts(count: u64) -> Vec<(AccountId, ClaimKey)> {
-    assert!(count % 2 == 0, "`x % 2 == 0` should hold for all x");
+	assert!(count % 2 == 0, "`x % 2 == 0` should hold for all x");
 	let mut x = relay_generate(count / 2);
 	let mut y = ethereum_generate(count / 2);
 	x.append(&mut y);

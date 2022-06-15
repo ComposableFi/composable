@@ -1,18 +1,26 @@
 use crate::{
 	mocks::{
 		ethereum_address, generate_accounts, AccountId, Airdrop, AirdropId, Balance, Balances,
-		ClaimKey, EthKey, ExtBuilder, MockRuntime, Moment, Origin, System, Timestamp,
-		PROOF_PREFIX, STAKE,
+		ClaimKey, EthKey, ExtBuilder, MockRuntime, Moment, Origin, System, Timestamp, PROOF_PREFIX,
+		STAKE,
 	},
 	models::AirdropState,
 	Error,
 };
 use codec::Encode;
-use composable_support::types::{EcdsaSignature, EthereumAddress};
+use composable_support::types::{
+	CosmosAddress, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress,
+};
 use composable_tests_helpers::prop_assert_ok;
-use frame_support::{assert_noop, assert_ok, traits::{Currency, fungible::Inspect}};
+use frame_support::{
+	assert_noop, assert_ok,
+	traits::{fungible::Inspect, Currency},
+};
 use hex_literal::hex;
+use p256::ecdsa::{signature::Signer, SigningKey, VerifyingKey};
 use proptest::prelude::*;
+use rand_core::OsRng;
+use sp_io::hashing::sha2_256;
 use sp_runtime::AccountId32;
 
 const DEFAULT_FUNDED_CLAIM: bool = false;
@@ -24,17 +32,17 @@ const CREATOR: AccountId = AccountId32::new([0_u8; 32]);
 const OTHER: AccountId = AccountId32::new([1_u8; 32]);
 
 prop_compose! {
-    fn vesting_point()
-    (x in 1..(DEFAULT_VESTING_PERIOD / DEFAULT_VESTING_SCHEDULE)) -> Moment {
-        x * DEFAULT_VESTING_SCHEDULE
-    }
+	fn vesting_point()
+	(x in 1..(DEFAULT_VESTING_PERIOD / DEFAULT_VESTING_SCHEDULE)) -> Moment {
+		x * DEFAULT_VESTING_SCHEDULE
+	}
 }
 
 fn with_recipients<R>(
 	count: u128,
 	reward: Balance,
 	funded_claim: bool,
-    vesting_schedule: Moment, 
+	vesting_schedule: Moment,
 	vesting_period: Moment,
 	execute: impl FnOnce(&dyn Fn(Moment), Vec<(AccountId, ClaimKey)>) -> R,
 ) -> R {
@@ -66,7 +74,7 @@ fn with_default_recipients<R>(
 		DEFAULT_NB_OF_CONTRIBUTORS,
 		DEFAULT_REWARD,
 		DEFAULT_FUNDED_CLAIM,
-        DEFAULT_VESTING_SCHEDULE,
+		DEFAULT_VESTING_SCHEDULE,
 		DEFAULT_VESTING_PERIOD,
 		execute,
 	)
@@ -74,7 +82,6 @@ fn with_default_recipients<R>(
 
 #[cfg(test)]
 mod create_airdrop {
-
 
 	use super::*;
 
@@ -143,7 +150,14 @@ mod add_recipient {
 		let accounts = generate_accounts(128);
 		let recipients = accounts
 			.iter()
-			.map(|(_, account)| (account.as_remote_public(), DEFAULT_REWARD, DEFAULT_VESTING_PERIOD, DEFAULT_FUNDED_CLAIM))
+			.map(|(_, account)| {
+				(
+					account.as_remote_public(),
+					DEFAULT_REWARD,
+					DEFAULT_VESTING_PERIOD,
+					DEFAULT_FUNDED_CLAIM,
+				)
+			})
 			.collect();
 
 		ExtBuilder::default().build().execute_with(|| {
@@ -165,7 +179,14 @@ mod add_recipient {
 		let accounts = generate_accounts(128);
 		let recipients = accounts
 			.iter()
-			.map(|(_, account)| (account.as_remote_public(), DEFAULT_REWARD, DEFAULT_VESTING_PERIOD, DEFAULT_FUNDED_CLAIM))
+			.map(|(_, account)| {
+				(
+					account.as_remote_public(),
+					DEFAULT_REWARD,
+					DEFAULT_VESTING_PERIOD,
+					DEFAULT_FUNDED_CLAIM,
+				)
+			})
 			.collect();
 
 		ExtBuilder::default().build().execute_with(|| {
@@ -185,7 +206,14 @@ mod add_recipient {
 		let accounts = generate_accounts(128);
 		let recipients = accounts
 			.iter()
-			.map(|(_, account)| (account.as_remote_public(), DEFAULT_REWARD, DEFAULT_VESTING_PERIOD, DEFAULT_FUNDED_CLAIM))
+			.map(|(_, account)| {
+				(
+					account.as_remote_public(),
+					DEFAULT_REWARD,
+					DEFAULT_VESTING_PERIOD,
+					DEFAULT_FUNDED_CLAIM,
+				)
+			})
 			.collect();
 
 		ExtBuilder::default().build().execute_with(|| {
@@ -321,9 +349,9 @@ mod enable_airdrop {
 	#[allow(clippy::disallowed_methods)] // Allow unwrap
 	fn should_enable_airdrop_successfully() {
 		with_default_recipients(|set_moment, _| {
-            set_moment(DEFAULT_VESTING_PERIOD * 2);
-            
-            assert_eq!(Airdrop::get_airdrop_state(1).unwrap(), AirdropState::Enabled);
+			set_moment(DEFAULT_VESTING_PERIOD * 2);
+
+			assert_eq!(Airdrop::get_airdrop_state(1).unwrap(), AirdropState::Enabled);
 		})
 	}
 }
@@ -337,7 +365,10 @@ mod disable_airdrop {
 		let other = Origin::signed(OTHER);
 
 		with_default_recipients(|_, _| {
-            assert_noop!(Airdrop::disable_airdrop(other, 1), Error::<MockRuntime>::NotAirdropCreator);
+			assert_noop!(
+				Airdrop::disable_airdrop(other, 1),
+				Error::<MockRuntime>::NotAirdropCreator
+			);
 		})
 	}
 
@@ -347,99 +378,131 @@ mod disable_airdrop {
 		let creator = Origin::signed(CREATOR);
 
 		with_default_recipients(|set_moment, _| {
-            set_moment(DEFAULT_VESTING_PERIOD * 2);
+			set_moment(DEFAULT_VESTING_PERIOD * 2);
 
-            assert_eq!(Airdrop::get_airdrop_state(1).unwrap(), AirdropState::Enabled);
-            assert_ok!(Airdrop::disable_airdrop(creator, 1));
-            assert!(Airdrop::airdrops(1).is_none());
+			assert_eq!(Airdrop::get_airdrop_state(1).unwrap(), AirdropState::Enabled);
+			assert_ok!(Airdrop::disable_airdrop(creator, 1));
+			assert!(Airdrop::airdrops(1).is_none());
 		})
 	}
 }
 
 #[cfg(test)]
 mod claim {
-    use super::*;
+	use super::*;
 
-    #[test]
-    fn should_give_full_fund_to_recipients_at_end_of_vesting_period() {
-        with_default_recipients(|set_moment, accounts| {
-            set_moment(DEFAULT_VESTING_PERIOD);
+	#[test]
+	fn should_give_full_fund_to_recipients_at_end_of_vesting_period() {
+		with_default_recipients(|set_moment, accounts| {
+			set_moment(DEFAULT_VESTING_PERIOD);
 
-            for (local_account, remote_account) in accounts {
-                assert_ok!(remote_account.claim(1, local_account.clone()));
-                assert_eq!(Balances::balance(&local_account), DEFAULT_REWARD);
-            }
-        })  
-    }
+			for (local_account, remote_account) in accounts {
+				assert_ok!(remote_account.claim(1, local_account.clone()));
+				assert_eq!(Balances::balance(&local_account), DEFAULT_REWARD);
+			}
+		})
+	}
 
-    #[test]
-    fn should_prune_airdrop_if_all_funds_are_claimed() {
-        with_default_recipients(|set_moment, accounts| {
-            set_moment(DEFAULT_VESTING_PERIOD);
+	#[test]
+	fn should_prune_airdrop_if_all_funds_are_claimed() {
+		with_default_recipients(|set_moment, accounts| {
+			set_moment(DEFAULT_VESTING_PERIOD);
 
-            for (local_account, remote_account) in accounts {
-                assert_ok!(remote_account.claim(1, local_account.clone()));
-            }
+			for (local_account, remote_account) in accounts {
+				assert_ok!(remote_account.claim(1, local_account.clone()));
+			}
 
-            assert!(Airdrop::airdrops(1).is_none());
-        })  
-    }
+			assert!(Airdrop::airdrops(1).is_none());
+		})
+	}
 
-    #[test]
-    fn should_fail_when_nothing_to_claim() {
-        with_default_recipients(|set_moment, accounts| {
-            set_moment(1);
+	#[test]
+	fn should_fail_when_nothing_to_claim() {
+		with_default_recipients(|set_moment, accounts| {
+			set_moment(1);
 
-            for (local_account, remote_account) in accounts {
-                assert_noop!(remote_account.claim(1, local_account.clone()), Error::<MockRuntime>::NothingToClaim);
-            }
-        })  
-    }
+			for (local_account, remote_account) in accounts {
+				assert_noop!(
+					remote_account.claim(1, local_account.clone()),
+					Error::<MockRuntime>::NothingToClaim
+				);
+			}
+		})
+	}
 
-    proptest! {
-        #![proptest_config(ProptestConfig::with_cases((DEFAULT_VESTING_PERIOD / DEFAULT_VESTING_SCHEDULE) as u32))]
+	proptest! {
+		#![proptest_config(ProptestConfig::with_cases((DEFAULT_VESTING_PERIOD / DEFAULT_VESTING_SCHEDULE) as u32))]
 
-        #[test]
-        fn should_give_fund_proportional_to_the_vesting_point(vesting_point in vesting_point()) {
-            with_default_recipients(|set_moment, accounts| {
-                let vesting_window = vesting_point.saturating_sub(vesting_point % DEFAULT_VESTING_SCHEDULE);
-                let should_have_claimed = DEFAULT_REWARD.saturating_mul(vesting_window as u128) / (DEFAULT_VESTING_PERIOD as u128);
-                set_moment(vesting_point);
+		#[test]
+		fn should_give_fund_proportional_to_the_vesting_point(vesting_point in vesting_point()) {
+			with_default_recipients(|set_moment, accounts| {
+				let vesting_window = vesting_point.saturating_sub(vesting_point % DEFAULT_VESTING_SCHEDULE);
+				let should_have_claimed = DEFAULT_REWARD.saturating_mul(vesting_window as u128) / (DEFAULT_VESTING_PERIOD as u128);
+				set_moment(vesting_point);
 
-                for (local_account, remote_account) in accounts {
-                    prop_assert_ok!(remote_account.claim(1, local_account.clone()));
-                    prop_assert_eq!(Balances::balance(&local_account), should_have_claimed );
-                }
-                Ok(())
-            })?;
-        }
-    }
+				for (local_account, remote_account) in accounts {
+					prop_assert_ok!(remote_account.claim(1, local_account.clone()));
+					prop_assert_eq!(Balances::balance(&local_account), should_have_claimed );
+				}
+				Ok(())
+			})?;
+		}
+	}
 }
 
 #[cfg(test)]
 mod ethereum_recover {
-    use super::*;
+	use super::*;
 
-    #[test]
+	#[test]
 	#[allow(clippy::disallowed_methods)] // Allow unwrap
-    fn should_recover_hard_coded_eth_address() {
-        let eth_address = EthereumAddress(hex!("176FD6F90730E02D2AF55681c65a115C174bA2C7"));
-        let eth_account =
-            EthKey::parse(&hex!("29134835563739bae90483ee3d80945edf2c87a9b55c9193a694291cfdf23a05"))
-                .unwrap();
+	fn should_recover_hard_coded_eth_address() {
+		let eth_address = EthereumAddress(hex!("176FD6F90730E02D2AF55681c65a115C174bA2C7"));
+		let eth_account = EthKey::parse(&hex!(
+			"29134835563739bae90483ee3d80945edf2c87a9b55c9193a694291cfdf23a05"
+		))
+		.unwrap();
 
-        assert_eq!(ethereum_address(&eth_account), eth_address);
+		assert_eq!(ethereum_address(&eth_account), eth_address);
 
-        // sign(concat("picasso-"), CREATOR) = sign(concat("picasso-", [0u8; 32]))
-        let eth_proof = EcdsaSignature(hex!("42f2fa6a3db41e6654891e4408ce56ba31fc2b4dea18e82db1c78e33a3f65a55119a23fa7b3fe7a5088197a74a0102266836bb721461b9eaef128bec120db0401c"));
+		// sign(concat("picasso-"), CREATOR) = sign(concat("picasso-", [0u8; 32]))
+		let eth_proof = EcdsaSignature(hex!("42f2fa6a3db41e6654891e4408ce56ba31fc2b4dea18e82db1c78e33a3f65a55119a23fa7b3fe7a5088197a74a0102266836bb721461b9eaef128bec120db0401c"));
 
-        // Make sure we are able to recover the address
-        let recovered_address = Airdrop::ethereum_recover(
-            PROOF_PREFIX,
-            &CREATOR.using_encoded(|x| hex::encode(x).as_bytes().to_vec()),
-            &eth_proof,
-        );
+		// Make sure we are able to recover the address
+		let recovered_address = Airdrop::ethereum_recover(
+			PROOF_PREFIX,
+			&CREATOR.using_encoded(|x| hex::encode(x).as_bytes().to_vec()),
+			&eth_proof,
+		);
 
-        assert_eq!(Some(eth_address), recovered_address);
-    }
+		assert_eq!(Some(eth_address), recovered_address);
+	}
+}
+
+#[cfg(test)]
+mod cosmos_recover {
+	use super::*;
+
+	#[test]
+	fn should_verify_r1_sig_and_pub_key() {
+		// TODO: Use constant values for testing instead of random
+		let sign_key = SigningKey::random(&mut OsRng);
+		let verify_key = VerifyingKey::from(&sign_key);
+		let message =
+			sha2_256(format!("picasso-{}", &CREATOR.using_encoded(|x| hex::encode(x))).as_bytes());
+		let mut sig: [u8; 64] = [0; 64];
+		sig.copy_from_slice(sign_key.sign(&message).to_vec().as_slice());
+
+		let mut pub_key: [u8; 33] = [0; 33];
+		pub_key.copy_from_slice(verify_key.to_encoded_point(true).as_bytes());
+
+		let verified = Airdrop::cosmos_recover(
+			PROOF_PREFIX,
+			&CREATOR.using_encoded(|x| hex::encode(x).as_bytes().to_vec()),
+			CosmosAddress::Secp256r1(pub_key),
+			&CosmosEcdsaSignature(sig),
+		);
+
+		assert_eq!(verified, Some(CosmosAddress::Secp256r1(pub_key)));
+	}
 }
