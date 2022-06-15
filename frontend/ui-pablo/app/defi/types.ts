@@ -33,56 +33,6 @@ export type AMM = {
   label: string
 }
 
-export type Auction = {
-  id: string;
-  tokenId: TokenId;
-  networkId: NetworkId;
-  duration: number; //in days
-  totalVolume: BigNumber;
-  liquidity: BigNumber;
-  price: BigNumber;
-  tokenSold: BigNumber;
-  fundsRaised: BigNumber;
-  contract: {
-    tokenAddress: string;
-    ownerAddress: string;
-    docLink: string;
-  };
-  statistics: {
-    startBalances: {
-      token: BigNumber;
-      base: BigNumber;
-    };
-    currentBalances: {
-      token: BigNumber;
-      base: BigNumber;
-    };
-    totalSold: BigNumber;
-    totalRaised: BigNumber;
-  };
-  start_at: number; //timestamp
-  end_at: number; //timestamp
-};
-
-export type AuctionHistory = {
-  type: "Buy" | "Sell";
-  input: {
-    tokenId: TokenId;
-    amount: BigNumber;
-  };
-  output: {
-    tokenId: TokenId;
-    amount: BigNumber;
-  };
-  price: BigNumber;
-  walletAddress: string;
-  created_at: number; //timestamp
-};
-
-export type AuctionLaunchDescritpion = {
-  paragraphs: string[];
-};
-
 export type TableHeader = {
   header: string;
   tooltip?: string;

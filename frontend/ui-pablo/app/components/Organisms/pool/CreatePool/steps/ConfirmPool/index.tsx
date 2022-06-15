@@ -95,7 +95,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
     return new BigNumber(liquidity.quoteAmount);
   }, [liquidity.quoteAmount]);
 
-  const { createdAt } = useAppSelector((state) => state.pool.currentPool);
+  const [createdAt, setCreatedAt] = useState(-1)
 
   let baseAssetOnChainId = baseAsset === "none" ? -1 : getAssetOnChainId(DEFAULT_NETWORK_ID, baseAsset)
   let quoteAssetOnChainId = quoteAsset === "none" ? -1 : getAssetOnChainId(DEFAULT_NETWORK_ID, quoteAsset)
@@ -176,6 +176,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
 
   const onCreateFinalized = (txHash: string, events: EventRecord[]) => {
     console.log("Pool Creation Finalized", txHash);
+    setCreatedAt(Date.now())
 
     if (parachainApi) {
       const poolCreatedEvent = events.find((ev) =>
