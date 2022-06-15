@@ -1,6 +1,6 @@
 //! Default interface is used to interact with financial NFTs through a NFT provider.
 //!
-//! Allows  allows to enter positions and sell it before position is left as NFT.
+//! Allows to enter positions and sell it before position is left as NFT.
 //! Allows to split financial positions.
 //!
 //! # Design
