@@ -88,9 +88,9 @@ proptest! {
 				base_asset_reserves: vamm_config.base_asset_reserves,
 				quote_asset_reserves: vamm_config.quote_asset_reserves,
 				peg_multiplier: vamm_config.peg_multiplier,
-				funding_period: vamm_config.funding_period,
 				base_asset_twap: base_asset_twap.into_inner(),
 				quote_asset_twap: quote_asset_twap.into_inner(),
+				twap_period: vamm_config.twap_period,
 				invariant,
 				..Default::default()
 			};

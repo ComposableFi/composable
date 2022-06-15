@@ -6,7 +6,7 @@ use crate::{
 		run_to_block, TestSwapConfig, RUN_CASES,
 	},
 };
-use composable_traits::vamm::{AssetType, Direction, Vamm as VammTrait, MINIMUM_FUNDING_PERIOD};
+use composable_traits::vamm::{AssetType, Direction, Vamm as VammTrait, MINIMUM_TWAP_PERIOD};
 use frame_support::assert_noop;
 use proptest::prelude::*;
 
@@ -35,7 +35,7 @@ proptest! {
 		vamm_state.quote_asset_twap_timestamp = 0;
 
 		// Ensure we don't throw `FailedToComputeLastTwapWeight` error.
-		vamm_state.funding_period = (MINIMUM_FUNDING_PERIOD + 1).into();
+		vamm_state.twap_period = (MINIMUM_TWAP_PERIOD + 1).into();
 
 		vamm_state.quote_asset_reserves = quote_asset_reserves;
 		swap_config.input_amount = input_amount;
@@ -78,7 +78,7 @@ proptest! {
 		vamm_state.quote_asset_twap_timestamp = 0;
 
 		// Ensure we don't throw `FailedToComputeLastTwapWeight` error.
-		vamm_state.funding_period = (MINIMUM_FUNDING_PERIOD + 1).into();
+		vamm_state.twap_period = (MINIMUM_TWAP_PERIOD + 1).into();
 
 		swap_config.input_amount = input_amount;
 		vamm_state.quote_asset_reserves = quote_asset_reserves;

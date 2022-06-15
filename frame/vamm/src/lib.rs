@@ -131,7 +131,7 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::vamm::{
 		AssetType, Direction, MovePriceConfig, SwapConfig, SwapOutput, SwapSimulationConfig, Vamm,
-		VammConfig, MINIMUM_FUNDING_PERIOD,
+		VammConfig, MINIMUM_TWAP_PERIOD,
 	};
 	use frame_support::{
 		pallet_prelude::*, sp_std::fmt::Debug, traits::UnixTime, transactional, Blake2_128Concat,
@@ -288,7 +288,7 @@ pub mod pallet {
 
 		/// The frequency with which the vamm must have it's funding rebalance.
 		/// (Used only for twap calculations.)
-		pub funding_period: Moment,
+		pub twap_period: Moment,
 	}
 
 	// ----------------------------------------------------------------------------------------------------
@@ -393,13 +393,13 @@ pub mod pallet {
 		/// zero.
 		NewTwapValueIsZero,
 		/// Tried to compute last twap weight. This is due to
-		/// [`funding_period`](VammState::funding_period) being less than `now -
+		/// [`twap_period`](VammState::twap_period) being less than `now -
 		/// last_twap_timestamp`.
 		FailedToComputeLastTwapWeight,
 		/// Tried to create a vamm with a
-		/// [`funding_period`](VammState::funding_period) smaller than the
+		/// [`twap_period`](VammState::twap_period) smaller than the
 		/// minimum allowed one specified by
-		/// [`MINIMUM_FUNDING_PERIOD`](composable_traits::vamm::MINIMUM_FUNDING_PERIOD).
+		/// [`MINIMUM_TWAP_PERIOD`](composable_traits::vamm::MINIMUM_TWAP_PERIOD).
 		FundingPeriodTooSmall,
 	}
 
@@ -507,7 +507,7 @@ pub mod pallet {
 
 			ensure!(!config.peg_multiplier.is_zero(), Error::<T>::PegMultiplierIsZero);
 			ensure!(
-				config.funding_period >= MINIMUM_FUNDING_PERIOD.into(),
+				config.twap_period >= MINIMUM_TWAP_PERIOD.into(),
 				Error::<T>::FundingPeriodTooSmall
 			);
 
@@ -534,7 +534,7 @@ pub mod pallet {
 					quote_asset_twap_timestamp: now,
 					peg_multiplier: config.peg_multiplier,
 					invariant,
-					funding_period: config.funding_period,
+					twap_period: config.twap_period,
 					closed: None,
 				};
 
@@ -1212,7 +1212,7 @@ pub mod pallet {
 		fn calculate_twap(
 			now: &Option<MomentOf<T>>,
 			last_twap_timestamp: MomentOf<T>,
-			funding_period: MomentOf<T>,
+			twap_period: MomentOf<T>,
 			new_price: DecimalOf<T>,
 			old_price: DecimalOf<T>,
 		) -> Result<DecimalOf<T>, DispatchError> {
@@ -1225,12 +1225,12 @@ pub mod pallet {
 
 			// TODO(Cardosaum): Won't this subtraction cause a failure everytime
 			// if we don't update twap for a long period of time?  for example,
-			// if `funding_period = 1 hour`, and we pass 2 or more hours without
+			// if `twap_period = 1 hour`, and we pass 2 or more hours without
 			// updating the twap, doesn't it mean we will throw an error each
-			// time we try to subtract `funding_period -  weight_now`?
+			// time we try to subtract `twap_period -  weight_now`?
 			let weight_last_twap: MomentOf<T> = std::cmp::max(
 				1_u64.into(),
-				funding_period
+				twap_period
 					.checked_sub(&weight_now)
 					.ok_or(Error::<T>::FailedToComputeLastTwapWeight)?,
 			);

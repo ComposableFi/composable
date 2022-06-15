@@ -7,7 +7,7 @@ use crate::{
 	pallet::{self, VammState},
 };
 use composable_traits::vamm::{
-	AssetType, Direction, MovePriceConfig, SwapConfig, Vamm as VammTrait, MINIMUM_FUNDING_PERIOD,
+	AssetType, Direction, MovePriceConfig, SwapConfig, Vamm as VammTrait, MINIMUM_TWAP_PERIOD,
 };
 use frame_support::pallet_prelude::Hooks;
 use proptest::prelude::*;
@@ -162,10 +162,10 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn valid_funding_period()(
-		funding_period in (MINIMUM_FUNDING_PERIOD+1).into()..=VammTimestamp::MAX
-	) -> VammTimestamp {
-		funding_period
+	fn valid_twap_period()(
+		twap_period in (MINIMUM_TWAP_PERIOD+1).into()..=Timestamp::MAX
+	) -> Timestamp {
+		twap_period
 	}
 }
 
@@ -267,7 +267,7 @@ prop_compose! {
 			base_asset_twap: base_asset_reserves,
 			quote_asset_twap: quote_asset_reserves,
 			closed,
-			funding_period,
+			twap_period,
 		}
 	}
 }

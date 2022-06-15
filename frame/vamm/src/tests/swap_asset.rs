@@ -8,7 +8,7 @@ use crate::{
 	VammState,
 };
 use composable_traits::vamm::{
-	AssetType, Direction, SwapConfig, SwapOutput, Vamm as VammTrait, MINIMUM_FUNDING_PERIOD,
+	AssetType, Direction, SwapConfig, SwapOutput, Vamm as VammTrait, MINIMUM_TWAP_PERIOD,
 };
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
@@ -83,7 +83,7 @@ proptest! {
 		vamm_state.quote_asset_twap_timestamp = 0;
 
 		// Ensure we don't throw `FailedToComputeLastTwapWeight` error.
-		vamm_state.funding_period = (MINIMUM_FUNDING_PERIOD + 1).into();
+		vamm_state.twap_period = (MINIMUM_TWAP_PERIOD + 1).into();
 
 		swap_config.output_amount_limit = limit;
 		swap_config.vamm_id = VammId::zero();
@@ -120,7 +120,7 @@ proptest! {
 		vamm_state.quote_asset_twap_timestamp = 0;
 
 		// Ensure we don't throw `FailedToComputeLastTwapWeight` error.
-		vamm_state.funding_period = (MINIMUM_FUNDING_PERIOD + 1).into();
+		vamm_state.twap_period = (MINIMUM_TWAP_PERIOD + 1).into();
 
 		swap_config.vamm_id = VammId::zero();
 
@@ -170,7 +170,7 @@ fn swap_add_base() {
 				quote_asset_reserves: quote_u256.as_u128(),
 				base_asset_twap: base_u256.as_u128(),
 				quote_asset_twap: quote_u256.as_u128(),
-				funding_period: 3600,
+				twap_period: 3600,
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
@@ -226,7 +226,7 @@ fn swap_remove_base() {
 				quote_asset_reserves: quote_u256.as_u128(),
 				base_asset_twap: base_u256.as_u128(),
 				quote_asset_twap: quote_u256.as_u128(),
-				funding_period: 3600,
+				twap_period: 3600,
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
@@ -282,7 +282,7 @@ fn swap_add_quote() {
 				quote_asset_reserves: quote_u256.as_u128(),
 				base_asset_twap: base_u256.as_u128(),
 				quote_asset_twap: quote_u256.as_u128(),
-				funding_period: 3600,
+				twap_period: 3600,
 				peg_multiplier: 1,
 				invariant,
 				closed: None,
@@ -338,7 +338,7 @@ fn swap_remove_quote() {
 				quote_asset_reserves: quote_u256.as_u128(),
 				base_asset_twap: base_u256.as_u128(),
 				quote_asset_twap: quote_u256.as_u128(),
-				funding_period: 3600,
+				twap_period: 3600,
 				peg_multiplier: 1,
 				invariant,
 				closed: None,

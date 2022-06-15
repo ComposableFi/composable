@@ -142,7 +142,7 @@ fn update_twap_succeeds() {
 		quote_asset_twap: twap,
 		base_asset_reserves: twap,
 		quote_asset_reserves: twap,
-		funding_period: 3600,
+		twap_period: 3600,
 		..Default::default()
 	};
 	ExtBuilder { vamm_count: 1, vamms: vec![(0, vamm_state)] }
@@ -180,7 +180,6 @@ fn update_twap_updates_twap_correctly() {
 		quote_asset_twap: twap,
 		base_asset_reserves: twap,
 		quote_asset_reserves: twap,
-		funding_period: 3600,
 		..Default::default()
 	};
 	ExtBuilder { vamm_count: 1, vamms: vec![(vamm_id, vamm_state)] }
@@ -199,6 +198,7 @@ fn update_twap_updates_twap_correctly() {
 				asset_type,
 				value: new_twap.unwrap(),
 			}));
+			twap_period: 3600,
 
 			timestamp_greater += 1;
 			run_to_block(timestamp_greater);
