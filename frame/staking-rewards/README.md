@@ -147,6 +147,8 @@ Penalties and lock periods are optional depending on pool configuration.
 
 A stake is transferred into the protocol treasury.
 
+Initially, on a nonzero time lock nonzero penalties no time decay but expireable positions are supported.
+
 ### Staked asset
 
 User share amount, potentially elevated, issued as a new token onto asset account owned by staking position account.
@@ -192,11 +194,13 @@ Allows splitting positions without paying a penalty at any time.
 
 The share and rewards are split.
 
+Shares fraction obtained by split must be more than ED.
+
 **Examples**
 
 An owning user has a position with MONTH lock total, with 2 weeks already passed with 100 tokens.
 She may split it into 30 and 70 tokens each locked for one MONTH.
-Split fraction is limited by ED.
+
 
 It can split the position into several parts 20, 30, and 40 tokens.
 Each of which will be the same lock duration and time lock passed.
@@ -253,7 +257,7 @@ print(rolling) # time it moves to new lock
 
 ### Expiration
 
-If there is time-locked position.
+If there is a time-locked position.
 
 After the position expired, a user can unstake without penalty.
 

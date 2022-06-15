@@ -11,7 +11,7 @@ pub type DurationMultiplierRewardsConfig<Limit> = BoundedBTreeMap<DurationSecond
 
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
 pub struct RewardConfig<RewardsRate> {
-	/// if not update, stops inflating rewards
+	/// if not update, stops add rewards to pool
 	pub end_block: Timestamp,
 	/// for example, asset id, amount, and release frequency   
 	pub reward_rates: BiBoundedVec<RewardsRate, 1, 16>,

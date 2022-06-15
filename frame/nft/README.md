@@ -8,9 +8,9 @@ Provides abstractions for typed and reference NFT design.
 
 ## fNFT
 
-fNFT instance account can be made the owner of financial positions by referencing these in specific protocols.
-The original owner becomes an owner of fNFT. 
-fNFT account becomes owner of position.
+A fNFT instance account can be made the owner of financial positions by referencing these in specific protocols.
+The original owner becomes an owner of the fNFT. 
+The fNFT account becomes the owner of underlying position.
 
 fNFT unifies interface possible around positions:
 
@@ -23,6 +23,11 @@ fNFT unifies interface possible around positions:
 **Example**
 
 fNFT account can be use `account proxy` to delegate xTokens received for share to any other account to be used in  `democracy` for voting.
+
+
+## XCMP
+
+XCMP transfer will change the owner of  fFNT to sovereign account of sibling parachain where fNFT wash "transferred". 
 
 ## References
 

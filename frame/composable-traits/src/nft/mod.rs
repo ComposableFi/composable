@@ -12,10 +12,12 @@
 //! - NFT account produced from identity is set as owner of position
 //! - protocol providing position implements trait which allow to work with it through NFT API
 //! - position is stored in any way efficient for that
-//! - NFT stores only reference to position in protocol, for example pallet identifier and some
-//!   monotonous identifier
-//! - during XCMP transfer, owner of NFT becomes target parachain
-//! - allow to build NFTs from lower level typed positions
+//! - NFT stores only reference to position in protocol,
+//! For example, pallet identifier and some strict monotonic a counter/sequence identifier of
+//! position combined.
+//! - allows to build NFTs from typed positions(primitives)
+//! - during XCMP transfer, owner of NFT become target parachain
+//! - position reference work well with reserver transfer XCMP approach
 //!
 //! So NFT is (class, id, position reference)
 //!
@@ -29,10 +31,10 @@
 //! protocol implementation on other side. In both cases RPC or shared library is required to
 //! interpret state offchain.
 //!
-//! Problem with traditional NFT as is that it is isolate while burn and mint, while our goal is to
-//! make burn/mint and split to influence some total/shared.  For this case we go with option to
-//! have a proxy which ensure that NFT part of state and protocol state are synchronized during such
-//! calls.
+//! Problem with traditional NFTs - these are isolated from each other while burn and mint, while
+//! our goal is to make burn/mint(and split) to influence some total/shared.  For this case we go
+//! with option to have a proxy which ensure that NFT part of state and protocol state are
+//! synchronized during such calls.
 pub mod protocol;
 
 use codec::{Decode, Encode, MaxEncodedLen};
