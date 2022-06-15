@@ -1,7 +1,7 @@
 import { LiquidityBootstrappingPool } from "@/store/pools/pools.types";
 import BigNumber from "bignumber.js";
 import { DAYS } from "../constants";
-import { getCurrentWeights } from "../pablo/auctions";
+import { caluclateWeightAt } from "../pablo/auctions";
 
 export function calculatePredictedChartSeries(
   lastTransactionTimestamp: number,
@@ -18,7 +18,7 @@ export function calculatePredictedChartSeries(
   // const priceWFee = new BigNumber(1).div(new BigNumber(1).minus(new BigNumber(pool.feeConfig.feeRate).div(100)))
 
   while (nextPoint < pool.sale.end) {
-    const weightAtT = getCurrentWeights(pool, new BigNumber(blockNumber));
+    const weightAtT = caluclateWeightAt(pool, new BigNumber(blockNumber));
     const quoteWeight = quoteBalance.div(weightAtT.quoteWeight);
     const baseWeight = baseBalance.div(weightAtT.baseWeight);
 

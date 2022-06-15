@@ -5,23 +5,12 @@ import {
 } from "@/defi/utils";
 import { calculatePredictedChartSeries } from "@/defi/utils/charts/auctions";
 import { transformAuctionsTransaction } from "@/defi/utils/pablo/auctions";
+import { LiquidityBootstrappingPoolTrade } from "@/defi/utils/pablo/auctions/types";
 import { queryPoolTransactionsByType } from "@/updaters/pools/subsquid";
 import BigNumber from "bignumber.js";
 import { useEffect, useState } from "react";
 import { useParachainApi } from "substrate-react";
 import { LiquidityBootstrappingPool } from "../pools/pools.types";
-
-export interface SubsquidSwapTransaction {
-  baseAssetAmount: string;
-  baseAssetId: number;
-  id: string;
-  quoteAssetAmount: string;
-  quoteAssetId: number;
-  receivedTimestamp: number;
-  spotPrice: string;
-  side: "SELL" | "BUY";
-  walletAddress: string;
-}
 
 export function useAuctionsChart(
   pool: LiquidityBootstrappingPool | undefined
@@ -40,7 +29,7 @@ export function useAuctionsChart(
   useEffect(() => {
     if (pool && parachainApi) {
       queryPoolTransactionsByType(pool.poolId, "SWAP").then((res) => {
-        let swapTxs: SubsquidSwapTransaction[] = [];
+        let swapTxs: LiquidityBootstrappingPoolTrade[] = [];
         if ((res as any).data && (res as any).data.pabloTransactions) {
           swapTxs = (res as any).data.pabloTransactions.map((t: any) =>
             transformAuctionsTransaction(t, pool.pair.quote)
