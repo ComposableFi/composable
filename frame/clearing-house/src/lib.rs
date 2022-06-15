@@ -153,7 +153,9 @@ pub mod pallet {
 		Market, MarketConfig, Position,
 	};
 	use crate::{
-		math::{FixedPointMath, FromBalance, IntoBalance, IntoDecimal, IntoSigned, UnsignedMath},
+		math::{
+			self, FixedPointMath, FromBalance, IntoBalance, IntoDecimal, IntoSigned, UnsignedMath,
+		},
 		types::{AccountSummary, PositionInfo, BASIS_POINT_DENOMINATOR},
 		weights::WeightInfo,
 	};
@@ -1961,7 +1963,7 @@ pub mod pallet {
 				};
 				let last_oracle_10bp =
 					last_oracle.try_div(&T::Decimal::saturating_from_integer(1000))?;
-				oracle = Self::clip(
+				oracle = math::clip(
 					oracle,
 					last_oracle.try_sub(&last_oracle_10bp)?,
 					last_oracle.try_sub(&last_oracle_10bp)?,
@@ -1976,7 +1978,7 @@ pub mod pallet {
 				let since_last = cmp::max(1, now.saturating_sub(market.last_oracle_ts));
 				let from_start = cmp::max(1, market.twap_period.saturating_sub(since_last));
 
-				let new_twap = Self::weighted_average(
+				let new_twap = math::weighted_average(
 					&oracle,
 					&market.last_oracle_twap,
 					&T::Decimal::saturating_from_integer(since_last),
@@ -2012,22 +2014,6 @@ pub mod pallet {
 			} else {
 				*oracle
 			})
-		}
-
-		fn clip(value: T::Decimal, lower: T::Decimal, upper: T::Decimal) -> T::Decimal {
-			cmp::min(cmp::max(lower, value), upper)
-		}
-
-		fn weighted_average(
-			oracle: &T::Decimal,
-			twap: &T::Decimal,
-			since_last: &T::Decimal,
-			from_start: &T::Decimal,
-		) -> Result<T::Decimal, DispatchError> {
-			Ok(oracle
-				.try_mul(since_last)?
-				.try_add(&twap.try_mul(from_start)?)?
-				.try_div(&since_last.try_add(from_start)?)?)
 		}
 	}
 }
