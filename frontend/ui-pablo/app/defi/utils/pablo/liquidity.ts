@@ -3,7 +3,7 @@ import {
   createPabloPoolAccountId,
   fetchBalanceByAssetId,
   fromChainUnits,
-} from "@/utils/defi";
+} from "@/defi/utils";
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
 

@@ -11,7 +11,7 @@ import {
   AVERAGE_BLOCK_TIME,
   DEFAULT_NETWORK_ID,
   DUMMY_LAUNCH_DESCRIPTION,
-} from "../constants";
+} from "@/defi/utils/constants";
 
 export const stringToBigNumber = (value: string): BigNumber =>
   new BigNumber(value.replaceAll(",", ""));

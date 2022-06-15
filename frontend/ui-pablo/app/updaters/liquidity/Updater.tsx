@@ -2,9 +2,9 @@ import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 import { useEffect, useMemo } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
-import { DEFAULT_NETWORK_ID } from "../constants";
-import { fetchAndUpdatePoolLiquidity } from "@/utils/defi";
-import { fetchBalanceByAssetId } from "@/utils/defi";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
+import { fetchAndUpdatePoolLiquidity } from "@/defi/utils";
+import { fetchBalanceByAssetId } from "@/defi/utils";
 import _ from "lodash";
 
 const PICK = ["poolId", "pair", "lpToken"];

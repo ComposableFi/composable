@@ -4,9 +4,6 @@ import { useParachainApi } from "substrate-react";
 import { AssetId } from "@/defi/polkadot/types";
 import { Assets } from "@/defi/polkadot/Assets";
 import BigNumber from "bignumber.js";
-import {
-  fetchSpotPrice,
-} from "./utils";
 import { isValidAssetPair } from "../utils";
 import {
   ConstantProductPool,
@@ -14,8 +11,9 @@ import {
   LiquidityPoolType,
   StableSwapPool,
 } from "@/store/pools/pools.types";
-import { fetchBalanceByAssetId } from "@/utils/defi";
-import { createPabloPoolAccountId } from "@/utils/defi";
+import { fetchBalanceByAssetId } from "@/defi/utils";
+import { createPabloPoolAccountId } from "@/defi/utils";
+import { fetchSpotPrice } from "@/defi/utils/pablo/spotPrice";
 
 const Updater = () => {
   const {

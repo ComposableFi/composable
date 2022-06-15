@@ -1,4 +1,4 @@
-import { fromChainUnits } from "@/utils/defi";
+import { fromChainUnits } from "@/defi/utils";
 import { ApiPromise } from "@polkadot/api";
 
 export const fetchBalanceByAssetId = async (

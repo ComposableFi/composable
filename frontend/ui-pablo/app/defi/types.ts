@@ -4,6 +4,7 @@ import { DEFI_CONFIG } from "./config";
 export type TokenId = typeof DEFI_CONFIG.tokenIds[number];
 export type ChartInterval = "24h" | "1m" | "1w";
 // | "1y";
+export enum LiquidityPoolTransactionType { "SWAP", "ADD_LIQUIDITY", "CREATE_POOL", "REMOVE_LIQUIDITY" };
 
 export type Token = {
   id: TokenId;

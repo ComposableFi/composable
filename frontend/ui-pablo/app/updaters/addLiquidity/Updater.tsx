@@ -3,7 +3,7 @@ import { useParachainApi } from "substrate-react";
 import { getAsset, getAssetByOnChainId } from "@/defi/polkadot/Assets";
 import { isValidAssetPair } from "../utils";
 import { AssetId } from "@/defi/polkadot/types";
-import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { useAddLiquiditySlice, setPool, setSelection } from "@/store/addLiquidity/addLiquidity.slice";
 import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardingPools";
 

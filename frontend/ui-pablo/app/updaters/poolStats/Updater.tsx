@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import BigNumber from "bignumber.js";
 import useStore from "@/store/useStore";
 import { useParachainApi } from "substrate-react";
-import { DEFAULT_NETWORK_ID } from "../constants";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { useAllLpTokenRewardingPools } from "../../store/hooks/useAllLpTokenRewardingPools";
 import {
   calculatePoolStats,

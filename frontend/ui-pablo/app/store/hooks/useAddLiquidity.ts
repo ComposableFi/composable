@@ -8,7 +8,7 @@ import { AssetId } from "@/defi/polkadot/types";
 import { getPairDecimals } from "@/defi/polkadot/utils";
 import { setSelection, useAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
 import useStore from "@/store/useStore";
-import { DEFAULT_NETWORK_ID, DEFAULT_DECIMALS } from "@/updaters/constants";
+import { DEFAULT_NETWORK_ID, DEFAULT_DECIMALS } from "@/defi/utils/constants";
 import BigNumber from "bignumber.js";
 import { useState, useMemo, useEffect } from "react";
 import { useParachainApi } from "substrate-react";

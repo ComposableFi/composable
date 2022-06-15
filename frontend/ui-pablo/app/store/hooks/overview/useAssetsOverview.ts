@@ -1,6 +1,6 @@
 import { getAssetOnChainId } from "@/defi/polkadot/Assets";
 import { AssetId } from "@/defi/polkadot/types";
-import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import BigNumber from "bignumber.js";
 import { useMemo } from "react";
 import useStore from "@/store/useStore";

@@ -1,9 +1,9 @@
 import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
-import { calcaulateProvidedLiquidity } from "@/utils/defi";
+import { calcaulateProvidedLiquidity } from "@/defi/utils";
 import { liquidityTransactionsByAddressAndPool } from "@/updaters/pools/subsquid";
 import { useEffect, useMemo, useState } from "react";
 import { useSelectedAccount } from "substrate-react";
-import { DEFAULT_NETWORK_ID } from "../../updaters/constants";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";

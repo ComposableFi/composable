@@ -21,7 +21,7 @@ import { openTransactionSettingsModal } from "@/stores/ui/uiSlice";
 import useStore from "@/store/useStore";
 import { Assets, getAssetOnChainId } from "@/defi/polkadot/Assets";
 import { AssetId } from "@/defi/polkadot/types";
-import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 
 const selectLabelProps = (valid: boolean, label: string, balance: string) =>
   ({

@@ -4,14 +4,15 @@ import useStore from "@/store/useStore";
 import { getAssetById } from "@/defi/polkadot/Assets";
 import BigNumber from "bignumber.js";
 
-import { aggregateTrades, transformAuctionsTransaction } from "./utils";
+import { aggregateTrades } from "./utils";
 import { PoolTradeHistory } from "@/store/auctions/auctions.types";
-import { fetchBalanceByAssetId } from "@/utils/defi";
-import { AVERAGE_BLOCK_TIME, DEFAULT_DECIMALS, DEFAULT_NETWORK_ID } from "../constants";
+import { fetchBalanceByAssetId } from "@/defi/utils";
+import { AVERAGE_BLOCK_TIME, DEFAULT_DECIMALS, DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { queryAuctionStats } from "./subsquid";
 import { queryPoolTransactionsByType } from "../pools/subsquid";
-import { fetchSpotPrice } from "../swaps/utils";
-import { createPabloPoolAccountId } from "@/utils/defi/pablo";
+import { fetchSpotPrice } from "@/defi/utils";
+import { createPabloPoolAccountId } from "@/defi/utils/pablo";
+import { transformAuctionsTransaction } from "@/defi/utils/pablo/auctions";
 
 const Updater = () => {
   const {

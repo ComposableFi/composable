@@ -7,8 +7,8 @@ import {
   useSelectedAccount,
 } from "substrate-react";
 import useStore from "@/store/useStore";
-import { fetchBalanceByAssetId } from "@/utils/defi";
-import { DEFAULT_NETWORK_ID } from "../../constants";
+import { fetchBalanceByAssetId } from "@/defi/utils";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import _ from "lodash";
 
 const processedTransactions: string[] = [];

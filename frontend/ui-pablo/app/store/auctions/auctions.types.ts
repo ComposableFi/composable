@@ -1,5 +1,4 @@
 import { LiquidityBootstrappingPool, LiquidityBootstrappingPoolStats } from "@/store/pools/pools.types";
-export enum LiquidityBootstrappingPoolTransactionType { "SWAP", "ADD_LIQUIDITY","CREATE_POOL" };
 export interface PoolTradeHistory {
     baseAssetAmount: string;
     baseAssetId: number;

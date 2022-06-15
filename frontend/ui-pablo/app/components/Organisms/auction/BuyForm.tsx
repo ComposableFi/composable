@@ -27,11 +27,11 @@ import { getAssetById } from "@/defi/polkadot/Assets";
 import { getSigner } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import useStore from "@/store/useStore";
-import { onSwapAmountChange } from "@/updaters/swaps/utils";
 import { debounce } from "lodash";
 import { ConfirmingModal } from "../swap/ConfirmingModal";
 import { useSnackbar } from "notistack";
-import { toChainUnits } from "@/utils/defi";
+import { toChainUnits } from "@/defi/utils";
+import { calculateSwap } from "@/defi/utils/pablo/swaps";
 
 export type BuyFormProps = {
   auction: LiquidityBootstrappingPool;
@@ -122,7 +122,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
         slippage: 0.1,
       };
 
-      onSwapAmountChange(parachainApi, exchangeParams, {
+      calculateSwap(parachainApi, exchangeParams, {
         poolAccountId: "",
         poolIndex: auction.poolId,
         fee: auction.feeConfig.feeRate.toString(),

@@ -32,7 +32,7 @@ import { Assets, AssetsValidForNow } from "@/defi/polkadot/Assets";
 import useStore from "@/store/useStore";
 import { AssetId } from "@/defi/polkadot/types";
 import { debounce } from "lodash";
-import { onSwapAmountChange } from "@/updaters/swaps/utils";
+import { calculateSwap } from "@/defi/utils/pablo/swaps";
 
 const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
@@ -208,7 +208,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         slippage,
       };
 
-      onSwapAmountChange(
+      calculateSwap(
         parachainApi,
         exchangeParams,
         swaps.poolConstants

@@ -42,10 +42,10 @@ import {
   createConstantProductPool,
   createStableSwapPool,
 } from "@/updaters/createPool/utils";
-import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { EventRecord } from "@polkadot/types/interfaces/system/types";
-import { addLiquidityToPoolViaPablo } from "@/updaters/addLiquidity/utils";
+import { addLiquidityToPoolViaPablo } from "@/defi/utils";
 import { closeConfirmingModal, openConfirmingModal } from "@/stores/ui/uiSlice";
 
 const labelProps = (

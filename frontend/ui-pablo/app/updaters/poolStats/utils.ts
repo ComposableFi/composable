@@ -1,7 +1,7 @@
 import { getAssetByOnChainId } from "@/defi/polkadot/Assets";
 import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
 import BigNumber from "bignumber.js";
-import { DAYS, DEFAULT_NETWORK_ID } from "../constants";
+import { DAYS, DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { queryPabloPoolById } from "../pools/subsquid";
 
 export interface PabloPoolStatsSquidResponse {

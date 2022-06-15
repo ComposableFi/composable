@@ -1,6 +1,6 @@
 import { DEFI_CONFIG } from "@/defi/config";
 import { getAssetOnChainId } from "@/defi/polkadot/Assets";
-import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { queryPoolTransactionsByType } from "@/updaters/pools/subsquid";
 import { query24hOldTransactionByPoolQuoteAsset } from "@/updaters/swaps/subsquid";
 import { useState, useEffect } from "react";
@@ -10,7 +10,7 @@ import useStore from "../useStore";
 import {
   ChartRange,
   processSubsquidChartData,
-} from "@/utils/defi/charts";
+} from "@/defi/utils/charts";
 
 export const useSwapsChart = () => {
   const { swaps } = useStore();
