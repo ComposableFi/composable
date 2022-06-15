@@ -11,6 +11,10 @@ on:
           - dali
           - composable
           - picasso
+      release_selection:
+        type: string
+        required: true
+        description: 'Release version. Example: v2.2.0'
 
 jobs:
   dali-runtime-upgrade:
@@ -26,9 +30,6 @@ jobs:
         run: |
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
-      - name: Set env
-        run: |
-          echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
 
       - uses: actions/checkout@v2
         with:
@@ -44,7 +45,7 @@ jobs:
         working-directory: scripts/github/
         run: |
           FILE_NAME=dali_runtime.wasm
-          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/${RELEASE_VERSION}/${FILE_NAME}
+          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/${{ inputs.release_selection }}/${FILE_NAME}
           wget $FILE_GITHUB_PATH
 
       - name: Install
@@ -70,9 +71,6 @@ jobs:
         run: |
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
-      - name: Set env
-        run: |
-          echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
 
       - uses: actions/checkout@v2
         with:
@@ -88,7 +86,7 @@ jobs:
         working-directory: scripts/github/
         run: |
           FILE_NAME=composable_runtime.wasm
-          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/${RELEASE_VERSION}/${FILE_NAME}
+          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/${{ inputs.release_selection }}/${FILE_NAME}
           wget $FILE_GITHUB_PATH
 
       - name: Install
@@ -114,9 +112,6 @@ jobs:
         run: |
           sudo chown -R $USER:$USER $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
-      - name: Set env
-        run: |
-          echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
 
       - uses: actions/checkout@v2
         with:
@@ -132,7 +127,7 @@ jobs:
         working-directory: scripts/github/
         run: |
           FILE_NAME=picasso_runtime.wasm
-          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/${RELEASE_VERSION}/${FILE_NAME}
+          FILE_GITHUB_PATH=https://github.com/ComposableFi/composable/releases/download/${{ inputs.release_selection }}/${FILE_NAME}
           wget $FILE_GITHUB_PATH
 
       - name: Install
