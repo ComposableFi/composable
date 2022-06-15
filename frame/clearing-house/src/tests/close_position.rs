@@ -1,6 +1,6 @@
 use crate::{
 	mock::{
-		accounts::ALICE,
+		accounts::{ALICE, BOB},
 		runtime::{
 			Oracle as OraclePallet, Origin, Runtime, System as SystemPallet, TestPallet,
 			Vamm as VammPallet,
@@ -13,7 +13,8 @@ use crate::{
 	tests::{
 		any_direction, as_balance, get_collateral, get_market, get_market_fee_pool,
 		get_outstanding_gains, get_position, run_for_seconds, run_to_time,
-		set_maximum_oracle_mark_divergence, with_trading_context, Market, MarketConfig,
+		set_maximum_oracle_mark_divergence, traders_in_one_market_context, with_trading_context,
+		Market, MarketConfig,
 	},
 };
 
@@ -300,7 +301,45 @@ fn should_not_fail_if_index_mark_divergence_was_already_above_threshold() {
 	});
 }
 
-// TODO(0xangelo): check that only available gains are realized (update collateral)
+#[test]
+fn should_only_update_collateral_with_available_gains() {
+	let config = MarketConfig { taker_fee: 0, ..Default::default() };
+	let collateral = as_balance(100);
+	let margins = vec![(ALICE, collateral), (BOB, collateral / 2)];
+
+	traders_in_one_market_context(config, margins, |market_id| {
+		VammPallet::set_price(Some(10.into()));
+
+		let base = as_balance(10);
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(ALICE),
+			market_id,
+			Long,
+			collateral,
+			base,
+		));
+
+		let base = as_balance(10);
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(BOB),
+			market_id,
+			Short,
+			collateral / 2,
+			base,
+		));
+
+		// Price moves so that Alice is up 100% and Bob is down 100%
+		VammPallet::set_price(Some(20.into()));
+		assert_ok!(TestPallet::close_position(Origin::signed(BOB), market_id));
+		assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
+
+		// Since Bob's size was lower than Alice's, even his whole collateral cannot cover Alice's
+		// gains
+		assert_eq!(get_collateral(BOB), 0);
+		assert_eq!(get_collateral(ALICE), collateral + collateral / 2);
+		assert_eq!(get_outstanding_gains(ALICE, &market_id), collateral / 2);
+	});
+}
 
 // -------------------------------------------------------------------------------------------------
 //                                        Property Tests
