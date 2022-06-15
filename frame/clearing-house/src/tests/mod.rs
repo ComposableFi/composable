@@ -247,6 +247,7 @@ impl Default for MarketConfigGeneric<AssetId, Balance, Decimal, VammConfig> {
 			funding_frequency: ONE_HOUR,
 			funding_period: ONE_HOUR * 24,
 			taker_fee: 10, // 0.1%
+			twap_period: ONE_HOUR,
 		}
 	}
 }
@@ -260,6 +261,10 @@ impl<T: Config> Default for MarketGeneric<T> {
 			margin_ratio_maintenance: Default::default(),
 			margin_ratio_partial: Default::default(),
 			minimum_trade_size: Default::default(),
+			funding_frequency: Default::default(),
+			funding_period: Default::default(),
+			taker_fee: Default::default(),
+			twap_period: Default::default(),
 			available_gains: Zero::zero(),
 			base_asset_amount_long: Default::default(),
 			base_asset_amount_short: Default::default(),
@@ -267,9 +272,9 @@ impl<T: Config> Default for MarketGeneric<T> {
 			cum_funding_rate_short: Default::default(),
 			fee_pool: Default::default(),
 			funding_rate_ts: Default::default(),
-			funding_frequency: Default::default(),
-			funding_period: Default::default(),
-			taker_fee: Default::default(),
+			last_oracle_price: Zero::zero(),
+			last_oracle_twap: Zero::zero(),
+			last_oracle_ts: Default::default(),
 		}
 	}
 }

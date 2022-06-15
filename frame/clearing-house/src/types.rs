@@ -108,6 +108,21 @@ pub struct Market<T: Config> {
 	pub funding_period: DurationSeconds,
 	/// Taker fee, in basis points, applied to all market orders.
 	pub taker_fee: T::Balance,
+	/// The reference time span used for weighting the EMA updates for the Oracle and Vamm TWAPs.
+	/// ```text
+	///                                                       twap_period
+	///                                        |---------------------------------------|
+	///                                         from_start          since_last
+	///                                        |-----------|---------------------------|
+	/// -------------------------------------------------------------------------------|
+	///                                        ^           ^                           ^
+	///                                      now -         |                          now
+	///                                   twap_period      |
+	///                                               last_twap_ts
+	/// ```
+	/// In the example above, the current price is given a weight of `since_last` and the last
+	/// TWAP, `from_start`. The new TWAP is then the weighted average of the two.
+	pub twap_period: DurationSeconds,
 	// ---------------------------------------------------------------------------------------------
 	//                                         Dynamic
 	// ---------------------------------------------------------------------------------------------
@@ -129,6 +144,13 @@ pub struct Market<T: Config> {
 	pub fee_pool: T::Balance,
 	/// The timestamp for the latest funding rate update.
 	pub funding_rate_ts: DurationSeconds,
+	/// Last oracle price used to update the index TWAP. This has likely gone through
+	/// preprocessing, i.e., is not the actual oracle price reported at the time.
+	pub last_oracle_price: T::Decimal,
+	/// The last calculated oracle TWAP.
+	pub last_oracle_twap: T::Decimal,
+	/// The timestamp for [`last_oracle_twap`] and [`last_oracle_twap_ts`].
+	pub last_oracle_ts: DurationSeconds,
 }
 
 impl<T: Config> Market<T> {
@@ -198,6 +220,8 @@ pub struct MarketConfig<AssetId, Balance, Decimal, VammConfig> {
 	pub funding_period: DurationSeconds,
 	/// Taker fee, in basis points, applied to all market orders.
 	pub taker_fee: Balance,
+	/// The reference time span used for weighting the EMA updates for the Oracle and Vamm TWAPs.
+	pub twap_period: DurationSeconds,
 }
 
 // -------------------------------------------------------------------------------------------------

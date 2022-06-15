@@ -12,8 +12,8 @@ use crate::{
 	},
 	tests::{
 		any_direction, as_balance, get_collateral, get_market, get_market_fee_pool,
-		get_outstanding_gains, get_position, run_for_seconds, set_maximum_oracle_mark_divergence,
-		with_trading_context, MarketConfig,
+		get_outstanding_gains, get_position, run_for_seconds, run_to_time,
+		set_maximum_oracle_mark_divergence, with_trading_context, MarketConfig,
 	},
 };
 
@@ -327,6 +327,32 @@ proptest! {
 	}
 
 	#[test]
+	fn should_update_oracle_twap(direction in any_direction()) {
+		let config = MarketConfig { twap_period: 60, ..Default::default() };
+		let collateral = as_balance(100);
+
+		with_trading_context(config.clone(), collateral, |market_id| {
+			// Alice opens a position
+			VammPallet::set_price(Some(5.into()));
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				direction,
+				collateral,
+				as_balance(20),
+			));
+
+			// Time passes and ALICE closes her position
+			let now = config.twap_period / 2;
+			run_to_time(now);
+			assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
+
+			// The last oracle TWAP update timestamp equals the one of the position closing
+			assert_eq!(get_market(&market_id).last_oracle_ts, now);
+		});
+	}
+
+		#[test]
 	fn should_charge_fees_upon_closing(direction in any_direction(), taker_fee in 1..=1_000_u128) {
 		let config = MarketConfig {
 			taker_fee,

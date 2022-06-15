@@ -928,22 +928,26 @@ pub mod pallet {
 			MarketCount::<T>::try_mutate(|id| {
 				let market_id = id.clone();
 				let market = Market {
-					asset_id: config.asset,
 					vamm_id: T::Vamm::create(&config.vamm_config)?,
+					asset_id: config.asset,
 					margin_ratio_initial: config.margin_ratio_initial,
 					margin_ratio_maintenance: config.margin_ratio_maintenance,
 					margin_ratio_partial: config.margin_ratio_partial,
 					minimum_trade_size: config.minimum_trade_size,
+					funding_frequency: config.funding_frequency,
+					funding_period: config.funding_period,
+					taker_fee: config.taker_fee,
+					twap_period: config.twap_period,
 					available_gains: Zero::zero(),
 					base_asset_amount_long: Zero::zero(),
 					base_asset_amount_short: Zero::zero(),
-					fee_pool: Zero::zero(),
-					funding_frequency: config.funding_frequency,
-					funding_period: config.funding_period,
 					cum_funding_rate_long: Zero::zero(),
 					cum_funding_rate_short: Zero::zero(),
+					fee_pool: Zero::zero(),
 					funding_rate_ts: T::UnixTime::now().as_secs(),
-					taker_fee: config.taker_fee,
+					last_oracle_price: Zero::zero(),
+					last_oracle_twap: Zero::zero(),
+					last_oracle_ts: T::UnixTime::now().as_secs(),
 				};
 				Markets::<T>::insert(&market_id, market);
 
@@ -1084,6 +1088,9 @@ pub mod pallet {
 
 			if let Some(direction) = position.direction() {
 				Self::settle_funding(position, &market, &mut collateral)?;
+
+				// Update oracle TWAP *before* swapping
+				Self::update_oracle_twap(&market)?;
 
 				// For checking oracle guard rails afterwards
 				let was_mark_index_too_divergent = Self::is_mark_index_too_divergent(&market)?;
@@ -1757,6 +1764,10 @@ pub mod pallet {
 
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
+		fn update_oracle_twap(market: &Market<T>) -> Result<(), DispatchError> {
+			Ok(())
+		}
+
 		fn settle_profit_and_loss(
 			collateral: &mut T::Balance,
 			outstanding_gains: &mut T::Balance,
