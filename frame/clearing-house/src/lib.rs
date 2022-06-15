@@ -1685,7 +1685,7 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			// Block if mark-index divergence was pushed too far
 			ensure!(
-				!Self::is_mark_index_too_divergent(market)? || was_mark_index_too_divergent,
+				was_mark_index_too_divergent || !Self::is_mark_index_too_divergent(market)?,
 				Error::<T>::OracleMarkTooDivergent
 			);
 
