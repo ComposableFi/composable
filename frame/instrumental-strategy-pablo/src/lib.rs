@@ -149,8 +149,9 @@ pub mod pallet {
 	pub type AssociatedVaults<T: Config> =
 		StorageValue<_, BoundedBTreeSet<T::VaultId, T::MaxAssociatedVaults>, ValueQuery>;
 
-	/// An asset whitelisted by Instrumental
-	/// The corresponding Pool to invest the whitelisted asset into
+	/// An asset whitelisted by Instrumental.
+	///
+	/// The corresponding Pool to invest the whitelisted asset into.
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
 	pub type Pools<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, T::PoolId>;
