@@ -68,7 +68,10 @@ pub mod pallet {
 	use sp_runtime::{
 		helpers_128bit::multiply_by_rational,
 		offchain::{http, Duration},
-		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Saturating, Zero},
+		traits::{
+			AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Saturating,
+			UniqueSaturatedInto as _, Zero,
+		},
 		AccountId32, ArithmeticError, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId,
 		PerThing, Percent, RuntimeDebug,
 	};
@@ -382,10 +385,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> Oracle for Pallet<T>
-	where
-		u128: From<<T as frame_system::Config>::BlockNumber>,
-	{
+	impl<T: Config> Oracle for Pallet<T> {
 		type Balance = T::PriceValue;
 		type AssetId = T::AssetId;
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
@@ -947,19 +947,82 @@ pub mod pallet {
 			});
 		}
 
+		pub fn get_twap(
+			asset_id: T::AssetId,
+			twap_window: usize,
+		) -> Result<T::PriceValue, DispatchError> {
+			let historical_prices = Self::price_history(asset_id);
+
+			ensure!(twap_window <= historical_prices.len() + 1, Error::<T>::DepthTooLarge);
+
+			let mut prices: Vec<_> = historical_prices
+				.iter()
+				.rev()
+				.enumerate()
+				.filter_map(|(i, price)| if i < twap_window { Some(price) } else { None })
+				.rev()
+				.collect();
+			let current_price =
+				Prices::<T>::try_get(asset_id).map_err(|_| Error::<T>::PriceNotFound)?;
+			prices.push(&current_price);
+
+			let weights: Vec<u128> = prices
+				.windows(2)
+				.map(|w| {
+					w.get(0)
+						.and_then(|a| w.get(1).map(|b| (a, b)))
+						.and_then(|(a, b)| b.block.checked_sub(&a.block))
+						.unwrap_or_default()
+						.unique_saturated_into()
+				})
+				.collect();
+
+			let weights_sum: u128 = weights.iter().sum();
+
+			let prices_sum: u128 = prices
+				.iter()
+				// skip 1 for diff calculation
+				.skip(1)
+				.map(|e| -> u128 { e.price.into() })
+				.zip(weights)
+				.filter_map(|(price, weight)| {
+					if weights_sum == 0_u128 {
+						// if all weights is eq 0 then just return price.
+						Some(price)
+					} else if weight == 0_u128 {
+						// if weight is eq 0 then skip it.
+						// it happens if few prices associated with same block number.
+						None
+					} else {
+						// otherwise muliply price and weight.
+						Some(price * weight)
+					}
+				})
+				.sum();
+
+			let twap = if weights_sum == 0_u128 {
+				prices_sum / ((prices.len() - 1) as u128)
+			} else {
+				prices_sum / weights_sum
+			};
+
+			Ok(twap.into())
+		}
+
 		fn quote(
 			asset_id: T::AssetId,
 			price: T::PriceValue,
 			amount: T::PriceValue,
-		) -> Result<T::PriceValue, DispatchError>
-		where
-			u128: From<<T as frame_system::Config>::BlockNumber>,
-		{
+		) -> Result<T::PriceValue, DispatchError> {
 			let unit = 10_u128
 				.checked_pow(<Self as Oracle>::LocalAssets::decimals(asset_id)?)
 				.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
-			let price = multiply_by_rational(price.into(), amount.into(), unit)
-				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
+			let price = multiply_by_rational(
+				price.unique_saturated_into(),
+				amount.unique_saturated_into(),
+				unit,
+			)
+			.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
 			let price = price
 				.try_into()
 				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
@@ -1093,73 +1156,6 @@ pub mod pallet {
 				_ => return None,
 			};
 			Some(price.integer as u64)
-		}
-	}
-
-	// u128: From<<T as frame_system::Config>::BlockNumber>,
-	impl<T: Config> Pallet<T>
-	where
-		u128: From<<T as frame_system::Config>::BlockNumber>,
-	{
-		pub fn get_twap(
-			asset_id: T::AssetId,
-			twap_window: usize,
-		) -> Result<T::PriceValue, DispatchError> {
-			let historical_prices = Self::price_history(asset_id);
-
-			ensure!(twap_window <= historical_prices.len() + 1, Error::<T>::DepthTooLarge);
-
-			let mut prices: Vec<_> = historical_prices
-				.iter()
-				.rev()
-				.enumerate()
-				.filter_map(|(i, price)| if i < twap_window { Some(price) } else { None })
-				.rev()
-				.collect();
-			let current_price =
-				Prices::<T>::try_get(asset_id).map_err(|_| Error::<T>::PriceNotFound)?;
-			prices.push(&current_price);
-
-			let weights: Vec<u128> = prices
-				.windows(2)
-				.map(|w| {
-					w.get(0)
-						.and_then(|a| w.get(1).map(|b| (a, b)))
-						.and_then(|(a, b)| b.block.checked_sub(&a.block))
-						.unwrap_or_default()
-						.into()
-				})
-				.collect();
-
-			let weights_sum: u128 = weights.iter().sum();
-
-			let prices_sum: u128 = prices
-				.iter()
-				// skip helper for diff calculation
-				.skip(1)
-				.map(|e| -> u128 { e.price.into() })
-				.zip(weights)
-				.filter_map(|(price, weight)| {
-					if weights_sum == 0_u128 {
-						// if all weights is eq 0 then just return price
-						Some(price)
-					} else if weight == 0_u128 {
-						// if weight is eq 0 then skip it
-						None
-					} else {
-						// otherwise muliply price and weight
-						Some(price * weight)
-					}
-				})
-				.sum();
-
-			let twap = if weights_sum == 0_u128 {
-				prices_sum / ((prices.len() - 1) as u128)
-			} else {
-				prices_sum / weights_sum
-			};
-
-			Ok(twap.into())
 		}
 	}
 }
