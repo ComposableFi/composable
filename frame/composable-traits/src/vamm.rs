@@ -88,7 +88,7 @@ pub struct VammConfig<Balance, Moment> {
 	pub peg_multiplier: Balance,
 	/// The frequency with wich the vamm must have it's funding rebalance.
 	/// (Used only for twap calculations.)
-	pub funding_period: Moment,
+	pub twap_period: Moment,
 }
 
 /// Specify a common encapsulation layer for the swap function.
@@ -142,5 +142,5 @@ pub struct SwapOutput<Balance> {
 	pub negative: bool,
 }
 
-/// The minimum allowed value for [`funding_period`](VammState::funding_period).
-pub const MINIMUM_FUNDING_PERIOD: u32 = 10;
+/// The minimum allowed value for [`twap_period`](VammState::twap_period).
+pub const MINIMUM_TWAP_PERIOD: u32 = 10;
