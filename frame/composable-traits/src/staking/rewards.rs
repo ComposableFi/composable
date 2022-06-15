@@ -21,6 +21,6 @@ pub struct RewardConfig<RewardsRate> {
 pub struct Rewards<RewardsUpdates> {
 	/// List of reward asset/pending rewards.
 	pub rewards: RewardsUpdates,
-	/// The reward multiplier. Captured from configuration  on creation.
+	/// The reward multiplier. Captured from configuration on creation.
 	pub reward_multiplier: Perbill,
 }
