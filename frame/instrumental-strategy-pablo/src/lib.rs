@@ -253,11 +253,10 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			if Pools::<T>::contains_key(asset_id) {
 				Pools::<T>::mutate(asset_id, |_| pool_id);
-				Ok(())
 			} else {
 				Pools::<T>::insert(asset_id, pool_id);
-				Ok(())
 			}
+			Ok(())
 		}
 
 		fn rebalance() -> DispatchResult {
