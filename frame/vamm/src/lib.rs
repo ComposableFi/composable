@@ -275,13 +275,14 @@ pub mod pallet {
 		/// effect at the time `timestamp`.
 		pub closed: Option<Moment>,
 
-		/// The time weighted average price for
-		/// [`base_asset_reserves`](VammState::base_asset_reserves).
+		/// The time weighted average price of
+		/// [`base`](composable_traits::vamm::AssetType::Base) asset w.r.t.
+		/// [`quote`](composable_traits::vamm::AssetType::Quote) asset.
 		pub base_asset_twap: Decimal,
 
-		/// The time weighted average price timestamp for
-		/// [`base_asset_reserves`](VammState::base_asset_reserves).
-		pub base_asset_twap_timestamp: Moment,
+		/// The time weighted average price of
+		/// [`quote`](composable_traits::vamm::AssetType::Quote) asset w.r.t.
+		/// [`base`](composable_traits::vamm::AssetType::Base) asset.
 		pub quote_asset_twap: Decimal,
 
 		/// The time weighted average price for
