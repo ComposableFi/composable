@@ -2,11 +2,11 @@ use composable_traits::{instrumental::InstrumentalVaultConfig, vault::VaultConfi
 use frame_support::{
 	assert_ok, sp_std::collections::btree_map::BTreeMap, traits::fungibles::Mutate,
 };
+use primitives::currency::CurrencyId;
 use sp_runtime::Perquintill;
 
 use super::{
 	account_id::{AccountId, ADMIN},
-	currency::{CurrencyId, USDC},
 	runtime::{Assets, Balance, Instrumental, Origin},
 };
 
@@ -22,7 +22,7 @@ pub struct InstrumentalVaultConfigBuilder {
 impl Default for InstrumentalVaultConfigBuilder {
 	fn default() -> Self {
 		InstrumentalVaultConfigBuilder {
-			asset_id: USDC::ID,
+			asset_id: CurrencyId::USDC,
 			percent_deployable: Perquintill::zero(),
 		}
 	}
@@ -62,7 +62,7 @@ pub struct VaultConfigBuilder {
 impl Default for VaultConfigBuilder {
 	fn default() -> Self {
 		VaultConfigBuilder {
-			asset_id: USDC::ID,
+			asset_id: CurrencyId::USDC,
 			manager: ADMIN,
 			reserved: Perquintill::one(),
 			strategies: BTreeMap::new(),

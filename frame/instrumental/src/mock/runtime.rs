@@ -1,31 +1,29 @@
-use composable_traits::governance::{GovernanceRegistry, SignedRawOrigin};
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{Everything, GenesisBuild},
 	PalletId,
 };
-use frame_system::{EnsureRoot, EnsureSignedBy};
-use orml_traits::{parameter_type_with_key, GetByKey};
-use pallet_instrumental::mock::{
-	account_id::{AccountId, ADMIN},
-	currency::{CurrencyId, PICA},
-};
+use frame_system::{EnsureRoot, EnsureSigned, EnsureSignedBy};
+use orml_traits::parameter_type_with_key;
+use pallet_instrumental::mock::account_id::{AccountId, ADMIN};
+use primitives::currency::CurrencyId;
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{ConvertInto, IdentityLookup},
+	Permill,
 };
 
 use crate as pallet_instrumental;
 
 pub type BlockNumber = u64;
 pub type Balance = u128;
+pub type PoolId = u128;
 pub type VaultId = u64;
+pub type Moment = composable_traits::time::Timestamp;
 pub type Amount = i128;
 
-pub const VAULT_PALLET_ID: PalletId = PalletId(*b"cubic___");
-pub const NATIVE_ASSET: CurrencyId = PICA::ID;
-
+pub const MILLISECS_PER_BLOCK: u64 = 12000;
 pub const MAX_ASSOCIATED_VAULTS: u32 = 10;
 
 // ----------------------------------------------------------------------------------------------------
@@ -120,35 +118,26 @@ impl pallet_currency_factory::Config for MockRuntime {
 	type WeightInfo = ();
 }
 
-// ----------------------------------------------------------------------------------------------------
-//                                                Assets
-// ----------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------
+//                                   Governance Registry
+// -----------------------------------------------------------------------------------------------
+
+impl pallet_governance_registry::Config for MockRuntime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type WeightInfo = ();
+}
+
+// -------------------------------------------------------------------------------------------------
+//                                              Assets
+// -------------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const NativeAssetId: CurrencyId = CurrencyId::PICA;
+}
 
 ord_parameter_types! {
 	pub const RootAccount: AccountId = ADMIN;
-}
-
-parameter_types! {
-	pub const NativeAssetId: CurrencyId = NATIVE_ASSET;
-}
-
-pub struct NoopRegistry;
-
-impl<CurrencyId, AccountId> GovernanceRegistry<CurrencyId, AccountId> for NoopRegistry {
-	fn set(_k: CurrencyId, _value: SignedRawOrigin<AccountId>) {}
-}
-
-impl<CurrencyId>
-	GetByKey<
-		CurrencyId,
-		Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError>,
-	> for NoopRegistry
-{
-	fn get(
-		_k: &CurrencyId,
-	) -> Result<SignedRawOrigin<sp_core::sr25519::Public>, sp_runtime::DispatchError> {
-		Ok(SignedRawOrigin::Root)
-	}
 }
 
 impl pallet_assets::Config for MockRuntime {
@@ -159,8 +148,8 @@ impl pallet_assets::Config for MockRuntime {
 	type NativeCurrency = Balances;
 	type MultiCurrency = Tokens;
 	type WeightInfo = ();
-	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
-	type GovernanceRegistry = NoopRegistry;
+	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>; // TODO(saruman9): or EnsureRoot<AccountId>?
+	type GovernanceRegistry = GovernanceRegistry;
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -174,8 +163,8 @@ parameter_types! {
 	pub const RentPerBlock: Balance = 1;
 	pub const MinimumDeposit: Balance = 0;
 	pub const MinimumWithdrawal: Balance = 0;
-	pub const VaultPalletId: PalletId = VAULT_PALLET_ID;
-	  pub const TombstoneDuration: u64 = 42;
+	pub const VaultPalletId: PalletId = PalletId(*b"cubic___");
+	pub const TombstoneDuration: u64 = 42;
 }
 
 impl pallet_vault::Config for MockRuntime {
@@ -199,6 +188,55 @@ impl pallet_vault::Config for MockRuntime {
 }
 
 // -----------------------------------------------------------------------------------------------
+//                                   Timestamp
+// -----------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const MinimumPeriod: u64 = MILLISECS_PER_BLOCK / 2;
+}
+
+impl pallet_timestamp::Config for MockRuntime {
+	type Moment = Moment;
+	type OnTimestampSet = ();
+	type MinimumPeriod = MinimumPeriod;
+	type WeightInfo = ();
+}
+
+// -----------------------------------------------------------------------------------------------
+//                                   Pablo (AMM)
+// -----------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const PabloPalletId: PalletId = PalletId(*b"pablo_pa");
+	pub const MinSaleDuration: BlockNumber = 3600 / 12;
+	pub const MaxSaleDuration: BlockNumber = 30 * 24 * 3600 / 12;
+	pub const MaxInitialWeight: Permill = Permill::from_percent(95);
+	pub const MinFinalWeight: Permill = Permill::from_percent(5);
+	pub const TWAPInterval: Moment = MILLISECS_PER_BLOCK * 10;
+}
+
+impl pallet_pablo::Config for MockRuntime {
+	type Event = Event;
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type Convert = ConvertInto;
+	type CurrencyFactory = LpTokenFactory;
+	type Assets = Assets;
+	type PoolId = PoolId;
+	type PalletId = PabloPalletId;
+	type LocalAssets = LpTokenFactory;
+	type LbpMinSaleDuration = MinSaleDuration;
+	type LbpMaxSaleDuration = MaxSaleDuration;
+	type LbpMaxInitialWeight = MaxInitialWeight;
+	type LbpMinFinalWeight = MinFinalWeight;
+	type PoolCreationOrigin = EnsureSigned<Self::AccountId>;
+	type EnableTwapOrigin = EnsureRoot<AccountId>;
+	type Time = Timestamp;
+	type TWAPInterval = TWAPInterval;
+	type WeightInfo = ();
+}
+
+// -----------------------------------------------------------------------------------------------
 //                                   Instrumental Pablo Strategy
 // -----------------------------------------------------------------------------------------------
 
@@ -215,6 +253,9 @@ impl instrumental_strategy_pablo::Config for MockRuntime {
 	type VaultId = VaultId;
 	type Vault = Vault;
 	type MaxAssociatedVaults = MaxAssociatedVaults;
+	type PoolId = PoolId;
+	type Currency = Tokens;
+	type Pablo = Pablo;
 	type PalletId = InstrumentalPabloStrategyPalletId;
 }
 
@@ -274,10 +315,13 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
 		Tokens: orml_tokens::{Pallet, Storage, Event<T>, Config<T>},
 		Assets: pallet_assets::{Pallet, Call, Storage},
+		GovernanceRegistry: pallet_governance_registry::{Pallet, Call, Storage, Event<T>},
+		Timestamp: pallet_timestamp::{Pallet, Call, Storage},
 
 		LpTokenFactory: pallet_currency_factory::{Pallet, Storage, Event<T>},
 
 		Vault: pallet_vault::{Pallet, Call, Storage, Event<T>},
+		Pablo: pallet_pablo::{Pallet, Call, Storage, Event<T>},
 		PabloStrategy: instrumental_strategy_pablo::{Pallet, Call, Storage, Event<T>},
 		InstrumentalStrategy: instrumental_strategy::{Pallet, Call, Storage, Event<T>},
 		Instrumental: pallet_instrumental::{Pallet, Call, Storage, Event<T>},
@@ -312,7 +356,7 @@ impl ExtBuilder {
 		asset: CurrencyId,
 		balance: Balance,
 	) -> ExtBuilder {
-		if asset == NATIVE_ASSET {
+		if asset == CurrencyId::PICA {
 			self.native_balances.push((user, balance));
 		} else {
 			self.balances.push((user, asset, balance));
@@ -326,7 +370,7 @@ impl ExtBuilder {
 		balances: Vec<(AccountId, CurrencyId, Balance)>,
 	) -> ExtBuilder {
 		balances.into_iter().for_each(|(account, asset, balance)| {
-			if asset == NATIVE_ASSET {
+			if asset == CurrencyId::PICA {
 				self.native_balances.push((account, balance));
 			} else {
 				self.balances.push((account, asset, balance));
