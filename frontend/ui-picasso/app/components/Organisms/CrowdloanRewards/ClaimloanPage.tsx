@@ -37,7 +37,7 @@ import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { closeKSMClaimModal, openKSMClaimModal } from "@/stores/ui/uiSlice";
 import { OpenInNewRounded } from "@mui/icons-material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import { isPendingExtrinsic, useExecutor } from "substrate-react";
+import { usePendingExtrinsic, useExecutor } from "substrate-react";
 import { useSnackbar } from "notistack";
 import BigNumber from "bignumber.js";
 const DEFAULT_EVM_ID = 1;
@@ -217,13 +217,13 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
         : claimablePICA
       : claimablePICA;
 
-  const isPendingClaim = isPendingExtrinsic(
+  const isPendingClaim = usePendingExtrinsic(
     "claim",
     "crowdloanRewards",
     selectedAccount ? selectedAccount.address : ""
   );
 
-  const isPendingAssociate = isPendingExtrinsic(
+  const isPendingAssociate = usePendingExtrinsic(
     "associate",
     "crowdloanRewards",
     ""

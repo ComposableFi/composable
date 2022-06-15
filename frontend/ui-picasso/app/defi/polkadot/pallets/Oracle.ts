@@ -3,7 +3,6 @@ import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
 import { store } from "@/stores/root";
 import { updatePrice } from "@/stores/defi/polkadot/oracle/slice";
-import { Price } from "@/defi/polkadot/interfaces/basilisk";
 import { fromPica } from "@/defi/polkadot/pallets/BondedFinance";
 import { ComposableTraitsOraclePrice } from "@/defi/polkadot/interfaces";
 

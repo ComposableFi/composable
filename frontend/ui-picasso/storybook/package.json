@@ -17,7 +17,6 @@
     "@storybook/react": "^6.4.9",
     "@storybook/testing-react": "^1.2.3",
     "eslint-plugin-storybook": "^0.5.5",
-    "storybook-addon-next": "^1.4.1",
     "storybook-addon-next-router": "^3.1.1",
     "typescript": "latest"
   },
@@ -25,7 +24,6 @@
     "webpack": "*"
   },
   "dependencies": {
-    "@storybook/addon-actions": "^6.4.19",
     "@storybook/addons": "^6.4.19",
     "storybook-addon-next": "^1.6.2"
   }

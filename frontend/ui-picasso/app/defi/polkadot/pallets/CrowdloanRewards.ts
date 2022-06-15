@@ -2,7 +2,6 @@ import { ApiPromise } from "@polkadot/api";
 import { Signer } from "@polkadot/api/types";
 import { AnyAction, Dispatch } from "@reduxjs/toolkit";
 import BigNumber from "bignumber.js";
-import Executor from "substrate-react/dist/Executor";
 
 export class CrowdloanRewards {
   api: ApiPromise;
@@ -21,8 +20,7 @@ export class CrowdloanRewards {
   public async associate(
     proof: string,
     rewardAccount: string,
-    contributorAccount: string | undefined = undefined,
-    executor: Executor
+    contributorAccount: string | undefined = undefined
   ) {
     const rewardsAccountID = this.api.createType("AccountId32", rewardAccount);
 

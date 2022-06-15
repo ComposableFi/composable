@@ -1,6 +1,7 @@
 import { Token, TOKENS } from "@/defi/Tokens";
 
 import { createSlice } from "@reduxjs/toolkit";
+import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 
 // TODO: [defi] edit values accordingly to your needs
 export type Account = {
@@ -60,10 +61,11 @@ interface PolkadotState {
   };
   selectedAccount: Account | null;
   allBonds: AllBondsAsset[];
+  bonds: BondOffer[];
   staking: StakingInfo;
 }
 
-const initialState: PolkadotState = {
+const initialState: { myStakingAssets: { pablo: any[]; picasso: any[] }; staking: { nextRewardAmount: number; balance: number; stakedBalance: number; apy: string; roi: number; deposits: string; totalStaked: string }; assets: ({ balance: number; price: number; change_24hr: number; value: number; token: Token } | { balance: number; price: number; change_24hr: number; value: number; token: Token })[]; bonds: any[]; selectedAccount: null; myBondingAssets: { pablo: any[]; picasso: any[] } } = {
   selectedAccount: null,
   assets: [
     {
@@ -83,89 +85,21 @@ const initialState: PolkadotState = {
   ],
   myStakingAssets: {
     picasso: [
-      {
-        token: TOKENS["pica"],
-        price: 1.43,
-        balance: 4534,
-        value: 46187,
-        change_24hr: 0.34,
-      },
-      {
-        token: TOKENS["ksm"],
-        price: 189,
-        balance: 42,
-        value: 984.98,
-        change_24hr: -0.12,
-      },
     ],
     pablo: [
-      {
-        token: TOKENS["pica"],
-        toToken: TOKENS["ksm"],
-        price: 1.43,
-        balance: 4534,
-        value: 46187,
-        change_24hr: 0.34,
-      },
-      {
-        token: TOKENS["ksm"],
-        toToken: TOKENS["pica"],
-        price: 189,
-        balance: 42,
-        value: 984.98,
-        change_24hr: -0.12,
-      },
+
     ],
   },
   myBondingAssets: {
     picasso: [
-      {
-        token: TOKENS["ksm"],
-        toToken: TOKENS["pica"],
-        claimable: 543,
-        pending: 123,
-        vesting_time: "4D 2H 43M",
-      },
-      {
-        token: TOKENS["pica"],
-        toToken: TOKENS["ksm"],
-        claimable: 543,
-        pending: 123,
-        vesting_time: "4D 2H 43M",
-      },
+
     ],
     pablo: [
-      {
-        token: TOKENS["ksm"],
-        toToken: TOKENS["pica"],
-        claimable: 543,
-        pending: 123,
-        vesting_time: "4D 2H 43M",
-      },
-      {
-        token: TOKENS["pica"],
-        toToken: TOKENS["ksm"],
-        claimable: 543,
-        pending: 123,
-        vesting_time: "4D 2H 43M",
-      },
+
     ],
   },
   bonds: [
-    {
-      token: TOKENS["ksm"],
-      toToken: TOKENS["pica"],
-      price: 529.17,
-      roi: 2.94,
-      totalPurchased: "12,179,198.25	",
-    },
-    {
-      token: TOKENS["pica"],
-      toToken: TOKENS["ksm"],
-      price: 529.17,
-      roi: -12.3,
-      totalPurchased: "12,179,198.25	",
-    },
+
   ],
   staking: {
     deposits: "$0",

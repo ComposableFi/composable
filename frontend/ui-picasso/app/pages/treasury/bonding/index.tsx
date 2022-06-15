@@ -23,7 +23,7 @@ const TreasuryBonding: NextPage = () => {
   const theme = useTheme();
   const { extensionStatus } = useContext(ParachainContext);
   const myBondings = useAppSelector((state) => state.polkadot.myBondingAssets);
-  const allBonds = useAppSelector((state) => state.polkadot.allBonds);
+  const allBonds = useAppSelector((state) => state.polkadot.bonds);
   const router = useRouter();
 
   const handleActiveBondsClick = (asset: BondingAsset) => {
@@ -44,6 +44,8 @@ const TreasuryBonding: NextPage = () => {
     });
   };
 
+  // @ts-ignore
+  // @ts-ignore
   return (
     <Default>
       <Box flexGrow={1} sx={{ mx: "auto" }} maxWidth={1032} paddingBottom={16}>
@@ -110,6 +112,7 @@ const TreasuryBonding: NextPage = () => {
                   <Typography mb={2}>All Bonds</Typography>
                   <AllBondsTable
                     assets={allBonds}
+                    // @ts-ignore
                     onRowClick={handleAllBondsClick}
                   />
                 </Box>

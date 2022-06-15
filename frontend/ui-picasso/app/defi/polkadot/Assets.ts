@@ -59,6 +59,17 @@ export const Assets: {
       picasso: 2,
     },
   },
+  pablo: {
+    decimals: 12,
+    assetId: "pablo",
+    symbol: "PAB",
+    icon: "/tokens/pablo.svg",
+    name: "PABLO",
+    supportedNetwork: {
+      karura: null,
+      picasso: 2,
+    },
+  },
 };
 
 export const AssetsValidForNow: AssetId[] = ["pica", "kusd", "ksm"];

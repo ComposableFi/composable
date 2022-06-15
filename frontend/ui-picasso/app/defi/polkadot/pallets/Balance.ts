@@ -9,9 +9,8 @@ export const fetchBalanceByAssetId = async (
   assetId: string
 ): Promise<string> => {
   try {
-    const uAssetId = api.createType("CurrencyId", assetId);
     const uAccount = api.createType("AccountId32", accountId);
-    const balance = await api.rpc.assets.balanceOf(uAssetId, uAccount);
+    const balance = await api.rpc.assets.balanceOf(assetId, uAccount);
 
     console.log({ balance: balance.toString(), assetId });
 
