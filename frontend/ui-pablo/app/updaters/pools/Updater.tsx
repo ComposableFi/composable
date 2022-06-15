@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import useStore from "@/store/useStore";
 import { useParachainApi } from "substrate-react";
-import { fetchPools } from "./utils";
+import { fetchPools } from "@/defi/utils";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { useRouter } from "next/router";
 /**

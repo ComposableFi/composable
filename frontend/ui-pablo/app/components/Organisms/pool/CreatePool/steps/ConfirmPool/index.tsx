@@ -24,9 +24,7 @@ import moment from "moment-timezone";
 import { useRouter } from "next/router";
 import useStore from "@/store/useStore";
 import {
-  Assets,
   getAsset,
-  getAssetById,
   getAssetOnChainId,
 } from "@/defi/polkadot/Assets";
 import { AMMs } from "@/defi/AMMs";
@@ -38,14 +36,10 @@ import {
   useParachainApi,
   useSelectedAccount,
 } from "substrate-react";
-import {
-  createConstantProductPool,
-  createStableSwapPool,
-} from "@/updaters/createPool/utils";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { EventRecord } from "@polkadot/types/interfaces/system/types";
-import { addLiquidityToPoolViaPablo } from "@/defi/utils";
+import { addLiquidityToPoolViaPablo, createConstantProductPool, createStableSwapPool } from "@/defi/utils";
 import { closeConfirmingModal, openConfirmingModal } from "@/stores/ui/uiSlice";
 
 const labelProps = (
