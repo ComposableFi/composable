@@ -254,7 +254,7 @@ prop_compose! {
 		base_asset_twap_timestamp in any_time(),
 		quote_asset_twap_timestamp in any_time(),
 		funding_period in any_time()
-	) -> VammState<Balance, VammTimestamp> {
+	) -> VammState<Balance, Timestamp, Decimal> {
 		VammState {
 			base_asset_reserves,
 			quote_asset_reserves,
@@ -264,8 +264,8 @@ prop_compose! {
 			).unwrap(),
 			base_asset_twap_timestamp,
 			quote_asset_twap_timestamp,
-			base_asset_twap: base_asset_reserves,
-			quote_asset_twap: quote_asset_reserves,
+			base_asset_twap: Decimal::from_inner(base_asset_reserves),
+			quote_asset_twap: Decimal::from_inner(quote_asset_reserves),
 			closed,
 			twap_period,
 		}
@@ -294,7 +294,7 @@ prop_compose! {
 		base_asset_twap_timestamp in timestamp(),
 		quote_asset_twap in balance_range(),
 		quote_asset_twap_timestamp in timestamp(),
-	) -> VammState<Balance, VammTimestamp> {
+	) -> VammState<Balance, Timestamp, Decimal> {
 		let invariant = match (
 			config.base_asset_reserves,
 			config.quote_asset_reserves
@@ -302,6 +302,9 @@ prop_compose! {
 			(Some(base), Some(quote)) => TestPallet::compute_invariant(base, quote),
 			_ => TestPallet::compute_invariant(base_asset_reserves, quote_asset_reserves)
 		}.unwrap();
+
+		let base_asset_twap = Decimal::from_inner(base_asset_twap);
+		let quote_asset_twap = Decimal::from_inner(quote_asset_twap);
 
 		VammState {
 			base_asset_reserves: config

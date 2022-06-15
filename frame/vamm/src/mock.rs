@@ -139,6 +139,7 @@ pub struct ExtBuilder {
 		pallet_vamm::VammState<
 			<MockRuntime as pallet_vamm::Config>::Balance,
 			<MockRuntime as pallet_vamm::Config>::Moment,
+			<MockRuntime as pallet_vamm::Config>::Decimal,
 		>,
 	)>,
 }

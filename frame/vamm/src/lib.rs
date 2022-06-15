@@ -200,7 +200,12 @@ pub mod pallet {
 			+ Zero;
 
 		/// Signed decimal fixed point number.
-		type Decimal: FullCodec + MaxEncodedLen + TypeInfo + FixedPointNumber<Inner = Self::Balance>;
+		type Decimal: Default
+			+ FixedPointNumber<Inner = Self::Balance>
+			+ FullCodec
+			+ MaxEncodedLen
+			+ MaybeSerializeDeserialize
+			+ TypeInfo;
 
 		/// The Integer type used by the pallet for computing swaps.
 		type Integer: Integer;
@@ -235,7 +240,7 @@ pub mod pallet {
 	type SwapSimulationConfigOf<T> = SwapSimulationConfig<VammIdOf<T>, BalanceOf<T>>;
 	type MovePriceConfigOf<T> = MovePriceConfig<VammIdOf<T>, BalanceOf<T>>;
 	type VammConfigOf<T> = VammConfig<BalanceOf<T>, MomentOf<T>>;
-	type VammStateOf<T> = VammState<BalanceOf<T>, MomentOf<T>>;
+	type VammStateOf<T> = VammState<BalanceOf<T>, MomentOf<T>, DecimalOf<T>>;
 
 	/// Represents the direction a of a position.
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo)]
@@ -247,7 +252,7 @@ pub mod pallet {
 	/// Data relating to the state of a virtual market.
 	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug, Default)]
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-	pub struct VammState<Balance, Moment> {
+	pub struct VammState<Balance, Moment, Decimal> {
 		/// The total amount of base asset present in the vamm.
 		pub base_asset_reserves: Balance,
 
@@ -272,15 +277,15 @@ pub mod pallet {
 
 		/// The time weighted average price for
 		/// [`base_asset_reserves`](VammState::base_asset_reserves).
-		pub base_asset_twap: Balance,
+		pub base_asset_twap: Decimal,
 
 		/// The time weighted average price timestamp for
 		/// [`base_asset_reserves`](VammState::base_asset_reserves).
 		pub base_asset_twap_timestamp: Moment,
+		pub quote_asset_twap: Decimal,
 
 		/// The time weighted average price for
 		/// [`quote_asset_reserves`](VammState::quote_asset_reserves).
-		pub quote_asset_twap: Balance,
 
 		/// The time weighted average price timestamp for
 		/// [`quote_asset_reserves`](VammState::quote_asset_reserves).
@@ -528,10 +533,10 @@ pub mod pallet {
 				let vamm_state = VammStateOf::<T> {
 					base_asset_reserves: config.base_asset_reserves,
 					quote_asset_reserves: config.quote_asset_reserves,
-					base_asset_twap: base_twap.into_inner(),
-					quote_asset_twap: quote_twap.into_inner(),
 					base_asset_twap_timestamp: now,
 					quote_asset_twap_timestamp: now,
+					base_asset_twap: base_twap,
+					quote_asset_twap: quote_twap,
 					peg_multiplier: config.peg_multiplier,
 					invariant,
 					twap_period: config.twap_period,
@@ -649,8 +654,8 @@ pub mod pallet {
 			ensure!(!Self::is_vamm_closed(&vamm_state, &None), Error::<T>::VammIsClosed);
 
 			match asset_type {
-				AssetType::Base => Ok(DecimalOf::<T>::from_inner(vamm_state.base_asset_twap)),
-				AssetType::Quote => Ok(DecimalOf::<T>::from_inner(vamm_state.quote_asset_twap)),
+				AssetType::Base => Ok(vamm_state.base_asset_twap),
+				AssetType::Quote => Ok(vamm_state.quote_asset_twap),
 			}
 		}
 

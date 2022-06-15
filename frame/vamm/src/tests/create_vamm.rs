@@ -73,7 +73,7 @@ proptest! {
 				vamm_config.quote_asset_reserves
 			).unwrap();
 
-			let tmp_vamm_expected = VammState::<Balance, VammTimestamp> {
+			let tmp_vamm_expected = VammState::<Balance, Timestamp, Decimal> {
 					base_asset_reserves: vamm_config.base_asset_reserves,
 					quote_asset_reserves: vamm_config.quote_asset_reserves,
 					peg_multiplier: vamm_config.peg_multiplier,
@@ -84,13 +84,13 @@ proptest! {
 			let base_asset_twap = TestPallet::do_get_price(&tmp_vamm_expected, AssetType::Base).unwrap();
 			let quote_asset_twap = TestPallet::do_get_price(&tmp_vamm_expected, AssetType::Quote).unwrap();
 
-			let vamm_expected = VammState::<Balance, VammTimestamp> {
+			let vamm_expected = VammState::<Balance, Timestamp, Decimal> {
 				base_asset_reserves: vamm_config.base_asset_reserves,
 				quote_asset_reserves: vamm_config.quote_asset_reserves,
 				peg_multiplier: vamm_config.peg_multiplier,
-				base_asset_twap: base_asset_twap.into_inner(),
-				quote_asset_twap: quote_asset_twap.into_inner(),
 				twap_period: vamm_config.twap_period,
+				base_asset_twap: base_asset_twap,
+				quote_asset_twap: quote_asset_twap,
 				invariant,
 				..Default::default()
 			};

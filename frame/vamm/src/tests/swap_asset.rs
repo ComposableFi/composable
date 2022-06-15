@@ -168,8 +168,8 @@ fn swap_add_base() {
 			VammState {
 				base_asset_reserves: base_u256.as_u128(),
 				quote_asset_reserves: quote_u256.as_u128(),
-				base_asset_twap: base_u256.as_u128(),
-				quote_asset_twap: quote_u256.as_u128(),
+				base_asset_twap: base_u256.as_u128().into(),
+				quote_asset_twap: quote_u256.as_u128().into(),
 				twap_period: 3600,
 				peg_multiplier: 1,
 				invariant,
@@ -224,8 +224,8 @@ fn swap_remove_base() {
 			VammState {
 				base_asset_reserves: base_u256.as_u128(),
 				quote_asset_reserves: quote_u256.as_u128(),
-				base_asset_twap: base_u256.as_u128(),
-				quote_asset_twap: quote_u256.as_u128(),
+				base_asset_twap: base_u256.as_u128().into(),
+				quote_asset_twap: quote_u256.as_u128().into(),
 				twap_period: 3600,
 				peg_multiplier: 1,
 				invariant,
@@ -280,8 +280,8 @@ fn swap_add_quote() {
 			VammState {
 				base_asset_reserves: base_u256.as_u128(),
 				quote_asset_reserves: quote_u256.as_u128(),
-				base_asset_twap: base_u256.as_u128(),
-				quote_asset_twap: quote_u256.as_u128(),
+				base_asset_twap: base_u256.as_u128().into(),
+				quote_asset_twap: quote_u256.as_u128().into(),
 				twap_period: 3600,
 				peg_multiplier: 1,
 				invariant,
@@ -336,8 +336,8 @@ fn swap_remove_quote() {
 			VammState {
 				base_asset_reserves: base_u256.as_u128(),
 				quote_asset_reserves: quote_u256.as_u128(),
-				base_asset_twap: base_u256.as_u128(),
-				quote_asset_twap: quote_u256.as_u128(),
+				base_asset_twap: base_u256.as_u128().into(),
+				quote_asset_twap: quote_u256.as_u128().into(),
 				twap_period: 3600,
 				peg_multiplier: 1,
 				invariant,

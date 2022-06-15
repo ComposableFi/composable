@@ -135,11 +135,11 @@ fn update_twap_succeeds() {
 	let mut timestamp_greater = VammTimestamp::MIN + 1;
 	let twap = 10_u128.pow(18);
 	let new_twap = Some(VammDecimal::from_inner(10_u128.pow(18) * 5));
-	let vamm_state = VammState {
 		base_asset_twap_timestamp: timestamp,
 		quote_asset_twap_timestamp: timestamp,
-		base_asset_twap: twap,
-		quote_asset_twap: twap,
+	let vamm_state = VammState::<Balance, Timestamp, Decimal> {
+		base_asset_twap: twap.into(),
+		quote_asset_twap: twap.into(),
 		base_asset_reserves: twap,
 		quote_asset_reserves: twap,
 		twap_period: 3600,
