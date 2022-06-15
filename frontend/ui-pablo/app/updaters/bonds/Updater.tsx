@@ -32,23 +32,25 @@ const Updater = () => {
           bonds.map(async (bond, index) => {
             const [beneficiary, bondOffer] = bond.toHuman() as any;
 
-            const assetId = stringToBigNumber(bondOffer.asset).toNumber();
-            const rewardAssetId = stringToBigNumber(
+            const principalCurrencyId = stringToBigNumber(
+              bondOffer.asset
+            ).toNumber();
+            const rewardCurrencyId = stringToBigNumber(
               bondOffer.reward.asset
             ).toNumber();
 
             const [vestingSchedule] = (await (
               await parachainApi.query.vesting.vestingSchedules(
                 selectedAccount.address,
-                assetId
+                principalCurrencyId
               )
             ).toHuman()) as any;
 
             const oracleAssetPrice = (
-              await parachainApi.query.oracle.prices(assetId)
+              await parachainApi.query.oracle.prices(principalCurrencyId)
             ).toHuman() as any;
             const oracleRewardPrice = (
-              await parachainApi.query.oracle.prices(rewardAssetId)
+              await parachainApi.query.oracle.prices(rewardCurrencyId)
             ).toHuman() as any;
 
             const assetPriceInUSD = stringToBigNumber(

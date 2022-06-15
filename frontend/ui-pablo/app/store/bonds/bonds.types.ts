@@ -22,6 +22,7 @@ export interface BondSlice {
 export interface BondOffer {
   offerId: number;
   beneficiary: AccountId32;
+  currencyId: number;
   asset: Token;
   bondPrice: BigNumber;
   nbOfBonds: number;
@@ -39,6 +40,7 @@ export interface VestingSchedule {
 type Window = { start: number; period: number };
 
 interface OfferReward {
+  currencyId: number;
   asset: Token;
   amount: BigNumber;
   maturity: number;
