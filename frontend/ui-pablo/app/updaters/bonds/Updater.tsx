@@ -3,9 +3,9 @@ import useStore from "../../store/useStore";
 import { useEffect } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { decodeBondOffer } from "./decodeBondOffer";
-import { stringToBigNumber } from "../pools/utils";
-import { DEFAULT_NETWORK_ID } from "../constants";
+import { DEFAULT_DECIMALS, DEFAULT_NETWORK_ID } from "../constants";
 import { decodeVestingSchedule } from "./decodeVestingSchedule";
+import { stringToBigNumber } from "../../utils/stringToBigNumber";
 
 /**
  * Updates zustand store with all bonds from bondedFinance pallet
@@ -29,7 +29,7 @@ const Updater = () => {
           }
 
           const bonds = await Promise.all(offerPromises);
-          bonds.map(async (bond) => {
+          bonds.map(async (bond, index) => {
             const [beneficiary, bondOffer] = bond.toHuman() as any;
 
             const assetId = stringToBigNumber(bondOffer.asset).toNumber();
@@ -51,24 +51,27 @@ const Updater = () => {
               await parachainApi.query.oracle.prices(rewardAssetId)
             ).toHuman() as any;
 
-            const decimals = new BigNumber(10).pow(12);
-
             const assetPriceInUSD = stringToBigNumber(
               oracleAssetPrice.price
-            ).div(decimals);
+            ).div(DEFAULT_DECIMALS);
             const rewardPriceInUSD = stringToBigNumber(
               oracleRewardPrice.price
-            ).div(decimals);
+            ).div(DEFAULT_DECIMALS);
 
-            const decodedBondOffer = decodeBondOffer(beneficiary, bondOffer);
+            const decodedBondOffer = decodeBondOffer(
+              index + 1,
+              beneficiary,
+              bondOffer
+            );
             const decodedVestingSchedule = vestingSchedule
               ? decodeVestingSchedule(vestingSchedule)
               : null;
 
-            const currentBlock = stringToBigNumber(
+            const currentBlock = Number(
               (await parachainApi.query.system.number()).toString()
             );
-            const currentTime = stringToBigNumber(
+
+            const currentTime = Number(
               (await parachainApi.query.timestamp.now()).toString()
             );
 
