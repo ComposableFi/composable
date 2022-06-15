@@ -9,6 +9,9 @@ on:
       - releases
       - qa-simnode
 
+env:
+  RUNTIME_CHECK: 1
+
 jobs:
   simnode:
     runs-on:
