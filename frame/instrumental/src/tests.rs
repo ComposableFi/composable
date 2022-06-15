@@ -4,15 +4,17 @@ use itertools::Itertools;
 use primitives::currency::CurrencyId;
 use proptest::prelude::*;
 
-use crate::mock::{
-	account_id::{pick_account, AccountId, ADMIN},
-	helpers::*,
-	runtime::{
-		Assets, Balance, Event, ExtBuilder, Instrumental, MockRuntime, Origin, System, Vault,
+use crate::{
+	mock::{
+		account_id::{pick_account, AccountId, ADMIN},
+		helpers::*,
+		runtime::{
+			Assets, Balance, Event, ExtBuilder, Instrumental, MockRuntime, Origin, System, Vault,
+		},
 	},
+	pallet,
+	pallet::{AssetVault, Error},
 };
-#[cfg(test)]
-use crate::{pallet, pallet::AssetVault, pallet::Error};
 
 // -------------------------------------------------------------------------------------------------
 //                                           Prop_compose
