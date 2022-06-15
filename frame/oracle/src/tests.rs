@@ -1414,7 +1414,7 @@ fn get_twap_for_amount() {
 		));
 
 		let asset_id = 0;
-		let block = 24;
+		let block = 26;
 		let account_1 = get_account_1();
 
 		for _ in 0..3 {
@@ -1426,14 +1426,14 @@ fn get_twap_for_amount() {
 
 		let price_1 = Price { price: 100, block: 21 };
 		let price_2 = Price { price: 100, block: 22 };
-		let price_3 = Price { price: 100, block: 23 };
+		let price_3 = Price { price: 100, block: 25 };
 		let historic_prices = [price_1, price_2, price_3].to_vec();
 		set_historic_prices(asset_id, historic_prices);
 
 		let amount = 10_000;
 		let twap = Oracle::get_twap_for_amount(0, amount);
-		// twap should be ((1 * 100) + (1 * 100) + (1 * 120)) / (1 + 1 + 1) * 10_000
-		assert_eq!(twap, Ok(106 * amount));
+		// twap should be ((1 * 100) + (3 * 100) + (1 * 120)) / (1 + 3 + 1) * 10_000
+		assert_eq!(twap, Ok(104 * amount));
 	});
 }
 
