@@ -4,7 +4,10 @@
 use std::ops::RangeInclusive;
 
 use crate::{
-	mock::{Balance, MockRuntime, Origin, System, TestPallet, Timestamp},
+	mock::{
+		Balance, MockRuntime, Origin, System as SystemPallet, TestPallet,
+		Timestamp as TimestampPallet,
+	},
 	pallet::{self, VammState},
 };
 use composable_traits::vamm::{
@@ -28,45 +31,15 @@ pub mod update_twap;
 // ----------------------------------------------------------------------------------------------------
 
 type Decimal = <MockRuntime as pallet::Config>::Decimal;
-type VammTimestamp = <MockRuntime as pallet::Config>::Moment;
+type Timestamp = <MockRuntime as pallet::Config>::Moment;
 type VammId = <TestPallet as VammTrait>::VammId;
 
-#[allow(dead_code)]
-fn run_to_block(n: u64) {
-	while System::block_number() < n {
-		if System::block_number() > 0 {
-			Timestamp::on_finalize(System::block_number());
-			System::on_finalize(System::block_number());
-		}
-		System::set_block_number(System::block_number() + 1);
-		// Time is set in milliseconds, so at each block we increment the timestamp by 1000ms = 1s
-		let _ = Timestamp::set(Origin::none(), System::block_number() * 1000);
-		System::on_initialize(System::block_number());
-		Timestamp::on_initialize(System::block_number());
-	}
-}
-
-#[allow(dead_code)]
-fn run_for_seconds(seconds: u64) {
-	// Not using an equivalent run_to_block call here because it causes the
-	// tests to slow down drastically
-	if System::block_number() > 0 {
-		Timestamp::on_finalize(System::block_number());
-		System::on_finalize(System::block_number());
-	}
-	System::set_block_number(System::block_number() + 1);
-	// Time is set in milliseconds, so we multiply the seconds by 1_000
-	let _ = Timestamp::set(Origin::none(), Timestamp::now() + 1_000 * seconds);
-	System::on_initialize(System::block_number());
-	Timestamp::on_initialize(System::block_number());
-}
-
 #[derive(Default)]
-struct TestVammState<Balance, VammTimestamp> {
+struct TestVammState<Balance, Timestamp> {
 	base_asset_reserves: Option<Balance>,
 	quote_asset_reserves: Option<Balance>,
 	peg_multiplier: Option<Balance>,
-	closed: Option<Option<VammTimestamp>>,
+	closed: Option<Option<Timestamp>>,
 }
 
 #[derive(Default)]
@@ -91,8 +64,43 @@ const MAXIMUM_RESERVE: Balance = Balance::MAX;
 const RUN_CASES: u32 = 1000;
 
 // ----------------------------------------------------------------------------------------------------
+//                                             Helper Functions
+// ----------------------------------------------------------------------------------------------------
+
+#[allow(dead_code)]
+fn run_to_block(n: u64) {
+	while SystemPallet::block_number() < n {
+		if SystemPallet::block_number() > 0 {
+			TimestampPallet::on_finalize(SystemPallet::block_number());
+			SystemPallet::on_finalize(SystemPallet::block_number());
+		}
+		SystemPallet::set_block_number(SystemPallet::block_number() + 1);
+		// Time is set in milliseconds, so at each block we increment the timestamp by 1000ms = 1s
+		let _ = TimestampPallet::set(Origin::none(), SystemPallet::block_number() * 1000);
+		SystemPallet::on_initialize(SystemPallet::block_number());
+		TimestampPallet::on_initialize(SystemPallet::block_number());
+	}
+}
+
+#[allow(dead_code)]
+fn run_for_seconds(seconds: u64) {
+	// Not using an equivalent run_to_block call here because it causes the
+	// tests to slow down drastically
+	if SystemPallet::block_number() > 0 {
+		TimestampPallet::on_finalize(SystemPallet::block_number());
+		SystemPallet::on_finalize(SystemPallet::block_number());
+	}
+	SystemPallet::set_block_number(SystemPallet::block_number() + 1);
+	// Time is set in milliseconds, so we multiply the seconds by 1_000
+	let _ = TimestampPallet::set(Origin::none(), TimestampPallet::now() + 1_000 * seconds);
+	SystemPallet::on_initialize(SystemPallet::block_number());
+	TimestampPallet::on_initialize(SystemPallet::block_number());
+}
+
+// ----------------------------------------------------------------------------------------------------
 //                                             Prop_compose
 // ----------------------------------------------------------------------------------------------------
+
 prop_compose! {
 	fn then_and_now()(then in u64::MIN..1000)(
 		then in Just(then),
@@ -186,8 +194,8 @@ prop_compose! {
 
 prop_compose! {
 	fn timestamp()(
-		t in VammTimestamp::MIN..=VammTimestamp::MAX
-	) -> VammTimestamp {
+		t in Timestamp::MIN..=Timestamp::MAX
+	) -> Timestamp {
 		t
 	}
 }
@@ -240,8 +248,8 @@ fn any_vamm_id() -> RangeInclusive<VammId> {
 	VammId::MIN..=VammId::MAX
 }
 
-fn any_time() -> RangeInclusive<VammTimestamp> {
-	VammTimestamp::MIN..=VammTimestamp::MAX
+fn any_time() -> RangeInclusive<Timestamp> {
+	Timestamp::MIN..=Timestamp::MAX
 }
 
 prop_compose! {
@@ -250,9 +258,8 @@ prop_compose! {
 		quote_asset_reserves in any_sane_asset_amount(),
 		peg_multiplier in 1..=100_000_u128,
 		closed in prop_oneof![timestamp().prop_map(Some), Just(None)],
-		base_asset_twap_timestamp in any_time(),
-		quote_asset_twap_timestamp in any_time(),
-		funding_period in any_time()
+		twap_timestamp in any_time(),
+		twap_period in any_time()
 	) -> VammState<Balance, Timestamp, Decimal> {
 		VammState {
 			base_asset_reserves,
@@ -261,8 +268,7 @@ prop_compose! {
 			invariant: TestPallet::compute_invariant(
 				base_asset_reserves, quote_asset_reserves
 			).unwrap(),
-			base_asset_twap_timestamp,
-			quote_asset_twap_timestamp,
+			twap_timestamp,
 			base_asset_twap: Decimal::from_inner(base_asset_reserves),
 			quote_asset_twap: Decimal::from_inner(quote_asset_reserves),
 			closed,
@@ -286,13 +292,12 @@ prop_compose! {
 }
 
 prop_compose! {
-	fn get_vamm_state(config: TestVammState<Balance, VammTimestamp>)(
+	fn get_vamm_state(config: TestVammState<Balance, Timestamp>)(
 		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in any_sane_base_quote_peg(),
 		closed in prop_oneof![timestamp().prop_map(Some), Just(None)],
 		base_asset_twap in balance_range(),
-		base_asset_twap_timestamp in timestamp(),
 		quote_asset_twap in balance_range(),
-		quote_asset_twap_timestamp in timestamp(),
+		twap_timestamp in timestamp(),
 	) -> VammState<Balance, Timestamp, Decimal> {
 		let invariant = match (
 			config.base_asset_reserves,
@@ -320,9 +325,8 @@ prop_compose! {
 				.closed
 				.unwrap_or(closed),
 			base_asset_twap,
-			base_asset_twap_timestamp,
 			quote_asset_twap,
-			quote_asset_twap_timestamp,
+			twap_timestamp,
 			..Default::default()
 		}
 	}

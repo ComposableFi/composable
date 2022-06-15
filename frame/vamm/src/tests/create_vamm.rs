@@ -1,51 +1,65 @@
+use std::ops::RangeInclusive;
+
 use crate::{
-	mock::{Balance, Event, ExtBuilder, MockRuntime, System, TestPallet},
+	mock::{Event, ExtBuilder, MockRuntime, System, TestPallet},
 	pallet::{self, Error, VammMap, VammState},
 	tests::{
 		any_sane_asset_amount, any_sane_base_quote_peg, loop_times, min_max_reserve,
-		valid_funding_period, zero_reserve, RUN_CASES,
+		valid_twap_period, zero_reserve, Balance, Decimal, Timestamp, RUN_CASES,
 	},
 };
-use composable_traits::vamm::{AssetType, Vamm as VammTrait, VammConfig, MINIMUM_FUNDING_PERIOD};
+use composable_traits::vamm::{AssetType, Vamm as VammTrait, VammConfig, MINIMUM_TWAP_PERIOD};
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 use sp_runtime::FixedPointNumber;
 
 // ----------------------------------------------------------------------------------------------------
-//                                           Setup
+//                                        Prop Compose & Helpers
 // ----------------------------------------------------------------------------------------------------
 
-type VammTimestamp = <MockRuntime as pallet::Config>::Moment;
-type VammBalance = <MockRuntime as pallet::Config>::Balance;
+fn one_up_to_(x: Balance) -> RangeInclusive<Balance> {
+	1..=x
+}
 
-// ----------------------------------------------------------------------------------------------------
-//                                           Prop Compose
-// ----------------------------------------------------------------------------------------------------
+prop_compose! {
+	fn limited_quote_peg() (
+		x in 1..=(Balance::MAX/Decimal::DIV),
+	) (
+		y in one_up_to_(x),
+		x in Just(x),
+		first_is_quote in any::<bool>()
+	) -> (Balance, Balance) {
+		if first_is_quote {
+			(x, y)
+		} else {
+			(y, x)
+		}
+	}
+}
 
 prop_compose! {
 	fn any_valid_vammconfig() (
-		(base_asset_reserves,
-		 quote_asset_reserves,
-		 peg_multiplier) in any_sane_base_quote_peg(),
-		funding_period in  valid_funding_period()
-	) -> VammConfig<VammBalance, VammTimestamp> {
+		(quote_asset_reserves, peg_multiplier) in limited_quote_peg(),
+		base_asset_reserves in any_sane_asset_amount(),
+		twap_period in  valid_twap_period()
+	) -> VammConfig<Balance, Timestamp> {
 		VammConfig {
 			base_asset_reserves,
 			quote_asset_reserves,
 			peg_multiplier,
-			funding_period
+			twap_period
 		}
 	}
 }
 
 // -------------------------------------------------------------------------------------------------
-//                                           Unit Tests
+//                                            Unit Tests
 // -------------------------------------------------------------------------------------------------
 
 #[test]
-fn create_vamm_fail_if_funding_period_is_less_than_minimum() {
-	let vamm_state = VammConfig::<VammBalance, VammTimestamp> {
-		funding_period: (MINIMUM_FUNDING_PERIOD - 1).into(),
+fn create_vamm_fail_if_twap_period_is_less_than_minimum() {
+	let vamm_state = VammConfig::<Balance, Timestamp> {
+		twap_period: (MINIMUM_TWAP_PERIOD - 1).into(),
 		peg_multiplier: 1,
 		..Default::default()
 	};
@@ -55,7 +69,7 @@ fn create_vamm_fail_if_funding_period_is_less_than_minimum() {
 }
 
 // -------------------------------------------------------------------------------------------------
-//                                           Proptests
+//                                             Proptests
 // -------------------------------------------------------------------------------------------------
 
 proptest! {

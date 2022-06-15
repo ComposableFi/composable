@@ -31,8 +31,7 @@ proptest! {
 		vamm_state.closed = None;
 
 		// Ensure we don't throw `AssetTwapTimestampIsMoreRecent` error.
-		vamm_state.base_asset_twap_timestamp = 0;
-		vamm_state.quote_asset_twap_timestamp = 0;
+		vamm_state.twap_timestamp = 0;
 
 		// Ensure we don't throw `FailedToComputeLastTwapWeight` error.
 		vamm_state.twap_period = (MINIMUM_TWAP_PERIOD + 1).into();
@@ -77,8 +76,7 @@ proptest! {
 		swap_config.output_amount_limit = 0;
 
 		// Ensure we don't throw `AssetTwapTimestampIsMoreRecent` error.
-		vamm_state.base_asset_twap_timestamp = 0;
-		vamm_state.quote_asset_twap_timestamp = 0;
+		vamm_state.twap_timestamp = 0;
 
 		// Ensure we don't throw `FailedToComputeLastTwapWeight` error.
 		vamm_state.twap_period = (MINIMUM_TWAP_PERIOD + 1).into();
@@ -114,8 +112,7 @@ proptest! {
 		vamm_state.closed = None;
 
 		// Ensure we don't throw `AssetTwapTimestampIsMoreRecent` error.
-		vamm_state.base_asset_twap_timestamp = 0;
-		vamm_state.quote_asset_twap_timestamp = 0;
+		vamm_state.twap_timestamp = 0;
 
 		// Ensure we don't throw `FailedToComputeLastTwapWeight` error.
 		vamm_state.twap_period = (MINIMUM_TWAP_PERIOD + 1).into();

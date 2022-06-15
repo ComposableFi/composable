@@ -1,7 +1,7 @@
 use crate::{
 	mock::{ExtBuilder, MockRuntime, System, TestPallet},
 	pallet::{Error, Event, VammMap},
-	tests::{any_move_price_config, any_vamm_state, run_for_seconds, VammTimestamp, RUN_CASES},
+	tests::{any_move_price_config, any_vamm_state, run_for_seconds, Timestamp, RUN_CASES},
 	VammState,
 };
 use composable_traits::vamm::Vamm as VammTrait;
@@ -70,7 +70,7 @@ proptest! {
 		move_price_config.vamm_id = 0;
 
 		// Ensure vamm is closed before starting operation.
-		vamm_state.closed = Some(VammTimestamp::MIN);
+		vamm_state.closed = Some(Timestamp::MIN);
 
 		ExtBuilder {
 			vamm_count: 1,
