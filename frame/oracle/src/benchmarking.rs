@@ -115,7 +115,7 @@ benchmarks! {
 			min_answers: 1,
 			max_answers: T::MaxAnswerBound::get(),
 			block_interval: 0u32.into(),
-			reward: T::Currency::minimum_balance(),
+			reward_per_oracle: T::Currency::minimum_balance(),
 			slash: T::Currency::minimum_balance()
 		});
 		frame_system::Pallet::<T>::set_block_number(6u32.into());
@@ -145,7 +145,7 @@ benchmarks! {
 			min_answers: 1,
 			max_answers: p,
 			block_interval: T::StalePrice::get(),
-			reward: T::Currency::minimum_balance(),
+			reward_per_oracle: T::Currency::minimum_balance(),
 			slash: T::Currency::minimum_balance()
 		};
 		let pre_prices = (0..p).map(|i| {
@@ -171,7 +171,7 @@ benchmarks! {
 			min_answers: 1,
 			max_answers: p,
 			block_interval: T::StalePrice::get(),
-			reward: T::Currency::minimum_balance(),
+			reward_per_oracle: T::Currency::minimum_balance(),
 			slash: T::Currency::minimum_balance()
 		};
 		let pre_prices = (0..p).map(|_| {

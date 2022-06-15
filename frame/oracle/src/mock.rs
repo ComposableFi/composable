@@ -168,6 +168,7 @@ impl pallet_oracle::Config for Test {
 	type LocalAssets = ();
 	type TreasuryAccount = TreasuryAccountId;
 	type TwapWindow = TwapWindow;
+	type RewardOrigin = EnsureRoot<AccountId>;
 }
 
 // Build genesis storage according to the mock runtime.

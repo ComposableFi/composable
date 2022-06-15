@@ -479,6 +479,7 @@ impl oracle::Config for Runtime {
 	type LocalAssets = CurrencyFactory;
 	type TreasuryAccount = TreasuryAccount;
 	type TwapWindow = TwapWindow;
+	type RewardOrigin = EnsureRootOrHalfCouncil;
 }
 
 // Parachain stuff.

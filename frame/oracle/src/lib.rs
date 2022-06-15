@@ -73,13 +73,15 @@ pub mod pallet {
 		helpers_128bit::multiply_by_rational,
 		offchain::{http, Duration},
 		traits::{
-			AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Saturating, Scale,
-			UniqueSaturatedInto as _, Zero,
+			AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, Saturating,
+			Scale, UniqueSaturatedInto as _, Zero,
 		},
 		AccountId32, ArithmeticError, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId,
-		PerThing, Perbill, Percent, RuntimeDebug,
+		PerThing, Perbill, Percent, RuntimeDebug, SaturatedConversion,
 	};
-	use sp_std::{borrow::ToOwned, fmt::Debug, str, vec, vec::Vec};
+	use sp_std::{
+		borrow::ToOwned, collections::btree_set::BTreeSet, fmt::Debug, str, vec, vec::Vec,
+	};
 
 	// Key Id for location of signer key in keystore
 	pub const KEY_ID: [u8; 4] = *b"orac";
@@ -157,6 +159,8 @@ pub mod pallet {
 		type StalePrice: Get<Self::BlockNumber>;
 		/// Origin to add new price types
 		type AddOracle: EnsureOrigin<Self::Origin>;
+		/// Origin to manage rewards
+		type RewardOrigin: EnsureOrigin<Self::Origin>;
 		/// Upper bound for max answers for a price
 		type MaxAnswerBound: Get<u32>;
 		/// Upper bound for total assets available for the oracle
@@ -197,7 +201,10 @@ pub mod pallet {
 		pub min_answers: u32,
 		pub max_answers: u32,
 		pub block_interval: BlockNumber,
-		pub reward: Balance,
+		/// Possible reward for submitting the right price.
+		/// This would be less based on the number of oracles and the inflation allowed for rewards
+		/// per block.
+		pub reward_per_oracle: Balance,
 		pub slash: Balance,
 	}
 
@@ -219,8 +226,8 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn reward_rate)]
 	#[allow(clippy::disallowed_types)]
-	/// Annualized reward rate for oracles. This is used to inflate currency supply when issuing the
-	/// reward per each block.
+	/// Annualized reward rate for oracles. This is used to transfer derive the
+	/// amount per block and transfer from the available funds in the treasury.
 	pub type RewardRate<T: Config> = StorageValue<_, Perbill, ValueQuery>;
 
 	#[pallet::storage]
@@ -322,6 +329,8 @@ pub mod pallet {
 		UserSlashed(T::AccountId, T::AssetId, BalanceOf<T>),
 		/// Oracle rewarded. \[oracle_address, asset_id, price\]
 		UserRewarded(T::AccountId, T::AssetId, BalanceOf<T>),
+		/// Reward rate set \[reward rate]
+		RewardRateSet(Perbill),
 		/// Answer from oracle removed for staleness. \[oracle_address, price\]
 		AnswerPruned(T::AccountId, T::PriceValue),
 	}
@@ -557,6 +566,22 @@ pub mod pallet {
 			Ok(().into())
 		}
 
+		/// Call to set a reward rate that is used for inflating the token supply to reward Oracles.
+		///
+		/// - `reward_rate`: reward_rate
+		///
+		/// Emits `RewardRateSet` event when successful.
+		#[pallet::weight(T::OracleWeightInfo::set_reward_rate())]
+		pub fn set_reward_rate(
+			origin: OriginFor<T>,
+			reward_rate: Perbill,
+		) -> DispatchResultWithPostInfo {
+			T::RewardOrigin::ensure_origin(origin)?;
+			Self::do_set_reward_rate(reward_rate);
+			Self::deposit_event(Event::RewardRateSet(reward_rate));
+			Ok(().into())
+		}
+
 		/// call to add more stake from a controller
 		///
 		/// - `stake`: amount to add to stake
@@ -685,8 +710,7 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		#[cfg(any(feature = "std", feature = "runtime-benchmarks", test))]
-		pub fn set_reward_rate(rate: Perbill) {
+		fn do_set_reward_rate(rate: Perbill) {
 			<RewardRate<T>>::put(rate);
 		}
 
@@ -712,6 +736,7 @@ pub mod pallet {
 			asset_id: T::AssetId,
 			asset_info: &AssetInfo<Percent, T::BlockNumber, BalanceOf<T>>,
 		) {
+			let mut rewarded_oracles = BTreeSet::new();
 			for answer in pre_prices {
 				let accuracy: Percent = if answer.price < price {
 					PerThing::from_rational(answer.price, price)
@@ -747,30 +772,48 @@ pub mod pallet {
 						slash_amount,
 					));
 				} else {
-					let reward_amount = Self::possible_reward(asset_info.reward);
 					let controller = SignerToController::<T>::get(&answer.who)
 						.unwrap_or_else(|| answer.who.clone());
-
-					let result = T::Currency::deposit_into_existing(&controller, reward_amount);
-					if result.is_err() {
-						log::warn!("Failed to deposit {:?}", controller);
-					}
-					Self::deposit_event(Event::UserRewarded(
-						answer.who.clone(),
-						asset_id,
-						reward_amount,
-					));
-				};
+					rewarded_oracles.insert((answer.who.clone(), controller.clone()));
+				}
 				Self::remove_price_in_transit(&answer.who, asset_info)
+			}
+			let reward_amount =
+				Self::possible_reward(rewarded_oracles.len() as u64, asset_info.reward_per_oracle);
+			for accounts in rewarded_oracles {
+				Self::transfer_reward(accounts.0, accounts.1, asset_id, reward_amount);
 			}
 		}
 
-		fn possible_reward(standard_reward: BalanceOf<T>) -> BalanceOf<T> {
-			let max_reward_per_block = Self::max_reward_per_block();
-			sp_std::cmp::min(standard_reward, max_reward_per_block)
+		fn transfer_reward(
+			who: T::AccountId,
+			controller: T::AccountId,
+			asset_id: T::AssetId,
+			reward_amount: BalanceOf<T>,
+		) {
+			let result = T::Currency::deposit_into_existing(&controller, reward_amount);
+			if result.is_err() {
+				log::warn!("Failed to deposit {:?}", controller);
+			}
+			Self::deposit_event(Event::UserRewarded(who.clone(), asset_id, reward_amount));
 		}
 
-		pub fn max_reward_per_block() -> BalanceOf<T> {
+		/// Given the `max_reward_per_block` decide the minimum allowed reward for an Oracle per
+		/// block.
+		pub(crate) fn possible_reward(
+			num_oracles: u64,
+			standard_reward: BalanceOf<T>,
+		) -> BalanceOf<T> {
+			let max_reward_per_block = Self::max_reward_per_block();
+			let num_oracles_converted: BalanceOf<T> = num_oracles.saturated_into();
+			let total_proposed_reward = standard_reward.saturating_mul(num_oracles_converted);
+			sp_std::cmp::min(total_proposed_reward, max_reward_per_block)
+				.checked_div(&num_oracles_converted)
+				.unwrap_or(BalanceOf::<T>::zero())
+		}
+
+		/// Calculate the maximum reward per block given the reward rate configured.
+		pub(crate) fn max_reward_per_block() -> BalanceOf<T> {
 			let total_issuance = <T as Config>::Currency::total_issuance();
 			let slot_duration: u64 = <T as pallet_timestamp::Config>::MinimumPeriod::get()
 				.saturating_mul(2_u32.into())

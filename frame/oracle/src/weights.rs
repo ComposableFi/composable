@@ -9,6 +9,7 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
 	fn add_asset_and_info() -> Weight;
 	fn set_signer() -> Weight;
+	fn set_reward_rate() -> Weight;
 	fn add_stake() -> Weight;
 	fn remove_stake() -> Weight;
 	fn reclaim_stake() -> Weight;
@@ -26,6 +27,11 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	fn set_signer() -> Weight {
+		(134_000_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
+			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+	}
+	fn set_reward_rate() -> Weight {
 		(134_000_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
@@ -80,6 +86,13 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
 			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
 	}
+
+	fn set_reward_rate() -> Weight {
+		(134_000_000 as Weight)
+			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
+			.saturating_add(RocksDbWeight::get().writes(3 as Weight))
+	}
+
 	fn add_stake() -> Weight {
 		(219_457_000 as Weight)
 			.saturating_add(RocksDbWeight::get().reads(3 as Weight))
