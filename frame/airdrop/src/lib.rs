@@ -25,7 +25,7 @@ pub mod pallet {
 			utils::{increment::SafeIncrement, start_at::ZeroInit},
 		},
 		math::safe::{SafeAdd, SafeSub},
-		types::{EcdsaSignature, EthereumAddress, CosmosAddress},
+		types::{EcdsaSignature, EthereumAddress, CosmosAddress, CosmosEcdsaSignature},
 	};
 	use composable_traits::airdrop::AirdropManagement;
 	use frame_support::{
@@ -39,6 +39,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
+    use p256::ecdsa::{SigningKey, Signature, signature::{Signer, Verifier}, VerifyingKey};
     use sp_io::hashing::{keccak_256, sha2_256};
 	use sp_runtime::{
 		traits::{
@@ -525,33 +526,46 @@ pub mod pallet {
 			prefix: &[u8],
 			msg: &[u8],
             cosmos_address: CosmosAddress,
-			EcdsaSignature(sig): &EcdsaSignature,
+			CosmosEcdsaSignature(sig): &CosmosEcdsaSignature,
         ) -> Option<CosmosAddress> {
             let msg = sha2_256(&[prefix, msg].concat());
 
-            let pub_key = match cosmos_address {
-                CosmosAddress::Secp256k1(_) => sp_io::crypto::secp256k1_ecdsa_recover_compressed(sig, &msg).ok()?,
-                CosmosAddress::Secp256r1(_) => todo!()
-            };
+            // let pub_key = match cosmos_address {
+            //     CosmosAddress::Secp256k1(_) => sp_io::crypto::secp256k1_ecdsa_recover_compressed(sig, &msg).ok()?,
+            //     CosmosAddress::Secp256r1(pub_key) => {
+            //         let sig = Signature::from(sig);
+            //         let verify_key = VerifyingKey::from(pub_key);
+            //     }
+            // };
 
-            Some(Self::cosmos_hash(b"cosmos.sdk.AccAddress", &pub_key, cosmos_address))
-        }
-
-        /// Hashes a Cosmos public key with the account type prefix to derive a Cosmos Address
-        pub(crate) fn cosmos_hash(typ: &[u8], pub_key: &[u8; 33], cosmos_address: CosmosAddress) -> CosmosAddress {
             match cosmos_address {
-                // Cosmos secp256k1 Addresses are expected to be 20 bytes long
-                CosmosAddress::Secp256k1(_) => {
-                    let mut address: [u8; 20] = Default::default();
-                    address.copy_from_slice(&sha2_256(&[typ, pub_key].concat())[..20]);
-                    CosmosAddress::Secp256k1(address)
+                CosmosAddress::Secp256k1(pub_key) => {
+                    // Cosmos gives us a 64-byte, we convert it into the more standard 65-byte
+                    // signature here
+                    let sig: EcdsaSignature = CosmosEcdsaSignature(*sig).into();
+
+                    if pub_key == sp_io::crypto::secp256k1_ecdsa_recover_compressed(&sig.0, &msg).ok()? {
+                        return Some(CosmosAddress::Secp256k1(pub_key))
+                    }
+
+                    None
                 },
-                // Cosmos secp256r1 Addresses are expected to be 32 bytes long
-                CosmosAddress::Secp256r1(_) => {
-                    CosmosAddress::Secp256r1(sha2_256(&[typ, pub_key].concat()))
+                CosmosAddress::Secp256r1(pub_key) => {
+                    // Deconstruct `sig` into `r` and `s` values so we can construct a p256
+                    // friendly signature
+                    let mut r: [u8; 32] = [0; 32];
+                    let mut s: [u8; 32] = [0; 32];
+                    r.copy_from_slice(&sig[..32]);
+                    s.copy_from_slice(&sig[33..=64]);
+
+                    let sig = Signature::from_scalars(r, s).ok()?;
+                    let verify_key = VerifyingKey::from_sec1_bytes(&pub_key).ok()?;
+                    let _ = verify_key.verify(&msg, &sig).ok()?;
+                    Some(CosmosAddress::Secp256r1(pub_key))
                 },
             }
         }
+
 
 		/// Start an Airdrop at a given moment.
 		///
