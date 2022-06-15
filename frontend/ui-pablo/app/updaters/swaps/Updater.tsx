@@ -4,7 +4,7 @@ import { useParachainApi } from "substrate-react";
 import { AssetId } from "@/defi/polkadot/types";
 import { Assets } from "@/defi/polkadot/Assets";
 import BigNumber from "bignumber.js";
-import { isValidAssetPair } from "../utils";
+import { isValidAssetPair } from "@/defi/utils";
 import {
   ConstantProductPool,
   LiquidityBootstrappingPool,
