@@ -360,8 +360,8 @@ pub mod pallet {
 		PriceNotFound,
 		/// Stake exceeded
 		ExceedStake,
-		/// Price weight must sum to 100
-		MustSumTo100,
+		/// Order of prices history for twap
+		WeightsSumInvalid,
 		/// Too many weighted averages requested
 		DepthTooLarge,
 		ArithmeticError,
@@ -978,6 +978,16 @@ pub mod pallet {
 				.collect();
 
 			let weights_sum: u128 = weights.iter().sum();
+
+			ensure!(
+				prices.get(0).map(|v| v.block.unique_saturated_into()).and_then(|first: u128| {
+					prices
+						.last()
+						.map(|v| v.block.unique_saturated_into())
+						.map(|last: u128| (last - first) == weights_sum)
+				}) == Some(true),
+				Error::<T>::WeightsSumInvalid
+			);
 
 			let prices_sum: u128 = prices
 				.iter()
