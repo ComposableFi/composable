@@ -950,25 +950,30 @@ pub mod pallet {
 			vamm_state: &VammStateOf<T>,
 			asset_type: AssetType,
 		) -> Result<DecimalOf<T>, DispatchError> {
-			let base_asset_reserves_decimal =
-				DecimalOf::<T>::from_inner(vamm_state.base_asset_reserves);
-			let quote_asset_reserves_decimal =
-				DecimalOf::<T>::from_inner(vamm_state.quote_asset_reserves);
-			let peg_multiplier_decimal = DecimalOf::<T>::from_inner(vamm_state.peg_multiplier);
+			let precision = Self::balance_to_u256(DecimalOf::<T>::DIV)?;
+			let base_u256 = Self::balance_to_u256(vamm_state.base_asset_reserves)?;
+			let quote_u256 = Self::balance_to_u256(vamm_state.quote_asset_reserves)?;
+			let peg_u256 = Self::balance_to_u256(vamm_state.peg_multiplier)?;
 
-			match asset_type {
-				AssetType::Base => Ok(quote_asset_reserves_decimal
-					.checked_mul(&peg_multiplier_decimal)
+			let price_u256 = match asset_type {
+				AssetType::Base => quote_u256
+					.checked_mul(peg_u256)
 					.ok_or(ArithmeticError::Overflow)?
-					.checked_div(&base_asset_reserves_decimal)
-					.ok_or(ArithmeticError::DivisionByZero)?),
+					.checked_mul(precision)
+					.ok_or(ArithmeticError::Overflow)?
+					.checked_div(base_u256)
+					.ok_or(ArithmeticError::DivisionByZero)?,
 
-				AssetType::Quote => Ok(base_asset_reserves_decimal
-					.checked_mul(&peg_multiplier_decimal)
+				AssetType::Quote => base_u256
+					.checked_mul(precision)
 					.ok_or(ArithmeticError::Overflow)?
-					.checked_div(&quote_asset_reserves_decimal)
-					.ok_or(ArithmeticError::DivisionByZero)?),
-			}
+					.checked_div(peg_u256.checked_mul(quote_u256).ok_or(ArithmeticError::Overflow)?)
+					.ok_or(ArithmeticError::DivisionByZero)?,
+			};
+
+			let price = Self::u256_to_balance(price_u256)?;
+
+			Ok(DecimalOf::<T>::from_inner(price))
 		}
 
 		fn do_update_twap(
