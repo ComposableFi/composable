@@ -13,6 +13,8 @@ import { useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useSnackbar } from "notistack";
+import { useSupplySummary } from "../../../store/hooks/useSupplySummary";
+import ErrorPage from "next/error";
 
 const standardPageSize = {
   xs: 12,
@@ -31,6 +33,9 @@ const SelectBond: NextPage = () => {
   const { enqueueSnackbar } = useSnackbar();
   const { extensionStatus } = useDotSamaContext();
   const bond = useAppSelector((state) => state.bonds.selectedBond);
+  const offerId = Number(router.query.offerId);
+
+  const supplySummary = useSupplySummary({ offerId });
 
   const claimable = !bond.claimable_amount.eq(0) || !bond.pending_amount.eq(0);
 
@@ -52,6 +57,10 @@ const SelectBond: NextPage = () => {
       });
     }
   }, [enqueueSnackbar, message]);
+
+  if (supplySummary === "no-summary") {
+    return <ErrorPage statusCode={404} />;
+  }
 
   const breadcrumbs = [
     <Link key="pool" underline="none" color="primary" href="/bond">

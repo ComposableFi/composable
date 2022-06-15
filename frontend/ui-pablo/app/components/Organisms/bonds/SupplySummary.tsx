@@ -3,8 +3,16 @@ import { getToken } from "@/defi/Tokens";
 import { getNetwork } from "@/defi/Networks";
 import { BondDetails } from "@/defi/types";
 import { ArrowRightAlt } from "@mui/icons-material";
-import { Box, BoxProps, Typography, TypographyProps, Theme, useTheme, alpha } from "@mui/material";
-import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
+import {
+  Box,
+  BoxProps,
+  Typography,
+  TypographyProps,
+  Theme,
+  useTheme,
+  alpha,
+} from "@mui/material";
+import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
 
 const containerBoxProps = (theme: Theme) => ({
   display: "flex",
@@ -14,7 +22,10 @@ const containerBoxProps = (theme: Theme) => ({
   borderRadius: 1.5,
   sx: {
     background: theme.palette.gradient.secondary,
-    border: `1px solid ${alpha(theme.palette.common.white, theme.custom.opacity.light)}`
+    border: `1px solid ${alpha(
+      theme.palette.common.white,
+      theme.custom.opacity.light
+    )}`,
   },
 });
 
@@ -29,17 +40,16 @@ const itemTitleProps: TypographyProps = {
   variant: "body1",
   fontWeight: "600",
   color: "text.secondary",
-}
+};
 
 export type SupplySummaryProps = {
-  bond: BondDetails,
+  bond: BondDetails;
 } & BoxProps;
 
 export const SupplySummary: React.FC<SupplySummaryProps> = ({
   bond,
   ...boxProps
 }) => {
-
   const theme = useTheme();
   const token1 = getToken(bond.tokenId1);
   const token2 = getToken(bond.tokenId2);
@@ -48,16 +58,16 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
 
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>
-      <Box display="flex" justifyContent="center" alignItems="center" gap={5.25}>
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        gap={5.25}
+      >
         <Box {...itemBoxProps}>
-          <Typography {...itemTitleProps}>
-            Supply
-          </Typography>
+          <Typography {...itemTitleProps}>Supply</Typography>
           <PairAsset
-            assets={[
-              {icon: token1.icon},
-              {icon: token2.icon},
-            ]}
+            assets={[{ icon: token1.icon }, { icon: token2.icon }]}
             iconOnly
             iconSize={36}
           />
@@ -65,15 +75,10 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
             {`LP ${token1.symbol}-${token2.symbol}`}
           </Typography>
         </Box>
-        <ArrowRightAlt sx={{color: "text.secondary"}}/>
+        <ArrowRightAlt sx={{ color: "text.secondary" }} />
         <Box {...itemBoxProps}>
-          <Typography {...itemTitleProps}>
-            Receive
-          </Typography>
-          <BaseAsset
-            icon={pablo.icon}
-            iconSize={36}
-          />
+          <Typography {...itemTitleProps}>Receive</Typography>
+          <BaseAsset icon={pablo.icon} iconSize={36} />
           <Typography variant="body1">
             {`${pablo.symbol} - `}
             <Typography variant="body1" fontWeight="600" component="span">
@@ -84,13 +89,9 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
       </Box>
 
       <Box {...itemBoxProps}>
-        <Typography {...itemTitleProps}>
-          Vesting period
-        </Typography>
-        <TimerOutlinedIcon sx={{width: 36, height: 36}} />
-        <Typography variant="body1">
-          {`${bond.vesting_term} days`}
-        </Typography>
+        <Typography {...itemTitleProps}>Vesting period</Typography>
+        <TimerOutlinedIcon sx={{ width: 36, height: 36 }} />
+        <Typography variant="body1">{`${bond.vesting_term} days`}</Typography>
       </Box>
 
       <Box {...itemBoxProps}>
@@ -107,11 +108,8 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
             iconSize={36}
           />
         </Box>
-        <Typography variant="body1">
-          {pablo.symbol}
-        </Typography>
+        <Typography variant="body1">{pablo.symbol}</Typography>
       </Box>
-
     </Box>
   );
 };

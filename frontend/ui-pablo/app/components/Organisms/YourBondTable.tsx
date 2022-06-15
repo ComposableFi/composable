@@ -39,8 +39,8 @@ export const YourBondTable: React.FC = () => {
   const { activeBonds } = useStore();
   const router = useRouter();
 
-  const handleRowClick = (e: React.MouseEvent) => {
-    router.push("/bond/select");
+  const handleRowClick = (offerId: number) => {
+    router.push(`/bond/select/${offerId}`);
   };
 
   if (activeBonds.length == 0) {
@@ -81,7 +81,7 @@ export const YourBondTable: React.FC = () => {
           <TableBody>
             {activeBonds.map((bond, index) => (
               <TableRow
-                onClick={handleRowClick}
+                onClick={() => handleRowClick(bond.offerId)}
                 key={index}
                 sx={{ cursor: "pointer" }}
               >

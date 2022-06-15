@@ -49,8 +49,8 @@ export const AllBondTable: React.FC = () => {
     setCount(count + BOND_LIMIT_TO_SHOW);
   };
 
-  const handleBondClick = () => {
-    router.push("bond/select");
+  const handleBondClick = (offerId: number) => {
+    router.push(`bond/select/${offerId}`);
   };
 
   return (
@@ -76,7 +76,7 @@ export const AllBondTable: React.FC = () => {
           {allBonds.slice(0, count).map((bond, index) => (
             <TableRow
               key={index}
-              onClick={handleBondClick}
+              onClick={() => handleBondClick(bond.offerId)}
               sx={{ cursor: "pointer" }}
             >
               <TableCell align="left">
