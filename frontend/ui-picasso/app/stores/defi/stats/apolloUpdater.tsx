@@ -17,7 +17,7 @@ let binancePrice = async (apolloStats: any, value: string) => {
   return await apolloStats
     .queryBinancePrice(value.toUpperCase())
     .then((binPrice: any) => {
-      return binPrice.price;
+      return parseFloat(binPrice.price).toFixed(2);
     })
     .catch((err: any) => {
       console.log("BIN PRICE ERR", value, err);
@@ -29,7 +29,7 @@ let binancePriceChange = async (apolloStats: any, value: string) => {
   return await apolloStats
     .queryBinanace24hrChange(value.toUpperCase())
     .then((binChange: any) => {
-      return binChange.priceChangePercent;
+      return parseFloat(binChange.priceChangePercent).toFixed(2);
     })
     .catch((err: any) => {
       console.log("BIN CHANGE ERROR", value, err);
@@ -42,7 +42,7 @@ let oraclePrice = async (apolloStats: any, key: string) => {
     .queryOracleAssetPrice(parseInt(key))
     .then((res: { price: number; block: number } | null) => {
       if (res != null) {
-        return toTokenUnitsBN(res.price, 12).toNumber();
+        return toTokenUnitsBN(res.price, 12).toNumber().toFixed(2);
       }
       return undefined;
     })

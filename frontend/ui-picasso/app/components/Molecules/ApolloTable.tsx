@@ -47,13 +47,12 @@ export const ApolloTable: React.FC<ApolloTableProps> = ({
                 </TableCell>
                 <TableCell align="left">
                   {asset.binanceValue
-                    ? "$" +
-                      formatNumber(parseFloat(asset.binanceValue).toFixed(2))
+                    ? "$" + formatNumber(asset.binanceValue)
                     : "-"}
                 </TableCell>
                 <TableCell align="left">
                   {asset.apolloValue
-                    ? "$" + formatNumber(asset.apolloValue.toFixed(2))
+                    ? "$" + formatNumber(asset.apolloValue)
                     : "-"}
                 </TableCell>
                 <TableCell
