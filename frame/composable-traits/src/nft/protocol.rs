@@ -6,7 +6,7 @@ pub trait ProtocolNft<AccountId> {
 	type AssetId;
 	type InstanceId;
 	type Balance;
-	/// no always may work, for examples  if locked for sale or voting
+	/// no always may work, for example if locked for sale or voting
 	fn split(
 		instance: &Self::InstanceId,
 		ratio: Permill,
