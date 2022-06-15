@@ -390,7 +390,7 @@ pub mod pallet {
 		/// Tried to perform swap operation but it would drain all
 		/// [`quote`](VammState::quote_asset_reserves) asset reserves.
 		QuoteAssetReservesWouldBeCompletelyDrained,
-		/// Tried to update twap for an asset, but it's last twap update was
+		/// Tried to update twap for an asset, but its last twap update was
 		/// more recent than the current time.
 		AssetTwapTimestampIsMoreRecent,
 		/// Tried to update twap for an asset, but the desired new twap value is

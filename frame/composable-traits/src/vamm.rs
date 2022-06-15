@@ -18,7 +18,7 @@ pub trait Vamm {
 	/// The balance type for an account.
 	type Balance: Unsigned;
 
-	/// The moment type, representing a timestmap.
+	/// The moment type, representing a timestamp.
 	type Moment: AtLeast32BitUnsigned;
 
 	/// Signed fixed point number implementation.
@@ -86,7 +86,7 @@ pub struct VammConfig<Balance, Moment> {
 	pub quote_asset_reserves: Balance,
 	/// The magnitude of the quote asset reserve.
 	pub peg_multiplier: Balance,
-	/// The frequency with wich the vamm must have it's funding rebalance.
+	/// The frequency with which the vamm must have it's funding rebalance.
 	/// (Used only for twap calculations.)
 	pub twap_period: Moment,
 }
