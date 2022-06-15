@@ -49,15 +49,17 @@ describe("rpc.assets Tests", function () {
   it("rpc.assets.listAssets Tests", async function () {
     if (!testConfiguration.enabledTests.rpc.listAssets__success) this.skip();
     const result = await RpcAssetsTests.rpcListAssetsTest(api);
-    expect(result).to.have.lengthOf(5);
+    expect(result).to.have.lengthOf(7);
     result.every(i => expect(i).to.have.all.keys("id", "name"));
-    expect(result.map(e => e.id.toNumber())).to.include.members([1, 2, 3, 4, 129]);
+    expect(result.map(e => e.id.toNumber())).to.include.members([1, 2, 3, 4, 129, 130, 131]);
     expect(result.map(e => hex_to_ascii(e.name.toString()))).to.include.members([
       "PICA",
       "LAYR",
       "CROWD_LOAN",
       "KSM",
-      "kUSD"
+      "kUSD",
+      "USDT",
+      "USDC"
     ]);
   });
 });
@@ -73,10 +75,10 @@ export class RpcAssetsTests {
 }
 
 function hex_to_ascii(str1: string) {
-  var hex = str1.toString();
-  var str = "";
+  const hex = str1.toString();
+  let str = "";
   //skip 0x
-  for (var n = 2; n < hex.length; n += 2) {
+  for (let n = 2; n < hex.length; n += 2) {
     str += String.fromCharCode(parseInt(hex.substr(n, 2), 16));
   }
   return str;
