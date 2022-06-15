@@ -28,7 +28,7 @@ import { PreviewDetails } from "./PreviewDetails";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
 import useDebounce from "@/hooks/useDebounce";
 import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
-import { fetchSpotPrice } from "@/defi/utils";
+import { fetchSpotPrice, toChainUnits } from "@/defi/utils";
 import { useParachainApi } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 
@@ -38,66 +38,67 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const dispatch = useDispatch();
 
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-  const { poolId } =
-    useRemoveLiquidityState();
-  const {
-    lpBalance,
-    baseAsset,
-    quoteAsset
-  } = useLiquidityPoolDetails(poolId)
+  const { poolId } = useRemoveLiquidityState();
+  const { lpBalance, baseAsset, quoteAsset } = useLiquidityPoolDetails(poolId);
 
-  const { share } = useAppSelector((state) => state.pool.currentLiquidity);
 
   const isConfirmingModalOpen = useAppSelector(
     (state) => state.ui.isConfirmingModalOpen
   );
 
   const [percentage, setPercentage] = useState<number>(0);
-  const [expectedRemoveAmountQuote, setExpectedRemoveAmountQuote] = useState<BigNumber>(
-    new BigNumber(0)
-  );
-  const [expectedRemoveAmountBase, setExpectedRemoveAmountBase] = useState<BigNumber>(
-    new BigNumber(0)
-  );
+  const [expectedRemoveAmountQuote, setExpectedRemoveAmountQuote] =
+    useState<BigNumber>(new BigNumber(0));
+  const [expectedRemoveAmountBase, setExpectedRemoveAmountBase] =
+    useState<BigNumber>(new BigNumber(0));
 
   const [confirmed, setConfirmed] = useState<boolean>(false);
-  const message = useAppSelector((state) => state.ui.message);
 
   const debouncedPercentage = useDebounce(percentage, 500);
 
-  const [priceOfBase, setPriceOfBase] = useState(new BigNumber(0))
-  const [priceOfQuote, setPriceOfQuote] = useState(new BigNumber(0))
+  const [priceOfBase, setPriceOfBase] = useState(new BigNumber(0));
+  const [priceOfQuote, setPriceOfQuote] = useState(new BigNumber(0));
 
   useEffect(() => {
     if (poolId !== -1 && baseAsset && quoteAsset && parachainApi) {
-      const baseAssetId = baseAsset.supportedNetwork.picasso
-      const quoteAssetId = quoteAsset.supportedNetwork.picasso
+      const baseAssetId = baseAsset.supportedNetwork.picasso;
+      const quoteAssetId = quoteAsset.supportedNetwork.picasso;
 
       if (baseAssetId && quoteAssetId) {
-        fetchSpotPrice(parachainApi, {
-          base: baseAssetId,
-          quote: quoteAssetId
-        }, poolId).then(basePrice => {
+        fetchSpotPrice(
+          parachainApi,
+          {
+            base: baseAssetId,
+            quote: quoteAssetId,
+          },
+          poolId
+        ).then((basePrice) => {
           const basePriceBn = new BigNumber(basePrice);
 
           setPriceOfBase(basePriceBn);
           setPriceOfQuote(new BigNumber(1).div(basePriceBn));
-        })
+        });
       }
     }
   }, [poolId, baseAsset, quoteAsset, parachainApi]);
 
   useEffect(() => {
     if (parachainApi && debouncedPercentage > 0 && lpBalance.gt(0)) {
-      // const selectedLpAmount = lpBalance.times(debouncedPercentage / 100).times(DEFAULT_DECIMALS);
-      // (parachainApi.rpc as any).pablo.redeemableAssetForGivenLpTokens(poolId, selectedLpAmount).then((response) => {
-
-      // })
+      const selectedLpAmount = toChainUnits(
+        lpBalance.times(debouncedPercentage / 100)
+      );
+      (parachainApi.rpc as any).pablo
+        .redeemableAssetForGivenLpTokens(poolId, selectedLpAmount)
+        .then((response: any) => {
+          console.log(response);
+        }).catch((err: any) => {
+          console.error(err)
+        });
     } else {
       setExpectedRemoveAmountBase(new BigNumber(0));
       setExpectedRemoveAmountQuote(new BigNumber(0));
     }
-  }, [parachainApi, debouncedPercentage])
+  }, [parachainApi, debouncedPercentage]);
 
   const onBackHandler = () => {
     router.push("/pool");
@@ -112,7 +113,7 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   };
 
   const onRemoveHandler = async () => {
-    dispatch(openConfirmingModal())
+    dispatch(openConfirmingModal());
   };
 
   useEffect(() => {

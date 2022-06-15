@@ -74,7 +74,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     } else {
       setBalanceQuote(new BigNumber(0));
     }
-  }, [balances, baseAsset, auction.pair.quote]);
+  }, [balances, quoteAsset, auction.pair.quote]);
 
   const [balanceBase, setBalanceBase] = useState(new BigNumber(0));
   useEffect(() => {
@@ -84,7 +84,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     } else {
       setBalanceBase(new BigNumber(0));
     }
-  }, [balances, baseAsset, auction.pair.quote]);
+  }, [balances, baseAsset, auction.pair.base]);
 
   const [valid1, setValid1] = useState<boolean>(false);
   const [valid2, setValid2] = useState<boolean>(false);
@@ -145,11 +145,11 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
 
       const minRec = parachainApi.createType(
         "u128",
-        toChainUnits(minReceive)
+        toChainUnits(minReceive).toString()
       );
       const amountParam = parachainApi.createType(
         "u128",
-        toChainUnits(baseAssetAmount)
+        toChainUnits(baseAssetAmount).toString()
       );
 
       try {

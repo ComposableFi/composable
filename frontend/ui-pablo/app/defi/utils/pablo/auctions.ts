@@ -1,6 +1,34 @@
 import { LiquidityPoolTransactionType } from "@/defi/types";
 import { PoolTradeHistory } from "@/store/auctions/auctions.types";
+import { LiquidityBootstrappingPool } from "@/store/pools/pools.types";
+import { fromChainUnits } from "../units";
 import BigNumber from "bignumber.js";
+
+export function getCurrentWeights(
+  pool: LiquidityBootstrappingPool,
+  current_block: BigNumber
+): { baseWeight: BigNumber; quoteWeight: BigNumber } {
+  let baseWeight = new BigNumber(0),
+    quoteWeight = new BigNumber(0);
+
+  let one = new BigNumber(1);
+  let pointInSale = new BigNumber(current_block).div(
+    new BigNumber(pool.sale.endBlock).minus(pool.sale.startBlock)
+  );
+  let weightRange = new BigNumber(pool.sale.initialWeight)
+    .div(100)
+    .minus(new BigNumber(pool.sale.finalWeight).div(100));
+
+  baseWeight = new BigNumber(pool.sale.initialWeight)
+    .div(100)
+    .minus(pointInSale.times(weightRange));
+  quoteWeight = one.minus(baseWeight);
+
+  return {
+    baseWeight,
+    quoteWeight,
+  };
+}
 
 export function transformAuctionsTransaction(
     transaction: {
@@ -14,13 +42,9 @@ export function transformAuctionsTransaction(
       who: string;
       id: string;
     },
-    selectedPool: {
-      onChainPoolQuoteAssetId: number;
-      baseDecimals: BigNumber;
-      quoteDecimals: BigNumber;
-    }
+    onChainPoolQuoteAssetId: number
   ): PoolTradeHistory {
-    const { baseDecimals, quoteDecimals, onChainPoolQuoteAssetId } = selectedPool;
+
     const baseAssetId = Number(transaction.baseAssetId);
     const quoteAssetId = Number(transaction.quoteAssetId);
   
@@ -34,19 +58,11 @@ export function transformAuctionsTransaction(
   
     if (quoteAssetId === onChainPoolQuoteAssetId) {
       side = "BUY";
-      baseAssetAmount = new BigNumber(transaction.baseAssetAmount)
-        .div(baseDecimals)
-        .toFixed(4);
-      quoteAssetAmount = new BigNumber(transaction.quoteAssetAmount)
-        .div(quoteDecimals)
-        .toFixed(4);
+      baseAssetAmount = fromChainUnits(transaction.baseAssetAmount).toString();
+      quoteAssetAmount = fromChainUnits(transaction.quoteAssetAmount).toString();
     } else {
-      baseAssetAmount = new BigNumber(transaction.baseAssetAmount)
-        .div(quoteDecimals)
-        .toFixed(4);
-      quoteAssetAmount = new BigNumber(transaction.quoteAssetAmount)
-        .div(baseDecimals)
-        .toFixed(4);
+      baseAssetAmount = fromChainUnits(transaction.baseAssetAmount).toString();
+      quoteAssetAmount = fromChainUnits(transaction.quoteAssetAmount).toString();
       spotPrice = new BigNumber(1).div(new BigNumber(spotPrice)).toString();
     }
   

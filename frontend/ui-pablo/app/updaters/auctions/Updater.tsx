@@ -6,8 +6,12 @@ import BigNumber from "bignumber.js";
 
 import { aggregateTrades } from "./utils";
 import { PoolTradeHistory } from "@/store/auctions/auctions.types";
-import { fetchBalanceByAssetId } from "@/defi/utils";
-import { AVERAGE_BLOCK_TIME, DEFAULT_DECIMALS, DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
+import { fetchBalanceByAssetId, fromChainUnits } from "@/defi/utils";
+import {
+  AVERAGE_BLOCK_TIME,
+  DEFAULT_DECIMALS,
+  DEFAULT_NETWORK_ID,
+} from "@/defi/utils/constants";
 import { queryAuctionStats } from "./subsquid";
 import { queryPoolTransactionsByType } from "../pools/subsquid";
 import { fetchSpotPrice } from "@/defi/utils";
@@ -24,7 +28,6 @@ const Updater = () => {
     auctions,
     putStatsActiveLBP,
     putHistoryActiveLBP,
-    putChartSeries,
   } = useStore();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   /**
@@ -37,16 +40,10 @@ const Updater = () => {
       const { base, quote } = auctions.activeLBP.pair;
       const { start } = auctions.activeLBP.sale;
 
-      const baseAsset = getAssetById(DEFAULT_NETWORK_ID, base);
-      const quoteAsset = getAssetById(DEFAULT_NETWORK_ID, quote);
-      const baseDecimals = baseAsset
-        ? new BigNumber(10).pow(baseAsset.decimals)
-        : DEFAULT_DECIMALS;
-      const quoteDecimals = quoteAsset
-        ? new BigNumber(10).pow(quoteAsset.decimals)
-        : DEFAULT_DECIMALS;
-
-      const poolAccountId = createPabloPoolAccountId(parachainApi, auctions.activeLBP.poolId);
+      const poolAccountId = createPabloPoolAccountId(
+        parachainApi,
+        auctions.activeLBP.poolId
+      );
 
       let allQueries = [
         /**
@@ -71,20 +68,12 @@ const Updater = () => {
          * Query amount of base tokens in
          * the pool
          */
-        fetchBalanceByAssetId(
-          parachainApi,
-          poolAccountId,
-          base.toString()
-        ),
+        fetchBalanceByAssetId(parachainApi, poolAccountId, base.toString()),
         /**
          * Query amount of quote tokens in
          * the pool
          */
-        fetchBalanceByAssetId(
-          parachainApi,
-          poolAccountId,
-          quote.toString()
-        ),
+        fetchBalanceByAssetId(parachainApi, poolAccountId, quote.toString()),
       ];
 
       Promise.all(allQueries).then(
@@ -119,11 +108,7 @@ const Updater = () => {
           ) {
             createPoolTx = transformAuctionsTransaction(
               (createPool as any).data.pabloTransactions[0],
-              {
-                baseDecimals,
-                quoteDecimals,
-                onChainPoolQuoteAssetId: quote,
-              }
+              quote
             );
           }
 
@@ -133,11 +118,7 @@ const Updater = () => {
             const addLiqTxs: PoolTradeHistory[] = (
               addLiq as any
             ).data.pabloTransactions.map((t: any) =>
-              transformAuctionsTransaction(t, {
-                baseDecimals,
-                quoteDecimals,
-                onChainPoolQuoteAssetId: quote,
-              })
+              transformAuctionsTransaction(t, quote)
             );
 
             let saleStartTs = createPoolTx
@@ -164,12 +145,8 @@ const Updater = () => {
                 quote: quoteBalance as string,
                 base: baseBalance as string,
               },
-              liquidity: new BigNumber(totalLiquidity)
-                .div(quoteDecimals)
-                .toFixed(4),
-              totalVolume: new BigNumber(totalVolume)
-                .div(quoteDecimals)
-                .toFixed(4),
+              liquidity: fromChainUnits(totalLiquidity).toString(),
+              totalVolume: fromChainUnits(totalVolume).toString()
             });
           }
 
@@ -179,20 +156,13 @@ const Updater = () => {
             (swapsHistory as any).data.pabloTransactions
           ) {
             swapTxs = (swapsHistory as any).data.pabloTransactions.map(
-              (t: any) =>
-                transformAuctionsTransaction(t, {
-                  baseDecimals,
-                  quoteDecimals,
-                  onChainPoolQuoteAssetId: quote,
-                })
+              (t: any) => transformAuctionsTransaction(t, quote)
             );
-            putChartSeries("price", aggregateTrades(swapTxs));
             putHistoryActiveLBP(swapTxs.slice(0, 10));
           }
         }
       );
     } else {
-      putChartSeries("price", []);
       putHistoryActiveLBP([]);
     }
   }, [parachainApi, auctions.activeLBP]);
@@ -207,14 +177,15 @@ const Updater = () => {
         pool < liquidityBootstrappingPools.verified.length;
         pool++
       ) {
-        let quoteId = liquidityBootstrappingPools.verified[pool].pair.quote.toString()
+        let quoteId =
+          liquidityBootstrappingPools.verified[pool].pair.quote.toString();
         if (apollo[quoteId]) {
           fetchSpotPrice(
             parachainApi,
             liquidityBootstrappingPools.verified[pool].pair,
             liquidityBootstrappingPools.verified[pool].poolId
-            ).then((spotPrice) => {
-            spotPrice = spotPrice.times(apollo[quoteId])
+          ).then((spotPrice) => {
+            spotPrice = spotPrice.times(apollo[quoteId]);
             setLiquidityBootstrappingPoolSpotPrice(
               liquidityBootstrappingPools.verified[pool].poolId,
               spotPrice.toFixed(4)

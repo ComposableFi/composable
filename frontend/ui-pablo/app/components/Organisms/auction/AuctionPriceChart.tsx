@@ -11,7 +11,8 @@ const NoSSRChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 export type AuctionPriceChartProps = {
   baseAsset: AssetMetadata | null;
   quoteAsset: AssetMetadata | null;
-  data: [number, number][];
+  priceSeries: [number, number][];
+  predictedPriceSeries: [number, number][];
   height: number | string;
   dateFormat: (timestamp: number | string) => string;
   pastCount?: number;
@@ -20,7 +21,8 @@ export type AuctionPriceChartProps = {
 
 export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
   baseAsset,
-  data,
+  priceSeries,
+  predictedPriceSeries,
   height,
   dateFormat,
   pastCount = 0,
@@ -28,7 +30,7 @@ export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
 }) => {
   const theme = useTheme();
 
-  const dates = data
+  const dates = priceSeries
     .map((item) => {
       return moment(item[0]).utc().format("D MMM");
     })
@@ -159,17 +161,10 @@ export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
           options={options}
           series={[
             {
-              data: data,
+              data: priceSeries,
             },
             {
-              data: data.slice(
-                0,
-                pastCount == 1
-                  ? 0
-                  : pastCount == data.length - 1
-                  ? data.length
-                  : pastCount
-              ),
+              data: predictedPriceSeries
             },
           ]}
           type="area"
@@ -194,14 +189,14 @@ export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
         <Typography variant="body2" pl={1} pr={2}>
           {baseAsset?.symbol}
         </Typography>
-        {/* <FiberManualRecordIcon color="primary"/>
+        <FiberManualRecordIcon color="inherit" />
         <Typography
           variant="body2"
           pl={1}
           whiteSpace="nowrap"
         >
           {baseAsset?.symbol} predicted price (without new buyers)
-        </Typography> */}
+        </Typography>
       </Box>
     </Box>
   );
