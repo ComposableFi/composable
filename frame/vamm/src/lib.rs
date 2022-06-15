@@ -218,7 +218,7 @@ pub mod pallet {
 			+ MaybeSerializeDeserialize
 			+ TypeInfo;
 
-		/// Implementation for querying the current Unix timestamp
+		/// Implementation for querying the current Unix timestamp.
 		type TimeProvider: UnixTime;
 	}
 
@@ -307,7 +307,7 @@ pub mod pallet {
 	pub type VammCounter<T: Config> = StorageValue<_, VammIdOf<T>, ValueQuery>;
 
 	/// Maps [VammId](Config::VammId) to the corresponding virtual
-	/// [VammState] specs
+	/// [VammState] specs.
 	#[pallet::storage]
 	#[pallet::getter(fn get_vamm)]
 	pub type VammMap<T: Config> = StorageMap<_, Blake2_128Concat, VammIdOf<T>, VammStateOf<T>>;
@@ -465,13 +465,13 @@ pub mod pallet {
 		///
 		/// ## Parameters:
 		/// - `base_asset_reserves`: The amount of
-		/// [`base`](VammState::base_asset_reserves) asset
+		/// [`base`](VammState::base_asset_reserves) asset.
 		/// - `quote_asset_reserves`: The amount of
-		/// [`quote`](VammState::quote_asset_reserves) asset
+		/// [`quote`](VammState::quote_asset_reserves) asset.
 		/// - `peg_multiplier`: The constant multiplier responsible to balance
 		/// [`quote`](VammState::quote_asset_reserves) and
 		/// [`base`](VammState::base_asset_reserves)
-		/// asset
+		/// asset.
 		///
 		/// ## Returns
 		/// The new vamm's id, if successful.
@@ -563,7 +563,7 @@ pub mod pallet {
 		///  - `vamm_id`: The ID of the desired vamm to query.
 		///  - `asset_type`: The desired asset type to get info about. (either
 		///  [`base`](VammState::base_asset_reserves) or
-		///  [`quote`](VammState::quote_asset_reserves))
+		///  [`quote`](VammState::quote_asset_reserves)).
 		///
 		/// ## Returns
 		/// The price of [`base`](VammState::base_asset_reserves) asset in
@@ -695,7 +695,7 @@ pub mod pallet {
 		/// The new twap value for the specified asset.
 		///
 		/// ## Assumptions or Requirements
-		/// * The requested [`VammId`](Config::VammId) must exists
+		/// * The requested [`VammId`](Config::VammId) must exists.
 		/// * The requested Vamm must be open.
 		/// * The `new_twap` value can't be zero.
 		///
@@ -763,11 +763,11 @@ pub mod pallet {
 		/// [`base`](VammState::base_asset_reserves) asset (and vice-versa).
 		///
 		/// ## Assumptions or Requirements
-		/// * The requested [`VammId`](Config::VammId) must exists
+		/// * The requested [`VammId`](Config::VammId) must exists.
 		/// * The desired swap amount can not exceed the maximum supported value
-		/// for the Vamm
+		/// for the Vamm.
 		/// * The desired swap amount must result in at least
-		/// [`output_amount_limit`](composable_traits::vamm::SwapConfig)
+		/// [`output_amount_limit`](composable_traits::vamm::SwapConfig).
 		///
 		/// ## Emits
 		/// * [`Swapped`](Event::<T>::Swapped)
@@ -872,7 +872,7 @@ pub mod pallet {
 		///
 		/// ## Assumptions or Requirements
 		/// In order to move the price of a vamm we need to ensure that some properties hold:
-		/// * The passed [`VammId`](Config::VammId) must be valid
+		/// * The passed [`VammId`](Config::VammId) must be valid.
 		/// * The desired vamm must be open. (See the [`closed`](VammState)
 		/// field for more information).
 		/// * Both [`base`](VammState::base_asset_reserves) and
