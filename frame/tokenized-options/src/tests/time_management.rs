@@ -10,6 +10,7 @@ use composable_traits::tokenized_options::TokenizedOptions as TokenizedOptionsTr
 use frame_support::{
 	assert_ok,
 	traits::{Get, OnFinalize, OnIdle, OnInitialize},
+	weights::Weight,
 };
 use proptest::prelude::*;
 use std::{collections::HashMap, ops::Range};
@@ -131,6 +132,7 @@ impl Tester {
 #[derive(Debug)]
 struct Block {
 	is_initial: bool,
+	is_final: bool,
 	block_number: BlockNumber,
 }
 
@@ -140,14 +142,28 @@ impl Drop for Block {
 			frame_system::limits::BlockWeights,
 		>>::get()
 		.max_block;
+		let max_weight = if !self.is_final { max_weight } else { Weight::max_value() };
 		TokenizedOptions::on_idle(self.block_number, max_weight);
 		TokenizedOptions::on_finalize(self.block_number);
 	}
 }
 
 impl Block {
+	fn new(is_initial: bool, is_final: bool, block_number: BlockNumber, moment: Moment) -> Self {
+		if !is_initial {
+			System::reset_events();
+			System::set_block_number(block_number);
+		}
+		TokenizedOptions::on_initialize(block_number);
+		let moment = if !is_final { moment } else { Moment::max_value() };
+		Timestamp::set_timestamp(moment);
+		Block { is_initial, is_final, block_number }
+	}
 	fn is_initial(&self) -> bool {
 		self.is_initial
+	}
+	fn is_final(&self) -> bool {
+		self.is_final
 	}
 }
 
@@ -161,12 +177,11 @@ struct BlockProducer {
 
 impl BlockProducer {
 	fn new(durations: Vec<Moment>) -> Self {
-		let block_number = System::block_number();
 		BlockProducer {
 			durations: durations.into_iter(),
 			is_initial: true,
-			block_number,
-			moment: 0,
+			block_number: System::block_number(),
+			moment: Timestamp::get(),
 		}
 	}
 }
@@ -174,15 +189,10 @@ impl BlockProducer {
 impl Iterator for BlockProducer {
 	type Item = Block;
 	fn next(&mut self) -> Option<Self::Item> {
-		if !self.is_initial {
-			System::reset_events();
-			System::set_block_number(self.block_number);
-		}
-		TokenizedOptions::on_initialize(self.block_number);
-		Timestamp::set_timestamp(self.moment);
 		match self.durations.next() {
 			Some(duration) => {
-				let block = Block { is_initial: self.is_initial, block_number: self.block_number };
+				let is_final = self.durations.len() == 0;
+				let block = Block::new(self.is_initial, is_final, self.block_number, self.moment);
 				self.is_initial = false;
 				self.block_number += 1;
 				self.moment += duration;
