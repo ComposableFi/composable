@@ -14,7 +14,7 @@
 //! - position is stored in any way efficient for that
 //! - NFT stores only reference to position in protocol, example pallet identifier and some
 //!   monotonous identifier
-//! - during XCMP transfer, owner of NFT become target parachain
+//! - during XCMP transfer, owner of NFT becomes target parachain
 //! - allow to build NFTs from lower level typed positions
 //!
 //! So NFT is (class, id, position reference)
