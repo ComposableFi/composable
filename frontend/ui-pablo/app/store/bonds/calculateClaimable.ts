@@ -1,11 +1,11 @@
 import BigNumber from "bignumber.js";
 
 type Props = {
-  currentBlockOrMoment: BigNumber;
-  start: BigNumber;
+  currentBlockOrMoment: number;
+  start: number;
   perPeriod: BigNumber;
-  periodCount: BigNumber;
-  blockNumberOrMomentAtEnd: BigNumber;
+  periodCount: number;
+  blockNumberOrMomentAtEnd: number;
 };
 export function calculateClaimable({
   currentBlockOrMoment,
@@ -14,14 +14,12 @@ export function calculateClaimable({
   periodCount,
   blockNumberOrMomentAtEnd,
 }: Props) {
-  const getClaimable = (currentBlockNumberOrMoment: BigNumber) =>
+  const getClaimable = (currentBlockNumberOrMoment: number) =>
     perPeriod.times(
-      Math.floor(
-        currentBlockNumberOrMoment.minus(start).div(periodCount).toNumber()
-      )
+      Math.floor((currentBlockNumberOrMoment - start) / periodCount)
     );
   if (currentBlockOrMoment > blockNumberOrMomentAtEnd) {
-    return periodCount.isEqualTo(1)
+    return periodCount === 1
       ? perPeriod
       : getClaimable(blockNumberOrMomentAtEnd);
   }

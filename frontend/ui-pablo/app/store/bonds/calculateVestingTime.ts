@@ -1,11 +1,10 @@
-import BigNumber from "bignumber.js";
 import moment from "moment";
 
 type CalculateBlockBasedVestingTimeProps = {
-  start: BigNumber;
-  currentBlock: BigNumber;
-  period: BigNumber;
-  blockNumberOrMomentAtEnd: BigNumber;
+  start: number;
+  currentBlock: number;
+  period: number;
+  blockNumberOrMomentAtEnd: number;
 };
 
 export function calculateBlockBasedVestingTime({
@@ -22,16 +21,13 @@ export function calculateBlockBasedVestingTime({
     return "0%";
   }
 
-  return `${blockNumberOrMomentAtEnd
-    .minus(currentBlock)
-    .div(period)
-    .times(100)}%`;
+  return `${((blockNumberOrMomentAtEnd - currentBlock) / period) * 100}%`;
 }
 
 type CalculateMomentBasedVestingTimeProps = {
-  start: BigNumber;
-  currentTime: BigNumber;
-  blockNumberOrMomentAtEnd: BigNumber;
+  start: number;
+  currentTime: number;
+  blockNumberOrMomentAtEnd: number;
 };
 
 export function calculateMomentBasedVestingTime({
@@ -39,8 +35,8 @@ export function calculateMomentBasedVestingTime({
   currentTime,
   blockNumberOrMomentAtEnd,
 }: CalculateMomentBasedVestingTimeProps) {
-  const startMoment = moment.unix(start.toNumber());
-  const endMoment = moment.unix(blockNumberOrMomentAtEnd.toNumber());
+  const startMoment = moment.unix(start);
+  const endMoment = moment.unix(blockNumberOrMomentAtEnd);
   const duration = moment.duration(endMoment.diff(startMoment));
   return currentTime > start
     ? `0D 0H 0M 0S`

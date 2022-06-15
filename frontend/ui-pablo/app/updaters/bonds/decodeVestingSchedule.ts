@@ -1,23 +1,21 @@
-import { VestingSchedule } from "../../store/bonds/types";
-import BigNumber from "bignumber.js";
-
-export const stringToBigNumber = (value: string): BigNumber =>
-  new BigNumber(value.replaceAll(",", ""));
+import { VestingSchedule } from "../../store/bonds/bonds.types";
+import { stringToBigNumber } from "../../utils/stringToBigNumber";
+import { stringToNumber } from "../../utils/stringToNumber";
 
 export function decodeVestingSchedule(vestingSchedule: any): VestingSchedule {
   const type = vestingSchedule.window.BlockNumberBased ? "block" : "moment";
   const window = {
     start: vestingSchedule.window.BlockNumberBased
-      ? stringToBigNumber(vestingSchedule.window.BlockNumberBased.start)
-      : stringToBigNumber(vestingSchedule.window.MomentBased.start),
+      ? stringToNumber(vestingSchedule.window.BlockNumberBased.start)
+      : stringToNumber(vestingSchedule.window.MomentBased.start),
     period: vestingSchedule.window.BlockNumberBased
-      ? stringToBigNumber(vestingSchedule.window.BlockNumberBased.period)
-      : stringToBigNumber(vestingSchedule.window.MomentBased.period),
+      ? stringToNumber(vestingSchedule.window.BlockNumberBased.period)
+      : stringToNumber(vestingSchedule.window.MomentBased.period),
   };
 
   return {
     perPeriod: stringToBigNumber(vestingSchedule.perPeriod),
-    periodCount: stringToBigNumber(vestingSchedule.periodCount),
+    periodCount: Number(vestingSchedule.periodCount),
     window,
     type,
   };

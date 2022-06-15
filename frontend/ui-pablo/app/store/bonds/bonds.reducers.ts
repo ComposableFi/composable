@@ -5,21 +5,20 @@ import {
   calculateBlockBasedVestingTime,
   calculateMomentBasedVestingTime,
 } from "./calculateVestingTime";
-import { BondOffer, BondSlice, VestingSchedule } from "./types";
-
-const DECIMALS = new BigNumber(10).pow(12);
+import { BondOffer, BondSlice, VestingSchedule } from "./bonds.types";
+import { DEFAULT_DECIMALS } from "../../updaters/constants";
 
 export const addActiveBond = (
   activeBonds: BondSlice["activeBonds"],
   bondOffer: BondOffer,
   vestingSchedule: VestingSchedule,
-  currentBlock: BigNumber,
-  currentTime: BigNumber
+  currentBlock: number,
+  currentTime: number
 ) => {
   return produce(activeBonds, (draft) => {
     const window = vestingSchedule.window;
-    const totalPeriod = window.period.times(vestingSchedule.periodCount);
-    const blockNumberOrMomentAtEnd = window.start.plus(totalPeriod);
+    const totalPeriod = window.period * vestingSchedule.periodCount;
+    const blockNumberOrMomentAtEnd = window.start + totalPeriod;
     const vestingTime =
       vestingSchedule.type === "block"
         ? calculateBlockBasedVestingTime({
@@ -42,12 +41,14 @@ export const addActiveBond = (
       blockNumberOrMomentAtEnd,
     });
     draft.push({
+      offerId: bondOffer.offerId,
       asset: bondOffer.asset,
       pendingAmount: vestingSchedule.perPeriod
         .times(vestingSchedule.periodCount)
         .minus(claimableAmount),
       claimableAmount,
       vestingTime,
+      bondOffer,
     });
   });
 };
@@ -60,18 +61,19 @@ export const addBond = (
 ) => {
   const price = new BigNumber(bondOffer.bondPrice)
     .times(assetPrice)
-    .times(bondOffer.nbOfBonds)
-    .div(DECIMALS);
+    .div(DEFAULT_DECIMALS);
   return produce(allBonds, (draft) => {
     draft.push({
+      offerId: bondOffer.offerId,
       asset: bondOffer.asset,
       price,
       roi: new BigNumber(rewardPrice)
         .times(bondOffer.reward.amount)
         .times(100)
-        .div(DECIMALS)
+        .div(DEFAULT_DECIMALS)
         .div(price),
       totalPurchased: new BigNumber(0), // TBD
+      bondOffer,
     });
   });
 };

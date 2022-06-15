@@ -1,22 +1,21 @@
-import { BondOffer } from "../../store/bonds/types";
+import { BondOffer } from "../../store/bonds/bonds.types";
 import type { AccountId32 } from "@polkadot/types/interfaces/runtime";
-import BigNumber from "bignumber.js";
 import { TOKENS } from "../../defi/Tokens";
 import { TokenId } from "../../defi/types";
+import { stringToBigNumber } from "../../utils/stringToBigNumber";
 
 const currencyIdToAssetMap: Record<string, TokenId> = {
   "1": "pica",
   "4": "ksm",
 };
 
-export const stringToBigNumber = (value: string): BigNumber =>
-  new BigNumber(value.replaceAll(",", ""));
-
 export function decodeBondOffer(
+  offerId: number,
   beneficiary: AccountId32,
   bondOffer: any
 ): BondOffer {
   return {
+    offerId,
     beneficiary,
     asset: TOKENS[currencyIdToAssetMap[bondOffer.asset]],
     bondPrice: stringToBigNumber(bondOffer.bondPrice),
@@ -27,7 +26,7 @@ export function decodeBondOffer(
     reward: {
       asset: TOKENS[currencyIdToAssetMap[bondOffer.reward.asset]],
       amount: stringToBigNumber(bondOffer.reward.amount),
-      maturity: new BigNumber(bondOffer.reward.maturity),
+      maturity: Number(bondOffer.reward.maturity),
     },
   };
 }

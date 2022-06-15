@@ -4,7 +4,7 @@ import createAuctionsSlice from "./auctions/auctions.slice";
 import createSwapsSlice from "./swaps/swaps.slice";
 import createPoolsSlice from "./pools/pools.slice";
 import createUiSlice from "./ui/ui.slice";
-import createBondsSlice from "./bonds/slice";
+import createBondsSlice from "./bonds/bonds.slice";
 
 import createLiquiditySlice from "./liquidity/liquidity.slice";
 import createRemoveLiquiditySlice from "./removeLiquidity/removeLiquidity.slice";

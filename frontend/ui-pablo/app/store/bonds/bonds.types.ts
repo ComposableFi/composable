@@ -8,8 +8,8 @@ export interface BondSlice {
   addActiveBond: (
     bondOffer: BondOffer,
     vestingSchedule: VestingSchedule,
-    currentBlock: BigNumber,
-    currentTime: BigNumber
+    currentBlock: number,
+    currentTime: number
   ) => void;
   addBond: (
     bondOffer: BondOffer,
@@ -20,39 +20,44 @@ export interface BondSlice {
 }
 
 export interface BondOffer {
+  offerId: number;
   beneficiary: AccountId32;
   asset: Token;
   bondPrice: BigNumber;
-  nbOfBonds: BigNumber;
+  nbOfBonds: number;
   maturity: number | "Infinite";
   reward: OfferReward;
 }
 
 export interface VestingSchedule {
   perPeriod: BigNumber;
-  periodCount: BigNumber;
+  periodCount: number;
   window: Window;
   type: "block" | "moment";
 }
 
-type Window = { start: BigNumber; period: BigNumber };
+type Window = { start: number; period: number };
 
 interface OfferReward {
   asset: Token;
   amount: BigNumber;
-  maturity: BigNumber;
+  maturity: number;
 }
 
 type ActiveBond = {
+  offerId: number;
   asset: Token;
   pendingAmount: BigNumber;
   claimableAmount: BigNumber;
   vestingTime: string;
+  bondOffer: BondOffer;
 };
 
 type AllBond = {
+  offerId: number;
   asset: Token;
   price: BigNumber;
   roi: BigNumber;
   totalPurchased: BigNumber;
+  bondOffer: BondOffer;
 };

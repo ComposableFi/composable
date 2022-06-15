@@ -1,7 +1,6 @@
-import BigNumber from "bignumber.js";
 import { StoreSlice } from "../types";
-import { addActiveBond, addBond } from "./reducers";
-import { BondOffer, BondSlice, VestingSchedule } from "./types";
+import { addActiveBond, addBond } from "./bonds.reducers";
+import { BondOffer, BondSlice, VestingSchedule } from "./bonds.types";
 
 const createBondsSlice: StoreSlice<BondSlice> = (set) => ({
   allBonds: [],
@@ -9,8 +8,8 @@ const createBondsSlice: StoreSlice<BondSlice> = (set) => ({
   addActiveBond: (
     bondOffer: BondOffer,
     vestingSchedule: VestingSchedule,
-    currentBlock: BigNumber,
-    currentTime: BigNumber
+    currentBlock: number,
+    currentTime: number
   ) =>
     set((prev: BondSlice) => ({
       activeBonds: addActiveBond(
