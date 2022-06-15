@@ -2,12 +2,19 @@ name: "NodeJs runtime upgrade"
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - new-runtime-upgrade
+    inputs:
+      name:
+        type: choice
+        required: true
+        description: 'Network environment'
+        options:
+          - dali
+          - composable
+          - picasso
 
 jobs:
   dali-runtime-upgrade:
+    if: ${{ inputs.name == 'dali' }}
     runs-on:
       - self-hosted
       - linux
@@ -51,6 +58,7 @@ jobs:
           yarn upgrade-runtime --root_key=${{ secrets.DALI_ROOT_KEY }} --rpc_ws_url=wss://rpc.composablefinance.ninja --path=./${FILE_NAME}
 
   composable-runtime-upgrade:
+    if: ${{ inputs.name == 'composable' }}
     runs-on:
       - self-hosted
       - linux
@@ -94,6 +102,7 @@ jobs:
           yarn upgrade-runtime --root_key=${{ secrets.COMPOSABLE_ROOT_KEY }} --rpc_ws_url=wss://rpc.composablefinance.ninja --path=./${FILE_NAME}
 
   picasso-runtime-upgrade:
+    if: ${{ inputs.name == 'picasso' }}
     runs-on:
       - self-hosted
       - linux
