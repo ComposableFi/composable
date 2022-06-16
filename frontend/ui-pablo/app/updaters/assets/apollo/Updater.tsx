@@ -19,7 +19,8 @@ const Updater = () => {
     if (parachainApi) {
       Array.from(onChainAssetIds).map(onChainAssetId => {
         fetchApolloPriceByAssetId(parachainApi, onChainAssetId).then(price => {
-          updateApolloPrice(onChainAssetId.toString(), price);
+          // updateApolloPrice(onChainAssetId.toString(), price);
+          updateApolloPrice(onChainAssetId.toString(), "1");
         })
       })
     }

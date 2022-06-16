@@ -156,6 +156,7 @@ export async function fetchLbpStats(pool: LiquidityBootstrappingPool): Promise<{
         "[fetchInitialBalance] Unable to retreive data from query"
       );
 
+
     if (pabloPools.length) {
       totalLiquidity = fromChainUnits(pabloPools[0].totalLiquidity);
       totalVolume = fromChainUnits(pabloPools[0].totalVolume);
@@ -197,6 +198,7 @@ export async function fetchAuctions(
      */
     const stats = await fetchLbpStats(pool);
     totalVolume = stats.totalVolume.toString();
+    liquidity = stats.totalLiquidity.toString();
     /**
      * Query trade history
      * for transactions tab
