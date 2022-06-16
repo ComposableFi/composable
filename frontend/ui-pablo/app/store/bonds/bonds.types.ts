@@ -23,7 +23,7 @@ export interface BondOffer {
   offerId: number;
   beneficiary: AccountId32;
   currencyId: number;
-  asset: Token | "string";
+  asset: Token;
   bondPrice: BigNumber;
   nbOfBonds: number;
   maturity: number | "Infinite";
@@ -41,14 +41,14 @@ type Window = { start: number; period: number };
 
 interface OfferReward {
   currencyId: number;
-  asset: Token | "string";
+  asset: Token;
   amount: BigNumber;
   maturity: number;
 }
 
 type ActiveBond = {
   offerId: number;
-  asset: Token | "string";
+  asset: Token;
   pendingAmount: BigNumber;
   claimableAmount: BigNumber;
   vestingTime: string;
@@ -57,7 +57,7 @@ type ActiveBond = {
 
 type AllBond = {
   offerId: number;
-  asset: Token | "string";
+  asset: Token;
   price: BigNumber;
   roi: BigNumber;
   totalPurchased: BigNumber;
