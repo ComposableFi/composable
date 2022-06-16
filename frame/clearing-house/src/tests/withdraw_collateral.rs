@@ -42,7 +42,7 @@ fn should_fail_if_withdrawal_amount_is_zero() {
 
 #[test]
 fn cannot_withdraw_outstanding_profits() {
-	let config = MarketConfig { taker_fee: 0, ..Default::default() };
+	let config = MarketConfig::default();
 	let collateral = as_balance(100);
 
 	with_trading_context(config, collateral, |market_id| {
@@ -70,7 +70,7 @@ fn cannot_withdraw_outstanding_profits() {
 
 #[test]
 fn can_withdraw_realized_profits() {
-	let config = MarketConfig { taker_fee: 0, ..Default::default() };
+	let config = MarketConfig::default();
 	let collateral = as_balance(100);
 	let margins = vec![(ALICE, collateral), (BOB, collateral / 2)];
 
@@ -121,7 +121,7 @@ fn can_withdraw_realized_profits() {
 
 #[test]
 fn can_withdraw_unrealized_funding_payments_by_settling_them() {
-	let config = MarketConfig { taker_fee: 0, ..Default::default() };
+	let config = MarketConfig::default();
 	let collateral = as_balance(500);
 
 	with_trading_context(config.clone(), collateral, |market_id| {
@@ -177,14 +177,17 @@ fn cannot_withdraw_funds_reserved_for_market_fee_pool() {
 		// Alice closes her position
 		assert_ok!(<TestPallet as ClearingHouse>::close_position(&ALICE, &market_id));
 
-        // Alice should have 100 as collateral and the Fee Pool should have the remaining 1
+		// Alice should have 100 as collateral and the Fee Pool should have the remaining 1
 		assert_err!(
 			<TestPallet as ClearingHouse>::withdraw_collateral(&ALICE, collateral),
 			Error::<Runtime>::InsufficientCollateral
 		);
 
-        assert_ok!(<TestPallet as ClearingHouse>::withdraw_collateral(&ALICE, as_balance(100)));
-        assert_eq!(AssetsPallet::balance(USDC, &TestPallet::get_collateral_account()), as_balance(1));
+		assert_ok!(<TestPallet as ClearingHouse>::withdraw_collateral(&ALICE, as_balance(100)));
+		assert_eq!(
+			AssetsPallet::balance(USDC, &TestPallet::get_collateral_account()),
+			as_balance(1)
+		);
 	});
 }
 
@@ -241,7 +244,6 @@ proptest! {
 			margin_ratio_initial: (1, 2).into(),      // 2x max leverage
 			margin_ratio_maintenance: (1, 10).into(), // 10% MMR
 			margin_ratio_partial: (2, 10).into(),     // 20% PMR
-			taker_fee: 0,
 			..Default::default()
 		};
 

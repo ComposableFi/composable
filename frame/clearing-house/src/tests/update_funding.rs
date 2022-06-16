@@ -266,7 +266,6 @@ proptest! {
 		let config = MarketConfig {
 			funding_frequency: ONE_HOUR,
 			funding_period: ONE_HOUR,
-			taker_fee: 0,
 			..Default::default()
 		};
 

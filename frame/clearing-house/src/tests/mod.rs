@@ -255,11 +255,10 @@ impl Default for MarketConfigGeneric<AssetId, Balance, Decimal, VammConfig> {
 			margin_ratio_maintenance: FixedI128::from_float(0.02),
 			// partially liquidate when above 25x leverage
 			margin_ratio_partial: FixedI128::from_float(0.04),
-			// 'One cent' of the quote asset
-			minimum_trade_size: FixedI128::from_float(0.01),
+			minimum_trade_size: 0.into(),
 			funding_frequency: ONE_HOUR,
 			funding_period: ONE_HOUR * 24,
-			taker_fee: 10, // 0.1%
+			taker_fee: 0,
 			twap_period: ONE_HOUR,
 		}
 	}
