@@ -61,7 +61,14 @@ export default {
     ComposableTraitsVestingVestingSchedule: "Null",
     CumulusPalletDmpQueuePageIndexData: "Null",
     PalletDutchAuctionTakeOrder: "Null",
-    ComposableTraitsGovernanceSignedRawOrigin: "Null",
+    ComposableTraitsGovernanceSignedRawOrigin: {
+      _enum: {
+        Root: "Null",
+        Signed: "AccountId32",
+        isSigned: "bool",
+        asSigned: "AccountId32"
+      }
+    },
     PalletIdentityRegistration: "Null",
     PalletIdentityRegistrarInfo: "Null",
     PalletOracleAssetInfo: "Null",
@@ -72,6 +79,9 @@ export default {
     PalletOraclePrePrice: "Null",
     PalletOraclePrice: "Null",
     PolkadotPrimitivesV1AbridgedHostConfiguration: "Null",
+    PolkadotPrimitivesV2PersistedValidationData: "Null",
+    PolkadotPrimitivesV2UpgradeRestriction: "Null",
+    PolkadotPrimitivesV2AbridgedHostConfiguration: "Null",
     CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot: "Null",
     PolkadotPrimitivesV1PersistedValidationData: "PersistedValidationData",
     PalletSchedulerScheduledV2: "Null",
@@ -84,6 +94,7 @@ export default {
       frozen: "u128"
     },
     OrmlTokensBalanceLock: "Null",
+    OrmlTokensReserveData: "Null",
     PalletTreasuryProposal: "Null",
     PalletVaultModelsStrategyOverview: "Null",
     PalletVaultModelsVaultInfo: "Null",
@@ -156,9 +167,6 @@ export default {
     ComposableTraitsXcmAssetsXcmAssetLocation: "Null",
     SpTrieStorageProof: "Null",
     ComposableTraitsXcmAssetsForeignMetadata: "Null",
-    PolkadotPrimitivesV2PersistedValidationData: "Null",
-    PolkadotPrimitivesV2UpgradeRestriction: "Null",
-    PolkadotPrimitivesV2AbridgedHostConfiguration: "Null",
     FrameSystemAccountInfo: {
       nonce: "Null",
       consumers: "Null",
@@ -170,6 +178,6 @@ export default {
         miscFrozen: "u128",
         feeFrozen: "u128"
       }
-    }
+    },
   }
 };

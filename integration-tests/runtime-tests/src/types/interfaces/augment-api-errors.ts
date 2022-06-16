@@ -1,12 +1,13 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes } from "@polkadot/api-base/types";
+import type { ApiTypes } from '@polkadot/api-base/types';
 
-declare module "@polkadot/api-base/types/errors" {
+declare module '@polkadot/api-base/types/errors' {
   export interface AugmentedErrors<ApiType extends ApiTypes> {
     assets: {
       CannotSetNewCurrencyToRegistry: AugmentedError<ApiType>;
+      InvalidCurrency: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -451,6 +452,66 @@ declare module "@polkadot/api-base/types/errors" {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    ibc: {
+      /**
+       * Client state not found
+       **/
+      ClientStateNotFound: AugmentedError<ApiType>;
+      /**
+       * Client consensus state not found for height
+       **/
+      ConsensusStateNotFound: AugmentedError<ApiType>;
+      /**
+       * Error decoding some type
+       **/
+      DecodingError: AugmentedError<ApiType>;
+      /**
+       * Error encoding some type
+       **/
+      EncodingError: AugmentedError<ApiType>;
+      /**
+       * Invalid route
+       **/
+      InvalidRoute: AugmentedError<ApiType>;
+      /**
+       * Other forms of errors
+       **/
+      Other: AugmentedError<ApiType>;
+      /**
+       * Error processing ibc messages
+       **/
+      ProcessingError: AugmentedError<ApiType>;
+      /**
+       * Error generating trie proof
+       **/
+      ProofGenerationError: AugmentedError<ApiType>;
+      /**
+       * Error constructing packet
+       **/
+      SendPacketError: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    ibcPing: {
+      /**
+       * Error opening channel
+       **/
+      ChannelInitError: AugmentedError<ApiType>;
+      /**
+       * Invalid params passed
+       **/
+      InvalidParams: AugmentedError<ApiType>;
+      /**
+       * Error registering packet
+       **/
+      PacketSendError: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     identity: {
       /**
        * Account ID is already named.
@@ -566,6 +627,7 @@ declare module "@polkadot/api-base/types/errors" {
        * Can't allow amount 0 as collateral.
        **/
       CannotDepositZeroCollateral: AugmentedError<ApiType>;
+      CannotIncreaseCollateralFactorOfOpenMarket: AugmentedError<ApiType>;
       CannotRepayMoreThanBorrowAmount: AugmentedError<ApiType>;
       /**
        * Repaying more than once in the same block is not allowed.
@@ -930,6 +992,44 @@ declare module "@polkadot/api-base/types/errors" {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    proxy: {
+      /**
+       * Account is already a proxy.
+       **/
+      Duplicate: AugmentedError<ApiType>;
+      /**
+       * Call may not be made by proxy because it may escalate its privileges.
+       **/
+      NoPermission: AugmentedError<ApiType>;
+      /**
+       * Cannot add self as proxy.
+       **/
+      NoSelfProxy: AugmentedError<ApiType>;
+      /**
+       * Proxy registration not found.
+       **/
+      NotFound: AugmentedError<ApiType>;
+      /**
+       * Sender is not a proxy of the account to be proxied.
+       **/
+      NotProxy: AugmentedError<ApiType>;
+      /**
+       * There are too many proxies registered or too many announcements pending.
+       **/
+      TooMany: AugmentedError<ApiType>;
+      /**
+       * Announcement, if made at all, was made too recently.
+       **/
+      Unannounced: AugmentedError<ApiType>;
+      /**
+       * A call which is incompatible with the proxy type's filter was attempted.
+       **/
+      Unproxyable: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     relayerXcm: {
       /**
        * The location is invalid since it already has a subscription from us.
@@ -1056,7 +1156,7 @@ declare module "@polkadot/api-base/types/errors" {
       CallFiltered: AugmentedError<ApiType>;
       /**
        * Failed to extract the runtime version from the new runtime.
-       *
+       * 
        * Either calling `Core_version` or decoding `RuntimeVersion` failed.
        **/
       FailedToExtractRuntimeVersion: AugmentedError<ApiType>;
@@ -1112,6 +1212,7 @@ declare module "@polkadot/api-base/types/errors" {
        * Failed because the maximum locks was exceeded
        **/
       MaxLocksExceeded: AugmentedError<ApiType>;
+      TooManyReserves: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -1126,6 +1227,10 @@ declare module "@polkadot/api-base/types/errors" {
        * No proposal or bounty at that index.
        **/
       InvalidIndex: AugmentedError<ApiType>;
+      /**
+       * Proposal has not been approved.
+       **/
+      ProposalNotApproved: AugmentedError<ApiType>;
       /**
        * Too many approvals in the queue.
        **/
