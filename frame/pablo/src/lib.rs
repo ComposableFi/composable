@@ -629,7 +629,8 @@ pub mod pallet {
 					pair,
 				),
 				PoolInitConfiguration::LiquidityBootstrapping(pool_config) => {
-					let validated_pool_config = Validated::new(pool_config.clone())?;
+					let validated_pool_config = Validated::new(pool_config.clone())
+						.map_err(|err| DispatchError::Other(err))?;
 					(
 						pool_config.owner,
 						LiquidityBootstrapping::<T>::do_create_pool(validated_pool_config)?,
