@@ -149,7 +149,8 @@ pub struct Market<T: Config> {
 	pub last_oracle_price: T::Decimal,
 	/// The last calculated oracle TWAP.
 	pub last_oracle_twap: T::Decimal,
-	/// The timestamp for [`last_oracle_twap`] and [`last_oracle_twap_ts`].
+	/// The timestamp for [`last_oracle_twap`](Market::last_oracle_twap) and
+	/// [`last_oracle_ts`](Market::last_oracle_ts).
 	pub last_oracle_ts: DurationSeconds,
 }
 
