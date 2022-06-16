@@ -286,7 +286,6 @@ fn partial_liquidation_realizes_funding_payments() {
 		run_for_seconds(config.funding_frequency);
 		// Time passes and funding rates are updated
 		VammPallet::set_twap(Some(100.into()));
-		// Index price moves against Alice's position
 		set_oracle_twap(&market_id, (1006, 10).into() /* 100.6 */);
 		// HACK: set Fee Pool depth so as not to worry about capped funding rates
 		set_fee_pool_depth(&market_id, as_balance(1_000_000));
