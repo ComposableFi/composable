@@ -35,6 +35,7 @@ pub mod liquidate;
 pub mod math;
 pub mod open_position;
 pub mod update_funding;
+pub mod withdraw_collateral;
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Setup
