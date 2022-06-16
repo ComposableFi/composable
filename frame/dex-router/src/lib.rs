@@ -28,7 +28,7 @@ pub mod pallet {
 	use composable_support::math::safe::SafeArithmetic;
 	use composable_traits::{
 		defi::CurrencyPair,
-		dex::{Amm, DexRoute, DexRouter, RedeemableAssets},
+		dex::{Amm, DexRoute, DexRouter, RedeemableAssets, RemoveLiquidityDryrunResult},
 	};
 	use core::fmt::Debug;
 	use frame_support::{pallet_prelude::*, transactional, PalletId};
@@ -441,10 +441,37 @@ pub mod pallet {
 		fn redeemable_assets_for_given_lp_tokens(
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
+			min_base_amount: Self::Balance,
+			min_quote_amount: Self::Balance,
 		) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
-				[pool_id] => T::Pablo::redeemable_assets_for_given_lp_tokens(pool_id, lp_amount),
+				[pool_id] => T::Pablo::redeemable_assets_for_given_lp_tokens(
+					pool_id,
+					lp_amount,
+					min_base_amount,
+					min_quote_amount,
+				),
+				_ => Err(Error::<T>::UnsupportedOperation.into()),
+			}
+		}
+
+		fn remove_liquidity_dryrun(
+			who: &Self::AccountId,
+			pool_id: Self::PoolId,
+			lp_amount: Self::Balance,
+			min_base_amount: Self::Balance,
+			min_quote_amount: Self::Balance,
+		) -> Result<RemoveLiquidityDryrunResult<Self::AssetId, Self::Balance>, DispatchError> {
+			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
+			match route[..] {
+				[pool_id] => T::Pablo::remove_liquidity_dryrun(
+					who,
+					pool_id,
+					lp_amount,
+					min_base_amount,
+					min_quote_amount,
+				),
 				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}
 		}

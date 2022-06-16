@@ -37,7 +37,7 @@ use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::Asset,
 	defi::{CurrencyPair, Rate},
-	dex::{Amm, PriceAggregate, RedeemableAssets},
+	dex::{Amm, PriceAggregate, RedeemableAssets, RemoveLiquidityDryrunResult},
 };
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
@@ -1338,7 +1338,7 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pablo_runtime_api::PabloRuntimeApi<Block, PoolId, CurrencyId, Balance> for Runtime {
+	impl pablo_runtime_api::PabloRuntimeApi<Block, AccountId, PoolId, CurrencyId, Balance> for Runtime {
 		fn prices_for(
 			pool_id: PoolId,
 			base_asset_id: CurrencyId,
@@ -1382,10 +1382,12 @@ impl_runtime_apis! {
 
 	fn redeemable_assets_for_given_lp_tokens(
 		pool_id: SafeRpcWrapper<PoolId>,
-		lp_amount: SafeRpcWrapper<Balance>
+		lp_amount: SafeRpcWrapper<Balance>,
+		min_base_amount: SafeRpcWrapper<Balance>,
+		min_quote_amount: SafeRpcWrapper<Balance>,
 	) -> RedeemableAssets<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
 			let currency_pair = <Pablo as Amm>::currency_pair(pool_id.0).unwrap_or_else(|_| CurrencyPair::new(CurrencyId::INVALID, CurrencyId::INVALID));
-			let redeemable_assets = <Pablo as Amm>::redeemable_assets_for_given_lp_tokens(pool_id.0, lp_amount.0)
+			let redeemable_assets = <Pablo as Amm>::redeemable_assets_for_given_lp_tokens(pool_id.0, lp_amount.0, min_base_amount.0, min_quote_amount.0)
 			.unwrap_or_else(|_|
 			RedeemableAssets {
 				assets: BTreeMap::from([
@@ -1403,6 +1405,34 @@ impl_runtime_apis! {
 			}
 	}
 
+	fn remove_liquidity_dryrun(
+		who: SafeRpcWrapper<AccountId>,
+		pool_id: SafeRpcWrapper<PoolId>,
+		lp_amount: SafeRpcWrapper<Balance>,
+		min_base_amount: SafeRpcWrapper<Balance>,
+		min_quote_amount: SafeRpcWrapper<Balance>,
+	) -> RemoveLiquidityDryrunResult<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
+			let currency_pair = <Pablo as Amm>::currency_pair(pool_id.0).unwrap_or_else(|_| CurrencyPair::new(CurrencyId::INVALID, CurrencyId::INVALID));
+			let lp_token = <Pablo as Amm>::lp_token(pool_id.0).unwrap_or_else(|_| CurrencyId::INVALID);
+			let remove_liquidity_dryrun_result = <Pablo as Amm>::remove_liquidity_dryrun(&who.0, pool_id.0, lp_amount.0, min_base_amount.0, min_quote_amount.0)
+				.unwrap_or_else(|_|
+					RemoveLiquidityDryrunResult{
+				assets: BTreeMap::from([
+							(currency_pair.base, Zero::zero()),
+							(currency_pair.quote, Zero::zero()),
+							(lp_token, Zero::zero())
+				])
+					}
+				);
+			let mut new_map = BTreeMap::new();
+			for (k,v) in remove_liquidity_dryrun_result.assets.iter() {
+				new_map.insert(SafeRpcWrapper(*k), SafeRpcWrapper(*v));
+			}
+			RemoveLiquidityDryrunResult{
+				assets: new_map
+			}
+
+	}
 	}
 
 	impl sp_api::Core<Block> for Runtime {

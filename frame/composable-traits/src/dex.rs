@@ -36,6 +36,8 @@ pub trait Amm {
 	fn redeemable_assets_for_given_lp_tokens(
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
+		min_base_amount: Self::Balance,
+		min_quote_amount: Self::Balance,
 	) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError>
 	where
 		Self::AssetId: sp_std::cmp::Ord;
@@ -118,6 +120,16 @@ pub trait Amm {
 		min_receive: Self::Balance,
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
+
+	fn remove_liquidity_dryrun(
+		who: &Self::AccountId,
+		pool_id: Self::PoolId,
+		lp_amount: Self::Balance,
+		min_base_amount: Self::Balance,
+		min_quote_amount: Self::Balance,
+	) -> Result<RemoveLiquidityDryrunResult<Self::AssetId, Self::Balance>, DispatchError>
+	where
+		Self::AssetId: sp_std::cmp::Ord;
 }
 
 /// Pool Fees
@@ -387,6 +399,16 @@ pub struct PriceAggregate<PoolId, AssetId, Balance> {
 #[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct RedeemableAssets<AssetId, Balance>
+where
+	AssetId: Ord,
+{
+	pub assets: BTreeMap<AssetId, Balance>,
+}
+
+/// RemoveLiquidityDryrunResult for given amount of lp tokens.
+#[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, TypeInfo)]
+#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+pub struct RemoveLiquidityDryrunResult<AssetId, Balance>
 where
 	AssetId: Ord,
 {

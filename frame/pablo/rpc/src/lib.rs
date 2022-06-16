@@ -1,6 +1,6 @@
 use codec::Codec;
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use composable_traits::dex::{PriceAggregate, RedeemableAssets};
+use composable_traits::dex::{PriceAggregate, RedeemableAssets, RemoveLiquidityDryrunResult};
 use core::{fmt::Display, str::FromStr};
 use jsonrpsee::{
 	core::{Error as RpcError, RpcResult},
@@ -14,8 +14,9 @@ use sp_runtime::{generic::BlockId, traits::Block as BlockT};
 use sp_std::{cmp::Ord, sync::Arc};
 
 #[rpc(client, server)]
-pub trait PabloApi<BlockHash, PoolId, AssetId, Balance>
+pub trait PabloApi<BlockHash, AccountId, PoolId, AssetId, Balance>
 where
+	AccountId: FromStr + Display,
 	PoolId: FromStr + Display,
 	AssetId: FromStr + Display + Ord,
 	Balance: FromStr + Display,
@@ -46,8 +47,21 @@ where
 		&self,
 		pool_id: SafeRpcWrapper<PoolId>,
 		lp_amount: SafeRpcWrapper<Balance>,
+		min_base_amount: SafeRpcWrapper<Balance>,
+		min_quote_amount: SafeRpcWrapper<Balance>,
 		at: Option<BlockHash>,
 	) -> RpcResult<RedeemableAssets<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>;
+
+	#[method(name = "pablo_remove_liquidity_dryrun")]
+	fn remove_liquidity_dryrun(
+		&self,
+		who: SafeRpcWrapper<AccountId>,
+		pool_id: SafeRpcWrapper<PoolId>,
+		lp_amount: SafeRpcWrapper<Balance>,
+		min_base_amount: SafeRpcWrapper<Balance>,
+		min_quote_amount: SafeRpcWrapper<Balance>,
+		at: Option<BlockHash>,
+	) -> RpcResult<RemoveLiquidityDryrunResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>;
 }
 
 pub struct Pablo<C, Block> {
@@ -61,18 +75,19 @@ impl<C, M> Pablo<C, M> {
 	}
 }
 
-impl<C, Block, PoolId, AssetId, Balance>
-	PabloApiServer<<Block as BlockT>::Hash, PoolId, AssetId, Balance>
-	for Pablo<C, (Block, PoolId, AssetId, Balance)>
+impl<C, Block, AccountId, PoolId, AssetId, Balance>
+	PabloApiServer<<Block as BlockT>::Hash, AccountId, PoolId, AssetId, Balance>
+	for Pablo<C, (Block, AccountId, PoolId, AssetId, Balance)>
 where
 	Block: BlockT,
+	AccountId: Send + Sync + 'static + Codec + FromStr + Display,
 	PoolId: Send + Sync + 'static + Codec + FromStr + Display,
 	AssetId: Send + Sync + 'static + Codec + FromStr + Display + Ord,
 	Balance: Send + Sync + 'static + Codec + FromStr + Display,
 	C: Send + Sync + 'static,
 	C: ProvideRuntimeApi<Block>,
 	C: HeaderBackend<Block>,
-	C::Api: PabloRuntimeApi<Block, PoolId, AssetId, Balance>,
+	C::Api: PabloRuntimeApi<Block, AccountId, PoolId, AssetId, Balance>,
 {
 	fn prices_for(
 		&self,
@@ -131,6 +146,8 @@ where
 		&self,
 		pool_id: SafeRpcWrapper<PoolId>,
 		lp_amount: SafeRpcWrapper<Balance>,
+		min_base_amount: SafeRpcWrapper<Balance>,
+		min_quote_amount: SafeRpcWrapper<Balance>,
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<RedeemableAssets<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>> {
 		let api = self.client.runtime_api();
@@ -138,7 +155,44 @@ where
 		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
 
 		// calling ../../runtime-api
-		let runtime_api_result = api.redeemable_assets_for_given_lp_tokens(&at, pool_id, lp_amount);
+		let runtime_api_result = api.redeemable_assets_for_given_lp_tokens(
+			&at,
+			pool_id,
+			lp_amount,
+			min_base_amount,
+			min_quote_amount,
+		);
+		runtime_api_result.map_err(|e| {
+			RpcError::Call(CallError::Custom(ErrorObject::owned(
+				9876,
+				"Something wrong",
+				Some(format!("{:?}", e)),
+			)))
+		})
+	}
+
+	fn remove_liquidity_dryrun(
+		&self,
+		who: SafeRpcWrapper<AccountId>,
+		pool_id: SafeRpcWrapper<PoolId>,
+		lp_amount: SafeRpcWrapper<Balance>,
+		min_base_amount: SafeRpcWrapper<Balance>,
+		min_quote_amount: SafeRpcWrapper<Balance>,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> RpcResult<RemoveLiquidityDryrunResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>> {
+		let api = self.client.runtime_api();
+
+		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
+
+		// calling ../../runtime-api
+		let runtime_api_result = api.remove_liquidity_dryrun(
+			&at,
+			who,
+			pool_id,
+			lp_amount,
+			min_base_amount,
+			min_quote_amount,
+		);
 		runtime_api_result.map_err(|e| {
 			RpcError::Call(CallError::Custom(ErrorObject::owned(
 				9876,

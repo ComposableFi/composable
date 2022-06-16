@@ -206,8 +206,13 @@ fn test_redeemable_assets() {
 
 		let lp = Tokens::balance(pool.lp_token, &ALICE);
 		// if we want to redeem all lp token, it must give same values as used for add_liquidity
-		let redeemable_assets = <Pablo as Amm>::redeemable_assets_for_given_lp_tokens(pool_id, lp)
-			.expect("redeemable_assets failed");
+		let redeemable_assets = <Pablo as Amm>::redeemable_assets_for_given_lp_tokens(
+			pool_id,
+			lp,
+			initial_btc,
+			initial_usdt,
+		)
+		.expect("redeemable_assets failed");
 		let base_amount = *redeemable_assets.assets.get(&BTC).expect("Invalid asset");
 		let quote_amount = *redeemable_assets.assets.get(&USDT).expect("Invalid asset");
 
