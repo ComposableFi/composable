@@ -1,85 +1,34 @@
-# Run Composable's parachain only
+# Overview
+This is a guide on how to run things locally or in isolated environment with your own stuff
 
-Need to do to run 2 Relay Chain nodes and 1 Composable collators:
+## Prepare 
 
-1. build a Composable's collator
+1. `1-build-composable-collator.sh`
 
-	```bash
-	old_pwd=$(pwd)
-	cd ../..
-	cargo build --release
-	target/release/composable --version
-	cd "$old_pwd"
-    ```
+2. `2-download-polkadot-relay.sh`
 
-2. download a Polkadot Relay Chain
+3. `3-download-basilisk-collator.sh`
 
-	```bash
-	mkdir -p ../../../polkadot/target/release
-	curl https://github.com/paritytech/polkadot/releases/download/v0.9.18-rc4/polkadot -Lo ../../../polkadot/target/release/polkadot
-	../../../polkadot/target/release/polkadot --version
-    ```
+4. run `yarn` to build the runner
+## Run Composable's parachain only
 
-3. build this project
-
-	```bash
-	yarn
-	```
-
-4. run all
-
-	```bash
-	yarn composable
-	```
+```bash
+yarn composable
+```
 
 URLs:
 * [the 1st Relay Chain node](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9944#/explorer)
 * [the 1st Composable collator](https://polkadot.js.org/apps/?rpc=ws%3A%2F%2F127.0.0.1%3A9988#/explorer)
 
-# Run Composable's and Basilisk's parachains
+## Run Composable's and Basilisk's parachains
 
 Need to do to run 5 Relay Chain nodes, 2 Composable collators and 2 Basilisk collators:
 
-1. build a Composable's collator
+```bash
+yarn composable_and_basilisk
+```
 
-	```bash
-	(
-		cd ../..
-		cargo build --release
-		target/release/composable --version
-	)
-	```
-
-2. download a Polkadot Relay Chain
-
-	```bash
-	mkdir -p ../../../polkadot/target/release
-	curl https://github.com/paritytech/polkadot/releases/download/v0.9.18-rc4/polkadot -Lo ../../../polkadot/target/release/polkadot
-	../../../polkadot/target/release/polkadot --version
-    ```
-
-3. download a Basilisk's collator
-
-	```bash
-	mkdir -p ../../../Basilisk-node/target/release
-	curl https://github.com/galacticcouncil/Basilisk-node/releases/download/v8.0.0/basilisk -Lo ../../../basilisk-node/target/release/basilisk
-	chmod +x ../../../basilisk-node/target/release/basilisk
-	../../../basilisk-node/target/release/basilisk --version
-	```
-
-4. build this project
-
-	```bash
-	yarn
-	```
-
-5. run all
-
-	```bash
-	yarn composable_and_basilisk
-	```
-
-# Run  Kusama relay + Dali parachain + Hydra paracahin in Docker via [polkadot-launch](https://github.com/paritytech/polkadot-launch)
+## Run  Kusama relay + Dali parachain + Hydra paracahin in Docker via [polkadot-launch](https://github.com/paritytech/polkadot-launch)
 
 Build via `sandbox docker` job in Actions into latest and git hash.
 
