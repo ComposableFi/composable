@@ -867,7 +867,7 @@ pub mod pallet {
 						Error::<T>::NotEnoughLiquidity
 					);
 					ensure!(
-						T::Assets::reducible_balance(lp_token, &who, false) > lp_amount,
+						T::Assets::reducible_balance(lp_token, who, false) > lp_amount,
 						Error::<T>::NotEnoughLpToken
 					);
 					Ok(RemoveLiquidityDryrunResult {

@@ -1388,7 +1388,7 @@ impl_runtime_apis! {
 			min_quote_amount: SafeRpcWrapper<Balance>,
 		) -> RemoveLiquidityDryrunResult<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
 			let currency_pair = <Pablo as Amm>::currency_pair(pool_id.0).unwrap_or_else(|_| CurrencyPair::new(CurrencyId::INVALID, CurrencyId::INVALID));
-			let lp_token = <Pablo as Amm>::lp_token(pool_id.0).unwrap_or_else(|_| CurrencyId::INVALID);
+			let lp_token = <Pablo as Amm>::lp_token(pool_id.0).unwrap_or(CurrencyId::INVALID);
 			let remove_liquidity_dryrun_result = <Pablo as Amm>::remove_liquidity_dryrun(&who.0, pool_id.0, lp_amount.0, min_base_amount.0, min_quote_amount.0)
 				.unwrap_or_else(|_|
 					RemoveLiquidityDryrunResult{
