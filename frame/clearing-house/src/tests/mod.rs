@@ -159,6 +159,18 @@ fn set_maximum_oracle_mark_divergence(fraction: FixedI128) {
 	MaxPriceDivergence::<Runtime>::set(fraction);
 }
 
+fn set_oracle_twap(market_id: &MarketId, twap: FixedI128) {
+	Markets::<Runtime>::try_mutate(market_id, |m| {
+		if let Some(m) = m {
+			m.last_oracle_twap = twap;
+			Ok(())
+		} else {
+			Err(())
+		}
+	})
+	.unwrap();
+}
+
 // ----------------------------------------------------------------------------------------------------
 //                                        Execution Contexts
 // ----------------------------------------------------------------------------------------------------

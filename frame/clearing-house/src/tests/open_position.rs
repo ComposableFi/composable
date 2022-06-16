@@ -3,14 +3,15 @@ use crate::{
 		accounts::ALICE,
 		assets::USDC,
 		runtime::{
-			Balance, ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime,
-			System as SystemPallet, TestPallet, Vamm as VammPallet,
+			Balance, ExtBuilder, MarketId, Origin, Runtime, System as SystemPallet, TestPallet,
+			Vamm as VammPallet,
 		},
 	},
 	pallet::{Config, Direction, Error, Event},
 	tests::{
 		any_direction, any_price, as_balance, get_market, get_position, run_for_seconds,
-		set_fee_pool_depth, with_markets_context, with_trading_context, MarketConfig,
+		set_fee_pool_depth, set_oracle_twap, with_markets_context, with_trading_context,
+		MarketConfig,
 	},
 };
 use composable_traits::{clearing_house::ClearingHouse, time::ONE_HOUR};
@@ -297,7 +298,7 @@ proptest! {
 
 			// Update market funding rate
 			run_for_seconds(ONE_HOUR);
-			OraclePallet::set_twap(Some(100)); // 1.0 in cents
+			set_oracle_twap(&market_id, 1.into());
 			// price in basis points
 			VammPallet::set_twap(Some(((10_000 + rate) as u128, 10_000).into()));
 			// Hack: set Fee Pool depth so as not to worry about capped funding rates
@@ -679,7 +680,7 @@ proptest! {
 
 			// Update funding rate for 1st market
 			run_for_seconds(ONE_HOUR);
-			OraclePallet::set_twap(Some(price_cents));
+			set_oracle_twap(&market_ids[0], (price_cents, 100).into());
 			VammPallet::set_twap(Some((
 				match direction { Direction::Long => price_cents + 1, _ => price_cents - 1 },
 				100

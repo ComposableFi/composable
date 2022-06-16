@@ -15,6 +15,7 @@ use crate::{
 			System as SystemPallet, TestPallet, Vamm as VammPallet,
 		},
 	},
+	tests::set_oracle_twap,
 	Direction, Error, Event, FullLiquidationPenalty, FullLiquidationPenaltyLiquidatorShare,
 	PartialLiquidationCloseRatio, PartialLiquidationPenalty,
 	PartialLiquidationPenaltyLiquidatorShare,
@@ -286,7 +287,7 @@ fn partial_liquidation_realizes_funding_payments() {
 		// Time passes and funding rates are updated
 		VammPallet::set_twap(Some(100.into()));
 		// Index price moves against Alice's position
-		OraclePallet::set_twap(Some(10060 /* 10060 cents = 100.6 */));
+		set_oracle_twap(&market_id, (1006, 10).into() /* 100.6 */);
 		// HACK: set Fee Pool depth so as not to worry about capped funding rates
 		set_fee_pool_depth(&market_id, as_balance(1_000_000));
 		assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));

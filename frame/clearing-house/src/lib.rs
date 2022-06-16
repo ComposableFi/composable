@@ -1211,15 +1211,10 @@ pub mod pallet {
 		type Decimal = T::Decimal;
 
 		fn funding_rate(market: &Self::Market) -> Result<Self::Decimal, DispatchError> {
-			// Oracle returns prices in USDT cents
-			let unnormalized_oracle_twap = T::Oracle::get_twap(market.asset_id, vec![])?;
-			let oracle_twap = Self::Decimal::checked_from_rational(unnormalized_oracle_twap, 100)
-				.ok_or(ArithmeticError::Overflow)?;
-
 			let vamm_twap: Self::Decimal = T::Vamm::get_twap(market.vamm_id, AssetType::Base)
 				.and_then(|p| p.into_signed().map_err(|e| e.into()))?;
 
-			let price_spread = vamm_twap.try_sub(&oracle_twap)?;
+			let price_spread = vamm_twap.try_sub(&market.last_oracle_twap)?;
 			let period_adjustment = Self::Decimal::checked_from_rational(
 				market.funding_frequency,
 				market.funding_period,
@@ -1992,6 +1987,7 @@ pub mod pallet {
 		}
 
 		fn oracle_price(asset_id: AssetIdOf<T>) -> Result<T::Decimal, DispatchError> {
+			// Oracle returns prices in USDT cents
 			let price_cents =
 				T::Oracle::get_price(asset_id, T::Decimal::one().into_balance()?)?.price;
 			T::Decimal::checked_from_rational(price_cents, 100)

@@ -116,6 +116,7 @@ proptest! {
 	}
 
 	#[test]
+	#[ignore = "TWAP is now stored in market; this test should be modified or discarded"]
 	fn funding_rate_query_fails_if_oracle_twap_fails(market in any_market()) {
 		ExtBuilder { oracle_twap: None, ..Default::default() }.build().execute_with(|| {
 			assert_noop!(
