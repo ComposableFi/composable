@@ -343,9 +343,9 @@ mod add_liquidity {
 }
 
 mod invalid_pool {
+	use super::*;
 	use frame_support::assert_err;
 	use sp_runtime::DispatchError;
-	use super::*;
 
 	#[test]
 	fn final_weight_below_minimum() {
@@ -358,16 +358,19 @@ mod invalid_pool {
 			let initial_weight = MaxInitialWeight::get();
 			let final_weight = MinFinalWeight::get() - Permill::from_parts(1);
 			let fee = Permill::from_perthousand(1);
-			assert_err!(Validated::<_, PoolIsValid<Test>>::new(LiquidityBootstrappingPoolInfo {
-				owner,
-				pair,
-				sale: Sale { start, end, initial_weight, final_weight },
-				fee_config: FeeConfig {
-					fee_rate: fee,
-					owner_fee_rate: Permill::zero(),
-					protocol_fee_rate: Permill::zero()
-				},
-			}), DispatchError::Other("Final weight must not be lower than the defined minimum."));
+			assert_err!(
+				Validated::<_, PoolIsValid<Test>>::new(LiquidityBootstrappingPoolInfo {
+					owner,
+					pair,
+					sale: Sale { start, end, initial_weight, final_weight },
+					fee_config: FeeConfig {
+						fee_rate: fee,
+						owner_fee_rate: Permill::zero(),
+						protocol_fee_rate: Permill::zero()
+					},
+				}),
+				DispatchError::Other("Final weight must not be lower than the defined minimum.")
+			);
 		});
 	}
 
