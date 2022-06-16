@@ -119,7 +119,7 @@ impl<
 	fn from(instruction: XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>) -> Self {
 		Instruction {
 			instruction: Some(match instruction {
-				XCVMInstruction::Transfer { to: destination, assets } => {
+				XCVMInstruction::Transfer { to: destination, assets } =>
 					instruction::Instruction::Transfer(Transfer {
 						destination: Some(Account { encoded: destination.as_ref().to_vec() }),
 						assets: assets
@@ -127,12 +127,10 @@ impl<
 							.into_iter()
 							.map(|(asset, amount)| (asset, amount.into()))
 							.collect(),
-					})
-				},
-				XCVMInstruction::Call { encoded } => {
-					instruction::Instruction::Call(Call { encoded: encoded.into() })
-				},
-				XCVMInstruction::Spawn { network, assets, program } => {
+					}),
+				XCVMInstruction::Call { encoded } =>
+					instruction::Instruction::Call(Call { encoded: encoded.into() }),
+				XCVMInstruction::Spawn { network, assets, program } =>
 					instruction::Instruction::Spawn(Spawn {
 						network: network.into(),
 						assets: assets
@@ -141,8 +139,7 @@ impl<
 							.map(|(asset, amount)| (asset, amount.into()))
 							.collect(),
 						program: Some(program.into()),
-					})
-				},
+					}),
 			}),
 		}
 	}
@@ -170,9 +167,8 @@ impl<
 						.collect::<Result<BTreeMap<u32, u128>, ()>>()?
 						.into(),
 				}),
-				instruction::Instruction::Call(Call { encoded }) => {
-					Ok(XCVMInstruction::Call { encoded: encoded.try_into().map_err(|_| ())? })
-				},
+				instruction::Instruction::Call(Call { encoded }) =>
+					Ok(XCVMInstruction::Call { encoded: encoded.try_into().map_err(|_| ())? }),
 				instruction::Instruction::Spawn(Spawn {
 					network,
 					assets,
