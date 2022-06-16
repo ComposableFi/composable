@@ -1695,16 +1695,15 @@ pub mod pallet {
 		}
 
 		fn is_mark_index_too_divergent(market: &Market<T>) -> Result<bool, DispatchError> {
-			let index_cents =
+			let index_price_in_cents =
 				T::Oracle::get_price(market.asset_id, T::Decimal::one().into_balance()?)?.price;
-			let index = T::Decimal::checked_from_rational(index_cents, 100)
+			let index_price = T::Decimal::checked_from_rational(index_price_in_cents, 100)
 				.ok_or(ArithmeticError::Overflow)?;
-			let mark: T::Decimal =
+			let mark_price: T::Decimal =
 				T::Vamm::get_price(market.vamm_id, AssetType::Base)?.into_signed()?;
 
-			let divergence = mark.try_sub(&index)?.try_div(&index)?;
-			let threshold = Self::max_price_divergence();
-			Ok(divergence.saturating_abs() > threshold)
+			let divergence = mark_price.try_sub(&index_price)?.try_div(&index_price)?;
+			Ok(divergence.saturating_abs() > Self::max_price_divergence())
 		}
 
 		fn is_funding_update_time(
