@@ -155,6 +155,8 @@ pub struct Market<T: Config> {
 }
 
 impl<T: Config> Market<T> {
+	// TODO(0xangelo): add a method to construct self from MarketConfig
+
 	/// Returns the current funding rate for positions with the given direction.
 	pub fn cum_funding_rate(&self, direction: Direction) -> T::Decimal {
 		match direction {
