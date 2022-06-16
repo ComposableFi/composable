@@ -514,7 +514,7 @@ pub mod pallet {
 					<frame_system::Pallet<T>>::block_number(),
 					vault.deposit,
 				) {
-					return Err(Error::<T>::TombstoneDurationNotExceeded.into())
+					return Err(Error::<T>::TombstoneDurationNotExceeded.into());
 				} else {
 					let deletion_reward_account = &Self::deletion_reward_account(dest);
 					let reward =
@@ -849,6 +849,25 @@ pub mod pallet {
 			Ok(lp_shares_value_amount)
 		}
 
+		fn do_calculate_lp_tokens_from_asset_amount(
+			vault_id: &T::VaultId,
+			vault: &VaultInfo<T>,
+			asset_amount: T::Balance,
+		) -> Result<BalanceOf<T>, DispatchError> {
+			let total_lp_issuance = T::Currency::total_issuance(vault.lp_token_id);
+			let aum = Self::assets_under_management(vault_id)?;
+
+			let a = <T::Convert as Convert<T::Balance, u128>>::convert(asset_amount);
+			let b = <T::Convert as Convert<T::Balance, u128>>::convert(total_lp_issuance);
+			let c = <T::Convert as Convert<T::Balance, u128>>::convert(aum);
+
+			let shares_amount =
+				multiply_by_rational(a, b, c).map_err(|_| ArithmeticError::Overflow)?;
+
+			let shares_amount = <T::Convert as Convert<u128, T::Balance>>::convert(shares_amount);
+			Ok(shares_amount)
+		}
+
 		/// Computes the sum of all the assets that the vault currently controls.
 		fn do_assets_under_management(
 			vault_id: &T::VaultId,
@@ -890,8 +909,9 @@ pub mod pallet {
 			config: VaultConfig<Self::AccountId, Self::AssetId>,
 		) -> Result<Self::VaultId, DispatchError> {
 			match Validated::new(config) {
-				Ok(validated_config) =>
-					Self::do_create_vault(deposit, validated_config).map(|(id, _)| id),
+				Ok(validated_config) => {
+					Self::do_create_vault(deposit, validated_config).map(|(id, _)| id)
+				},
 				Err(_) => Err(DispatchError::from(Error::<T>::TooManyStrategies)),
 			}
 		}
@@ -962,6 +982,16 @@ pub mod pallet {
 			let vault = Self::vault_info(vault_id)?;
 			let amount = Self::do_lp_share_value(vault_id, &vault, lp_amount)?;
 			Ok(amount)
+		}
+
+		fn calculate_lp_tokens_from_asset_amount(
+			vault_id: &Self::VaultId,
+			asset_amount: Self::Balance,
+		) -> Result<Self::Balance, DispatchError> {
+			let vault = Self::vault_info(vault_id)?;
+			let lp =
+				Self::do_calculate_lp_tokens_from_asset_amount(vault_id, &vault, asset_amount)?;
+			Ok(lp)
 		}
 	}
 

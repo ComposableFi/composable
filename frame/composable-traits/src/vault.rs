@@ -112,6 +112,11 @@ pub trait Vault {
 		vault_id: &Self::VaultId,
 		lp_amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
+
+	fn calculate_lp_tokens_from_asset_amount(
+		vault_id: &Self::VaultId,
+		asset_amount: Self::Balance,
+	) -> Result<Self::Balance, DispatchError>;
 }
 
 /// CapabilityVault exposes functionalities for stopping and limiting vault functionality.
