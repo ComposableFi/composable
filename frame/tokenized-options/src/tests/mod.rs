@@ -31,6 +31,7 @@ use proptest::{
 use sp_runtime::{DispatchError, Perquintill};
 use std::collections::BTreeMap;
 
+mod block_producer;
 pub mod buy_option;
 pub mod create_option;
 pub mod create_vault;
