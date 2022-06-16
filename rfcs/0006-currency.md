@@ -212,3 +212,5 @@ I can do research and documenting on various bridge protocols in terms of what s
  }
 
 TODO: add mention about Euler feature to govern currencies by risks categories
+
+macor
