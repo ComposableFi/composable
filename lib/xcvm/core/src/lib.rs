@@ -137,7 +137,7 @@ mod tests {
 			Ok(XCVMProgramBuilder::<
 					XCVMNetwork,
 					XCVMInstruction<XCVMNetwork, _, (), XCVMTransfer>,
-				>::from(None, XCVMNetwork::PICASSO, 0)
+				>::from(Some("Main program".as_bytes().to_vec()), XCVMNetwork::PICASSO, 0)
 				.call(DummyProtocol1)?
 				.spawn::<_, ProgramBuildError>(
 					None,
@@ -166,7 +166,7 @@ mod tests {
 						network: XCVMNetwork::ETHEREUM,
 						assets: XCVMTransfer::empty(),
 						program: XCVMProgram {
-							tag: Some("Sub program".as_bytes().to_vec()),
+							tag: None,
 							nonce: 1,
 							instructions: VecDeque::from([
 								// Protocol 2 on eth
