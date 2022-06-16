@@ -48,7 +48,7 @@ interface OfferReward {
 
 type ActiveBond = {
   offerId: number;
-  asset: Token;
+  asset: Token | "string";
   pendingAmount: BigNumber;
   claimableAmount: BigNumber;
   vestingTime: string;
@@ -57,7 +57,7 @@ type ActiveBond = {
 
 type AllBond = {
   offerId: number;
-  asset: Token;
+  asset: Token | "string";
   price: BigNumber;
   roi: BigNumber;
   totalPurchased: BigNumber;
