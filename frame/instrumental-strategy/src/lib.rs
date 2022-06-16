@@ -92,6 +92,17 @@ pub mod pallet {
 			VaultId = Self::VaultId,
 		>;
 
+		/// Type representing the unique ID of a pool.
+		type PoolId: FullCodec
+			+ MaxEncodedLen
+			+ Default
+			+ Debug
+			+ TypeInfo
+			+ Eq
+			+ PartialEq
+			+ Ord
+			+ Copy;
+
 		// TODO: (Nevin)
 		//  - try to make the connection to substrategies a vec of InstrumentalProtocolStrategy
 		//  - ideally something like: type WhitelistedStrategies: Get<[dyn
@@ -190,7 +201,7 @@ pub mod pallet {
 		// 	vec![&T::PabloStrategy]
 		// }
 
-		fn get_optimum_strategy_for(asset: T::AssetId) -> Result<T::AccountId, DispatchError> {
+		fn get_optimum_strategy_for(_asset: T::AssetId) -> Result<T::AccountId, DispatchError> {
 			Ok(T::PabloStrategy::account_id())
 		}
 	}
@@ -203,6 +214,7 @@ pub mod pallet {
 		type AccountId = T::AccountId;
 		type AssetId = T::AssetId;
 		type VaultId = T::VaultId;
+		type PoolId = T::PoolId;
 
 		fn account_id() -> Self::AccountId {
 			T::PalletId::get().into_account()
@@ -234,6 +246,13 @@ pub mod pallet {
 
 				Ok(())
 			})
+		}
+
+		#[transactional]
+		fn set_pool_id_for_asset(_asset_id: T::AssetId, _pool_id: T::PoolId) -> DispatchResult {
+			// TODO: (belousm)
+			// Same function like in instrumental-strategy-pablo
+			Ok(())
 		}
 
 		fn rebalance() -> DispatchResult {
