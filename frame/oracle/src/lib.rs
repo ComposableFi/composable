@@ -1008,19 +1008,9 @@ pub mod pallet {
 			price: T::PriceValue,
 			amount: T::PriceValue,
 		) -> Result<T::PriceValue, DispatchError> {
-			let unit = 10_u128
-				.checked_pow(<Self as Oracle>::LocalAssets::decimals(asset_id)?)
-				.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
-			let price = multiply_by_rational(
-				price.unique_saturated_into(),
-				amount.unique_saturated_into(),
-				unit,
-			)
-			.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
-			let price = price
-				.try_into()
-				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
-			Ok(price)
+			let unit = <Self as Oracle>::LocalAssets::unit(asset_id)?;
+			let price = multiply_by_rational(price.into(), amount.into(), unit)?;
+			Ok(price.into())
 		}
 
 		// REVIEW: indexing
