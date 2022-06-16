@@ -636,9 +636,9 @@ where
 		let next_seq_send = NextSequenceSend::<T>::get(port_id.clone(), channel_id.clone());
 		let sequence = Sequence::from(next_seq_send);
 		let source_port =
-			port_id_from_bytes(port_id.clone()).map_err(|_| IbcHandlerError::SendPacketError)?;
-		let source_channel = channel_id_from_bytes(channel_id.clone())
-			.map_err(|_| IbcHandlerError::SendPacketError)?;
+			port_id_from_bytes(port_id).map_err(|_| IbcHandlerError::SendPacketError)?;
+		let source_channel =
+			channel_id_from_bytes(channel_id).map_err(|_| IbcHandlerError::SendPacketError)?;
 		let destination_port =
 			port_id_from_bytes(data.dest_port_id).map_err(|_| IbcHandlerError::SendPacketError)?;
 		let destination_channel = channel_id_from_bytes(data.dest_channel_id)
@@ -657,7 +657,7 @@ where
 		};
 
 		let send_packet_result =
-			ibc::core::ics04_channel::handler::send_packet::send_packet(&ctx, packet.clone())
+			ibc::core::ics04_channel::handler::send_packet::send_packet(&ctx, packet)
 				.map_err(|_| IbcHandlerError::SendPacketError)?;
 		ctx.store_packet_result(send_packet_result.result)
 			.map_err(|_| IbcHandlerError::SendPacketError)?;

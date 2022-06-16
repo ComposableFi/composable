@@ -175,22 +175,22 @@ impl From<RawIbcEvent> for IbcEvent {
 			RawIbcEvent::OpenInitConnection(ev) => IbcEvent::OpenInitConnection {
 				revision_height: ev.height().revision_height,
 				revision_number: ev.height().revision_number,
-				connection_id: ev.connection_id().clone().map(|val| val.as_bytes().to_vec()),
+				connection_id: ev.connection_id().map(|val| val.as_bytes().to_vec()),
 			},
 			RawIbcEvent::OpenTryConnection(ev) => IbcEvent::OpenTryConnection {
 				revision_height: ev.height().revision_height,
 				revision_number: ev.height().revision_number,
-				connection_id: ev.connection_id().clone().map(|val| val.as_bytes().to_vec()),
+				connection_id: ev.connection_id().map(|val| val.as_bytes().to_vec()),
 			},
 			RawIbcEvent::OpenAckConnection(ev) => IbcEvent::OpenAckConnection {
 				revision_height: ev.height().revision_height,
 				revision_number: ev.height().revision_number,
-				connection_id: ev.connection_id().clone().map(|val| val.as_bytes().to_vec()),
+				connection_id: ev.connection_id().map(|val| val.as_bytes().to_vec()),
 			},
 			RawIbcEvent::OpenConfirmConnection(ev) => IbcEvent::OpenConfirmConnection {
 				revision_height: ev.height().revision_height,
 				revision_number: ev.height().revision_number,
-				connection_id: ev.connection_id().clone().map(|val| val.as_bytes().to_vec()),
+				connection_id: ev.connection_id().map(|val| val.as_bytes().to_vec()),
 			},
 			RawIbcEvent::OpenInitChannel(ev) => IbcEvent::OpenInitChannel {
 				revision_height: ev.height().revision_height,
