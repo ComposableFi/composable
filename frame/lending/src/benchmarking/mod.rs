@@ -1,7 +1,7 @@
 //! Benchmarks and sanity tests for lending. Only test that action do not error, not that produce
 //! positive side effects
 #![warn(unused_imports)]
-use super::{setup::*, *};
+use super::*;
 use crate::{self as pallet_lending, Pallet as Lending};
 use composable_traits::{
 	defi::{CurrencyPair, DeFiComposableConfig},
@@ -14,8 +14,11 @@ use frame_support::{
 	BoundedVec,
 };
 use frame_system::RawOrigin;
+use setup::*;
 use sp_std::prelude::*;
 type BalanceOf<T> = <T as DeFiComposableConfig>::Balance;
+
+mod setup;
 
 /// Create a market with the given origin and input.
 ///

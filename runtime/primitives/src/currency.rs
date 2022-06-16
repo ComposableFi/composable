@@ -1,5 +1,6 @@
 //! CurrencyId implementation
 use codec::{CompactAs, Decode, Encode, MaxEncodedLen};
+use composable_support::validation::Validate;
 use composable_traits::{assets::Asset, currency::Exponent};
 use core::{fmt::Display, ops::Div, str::FromStr};
 use scale_info::TypeInfo;
@@ -99,8 +100,43 @@ impl CurrencyId {
 			Asset { id: CurrencyId::CROWD_LOAN.0 as u64, name: b"CROWD_LOAN".to_vec() },
 			Asset { id: CurrencyId::KSM.0 as u64, name: b"KSM".to_vec() },
 			Asset { id: CurrencyId::kUSD.0 as u64, name: b"kUSD".to_vec() },
+			Asset { id: CurrencyId::USDT.0 as u64, name: b"USDT".to_vec() },
+			Asset { id: CurrencyId::USDC.0 as u64, name: b"USDC".to_vec() },
 		]
 		.to_vec()
+	}
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, TypeInfo)]
+pub struct ValidateCurrencyId;
+
+impl Validate<CurrencyId, ValidateCurrencyId> for ValidateCurrencyId {
+	fn validate(input: CurrencyId) -> Result<CurrencyId, &'static str> {
+		if input != CurrencyId::INVALID {
+			Ok(input)
+		} else {
+			Err("Invalid Currency")
+		}
+	}
+}
+
+impl Validate<u64, ValidateCurrencyId> for ValidateCurrencyId {
+	fn validate(input: u64) -> Result<u64, &'static str> {
+		if input != 0_u64 {
+			Ok(input)
+		} else {
+			Err("Invalid Currency")
+		}
+	}
+}
+
+impl Validate<u128, ValidateCurrencyId> for ValidateCurrencyId {
+	fn validate(input: u128) -> Result<u128, &'static str> {
+		if input != 0_u128 {
+			Ok(input)
+		} else {
+			Err("Invalid Currency")
+		}
 	}
 }
 

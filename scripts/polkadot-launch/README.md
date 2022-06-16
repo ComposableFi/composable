@@ -1,6 +1,6 @@
 # Run Composable's parachain only
 
-Need to do to run 4 relay chain nodes and 1 Composable's collator:
+Need to do to run 2 Relay Chain nodes and 1 Composable collators:
 
 1. build a Composable's collator
 
@@ -38,7 +38,7 @@ URLs:
 
 # Run Composable's and Basilisk's parachains
 
-Need to do to run 4 relay chain nodes, 2 Composable's collators and 2 Basilisk's collators:
+Need to do to run 3 Relay Chain nodes, 1 Composable collator and 1 Basilisk collators:
 
 1. build a Composable's collator
 

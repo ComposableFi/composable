@@ -38,7 +38,6 @@ pub struct UpdateInput<LiquidationStrategyId, BlockNumber> {
 	pub under_collateralized_warn_percent: Percent,
 	/// liquidation engine id
 	pub liquidators: Vec<LiquidationStrategyId>,
-	pub interest_rate_model: InterestRateModel,
 	/// Count of blocks until throw error PriceIsTooOld
 	pub max_price_age: BlockNumber,
 }
@@ -55,6 +54,7 @@ pub struct CreateInput<LiquidationStrategyId, AssetId, BlockNumber> {
 	pub currency_pair: CurrencyPair<AssetId>,
 	/// Reserve factor of market borrow vault.
 	pub reserved_factor: Perquintill,
+	pub interest_rate_model: InterestRateModel,
 }
 
 impl<LiquidationStrategyId, AssetId: Copy, BlockNumber>
