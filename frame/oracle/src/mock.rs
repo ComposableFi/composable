@@ -1,10 +1,15 @@
 use crate as pallet_oracle;
 use crate::*;
+use composable_traits::{
+	oracle::{OracleRewardHistory, OracleRewardModel},
+	time::{MS_PER_YEAR_NAIVE, SECONDS_PER_YEAR_NAIVE},
+};
 use frame_support::{
 	ord_parameter_types,
 	pallet_prelude::ConstU32,
 	parameter_types,
 	traits::{EnsureOneOf, Everything},
+	PalletId,
 };
 use frame_system as system;
 use frame_system::EnsureSignedBy;
@@ -147,8 +152,37 @@ where
 pub type AssetId = u128;
 pub type PriceValue = u128;
 parameter_types! {
- pub const TreasuryAccountId : AccountId= sr25519::Public([10u8; 32]);
+	 pub const TreasuryAccountId : AccountId= sr25519::Public([10u8; 32]);
+	pub const OraclePalletId: PalletId = PalletId(*b"plt_orac");
 }
+
+pub struct MockRewardModel();
+impl OracleRewardModel<Balance, Moment> for MockRewardModel {
+	fn allocation() -> Balance {
+		800_000_000
+	}
+
+	fn get_current_block_reward(
+		oracle_reward_tracker: OracleRewardHistory<Balance, Moment>,
+		current_timestamp: Moment,
+	) -> Balance {
+		if oracle_reward_tracker.rewarding_start_timestamp == 0 ||
+			oracle_reward_tracker.total_already_rewarded >= 800_000_000
+		{
+			return 0
+		}
+		let time_elapsed_since_start =
+			current_timestamp - oracle_reward_tracker.rewarding_start_timestamp;
+		let annual_reward: Balance = if time_elapsed_since_start < MS_PER_YEAR_NAIVE {
+			// first year
+			120_000_000
+		} else {
+			80_000_000
+		};
+		annual_reward / MS_PER_YEAR_NAIVE * MILLISECS_PER_BLOCK
+	}
+}
+
 impl pallet_oracle::Config for Test {
 	type Event = Event;
 	type AuthorityId = crypto::BathurstStId;
@@ -164,11 +198,15 @@ impl pallet_oracle::Config for Test {
 	type MaxAssetsCount = MaxAssetsCount;
 	type MaxHistory = MaxHistory;
 	type MaxPrePrices = MaxPrePrices;
-	type OracleWeightInfo = ();
+	type WeightInfo = ();
 	type LocalAssets = ();
 	type TreasuryAccount = TreasuryAccountId;
+	type RewardModel = MockRewardModel;
+	type Moment = Moment;
+	type Time = Timestamp;
 	type TwapWindow = TwapWindow;
 	type RewardOrigin = EnsureRoot<AccountId>;
+	type PalletId = OraclePalletId;
 }
 
 // Build genesis storage according to the mock runtime.

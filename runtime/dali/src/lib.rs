@@ -475,11 +475,15 @@ impl oracle::Config for Runtime {
 	type MaxAssetsCount = MaxAssetsCount;
 	type MaxHistory = MaxHistory;
 	type MaxPrePrices = MaxPrePrices;
-	type OracleWeightInfo = weights::oracle::WeightInfo<Runtime>;
+	type WeightInfo = weights::oracle::WeightInfo<Runtime>;
 	type LocalAssets = CurrencyFactory;
 	type TreasuryAccount = TreasuryAccount;
 	type TwapWindow = TwapWindow;
 	type RewardOrigin = EnsureRootOrHalfCouncil;
+	type RewardModel = ();
+	type Moment = ();
+	type Time = ();
+	type PalletId = ();
 }
 
 // Parachain stuff.

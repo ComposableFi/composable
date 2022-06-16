@@ -45,8 +45,7 @@ pub mod pallet {
 	};
 	use composable_traits::{
 		currency::LocalAssets,
-		oracle::{Oracle, Price},
-		time::SECONDS_PER_YEAR_NAIVE,
+		oracle::{Oracle, OracleRewardHistory, OracleRewardModel, Price},
 	};
 	use frame_support::{
 		dispatch::{DispatchResult, DispatchResultWithPostInfo},
@@ -54,9 +53,10 @@ pub mod pallet {
 		traits::{
 			BalanceStatus, Currency, EnsureOrigin,
 			ExistenceRequirement::{AllowDeath, KeepAlive},
-			ReservableCurrency,
+			ReservableCurrency, Time,
 		},
 		weights::{DispatchClass::Operational, Pays},
+		PalletId,
 	};
 	use frame_system::{
 		offchain::{
@@ -77,11 +77,12 @@ pub mod pallet {
 			Scale, UniqueSaturatedInto as _, Zero,
 		},
 		AccountId32, ArithmeticError, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId,
-		PerThing, Perbill, Percent, RuntimeDebug, SaturatedConversion,
+		PerThing, Percent, RuntimeDebug, SaturatedConversion,
 	};
 	use sp_std::{
 		borrow::ToOwned, collections::btree_set::BTreeSet, fmt::Debug, str, vec, vec::Vec,
 	};
+	use std::ops::Add;
 
 	// Key Id for location of signer key in keystore
 	pub const KEY_ID: [u8; 4] = *b"orac";
@@ -119,9 +120,7 @@ pub mod pallet {
 	}
 
 	#[pallet::config]
-	pub trait Config:
-		CreateSignedTransaction<Call<Self>> + frame_system::Config + pallet_timestamp::Config
-	{
+	pub trait Config: CreateSignedTransaction<Call<Self>> + frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 		/// The currency mechanism.
 		type Currency: ReservableCurrency<Self::AccountId>;
@@ -178,8 +177,21 @@ pub mod pallet {
 		type MaxPrePrices: Get<u32>;
 
 		/// The weight information of this pallet.
-		type OracleWeightInfo: WeightInfo;
+		type WeightInfo: WeightInfo;
 		type LocalAssets: LocalAssets<Self::AssetId>;
+
+		/// `RewardModel` decides how to reward Oracles based on the financial models and
+		/// agreements.
+		type RewardModel: OracleRewardModel<BalanceOf<Self>, Self::Moment>;
+
+		/// Type for timestamps
+		type Moment: AtLeast32Bit + Parameter + Default + Copy + MaxEncodedLen + FullCodec;
+
+		/// The time provider.
+		type Time: Time<Moment = Self::Moment>;
+
+		#[pallet::constant]
+		type PalletId: Get<PalletId>;
 	}
 
 	#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo, Clone)]
@@ -224,11 +236,11 @@ pub mod pallet {
 		StorageValue<_, u32, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 
 	#[pallet::storage]
-	#[pallet::getter(fn reward_rate)]
+	#[pallet::getter(fn reward_history)]
 	#[allow(clippy::disallowed_types)]
-	/// Annualized reward rate for oracles. This is used to transfer derive the
-	/// amount per block and transfer from the available funds in the treasury.
-	pub type RewardRate<T: Config> = StorageValue<_, Perbill, ValueQuery>;
+	/// Rewarding history for Oracles. Used for calculating the current block reward.
+	pub type RewardHistory<T: Config> =
+		StorageValue<_, OracleRewardHistory<BalanceOf<T>, T::Moment>, ValueQuery>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn signer_to_controller)]
@@ -328,9 +340,9 @@ pub mod pallet {
 		/// Oracle slashed. \[oracle_address, asset_id, amount\]
 		UserSlashed(T::AccountId, T::AssetId, BalanceOf<T>),
 		/// Oracle rewarded. \[oracle_address, asset_id, price\]
-		UserRewarded(T::AccountId, T::AssetId, BalanceOf<T>),
-		/// Reward rate set \[reward rate]
-		RewardRateSet(Perbill),
+		OracleRewarded(T::AccountId, T::AssetId, BalanceOf<T>),
+		/// Rewarding Started \[rewarding start timestamp]
+		RewardingStarted(T::Moment),
 		/// Answer from oracle removed for staleness. \[oracle_address, price\]
 		AnswerPruned(T::AccountId, T::PriceValue),
 	}
@@ -394,6 +406,8 @@ pub mod pallet {
 		TransferError,
 		MaxHistory,
 		MaxPrePrices,
+		/// Not enough to start rewarding Oracles
+		NotEnoughBalanceToReward,
 	}
 
 	#[pallet::hooks]
@@ -493,7 +507,7 @@ pub mod pallet {
 		/// - `slash`: slash amount for bad answer
 		///
 		/// Emits `DepositEvent` event when successful.
-		#[pallet::weight(T::OracleWeightInfo::add_asset_and_info())]
+		#[pallet::weight(T::WeightInfo::add_asset_and_info())]
 		pub fn add_asset_and_info(
 			origin: OriginFor<T>,
 			asset_id: T::AssetId,
@@ -545,7 +559,7 @@ pub mod pallet {
 		/// - `signer`: signer to tie controller to
 		///
 		/// Emits `SignerSet` and `StakeAdded` events when successful.
-		#[pallet::weight(T::OracleWeightInfo::set_signer())]
+		#[pallet::weight(T::WeightInfo::set_signer())]
 		pub fn set_signer(
 			origin: OriginFor<T>,
 			signer: T::AccountId,
@@ -566,19 +580,20 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		/// Call to set a reward rate that is used for inflating the token supply to reward Oracles.
-		///
-		/// - `reward_rate`: reward_rate
-		///
+		/// Call to start rewarding Oracles.
 		/// Emits `RewardRateSet` event when successful.
-		#[pallet::weight(T::OracleWeightInfo::set_reward_rate())]
-		pub fn set_reward_rate(
-			origin: OriginFor<T>,
-			reward_rate: Perbill,
-		) -> DispatchResultWithPostInfo {
+		#[pallet::weight(T::WeightInfo::start_rewarding())]
+		pub fn start_rewarding(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			T::RewardOrigin::ensure_origin(origin)?;
-			Self::do_set_reward_rate(reward_rate);
-			Self::deposit_event(Event::RewardRateSet(reward_rate));
+			ensure!(
+				T::RewardModel::allocation() <= T::Currency::free_balance(&Self::account_id()),
+				Error::<T>::NotEnoughBalanceToReward
+			);
+			RewardHistory::<T>::set(OracleRewardHistory {
+				total_already_rewarded: BalanceOf::<T>::zero(),
+				rewarding_start_timestamp: T::Time::now(),
+			});
+			Self::deposit_event(Event::RewardingStarted(T::Time::now()));
 			Ok(().into())
 		}
 
@@ -587,7 +602,7 @@ pub mod pallet {
 		/// - `stake`: amount to add to stake
 		///
 		/// Emits `StakeAdded` event when successful.
-		#[pallet::weight(T::OracleWeightInfo::add_stake())]
+		#[pallet::weight(T::WeightInfo::add_stake())]
 		pub fn add_stake(origin: OriginFor<T>, stake: BalanceOf<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let signer = ControllerToSigner::<T>::get(&who).ok_or(Error::<T>::UnsetSigner)?;
@@ -600,7 +615,7 @@ pub mod pallet {
 		/// Call to put in a claim to remove stake, called from controller
 		///
 		/// Emits `StakeRemoved` event when successful.
-		#[pallet::weight(T::OracleWeightInfo::remove_stake())]
+		#[pallet::weight(T::WeightInfo::remove_stake())]
 		pub fn remove_stake(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let signer = ControllerToSigner::<T>::get(&who).ok_or(Error::<T>::UnsetSigner)?;
@@ -618,7 +633,7 @@ pub mod pallet {
 		/// Call to reclaim stake after proper time has passed, called from controller
 		///
 		/// Emits `StakeReclaimed` event when successful.
-		#[pallet::weight(T::OracleWeightInfo::reclaim_stake())]
+		#[pallet::weight(T::WeightInfo::reclaim_stake())]
 		pub fn reclaim_stake(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let signer = ControllerToSigner::<T>::get(&who).ok_or(Error::<T>::UnsetSigner)?;
@@ -644,7 +659,7 @@ pub mod pallet {
 		/// - `asset_id`: Id for the asset
 		///
 		/// Emits `PriceSubmitted` event when successful.
-		#[pallet::weight((T::OracleWeightInfo::submit_price(T::MaxAnswerBound::get()), Operational))]
+		#[pallet::weight((T::WeightInfo::submit_price(T::MaxAnswerBound::get()), Operational))]
 		pub fn submit_price(
 			origin: OriginFor<T>,
 			price: T::PriceValue,
@@ -710,8 +725,8 @@ pub mod pallet {
 	}
 
 	impl<T: Config> Pallet<T> {
-		fn do_set_reward_rate(rate: Perbill) {
-			<RewardRate<T>>::put(rate);
+		fn account_id() -> T::AccountId {
+			T::PalletId::get().into_account()
 		}
 
 		pub fn do_add_stake(
@@ -780,9 +795,13 @@ pub mod pallet {
 			}
 			let reward_amount =
 				Self::possible_reward(rewarded_oracles.len() as u64, asset_info.reward_per_oracle);
+			let reward_history = RewardHistory::<T>::get();
 			for accounts in rewarded_oracles {
 				Self::transfer_reward(accounts.0, accounts.1, asset_id, reward_amount);
+				// track the total being rewarded
+				reward_history.total_already_rewarded.saturating_add(reward_amount);
 			}
+			RewardHistory::<T>::set(reward_history);
 		}
 
 		fn transfer_reward(
@@ -791,11 +810,12 @@ pub mod pallet {
 			asset_id: T::AssetId,
 			reward_amount: BalanceOf<T>,
 		) {
-			let result = T::Currency::deposit_into_existing(&controller, reward_amount);
+			let result =
+				T::Currency::transfer(&Self::account_id(), &controller, reward_amount, KeepAlive);
 			if result.is_err() {
 				log::warn!("Failed to deposit {:?}", controller);
 			}
-			Self::deposit_event(Event::UserRewarded(who.clone(), asset_id, reward_amount));
+			Self::deposit_event(Event::OracleRewarded(who.clone(), asset_id, reward_amount));
 		}
 
 		/// Given the `max_reward_per_block` decide the minimum allowed reward for an Oracle per
@@ -804,23 +824,13 @@ pub mod pallet {
 			num_oracles: u64,
 			standard_reward: BalanceOf<T>,
 		) -> BalanceOf<T> {
-			let max_reward_per_block = Self::max_reward_per_block();
+			let max_reward_per_block =
+				T::RewardModel::get_current_block_reward(RewardHistory::<T>::get(), T::Time::now());
 			let num_oracles_converted: BalanceOf<T> = num_oracles.saturated_into();
 			let total_proposed_reward = standard_reward.saturating_mul(num_oracles_converted);
 			sp_std::cmp::min(total_proposed_reward, max_reward_per_block)
 				.checked_div(&num_oracles_converted)
 				.unwrap_or(BalanceOf::<T>::zero())
-		}
-
-		/// Calculate the maximum reward per block given the reward rate configured.
-		pub(crate) fn max_reward_per_block() -> BalanceOf<T> {
-			let total_issuance = <T as Config>::Currency::total_issuance();
-			let slot_duration: u64 = <T as pallet_timestamp::Config>::MinimumPeriod::get()
-				.saturating_mul(2_u32.into())
-				.unique_saturated_into();
-			let number_of_blocks_per_year =
-				Scale::div(SECONDS_PER_YEAR_NAIVE * 1000, slot_duration);
-			RewardRate::<T>::get().div(number_of_blocks_per_year).mul_ceil(total_issuance)
 		}
 
 		pub fn update_prices(block: T::BlockNumber) -> Weight {
@@ -831,14 +841,13 @@ pub mod pallet {
 				if let Ok((removed_pre_prices_len, pre_prices)) =
 					Self::update_pre_prices(asset_id, &asset_info, block)
 				{
-					total_weight +=
-						T::OracleWeightInfo::update_pre_prices(removed_pre_prices_len as u32);
+					total_weight += T::WeightInfo::update_pre_prices(removed_pre_prices_len as u32);
 					let pre_prices_len = pre_prices.len();
 
 					// We can ignore `Error::<T>::MaxHistory` because it can not be
 					// because we control the length of items of `PriceHistory`.
 					let _ = Self::update_price(asset_id, asset_info.clone(), block, pre_prices);
-					total_weight += T::OracleWeightInfo::update_price(pre_prices_len as u32);
+					total_weight += T::WeightInfo::update_price(pre_prices_len as u32);
 				};
 			}
 			total_weight

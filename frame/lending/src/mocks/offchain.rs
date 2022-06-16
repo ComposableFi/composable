@@ -285,7 +285,7 @@ impl pallet_oracle::Config for Runtime {
 	type MaxAssetsCount = MinU32;
 	type MaxHistory = MinU32;
 	type MaxPrePrices = MinU32;
-	type OracleWeightInfo = ();
+	type WeightInfo = ();
 	type LocalAssets = Decimals;
 
 	type TreasuryAccount = RootAccount;
