@@ -19,7 +19,7 @@ export const decodeLbp = (
     const end = currentBlock.gt(endBlock)
       ? Date.now() - endBlock.toNumber() * AVERAGE_BLOCK_TIME
       : Date.now() + endBlock.toNumber() * AVERAGE_BLOCK_TIME;
-    const duration = Math.round((end - start) / (1000 * 60 * 24 * 24));
+    const duration = Math.round((end - start) / (1000 * 60 * 60 * 24));
   
     const baseAssetId = Number(
       (poolItem.pair.base as string).replaceAll(",", "")
