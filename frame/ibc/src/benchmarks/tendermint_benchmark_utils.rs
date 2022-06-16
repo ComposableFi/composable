@@ -146,7 +146,7 @@ pub fn create_client_update() -> MsgUpdateAnyClient {
 	MsgUpdateAnyClient {
 		client_id: ClientId::new(ClientType::Tendermint, 0).unwrap(),
 		header: AnyHeader::Tendermint(create_tendermint_header()),
-		signer: Signer::new("relayer"),
+		signer: Signer::from_str("relayer").unwrap(),
 	}
 }
 // Proof generation process for all tendermint benchmarks
@@ -263,7 +263,7 @@ pub fn create_conn_open_try<T: Config>() -> (ConsensusState, MsgConnectionOpenTr
 			)
 			.unwrap(),
 			delay_period,
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str("relayer").unwrap(),
 		},
 	)
 }
@@ -366,7 +366,7 @@ pub fn create_conn_open_ack<T: Config>() -> (ConsensusState, MsgConnectionOpenAc
 			)
 			.unwrap(),
 			version: ConnVersion::default(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str("relayer").unwrap(),
 		},
 	)
 }
@@ -454,7 +454,7 @@ pub fn create_conn_open_confirm<T: Config>() -> (ConsensusState, MsgConnectionOp
 				Height::new(0, 2),
 			)
 			.unwrap(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str("relayer").unwrap(),
 		},
 	)
 }
@@ -517,7 +517,7 @@ pub fn create_chan_open_try() -> (ConsensusState, MsgChannelOpenTry) {
 			counterparty_version: ChannelVersion::default(),
 			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))
 				.unwrap(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str("relayer").unwrap(),
 		},
 	)
 }
@@ -573,7 +573,7 @@ pub fn create_chan_open_ack() -> (ConsensusState, MsgChannelOpenAck) {
 			counterparty_version: ChannelVersion::default(),
 			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))
 				.unwrap(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str("relayer").unwrap(),
 		},
 	)
 }
@@ -627,14 +627,18 @@ pub fn create_chan_open_confirm() -> (ConsensusState, MsgChannelOpenConfirm) {
 			channel_id: ChannelId::new(0),
 			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))
 				.unwrap(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str("relayer").unwrap(),
 		},
 	)
 }
 
 pub fn create_chan_close_init() -> MsgChannelCloseInit {
 	let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
-	MsgChannelCloseInit { port_id, channel_id: ChannelId::new(0), signer: Signer::new("relayer") }
+	MsgChannelCloseInit {
+		port_id,
+		channel_id: ChannelId::new(0),
+		signer: Signer::from_str("relayer").unwrap(),
+	}
 }
 
 pub fn create_chan_close_confirm() -> (ConsensusState, MsgChannelCloseConfirm) {
@@ -686,7 +690,7 @@ pub fn create_chan_close_confirm() -> (ConsensusState, MsgChannelCloseConfirm) {
 			channel_id: Default::default(),
 			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))
 				.unwrap(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str("relayer").unwrap(),
 		},
 	)
 }
@@ -751,7 +755,7 @@ where
 			packet,
 			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))
 				.unwrap(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str("relayer").unwrap(),
 		},
 	)
 }
@@ -821,7 +825,7 @@ where
 			acknowledgement: ack.into(),
 			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))
 				.unwrap(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str("relayer").unwrap(),
 		},
 	)
 }
@@ -886,7 +890,7 @@ where
 			next_sequence_recv: Default::default(),
 			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))
 				.unwrap(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str("relayer").unwrap(),
 		},
 	)
 }
