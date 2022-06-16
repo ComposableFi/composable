@@ -532,7 +532,7 @@ pub mod pallet {
 		///
 		/// ![](http://www.plantuml.com/plantuml/svg/FSrD2W8n343XlQVG0ynaxsf0y1wPDhQ592tvmUihBbmztkexFD0YXI-teOMpKXfVUyJoEu3XUsyZUfxfP6LgaCPUfi1ZofgE9zDpGFaFa9TE1Yz38IXCQ4FRrcSwGHtO3CK1Qzq4hGtT5wF--8EqVli1)
 		///
-		/// ## Parameters:
+		/// ## Parameters
 		/// - `asset_id`: The identifier of the asset type being deposited
 		/// - `amount`: The balance of `asset` to be transferred from the caller to the Clearing
 		///   House
@@ -552,7 +552,7 @@ pub mod pallet {
 		///
 		/// # Weight/Runtime
 		/// `O(1)`
-		#[pallet::weight(<T as Config>::WeightInfo::add_margin())]
+		#[pallet::weight(<T as Config>::WeightInfo::deposit_collateral())]
 		pub fn deposit_collateral(
 			origin: OriginFor<T>,
 			asset_id: AssetIdOf<T>,
