@@ -6,6 +6,7 @@ interface OfferReward {
   asset: Token | Token[];
   amount: BigNumber;
   maturity: BigNumber;
+  assetId: string;
 }
 
 export interface BondOffer {

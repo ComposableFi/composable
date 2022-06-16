@@ -2,21 +2,20 @@ import { getAssetById } from "@/defi/polkadot/Assets";
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
 import { u128 } from "@polkadot/types-codec";
+import { fromPica } from "./BondedFinance";
 
 export const fetchBalanceByAssetId = async (
   api: ApiPromise,
   accountId: string,
   assetId: string
-): Promise<string> => {
+): Promise<BigNumber> => {
   try {
     const uAccount = api.createType("AccountId32", accountId);
     const balance = await api.rpc.assets.balanceOf(assetId, uAccount);
 
-    console.log({ balance: balance.toString(), assetId });
-
-    return new BigNumber(balance.toString()).div(10 ** 12).toFixed(4);
+    return fromPica(new BigNumber(balance.toString()));
   } catch (err: any) {
     console.log(err);
-    return "0";
+    return new BigNumber(0);
   }
 };

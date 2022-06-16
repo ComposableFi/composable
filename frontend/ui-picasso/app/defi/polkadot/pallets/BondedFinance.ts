@@ -126,6 +126,7 @@ function bondTransformer(beneficiary: AccountId32, bondOffer: any): BondOffer {
       ? bondOffer.maturity.Finite.returnIn
       : "Infinite",
     reward: {
+      assetId: bondOffer.reward.asset.toString(),
       asset: getAssets(bondOffer.reward.asset),
       amount: fromPica(stringToBigNumber(bondOffer.reward.amount.toString())),
       maturity: new BigNumber(bondOffer.reward.maturity),
