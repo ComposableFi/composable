@@ -49,9 +49,6 @@ pub trait InstrumentalProtocolStrategy {
 
 	fn associate_vault(vault_id: &Self::VaultId) -> Result<(), DispatchError>;
 
-	// TODO: (Kevin)
-	//  - can probably be a template method and call add_liquidity and remove_liquidity
-	//    implementations
 	fn rebalance() -> DispatchResult;
 
 	fn get_apy(asset: Self::AssetId) -> Result<u128, DispatchError>;

@@ -190,7 +190,7 @@ pub mod pallet {
 		// 	vec![&T::PabloStrategy]
 		// }
 
-		fn get_optimum_strategy_for(asset: T::AssetId) -> Result<T::AccountId, DispatchError> {
+		fn get_optimum_strategy_for(_asset: T::AssetId) -> Result<T::AccountId, DispatchError> {
 			Ok(T::PabloStrategy::account_id())
 		}
 	}
