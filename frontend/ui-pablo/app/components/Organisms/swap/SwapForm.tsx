@@ -9,7 +9,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
 import { BoxProps } from "@mui/system";
 import { useAppSelector } from "@/hooks/store";
@@ -43,7 +43,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const { extensionStatus } = useDotSamaContext();
   
-  const { swaps, setUiAssetSelectionSwaps, apollo } = useStore();
+  const { swaps, setUiAssetSelectionSwaps, apollo, invertAssetSelectionSwaps } = useStore();
   const [valid1, setValid1] = useState<boolean>(false);
   const [valid2, setValid2] = useState<boolean>(false);
 
@@ -127,6 +127,10 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const [quoteAssetAmount, setQuoteAssetAmount] = useState(new BigNumber(0));
   const [minimumReceived, setMinimumReceived] = useState(new BigNumber(0));
   const [priceImpact, setPriceImpact] = useState(new BigNumber(0));
+
+  const revertSwap = useCallback(() => {
+      invertAssetSelectionSwaps();
+  }, [swaps.ui, invertAssetSelectionSwaps])
 
   useEffect(() => {
     setIsProcessing(true);
@@ -248,8 +252,6 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   };
 
   const handler = debounce(onSwapAmountInput, 1000);
-
-  const onSwapClick = () => {};
 
   return (
     <Box
@@ -385,7 +387,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             },
           }}
         >
-          <SwapVertRounded onClick={onSwapClick} />
+          <SwapVertRounded onClick={revertSwap} />
         </Box>
       </Box>
 
