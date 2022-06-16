@@ -4,7 +4,7 @@
 
 use codec::Codec;
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use composable_traits::dex::{PriceAggregate, RedeemableAssets, RemoveLiquidityDryrunResult};
+use composable_traits::dex::{PriceAggregate, RemoveLiquidityDryrunResult};
 
 // Pablo Runtime API declaration. Implemented for each runtime at
 // `runtime/<runtime-name>/src/lib.rs`.
@@ -31,19 +31,12 @@ sp_api::decl_runtime_apis! {
 			quote_asset_amount: SafeRpcWrapper<Balance>,
 		) -> SafeRpcWrapper<Balance>;
 
-	fn redeemable_assets_for_given_lp_tokens(
-		pool_id: SafeRpcWrapper<PoolId>,
-		lp_amount: SafeRpcWrapper<Balance>,
-		min_base_amount: SafeRpcWrapper<Balance>,
-		min_quote_amount: SafeRpcWrapper<Balance>,
-	) -> RedeemableAssets<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>;
-
-	fn remove_liquidity_dryrun(
-		who: SafeRpcWrapper<AccountId>,
-		pool_id: SafeRpcWrapper<PoolId>,
-		lp_amount: SafeRpcWrapper<Balance>,
-		min_base_amount: SafeRpcWrapper<Balance>,
-		min_quote_amount: SafeRpcWrapper<Balance>,
-	) -> RemoveLiquidityDryrunResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>;
+		fn remove_liquidity_dryrun(
+			who: SafeRpcWrapper<AccountId>,
+			pool_id: SafeRpcWrapper<PoolId>,
+			lp_amount: SafeRpcWrapper<Balance>,
+			min_base_amount: SafeRpcWrapper<Balance>,
+			min_quote_amount: SafeRpcWrapper<Balance>,
+		) -> RemoveLiquidityDryrunResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>;
 	}
 }

@@ -1,6 +1,6 @@
 use codec::Codec;
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use composable_traits::dex::{PriceAggregate, RedeemableAssets, RemoveLiquidityDryrunResult};
+use composable_traits::dex::{PriceAggregate, RemoveLiquidityDryrunResult};
 use core::{fmt::Display, str::FromStr};
 use jsonrpsee::{
 	core::{Error as RpcError, RpcResult},
@@ -41,16 +41,6 @@ where
 		quote_asset_amount: SafeRpcWrapper<Balance>,
 		at: Option<BlockHash>,
 	) -> RpcResult<SafeRpcWrapper<Balance>>;
-
-	#[method(name = "pablo_redeemableAssetForGivenLpTokens")]
-	fn redeemable_assets_for_given_lp_tokens(
-		&self,
-		pool_id: SafeRpcWrapper<PoolId>,
-		lp_amount: SafeRpcWrapper<Balance>,
-		min_base_amount: SafeRpcWrapper<Balance>,
-		min_quote_amount: SafeRpcWrapper<Balance>,
-		at: Option<BlockHash>,
-	) -> RpcResult<RedeemableAssets<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>;
 
 	#[method(name = "pablo_remove_liquidity_dryrun")]
 	fn remove_liquidity_dryrun(
@@ -132,35 +122,6 @@ where
 			pool_id,
 			base_asset_amount,
 			quote_asset_amount,
-		);
-		runtime_api_result.map_err(|e| {
-			RpcError::Call(CallError::Custom(ErrorObject::owned(
-				9876,
-				"Something wrong",
-				Some(format!("{:?}", e)),
-			)))
-		})
-	}
-
-	fn redeemable_assets_for_given_lp_tokens(
-		&self,
-		pool_id: SafeRpcWrapper<PoolId>,
-		lp_amount: SafeRpcWrapper<Balance>,
-		min_base_amount: SafeRpcWrapper<Balance>,
-		min_quote_amount: SafeRpcWrapper<Balance>,
-		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<RedeemableAssets<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>> {
-		let api = self.client.runtime_api();
-
-		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
-
-		// calling ../../runtime-api
-		let runtime_api_result = api.redeemable_assets_for_given_lp_tokens(
-			&at,
-			pool_id,
-			lp_amount,
-			min_base_amount,
-			min_quote_amount,
 		);
 		runtime_api_result.map_err(|e| {
 			RpcError::Call(CallError::Custom(ErrorObject::owned(
