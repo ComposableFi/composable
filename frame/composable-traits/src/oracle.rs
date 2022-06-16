@@ -91,7 +91,7 @@ pub trait Oracle {
 		Self::get_price(asset, unit).map(|_| true)
 	}
 
-	/// Getting time weighted price for setted amount.
+	/// Get the time weighted price for the `amount` of `asset_id`.
 	fn get_twap_for_amount(
 		asset_id: Self::AssetId,
 		amount: Self::Balance,

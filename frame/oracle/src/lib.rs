@@ -955,23 +955,19 @@ pub mod pallet {
 
 			ensure!(twap_window <= historical_prices.len() + 1, Error::<T>::DepthTooLarge);
 
-			let mut prices: Vec<_> = historical_prices
-				.iter()
-				.rev()
-				.enumerate()
-				.filter_map(|(i, price)| if i < twap_window { Some(price) } else { None })
-				.rev()
-				.collect();
+			let mut prices: Vec<_> =
+				historical_prices.iter().rev().take(twap_window).rev().collect();
 			let current_price =
 				Prices::<T>::try_get(asset_id).map_err(|_| Error::<T>::PriceNotFound)?;
 			prices.push(&current_price);
 
 			let weights: Vec<u128> = prices
 				.windows(2)
-				.map(|w| {
-					w.get(0)
-						.and_then(|a| w.get(1).map(|b| (a, b)))
-						.and_then(|(a, b)| b.block.checked_sub(&a.block))
+				.map(|window| {
+					window
+						.get(0)
+						.and_then(|first| window.get(1).map(|second| (first, second)))
+						.and_then(|(first, second)| second.block.checked_sub(&first.block))
 						.unwrap_or_default()
 						.unique_saturated_into()
 				})
@@ -980,12 +976,16 @@ pub mod pallet {
 			let weights_sum: u128 = weights.iter().sum();
 
 			ensure!(
-				prices.get(0).map(|v| v.block.unique_saturated_into()).and_then(|first: u128| {
-					prices
-						.last()
-						.map(|v| v.block.unique_saturated_into())
-						.map(|last: u128| (last - first) == weights_sum)
-				}) == Some(true),
+				prices
+					.first()
+					.map(|v| v.block.unique_saturated_into())
+					.and_then(|first: u128| {
+						prices
+							.last()
+							.map(|v| v.block.unique_saturated_into())
+							.map(|last: u128| (last - first) == weights_sum)
+					})
+					.unwrap_or_default(),
 				Error::<T>::WeightsSumInvalid
 			);
 
@@ -996,10 +996,10 @@ pub mod pallet {
 				.map(|e| -> u128 { e.price.into() })
 				.zip(weights)
 				.filter_map(|(price, weight)| {
-					if weights_sum == 0_u128 {
+					if weights_sum.is_zero() {
 						// if all weights is eq 0 then just return price.
 						Some(price)
-					} else if weight == 0_u128 {
+					} else if weight.is_zero() {
 						// if weight is eq 0 then skip it.
 						// it happens if few prices associated with same block number.
 						None
@@ -1010,7 +1010,7 @@ pub mod pallet {
 				})
 				.sum();
 
-			let twap = if weights_sum == 0_u128 {
+			let twap = if weights_sum.is_zero() {
 				prices_sum / ((prices.len() - 1) as u128)
 			} else {
 				prices_sum / weights_sum
