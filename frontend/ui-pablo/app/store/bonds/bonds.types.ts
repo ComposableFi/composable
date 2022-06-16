@@ -13,8 +13,8 @@ export interface BondSlice {
   ) => void;
   addBond: (
     bondOffer: BondOffer,
-    assetPrice: number,
-    rewardPrice: number
+    principalAppoloPriceInUSD: number,
+    rewardAppoloPriceInUSD: number
   ) => void;
   reset: () => void;
 }
@@ -23,7 +23,7 @@ export interface BondOffer {
   offerId: number;
   beneficiary: AccountId32;
   currencyId: number;
-  asset: Token;
+  asset: Token | "string";
   bondPrice: BigNumber;
   nbOfBonds: number;
   maturity: number | "Infinite";
@@ -41,7 +41,7 @@ type Window = { start: number; period: number };
 
 interface OfferReward {
   currencyId: number;
-  asset: Token;
+  asset: Token | "string";
   amount: BigNumber;
   maturity: number;
 }

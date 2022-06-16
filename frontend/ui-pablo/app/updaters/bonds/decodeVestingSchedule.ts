@@ -12,7 +12,6 @@ export function decodeVestingSchedule(vestingSchedule: any): VestingSchedule {
       ? stringToNumber(vestingSchedule.window.BlockNumberBased.period)
       : stringToNumber(vestingSchedule.window.MomentBased.period),
   };
-
   return {
     perPeriod: stringToBigNumber(vestingSchedule.perPeriod),
     periodCount: Number(vestingSchedule.periodCount),

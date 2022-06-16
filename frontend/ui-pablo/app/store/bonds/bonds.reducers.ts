@@ -56,18 +56,18 @@ export const addActiveBond = (
 export const addBond = (
   allBonds: BondSlice["allBonds"],
   bondOffer: BondOffer,
-  assetPrice: number,
-  rewardPrice: number
+  principalAppoloPriceInUSD: number,
+  rewardAppoloPriceInUSD: number
 ) => {
   const price = new BigNumber(bondOffer.bondPrice)
-    .times(assetPrice)
+    .times(principalAppoloPriceInUSD)
     .div(DEFAULT_DECIMALS);
   return produce(allBonds, (draft) => {
     draft.push({
       offerId: bondOffer.offerId,
       asset: bondOffer.asset,
       price,
-      roi: new BigNumber(rewardPrice)
+      roi: new BigNumber(rewardAppoloPriceInUSD)
         .times(bondOffer.reward.amount)
         .times(100)
         .div(DEFAULT_DECIMALS)

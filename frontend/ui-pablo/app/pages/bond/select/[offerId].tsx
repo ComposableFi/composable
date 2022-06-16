@@ -14,7 +14,6 @@ import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useSnackbar } from "notistack";
 import { useSupplySummary } from "../../../store/hooks/useSupplySummary";
-import ErrorPage from "next/error";
 
 const standardPageSize = {
   xs: 12,
@@ -59,7 +58,7 @@ const SelectBond: NextPage = () => {
   }, [enqueueSnackbar, message]);
 
   if (supplySummary === "no-summary") {
-    return <ErrorPage statusCode={404} />;
+    return null;
   }
 
   const breadcrumbs = [

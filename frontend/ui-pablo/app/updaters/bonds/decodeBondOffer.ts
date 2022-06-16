@@ -5,7 +5,7 @@ import { TokenId } from "../../defi/types";
 import { stringToBigNumber } from "../../utils/stringToBigNumber";
 import { stringToNumber } from "../../utils/stringToNumber";
 
-const currencyIdToAssetMap: Record<string, TokenId> = {
+const currencyIdToTokenIdMap: Record<string, TokenId> = {
   "1": "pica",
   "4": "ksm",
 };
@@ -19,7 +19,7 @@ export function decodeBondOffer(
     offerId,
     beneficiary,
     currencyId: stringToNumber(bondOffer.asset),
-    asset: TOKENS[currencyIdToAssetMap[bondOffer.asset]],
+    asset: TOKENS[currencyIdToTokenIdMap[bondOffer.asset]] ?? bondOffer.asset, // asset could either be an lp token or otherwise
     bondPrice: stringToBigNumber(bondOffer.bondPrice),
     nbOfBonds: bondOffer.nbOfBonds,
     maturity: bondOffer.maturity.Finite
@@ -27,7 +27,9 @@ export function decodeBondOffer(
       : "Infinite",
     reward: {
       currencyId: stringToNumber(bondOffer.asset),
-      asset: TOKENS[currencyIdToAssetMap[bondOffer.reward.asset]],
+      asset:
+        TOKENS[currencyIdToTokenIdMap[bondOffer.reward.asset]] ??
+        bondOffer.asset, // asset could either be an lp token or otherwise
       amount: stringToBigNumber(bondOffer.reward.amount),
       maturity: Number(bondOffer.reward.maturity),
     },

@@ -14,6 +14,7 @@ import Head from "next/head";
 import CssBaseline from "@mui/material/CssBaseline";
 import createEmotionCache from "@/styles/createEmotionCache";
 
+import PoolUpdater from "@/updaters/pools/Updater";
 import LiquidityUpdater from "@/updaters/liquidity/Updater";
 import LiquidityBootstrappingUpdater from "@/updaters/pools/Updater";
 import SwapsUpdater from "@/updaters/swaps/Updater";
@@ -145,6 +146,7 @@ export default function MyApp(props: MyAppProps) {
                   <LiquidityUpdater />
                   <PoolStatsUpdater />
                   <PabloPoolEventsUpdater />
+                  <PoolUpdater />
                 </>
                 <ExecutorProvider>
                   <Component {...pageProps} />

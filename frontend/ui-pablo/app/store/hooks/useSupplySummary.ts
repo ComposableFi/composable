@@ -6,6 +6,7 @@ import { useParachainApi } from "substrate-react";
 import { DEFAULT_DECIMALS } from "../../updaters/constants";
 import { useBlockInterval } from "../../utils/defi/hooks/polkadot/useBlockInterval";
 import { stringToBigNumber } from "../../utils/stringToBigNumber";
+import { fetchApolloPriceByAssetId } from "../../utils/defi/apollo";
 
 const DEFAULT_BLOCK_TIME = 6 * 1000;
 
@@ -29,11 +30,11 @@ export function useSupplySummary({ offerId }: Props) {
     (async () => {
       if (parachainApi && selectedBond) {
         const rewardCurrencyId = selectedBond.bondOffer.reward.currencyId;
-        const oracleRewardPrice = (
-          await parachainApi.query.oracle.prices(rewardCurrencyId)
-        ).toHuman() as any;
-
-        const rewardPriceInUSD = stringToBigNumber(oracleRewardPrice.price)
+        const oracleRewardPrice = await fetchApolloPriceByAssetId(
+          parachainApi,
+          rewardCurrencyId
+        );
+        const rewardPriceInUSD = stringToBigNumber(oracleRewardPrice)
           .div(DEFAULT_DECIMALS)
           .toNumber();
 
@@ -66,5 +67,10 @@ export function useSupplySummary({ offerId }: Props) {
           );
   }
 
-  return { marketPrice, vestingPeriod };
+  return {
+    offerAsset: selectedBond.bondOffer.asset,
+    rewardAsset: selectedBond.bondOffer.reward.asset,
+    marketPrice,
+    vestingPeriod,
+  };
 }

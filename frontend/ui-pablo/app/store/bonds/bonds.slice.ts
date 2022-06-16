@@ -20,9 +20,18 @@ const createBondsSlice: StoreSlice<BondSlice> = (set) => ({
         currentTime
       ),
     })),
-  addBond: (bondOffer: BondOffer, assetPrice: number, rewardPrice: number) =>
+  addBond: (
+    bondOffer: BondOffer,
+    principalAppoloPriceInUSD: number,
+    rewardAppoloPriceInUSD: number
+  ) =>
     set((prev: BondSlice) => ({
-      allBonds: addBond(prev.allBonds, bondOffer, assetPrice, rewardPrice),
+      allBonds: addBond(
+        prev.allBonds,
+        bondOffer,
+        principalAppoloPriceInUSD,
+        rewardAppoloPriceInUSD
+      ),
     })),
   reset: () =>
     set(() => ({
