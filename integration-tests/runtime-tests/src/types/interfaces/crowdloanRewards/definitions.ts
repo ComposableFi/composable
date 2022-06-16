@@ -167,9 +167,6 @@ export default {
     ComposableTraitsXcmAssetsXcmAssetLocation: "Null",
     SpTrieStorageProof: "Null",
     ComposableTraitsXcmAssetsForeignMetadata: "Null",
-    PolkadotPrimitivesV2PersistedValidationData: "Null",
-    PolkadotPrimitivesV2UpgradeRestriction: "Null",
-    PolkadotPrimitivesV2AbridgedHostConfiguration: "Null",
     FrameSystemAccountInfo: {
       nonce: "Null",
       consumers: "Null",
@@ -181,6 +178,6 @@ export default {
         miscFrozen: "u128",
         feeFrozen: "u128"
       }
-    }
+    },
   }
 };
