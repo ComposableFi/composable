@@ -3,6 +3,7 @@ use sp_std::marker::PhantomData;
 
 pub trait WeightInfo {
 	fn add_margin() -> Weight;
+	fn withdraw_collateral() -> Weight;
 	fn create_market() -> Weight;
 	fn open_position() -> Weight;
 	fn close_position() -> Weight;
@@ -14,6 +15,10 @@ pub trait WeightInfo {
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn add_margin() -> Weight {
+		1_000_u32.into()
+	}
+
+	fn withdraw_collateral() -> Weight {
 		1_000_u32.into()
 	}
 
@@ -41,6 +46,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 // For backwards compatibility and tests
 impl WeightInfo for () {
 	fn add_margin() -> Weight {
+		1_000_u32.into()
+	}
+
+	fn withdraw_collateral() -> Weight {
 		1_000_u32.into()
 	}
 

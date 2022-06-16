@@ -563,6 +563,35 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Withdraw collateral from a trader's account.
+		///
+		/// # Overview
+		/// TODO(0xangelo)
+		///
+		/// ## Parameters
+		/// - `amount`: The balance of collateral asset to be transferred from the Clearing House to the caller
+		/// 
+		/// ## Assumptions or Requirements
+		/// TODO(0xangelo)
+		/// 
+		/// ## Emits
+		/// TODO(0xangelo)
+		/// 
+		/// ## State Changes
+		/// TODO(0xangelo)
+		/// 
+		/// ## Errors
+		/// TODO(0xangelo)
+		/// 
+		/// # Weight/Runtime
+		/// TODO(0xangelo)
+		#[pallet::weight(<T as Config>::WeightInfo::withdraw_collateral())]
+		pub fn withdraw_collateral(origin: OriginFor<T>, amount: T::Balance) -> DispatchResult {
+			let account_id = ensure_signed(origin)?;
+			<Self as ClearingHouse>::withdraw_collateral(&account_id, amount)?;
+			Ok(())
+		}
+
 		/// Creates a new perpetuals market with the desired parameters.
 		///
 		/// # Overview
@@ -896,6 +925,13 @@ pub mod pallet {
 				amount,
 			});
 			Ok(())
+		}
+
+		fn withdraw_collateral(
+			account_id: &Self::AccountId,
+			amount: Self::Balance,
+		) -> Result<(), DispatchError> {
+			todo!()
 		}
 
 		fn create_market(config: &Self::MarketConfig) -> Result<Self::MarketId, DispatchError> {

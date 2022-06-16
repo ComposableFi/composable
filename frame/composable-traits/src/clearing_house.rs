@@ -37,6 +37,23 @@ pub trait ClearingHouse {
 		amount: Self::Balance,
 	) -> Result<(), DispatchError>;
 
+	/// Withdraw collateral from a user's account.
+	///
+	/// Assumes margin account is unique to each wallet address, i.e., there's only one margin
+	/// account per user.
+	///
+	/// The collateral asset Id is inferred from the exchange's configured collateral asset.
+	///
+	/// Withdrawal amount is subject to checks on the resulting margin ratio of the account.
+	///
+	/// ## Parameters
+	/// - `account_id`: the trader's margin account Id
+	/// - `amount`: the amount of collateral to withdraw
+	fn withdraw_collateral(
+		account_id: &Self::AccountId,
+		amount: Self::Balance,
+	) -> Result<(), DispatchError>;
+
 	/// Create a new perpetuals market.
 	///
 	/// ## Parameters
