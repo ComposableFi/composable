@@ -1,14 +1,10 @@
 import { useEffect } from "react";
-import BigNumber from "bignumber.js";
-import useStore from "@/store/useStore";
 import { useParachainApi } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { useAllLpTokenRewardingPools } from "../../store/hooks/useAllLpTokenRewardingPools";
-import {
-  calculatePoolStats,
-  fetchPoolStats,
-  PabloPoolStatsSquidResponse,
-} from "./utils";
+import { fetchPoolStats, calculatePoolStats, PabloPoolQueryResponse } from "@/defi/utils/pablo/pools/stats";
+import BigNumber from "bignumber.js";
+import useStore from "@/store/useStore";
 
 /**
  * Updates zustand store with all pools from pablo pallet
@@ -23,7 +19,7 @@ const Updater = () => {
   useEffect(() => {
     console.log(`[PoolStatsUpdater] Update Stats Effect (1)`);
     if (parachainApi && allLpRewardingPools.length) {
-      let promises: Promise<PabloPoolStatsSquidResponse[]>[] = [];
+      let promises: Promise<PabloPoolQueryResponse[]>[] = [];
 
       allLpRewardingPools.forEach((pool) => {
         promises.push(fetchPoolStats(pool as any));

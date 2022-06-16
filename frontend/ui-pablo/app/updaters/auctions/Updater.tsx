@@ -4,7 +4,7 @@ import useStore from "@/store/useStore";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { fetchSpotPrice } from "@/defi/utils";
 import {
-  fetchAuctions,
+  fetchAuctions, fetchTrades,
 } from "@/defi/utils/pablo/auctions";
 
 const Updater = () => {
@@ -28,27 +28,30 @@ const Updater = () => {
     if (parachainApi && poolId !== -1) {
       fetchAuctions(parachainApi, auctions.activeLBP)
         .then((data) => {
-          putStatsActiveLBP({
-            startBalances: {
-              quote: data.startBalances.quote,
-              base: data.startBalances.base,
-            },
-            currentBalances: {
-              quote: data.currentBalances.quote,
-              base: data.currentBalances.base,
-            },
-            liquidity: data.liquidity,
-            totalVolume: data.totalVolume,
-          });
-          putHistoryActiveLBP(data.trades);
+          putStatsActiveLBP(data);
         })
         .catch((err) => {
-          console.log(err);
+          console.error(err);
         });
+    }
+  }, [parachainApi, auctions.activeLBP]);
+  /**
+   * Update trade history
+   * in history tab
+   * add apollo here as well
+   */
+  useEffect(() => {
+    const { poolId } = auctions.activeLBP;
+    if (poolId !== -1) {
+      fetchTrades(auctions.activeLBP).then(trades => {
+        putHistoryActiveLBP(trades)
+      }).catch(err => {
+        console.error(err);
+      })
     } else {
       putHistoryActiveLBP([]);
     }
-  }, [parachainApi, auctions.activeLBP]);
+  }, [auctions.activeLBP])
   /**
    * This effect is called to show prices
    * on auctions page
@@ -73,7 +76,9 @@ const Updater = () => {
               liquidityBootstrappingPools.verified[pool].poolId,
               spotPrice.toFixed(4)
             );
-          });
+          }).catch(err => {
+            console.error(err);
+          })
         }
       }
     }

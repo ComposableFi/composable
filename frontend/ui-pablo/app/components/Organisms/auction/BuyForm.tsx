@@ -32,13 +32,14 @@ import { ConfirmingModal } from "../swap/ConfirmingModal";
 import { useSnackbar } from "notistack";
 import { toChainUnits } from "@/defi/utils";
 import { calculateSwap } from "@/defi/utils/pablo/swaps";
+import { fetchAuctions, fetchTrades } from "@/defi/utils/pablo/auctions";
 
 export type BuyFormProps = {
   auction: LiquidityBootstrappingPool;
 } & BoxProps;
 
 export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
-  const { balances } = useStore();
+  const { balances, auctions: { activeLBP }, putHistoryActiveLBP, putStatsActiveLBP } = useStore();
   const { extensionStatus } = useDotSamaContext();
   const { parachainApi } = useParachainApi("picasso");
   const selectedAccount = useSelectedAccount("picasso");
@@ -47,6 +48,17 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
   const isMobile = useMobile();
   const executor = useExecutor();
   const currentTimestamp = Date.now();
+
+
+  const updateState = useCallback(async () => {
+    const { poolId } = activeLBP;
+    if (parachainApi && poolId !== -1) {
+      const stats = await fetchAuctions(parachainApi, activeLBP);
+      const trades = await fetchTrades(activeLBP);
+      putStatsActiveLBP(stats);
+      putHistoryActiveLBP(trades);
+    }
+  }, [activeLBP, putHistoryActiveLBP, putStatsActiveLBP, parachainApi])
 
   const isActive: boolean =
     auction.sale.start <= currentTimestamp &&
@@ -170,6 +182,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
             },
             (txHash: string, events) => {
               enqueueSnackbar('Transaction Finalized');
+              updateState();
             }
           )
           .catch((err) => {
@@ -179,7 +192,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
         enqueueSnackbar(err.message);
       }
     }
-  }, [parachainApi, executor, selectedAccount, baseAsset, baseAssetAmount]);
+  }, [parachainApi, executor, selectedAccount, baseAsset, baseAssetAmount, updateState]);
 
   return (
     <Box
