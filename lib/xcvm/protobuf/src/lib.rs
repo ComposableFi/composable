@@ -67,11 +67,12 @@ impl<
 	for Program
 {
 	fn from(
-		XCVMProgram { instructions, nonce }: XCVMProgram<
+		XCVMProgram { tag, instructions, nonce }: XCVMProgram<
 			VecDeque<XCVMInstruction<TNetwork, TAbiEncoded, TAccount, TAssets>>,
 		>,
 	) -> Self {
 		Program {
+			tag: tag.unwrap_or_default(),
 			instructions: Some(Instructions {
 				instructions: instructions.into_iter().map(Into::<Instruction>::into).collect(),
 			}),
@@ -91,14 +92,18 @@ impl<
 	type Error = ();
 	fn try_from(program: Program) -> Result<Self, Self::Error> {
 		match program {
-			Program { instructions: Some(Instructions { instructions }), nonce } =>
+			Program { instructions: Some(Instructions { instructions }), nonce, tag } => {
+				let tag = if tag.is_empty() { None } else { Some(tag) };
+
 				Ok(XCVMProgram {
+					tag,
 					instructions: instructions
 						.into_iter()
 						.map(TryInto::<XCVMInstruction<_, _, _, _>>::try_into)
 						.collect::<Result<VecDeque<_>, _>>()?,
 					nonce,
-				}),
+				})
+			},
 			_ => Err(()),
 		}
 	}
@@ -208,9 +213,9 @@ mod tests {
 			XCVMProgramBuilder::<
 				XCVMNetwork,
 				XCVMInstruction<XCVMNetwork, _, Vec<u8>, BTreeMap<u32, u128>>,
-			>::from(XCVMNetwork::PICASSO, 0)
+			>::from(None, XCVMNetwork::PICASSO, 0)
 			.call(DummyProtocol)?
-			.spawn(XCVMNetwork::ETHEREUM, BTreeMap::from([(0x1337, 20_000)]), |child| {
+			.spawn(None, XCVMNetwork::ETHEREUM, BTreeMap::from([(0x1337, 20_000)]), |child| {
 				Ok(child
 					.call(DummyProtocol)?
 					.transfer(vec![0xBE, 0xEF], BTreeMap::from([(0, 10_000)])))
@@ -236,10 +241,13 @@ mod tests {
 			Ok(XCVMProgramBuilder::<
 				XCVMNetwork,
 				XCVMInstruction<XCVMNetwork, _, Vec<u8>, BTreeMap<u32, u128>>,
-			>::from(XCVMNetwork::PICASSO, 0)
-			.spawn::<_, ()>(XCVMNetwork::ETHEREUM, BTreeMap::from([(0x1337, 20_000)]), |child| {
-				Ok(child.transfer(vec![0xBE, 0xEF], BTreeMap::from([(0, 10_000)])))
-			})?
+			>::from(Some("test tag".as_bytes().to_vec()), XCVMNetwork::PICASSO, 0)
+			.spawn::<_, ()>(
+				Some("test tag 2".as_bytes().to_vec()),
+				XCVMNetwork::ETHEREUM,
+				BTreeMap::from([(0x1337, 20_000)]),
+				|child| Ok(child.transfer(vec![0xBE, 0xEF], BTreeMap::from([(0, 10_000)]))),
+			)?
 			.build())
 		}()
 		.expect("valid program");
@@ -253,7 +261,7 @@ mod tests {
 			Ok(XCVMProgramBuilder::<
 				XCVMNetwork,
 				XCVMInstruction<XCVMNetwork, _, Vec<u8>, BTreeMap<u32, u128>>,
-			>::from(XCVMNetwork::PICASSO, 0)
+			>::from(Some("test tag".as_bytes().to_vec()), XCVMNetwork::PICASSO, 0)
 			.transfer(
 				hex::decode("d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d")
 					.expect("valid"),
@@ -280,7 +288,7 @@ mod tests {
 			Ok(XCVMProgramBuilder::<
 				XCVMNetwork,
 				XCVMInstruction<XCVMNetwork, _, Vec<u8>, BTreeMap<u32, u128>>,
-			>::from(XCVMNetwork::PICASSO, 0)
+			>::from(Some("test tag".as_bytes().to_vec()), XCVMNetwork::PICASSO, 0)
 			.transfer(
 				hex::decode("d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d")
 					.expect("valid"),
@@ -292,6 +300,7 @@ mod tests {
 				BTreeMap::from([(XCVMAsset::PICA.into(), 1336000000000000)]),
 			)
 			.spawn::<_, ()>(
+				Some("test tag 2".as_bytes().to_vec()),
 				XCVMNetwork::ETHEREUM,
 				BTreeMap::from([(XCVMAsset::PICA.into(), 1000000000000)]),
 				|child| {
