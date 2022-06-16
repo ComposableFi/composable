@@ -2,7 +2,7 @@ import { getAssetById } from "@/defi/polkadot/Assets";
 import { LiquidityBootstrappingPool, ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
 import { percentageToNumber } from "@/utils/number";
 import BigNumber from "bignumber.js";
-import { AVERAGE_BLOCK_TIME, DEFAULT_NETWORK_ID, DUMMY_LAUNCH_DESCRIPTION } from "../../constants";
+import { AVERAGE_BLOCK_TIME, DAYS, DEFAULT_NETWORK_ID, DUMMY_LAUNCH_DESCRIPTION } from "../../constants";
 import { stringToBigNumber } from "../../misc";
 
 export const decodeLbp = (
@@ -19,7 +19,7 @@ export const decodeLbp = (
     const end = currentBlock.gt(endBlock)
       ? Date.now() - endBlock.toNumber() * AVERAGE_BLOCK_TIME
       : Date.now() + endBlock.toNumber() * AVERAGE_BLOCK_TIME;
-    const duration = Math.round((end - start) / (1000 * 60 * 60 * 24));
+    const duration = Math.round((end - start) / DAYS);
   
     const baseAssetId = Number(
       (poolItem.pair.base as string).replaceAll(",", "")
