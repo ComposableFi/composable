@@ -4,7 +4,8 @@
 * @ComposableFi/core
 
 # CI and deployment related files
-.github/ @ComposableFi/sre @ComposableFi/core 
+.github/ @ComposableFi/sre 
+.github/CODEOWNERS @ComposableFi/core 
 docker/ @ComposableFi/sre
 Makefile @ComposableFi/sre
 
