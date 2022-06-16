@@ -155,6 +155,21 @@ export default {
     ComposableTraitsLendingRepayStrategy: "Null",
     ComposableTraitsXcmAssetsXcmAssetLocation: "Null",
     SpTrieStorageProof: "Null",
-    ComposableTraitsXcmAssetsForeignMetadata: "Null"
+    ComposableTraitsXcmAssetsForeignMetadata: "Null",
+    PolkadotPrimitivesV2PersistedValidationData: "Null",
+    PolkadotPrimitivesV2UpgradeRestriction: "Null",
+    PolkadotPrimitivesV2AbridgedHostConfiguration: "Null",
+    FrameSystemAccountInfo: {
+      nonce: "Null",
+      consumers: "Null",
+      providers: "Null",
+      sufficients: "Null",
+      data: {
+        free: "u128",
+        reserved: "u128",
+        miscFrozen: "u128",
+        feeFrozen: "u128"
+      }
+    }
   }
 };
