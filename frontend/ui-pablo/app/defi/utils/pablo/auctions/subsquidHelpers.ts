@@ -5,7 +5,6 @@ import { queryAuctionStats } from "@/updaters/auctions/subsquid";
 import { queryPoolTransactionsByType } from "@/updaters/pools/subsquid";
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
-import { ParachainApi } from "substrate-react/dist/dotsama/types";
 import { fetchBalanceByAssetId } from "../../assets";
 import { fromChainUnits } from "../../units";
 import { createPabloPoolAccountId } from "../misc";
@@ -185,13 +184,11 @@ export async function fetchAuctions(
   };
   liquidity: string;
   totalVolume: string;
-  trades: LiquidityBootstrappingPoolTrade[];
 }> {
   let startBalances = { base: "0", quote: "0" }
   let currentBalances = { base: "0", quote: "0" }
   let liquidity = "0";
   let totalVolume = "0";
-  let trades: LiquidityBootstrappingPoolTrade[] = [];
   const { base, quote } = pool.pair;
   const poolAccountId = createPabloPoolAccountId(api, pool.poolId);
   try {
@@ -204,7 +201,6 @@ export async function fetchAuctions(
      * Query trade history
      * for transactions tab
      */
-    trades = await fetchTrades(pool)
     /**
      * Query for initial balances
      */
@@ -231,7 +227,6 @@ export async function fetchAuctions(
     currentBalances,
     liquidity,
     totalVolume,
-    trades
   }
 
 }

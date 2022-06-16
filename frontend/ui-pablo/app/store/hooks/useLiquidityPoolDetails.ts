@@ -6,7 +6,7 @@ import useStore from "@/store/useStore";
 import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
 import { useLiquidityByPool } from "./useLiquidityByPool";
 import { DailyRewards } from "../poolStats/poolStats.types";
-import { calculatePoolStats, fetchPoolStats } from "@/updaters/poolStats/utils";
+import { calculatePoolStats, fetchPoolStats } from "@/defi/utils/pablo";
 
 export const useLiquidityPoolDetails = (poolId: number) => {
   const { poolStats, poolStatsValue, userLpBalances, putPoolStats } = useStore();

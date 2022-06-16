@@ -28,23 +28,48 @@ import { SwapRoute } from "./SwapRoute";
 import { PreviewModal } from "./PreviewModal";
 import { ConfirmingModal } from "./ConfirmingModal";
 import { useDotSamaContext, useParachainApi } from "substrate-react";
-import { Assets, AssetsValidForNow } from "@/defi/polkadot/Assets";
+import { Assets, AssetsValidForNow, getAssetOnChainId } from "@/defi/polkadot/Assets";
 import useStore from "@/store/useStore";
 import { AssetId } from "@/defi/polkadot/types";
 import { debounce } from "lodash";
 import { calculateSwap } from "@/defi/utils/pablo/swaps";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
   const theme = useTheme();
   const dispatch = useDispatch();
   
-  const { parachainApi } = useParachainApi("picasso");
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const { extensionStatus } = useDotSamaContext();
   
-  const { swaps, setUiAssetSelectionSwaps } = useStore();
+  const { swaps, setUiAssetSelectionSwaps, apollo } = useStore();
   const [valid1, setValid1] = useState<boolean>(false);
   const [valid2, setValid2] = useState<boolean>(false);
+
+  const token1PriceInUSD = useMemo(() => {
+    if (swaps.ui.baseAssetSelected === "none") return new BigNumber(0);
+    let base = getAssetOnChainId(DEFAULT_NETWORK_ID, swaps.ui.baseAssetSelected);
+    if (base) {
+      let baseId = base.toString()
+      if (apollo[baseId]) {
+        return new BigNumber(apollo[baseId])
+      }
+    }
+    return new BigNumber(0);
+  }, [swaps.ui.baseAssetSelected, apollo])
+
+  const token2PriceInUSD = useMemo(() => {
+    if (swaps.ui.quoteAssetSelected === "none") return new BigNumber(0);
+    let quote = getAssetOnChainId(DEFAULT_NETWORK_ID, swaps.ui.quoteAssetSelected);
+    if (quote) {
+      let quoteId = quote.toString()
+      if (apollo[quoteId]) {
+        return new BigNumber(apollo[quoteId])
+      }
+    }
+    return new BigNumber(0);
+  }, [swaps.ui.quoteAssetSelected, apollo])
 
   const balance1 = useMemo(() => {
     return new BigNumber(swaps.userAccount.quoteAssetBalance);
@@ -92,10 +117,6 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
 
   const slippage = useAppSelector(
     (state) => state.settings.transactionSettings.tolerance
-  );
-
-  const { token1PriceInUSD, token2PriceInUSD } = useAppSelector(
-    (state) => state.swap.swap
   );
 
   const spotPriceBn = useMemo(() => {

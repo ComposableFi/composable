@@ -4,7 +4,7 @@ import { useParachainApi } from "substrate-react";
 import { AssetId } from "@/defi/polkadot/types";
 import { Assets } from "@/defi/polkadot/Assets";
 import BigNumber from "bignumber.js";
-import { isValidAssetPair } from "@/defi/utils";
+import { DEFAULT_NETWORK_ID, isValidAssetPair } from "@/defi/utils";
 import {
   ConstantProductPool,
   LiquidityBootstrappingPool,
@@ -29,7 +29,7 @@ const Updater = () => {
       stableSwapPools,
     },
   } = useStore();
-  const { parachainApi } = useParachainApi("picasso");
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   /**
    * Triggered when user changes first
    * token from token list dropdown on
