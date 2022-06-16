@@ -2,8 +2,14 @@ use crate::{
 	math::{FixedPointMath, IntoDecimal},
 	Config,
 };
-use composable_traits::{time::DurationSeconds, vamm::Direction as VammDirection};
-use frame_support::pallet_prelude::{Decode, Encode, MaxEncodedLen, TypeInfo};
+use composable_traits::{
+	time::DurationSeconds,
+	vamm::{Direction as VammDirection, Vamm},
+};
+use frame_support::{
+	pallet_prelude::{Decode, Encode, MaxEncodedLen, TypeInfo},
+	traits::UnixTime,
+};
 use num_traits::Zero;
 use sp_runtime::{ArithmeticError, DispatchError, FixedPointNumber};
 use Direction::{Long, Short};
@@ -155,8 +161,33 @@ pub struct Market<T: Config> {
 }
 
 impl<T: Config> Market<T> {
-	// TODO(0xangelo): add a method to construct self from MarketConfig
-
+	/// Construct new market from `MarketConfig`.
+	pub fn new(
+		config: MarketConfig<T::MayBeAssetId, T::Balance, T::Decimal, T::VammConfig>,
+	) -> Result<Self, DispatchError> {
+		Ok(Self {
+			vamm_id: T::Vamm::create(&config.vamm_config)?,
+			asset_id: config.asset,
+			margin_ratio_initial: config.margin_ratio_initial,
+			margin_ratio_maintenance: config.margin_ratio_maintenance,
+			margin_ratio_partial: config.margin_ratio_partial,
+			minimum_trade_size: config.minimum_trade_size,
+			funding_frequency: config.funding_frequency,
+			funding_period: config.funding_period,
+			taker_fee: config.taker_fee,
+			twap_period: config.twap_period,
+			available_gains: Zero::zero(),
+			base_asset_amount_long: Zero::zero(),
+			base_asset_amount_short: Zero::zero(),
+			cum_funding_rate_long: Zero::zero(),
+			cum_funding_rate_short: Zero::zero(),
+			fee_pool: Zero::zero(),
+			funding_rate_ts: T::UnixTime::now().as_secs(),
+			last_oracle_price: Zero::zero(),
+			last_oracle_twap: Zero::zero(),
+			last_oracle_ts: T::UnixTime::now().as_secs(),
+		})
+	}
 	/// Returns the current funding rate for positions with the given direction.
 	pub fn cum_funding_rate(&self, direction: Direction) -> T::Decimal {
 		match direction {

@@ -633,7 +633,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::create_market())]
 		pub fn create_market(origin: OriginFor<T>, config: MarketConfigOf<T>) -> DispatchResult {
 			ensure_signed(origin)?;
-			let _ = <Self as ClearingHouse>::create_market(&config)?;
+			let _ = <Self as ClearingHouse>::create_market(config)?;
 			Ok(())
 		}
 
@@ -940,7 +940,7 @@ pub mod pallet {
 			todo!()
 		}
 
-		fn create_market(config: &Self::MarketConfig) -> Result<Self::MarketId, DispatchError> {
+		fn create_market(config: Self::MarketConfig) -> Result<Self::MarketId, DispatchError> {
 			ensure!(T::Oracle::is_supported(config.asset)?, Error::<T>::NoPriceFeedForAsset);
 			ensure!(
 				config.funding_period > 0 && config.funding_frequency > 0,
@@ -971,37 +971,13 @@ pub mod pallet {
 
 			MarketCount::<T>::try_mutate(|id| {
 				let market_id = id.clone();
-				let market = Market {
-					vamm_id: T::Vamm::create(&config.vamm_config)?,
-					asset_id: config.asset,
-					margin_ratio_initial: config.margin_ratio_initial,
-					margin_ratio_maintenance: config.margin_ratio_maintenance,
-					margin_ratio_partial: config.margin_ratio_partial,
-					minimum_trade_size: config.minimum_trade_size,
-					funding_frequency: config.funding_frequency,
-					funding_period: config.funding_period,
-					taker_fee: config.taker_fee,
-					twap_period: config.twap_period,
-					available_gains: Zero::zero(),
-					base_asset_amount_long: Zero::zero(),
-					base_asset_amount_short: Zero::zero(),
-					cum_funding_rate_long: Zero::zero(),
-					cum_funding_rate_short: Zero::zero(),
-					fee_pool: Zero::zero(),
-					funding_rate_ts: T::UnixTime::now().as_secs(),
-					last_oracle_price: Zero::zero(),
-					last_oracle_twap: Zero::zero(),
-					last_oracle_ts: T::UnixTime::now().as_secs(),
-				};
-				Markets::<T>::insert(&market_id, market);
+				let asset = config.asset;
+				Markets::<T>::insert(&market_id, Market::new(config)?);
 
 				// Change the market count at the end
 				*id = id.checked_add(&One::one()).ok_or(ArithmeticError::Overflow)?;
 
-				Self::deposit_event(Event::MarketCreated {
-					market: market_id.clone(),
-					asset: config.asset,
-				});
+				Self::deposit_event(Event::MarketCreated { market: market_id.clone(), asset });
 				Ok(market_id)
 			})
 		}

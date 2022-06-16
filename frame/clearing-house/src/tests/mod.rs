@@ -13,7 +13,7 @@ use crate::{
 		},
 		vamm::VammConfig,
 	},
-	Config, Direction, Market as MarketGeneric, MarketConfig as MarketConfigGeneric, Markets,
+	Direction, Market as MarketGeneric, MarketConfig as MarketConfigGeneric, Markets,
 	MaxPriceDivergence,
 };
 use composable_traits::{
@@ -264,30 +264,9 @@ impl Default for MarketConfigGeneric<AssetId, Balance, Decimal, VammConfig> {
 	}
 }
 
-impl<T: Config> Default for MarketGeneric<T> {
+impl Default for MarketGeneric<Runtime> {
 	fn default() -> Self {
-		Self {
-			vamm_id: Zero::zero(),
-			asset_id: Default::default(),
-			margin_ratio_initial: Default::default(),
-			margin_ratio_maintenance: Default::default(),
-			margin_ratio_partial: Default::default(),
-			minimum_trade_size: Default::default(),
-			funding_frequency: Default::default(),
-			funding_period: Default::default(),
-			taker_fee: Default::default(),
-			twap_period: Default::default(),
-			available_gains: Zero::zero(),
-			base_asset_amount_long: Default::default(),
-			base_asset_amount_short: Default::default(),
-			cum_funding_rate_long: Default::default(),
-			cum_funding_rate_short: Default::default(),
-			fee_pool: Default::default(),
-			funding_rate_ts: Default::default(),
-			last_oracle_price: Zero::zero(),
-			last_oracle_twap: Zero::zero(),
-			last_oracle_ts: Default::default(),
-		}
+		Self::new(MarketConfigGeneric::<AssetId, Balance, Decimal, VammConfig>::default()).unwrap()
 	}
 }
 
@@ -338,7 +317,7 @@ trait MarketInitializer {
 		T: Iterator<Item = Option<MarketConfig>>;
 
 	fn create_market_helper(config: Option<MarketConfig>) -> MarketId {
-		<TestPallet as ClearingHouse>::create_market(&config.unwrap_or_default()).unwrap()
+		<TestPallet as ClearingHouse>::create_market(config.unwrap_or_default()).unwrap()
 	}
 }
 

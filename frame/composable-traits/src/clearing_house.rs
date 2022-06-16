@@ -61,7 +61,7 @@ pub trait ClearingHouse {
 	///
 	/// ## Returns
 	/// The new market's id, if successful.
-	fn create_market(config: &Self::MarketConfig) -> Result<Self::MarketId, DispatchError>;
+	fn create_market(config: Self::MarketConfig) -> Result<Self::MarketId, DispatchError>;
 
 	/// Open a position in a market.
 	///
