@@ -44,11 +44,11 @@ xcm = { git = "https://github.com/paritytech/polkadot", default-features = false
 
 log = { version = "0.4.14", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
+primitives = { path = "../../runtime/primitives", default-features = false }
 rand = { version = "0.7.2", optional = true }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
-primitives = { path = "../../runtime/primitives", default-features = false }
 
 [dev-dependencies]
 composable-tests-helpers = { path = "../composable-tests-helpers" }
