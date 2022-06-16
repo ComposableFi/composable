@@ -17,7 +17,6 @@ import React, { useState } from "react";
 import { KeyboardArrowDown } from "@mui/icons-material";
 import { KeyboardArrowUp } from "@mui/icons-material";
 import { AuctionStatusIndicator } from "./auction/AuctionStatusIndicator";
-import useStore from "@/store/useStore";
 import { getAssetById } from "@/defi/polkadot/Assets";
 
 import { getParachainNetwork } from "substrate-react";
@@ -56,7 +55,7 @@ export const AllAuctionsTable: React.FC<TableContainerProps> = ({
             <TableCell align="left" sx={{ paddingLeft: theme.spacing(4) }}>
               Token
             </TableCell>
-            <TableCell align="left">Network</TableCell>
+            {/* <TableCell align="left">Network</TableCell> */}
             <TableCell align="center">Auction Status</TableCell>
             <TableCell align="right" sx={{ paddingRight: theme.spacing(4) }}>
               Price
@@ -83,13 +82,13 @@ export const AllAuctionsTable: React.FC<TableContainerProps> = ({
                     LabelProps={{ variant: "body1" }}
                   />
                 </TableCell>
-                <TableCell align="left">
+                {/* <TableCell align="left">
                   <BaseAsset
                     icon={lbPool.icon}
                     label={getParachainNetwork(lbPool.networkId).name}
                     LabelProps={{ variant: "body1" }}
                   />
-                </TableCell>
+                </TableCell> */}
                 <TableCell align="center">
                   <AuctionStatusIndicator
                     auction={lbPool}
