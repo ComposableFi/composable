@@ -56,6 +56,7 @@
 //! ### Extrinsics
 //!
 //! - [`deposit_collateral`](Call::deposit_collateral)
+//! - [`withdraw_collateral`](Call::withdraw_collateral)
 //! - [`create_market`](Call::create_market)
 //! - [`open_position`](Call::open_position)
 //! - [`close_position`](Call::close_position)
@@ -65,6 +66,7 @@
 //! ### Implemented Functions
 //!
 //! - [`deposit_collateral`](pallet/struct.Pallet.html#method.deposit_collateral-1)
+//! - [`withdraw_collateral`](pallet/struct.Pallet.html#method.withdraw_collateral-1)
 //! - [`create_market`](pallet/struct.Pallet.html#method.create_market-1)
 //! - [`open_position`](pallet/struct.Pallet.html#method.open_position-1)
 //! - [`close_position`](pallet/struct.Pallet.html#method.close_position-1)
@@ -569,20 +571,21 @@ pub mod pallet {
 		/// TODO(0xangelo)
 		///
 		/// ## Parameters
-		/// - `amount`: The balance of collateral asset to be transferred from the Clearing House to the caller
-		/// 
+		/// - `amount`: The balance of collateral asset to be transferred from the Clearing House to
+		///   the caller
+		///
 		/// ## Assumptions or Requirements
 		/// TODO(0xangelo)
-		/// 
+		///
 		/// ## Emits
 		/// TODO(0xangelo)
-		/// 
+		///
 		/// ## State Changes
 		/// TODO(0xangelo)
-		/// 
+		///
 		/// ## Errors
 		/// TODO(0xangelo)
-		/// 
+		///
 		/// # Weight/Runtime
 		/// TODO(0xangelo)
 		#[pallet::weight(<T as Config>::WeightInfo::withdraw_collateral())]
@@ -831,7 +834,8 @@ pub mod pallet {
 		/// liquidated first.
 		///
 		/// The caller of the function, the 'liquidator', may be credited with a liquidation fee in
-		/// their account, which can be withdrawn via TODO(0xangelo).
+		/// their account, which can be withdrawn via
+		/// [`withdraw_collateral`](Call::withdraw_collateral).
 		///
 		/// ## Parameters
 		///
