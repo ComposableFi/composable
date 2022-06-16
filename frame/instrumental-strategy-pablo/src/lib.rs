@@ -256,8 +256,7 @@ pub mod pallet {
 			let asset_id = T::Vault::asset_id(vault_id)?;
 			let account_id = T::Vault::account_id(vault_id);
 			let pool_id = Self::pools(asset_id).ok_or(Error::<T>::PoolNotFound)?;
-			let task = T::Vault::available_funds(vault_id, &Self::account_id())?;
-			match task {
+			match T::Vault::available_funds(vault_id, &Self::account_id())? {
 				FundsAvailability::Withdrawable(balance) => {
 					let vault_account = T::Vault::account_id(vault_id);
 					let lp_token_amount = T::Pablo::amount_of_lp_token_for_added_liquidity(
@@ -271,7 +270,7 @@ pub mod pallet {
 						T::Balance::zero(),
 						balance,
 						lp_token_amount,
-						bool::default(),
+						true,
 					)?;
 				},
 				FundsAvailability::Depositable(balance) => {
