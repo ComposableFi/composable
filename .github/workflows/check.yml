@@ -25,6 +25,20 @@ env:
   DOCKER_USER_OPTION: '$UID:$GID'
 
 jobs:
+  mosaic-check:
+    name: Check Mosaic
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ouzi-dev/commit-status-updater@v1.1.0
+      - run: |
+          npm install
+          yarn test
+        working-directory: mosaic/v2
+      - if: always()
+        uses: ouzi-dev/commit-status-updater@v1.1.0
+        with:
+          status: "${{ job.status }}"
   substrate-check:
     name: Check Benchmarks
     runs-on:
