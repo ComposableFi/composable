@@ -636,9 +636,9 @@ where
 		let next_seq_send = NextSequenceSend::<T>::get(port_id.clone(), channel_id.clone());
 		let sequence = Sequence::from(next_seq_send);
 		let source_port =
-			port_id_from_bytes(port_id.clone()).map_err(|_| IbcHandlerError::SendPacketError)?;
-		let source_channel = channel_id_from_bytes(channel_id.clone())
-			.map_err(|_| IbcHandlerError::SendPacketError)?;
+			port_id_from_bytes(port_id).map_err(|_| IbcHandlerError::SendPacketError)?;
+		let source_channel =
+			channel_id_from_bytes(channel_id).map_err(|_| IbcHandlerError::SendPacketError)?;
 		let destination_port =
 			port_id_from_bytes(data.dest_port_id).map_err(|_| IbcHandlerError::SendPacketError)?;
 		let destination_channel = channel_id_from_bytes(data.dest_channel_id)
@@ -657,20 +657,10 @@ where
 		};
 
 		let send_packet_result =
-			ibc::core::ics04_channel::handler::send_packet::send_packet(&ctx, packet.clone())
+			ibc::core::ics04_channel::handler::send_packet::send_packet(&ctx, packet)
 				.map_err(|_| IbcHandlerError::SendPacketError)?;
 		ctx.store_packet_result(send_packet_result.result)
 			.map_err(|_| IbcHandlerError::SendPacketError)?;
-
-		// store packet offchain
-		let key = Pallet::<T>::offchain_key(channel_id, port_id);
-		let mut offchain_packets: BTreeMap<u64, OffchainPacketType> =
-			sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
-				.and_then(|v| codec::Decode::decode(&mut &*v).ok())
-				.unwrap_or_default();
-		let offchain_packet: OffchainPacketType = packet.into();
-		offchain_packets.insert(next_seq_send, offchain_packet);
-		sp_io::offchain_index::set(&key, offchain_packets.encode().as_slice());
 		Ok(())
 	}
 
@@ -683,9 +673,13 @@ where
 			ctx.channel_counter().map_err(|_| IbcHandlerError::ChannelInitError)?;
 		let channel_id = ChannelId::new(channel_counter);
 		// Signer does not matter in this case
-		let value = MsgChannelOpenInit { port_id, channel: channel_end, signer: Signer::new("") }
-			.encode_vec()
-			.map_err(|_| IbcHandlerError::ChannelInitError)?;
+		let value = MsgChannelOpenInit {
+			port_id,
+			channel: channel_end,
+			signer: Signer::from_str(MODULE_ID).map_err(|_| IbcHandlerError::ChannelInitError)?,
+		}
+		.encode_vec()
+		.map_err(|_| IbcHandlerError::ChannelInitError)?;
 		let msg = ibc_proto::google::protobuf::Any {
 			type_url: CHANNEL_OPEN_INIT_TYPE_URL.to_string(),
 			value,

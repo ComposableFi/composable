@@ -1,4 +1,4 @@
-use crate::{mock::*, Any, ConnectionParams};
+use crate::{mock::*, Any, ConnectionParams, MODULE_ID};
 use frame_support::{assert_ok, traits::Get};
 use ibc::{
 	core::{
@@ -35,7 +35,7 @@ fn initialize_connection() {
 		let msg = MsgCreateAnyClient::new(
 			AnyClientState::Mock(mock_client_state),
 			Some(AnyConsensusState::Mock(mock_cs_state)),
-			Signer::new("relayer"),
+			Signer::from_str(MODULE_ID).unwrap(),
 		)
 		.unwrap()
 		.encode_vec()
@@ -73,7 +73,7 @@ fn should_open_a_channel() {
 		let msg = MsgCreateAnyClient::new(
 			AnyClientState::Mock(mock_client_state),
 			Some(AnyConsensusState::Mock(mock_cs_state)),
-			Signer::new("relayer"),
+			Signer::from_str(MODULE_ID).unwrap(),
 		)
 		.unwrap()
 		.encode_vec()
@@ -123,7 +123,7 @@ fn should_send_ping_packet() {
 		let msg = MsgCreateAnyClient::new(
 			AnyClientState::Mock(mock_client_state),
 			Some(AnyConsensusState::Mock(mock_cs_state)),
-			Signer::new("relayer"),
+			Signer::from_str(MODULE_ID).unwrap(),
 		)
 		.unwrap()
 		.encode_vec()
@@ -170,7 +170,7 @@ fn should_send_ping_packet() {
 			)
 			.unwrap(),
 			version: ConnVersion::default(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str(MODULE_ID).unwrap(),
 		}
 		.encode_vec()
 		.unwrap();
@@ -208,7 +208,7 @@ fn should_send_ping_packet() {
 				Height::new(0, 1),
 			)
 			.unwrap(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str(MODULE_ID).unwrap(),
 		}
 		.encode_vec()
 		.unwrap();
