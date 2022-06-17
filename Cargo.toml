@@ -57,8 +57,8 @@ lto = true
 
 [patch.crates-io]
 # https://github.com/paritytech/parity-scale-codec/issues/348
-# parity-scale-codec = { git = "https://github.com/paritytech/parity-scale-codec", tag = "parity-scale-codec-3.1.2" }
-# parity-scale-codec-derive = { git = "https://github.com/paritytech/parity-scale-codec", tag = "parity-scale-codec-derive-3.1.2" }
+parity-scale-codec = { git = "https://github.com/paritytech/parity-scale-codec", tag = "parity-scale-codec-3.1.2" }
+parity-scale-codec-derive = { git = "https://github.com/paritytech/parity-scale-codec", tag = "parity-scale-codec-derive-3.1.2" }
 
 
 tendermint = { git = "https://github.com/composableFi/tendermint-rs", branch = "seun-0.23.7" }
