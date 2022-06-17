@@ -6,6 +6,7 @@ tenderly.yaml
 .vs/*
 .DS_Store
 .openzeppelin
+deployments/*
 deployments/goerli
 deployments/rinkeby
 deployments/mumbai
