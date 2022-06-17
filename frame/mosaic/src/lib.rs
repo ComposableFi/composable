@@ -58,6 +58,7 @@ pub mod pallet {
 	pub(crate) type AssetIdOf<T> = <<T as Config>::Assets as Inspect<AccountIdOf<T>>>::AssetId;
 	pub(crate) type NetworkIdOf<T> = <T as Config>::NetworkId;
 	pub(crate) type RemoteAssetIdOf<T> = <T as Config>::RemoteAssetId;
+	pub(crate) type RemoteAmmIdOf<T> = <T as Config>::RemoteAmmId;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -90,6 +91,9 @@ pub mod pallet {
 
 		/// A type representing a remote asset ID.
 		type RemoteAssetId: FullCodec + MaxEncodedLen + TypeInfo + Clone + Debug + PartialEq;
+
+		/// A type representing a remote AMM ID.
+		type RemoteAmmId: FullCodec + MaxEncodedLen + TypeInfo + Clone + Debug + PartialEq;
 
 		/// Origin capable of setting the relayer. Inteded to be RootOrHalfCouncil, as it is also
 		/// used as the origin capable of stopping attackers.
@@ -182,6 +186,21 @@ pub mod pallet {
 	#[pallet::getter(fn nonce)]
 	#[allow(clippy::disallowed_types)]
 	pub type Nonce<T: Config> = StorageValue<_, u128, ValueQuery>;
+
+	/// Remote AMM IDs that exist (NetworkId, AmmId).
+	/// Note that this is actually a set that does bookkeeping of valid AmmIds.
+	/// Therefore, the value type is (), because it is irrelevant for our use case.
+	#[pallet::storage]
+	#[pallet::getter(fn amm_ids)]
+	pub type RemoteAmmIds<T: Config> = StorageDoubleMap<
+		_,
+		Blake2_128Concat,
+		NetworkIdOf<T>,
+		Blake2_128Concat,
+		RemoteAmmIdOf<T>,
+		(),
+		OptionQuery,
+	>;
 
 	#[pallet::type_value]
 	pub fn TimeLockPeriodOnEmpty<T: Config>() -> BlockNumberOf<T> {
@@ -938,8 +957,9 @@ pub mod pallet {
 				let lock_at = current_block.saturating_add(lock_time);
 
 				IncomingTransactions::<T>::mutate(to.clone(), asset_id, |prev| match prev {
-					Some((balance, _)) =>
-						*prev = Some(((*balance).saturating_add(amount), lock_at)),
+					Some((balance, _)) => {
+						*prev = Some(((*balance).saturating_add(amount), lock_at))
+					},
 					_ => *prev = Some((amount, lock_at)),
 				});
 
