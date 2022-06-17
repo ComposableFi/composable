@@ -59,7 +59,7 @@ fn should_succeed_returning_correct_price() {
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
-	fn should_always_succeed(
+	fn should_succeed_always(
 		base_asset_reserves in any_sane_asset_amount(),
 		quote_asset_reserves in any_sane_asset_amount(),
 		peg_multiplier in 1..=10_u128.pow(6)

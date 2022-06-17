@@ -21,7 +21,7 @@ use sp_core::U256;
 use sp_runtime::traits::Zero;
 
 // ----------------------------------------------------------------------------------------------------
-//                                        Prop Compose & Helpers
+//                                               Helpers
 // ----------------------------------------------------------------------------------------------------
 
 fn default_vamm_config() -> VammConfig<Balance, Moment> {
@@ -425,7 +425,7 @@ proptest! {
 	}
 
 	#[test]
-	fn should_fail_trade_exptrapolates_maximum_supported_amount_base(
+	fn should_fail_if_trade_extrapolates_maximum_supported_amount_base(
 		mut vamm_state in get_vamm_state(Default::default()),
 		mut swap_config in get_swap_config(
 			TestSwapConfig {
@@ -456,7 +456,7 @@ proptest! {
 	}
 
 	#[test]
-	fn should_fail_trade_exptrapolates_maximum_supported_amount_quote(
+	fn should_fail_if_trade_extrapolates_maximum_supported_amount_quote(
 		mut vamm_state in get_vamm_state(Default::default()),
 		mut swap_config in get_swap_config(
 			TestSwapConfig {

@@ -8,10 +8,14 @@ use composable_traits::vamm::Vamm as VammTrait;
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 
+// -------------------------------------------------------------------------------------------------
+//                                             Proptests
+// -------------------------------------------------------------------------------------------------
+
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
-	fn move_price_succeeds(
+	fn should_succeed_moving_price(
 		mut vamm_state in any_vamm_state(),
 		mut move_price_config in any_move_price_config(),
 	) {
@@ -29,12 +33,9 @@ proptest! {
 			assert_ok!(TestPallet::move_price(&move_price_config));
 		})
 	}
-}
 
-proptest! {
-	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
-	fn move_price_fails_if_vamm_does_not_exists(
+	fn should_fail_if_vamm_does_not_exists(
 		mut vamm_state in any_vamm_state(),
 		move_price_config in any_move_price_config(),
 	) {
@@ -55,12 +56,9 @@ proptest! {
 			);
 		})
 	}
-}
 
-proptest! {
-	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
-	fn move_price_fails_if_vamm_is_closed(
+	fn should_fail_if_vamm_is_closed(
 		mut vamm_state in any_vamm_state(),
 		mut move_price_config in any_move_price_config(),
 		random_seconds in 1..=1_000_000_000_u64,
@@ -85,12 +83,9 @@ proptest! {
 			);
 		})
 	}
-}
 
-proptest! {
-	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
-	fn move_price_fails_if_base_asset_reserve_is_zero(
+	fn should_fail_if_base_asset_reserve_is_zero(
 		mut vamm_state in any_vamm_state(),
 		mut move_price_config in any_move_price_config(),
 	) {
@@ -114,12 +109,9 @@ proptest! {
 			);
 		})
 	}
-}
 
-proptest! {
-	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
-	fn move_price_fails_if_quote_asset_reserve_is_zero(
+	fn should_fail_if_quote_asset_reserve_is_zero(
 		mut vamm_state in any_vamm_state(),
 		mut move_price_config in any_move_price_config(),
 	) {
@@ -143,12 +135,9 @@ proptest! {
 			);
 		})
 	}
-}
 
-proptest! {
-	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
-	fn move_price_updates_runtime_correctly(
+	fn should_succeed_updating_runtime_correctly(
 		mut vamm_state in any_vamm_state(),
 		mut move_price_config in any_move_price_config(),
 	) {
@@ -173,12 +162,9 @@ proptest! {
 			);
 		})
 	}
-}
 
-proptest! {
-	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
-	fn move_price_deposits_event_correctly(
+	fn should_succeed_depositing_event_correctly(
 		mut vamm_state in any_vamm_state(),
 		mut move_price_config in any_move_price_config(),
 	) {
@@ -211,12 +197,9 @@ proptest! {
 			)
 		})
 	}
-}
 
-proptest! {
-	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
-	fn move_price_returned_correct_invariant(
+	fn should_succeed_returning_correct_invariant(
 		mut vamm_state in any_vamm_state(),
 		mut move_price_config in any_move_price_config(),
 	) {

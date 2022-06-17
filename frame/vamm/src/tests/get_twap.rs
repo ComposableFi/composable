@@ -7,13 +7,17 @@ use composable_traits::vamm::{AssetType, Vamm as VammTrait};
 use frame_support::{assert_noop, assert_ok, assert_storage_noop};
 use proptest::prelude::*;
 
+// -------------------------------------------------------------------------------------------------
+//                                             Proptests
+// -------------------------------------------------------------------------------------------------
+
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	// ----------------------------------------------------------------------------------------------------
-	//                              TWAP - Base Asset
+	//                                          TWAP - Base Asset
 	// ----------------------------------------------------------------------------------------------------
 	#[test]
-	fn get_twap_base_asset_succeeds(
+	fn should_succeed_not_modifying_storage_base(
 		vamm_state in get_vamm_state(Default::default())
 	) {
 		ExtBuilder {
@@ -26,7 +30,7 @@ proptest! {
 	}
 
 	#[test]
-	fn get_twap_base_asset_fails_if_vamm_does_not_exists(
+	fn should_fail_if_vamm_does_not_exists_base(
 		vamm_state in get_vamm_state(Default::default()),
 		vamm_id in 1..=VammId::MAX
 	) {
@@ -42,7 +46,7 @@ proptest! {
 	}
 
 	#[test]
-	fn get_twap_base_asset_fails_if_vamm_is_closed(
+	fn should_fail_if_vamm_is_closed_base(
 		mut vamm_state in get_vamm_state(Default::default()),
 		closed in (0..18446744073709551_u64).prop_map(Some),
 	) {
@@ -67,10 +71,10 @@ proptest! {
 	}
 
 	// ----------------------------------------------------------------------------------------------------
-	//                              TWAP - Quote Asset
+	//                                          TWAP - Quote Asset
 	// ----------------------------------------------------------------------------------------------------
 	#[test]
-	fn get_twap_quote_asset_succeeds(
+	fn should_succeed_not_modifying_storage_quote(
 		vamm_state in get_vamm_state(Default::default())
 	) {
 		ExtBuilder {
@@ -83,7 +87,7 @@ proptest! {
 	}
 
 	#[test]
-	fn get_twap_quote_asset_fails_if_vamm_does_not_exists(
+	fn should_fail_if_vamm_does_not_exists_quote(
 		vamm_state in get_vamm_state(Default::default()),
 		vamm_id in 1..=VammId::MAX
 	) {
@@ -99,7 +103,7 @@ proptest! {
 	}
 
 	#[test]
-	fn get_twap_quote_asset_fails_if_vamm_is_closed(
+	fn should_fail_if_vamm_is_closed_quote(
 		mut vamm_state in get_vamm_state(Default::default()),
 		closed in (0..18446744073709551_u64).prop_map(Some),
 	) {

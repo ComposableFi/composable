@@ -14,12 +14,16 @@ use proptest::prelude::*;
 use sp_runtime::FixedPointNumber;
 
 // ----------------------------------------------------------------------------------------------------
-//                                        Prop Compose & Helpers
+//                                               Helpers
 // ----------------------------------------------------------------------------------------------------
 
 fn one_up_to_(x: Balance) -> RangeInclusive<Balance> {
 	1..=x
 }
+
+// ----------------------------------------------------------------------------------------------------
+//                                           Prop Compose
+// ----------------------------------------------------------------------------------------------------
 
 prop_compose! {
 	fn limited_quote_peg() (
@@ -57,7 +61,7 @@ prop_compose! {
 // -------------------------------------------------------------------------------------------------
 
 #[test]
-fn create_vamm_fail_if_twap_period_is_less_than_minimum() {
+fn should_fail_if_twap_period_is_less_than_minimum() {
 	let vamm_state = VammConfig::<Balance, Timestamp> {
 		twap_period: (MINIMUM_TWAP_PERIOD - 1).into(),
 		peg_multiplier: 1,
@@ -75,7 +79,7 @@ fn create_vamm_fail_if_twap_period_is_less_than_minimum() {
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
-	fn create_vamm_correctly_returns_vamm_state(
+	fn should_succeed_correctly_returning_vamm_id(
 		vamm_config in any_valid_vammconfig(),
 	) {
 		ExtBuilder::default().build().execute_with(|| {
@@ -119,7 +123,7 @@ proptest! {
 	}
 
 	#[test]
-	fn create_vamm_succeeds(
+	fn should_succeed_creating_vamm(
 		vamm_config in any_valid_vammconfig(),
 	) {
 		ExtBuilder::default().build().execute_with(|| {
@@ -128,7 +132,7 @@ proptest! {
 	}
 
 	#[test]
-	fn create_vamm_zero_base_asset_reserves_error(
+	fn should_fail_if_base_asset_is_zero(
 		mut vamm_config in any_valid_vammconfig(),
 	) {
 		ExtBuilder::default().build().execute_with(|| {
@@ -140,7 +144,7 @@ proptest! {
 	}
 
 	#[test]
-	fn create_vamm_zero_quote_asset_reserves_error(
+	fn should_fail_if_quote_asset_is_zero(
 		mut vamm_config in any_valid_vammconfig(),
 	) {
 		ExtBuilder::default().build().execute_with(|| {
@@ -152,7 +156,7 @@ proptest! {
 	}
 
 	#[test]
-	fn create_vamm_zero_peg_multiplier_error(
+	fn should_fail_if_peg_multiplier_is_zero(
 		mut vamm_config in any_valid_vammconfig(),
 	) {
 		ExtBuilder::default().build().execute_with(|| {
@@ -164,7 +168,7 @@ proptest! {
 	}
 
 	#[test]
-	fn create_vamm_update_counter_succeeds(
+	fn should_succeed_updating_vamm_counter(
 		vamm_config in any_valid_vammconfig(),
 		loop_times in loop_times(),
 	) {
@@ -180,7 +184,7 @@ proptest! {
 	}
 
 	#[test]
-	fn create_vamm_emits_event_succeeds(
+	fn should_succeed_emitting_event(
 		vamm_config in any_valid_vammconfig(),
 	) {
 		ExtBuilder::default().build().execute_with(|| {
@@ -194,7 +198,7 @@ proptest! {
 	}
 
 	#[test]
-	fn create_vamm_updates_storage_map(
+	fn should_succeed_updating_runtime_storage(
 		vamm_config in any_valid_vammconfig(),
 	) {
 		ExtBuilder::default().build().execute_with(|| {
