@@ -648,7 +648,7 @@ dependencies = [
 [[package]]
 name = "beefy-generic-client"
 version = "0.1.0"
-source = "git+https://github.com/ComposableFi/beefy-client?branch=master#c8ef22e646f9eb33d66ac83e6fdad808b76aa4ed"
+source = "git+https://github.com/ComposableFi/beefy-client?branch=master#77dabc68b5aecfc366ea35b3f92a170a46104ed3"
 dependencies = [
  "beefy-primitives",
  "ckb-merkle-mountain-range",
@@ -16832,8 +16832,3 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22#
 name = "substrate-test-utils-test-crate"
 version = "0.1.0"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22#616d33ea23bab86cafffaf116fc607b6790fb4eb"
-
-[[patch.unused]]
-name = "parity-scale-codec-derive"
-version = "3.1.2"
-source = "git+https://github.com/paritytech/parity-scale-codec?tag=parity-scale-codec-derive-3.1.2#5aab13d31634beb3768d77c6e24f5f879d0ffc14"
