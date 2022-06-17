@@ -4526,7 +4526,7 @@ dependencies = [
  "subtle-encoding",
  "tendermint",
  "tendermint-light-client-verifier",
- "tendermint-proto 0.23.7 (git+https://github.com/composableFi/tendermint-rs?branch=seun-0.23.7)",
+ "tendermint-proto",
  "tendermint-testgen",
  "time 0.3.9",
  "tracing",
@@ -4554,7 +4554,7 @@ dependencies = [
  "prost 0.10.4",
  "prost-types 0.10.1",
  "serde",
- "tendermint-proto 0.23.7 (git+https://github.com/composableFi/tendermint-rs?branch=seun-0.23.7)",
+ "tendermint-proto",
 ]
 
 [[package]]
@@ -4576,7 +4576,7 @@ dependencies = [
  "sp-core",
  "sp-runtime",
  "sp-trie",
- "tendermint-proto 0.23.7 (git+https://github.com/composableFi/tendermint-rs?branch=seun-0.23.7)",
+ "tendermint-proto",
 ]
 
 [[package]]
@@ -6923,7 +6923,7 @@ dependencies = [
  "sp-core",
  "sp-io",
  "sp-runtime",
- "sp-std 4.0.0",
+ "sp-std",
 ]
 
 [[package]]
@@ -7765,7 +7765,7 @@ dependencies = [
  "sp-std",
  "sp-trie",
  "tendermint",
- "tendermint-proto 0.23.7 (git+https://github.com/composableFi/tendermint-rs?branch=seun-0.23.7)",
+ "tendermint-proto",
 ]
 
 [[package]]
@@ -7787,7 +7787,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
- "tendermint-proto 0.23.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "tendermint-proto",
 ]
 
 [[package]]
@@ -16560,6 +16560,11 @@ dependencies = [
 ]
 
 [[patch.unused]]
+name = "parity-scale-codec-derive"
+version = "3.1.2"
+source = "git+https://github.com/paritytech/parity-scale-codec?tag=parity-scale-codec-derive-3.1.2#5aab13d31634beb3768d77c6e24f5f879d0ffc14"
+
+[[patch.unused]]
 name = "chain-spec-builder"
 version = "2.0.0"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22#616d33ea23bab86cafffaf116fc607b6790fb4eb"
@@ -16843,8 +16848,3 @@ source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22#
 name = "substrate-test-utils-test-crate"
 version = "0.1.0"
 source = "git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22#616d33ea23bab86cafffaf116fc607b6790fb4eb"
-
-[[patch.unused]]
-name = "parity-scale-codec-derive"
-version = "3.1.2"
-source = "git+https://github.com/paritytech/parity-scale-codec?tag=parity-scale-codec-derive-3.1.2#5aab13d31634beb3768d77c6e24f5f879d0ffc14"
