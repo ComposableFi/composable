@@ -34,7 +34,7 @@ jobs:
       - run: |
           npm install
           yarn test
-        working-directory: mosaic/v2
+        working-directory: ./mosaic/v2
       - if: always()
         uses: ouzi-dev/commit-status-updater@v1.1.0
         with:
