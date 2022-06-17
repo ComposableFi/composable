@@ -86,7 +86,26 @@ export const YourBondTable: React.FC = () => {
                 sx={{ cursor: "pointer" }}
               >
                 <TableCell align="left">
-                  <BaseAsset label={bond.asset.symbol} icon={bond.asset.icon} />
+                  {"base" in bond.asset ? (
+                    <PairAsset
+                      assets={[
+                        {
+                          icon: bond.asset.base.icon,
+                          label: bond.asset.base.symbol,
+                        },
+                        {
+                          icon: bond.asset.quote.icon,
+                          label: bond.asset.quote.symbol,
+                        },
+                      ]}
+                      separator="/"
+                    />
+                  ) : (
+                    <BaseAsset
+                      label={bond.asset.symbol}
+                      icon={bond.asset.icon}
+                    />
+                  )}
                 </TableCell>
                 <TableCell align="left">
                   <Typography variant="body2">

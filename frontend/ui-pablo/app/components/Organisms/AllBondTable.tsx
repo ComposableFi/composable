@@ -11,9 +11,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import { BaseAsset, PairAsset } from "../Atoms";
-import { useAppDispatch } from "@/hooks/store";
-import { addNextDataBondPools } from "@/stores/defi/polkadot";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { InfoOutlined, KeyboardArrowDown } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
 import { useRouter } from "next/router";
@@ -80,7 +78,23 @@ export const AllBondTable: React.FC = () => {
               sx={{ cursor: "pointer" }}
             >
               <TableCell align="left">
-                {<BaseAsset label={bond.asset.symbol} icon={bond.asset.icon} />}
+                {"base" in bond.asset ? (
+                  <PairAsset
+                    assets={[
+                      {
+                        icon: bond.asset.base.icon,
+                        label: bond.asset.base.symbol,
+                      },
+                      {
+                        icon: bond.asset.quote.icon,
+                        label: bond.asset.quote.symbol,
+                      },
+                    ]}
+                    separator="/"
+                  />
+                ) : (
+                  <BaseAsset label={bond.asset.symbol} icon={bond.asset.icon} />
+                )}
               </TableCell>
               <TableCell align="left">
                 <Typography variant="body2">
