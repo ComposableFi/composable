@@ -659,14 +659,13 @@ pub mod pallet {
 			}
 		}
 
-		/// Updates the time weighted average price of the desired asset.
+		/// Updates the time weighted average price of both assets.
 		///
 		/// # Overview
 		/// In order for the caller to update the time weighted average price of
-		/// the desired asset, it has to request it to the Vamm Pallet. The
-		/// pallet will perform the needed sanity checks and update the runtime
-		/// storage with the desired twap value, returning it in case of
-		/// success.
+		/// the assets, it has to request it to the Vamm Pallet. The pallet will
+		/// perform the needed sanity checks and update the runtime storage with
+		/// the desired twap values, returning both it in case of success.
 		///
 		/// This function can also compute the new twap value using an
 		/// Exponential Moving Average algorithm rather than blindly seting it
@@ -690,11 +689,14 @@ pub mod pallet {
 		///
 		/// ## Parameters
 		///  - [`vamm_id`](Config::VammId): The ID of the desired vamm to update.
-		///  - [`asset_type`](composable_traits::vamm::AssetType): The desired
-		///  asset type to update.
-		///  - `new_twap`: The optional desired value for the new asset's twap.
-		///  If the value is `None`, than the Vamm will update the twap using an
-		///  exponential moving average algorithm.
+		///  - [`base_twap`](VammState::base_asset_twap): The optional desired
+		///  value for the base asset's twap.  If the value is `None`, than the
+		///  Vamm will update the twap using an exponential moving average
+		///  algorithm.
+		///  - [`quote_twap`](VammState::quote_asset_twap): The optional desired
+		///  value for the base asset's twap.  If the value is `None`, than the
+		///  Vamm will update the twap using an exponential moving average
+		///  algorithm.
 		///
 		/// ## Returns
 		/// A tuple with the new twap value for both base and quote asset.
@@ -702,7 +704,8 @@ pub mod pallet {
 		/// ## Assumptions or Requirements
 		/// * The requested [`VammId`](Config::VammId) must exists.
 		/// * The requested Vamm must be open.
-		/// * The `new_twap` value can't be zero.
+		/// * The `base_twap` value can't be zero.
+		/// * The `quote_twap` value can't be zero.
 		///
 		/// For more information about how to know if a Vamm is open or not,
 		/// please have a look in the variable [`closed`](VammState::closed).
