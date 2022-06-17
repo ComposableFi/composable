@@ -999,7 +999,7 @@ pub mod pallet {
 			quote_asset_amount: Self::Balance,
 			base_asset_amount_limit: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			let mut market = Self::get_market(&market_id).ok_or(Error::<T>::MarketIdNotFound)?;
+			let mut market = Self::try_get_market(market_id)?;
 			let mut quote_abs_amount_decimal = T::Decimal::from_balance(quote_asset_amount)?;
 			ensure!(
 				quote_abs_amount_decimal >= market.minimum_trade_size,
@@ -1117,7 +1117,7 @@ pub mod pallet {
 			market_id: &Self::MarketId,
 		) -> Result<Self::Balance, DispatchError> {
 			let mut collateral = Self::get_collateral(account_id).unwrap_or_else(Zero::zero);
-			let mut market = Self::get_market(market_id).ok_or(Error::<T>::MarketIdNotFound)?;
+			let mut market = Self::try_get_market(market_id)?;
 			let mut positions = Self::get_positions(account_id);
 			let (position, position_index) = Self::try_get_position(&mut positions, market_id)?;
 
