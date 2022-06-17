@@ -57,6 +57,7 @@ std = [
     "orml-tokens/std",
     "orml-traits/std",
     "pallet-balances/std",
+    "pallet-vault/std",
     "primitives/std",
     "scale-info/std",
     "serde/std",
