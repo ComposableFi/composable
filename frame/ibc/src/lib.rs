@@ -53,6 +53,7 @@ mod port;
 pub mod routing;
 
 pub const IBC_DIGEST_ID: [u8; 4] = *b"/IBC";
+pub const MODULE_ID: &str = "pallet_ibc";
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct Any {
@@ -451,7 +452,7 @@ pub mod pallet {
 				counterparty,
 				version: Some(version),
 				delay_period,
-				signer: Signer::from_str("pallet_ibc").map_err(|_| Error::<T>::DecodingError)?,
+				signer: Signer::from_str(MODULE_ID).map_err(|_| Error::<T>::DecodingError)?,
 			}
 			.encode_vec()
 			.map_err(|_| Error::<T>::ProcessingError)?;

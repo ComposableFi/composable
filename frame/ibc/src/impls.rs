@@ -676,8 +676,7 @@ where
 		let value = MsgChannelOpenInit {
 			port_id,
 			channel: channel_end,
-			signer: Signer::from_str("pallet_ibc")
-				.map_err(|_| IbcHandlerError::ChannelInitError)?,
+			signer: Signer::from_str(MODULE_ID).map_err(|_| IbcHandlerError::ChannelInitError)?,
 		}
 		.encode_vec()
 		.map_err(|_| IbcHandlerError::ChannelInitError)?;

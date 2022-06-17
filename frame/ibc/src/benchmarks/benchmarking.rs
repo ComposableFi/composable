@@ -73,7 +73,7 @@ benchmarks! {
 		let msg = MsgCreateAnyClient::new(
 			AnyClientState::Tendermint(mock_client_state),
 			Some(AnyConsensusState::Tendermint(mock_cs_state)),
-			Signer::from_str("relayer").unwrap(),
+			Signer::from_str(MODULE_ID).unwrap(),
 		)
 		.unwrap()
 		.encode_vec()
@@ -136,7 +136,7 @@ benchmarks! {
 			counterparty,
 			version: None,
 			delay_period,
-			signer: Signer::from_str("relayer").unwrap()
+			signer: Signer::from_str(MODULE_ID).unwrap()
 		}.encode_vec().unwrap();
 
 		let msg = Any { type_url: conn_open_init::TYPE_URL.as_bytes().to_vec(), value };
@@ -307,7 +307,7 @@ benchmarks! {
 		let value = MsgChannelOpenInit {
 			port_id: port_id.clone(),
 			channel: channel_end,
-			signer: Signer::from_str("relayer").unwrap()
+			signer: Signer::from_str(MODULE_ID).unwrap()
 		}.encode_vec().unwrap();
 
 		let caller: T::AccountId = whitelisted_caller();
@@ -361,7 +361,7 @@ benchmarks! {
 		let value = MsgChannelOpenInit {
 			port_id,
 			channel: channel_end,
-			signer: Signer::from_str("relayer").unwrap()
+			signer: Signer::from_str(MODULE_ID).unwrap()
 		}.encode_vec().unwrap();
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: CHAN_OPEN_TYPE_URL.to_string(), value };
@@ -424,7 +424,7 @@ benchmarks! {
 		let value = MsgChannelOpenInit {
 			port_id,
 			channel: channel_end,
-			signer: Signer::from_str("relayer").unwrap()
+			signer: Signer::from_str(MODULE_ID).unwrap()
 		}.encode_vec().unwrap();
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: CHAN_OPEN_TYPE_URL.to_string(), value };
