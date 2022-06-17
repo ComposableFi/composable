@@ -23,13 +23,15 @@ jobs:
         chmod +x target/release/composable
         ./target/release/composable --version
 
-    - name: Build a Polkadot relay chain
+    - name: Download Polkadot relay chain
       run: |
         cd scripts/polkadot-launch
-        git clone -b mmr-polkadot-v0.9.22 https://github.com/composableFi/polkadot
+        mkdir -p polkadot/target/release
         cd polkadot
-        cargo build --release
+        curl https://github.com/ComposableFi/polkadot/releases/download/v0.9.22/polkadot -Lo ./target/release/polkadot
+        chmod +x target/release/polkadot
         ./target/release/polkadot --version
+
 
     - name: Run polkadot-launch
       timeout-minutes: 5
@@ -46,35 +48,9 @@ jobs:
 
         yarn
         yarn composable > "${LOG_FILE}" 2>&1 &
-        # yarn composable
 
         # wait for polka-launch
         sleep 240
-#        echo "wait for polka-launch"
-#        while true; do
-#          sleep 1
-#          echo "====="
-#          echo "====="
-#          echo "====="
-#          cat "${LOG_FILE}"
-#          stdout=$(tail -n 1 "${LOG_FILE}" | grep "POLKADOT LAUNCH COMPLETE")
-#          if [ -z "$stdout" ]; then
-#            true
-#          else
-#            break
-#          fi
-#        done
-#        echo "wait for polka-launch"
-#
-#        while IFS="" read -r string; do
-#          echo $string
-#          matched_string=$(echo "$string" | grep "POLKADOT LAUNCH COMPLETE")
-#          if [ -z "${matched_string}" ]; then
-#            true
-#          else
-#            break
-#          fi
-#        done < <(tail -f "${LOG_FILE}")
 
     - name: Run Test
       env:
