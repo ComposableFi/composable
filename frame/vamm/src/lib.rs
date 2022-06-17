@@ -798,7 +798,8 @@ pub mod pallet {
 			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
 
 			// Perform twap update before swapping assets.
-			Self::update_vamm_twap(config.vamm_id, &mut vamm_state, &None);
+			// Ignore errors from this function while doing swaps.
+			let _ = Self::update_vamm_twap(config.vamm_id, &mut vamm_state, &None);
 
 			// Perform required sanity checks.
 			Self::swap_sanity_check(config, &vamm_state)?;
