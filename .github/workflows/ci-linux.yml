@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
   push:
     branches:
-       # ISSUE: this job build docker out of branch and has access to some tokens
-       # ISSUE: it may be risk to have docker to be hacked
+       # WARNING: This job builds a docker image using an out of branch file, and thus may have access to some 
+       # tokens
       - ci-linux
 
 env:
