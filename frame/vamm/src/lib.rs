@@ -140,7 +140,10 @@ pub mod pallet {
 	use sp_arithmetic::traits::Unsigned;
 	use sp_core::U256;
 	use sp_runtime::{
-		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Zero},
+		traits::{
+			AtLeast32BitUnsigned, CheckedAdd, CheckedDiv, CheckedMul, CheckedSub, One, Saturating,
+			Zero,
+		},
 		ArithmeticError, FixedPointNumber,
 	};
 	use std::cmp::Ordering;
@@ -593,6 +596,9 @@ pub mod pallet {
 		) -> Result<DecimalOf<T>, DispatchError> {
 			// Get Vamm state.
 			let vamm_state = Self::get_vamm_state(&vamm_id)?;
+
+			// Vamm must be open
+			ensure!(!Self::is_vamm_closed(&vamm_state, &None), Error::<T>::VammIsClosed);
 
 			Self::do_get_price(&vamm_state, asset_type)
 		}
