@@ -32,7 +32,7 @@ ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "c7c73ab423445f501
 ] }
 pallet-ibc = { path = "../ibc" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18" }
-tendermint-proto = { version = "0.23.6" }
+tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", branch = "seun-0.23.7" }
 
 [features]
 default = ['std']
