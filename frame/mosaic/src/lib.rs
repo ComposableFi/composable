@@ -97,6 +97,7 @@ pub mod pallet {
 
 		/// Origin capable of setting the relayer. Inteded to be RootOrHalfCouncil, as it is also
 		/// used as the origin capable of stopping attackers.
+		/// Also the origin capable of setting Remote AMM IDs
 		type ControlOrigin: EnsureOrigin<Self::Origin>;
 
 		/// Weight implementation used for extrinsics.
@@ -364,6 +365,8 @@ pub mod pallet {
 		NoOutgoingTx,
 		AmountMismatch,
 		AssetNotMapped,
+		RemoteAmmIdNotFound,
+		RemoteAmmIdAlreadyExists,
 	}
 
 	#[pallet::call]
@@ -731,6 +734,44 @@ pub mod pallet {
 					});
 				},
 			}
+			Ok(().into())
+		}
+
+		// TODO: Set proper pallet weight
+		#[pallet::weight(1_0000)]
+		pub fn add_remote_amm_id(
+			origin: OriginFor<T>,
+			network_id: NetworkIdOf<T>,
+			amm_id: RemoteAmmIdOf<T>,
+		) -> DispatchResultWithPostInfo {
+			T::ControlOrigin::ensure_origin(origin)?;
+
+			ensure!(
+				!RemoteAmmIds::<T>::contains_key(&network_id, &amm_id),
+				Error::<T>::RemoteAmmIdAlreadyExists,
+			);
+
+			RemoteAmmIds::<T>::insert(network_id, amm_id, ());
+
+			Ok(().into())
+		}
+
+		// TODO: Set proper pallet weight
+		#[pallet::weight(1_0000)]
+		pub fn remove_remote_amm_id(
+			origin: OriginFor<T>,
+			network_id: NetworkIdOf<T>,
+			amm_id: RemoteAmmIdOf<T>,
+		) -> DispatchResultWithPostInfo {
+			T::ControlOrigin::ensure_origin(origin)?;
+
+			ensure!(
+				RemoteAmmIds::<T>::contains_key(&network_id, &amm_id),
+				Error::<T>::RemoteAmmIdNotFound
+			);
+
+			RemoteAmmIds::<T>::remove(network_id, amm_id);
+
 			Ok(().into())
 		}
 	}
