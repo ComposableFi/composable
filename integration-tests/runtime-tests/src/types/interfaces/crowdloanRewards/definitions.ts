@@ -178,6 +178,6 @@ export default {
         miscFrozen: "u128",
         feeFrozen: "u128"
       }
-    },
+    }
   }
 };
