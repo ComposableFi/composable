@@ -13,6 +13,7 @@ import {
   alpha,
 } from "@mui/material";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
+import { ISupplySummary } from "../../../store/bonds/bonds.types";
 
 const containerBoxProps = (theme: Theme) => ({
   display: "flex",
@@ -44,15 +45,15 @@ const itemTitleProps: TypographyProps = {
 
 export type SupplySummaryProps = {
   bond: BondDetails;
+  summary: ISupplySummary;
 } & BoxProps;
 
 export const SupplySummary: React.FC<SupplySummaryProps> = ({
   bond,
+  summary,
   ...boxProps
 }) => {
   const theme = useTheme();
-  const token1 = getToken(bond.tokenId1);
-  const token2 = getToken(bond.tokenId2);
   const pablo = getToken("pablo");
   const ethereum = getNetwork(1);
 
@@ -66,13 +67,31 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
       >
         <Box {...itemBoxProps}>
           <Typography {...itemTitleProps}>Supply</Typography>
-          <PairAsset
-            assets={[{ icon: token1.icon }, { icon: token2.icon }]}
-            iconOnly
-            iconSize={36}
-          />
+          {"base" in summary.principalAsset ? (
+            <PairAsset
+              assets={[
+                {
+                  icon: summary.principalAsset.base.icon,
+                  label: summary.principalAsset.base.symbol,
+                },
+                {
+                  icon: summary.principalAsset.quote.icon,
+                  label: summary.principalAsset.quote.symbol,
+                },
+              ]}
+              iconOnly
+              iconSize={36}
+            />
+          ) : (
+            <BaseAsset
+              label={summary.principalAsset.symbol}
+              icon={summary.principalAsset.icon}
+            />
+          )}
           <Typography variant="body1">
-            {`LP ${token1.symbol}-${token2.symbol}`}
+            {"base" in summary.principalAsset
+              ? `LP ${summary.principalAsset.base.symbol}-${summary.principalAsset.quote.symbol}`
+              : summary.principalAsset.symbol}
           </Typography>
         </Box>
         <ArrowRightAlt sx={{ color: "text.secondary" }} />
@@ -82,7 +101,7 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
           <Typography variant="body1">
             {`${pablo.symbol} - `}
             <Typography variant="body1" fontWeight="600" component="span">
-              {`${bond.roi}%`}
+              {`${summary.roi}%`}
             </Typography>
           </Typography>
         </Box>
@@ -91,22 +110,13 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
       <Box {...itemBoxProps}>
         <Typography {...itemTitleProps}>Vesting period</Typography>
         <TimerOutlinedIcon sx={{ width: 36, height: 36 }} />
-        <Typography variant="body1">{`${bond.vesting_term} days`}</Typography>
+        <Typography variant="body1">{summary.vestingPeriod}</Typography>
       </Box>
 
       <Box {...itemBoxProps}>
-        <Typography {...itemTitleProps}>
-          Discount Price / Market Price
-        </Typography>
+        <Typography {...itemTitleProps}>Market Price</Typography>
         <Box display="flex" justifyContent="center" alignItems="center">
-          <BaseAsset
-            icon={ethereum.logo}
-            label={ethereum.name}
-            LabelProps={{
-              variant: "h6",
-            }}
-            iconSize={36}
-          />
+          {`$${summary.marketPriceInUSD}`}
         </Box>
         <Typography variant="body1">{pablo.symbol}</Typography>
       </Box>
