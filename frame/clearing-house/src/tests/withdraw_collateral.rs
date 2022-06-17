@@ -161,7 +161,7 @@ fn can_withdraw_unrealized_funding_payments_by_settling_them() {
 #[test]
 fn cannot_withdraw_funds_reserved_for_market_fee_pool() {
 	let config = MarketConfig { taker_fee: 100 /* 1% */, ..Default::default() };
-	let collateral = as_balance(101);
+	let collateral = as_balance(102);
 
 	with_trading_context(config, collateral, |market_id| {
 		// Alice opens a position and pays 1 as a fee
@@ -174,10 +174,10 @@ fn cannot_withdraw_funds_reserved_for_market_fee_pool() {
 			as_balance(10),
 		));
 
-		// Alice closes her position
+		// Alice closes her position and pays 1 as a fee again
 		assert_ok!(<TestPallet as ClearingHouse>::close_position(&ALICE, &market_id));
 
-		// Alice should have 100 as collateral and the Fee Pool should have the remaining 1
+		// Alice should have 100 as collateral and the Fee Pool should have the remaining 2
 		assert_err!(
 			<TestPallet as ClearingHouse>::withdraw_collateral(&ALICE, collateral),
 			Error::<Runtime>::InsufficientCollateral
@@ -186,7 +186,7 @@ fn cannot_withdraw_funds_reserved_for_market_fee_pool() {
 		assert_ok!(<TestPallet as ClearingHouse>::withdraw_collateral(&ALICE, as_balance(100)));
 		assert_eq!(
 			AssetsPallet::balance(USDC, &TestPallet::get_fee_pool_account(market_id)),
-			as_balance(1)
+			as_balance(2)
 		);
 	});
 }
