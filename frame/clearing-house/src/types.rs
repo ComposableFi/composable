@@ -188,6 +188,7 @@ impl<T: Config> Market<T> {
 			last_oracle_ts: T::UnixTime::now().as_secs(),
 		})
 	}
+
 	/// Returns the current funding rate for positions with the given direction.
 	pub fn cum_funding_rate(&self, direction: Direction) -> T::Decimal {
 		match direction {
