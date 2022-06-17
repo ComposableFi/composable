@@ -30,4 +30,4 @@ sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "pol
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
-tendermint-proto = {git = "https://github.com/composableFi/tendermint-rs", branch = "seun-0.23.7" }
+tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", branch = "seun-0.23.7" }
