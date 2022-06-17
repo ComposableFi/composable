@@ -942,11 +942,69 @@ pub mod pallet {
 			Ok(())
 		}
 
+		#[transactional]
 		fn withdraw_collateral(
 			account_id: &Self::AccountId,
 			amount: Self::Balance,
 		) -> Result<(), DispatchError> {
-			todo!()
+			ensure!(!amount.is_zero(), Error::<T>::ZeroWithdrawalAmount);
+
+			let mut collateral = Self::get_collateral(account_id).unwrap_or_else(Zero::zero);
+			// Settle funding payments and outstanding profits for all positions in the account
+			let mut positions = Self::get_positions(&account_id);
+			for position in positions.iter_mut() {
+				Self::settle_funding_and_outstanding_profits(
+					account_id,
+					position,
+					&mut collateral,
+				)?;
+			}
+
+			// Ensure the user is entitled to enough collateral to withdraw the requested amount
+			ensure!(amount <= collateral, Error::<T>::InsufficientCollateral);
+
+			// Actual withdrawal amount may be lower due to collateral and insurance account
+			// balances
+			let asset_id = Self::get_collateral_asset_id()?;
+			let collateral_account = Self::get_collateral_account();
+			let insurance_account = Self::get_insurance_account();
+			let (collateral_amount, insurance_amount) = Self::get_withdrawal_amounts(
+				asset_id,
+				&collateral_account,
+				&insurance_account,
+				amount,
+			);
+			collateral.try_sub_mut(&collateral_amount.try_add(&insurance_amount)?)?;
+
+			ensure!(
+				Self::meets_initial_margin_ratio(&positions, collateral)?,
+				Error::<T>::InsufficientCollateral
+			);
+
+			if !collateral_amount.is_zero() {
+				T::Assets::transfer(
+					asset_id,
+					&collateral_account,
+					account_id,
+					collateral_amount,
+					false,
+				)?;
+			}
+			if !insurance_amount.is_zero() {
+				T::Assets::transfer(
+					asset_id,
+					&insurance_account,
+					account_id,
+					insurance_amount,
+					false,
+				)?;
+			}
+
+			// Update Runtime Storage
+			Collateral::<T>::insert(account_id, collateral);
+			Positions::<T>::insert(account_id, positions);
+
+			Ok(())
 		}
 
 		fn create_market(config: Self::MarketConfig) -> Result<Self::MarketId, DispatchError> {
@@ -1567,6 +1625,35 @@ pub mod pallet {
 			Ok(())
 		}
 
+		fn settle_funding_and_outstanding_profits(
+			account_id: &T::AccountId,
+			position: &mut Position<T>,
+			collateral: &mut T::Balance,
+		) -> Result<(), DispatchError> {
+			let mut market = Self::try_get_market(&position.market_id)?;
+
+			if let Some(direction) = position.direction() {
+				let payment = <Self as Instruments>::unrealized_funding(&market, position)?;
+				*collateral = Self::updated_balance(collateral, &payment)?;
+				position.last_cum_funding = market.cum_funding_rate(direction);
+			}
+
+			if !market.available_gains.is_zero() {
+				let mut outstanding_profits =
+					Self::outstanding_gains(account_id, &position.market_id)
+						.unwrap_or_else(Zero::zero);
+				let realizable_profits = cmp::min(outstanding_profits, market.available_gains);
+				collateral.try_add_mut(&realizable_profits)?;
+				outstanding_profits.try_sub_mut(&realizable_profits)?;
+				market.available_gains.try_sub_mut(&realizable_profits)?;
+				OutstandingGains::<T>::insert(account_id, &position.market_id, outstanding_profits);
+			}
+
+			Markets::<T>::insert(&position.market_id, market);
+
+			Ok(())
+		}
+
 		fn fee_for_trade(
 			market: &Market<T>,
 			quote_abs_amount: &T::Decimal,
@@ -1982,6 +2069,27 @@ pub mod pallet {
 				*quote_abs_amount = *base_abs_value;
 			}
 			Ok(())
+		}
+
+		fn get_withdrawal_amounts(
+			asset_id: AssetIdOf<T>,
+			collateral_account: &T::AccountId,
+			insurance_account: &T::AccountId,
+			amount: T::Balance,
+		) -> (T::Balance, T::Balance) {
+			let collateral_balance = T::Assets::balance(asset_id, collateral_account);
+			let insurance_balance = T::Assets::balance(asset_id, insurance_account);
+			if amount <= collateral_balance {
+				(amount, T::Balance::zero())
+			} else {
+				(
+					collateral_balance,
+					cmp::min(
+						amount - collateral_balance, /* Safe since amount > collateral_balance */
+						insurance_balance,
+					),
+				)
+			}
 		}
 
 		fn updated_balance(
