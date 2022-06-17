@@ -153,7 +153,11 @@ impl<AssetId: PartialEq> CurrencyPair<AssetId> {
 	/// let _ = slice[0];
 	/// ```
 	pub fn as_slice(&self) -> &[AssetId] {
-		unsafe { sp_std::slice::from_raw_parts(self as *const Self as *const AssetId, 2) }
+		#[allow(trivial_casts)]
+		unsafe {
+			// used often and we avoid clone here
+			sp_std::slice::from_raw_parts(self as *const Self as *const AssetId, 2)
+		}
 	}
 
 	pub fn reverse(&mut self) {

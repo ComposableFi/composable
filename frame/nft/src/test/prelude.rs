@@ -1,8 +1,9 @@
 use codec::{Decode, Encode};
 use composable_tests_helpers::test::helper::assert_last_event;
-use composable_traits::financial_nft::{FinancialNftProvider, NftClass};
+pub use composable_traits::nft::NftClass;
+use composable_traits::nft::{Key, ReferenceNft, Value};
 use frame_support::{
-	assert_ok,
+	assert_ok, bounded_btree_map,
 	traits::tokens::nonfungibles::{Inspect, Mutate},
 };
 use std::{
@@ -24,8 +25,11 @@ use crate::{
 ///
 /// NOTE: Only call once per test!
 pub(crate) fn mint_nft_and_assert() -> NftInstanceId {
+	let key = Key::from_vec(vec![1_u8]).unwrap();
+	let value = Value::from_vec(vec![1_u8]).unwrap();
+	let mut fix_me = bounded_btree_map!(key => value);
 	let created_nft_id =
-		Pallet::<MockRuntime>::mint_nft(&NftClass::STAKING, &ALICE, &1_u32, &1_u32).unwrap();
+		Pallet::<MockRuntime>::mint_new_into(&NftClass::STAKING, &ALICE, fix_me).unwrap();
 
 	assert_last_event::<MockRuntime>(Event::Nft(NftEvent::NftCreated {
 		class_id: NftClass::STAKING,
