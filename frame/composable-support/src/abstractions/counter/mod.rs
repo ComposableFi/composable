@@ -15,15 +15,16 @@ use frame_support::{
 #[cfg(test)]
 mod test_storage_counter;
 
-/// Defines what a nonce should start at and how it should be incremented.
+/// Defines what a counter should start at and how it should be incremented/ decremented.
 ///
 /// # Example
 ///
-/// A nonce that starts at zero, incrementing using [`SafeAdd`]:
+/// A counter that starts at zero, incrementing using [`SafeNext`] and decrementing using
+/// [`SafePrevious`]:
 ///
 /// ```rust,ignore
 /// #[pallet::storage]
-/// pub type SomeNonce<T: Config> = StorageValue<
+/// pub type SomeCounter<T: Config> = StorageValue<
 ///     _,
 ///     T::Something,
 ///     ValueQuery,
@@ -39,8 +40,7 @@ mod test_storage_counter;
 ///     pub fn extrinsic(
 ///         origin: OriginFor<T>,
 ///     ) -> DispatchResultWithPostInfo {
-///         // notice the double ?; since SafeNext is fallible, increment() is also fallible
-///         let nonce_next = SomeNonce::increment()??;
+///         let nonce_next = SomeNonce::increment()?;
 ///     }
 /// }
 /// ```
