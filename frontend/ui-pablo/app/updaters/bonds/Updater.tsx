@@ -1,76 +1,76 @@
-import BigNumber from "bignumber.js";
 import useStore from "../../store/useStore";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { decodeBondOffer } from "./decodeBondOffer";
-import { DEFAULT_DECIMALS, DEFAULT_NETWORK_ID } from "../constants";
+import { DEFAULT_NETWORK_ID } from "../constants";
 import { decodeVestingSchedule } from "./decodeVestingSchedule";
-import { stringToBigNumber } from "../../utils/stringToBigNumber";
-import { fetchApolloPriceByAssetId } from "../../utils/defi/apollo";
+import { getAppoloPriceInUSD } from "../../utils/defi/apollo";
+import { fetchBonds } from "./fetchBonds";
+import { getVestingSchedule } from "./getVestingSchedule";
+import { getLPTokenPair } from "../pools/utils";
+import { CURRENCY_ID_TO_TOKEN_ID_MAP } from "../../utils/constants";
+import { TOKENS } from "../../defi/Tokens";
+import { getCurrentBlock } from "../../utils/getCurrentBlock";
+import { getCurrentTime } from "../../utils/getCurrentTime";
 
 /**
  * Updates zustand store with all bonds from bondedFinance pallet
  * @returns null
  */
 const Updater = () => {
-  const { addBond, addActiveBond, reset } = useStore();
+  const { pools, addBond, addActiveBond, reset } = useStore();
   const { parachainApi } = useParachainApi("picasso");
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
 
+  const constantProductPool = useMemo(
+    () => [
+      ...pools.constantProductPools.verified,
+      ...pools.constantProductPools.unVerified,
+    ],
+    [pools]
+  );
+
   useEffect(() => {
     if (parachainApi && selectedAccount) {
-      parachainApi.query.bondedFinance
-        ?.bondOfferCount()
-        .then(async (offerCount) => {
-          const _offerCount = new BigNumber(offerCount.toString());
-
-          let offerPromises = [];
-          for (let i = 1; i <= _offerCount.toNumber(); i++) {
-            offerPromises.push(parachainApi.query.bondedFinance.bondOffers(i));
-          }
-
-          const bonds = await Promise.all(offerPromises);
-
-          bonds.map(async (bond, index) => {
-            const [beneficiary, bondOffer] = bond.toHuman() as any;
-            const principalCurrencyId = stringToBigNumber(
-              bondOffer.asset
-            ).toNumber();
-            const rewardCurrencyId = stringToBigNumber(
-              bondOffer.reward.asset
-            ).toNumber();
-            const [vestingSchedule] = (await (
-              await parachainApi.query.vesting.vestingSchedules(
-                selectedAccount.address,
-                principalCurrencyId
-              )
-            ).toHuman()) as any;
-            const principalApolloPrice = await fetchApolloPriceByAssetId(
+      fetchBonds(parachainApi).then((bonds) => {
+        bonds.map(async (bond, index) => {
+          try {
+            const [beneficiary, bondOffer] = bond.unwrap();
+            const principalCurrencyId = bondOffer.asset.toString();
+            const principalAppoloPriceInUSD = await getAppoloPriceInUSD(
               parachainApi,
               principalCurrencyId
             );
-            const rewardApolloPrice = await fetchApolloPriceByAssetId(
+            const rewardAppoloPriceInUSD = await getAppoloPriceInUSD(
               parachainApi,
-              rewardCurrencyId
+              bondOffer.reward.amount.toString()
             );
-            const principalAppoloPriceInUSD =
-              stringToBigNumber(principalApolloPrice).div(DEFAULT_DECIMALS);
-            const rewardAppoloPriceInUSD =
-              stringToBigNumber(rewardApolloPrice).div(DEFAULT_DECIMALS);
+            const vestingSchedule = await getVestingSchedule(
+              parachainApi,
+              selectedAccount.address,
+              principalCurrencyId
+            );
+            const lpTokenPair = getLPTokenPair(
+              constantProductPool,
+              principalCurrencyId
+            );
+            const principalAsset = lpTokenPair
+              ? {
+                  base: TOKENS[CURRENCY_ID_TO_TOKEN_ID_MAP[lpTokenPair.base]],
+                  quote: TOKENS[CURRENCY_ID_TO_TOKEN_ID_MAP[lpTokenPair.quote]],
+                }
+              : TOKENS[CURRENCY_ID_TO_TOKEN_ID_MAP[bondOffer.asset.toString()]];
             const decodedBondOffer = decodeBondOffer(
               index + 1,
               beneficiary,
-              bondOffer
+              bondOffer,
+              principalAsset
             );
             const decodedVestingSchedule = vestingSchedule
               ? decodeVestingSchedule(vestingSchedule)
               : null;
-            const currentBlock = Number(
-              (await parachainApi.query.system.number()).toString()
-            );
-            const currentTime = Number(
-              (await parachainApi.query.timestamp.now()).toString()
-            );
+            const currentBlock = await getCurrentBlock(parachainApi);
+            const currentTime = await getCurrentTime(parachainApi);
             if (decodedVestingSchedule) {
               addActiveBond(
                 decodedBondOffer,
@@ -84,8 +84,11 @@ const Updater = () => {
               principalAppoloPriceInUSD.toNumber(),
               rewardAppoloPriceInUSD.toNumber()
             );
-          });
+          } catch (ex) {
+            return null;
+          }
         });
+      });
     }
   }, [parachainApi, selectedAccount]);
 

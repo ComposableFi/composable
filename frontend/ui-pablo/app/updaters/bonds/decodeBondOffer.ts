@@ -1,25 +1,22 @@
 import { BondOffer } from "../../store/bonds/bonds.types";
 import type { AccountId32 } from "@polkadot/types/interfaces/runtime";
 import { TOKENS } from "../../defi/Tokens";
-import { TokenId } from "../../defi/types";
+import { Token, TokenId } from "../../defi/types";
 import { stringToBigNumber } from "../../utils/stringToBigNumber";
 import { stringToNumber } from "../../utils/stringToNumber";
-
-const currencyIdToTokenIdMap: Record<string, TokenId> = {
-  "1": "pica",
-  "4": "ksm",
-};
+import { CURRENCY_ID_TO_TOKEN_ID_MAP } from "../../utils/constants";
 
 export function decodeBondOffer(
   offerId: number,
   beneficiary: AccountId32,
-  bondOffer: any
+  bondOffer: any,
+  principalAsset: { base: Token; quote: Token } | Token
 ): BondOffer {
   return {
     offerId,
     beneficiary,
     currencyId: stringToNumber(bondOffer.asset),
-    asset: TOKENS[currencyIdToTokenIdMap[bondOffer.asset]] ?? bondOffer.asset, // asset could either be an lp token or otherwise
+    asset: principalAsset,
     bondPrice: stringToBigNumber(bondOffer.bondPrice),
     nbOfBonds: bondOffer.nbOfBonds,
     maturity: bondOffer.maturity.Finite
@@ -27,9 +24,7 @@ export function decodeBondOffer(
       : "Infinite",
     reward: {
       currencyId: stringToNumber(bondOffer.asset),
-      asset:
-        TOKENS[currencyIdToTokenIdMap[bondOffer.reward.asset]] ??
-        bondOffer.asset, // asset could either be an lp token or otherwise
+      asset: TOKENS[CURRENCY_ID_TO_TOKEN_ID_MAP[bondOffer.reward.asset]],
       amount: stringToBigNumber(bondOffer.reward.amount),
       maturity: Number(bondOffer.reward.maturity),
     },
