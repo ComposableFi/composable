@@ -25,6 +25,7 @@ pub type Amount = i128;
 
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
 pub const MAX_ASSOCIATED_VAULTS: u32 = 10;
+pub const NATIVE_ASSET: CurrencyId = CurrencyId::PICA;
 
 // -------------------------------------------------------------------------------------------------
 //                                              Config
@@ -133,7 +134,7 @@ impl pallet_governance_registry::Config for MockRuntime {
 // -------------------------------------------------------------------------------------------------
 
 parameter_types! {
-	pub const NativeAssetId: CurrencyId = CurrencyId::PICA;
+	pub const NativeAssetId: CurrencyId = NATIVE_ASSET;
 }
 
 ord_parameter_types! {
@@ -356,7 +357,7 @@ impl ExtBuilder {
 		asset: CurrencyId,
 		balance: Balance,
 	) -> ExtBuilder {
-		if asset == CurrencyId::PICA {
+		if asset == NATIVE_ASSET {
 			self.native_balances.push((user, balance));
 		} else {
 			self.balances.push((user, asset, balance));
@@ -370,7 +371,7 @@ impl ExtBuilder {
 		balances: Vec<(AccountId, CurrencyId, Balance)>,
 	) -> ExtBuilder {
 		balances.into_iter().for_each(|(account, asset, balance)| {
-			if asset == CurrencyId::PICA {
+			if asset == NATIVE_ASSET {
 				self.native_balances.push((account, balance));
 			} else {
 				self.balances.push((account, asset, balance));
