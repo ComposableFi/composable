@@ -46,6 +46,7 @@ pub mod crypto;
 mod helpers;
 mod impls;
 mod models;
+mod types;
 
 #[cfg(test)]
 mod mocks;
@@ -67,12 +68,16 @@ mod repay_borrow;
 pub mod pallet {
 	use crate::weights::WeightInfo;
 
-	pub use crate::helpers::swap;
+	pub(crate) use crate::types::{CreateInputOf, MarketAssets};
+	pub use crate::{
+		helpers::swap,
+		types::{MarketId, MarketIndex},
+	};
 	use codec::Codec;
 	use composable_traits::{
 		currency::CurrencyFactory,
 		defi::{DeFiComposableConfig, *},
-		lending::{CreateInput, Lending, MarketConfig, RepayStrategy, UpdateInput},
+		lending::{Lending, MarketConfig, RepayStrategy, UpdateInput},
 		liquidation::Liquidation,
 		oracle::Oracle,
 		time::Timestamp,
@@ -105,31 +110,6 @@ pub mod pallet {
 		<T as Config>::LiquidationStrategyId,
 		<T as frame_system::Config>::BlockNumber,
 	>;
-
-	pub type MarketId = u32;
-
-	// REVIEW: Maybe move this to `models::market_index`?
-	// TODO: Rename to `MarketId`.
-	#[derive(Default, Debug, Copy, Clone, Encode, Decode, PartialEq, MaxEncodedLen, TypeInfo)]
-	#[repr(transparent)]
-	pub struct MarketIndex(
-		#[cfg(test)] // to allow pattern matching in tests outside of this crate
-		pub MarketId,
-		#[cfg(not(test))] pub(crate) MarketId,
-	);
-
-	impl MarketIndex {
-		pub fn new(i: u32) -> Self {
-			Self(i)
-		}
-	}
-
-	pub(crate) struct MarketAssets<T: DeFiComposableConfig> {
-		/// The borrow asset for the market.
-		pub(crate) borrow_asset: <T as DeFiComposableConfig>::MayBeAssetId,
-		/// The debt token/ debt marker for the market.
-		pub(crate) debt_asset: <T as DeFiComposableConfig>::MayBeAssetId,
-	}
 
 	pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"lend");
 	pub const CRYPTO_KEY_TYPE: CryptoKeyTypeId = CryptoKeyTypeId(*b"lend");
@@ -559,13 +539,6 @@ pub mod pallet {
 			<Self as frame_support::traits::GenesisBuild<T>>::assimilate_storage(self, storage)
 		}
 	}
-
-	/// A convenience wrapper around [`CreateInput`] for `T: Config`.
-	pub type CreateInputOf<T> = CreateInput<
-		<T as Config>::LiquidationStrategyId,
-		<T as DeFiComposableConfig>::MayBeAssetId,
-		<T as frame_system::Config>::BlockNumber,
-	>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {

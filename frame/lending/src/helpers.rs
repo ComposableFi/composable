@@ -1,8 +1,11 @@
 use crate::{models::borrower_data::BorrowerData, weights::WeightInfo, *};
 
-use crate::validation::{
-	AssetIsSupportedByOracle, BalanceGreaterThenZero, CurrencyPairIsNotSame, MarketModelValid,
-	UpdateInputValid,
+use crate::{
+	types::InitializeBlockCallCounters,
+	validation::{
+		AssetIsSupportedByOracle, BalanceGreaterThenZero, CurrencyPairIsNotSame, MarketModelValid,
+		UpdateInputValid,
+	},
 };
 use composable_support::{
 	math::safe::{SafeAdd, SafeDiv, SafeMul},
@@ -32,20 +35,6 @@ use sp_runtime::{
 	ArithmeticError, DispatchError, FixedPointNumber, FixedU128, Percent, Perquintill,
 };
 use sp_std::{fmt::Debug, vec::Vec};
-
-/// Used to count the calls in [`Pallet::initialize_block`]. Each field corresponds to a
-/// function call to count.
-#[derive(Debug, Default, Clone, Copy)]
-pub(crate) struct InitializeBlockCallCounters {
-	pub(crate) now: u32,
-	pub(crate) read_markets: u32,
-	pub(crate) accrue_interest: u32,
-	pub(crate) account_id: u32,
-	pub(crate) available_funds: u32,
-	pub(crate) handle_withdrawable: u32,
-	pub(crate) handle_depositable: u32,
-	pub(crate) handle_must_liquidate: u32,
-}
 
 // private helper functions
 impl<T: Config> Pallet<T> {
