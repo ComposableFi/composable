@@ -146,8 +146,6 @@ pub struct Market<T: Config> {
 	/// The latest cumulative funding rate for short positions in this market. Must be updated
 	/// periodically.
 	pub cum_funding_rate_short: T::Decimal,
-	/// Amount, in quote asset, of fees collected from trades.
-	pub fee_pool: T::Balance,
 	/// The timestamp for the latest funding rate update.
 	pub funding_rate_ts: DurationSeconds,
 	/// Last oracle price used to update the index TWAP. This has likely gone through
@@ -181,7 +179,6 @@ impl<T: Config> Market<T> {
 			base_asset_amount_short: Zero::zero(),
 			cum_funding_rate_long: Zero::zero(),
 			cum_funding_rate_short: Zero::zero(),
-			fee_pool: Zero::zero(),
 			funding_rate_ts: T::UnixTime::now().as_secs(),
 			last_oracle_price: Zero::zero(),
 			last_oracle_twap: Zero::zero(),

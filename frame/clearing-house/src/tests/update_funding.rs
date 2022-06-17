@@ -12,7 +12,7 @@ use crate::{
 			Vamm as VammPallet, MINIMUM_PERIOD_SECONDS,
 		},
 	},
-	tests::set_oracle_twap,
+	tests::{get_market_fee_pool, set_oracle_twap},
 	Direction, Error, Event,
 };
 use composable_traits::{
@@ -288,9 +288,7 @@ proptest! {
 
 			// funding rate is 1 ( TWAP_diff * freq / period )
 			// payment = rate * net_position
-			let payment = net_position;
-			let market = TestPallet::get_market(&market_id).unwrap();
-			assert_eq!(market.fee_pool, payment);
+			assert_eq!(get_market_fee_pool(&market_id), net_position);
 		});
 	}
 
@@ -322,9 +320,8 @@ proptest! {
 
 			// funding rate is 1% ( TWAP_diff * freq / period )
 			// payment = rate * net_position = fee
-			let market = TestPallet::get_market(&market_id).unwrap();
 			// Whole fee pool is paid back in funding
-			assert_eq!(market.fee_pool, 0);
+			assert_eq!(get_market_fee_pool(&market_id), 0);
 		});
 	}
 
@@ -362,7 +359,7 @@ proptest! {
 				bob_position,
 			));
 			let initial_fee_pool = fees.0 + fees.1;
-			assert_eq!(TestPallet::get_market(&market_id).unwrap().fee_pool, initial_fee_pool);
+			assert_eq!(get_market_fee_pool(&market_id), initial_fee_pool);
 
 			// Time passes and the external market moves in favor of Alice's position
 			run_for_seconds(config.funding_frequency);
@@ -393,7 +390,7 @@ proptest! {
 
 			// System is airtight: all transfers are accounted for and no funds are left without a
 			// destination
-			let fee_pool_decimal = market.fee_pool.into_decimal().unwrap();
+			let fee_pool_decimal = get_market_fee_pool(&market_id).into_decimal().unwrap();
 			assert_eq!(alice_funding + fee_pool_decimal, bob_and_fees);
 		});
 	}

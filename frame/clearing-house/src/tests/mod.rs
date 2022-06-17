@@ -7,9 +7,9 @@ use crate::{
 		accounts::{AccountId, ALICE},
 		assets::{AssetId, DOT, USDC},
 		runtime::{
-			Balance, Decimal, ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime,
-			System as SystemPallet, TestPallet, Timestamp as TimestampPallet, Vamm as VammPallet,
-			VammId,
+			Assets as AssetsPallet, Balance, Decimal, ExtBuilder, MarketId, Oracle as OraclePallet,
+			Origin, Runtime, System as SystemPallet, TestPallet, Timestamp as TimestampPallet,
+			Vamm as VammPallet, VammId,
 		},
 		vamm::VammConfig,
 	},
@@ -22,7 +22,11 @@ use composable_traits::{
 	time::{DurationSeconds, ONE_HOUR},
 	vamm::{AssetType, Direction as VammDirection, Vamm},
 };
-use frame_support::{assert_err, assert_ok, pallet_prelude::Hooks};
+use frame_support::{
+	assert_err, assert_ok,
+	pallet_prelude::Hooks,
+	traits::fungibles::{Inspect, Unbalanced},
+};
 use proptest::prelude::*;
 use sp_runtime::{traits::Zero, FixedI128, FixedPointNumber, FixedU128};
 
@@ -140,20 +144,11 @@ fn get_market(market_id: &MarketId) -> Market {
 }
 
 fn get_market_fee_pool(market_id: &MarketId) -> Balance {
-	TestPallet::get_market(market_id).unwrap().fee_pool
+	AssetsPallet::balance(USDC, &TestPallet::get_fee_pool_account(*market_id))
 }
 
 fn set_fee_pool_depth(market_id: &MarketId, depth: Balance) {
-	fn set_depth(market: &mut Option<Market>, d: Balance) -> Result<(), ()> {
-		if let Some(m) = market {
-			m.fee_pool = d;
-			Ok(())
-		} else {
-			Err(())
-		}
-	}
-
-	Markets::<Runtime>::try_mutate(market_id, |m| set_depth(m, depth)).unwrap();
+	AssetsPallet::set_balance(USDC, &TestPallet::get_fee_pool_account(*market_id), depth);
 }
 
 fn set_maximum_oracle_mark_divergence(fraction: FixedI128) {

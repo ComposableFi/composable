@@ -9,9 +9,9 @@ use crate::{
 	},
 	pallet::{Config, Direction, Error, Event},
 	tests::{
-		any_direction, any_price, as_balance, get_market, get_position, run_for_seconds,
-		set_fee_pool_depth, set_oracle_twap, with_markets_context, with_trading_context,
-		MarketConfig,
+		any_direction, any_price, as_balance, get_market, get_market_fee_pool, get_position,
+		run_for_seconds, set_fee_pool_depth, set_oracle_twap, with_markets_context,
+		with_trading_context, MarketConfig,
 	},
 };
 use composable_traits::{clearing_house::ClearingHouse, time::ONE_HOUR};
@@ -182,7 +182,7 @@ proptest! {
 			// - net position
 			// - fees collected
 			assert_eq!(market.base_asset_amount(direction), position.base_asset_amount);
-			assert_eq!(market.fee_pool, fees);
+			assert_eq!(get_market_fee_pool(&market_id), fees);
 
 			SystemPallet::assert_last_event(
 				Event::TradeExecuted {

@@ -185,7 +185,7 @@ fn cannot_withdraw_funds_reserved_for_market_fee_pool() {
 
 		assert_ok!(<TestPallet as ClearingHouse>::withdraw_collateral(&ALICE, as_balance(100)));
 		assert_eq!(
-			AssetsPallet::balance(USDC, &TestPallet::get_collateral_account()),
+			AssetsPallet::balance(USDC, &TestPallet::get_fee_pool_account(market_id)),
 			as_balance(1)
 		);
 	});

@@ -172,7 +172,7 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		storage::bounded_vec::BoundedVec,
-		traits::{tokens::fungibles::Transfer, GenesisBuild, UnixTime},
+		traits::{fungibles::Inspect, tokens::fungibles::Transfer, GenesisBuild, UnixTime},
 		transactional, Blake2_128Concat, PalletId, Twox64Concat,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
@@ -202,11 +202,8 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: DeFiComposableConfig + frame_system::Config {
 		/// Pallet implementation of asset transfers.
-		type Assets: Transfer<
-			Self::AccountId,
-			AssetId = Self::MayBeAssetId,
-			Balance = Self::Balance,
-		>;
+		type Assets: Inspect<Self::AccountId, AssetId = Self::MayBeAssetId, Balance = Self::Balance>
+			+ Transfer<Self::AccountId, AssetId = Self::MayBeAssetId, Balance = Self::Balance>;
 
 		/// Signed decimal fixed point number.
 		type Decimal: FixedPointNumber<Inner = Self::Integer>
@@ -925,7 +922,7 @@ pub mod pallet {
 			amount: Self::Balance,
 		) -> Result<(), DispatchError> {
 			ensure!(
-				CollateralType::<T>::get().ok_or(Error::<T>::NoCollateralTypeSet)? == asset_id,
+				Self::get_collateral_asset_id()? == asset_id,
 				Error::<T>::UnsupportedCollateralType
 			);
 
@@ -1084,7 +1081,13 @@ pub mod pallet {
 			// Charge fees
 			let fee = Self::fee_for_trade(&market, &quote_abs_amount_decimal)?;
 			collateral.try_sub_mut(&fee)?;
-			market.fee_pool.try_add_mut(&fee)?;
+			T::Assets::transfer(
+				Self::get_collateral_asset_id()?,
+				&Self::get_collateral_account(),
+				&Self::get_fee_pool_account(market_id.clone()),
+				fee,
+				false,
+			)?;
 
 			// Check account risk
 			if is_risk_increasing {
@@ -1150,7 +1153,13 @@ pub mod pallet {
 				// Charge fees
 				let fee = Self::fee_for_trade(&market, &exit_value)?;
 				collateral.try_sub_mut(&fee)?;
-				market.fee_pool.try_add_mut(&fee)?;
+				T::Assets::transfer(
+					Self::get_collateral_asset_id()?,
+					&Self::get_collateral_account(),
+					&Self::get_fee_pool_account(market_id.clone()),
+					fee,
+					false,
+				)?;
 
 				// Attempt funding rate update at the end
 				Self::do_update_funding(market_id, &mut market, T::UnixTime::now().as_secs())?;
@@ -1220,9 +1229,8 @@ pub mod pallet {
 				Collateral::<T>::insert(liquidator_id, col.try_add(&liquidator_fee)?);
 			}
 			if !insurance_fee.is_zero() {
-				let asset_id = CollateralType::<T>::get().ok_or(Error::<T>::NoCollateralTypeSet)?;
 				T::Assets::transfer(
-					asset_id,
+					Self::get_collateral_asset_id()?,
 					&Self::get_collateral_account(),
 					&Self::get_insurance_account(),
 					insurance_fee,
@@ -1296,16 +1304,27 @@ pub mod pallet {
 
 			if !(funding_rate.is_zero() | net_base_asset_amount.is_zero()) {
 				let uncapped_funding = funding_rate.try_mul(&net_base_asset_amount)?;
+				let collateral_account = Self::get_collateral_account();
+				let fee_pool_account = Self::get_fee_pool_account(market_id.clone());
+				let collateral_asset_id = Self::get_collateral_asset_id()?;
 
 				if uncapped_funding.is_positive() {
 					// Fee Pool receives funding
-					market.fee_pool.try_add_mut(&uncapped_funding.into_balance()?)?;
+					T::Assets::transfer(
+						collateral_asset_id,
+						&collateral_account,
+						&fee_pool_account,
+						uncapped_funding.into_balance()?,
+						false,
+					)?;
 				} else {
 					// Fee Pool pays funding
 					// TODO(0xangelo): set limits for
 					// - total Fee Pool usage (reserve some funds for other operations)
 					// - Fee Pool usage for funding payments per call to `update_funding`
-					let usable_fees: T::Decimal = -market.fee_pool.into_decimal()?;
+					let usable_fees: T::Decimal =
+						-T::Assets::balance(collateral_asset_id, &fee_pool_account)
+							.into_decimal()?;
 					let mut capped_funding = sp_std::cmp::max(uncapped_funding, usable_fees);
 
 					// Since we're dealing with negatives, we check if the uncapped funding is
@@ -1329,7 +1348,13 @@ pub mod pallet {
 						capped_funding.try_sub_mut(&excess)?;
 					}
 
-					market.fee_pool.try_sub_mut(&capped_funding.into_balance()?)?;
+					T::Assets::transfer(
+						collateral_asset_id,
+						&fee_pool_account,
+						&collateral_account,
+						capped_funding.into_balance()?,
+						false,
+					)?;
 				};
 			}
 
@@ -1863,6 +1888,11 @@ pub mod pallet {
 			.output)
 		}
 
+		/// Returns the asset Id of the collateral type.
+		pub fn get_collateral_asset_id() -> Result<AssetIdOf<T>, DispatchError> {
+			CollateralType::<T>::get().ok_or_else(|| Error::<T>::NoCollateralTypeSet.into())
+		}
+
 		/// Returns the Id of the account holding user's collateral.
 		pub fn get_collateral_account() -> T::AccountId {
 			T::PalletId::get().into_sub_account("Collateral")
@@ -1871,6 +1901,11 @@ pub mod pallet {
 		/// Returns the Id of the account holding insurance funds.
 		pub fn get_insurance_account() -> T::AccountId {
 			T::PalletId::get().into_sub_account("Insurance")
+		}
+
+		/// Returns the Id of the account holding the Fee Pool funds for a market.
+		pub fn get_fee_pool_account(market_id: T::MarketId) -> T::AccountId {
+			T::PalletId::get().into_sub_account(market_id)
 		}
 
 		fn decimal_from_swapped(
