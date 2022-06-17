@@ -11,10 +11,12 @@ import {
 import { useAppSelector } from "@/hooks/store";
 import { ConnectToStakeCover } from "@/components/Molecules/ConnectToStakeCover";
 import { AllBondsTable } from "@/components/Molecules/AllBondsTable";
-import { AllBondsAsset, BondingAsset } from "@/stores/defi/polkadot";
+import { BondingAsset } from "@/stores/defi/polkadot";
 import { useContext } from "react";
 import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { Updater } from "@/stores/defi/polkadot/bonds/PolkadotBondsUpdater";
+import { useSelectedAccount } from "@/defi/polkadot/hooks";
+import { useOpenPositions } from "@/defi/polkadot/hooks/useOpenPositions";
 
 const standardPageSize = {
   xs: 12,
@@ -23,8 +25,9 @@ const standardPageSize = {
 const TreasuryBonding: NextPage = () => {
   const theme = useTheme();
   const { extensionStatus } = useContext(ParachainContext);
-  const myBondings = useAppSelector((state) => state.polkadot.myBondingAssets);
   const bonds = useAppSelector((state) => state.bonding.bonds);
+  const account = useSelectedAccount();
+  const openPositions = useOpenPositions(account);
   const router = useRouter();
 
   const handleActiveBondsClick = (asset: BondingAsset) => {
@@ -95,7 +98,7 @@ const TreasuryBonding: NextPage = () => {
                 >
                   <Typography mb={2}>Your Active Bonds</Typography>
                   <MyBondingsTable
-                    assets={myBondings.picasso}
+                    openPositions={openPositions}
                     onRowClick={handleActiveBondsClick}
                   />
                 </Box>

@@ -9,6 +9,7 @@ export interface BondsSlice {
 const initialState = {
   bonds: [],
   bondOfferCount: 0,
+  openPositions: [],
 };
 
 export const bondsSlice = createSlice({

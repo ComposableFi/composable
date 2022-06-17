@@ -1,0 +1,41 @@
+import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
+import { useBlockInterval } from "@/defi/polkadot/hooks/useBlockInterval";
+import { BN } from "@polkadot/util";
+
+export function secondsToDHMS(seconds: number) {
+  seconds = Number(seconds);
+  const d = Math.floor(seconds / (3600 * 24));
+  const h = Math.floor((seconds % (3600 * 24)) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+
+  const dDisplay = d > 0 ? d + "D " : "";
+  const hDisplay = h > 0 ? h + "H " : "";
+  const mDisplay = m > 0 ? m + "M" : "";
+  const sDisplay = s > 0 ? s + "S" : "";
+  return {
+    d,
+    h,
+    m,
+    s,
+    dDisplay,
+    hDisplay,
+    mDisplay,
+    sDisplay,
+  };
+}
+
+function maturityToSeconds(
+  maturity: number | "Infinite",
+  interval?: BN | undefined
+) {
+  const DEFAULT_BLOCK_TIME = interval?.toNumber() ?? 6 * 1000; // 6 seconds
+  return maturity === "Infinite" ? "Infinite" : maturity * DEFAULT_BLOCK_TIME;
+}
+export function useBondVestingInDays(bondOffer: BondOffer) {
+  const interval = useBlockInterval();
+
+  const inSeconds = maturityToSeconds(bondOffer.maturity, interval);
+
+  return inSeconds === "Infinite" ? inSeconds : inSeconds;
+}

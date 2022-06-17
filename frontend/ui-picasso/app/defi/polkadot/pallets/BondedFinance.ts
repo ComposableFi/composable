@@ -8,6 +8,9 @@ import { ComposableTraitsBondedFinanceBondOffer } from "@/defi/polkadot/interfac
 import { Option } from "@polkadot/types-codec";
 import { ITuple } from "@polkadot/types-codec/types";
 import { fetchAssetPrice } from "./Oracle";
+import Executor from "substrate-react/dist/extrinsics/Executor";
+import { getSigner } from "substrate-react";
+import { APP_NAME } from "@/defi/polkadot/constants";
 
 export function createArrayOfLength(length: number): number[] {
   return Array.from(Array(length).keys());
@@ -122,8 +125,8 @@ function bondTransformer(beneficiary: AccountId32, bondOffer: any): BondOffer {
     asset: getAssets(bondOffer.asset),
     bondPrice: fromPica(stringToBigNumber(bondOffer.bondPrice.toString())),
     nbOfBonds: bondOffer.nbOfBonds,
-    maturity: bondOffer.maturity.Finite
-      ? bondOffer.maturity.Finite.returnIn
+    maturity: bondOffer.maturity.isFinite
+      ? bondOffer.maturity.asFinite.returnIn.toString()
       : "Infinite",
     reward: {
       assetId: bondOffer.reward.asset.toString(),
@@ -151,3 +154,60 @@ export function getROI(
     .multipliedBy(100)
     .multipliedBy(rewardPrice.lt(bondPrice) ? -1 : 1);
 }
+
+export type PurchaseBond = {
+  parachainApi: ApiPromise | undefined;
+  account: { name: string; address: string } | undefined;
+  executor: Executor | undefined;
+  offerId: string;
+  bondInput: BigNumber;
+  enqueueSnackbar: (str: string) => void;
+  setOpen: (value: ((prevState: boolean) => boolean) | boolean) => void;
+  setOpen2nd: (value: ((prevState: boolean) => boolean) | boolean) => void;
+  handleFormReset: () => void;
+};
+export async function purchaseBond({
+  parachainApi,
+  account,
+  executor,
+  offerId,
+  bondInput,
+  enqueueSnackbar,
+  setOpen,
+  setOpen2nd,
+  handleFormReset,
+}: PurchaseBond) {
+  if (parachainApi && account && executor) {
+    try {
+      const signer = await getSigner(APP_NAME, account.address);
+      await executor
+        .execute(
+          parachainApi.tx.bondedFinance.bond(
+            offerId.toString(),
+            bondInput.toString(),
+            true
+          ),
+          account.address,
+          parachainApi,
+          signer,
+          (txHash: string) => {
+            enqueueSnackbar("Initiating Transaction on " + txHash);
+            setOpen(false);
+            setOpen2nd(false);
+          },
+          (txHash: string, events) => {
+            enqueueSnackbar("Transaction Finalized on " + txHash);
+            handleFormReset();
+          }
+        )
+        .catch((err) => {
+          enqueueSnackbar(err.message);
+        });
+    } catch (e) {
+      console.log(e);
+    }
+  } else {
+    console.log("Purchasing... no parachainAPI");
+  }
+}
+
