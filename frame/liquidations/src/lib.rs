@@ -50,8 +50,12 @@ pub mod pallet {
 	use codec::{Decode, Encode, FullCodec, MaxEncodedLen};
 	use composable_support::{
 		abstractions::{
-			nonce::{Increment, Nonce, ValueQuery},
-			utils::{increment::WrappingIncrement, start_at::DefaultInit},
+			nonce::Nonce,
+			utils::{
+				increment::{Increment, WrappingIncrement},
+				start_at::DefaultInit,
+				ValueQuery,
+			},
 		},
 		math::wrapping_next::WrappingNext,
 	};

@@ -232,6 +232,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn vault_count)]
 	#[allow(clippy::disallowed_types)]
+	// TODO: This is a nonce, rename to VaultId
 	pub type VaultCount<T: Config> = StorageValue<_, T::VaultId, ValueQuery>;
 
 	/// Info for each specific vaults.
