@@ -1,6 +1,6 @@
 use composable_traits::clearing_house::ClearingHouse;
 use frame_support::{
-	assert_err, assert_ok,
+	assert_noop, assert_ok,
 	traits::fungibles::{Inspect, Unbalanced},
 };
 
@@ -33,7 +33,7 @@ fn should_fail_if_withdrawal_amount_is_zero() {
 	let config = MarketConfig::default();
 
 	with_trading_context(config, as_balance(100), |_| {
-		assert_err!(
+		assert_noop!(
 			TestPallet::withdraw_collateral(Origin::signed(ALICE), 0),
 			Error::<Runtime>::ZeroWithdrawalAmount
 		);
@@ -61,7 +61,7 @@ fn cannot_withdraw_outstanding_profits() {
 		// No one realized losses, so profits are outstanding.
 		assert_eq!(get_outstanding_gains(ALICE, &market_id), collateral);
 
-		assert_err!(
+		assert_noop!(
 			TestPallet::withdraw_collateral(Origin::signed(ALICE), collateral * 2),
 			Error::<Runtime>::InsufficientCollateral
 		);
@@ -178,7 +178,7 @@ fn cannot_withdraw_funds_reserved_for_market_fee_pool() {
 		assert_ok!(<TestPallet as ClearingHouse>::close_position(&ALICE, &market_id));
 
 		// Alice should have 100 as collateral and the Fee Pool should have the remaining 2
-		assert_err!(
+		assert_noop!(
 			<TestPallet as ClearingHouse>::withdraw_collateral(&ALICE, collateral),
 			Error::<Runtime>::InsufficientCollateral
 		);
@@ -215,7 +215,7 @@ proptest! {
 
 		with_market_context(ExtBuilder::default(), config, |_| {
 			TestPallet::deposit_collateral(Origin::signed(ALICE), USDC, a);
-			assert_err!(
+			assert_noop!(
 				TestPallet::withdraw_collateral(Origin::signed(ALICE), b),
 				Error::<Runtime>::InsufficientCollateral
 			);
@@ -229,7 +229,7 @@ proptest! {
 
 		with_market_context(ExtBuilder::default(), config, |_| {
 			TestPallet::deposit_collateral(Origin::signed(ALICE), USDC, balance);
-			assert_err!(
+			assert_noop!(
 				TestPallet::withdraw_collateral(Origin::signed(BOB), balance),
 				Error::<Runtime>::InsufficientCollateral
 			);
@@ -265,7 +265,7 @@ proptest! {
 			);
 
 			// Alice can't withdraw because her account is already at max leverage
-			assert_err!(
+			assert_noop!(
 				TestPallet::withdraw_collateral(Origin::signed(ALICE), balance),
 				Error::<Runtime>::InsufficientCollateral
 			);
