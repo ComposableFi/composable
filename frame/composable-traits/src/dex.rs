@@ -44,7 +44,8 @@ pub trait Amm {
 
 	/// Returns the amount of LP tokens that would be recieved by adding the given amounts of base
 	/// and quote.
-	fn amount_of_lp_token_for_added_liquidity(
+	fn add_liquidity_dryrun(
+		who: &Self::AccountId,
 		pool_id: Self::PoolId,
 		base_amount: Self::Balance,
 		quote_amount: Self::Balance,

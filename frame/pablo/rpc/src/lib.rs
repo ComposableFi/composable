@@ -33,9 +33,10 @@ where
 		PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
 	>;
 
-	#[method(name = "pablo_expectedLpTokensGivenLiquidity")]
-	fn expected_lp_tokens_given_liquidity(
+	#[method(name = "pablo_add_liquidity_dryrun")]
+	fn add_liquidity_dryrun(
 		&self,
+		who: SafeRpcWrapper<AccountId>,
 		pool_id: SafeRpcWrapper<PoolId>,
 		base_asset_amount: SafeRpcWrapper<Balance>,
 		quote_asset_amount: SafeRpcWrapper<Balance>,
@@ -105,8 +106,9 @@ where
 		})
 	}
 
-	fn expected_lp_tokens_given_liquidity(
+	fn add_liquidity_dryrun(
 		&self,
+		who: SafeRpcWrapper<AccountId>,
 		pool_id: SafeRpcWrapper<PoolId>,
 		base_asset_amount: SafeRpcWrapper<Balance>,
 		quote_asset_amount: SafeRpcWrapper<Balance>,
@@ -117,12 +119,8 @@ where
 		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
 
 		// calling ../../runtime-api
-		let runtime_api_result = api.expected_lp_tokens_given_liquidity(
-			&at,
-			pool_id,
-			base_asset_amount,
-			quote_asset_amount,
-		);
+		let runtime_api_result =
+			api.add_liquidity_dryrun(&at, who, pool_id, base_asset_amount, quote_asset_amount);
 		runtime_api_result.map_err(|e| {
 			RpcError::Call(CallError::Custom(ErrorObject::owned(
 				9876,

@@ -1365,13 +1365,15 @@ impl_runtime_apis! {
 			})
 		}
 
-		fn expected_lp_tokens_given_liquidity(
+		fn add_liquidity_dryrun(
+			who: SafeRpcWrapper<AccountId>,
 			pool_id: SafeRpcWrapper<PoolId>,
 			base_asset_amount: SafeRpcWrapper<Balance>,
 			quote_asset_amount: SafeRpcWrapper<Balance>,
 		) -> SafeRpcWrapper<Balance> {
 			SafeRpcWrapper(
-				<Pablo as Amm>::amount_of_lp_token_for_added_liquidity(
+				<Pablo as Amm>::add_liquidity_dryrun(
+					&who.0,
 					pool_id.0,
 					base_asset_amount.0,
 					quote_asset_amount.0,

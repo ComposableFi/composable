@@ -730,7 +730,8 @@ pub mod pallet {
 			}
 		}
 
-		fn amount_of_lp_token_for_added_liquidity(
+		fn add_liquidity_dryrun(
+			who: &Self::AccountId,
 			pool_id: Self::PoolId,
 			base_amount: Self::Balance,
 			quote_amount: Self::Balance,
@@ -738,14 +739,24 @@ pub mod pallet {
 			let pool = Self::get_pool(pool_id)?;
 			let pool_account = Self::account_id(&pool_id);
 			match pool {
-				PoolConfiguration::StableSwap(pool) =>
-					StableSwap::<T>::calculate_mint_amount_and_fees(
-						&pool,
-						&pool_account,
-						&base_amount,
-						&quote_amount,
-					)
-					.map(|x| x.0),
+				PoolConfiguration::StableSwap(pool) => {
+					let (amount_of_lp_token_to_mint, ..) =
+						StableSwap::<T>::calculate_mint_amount_and_fees(
+							&pool,
+							&pool_account,
+							&base_amount,
+							&quote_amount,
+						)?;
+					ensure!(
+						T::Assets::reducible_balance(pool.pair.base, who, false) >= base_amount,
+						Error::<T>::NotEnoughLiquidity
+					);
+					ensure!(
+						T::Assets::reducible_balance(pool.pair.quote, who, false) >= quote_amount,
+						Error::<T>::NotEnoughLiquidity
+					);
+					Ok(amount_of_lp_token_to_mint)
+				},
 				PoolConfiguration::ConstantProduct(pool) => {
 					let pool_base_aum =
 						T::Convert::convert(T::Assets::balance(pool.pair.base, &pool_account));
@@ -761,11 +772,28 @@ pub mod pallet {
 						pool_base_aum,
 						pool_quote_aum,
 					)?;
+					ensure!(
+						T::Assets::reducible_balance(pool.pair.base, who, false) >= base_amount,
+						Error::<T>::NotEnoughLiquidity
+					);
+					ensure!(
+						T::Assets::reducible_balance(pool.pair.quote, who, false) >= quote_amount,
+						Error::<T>::NotEnoughLiquidity
+					);
 
 					Ok(T::Convert::convert(amount_of_lp_token_to_mint))
 				},
-				PoolConfiguration::LiquidityBootstrapping(_) =>
-					Err(Error::<T>::NoLpTokenForLbp.into()),
+				PoolConfiguration::LiquidityBootstrapping(pool) => {
+					ensure!(
+						T::Assets::reducible_balance(pool.pair.base, who, false) >= base_amount,
+						Error::<T>::NotEnoughLiquidity
+					);
+					ensure!(
+						T::Assets::reducible_balance(pool.pair.quote, who, false) >= quote_amount,
+						Error::<T>::NotEnoughLiquidity
+					);
+					Ok(T::Balance::zero())
+				},
 			}
 		}
 
