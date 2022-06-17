@@ -44,7 +44,6 @@ pub mod pallet {
 		currency::LocalAssets,
 		oracle::{Oracle, Price},
 	};
-	use core::ops::{Div, Mul};
 	use frame_support::{
 		dispatch::{DispatchResult, DispatchResultWithPostInfo},
 		pallet_prelude::*,
@@ -69,7 +68,10 @@ pub mod pallet {
 	use sp_runtime::{
 		helpers_128bit::multiply_by_rational,
 		offchain::{http, Duration},
-		traits::{AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Saturating, Zero},
+		traits::{
+			AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Saturating,
+			UniqueSaturatedInto as _, Zero,
+		},
 		AccountId32, ArithmeticError, FixedPointNumber, FixedU128, KeyTypeId as CryptoKeyTypeId,
 		PerThing, Percent, RuntimeDebug,
 	};
@@ -158,6 +160,9 @@ pub mod pallet {
 
 		#[pallet::constant]
 		type MaxHistory: Get<u32>;
+
+		#[pallet::constant]
+		type TwapWindow: Get<u16>;
 
 		#[pallet::constant]
 		type MaxPrePrices: Get<u32>;
@@ -355,8 +360,6 @@ pub mod pallet {
 		PriceNotFound,
 		/// Stake exceeded
 		ExceedStake,
-		/// Price weight must sum to 100
-		MustSumTo100,
 		/// Too many weighted averages requested
 		DepthTooLarge,
 		ArithmeticError,
@@ -386,6 +389,7 @@ pub mod pallet {
 		type Timestamp = <T as frame_system::Config>::BlockNumber;
 		type LocalAssets = T::LocalAssets;
 		type MaxAnswerBound = T::MaxAnswerBound;
+		type TwapWindow = T::TwapWindow;
 
 		fn get_price(
 			asset_id: Self::AssetId,
@@ -393,22 +397,23 @@ pub mod pallet {
 		) -> Result<Price<Self::Balance, Self::Timestamp>, DispatchError> {
 			let Price { price, block } =
 				Prices::<T>::try_get(asset_id).map_err(|_| Error::<T>::PriceNotFound)?;
-			let unit = 10_u128
-				.checked_pow(Self::LocalAssets::decimals(asset_id)?)
-				.ok_or(DispatchError::Arithmetic(ArithmeticError::Overflow))?;
-			let price = multiply_by_rational(price.into(), amount.into(), unit)
-				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
-			let price = price
-				.try_into()
-				.map_err(|_| DispatchError::Arithmetic(ArithmeticError::Overflow))?;
+			let price = Self::quote(asset_id, price, amount)?;
 			Ok(Price { price, block })
 		}
 
-		fn get_twap(
-			of: Self::AssetId,
-			weighting: Vec<Self::Balance>,
+		/// Currently using a flat distribution of weights.
+		fn get_twap_for_amount(
+			asset_id: Self::AssetId,
+			amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			Self::get_twap(of, weighting)
+			let prices_length = Self::price_history(asset_id).len();
+			let twap_window: usize = <Self as Oracle>::TwapWindow::get().into();
+			if twap_window > prices_length + 1 {
+				Self::get_price(asset_id, amount).map(|p| p.price)
+			} else {
+				let price = Self::get_twap(asset_id, twap_window)?;
+				Self::quote(asset_id, price, amount)
+			}
 		}
 
 		fn get_ratio(
@@ -940,51 +945,72 @@ pub mod pallet {
 			});
 		}
 
-		// REVIEW: indexing
-		#[allow(clippy::indexing_slicing)] // to get CI to pass
 		pub fn get_twap(
 			asset_id: T::AssetId,
-			mut price_weights: Vec<T::PriceValue>,
+			twap_window: usize,
 		) -> Result<T::PriceValue, DispatchError> {
-			let precision: T::PriceValue = 100_u128.into();
 			let historical_prices = Self::price_history(asset_id);
 
-			// add an extra to account for current price not stored in history
-			ensure!(historical_prices.len() + 1 >= price_weights.len(), Error::<T>::DepthTooLarge);
+			ensure!(twap_window <= historical_prices.len() + 1, Error::<T>::DepthTooLarge);
 
-			let sum = Self::price_values_sum(&price_weights);
-			ensure!(sum == precision, Error::<T>::MustSumTo100);
+			let mut prices: Vec<_> =
+				historical_prices.iter().rev().take(twap_window).rev().collect();
+			let current_price =
+				Prices::<T>::try_get(asset_id).map_err(|_| Error::<T>::PriceNotFound)?;
+			prices.push(&current_price);
 
-			let last_weight = price_weights.pop().unwrap_or_else(|| 0_u128.into());
-			ensure!(last_weight != 0_u128.into(), Error::<T>::ArithmeticError);
-
-			let mut weighted_prices = price_weights
-				.iter()
-				.enumerate()
-				.map(|(i, weight)| {
-					weight
-						.mul(
-							historical_prices[historical_prices.len() - price_weights.len() + i]
-								.price,
-						)
-						.div(precision)
+			let weights: Vec<u128> = prices
+				.windows(2)
+				.map(|window| {
+					window
+						.get(0)
+						.and_then(|first| window.get(1).map(|second| (first, second)))
+						.and_then(|(first, second)| second.block.checked_sub(&first.block))
+						.unwrap_or_default()
+						.unique_saturated_into()
 				})
-				.collect::<Vec<_>>();
-			let current_price = Self::prices(asset_id);
-			let current_weighted_price = last_weight.mul(current_price.price).div(precision);
+				.collect();
 
-			weighted_prices.push(current_weighted_price);
+			let weights_sum: u128 = weights.iter().sum();
 
-			let weighted_average = Self::price_values_sum(&weighted_prices);
-			ensure!(weighted_average != 0_u128.into(), Error::<T>::ArithmeticError);
+			let prices_sum: u128 = prices
+				.iter()
+				// skip 1 for diff calculation
+				.skip(1)
+				.map(|e| -> u128 { e.price.into() })
+				.zip(weights)
+				.filter_map(|(price, weight)| {
+					if weights_sum.is_zero() {
+						// if all weights is eq 0 then just return price.
+						Some(price)
+					} else if weight.is_zero() {
+						// if weight is eq 0 then skip it.
+						// it happens if few prices associated with same block number.
+						None
+					} else {
+						// otherwise muliply price and weight.
+						Some(price * weight)
+					}
+				})
+				.sum();
 
-			Ok(weighted_average)
+			let twap = if weights_sum.is_zero() {
+				prices_sum / ((prices.len() - 1) as u128)
+			} else {
+				prices_sum / weights_sum
+			};
+
+			Ok(twap.into())
 		}
 
-		fn price_values_sum(price_values: &[T::PriceValue]) -> T::PriceValue {
-			price_values
-				.iter()
-				.fold(T::PriceValue::from(0_u128), |acc, b| acc.saturating_add(*b))
+		fn quote(
+			asset_id: T::AssetId,
+			price: T::PriceValue,
+			amount: T::PriceValue,
+		) -> Result<T::PriceValue, DispatchError> {
+			let unit = <Self as Oracle>::LocalAssets::unit(asset_id)?;
+			let price = multiply_by_rational(price.into(), amount.into(), unit)?;
+			Ok(price.into())
 		}
 
 		// REVIEW: indexing

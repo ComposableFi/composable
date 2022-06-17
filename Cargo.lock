@@ -2806,6 +2806,7 @@ dependencies = [
  "pallet-membership",
  "pallet-mosaic",
  "pallet-multisig",
+ "pallet-nft",
  "pallet-oracle",
  "pallet-pablo",
  "pallet-preimage",
@@ -2813,6 +2814,7 @@ dependencies = [
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-session",
+ "pallet-staking-rewards",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -6909,6 +6911,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "orml-rewards"
+version = "0.4.1-dev"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=f709ed62262435b3ad80482d309e3575625d1e5b#f709ed62262435b3ad80482d309e3575625d1e5b"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "orml-traits",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std 4.0.0",
+]
+
+[[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
 source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=f709ed62262435b3ad80482d309e3575625d1e5b#f709ed62262435b3ad80482d309e3575625d1e5b"
@@ -8363,13 +8382,14 @@ dependencies = [
  "composable-support",
  "composable-tests-helpers",
  "composable-traits",
+ "env_logger",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log 0.4.17",
+ "orml-rewards",
  "orml-tokens",
  "orml-traits",
- "pallet-nft",
  "pallet-timestamp",
  "parity-scale-codec",
  "scale-info",
@@ -15216,7 +15236,7 @@ dependencies = [
  "chrono",
  "lazy_static",
  "matchers",
- "parking_lot 0.11.2",
+ "parking_lot 0.9.0",
  "regex",
  "serde",
  "serde_json",
@@ -15397,9 +15417,9 @@ version = "1.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fee6b57c6a41524a810daee9286c02d7752c4253064d0b05472833a438f675"
 dependencies = [
- "cfg-if 1.0.0",
+ "cfg-if 0.1.10",
  "digest 0.10.3",
- "rand 0.8.5",
+ "rand 0.6.5",
  "static_assertions",
 ]
 
