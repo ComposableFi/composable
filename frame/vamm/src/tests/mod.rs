@@ -1,5 +1,5 @@
 // Allow use of .unwrap() in tests and unused Results from function calls
-#![allow(clippy::disallowed_methods, unused_must_use)]
+#![allow(clippy::disallowed_methods, unused_must_use, dead_code)]
 
 use std::ops::RangeInclusive;
 
@@ -22,8 +22,6 @@ pub mod get_price;
 pub mod get_twap;
 pub mod move_price;
 pub mod swap_asset;
-pub mod swap_base_asset;
-pub mod swap_quote_asset;
 pub mod update_twap;
 
 // ----------------------------------------------------------------------------------------------------
@@ -51,16 +49,9 @@ struct TestSwapConfig<VammId, Balance> {
 	output_amount_limit: Option<Balance>,
 }
 
-#[allow(dead_code)]
 const ZERO_RESERVE: Balance = Balance::MIN;
-
-#[allow(dead_code)]
 const MINIMUM_RESERVE: Balance = ZERO_RESERVE + 1;
-
-#[allow(dead_code)]
 const MAXIMUM_RESERVE: Balance = Balance::MAX;
-
-#[allow(dead_code)]
 const RUN_CASES: u32 = 1000;
 
 // ----------------------------------------------------------------------------------------------------
