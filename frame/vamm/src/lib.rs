@@ -1287,26 +1287,6 @@ pub mod pallet {
 			}
 		}
 
-		fn asset_twap_from_vamm_state(
-			vamm_state: &VammStateOf<T>,
-			asset_type: AssetType,
-		) -> BalanceOf<T> {
-			match asset_type {
-				AssetType::Base => vamm_state.base_asset_twap,
-				AssetType::Quote => vamm_state.quote_asset_twap,
-			}
-		}
-
-		fn asset_twap_timestamp_from_vamm_state(
-			vamm_state: &VammStateOf<T>,
-			asset_type: AssetType,
-		) -> MomentOf<T> {
-			match asset_type {
-				AssetType::Base => vamm_state.base_asset_twap_timestamp,
-				AssetType::Quote => vamm_state.quote_asset_twap_timestamp,
-			}
-		}
-
 		fn now(now: &Option<MomentOf<T>>) -> MomentOf<T> {
 			match now {
 				Some(now) => *now,
