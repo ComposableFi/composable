@@ -81,7 +81,7 @@ const SelectBond: NextPage = () => {
 
         <BuyButtons mt={8} bond={bond} />
 
-        <SupplySummary mt={8} bond={bond} />
+        <SupplySummary mt={8} summary={supplySummary} bond={bond} />
         <Box position="relative" mt={8} mb={25}>
           <Grid container columnSpacing={4}>
             <Grid item {...(claimable ? twoColumnPageSize : standardPageSize)}>

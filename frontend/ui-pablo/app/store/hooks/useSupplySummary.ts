@@ -5,8 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useParachainApi } from "substrate-react";
 import { DEFAULT_DECIMALS } from "../../updaters/constants";
 import { useBlockInterval } from "../../utils/defi/hooks/polkadot/useBlockInterval";
-import { stringToBigNumber } from "../../utils/stringToBigNumber";
-import { fetchApolloPriceByAssetId } from "../../utils/defi/apollo";
+import { getAppoloPriceInUSD } from "../../utils/defi/apollo";
+import { ISupplySummary } from "../bonds/bonds.types";
 
 const DEFAULT_BLOCK_TIME = 6 * 1000;
 
@@ -14,9 +14,12 @@ type Props = {
   offerId: number;
 };
 
-export function useSupplySummary({ offerId }: Props) {
+export function useSupplySummary({
+  offerId,
+}: Props): "no-summary" | ISupplySummary {
   const { parachainApi } = useParachainApi("picasso");
   const { allBonds } = useStore();
+  const [principalPriceInUSD, setPrincipalPriceInUSD] = useState(0);
   const [rewardPriceInUSD, setRewardPriceInUSD] = useState(0);
   const interval = useBlockInterval();
 
@@ -30,15 +33,17 @@ export function useSupplySummary({ offerId }: Props) {
     (async () => {
       if (parachainApi && selectedBond) {
         const rewardCurrencyId = selectedBond.bondOffer.reward.currencyId;
-        const oracleRewardPrice = await fetchApolloPriceByAssetId(
+        const rewardPriceInUSD = await getAppoloPriceInUSD(
           parachainApi,
           rewardCurrencyId
         );
-        const rewardPriceInUSD = stringToBigNumber(oracleRewardPrice)
-          .div(DEFAULT_DECIMALS)
-          .toNumber();
-
-        setRewardPriceInUSD(rewardPriceInUSD);
+        const principalCurrencyId = selectedBond.bondOffer.currencyId;
+        const principalPriceInUSD = await getAppoloPriceInUSD(
+          parachainApi,
+          principalCurrencyId
+        );
+        setRewardPriceInUSD(rewardPriceInUSD.toNumber());
+        setPrincipalPriceInUSD(principalPriceInUSD.toNumber());
       }
     })();
   }, [parachainApi, selectedBond]);
@@ -47,10 +52,17 @@ export function useSupplySummary({ offerId }: Props) {
     return "no-summary";
   }
 
-  const marketPrice = selectedBond.bondOffer.reward.amount
+  const marketPriceInUSD = selectedBond.bondOffer.reward.amount
     .div(DEFAULT_DECIMALS)
     .times(rewardPriceInUSD)
     .toNumber();
+
+  const bondPriceInUSD = selectedBond.bondOffer.bondPrice
+    .div(DEFAULT_DECIMALS)
+    .times(principalPriceInUSD)
+    .toNumber();
+
+  const discountInPercentage = (marketPriceInUSD / bondPriceInUSD) * 100;
 
   const bondMaturity = selectedBond.bondOffer.maturity;
 
@@ -68,9 +80,11 @@ export function useSupplySummary({ offerId }: Props) {
   }
 
   return {
-    offerAsset: selectedBond.bondOffer.asset,
+    principalAsset: selectedBond.bondOffer.asset,
     rewardAsset: selectedBond.bondOffer.reward.asset,
-    marketPrice,
+    marketPriceInUSD,
+    roi: selectedBond.roi.toNumber(),
+    discountInPercentage,
     vestingPeriod,
   };
 }
