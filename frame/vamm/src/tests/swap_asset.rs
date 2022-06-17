@@ -379,18 +379,12 @@ proptest! {
 		// Ensure vamm is always open
 		vamm_state.closed = None;
 
-		// Ensure we don't throw `AssetTwapTimestampIsMoreRecent` error.
-		vamm_state.twap_timestamp = 0;
-		let mut block_ts = 0;
-
 		ExtBuilder {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
 			let vamm_before_swap = VammMap::<MockRuntime>::get(0);
 			for x in swap_config.iter() {
-				block_ts += 1;
-				run_for_seconds(block_ts);
 				assert_ok!(TestPallet::swap(x));
 			}
 			let vamm_after_swap = VammMap::<MockRuntime>::get(0);
@@ -424,21 +418,12 @@ proptest! {
 		// Ensure vamm is always open
 		vamm_state.closed = None;
 
-		// Ensure we don't throw `AssetTwapTimestampIsMoreRecent` error.
-		vamm_state.twap_timestamp = 0;
-		let mut block_ts = 0;
-
 		ExtBuilder {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
 			let vamm_before_swap = VammMap::<MockRuntime>::get(0);
 			for mut x in swap_config.iter_mut() {
-				// TODO(Cardosaum): Is this assumption valid? what if we try to
-				// execute more than one swap per second?
-				// Make sure time has passed between swaps.
-				block_ts += 1;
-				run_for_seconds(block_ts);
 				// Make swaps only for base asset
 				x.asset = AssetType::Base;
 				assert_ok!(TestPallet::swap(x));
@@ -475,21 +460,12 @@ proptest! {
 		// Ensure vamm is always open
 		vamm_state.closed = None;
 
-		// Ensure we don't throw `AssetTwapTimestampIsMoreRecent` error.
-		vamm_state.twap_timestamp = 0;
-		let mut block_ts = 0;
-
 		ExtBuilder {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
 			let vamm_before_swap = VammMap::<MockRuntime>::get(0);
 			for mut x in swap_config.iter_mut() {
-				// TODO(Cardosaum): Is this assumption valid? what if we try to
-				// execute more than one swap per second?
-				// Make sure time has passed between swaps.
-				block_ts += 1;
-				run_for_seconds(block_ts);
 				// Make swaps only for quote asset
 				x.asset = AssetType::Quote;
 				assert_ok!(TestPallet::swap(x));

@@ -396,10 +396,6 @@ pub mod pallet {
 		/// Tried to update twap for an asset, but the desired new twap value is
 		/// zero.
 		NewTwapValueIsZero,
-		/// Tried to compute last twap weight. This is due to
-		/// [`twap_period`](VammState::twap_period) being less than `now -
-		/// last_twap_timestamp`.
-		FailedToComputeLastTwapWeight,
 		/// Tried to create a vamm with a
 		/// [`twap_period`](VammState::twap_period) smaller than the
 		/// minimum allowed one specified by
@@ -796,7 +792,7 @@ pub mod pallet {
 			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
 
 			// Perform twap update before swapping assets.
-			Self::update_vamm_twap(config.vamm_id, &mut vamm_state, config.asset, &None)?;
+			Self::update_vamm_twap(config.vamm_id, &mut vamm_state, &None);
 
 			// Perform required sanity checks.
 			Self::swap_sanity_check(config, &vamm_state)?;
@@ -979,24 +975,17 @@ pub mod pallet {
 		fn do_update_twap(
 			vamm_id: VammIdOf<T>,
 			vamm_state: &mut VammStateOf<T>,
-			asset_type: AssetType,
-			new_twap: DecimalOf<T>,
+			base_twap: DecimalOf<T>,
+			quote_twap: DecimalOf<T>,
 			now: &Option<MomentOf<T>>,
-		) -> Result<DecimalOf<T>, DispatchError> {
+		) -> Result<(DecimalOf<T>, DecimalOf<T>), DispatchError> {
 			// Sanity checks
-			Self::update_twap_sanity_check(vamm_state, asset_type, Some(new_twap), now)?;
+			Self::update_twap_sanity_check(vamm_state, Some(base_twap), Some(quote_twap), now)?;
 
 			let now = Self::now(now);
-			match asset_type {
-				AssetType::Base => {
-					vamm_state.base_asset_twap = new_twap.into_inner();
-					vamm_state.base_asset_twap_timestamp = now;
-				},
-				AssetType::Quote => {
-					vamm_state.quote_asset_twap = new_twap.into_inner();
-					vamm_state.quote_asset_twap_timestamp = now;
-				},
-			};
+			vamm_state.base_asset_twap = base_twap;
+			vamm_state.quote_asset_twap = quote_twap;
+			vamm_state.twap_timestamp = now;
 
 			// Update runtime storage
 			VammMap::<T>::insert(&vamm_id, vamm_state);
@@ -1211,9 +1200,13 @@ pub mod pallet {
 				vamm_state.base_asset_twap,
 			)?;
 
-			let quote_twap = DecimalOf::<T>::from_inner(1_u64.into())
-				.checked_div(&base_twap)
-				.ok_or(ArithmeticError::DivisionByZero)?;
+			let quote_twap = Self::calculate_twap(
+				now,
+				vamm_state.twap_timestamp,
+				vamm_state.twap_period,
+				Self::do_get_price(vamm_state, AssetType::Quote)?,
+				vamm_state.quote_asset_twap,
+			)?;
 
 			Self::do_update_twap(vamm_id, vamm_state, base_twap, quote_twap, now)?;
 
@@ -1228,23 +1221,16 @@ pub mod pallet {
 			old_price: DecimalOf<T>,
 		) -> Result<DecimalOf<T>, DispatchError> {
 			let now = Self::now(now);
-			let weight_now: MomentOf<T> = std::cmp::max(
-				1_u64.into(),
-				now.checked_sub(&last_twap_timestamp)
-					.ok_or(Error::<T>::AssetTwapTimestampIsMoreRecent)?,
-			);
+			let weight_now: MomentOf<T> =
+				std::cmp::max(1_u64.into(), now.saturating_sub(last_twap_timestamp));
 
 			// TODO(Cardosaum): Won't this subtraction cause a failure everytime
 			// if we don't update twap for a long period of time?  for example,
 			// if `twap_period = 1 hour`, and we pass 2 or more hours without
 			// updating the twap, doesn't it mean we will throw an error each
 			// time we try to subtract `twap_period -  weight_now`?
-			let weight_last_twap: MomentOf<T> = std::cmp::max(
-				1_u64.into(),
-				twap_period
-					.checked_sub(&weight_now)
-					.ok_or(Error::<T>::FailedToComputeLastTwapWeight)?,
-			);
+			let weight_last_twap: MomentOf<T> =
+				std::cmp::max(1_u64.into(), twap_period.saturating_sub(weight_now));
 
 			Self::calculate_exponential_moving_average(
 				new_price,

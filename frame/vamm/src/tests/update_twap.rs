@@ -109,22 +109,22 @@ fn update_twap_fails_if_twap_timestamp_is_more_recent() {
 			run_for_seconds(timestamp);
 
 			assert_noop!(
-				TestPallet::update_twap(0, AssetType::Base, new_twap),
+				TestPallet::update_twap(0, new_twap, new_twap),
 				Error::<MockRuntime>::AssetTwapTimestampIsMoreRecent
 			);
 
 			assert_noop!(
-				TestPallet::update_twap(0, AssetType::Quote, new_twap),
+				TestPallet::update_twap(0, None, new_twap),
 				Error::<MockRuntime>::AssetTwapTimestampIsMoreRecent
 			);
 
 			assert_noop!(
-				TestPallet::update_twap(0, AssetType::Base, None),
+				TestPallet::update_twap(0, new_twap, None),
 				Error::<MockRuntime>::AssetTwapTimestampIsMoreRecent
 			);
 
 			assert_noop!(
-				TestPallet::update_twap(0, AssetType::Quote, None),
+				TestPallet::update_twap(0, None, None),
 				Error::<MockRuntime>::AssetTwapTimestampIsMoreRecent
 			);
 		})
@@ -151,82 +151,65 @@ fn update_twap_succeeds() {
 		.execute_with(|| {
 			// For event emission
 			run_for_seconds(timestamp_greater);
-			assert_ok!(TestPallet::update_twap(0, AssetType::Base, new_twap));
+			assert_ok!(TestPallet::update_twap(0, new_twap, new_twap));
 
 			timestamp_greater += 1;
 			run_for_seconds(timestamp_greater);
-			assert_ok!(TestPallet::update_twap(0, AssetType::Quote, new_twap));
+			assert_ok!(TestPallet::update_twap(0, None, new_twap));
 
 			timestamp_greater += 1;
 			run_for_seconds(timestamp_greater);
-			assert_ok!(TestPallet::update_twap(0, AssetType::Base, None));
+			assert_ok!(TestPallet::update_twap(0, new_twap, None));
 
 			timestamp_greater += 1;
 			run_for_seconds(timestamp_greater);
-			assert_ok!(TestPallet::update_twap(0, AssetType::Quote, None));
+			assert_ok!(TestPallet::update_twap(0, None, None));
 		})
 }
 
 #[test]
 fn should_update_twap_correctly() {
-	let timestamp = Timestamp::MIN;
-	let mut timestamp_greater = Timestamp::MIN + 1;
-	let twap = 10_u128.pow(18);
-	let new_twap = Some(Decimal::from_inner(10_u128.pow(18) * 5));
 	ExtBuilder::default().build().execute_with(|| {
 		let vamm_creation = TestPallet::create(&VammConfig {
-			base_asset_reserves: twap,
-			quote_asset_reserves: twap,
+			base_asset_reserves: 10_u128.pow(18) * 2,
+			quote_asset_reserves: 10_u128.pow(18) * 50,
 			peg_multiplier: 1,
 			twap_period: 3600,
 		});
 		let vamm_id = vamm_creation.unwrap();
+		let original_base_twap = TestPallet::get_vamm(vamm_id).unwrap().base_asset_twap;
+		let original_quote_twap = TestPallet::get_vamm(vamm_id).unwrap().quote_asset_twap;
 		assert_ok!(vamm_creation);
 
-		// For event emission
-		run_to_block(timestamp_greater);
-		let asset_type = AssetType::Base;
-		assert_ok!(TestPallet::update_twap(vamm_id, asset_type, new_twap));
-		assert_eq!(TestPallet::get_vamm(vamm_id).unwrap().base_asset_twap, new_twap.unwrap());
+		// For event emission & twap update
+		run_to_block(1);
+		let new_twap = Some(Decimal::from_inner(10_u128.pow(18) * 100));
+		assert_ok!(TestPallet::update_twap(vamm_id, new_twap, new_twap));
+		let vamm_state = TestPallet::get_vamm(vamm_id).unwrap();
+		assert_eq!(vamm_state.base_asset_twap, new_twap.unwrap());
+		assert_eq!(vamm_state.quote_asset_twap, new_twap.unwrap());
 		System::assert_last_event(Event::TestPallet(pallet::Event::UpdatedTwap {
 			vamm_id,
-			asset_type,
-			value: new_twap.unwrap(),
+			base_twap: new_twap.unwrap(),
+			quote_twap: new_twap.unwrap(),
 		}));
 
-		timestamp_greater += 1;
-		run_to_block(timestamp_greater);
-		let asset_type = AssetType::Quote;
-		assert_ok!(TestPallet::update_twap(vamm_id, asset_type, new_twap));
-		assert_eq!(TestPallet::get_vamm(0).unwrap().quote_asset_twap, new_twap.unwrap());
+		// Run for long enough in order to approximate to the original twap value.
+		run_for_seconds(TestPallet::get_vamm(vamm_id).unwrap().twap_period.saturating_pow(2));
+		assert_ok!(TestPallet::update_twap(vamm_id, None, None));
+		let vamm_state = TestPallet::get_vamm(vamm_id).unwrap();
+		assert_ok!(default_acceptable_computation_error(
+			vamm_state.base_asset_twap.into_inner(),
+			original_base_twap.into_inner(),
+		));
+		assert_ok!(default_acceptable_computation_error(
+			vamm_state.quote_asset_twap.into_inner(),
+			original_quote_twap.into_inner(),
+		));
 		System::assert_last_event(Event::TestPallet(pallet::Event::UpdatedTwap {
 			vamm_id,
-			asset_type,
-			value: new_twap.unwrap(),
-		}));
-
-		timestamp_greater += 1;
-		run_to_block(timestamp_greater);
-		let asset_type = AssetType::Base;
-		let value = Decimal::from_inner(4997777777777777777);
-		assert_ok!(TestPallet::update_twap(vamm_id, asset_type, None));
-		assert_eq!(TestPallet::get_vamm(vamm_id).unwrap().base_asset_twap, value);
-		System::assert_last_event(Event::TestPallet(pallet::Event::UpdatedTwap {
-			vamm_id,
-			asset_type,
-			value,
-		}));
-
-		timestamp_greater += 1;
-		run_to_block(timestamp_greater);
-		let asset_type = AssetType::Quote;
-		let value = Decimal::from_inner(4997777777777777777);
-		assert_ok!(TestPallet::update_twap(vamm_id, asset_type, None));
-		assert_eq!(TestPallet::get_vamm(vamm_id).unwrap().quote_asset_twap, value);
-		System::assert_last_event(Event::TestPallet(pallet::Event::UpdatedTwap {
-			vamm_id,
-			asset_type,
-			value,
+			base_twap: vamm_state.base_asset_twap,
+			quote_twap: vamm_state.quote_asset_twap,
 		}));
 	})
 }
