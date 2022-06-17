@@ -4,8 +4,8 @@ use crate::{
 	mock::{Event, ExtBuilder, MockRuntime, System, TestPallet},
 	pallet::{self, Error, VammMap, VammState},
 	tests::{
-		any_sane_asset_amount, any_sane_base_quote_peg, loop_times, min_max_reserve,
-		valid_twap_period, zero_reserve, Balance, Decimal, Timestamp, RUN_CASES,
+		any_sane_asset_amount, loop_times, valid_twap_period, Balance, Decimal, Timestamp,
+		RUN_CASES,
 	},
 };
 use composable_traits::vamm::{AssetType, Vamm as VammTrait, VammConfig, MINIMUM_TWAP_PERIOD};
@@ -106,8 +106,8 @@ proptest! {
 				quote_asset_reserves: vamm_config.quote_asset_reserves,
 				peg_multiplier: vamm_config.peg_multiplier,
 				twap_period: vamm_config.twap_period,
-				base_asset_twap: base_asset_twap,
-				quote_asset_twap: quote_asset_twap,
+				base_asset_twap,
+				quote_asset_twap,
 				invariant,
 				..Default::default()
 			};

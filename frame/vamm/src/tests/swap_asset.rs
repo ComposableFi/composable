@@ -1,20 +1,13 @@
 use crate::{
-	mock::{Balance, ExtBuilder, MockRuntime, Moment, System, TestPallet, VammId},
+	mock::{Balance, ExtBuilder, MockRuntime, System, TestPallet, VammId},
 	pallet::{Error, Event, VammMap},
 	tests::{
 		any_vamm_state, balance_range_lower_half, balance_range_upper_half, create_vamm,
 		default_swap_config, default_vamm_config, get_swap_config, get_vamm_state, multiple_swaps,
 		run_for_seconds, run_to_block, swap_config, then_and_now, TestSwapConfig, RUN_CASES,
 	},
-	VammState,
 };
-use composable_tests_helpers::test::helper::{
-	acceptable_computation_error, DEFAULT_EPSILON, DEFAULT_PRECISION,
-};
-use composable_traits::vamm::{
-	AssetType, Direction, SwapConfig, SwapOutput, Vamm as VammTrait, VammConfig,
-	MINIMUM_TWAP_PERIOD,
-};
+use composable_traits::vamm::{AssetType, Direction, SwapOutput, Vamm as VammTrait};
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 use sp_core::U256;

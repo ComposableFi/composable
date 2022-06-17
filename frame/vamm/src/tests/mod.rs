@@ -14,7 +14,7 @@ use composable_traits::vamm::{
 	AssetType, Direction, MovePriceConfig, SwapConfig, Vamm as VammTrait, VammConfig,
 	MINIMUM_TWAP_PERIOD,
 };
-use frame_support::{assert_noop, assert_ok, pallet_prelude::Hooks};
+use frame_support::{assert_ok, pallet_prelude::Hooks};
 use proptest::prelude::*;
 
 pub mod compute_invariant;

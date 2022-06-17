@@ -2,13 +2,13 @@ use crate::{
 	mock::{Balance, Event, ExtBuilder, MockRuntime, System, TestPallet},
 	pallet::{self, Error},
 	tests::{
-		any_sane_asset_amount, any_vamm_state, get_vamm_state, run_for_seconds, run_to_block,
-		Decimal, Timestamp, RUN_CASES,
+		any_sane_asset_amount, any_vamm_state, run_for_seconds, run_to_block, Decimal, Timestamp,
+		RUN_CASES,
 	},
 	VammState,
 };
 use composable_tests_helpers::test::helper::default_acceptable_computation_error;
-use composable_traits::vamm::{AssetType, Vamm as VammTrait, VammConfig};
+use composable_traits::vamm::{Vamm as VammTrait, VammConfig};
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 use sp_runtime::FixedPointNumber;

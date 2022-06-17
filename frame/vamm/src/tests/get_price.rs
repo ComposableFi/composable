@@ -1,18 +1,11 @@
 use crate::{
 	mock::{ExtBuilder, MockRuntime, TestPallet},
 	pallet::{Error, VammState},
-	tests::{
-		any_sane_asset_amount, balance_range, balance_range_upper_half, create_vamm,
-		default_vamm_config, run_for_seconds, Decimal, Timestamp, RUN_CASES,
-	},
+	tests::{any_sane_asset_amount, run_for_seconds, Decimal, Timestamp, RUN_CASES},
 };
 use composable_traits::vamm::{AssetType, Vamm as VammTrait};
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
-use sp_runtime::{
-	traits::{CheckedDiv, CheckedMul},
-	ArithmeticError,
-};
 
 // -------------------------------------------------------------------------------------------------
 //                                           Unit Tests
@@ -75,7 +68,7 @@ fn should_succeed_returning_correct_price() {
 			);
 			assert_ok!(
 				TestPallet::get_price(0, AssetType::Quote),
-				Decimal::from_inner(0500000000000000000) // 0.5 unit in decimal
+				Decimal::from_inner(500000000000000000) // 0.5 unit in decimal
 			);
 		})
 }
