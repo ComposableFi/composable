@@ -984,6 +984,7 @@ impl mosaic::Config for Runtime {
 	type RemoteAssetId = MosaicRemoteAssetId;
 	type ControlOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::mosaic::WeightInfo<Runtime>;
+	type RemoteAmmId = u128; // TODO: Swap to U256?
 }
 
 pub type LiquidationStrategyId = u32;
