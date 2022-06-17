@@ -570,14 +570,25 @@ pub mod pallet {
 		/// Withdraw collateral from a trader's account.
 		///
 		/// # Overview
-		/// TODO(0xangelo)
+		/// Allows users to withdraw free collateral from their margin account. The term 'free'
+		/// alludes to the amount of collateral that can be withdrawn without making the account go
+		/// below the initial margin ratio.
+		///
+		/// ![](https://www.plantuml.com/plantuml/svg/FOux3i8m40LxJW47IBQdYeJ4FJREmxPahwtzmFM9AAX6CzLivgmUlLrkLLAB0w7jMjodtOcKFskkNc8FWwOX3l4rZKwFqUSmtXkUbT9V29OAb5xA7PGQMAlafOmmq54vdzr8qSSRIsVDLTRPM7u76-Gu-GK0)
 		///
 		/// ## Parameters
 		/// - `amount`: The balance of collateral asset to be transferred from the Clearing House to
 		///   the caller
 		///
 		/// ## Assumptions or Requirements
-		/// TODO(0xangelo)
+		/// - All withdrawals transfer [`CollateralType`] asset to the caller
+		/// - The user cannot withdraw a 0 amount of collateral
+		/// - The user is only entitled to withdrawal amounts that do not put their account below
+		///   the IMR
+		/// - The user cannot withdraw collateral deposited by other users
+		/// - The user cannot withdraw collateral that was seized as trading fees in a market Fee
+		///   Pool
+		/// - The user cannot withdraw outstanding profits
 		///
 		/// ## Emits
 		/// TODO(0xangelo)
@@ -586,7 +597,8 @@ pub mod pallet {
 		/// TODO(0xangelo)
 		///
 		/// ## Errors
-		/// TODO(0xangelo)
+		/// - [`ZeroWithdrawalAmount`](Error::<T>::ZeroWithdrawalAmount)
+		/// - [`InsufficientCollateral`](Error::<T>::InsufficientCollateral)
 		///
 		/// # Weight/Runtime
 		/// TODO(0xangelo)
