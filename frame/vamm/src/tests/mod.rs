@@ -5,15 +5,16 @@ use std::ops::RangeInclusive;
 
 use crate::{
 	mock::{
-		Balance, MockRuntime, Origin, System as SystemPallet, TestPallet,
+		Balance, MockRuntime, Moment, Origin, System as SystemPallet, TestPallet,
 		Timestamp as TimestampPallet,
 	},
 	pallet::{self, VammState},
 };
 use composable_traits::vamm::{
-	AssetType, Direction, MovePriceConfig, SwapConfig, Vamm as VammTrait, MINIMUM_TWAP_PERIOD,
+	AssetType, Direction, MovePriceConfig, SwapConfig, Vamm as VammTrait, VammConfig,
+	MINIMUM_TWAP_PERIOD,
 };
-use frame_support::pallet_prelude::Hooks;
+use frame_support::{assert_noop, assert_ok, pallet_prelude::Hooks};
 use proptest::prelude::*;
 
 pub mod compute_invariant;
@@ -58,7 +59,6 @@ const RUN_CASES: u32 = 1000;
 //                                             Helper Functions
 // ----------------------------------------------------------------------------------------------------
 
-#[allow(dead_code)]
 fn run_to_block(n: u64) {
 	while SystemPallet::block_number() < n {
 		if SystemPallet::block_number() > 0 {
@@ -73,7 +73,6 @@ fn run_to_block(n: u64) {
 	}
 }
 
-#[allow(dead_code)]
 fn run_for_seconds(seconds: u64) {
 	// Not using an equivalent run_to_block call here because it causes the
 	// tests to slow down drastically
@@ -86,6 +85,29 @@ fn run_for_seconds(seconds: u64) {
 	let _ = TimestampPallet::set(Origin::none(), TimestampPallet::now() + 1_000 * seconds);
 	SystemPallet::on_initialize(SystemPallet::block_number());
 	TimestampPallet::on_initialize(SystemPallet::block_number());
+}
+
+fn default_vamm_config() -> VammConfig<Balance, Moment> {
+	VammConfig {
+		base_asset_reserves: 10_u128.pow(18) * 2,
+		quote_asset_reserves: 10_u128.pow(18) * 50,
+		peg_multiplier: 1,
+		twap_period: 3600,
+	}
+}
+
+fn default_swap_config(asset: AssetType, direction: Direction) -> SwapConfig<VammId, Balance> {
+	SwapConfig {
+		vamm_id: 0,
+		asset,
+		input_amount: 10_u128.pow(18),
+		direction,
+		output_amount_limit: 0,
+	}
+}
+
+fn create_vamm(vamm_config: &VammConfig<Balance, Moment>) {
+	assert_ok!(TestPallet::create(vamm_config));
 }
 
 // ----------------------------------------------------------------------------------------------------

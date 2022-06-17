@@ -35,7 +35,7 @@ proptest! {
 	}
 
 	#[test]
-	fn should_fail_if_vamm_does_not_exists(
+	fn should_fail_if_vamm_does_not_exist(
 		mut vamm_state in any_vamm_state(),
 		move_price_config in any_move_price_config(),
 	) {
@@ -180,7 +180,7 @@ proptest! {
 			vamms: vec![(0, vamm_state)]
 		}.build().execute_with(|| {
 			// for event emission
-			run_for_seconds(10);
+			run_for_seconds(1);
 
 			assert_ok!(TestPallet::move_price(&move_price_config));
 

@@ -127,7 +127,7 @@ pub enum Direction {
 }
 
 /// Specify a common encapsulation layer for the move price function.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct MovePriceConfig<VammId, Balance> {
 	pub vamm_id: VammId,
 	pub base_asset_reserves: Balance,

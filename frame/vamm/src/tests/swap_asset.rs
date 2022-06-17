@@ -2,9 +2,9 @@ use crate::{
 	mock::{Balance, ExtBuilder, MockRuntime, Moment, System, TestPallet, VammId},
 	pallet::{Error, Event, VammMap},
 	tests::{
-		any_vamm_state, balance_range_lower_half, balance_range_upper_half, get_swap_config,
-		get_vamm_state, multiple_swaps, run_for_seconds, run_to_block, swap_config, then_and_now,
-		TestSwapConfig, RUN_CASES,
+		any_vamm_state, balance_range_lower_half, balance_range_upper_half, create_vamm,
+		default_swap_config, default_vamm_config, get_swap_config, get_vamm_state, multiple_swaps,
+		run_for_seconds, run_to_block, swap_config, then_and_now, TestSwapConfig, RUN_CASES,
 	},
 	VammState,
 };
@@ -19,33 +19,6 @@ use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 use sp_core::U256;
 use sp_runtime::traits::Zero;
-
-// ----------------------------------------------------------------------------------------------------
-//                                               Helpers
-// ----------------------------------------------------------------------------------------------------
-
-fn default_vamm_config() -> VammConfig<Balance, Moment> {
-	VammConfig {
-		base_asset_reserves: 10_u128.pow(18) * 2,
-		quote_asset_reserves: 10_u128.pow(18) * 50,
-		peg_multiplier: 1,
-		twap_period: 3600,
-	}
-}
-
-fn default_swap_config(asset: AssetType, direction: Direction) -> SwapConfig<VammId, Balance> {
-	SwapConfig {
-		vamm_id: 0,
-		asset,
-		input_amount: 10_u128.pow(18),
-		direction,
-		output_amount_limit: 0,
-	}
-}
-
-fn create_vamm(vamm_config: &VammConfig<Balance, Moment>) {
-	assert_ok!(TestPallet::create(vamm_config));
-}
 
 // -------------------------------------------------------------------------------------------------
 //                                            Unit Tests

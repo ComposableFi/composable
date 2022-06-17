@@ -7,9 +7,11 @@ use crate::{
 	},
 	VammState,
 };
+use composable_tests_helpers::test::helper::default_acceptable_computation_error;
 use composable_traits::vamm::{AssetType, Vamm as VammTrait, VammConfig};
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
+use sp_runtime::FixedPointNumber;
 
 // ----------------------------------------------------------------------------------------------------
 //                                           Prop Compose
@@ -133,7 +135,6 @@ fn update_twap_fails_if_twap_timestamp_is_more_recent() {
 #[test]
 fn update_twap_succeeds() {
 	let timestamp = Timestamp::MIN;
-	let mut timestamp_greater = Timestamp::MIN + 1;
 	let twap = 10_u128.pow(18);
 	let new_twap = Some(Decimal::from_inner(10_u128.pow(18) * 5));
 	let vamm_state = VammState::<Balance, Timestamp, Decimal> {
@@ -149,20 +150,19 @@ fn update_twap_succeeds() {
 	ExtBuilder { vamm_count: 1, vamms: vec![(0, vamm_state)] }
 		.build()
 		.execute_with(|| {
-			// For event emission
-			run_for_seconds(timestamp_greater);
-			assert_ok!(TestPallet::update_twap(0, new_twap, new_twap));
+			run_for_seconds(1);
+			assert_ok!(
+				TestPallet::update_twap(0, new_twap, new_twap),
+				(new_twap.unwrap(), new_twap.unwrap())
+			);
 
-			timestamp_greater += 1;
-			run_for_seconds(timestamp_greater);
+			run_for_seconds(1);
 			assert_ok!(TestPallet::update_twap(0, None, new_twap));
 
-			timestamp_greater += 1;
-			run_for_seconds(timestamp_greater);
+			run_for_seconds(1);
 			assert_ok!(TestPallet::update_twap(0, new_twap, None));
 
-			timestamp_greater += 1;
-			run_for_seconds(timestamp_greater);
+			run_for_seconds(1);
 			assert_ok!(TestPallet::update_twap(0, None, None));
 		})
 }
@@ -220,7 +220,6 @@ fn should_update_twap_correctly() {
 
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
-	// #![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
 	fn update_twap_proptest_succeeds(
 		vamm_state in any_vamm_state(),

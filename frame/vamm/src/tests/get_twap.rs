@@ -73,7 +73,7 @@ proptest! {
 	}
 
 	#[test]
-	fn should_fail_if_vamm_does_not_exists_base(
+	fn should_fail_if_vamm_does_not_exist_base(
 		vamm_state in get_vamm_state(Default::default()),
 		vamm_id in 1..=VammId::MAX
 	) {
@@ -130,7 +130,7 @@ proptest! {
 	}
 
 	#[test]
-	fn should_fail_if_vamm_does_not_exists_quote(
+	fn should_fail_if_vamm_does_not_exist_quote(
 		vamm_state in get_vamm_state(Default::default()),
 		vamm_id in 1..=VammId::MAX
 	) {
