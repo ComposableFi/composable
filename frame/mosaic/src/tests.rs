@@ -1406,6 +1406,42 @@ mod add_remote_amm_id {
 		}
 
 		#[test]
+		fn should_be_impossible_to_add_amm_id_twice(
+			network_id in 1..u32::max_value(),
+			amm_id in 0..u128::max_value(),
+			start_block in 1..10_000u64,
+		) {
+			new_test_ext().execute_with(|| {
+
+				System::set_block_number(start_block);
+				prop_assert_ok!(Mosaic::add_remote_amm_id(
+					Origin::root(),
+					network_id,
+					amm_id
+				));
+
+				prop_assert_noop!(
+					Mosaic::add_remote_amm_id(
+						Origin::root(),
+						network_id,
+						amm_id
+					),
+					Error::<Test>::RemoteAmmIdAlreadyExists
+				);
+
+				Ok(())
+			})?;
+		}
+	}
+}
+
+mod remove_remote_amm_id {
+	use super::*;
+
+	proptest! {
+		#![proptest_config(ProptestConfig::with_cases(10000))]
+
+		#[test]
 		fn should_be_able_remove_amm_id_after_adding(
 			network_id in 1..u32::max_value(),
 			amm_id in 0..u128::max_value(),
@@ -1430,7 +1466,26 @@ mod add_remote_amm_id {
 			})?;
 		}
 
+		#[test]
+		fn should_not_be_able_to_remove_nonexistent_remote_amm_ids(
+			network_id in 1..u32::max_value(),
+			amm_id in 0..u128::max_value(),
+			start_block in 1..10_000u64,
+		) {
+			new_test_ext().execute_with(|| {
 
+				System::set_block_number(start_block);
+				prop_assert_noop!(
+					Mosaic::remove_remote_amm_id(
+						Origin::root(),
+						network_id,
+						amm_id
+					),
+					Error::<Test>::RemoteAmmIdNotFound
+				);
 
+				Ok(())
+			})?;
+		}
 	}
 }
