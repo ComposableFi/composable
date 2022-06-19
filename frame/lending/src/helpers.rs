@@ -1,4 +1,4 @@
-use crate::{models::borrower_data::BorrowerData, weights::WeightInfo, *};
+use crate::{models::borrower_data::BorrowerData, types::AccruedInterest, weights::WeightInfo, *};
 
 use crate::{
 	types::InitializeBlockCallCounters,
@@ -34,7 +34,7 @@ use sp_runtime::{
 	traits::{One, Saturating, Zero},
 	ArithmeticError, DispatchError, FixedPointNumber, FixedU128, Percent, Perquintill,
 };
-use sp_std::{fmt::Debug, vec::Vec};
+use sp_std::vec::Vec;
 
 // private helper functions
 impl<T: Config> Pallet<T> {
@@ -593,12 +593,6 @@ pub(crate) fn accrue_interest_internal<T: Config, I: InterestRate>(
 		.into();
 
 	Ok(AccruedInterest { accrued_increment, new_borrow_index })
-}
-
-#[derive(Debug, PartialEqNoBound)]
-pub(crate) struct AccruedInterest<T: Config> {
-	pub(crate) accrued_increment: T::Balance,
-	pub(crate) new_borrow_index: FixedU128,
 }
 
 /// Retrieve the current interest rate for the given `market_id`.

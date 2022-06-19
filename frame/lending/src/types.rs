@@ -1,3 +1,9 @@
+use crate::pallet::Config;
+use composable_traits::{defi::DeFiComposableConfig, lending::CreateInput};
+use frame_support::pallet_prelude::*;
+use sp_runtime::FixedU128;
+use sp_std::fmt::Debug;
+
 /// Used to count the calls in [`Pallet::initialize_block`]. Each field corresponds to a
 /// function call to count.
 #[derive(Debug, Default, Clone, Copy)]
@@ -11,12 +17,6 @@ pub(crate) struct InitializeBlockCallCounters {
 	pub(crate) handle_depositable: u32,
 	pub(crate) handle_must_liquidate: u32,
 }
-
-use crate::pallet::Config;
-
-use composable_traits::{defi::DeFiComposableConfig, lending::CreateInput};
-use frame_support::pallet_prelude::*;
-use sp_std::fmt::Debug;
 
 pub type MarketId = u32;
 
@@ -49,3 +49,9 @@ pub type CreateInputOf<T> = CreateInput<
 	<T as DeFiComposableConfig>::MayBeAssetId,
 	<T as frame_system::Config>::BlockNumber,
 >;
+
+#[derive(Debug, PartialEqNoBound)]
+pub(crate) struct AccruedInterest<T: Config> {
+	pub(crate) accrued_increment: T::Balance,
+	pub(crate) new_borrow_index: FixedU128,
+}
