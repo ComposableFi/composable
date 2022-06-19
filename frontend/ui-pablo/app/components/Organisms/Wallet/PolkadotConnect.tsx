@@ -49,7 +49,7 @@ const Status = () => {
               value: asset.assetId,
               label:
               balance.lte(1000)
-                  ? balance.toFixed(2).toString()
+                  ? balance.toFixed(2)
                   : (balance.div(1000)).toFixed(1) + "K",
               icon: asset.icon,
             }
