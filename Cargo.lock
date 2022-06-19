@@ -1663,7 +1663,6 @@ dependencies = [
  "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
- "pablo-runtime-api",
  "pallet-assets 0.0.1",
  "pallet-assets-registry",
  "pallet-aura",
@@ -2796,7 +2795,6 @@ dependencies = [
  "pallet-membership",
  "pallet-mosaic",
  "pallet-multisig",
- "pallet-nft",
  "pallet-oracle",
  "pallet-pablo",
  "pallet-preimage",
@@ -2804,7 +2802,6 @@ dependencies = [
  "pallet-randomness-collective-flip",
  "pallet-scheduler",
  "pallet-session",
- "pallet-staking-rewards",
  "pallet-sudo",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -6898,23 +6895,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "orml-rewards"
-version = "0.4.1-dev"
-source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=f709ed62262435b3ad80482d309e3575625d1e5b#f709ed62262435b3ad80482d309e3575625d1e5b"
-dependencies = [
- "frame-support",
- "frame-system",
- "orml-traits",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
 source = "git+https://github.com/open-web3-stack/open-runtime-module-library?rev=f709ed62262435b3ad80482d309e3575625d1e5b#f709ed62262435b3ad80482d309e3575625d1e5b"
@@ -7465,7 +7445,6 @@ name = "pallet-crowdloan-rewards"
 version = "0.0.1"
 dependencies = [
  "composable-support",
- "composable-traits",
  "frame-support",
  "frame-system",
  "hex",
@@ -7594,7 +7573,6 @@ dependencies = [
  "pallet-timestamp",
  "parity-scale-codec",
  "polkadot-parachain",
- "primitives",
  "proptest",
  "scale-info",
  "serde",
@@ -7838,9 +7816,7 @@ dependencies = [
  "composable-support",
  "composable-tests-helpers",
  "composable-traits",
- "cumulus-pallet-xcm",
  "frame-benchmarking",
- "frame-executive",
  "frame-support",
  "frame-system",
  "hex-literal",
@@ -7858,7 +7834,6 @@ dependencies = [
  "pallet-timestamp",
  "pallet-vault",
  "parity-scale-codec",
- "primitives",
  "proptest",
  "rand 0.7.3",
  "scale-info",
@@ -7881,8 +7856,6 @@ dependencies = [
  "composable-support",
  "composable-tests-helpers",
  "composable-traits",
- "cumulus-pallet-xcm",
- "cumulus-primitives-core",
  "frame-benchmarking",
  "frame-support",
  "frame-system",
@@ -7896,7 +7869,6 @@ dependencies = [
  "pallet-dutch-auction",
  "pallet-timestamp",
  "parity-scale-codec",
- "primitives",
  "proptest",
  "scale-info",
  "smallvec 1.8.0",
@@ -8006,7 +7978,6 @@ dependencies = [
  "composable-support",
  "composable-tests-helpers",
  "composable-traits",
- "frame-benchmarking",
  "frame-support",
  "frame-system",
  "pallet-timestamp",
@@ -8368,25 +8339,12 @@ dependencies = [
 name = "pallet-staking-rewards"
 version = "0.0.1"
 dependencies = [
- "composable-support",
  "composable-tests-helpers",
  "composable-traits",
  "env_logger",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "log 0.4.17",
- "orml-rewards",
  "orml-tokens",
  "orml-traits",
  "pallet-timestamp",
- "parity-scale-codec",
- "scale-info",
- "sp-arithmetic",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
 ]
 
 [[package]]
@@ -9003,7 +8961,6 @@ dependencies = [
  "orml-unknown-tokens",
  "orml-xcm-support",
  "orml-xtokens",
- "pablo-runtime-api",
  "pallet-assets 0.0.1",
  "pallet-assets-registry",
  "pallet-aura",

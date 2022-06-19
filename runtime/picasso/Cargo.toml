@@ -87,7 +87,6 @@ transaction-payment-rpc-runtime-api = { package = "pallet-transaction-payment-rp
 # local RPCs
 assets-runtime-api = { path = '../../frame/assets/runtime-api', default-features = false }
 crowdloan-rewards-runtime-api = { path = '../../frame/crowdloan-rewards/runtime-api', default-features = false }
-pablo-runtime-api = { path = '../../frame/pablo/runtime-api', default-features = false }
 
 # Used for runtime benchmarking
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
@@ -199,7 +198,6 @@ std = [
   "system-rpc-runtime-api/std",
   "transaction-payment-rpc-runtime-api/std",
   "assets-runtime-api/std",
-  "pablo-runtime-api/std",
   "crowdloan-rewards-runtime-api/std",
   "simnode-apis/std",
 ]
