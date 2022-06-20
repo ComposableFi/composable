@@ -53,6 +53,7 @@ mod port;
 pub mod routing;
 
 pub const IBC_DIGEST_ID: [u8; 4] = *b"/IBC";
+pub const MODULE_ID: &str = "pallet_ibc";
 
 #[derive(Clone, PartialEq, Eq, Encode, Decode, RuntimeDebug, TypeInfo)]
 pub struct Any {
@@ -127,6 +128,7 @@ pub mod pallet {
 				version::Version,
 			},
 			ics23_commitment::commitment::CommitmentPrefix,
+			ics26_routing::handler::MsgReceipt,
 		},
 		signer::Signer,
 	};
@@ -399,7 +401,7 @@ pub mod pallet {
 					match ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(
 						&mut ctx, msg,
 					) {
-						Ok((temp_events, temp_logs)) => {
+						Ok(MsgReceipt { events: temp_events, log: temp_logs }) => {
 							events.extend_from_slice(&temp_events);
 							logs.extend_from_slice(&temp_logs);
 						},
@@ -450,7 +452,7 @@ pub mod pallet {
 				counterparty,
 				version: Some(version),
 				delay_period,
-				signer: Signer::new(""),
+				signer: Signer::from_str(MODULE_ID).map_err(|_| Error::<T>::DecodingError)?,
 			}
 			.encode_vec()
 			.map_err(|_| Error::<T>::ProcessingError)?;

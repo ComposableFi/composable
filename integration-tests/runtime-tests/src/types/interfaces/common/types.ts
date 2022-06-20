@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type { Null, Struct, Text, u128 } from '@polkadot/types-codec';
+import type { Null, Struct, Text, u128 } from "@polkadot/types-codec";
 
 /** @name AssetsBalance */
 export interface AssetsBalance extends u128 {}
@@ -33,4 +33,4 @@ export interface CustomRpcCurrencyId extends SafeRpcWrapper {}
 /** @name SafeRpcWrapper */
 export interface SafeRpcWrapper extends Text {}
 
-export type PHANTOM_COMMON = 'common';
+export type PHANTOM_COMMON = "common";
