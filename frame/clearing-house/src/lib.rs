@@ -56,6 +56,7 @@
 //! ### Extrinsics
 //!
 //! - [`deposit_collateral`](Call::deposit_collateral)
+//! - [`withdraw_collateral`](Call::withdraw_collateral)
 //! - [`create_market`](Call::create_market)
 //! - [`open_position`](Call::open_position)
 //! - [`close_position`](Call::close_position)
@@ -65,6 +66,7 @@
 //! ### Implemented Functions
 //!
 //! - [`deposit_collateral`](pallet/struct.Pallet.html#method.deposit_collateral-1)
+//! - [`withdraw_collateral`](pallet/struct.Pallet.html#method.withdraw_collateral-1)
 //! - [`create_market`](pallet/struct.Pallet.html#method.create_market-1)
 //! - [`open_position`](pallet/struct.Pallet.html#method.open_position-1)
 //! - [`close_position`](pallet/struct.Pallet.html#method.close_position-1)
@@ -153,7 +155,9 @@ pub mod pallet {
 		Market, MarketConfig, Position,
 	};
 	use crate::{
-		math::{FixedPointMath, FromBalance, IntoBalance, IntoDecimal, IntoSigned, UnsignedMath},
+		math::{
+			self, FixedPointMath, FromBalance, IntoBalance, IntoDecimal, IntoSigned, UnsignedMath,
+		},
 		types::{AccountSummary, PositionInfo, BASIS_POINT_DENOMINATOR},
 		weights::WeightInfo,
 	};
@@ -168,7 +172,7 @@ pub mod pallet {
 	use frame_support::{
 		pallet_prelude::*,
 		storage::bounded_vec::BoundedVec,
-		traits::{tokens::fungibles::Transfer, GenesisBuild, UnixTime},
+		traits::{fungibles::Inspect, tokens::fungibles::Transfer, GenesisBuild, UnixTime},
 		transactional, Blake2_128Concat, PalletId, Twox64Concat,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
@@ -198,11 +202,8 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: DeFiComposableConfig + frame_system::Config {
 		/// Pallet implementation of asset transfers.
-		type Assets: Transfer<
-			Self::AccountId,
-			AssetId = Self::MayBeAssetId,
-			Balance = Self::Balance,
-		>;
+		type Assets: Inspect<Self::AccountId, AssetId = Self::MayBeAssetId, Balance = Self::Balance>
+			+ Transfer<Self::AccountId, AssetId = Self::MayBeAssetId, Balance = Self::Balance>;
 
 		/// Signed decimal fixed point number.
 		type Decimal: FixedPointNumber<Inner = Self::Integer>
@@ -458,6 +459,13 @@ pub mod pallet {
 			/// Amount of base asset closed.
 			base: T::Balance,
 		},
+		/// Collateral withdrawn by trader.
+		CollateralWithdrawn {
+			/// Id of the trader.
+			user: T::AccountId,
+			/// Amount of collateral withdrawn.
+			amount: T::Balance,
+		},
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -513,6 +521,8 @@ pub mod pallet {
 		UserHasNoPositions,
 		/// Attempted to create a new market but the funding period or frequency is 0 seconds long.
 		ZeroLengthFundingPeriodOrFrequency,
+		/// Attempted to withdraw a collateral amount of 0.
+		ZeroWithdrawalAmount,
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -530,7 +540,7 @@ pub mod pallet {
 		///
 		/// ![](http://www.plantuml.com/plantuml/svg/FSrD2W8n343XlQVG0ynaxsf0y1wPDhQ592tvmUihBbmztkexFD0YXI-teOMpKXfVUyJoEu3XUsyZUfxfP6LgaCPUfi1ZofgE9zDpGFaFa9TE1Yz38IXCQ4FRrcSwGHtO3CK1Qzq4hGtT5wF--8EqVli1)
 		///
-		/// ## Parameters:
+		/// ## Parameters
 		/// - `asset_id`: The identifier of the asset type being deposited
 		/// - `amount`: The balance of `asset` to be transferred from the caller to the Clearing
 		///   House
@@ -550,7 +560,7 @@ pub mod pallet {
 		///
 		/// # Weight/Runtime
 		/// `O(1)`
-		#[pallet::weight(<T as Config>::WeightInfo::add_margin())]
+		#[pallet::weight(<T as Config>::WeightInfo::deposit_collateral())]
 		pub fn deposit_collateral(
 			origin: OriginFor<T>,
 			asset_id: AssetIdOf<T>,
@@ -558,6 +568,55 @@ pub mod pallet {
 		) -> DispatchResult {
 			let account_id = ensure_signed(origin)?;
 			<Self as ClearingHouse>::deposit_collateral(&account_id, asset_id, amount)?;
+			Ok(())
+		}
+
+		/// Withdraw collateral from a trader's account.
+		///
+		/// # Overview
+		/// Allows users to withdraw free collateral from their margin account. The term 'free'
+		/// alludes to the amount of collateral that can be withdrawn without making the account go
+		/// below the initial margin ratio.
+		///
+		/// ![](https://www.plantuml.com/plantuml/svg/FOux3i8m40LxJW47IBQdYeJ4FJREmxPahwtzmFM9AAX6CzLivgmUlLrkLLAB0w7jMjodtOcKFskkNc8FWwOX3l4rZKwFqUSmtXkUbT9V29OAb5xA7PGQMAlafOmmq54vdzr8qSSRIsVDLTRPM7u76-Gu-GK0)
+		///
+		/// ## Parameters
+		/// - `amount`: The balance of collateral asset to be transferred from the Clearing House to
+		///   the caller
+		///
+		/// ## Assumptions or Requirements
+		/// - All withdrawals transfer [`CollateralType`] asset to the caller
+		/// - The user cannot withdraw a 0 amount of collateral
+		/// - The user is only entitled to withdrawal amounts that do not put their account below
+		///   the IMR
+		/// - The user cannot withdraw collateral deposited by other users
+		/// - The user cannot withdraw collateral that was seized as trading fees in a market Fee
+		///   Pool
+		/// - The user cannot withdraw outstanding profits
+		///
+		/// ## Emits
+		/// - [`CollateralWithdrawn`](Event::<T>::CollateralWithdrawn)
+		///
+		/// ## State Changes
+		/// - Settles funding and outstanding profits for all open [`Position`]s
+		/// - Updates the available profits in for the [`Markets`] that the user has open positions
+		///   in
+		/// - Updates the [`Collateral`] of the user
+		///
+		/// The pallet's collateral and insurance accounts are also updated, depending on the amount
+		/// of collateral withdrawn and the bad debt of the system.
+		///
+		/// ## Errors
+		/// - [`ZeroWithdrawalAmount`](Error::<T>::ZeroWithdrawalAmount)
+		/// - [`InsufficientCollateral`](Error::<T>::InsufficientCollateral)
+		///
+		/// # Weight/Runtime
+		/// `O(n)`, where `n` is the number of open positions, due to settlement of funding and
+		/// outstanding profits, in addition to calculation of the account's margin ratio.
+		#[pallet::weight(<T as Config>::WeightInfo::withdraw_collateral())]
+		pub fn withdraw_collateral(origin: OriginFor<T>, amount: T::Balance) -> DispatchResult {
+			let account_id = ensure_signed(origin)?;
+			<Self as ClearingHouse>::withdraw_collateral(&account_id, amount)?;
 			Ok(())
 		}
 
@@ -597,7 +656,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::create_market())]
 		pub fn create_market(origin: OriginFor<T>, config: MarketConfigOf<T>) -> DispatchResult {
 			ensure_signed(origin)?;
-			let _ = <Self as ClearingHouse>::create_market(&config)?;
+			let _ = <Self as ClearingHouse>::create_market(config)?;
 			Ok(())
 		}
 
@@ -762,7 +821,8 @@ pub mod pallet {
 		/// [`Markets`] is updated, specifically the [`Market`] attributes:
 		/// - [`cum_funding_rate`](Market::<T>::cum_funding_rate)
 		/// - [`funding_rate_ts`](Market::<T>::funding_rate_ts)
-		/// - [`fee_pool`](Market::<T>::fee_pool), if there's Long-Short imbalance
+		///
+		/// The market's Fee Pool account is also updated, if there's Long-Short imbalance
 		///
 		/// ## Errors
 		///
@@ -800,7 +860,8 @@ pub mod pallet {
 		/// liquidated first.
 		///
 		/// The caller of the function, the 'liquidator', may be credited with a liquidation fee in
-		/// their account, which can be withdrawn via TODO(0xangelo).
+		/// their account, which can be withdrawn via
+		/// [`withdraw_collateral`](Call::withdraw_collateral).
 		///
 		/// ## Parameters
 		///
@@ -876,7 +937,7 @@ pub mod pallet {
 			amount: Self::Balance,
 		) -> Result<(), DispatchError> {
 			ensure!(
-				CollateralType::<T>::get().ok_or(Error::<T>::NoCollateralTypeSet)? == asset_id,
+				Self::get_collateral_asset_id()? == asset_id,
 				Error::<T>::UnsupportedCollateralType
 			);
 
@@ -896,7 +957,77 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn create_market(config: &Self::MarketConfig) -> Result<Self::MarketId, DispatchError> {
+		#[transactional]
+		fn withdraw_collateral(
+			account_id: &Self::AccountId,
+			amount: Self::Balance,
+		) -> Result<(), DispatchError> {
+			ensure!(!amount.is_zero(), Error::<T>::ZeroWithdrawalAmount);
+
+			let mut collateral = Self::get_collateral(account_id).unwrap_or_else(Zero::zero);
+			// Settle funding payments and outstanding profits for all positions in the account
+			let mut positions = Self::get_positions(&account_id);
+			for position in positions.iter_mut() {
+				Self::settle_funding_and_outstanding_profits(
+					account_id,
+					position,
+					&mut collateral,
+				)?;
+			}
+
+			// Ensure the user is entitled to enough collateral to withdraw the requested amount
+			ensure!(amount <= collateral, Error::<T>::InsufficientCollateral);
+
+			// Actual withdrawal amount may be lower due to collateral and insurance account
+			// balances
+			let asset_id = Self::get_collateral_asset_id()?;
+			let collateral_account = Self::get_collateral_account();
+			let insurance_account = Self::get_insurance_account();
+			let (collateral_amount, insurance_amount) = Self::get_withdrawal_amounts(
+				asset_id,
+				&collateral_account,
+				&insurance_account,
+				amount,
+			);
+			let actual_amount = collateral_amount.try_add(&insurance_amount)?;
+			collateral.try_sub_mut(&actual_amount)?;
+
+			ensure!(
+				Self::meets_initial_margin_ratio(&positions, collateral)?,
+				Error::<T>::InsufficientCollateral
+			);
+
+			if !collateral_amount.is_zero() {
+				T::Assets::transfer(
+					asset_id,
+					&collateral_account,
+					account_id,
+					collateral_amount,
+					false,
+				)?;
+			}
+			if !insurance_amount.is_zero() {
+				T::Assets::transfer(
+					asset_id,
+					&insurance_account,
+					account_id,
+					insurance_amount,
+					false,
+				)?;
+			}
+
+			// Update Runtime Storage
+			Collateral::<T>::insert(account_id, collateral);
+			Positions::<T>::insert(account_id, positions);
+
+			Self::deposit_event(Event::<T>::CollateralWithdrawn {
+				user: account_id.clone(),
+				amount: actual_amount,
+			});
+			Ok(())
+		}
+
+		fn create_market(config: Self::MarketConfig) -> Result<Self::MarketId, DispatchError> {
 			ensure!(T::Oracle::is_supported(config.asset)?, Error::<T>::NoPriceFeedForAsset);
 			ensure!(
 				config.funding_period > 0 && config.funding_frequency > 0,
@@ -927,37 +1058,13 @@ pub mod pallet {
 
 			MarketCount::<T>::try_mutate(|id| {
 				let market_id = id.clone();
-				let market = Market {
-					vamm_id: T::Vamm::create(&config.vamm_config)?,
-					asset_id: config.asset,
-					margin_ratio_initial: config.margin_ratio_initial,
-					margin_ratio_maintenance: config.margin_ratio_maintenance,
-					margin_ratio_partial: config.margin_ratio_partial,
-					minimum_trade_size: config.minimum_trade_size,
-					funding_frequency: config.funding_frequency,
-					funding_period: config.funding_period,
-					taker_fee: config.taker_fee,
-					twap_period: config.twap_period,
-					available_gains: Zero::zero(),
-					base_asset_amount_long: Zero::zero(),
-					base_asset_amount_short: Zero::zero(),
-					cum_funding_rate_long: Zero::zero(),
-					cum_funding_rate_short: Zero::zero(),
-					fee_pool: Zero::zero(),
-					funding_rate_ts: T::UnixTime::now().as_secs(),
-					last_oracle_price: Zero::zero(),
-					last_oracle_twap: Zero::zero(),
-					last_oracle_ts: T::UnixTime::now().as_secs(),
-				};
-				Markets::<T>::insert(&market_id, market);
+				let asset = config.asset;
+				Markets::<T>::insert(&market_id, Market::new(config)?);
 
 				// Change the market count at the end
 				*id = id.checked_add(&One::one()).ok_or(ArithmeticError::Overflow)?;
 
-				Self::deposit_event(Event::MarketCreated {
-					market: market_id.clone(),
-					asset: config.asset,
-				});
+				Self::deposit_event(Event::MarketCreated { market: market_id.clone(), asset });
 				Ok(market_id)
 			})
 		}
@@ -970,7 +1077,7 @@ pub mod pallet {
 			quote_asset_amount: Self::Balance,
 			base_asset_amount_limit: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			let mut market = Self::get_market(&market_id).ok_or(Error::<T>::MarketIdNotFound)?;
+			let mut market = Self::try_get_market(market_id)?;
 			let mut quote_abs_amount_decimal = T::Decimal::from_balance(quote_asset_amount)?;
 			ensure!(
 				quote_abs_amount_decimal >= market.minimum_trade_size,
@@ -1052,7 +1159,13 @@ pub mod pallet {
 			// Charge fees
 			let fee = Self::fee_for_trade(&market, &quote_abs_amount_decimal)?;
 			collateral.try_sub_mut(&fee)?;
-			market.fee_pool.try_add_mut(&fee)?;
+			T::Assets::transfer(
+				Self::get_collateral_asset_id()?,
+				&Self::get_collateral_account(),
+				&Self::get_fee_pool_account(market_id.clone()),
+				fee,
+				false,
+			)?;
 
 			// Check account risk
 			if is_risk_increasing {
@@ -1082,7 +1195,7 @@ pub mod pallet {
 			market_id: &Self::MarketId,
 		) -> Result<Self::Balance, DispatchError> {
 			let mut collateral = Self::get_collateral(account_id).unwrap_or_else(Zero::zero);
-			let mut market = Self::get_market(market_id).ok_or(Error::<T>::MarketIdNotFound)?;
+			let mut market = Self::try_get_market(market_id)?;
 			let mut positions = Self::get_positions(account_id);
 			let (position, position_index) = Self::try_get_position(&mut positions, market_id)?;
 
@@ -1118,7 +1231,13 @@ pub mod pallet {
 				// Charge fees
 				let fee = Self::fee_for_trade(&market, &exit_value)?;
 				collateral.try_sub_mut(&fee)?;
-				market.fee_pool.try_add_mut(&fee)?;
+				T::Assets::transfer(
+					Self::get_collateral_asset_id()?,
+					&Self::get_collateral_account(),
+					&Self::get_fee_pool_account(market_id.clone()),
+					fee,
+					false,
+				)?;
 
 				// Attempt funding rate update at the end
 				Self::do_update_funding(market_id, &mut market, T::UnixTime::now().as_secs())?;
@@ -1188,9 +1307,8 @@ pub mod pallet {
 				Collateral::<T>::insert(liquidator_id, col.try_add(&liquidator_fee)?);
 			}
 			if !insurance_fee.is_zero() {
-				let asset_id = CollateralType::<T>::get().ok_or(Error::<T>::NoCollateralTypeSet)?;
 				T::Assets::transfer(
-					asset_id,
+					Self::get_collateral_asset_id()?,
 					&Self::get_collateral_account(),
 					&Self::get_insurance_account(),
 					insurance_fee,
@@ -1209,15 +1327,10 @@ pub mod pallet {
 		type Decimal = T::Decimal;
 
 		fn funding_rate(market: &Self::Market) -> Result<Self::Decimal, DispatchError> {
-			// Oracle returns prices in USDT cents
-			let unnormalized_oracle_twap = T::Oracle::get_twap(market.asset_id, vec![])?;
-			let oracle_twap = Self::Decimal::checked_from_rational(unnormalized_oracle_twap, 100)
-				.ok_or(ArithmeticError::Overflow)?;
-
 			let vamm_twap: Self::Decimal = T::Vamm::get_twap(market.vamm_id, AssetType::Base)
 				.and_then(|p| p.into_signed().map_err(|e| e.into()))?;
 
-			let price_spread = vamm_twap.try_sub(&oracle_twap)?;
+			let price_spread = vamm_twap.try_sub(&market.last_oracle_twap)?;
 			let period_adjustment = Self::Decimal::checked_from_rational(
 				market.funding_frequency,
 				market.funding_period,
@@ -1269,16 +1382,27 @@ pub mod pallet {
 
 			if !(funding_rate.is_zero() | net_base_asset_amount.is_zero()) {
 				let uncapped_funding = funding_rate.try_mul(&net_base_asset_amount)?;
+				let collateral_account = Self::get_collateral_account();
+				let fee_pool_account = Self::get_fee_pool_account(market_id.clone());
+				let collateral_asset_id = Self::get_collateral_asset_id()?;
 
 				if uncapped_funding.is_positive() {
 					// Fee Pool receives funding
-					market.fee_pool.try_add_mut(&uncapped_funding.into_balance()?)?;
+					T::Assets::transfer(
+						collateral_asset_id,
+						&collateral_account,
+						&fee_pool_account,
+						uncapped_funding.into_balance()?,
+						false,
+					)?;
 				} else {
 					// Fee Pool pays funding
 					// TODO(0xangelo): set limits for
 					// - total Fee Pool usage (reserve some funds for other operations)
 					// - Fee Pool usage for funding payments per call to `update_funding`
-					let usable_fees: T::Decimal = -market.fee_pool.into_decimal()?;
+					let usable_fees: T::Decimal =
+						-T::Assets::balance(collateral_asset_id, &fee_pool_account)
+							.into_decimal()?;
 					let mut capped_funding = sp_std::cmp::max(uncapped_funding, usable_fees);
 
 					// Since we're dealing with negatives, we check if the uncapped funding is
@@ -1302,7 +1426,13 @@ pub mod pallet {
 						capped_funding.try_sub_mut(&excess)?;
 					}
 
-					market.fee_pool.try_sub_mut(&capped_funding.into_balance()?)?;
+					T::Assets::transfer(
+						collateral_asset_id,
+						&fee_pool_account,
+						&collateral_account,
+						capped_funding.into_balance()?,
+						false,
+					)?;
 				};
 			}
 
@@ -1515,6 +1645,35 @@ pub mod pallet {
 			Ok(())
 		}
 
+		fn settle_funding_and_outstanding_profits(
+			account_id: &T::AccountId,
+			position: &mut Position<T>,
+			collateral: &mut T::Balance,
+		) -> Result<(), DispatchError> {
+			let mut market = Self::try_get_market(&position.market_id)?;
+
+			if let Some(direction) = position.direction() {
+				let payment = <Self as Instruments>::unrealized_funding(&market, position)?;
+				*collateral = Self::updated_balance(collateral, &payment)?;
+				position.last_cum_funding = market.cum_funding_rate(direction);
+			}
+
+			if !market.available_gains.is_zero() {
+				let mut outstanding_profits =
+					Self::outstanding_gains(account_id, &position.market_id)
+						.unwrap_or_else(Zero::zero);
+				let realizable_profits = cmp::min(outstanding_profits, market.available_gains);
+				collateral.try_add_mut(&realizable_profits)?;
+				outstanding_profits.try_sub_mut(&realizable_profits)?;
+				market.available_gains.try_sub_mut(&realizable_profits)?;
+				OutstandingGains::<T>::insert(account_id, &position.market_id, outstanding_profits);
+			}
+
+			Markets::<T>::insert(&position.market_id, market);
+
+			Ok(())
+		}
+
 		fn fee_for_trade(
 			market: &Market<T>,
 			quote_abs_amount: &T::Decimal,
@@ -1685,7 +1844,7 @@ pub mod pallet {
 		) -> Result<(), DispatchError> {
 			// Block if mark-index divergence was pushed too far
 			ensure!(
-				!Self::is_mark_index_too_divergent(market)? || was_mark_index_too_divergent,
+				was_mark_index_too_divergent || !Self::is_mark_index_too_divergent(market)?,
 				Error::<T>::OracleMarkTooDivergent
 			);
 
@@ -1693,16 +1852,15 @@ pub mod pallet {
 		}
 
 		fn is_mark_index_too_divergent(market: &Market<T>) -> Result<bool, DispatchError> {
-			let index_cents =
+			let index_price_in_cents =
 				T::Oracle::get_price(market.asset_id, T::Decimal::one().into_balance()?)?.price;
-			let index = T::Decimal::checked_from_rational(index_cents, 100)
+			let index_price = T::Decimal::checked_from_rational(index_price_in_cents, 100)
 				.ok_or(ArithmeticError::Overflow)?;
-			let mark: T::Decimal =
+			let mark_price: T::Decimal =
 				T::Vamm::get_price(market.vamm_id, AssetType::Base)?.into_signed()?;
 
-			let divergence = mark.try_sub(&index)?.try_div(&index)?;
-			let threshold = Self::max_price_divergence();
-			Ok(divergence.saturating_abs() > threshold)
+			let divergence = mark_price.try_sub(&index_price)?.try_div(&index_price)?;
+			Ok(divergence.saturating_abs() > Self::max_price_divergence())
 		}
 
 		fn is_funding_update_time(
@@ -1837,6 +1995,11 @@ pub mod pallet {
 			.output)
 		}
 
+		/// Returns the asset Id of the collateral type.
+		pub fn get_collateral_asset_id() -> Result<AssetIdOf<T>, DispatchError> {
+			CollateralType::<T>::get().ok_or_else(|| Error::<T>::NoCollateralTypeSet.into())
+		}
+
 		/// Returns the Id of the account holding user's collateral.
 		pub fn get_collateral_account() -> T::AccountId {
 			T::PalletId::get().into_sub_account("Collateral")
@@ -1845,6 +2008,11 @@ pub mod pallet {
 		/// Returns the Id of the account holding insurance funds.
 		pub fn get_insurance_account() -> T::AccountId {
 			T::PalletId::get().into_sub_account("Insurance")
+		}
+
+		/// Returns the Id of the account holding the Fee Pool funds for a market.
+		pub fn get_fee_pool_account(market_id: T::MarketId) -> T::AccountId {
+			T::PalletId::get().into_sub_account(market_id)
 		}
 
 		fn decimal_from_swapped(
@@ -1923,6 +2091,27 @@ pub mod pallet {
 			Ok(())
 		}
 
+		fn get_withdrawal_amounts(
+			asset_id: AssetIdOf<T>,
+			collateral_account: &T::AccountId,
+			insurance_account: &T::AccountId,
+			amount: T::Balance,
+		) -> (T::Balance, T::Balance) {
+			let collateral_balance = T::Assets::balance(asset_id, collateral_account);
+			let insurance_balance = T::Assets::balance(asset_id, insurance_account);
+			if amount <= collateral_balance {
+				(amount, T::Balance::zero())
+			} else {
+				(
+					collateral_balance,
+					cmp::min(
+						amount - collateral_balance, /* Safe since amount > collateral_balance */
+						insurance_balance,
+					),
+				)
+			}
+		}
+
 		fn updated_balance(
 			balance: &T::Balance,
 			delta: &T::Decimal,
@@ -1961,7 +2150,7 @@ pub mod pallet {
 				};
 				let last_oracle_10bp =
 					last_oracle.try_div(&T::Decimal::saturating_from_integer(1000))?;
-				oracle = Self::clip(
+				oracle = math::clip(
 					oracle,
 					last_oracle.try_sub(&last_oracle_10bp)?,
 					last_oracle.try_sub(&last_oracle_10bp)?,
@@ -1976,7 +2165,7 @@ pub mod pallet {
 				let since_last = cmp::max(1, now.saturating_sub(market.last_oracle_ts));
 				let from_start = cmp::max(1, market.twap_period.saturating_sub(since_last));
 
-				let new_twap = Self::weighted_average(
+				let new_twap = math::weighted_average(
 					&oracle,
 					&market.last_oracle_twap,
 					&T::Decimal::saturating_from_integer(since_last),
@@ -1991,6 +2180,7 @@ pub mod pallet {
 		}
 
 		fn oracle_price(asset_id: AssetIdOf<T>) -> Result<T::Decimal, DispatchError> {
+			// Oracle returns prices in USDT cents
 			let price_cents =
 				T::Oracle::get_price(asset_id, T::Decimal::one().into_balance()?)?.price;
 			T::Decimal::checked_from_rational(price_cents, 100)
@@ -2012,22 +2202,6 @@ pub mod pallet {
 			} else {
 				*oracle
 			})
-		}
-
-		fn clip(value: T::Decimal, lower: T::Decimal, upper: T::Decimal) -> T::Decimal {
-			cmp::min(cmp::max(lower, value), upper)
-		}
-
-		fn weighted_average(
-			oracle: &T::Decimal,
-			twap: &T::Decimal,
-			since_last: &T::Decimal,
-			from_start: &T::Decimal,
-		) -> Result<T::Decimal, DispatchError> {
-			Ok(oracle
-				.try_mul(since_last)?
-				.try_add(&twap.try_mul(from_start)?)?
-				.try_div(&since_last.try_add(from_start)?)?)
 		}
 	}
 }

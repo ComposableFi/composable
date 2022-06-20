@@ -7,6 +7,26 @@ use sp_runtime::{
 	ArithmeticError::{DivisionByZero, Overflow, Underflow},
 	FixedPointNumber, FixedPointOperand,
 };
+use sp_std::cmp;
+
+// -------------------------------------------------------------------------------------------------
+//                                          Functions
+// -------------------------------------------------------------------------------------------------
+
+/// Clips `value` between `lower` and `upper` (inclusive).
+pub fn clip<T: FixedPointNumber>(value: T, lower: T, upper: T) -> T {
+	cmp::min(cmp::max(lower, value), upper)
+}
+
+/// Computes a weighted average as `(a * wa + b * wb) / (wa + wb)`.
+pub fn weighted_average<T>(a: &T, b: &T, weight_a: &T, weight_b: &T) -> Result<T, ArithmeticError>
+where
+	T: FixedPointNumber,
+{
+	a.try_mul(weight_a)?
+		.try_add(&b.try_mul(weight_b)?)?
+		.try_div(&weight_a.try_add(weight_b)?)
+}
 
 // -------------------------------------------------------------------------------------------------
 //                                             Traits

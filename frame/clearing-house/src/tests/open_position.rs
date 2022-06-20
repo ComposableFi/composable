@@ -3,14 +3,15 @@ use crate::{
 		accounts::ALICE,
 		assets::USDC,
 		runtime::{
-			Balance, ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime,
-			System as SystemPallet, TestPallet, Vamm as VammPallet,
+			Balance, ExtBuilder, MarketId, Origin, Runtime, System as SystemPallet, TestPallet,
+			Vamm as VammPallet,
 		},
 	},
 	pallet::{Config, Direction, Error, Event},
 	tests::{
-		any_direction, any_price, as_balance, get_market, get_position, run_for_seconds,
-		set_fee_pool_depth, with_markets_context, with_trading_context, MarketConfig,
+		any_direction, any_price, as_balance, get_market, get_market_fee_pool, get_position,
+		run_for_seconds, set_fee_pool_depth, set_oracle_twap, with_markets_context,
+		with_trading_context, MarketConfig,
 	},
 };
 use composable_traits::{clearing_house::ClearingHouse, time::ONE_HOUR};
@@ -46,10 +47,6 @@ fn valid_quote_asset_amount() -> Balance {
 
 fn valid_base_asset_amount_limit() -> Balance {
 	as_balance(10)
-}
-
-fn valid_market_config() -> MarketConfig {
-	MarketConfig { taker_fee: 0, ..Default::default() }
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -103,7 +100,7 @@ fn fails_to_open_position_if_market_id_invalid() {
 fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 	let max_positions = <Runtime as Config>::MaxPositions::get() as usize;
 	let orders = max_positions + 1;
-	let configs = vec![valid_market_config(); orders];
+	let configs = vec![MarketConfig::default(); orders];
 	let margin = valid_quote_asset_amount();
 
 	cross_margin_context(configs, margin, |market_ids| {
@@ -143,8 +140,7 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 proptest! {
 	#[test]
 	fn open_position_in_new_market_succeeds(direction in any_direction()) {
-		let mut config = valid_market_config();
-		config.taker_fee = 10; // 0.1%
+		let config = MarketConfig { taker_fee: 10 /* 0.1% */, ..Default::default() };
 		let quote_amount = valid_quote_asset_amount();
 		let fees = (quote_amount * config.taker_fee) / 10_000;
 
@@ -186,7 +182,7 @@ proptest! {
 			// - net position
 			// - fees collected
 			assert_eq!(market.base_asset_amount(direction), position.base_asset_amount);
-			assert_eq!(market.fee_pool, fees);
+			assert_eq!(get_market_fee_pool(&market_id), fees);
 
 			SystemPallet::assert_last_event(
 				Event::TradeExecuted {
@@ -203,8 +199,7 @@ proptest! {
 	fn fails_to_open_position_if_trade_size_too_small(
 		(minimum_trade_size, eps) in min_trade_size_and_eps(as_balance((1, 100)))
 	) {
-		let mut market_config = valid_market_config();
-		market_config.minimum_trade_size = minimum_trade_size;
+		let market_config = MarketConfig { minimum_trade_size, ..Default::default() };
 		let quote_amount = eps.unsigned_abs();
 
 		with_trading_context(market_config, quote_amount, |market_id| {
@@ -231,8 +226,7 @@ proptest! {
 		direction in any_direction(),
 		(minimum_trade_size, eps) in min_trade_size_and_eps(as_balance((1, 100)))
 	) {
-		let mut config = valid_market_config();
-		config.minimum_trade_size = minimum_trade_size;
+		let config = MarketConfig { minimum_trade_size, ..Default::default() };
 		let quote_amount = valid_quote_asset_amount();
 
 		with_trading_context(config, quote_amount, |market_id| {
@@ -272,11 +266,13 @@ proptest! {
 		direction in any_direction(),
 		rate in -100..=100_i128, // -1% to 1% in basis points
 	) {
-		let mut config = valid_market_config();
-		config.funding_frequency = ONE_HOUR;
-		config.funding_period = ONE_HOUR;
-		config.margin_ratio_initial = (1, 10).into(); // allow 10x leverage, more than enough
-		config.taker_fee = 100; // 1%
+		let config = MarketConfig {
+			funding_frequency: ONE_HOUR,
+			funding_period: ONE_HOUR,
+			margin_ratio_initial: (1, 10).into(), // allow 10x leverage, more than enough
+			taker_fee: 100, // 1%
+			..Default::default()
+		};
 		let quote_amount = as_balance(10_000);
 		let fee = (quote_amount * config.taker_fee) / 10_000;
 
@@ -297,7 +293,7 @@ proptest! {
 
 			// Update market funding rate
 			run_for_seconds(ONE_HOUR);
-			OraclePallet::set_twap(Some(100)); // 1.0 in cents
+			set_oracle_twap(&market_id, 1.into());
 			// price in basis points
 			VammPallet::set_twap(Some(((10_000 + rate) as u128, 10_000).into()));
 			// Hack: set Fee Pool depth so as not to worry about capped funding rates
@@ -329,7 +325,7 @@ proptest! {
 	) {
 		let quote_amount = as_balance(100);
 
-		with_trading_context(valid_market_config(), quote_amount, |market_id| {
+		with_trading_context(MarketConfig::default(), quote_amount, |market_id| {
 			let positions_before = TestPallet::get_positions(&ALICE).len();
 
 			VammPallet::set_price(Some(10.into()));
@@ -375,8 +371,7 @@ proptest! {
 		new_price in any_price(),
 		percentf in percentage_fraction()
 	) {
-		let mut market_config = valid_market_config();
-		market_config.minimum_trade_size = 0.into();
+		let market_config = MarketConfig { minimum_trade_size: 0.into(), ..Default::default() };
 		let quote_amount = as_balance(100);
 
 		with_trading_context(market_config, quote_amount, |market_id| {
@@ -441,8 +436,7 @@ proptest! {
 		direction in any_direction(),
 		new_price in any_price()
 	) {
-		let mut market_config = valid_market_config();
-		market_config.minimum_trade_size = 0.into();
+		let market_config = MarketConfig { minimum_trade_size: 0.into(), ..Default::default() };
 		let quote_amount = as_balance(100);
 
 		with_trading_context(market_config, quote_amount, |market_id| {
@@ -516,8 +510,10 @@ proptest! {
 		direction in any_direction(),
 		excess in 1..as_balance(1_000_000),
 	) {
-		let mut market_config = valid_market_config();
-		market_config.margin_ratio_initial = (1, 10).into();  // 1/10 IMR, or 10x leverage
+		let market_config = MarketConfig {
+			margin_ratio_initial: (1, 10).into(),
+			..Default::default()
+		};
 		let margin = as_balance(10);
 
 		with_trading_context(market_config, margin, |market_id| {
@@ -543,8 +539,10 @@ proptest! {
 		max_leverage_percent in 100..2_000_u128,  // Anywhere from 1x to 20x margin
 		percentf in percentage_fraction()
 	) {
-		let mut market_config = valid_market_config();
-		market_config.margin_ratio_initial = (100, max_leverage_percent).into();
+		let market_config = MarketConfig {
+			margin_ratio_initial: (100, max_leverage_percent).into(),
+			..Default::default()
+		};
 		let margin = as_balance(10);
 		let quote_amount_max = market_config
 			.margin_ratio_initial
@@ -571,8 +569,10 @@ proptest! {
 
 	#[test]
 	fn can_decrease_position_even_if_below_imr(direction in any_direction()) {
-		let mut market_config = valid_market_config();
-		market_config.margin_ratio_initial = (1, 10).into();  // 1/10 IMR, or 10x leverage
+		let market_config = MarketConfig {
+			margin_ratio_initial: (1, 10).into(),  // 1/10 IMR, or 10x leverage
+			..Default::default()
+		};
 		let margin = as_balance(10);
 
 		with_trading_context(market_config, margin, |market_id| {
@@ -613,8 +613,10 @@ proptest! {
 	fn cannot_reverse_position_while_exceeding_max_leverage(
 		direction in any_direction()
 	) {
-		let mut market_config = valid_market_config();
-		market_config.margin_ratio_initial = (1, 10).into();  // 1/10 IMR, or 10x leverage
+		let market_config = MarketConfig {
+			margin_ratio_initial: (1, 10).into(),  // 1/10 IMR, or 10x leverage
+			..Default::default()
+		};
 		let margin = as_balance(10);
 
 		with_trading_context(market_config, margin, |market_id| {
@@ -655,11 +657,12 @@ proptest! {
 
 	#[test]
 	fn margin_ratio_takes_unrealized_funding_into_account(direction in any_direction()) {
-		let mut config = valid_market_config();
-		config.funding_frequency = ONE_HOUR;
-		config.funding_period = ONE_HOUR;
-		config.margin_ratio_initial = 1.into(); // 1x leverage
-		config.taker_fee = 0;
+		let config = MarketConfig {
+			funding_frequency: ONE_HOUR,
+			funding_period: ONE_HOUR,
+			margin_ratio_initial: 1.into(), // 1x leverage
+			..Default::default()
+		};
 		let margin = as_balance(100);
 
 		cross_margin_context(vec![config.clone(), config], margin, |market_ids| {
@@ -679,7 +682,7 @@ proptest! {
 
 			// Update funding rate for 1st market
 			run_for_seconds(ONE_HOUR);
-			OraclePallet::set_twap(Some(price_cents));
+			set_oracle_twap(&market_ids[0], (price_cents, 100).into());
 			VammPallet::set_twap(Some((
 				match direction { Direction::Long => price_cents + 1, _ => price_cents - 1 },
 				100
@@ -705,8 +708,10 @@ proptest! {
 	#[test]
 	fn imr_is_combination_of_market_imrs_with_open_positions(direction in any_direction()) {
 		let mut configs = Vec::<_>::new();
-		let mut market_config = valid_market_config();
-		market_config.margin_ratio_initial = (1, 10).into(); // 10x leverage
+		let mut market_config = MarketConfig {
+			margin_ratio_initial: (1, 10).into(),  // 10x leverage
+			..Default::default()
+		};
 		configs.push(market_config.clone());
 		market_config.margin_ratio_initial = (1, 20).into(); // 20x leverage
 		configs.push(market_config);

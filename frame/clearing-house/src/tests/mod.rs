@@ -7,13 +7,13 @@ use crate::{
 		accounts::{AccountId, ALICE},
 		assets::{AssetId, DOT, USDC},
 		runtime::{
-			Balance, Decimal, ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime,
-			System as SystemPallet, TestPallet, Timestamp as TimestampPallet, Vamm as VammPallet,
-			VammId,
+			Assets as AssetsPallet, Balance, Decimal, ExtBuilder, MarketId, Oracle as OraclePallet,
+			Origin, Runtime, System as SystemPallet, TestPallet, Timestamp as TimestampPallet,
+			Vamm as VammPallet, VammId,
 		},
 		vamm::VammConfig,
 	},
-	Config, Direction, Market as MarketGeneric, MarketConfig as MarketConfigGeneric, Markets,
+	Direction, Market as MarketGeneric, MarketConfig as MarketConfigGeneric, Markets,
 	MaxPriceDivergence,
 };
 use composable_traits::{
@@ -22,7 +22,11 @@ use composable_traits::{
 	time::{DurationSeconds, ONE_HOUR},
 	vamm::{AssetType, Direction as VammDirection, Vamm},
 };
-use frame_support::{assert_err, assert_ok, pallet_prelude::Hooks};
+use frame_support::{
+	assert_err, assert_ok,
+	pallet_prelude::Hooks,
+	traits::fungibles::{Inspect, Unbalanced},
+};
 use proptest::prelude::*;
 use sp_runtime::{traits::Zero, FixedI128, FixedPointNumber, FixedU128};
 
@@ -35,6 +39,7 @@ pub mod liquidate;
 pub mod math;
 pub mod open_position;
 pub mod update_funding;
+pub mod withdraw_collateral;
 
 // ----------------------------------------------------------------------------------------------------
 //                                             Setup
@@ -139,24 +144,27 @@ fn get_market(market_id: &MarketId) -> Market {
 }
 
 fn get_market_fee_pool(market_id: &MarketId) -> Balance {
-	TestPallet::get_market(market_id).unwrap().fee_pool
+	AssetsPallet::balance(USDC, &TestPallet::get_fee_pool_account(*market_id))
 }
 
 fn set_fee_pool_depth(market_id: &MarketId, depth: Balance) {
-	fn set_depth(market: &mut Option<Market>, d: Balance) -> Result<(), ()> {
-		if let Some(m) = market {
-			m.fee_pool = d;
-			Ok(())
-		} else {
-			Err(())
-		}
-	}
-
-	Markets::<Runtime>::try_mutate(market_id, |m| set_depth(m, depth)).unwrap();
+	AssetsPallet::set_balance(USDC, &TestPallet::get_fee_pool_account(*market_id), depth);
 }
 
 fn set_maximum_oracle_mark_divergence(fraction: FixedI128) {
 	MaxPriceDivergence::<Runtime>::set(fraction);
+}
+
+fn set_oracle_twap(market_id: &MarketId, twap: FixedI128) {
+	Markets::<Runtime>::try_mutate(market_id, |m| {
+		if let Some(m) = m {
+			m.last_oracle_twap = twap;
+			Ok(())
+		} else {
+			Err(())
+		}
+	})
+	.unwrap();
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -242,40 +250,18 @@ impl Default for MarketConfigGeneric<AssetId, Balance, Decimal, VammConfig> {
 			margin_ratio_maintenance: FixedI128::from_float(0.02),
 			// partially liquidate when above 25x leverage
 			margin_ratio_partial: FixedI128::from_float(0.04),
-			// 'One cent' of the quote asset
-			minimum_trade_size: FixedI128::from_float(0.01),
+			minimum_trade_size: 0.into(),
 			funding_frequency: ONE_HOUR,
 			funding_period: ONE_HOUR * 24,
-			taker_fee: 10, // 0.1%
+			taker_fee: 0,
 			twap_period: ONE_HOUR,
 		}
 	}
 }
 
-impl<T: Config> Default for MarketGeneric<T> {
+impl Default for MarketGeneric<Runtime> {
 	fn default() -> Self {
-		Self {
-			vamm_id: Zero::zero(),
-			asset_id: Default::default(),
-			margin_ratio_initial: Default::default(),
-			margin_ratio_maintenance: Default::default(),
-			margin_ratio_partial: Default::default(),
-			minimum_trade_size: Default::default(),
-			funding_frequency: Default::default(),
-			funding_period: Default::default(),
-			taker_fee: Default::default(),
-			twap_period: Default::default(),
-			available_gains: Zero::zero(),
-			base_asset_amount_long: Default::default(),
-			base_asset_amount_short: Default::default(),
-			cum_funding_rate_long: Default::default(),
-			cum_funding_rate_short: Default::default(),
-			fee_pool: Default::default(),
-			funding_rate_ts: Default::default(),
-			last_oracle_price: Zero::zero(),
-			last_oracle_twap: Zero::zero(),
-			last_oracle_ts: Default::default(),
-		}
+		Self::new(MarketConfigGeneric::<AssetId, Balance, Decimal, VammConfig>::default()).unwrap()
 	}
 }
 
@@ -326,7 +312,7 @@ trait MarketInitializer {
 		T: Iterator<Item = Option<MarketConfig>>;
 
 	fn create_market_helper(config: Option<MarketConfig>) -> MarketId {
-		<TestPallet as ClearingHouse>::create_market(&config.unwrap_or_default()).unwrap()
+		<TestPallet as ClearingHouse>::create_market(config.unwrap_or_default()).unwrap()
 	}
 }
 

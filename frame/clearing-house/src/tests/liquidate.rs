@@ -15,6 +15,7 @@ use crate::{
 			System as SystemPallet, TestPallet, Vamm as VammPallet,
 		},
 	},
+	tests::set_oracle_twap,
 	Direction, Error, Event, FullLiquidationPenalty, FullLiquidationPenaltyLiquidatorShare,
 	PartialLiquidationCloseRatio, PartialLiquidationPenalty,
 	PartialLiquidationPenaltyLiquidatorShare,
@@ -75,7 +76,6 @@ fn cant_liquidate_if_above_partial_margin_ratio_by_pnl() {
 		margin_ratio_initial: (1, 2).into(),      // 2x max leverage
 		margin_ratio_maintenance: (1, 10).into(), // 10% MMR
 		margin_ratio_partial: (2, 10).into(),     // 20% PMR
-		taker_fee: 0,
 		..Default::default()
 	};
 
@@ -125,7 +125,6 @@ fn cant_liquidate_if_above_partial_margin_ratio_by_funding() {
 		margin_ratio_initial: (1, 2).into(),       // 2x max leverage
 		margin_ratio_maintenance: (5, 100).into(), // 5% MMR
 		margin_ratio_partial: (7, 100).into(),     // 7% PMR
-		taker_fee: 0,
 		..Default::default()
 	};
 
@@ -172,7 +171,6 @@ fn can_partially_liquidate_if_below_partial_margin_ratio_by_pnl() {
 		margin_ratio_initial: (10, 100).into(),     // 10x leverage
 		margin_ratio_maintenance: (4, 100).into(),  // 25x leverage
 		margin_ratio_partial: (625, 10_000).into(), // 16x leverage
-		taker_fee: 0,
 		..Default::default()
 	};
 
@@ -257,7 +255,6 @@ fn partial_liquidation_realizes_funding_payments() {
 		margin_ratio_partial: (625, 10_000).into(), // 16x leverage
 		funding_frequency: 60,
 		funding_period: 60,
-		taker_fee: 0,
 		..Default::default()
 	};
 
@@ -285,8 +282,7 @@ fn partial_liquidation_realizes_funding_payments() {
 		run_for_seconds(config.funding_frequency);
 		// Time passes and funding rates are updated
 		VammPallet::set_twap(Some(100.into()));
-		// Index price moves against Alice's position
-		OraclePallet::set_twap(Some(10060 /* 10060 cents = 100.6 */));
+		set_oracle_twap(&market_id, (1006, 10).into() /* 100.6 */);
 		// HACK: set Fee Pool depth so as not to worry about capped funding rates
 		set_fee_pool_depth(&market_id, as_balance(1_000_000));
 		assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
@@ -333,7 +329,6 @@ fn can_fully_liquidate_if_below_maintenance_margin_ratio_by_pnl() {
 		margin_ratio_initial: (1, 2).into(),       // 2x max leverage
 		margin_ratio_maintenance: (6, 100).into(), // 6% MMR
 		margin_ratio_partial: (10, 100).into(),    // 10% PMR
-		taker_fee: 0,
 		..Default::default()
 	};
 
@@ -385,7 +380,6 @@ fn negative_accounts_imply_no_liquidation_fees() {
 		margin_ratio_initial: (1, 2).into(),       // 2x max leverage
 		margin_ratio_maintenance: (6, 100).into(), // 6% MMR
 		margin_ratio_partial: (20, 100).into(),    // 20% PMR
-		taker_fee: 0,
 		..Default::default()
 	};
 
@@ -436,7 +430,6 @@ fn position_in_market_with_greatest_margin_requirement_gets_liquidated_first() {
 		margin_ratio_initial: (1, 2).into(),
 		margin_ratio_maintenance: (20, 100).into(),
 		margin_ratio_partial: (40, 100).into(),
-		taker_fee: 0,
 		..Default::default()
 	};
 	let config1 = MarketConfig { margin_ratio_maintenance: (36, 100).into(), ..config0.clone() };
@@ -504,7 +497,6 @@ fn fees_are_proportional_to_base_asset_value_liquidated() {
 		margin_ratio_initial: (1, 2).into(),
 		margin_ratio_maintenance: (15, 100).into(),
 		margin_ratio_partial: (25, 100).into(),
-		taker_fee: 0,
 		..Default::default()
 	};
 	let config1 = MarketConfig { margin_ratio_maintenance: (20, 100).into(), ..config0.clone() };
@@ -581,7 +573,6 @@ fn fees_decrease_margin_for_remaining_positions() {
 		margin_ratio_initial: (1, 2).into(),
 		margin_ratio_maintenance: (20, 100).into(),
 		margin_ratio_partial: (40, 100).into(),
-		taker_fee: 0,
 		..Default::default()
 	};
 	let config1 = MarketConfig { margin_ratio_maintenance: (30, 100).into(), ..config0.clone() };
@@ -652,7 +643,6 @@ fn above_water_position_can_protect_underwater_position() {
 		margin_ratio_initial: (50, 100).into(),
 		margin_ratio_maintenance: (10, 100).into(),
 		margin_ratio_partial: (20, 100).into(),
-		taker_fee: 0,
 		..Default::default()
 	};
 	let configs = vec![config0; 2];

@@ -13,8 +13,8 @@ use crate::{
 	tests::{
 		any_direction, as_balance, get_collateral, get_market, get_market_fee_pool,
 		get_outstanding_gains, get_position, run_for_seconds, run_to_time,
-		set_maximum_oracle_mark_divergence, traders_in_one_market_context, with_trading_context,
-		Market, MarketConfig,
+		set_maximum_oracle_mark_divergence, set_oracle_twap, traders_in_one_market_context,
+		with_trading_context, Market, MarketConfig,
 	},
 };
 
@@ -128,7 +128,7 @@ fn should_realize_long_position_funding() {
 
 		// Time passes and the index moves against Alice's position by 10%
 		run_for_seconds(config.funding_frequency);
-		OraclePallet::set_twap(Some(1_800)); // 18 in cents
+		set_oracle_twap(&market_id, 18.into());
 		VammPallet::set_twap(Some(20.into()));
 		assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
 
@@ -221,7 +221,7 @@ fn should_realize_short_position_funding() {
 
 		// Time passes and the index moves against Alice's position by 10%
 		run_for_seconds(config.funding_frequency);
-		OraclePallet::set_twap(Some(550)); // 5.5 in cents
+		set_oracle_twap(&market_id, (55, 10).into()); // 5.5
 		VammPallet::set_twap(Some(5.into()));
 		assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
 
@@ -308,6 +308,10 @@ fn should_only_update_collateral_with_available_gains() {
 	let margins = vec![(ALICE, collateral), (BOB, collateral / 2)];
 
 	traders_in_one_market_context(config, margins, |market_id| {
+		// Make sure no funding is incurred
+		set_oracle_twap(&market_id, 10.into());
+		VammPallet::set_twap(Some(10.into()));
+
 		VammPallet::set_price(Some(10.into()));
 
 		let base = as_balance(10);

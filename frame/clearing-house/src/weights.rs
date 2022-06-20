@@ -2,7 +2,8 @@ use frame_support::weights::Weight;
 use sp_std::marker::PhantomData;
 
 pub trait WeightInfo {
-	fn add_margin() -> Weight;
+	fn deposit_collateral() -> Weight;
+	fn withdraw_collateral() -> Weight;
 	fn create_market() -> Weight;
 	fn open_position() -> Weight;
 	fn close_position() -> Weight;
@@ -13,7 +14,11 @@ pub trait WeightInfo {
 /// Weights for `pallet_clearing_house` using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
-	fn add_margin() -> Weight {
+	fn deposit_collateral() -> Weight {
+		1_000_u32.into()
+	}
+
+	fn withdraw_collateral() -> Weight {
 		1_000_u32.into()
 	}
 
@@ -40,7 +45,11 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 
 // For backwards compatibility and tests
 impl WeightInfo for () {
-	fn add_margin() -> Weight {
+	fn deposit_collateral() -> Weight {
+		1_000_u32.into()
+	}
+
+	fn withdraw_collateral() -> Weight {
 		1_000_u32.into()
 	}
 

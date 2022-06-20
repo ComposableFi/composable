@@ -9,6 +9,7 @@ use crate::{
 		},
 	},
 	pallet::{Error, Event, Markets},
+	tests::get_market_fee_pool,
 };
 use composable_traits::time::{DurationSeconds, ONE_HOUR};
 use frame_support::{assert_noop, assert_ok, traits::UnixTime};
@@ -188,9 +189,11 @@ fn create_first_market_succeeds() {
 		assert_eq!(market.base_asset_amount_short, 0.into());
 		assert_eq!(market.cum_funding_rate_long, 0.into());
 		assert_eq!(market.cum_funding_rate_short, 0.into());
-		assert_eq!(market.fee_pool, 0);
 		// Ensure last funding rate timestamp is the same as this block's time
 		assert_eq!(market.funding_rate_ts, block_time_now);
+
+		// Assert Fee Pool has no assets initially
+		assert_eq!(get_market_fee_pool(&0_u64), 0);
 	})
 }
 
