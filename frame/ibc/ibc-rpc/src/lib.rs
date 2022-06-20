@@ -1243,7 +1243,6 @@ where
 		&self,
 		block_hash: Block::Hash,
 	) -> Result<Vec<IdentifiedClientState>> {
-		// Storage key for system events
 		let api = self.client.runtime_api();
 		let at = BlockId::Hash(block_hash);
 		let events = api

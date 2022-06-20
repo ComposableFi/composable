@@ -424,7 +424,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::create_client())]
 		#[frame_support::transactional]
 		pub fn create_client(origin: OriginFor<T>, msg: Any) -> DispatchResult {
 			T::AdminOrigin::ensure_origin(origin.clone())?;
@@ -445,7 +445,7 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::initiate_connection())]
 		#[frame_support::transactional]
 		pub fn initiate_connection(
 			origin: OriginFor<T>,
