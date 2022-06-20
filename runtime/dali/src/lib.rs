@@ -1074,6 +1074,7 @@ impl pallet_ibc::Config for Runtime {
 	const CONNECTION_PREFIX: &'static [u8] = b"ibc";
 	type ExpectedBlockTime = ExpectedBlockTime;
 	type WeightInfo = crate::weights::pallet_ibc::WeightInfo<Self>;
+	type AdminOrigin = EnsureRoot<AccountId>;
 }
 
 impl pallet_ibc_ping::Config for Runtime {
@@ -1564,6 +1565,26 @@ impl_runtime_apis! {
 
 		fn denom_traces(_offset: Vec<u8>, _limit: u64, _height: u32) -> Option<ibc_primitives::QueryDenomTracesResponse> {
 			None
+		}
+
+		fn block_events() -> Vec<pallet_ibc::events::IbcEvent> {
+			let events = frame_system::Pallet::<Self>::read_events_no_consensus().into_iter().filter_map(|e| {
+				let frame_system::EventRecord{ event, ..} = *e;
+				match event {
+					Event::Ibc(evt) => {
+						match evt {
+							pallet_ibc::Event::IbcEvents{ events } => Some(events),
+							_ => None
+						}
+					},
+					_ => None
+				}
+			}).collect::<Vec<_>>();
+
+			events.into_iter().fold(vec![], |mut events, ev| {
+				events.extend_from_slice(&ev);
+				events
+			})
 		}
 	}
 	#[cfg(feature = "runtime-benchmarks")]

@@ -43,7 +43,7 @@ fn initialize_connection() {
 
 		let msg = Any { type_url: TYPE_URL.to_string().as_bytes().to_vec(), value: msg };
 
-		assert_ok!(Ibc::deliver(Origin::signed(1u64).into(), vec![msg]));
+		assert_ok!(Ibc::create_client(Origin::root(), msg));
 
 		let params = ConnectionParams {
 			version: (
@@ -81,7 +81,7 @@ fn should_open_a_channel() {
 
 		let msg = Any { type_url: TYPE_URL.to_string().as_bytes().to_vec(), value: msg };
 
-		assert_ok!(Ibc::deliver(Origin::signed(1u64).into(), vec![msg]));
+		assert_ok!(Ibc::create_client(Origin::root(), msg));
 
 		let params = ConnectionParams {
 			version: (
@@ -131,7 +131,7 @@ fn should_send_ping_packet() {
 
 		let msg = Any { type_url: TYPE_URL.to_string().as_bytes().to_vec(), value: msg };
 
-		assert_ok!(Ibc::deliver(Origin::signed(1u64).into(), vec![msg]));
+		assert_ok!(Ibc::create_client(Origin::root(), msg));
 
 		let params = ConnectionParams {
 			version: (

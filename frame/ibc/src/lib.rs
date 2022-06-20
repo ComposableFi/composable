@@ -47,7 +47,7 @@ mod channel;
 mod client;
 mod connection;
 mod errors;
-mod events;
+pub mod events;
 mod host_functions;
 mod port;
 pub mod routing;
@@ -156,6 +156,8 @@ pub mod pallet {
 		#[pallet::constant]
 		type ExpectedBlockTime: Get<u64>;
 		type WeightInfo: WeightInfo;
+		/// Origin allowed to create light clients and initiate connections
+		type AdminOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	#[pallet::pallet]
@@ -425,7 +427,7 @@ pub mod pallet {
 		#[pallet::weight(0)]
 		#[frame_support::transactional]
 		pub fn create_client(origin: OriginFor<T>, msg: Any) -> DispatchResult {
-			ensure_root(origin)?;
+			T::AdminOrigin::ensure_origin(origin.clone())?;
 			let mut ctx = routing::Context::<T>::new();
 			let type_url =
 				String::from_utf8(msg.type_url.clone()).map_err(|_| Error::<T>::DecodingError)?;
@@ -449,7 +451,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			params: ConnectionParams,
 		) -> DispatchResult {
-			ensure_root(origin)?;
+			T::AdminOrigin::ensure_origin(origin.clone())?;
 			if !ClientStates::<T>::contains_key(params.client_id.clone()) {
 				return Err(Error::<T>::ClientStateNotFound.into())
 			}

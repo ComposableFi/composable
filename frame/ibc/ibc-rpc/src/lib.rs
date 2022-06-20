@@ -309,9 +309,9 @@ pub trait IbcApi<BlockNumber, Hash> {
 		height: u32,
 	) -> Result<QueryDenomTracesResponse>;
 
-	/// Query clientId created in block
-	#[method(name = "ibc_queryClientIdFromBlock")]
-	fn query_client_id_from_block(&self, block_hash: Hash) -> Result<IdentifiedClientState>;
+	/// Query newly created clients in block
+	#[method(name = "ibc_queryNewlyCreatedClients")]
+	fn query_newly_created_clients(&self, block_hash: Hash) -> Result<Vec<IdentifiedClientState>>;
 }
 
 /// Converts a runtime trap into an RPC error.
@@ -1239,8 +1239,41 @@ where
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 
-	fn query_client_id_from_block(&self, block_hash: Block::Hash) -> Result<IdentifiedClientState> {
+	fn query_newly_created_clients(
+		&self,
+		block_hash: Block::Hash,
+	) -> Result<Vec<IdentifiedClientState>> {
+		// Storage key for system events
+		let api = self.client.runtime_api();
 		let at = BlockId::Hash(block_hash);
-		Err(runtime_error_into_rpc_error("Unimplemented"))
+		let events = api
+			.block_events(&at)
+			.map_err(|_| runtime_error_into_rpc_error("[ibc_rpc]: failed to read block events"))?;
+
+		let mut identified_clients = vec![];
+		for e in events {
+			match e {
+				pallet_ibc::events::IbcEvent::CreateClient { client_id, .. } => {
+					let result: ibc_primitives::QueryClientStateResponse = api
+						.client_state(&at, client_id.clone())
+						.ok()
+						.flatten()
+						.ok_or_else(|| runtime_error_into_rpc_error("client state to exist"))?;
+
+					let client_state = AnyClientState::decode_vec(&result.client_state)
+						.map_err(|_| runtime_error_into_rpc_error("client state to be valid"))?;
+					let client_state = IdentifiedClientState {
+						client_id: String::from_utf8(client_id).map_err(|_| {
+							runtime_error_into_rpc_error("client id should be valid utf8")
+						})?,
+						client_state: Some(client_state.into()),
+					};
+					identified_clients.push(client_state)
+				},
+				_ => continue,
+			}
+		}
+
+		Ok(identified_clients)
 	}
 }
