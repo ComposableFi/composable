@@ -1,13 +1,10 @@
 import { FormTitle, ValueSelector } from "@/components";
-import { getToken } from "@/defi/Tokens";
-import { TokenId } from "@/defi/types";
 import { useAppSelector } from "@/hooks/store";
 import {
   closeConfirmingModal,
   openConfirmingModal,
   setMessage,
 } from "@/stores/ui/uiSlice";
-import CheckIcon from "@mui/icons-material/Check";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   alpha,
@@ -21,17 +18,16 @@ import {
 import { BoxProps } from "@mui/system";
 import BigNumber from "bignumber.js";
 import { useRouter } from "next/router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { ConfirmingModal } from "./ConfirmingModal";
 import { PreviewDetails } from "./PreviewDetails";
 import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
 import useDebounce from "@/hooks/useDebounce";
 import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
-import { useUserProvidedLiquidityByPool } from "@/store/hooks/useUserProvidedLiquidityByPool";
 import { fetchSpotPrice } from "@/updaters/swaps/utils";
 import { useParachainApi } from "substrate-react";
-import { DEFAULT_DECIMALS, DEFAULT_NETWORK_ID } from "@/updaters/constants";
+import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
 
 export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const theme = useTheme();
@@ -98,6 +94,7 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
       setExpectedRemoveAmountBase(new BigNumber(0));
       setExpectedRemoveAmountQuote(new BigNumber(0));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parachainApi, debouncedPercentage])
 
   const onBackHandler = () => {
@@ -119,10 +116,12 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   useEffect(() => {
     confirmed && dispatch(closeConfirmingModal());
     !confirmed && dispatch(setMessage({}));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [confirmed]);
 
   useEffect(() => {
     dispatch(setMessage({}));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

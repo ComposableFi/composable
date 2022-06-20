@@ -174,6 +174,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
       setIsConfirmed(false);
       dispatch(closeConfirmingModal());
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConfirmed]);
 
   const [isProcessing, setIsProcessing] = useState(false);

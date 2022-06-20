@@ -78,6 +78,7 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
     if (base === "0") return "0";
 
     return tokenSold.div(new BigNumber(base)).times(100).toFixed(2);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stats.startBalances.base, tokenSold]);
 
   return (

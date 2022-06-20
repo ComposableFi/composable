@@ -48,6 +48,7 @@ export const DropdownCombinedInput: React.FC<DropdownCombinedInputProps> = ({
 
   useEffect(() => {
     isAnchorable && setAnchorEl(dropdownRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

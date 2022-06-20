@@ -44,6 +44,7 @@ export const PoolDetails: React.FC<BoxProps> = ({
   useEffect(() => {
     const { poolId } = router.query;
     setPoolId(Number(poolId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [tab, setTab] = useState<number>(0);

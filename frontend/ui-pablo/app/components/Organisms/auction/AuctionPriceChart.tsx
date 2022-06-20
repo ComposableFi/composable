@@ -20,7 +20,6 @@ export type AuctionPriceChartProps = {
 
 export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
   baseAsset,
-  quoteAsset,
   data,
   height,
   dateFormat,
@@ -144,6 +143,7 @@ export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
 
   useEffect(() => {
     setOptions(chartOptions(color || theme.palette.primary.main, dateFormat));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -151,6 +151,7 @@ export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
       ...options,
       ...chartOptions(color || theme.palette.primary.main, dateFormat),
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateFormat, color]);
 
   return (

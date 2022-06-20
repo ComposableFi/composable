@@ -30,6 +30,7 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({
 
   const copyTokenAddress = useCallback(() => {
     navigator.clipboard.writeText("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auction.poolId]);
 
   return (
