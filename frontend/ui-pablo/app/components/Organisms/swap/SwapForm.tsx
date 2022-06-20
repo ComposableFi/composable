@@ -174,6 +174,8 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
       setIsConfirmed(false);
       dispatch(closeConfirmingModal());
     }
+    // dispatch does not need to be
+    // added to a dependancy list
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConfirmed]);
 

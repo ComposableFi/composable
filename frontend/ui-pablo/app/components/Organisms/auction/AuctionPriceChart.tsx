@@ -143,14 +143,16 @@ export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
 
   useEffect(() => {
     setOptions(chartOptions(color || theme.palette.primary.main, dateFormat));
+    // do not add chart options as dependancy
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [color, theme, dateFormat]);
 
   useEffect(() => {
     setOptions({
       ...options,
       ...chartOptions(color || theme.palette.primary.main, dateFormat),
     });
+    // do not add chart options as dependancy
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateFormat, color]);
 

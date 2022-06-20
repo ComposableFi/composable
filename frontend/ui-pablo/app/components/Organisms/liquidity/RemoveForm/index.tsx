@@ -43,8 +43,6 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
     quoteAsset
   } = useLiquidityPoolDetails(poolId)
 
-  const { share } = useAppSelector((state) => state.pool.currentLiquidity);
-
   const isConfirmingModalOpen = useAppSelector(
     (state) => state.ui.isConfirmingModalOpen
   );
@@ -94,8 +92,7 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
       setExpectedRemoveAmountBase(new BigNumber(0));
       setExpectedRemoveAmountQuote(new BigNumber(0));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [parachainApi, debouncedPercentage])
+  }, [parachainApi, debouncedPercentage, lpBalance])
 
   const onBackHandler = () => {
     router.push("/pool");
@@ -116,11 +113,15 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   useEffect(() => {
     confirmed && dispatch(closeConfirmingModal());
     !confirmed && dispatch(setMessage({}));
+    // dispatch doesnt need to be added to
+    // dependancy list 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [confirmed]);
 
   useEffect(() => {
     dispatch(setMessage({}));
+    // dispatch doesnt need to be added to
+    // dependancy list 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

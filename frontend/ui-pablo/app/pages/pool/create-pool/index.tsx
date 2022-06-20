@@ -21,8 +21,7 @@ const CreatePoolHome: NextPage = () => {
 
   useEffect(() => {
     extensionStatus !== "connected" && !isPolkadotModalOpen && router.push('/pool');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [extensionStatus, isPolkadotModalOpen]);
+  }, [extensionStatus, isPolkadotModalOpen, router]);
 
   const breadcrumbs = [
     <Link key="pool" underline="none" color="primary" href="/pool">

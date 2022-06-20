@@ -40,8 +40,7 @@ const SelectBond: NextPage = () => {
     if (extensionStatus !== "connected") {
       router.push("/bond");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [extensionStatus]);
+  }, [extensionStatus, router]);
 
   useEffect(() => {
     if (message.text) {

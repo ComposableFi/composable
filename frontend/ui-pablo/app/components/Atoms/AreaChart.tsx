@@ -141,8 +141,7 @@ export const AreaChart: React.FC<AreaChartProps> = ({
     setOptions(
       chartOptions(color || theme.palette.primary.main, labelFormat, min, max)
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [theme, color, labelFormat, min, max]);
 
   useEffect(() => {
     setOptions({
@@ -154,8 +153,7 @@ export const AreaChart: React.FC<AreaChartProps> = ({
         max
       ),
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, color]);
+  }, [data, color, min, max, labelFormat, theme, options]);
 
   return (
     <Box mt={marginTop} height={height} overflow="hidden">

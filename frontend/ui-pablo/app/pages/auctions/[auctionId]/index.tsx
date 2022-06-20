@@ -54,8 +54,7 @@ const Auction: NextPage = () => {
 
       return () => clearInterval(interval);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [parachainApi, activeLBP.poolId]);
+  }, [parachainApi, activeLBP, setLiquidityBootstrappingPoolSpotPrice]);
 
   const baseAsset = getAssetById("picasso", activeLBP.pair.base);
   const quoteAsset = getAssetById("picasso", activeLBP.pair.quote);
@@ -99,6 +98,9 @@ const Auction: NextPage = () => {
     return () => {
       resetActiveLBP();
     };
+    // ignoring because it's a cleanup
+    // case and it only runs on destruction
+    // of page by react, hance no dependancies
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

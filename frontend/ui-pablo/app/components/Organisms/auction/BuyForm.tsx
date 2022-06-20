@@ -73,7 +73,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     } else {
       setBalanceQuote(new BigNumber(0));
     }
-  }, [assetBalances, baseAsset, auction.pair.quote]);
+  }, [assetBalances, quoteAsset, auction.pair.quote]);
 
   const [balanceBase, setBalanceBase] = useState(new BigNumber(0));
   useEffect(() => {
@@ -83,8 +83,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     } else {
       setBalanceBase(new BigNumber(0));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [assetBalances, baseAsset, auction.pair.quote]);
+  }, [assetBalances, baseAsset, auction.pair.base]);
 
   const [valid1, setValid1] = useState<boolean>(false);
   const [valid2, setValid2] = useState<boolean>(false);
@@ -168,10 +167,10 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
             parachainApi,
             signer,
             (txHash: string) => {
-              enqueueSnackbar('Initiating Transaction');
+              enqueueSnackbar("Initiating Transaction");
             },
             (txHash: string, events) => {
-              enqueueSnackbar('Transaction Finalized');
+              enqueueSnackbar("Transaction Finalized");
             }
           )
           .catch((err) => {
@@ -181,8 +180,15 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
         enqueueSnackbar(err.message);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [parachainApi, executor, selectedAccount, baseAsset, baseAssetAmount]);
+  }, [
+    parachainApi,
+    executor,
+    selectedAccount,
+    baseAssetAmount,
+    minReceive,
+    enqueueSnackbar,
+    auction.pair,
+  ]);
 
   return (
     <Box

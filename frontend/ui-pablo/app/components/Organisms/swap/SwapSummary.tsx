@@ -47,8 +47,7 @@ export const SwapSummary: React.FC<SwapSummaryProps> = ({
     } else {
       return new BigNumber(0);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [quoteAssetAmount, validTokens]);
+  }, [quoteAssetAmount, validTokens, fee]);
 
   if (!validTokens) {
     return <></>;

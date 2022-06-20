@@ -2,12 +2,10 @@ import { useEffect } from "react";
 import useStore from "@/store/useStore";
 import { useParachainApi } from "substrate-react";
 import { AssetId } from "@/defi/polkadot/types";
-import { Assets, getAssetOnChainId } from "@/defi/polkadot/Assets";
+import { Assets } from "@/defi/polkadot/Assets";
 import BigNumber from "bignumber.js";
 import {
-  swapTransactionsToChartSeries,
   fetchSpotPrice,
-  transformSwapSubsquidTx,
 } from "./utils";
 import { isValidAssetPair } from "../utils";
 import {
@@ -48,8 +46,7 @@ const Updater = () => {
       const balance = assetBalances[ui.quoteAssetSelected as AssetId].picasso;
       setUserAccountBalanceSwaps("quote", balance);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [swaps.ui, assetBalances]);
+  }, [swaps, assetBalances, setUserAccountBalanceSwaps]);
   /**
    * Triggered when user changes second
    * token from token list dropdown on
@@ -64,8 +61,7 @@ const Updater = () => {
       const balance = assetBalances[ui.baseAssetSelected as AssetId].picasso;
       setUserAccountBalanceSwaps("base", balance);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [swaps.ui, assetBalances]);
+  }, [swaps, assetBalances, setUserAccountBalanceSwaps]);
   /**
    * This hook is triggered when all
    * pools are fetched from the pablo pallet
@@ -108,7 +104,7 @@ const Updater = () => {
             let dexRoute: any = null;
             if (!!baseToQuoteRouteJSON) dexRoute = baseToQuoteRouteJSON;
             if (!!quoteToBaseRouteJSON) dexRoute = quoteToBaseRouteJSON;
-            
+
             if (dexRoute === null) {
               /**
                * Clear Data here as no
@@ -158,7 +154,10 @@ const Updater = () => {
               }
 
               if (pool) {
-                let poolAccountId = createPoolAccountId(parachainApi, Number(poolId));
+                let poolAccountId = createPoolAccountId(
+                  parachainApi,
+                  Number(poolId)
+                );
 
                 let lbp = undefined;
                 let fee = new BigNumber(pool.feeConfig.feeRate);
@@ -208,11 +207,13 @@ const Updater = () => {
       }
     }
   }, [
-    swaps.ui,
+    swaps,
     parachainApi,
-    liquidityBootstrappingPools.verified.length,
-    constantProductPools.verified.length,
-    stableSwapPools.verified.length,
+    liquidityBootstrappingPools.verified,
+    constantProductPools.verified,
+    stableSwapPools.verified,
+    setDexRouteSwaps,
+    setPoolConstantsSwaps,
   ]);
 
   useEffect(() => {
@@ -249,15 +250,11 @@ const Updater = () => {
               parachainApi,
               swaps.poolConstants.pair,
               swaps.poolConstants.poolIndex
-            )
+            ),
           ];
 
           Promise.all(promises).then(
-            ([
-              baseAssetBalance,
-              quoteAssetBalance,
-              spotPrice,
-            ]) => {
+            ([baseAssetBalance, quoteAssetBalance, spotPrice]) => {
               if (isReversedTrade) {
                 spotPrice = new BigNumber(1).div(spotPrice as BigNumber);
               }
@@ -267,7 +264,6 @@ const Updater = () => {
                 baseAssetReserve: baseAssetBalance as string,
                 quoteAssetReserve: quoteAssetBalance as string,
               });
-
             }
           );
         }
@@ -279,7 +275,7 @@ const Updater = () => {
         quoteAssetReserve: "0",
       });
     }
-  }, [swaps.ui, swaps.poolConstants.poolIndex, parachainApi]);
+  }, [swaps.poolConstants, parachainApi, setPoolVariablesSwaps, swaps.ui]);
 
   return null;
 };
