@@ -1,13 +1,22 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
 import { DepositForm } from "@ui-pablo/app/components/Organisms/bonds/DepositForm";
-import { useAppSelector } from "@/hooks/store";
+import { useDepositSummary } from "../../../app/store/hooks/bond/useDepositSummary";
+import { useSupplySummary } from "../../../app/store/hooks/bond/useSupplySummary";
 
 const DepositFormStories = () => {
-  const bond = useAppSelector((state) => state.bonds.selectedBond);
+  const supplySummary = useSupplySummary({ offerId: 1 });
+  const depositSummary = useDepositSummary({ offerId: 1 });
+
+  if (supplySummary === "no-summary" || depositSummary === "no-summary")
+    return null;
+
   return (
     <Box>
-      <DepositForm bond={bond} />
+      <DepositForm
+        depositSummary={depositSummary}
+        supplySummary={supplySummary}
+      />
     </Box>
   );
 };

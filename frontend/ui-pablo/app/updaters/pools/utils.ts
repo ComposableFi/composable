@@ -163,18 +163,17 @@ export async function isVerifiedPool(
     dexRoute = dexRoute.toJSON();
     dexRouteReverse = dexRouteReverse.toJSON();
 
-    if (!dexRoute && !dexRouteReverse) return -1
-    dexRoute = dexRoute ? dexRoute : dexRouteReverse
-    if (!dexRoute.direct) return -1
+    if (!dexRoute && !dexRouteReverse) return -1;
+    dexRoute = dexRoute ? dexRoute : dexRouteReverse;
+    if (!dexRoute.direct) return -1;
 
     if (dexRoute.direct.length && dexRoute.direct[0] === pool.poolId) {
-      return pool.poolId
+      return pool.poolId;
     } else {
-      return -1
+      return -1;
     }
-
   } catch (err: any) {
-    console.error(err.message)
+    console.error(err.message);
     return -1;
   }
 }
@@ -225,7 +224,7 @@ export async function fetchPools(parachainApi: ApiPromise): Promise<{
 
     let allVerifiedPoolIds = await Promise.all(
       allPools.map((i: any) => isVerifiedPool(parachainApi, i))
-      );
+    );
     allVerifiedPoolIds = allVerifiedPoolIds.filter((i) => i !== -1);
 
     let lbpool: LiquidityBootstrappingPool[] = allPools.filter(
@@ -263,4 +262,14 @@ export async function fetchPools(parachainApi: ApiPromise): Promise<{
   } catch (err) {
     return pools;
   }
+}
+
+export function getLPTokenPair(
+  constantProductPool: ConstantProductPool[],
+  currencyId: string
+) {
+  const constantProduct = constantProductPool.find(
+    (constantProduct) => constantProduct.lpToken === currencyId
+  );
+  return constantProduct ? constantProduct.pair : null;
 }
