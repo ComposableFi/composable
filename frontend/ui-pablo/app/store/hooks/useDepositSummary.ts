@@ -6,7 +6,7 @@ import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { fetchBalanceByAssetId } from "../../updaters/balances/utils";
 import { DEFAULT_NETWORK_ID } from "../../updaters/constants";
 import { useBlockInterval } from "../../utils/defi/hooks/polkadot/useBlockInterval";
-import { fromPica } from "../../utils/fromPica";
+import { fromPica } from "../../utils/defi/fromPica";
 import { fetchVesitngPeriod } from "../bonds/fetchVestingPeriod";
 import { IDepositSummary } from "../bonds/bonds.types";
 

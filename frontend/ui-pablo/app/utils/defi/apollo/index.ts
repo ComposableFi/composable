@@ -1,5 +1,5 @@
 import { ApiPromise } from "@polkadot/api";
-import { fromPica } from "../../fromPica";
+import { fromPica } from "../fromPica";
 import { stringToBigNumber } from "../../stringToBigNumber";
 
 export const fetchApolloPriceByAssetId = async (

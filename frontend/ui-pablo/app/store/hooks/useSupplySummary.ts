@@ -5,7 +5,7 @@ import { useParachainApi } from "substrate-react";
 import { useBlockInterval } from "../../utils/defi/hooks/polkadot/useBlockInterval";
 import { getAppoloPriceInUSD } from "../../utils/defi/apollo";
 import { ISupplySummary } from "../bonds/bonds.types";
-import { fromPica } from "../../utils/fromPica";
+import { fromPica } from "../../utils/defi/fromPica";
 import { fetchVesitngPeriod } from "../bonds/fetchVestingPeriod";
 
 type Props = {

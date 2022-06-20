@@ -6,12 +6,11 @@ import { DEFAULT_NETWORK_ID } from "../constants";
 import { decodeVestingSchedule } from "./decodeVestingSchedule";
 import { getAppoloPriceInUSD } from "../../utils/defi/apollo";
 import { fetchBonds } from "./fetchBonds";
-import { getVestingSchedule } from "./getVestingSchedule";
+import { fetchVestingSchedule } from "./fetchVestingSchedule";
 import { getLPTokenPair } from "../pools/utils";
-import { CURRENCY_ID_TO_TOKEN_ID_MAP } from "../../utils/constants";
-import { TOKENS } from "../../defi/Tokens";
-import { getCurrentBlock } from "../../utils/getCurrentBlock";
-import { getCurrentTime } from "../../utils/getCurrentTime";
+import { getToken, getTokenId } from "../../defi/Tokens";
+import { getCurrentBlock } from "../../utils/defi/getCurrentBlock";
+import { getCurrentTime } from "../../utils/defi/getCurrentTime";
 
 /**
  * Updates zustand store with all bonds from bondedFinance pallet
@@ -46,7 +45,7 @@ const Updater = () => {
               bondOffer.reward.asset.toString()
             );
 
-            const vestingSchedule = await getVestingSchedule(
+            const vestingSchedule = await fetchVestingSchedule(
               parachainApi,
               selectedAccount.address,
               principalCurrencyId
@@ -57,10 +56,10 @@ const Updater = () => {
             );
             const principalAsset = lpTokenPair
               ? {
-                  base: TOKENS[CURRENCY_ID_TO_TOKEN_ID_MAP[lpTokenPair.base]],
-                  quote: TOKENS[CURRENCY_ID_TO_TOKEN_ID_MAP[lpTokenPair.quote]],
+                  base: getToken(getTokenId(lpTokenPair.base)),
+                  quote: getToken(getTokenId(lpTokenPair.quote)),
                 }
-              : TOKENS[CURRENCY_ID_TO_TOKEN_ID_MAP[bondOffer.asset.toString()]];
+              : getToken(getTokenId(bondOffer.asset.toNumber()));
             const decodedBondOffer = decodeBondOffer(
               index + 1,
               beneficiary,
@@ -91,10 +90,12 @@ const Updater = () => {
         });
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parachainApi, selectedAccount]);
 
   useEffect(() => {
     reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedAccount]);
 
   return null;

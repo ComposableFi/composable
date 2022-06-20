@@ -6,7 +6,7 @@ import {
   fetchMomentBasedVestingTime,
 } from "./fetchVestingTime";
 import { BondOffer, BondSlice, VestingSchedule } from "./bonds.types";
-import { fromPica } from "../../utils/fromPica";
+import { fromPica } from "../../utils/defi/fromPica";
 
 export const addActiveBond = (
   activeBonds: BondSlice["activeBonds"],

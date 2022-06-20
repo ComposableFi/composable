@@ -1,6 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
 
-export async function getVestingSchedule(
+export async function fetchVestingSchedule(
   parachainApi: ApiPromise,
   address: string,
   principalCurrencyId: string
