@@ -83,8 +83,7 @@ export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
 
   useEffect(() => {
     dispatch(addNextDataLiquidityPools({ startIndex }));
-    // only called once
-    // on page load
+    // Only called once on page load.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
