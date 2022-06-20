@@ -10,8 +10,8 @@ version = "0.0.1"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [package.metadata.cargo-udeps.ignore]
-normal = ["primitives"]
 development = ["composable-tests-helpers"]
+normal = ["primitives"]
 
 [dependencies.codec]
 default-features = false

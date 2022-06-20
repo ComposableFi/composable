@@ -21,6 +21,4 @@ pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "
 
 [features]
 default = ["std"]
-std = [
-  "composable-traits/std",
-]
+std = ["composable-traits/std"]
