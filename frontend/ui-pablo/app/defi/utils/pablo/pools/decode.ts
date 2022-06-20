@@ -2,6 +2,7 @@ import { getAssetById } from "@/defi/polkadot/Assets";
 import { LiquidityBootstrappingPool, ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
 import { percentageToNumber } from "@/utils/number";
 import BigNumber from "bignumber.js";
+import moment from "moment";
 import { AVERAGE_BLOCK_TIME, DAYS, DEFAULT_NETWORK_ID, DUMMY_LAUNCH_DESCRIPTION } from "../../constants";
 import { stringToBigNumber } from "../../misc";
 
@@ -14,11 +15,11 @@ export const decodeLbp = (
     const endBlock = stringToBigNumber(poolItem.sale.end as string);
   
     const start = currentBlock.gt(startBlock)
-      ? Date.now() - startBlock.toNumber() * AVERAGE_BLOCK_TIME
-      : Date.now() + startBlock.toNumber() * AVERAGE_BLOCK_TIME;
+      ? Date.now() - ((currentBlock.minus(startBlock).toNumber()) * AVERAGE_BLOCK_TIME)
+      : Date.now() + ((startBlock.minus(currentBlock)).toNumber() * AVERAGE_BLOCK_TIME);
     const end = currentBlock.gt(endBlock)
-      ? Date.now() - endBlock.toNumber() * AVERAGE_BLOCK_TIME
-      : Date.now() + endBlock.toNumber() * AVERAGE_BLOCK_TIME;
+      ? Date.now() - (currentBlock.minus(endBlock).toNumber()) * AVERAGE_BLOCK_TIME
+      : Date.now() + (endBlock.minus(currentBlock).toNumber()) * AVERAGE_BLOCK_TIME;
     const duration = Math.round((end - start) / DAYS);
   
     const baseAssetId = Number(
