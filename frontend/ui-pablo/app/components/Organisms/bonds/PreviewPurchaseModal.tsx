@@ -7,6 +7,7 @@ import { useDispatch } from "react-redux";
 import { closeConfirmingModal, setMessage } from "@/stores/ui/uiSlice";
 import BigNumber from "bignumber.js";
 import { ISupplySummary } from "../../../store/bonds/bonds.types";
+import { useAsyncEffect } from "../../../hooks/useAsyncEffect";
 
 const defaultLabelProps = (label: string, balance: string) =>
   ({
@@ -58,11 +59,9 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
     dispatch(closeConfirmingModal());
   };
 
-  useEffect(() => {
-    (async () => {
-      setBondPrice(await supplySummary.bondPriceInUSD());
-      setMarketPrice(await supplySummary.marketPriceInUSD());
-    })();
+  useAsyncEffect(async () => {
+    setBondPrice(await supplySummary.bondPriceInUSD());
+    setMarketPrice(await supplySummary.marketPriceInUSD());
   }, []);
 
   return (

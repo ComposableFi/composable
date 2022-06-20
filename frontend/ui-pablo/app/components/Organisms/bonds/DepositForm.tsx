@@ -10,7 +10,7 @@ import {
   alpha,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import BigNumber from "bignumber.js";
 import { useAppSelector } from "@/hooks/store";
 import {
@@ -24,6 +24,7 @@ import {
   IDepositSummary,
   ISupplySummary,
 } from "../../../store/bonds/bonds.types";
+import { useAsyncEffect } from "../../../hooks/useAsyncEffect";
 
 const containerBoxProps = (theme: Theme) =>
   ({
@@ -104,13 +105,11 @@ export const DepositForm: React.FC<DepositFormProps> = ({
       }`;
   const disabled = (approved && !valid) || soldout;
 
-  useEffect(() => {
-    (async () => {
-      setPurchasableTokens(await depositSummary.purchasableTokens());
-      setBondPriceInUSD(await supplySummary.bondPriceInUSD());
-      setMarketPriceInUSD(await supplySummary.marketPriceInUSD());
-      setBalance(await depositSummary.userBalance());
-    })();
+  useAsyncEffect(async () => {
+    setPurchasableTokens(await depositSummary.purchasableTokens());
+    setBondPriceInUSD(await supplySummary.bondPriceInUSD());
+    setMarketPriceInUSD(await supplySummary.marketPriceInUSD());
+    setBalance(await depositSummary.userBalance());
   }, []);
 
   return (

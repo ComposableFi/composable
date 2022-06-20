@@ -26,10 +26,7 @@ const twoColumnPageSize = {
 };
 
 const SelectBond: NextPage = () => {
-  const theme = useTheme();
-  const drawerWidth = theme.custom.drawerWidth.desktop;
   const router = useRouter();
-  const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
   const { extensionStatus } = useDotSamaContext();
   const bond = useAppSelector((state) => state.bonds.selectedBond);
@@ -42,11 +39,16 @@ const SelectBond: NextPage = () => {
 
   const message = useAppSelector((state) => state.ui.message);
 
-  useEffect(() => {
-    if (extensionStatus !== "connected") {
-      router.push("/bond");
-    }
-  }, [extensionStatus]);
+  useEffect(
+    () => {
+      if (extensionStatus !== "connected") {
+        router.push("/bond");
+      }
+    },
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [extensionStatus]
+  );
 
   useEffect(() => {
     if (message.text) {

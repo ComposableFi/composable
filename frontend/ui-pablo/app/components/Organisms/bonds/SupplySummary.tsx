@@ -1,6 +1,4 @@
 import { BaseAsset, PairAsset } from "@/components/Atoms";
-import { getToken } from "@/defi/Tokens";
-import { getNetwork } from "@/defi/Networks";
 import { BondDetails } from "@/defi/types";
 import { ArrowRightAlt } from "@mui/icons-material";
 import {
@@ -14,7 +12,8 @@ import {
 } from "@mui/material";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
 import { ISupplySummary } from "../../../store/bonds/bonds.types";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useAsyncEffect } from "../../../hooks/useAsyncEffect";
 
 const containerBoxProps = (theme: Theme) => ({
   display: "flex",
@@ -56,11 +55,10 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
   const rewardAsset = supplySummary.rewardAsset;
   const [marketPriceInUSD, setMarketPriceInUSD] = useState(0);
 
-  useEffect(() => {
-    (async () => {
-      setMarketPriceInUSD(await supplySummary.marketPriceInUSD());
-    })();
+  useAsyncEffect(async () => {
+    setMarketPriceInUSD(await supplySummary.marketPriceInUSD());
   }, []);
+
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>
       <Box
