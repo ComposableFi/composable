@@ -8550,6 +8550,7 @@ dependencies = [
 name = "pallet-vamm"
 version = "0.1.0"
 dependencies = [
+ "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",

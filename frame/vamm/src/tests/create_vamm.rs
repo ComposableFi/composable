@@ -1,51 +1,69 @@
+use std::ops::RangeInclusive;
+
 use crate::{
-	mock::{Balance, Event, ExtBuilder, MockRuntime, System, TestPallet},
+	mock::{Event, ExtBuilder, MockRuntime, System, TestPallet},
 	pallet::{self, Error, VammMap, VammState},
 	tests::{
-		any_sane_asset_amount, any_sane_base_quote_peg, loop_times, min_max_reserve,
-		valid_funding_period, zero_reserve, RUN_CASES,
+		any_sane_asset_amount, loop_times, valid_twap_period, Balance, Decimal, Timestamp,
+		RUN_CASES,
 	},
 };
-use composable_traits::vamm::{AssetType, Vamm as VammTrait, VammConfig, MINIMUM_FUNDING_PERIOD};
+use composable_traits::vamm::{AssetType, Vamm as VammTrait, VammConfig, MINIMUM_TWAP_PERIOD};
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 use sp_runtime::FixedPointNumber;
 
 // ----------------------------------------------------------------------------------------------------
-//                                           Setup
+//                                               Helpers
 // ----------------------------------------------------------------------------------------------------
 
-type VammTimestamp = <MockRuntime as pallet::Config>::Moment;
-type VammBalance = <MockRuntime as pallet::Config>::Balance;
+fn one_up_to_(x: Balance) -> RangeInclusive<Balance> {
+	1..=x
+}
 
 // ----------------------------------------------------------------------------------------------------
 //                                           Prop Compose
 // ----------------------------------------------------------------------------------------------------
 
 prop_compose! {
+	fn limited_quote_peg() (
+		x in 1..=(Balance::MAX/Decimal::DIV),
+	) (
+		y in one_up_to_(x),
+		x in Just(x),
+		first_is_quote in any::<bool>()
+	) -> (Balance, Balance) {
+		if first_is_quote {
+			(x, y)
+		} else {
+			(y, x)
+		}
+	}
+}
+
+prop_compose! {
 	fn any_valid_vammconfig() (
-		(base_asset_reserves,
-		 quote_asset_reserves,
-		 peg_multiplier) in any_sane_base_quote_peg(),
-		funding_period in  valid_funding_period()
-	) -> VammConfig<VammBalance, VammTimestamp> {
+		(quote_asset_reserves, peg_multiplier) in limited_quote_peg(),
+		base_asset_reserves in any_sane_asset_amount(),
+		twap_period in  valid_twap_period()
+	) -> VammConfig<Balance, Timestamp> {
 		VammConfig {
 			base_asset_reserves,
 			quote_asset_reserves,
 			peg_multiplier,
-			funding_period
+			twap_period
 		}
 	}
 }
 
 // -------------------------------------------------------------------------------------------------
-//                                           Unit Tests
+//                                            Unit Tests
 // -------------------------------------------------------------------------------------------------
 
 #[test]
-fn create_vamm_fail_if_funding_period_is_less_than_minimum() {
-	let vamm_state = VammConfig::<VammBalance, VammTimestamp> {
-		funding_period: (MINIMUM_FUNDING_PERIOD - 1).into(),
+fn should_fail_if_twap_period_is_less_than_minimum() {
+	let vamm_state = VammConfig::<Balance, Timestamp> {
+		twap_period: (MINIMUM_TWAP_PERIOD - 1).into(),
 		peg_multiplier: 1,
 		..Default::default()
 	};
@@ -55,14 +73,13 @@ fn create_vamm_fail_if_funding_period_is_less_than_minimum() {
 }
 
 // -------------------------------------------------------------------------------------------------
-//                                           Proptests
+//                                             Proptests
 // -------------------------------------------------------------------------------------------------
 
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
-	#[allow(clippy::disallowed_methods)]
-	fn create_vamm_correctly_returns_vamm_state(
+	fn should_succeed_correctly_returning_vamm_id(
 		vamm_config in any_valid_vammconfig(),
 	) {
 		ExtBuilder::default().build().execute_with(|| {
@@ -73,7 +90,7 @@ proptest! {
 				vamm_config.quote_asset_reserves
 			).unwrap();
 
-			let tmp_vamm_expected = VammState::<Balance, VammTimestamp> {
+			let tmp_vamm_expected = VammState::<Balance, Timestamp, Decimal> {
 					base_asset_reserves: vamm_config.base_asset_reserves,
 					quote_asset_reserves: vamm_config.quote_asset_reserves,
 					peg_multiplier: vamm_config.peg_multiplier,
@@ -84,13 +101,13 @@ proptest! {
 			let base_asset_twap = TestPallet::do_get_price(&tmp_vamm_expected, AssetType::Base).unwrap();
 			let quote_asset_twap = TestPallet::do_get_price(&tmp_vamm_expected, AssetType::Quote).unwrap();
 
-			let vamm_expected = VammState::<Balance, VammTimestamp> {
+			let vamm_expected = VammState::<Balance, Timestamp, Decimal> {
 				base_asset_reserves: vamm_config.base_asset_reserves,
 				quote_asset_reserves: vamm_config.quote_asset_reserves,
 				peg_multiplier: vamm_config.peg_multiplier,
-				funding_period: vamm_config.funding_period,
-				base_asset_twap: base_asset_twap.into_inner(),
-				quote_asset_twap: quote_asset_twap.into_inner(),
+				twap_period: vamm_config.twap_period,
+				base_asset_twap,
+				quote_asset_twap,
 				invariant,
 				..Default::default()
 			};
@@ -106,7 +123,7 @@ proptest! {
 	}
 
 	#[test]
-	fn create_vamm_succeeds(
+	fn should_succeed_creating_vamm(
 		vamm_config in any_valid_vammconfig(),
 	) {
 		ExtBuilder::default().build().execute_with(|| {
@@ -115,7 +132,7 @@ proptest! {
 	}
 
 	#[test]
-	fn create_vamm_zero_base_asset_reserves_error(
+	fn should_fail_if_base_asset_is_zero(
 		mut vamm_config in any_valid_vammconfig(),
 	) {
 		ExtBuilder::default().build().execute_with(|| {
@@ -127,7 +144,7 @@ proptest! {
 	}
 
 	#[test]
-	fn create_vamm_zero_quote_asset_reserves_error(
+	fn should_fail_if_quote_asset_is_zero(
 		mut vamm_config in any_valid_vammconfig(),
 	) {
 		ExtBuilder::default().build().execute_with(|| {
@@ -139,7 +156,7 @@ proptest! {
 	}
 
 	#[test]
-	fn create_vamm_zero_peg_multiplier_error(
+	fn should_fail_if_peg_multiplier_is_zero(
 		mut vamm_config in any_valid_vammconfig(),
 	) {
 		ExtBuilder::default().build().execute_with(|| {
@@ -151,7 +168,7 @@ proptest! {
 	}
 
 	#[test]
-	fn create_vamm_update_counter_succeeds(
+	fn should_succeed_updating_vamm_counter(
 		vamm_config in any_valid_vammconfig(),
 		loop_times in loop_times(),
 	) {
@@ -167,8 +184,7 @@ proptest! {
 	}
 
 	#[test]
-	#[allow(clippy::disallowed_methods)]
-	fn create_vamm_emits_event_succeeds(
+	fn should_succeed_emitting_event(
 		vamm_config in any_valid_vammconfig(),
 	) {
 		ExtBuilder::default().build().execute_with(|| {
@@ -182,7 +198,7 @@ proptest! {
 	}
 
 	#[test]
-	fn create_vamm_updates_storage_map(
+	fn should_succeed_updating_runtime_storage(
 		vamm_config in any_valid_vammconfig(),
 	) {
 		ExtBuilder::default().build().execute_with(|| {

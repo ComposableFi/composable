@@ -1,19 +1,66 @@
 use crate::{
 	mock::{ExtBuilder, MockRuntime, TestPallet, VammId},
 	pallet::Error,
-	tests::{get_vamm_state, run_for_seconds, RUN_CASES},
+	tests::{get_vamm_state, run_for_seconds, Timestamp, VammState, RUN_CASES},
 };
 use composable_traits::vamm::{AssetType, Vamm as VammTrait};
 use frame_support::{assert_noop, assert_ok, assert_storage_noop};
 use proptest::prelude::*;
 
+// -------------------------------------------------------------------------------------------------
+//                                            Unit Tests
+// -------------------------------------------------------------------------------------------------
+
+#[test]
+fn should_fail_if_vamm_does_not_exist() {
+	ExtBuilder::default().build().execute_with(|| {
+		assert_noop!(
+			TestPallet::get_twap(0, AssetType::Base),
+			Error::<MockRuntime>::VammDoesNotExist
+		);
+		assert_noop!(
+			TestPallet::get_twap(0, AssetType::Quote),
+			Error::<MockRuntime>::VammDoesNotExist
+		);
+	})
+}
+
+#[test]
+fn should_fail_if_vamm_is_closed() {
+	let vamm_state = VammState {
+		base_asset_reserves: (10_u128.pow(18) * 4), // 4 units in decimal
+		quote_asset_reserves: (10_u128.pow(18) * 8), // 8 units in decimal
+		peg_multiplier: 1,
+		closed: Some(Timestamp::MIN),
+		..Default::default()
+	};
+	ExtBuilder { vamm_count: 1, vamms: vec![(0, vamm_state)] }
+		.build()
+		.execute_with(|| {
+			// for closed assertion takes place.
+			run_for_seconds(1);
+			assert_noop!(
+				TestPallet::get_twap(0, AssetType::Base),
+				Error::<MockRuntime>::VammIsClosed
+			);
+			assert_noop!(
+				TestPallet::get_twap(0, AssetType::Quote),
+				Error::<MockRuntime>::VammIsClosed
+			);
+		})
+}
+
+// -------------------------------------------------------------------------------------------------
+//                                             Proptests
+// -------------------------------------------------------------------------------------------------
+
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	// ----------------------------------------------------------------------------------------------------
-	//                              TWAP - Base Asset
+	//                                          TWAP - Base Asset
 	// ----------------------------------------------------------------------------------------------------
 	#[test]
-	fn get_twap_base_asset_succeeds(
+	fn should_succeed_not_modifying_storage_base(
 		vamm_state in get_vamm_state(Default::default())
 	) {
 		ExtBuilder {
@@ -26,7 +73,7 @@ proptest! {
 	}
 
 	#[test]
-	fn get_twap_base_asset_fails_if_vamm_does_not_exists(
+	fn should_fail_if_vamm_does_not_exist_base(
 		vamm_state in get_vamm_state(Default::default()),
 		vamm_id in 1..=VammId::MAX
 	) {
@@ -42,7 +89,7 @@ proptest! {
 	}
 
 	#[test]
-	fn get_twap_base_asset_fails_if_vamm_is_closed(
+	fn should_fail_if_vamm_is_closed_base(
 		mut vamm_state in get_vamm_state(Default::default()),
 		closed in (0..18446744073709551_u64).prop_map(Some),
 	) {
@@ -67,10 +114,10 @@ proptest! {
 	}
 
 	// ----------------------------------------------------------------------------------------------------
-	//                              TWAP - Quote Asset
+	//                                          TWAP - Quote Asset
 	// ----------------------------------------------------------------------------------------------------
 	#[test]
-	fn get_twap_quote_asset_succeeds(
+	fn should_succeed_not_modifying_storage_quote(
 		vamm_state in get_vamm_state(Default::default())
 	) {
 		ExtBuilder {
@@ -83,7 +130,7 @@ proptest! {
 	}
 
 	#[test]
-	fn get_twap_quote_asset_fails_if_vamm_does_not_exists(
+	fn should_fail_if_vamm_does_not_exist_quote(
 		vamm_state in get_vamm_state(Default::default()),
 		vamm_id in 1..=VammId::MAX
 	) {
@@ -99,7 +146,7 @@ proptest! {
 	}
 
 	#[test]
-	fn get_twap_quote_asset_fails_if_vamm_is_closed(
+	fn should_fail_if_vamm_is_closed_quote(
 		mut vamm_state in get_vamm_state(Default::default()),
 		closed in (0..18446744073709551_u64).prop_map(Some),
 	) {

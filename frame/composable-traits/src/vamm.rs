@@ -18,7 +18,7 @@ pub trait Vamm {
 	/// The balance type for an account.
 	type Balance: Unsigned;
 
-	/// The moment type, representing a timestmap.
+	/// The moment type, representing a timestamp.
 	type Moment: AtLeast32BitUnsigned;
 
 	/// Signed fixed point number implementation.
@@ -72,9 +72,9 @@ pub trait Vamm {
 	/// Updates the twap for the desired asset, returning it if successful.
 	fn update_twap(
 		vamm_id: Self::VammId,
-		asset_type: AssetType,
-		new_twap: Option<Self::Decimal>,
-	) -> Result<Self::Decimal, DispatchError>;
+		base_twap: Option<Self::Decimal>,
+		quote_twap: Option<Self::Decimal>,
+	) -> Result<(Self::Decimal, Self::Decimal), DispatchError>;
 }
 
 /// Specify a common encapsulation layer for the [`create`](Vamm::create) function.
@@ -86,9 +86,9 @@ pub struct VammConfig<Balance, Moment> {
 	pub quote_asset_reserves: Balance,
 	/// The magnitude of the quote asset reserve.
 	pub peg_multiplier: Balance,
-	/// The frequency with wich the vamm must have it's funding rebalance.
+	/// The frequency with which the vamm must have it's funding rebalance.
 	/// (Used only for twap calculations.)
-	pub funding_period: Moment,
+	pub twap_period: Moment,
 }
 
 /// Specify a common encapsulation layer for the swap function.
@@ -127,7 +127,7 @@ pub enum Direction {
 }
 
 /// Specify a common encapsulation layer for the move price function.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub struct MovePriceConfig<VammId, Balance> {
 	pub vamm_id: VammId,
 	pub base_asset_reserves: Balance,
@@ -142,5 +142,5 @@ pub struct SwapOutput<Balance> {
 	pub negative: bool,
 }
 
-/// The minimum allowed value for [`funding_period`](VammState::funding_period).
-pub const MINIMUM_FUNDING_PERIOD: u32 = 10;
+/// The minimum allowed value for [`twap_period`](VammState::twap_period).
+pub const MINIMUM_TWAP_PERIOD: u32 = 10;

@@ -233,9 +233,9 @@ pub mod pallet {
 
 		fn update_twap(
 			vamm_id: Self::VammId,
-			asset_type: AssetType,
-			new_twap: Option<Self::Decimal>,
-		) -> Result<Self::Decimal, DispatchError> {
+			base_twap: Option<Self::Decimal>,
+			quote_twap: Option<Self::Decimal>,
+		) -> Result<(Self::Decimal, Self::Decimal), DispatchError> {
 			unimplemented!()
 		}
 	}
