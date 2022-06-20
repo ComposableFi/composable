@@ -193,7 +193,7 @@ pub mod pallet {
 	/// Therefore, the value type is (), because it is irrelevant for our use case.
 	#[pallet::storage]
 	#[pallet::getter(fn amm_ids)]
-	pub type RemoteAmmIds<T: Config> = StorageDoubleMap<
+	pub type RemoteAmmWhitelist<T: Config> = StorageDoubleMap<
 		_,
 		Blake2_128Concat,
 		NetworkIdOf<T>,
@@ -747,11 +747,11 @@ pub mod pallet {
 			T::ControlOrigin::ensure_origin(origin)?;
 
 			ensure!(
-				!RemoteAmmIds::<T>::contains_key(&network_id, &amm_id),
+				!RemoteAmmWhitelist::<T>::contains_key(&network_id, &amm_id),
 				Error::<T>::RemoteAmmIdAlreadyExists,
 			);
 
-			RemoteAmmIds::<T>::insert(network_id, amm_id, ());
+			RemoteAmmWhitelist::<T>::insert(network_id, amm_id, ());
 
 			Ok(().into())
 		}
@@ -766,11 +766,11 @@ pub mod pallet {
 			T::ControlOrigin::ensure_origin(origin)?;
 
 			ensure!(
-				RemoteAmmIds::<T>::contains_key(&network_id, &amm_id),
+				RemoteAmmWhitelist::<T>::contains_key(&network_id, &amm_id),
 				Error::<T>::RemoteAmmIdNotFound
 			);
 
-			RemoteAmmIds::<T>::remove(network_id, amm_id);
+			RemoteAmmWhitelist::<T>::remove(network_id, amm_id);
 
 			Ok(().into())
 		}
