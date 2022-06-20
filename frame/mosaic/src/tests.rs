@@ -379,6 +379,7 @@ fn incoming_outgoing_accounts_are_isolated() {
 			asset_id,
 			ethereum_address,
 			amount,
+			false,
 			true
 		));
 		assert_eq!(account_balance(), 0);
@@ -1078,6 +1079,7 @@ mod transfer_to {
 					asset_id,
 					ethereum_address,
 					amount,
+					false,
 					true
 				),
 				Error::<Test>::BelowMinTransferSize
@@ -1127,6 +1129,7 @@ mod transfer_to {
 					asset_id,
 					ethereum_address,
 					amount,
+					false,
 					true
 				),
 				Error::<Test>::ExceedsMaxTransferSize
@@ -1157,6 +1160,7 @@ mod transfer_to {
 				asset_id,
 				ethereum_address,
 				amount,
+				false,
 				true
 			));
 			assert_eq!(account_balance(), 0);
@@ -1189,7 +1193,8 @@ mod transfer_to {
 					asset_id,
 					ethereum_address,
 					amount,
-					true
+					true,
+					false
 				),
 				Error::<Test>::UnsupportedAsset
 			);
@@ -1199,6 +1204,7 @@ mod transfer_to {
 	fn do_transfer_to() {
 		let ethereum_address = EthereumAddress([0; 20]);
 		let amount = 100;
+		let swap_to_native = false;
 
 		assert_ok!(Mosaic::transfer_to(
 			Origin::signed(ALICE),
@@ -1206,6 +1212,7 @@ mod transfer_to {
 			ASSET_ID,
 			ethereum_address,
 			amount,
+			swap_to_native,
 			true,
 		));
 		assert_eq!(
@@ -1245,6 +1252,7 @@ mod transfer_to {
 			network_id: NETWORK_ID,
 			remote_asset_id: REMOTE_ASSET_ID,
 			amount,
+			swap_to_native,
 		}));
 	}
 }

@@ -280,6 +280,7 @@ pub mod pallet {
 			network_id: NetworkIdOf<T>,
 			remote_asset_id: RemoteAssetIdOf<T>,
 			amount: BalanceOf<T>,
+			swap_to_native: bool,
 		},
 		/// User claimed outgoing tx that was not (yet) picked up by the relayer
 		StaleTxClaimed {
@@ -475,6 +476,7 @@ pub mod pallet {
 			asset_id: AssetIdOf<T>,
 			address: EthereumAddress,
 			amount: BalanceOf<T>,
+			swap_to_native: bool,
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
@@ -504,6 +506,7 @@ pub mod pallet {
 				asset_id,
 				network_id,
 				remote_asset_id,
+				swap_to_native,
 			});
 
 			Ok(().into())
