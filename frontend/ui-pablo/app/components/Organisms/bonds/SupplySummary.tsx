@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
 import { ISupplySummary } from "../../../store/bonds/bonds.types";
+import { useEffect, useState } from "react";
 
 const containerBoxProps = (theme: Theme) => ({
   display: "flex",
@@ -44,19 +45,22 @@ const itemTitleProps: TypographyProps = {
 };
 
 export type SupplySummaryProps = {
-  bond: BondDetails;
-  summary: ISupplySummary;
+  supplySummary: ISupplySummary;
 } & BoxProps;
 
 export const SupplySummary: React.FC<SupplySummaryProps> = ({
-  bond,
-  summary,
+  supplySummary,
   ...boxProps
 }) => {
   const theme = useTheme();
-  const pablo = getToken("pablo");
-  const ethereum = getNetwork(1);
+  const rewardAsset = supplySummary.rewardAsset;
+  const [marketPriceInUSD, setMarketPriceInUSD] = useState(0);
 
+  useEffect(() => {
+    (async () => {
+      setMarketPriceInUSD(await supplySummary.marketPriceInUSD());
+    })();
+  }, []);
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>
       <Box
@@ -67,16 +71,16 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
       >
         <Box {...itemBoxProps}>
           <Typography {...itemTitleProps}>Supply</Typography>
-          {"base" in summary.principalAsset ? (
+          {"base" in supplySummary.principalAsset ? (
             <PairAsset
               assets={[
                 {
-                  icon: summary.principalAsset.base.icon,
-                  label: summary.principalAsset.base.symbol,
+                  icon: supplySummary.principalAsset.base.icon,
+                  label: supplySummary.principalAsset.base.symbol,
                 },
                 {
-                  icon: summary.principalAsset.quote.icon,
-                  label: summary.principalAsset.quote.symbol,
+                  icon: supplySummary.principalAsset.quote.icon,
+                  label: supplySummary.principalAsset.quote.symbol,
                 },
               ]}
               iconOnly
@@ -84,24 +88,24 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
             />
           ) : (
             <BaseAsset
-              label={summary.principalAsset.symbol}
-              icon={summary.principalAsset.icon}
+              label={supplySummary.principalAsset.symbol}
+              icon={supplySummary.principalAsset.icon}
             />
           )}
           <Typography variant="body1">
-            {"base" in summary.principalAsset
-              ? `LP ${summary.principalAsset.base.symbol}-${summary.principalAsset.quote.symbol}`
-              : summary.principalAsset.symbol}
+            {"base" in supplySummary.principalAsset
+              ? `LP ${supplySummary.principalAsset.base.symbol}-${supplySummary.principalAsset.quote.symbol}`
+              : supplySummary.principalAsset.symbol}
           </Typography>
         </Box>
         <ArrowRightAlt sx={{ color: "text.secondary" }} />
         <Box {...itemBoxProps}>
           <Typography {...itemTitleProps}>Receive</Typography>
-          <BaseAsset icon={pablo.icon} iconSize={36} />
+          <BaseAsset icon={rewardAsset.icon} iconSize={36} />
           <Typography variant="body1">
-            {`${pablo.symbol} - `}
+            {`${rewardAsset.symbol} - `}
             <Typography variant="body1" fontWeight="600" component="span">
-              {`${summary.roi}%`}
+              {`${supplySummary.roi}%`}
             </Typography>
           </Typography>
         </Box>
@@ -110,15 +114,15 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
       <Box {...itemBoxProps}>
         <Typography {...itemTitleProps}>Vesting period</Typography>
         <TimerOutlinedIcon sx={{ width: 36, height: 36 }} />
-        <Typography variant="body1">{summary.vestingPeriod}</Typography>
+        <Typography variant="body1">{supplySummary.vestingPeriod}</Typography>
       </Box>
 
       <Box {...itemBoxProps}>
         <Typography {...itemTitleProps}>Market Price</Typography>
         <Box display="flex" justifyContent="center" alignItems="center">
-          {`$${summary.marketPriceInUSD}`}
+          {`$${marketPriceInUSD}`}
         </Box>
-        <Typography variant="body1">{pablo.symbol}</Typography>
+        <Typography variant="body1">{rewardAsset.symbol}</Typography>
       </Box>
     </Box>
   );

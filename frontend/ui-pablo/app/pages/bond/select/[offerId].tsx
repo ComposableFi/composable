@@ -14,6 +14,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useSnackbar } from "notistack";
 import { useSupplySummary } from "../../../store/hooks/useSupplySummary";
+import { useDepositSummary } from "../../../store/hooks/useDepositSummary";
 
 const standardPageSize = {
   xs: 12,
@@ -35,6 +36,7 @@ const SelectBond: NextPage = () => {
   const offerId = Number(router.query.offerId);
 
   const supplySummary = useSupplySummary({ offerId });
+  const depositSummary = useDepositSummary({ offerId });
 
   const claimable = !bond.claimable_amount.eq(0) || !bond.pending_amount.eq(0);
 
@@ -57,7 +59,7 @@ const SelectBond: NextPage = () => {
     }
   }, [enqueueSnackbar, message]);
 
-  if (supplySummary === "no-summary") {
+  if (supplySummary === "no-summary" || depositSummary === "no-summary") {
     return null;
   }
 
@@ -76,16 +78,32 @@ const SelectBond: NextPage = () => {
     <Default breadcrumbs={breadcrumbs}>
       <Container maxWidth="lg">
         <Box display="flex" flexDirection="column" alignItems="center">
-          <PageTitle tokenId1={bond.tokenId1} tokenId2={bond.tokenId2} />
+          <PageTitle
+            tokenId1={
+              "base" in supplySummary.principalAsset
+                ? supplySummary.principalAsset.base.id
+                : supplySummary.principalAsset.id
+            }
+            tokenId2={
+              "base" in supplySummary.principalAsset
+                ? supplySummary.principalAsset.quote.id
+                : supplySummary.principalAsset.id
+            }
+            rewardAsset={supplySummary.rewardAsset}
+          />
         </Box>
 
         <BuyButtons mt={8} bond={bond} />
 
-        <SupplySummary mt={8} summary={supplySummary} bond={bond} />
+        <SupplySummary mt={8} supplySummary={supplySummary} />
         <Box position="relative" mt={8} mb={25}>
           <Grid container columnSpacing={4}>
             <Grid item {...(claimable ? twoColumnPageSize : standardPageSize)}>
-              <DepositForm bond={bond} />
+              <DepositForm
+                bond={bond}
+                supplySummary={supplySummary}
+                depositSummary={depositSummary}
+              />
             </Grid>
             {claimable && (
               <Grid item {...twoColumnPageSize}>

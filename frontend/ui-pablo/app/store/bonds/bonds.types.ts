@@ -67,8 +67,17 @@ type AllBond = {
 export interface ISupplySummary {
   principalAsset: BondOffer["asset"];
   rewardAsset: OfferReward["asset"];
-  marketPriceInUSD: number;
-  discountInPercentage: number;
+  marketPriceInUSD: () => Promise<number>;
+  bondPriceInUSD: () => Promise<number>;
   roi: number;
+  vestingPeriod: string;
+}
+
+export interface IDepositSummary {
+  principalAsset: BondOffer["asset"];
+  userBalance: () => Promise<string>;
+  purchasableTokens: () => Promise<string>;
+  rewardableTokens: (amount: number) => string;
+  roi: BigNumber;
   vestingPeriod: string;
 }

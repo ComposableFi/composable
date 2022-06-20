@@ -43,8 +43,9 @@ const Updater = () => {
             );
             const rewardAppoloPriceInUSD = await getAppoloPriceInUSD(
               parachainApi,
-              bondOffer.reward.amount.toString()
+              bondOffer.reward.asset.toString()
             );
+
             const vestingSchedule = await getVestingSchedule(
               parachainApi,
               selectedAccount.address,

@@ -1,12 +1,12 @@
 import BigNumber from "bignumber.js";
 import produce from "immer";
-import { calculateClaimable } from "./calculateClaimable";
+import { fetchClaimable } from "./fetchClaimable";
 import {
-  calculateBlockBasedVestingTime,
-  calculateMomentBasedVestingTime,
-} from "./calculateVestingTime";
+  fetchBlockBasedVestingTime,
+  fetchMomentBasedVestingTime,
+} from "./fetchVestingTime";
 import { BondOffer, BondSlice, VestingSchedule } from "./bonds.types";
-import { DEFAULT_DECIMALS } from "../../updaters/constants";
+import { fromPica } from "../../utils/fromPica";
 
 export const addActiveBond = (
   activeBonds: BondSlice["activeBonds"],
@@ -18,27 +18,26 @@ export const addActiveBond = (
   return produce(activeBonds, (draft) => {
     const window = vestingSchedule.window;
     const totalPeriod = window.period * vestingSchedule.periodCount;
-    const blockNumberOrMomentAtEnd = window.start + totalPeriod;
+    const lastBlockOrMoment = window.start + totalPeriod;
     const vestingTime =
       vestingSchedule.type === "block"
-        ? calculateBlockBasedVestingTime({
+        ? fetchBlockBasedVestingTime({
             start: window.start,
-            period: window.period,
-            blockNumberOrMomentAtEnd,
+            lastBlock: lastBlockOrMoment,
             currentBlock,
           })
-        : calculateMomentBasedVestingTime({
+        : fetchMomentBasedVestingTime({
             start: window.start,
-            blockNumberOrMomentAtEnd,
+            lastMoment: lastBlockOrMoment,
             currentTime,
           });
-    const claimableAmount = calculateClaimable({
+    const claimableAmount = fetchClaimable({
       currentBlockOrMoment:
         vestingSchedule.type === "block" ? currentBlock : currentTime,
       start: window.start,
       periodCount: vestingSchedule.periodCount,
       perPeriod: vestingSchedule.perPeriod,
-      blockNumberOrMomentAtEnd,
+      lastBlockOrMoment,
     });
     draft.push({
       offerId: bondOffer.offerId,
@@ -59,19 +58,19 @@ export const addBond = (
   principalAppoloPriceInUSD: number,
   rewardAppoloPriceInUSD: number
 ) => {
-  const price = new BigNumber(bondOffer.bondPrice)
-    .times(principalAppoloPriceInUSD)
-    .div(DEFAULT_DECIMALS);
+  const price = fromPica(
+    new BigNumber(bondOffer.bondPrice).times(principalAppoloPriceInUSD)
+  );
   return produce(allBonds, (draft) => {
     draft.push({
       offerId: bondOffer.offerId,
       asset: bondOffer.asset,
       price,
-      roi: new BigNumber(rewardAppoloPriceInUSD)
-        .times(bondOffer.reward.amount)
-        .times(100)
-        .div(DEFAULT_DECIMALS)
-        .div(price),
+      roi: fromPica(
+        new BigNumber(rewardAppoloPriceInUSD)
+          .times(bondOffer.reward.amount)
+          .times(100)
+      ).div(price),
       totalPurchased: new BigNumber(0), // TBD
       bondOffer,
     });

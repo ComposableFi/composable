@@ -1,8 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
-import BigNumber from "bignumber.js";
+import { fromPica } from "../../fromPica";
 import { stringToBigNumber } from "../../stringToBigNumber";
-
-export const DEFAULT_DECIMALS = new BigNumber(10).pow(12);
 
 export const fetchApolloPriceByAssetId = async (
   api: ApiPromise,
@@ -26,6 +24,5 @@ export async function getAppoloPriceInUSD(
     parachainApi,
     currencyId
   );
-
-  return stringToBigNumber(principalApolloPrice).div(DEFAULT_DECIMALS);
+  return fromPica(stringToBigNumber(principalApolloPrice));
 }

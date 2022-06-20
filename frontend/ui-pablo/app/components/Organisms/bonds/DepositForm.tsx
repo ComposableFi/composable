@@ -11,7 +11,7 @@ import {
   alpha,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
 import { useAppSelector } from "@/hooks/store";
 import {
@@ -21,6 +21,10 @@ import {
 import { PreviewPurchaseModal } from "./PreviewPurchaseModal";
 import { useDispatch } from "react-redux";
 import { WrongAmountEnteredModal } from "./WrongAmountEnteredModal";
+import {
+  IDepositSummary,
+  ISupplySummary,
+} from "../../../store/bonds/bonds.types";
 
 const containerBoxProps = (theme: Theme) =>
   ({
@@ -49,10 +53,14 @@ const defaultLabelProps = (label: string, balance: string) =>
 
 export type DepositFormProps = {
   bond: BondDetails;
+  depositSummary: IDepositSummary;
+  supplySummary: ISupplySummary;
 } & BoxProps;
 
 export const DepositForm: React.FC<DepositFormProps> = ({
   bond,
+  depositSummary,
+  supplySummary,
   ...boxProps
 }) => {
   const dispatch = useDispatch();
@@ -63,19 +71,25 @@ export const DepositForm: React.FC<DepositFormProps> = ({
     (state) => state.ui.isWrongAmountEnteredModalOpen
   );
   const theme = useTheme();
-  const token1 = getToken(bond.tokenId1);
-  const token2 = getToken(bond.tokenId2);
+
   const pablo = getToken("pablo");
 
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
   const [approved, setApproved] = useState<boolean>(false);
+  const [balance, setBalance] = useState("0");
+  const [bondPriceInUSD, setBondPriceInUSD] = useState(0);
+  const [marketPriceInUSD, setMarketPriceInUSD] = useState(0);
+  const [purchasableTokens, setPurchasableTokens] = useState("0");
 
-  const soldout = bond.balance.eq(0);
-  const isWrongAmount = bond.discount_price < bond.market_price;
+  const principalAsset = depositSummary.principalAsset;
+  const soldout = balance === "0";
+  const isWrongAmount = bondPriceInUSD < marketPriceInUSD;
 
   const handleDeposit = () => {
-    dispatch(isWrongAmount ? openWrongAmountEnteredModal() : openConfirmingModal());
+    dispatch(
+      isWrongAmount ? openWrongAmountEnteredModal() : openConfirmingModal()
+    );
   };
 
   const handleButtonClick = () => {
@@ -83,12 +97,24 @@ export const DepositForm: React.FC<DepositFormProps> = ({
   };
 
   const buttonText = soldout
-                      ? "Sold out"
-                      : (approved
-                          ? "Deposit"
-                          : `Approve bonding ${token1.symbol}-${token2.symbol}`
-                      );
+    ? "Sold out"
+    : approved
+    ? "Deposit"
+    : `Approve bonding ${
+        "base" in principalAsset
+          ? `${principalAsset.base.symbol}-${principalAsset.quote.symbol}`
+          : principalAsset.symbol
+      }`;
   const disabled = (approved && !valid) || soldout;
+
+  useEffect(() => {
+    (async () => {
+      setPurchasableTokens(await depositSummary.purchasableTokens());
+      setBondPriceInUSD(await supplySummary.bondPriceInUSD());
+      setMarketPriceInUSD(await supplySummary.marketPriceInUSD());
+      setBalance(await depositSummary.userBalance());
+    })();
+  }, []);
 
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>
@@ -97,19 +123,28 @@ export const DepositForm: React.FC<DepositFormProps> = ({
         <BigNumberInput
           value={amount}
           setValue={setAmount}
-          maxValue={bond.balance}
+          maxValue={new BigNumber(balance)}
           setValid={setValid}
           EndAdornmentAssetProps={{
-            assets: [
-              { icon: token1.icon, label: token1.symbol },
-              { icon: token2.icon, label: token2.symbol },
-            ],
+            assets:
+              "base" in principalAsset
+                ? [
+                    {
+                      icon: principalAsset.base.icon,
+                      label: principalAsset.base.symbol,
+                    },
+                    {
+                      icon: principalAsset.quote.icon,
+                      label: principalAsset.quote.symbol,
+                    },
+                  ]
+                : [{ icon: principalAsset.icon, label: principalAsset.symbol }],
             separator: "/",
             LabelProps: { variant: "body1" },
           }}
           buttonLabel="Max"
           ButtonProps={{
-            onClick: () => setAmount(bond.balance),
+            onClick: () => setAmount(new BigNumber(balance)),
             sx: {
               padding: theme.spacing(1),
             },
@@ -118,7 +153,11 @@ export const DepositForm: React.FC<DepositFormProps> = ({
             label: "Amount",
             BalanceProps: {
               title: <AccountBalanceWalletIcon color="primary" />,
-              balance: `${bond.balance} ${token1.symbol}/${token2.symbol}`,
+              balance: `${balance} ${
+                "base" in principalAsset
+                  ? `${principalAsset.base.symbol}/${principalAsset.quote.symbol}`
+                  : principalAsset.symbol
+              }`,
             },
           }}
           disabled={soldout}
@@ -135,27 +174,32 @@ export const DepositForm: React.FC<DepositFormProps> = ({
           {buttonText}
         </Button>
       </Box>
-      <Box mt={6} sx={{opacity: soldout ? "50%" : "100%"}}>
-        <Label {...defaultLabelProps("Your balance", `${bond.balance} LP`)} />
+      <Box mt={6} sx={{ opacity: soldout ? "50%" : "100%" }}>
+        <Label {...defaultLabelProps("Your balance", `${balance} LP`)} />
         <Label
           {...defaultLabelProps(
             "You will get",
-            `${bond.rewardable_amount} ${pablo.symbol}`
+            `${depositSummary.rewardableTokens(amount.toNumber())} ${
+              pablo.symbol
+            }`
           )}
           mt={2}
         />
         <Label
           {...defaultLabelProps(
             "Max you can buy",
-            `${bond.buyable_amount} ${pablo.symbol}`
+            `${purchasableTokens} ${pablo.symbol}`
           )}
           mt={2}
         />
         <Label
-          {...defaultLabelProps("Vesting term", `${bond.vesting_term} days`)}
+          {...defaultLabelProps("Vesting period", depositSummary.vestingPeriod)}
           mt={2}
         />
-        <Label {...defaultLabelProps("ROI", `${bond.roi}%`)} mt={2} />
+        <Label
+          {...defaultLabelProps("ROI", `${depositSummary.roi.toNumber()}%`)}
+          mt={2}
+        />
       </Box>
       <PreviewPurchaseModal
         bond={bond}
