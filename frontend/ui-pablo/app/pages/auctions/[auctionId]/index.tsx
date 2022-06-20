@@ -54,6 +54,7 @@ const Auction: NextPage = () => {
 
       return () => clearInterval(interval);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parachainApi, activeLBP.poolId]);
 
   const baseAsset = getAssetById("picasso", activeLBP.pair.base);
@@ -98,6 +99,7 @@ const Auction: NextPage = () => {
     return () => {
       resetActiveLBP();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

@@ -32,6 +32,7 @@ const AddLiquidity: NextPage = () => {
 
   useEffect(() => {
     extensionStatus !== "connected" && !isPolkadotModalOpen && router.push('/pool');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [extensionStatus, isPolkadotModalOpen]);
 
   return (

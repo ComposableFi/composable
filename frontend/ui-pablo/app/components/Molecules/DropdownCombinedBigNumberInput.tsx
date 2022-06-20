@@ -43,6 +43,7 @@ export const DropdownCombinedBigNumberInput: React.FC<DropdownCombinedBigNumberI
 
   React.useEffect(() => {
     setter && setter(bignrValue);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bignrValue]);
 
   React.useEffect(() => {
@@ -50,6 +51,7 @@ export const DropdownCombinedBigNumberInput: React.FC<DropdownCombinedBigNumberI
       setValue(value as BigNumber);
       setStringValue((value as BigNumber).toFixed());
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   return (

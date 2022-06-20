@@ -57,6 +57,7 @@ const Auctions: NextPage = () => {
 
       return () => clearInterval(interval);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parachainApi, liquidityBootstrappingPools.verified.length]);
 
   return (
