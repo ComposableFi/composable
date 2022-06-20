@@ -119,8 +119,7 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
 
   useEffect(() => {
     dispatch(setMessage({}));
-    // dispatch doesnt need to be added to
-    // dependancy list 
+    // Dispatch doesn't need to be added to the dependency list. 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
