@@ -48,7 +48,7 @@ const Updater = () => {
         });
       });
     }
-  }, [parachainApi, allLpRewardingPools]);
+  }, [parachainApi, allLpRewardingPools, putPoolStats]);
 
   useEffect(() => {
     console.log(`[PoolStatsUpdater] Update Value Effect (2)`);
@@ -83,7 +83,7 @@ const Updater = () => {
         }
       });
     }
-  }, [apollo, allLpRewardingPools.length, poolStats]);
+  }, [apollo, allLpRewardingPools, poolStats, putPoolStatsValue]);
 
   return null;
 };

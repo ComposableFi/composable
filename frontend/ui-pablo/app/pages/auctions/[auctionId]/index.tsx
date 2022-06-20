@@ -20,13 +20,13 @@ import { AuctionDetails } from "@/components/Organisms/auction/AuctionDetails";
 import { BuyForm } from "@/components/Organisms/auction/BuyForm";
 import { AuctionHistoriesTable } from "@/components/Organisms/auction/AuctionHistoriesTable";
 import { AuctionPriceChart } from "@/components/Organisms/auction/AuctionPriceChart";
-import moment from "moment-timezone";
-import useLiquidityBootstrappingPoolStore from "@/store/useStore";
 import { useEffect, useState } from "react";
 import { getAssetById } from "@/defi/polkadot/Assets";
 import { fetchSpotPrice } from "@/defi/utils";
 import { useParachainApi } from "substrate-react";
 import { useAuctionsChart } from "@/store/hooks/useAuctionsChart";
+import moment from "moment-timezone";
+import useLiquidityBootstrappingPoolStore from "@/store/useStore";
 
 const Auction: NextPage = () => {
   const theme = useTheme();

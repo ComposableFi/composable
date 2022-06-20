@@ -25,9 +25,9 @@ const Updater = () => {
    */
   const allPools = useMemo(() => {
     return [
-      ...pools.constantProductPools.unVerified.map((p) => _.pick(p, PICK)),
+      // ...pools.constantProductPools.unVerified.map((p) => _.pick(p, PICK)),
       ...pools.constantProductPools.verified.map((p) => _.pick(p, PICK)),
-      ...pools.stableSwapPools.unVerified.map((p) => _.pick(p, PICK)),
+      // ...pools.stableSwapPools.unVerified.map((p) => _.pick(p, PICK)),
       ...pools.stableSwapPools.verified.map((p) => _.pick(p, PICK)),
     ];
   }, [pools]);
@@ -49,7 +49,7 @@ const Updater = () => {
         }
       });
     }
-  }, [allPools.length, parachainApi]);
+  }, [allPools, parachainApi, setTokenAmountInLiquidityPool]);
   /**
    * Fetch and update LP Balances within
    * zustand store
@@ -68,7 +68,7 @@ const Updater = () => {
         }
       });
     }
-  }, [parachainApi, allPools.length, selectedAccount]);
+  }, [parachainApi, allPools, selectedAccount, setUserLpBalance]);
   /**
    * For each pool, update zustand
    * store with value of tokens
@@ -104,7 +104,7 @@ const Updater = () => {
         }
       });
     }
-  }, [allPools.length, apollo, poolLiquidity]);
+  }, [allPools, apollo, poolLiquidity, setTokenValueInLiquidityPool]);
 
   return null;
 };

@@ -35,7 +35,7 @@ const Updater = () => {
         }
       });
     }
-  }, [parachainApi, selectedAccount]);
+  }, [parachainApi, selectedAccount, updateAssetBalance]);
 
   useEffect(() => {
     if (
@@ -83,7 +83,7 @@ const Updater = () => {
         });
       }
     }
-  }, [extrinsicCalls, parachainApi, selectedAccount]);
+  }, [extrinsicCalls, parachainApi, selectedAccount, updateAssetBalance]);
 
   return null;
 };

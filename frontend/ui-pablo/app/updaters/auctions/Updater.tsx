@@ -3,9 +3,7 @@ import { useParachainApi } from "substrate-react";
 import useStore from "@/store/useStore";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { fetchSpotPrice } from "@/defi/utils";
-import {
-  fetchAuctions, fetchTrades,
-} from "@/defi/utils/pablo/auctions";
+import { fetchAuctions, fetchTrades } from "@/defi/utils/pablo/auctions";
 
 const Updater = () => {
   const {
@@ -34,7 +32,7 @@ const Updater = () => {
           console.error(err);
         });
     }
-  }, [parachainApi, auctions.activeLBP]);
+  }, [parachainApi, auctions.activeLBP, putStatsActiveLBP]);
   /**
    * Update trade history
    * in history tab
@@ -43,15 +41,17 @@ const Updater = () => {
   useEffect(() => {
     const { poolId } = auctions.activeLBP;
     if (poolId !== -1) {
-      fetchTrades(auctions.activeLBP).then(trades => {
-        putHistoryActiveLBP(trades)
-      }).catch(err => {
-        console.error(err);
-      })
+      fetchTrades(auctions.activeLBP)
+        .then((trades) => {
+          putHistoryActiveLBP(trades);
+        })
+        .catch((err) => {
+          console.error(err);
+        });
     } else {
       putHistoryActiveLBP([]);
     }
-  }, [auctions.activeLBP])
+  }, [auctions.activeLBP, putHistoryActiveLBP]);
   /**
    * This effect is called to show prices
    * on auctions page
@@ -70,19 +70,26 @@ const Updater = () => {
             parachainApi,
             liquidityBootstrappingPools.verified[pool].pair,
             liquidityBootstrappingPools.verified[pool].poolId
-          ).then((spotPrice) => {
-            spotPrice = spotPrice.times(apollo[quoteId]);
-            setLiquidityBootstrappingPoolSpotPrice(
-              liquidityBootstrappingPools.verified[pool].poolId,
-              spotPrice.toFixed(4)
-            );
-          }).catch(err => {
-            console.error(err);
-          })
+          )
+            .then((spotPrice) => {
+              spotPrice = spotPrice.times(apollo[quoteId]);
+              setLiquidityBootstrappingPoolSpotPrice(
+                liquidityBootstrappingPools.verified[pool].poolId,
+                spotPrice.toFixed(4)
+              );
+            })
+            .catch((err) => {
+              console.error(err);
+            });
         }
       }
     }
-  }, [parachainApi, liquidityBootstrappingPools.verified.length, apollo]);
+  }, [
+    parachainApi,
+    liquidityBootstrappingPools.verified,
+    apollo,
+    setLiquidityBootstrappingPoolSpotPrice,
+  ]);
 
   return null;
 };
