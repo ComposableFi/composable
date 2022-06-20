@@ -118,6 +118,12 @@ pub mod pallet {
 		Outgoing,
 	}
 
+	#[derive(Clone, Debug, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq)]
+	pub struct AmmSwapInfo<T: Config> {
+		pub destination_token_out_address: EthereumAddress,
+		pub destination_amm_id: (NetworkIdOf<T>, RemoteAmmIdOf<T>),
+	}
+
 	/// The information required for an assets to be transferred between chains.
 	#[derive(Clone, Debug, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq)]
 	pub struct AssetInfo<BlockNumber, Balance, Decayer> {
@@ -282,6 +288,7 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 			swap_to_native: bool,
 			source_user_account: AccountIdOf<T>,
+			amm_swap_info: Option<AmmSwapInfo<T>>,
 		},
 		/// User claimed outgoing tx that was not (yet) picked up by the relayer
 		StaleTxClaimed {
