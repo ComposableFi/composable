@@ -14,6 +14,7 @@ const DepositFormStories = () => {
   return (
     <Box>
       <DepositForm
+        offerId={1}
         depositSummary={depositSummary}
         supplySummary={supplySummary}
       />
