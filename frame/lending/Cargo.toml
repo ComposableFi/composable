@@ -10,7 +10,12 @@ version = "0.0.1"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [package.metadata.cargo-udeps.ignore]
-normal = ["pallet-vault"]
+normal = [
+  "cumulus-pallet-xcm",
+  "frame-executive",
+  "pallet-vault",
+  "primitives",
+]
 
 [dependencies.codec]
 default-features = false
@@ -20,6 +25,9 @@ version = "3.0.0"
 
 [dependencies]
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+frame-executive = { default-features = false, git = "https://github.com/paritytech/substrate", features = [
+  "try-runtime",
+], branch = "polkadot-v0.9.22", optional = true }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", optional = true, branch = "polkadot-v0.9.22" }
@@ -28,6 +36,7 @@ sp-application-crypto = { default-features = false, git = "https://github.com/pa
 
 composable-support = { default-features = false, path = "../composable-support" }
 composable-traits = { default-features = false, path = "../composable-traits" }
+cumulus-pallet-xcm = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.22", optional = true }
 pallet-oracle = { default-features = false, optional = true, path = "../oracle" }
 pallet-vault = { default-features = false, path = "../vault", optional = true }
 sp-arithmetic = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
@@ -40,6 +49,7 @@ xcm = { git = "https://github.com/paritytech/polkadot", default-features = false
 
 log = { version = "0.4.14", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
+primitives = { path = "../../runtime/primitives", default-features = false, optional = true }
 rand = { version = "0.7.2", optional = true }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
@@ -93,4 +103,7 @@ runtime-benchmarks = [
   "pallet-vault/runtime-benchmarks",
   "pallet-timestamp/runtime-benchmarks",
   "pallet-balances/runtime-benchmarks",
+  "cumulus-pallet-xcm",
+  "frame-executive",
+  "primitives",
 ]

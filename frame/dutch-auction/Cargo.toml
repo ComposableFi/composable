@@ -9,6 +9,10 @@ version = "0.0.1"
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
 
+[package.metadata.cargo-udeps.ignore]
+normal = ["primitives"]
+development = ["composable-tests-helpers"]
+
 [dependencies.codec]
 default-features = false
 features = ["derive"]
@@ -48,10 +52,8 @@ pallet-assets = { path = '../assets' }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 pallet-currency-factory = { path = "../currency-factory" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+primitives = { path = "../../runtime/primitives", default-features = false }
 proptest = "1.0"
-
-[package.metadata.cargo-udeps.ignore]
-development = ["composable-tests-helpers"]
 
 [features]
 default = ["std"]
