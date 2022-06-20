@@ -34,8 +34,11 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_support::{
 		abstractions::{
-			nonce::{Increment, Nonce},
-			utils::{increment::SafeIncrement, start_at::ZeroInit},
+			nonce::Nonce,
+			utils::{
+				increment::{Increment, SafeIncrement},
+				start_at::ZeroInit,
+			},
 		},
 		math::safe::SafeDiv,
 		validation::Validated,
@@ -206,6 +209,7 @@ pub mod pallet {
 	#[pallet::getter(fn assets_count)]
 	#[allow(clippy::disallowed_types)] // Default asset count of 0 is valid in this context
 	/// Total amount of assets
+	// TODO: Replace SafeIncrement with IncrementToMax
 	pub type AssetsCount<T: Config> =
 		StorageValue<_, u32, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 

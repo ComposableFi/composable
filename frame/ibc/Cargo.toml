@@ -45,9 +45,9 @@ ibc-trait = { path = "ibc-trait", default-features = false }
 pallet-ibc-ping = { path = "../ibc-ping", default-features = false }
 
 # To be removed in refactor here https://github.com/ComposableFi/composable/pull/1122
+ripemd = { version = "0.1.1", default-features = false }
 sha2 = { version = "0.10.2", default-features = false }
 sha3 = { version = "0.10.1", default-features = false }
-ripemd = { version = "0.1.1", default-features = false }
 
 [dev-dependencies]
 chrono = "0.4.19"
@@ -87,7 +87,7 @@ std = [
   "sp-runtime-interface/std",
   "sha3/std",
   "sha2/std",
-  "ripemd/std"
+  "ripemd/std",
 ]
 
 runtime-benchmarks = [
