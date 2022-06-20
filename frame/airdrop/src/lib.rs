@@ -21,8 +21,8 @@ pub mod pallet {
 	use codec::{Codec, FullCodec, MaxEncodedLen};
 	use composable_support::{
 		abstractions::{
-			nonce::{Increment, Nonce},
-			utils::{increment::SafeIncrement, start_at::ZeroInit},
+			nonce::Nonce,
+			utils::{increment::{Increment, SafeIncrement}, start_at::ZeroInit},
 		},
 		math::safe::{SafeAdd, SafeSub},
 		types::{CosmosAddress, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress},
