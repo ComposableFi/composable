@@ -1571,17 +1571,14 @@ impl_runtime_apis! {
 			let events = frame_system::Pallet::<Self>::read_events_no_consensus().into_iter().filter_map(|e| {
 				let frame_system::EventRecord{ event, ..} = *e;
 				match event {
-					Event::Ibc(evt) => {
-						match evt {
-							pallet_ibc::Event::IbcEvents{ events } => Some(events),
-							_ => None
-						}
+					Event::Ibc(pallet_ibc::Event::IbcEvents{ events }) => {
+						Some(events)
 					},
 					_ => None
 				}
-			}).collect::<Vec<_>>();
+			});
 
-			events.into_iter().fold(vec![], |mut events, ev| {
+			events.fold(vec![], |mut events, ev| {
 				events.extend_from_slice(&ev);
 				events
 			})
