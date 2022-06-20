@@ -34,6 +34,7 @@ import { AssetId } from "@/defi/polkadot/types";
 import { debounce } from "lodash";
 import { calculateSwap } from "@/defi/utils/pablo/swaps";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { useUSDPriceByAssetId } from "@/store/assets/hooks";
 
 const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
@@ -47,29 +48,8 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const [valid1, setValid1] = useState<boolean>(false);
   const [valid2, setValid2] = useState<boolean>(false);
 
-  const token1PriceInUSD = useMemo(() => {
-    if (swaps.ui.baseAssetSelected === "none") return new BigNumber(0);
-    let base = getAssetOnChainId(DEFAULT_NETWORK_ID, swaps.ui.baseAssetSelected);
-    if (base) {
-      let baseId = base.toString()
-      if (apollo[baseId]) {
-        return new BigNumber(apollo[baseId])
-      }
-    }
-    return new BigNumber(0);
-  }, [swaps.ui.baseAssetSelected, apollo])
-
-  const token2PriceInUSD = useMemo(() => {
-    if (swaps.ui.quoteAssetSelected === "none") return new BigNumber(0);
-    let quote = getAssetOnChainId(DEFAULT_NETWORK_ID, swaps.ui.quoteAssetSelected);
-    if (quote) {
-      let quoteId = quote.toString()
-      if (apollo[quoteId]) {
-        return new BigNumber(apollo[quoteId])
-      }
-    }
-    return new BigNumber(0);
-  }, [swaps.ui.quoteAssetSelected, apollo])
+  const token1PriceInUSD = useUSDPriceByAssetId(swaps.ui.baseAssetSelected);
+  const token2PriceInUSD = useUSDPriceByAssetId(swaps.ui.quoteAssetSelected);
 
   const balance1 = useMemo(() => {
     return new BigNumber(swaps.userAccount.quoteAssetBalance);
