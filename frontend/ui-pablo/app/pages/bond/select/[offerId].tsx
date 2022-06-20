@@ -100,7 +100,6 @@ const SelectBond: NextPage = () => {
           <Grid container columnSpacing={4}>
             <Grid item {...(claimable ? twoColumnPageSize : standardPageSize)}>
               <DepositForm
-                bond={bond}
                 supplySummary={supplySummary}
                 depositSummary={depositSummary}
               />

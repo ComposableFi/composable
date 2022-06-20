@@ -52,13 +52,11 @@ const defaultLabelProps = (label: string, balance: string) =>
   } as const);
 
 export type DepositFormProps = {
-  bond: BondDetails;
   depositSummary: IDepositSummary;
   supplySummary: ISupplySummary;
 } & BoxProps;
 
 export const DepositForm: React.FC<DepositFormProps> = ({
-  bond,
   depositSummary,
   supplySummary,
   ...boxProps
