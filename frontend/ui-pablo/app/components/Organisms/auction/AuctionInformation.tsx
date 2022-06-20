@@ -10,7 +10,7 @@ import BigNumber from "bignumber.js";
 import { getAssetById } from "@/defi/polkadot/Assets";
 import { useMemo } from "react";
 import { useAuctionSpotPrice } from "@/store/auctions/hooks";
-import { useAssetPrice } from "@/store/assets/hooks";
+import { useUSDAssetPrice } from "@/store/assets/hooks";
 
 export type AuctionInformationProps = {
   auction: LiquidityBootstrappingPool;
@@ -50,7 +50,7 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
   };
 
   const spotPrice = useAuctionSpotPrice(auction.poolId);
-  const quoteAssetPrice = useAssetPrice(auction.pair.quote.toString());
+  const quoteAssetPrice = useUSDAssetPrice(auction.pair.quote);
 
   let tokenRaised = useMemo(() => {
     return new BigNumber(stats.currentBalances.quote).minus(

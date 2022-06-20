@@ -28,7 +28,7 @@ import {
   getAssetOnChainId,
 } from "@/defi/polkadot/Assets";
 import { AMMs } from "@/defi/AMMs";
-import { useAssetPrice } from "@/store/assets/hooks";
+import { useUSDAssetPrice } from "@/store/assets/hooks";
 import { AssetId } from "@/defi/polkadot/types";
 import {
   getSigner,
@@ -100,8 +100,8 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   let baseAssetOnChainId = baseAsset === "none" ? -1 : getAssetOnChainId(DEFAULT_NETWORK_ID, baseAsset)
   let quoteAssetOnChainId = quoteAsset === "none" ? -1 : getAssetOnChainId(DEFAULT_NETWORK_ID, quoteAsset)
 
-  const baseTokenUSDPrice = useAssetPrice(baseAssetOnChainId ? baseAssetOnChainId.toString() : "0");
-  const quoteTokenUSDPrice = useAssetPrice(quoteAssetOnChainId ? quoteAssetOnChainId.toString() : "0");
+  const baseTokenUSDPrice = useUSDAssetPrice(baseAssetOnChainId ? baseAssetOnChainId : 0);
+  const quoteTokenUSDPrice = useUSDAssetPrice(quoteAssetOnChainId ? quoteAssetOnChainId : 0);
 
   const [isFunding, setIsFunding] = useState<boolean>(false);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);

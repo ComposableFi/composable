@@ -8,14 +8,17 @@ import useStore from "../useStore";
  * @param assetId string on chain asset id but in string
  * @returns string
  */
-export function useAssetPrice(assetId: string): string {
+export function useUSDAssetPrice(assetId: number): BigNumber {
     const {
         apollo
     } = useStore();
-    if (apollo[assetId]) {
-        return apollo[assetId]
+    let assetIdStr = assetId.toString();
+
+    if (apollo[assetIdStr]) {
+        return new BigNumber(apollo[assetIdStr])
     }
-    return "0"
+
+    return new BigNumber(0)
 }
 
 /**
