@@ -144,8 +144,8 @@ proptest! {
 			let market_account = Lending::account_id(&market_id);
 			let vault_account = Vault::account_id(&vault_id);
 			// Deposit USDT in the vault.
-			assert_ok!(Tokens::mint_into(USDT::ID, &lender, USDT::units(total_amount)));
-			assert_ok!(Vault::deposit(Origin::signed(lender), vault_id, USDT::units(total_amount)));
+			prop_assert_ok!(Tokens::mint_into(USDT::ID, &lender, USDT::units(total_amount)));
+			prop_assert_ok!(Vault::deposit(Origin::signed(lender), vault_id, USDT::units(total_amount)));
 			// Process one block to transfer not-reserved assets to the corresponded market.
 			test::block::process_and_progress_blocks::<Lending, Runtime>(1);
 			// Generate a bunch of borrowers' accounts.
@@ -162,7 +162,7 @@ proptest! {
 			}
 			// For some reason lender needs some of his money back.
 			// So, he withdraw all assets from vault's account.
-			assert_ok!(Vault::withdraw(
+			prop_assert_ok!(Vault::withdraw(
 				Origin::signed(lender),
 				vault_id,
 				Assets::balance(USDT::ID, &vault_account)
@@ -182,7 +182,8 @@ proptest! {
 					test::block::process_and_progress_blocks::<Lending, Runtime>(1);
 				}
 			}
-			assert!(is_vault_balanced(vault_id, &market_account));
-		});
+			prop_assert!(is_vault_balanced(vault_id, &market_account));
+			Ok(())
+		})?;
 	}
 }
