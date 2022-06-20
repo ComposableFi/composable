@@ -598,14 +598,21 @@ pub mod pallet {
 		/// - [`CollateralWithdrawn`](Event::<T>::CollateralWithdrawn)
 		///
 		/// ## State Changes
-		/// TODO(0xangelo)
+		/// - Settles funding and outstanding profits for all open [`Position`]s
+		/// - Updates the available profits in for the [`Markets`] that the user has open positions
+		///   in
+		/// - Updates the [`Collateral`] of the user
+		///
+		/// The pallet's collateral and insurance accounts are also updated, depending on the amount
+		/// of collateral withdrawn and the bad debt of the system.
 		///
 		/// ## Errors
 		/// - [`ZeroWithdrawalAmount`](Error::<T>::ZeroWithdrawalAmount)
 		/// - [`InsufficientCollateral`](Error::<T>::InsufficientCollateral)
 		///
 		/// # Weight/Runtime
-		/// TODO(0xangelo)
+		/// `O(n)`, where `n` is the number of open positions, due to settlement of funding and
+		/// outstanding profits, in addition to calculation of the account's margin ratio.
 		#[pallet::weight(<T as Config>::WeightInfo::withdraw_collateral())]
 		pub fn withdraw_collateral(origin: OriginFor<T>, amount: T::Balance) -> DispatchResult {
 			let account_id = ensure_signed(origin)?;
@@ -814,7 +821,8 @@ pub mod pallet {
 		/// [`Markets`] is updated, specifically the [`Market`] attributes:
 		/// - [`cum_funding_rate`](Market::<T>::cum_funding_rate)
 		/// - [`funding_rate_ts`](Market::<T>::funding_rate_ts)
-		/// - [`fee_pool`](Market::<T>::fee_pool), if there's Long-Short imbalance
+		///
+		/// The market's Fee Pool account is also updated, if there's Long-Short imbalance
 		///
 		/// ## Errors
 		///
