@@ -9,7 +9,6 @@ import { DepositForm } from "@/components/Organisms/bonds/DepositForm";
 import { ClaimForm } from "@/components/Organisms/bonds/ClaimForm";
 import { useDotSamaContext } from "substrate-react";
 import { Link } from "@/components";
-import { useDispatch } from "react-redux";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useSnackbar } from "notistack";
@@ -81,16 +80,7 @@ const SelectBond: NextPage = () => {
       <Container maxWidth="lg">
         <Box display="flex" flexDirection="column" alignItems="center">
           <PageTitle
-            tokenId1={
-              "base" in supplySummary.principalAsset
-                ? supplySummary.principalAsset.base.id
-                : supplySummary.principalAsset.id
-            }
-            tokenId2={
-              "base" in supplySummary.principalAsset
-                ? supplySummary.principalAsset.quote.id
-                : supplySummary.principalAsset.id
-            }
+            principalAsset={supplySummary.principalAsset}
             rewardAsset={supplySummary.rewardAsset}
           />
         </Box>

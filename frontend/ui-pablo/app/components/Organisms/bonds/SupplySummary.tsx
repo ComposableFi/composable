@@ -1,5 +1,4 @@
 import { BaseAsset, PairAsset } from "@/components/Atoms";
-import { BondDetails } from "@/defi/types";
 import { ArrowRightAlt } from "@mui/icons-material";
 import {
   Box,
@@ -85,10 +84,7 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
               iconSize={36}
             />
           ) : (
-            <BaseAsset
-              label={supplySummary.principalAsset.symbol}
-              icon={supplySummary.principalAsset.icon}
-            />
+            <BaseAsset icon={supplySummary.principalAsset.icon} iconSize={36} />
           )}
           <Typography variant="body1">
             {"base" in supplySummary.principalAsset
