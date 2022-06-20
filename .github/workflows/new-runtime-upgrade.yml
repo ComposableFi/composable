@@ -1,4 +1,4 @@
-name: "NodeJs runtime upgrade"
+name: "WASM runtime upgrade"
 
 on:
   workflow_dispatch:
