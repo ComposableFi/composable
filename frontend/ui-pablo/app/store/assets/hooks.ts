@@ -20,8 +20,8 @@ export function useAssetPrice(assetId: string): string {
 
 /**
  * Get price from Apollo in USD
- * @param assetId string on chain asset id but in string
- * @returns string
+ * @param assetId hardcoded asset ids on FE or "none"
+ * @returns BigNumber
  */
  export function useUSDPriceByAssetId(assetId: AssetId | "none"): BigNumber {
     const {
