@@ -2,7 +2,7 @@ use crate::{
 	math::{FixedPointMath, IntoDecimal},
 	Config,
 };
-use composable_traits::time::DurationSeconds;
+use composable_traits::{time::DurationSeconds, vamm::Direction as VammDirection};
 use frame_support::pallet_prelude::{Decode, Encode, MaxEncodedLen, TypeInfo};
 use num_traits::Zero;
 use sp_runtime::{ArithmeticError, DispatchError, FixedPointNumber};
@@ -13,15 +13,27 @@ pub const BASIS_POINT_DENOMINATOR: u32 = 10_000;
 /// Indicates the direction of a position
 #[derive(Encode, Decode, TypeInfo, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Direction {
+	/// For a long position, the position is long the asset.
 	Long,
+	/// For a short position, the position is short the asset.
 	Short,
 }
 
 impl Direction {
+	/// Gives the opposite direction of the current one.
 	pub fn opposite(&self) -> Self {
 		match self {
 			Self::Long => Self::Short,
 			Self::Short => Self::Long,
+		}
+	}
+}
+
+impl From<Direction> for VammDirection {
+	fn from(direction: Direction) -> Self {
+		match direction {
+			Long => Self::Add,
+			Short => Self::Remove,
 		}
 	}
 }
@@ -31,12 +43,12 @@ impl Direction {
 #[scale_info(skip_type_params(T))]
 #[codec(mel_bound())]
 pub struct Position<T: Config> {
-	/// The Id of the virtual market
+	/// The Id of the virtual market.
 	pub market_id: T::MarketId,
 	/// Virtual base asset amount. Positive implies long position and negative, short.
 	pub base_asset_amount: T::Decimal,
 	/// Virtual quote asset notional amount (margin * leverage * direction) used to open the
-	/// position
+	/// position.
 	pub quote_asset_notional_amount: T::Decimal,
 	/// Last cumulative funding rate used to update this position. The market's latest
 	/// cumulative funding rate minus this gives the funding rate this position must pay. This
@@ -47,6 +59,7 @@ pub struct Position<T: Config> {
 }
 
 impl<T: Config> Position<T> {
+	/// Returns the direction of the position, if any.
 	pub fn direction(&self) -> Option<Direction> {
 		if self.base_asset_amount.is_zero() {
 			None
@@ -95,9 +108,26 @@ pub struct Market<T: Config> {
 	pub funding_period: DurationSeconds,
 	/// Taker fee, in basis points, applied to all market orders.
 	pub taker_fee: T::Balance,
+	/// The reference time span used for weighting the EMA updates for the Oracle and Vamm TWAPs.
+	/// ```text
+	///                                                       twap_period
+	///                                        |---------------------------------------|
+	///                                         from_start          since_last
+	///                                        |-----------|---------------------------|
+	/// -------------------------------------------------------------------------------|
+	///                                        ^           ^                           ^
+	///                                      now -         |                          now
+	///                                   twap_period      |
+	///                                               last_twap_ts
+	/// ```
+	/// In the example above, the current price is given a weight of `since_last` and the last
+	/// TWAP, `from_start`. The new TWAP is then the weighted average of the two.
+	pub twap_period: DurationSeconds,
 	// ---------------------------------------------------------------------------------------------
 	//                                         Dynamic
 	// ---------------------------------------------------------------------------------------------
+	/// The current total realized losses which haven't been claimed by traders in profit.
+	pub available_gains: T::Balance,
 	/// Total position, in base asset, of all traders that are long. Must be positive. Used to
 	/// compute parameter adjustment costs and funding payments from/to the Clearing House.
 	pub base_asset_amount_long: T::Decimal,
@@ -114,9 +144,17 @@ pub struct Market<T: Config> {
 	pub fee_pool: T::Balance,
 	/// The timestamp for the latest funding rate update.
 	pub funding_rate_ts: DurationSeconds,
+	/// Last oracle price used to update the index TWAP. This has likely gone through
+	/// preprocessing, i.e., is not the actual oracle price reported at the time.
+	pub last_oracle_price: T::Decimal,
+	/// The last calculated oracle TWAP.
+	pub last_oracle_twap: T::Decimal,
+	/// The timestamp for [`last_oracle_twap`] and [`last_oracle_twap_ts`].
+	pub last_oracle_ts: DurationSeconds,
 }
 
 impl<T: Config> Market<T> {
+	/// Returns the current funding rate for positions with the given direction.
 	pub fn cum_funding_rate(&self, direction: Direction) -> T::Decimal {
 		match direction {
 			Long => self.cum_funding_rate_long,
@@ -124,6 +162,7 @@ impl<T: Config> Market<T> {
 		}
 	}
 
+	/// Returns the total base asset amount of positions with the given direction.
 	pub fn base_asset_amount(&self, direction: Direction) -> T::Decimal {
 		match direction {
 			Long => self.base_asset_amount_long,
@@ -131,6 +170,7 @@ impl<T: Config> Market<T> {
 		}
 	}
 
+	/// Adds to the total base asset amount of positions with the given direction.
 	pub fn add_base_asset_amount(
 		&mut self,
 		amount: &T::Decimal,
@@ -143,6 +183,7 @@ impl<T: Config> Market<T> {
 		Ok(())
 	}
 
+	/// Subtracts from the total base asset amount of positions with the given direction.
 	pub fn sub_base_asset_amount(
 		&mut self,
 		amount: &T::Decimal,
@@ -179,6 +220,8 @@ pub struct MarketConfig<AssetId, Balance, Decimal, VammConfig> {
 	pub funding_period: DurationSeconds,
 	/// Taker fee, in basis points, applied to all market orders.
 	pub taker_fee: Balance,
+	/// The reference time span used for weighting the EMA updates for the Oracle and Vamm TWAPs.
+	pub twap_period: DurationSeconds,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -204,6 +247,7 @@ pub struct AccountSummary<T: Config> {
 }
 
 impl<T: Config> AccountSummary<T> {
+	/// Creates a new account summary with no positions accounted for.
 	pub fn new(collateral: T::Balance) -> Result<Self, DispatchError> {
 		Ok(Self {
 			collateral,
@@ -215,6 +259,7 @@ impl<T: Config> AccountSummary<T> {
 		})
 	}
 
+	/// Updates the account summary with the given position's info.
 	pub fn update(
 		&mut self,
 		market: Market<T>,

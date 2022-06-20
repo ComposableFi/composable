@@ -48,7 +48,7 @@ pub trait ClearingHouse {
 
 	/// Open a position in a market.
 	///
-	/// This may result in the following outcomes:
+	/// This will result in one the following outcomes (if successful):
 	/// - Creation of a whole new position in the market, if one didn't already exist
 	/// - An increase in the size of an existing position, if the trade's direction matches the
 	///   existing position's one
@@ -65,7 +65,7 @@ pub trait ClearingHouse {
 	/// - `direction`: whether to long or short the base asset
 	/// - `quote_asset_amount`: the amount of exposure to the base asset in quote asset value
 	/// - `base_asset_amount_limit`: the minimum absolute amount of base asset to add to the
-	///   position; prevents slippage
+	///   position; determines the maximum amount of allowable slippage
 	///
 	/// ## Returns
 	/// The absolute amount of base asset exchanged.
@@ -81,7 +81,7 @@ pub trait ClearingHouse {
 	///
 	/// This is an alternative to calling [`open_position`](Self::open_position) with an opposite
 	/// direction to the existing position, a `quote_asset_amount` equivalent to the absolute value
-	/// the position's base asset amount, and a zero `base_asset_amount_limit`.
+	/// of the position's base asset amount, and a zero `base_asset_amount_limit`.
 	///
 	/// As such, this function may be more weight-efficient than using an equivalent
 	/// [`open_position`](Self::open_position) call. On the other hand, it does not prevent
