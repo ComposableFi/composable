@@ -281,6 +281,7 @@ pub mod pallet {
 			remote_asset_id: RemoteAssetIdOf<T>,
 			amount: BalanceOf<T>,
 			swap_to_native: bool,
+			source_user_account: AccountIdOf<T>,
 		},
 		/// User claimed outgoing tx that was not (yet) picked up by the relayer
 		StaleTxClaimed {
@@ -470,6 +471,8 @@ pub mod pallet {
 		///   an error.
 		#[pallet::weight(T::WeightInfo::transfer_to())]
 		#[transactional]
+		// allowing too many arguments to keep the api simple for the Relayer team
+		#[allow(clippy::too_many_arguments)]
 		pub fn transfer_to(
 			origin: OriginFor<T>,
 			network_id: NetworkIdOf<T>,
@@ -477,6 +480,7 @@ pub mod pallet {
 			address: EthereumAddress,
 			amount: BalanceOf<T>,
 			swap_to_native: bool,
+			source_user_account: AccountIdOf<T>,
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
@@ -507,6 +511,7 @@ pub mod pallet {
 				network_id,
 				remote_asset_id,
 				swap_to_native,
+				source_user_account,
 			});
 
 			Ok(().into())

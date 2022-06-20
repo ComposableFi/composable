@@ -380,6 +380,7 @@ fn incoming_outgoing_accounts_are_isolated() {
 			ethereum_address,
 			amount,
 			false,
+			ALICE,
 			true
 		));
 		assert_eq!(account_balance(), 0);
@@ -1080,6 +1081,7 @@ mod transfer_to {
 					ethereum_address,
 					amount,
 					false,
+					ALICE,
 					true
 				),
 				Error::<Test>::BelowMinTransferSize
@@ -1130,6 +1132,7 @@ mod transfer_to {
 					ethereum_address,
 					amount,
 					false,
+					ALICE,
 					true
 				),
 				Error::<Test>::ExceedsMaxTransferSize
@@ -1161,6 +1164,7 @@ mod transfer_to {
 				ethereum_address,
 				amount,
 				false,
+				ALICE,
 				true
 			));
 			assert_eq!(account_balance(), 0);
@@ -1194,6 +1198,7 @@ mod transfer_to {
 					ethereum_address,
 					amount,
 					true,
+					ALICE,
 					false
 				),
 				Error::<Test>::UnsupportedAsset
@@ -1213,6 +1218,7 @@ mod transfer_to {
 			ethereum_address,
 			amount,
 			swap_to_native,
+			ALICE,
 			true,
 		));
 		assert_eq!(
@@ -1253,6 +1259,7 @@ mod transfer_to {
 			remote_asset_id: REMOTE_ASSET_ID,
 			amount,
 			swap_to_native,
+			source_user_account: ALICE,
 		}));
 	}
 }
