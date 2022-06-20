@@ -98,9 +98,7 @@ const Auction: NextPage = () => {
     return () => {
       resetActiveLBP();
     };
-    // ignoring because it's a cleanup
-    // case and it only runs on destruction
-    // of page by react, hence no dependancies
+    // We can omit dependencies because it's a cleanup case and it only runs on destruction of pages by React.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
