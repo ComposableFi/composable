@@ -43,7 +43,7 @@ export const DropdownCombinedBigNumberInput: React.FC<DropdownCombinedBigNumberI
 
   React.useEffect(() => {
     setter && setter(bignrValue);
-    // no need to add setters in dependancy array
+    // Only depends on setters, therefore we can omit dependencies.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bignrValue]);
 
