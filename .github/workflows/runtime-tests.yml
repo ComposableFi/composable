@@ -1,7 +1,7 @@
 name: Runtime Tests
 
 on:
-  push:
+  pull_request:
     branches:
       - main
 

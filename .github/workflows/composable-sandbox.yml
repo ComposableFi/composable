@@ -14,6 +14,7 @@ env:
 
 jobs:
   build-and-publish:
+  if: ${{ github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'needs-to-update-composable-sandbox') }}
     runs-on: 
       - self-hosted
       - linux
