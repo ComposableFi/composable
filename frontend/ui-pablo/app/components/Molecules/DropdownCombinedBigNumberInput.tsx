@@ -52,7 +52,7 @@ export const DropdownCombinedBigNumberInput: React.FC<DropdownCombinedBigNumberI
       setValue(value as BigNumber);
       setStringValue((value as BigNumber).toFixed());
     }
-    // no need to add setters in dependancy array
+    // Only depends on setters, therefore we can omit dependencies.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
