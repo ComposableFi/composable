@@ -46,7 +46,7 @@ export const BigNumberInput: React.FC<BigNumberInputProps> = ({
       setValue(value as BigNumber);
       setStringValue((value as BigNumber).toFixed());
     }
-    // no need at setters as dependancy
+    // Only depends on setters, therefore we can omit dependencies.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
