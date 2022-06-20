@@ -247,6 +247,7 @@ parameter_types! {
 	pub const MinBalance: Balance = 0;
 	pub const MinU32: u32 = 0;
 	pub const MinU64: u64 = 0;
+	pub const TwapWindow: u16 = 3;
 }
 
 pub struct Decimals;
@@ -273,6 +274,7 @@ impl pallet_oracle::Config for Runtime {
 	type WeightInfo = ();
 	type LocalAssets = Decimals;
 	type TreasuryAccount = RootAccount;
+	type TwapWindow = TwapWindow;
 }
 
 impl DeFiComposableConfig for Runtime {

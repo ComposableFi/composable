@@ -1224,13 +1224,12 @@ pub mod pallet {
 				.ok_or_else(|| Error::<T>::MarketDoesNotExist.into())
 		}
 
+		/// Get TWAP from oracle. If history of prices is empty then return latest price.
 		fn get_price(
 			asset_id: <T as DeFiComposableConfig>::MayBeAssetId,
 			amount: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
-			<T::Oracle as Oracle>::get_price(asset_id, amount)
-				.map(|p| p.price)
-				.map_err(|_| Error::<T>::AssetPriceNotFound.into())
+			<T::Oracle as Oracle>::get_twap_for_amount(asset_id, amount)
 		}
 
 		/// Some of these checks remain to provide better errors. See [this clickup task](task) for

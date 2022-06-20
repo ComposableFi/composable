@@ -20,21 +20,7 @@
         "wsPort": 9966,
         "port": 30666,
         "flags": ["--rpc-cors=all", "--beefy"]
-      },
-      {
-        "name": "dave",
-        "wsPort": 9977,
-        "port": 30777,
-        "flags": ["--rpc-cors=all", "--beefy"]
-      },
-      {
-        "name": "ferdie",
-        "wsPort": 9978,
-        "basePath": "/tmp/polkadot-launch/relaychains/ferdie",
-        "port": 30778,
-        "flags": ["--rpc-cors=all", "--beefy"]
       }
-
     ],
     "runtime_genesis_config": {
       "parachainsConfiguration": {
@@ -56,11 +42,6 @@
           "wsPort": 9988,
           "port": 31200,
           "flags": ["--alice", "--rpc-cors=all", "--", "--execution=wasm"]
-        },
-        {
-          "wsPort": 9989,
-          "port": 31201,
-          "flags": ["--bob", "--rpc-cors=all", "--", "--execution=wasm"]
         }
       ]
     },
@@ -73,11 +54,6 @@
           "wsPort": 9998,
           "port": 31300,
           "flags": ["--alice", "--rpc-cors=all", "--", "--execution=wasm"]
-        },
-        {
-          "wsPort": 9999,
-          "port": 31301,
-          "flags": ["--bob", "--rpc-cors=all", "--", "--execution=wasm"]
         }
       ]
     }
