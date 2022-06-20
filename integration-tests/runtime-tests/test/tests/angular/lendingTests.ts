@@ -45,8 +45,7 @@ describe.only("Lending Tests", function() {
     lenderWallet: KeyringPair,
     borrowerWallet: KeyringPair,
     oracleControllerWallet: KeyringPair,
-    oracleSignerWallet: KeyringPair,
-    vaultManagerWallet: KeyringPair;
+    oracleSignerWallet: KeyringPair;
 
   before("Before Lending Tests: Base Setup", async function() {
     if (!testConfiguration.enabledTests.runBeforeBaseSetup)
@@ -57,10 +56,9 @@ describe.only("Lending Tests", function() {
     lendingMarketIdCurveInterestRate = 1;
     sudoKey = devWalletAlice;
     oracleControllerWallet = devWalletAlice;
-    vaultManagerWallet = devWalletAlice;
-    lenderWallet = devWalletCharlie.derive("/test/lending/lenderWallet");
-    borrowerWallet = devWalletFerdie.derive("/test/lending/borrowerWallet");
-    oracleSignerWallet = devWalletAlice.derive("/test/lending/oracleSigner");
+    lenderWallet = devWalletAlice;
+    borrowerWallet = devWalletAlice;
+    oracleSignerWallet = devWalletAlice;
   });
 
   before("Before Lending Tests: Mint lending asset", async function() {
@@ -68,9 +66,9 @@ describe.only("Lending Tests", function() {
       return;
     // Timeout set to 2 minutes.
     this.timeout(15 * 60 * 1000);
-    await mintAssetsToWallet(api, lenderWallet, sudoKey, [1, 2, 3]);
-    await mintAssetsToWallet(api, borrowerWallet, sudoKey, [1, 3]);
-    await mintAssetsToWallet(api, oracleSignerWallet, sudoKey, [1, 3]);
+    await mintAssetsToWallet(api, lenderWallet, sudoKey, [1, 4, 1000]);
+    await mintAssetsToWallet(api, borrowerWallet, sudoKey, [1, 4, 1000]);
+    await mintAssetsToWallet(api, oracleSignerWallet, sudoKey, [1, 4, 1000]);
     //await handleAssetMintSetup(sudoKey, [ASSET_ID_BTC, ASSET_ID_USDT, ASSET_ID_PICA], walletAlice, mintingAmount);
   });
 
@@ -83,80 +81,20 @@ describe.only("Lending Tests", function() {
    * We do this within this test block
    */
   describe("Lending Tests - Oracle Setup", function() {
-    before("Before Lending Tests: Create asset vault", async function() {
-      if (!testConfiguration.enabledTests.runBeforeCreateAssetVault)
-        return;
-      // Timeout set to 2 minutes.
-      this.timeout(2 * 60 * 1000);
-      await waitForBlocks(api);
-      const reserved = api.createType("Perquintill", 1000000000000);
-      const strategyMap = new Map();
-      strategyMap.set("AccountId32", api.createType("AccountId32", vaultManagerWallet.address));
-      strategyMap.set("Perquintill", api.createType("Perquintill", 1000000000000));
-      const strategy = api.createType("BTreeMap<AccountId32,Perquintill>", strategyMap);
-      const depositAmount = api.createType("u128", 1000000000000);
-
-      // Transaction
-      const result = await handleLendingVaultSetup(
-        api,
-        1,
-        reserved,
-        vaultManagerWallet,
-        strategy,
-        depositAmount
-      );
-
-      // ToDo (D. Roth): Verification!
-      console.debug(result.toString());
-    });
-
     describe("Before Lending Tests: Create Oracles", function() {
-      it("Before Lending Tests: Create Oracle for PICA", async function() {
+
+      it("Before Lending Tests: Create Oracle for borrow asset", async function() {
         if (!testConfiguration.enabledTests.runBeforeCreateOracle)
-          return;
+          this.skip();
         // Timeout set to 4 minutes.
         this.timeout(4 * 60 * 1000);
-        // Create oracle
-        const assetId = api.createType("u128", 1);
-        const threshold = api.createType("Percent", 50);
+        const assetId = api.createType("u128", 4);
+        const threshold = api.createType("Percent", 80);
         const minAnswers = api.createType("u32", 1);
-        const maxAnswers = api.createType("u32", 5);
+        const maxAnswers = api.createType("u32", 3);
         const blockInterval = api.createType("u32", 6);
-        const reward = api.createType("u128", 150000000000);
-        const slash = api.createType("u128", 100000000000);
-
-        // Transaction
-        const { data: [result] } = await txOracleAddAssetAndInfoSuccessTest(
-          api,
-          oracleControllerWallet,
-          assetId,
-          threshold,
-          minAnswers,
-          maxAnswers,
-          blockInterval,
-          reward,
-          slash
-        );
-
-        // ToDo (D. Roth): Verification!
-        if (result.isErr)
-          console.debug(result.asErr.toString());
-        expect(result.isOk).to.be.true;
-        oracleId = (await api.query.oracle.assetsCount()).toNumber();
-      });
-
-      it("Before Lending Tests: Create Oracle for base asset", async function() {
-        if (!testConfiguration.enabledTests.runBeforeCreateOracle)
-          return;
-        // Timeout set to 4 minutes.
-        this.timeout(4 * 60 * 1000);
-        const assetId = api.createType("u128", 1000);
-        const threshold = api.createType("Percent", 50);
-        const minAnswers = api.createType("u32", 1);
-        const maxAnswers = api.createType("u32", 5);
-        const blockInterval = api.createType("u32", 6);
-        const reward = api.createType("u128", 150000000000);
-        const slash = api.createType("u128", 100000000000);
+        const reward = api.createType("u128", 10000);
+        const slash = api.createType("u128", 10000);
 
         // Transaction
         const { data: [result] } = await txOracleAddAssetAndInfoSuccessTest(
@@ -180,16 +118,16 @@ describe.only("Lending Tests", function() {
 
       it("Before Lending Tests: Create Oracle for lending asset", async function() {
         if (!testConfiguration.enabledTests.runBeforeCreateOracle)
-          return;
+          this.skip();
         // Timeout set to 4 minutes.
         this.timeout(4 * 60 * 1000);
-        const assetId = api.createType("u128", 2000);
-        const threshold = api.createType("Percent", 50);
+        const assetId = api.createType("u128", 1000);
+        const threshold = api.createType("Percent", 80);
         const minAnswers = api.createType("u32", 1);
-        const maxAnswers = api.createType("u32", 5);
+        const maxAnswers = api.createType("u32", 3);
         const blockInterval = api.createType("u32", 6);
-        const reward = api.createType("u128", 150000000000);
-        const slash = api.createType("u128", 100000000000);
+        const reward = api.createType("u128", 10000);
+        const slash = api.createType("u128", 10000);
 
         // Transaction
         const { data: [result] } = await txOracleAddAssetAndInfoSuccessTest(
@@ -215,7 +153,7 @@ describe.only("Lending Tests", function() {
     describe("Before Lending Tests: Set Oracle Signer and add stake", function() {
       it("Setting oracle signer", async function() {
         if (!testConfiguration.enabledTests.runBeforeSetOracleSigner)
-          return;
+          this.skip();
         // Setting timeout to 2 minutes.
         this.timeout(2 * 60 * 1000);
 
@@ -260,75 +198,75 @@ describe.only("Lending Tests", function() {
           .equal(api.createType("AccountId32", oracleSignerWallet.publicKey).toString());
       });
     });
+
+    describe("Before Lending Tests: Submit Oracle Prices", function() {
+      it("Submit new price to oracle for base asset", async function() {
+        if (!testConfiguration.enabledTests.runBeforeSubmitPriceOracle)
+          this.skip();
+        // Setting timeout to 2 minutes.
+        this.timeout(5 * 60 * 1000);
+        const price = api.createType("u128", 100000000000);
+        const assetId = api.createType("u128", 4);
+
+        // Transaction
+        const { data: [result] } = await txOracleSubmitPriceSuccessTest(api, oracleSignerWallet, price, assetId);
+
+        // ToDo (D. Roth): Verification!
+        expect(result).to.not.be.an("Error");
+        expect(result.toString()).to.be
+          .equal(api.createType("AccountId32", oracleSignerWallet.publicKey).toString());
+        await waitForBlocks(api);
+      });
+
+      it("Submit new price to oracle for lending asset", async function() {
+        if (!testConfiguration.enabledTests.runBeforeSubmitPriceOracle)
+          this.skip();
+        // Setting timeout to 2 minutes.
+        this.timeout(2 * 60 * 1000);
+        const price = api.createType("u128", 100000000000);
+        const assetId = api.createType("u128", 1000);
+
+        // Transaction
+        const { data: [result] } = await txOracleSubmitPriceSuccessTest(api, oracleSignerWallet, price, assetId);
+
+        // ToDo (D. Roth): Verification!
+        expect(result).to.not.be.an("Error");
+        expect(result.toString()).to.be
+          .equal(api.createType("AccountId32", oracleSignerWallet.publicKey).toString());
+      });
+    });
   });
 
-  describe("Before Lending Tests: Submit Oracle Prices", function() {
-    it("Submit new price to oracle for base asset", async function() {
-      if (!testConfiguration.enabledTests.runBeforeSubmitPriceOracle)
-        this.skip();
-      // Setting timeout to 2 minutes.
-      this.timeout(5 * 60 * 1000);
-      await waitForBlocks(api, 10);
-      const price = api.createType("u128", 10000);
-      const assetId = api.createType("u128", 1000);
-
-      // Transaction
-      const { data: [result] } = await txOracleSubmitPriceSuccessTest(api, oracleSignerWallet, price, assetId);
-
-      // ToDo (D. Roth): Verification!
-      expect(result).to.not.be.an("Error");
-      expect(result.toString()).to.be
-        .equal(api.createType("AccountId32", oracleSignerWallet.publicKey).toString());
-      await waitForBlocks(api);
-    });
-
-    it("Submit new price to oracle for lending asset", async function() {
-      if (!testConfiguration.enabledTests.runBeforeSubmitPriceOracle)
-        this.skip();
-      // Setting timeout to 2 minutes.
-      this.timeout(2 * 60 * 1000);
-      const price = api.createType("u128", 10000);
-      const assetId = api.createType("u128", 2000);
-
-      // Transaction
-      const { data: [result] } = await txOracleSubmitPriceSuccessTest(api, oracleSignerWallet, price, assetId);
-
-      // ToDo (D. Roth): Verification!
-      expect(result).to.not.be.an("Error");
-      expect(result.toString()).to.be
-        .equal(api.createType("AccountId32", oracleSignerWallet.publicKey).toString());
-    });
-  });
-
-  describe.only("Lending Market Creation Success Tests", function() {
+  describe("Lending Market Creation Success Tests", function() {
     it("Can create lending market (Jump Interest Rate Model)", async function() {
       if (!testConfiguration.enabledTests.canCreateLendingMarket.createMarketCurveInterestRateModel) this.skip();
       // Setting timeout to 2 minutes.
       this.timeout(8 * 60 * 1000);
 
-      const paraCollateralFactor = api.createType('u128', 2);
+      const paraCollateralFactor = api.createType('FixedU128', 2_000_000_000_000_000_000n);
       const paraUnderCollateralizedWarnPercent = api.createType("Percent", 10);
       const paraLiquidators = api.createType("Vec<u32>", []);
       const paraInterestRateModel = api.createType("ComposableTraitsLendingMathInterestRateModel", { // Interest Rate Model
         jump: api.createType('ComposableTraitsLendingMathJumpModel',{
-          baseRate: api.createType("u128", 2),
-          jumpRate: api.createType("u128", 1),
-          fullRate: api.createType("u128", 10),
+          baseRate: api.createType("u128", 2000000000),
+          jumpRate: api.createType("u128", 10000000000),
+          fullRate: api.createType("u128", 32000000000),
           targetUtilization: api.createType("Percent", 80)
         })
       });
       const paraCurrencyPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", { // Currency Pair
-        base: api.createType("u128", 1000), // Borrow Asset
-        quote: api.createType("u128", 2000) // Collateral Asset
+        base: api.createType("u128", 4), // Borrow Asset
+        quote: api.createType("u128", 1000) // Collateral Asset
       });
-      const paraReservedFactor = api.createType("Perquintill", new BN("1000000000000"));//new BN("100_000_000_000_000_000"));
-
+      const paraReservedFactor = api.createType("Perquintill", 100000000000000000n);//new BN("100_000_000_000_000_000"));
+      const maxPriceAge = api.createType('u32', 1337);
       // Transaction | ToDo (D. Roth): Cleanup!
       const result = await createLendingMarketHandler(
         api,
         oracleSignerWallet,
         paraCollateralFactor,
         paraUnderCollateralizedWarnPercent,
+        maxPriceAge,
         paraLiquidators,
         paraInterestRateModel,
         paraCurrencyPair,
@@ -340,7 +278,7 @@ describe.only("Lending Tests", function() {
       await waitForBlocks(api, 3);
     });
 
-    it("Can create lending market (Curve Interest Rate Model)", async function() {
+    it.only("Can create lending market (Curve Interest Rate Model)", async function() {
       if (!testConfiguration.enabledTests.canCreateLendingMarket.createMarketCurveInterestRateModel)
         this.skip();
       // Setting timeout to 2 minutes.
@@ -354,17 +292,18 @@ describe.only("Lending Tests", function() {
         })
       });
       const paraCurrencyPair = api.createType("ComposableTraitsDefiCurrencyPairCurrencyId", { // Currency Pair
-        base: api.createType("u128", 1000), // Borrow Asset
-        quote: api.createType("u128", 2000) // Collateral Asset
+        base: api.createType("u128", 4), // Borrow Asset
+        quote: api.createType("u128", 1000) // Collateral Asset
       });
       const paraReservedFactor = api.createType("Perquintill", 1000000000000);//new BN("100_000_000_000_000_000"));
-
+      const maxPriceAge = api.createType('u32', 1337);
       // Transaction | ToDo (D. Roth): Cleanup!
       const result = await createLendingMarketHandler(
         api,
         oracleSignerWallet,
         paraCollateralFactor,
         paraUnderCollateralizedWarnPercent,
+        maxPriceAge,
         paraLiquidators,
         paraInterestRateModel,
         paraCurrencyPair,

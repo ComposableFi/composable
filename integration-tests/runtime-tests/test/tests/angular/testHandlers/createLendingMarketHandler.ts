@@ -8,6 +8,7 @@ export async function createLendingMarketHandler(
   wallet:KeyringPair,
   collateralFactor,
   underCollateralizedWarnPercent,
+  maxPriceAge,
   liquidators,
   interestRateModel,
   currencyPair,
@@ -17,11 +18,12 @@ export async function createLendingMarketHandler(
     updatable: api.createType('ComposableTraitsLendingUpdateInput', {
       collateralFactor: collateralFactor,
       underCollateralizedWarnPercent: underCollateralizedWarnPercent,
+      maxPriceAge: maxPriceAge,
       liquidators: liquidators,
+      currencyPair: currencyPair,
+      reservedFactor: reservedFactor,
       interestRateModel: interestRateModel,
     }),
-    currencyPair: currencyPair,
-    reservedFactor: reservedFactor
   });
 
   return await sendAndWaitForSuccess(
