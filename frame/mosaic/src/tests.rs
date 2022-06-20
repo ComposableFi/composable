@@ -67,13 +67,6 @@ prop_compose! {
 		}
 }
 
-// prop_compose! {
-// 	fn ethereum_address()
-// 		(x in EthereumAddress::MAX) -> EthereumAddress {
-// 			x
-// 		}
-// }
-
 prop_compose! {
 	fn amount_within_budget()
 		(x in 1..BUDGET) -> Balance {
