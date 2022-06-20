@@ -1,9 +1,8 @@
 import type { NextPage } from "next";
 import { useRouter } from "next/router";
 import Default from "@/components/Templates/Default";
-import { useTheme, Grid, Box, Typography, alpha } from "@mui/material";
+import { alpha, Box, Grid, Typography, useTheme } from "@mui/material";
 import {
-  Chart,
   ConnectWalletFeaturedBox,
   MyBondingsTable,
   PageTitle,
@@ -11,7 +10,6 @@ import {
 import { useAppSelector } from "@/hooks/store";
 import { ConnectToStakeCover } from "@/components/Molecules/ConnectToStakeCover";
 import { AllBondsTable } from "@/components/Molecules/AllBondsTable";
-import { BondingAsset } from "@/stores/defi/polkadot";
 import { useContext } from "react";
 import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { Updater } from "@/stores/defi/polkadot/bonds/PolkadotBondsUpdater";
@@ -29,6 +27,7 @@ const TreasuryBonding: NextPage = () => {
   const account = useSelectedAccount();
   useOpenPositions(account);
   const openPositions = useAppSelector((state) => state.bonding.openPositions);
+  console.log(openPositions);
   const router = useRouter();
 
   const handleActiveBondsClick = (offerId: string) => {

@@ -4,7 +4,10 @@ import { useEffect } from "react";
 import { usePicassoProvider } from "@/defi/polkadot/hooks/index";
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
-import { updateOpenPositions, VestingSchedule } from "@/stores/defi/polkadot/bonds/slice";
+import {
+  updateOpenPositions,
+  VestingSchedule,
+} from "@/stores/defi/polkadot/bonds/slice";
 
 type VestingAccount = { name: string; address: string };
 
@@ -44,7 +47,7 @@ export function useOpenPositions(account: VestingAccount | undefined) {
           acc.address
         )(api);
         const jsonVestingSchedule: VestingSchedule | null =
-          vestingScheduleResponse.toJSON();
+          vestingScheduleResponse?.toJSON() ?? null;
         if (jsonVestingSchedule) {
           const perPeriod = unwrapNumberOrHex(
             (jsonVestingSchedule as any).perPeriod
@@ -53,7 +56,7 @@ export function useOpenPositions(account: VestingAccount | undefined) {
             (jsonVestingSchedule as any).periodCount
           );
           console.log({
-            window: (jsonVestingSchedule as any).window
+            window: (jsonVestingSchedule as any).window,
           });
           const window = {
             blockNumberBased: {
@@ -92,7 +95,7 @@ export function useOpenPositions(account: VestingAccount | undefined) {
     >
   ) {
     const result = await factoryFn();
-    dispatch(updateOpenPositions(result));
+    dispatch(updateOpenPositions(result.filter(Boolean)));
   }
 
   useEffect(() => {

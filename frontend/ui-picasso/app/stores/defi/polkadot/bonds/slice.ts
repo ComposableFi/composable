@@ -3,7 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import BigNumber from "bignumber.js";
 
 export interface BondsSlice {
-  openPositions: Array<OpenPositions>;
+  openPositions: Array<ActiveBond>;
   bonds: Array<BondOffer>;
   total: number;
 }
@@ -19,7 +19,7 @@ export interface VestingSchedule {
   perPeriod: BigNumber;
 }
 
-export interface OpenPositions {
+export interface ActiveBond {
   bond: BondOffer;
   periodCount: BigNumber;
   perPeriod: BigNumber;

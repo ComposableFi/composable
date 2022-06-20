@@ -13,51 +13,20 @@ import { BaseAsset, TokenAsset } from "../Atom";
 import BigNumber from "bignumber.js";
 import { NoAssetsCover } from "./NoAssetsCover";
 import { TokenPairAsset } from "../Atom/TokenPairAsset";
-import { getTokenString } from "@/components/Organisms/Bond/utils";
+import {
+  getClaimable,
+  getTokenString,
+} from "@/components/Organisms/Bond/utils";
 import { useCurrentBlockAndTime } from "@/defi/polkadot/utils";
 import { useBlockInterval, usePicassoProvider } from "@/defi/polkadot/hooks";
 import { secondsToDHMS } from "@/defi/polkadot/hooks/useBondVestingInDays";
-import { Token } from "@/defi/Tokens";
-import { OpenPositions } from "@/stores/defi/polkadot/bonds/slice";
+import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
 import { fromPica } from "@/defi/polkadot/pallets/BondedFinance";
 
 export type MyBondingsTableProps = TableContainerProps & {
   onRowClick?: (offerId: string) => void;
   openPositions: any; // TODO(Mamali): Fix type
 };
-
-function getClaimable(
-  block: BigNumber,
-  window: { blockNumberBased: { start: BigNumber; period: BigNumber } },
-  perPeriod: BigNumber,
-  lastBlock: BigNumber,
-  periodCount: BigNumber
-) {
-  if (block.gt(lastBlock)) {
-    console.log(`Curent Block ${block.toNumber()} is bigger than ${lastBlock.toNumber()}`)
-    if (periodCount.eq(1)) {
-      console.log(`Return perPeriod as claimable ${fromPica(perPeriod).toNumber()}`)
-      return fromPica(perPeriod);
-    }
-    return lastBlock // 1200
-      .minus(window.blockNumberBased.start) // 45
-      .dividedBy(fromPica(perPeriod)) // 1000
-      .multipliedBy(fromPica(perPeriod))
-      .abs();
-  }
-
-  if (periodCount.eq(1)) {
-    return new BigNumber(0);
-  }
-
-  return block.gt(window.blockNumberBased.start)
-    ? block
-        .minus(window.blockNumberBased.start)
-        .dividedBy(periodCount)
-        .multipliedBy(fromPica(perPeriod))
-        .abs()
-    : 0;
-}
 
 export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
   openPositions,
@@ -82,7 +51,7 @@ export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
           </TableHead>
           <TableBody>
             {openPositions.map(
-              ({ window, periodCount, perPeriod, bond }: OpenPositions) => {
+              ({ window, periodCount, perPeriod, bond }: ActiveBond) => {
                 const lastBlock = window.blockNumberBased.start
                   .plus(window.blockNumberBased.period)
                   .multipliedBy(periodCount);
@@ -139,7 +108,7 @@ export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
                         icon="/tokens/chaos.svg"
                         label={`${new BigNumber(
                           claimable
-                        ).toFormat()} ${bond.reward.asset.id.toUpperCase()}`}
+                        ).toFormat()} ${bond.reward.asset?.id.toUpperCase()}`}
                       />
                     </TableCell>
                     <TableCell align="left">

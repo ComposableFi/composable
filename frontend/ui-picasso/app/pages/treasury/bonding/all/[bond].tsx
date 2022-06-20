@@ -5,13 +5,10 @@ import { Box, Grid, useTheme } from "@mui/material";
 
 import Default from "@/components/Templates/Default";
 import { PageTitle } from "@/components/Molecules";
-import PositionDetails from "@/components/Atom/PositionDetails";
-import PositionDetailsRow from "@/components/Atom/PositionDetailsRow";
 import { useAppSelector } from "@/hooks/store";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { Updater } from "@/stores/defi/polkadot/bonds/PolkadotBondsUpdater";
 import { getROI } from "@/defi/polkadot/pallets/BondedFinance";
-import { Token } from "@/defi/Tokens";
 import { fetchBalanceByAssetId } from "@/defi/polkadot/pallets/Balance";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import BigNumber from "bignumber.js";
@@ -22,6 +19,8 @@ import {
   getMaxPurchasableBonds,
   getTokenString,
 } from "@/components/Organisms/Bond/utils";
+import { useOpenPositions } from "@/defi/polkadot/hooks/useOpenPositions";
+import { ClaimForm } from "@/components/Organisms/Bond/ClaimForm";
 
 const standardPageSize = {
   xs: 12,
@@ -65,7 +64,9 @@ const Bond: NextPage = () => {
 
   const { isLoading: isLoadingBalances, balances } =
     useBalanceForOffer(bondOffer);
-
+  const account = useSelectedAccount();
+  useOpenPositions(account);
+  const openPositions = useAppSelector((state) => state.bonding.openPositions);
   const maxPurchasableBond = getMaxPurchasableBonds(
     bondOffer,
     balances[bondOffer?.assetId]
@@ -102,7 +103,10 @@ const Bond: NextPage = () => {
             />
           </Grid>
           <HighlightBoxes bondOffer={bondOffer} roi={roi} />
+        </Grid>
+        <Box display="flex" gap={2} mt={4}>
           <BondForm
+            hasClaim={openPositions.length > 0}
             offerId={bond.toString()}
             standardPageSize={standardPageSize}
             maxPurchasableBonds={maxPurchasableBond}
@@ -112,7 +116,8 @@ const Bond: NextPage = () => {
             tokenSymbol={token}
             isLoadingBalances={isLoadingBalances}
           />
-        </Grid>
+          <ClaimForm />
+        </Box>
       </Box>
     </Default>
   );

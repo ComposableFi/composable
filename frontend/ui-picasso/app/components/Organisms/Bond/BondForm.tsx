@@ -21,7 +21,7 @@ import {
   getTokenString,
   lpToSymbolPair,
 } from "@/components/Organisms/Bond/utils";
-import { useTheme } from "@mui/material/styles";
+import { alpha, useTheme } from "@mui/material/styles";
 import { getROI, purchaseBond } from "@/defi/polkadot/pallets/BondedFinance";
 
 type BondOfferBalances = {
@@ -35,6 +35,7 @@ type PositionItem = {
 };
 
 export const BondForm: FC<{
+  hasClaim: boolean;
   standardPageSize: { [key: string]: string | number };
   maxPurchasableBonds: BigNumber;
   bondOffer: BondOffer;
@@ -44,6 +45,7 @@ export const BondForm: FC<{
   tokenSymbol: string;
   isLoadingBalances: boolean;
 }> = ({
+  hasClaim,
   standardPageSize,
   roi,
   maxPurchasableBonds,
@@ -157,8 +159,47 @@ export const BondForm: FC<{
     }
   }, [isLoadingBalances, bondInput]);
 
-  return (
-    <>
+  const DetailWrapperComponent: FC<{ hasClaim: boolean }> = ({
+    hasClaim,
+    children,
+  }) => {
+    if (hasClaim) {
+      return (
+        <Box
+          sx={{
+            marginTop: "2rem",
+          }}
+        >
+          {children}
+        </Box>
+      );
+    }
+    return <PositionDetails>{children}</PositionDetails>;
+  };
+
+  const WrapperComponent: FC<{ hasClaim: boolean }> = ({
+    hasClaim,
+    children,
+  }) => {
+    if (hasClaim) {
+      return (
+        <Box
+          sx={{
+            flexDirection: "column",
+            display: "flex",
+            alignItems: "center",
+            padding: "3rem",
+            backgroundColor: alpha(theme.palette.common.white, 0.02),
+            borderRadius: "0.75rem",
+            minWidth: "50%",
+            width: "50%",
+          }}
+        >
+          {children}
+        </Box>
+      );
+    }
+    return (
       <Grid container sx={{ xs: 12 }}>
         <Grid
           item
@@ -168,73 +209,84 @@ export const BondForm: FC<{
           flexDirection="column"
           {...standardPageSize}
         >
-          <Typography
-            variant="h5"
-            color="text.common.white"
-            textAlign="center"
-            mb="3.813rem"
+          {children}
+        </Grid>
+      </Grid>
+    );
+  };
+
+  return (
+    <>
+      <WrapperComponent hasClaim={hasClaim}>
+        <Typography
+          variant="h5"
+          color="text.common.white"
+          textAlign="center"
+          mb="2rem"
+        >
+          Bond
+        </Typography>
+        <BigNumberInput
+          value={bondInput}
+          isValid={(v) => setBondValidation(v)}
+          setter={setBondInput}
+          maxValue={maxPurchasableBonds}
+          LabelProps={{
+            mainLabelProps: { label: "Amount" },
+            balanceLabelProps: {
+              label: "Balance:",
+              balanceText: `${balances[bondOffer.assetId]?.toFormat(0)} ${
+                Array.isArray(bondOffer.asset)
+                  ? bondOffer.asset.reduce(lpToSymbolPair, "")
+                  : bondOffer.asset.symbol
+              }`,
+            },
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position={"start"}>
+                {Array.isArray(bondOffer.asset) ? (
+                  <PairAsset assets={bondOffer.asset} />
+                ) : (
+                  <TokenAsset tokenId={bondOffer.asset.symbol} />
+                )}
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position="end">
+                <Button
+                  variant="text"
+                  color="primary"
+                  onClick={() => setBondInput(maxPurchasableBonds)}
+                >
+                  Max
+                </Button>
+              </InputAdornment>
+            ),
+          }}
+        />
+        {/** If Bond Is negative, show approve */}
+        {roi.lt(0) ? (
+          <Button variant="contained" fullWidth onClick={handleApprove}>
+            Approve
+          </Button>
+        ) : (
+          <Button
+            fullWidth
+            variant="contained"
+            onClick={handleBond}
+            disabled={!isBondValid}
+            sx={{
+              ...(hasClaim ? { marginTop: "2rem" } : {}),
+              ...(hasClaim ? { marginTop: "2rem" } : {}),
+            }}
           >
             Bond
-          </Typography>
-          <BigNumberInput
-            value={bondInput}
-            isValid={(v) => setBondValidation(v)}
-            setter={setBondInput}
-            maxValue={maxPurchasableBonds}
-            LabelProps={{
-              mainLabelProps: { label: "Amount" },
-              balanceLabelProps: {
-                label: "Balance:",
-                balanceText: `${balances[bondOffer.assetId]?.toFormat(0)} ${
-                  Array.isArray(bondOffer.asset)
-                    ? bondOffer.asset.reduce(lpToSymbolPair, "")
-                    : bondOffer.asset.symbol
-                }`,
-              },
-            }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position={"start"}>
-                  {Array.isArray(bondOffer.asset) ? (
-                    <PairAsset assets={bondOffer.asset} />
-                  ) : (
-                    <TokenAsset tokenId={bondOffer.asset.symbol} />
-                  )}
-                </InputAdornment>
-              ),
-              endAdornment: (
-                <InputAdornment position="end">
-                  <Button
-                    variant="text"
-                    color="primary"
-                    onClick={() => setBondInput(maxPurchasableBonds)}
-                  >
-                    Max
-                  </Button>
-                </InputAdornment>
-              ),
-            }}
-          />
-          {/** If Bond Is negative, show approve */}
-          {roi.lt(0) ? (
-            <Button variant="contained" fullWidth onClick={handleApprove}>
-              Approve
-            </Button>
-          ) : (
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={handleBond}
-              disabled={!isBondValid}
-            >
-              Bond
-            </Button>
-          )}
-        </Grid>
-
+          </Button>
+        )}
         {isBondValid && (
           <Grid item {...standardPageSize}>
-            <PositionDetails>
+            <DetailWrapperComponent hasClaim={hasClaim}>
               {Object.values(transferDetails).map(({ label, description }) => (
                 <PositionDetailsRow
                   key={label}
@@ -242,11 +294,10 @@ export const BondForm: FC<{
                   description={description}
                 />
               ))}
-            </PositionDetails>
+            </DetailWrapperComponent>
           </Grid>
         )}
-      </Grid>
-      {/** First confirmation */}
+      </WrapperComponent>
       <Modal open={open} onClose={() => setOpen(false)} dismissible>
         <Typography textAlign="center" variant="h6">
           Purchase Bond

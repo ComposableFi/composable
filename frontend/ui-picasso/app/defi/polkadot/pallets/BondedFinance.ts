@@ -169,6 +169,36 @@ export type PurchaseBond = {
   setOpen2nd: (value: ((prevState: boolean) => boolean) | boolean) => void;
   handleFormReset: () => void;
 };
+export type ClaimType = {
+  parachainApi: ApiPromise | undefined;
+  account: { name: string; address: string } | undefined;
+  executor: Executor | undefined;
+  assetId: string;
+};
+
+export async function claim(
+  { parachainApi, account, executor, assetId }: ClaimType,
+  onSuccess: () => void,
+  onError: () => void,
+  onStart: () => void
+) {
+  if (parachainApi && account && executor) {
+    try {
+      const signer = await getSigner(APP_NAME, account.address);
+      await executor.execute(
+        parachainApi.tx.vesting.claim(assetId),
+        account.address,
+        parachainApi,
+        signer,
+        onStart,
+        onSuccess
+      );
+    } catch (e) {
+      console.log(e);
+    }
+  }
+}
+
 export async function purchaseBond({
   parachainApi,
   account,

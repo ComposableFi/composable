@@ -1,7 +1,7 @@
 import { Token } from "@/defi/Tokens";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import BigNumber from "bignumber.js";
-import { VestingSchedule } from "@/defi/polkadot/hooks/useOpenPositions";
+import { fromPica } from "@/defi/polkadot/pallets/BondedFinance";
 
 export function lpToSymbolPair(acc: string, token: Token) {
   return acc.length > 0 ? acc + "-" + token.symbol : token.symbol;
@@ -29,31 +29,33 @@ export function getTokenString(asset: Token | Token[]) {
   return Array.isArray(asset) ? asset.reduce(lpToSymbolPair, "") : asset.symbol;
 }
 
-type CalculateClaimableArgs = {
-  currentBlockOrMoment: number;
-  start: number;
-  perPeriod: BigNumber;
-  periodCount: number;
-  blockNumberOrMomentAtEnd: number;
-};
-export function calculateClaimable({
-  currentBlockOrMoment,
-  start,
-  perPeriod,
-  periodCount,
-  blockNumberOrMomentAtEnd,
-}: CalculateClaimableArgs) {
-  const getClaimable = (currentBlockNumberOrMoment: number) =>
-    perPeriod.times(
-      Math.floor((currentBlockNumberOrMoment - start) / periodCount)
-    );
-  if (currentBlockOrMoment > blockNumberOrMomentAtEnd) {
-    return periodCount === 1
-      ? perPeriod
-      : getClaimable(blockNumberOrMomentAtEnd);
+export function getClaimable(
+  block: BigNumber,
+  window: { blockNumberBased: { start: BigNumber; period: BigNumber } },
+  perPeriod: BigNumber,
+  lastBlock: BigNumber,
+  periodCount: BigNumber
+) {
+  if (block.gt(lastBlock)) {
+    if (periodCount.eq(1)) {
+      return fromPica(perPeriod);
+    }
+    return lastBlock // 1200
+      .minus(window.blockNumberBased.start) // 45
+      .dividedBy(fromPica(perPeriod)) // 1000
+      .multipliedBy(fromPica(perPeriod))
+      .abs();
   }
-  if (currentBlockOrMoment > start) {
-    return getClaimable(currentBlockOrMoment);
+
+  if (periodCount.eq(1)) {
+    return new BigNumber(0);
   }
-  return new BigNumber(0);
+
+  return block.gt(window.blockNumberBased.start)
+    ? block
+        .minus(window.blockNumberBased.start)
+        .dividedBy(periodCount)
+        .multipliedBy(fromPica(perPeriod))
+        .abs()
+    : new BigNumber(0);
 }
