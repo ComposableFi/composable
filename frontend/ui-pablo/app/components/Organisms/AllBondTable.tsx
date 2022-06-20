@@ -54,7 +54,7 @@ export const AllBondTable: React.FC = () => {
 
   useEffect(() => {
     dispatch(addNextDataBondPools({ startIndex }));
-    // only called once
+    // Only called once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
