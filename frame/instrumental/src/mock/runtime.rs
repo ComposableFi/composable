@@ -357,12 +357,7 @@ impl ExtBuilder {
 		asset: CurrencyId,
 		balance: Balance,
 	) -> ExtBuilder {
-		if asset == NATIVE_ASSET {
-			self.native_balances.push((user, balance));
-		} else {
-			self.balances.push((user, asset, balance));
-		}
-
+		self.inner_initialize_balance(user, asset, balance);
 		self
 	}
 
@@ -371,13 +366,16 @@ impl ExtBuilder {
 		balances: Vec<(AccountId, CurrencyId, Balance)>,
 	) -> ExtBuilder {
 		balances.into_iter().for_each(|(account, asset, balance)| {
-			if asset == NATIVE_ASSET {
-				self.native_balances.push((account, balance));
-			} else {
-				self.balances.push((account, asset, balance));
-			}
+			self.inner_initialize_balance(account, asset, balance)
 		});
-
 		self
+	}
+
+	fn inner_initialize_balance(&mut self, user: AccountId, asset: CurrencyId, balance: Balance) {
+		if asset == NATIVE_ASSET {
+			self.native_balances.push((user, balance));
+		} else {
+			self.balances.push((user, asset, balance));
+		}
 	}
 }
