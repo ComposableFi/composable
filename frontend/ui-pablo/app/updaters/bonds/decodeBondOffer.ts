@@ -11,6 +11,7 @@ export function decodeBondOffer(
   bondOffer: any,
   principalAsset: { base: Token; quote: Token } | Token
 ): BondOffer {
+  const maturity = bondOffer.maturity.toHuman();
   return {
     offerId,
     beneficiary,
@@ -18,8 +19,8 @@ export function decodeBondOffer(
     asset: principalAsset,
     bondPrice: stringToBigNumber(bondOffer.bondPrice),
     nbOfBonds: bondOffer.nbOfBonds,
-    maturity: bondOffer.maturity.Finite
-      ? bondOffer.maturity.Finite.returnIn
+    maturity: maturity.Finite
+      ? stringToNumber(maturity.Finite.returnIn)
       : "Infinite",
     reward: {
       currencyId: stringToNumber(bondOffer.asset),
