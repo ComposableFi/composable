@@ -20,7 +20,7 @@ use crate::{
 //                                           Prop_compose
 // -------------------------------------------------------------------------------------------------
 
-const TOTAL_NUM_OF_ASSETS: usize = 6;
+const TOTAL_NUM_OF_ASSETS: usize = 5;
 const MINIMUM_RESERVE: Balance = 1_000;
 const MAXIMUM_RESERVE: Balance = 1_000_000_000;
 const TOTAL_NUM_OF_ACCOUNTS: usize = 5;
@@ -30,7 +30,6 @@ const NUMBER_OF_PROPTEST_CASES: u32 =
 
 fn pick_assets() -> impl Strategy<Value = CurrencyId> {
 	prop_oneof!(
-		Just(CurrencyId::PICA),
 		Just(CurrencyId::LAYR),
 		Just(CurrencyId::CROWD_LOAN),
 		Just(CurrencyId::USDC),
