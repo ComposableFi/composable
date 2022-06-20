@@ -36,8 +36,7 @@ pub trait Amm {
 	fn redeemable_assets_for_lp_tokens(
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
-		min_base_amount: Self::Balance,
-		min_quote_amount: Self::Balance,
+		min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
 	) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError>
 	where
 		Self::AssetId: sp_std::cmp::Ord;
@@ -47,9 +46,10 @@ pub trait Amm {
 	fn simulate_add_liquidity(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
-		base_amount: Self::Balance,
-		quote_amount: Self::Balance,
-	) -> Result<Self::Balance, DispatchError>;
+		amounts: BTreeMap<Self::AssetId, Self::Balance>,
+	) -> Result<Self::Balance, DispatchError>
+	where
+		Self::AssetId: sp_std::cmp::Ord;
 
 	/// Returns the amount of base/quote assets that would be recieved by removing the given
 	/// amounts of lp tokens.
@@ -57,8 +57,7 @@ pub trait Amm {
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
-		min_base_amount: Self::Balance,
-		min_quote_amount: Self::Balance,
+		min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
 	) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError>
 	where
 		Self::AssetId: sp_std::cmp::Ord;

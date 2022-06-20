@@ -26,6 +26,7 @@ use frame_support::{
 };
 use proptest::prelude::*;
 use sp_runtime::{traits::IntegerSquareRoot, DispatchError, Permill};
+use sp_std::collections::btree_map::BTreeMap;
 
 fn create_pool(
 	base_asset: AssetId,
@@ -206,11 +207,10 @@ fn test_redeemable_assets() {
 
 		let lp = Tokens::balance(pool.lp_token, &ALICE);
 		// if we want to redeem all lp token, it must give same values as used for add_liquidity
-		let redeemable_assets = <Pablo as Amm>::redeemable_assets_for_given_lp_tokens(
+		let redeemable_assets = <Pablo as Amm>::redeemable_assets_for_lp_tokens(
 			pool_id,
 			lp,
-			initial_btc,
-			initial_usdt,
+			BTreeMap::from([(BTC, initial_btc), (USDT, initial_usdt)]),
 		)
 		.expect("redeemable_assets failed");
 		let base_amount = *redeemable_assets.assets.get(&BTC).expect("Invalid asset");

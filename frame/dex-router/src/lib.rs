@@ -37,7 +37,10 @@ pub mod pallet {
 		traits::{CheckedAdd, One, Zero},
 		DispatchResult,
 	};
-	use sp_std::{collections::btree_set::BTreeSet, vec::Vec};
+	use sp_std::{
+		collections::{btree_map::BTreeMap, btree_set::BTreeSet},
+		vec::Vec,
+	};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -425,13 +428,11 @@ pub mod pallet {
 		fn simulate_add_liquidity(
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
-			base_amount: Self::Balance,
-			quote_amount: Self::Balance,
+			amounts: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<Self::Balance, DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
-				[pool_id] =>
-					T::Pablo::simulate_add_liquidity(who, pool_id, base_amount, quote_amount),
+				[pool_id] => T::Pablo::simulate_add_liquidity(who, pool_id, amounts),
 				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}
 		}
@@ -439,16 +440,14 @@ pub mod pallet {
 		fn redeemable_assets_for_lp_tokens(
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
-			min_base_amount: Self::Balance,
-			min_quote_amount: Self::Balance,
+			min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<RedeemableAssets<Self::AssetId, Self::Balance>, DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
 				[pool_id] => T::Pablo::redeemable_assets_for_lp_tokens(
 					pool_id,
 					lp_amount,
-					min_base_amount,
-					min_quote_amount,
+					min_expected_amounts,
 				),
 				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}
@@ -458,8 +457,7 @@ pub mod pallet {
 			who: &Self::AccountId,
 			pool_id: Self::PoolId,
 			lp_amount: Self::Balance,
-			min_base_amount: Self::Balance,
-			min_quote_amount: Self::Balance,
+			min_expected_amounts: BTreeMap<Self::AssetId, Self::Balance>,
 		) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError> {
 			let (route, _reverse) = Self::get_route(pool_id).ok_or(Error::<T>::NoRouteFound)?;
 			match route[..] {
@@ -467,8 +465,7 @@ pub mod pallet {
 					who,
 					pool_id,
 					lp_amount,
-					min_base_amount,
-					min_quote_amount,
+					min_expected_amounts,
 				),
 				_ => Err(Error::<T>::UnsupportedOperation.into()),
 			}

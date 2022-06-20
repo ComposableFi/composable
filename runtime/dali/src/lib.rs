@@ -81,7 +81,7 @@ use sp_runtime::AccountId32;
 #[cfg(any(feature = "std", test))]
 pub use sp_runtime::BuildStorage;
 pub use sp_runtime::{FixedPointNumber, Perbill, Permill, Perquintill};
-use sp_std::{collections::btree_map::BTreeMap, fmt::Debug};
+use sp_std::{collections::btree_map::BTreeMap, fmt::Debug, vec::Vec};
 use system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
@@ -1368,15 +1368,15 @@ impl_runtime_apis! {
 		fn simulate_add_liquidity(
 			who: SafeRpcWrapper<AccountId>,
 			pool_id: SafeRpcWrapper<PoolId>,
-			base_asset_amount: SafeRpcWrapper<Balance>,
-			quote_asset_amount: SafeRpcWrapper<Balance>,
+			amounts: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
 		) -> SafeRpcWrapper<Balance> {
+			let amounts: Vec<(CurrencyId, Balance)> = amounts.iter().map(|(k, v)| (k.0,v.0)).collect();
+			let amounts: BTreeMap<CurrencyId, Balance> = BTreeMap::from_iter(amounts.into_iter());
 			SafeRpcWrapper(
 				<Pablo as Amm>::simulate_add_liquidity(
 					&who.0,
 					pool_id.0,
-					base_asset_amount.0,
-					quote_asset_amount.0,
+					amounts,
 				)
 				.unwrap_or_else(|_| Zero::zero())
 			)
@@ -1386,12 +1386,13 @@ impl_runtime_apis! {
 			who: SafeRpcWrapper<AccountId>,
 			pool_id: SafeRpcWrapper<PoolId>,
 			lp_amount: SafeRpcWrapper<Balance>,
-			min_base_amount: SafeRpcWrapper<Balance>,
-			min_quote_amount: SafeRpcWrapper<Balance>,
+			min_expected_amounts: BTreeMap<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>>,
 		) -> RemoveLiquiditySimulationResult<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
+			let min_expected_amounts: Vec<(CurrencyId, Balance)> = min_expected_amounts.iter().map(|(k, v)| (k.0, v.0)).collect();
+			let min_expected_amounts: BTreeMap<CurrencyId, Balance> = BTreeMap::from_iter(min_expected_amounts.into_iter());
 			let currency_pair = <Pablo as Amm>::currency_pair(pool_id.0).unwrap_or_else(|_| CurrencyPair::new(CurrencyId::INVALID, CurrencyId::INVALID));
 			let lp_token = <Pablo as Amm>::lp_token(pool_id.0).unwrap_or(CurrencyId::INVALID);
-			let simulte_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0, min_base_amount.0, min_quote_amount.0)
+			let simulte_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0, min_expected_amounts)
 				.unwrap_or_else(|_|
 					RemoveLiquiditySimulationResult{
 						assets: BTreeMap::from([

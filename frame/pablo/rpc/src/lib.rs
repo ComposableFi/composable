@@ -11,7 +11,7 @@ use pablo_runtime_api::PabloRuntimeApi;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::HeaderBackend;
 use sp_runtime::{generic::BlockId, traits::Block as BlockT};
-use sp_std::{cmp::Ord, sync::Arc};
+use sp_std::{cmp::Ord, collections::btree_map::BTreeMap, sync::Arc};
 
 #[rpc(client, server)]
 pub trait PabloApi<BlockHash, AccountId, PoolId, AssetId, Balance>
@@ -38,8 +38,7 @@ where
 		&self,
 		who: SafeRpcWrapper<AccountId>,
 		pool_id: SafeRpcWrapper<PoolId>,
-		base_asset_amount: SafeRpcWrapper<Balance>,
-		quote_asset_amount: SafeRpcWrapper<Balance>,
+		amounts: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
 		at: Option<BlockHash>,
 	) -> RpcResult<SafeRpcWrapper<Balance>>;
 
@@ -49,8 +48,7 @@ where
 		who: SafeRpcWrapper<AccountId>,
 		pool_id: SafeRpcWrapper<PoolId>,
 		lp_amount: SafeRpcWrapper<Balance>,
-		min_base_amount: SafeRpcWrapper<Balance>,
-		min_quote_amount: SafeRpcWrapper<Balance>,
+		min_expected_amounts: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
 		at: Option<BlockHash>,
 	) -> RpcResult<RemoveLiquiditySimulationResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>;
 }
@@ -110,8 +108,7 @@ where
 		&self,
 		who: SafeRpcWrapper<AccountId>,
 		pool_id: SafeRpcWrapper<PoolId>,
-		base_asset_amount: SafeRpcWrapper<Balance>,
-		quote_asset_amount: SafeRpcWrapper<Balance>,
+		amounts: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<SafeRpcWrapper<Balance>> {
 		let api = self.client.runtime_api();
@@ -119,8 +116,7 @@ where
 		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
 
 		// calling ../../runtime-api
-		let runtime_api_result =
-			api.simulate_add_liquidity(&at, who, pool_id, base_asset_amount, quote_asset_amount);
+		let runtime_api_result = api.simulate_add_liquidity(&at, who, pool_id, amounts);
 		runtime_api_result.map_err(|e| {
 			RpcError::Call(CallError::Custom(ErrorObject::owned(
 				9876,
@@ -135,8 +131,7 @@ where
 		who: SafeRpcWrapper<AccountId>,
 		pool_id: SafeRpcWrapper<PoolId>,
 		lp_amount: SafeRpcWrapper<Balance>,
-		min_base_amount: SafeRpcWrapper<Balance>,
-		min_quote_amount: SafeRpcWrapper<Balance>,
+		min_expected_amounts: BTreeMap<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
 		at: Option<<Block as BlockT>::Hash>,
 	) -> RpcResult<RemoveLiquiditySimulationResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>
 	{
@@ -145,14 +140,8 @@ where
 		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
 
 		// calling ../../runtime-api
-		let runtime_api_result = api.simulate_remove_liquidity(
-			&at,
-			who,
-			pool_id,
-			lp_amount,
-			min_base_amount,
-			min_quote_amount,
-		);
+		let runtime_api_result =
+			api.simulate_remove_liquidity(&at, who, pool_id, lp_amount, min_expected_amounts);
 		runtime_api_result.map_err(|e| {
 			RpcError::Call(CallError::Custom(ErrorObject::owned(
 				9876,
