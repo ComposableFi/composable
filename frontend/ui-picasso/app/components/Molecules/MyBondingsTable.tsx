@@ -4,10 +4,10 @@ import {
   TableBody,
   TableCell,
   TableContainer,
+  TableContainerProps,
   TableHead,
   TableRow,
   Typography,
-  TableContainerProps,
 } from "@mui/material";
 import { BaseAsset, TokenAsset } from "../Atom";
 import BigNumber from "bignumber.js";
@@ -106,9 +106,11 @@ export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
                     <TableCell align="left">
                       <BaseAsset
                         icon="/tokens/chaos.svg"
-                        label={`${new BigNumber(
-                          claimable
-                        ).toFormat()} ${bond.reward.asset?.id.toUpperCase()}`}
+                        label={`${new BigNumber(claimable).toFormat()} ${
+                          Array.isArray(bond.reward.asset)
+                            ? bond.reward.asset[0].id
+                            : bond.reward.asset.id
+                        }`}
                       />
                     </TableCell>
                     <TableCell align="left">

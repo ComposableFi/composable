@@ -4,20 +4,19 @@ import {
   TableBody,
   TableCell,
   TableContainer,
+  TableContainerProps,
   TableHead,
   TableRow,
   Typography,
-  TableContainerProps,
 } from "@mui/material";
 import { NoAssetsCover } from "./NoAssetsCover";
-import { TokenPairAsset } from "@/components";
+import { TokenAsset, TokenPairAsset } from "@/components";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { getROI } from "@/defi/polkadot/pallets/BondedFinance";
-import { TokenAsset } from "@/components";
 
 export type AllBondsTableProps = TableContainerProps & {
   bonds?: BondOffer[];
-  onRowClick: (offerId: number) => void;
+  onRowClick: (offerId: string) => void;
 };
 
 export const AllBondsTable: React.FC<AllBondsTableProps> = ({
@@ -62,7 +61,7 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
                         ? asset.map((a) => a.symbol).join("+")
                         : asset.symbol
                     }
-                    onClick={() => onRowClick(index + 1)}
+                    onClick={() => onRowClick(String(index + 1))}
                   >
                     <TableCell align="left">
                       {Array.isArray(asset) && (

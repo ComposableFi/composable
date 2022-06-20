@@ -20,7 +20,7 @@ const standardPageSize = {
   xs: 12,
 };
 
-const TreasuryBonding: NextPage = () => {
+const Bonds: NextPage = () => {
   const theme = useTheme();
   const { extensionStatus } = useContext(ParachainContext);
   const bonds = useAppSelector((state) => state.bonding.bonds);
@@ -32,13 +32,7 @@ const TreasuryBonding: NextPage = () => {
 
   const handleActiveBondsClick = (offerId: string) => {
     router.push({
-      pathname: `/treasury/bonding/all/${offerId}`,
-    });
-  };
-
-  const goToDetails = (offerId: number) => {
-    router.push({
-      pathname: `/treasury/bonding/all/${offerId}`,
+      pathname: `/bonds/${offerId}`,
     });
   };
 
@@ -85,7 +79,10 @@ const TreasuryBonding: NextPage = () => {
                   bgcolor={alpha(theme.palette.common.white, 0.02)}
                 >
                   <Typography mb={2}>All Bonds</Typography>
-                  <AllBondsTable bonds={bonds} onRowClick={goToDetails} />
+                  <AllBondsTable
+                    bonds={bonds}
+                    onRowClick={handleActiveBondsClick}
+                  />
                 </Box>
               </Grid>
             </>
@@ -96,4 +93,4 @@ const TreasuryBonding: NextPage = () => {
   );
 };
 
-export default TreasuryBonding;
+export default Bonds;
