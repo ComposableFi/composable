@@ -55,7 +55,8 @@
 		"workbench.preferredDarkColorTheme": "GitHub Dark",
 		"workbench.startupEditor": "none",
 		"editor.inlineSuggest.enabled": true,
-		"git.autofetch": true
+		"git.autofetch": true,
+		"git.confirmSync": false
 	},
 	// Add the IDs of extensions you want installed when the container is created.
 	"extensions": [
