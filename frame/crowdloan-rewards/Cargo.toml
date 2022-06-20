@@ -52,7 +52,6 @@ rustc-hex = { version = "2.1.0", default-features = false }
 serde = { version = '1.0.136', optional = true }
 
 composable-support = { path = "../composable-support", default-features = false }
-composable-traits = { path = "../composable-traits", default-features = false }
 
 [features]
 default = ["std"]
