@@ -6,8 +6,14 @@ import { Box, Typography, useTheme, Button } from "@mui/material";
 import { useDispatch } from "react-redux";
 import { closeConfirmingModal, setMessage } from "@/stores/ui/uiSlice";
 import BigNumber from "bignumber.js";
-import { ISupplySummary } from "../../../store/bonds/bonds.types";
+import {
+  BondOffer,
+  IDepositSummary,
+  ISupplySummary,
+} from "../../../store/bonds/bonds.types";
 import { useAsyncEffect } from "../../../hooks/useAsyncEffect";
+import { usePurchaseBond } from "../../../store/hooks/bond/usePurchaseBond";
+import { useCancelOffer } from "../../../store/hooks/bond/useCancelOffer";
 
 const defaultLabelProps = (label: string, balance: string) =>
   ({
@@ -22,46 +28,91 @@ const defaultLabelProps = (label: string, balance: string) =>
   } as const);
 
 export type PreviewPurchaseModalProps = {
-  supplySummary: ISupplySummary;
+  offerId: number;
+  principalAsset: BondOffer["asset"];
+  bondPriceInUSD: ISupplySummary["bondPriceInUSD"];
+  marketPriceInUSD: ISupplySummary["marketPriceInUSD"];
   amount: BigNumber;
+  nbOfBonds: IDepositSummary["nbOfBonds"];
   rewardableTokens: string;
+  setAmount: (v: BigNumber) => any;
 } & ModalProps;
 
 export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
-  supplySummary,
+  offerId,
+  principalAsset,
+  bondPriceInUSD,
+  marketPriceInUSD,
   amount,
+  nbOfBonds,
   rewardableTokens,
+  setAmount,
   ...modalProps
 }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
 
-  const principalAsset = supplySummary.principalAsset;
+  const bond = usePurchaseBond();
+  const cancel = useCancelOffer();
 
   const [bondPrice, setBondPrice] = useState(0);
   const [marketPrice, setMarketPrice] = useState(0);
   const discountPercent =
     marketPrice === 0 ? 0 : ((marketPrice - bondPrice) / marketPrice) * 100;
 
-  const handlePurchaseBond = () => {
-    dispatch(
-      setMessage({
-        title: "Transaction successfull",
-        text: "Bond",
-        link: "/",
-        severity: "success",
-      })
-    );
+  const handlePurchaseBond = async () => {
+    const result = await bond(offerId, nbOfBonds(amount.toNumber()));
+
+    if (result) {
+      dispatch(
+        setMessage({
+          title: "Transaction successful",
+          text: "Purchase bond",
+          link: "/",
+          severity: "success",
+        })
+      );
+    } else {
+      dispatch(
+        setMessage({
+          title: "Transaction error",
+          text: "Purchase bond",
+          link: "/",
+          severity: "error",
+        })
+      );
+    }
     dispatch(closeConfirmingModal());
+    setAmount(new BigNumber(0));
   };
 
-  const handleCancelBond = () => {
+  const handleCancelBond = async () => {
+    const result = await cancel(offerId);
+    if (result) {
+      dispatch(
+        setMessage({
+          title: "Transaction successful",
+          text: "Cancel offer",
+          link: "/",
+          severity: "success",
+        })
+      );
+    } else {
+      dispatch(
+        setMessage({
+          title: "Transaction error",
+          text: "Cancel offer",
+          link: "/",
+          severity: "error",
+        })
+      );
+    }
     dispatch(closeConfirmingModal());
   };
 
   useAsyncEffect(async () => {
-    setBondPrice(await supplySummary.bondPriceInUSD());
-    setMarketPrice(await supplySummary.marketPriceInUSD());
+    setBondPrice(await bondPriceInUSD());
+    setMarketPrice(await marketPriceInUSD());
   }, []);
 
   return (

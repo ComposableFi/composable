@@ -1,8 +1,8 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
 import { DepositForm } from "@ui-pablo/app/components/Organisms/bonds/DepositForm";
-import { useDepositSummary } from "../../../app/store/hooks/useDepositSummary";
-import { useSupplySummary } from "../../../app/store/hooks/useSupplySummary";
+import { useDepositSummary } from "../../../app/store/hooks/bond/useDepositSummary";
+import { useSupplySummary } from "../../../app/store/hooks/bond/useSupplySummary";
 
 const DepositFormStories = () => {
   const supplySummary = useSupplySummary({ offerId: 1 });

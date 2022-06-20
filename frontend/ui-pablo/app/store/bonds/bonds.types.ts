@@ -75,6 +75,7 @@ export interface ISupplySummary {
 
 export interface IDepositSummary {
   principalAsset: BondOffer["asset"];
+  nbOfBonds: (amount: number) => number;
   userBalance: () => Promise<string>;
   purchasableTokens: () => Promise<string>;
   rewardableTokens: (amount: number) => string;

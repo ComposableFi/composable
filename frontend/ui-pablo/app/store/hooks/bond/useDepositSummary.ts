@@ -1,14 +1,14 @@
 import BigNumber from "bignumber.js";
-import useStore from "../useStore";
+import useStore from "../../useStore";
 
 import { useMemo } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
-import { fetchBalanceByAssetId } from "../../updaters/balances/utils";
-import { DEFAULT_NETWORK_ID } from "../../updaters/constants";
-import { useBlockInterval } from "../../utils/defi/hooks/polkadot/useBlockInterval";
-import { fromPica } from "../../utils/defi/fromPica";
-import { fetchVesitngPeriod } from "../bonds/fetchVestingPeriod";
-import { IDepositSummary } from "../bonds/bonds.types";
+import { fetchBalanceByAssetId } from "../../../updaters/balances/utils";
+import { DEFAULT_NETWORK_ID } from "../../../updaters/constants";
+import { useBlockInterval } from "../../../utils/defi/hooks/polkadot/useBlockInterval";
+import { fromPica } from "../../../utils/defi/fromPica";
+import { fetchVesitngPeriod } from "../../bonds/fetchVestingPeriod";
+import { IDepositSummary } from "../../bonds/bonds.types";
 
 type Props = {
   offerId: number;
@@ -36,6 +36,16 @@ export function useDepositSummary({
     bondMaturity: selectedBond.bondOffer.maturity,
   });
 
+  const getNbOfBonds = (amount: number) => {
+    const principalTokens = fromPica(selectedBond.bondOffer.bondPrice);
+    return Math.round(
+      new BigNumber(amount)
+        .div(principalTokens)
+        .times(selectedBond.bondOffer.nbOfBonds)
+        .toNumber()
+    );
+  };
+
   return {
     principalAsset: selectedBond.bondOffer.asset,
     userBalance: async () => {
@@ -55,13 +65,12 @@ export function useDepositSummary({
       );
       return new BigNumber(userLPBalance).div(lpPerBond).toString();
     },
+    nbOfBonds: (amount: number) => {
+      return getNbOfBonds(amount);
+    },
     rewardableTokens: (amount: number) => {
-      const principalTokens = fromPica(selectedBond.bondOffer.bondPrice);
-      const nbOfBonds = new BigNumber(amount)
-        .div(principalTokens)
-        .times(selectedBond.bondOffer.nbOfBonds);
       const rewardTokens = fromPica(selectedBond.bondOffer.reward.amount);
-      return rewardTokens.times(nbOfBonds).toString();
+      return rewardTokens.times(getNbOfBonds(amount)).toString();
     },
     roi: selectedBond.roi,
     vestingPeriod,

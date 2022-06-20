@@ -12,8 +12,8 @@ import { Link } from "@/components";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useSnackbar } from "notistack";
-import { useSupplySummary } from "../../../store/hooks/useSupplySummary";
-import { useDepositSummary } from "../../../store/hooks/useDepositSummary";
+import { useSupplySummary } from "../../../store/hooks/bond/useSupplySummary";
+import { useDepositSummary } from "../../../store/hooks/bond/useDepositSummary";
 
 const standardPageSize = {
   xs: 12,
@@ -92,6 +92,7 @@ const SelectBond: NextPage = () => {
           <Grid container columnSpacing={4}>
             <Grid item {...(claimable ? twoColumnPageSize : standardPageSize)}>
               <DepositForm
+                offerId={offerId}
                 supplySummary={supplySummary}
                 depositSummary={depositSummary}
               />

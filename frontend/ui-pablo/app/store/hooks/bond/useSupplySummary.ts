@@ -1,12 +1,12 @@
-import useStore from "../useStore";
+import useStore from "../../useStore";
 
 import { useMemo } from "react";
 import { useParachainApi } from "substrate-react";
-import { useBlockInterval } from "../../utils/defi/hooks/polkadot/useBlockInterval";
-import { getAppoloPriceInUSD } from "../../utils/defi/apollo";
-import { ISupplySummary } from "../bonds/bonds.types";
-import { fromPica } from "../../utils/defi/fromPica";
-import { fetchVesitngPeriod } from "../bonds/fetchVestingPeriod";
+import { useBlockInterval } from "../../../utils/defi/hooks/polkadot/useBlockInterval";
+import { getAppoloPriceInUSD } from "../../../utils/defi/apollo";
+import { ISupplySummary } from "../../bonds/bonds.types";
+import { fromPica } from "../../../utils/defi/fromPica";
+import { fetchVesitngPeriod } from "../../bonds/fetchVestingPeriod";
 
 type Props = {
   offerId: number;

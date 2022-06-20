@@ -52,11 +52,13 @@ const defaultLabelProps = (label: string, balance: string) =>
   } as const);
 
 export type DepositFormProps = {
+  offerId: number;
   depositSummary: IDepositSummary;
   supplySummary: ISupplySummary;
 } & BoxProps;
 
 export const DepositForm: React.FC<DepositFormProps> = ({
+  offerId,
   depositSummary,
   supplySummary,
   ...boxProps
@@ -198,9 +200,14 @@ export const DepositForm: React.FC<DepositFormProps> = ({
         />
       </Box>
       <PreviewPurchaseModal
-        supplySummary={supplySummary}
+        offerId={offerId}
+        principalAsset={supplySummary.principalAsset}
+        bondPriceInUSD={supplySummary.bondPriceInUSD}
+        marketPriceInUSD={supplySummary.marketPriceInUSD}
+        nbOfBonds={depositSummary.nbOfBonds}
         rewardableTokens={depositSummary.rewardableTokens(amount.toNumber())}
         amount={amount}
+        setAmount={setAmount}
         open={isOpenPreviewPurchaseModal}
       />
       <WrongAmountEnteredModal open={isWrongAmountEnteredModalOpen} />
