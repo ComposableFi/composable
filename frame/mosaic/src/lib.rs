@@ -50,6 +50,7 @@ pub mod pallet {
 		traits::{AccountIdConversion, Keccak256, Saturating},
 		DispatchError,
 	};
+	use sp_std::fmt;
 	use sp_std::{fmt::Debug, str};
 
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -118,10 +119,23 @@ pub mod pallet {
 		Outgoing,
 	}
 
-	#[derive(Clone, Debug, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq)]
+	#[derive(Clone, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq)]
 	pub struct AmmSwapInfo<T: Config> {
 		pub destination_token_out_address: EthereumAddress,
 		pub destination_amm_id: (NetworkIdOf<T>, RemoteAmmIdOf<T>),
+	}
+
+	impl<T> Debug for AmmSwapInfo<T>
+	where
+		T: Config,
+	{
+		fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+			write!(
+				f,
+				"AmmSwapInfo {{ destination_token_out_address: {:?}, destination_amm_id: {:?} }}",
+				self.destination_token_out_address, self.destination_amm_id
+			)
+		}
 	}
 
 	/// The information required for an assets to be transferred between chains.
@@ -376,6 +390,7 @@ pub mod pallet {
 		AssetNotMapped,
 		RemoteAmmIdNotFound,
 		RemoteAmmIdAlreadyExists,
+		DestinationAmmIdNotWhitelisted,
 	}
 
 	#[pallet::call]
@@ -488,6 +503,7 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 			swap_to_native: bool,
 			source_user_account: AccountIdOf<T>,
+			amm_swap_info: Option<AmmSwapInfo<T>>,
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
@@ -509,6 +525,15 @@ pub mod pallet {
 				now,
 			)?;
 
+			// Ensure that users can only swap using a whitelisted destination amm id
+			if let Some(swap_info) = amm_swap_info {
+				let (network_id, remote_amm_id) = &swap_info.destination_amm_id;
+				ensure!(
+					RemoteAmmWhitelist::<T>::contains_key(network_id, remote_amm_id),
+					Error::<T>::DestinationAmmIdNotWhitelisted
+				);
+			}
+
 			let id = generate_id::<T>(&caller, &network_id, &asset_id, &address, &amount, &now);
 			Self::deposit_event(Event::<T>::TransferOut {
 				id,
@@ -519,6 +544,7 @@ pub mod pallet {
 				remote_asset_id,
 				swap_to_native,
 				source_user_account,
+				amm_swap_info,
 			});
 
 			Ok(().into())
