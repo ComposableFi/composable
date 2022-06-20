@@ -1,87 +1,104 @@
-import { useAppSelector } from "@/hooks/store";
+import { useAppDispatch, useAppSelector } from "@/hooks/store";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { usePicassoProvider } from "@/defi/polkadot/hooks/index";
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
+import { updateOpenPositions, VestingSchedule } from "@/stores/defi/polkadot/bonds/slice";
 
-export interface VestingSchedule {
-  window: {
-    blockNumberBased: {
-      start: BigNumber;
-      period: BigNumber;
-    };
-  };
-  periodCount: BigNumber;
-  perPeriod: BigNumber;
-}
 type VestingAccount = { name: string; address: string };
+
+const bondedVestingSchedule =
+  (bond: BondOffer) => (address: string) => (api: ApiPromise) =>
+    api.query.vesting.vestingSchedules(address, bond.reward.assetId);
+
+function unwrapNumberOrHex(v: string | number) {
+  return new BigNumber(v, v.toString().startsWith("0x") ? 16 : 10);
+}
 
 export function useOpenPositions(account: VestingAccount | undefined) {
   const bonds = useAppSelector<BondOffer[]>((state) => state.bonding.bonds);
   const { parachainApi } = usePicassoProvider();
+  const dispatch = useAppDispatch();
 
   // traverse to all bonds
   // get all reward assets
-  // fetch each reward asset and create a new array
-
-  const rewardIds = useMemo(
-    () =>
-      bonds.reduce((acc, cur) => {
-        acc.push(cur.reward.assetId);
-        return acc;
-      }, <string[]>[]),
-    bonds
-  );
-
-  function unwrapNumberOrHex(v: string | number) {
-    return new BigNumber(v, v.toString().startsWith("0x") ? 16 : 10);
-  }
-  async function subscribeVestingSchedule(
+  // fetch each reward asset and create a new ar
+  function fetchVestingSchedules(
     api: ApiPromise,
     acc: VestingAccount
+  ): Promise<
+    Awaited<{
+      periodCount: BigNumber;
+      perPeriod: BigNumber;
+      window: {
+        blockNumberBased: { period: BigNumber; start: BigNumber };
+      };
+      type: string;
+      bond: BondOffer;
+    } | null>[]
+  > {
+    const output = bonds
+      .map(async (bond) => {
+        const [vestingScheduleResponse] = await bondedVestingSchedule(bond)(
+          acc.address
+        )(api);
+        const jsonVestingSchedule: VestingSchedule | null =
+          vestingScheduleResponse.toJSON();
+        if (jsonVestingSchedule) {
+          const perPeriod = unwrapNumberOrHex(
+            (jsonVestingSchedule as any).perPeriod
+          );
+          const periodCount = unwrapNumberOrHex(
+            (jsonVestingSchedule as any).periodCount
+          );
+          console.log({
+            window: (jsonVestingSchedule as any).window
+          });
+          const window = {
+            blockNumberBased: {
+              start: unwrapNumberOrHex(
+                (jsonVestingSchedule as any).window.blockNumberBased.start
+              ),
+              period: unwrapNumberOrHex(
+                (jsonVestingSchedule as any).window.blockNumberBased.period
+              ),
+            },
+          };
+          return {
+            bond,
+            perPeriod,
+            periodCount,
+            window,
+            type: window.blockNumberBased ? "block" : "time",
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
+    return Promise.all(output);
+  }
+
+  async function fetchAndStore(
+    factoryFn: () => Promise<
+      Awaited<{
+        periodCount: BigNumber;
+        perPeriod: BigNumber;
+        window: {
+          blockNumberBased: { period: BigNumber; start: BigNumber };
+        };
+        bond: BondOffer;
+      } | null>[]
+    >
   ) {
-    const unsub = await api.query.vesting.vestingSchedules.multi(
-      rewardIds.map((id) => [acc.address, id]),
-      (schedules) => {
-        const out = schedules.flatMap((schedule) => {
-          return schedule.flatMap((each) => each.toJSON());
-        });
-        const state: VestingSchedule[] = out
-          .map((v) => {
-            if (v) {
-              const perPeriod = unwrapNumberOrHex(v.perPeriod);
-              const periodCount = unwrapNumberOrHex(v.periodCount);
-              const window = {
-                blockNumberBased: {
-                  start: unwrapNumberOrHex(v.window.blockNumberBased.start),
-                  periodCount: unwrapNumberOrHex(
-                    v.window.blockNumberBased.period
-                  ),
-                },
-              };
-              return {
-                perPeriod,
-                periodCount,
-                window,
-              };
-            } else {
-              return null;
-            }
-          })
-          .filter(Boolean);
-        console.log("State", state);
-      }
-    );
-    return () => unsub();
+    const result = await factoryFn();
+    dispatch(updateOpenPositions(result));
   }
 
   useEffect(() => {
     let unsub = () => {};
     if (parachainApi && account) {
-      subscribeVestingSchedule(parachainApi, account).then(
-        (uns) => (unsub = uns)
-      );
+      fetchAndStore(() => fetchVestingSchedules(parachainApi, account));
     }
 
     return () => unsub();

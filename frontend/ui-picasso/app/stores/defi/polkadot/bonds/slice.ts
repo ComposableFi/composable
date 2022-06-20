@@ -1,9 +1,34 @@
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { createSlice } from "@reduxjs/toolkit";
+import BigNumber from "bignumber.js";
 
 export interface BondsSlice {
+  openPositions: Array<OpenPositions>;
   bonds: Array<BondOffer>;
   total: number;
+}
+
+export interface VestingSchedule {
+  window: {
+    blockNumberBased: {
+      start: BigNumber;
+      period: BigNumber;
+    };
+  };
+  periodCount: BigNumber;
+  perPeriod: BigNumber;
+}
+
+export interface OpenPositions {
+  bond: BondOffer;
+  periodCount: BigNumber;
+  perPeriod: BigNumber;
+  window: {
+    blockNumberBased: {
+      start: BigNumber;
+      period: BigNumber;
+    };
+  };
 }
 
 const initialState = {
@@ -22,9 +47,12 @@ export const bondsSlice = createSlice({
     setBondOfferCount: (state, action) => {
       state.bondOfferCount = action.payload;
     },
+    updateOpenPositions: (state, action) => {
+      state.openPositions = action.payload;
+    },
   },
 });
 
-export const { setBonds, setBondOfferCount } = bondsSlice.actions;
+export const { setBonds, setBondOfferCount, updateOpenPositions } = bondsSlice.actions;
 
 export default bondsSlice.reducer;

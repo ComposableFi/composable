@@ -35,7 +35,5 @@ function maturityToSeconds(
 export function useBondVestingInDays(bondOffer: BondOffer) {
   const interval = useBlockInterval();
 
-  const inSeconds = maturityToSeconds(bondOffer.maturity, interval);
-
-  return inSeconds === "Infinite" ? inSeconds : inSeconds;
+  return maturityToSeconds(bondOffer.maturity, interval);
 }

@@ -19,4 +19,5 @@ export interface BondOffer {
   reward: OfferReward;
   rewardPrice: BigNumber; // from Oracle
   price: BigNumber; // from Oracle
+  bondOfferId: string;
 }

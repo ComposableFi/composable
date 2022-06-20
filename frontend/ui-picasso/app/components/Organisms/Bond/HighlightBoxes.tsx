@@ -42,7 +42,7 @@ export const HighlightBoxes: FC<{
     3: {
       title: "Vesting period",
       description: `${
-        vesting === "Infinite" ? "Infinite" : secondsToDHMS(vesting).d + " Days"
+        vesting === "Infinite" ? "Infinite" : secondsToDHMS(vesting / 1000).d + " Days"
       }`,
     },
   };

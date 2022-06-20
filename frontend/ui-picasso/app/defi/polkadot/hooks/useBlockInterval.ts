@@ -9,6 +9,7 @@ import { BN, BN_THOUSAND, BN_TWO, bnMin } from "@polkadot/util";
 
 import { createNamedHook } from "./createNamedHook";
 import { useParachainApi } from "substrate-react";
+import { usePicassoProvider } from "@/defi/polkadot/hooks/index";
 
 // Some chains incorrectly use these, i.e. it is set to values such as 0 or even 2
 // Use a low minimum validity threshold to check these against
@@ -39,7 +40,7 @@ function calcInterval(api: ApiPromise | undefined): BN | undefined {
 }
 
 function useBlockIntervalImpl(): BN | undefined {
-  const { parachainApi } = useParachainApi("picasso");
+  const { parachainApi } = usePicassoProvider();
 
   return useMemo(() => calcInterval(parachainApi), [parachainApi]);
 }

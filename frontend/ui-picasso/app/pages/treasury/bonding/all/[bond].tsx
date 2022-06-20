@@ -21,7 +21,6 @@ import { BondForm } from "@/components/Organisms/Bond/BondForm";
 import {
   getMaxPurchasableBonds,
   getTokenString,
-  lpToSymbolPair,
 } from "@/components/Organisms/Bond/utils";
 
 const standardPageSize = {

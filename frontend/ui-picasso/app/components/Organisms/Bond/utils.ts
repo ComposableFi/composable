@@ -1,6 +1,7 @@
 import { Token } from "@/defi/Tokens";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import BigNumber from "bignumber.js";
+import { VestingSchedule } from "@/defi/polkadot/hooks/useOpenPositions";
 
 export function lpToSymbolPair(acc: string, token: Token) {
   return acc.length > 0 ? acc + "-" + token.symbol : token.symbol;
@@ -26,4 +27,33 @@ export function getMaxPurchasableBonds(
 
 export function getTokenString(asset: Token | Token[]) {
   return Array.isArray(asset) ? asset.reduce(lpToSymbolPair, "") : asset.symbol;
+}
+
+type CalculateClaimableArgs = {
+  currentBlockOrMoment: number;
+  start: number;
+  perPeriod: BigNumber;
+  periodCount: number;
+  blockNumberOrMomentAtEnd: number;
+};
+export function calculateClaimable({
+  currentBlockOrMoment,
+  start,
+  perPeriod,
+  periodCount,
+  blockNumberOrMomentAtEnd,
+}: CalculateClaimableArgs) {
+  const getClaimable = (currentBlockNumberOrMoment: number) =>
+    perPeriod.times(
+      Math.floor((currentBlockNumberOrMoment - start) / periodCount)
+    );
+  if (currentBlockOrMoment > blockNumberOrMomentAtEnd) {
+    return periodCount === 1
+      ? perPeriod
+      : getClaimable(blockNumberOrMomentAtEnd);
+  }
+  if (currentBlockOrMoment > start) {
+    return getClaimable(currentBlockOrMoment);
+  }
+  return new BigNumber(0);
 }

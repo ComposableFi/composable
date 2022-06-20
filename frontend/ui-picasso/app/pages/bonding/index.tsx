@@ -27,15 +27,13 @@ const TreasuryBonding: NextPage = () => {
   const { extensionStatus } = useContext(ParachainContext);
   const bonds = useAppSelector((state) => state.bonding.bonds);
   const account = useSelectedAccount();
-  const openPositions = useOpenPositions(account);
+  useOpenPositions(account);
+  const openPositions = useAppSelector((state) => state.bonding.openPositions);
   const router = useRouter();
 
-  const handleActiveBondsClick = (asset: BondingAsset) => {
-    let token = asset.token.symbol;
-    let toToken = asset.toToken.symbol;
+  const handleActiveBondsClick = (offerId: string) => {
     router.push({
-      pathname: `/treasury/bonding/active/${token}-${toToken}`,
-      query: { token, toToken },
+      pathname: `/treasury/bonding/all/${offerId}`,
     });
   };
 
@@ -68,28 +66,6 @@ const TreasuryBonding: NextPage = () => {
             </>
           ) : (
             <>
-              <Grid item {...standardPageSize}>
-                <Chart
-                  title="My portfolio"
-                  totalText="$24,587,298"
-                  changeText="+34%"
-                  changeTextColor={theme.palette.featured.lemon}
-                  AreaChartProps={{
-                    data: [
-                      [1644550600000, 20],
-                      [1644560620928, 40],
-                      [1644570600000, 35],
-                      [1644580600000, 60],
-                      [1644590600000, 80],
-                    ],
-                    height: 200,
-                    shorthandLabel: "Change",
-                    labelFormat: (n: number) => n.toFixed(),
-                    color: theme.palette.primary.main,
-                  }}
-                  intervals={["1h", "24h", "1w", "1m", "1y"]}
-                />
-              </Grid>
               <Grid item {...standardPageSize}>
                 <Box
                   padding={4}

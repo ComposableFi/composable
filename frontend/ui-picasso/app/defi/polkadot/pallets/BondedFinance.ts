@@ -41,7 +41,8 @@ export async function fetchBonds(api: ApiPromise) {
       acc: Promise<BondOffer[]>,
       bond: Option<
         ITuple<[AccountId32, ComposableTraitsBondedFinanceBondOffer]>
-      >
+      >,
+      index
     ) => {
       const prev = await acc;
       if (bond.isNone) return prev;
@@ -54,6 +55,7 @@ export async function fetchBonds(api: ApiPromise) {
         ...bondOffer,
         price,
         rewardPrice,
+        offerId: index + 1,
       };
 
       return [...prev, bondTransformer(beneficiary, newBondOffer)];
@@ -120,6 +122,7 @@ export function fromPica(value: number | BigNumber) {
 
 function bondTransformer(beneficiary: AccountId32, bondOffer: any): BondOffer {
   return {
+    bondOfferId: bondOffer.offerId,
     beneficiary,
     assetId: bondOffer.asset.toString(),
     asset: getAssets(bondOffer.asset),
@@ -210,4 +213,3 @@ export async function purchaseBond({
     console.log("Purchasing... no parachainAPI");
   }
 }
-
