@@ -50,7 +50,6 @@ pub mod pallet {
 		traits::{AccountIdConversion, Keccak256, Saturating},
 		DispatchError,
 	};
-	use sp_std::fmt;
 	use sp_std::{fmt::Debug, str};
 
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -119,23 +118,10 @@ pub mod pallet {
 		Outgoing,
 	}
 
-	#[derive(Clone, Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq)]
-	pub struct AmmSwapInfo<T: Config> {
+	#[derive(Clone, Encode, Decode, Debug, MaxEncodedLen, TypeInfo, PartialEq)]
+	pub struct AmmSwapInfo<N, R> {
 		pub destination_token_out_address: EthereumAddress,
-		pub destination_amm_id: (NetworkIdOf<T>, RemoteAmmIdOf<T>),
-	}
-
-	impl<T> Debug for AmmSwapInfo<T>
-	where
-		T: Config,
-	{
-		fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-			write!(
-				f,
-				"AmmSwapInfo {{ destination_token_out_address: {:?}, destination_amm_id: {:?} }}",
-				self.destination_token_out_address, self.destination_amm_id
-			)
-		}
+		pub destination_amm_id: (N, R),
 	}
 
 	/// The information required for an assets to be transferred between chains.
@@ -302,7 +288,7 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 			swap_to_native: bool,
 			source_user_account: AccountIdOf<T>,
-			amm_swap_info: Option<AmmSwapInfo<T>>,
+			amm_swap_info: Option<AmmSwapInfo<NetworkIdOf<T>, RemoteAmmIdOf<T>>>,
 		},
 		/// User claimed outgoing tx that was not (yet) picked up by the relayer
 		StaleTxClaimed {
@@ -503,7 +489,7 @@ pub mod pallet {
 			amount: BalanceOf<T>,
 			swap_to_native: bool,
 			source_user_account: AccountIdOf<T>,
-			amm_swap_info: Option<AmmSwapInfo<T>>,
+			amm_swap_info: Option<AmmSwapInfo<NetworkIdOf<T>, RemoteAmmIdOf<T>>>,
 			keep_alive: bool,
 		) -> DispatchResultWithPostInfo {
 			let caller = ensure_signed(origin)?;
@@ -526,7 +512,7 @@ pub mod pallet {
 			)?;
 
 			// Ensure that users can only swap using a whitelisted destination amm id
-			if let Some(swap_info) = amm_swap_info {
+			if let Some(swap_info) = amm_swap_info.clone() {
 				let (network_id, remote_amm_id) = &swap_info.destination_amm_id;
 				ensure!(
 					RemoteAmmWhitelist::<T>::contains_key(network_id, remote_amm_id),

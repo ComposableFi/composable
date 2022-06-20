@@ -381,7 +381,8 @@ fn incoming_outgoing_accounts_are_isolated() {
 			amount,
 			false,
 			ALICE,
-			true
+			None,
+			true,
 		));
 		assert_eq!(account_balance(), 0);
 		assert_eq!(balance_of(SubAccount::new_outgoing(ALICE)), amount);
@@ -1082,6 +1083,7 @@ mod transfer_to {
 					amount,
 					false,
 					ALICE,
+					None,
 					true
 				),
 				Error::<Test>::BelowMinTransferSize
@@ -1133,6 +1135,7 @@ mod transfer_to {
 					amount,
 					false,
 					ALICE,
+					None,
 					true
 				),
 				Error::<Test>::ExceedsMaxTransferSize
@@ -1165,6 +1168,7 @@ mod transfer_to {
 				amount,
 				false,
 				ALICE,
+				None,
 				true
 			));
 			assert_eq!(account_balance(), 0);
@@ -1199,6 +1203,7 @@ mod transfer_to {
 					amount,
 					true,
 					ALICE,
+					None,
 					false
 				),
 				Error::<Test>::UnsupportedAsset
@@ -1219,6 +1224,7 @@ mod transfer_to {
 			amount,
 			swap_to_native,
 			ALICE,
+			None,
 			true,
 		));
 		assert_eq!(
@@ -1260,6 +1266,7 @@ mod transfer_to {
 			amount,
 			swap_to_native,
 			source_user_account: ALICE,
+			amm_swap_info: None,
 		}));
 	}
 }
