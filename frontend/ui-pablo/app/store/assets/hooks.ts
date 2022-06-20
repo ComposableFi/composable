@@ -30,10 +30,15 @@ export function useAssetPrice(assetId: string): string {
 
     if (assetId === "none") return new BigNumber(0)
 
-    const assetOnChainId = getAssetOnChainId(DEFAULT_NETWORK_ID, assetId);
+    let assetOnChainId: number | null | string = getAssetOnChainId(DEFAULT_NETWORK_ID, assetId);
 
-    if (assetOnChainId && apollo[assetOnChainId.toString()]) {
-        return new BigNumber(apollo[assetId])
+    if (assetOnChainId) {
+        assetOnChainId = assetOnChainId.toString();
+    
+        if (apollo[assetOnChainId]) {
+            return new BigNumber(apollo[assetOnChainId])
+        }
     }
-    return new BigNumber(apollo[assetId])
+
+    return new BigNumber(0)
 }
