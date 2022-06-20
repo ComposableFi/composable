@@ -29,6 +29,10 @@
 			"**/target/**": true
 		},
 		"rust-analyzer.checkOnSave.command": "clippy",
+		"rust-analyzer.checkOnSave.extraArgs": [
+			"--target-dir",
+			"/workspaces/composable/target/check"
+		],
 		"git.enableCommitSigning": true,
 		"editor.formatOnSave": true,
 		"terminal.integrated.defaultProfile.linux": "zsh",
@@ -50,7 +54,7 @@
 		"workbench.preferredLightColorTheme": "GitHub Light",
 		"workbench.preferredDarkColorTheme": "GitHub Dark",
 		"workbench.startupEditor": "none",
-		"editor.inlineSuggest.enabled": true,			
+		"editor.inlineSuggest.enabled": true,
 		"git.autofetch": true
 	},
 	// Add the IDs of extensions you want installed when the container is created.
