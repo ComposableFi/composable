@@ -61,52 +61,13 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
     marketPrice === 0 ? 0 : ((marketPrice - bondPrice) / marketPrice) * 100;
 
   const handlePurchaseBond = async () => {
-    const result = await bond(offerId, nbOfBonds(amount.toNumber()));
-
-    if (result) {
-      dispatch(
-        setMessage({
-          title: "Transaction successful",
-          text: "Purchase bond",
-          link: "/",
-          severity: "success",
-        })
-      );
-    } else {
-      dispatch(
-        setMessage({
-          title: "Transaction error",
-          text: "Purchase bond",
-          link: "/",
-          severity: "error",
-        })
-      );
-    }
+    await bond(offerId, nbOfBonds(amount.toNumber()));
     dispatch(closeConfirmingModal());
     setAmount(new BigNumber(0));
   };
 
   const handleCancelBond = async () => {
-    const result = await cancel(offerId);
-    if (result) {
-      dispatch(
-        setMessage({
-          title: "Transaction successful",
-          text: "Cancel offer",
-          link: "/",
-          severity: "success",
-        })
-      );
-    } else {
-      dispatch(
-        setMessage({
-          title: "Transaction error",
-          text: "Cancel offer",
-          link: "/",
-          severity: "error",
-        })
-      );
-    }
+    await cancel(offerId);
     dispatch(closeConfirmingModal());
   };
 

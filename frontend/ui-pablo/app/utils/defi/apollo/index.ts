@@ -1,5 +1,5 @@
 import { ApiPromise } from "@polkadot/api";
-import { fromPica } from "../fromPica";
+import { fromChainUnits } from "../fromChainUnits";
 import { stringToBigNumber } from "../../stringToBigNumber";
 
 export const fetchApolloPriceByAssetId = async (
@@ -24,5 +24,5 @@ export async function getAppoloPriceInUSD(
     parachainApi,
     currencyId
   );
-  return fromPica(stringToBigNumber(principalApolloPrice));
+  return fromChainUnits(stringToBigNumber(principalApolloPrice));
 }

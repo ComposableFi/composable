@@ -38,8 +38,9 @@ export function useCancelOffer() {
           .catch((err) => {
             enqueueSnackbar(err.message);
           });
-        return "Success";
-      } catch {
+        return true;
+      } catch (err: any) {
+        enqueueSnackbar(err.message);
         return null;
       }
     },

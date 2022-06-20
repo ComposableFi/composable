@@ -6,7 +6,7 @@ import {
   fetchMomentBasedVestingTime,
 } from "./fetchVestingTime";
 import { BondOffer, BondSlice, VestingSchedule } from "./bonds.types";
-import { fromPica } from "../../utils/defi/fromPica";
+import { fromChainUnits } from "../../utils/defi/fromChainUnits";
 
 export const addActiveBond = (
   activeBonds: BondSlice["activeBonds"],
@@ -58,7 +58,7 @@ export const addBond = (
   principalAppoloPriceInUSD: number,
   rewardAppoloPriceInUSD: number
 ) => {
-  const price = fromPica(
+  const price = fromChainUnits(
     new BigNumber(bondOffer.bondPrice).times(principalAppoloPriceInUSD)
   );
   return produce(allBonds, (draft) => {
@@ -66,7 +66,7 @@ export const addBond = (
       offerId: bondOffer.offerId,
       asset: bondOffer.asset,
       price,
-      roi: fromPica(
+      roi: fromChainUnits(
         new BigNumber(rewardAppoloPriceInUSD)
           .times(bondOffer.reward.amount)
           .times(100)

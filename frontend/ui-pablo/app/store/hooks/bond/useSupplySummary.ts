@@ -5,7 +5,7 @@ import { useParachainApi } from "substrate-react";
 import { useBlockInterval } from "../../../utils/defi/hooks/polkadot/useBlockInterval";
 import { getAppoloPriceInUSD } from "../../../utils/defi/apollo";
 import { ISupplySummary } from "../../bonds/bonds.types";
-import { fromPica } from "../../../utils/defi/fromPica";
+import { fromChainUnits } from "../../../utils/defi/fromChainUnits";
 import { fetchVesitngPeriod } from "../../bonds/fetchVestingPeriod";
 
 type Props = {
@@ -38,7 +38,7 @@ export function useSupplySummary({
           selectedBond.bondOffer.reward.currencyId
         )
       ).toNumber();
-      return fromPica(selectedBond.bondOffer.reward.amount)
+      return fromChainUnits(selectedBond.bondOffer.reward.amount)
         .times(rewardPriceInUSD)
         .toNumber();
     },
@@ -49,7 +49,7 @@ export function useSupplySummary({
           selectedBond.bondOffer.currencyId
         )
       ).toNumber();
-      return fromPica(selectedBond.bondOffer.bondPrice)
+      return fromChainUnits(selectedBond.bondOffer.bondPrice)
         .times(principalPriceInUSD)
         .toNumber();
     },
