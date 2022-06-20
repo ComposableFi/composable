@@ -162,6 +162,9 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
     } else {
       appDispatch(setUseAssociationMode({ useAssociationMode: "ethereum" }));
     }
+    // only to be called on page load
+    // therefore no params
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

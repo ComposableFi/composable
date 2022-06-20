@@ -37,12 +37,16 @@ export const BigNumberInput: FC<BigNumberInputProps> = ({
 
   React.useEffect(() => {
     setter && setter(bignrValue);
+    // no need to add setter as dependancy
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bignrValue]);
 
   React.useEffect(() => {
     if (value !== bignrValue) {
       setValue(value);
     }
+    // no need to add setter as dependancy
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   return (

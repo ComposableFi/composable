@@ -36,6 +36,9 @@ const CrowdloanRewards: NextPage = () => {
         ? router.push("crowdloan-rewards/stablecoin")
         : router.push("crowdloan-rewards/ksm");
     }
+    // only to be called on page load
+    // therefore no params
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -72,6 +75,7 @@ const CrowdloanRewards: NextPage = () => {
                   }}
                 >
                   <Image
+                    alt="polkadot"
                     src="/tokens/dotsama-kusama.svg"
                     width="64"
                     height="64"
@@ -102,15 +106,26 @@ const CrowdloanRewards: NextPage = () => {
                   }}
                 >
                   <Image
+                    alt="stablecoin"
                     src="/tokens/usd-coin-usdc.svg"
                     width="64"
                     height="64"
                   />
                   <Box sx={{ width: 64, height: 64, marginLeft: "-8px" }}>
-                    <Image src="/tokens/dai.svg" width="64" height="64" />
+                    <Image
+                      alt="dai"
+                      src="/tokens/dai.svg"
+                      width="64"
+                      height="64"
+                    />
                   </Box>
                   <Box sx={{ width: 64, height: 64, marginLeft: "-8px" }}>
-                    <Image src="/tokens/tether.svg" width="64" height="64" />
+                    <Image
+                      alt="tether"
+                      src="/tokens/tether.svg"
+                      width="64"
+                      height="64"
+                    />
                   </Box>
                 </Box>
               }

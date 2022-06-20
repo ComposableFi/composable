@@ -132,7 +132,7 @@ export const AreaChart: React.FC<AreaChartProps> = ({
     setOptions(
       chartOptions(color || theme.palette.primary.main, labelFormat, min, max)
     );
-  }, []);
+  }, [color, theme, labelFormat, min, max]);
 
   useEffect(() => {
     setOptions({
@@ -144,7 +144,7 @@ export const AreaChart: React.FC<AreaChartProps> = ({
         max
       ),
     });
-  }, [data, color]);
+  }, [data, color, min, max, labelFormat, theme, options]);
 
   return (
     <Box height={height} overflow="hidden">

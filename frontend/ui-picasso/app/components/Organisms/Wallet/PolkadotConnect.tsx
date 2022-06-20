@@ -109,6 +109,9 @@ export const PolkadotConnect: React.FC<{}> = () => {
         // wait 2P secs
       }, 1000);
     }
+    // only to be called on page load
+    // therefore no param effect
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
