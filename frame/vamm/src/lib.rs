@@ -738,11 +738,16 @@ pub mod pallet {
 			let mut vamm_state = Self::get_vamm_state(&vamm_id)?;
 
 			// Delegate update twap to internal functions.
-			match (base_twap, quote_twap) {
+			let (base_twap, quote_twap) = match (base_twap, quote_twap) {
 				(Some(base_twap), Some(quote_twap)) =>
-					Self::do_update_twap(vamm_id, &mut vamm_state, base_twap, quote_twap, &None),
-				_ => Self::update_vamm_twap(vamm_id, &mut vamm_state, &None),
-			}
+					Self::do_update_twap(vamm_id, &mut vamm_state, base_twap, quote_twap, &None)?,
+				_ => Self::update_vamm_twap(vamm_id, &mut vamm_state, &None)?,
+			};
+
+			// Deposit updated twap event into blockchain
+			Self::deposit_event(Event::<T>::UpdatedTwap { vamm_id, base_twap, quote_twap });
+
+			Ok((base_twap, quote_twap))
 		}
 
 		/// Performs the swap of the desired asset against the vamm.
@@ -999,12 +1004,6 @@ pub mod pallet {
 
 			// Update runtime storage
 			VammMap::<T>::insert(&vamm_id, vamm_state);
-
-			// TODO(Cardosaum): This function will execute quite frequently,
-			// isn't it a problem to emit one new event for each function call?`
-			//
-			// Deposit updated twap event into blockchain
-			Self::deposit_event(Event::<T>::UpdatedTwap { vamm_id, base_twap, quote_twap });
 
 			// Return new asset twap
 			Ok((base_twap, quote_twap))
