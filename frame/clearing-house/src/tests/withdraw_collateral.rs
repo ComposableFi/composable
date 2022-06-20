@@ -9,8 +9,8 @@ use crate::{
 		accounts::{ALICE, BOB},
 		assets::USDC,
 		runtime::{
-			Assets as AssetsPallet, Balance, ExtBuilder, Origin, Runtime, TestPallet,
-			Vamm as VammPallet,
+			Assets as AssetsPallet, Balance, ExtBuilder, Origin, Runtime, System as SystemPallet,
+			TestPallet, Vamm as VammPallet,
 		},
 	},
 	tests::{
@@ -19,7 +19,7 @@ use crate::{
 		with_trading_context, MarketConfig,
 	},
 	Direction::{Long, Short},
-	Error,
+	Error, Event,
 };
 use proptest::prelude::*;
 
@@ -116,6 +116,10 @@ fn can_withdraw_realized_profits() {
 			collateral + collateral / 2
 		));
 		assert_eq!(AssetsPallet::balance(USDC, &ALICE), collateral + collateral / 2);
+
+		SystemPallet::assert_last_event(
+			Event::CollateralWithdrawn { user: ALICE, amount: collateral + collateral / 2 }.into(),
+		);
 	});
 }
 

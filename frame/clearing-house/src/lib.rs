@@ -459,6 +459,13 @@ pub mod pallet {
 			/// Amount of base asset closed.
 			base: T::Balance,
 		},
+		/// Collateral withdrawn by trader.
+		CollateralWithdrawn {
+			/// Id of the trader.
+			user: T::AccountId,
+			/// Amount of collateral withdrawn.
+			amount: T::Balance,
+		},
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -588,7 +595,7 @@ pub mod pallet {
 		/// - The user cannot withdraw outstanding profits
 		///
 		/// ## Emits
-		/// TODO(0xangelo)
+		/// - [`CollateralWithdrawn`](Event::<T>::CollateralWithdrawn)
 		///
 		/// ## State Changes
 		/// TODO(0xangelo)
@@ -974,7 +981,8 @@ pub mod pallet {
 				&insurance_account,
 				amount,
 			);
-			collateral.try_sub_mut(&collateral_amount.try_add(&insurance_amount)?)?;
+			let actual_amount = collateral_amount.try_add(&insurance_amount)?;
+			collateral.try_sub_mut(&actual_amount)?;
 
 			ensure!(
 				Self::meets_initial_margin_ratio(&positions, collateral)?,
@@ -1004,6 +1012,10 @@ pub mod pallet {
 			Collateral::<T>::insert(account_id, collateral);
 			Positions::<T>::insert(account_id, positions);
 
+			Self::deposit_event(Event::<T>::CollateralWithdrawn {
+				user: account_id.clone(),
+				amount: actual_amount,
+			});
 			Ok(())
 		}
 
