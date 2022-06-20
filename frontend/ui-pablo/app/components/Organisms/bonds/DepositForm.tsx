@@ -1,6 +1,5 @@
 import { BigNumberInput, Label } from "@/components/Atoms";
 import { getToken } from "@/defi/Tokens";
-import { BondDetails } from "@/defi/types";
 import {
   Box,
   Button,
@@ -200,9 +199,9 @@ export const DepositForm: React.FC<DepositFormProps> = ({
         />
       </Box>
       <PreviewPurchaseModal
-        bond={bond}
+        supplySummary={supplySummary}
+        rewardableTokens={depositSummary.rewardableTokens(amount.toNumber())}
         amount={amount}
-        setAmount={setAmount}
         open={isOpenPreviewPurchaseModal}
       />
       <WrongAmountEnteredModal open={isWrongAmountEnteredModalOpen} />
