@@ -100,7 +100,7 @@ const Auction: NextPage = () => {
     };
     // ignoring because it's a cleanup
     // case and it only runs on destruction
-    // of page by react, hance no dependancies
+    // of page by react, hence no dependancies
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
