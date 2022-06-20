@@ -1,8 +1,8 @@
-# [name] Inegration Guide
+# [name] Integration Guide
 
-[**Pallet Overviw & Workflow**](../pallet-name.md)
+[**Pallet Overview & Workflow**](../pallet-name.md)
 
-## Inegration Status
+## Integration Status
 
 | Dali | Picasso     | Composable |
 | ---- | ----------- | ---------- |
@@ -10,33 +10,34 @@
 
 ## Setup / Configuration
 
-*Include any notes about pallet lifecycle or states. A state diagram that notes
-transition requirements if you're feeling fancy*
+<!-- Include any notes about pallet life cycle or states. A state diagram that 
+notes transition requirements if you're feeling fancy -->
 
 ## RPC & Data Retrieval
 
-*RPCs w/ links to cargo docs?*
+<!-- RPCs w/ links to cargo docs? -->
 
 ## Subsquid Data Retrieval
 
-*Not requried yet since we have no subsquid yet*
+<!-- Not required yet since we have no subsquid yet -->
 
 ## Locally Consumed Types
 
-*Types the pallet consumes, potentially linking to pallet#config docs*
+<!-- Types the pallet consumes, potentially linking to pallet#config Rust docs -->
 
 ## Calculations & Sources of Values
 
-*"Provide calculations of APY or APR if any and mention the source of all values
-that need to be fetched from the chain/backend/subsquid or any other data
-source"*
+<!-- Provide calculations of APY or APR if any and mention the source of all 
+values that need to be fetched from the chain/backend/subsquid or any other data 
+source -->
 
-## Extrinsic Paramater Sources
+## Extrinsic Parameter Sources
 
-*Document sources of extrinsic paramaters, hard coded, calculated on the front
-end, user provided*
+<!-- Document sources of extrinsic parameters, hard coded, calculated on the 
+front end, user provided -->
 
 ## Pricing Sources
 
-*"Pricing sources are a must have if any Zeplin designs show users values in USD
-$"*
+<!-- Pricing sources are a must have if any Zeplin designs show users values in 
+USD$ -->
+
