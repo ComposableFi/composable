@@ -105,7 +105,7 @@ pub fn generate_raw_proof(inputs: Vec<(Vec<u8>, Vec<u8>)>, keys: Vec<Vec<u8>>) -
 
 /// IBC RPC methods.
 #[rpc(client, server)]
-pub trait IbcApi<BlockNumber> {
+pub trait IbcApi<BlockNumber, Hash> {
 	/// Query packet data
 	#[method(name = "ibc_queryPackets")]
 	fn query_packets(
@@ -308,6 +308,10 @@ pub trait IbcApi<BlockNumber> {
 		limit: u64,
 		height: u32,
 	) -> Result<QueryDenomTracesResponse>;
+
+	/// Query clientId created in block
+	#[method(name = "ibc_queryClientIdFromBlock")]
+	fn query_client_id_from_block(&self, block_hash: Hash) -> Result<IdentifiedClientState>;
 }
 
 /// Converts a runtime trap into an RPC error.
@@ -334,7 +338,7 @@ impl<C, B> IbcRpcHandler<C, B> {
 	}
 }
 
-impl<C, Block> IbcApiServer<<<Block as BlockT>::Header as HeaderT>::Number>
+impl<C, Block> IbcApiServer<<<Block as BlockT>::Header as HeaderT>::Number, Block::Hash>
 	for IbcRpcHandler<C, Block>
 where
 	Block: BlockT,
@@ -1232,6 +1236,11 @@ where
 		_limit: u64,
 		_height: u32,
 	) -> Result<QueryDenomTracesResponse> {
+		Err(runtime_error_into_rpc_error("Unimplemented"))
+	}
+
+	fn query_client_id_from_block(&self, block_hash: Block::Hash) -> Result<IdentifiedClientState> {
+		let at = BlockId::Hash(block_hash);
 		Err(runtime_error_into_rpc_error("Unimplemented"))
 	}
 }
