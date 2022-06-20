@@ -1654,7 +1654,7 @@ mod do_transfer_with_remote_amm_swap {
 					account_a,
 					Some(amm_swap_info),
 					true
-				), Error::<Test>::NotWhitelistedAmmId);
+				), Error::<Test>::DestinationAmmIdNotWhitelisted);
 
 
 				Ok(())
