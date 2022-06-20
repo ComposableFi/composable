@@ -1,6 +1,6 @@
 use codec::Codec;
 use composable_support::rpc_helpers::SafeRpcWrapper;
-use composable_traits::dex::{PriceAggregate, RemoveLiquidityDryrunResult};
+use composable_traits::dex::{PriceAggregate, RemoveLiquiditySimulationResult};
 use core::{fmt::Display, str::FromStr};
 use jsonrpsee::{
 	core::{Error as RpcError, RpcResult},
@@ -33,8 +33,8 @@ where
 		PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
 	>;
 
-	#[method(name = "pablo_add_liquidity_dryrun")]
-	fn add_liquidity_dryrun(
+	#[method(name = "pablo_simulate_add_liquidity")]
+	fn simulate_add_liquidity(
 		&self,
 		who: SafeRpcWrapper<AccountId>,
 		pool_id: SafeRpcWrapper<PoolId>,
@@ -43,8 +43,8 @@ where
 		at: Option<BlockHash>,
 	) -> RpcResult<SafeRpcWrapper<Balance>>;
 
-	#[method(name = "pablo_remove_liquidity_dryrun")]
-	fn remove_liquidity_dryrun(
+	#[method(name = "pablo_simulate_remove_liquidity")]
+	fn simulate_remove_liquidity(
 		&self,
 		who: SafeRpcWrapper<AccountId>,
 		pool_id: SafeRpcWrapper<PoolId>,
@@ -52,7 +52,7 @@ where
 		min_base_amount: SafeRpcWrapper<Balance>,
 		min_quote_amount: SafeRpcWrapper<Balance>,
 		at: Option<BlockHash>,
-	) -> RpcResult<RemoveLiquidityDryrunResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>;
+	) -> RpcResult<RemoveLiquiditySimulationResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>;
 }
 
 pub struct Pablo<C, Block> {
@@ -106,7 +106,7 @@ where
 		})
 	}
 
-	fn add_liquidity_dryrun(
+	fn simulate_add_liquidity(
 		&self,
 		who: SafeRpcWrapper<AccountId>,
 		pool_id: SafeRpcWrapper<PoolId>,
@@ -120,7 +120,7 @@ where
 
 		// calling ../../runtime-api
 		let runtime_api_result =
-			api.add_liquidity_dryrun(&at, who, pool_id, base_asset_amount, quote_asset_amount);
+			api.simulate_add_liquidity(&at, who, pool_id, base_asset_amount, quote_asset_amount);
 		runtime_api_result.map_err(|e| {
 			RpcError::Call(CallError::Custom(ErrorObject::owned(
 				9876,
@@ -130,7 +130,7 @@ where
 		})
 	}
 
-	fn remove_liquidity_dryrun(
+	fn simulate_remove_liquidity(
 		&self,
 		who: SafeRpcWrapper<AccountId>,
 		pool_id: SafeRpcWrapper<PoolId>,
@@ -138,13 +138,14 @@ where
 		min_base_amount: SafeRpcWrapper<Balance>,
 		min_quote_amount: SafeRpcWrapper<Balance>,
 		at: Option<<Block as BlockT>::Hash>,
-	) -> RpcResult<RemoveLiquidityDryrunResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>> {
+	) -> RpcResult<RemoveLiquiditySimulationResult<SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>>
+	{
 		let api = self.client.runtime_api();
 
 		let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
 
 		// calling ../../runtime-api
-		let runtime_api_result = api.remove_liquidity_dryrun(
+		let runtime_api_result = api.simulate_remove_liquidity(
 			&at,
 			who,
 			pool_id,

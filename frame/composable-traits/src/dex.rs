@@ -33,7 +33,7 @@ pub trait Amm {
 	fn lp_token(pool_id: Self::PoolId) -> Result<Self::AssetId, DispatchError>;
 
 	/// Returns the amount of base & quote asset redeemable for given amount of lp token.
-	fn redeemable_assets_for_given_lp_tokens(
+	fn redeemable_assets_for_lp_tokens(
 		pool_id: Self::PoolId,
 		lp_amount: Self::Balance,
 		min_base_amount: Self::Balance,
@@ -44,12 +44,24 @@ pub trait Amm {
 
 	/// Returns the amount of LP tokens that would be recieved by adding the given amounts of base
 	/// and quote.
-	fn add_liquidity_dryrun(
+	fn simulate_add_liquidity(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
 		base_amount: Self::Balance,
 		quote_amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
+
+	/// Returns the amount of base/quote assets that would be recieved by removing the given
+	/// amounts of lp tokens.
+	fn simulate_remove_liquidity(
+		who: &Self::AccountId,
+		pool_id: Self::PoolId,
+		lp_amount: Self::Balance,
+		min_base_amount: Self::Balance,
+		min_quote_amount: Self::Balance,
+	) -> Result<RemoveLiquiditySimulationResult<Self::AssetId, Self::Balance>, DispatchError>
+	where
+		Self::AssetId: sp_std::cmp::Ord;
 
 	/// Get pure exchange value for given units of given asset. (Note this does not include fees.)
 	/// `pool_id` the pool containing the `asset_id`.
@@ -121,16 +133,6 @@ pub trait Amm {
 		min_receive: Self::Balance,
 		keep_alive: bool,
 	) -> Result<Self::Balance, DispatchError>;
-
-	fn remove_liquidity_dryrun(
-		who: &Self::AccountId,
-		pool_id: Self::PoolId,
-		lp_amount: Self::Balance,
-		min_base_amount: Self::Balance,
-		min_quote_amount: Self::Balance,
-	) -> Result<RemoveLiquidityDryrunResult<Self::AssetId, Self::Balance>, DispatchError>
-	where
-		Self::AssetId: sp_std::cmp::Ord;
 }
 
 /// Pool Fees
@@ -406,10 +408,10 @@ where
 	pub assets: BTreeMap<AssetId, Balance>,
 }
 
-/// RemoveLiquidityDryrunResult for given amount of lp tokens.
+/// RemoveLiquiditySimulationResult for given amount of lp tokens.
 #[derive(RuntimeDebug, Encode, Decode, Default, Clone, PartialEq, TypeInfo)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub struct RemoveLiquidityDryrunResult<AssetId, Balance>
+pub struct RemoveLiquiditySimulationResult<AssetId, Balance>
 where
 	AssetId: Ord,
 {

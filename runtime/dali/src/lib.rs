@@ -37,7 +37,7 @@ use composable_support::rpc_helpers::SafeRpcWrapper;
 use composable_traits::{
 	assets::Asset,
 	defi::{CurrencyPair, Rate},
-	dex::{Amm, PriceAggregate, RemoveLiquidityDryrunResult},
+	dex::{Amm, PriceAggregate, RemoveLiquiditySimulationResult},
 };
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
 use sp_api::impl_runtime_apis;
@@ -1365,14 +1365,14 @@ impl_runtime_apis! {
 			})
 		}
 
-		fn add_liquidity_dryrun(
+		fn simulate_add_liquidity(
 			who: SafeRpcWrapper<AccountId>,
 			pool_id: SafeRpcWrapper<PoolId>,
 			base_asset_amount: SafeRpcWrapper<Balance>,
 			quote_asset_amount: SafeRpcWrapper<Balance>,
 		) -> SafeRpcWrapper<Balance> {
 			SafeRpcWrapper(
-				<Pablo as Amm>::add_liquidity_dryrun(
+				<Pablo as Amm>::simulate_add_liquidity(
 					&who.0,
 					pool_id.0,
 					base_asset_amount.0,
@@ -1382,18 +1382,18 @@ impl_runtime_apis! {
 			)
 		}
 
-		fn remove_liquidity_dryrun(
+		fn simulate_remove_liquidity(
 			who: SafeRpcWrapper<AccountId>,
 			pool_id: SafeRpcWrapper<PoolId>,
 			lp_amount: SafeRpcWrapper<Balance>,
 			min_base_amount: SafeRpcWrapper<Balance>,
 			min_quote_amount: SafeRpcWrapper<Balance>,
-		) -> RemoveLiquidityDryrunResult<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
+		) -> RemoveLiquiditySimulationResult<SafeRpcWrapper<CurrencyId>, SafeRpcWrapper<Balance>> {
 			let currency_pair = <Pablo as Amm>::currency_pair(pool_id.0).unwrap_or_else(|_| CurrencyPair::new(CurrencyId::INVALID, CurrencyId::INVALID));
 			let lp_token = <Pablo as Amm>::lp_token(pool_id.0).unwrap_or(CurrencyId::INVALID);
-			let remove_liquidity_dryrun_result = <Pablo as Amm>::remove_liquidity_dryrun(&who.0, pool_id.0, lp_amount.0, min_base_amount.0, min_quote_amount.0)
+			let simulte_remove_liquidity_result = <Pablo as Amm>::simulate_remove_liquidity(&who.0, pool_id.0, lp_amount.0, min_base_amount.0, min_quote_amount.0)
 				.unwrap_or_else(|_|
-					RemoveLiquidityDryrunResult{
+					RemoveLiquiditySimulationResult{
 						assets: BTreeMap::from([
 									(currency_pair.base, Zero::zero()),
 									(currency_pair.quote, Zero::zero()),
@@ -1402,10 +1402,10 @@ impl_runtime_apis! {
 					}
 				);
 			let mut new_map = BTreeMap::new();
-			for (k,v) in remove_liquidity_dryrun_result.assets.iter() {
+			for (k,v) in simulte_remove_liquidity_result.assets.iter() {
 				new_map.insert(SafeRpcWrapper(*k), SafeRpcWrapper(*v));
 			}
-			RemoveLiquidityDryrunResult{
+			RemoveLiquiditySimulationResult{
 				assets: new_map
 			}
 
