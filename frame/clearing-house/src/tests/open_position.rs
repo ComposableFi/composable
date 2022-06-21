@@ -10,8 +10,8 @@ use crate::{
 	pallet::{Config, Direction, Error, Event},
 	tests::{
 		any_direction, any_price, as_balance, get_market, get_market_fee_pool, get_position,
-		run_for_seconds, set_fee_pool_depth, set_oracle_twap, with_markets_context,
-		with_trading_context, MarketConfig,
+		run_for_seconds, run_to_time, set_fee_pool_depth, set_oracle_twap, with_markets_context,
+		with_trading_context, Market, MarketConfig,
 	},
 };
 use composable_traits::{clearing_house::ClearingHouse, time::ONE_HOUR};
@@ -258,6 +258,36 @@ proptest! {
 			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
 
 			assert_eq!(get_market(&market_id).base_asset_amount(direction), 0.into());
+		});
+	}
+
+	#[test]
+	fn should_update_oracle_twap(direction in any_direction()) {
+		let config = MarketConfig { twap_period: 60, ..Default::default() };
+		let collateral = as_balance(100);
+
+		with_trading_context(config.clone(), collateral, |market_id| {
+			// Ensure last_oracle_ts is 0 (market creation timestamp)
+			let Market { last_oracle_ts, last_oracle_price, last_oracle_twap, .. } = get_market(&market_id);
+			assert_eq!(last_oracle_ts, 0);
+
+			// Time passes and ALICE opens a position
+			let now = config.twap_period / 2;
+			run_to_time(now);
+			VammPallet::set_price(Some(5.into()));
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				direction,
+				collateral,
+				collateral / 5,
+			));
+
+			let market = get_market(&market_id);
+			// The last oracle TWAP update timestamp equals the one of the position closing
+			assert_eq!(market.last_oracle_ts, now);
+			assert_ne!(market.last_oracle_price, last_oracle_price);
+			assert_ne!(market.last_oracle_twap, last_oracle_twap);
 		});
 	}
 
