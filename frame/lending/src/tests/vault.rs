@@ -1,12 +1,10 @@
 use super::prelude::*;
 use crate::tests::borrow;
+use codec::{Decode, Encode};
 use composable_traits::vault::{FundsAvailability, StrategicVault, Vault as VaultTrate};
-use frame_support::{
-	traits::{fungible::Mutate, fungibles::Mutate as FungiblesMutate},
-	PalletId,
-};
+use frame_support::traits::{fungible::Mutate, fungibles::Mutate as FungiblesMutate};
 use sp_core::sr25519::Public;
-use sp_runtime::{traits::AccountIdConversion, Perquintill};
+use sp_runtime::{traits::AccountIdConversion, Perquintill, TypeId};
 
 #[test]
 fn vault_takes_part_of_borrow_so_cannot_withdraw() {
@@ -76,10 +74,17 @@ fn test_vault_market_can_withdraw() {
 	});
 }
 
+// Struct for accounts generating
+#[derive(Encode, Decode, Default, PartialEq, Debug)]
+struct AccountPrefix([u8; 6]);
+impl TypeId for AccountPrefix {
+	const TYPE_ID: [u8; 4] = *b"prfx";
+}
+
 // Generates well funded accounts
 fn generate_accounts(amount: u128) -> Vec<AccountId> {
 	let mut accounts = Vec::new();
-	let pid = PalletId(*b"markttst");
+	let pid = AccountPrefix(*b"prefix");
 	for num in 0..amount {
 		let account = pid.into_sub_account(num);
 		Balances::mint_into(&account, PICA::units(1_000_000_000)).unwrap();
@@ -169,7 +174,7 @@ proptest! {
 			));
 			test::block::process_and_progress_blocks::<Lending, Runtime>(1);
 			//Now vault is unbalanced and should restore equilibrium state.
-			while !is_vault_balanced(vault_id, &market_account) {
+			 while !is_vault_balanced(vault_id, &market_account) {
 				for borrower in &borrowers {
 					<Lending as LendingTrait>::repay_borrow(
 						&market_id,
@@ -182,7 +187,29 @@ proptest! {
 					test::block::process_and_progress_blocks::<Lending, Runtime>(1);
 				}
 			}
+			// Vault should be balanced.
 			prop_assert!(is_vault_balanced(vault_id, &market_account));
+			// Lender decided withdraw money from the vault again.
+			prop_assert_ok!(Vault::withdraw(
+						Origin::signed(lender),
+						vault_id,
+						Assets::balance(USDT::ID, &vault_account)
+					));
+			// Vault is unbalanced
+			assert!(!is_vault_balanced(vault_id, &market_account));
+			// Refresh assets prices
+			set_price(USDT::ID, NORMALIZED::ONE);
+			set_price(BTC::ID, NORMALIZED::units(50_000));
+			// We can borrow from market related to unblanaced vault
+			borrow::<Runtime>(*borrowers.get(0).unwrap(), market_id, Assets::balance(USDT::ID, &market_account));
+			test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+
+			// Lender puts back assets to the vault.
+			prop_assert_ok!(Tokens::mint_into(USDT::ID, &lender, USDT::units(total_amount)));
+			prop_assert_ok!(Vault::deposit(Origin::signed(lender), vault_id, USDT::units(total_amount)));
+			test::block::process_and_progress_blocks::<Lending, Runtime>(1);
+			// Vault is balanced.
+			assert!(is_vault_balanced(vault_id, &market_account));
 			Ok(())
 		})?;
 	}
