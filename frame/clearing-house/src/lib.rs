@@ -216,7 +216,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// Integer type underlying fixed point decimal implementation. Must be convertible to/from
-		/// the balance type
+		/// the balance type.
 		type Integer: CheckedDiv
 			+ CheckedMul
 			+ Debug
@@ -237,10 +237,10 @@ pub mod pallet {
 			+ PartialEq
 			+ TypeInfo;
 
-		/// The maximum number of open positions (one for each market) for a trader
+		/// The maximum number of open positions (one for each market) for a trader.
 		type MaxPositions: Get<u32>;
 
-		/// Price feed (in USDT) Oracle pallet implementation
+		/// Price feed (in USDT) Oracle pallet implementation.
 		type Oracle: Oracle<AssetId = Self::MayBeAssetId, Balance = Self::Balance>;
 
 		/// The id used as the `AccountId` of the clearing house. This should be unique across all
@@ -248,10 +248,10 @@ pub mod pallet {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
-		/// Implementation for querying the current Unix timestamp
+		/// Implementation for querying the current Unix timestamp.
 		type UnixTime: UnixTime;
 
-		/// Virtual Automated Market Maker pallet implementation
+		/// Virtual Automated Market Maker pallet implementation.
 		type Vamm: Vamm<
 			Balance = Self::Balance,
 			SwapConfig = SwapConfig<Self::VammId, Self::Balance>,
@@ -261,13 +261,13 @@ pub mod pallet {
 		>;
 
 		/// Configuration for creating and initializing a new vAMM instance. To be used as an
-		/// extrinsic input
+		/// extrinsic input.
 		type VammConfig: Clone + Debug + FullCodec + MaxEncodedLen + PartialEq + TypeInfo;
 
-		/// Virtual automated market maker identifier; usually an integer
+		/// Virtual automated market maker identifier; usually an integer.
 		type VammId: Clone + Copy + FullCodec + MaxEncodedLen + TypeInfo + Zero;
 
-		/// Weight information for this pallet's extrinsics
+		/// Weight information for this pallet's extrinsics.
 		type WeightInfo: WeightInfo;
 	}
 
@@ -822,7 +822,7 @@ pub mod pallet {
 		/// - [`cum_funding_rate`](Market::<T>::cum_funding_rate)
 		/// - [`funding_rate_ts`](Market::<T>::funding_rate_ts)
 		///
-		/// The market's Fee Pool account is also updated, if there's Long-Short imbalance
+		/// The market's Fee Pool account is also updated, if there's Long-Short imbalance.
 		///
 		/// ## Errors
 		///
