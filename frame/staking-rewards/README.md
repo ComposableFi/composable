@@ -52,7 +52,7 @@ A pool is where users put tokens and get shares of rewards or other powers.
 
 Any protocol can have one or more pools. The main characteristic of a pool is staked asset identifier(token).
 
-Each pool is governed through a protocol created it.
+Each pool is governed through a protocol that created it.
 
 ### Configuration
 
@@ -62,7 +62,7 @@ Configuration of a pool defines:
 
 Can/must user time lock tokens to get, possibly increased, `share`. What is the penalty for early unlock if there is a lock.
 
-By default share does not decay with time and extending time subsumes old-time already passed in a lock (user gets smaller remaining time with higher share).
+By default share does not decay with time and extending time subsumes old-time already passed in a lock. The lock gets smaller remaining time with a higher share.
 
 Owner account of the pool. Usually other protocol or its "owner".
 
