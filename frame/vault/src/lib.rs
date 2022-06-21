@@ -1057,7 +1057,7 @@ pub mod pallet {
 			account_id: &Self::AccountId,
 		) -> Result<bool, DispatchError> {
 			if let FundsAvailability::Depositable(balance) =
-				<Self as StrategicVault>::available_funds(&vault_id, &account_id)?
+				<Self as StrategicVault>::available_funds(vault_id, account_id)?
 			{
 				return Ok(balance.is_zero())
 			}
