@@ -4817,6 +4817,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "instrumental-strategy",
  "log 0.4.17",
  "orml-tokens 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=f709ed62262435b3ad80482d309e3575625d1e5b)",
  "orml-traits 0.4.1-dev (git+https://github.com/open-web3-stack/open-runtime-module-library?rev=f709ed62262435b3ad80482d309e3575625d1e5b)",

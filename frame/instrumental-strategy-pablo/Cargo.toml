@@ -28,6 +28,7 @@ log = { version = "0.4.14", default-features = false }
 serde = { version = '1', optional = true }
 
 [dev-dependencies]
+instrumental-strategy = { path = "../instrumental-strategy", default-features = false }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b", default-features = false }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b", default-features = false }
 pallet-assets = { path = "../assets", default-features = false }
