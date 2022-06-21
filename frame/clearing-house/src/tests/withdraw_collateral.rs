@@ -275,4 +275,21 @@ proptest! {
 			);
 		});
 	}
+
+	#[test]
+	fn should_not_panic_when_computing_withdrawal_amounts(
+		collateral_balance in any_balance(),
+		insurance_balance in any_balance(),
+		amount in any_balance(),
+	) {
+		ExtBuilder::default().build().execute_with(|| {
+			let collateral_account = TestPallet::get_collateral_account();
+			let insurance_account = TestPallet::get_insurance_account();
+
+			AssetsPallet::set_balance(USDC, &collateral_account, collateral_balance);
+			AssetsPallet::set_balance(USDC, &insurance_account, insurance_balance);
+
+			TestPallet::get_withdrawal_amounts(USDC, &collateral_account, &insurance_account, amount);
+		});
+	}
 }

@@ -2091,7 +2091,11 @@ pub mod pallet {
 			Ok(())
 		}
 
-		fn get_withdrawal_amounts(
+		/// Compute how much to withdraw from the collateral and insurance accounts.
+		///
+		/// Prioritizes the first until it is empty, falling back on the insurance fund to cover any
+		/// shortfalls. This function only computes amounts, no actual transfers are made.
+		pub fn get_withdrawal_amounts(
 			asset_id: AssetIdOf<T>,
 			collateral_account: &T::AccountId,
 			insurance_account: &T::AccountId,
@@ -2102,13 +2106,9 @@ pub mod pallet {
 			if amount <= collateral_balance {
 				(amount, T::Balance::zero())
 			} else {
-				(
-					collateral_balance,
-					cmp::min(
-						amount - collateral_balance, /* Safe since amount > collateral_balance */
-						insurance_balance,
-					),
-				)
+				// Safe since amount > collateral_balance in this branch
+				let insurance_amount = amount - collateral_balance;
+				(collateral_balance, insurance_amount.min(insurance_balance))
 			}
 		}
 
