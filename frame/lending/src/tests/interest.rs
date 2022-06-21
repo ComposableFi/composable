@@ -1,5 +1,9 @@
 use super::prelude::*;
-use crate::{accrue_interest_internal, tests::new_jump_model, AccruedInterest};
+use crate::{
+	helpers::{accrue_interest_internal, current_interest_rate},
+	tests::new_jump_model,
+	types::AccruedInterest,
+};
 use composable_traits::{defi::Rate, lending::math::InterestRate, time::SECONDS_PER_YEAR_NAIVE};
 use sp_arithmetic::assert_eq_error_rate;
 
@@ -12,7 +16,7 @@ fn current_interest_rate_test() {
 		let ((market_id, _), _) = create_simple_vaulted_market(BTC::instance(), manager);
 
 		assert_eq!(
-			crate::current_interest_rate::<Runtime>(market_id.0).unwrap(),
+			current_interest_rate::<Runtime>(market_id.0).unwrap(),
 			FixedU128::saturating_from_rational(2_u128, 100_u128)
 		);
 	})

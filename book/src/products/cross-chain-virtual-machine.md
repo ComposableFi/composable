@@ -11,7 +11,7 @@ In short, the XCVM **abstracts complexity** from the process of having to send i
 
 We do not aim to create a new standard for cross-chain communication, which is already the object of numerous projects. Instead, the XCVM will serve as the orchestration layer for existing bridging protocols, as depicted below:
 
-![composable_technical_stack](./composable-technical-stack.jpg)
+![composable_technical_stack](./composable-technical-stack.png)
 *Features and order execution within a XCVM environment*
 
 ---
