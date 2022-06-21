@@ -30,7 +30,7 @@ jobs:
       - name: Run tests
         run: |
           cd integration-tests/runtime-tests
-          docker run --rm -v$(pwd):/build -e "ENDPOINT=composable:9988" --workdir /build --network runtime-tests_default --entrypoint=/build/dockerRun.sh node:16.14
+          docker run --rm -v$(pwd):/build -e "ENDPOINT=composable:9988" -e "ENDPOINT_RELAYCHAIN=composable:9944" --workdir /build --network runtime-tests_default --entrypoint=/build/dockerRun.sh node:16.14
 
       - name: Cleanup
         run: |
