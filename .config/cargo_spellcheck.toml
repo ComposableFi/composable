@@ -26,7 +26,7 @@ search_dirs = ["."]
 # Refer to `man 5 hunspell`
 # or https://www.systutorials.com/docs/linux/man/4-hunspell/#lbAE
 # on how to define a custom dictionary file.
-extra_dictionaries = ["cargo_spellcheck.dic"]
+extra_dictionaries = ["spellcheck.dic"]
 
 # If set to `true`, the OS specific default search paths
 # are skipped and only explicitly specified ones are used.
