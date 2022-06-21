@@ -360,7 +360,7 @@ fn borrow_flow() {
 }
 
 #[test]
-fn zero_amount_collateral_deposit() {
+fn zero_amount_collateral_deposit_or_withdraw() {
 	new_test_ext().execute_with(|| {
 		let (market, _vault) = create_simple_market();
 		let collateral_amount = 0;
