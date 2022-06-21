@@ -1,5 +1,5 @@
 use super::prelude::*;
-use crate::{models::borrower_data::BorrowerData, validation::BalanceGreaterThenZero};
+use crate::models::borrower_data::BorrowerData;
 use composable_traits::defi::LiftedFixedBalance;
 
 #[test]
@@ -362,9 +362,18 @@ fn borrow_flow() {
 #[test]
 fn zero_amount_collateral_deposit() {
 	new_test_ext().execute_with(|| {
-		let collateral_amount: Result<Validated<u128, BalanceGreaterThenZero>, &str> =
-			0.try_into_validated();
-		assert_err!(collateral_amount, "Can not deposit zero collateral");
+		let (market, _vault) = create_simple_market();
+		let collateral_amount = 0;
+		let error_message = "Can not deposit or withdraw zero collateral";
+		assert_noop!(
+			Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral_amount, false),
+			error_message
+		);
+
+		assert_noop!(
+			Lending::withdraw_collateral(Origin::signed(*ALICE), market, collateral_amount,),
+			error_message
+		);
 	})
 }
 
