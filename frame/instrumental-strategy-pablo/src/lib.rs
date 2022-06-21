@@ -14,10 +14,11 @@ pub mod pallet {
 	//                                     Imports and Dependencies
 	// ---------------------------------------------------------------------------------------------
 
+	use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		dex::Amm,
-		instrumental::InstrumentalProtocolStrategy,
+		instrumental::{InstrumentalProtocolStrategy, State},
 		vault::{FundsAvailability, StrategicVault, Vault},
 	};
 	use frame_support::{
@@ -27,12 +28,11 @@ pub mod pallet {
 		traits::fungibles::{Inspect, Mutate, MutateHold, Transfer},
 		transactional, Blake2_128Concat, PalletId,
 	};
+	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
 	};
 	use sp_std::fmt::Debug;
-
-	use crate::weights::WeightInfo;
 
 	// ---------------------------------------------------------------------------------------------
 	//                                  Declaration Of The Pallet Type
@@ -140,7 +140,11 @@ pub mod pallet {
 	// ---------------------------------------------------------------------------------------------
 	//                                           Pallet Types
 	// ---------------------------------------------------------------------------------------------
-
+	#[derive(Encode, Decode, MaxEncodedLen, Clone, Copy, Default, Debug, PartialEq, TypeInfo)]
+	pub struct PoolState<PoolId, State> {
+		pub pool_id: PoolId,
+		pub state: State,
+	}
 	// ---------------------------------------------------------------------------------------------
 	//                                          Runtime Storage
 	// ---------------------------------------------------------------------------------------------
@@ -155,7 +159,8 @@ pub mod pallet {
 	/// The corresponding Pool to invest the whitelisted asset into.
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
-	pub type Pools<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, T::PoolId>;
+	pub type Pools<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AssetId, PoolState<T::PoolId, State>>;
 
 	// ---------------------------------------------------------------------------------------------
 	//                                          Runtime Events
@@ -169,6 +174,8 @@ pub mod pallet {
 		RebalancedVault { vault_id: T::VaultId },
 
 		UnableToRebalanceVault { vault_id: T::VaultId },
+
+		Setted { asset_id: T::AssetId, pool_id: T::PoolId },
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -184,6 +191,9 @@ pub mod pallet {
 		// TODO(belousm): only for MVP version we can assume the `pool_id` is already known and
 		// exist. We should remove it in V1.
 		PoolNotFound,
+
+		// Occurs when we try to set a new pool_id, during a transferring from or to an old one
+		TransferringInProgress,
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -198,7 +208,22 @@ pub mod pallet {
 	// ---------------------------------------------------------------------------------------------
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		/// Store a mapping of asset_id -> pool_id in the pools runtime storage object
+		///
+		/// Emits `Setted` event when successful.
+		#[pallet::weight(T::WeightInfo::set_pool_id_for_asset())]
+		pub fn set_pool_id_for_asset(
+			origin: OriginFor<T>,
+			asset_id: T::AssetId,
+			pool_id: T::PoolId,
+		) -> DispatchResult {
+			let _who = ensure_signed(origin)?;
+			let _ =
+				<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
+			Ok(())
+		}
+	}
 
 	// ---------------------------------------------------------------------------------------------
 	//                                         Protocol Strategy
@@ -208,9 +233,28 @@ pub mod pallet {
 		type AccountId = T::AccountId;
 		type AssetId = T::AssetId;
 		type VaultId = T::VaultId;
+		type PoolId = T::PoolId;
 
 		fn account_id() -> Self::AccountId {
 			T::PalletId::get().into_account()
+		}
+
+		#[transactional]
+		fn set_pool_id_for_asset(
+			asset_id: T::AssetId,
+			pool_id: T::PoolId,
+		) -> Result<(), DispatchError> {
+			if Pools::<T>::contains_key(asset_id) {
+				let pool_id_and_state = Self::pools(asset_id).ok_or(Error::<T>::PoolNotFound)?;
+				ensure!(
+					pool_id_and_state.state == State::Normal,
+					Error::<T>::TransferringInProgress
+				);
+				Pools::<T>::mutate(asset_id, |_| PoolState { pool_id, state: State::Normal });
+			} else {
+				Pools::<T>::insert(asset_id, PoolState { pool_id, state: State::Normal });
+			}
+			Ok(())
 		}
 
 		#[transactional]
@@ -256,54 +300,83 @@ pub mod pallet {
 		fn do_rebalance(vault_id: &T::VaultId) -> DispatchResult {
 			let asset_id = T::Vault::asset_id(vault_id)?;
 			let account_id = T::Vault::account_id(vault_id);
-			let pool_id = Self::pools(asset_id).ok_or(Error::<T>::PoolNotFound)?;
-			match T::Vault::available_funds(vault_id, &Self::account_id())? {
+			let pool_id_and_state = Self::pools(asset_id).ok_or(Error::<T>::PoolNotFound)?;
+			let pool_id = pool_id_and_state.pool_id;
+			let task = T::Vault::available_funds(vault_id, &Self::account_id())?;
+			match task {
 				FundsAvailability::Withdrawable(balance) => {
-					let vault_account = T::Vault::account_id(vault_id);
-					let lp_token_amount = T::Pablo::amount_of_lp_token_for_added_liquidity(
-						pool_id,
-						T::Balance::zero(),
-						balance,
-					)?;
-					T::Pablo::add_liquidity(
-						&vault_account,
-						pool_id,
-						T::Balance::zero(),
-						balance,
-						lp_token_amount,
-						true,
-					)?;
+					Self::withdraw(vault_id, pool_id, balance)?;
 				},
 				FundsAvailability::Depositable(balance) => {
-					let vault_account = T::Vault::account_id(vault_id);
-					let lp_token_amount = T::Pablo::amount_of_lp_token_for_added_liquidity(
-						pool_id,
-						T::Balance::zero(),
-						balance,
-					)?;
-					T::Pablo::remove_liquidity(
-						&vault_account,
-						pool_id,
-						lp_token_amount,
-						T::Balance::zero(),
-						T::Balance::zero(),
-					)?;
+					Self::deposit(vault_id, pool_id, balance)?;
 				},
 				FundsAvailability::MustLiquidate => {
-					let vault_account = T::Vault::account_id(vault_id);
-					let lp_token_id = T::Pablo::lp_token(pool_id)?;
-					let balance_of_lp_token = T::Currency::balance(lp_token_id, &account_id);
-					T::Pablo::remove_liquidity(
-						&vault_account,
-						pool_id,
-						balance_of_lp_token,
-						T::Balance::zero(),
-						T::Balance::zero(),
-					)?;
+					Self::liquidate(vault_id, pool_id, &account_id)?;
 				},
 				FundsAvailability::None => {},
 			};
 			Ok(())
+		}
+
+		#[transactional]
+		fn withdraw(
+			vault_id: &T::VaultId,
+			pool_id: T::PoolId,
+			balance: T::Balance,
+		) -> DispatchResult {
+			let vault_account = T::Vault::account_id(vault_id);
+			let lp_token_amount = T::Pablo::amount_of_lp_token_for_added_liquidity(
+				pool_id,
+				T::Balance::zero(),
+				balance,
+			)?;
+			T::Pablo::add_liquidity(
+				&vault_account,
+				pool_id,
+				T::Balance::zero(),
+				balance,
+				lp_token_amount,
+				bool::default(),
+			)
+		}
+
+		#[transactional]
+		fn deposit(
+			vault_id: &T::VaultId,
+			pool_id: T::PoolId,
+			balance: T::Balance,
+		) -> DispatchResult {
+			let vault_account = T::Vault::account_id(vault_id);
+			let lp_token_amount = T::Pablo::amount_of_lp_token_for_added_liquidity(
+				pool_id,
+				T::Balance::zero(),
+				balance,
+			)?;
+			T::Pablo::remove_liquidity(
+				&vault_account,
+				pool_id,
+				lp_token_amount,
+				T::Balance::zero(),
+				T::Balance::zero(),
+			)
+		}
+
+		#[transactional]
+		fn liquidate(
+			vault_id: &T::VaultId,
+			pool_id: T::PoolId,
+			account_id: &T::AccountId,
+		) -> DispatchResult {
+			let vault_account = T::Vault::account_id(vault_id);
+			let lp_token_id = T::Pablo::lp_token(pool_id)?;
+			let balance_of_lp_token = T::Currency::balance(lp_token_id, account_id);
+			T::Pablo::remove_liquidity(
+				&vault_account,
+				pool_id,
+				balance_of_lp_token,
+				T::Balance::zero(),
+				T::Balance::zero(),
+			)
 		}
 	}
 }
