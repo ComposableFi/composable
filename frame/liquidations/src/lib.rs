@@ -266,8 +266,7 @@ pub mod pallet {
 				configuration
 					.try_push(DefaultStrategyIndex::<T>::get())
 					.map_err(|()| Error::<T>::InvalidLiquidationStrategiesVector)?;
-			};
-			println!("Configuration: {:?}", configuration);
+			};			
 			for id in configuration {
 				let configuration = Strategies::<T>::get(id);
 				if let Some(configuration) = configuration {
