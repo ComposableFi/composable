@@ -59,7 +59,7 @@ export const useLiquidityPoolsList = (): LiquidityPoolRow[] => {
       };
     })
 
-  }, [allLpRewardingPools.length, poolLiquidity, poolStatsValue, poolStats]);
+  }, [allLpRewardingPools, poolLiquidity, poolStatsValue, poolStats]);
 
   return liquidityPoolsList;
 };

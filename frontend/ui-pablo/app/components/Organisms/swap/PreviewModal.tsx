@@ -28,18 +28,18 @@ import {
 } from "substrate-react";
 import { SwapSummary } from "./SwapSummary";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import { AssetId } from "@/defi/polkadot/types";
-import { Assets } from "@/defi/polkadot/Assets";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { useSnackbar } from "notistack";
 import { useAppSelector } from "@/hooks/store";
+import { MockedAsset } from "@/store/assets/assets.types";
+import { DEFAULT_NETWORK_ID, toChainUnits } from "@/defi/utils";
 
 export type PreviewModalProps = {
   setConfirmed?: (confirmed: boolean) => any;
-  baseAssetId: AssetId | "none";
-  quoteAssetId: AssetId | "none";
+  baseAsset: MockedAsset | undefined;
+  quoteAsset: MockedAsset | undefined;
   quoteAssetAmount: BigNumber;
   baseAssetAmount: BigNumber;
   minimumReceived: BigNumber;
@@ -47,61 +47,46 @@ export type PreviewModalProps = {
 
 export const PreviewModal: React.FC<PreviewModalProps> = ({
   setConfirmed,
-  baseAssetId,
-  quoteAssetId,
+  baseAsset,
+  quoteAsset,
   quoteAssetAmount,
   baseAssetAmount,
   minimumReceived,
   ...modalProps
 }) => {
   const theme = useTheme();
-  const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
-  const connectedAccount = useSelectedAccount("picasso");
-  const executor = useExecutor();
+  const dispatch = useDispatch();
+
   const { parachainApi } = useParachainApi("picasso");
   const { swaps } = useStore();
+  const connectedAccount = useSelectedAccount("picasso");
+  const executor = useExecutor();
 
   const priceImpact = 0;
-
-  const baseAsset = baseAssetId === "none" ? null : Assets[baseAssetId];
-  const quoteAsset = quoteAssetId === "none" ? null : Assets[quoteAssetId];
 
   const spotPrice = useMemo(() => {
     return new BigNumber(swaps.poolVariables.spotPrice);
   }, [swaps.poolVariables]);
 
   const onConfirmSwap = async () => {
-    const { ui } = swaps;
-    const {baseAssetSelected, quoteAssetSelected} = ui;
     if (
       parachainApi &&
       connectedAccount &&
       executor &&
-      baseAssetSelected !== "none" &&
-      quoteAssetSelected !== "none"
+      baseAsset && quoteAsset
     ) {
       try {
-        const decimalsBase = new BigNumber(10).pow(
-          Assets[quoteAssetSelected].decimals
-        );
 
-        const base = Assets[baseAssetSelected].supportedNetwork.picasso;
-        const quote = Assets[quoteAssetSelected].supportedNetwork.picasso;
-
-        const qtAmont = baseAssetAmount.times(decimalsBase);
-        const minRec = minimumReceived.times(decimalsBase);
+        const qtAmont = toChainUnits(baseAssetAmount);
+        const minRec = toChainUnits(minimumReceived);
 
         const signer = await getSigner(APP_NAME, connectedAccount.address);
 
         let pair = {
-          base,
-          quote,
+          base: +baseAsset.network[DEFAULT_NETWORK_ID],
+          quote: +quoteAsset.network[DEFAULT_NETWORK_ID],
         };
-
-        console.log('Minimum Recieve: ', minRec.toFixed(0))
-        console.log('Quote Amount: ', qtAmont .toFixed(0))
-        console.log('Exchange: ', quote === swaps.poolConstants.pair.quote, pair)
 
         executor.execute(
           parachainApi.tx.dexRouter.exchange(
@@ -251,8 +236,8 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
           mt={4}
           quoteAssetAmount={quoteAssetAmount}
           poolType={swaps.poolConstants.poolType}
-          baseAssetId={baseAssetId}
-          quoteAssetId={quoteAssetId}
+          baseAsset={baseAsset}
+          quoteAsset={quoteAsset}
           minimumReceived={minimumReceived}
           priceImpact={priceImpact}
           PriceImpactProps={{

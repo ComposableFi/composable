@@ -19,9 +19,9 @@ import { useMobile } from "@/hooks/responsive";
 import { TransactionSettings } from "@/components/Organisms/TransactionSettings";
 import { openTransactionSettingsModal } from "@/stores/ui/uiSlice";
 import useStore from "@/store/useStore";
-import { Assets, getAssetOnChainId } from "@/defi/polkadot/Assets";
-import { AssetId } from "@/defi/polkadot/types";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
+import { useAssetBalance, useUSDPriceByAssetId } from "@/store/assets/hooks";
+import { MockedAsset } from "@/store/assets/assets.types";
 
 const selectLabelProps = (valid: boolean, label: string, balance: string) =>
   ({
@@ -61,19 +61,19 @@ const priceLabelProps = (label: string, balance?: string) =>
     },
   } as const);
 
-const combinedSelectProps = (assetId: AssetId | "none", isMobile?: boolean) =>
+const combinedSelectProps = (asset: MockedAsset | undefined, isMobile?: boolean) =>
   ({
-    value: assetId,
+    value: asset ? asset.network[DEFAULT_NETWORK_ID] : "",
     dropdownModal: true,
     forceHiddenLabel: isMobile ? true : false,
     options:
-      assetId !== "none"
+      asset
         ? [
             {
-              value: Assets[assetId].assetId,
-              label: Assets[assetId].name,
-              shortLabel: Assets[assetId].symbol,
-              icon: Assets[assetId].icon,
+              value: asset.network[DEFAULT_NETWORK_ID],
+              label: asset.name,
+              shortLabel: asset.symbol,
+              icon: asset.icon,
             },
           ]
         : [],
@@ -88,7 +88,7 @@ const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
   const dispatch = useDispatch();
 
-  const { createPool, balances, apollo } = useStore();
+  const { createPool, supportedAssets } = useStore();
 
   const baseAmount = useMemo(() => {
     return new BigNumber(createPool.liquidity.baseAmount);
@@ -98,50 +98,26 @@ const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
     return new BigNumber(createPool.liquidity.quoteAmount);
   }, [createPool.liquidity.quoteAmount]);
 
-  const balance1 = useMemo(() => {
-    if (createPool.baseAsset !== "none") {
-      return new BigNumber(balances[createPool.baseAsset].picasso);
-    } else {
-      return new BigNumber(0);
-    }
-  }, [balances, createPool.baseAsset]);
-
-  const balance2 = useMemo(() => {
-    if (createPool.quoteAsset !== "none") {
-      return new BigNumber(balances[createPool.quoteAsset].picasso);
-    } else {
-      return new BigNumber(0);
-    }
-  }, [balances, createPool.quoteAsset]);
+  const balance1 = useAssetBalance(DEFAULT_NETWORK_ID, createPool.baseAsset);
+  const balance2 = useAssetBalance(DEFAULT_NETWORK_ID, createPool.quoteAsset);
 
   const [valid1, setValid1] = useState<boolean>(false);
   const [valid2, setValid2] = useState<boolean>(false);
 
-  const tokenToUSD1 = useMemo(() => {
-    if (createPool.baseAsset !== "none") {
-      const onChainId = getAssetOnChainId(
-        DEFAULT_NETWORK_ID,
-        createPool.baseAsset
-      );
-      if (onChainId && apollo[onChainId.toString()]) {
-        return new BigNumber(apollo[onChainId.toString()]);
-      }
-    }
-    return new BigNumber(0);
-  }, [createPool.baseAsset, apollo, balance1]);
+  const tokenToUSD1 = useUSDPriceByAssetId(createPool.baseAsset);
+  const tokenToUSD2 = useUSDPriceByAssetId(createPool.quoteAsset);
 
-  const tokenToUSD2 = useMemo(() => {
-    if (createPool.quoteAsset !== "none") {
-      const onChainId = getAssetOnChainId(
-        DEFAULT_NETWORK_ID,
-        createPool.quoteAsset
-      );
-      if (onChainId && apollo[onChainId.toString()]) {
-        return new BigNumber(apollo[onChainId.toString()]);
-      }
-    }
-    return new BigNumber(0);
-  }, [createPool.quoteAsset, apollo]);
+  const _baseAsset = useMemo(() => {
+    return supportedAssets.find(i => {
+      return i.network[DEFAULT_NETWORK_ID] === createPool.baseAsset
+    })
+  }, [createPool.baseAsset, supportedAssets])
+
+  const _quoteAsset = useMemo(() => {
+    return supportedAssets.find(i => {
+      return i.network[DEFAULT_NETWORK_ID] === createPool.quoteAsset
+    })
+  }, [createPool.quoteAsset, supportedAssets])
 
   const validToken1 = createPool.baseAsset !== "none";
   const validToken2 = createPool.quoteAsset !== "none";
@@ -196,7 +172,7 @@ const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
             },
           }}
           CombinedSelectProps={combinedSelectProps(
-            createPool.baseAsset,
+            _baseAsset,
             isMobile
           )}
           LabelProps={selectLabelProps(validToken1, "Token 1", `${balance1}`)}
@@ -238,7 +214,7 @@ const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
             },
           }}
           CombinedSelectProps={combinedSelectProps(
-            createPool.quoteAsset,
+            _quoteAsset,
             isMobile
           )}
           LabelProps={selectLabelProps(validToken2, "Token 2", `${balance2}`)}

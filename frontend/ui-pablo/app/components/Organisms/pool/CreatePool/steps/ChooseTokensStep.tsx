@@ -18,7 +18,8 @@ import { TransactionSettings } from "@/components/Organisms/TransactionSettings"
 import useStore from "@/store/useStore";
 import { AssetId } from "@/defi/polkadot/types";
 import { LiquidityPoolType } from "@/store/pools/pools.types";
-import { Assets, AssetsValidForNow } from "@/defi/polkadot/Assets";
+import { Assets } from "@/defi/polkadot/Assets";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 const labelProps = (label: string, disabled: boolean = false) => ({
   label: label,
@@ -61,38 +62,41 @@ const ChooseTokensStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const dispatch = useDispatch();
 
   const {
-    createPool
+    createPool,
+    supportedAssets
   } = useStore();
 
   const { baseAsset, quoteAsset, ammId, setSelectable, currentStep } = createPool;
 
   const baseAssetList = useMemo(() => {
-    return Object.values(Assets)
+    return supportedAssets
       .filter((i) => {
-        return (
-          AssetsValidForNow.includes(i.assetId) && i.assetId !== quoteAsset
-        );
+        if (quoteAsset === "none") {return true;}
+        if (i.network[DEFAULT_NETWORK_ID] === quoteAsset) {return false;}
+        return true;
       })
       .map((asset) => ({
-        value: asset.assetId,
+        value: asset.network[DEFAULT_NETWORK_ID],
         label: asset.name,
         shortLabel: asset.symbol,
         icon: asset.icon,
       }));
-  }, [quoteAsset]);
+  }, [quoteAsset, supportedAssets]);
 
   const quoteAssetList = useMemo(() => {
-    return Object.values(Assets)
+    return supportedAssets
       .filter((i) => {
-        return AssetsValidForNow.includes(i.assetId) && i.assetId !== baseAsset;
+        if (baseAsset === "none") {return true;}
+        if (i.network[DEFAULT_NETWORK_ID] === baseAsset) {return false;}
+        return true;
       })
       .map((asset) => ({
-        value: asset.assetId,
+        value: asset.network[DEFAULT_NETWORK_ID],
         label: asset.name,
         shortLabel: asset.symbol,
         icon: asset.icon,
       }));
-  }, [baseAsset]);
+  }, [supportedAssets, baseAsset]);
 
   const isUnverifiedPoolWarningOpen = useAppSelector(
     (state) => state.ui.isConfirmingModalOpen

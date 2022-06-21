@@ -1,4 +1,3 @@
-import { Assets } from "@/defi/polkadot/Assets";
 import { LiquidityPoolType } from "@/store/pools/pools.types";
 import { SwapsSlice } from "@/store/swaps/swaps.types";
 import { ApiPromise } from "@polkadot/api";
@@ -21,9 +20,6 @@ export const calculateSwap = async (
   minimumRecieved: string;
   tokenOutAmount: string;
 }> => {
-  let selectedQuoteAsset =
-    Assets[exchange.quoteAssetId].supportedNetwork.picasso;
-  let selectedBaseAsset = Assets[exchange.baseAssetId].supportedNetwork.picasso;
 
   let tradeSummary = {
     priceImpact: "0",
@@ -39,14 +35,12 @@ export const calculateSwap = async (
     );
     let oneQuoteInBase = new BigNumber(1).div(oneBaseInQuote);
 
-    if (!selectedQuoteAsset || !selectedBaseAsset)
-      throw new Error("Unable to match pair with Asset");
     if (oneQuoteInBase.lte(0) || oneBaseInQuote.lte(0))
       throw new Error("Price RPC Fail");
 
     let tokenOut = new BigNumber(0);
     if (exchange.side === "quote") {
-      if (selectedQuoteAsset === poolConstants.pair.quote) {
+      if (exchange.quoteAssetId === poolConstants.pair.quote.toString()) {
         // same quote as on chain
         tokenOut = exchange.quoteAmount.times(oneQuoteInBase);
       } else {
@@ -54,7 +48,7 @@ export const calculateSwap = async (
         tokenOut = exchange.quoteAmount.times(oneBaseInQuote);
       }
     } else {
-      if (selectedQuoteAsset === poolConstants.pair.quote) {
+      if (exchange.quoteAssetId === poolConstants.pair.quote.toString()) {
         tokenOut = exchange.quoteAmount.times(oneBaseInQuote);
       } else {
         tokenOut = exchange.quoteAmount.times(oneQuoteInBase);
@@ -75,7 +69,7 @@ export const calculateSwap = async (
       let feeDeductionValue = new BigNumber(0);
       // fee % of token in
       if (exchange.side === "quote") {
-        if (selectedQuoteAsset === poolConstants.pair.quote) {
+        if (exchange.quoteAssetId === poolConstants.pair.quote.toString()) {
           // same quote asset as on chain, deduct in quote
           feeDeductionValue = fee
             .times(oneQuoteInBase)
@@ -85,7 +79,7 @@ export const calculateSwap = async (
           feeDeductionValue = fee.times(oneBaseInQuote).times(tokenOut);
         }
       } else {
-        if (selectedQuoteAsset === poolConstants.pair.quote) {
+        if (exchange.quoteAssetId === poolConstants.pair.quote.toString()) {
           feeDeductionValue = fee.times(tokenOut).times(oneQuoteInBase);
         } else {
           feeDeductionValue = fee.times(tokenOut).times(oneBaseInQuote);

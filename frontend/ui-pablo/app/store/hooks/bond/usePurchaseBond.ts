@@ -1,3 +1,4 @@
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 import {
@@ -6,8 +7,7 @@ import {
   useParachainApi,
   useSelectedAccount,
 } from "substrate-react";
-import { APP_NAME } from "../../../defi/polkadot/constants";
-import { DEFAULT_NETWORK_ID } from "../../../updaters/constants";
+import { APP_NAME } from "@/defi/polkadot/constants";
 
 export function usePurchaseBond() {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);

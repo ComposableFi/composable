@@ -30,16 +30,17 @@ import useStore from "@/store/useStore";
 import { debounce } from "lodash";
 import { ConfirmingModal } from "../swap/ConfirmingModal";
 import { useSnackbar } from "notistack";
-import { toChainUnits } from "@/defi/utils";
+import { DEFAULT_NETWORK_ID, toChainUnits } from "@/defi/utils";
 import { calculateSwap } from "@/defi/utils/pablo/swaps";
 import { fetchAuctions, fetchTrades } from "@/defi/utils/pablo/auctions";
+import { useAssetBalance } from "@/store/assets/hooks";
 
 export type BuyFormProps = {
   auction: LiquidityBootstrappingPool;
 } & BoxProps;
 
 export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
-  const { balances, auctions: { activeLBP }, putHistoryActiveLBP, putStatsActiveLBP } = useStore();
+  const { auctions: { activeLBP }, putHistoryActiveLBP, putStatsActiveLBP } = useStore();
   const { extensionStatus } = useDotSamaContext();
   const { parachainApi } = useParachainApi("picasso");
   const selectedAccount = useSelectedAccount("picasso");
@@ -78,25 +79,8 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     return getAssetById(auction.networkId, auction.pair.quote);
   }, [auction]);
 
-  const [balanceQuote, setBalanceQuote] = useState(new BigNumber(0));
-  useEffect(() => {
-    const asset = getAssetById("picasso", auction.pair.quote);
-    if (asset) {
-      setBalanceQuote(new BigNumber(balances[asset.assetId].picasso));
-    } else {
-      setBalanceQuote(new BigNumber(0));
-    }
-  }, [balances, quoteAsset, auction.pair.quote]);
-
-  const [balanceBase, setBalanceBase] = useState(new BigNumber(0));
-  useEffect(() => {
-    const asset = getAssetById("picasso", auction.pair.base);
-    if (asset) {
-      setBalanceBase(new BigNumber(balances[asset.assetId].picasso));
-    } else {
-      setBalanceBase(new BigNumber(0));
-    }
-  }, [balances, baseAsset, auction.pair.base]);
+  const balanceBase = useAssetBalance(DEFAULT_NETWORK_ID, auction.pair.base.toString())
+  const balanceQuote = useAssetBalance(DEFAULT_NETWORK_ID, auction.pair.quote.toString())
 
   const [valid1, setValid1] = useState<boolean>(false);
   const [valid2, setValid2] = useState<boolean>(false);

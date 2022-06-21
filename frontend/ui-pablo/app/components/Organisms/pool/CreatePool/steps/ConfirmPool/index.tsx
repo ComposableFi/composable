@@ -28,7 +28,7 @@ import {
   getAssetOnChainId,
 } from "@/defi/polkadot/Assets";
 import { AMMs } from "@/defi/AMMs";
-import { useUSDAssetPrice } from "@/store/assets/hooks";
+import { useUSDPriceByAssetId } from "@/store/assets/hooks";
 import { AssetId } from "@/defi/polkadot/types";
 import {
   getSigner,
@@ -83,7 +83,20 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
       setSelectable,
       resetSlice,
     },
+    supportedAssets
   } = useStore();
+
+  const _baseAsset = useMemo(() => {
+    return supportedAssets.find(i => {
+      return i.network[DEFAULT_NETWORK_ID] === baseAsset
+    })
+  }, [baseAsset, supportedAssets])
+
+  const _quoteAsset = useMemo(() => {
+    return supportedAssets.find(i => {
+      return i.network[DEFAULT_NETWORK_ID] === quoteAsset
+    })
+  }, [quoteAsset, supportedAssets])
 
   const executor = useExecutor();
 
@@ -97,11 +110,8 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
 
   const [createdAt, setCreatedAt] = useState(-1)
 
-  let baseAssetOnChainId = baseAsset === "none" ? -1 : getAssetOnChainId(DEFAULT_NETWORK_ID, baseAsset)
-  let quoteAssetOnChainId = quoteAsset === "none" ? -1 : getAssetOnChainId(DEFAULT_NETWORK_ID, quoteAsset)
-
-  const baseTokenUSDPrice = useUSDAssetPrice(baseAssetOnChainId ? baseAssetOnChainId : 0);
-  const quoteTokenUSDPrice = useUSDAssetPrice(quoteAssetOnChainId ? quoteAssetOnChainId : 0);
+  const baseTokenUSDPrice = useUSDPriceByAssetId(baseAsset);
+  const quoteTokenUSDPrice = useUSDPriceByAssetId(quoteAsset);
 
   const [isFunding, setIsFunding] = useState<boolean>(false);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
@@ -109,10 +119,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const usdAmount1 = baseLiquidity.multipliedBy(baseTokenUSDPrice);
   const usdAmount2 = quoteLiquidity.multipliedBy(quoteTokenUSDPrice);
 
-  const poolName = `
-    ${baseAsset !== "none" ? getAsset(baseAsset).symbol : ""}-
-    ${quoteAsset !== "none" ? getAsset(quoteAsset).symbol : ""}
-  `;
+  const poolName = `${_baseAsset?.symbol}-${_quoteAsset?.symbol}`;
 
   const buttonText = () => {
     // if (isConfirmed) {
@@ -259,10 +266,10 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
         </Typography>
 
         <Label {...labelProps(undefined, `${baseLiquidity}`, 600)} mt={3}>
-          {baseAsset === "none" ? null : (
+          {_baseAsset && (
             <BaseAsset
-              icon={getAsset(baseAsset).icon}
-              label={getAsset(baseAsset).symbol}
+              icon={_baseAsset.icon}
+              label={_baseAsset.symbol}
             />
           )}
         </Label>
@@ -277,10 +284,10 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
         </Typography>
 
         <Label {...labelProps(undefined, `${quoteLiquidity}`, 600)} mt={2}>
-          {quoteAsset === "none" ? null : (
+          {_quoteAsset && (
             <BaseAsset
-              icon={getAsset(quoteAsset).icon}
-              label={getAsset(quoteAsset).symbol}
+              icon={_quoteAsset.icon}
+              label={_quoteAsset.symbol}
             />
           )}
         </Label>

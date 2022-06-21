@@ -42,7 +42,7 @@ export const useLiquidityPoolDetails = (poolId: number) => {
       setBaseAsset(undefined);
       setQuoteAsset(undefined);
     }
-  }, [poolId]);
+  }, [poolId, allLpRewardingPools]);
 
   useEffect(() => {
     if (pool) {
@@ -53,7 +53,7 @@ export const useLiquidityPoolDetails = (poolId: number) => {
         }
       })
     }
-  }, [pool]);
+  }, [pool, putPoolStats]);
 
   const _poolStats = useMemo(() => {
     let _poolValue = {

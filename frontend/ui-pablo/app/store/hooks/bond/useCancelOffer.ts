@@ -1,3 +1,5 @@
+import { APP_NAME } from "@/defi/polkadot/constants";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
 import {
@@ -6,8 +8,6 @@ import {
   useParachainApi,
   useSelectedAccount,
 } from "substrate-react";
-import { APP_NAME } from "../../../defi/polkadot/constants";
-import { DEFAULT_NETWORK_ID } from "../../../updaters/constants";
 
 export function useCancelOffer() {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);

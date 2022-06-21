@@ -1,6 +1,5 @@
 import { Label, PairAsset } from "@/components/Atoms";
-import { getAsset } from "@/defi/polkadot/Assets";
-import { AssetId } from "@/defi/polkadot/types";
+import { MockedAsset } from "@/store/assets/assets.types";
 import {
   alpha,
   Box,
@@ -13,8 +12,8 @@ import BigNumber from "bignumber.js";
 type YourPositionProps = {
   noTitle?: boolean;
   noDivider?: boolean;
-  tokenId1: AssetId,
-  tokenId2: AssetId,
+  token1: MockedAsset | undefined,
+  token2: MockedAsset | undefined,
   pooledAmount1: BigNumber,
   pooledAmount2: BigNumber,
   amount: BigNumber,
@@ -24,8 +23,8 @@ type YourPositionProps = {
 export const YourPosition: React.FC<YourPositionProps> = ({
   noTitle,
   noDivider,
-  tokenId1,
-  tokenId2,
+  token1,
+  token2,
   pooledAmount1,
   pooledAmount2,
   amount,
@@ -33,8 +32,6 @@ export const YourPosition: React.FC<YourPositionProps> = ({
   ...rest
 }) => {
   const theme = useTheme();
-  const token1 = getAsset(tokenId1);
-  const token2 = getAsset(tokenId2);
 
   return (
     <Box
@@ -56,6 +53,8 @@ export const YourPosition: React.FC<YourPositionProps> = ({
           },
         }}
       >
+        {token1 && token2 && 
+        
         <PairAsset
           assets={[
             {
@@ -69,6 +68,8 @@ export const YourPosition: React.FC<YourPositionProps> = ({
           ]}
           separator="/"
         />
+        
+        }
       </Label>
 
       <Label
@@ -86,7 +87,7 @@ export const YourPosition: React.FC<YourPositionProps> = ({
 
       <Label
         mt={3}
-        label={`Pooled ${token2.symbol}`}
+        label={`Pooled ${token1?.symbol}`}
         TypographyProps={{variant: "body1"}}
         BalanceProps={{
           balance: pooledAmount1.toString(),
@@ -99,7 +100,7 @@ export const YourPosition: React.FC<YourPositionProps> = ({
 
       <Label
         mt={3}
-        label={`Pooled ${token1.symbol}`}
+        label={`Pooled ${token2?.symbol}`}
         TypographyProps={{variant: "body1"}}
         BalanceProps={{
           balance: pooledAmount2.toString(),

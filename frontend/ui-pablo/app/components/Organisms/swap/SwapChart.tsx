@@ -7,29 +7,23 @@ import { useMemo } from "react";
 import { BoxProps } from "@mui/system";
 import { DEFI_CONFIG } from "@/defi/config";
 import useStore from "@/store/useStore";
-import { getAsset } from "@/defi/polkadot/Assets";
 import BigNumber from "bignumber.js";
 import { useSwapsChart } from "@/store/hooks/useSwapsChart";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
   const theme = useTheme();
 
-  const { swaps } = useStore();
+  const { swaps, supportedAssets } = useStore();
   const {selectedInterval, chartSeries, seriesIntervals, _24hourOldPrice, setSelectedInterval} = useSwapsChart();
 
   const baseAsset = useMemo(() => {
-    if (swaps.ui.baseAssetSelected !== "none") {
-      return getAsset(swaps.ui.baseAssetSelected)
-    }
-    return null;
-  }, [swaps.ui])
+    return supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === swaps.ui.baseAssetSelected)
+  }, [swaps.ui, supportedAssets])
 
   const quoteAsset = useMemo(() => {
-    if (swaps.ui.quoteAssetSelected !== "none") {
-      return getAsset(swaps.ui.quoteAssetSelected)
-    }
-    return null;
-  }, [swaps.ui])
+    return supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === swaps.ui.quoteAssetSelected)
+  }, [swaps.ui, supportedAssets])
 
   const changePercent = useMemo(() => {
     if (swaps.poolVariables.spotPrice === "0") return 0 

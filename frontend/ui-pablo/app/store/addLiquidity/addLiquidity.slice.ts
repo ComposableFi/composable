@@ -5,8 +5,8 @@ import { ConstantProductPool, StableSwapPool } from "../pools/pools.types";
 export interface AddLiquiditySlice {
   pool: StableSwapPool | ConstantProductPool | undefined;
   ui: {
-    assetOne: AssetId | "none";
-    assetTwo: AssetId | "none";
+    assetOne: string | "none";
+    assetTwo: string | "none";
     assetOneAmount: string;
     assetTwoAmount: string;
   };

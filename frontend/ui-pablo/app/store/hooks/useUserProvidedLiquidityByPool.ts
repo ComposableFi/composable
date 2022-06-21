@@ -30,11 +30,6 @@ export const useUserProvidedLiquidityByPool = (
   const {
     apollo,
     /**
-     * prices of assets within the
-     * pool
-     */
-    assets,
-    /**
      * acutal provided liquidity from zustand
      */
     userProvidedLiquidity,
@@ -54,7 +49,7 @@ export const useUserProvidedLiquidityByPool = (
    */
   const pool = useMemo<StableSwapPool | ConstantProductPool | undefined>(() => {
     return allPools.find((i) => i.poolId === poolId);
-  }, [poolId]);
+  }, [poolId, allPools]);
   /**
    * hook defaults
    */
@@ -90,7 +85,7 @@ export const useUserProvidedLiquidityByPool = (
         });
       });
     }
-  }, [pool, selectedAccount]);
+  }, [pool, selectedAccount, setUserProvidedTokenAmountInLiquidityPool]);
   /**
    * use amount of liquity tokens
    * from zustand store and pass it

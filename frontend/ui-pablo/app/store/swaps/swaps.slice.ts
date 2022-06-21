@@ -46,7 +46,7 @@ const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
     })),
   setUiAssetSelectionSwaps: (
     side: "base" | "quote",
-    assetId: AssetId | "none"
+    assetId: string | "none"
   ) =>
     set((prev: SwapsSlice) => ({
       swaps: putUiAssetSelection(prev.swaps, side, assetId),

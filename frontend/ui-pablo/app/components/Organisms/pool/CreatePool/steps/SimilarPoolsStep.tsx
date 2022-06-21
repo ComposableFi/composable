@@ -10,7 +10,7 @@ import {
   Typography,
   Theme,
 } from "@mui/material";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
 import { useDispatch } from "react-redux";
 import FormWrapper from "../FormWrapper";
@@ -19,6 +19,8 @@ import { TransactionSettings } from "@/components/Organisms/TransactionSettings"
 import { openTransactionSettingsModal } from "@/stores/ui/uiSlice";
 import useStore from "@/store/useStore";
 import { getAsset } from "@/defi/polkadot/Assets";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import createPool from "@/pages/pool/create-pool";
 
 const itemBoxProps = (theme: Theme) =>
   ({
@@ -49,6 +51,7 @@ const SimilarPoolsStep: React.FC<SimilarPoolsStepProps> = ({
       similarPool,
       setSelectable,
     },
+    supportedAssets
   } = useStore();
 
   const [isSettingOnFlow, setIsSettingOnFlow] = useState<boolean>(false);
@@ -78,8 +81,17 @@ const SimilarPoolsStep: React.FC<SimilarPoolsStepProps> = ({
     }
   };
 
-  const token1 = baseAsset !== "none" ? getAsset(baseAsset) : null;
-  const token2 = quoteAsset !== "none" ? getAsset(quoteAsset) : null;
+  const _baseAsset = useMemo(() => {
+    return supportedAssets.find(i => {
+      return i.network[DEFAULT_NETWORK_ID] === baseAsset
+    })
+  }, [baseAsset, supportedAssets])
+
+  const _quoteAsset = useMemo(() => {
+    return supportedAssets.find(i => {
+      return i.network[DEFAULT_NETWORK_ID] === quoteAsset
+    })
+  }, [quoteAsset, supportedAssets])
 
   return (
     <FormWrapper {...boxProps}>
@@ -90,11 +102,11 @@ const SimilarPoolsStep: React.FC<SimilarPoolsStepProps> = ({
       />
 
       <Box mt={6} display="flex" justifyContent="center">
-        {token1 && token2 && (
+        {_baseAsset && _quoteAsset && (
           <PairAsset
             assets={[
-              { icon: token1.icon, label: token1.symbol },
-              { icon: token2.icon, label: token2.symbol },
+              { icon: _baseAsset.icon, label: _baseAsset.symbol },
+              { icon: _quoteAsset.icon, label: _quoteAsset.symbol },
             ]}
             iconSize={32}
             LabelProps={{ variant: "body1" }}

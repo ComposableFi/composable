@@ -19,7 +19,6 @@ import {
 } from "@/stores/ui/uiSlice";
 import { useAppSelector } from "@/hooks/store";
 import BigNumber from "bignumber.js";
-import { AssetMetadata } from "@/defi/polkadot/Assets";
 import { getSigner, useExecutor, useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { getPairDecimals } from "@/defi/polkadot/utils";
@@ -27,10 +26,12 @@ import { APP_NAME } from "@/defi/polkadot/constants";
 import { useSnackbar } from "notistack";
 import { resetAddLiquiditySlice, useAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
 import { useRouter } from "next/router";
+import { MockedAsset } from "@/store/assets/assets.types";
+import { toChainUnits } from "@/defi/utils";
 
 export interface SupplyModalProps {
-  assetOne: AssetMetadata | null;
-  assetTwo: AssetMetadata | null;
+  assetOne: MockedAsset | undefined;
+  assetTwo: MockedAsset | undefined;
   assetOneAmount: BigNumber;
   assetTwoAmount: BigNumber;
   lpReceiveAmount: BigNumber;
@@ -73,20 +74,11 @@ export const ConfirmSupplyModal: React.FC<SupplyModalProps & ModalProps> = ({
       assetTwo !== null
       && addLiquiditySlice.pool) {
         dispatch(closeConfirmSupplyModal());
-        const { baseDecimals, quoteDecimals } = getPairDecimals(
-          assetOne.assetId,
-          assetTwo.assetId
-        );
   
-        let isReverse =
-        addLiquiditySlice.pool.pair.base !==
-          assetOne.supportedNetwork.picasso;
-        const bnBase = new BigNumber(
-          isReverse ? assetTwoAmount : assetOneAmount
-        ).times(isReverse ? quoteDecimals : baseDecimals);
-        const bnQuote = new BigNumber(
-          isReverse ? assetOneAmount : assetTwoAmount
-        ).times(isReverse ? baseDecimals : quoteDecimals);
+      let isReverse =
+        addLiquiditySlice.pool.pair.base.toString() !== assetOne?.network.picasso;
+      const bnBase = toChainUnits(isReverse ? assetTwoAmount : assetOneAmount);
+      const bnQuote = toChainUnits(isReverse ? assetOneAmount : assetTwoAmount);
 
       const signer = await getSigner(APP_NAME, selectedAccount.address);
 

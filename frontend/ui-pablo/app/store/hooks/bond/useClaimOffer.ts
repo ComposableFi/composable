@@ -1,6 +1,6 @@
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useCallback } from "react";
 import { useParachainApi } from "substrate-react";
-import { DEFAULT_NETWORK_ID } from "../../../updaters/constants";
 
 export function useClaimOffer() {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);

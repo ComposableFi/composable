@@ -36,14 +36,14 @@ export interface SwapsSlice {
       quoteAssetBalance: string;
     };
     ui: {
-      quoteAssetSelected: AssetId | "none";
-      baseAssetSelected: AssetId | "none";
+      quoteAssetSelected: string | "none";
+      baseAssetSelected: string | "none";
     };
   };
   setDexRouteSwaps: (dexRoute: number[]) => void;
   setUiAssetSelectionSwaps: (
     side: "base" | "quote",
-    assetId: AssetId | "none"
+    assetId: string | "none"
   ) => void;
   invertAssetSelectionSwaps: () => void;
   setPoolConstantsSwaps: (

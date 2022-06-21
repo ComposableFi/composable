@@ -1,6 +1,5 @@
-import { AssetId } from "@/defi/polkadot/types";
 import produce from "immer";
-import { SwapsChartRange, SwapsSlice } from "./swaps.types";
+import { SwapsSlice } from "./swaps.types";
 
 export const putDexRoute = (
   swapState: SwapsSlice["swaps"],
@@ -14,7 +13,7 @@ export const putDexRoute = (
 export const putUiAssetSelection = (
   swapState: SwapsSlice["swaps"],
   side: "quote" | "base",
-  assetId: AssetId | "none"
+  assetId: string | "none"
 ) => {
   return produce(swapState, (draft) => {
     if (side === "quote") {

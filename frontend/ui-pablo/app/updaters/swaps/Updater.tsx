@@ -1,30 +1,26 @@
 import { useEffect } from "react";
-import useStore from "@/store/useStore";
 import { useParachainApi } from "substrate-react";
-import { AssetId } from "@/defi/polkadot/types";
-import { Assets } from "@/defi/polkadot/Assets";
-import BigNumber from "bignumber.js";
 import { DEFAULT_NETWORK_ID, isValidAssetPair } from "@/defi/utils";
-import {
-  ConstantProductPool,
-  LiquidityBootstrappingPool,
-  LiquidityPoolType,
-  StableSwapPool,
-} from "@/store/pools/pools.types";
 import { fetchBalanceByAssetId } from "@/defi/utils";
 import { createPabloPoolAccountId } from "@/defi/utils";
 import { fetchSpotPrice } from "@/defi/utils/pablo/spotPrice";
+import {
+  ConstantProductPool,
+  LiquidityPoolType,
+  StableSwapPool,
+} from "@/store/pools/pools.types";
+import useStore from "@/store/useStore";
+import BigNumber from "bignumber.js";
 
 const Updater = () => {
   const {
-    balances,
+    assetBalances,
     swaps,
     setDexRouteSwaps,
     setPoolConstantsSwaps,
     setUserAccountBalanceSwaps,
     setPoolVariablesSwaps,
     pools: {
-      liquidityBootstrappingPools,
       constantProductPools,
       stableSwapPools,
     },
@@ -38,14 +34,14 @@ const Updater = () => {
    */
   useEffect(() => {
     const { ui } = swaps;
-    if (ui.quoteAssetSelected === "none") {
-      setUserAccountBalanceSwaps("quote", "0");
-    } else {
-      const balance = balances[ui.quoteAssetSelected as AssetId].picasso;
-      setUserAccountBalanceSwaps("quote", balance);
+    if (assetBalances[DEFAULT_NETWORK_ID]) {
+      if (assetBalances[DEFAULT_NETWORK_ID][ui.baseAssetSelected]) {
+        const balance = assetBalances[DEFAULT_NETWORK_ID][ui.baseAssetSelected];
+        setUserAccountBalanceSwaps("base", balance);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [swaps.ui, balances]);
+    setUserAccountBalanceSwaps("base", "0");
+  }, [swaps, assetBalances, setUserAccountBalanceSwaps]);
   /**
    * Triggered when user changes second
    * token from token list dropdown on
@@ -54,14 +50,14 @@ const Updater = () => {
    */
   useEffect(() => {
     const { ui } = swaps;
-    if (ui.baseAssetSelected === "none") {
-      setUserAccountBalanceSwaps("base", "0");
-    } else {
-      const balance = balances[ui.baseAssetSelected as AssetId].picasso;
-      setUserAccountBalanceSwaps("base", balance);
+    if (assetBalances[DEFAULT_NETWORK_ID]) {
+      if (assetBalances[DEFAULT_NETWORK_ID][ui.quoteAssetSelected]) {
+        const balance = assetBalances[DEFAULT_NETWORK_ID][ui.quoteAssetSelected];
+        setUserAccountBalanceSwaps("quote", balance);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [swaps.ui, balances]);
+    setUserAccountBalanceSwaps("quote", "0");
+  }, [swaps, assetBalances, setUserAccountBalanceSwaps]);
   /**
    * This hook is triggered when all
    * pools are fetched from the pablo pallet
@@ -77,23 +73,18 @@ const Updater = () => {
     if (isValidAssetPair(ui.baseAssetSelected, ui.quoteAssetSelected)) {
       if (
         parachainApi &&
-        (liquidityBootstrappingPools.verified.length ||
-          constantProductPools.verified.length ||
+        // (liquidityBootstrappingPools.verified.length ||
+          (constantProductPools.verified.length ||
           stableSwapPools.verified.length)
       ) {
-        // Convert to on chain Asset Ids from string Asset Ids
-        const _baseAssetId =
-          Assets[ui.baseAssetSelected as AssetId].supportedNetwork.picasso;
-        const _quoteAssetId =
-          Assets[ui.quoteAssetSelected as AssetId].supportedNetwork.picasso;
         /**
          * Fetch a permissioned route, dexRoutes do
          * not support inverted routes so we query
          * both possibilites
          */
         const routePromises = [
-          parachainApi.query.dexRouter.dexRoutes(_baseAssetId, _quoteAssetId),
-          parachainApi.query.dexRouter.dexRoutes(_quoteAssetId, _baseAssetId),
+          parachainApi.query.dexRouter.dexRoutes(ui.baseAssetSelected, ui.quoteAssetSelected),
+          parachainApi.query.dexRouter.dexRoutes(ui.quoteAssetSelected, ui.baseAssetSelected),
         ];
 
         Promise.all(routePromises).then(
@@ -134,12 +125,13 @@ const Updater = () => {
                * to use dexRouter registered pools
                */
               let pool:
-                | LiquidityBootstrappingPool
                 | ConstantProductPool
                 | StableSwapPool
-                | undefined = liquidityBootstrappingPools.verified.find(
-                (pool) => pool.poolId.toString() === poolId
-              );
+                | undefined;
+                
+              //   = liquidityBootstrappingPools.verified.find(
+              //   (pool) => pool.poolId.toString() === poolId
+              // );
               if (!pool) {
                 poolType = "ConstantProduct";
                 pool = constantProductPools.verified.find(
@@ -163,19 +155,19 @@ const Updater = () => {
                 let fee = new BigNumber(pool.feeConfig.feeRate);
                 pair = pool.pair;
 
-                if ((pool as LiquidityBootstrappingPool).sale) {
-                  poolType = "LiquidityBootstrapping";
-                  lbp = {
-                    start: (pool as LiquidityBootstrappingPool).sale.start,
-                    end: (pool as LiquidityBootstrappingPool).sale.end,
-                    initialWeight: (
-                      pool as LiquidityBootstrappingPool
-                    ).sale.initialWeight.toString(),
-                    finalWeight: (
-                      pool as LiquidityBootstrappingPool
-                    ).sale.finalWeight.toString(),
-                  };
-                }
+                // if ((pool as LiquidityBootstrappingPool).sale) {
+                //   poolType = "LiquidityBootstrapping";
+                //   lbp = {
+                //     start: (pool as LiquidityBootstrappingPool).sale.start,
+                //     end: (pool as LiquidityBootstrappingPool).sale.end,
+                //     initialWeight: (
+                //       pool as LiquidityBootstrappingPool
+                //     ).sale.initialWeight.toString(),
+                //     finalWeight: (
+                //       pool as LiquidityBootstrappingPool
+                //     ).sale.finalWeight.toString(),
+                //   };
+                // }
 
                 let poolConstants = {
                   poolAccountId: poolAccountId,
@@ -209,7 +201,6 @@ const Updater = () => {
   }, [
     swaps,
     parachainApi,
-    liquidityBootstrappingPools.verified,
     constantProductPools.verified,
     stableSwapPools.verified,
     setDexRouteSwaps,
@@ -225,24 +216,20 @@ const Updater = () => {
         isValidAssetPair(baseAssetSelected, quoteAssetSelected) &&
         parachainApi
       ) {
-        const _baseAssetId =
-          Assets[baseAssetSelected as AssetId].supportedNetwork.picasso;
-        const _quoteAssetId =
-          Assets[quoteAssetSelected as AssetId].supportedNetwork.picasso;
 
-        const isReversedTrade = pair.base === _baseAssetId;
+        const isReversedTrade = pair.base.toString() === baseAssetSelected;
 
-        if (_baseAssetId && _quoteAssetId) {
+        if (baseAssetSelected && quoteAssetSelected) {
           let promises = [
             fetchBalanceByAssetId(
               parachainApi,
               poolAccountId,
-              _baseAssetId.toString()
+              baseAssetSelected
             ),
             fetchBalanceByAssetId(
               parachainApi,
               poolAccountId,
-              _quoteAssetId.toString()
+              quoteAssetSelected
             ),
             fetchSpotPrice(
               parachainApi,

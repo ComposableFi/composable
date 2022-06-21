@@ -28,7 +28,6 @@ import { SwapRoute } from "./SwapRoute";
 import { PreviewModal } from "./PreviewModal";
 import { ConfirmingModal } from "./ConfirmingModal";
 import { useDotSamaContext, useParachainApi } from "substrate-react";
-import { Assets, AssetsValidForNow, getAssetOnChainId } from "@/defi/polkadot/Assets";
 import useStore from "@/store/useStore";
 import { AssetId } from "@/defi/polkadot/types";
 import { debounce } from "lodash";
@@ -44,7 +43,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const { extensionStatus } = useDotSamaContext();
   
-  const { swaps, setUiAssetSelectionSwaps, apollo, invertAssetSelectionSwaps } = useStore();
+  const { swaps, setUiAssetSelectionSwaps, invertAssetSelectionSwaps, supportedAssets } = useStore();
   const [valid1, setValid1] = useState<boolean>(false);
   const [valid2, setValid2] = useState<boolean>(false);
 
@@ -59,37 +58,41 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     return new BigNumber(swaps.userAccount.baseAssetBalance);
   }, [swaps.userAccount.baseAssetBalance]);
 
+  const baseAssetSelected = useMemo(() => {
+    return supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === swaps.ui.baseAssetSelected)
+  }, [supportedAssets, swaps.ui]);
+
+  const quoteAssetSelected = useMemo(() => {
+    return supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === swaps.ui.quoteAssetSelected)
+  }, [supportedAssets, swaps.ui]);
+
   const assetList1 = useMemo(() => {
-    return Object.values(Assets)
+    return supportedAssets
       .filter((i) => {
-        return (
-          AssetsValidForNow.includes(i.assetId) &&
-          i.assetId !== swaps.ui.baseAssetSelected
-        );
+        if (!baseAssetSelected) return true;
+        if (baseAssetSelected.name !== i.name) return true;
       })
       .map((asset) => ({
-        value: asset.assetId,
+        value: asset.network[DEFAULT_NETWORK_ID],
         label: asset.name,
         shortLabel: asset.symbol,
         icon: asset.icon,
       }));
-  }, [swaps.ui]);
+  }, [supportedAssets, baseAssetSelected]);
 
   const assetList2 = useMemo(() => {
-    return Object.values(Assets)
+    return supportedAssets
       .filter((i) => {
-        return (
-          AssetsValidForNow.includes(i.assetId) &&
-          i.assetId !== swaps.ui.quoteAssetSelected
-        );
+        if (!quoteAssetSelected) return true;
+        if (quoteAssetSelected.name !== i.name) return true;
       })
       .map((asset) => ({
-        value: asset.assetId,
+        value: asset.network[DEFAULT_NETWORK_ID],
         label: asset.name,
         shortLabel: asset.symbol,
         icon: asset.icon,
       }));
-  }, [swaps.ui]);
+  }, [supportedAssets, quoteAssetSelected]);
 
   const percentageToSwap = useAppSelector(
     (state) => state.swap.percentageToSwap
@@ -107,10 +110,6 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const [quoteAssetAmount, setQuoteAssetAmount] = useState(new BigNumber(0));
   const [minimumReceived, setMinimumReceived] = useState(new BigNumber(0));
   const [priceImpact, setPriceImpact] = useState(new BigNumber(0));
-
-  const revertSwap = useCallback(() => {
-      invertAssetSelectionSwaps();
-  }, [swaps.ui, invertAssetSelectionSwaps])
 
   useEffect(() => {
     setIsProcessing(true);
@@ -130,7 +129,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
 
   const setAssetId = (side: "base" | "quote") => (
-    assetId: AssetId | "none"
+    assetId: string | "none"
   ) => {
     setUiAssetSelectionSwaps(side, assetId);
   };
@@ -367,7 +366,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             },
           }}
         >
-          <SwapVertRounded onClick={revertSwap} />
+          <SwapVertRounded onClick={invertAssetSelectionSwaps} />
         </Box>
       </Box>
 
@@ -477,9 +476,9 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         <SwapSummary
           mt={4}
           poolType={swaps.poolConstants.poolType}
-          quoteAssetId={swaps.ui.quoteAssetSelected}
           baseAssetAmount={baseAssetAmount}
-          baseAssetId={swaps.ui.baseAssetSelected}
+          quoteAsset={quoteAssetSelected}
+          baseAsset={baseAssetSelected}
           quoteAssetAmount={quoteAssetAmount}
           minimumReceived={minimumReceived}
           priceImpact={priceImpact.toNumber()}
@@ -491,15 +490,15 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         <>
           <SwapRoute
             mt={4}
-            quoteAssetId={swaps.ui.quoteAssetSelected}
-            baseAssetId={swaps.ui.baseAssetSelected}
+            quoteAsset={quoteAssetSelected}
+            baseAsset={baseAssetSelected}
           />
           <PreviewModal
             minimumReceived={minimumReceived}
             baseAssetAmount={baseAssetAmount}
             quoteAssetAmount={quoteAssetAmount}
-            baseAssetId={swaps.ui.baseAssetSelected}
-            quoteAssetId={swaps.ui.quoteAssetSelected}
+            quoteAsset={quoteAssetSelected}
+            baseAsset={baseAssetSelected}
             open={isSwapPreviewModalOpen}
             setConfirmed={setIsConfirmed}
           />

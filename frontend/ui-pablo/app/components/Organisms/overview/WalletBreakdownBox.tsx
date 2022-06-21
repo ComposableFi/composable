@@ -13,7 +13,7 @@ import React from "react";
 import { TableHeader } from "@/defi/types";
 import { BoxWrapper } from "../BoxWrapper";
 
-import { useAssetsWithBalance } from "@/store/hooks/overview/useAssetsOverview";
+import { useAssetsOverview } from "@/store/hooks/overview/useAssetsOverview";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -33,7 +33,7 @@ const tableHeaders: TableHeader[] = [
 export const WalletBreakdownBox: React.FC<BoxProps> = ({
   ...boxProps
 }) => {
-  const walletOverview = useAssetsWithBalance();
+  const assetsOverview = useAssetsOverview();
 
   return (
     <BoxWrapper
@@ -52,9 +52,9 @@ export const WalletBreakdownBox: React.FC<BoxProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {walletOverview.map((asset) => {
+            {assetsOverview.map((asset) => {
               return (
-                <TableRow key={asset.assetId}>
+                <TableRow key={asset.name}>
                   <TableCell align="left">
                     <BaseAsset
                       label={asset.symbol}
@@ -62,7 +62,7 @@ export const WalletBreakdownBox: React.FC<BoxProps> = ({
                     />
                   </TableCell>
                   <TableCell align="left">
-                    <Typography variant="body1">${asset.price.toFixed(2)}</Typography>
+                    <Typography variant="body1">${asset.priceUsd.toFixed(2)}</Typography>
                   </TableCell>
                   <TableCell align="left">
                     <Typography variant="body1">
@@ -71,7 +71,7 @@ export const WalletBreakdownBox: React.FC<BoxProps> = ({
                   </TableCell>
                   <TableCell align="left">
                     <Typography variant="body1">
-                      ${asset.balance.multipliedBy(asset.price).toFormat(2)}
+                      ${asset.balance.multipliedBy(asset.priceUsd).toFormat(2)}
                     </Typography>
                   </TableCell>
                 </TableRow>

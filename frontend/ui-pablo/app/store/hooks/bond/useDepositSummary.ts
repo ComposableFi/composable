@@ -3,12 +3,11 @@ import useStore from "../../useStore";
 
 import { useMemo } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
-import { fetchBalanceByAssetId } from "../../../updaters/balances/utils";
-import { DEFAULT_NETWORK_ID } from "../../../updaters/constants";
 import { useBlockInterval } from "../../../utils/defi/hooks/polkadot/useBlockInterval";
 import { fromChainUnits } from "../../../utils/defi/fromChainUnits";
 import { fetchVesitngPeriod } from "../../bonds/fetchVestingPeriod";
 import { IDepositSummary } from "../../bonds/bonds.types";
+import { DEFAULT_NETWORK_ID, fetchBalanceByAssetId } from "@/defi/utils";
 
 type Props = {
   offerId: number;
@@ -51,7 +50,6 @@ export function useDepositSummary({
     userBalance: async () => {
       return await fetchBalanceByAssetId(
         parachainApi,
-        DEFAULT_NETWORK_ID,
         selectedAccount.address,
         selectedBond.bondOffer.currencyId.toString()
       );
@@ -59,7 +57,6 @@ export function useDepositSummary({
     purchasableTokens: async () => {
       const userLPBalance = await fetchBalanceByAssetId(
         parachainApi,
-        DEFAULT_NETWORK_ID,
         selectedAccount.address,
         selectedBond.bondOffer.currencyId.toString()
       );

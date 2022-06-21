@@ -2,15 +2,15 @@ import useStore from "../../store/useStore";
 import { useEffect, useMemo } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { decodeBondOffer } from "./decodeBondOffer";
-import { DEFAULT_NETWORK_ID } from "../constants";
+
 import { decodeVestingSchedule } from "./decodeVestingSchedule";
 import { getAppoloPriceInUSD } from "../../utils/defi/apollo";
 import { fetchBonds } from "./fetchBonds";
 import { fetchVestingSchedule } from "./fetchVestingSchedule";
-import { getLPTokenPair } from "../pools/utils";
 import { getToken, getTokenId } from "../../defi/Tokens";
 import { getCurrentBlock } from "../../utils/defi/getCurrentBlock";
 import { getCurrentTime } from "../../utils/defi/getCurrentTime";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 /**
  * Updates zustand store with all bonds from bondedFinance pallet
@@ -50,40 +50,40 @@ const Updater = () => {
               selectedAccount.address,
               principalCurrencyId
             );
-            const lpTokenPair = getLPTokenPair(
-              constantProductPool,
-              principalCurrencyId
-            );
-            const principalAsset = lpTokenPair
-              ? {
-                  base: getToken(getTokenId(lpTokenPair.base)),
-                  quote: getToken(getTokenId(lpTokenPair.quote)),
-                }
-              : getToken(getTokenId(bondOffer.asset.toNumber()));
-            const decodedBondOffer = decodeBondOffer(
-              index + 1,
-              beneficiary,
-              bondOffer,
-              principalAsset
-            );
-            const decodedVestingSchedule = vestingSchedule
-              ? decodeVestingSchedule(vestingSchedule)
-              : null;
-            const currentBlock = await getCurrentBlock(parachainApi);
-            const currentTime = await getCurrentTime(parachainApi);
-            if (decodedVestingSchedule) {
-              addActiveBond(
-                decodedBondOffer,
-                decodedVestingSchedule,
-                currentBlock,
-                currentTime
-              );
-            }
-            addBond(
-              decodedBondOffer,
-              principalAppoloPriceInUSD.toNumber(),
-              rewardAppoloPriceInUSD.toNumber()
-            );
+            // const lpTokenPair = getLPTokenPair(
+            //   constantProductPool,
+            //   principalCurrencyId
+            // );
+            // const principalAsset = lpTokenPair
+            //   ? {
+            //       base: getToken(getTokenId(lpTokenPair.base)),
+            //       quote: getToken(getTokenId(lpTokenPair.quote)),
+            //     }
+            //   : getToken(getTokenId(bondOffer.asset.toNumber()));
+            // const decodedBondOffer = decodeBondOffer(
+            //   index + 1,
+            //   beneficiary,
+            //   bondOffer,
+            //   principalAsset
+            // );
+            // const decodedVestingSchedule = vestingSchedule
+            //   ? decodeVestingSchedule(vestingSchedule)
+            //   : null;
+            // const currentBlock = await getCurrentBlock(parachainApi);
+            // const currentTime = await getCurrentTime(parachainApi);
+            // if (decodedVestingSchedule) {
+            //   addActiveBond(
+            //     decodedBondOffer,
+            //     decodedVestingSchedule,
+            //     currentBlock,
+            //     currentTime
+            //   );
+            // }
+            // addBond(
+            //   decodedBondOffer,
+            //   principalAppoloPriceInUSD.toNumber(),
+            //   rewardAppoloPriceInUSD.toNumber()
+            // );
           } catch (ex) {
             return null;
           }

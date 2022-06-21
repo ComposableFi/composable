@@ -8,7 +8,6 @@ import Default from "@/components/Templates/Default";
 import { Link } from "@/components";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
-import { useDispatch } from "react-redux";
 import useStore from "@/store/useStore";
 import { useDotSamaContext } from "substrate-react";
 import { AddLiquidityForm } from "@/components/Organisms/liquidity/AddForm";
@@ -16,7 +15,6 @@ import AddLiquidityUpdater from "@/updaters/addLiquidity/Updater";
 
 const AddLiquidity: NextPage = () => {
 
-  const dispatch = useDispatch();
   const router = useRouter();
   const {extensionStatus} = useDotSamaContext();
   const { ui: { isPolkadotModalOpen } } = useStore();
@@ -32,7 +30,7 @@ const AddLiquidity: NextPage = () => {
 
   useEffect(() => {
     extensionStatus !== "connected" && !isPolkadotModalOpen && router.push('/pool');
-  }, [extensionStatus, isPolkadotModalOpen]);
+  }, [extensionStatus, isPolkadotModalOpen, router]);
 
   return (
     <Default breadcrumbs={breadcrumbs}>
