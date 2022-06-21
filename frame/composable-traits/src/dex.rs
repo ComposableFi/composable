@@ -41,8 +41,8 @@ pub trait Amm {
 	where
 		Self::AssetId: sp_std::cmp::Ord;
 
-	/// Returns the amount of LP tokens that would be recieved by adding the given amounts of base
-	/// and quote.
+	/// Simulate add_liquidity computations, on success returns the amount of LP tokens
+	/// that would be recieved by adding the given amounts of base and quote.
 	fn simulate_add_liquidity(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
@@ -51,8 +51,8 @@ pub trait Amm {
 	where
 		Self::AssetId: sp_std::cmp::Ord;
 
-	/// Returns the amount of base/quote assets that would be recieved by removing the given
-	/// amounts of lp tokens.
+	/// Simulate remove_liquidity computations, on success returns the amount of base/quote assets
+	/// that would be recieved by removing the given amounts of lp tokens.
 	fn simulate_remove_liquidity(
 		who: &Self::AccountId,
 		pool_id: Self::PoolId,
