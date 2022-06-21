@@ -1240,7 +1240,7 @@ pub mod pallet {
 				)?;
 
 				// Attempt funding rate update at the end
-				Self::do_update_funding(market_id, &mut market, T::UnixTime::now().as_secs())?;
+				Self::try_update_funding(market_id, &mut market)?;
 
 				Collateral::<T>::insert(account_id, collateral);
 				OutstandingGains::<T>::insert(account_id, market_id, outstanding_gains);
@@ -1360,6 +1360,17 @@ pub mod pallet {
 
 	// Helper functions - core functionality
 	impl<T: Config> Pallet<T> {
+		fn try_update_funding(
+			market_id: &T::MarketId,
+			market: &mut Market<T>,
+		) -> Result<(), DispatchError> {
+			let now = T::UnixTime::now().as_secs();
+			if Self::is_funding_update_time(market, now)? {
+				Self::do_update_funding(market_id, market, now)?;
+			}
+			Ok(())
+		}
+
 		fn do_update_funding(
 			market_id: &T::MarketId,
 			market: &mut Market<T>,
