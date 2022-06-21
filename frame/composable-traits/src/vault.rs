@@ -113,7 +113,7 @@ pub trait Vault {
 		lp_amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
 
-	fn calculate_lp_tokens_from_asset_amount(
+	fn amount_of_lp_token_for_added_liquidity(
 		vault_id: &Self::VaultId,
 		asset_amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
