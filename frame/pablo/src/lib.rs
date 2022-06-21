@@ -129,44 +129,6 @@ pub mod pallet {
 		LiquidityBootstrapping(LiquidityBootstrappingPoolInfo<AccountId, AssetId, BlockNumber>),
 	}
 
-	fn lp_for_liquidity<T: Config>(
-		pool_config: PoolConfiguration<T::AccountId, T::AssetId, T::BlockNumber>,
-		pool_account: T::AccountId,
-		base_amount: T::Balance,
-		quote_amount: T::Balance,
-	) -> Result<T::Balance, DispatchError> {
-		match pool_config {
-			PoolConfiguration::StableSwap(pool) => {
-				let (amount_of_lp_token_to_mint, ..) =
-					StableSwap::<T>::calculate_mint_amount_and_fees(
-						&pool,
-						&pool_account,
-						&base_amount,
-						&quote_amount,
-					)?;
-				Ok(amount_of_lp_token_to_mint)
-			},
-			PoolConfiguration::ConstantProduct(pool) => {
-				let pool_base_aum =
-					T::Convert::convert(T::Assets::balance(pool.pair.base, &pool_account));
-				let pool_quote_aum =
-					T::Convert::convert(T::Assets::balance(pool.pair.quote, &pool_account));
-
-				let lp_total_issuance =
-					T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
-				let (_, amount_of_lp_token_to_mint) = compute_deposit_lp(
-					lp_total_issuance,
-					T::Convert::convert(base_amount),
-					T::Convert::convert(quote_amount),
-					pool_base_aum,
-					pool_quote_aum,
-				)?;
-				Ok(T::Convert::convert(amount_of_lp_token_to_mint))
-			},
-			PoolConfiguration::LiquidityBootstrapping(_pool) => Ok(T::Balance::zero()),
-		}
-	}
-
 	pub(crate) type AssetIdOf<T> = <T as Config>::AssetId;
 	pub(crate) type BalanceOf<T> = <T as Config>::Balance;
 	pub(crate) type AccountIdOf<T> = <T as frame_system::Config>::AccountId;
@@ -1271,5 +1233,43 @@ pub mod pallet {
 		// implemented as of now.
 		let spot_price = <Pallet<T> as Amm>::get_exchange_value(pool_id, base_asset_id, amount)?;
 		Ok(PriceAggregate { pool_id, base_asset_id, quote_asset_id, spot_price })
+	}
+
+	fn lp_for_liquidity<T: Config>(
+		pool_config: PoolConfiguration<T::AccountId, T::AssetId, T::BlockNumber>,
+		pool_account: T::AccountId,
+		base_amount: T::Balance,
+		quote_amount: T::Balance,
+	) -> Result<T::Balance, DispatchError> {
+		match pool_config {
+			PoolConfiguration::StableSwap(pool) => {
+				let (amount_of_lp_token_to_mint, ..) =
+					StableSwap::<T>::calculate_mint_amount_and_fees(
+						&pool,
+						&pool_account,
+						&base_amount,
+						&quote_amount,
+					)?;
+				Ok(amount_of_lp_token_to_mint)
+			},
+			PoolConfiguration::ConstantProduct(pool) => {
+				let pool_base_aum =
+					T::Convert::convert(T::Assets::balance(pool.pair.base, &pool_account));
+				let pool_quote_aum =
+					T::Convert::convert(T::Assets::balance(pool.pair.quote, &pool_account));
+
+				let lp_total_issuance =
+					T::Convert::convert(T::Assets::total_issuance(pool.lp_token));
+				let (_, amount_of_lp_token_to_mint) = compute_deposit_lp(
+					lp_total_issuance,
+					T::Convert::convert(base_amount),
+					T::Convert::convert(quote_amount),
+					pool_base_aum,
+					pool_quote_aum,
+				)?;
+				Ok(T::Convert::convert(amount_of_lp_token_to_mint))
+			},
+			PoolConfiguration::LiquidityBootstrapping(_pool) => Ok(T::Balance::zero()),
+		}
 	}
 }

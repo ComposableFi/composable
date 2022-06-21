@@ -33,7 +33,7 @@ where
 		PriceAggregate<SafeRpcWrapper<PoolId>, SafeRpcWrapper<AssetId>, SafeRpcWrapper<Balance>>,
 	>;
 
-	#[method(name = "pablo_simulate_add_liquidity")]
+	#[method(name = "pablo_simulateAddLiquidity")]
 	fn simulate_add_liquidity(
 		&self,
 		who: SafeRpcWrapper<AccountId>,
@@ -42,7 +42,7 @@ where
 		at: Option<BlockHash>,
 	) -> RpcResult<SafeRpcWrapper<Balance>>;
 
-	#[method(name = "pablo_simulate_remove_liquidity")]
+	#[method(name = "pablo_simulateRemoveLiquidity")]
 	fn simulate_remove_liquidity(
 		&self,
 		who: SafeRpcWrapper<AccountId>,
