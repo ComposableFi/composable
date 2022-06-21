@@ -192,6 +192,7 @@ pub mod pallet {
 		XcmCannotDecodeRemoteParametersToLocalRepresentations,
 		XcmCannotFindLocalIdentifiersAsDecodedFromRemote,
 		XcmNotFoundConfigurationById,
+		XcmBaseEqQuote,
 	}
 
 	#[pallet::pallet]
@@ -355,6 +356,7 @@ pub mod pallet {
 				.map_err(|_| Error::<T>::XcmCannotDecodeRemoteParametersToLocalRepresentations)?;
 			let quote = T::MayBeAssetId::decode(&mut &request.order.pair.quote.encode()[..])
 				.map_err(|_| Error::<T>::XcmCannotDecodeRemoteParametersToLocalRepresentations)?;
+			ensure!(base != quote, Error::<T>::XcmBaseEqQuote);
 			let amount: T::Balance =
 				request.order.take.amount.try_into().map_err(|_| {
 					Error::<T>::XcmCannotDecodeRemoteParametersToLocalRepresentations
