@@ -158,7 +158,10 @@ pub mod pallet {
 		math::{
 			self, FixedPointMath, FromBalance, IntoBalance, IntoDecimal, IntoSigned, UnsignedMath,
 		},
-		types::{AccountSummary, PositionInfo, BASIS_POINT_DENOMINATOR},
+		types::{
+			AccountSummary, PositionInfo, TradeResponse, TraderPositionState,
+			BASIS_POINT_DENOMINATOR,
+		},
 		weights::WeightInfo,
 	};
 	use codec::FullCodec;
@@ -1085,78 +1088,30 @@ pub mod pallet {
 			);
 
 			let mut positions = Self::get_positions(&account_id);
-			let (position, position_index) =
-				Self::get_or_create_position(&mut positions, market_id, &market, direction)?;
-			let position_direction = position.direction().unwrap_or(direction);
+			let mut position =
+				Self::remove_or_create_position(&mut positions, market_id, &market, direction)?;
 
 			let mut collateral = Self::get_collateral(account_id).unwrap_or_else(T::Balance::zero);
 			// Settle funding for position before any modifications
-			Self::settle_funding(position, &market, &mut collateral)?;
+			Self::settle_funding(&mut position, &market, &mut collateral)?;
 
 			// Update oracle TWAP *before* swapping
 			Self::update_oracle_twap(&mut market)?;
 
-			// Whether or not the trade increases the risk exposure of the account
-			let mut is_risk_increasing = false;
-			let base_swapped: T::Balance;
-			if direction == position_direction {
-				base_swapped = Self::increase_position(
-					position,
-					&mut market,
-					direction,
-					&quote_abs_amount_decimal,
-					base_asset_amount_limit,
-				)?;
-
-				is_risk_increasing = true;
-			} else {
-				let abs_base_asset_value =
-					Self::base_asset_value(&market, position, position_direction)?.saturating_abs();
-
-				// Round trade if it nearly closes the position
-				Self::round_trade_if_necessary(
-					&market,
-					&mut quote_abs_amount_decimal,
-					&abs_base_asset_value,
-				)?;
-
-				let entry_value: T::Decimal;
-				let exit_value: T::Decimal;
-				(base_swapped, entry_value, exit_value) =
-					match quote_abs_amount_decimal.cmp(&abs_base_asset_value) {
-						Ordering::Less => Self::decrease_position(
-							position,
-							&mut market,
-							direction,
-							&quote_abs_amount_decimal,
-							base_asset_amount_limit,
-						)?,
-						Ordering::Equal => Self::do_close_position(
-							&mut positions,
-							position_index,
-							position_direction,
-							&mut market,
-							quote_abs_amount_decimal.into_balance()?,
-						)?,
-						Ordering::Greater => {
-							is_risk_increasing = quote_abs_amount_decimal
-								.try_sub(&abs_base_asset_value)? >
-								abs_base_asset_value;
-
-							Self::reverse_position(
-								position,
-								&mut market,
-								direction,
-								&quote_abs_amount_decimal,
-								base_asset_amount_limit,
-								&abs_base_asset_value,
-							)?
-						},
-					};
-
-				let pnl = exit_value.try_sub(&entry_value)?;
-				// Realize PnL
-				collateral = Self::update_margin_with_pnl(&collateral, &pnl)?;
+			let TradeResponse {
+				mut collateral,
+				market,
+				position,
+				base_swapped,
+				is_risk_increasing,
+			} = Self::execute_trade(
+				TraderPositionState { collateral, market, position },
+				direction,
+				&mut quote_abs_amount_decimal,
+				base_asset_amount_limit,
+			)?;
+			if let Some(p) = position {
+				positions.try_push(p).map_err(|_| Error::<T>::MaxPositionsExceeded)?;
 			}
 
 			// Charge fees
@@ -1687,167 +1642,6 @@ pub mod pallet {
 
 			Ok(())
 		}
-
-		fn fee_for_trade(
-			market: &Market<T>,
-			quote_abs_amount: &T::Decimal,
-		) -> Result<T::Balance, ArithmeticError> {
-			quote_abs_amount
-				.into_balance()?
-				.try_mul(&market.taker_fee)?
-				.try_div(&BASIS_POINT_DENOMINATOR.into())
-		}
-
-		fn increase_position(
-			position: &mut Position<T>,
-			market: &mut Market<T>,
-			direction: Direction,
-			quote_abs_amount_decimal: &T::Decimal,
-			base_asset_amount_limit: T::Balance,
-		) -> Result<T::Balance, DispatchError> {
-			let base_swapped = Self::swap_quote(
-				market,
-				direction,
-				quote_abs_amount_decimal,
-				base_asset_amount_limit,
-			)?;
-			let base_delta_decimal = Self::decimal_from_swapped(base_swapped, direction)?;
-
-			position.base_asset_amount.try_add_mut(&base_delta_decimal)?;
-			position.quote_asset_notional_amount.try_add_mut(&match direction {
-				Long => *quote_abs_amount_decimal,
-				Short => quote_abs_amount_decimal.neg(),
-			})?;
-
-			market.add_base_asset_amount(&base_delta_decimal, direction)?;
-
-			Ok(base_swapped)
-		}
-
-		fn decrease_position(
-			position: &mut Position<T>,
-			market: &mut Market<T>,
-			direction: Direction,
-			quote_abs_amount_decimal: &T::Decimal,
-			base_asset_amount_limit: T::Balance,
-		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
-			let base_swapped = Self::swap_quote(
-				market,
-				direction,
-				quote_abs_amount_decimal,
-				base_asset_amount_limit,
-			)?;
-			let base_delta_decimal = Self::decimal_from_swapped(base_swapped, direction)?;
-
-			// Compute proportion of quote asset notional amount closed
-			let entry_value = position.quote_asset_notional_amount.try_mul(
-				&base_delta_decimal
-					.saturating_abs()
-					.try_div(&position.base_asset_amount.saturating_abs())?,
-			)?;
-			// Trade direction is opposite of position direction, so we compute the exit value
-			// accordingly
-			let exit_value = match direction {
-				Long => quote_abs_amount_decimal.neg(),
-				Short => *quote_abs_amount_decimal,
-			};
-
-			position.base_asset_amount.try_add_mut(&base_delta_decimal)?;
-			position.quote_asset_notional_amount.try_sub_mut(&entry_value)?;
-
-			market.add_base_asset_amount(&base_delta_decimal, direction.opposite())?;
-
-			Ok((base_swapped, entry_value, exit_value))
-		}
-
-		fn do_close_position(
-			positions: &mut BoundedVec<Position<T>, T::MaxPositions>,
-			position_index: usize,
-			position_direction: Direction,
-			market: &mut Market<T>,
-			quote_asset_amount_limit: T::Balance,
-		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
-			// This should always succeed if called by either <Self as ClearingHouse>::open_position
-			// or <Self as ClearingHouse>::close_position
-			let position = positions.get(position_index).ok_or(Error::<T>::PositionNotFound)?;
-			let close_result = Self::close_position_in_market(
-				position,
-				position_direction,
-				market,
-				quote_asset_amount_limit,
-			)?;
-			positions.swap_remove(position_index);
-			Ok(close_result)
-		}
-
-		fn close_position_in_market(
-			position: &Position<T>,
-			position_direction: Direction,
-			market: &mut Market<T>,
-			quote_asset_amount_limit: T::Balance,
-		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
-			let base_swapped = position.base_asset_amount.into_balance()?;
-			let quote_swapped = Self::swap_base(
-				market,
-				position_direction,
-				base_swapped,
-				quote_asset_amount_limit,
-			)?;
-
-			let entry_value = position.quote_asset_notional_amount;
-			let quote_amount_decimal: T::Decimal = quote_swapped.into_decimal()?;
-			let exit_value = match position_direction {
-				Long => quote_amount_decimal,
-				Short => quote_amount_decimal.neg(),
-			};
-
-			market.sub_base_asset_amount(&position.base_asset_amount, position_direction)?;
-			Ok((base_swapped, entry_value, exit_value))
-		}
-
-		fn reverse_position(
-			position: &mut Position<T>,
-			market: &mut Market<T>,
-			direction: Direction,
-			quote_abs_amount_decimal: &T::Decimal,
-			base_asset_amount_limit: T::Balance,
-			abs_base_asset_value: &T::Decimal,
-		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
-			let base_swapped = Self::swap_quote(
-				market,
-				direction,
-				quote_abs_amount_decimal,
-				base_asset_amount_limit,
-			)?;
-
-			// Since reversing is equivalent to closing a position and then opening a
-			// new one in the opposite direction, all of the current position's PnL is
-			// realized
-			let entry_value = position.quote_asset_notional_amount;
-			// Trade direction is opposite of position direction, so we compute the exit value
-			// accordingly
-			let exit_value = match direction {
-				Long => abs_base_asset_value.neg(),
-				Short => *abs_base_asset_value,
-			};
-
-			// Account for the implicit position closing
-			market.sub_base_asset_amount(&position.base_asset_amount, direction.opposite())?;
-
-			position
-				.base_asset_amount
-				.try_add_mut(&Self::decimal_from_swapped(base_swapped, direction)?)?;
-			position.quote_asset_notional_amount = exit_value.try_add(&match direction {
-				Long => *quote_abs_amount_decimal,
-				Short => quote_abs_amount_decimal.neg(),
-			})?;
-			// Update to account for direction change
-			position.last_cum_funding = market.cum_funding_rate(direction);
-
-			market.add_base_asset_amount(&position.base_asset_amount, direction)?;
-
-			Ok((base_swapped, entry_value, exit_value))
-		}
 	}
 
 	// Helper functions - validity checks
@@ -2040,29 +1834,26 @@ pub mod pallet {
 			})
 		}
 
-		fn get_or_create_position<'a>(
-			positions: &'a mut BoundedVec<Position<T>, T::MaxPositions>,
+		fn remove_or_create_position(
+			positions: &mut BoundedVec<Position<T>, T::MaxPositions>,
 			market_id: &T::MarketId,
 			market: &Market<T>,
 			direction: Direction,
-		) -> Result<(&'a mut Position<T>, usize), DispatchError> {
+		) -> Result<Position<T>, DispatchError> {
 			Ok(match positions.iter().position(|p| p.market_id == *market_id) {
-				Some(index) =>
-					(positions.get_mut(index).expect("Item successfully found above"), index),
+				Some(index) => positions.swap_remove(index),
 				None => {
-					positions
-						.try_push(Position::<T> {
-							market_id: market_id.clone(),
-							base_asset_amount: Zero::zero(),
-							quote_asset_notional_amount: Zero::zero(),
-							last_cum_funding: market.cum_funding_rate(direction),
-						})
-						.map_err(|_| Error::<T>::MaxPositionsExceeded)?;
-					let index = positions.len() - 1;
-					let position = positions
-						.get_mut(index)
-						.expect("Will always succeed if the above push does");
-					(position, index)
+					// Ensure there is space if the position is added to the vector later
+					ensure!(
+						positions.len() < BoundedVec::<Position<T>, T::MaxPositions>::bound(),
+						Error::<T>::MaxPositionsExceeded
+					);
+					Position::<T> {
+						market_id: market_id.clone(),
+						base_asset_amount: Zero::zero(),
+						quote_asset_notional_amount: Zero::zero(),
+						last_cum_funding: market.cum_funding_rate(direction),
+					}
 				},
 			})
 		}
@@ -2143,6 +1934,266 @@ pub mod pallet {
 			pnl: &T::Decimal,
 		) -> Result<T::Balance, DispatchError> {
 			Self::updated_balance(margin, pnl)
+		}
+	}
+
+	// Trading helpers
+	impl<T: Config> Pallet<T> {
+		fn execute_trade(
+			state: TraderPositionState<T>,
+			direction: Direction,
+			quote_abs_amount_decimal: &mut T::Decimal,
+			base_asset_amount_limit: T::Balance,
+		) -> Result<TradeResponse<T>, DispatchError> {
+			let TraderPositionState { mut collateral, mut market, mut position } = state;
+
+			let base_swapped;
+			// Whether or not the trade increases the risk exposure of the account
+			let mut is_risk_increasing = false;
+			let new_position;
+
+			let position_direction = position.direction().unwrap_or(direction);
+			if direction == position_direction {
+				base_swapped = Self::increase_position(
+					&mut position,
+					&mut market,
+					direction,
+					quote_abs_amount_decimal,
+					base_asset_amount_limit,
+				)?;
+
+				is_risk_increasing = true;
+				new_position = Some(position);
+			} else {
+				let abs_base_asset_value =
+					Self::base_asset_value(&market, &position, position_direction)?
+						.saturating_abs();
+
+				// Round trade if it nearly closes the position
+				Self::round_trade_if_necessary(
+					&market,
+					quote_abs_amount_decimal,
+					&abs_base_asset_value,
+				)?;
+
+				let entry_value: T::Decimal;
+				let exit_value: T::Decimal;
+				(base_swapped, entry_value, exit_value) =
+					match (*quote_abs_amount_decimal).cmp(&abs_base_asset_value) {
+						Ordering::Less => {
+							let result = Self::decrease_position(
+								&mut position,
+								&mut market,
+								direction,
+								quote_abs_amount_decimal,
+								base_asset_amount_limit,
+							)?;
+
+							new_position = Some(position);
+							result
+						},
+						Ordering::Equal => {
+							let result = Self::close_position_in_market(
+								&position,
+								position_direction,
+								&mut market,
+								quote_abs_amount_decimal.into_balance()?,
+							)?;
+
+							new_position = None;
+							result
+						},
+						Ordering::Greater => {
+							let result = Self::reverse_position(
+								&mut position,
+								&mut market,
+								direction,
+								quote_abs_amount_decimal,
+								base_asset_amount_limit,
+								&abs_base_asset_value,
+							)?;
+
+							is_risk_increasing = quote_abs_amount_decimal
+								.try_sub(&abs_base_asset_value)? >
+								abs_base_asset_value;
+							new_position = Some(position);
+							result
+						},
+					};
+
+				let pnl = exit_value.try_sub(&entry_value)?;
+				// Realize PnL
+				collateral = Self::update_margin_with_pnl(&collateral, &pnl)?;
+			}
+
+			Ok(TradeResponse {
+				collateral,
+				market,
+				position: new_position,
+				base_swapped,
+				is_risk_increasing,
+			})
+		}
+
+		fn increase_position(
+			position: &mut Position<T>,
+			market: &mut Market<T>,
+			direction: Direction,
+			quote_abs_amount_decimal: &T::Decimal,
+			base_asset_amount_limit: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
+			let base_swapped = Self::swap_quote(
+				market,
+				direction,
+				quote_abs_amount_decimal,
+				base_asset_amount_limit,
+			)?;
+			let base_delta_decimal = Self::decimal_from_swapped(base_swapped, direction)?;
+
+			position.base_asset_amount.try_add_mut(&base_delta_decimal)?;
+			position.quote_asset_notional_amount.try_add_mut(&match direction {
+				Long => *quote_abs_amount_decimal,
+				Short => quote_abs_amount_decimal.neg(),
+			})?;
+
+			market.add_base_asset_amount(&base_delta_decimal, direction)?;
+
+			Ok(base_swapped)
+		}
+
+		fn decrease_position(
+			position: &mut Position<T>,
+			market: &mut Market<T>,
+			direction: Direction,
+			quote_abs_amount_decimal: &T::Decimal,
+			base_asset_amount_limit: T::Balance,
+		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
+			let base_swapped = Self::swap_quote(
+				market,
+				direction,
+				quote_abs_amount_decimal,
+				base_asset_amount_limit,
+			)?;
+			let base_delta_decimal = Self::decimal_from_swapped(base_swapped, direction)?;
+
+			// Compute proportion of quote asset notional amount closed
+			let entry_value = position.quote_asset_notional_amount.try_mul(
+				&base_delta_decimal
+					.saturating_abs()
+					.try_div(&position.base_asset_amount.saturating_abs())?,
+			)?;
+			// Trade direction is opposite of position direction, so we compute the exit value
+			// accordingly
+			let exit_value = match direction {
+				Long => quote_abs_amount_decimal.neg(),
+				Short => *quote_abs_amount_decimal,
+			};
+
+			position.base_asset_amount.try_add_mut(&base_delta_decimal)?;
+			position.quote_asset_notional_amount.try_sub_mut(&entry_value)?;
+
+			market.add_base_asset_amount(&base_delta_decimal, direction.opposite())?;
+
+			Ok((base_swapped, entry_value, exit_value))
+		}
+
+		fn do_close_position(
+			positions: &mut BoundedVec<Position<T>, T::MaxPositions>,
+			position_index: usize,
+			position_direction: Direction,
+			market: &mut Market<T>,
+			quote_asset_amount_limit: T::Balance,
+		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
+			// This should always succeed if called by either <Self as ClearingHouse>::open_position
+			// or <Self as ClearingHouse>::close_position
+			let position = positions.get(position_index).ok_or(Error::<T>::PositionNotFound)?;
+			let close_result = Self::close_position_in_market(
+				position,
+				position_direction,
+				market,
+				quote_asset_amount_limit,
+			)?;
+			positions.swap_remove(position_index);
+			Ok(close_result)
+		}
+
+		fn close_position_in_market(
+			position: &Position<T>,
+			position_direction: Direction,
+			market: &mut Market<T>,
+			quote_asset_amount_limit: T::Balance,
+		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
+			let base_swapped = position.base_asset_amount.into_balance()?;
+			let quote_swapped = Self::swap_base(
+				market,
+				position_direction,
+				base_swapped,
+				quote_asset_amount_limit,
+			)?;
+
+			let entry_value = position.quote_asset_notional_amount;
+			let quote_amount_decimal: T::Decimal = quote_swapped.into_decimal()?;
+			let exit_value = match position_direction {
+				Long => quote_amount_decimal,
+				Short => quote_amount_decimal.neg(),
+			};
+
+			market.sub_base_asset_amount(&position.base_asset_amount, position_direction)?;
+			Ok((base_swapped, entry_value, exit_value))
+		}
+
+		fn reverse_position(
+			position: &mut Position<T>,
+			market: &mut Market<T>,
+			direction: Direction,
+			quote_abs_amount_decimal: &T::Decimal,
+			base_asset_amount_limit: T::Balance,
+			abs_base_asset_value: &T::Decimal,
+		) -> Result<(T::Balance, T::Decimal, T::Decimal), DispatchError> {
+			let base_swapped = Self::swap_quote(
+				market,
+				direction,
+				quote_abs_amount_decimal,
+				base_asset_amount_limit,
+			)?;
+
+			// Since reversing is equivalent to closing a position and then opening a
+			// new one in the opposite direction, all of the current position's PnL is
+			// realized
+			let entry_value = position.quote_asset_notional_amount;
+			// Trade direction is opposite of position direction, so we compute the exit value
+			// accordingly
+			let exit_value = match direction {
+				Long => abs_base_asset_value.neg(),
+				Short => *abs_base_asset_value,
+			};
+
+			// Account for the implicit position closing
+			market.sub_base_asset_amount(&position.base_asset_amount, direction.opposite())?;
+
+			position
+				.base_asset_amount
+				.try_add_mut(&Self::decimal_from_swapped(base_swapped, direction)?)?;
+			position.quote_asset_notional_amount = exit_value.try_add(&match direction {
+				Long => *quote_abs_amount_decimal,
+				Short => quote_abs_amount_decimal.neg(),
+			})?;
+			// Update to account for direction change
+			position.last_cum_funding = market.cum_funding_rate(direction);
+
+			market.add_base_asset_amount(&position.base_asset_amount, direction)?;
+
+			Ok((base_swapped, entry_value, exit_value))
+		}
+
+		fn fee_for_trade(
+			market: &Market<T>,
+			quote_abs_amount: &T::Decimal,
+		) -> Result<T::Balance, ArithmeticError> {
+			quote_abs_amount
+				.into_balance()?
+				.try_mul(&market.taker_fee)?
+				.try_div(&BASIS_POINT_DENOMINATOR.into())
 		}
 	}
 

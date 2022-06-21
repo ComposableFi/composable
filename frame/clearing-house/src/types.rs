@@ -257,6 +257,24 @@ pub struct MarketConfig<AssetId, Balance, Decimal, VammConfig> {
 }
 
 // -------------------------------------------------------------------------------------------------
+//                                            Trading
+// -------------------------------------------------------------------------------------------------
+
+pub struct TraderPositionState<T: Config> {
+	pub collateral: T::Balance,
+	pub market: Market<T>,
+	pub position: Position<T>,
+}
+
+pub struct TradeResponse<T: Config> {
+	pub collateral: T::Balance,
+	pub market: Market<T>,
+	pub position: Option<Position<T>>,
+	pub base_swapped: T::Balance,
+	pub is_risk_increasing: bool,
+}
+
+// -------------------------------------------------------------------------------------------------
 //                                          Liquidations
 // -------------------------------------------------------------------------------------------------
 
