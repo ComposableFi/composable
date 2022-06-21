@@ -182,6 +182,7 @@ impl pallet_assets::Config for Runtime {
 	type WeightInfo = ();
 	type AdminOrigin = EnsureSignedBy<RootAccount, AccountId>;
 	type GovernanceRegistry = NoopRegistry;
+	type CurrencyValidator = primitives::currency::ValidateCurrencyId;
 }
 
 parameter_types! {
