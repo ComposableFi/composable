@@ -298,6 +298,46 @@ impl instrumental_strategy_pablo::Config for MockRuntime {
 }
 
 // -------------------------------------------------------------------------------------------------
+//                                       Instrumental Strategy
+// -------------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const InstrumentalStrategyPalletId: PalletId = PalletId(*b"dynamic_");
+}
+
+impl instrumental_strategy::Config for MockRuntime {
+	type Event = Event;
+	type WeightInfo = ();
+	type AssetId = CurrencyId;
+	type Balance = Balance;
+	type VaultId = VaultId;
+	type Vault = Vault;
+	type PoolId = PoolId;
+	type PabloStrategy = PabloStrategy;
+	type MaxAssociatedVaults = MaxAssociatedVaults;
+	type PalletId = InstrumentalStrategyPalletId;
+}
+
+// -------------------------------------------------------------------------------------------------
+//                                           Instrumental
+// -------------------------------------------------------------------------------------------------
+
+parameter_types! {
+	pub const InstrumentalPalletId: PalletId = PalletId(*b"strm____");
+}
+
+impl pallet_instrumental::Config for MockRuntime {
+	type Event = Event;
+	type WeightInfo = ();
+	type Balance = Balance;
+	type AssetId = CurrencyId;
+	type VaultId = VaultId;
+	type Vault = Vault;
+	type InstrumentalStrategy = InstrumentalStrategy;
+	type PalletId = InstrumentalPalletId;
+}
+
+// -------------------------------------------------------------------------------------------------
 //                                         Construct Runtime
 // -------------------------------------------------------------------------------------------------
 
@@ -322,6 +362,8 @@ frame_support::construct_runtime!(
 		StakingRewards: pallet_staking_rewards::{Pallet, Storage, Call, Event<T>},
 		Pablo: pallet_pablo::{Pallet, Call, Storage, Event<T>},
 
+		InstrumentalStrategy: instrumental_strategy::{Pallet, Call, Storage, Event<T>},
+		Instrumental: pallet_instrumental::{Pallet, Call, Storage, Event<T>},
 		PabloStrategy: instrumental_strategy_pablo::{Pallet, Call, Storage, Event<T>},
 	}
 );

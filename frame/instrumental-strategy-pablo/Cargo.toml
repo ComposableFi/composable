@@ -27,17 +27,19 @@ log = { version = "0.4.14", default-features = false }
 serde = { version = '1', optional = true }
 
 [dev-dependencies]
+instrumental-strategy = { path = "../instrumental-strategy", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
 pallet-assets = { path = "../assets", default-features = false }
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27" }
 pallet-currency-factory = { path = "../currency-factory" }
 pallet-governance-registry = { path = "../governance-registry", default-features = false }
+pallet-instrumental = { path = "../instrumental", default-features = false }
 pallet-pablo = { path = "../pablo", default-features = false }
 pallet-staking-rewards = { path = "../staking-rewards", default-features = false }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.27", default-features = false }
 pallet-vault = { default-features = false, path = "../vault" }
 primitives = { path = "../../runtime/primitives", default-features = false }
-orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
-orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "377213f750755cc48e80a3131eaae63b5eda8362" }
 
 [features]
 default = ["std"]

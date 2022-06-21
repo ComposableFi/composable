@@ -1,8 +1,11 @@
-use composable_traits::instrumental::InstrumentalProtocolStrategy;
+use composable_traits::instrumental::{Instrumental as InstrumentalTrait, InstrumentalVaultConfig, InstrumentalProtocolStrategy};
 use frame_support::{assert_noop, assert_ok};
+use primitives::currency::CurrencyId;
+use sp_runtime::Perquintill;
 
 use crate::mock::runtime::{
-	Event, ExtBuilder, MockRuntime, PabloStrategy, System, VaultId, MAX_ASSOCIATED_VAULTS,
+	Event, ExtBuilder, Instrumental, MockRuntime, PabloStrategy, System, VaultId,
+	MAX_ASSOCIATED_VAULTS,
 };
 #[allow(unused_imports)]
 use crate::{pallet, pallet::Error};
@@ -12,7 +15,7 @@ use crate::{pallet, pallet::Error};
 // -------------------------------------------------------------------------------------------------
 
 #[test]
-fn test_add_an_associated_vault() {
+fn add_an_associated_vault() {
 	ExtBuilder::default().build().execute_with(|| {
 		let vault_id: VaultId = 1;
 
@@ -21,7 +24,7 @@ fn test_add_an_associated_vault() {
 }
 
 #[test]
-fn test_adding_an_associated_vault_twice_throws_an_error() {
+fn adding_an_associated_vault_twice_throws_an_error() {
 	ExtBuilder::default().build().execute_with(|| {
 		let vault_id: VaultId = 1;
 
@@ -34,7 +37,7 @@ fn test_adding_an_associated_vault_twice_throws_an_error() {
 }
 
 #[test]
-fn test_associating_too_many_vaults_throws_an_error() {
+fn associating_too_many_vaults_throws_an_error() {
 	ExtBuilder::default().build().execute_with(|| {
 		for vault_id in 0..MAX_ASSOCIATED_VAULTS {
 			assert_ok!(PabloStrategy::associate_vault(&(vault_id as VaultId)));
@@ -53,11 +56,16 @@ fn test_associating_too_many_vaults_throws_an_error() {
 // -------------------------------------------------------------------------------------------------
 
 #[test]
-fn test_rebalance_emits_event() {
+fn rebalance_emits_event() {
 	ExtBuilder::default().build().execute_with(|| {
 		System::set_block_number(1);
 
-		let vault_id: VaultId = 1;
+		let config = InstrumentalVaultConfig {
+			asset_id: CurrencyId::USDC,
+			percent_deployable: Perquintill::zero(),
+		};
+		let vault_id = <Instrumental as InstrumentalTrait>::create(config).unwrap();
+
 		assert_ok!(PabloStrategy::associate_vault(&(vault_id as VaultId)));
 
 		assert_ok!(PabloStrategy::rebalance());
