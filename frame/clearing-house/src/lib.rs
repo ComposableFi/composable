@@ -1093,6 +1093,9 @@ pub mod pallet {
 			// Settle funding for position before any modifications
 			Self::settle_funding(position, &market, &mut collateral)?;
 
+			// Update oracle TWAP *before* swapping
+			Self::update_oracle_twap(&mut market)?;
+
 			// Whether or not the trade increases the risk exposure of the account
 			let mut is_risk_increasing = false;
 			let base_swapped: T::Balance;
