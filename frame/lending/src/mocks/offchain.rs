@@ -69,6 +69,7 @@ pub type Public = AuthorityId;
 pub type Header = HeaderType;
 parameter_types! {
 	pub const LiquidationsPalletId : PalletId = PalletId(*b"liqd_tns");
+	pub const MaxLiquidationStrategiesAmount: u32 = 3;
 }
 
 pub static ALICE: Lazy<AccountId> = Lazy::new(|| 0);
@@ -360,6 +361,7 @@ impl pallet_liquidations::Config for Runtime {
 	type WeightInfo = ();
 	type CanModifyStrategies = EnsureRoot<Self::AccountId>;
 	type XcmSender = XcmFake;
+	type MaxLiquidationStrategiesAmount = MaxLiquidationStrategiesAmount;
 }
 
 pub type Extrinsic = TestExtrinsic;
