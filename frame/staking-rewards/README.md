@@ -68,7 +68,7 @@ Or if the share does not decay with time and extending time subsumes old-time al
 
 Owner account of the pool. Usually other protocol or its "owner".
 
-The inflation rate "grows" rewards as time goes. It can be dynamically updated later.
+The rewards rate "grows" rewards as time goes. It can be dynamically updated later.
   
 **Example**,
 
