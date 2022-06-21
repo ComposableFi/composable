@@ -47,8 +47,11 @@ pub mod pallet {
 	use codec::FullCodec;
 	use composable_support::{
 		abstractions::{
-			nonce::{Increment, Nonce},
-			utils::{increment::SafeIncrement, start_at::ZeroInit},
+			nonce::Nonce,
+			utils::{
+				increment::{Increment, SafeIncrement},
+				start_at::ZeroInit,
+			},
 		},
 		math::safe::SafeAdd,
 		validation::Validated,

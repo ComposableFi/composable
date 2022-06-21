@@ -11,11 +11,11 @@ import {
 } from "@mui/material";
 import Image from "next/image";
 import { BaseAsset, PairAsset } from "../Atoms";
-import { useAppSelector } from "@/hooks/store";
 import { useRouter } from "next/router";
 import React from "react";
 import { InfoOutlined } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
+import useStore from "../../store/useStore";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -36,14 +36,14 @@ const tableHeaders: TableHeader[] = [
 ];
 
 export const YourBondTable: React.FC = () => {
-  const pools = useAppSelector((state) => state.polkadot.yourBondPools);
+  const { activeBonds } = useStore();
   const router = useRouter();
 
-  const handleRowClick = (e: React.MouseEvent) => {
-    router.push("/bond/select");
+  const handleRowClick = (offerId: number) => {
+    router.push(`/bond/select/${offerId}`);
   };
 
-  if (pools.length == 0) {
+  if (activeBonds.length == 0) {
     return (
       <Box textAlign="center" mt={3}>
         <Image
@@ -70,7 +70,7 @@ export const YourBondTable: React.FC = () => {
                     {th.header}
                     {th.tooltip && (
                       <Tooltip arrow title={th.tooltip}>
-                        <InfoOutlined color="primary" fontSize="small"/>
+                        <InfoOutlined color="primary" fontSize="small" />
                       </Tooltip>
                     )}
                   </Box>
@@ -79,38 +79,46 @@ export const YourBondTable: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {pools.map((pool, index) => (
+            {activeBonds.map((bond, index) => (
               <TableRow
-                onClick={handleRowClick}
+                onClick={() => handleRowClick(bond.offerId)}
                 key={index}
-                sx={{cursor: "pointer"}}
+                sx={{ cursor: "pointer" }}
               >
                 <TableCell align="left">
-                  {pool.token2 ? (
+                  {"base" in bond.asset ? (
                     <PairAsset
                       assets={[
-                        { icon: pool.token1.icon, label: pool.token1.symbol },
-                        { icon: pool.token2.icon, label: pool.token2.symbol },
+                        {
+                          icon: bond.asset.base.icon,
+                          label: bond.asset.base.symbol,
+                        },
+                        {
+                          icon: bond.asset.quote.icon,
+                          label: bond.asset.quote.symbol,
+                        },
                       ]}
                       separator="/"
                     />
                   ) : (
                     <BaseAsset
-                      label={pool.token1.symbol}
-                      icon={pool.token1.icon}
+                      label={bond.asset.symbol}
+                      icon={bond.asset.icon}
                     />
                   )}
                 </TableCell>
                 <TableCell align="left">
-                  <Typography variant="body2">{pool.claimable.toFormat()} CHAOS</Typography>
-                </TableCell>
-                <TableCell align="left">
-                  <Typography variant="body2">{pool.pending.toFormat()} CHAOS</Typography>
+                  <Typography variant="body2">
+                    {bond.claimableAmount.toFormat()} CHAOS
+                  </Typography>
                 </TableCell>
                 <TableCell align="left">
                   <Typography variant="body2">
-                    {pool.vesting_term} days
+                    {bond.pendingAmount.toFormat()} CHAOS
                   </Typography>
+                </TableCell>
+                <TableCell align="left">
+                  <Typography variant="body2">{bond.vestingTime}</Typography>
                 </TableCell>
               </TableRow>
             ))}

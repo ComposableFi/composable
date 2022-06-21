@@ -30,7 +30,6 @@
       {
         "name": "ferdie",
         "wsPort": 9978,
-        "basePath": "/tmp/polkadot-launch/relaychains/ferdie",
         "port": 30778,
         "flags": ["--rpc-cors=all", "--beefy"]
       }

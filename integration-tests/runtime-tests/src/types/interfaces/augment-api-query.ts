@@ -24,6 +24,7 @@ import type {
   DaliRuntimeOpaqueSessionKeys,
   OrmlTokensAccountData,
   OrmlTokensBalanceLock,
+  OrmlTokensReserveData,
   PalletCollatorSelectionCandidateInfo,
   PalletCrowdloanRewardsModelsRemoteAccount,
   PalletCrowdloanRewardsModelsReward,
@@ -49,8 +50,9 @@ import type {
   PalletTreasuryProposal,
   PalletVaultModelsStrategyOverview,
   PalletVaultModelsVaultInfo,
-  PolkadotPrimitivesV1AbridgedHostConfiguration,
-  PolkadotPrimitivesV1PersistedValidationData,
+  PolkadotPrimitivesV2AbridgedHostConfiguration,
+  PolkadotPrimitivesV2PersistedValidationData,
+  PolkadotPrimitivesV2UpgradeRestriction,
   SpConsensusAuraSr25519AppSr25519Public,
   SpTrieStorageProof
 } from "@composable/types/interfaces/crowdloanRewards";
@@ -90,9 +92,10 @@ import type {
   PalletBalancesReserveData,
   PalletCollectiveVotes,
   PalletMultisigMultisig,
+  PalletProxyAnnouncement,
+  PalletProxyProxyDefinition,
   PalletTransactionPaymentReleases,
   PolkadotCorePrimitivesOutboundHrmpMessage,
-  PolkadotPrimitivesV1UpgradeRestriction,
   SpCoreCryptoKeyTypeId,
   SpRuntimeDigest,
   XcmV1MultiLocation
@@ -660,6 +663,177 @@ declare module "@polkadot/api-base/types/storage" {
        **/
       [key: string]: QueryableStorageEntry<ApiType>;
     };
+    ibc: {
+      /**
+       * (port_identifier, channel_identifier, Sequence) => Hash
+       **/
+      acknowledgements: AugmentedQuery<
+        ApiType,
+        (
+          arg:
+            | ITuple<[Bytes, Bytes, u64]>
+            | [Bytes | string | Uint8Array, Bytes | string | Uint8Array, u64 | AnyNumber | Uint8Array]
+        ) => Observable<Bytes>,
+        [ITuple<[Bytes, Bytes, u64]>]
+      > &
+        QueryableStorageEntry<ApiType, [ITuple<[Bytes, Bytes, u64]>]>;
+      channelCounter: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * (port_identifier, channel_identifier) => ChannelEnd
+       **/
+      channels: AugmentedQuery<
+        ApiType,
+        (arg1: Bytes | string | Uint8Array, arg2: Bytes | string | Uint8Array) => Observable<Bytes>,
+        [Bytes, Bytes]
+      > &
+        QueryableStorageEntry<ApiType, [Bytes, Bytes]>;
+      /**
+       * connection_identifier => Vec<(port_id, channel_id)>
+       **/
+      channelsConnection: AugmentedQuery<
+        ApiType,
+        (arg: Bytes | string | Uint8Array) => Observable<Vec<ITuple<[Bytes, Bytes]>>>,
+        [Bytes]
+      > &
+        QueryableStorageEntry<ApiType, [Bytes]>;
+      /**
+       * clientId => ClientType
+       **/
+      clients: AugmentedQuery<ApiType, (arg: Bytes | string | Uint8Array) => Observable<Bytes>, [Bytes]> &
+        QueryableStorageEntry<ApiType, [Bytes]>;
+      /**
+       * client_id => ClientState
+       **/
+      clientStates: AugmentedQuery<ApiType, (arg: Bytes | string | Uint8Array) => Observable<Bytes>, [Bytes]> &
+        QueryableStorageEntry<ApiType, [Bytes]>;
+      /**
+       * client_id , Height => Height
+       **/
+      clientUpdateHeight: AugmentedQuery<
+        ApiType,
+        (arg1: Bytes | string | Uint8Array, arg2: Bytes | string | Uint8Array) => Observable<Bytes>,
+        [Bytes, Bytes]
+      > &
+        QueryableStorageEntry<ApiType, [Bytes, Bytes]>;
+      /**
+       * client_id , Height => Timestamp
+       **/
+      clientUpdateTime: AugmentedQuery<
+        ApiType,
+        (arg1: Bytes | string | Uint8Array, arg2: Bytes | string | Uint8Array) => Observable<u64>,
+        [Bytes, Bytes]
+      > &
+        QueryableStorageEntry<ApiType, [Bytes, Bytes]>;
+      /**
+       * client_id => Vec<Connection_id>
+       **/
+      connectionClient: AugmentedQuery<ApiType, (arg: Bytes | string | Uint8Array) => Observable<Vec<Bytes>>, [Bytes]> &
+        QueryableStorageEntry<ApiType, [Bytes]>;
+      /**
+       * connection_id => ConnectionEnd
+       **/
+      connections: AugmentedQuery<ApiType, (arg: Bytes | string | Uint8Array) => Observable<Bytes>, [Bytes]> &
+        QueryableStorageEntry<ApiType, [Bytes]>;
+      /**
+       * client_id, height => ConsensusState
+       **/
+      consensusStates: AugmentedQuery<
+        ApiType,
+        (arg1: Bytes | string | Uint8Array, arg2: Bytes | string | Uint8Array) => Observable<Bytes>,
+        [Bytes, Bytes]
+      > &
+        QueryableStorageEntry<ApiType, [Bytes, Bytes]>;
+      /**
+       * Counter for the related counted storage map
+       **/
+      counterForAcknowledgements: AugmentedQuery<ApiType, () => Observable<u32>, []> &
+        QueryableStorageEntry<ApiType, []>;
+      /**
+       * Counter for the related counted storage map
+       **/
+      counterForClients: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Counter for the related counted storage map
+       **/
+      counterForConnections: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Counter for the related counted storage map
+       **/
+      counterForPacketCommitment: AugmentedQuery<ApiType, () => Observable<u32>, []> &
+        QueryableStorageEntry<ApiType, []>;
+      /**
+       * Counter for the related counted storage map
+       **/
+      counterForPacketReceipt: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * height => IbcConsensusState
+       **/
+      hostConsensusStates: AugmentedQuery<ApiType, () => Observable<BTreeMap<u64, PalletIbcIbcConsensusState>>, []> &
+        QueryableStorageEntry<ApiType, []>;
+      /**
+       * (port_identifier, channel_identifier) = Sequence
+       **/
+      nextSequenceAck: AugmentedQuery<
+        ApiType,
+        (arg1: Bytes | string | Uint8Array, arg2: Bytes | string | Uint8Array) => Observable<u64>,
+        [Bytes, Bytes]
+      > &
+        QueryableStorageEntry<ApiType, [Bytes, Bytes]>;
+      /**
+       * (port_identifier, channel_identifier) => Sequence
+       **/
+      nextSequenceRecv: AugmentedQuery<
+        ApiType,
+        (arg1: Bytes | string | Uint8Array, arg2: Bytes | string | Uint8Array) => Observable<u64>,
+        [Bytes, Bytes]
+      > &
+        QueryableStorageEntry<ApiType, [Bytes, Bytes]>;
+      /**
+       * (port_identifier, channel_identifier) => Sequence
+       **/
+      nextSequenceSend: AugmentedQuery<
+        ApiType,
+        (arg1: Bytes | string | Uint8Array, arg2: Bytes | string | Uint8Array) => Observable<u64>,
+        [Bytes, Bytes]
+      > &
+        QueryableStorageEntry<ApiType, [Bytes, Bytes]>;
+      /**
+       * (port_id, channel_id, sequence) => hash
+       **/
+      packetCommitment: AugmentedQuery<
+        ApiType,
+        (
+          arg:
+            | ITuple<[Bytes, Bytes, u64]>
+            | [Bytes | string | Uint8Array, Bytes | string | Uint8Array, u64 | AnyNumber | Uint8Array]
+        ) => Observable<Bytes>,
+        [ITuple<[Bytes, Bytes, u64]>]
+      > &
+        QueryableStorageEntry<ApiType, [ITuple<[Bytes, Bytes, u64]>]>;
+      /**
+       * (port_id, channel_id, sequence) => receipt
+       **/
+      packetReceipt: AugmentedQuery<
+        ApiType,
+        (
+          arg:
+            | ITuple<[Bytes, Bytes, u64]>
+            | [Bytes | string | Uint8Array, Bytes | string | Uint8Array, u64 | AnyNumber | Uint8Array]
+        ) => Observable<Bytes>,
+        [ITuple<[Bytes, Bytes, u64]>]
+      > &
+        QueryableStorageEntry<ApiType, [ITuple<[Bytes, Bytes, u64]>]>;
+      /**
+       * Generic query
+       **/
+      [key: string]: QueryableStorageEntry<ApiType>;
+    };
+    ibcPing: {
+      /**
+       * Generic query
+       **/
+      [key: string]: QueryableStorageEntry<ApiType>;
+    };
     identity: {
       /**
        * Information that is pertinent to identify the entity behind an account.
@@ -1069,7 +1243,7 @@ declare module "@polkadot/api-base/types/storage" {
        **/
       hostConfiguration: AugmentedQuery<
         ApiType,
-        () => Observable<Option<PolkadotPrimitivesV1AbridgedHostConfiguration>>,
+        () => Observable<Option<PolkadotPrimitivesV2AbridgedHostConfiguration>>,
         []
       > &
         QueryableStorageEntry<ApiType, []>;
@@ -1183,7 +1357,7 @@ declare module "@polkadot/api-base/types/storage" {
        **/
       upgradeRestrictionSignal: AugmentedQuery<
         ApiType,
-        () => Observable<Option<PolkadotPrimitivesV1UpgradeRestriction>>,
+        () => Observable<Option<PolkadotPrimitivesV2UpgradeRestriction>>,
         []
       > &
         QueryableStorageEntry<ApiType, []>;
@@ -1200,7 +1374,7 @@ declare module "@polkadot/api-base/types/storage" {
        **/
       validationData: AugmentedQuery<
         ApiType,
-        () => Observable<Option<PolkadotPrimitivesV1PersistedValidationData>>,
+        () => Observable<Option<PolkadotPrimitivesV2PersistedValidationData>>,
         []
       > &
         QueryableStorageEntry<ApiType, []>;
@@ -1224,6 +1398,31 @@ declare module "@polkadot/api-base/types/storage" {
         [H256]
       > &
         QueryableStorageEntry<ApiType, [H256]>;
+      /**
+       * Generic query
+       **/
+      [key: string]: QueryableStorageEntry<ApiType>;
+    };
+    proxy: {
+      /**
+       * The announcements made by the proxy (key).
+       **/
+      announcements: AugmentedQuery<
+        ApiType,
+        (arg: AccountId32 | string | Uint8Array) => Observable<ITuple<[Vec<PalletProxyAnnouncement>, u128]>>,
+        [AccountId32]
+      > &
+        QueryableStorageEntry<ApiType, [AccountId32]>;
+      /**
+       * The set of account proxies. Maps the account which has delegated to the accounts
+       * which are being delegated to, together with the amount held on deposit.
+       **/
+      proxies: AugmentedQuery<
+        ApiType,
+        (arg: AccountId32 | string | Uint8Array) => Observable<ITuple<[Vec<PalletProxyProxyDefinition>, u128]>>,
+        [AccountId32]
+      > &
+        QueryableStorageEntry<ApiType, [AccountId32]>;
       /**
        * Generic query
        **/
@@ -1369,8 +1568,11 @@ declare module "@polkadot/api-base/types/storage" {
       /**
        * Events deposited for the current block.
        *
-       * NOTE: This storage item is explicitly unbounded since it is never intended to be read
-       * from within the runtime.
+       * NOTE: The item is unbound and should therefore never be read on chain.
+       * It could otherwise inflate the PoV size of a block.
+       *
+       * Events have a large in-memory size. Box the events to not go out-of-memory
+       * just in case someone still reads them from within the runtime.
        **/
       events: AugmentedQuery<ApiType, () => Observable<Vec<FrameSystemEventRecord>>, []> &
         QueryableStorageEntry<ApiType, []>;
@@ -1476,6 +1678,18 @@ declare module "@polkadot/api-base/types/storage" {
           arg1: AccountId32 | string | Uint8Array,
           arg2: u128 | AnyNumber | Uint8Array
         ) => Observable<Vec<OrmlTokensBalanceLock>>,
+        [AccountId32, u128]
+      > &
+        QueryableStorageEntry<ApiType, [AccountId32, u128]>;
+      /**
+       * Named reserves on some account balances.
+       **/
+      reserves: AugmentedQuery<
+        ApiType,
+        (
+          arg1: AccountId32 | string | Uint8Array,
+          arg2: u128 | AnyNumber | Uint8Array
+        ) => Observable<Vec<OrmlTokensReserveData>>,
         [AccountId32, u128]
       > &
         QueryableStorageEntry<ApiType, [AccountId32, u128]>;

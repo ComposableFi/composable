@@ -160,3 +160,13 @@ export async function fetchPools(parachainApi: ApiPromise): Promise<{
     return pools;
   }
 }
+
+export function getLPTokenPair(
+  constantProductPool: ConstantProductPool[],
+  currencyId: string
+) {
+  const constantProduct = constantProductPool.find(
+    (constantProduct) => constantProduct.lpToken === currencyId
+  );
+  return constantProduct ? constantProduct.pair : null;
+}

@@ -10,7 +10,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 codec = { package = "parity-scale-codec", version = "3.0.0", features = [
   "derive",
 ], default-features = false }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "198440a62d4ccc88555cfef6253d6595319b88bf", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "c7c73ab423445f501ceae3d1d5d74815b502744a", default-features = false }
 scale-info = { version = '2.1.1', default-features = false }
 serde = { version = "1.0.136", features = ["derive"], optional = true }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.18", default-features = false }

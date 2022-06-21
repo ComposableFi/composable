@@ -27,14 +27,13 @@ export interface PalletPabloPoolConfiguration extends Enum {
     readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
     readonly amplification_coefficient: u16;
     readonly fee: Permill;
-    readonly ownerFee: Permill;
   } & Struct;
   readonly isConstantProduct: boolean;
   readonly asConstantProduct: {
     readonly owner: AccountId32;
     readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
     readonly fee: Permill;
-    readonly ownerFee: Permill;
+    readonly baseWeight: Permill;
   } & Struct;
   readonly isLiquidityBootstrapping: boolean;
   readonly asLiquidityBootstrapping: {
@@ -46,7 +45,11 @@ export interface PalletPabloPoolConfiguration extends Enum {
       readonly initial_weight: Permill;
       readonly final_weight: Permill;
     } & Struct;
-    readonly fee: Permill;
+    readonly feeConfig: {
+      readonly feeRate: Permill;
+      readonly ownerFeeRate: Permill;
+      readonly protocolFeeRate: Permill;
+    } & Struct;
   } & Struct;
   readonly type: "StableSwap" | "ConstantProduct" | "LiquidityBootstrapping";
 }

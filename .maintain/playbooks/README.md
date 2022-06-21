@@ -28,3 +28,23 @@ This playbook does next:
 | Relay Chain #1           | wss://domain_of_vps:9901 |
 | Composable's collator #1 | wss://domain_of_vps:9902 |
 | Basilisk's collator #1   | wss://domain_of_vps:9903 |
+
+
+# dali-subsquid.yml
+
+## Description
+    This playbook deploys Subsquid for Dali.
+
+## Usage
+
+### Dev environment
+
+    ```bash
+    ansible-playbook -i inventory dev-dali-subsquid.yml -e "domain=your-domain.example.com" -e "letsencrypt_contact_email=your-email@example.com" 
+    ```
+
+### Prod environment
+
+    ```bash
+    ansible-playbook -i inventory prod-dali-subsquid.yml -e "domain=dali-subsquid.composable.finance"
+    ```

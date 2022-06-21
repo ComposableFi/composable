@@ -41,6 +41,7 @@ import type { Data } from "@polkadot/types";
 import type {
   Bytes,
   Compact,
+  Null,
   Option,
   U8aFixed,
   Vec,
@@ -1706,6 +1707,61 @@ declare module "@polkadot/api-base/types/submittable" {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
+    ibc: {
+      deliver: AugmentedSubmittable<
+        (
+          messages: Vec<PalletIbcAny> | (PalletIbcAny | { typeUrl?: any; value?: any } | string | Uint8Array)[]
+        ) => SubmittableExtrinsic<ApiType>,
+        [Vec<PalletIbcAny>]
+      >;
+      initiateConnection: AugmentedSubmittable<
+        (
+          params:
+            | PalletIbcConnectionParams
+            | { version?: any; clientId?: any; counterpartyClientId?: any; commitmentPrefix?: any; delayPeriod?: any }
+            | string
+            | Uint8Array
+        ) => SubmittableExtrinsic<ApiType>,
+        [PalletIbcConnectionParams]
+      >;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
+    ibcPing: {
+      openChannel: AugmentedSubmittable<
+        (
+          params:
+            | IbcTraitOpenChannelParams
+            | { order?: any; connectionId?: any; counterpartyPortId?: any; version?: any }
+            | string
+            | Uint8Array
+        ) => SubmittableExtrinsic<ApiType>,
+        [IbcTraitOpenChannelParams]
+      >;
+      sendPing: AugmentedSubmittable<
+        (
+          params:
+            | PalletIbcPingSendPingParams
+            | {
+                data?: any;
+                timeoutHeightOffset?: any;
+                timeoutTimestampOffset?: any;
+                channelId?: any;
+                destPortId?: any;
+                destChannelId?: any;
+              }
+            | string
+            | Uint8Array
+        ) => SubmittableExtrinsic<ApiType>,
+        [PalletIbcPingSendPingParams]
+      >;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
     identity: {
       /**
        * Add a registrar to the system.
@@ -2291,11 +2347,12 @@ declare module "@polkadot/api-base/types/submittable" {
         (
           input:
             | ComposableTraitsLendingCreateInput
-            | { updatable?: any; currencyPair?: any; reservedFactor?: any }
+            | { updatable?: any; currencyPair?: any; reservedFactor?: any; interestRateModel?: any }
             | string
-            | Uint8Array
+            | Uint8Array,
+          keepAlive: bool | boolean | Uint8Array
         ) => SubmittableExtrinsic<ApiType>,
-        [ComposableTraitsLendingCreateInput]
+        [ComposableTraitsLendingCreateInput, bool]
       >;
       /**
        * Deposit collateral to market.
@@ -2306,15 +2363,17 @@ declare module "@polkadot/api-base/types/submittable" {
       depositCollateral: AugmentedSubmittable<
         (
           marketId: u32 | AnyNumber | Uint8Array,
-          amount: u128 | AnyNumber | Uint8Array
+          amount: u128 | AnyNumber | Uint8Array,
+          keepAlive: bool | boolean | Uint8Array
         ) => SubmittableExtrinsic<ApiType>,
-        [u32, u128]
+        [u32, u128, bool]
       >;
       /**
-       * Check if borrow for `borrower` account is required to be liquidated, initiate
+       * Check if borrows for the `borrowers` accounts are required to be liquidated, initiate
        * liquidation.
        * - `origin` : Sender of this extrinsic.
        * - `market_id` : Market index from which `borrower` has taken borrow.
+       * - `borrowers` : Vector of borrowers accounts' ids.
        **/
       liquidate: AugmentedSubmittable<
         (
@@ -2344,9 +2403,10 @@ declare module "@polkadot/api-base/types/submittable" {
             | { TotalDebt: any }
             | { PartialAmount: any }
             | string
-            | Uint8Array
+            | Uint8Array,
+          keepAlive: bool | boolean | Uint8Array
         ) => SubmittableExtrinsic<ApiType>,
-        [u32, AccountId32, ComposableTraitsLendingRepayStrategy]
+        [u32, AccountId32, ComposableTraitsLendingRepayStrategy, bool]
       >;
       /**
        * owner must be very careful calling this
@@ -2356,13 +2416,7 @@ declare module "@polkadot/api-base/types/submittable" {
           marketId: u32 | AnyNumber | Uint8Array,
           input:
             | ComposableTraitsLendingUpdateInput
-            | {
-                collateralFactor?: any;
-                underCollateralizedWarnPercent?: any;
-                liquidators?: any;
-                interestRateModel?: any;
-                maxPriceAge?: any;
-              }
+            | { collateralFactor?: any; underCollateralizedWarnPercent?: any; liquidators?: any; maxPriceAge?: any }
             | string
             | Uint8Array
         ) => SubmittableExtrinsic<ApiType>,
@@ -3034,6 +3088,267 @@ declare module "@polkadot/api-base/types/submittable" {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
+    proxy: {
+      /**
+       * Register a proxy account for the sender that is able to make calls on its behalf.
+       *
+       * The dispatch origin for this call must be _Signed_.
+       *
+       * Parameters:
+       * - `proxy`: The account that the `caller` would like to make a proxy.
+       * - `proxy_type`: The permissions allowed for this proxy account.
+       * - `delay`: The announcement period required of the initial proxy. Will generally be
+       * zero.
+       *
+       * # <weight>
+       * Weight is a function of the number of proxies the user has (P).
+       * # </weight>
+       **/
+      addProxy: AugmentedSubmittable<
+        (
+          delegate: AccountId32 | string | Uint8Array,
+          proxyType: Null | null,
+          delay: u32 | AnyNumber | Uint8Array
+        ) => SubmittableExtrinsic<ApiType>,
+        [AccountId32, Null, u32]
+      >;
+      /**
+       * Publish the hash of a proxy-call that will be made in the future.
+       *
+       * This must be called some number of blocks before the corresponding `proxy` is attempted
+       * if the delay associated with the proxy relationship is greater than zero.
+       *
+       * No more than `MaxPending` announcements may be made at any one time.
+       *
+       * This will take a deposit of `AnnouncementDepositFactor` as well as
+       * `AnnouncementDepositBase` if there are no other pending announcements.
+       *
+       * The dispatch origin for this call must be _Signed_ and a proxy of `real`.
+       *
+       * Parameters:
+       * - `real`: The account that the proxy will make a call on behalf of.
+       * - `call_hash`: The hash of the call to be made by the `real` account.
+       *
+       * # <weight>
+       * Weight is a function of:
+       * - A: the number of announcements made.
+       * - P: the number of proxies the user has.
+       * # </weight>
+       **/
+      announce: AugmentedSubmittable<
+        (
+          real: AccountId32 | string | Uint8Array,
+          callHash: H256 | string | Uint8Array
+        ) => SubmittableExtrinsic<ApiType>,
+        [AccountId32, H256]
+      >;
+      /**
+       * Spawn a fresh new account that is guaranteed to be otherwise inaccessible, and
+       * initialize it with a proxy of `proxy_type` for `origin` sender.
+       *
+       * Requires a `Signed` origin.
+       *
+       * - `proxy_type`: The type of the proxy that the sender will be registered as over the
+       * new account. This will almost always be the most permissive `ProxyType` possible to
+       * allow for maximum flexibility.
+       * - `index`: A disambiguation index, in case this is called multiple times in the same
+       * transaction (e.g. with `utility::batch`). Unless you're using `batch` you probably just
+       * want to use `0`.
+       * - `delay`: The announcement period required of the initial proxy. Will generally be
+       * zero.
+       *
+       * Fails with `Duplicate` if this has already been called in this transaction, from the
+       * same sender, with the same parameters.
+       *
+       * Fails if there are insufficient funds to pay for deposit.
+       *
+       * # <weight>
+       * Weight is a function of the number of proxies the user has (P).
+       * # </weight>
+       * TODO: Might be over counting 1 read
+       **/
+      anonymous: AugmentedSubmittable<
+        (
+          proxyType: Null | null,
+          delay: u32 | AnyNumber | Uint8Array,
+          index: u16 | AnyNumber | Uint8Array
+        ) => SubmittableExtrinsic<ApiType>,
+        [Null, u32, u16]
+      >;
+      /**
+       * Removes a previously spawned anonymous proxy.
+       *
+       * WARNING: **All access to this account will be lost.** Any funds held in it will be
+       * inaccessible.
+       *
+       * Requires a `Signed` origin, and the sender account must have been created by a call to
+       * `anonymous` with corresponding parameters.
+       *
+       * - `spawner`: The account that originally called `anonymous` to create this account.
+       * - `index`: The disambiguation index originally passed to `anonymous`. Probably `0`.
+       * - `proxy_type`: The proxy type originally passed to `anonymous`.
+       * - `height`: The height of the chain when the call to `anonymous` was processed.
+       * - `ext_index`: The extrinsic index in which the call to `anonymous` was processed.
+       *
+       * Fails with `NoPermission` in case the caller is not a previously created anonymous
+       * account whose `anonymous` call has corresponding parameters.
+       *
+       * # <weight>
+       * Weight is a function of the number of proxies the user has (P).
+       * # </weight>
+       **/
+      killAnonymous: AugmentedSubmittable<
+        (
+          spawner: AccountId32 | string | Uint8Array,
+          proxyType: Null | null,
+          index: u16 | AnyNumber | Uint8Array,
+          height: Compact<u32> | AnyNumber | Uint8Array,
+          extIndex: Compact<u32> | AnyNumber | Uint8Array
+        ) => SubmittableExtrinsic<ApiType>,
+        [AccountId32, Null, u16, Compact<u32>, Compact<u32>]
+      >;
+      /**
+       * Dispatch the given `call` from an account that the sender is authorised for through
+       * `add_proxy`.
+       *
+       * Removes any corresponding announcement(s).
+       *
+       * The dispatch origin for this call must be _Signed_.
+       *
+       * Parameters:
+       * - `real`: The account that the proxy will make a call on behalf of.
+       * - `force_proxy_type`: Specify the exact proxy type to be used and checked for this call.
+       * - `call`: The call to be made by the `real` account.
+       *
+       * # <weight>
+       * Weight is a function of the number of proxies the user has (P).
+       * # </weight>
+       **/
+      proxy: AugmentedSubmittable<
+        (
+          real: AccountId32 | string | Uint8Array,
+          forceProxyType: Option<Null> | null | object | string | Uint8Array,
+          call: Call | { callIndex?: any; args?: any } | string | Uint8Array
+        ) => SubmittableExtrinsic<ApiType>,
+        [AccountId32, Option<Null>, Call]
+      >;
+      /**
+       * Dispatch the given `call` from an account that the sender is authorized for through
+       * `add_proxy`.
+       *
+       * Removes any corresponding announcement(s).
+       *
+       * The dispatch origin for this call must be _Signed_.
+       *
+       * Parameters:
+       * - `real`: The account that the proxy will make a call on behalf of.
+       * - `force_proxy_type`: Specify the exact proxy type to be used and checked for this call.
+       * - `call`: The call to be made by the `real` account.
+       *
+       * # <weight>
+       * Weight is a function of:
+       * - A: the number of announcements made.
+       * - P: the number of proxies the user has.
+       * # </weight>
+       **/
+      proxyAnnounced: AugmentedSubmittable<
+        (
+          delegate: AccountId32 | string | Uint8Array,
+          real: AccountId32 | string | Uint8Array,
+          forceProxyType: Option<Null> | null | object | string | Uint8Array,
+          call: Call | { callIndex?: any; args?: any } | string | Uint8Array
+        ) => SubmittableExtrinsic<ApiType>,
+        [AccountId32, AccountId32, Option<Null>, Call]
+      >;
+      /**
+       * Remove the given announcement of a delegate.
+       *
+       * May be called by a target (proxied) account to remove a call that one of their delegates
+       * (`delegate`) has announced they want to execute. The deposit is returned.
+       *
+       * The dispatch origin for this call must be _Signed_.
+       *
+       * Parameters:
+       * - `delegate`: The account that previously announced the call.
+       * - `call_hash`: The hash of the call to be made.
+       *
+       * # <weight>
+       * Weight is a function of:
+       * - A: the number of announcements made.
+       * - P: the number of proxies the user has.
+       * # </weight>
+       **/
+      rejectAnnouncement: AugmentedSubmittable<
+        (
+          delegate: AccountId32 | string | Uint8Array,
+          callHash: H256 | string | Uint8Array
+        ) => SubmittableExtrinsic<ApiType>,
+        [AccountId32, H256]
+      >;
+      /**
+       * Remove a given announcement.
+       *
+       * May be called by a proxy account to remove a call they previously announced and return
+       * the deposit.
+       *
+       * The dispatch origin for this call must be _Signed_.
+       *
+       * Parameters:
+       * - `real`: The account that the proxy will make a call on behalf of.
+       * - `call_hash`: The hash of the call to be made by the `real` account.
+       *
+       * # <weight>
+       * Weight is a function of:
+       * - A: the number of announcements made.
+       * - P: the number of proxies the user has.
+       * # </weight>
+       **/
+      removeAnnouncement: AugmentedSubmittable<
+        (
+          real: AccountId32 | string | Uint8Array,
+          callHash: H256 | string | Uint8Array
+        ) => SubmittableExtrinsic<ApiType>,
+        [AccountId32, H256]
+      >;
+      /**
+       * Unregister all proxy accounts for the sender.
+       *
+       * The dispatch origin for this call must be _Signed_.
+       *
+       * WARNING: This may be called on accounts created by `anonymous`, however if done, then
+       * the unreserved fees will be inaccessible. **All access to this account will be lost.**
+       *
+       * # <weight>
+       * Weight is a function of the number of proxies the user has (P).
+       * # </weight>
+       **/
+      removeProxies: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
+      /**
+       * Unregister a proxy account for the sender.
+       *
+       * The dispatch origin for this call must be _Signed_.
+       *
+       * Parameters:
+       * - `proxy`: The account that the `caller` would like to remove as a proxy.
+       * - `proxy_type`: The permissions currently enabled for the removed proxy account.
+       *
+       * # <weight>
+       * Weight is a function of the number of proxies the user has (P).
+       * # </weight>
+       **/
+      removeProxy: AugmentedSubmittable<
+        (
+          delegate: AccountId32 | string | Uint8Array,
+          proxyType: Null | null,
+          delay: u32 | AnyNumber | Uint8Array
+        ) => SubmittableExtrinsic<ApiType>,
+        [AccountId32, Null, u32]
+      >;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
     relayerXcm: {
       /**
        * Execute an XCM message from a local, signed, origin.
@@ -3108,10 +3423,13 @@ declare module "@polkadot/api-base/types/submittable" {
         [XcmV1MultiLocation, u32]
       >;
       /**
-       * Transfer some assets from the local chain to the sovereign account of a destination chain and forward
-       * a notification XCM.
+       * Transfer some assets from the local chain to the sovereign account of a destination
+       * chain and forward a notification XCM.
        *
-       * Fee payment on the destination side is made from the first asset listed in the `assets` vector.
+       * Fee payment on the destination side is made from the asset in the `assets` vector of
+       * index `fee_asset_item`, up to enough to pay for `weight_limit` of weight. If more weight
+       * is needed than `weight_limit`, then the operation will fail and the assets send may be
+       * at risk.
        *
        * - `origin`: Must be capable of withdrawing the `assets` and executing XCM.
        * - `dest`: Destination context for the assets. Will typically be `X2(Parent, Parachain(..))` to send
@@ -3137,7 +3455,10 @@ declare module "@polkadot/api-base/types/submittable" {
       /**
        * Teleport some assets from the local chain to some destination chain.
        *
-       * Fee payment on the destination side is made from the first asset listed in the `assets` vector.
+       * Fee payment on the destination side is made from the asset in the `assets` vector of
+       * index `fee_asset_item`, up to enough to pay for `weight_limit` of weight. If more weight
+       * is needed than `weight_limit`, then the operation will fail and the assets send may be
+       * at risk.
        *
        * - `origin`: Must be capable of withdrawing the `assets` and executing XCM.
        * - `dest`: Destination context for the assets. Will typically be `X2(Parent, Parachain(..))` to send
@@ -3161,12 +3482,12 @@ declare module "@polkadot/api-base/types/submittable" {
         [XcmVersionedMultiLocation, XcmVersionedMultiLocation, XcmVersionedMultiAssets, u32, XcmV2WeightLimit]
       >;
       /**
-       * Transfer some assets from the local chain to the sovereign account of a destination chain and forward
-       * a notification XCM.
+       * Transfer some assets from the local chain to the sovereign account of a destination
+       * chain and forward a notification XCM.
        *
-       * Fee payment on the destination side is made from the first asset listed in the `assets` vector and
-       * fee-weight is calculated locally and thus remote weights are assumed to be equal to
-       * local weights.
+       * Fee payment on the destination side is made from the asset in the `assets` vector of
+       * index `fee_asset_item`. The weight limit for fees is not provided and thus is unlimited,
+       * with all fees taken as needed from the asset.
        *
        * - `origin`: Must be capable of withdrawing the `assets` and executing XCM.
        * - `dest`: Destination context for the assets. Will typically be `X2(Parent, Parachain(..))` to send
@@ -3197,9 +3518,9 @@ declare module "@polkadot/api-base/types/submittable" {
       /**
        * Teleport some assets from the local chain to some destination chain.
        *
-       * Fee payment on the destination side is made from the first asset listed in the `assets` vector and
-       * fee-weight is calculated locally and thus remote weights are assumed to be equal to
-       * local weights.
+       * Fee payment on the destination side is made from the asset in the `assets` vector of
+       * index `fee_asset_item`. The weight limit for fees is not provided and thus is unlimited,
+       * with all fees taken as needed from the asset.
        *
        * - `origin`: Must be capable of withdrawing the `assets` and executing XCM.
        * - `dest`: Destination context for the assets. Will typically be `X2(Parent, Parachain(..))` to send
@@ -3784,6 +4105,27 @@ declare module "@polkadot/api-base/types/submittable" {
         [Compact<u32>]
       >;
       /**
+       * Force a previously approved proposal to be removed from the approval queue.
+       * The original deposit will no longer be returned.
+       *
+       * May only be called from `T::RejectOrigin`.
+       * - `proposal_id`: The index of a proposal
+       *
+       * # <weight>
+       * - Complexity: O(A) where `A` is the number of approvals
+       * - Db reads and writes: `Approvals`
+       * # </weight>
+       *
+       * Errors:
+       * - `ProposalNotApproved`: The `proposal_id` supplied was not found in the approval queue,
+       * i.e., the proposal has not been approved. This could also mean the proposal does not
+       * exist altogether, thus there is no way it would have been approved in the first place.
+       **/
+      removeApproval: AugmentedSubmittable<
+        (proposalId: Compact<u32> | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>,
+        [Compact<u32>]
+      >;
+      /**
        * Generic tx
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
@@ -3886,6 +4228,28 @@ declare module "@polkadot/api-base/types/submittable" {
           call: Call | { callIndex?: any; args?: any } | string | Uint8Array
         ) => SubmittableExtrinsic<ApiType>,
         [DaliRuntimeOriginCaller, Call]
+      >;
+      /**
+       * Send a batch of dispatch calls.
+       * Unlike `batch`, it allows errors and won't interrupt.
+       *
+       * May be called from any origin.
+       *
+       * - `calls`: The calls to be dispatched from the same origin. The number of call must not
+       * exceed the constant: `batched_calls_limit` (available in constant metadata).
+       *
+       * If origin is root then call are dispatch without checking origin filter. (This includes
+       * bypassing `frame_system::Config::BaseCallFilter`).
+       *
+       * # <weight>
+       * - Complexity: O(C) where C is the number of calls to be batched.
+       * # </weight>
+       **/
+      forceBatch: AugmentedSubmittable<
+        (
+          calls: Vec<Call> | (Call | { callIndex?: any; args?: any } | string | Uint8Array)[]
+        ) => SubmittableExtrinsic<ApiType>,
+        [Vec<Call>]
       >;
       /**
        * Generic tx

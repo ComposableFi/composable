@@ -14,6 +14,7 @@ import Head from "next/head";
 import CssBaseline from "@mui/material/CssBaseline";
 import createEmotionCache from "@/styles/createEmotionCache";
 
+import PoolsUpdater from "@/updaters/pools/Updater";
 import LiquidityUpdater from "@/updaters/liquidity/Updater";
 import LiquidityBootstrappingUpdater from "@/updaters/pools/Updater";
 import SwapsUpdater from "@/updaters/swaps/Updater";
@@ -21,6 +22,7 @@ import PoolStatsUpdater from "@/updaters/poolStats/Updater";
 import BalancesUpdater from "@/updaters/assets/balances/Updater";
 import ApolloUpdater from "@/updaters/assets/apollo/Updater";
 import AuctionsUpdater from "@/updaters/auctions/Updater";
+import BondsUpdater from "@/updaters/bonds/Updater";
 
 import * as definitions from "@/defi/polkadot/interfaces/definitions";
 import { SnackbarProvider } from "notistack";
@@ -137,12 +139,14 @@ export default function MyApp(props: MyAppProps) {
               >
                 <>
                   <AuctionsUpdater />
+                  <BondsUpdater />
                   <SwapsUpdater />
                   <LiquidityBootstrappingUpdater />
                   <BalancesUpdater />
                   <LiquidityUpdater />
                   <PoolStatsUpdater />
                   <ApolloUpdater />
+                  <PoolsUpdater />
                 </>
                 <ExecutorProvider>
                   <Component {...pageProps} />

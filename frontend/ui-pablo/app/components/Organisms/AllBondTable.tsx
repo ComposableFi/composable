@@ -11,12 +11,11 @@ import {
   Tooltip,
 } from "@mui/material";
 import { BaseAsset, PairAsset } from "../Atoms";
-import { useAppDispatch, useAppSelector } from "@/hooks/store";
-import { addNextDataBondPools } from "@/stores/defi/polkadot";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { InfoOutlined, KeyboardArrowDown } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
 import { useRouter } from "next/router";
+import useStore from "../../store/useStore";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -36,25 +35,21 @@ const tableHeaders: TableHeader[] = [
   },
 ];
 
+const BOND_LIMIT_TO_SHOW = 4;
+
 export const AllBondTable: React.FC = () => {
-  const dispatch = useAppDispatch();
   const theme = useTheme();
   const router = useRouter();
-  const [startIndex, setStartIndex] = useState(0);
-  const pools = useAppSelector((state) => state.polkadot.allBondPools);
+  const { allBonds } = useStore();
+  const [count, setCount] = useState(BOND_LIMIT_TO_SHOW);
 
   const handleSeeMore = () => {
-    dispatch(addNextDataBondPools({ startIndex: startIndex + 4 }));
-    setStartIndex(startIndex + 4);
+    setCount(count + BOND_LIMIT_TO_SHOW);
   };
 
-  const handleBondClick = () => {
-    router.push("bond/select");
+  const handleBondClick = (offerId: number) => {
+    router.push(`bond/select/${offerId}`);
   };
-
-  useEffect(() => {
-    dispatch(addNextDataBondPools({ startIndex }));
-  }, []);
 
   return (
     <TableContainer>
@@ -67,7 +62,7 @@ export const AllBondTable: React.FC = () => {
                   {th.header}
                   {th.tooltip && (
                     <Tooltip arrow title={th.tooltip}>
-                      <InfoOutlined color="primary" fontSize="small"/>
+                      <InfoOutlined color="primary" fontSize="small" />
                     </Tooltip>
                   )}
                 </Box>
@@ -76,55 +71,65 @@ export const AllBondTable: React.FC = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {pools.map((pool, index) => (
+          {allBonds.slice(0, count).map((bond, index) => (
             <TableRow
               key={index}
-              onClick={handleBondClick}
+              onClick={() => handleBondClick(bond.offerId)}
               sx={{ cursor: "pointer" }}
             >
               <TableCell align="left">
-                {pool.token2 ? (
+                {"base" in bond.asset ? (
                   <PairAsset
                     assets={[
-                      { icon: pool.token1.icon, label: pool.token1.symbol },
-                      { icon: pool.token2.icon, label: pool.token2.symbol },
+                      {
+                        icon: bond.asset.base.icon,
+                        label: bond.asset.base.symbol,
+                      },
+                      {
+                        icon: bond.asset.quote.icon,
+                        label: bond.asset.quote.symbol,
+                      },
                     ]}
                     separator="/"
                   />
                 ) : (
-                  <BaseAsset label={pool.token1.symbol} icon={pool.token1.icon} />
+                  <BaseAsset label={bond.asset.symbol} icon={bond.asset.icon} />
                 )}
               </TableCell>
               <TableCell align="left">
-                <Typography variant="body2">${pool.price.toFormat()}</Typography>
+                <Typography variant="body2">
+                  ${bond.price.toFormat()}
+                </Typography>
               </TableCell>
               <TableCell align="left">
                 <Typography variant="body2" color="featured.main">
-                  {pool.roi.toFormat()}%
+                  {bond.roi.toFormat()}%
                 </Typography>
               </TableCell>
               <TableCell align="left">
                 <Typography variant="body2">
-                  ${pool.volume.toFormat()}
+                  ${bond.totalPurchased.toFormat()}
                 </Typography>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
-      <Box
-        onClick={handleSeeMore}
-        mt={4}
-        display="flex"
-        gap={1}
-        justifyContent="center"
-        sx={{ cursor: "pointer" }}
-      >
-        <Typography textAlign="center" variant="body2">
-          See more
-        </Typography>
-        <KeyboardArrowDown sx={{ color: theme.palette.primary.main }} />
-      </Box>
+      {allBonds.length > count && (
+        <Box
+          onClick={handleSeeMore}
+          mt={4}
+          display="flex"
+          gap={1}
+          justifyContent="center"
+          sx={{ cursor: "pointer" }}
+        >
+          <Typography textAlign="center" variant="body2">
+            See more
+          </Typography>
+          <KeyboardArrowDown sx={{ color: theme.palette.primary.main }} />
+        </Box>
+      )}
     </TableContainer>
   );
 };

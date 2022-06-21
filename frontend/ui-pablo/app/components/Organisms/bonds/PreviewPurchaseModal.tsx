@@ -1,98 +1,89 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { ModalProps, Modal } from "@/components/Molecules";
 import { Label } from "@/components/Atoms";
-import { getToken } from "@/defi/Tokens";
-import { BondDetails, TokenId } from "@/defi/types";
-import {
-  Box,
-  Typography,
-  useTheme,
-  Button,
-} from "@mui/material";
+import { Box, Typography, useTheme, Button } from "@mui/material";
 
 import { useDispatch } from "react-redux";
-import {
-  closeConfirmingModal, setMessage,
-} from "@/stores/ui/uiSlice";
-import { useAppSelector } from "@/hooks/store";
-import { setSelectedBond } from "@/stores/defi/bonds";
+import { closeConfirmingModal, setMessage } from "@/stores/ui/uiSlice";
 import BigNumber from "bignumber.js";
+import {
+  BondOffer,
+  IDepositSummary,
+  ISupplySummary,
+} from "../../../store/bonds/bonds.types";
+import { useAsyncEffect } from "../../../hooks/useAsyncEffect";
+import { usePurchaseBond } from "../../../store/hooks/bond/usePurchaseBond";
+import { useCancelOffer } from "../../../store/hooks/bond/useCancelOffer";
 
-const defaultLabelProps = (label: string, balance: string) => ({
-  label: label,
-  TypographyProps: {variant: "body1"},
-  BalanceProps: {
-    balance: balance,
-    BalanceTypographyProps: {
-      variant: "body1",
-    }
-  }
-} as const);
+const defaultLabelProps = (label: string, balance: string) =>
+  ({
+    label: label,
+    TypographyProps: { variant: "body1" },
+    BalanceProps: {
+      balance: balance,
+      BalanceTypographyProps: {
+        variant: "body1",
+      },
+    },
+  } as const);
 
 export type PreviewPurchaseModalProps = {
-  bond: BondDetails,
-  amount: BigNumber,
-  setAmount: (v: BigNumber) => any
+  offerId: number;
+  principalAsset: BondOffer["asset"];
+  bondPriceInUSD: ISupplySummary["bondPriceInUSD"];
+  marketPriceInUSD: ISupplySummary["marketPriceInUSD"];
+  amount: BigNumber;
+  nbOfBonds: IDepositSummary["nbOfBonds"];
+  rewardableTokens: string;
+  setAmount: (v: BigNumber) => any;
 } & ModalProps;
 
 export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
-  bond,
+  offerId,
+  principalAsset,
+  bondPriceInUSD,
+  marketPriceInUSD,
   amount,
+  nbOfBonds,
+  rewardableTokens,
   setAmount,
   ...modalProps
 }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
 
-  const {
-    tokenId1,
-    tokenId2,
-    balance,
-    discount_price,
-    market_price,
-  } = useAppSelector((state) => state.bonds.selectedBond);
+  const bond = usePurchaseBond();
+  const cancel = useCancelOffer();
 
-  const token1 = getToken(tokenId1 as TokenId);
-  const token2 = getToken(tokenId2 as TokenId);
-  const bondPrice = amount.multipliedBy(discount_price);
-  const marketPrice = amount.multipliedBy(market_price);
-  const discountPercent = market_price.minus(discount_price).dividedBy(market_price).multipliedBy(100);
+  const [bondPrice, setBondPrice] = useState(0);
+  const [marketPrice, setMarketPrice] = useState(0);
+  const discountPercent =
+    marketPrice === 0 ? 0 : ((marketPrice - bondPrice) / marketPrice) * 100;
 
-  const handlePurchaseBond = () => {
-    dispatch(setSelectedBond({
-      balance: balance.minus(amount),
-      pending_amount: amount,
-    }));
-
-    dispatch(setMessage(
-      {
-        title: "Transaction successfull",
-        text: "Bond",
-        link: "/",
-        severity: "success",
-      }
-    ));
-
+  const handlePurchaseBond = async () => {
+    await bond(offerId, nbOfBonds(amount.toNumber()));
+    dispatch(closeConfirmingModal());
     setAmount(new BigNumber(0));
+  };
 
+  const handleCancelBond = async () => {
+    await cancel(offerId);
     dispatch(closeConfirmingModal());
   };
 
-  const handleCancelBond = () => {
-    dispatch(closeConfirmingModal());
-  };
+  useAsyncEffect(async () => {
+    setBondPrice(await bondPriceInUSD());
+    setMarketPrice(await marketPriceInUSD());
+  }, []);
 
   return (
-    <Modal
-      onClose={handleCancelBond}
-      {...modalProps}
-    >
+    <Modal onClose={handleCancelBond} {...modalProps}>
       <Box
         sx={{
           width: 480,
           margin: "auto",
-          [theme.breakpoints.down('sm')]: {
-            width: '100%',
+          [theme.breakpoints.down("sm")]: {
+            width: "100%",
             p: 2,
           },
         }}
@@ -100,16 +91,40 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
         <Typography variant="h5" textAlign="center">
           Purchase bond
         </Typography>
-        <Typography variant="subtitle1" textAlign="center" color="text.secondary" mt={2}>
-          Are you sure you want to bond for a negative discount? You will lose money if you do this...
+        <Typography
+          variant="subtitle1"
+          textAlign="center"
+          color="text.secondary"
+          mt={2}
+        >
+          Are you sure you want to bond for a negative discount? You will lose
+          money if you do this...
         </Typography>
 
         <Box mt={8}>
-          <Label {...defaultLabelProps("Bonding", `${amount} ${token1.symbol}-${token2.symbol}`)} />
-          <Label mt={2} {...defaultLabelProps("You will get", `0 PAB`)} />
+          <Label
+            {...defaultLabelProps(
+              "Bonding",
+              `${amount} ${
+                "base" in principalAsset
+                  ? `${principalAsset.base.symbol}-${principalAsset.quote.symbol}`
+                  : principalAsset.symbol
+              }`
+            )}
+          />
+          <Label
+            mt={2}
+            {...defaultLabelProps("You will get", `${rewardableTokens} PAB`)}
+          />
           <Label mt={2} {...defaultLabelProps("Bond Price", `$${bondPrice}`)} />
-          <Label mt={2} {...defaultLabelProps("Market Price", `$${marketPrice}`)} />
-          <Label mt={2} {...defaultLabelProps("Discount", `${discountPercent.toFormat(2)}%`)} />
+          <Label
+            mt={2}
+            {...defaultLabelProps("Market Price", `$${marketPrice}`)}
+          />
+          <Label
+            mt={2}
+            {...defaultLabelProps("Discount", `${discountPercent}%`)}
+          />
         </Box>
 
         <Box mt={8}>
@@ -137,4 +152,3 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
     </Modal>
   );
 };
-
