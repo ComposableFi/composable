@@ -5,7 +5,7 @@
 /// Intended usage:
 ///
 /// ```
-/// # use pallet_lending::currency::Currency;
+/// # use composable_tests_helpers::test::currency::Currency;
 ///
 /// type ACOIN = Currency<12345, 10>;
 /// type BCOIN = Currency<54321, 12>;
@@ -40,7 +40,7 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	/// # Examples
 	///
 	/// ```
-	/// # use pallet_lending::currency::Currency;
+	/// # use composable_tests_helpers::test::currency::Currency;
 	///
 	/// type ACOIN = Currency<12345, 10>;
 	/// assert_eq!(ACOIN::ONE, 10_000_000_000);
@@ -48,13 +48,13 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 	pub const ONE: u128 = 10_u128.pow(Self::EXPONENT as u32);
 
 	/// Returns the provided amount of the currency, cannonicalized to
-	/// [`Self::ONE`](pallet_lending::currency::Currency::ONE), saturating at the numeric bounds
-	/// ([`u128::MAX`](core::u128::MAX)).
+	/// [`Self::ONE`](composable_tests_helpers::test::currency::Currency::ONE), saturating at the
+	/// numeric bounds ([`u128::MAX`](core::u128::MAX)).
 	///
 	/// # Examples
 	///
 	/// ```
-	/// # use pallet_lending::currency::Currency;
+	/// # use composable_tests_helpers::test::currency::Currency;
 	///
 	/// type ACOIN = Currency<12345, 10>;
 	/// assert_eq!(ACOIN::units(7), 70_000_000_000);
@@ -83,7 +83,7 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 /// Can be created from a [`Currency`]:
 ///
 /// ```rust
-/// # use pallet_lending::currency::{Currency, RuntimeCurrency};
+/// # use composable_tests_helpers::test::currency::{Currency, RuntimeCurrency};
 /// type ACOIN = Currency<12345, 10>;
 /// let runtime_currency = ACOIN::instance();
 /// assert_eq!(runtime_currency.one(), ACOIN::ONE);
@@ -92,7 +92,7 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 /// Useful in non-const contexts:
 ///
 /// ```rust
-/// # use pallet_lending::currency::{Currency, RuntimeCurrency};
+/// # use composable_tests_helpers::test::currency::{Currency, RuntimeCurrency};
 /// let lp_token_id = create_btc_usdt_vault();
 /// let rc = RuntimeCurrency::new(lp_token_id, 12);
 /// let ten_lp_tokens = rc.units(10);
@@ -106,7 +106,7 @@ impl<const ID: u128, const EXPONENT: u8> Currency<ID, EXPONENT> {
 /// Create many currencies:
 ///
 /// ```rust
-/// # use pallet_lending::currency::{Currency, RuntimeCurrency};
+/// # use composable_tests_helpers::test::currency::{Currency, RuntimeCurrency};
 /// let currencies = (0..100)
 ///     .zip(std::iter::repeat(12))
 ///     .map(|(id, exp)| RuntimeCurrency::new(id, exp));
@@ -141,7 +141,7 @@ impl RuntimeCurrency {
 	/// # Examples
 	///
 	/// ```
-	/// # use pallet_lending::currency::{Currency, RuntimeCurrency};
+	/// # use composable_tests_helpers::test::currency::{Currency, RuntimeCurrency};
 	///
 	/// type ACOIN = Currency<12345, 10>;
 	/// assert_eq!(ACOIN::instance().one(), 10_000_000_000);
@@ -156,7 +156,7 @@ impl RuntimeCurrency {
 	/// # Examples
 	///
 	/// ```
-	/// # use pallet_lending::currency::{Currency, RuntimeCurrency};
+	/// # use composable_tests_helpers::test::currency::{Currency, RuntimeCurrency};
 	///
 	/// type ACOIN = Currency<12345, 10>;
 	/// assert_eq!(ACOIN::instance().units(7), 70_000_000_000);
