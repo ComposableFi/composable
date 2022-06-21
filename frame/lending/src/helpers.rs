@@ -243,6 +243,11 @@ impl<T: Config> Pallet<T> {
 			Error::<T>::MarketIsClosing
 		);
 
+		ensure!(
+			T::Vault::is_vault_balanced(&market.borrow_asset_vault, &market_account)?,
+			Error::<T>::CannotBorrowFromMarketWithUnbalancedVault
+		);
+
 		Ok(())
 	}
 

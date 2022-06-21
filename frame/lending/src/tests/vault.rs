@@ -94,7 +94,7 @@ fn generate_accounts(amount: u128) -> Vec<AccountId> {
 	accounts
 }
 
-// If available_funds()returns FundsAvailability::Depositable then vault is unbalanced,
+// If available_funds() returns FundsAvailability::Depositable then vault is unbalanced,
 // except the case when returned balances equals zero.
 fn is_vault_balanced(vault_id: u64, account_id: &Public) -> bool {
 	if let FundsAvailability::Depositable(balance) =
@@ -174,7 +174,7 @@ proptest! {
 			));
 			test::block::process_and_progress_blocks::<Lending, Runtime>(1);
 			//Now vault is unbalanced and should restore equilibrium state.
-			 while !is_vault_balanced(vault_id, &market_account) {
+			 while !Vault::is_vault_balanced(&vault_id, &market_account).unwrap() {
 				for borrower in &borrowers {
 					<Lending as LendingTrait>::repay_borrow(
 						&market_id,
@@ -200,8 +200,10 @@ proptest! {
 			// Refresh assets prices
 			set_price(USDT::ID, NORMALIZED::ONE);
 			set_price(BTC::ID, NORMALIZED::units(50_000));
-			// We can borrow from market related to unblanaced vault
-			borrow::<Runtime>(*borrowers.get(0).unwrap(), market_id, Assets::balance(USDT::ID, &market_account));
+
+			// Check that we can not borrow from market related to unblanaced vault
+			prop_assert_noop!(Lending::borrow(Origin::signed(*borrowers.get(0).unwrap()), market_id, Assets::balance(USDT::ID, &market_account)),
+				Error::<Runtime>::CannotBorrowFromMarketWithUnbalancedVault);
 			test::block::process_and_progress_blocks::<Lending, Runtime>(1);
 
 			// Lender puts back assets to the vault.

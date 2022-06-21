@@ -181,6 +181,12 @@ pub trait StrategicVault: Vault {
 		from: &Self::AccountId,
 		amount: Self::Balance,
 	) -> Result<(), DispatchError>;
+
+	// Check if valut and strategy are balanced.
+	fn is_vault_balanced(
+		vault_id: &Self::VaultId,
+		account_id: &Self::AccountId,
+	) -> Result<bool, DispatchError>;
 }
 
 /// A vault which allow the strategy to do periodic report.
