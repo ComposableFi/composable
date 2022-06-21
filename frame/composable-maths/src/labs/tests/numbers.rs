@@ -1,4 +1,4 @@
-use crate::math::{div_mod_with_acc, multiply_by_rational};
+use crate::{div_mod_with_acc, multiply_by_rational};
 use frame_support::assert_err;
 use proptest::prelude::*;
 use sp_arithmetic::{FixedI128, FixedI64, FixedPointNumber, FixedU128};

@@ -13,3 +13,4 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod dex;
+pub mod labs;
