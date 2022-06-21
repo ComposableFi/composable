@@ -1,4 +1,3 @@
-//! OBSOLETE: use "composable-test-helpers" crate
 /// A const-generic currency. generic over the ID and EXPONENT.
 ///
 /// # Examples
@@ -187,7 +186,6 @@ pub mod defs {
 
 	use super::Currency;
 
-	pub type INVALID = Currency<0, 12>;
 	pub type PICA = Currency<1, 12>;
 	pub type BTC = Currency<2000, 12>;
 	pub type USDT = Currency<1000, 12>;
