@@ -16,12 +16,13 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		dex::Amm,
-		instrumental::InstrumentalProtocolStrategy,
+		instrumental::{InstrumentalProtocolStrategy, State},
 		vault::{FundsAvailability, StrategicVault, Vault},
 	};
 	use frame_support::{
 		dispatch::{DispatchError, DispatchResult},
 		pallet_prelude::*,
+		sp_std::fmt::Debug,
 		storage::bounded_btree_set::BoundedBTreeSet,
 		traits::fungibles::{Inspect, Mutate, MutateHold, Transfer},
 		transactional, Blake2_128Concat, PalletId,
@@ -30,7 +31,6 @@ pub mod pallet {
 	use sp_runtime::traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
 	};
-	use sp_std::fmt::Debug;
 
 	use crate::weights::WeightInfo;
 
@@ -140,6 +140,11 @@ pub mod pallet {
 	// -------------------------------------------------------------------------------------------
 	//                                         Pallet Types
 	// -------------------------------------------------------------------------------------------
+	#[derive(Encode, Decode, MaxEncodedLen, Clone, Copy, Default, Debug, PartialEq, TypeInfo)]
+	pub struct PoolState<PoolId, State> {
+		pub pool_id: PoolId,
+		pub state: State,
+	}
 
 	// -------------------------------------------------------------------------------------------
 	//                                       Runtime  Storage
@@ -155,7 +160,8 @@ pub mod pallet {
 	/// The corresponding Pool to invest the whitelisted asset into.
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
-	pub type Pools<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, T::PoolId>;
+	pub type Pools<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AssetId, PoolState<T::PoolId, State>>;
 
 	// -------------------------------------------------------------------------------------------
 	//                                        Runtime Events
@@ -186,6 +192,8 @@ pub mod pallet {
 		// TODO(belousm): only for MVP version we can assume the `pool_id` is already known and
 		// exist. We should remove it in V1.
 		PoolNotFound,
+		// Occurs when we try to set a new pool_id, during a transferring from or to an old one
+		TransferringInProgress,
 	}
 
 	// -------------------------------------------------------------------------------------------
@@ -251,10 +259,12 @@ pub mod pallet {
 			asset_id: T::AssetId,
 			pool_id: T::PoolId,
 		) -> Result<(), DispatchError> {
+			let pool_id_and_state = Self::pools(asset_id).ok_or(Error::<T>::PoolNotFound)?;
+			ensure!(pool_id_and_state.state == State::Normal, Error::<T>::TransferringInProgress);
 			if Pools::<T>::contains_key(asset_id) {
-				Pools::<T>::mutate(asset_id, |_| pool_id);
+				Pools::<T>::mutate(asset_id, |_| PoolState { pool_id, state: State::Normal });
 			} else {
-				Pools::<T>::insert(asset_id, pool_id);
+				Pools::<T>::insert(asset_id, PoolState { pool_id, state: State::Normal });
 			}
 			Ok(())
 		}
@@ -287,7 +297,8 @@ pub mod pallet {
 		fn do_rebalance(vault_id: &T::VaultId) -> DispatchResult {
 			let asset_id = T::Vault::asset_id(vault_id)?;
 			let account_id = T::Vault::account_id(vault_id);
-			let pool_id = Self::pools(asset_id).ok_or(Error::<T>::PoolNotFound)?;
+			let pool_id_and_state = Self::pools(asset_id).ok_or(Error::<T>::PoolNotFound)?;
+			let pool_id = pool_id_and_state.pool_id;
 			let task = T::Vault::available_funds(vault_id, &Self::account_id())?;
 			match task {
 				FundsAvailability::Withdrawable(balance) => {

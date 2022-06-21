@@ -2,6 +2,16 @@ use codec::Codec;
 use frame_support::{pallet_prelude::*, sp_std::fmt::Debug};
 use sp_runtime::Perquintill;
 
+#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, MaxEncodedLen, TypeInfo)]
+pub enum State {
+	/// Indicates that there is currently no asset transfering going on for this asset
+	/// and it can be incilized
+	Normal,
+	/// Indicates that an asset is currently being transferred from one pool to another
+	/// for this asset, so it is not possible to initialize a new transfer
+	Transferrig,
+}
+
 #[derive(Clone, Copy, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
 pub struct InstrumentalVaultConfig<AssetId, Percent> {
 	pub asset_id: AssetId,
