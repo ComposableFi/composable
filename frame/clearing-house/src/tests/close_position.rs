@@ -471,4 +471,38 @@ proptest! {
 			assert_eq!(get_market(&market_id).funding_rate_ts, config.funding_frequency);
 		});
 	}
+
+	#[test]
+	fn should_not_update_market_funding_if_too_early(
+		direction in any_direction(),
+		offset in 1..=60_u64
+	) {
+		let config = MarketConfig {
+			funding_frequency: 60,
+			funding_period: 60,
+			..Default::default()
+		};
+		let size = as_balance(100);
+
+		with_trading_context(config, size, |market_id| {
+			// Ensure last funding update is at time 0
+			assert_eq!(get_market(&market_id).funding_rate_ts, 0);
+
+			VammPallet::set_price(Some(10.into()));
+
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				direction,
+				size,
+				size / 10,
+			));
+
+			// Not enough time passes for a funding update to be possible
+			run_for_seconds(60 - offset);
+			assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
+			// Last funding update should be at time 0
+			assert_eq!(get_market(&market_id).funding_rate_ts, 0);
+		});
+	}
 }
