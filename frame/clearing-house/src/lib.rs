@@ -135,8 +135,6 @@ mod mock;
 #[cfg(test)]
 mod tests;
 
-mod math;
-
 mod types;
 
 mod weights;
@@ -155,13 +153,13 @@ pub mod pallet {
 		Market, MarketConfig, Position,
 	};
 	use crate::{
-		math::{
-			self, FixedPointMath, FromBalance, IntoBalance, IntoDecimal, IntoSigned, UnsignedMath,
-		},
 		types::{AccountSummary, PositionInfo, BASIS_POINT_DENOMINATOR},
 		weights::WeightInfo,
 	};
 	use codec::FullCodec;
+	use composable_maths::labs::numbers::{
+		self, FixedPointMath, FromBalance, IntoBalance, IntoDecimal, IntoSigned, UnsignedMath,
+	};
 	use composable_traits::{
 		clearing_house::{ClearingHouse, Instruments},
 		defi::DeFiComposableConfig,
@@ -2150,8 +2148,7 @@ pub mod pallet {
 				};
 				let last_oracle_10bp =
 					last_oracle.try_div(&T::Decimal::saturating_from_integer(1000))?;
-				oracle = math::clip(
-					oracle,
+				oracle = oracle.clamp(
 					last_oracle.try_sub(&last_oracle_10bp)?,
 					last_oracle.try_sub(&last_oracle_10bp)?,
 				);
@@ -2165,7 +2162,7 @@ pub mod pallet {
 				let since_last = cmp::max(1, now.saturating_sub(market.last_oracle_ts));
 				let from_start = cmp::max(1, market.twap_period.saturating_sub(since_last));
 
-				let new_twap = math::weighted_average(
+				let new_twap = numbers::weighted_average(
 					&oracle,
 					&market.last_oracle_twap,
 					&T::Decimal::saturating_from_integer(since_last),

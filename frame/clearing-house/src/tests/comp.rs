@@ -1,4 +1,4 @@
-use crate::math::IntoDecimal;
+use composable_maths::labs::numbers::IntoDecimal;
 use sp_runtime::{traits::Zero, FixedI128, FixedPointNumber};
 
 /// Returns whether `a` isn't larger than `b` and at most a tiny amount smaller

@@ -7,6 +7,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	use codec::{Codec, Decode, Encode, FullCodec, MaxEncodedLen};
+	use composable_maths::labs::numbers::{FixedPointMath, UnsignedMath};
 	use composable_traits::{
 		defi::DeFiComposableConfig,
 		vamm::{AssetType, Direction, SwapConfig, SwapOutput, SwapSimulationConfig, Vamm},
@@ -20,8 +21,6 @@ pub mod pallet {
 		ArithmeticError, FixedPointNumber,
 	};
 	use sp_std::ops::Add;
-
-	use crate::math::{FixedPointMath, UnsignedMath};
 
 	// ----------------------------------------------------------------------------------------------------
 	//                                    Declaration Of The Pallet Type

@@ -1,7 +1,5 @@
-use crate::{
-	math::{FixedPointMath, IntoDecimal},
-	Config,
-};
+use crate::Config;
+use composable_maths::labs::numbers::{FixedPointMath, IntoDecimal};
 use composable_traits::{
 	time::DurationSeconds,
 	vamm::{Direction as VammDirection, Vamm},
