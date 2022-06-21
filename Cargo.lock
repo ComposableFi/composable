@@ -4554,6 +4554,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "instrumental-strategy",
  "log 0.4.17",
  "orml-tokens",
  "orml-traits",
