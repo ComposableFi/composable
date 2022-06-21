@@ -1,3 +1,3 @@
 #!/bin/bash
-npm install
+npm install -q
 npm run test
