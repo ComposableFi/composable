@@ -76,6 +76,7 @@ mod mock;
 mod prelude;
 mod support;
 mod types;
+mod validation;
 pub mod weights;
 
 #[frame_support::pallet]
@@ -84,7 +85,7 @@ pub mod pallet {
 	use crate::{prelude::*, types::*};
 	use xcm::latest::{prelude::*, MultiAsset, WeightLimit::Unlimited};
 
-	use crate::{math::*, support::DefiMultiReservableCurrency};
+	use crate::{math::*, support::DefiMultiReservableCurrency, validation::XcmSellRequestValid};
 	use composable_support::{
 		abstractions::{
 			nonce::Nonce,
@@ -94,6 +95,7 @@ pub mod pallet {
 			},
 		},
 		math::wrapping_next::WrappingNext,
+		validation::Validate,
 	};
 	use composable_traits::{
 		defi::{DeFiComposableConfig, DeFiEngine, OrderIdLike, Sell, SellEngine, Take},
@@ -348,6 +350,8 @@ pub mod pallet {
 			request: XcmSellRequest,
 		) -> DispatchResultWithPostInfo {
 			// TODO: make events/logs from all failed liqudations
+
+			let request = XcmSellRequestValid::validate(request)?;
 
 			// incoming message is generic in representations, so need to map it back to local,
 			let parachain_id = ensure_sibling_para(<T as Config>::XcmOrigin::from(origin))?;
