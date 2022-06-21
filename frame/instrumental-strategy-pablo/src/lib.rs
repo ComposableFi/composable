@@ -259,9 +259,9 @@ pub mod pallet {
 			asset_id: T::AssetId,
 			pool_id: T::PoolId,
 		) -> Result<(), DispatchError> {
-			let pool_id_and_state = Self::pools(asset_id).ok_or(Error::<T>::PoolNotFound)?;
-			ensure!(pool_id_and_state.state == State::Normal, Error::<T>::TransferringInProgress);
 			if Pools::<T>::contains_key(asset_id) {
+				let pool_id_and_state = Self::pools(asset_id).ok_or(Error::<T>::PoolNotFound)?;
+				ensure!(pool_id_and_state.state == State::Normal, Error::<T>::TransferringInProgress);
 				Pools::<T>::mutate(asset_id, |_| PoolState { pool_id, state: State::Normal });
 			} else {
 				Pools::<T>::insert(asset_id, PoolState { pool_id, state: State::Normal });
@@ -278,7 +278,6 @@ pub mod pallet {
 						Self::deposit_event(Event::UnableToRebalanceVault { vault_id: *vault_id });
 					}
 				});
-
 				Ok(())
 			})
 		}

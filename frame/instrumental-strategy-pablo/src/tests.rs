@@ -1,8 +1,10 @@
 use composable_traits::instrumental::InstrumentalProtocolStrategy;
 use frame_support::{assert_noop, assert_ok};
 
-use crate::mock::runtime::{
-	Event, ExtBuilder, MockRuntime, PabloStrategy, System, VaultId, MAX_ASSOCIATED_VAULTS,
+use crate::mock::{
+	account_id::{pick_account, AccountId, ADMIN},
+	runtime::{
+	Event, ExtBuilder, MockRuntime, PabloStrategy, System, VaultId, MAX_ASSOCIATED_VAULTS,},
 };
 #[allow(unused_imports)]
 use crate::{pallet, pallet::Error};
@@ -66,4 +68,18 @@ fn test_rebalance_emits_event() {
 			vault_id,
 		}));
 	});
+}
+
+// -----------------------------------------------------------------------------------------------
+//                                            Set pool_id for asset
+// -----------------------------------------------------------------------------------------------
+#[test]
+fn test_add_new_pool_id_for_asset() {
+	ExtBuilder::default().build().execute_with(|| {  
+		let vault_id: VaultId = 1;
+		let asset_id: AssetId = 1;
+		let pool_id: PoolId = 1;
+		assert_ok!(PabloStrategy::associate_vault(&(vault_id as VaultId)));
+		assert_ok!(PabloStrategy::set_pool_id_for_asset());		
+	}	
 }
