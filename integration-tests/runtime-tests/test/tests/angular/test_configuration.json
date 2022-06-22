@@ -1,7 +1,6 @@
 {
   "enabled": true,
   "enabledTests": {
-    "runBeforeBaseSetup": true,
     "runBeforeMintLendingAsset": true,
     "runBeforeCreateAssetVault": false,
     "runBeforeCreateOracle": true,

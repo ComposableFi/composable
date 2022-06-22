@@ -148,16 +148,16 @@ export default {
     ComposableTraitsDexConsantProductPoolInfo: "Null",
     ComposableTraitsLendingMarketConfig: "Null",
     ComposableTraitsLendingCreateInput: {
-      updatable: "ComposableTraitsLendingUpdateInput"
+      updatable: "ComposableTraitsLendingUpdateInput",
+      currencyPair: "ComposableTraitsDefiCurrencyPairCurrencyId",
+      reservedFactor: "Perquintill",
+      interestRateModel: "ComposableTraitsLendingMathInterestRateModel"
     },
     ComposableTraitsLendingUpdateInput: {
       collateralFactor: "FixedU128",
       underCollateralizedWarnPercent: "Percent",
       liquidators: "Vec<u32>",
-      maxPriceAge: "u32",
-      currencyPair: "ComposableTraitsDefiCurrencyPairCurrencyId",
-      reservedFactor: "Perquintill",
-      interestRateModel: "ComposableTraitsLendingMathInterestRateModel"
+      maxPriceAge: "u32"
     },
     ComposableTraitsLendingMathInterestRateModel: {
       _enum: {

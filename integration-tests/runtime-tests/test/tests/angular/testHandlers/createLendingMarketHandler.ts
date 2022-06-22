@@ -6,31 +6,15 @@ import { ApiPromise } from "@polkadot/api";
 export async function createLendingMarketHandler(
   api: ApiPromise,
   wallet:KeyringPair,
-  collateralFactor,
-  underCollateralizedWarnPercent,
-  maxPriceAge,
-  liquidators,
-  interestRateModel,
-  currencyPair,
-  reservedFactor
+  input,
+  keepAlive
 ) {
-  const input = api.createType('ComposableTraitsLendingCreateInput', {
-    updatable: api.createType('ComposableTraitsLendingUpdateInput', {
-      collateralFactor: collateralFactor,
-      underCollateralizedWarnPercent: underCollateralizedWarnPercent,
-      maxPriceAge: maxPriceAge,
-      liquidators: liquidators,
-      currencyPair: currencyPair,
-      reservedFactor: reservedFactor,
-      interestRateModel: interestRateModel,
-    }),
-  });
 
   return await sendAndWaitForSuccess(
     api,
     wallet,
     api.events.treasury.Deposit.is,
-    api.tx.lending.createMarket(input, false),
+    api.tx.lending.createMarket(input, keepAlive),
     false
   );
 }
