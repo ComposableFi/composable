@@ -12,6 +12,15 @@ pub enum State {
 	Transferrig,
 }
 
+#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, MaxEncodedLen, TypeInfo)]
+pub enum AccessRights {
+	Full,
+
+	Rebalance,
+
+	SetPoolId,
+}
+
 #[derive(Clone, Copy, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
 pub struct InstrumentalVaultConfig<AssetId, Percent> {
 	pub asset_id: AssetId,

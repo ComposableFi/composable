@@ -18,7 +18,7 @@ pub mod pallet {
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		dex::Amm,
-		instrumental::{InstrumentalProtocolStrategy, State},
+		instrumental::{AccessRights, InstrumentalProtocolStrategy, State},
 		vault::{FundsAvailability, StrategicVault, Vault},
 	};
 	use frame_support::{
@@ -162,6 +162,10 @@ pub mod pallet {
 	pub type Pools<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AssetId, PoolState<T::PoolId, State>>;
 
+	#[pallet::storage]
+	#[pallet::getter(fn admin_accounts)]
+	pub type AdminAccountIds<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, AccessRights>;
 	// ---------------------------------------------------------------------------------------------
 	//                                          Runtime Events
 	// ---------------------------------------------------------------------------------------------
@@ -187,13 +191,15 @@ pub mod pallet {
 		VaultAlreadyAssociated,
 
 		TooManyAssociatedStrategies,
-
 		// TODO(belousm): only for MVP version we can assume the `pool_id` is already known and
 		// exist. We should remove it in V1.
 		PoolNotFound,
-
 		// Occurs when we try to set a new pool_id, during a transferring from or to an old one
 		TransferringInProgress,
+		// Occurs when an attempt is made to initialize a function not from an admin account
+		NotAdminAccount,
+		// Occurs when an admin account doesn't have enough access rights to initialize a function
+		NotEnoughAccessRights,
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -218,9 +224,13 @@ pub mod pallet {
 			asset_id: T::AssetId,
 			pool_id: T::PoolId,
 		) -> DispatchResult {
-			let _who = ensure_signed(origin)?;
-			let _ =
-				<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
+			let who = ensure_signed(origin)?;
+			let access_right = Self::admin_accounts(who).ok_or(Error::<T>::NotAdminAccount)?;
+			ensure!(
+				access_right == AccessRights::Full || access_right == AccessRights::SetPoolId,
+				Error::<T>::NotEnoughAccessRights
+			);
+			<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
 			Ok(())
 		}
 	}
