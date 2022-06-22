@@ -37,8 +37,8 @@ describe("tx.bondedFinance Tests", function () {
 
   before("mint assets into the wallet", async function () {
     this.timeout(2 * 60 * 1000);
-    await mintAssetsToWallet(api, walletAlice, walletAlice, [4]);
-    await mintAssetsToWallet(api, walletBob, walletAlice, [4]);
+    await mintAssetsToWallet(api, walletAlice, walletAlice, [4, 1000]);
+    await mintAssetsToWallet(api, walletBob, walletAlice, [4, 1000]);
   });
 
   after("Closing the connection", async function () {
@@ -63,7 +63,7 @@ describe("tx.bondedFinance Tests", function () {
         nbOfBonds: api.createType("u128", 10),
         maturity: { Finite: { returnIn: api.createType("u32", 16) } },
         reward: {
-          asset: api.createType("u128", 4),
+          asset: api.createType("u128", 1000),
           amount: api.createType("u128", 1100000000000000),
           maturity: api.createType("u32", 1)
         }
@@ -80,12 +80,12 @@ describe("tx.bondedFinance Tests", function () {
       if (!testConfiguration.enabledTests.offer_bond__success.create2) this.skip();
       const requestParameters = {
         beneficiary: walletBob.publicKey,
-        asset: api.createType("u128", 4),
+        asset: api.createType("u128", 1000),
         bondPrice: api.createType("u128", 100000000000000),
         nbOfBonds: api.createType("u128", 10),
         maturity: { Finite: { returnIn: api.createType("u32", 16) } },
         reward: {
-          asset: api.createType("u128", 1),
+          asset: api.createType("u128", 4),
           amount: api.createType("u128", 1100000000000000),
           maturity: api.createType("u32", 1)
         }
