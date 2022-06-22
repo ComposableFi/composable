@@ -52,6 +52,7 @@ use jsonrpsee::{
 	proc_macros::rpc,
 	types::{error::CallError, ErrorObject},
 };
+use pallet_ibc::events::IbcEvent;
 use sc_chain_spec::Properties;
 use serde::{Deserialize, Serialize};
 use sp_api::ProvideRuntimeApi;
@@ -1252,7 +1253,7 @@ where
 		let mut identified_clients = vec![];
 		for e in events {
 			match e {
-				pallet_ibc::events::IbcEvent::CreateClient { client_id, .. } => {
+				IbcEvent::CreateClient { client_id, .. } => {
 					let result: ibc_primitives::QueryClientStateResponse = api
 						.client_state(&at, client_id.clone())
 						.ok()

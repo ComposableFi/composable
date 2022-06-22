@@ -427,7 +427,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::create_client())]
 		#[frame_support::transactional]
 		pub fn create_client(origin: OriginFor<T>, msg: Any) -> DispatchResult {
-			T::AdminOrigin::ensure_origin(origin.clone())?;
+			T::AdminOrigin::ensure_origin(origin)?;
 			let mut ctx = routing::Context::<T>::new();
 			let type_url =
 				String::from_utf8(msg.type_url.clone()).map_err(|_| Error::<T>::DecodingError)?;
@@ -451,7 +451,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			params: ConnectionParams,
 		) -> DispatchResult {
-			T::AdminOrigin::ensure_origin(origin.clone())?;
+			T::AdminOrigin::ensure_origin(origin)?;
 			if !ClientStates::<T>::contains_key(params.client_id.clone()) {
 				return Err(Error::<T>::ClientStateNotFound.into())
 			}
