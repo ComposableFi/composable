@@ -225,14 +225,15 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			asset_id: T::AssetId,
 			pool_id: T::PoolId,
-		) -> DispatchResult {
+		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
 			let access_right = Self::admin_accounts(who).ok_or(Error::<T>::NotAdminAccount)?;
 			ensure!(
 				access_right == AccessRights::Full || access_right == AccessRights::SetPoolId,
 				Error::<T>::NotEnoughAccessRights
 			);
-			<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)
+			<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
+			Ok(().into())
 		}
 	}
 
@@ -255,17 +256,20 @@ pub mod pallet {
 			asset_id: T::AssetId,
 			pool_id: T::PoolId,
 		) -> Result<(), DispatchError> {
-			if Pools::<T>::contains_key(asset_id) {
-				let pool_id_and_state = Self::pools(asset_id).ok_or(Error::<T>::PoolNotFound)?;
-				ensure!(
-					pool_id_and_state.state == State::Normal,
-					Error::<T>::TransferringInProgress
-				);
-				Pools::<T>::mutate(asset_id, |_| PoolState { pool_id, state: State::Normal });
-			} else {
-				Pools::<T>::insert(asset_id, PoolState { pool_id, state: State::Normal });
-			}
-			Ok(())
+			Pools::<T>::try_mutate(asset_id, |current_pool_id_and_state| -> DispatchResult {
+				match current_pool_id_and_state {
+					Some(current_pool_id_and_state) => {
+						ensure!(
+							current_pool_id_and_state.state == State::Normal,
+							Error::<T>::TransferringInProgress
+						);
+						*current_pool_id_and_state = PoolState { pool_id, state: State::Normal };
+					},
+					None =>
+						Pools::<T>::insert(asset_id, PoolState { pool_id, state: State::Normal }),
+				};
+				Ok(())
+			})
 		}
 
 		#[transactional]
