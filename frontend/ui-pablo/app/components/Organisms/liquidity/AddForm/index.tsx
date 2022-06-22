@@ -23,6 +23,7 @@ import { TransactionSettings } from "../../TransactionSettings";
 import { YourPosition } from "../YourPosition";
 import { PoolShare } from "./PoolShare";
 import {useAddLiquidity} from "@/store/hooks/useAddLiquidity";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const isMobile = useMobile();
@@ -116,7 +117,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           }}
           CombinedSelectProps={{
             disabled: !findPoolManually,
-            value: assetOne,
+            value: assetOne ? assetOne.network[DEFAULT_NETWORK_ID] : undefined,
             setValue: setToken("assetOne"),
             dropdownModal: true,
             forceHiddenLabel: isMobile ? true : false,
@@ -180,7 +181,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           }}
           CombinedSelectProps={{
             disabled: !findPoolManually,
-            value: assetTwo,
+            value: assetTwo ? assetTwo.network[DEFAULT_NETWORK_ID] : undefined,
             setValue: setToken("assetTwo"),
             dropdownModal: true,
             forceHiddenLabel: isMobile ? true : false,
