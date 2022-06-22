@@ -25,9 +25,7 @@ const Status = () => {
   const { openPolkadotModal } = useStore();
   const { extensionStatus, selectedAccount } = useDotSamaContext();
   const { accounts } = useParachainApi("picasso");
-  const [selectedAsset, setSelectedAsset] = useState<string | undefined>(
-    undefined
-  );
+  const [selectedAsset, setSelectedAsset] = useState<string>("");
 
   useEffect(() => {
     if (assetsWithBalance.length) {
