@@ -301,6 +301,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       TransferFailed: AugmentedError<ApiType>;
       /**
+       * NOTE: TEMPORARY
+       **/
+      Unsupported: AugmentedError<ApiType>;
+      /**
        * The size defined in `T::MaxValueSize` was exceeded.
        **/
       ValueTooLarge: AugmentedError<ApiType>;

@@ -77,7 +77,7 @@ pub struct ContractResult<R, Balance> {
 
 /// Result type of a `bare_call` call.
 pub type ContractExecResult<Balance> =
-	ContractResult<Result<ExecReturnValue, DispatchError>, Balance>;
+	ContractResult<Result<Option<Bytes>, DispatchError>, Balance>;
 
 /// Result type of a `bare_instantiate` call.
 pub type ContractInstantiateResult<AccountId, Balance> =
@@ -132,7 +132,7 @@ impl ExecReturnValue {
 #[cfg_attr(feature = "std", serde(rename_all = "camelCase"))]
 pub struct InstantiateReturnValue<AccountId> {
 	/// The output of the called constructor.
-	pub result: ExecReturnValue,
+	pub result: Option<Bytes>,
 	/// The account id of the new contract.
 	pub account_id: AccountId,
 }

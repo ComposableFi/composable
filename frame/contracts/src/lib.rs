@@ -123,8 +123,7 @@ use frame_support::{
 use frame_system::Pallet as System;
 use pallet_contracts_primitives::{
 	Code, CodeUploadResult, CodeUploadReturnValue, ContractAccessError, ContractExecResult,
-	ContractInstantiateResult, ExecReturnValue, GetStorageResult, InstantiateReturnValue,
-	StorageDeposit,
+	ContractInstantiateResult, GetStorageResult, InstantiateReturnValue, StorageDeposit,
 };
 use scale_info::TypeInfo;
 use sp_core::{crypto::UncheckedFrom, Bytes};
@@ -133,6 +132,7 @@ use sp_runtime::{
 	DispatchError,
 };
 use sp_std::{fmt::Debug, prelude::*};
+use wasm::cosmwasm::types::Binary;
 
 pub(crate) type CodeHash<T> = <T as frame_system::Config>::Hash;
 pub(crate) type TrieId = Vec<u8>;
@@ -417,7 +417,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let origin = ensure_signed(origin)?;
 			let dest = T::Lookup::lookup(dest)?;
-			let mut output = Self::internal_call(
+			let output = Self::internal_call(
 				origin,
 				dest,
 				value,
@@ -426,11 +426,6 @@ pub mod pallet {
 				data,
 				None,
 			);
-			if let Ok(retval) = &output.result {
-				if retval.did_revert() {
-					output.result = Err(<Error<T>>::ContractReverted.into());
-				}
-			}
 			output.gas_meter.into_dispatch_result(output.result, T::WeightInfo::call())
 		}
 
@@ -445,7 +440,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let origin = ensure_signed(origin)?;
 			let dest = T::Lookup::lookup(dest)?;
-			let mut output = Self::internal_query(
+			let output = Self::internal_query(
 				origin,
 				dest,
 				value,
@@ -454,11 +449,6 @@ pub mod pallet {
 				data,
 				None,
 			);
-			if let Ok(retval) = &output.result {
-				if retval.did_revert() {
-					output.result = Err(<Error<T>>::ContractReverted.into());
-				}
-			}
 			output.gas_meter.into_dispatch_result(output.result, T::WeightInfo::call())
 		}
 
@@ -504,7 +494,7 @@ pub mod pallet {
 			let origin = ensure_signed(origin)?;
 			let code_len = code.len() as u32;
 			let salt_len = salt.len() as u32;
-			let mut output = Self::internal_instantiate(
+			let output = Self::internal_instantiate(
 				origin,
 				value,
 				gas_limit,
@@ -514,11 +504,6 @@ pub mod pallet {
 				salt,
 				None,
 			);
-			if let Ok(retval) = &output.result {
-				if retval.1.did_revert() {
-					output.result = Err(<Error<T>>::ContractReverted.into());
-				}
-			}
 			output.gas_meter.into_dispatch_result(
 				output.result.map(|(_address, result)| result),
 				T::WeightInfo::instantiate_with_code(code_len, salt_len),
@@ -544,7 +529,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let origin = ensure_signed(origin)?;
 			let salt_len = salt.len() as u32;
-			let mut output = Self::internal_instantiate(
+			let output = Self::internal_instantiate(
 				origin,
 				value,
 				gas_limit,
@@ -554,11 +539,6 @@ pub mod pallet {
 				salt,
 				None,
 			);
-			if let Ok(retval) = &output.result {
-				if retval.1.did_revert() {
-					output.result = Err(<Error<T>>::ContractReverted.into());
-				}
-			}
 			output.gas_meter.into_dispatch_result(
 				output.result.map(|(_address, output)| output),
 				T::WeightInfo::instantiate(salt_len),
@@ -804,10 +784,10 @@ pub mod pallet {
 }
 
 /// Return type of the private [`Pallet::internal_call`] function.
-type InternalCallOutput<T> = InternalOutput<T, ExecReturnValue>;
+type InternalCallOutput<T> = InternalOutput<T, Option<Binary>>;
 
 /// Return type of the private [`Pallet::internal_instantiate`] function.
-type InternalInstantiateOutput<T> = InternalOutput<T, (AccountIdOf<T>, ExecReturnValue)>;
+type InternalInstantiateOutput<T> = InternalOutput<T, (AccountIdOf<T>, Option<Binary>)>;
 
 /// Return type of private helper functions.
 struct InternalOutput<T: Config, O> {
@@ -843,7 +823,7 @@ where
 			debug_message.as_mut(),
 		);
 		ContractExecResult {
-			result: output.result.map_err(|r| r.error),
+			result: output.result.map(|v| v.map(Into::into)).map_err(|r| r.error),
 			gas_consumed: output.gas_meter.gas_consumed(),
 			gas_required: output.gas_meter.gas_required(),
 			storage_deposit: output.storage_deposit,
@@ -883,7 +863,7 @@ where
 			debug_message.as_mut(),
 		);
 		ContractExecResult {
-			result: output.result.map_err(|r| r.error),
+			result: output.result.map(|v| v.map(Into::into)).map_err(|r| r.error),
 			gas_consumed: output.gas_meter.gas_consumed(),
 			gas_required: output.gas_meter.gas_required(),
 			storage_deposit: output.storage_deposit,
@@ -927,7 +907,10 @@ where
 		ContractInstantiateResult {
 			result: output
 				.result
-				.map(|(account_id, result)| InstantiateReturnValue { result, account_id })
+				.map(|(account_id, result)| InstantiateReturnValue {
+					result: result.map(Into::into),
+					account_id,
+				})
 				.map_err(|e| e.error),
 			gas_consumed: output.gas_meter.gas_consumed(),
 			gas_required: output.gas_meter.gas_required(),

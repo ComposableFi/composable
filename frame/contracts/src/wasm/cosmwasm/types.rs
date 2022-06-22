@@ -1,5 +1,6 @@
 use alloc::string::String;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
+use sp_core::Bytes;
 use sp_runtime::DispatchError;
 use sp_std::vec::Vec;
 
@@ -554,6 +555,12 @@ impl core::fmt::Display for Coin {
 /// This is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>
 #[derive(Clone, Default, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct Binary(pub Vec<u8>);
+
+impl From<Binary> for Bytes {
+	fn from(Binary(x): Binary) -> Self {
+		Bytes(x)
+	}
+}
 
 impl Binary {
 	/// take an (untrusted) string and decode it into bytes.

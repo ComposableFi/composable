@@ -2,8 +2,8 @@
 /* eslint-disable */
 
 import type { CustomRpcBalance } from '@composable/types/interfaces/common';
-import type { Bytes, Enum, Result, Struct, u32, u64 } from '@polkadot/types-codec';
-import type { AccountId, Hash } from '@polkadot/types/interfaces/runtime';
+import type { Bytes, Enum, Option, Result, Struct, u64 } from '@polkadot/types-codec';
+import type { Hash } from '@polkadot/types/interfaces/runtime';
 import type { DispatchError } from '@polkadot/types/interfaces/system';
 
 /** @name Code */
@@ -21,7 +21,7 @@ export interface ContractExecResult extends Struct {
   readonly gas_required: u64;
   readonly storage_deposit: StorageDeposit;
   readonly debug_message: Bytes;
-  readonly result: Result<ExecReturnValue, DispatchError>;
+  readonly result: Result<Option<Bytes>, DispatchError>;
 }
 
 /** @name ContractInstantiateResult */
@@ -30,19 +30,7 @@ export interface ContractInstantiateResult extends Struct {
   readonly gas_required: u64;
   readonly storage_deposit: StorageDeposit;
   readonly debug_message: Bytes;
-  readonly result: Result<InstantiateReturnValue, DispatchError>;
-}
-
-/** @name ExecReturnValue */
-export interface ExecReturnValue extends Struct {
-  readonly flags: u32;
-  readonly data: Bytes;
-}
-
-/** @name InstantiateReturnValue */
-export interface InstantiateReturnValue extends Struct {
-  readonly result: ExecReturnValue;
-  readonly account_id: AccountId;
+  readonly result: Result<Option<Bytes>, DispatchError>;
 }
 
 /** @name StorageDeposit */

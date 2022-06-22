@@ -128,22 +128,14 @@ export default {
       gas_required: "u64",
       storage_deposit: "StorageDeposit",
       debug_message: "Bytes",
-      result: "Result<ExecReturnValue, DispatchError>"
+      result: "Result<Option<Bytes>, DispatchError>"
     },
     ContractInstantiateResult: {
       gas_consumed: "u64",
       gas_required: "u64",
       storage_deposit: "StorageDeposit",
       debug_message: "Bytes",
-      result: "Result<InstantiateReturnValue, DispatchError>"
-    },
-    InstantiateReturnValue: {
-      result: "ExecReturnValue",
-      account_id: "AccountId"
-    },
-    ExecReturnValue: {
-      flags: "u32",
-      data: "Bytes"
+      result: "Result<Option<Bytes>, DispatchError>"
     },
   }
 };

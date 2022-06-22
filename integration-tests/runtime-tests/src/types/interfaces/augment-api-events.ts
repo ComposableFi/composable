@@ -563,7 +563,7 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * An outgoing tx is created, and locked in the outgoing tx pool.
        **/
-      TransferOut: AugmentedEvent<ApiType, [H256, ComposableSupportEthereumAddress, u128, u32, CommonMosaicRemoteAssetId, u128]>;
+      TransferOut: AugmentedEvent<ApiType, [H256, AccountId32, ComposableSupportEthereumAddress, u128, u32, CommonMosaicRemoteAssetId, u128]>;
       /**
        * Generic event
        **/

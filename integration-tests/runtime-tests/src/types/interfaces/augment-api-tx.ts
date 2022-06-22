@@ -2698,9 +2698,9 @@ declare module '@polkadot/api-base/types/submittable' {
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
     xcvm: {
-      execute: AugmentedSubmittable<(program: XcvmCoreProgramXcvmProgram | { instructions?: any; nonce?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [XcvmCoreProgramXcvmProgram]>;
-      executeJson: AugmentedSubmittable<(program: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Bytes]>;
-      executeProtobuf: AugmentedSubmittable<(program: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Bytes]>;
+      execute: AugmentedSubmittable<(realOrigin: Option<AccountId32> | null | object | string | Uint8Array, program: XcvmCoreProgramXcvmProgram | { instructions?: any; nonce?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Option<AccountId32>, XcvmCoreProgramXcvmProgram]>;
+      executeJson: AugmentedSubmittable<(realOrigin: Option<AccountId32> | null | object | string | Uint8Array, program: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Option<AccountId32>, Bytes]>;
+      executeProtobuf: AugmentedSubmittable<(realOrigin: Option<AccountId32> | null | object | string | Uint8Array, program: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Option<AccountId32>, Bytes]>;
       setSatellite: AugmentedSubmittable<(network: u32 | AnyNumber | Uint8Array, satellite: ITuple<[u32, ComposableSupportEthereumAddress]> | [u32 | AnyNumber | Uint8Array, ComposableSupportEthereumAddress | string | Uint8Array]) => SubmittableExtrinsic<ApiType>, [u32, ITuple<[u32, ComposableSupportEthereumAddress]>]>;
       /**
        * Generic tx

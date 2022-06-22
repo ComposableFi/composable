@@ -579,7 +579,7 @@ where
 		value: TransferredAssets<T>,
 		input_data: Vec<u8>,
 		debug_message: Option<&'a mut Vec<u8>>,
-	) -> Result<ExecReturnValue, ExecError> {
+	) -> Result<Option<Binary>, ExecError> {
 		let (mut stack, executable) = Self::new(
 			FrameArgs::Call { dest, cached_info: None, delegated_call: None },
 			origin,
@@ -611,7 +611,7 @@ where
 		value: TransferredAssets<T>,
 		input_data: Vec<u8>,
 		debug_message: Option<&'a mut Vec<u8>>,
-	) -> Result<ExecReturnValue, ExecError> {
+	) -> Result<Option<Binary>, ExecError> {
 		let (mut stack, executable) = Self::new(
 			FrameArgs::Query { dest, cached_info: None, delegated_call: None },
 			origin,
@@ -644,7 +644,7 @@ where
 		input_data: Vec<u8>,
 		salt: &[u8],
 		debug_message: Option<&'a mut Vec<u8>>,
-	) -> Result<(T::AccountId, ExecReturnValue), ExecError> {
+	) -> Result<(T::AccountId, Option<Binary>), ExecError> {
 		let (mut stack, executable) = Self::new(
 			FrameArgs::Instantiate {
 				sender: origin.clone(),
@@ -831,7 +831,7 @@ where
 		executable: E,
 		input_data: Vec<u8>,
 		add_event: &mut dyn FnMut(Either<Event<T>, CosmwasmEvent>),
-	) -> Result<ExecReturnValue, ExecError> {
+	) -> Result<Option<Binary>, ExecError> {
 		log::debug!(target: "runtime::contracts", "== Execute new frame ==");
 
 		let top_frame = self.top_frame();
@@ -940,18 +940,17 @@ where
 
 				enum SubCallCont {
 					Reply(SubMsgResult),
-					Continue(ExecReturnValue),
+					Continue(Option<Binary>),
 					Abort(ExecError),
 				}
 
-				let initial =
-					ExecReturnValue { flags: ReturnFlags::empty(), data: Bytes::from(Vec::new()) };
+				let initial = response.data;
 
 				response.messages.into_iter().try_fold(
 					initial,
-					|_,
+					|current,
 					 SubMsg { id, msg, gas_limit, reply_on }|
-					 -> Result<ExecReturnValue, ExecError> {
+					 -> Result<Option<Binary>, ExecError> {
 						log::debug!(target: "runtime::contracts", "Process sub message");
 						let mut sub_events = Vec::<CosmwasmEvent>::new();
 						let mut raise_event = |event: Either<Event<T>, CosmwasmEvent>| {
@@ -966,15 +965,13 @@ where
 						let sub_message_result = match msg {
 							CosmosMsg::Custom(ComposableMsg::XCVM { funds, program }) => {
 								log::debug!(target: "runtime::contracts", "CustomMsg::XCVM");
-								T::XCVM::execute(&contract_address, (funds, program))
-									.map(|_| ExecReturnValue {
-										flags: ReturnFlags::empty(),
-										data: Bytes::from(Vec::new()),
-									})
-									.map_err(|error| ExecError {
-										error,
-										origin: ErrorOrigin::Callee,
-									})
+								T::XCVM::execute(&contract_address, (funds, program)).map_err(
+									|error| {
+										log::debug!(target: "runtime::contracts", "ComposableMsg::XCVM: {:?}", error);
+										ExecError { error, origin: ErrorOrigin::Callee }
+									},
+								)?;
+								Ok(None)
 							},
 							CosmosMsg::Wasm(wasm_msg) => match wasm_msg {
 								WasmMsg::Execute { contract_addr, msg: Binary(msg), funds } => {
@@ -1016,9 +1013,7 @@ where
 										self.schedule,
 										self.gas_meter(),
 									)?;
-									log::debug!(target: "runtime::contracts", "Found code");
 									let nonce = self.next_nonce();
-									log::debug!(target: "runtime::contracts", "Push frame");
 									let executable = self.push_frame(
 										FrameArgs::Instantiate {
 											sender: self.top_frame().account_id.clone(),
@@ -1029,7 +1024,6 @@ where
 										Self::coins_to_transferred_assets(funds)?,
 										gas_limit.unwrap_or_default(),
 									)?;
-									log::debug!(target: "runtime::contracts", "Do instantiate");
 									self.run_recurse(executable, msg, &mut raise_event)
 								},
 								WasmMsg::Migrate { .. } => Err(ExecError {
@@ -1068,11 +1062,8 @@ where
 									.map_err(|error| ExecError {
 										error,
 										origin: ErrorOrigin::Callee,
-									})
-									.map(|_| ExecReturnValue {
-										flags: ReturnFlags::empty(),
-										data: Bytes::from(Vec::new()),
-									})
+									})?;
+								Ok(None)
 							},
 						};
 						let sub_call_cont = match (sub_message_result, reply_on.clone()) {
@@ -1082,14 +1073,11 @@ where
 								SubCallCont::Continue(v)
 							},
 							// Commit and reply
-							(
-								Ok(ExecReturnValue { data: Bytes(data), .. }),
-								ReplyOn::Always | ReplyOn::Success,
-							) => {
+							(Ok(v), ReplyOn::Always | ReplyOn::Success) => {
 								sp_io::storage::commit_transaction();
 								SubCallCont::Reply(SubMsgResult::Ok(SubMsgResponse {
 									events: sub_events.clone(),
-									data: Some(Binary::from(data)),
+									data: v,
 								}))
 							},
 							// Rollback and reply
@@ -1105,7 +1093,7 @@ where
 						};
 
 						match sub_call_cont {
-							SubCallCont::Continue(v) => Ok(v),
+							SubCallCont::Continue(v) => Ok(v.or_else(|| current)),
 							SubCallCont::Abort(e) => Err(e),
 							SubCallCont::Reply(sub_call_result) => {
 								let cached_info = self
@@ -1136,14 +1124,14 @@ where
 										.map_err(|_| Error::<T>::DecodingFailed)?,
 									add_event,
 								)
+								.map(|v| v.or_else(|| current))
 							},
 						}
 					},
 				)
 			},
 			// Query branch
-			Ok(Left(Binary(v))) =>
-				Ok(ExecReturnValue { flags: ReturnFlags::empty(), data: Bytes::from(v) }),
+			Ok(Left(v)) => Ok(Some(v)),
 			// Error branch
 			Err(e) => Err(e),
 		};
@@ -1163,7 +1151,7 @@ where
 	/// Run the current (top) frame.
 	///
 	/// This can be either a call or an instantiate.
-	fn run(&mut self, executable: E, input_data: Vec<u8>) -> Result<ExecReturnValue, ExecError> {
+	fn run(&mut self, executable: E, input_data: Vec<u8>) -> Result<Option<Binary>, ExecError> {
 		with_transaction(|| {
 			let mut events = Vec::new();
 			let mut raise_event = |event: Either<Event<T>, CosmwasmEvent>| {
@@ -1418,15 +1406,17 @@ where
 					.map_err(|_| Error::<T>::DecodingFailed)?;
 				let to =
 					T::ConvertAccount::convert(address).map_err(|_| Error::<T>::DecodingFailed)?;
-				let response = SystemResult::Ok(CosmwasmResult::Ok(BalanceResponse {
+				let response = serde_json::to_vec(&BalanceResponse {
 					amount: Coin {
 						denom,
 						amount: T::Assets::reducible_balance(asset, &to, false)
 							.try_into()
 							.map_err(|_| Error::<T>::ValueTooLarge)?,
 					},
-				}));
-				serde_json::to_vec(&response).map_err(|_| Error::<T>::DecodingFailed.into())
+				})
+				.map_err(|_| Error::<T>::DecodingFailed)?;
+				serde_json::to_vec(&SystemResult::Ok(CosmwasmResult::Ok(Binary(response))))
+					.map_err(|_| Error::<T>::DecodingFailed.into())
 			},
 			QueryRequest::Wasm(wasm_query) => match wasm_query {
 				WasmQuery::Smart { contract_addr, msg: Binary(msg) } => {
@@ -1455,10 +1445,10 @@ where
 								.map_err(|e| e.error)?;
 							// No events on query
 							let mut raise_event = |_: Either<Event<T>, CosmwasmEvent>| {};
-							let Bytes(response) = self
+							let Binary(response) = self
 								.run_recurse(executable, msg, &mut raise_event)
 								.map_err(|e| e.error)?
-								.data;
+								.unwrap_or_default();
 							Ok(response)
 						},
 						Err(_) => Err(Error::<T>::DecodingFailed.into()),
