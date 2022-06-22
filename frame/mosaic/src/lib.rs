@@ -120,7 +120,13 @@ pub mod pallet {
 	#[derive(Clone, Encode, Decode, Debug, MaxEncodedLen, TypeInfo, PartialEq)]
 	pub struct AmmSwapInfo<N, R> {
 		pub destination_token_out_address: EthereumAddress,
-		pub destination_amm_id: (N, R),
+		pub destination_amm: RemoteAmm<N, R>,
+	}
+
+	#[derive(Clone, Encode, Decode, Debug, MaxEncodedLen, TypeInfo, PartialEq)]
+	pub struct RemoteAmm<N, R> {
+		pub network_id: N,
+		pub amm_id: R,
 	}
 
 	/// The information required for an assets to be transferred between chains.
@@ -512,9 +518,11 @@ pub mod pallet {
 
 			// Ensure that users can only swap using a whitelisted destination amm id
 			if let Some(swap_info) = amm_swap_info.clone() {
-				let (network_id, remote_amm_id) = &swap_info.destination_amm_id;
 				ensure!(
-					RemoteAmmWhitelist::<T>::contains_key(network_id, remote_amm_id),
+					RemoteAmmWhitelist::<T>::contains_key(
+						&swap_info.destination_amm.network_id,
+						&swap_info.destination_amm.amm_id
+					),
 					Error::<T>::DestinationAmmIdNotWhitelisted
 				);
 			}

@@ -1566,7 +1566,10 @@ mod do_transfer_with_remote_amm_swap {
 
 				let amm_swap_info = AmmSwapInfo {
 					destination_token_out_address: ethereum_address,
-					destination_amm_id: (network_id, amm_id),
+					destination_amm: RemoteAmm {
+						network_id,
+						amm_id
+					},
 				};
 
 				prop_assert_ok!(Mosaic::transfer_to(
@@ -1580,7 +1583,6 @@ mod do_transfer_with_remote_amm_swap {
 					Some(amm_swap_info),
 					true
 				));
-
 
 				Ok(())
 			})?;
@@ -1634,7 +1636,10 @@ mod do_transfer_with_remote_amm_swap {
 
 				let amm_swap_info = AmmSwapInfo {
 					destination_token_out_address: ethereum_address,
-					destination_amm_id: (network_id, amm_id),
+					destination_amm: RemoteAmm {
+						network_id,
+						amm_id,
+					}
 				};
 
 				prop_assert_noop!(Mosaic::transfer_to(
