@@ -15,7 +15,6 @@ export type AuctionPriceChartProps = {
   predictedPriceSeries: [number, number][];
   height: number | string;
   dateFormat: (timestamp: number | string) => string;
-  pastCount?: number;
   color?: string;
 };
 
@@ -25,7 +24,6 @@ export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
   predictedPriceSeries,
   height,
   dateFormat,
-  pastCount = 0,
   color,
 }) => {
   const theme = useTheme();

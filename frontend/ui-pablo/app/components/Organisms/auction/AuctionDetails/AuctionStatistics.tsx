@@ -5,28 +5,28 @@ import {
   Typography, 
   useTheme, 
 } from "@mui/material";
-import { getAssetById } from "@/defi/polkadot/Assets";
 import BigNumber from "bignumber.js";
 import { LiquidityBootstrappingPool, LiquidityBootstrappingPoolStats } from "@/store/pools/pools.types";
+import { MockedAsset } from "@/store/assets/assets.types";
 
 export type AuctionStatisticsProps = {
   auction: LiquidityBootstrappingPool,
+  baseAsset: MockedAsset | undefined,
+  quoteAsset: MockedAsset | undefined,
   stats: LiquidityBootstrappingPoolStats,
 } & BoxProps;
 
 export const AuctionStatistics: React.FC<AuctionStatisticsProps> = ({
   auction,
+  baseAsset,
+  quoteAsset,
   stats,
   ...rest
 }) => {
   const {
     currentBalances,
     startBalances,
-    totalSold,
-    totalRaised,
   } = stats;
-  const baseAsset = getAssetById("picasso", auction.pair.base);
-  const quoteAsset = getAssetById("picasso", auction.pair.quote);
 
   return (
     <Box {...rest}>

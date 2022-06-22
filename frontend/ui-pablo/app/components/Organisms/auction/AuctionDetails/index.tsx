@@ -1,7 +1,6 @@
 import { 
   Box, 
-  BoxProps, 
-  useTheme, 
+  BoxProps,
 } from "@mui/material";
 import { ContractDetails } from "./ContractDetails";
 import { LaunchDescrition } from "./LauchDescription";
@@ -9,26 +8,30 @@ import { LaunchDetails } from "./LaunchDetails";
 import { AuctionSettings } from "./AuctionSettings";
 import { AuctionStatistics } from "./AuctionStatistics";
 import { LiquidityBootstrappingPoolStats, LiquidityBootstrappingPool } from "@/store/pools/pools.types";
+import { MockedAsset } from "@/store/assets/assets.types";
 
 export type AuctionDetailsProps = {
   auction: LiquidityBootstrappingPool,
+  baseAsset: MockedAsset | undefined,
+  quoteAsset: MockedAsset | undefined,
   stats: LiquidityBootstrappingPoolStats,
 } & BoxProps;
 
 export const AuctionDetails: React.FC<AuctionDetailsProps> = ({
   auction,
+  baseAsset,
+  quoteAsset,
   stats,
   ...rest
 }) => {
-  const currentTimestamp = Date.now();
 
   return (
     <Box {...rest}>
-      <ContractDetails auction={auction} />
+      <ContractDetails auction={auction} baseAsset={baseAsset} />
       <LaunchDescrition auction={auction} mt={8} />
       <LaunchDetails auction={auction} mt={8} />
-      <AuctionStatistics auction={auction} stats={stats} mt={8} />
-      <AuctionSettings stats={stats} auction={auction} mt={8} />
+      <AuctionStatistics auction={auction} stats={stats} mt={8} baseAsset={baseAsset} quoteAsset={quoteAsset} />
+      <AuctionSettings stats={stats} auction={auction} mt={8} baseAsset={baseAsset} quoteAsset={quoteAsset} />
     </Box>
   );
 }

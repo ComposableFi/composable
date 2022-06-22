@@ -23,7 +23,6 @@ import {
   useSelectedAccount,
 } from "substrate-react";
 import { LiquidityBootstrappingPool } from "@/store/pools/pools.types";
-import { getAssetById } from "@/defi/polkadot/Assets";
 import { getSigner } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import useStore from "@/store/useStore";
@@ -114,7 +113,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
         baseAssetId: baseAsset.network[DEFAULT_NETWORK_ID],
         quoteAssetId: quoteAsset.network[DEFAULT_NETWORK_ID],
         side: side,
-        slippage: 0.1,
+        slippage: 10,
       };
 
       calculateSwap(parachainApi, exchangeParams, {
@@ -166,16 +165,31 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
             (txHash: string, events) => {
               enqueueSnackbar('Transaction Finalized');
               updateState();
+            },
+            (txError) => {
+              console.error(txError);
+              enqueueSnackbar(txError);
             }
           )
           .catch((err) => {
+            console.error(err)
             enqueueSnackbar(err.message);
           });
       } catch (err: any) {
+        console.error(err)
         enqueueSnackbar(err.message);
       }
     }
-  }, [parachainApi, executor, selectedAccount, baseAsset, baseAssetAmount, updateState]);
+  }, [
+    parachainApi, 
+    executor, 
+    selectedAccount, 
+    minReceive,
+    baseAssetAmount, 
+    updateState, 
+    auction.pair,
+    enqueueSnackbar
+  ]);
 
   return (
     <Box
@@ -213,7 +227,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
             },
           }}
           CombinedSelectProps={{
-            value: quoteAsset ? quoteAsset.network[DEFAULT_NETWORK_ID] : undefined,
+            value: quoteAsset ? quoteAsset.network[DEFAULT_NETWORK_ID] : "",
             dropdownModal: true,
             forceHiddenLabel: isMobile ? true : false,
             options: [
@@ -240,7 +254,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
             label: "Currency",
             BalanceProps: {
               title: <AccountBalanceWalletIcon color="primary" />,
-              balance: `${balanceBase.toFixed(4)}`,
+              balance: `${balanceQuote.toFixed(4)}`,
             },
           }}
         />

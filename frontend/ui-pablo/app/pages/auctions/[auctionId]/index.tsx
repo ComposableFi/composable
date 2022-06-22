@@ -173,7 +173,6 @@ const Auction: NextPage = () => {
                   dateFormat={(timestamp: number | string) => {
                     return moment(timestamp).utc().format("MMM D, h:mm:ss A");
                   }}
-                  pastCount={1}
                   color={theme.palette.primary.main}
                 />
               </Grid>
@@ -186,7 +185,7 @@ const Auction: NextPage = () => {
           <Box mt={8}>
             <Tabs items={tabItems} value={tab} onChange={handleTabChange} />
             <TabPanel value={tab} index={0}>
-              <AuctionDetails stats={activeLBPStats} auction={activeLBP} />
+              <AuctionDetails stats={activeLBPStats} auction={activeLBP} baseAsset={baseAsset} quoteAsset={quoteAsset} />
             </TabPanel>
             <TabPanel value={tab} index={1}>
               <AuctionHistoriesTable auction={activeLBP} baseAsset={baseAsset} quoteAsset={quoteAsset} />

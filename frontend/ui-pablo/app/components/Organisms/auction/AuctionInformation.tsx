@@ -73,7 +73,7 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
     if (base === "0") return "0";
 
     return tokenSold.div(new BigNumber(base)).times(100).toFixed(2);
-  }, [stats.startBalances.base, tokenSold]);
+  }, [stats.startBalances, tokenSold]);
 
   return (
     <Box {...rest}>
