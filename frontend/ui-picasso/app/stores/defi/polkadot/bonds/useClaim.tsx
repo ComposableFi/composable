@@ -6,11 +6,7 @@ import BigNumber from "bignumber.js";
 import { humanDate, SHORT_HUMAN_DATE } from "@/utils/formatters";
 import { useCurrentBlockAndTime } from "@/defi/polkadot/utils";
 import { useBlockInterval, usePicassoProvider } from "@/defi/polkadot/hooks";
-
-function findCurrentBond(b: ActiveBond, bond: string): boolean {
-  console.log(b);
-  return b.bond.bondOfferId.toString() === bond;
-}
+import { findCurrentBond } from "@/stores/defi/polkadot/bonds/utils";
 
 export const useClaim = (bondOfferId: string) => {
   const openBonds = useAppSelector<ActiveBond[]>(

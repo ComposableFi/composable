@@ -13,11 +13,7 @@ import { PairAsset } from "@/components/Atom/PairAsset";
 import { useExecutor } from "substrate-react";
 import { humanBalance } from "@/utils/formatters";
 import { useClaim } from "@/stores/defi/polkadot/bonds/useClaim";
-
-function findCurrentBond(b: ActiveBond, bond: string): boolean {
-  console.log(b);
-  return b.bond.bondOfferId.toString() === bond;
-}
+import { findCurrentBond } from "@/stores/defi/polkadot/bonds/utils";
 
 export const ClaimForm = () => {
   const theme = useTheme();
