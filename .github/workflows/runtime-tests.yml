@@ -1,9 +1,9 @@
 name: Runtime Tests
 
 on:
-  pull_request:
-    branches:
-      - main
+  # pull_request: # tmp
+  #   branches:
+  #     - main
   workflow_run:
     workflows: [Build composable-sandbox Docker image]
     types:
