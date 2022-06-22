@@ -1751,9 +1751,10 @@ pub mod pallet {
 				let losses = pnl.into_balance()?;
 				let outstanding_gains_lost = cmp::min(*outstanding_gains, losses);
 				let realized_losses = losses.saturating_sub(outstanding_gains_lost);
-				collateral.try_sub_mut(&realized_losses)?;
 				outstanding_gains.try_sub_mut(&outstanding_gains_lost)?;
 				market.available_gains.try_add_mut(&realized_losses)?;
+				// Shortfalls are covered by the Insurance Fund in `withdraw_collateral`
+				*collateral = (*collateral).saturating_sub(realized_losses);
 			}
 
 			Ok(())
