@@ -36,7 +36,7 @@ A vital feature of the active management module is that JIT liquidity bots can w
 A user can configure a JIT liquidity bot using a free public RPC endpoint for interacting with the blockchain or a paid-for custom RPC endpoint. A JIT liquidity bot can be initialized using the active liquidity SDK. 
 
 
-![alt_text](images/image2.png "image_tooltip")
+![liquidity-bot-sequence-diagram](./liquidity-bot-sequence-diagram.png)
 
 
 By using highly familiar tools like [Node.js](https://nodejs.org/), [Typescript](https://www.typescriptlang.org/), and [Ether.js](https://docs.ethers.io/v5/), barriers to entry will be further broken down and a community of developers will be fostered that make this built-in maximal extractable value (MEV) opportunity more accessible. Once the bot is set to monitor certain parameters, it can begin scanning for opportunities to provide or withdraw liquidity actively as opportunities arise.
