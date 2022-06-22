@@ -19,7 +19,7 @@ jobs:
       - name: Prepare a test environment
         run: |
           cd integration-tests/runtime-tests
-          export TAG=$(shell git rev-parse --short=9 HEAD)
+          echo "TAG=$(shell git rev-parse --short=9 HEAD)" >> $GITHUB_ENV
           docker-compose -f docker-compose-ci.yml up -d
 
       - name: Wait when the node will be started
