@@ -168,6 +168,7 @@ pub mod pallet {
 	#[pallet::getter(fn admin_accounts)]
 	pub type AdminAccountIds<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, AccessRights>;
+	
 	// ---------------------------------------------------------------------------------------------
 	//                                          Runtime Events
 	// ---------------------------------------------------------------------------------------------
