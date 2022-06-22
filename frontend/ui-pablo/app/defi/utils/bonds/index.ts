@@ -14,6 +14,7 @@ export async function fetchBonds(parachainApi: ApiPromise) {
 
     return await Promise.all(offerPromises);
   } catch (ex) {
+    console.error(ex);
     return [];
   }
 }

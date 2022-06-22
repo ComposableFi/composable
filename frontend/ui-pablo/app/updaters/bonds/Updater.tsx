@@ -4,8 +4,7 @@ import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { decodeBondOffer } from "./decodeBondOffer";
 
 import { decodeVestingSchedule } from "./decodeVestingSchedule";
-import { fetchBonds } from "./fetchBonds";
-import { fetchVestingSchedule } from "./fetchVestingSchedule";
+import { fetchBonds, fetchVestingSchedule } from "@/defi/utils/";
 import { getToken, getTokenId } from "../../defi/Tokens";
 import { getCurrentBlock } from "../../utils/defi/getCurrentBlock";
 import { getCurrentTime } from "../../utils/defi/getCurrentTime";
