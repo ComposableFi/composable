@@ -72,6 +72,7 @@ const Updater = () => {
             liquidityBootstrappingPools.verified[pool].poolId
           )
             .then((spotPrice) => {
+              console.log(spotPrice.toString(), 'spotPrice')
               spotPrice = spotPrice.times(apollo[quoteId]);
               setLiquidityBootstrappingPoolSpotPrice(
                 liquidityBootstrappingPools.verified[pool].poolId,

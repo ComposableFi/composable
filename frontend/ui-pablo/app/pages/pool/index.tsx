@@ -13,7 +13,7 @@ import { useState } from "react";
 import { useRouter } from "next/router";
 import Default from "@/components/Templates/Default";
 import { MessageBox } from "@/components/Atoms";
-import { Chart, PageTitle } from "@/components";
+import { PageTitle } from "@/components";
 import { ConnectWalletFeaturedBox } from "@/components/Organisms/ConnectWalletFeaturedBox";
 import { AllLiquidityTable } from "@/components/Organisms/AllLiquidityTable";
 
@@ -122,7 +122,7 @@ const Pool: NextPage = () => {
             </Grid>
           </Grid>
         )}
-        <Grid mt={4} container spacing={4}>
+        {/* <Grid mt={4} container spacing={4}>
           <Grid item {...twoColumnPageSize}>
             <Chart
               title="TVL"
@@ -158,7 +158,7 @@ const Pool: NextPage = () => {
               currentInterval="1w"
             />
           </Grid>
-        </Grid>
+        </Grid> */}
         <Grid mt={4}>
           <Grid item {...standardPageSize}>
             <Card variant="outlined">

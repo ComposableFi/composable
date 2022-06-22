@@ -1,16 +1,16 @@
 import React from "react";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { alpha, Box, Typography, useTheme } from "@mui/material";
+import { Box, Typography, useTheme } from "@mui/material";
 import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import moment from "moment-timezone";
-import { AssetMetadata } from "@/defi/polkadot/Assets";
+import { MockedAsset } from "@/store/assets/assets.types";
 
 const NoSSRChart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
 export type AuctionPriceChartProps = {
-  baseAsset: AssetMetadata | null;
-  quoteAsset: AssetMetadata | null;
+  baseAsset: MockedAsset | undefined;
+  quoteAsset: MockedAsset | undefined;
   priceSeries: [number, number][];
   predictedPriceSeries: [number, number][];
   height: number | string;
@@ -145,6 +145,7 @@ export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
 
   useEffect(() => {
     setOptions(chartOptions(color || theme.palette.primary.main, dateFormat));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -152,6 +153,7 @@ export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
       ...options,
       ...chartOptions(color || theme.palette.primary.main, dateFormat),
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateFormat, color]);
 
   return (

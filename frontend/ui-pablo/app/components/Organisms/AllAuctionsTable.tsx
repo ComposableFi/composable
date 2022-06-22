@@ -18,16 +18,14 @@ import { KeyboardArrowDown } from "@mui/icons-material";
 import { KeyboardArrowUp } from "@mui/icons-material";
 import { AuctionStatusIndicator } from "./auction/AuctionStatusIndicator";
 import { getAssetById } from "@/defi/polkadot/Assets";
-
-import { getParachainNetwork } from "substrate-react";
 import { LiquidityBootstrappingPool } from "@/store/pools/pools.types";
-import { useVerifiedLiquidityBootstrappingPools } from "@/store/auctions/hooks";
+import { useLiquidityBootstrappingPools } from "@/defi/hooks/auctions";
 
 export const AllAuctionsTable: React.FC<TableContainerProps> = ({
   ...rest
 }) => {
   const { liquidityBootstrappingPools, setActiveAuctionsPool } =
-    useVerifiedLiquidityBootstrappingPools();
+    useLiquidityBootstrappingPools();
   const theme = useTheme();
   const limit = useAppSelector((state) => state.auctions.auctionsTableLimit);
   const [count, setCount] = useState(limit);
@@ -137,3 +135,7 @@ export const AllAuctionsTable: React.FC<TableContainerProps> = ({
     </TableContainer>
   );
 };
+function useVerifiedLiquidityBootstrappingPools(): { liquidityBootstrappingPools: any; setActiveAuctionsPool: any; } {
+  throw new Error("Function not implemented.");
+}
+

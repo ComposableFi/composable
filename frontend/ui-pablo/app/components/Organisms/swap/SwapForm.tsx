@@ -9,7 +9,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
 import { BoxProps } from "@mui/system";
 import { useAppSelector } from "@/hooks/store";
@@ -28,12 +28,11 @@ import { SwapRoute } from "./SwapRoute";
 import { PreviewModal } from "./PreviewModal";
 import { ConfirmingModal } from "./ConfirmingModal";
 import { useDotSamaContext, useParachainApi } from "substrate-react";
-import useStore from "@/store/useStore";
-import { AssetId } from "@/defi/polkadot/types";
 import { debounce } from "lodash";
 import { calculateSwap } from "@/defi/utils/pablo/swaps";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useAssetBalance, useUSDPriceByAssetId } from "@/store/assets/hooks";
+import useStore from "@/store/useStore";
 
 const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
@@ -174,6 +173,9 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
       setIsConfirmed(false);
       dispatch(closeConfirmingModal());
     }
+  // dispatch is a setter, we can skip adding it to
+  // dependancies list
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConfirmed]);
 
   const [isProcessing, setIsProcessing] = useState(false);

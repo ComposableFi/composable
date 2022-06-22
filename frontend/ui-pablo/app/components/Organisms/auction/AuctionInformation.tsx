@@ -9,8 +9,8 @@ import { nFormatter } from "@/utils/number";
 import BigNumber from "bignumber.js";
 import { getAssetById } from "@/defi/polkadot/Assets";
 import { useMemo } from "react";
-import { useAuctionSpotPrice } from "@/store/auctions/hooks";
 import { useUSDPriceByAssetId } from "@/store/assets/hooks";
+import { useAuctionSpotPrice } from "@/defi/hooks/auctions";
 
 export type AuctionInformationProps = {
   auction: LiquidityBootstrappingPool;

@@ -40,16 +40,15 @@ export type BuyFormProps = {
 } & BoxProps;
 
 export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
-  const { auctions: { activeLBP }, putHistoryActiveLBP, putStatsActiveLBP } = useStore();
+  const { auctions: { activeLBP }, putHistoryActiveLBP, putStatsActiveLBP, supportedAssets } = useStore();
   const { extensionStatus } = useDotSamaContext();
-  const { parachainApi } = useParachainApi("picasso");
-  const selectedAccount = useSelectedAccount("picasso");
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const { enqueueSnackbar } = useSnackbar();
   const theme = useTheme();
   const isMobile = useMobile();
   const executor = useExecutor();
   const currentTimestamp = Date.now();
-
 
   const updateState = useCallback(async () => {
     const { poolId } = activeLBP;
@@ -72,12 +71,12 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     selectedAccount ? selectedAccount.address : ""
   );
 
-  const baseAsset = useMemo(() => {
-    return getAssetById(auction.networkId, auction.pair.base);
-  }, [auction]);
-  const quoteAsset = useMemo(() => {
-    return getAssetById(auction.networkId, auction.pair.quote);
-  }, [auction]);
+  const { baseAsset, quoteAsset } = useMemo(() => {
+    let baseAsset, quoteAsset;
+    baseAsset = supportedAssets.find(a => a.network[DEFAULT_NETWORK_ID] === auction.pair.base.toString())
+    quoteAsset = supportedAssets.find(a => a.network[DEFAULT_NETWORK_ID] === auction.pair.quote.toString())
+    return { baseAsset, quoteAsset }
+  }, [auction, supportedAssets]);
 
   const balanceBase = useAssetBalance(DEFAULT_NETWORK_ID, auction.pair.base.toString())
   const balanceQuote = useAssetBalance(DEFAULT_NETWORK_ID, auction.pair.quote.toString())
@@ -110,10 +109,10 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
         setQuoteAmount(swapAmount.value);
       }
 
-      const exchangeParams = {
+      const exchangeParams: any = {
         quoteAmount: value,
-        baseAssetId: baseAsset.assetId,
-        quoteAssetId: quoteAsset.assetId,
+        baseAssetId: baseAsset.network[DEFAULT_NETWORK_ID],
+        quoteAssetId: quoteAsset.network[DEFAULT_NETWORK_ID],
         side: side,
         slippage: 0.1,
       };
@@ -214,7 +213,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
             },
           }}
           CombinedSelectProps={{
-            value: quoteAsset,
+            value: quoteAsset ? quoteAsset.network[DEFAULT_NETWORK_ID] : undefined,
             dropdownModal: true,
             forceHiddenLabel: isMobile ? true : false,
             options: [
@@ -225,13 +224,13 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
                 disabled: true,
                 hidden: true,
               },
-              ...[
+              ... quoteAsset ? [
                 {
-                  value: quoteAsset,
-                  icon: quoteAsset ? quoteAsset.icon : "",
-                  label: quoteAsset ? quoteAsset.symbol : "",
+                  value: quoteAsset.network[DEFAULT_NETWORK_ID],
+                  icon: quoteAsset.icon,
+                  label: quoteAsset.symbol,
                 },
-              ],
+              ] : [],
             ],
             borderLeft: false,
             minWidth: isMobile ? undefined : 150,
@@ -241,7 +240,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
             label: "Currency",
             BalanceProps: {
               title: <AccountBalanceWalletIcon color="primary" />,
-              balance: `${balanceQuote.toFixed(4)}`,
+              balance: `${balanceBase.toFixed(4)}`,
             },
           }}
         />
@@ -283,12 +282,12 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
           maxValue={balanceBase}
           setValid={setValid2}
           EndAdornmentAssetProps={{
-            assets: [
+            assets: baseAsset ? [
               {
-                icon: baseAsset ? baseAsset.icon : "",
-                label: baseAsset ? baseAsset.symbol : "",
+                icon: baseAsset.icon,
+                label: baseAsset.symbol,
               },
-            ],
+            ] : [],
           }}
           LabelProps={{
             label: "Launch token",

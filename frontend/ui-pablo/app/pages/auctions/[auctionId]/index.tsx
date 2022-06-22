@@ -20,9 +20,8 @@ import { AuctionDetails } from "@/components/Organisms/auction/AuctionDetails";
 import { BuyForm } from "@/components/Organisms/auction/BuyForm";
 import { AuctionHistoriesTable } from "@/components/Organisms/auction/AuctionHistoriesTable";
 import { AuctionPriceChart } from "@/components/Organisms/auction/AuctionPriceChart";
-import { useEffect, useState } from "react";
-import { getAssetById } from "@/defi/polkadot/Assets";
-import { fetchSpotPrice } from "@/defi/utils";
+import { useEffect, useMemo, useState } from "react";
+import { DEFAULT_NETWORK_ID, fetchSpotPrice } from "@/defi/utils";
 import { useParachainApi } from "substrate-react";
 import { useAuctionsChart } from "@/store/hooks/useAuctionsChart";
 import moment from "moment-timezone";
@@ -30,14 +29,24 @@ import useLiquidityBootstrappingPoolStore from "@/store/useStore";
 
 const Auction: NextPage = () => {
   const theme = useTheme();
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+
   const {
     pools: {
       setLiquidityBootstrappingPoolSpotPrice,
     },
     resetActiveLBP,
     auctions: { activeLBP, activeLBPStats },
+    supportedAssets
   } = useLiquidityBootstrappingPoolStore();
-  const { parachainApi } = useParachainApi("picasso");
+
+  const baseAsset = useMemo(() => {
+    return supportedAssets.find(a => a.network[DEFAULT_NETWORK_ID] === activeLBP.pair.base.toString())
+  }, [supportedAssets, activeLBP])
+
+  const quoteAsset = useMemo(() => {
+    return supportedAssets.find(a => a.network[DEFAULT_NETWORK_ID] === activeLBP.pair.quote.toString())
+  }, [supportedAssets, activeLBP])
 
   useEffect(() => {
     if (parachainApi && activeLBP.poolId !== -1) {
@@ -61,8 +70,7 @@ const Auction: NextPage = () => {
     }
   }, [parachainApi, activeLBP.poolId, activeLBP.pair, setLiquidityBootstrappingPoolSpotPrice]);
 
-  const baseAsset = getAssetById("picasso", activeLBP.pair.base);
-  const quoteAsset = getAssetById("picasso", activeLBP.pair.quote);
+
   const [currentTimestamp] = useState<number>(Date.now());
 
   const isActive: boolean =
@@ -181,7 +189,7 @@ const Auction: NextPage = () => {
               <AuctionDetails stats={activeLBPStats} auction={activeLBP} />
             </TabPanel>
             <TabPanel value={tab} index={1}>
-              <AuctionHistoriesTable auction={activeLBP} />
+              <AuctionHistoriesTable auction={activeLBP} baseAsset={baseAsset} quoteAsset={quoteAsset} />
             </TabPanel>
           </Box>
         </Box>
