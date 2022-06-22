@@ -12,7 +12,7 @@ pub trait WeightInfo {
 
 	fn sell<T: Config>(confs: &[T::LiquidationStrategyId]) -> Weight {
 		use frame_support::traits::Get as _;
-		let len = if confs.len() == 0 {
+		let len = if confs.is_empty() {
 			1 // because if configurations is empty we add default Configuration
 		} else {
 			confs.len() as Weight
