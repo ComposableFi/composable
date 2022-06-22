@@ -30,6 +30,8 @@ jobs:
       fail-fast: true
       
     steps:
+    - uses: hmarr/debug-action@v2
+
     - name: Clean up
       continue-on-error: true
       run: |
