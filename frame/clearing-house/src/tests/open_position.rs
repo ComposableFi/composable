@@ -8,7 +8,11 @@ use crate::{
 			Vamm as VammPallet,
 		},
 	},
-	pallet::{Config, Direction, Error, Event},
+	pallet::{
+		Config,
+		Direction::{Long, Short},
+		Error, Event,
+	},
 	tests::{
 		any_direction, any_price, as_balance, get_collateral, get_market, get_market_fee_pool,
 		get_outstanding_gains, get_position, run_for_seconds, run_to_time, set_fee_pool_depth,
@@ -85,7 +89,7 @@ fn fails_to_open_position_if_market_id_invalid() {
 			TestPallet::open_position(
 				Origin::signed(ALICE),
 				market_id + 1,
-				Direction::Long,
+				Long,
 				quote_amount,
 				base_amount_limit
 			),
@@ -112,7 +116,7 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 			assert_ok!(TestPallet::open_position(
 				Origin::signed(ALICE),
 				*market_id,
-				Direction::Long,
+				Long,
 				quote_amount,
 				base_amount_limit,
 			));
@@ -122,7 +126,7 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 			TestPallet::open_position(
 				Origin::signed(ALICE),
 				market_ids[max_positions],
-				Direction::Long,
+				Long,
 				quote_amount,
 				base_amount_limit,
 			),
@@ -161,12 +165,12 @@ proptest! {
 			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before + 1);
 			let position = get_position(&ALICE, &market_id).unwrap();
 			assert!(match direction {
-				Direction::Long => position.base_asset_amount.is_positive(),
-				Direction::Short => position.base_asset_amount.is_negative()
+				Long => position.base_asset_amount.is_positive(),
+				Short => position.base_asset_amount.is_negative()
 			});
 			assert!(match direction {
-				Direction::Long => position.quote_asset_notional_amount.is_positive(),
-				Direction::Short => position.quote_asset_notional_amount.is_negative()
+				Long => position.quote_asset_notional_amount.is_positive(),
+				Short => position.quote_asset_notional_amount.is_negative()
 			});
 
 			// Ensure cumulative funding is initialized to market's current
@@ -208,8 +212,8 @@ proptest! {
 					Origin::signed(ALICE),
 					market_id,
 					match eps.is_positive() {
-						true => Direction::Long,
-						false => Direction::Short,
+						true => Long,
+						false => Short,
 					},
 					quote_amount,
 					quote_amount, // price = 1
@@ -339,7 +343,7 @@ proptest! {
 				),
 				base_amount
 			);
-			let sign = match direction { Direction::Long => -1, _ => 1 };
+			let sign = match direction { Long => -1, _ => 1 };
 			let payment = sign * (rate * quote_amount as i128) / 10_000;
 			let margin = quote_amount as i128  + payment; // Initial margin minus fees + funding
 			assert_eq!(TestPallet::get_collateral(&ALICE), Some(margin as u128));
@@ -383,7 +387,7 @@ proptest! {
 			);
 
 			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
-			let sign = match direction { Direction::Long => 1, _ => -1 };
+			let sign = match direction { Long => 1, _ => -1 };
 			let margin = quote_amount as i128;
 			let pnl = sign * (new_base_value as i128) - sign * margin;
 			// Profits are outstanding since no one realized losses in the market
@@ -439,7 +443,7 @@ proptest! {
 			// Position remains open
 			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
 			// Fraction of the PnL is realized
-			let sign = match direction { Direction::Long => 1, _ => -1 };
+			let sign = match direction { Long => 1, _ => -1 };
 			let entry_value = fraction.saturating_mul_int(quote_amount);
 			let pnl = sign * (base_value_to_close as i128) - sign * (entry_value as i128);
 			if pnl >= 0 {
@@ -510,7 +514,7 @@ proptest! {
 				base_delta
 			);
 
-			let sign = match direction { Direction::Long => 1, _ => -1 };
+			let sign = match direction { Long => 1, _ => -1 };
 			// Full PnL is realized
 			let margin = quote_amount as i128;
 			let pnl = sign * (new_base_value as i128) - sign * margin;
@@ -626,8 +630,8 @@ proptest! {
 			);
 
 			let new_price: FixedU128 = match direction {
-				Direction::Long => 8, // decrease price => negative PnL
-				Direction::Short => 12, // increase price => negative PnL
+				Long => 8, // decrease price => negative PnL
+				Short => 12, // increase price => negative PnL
 			}.into();
 			VammPallet::set_price(Some(new_price));
 			let new_base_value = new_price.saturating_mul_int(base_amount_limit);
@@ -755,7 +759,7 @@ proptest! {
 			run_for_seconds(ONE_HOUR);
 			set_oracle_twap(&market_ids[0], (price_cents, 100).into());
 			VammPallet::set_twap(Some((
-				match direction { Direction::Long => price_cents + 1, _ => price_cents - 1 },
+				match direction { Long => price_cents + 1, _ => price_cents - 1 },
 				100
 			).into())); // funding rate = 1%
 			assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_ids[0]));
