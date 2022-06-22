@@ -136,7 +136,7 @@ fn get_position(account_id: &AccountId, market_id: &MarketId) -> Option<Position
 }
 
 fn get_outstanding_gains(account_id: AccountId, market_id: &MarketId) -> Balance {
-	TestPallet::outstanding_gains(&account_id, market_id).unwrap_or_else(Zero::zero)
+	TestPallet::outstanding_profits(&account_id, market_id).unwrap_or_else(Zero::zero)
 }
 
 fn get_market(market_id: &MarketId) -> Market {

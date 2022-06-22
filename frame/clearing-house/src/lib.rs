@@ -353,11 +353,11 @@ pub mod pallet {
 		ValueQuery,
 	>;
 
-	/// Gains that were realized but cannot be withdrawn due to lack of offsetting realized losses
+	/// Profits that were realized but cannot be withdrawn due to lack of offsetting realized losses
 	/// from other positions in the market.
 	#[pallet::storage]
-	#[pallet::getter(fn outstanding_gains)]
-	pub type OutstandingGains<T: Config> =
+	#[pallet::getter(fn outstanding_profits)]
+	pub type OutstandingProfits<T: Config> =
 		StorageDoubleMap<_, Blake2_128Concat, T::AccountId, Twox64Concat, T::MarketId, T::Balance>;
 
 	/// The number of markets, also used to generate the next market identifier.
@@ -1099,7 +1099,7 @@ pub mod pallet {
 			Self::update_oracle_twap(&mut market)?;
 
 			let outstanding_profits =
-				Self::outstanding_gains(account_id, market_id).unwrap_or_else(Zero::zero);
+				Self::outstanding_profits(account_id, market_id).unwrap_or_else(Zero::zero);
 			let TradeResponse {
 				mut collateral,
 				market,
@@ -1138,7 +1138,7 @@ pub mod pallet {
 
 			// Update storage
 			Collateral::<T>::insert(account_id, collateral);
-			OutstandingGains::<T>::insert(account_id, market_id, outstanding_profits);
+			OutstandingProfits::<T>::insert(account_id, market_id, outstanding_profits);
 			Positions::<T>::insert(account_id, positions);
 			Markets::<T>::insert(market_id, market);
 
@@ -1181,11 +1181,11 @@ pub mod pallet {
 				Self::check_oracle_guard_rails(&market, was_mark_index_too_divergent)?;
 
 				// Realize PnL
-				let mut outstanding_gains =
-					Self::outstanding_gains(account_id, market_id).unwrap_or_else(Zero::zero);
+				let mut outstanding_profits =
+					Self::outstanding_profits(account_id, market_id).unwrap_or_else(Zero::zero);
 				Self::settle_profit_and_loss(
 					&mut collateral,
-					&mut outstanding_gains,
+					&mut outstanding_profits,
 					&mut market,
 					exit_value.try_sub(&entry_value)?,
 				)?;
@@ -1205,7 +1205,7 @@ pub mod pallet {
 				Self::try_update_funding(market_id, &mut market)?;
 
 				Collateral::<T>::insert(account_id, collateral);
-				OutstandingGains::<T>::insert(account_id, market_id, outstanding_gains);
+				OutstandingProfits::<T>::insert(account_id, market_id, outstanding_profits);
 				Markets::<T>::insert(market_id, market);
 				Positions::<T>::insert(account_id, positions);
 
@@ -1631,15 +1631,19 @@ pub mod pallet {
 				position.last_cum_funding = market.cum_funding_rate(direction);
 			}
 
-			if !market.available_gains.is_zero() {
+			if !market.available_profits.is_zero() {
 				let mut outstanding_profits =
-					Self::outstanding_gains(account_id, &position.market_id)
+					Self::outstanding_profits(account_id, &position.market_id)
 						.unwrap_or_else(Zero::zero);
-				let realizable_profits = cmp::min(outstanding_profits, market.available_gains);
+				let realizable_profits = cmp::min(outstanding_profits, market.available_profits);
 				collateral.try_add_mut(&realizable_profits)?;
 				outstanding_profits.try_sub_mut(&realizable_profits)?;
-				market.available_gains.try_sub_mut(&realizable_profits)?;
-				OutstandingGains::<T>::insert(account_id, &position.market_id, outstanding_profits);
+				market.available_profits.try_sub_mut(&realizable_profits)?;
+				OutstandingProfits::<T>::insert(
+					account_id,
+					&position.market_id,
+					outstanding_profits,
+				);
 			}
 
 			Markets::<T>::insert(&position.market_id, market);
@@ -2171,23 +2175,23 @@ pub mod pallet {
 
 		fn settle_profit_and_loss(
 			collateral: &mut T::Balance,
-			outstanding_gains: &mut T::Balance,
+			outstanding_profits: &mut T::Balance,
 			market: &mut Market<T>,
 			pnl: T::Decimal,
 		) -> Result<(), DispatchError> {
 			if pnl.is_positive() {
-				// take the opportunity to settle any outstanding gains
-				outstanding_gains.try_add_mut(&pnl.into_balance()?)?;
-				let realized_gains = cmp::min(*outstanding_gains, market.available_gains);
-				collateral.try_add_mut(&realized_gains)?;
-				outstanding_gains.try_sub_mut(&realized_gains)?;
-				market.available_gains.try_sub_mut(&realized_gains)?;
+				// take the opportunity to settle any outstanding profits
+				outstanding_profits.try_add_mut(&pnl.into_balance()?)?;
+				let realized_profits = cmp::min(*outstanding_profits, market.available_profits);
+				collateral.try_add_mut(&realized_profits)?;
+				outstanding_profits.try_sub_mut(&realized_profits)?;
+				market.available_profits.try_sub_mut(&realized_profits)?;
 			} else {
 				let losses = pnl.into_balance()?;
-				let outstanding_gains_lost = cmp::min(*outstanding_gains, losses);
-				let realized_losses = losses.saturating_sub(outstanding_gains_lost);
-				outstanding_gains.try_sub_mut(&outstanding_gains_lost)?;
-				market.available_gains.try_add_mut(&realized_losses)?;
+				let outstanding_profits_lost = cmp::min(*outstanding_profits, losses);
+				let realized_losses = losses.saturating_sub(outstanding_profits_lost);
+				outstanding_profits.try_sub_mut(&outstanding_profits_lost)?;
+				market.available_profits.try_add_mut(&realized_losses)?;
 				// Shortfalls are covered by the Insurance Fund in `withdraw_collateral`
 				*collateral = (*collateral).saturating_sub(realized_losses);
 			}
