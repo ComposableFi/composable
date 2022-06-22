@@ -95,9 +95,8 @@ pub mod pallet {
 		/// A type representing a remote AMM ID.
 		type RemoteAmmId: FullCodec + MaxEncodedLen + TypeInfo + Clone + Debug + PartialEq;
 
-		/// Origin capable of setting the relayer. Inteded to be RootOrHalfCouncil, as it is also
+		/// Origin capable of setting the relayer and AMM IDs. Inteded to be RootOrHalfCouncil, as it is also
 		/// used as the origin capable of stopping attackers.
-		/// Also the origin capable of setting Remote AMM IDs
 		type ControlOrigin: EnsureOrigin<Self::Origin>;
 
 		/// Weight implementation used for extrinsics.
