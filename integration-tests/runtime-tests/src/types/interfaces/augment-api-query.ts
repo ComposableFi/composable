@@ -36,6 +36,7 @@ import type {
   PalletDemocracyVoteVoting,
   PalletDutchAuctionSellOrder,
   PalletDutchAuctionTakeOrder,
+  PalletIbcIbcConsensusState,
   PalletIdentityRegistrarInfo,
   PalletIdentityRegistration,
   PalletLiquidationsLiquidationStrategyConfiguration,

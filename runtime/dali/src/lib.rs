@@ -865,6 +865,24 @@ impl crowdloan_rewards::Config for Runtime {
 	type Time = Timestamp;
 }
 
+parameter_types! {
+	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
+}
+
+impl pallet_staking_rewards::Config for Runtime {
+	type Event = Event;
+	type Share = Balance;
+	type Balance = Balance;
+	type PoolId = u16;
+	type PositionId = u128;
+	type MayBeAssetId = CurrencyId;
+	type CurrencyFactory = CurrencyFactory;
+	type UnixTime = Timestamp;
+	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
+	type PalletId = StakingRewardsPalletId;
+	type WeightInfo = ();
+}
+
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -1143,6 +1161,8 @@ construct_runtime!(
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
+		StakingRewards: pallet_staking_rewards = 67,
+
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 
 		// IBC Support, pallet-ibc should be the last in the list of pallets that use the ibc protocol

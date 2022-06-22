@@ -54,6 +54,7 @@ import type {
   FrameSupportScheduleLookupError,
   FrameSupportScheduleMaybeHashed,
   FrameSystemAccountInfo,
+  IbcTraitOpenChannelParams,
   OrmlTokensAccountData,
   OrmlTokensBalanceLock,
   OrmlTokensReserveData,
@@ -76,6 +77,12 @@ import type {
   PalletDemocracyVoteVoting,
   PalletDutchAuctionSellOrder,
   PalletDutchAuctionTakeOrder,
+  PalletIbcAny,
+  PalletIbcConnectionParams,
+  PalletIbcErrorsIbcError,
+  PalletIbcEventsIbcEvent,
+  PalletIbcIbcConsensusState,
+  PalletIbcPingSendPingParams,
   PalletIdentityBitFlags,
   PalletIdentityIdentityInfo,
   PalletIdentityJudgement,
@@ -1687,6 +1694,7 @@ declare module "@polkadot/types/types/registry" {
     I64: I64;
     i8: i8;
     I8: I8;
+    IbcTraitOpenChannelParams: IbcTraitOpenChannelParams;
     IdentificationTuple: IdentificationTuple;
     IdentityFields: IdentityFields;
     IdentityInfo: IdentityInfo;
@@ -1889,6 +1897,12 @@ declare module "@polkadot/types/types/registry" {
     PalletErrorMetadataV14: PalletErrorMetadataV14;
     PalletEventMetadataLatest: PalletEventMetadataLatest;
     PalletEventMetadataV14: PalletEventMetadataV14;
+    PalletIbcAny: PalletIbcAny;
+    PalletIbcConnectionParams: PalletIbcConnectionParams;
+    PalletIbcErrorsIbcError: PalletIbcErrorsIbcError;
+    PalletIbcEventsIbcEvent: PalletIbcEventsIbcEvent;
+    PalletIbcIbcConsensusState: PalletIbcIbcConsensusState;
+    PalletIbcPingSendPingParams: PalletIbcPingSendPingParams;
     PalletId: PalletId;
     PalletIdentityBitFlags: PalletIdentityBitFlags;
     PalletIdentityIdentityInfo: PalletIdentityIdentityInfo;

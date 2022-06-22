@@ -1,0 +1,41 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Oracle initializer",
+      "request": "launch",
+      "internalConsoleOptions": "openOnSessionStart",
+      "runtimeArgs": ["start"],
+      "runtimeExecutable": "yarn",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    },
+    {
+      "name": "Lint",
+      "request": "launch",
+      "internalConsoleOptions": "openOnSessionStart",
+      "runtimeArgs": ["run", "lint"],
+      "runtimeExecutable": "yarn",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    },
+    {
+      "name": "Lint Dry Run",
+      "request": "launch",
+      "internalConsoleOptions": "openOnSessionStart",
+      "runtimeArgs": ["run", "lint"],
+      "runtimeExecutable": "yarn",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    },
+    {
+      "name": "Regenerate Types",
+      "request": "launch",
+      "internalConsoleOptions": "openOnSessionStart",
+      "runtimeArgs": ["run", "gen"],
+      "runtimeExecutable": "yarn",
+      "skipFiles": ["<node_internals>/**"],
+      "type": "node"
+    }
+  ]
+}

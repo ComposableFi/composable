@@ -16,6 +16,8 @@ import type {
   PalletDemocracyVoteAccountVote,
   PalletDemocracyVoteThreshold,
   PalletDutchAuctionSellOrder,
+  PalletIbcErrorsIbcError,
+  PalletIbcEventsIbcEvent,
   PalletMosaicDecayBudgetPenaltyDecayer,
   PalletMosaicNetworkInfo
 } from "@composable/types/interfaces/crowdloanRewards";

@@ -845,10 +845,6 @@ declare module "@polkadot/api-base/types/errors" {
        **/
       MaxPrices: AugmentedError<ApiType>;
       /**
-       * Price weight must sum to 100
-       **/
-      MustSumTo100: AugmentedError<ApiType>;
-      /**
        * No Permission
        **/
       NoPermission: AugmentedError<ApiType>;

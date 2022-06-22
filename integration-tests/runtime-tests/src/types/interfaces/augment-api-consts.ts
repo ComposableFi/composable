@@ -328,6 +328,7 @@ declare module "@polkadot/api-base/types/consts" {
     oracle: {
       maxHistory: u32 & AugmentedConst<ApiType>;
       maxPrePrices: u32 & AugmentedConst<ApiType>;
+      twapWindow: u16 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

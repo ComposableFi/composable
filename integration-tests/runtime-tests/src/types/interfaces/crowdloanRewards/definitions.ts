@@ -178,6 +178,13 @@ export default {
         miscFrozen: "u128",
         feeFrozen: "u128"
       }
-    }
+    },
+    PalletIbcPingSendPingParams: "Null",
+    IbcTraitOpenChannelParams: "Null",
+    PalletIbcConnectionParams: "Null",
+    PalletIbcAny: "Null",
+    PalletIbcIbcConsensusState: "Null",
+    PalletIbcEventsIbcEvent: "Null",
+    PalletIbcErrorsIbcError: "Null"
   }
 };
