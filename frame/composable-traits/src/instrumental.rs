@@ -2,22 +2,25 @@ use codec::Codec;
 use frame_support::{pallet_prelude::*, sp_std::fmt::Debug};
 use sp_runtime::Perquintill;
 
+/// An indication of pool state. Shows whether the transfer of assets is currently taking place with the current pool.
 #[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, MaxEncodedLen, TypeInfo)]
 pub enum State {
 	/// Indicates that there is currently no asset transfering going on for this asset
-	/// and it can be incilized
+	/// and it can be initialized.
 	Normal,
 	/// Indicates that an asset is currently being transferred from one pool to another
-	/// for this asset, so it is not possible to initialize a new transfer
+	/// for this asset, so it is not possible to initialize a new transfer.
 	Transferrig,
 }
 
+/// An ndication of access rights for admin accounts.
 #[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, MaxEncodedLen, TypeInfo)]
 pub enum AccessRights {
+	/// Account has full access rigths
 	Full,
-
+	/// Account has access only to `rebalance` function
 	Rebalance,
-
+	/// Account has access only to `set_pool_id_for_asset` function
 	SetPoolId,
 }
 
