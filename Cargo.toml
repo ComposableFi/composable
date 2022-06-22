@@ -10,5 +10,6 @@ path = "./bin/main.rs"
 
 [dependencies]
 futures = "0.3.21"
-tokio = "1.18.2"
 async-trait = "0.1.53"
+tokio = { version = "1.19.2", features = ["macros"] }
+ibc = { git = "https://github.com/composableFi/ibc-rs.git", branch = "master" }
