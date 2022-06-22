@@ -1098,6 +1098,9 @@ pub mod pallet {
 			// Update oracle TWAP *before* swapping
 			Self::update_oracle_twap(&mut market)?;
 
+			// For checking oracle guard rails afterwards
+			let mark_index_divergence_before = Self::mark_index_divergence(&market)?;
+
 			let outstanding_profits =
 				Self::outstanding_profits(account_id, market_id).unwrap_or_else(Zero::zero);
 			let TradeResponse {
@@ -1113,6 +1116,14 @@ pub mod pallet {
 				&mut quote_abs_amount_decimal,
 				base_asset_amount_limit,
 			)?;
+
+			Self::check_oracle_guard_rails(
+				&market,
+				mark_index_divergence_before,
+				is_risk_increasing,
+			)?;
+
+			// If the trade kept the position open, re-add it
 			if let Some(p) = position {
 				positions.try_push(p).map_err(|_| Error::<T>::MaxPositionsExceeded)?;
 			}
@@ -1168,7 +1179,7 @@ pub mod pallet {
 				Self::update_oracle_twap(&mut market)?;
 
 				// For checking oracle guard rails afterwards
-				let was_mark_index_too_divergent = Self::is_mark_index_too_divergent(&market)?;
+				let mark_index_divergence_before = Self::mark_index_divergence(&market)?;
 
 				let (base_swapped, entry_value, exit_value) = Self::do_close_position(
 					&mut positions,
@@ -1178,7 +1189,7 @@ pub mod pallet {
 					Zero::zero(),
 				)?;
 
-				Self::check_oracle_guard_rails(&market, was_mark_index_too_divergent)?;
+				Self::check_oracle_guard_rails(&market, mark_index_divergence_before, false)?;
 
 				// Realize PnL
 				let mut outstanding_profits =
@@ -1656,18 +1667,31 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		fn check_oracle_guard_rails(
 			market: &Market<T>,
-			was_mark_index_too_divergent: bool,
+			mark_index_divergence_before: T::Decimal,
+			is_risk_increasing: bool,
 		) -> Result<(), DispatchError> {
+			let was_mark_index_too_divergent =
+				Self::exceeds_max_price_divergence(mark_index_divergence_before);
+			let divergence = Self::mark_index_divergence(market)?;
+			let is_mark_index_too_divergent = Self::exceeds_max_price_divergence(divergence);
+
 			// Block if mark-index divergence was pushed too far
 			ensure!(
-				was_mark_index_too_divergent || !Self::is_mark_index_too_divergent(market)?,
+				was_mark_index_too_divergent || !is_mark_index_too_divergent,
+				Error::<T>::OracleMarkTooDivergent
+			);
+
+			ensure!(
+				!is_risk_increasing ||
+					!is_mark_index_too_divergent ||
+					divergence <= mark_index_divergence_before,
 				Error::<T>::OracleMarkTooDivergent
 			);
 
 			Ok(())
 		}
 
-		fn is_mark_index_too_divergent(market: &Market<T>) -> Result<bool, DispatchError> {
+		fn mark_index_divergence(market: &Market<T>) -> Result<T::Decimal, DispatchError> {
 			let index_price_in_cents =
 				T::Oracle::get_price(market.asset_id, T::Decimal::one().into_balance()?)?.price;
 			let index_price = T::Decimal::checked_from_rational(index_price_in_cents, 100)
@@ -1676,7 +1700,11 @@ pub mod pallet {
 				T::Vamm::get_price(market.vamm_id, AssetType::Base)?.into_signed()?;
 
 			let divergence = mark_price.try_sub(&index_price)?.try_div(&index_price)?;
-			Ok(divergence.saturating_abs() > Self::max_price_divergence())
+			Ok(divergence)
+		}
+
+		fn exceeds_max_price_divergence(divergence: T::Decimal) -> bool {
+			divergence.saturating_abs() > Self::max_price_divergence()
 		}
 
 		fn is_funding_update_time(
