@@ -38,18 +38,6 @@ fn cross_margin_context<R>(
 }
 
 // ----------------------------------------------------------------------------------------------------
-//                                          Valid Inputs
-// ----------------------------------------------------------------------------------------------------
-
-fn valid_quote_asset_amount() -> Balance {
-	as_balance(100)
-}
-
-fn valid_base_asset_amount_limit() -> Balance {
-	as_balance(10)
-}
-
-// ----------------------------------------------------------------------------------------------------
 //                                             Prop Compose
 // ----------------------------------------------------------------------------------------------------
 
@@ -76,8 +64,8 @@ prop_compose! {
 
 #[test]
 fn fails_to_open_position_if_market_id_invalid() {
-	let quote_amount = valid_quote_asset_amount();
-	let base_amount_limit = valid_base_asset_amount_limit();
+	let quote_amount = as_balance(100);
+	let base_amount_limit = as_balance(10);
 
 	with_trading_context(MarketConfig::default(), quote_amount, |market_id| {
 		// Current price = quote_amount / base_amount_limit
@@ -101,11 +89,11 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 	let max_positions = <Runtime as Config>::MaxPositions::get() as usize;
 	let orders = max_positions + 1;
 	let configs = vec![MarketConfig::default(); orders];
-	let margin = valid_quote_asset_amount();
+	let margin = as_balance(100);
 
 	cross_margin_context(configs, margin, |market_ids| {
 		let quote_amount: Balance = margin / (orders as u128);
-		let base_amount_limit: Balance = valid_base_asset_amount_limit() / (orders as u128);
+		let base_amount_limit: Balance = as_balance(10) / (orders as u128);
 
 		// Current price = quote_amount / base_amount_limit
 		VammPallet::set_price(Some((quote_amount, base_amount_limit).into()));
@@ -141,14 +129,14 @@ proptest! {
 	#[test]
 	fn open_position_in_new_market_succeeds(direction in any_direction()) {
 		let config = MarketConfig { taker_fee: 10 /* 0.1% */, ..Default::default() };
-		let quote_amount = valid_quote_asset_amount();
+		let quote_amount = as_balance(100);
 		let fees = (quote_amount * config.taker_fee) / 10_000;
 
 		// Have enough margin to pay for fees
 		with_trading_context(config, quote_amount + fees, |market_id| {
 			let positions_before = TestPallet::get_positions(&ALICE).len();
 
-			let base_amount = valid_base_asset_amount_limit();
+			let base_amount = as_balance(10);
 			// Current price = quote_amount / base_amount
 			VammPallet::set_price(Some((quote_amount, base_amount).into()));
 			assert_ok!(TestPallet::open_position(
@@ -227,12 +215,12 @@ proptest! {
 		(minimum_trade_size, eps) in min_trade_size_and_eps(as_balance((1, 100)))
 	) {
 		let config = MarketConfig { minimum_trade_size, ..Default::default() };
-		let quote_amount = valid_quote_asset_amount();
+		let quote_amount = as_balance(100);
 
 		with_trading_context(config, quote_amount, |market_id| {
 			let positions_before = TestPallet::get_positions(&ALICE).len();
 
-			let base_amount_limit = valid_base_asset_amount_limit();
+			let base_amount_limit = as_balance(10);
 			// price * base_amount_limit = quote_amount
 			VammPallet::set_price(Some((quote_amount, base_amount_limit).into()));
 			assert_ok!(TestPallet::open_position(
