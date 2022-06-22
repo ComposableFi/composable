@@ -5,6 +5,13 @@ on:
     branches:
       - main
 
+on:
+  workflow_run:
+    workflows:
+      - "Build composable-sandbox Docker image"
+    types:
+      - completed
+
 jobs:
   tests:
     name: Runtime tests

@@ -1,4 +1,4 @@
-name: "composable-sandbox Docker image"
+name: "Build composable-sandbox Docker image"
 
 on:
   workflow_dispatch:
