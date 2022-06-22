@@ -58,3 +58,5 @@ jobs:
     - name: Push Docker image without latest tag
       if: ${{ github.ref != 'refs/heads/main' }}
       run: make push-composable-sandbox-without-latest-tag
+
+    - uses: hmarr/debug-action@v2
