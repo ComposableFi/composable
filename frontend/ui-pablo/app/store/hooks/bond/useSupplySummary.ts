@@ -2,11 +2,11 @@ import useStore from "../../useStore";
 
 import { useMemo } from "react";
 import { useParachainApi } from "substrate-react";
-import { useBlockInterval } from "../../../utils/defi/hooks/polkadot/useBlockInterval";
-import { getAppoloPriceInUSD } from "../../../utils/defi/apollo";
 import { ISupplySummary } from "../../bonds/bonds.types";
-import { fromChainUnits } from "../../../utils/defi/fromChainUnits";
+
 import { fetchVesitngPeriod } from "../../bonds/fetchVestingPeriod";
+import { useBlockInterval } from "@/defi/hooks";
+import { DEFAULT_NETWORK_ID, fetchApolloPriceByAssetId, fromChainUnits } from "@/defi/utils";
 
 type Props = {
   offerId: number;
@@ -15,7 +15,7 @@ type Props = {
 export function useSupplySummary({
   offerId,
 }: Props): "no-summary" | ISupplySummary {
-  const { parachainApi } = useParachainApi("picasso");
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const { allBonds } = useStore();
   const interval = useBlockInterval();
 
@@ -32,24 +32,22 @@ export function useSupplySummary({
     principalAsset: selectedBond.bondOffer.asset,
     rewardAsset: selectedBond.bondOffer.reward.asset,
     marketPriceInUSD: async () => {
-      const rewardPriceInUSD = (
-        await getAppoloPriceInUSD(
+      const rewardPriceInUSD = 
+        await fetchApolloPriceByAssetId(
           parachainApi,
-          selectedBond.bondOffer.reward.currencyId
-        )
-      ).toNumber();
-      return fromChainUnits(selectedBond.bondOffer.reward.amount)
+          selectedBond.bondOffer.reward.currencyId.toString()
+        );
+      return fromChainUnits(selectedBond.bondOffer.reward.amount.toString())
         .times(rewardPriceInUSD)
         .toNumber();
     },
     bondPriceInUSD: async () => {
-      const principalPriceInUSD = (
-        await getAppoloPriceInUSD(
+      const principalPriceInUSD = 
+        await fetchApolloPriceByAssetId(
           parachainApi,
-          selectedBond.bondOffer.currencyId
-        )
-      ).toNumber();
-      return fromChainUnits(selectedBond.bondOffer.bondPrice)
+          selectedBond.bondOffer.currencyId.toString()
+        );
+      return fromChainUnits(selectedBond.bondOffer.bondPrice.toString())
         .times(principalPriceInUSD)
         .toNumber();
     },

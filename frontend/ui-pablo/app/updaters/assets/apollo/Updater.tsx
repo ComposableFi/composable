@@ -20,7 +20,8 @@ const Updater = () => {
       Array.from(onChainAssetIds).map(onChainAssetId => {
         fetchApolloPriceByAssetId(parachainApi, onChainAssetId).then(price => {
           // updateApolloPrice(onChainAssetId.toString(), price);
-          updateApolloPrice(onChainAssetId.toString(), "1");
+          // updateApolloPrice(onChainAssetId, "1");
+          console.log(onChainAssetId)
         })
       })
     }

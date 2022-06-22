@@ -3,11 +3,10 @@ import useStore from "../../useStore";
 
 import { useMemo } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
-import { useBlockInterval } from "../../../utils/defi/hooks/polkadot/useBlockInterval";
-import { fromChainUnits } from "../../../utils/defi/fromChainUnits";
 import { fetchVesitngPeriod } from "../../bonds/fetchVestingPeriod";
 import { IDepositSummary } from "../../bonds/bonds.types";
-import { DEFAULT_NETWORK_ID, fetchBalanceByAssetId } from "@/defi/utils";
+import { DEFAULT_NETWORK_ID, fetchBalanceByAssetId, fromChainUnits } from "@/defi/utils";
+import { useBlockInterval } from "@/defi/hooks";
 
 type Props = {
   offerId: number;
@@ -29,14 +28,14 @@ export function useDepositSummary({
     return "no-summary";
   }
 
-  const lpPerBond = fromChainUnits(selectedBond.bondOffer.bondPrice);
+  const lpPerBond = fromChainUnits(selectedBond.bondOffer.bondPrice.toString());
   const vestingPeriod = fetchVesitngPeriod({
     interval: interval ? interval.toNumber() : undefined,
     bondMaturity: selectedBond.bondOffer.maturity,
   });
 
   const getNbOfBonds = (amount: number) => {
-    const principalTokens = fromChainUnits(selectedBond.bondOffer.bondPrice);
+    const principalTokens = fromChainUnits(selectedBond.bondOffer.bondPrice.toString());
     return Math.round(
       new BigNumber(amount)
         .div(principalTokens)
@@ -66,7 +65,7 @@ export function useDepositSummary({
       return getNbOfBonds(amount);
     },
     rewardableTokens: (amount: number) => {
-      const rewardTokens = fromChainUnits(selectedBond.bondOffer.reward.amount);
+      const rewardTokens = fromChainUnits(selectedBond.bondOffer.reward.amount.toString());
       return rewardTokens.times(getNbOfBonds(amount)).toString();
     },
     roi: selectedBond.roi,

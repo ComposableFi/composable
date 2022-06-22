@@ -9,6 +9,7 @@ export const useAllLpTokenRewardingPools = (): any[] => {
   return useMemo(() => {
     const allSS = [...stableSwapPools.verified];
     const allCp = [
+      ...
       constantProductPools.verified
     ]
 

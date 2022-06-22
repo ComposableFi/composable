@@ -7,11 +7,12 @@ import _ from "lodash";
 import { useMemo } from "react";
 import { DailyRewards } from "../poolStats/poolStats.types";
 import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
+import { MockedAsset } from "../assets/assets.types";
 
 export interface LiquidityPoolRow {
   poolId: number;
-  baseAsset: AssetMetadata;
-  quoteAsset: AssetMetadata;
+  baseAsset: MockedAsset | undefined;
+  quoteAsset: MockedAsset | undefined;
   totalVolume: BigNumber;
   apr: BigNumber;
   totalValueLocked: BigNumber;
@@ -20,14 +21,16 @@ export interface LiquidityPoolRow {
 }
 
 export const useLiquidityPoolsList = (): LiquidityPoolRow[] => {
-  const { poolStats, poolStatsValue, poolLiquidity } = useStore();
+  const { poolStats, poolStatsValue, poolLiquidity, supportedAssets } = useStore();
   const allLpRewardingPools = useAllLpTokenRewardingPools();
 
   const liquidityPoolsList = useMemo(() => {
     return allLpRewardingPools.map((pool) => {
-      const { pair, poolId } = pool;
-      const baseAsset = getAssetByOnChainId(DEFAULT_NETWORK_ID, pair.base);
-      const quoteAsset = getAssetByOnChainId(DEFAULT_NETWORK_ID, pair.quote);
+      const { poolId, pair } = pool;
+
+      const baseAsset = supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === pair.base.toString())
+      const quoteAsset = supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === pair.quote.toString())
+
       const lpTokenAssetId = pool.lpToken;
 
       let totalVolume = new BigNumber(0);
@@ -59,7 +62,7 @@ export const useLiquidityPoolsList = (): LiquidityPoolRow[] => {
       };
     })
 
-  }, [allLpRewardingPools, poolLiquidity, poolStatsValue, poolStats]);
+  }, [allLpRewardingPools, poolLiquidity, poolStatsValue, poolStats, supportedAssets]);
 
   return liquidityPoolsList;
 };

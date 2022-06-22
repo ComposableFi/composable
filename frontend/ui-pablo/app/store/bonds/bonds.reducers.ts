@@ -6,7 +6,7 @@ import {
   fetchMomentBasedVestingTime,
 } from "./fetchVestingTime";
 import { BondOffer, BondSlice, VestingSchedule } from "./bonds.types";
-import { fromChainUnits } from "../../utils/defi/fromChainUnits";
+import { fromChainUnits } from "@/defi/utils";
 
 export const addActiveBond = (
   activeBonds: BondSlice["activeBonds"],
@@ -59,7 +59,9 @@ export const addBond = (
   rewardAppoloPriceInUSD: number
 ) => {
   const price = fromChainUnits(
-    new BigNumber(bondOffer.bondPrice).times(principalAppoloPriceInUSD)
+    new BigNumber(bondOffer.bondPrice)
+      .times(principalAppoloPriceInUSD)
+      .toString()
   );
   return produce(allBonds, (draft) => {
     draft.push({
@@ -70,6 +72,7 @@ export const addBond = (
         new BigNumber(rewardAppoloPriceInUSD)
           .times(bondOffer.reward.amount)
           .times(100)
+          .toString()
       ).div(price),
       totalPurchased: new BigNumber(0), // TBD
       bondOffer,
