@@ -1049,20 +1049,6 @@ pub mod pallet {
 				Ok(())
 			})
 		}
-		// Check if valut and strategy are balanced.
-		// If available_funds() returns FundsAvailability::Depositable then vault is unbalanced,
-		// except the case when returned balances equals zero.
-		fn is_vault_balanced(
-			vault_id: &Self::VaultId,
-			account_id: &Self::AccountId,
-		) -> Result<bool, DispatchError> {
-			if let FundsAvailability::Depositable(balance) =
-				<Self as StrategicVault>::available_funds(vault_id, account_id)?
-			{
-				return Ok(balance.is_zero())
-			}
-			Ok(true)
-		}
 	}
 
 	impl<T: Config> ReportableStrategicVault for Pallet<T> {
