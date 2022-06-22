@@ -1098,14 +1098,17 @@ pub mod pallet {
 			// Update oracle TWAP *before* swapping
 			Self::update_oracle_twap(&mut market)?;
 
+			let outstanding_profits =
+				Self::outstanding_gains(account_id, market_id).unwrap_or_else(Zero::zero);
 			let TradeResponse {
 				mut collateral,
 				market,
 				position,
+				outstanding_profits,
 				base_swapped,
 				is_risk_increasing,
 			} = Self::execute_trade(
-				TraderPositionState { collateral, market, position },
+				TraderPositionState { collateral, market, position, outstanding_profits },
 				direction,
 				&mut quote_abs_amount_decimal,
 				base_asset_amount_limit,
@@ -1135,6 +1138,7 @@ pub mod pallet {
 
 			// Update storage
 			Collateral::<T>::insert(account_id, collateral);
+			OutstandingGains::<T>::insert(account_id, market_id, outstanding_profits);
 			Positions::<T>::insert(account_id, positions);
 			Markets::<T>::insert(market_id, market);
 
@@ -1945,7 +1949,12 @@ pub mod pallet {
 			quote_abs_amount_decimal: &mut T::Decimal,
 			base_asset_amount_limit: T::Balance,
 		) -> Result<TradeResponse<T>, DispatchError> {
-			let TraderPositionState { mut collateral, mut market, mut position } = state;
+			let TraderPositionState {
+				mut collateral,
+				mut market,
+				mut position,
+				mut outstanding_profits,
+			} = state;
 
 			let base_swapped;
 			// Whether or not the trade increases the risk exposure of the account
@@ -2021,15 +2030,21 @@ pub mod pallet {
 						},
 					};
 
-				let pnl = exit_value.try_sub(&entry_value)?;
 				// Realize PnL
-				collateral = Self::update_margin_with_pnl(&collateral, &pnl)?;
+				let pnl = exit_value.try_sub(&entry_value)?;
+				Self::settle_profit_and_loss(
+					&mut collateral,
+					&mut outstanding_profits,
+					&mut market,
+					pnl,
+				)?;
 			}
 
 			Ok(TradeResponse {
 				collateral,
 				market,
 				position: new_position,
+				outstanding_profits,
 				base_swapped,
 				is_risk_increasing,
 			})

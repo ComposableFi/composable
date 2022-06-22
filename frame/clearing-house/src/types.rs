@@ -264,12 +264,14 @@ pub struct TraderPositionState<T: Config> {
 	pub collateral: T::Balance,
 	pub market: Market<T>,
 	pub position: Position<T>,
+	pub outstanding_profits: T::Balance,
 }
 
 pub struct TradeResponse<T: Config> {
 	pub collateral: T::Balance,
 	pub market: Market<T>,
 	pub position: Option<Position<T>>,
+	pub outstanding_profits: T::Balance,
 	pub base_swapped: T::Balance,
 	pub is_risk_increasing: bool,
 }
