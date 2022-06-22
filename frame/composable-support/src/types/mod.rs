@@ -85,10 +85,5 @@ impl From<CosmosEcdsaSignature> for EcdsaSignature {
         sig.copy_from_slice(&item.0);
 
         EcdsaSignature(sig)
-		// let mut sig = item.0.to_vec();
-		// sig.push(0);
-		// let mut signature: [u8; 65] = [0; 65];
-		// signature.copy_from_slice(sig.as_slice());
-		// EcdsaSignature(signature)
 	}
 }

@@ -537,15 +537,6 @@ pub mod pallet {
 		) -> Option<CosmosAddress> {
 			let msg = sha2_256(&[prefix, msg].concat());
 
-			// let pub_key = match cosmos_address {
-			//     CosmosAddress::Secp256k1(_) =>
-			// sp_io::crypto::secp256k1_ecdsa_recover_compressed(sig, &msg).ok()?,
-			//     CosmosAddress::Secp256r1(pub_key) => {
-			//         let sig = Signature::from(sig);
-			//         let verify_key = VerifyingKey::from(pub_key);
-			//     }
-			// };
-
 			match cosmos_address {
 				CosmosAddress::Secp256k1(pub_key) => {
 					// Cosmos gives us a 64-byte, we convert it into the more standard 65-byte
