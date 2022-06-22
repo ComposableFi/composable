@@ -1887,7 +1887,7 @@ pub mod pallet {
 			Ok(match positions.iter().position(|p| p.market_id == *market_id) {
 				Some(index) => positions.swap_remove(index),
 				None => {
-					// Ensure there is space if the position is added to the vector later
+					// Ensure there is space for the position to be added to the vector later
 					ensure!(
 						positions.len() < BoundedVec::<Position<T>, T::MaxPositions>::bound(),
 						Error::<T>::MaxPositionsExceeded
