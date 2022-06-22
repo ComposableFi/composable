@@ -1,5 +1,3 @@
-import { AssetId } from "@/defi/polkadot/types";
-
 export interface MockedAsset {
     name: string;
     decimals: number;

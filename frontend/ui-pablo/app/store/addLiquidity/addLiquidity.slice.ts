@@ -1,4 +1,3 @@
-import { AssetId } from "@/defi/polkadot/types";
 import create from "zustand";
 import { ConstantProductPool, StableSwapPool } from "../pools/pools.types";
 
