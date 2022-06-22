@@ -232,8 +232,7 @@ pub mod pallet {
 				access_right == AccessRights::Full || access_right == AccessRights::SetPoolId,
 				Error::<T>::NotEnoughAccessRights
 			);
-			<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
-			Ok(())
+			<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)
 		}
 	}
 
@@ -314,8 +313,7 @@ pub mod pallet {
 			let vault_account = T::Vault::account_id(vault_id);
 			let pool_id_and_state = Self::pools(asset_id).ok_or(Error::<T>::PoolNotFound)?;
 			let pool_id = pool_id_and_state.pool_id;
-			let task = T::Vault::available_funds(vault_id, &Self::account_id())?;
-			match task {
+			match T::Vault::available_funds(vault_id, &Self::account_id())? {
 				FundsAvailability::Withdrawable(balance) => {
 					Self::withdraw(vault_account, pool_id, balance)?;
 				},
