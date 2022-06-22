@@ -233,7 +233,7 @@ const Updater = () => {
             ),
             fetchSpotPrice(
               parachainApi,
-              swaps.poolConstants.pair,
+              { base: swaps.poolConstants.pair.base.toString(), quote: swaps.poolConstants.pair.quote.toString() },
               swaps.poolConstants.poolIndex
             ),
           ];

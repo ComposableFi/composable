@@ -43,7 +43,11 @@ const Auction: NextPage = () => {
     if (parachainApi && activeLBP.poolId !== -1) {
       const interval = setInterval(() => {
         console.log("SP Interval");
-        fetchSpotPrice(parachainApi, activeLBP.pair, activeLBP.poolId).then(
+        const pair = {
+          base: activeLBP.pair.base.toString(),
+          quote: activeLBP.pair.quote.toString()
+        }
+        fetchSpotPrice(parachainApi, pair, activeLBP.poolId).then(
           (spotPrice) => {
             setLiquidityBootstrappingPoolSpotPrice(
               activeLBP.poolId,
@@ -55,7 +59,7 @@ const Auction: NextPage = () => {
 
       return () => clearInterval(interval);
     }
-  }, [parachainApi, activeLBP.poolId]);
+  }, [parachainApi, activeLBP.poolId, activeLBP.pair, setLiquidityBootstrappingPoolSpotPrice]);
 
   const baseAsset = getAssetById("picasso", activeLBP.pair.base);
   const quoteAsset = getAssetById("picasso", activeLBP.pair.quote);

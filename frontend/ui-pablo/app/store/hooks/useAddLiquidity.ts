@@ -1,8 +1,3 @@
-import {
-  Assets,
-  AssetsValidForNow,
-  getAssetOnChainId,
-} from "@/defi/polkadot/Assets";
 import { AssetId } from "@/defi/polkadot/types";
 import { setSelection, useAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
 import useStore from "@/store/useStore";

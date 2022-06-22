@@ -21,7 +21,7 @@ const CreatePoolHome: NextPage = () => {
 
   useEffect(() => {
     extensionStatus !== "connected" && !isPolkadotModalOpen && router.push('/pool');
-  }, [extensionStatus, isPolkadotModalOpen]);
+  }, [extensionStatus, isPolkadotModalOpen, router]);
 
   const breadcrumbs = [
     <Link key="pool" underline="none" color="primary" href="/pool">

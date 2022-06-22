@@ -39,7 +39,7 @@ export const useLiquidityByPool = (
     if (pool && parachainApi) {
       fetchAndUpdatePoolLiquidity(pool as any, setTokenAmountInLiquidityPool, parachainApi)
     }
-  }, [pool, parachainApi])
+  }, [pool, parachainApi, setTokenAmountInLiquidityPool])
   /**
    * Use Updated balance of pool
    * from the zustand store

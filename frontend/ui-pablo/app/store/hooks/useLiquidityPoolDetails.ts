@@ -1,4 +1,3 @@
-import { AssetMetadata, getAssetByOnChainId } from "@/defi/polkadot/Assets";
 import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
 import BigNumber from "bignumber.js";
 import { useState, useEffect, useMemo } from "react";
@@ -7,9 +6,11 @@ import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
 import { useLiquidityByPool } from "./useLiquidityByPool";
 import { DailyRewards } from "../poolStats/poolStats.types";
 import { calculatePoolStats, fetchPoolStats } from "@/defi/utils/pablo";
+import { MockedAsset } from "../assets/assets.types";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 export const useLiquidityPoolDetails = (poolId: number) => {
-  const { poolStats, poolStatsValue, userLpBalances, putPoolStats } = useStore();
+  const { poolStats, poolStatsValue, userLpBalances, putPoolStats, supportedAssets } = useStore();
 
   const allLpRewardingPools = useAllLpTokenRewardingPools();
   const [pool, setPool] =
@@ -18,31 +19,28 @@ export const useLiquidityPoolDetails = (poolId: number) => {
   const tokensLocked = useLiquidityByPool(pool);
 
   const [baseAsset, setBaseAsset] =
-    useState<AssetMetadata | undefined>(undefined);
+    useState<MockedAsset | undefined>(undefined);
   const [quoteAsset, setQuoteAsset] =
-    useState<AssetMetadata | undefined>(undefined);
+    useState<MockedAsset | undefined>(undefined);
 
   useEffect(() => {
-    let pool: StableSwapPool | ConstantProductPool | undefined =
+    let matchingPool: StableSwapPool | ConstantProductPool | undefined =
       allLpRewardingPools.find((p) => p.poolId === poolId);
 
-    if (pool) {
-      setPool(pool);
-      const base = getAssetByOnChainId("picasso", pool.pair.base);
-      const quote = getAssetByOnChainId("picasso", pool.pair.quote);
-
-      if (base) {
-        setBaseAsset(base);
-      }
-      if (quote) {
-        setQuoteAsset(quote);
-      }
+    if (matchingPool) {
+      let b = matchingPool.pair.base.toString();
+      let q = matchingPool.pair.quote.toString();
+      const baseAsset = supportedAssets.find(a => a.network[DEFAULT_NETWORK_ID] === b)
+      const quoteAsset = supportedAssets.find(a => a.network[DEFAULT_NETWORK_ID] === q)
+      setPool(matchingPool);
+      setBaseAsset(baseAsset);
+      setQuoteAsset(quoteAsset);
     } else {
       setPool(undefined);
       setBaseAsset(undefined);
       setQuoteAsset(undefined);
     }
-  }, [poolId, allLpRewardingPools]);
+  }, [poolId, allLpRewardingPools, supportedAssets]);
 
   useEffect(() => {
     if (pool) {

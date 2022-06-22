@@ -1,6 +1,4 @@
 import { useCallback, useEffect } from "react";
-import { Assets } from "@/defi/polkadot/Assets";
-import { AssetId } from "@/defi/polkadot/types";
 import {
   useExtrinsics,
   useParachainApi,

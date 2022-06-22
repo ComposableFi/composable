@@ -33,7 +33,7 @@ import { AssetId } from "@/defi/polkadot/types";
 import { debounce } from "lodash";
 import { calculateSwap } from "@/defi/utils/pablo/swaps";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
-import { useUSDPriceByAssetId } from "@/store/assets/hooks";
+import { useAssetBalance, useUSDPriceByAssetId } from "@/store/assets/hooks";
 
 const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
@@ -50,20 +50,16 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const token1PriceInUSD = useUSDPriceByAssetId(swaps.ui.baseAssetSelected);
   const token2PriceInUSD = useUSDPriceByAssetId(swaps.ui.quoteAssetSelected);
 
-  const balance1 = useMemo(() => {
-    return new BigNumber(swaps.userAccount.quoteAssetBalance);
-  }, [swaps.userAccount.quoteAssetBalance]);
+  const balance1 = useAssetBalance(DEFAULT_NETWORK_ID, swaps.ui.baseAssetSelected);
+  const balance2 = useAssetBalance(DEFAULT_NETWORK_ID, swaps.ui.quoteAssetSelected);
 
-  const balance2 = useMemo(() => {
-    return new BigNumber(swaps.userAccount.baseAssetBalance);
-  }, [swaps.userAccount.baseAssetBalance]);
-
-  const baseAssetSelected = useMemo(() => {
-    return supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === swaps.ui.baseAssetSelected)
-  }, [supportedAssets, swaps.ui]);
-
-  const quoteAssetSelected = useMemo(() => {
-    return supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === swaps.ui.quoteAssetSelected)
+  const { baseAssetSelected, quoteAssetSelected } = useMemo(() => {
+    let baseAssetSelected = supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === swaps.ui.baseAssetSelected)
+    let quoteAssetSelected = supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === swaps.ui.quoteAssetSelected)
+    return {
+      baseAssetSelected,
+      quoteAssetSelected
+    }
   }, [supportedAssets, swaps.ui]);
 
   const assetList1 = useMemo(() => {
@@ -446,13 +442,13 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         {validTokens && (
           <>
             <Typography variant="body2">
-              1 {swaps.ui.quoteAssetSelected} = {spotPriceBn.toFixed()}{" "}
-              {swaps.ui.baseAssetSelected}
+              1 {quoteAssetSelected?.symbol} = {spotPriceBn.toFixed()}{" "}
+              {baseAssetSelected?.decimals}
             </Typography>
             <Tooltip
               title={`1 ${
-                swaps.ui.quoteAssetSelected
-              } = ${spotPriceBn.toFixed()} ${swaps.ui.baseAssetSelected}`}
+                quoteAssetSelected?.symbol
+              } = ${spotPriceBn.toFixed()} ${baseAssetSelected?.symbol}`}
               placement="top"
             >
               <InfoOutlined sx={{ color: theme.palette.primary.main }} />

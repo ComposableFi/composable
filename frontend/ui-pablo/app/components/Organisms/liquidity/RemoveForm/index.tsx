@@ -61,24 +61,19 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
 
   useEffect(() => {
     if (poolId !== -1 && baseAsset && quoteAsset && parachainApi) {
-      const baseAssetId = baseAsset.supportedNetwork.picasso;
-      const quoteAssetId = quoteAsset.supportedNetwork.picasso;
+      fetchSpotPrice(
+        parachainApi,
+        {
+          base: baseAsset.network[DEFAULT_NETWORK_ID],
+          quote: quoteAsset.network[DEFAULT_NETWORK_ID],
+        },
+        poolId
+      ).then((basePrice) => {
+        const basePriceBn = new BigNumber(basePrice);
 
-      if (baseAssetId && quoteAssetId) {
-        fetchSpotPrice(
-          parachainApi,
-          {
-            base: baseAssetId,
-            quote: quoteAssetId,
-          },
-          poolId
-        ).then((basePrice) => {
-          const basePriceBn = new BigNumber(basePrice);
-
-          setPriceOfBase(basePriceBn);
-          setPriceOfQuote(new BigNumber(1).div(basePriceBn));
-        });
-      }
+        setPriceOfBase(basePriceBn);
+        setPriceOfQuote(new BigNumber(1).div(basePriceBn));
+      });
     }
   }, [poolId, baseAsset, quoteAsset, parachainApi]);
 
@@ -98,7 +93,7 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
       setExpectedRemoveAmountBase(new BigNumber(0));
       setExpectedRemoveAmountQuote(new BigNumber(0));
     }
-  }, [parachainApi, debouncedPercentage]);
+  }, [parachainApi, debouncedPercentage, lpBalance, poolId]);
 
   const onBackHandler = () => {
     router.push("/pool");
@@ -119,10 +114,11 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   useEffect(() => {
     confirmed && dispatch(closeConfirmingModal());
     !confirmed && dispatch(setMessage({}));
-  }, [confirmed]);
+  }, [confirmed, dispatch]);
 
   useEffect(() => {
     dispatch(setMessage({}));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -206,8 +202,8 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
         <PreviewDetails
           lpToRemove={lpBalance.times(debouncedPercentage).div(100)}
           mt={4}
-          tokenId1={baseAsset}
-          tokenId2={quoteAsset}
+          token1={baseAsset}
+          token2={quoteAsset}
           expectedRecieveAmountToken1={expectedRemoveAmountBase}
           expectedRecieveAmountToken2={expectedRemoveAmountQuote}
           price1={priceOfBase}

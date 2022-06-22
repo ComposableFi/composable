@@ -5,16 +5,16 @@ import { fromChainUnits, toChainUnits } from "../units";
 export async function fetchSpotPrice(
   api: ApiPromise,
   pair: {
-    base: number;
-    quote: number;
+    base: string;
+    quote: string;
   },
   poolId: number
 ): Promise<BigNumber> {
   try {
     const rpcResult = await (api.rpc as any).pablo.pricesFor(
       api.createType("PalletPabloPoolId", poolId.toString()),
-      api.createType("CustomRpcCurrencyId", pair.base.toString()),
-      api.createType("CustomRpcCurrencyId", pair.quote.toString()),
+      api.createType("CustomRpcCurrencyId", pair.base),
+      api.createType("CustomRpcCurrencyId", pair.quote),
       api.createType("CustomRpcBalance", toChainUnits(1).toString())
     );
 

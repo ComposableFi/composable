@@ -68,7 +68,7 @@ const Updater = () => {
         if (apollo[quoteId]) {
           fetchSpotPrice(
             parachainApi,
-            liquidityBootstrappingPools.verified[pool].pair,
+            { base: liquidityBootstrappingPools.verified[pool].pair.base.toString(), quote: liquidityBootstrappingPools.verified[pool].pair.quote.toString() },
             liquidityBootstrappingPools.verified[pool].poolId
           )
             .then((spotPrice) => {

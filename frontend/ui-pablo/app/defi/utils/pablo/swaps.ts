@@ -30,7 +30,10 @@ export const calculateSwap = async (
   try {
     let oneBaseInQuote = await fetchSpotPrice(
       api,
-      poolConstants.pair,
+      {
+        base: poolConstants.pair.base.toString(),
+        quote: poolConstants.pair.quote.toString()
+      },
       poolConstants.poolIndex
     );
     let oneQuoteInBase = new BigNumber(1).div(oneBaseInQuote);

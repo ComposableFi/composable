@@ -43,6 +43,7 @@ const Updater = () => {
       }
     }
   }, [
+    pools,
     parachainApi,
     ui.assetOne,
     ui.assetTwo,
