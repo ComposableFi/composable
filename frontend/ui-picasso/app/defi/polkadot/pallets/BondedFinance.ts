@@ -11,6 +11,7 @@ import { fetchAssetPrice } from "./Oracle";
 import Executor from "substrate-react/dist/extrinsics/Executor";
 import { getSigner } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 
 export function createArrayOfLength(length: number): number[] {
   return Array.from(Array(length).keys());
@@ -167,7 +168,7 @@ export type PurchaseBond = {
   executor: Executor | undefined;
   offerId: string;
   bondInput: BigNumber;
-  enqueueSnackbar: (str: string) => void;
+  enqueueSnackbar: (str: string, options: any) => void;
   setOpen: (value: ((prevState: boolean) => boolean) | boolean) => void;
   setOpen2nd: (value: ((prevState: boolean) => boolean) | boolean) => void;
   handleFormReset: () => void;
@@ -181,9 +182,9 @@ export type ClaimType = {
 
 export async function claim(
   { parachainApi, account, executor, assetId }: ClaimType,
-  onSuccess: () => void,
-  onError: () => void,
-  onStart: () => void
+  onSuccess: (txHash: string) => void,
+  onError: (msg: string) => void,
+  onStart: (txHash: string) => void
 ) {
   if (parachainApi && account && executor) {
     try {
@@ -197,6 +198,7 @@ export async function claim(
         onSuccess
       );
     } catch (e) {
+      onError(e.toString());
       console.log(e);
     }
   }
@@ -227,17 +229,32 @@ export async function purchaseBond({
           parachainApi,
           signer,
           (txHash: string) => {
-            enqueueSnackbar("Initiating Transaction on " + txHash);
+            enqueueSnackbar("Processing transaction", {
+              variant: "info",
+              isClosable: true,
+              persist: true,
+              url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + txHash,
+            });
             setOpen(false);
             setOpen2nd(false);
           },
           (txHash: string, events) => {
-            enqueueSnackbar("Transaction Finalized on " + txHash);
+            enqueueSnackbar("Bond transaction successful", {
+              variant: "success",
+              isClosable: true,
+              persist: true,
+              url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + txHash,
+            });
             handleFormReset();
           }
         )
         .catch((err) => {
-          enqueueSnackbar(err.message);
+          enqueueSnackbar("Bond transaction failed", {
+            variant: "error",
+            isClosable: true,
+            description: err.message,
+            persist: true,
+          });
         });
     } catch (e) {
       console.log(e);

@@ -16,7 +16,7 @@ const bondedVestingSchedule =
         bond.reward.assetId
       );
 
-      const out = vestingScheduleResponse
+      return vestingScheduleResponse
         ? vestingScheduleResponse.flatMap((vs) => {
             const jsonVestingSchedule: any = vs?.toJSON() ?? null;
             if (jsonVestingSchedule) {
@@ -47,13 +47,6 @@ const bondedVestingSchedule =
             return null;
           })
         : [];
-      console.log({
-        out: {
-          per1: out[1].perPeriod.toString(),
-          per2: out[0].perPeriod.toString(),
-        },
-      });
-      return out;
     };
   };
 

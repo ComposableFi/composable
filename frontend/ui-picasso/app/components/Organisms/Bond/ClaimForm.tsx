@@ -14,6 +14,8 @@ import { useExecutor } from "substrate-react";
 import { humanBalance } from "@/utils/formatters";
 import { useClaim } from "@/stores/defi/polkadot/bonds/useClaim";
 import { findCurrentBond } from "@/stores/defi/polkadot/bonds/utils";
+import { useSnackbar } from "notistack";
+import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 
 export const ClaimForm = () => {
   const theme = useTheme();
@@ -25,6 +27,7 @@ export const ClaimForm = () => {
   const { claimable, vestingTime, vestedTime, pending } = useClaim(
     bond?.toString() ?? ""
   );
+  const { enqueueSnackbar } = useSnackbar();
   const openBonds = useAppSelector<ActiveBond[]>(
     (state) => state.bonding.openPositions
   );
@@ -41,14 +44,29 @@ export const ClaimForm = () => {
         executor,
         assetId: activeBond.bond.reward.assetId,
       },
-      () => {
-        console.log("Successfully claimed");
+      (txHash) => {
+        enqueueSnackbar("Claim was successful", {
+          variant: "success",
+          isClosable: true,
+          persist: true,
+          url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + txHash,
+        });
       },
-      () => {
-        console.log("No success here");
+      (msg) => {
+        enqueueSnackbar("An error occurred while processing transaction", {
+          variant: "error",
+          isClosable: true,
+          persist: true,
+          url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + txHash,
+        });
       },
-      () => {
-        console.log("Started transactuin");
+      (txHash) => {
+        enqueueSnackbar("Processing Claim", {
+          variant: "info",
+          isClosable: true,
+          persist: true,
+          url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + txHash,
+        });
       }
     );
   };

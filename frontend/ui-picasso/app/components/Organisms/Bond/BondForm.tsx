@@ -161,7 +161,7 @@ export const BondForm: FC<{
         };
       });
     }
-  }, [isLoadingBalances, bondInput]);
+  }, [isLoadingBalances, bondInput]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const DetailWrapperComponent: FC<{ hasClaim: boolean }> = ({
     hasClaim,
@@ -396,7 +396,7 @@ export const BondForm: FC<{
           color="text.secondary"
           mt={theme.spacing(2)}
         >
-          This bond is bondOfferly at a negative discount. <br />
+          This bond is offered at a negative discount. <br />
           Please consider waiting until bond returns to positive discount.
         </Typography>
         <Button
