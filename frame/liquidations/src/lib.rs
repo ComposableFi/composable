@@ -148,7 +148,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::WeightInfo::sell())]
+		#[pallet::weight(T::WeightInfo::sell::<T>(configuration))]
 		pub fn sell(
 			origin: OriginFor<T>,
 			order: Sell<T::MayBeAssetId, T::Balance>,
