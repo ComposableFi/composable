@@ -39,6 +39,7 @@ export async function fetchPool(
 
     return null;
   } catch (err) {
+    console.error(err)
     return null;
   }
 }
@@ -137,26 +138,27 @@ export async function fetchPools(parachainApi: ApiPromise): Promise<{
     pools.liquidityBootstrapping.verified = lbpool.filter((p) =>
       allVerifiedPoolIds.includes(p.poolId)
     );
-    pools.liquidityBootstrapping.unVerified = lbpool.filter(
-      (p) => !allVerifiedPoolIds.includes(p.poolId)
-    );
+    // pools.liquidityBootstrapping.unVerified = lbpool.filter(
+    //   (p) => !allVerifiedPoolIds.includes(p.poolId)
+    // );
 
     pools.constantProduct.verified = cpPool.filter((p) =>
       allVerifiedPoolIds.includes(p.poolId)
     );
-    pools.constantProduct.unVerified = cpPool.filter(
-      (p) => !allVerifiedPoolIds.includes(p.poolId)
-    );
+    // pools.constantProduct.unVerified = cpPool.filter(
+    //   (p) => !allVerifiedPoolIds.includes(p.poolId)
+    // );
 
     pools.stableSwap.verified = ssPool.filter((p) =>
       allVerifiedPoolIds.includes(p.poolId)
     );
-    pools.stableSwap.unVerified = ssPool.filter(
-      (p) => !allVerifiedPoolIds.includes(p.poolId)
-    );
+    // pools.stableSwap.unVerified = ssPool.filter(
+    //   (p) => !allVerifiedPoolIds.includes(p.poolId)
+    // );
 
     return pools;
   } catch (err) {
+    console.error(err)
     return pools;
   }
 }

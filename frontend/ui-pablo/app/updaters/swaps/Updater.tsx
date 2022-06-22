@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useParachainApi } from "substrate-react";
 import { DEFAULT_NETWORK_ID, isValidAssetPair } from "@/defi/utils";
-import { fetchBalanceByAssetId } from "@/defi/utils";
 import { createPabloPoolAccountId } from "@/defi/utils";
 import { fetchSpotPrice } from "@/defi/utils/pablo/spotPrice";
 import {
@@ -40,7 +39,7 @@ const Updater = () => {
       if (
         parachainApi &&
         // (liquidityBootstrappingPools.verified.length ||
-          (constantProductPools.verified.length ||
+        (constantProductPools.verified.length ||
           stableSwapPools.verified.length)
       ) {
         /**
@@ -94,7 +93,7 @@ const Updater = () => {
                 | ConstantProductPool
                 | StableSwapPool
                 | undefined;
-                
+
               //   = liquidityBootstrappingPools.verified.find(
               //   (pool) => pool.poolId.toString() === poolId
               // );
@@ -164,16 +163,16 @@ const Updater = () => {
         );
       }
     }
-  /**
-   * eslint asks 
-   * 'setDexRouteSwaps', 'setPoolConstantsSwaps', and 'swaps'
-   * to be added to dependancy list
-   * 'setDexRouteSwaps', 'setPoolConstantsSwaps' are setters and theyll remain
-   * the same throught the renders
-   * 'swaps' is entire swaps state and this hook
-   * only needs access to some part of the state
-   */
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    /**
+     * eslint asks 
+     * 'setDexRouteSwaps', 'setPoolConstantsSwaps', and 'swaps'
+     * to be added to dependancy list
+     * 'setDexRouteSwaps', 'setPoolConstantsSwaps' are setters and theyll remain
+     * the same throught the renders
+     * 'swaps' is entire swaps state and this hook
+     * only needs access to some part of the state
+     */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     swaps.ui,
     parachainApi,
@@ -183,45 +182,25 @@ const Updater = () => {
 
   useEffect(() => {
     if (swaps.poolConstants.poolIndex !== -1) {
-      const { poolAccountId, pair } = swaps.poolConstants;
+      const { pair } = swaps.poolConstants;
       const { baseAssetSelected, quoteAssetSelected } = swaps.ui;
-
       if (
         isValidAssetPair(baseAssetSelected, quoteAssetSelected) &&
         parachainApi
       ) {
-
         const isReversedTrade = pair.base.toString() === baseAssetSelected;
-
         if (baseAssetSelected && quoteAssetSelected) {
-          let promises = [
-            fetchBalanceByAssetId(
-              parachainApi,
-              poolAccountId,
-              baseAssetSelected
-            ),
-            fetchBalanceByAssetId(
-              parachainApi,
-              poolAccountId,
-              quoteAssetSelected
-            ),
-            fetchSpotPrice(
-              parachainApi,
-              { base: swaps.poolConstants.pair.base.toString(), quote: swaps.poolConstants.pair.quote.toString() },
-              swaps.poolConstants.poolIndex
-            ),
-          ];
-
-          Promise.all(promises).then(
-            ([baseAssetBalance, quoteAssetBalance, spotPrice]) => {
+          fetchSpotPrice(
+            parachainApi,
+            { base: swaps.poolConstants.pair.base.toString(), quote: swaps.poolConstants.pair.quote.toString() },
+            swaps.poolConstants.poolIndex
+          ).then(
+            (spotPrice) => {
               if (isReversedTrade) {
                 spotPrice = new BigNumber(1).div(spotPrice as BigNumber);
               }
-
               setPoolVariablesSwaps({
                 spotPrice: (spotPrice as BigNumber).toFixed(4),
-                baseAssetReserve: baseAssetBalance as string,
-                quoteAssetReserve: quoteAssetBalance as string,
               });
             }
           );
@@ -230,8 +209,6 @@ const Updater = () => {
     } else {
       setPoolVariablesSwaps({
         spotPrice: "0",
-        baseAssetReserve: "0",
-        quoteAssetReserve: "0",
       });
     }
   }, [swaps.ui, swaps.poolConstants, parachainApi, setPoolVariablesSwaps]);
