@@ -22,7 +22,10 @@ pub mod pallet {
 	use composable_support::{
 		abstractions::{
 			nonce::Nonce,
-			utils::{increment::{Increment, SafeIncrement}, start_at::ZeroInit},
+			utils::{
+				increment::{Increment, SafeIncrement},
+				start_at::ZeroInit,
+			},
 		},
 		math::safe::{SafeAdd, SafeSub},
 		types::{CosmosAddress, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress},

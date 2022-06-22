@@ -5,17 +5,21 @@ use crate::{
 	models::{Proof, RemoteAccount},
 	AccountIdOf, Call, Config, Pallet as Airdrop, Pallet, ProofOf, RemoteAccountOf,
 };
-use composable_support::types::{EcdsaSignature, EthereumAddress};
+use composable_support::types::{
+	CosmosAddress, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress,
+};
 use composable_traits::airdrop::AirdropManagement;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::pallet_prelude::*;
 use frame_system::{Pallet as System, RawOrigin};
-use sp_io::{crypto::Pair, ed25519, hashing::keccak_256};
+use multihash::{Hasher, Keccak256, Sha2_256};
+use p256::ecdsa::{signature::Signer, SigningKey, VerifyingKey};
 use sp_runtime::traits::One;
 use sp_std::prelude::*;
 
 pub type EthKey = libsecp256k1::SecretKey;
-pub type RelayKey = ed25519::Pair;
+// pub type RelayKey = ed25519::Pair;
+pub type CosmosKey = SigningKey;
 
 pub type BlockNumber = u32;
 pub type Moment = u32;
@@ -32,7 +36,8 @@ const WEEKS: BlockNumber = DAYS * 7;
 
 #[derive(Clone)]
 pub enum ClaimKey {
-	Relay(RelayKey),
+	Cosmos(CosmosKey),
+	// Relay(RelayKey),
 	Eth(EthKey),
 }
 
@@ -42,8 +47,9 @@ impl ClaimKey {
 		T: Config<RelayChainAccountId = [u8; 32]>,
 	{
 		match self {
-			ClaimKey::Relay(relay_account) =>
-				RemoteAccount::RelayChain(*(relay_account.public().as_array_ref())),
+			ClaimKey::Cosmos(cosmos_account) => RemoteAccount::Cosmos(cosmos_address(
+				VerifyingKey::from(cosmos_account).to_encoded_point(true).as_bytes(),
+			)),
 			ClaimKey::Eth(eth_account) => RemoteAccount::Ethereum(ethereum_address(eth_account)),
 		}
 	}
@@ -53,28 +59,30 @@ impl ClaimKey {
 		T: Config<RelayChainAccountId = [u8; 32]>,
 	{
 		match self {
-			ClaimKey::Relay(relay) => relay_proof::<T>(&relay, reward_account),
+			ClaimKey::Cosmos(cosmos) => cosmos_proof::<T>(&cosmos, reward_account),
 			ClaimKey::Eth(eth) => ethereum_proof::<T>(&eth, reward_account),
 		}
 	}
 }
 
-fn relay_proof<T>(relay_account: &RelayKey, reward_account: AccountIdOf<T>) -> ProofOf<T>
+fn cosmos_proof<T>(cosmos_account: &CosmosKey, reward_account: AccountIdOf<T>) -> ProofOf<T>
 where
 	T: Config<RelayChainAccountId = [u8; 32]>,
 {
-	let mut msg = b"<Bytes>".to_vec();
-	msg.append(&mut PROOF_PREFIX.to_vec());
+	let mut msg = PROOF_PREFIX.to_vec();
 	msg.append(&mut reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec()));
-	msg.append(&mut b"</Bytes>".to_vec());
-	Proof::RelayChain(*(relay_account.public().as_array_ref()), relay_account.sign(&msg).into())
+	let cosmos_address =
+		cosmos_address(VerifyingKey::from(cosmos_account).to_encoded_point(true).as_bytes());
+	let mut sig: [u8; 64] = [0; 64];
+	sig.copy_from_slice(cosmos_account.sign(&hash::<Sha2_256>(&msg)).to_vec().as_slice());
+	Proof::Cosmos(cosmos_address, CosmosEcdsaSignature(sig))
 }
 
 pub fn ethereum_proof<T>(ethereum_account: &EthKey, reward_account: AccountIdOf<T>) -> ProofOf<T>
 where
 	T: Config<RelayChainAccountId = [u8; 32]>,
 {
-	let msg = keccak_256(
+	let msg = hash::<Keccak256>(
 		&Airdrop::<T>::ethereum_signable_message(
 			PROOF_PREFIX,
 			&reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec()),
@@ -93,14 +101,20 @@ pub fn ethereum_public(secret: &EthKey) -> libsecp256k1::PublicKey {
 	libsecp256k1::PublicKey::from_secret_key(secret)
 }
 
+pub fn cosmos_address(pub_key_slice: &[u8]) -> CosmosAddress {
+	let mut pub_key: [u8; 33] = [0; 33];
+	pub_key.copy_from_slice(pub_key_slice);
+	CosmosAddress::Secp256r1(pub_key)
+}
+
 pub fn ethereum_address(secret: &EthKey) -> EthereumAddress {
 	let mut res = EthereumAddress::default();
 	res.0
-		.copy_from_slice(&keccak_256(&ethereum_public(secret).serialize()[1..65])[12..]);
+		.copy_from_slice(&hash::<Keccak256>(&ethereum_public(secret).serialize()[1..65])[12..]);
 	res
 }
 
-pub fn relay_generate<T>(count: u64) -> Vec<(AccountIdOf<T>, ClaimKey)>
+pub fn cosmos_generate<T>(count: u64) -> Vec<(AccountIdOf<T>, ClaimKey)>
 where
 	T: Config<RelayChainAccountId = [u8; 32]>,
 {
@@ -110,10 +124,13 @@ where
 			let account_id = account("recipient", i as u32, 0xCAFEBABE);
 			(
 				account_id,
-				ClaimKey::Relay(ed25519::Pair::from_seed(&keccak_256(
-					&[(&(seed + i as u128)).to_le_bytes(), (&(seed + i as u128)).to_le_bytes()]
-						.concat(),
-				))),
+				ClaimKey::Cosmos(
+					SigningKey::from_bytes(
+						&[(&(seed + i as u128)).to_le_bytes(), (&(seed + i as u128)).to_le_bytes()]
+							.concat(),
+					)
+					.unwrap(),
+				),
 			)
 		})
 		.collect()
@@ -127,7 +144,10 @@ where
 	(0..count)
 		.map(|i| {
 			let account_id = account("recipient", i as u32, 0xCAFEBABE);
-			(account_id, ClaimKey::Eth(EthKey::parse(&keccak_256(&i.to_le_bytes())).unwrap()))
+			(
+				account_id,
+				ClaimKey::Eth(EthKey::parse(&hash::<Keccak256>(&i.to_le_bytes())).unwrap()),
+			)
 		})
 		.collect()
 }
@@ -138,10 +158,24 @@ where
 	T: Config<RelayChainAccountId = [u8; 32]>,
 {
 	assert!(count % 2 == 0, "`x % 2 == 0` should hold for all x");
-	let mut x = relay_generate::<T>(count / 2);
+	let mut x = cosmos_generate::<T>(count / 2);
 	let mut y = ethereum_generate::<T>(count / 2);
 	x.append(&mut y);
 	x
+}
+
+pub fn hash<T>(input: &[u8]) -> [u8; 32]
+where
+	T: Hasher + Default,
+{
+	let mut hasher: T = Default::default();
+	let mut hash: [u8; 32] = [0; 32];
+
+	hasher.update(input);
+	hash.copy_from_slice(hasher.finalize());
+	hasher.reset();
+
+	hash
 }
 
 benchmarks! {

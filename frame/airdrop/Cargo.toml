@@ -51,7 +51,9 @@ scale-info = { version = "2.1.1", default-features = false, features = [
 
 # misc
 hex = { version = "0.4", default-features = false, features = ["alloc"] }
+ecdsa = { version = "^0.13", default-features = false, features = ["alloc"] }
 p256 = { version = "0.10.1", default-features = false, features = ["ecdsa", "ecdsa-core"] }
+multihash = { version = "0.16.2", default-features = false, features = ["multihash-impl", "sha2", "sha3"] }
 rustc-hex = { version = "2.1.0", default-features = false }
 serde = { version = "1.0.136", optional = true, default-features = false }
 
