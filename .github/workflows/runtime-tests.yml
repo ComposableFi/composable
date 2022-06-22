@@ -7,8 +7,7 @@ on:
 
 on:
   workflow_run:
-    workflows:
-      - "Build composable-sandbox Docker image"
+    workflows: [Build composable-sandbox Docker image]
     types:
       - completed
 
