@@ -80,6 +80,16 @@ pub mod pallet {
 			airdrop_id: T::AirdropId,
 			by: T::AccountId,
 		},
+		RecipientsAdded {
+			airdrop_id: T::AirdropId,
+			number: u32,
+			unclaimed_funds: T::Balance,
+		},
+		RecipientRemoved {
+			airdrop_id: T::AirdropId,
+			recipient_id: RemoteAccountOf<T>,
+			unclaimed_funds: T::Balance,
+		},
 		AirdropStarted {
 			airdrop_id: T::AirdropId,
 			at: T::Moment,
@@ -794,14 +804,22 @@ pub mod pallet {
 			});
 
 			// Update Airdrop statistics
-			Airdrops::<T>::try_mutate(airdrop_id, |airdrop| match airdrop.as_mut() {
-				Some(airdrop) => {
-					airdrop.total_funds = total_funds;
-					airdrop.total_recipients = total_recipients;
-					Ok(())
-				},
-				None => Err(Error::<T>::AirdropDoesNotExist),
-			})?;
+			let (total_funds, claimed_funds) =
+				Airdrops::<T>::try_mutate(airdrop_id, |airdrop| match airdrop.as_mut() {
+					Some(airdrop) => {
+						airdrop.total_funds = total_funds;
+						airdrop.total_recipients = total_recipients;
+						// Ok(airdrop.total_funds.safe_sub(&airdrop.claimed_funds)?)
+						Ok((airdrop.total_funds, airdrop.claimed_funds))
+					},
+					None => Err(Error::<T>::AirdropDoesNotExist),
+				})?;
+
+			Self::deposit_event(Event::RecipientsAdded {
+				airdrop_id,
+				number: transaction_recipients,
+				unclaimed_funds: total_funds.safe_sub(&claimed_funds)?,
+			});
 
 			Ok(())
 		}
@@ -832,12 +850,12 @@ pub mod pallet {
 			);
 
 			// Update Airdrop details
-			let creator =
+			let (creator, total_funds, claimed_funds) =
 				Airdrops::<T>::try_mutate(airdrop_id, |airdrop| match airdrop.as_mut() {
 					Some(airdrop) => {
 						airdrop.total_funds =
 							airdrop.total_funds.saturating_sub(recipient_fund.total);
-						Ok(airdrop.creator.clone())
+						Ok((airdrop.creator.clone(), airdrop.total_funds, airdrop.claimed_funds))
 					},
 					None => Err(Error::<T>::AirdropDoesNotExist),
 				})?;
@@ -854,7 +872,13 @@ pub mod pallet {
 				false,
 			)?;
 
-			RecipientFunds::<T>::remove(airdrop_id, recipient);
+			RecipientFunds::<T>::remove(airdrop_id, recipient.clone());
+
+			Self::deposit_event(Event::RecipientRemoved {
+				airdrop_id,
+				recipient_id: recipient,
+				unclaimed_funds: total_funds.safe_sub(&claimed_funds)?,
+			});
 
 			if Self::prune_airdrop(airdrop_id)? {
 				Self::deposit_event(Event::AirdropEnded { airdrop_id, at: T::Time::now() })
