@@ -123,6 +123,9 @@ fn can_withdraw_realized_profits() {
 	});
 }
 
+// TODO(0xangelo): the Insurance Fund should cover losses incurred by traders with realized bad debt
+// when a trader in profit withdraws.
+
 #[test]
 fn can_withdraw_unrealized_funding_payments_by_settling_them() {
 	let config = MarketConfig::default();
