@@ -5,7 +5,6 @@ import {
   putDexRoute,
   putPoolConstants,
   putUiAssetSelection,
-  putUserAccountBalance,
   putPoolVariables,
   invertAssetSelection,
 } from "./swaps.utils";

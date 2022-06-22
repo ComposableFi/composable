@@ -7,18 +7,22 @@ import {
 } from "@/store/pools/pools.types";
 import { nFormatter } from "@/utils/number";
 import BigNumber from "bignumber.js";
-import { getAssetById } from "@/defi/polkadot/Assets";
 import { useMemo } from "react";
 import { useUSDPriceByAssetId } from "@/store/assets/hooks";
 import { useAuctionSpotPrice } from "@/defi/hooks/auctions";
+import { MockedAsset } from "@/store/assets/assets.types";
 
 export type AuctionInformationProps = {
   auction: LiquidityBootstrappingPool;
+  baseAsset: MockedAsset | undefined;
+  quoteAsset: MockedAsset | undefined;
   stats: LiquidityBootstrappingPoolStats;
 } & BoxProps;
 
 export const AuctionInformation: React.FC<AuctionInformationProps> = ({
   auction,
+  baseAsset,
+  quoteAsset,
   stats,
   ...rest
 }) => {
@@ -149,7 +153,7 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
             <Typography variant="h6">{tokenRaised.toFixed(4)}</Typography>
           </Box>
           <Typography variant="body1" color="text.secondary" fontWeight="bold">
-            {getAssetById("picasso", auction.pair.quote)?.symbol}
+            {quoteAsset?.symbol}
           </Typography>
         </Grid>
       </Grid>

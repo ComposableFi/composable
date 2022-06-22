@@ -116,6 +116,7 @@ const Auction: NextPage = () => {
     return () => {
       resetActiveLBP();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
@@ -157,6 +158,8 @@ const Auction: NextPage = () => {
             </Box>
 
             <AuctionInformation
+              baseAsset={baseAsset}
+              quoteAsset={quoteAsset}
               stats={activeLBPStats}
               auction={activeLBP}
               mt={6}

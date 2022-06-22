@@ -17,7 +17,6 @@ import React, { useState } from "react";
 import { KeyboardArrowDown } from "@mui/icons-material";
 import { KeyboardArrowUp } from "@mui/icons-material";
 import { AuctionStatusIndicator } from "./auction/AuctionStatusIndicator";
-import { getAssetById } from "@/defi/polkadot/Assets";
 import { LiquidityBootstrappingPool } from "@/store/pools/pools.types";
 import { useLiquidityBootstrappingPools } from "@/defi/hooks/auctions";
 
@@ -61,43 +60,41 @@ export const AllAuctionsTable: React.FC<TableContainerProps> = ({
           </TableRow>
         </TableHead>
         <TableBody>
-          {liquidityBootstrappingPools
-            .slice(0, count)
-            .map((lbPool: LiquidityBootstrappingPool) => (
-              <TableRow
-                onClick={() => {
-                  goAuctionDetails(lbPool);
-                }}
-                key={lbPool.icon}
-                sx={{ cursor: "pointer" }}
-              >
-                <TableCell align="left" sx={{ padding: theme.spacing(4) }}>
+          {liquidityBootstrappingPools.slice(0, count).map((lbPool) => (
+            <TableRow
+              onClick={() => {
+                goAuctionDetails(lbPool);
+              }}
+              key={lbPool.poolId}
+              sx={{ cursor: "pointer" }}
+            >
+              <TableCell align="left" sx={{ padding: theme.spacing(4) }}>
+                {lbPool.baseAsset && (
                   <BaseAsset
-                    icon={lbPool.icon}
-                    label={
-                      getAssetById(lbPool.networkId, lbPool.pair.base)?.symbol
-                    }
+                    icon={lbPool.baseAsset.icon}
+                    label={lbPool.baseAsset.name}
                     LabelProps={{ variant: "body1" }}
                   />
-                </TableCell>
-                {/* <TableCell align="left">
+                )}
+              </TableCell>
+              {/* <TableCell align="left">
                   <BaseAsset
                     icon={lbPool.icon}
                     label={getParachainNetwork(lbPool.networkId).name}
                     LabelProps={{ variant: "body1" }}
                   />
                 </TableCell> */}
-                <TableCell align="center">
-                  <AuctionStatusIndicator
-                    auction={lbPool}
-                    justifyContent="center"
-                  />
-                </TableCell>
-                <TableCell align="right" sx={{ padding: theme.spacing(4) }}>
-                  <Typography variant="body1">${lbPool.spotPrice}</Typography>
-                </TableCell>
-              </TableRow>
-            ))}
+              <TableCell align="center">
+                <AuctionStatusIndicator
+                  auction={lbPool}
+                  justifyContent="center"
+                />
+              </TableCell>
+              <TableCell align="right" sx={{ padding: theme.spacing(4) }}>
+                <Typography variant="body1">${lbPool.spotPrice}</Typography>
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
       {liquidityBootstrappingPools.length > count && (
@@ -135,7 +132,3 @@ export const AllAuctionsTable: React.FC<TableContainerProps> = ({
     </TableContainer>
   );
 };
-function useVerifiedLiquidityBootstrappingPools(): { liquidityBootstrappingPools: any; setActiveAuctionsPool: any; } {
-  throw new Error("Function not implemented.");
-}
-

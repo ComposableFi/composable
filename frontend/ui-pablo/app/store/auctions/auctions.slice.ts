@@ -25,7 +25,6 @@ const PLACEHOLDER_STATS: LiquidityBootstrappingPoolStats = {
 const PLACEHOLDER_POOL: LiquidityBootstrappingPool = {
   id: "-",
   poolId: -1,
-  icon: "",
   owner: "-",
   pair: {
     base: 129,

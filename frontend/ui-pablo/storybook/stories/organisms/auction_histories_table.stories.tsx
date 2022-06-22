@@ -7,7 +7,7 @@ const AuctionHistoriesTableStories = () => {
   const {auctions} = useStore();
   return (
     <Box>
-      <AuctionHistoriesTable auction={auctions.activeLBP} />
+      <AuctionHistoriesTable auction={auctions.activeLBP} baseAsset={undefined} quoteAsset={undefined} />
     </Box>
   );
 };

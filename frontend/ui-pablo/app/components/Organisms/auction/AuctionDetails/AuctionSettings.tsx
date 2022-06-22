@@ -6,7 +6,6 @@ import {
   useTheme, 
 } from "@mui/material";
 import { LiquidityBootstrappingPool, LiquidityBootstrappingPoolStats } from "@/store/pools/pools.types";
-import { getAssetById } from "@/defi/polkadot/Assets";
 import { MockedAsset } from "@/store/assets/assets.types";
 
 export type AuctionSettingsProps = {

@@ -2,7 +2,6 @@ import { getAssetById } from "@/defi/polkadot/Assets";
 import { LiquidityBootstrappingPool, ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
 import { percentageToNumber } from "@/utils/number";
 import BigNumber from "bignumber.js";
-import moment from "moment";
 import { AVERAGE_BLOCK_TIME, DAYS, DEFAULT_NETWORK_ID, DUMMY_LAUNCH_DESCRIPTION } from "../../constants";
 import { stringToBigNumber } from "../../misc";
 
@@ -28,17 +27,11 @@ export const decodeLbp = (
     const quoteAssetId = Number(
       (poolItem.pair.quote as string).replaceAll(",", "")
     );
-  
-    const baseAsset = getAssetById("picasso", baseAssetId);
-    const quoteAsset = getAssetById("picasso", quoteAssetId);
-    let poolId = `${baseAsset?.symbol.toLowerCase()}-${quoteAsset?.symbol.toLowerCase()}-${poolIndex}`;
-    const icon = baseAsset ? baseAsset.icon : quoteAsset ? quoteAsset.icon : "-";
-  
+   
     return {
-      id: poolId,
+      id: poolIndex.toString(),
       poolId: poolIndex,
       networkId: DEFAULT_NETWORK_ID,
-      icon,
       owner: poolItem.owner,
       pair: {
         base: baseAssetId,

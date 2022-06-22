@@ -52,7 +52,6 @@ export interface LiquidityBootstrappingPoolStats {
 export interface LiquidityBootstrappingPool {
     id: string;
     poolId: number;
-    icon: string;
     owner: string,
     pair: {
         base: number;
