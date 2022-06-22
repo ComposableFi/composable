@@ -3,10 +3,8 @@ import { Grid } from "@mui/material";
 import { BondBox } from "@/components";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import BigNumber from "bignumber.js";
-import {
-  secondsToDHMS,
-  useBondVestingInDays,
-} from "@/defi/polkadot/hooks/useBondVestingInDays";
+import { useBondVestingInDays } from "@/defi/polkadot/hooks/useBondVestingInDays";
+import { humanBalance, humanDate, LONG_HUMAN_DATE } from "@/utils/formatters";
 
 type BoxPosition = 0 | 1 | 2 | 3;
 
@@ -28,15 +26,15 @@ export const HighlightBoxes: FC<{
   const bondBoxes: BoxItem = {
     0: {
       title: "Bond price",
-      description: `$${bondOffer.price.toFormat(0)}`,
+      description: `$${humanBalance(bondOffer.price)}`,
     },
     1: {
       title: "Market price",
-      description: `$${bondOffer.rewardPrice.toFormat(0)}`,
+      description: `$${humanBalance(bondOffer.rewardPrice)}`,
     },
     2: {
       title: "Discount",
-      description: `${roi.toFixed(3)}%`,
+      description: `${humanBalance(roi)}%`,
       discountColor: Number(roi.toFixed(3)),
     },
     3: {
@@ -44,7 +42,7 @@ export const HighlightBoxes: FC<{
       description: `${
         vesting === "Infinite"
           ? "Infinite"
-          : secondsToDHMS(vesting / 1000).d + " Days"
+          : humanDate(vesting / 1000, LONG_HUMAN_DATE)
       }`,
     },
   };

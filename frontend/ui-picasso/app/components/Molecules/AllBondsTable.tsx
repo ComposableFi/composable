@@ -13,6 +13,7 @@ import { NoAssetsCover } from "./NoAssetsCover";
 import { TokenAsset, TokenPairAsset } from "@/components";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { getROI } from "@/defi/polkadot/pallets/BondedFinance";
+import { humanBalance } from "@/utils/formatters";
 
 export type AllBondsTableProps = TableContainerProps & {
   bonds?: BondOffer[];
@@ -73,7 +74,7 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
                     </TableCell>
                     <TableCell align="left">
                       <Typography variant="body2">
-                        ${price.toFormat(0)}
+                        ${humanBalance(price)}
                       </Typography>
                     </TableCell>
                     <TableCell align="left">
@@ -82,7 +83,7 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
                         color={roi.lt(0) ? "error.main" : "featured.lemon"}
                       >
                         {roi.gt(0) ? "+" : ""}
-                        {roi.toFormat(3)}%
+                        {humanBalance(roi)}%
                       </Typography>
                     </TableCell>
                     <TableCell align="left">

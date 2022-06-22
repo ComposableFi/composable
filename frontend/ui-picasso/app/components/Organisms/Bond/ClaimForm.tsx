@@ -11,13 +11,13 @@ import { useAppSelector } from "@/hooks/store";
 import PositionDetailsRow from "@/components/Atom/PositionDetailsRow";
 import { claim, fromPica, getROI } from "@/defi/polkadot/pallets/BondedFinance";
 import BigNumber from "bignumber.js";
-import { secondsToDHMS } from "@/defi/polkadot/hooks/useBondVestingInDays";
 import router from "next/router";
 import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
 import { getClaimable } from "@/components/Organisms/Bond/utils";
 import { useCurrentBlockAndTime } from "@/defi/polkadot/utils";
 import { PairAsset } from "@/components/Atom/PairAsset";
 import { useExecutor } from "substrate-react";
+import { humanBalance, humanDate, SHORT_HUMAN_DATE } from "@/utils/formatters";
 
 function findCurrentBond(b: ActiveBond, bond: string): boolean {
   console.log(b);
@@ -78,22 +78,17 @@ export const ClaimForm = () => {
   const remainingBlocks = lastBlock.minus(block).lte(0)
     ? new BigNumber(0)
     : lastBlock.minus(block);
-  const remainingTime = secondsToDHMS(
+  const vesting_time = humanDate(
     remainingBlocks.multipliedBy(Number(interval) / 1000).toNumber()
   );
-  const vesting_time = `${remainingTime.d
-    .toString()
-    .padStart(2, "00")}D${remainingTime.h
-    .toString()
-    .padStart(2, "00")}H${remainingTime.m
-    .toString()
-    .padStart(2, "00")}M${remainingTime.s.toString().padStart(2, "00")}S`;
 
-  const vested_time = secondsToDHMS(
-    block
+  const sourceBlock = block.gt(lastBlock) ? lastBlock : block;
+  const vested_time = humanDate(
+    sourceBlock
       .minus(window.blockNumberBased.start)
       .multipliedBy(Number(interval) / 1000)
-      .toNumber()
+      .toNumber(),
+    SHORT_HUMAN_DATE
   );
   return (
     <Box
@@ -148,20 +143,20 @@ export const ClaimForm = () => {
         Claim
       </Button>
 
-      <Stack mt={theme.spacing(4)}>
+      <Stack mt={theme.spacing(4)} width="100%">
         <PositionDetailsRow
           label="Pending reward"
           description={`${pending.toFormat(0)}`}
         />
         <PositionDetailsRow
           label="Claimable reward"
-          description={`${claimable.toFormat(0)}`}
+          description={`${humanBalance(claimable)}`}
         />
         <PositionDetailsRow
           label="Time until fully vested"
           description={`${vesting_time}`}
         />
-        <PositionDetailsRow label="Vested" description={`${vested_time.d}`} />
+        <PositionDetailsRow label="Vested" description={vested_time} />
         <PositionDetailsRow
           label="ROI"
           description={`${getROI(

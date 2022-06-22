@@ -43,7 +43,7 @@ export function useOpenPositions(account: VestingAccount | undefined) {
   > {
     const output = bonds
       .map(async (bond) => {
-        const [vestingScheduleResponse] = await bondedVestingSchedule(bond)(
+        const [vestingScheduleResponse, theSecondOneIsHere] = await bondedVestingSchedule(bond)(
           acc.address
         )(api);
         const jsonVestingSchedule: VestingSchedule | null =

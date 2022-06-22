@@ -9,19 +9,23 @@ export function secondsToDHMS(seconds: number) {
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
 
-  const dDisplay = d > 0 ? d + "D " : "";
-  const hDisplay = h > 0 ? h + "H " : "";
-  const mDisplay = m > 0 ? m + "M" : "";
-  const sDisplay = s > 0 ? s + "S" : "";
+  function getSuffix(value: number) {
+    return value > 1 ? "s" : "";
+  }
+
+  const dDisplay = d > 0 ? d + " Day" : "";
+  const hDisplay = h > 0 ? h + " Hour" : "";
+  const mDisplay = m > 0 ? m + " Minute" : "";
+  const sDisplay = s > 0 ? s + " Second" : "";
   return {
     d,
     h,
     m,
     s,
-    dDisplay,
-    hDisplay,
-    mDisplay,
-    sDisplay,
+    dDisplay: dDisplay + getSuffix(d),
+    hDisplay: hDisplay + getSuffix(h),
+    mDisplay: mDisplay + getSuffix(m),
+    sDisplay: sDisplay + getSuffix(s),
   };
 }
 
@@ -32,6 +36,7 @@ function maturityToSeconds(
   const DEFAULT_BLOCK_TIME = interval?.toNumber() ?? 6 * 1000; // 6 seconds
   return maturity === "Infinite" ? "Infinite" : maturity * DEFAULT_BLOCK_TIME;
 }
+
 export function useBondVestingInDays(bondOffer: BondOffer) {
   const interval = useBlockInterval();
 

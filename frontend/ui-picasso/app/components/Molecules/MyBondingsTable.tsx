@@ -19,14 +19,24 @@ import {
 } from "@/components/Organisms/Bond/utils";
 import { useCurrentBlockAndTime } from "@/defi/polkadot/utils";
 import { useBlockInterval, usePicassoProvider } from "@/defi/polkadot/hooks";
-import { secondsToDHMS } from "@/defi/polkadot/hooks/useBondVestingInDays";
 import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
 import { fromPica } from "@/defi/polkadot/pallets/BondedFinance";
+import { humanBalance, humanDate } from "@/utils/formatters";
 
 export type MyBondingsTableProps = TableContainerProps & {
   onRowClick?: (offerId: string) => void;
   openPositions: any; // TODO(Mamali): Fix type
 };
+
+function getLastBlock(
+  window: { blockNumberBased: { start: BigNumber; period: BigNumber } },
+  periodCount: BigNumber
+) {
+  const lastBlock = window.blockNumberBased.start
+    .plus(window.blockNumberBased.period)
+    .multipliedBy(periodCount);
+  return lastBlock;
+}
 
 export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
   openPositions,
@@ -52,9 +62,7 @@ export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
           <TableBody>
             {openPositions.map(
               ({ window, periodCount, perPeriod, bond }: ActiveBond) => {
-                const lastBlock = window.blockNumberBased.start
-                  .plus(window.blockNumberBased.period)
-                  .multipliedBy(periodCount);
+                const lastBlock = getLastBlock(window, periodCount);
                 const claimable = getClaimable(
                   block,
                   window,
@@ -69,20 +77,11 @@ export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
                 const remainingBlocks = lastBlock.minus(block).lte(0)
                   ? new BigNumber(0)
                   : lastBlock.minus(block);
-                const remainingTime = secondsToDHMS(
+                const vesting_time = humanDate(
                   remainingBlocks
                     .multipliedBy(Number(interval) / 1000)
                     .toNumber()
                 );
-                const vesting_time = `${remainingTime.d
-                  .toString()
-                  .padStart(2, "00")}D${remainingTime.h
-                  .toString()
-                  .padStart(2, "00")}H${remainingTime.m
-                  .toString()
-                  .padStart(2, "00")}M${remainingTime.s
-                  .toString()
-                  .padStart(2, "00")}S`;
                 return (
                   <TableRow
                     sx={{
@@ -106,7 +105,7 @@ export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
                     <TableCell align="left">
                       <BaseAsset
                         icon="/tokens/chaos.svg"
-                        label={`${new BigNumber(claimable).toFormat()} ${
+                        label={`${humanBalance(claimable)} ${
                           Array.isArray(bond.reward.asset)
                             ? bond.reward.asset[0].id
                             : bond.reward.asset.id
@@ -116,7 +115,11 @@ export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
                     <TableCell align="left">
                       <BaseAsset
                         icon="/tokens/chaos.svg"
-                        label={`${new BigNumber(pending).toFormat()} Chaos`}
+                        label={`${humanBalance(pending)} ${
+                          Array.isArray(bond.reward.asset)
+                            ? bond.reward.asset[0].id
+                            : bond.reward.asset.id
+                        }`}
                       />
                     </TableCell>
                     <TableCell align="left">

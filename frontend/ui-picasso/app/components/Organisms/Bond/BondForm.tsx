@@ -23,6 +23,7 @@ import {
 } from "@/components/Organisms/Bond/utils";
 import { alpha, useTheme } from "@mui/material/styles";
 import { getROI, purchaseBond } from "@/defi/polkadot/pallets/BondedFinance";
+import { humanBalance } from "@/utils/formatters";
 
 type BondOfferBalances = {
   [key: string]: BigNumber;
@@ -124,8 +125,8 @@ export const BondForm: FC<{
           ...{
             yourBalance: {
               label: "Your balance",
-              description: `${balances[bondOffer.assetId].toFormat(
-                0
+              description: `${humanBalance(
+                balances[bondOffer.assetId]
               )} ${getTokenString(bondOffer.asset)}`,
             },
           },
@@ -168,6 +169,7 @@ export const BondForm: FC<{
         <Box
           sx={{
             marginTop: "2rem",
+            width: "100%",
           }}
         >
           {children}
@@ -235,7 +237,7 @@ export const BondForm: FC<{
             mainLabelProps: { label: "Amount" },
             balanceLabelProps: {
               label: "Balance:",
-              balanceText: `${balances[bondOffer.assetId]?.toFormat(0)} ${
+              balanceText: `${humanBalance(balances[bondOffer.assetId] || 0)} ${
                 Array.isArray(bondOffer.asset)
                   ? bondOffer.asset.reduce(lpToSymbolPair, "")
                   : bondOffer.asset.symbol
@@ -285,17 +287,15 @@ export const BondForm: FC<{
           </Button>
         )}
         {isBondValid && (
-          <Grid item {...standardPageSize}>
-            <DetailWrapperComponent hasClaim={hasClaim}>
-              {Object.values(transferDetails).map(({ label, description }) => (
-                <PositionDetailsRow
-                  key={label}
-                  label={label}
-                  description={description}
-                />
-              ))}
-            </DetailWrapperComponent>
-          </Grid>
+          <DetailWrapperComponent hasClaim={hasClaim}>
+            {Object.values(transferDetails).map(({ label, description }) => (
+              <PositionDetailsRow
+                key={label}
+                label={label}
+                description={description}
+              />
+            ))}
+          </DetailWrapperComponent>
         )}
       </WrapperComponent>
       <Modal open={open} onClose={() => setOpen(false)} dismissible>
