@@ -10,9 +10,9 @@ use crate::{
 	},
 	pallet::{Config, Direction, Error, Event},
 	tests::{
-		any_direction, any_price, as_balance, get_market, get_market_fee_pool, get_position,
-		run_for_seconds, run_to_time, set_fee_pool_depth, set_oracle_twap, with_markets_context,
-		with_trading_context, Market, MarketConfig,
+		any_direction, any_price, as_balance, get_collateral, get_market, get_market_fee_pool,
+		get_outstanding_gains, get_position, run_for_seconds, run_to_time, set_fee_pool_depth,
+		set_oracle_twap, with_markets_context, with_trading_context, Market, MarketConfig,
 	},
 };
 use composable_traits::{clearing_house::ClearingHouse, time::ONE_HOUR};
@@ -386,10 +386,13 @@ proptest! {
 			let sign = match direction { Direction::Long => 1, _ => -1 };
 			let margin = quote_amount as i128;
 			let pnl = sign * (new_base_value as i128) - sign * margin;
-			assert_eq!(
-				TestPallet::get_collateral(&ALICE).unwrap(),
-				(margin + pnl).max(0) as u128
-			);
+			// Profits are outstanding since no one realized losses in the market
+			if pnl >= 0 {
+				assert_eq!(get_collateral(ALICE), margin as u128);
+				assert_eq!(get_outstanding_gains(ALICE, &market_id), pnl as u128);
+			} else {
+				assert_eq!(get_collateral(ALICE), (margin + pnl).max(0) as u128);
+			}
 		});
 	}
 
@@ -397,7 +400,7 @@ proptest! {
 	fn reducing_position_partially_realizes_pnl(
 		direction in any_direction(),
 		new_price in any_price(),
-		percentf in percentage_fraction()
+		fraction in percentage_fraction()
 	) {
 		let market_config = MarketConfig { minimum_trade_size: 0.into(), ..Default::default() };
 		let quote_amount = as_balance(100);
@@ -420,7 +423,7 @@ proptest! {
 
 			VammPallet::set_price(Some(new_price));
 			// Reduce (close) position by desired percentage
-			let base_amount_to_close = percentf.saturating_mul_int(base_amount);
+			let base_amount_to_close = fraction.saturating_mul_int(base_amount);
 			let base_value_to_close = new_price.saturating_mul_int(base_amount_to_close);
 			assert_ok!(
 				<TestPallet as ClearingHouse>::open_position(
@@ -437,12 +440,14 @@ proptest! {
 			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
 			// Fraction of the PnL is realized
 			let sign = match direction { Direction::Long => 1, _ => -1 };
-			let entry_value = percentf.saturating_mul_int(quote_amount);
+			let entry_value = fraction.saturating_mul_int(quote_amount);
 			let pnl = sign * (base_value_to_close as i128) - sign * (entry_value as i128);
-			assert_eq!(
-				TestPallet::get_collateral(&ALICE).unwrap(),
-				(quote_amount as i128 + pnl).max(0) as u128
-			);
+			if pnl >= 0 {
+				assert_eq!(get_collateral(ALICE), quote_amount);
+				assert_eq!(get_outstanding_gains(ALICE, &market_id), pnl as u128);
+			} else {
+				assert_eq!(get_collateral(ALICE), (quote_amount as i128 + pnl).max(0) as u128);
+			}
 
 			let position = get_position(&ALICE, &market_id).unwrap();
 			// Position base asset and quote asset notional are cut by percentage
@@ -509,10 +514,12 @@ proptest! {
 			// Full PnL is realized
 			let margin = quote_amount as i128;
 			let pnl = sign * (new_base_value as i128) - sign * margin;
-			assert_eq!(
-				TestPallet::get_collateral(&ALICE).unwrap(),
-				(margin + pnl).max(0) as u128
-			);
+			if pnl >= 0 {
+				assert_eq!(get_collateral(ALICE), margin as u128);
+				assert_eq!(get_outstanding_gains(ALICE, &market_id), pnl as u128);
+			} else {
+				assert_eq!(get_collateral(ALICE), (margin + pnl).max(0) as u128);
+			}
 
 			// Position remains open
 			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
