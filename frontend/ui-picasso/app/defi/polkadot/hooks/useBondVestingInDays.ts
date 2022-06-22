@@ -1,6 +1,6 @@
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { useBlockInterval } from "@/defi/polkadot/hooks/useBlockInterval";
-import { BN } from "@polkadot/util";
+import BigNumber from "bignumber.js";
 
 export function secondsToDHMS(seconds: number) {
   seconds = Number(seconds);
@@ -31,9 +31,9 @@ export function secondsToDHMS(seconds: number) {
 
 function maturityToSeconds(
   maturity: number | "Infinite",
-  interval?: BN | undefined
+  interval?: BigNumber
 ) {
-  const DEFAULT_BLOCK_TIME = interval?.toNumber() ?? 6 * 1000; // 6 seconds
+  const DEFAULT_BLOCK_TIME = (interval?.toNumber() ?? 6000_000) / 1000; // 6 seconds as default block time
   return maturity === "Infinite" ? "Infinite" : maturity * DEFAULT_BLOCK_TIME;
 }
 

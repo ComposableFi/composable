@@ -8,7 +8,7 @@ import { useCurrentBlockAndTime } from "@/defi/polkadot/utils";
 import { useBlockInterval, usePicassoProvider } from "@/defi/polkadot/hooks";
 import { findCurrentBond } from "@/stores/defi/polkadot/bonds/utils";
 
-export const useClaim = (bondOfferId: string) => {
+export const useClaim = (bondOfferId?: string) => {
   const openBonds = useAppSelector<ActiveBond[]>(
     (state) => state.bonding.openPositions
   );
@@ -51,14 +51,14 @@ export const useClaim = (bondOfferId: string) => {
     ? new BigNumber(0)
     : lastBlock.minus(block);
   const vestingTime = humanDate(
-    remainingBlocks.multipliedBy(Number(interval) / 1000).toNumber()
+    remainingBlocks.multipliedBy(interval.toNumber() / 1000).toNumber()
   );
 
   const sourceBlock = block.gt(lastBlock) ? lastBlock : block;
   const vestedTime = humanDate(
     sourceBlock
       .minus(window.blockNumberBased.start)
-      .multipliedBy(Number(interval) / 1000)
+      .multipliedBy(interval.toNumber())
       .toNumber(),
     SHORT_HUMAN_DATE
   );

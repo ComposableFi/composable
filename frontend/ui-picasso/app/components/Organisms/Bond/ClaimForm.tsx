@@ -122,10 +122,9 @@ export const ClaimForm = () => {
         <PositionDetailsRow label="Vested" description={vestedTime} />
         <PositionDetailsRow
           label="ROI"
-          description={`${getROI(
-            activeBond.bond.rewardPrice,
-            activeBond.bond.bondPrice
-          ).toFormat(0)}%`}
+          description={`${humanBalance(
+            getROI(activeBond.bond.rewardPrice, activeBond.bond.price)
+          )}%`}
         />
       </Stack>
     </Box>

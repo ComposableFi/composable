@@ -8,8 +8,9 @@ import { useMemo } from "react";
 import { BN, BN_THOUSAND, BN_TWO, bnMin } from "@polkadot/util";
 
 import { createNamedHook } from "./createNamedHook";
-import { useParachainApi } from "substrate-react";
 import { usePicassoProvider } from "@/defi/polkadot/hooks/index";
+import BigNumber from "bignumber.js";
+import { unwrapNumberOrHex } from "@/utils/hexStrings";
 
 // Some chains incorrectly use these, i.e. it is set to values such as 0 or even 2
 // Use a low minimum validity threshold to check these against
@@ -18,8 +19,8 @@ const DEFAULT_TIME = new BN(6_000);
 
 const A_DAY = new BN(24 * 60 * 60 * 1000);
 
-function calcInterval(api: ApiPromise | undefined): BN | undefined {
-  if (!api) return undefined;
+function calcInterval(api: ApiPromise | undefined): BigNumber {
+  if (!api) return new BigNumber(6 * 1000);
   const time =
     // Babe, e.g. Relay chains (Substrate defaults)
     api.consts.babe?.expectedBlockTime ||
@@ -36,10 +37,11 @@ function calcInterval(api: ApiPromise | undefined): BN | undefined {
         DEFAULT_TIME.mul(BN_TWO)
       : // default guess for others
         DEFAULT_TIME);
-  return bnMin(A_DAY, new BN(time.toString()));
+
+  return unwrapNumberOrHex(bnMin(A_DAY, new BN(time.toString())).toString());
 }
 
-function useBlockIntervalImpl(): BN | undefined {
+function useBlockIntervalImpl(): BigNumber {
   const { parachainApi } = usePicassoProvider();
 
   return useMemo(() => calcInterval(parachainApi), [parachainApi]);

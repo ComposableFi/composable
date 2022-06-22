@@ -10,9 +10,8 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { BaseAsset, TokenAsset } from "../Atom";
+import { BaseAsset, TokenAsset, TokenPairAsset } from "../Atom";
 import { NoAssetsCover } from "./NoAssetsCover";
-import { TokenPairAsset } from "@/components";
 import { getTokenString } from "@/components/Organisms/Bond/utils";
 import { humanBalance } from "@/utils/formatters";
 import { useClaim } from "@/stores/defi/polkadot/bonds/useClaim";

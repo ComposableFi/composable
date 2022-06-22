@@ -42,7 +42,7 @@ export const HighlightBoxes: FC<{
       description: `${
         vesting === "Infinite"
           ? "Infinite"
-          : humanDate(vesting / 1000, LONG_HUMAN_DATE)
+          : humanDate(vesting, LONG_HUMAN_DATE)
       }`,
     },
   };

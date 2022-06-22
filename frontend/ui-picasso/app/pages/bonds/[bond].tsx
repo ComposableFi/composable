@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { NextPage } from "next";
 import { useRouter } from "next/router";
 import { Box, Grid, useTheme } from "@mui/material";
@@ -9,9 +8,7 @@ import { useAppSelector } from "@/hooks/store";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { Updater } from "@/stores/defi/polkadot/bonds/PolkadotBondsUpdater";
 import { getROI } from "@/defi/polkadot/pallets/BondedFinance";
-import { fetchBalanceByAssetId } from "@/defi/polkadot/pallets/Balance";
-import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
-import BigNumber from "bignumber.js";
+import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { BondDetailSkeleton } from "@/components/Organisms/Bond/BondDetailSkeleton";
 import { HighlightBoxes } from "@/components/Organisms/Bond/HighlightBoxes";
 import { BondForm } from "@/components/Organisms/Bond/BondForm";
@@ -21,38 +18,11 @@ import {
 } from "@/components/Organisms/Bond/utils";
 import { useOpenPositions } from "@/defi/polkadot/hooks/useOpenPositions";
 import { ClaimForm } from "@/components/Organisms/Bond/ClaimForm";
+import { useBalanceForOffer } from "@/stores/defi/polkadot/bonds/useBalanceForOffer";
 
 const standardPageSize = {
   xs: 12,
 };
-
-type BondOfferBalances = {
-  [key: string]: BigNumber;
-};
-
-function useBalanceForOffer(offer: BondOffer) {
-  const { parachainApi } = usePicassoProvider();
-  const account = useSelectedAccount();
-  const [balances, setBalances] = useState<BondOfferBalances>({});
-
-  useEffect(() => {
-    if (account && parachainApi && offer) {
-      fetchBalanceByAssetId(parachainApi, account.address, offer.assetId).then(
-        (result) => {
-          setBalances((amount) => ({
-            ...amount,
-            ...{ [offer.assetId]: result },
-          }));
-        }
-      );
-    }
-  }, [parachainApi, account, offer]);
-
-  return {
-    balances,
-    isLoading: Object.keys(balances).length === 0,
-  };
-}
 
 const Bond: NextPage = () => {
   const theme = useTheme();

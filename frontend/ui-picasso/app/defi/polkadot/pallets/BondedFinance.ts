@@ -81,6 +81,7 @@ async function fetchBondPrice(
     fetchAssetPrice(reward_asset, api),
   ]);
 
+  const nbOfBonds = stringToBigNumber(bond.nbOfBonds.toString());
   return [
     assetPriceResult.status === "fulfilled"
       ? assetPriceResult.value.multipliedBy(
@@ -89,7 +90,9 @@ async function fetchBondPrice(
       : new BigNumber(0),
     rewardAssetPriceResult.status === "fulfilled"
       ? rewardAssetPriceResult.value.multipliedBy(
-          fromPica(stringToBigNumber(bond.reward.amount.toString()))
+          fromPica(stringToBigNumber(bond.reward.amount.toString())).dividedBy(
+            nbOfBonds
+          )
         )
       : new BigNumber(0),
   ];

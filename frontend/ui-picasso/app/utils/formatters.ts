@@ -119,12 +119,12 @@ export function humanBalance(balance: string | number | BigNumber) {
     if (newValue.gte(new BigNumber(size))) {
       acc = {
         unit,
-        amount: newValue.div(size).toString(),
+        amount: newValue.div(size).toFixed(),
       };
     } else {
       acc = {
         unit: "",
-        amount: newValue.toString(),
+        amount: newValue.toFixed(),
       };
     }
 

@@ -27,7 +27,6 @@ const Bonds: NextPage = () => {
   const account = useSelectedAccount();
   useOpenPositions(account);
   const openPositions = useAppSelector((state) => state.bonding.openPositions);
-  console.log(openPositions);
   const router = useRouter();
 
   const handleActiveBondsClick = (offerId: string) => {

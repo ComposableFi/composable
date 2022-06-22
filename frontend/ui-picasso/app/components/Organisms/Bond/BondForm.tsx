@@ -133,26 +133,29 @@ export const BondForm: FC<{
           ...{
             youWillGet: {
               label: "You will get",
-              description: `${bondInput.multipliedBy(
+              description: `${humanBalance(
                 bondOffer.reward.amount
+                  .dividedBy(bondOffer.nbOfBonds)
+                  .multipliedBy(bondInput)
               )} ${getTokenString(bondOffer.reward.asset)}`,
             },
           },
           ...{
             maxYouCanBuy: {
               label: "Max you can buy",
-              description: `${maxPurchasableBonds
-                ?.multipliedBy(bondOffer.reward.amount)
-                ?.toFormat(0)} ${getTokenString(bondOffer.reward.asset)}`,
+              description: `${humanBalance(
+                bondOffer.reward.amount
+                  .dividedBy(bondOffer.nbOfBonds)
+                  .multipliedBy(maxPurchasableBonds)
+              )} ${getTokenString(bondOffer.reward.asset)}`,
             },
           },
           ...{
             roi: {
               label: "ROI",
-              description: `${getROI(
-                bondOffer.rewardPrice,
-                bondOffer.price
-              ).toFixed(3)}%`,
+              description: `${humanBalance(
+                getROI(bondOffer.rewardPrice, bondOffer.price)
+              )}%`,
             },
           },
         };
@@ -333,7 +336,7 @@ export const BondForm: FC<{
             },
             {
               label: "Discount",
-              description: `${roi.toFormat(3)}%`,
+              description: `${humanBalance(roi)}%`,
               discountColor: roi.toNumber(),
             },
           ].map(({ label, description, discountColor }) => (
