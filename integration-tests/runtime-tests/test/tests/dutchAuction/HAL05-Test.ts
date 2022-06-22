@@ -13,7 +13,7 @@ import { expect } from "chai";
  * This can result in situations when a victim pays, for example, 1000 tokens
  * to get 100 tokens of the same type.
  */
-describe("Halborn Audit Fix Dutch Auction Fix Test", function () {
+describe.only("Halborn Audit Fix Dutch Auction Fix Test", function () {
   let api: ApiPromise;
   let sudoKey: KeyringPair, walletId1: KeyringPair;
   let eth: number;
@@ -51,11 +51,16 @@ describe("Halborn Audit Fix Dutch Auction Fix Test", function () {
         total: api.createType("u64", 100)
       })
     });
-    await sendAndWaitForSuccess(
+    const {data: [result]} = await sendAndWaitForSuccess(
       api,
       walletId1,
       api.events.dutchAuction.OrderAdded.is,
       api.tx.dutchAuction.ask(order, configuration)
-    ).catch(error => expect(error.message).to.contain("SomeValue"));
+    ).catch(error => {
+      console.warn(error.message);
+      expect(error.message).to.contain("SomeValue");
+      return error;
+    });
+    expect(result).to.be.an("Error");
   });
 });
