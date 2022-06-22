@@ -1,4 +1,5 @@
 use crate::{
+	math::{IntoBalance, IntoSigned},
 	mock::{
 		accounts::ALICE,
 		assets::USDC,
@@ -40,6 +41,15 @@ fn cross_margin_context<R>(
 // -------------------------------------------------------------------------------------------------
 //                                         Prop Compose
 // -------------------------------------------------------------------------------------------------
+
+prop_compose! {
+	fn decimal_a_lt_decimal_b(b: FixedU128)(
+		a_inner in 0..b.into_inner(),
+		b in Just(b),
+	) -> (FixedI128, FixedI128) {
+		(FixedU128::from_inner(a_inner).into_signed().unwrap(), b.into_signed().unwrap())
+	}
+}
 
 prop_compose! {
 	fn min_trade_size_and_eps(min_size: u128)(
@@ -671,7 +681,43 @@ proptest! {
 		});
 	}
 
-	// TODO(0xangelo): cannot reverse into dust position (< min_trade_size)
+	#[test]
+	fn cannot_reverse_into_dust_position(
+		direction in any_direction(),
+		(eps, minimum_trade_size) in decimal_a_lt_decimal_b((1, 100).into())
+	) {
+		let config = MarketConfig { minimum_trade_size, ..Default::default() };
+		let quote_amount = as_balance(100);
+
+		with_trading_context(config, quote_amount, |market_id| {
+			let positions_before = TestPallet::get_positions(&ALICE).len();
+
+			let base_amount_limit = as_balance(10);
+			// price * base_amount_limit = quote_amount
+			VammPallet::set_price(Some((quote_amount, base_amount_limit).into()));
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				direction,
+				quote_amount,
+				base_amount_limit,
+			));
+
+			// Try reversing while leaving a small resulting position in the opposite direction
+			let eps_balance: Balance = eps.into_balance().unwrap();
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				direction.opposite(),
+				quote_amount + eps_balance,
+				base_amount_limit,
+			));
+			// The position should be closed, rather than leaving a dust position behind
+			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
+			assert_eq!(get_market(&market_id).base_asset_amount(direction), 0.into());
+		});
+	}
+
 
 	#[test]
 	fn margin_ratio_takes_unrealized_funding_into_account(direction in any_direction()) {
