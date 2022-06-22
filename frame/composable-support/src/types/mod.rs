@@ -59,14 +59,8 @@ impl<'de> frame_support::Deserialize<'de> for EthereumAddress {
 	}
 }
 
-#[derive(Encode, Decode, Clone, MaxEncodedLen, TypeInfo)]
+#[derive(PartialEq, Eq, Encode, Decode, Clone, MaxEncodedLen, TypeInfo)]
 pub struct CosmosEcdsaSignature(pub [u8; 64]);
-
-impl PartialEq for CosmosEcdsaSignature {
-	fn eq(&self, other: &Self) -> bool {
-		self.0[..] == other.0[..]
-	}
-}
 
 impl sp_std::fmt::Debug for CosmosEcdsaSignature {
 	fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
@@ -75,14 +69,8 @@ impl sp_std::fmt::Debug for CosmosEcdsaSignature {
 }
 
 /// Struct representing an Elliptic Curve Signature
-#[derive(Encode, Decode, Clone, MaxEncodedLen, TypeInfo)]
+#[derive(PartialEq, Eq, Encode, Decode, Clone, MaxEncodedLen, TypeInfo)]
 pub struct EcdsaSignature(pub [u8; 65]);
-
-impl PartialEq for EcdsaSignature {
-	fn eq(&self, other: &Self) -> bool {
-		self.0[..] == other.0[..]
-	}
-}
 
 impl sp_std::fmt::Debug for EcdsaSignature {
 	fn fmt(&self, f: &mut sp_std::fmt::Formatter<'_>) -> sp_std::fmt::Result {
