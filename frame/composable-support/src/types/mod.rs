@@ -92,10 +92,15 @@ impl sp_std::fmt::Debug for EcdsaSignature {
 
 impl From<CosmosEcdsaSignature> for EcdsaSignature {
 	fn from(item: CosmosEcdsaSignature) -> Self {
-		let mut sig = item.0.to_vec();
-		sig.push(0);
-		let mut signature: [u8; 65] = [0; 65];
-		signature.copy_from_slice(sig.as_slice());
-		EcdsaSignature(signature)
+        let mut sig: [u8; 65] = [0; 65];
+
+        sig.copy_from_slice(&item.0);
+
+        EcdsaSignature(sig)
+		// let mut sig = item.0.to_vec();
+		// sig.push(0);
+		// let mut signature: [u8; 65] = [0; 65];
+		// signature.copy_from_slice(sig.as_slice());
+		// EcdsaSignature(signature)
 	}
 }
