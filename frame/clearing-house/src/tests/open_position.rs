@@ -4,8 +4,8 @@ use crate::{
 		accounts::ALICE,
 		assets::USDC,
 		runtime::{
-			Balance, ExtBuilder, MarketId, Origin, Runtime, System as SystemPallet, TestPallet,
-			Vamm as VammPallet,
+			Balance, ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime,
+			System as SystemPallet, TestPallet, Vamm as VammPallet,
 		},
 	},
 	pallet::{
@@ -16,7 +16,8 @@ use crate::{
 	tests::{
 		any_direction, any_price, as_balance, get_collateral, get_market, get_market_fee_pool,
 		get_outstanding_gains, get_position, run_for_seconds, run_to_time, set_fee_pool_depth,
-		set_oracle_twap, with_markets_context, with_trading_context, Market, MarketConfig,
+		set_maximum_oracle_mark_divergence, set_oracle_twap, with_markets_context,
+		with_trading_context, Market, MarketConfig,
 	},
 };
 use composable_traits::{clearing_house::ClearingHouse, time::ONE_HOUR};
@@ -131,6 +132,113 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 				base_amount_limit,
 			),
 			Error::<Runtime>::MaxPositionsExceeded
+		);
+	});
+}
+
+#[test]
+fn should_block_risk_decreasing_trade_if_it_pushes_index_mark_divergence_above_threshold() {
+	let config = MarketConfig::default();
+
+	with_trading_context(config, as_balance(1_000_000), |market_id| {
+		// Set maximum divergence to 10%
+		set_maximum_oracle_mark_divergence((10, 100).into());
+
+		let vamm_id = &get_market(&market_id).vamm_id;
+		OraclePallet::set_price(Some(100)); // 1 in cents
+		VammPallet::set_price_of(vamm_id, Some(1.into()));
+
+		// Alice opens a position (no price impact)
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(ALICE),
+			market_id,
+			Long,
+			as_balance(1_000_000),
+			as_balance(1_000_000),
+		));
+
+		// Alice tries to close her position, but it fails because it pushes the mark price too
+		// below the index. Closing tanks the mark price to 89% of previous one.
+		// Relative index-mark spread:
+		// (mark - index) / index = (0.89 - 1.00) / 1.00 = -0.11
+		VammPallet::set_price_impact_of(vamm_id, Some((89, 100).into()));
+		assert_noop!(
+			TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				Short,
+				as_balance(1_000_000),
+				as_balance(0)
+			),
+			Error::<Runtime>::OracleMarkTooDivergent
+		);
+	});
+}
+
+#[test]
+fn should_not_block_risk_decreasing_trade_if_index_mark_divergence_was_already_above_threshold() {
+	let config = MarketConfig::default();
+
+	with_trading_context(config, as_balance(1_000_000), |market_id| {
+		// Set maximum divergence to 10%
+		set_maximum_oracle_mark_divergence((10, 100).into());
+
+		let vamm_id = &get_market(&market_id).vamm_id;
+		OraclePallet::set_price(Some(100)); // 1 in cents
+		VammPallet::set_price_of(vamm_id, Some(1.into()));
+
+		// Alice opens a position (no price impact)
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(ALICE),
+			market_id,
+			Long,
+			as_balance(1_000_000),
+			as_balance(1_000_000),
+		));
+
+		// Due to external market conditions, index-mark spread rises to >10%
+		// Relative index-mark spread:
+		// (mark - index) / index = (1.00 - 1.12) / 1.12 = -0.1071428571
+		OraclePallet::set_price(Some(112));
+
+		// Alice closes her position causing mark price to drop by 1%
+		VammPallet::set_price_impact_of(vamm_id, Some((99, 100).into()));
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(ALICE),
+			market_id,
+			Short,
+			as_balance(1_000_000),
+			as_balance(0)
+		));
+	});
+}
+
+#[test]
+fn should_block_risk_increasing_trade_if_it_pushes_index_mark_divergence_above_threshold() {
+	let config = MarketConfig::default();
+
+	with_trading_context(config, as_balance(1_000_000), |market_id| {
+		// Set maximum divergence to 10%
+		set_maximum_oracle_mark_divergence((10, 100).into());
+
+		let vamm_id = &get_market(&market_id).vamm_id;
+		OraclePallet::set_price(Some(100)); // 1 in cents
+		VammPallet::set_price_of(vamm_id, Some(1.into()));
+
+		// Alice tries to open a new long, but it fails because it pushes the mark price too
+		// above the index. Opening pumps the mark price to 111% of previous one.
+		// Relative index-mark spread:
+		// (mark - index) / index = (1.11 - 1.00) / 1.00 = 0.11
+		VammPallet::set_price_impact_of(vamm_id, Some((111, 100).into()));
+		assert_noop!(
+			TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				Long,
+				as_balance(1_000_000),
+				as_balance(1_000_000),
+			),
+			Error::<Runtime>::OracleMarkTooDivergent
 		);
 	});
 }
