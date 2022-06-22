@@ -140,11 +140,13 @@ pub mod pallet {
 	// ---------------------------------------------------------------------------------------------
 	//                                           Pallet Types
 	// ---------------------------------------------------------------------------------------------
+
 	#[derive(Encode, Decode, MaxEncodedLen, Clone, Copy, Default, Debug, PartialEq, TypeInfo)]
 	pub struct PoolState<PoolId, State> {
 		pub pool_id: PoolId,
 		pub state: State,
 	}
+
 	// ---------------------------------------------------------------------------------------------
 	//                                          Runtime Storage
 	// ---------------------------------------------------------------------------------------------
@@ -215,9 +217,9 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		/// Store a mapping of asset_id -> pool_id in the pools runtime storage object
+		/// Store a mapping of asset_id -> pool_id in the pools runtime storage object.
 		///
-		/// Emits `Setted` event when successful.
+		/// Emits [`Setted`](Event::Setted) event when successful.
 		#[pallet::weight(T::WeightInfo::set_pool_id_for_asset())]
 		pub fn set_pool_id_for_asset(
 			origin: OriginFor<T>,
@@ -309,19 +311,19 @@ pub mod pallet {
 		#[transactional]
 		fn do_rebalance(vault_id: &T::VaultId) -> DispatchResult {
 			let asset_id = T::Vault::asset_id(vault_id)?;
-			let account_id = T::Vault::account_id(vault_id);
+			let vault_account = T::Vault::account_id(vault_id);
 			let pool_id_and_state = Self::pools(asset_id).ok_or(Error::<T>::PoolNotFound)?;
 			let pool_id = pool_id_and_state.pool_id;
 			let task = T::Vault::available_funds(vault_id, &Self::account_id())?;
 			match task {
 				FundsAvailability::Withdrawable(balance) => {
-					Self::withdraw(vault_id, pool_id, balance)?;
+					Self::withdraw(vault_account, pool_id, balance)?;
 				},
 				FundsAvailability::Depositable(balance) => {
-					Self::deposit(vault_id, pool_id, balance)?;
+					Self::deposit(vault_account, pool_id, balance)?;
 				},
 				FundsAvailability::MustLiquidate => {
-					Self::liquidate(vault_id, pool_id, &account_id)?;
+					Self::liquidate(vault_account, pool_id)?;
 				},
 				FundsAvailability::None => {},
 			};
@@ -330,11 +332,10 @@ pub mod pallet {
 
 		#[transactional]
 		fn withdraw(
-			vault_id: &T::VaultId,
+			vault_account: T::AccountId,
 			pool_id: T::PoolId,
 			balance: T::Balance,
 		) -> DispatchResult {
-			let vault_account = T::Vault::account_id(vault_id);
 			let lp_token_amount = T::Pablo::amount_of_lp_token_for_added_liquidity(
 				pool_id,
 				T::Balance::zero(),
@@ -346,17 +347,16 @@ pub mod pallet {
 				T::Balance::zero(),
 				balance,
 				lp_token_amount,
-				bool::default(),
+				true,
 			)
 		}
 
 		#[transactional]
 		fn deposit(
-			vault_id: &T::VaultId,
+			vault_account: T::AccountId,
 			pool_id: T::PoolId,
 			balance: T::Balance,
 		) -> DispatchResult {
-			let vault_account = T::Vault::account_id(vault_id);
 			let lp_token_amount = T::Pablo::amount_of_lp_token_for_added_liquidity(
 				pool_id,
 				T::Balance::zero(),
@@ -372,14 +372,9 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		fn liquidate(
-			vault_id: &T::VaultId,
-			pool_id: T::PoolId,
-			account_id: &T::AccountId,
-		) -> DispatchResult {
-			let vault_account = T::Vault::account_id(vault_id);
+		fn liquidate(vault_account: T::AccountId, pool_id: T::PoolId) -> DispatchResult {
 			let lp_token_id = T::Pablo::lp_token(pool_id)?;
-			let balance_of_lp_token = T::Currency::balance(lp_token_id, account_id);
+			let balance_of_lp_token = T::Currency::balance(lp_token_id, &vault_account);
 			T::Pablo::remove_liquidity(
 				&vault_account,
 				pool_id,
