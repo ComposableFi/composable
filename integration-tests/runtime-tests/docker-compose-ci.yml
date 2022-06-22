@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   composable:
-    image: composablefi/composable-sandbox:latest
+    image: composablefi/composable-sandbox:${TAG}
     ports:
       - "9988:9988"
       - "9944:9944"
