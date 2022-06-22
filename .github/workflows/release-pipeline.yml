@@ -3,9 +3,11 @@ on:
   push:
     branches:
       - release-*
+      - update-release
 
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+  GH_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
 jobs:
   build-and-publish:
     runs-on:
@@ -19,7 +21,8 @@ jobs:
       - name: Clean up
         continue-on-error: true
         run: |
-          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          git config --global --add safe.directory /home/runner/_work/composable/composable
+          sudo chown -R runner:runner $GITHUB_WORKSPACE
           docker system prune --force --all --volumes
 
       - uses: actions/checkout@v2
@@ -45,11 +48,6 @@ jobs:
       # in between this commit and the previous tag.
       - uses: release-drafter/release-drafter@v5
         id: release_drafter
-
-      - name: Set Permission
-        continue-on-error: true
-        run: |
-          sudo su runner && sudo chmod -R 777  /home/runner/_work/_tool/node/
 
       - uses: actions/setup-node@v2
         with:
@@ -109,8 +107,8 @@ jobs:
           RELEASE_VERSION: ${{ steps.release_drafter.outputs.tag_name }}
         run: |
           RELEASE_VERSION=${RELEASE_VERSION:1} make version
-          cargo build --release -p composable
-          echo "client_release=1" >> "$GITHUB_ENV"
+          .maintain/client_release.sh
+          
 
       # This uploads the client binary built in the previous step to the release draft
       # DO NOT REMOVE
