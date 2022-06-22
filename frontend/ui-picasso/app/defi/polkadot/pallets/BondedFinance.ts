@@ -86,14 +86,14 @@ async function fetchBondPrice(
   return [
     assetPriceResult.status === "fulfilled"
       ? assetPriceResult.value.multipliedBy(
-          fromPica(stringToBigNumber(bond.bondPrice.toString()))
+          fromChainIdUnit(stringToBigNumber(bond.bondPrice.toString()))
         )
       : new BigNumber(0),
     rewardAssetPriceResult.status === "fulfilled"
       ? rewardAssetPriceResult.value.multipliedBy(
-          fromPica(stringToBigNumber(bond.reward.amount.toString())).dividedBy(
-            nbOfBonds
-          )
+          fromChainIdUnit(
+            stringToBigNumber(bond.reward.amount.toString())
+          ).dividedBy(nbOfBonds)
         )
       : new BigNumber(0),
   ];
@@ -111,14 +111,14 @@ function getAssets(asset: string): Token[] | Token {
     : TOKENS[tokens];
 }
 
-export function toPica(value: number | BigNumber) {
+export function toChainIdUnit(value: number | BigNumber) {
   const bigNumberValue =
     typeof value === "number" ? new BigNumber(value) : value;
 
   return bigNumberValue.multipliedBy(10 ** 12);
 }
 
-export function fromPica(value: number | BigNumber) {
+export function fromChainIdUnit(value: number | BigNumber) {
   return (typeof value === "number" ? new BigNumber(value) : value).dividedBy(
     10 ** 12
   );
@@ -130,7 +130,9 @@ function bondTransformer(beneficiary: AccountId32, bondOffer: any): BondOffer {
     beneficiary,
     assetId: bondOffer.asset.toString(),
     asset: getAssets(bondOffer.asset),
-    bondPrice: fromPica(stringToBigNumber(bondOffer.bondPrice.toString())),
+    bondPrice: fromChainIdUnit(
+      stringToBigNumber(bondOffer.bondPrice.toString())
+    ),
     nbOfBonds: bondOffer.nbOfBonds,
     maturity: bondOffer.maturity.isFinite
       ? bondOffer.maturity.asFinite.returnIn.toString()
@@ -138,7 +140,9 @@ function bondTransformer(beneficiary: AccountId32, bondOffer: any): BondOffer {
     reward: {
       assetId: bondOffer.reward.asset.toString(),
       asset: getAssets(bondOffer.reward.asset),
-      amount: fromPica(stringToBigNumber(bondOffer.reward.amount.toString())),
+      amount: fromChainIdUnit(
+        stringToBigNumber(bondOffer.reward.amount.toString())
+      ),
       maturity: new BigNumber(bondOffer.reward.maturity),
     },
     price: bondOffer.price,

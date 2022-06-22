@@ -1,7 +1,7 @@
 import { Token } from "@/defi/Tokens";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import BigNumber from "bignumber.js";
-import { fromPica } from "@/defi/polkadot/pallets/BondedFinance";
+import { fromChainIdUnit } from "@/defi/polkadot/pallets/BondedFinance";
 
 export function lpToSymbolPair(acc: string, token: Token) {
   return acc.length > 0 ? acc + "-" + token.symbol : token.symbol;
@@ -38,12 +38,12 @@ export function getClaimable(
 ) {
   if (block.gt(lastBlock)) {
     if (periodCount.eq(1)) {
-      return fromPica(perPeriod);
+      return fromChainIdUnit(perPeriod);
     }
     return lastBlock // 1200
       .minus(window.blockNumberBased.start) // 45
-      .dividedBy(fromPica(perPeriod)) // 1000
-      .multipliedBy(fromPica(perPeriod))
+      .dividedBy(fromChainIdUnit(perPeriod)) // 1000
+      .multipliedBy(fromChainIdUnit(perPeriod))
       .abs();
   }
 
@@ -55,7 +55,7 @@ export function getClaimable(
     ? block
         .minus(window.blockNumberBased.start)
         .dividedBy(periodCount)
-        .multipliedBy(fromPica(perPeriod))
+        .multipliedBy(fromChainIdUnit(perPeriod))
         .abs()
     : new BigNumber(0);
 }

@@ -1,7 +1,7 @@
 import { useAppSelector } from "@/hooks/store";
 import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
 import { getClaimable } from "@/components/Organisms/Bond/utils";
-import { fromPica } from "@/defi/polkadot/pallets/BondedFinance";
+import { fromChainIdUnit } from "@/defi/polkadot/pallets/BondedFinance";
 import BigNumber from "bignumber.js";
 import { humanDate, SHORT_HUMAN_DATE } from "@/utils/formatters";
 import { useCurrentBlockAndTime } from "@/defi/polkadot/utils";
@@ -44,7 +44,7 @@ export const useClaim = (bondOfferId?: string) => {
     periodCount
   );
 
-  const total = periodCount.multipliedBy(fromPica(perPeriod));
+  const total = periodCount.multipliedBy(fromChainIdUnit(perPeriod));
 
   const pending = total.minus(claimable);
   const remainingBlocks = lastBlock.minus(block).lte(0)
