@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - composable-sandbox
   pull_request:
     types: [labeled, synchronize, opened, reopened]
     branches:
@@ -19,7 +18,6 @@ env:
 
 jobs:
   build-and-publish:
-  if: ${{ github.ref == 'refs/heads/main' || contains(github.event.pull_request.labels.*.name, 'needs-to-update-composable-sandbox') }}
     runs-on: 
       - self-hosted
       - linux
