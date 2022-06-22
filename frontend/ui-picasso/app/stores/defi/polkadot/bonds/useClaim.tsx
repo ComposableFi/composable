@@ -39,6 +39,7 @@ export const useClaim = (bondOfferId: string) => {
   const lastBlock = window.blockNumberBased.start
     .plus(window.blockNumberBased.period)
     .multipliedBy(periodCount);
+
   const claimable = getClaimable(
     block,
     window,

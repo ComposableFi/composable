@@ -1,4 +1,5 @@
 import * as React from "react";
+import { FC } from "react";
 import {
   Table,
   TableBody,
@@ -10,43 +11,72 @@ import {
   Typography,
 } from "@mui/material";
 import { BaseAsset, TokenAsset } from "../Atom";
-import BigNumber from "bignumber.js";
 import { NoAssetsCover } from "./NoAssetsCover";
-import { TokenPairAsset } from "../Atom/TokenPairAsset";
-import {
-  getClaimable,
-  getTokenString,
-} from "@/components/Organisms/Bond/utils";
-import { useCurrentBlockAndTime } from "@/defi/polkadot/utils";
-import { useBlockInterval, usePicassoProvider } from "@/defi/polkadot/hooks";
+import { TokenPairAsset } from "@/components";
+import { getTokenString } from "@/components/Organisms/Bond/utils";
+import { humanBalance } from "@/utils/formatters";
+import { useClaim } from "@/stores/defi/polkadot/bonds/useClaim";
+import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
-import { fromPica } from "@/defi/polkadot/pallets/BondedFinance";
-import { humanBalance, humanDate } from "@/utils/formatters";
 
 export type MyBondingsTableProps = TableContainerProps & {
   onRowClick?: (offerId: string) => void;
-  openPositions: any; // TODO(Mamali): Fix type
+  openPositions: ActiveBond[];
 };
 
-function getLastBlock(
-  window: { blockNumberBased: { start: BigNumber; period: BigNumber } },
-  periodCount: BigNumber
-) {
-  const lastBlock = window.blockNumberBased.start
-    .plus(window.blockNumberBased.period)
-    .multipliedBy(periodCount);
-  return lastBlock;
-}
+export const BondTableRow: FC<{
+  bond: BondOffer;
+  onRowClick: (value: string) => void;
+}> = ({ bond, onRowClick }) => {
+  const { claimable, pending, vestingTime } = useClaim(bond.bondOfferId);
+  return (
+    <TableRow
+      sx={{
+        "&:hover": {
+          cursor: "pointer",
+        },
+      }}
+      key={getTokenString(bond.reward.asset)}
+      onClick={() => onRowClick(bond.bondOfferId)}
+    >
+      <TableCell align="left">
+        {Array.isArray(bond.asset) && (
+          <TokenPairAsset tokenIds={bond.asset.map(({ id }) => id)} />
+        )}
+        {!Array.isArray(bond.asset) && <TokenAsset tokenId={bond.asset.id} />}
+      </TableCell>
+      <TableCell align="left">
+        <BaseAsset
+          icon="/tokens/chaos.svg"
+          label={`${humanBalance(claimable)} ${
+            Array.isArray(bond.reward.asset)
+              ? bond.reward.asset[0].id
+              : bond.reward.asset.id
+          }`}
+        />
+      </TableCell>
+      <TableCell align="left">
+        <BaseAsset
+          icon="/tokens/chaos.svg"
+          label={`${humanBalance(pending)} ${
+            Array.isArray(bond.reward.asset)
+              ? bond.reward.asset[0].id
+              : bond.reward.asset.id
+          }`}
+        />
+      </TableCell>
+      <TableCell align="left">
+        <Typography variant="body2">{vestingTime}</Typography>
+      </TableCell>
+    </TableRow>
+  );
+};
 
 export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
   openPositions,
   onRowClick = () => {},
   ...rest
 }) => {
-  const { parachainApi } = usePicassoProvider();
-  const { block, time } = useCurrentBlockAndTime(parachainApi);
-  const interval = useBlockInterval();
-
   if (openPositions.length > 0) {
     return (
       <TableContainer {...rest}>
@@ -60,75 +90,9 @@ export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {openPositions.map(
-              ({ window, periodCount, perPeriod, bond }: ActiveBond) => {
-                const lastBlock = getLastBlock(window, periodCount);
-                const claimable = getClaimable(
-                  block,
-                  window,
-                  perPeriod,
-                  lastBlock,
-                  periodCount
-                );
-
-                const total = periodCount.multipliedBy(fromPica(perPeriod));
-
-                const pending = total.minus(claimable);
-                const remainingBlocks = lastBlock.minus(block).lte(0)
-                  ? new BigNumber(0)
-                  : lastBlock.minus(block);
-                const vesting_time = humanDate(
-                  remainingBlocks
-                    .multipliedBy(Number(interval) / 1000)
-                    .toNumber()
-                );
-                return (
-                  <TableRow
-                    sx={{
-                      "&:hover": {
-                        cursor: "pointer",
-                      },
-                    }}
-                    key={getTokenString(bond.reward.asset)}
-                    onClick={() => onRowClick(bond.bondOfferId)}
-                  >
-                    <TableCell align="left">
-                      {Array.isArray(bond.asset) && (
-                        <TokenPairAsset
-                          tokenIds={bond.asset.map(({ id }) => id)}
-                        />
-                      )}
-                      {!Array.isArray(bond.asset) && (
-                        <TokenAsset tokenId={bond.asset.id} />
-                      )}
-                    </TableCell>
-                    <TableCell align="left">
-                      <BaseAsset
-                        icon="/tokens/chaos.svg"
-                        label={`${humanBalance(claimable)} ${
-                          Array.isArray(bond.reward.asset)
-                            ? bond.reward.asset[0].id
-                            : bond.reward.asset.id
-                        }`}
-                      />
-                    </TableCell>
-                    <TableCell align="left">
-                      <BaseAsset
-                        icon="/tokens/chaos.svg"
-                        label={`${humanBalance(pending)} ${
-                          Array.isArray(bond.reward.asset)
-                            ? bond.reward.asset[0].id
-                            : bond.reward.asset.id
-                        }`}
-                      />
-                    </TableCell>
-                    <TableCell align="left">
-                      <Typography variant="body2">{vesting_time}</Typography>
-                    </TableCell>
-                  </TableRow>
-                );
-              }
-            )}
+            {openPositions.map(({ bond }: { bond: BondOffer }, index) => (
+              <BondTableRow key={index} bond={bond} onRowClick={onRowClick} />
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
