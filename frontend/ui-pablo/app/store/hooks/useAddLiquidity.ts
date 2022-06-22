@@ -1,13 +1,13 @@
 import { AssetId } from "@/defi/polkadot/types";
 import { setSelection, useAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
 import useStore from "@/store/useStore";
-import { DEFAULT_NETWORK_ID, DEFAULT_DECIMALS } from "@/defi/utils/constants";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import BigNumber from "bignumber.js";
 import { useState, useMemo, useEffect } from "react";
 import { useParachainApi } from "substrate-react";
 import { useLiquidityByPool } from "./useLiquidityByPool";
 import { useAssetBalance } from "../assets/hooks";
-import { toChainUnits } from "@/defi/utils";
+import { fromChainUnits, toChainUnits } from "@/defi/utils";
 
 export const useAddLiquidity = () => {
   const {
@@ -162,7 +162,7 @@ export const useAddLiquidity = () => {
           )
           .then((expectedLP: any) => {
             setLpReceiveAmount(
-              new BigNumber(expectedLP.toString()).div(DEFAULT_DECIMALS)
+              fromChainUnits(expectedLP.toString())
             );
           })
           .catch((err: any) => {
