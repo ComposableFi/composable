@@ -198,8 +198,7 @@ export async function claim(
         onSuccess
       );
     } catch (e) {
-      onError(e.toString());
-      console.log(e);
+      onError(e as any);
     }
   }
 }

@@ -50,7 +50,7 @@ export const AllBondsTable: React.FC<AllBondsTableProps> = ({
                 },
                 index
               ) => {
-                const roi = getROI(rewardPrice, price, nbOfBonds);
+                const roi = getROI(rewardPrice, price);
                 return (
                   <TableRow
                     sx={{

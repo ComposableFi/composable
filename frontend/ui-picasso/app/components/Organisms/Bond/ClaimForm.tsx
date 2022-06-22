@@ -57,7 +57,7 @@ export const ClaimForm = () => {
           variant: "error",
           isClosable: true,
           persist: true,
-          url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + txHash,
+          description: "Failed with: " + msg,
         });
       },
       (txHash) => {
