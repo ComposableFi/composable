@@ -12,11 +12,9 @@ import {
   useTheme,
 } from "@mui/material";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useStore from "@/store/useStore";
 import { useDotSamaContext, useParachainApi } from "substrate-react";
-import { AssetId } from "@/defi/polkadot/types";
-import BigNumber from "bignumber.js";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useAssetsWithBalance } from "@/defi/hooks/useAssetsWithBalance";
 
@@ -27,9 +25,15 @@ const Status = () => {
   const { openPolkadotModal } = useStore();
   const { extensionStatus, selectedAccount } = useDotSamaContext();
   const { accounts } = useParachainApi("picasso");
-  const [selectedAsset, setSelectedAsset] = useState<AssetId>(
-    "pica"
+  const [selectedAsset, setSelectedAsset] = useState<string | undefined>(
+    undefined
   );
+
+  useEffect(() => {
+    if (assetsWithBalance.length) {
+      setSelectedAsset(assetsWithBalance[0].symbol)
+    }
+  }, [assetsWithBalance])
 
   if (extensionStatus === 'connected') {
     return (

@@ -23,7 +23,7 @@ export function useAssetsWithBalance(networkId: string): AssetWithBalance[] {
                 ...asset,
                 balance
             }
-        })
+        }).filter(i => i.balance.gt(0))
     }, [assetBalances, supportedAssets, networkId]);
 
     return assetsWithBalance;
