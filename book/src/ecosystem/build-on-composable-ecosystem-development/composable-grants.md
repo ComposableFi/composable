@@ -42,9 +42,9 @@ This program invites developers to leverage our [Composable software development
 
 Composable Finance has built this [SDK](https://dali.devnets.composablefinance.ninja/developer-guides/composable-sdk.html) to facilitate development across various layers and chains. Given this broad scope of possibilities, our cross-layer grant recipients can have a diverse set of interests, for example:
 
-_Yield farming enthusiast_? Use Composable’s SDK to build a cross-layer yield aggregator, allowing maximal yield generation.
+_ Use Composable’s SDK to build a cross-layer yield aggregator, allowing maximal yield generation.
 
-_Crypto-lending connoisseur_? Use cross-layer function calls to build a flash loan protocol which can leap across several chains within a single block time.
+_ Use cross-layer function calls to build a flash loan protocol which can leap across several chains within a single block time.
 
 At Composable, we are still discovering the full extent to which this technology can be leveraged. Even if you are not seeking a grant, we still invite you to work with our SDK to see what you can build!
 
