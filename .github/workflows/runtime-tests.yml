@@ -1,9 +1,6 @@
 name: Runtime Tests
 
 on:
-  # pull_request: # tmp
-  #   branches:
-  #     - main
   workflow_run:
     workflows: ["Build composable-sandbox Docker image"]
     types:
@@ -18,6 +15,8 @@ jobs:
       group: runtime-tests-${{ github.ref }}
       cancel-in-progress: true
     steps:
+      - uses: hmarr/debug-action@v2
+
       - uses: actions/checkout@v2
 
       - name: Prepare a test environment
