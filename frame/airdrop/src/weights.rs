@@ -1,9 +1,4 @@
-use frame_support::{
-	traits::Get,
-	weights::{constants::RocksDbWeight, Weight},
-};
-
-use sp_std::marker::PhantomData;
+use frame_support::weights::Weight;
 
 pub trait WeightInfo {
 	fn create_airdrop() -> Weight;

@@ -30,7 +30,7 @@ pub mod pallet {
 		math::safe::{SafeAdd, SafeSub},
 		types::{CosmosAddress, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress},
 	};
-	use composable_traits::airdrop::AirdropManagement;
+	use composable_traits::airdrop::Airdropper;
 	use frame_support::{
 		dispatch::PostDispatchInfo,
 		pallet_prelude::*,
@@ -248,7 +248,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let creator = ensure_signed(origin)?;
 
-			<Self as AirdropManagement>::create_airdrop(creator, start_at, vesting_schedule)
+			<Self as Airdropper>::create_airdrop(creator, start_at, vesting_schedule)
 		}
 
 		/// Add one or more recipients to the Airdrop, specifying the token amount that each
@@ -268,7 +268,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let origin_id = ensure_signed(origin)?;
 
-			<Self as AirdropManagement>::add_recipient(origin_id, airdrop_id, recipients)
+			<Self as Airdropper>::add_recipient(origin_id, airdrop_id, recipients)
 		}
 
 		/// Remove a recipient from an Airdrop.
@@ -289,7 +289,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			let origin_id = ensure_signed(origin)?;
 
-			<Self as AirdropManagement>::remove_recipient(origin_id, airdrop_id, recipient)
+			<Self as Airdropper>::remove_recipient(origin_id, airdrop_id, recipient)
 		}
 
 		/// Start an Airdrop.
@@ -307,7 +307,7 @@ pub mod pallet {
 		pub fn enable_airdrop(origin: OriginFor<T>, airdrop_id: T::AirdropId) -> DispatchResult {
 			let origin_id = ensure_signed(origin)?;
 
-			<Self as AirdropManagement>::enable_airdrop(origin_id, airdrop_id)
+			<Self as Airdropper>::enable_airdrop(origin_id, airdrop_id)
 		}
 
 		/// Stop an Airdrop.
@@ -322,7 +322,7 @@ pub mod pallet {
 		pub fn disable_airdrop(origin: OriginFor<T>, airdrop_id: T::AirdropId) -> DispatchResult {
 			let origin_id = ensure_signed(origin)?;
 
-			<Self as AirdropManagement>::disable_airdrop(origin_id, airdrop_id)?;
+			<Self as Airdropper>::disable_airdrop(origin_id, airdrop_id)?;
 			Ok(())
 		}
 
@@ -364,7 +364,7 @@ pub mod pallet {
 				},
 			}
 
-			<Self as AirdropManagement>::claim(airdrop_id, remote_account, reward_account)
+			<Self as Airdropper>::claim(airdrop_id, remote_account, reward_account)
 		}
 	}
 
@@ -677,7 +677,7 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> AirdropManagement for Pallet<T> {
+	impl<T: Config> Airdropper for Pallet<T> {
 		type AccountId = AccountIdOf<T>;
 		type AirdropId = AirdropIdOf<T>;
 		type AirdropStart = MomentOf<T>;

@@ -8,7 +8,7 @@ use crate::{
 use composable_support::types::{
 	CosmosAddress, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress,
 };
-use composable_traits::airdrop::AirdropManagement;
+use composable_traits::airdrop::Airdropper;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
 use frame_support::pallet_prelude::*;
 use frame_system::{Pallet as System, RawOrigin};
@@ -195,7 +195,7 @@ benchmarks! {
 		let accounts: Vec<(RemoteAccountOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
-		<Airdrop<T> as AirdropManagement>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
+		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
 	}: add_recipient(RawOrigin::Signed(creator), airdrop_id, accounts)
 
 	remove_recipient_benchmark {
@@ -203,8 +203,8 @@ benchmarks! {
 		let accounts: Vec<(RemoteAccountOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
-		<Airdrop<T> as AirdropManagement>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
-		<Airdrop<T> as AirdropManagement>::add_recipient(creator.clone(), airdrop_id, accounts.clone())?;
+		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
+		<Airdrop<T> as Airdropper>::add_recipient(creator.clone(), airdrop_id, accounts.clone())?;
 	}: remove_recipient(RawOrigin::Signed(creator), airdrop_id, accounts[0].0.clone())
 
 	enable_airdrop_benchmark {
@@ -212,8 +212,8 @@ benchmarks! {
 		let accounts: Vec<(RemoteAccountOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
-		<Airdrop<T> as AirdropManagement>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
-		<Airdrop<T> as AirdropManagement>::add_recipient(creator.clone(), airdrop_id, accounts)?;
+		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
+		<Airdrop<T> as Airdropper>::add_recipient(creator.clone(), airdrop_id, accounts)?;
 	}: enable_airdrop(RawOrigin::Signed(creator), airdrop_id)
 
 	disable_airdrop_benchmark {
@@ -221,8 +221,8 @@ benchmarks! {
 		let accounts: Vec<(RemoteAccountOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
-		<Airdrop<T> as AirdropManagement>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
-		<Airdrop<T> as AirdropManagement>::add_recipient(creator.clone(), airdrop_id, accounts)?;
+		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
+		<Airdrop<T> as Airdropper>::add_recipient(creator.clone(), airdrop_id, accounts)?;
 	}: disable_airdrop(RawOrigin::Signed(creator), airdrop_id)
 
 	claim_benchmark {
@@ -231,8 +231,8 @@ benchmarks! {
 		let remote_accounts = accounts.clone().into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
-		<Airdrop<T> as AirdropManagement>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
-		<Airdrop<T> as AirdropManagement>::add_recipient(creator, airdrop_id, remote_accounts)?;
+		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
+		<Airdrop<T> as Airdropper>::add_recipient(creator, airdrop_id, remote_accounts)?;
 		let reward_account = accounts[0].0.clone();
 		System::<T>::set_block_number(VESTING_PERIOD.into());
 	}: claim(RawOrigin::None, airdrop_id, reward_account, accounts[0].1.clone().proof::<T>(accounts[0].0.clone()))

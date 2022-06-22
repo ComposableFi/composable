@@ -4,7 +4,7 @@ use frame_support::dispatch::{DispatchResult, DispatchResultWithPostInfo};
 use sp_runtime::DispatchError;
 
 /// Contains functions necessary functions for the business logic for managing Airdrops
-pub trait AirdropManagement {
+pub trait Airdropper {
 	type AccountId;
 	type AirdropId;
 	type AirdropStart;
