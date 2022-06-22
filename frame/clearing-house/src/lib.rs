@@ -1734,32 +1734,6 @@ pub mod pallet {
 
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
-		fn settle_profit_and_loss(
-			collateral: &mut T::Balance,
-			outstanding_gains: &mut T::Balance,
-			market: &mut Market<T>,
-			pnl: T::Decimal,
-		) -> Result<(), DispatchError> {
-			if pnl.is_positive() {
-				// take the opportunity to settle any outstanding gains
-				outstanding_gains.try_add_mut(&pnl.into_balance()?)?;
-				let realized_gains = cmp::min(*outstanding_gains, market.available_gains);
-				collateral.try_add_mut(&realized_gains)?;
-				outstanding_gains.try_sub_mut(&realized_gains)?;
-				market.available_gains.try_sub_mut(&realized_gains)?;
-			} else {
-				let losses = pnl.into_balance()?;
-				let outstanding_gains_lost = cmp::min(*outstanding_gains, losses);
-				let realized_losses = losses.saturating_sub(outstanding_gains_lost);
-				outstanding_gains.try_sub_mut(&outstanding_gains_lost)?;
-				market.available_gains.try_add_mut(&realized_losses)?;
-				// Shortfalls are covered by the Insurance Fund in `withdraw_collateral`
-				*collateral = (*collateral).saturating_sub(realized_losses);
-			}
-
-			Ok(())
-		}
-
 		fn try_get_market(market_id: &T::MarketId) -> Result<Market<T>, DispatchError> {
 			Markets::<T>::get(market_id).ok_or_else(|| Error::<T>::MarketIdNotFound.into())
 		}
@@ -1839,30 +1813,6 @@ pub mod pallet {
 			})
 		}
 
-		fn remove_or_create_position(
-			positions: &mut BoundedVec<Position<T>, T::MaxPositions>,
-			market_id: &T::MarketId,
-			market: &Market<T>,
-			direction: Direction,
-		) -> Result<Position<T>, DispatchError> {
-			Ok(match positions.iter().position(|p| p.market_id == *market_id) {
-				Some(index) => positions.swap_remove(index),
-				None => {
-					// Ensure there is space if the position is added to the vector later
-					ensure!(
-						positions.len() < BoundedVec::<Position<T>, T::MaxPositions>::bound(),
-						Error::<T>::MaxPositionsExceeded
-					);
-					Position::<T> {
-						market_id: market_id.clone(),
-						base_asset_amount: Zero::zero(),
-						quote_asset_notional_amount: Zero::zero(),
-						last_cum_funding: market.cum_funding_rate(direction),
-					}
-				},
-			})
-		}
-
 		fn abs_position_notional_and_pnl(
 			market: &Market<T>,
 			position: &Position<T>,
@@ -1886,19 +1836,6 @@ pub mod pallet {
 			})?;
 
 			Self::decimal_from_swapped(sim_swapped, position_direction)
-		}
-
-		fn round_trade_if_necessary(
-			market: &Market<T>,
-			quote_abs_amount: &mut T::Decimal,
-			base_abs_value: &T::Decimal,
-		) -> Result<(), DispatchError> {
-			let diff = base_abs_value.try_sub(quote_abs_amount)?;
-			if diff.saturating_abs() < market.minimum_trade_size {
-				// round trade to close off position
-				*quote_abs_amount = *base_abs_value;
-			}
-			Ok(())
 		}
 
 		/// Compute how much to withdraw from the collateral and insurance accounts.
@@ -1933,17 +1870,34 @@ pub mod pallet {
 				false => balance.saturating_sub(abs_delta),
 			})
 		}
-
-		fn update_margin_with_pnl(
-			margin: &T::Balance,
-			pnl: &T::Decimal,
-		) -> Result<T::Balance, DispatchError> {
-			Self::updated_balance(margin, pnl)
-		}
 	}
 
 	// Trading helpers
 	impl<T: Config> Pallet<T> {
+		fn remove_or_create_position(
+			positions: &mut BoundedVec<Position<T>, T::MaxPositions>,
+			market_id: &T::MarketId,
+			market: &Market<T>,
+			direction: Direction,
+		) -> Result<Position<T>, DispatchError> {
+			Ok(match positions.iter().position(|p| p.market_id == *market_id) {
+				Some(index) => positions.swap_remove(index),
+				None => {
+					// Ensure there is space if the position is added to the vector later
+					ensure!(
+						positions.len() < BoundedVec::<Position<T>, T::MaxPositions>::bound(),
+						Error::<T>::MaxPositionsExceeded
+					);
+					Position::<T> {
+						market_id: market_id.clone(),
+						base_asset_amount: Zero::zero(),
+						quote_asset_notional_amount: Zero::zero(),
+						last_cum_funding: market.cum_funding_rate(direction),
+					}
+				},
+			})
+		}
+
 		fn execute_trade(
 			state: TraderPositionState<T>,
 			direction: Direction,
@@ -2049,6 +2003,19 @@ pub mod pallet {
 				base_swapped,
 				is_risk_increasing,
 			})
+		}
+
+		fn round_trade_if_necessary(
+			market: &Market<T>,
+			quote_abs_amount: &mut T::Decimal,
+			base_abs_value: &T::Decimal,
+		) -> Result<(), DispatchError> {
+			let diff = base_abs_value.try_sub(quote_abs_amount)?;
+			if diff.saturating_abs() < market.minimum_trade_size {
+				// round trade to close off position
+				*quote_abs_amount = *base_abs_value;
+			}
+			Ok(())
 		}
 
 		fn increase_position(
@@ -2200,6 +2167,32 @@ pub mod pallet {
 			market.add_base_asset_amount(&position.base_asset_amount, direction)?;
 
 			Ok((base_swapped, entry_value, exit_value))
+		}
+
+		fn settle_profit_and_loss(
+			collateral: &mut T::Balance,
+			outstanding_gains: &mut T::Balance,
+			market: &mut Market<T>,
+			pnl: T::Decimal,
+		) -> Result<(), DispatchError> {
+			if pnl.is_positive() {
+				// take the opportunity to settle any outstanding gains
+				outstanding_gains.try_add_mut(&pnl.into_balance()?)?;
+				let realized_gains = cmp::min(*outstanding_gains, market.available_gains);
+				collateral.try_add_mut(&realized_gains)?;
+				outstanding_gains.try_sub_mut(&realized_gains)?;
+				market.available_gains.try_sub_mut(&realized_gains)?;
+			} else {
+				let losses = pnl.into_balance()?;
+				let outstanding_gains_lost = cmp::min(*outstanding_gains, losses);
+				let realized_losses = losses.saturating_sub(outstanding_gains_lost);
+				outstanding_gains.try_sub_mut(&outstanding_gains_lost)?;
+				market.available_gains.try_add_mut(&realized_losses)?;
+				// Shortfalls are covered by the Insurance Fund in `withdraw_collateral`
+				*collateral = (*collateral).saturating_sub(realized_losses);
+			}
+
+			Ok(())
 		}
 
 		fn fee_for_trade(
