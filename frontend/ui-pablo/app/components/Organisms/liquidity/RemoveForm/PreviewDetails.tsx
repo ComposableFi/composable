@@ -6,7 +6,6 @@ import {
 } from "@mui/material";
 
 import BigNumber from "bignumber.js";
-import { AssetMetadata } from "@/defi/polkadot/Assets";
 import { MockedAsset } from "@/store/assets/assets.types";
 
 export type PreviewDetailsProps = {

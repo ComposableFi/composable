@@ -1,5 +1,3 @@
-import { AssetMetadata, getAssetByOnChainId } from "@/defi/polkadot/Assets";
-import { AssetId } from "@/defi/polkadot/types";
 import useStore from "@/store/useStore";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import BigNumber from "bignumber.js";

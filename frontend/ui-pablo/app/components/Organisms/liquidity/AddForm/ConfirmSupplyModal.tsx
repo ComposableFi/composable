@@ -21,7 +21,6 @@ import { useAppSelector } from "@/hooks/store";
 import BigNumber from "bignumber.js";
 import { getSigner, useExecutor, useParachainApi, useSelectedAccount } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
-import { getPairDecimals } from "@/defi/polkadot/utils";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { useSnackbar } from "notistack";
 import { resetAddLiquiditySlice, useAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";

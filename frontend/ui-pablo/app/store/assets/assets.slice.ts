@@ -32,6 +32,16 @@ export const SUPPORTED_ASSETS: MockedAsset[] = [
       karura: "none",
       picasso: "129",
     },
+  },
+  {
+    decimals: 12,
+    symbol: "PBLO",
+    icon: "/tokens/pablo.svg",
+    name: "Pablo",
+    network: {
+      karura: "none",
+      picasso: "201",
+    },
   }
 ]
 

@@ -1,4 +1,3 @@
-import { getAssetById } from "@/defi/polkadot/Assets";
 import { LiquidityBootstrappingPool, ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
 import { percentageToNumber } from "@/utils/number";
 import BigNumber from "bignumber.js";

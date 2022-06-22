@@ -1,8 +1,8 @@
-import { getAssetByOnChainId } from "@/defi/polkadot/Assets";
 import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
 import { queryPabloPoolById } from "@/updaters/pools/subsquid";
-import { DAYS, DEFAULT_NETWORK_ID } from "../../constants";
+import { DAYS } from "../../constants";
 import BigNumber from "bignumber.js";
+import { fromChainUnits } from "../../units";
 
 export interface PabloPoolQueryResponse {
     totalLiquidity: BigNumber;
@@ -17,19 +17,17 @@ export interface PabloPoolQueryResponse {
 export async function fetchPoolStats(pool: ConstantProductPool | StableSwapPool): Promise<PabloPoolQueryResponse[]> {
     try {
         const response = await queryPabloPoolById(pool.poolId);
-        const quoteAsset = getAssetByOnChainId(DEFAULT_NETWORK_ID, pool.pair.quote);
 
         if (!response.data) throw new Error("Unable to Fetch Data");
 
         let { pabloPools } = response.data;
         if (!pabloPools) throw new Error("[fetchPoolStats] Unable to retreive data from query");
 
-        const decimals = new BigNumber(10).pow(quoteAsset.decimals);
         pabloPools = pabloPools.map((poolState: any) => {
             return {
-                totalLiquidity: new BigNumber(poolState.totalLiquidity).div(decimals),
-                totalVolume: new BigNumber(poolState.totalVolume).div(decimals),
-                totalFees: new BigNumber(poolState.totalFees).div(decimals),
+                totalLiquidity: fromChainUnits(poolState.totalFees),
+                totalVolume: fromChainUnits(poolState.totalFees),
+                totalFees: fromChainUnits(poolState.totalFees),
                 transactionCount: Number(poolState.transactionCount),
                 calculatedTimestamp: Number(poolState.calculatedTimestamp),
                 quoteAssetId: Number(poolState.quoteAssetId),

@@ -41,7 +41,6 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
   const { poolId } = useRemoveLiquidityState();
   const { lpBalance, baseAsset, quoteAsset } = useLiquidityPoolDetails(poolId);
 
-
   const isConfirmingModalOpen = useAppSelector(
     (state) => state.ui.isConfirmingModalOpen
   );

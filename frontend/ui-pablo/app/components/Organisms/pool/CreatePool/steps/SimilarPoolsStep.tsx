@@ -18,9 +18,7 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { TransactionSettings } from "@/components/Organisms/TransactionSettings";
 import { openTransactionSettingsModal } from "@/stores/ui/uiSlice";
 import useStore from "@/store/useStore";
-import { getAsset } from "@/defi/polkadot/Assets";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
-import createPool from "@/pages/pool/create-pool";
 
 const itemBoxProps = (theme: Theme) =>
   ({

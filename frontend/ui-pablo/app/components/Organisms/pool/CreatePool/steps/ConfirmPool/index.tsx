@@ -23,13 +23,8 @@ import { AccessTimeRounded, OpenInNewRounded } from "@mui/icons-material";
 import moment from "moment-timezone";
 import { useRouter } from "next/router";
 import useStore from "@/store/useStore";
-import {
-  getAsset,
-  getAssetOnChainId,
-} from "@/defi/polkadot/Assets";
 import { AMMs } from "@/defi/AMMs";
 import { useUSDPriceByAssetId } from "@/store/assets/hooks";
-import { AssetId } from "@/defi/polkadot/types";
 import {
   getSigner,
   useExecutor,
@@ -39,7 +34,7 @@ import {
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { EventRecord } from "@polkadot/types/interfaces/system/types";
-import { addLiquidityToPoolViaPablo, createConstantProductPool, createStableSwapPool } from "@/defi/utils";
+import { addLiquidityToPoolViaPablo, createConstantProductPool, createStableSwapPool, toChainUnits } from "@/defi/utils";
 import { closeConfirmingModal, openConfirmingModal } from "@/stores/ui/uiSlice";
 
 const labelProps = (
@@ -146,18 +141,11 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
       const { address } = selectedAccount;
       const signer = await getSigner(APP_NAME, address);
 
-      const baseDecimals = new BigNumber(10).pow(
-        getAsset(baseAsset as AssetId).decimals ?? 12
-      );
-      const quoteDecimals = new BigNumber(10).pow(
-        getAsset(quoteAsset as AssetId).decimals ?? 12
-      );
-
       const call = addLiquidityToPoolViaPablo(
         parachainApi,
         poolId,
-        new BigNumber(liquidity.baseAmount).times(baseDecimals).toFixed(0),
-        new BigNumber(liquidity.quoteAmount).times(quoteDecimals).toFixed(0)
+        toChainUnits(liquidity.baseAmount).toString(),
+        toChainUnits(liquidity.quoteAmount).toString()
       );
 
       executor.execute(
@@ -208,11 +196,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
       const { address } = selectedAccount;
       const signer = await getSigner(APP_NAME, address);
 
-      let pair = {
-        base: getAssetOnChainId("picasso", baseAsset as AssetId) as number,
-        quote: getAssetOnChainId("picasso", quoteAsset as AssetId) as number,
-      };
-
+      let pair = { base: +baseAsset, quote: +quoteAsset }
       let permillDecimals = new BigNumber(10).pow(4);
       let fee = new BigNumber(swapFee).times(permillDecimals).toNumber();
 
