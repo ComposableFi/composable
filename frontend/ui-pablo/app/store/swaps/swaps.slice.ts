@@ -31,10 +31,6 @@ const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
         base: -1,
       },
     },
-    userAccount: {
-      baseAssetBalance: "0",
-      quoteAssetBalance: "0",
-    },
     ui: {
       quoteAssetSelected: "none",
       baseAssetSelected: "none",
@@ -54,10 +50,6 @@ const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
   setPoolConstantsSwaps: (poolConstants) =>
     set((prev: SwapsSlice) => ({
       swaps: putPoolConstants(prev.swaps, poolConstants),
-    })),
-  setUserAccountBalanceSwaps: (side: "base" | "quote", balance: string) =>
-    set((prev: SwapsSlice) => ({
-      swaps: putUserAccountBalance(prev.swaps, side, balance),
     })),
   setPoolVariablesSwaps: (key: {
     spotPrice: string;

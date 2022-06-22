@@ -35,20 +35,6 @@ export const putPoolConstants = (
   });
 }
 
-export const putUserAccountBalance = (
-  swapState: SwapsSlice["swaps"],
-  side: "quote" | "base",
-  balance: string,
-) => {
-  return produce(swapState, (draft) => {
-    if (side === "quote") {
-      draft.userAccount.quoteAssetBalance = balance;
-    } else {
-      draft.userAccount.baseAssetBalance = balance;
-    }
-  });
-}
-
 export const putPoolVariables = (
   swapState: SwapsSlice["swaps"],
   key: {

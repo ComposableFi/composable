@@ -50,8 +50,8 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const token1PriceInUSD = useUSDPriceByAssetId(swaps.ui.baseAssetSelected);
   const token2PriceInUSD = useUSDPriceByAssetId(swaps.ui.quoteAssetSelected);
 
-  const balance1 = useAssetBalance(DEFAULT_NETWORK_ID, swaps.ui.baseAssetSelected);
-  const balance2 = useAssetBalance(DEFAULT_NETWORK_ID, swaps.ui.quoteAssetSelected);
+  const balance1 = useAssetBalance(DEFAULT_NETWORK_ID, swaps.ui.quoteAssetSelected);
+  const balance2 = useAssetBalance(DEFAULT_NETWORK_ID, swaps.ui.baseAssetSelected);
 
   const { baseAssetSelected, quoteAssetSelected } = useMemo(() => {
     let baseAssetSelected = supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === swaps.ui.baseAssetSelected)
@@ -443,7 +443,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
           <>
             <Typography variant="body2">
               1 {quoteAssetSelected?.symbol} = {spotPriceBn.toFixed()}{" "}
-              {baseAssetSelected?.decimals}
+              {baseAssetSelected?.symbol}
             </Typography>
             <Tooltip
               title={`1 ${

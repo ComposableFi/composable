@@ -14,11 +14,9 @@ import BigNumber from "bignumber.js";
 
 const Updater = () => {
   const {
-    assetBalances,
     swaps,
     setDexRouteSwaps,
     setPoolConstantsSwaps,
-    setUserAccountBalanceSwaps,
     setPoolVariablesSwaps,
     pools: {
       constantProductPools,
@@ -26,38 +24,6 @@ const Updater = () => {
     },
   } = useStore();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-  /**
-   * Triggered when user changes first
-   * token from token list dropdown on
-   * swaps page
-   * Updates with balance from zustand store
-   */
-  useEffect(() => {
-    const { ui } = swaps;
-    if (assetBalances[DEFAULT_NETWORK_ID]) {
-      if (assetBalances[DEFAULT_NETWORK_ID][ui.baseAssetSelected]) {
-        const balance = assetBalances[DEFAULT_NETWORK_ID][ui.baseAssetSelected];
-        setUserAccountBalanceSwaps("base", balance);
-      }
-    }
-    setUserAccountBalanceSwaps("base", "0");
-  }, [swaps, assetBalances, setUserAccountBalanceSwaps]);
-  /**
-   * Triggered when user changes second
-   * token from token list dropdown on
-   * swaps page
-   * Updates with balance from zustand store
-   */
-  useEffect(() => {
-    const { ui } = swaps;
-    if (assetBalances[DEFAULT_NETWORK_ID]) {
-      if (assetBalances[DEFAULT_NETWORK_ID][ui.quoteAssetSelected]) {
-        const balance = assetBalances[DEFAULT_NETWORK_ID][ui.quoteAssetSelected];
-        setUserAccountBalanceSwaps("quote", balance);
-      }
-    }
-    setUserAccountBalanceSwaps("quote", "0");
-  }, [swaps, assetBalances, setUserAccountBalanceSwaps]);
   /**
    * This hook is triggered when all
    * pools are fetched from the pablo pallet
@@ -198,13 +164,21 @@ const Updater = () => {
         );
       }
     }
+  /**
+   * eslint asks 
+   * 'setDexRouteSwaps', 'setPoolConstantsSwaps', and 'swaps'
+   * to be added to dependancy list
+   * 'setDexRouteSwaps', 'setPoolConstantsSwaps' are setters and theyll remain
+   * the same throught the renders
+   * 'swaps' is entire swaps state and this hook
+   * only needs access to some part of the state
+   */
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    swaps,
+    swaps.ui,
     parachainApi,
     constantProductPools.verified,
     stableSwapPools.verified,
-    setDexRouteSwaps,
-    setPoolConstantsSwaps,
   ]);
 
   useEffect(() => {

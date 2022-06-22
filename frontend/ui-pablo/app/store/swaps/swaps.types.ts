@@ -31,10 +31,6 @@ export interface SwapsSlice {
       quoteAssetReserve: string;
       baseAssetReserve: string;
     };
-    userAccount: {
-      baseAssetBalance: string;
-      quoteAssetBalance: string;
-    };
     ui: {
       quoteAssetSelected: string | "none";
       baseAssetSelected: string | "none";
@@ -62,10 +58,6 @@ export interface SwapsSlice {
           }
         | undefined;
     }
-  ) => void;
-  setUserAccountBalanceSwaps: (
-    side: "base" | "quote",
-    balance: string
   ) => void;
   setPoolVariablesSwaps: (key: {
     spotPrice: string;
