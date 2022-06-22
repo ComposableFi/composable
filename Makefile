@@ -100,6 +100,9 @@ push-composable-sandbox:
 	@docker push ${REPO}/composable-sandbox:${COMMIT_SHA}
 	@docker push ${REPO}/composable-sandbox:latest
 
+push-composable-sandbox-without-latest-tag:
+	@docker push ${REPO}/composable-sandbox:${COMMIT_SHA}
+
 containerize-composable-sandbox-plus:
 	@docker build -f docker/composable-sandbox-plus.dockerfile \
 		-t ${REPO}/composable-sandbox-plus:${COMMIT_SHA} \
@@ -147,7 +150,7 @@ endif
 
 
 .PHONY: build test docs style-check lint udeps containerize dev push install stop containerize-release push-release
-.PHONY: containerize-composable-sandbox push-composable-sandbox
+.PHONY: containerize-composable-sandbox push-composable-sandbox push-composable-sandbox-without-latest-tag
 .PHONY: containerize-composable-sandbox-plus push-composable-sandbox-plus
 .PHONY: containerize-mmr-polkadot push-mmr-polkadot
 .PHONY: containerize-base-ci-linux push-base-ci-linux

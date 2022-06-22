@@ -49,5 +49,10 @@ jobs:
     - name: Build Docker image
       run: make containerize-composable-sandbox
 
-    - name:  Docker push
+    - name: Push Docker image
+      if: ${{ github.ref == 'refs/heads/main' }}
       run: make push-composable-sandbox
+
+    - name: Push Docker image without latest tag
+      if: ${{ github.ref != 'refs/heads/main' }}
+      run: make push-composable-sandbox-without-latest-tag
