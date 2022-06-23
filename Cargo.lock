@@ -4548,11 +4548,14 @@ dependencies = [
 name = "ibc-rpc"
 version = "0.1.0"
 dependencies = [
+ "frame-system",
+ "hex-literal",
  "ibc",
  "ibc-primitives",
  "ibc-proto",
  "ibc-runtime-api",
  "jsonrpsee 0.13.1",
+ "pallet-ibc",
  "parity-scale-codec",
  "sc-chain-spec",
  "sc-client-api",
@@ -4570,8 +4573,12 @@ dependencies = [
 name = "ibc-runtime-api"
 version = "0.1.0"
 dependencies = [
+ "frame-support",
  "ibc-primitives",
+ "pallet-ibc",
+ "parity-scale-codec",
  "sp-api",
+ "sp-runtime",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22)",
 ]
 
