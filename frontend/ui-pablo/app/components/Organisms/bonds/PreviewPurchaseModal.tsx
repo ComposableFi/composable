@@ -33,7 +33,6 @@ export type PreviewPurchaseModalProps = {
   offerId: number;
   selectedBondOffer: SelectedBondOffer,
   amount: BigNumber;
-  nbOfBonds: IDepositSummary["nbOfBonds"];
   rewardableTokens: string;
   setAmount: (v: BigNumber) => any;
 } & ModalProps;
@@ -42,7 +41,6 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
   offerId,
   selectedBondOffer,
   amount,
-  nbOfBonds,
   rewardableTokens,
   setAmount,
   ...modalProps
@@ -58,9 +56,9 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
     // marketPrice === 0 ? 0 : ((marketPrice - bondPrice) / marketPrice) * 100;
 
   const handlePurchaseBond = async () => {
-    await bond(offerId, nbOfBonds(amount.toNumber()));
-    dispatch(closeConfirmingModal());
-    setAmount(new BigNumber(0));
+    // await bond(offerId, nbOfBonds(amount.toNumber()));
+    // dispatch(closeConfirmingModal());
+    // setAmount(new BigNumber(0));
   };
 
   const handleCancelBond = async () => {
@@ -75,7 +73,7 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
       ? (principalAsset as any).baseAsset.symbol +
           "/" +
           (principalAsset as any).quoteAsset
-      : (principalAsset as MockedAsset).symbol
+      : principalAsset && (principalAsset as MockedAsset).symbol
       ? (principalAsset as MockedAsset).symbol
       : "";
   }, [principalAsset]);

@@ -1,9 +1,9 @@
 import { BondOffer } from "@/defi/types";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardingPools";
 import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
 import { MockedAsset } from "@/store/assets/assets.types";
-import { DEFAULT_NETWORK_ID, fetchBondOffers, fetchVesitngPeriod } from "@/defi/utils";
+import { decodeBondOffer, DEFAULT_NETWORK_ID, fetchBondOffers, fetchVesitngPeriod } from "@/defi/utils";
 import { useParachainApi } from "substrate-react";
 import { useBlockInterval } from "../useBlockInterval";
 import useStore from "@/store/useStore";
@@ -125,7 +125,19 @@ export default function useBondOffer(offerId: string) {
       return selectedBondOffer.bondPrice;
     }
     return new BigNumber(0)
-  }, [selectedBondOffer])
+  }, [selectedBondOffer]);
+
+  const updateBondInfo = useCallback(async() => {
+    if (parachainApi && selectedBondOffer) {
+      try {
+        const bondOffer = await parachainApi.query.bondedFinance.bondOffers(selectedBondOffer.offerId.toString());
+        const decodedOffer = decodeBondOffer(bondOffer.toHuman(), selectedBondOffer.offerId.toNumber());
+        setSelectedBondOffer(decodedOffer)
+      } catch (err) {
+        console.error(err)
+      }
+    }
+  }, [selectedBondOffer, parachainApi])
 
   const roi = useMemo(() => {
     if (principalAssetPerBond.gt(0) && rewardAssetPerBond.gt(0)) {
@@ -147,6 +159,7 @@ export default function useBondOffer(offerId: string) {
     vestingPeriod,
     principalAsset,
     rewardAsset,
+    updateBondInfo,
     principalAssetPerBond,
     rewardAssetPerBond,
     roi

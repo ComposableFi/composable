@@ -92,14 +92,10 @@ const SelectBond: NextPage = () => {
         <Box position="relative" mt={8} mb={25}>
           <Grid container columnSpacing={4}>
             <Grid item {...(claimable ? twoColumnPageSize : standardPageSize)}>
-              {supplySummary !== "no-summary" &&
-                depositSummary !== "no-summary" && (
-                  <DepositForm
-                    bond={bondOfferSelected}
-                    offerId={offerId as string}
-                    depositSummary={depositSummary}
-                  />
-                )}
+                <DepositForm
+                  bond={bondOfferSelected}
+                  offerId={offerId as string}
+                />
             </Grid>
             {claimable && (
               <Grid item {...twoColumnPageSize}>
