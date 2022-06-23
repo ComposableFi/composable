@@ -39,6 +39,39 @@ fn get_position(account: &AccountId, market_id: &MarketId) -> Position {
 // -------------------------------------------------------------------------------------------------
 
 #[test]
+fn should_update_oracle_and_vamm_twaps() {
+	let config = MarketConfig {
+		funding_frequency: ONE_HOUR,
+		funding_period: ONE_HOUR,
+		twap_period: ONE_HOUR,
+		..Default::default()
+	};
+
+	// Set oracle price at genesis
+	let ext_builder = ExtBuilder { oracle_price: Some(100) /* 1.0 */, ..Default::default() };
+	with_market_context(ext_builder, config, |market_id| {
+		// Get variables before update (timestamp should be 0)
+		let Market { vamm_id, last_oracle_price, last_oracle_twap, .. } = get_market(&market_id);
+		assert_eq!(last_oracle_price, 0.into());
+		assert_eq!(last_oracle_twap, 0.into());
+
+		// Run to next available update time
+		run_to_time(ONE_HOUR);
+		set_oracle_price(&market_id, 1.into());
+		VammPallet::set_next_twap_of(&vamm_id, Some(1.into()));
+		assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
+
+		let market = get_market(&market_id);
+		// First update since market creation, so TWAP should be the same as current price
+		assert_eq!(market.last_oracle_price, 1.into());
+		assert_eq!(market.last_oracle_twap, market.last_oracle_price);
+		assert_eq!(market.last_oracle_ts, ONE_HOUR);
+		// Assert `Vamm::update_twap` was called
+		assert_eq!(VammPallet::get_twap(vamm_id, AssetType::Base).unwrap(), 1.into());
+	});
+}
+
+#[test]
 fn late_update_has_same_weight_as_normal_update() {
 	let config = MarketConfig {
 		funding_frequency: ONE_HOUR,
