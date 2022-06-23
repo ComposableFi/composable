@@ -591,6 +591,7 @@ pub mod pallet {
 		///
 		/// # Runtime
 		/// `O(1)`
+		#[transactional]
 		fn get_price(
 			vamm_id: VammIdOf<T>,
 			asset_type: AssetType,
@@ -729,6 +730,7 @@ pub mod pallet {
 		///
 		/// # Runtime
 		/// `O(1)`
+		#[transactional]
 		fn update_twap(
 			vamm_id: VammIdOf<T>,
 			base_twap: Option<DecimalOf<T>>,
