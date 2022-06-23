@@ -9,6 +9,7 @@ on:
 
 env:
   GITHUB_TOKEN: ${{ secrets.COMPOSABLE_GITHUB_TOKEN }}
+  RELEASE_VERSION: 
 jobs:
   build-and-publish:
     runs-on:
@@ -57,6 +58,7 @@ jobs:
 
       - name: Upload Artifacts
         run: |
+          echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
           sudo gsutil cp ./target/release/composable gs://composable-binaries/dali-stage/${{ env.RELEASE_VERSION }}/
           
     
