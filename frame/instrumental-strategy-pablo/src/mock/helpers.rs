@@ -1,5 +1,5 @@
-use composable_traits::defi::CurrencyPair;
-use frame_support::assert_ok;
+use composable_traits::{defi::CurrencyPair, dex::Amm};
+use frame_support::{assert_ok, traits::fungibles::Mutate};
 use pallet_pablo::PoolInitConfiguration;
 use primitives::currency::CurrencyId;
 use sp_runtime::Permill;
@@ -19,11 +19,17 @@ pub fn create_usdt_usdc_pool() -> PoolId {
 
 fn create_pool(
 	assets: CurrencyPair<CurrencyId>,
-	// TODO(saruman9): add amount to a pools
-	_amounts: Vec<Balance>,
+	amounts: Vec<Balance>,
 	fee: Permill,
 	base_weight: Permill,
 ) -> PoolId {
+	let base = assets.base;
+	let quote = assets.quote;
+	assert_ok!(Tokens::mint_into(base, &ALICE, amounts[0]));
+	assert_ok!(Tokens::mint_into(quote, &ALICE, amounts[1]));
+	assert_ok!(Tokens::mint_into(base, &BOB, amounts[0]));
+	assert_ok!(Tokens::mint_into(quote, &BOB, amounts[1]));
+
 	let config = PoolInitConfiguration::<AccountId, CurrencyId, BlockNumber>::ConstantProduct {
 		owner: ALICE,
 		pair: assets,
@@ -32,5 +38,10 @@ fn create_pool(
 	};
 	let pool_id = Pablo::do_create_pool(config);
 	assert_ok!(pool_id);
-	pool_id.unwrap()
+	let pool_id = pool_id.unwrap();
+	assert_ok!(<Pablo as Amm>::add_liquidity(
+		&ALICE, pool_id, amounts[0], amounts[1], 0_u128, true
+	));
+	assert_ok!(<Pablo as Amm>::add_liquidity(&BOB, pool_id, amounts[0], amounts[1], 0_u128, true));
+	pool_id
 }
