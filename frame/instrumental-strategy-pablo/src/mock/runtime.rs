@@ -10,8 +10,8 @@ use sp_runtime::{
 };
 
 use crate as pallet_pablo_strategy;
+use crate::mock::account_id::AccountId;
 
-pub type AccountId = u128;
 pub type Amount = i128;
 pub type BlockNumber = u64;
 pub type Balance = u128;
