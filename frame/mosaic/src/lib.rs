@@ -95,8 +95,8 @@ pub mod pallet {
 		/// A type representing a remote AMM ID.
 		type RemoteAmmId: FullCodec + MaxEncodedLen + TypeInfo + Clone + Debug + PartialEq;
 
-		/// Origin capable of setting the relayer and AMM IDs. Inteded to be RootOrHalfCouncil, as it is also
-		/// used as the origin capable of stopping attackers.
+		/// Origin capable of setting the relayer and AMM IDs. Inteded to be RootOrHalfCouncil, as
+		/// it is also used as the origin capable of stopping attackers.
 		type ControlOrigin: EnsureOrigin<Self::Origin>;
 
 		/// Weight implementation used for extrinsics.
@@ -1032,9 +1032,8 @@ pub mod pallet {
 				let lock_at = current_block.saturating_add(lock_time);
 
 				IncomingTransactions::<T>::mutate(to.clone(), asset_id, |prev| match prev {
-					Some((balance, _)) => {
-						*prev = Some(((*balance).saturating_add(amount), lock_at))
-					},
+					Some((balance, _)) =>
+						*prev = Some(((*balance).saturating_add(amount), lock_at)),
 					_ => *prev = Some((amount, lock_at)),
 				});
 
