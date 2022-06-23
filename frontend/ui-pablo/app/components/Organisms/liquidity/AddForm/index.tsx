@@ -117,7 +117,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           }}
           CombinedSelectProps={{
             disabled: !findPoolManually,
-            value: assetOne ? assetOne.network[DEFAULT_NETWORK_ID] : undefined,
+            value: assetOne ? assetOne.network[DEFAULT_NETWORK_ID] : "",
             setValue: setToken("assetOne"),
             dropdownModal: true,
             forceHiddenLabel: isMobile ? true : false,
@@ -181,7 +181,7 @@ export const AddLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           }}
           CombinedSelectProps={{
             disabled: !findPoolManually,
-            value: assetTwo ? assetTwo.network[DEFAULT_NETWORK_ID] : undefined,
+            value: assetTwo ? assetTwo.network[DEFAULT_NETWORK_ID] : "",
             setValue: setToken("assetTwo"),
             dropdownModal: true,
             forceHiddenLabel: isMobile ? true : false,
