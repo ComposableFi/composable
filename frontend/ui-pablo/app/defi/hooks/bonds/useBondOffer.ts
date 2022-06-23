@@ -10,7 +10,7 @@ import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 
 export default function useBondOffer(offerId: string) {
-  const { bondOffers, supportedAssets } = useStore();
+  const { bondOffers, supportedAssets, apollo } = useStore();
   const lpRewardingPools = useAllLpTokenRewardingPools();
 
   const { putBondOffers } = useStore();
@@ -111,17 +111,44 @@ export default function useBondOffer(offerId: string) {
     }
   }, [selectedBondOffer, averageBlockTime])
 
-  const bondPriceUsd = new BigNumber(0);
-  const marketPriceUsd = new BigNumber(0);
-  const roi = new BigNumber(0);
+  const rewardAssetPerBond = useMemo(() => {
+    if (selectedBondOffer) {
+      return selectedBondOffer.reward.amount.div(
+        selectedBondOffer.nbOfBonds
+      );
+    }
+    return new BigNumber(0)
+  }, [selectedBondOffer])
+
+  const principalAssetPerBond = useMemo(() => {
+    if (selectedBondOffer) {
+      return selectedBondOffer.bondPrice;
+    }
+    return new BigNumber(0)
+  }, [selectedBondOffer])
+
+  const roi = useMemo(() => {
+    if (principalAssetPerBond.gt(0) && rewardAssetPerBond.gt(0)) {
+      if (selectedBondOffer && apollo[selectedBondOffer.asset] && apollo[selectedBondOffer.reward.asset]) {
+        let rewardPrice = new BigNumber(apollo[selectedBondOffer.reward.asset]);
+        let principalPrice = new BigNumber(apollo[selectedBondOffer.asset]);
+        if (rewardPrice.gt(0) && principalPrice.gt(0)) {
+          const initialInv = principalPrice.times(principalAssetPerBond);
+          const finalInv = rewardAssetPerBond.times(rewardPrice);
+          return finalInv.minus(initialInv).div(initialInv);
+        }
+      }
+    }
+    return new BigNumber(0)
+  }, [principalAssetPerBond, rewardAssetPerBond, apollo, selectedBondOffer])
 
   return {
     selectedBondOffer,
     vestingPeriod,
-    bondPriceUsd,
-    marketPriceUsd,
     principalAsset,
     rewardAsset,
+    principalAssetPerBond,
+    rewardAssetPerBond,
     roi
   };
 }

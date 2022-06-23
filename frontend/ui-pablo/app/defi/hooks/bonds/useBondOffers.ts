@@ -77,11 +77,13 @@ export default function useBondOffers(): OfferRow[] {
         principalPriceUsd = new BigNumber(apollo[bondOffer.asset]);
       }
       if (apollo[bondOffer.reward.asset]) {
-        principalPriceUsd = new BigNumber(apollo[bondOffer.reward.asset]);
+        rewardPriceUsd = new BigNumber(apollo[bondOffer.reward.asset]);
       }
 
       if (principalPriceUsd.gt(0) && rewardPriceUsd.gt(0)) {
-        roi = rewardPriceUsd.minus(principalPriceUsd).div(principalPriceUsd);
+        const initialInv = principalPriceUsd.times(principalAssetPerBond);
+        const finalInv = rewardPriceUsd.times(rewardAssetPerBond);
+        roi = finalInv.minus(initialInv).div(initialInv);
       }
 
       return {

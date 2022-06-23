@@ -84,12 +84,11 @@ const SelectBond: NextPage = () => {
 
         <BuyButtons mt={8} bond={bondOfferSelected} />
 
-        {supplySummary !== "no-summary" && (
           <SupplySummary
             bond={bondOfferSelected}
             mt={8}
           />
-        )}
+
         <Box position="relative" mt={8} mb={25}>
           <Grid container columnSpacing={4}>
             <Grid item {...(claimable ? twoColumnPageSize : standardPageSize)}>

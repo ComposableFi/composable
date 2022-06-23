@@ -19,12 +19,16 @@ const Updater = () => {
     if (parachainApi) {
       Array.from(onChainAssetIds).map(onChainAssetId => {
         fetchApolloPriceByAssetId(parachainApi, onChainAssetId).then(price => {
+          if (onChainAssetId === "201") {
+            updateApolloPrice(onChainAssetId, "1.5");
+          } else {
+            updateApolloPrice(onChainAssetId, "1");
+          }
           // updateApolloPrice(onChainAssetId.toString(), price);
-          updateApolloPrice(onChainAssetId, "1");
         })
       })
     }
-  }, [onChainAssetIds, parachainApi])
+  }, [onChainAssetIds, parachainApi, updateApolloPrice])
 
   useEffect(() => {
     if (parachainApi) {

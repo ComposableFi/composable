@@ -15,6 +15,8 @@ import { useState } from "react";
 import { useAsyncEffect } from "../../../hooks/useAsyncEffect";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
 import { MockedAsset } from "@/store/assets/assets.types";
+import { useUSDPriceByAssetId } from "@/store/assets/hooks";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 const containerBoxProps = (theme: Theme) => ({
   display: "flex",
@@ -54,7 +56,7 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
 }) => {
   const theme = useTheme();
   const { principalAsset, rewardAsset } = bond;
-  const [marketPriceInUSD, setMarketPriceInUSD] = useState(0);
+  const rewardPriceInUSD = useUSDPriceByAssetId(rewardAsset ? rewardAsset.network[DEFAULT_NETWORK_ID] : "-")
 
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>
@@ -81,7 +83,7 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
               iconOnly
               iconSize={36}
             />
-          ) : (principalAsset as MockedAsset).icon && (principalAsset as MockedAsset).symbol ? (
+          ) : principalAsset && (principalAsset as MockedAsset).icon && (principalAsset as MockedAsset).symbol ? (
             <BaseAsset
             label={(principalAsset as MockedAsset).symbol}
             icon={(principalAsset as MockedAsset).icon}
@@ -92,15 +94,18 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
           <Typography variant="body1">
             {principalAsset && (principalAsset as any).baseAsset && (principalAsset as any).quoteAsset ?
               `LP ${(principalAsset as any).baseAsset.symbol}-${(principalAsset as any).quoteAsset.symbol}`
-              : (principalAsset as MockedAsset).symbol ? `${(principalAsset as MockedAsset).symbol}` : ""}
+              : principalAsset && (principalAsset as MockedAsset).symbol ? `${(principalAsset as MockedAsset).symbol}` : ""}
           </Typography>
         </Box>
         <ArrowRightAlt sx={{ color: "text.secondary" }} />
         <Box {...itemBoxProps}>
           <Typography {...itemTitleProps}>Receive</Typography>
-          {rewardAsset &&
-          <BaseAsset icon={rewardAsset.icon} iconSize={36} />
-          }
+          {rewardAsset && <BaseAsset
+            label={(rewardAsset as MockedAsset).symbol}
+            icon={(rewardAsset as MockedAsset).icon}
+            LabelProps={{ variant: "h4" }}
+            iconSize={36}
+          />}
           <Typography variant="body1">
             {rewardAsset && `${rewardAsset.symbol}`}
             <Typography variant="body1" fontWeight="600" component="span">
@@ -119,7 +124,7 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
       <Box {...itemBoxProps}>
         <Typography {...itemTitleProps}>Market Price</Typography>
         <Box display="flex" justifyContent="center" alignItems="center">
-          {`$${marketPriceInUSD}`}
+          {`$${rewardPriceInUSD}`}
         </Box>
         <Typography variant="body1">{rewardAsset?.symbol}</Typography>
       </Box>
