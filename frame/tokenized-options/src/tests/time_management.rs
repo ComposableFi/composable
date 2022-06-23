@@ -1,11 +1,17 @@
-use super::{block_producer::BlockProducer, OptionsConfigBuilder, VaultInitializer};
+use super::{
+	block_producer::{BlockProducer, BlocksConfig, BlocksData, Run},
+	OptionsConfigBuilder, VaultInitializer,
+};
 use crate::{
-	mocks::runtime::{Event, ExtBuilder, Moment, OptionId, System, Timestamp, TokenizedOptions},
+	mocks::runtime::{
+		Event, ExtBuilder, MockRuntime, Moment, OptionId, System, Timestamp, TokenizedOptions,
+	},
 	types::Epoch,
 };
 use composable_traits::tokenized_options::TokenizedOptions as TokenizedOptionsTrait;
 use frame_support::assert_ok;
-use proptest::prelude::*;
+use proptest::prelude::{prop, prop_compose, proptest, Just, ProptestConfig, Strategy};
+use sp_runtime::DispatchResult;
 use std::{collections::HashMap, ops::Range};
 
 prop_compose! {
@@ -27,30 +33,30 @@ fn random_epochs(
 	prop::collection::vec(random_epoch(start_rng, duration_rng), n_rng)
 }
 
-fn random_durations(
-	m_rng: Range<usize>,
-	duration_rng: Range<Moment>,
-) -> impl Strategy<Value = Vec<Moment>> {
-	prop::collection::vec(duration_rng, m_rng)
-}
-
 proptest! {
 	#![proptest_config(ProptestConfig {
 		cases: 10, .. ProptestConfig::default()
 	})]
 	#[test]
-	fn test_time_management(epochs in random_epochs(50..200, 0..1000, 10..100), durations in random_durations(100..500, 10..50)) {
+	fn test_time_management(
+		epochs in random_epochs(50..200, 0..1000, 10..100),
+		blocks_data in BlocksData::<TokenizedOptionsBlocksConfig>::generate(100..500, 10..50, 0..1, Just(EmptyExtrinsic))
+	) {
 		ExtBuilder::default()
 			.build()
 			.initialize_oracle_prices()
 			.initialize_all_vaults()
-			.execute_with(|| do_test_time_management(epochs, durations));
+			.execute_with(|| do_test_time_management(epochs, blocks_data));
 	}
 }
 
-fn do_test_time_management(mut epochs: Vec<Epoch<Moment>>, durations: Vec<Moment>) {
+fn do_test_time_management(
+	mut epochs: Vec<Epoch<Moment>>,
+	blocks_data: BlocksData<TokenizedOptionsBlocksConfig>,
+) {
+	let mut block_producer = BlockProducer::new(blocks_data);
 	let mut tester = Tester::default();
-	for block in BlockProducer::new(durations) {
+	while let Some(block) = block_producer.next_block() {
 		if block.is_initial() {
 			let options = initialize_options(std::mem::take(&mut epochs));
 			tester.set_options(options);
@@ -119,5 +125,22 @@ impl Tester {
 		for counter in self.counters {
 			assert_eq!(counter, self.options.len());
 		}
+	}
+}
+
+enum TokenizedOptionsBlocksConfig {}
+
+impl BlocksConfig for TokenizedOptionsBlocksConfig {
+	type Runtime = MockRuntime;
+	type Hooked = TokenizedOptions;
+	type Extrinsic = EmptyExtrinsic;
+}
+
+#[derive(Clone, Debug)]
+struct EmptyExtrinsic;
+
+impl Run for EmptyExtrinsic {
+	fn run(&self) -> DispatchResult {
+		Ok(())
 	}
 }
