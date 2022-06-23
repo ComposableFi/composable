@@ -6,19 +6,13 @@ import { useDepositSummary } from "../../../app/store/hooks/bond/useDepositSumma
 import { useSupplySummary } from "../../../app/store/hooks/bond/useSupplySummary";
 
 const DepositFormStories = () => {
-  const supplySummary = useSupplySummary({ offerId: 1 });
-  const depositSummary = useDepositSummary({ offerId: 1 });
-
   const bond = useBondOffer("0")
-  if (supplySummary === "no-summary" || depositSummary === "no-summary")
-    return null;
 
   return (
     <Box>
       <DepositForm
       bond={bond}
         offerId={"0"}
-        depositSummary={depositSummary}
       />
     </Box>
   );
