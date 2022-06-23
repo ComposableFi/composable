@@ -41,6 +41,7 @@ pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "
 pallet-vault = { path = "../vault", default-features = false }
 primitives = { path = "../../runtime/primitives" }
 proptest = "1.0"
+proptest-derive = "0.3"
 
 [features]
 default = ["std"]

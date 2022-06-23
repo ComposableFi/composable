@@ -352,8 +352,8 @@ impl pallet_tokenized_options::Config for MockRuntime {
 
 #[derive(Default)]
 pub struct ExtBuilder {
-	pub native_balances: Vec<(AccountId, Balance)>,
-	pub balances: Vec<(AccountId, AssetId, Balance)>,
+	native_balances: Vec<(AccountId, Balance)>,
+	balances: Vec<(AccountId, AssetId, Balance)>,
 }
 
 impl ExtBuilder {
@@ -387,7 +387,7 @@ impl ExtBuilder {
 
 	pub fn initialize_balances(
 		mut self,
-		balances: Vec<(AccountId, AssetId, Balance)>,
+		balances: impl IntoIterator<Item = (AccountId, AssetId, Balance)>,
 	) -> ExtBuilder {
 		balances.into_iter().for_each(|(account, asset, balance)| {
 			if asset == PICA {
@@ -398,5 +398,17 @@ impl ExtBuilder {
 		});
 
 		self
+	}
+
+	/// Initialize balances from slice of length = account_count * ASSETS_WITH_USDC.len();
+	/// account ids will be from 1 to account_count inclusively.
+	pub fn initialize_balances_simpl(self, balances: &[Balance]) -> ExtBuilder {
+		let asset_count = ASSETS_WITH_USDC.len();
+		let iter = balances.iter().enumerate().map(|(j, balance)| {
+			let account_id = account_id_from_u64(1 + (j / asset_count) as u64);
+			let asset_id = ASSETS_WITH_USDC[j % asset_count];
+			(account_id, asset_id, *balance)
+		});
+		self.initialize_balances(iter)
 	}
 }

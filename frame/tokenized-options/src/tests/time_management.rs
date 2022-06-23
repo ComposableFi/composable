@@ -1,6 +1,6 @@
 use super::{
 	block_producer::{BlockProducer, BlocksConfig, BlocksData, Run},
-	OptionsConfigBuilder, VaultInitializer,
+	random_epoch, OptionsConfigBuilder, VaultInitializer,
 };
 use crate::{
 	mocks::runtime::{
@@ -10,20 +10,9 @@ use crate::{
 };
 use composable_traits::tokenized_options::TokenizedOptions as TokenizedOptionsTrait;
 use frame_support::assert_ok;
-use proptest::prelude::{prop, prop_compose, proptest, Just, ProptestConfig, Strategy};
+use proptest::prelude::{prop, proptest, Just, ProptestConfig, Strategy};
 use sp_runtime::DispatchResult;
 use std::{collections::HashMap, ops::Range};
-
-prop_compose! {
-	fn random_epoch(start_rng: Range<Moment>, duration_rng: Range<Moment>)
-	(start in start_rng, duration in prop::array::uniform4(duration_rng)) -> Epoch<Moment> {
-		let deposit = start;
-		let purchase = deposit + duration[0];
-		let exercise = purchase + duration[1];
-		let end = exercise + duration[2];
-		Epoch { deposit, purchase, exercise, end }
-	}
-}
 
 fn random_epochs(
 	n_rng: Range<usize>,

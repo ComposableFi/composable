@@ -136,7 +136,7 @@ proptest! {
 
 	/// Create random vaults and check if error is raised correctly
 	#[test]
-	fn proptest_create_vault_ext(assets in prop_random_asset_vec()) {
+	fn proptest_create_vault_ext(assets in prop::collection::vec(random_asset(), 10)) {
 		ExtBuilder::default().build().initialize_oracle_prices().execute_with(|| {
 			assets.iter().for_each(|&asset| {
 				let vault_config = VaultConfigBuilder::default().asset_id(asset).build();

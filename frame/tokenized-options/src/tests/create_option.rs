@@ -283,13 +283,12 @@ fn test_create_option_error_not_protocol_origin_ext() {
 proptest! {
 	#![proptest_config(ProptestConfig::with_cases(20))]
 	#[test]
-	fn proptest_create_option(random_option_configs in prop_random_option_config_vec()) {
+	fn proptest_create_option(
+		option_configs in random_option_configs(5..10, any::<u128>(), 0..1000, 10..100)
+	) {
 		// Create all the asset vaults before creating options
 		ExtBuilder::default().build().initialize_oracle_prices().initialize_all_vaults().execute_with(|| {
-			random_option_configs.iter().for_each(|option_config|{
-
-				let option_config = OptionsConfigBuilder::default().base_asset_id(option_config.0).base_asset_strike_price(option_config.1).build();
-
+			option_configs.into_iter().for_each(|option_config|{
 				match trait_create_option(Origin::signed(ADMIN), option_config.clone()) {
 					Ok(option_id) => {
 						assert!(OptionIdToOption::<MockRuntime>::contains_key(option_id));
