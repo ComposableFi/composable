@@ -22,7 +22,6 @@ use proptest::{
 	strategy::{Just, Strategy},
 };
 
-#[allow(dead_code)]
 pub fn pick_account() -> impl Strategy<Value = AccountId> {
 	prop_oneof![Just(ALICE), Just(BOB), Just(CHARLIE), Just(DAVE), Just(EVEN),]
 }
