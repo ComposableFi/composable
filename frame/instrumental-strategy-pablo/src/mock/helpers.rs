@@ -4,8 +4,10 @@ use pallet_pablo::PoolInitConfiguration;
 use primitives::currency::CurrencyId;
 use sp_runtime::Permill;
 
-use super::runtime::{Balance, Pablo, PoolId};
-use crate::mock::runtime::{AccountId, BlockNumber};
+use crate::mock::{
+	account_id::{AccountId, ALICE, BOB},
+	runtime::{Balance, BlockNumber, Pablo, PoolId, Tokens},
+};
 
 pub fn create_usdt_usdc_pool() -> PoolId {
 	let usdt_amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
@@ -23,8 +25,7 @@ fn create_pool(
 	base_weight: Permill,
 ) -> PoolId {
 	let config = PoolInitConfiguration::<AccountId, CurrencyId, BlockNumber>::ConstantProduct {
-		// TODO(saruman9): create users
-		owner: 1,
+		owner: ALICE,
 		pair: assets,
 		fee,
 		base_weight,
