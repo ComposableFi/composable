@@ -11,7 +11,7 @@ pub enum State {
 	Normal,
 	/// Indicates that an asset is currently being transferred from one pool to another
 	/// for this asset, so it is not possible to initialize a new transfer.
-	Transferrig,
+	Transferring,
 }
 
 /// An indication of access rights for admin accounts.
