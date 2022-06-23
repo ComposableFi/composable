@@ -16,7 +16,7 @@ export default function useBondOffers(): OfferRow[] {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
 
   useEffect(() => {
-    console.log(`Update Bond Offers`)
+    console.log(`Update Bond Offers`);
     if (parachainApi) {
       fetchBondOffers(parachainApi).then((decodedOffers) => {
         putBondOffers(decodedOffers);
@@ -65,29 +65,33 @@ export default function useBondOffers(): OfferRow[] {
         );
       }
 
-      const rewardAssetPerBond = bondOffer.reward.amount.div(bondOffer.nbOfBonds);
+      const rewardAssetPerBond = bondOffer.reward.amount.div(
+        bondOffer.nbOfBonds
+      );
       const principalAssetPerBond = bondOffer.bondPrice;
-      let roi = new BigNumber(0), principalPriceUsd = new BigNumber(0), rewardPriceUsd = new BigNumber(0)
+      let roi = new BigNumber(0),
+        principalPriceUsd = new BigNumber(0),
+        rewardPriceUsd = new BigNumber(0);
 
       if (apollo[bondOffer.asset]) {
-        principalPriceUsd = new BigNumber(apollo[bondOffer.asset])
+        principalPriceUsd = new BigNumber(apollo[bondOffer.asset]);
       }
       if (apollo[bondOffer.reward.asset]) {
-        principalPriceUsd = new BigNumber(apollo[bondOffer.reward.asset])
+        principalPriceUsd = new BigNumber(apollo[bondOffer.reward.asset]);
       }
 
       if (principalPriceUsd.gt(0) && rewardPriceUsd.gt(0)) {
-        roi = rewardPriceUsd.minus(principalPriceUsd).div(principalPriceUsd)
+        roi = rewardPriceUsd.minus(principalPriceUsd).div(principalPriceUsd);
       }
 
       return {
         offerId: bondOffer.offerId,
         roi,
         totalPurchased: new BigNumber(0),
-        bondPrice: bondOffer.bondPrice,
+        bondPrice: principalPriceUsd.times(principalAssetPerBond),
         principalAsset,
         rewardAssetPerBond,
-        principalAssetPerBond
+        principalAssetPerBond,
       };
     });
   }, [bondOffers, lpRewardingPools, supportedAssets, apollo]);
