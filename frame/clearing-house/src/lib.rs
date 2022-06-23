@@ -1147,6 +1147,8 @@ pub mod pallet {
 				);
 			}
 
+			// TODO(0xangelo): attempt funding rate update at end
+
 			// Update storage
 			Collateral::<T>::insert(account_id, collateral);
 			OutstandingProfits::<T>::insert(account_id, market_id, outstanding_profits);
