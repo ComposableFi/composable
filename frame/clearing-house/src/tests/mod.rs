@@ -155,9 +155,17 @@ fn set_maximum_oracle_mark_divergence(fraction: FixedI128) {
 	MaxPriceDivergence::<Runtime>::set(fraction);
 }
 
+fn set_oracle_price(_market_id: &MarketId, price: FixedU128) {
+	// let market = get_market(market_id);
+	OraclePallet::set_price(Some(price.saturating_mul_int(100)));
+}
+
 fn set_oracle_twap(market_id: &MarketId, twap: FixedI128) {
+	// Prepare everything so that even if the TWAP is updated via an EMA, it stays the same
+	OraclePallet::set_price(Some(twap.saturating_mul_int(100)));
 	Markets::<Runtime>::try_mutate(market_id, |m| {
 		if let Some(m) = m {
+			m.last_oracle_price = twap;
 			m.last_oracle_twap = twap;
 			Ok(())
 		} else {

@@ -130,6 +130,7 @@ fn cant_liquidate_if_above_partial_margin_ratio_by_funding() {
 
 	let margins = vec![(ALICE, as_balance(50)), (BOB, 0)];
 	traders_in_one_market_context(config, margins, |market_id| {
+		set_oracle_twap(&market_id, 1.into());
 		VammPallet::set_price(Some(1.into()));
 
 		// Alice opens a position
@@ -151,7 +152,7 @@ fn cant_liquidate_if_above_partial_margin_ratio_by_funding() {
 		// Time passes and funding rates are updated
 		VammPallet::set_twap(Some(1.into()));
 		// Index price moves against Alice's position
-		OraclePallet::set_twap(Some(143)); // 100 -> 143 cents
+		set_oracle_twap(&market_id, (143, 100).into());
 		assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
 		// Alice should now owe 0.43 * 100 = 43 in funding, bringing her account's
 		// margin ratio to exactly the MMR
