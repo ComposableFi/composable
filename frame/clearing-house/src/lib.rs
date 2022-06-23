@@ -1247,6 +1247,10 @@ pub mod pallet {
 				Error::<T>::UpdatingFundingTooEarly
 			);
 
+			// Update TWAPs *before* funding rate calculations
+			Self::update_oracle_twap(&mut market)?;
+			T::Vamm::update_twap(market.vamm_id, None, None)?;
+
 			Self::do_update_funding(market_id, &mut market, now)?;
 
 			Markets::<T>::insert(market_id, market);
