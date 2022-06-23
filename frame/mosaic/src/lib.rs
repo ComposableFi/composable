@@ -520,7 +520,7 @@ pub mod pallet {
 			)?;
 
 			// Ensure that users can only swap using a whitelisted destination amm id
-			if let Some(swap_info) = amm_swap_info.clone() {
+			if let Some(swap_info) = &amm_swap_info {
 				ensure!(
 					RemoteAmmWhitelist::<T>::contains_key(
 						&swap_info.destination_amm.network_id,
@@ -798,7 +798,6 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-
 		/// Removes a remote AMM for a specific Network
 		#[pallet::weight(T::WeightInfo::remove_remote_amm_id())]
 		#[transactional]
@@ -816,7 +815,7 @@ pub mod pallet {
 
 			RemoteAmmWhitelist::<T>::remove(network_id, amm_id);
 
-			Ok(())
+			Ok(().into())
 		}
 	}
 
