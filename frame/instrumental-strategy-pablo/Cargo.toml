@@ -28,6 +28,7 @@ log = { version = "0.4.14", default-features = false }
 serde = { version = '1', optional = true }
 
 [dev-dependencies]
+hex-literal = "0.3.3"
 instrumental-strategy = { path = "../instrumental-strategy", default-features = false }
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b", default-features = false }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b", default-features = false }
@@ -40,6 +41,7 @@ pallet-pablo = { path = "../pablo", default-features = false }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
 pallet-vault = { path = "../vault", default-features = false }
 primitives = { path = "../../runtime/primitives", default-features = false }
+proptest = "1.0.0"
 
 [features]
 default = ["std"]
