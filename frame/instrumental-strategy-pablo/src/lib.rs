@@ -1,9 +1,25 @@
-#[cfg(test)]
-mod tests;
+#![cfg_attr(not(feature = "std"), no_std)]
+#![warn(
+	clippy::indexing_slicing,
+	clippy::panic,
+	clippy::todo,
+	clippy::unseparated_literal_suffix,
+	clippy::unwrap_used
+)]
+#![cfg_attr(
+	test,
+	allow(
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
+		clippy::panic,
+		clippy::unwrap_used,
+	)
+)]
 
 #[cfg(test)]
 mod mock;
-
+#[cfg(test)]
+mod tests;
 mod weights;
 
 pub use pallet::*;
@@ -142,7 +158,9 @@ pub mod pallet {
 	//                                           Pallet Types
 	// ---------------------------------------------------------------------------------------------
 
-	#[derive(Encode, Decode, MaxEncodedLen, Clone, Copy, Default, Debug, PartialEq, TypeInfo)]
+	#[derive(
+		Encode, Decode, MaxEncodedLen, Clone, Copy, Default, Debug, PartialEq, Eq, TypeInfo,
+	)]
 	pub struct PoolState<PoolId, State> {
 		pub pool_id: PoolId,
 		pub state: State,
@@ -154,6 +172,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn associated_vaults)]
+	#[allow(clippy::disallowed_types)]
 	pub type AssociatedVaults<T: Config> =
 		StorageValue<_, BoundedBTreeSet<T::VaultId, T::MaxAssociatedVaults>, ValueQuery>;
 
