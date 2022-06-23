@@ -168,7 +168,7 @@ pub mod pallet {
 	#[pallet::getter(fn admin_accounts)]
 	pub type AdminAccountIds<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, AccessRights>;
-	
+
 	// ---------------------------------------------------------------------------------------------
 	//                                          Runtime Events
 	// ---------------------------------------------------------------------------------------------
@@ -253,11 +253,8 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		fn set_pool_id_for_asset(
-			asset_id: T::AssetId,
-			pool_id: T::PoolId,
-		) -> Result<(), DispatchError> {
-			Pools::<T>::try_mutate(asset_id, |current_pool_id_and_state| -> DispatchResult {
+		fn set_pool_id_for_asset(asset_id: T::AssetId, pool_id: T::PoolId) -> DispatchResult {
+			Pools::<T>::try_mutate(asset_id, |current_pool_id_and_state| {
 				match current_pool_id_and_state {
 					Some(current_pool_id_and_state) => {
 						ensure!(
