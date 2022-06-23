@@ -742,9 +742,8 @@ pub mod pallet {
 
 			// Delegate update twap to internal functions.
 			let (base_twap, quote_twap) = match (base_twap, quote_twap) {
-				(Some(base_twap), Some(quote_twap)) => {
-					Self::do_update_twap(vamm_id, &mut vamm_state, base_twap, quote_twap, &None)?
-				},
+				(Some(base_twap), Some(quote_twap)) =>
+					Self::do_update_twap(vamm_id, &mut vamm_state, base_twap, quote_twap, &None)?,
 				_ => Self::update_vamm_twap(vamm_id, &mut vamm_state, &None)?,
 			};
 
@@ -1106,9 +1105,8 @@ pub mod pallet {
 		) -> Result<BalanceOf<T>, DispatchError> {
 			let quote_asset_reserve_change = match direction {
 				Direction::Add => quote_asset_reserve_before.try_sub(quote_asset_reserve_after)?,
-				Direction::Remove => {
-					quote_asset_reserve_after.try_sub(quote_asset_reserve_before)?
-				},
+				Direction::Remove =>
+					quote_asset_reserve_after.try_sub(quote_asset_reserve_before)?,
 			};
 
 			let quote_asset_amount =
