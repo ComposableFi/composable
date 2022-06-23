@@ -53,10 +53,12 @@ jobs:
       - name: Prepare a test environment
         run: |
           cd integration-tests/runtime-tests
+          curl -L "https://github.com/docker/compose/releases/download/v2.6.0/docker-compose-$(uname -s)-$(uname -m)" -o ./docker-compose
+          chmod +x ./docker-compose
           tag=$(git rev-parse --short=9 HEAD)
           sed -ri "s/\\$\\{TAG\\}/$tag/" docker-compose-ci.yml
           echo "composablefi/composable-sandbox:${tag} will be used"
-          docker-compose -f docker-compose-ci.yml up -d
+          ./docker-compose -f docker-compose-ci.yml up -d
 
       - name: Wait when the node will be started
         timeout-minutes: 5
@@ -72,4 +74,4 @@ jobs:
       - name: Cleanup
         run: |
           cd integration-tests/runtime-tests
-          docker-compose -f docker-compose-ci.yml down --remove-orphans
+          ./docker-compose -f docker-compose-ci.yml down --remove-orphans
