@@ -1,4 +1,5 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { NamedSet } from "zustand/middleware";
+import { AppState, StoreSlice } from "../types";
 
 export type Account = {
   address: string;
@@ -21,30 +22,39 @@ const initialState: MetamaskState = {
   availableToClaim: 122,
 };
 
-export const metamaskSlice = createSlice({
-  name: "Metamask",
-  initialState,
-  reducers: {
-    connectMetamaskWallet: (state) => {
-      state.connected = true;
+export interface MetamaskSlice {
+  metamask: MetamaskState & {
+    connectMetamaskWallet: () => void;
+    waitOnMetamaskWallet: () => void;
+    disconnectMetamaskWallet: () => void;
+    setAvailableToClaim: (availableToClaim: number) => void;
+  };
+}
+
+export const createMetamaskSlice: StoreSlice<MetamaskSlice> = (
+  set: NamedSet<MetamaskSlice>
+) => ({
+  metamask: {
+    ...initialState,
+    connectMetamaskWallet: () => {
+      set((state: AppState) => {
+        state.metamask.connected = true;
+      });
     },
-    waitOnMetamaskWallet: (state) => {
-      state.connecting = true;
+    waitOnMetamaskWallet: () => {
+      set((state: AppState) => {
+        state.metamask.connecting = true;
+      });
     },
-    disconnectMetamaskWallet: (state) => {
-      state.connected = false;
+    disconnectMetamaskWallet: () => {
+      set((state: AppState) => {
+        state.metamask.connected = false;
+      });
     },
-    setAvailableToClaim: (state, action) => {
-      state.availableToClaim = action.payload;
+    setAvailableToClaim: (availableToClaim: number) => {
+      set((state: AppState) => {
+        state.metamask.availableToClaim = availableToClaim;
+      });
     },
   },
 });
-
-export const {
-  connectMetamaskWallet,
-  disconnectMetamaskWallet,
-  waitOnMetamaskWallet,
-  setAvailableToClaim,
-} = metamaskSlice.actions;
-
-export default metamaskSlice.reducer;

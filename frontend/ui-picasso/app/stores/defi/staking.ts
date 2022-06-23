@@ -1,4 +1,5 @@
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { NamedSet } from "zustand/middleware";
+import { AppState, StoreSlice } from "../types";
 import { formatNumber } from "@/utils/formatters";
 import BigNumber from "bignumber.js";
 
@@ -39,20 +40,19 @@ export type OpenPosition = {
   expiryDate: number;
   multiplier: number;
   yourChaos: BigNumber;
+  value: BigNumber;
+  usdValue: BigNumber;
 };
 
 export type OpenPositions = Array<OpenPosition>;
 
-export const renewPeriod = createAsyncThunk(
-  "staking/renewPeriod",
-  async (extendPeriod: string, thunkAPI) => {
-    return extendPeriod;
-  }
-);
+export const renewPeriod = async (extendPeriod: string) => {
+  return extendPeriod;
+};
 
-export const burnUnstake = createAsyncThunk("staking/burnUnstake", async () => {
+export const burnUnstake = async () => {
   return "";
-});
+};
 
 export const initialState = {
   highlights: {
@@ -95,31 +95,28 @@ export const initialState = {
   withdrawablePica: new BigNumber(25565),
 };
 
-export const stakingSlice = createSlice({
-  name: "Staking",
-  initialState,
-  reducers: {
-    setStakingHighlights: (
-      state,
-      action: PayloadAction<StakingHighlightsType>
-    ) => {
-      state.highlights = action.payload;
+export interface StakingSlice {
+  staking: StakingState & {
+    setStakingHighlights: (data: StakingHighlightsType) => void;
+    setClaimableRewards: (data: ClaimableRewards) => void;
+  };
+}
+
+export const createStakingSlice: StoreSlice<StakingSlice> = (
+  set: NamedSet<StakingSlice>
+) => ({
+  staking: {
+    ...initialState,
+
+    setStakingHighlights: (data: StakingHighlightsType) => {
+      set((state: AppState) => {
+        state.staking.highlights = data;
+      });
     },
-    setClaimableRewards: (state, action: PayloadAction<ClaimableRewards>) => {
-      state.claimableRewards = action.payload;
+    setClaimableRewards: (data: ClaimableRewards) => {
+      set((state: AppState) => {
+        state.staking.claimableRewards = data;
+      });
     },
-  },
-  extraReducers: (builder) => {
-    builder.addCase(renewPeriod.fulfilled, (state, action) => {
-      // TOOD: update open positions
-    });
-    builder.addCase(burnUnstake.fulfilled, (state, action) => {
-      // TODO: update deposit and withdrawable pica
-    });
   },
 });
-
-export const { setStakingHighlights, setClaimableRewards } =
-  stakingSlice.actions;
-
-export default stakingSlice.reducer;

@@ -1,6 +1,6 @@
 import { Token, TOKENS } from "@/defi/Tokens";
-
-import { createSlice } from "@reduxjs/toolkit";
+import { NamedSet } from "zustand/middleware";
+import { AppState, StoreSlice } from "../types";
 
 // TODO: [defi] edit values accordingly to your needs
 export type Account = {
@@ -178,10 +178,14 @@ const initialState: PolkadotState = {
   },
 };
 
-export const polkadotSlice = createSlice({
-  name: "PolkaDot",
-  initialState,
-  reducers: {},
-});
+export interface PolkadotSlice {
+  polkadot: PolkadotState & {};
+}
 
-export default polkadotSlice.reducer;
+export const createPolkadotSlice: StoreSlice<PolkadotSlice> = (
+  set: NamedSet<PolkadotSlice>
+) => ({
+  polkadot: {
+    ...initialState,
+  },
+});

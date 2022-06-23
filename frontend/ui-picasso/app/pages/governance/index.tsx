@@ -3,7 +3,7 @@ import React from "react";
 import Default from "@/components/Templates/Default";
 import { useTheme, Grid, Button, Box } from "@mui/material";
 import { PageTitle, SearchInput, Select } from "@/components";
-import { useAppDispatch } from "@/hooks/store";
+
 import { VotingDetailsBox } from "@/components/Molecules/VotingDetailsBox";
 import HowToVoteIcon from "@mui/icons-material/HowToVote";
 import CheckIcon from "@mui/icons-material/Check";
@@ -38,7 +38,6 @@ const optionsStatus = [
 ];
 
 const Governance: NextPage = () => {
-  const dispatch = useAppDispatch();
   const theme = useTheme();
   const [value, setValue] = React.useState(0);
 
