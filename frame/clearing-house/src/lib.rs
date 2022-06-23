@@ -2265,7 +2265,7 @@ pub mod pallet {
 				oracle = math::clip(
 					oracle,
 					last_oracle.try_sub(&last_oracle_10bp)?,
-					last_oracle.try_sub(&last_oracle_10bp)?,
+					last_oracle.try_add(&last_oracle_10bp)?,
 				);
 
 				// TODO(0xangelo): consider further guard rails
