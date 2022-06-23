@@ -57,42 +57,42 @@ jobs:
 
       - name: Upload Artifacts
         run: |
-          sudo gsutil cp ./target/release/composable gs://composable-binaries/${{ env.RELEASE_VERSION }}/dali-stage
+          sudo gsutil cp ./target/release/composable gs://composable-binaries/dali-stage/${{ env.RELEASE_VERSION }}
           
     
-  # dali-client-release:
-  #   runs-on:
-  #     - self-hosted
-  #     - linux
-  #     - X64
-  #     - ansible-runner
-  #   steps:
-  #     - name: Clean up
-  #       continue-on-error: true
-  #       run: |
-  #         sudo chown -R $USER:$USER $GITHUB_WORKSPACE
-  #         docker system prune --force --all --volumes
-  #     - uses: actions/checkout@v2
-  #       with:
-  #         fetch-depth: 0
+  dali-client-release:
+    runs-on:
+      - self-hosted
+      - linux
+      - X64
+      - ansible-runner
+    steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-  #     - name: Set env
-  #       run: |
-  #         echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
-  #     - name: Run ansible playbook
-  #       working-directory: "./.maintain/playbooks"
-  #       run: |
-  #         ansible-playbook -l _environment_dali-stage client-upgrade.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
-  #     - name: Notify sre-tasks slack channel
-  #       uses: rtCamp/action-slack-notify@v2
-  #       env:
-  #         SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-  #         SLACK_CHANNEL: releases
-  #         SLACK_USERNAME: Github Actions
-  #         SLACK_ICON: https://avatars.githubusercontent.com/u/44036562?s=200&v=4
-  #         SLACK_TITLE: A new composable client for Dali-rococo ${{ env.RELEASE_VERSION }} has been rolled out
-  #         SLACK_MESSAGE: "https://telemetry.polkadot.io/#list/0x5719ed0c1a5f4a11ef4d206f3a35d350365adc35943f2834b8d5bc7ff6e1a1d2"
-  #         SLACK_FOOTER: ""
-  #         MSG_MINIMAL: true
+      - name: Set env
+        run: |
+          echo "RELEASE_VERSION=$(git tag --sort=committerdate | grep -E '^v[0-9]' | tail -1 )" >> $GITHUB_ENV
+      - name: Run ansible playbook
+        working-directory: "./.maintain/playbooks"
+        run: |
+          ansible-playbook -l _environment_dali-stage dali-stage-client-upgrade.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
+      - name: Notify sre-tasks slack channel
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_CHANNEL: releases
+          SLACK_USERNAME: Github Actions
+          SLACK_ICON: https://avatars.githubusercontent.com/u/44036562?s=200&v=4
+          SLACK_TITLE: A new composable client for Dali-rococo ${{ env.RELEASE_VERSION }} has been rolled out
+          SLACK_MESSAGE: "https://telemetry.polkadot.io/#list/0x5719ed0c1a5f4a11ef4d206f3a35d350365adc35943f2834b8d5bc7ff6e1a1d2"
+          SLACK_FOOTER: ""
+          MSG_MINIMAL: true
 
      
