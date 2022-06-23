@@ -2,8 +2,7 @@
 
 use super::*;
 use crate::{
-	models::{Proof, RemoteAccount},
-	AccountIdOf, Call, Config, Pallet as Airdrop, Pallet, ProofOf, RemoteAccountOf,
+	models::Proof, AccountIdOf, Call, Config, IdentityOf, Pallet as Airdrop, Pallet, ProofOf,
 };
 use composable_support::types::{
 	CosmosAddress, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress,
@@ -17,8 +16,7 @@ use p256::ecdsa::{signature::Signer, SigningKey, VerifyingKey};
 use sp_runtime::traits::One;
 use sp_std::prelude::*;
 
-pub type EthKey = libsecp256k1::SecretKey;
-// pub type RelayKey = ed25519::Pair;
+pub type EthereumKey = libsecp256k1::SecretKey;
 pub type CosmosKey = SigningKey;
 
 pub type BlockNumber = u32;
@@ -35,22 +33,22 @@ const DAYS: BlockNumber = HOURS * 24;
 const WEEKS: BlockNumber = DAYS * 7;
 
 #[derive(Clone)]
-pub enum ClaimKey {
+pub enum Identity {
 	Cosmos(CosmosKey),
-	// Relay(RelayKey),
-	Eth(EthKey),
+	Ethereum(EthereumKey),
 }
 
-impl ClaimKey {
-	pub fn as_remote_public<T>(&self) -> RemoteAccountOf<T>
+impl Identity {
+	pub fn as_remote_public<T>(&self) -> IdentityOf<T>
 	where
 		T: Config<RelayChainAccountId = [u8; 32]>,
 	{
 		match self {
-			ClaimKey::Cosmos(cosmos_account) => RemoteAccount::Cosmos(cosmos_address(
+			Identity::Cosmos(cosmos_account) => crate::models::Identity::Cosmos(cosmos_address(
 				VerifyingKey::from(cosmos_account).to_encoded_point(true).as_bytes(),
 			)),
-			ClaimKey::Eth(eth_account) => RemoteAccount::Ethereum(ethereum_address(eth_account)),
+			Identity::Ethereum(eth_account) =>
+				crate::models::Identity::Ethereum(ethereum_address(eth_account)),
 		}
 	}
 
@@ -59,8 +57,8 @@ impl ClaimKey {
 		T: Config<RelayChainAccountId = [u8; 32]>,
 	{
 		match self {
-			ClaimKey::Cosmos(cosmos) => cosmos_proof::<T>(&cosmos, reward_account),
-			ClaimKey::Eth(eth) => ethereum_proof::<T>(&eth, reward_account),
+			Identity::Cosmos(cosmos) => cosmos_proof::<T>(&cosmos, reward_account),
+			Identity::Ethereum(eth) => ethereum_proof::<T>(&eth, reward_account),
 		}
 	}
 }
@@ -78,7 +76,10 @@ where
 	Proof::Cosmos(cosmos_address, CosmosEcdsaSignature(sig))
 }
 
-pub fn ethereum_proof<T>(ethereum_account: &EthKey, reward_account: AccountIdOf<T>) -> ProofOf<T>
+pub fn ethereum_proof<T>(
+	ethereum_account: &EthereumKey,
+	reward_account: AccountIdOf<T>,
+) -> ProofOf<T>
 where
 	T: Config<RelayChainAccountId = [u8; 32]>,
 {
@@ -97,7 +98,7 @@ where
 	Proof::Ethereum(EcdsaSignature(recovered_signature))
 }
 
-pub fn ethereum_public(secret: &EthKey) -> libsecp256k1::PublicKey {
+pub fn ethereum_public(secret: &EthereumKey) -> libsecp256k1::PublicKey {
 	libsecp256k1::PublicKey::from_secret_key(secret)
 }
 
@@ -107,14 +108,14 @@ pub fn cosmos_address(pub_key_slice: &[u8]) -> CosmosAddress {
 	CosmosAddress::Secp256r1(pub_key)
 }
 
-pub fn ethereum_address(secret: &EthKey) -> EthereumAddress {
+pub fn ethereum_address(secret: &EthereumKey) -> EthereumAddress {
 	let mut res = EthereumAddress::default();
 	res.0
 		.copy_from_slice(&hash::<Keccak256>(&ethereum_public(secret).serialize()[1..65])[12..]);
 	res
 }
 
-pub fn cosmos_generate<T>(count: u64) -> Vec<(AccountIdOf<T>, ClaimKey)>
+pub fn cosmos_generate<T>(count: u64) -> Vec<(AccountIdOf<T>, Identity)>
 where
 	T: Config<RelayChainAccountId = [u8; 32]>,
 {
@@ -124,7 +125,7 @@ where
 			let account_id = account("recipient", i as u32, 0xCAFEBABE);
 			(
 				account_id,
-				ClaimKey::Cosmos(
+				Identity::Cosmos(
 					SigningKey::from_bytes(
 						&[(&(seed + i as u128)).to_le_bytes(), (&(seed + i as u128)).to_le_bytes()]
 							.concat(),
@@ -137,7 +138,7 @@ where
 }
 
 #[allow(clippy::disallowed_methods)] // Allow unwrap
-pub fn ethereum_generate<T>(count: u64) -> Vec<(AccountIdOf<T>, ClaimKey)>
+pub fn ethereum_generate<T>(count: u64) -> Vec<(AccountIdOf<T>, Identity)>
 where
 	T: Config<RelayChainAccountId = [u8; 32]>,
 {
@@ -146,14 +147,16 @@ where
 			let account_id = account("recipient", i as u32, 0xCAFEBABE);
 			(
 				account_id,
-				ClaimKey::Eth(EthKey::parse(&hash::<Keccak256>(&i.to_le_bytes())).unwrap()),
+				Identity::Ethereum(
+					EthereumKey::parse(&hash::<Keccak256>(&i.to_le_bytes())).unwrap(),
+				),
 			)
 		})
 		.collect()
 }
 
 /// `count % 2 == 0` should hold for all x
-pub fn generate_accounts<T>(count: u64) -> Vec<(AccountIdOf<T>, ClaimKey)>
+pub fn generate_accounts<T>(count: u64) -> Vec<(AccountIdOf<T>, Identity)>
 where
 	T: Config<RelayChainAccountId = [u8; 32]>,
 {
@@ -192,7 +195,7 @@ benchmarks! {
 
 	add_recipient_benchmark {
 		let x in 100..1000;
-		let accounts: Vec<(RemoteAccountOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), VESTING_PERIOD.into(), false)).collect();
+		let accounts: Vec<(IdentityOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
 		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
@@ -200,7 +203,7 @@ benchmarks! {
 
 	remove_recipient_benchmark {
 		let x in 100..1000;
-		let accounts: Vec<(RemoteAccountOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), VESTING_PERIOD.into(), false)).collect();
+		let accounts: Vec<(IdentityOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
 		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
@@ -209,7 +212,7 @@ benchmarks! {
 
 	enable_airdrop_benchmark {
 		let x in 100..1000;
-		let accounts: Vec<(RemoteAccountOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), VESTING_PERIOD.into(), false)).collect();
+		let accounts: Vec<(IdentityOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
 		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;
@@ -218,7 +221,7 @@ benchmarks! {
 
 	disable_airdrop_benchmark {
 		let x in 100..1000;
-		let accounts: Vec<(RemoteAccountOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), VESTING_PERIOD.into(), false)).collect();
+		let accounts: Vec<(IdentityOf<T>, BalanceOf<T>, MomentOf<T>,bool)> = generate_accounts::<T>(x as _).into_iter().map(|(_, a)| (a.as_remote_public::<T>(), T::Balance::from(1_000_000_000_000), VESTING_PERIOD.into(), false)).collect();
 		let airdrop_id = T::AirdropId::one();
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
 		<Airdrop<T> as Airdropper>::create_airdrop(creator.clone(), None, VESTING_STEP.into())?;

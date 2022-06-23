@@ -12,7 +12,7 @@ pub trait Airdropper {
 	type Proof;
 	type Recipient;
 	type RecipientCollection;
-	type RemoteAccount;
+	type Identity;
 	type VestingSchedule;
 
 	/// Create a new Airdrop.
@@ -48,7 +48,7 @@ pub trait Airdropper {
 	/// Claim a recipient reward from an Airdrop.
 	fn claim(
 		airdrop_id: Self::AirdropId,
-		remote_account: Self::RemoteAccount,
+		remote_account: Self::Identity,
 		reward_account: Self::AccountId,
 	) -> DispatchResultWithPostInfo;
 }

@@ -1,9 +1,5 @@
 #![cfg(test)]
-
-use crate::{
-	self as pallet_airdrop,
-	models::{Proof, RemoteAccount},
-};
+use crate::{self as pallet_airdrop, models::Proof};
 use codec::Encode;
 use composable_support::types::{EcdsaSignature, EthereumAddress};
 use frame_support::{
@@ -18,8 +14,8 @@ use sp_runtime::{
 };
 use sp_std::vec::Vec;
 
-pub type EthKey = libsecp256k1::SecretKey;
-pub type RelayKey = ed25519::Pair;
+pub type EthereumKey = libsecp256k1::SecretKey;
+pub type RelayChainKey = ed25519::Pair;
 
 pub type AccountId = AccountId32;
 pub type AirdropId = u64;
@@ -142,24 +138,25 @@ impl ExtBuilder {
 }
 
 #[derive(Clone)]
-pub enum ClaimKey {
-	Relay(RelayKey),
-	Eth(EthKey),
+pub enum Identity {
+	Relay(RelayChainKey),
+	Eth(EthereumKey),
 }
 
-impl ClaimKey {
-	pub fn as_remote_public(&self) -> RemoteAccount<RelayChainAccountId> {
+impl Identity {
+	pub fn as_remote_public(&self) -> crate::models::Identity<RelayChainAccountId> {
 		match self {
-			ClaimKey::Relay(relay_account) =>
-				RemoteAccount::RelayChain(relay_account.public().into()),
-			ClaimKey::Eth(eth_account) => RemoteAccount::Ethereum(ethereum_address(eth_account)),
+			Identity::Relay(relay_account) =>
+				crate::models::Identity::RelayChain(relay_account.public().into()),
+			Identity::Eth(eth_account) =>
+				crate::models::Identity::Ethereum(ethereum_address(eth_account)),
 		}
 	}
 
 	pub fn proof(self, reward_account: AccountId32) -> Proof<[u8; 32]> {
 		match self {
-			ClaimKey::Relay(relay) => relay_proof(&relay, reward_account),
-			ClaimKey::Eth(eth) => ethereum_proof(&eth, reward_account),
+			Identity::Relay(relay) => relay_proof(&relay, reward_account),
+			Identity::Eth(eth) => ethereum_proof(&eth, reward_account),
 		}
 	}
 
@@ -169,8 +166,8 @@ impl ClaimKey {
 		reward_account: AccountId,
 	) -> DispatchResultWithPostInfo {
 		let proof = match self {
-			ClaimKey::Relay(relay_account) => relay_proof(relay_account, reward_account.clone()),
-			ClaimKey::Eth(ethereum_account) =>
+			Identity::Relay(relay_account) => relay_proof(relay_account, reward_account.clone()),
+			Identity::Eth(ethereum_account) =>
 				ethereum_proof(ethereum_account, reward_account.clone()),
 		};
 
@@ -178,7 +175,10 @@ impl ClaimKey {
 	}
 }
 
-fn relay_proof(relay_account: &RelayKey, reward_account: AccountId) -> Proof<RelayChainAccountId> {
+fn relay_proof(
+	relay_account: &RelayChainKey,
+	reward_account: AccountId,
+) -> Proof<RelayChainAccountId> {
 	let mut msg = b"<Bytes>".to_vec();
 	msg.append(&mut PROOF_PREFIX.to_vec());
 	msg.append(&mut reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec()));
@@ -187,7 +187,7 @@ fn relay_proof(relay_account: &RelayKey, reward_account: AccountId) -> Proof<Rel
 }
 
 pub fn ethereum_proof(
-	ethereum_account: &EthKey,
+	ethereum_account: &EthereumKey,
 	reward_account: AccountId,
 ) -> Proof<RelayChainAccountId> {
 	let msg = keccak_256(
@@ -205,11 +205,11 @@ pub fn ethereum_proof(
 	Proof::Ethereum(EcdsaSignature(recovered_signature))
 }
 
-pub fn ethereum_public(secret: &EthKey) -> libsecp256k1::PublicKey {
+pub fn ethereum_public(secret: &EthereumKey) -> libsecp256k1::PublicKey {
 	libsecp256k1::PublicKey::from_secret_key(secret)
 }
 
-pub fn ethereum_address(secret: &EthKey) -> EthereumAddress {
+pub fn ethereum_address(secret: &EthereumKey) -> EthereumAddress {
 	let mut res = EthereumAddress::default();
 	res.0
 		.copy_from_slice(&keccak_256(&ethereum_public(secret).serialize()[1..65])[12..]);
@@ -217,7 +217,7 @@ pub fn ethereum_address(secret: &EthKey) -> EthereumAddress {
 }
 
 #[allow(clippy::disallowed_methods)] // Allow unwrap
-pub fn relay_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
+pub fn relay_generate(count: u64) -> Vec<(AccountId, Identity)> {
 	let seed: u128 = 12345678901234567890123456789012;
 	(0..count)
 		.map(|i| {
@@ -225,7 +225,7 @@ pub fn relay_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 				[[0_u8; 16], (&(i as u128 + 1)).to_le_bytes()].concat().try_into().unwrap();
 			(
 				AccountId::new(account_id),
-				ClaimKey::Relay(ed25519::Pair::from_seed(&keccak_256(
+				Identity::Relay(ed25519::Pair::from_seed(&keccak_256(
 					&[(&(seed + i as u128)).to_le_bytes(), (&(seed + i as u128)).to_le_bytes()]
 						.concat(),
 				))),
@@ -235,21 +235,21 @@ pub fn relay_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
 }
 
 #[allow(clippy::disallowed_methods)] // Allow unwrap
-pub fn ethereum_generate(count: u64) -> Vec<(AccountId, ClaimKey)> {
+pub fn ethereum_generate(count: u64) -> Vec<(AccountId, Identity)> {
 	(0..count)
 		.map(|i| {
 			let account_id =
 				[(&(i as u128 + 1)).to_le_bytes(), [0_u8; 16]].concat().try_into().unwrap();
 			(
 				AccountId::new(account_id),
-				ClaimKey::Eth(EthKey::parse(&keccak_256(&i.to_le_bytes())).unwrap()),
+				Identity::Eth(EthereumKey::parse(&keccak_256(&i.to_le_bytes())).unwrap()),
 			)
 		})
 		.collect()
 }
 
 /// `count % 2 == 0` should hold for all x
-pub fn generate_accounts(count: u64) -> Vec<(AccountId, ClaimKey)> {
+pub fn generate_accounts(count: u64) -> Vec<(AccountId, Identity)> {
 	assert!(count % 2 == 0, "`x % 2 == 0` should hold for all x");
 	let mut x = relay_generate(count / 2);
 	let mut y = ethereum_generate(count / 2);

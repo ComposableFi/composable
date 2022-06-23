@@ -15,7 +15,7 @@ mod tests;
 #[frame_support::pallet]
 pub mod pallet {
 	use crate::{
-		models::{Airdrop, AirdropState, Proof, RecipientFund, RemoteAccount},
+		models::{Airdrop, AirdropState, Identity, Proof, RecipientFund},
 		weights::WeightInfo,
 	};
 	use codec::{Codec, FullCodec, MaxEncodedLen};
@@ -71,7 +71,7 @@ pub mod pallet {
 	pub type MomentOf<T> = <T as Config>::Moment;
 	/// ['Proof'](crate::models::Proof) as configured by the pallet
 	pub type ProofOf<T> = Proof<<T as Config>::RelayChainAccountId>;
-	pub type RemoteAccountOf<T> = RemoteAccount<<T as Config>::RelayChainAccountId>;
+	pub type IdentityOf<T> = Identity<<T as Config>::RelayChainAccountId>;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -87,7 +87,7 @@ pub mod pallet {
 		},
 		RecipientRemoved {
 			airdrop_id: T::AirdropId,
-			recipient_id: RemoteAccountOf<T>,
+			recipient_id: IdentityOf<T>,
 			unclaimed_funds: T::Balance,
 		},
 		AirdropStarted {
@@ -99,7 +99,7 @@ pub mod pallet {
 			at: T::Moment,
 		},
 		Claimed {
-			remote_account: RemoteAccountOf<T>,
+			identity: IdentityOf<T>,
 			recipient_account: T::AccountId,
 			amount: T::Balance,
 		},
@@ -212,7 +212,7 @@ pub mod pallet {
 		T::AirdropId,
 		Blake2_128Concat,
 		T::AccountId,
-		RemoteAccountOf<T>,
+		IdentityOf<T>,
 		OptionQuery,
 	>;
 
@@ -230,7 +230,7 @@ pub mod pallet {
 		Blake2_128Concat,
 		T::AirdropId,
 		Blake2_128Concat,
-		RemoteAccountOf<T>,
+		IdentityOf<T>,
 		RecipientFundOf<T>,
 		OptionQuery,
 	>;
@@ -274,7 +274,7 @@ pub mod pallet {
 		pub fn add_recipient(
 			origin: OriginFor<T>,
 			airdrop_id: T::AirdropId,
-			recipients: Vec<(RemoteAccountOf<T>, BalanceOf<T>, MomentOf<T>, bool)>,
+			recipients: Vec<(IdentityOf<T>, BalanceOf<T>, MomentOf<T>, bool)>,
 		) -> DispatchResult {
 			let origin_id = ensure_signed(origin)?;
 
@@ -289,13 +289,13 @@ pub mod pallet {
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
 		/// * `NotAirdropCreator` - Signer of the origin is not the creator of the Airdrop
 		/// * `RecipientAlreadyClaimed` - The recipient has already began claiming their funds.
-		/// * `RecipientNotFound` - No recipient associated with the remote_account could be found.
+		/// * `RecipientNotFound` - No recipient associated with the `identity` could be found.
 		#[pallet::weight(<T as Config>::WeightInfo::remove_recipient())]
 		#[transactional]
 		pub fn remove_recipient(
 			origin: OriginFor<T>,
 			airdrop_id: T::AirdropId,
-			recipient: RemoteAccountOf<T>,
+			recipient: IdentityOf<T>,
 		) -> DispatchResult {
 			let origin_id = ensure_signed(origin)?;
 
@@ -346,7 +346,7 @@ pub mod pallet {
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
 		/// * `AirdropIsNotEnabled` - The Airdrop has not been enabled
 		/// * `InvalidProof`
-		/// * `RecipientNotFound` - No recipient associated with the remote_account could be found.
+		/// * `RecipientNotFound` - No recipient associated with the `identity` could be found.
 		#[pallet::weight(<T as Config>::WeightInfo::claim(TotalAirdropRecipients::<T>::get(airdrop_id)))]
 		#[transactional]
 		pub fn claim(
@@ -356,25 +356,20 @@ pub mod pallet {
 			proof: ProofOf<T>,
 		) -> DispatchResultWithPostInfo {
 			ensure_none(origin)?;
-			let remote_account =
-				Self::get_remote_account(proof, &reward_account, T::Prefix::get())?;
+			let identity = Self::get_identity(proof, &reward_account, T::Prefix::get())?;
 
 			match Associations::<T>::get(airdrop_id, reward_account.clone()) {
 				// Confirm association matches
 				Some(associated_account) => {
-					ensure!(associated_account == remote_account, Error::<T>::InvalidProof);
+					ensure!(associated_account == identity, Error::<T>::InvalidProof);
 				},
 				// If no association exist, create a new one
 				None => {
-					Associations::<T>::insert(
-						airdrop_id,
-						reward_account.clone(),
-						remote_account.clone(),
-					);
+					Associations::<T>::insert(airdrop_id, reward_account.clone(), identity.clone());
 				},
 			}
 
-			<Self as Airdropper>::claim(airdrop_id, remote_account, reward_account)
+			<Self as Airdropper>::claim(airdrop_id, identity, reward_account)
 		}
 	}
 
@@ -423,15 +418,15 @@ pub mod pallet {
 		}
 
 		/// Gets the [`RecipientFund`](crate::models::RecipientFund) of an Airdrop that is
-		/// associated with the `remote_account`.
+		/// associated with the `identity`.
 		///
 		/// # Errors
-		/// * `RecipientNotFound` - No recipient associated with the remote_account could be found.
+		/// * `RecipientNotFound` - No recipient associated with the `identity` could be found.
 		pub(crate) fn get_recipient_fund(
 			airdrop_id: T::AirdropId,
-			remote_account: RemoteAccountOf<T>,
+			identity: IdentityOf<T>,
 		) -> Result<RecipientFundOf<T>, Error<T>> {
-			RecipientFunds::<T>::try_get(airdrop_id, remote_account)
+			RecipientFunds::<T>::try_get(airdrop_id, identity)
 				.map_err(|_| Error::<T>::RecipientNotFound)
 		}
 
@@ -439,19 +434,19 @@ pub mod pallet {
 		///
 		/// # Errors
 		/// * `InvalidProof` - If the proof is invalid, an error will be returned.
-		pub(crate) fn get_remote_account(
+		pub(crate) fn get_identity(
 			proof: ProofOf<T>,
 			reward_account: &<T as frame_system::Config>::AccountId,
 			prefix: &[u8],
-		) -> Result<RemoteAccountOf<T>, DispatchErrorWithPostInfo<PostDispatchInfo>> {
-			let remote_account = match proof {
+		) -> Result<IdentityOf<T>, DispatchErrorWithPostInfo<PostDispatchInfo>> {
+			let identity = match proof {
 				Proof::Ethereum(eth_proof) => {
 					let reward_account_encoded =
 						reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec());
 					let eth_address =
 						Self::ethereum_recover(prefix, &reward_account_encoded, &eth_proof)
 							.ok_or(Error::<T>::InvalidProof)?;
-					Result::<_, DispatchError>::Ok(RemoteAccount::Ethereum(eth_address))
+					Result::<_, DispatchError>::Ok(Identity::Ethereum(eth_address))
 				},
 				Proof::RelayChain(relay_account, relay_proof) => {
 					ensure!(
@@ -463,7 +458,7 @@ pub mod pallet {
 						),
 						Error::<T>::InvalidProof
 					);
-					Ok(RemoteAccount::RelayChain(relay_account))
+					Ok(Identity::RelayChain(relay_account))
 				},
 				Proof::Cosmos(cosmos_address, cosmos_proof) => {
 					let reward_account_encoded =
@@ -475,10 +470,10 @@ pub mod pallet {
 						&cosmos_proof,
 					)
 					.ok_or(Error::<T>::InvalidProof)?;
-					Result::<_, DispatchError>::Ok(RemoteAccount::Cosmos(cosmos_address))
+					Result::<_, DispatchError>::Ok(Identity::Cosmos(cosmos_address))
 				},
 			}?;
-			Ok(remote_account)
+			Ok(identity)
 		}
 
 		/// Verify the proof is valid for a given relay account.
@@ -617,7 +612,7 @@ pub mod pallet {
 		/// # Errors
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
 		/// * `AirdropIsNotEnabled` - The Airdrop has not been enabled
-		pub(crate) fn should_have_claimed(
+		pub(crate) fn claimable(
 			airdrop_id: T::AirdropId,
 			fund: &RecipientFundOf<T>,
 		) -> Result<T::Balance, Error<T>> {
@@ -638,11 +633,10 @@ pub mod pallet {
 					let vesting_window =
 						vesting_point.saturating_sub(vesting_point % airdrop.schedule);
 
-					let should_have_claimed =
-						fund.total.saturating_mul(T::Convert::convert(vesting_window)) /
-							T::Convert::convert(fund.vesting_period);
+					let claimable = fund.total.saturating_mul(T::Convert::convert(vesting_window)) /
+						T::Convert::convert(fund.vesting_period);
 
-					Ok(should_have_claimed)
+					Ok(claimable)
 				},
 				_ => Err(Error::<T>::AirdropIsNotEnabled),
 			}
@@ -684,9 +678,9 @@ pub mod pallet {
 		type AirdropStart = MomentOf<T>;
 		type Balance = BalanceOf<T>;
 		type Proof = ProofOf<T>;
-		type Recipient = RemoteAccountOf<T>;
+		type Recipient = IdentityOf<T>;
 		type RecipientCollection = Vec<(Self::Recipient, BalanceOf<T>, MomentOf<T>, bool)>;
-		type RemoteAccount = RemoteAccountOf<T>;
+		type Identity = IdentityOf<T>;
 		type VestingSchedule = MomentOf<T>;
 
 		/// Create a new Airdrop.
@@ -784,20 +778,18 @@ pub mod pallet {
 			}
 
 			// Populate `RecipientFunds`
-			recipients
-				.iter()
-				.for_each(|(remote_account, funds, vesting_period, is_funded)| {
-					RecipientFunds::<T>::insert(
-						airdrop_id,
-						remote_account,
-						RecipientFundOf::<T> {
-							total: *funds,
-							claimed: T::Balance::zero(),
-							vesting_period: *vesting_period,
-							funded_claim: *is_funded,
-						},
-					);
-				});
+			recipients.iter().for_each(|(identity, funds, vesting_period, is_funded)| {
+				RecipientFunds::<T>::insert(
+					airdrop_id,
+					identity,
+					RecipientFundOf::<T> {
+						total: *funds,
+						claimed: T::Balance::zero(),
+						vesting_period: *vesting_period,
+						funded_claim: *is_funded,
+					},
+				);
+			});
 
 			TotalAirdropRecipients::<T>::mutate(airdrop_id, |total_airdrop_recipients| {
 				*total_airdrop_recipients = total_recipients;
@@ -832,7 +824,7 @@ pub mod pallet {
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
 		/// * `NotAirdropCreator` - Signer of the origin is not the creator of the Airdrop
 		/// * `RecipientAlreadyClaimed` - The recipient has already began claiming their funds.
-		/// * `RecipientNotFound` - No recipient associated with the remote_account could be found.
+		/// * `RecipientNotFound` - No recipient associated with the `identity` could be found.
 		fn remove_recipient(
 			origin_id: Self::AccountId,
 			airdrop_id: Self::AirdropId,
@@ -951,21 +943,20 @@ pub mod pallet {
 		/// # Errors
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
 		/// * `AirdropIsNotEnabled` - The Airdrop has not been enabled
-		/// * `RecipientNotFound` - No recipient associated with the remote_account could be found.
+		/// * `RecipientNotFound` - No recipient associated with the `identity` could be found.
 		fn claim(
 			airdrop_id: Self::AirdropId,
-			remote_account: Self::RemoteAccount,
+			identity: Self::Identity,
 			reward_account: Self::AccountId,
 		) -> DispatchResultWithPostInfo {
 			let airdrop_account = Self::get_airdrop_account_id(airdrop_id);
 			let (available_to_claim, recipient_fund) =
-				RecipientFunds::<T>::try_mutate(airdrop_id, remote_account, |fund| {
+				RecipientFunds::<T>::try_mutate(airdrop_id, identity, |fund| {
 					match fund.as_mut() {
 						Some(fund) => {
-							let should_have_claimed = Self::should_have_claimed(airdrop_id, fund)?;
+							let claimable = Self::claimable(airdrop_id, fund)?;
 							// .map_err(|_| Error::<T>::AirdropDoesNotExist)?;
-							let available_to_claim =
-								should_have_claimed.saturating_sub(fund.claimed);
+							let available_to_claim = claimable.saturating_sub(fund.claimed);
 
 							ensure!(
 								available_to_claim > T::Balance::zero(),
@@ -1035,18 +1026,17 @@ pub mod pallet {
 				}
 
 				// Evaluate proof
-				let remote_account =
-					Self::get_remote_account(proof.clone(), reward_account, T::Prefix::get())
-						.map_err(|_| {
-							Into::<TransactionValidityError>::into(InvalidTransaction::Custom(
-								ValidityError::InvalidProof as u8,
-							))
-						})?;
+				let identity = Self::get_identity(proof.clone(), reward_account, T::Prefix::get())
+					.map_err(|_| {
+						Into::<TransactionValidityError>::into(InvalidTransaction::Custom(
+							ValidityError::InvalidProof as u8,
+						))
+					})?;
 
 				match Associations::<T>::get(airdrop_id, reward_account) {
 					// Validity Error if the account is already associated to another
 					Some(associated_account) =>
-						if associated_account != remote_account {
+						if associated_account != identity {
 							return InvalidTransaction::Custom(
 								ValidityError::AlreadyAssociated as u8,
 							)
@@ -1057,12 +1047,12 @@ pub mod pallet {
 				}
 
 				// Validity Error if there are no funds for this recipient
-				match RecipientFunds::<T>::get(airdrop_id, remote_account.clone()) {
+				match RecipientFunds::<T>::get(airdrop_id, identity.clone()) {
 					None => InvalidTransaction::Custom(ValidityError::NoFunds as u8).into(),
 					Some(fund) if fund.total.is_zero() =>
 						InvalidTransaction::Custom(ValidityError::NoFunds as u8).into(),
 					Some(_) => ValidTransaction::with_tag_prefix("AirdropAssociationCheck")
-						.and_provides(remote_account)
+						.and_provides(identity)
 						.build(),
 				}
 			} else {

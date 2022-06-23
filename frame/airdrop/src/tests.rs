@@ -1,8 +1,8 @@
 use crate::{
 	mocks::{
 		ethereum_address, generate_accounts, AccountId, Airdrop, AirdropId, Balance, Balances,
-		ClaimKey, EthKey, ExtBuilder, MockRuntime, Moment, Origin, System, Timestamp, PROOF_PREFIX,
-		STAKE,
+		EthereumKey, ExtBuilder, Identity, MockRuntime, Moment, Origin, System, Timestamp,
+		PROOF_PREFIX, STAKE,
 	},
 	models::AirdropState,
 	Error,
@@ -44,7 +44,7 @@ fn with_recipients<R>(
 	funded_claim: bool,
 	vesting_schedule: Moment,
 	vesting_period: Moment,
-	execute: impl FnOnce(&dyn Fn(Moment), Vec<(AccountId, ClaimKey)>) -> R,
+	execute: impl FnOnce(&dyn Fn(Moment), Vec<(AccountId, Identity)>) -> R,
 ) -> R {
 	let accounts = generate_accounts(count as _);
 	let recipients = accounts
@@ -68,7 +68,7 @@ fn with_recipients<R>(
 }
 
 fn with_default_recipients<R>(
-	execute: impl FnOnce(&dyn Fn(Moment), Vec<(AccountId, ClaimKey)>) -> R,
+	execute: impl FnOnce(&dyn Fn(Moment), Vec<(AccountId, Identity)>) -> R,
 ) -> R {
 	with_recipients(
 		DEFAULT_NB_OF_CONTRIBUTORS,
@@ -458,7 +458,7 @@ mod ethereum_recover {
 	#[allow(clippy::disallowed_methods)] // Allow unwrap
 	fn should_recover_hard_coded_eth_address() {
 		let eth_address = EthereumAddress(hex!("176FD6F90730E02D2AF55681c65a115C174bA2C7"));
-		let eth_account = EthKey::parse(&hex!(
+		let eth_account = EthereumKey::parse(&hex!(
 			"29134835563739bae90483ee3d80945edf2c87a9b55c9193a694291cfdf23a05"
 		))
 		.unwrap();

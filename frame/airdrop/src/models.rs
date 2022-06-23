@@ -58,7 +58,7 @@ pub enum Proof<AccountId> {
 
 /// Remote account that is associated with a local account.
 #[derive(Hash, Clone, PartialEq, Eq, RuntimeDebug, Encode, Decode, MaxEncodedLen, TypeInfo)]
-pub enum RemoteAccount<AccountId> {
+pub enum Identity<AccountId> {
 	RelayChain(AccountId),
 	Ethereum(EthereumAddress),
 	Cosmos(CosmosAddress),
