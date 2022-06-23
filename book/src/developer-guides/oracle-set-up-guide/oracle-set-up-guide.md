@@ -200,7 +200,7 @@ ubuntu@oracle-test:~/composable/scripts/polkadot-launch$ tail -f 9988.log
 
 
 
-### Using PolkadotJS Web Interface
+## Using PolkadotJS Web Interface
 
 To see the block explorer and run extrinsics the PolkadotJS web interface needs to be connected. 
 
