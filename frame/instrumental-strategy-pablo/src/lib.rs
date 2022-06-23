@@ -234,6 +234,7 @@ pub mod pallet {
 				Error::<T>::NotEnoughAccessRights
 			);
 			<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
+			Self::deposit_event(Event::Setted { asset_id, pool_id });
 			Ok(().into())
 		}
 		/// Occur rebalance of liquidity of each vault.
