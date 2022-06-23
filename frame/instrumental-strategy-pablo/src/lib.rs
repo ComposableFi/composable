@@ -182,7 +182,7 @@ pub mod pallet {
 
 		UnableToRebalanceVault { vault_id: T::VaultId },
 
-		Setted { asset_id: T::AssetId, pool_id: T::PoolId },
+		PoolSettedToAsset { asset_id: T::AssetId, pool_id: T::PoolId },
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -220,7 +220,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Store a mapping of asset_id -> pool_id in the pools runtime storage object.
 		///
-		/// Emits [`Setted`](Event::Setted) event when successful.
+		/// Emits [`PoolSettedToAsset`](Event::PoolSettedToAsset) event when successful.
 		#[pallet::weight(T::WeightInfo::set_pool_id_for_asset())]
 		pub fn set_pool_id_for_asset(
 			origin: OriginFor<T>,
@@ -234,12 +234,12 @@ pub mod pallet {
 				Error::<T>::NotEnoughAccessRights
 			);
 			<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
-			Self::deposit_event(Event::Setted { asset_id, pool_id });
+			Self::deposit_event(Event::PoolSettedToAsset { asset_id, pool_id });
 			Ok(().into())
 		}
 		/// Occur rebalance of liquidity of each vault.
 		///
-		/// Emits [`RebalancedVault`](Event::RebalancedVault)].
+		/// Emits [`RebalancedVault`](Event::RebalancedVault) event when successful.
 		#[pallet::weight(T::WeightInfo::liquidity_rebalance())]
 		pub fn liquidity_rebalance(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
