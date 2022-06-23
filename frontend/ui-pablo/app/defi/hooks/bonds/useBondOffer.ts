@@ -113,6 +113,7 @@ export default function useBondOffer(offerId: string) {
 
   const bondPriceUsd = new BigNumber(0);
   const marketPriceUsd = new BigNumber(0);
+  const roi = new BigNumber(0);
 
   return {
     selectedBondOffer,
@@ -121,6 +122,7 @@ export default function useBondOffer(offerId: string) {
     marketPriceUsd,
     principalAsset,
     rewardAsset,
+    roi
   };
 }
 

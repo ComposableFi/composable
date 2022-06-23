@@ -32,8 +32,6 @@ const defaultLabelProps = (label: string, balance: string) =>
 export type PreviewPurchaseModalProps = {
   offerId: number;
   selectedBondOffer: SelectedBondOffer,
-  bondPriceInUSD: ISupplySummary["bondPriceInUSD"];
-  marketPriceInUSD: ISupplySummary["marketPriceInUSD"];
   amount: BigNumber;
   nbOfBonds: IDepositSummary["nbOfBonds"];
   rewardableTokens: string;
@@ -43,8 +41,6 @@ export type PreviewPurchaseModalProps = {
 export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
   offerId,
   selectedBondOffer,
-  bondPriceInUSD,
-  marketPriceInUSD,
   amount,
   nbOfBonds,
   rewardableTokens,
@@ -58,10 +54,8 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
   const bond = usePurchaseBond();
   const cancel = useCancelOffer();
 
-  const [bondPrice, setBondPrice] = useState(0);
-  const [marketPrice, setMarketPrice] = useState(0);
-  const discountPercent =
-    marketPrice === 0 ? 0 : ((marketPrice - bondPrice) / marketPrice) * 100;
+  const discountPercent = 0
+    // marketPrice === 0 ? 0 : ((marketPrice - bondPrice) / marketPrice) * 100;
 
   const handlePurchaseBond = async () => {
     await bond(offerId, nbOfBonds(amount.toNumber()));
@@ -73,11 +67,6 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
     await cancel(offerId);
     dispatch(closeConfirmingModal());
   };
-
-  useAsyncEffect(async () => {
-    setBondPrice(await bondPriceInUSD());
-    setMarketPrice(await marketPriceInUSD());
-  }, []);
 
   let principalSymbol = useMemo(() => {
     return principalAsset &&
@@ -127,10 +116,10 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
             mt={2}
             {...defaultLabelProps("You will get", `${rewardableTokens} PAB`)}
           />
-          <Label mt={2} {...defaultLabelProps("Bond Price", `$${bondPrice}`)} />
+          <Label mt={2} {...defaultLabelProps("Bond Price", `$${0}`)} />
           <Label
             mt={2}
-            {...defaultLabelProps("Market Price", `$${marketPrice}`)}
+            {...defaultLabelProps("Market Price", `$${0}`)}
           />
           <Label
             mt={2}

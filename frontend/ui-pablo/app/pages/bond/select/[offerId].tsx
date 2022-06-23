@@ -88,7 +88,6 @@ const SelectBond: NextPage = () => {
           <SupplySummary
             bond={bondOfferSelected}
             mt={8}
-            supplySummary={supplySummary}
           />
         )}
         <Box position="relative" mt={8} mb={25}>
@@ -99,7 +98,6 @@ const SelectBond: NextPage = () => {
                   <DepositForm
                     bond={bondOfferSelected}
                     offerId={offerId as string}
-                    supplySummary={supplySummary}
                     depositSummary={depositSummary}
                   />
                 )}

@@ -19,7 +19,6 @@ const DepositFormStories = () => {
       bond={bond}
         offerId={"0"}
         depositSummary={depositSummary}
-        supplySummary={supplySummary}
       />
     </Box>
   );

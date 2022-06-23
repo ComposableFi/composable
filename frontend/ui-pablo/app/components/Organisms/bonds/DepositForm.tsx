@@ -57,14 +57,12 @@ export type DepositFormProps = {
   bond: SelectedBondOffer;
   offerId: string;
   depositSummary: IDepositSummary;
-  supplySummary: ISupplySummary;
 } & BoxProps;
 
 export const DepositForm: React.FC<DepositFormProps> = ({
   bond,
   offerId,
   depositSummary,
-  supplySummary,
   ...boxProps
 }) => {
   const dispatch = useDispatch();
@@ -76,18 +74,15 @@ export const DepositForm: React.FC<DepositFormProps> = ({
   );
   const theme = useTheme();
 
-
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
   const [approved, setApproved] = useState<boolean>(false);
   const [balance, setBalance] = useState("0");
-  const [bondPriceInUSD, setBondPriceInUSD] = useState(0);
-  const [marketPriceInUSD, setMarketPriceInUSD] = useState(0);
   const [purchasableTokens, setPurchasableTokens] = useState("0");
 
   const { principalAsset, rewardAsset } = bond;
   const soldout = balance === "0";
-  const isWrongAmount = bondPriceInUSD < marketPriceInUSD;
+  const isWrongAmount = false;
 
   const handleDeposit = () => {
     dispatch(
@@ -113,8 +108,7 @@ export const DepositForm: React.FC<DepositFormProps> = ({
 
   useAsyncEffect(async () => {
     setPurchasableTokens(await depositSummary.purchasableTokens());
-    setBondPriceInUSD(await supplySummary.bondPriceInUSD());
-    setMarketPriceInUSD(await supplySummary.marketPriceInUSD());
+
     setBalance(await depositSummary.userBalance());
   }, []);
 
@@ -214,8 +208,6 @@ export const DepositForm: React.FC<DepositFormProps> = ({
       <PreviewPurchaseModal
         offerId={+offerId}
         selectedBondOffer={bond}
-        bondPriceInUSD={supplySummary.bondPriceInUSD}
-        marketPriceInUSD={supplySummary.marketPriceInUSD}
         nbOfBonds={depositSummary.nbOfBonds}
         rewardableTokens={depositSummary.rewardableTokens(amount.toNumber())}
         amount={amount}

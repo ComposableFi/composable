@@ -45,22 +45,16 @@ const itemTitleProps: TypographyProps = {
 };
 
 export type SupplySummaryProps = {
-  supplySummary: ISupplySummary;
   bond: SelectedBondOffer;
 } & BoxProps;
 
 export const SupplySummary: React.FC<SupplySummaryProps> = ({
-  supplySummary,
   bond,
   ...boxProps
 }) => {
   const theme = useTheme();
   const { principalAsset, rewardAsset } = bond;
   const [marketPriceInUSD, setMarketPriceInUSD] = useState(0);
-
-  useAsyncEffect(async () => {
-    setMarketPriceInUSD(await supplySummary.marketPriceInUSD());
-  }, []);
 
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>
@@ -110,7 +104,7 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
           <Typography variant="body1">
             {rewardAsset && `${rewardAsset.symbol}`}
             <Typography variant="body1" fontWeight="600" component="span">
-              {`${supplySummary.roi}%`}
+              {`${bond.roi}%`}
             </Typography>
           </Typography>
         </Box>
@@ -119,7 +113,7 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
       <Box {...itemBoxProps}>
         <Typography {...itemTitleProps}>Vesting period</Typography>
         <TimerOutlinedIcon sx={{ width: 36, height: 36 }} />
-        <Typography variant="body1">{supplySummary.vestingPeriod}</Typography>
+        <Typography variant="body1">{bond.vestingPeriod}</Typography>
       </Box>
 
       <Box {...itemBoxProps}>
