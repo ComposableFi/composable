@@ -66,6 +66,7 @@ jobs:
       - linux
       - X64
       - ansible-runner
+     needs: [build-and-publish]
     steps:
       - name: Clean up
         continue-on-error: true
@@ -82,7 +83,7 @@ jobs:
       - name: Run ansible playbook
         working-directory: "./.maintain/playbooks"
         run: |
-          ansible-playbook -l _environment_dali-stage dali-stage-client-upgrade.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
+          ansible-playbook -l _environment_dali_stage dali-stage-client-upgrade.yml -i gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
       - name: Notify sre-tasks slack channel
         uses: rtCamp/action-slack-notify@v2
         env:
