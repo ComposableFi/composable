@@ -236,6 +236,20 @@ pub mod pallet {
 			<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
 			Ok(().into())
 		}
+		/// Occur rebalance of liquidity of each vault.
+		///
+		/// Emits [`RebalancedVault`](Event::RebalancedVault)]
+		#[pallet::weight(T::WeightInfo::liquidity_rebalance())]
+		pub fn liquidity_rebalance(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			let access_right = Self::admin_accounts(who).ok_or(Error::<T>::NotAdminAccount)?;
+			ensure!(
+				access_right == AccessRights::Full || access_right == AccessRights::Rebalance,
+				Error::<T>::NotEnoughAccessRights
+			);
+			<Self as InstrumentalProtocolStrategy>::rebalance()?;
+			Ok(().into())
+		}
 	}
 
 	// ---------------------------------------------------------------------------------------------

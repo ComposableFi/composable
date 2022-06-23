@@ -6,6 +6,7 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
 	fn test() -> Weight;
 	fn set_pool_id_for_asset() -> Weight;
+	fn liquidity_rebalance() -> Weight;
 }
 
 /// Weights for instrumental_strategy_pablo using the Substrate node and recommended hardware.
@@ -18,6 +19,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn set_pool_id_for_asset() -> Weight {
 		10_000 as Weight
 	}
+
+	fn liquidity_rebalance() -> Weight {
+		10_000 as Weight
+	}
 }
 
 // For backwards compatibility and tests
@@ -27,6 +32,10 @@ impl WeightInfo for () {
 	}
 
 	fn set_pool_id_for_asset() -> Weight {
+		10_000 as Weight
+	}
+
+	fn liquidity_rebalance() -> Weight {
 		10_000 as Weight
 	}
 }

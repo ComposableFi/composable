@@ -22,8 +22,6 @@ pub enum AccessRights {
 	/// Account has access only to `rebalance` function
 	/// Account has access only to [`rebalance`](InstrumentalProtocolStrategy::rebalance())
 	/// function.
-	/// TODO (belousm): ask Kevin if we we need to implement a liquidity rebalance function as
-	/// Extrinsic.
 	Rebalance,
 	/// Account has access only to `set_pool_id_for_asset` function
 	/// [`set_pool_id_for_asset`](InstrumentalProtocolStrategy::set_pool_id_for_asset()) function.
