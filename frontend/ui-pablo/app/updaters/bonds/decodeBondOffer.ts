@@ -4,6 +4,7 @@ import { getToken, getTokenId } from "../../defi/Tokens";
 import { Token } from "../../defi/types";
 import { stringToBigNumber } from "../../utils/stringToBigNumber";
 import { stringToNumber } from "../../utils/stringToNumber";
+import { fromChainUnits } from "@/defi/utils";
 
 export function decodeBondOffer(
   offerId: number,
@@ -11,21 +12,21 @@ export function decodeBondOffer(
   bondOffer: any,
   principalAsset: { base: Token; quote: Token } | Token
 ): BondOffer {
-  const maturity = bondOffer.maturity.toHuman();
+  console.log(bondOffer)
   return {
     offerId,
     beneficiary,
     currencyId: stringToNumber(bondOffer.asset),
     asset: principalAsset,
-    bondPrice: stringToBigNumber(bondOffer.bondPrice),
+    bondPrice: fromChainUnits(bondOffer.bondPrice.replaceAll(",", "")),
     nbOfBonds: bondOffer.nbOfBonds,
-    maturity: maturity.Finite
-      ? stringToNumber(maturity.Finite.returnIn)
+    maturity: bondOffer.maturity.Finite
+      ? stringToNumber(bondOffer.maturity.Finite.returnIn)
       : "Infinite",
     reward: {
       currencyId: stringToNumber(bondOffer.asset),
       asset: getToken(getTokenId(bondOffer.reward.asset)),
-      amount: stringToBigNumber(bondOffer.reward.amount),
+      amount: fromChainUnits(bondOffer.reward.amount.replaceAll(",", "")),
       maturity: Number(bondOffer.reward.maturity),
     },
   };

@@ -4,11 +4,13 @@ import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { decodeBondOffer } from "./decodeBondOffer";
 
 import { decodeVestingSchedule } from "./decodeVestingSchedule";
-import { fetchBonds, fetchVestingSchedule } from "@/defi/utils/";
+import { fetchApolloPriceByAssetId, fetchBonds, fetchVestingSchedule, getLPTokenPair } from "@/defi/utils/";
 import { getToken, getTokenId } from "../../defi/Tokens";
 import { getCurrentBlock } from "../../utils/defi/getCurrentBlock";
 import { getCurrentTime } from "../../utils/defi/getCurrentTime";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import BigNumber from "bignumber.js";
+import { ConstantProductPool } from "@/store/pools/pools.types";
 
 /**
  * Updates zustand store with all bonds from bondedFinance pallet
@@ -19,77 +21,78 @@ const Updater = () => {
   const { parachainApi } = useParachainApi("picasso");
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
 
-  const constantProductPool = useMemo(
+  const lpRewardingPools = useMemo(
     () => [
       ...pools.constantProductPools.verified,
-      ...pools.constantProductPools.unVerified,
+      ...pools.stableSwapPools.verified,
     ],
     [pools]
   );
 
-  // useEffect(() => {
-  //   if (parachainApi && selectedAccount) {
-  //     fetchBonds(parachainApi).then((bonds) => {
-  //       bonds.map(async (bond, index) => {
-  //         try {
-  //           const [beneficiary, bondOffer] = bond.unwrap();
-  //           const principalCurrencyId = bondOffer.asset.toString();
-  //           const principalAppoloPriceInUSD = await getAppoloPriceInUSD(
-  //             parachainApi,
-  //             principalCurrencyId
-  //           );
-  //           const rewardAppoloPriceInUSD = await getAppoloPriceInUSD(
-  //             parachainApi,
-  //             bondOffer.reward.asset.toString()
-  //           );
+  useEffect(() => {
+    if (parachainApi && selectedAccount) {
+      fetchBonds(parachainApi).then((bonds) => {
+        bonds.map(async (bond, index) => {
+          try {
+            const [beneficiary, bondOffer] = bond.unwrap();
+            const principalCurrencyId = bondOffer.asset.toString();
+            const principalAppoloPriceInUSD = await fetchApolloPriceByAssetId(
+              parachainApi,
+              principalCurrencyId
+            );
+            const rewardAppoloPriceInUSD = await fetchApolloPriceByAssetId(
+              parachainApi,
+              bondOffer.reward.asset.toString()
+            );
 
-  //           const vestingSchedule = await fetchVestingSchedule(
-  //             parachainApi,
-  //             selectedAccount.address,
-  //             principalCurrencyId
-  //           );
-  //           const lpTokenPair = getLPTokenPair(
-  //             constantProductPool,
-  //             principalCurrencyId
-  //           );
-  //           const principalAsset = lpTokenPair
-  //             ? {
-  //                 base: getToken(getTokenId(lpTokenPair.base)),
-  //                 quote: getToken(getTokenId(lpTokenPair.quote)),
-  //               }
-  //             : getToken(getTokenId(bondOffer.asset.toNumber()));
-  //           const decodedBondOffer = decodeBondOffer(
-  //             index + 1,
-  //             beneficiary,
-  //             bondOffer,
-  //             principalAsset
-  //           );
-  //           const decodedVestingSchedule = vestingSchedule
-  //             ? decodeVestingSchedule(vestingSchedule)
-  //             : null;
-  //           const currentBlock = await getCurrentBlock(parachainApi);
-  //           const currentTime = await getCurrentTime(parachainApi);
-  //           if (decodedVestingSchedule) {
-  //             addActiveBond(
-  //               decodedBondOffer,
-  //               decodedVestingSchedule,
-  //               currentBlock,
-  //               currentTime
-  //             );
-  //           }
-  //           addBond(
-  //             decodedBondOffer,
-  //             principalAppoloPriceInUSD.toNumber(),
-  //             rewardAppoloPriceInUSD.toNumber()
-  //           );
-  //         } catch (ex) {
-  //           return null;
-  //         }
-  //       });
-  //     });
-  //   }
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [parachainApi, selectedAccount]);
+            const vestingSchedule = await fetchVestingSchedule(
+              parachainApi,
+              selectedAccount.address,
+              principalCurrencyId
+            );
+            const lpTokenPair = getLPTokenPair(
+              lpRewardingPools as ConstantProductPool[],
+              principalCurrencyId
+            );
+            const principalAsset = lpTokenPair
+              ? {
+                  base: getToken(getTokenId(lpTokenPair.base)),
+                  quote: getToken(getTokenId(lpTokenPair.quote)),
+                }
+              : getToken(getTokenId(bondOffer.asset.toNumber()));
+            const decodedBondOffer = decodeBondOffer(
+              index + 1,
+              beneficiary,
+              bondOffer.toHuman(),
+              principalAsset
+            );
+            const decodedVestingSchedule = vestingSchedule
+              ? decodeVestingSchedule(vestingSchedule.toJSON())
+              : null;
+            const currentBlock = await getCurrentBlock(parachainApi);
+            const currentTime = await getCurrentTime(parachainApi);
+            if (decodedVestingSchedule) {
+              addActiveBond(
+                decodedBondOffer,
+                decodedVestingSchedule,
+                currentBlock,
+                currentTime
+              );
+            }
+            addBond(
+              decodedBondOffer,
+              new BigNumber(principalAppoloPriceInUSD).toNumber(),
+              (new BigNumber(rewardAppoloPriceInUSD)).toNumber()
+            );
+          } catch (ex) {
+            console.error(ex)
+            return null;
+          }
+        });
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parachainApi, selectedAccount]);
 
   useEffect(() => {
     reset();
