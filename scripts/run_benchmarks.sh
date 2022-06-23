@@ -3,9 +3,9 @@
 # `cargo build --release --features runtime-benchmarks`
 
 chains=(
-  "./runtime/dali/src/weights,dali-dev"
-  "./runtime/picasso/src/weights,picasso-dev"
-  "./runtime/composable/src/weights,composable-dev"
+  "dali-dev"
+  "picasso-dev"
+  "composable-dev"
 )
 
 steps=50
