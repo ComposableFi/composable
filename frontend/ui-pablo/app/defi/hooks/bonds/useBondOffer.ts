@@ -10,9 +10,9 @@ import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 
 export default function useBondOffer(offerId: string) {
-  const { bondOffers, supportedAssets, apollo } = useStore();
-  const lpRewardingPools = useAllLpTokenRewardingPools();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  const { bondOffers, supportedAssets, apollo, putBondOffer } = useStore();
+  const lpRewardingPools = useAllLpTokenRewardingPools();
 
   const [selectedBondOffer, setSelectedBondOffer] =
     useState<BondOffer | undefined>(undefined);
@@ -121,12 +121,12 @@ export default function useBondOffer(offerId: string) {
       try {
         const bondOffer = await parachainApi.query.bondedFinance.bondOffers(selectedBondOffer.offerId.toString());
         const decodedOffer = decodeBondOffer(bondOffer.toHuman(), selectedBondOffer.offerId.toNumber());
-        setSelectedBondOffer(decodedOffer)
+        putBondOffer(decodedOffer);
       } catch (err) {
         console.error(err)
       }
     }
-  }, [selectedBondOffer, parachainApi])
+  }, [selectedBondOffer, parachainApi, putBondOffer])
 
   const roi = useMemo(() => {
     if (principalAssetPerBond.gt(0) && rewardAssetPerBond.gt(0)) {

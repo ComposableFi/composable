@@ -7,6 +7,7 @@ export interface BondSlice {
     list: BondOffer[]
   };
   putBondOffers: (bondsOffers: BondOffer[]) => void;
+  putBondOffer: (bondsOffers: BondOffer) => void;
   reset: () => void;
 }
 

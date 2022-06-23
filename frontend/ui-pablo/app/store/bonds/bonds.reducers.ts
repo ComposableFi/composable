@@ -74,6 +74,19 @@ import { BondSlice } from "./bonds.types";
 //   });
 // };
 
+export const putBondOffer = (
+  bondOffersState: BondSlice["bondOffers"],
+  bondOffer: BondOffer,
+) => {
+  return produce(bondOffersState, (draft) => {
+    draft.list = bondOffersState.list.map(offer => {
+      if (offer.offerId === bondOffer.offerId) {
+        return bondOffer
+      }
+      return offer;
+    })
+  })
+}
 
 export const putBondOffers = (
   bondOffersState: BondSlice["bondOffers"],
