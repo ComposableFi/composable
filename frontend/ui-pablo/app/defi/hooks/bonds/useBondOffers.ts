@@ -83,7 +83,7 @@ export default function useBondOffers(): OfferRow[] {
       if (principalPriceUsd.gt(0) && rewardPriceUsd.gt(0)) {
         const initialInv = principalPriceUsd.times(principalAssetPerBond);
         const finalInv = rewardPriceUsd.times(rewardAssetPerBond);
-        roi = finalInv.minus(initialInv).div(initialInv);
+        roi = finalInv.minus(initialInv).div(initialInv).times(100);
       }
 
       return {

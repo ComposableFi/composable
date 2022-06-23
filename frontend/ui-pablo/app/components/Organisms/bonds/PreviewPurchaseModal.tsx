@@ -50,7 +50,6 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
 
   const { principalAsset } = selectedBondOffer;
   const bond = usePurchaseBond();
-  const cancel = useCancelOffer();
 
   const discountPercent = 0
     // marketPrice === 0 ? 0 : ((marketPrice - bondPrice) / marketPrice) * 100;
@@ -62,7 +61,6 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
   };
 
   const handleCancelBond = async () => {
-    await cancel(offerId);
     dispatch(closeConfirmingModal());
   };
 
@@ -143,7 +141,7 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
             size="large"
             onClick={handleCancelBond}
           >
-            Cancel bond
+            Cancel
           </Button>
         </Box>
       </Box>

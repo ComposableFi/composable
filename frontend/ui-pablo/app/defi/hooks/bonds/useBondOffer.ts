@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardingPools";
 import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
 import { MockedAsset } from "@/store/assets/assets.types";
-import { decodeBondOffer, DEFAULT_NETWORK_ID, fetchBondOffers, fetchVesitngPeriod } from "@/defi/utils";
+import { decodeBondOffer, DEFAULT_NETWORK_ID, fetchVesitngPeriod } from "@/defi/utils";
 import { useParachainApi } from "substrate-react";
 import { useBlockInterval } from "../useBlockInterval";
 import useStore from "@/store/useStore";
@@ -12,18 +12,7 @@ import BigNumber from "bignumber.js";
 export default function useBondOffer(offerId: string) {
   const { bondOffers, supportedAssets, apollo } = useStore();
   const lpRewardingPools = useAllLpTokenRewardingPools();
-
-  const { putBondOffers } = useStore();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-
-  useEffect(() => {
-    console.log(`Update Bond Offers`);
-    if (parachainApi) {
-      fetchBondOffers(parachainApi).then((decodedOffers) => {
-        putBondOffers(decodedOffers);
-      });
-    }
-  }, [parachainApi, putBondOffers]);
 
   const [selectedBondOffer, setSelectedBondOffer] =
     useState<BondOffer | undefined>(undefined);
@@ -147,7 +136,7 @@ export default function useBondOffer(offerId: string) {
         if (rewardPrice.gt(0) && principalPrice.gt(0)) {
           const initialInv = principalPrice.times(principalAssetPerBond);
           const finalInv = rewardAssetPerBond.times(rewardPrice);
-          return finalInv.minus(initialInv).div(initialInv);
+          return finalInv.minus(initialInv).div(initialInv).times(100);
         }
       }
     }

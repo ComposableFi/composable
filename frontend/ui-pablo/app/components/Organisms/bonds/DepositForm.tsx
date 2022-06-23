@@ -66,21 +66,21 @@ export const DepositForm: React.FC<DepositFormProps> = ({
   ...boxProps
 }) => {
   const dispatch = useDispatch();
+  const theme = useTheme();
+
   const isOpenPreviewPurchaseModal = useAppSelector(
     (state) => state.ui.isConfirmingModalOpen
   );
   const isWrongAmountEnteredModalOpen = useAppSelector(
     (state) => state.ui.isWrongAmountEnteredModalOpen
   );
-  const theme = useTheme();
 
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
-  const [approved, setApproved] = useState<boolean>(false);
 
   const { principalAsset, rewardAsset } = bond;
-  const soldout = "0" === "0";
-  const isWrongAmount = false;
+  const soldout = bond.selectedBondOffer ? bond.selectedBondOffer.nbOfBonds.eq(0) : true;
+  const isWrongAmount = bond.roi.lt(0);
 
   const handleDeposit = () => {
     dispatch(
@@ -89,21 +89,13 @@ export const DepositForm: React.FC<DepositFormProps> = ({
   };
 
   const handleButtonClick = () => {
-    approved ? handleDeposit() : setApproved(true);
+    // approved ? handleDeposit() : setApproved(true);
+    handleDeposit();
   };
 
   const principalBalance = useAssetBalance(DEFAULT_NETWORK_ID, bond.selectedBondOffer ? bond.selectedBondOffer.asset : "0")
-  const buttonText = "Bond"
-  // const buttonText = soldout
-  //   ? "Sold out"
-  //   : approved
-  //   ? "Deposit"
-  //   : `Approve bonding ${
-  //       "baseAsset" in principalAsset && "quoteAsset" in principalAsset
-  //         ? `${principalAsset.baseAsset.symbol}-${principalAsset.quote.symbol}`
-  //         : principalAsset.symbol
-  //     }`;
-  const disabled = (approved && !valid) || soldout;
+  const buttonText = soldout ? "Sold out" : "Deposit";
+  const disabled = !valid || soldout;
 
   let principalSymbol = useMemo(() => {
     return principalAsset &&
@@ -117,6 +109,24 @@ export const DepositForm: React.FC<DepositFormProps> = ({
       : "";
   }, [principalAsset]);
 
+  const youWillGet = useMemo(() => {
+    if (bond.selectedBondOffer) {
+      return bond.rewardAssetPerBond.times(amount.dp(0))
+    }
+    return new BigNumber(0);
+  }, [amount, bond]);
+
+  const maxYouCanBuy = useMemo(() => {
+    if (bond.selectedBondOffer) {
+      let amountOfBondsBuyable = principalBalance.div(bond.principalAssetPerBond).dp(0);
+      if (amountOfBondsBuyable > bond.selectedBondOffer.nbOfBonds) {
+        return bond.selectedBondOffer.nbOfBonds;
+      } else {
+        return amountOfBondsBuyable;
+      }
+    }
+  }, [principalBalance, bond]);
+
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>
       <Typography variant="h6">Bond</Typography>
@@ -124,28 +134,28 @@ export const DepositForm: React.FC<DepositFormProps> = ({
         <BigNumberInput
           value={amount}
           setValue={setAmount}
-          maxValue={new BigNumber(0)}
+          maxValue={bond.selectedBondOffer ? bond.selectedBondOffer.nbOfBonds : new BigNumber(0)}
           setValid={setValid}
-          EndAdornmentAssetProps={{
-            assets:
-            principalAsset && (principalAsset as any).baseAsset && (principalAsset as any).quoteAsset 
-                ? [
-                  {
-                    icon: (principalAsset as any).baseAsset.icon,
-                    label: (principalAsset as any).baseAsset.symbol,
-                  },
-                  {
-                    icon: (principalAsset as any).quoteAsset.icon,
-                    label: (principalAsset as any).quoteAsset.symbol,
-                  },
-                ]
-                : principalAsset && (principalAsset as MockedAsset).icon && (principalAsset as MockedAsset).symbol ? [{ icon: (principalAsset as MockedAsset).icon, label: (principalAsset as MockedAsset).symbol }] : [],
-            separator: "/",
-            LabelProps: { variant: "body1" },
-          }}
+          // EndAdornmentAssetProps={{
+          //   assets:
+          //   principalAsset && (principalAsset as any).baseAsset && (principalAsset as any).quoteAsset 
+          //       ? [
+          //         {
+          //           icon: (principalAsset as any).baseAsset.icon,
+          //           label: (principalAsset as any).baseAsset.symbol,
+          //         },
+          //         {
+          //           icon: (principalAsset as any).quoteAsset.icon,
+          //           label: (principalAsset as any).quoteAsset.symbol,
+          //         },
+          //       ]
+          //       : principalAsset && (principalAsset as MockedAsset).icon && (principalAsset as MockedAsset).symbol ? [{ icon: (principalAsset as MockedAsset).icon, label: (principalAsset as MockedAsset).symbol }] : [],
+          //   separator: "/",
+          //   LabelProps: { variant: "body1" },
+          // }}
           buttonLabel="Max"
           ButtonProps={{
-            onClick: () => setAmount(new BigNumber(0)),
+            onClick: () => setAmount(new BigNumber(bond.selectedBondOffer ? bond.selectedBondOffer.nbOfBonds : 0)),
             sx: {
               padding: theme.spacing(1),
             },
@@ -154,7 +164,7 @@ export const DepositForm: React.FC<DepositFormProps> = ({
             label: "Amount",
             BalanceProps: {
               title: <AccountBalanceWalletIcon color="primary" />,
-              balance: `${principalBalance.toFixed(2)} ${principalSymbol}`,
+              balance: `${bond.selectedBondOffer ? bond.selectedBondOffer.nbOfBonds : new BigNumber(0)} ${principalSymbol} Bonds`,
             },
           }}
           disabled={soldout}
@@ -176,7 +186,7 @@ export const DepositForm: React.FC<DepositFormProps> = ({
         <Label
           {...defaultLabelProps(
             "You will get",
-            `${0} ${
+            `${youWillGet.toFixed(2)} ${
               rewardAsset?.symbol
             }`
           )}
@@ -185,7 +195,7 @@ export const DepositForm: React.FC<DepositFormProps> = ({
         <Label
           {...defaultLabelProps(
             "Max you can buy",
-            `${0} ${rewardAsset?.symbol}`
+            `${maxYouCanBuy}`
           )}
           mt={2}
         />
