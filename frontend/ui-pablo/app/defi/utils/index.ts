@@ -6,4 +6,4 @@ export * from "./constants";
 export * from "./misc";
 export * from "./pablo";
 export * from "./units";
-export * from "./vestedSchedules";
+export * from "./vesting";

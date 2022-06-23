@@ -10,7 +10,7 @@ import {
   alpha,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
 import { useAppSelector } from "@/hooks/store";
 import {
@@ -25,6 +25,8 @@ import {
   ISupplySummary,
 } from "../../../store/bonds/bonds.types";
 import { useAsyncEffect } from "../../../hooks/useAsyncEffect";
+import { MockedAsset } from "@/store/assets/assets.types";
+import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
 
 const containerBoxProps = (theme: Theme) =>
   ({
@@ -52,12 +54,14 @@ const defaultLabelProps = (label: string, balance: string) =>
   } as const);
 
 export type DepositFormProps = {
-  offerId: number;
+  bond: SelectedBondOffer;
+  offerId: string;
   depositSummary: IDepositSummary;
   supplySummary: ISupplySummary;
 } & BoxProps;
 
 export const DepositForm: React.FC<DepositFormProps> = ({
+  bond,
   offerId,
   depositSummary,
   supplySummary,
@@ -72,7 +76,6 @@ export const DepositForm: React.FC<DepositFormProps> = ({
   );
   const theme = useTheme();
 
-  const pablo = getToken("pablo");
 
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
@@ -82,7 +85,7 @@ export const DepositForm: React.FC<DepositFormProps> = ({
   const [marketPriceInUSD, setMarketPriceInUSD] = useState(0);
   const [purchasableTokens, setPurchasableTokens] = useState("0");
 
-  const principalAsset = depositSummary.principalAsset;
+  const { principalAsset, rewardAsset } = bond;
   const soldout = balance === "0";
   const isWrongAmount = bondPriceInUSD < marketPriceInUSD;
 
@@ -96,15 +99,16 @@ export const DepositForm: React.FC<DepositFormProps> = ({
     approved ? handleDeposit() : setApproved(true);
   };
 
-  const buttonText = soldout
-    ? "Sold out"
-    : approved
-    ? "Deposit"
-    : `Approve bonding ${
-        "base" in principalAsset
-          ? `${principalAsset.base.symbol}-${principalAsset.quote.symbol}`
-          : principalAsset.symbol
-      }`;
+  const buttonText = "Bond"
+  // const buttonText = soldout
+  //   ? "Sold out"
+  //   : approved
+  //   ? "Deposit"
+  //   : `Approve bonding ${
+  //       "baseAsset" in principalAsset && "quoteAsset" in principalAsset
+  //         ? `${principalAsset.baseAsset.symbol}-${principalAsset.quote.symbol}`
+  //         : principalAsset.symbol
+  //     }`;
   const disabled = (approved && !valid) || soldout;
 
   useAsyncEffect(async () => {
@@ -113,6 +117,18 @@ export const DepositForm: React.FC<DepositFormProps> = ({
     setMarketPriceInUSD(await supplySummary.marketPriceInUSD());
     setBalance(await depositSummary.userBalance());
   }, []);
+
+  let principalSymbol = useMemo(() => {
+    return principalAsset &&
+      (principalAsset as any).baseAsset &&
+      (principalAsset as any).quoteAsset
+      ? (principalAsset as any).baseAsset.symbol +
+          "/" +
+          (principalAsset as any).quoteAsset
+      : (principalAsset as MockedAsset).symbol
+      ? (principalAsset as MockedAsset).symbol
+      : "";
+  }, [principalAsset]);
 
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>
@@ -125,18 +141,18 @@ export const DepositForm: React.FC<DepositFormProps> = ({
           setValid={setValid}
           EndAdornmentAssetProps={{
             assets:
-              "base" in principalAsset
+            principalAsset && (principalAsset as any).baseAsset && (principalAsset as any).quoteAsset 
                 ? [
-                    {
-                      icon: principalAsset.base.icon,
-                      label: principalAsset.base.symbol,
-                    },
-                    {
-                      icon: principalAsset.quote.icon,
-                      label: principalAsset.quote.symbol,
-                    },
-                  ]
-                : [{ icon: principalAsset.icon, label: principalAsset.symbol }],
+                  {
+                    icon: (principalAsset as any).baseAsset.icon,
+                    label: (principalAsset as any).baseAsset.symbol,
+                  },
+                  {
+                    icon: (principalAsset as any).quoteAsset.icon,
+                    label: (principalAsset as any).quoteAsset.symbol,
+                  },
+                ]
+                : (principalAsset as MockedAsset).icon && (principalAsset as MockedAsset).symbol ? [{ icon: (principalAsset as MockedAsset).icon, label: (principalAsset as MockedAsset).symbol }] : [],
             separator: "/",
             LabelProps: { variant: "body1" },
           }}
@@ -151,11 +167,7 @@ export const DepositForm: React.FC<DepositFormProps> = ({
             label: "Amount",
             BalanceProps: {
               title: <AccountBalanceWalletIcon color="primary" />,
-              balance: `${balance} ${
-                "base" in principalAsset
-                  ? `${principalAsset.base.symbol}/${principalAsset.quote.symbol}`
-                  : principalAsset.symbol
-              }`,
+              balance: `${balance} ${principalSymbol}`,
             },
           }}
           disabled={soldout}
@@ -178,7 +190,7 @@ export const DepositForm: React.FC<DepositFormProps> = ({
           {...defaultLabelProps(
             "You will get",
             `${depositSummary.rewardableTokens(amount.toNumber())} ${
-              pablo.symbol
+              rewardAsset?.symbol
             }`
           )}
           mt={2}
@@ -186,7 +198,7 @@ export const DepositForm: React.FC<DepositFormProps> = ({
         <Label
           {...defaultLabelProps(
             "Max you can buy",
-            `${purchasableTokens} ${pablo.symbol}`
+            `${purchasableTokens} ${rewardAsset?.symbol}`
           )}
           mt={2}
         />
@@ -200,8 +212,8 @@ export const DepositForm: React.FC<DepositFormProps> = ({
         />
       </Box>
       <PreviewPurchaseModal
-        offerId={offerId}
-        principalAsset={supplySummary.principalAsset}
+        offerId={+offerId}
+        selectedBondOffer={bond}
         bondPriceInUSD={supplySummary.bondPriceInUSD}
         marketPriceInUSD={supplySummary.marketPriceInUSD}
         nbOfBonds={depositSummary.nbOfBonds}

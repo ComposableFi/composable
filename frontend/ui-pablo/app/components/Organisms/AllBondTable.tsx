@@ -16,6 +16,7 @@ import { InfoOutlined, KeyboardArrowDown } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
 import { useRouter } from "next/router";
 import useStore from "../../store/useStore";
+import useBondOffers from "@/defi/hooks/bonds/useBondOffers";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -40,14 +41,14 @@ const BOND_LIMIT_TO_SHOW = 4;
 export const AllBondTable: React.FC = () => {
   const theme = useTheme();
   const router = useRouter();
-  const { allBonds } = useStore();
+  const bondOffers = useBondOffers();
   const [count, setCount] = useState(BOND_LIMIT_TO_SHOW);
 
   const handleSeeMore = () => {
     setCount(count + BOND_LIMIT_TO_SHOW);
   };
 
-  const handleBondClick = (offerId: number) => {
+  const handleBondClick = (offerId: string) => {
     router.push(`bond/select/${offerId}`);
   };
 
@@ -71,34 +72,34 @@ export const AllBondTable: React.FC = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {allBonds.slice(0, count).map((bond, index) => (
+          {bondOffers.slice(0, count).map((bond, index) => (
             <TableRow
               key={index}
-              onClick={() => handleBondClick(bond.offerId)}
+              onClick={() => handleBondClick(bond.offerId.toString())}
               sx={{ cursor: "pointer" }}
             >
               <TableCell align="left">
-                {"base" in bond.asset ? (
+                {bond.principalAsset && (bond.principalAsset as any).baseAsset && (bond.principalAsset as any).quoteAsset ? (
                   <PairAsset
                     assets={[
                       {
-                        icon: bond.asset.base.icon,
-                        label: bond.asset.base.symbol,
+                        icon: (bond.principalAsset as any).baseAsset.icon,
+                        label: (bond.principalAsset as any).baseAsset.symbol,
                       },
                       {
-                        icon: bond.asset.quote.icon,
-                        label: bond.asset.quote.symbol,
+                        icon: (bond.principalAsset as any).quoteAsset.icon,
+                        label: (bond.principalAsset as any).quoteAsset.symbol,
                       },
                     ]}
                     separator="/"
                   />
-                ) : (
-                  <BaseAsset label={bond.asset.symbol} icon={bond.asset.icon} />
-                )}
+                ) : ((bond.principalAsset as any).symbol && (bond.principalAsset as any).icon) ? (
+                    <BaseAsset label={(bond.principalAsset as any).symbol} icon={(bond.principalAsset as any).icon} />
+                ) : null}
               </TableCell>
               <TableCell align="left">
                 <Typography variant="body2">
-                  ${bond.price.toFormat()}
+                  ${bond.bondPrice.toFormat()}
                 </Typography>
               </TableCell>
               <TableCell align="left">
@@ -115,7 +116,7 @@ export const AllBondTable: React.FC = () => {
           ))}
         </TableBody>
       </Table>
-      {allBonds.length > count && (
+      {bondOffers.length > count && (
         <Box
           onClick={handleSeeMore}
           mt={4}

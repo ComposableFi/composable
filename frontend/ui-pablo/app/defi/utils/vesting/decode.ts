@@ -1,7 +1,6 @@
+import { VestingSchedule } from "@/defi/types";
 import { fromChainUnits } from "@/defi/utils";
-import { VestingSchedule } from "../../store/bonds/bonds.types";
-import { stringToBigNumber } from "../../utils/stringToBigNumber";
-import { stringToNumber } from "../../utils/stringToNumber";
+import { stringToNumber } from "@/utils/stringToNumber";
 
 export function decodeVestingSchedule(vestingSchedule: any): VestingSchedule {
   const type = vestingSchedule.window.blockNumberBased ? "block" : "moment";

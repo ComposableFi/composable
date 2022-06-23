@@ -1,90 +1,106 @@
 import { BigNumberInput, Label } from "@/components/Atoms";
 import { getToken } from "@/defi/Tokens";
 import { BondDetails } from "@/defi/types";
-import { Box, Button, BoxProps, Typography, Theme, useTheme, alpha } from "@mui/material";
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import { useState } from "react";
+import {
+  Box,
+  Button,
+  BoxProps,
+  Typography,
+  Theme,
+  useTheme,
+  alpha,
+} from "@mui/material";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import { useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
+import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
+import { MockedAsset } from "@/store/assets/assets.types";
 
 const containerBoxProps = (theme: Theme) => ({
   p: 4,
   borderRadius: 1.5,
   sx: {
     background: theme.palette.gradient.secondary,
-    border: `1px solid ${alpha(theme.palette.common.white, theme.custom.opacity.light)}`
+    border: `1px solid ${alpha(
+      theme.palette.common.white,
+      theme.custom.opacity.light
+    )}`,
   },
 });
 
-const defaultLabelProps = (label: string, balance: string) => ({
-  label: label,
-  BalanceProps: {
-    balance: balance,
-    BalanceTypographyProps: {
-      variant: "body1",
-      fontWeight: "600",
-    }
-  }
-} as const);
+const defaultLabelProps = (label: string, balance: string) =>
+  ({
+    label: label,
+    BalanceProps: {
+      balance: balance,
+      BalanceTypographyProps: {
+        variant: "body1",
+        fontWeight: "600",
+      },
+    },
+  } as const);
 
 export type ClaimFormProps = {
-  bond: BondDetails,
+  bond: SelectedBondOffer;
 } & BoxProps;
 
-export const ClaimForm: React.FC<ClaimFormProps> = ({
-  bond,
-  ...boxProps
-}) => {
-
+export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
   const theme = useTheme();
-  const token1 = getToken(bond.tokenId1);
-  const token2 = getToken(bond.tokenId2);
-  const chaos = getToken("chaos");
-  const pablo = getToken("pablo");
+  const { principalAsset, rewardAsset } = bond;
 
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
 
-  const claimable = !bond.claimable_amount.eq(0);
+  const claimable = false;
 
   const handleClaim = () => {
     //TODO: handle deposit here
   };
 
+  let principalSymbol = useMemo(() => {
+    return principalAsset &&
+      (principalAsset as any).baseAsset &&
+      (principalAsset as any).quoteAsset
+      ? (principalAsset as any).baseAsset.symbol +
+          "/" +
+          (principalAsset as any).quoteAsset
+      : (principalAsset as MockedAsset).symbol
+      ? (principalAsset as MockedAsset).symbol
+      : "";
+  }, [principalAsset]);
+
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>
-      <Typography variant="h6">
-        Claim
-      </Typography>
+      <Typography variant="h6">Claim</Typography>
       <Box mt={6}>
         <BigNumberInput
           disabled={!claimable}
           value={amount}
           setValue={setAmount}
-          maxValue={bond.claimable_amount}
+          maxValue={new BigNumber(0)}
           setValid={setValid}
           EndAdornmentAssetProps={{
-            assets: [
-              { icon: chaos.icon, label: chaos.symbol },
-            ],
+            assets: rewardAsset
+              ? [{ icon: rewardAsset.icon, label: rewardAsset.symbol }]
+              : [],
             separator: "/",
-            LabelProps: {variant: 'body1'},
-
+            LabelProps: { variant: "body1" },
           }}
           buttonLabel="Max"
           ButtonProps={{
-            onClick: () => setAmount(bond.claimable_amount),
+            onClick: () => setAmount(new BigNumber(0)),
             sx: {
               padding: theme.spacing(1),
-            }
+            },
           }}
           LabelProps={{
             label: "Amount",
-            BalanceProps: (
-              claimable ? {
-                title: <AccountBalanceWalletIcon color="primary"/>,
-                balance: `${bond.claimable_amount} ${token1.symbol}/${token2.symbol}`
-              } : undefined
-            ),
+            BalanceProps: claimable
+              ? {
+                  title: <AccountBalanceWalletIcon color="primary" />,
+                  balance: `${0} ${principalSymbol}`,
+                }
+              : undefined,
           }}
         />
       </Box>
@@ -101,24 +117,27 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({
       </Box>
       <Box mt={6}>
         <Label
-          {...defaultLabelProps("Pending Rewards", `${bond.pending_amount} LP`)}
+          {...defaultLabelProps("Pending Rewards", `${0} LP`)}
         />
         <Label
-          {...defaultLabelProps("Claimable Rewards", `${bond.claimable_amount} ${pablo.symbol}`)}
+          {...defaultLabelProps(
+            "Claimable Rewards",
+            `${0} ${rewardAsset?.symbol}`
+          )}
           mt={2}
         />
         <Label
-          {...defaultLabelProps("Time until fully vested", `${bond.remaining_term} days`)}
+          {...defaultLabelProps(
+            "Time until fully vested",
+            `${0} days`
+          )}
           mt={2}
         />
         <Label
-          {...defaultLabelProps("Vested", `${bond.vested_term} days`)}
+          {...defaultLabelProps("Vested", `${bond.vestingPeriod} days`)}
           mt={2}
         />
-        <Label
-          {...defaultLabelProps("ROI", `${bond.roi}%`)}
-          mt={2}
-        />
+        <Label {...defaultLabelProps("ROI", `${0}%`)} mt={2} />
       </Box>
     </Box>
   );

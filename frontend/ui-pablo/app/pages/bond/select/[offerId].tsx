@@ -1,5 +1,5 @@
 import type { NextPage } from "next";
-import { Container, Box, Grid, Typography, useTheme } from "@mui/material";
+import { Container, Box, Grid, Typography } from "@mui/material";
 import Default from "@/components/Templates/Default";
 import { useAppSelector } from "@/hooks/store";
 import { PageTitle } from "@/components/Organisms/bonds/PageTitle";
@@ -12,8 +12,9 @@ import { Link } from "@/components";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useSnackbar } from "notistack";
-import { useSupplySummary } from "../../../store/hooks/bond/useSupplySummary";
-import { useDepositSummary } from "../../../store/hooks/bond/useDepositSummary";
+import { useDepositSummary } from "@/store/hooks/bond/useDepositSummary";
+import { useSupplySummary } from "@/store/hooks/bond/useSupplySummary";
+import useBondOffer from "@/defi/hooks/bonds/useBondOffer";
 
 const standardPageSize = {
   xs: 12,
@@ -28,14 +29,14 @@ const SelectBond: NextPage = () => {
   const router = useRouter();
   const { enqueueSnackbar } = useSnackbar();
   const { extensionStatus } = useDotSamaContext();
-  const bond = useAppSelector((state) => state.bonds.selectedBond);
-  const offerId = Number(router.query.offerId);
 
-  const supplySummary = useSupplySummary({ offerId });
-  const depositSummary = useDepositSummary({ offerId });
+  const offerId = router.query.offerId || "";
+  const bondOfferSelected = useBondOffer(offerId as string);
 
-  const claimable = !bond.claimable_amount.eq(0) || !bond.pending_amount.eq(0);
+  const supplySummary = "no-summary";
+  const depositSummary = "no-summary";
 
+  const claimable = false;
   const message = useAppSelector((state) => state.ui.message);
 
   useEffect(
@@ -60,10 +61,6 @@ const SelectBond: NextPage = () => {
     }
   }, [enqueueSnackbar, message]);
 
-  if (supplySummary === "no-summary" || depositSummary === "no-summary") {
-    return null;
-  }
-
   const breadcrumbs = [
     <Link key="pool" underline="none" color="primary" href="/bond">
       <Typography key="addliquidity" variant="body1">
@@ -80,26 +77,36 @@ const SelectBond: NextPage = () => {
       <Container maxWidth="lg">
         <Box display="flex" flexDirection="column" alignItems="center">
           <PageTitle
-            principalAsset={supplySummary.principalAsset}
-            rewardAsset={supplySummary.rewardAsset}
+            rewardAsset={bondOfferSelected.rewardAsset}
+            principalAsset={bondOfferSelected.principalAsset}
           />
         </Box>
 
-        <BuyButtons mt={8} bond={bond} />
+        <BuyButtons mt={8} bond={bondOfferSelected} />
 
-        <SupplySummary mt={8} supplySummary={supplySummary} />
+        {supplySummary !== "no-summary" && (
+          <SupplySummary
+            bond={bondOfferSelected}
+            mt={8}
+            supplySummary={supplySummary}
+          />
+        )}
         <Box position="relative" mt={8} mb={25}>
           <Grid container columnSpacing={4}>
             <Grid item {...(claimable ? twoColumnPageSize : standardPageSize)}>
-              <DepositForm
-                offerId={offerId}
-                supplySummary={supplySummary}
-                depositSummary={depositSummary}
-              />
+              {supplySummary !== "no-summary" &&
+                depositSummary !== "no-summary" && (
+                  <DepositForm
+                    bond={bondOfferSelected}
+                    offerId={offerId as string}
+                    supplySummary={supplySummary}
+                    depositSummary={depositSummary}
+                  />
+                )}
             </Grid>
             {claimable && (
               <Grid item {...twoColumnPageSize}>
-                <ClaimForm bond={bond} />
+                <ClaimForm bond={bondOfferSelected} />
               </Grid>
             )}
           </Grid>

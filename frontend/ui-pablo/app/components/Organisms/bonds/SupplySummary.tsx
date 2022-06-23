@@ -13,6 +13,8 @@ import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
 import { ISupplySummary } from "../../../store/bonds/bonds.types";
 import { useState } from "react";
 import { useAsyncEffect } from "../../../hooks/useAsyncEffect";
+import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
+import { MockedAsset } from "@/store/assets/assets.types";
 
 const containerBoxProps = (theme: Theme) => ({
   display: "flex",
@@ -44,14 +46,16 @@ const itemTitleProps: TypographyProps = {
 
 export type SupplySummaryProps = {
   supplySummary: ISupplySummary;
+  bond: SelectedBondOffer;
 } & BoxProps;
 
 export const SupplySummary: React.FC<SupplySummaryProps> = ({
   supplySummary,
+  bond,
   ...boxProps
 }) => {
   const theme = useTheme();
-  const rewardAsset = supplySummary.rewardAsset;
+  const { principalAsset, rewardAsset } = bond;
   const [marketPriceInUSD, setMarketPriceInUSD] = useState(0);
 
   useAsyncEffect(async () => {
@@ -68,36 +72,43 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
       >
         <Box {...itemBoxProps}>
           <Typography {...itemTitleProps}>Supply</Typography>
-          {"base" in supplySummary.principalAsset ? (
+          {principalAsset && (principalAsset as any).baseAsset && (principalAsset as any).quoteAsset ? (
             <PairAsset
               assets={[
                 {
-                  icon: supplySummary.principalAsset.base.icon,
-                  label: supplySummary.principalAsset.base.symbol,
+                  icon: (principalAsset as any).baseAsset.icon,
+                  label: (principalAsset as any).baseAsset.symbol,
                 },
                 {
-                  icon: supplySummary.principalAsset.quote.icon,
-                  label: supplySummary.principalAsset.quote.symbol,
+                  icon: (principalAsset as any).quoteAsset.icon,
+                  label: (principalAsset as any).quoteAsset.symbol,
                 },
               ]}
               iconOnly
               iconSize={36}
             />
-          ) : (
-            <BaseAsset icon={supplySummary.principalAsset.icon} iconSize={36} />
-          )}
+          ) : (principalAsset as MockedAsset).icon && (principalAsset as MockedAsset).symbol ? (
+            <BaseAsset
+            label={(principalAsset as MockedAsset).symbol}
+            icon={(principalAsset as MockedAsset).icon}
+            LabelProps={{ variant: "h4" }}
+            iconSize={36}
+          />
+          ) : null}
           <Typography variant="body1">
-            {"base" in supplySummary.principalAsset
-              ? `LP ${supplySummary.principalAsset.base.symbol}-${supplySummary.principalAsset.quote.symbol}`
-              : supplySummary.principalAsset.symbol}
+            {principalAsset && (principalAsset as any).baseAsset && (principalAsset as any).quoteAsset ?
+              `LP ${(principalAsset as any).baseAsset.symbol}-${(principalAsset as any).quoteAsset.symbol}`
+              : (principalAsset as MockedAsset).symbol ? `${(principalAsset as MockedAsset).symbol}` : ""}
           </Typography>
         </Box>
         <ArrowRightAlt sx={{ color: "text.secondary" }} />
         <Box {...itemBoxProps}>
           <Typography {...itemTitleProps}>Receive</Typography>
+          {rewardAsset &&
           <BaseAsset icon={rewardAsset.icon} iconSize={36} />
+          }
           <Typography variant="body1">
-            {`${rewardAsset.symbol} - `}
+            {rewardAsset && `${rewardAsset.symbol}`}
             <Typography variant="body1" fontWeight="600" component="span">
               {`${supplySummary.roi}%`}
             </Typography>
@@ -116,7 +127,7 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
         <Box display="flex" justifyContent="center" alignItems="center">
           {`$${marketPriceInUSD}`}
         </Box>
-        <Typography variant="body1">{rewardAsset.symbol}</Typography>
+        <Typography variant="body1">{rewardAsset?.symbol}</Typography>
       </Box>
     </Box>
   );

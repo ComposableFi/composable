@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ModalProps, Modal } from "@/components/Molecules";
 import { Label } from "@/components/Atoms";
 import { Box, Typography, useTheme, Button } from "@mui/material";
@@ -7,13 +7,15 @@ import { useDispatch } from "react-redux";
 import { closeConfirmingModal, setMessage } from "@/stores/ui/uiSlice";
 import BigNumber from "bignumber.js";
 import {
-  BondOffer,
   IDepositSummary,
   ISupplySummary,
 } from "../../../store/bonds/bonds.types";
 import { useAsyncEffect } from "../../../hooks/useAsyncEffect";
 import { usePurchaseBond } from "../../../store/hooks/bond/usePurchaseBond";
 import { useCancelOffer } from "../../../store/hooks/bond/useCancelOffer";
+import { BondOffer } from "@/defi/types";
+import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
+import { MockedAsset } from "@/store/assets/assets.types";
 
 const defaultLabelProps = (label: string, balance: string) =>
   ({
@@ -29,7 +31,7 @@ const defaultLabelProps = (label: string, balance: string) =>
 
 export type PreviewPurchaseModalProps = {
   offerId: number;
-  principalAsset: BondOffer["asset"];
+  selectedBondOffer: SelectedBondOffer,
   bondPriceInUSD: ISupplySummary["bondPriceInUSD"];
   marketPriceInUSD: ISupplySummary["marketPriceInUSD"];
   amount: BigNumber;
@@ -40,7 +42,7 @@ export type PreviewPurchaseModalProps = {
 
 export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
   offerId,
-  principalAsset,
+  selectedBondOffer,
   bondPriceInUSD,
   marketPriceInUSD,
   amount,
@@ -52,6 +54,7 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
   const theme = useTheme();
   const dispatch = useDispatch();
 
+  const { principalAsset } = selectedBondOffer;
   const bond = usePurchaseBond();
   const cancel = useCancelOffer();
 
@@ -75,6 +78,18 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
     setBondPrice(await bondPriceInUSD());
     setMarketPrice(await marketPriceInUSD());
   }, []);
+
+  let principalSymbol = useMemo(() => {
+    return principalAsset &&
+      (principalAsset as any).baseAsset &&
+      (principalAsset as any).quoteAsset
+      ? (principalAsset as any).baseAsset.symbol +
+          "/" +
+          (principalAsset as any).quoteAsset
+      : (principalAsset as MockedAsset).symbol
+      ? (principalAsset as MockedAsset).symbol
+      : "";
+  }, [principalAsset]);
 
   return (
     <Modal onClose={handleCancelBond} {...modalProps}>
@@ -105,11 +120,7 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
           <Label
             {...defaultLabelProps(
               "Bonding",
-              `${amount} ${
-                "base" in principalAsset
-                  ? `${principalAsset.base.symbol}-${principalAsset.quote.symbol}`
-                  : principalAsset.symbol
-              }`
+              `${amount} ${[principalSymbol]}`
             )}
           />
           <Label
