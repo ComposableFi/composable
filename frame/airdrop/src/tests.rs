@@ -8,8 +8,9 @@ use crate::{
 	Error,
 };
 use codec::Encode;
-use composable_support::types::{
-	CosmosAddress, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress,
+use composable_support::{
+	signature_verification,
+	types::{CosmosAddress, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress},
 };
 use composable_tests_helpers::prop_assert_ok;
 use frame_support::{
@@ -469,7 +470,7 @@ mod ethereum_recover {
 		let eth_proof = EcdsaSignature(hex!("42f2fa6a3db41e6654891e4408ce56ba31fc2b4dea18e82db1c78e33a3f65a55119a23fa7b3fe7a5088197a74a0102266836bb721461b9eaef128bec120db0401c"));
 
 		// Make sure we are able to recover the address
-		let recovered_address = Airdrop::ethereum_recover(
+		let recovered_address = signature_verification::ethereum_recover(
 			PROOF_PREFIX,
 			&CREATOR.using_encoded(|x| hex::encode(x).as_bytes().to_vec()),
 			&eth_proof,
@@ -496,7 +497,7 @@ mod cosmos_recover {
 		let mut pub_key: [u8; 33] = [0; 33];
 		pub_key.copy_from_slice(verify_key.to_encoded_point(true).as_bytes());
 
-		let verified = Airdrop::cosmos_recover(
+		let verified = signature_verification::cosmos_recover(
 			PROOF_PREFIX,
 			&CREATOR.using_encoded(|x| hex::encode(x).as_bytes().to_vec()),
 			CosmosAddress::Secp256r1(pub_key),

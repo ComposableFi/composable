@@ -4,8 +4,9 @@ use super::*;
 use crate::{
 	models::Proof, AccountIdOf, Call, Config, IdentityOf, Pallet as Airdrop, Pallet, ProofOf,
 };
-use composable_support::types::{
-	CosmosAddress, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress,
+use composable_support::{
+	signature_verification,
+	types::{CosmosAddress, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress},
 };
 use composable_traits::airdrop::Airdropper;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
@@ -84,7 +85,7 @@ where
 	T: Config<RelayChainAccountId = [u8; 32]>,
 {
 	let msg = hash::<Keccak256>(
-		&Airdrop::<T>::ethereum_signable_message(
+		&signature_verification::ethereum_signable_message(
 			PROOF_PREFIX,
 			&reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec()),
 		)[..],

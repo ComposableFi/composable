@@ -1,7 +1,10 @@
 #![cfg(test)]
 use crate::{self as pallet_airdrop, models::Proof};
 use codec::Encode;
-use composable_support::types::{EcdsaSignature, EthereumAddress};
+use composable_support::{
+	signature_verification,
+	types::{EcdsaSignature, EthereumAddress},
+};
 use frame_support::{
 	construct_runtime, dispatch::DispatchResultWithPostInfo, parameter_types, traits::Everything,
 	PalletId,
@@ -191,7 +194,7 @@ pub fn ethereum_proof(
 	reward_account: AccountId,
 ) -> Proof<RelayChainAccountId> {
 	let msg = keccak_256(
-		&Airdrop::ethereum_signable_message(
+		&signature_verification::ethereum_signable_message(
 			PROOF_PREFIX,
 			&reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec()),
 		)[..],
