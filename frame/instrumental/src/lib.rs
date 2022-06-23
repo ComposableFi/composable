@@ -90,8 +90,6 @@ pub mod pallet {
 	//                                     Imports and Dependencies
 	// ---------------------------------------------------------------------------------------------
 
-	use std::collections::BTreeMap;
-
 	use codec::{Codec, FullCodec};
 	use composable_support::validation::Validated;
 	use composable_traits::{
@@ -109,7 +107,7 @@ pub mod pallet {
 		},
 		ArithmeticError, Perquintill,
 	};
-	use sp_std::fmt::Debug;
+	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug};
 
 	use crate::{
 		validation::{ValidateVaultDoesNotExist, ValidateVaultExists},
