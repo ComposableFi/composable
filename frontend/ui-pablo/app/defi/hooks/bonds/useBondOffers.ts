@@ -7,10 +7,9 @@ import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { DEFAULT_NETWORK_ID, fetchBondOffers } from "@/defi/utils";
 import { useParachainApi } from "substrate-react";
-import { useBlockInterval } from "../useBlockInterval";
 
 export default function useBondOffers(): OfferRow[] {
-  const { bondOffers, supportedAssets } = useStore();
+  const { bondOffers, supportedAssets, apollo } = useStore();
   const lpRewardingPools = useAllLpTokenRewardingPools();
 
   const { putBondOffers } = useStore();
@@ -66,15 +65,32 @@ export default function useBondOffers(): OfferRow[] {
         );
       }
 
+      const rewardAssetPerBond = bondOffer.reward.amount.div(bondOffer.nbOfBonds);
+      const principalAssetPerBond = bondOffer.bondPrice;
+      let roi = new BigNumber(0), principalPriceUsd = new BigNumber(0), rewardPriceUsd = new BigNumber(0)
+
+      if (apollo[bondOffer.asset]) {
+        principalPriceUsd = new BigNumber(apollo[bondOffer.asset])
+      }
+      if (apollo[bondOffer.reward.asset]) {
+        principalPriceUsd = new BigNumber(apollo[bondOffer.reward.asset])
+      }
+
+      if (principalPriceUsd.gt(0) && rewardPriceUsd.gt(0)) {
+        roi = rewardPriceUsd.minus(principalPriceUsd).div(principalPriceUsd)
+      }
+
       return {
         offerId: bondOffer.offerId,
-        roi: new BigNumber(0),
+        roi,
         totalPurchased: new BigNumber(0),
         bondPrice: bondOffer.bondPrice,
         principalAsset,
+        rewardAssetPerBond,
+        principalAssetPerBond
       };
     });
-  }, [bondOffers, lpRewardingPools, supportedAssets]);
+  }, [bondOffers, lpRewardingPools, supportedAssets, apollo]);
 
   return _bondOffers;
 }
