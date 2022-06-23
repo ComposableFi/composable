@@ -4,11 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
-  pull_request:
-    types: [labeled, synchronize, opened, reopened]
-    branches:
-      - main
+      - composable-sandbox
 
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
@@ -30,8 +26,6 @@ jobs:
       fail-fast: true
       
     steps:
-    - uses: hmarr/debug-action@v2
-
     - name: Clean up
       continue-on-error: true
       run: |
@@ -52,11 +46,4 @@ jobs:
       run: make containerize-composable-sandbox
 
     - name: Push Docker image
-      if: ${{ github.ref == 'refs/heads/main' }}
       run: make push-composable-sandbox
-
-    - name: Push Docker image without latest tag
-      if: ${{ github.ref != 'refs/heads/main' }}
-      run: make push-composable-sandbox-without-latest-tag
-
-    - uses: hmarr/debug-action@v2
