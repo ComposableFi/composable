@@ -57,7 +57,7 @@ jobs:
 
       - name: Upload Artifacts
         run: |
-          sudo gsutil cp ./target/release/composable gs://composable-binaries/dali-stage/${{ env.RELEASE_VERSION }}
+          sudo gsutil cp ./target/release/composable gs://composable-binaries/dali-stage/${{ env.RELEASE_VERSION }}/
           
     
   dali-client-release:
