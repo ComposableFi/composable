@@ -6,7 +6,7 @@ use crate::{
 };
 use composable_support::{
 	signature_verification,
-	types::{CosmosPublicKey, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress},
+	types::{CosmosEcdsaSignature, CosmosPublicKey, EcdsaSignature, EthereumAddress},
 };
 use composable_traits::airdrop::Airdropper;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};

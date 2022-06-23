@@ -10,7 +10,7 @@ use crate::{
 use codec::Encode;
 use composable_support::{
 	signature_verification,
-	types::{CosmosPublicKey, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress},
+	types::{CosmosEcdsaSignature, CosmosPublicKey, EcdsaSignature, EthereumAddress},
 };
 use composable_tests_helpers::prop_assert_ok;
 use frame_support::{

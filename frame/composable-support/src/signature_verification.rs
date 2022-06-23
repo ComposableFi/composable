@@ -2,7 +2,7 @@
 //!
 //! Signed messages/proofs are expected to be in the format of `{perfix}-{msg}` before they
 //! are modified to fit their chains signature specifications.
-use crate::types::{CosmosPublicKey, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress};
+use crate::types::{CosmosEcdsaSignature, CosmosPublicKey, EcdsaSignature, EthereumAddress};
 use frame_support::pallet_prelude::Encode;
 use p256::ecdsa::{signature::Verifier, Signature, VerifyingKey};
 use sp_io::hashing::{keccak_256, sha2_256};

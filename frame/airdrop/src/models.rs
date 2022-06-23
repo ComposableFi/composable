@@ -1,6 +1,6 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use composable_support::types::{
-	CosmosPublicKey, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress,
+	CosmosEcdsaSignature, CosmosPublicKey, EcdsaSignature, EthereumAddress,
 };
 use scale_info::TypeInfo;
 use sp_runtime::{MultiSignature, RuntimeDebug};
