@@ -64,6 +64,7 @@ jobs:
         timeout-minutes: 5
         run: |
           cd integration-tests/runtime-tests
+          echo "PATH=$(pwd):$PATH" >> $GITHUB_ENV
           time ../../scripts/wait_for_polkadot_launch.sh
 
       - name: Run tests
