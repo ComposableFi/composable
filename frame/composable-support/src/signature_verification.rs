@@ -7,6 +7,7 @@ use frame_support::pallet_prelude::Encode;
 use p256::ecdsa::{signature::Verifier, Signature, VerifyingKey};
 use sp_io::hashing::{keccak_256, sha2_256};
 use sp_runtime::{traits::Verify, AccountId32, MultiSignature};
+use sp_std::vec::Vec;
 
 /// Verify the proof is valid for a given relay account.
 ///
@@ -34,7 +35,7 @@ where
 	msg.append(&mut reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec()));
 	msg.append(&mut WRAPPED_POSTFIX.to_vec());
 
-	proof.verify(&msg[..], &relay_account.into())
+	proof.verify(&msg[..], &relay_account)
 }
 
 /// Recover the public key of an `eth_sign` signature.
