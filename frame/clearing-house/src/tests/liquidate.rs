@@ -11,8 +11,8 @@ use crate::{
 		accounts::{ALICE, BOB},
 		assets::USDC,
 		runtime::{
-			Assets as AssetsPallet, Balance, Oracle as OraclePallet, Origin, Runtime,
-			System as SystemPallet, TestPallet, Vamm as VammPallet,
+			Assets as AssetsPallet, Balance, Origin, Runtime, System as SystemPallet, TestPallet,
+			Vamm as VammPallet,
 		},
 	},
 	tests::set_oracle_twap,
