@@ -1,11 +1,16 @@
-use composable_traits::instrumental::{Instrumental as InstrumentalTrait, InstrumentalVaultConfig, InstrumentalProtocolStrategy};
+use composable_traits::instrumental::{
+	Instrumental as InstrumentalTrait, InstrumentalProtocolStrategy, InstrumentalVaultConfig,
+};
 use frame_support::{assert_noop, assert_ok};
 use primitives::currency::CurrencyId;
 use sp_runtime::Perquintill;
 
-use crate::mock::runtime::{
-	Event, ExtBuilder, Instrumental, MockRuntime, PabloStrategy, System, VaultId,
-	MAX_ASSOCIATED_VAULTS,
+use crate::mock::{
+	helpers::create_usdt_usdc_pool,
+	runtime::{
+		Event, ExtBuilder, Instrumental, MockRuntime, PabloStrategy, System, VaultId,
+		MAX_ASSOCIATED_VAULTS,
+	},
 };
 #[allow(unused_imports)]
 use crate::{pallet, pallet::Error};
@@ -60,13 +65,20 @@ fn rebalance_emits_event() {
 	ExtBuilder::default().build().execute_with(|| {
 		System::set_block_number(1);
 
+		// Create Vault (USDC)
 		let config = InstrumentalVaultConfig {
 			asset_id: CurrencyId::USDC,
 			percent_deployable: Perquintill::zero(),
 		};
-		let vault_id = <Instrumental as InstrumentalTrait>::create(config).unwrap();
+		let vault_id = <Instrumental as InstrumentalTrait>::create(config);
+		assert_ok!(vault_id);
+		let vault_id = vault_id.unwrap() as VaultId;
 
-		assert_ok!(PabloStrategy::associate_vault(&(vault_id as VaultId)));
+		// Create Pool (USDT/USDC)
+		let pool_id = create_usdt_usdc_pool();
+		pallet::Pools::<MockRuntime>::insert(CurrencyId::USDC, pool_id);
+
+		assert_ok!(PabloStrategy::associate_vault(&vault_id));
 
 		assert_ok!(PabloStrategy::rebalance());
 
