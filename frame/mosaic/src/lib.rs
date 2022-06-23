@@ -395,6 +395,7 @@ pub mod pallet {
 		///
 		/// [controlorigin]: https://dali.devnets.composablefinance.ninja/doc/pallet_mosaic/pallet/trait.Config.html#associatedtype.ControlOrigin
 		#[pallet::weight(T::WeightInfo::set_relayer())]
+		#[transactional]
 		pub fn set_relayer(
 			origin: OriginFor<T>,
 			relayer: T::AccountId,
@@ -413,6 +414,7 @@ pub mod pallet {
 		///  - Only callable by the current Relayer.
 		///  - The Time To Live (TTL) must be greater than the [`MinimumTTL`](Config::MinimumTTL)
 		#[pallet::weight(T::WeightInfo::rotate_relayer())]
+		#[transactional]
 		pub fn rotate_relayer(
 			origin: OriginFor<T>,
 			new: T::AccountId,
@@ -436,6 +438,7 @@ pub mod pallet {
 		///
 		/// Only callable by the current Relayer
 		#[pallet::weight(T::WeightInfo::set_network())]
+		#[transactional]
 		pub fn set_network(
 			origin: OriginFor<T>,
 			network_id: NetworkIdOf<T>,
@@ -605,6 +608,7 @@ pub mod pallet {
 		///
 		/// Only callable by the current Relayer
 		#[pallet::weight(T::WeightInfo::timelocked_mint())]
+		#[transactional]
 		pub fn timelocked_mint(
 			origin: OriginFor<T>,
 			network_id: NetworkIdOf<T>,
@@ -641,6 +645,7 @@ pub mod pallet {
 		///
 		/// This can only be called by the [`ControlOrigin`](Config::ControlOrigin)
 		#[pallet::weight(T::WeightInfo::set_timelock_duration())]
+		#[transactional]
 		pub fn set_timelock_duration(
 			origin: OriginFor<T>,
 			period: Validated<BlockNumberOf<T>, ValidTimeLockPeriod<T::MinimumTimeLockPeriod>>,
@@ -685,6 +690,7 @@ pub mod pallet {
 
 		/// Collects funds deposited by the Relayer into the owner's account
 		#[pallet::weight(T::WeightInfo::claim_to())]
+		#[transactional]
 		pub fn claim_to(
 			origin: OriginFor<T>,
 			asset_id: AssetIdOf<T>,
@@ -707,6 +713,7 @@ pub mod pallet {
 		/// - `AssetMappingDeleted`
 		/// - `AssetMappingUpdated`
 		#[pallet::weight(T::WeightInfo::update_asset_mapping())]
+		#[transactional]
 		pub fn update_asset_mapping(
 			origin: OriginFor<T>,
 			asset_id: AssetIdOf<T>,
@@ -773,6 +780,7 @@ pub mod pallet {
 
 		// TODO: Set proper pallet weight
 		#[pallet::weight(T::WeightInfo::add_remote_amm_id())]
+		#[transactional]
 		pub fn add_remote_amm_id(
 			origin: OriginFor<T>,
 			network_id: NetworkIdOf<T>,
@@ -790,8 +798,10 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		// TODO: Set proper pallet weight
+
+
 		#[pallet::weight(T::WeightInfo::remove_remote_amm_id())]
+		#[transactional]
 		pub fn remove_remote_amm_id(
 			origin: OriginFor<T>,
 			network_id: NetworkIdOf<T>,
@@ -806,7 +816,7 @@ pub mod pallet {
 
 			RemoteAmmWhitelist::<T>::remove(network_id, amm_id);
 
-			Ok(().into())
+			Ok(())
 		}
 	}
 
