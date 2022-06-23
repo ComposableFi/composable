@@ -2,4 +2,6 @@
 #[cfg(test)]
 pub mod fnft;
 #[cfg(test)]
+pub mod helpers;
+#[cfg(test)]
 pub mod runtime;
