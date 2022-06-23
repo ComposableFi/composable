@@ -26,7 +26,7 @@ const MAXIMUM_RESERVE: Balance = 1_000_000_000;
 const TOTAL_NUM_OF_ACCOUNTS: usize = 5;
 
 const NUMBER_OF_PROPTEST_CASES: u32 =
-	3u32 * TOTAL_NUM_OF_ASSETS as u32 * TOTAL_NUM_OF_ACCOUNTS as u32;
+	3_u32 * TOTAL_NUM_OF_ASSETS as u32 * TOTAL_NUM_OF_ACCOUNTS as u32;
 
 fn pick_assets() -> impl Strategy<Value = CurrencyId> {
 	prop_oneof!(
@@ -102,7 +102,7 @@ mod create {
 			assert_ok!(Instrumental::create(Origin::signed(ADMIN), config));
 
 			System::assert_last_event(Event::Instrumental(pallet::Event::Created {
-				vault_id: 1u64,
+				vault_id: 1_u64,
 				config,
 			}));
 		});
