@@ -15,7 +15,7 @@ const TRANSFER_AMOUNT: u128 = 100_000_000_000_000;
 
 benchmarks! {
 	where_clause {
-		where T::RemoteAssetId: From<[u8; 20]>, T::BlockNumber: From<u32>, T::NetworkId: From<u32>, BalanceOf<T>: From<u128>, AssetIdOf<T>: From<u128>,
+		where T::RemoteAssetId: From<[u8; 20]>, T::BlockNumber: From<u32>, T::NetworkId: From<u32>, T::RemoteAmmId: From<u128>, BalanceOf<T>: From<u128>, AssetIdOf<T>: From<u128>,
 		  T::BudgetPenaltyDecayer: From<BudgetPenaltyDecayer<BalanceOf<T>, T::BlockNumber>>
 	}
 
@@ -260,6 +260,19 @@ benchmarks! {
 		  let asset_id: AssetIdOf<T> = 1.into();
 	  let remote_asset_id: T::RemoteAssetId = [0xFFu8; 20].into();
 	}: _(RawOrigin::Root, asset_id, network_id.clone(), Some(remote_asset_id.clone()))
+
+	add_remote_amm_id {
+		let network_id: T::NetworkId = 1.into();
+		let amm_id: T::RemoteAmmId = 1.into();
+	}: _(RawOrigin::Root, network_id.clone(), amm_id.clone())
+
+	remove_remote_amm_id {
+		let network_id: T::NetworkId = 1.into();
+		let amm_id: T::RemoteAmmId = 1.into();
+
+		assert_ok!(Mosaic::<T>::add_remote_amm_id(RawOrigin::Root.into(), network_id.clone(), amm_id.clone()));
+
+	}: _(RawOrigin::Root, network_id.clone(), amm_id.clone())
 }
 
 impl_benchmark_test_suite!(Mosaic, crate::mock::new_test_ext(), crate::mock::Test,);

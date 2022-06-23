@@ -95,8 +95,8 @@ pub mod pallet {
 		/// A type representing a remote AMM ID.
 		type RemoteAmmId: FullCodec + MaxEncodedLen + TypeInfo + Clone + Debug + PartialEq;
 
-		/// Origin capable of setting the relayer and AMM IDs. Inteded to be RootOrHalfCouncil, as
-		/// it is also used as the origin capable of stopping attackers.
+		/// Origin capable of setting the relayer and AMM IDs. Intended to be RootOrHalfCouncil, as it is also
+		/// used as the origin capable of stopping attackers.
 		type ControlOrigin: EnsureOrigin<Self::Origin>;
 
 		/// Weight implementation used for extrinsics.
@@ -772,7 +772,7 @@ pub mod pallet {
 		}
 
 		// TODO: Set proper pallet weight
-		#[pallet::weight(1_0000)]
+		#[pallet::weight(T::WeightInfo::add_remote_amm_id())]
 		pub fn add_remote_amm_id(
 			origin: OriginFor<T>,
 			network_id: NetworkIdOf<T>,
@@ -791,7 +791,7 @@ pub mod pallet {
 		}
 
 		// TODO: Set proper pallet weight
-		#[pallet::weight(1_0000)]
+		#[pallet::weight(T::WeightInfo::remove_remote_amm_id())]
 		pub fn remove_remote_amm_id(
 			origin: OriginFor<T>,
 			network_id: NetworkIdOf<T>,
@@ -1032,8 +1032,9 @@ pub mod pallet {
 				let lock_at = current_block.saturating_add(lock_time);
 
 				IncomingTransactions::<T>::mutate(to.clone(), asset_id, |prev| match prev {
-					Some((balance, _)) =>
-						*prev = Some(((*balance).saturating_add(amount), lock_at)),
+					Some((balance, _)) => {
+						*prev = Some(((*balance).saturating_add(amount), lock_at))
+					},
 					_ => *prev = Some((amount, lock_at)),
 				});
 
