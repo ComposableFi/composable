@@ -5,19 +5,21 @@ use frame_support::{
 };
 use sp_runtime::DispatchError;
 
+use super::account_id::AccountId;
+
 pub struct MockFnft;
 
-impl Inspect<u128> for MockFnft {
+impl Inspect<AccountId> for MockFnft {
 	type ItemId = ();
 	type CollectionId = ();
 
-	fn owner(_collection: &Self::CollectionId, _item: &Self::ItemId) -> Option<u128> {
+	fn owner(_collection: &Self::CollectionId, _item: &Self::ItemId) -> Option<AccountId> {
 		todo!()
 	}
 }
 
-impl FinancialNft<u128> for MockFnft {
-	fn asset_account(_collection: &Self::CollectionId, _instance: &Self::ItemId) -> u128 {
+impl FinancialNft<AccountId> for MockFnft {
+	fn asset_account(_collection: &Self::CollectionId, _instance: &Self::ItemId) -> AccountId {
 		todo!()
 	}
 
@@ -26,14 +28,14 @@ impl FinancialNft<u128> for MockFnft {
 	}
 }
 
-impl Create<u128> for MockFnft {
+impl Create<AccountId> for MockFnft {
 	fn create_collection(
 		_collection: &Self::CollectionId,
-		_who: &u128,
-		_admin: &u128,
+		_who: &AccountId,
+		_admin: &AccountId,
 	) -> DispatchResult {
 		todo!()
 	}
 }
 
-impl Mutate<u128> for MockFnft {}
+impl Mutate<AccountId> for MockFnft {}
