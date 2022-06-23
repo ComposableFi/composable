@@ -235,7 +235,7 @@ impl<T: Config> Pallet<T> {
 			);
 		}
 
-		Self::can_borrow_from_vault(&market.borrow_asset_vault, market_account)?;
+		Self::ensure_can_borrow_from_vault(&market.borrow_asset_vault, market_account)?;
 
 		Ok(())
 	}
@@ -247,7 +247,7 @@ impl<T: Config> Pallet<T> {
 	// is going to be closed. If FundsAvailability::Withdrawable is return, we can borrow, since
 	// vault has extra money that will be used for balancing in the next block. So, if we even
 	// borrow all assets from the market, vault has posibity for rebalancing.
-	pub(crate) fn can_borrow_from_vault(
+	pub(crate) fn ensure_can_borrow_from_vault(
 		vault_id: &T::VaultId,
 		account_id: &T::AccountId,
 	) -> Result<(), DispatchError> {
