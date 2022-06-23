@@ -15,8 +15,6 @@ Apollo consists of three key components. The On-chain pallet/worker that decides
 ![oracle_architecture](./oracle-architecture.jpg)
 
 
-
-
 1. Apollo off-chain worker monitors on-chain price requests.
 2. Once a price request for an asset has been detected, the off-chain worker does an http GET to the price-feed server and gets the latest price.
 3. If and only if the latest cached price (on the price-feed server) is recent enough (in seconds, configurable via the price-feed CLI), the off-chain worker submits a transaction containing the asset price.
@@ -25,9 +23,6 @@ Apollo consists of three key components. The On-chain pallet/worker that decides
 ## Setting up a node
 
 [Setup a node by following the collator guide](https://docs.composable.finance/developer-guides#collator-set-up-guide)
-
-
-# 
 
 
 ### Setting up a node in development mode
@@ -45,11 +40,9 @@ A **Debian** based Linux system is required, we recommend Debian, Ubuntu or Linu
 Run the following command: \
 
 
-
 ```
 sudo apt update && sudo apt install -y git clang curl libssl-dev llvm libudev-dev pkg-config wget
 ```
-
 
 2. Setup Rust binary and Toolchain
 
@@ -67,13 +60,11 @@ rustup default $RUST_C && \
 rustup show
 ```
 
-
 And wait for the installation process to finish.
 
 3. Setup Nodejs & Yarn 
 
 Run the following commands:
-
 
 ```
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
@@ -84,29 +75,21 @@ nvm use v16.15.0 && \
 npm install --global yarn
 ```
 
-
-
-
 **Setup Polkalaunch script**
 
 Run the following commands:
 
 Getting binaries
 
-
 ```
 cd ~/ && git clone --depth 1 --branch v2.2.1 https://github.com/ComposableFi/composable.git && \
 cd composable
 ```
 
-
-
 ```
 wget -P ./target/release https://github.com/ComposableFi/composable/releases/download/v2.2.1/composable && \
 chmod u+x ./target/release/composable
 ```
-
-
 
 ```
 cd ~/
@@ -114,9 +97,7 @@ wget -P ./polkadot/target/release https://github.com/paritytech/polkadot/release
 chmod u+x ./polkadot/target/release/polkadot
 ```
 
-
 Installing dependencies
-
 
 ```
 # install project
@@ -124,14 +105,11 @@ cd ~/composable/scripts/polkadot-launch
 yarn install 
 ```
 
-
 To start your local composable chain
-
 
 ```
 yarn composable
 ```
-
 
 Once it’s done you would see something like this in the terminal
 
@@ -155,9 +133,7 @@ $ rm -rf /tmp/polkadot-launch && polkadot-launch composable.json
 
 ```
 
-
 Followed by: 
-
 
 ```
 Starting a Collator for parachain 2000: 5Ec4AhPUwPeyTFyuhGuBbD224mY85LKLMSqSSo33JYWCazU4, Collator port : 31300 wsPort : 9996 rpcPort : undefined
@@ -169,17 +145,14 @@ Added --execution=wasm to collator
 🚀 POLKADOT LAUNCH COMPLETE 🚀
 ```
 
-
 This means your node has started.
 
 Nodes are writing logs here: 
-
 
 ```
 ubuntu@oracle-test:~/composable/scripts/polkadot-launch$ ls
 9988.log  9997.log   alice.log  charlie.log      composable_and_basilisk.json  ferdie.log      node_modules  rococo-local-raw.json  yarn.lock
 9996.log  README.md  bob.log    composable.json  dave.log  
-
 
 ubuntu@oracle-test:~/composable/scripts/polkadot-launch$ tail -f 9988.log 
 2022-05-23 10:23:24 [Parachain] PoV size { header: 0.1787109375kb, extrinsics: 2.4931640625kb, storage_proof: 5.80078125kb }
@@ -193,18 +166,11 @@ ubuntu@oracle-test:~/composable/scripts/polkadot-launch$ tail -f 9988.log
 2022-05-23 10:23:30 [Relaychain] 💤 Idle (7 peers), best: #114 (0x9970…5f18), finalized #110 (0x0ffc…245c), ⬇ 4.5kiB/s ⬆ 4.0kiB/s    
 2022-05-23 10:23:30 [Parachain] 💤 Idle (2 peers), best: #44 (0x88ff…32ad), finalized #42 (0xc49f…12c0), ⬇ 24 B/s ⬆ 24 B/s    
 2022-05-23 10:23:34 [Relaychain] 👴  Applying authority set change scheduled at block #111   
-
 ```
-
-
-
-
 
 ## Using PolkadotJS Web Interface
 
 To see the block explorer and run extrinsics the PolkadotJS web interface needs to be connected. 
-
-
 
 * Go to polkadot js →[https://polkadot.js.org/apps/#/explorer](https://polkadot.js.org/apps/#/explorer)
 * Add custom endpoint
@@ -214,25 +180,19 @@ Please note that port 9944 doesn't have pallet functionality; it is a relay node
 
 Make sure you have connected to the right port. 
 
-
 ![polkadotjs_web_interface](./polkadotjs-web-interface.png)
-
 
 You should see the block explorer:
 
-
 ![block_explorer](./block-explorer.png)
 
-
 In this web UI we will run extrinsics & RPCs, to attach the price feed to the node.
-
 
 ## Setting up the price feed (reference implementation)
 
 Composable provides a reference implementation for the price-feed server. It can be found 
 
 at the following address, in the [Composable GitHub repository](https://github.com/ComposableFi/composable/tree/main/utils/price-feed). The implementation is general enough and allows any fork to implement a new feed easily. By default, the prices are fetched from the [Binance public websocket API](https://docs.binance.org/api-reference/dex-api/ws-streams.html#4-trades).
-
 
 ### Setup
 
@@ -242,16 +202,13 @@ In this step, we will set up a rust compiler, a toolchain and build a node.  \
 
 Run the following command:
 
-
 ```
 sudo apt update && sudo apt install -y git clang curl libssl-dev llvm libudev-dev pkg-config
 ```
 
-
 **Get the project and build the price-feed**
 
 Run the following commands:
-
 
 ```
 git clone --depth 1 --branch v2.2.1 https://github.com/ComposableFi/composable.git composable-oracle && \
@@ -259,18 +216,13 @@ cd composable-oracle && \
 cargo build --release --package price-feed
 ```
 
-
-
 ### Start Price-feed
 
 You can try running the server with  \
 
-
-
 ```
 RUST_LOG=debug ./target/release/price-feed
 ```
-
 
 The server will start indexing a list of predefined assets (hardcoded).
 
@@ -283,12 +235,10 @@ Currently only the price for KSM is supported, which can be accessed using the f
 [http://127.0.0.1:3001/price/4](http://127.0.0.1:3001/price/4)
 
 
-
 ![price_feed_output](./price-feed-output.png)
 
 
 price-feed output should look like this.
-
 
 ```
 [2022-06-09T19:08:25Z DEBUG price_feed::backend] notification received: Started { feed: Binance }
@@ -303,25 +253,19 @@ price-feed output should look like this.
 [2022-06-09T19:08:36Z DEBUG price_feed::backend] notification received: AssetPriceUpdated { feed: Binance, asset: KSM, price: TimeStamped { value: (Price(6659), Exponent(2)), timestamp: TimeStamp(1654801716) } }
 ```
 
-
 The default URL is:
-
 
 ```
 localhost:3001/price/${ ASSET_ID }/
 ```
 
-
-
 ### CLI Options
 
 Run the following command: 
 
-
 ```
 ./target/release/price-feed --help
 ```
-
 
 For a list of CLI options.
 
@@ -355,10 +299,7 @@ OPTIONS:
 
     -V, --version
             Print version information
-
 ```
-
-
 
 ## **Setting up Apollo (becoming an Oracle)**
 
@@ -370,14 +311,11 @@ These are the wallet details for the Alice developer wallet.
 
 It’s required for registering the offchain worker.
 
-
 ```
 name: "Alice"
 Address (public key): "5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL"
 Mnemonic(seed): "bottom drive obey lake curtain smoke basket hold race lonely fit walk//Alice"
 ```
-
-
 
 ### 1. Automated Setup
 
@@ -389,14 +327,11 @@ Please scroll down to part 2. For manual setup instructions.
 
 Installing application dependencies:
 
-
 ```
 sudo apt update && sudo apt install -y git curl
 ```
 
-
 Installing NodeJS:
-
 
 ```
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
@@ -407,33 +342,26 @@ nvm use v16.15.0 && \
 npm install --global yarn
 ```
 
-
 **Setup oracle price feed initializer**
 
 Getting the oracle price feed initializer:
-
 
 ```
 git clone --depth 1 https://github.com/ComposableFi/composable.git composable-oracle-initializer && \
 cd composable-oracle-initializer/scripts/oracle-setup
 ```
 
-
 Setup oracle price feed initializer:
-
 
 ```
 yarn
 ```
 
-
 Starting oracle price feed initializer:
-
 
 ```
 yarn start
 ```
-
 
 **Registering offchain worker**
 
@@ -447,28 +375,11 @@ _Developer menu -> RPC calls -> author -> InsertKey_
 
 And enter the details, as seen in the screenshot below and press: “Submit RPC call”.
 
-
-<table>
-  <tr>
-   <td>keyType
-   </td>
-   <td>orac
-   </td>
-  </tr>
-  <tr>
-   <td>suri
-   </td>
-   <td>bottom drive obey lake curtain smoke basket hold race lonely fit walk//Alice
-   </td>
-  </tr>
-  <tr>
-   <td>publicKey
-   </td>
-   <td>5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL
-   </td>
-  </tr>
-</table>
-
+```
+keyType: orac
+suri: bottom drive obey lake curtain smoke basket hold race lonely fit walk//Alice
+publicKey: 5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL
+```
 
 ![register_offchain_worker](./register-offchain-worker.png)
 
@@ -479,12 +390,9 @@ After successfully following these steps, you should see the blockchain successf
 ![successful_price_submitted](./successful-price-submitted.png)
 
 
-
 ### 2. Manual Setup
 
 For the manual setup we need to do the following:
-
-
 
 1. Register price feed URL
 2. Register offchain worker
@@ -497,11 +405,9 @@ Register your price-feed url in the local storage,` kind` must be **PERSISTENT**
 
 JavaScript:
 
-
 ```
 api.rpc.offchain.localStorageSet('PERSISTENT', stringToHex('ocw-url'), stringToHex('http://localhost:3001/price/');
 ```
-
 
 To do this go to:
 
@@ -529,11 +435,9 @@ Bond the controller account by submitting a set_signer transaction (tie the Sign
 
 JavaScript:
 
-
 ```
 api.tx.oracle.setSigner(address);
 ```
-
 
 Setting the signer automatically adds a small amount of funds to the oracle stake of this wallet. These are required for submitting prices.
 
@@ -549,10 +453,7 @@ We can create an oracle for an asset by using the extrinsic _oracle.addAssetAndI
 
 _Developer -> Sudo -> Oracle **-> addAssetAndInfo	**_
 
-
-    **Parameters**:
-
-
+**Parameters**:
 
 * assetId: 4
 * threshold: 80
@@ -561,7 +462,6 @@ _Developer -> Sudo -> Oracle **-> addAssetAndInfo	**_
 * blockInterval: 6
 * reward: 10000
 * slash: 10000
-
 
 ![create_oracle_for_asset](./create-oracle-for-asset.png)
 
