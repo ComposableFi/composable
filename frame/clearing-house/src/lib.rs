@@ -2317,12 +2317,12 @@ pub mod pallet {
 			twap: &T::Decimal,
 		) -> Result<T::Decimal, DispatchError> {
 			let oracle_twap_spread = oracle.try_sub(twap)?;
-			let oracle_33pct = oracle.try_div(&T::Decimal::saturating_from_integer(3))?;
-			Ok(if oracle_twap_spread.saturating_abs() > oracle_33pct {
+			let twap_33pct = twap.try_div(&T::Decimal::saturating_from_integer(3))?;
+			Ok(if oracle_twap_spread.saturating_abs() > twap_33pct {
 				if oracle > twap {
-					twap.try_add(&oracle_33pct)?
+					twap.try_add(&twap_33pct)?
 				} else {
-					twap.try_sub(&oracle_33pct)?
+					twap.try_sub(&twap_33pct)?
 				}
 			} else {
 				*oracle
