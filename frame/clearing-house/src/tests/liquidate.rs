@@ -117,6 +117,8 @@ fn cant_liquidate_if_above_partial_margin_ratio_by_pnl() {
 	});
 }
 
+// TODO(0xangelo): can_partially_liquidate_if_below_partial_margin_ratio_by_funding
+
 #[test]
 fn cant_liquidate_if_above_partial_margin_ratio_by_funding() {
 	let config = MarketConfig {
