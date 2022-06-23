@@ -10,49 +10,8 @@ on:
       - main
 
 jobs:
-  build-and-publish-composable-sandbox:
+  runtime-tests:
     runs-on: 
-      - self-hosted
-      - linux
-      - x64
-      - sre
-    concurrency:
-      group: docker-${{ github.ref }}
-      cancel-in-progress: true
-    strategy: 
-      fail-fast: true
-      
-    steps:
-    - name: Clean up
-      continue-on-error: true
-      run: |
-        sudo chown -R $USER:$USER $GITHUB_WORKSPACE
-        docker system prune --force --all --volumes
-
-    - uses: actions/checkout@v2
-      with: 
-        fetch-depth: 0
-
-    - name: Login to DockerHub
-      uses: docker/login-action@v1 
-      with:
-        username: ${{ secrets.DOCKER_HUB_USERNAME }}
-        password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}  
-
-    - name: Build Docker image
-      run: make containerize-composable-sandbox
-
-    - name: Push Docker image
-      if: ${{ github.ref == 'refs/heads/main' }}
-      run: make push-composable-sandbox
-
-    - name: Push Docker image without latest tag
-      if: ${{ github.ref != 'refs/heads/main' }}
-      run: make push-composable-sandbox-without-latest-tag
-
-  tests:
-    name: Runtime tests
-    runs-on:
       - self-hosted
       - linux
       - x64
@@ -60,14 +19,43 @@ jobs:
     concurrency:
       group: runtime-tests-${{ github.ref }}
       cancel-in-progress: true
+    strategy: 
+      fail-fast: true
+      
     steps:
+      - name: Clean up
+        continue-on-error: true
+        run: |
+          sudo chown -R $USER:$USER $GITHUB_WORKSPACE
+          docker system prune --force --all --volumes
+
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      - name: Build Docker image
+        run: make containerize-composable-sandbox
+
+      - name: Push Docker image
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: make push-composable-sandbox
+
+      - name: Push Docker image without latest tag
+        if: ${{ github.ref != 'refs/heads/main' }}
+        run: make push-composable-sandbox-without-latest-tag
 
       - name: Prepare a test environment
         run: |
           cd integration-tests/runtime-tests
           tag=$(git rev-parse --short=9 HEAD)
           sed -ri "s/\\$\\{TAG\\}/$tag/" docker-compose-ci.yml
+          echo "composablefi/composable-sandbox:${tag} will be used"
           docker-compose -f docker-compose-ci.yml up -d
 
       - name: Wait when the node will be started
