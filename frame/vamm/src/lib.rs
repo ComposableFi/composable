@@ -147,7 +147,7 @@ pub mod pallet {
 		},
 		ArithmeticError, FixedPointNumber,
 	};
-	use std::cmp::Ordering;
+	use std::cmp::{self, Ordering};
 
 	#[cfg(feature = "std")]
 	use serde::{Deserialize, Serialize};
@@ -740,8 +740,9 @@ pub mod pallet {
 
 			// Delegate update twap to internal functions.
 			let (base_twap, quote_twap) = match (base_twap, quote_twap) {
-				(Some(base_twap), Some(quote_twap)) =>
-					Self::do_update_twap(vamm_id, &mut vamm_state, base_twap, quote_twap, &None)?,
+				(Some(base_twap), Some(quote_twap)) => {
+					Self::do_update_twap(vamm_id, &mut vamm_state, base_twap, quote_twap, &None)?
+				},
 				_ => Self::update_vamm_twap(vamm_id, &mut vamm_state, &None)?,
 			};
 
@@ -919,6 +920,7 @@ pub mod pallet {
 		fn move_price(config: &Self::MovePriceConfig) -> Result<U256, DispatchError> {
 			// Get Vamm state.
 			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
+
 			// TODO(Cardosaum): Try to move from using function
 			// Self::is_vamm_closed to Vamm.is_closed method
 			ensure!(!Self::is_vamm_closed(&vamm_state, &None), Error::<T>::VammIsClosed);
@@ -1219,15 +1221,10 @@ pub mod pallet {
 		) -> Result<DecimalOf<T>, DispatchError> {
 			let now = Self::now(now);
 			let weight_now: MomentOf<T> =
-				std::cmp::max(1_u64.into(), now.saturating_sub(last_twap_timestamp));
+				cmp::max(1_u64.into(), now.saturating_sub(last_twap_timestamp));
 
-			// TODO(Cardosaum): Won't this subtraction cause a failure everytime
-			// if we don't update twap for a long period of time?  for example,
-			// if `twap_period = 1 hour`, and we pass 2 or more hours without
-			// updating the twap, doesn't it mean we will throw an error each
-			// time we try to subtract `twap_period -  weight_now`?
 			let weight_last_twap: MomentOf<T> =
-				std::cmp::max(1_u64.into(), twap_period.saturating_sub(weight_now));
+				cmp::max(1_u64.into(), twap_period.saturating_sub(weight_now));
 
 			Self::calculate_exponential_moving_average(
 				new_price,
