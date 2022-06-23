@@ -4,14 +4,14 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_runtime::RuntimeDebug;
 
-/// Cosmos AccAddress type
+/// Cosmos Public Key type
 ///
 /// Cosmos supports both secp256k1 & secp256r1 for transaction authentication.
 /// Public Keys for both are in the ECDSA 33-byte compressed format.
 #[derive(
 	Clone, Copy, Decode, Encode, Eq, Hash, MaxEncodedLen, PartialEq, RuntimeDebug, TypeInfo,
 )]
-pub enum CosmosAddress {
+pub enum CosmosPublicKey {
 	/// Address length will be 20 bytes long
 	Secp256k1([u8; 33]),
 	/// Address length will be 32 bytes long

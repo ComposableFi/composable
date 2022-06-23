@@ -6,7 +6,7 @@ use crate::{
 };
 use composable_support::{
 	signature_verification,
-	types::{CosmosAddress, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress},
+	types::{CosmosPublicKey, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress},
 };
 use composable_traits::airdrop::Airdropper;
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite};
@@ -103,10 +103,10 @@ pub fn ethereum_public(secret: &EthereumKey) -> libsecp256k1::PublicKey {
 	libsecp256k1::PublicKey::from_secret_key(secret)
 }
 
-pub fn cosmos_address(pub_key_slice: &[u8]) -> CosmosAddress {
+pub fn cosmos_address(pub_key_slice: &[u8]) -> CosmosPublicKey {
 	let mut pub_key: [u8; 33] = [0; 33];
 	pub_key.copy_from_slice(pub_key_slice);
-	CosmosAddress::Secp256r1(pub_key)
+	CosmosPublicKey::Secp256r1(pub_key)
 }
 
 pub fn ethereum_address(secret: &EthereumKey) -> EthereumAddress {

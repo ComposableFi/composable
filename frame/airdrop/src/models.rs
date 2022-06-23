@@ -1,6 +1,6 @@
 use codec::{Decode, Encode, MaxEncodedLen};
 use composable_support::types::{
-	CosmosAddress, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress,
+	CosmosPublicKey, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress,
 };
 use scale_info::TypeInfo;
 use sp_runtime::{MultiSignature, RuntimeDebug};
@@ -53,7 +53,7 @@ pub enum AirdropState {
 pub enum Proof<AccountId> {
 	RelayChain(AccountId, MultiSignature),
 	Ethereum(EcdsaSignature),
-	Cosmos(CosmosAddress, CosmosEcdsaSignature),
+	Cosmos(CosmosPublicKey, CosmosEcdsaSignature),
 }
 
 /// Remote account that is associated with a local account.
@@ -61,5 +61,5 @@ pub enum Proof<AccountId> {
 pub enum Identity<AccountId> {
 	RelayChain(AccountId),
 	Ethereum(EthereumAddress),
-	Cosmos(CosmosAddress),
+	Cosmos(CosmosPublicKey),
 }

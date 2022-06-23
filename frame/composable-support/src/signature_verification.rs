@@ -2,7 +2,7 @@
 //!
 //! Signed messages/proofs are expected to be in the format of `{perfix}-{msg}` before they
 //! are modified to fit their chains signature specifications.
-use crate::types::{CosmosAddress, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress};
+use crate::types::{CosmosPublicKey, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress};
 use frame_support::pallet_prelude::Encode;
 use p256::ecdsa::{signature::Verifier, Signature, VerifyingKey};
 use sp_io::hashing::{keccak_256, sha2_256};
@@ -85,24 +85,24 @@ pub fn ethereum_signable_message(prefix: &[u8], msg: &[u8]) -> Vec<u8> {
 pub fn cosmos_recover(
 	prefix: &[u8],
 	msg: &[u8],
-	cosmos_address: CosmosAddress,
+	cosmos_address: CosmosPublicKey,
 	CosmosEcdsaSignature(sig): &CosmosEcdsaSignature,
-) -> Option<CosmosAddress> {
+) -> Option<CosmosPublicKey> {
 	let msg = sha2_256(&[prefix, msg].concat());
 
 	match cosmos_address {
-		CosmosAddress::Secp256k1(pub_key) => {
+		CosmosPublicKey::Secp256k1(pub_key) => {
 			// Cosmos gives us a 64-byte signature, we convert it into the more standard 65-byte
 			// signature here
 			let sig: EcdsaSignature = CosmosEcdsaSignature(*sig).into();
 
 			if pub_key == sp_io::crypto::secp256k1_ecdsa_recover_compressed(&sig.0, &msg).ok()? {
-				return Some(CosmosAddress::Secp256k1(pub_key))
+				return Some(CosmosPublicKey::Secp256k1(pub_key))
 			}
 
 			None
 		},
-		CosmosAddress::Secp256r1(pub_key) => {
+		CosmosPublicKey::Secp256r1(pub_key) => {
 			// Deconstruct `sig` into `r` and `s` values so we can construct a p256
 			// friendly signature
 			let mut r: [u8; 32] = [0; 32];
@@ -113,7 +113,7 @@ pub fn cosmos_recover(
 			let sig = Signature::from_scalars(r, s).ok()?;
 			let verify_key = VerifyingKey::from_sec1_bytes(&pub_key).ok()?;
 			let _ = verify_key.verify(&msg, &sig).ok()?;
-			Some(CosmosAddress::Secp256r1(pub_key))
+			Some(CosmosPublicKey::Secp256r1(pub_key))
 		},
 	}
 }

@@ -10,7 +10,7 @@ use crate::{
 use codec::Encode;
 use composable_support::{
 	signature_verification,
-	types::{CosmosAddress, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress},
+	types::{CosmosPublicKey, CosmosEcdsaSignature, EcdsaSignature, EthereumAddress},
 };
 use composable_tests_helpers::prop_assert_ok;
 use frame_support::{
@@ -500,10 +500,10 @@ mod cosmos_recover {
 		let verified = signature_verification::cosmos_recover(
 			PROOF_PREFIX,
 			&CREATOR.using_encoded(|x| hex::encode(x).as_bytes().to_vec()),
-			CosmosAddress::Secp256r1(pub_key),
+			CosmosPublicKey::Secp256r1(pub_key),
 			&CosmosEcdsaSignature(sig),
 		);
 
-		assert_eq!(verified, Some(CosmosAddress::Secp256r1(pub_key)));
+		assert_eq!(verified, Some(CosmosPublicKey::Secp256r1(pub_key)));
 	}
 }
