@@ -39,17 +39,9 @@ export const putPoolVariables = (
   swapState: SwapsSlice["swaps"],
   key: {
     spotPrice: string;
-    quoteAssetReserve: string | undefined;
-    baseAssetReserve: string | undefined;
   }
 ) => {
   return produce(swapState, (draft) => {
-    if (key.baseAssetReserve) {
-      draft.poolVariables.baseAssetReserve = key.baseAssetReserve;
-    }
-    if (key.quoteAssetReserve) {
-      draft.poolVariables.quoteAssetReserve = key.quoteAssetReserve;
-    }
     if (key.spotPrice) {
       draft.poolVariables.spotPrice = key.spotPrice;
     }

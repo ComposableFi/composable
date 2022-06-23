@@ -1,4 +1,3 @@
-import { AssetId } from "@/defi/polkadot/types";
 import { LiquidityPoolType } from "../pools/pools.types";
 
 export type SwapsChartRange = "24h" | "1w" | "1m";
@@ -28,8 +27,6 @@ export interface SwapsSlice {
     },
     poolVariables: {
       spotPrice: string;
-      quoteAssetReserve: string;
-      baseAssetReserve: string;
     };
     ui: {
       quoteAssetSelected: string | "none";
@@ -61,7 +58,5 @@ export interface SwapsSlice {
   ) => void;
   setPoolVariablesSwaps: (key: {
     spotPrice: string;
-    quoteAssetReserve: string | undefined;
-    baseAssetReserve: string | undefined;
   }) => void;
 }

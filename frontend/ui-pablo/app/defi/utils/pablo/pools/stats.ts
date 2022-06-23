@@ -28,8 +28,8 @@ export async function fetchPoolStats(pool: ConstantProductPool | StableSwapPool)
                 totalLiquidity: fromChainUnits(poolState.totalFees),
                 totalVolume: fromChainUnits(poolState.totalFees),
                 totalFees: fromChainUnits(poolState.totalFees),
-                transactionCount: Number(poolState.transactionCount),
                 calculatedTimestamp: Number(poolState.calculatedTimestamp),
+                transactionCount: Number(poolState.transactionCount),
                 quoteAssetId: Number(poolState.quoteAssetId),
                 poolId: Number(poolState.poolId),
             };

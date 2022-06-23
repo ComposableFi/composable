@@ -16,8 +16,6 @@ const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
     },
     poolVariables: {
       spotPrice: "0",
-      quoteAssetReserve: "0",
-      baseAssetReserve: "0",
     },
     poolConstants: {
       poolAccountId: "",
@@ -52,8 +50,6 @@ const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
     })),
   setPoolVariablesSwaps: (key: {
     spotPrice: string;
-    quoteAssetReserve: string | undefined;
-    baseAssetReserve: string | undefined;
   }) =>
     set((prev: SwapsSlice) => ({
       swaps: putPoolVariables(prev.swaps, key),
