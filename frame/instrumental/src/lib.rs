@@ -58,10 +58,27 @@
 //!
 //! - [`Vault Pallet`](../pallet_vault/index.html)
 
-#[cfg(test)]
-mod tests;
+#![cfg_attr(not(feature = "std"), no_std)]
+#![warn(
+	clippy::indexing_slicing,
+	clippy::panic,
+	clippy::todo,
+	clippy::unseparated_literal_suffix,
+	clippy::unwrap_used
+)]
+#![cfg_attr(
+	test,
+	allow(
+		clippy::disallowed_methods,
+		clippy::disallowed_types,
+		clippy::panic,
+		clippy::unwrap_used,
+	)
+)]
 
 mod mock;
+#[cfg(test)]
+mod tests;
 mod validation;
 mod weights;
 
