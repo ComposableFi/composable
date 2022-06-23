@@ -778,7 +778,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		// TODO: Set proper pallet weight
+		/// Adds a remote AMM for a specific Network
 		#[pallet::weight(T::WeightInfo::add_remote_amm_id())]
 		#[transactional]
 		pub fn add_remote_amm_id(
@@ -799,7 +799,7 @@ pub mod pallet {
 		}
 
 
-
+		/// Removes a remote AMM for a specific Network
 		#[pallet::weight(T::WeightInfo::remove_remote_amm_id())]
 		#[transactional]
 		pub fn remove_remote_amm_id(
