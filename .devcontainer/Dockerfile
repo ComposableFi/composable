@@ -31,8 +31,8 @@ RUN wget "https://github.com/paritytech/polkadot/releases/download/v0.9.22/polka
     chmod +x polkadot
 
 
-# # Add Basilisk node
-WORKDIR /Basilisk-node
+# # Add basilisk node
+WORKDIR /basilisk-node
 RUN wget "https://github.com/galacticcouncil/Basilisk-node/releases/download/v8.0.0/basilisk" && \
     chmod +x basilisk
 
