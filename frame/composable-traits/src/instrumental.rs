@@ -4,7 +4,7 @@ use sp_runtime::Perquintill;
 
 /// An indication of pool state. Shows whether the transfer of assets is currently taking place with
 /// the current pool.
-#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, MaxEncodedLen, TypeInfo)]
+#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum State {
 	/// Indicates that there is currently no asset transfering going on for this asset
 	/// and it can be initialized.
@@ -15,7 +15,7 @@ pub enum State {
 }
 
 /// An indication of access rights for admin accounts.
-#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, MaxEncodedLen, TypeInfo)]
+#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, Eq, MaxEncodedLen, TypeInfo)]
 pub enum AccessRights {
 	/// Account has full access rights.
 	Full,
@@ -28,7 +28,7 @@ pub enum AccessRights {
 	SetPoolId,
 }
 
-#[derive(Clone, Copy, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
+#[derive(Clone, Copy, Encode, Decode, Default, Debug, PartialEq, Eq, TypeInfo)]
 pub struct InstrumentalVaultConfig<AssetId, Percent> {
 	pub asset_id: AssetId,
 	pub percent_deployable: Percent,
