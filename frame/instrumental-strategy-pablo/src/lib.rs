@@ -238,7 +238,7 @@ pub mod pallet {
 		}
 		/// Occur rebalance of liquidity of each vault.
 		///
-		/// Emits [`RebalancedVault`](Event::RebalancedVault)]
+		/// Emits [`RebalancedVault`](Event::RebalancedVault)].
 		#[pallet::weight(T::WeightInfo::liquidity_rebalance())]
 		pub fn liquidity_rebalance(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
