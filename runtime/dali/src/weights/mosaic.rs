@@ -126,4 +126,12 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+
+        fn add_remote_amm_id() -> Weight {
+		(1 as Weight)
+	}
+
+	fn remove_remote_amm_id() -> Weight {
+		(1 as Weight)
+	}
 }
