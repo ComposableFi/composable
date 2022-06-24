@@ -9,32 +9,32 @@ use sp_runtime::{MultiSignature, RuntimeDebug};
 #[derive(Encode, Decode, PartialEq, Copy, Clone, TypeInfo, MaxEncodedLen)]
 pub struct Airdrop<AccountId, Balance, Moment> {
 	/// Creator of the Airdrop.
-	pub(crate) creator: AccountId,
+	pub creator: AccountId,
 	/// Total funds committed to the Airdrop.
-	pub(crate) total_funds: Balance,
+	pub total_funds: Balance,
 	/// Total number of recipients
-	pub(crate) total_recipients: u32,
+	pub total_recipients: u32,
 	/// Amount of the `total_funds` already claimed.
-	pub(crate) claimed_funds: Balance,
+	pub claimed_funds: Balance,
 	/// Starting block of the Airdrop.
-	pub(crate) start: Option<Moment>,
+	pub start: Option<Moment>,
 	/// The minimum time, in blocks, between recipient claims.
-	pub(crate) schedule: Moment,
+	pub schedule: Moment,
 	/// Set `true` if an airdrop has been explicitly disabled.
-	pub(crate) disabled: bool,
+	pub disabled: bool,
 }
 
 /// Funds, and related information, to be claimed by an Airdrop recipient.
 #[derive(Encode, Decode, PartialEq, Copy, Clone, TypeInfo, MaxEncodedLen)]
 pub struct RecipientFund<Balance, Period> {
 	/// Total funds committed for this recipient.
-	pub(crate) total: Balance,
+	pub total: Balance,
 	/// Amount of the `total` this recipient has claimed.
-	pub(crate) claimed: Balance,
+	pub claimed: Balance,
 	/// The minimum time, in blocks, between recipient claims.
-	pub(crate) vesting_period: Period,
+	pub vesting_period: Period,
 	/// If claims by this user will be funded by an external pool.
-	pub(crate) funded_claim: bool,
+	pub funded_claim: bool,
 }
 
 /// Current State of an [`Airdrop`](Airdrop).
