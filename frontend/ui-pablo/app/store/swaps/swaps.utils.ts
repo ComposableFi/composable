@@ -47,3 +47,15 @@ export const resetSwapsSlice = (
     draft.selectedPool = undefined;
   });
 }
+
+export const flipAssetSelection = (
+  swapState: SwapsSlice["swaps"]
+) => {
+  return produce(swapState, (draft) => {
+    draft.selectedAssets = {
+      base: swapState.selectedAssets.quote,
+      quote: swapState.selectedAssets.base
+    }
+    draft.selectedPool = undefined;
+  });
+}

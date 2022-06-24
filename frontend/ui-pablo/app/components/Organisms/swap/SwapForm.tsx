@@ -62,6 +62,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     setAssetTwoInputValid,
     assetOneInputValid,
     assetTwoInputValid,
+    flipAssetSelection
   } = useSwaps();
 
   const percentageToSwap = useAppSelector(
@@ -253,7 +254,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             },
           }}
         >
-          <SwapVertRounded onClick={() => {}} />
+          <SwapVertRounded onClick={flipAssetSelection} />
         </Box>
       </Box>
 

@@ -28,6 +28,7 @@ export function useSwaps(): {
     assetTwoAmount: BigNumber;
     dexRoute: BigNumber | null;
     onChangeTokenAmount: (sideChange: "base" | "quote", amount: BigNumber) => void;
+    flipAssetSelection: () => void;
     updateSpotPrice: () => void;
     pabloPool: ConstantProductPool | StableSwapPool | undefined;
     minimumReceived: BigNumber;
@@ -59,7 +60,8 @@ export function useSwaps(): {
         setSpotPrice,
         setSelectedAsset,
         setSelectedPool,
-        resetSwaps
+        resetSwaps,
+        flipAssetSelection
     } = swaps;
 
     useEffect(() => {
@@ -266,6 +268,7 @@ export function useSwaps(): {
         setAssetOneInputValid,
         setAssetTwoInputValid,
         assetOneInputValid,
-        assetTwoInputValid
+        assetTwoInputValid,
+        flipAssetSelection
     }
 }

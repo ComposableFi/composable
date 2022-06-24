@@ -2,7 +2,7 @@ import BigNumber from "bignumber.js";
 import { StoreSlice } from "../types";
 import { SwapsSlice } from "./swaps.types";
 import {
-  putAssetId, putSelectedPool, putSpotPrice, resetSwapsSlice,
+  putAssetId, putSelectedPool, putSpotPrice, resetSwapsSlice, flipAssetSelection
 } from "./swaps.utils";
 
 const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
@@ -24,6 +24,9 @@ const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
     })),
     resetSwaps: () => set((prev: SwapsSlice) => ({
       swaps: resetSwapsSlice(prev.swaps)
+    })),
+    flipAssetSelection: () => set((prev: SwapsSlice) => ({
+      swaps: flipAssetSelection(prev.swaps)
     }))
   }
 });

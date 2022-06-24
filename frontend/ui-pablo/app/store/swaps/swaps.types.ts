@@ -12,6 +12,7 @@ export interface SwapsSlice {
     },
     selectedPool: ConstantProductPool | StableSwapPool | undefined;
     setSelectedPool: (pool: ConstantProductPool | StableSwapPool | undefined) => void;
+    flipAssetSelection: () => void;
     setSelectedAsset: (assetId: string | "none", side: SwapSide) => void;
     setSpotPrice: (spotPrice: BigNumber) => void;
     resetSwaps: () => void;
