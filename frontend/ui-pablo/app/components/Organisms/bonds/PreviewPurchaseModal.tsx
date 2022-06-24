@@ -1,19 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { ModalProps, Modal } from "@/components/Molecules";
 import { Label } from "@/components/Atoms";
 import { Box, Typography, useTheme, Button } from "@mui/material";
-
 import { useDispatch } from "react-redux";
-import { closeConfirmingModal, setMessage } from "@/stores/ui/uiSlice";
+import { closeConfirmingModal } from "@/stores/ui/uiSlice";
 import BigNumber from "bignumber.js";
-import {
-  IDepositSummary,
-  ISupplySummary,
-} from "../../../store/bonds/bonds.types";
-import { useAsyncEffect } from "../../../hooks/useAsyncEffect";
 import { usePurchaseBond } from "../../../store/hooks/bond/usePurchaseBond";
-import { useCancelOffer } from "../../../store/hooks/bond/useCancelOffer";
-import { BondOffer } from "@/defi/types";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
 import { MockedAsset } from "@/store/assets/assets.types";
 
@@ -30,16 +22,14 @@ const defaultLabelProps = (label: string, balance: string) =>
   } as const);
 
 export type PreviewPurchaseModalProps = {
-  offerId: number;
-  selectedBondOffer: SelectedBondOffer,
+  bond: SelectedBondOffer,
   amount: BigNumber;
   rewardableTokens: string;
   setAmount: (v: BigNumber) => any;
 } & ModalProps;
 
 export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
-  offerId,
-  selectedBondOffer,
+  bond,
   amount,
   rewardableTokens,
   setAmount,
@@ -47,15 +37,14 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
 }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
+  const purchaseBond = usePurchaseBond(bond.selectedBondOffer ? bond.selectedBondOffer.offerId : new BigNumber(0), amount);
 
-  const { principalAsset } = selectedBondOffer;
-  const bond = usePurchaseBond();
-
-  const discountPercent = 0
+  const { principalAsset, roi } = bond;
     // marketPrice === 0 ? 0 : ((marketPrice - bondPrice) / marketPrice) * 100;
 
   const handlePurchaseBond = async () => {
-    // await bond(offerId, nbOfBonds(amount.toNumber()));
+    await purchaseBond();
+    bond.updateBondInfo();
     // dispatch(closeConfirmingModal());
     // setAmount(new BigNumber(0));
   };
@@ -119,7 +108,7 @@ export const PreviewPurchaseModal: React.FC<PreviewPurchaseModalProps> = ({
           />
           <Label
             mt={2}
-            {...defaultLabelProps("Discount", `${discountPercent}%`)}
+            {...defaultLabelProps("Discount", `${roi.toFormat(2)}%`)}
           />
         </Box>
 
