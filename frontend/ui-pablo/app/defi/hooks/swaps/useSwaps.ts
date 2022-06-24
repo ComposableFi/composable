@@ -8,6 +8,7 @@ import { MockedAsset } from "@/store/assets/assets.types";
 import { useAssetBalance, useUSDPriceByAssetId } from "@/store/assets/hooks";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js"
+import { useSnackbar } from "notistack";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParachainApi } from "substrate-react";
 
@@ -48,6 +49,7 @@ export function useSwaps(): {
     const [assetOneInputValid, setAssetOneInputValid] = useState(true);
     const [assetTwoInputValid, setAssetTwoInputValid] = useState(true);
     const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+    const { enqueueSnackbar } = useSnackbar();
 
     const { swaps, supportedAssets, pools: { constantProductPools, stableSwapPools } } = useStore();
     const {
@@ -221,6 +223,7 @@ export function useSwaps(): {
         } else {
             resetTokenAmounts();
             console.error(`Registered Pool not found`)
+            enqueueSnackbar(`Registered Pool not found`)
         }
     }
 
@@ -235,7 +238,7 @@ export function useSwaps(): {
         assetOneAmount, assetTwoAmount
     } = tokenAmounts;
 
-    const valid = dexRoute !== null && isValidAssetPair(selectedAssetOneId, selectedAssetTwoId) && !!selectedPool
+    const valid = dexRoute !== null && assetOneInputValid && assetTwoInputValid && !!selectedPool
 
     return {
         balance1,

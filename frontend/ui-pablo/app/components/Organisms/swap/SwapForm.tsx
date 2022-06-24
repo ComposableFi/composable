@@ -230,7 +230,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         />
       </Box>
 
-      {selectedAssetOne && (
+      {valid && (
         <Typography variant="body2" mt={1.5}>
           {`≈$${assetOneAmount.multipliedBy(asset1PriceUsd)}`}
         </Typography>
@@ -314,7 +314,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         />
       </Box>
 
-      {selectedAssetTwo && (
+      {valid && (
         <Typography variant="body2" mt={1.5}>
           {`≈$${assetTwoAmount.multipliedBy(asset2PriceUsd)}`}
         </Typography>

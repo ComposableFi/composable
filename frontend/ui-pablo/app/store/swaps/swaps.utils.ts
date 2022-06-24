@@ -41,8 +41,8 @@ export const resetSwapsSlice = (
   return produce(swapState, (draft) => {
     draft.spotPrice = new BigNumber(0);
     draft.selectedAssets = {
-      base: "none",
-      quote: "none"
+      base: "1",
+      quote: "4"
     }
     draft.selectedPool = undefined;
   });
