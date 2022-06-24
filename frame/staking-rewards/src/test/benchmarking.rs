@@ -1,18 +1,21 @@
 //! Benchmarks
-use std::collections::BTreeMap;
-use frame_benchmarking::{benchmarks, account};
-use frame_support::BoundedBTreeMap;
-use crate::*;
-use crate::test::get_default_reward_pool;
-use frame_system::RawOrigin;
-use sp_arithmetic::Perbill;
-use sp_arithmetic::traits::SaturatedConversion;
+use crate::{
+	test::{get_default_reward_pool, runtime::ALICE},
+	*,
+};
 use composable_tests_helpers::test::currency::{PICA, USDT};
-use composable_traits::staking::lock::LockConfig;
-use composable_traits::staking::{RewardConfig, RewardPoolConfiguration};
-use composable_traits::staking::RewardPoolConfiguration::RewardRateBasedIncentive;
-use composable_traits::time::{DurationSeconds, ONE_HOUR, ONE_MINUTE};
-use crate::test::runtime::ALICE;
+use composable_traits::{
+	staking::{
+		lock::LockConfig, RewardConfig, RewardPoolConfiguration,
+		RewardPoolConfiguration::RewardRateBasedIncentive,
+	},
+	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
+};
+use frame_benchmarking::{account, benchmarks};
+use frame_support::BoundedBTreeMap;
+use frame_system::RawOrigin;
+use sp_arithmetic::{traits::SaturatedConversion, Perbill};
+use std::collections::BTreeMap;
 
 fn get_reward_pool<T: Config>(
 	owner: T::AccountId,

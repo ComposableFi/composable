@@ -96,12 +96,7 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The reward balance type.
-		type Balance: Parameter
-		+ Member
-		+ BalanceLike
-		+ FixedPointOperand
-		+ From<u128>
-		+ Into<u128>;
+		type Balance: Parameter + Member + BalanceLike + FixedPointOperand + From<u128> + Into<u128>;
 
 		/// The reward pool ID type.
 		/// Type representing the unique ID of a pool.
