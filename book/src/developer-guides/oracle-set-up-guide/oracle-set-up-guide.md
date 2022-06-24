@@ -37,7 +37,7 @@ A **Debian** based Linux system is required, we recommend Debian, Ubuntu or Linu
 
 1. Set up required packages 
 
-Run the following command: \
+Run the following command:
 
 
 ```
@@ -301,7 +301,7 @@ OPTIONS:
             Print version information
 ```
 
-## **Setting up Apollo (becoming an Oracle)**
+## Setting up Apollo (becoming an Oracle)
 
 In order for a Collator to become an Apollo Oracle, you need to make sure that you deployed a price-feed server along your node. 
 
