@@ -181,7 +181,7 @@ impl<T: Config> LiquidityBootstrapping<T> {
 
 	pub(crate) fn remove_liquidity(
 		who: &T::AccountId,
-		pool_id: T::PoolId,
+		_pool_id: T::PoolId,
 		pool: LiquidityBootstrappingPoolInfoOf<T>,
 		pool_account: AccountIdOf<T>,
 		_: T::Balance,
@@ -203,7 +203,6 @@ impl<T: Config> LiquidityBootstrapping<T> {
 		let base_amount = repatriate(pool.pair.base)?;
 		let quote_amount = repatriate(pool.pair.quote)?;
 
-		Pools::<T>::remove(pool_id);
 		Ok((base_amount, quote_amount))
 	}
 }

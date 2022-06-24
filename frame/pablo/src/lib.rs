@@ -218,6 +218,15 @@ pub mod pallet {
 			/// Charged fees.
 			fee: Fee<T::AssetId, T::Balance>,
 		},
+		/// TWAP updated.
+		TWAPUpdated {
+			/// Pool id on which exchange done.
+			pool_id: T::PoolId,
+			/// TWAP Timestamp
+			timestamp: MomentOf<T>,
+			/// Map of asset_id -> twap
+			twaps: BTreeMap<T::AssetId, Rate>,
+		},
 	}
 
 	#[pallet::error]
@@ -591,6 +600,18 @@ pub mod pallet {
 				);
 				if result.is_ok() {
 					weight += 1;
+					if let Some(updated_twap) = TWAPState::<T>::get(pool_id) {
+						if let Ok(currency_pair) = Self::currency_pair(pool_id) {
+							Self::deposit_event(Event::<T>::TWAPUpdated {
+								pool_id,
+								timestamp: updated_twap.timestamp,
+								twaps: BTreeMap::from([
+									(currency_pair.base, updated_twap.base_twap),
+									(currency_pair.quote, updated_twap.quote_twap),
+								]),
+							});
+						}
+					}
 				}
 			}
 			weight
@@ -674,7 +695,7 @@ pub mod pallet {
 		}
 
 		fn update_twap(pool_id: T::PoolId) -> Result<(), DispatchError> {
-			// update price cumulatives
+			let currency_pair = Self::currency_pair(pool_id)?; // update price cumulatives
 			let (base_price_cumulative, quote_price_cumulative) =
 				PriceCumulativeState::<T>::try_mutate(
 					pool_id,
@@ -686,16 +707,32 @@ pub mod pallet {
 				quote_price_cumulative != T::Balance::zero()
 			{
 				// update TWAP
-				let _ = TWAPState::<T>::try_mutate(
+				let updated_twap = TWAPState::<T>::try_mutate(
 					pool_id,
-					|prev_twap_state| -> Result<(), DispatchError> {
-						update_twap_state::<T>(
+					|prev_twap_state| -> Result<Option<TWAPStateOf<T>>, DispatchError> {
+						let res = update_twap_state::<T>(
 							base_price_cumulative,
 							quote_price_cumulative,
 							prev_twap_state,
-						)
+						);
+						if res.is_ok() {
+							Ok(prev_twap_state.clone())
+						} else {
+							Ok(None)
+						}
 					},
-				);
+				)?;
+				if let Some(updated_twap) = updated_twap {
+					Self::deposit_event(Event::<T>::TWAPUpdated {
+						pool_id,
+						timestamp: updated_twap.timestamp,
+						twaps: BTreeMap::from([
+							(currency_pair.base, updated_twap.base_twap),
+							(currency_pair.quote, updated_twap.quote_twap),
+						]),
+					});
+				}
+				return Ok(())
 			}
 			Ok(())
 		}
