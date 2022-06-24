@@ -148,8 +148,7 @@ pub mod pallet {
 			+ MaxEncodedLen
 			+ Zero;
 
-		/// Conversion function from [`Self::Moment`](Self::Moment) to
-		/// [`Self::Balance`](Self::Balance)
+		/// Conversion function from [`Self::Moment`] to [`Self::Balance`]
 		type Convert: Convert<Self::Moment, Self::Balance>;
 
 		/// Time stamp
@@ -191,7 +190,7 @@ pub mod pallet {
 	/// The counter used to identify Airdrops.
 	#[pallet::storage]
 	#[pallet::getter(fn airdrop_count)]
-	#[allow(clippy::disallowed_types)] // Allow `farme_support::pallet_prelude::ValueQuery`
+	#[allow(clippy::disallowed_types)] // Allow `frame_support::pallet_prelude::ValueQuery`
 	pub type AirdropCount<T: Config> =
 		StorageValue<_, T::AirdropId, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 
@@ -216,7 +215,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn total_airdrop_recipients)]
-	#[allow(clippy::disallowed_types)] // Allow `farme_support::pallet_prelude::ValueQuery`
+	#[allow(clippy::disallowed_types)] // Allow `frame_support::pallet_prelude::ValueQuery`
 	pub type TotalAirdropRecipients<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AirdropId, u32, ValueQuery>;
 
@@ -242,6 +241,14 @@ pub mod pallet {
 		///
 		/// Can be called by any signed origin.
 		///
+		/// # Parameter Sources
+		/// * `start_at` - user provided, optional
+		/// * `vesting_schedule` - user provided
+		///
+		/// # Emits
+		/// * `AirdropCreated`
+		/// * `AirdropStarted`
+		///
 		/// # Errors
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
 		/// * `AirdropAlreadyStarted` - The Airdrop has already started or has been scheduled to
@@ -260,9 +267,16 @@ pub mod pallet {
 		}
 
 		/// Add one or more recipients to the Airdrop, specifying the token amount that each
-		/// provided adress will receive.
+		/// provided address will receive.
 		///
 		/// Only callable by the origin that created the Airdrop.
+		///
+		/// # Parameter Sources
+		/// * `airdrop_id` - user selected, provided by the system
+		/// * `recipients` - user provided
+		///
+		/// # Emits
+		/// * `RecipientsAdded`
 		///
 		/// # Errors
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
@@ -282,6 +296,14 @@ pub mod pallet {
 		/// Remove a recipient from an Airdrop.
 		///
 		/// Only callable by the origin that created the Airdrop.
+		///
+		/// # Parameter Sources
+		/// * `airdrop_id` - user selected, provided by the system
+		/// * `recipient` - user selected, provided by the system
+		///
+		/// # Emits
+		/// * `RecipientRemoved`
+		/// * `AirdropEnded`
 		///
 		/// # Errors
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
@@ -304,6 +326,12 @@ pub mod pallet {
 		///
 		/// Only callable by the origin that created the Airdrop.
 		///
+		/// # Parameter Sources
+		/// * `airdrop_id` - user selected, provided by the system
+		///
+		/// # Emits
+		/// * `AirdropStarted`
+		///
 		/// # Errors
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
 		/// * `AirdropAlreadyStarted` - The Airdrop has already started or has been scheduled to
@@ -322,6 +350,12 @@ pub mod pallet {
 		///
 		/// Only callable by the origin that created the Airdrop.
 		///
+		/// # Parameter Sources
+		/// * `airdrop_id` - user selected, provided by the system
+		///
+		/// # Emits
+		/// * `AirdropEnded`
+		///
 		/// # Errors
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
 		/// * `NotAirdropCreator` - Signer of the origin is not the creator of the Airdrop
@@ -339,6 +373,14 @@ pub mod pallet {
 		/// If no more funds are left to claim, the Airdrop will be removed.
 		///
 		/// Callable by any unsigned origin.
+		///
+		/// # Parameter Sources
+		/// * `airdrop_id` - user selected, provided by the system
+		/// * `reward_account` - user provided
+		/// * `proof` - calculated by the system (requires applicable signing)
+		///
+		/// # Emits
+		/// * `AirdropEnded`
 		///
 		/// # Errors
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
@@ -361,7 +403,7 @@ pub mod pallet {
 				Some(associated_account) => {
 					ensure!(associated_account == identity, Error::<T>::InvalidProof);
 				},
-				// If no association exist, create a new one
+				// If no association exists, create a new one
 				None => {
 					Associations::<T>::insert(airdrop_id, reward_account.clone(), identity.clone());
 				},
@@ -860,7 +902,6 @@ pub mod pallet {
 					match fund.as_mut() {
 						Some(fund) => {
 							let claimable = Self::claimable(airdrop_id, fund)?;
-							// .map_err(|_| Error::<T>::AirdropDoesNotExist)?;
 							let available_to_claim = claimable.saturating_sub(fund.claimed);
 
 							ensure!(
@@ -906,7 +947,7 @@ pub mod pallet {
 	}
 
 	/// Ensures the following:
-	/// * Only call can be called via an unsigned transaction
+	/// * Only claim can be called via an unsigned transaction
 	/// * The Airdrop exists in the pallet's storage
 	/// * The Airdrop has been enabled / has started
 	/// * The provided proof is valid

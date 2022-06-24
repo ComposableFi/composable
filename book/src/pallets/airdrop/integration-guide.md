@@ -64,34 +64,7 @@ N/A
 
 ## Extrinsic Parameter Sources
 
-### create_airdrop
-
-* `start_at` - user provided, optional
-* `vesting_scchedule` - user provided
-
-### add_recipient
-
-* `airdrop_id` - user selected, provided by the system
-* `recipients` - user provided
-
-### remove_recipient
-
-* `airdrop_id` - user selected, provided by the system
-* `recipient` - user selected, provided by the system
-
-### enable_airdrop
-
-* `airdrop_id` - user selected, provided by the system
-
-### disable_airdrop
-
-* `airdrop_id` - user selected, provided by the system
-
-### claim
-
-* `airdrop_id` - user selected, provided by the system
-* `reward_account` - user provided
-* `proof` - calculated by the system (requires applicable signing)
+See the Airdrop pallet extrinsics [documentation](./extrinsics.md)
 
 ## Pricing Sources
 <!-- "Pricing sources are a must have if any Zeplin designs show users values in USD$" -->
