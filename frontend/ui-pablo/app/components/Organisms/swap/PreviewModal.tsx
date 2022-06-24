@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { ModalProps, Modal } from "@/components/Molecules";
 import { Label, BaseAsset } from "@/components/Atoms";
 import {
@@ -18,7 +18,6 @@ import {
 } from "@/stores/ui/uiSlice";
 import { SwapSummary } from "./SwapSummary";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 import { useAppSelector } from "@/hooks/store";
 import { MockedAsset } from "@/store/assets/assets.types";
