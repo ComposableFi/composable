@@ -71,10 +71,10 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub fn deposit_event)]
 	pub enum Event<T: Config> {
-		/// Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
+		/// Pool with specified id `T::RewardPoolId` was created successfully by `T::AccountId`.
 		RewardPoolCreated {
 			/// Id of newly created pool.
-			pool_id: T::PoolId,
+			pool_id: T::RewardPoolId,
 			/// Owner of the pool.
 			owner: T::AccountId,
 			/// End block
@@ -101,7 +101,7 @@ pub mod pallet {
 
 		/// The reward pool ID type.
 		/// Type representing the unique ID of a pool.
-		type PoolId: FullCodec
+		type RewardPoolId: FullCodec
 			+ MaxEncodedLen
 			+ Default
 			+ Debug
@@ -119,7 +119,7 @@ pub mod pallet {
 
 		type MayBeAssetId: Parameter + Member + AssetIdLike + MaybeSerializeDeserialize + Ord;
 
-		/// Is used to create staked asset per `Self::PoolId`
+		/// Is used to create staked asset per `Self::RewardPoolId`
 		type CurrencyFactory: CurrencyFactory<Self::MayBeAssetId, Self::Balance>;
 
 		/// is used for rate based rewarding and position lock timing
@@ -174,11 +174,11 @@ pub mod pallet {
 	#[pallet::getter(fn pool_count)]
 	#[allow(clippy::disallowed_types)]
 	pub type RewardPoolCount<T: Config> =
-		StorageValue<_, T::PoolId, ValueQuery, Counter<ZeroInit, SafeIncrement, SafeDecrement>>;
+		StorageValue<_, T::RewardPoolId, ValueQuery, Counter<ZeroInit, SafeIncrement, SafeDecrement>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
-	pub type RewardPools<T: Config> = StorageMap<_, Blake2_128Concat, T::PoolId, RewardPoolOf<T>>;
+	pub type RewardPools<T: Config> = StorageMap<_, Blake2_128Concat, T::RewardPoolId, RewardPoolOf<T>>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -196,7 +196,7 @@ pub mod pallet {
 				RewardRateBasedIncentive {
 					owner,
 					asset_id,
-					initial_reward_config,
+					reward_config: initial_reward_config,
 					end_block,
 					lock,
 				} => {
@@ -236,14 +236,14 @@ pub mod pallet {
 
 	impl<T: Config> Staking for Pallet<T> {
 		type AccountId = T::AccountId;
-		type PoolId = T::PoolId;
+		type RewardPoolId = T::RewardPoolId;
 		type Balance = T::Balance;
 		type PositionId = T::PositionId;
 
 		#[transactional]
 		fn stake(
 			who: &Self::AccountId,
-			pool_id: &Self::PoolId,
+			pool_id: &Self::RewardPoolId,
 			amount: Self::Balance,
 			keep_alive: bool,
 		) -> Result<Self::PositionId, DispatchError> {

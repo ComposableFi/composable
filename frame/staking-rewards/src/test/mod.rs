@@ -59,7 +59,7 @@ fn get_default_reward_pool() -> RewardPoolConfiguration<
 		owner: ALICE,
 		asset_id: PICA::ID,
 		end_block: 5,
-		initial_reward_config: default_reward_config(),
+		reward_config: default_reward_config(),
 		lock: default_lock_config(),
 	};
 	pool_init_config
@@ -76,7 +76,7 @@ fn get_reward_pool_config_invalida_end_block() -> RewardPoolConfiguration<
 		owner: ALICE,
 		asset_id: PICA::ID,
 		end_block: 0,
-		initial_reward_config: default_reward_config(),
+		reward_config: default_reward_config(),
 		lock: default_lock_config(),
 	};
 	pool_init_config

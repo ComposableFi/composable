@@ -108,7 +108,7 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, Balance, BlockNumber, Durat
 		/// Pool would stop adding rewards to pool at this block number.
 		end_block: BlockNumber,
 		/// initial reward configuration for this pool
-		initial_reward_config: RewardConfig<AssetId, Balance>,
+		reward_config: RewardConfig<AssetId, Balance>,
 		// possible lock config for this reward
 		lock: LockConfig<DurationPresets>,
 	},
@@ -169,7 +169,7 @@ pub trait ProtocolStaking {
 /// Interface for protocol staking.
 pub trait Staking {
 	type AccountId;
-	type PoolId;
+	type RewardPoolId;
 	type Balance;
 	type PositionId;
 
@@ -182,7 +182,7 @@ pub trait Staking {
 	/// * `keep_alive` whether to keep the `from` account alive or not while transferring the stake.
 	fn stake(
 		who: &Self::AccountId,
-		pool_id: &Self::PoolId,
+		pool_id: &Self::RewardPoolId,
 		amount: Self::Balance,
 		keep_alive: bool,
 	) -> Result<Self::PositionId, DispatchError>;

@@ -187,14 +187,7 @@ impl pallet_assets::Config for Test {
 
 parameter_types! {
 	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
-}
-
-#[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, MaxEncodedLen, TypeInfo, core::fmt::Debug)]
-pub struct MaxStakingDurationPresets;
-impl Get<u32> for MaxStakingDurationPresets {
-	fn get() -> u32 {
-		10
-	}
+	pub const MaxStakingDurationPresets : u32 = 10;
 }
 
 #[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, MaxEncodedLen, TypeInfo, core::fmt::Debug)]
@@ -209,7 +202,7 @@ impl pallet_staking_rewards::Config for Test {
 	type Event = Event;
 	type Share = Balance;
 	type Balance = Balance;
-	type PoolId = u16;
+	type RewardPoolId = u16;
 	type PositionId = u128;
 	type MayBeAssetId = CurrencyId;
 	type CurrencyFactory = CurrencyFactory;
