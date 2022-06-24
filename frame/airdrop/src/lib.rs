@@ -108,6 +108,7 @@ pub mod pallet {
 		AirdropAlreadyStarted,
 		AirdropDoesNotExist,
 		AirdropIsNotEnabled,
+        ArithmiticError,
 		BackToTheFuture,
 		NotAirdropCreator,
 		NothingToClaim,
@@ -928,7 +929,7 @@ pub mod pallet {
 			Airdrops::<T>::try_mutate(airdrop_id, |airdrop| match airdrop.as_mut() {
 				Some(airdrop) => {
 					airdrop.claimed_funds =
-						airdrop.claimed_funds.saturating_add(available_to_claim);
+						airdrop.claimed_funds.safe_add(&available_to_claim).map_err(|_| Error::<T>::ArithmiticError)?;
 					Ok(())
 				},
 				None => Err(Error::<T>::AirdropDoesNotExist),
