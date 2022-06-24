@@ -75,6 +75,20 @@ macro_rules! list_assets {
 			pub const $NAME: CurrencyId = CurrencyId($id);
 		)*
 
+		pub fn native_asset_name(id: u128) -> Result<&'static str, &'static str> {
+			match id {
+				$($id => Ok(stringify!($NAME)),)*
+				_ => Err("Invalid native asset")
+			}
+		}
+
+		pub fn to_native_id(name: &str) -> Result<CurrencyId, &'static str> {
+			match name {
+				$(stringify!($NAME) => Ok(CurrencyId::$NAME),)*
+				_ => Err("Invalid native asset")
+			}
+		}
+
 		pub fn list_assets() -> Vec<Asset> {
 			[
 				$(Asset { id: CurrencyId::$NAME.0 as u64, name: stringify!($NAME).as_bytes().to_vec() },)*

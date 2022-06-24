@@ -95,6 +95,8 @@ ibc-primitives = { path = "../../frame/ibc/ibc-primitives", default-features = f
 ibc-runtime-api = { path = "../../frame/ibc/ibc-runtime-api", default-features = false }
 pallet-ibc = { path = "../../frame/ibc", default-features = false }
 pallet-ibc-ping = { path = "../../frame/ibc-ping", default-features = false }
+ibc-transfer = { path = "../../frame/ibc-transfer", default-features = false }
+hex = { version = "0.4.0", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22" }
@@ -191,7 +193,8 @@ runtime-benchmarks = [
   "common/runtime-benchmarks",
   "pallet-ibc/runtime-benchmarks",
   "pallet-proxy/runtime-benchmarks",
-  "pallet-staking-rewards/runtime-benchmarks",
+  "ibc-transfer/runtime-benchmarks",
+  "pallet-staking-rewards/runtime-benchmarks"
 ]
 std = [
   "codec/std",
@@ -276,6 +279,8 @@ std = [
   "ibc-primitives/std",
   "pallet-ibc-ping/std",
   "pallet-proxy/std",
-  "pallet-staking-rewards/std",
+  "ibc-transfer/std",
+  "hex/std",
+  "pallet-staking-rewards/std"
 ]
 wasm-builder = []

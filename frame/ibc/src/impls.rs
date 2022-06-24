@@ -1,17 +1,33 @@
 use super::*;
 use crate::routing::Context;
 use codec::{Decode, Encode};
+use composable_traits::{
+	defi::DeFiComposableConfig,
+	xcm::assets::{RemoteAssetRegistryInspect, RemoteAssetRegistryMutate, XcmAssetLocation},
+};
 use frame_support::traits::Currency;
 use ibc::{
+	applications::transfer::{
+		acknowledgement::{Acknowledgement as Ics20Acknowledgement, ACK_SUCCESS_B64},
+		error::Error as Ics20Error,
+		packet::PacketData,
+		relay::{
+			on_ack_packet::process_ack_packet, on_recv_packet::process_recv_packet,
+			on_timeout_packet::process_timeout_packet, send_transfer::send_transfer,
+		},
+	},
 	core::{
 		ics02_client::{
-			client_consensus::AnyConsensusState, client_state::AnyClientState,
+			client_state::{AnyClientState, ClientState},
 			context::ClientReader,
 		},
 		ics04_channel::{
 			channel::ChannelEnd,
 			context::{ChannelKeeper, ChannelReader},
-			msgs::chan_open_init::{MsgChannelOpenInit, TYPE_URL as CHANNEL_OPEN_INIT_TYPE_URL},
+			msgs::{
+				acknowledgement::Acknowledgement,
+				chan_open_init::{MsgChannelOpenInit, TYPE_URL as CHANNEL_OPEN_INIT_TYPE_URL},
+			},
 			packet::{Packet, Sequence},
 		},
 		ics24_host::{
@@ -22,8 +38,11 @@ use ibc::{
 				SeqRecvsPath, SeqSendsPath,
 			},
 		},
+		ics26_routing::context::ModuleOutputBuilder,
 	},
+	handler::HandlerOutputBuilder,
 	signer::Signer,
+	Height,
 };
 use ibc_primitives::{
 	ConnectionHandshake, IdentifiedChannel, IdentifiedClientState, IdentifiedConnection,
@@ -39,7 +58,7 @@ use ibc_trait::{
 	port_id_from_bytes, Error as IbcHandlerError, IbcTrait,
 };
 use scale_info::prelude::{collections::BTreeMap, string::ToString};
-use sp_std::time::Duration;
+use sp_runtime::traits::IdentifyAccount;
 use tendermint_proto::Protobuf;
 
 impl<T: Config> Pallet<T>
@@ -251,10 +270,7 @@ where
 			let client_state = ClientStates::<T>::get(client_id.clone());
 			let client_state =
 				AnyClientState::decode_vec(&client_state).map_err(|_| Error::<T>::DecodingError)?;
-			client_state
-				.latest_height()
-				.encode_vec()
-				.map_err(|_| Error::<T>::DecodingError)?
+			client_state.latest_height().encode_vec()
 		} else {
 			height
 		};
@@ -522,8 +538,11 @@ where
 	}
 
 	pub fn query_balance_with_address(addr: Vec<u8>) -> Result<u128, Error<T>> {
-		let account_id =
-			T::AccountId::decode(&mut &*addr).map_err(|_| Error::<T>::DecodingError)?;
+		let hex_string = String::from_utf8(addr).map_err(|_| Error::<T>::DecodingError)?;
+		let signer = Signer::from_str(&hex_string).map_err(|_| Error::<T>::DecodingError)?;
+		let ibc_acc = <T as transfer::Config>::AccountIdConversion::try_from(signer)
+			.map_err(|_| Error::<T>::DecodingError)?;
+		let account_id = ibc_acc.into_account();
 		let balance = format!("{:?}", T::Currency::free_balance(&account_id));
 		Ok(balance.parse().unwrap_or_default())
 	}
@@ -575,9 +594,7 @@ where
 		let ctx = Context::<T>::new();
 		// revision number is not used in this case so it's fine to use zero
 		let height = ibc::Height::new(0, height as u64);
-		ctx.host_consensus_state(height)
-			.ok()
-			.and_then(|cs_state| cs_state.encode_vec().ok())
+		ctx.host_consensus_state(height).ok().map(|cs_state| cs_state.encode_vec())
 	}
 }
 
@@ -596,11 +613,25 @@ impl<T: Config> Pallet<T> {
 impl<T: Config + Send + Sync> IbcTrait for Pallet<T>
 where
 	u32: From<<T as frame_system::Config>::BlockNumber>,
+	<T as DeFiComposableConfig>::MayBeAssetId:
+		From<<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryMutate>::AssetId>,
+	<T as DeFiComposableConfig>::MayBeAssetId:
+		From<<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryInspect>::AssetId>,
+	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryInspect>::AssetId:
+		From<<T as DeFiComposableConfig>::MayBeAssetId>,
+	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryMutate>::AssetId:
+		From<<T as DeFiComposableConfig>::MayBeAssetId>,
+	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryInspect>::AssetNativeLocation:
+		From<XcmAssetLocation>,
+	<<T as transfer::Config>::AssetRegistry as RemoteAssetRegistryMutate>::AssetNativeLocation:
+		From<XcmAssetLocation>,
+	<T as DeFiComposableConfig>::MayBeAssetId: From<<T as assets::Config>::AssetId>,
+	<T as DeFiComposableConfig>::MayBeAssetId: From<primitives::currency::CurrencyId>,
 {
-	fn send_packet(data: SendPacketData) -> Result<(), IbcHandlerError> {
-		let channel_id = data.channel_id;
-		let port_id = data.port_id;
-
+	fn client_revision_number(
+		port_id: Vec<u8>,
+		channel_id: Vec<u8>,
+	) -> Result<u64, IbcHandlerError> {
 		let connection_id = ChannelsConnection::<T>::iter()
 			.find_map(|(connection, identifiers)| {
 				if identifiers.contains(&(port_id.clone(), channel_id.clone())) {
@@ -609,7 +640,7 @@ where
 					None
 				}
 			})
-			.ok_or(IbcHandlerError::SendPacketError)?;
+			.ok_or(IbcHandlerError::ConnectionIdError)?;
 
 		let client_id = ConnectionClient::<T>::iter()
 			.find_map(
@@ -621,30 +652,40 @@ where
 					}
 				},
 			)
-			.ok_or(IbcHandlerError::SendPacketError)?;
-		let client_state = ClientStates::<T>::get(client_id.clone());
+			.ok_or(IbcHandlerError::ClientIdError)?;
+		let client_state = ClientStates::<T>::get(client_id);
 		let client_state = AnyClientState::decode_vec(&client_state)
-			.map_err(|_| IbcHandlerError::SendPacketError)?;
-		let latest_height = client_state.latest_height();
-		let encoded_height =
-			latest_height.encode_vec().map_err(|_| IbcHandlerError::SendPacketError)?;
-		let consensus_state = ConsensusStates::<T>::get(client_id, encoded_height);
-		let consensus_state = AnyConsensusState::decode_vec(&consensus_state)
-			.map_err(|_| IbcHandlerError::SendPacketError)?;
-		let latest_timestamp = consensus_state.timestamp();
+			.map_err(|_| IbcHandlerError::ClientStateError)?;
+		Ok(client_state.chain_id().version())
+	}
+
+	fn send_packet(data: SendPacketData) -> Result<(), IbcHandlerError> {
+		let channel_id = data.channel_id;
+		let port_id = data.port_id;
+
+		let revision_number = if let Some(revision_number) = data.revision_number {
+			revision_number
+		} else {
+			Self::client_revision_number(port_id.clone(), channel_id.clone())?
+		};
 		let mut ctx = crate::routing::Context::<T>::new();
 		let next_seq_send = NextSequenceSend::<T>::get(port_id.clone(), channel_id.clone());
 		let sequence = Sequence::from(next_seq_send);
 		let source_port =
-			port_id_from_bytes(port_id).map_err(|_| IbcHandlerError::SendPacketError)?;
+			port_id_from_bytes(port_id).map_err(|_| IbcHandlerError::ChannelOrPortError)?;
 		let source_channel =
-			channel_id_from_bytes(channel_id).map_err(|_| IbcHandlerError::SendPacketError)?;
-		let destination_port =
-			port_id_from_bytes(data.dest_port_id).map_err(|_| IbcHandlerError::SendPacketError)?;
-		let destination_channel = channel_id_from_bytes(data.dest_channel_id)
-			.map_err(|_| IbcHandlerError::SendPacketError)?;
-		let timestamp = (latest_timestamp + Duration::from_nanos(data.timeout_timestamp_offset))
-			.map_err(|_| IbcHandlerError::SendPacketError)?;
+			channel_id_from_bytes(channel_id).map_err(|_| IbcHandlerError::ChannelOrPortError)?;
+		let source_channel_end = ctx
+			.channel_end(&(source_port.clone(), source_channel))
+			.map_err(|_| IbcHandlerError::ChannelOrPortError)?;
+
+		let destination_port = source_channel_end.counterparty().port_id().clone();
+		let destination_channel = *source_channel_end
+			.counterparty()
+			.channel_id()
+			.ok_or(IbcHandlerError::ChannelOrPortError)?;
+		let timestamp = ibc::timestamp::Timestamp::from_nanoseconds(data.timeout_timestamp)
+			.map_err(|_| IbcHandlerError::TimestampOrHeightError)?;
 		let packet = Packet {
 			sequence,
 			source_port,
@@ -652,7 +693,7 @@ where
 			destination_port,
 			destination_channel,
 			data: data.data,
-			timeout_height: latest_height.add(data.timeout_height_offset),
+			timeout_height: Height::new(revision_number, data.timeout_height),
 			timeout_timestamp: timestamp,
 		};
 
@@ -678,8 +719,7 @@ where
 			channel: channel_end,
 			signer: Signer::from_str(MODULE_ID).map_err(|_| IbcHandlerError::ChannelInitError)?,
 		}
-		.encode_vec()
-		.map_err(|_| IbcHandlerError::ChannelInitError)?;
+		.encode_vec();
 		let msg = ibc_proto::google::protobuf::Any {
 			type_url: CHANNEL_OPEN_INIT_TYPE_URL.to_string(),
 			value,
@@ -689,6 +729,127 @@ where
 		)
 		.map_err(|_| IbcHandlerError::ChannelInitError)?;
 		Ok(channel_id)
+	}
+
+	fn send_transfer(
+		msg: ibc::applications::transfer::msgs::transfer::MsgTransfer<
+			ibc::applications::transfer::PrefixedCoin,
+		>,
+	) -> Result<(), IbcHandlerError> {
+		let mut handler_output = HandlerOutputBuilder::default();
+		let mut ctx = Context::<T>::default();
+		send_transfer::<_, _>(&mut ctx, &mut handler_output, msg)
+			.map_err(|_| IbcHandlerError::SendTransferError)?;
+		Ok(())
+	}
+
+	fn on_receive_packet(
+		output: &mut ModuleOutputBuilder,
+		packet: &Packet,
+	) -> Result<(), IbcHandlerError> {
+		let mut ctx = Context::<T>::default();
+		let packet_data: PacketData = serde_json::from_slice(packet.data.as_slice())
+			.map_err(|_| IbcHandlerError::DecodingError)?;
+		process_recv_packet(&ctx, output, packet, packet_data)
+			.and_then(|write_fn| write_fn(&mut ctx).map_err(Ics20Error::unknown_msg_type))
+			.map_err(|_| IbcHandlerError::ReceivePacketError)
+	}
+
+	fn on_ack_packet(
+		_output: &mut ModuleOutputBuilder,
+		packet: &Packet,
+		ack: &Acknowledgement,
+	) -> Result<(), IbcHandlerError> {
+		let mut ctx = Context::<T>::default();
+		let packet_data: PacketData = serde_json::from_slice(packet.data.as_slice())
+			.map_err(|_| IbcHandlerError::DecodingError)?;
+		let ack = String::from_utf8(ack.as_ref().to_vec())
+			.map(|val| {
+				if val.as_bytes() == ACK_SUCCESS_B64 {
+					Ics20Acknowledgement::Success(ACK_SUCCESS_B64.to_vec())
+				} else {
+					Ics20Acknowledgement::Error(val)
+				}
+			})
+			.map_err(|_| IbcHandlerError::DecodingError)?;
+		process_ack_packet(&mut ctx, packet, &packet_data, &ack)
+			.map_err(|_| IbcHandlerError::AcknowledgementError)
+	}
+
+	fn on_timeout_packet(
+		_output: &mut ModuleOutputBuilder,
+		packet: &Packet,
+	) -> Result<(), IbcHandlerError> {
+		let mut ctx = Context::<T>::default();
+		let packet_data: PacketData = serde_json::from_slice(packet.data.as_slice())
+			.map_err(|_| IbcHandlerError::DecodingError)?;
+		process_timeout_packet(&mut ctx, packet, &packet_data)
+			.map_err(|_| IbcHandlerError::TimeoutError)
+	}
+
+	fn write_acknowlegdement(packet: &Packet, ack: Vec<u8>) -> Result<(), IbcHandlerError> {
+		let mut ctx = Context::<T>::default();
+		let ack = ctx.ack_commitment(ack.into());
+		ctx.store_packet_acknowledgement(
+			(packet.source_port.clone(), packet.source_channel, packet.sequence),
+			ack,
+		)
+		.map_err(|_| IbcHandlerError::WriteAcknowledgementError)
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn create_client() -> Result<ClientId, IbcHandlerError> {
+		use crate::benchmarks::tendermint_benchmark_utils::create_mock_state;
+		use ibc::core::ics02_client::{
+			client_consensus::AnyConsensusState,
+			msgs::create_client::{MsgCreateAnyClient, TYPE_URL},
+		};
+
+		let (mock_client_state, mock_cs_state) = create_mock_state();
+		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
+		let msg = MsgCreateAnyClient::new(
+			AnyClientState::Tendermint(mock_client_state),
+			Some(AnyConsensusState::Tendermint(mock_cs_state)),
+			Signer::from_str("pallet_ibc").unwrap(),
+		)
+		.unwrap()
+		.encode_vec();
+		let msg = ibc_proto::google::protobuf::Any { type_url: TYPE_URL.to_string(), value: msg };
+		let mut ctx = crate::routing::Context::<T>::new();
+		ibc::core::ics26_routing::handler::deliver::<_, crate::host_functions::HostFunctions>(
+			&mut ctx, msg,
+		)
+		.unwrap();
+		Ok(client_id)
+	}
+
+	#[cfg(feature = "runtime-benchmarks")]
+	fn create_connection(
+		client_id: ClientId,
+		connection_id: ConnectionId,
+	) -> Result<(), IbcHandlerError> {
+		use ibc::core::ics03_connection::{
+			connection::{ConnectionEnd, Counterparty, State},
+			context::ConnectionKeeper,
+			version::Version,
+		};
+		let delay_period = core::time::Duration::from_nanos(1000);
+		let counter_party = Counterparty::new(
+			client_id.clone(),
+			Some(ConnectionId::new(1)),
+			<T as Config>::CONNECTION_PREFIX.to_vec().try_into().unwrap(),
+		);
+		let connection_end = ConnectionEnd::new(
+			State::Open,
+			client_id.clone(),
+			counter_party,
+			vec![Version::default()],
+			delay_period,
+		);
+		let mut ctx = crate::routing::Context::<T>::new();
+		ctx.store_connection(connection_id.clone(), &connection_end).unwrap();
+		ctx.store_connection_to_client(connection_id, &client_id).unwrap();
+		Ok(())
 	}
 }
 

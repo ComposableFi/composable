@@ -38,10 +38,11 @@ where
 		let mut ranges = Self { ranges: BoundedVec::default() };
 
 		#[allow(clippy::disallowed_methods)]
-		if Self::bounds() >= 3 {
+		if Self::bounds() >= 4 {
 			ranges.add(Range::lp_tokens()).expect("capacitiy is sufficient, qed");
 			ranges.add(Range::tokens()).expect("capacitiy is sufficient, qed");
 			ranges.add(Range::foreign_assets()).expect("capacitiy is sufficient, qed");
+			ranges.add(Range::ibc_assets()).expect("capacitiy is sufficient, qed");
 		}
 
 		ranges
@@ -132,6 +133,13 @@ where
 		Range {
 			current: AssetId::from(300_000_000_001_u128),
 			end: AssetId::from(400_000_000_000_u128),
+		}
+	}
+
+	fn ibc_assets() -> Self {
+		Range {
+			current: AssetId::from(400_000_000_001_u128),
+			end: AssetId::from(500_000_000_000_u128),
 		}
 	}
 

@@ -12,6 +12,20 @@ pub trait WeightInfo {
 	fn set_min_fee() -> Weight;
 }
 
+impl WeightInfo for () {
+	fn register_asset() -> Weight {
+		0
+	}
+
+	fn update_asset() -> Weight {
+		0
+	}
+
+	fn set_min_fee() -> Weight {
+		0
+	}
+}
+
 /// Weights for pallet_assets_registry using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {

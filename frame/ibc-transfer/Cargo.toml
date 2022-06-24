@@ -1,0 +1,57 @@
+[package]
+name = "ibc-transfer"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
+log = { version = "0.4.0", default-features = false }
+scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0.45", default-features = false }
+hex = { version = "0.4.3", default-features = false, optional = true }
+
+frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false, optional = true }
+frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
+frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
+balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
+composable-traits = { default-features = false, path = "../composable-traits" }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "b3ab319018b1bb8917bca3aad977455aa2c9b179", default-features = false }
+ibc-trait = {path = "../ibc/ibc-trait", default-features = false }
+ibc-primitives = {path = "../ibc/ibc-primitives", default-features = false }
+primitives = {path = "../../runtime/primitives", default-features = false }
+
+
+[features]
+default = ['std']
+std = [
+	'codec/std',
+	'log/std',
+	"scale-info/std",
+	"serde_json/std",
+	"frame-benchmarking/std",
+	'frame-support/std',
+	'frame-system/std',
+	'sp-runtime/std',
+	'sp-core/std',
+	'sp-std/std',
+	'ibc/std',
+	'ibc-trait/std',
+	'balances/std',
+	"composable-traits/std",
+	"primitives/std",
+	"ibc-primitives/std"
+]
+
+runtime-benchmarks = [
+	"frame-benchmarking",
+	"frame-system/runtime-benchmarks",
+	"ibc-trait/runtime-benchmarks",
+	"hex"
+]
+
+try-runtime = ["frame-support/try-runtime"]
