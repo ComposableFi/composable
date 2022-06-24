@@ -22,7 +22,7 @@ import {
   usePendingExtrinsic,
   useSelectedAccount,
 } from "substrate-react";
-import { LiquidityBootstrappingPool } from "@/store/pools/pools.types";
+import { LiquidityBootstrappingPool } from "@/defi/types";
 import { getSigner } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import useStore from "@/store/useStore";

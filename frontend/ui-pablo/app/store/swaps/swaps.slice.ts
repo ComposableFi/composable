@@ -1,68 +1,31 @@
+import BigNumber from "bignumber.js";
 import { StoreSlice } from "../types";
 import { SwapsSlice } from "./swaps.types";
 import {
-  putDexRoute,
-  putPoolConstants,
-  putUiAssetSelection,
-  putPoolVariables,
-  invertAssetSelection,
-  resetSwaps,
+  putAssetId, putSelectedPool, putSpotPrice, resetSwapsSlice,
 } from "./swaps.utils";
 
 const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
   swaps: {
-    dexRouter: {
-      dexRoute: [],
+    spotPrice: new BigNumber(0),
+    selectedAssets: {
+      base: "none",
+      quote: "none",
     },
-    poolVariables: {
-      spotPrice: "0",
-    },
-    poolConstants: {
-      poolAccountId: "",
-      poolIndex: -1,
-      feeConfig: {
-        feeRate: "0",
-        ownerFeeRate: "0",
-        protocolFeeRate: "0"
-      },
-      lbpConstants: undefined,
-      poolType: "none",
-      pair: {
-        quote: -1,
-        base: -1,
-      },
-    },
-    ui: {
-      quoteAssetSelected: "none",
-      baseAssetSelected: "none",
-    },
-  },
-  setDexRouteSwaps: (dexRoute: number[]) =>
-    set((prev: SwapsSlice) => ({
-      swaps: putDexRoute(prev.swaps, dexRoute),
+    selectedPool: undefined,
+    setSelectedAsset: (id, side) => set((prev: SwapsSlice) => ({
+      swaps: putAssetId(prev.swaps, id, side)
     })),
-  setUiAssetSelectionSwaps: (
-    side: "base" | "quote",
-    assetId: string | "none"
-  ) =>
-    set((prev: SwapsSlice) => ({
-      swaps: putUiAssetSelection(prev.swaps, side, assetId),
+    setSelectedPool: (pool) => set((prev: SwapsSlice) => ({
+      swaps: putSelectedPool(prev.swaps, pool)
     })),
-  setPoolConstantsSwaps: (poolConstants) =>
-    set((prev: SwapsSlice) => ({
-      swaps: putPoolConstants(prev.swaps, poolConstants),
+    setSpotPrice: (price) => set((prev: SwapsSlice) => ({
+      swaps: putSpotPrice(prev.swaps, price)
     })),
-  setPoolVariablesSwaps: (key: {
-    spotPrice: string;
-  }) =>
-    set((prev: SwapsSlice) => ({
-      swaps: putPoolVariables(prev.swaps, key),
-    })),
-  invertAssetSelectionSwaps: () =>
-    set((prev: SwapsSlice) => ({
-      swaps: invertAssetSelection(prev.swaps),
-    })),
-  resetSwaps: () => set((prev: SwapsSlice) => ({ swaps: resetSwaps(prev.swaps) }))
+    resetSwaps: () => set((prev: SwapsSlice) => ({
+      swaps: resetSwapsSlice(prev.swaps)
+    }))
+  }
 });
 
 export default createSwapsSlice;
