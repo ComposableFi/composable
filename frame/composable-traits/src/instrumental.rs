@@ -2,6 +2,32 @@ use codec::Codec;
 use frame_support::{pallet_prelude::*, sp_std::fmt::Debug};
 use sp_runtime::Perquintill;
 
+/// An indication of pool state. Shows whether the transfer of assets is currently taking place with
+/// the current pool.
+#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, MaxEncodedLen, TypeInfo)]
+pub enum State {
+	/// Indicates that there is currently no asset transfering going on for this asset
+	/// and it can be initialized.
+	Normal,
+	/// Indicates that an asset is currently being transferred from one pool to another
+	/// for this asset, so it is not possible to initialize a new transfer.
+	Transferring,
+}
+
+/// An indication of access rights for admin accounts.
+#[derive(Copy, Clone, Encode, Decode, Debug, PartialEq, MaxEncodedLen, TypeInfo)]
+pub enum AccessRights {
+	/// Account has full access rights.
+	Full,
+	/// Account has access only to `rebalance` function
+	/// Account has access only to [`rebalance`](InstrumentalProtocolStrategy::rebalance())
+	/// function.
+	Rebalance,
+	/// Account has access only to `set_pool_id_for_asset` function
+	/// [`set_pool_id_for_asset`](InstrumentalProtocolStrategy::set_pool_id_for_asset()) function.
+	SetPoolId,
+}
+
 #[derive(Clone, Copy, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
 pub struct InstrumentalVaultConfig<AssetId, Percent> {
 	pub asset_id: AssetId,
@@ -44,6 +70,7 @@ pub trait InstrumentalProtocolStrategy {
 	type AccountId: core::cmp::Ord;
 	type VaultId: Clone + Codec + Debug + PartialEq + Default + Parameter;
 	type AssetId;
+	type PoolId;
 
 	fn account_id() -> Self::AccountId;
 
@@ -52,4 +79,9 @@ pub trait InstrumentalProtocolStrategy {
 	fn rebalance() -> DispatchResult;
 
 	fn get_apy(asset: Self::AssetId) -> Result<u128, DispatchError>;
+
+	fn set_pool_id_for_asset(
+		asset_id: Self::AssetId,
+		pool_id: Self::PoolId,
+	) -> Result<(), DispatchError>;
 }

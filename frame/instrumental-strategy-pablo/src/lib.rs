@@ -16,7 +16,9 @@ pub mod pallet {
 
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
-		dex::Amm, instrumental::InstrumentalProtocolStrategy, vault::StrategicVault,
+		dex::Amm,
+		instrumental::{AccessRights, InstrumentalProtocolStrategy, State},
+		vault::StrategicVault,
 	};
 	use frame_support::{
 		dispatch::{DispatchError, DispatchResult},
@@ -25,6 +27,7 @@ pub mod pallet {
 		traits::fungibles::{Mutate, MutateHold, Transfer},
 		transactional, Blake2_128Concat, PalletId,
 	};
+	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use sp_runtime::traits::{
 		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
 	};
@@ -139,6 +142,12 @@ pub mod pallet {
 	//                                           Pallet Types
 	// ---------------------------------------------------------------------------------------------
 
+	#[derive(Encode, Decode, MaxEncodedLen, Clone, Copy, Default, Debug, PartialEq, TypeInfo)]
+	pub struct PoolState<PoolId, State> {
+		pub pool_id: PoolId,
+		pub state: State,
+	}
+
 	// ---------------------------------------------------------------------------------------------
 	//                                          Runtime Storage
 	// ---------------------------------------------------------------------------------------------
@@ -153,7 +162,13 @@ pub mod pallet {
 	/// The corresponding Pool to invest the whitelisted asset into.
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
-	pub type Pools<T: Config> = StorageMap<_, Blake2_128Concat, T::AssetId, T::PoolId>;
+	pub type Pools<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AssetId, PoolState<T::PoolId, State>>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn admin_accounts)]
+	pub type AdminAccountIds<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::AccountId, AccessRights>;
 
 	// ---------------------------------------------------------------------------------------------
 	//                                          Runtime Events
@@ -167,6 +182,8 @@ pub mod pallet {
 		RebalancedVault { vault_id: T::VaultId },
 
 		UnableToRebalanceVault { vault_id: T::VaultId },
+
+		AssociatedPoolWithAsset { asset_id: T::AssetId, pool_id: T::PoolId },
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -178,10 +195,15 @@ pub mod pallet {
 		VaultAlreadyAssociated,
 
 		TooManyAssociatedStrategies,
-
 		// TODO(belousm): only for MVP version we can assume the `pool_id` is already known and
 		// exist. We should remove it in V1.
 		PoolNotFound,
+		// Occurs when we try to set a new pool_id, during a transferring from or to an old one
+		TransferringInProgress,
+		// Occurs when an attempt is made to initialize a function not from an admin account
+		NotAdminAccount,
+		// Occurs when an admin account doesn't have enough access rights to initialize a function
+		NotEnoughAccessRights,
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -196,7 +218,41 @@ pub mod pallet {
 	// ---------------------------------------------------------------------------------------------
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {}
+	impl<T: Config> Pallet<T> {
+		/// Store a mapping of asset_id -> pool_id in the pools runtime storage object.
+		///
+		/// Emits [`AssociatedPoolWithAsset`](Event::AssociatedPoolWithAsset) event when successful.
+		#[pallet::weight(T::WeightInfo::set_pool_id_for_asset())]
+		pub fn set_pool_id_for_asset(
+			origin: OriginFor<T>,
+			asset_id: T::AssetId,
+			pool_id: T::PoolId,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			let access_right = Self::admin_accounts(who).ok_or(Error::<T>::NotAdminAccount)?;
+			ensure!(
+				access_right == AccessRights::Full || access_right == AccessRights::SetPoolId,
+				Error::<T>::NotEnoughAccessRights
+			);
+			<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
+			Self::deposit_event(Event::AssociatedPoolWithAsset { asset_id, pool_id });
+			Ok(().into())
+		}
+		/// Occur rebalance of liquidity of each vault.
+		///
+		/// Emits [`RebalancedVault`](Event::RebalancedVault) event when successful.
+		#[pallet::weight(T::WeightInfo::liquidity_rebalance())]
+		pub fn liquidity_rebalance(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			let access_right = Self::admin_accounts(who).ok_or(Error::<T>::NotAdminAccount)?;
+			ensure!(
+				access_right == AccessRights::Full || access_right == AccessRights::Rebalance,
+				Error::<T>::NotEnoughAccessRights
+			);
+			<Self as InstrumentalProtocolStrategy>::rebalance()?;
+			Ok(().into())
+		}
+	}
 
 	// ---------------------------------------------------------------------------------------------
 	//                                         Protocol Strategy
@@ -206,9 +262,28 @@ pub mod pallet {
 		type AccountId = T::AccountId;
 		type VaultId = T::VaultId;
 		type AssetId = T::AssetId;
+		type PoolId = T::PoolId;
 
 		fn account_id() -> Self::AccountId {
 			T::PalletId::get().into_account_truncating()
+		}
+
+		#[transactional]
+		fn set_pool_id_for_asset(asset_id: T::AssetId, pool_id: T::PoolId) -> DispatchResult {
+			Pools::<T>::try_mutate(asset_id, |current_pool_id_and_state| {
+				match current_pool_id_and_state {
+					Some(current_pool_id_and_state) => {
+						ensure!(
+							current_pool_id_and_state.state == State::Normal,
+							Error::<T>::TransferringInProgress
+						);
+						*current_pool_id_and_state = PoolState { pool_id, state: State::Normal };
+					},
+					None =>
+						Pools::<T>::insert(asset_id, PoolState { pool_id, state: State::Normal }),
+				};
+				Ok(())
+			})
 		}
 
 		#[transactional]
