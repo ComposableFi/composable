@@ -36,7 +36,8 @@ const tableHeaders: TableHeader[] = [
 ];
 
 export const YourBondTable: React.FC = () => {
-  const { activeBonds } = useStore();
+  // const { activeBonds } = useStore();
+  const activeBonds: any[] = [];
   const router = useRouter();
 
   const handleRowClick = (offerId: number) => {

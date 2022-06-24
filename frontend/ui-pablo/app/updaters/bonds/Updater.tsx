@@ -1,13 +1,7 @@
 import useStore from "../../store/useStore";
 import { useEffect, useMemo } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
-import { decodeBondOffer } from "./decodeBondOffer";
-
-import { decodeVestingSchedule } from "./decodeVestingSchedule";
-import { fetchBonds, fetchVestingSchedule } from "@/defi/utils/";
-import { getToken, getTokenId } from "../../defi/Tokens";
-import { getCurrentBlock } from "../../utils/defi/getCurrentBlock";
-import { getCurrentTime } from "../../utils/defi/getCurrentTime";
+import { fetchBondOffers } from "@/defi/utils/";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 /**
@@ -15,17 +9,17 @@ import { DEFAULT_NETWORK_ID } from "@/defi/utils";
  * @returns null
  */
 const Updater = () => {
-  const { pools, addBond, addActiveBond, reset } = useStore();
-  const { parachainApi } = useParachainApi("picasso");
-  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
+  // const { putBondOffers } = useStore();
+  // const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
+  // const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
 
-  const constantProductPool = useMemo(
-    () => [
-      ...pools.constantProductPools.verified,
-      ...pools.constantProductPools.unVerified,
-    ],
-    [pools]
-  );
+  // useEffect(() => {
+  //     if (parachainApi) {
+  //       fetchBondOffers(parachainApi).then(decodedOffers => {
+  //         putBondOffers(decodedOffers)
+  //       })
+  //     }
+  //   }, [parachainApi, putBondOffers])
 
   // useEffect(() => {
   //   if (parachainApi && selectedAccount) {
@@ -34,11 +28,11 @@ const Updater = () => {
   //         try {
   //           const [beneficiary, bondOffer] = bond.unwrap();
   //           const principalCurrencyId = bondOffer.asset.toString();
-  //           const principalAppoloPriceInUSD = await getAppoloPriceInUSD(
+  //           const principalAppoloPriceInUSD = await fetchApolloPriceByAssetId(
   //             parachainApi,
   //             principalCurrencyId
   //           );
-  //           const rewardAppoloPriceInUSD = await getAppoloPriceInUSD(
+  //           const rewardAppoloPriceInUSD = await fetchApolloPriceByAssetId(
   //             parachainApi,
   //             bondOffer.reward.asset.toString()
   //           );
@@ -49,7 +43,7 @@ const Updater = () => {
   //             principalCurrencyId
   //           );
   //           const lpTokenPair = getLPTokenPair(
-  //             constantProductPool,
+  //             lpRewardingPools as ConstantProductPool[],
   //             principalCurrencyId
   //           );
   //           const principalAsset = lpTokenPair
@@ -61,11 +55,11 @@ const Updater = () => {
   //           const decodedBondOffer = decodeBondOffer(
   //             index + 1,
   //             beneficiary,
-  //             bondOffer,
+  //             bondOffer.toHuman(),
   //             principalAsset
   //           );
   //           const decodedVestingSchedule = vestingSchedule
-  //             ? decodeVestingSchedule(vestingSchedule)
+  //             ? decodeVestingSchedule(vestingSchedule.toJSON())
   //             : null;
   //           const currentBlock = await getCurrentBlock(parachainApi);
   //           const currentTime = await getCurrentTime(parachainApi);
@@ -77,12 +71,14 @@ const Updater = () => {
   //               currentTime
   //             );
   //           }
+  //           console.log(decodeBondOffer)
   //           addBond(
   //             decodedBondOffer,
-  //             principalAppoloPriceInUSD.toNumber(),
-  //             rewardAppoloPriceInUSD.toNumber()
+  //             new BigNumber(principalAppoloPriceInUSD).toNumber(),
+  //             (new BigNumber(rewardAppoloPriceInUSD)).toNumber()
   //           );
   //         } catch (ex) {
+  //           console.error(ex)
   //           return null;
   //         }
   //       });
@@ -91,10 +87,10 @@ const Updater = () => {
   //   // eslint-disable-next-line react-hooks/exhaustive-deps
   // }, [parachainApi, selectedAccount]);
 
-  useEffect(() => {
-    reset();
+  // useEffect(() => {
+    // reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedAccount]);
+  // }, [selectedAccount]);
 
   return null;
 };

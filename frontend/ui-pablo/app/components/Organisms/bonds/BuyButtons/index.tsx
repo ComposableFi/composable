@@ -1,6 +1,5 @@
 import { BaseAsset, PairAsset } from "@/components/Atoms";
-import { getToken } from "@/defi/Tokens";
-import { BondDetails, TokenId } from "@/defi/types";
+import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
 import { Button, Grid, GridProps } from "@mui/material";
 import { useRouter } from "next/router";
 
@@ -30,7 +29,7 @@ const restAssetProps = (label: string, iconSize: number) =>
 type TokenType = "token1" | "token2" | "lp";
 
 export type BuyButtonsProps = {
-  bond: BondDetails;
+  bond: SelectedBondOffer;
   iconSize?: number;
 } & GridProps;
 export const BuyButtons: React.FC<BuyButtonsProps> = ({
@@ -40,9 +39,6 @@ export const BuyButtons: React.FC<BuyButtonsProps> = ({
 }) => {
   const router = useRouter();
 
-  const token1 = getToken(bond.tokenId1);
-  const token2 = getToken(bond.tokenId2);
-
   const onBuyHandler = (token: TokenType) => () => {
     if (token === "lp") {
       router.push("/pool");
@@ -51,21 +47,33 @@ export const BuyButtons: React.FC<BuyButtonsProps> = ({
     }
   };
 
+  const isLpBond =
+    bond.principalAsset &&
+    (bond.principalAsset as any).baseAsset &&
+    (bond.principalAsset as any).quoteAsset;
+  if (!isLpBond) return null;
+
   return (
     <Grid container columnSpacing={3} {...gridProps}>
       <Grid item {...threeColumnPageSize}>
         <Button {...buttonProps(onBuyHandler("token1"))}>
           <BaseAsset
-            icon={token1.icon}
-            {...restAssetProps(token1.symbol, iconSize)}
+            icon={(bond.principalAsset as any).baseAsset.icon}
+            {...restAssetProps(
+              (bond.principalAsset as any).baseAsset.symbol,
+              iconSize
+            )}
           />
         </Button>
       </Grid>
       <Grid item {...threeColumnPageSize}>
         <Button {...buttonProps(onBuyHandler("token2"))}>
           <BaseAsset
-            icon={token2.icon}
-            {...restAssetProps(token2.symbol, iconSize)}
+            icon={(bond.principalAsset as any).quoteAsset.icon}
+            {...restAssetProps(
+              (bond.principalAsset as any).quoteAsset.symbol,
+              iconSize
+            )}
           />
         </Button>
       </Grid>
@@ -73,8 +81,14 @@ export const BuyButtons: React.FC<BuyButtonsProps> = ({
         <Button {...buttonProps(onBuyHandler("lp"))}>
           <PairAsset
             assets={[
-              { icon: token1.icon, label: token1.symbol },
-              { icon: token2.icon, label: token2.symbol },
+              {
+                icon: (bond.principalAsset as any).baseAsset.icon,
+                label: (bond.principalAsset as any).baseAsset.symbol,
+              },
+              {
+                icon: (bond.principalAsset as any).quoteAsset.icon,
+                label: (bond.principalAsset as any).quoteAsset.symbol,
+              },
             ]}
             {...restAssetProps("Create LP", iconSize)}
           />

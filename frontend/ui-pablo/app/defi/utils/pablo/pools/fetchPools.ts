@@ -164,7 +164,7 @@ export async function fetchPools(parachainApi: ApiPromise): Promise<{
 }
 
 export function getLPTokenPair(
-  constantProductPool: ConstantProductPool[],
+  constantProductPool: Array<ConstantProductPool | StableSwapPool>,
   currencyId: string
 ) {
   const constantProduct = constantProductPool.find(
