@@ -36,8 +36,7 @@ const CrowdloanRewards: NextPage = () => {
         ? router.push("crowdloan-rewards/stablecoin")
         : router.push("crowdloan-rewards/ksm");
     }
-    // only to be called on page load
-    // therefore no params
+    // Only to be called on page load therefore we can omit dependencies.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -77,6 +77,7 @@ export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
     setStartIndex(startIndex + 4);
   };
 
+
   useEffect(() => {
     if (!userPools.length) {
         setShowNoPools(true);

@@ -145,8 +145,7 @@ export const AuctionPriceChart: React.FC<AuctionPriceChartProps> = ({
 
   useEffect(() => {
     setOptions(chartOptions(color || theme.palette.primary.main, dateFormat));
-    // do not add chart options as dependancy
-    // causes rerendering issue
+    // Do not add chart options as dependency as it causes rerendering issues.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [color, theme, dateFormat]);
 
