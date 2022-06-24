@@ -52,7 +52,7 @@ fn should_fail_if_there_is_no_position_in_market() {
 
 #[test]
 fn should_realize_long_position_gains() {
-	let config = MarketConfig { taker_fee: 0, ..Default::default() };
+	let config = MarketConfig::default();
 	let collateral_0 = as_balance(100);
 
 	with_trading_context(config, collateral_0, |market_id| {
@@ -79,7 +79,7 @@ fn should_realize_long_position_gains() {
 
 #[test]
 fn should_realize_long_position_losses() {
-	let config = MarketConfig { taker_fee: 0, ..Default::default() };
+	let config = MarketConfig::default();
 	let collateral_0 = as_balance(100);
 
 	with_trading_context(config, collateral_0, |market_id| {
@@ -106,12 +106,7 @@ fn should_realize_long_position_losses() {
 
 #[test]
 fn should_realize_long_position_funding() {
-	let config = MarketConfig {
-		funding_frequency: 60,
-		funding_period: 60,
-		taker_fee: 0,
-		..Default::default()
-	};
+	let config = MarketConfig { funding_frequency: 60, funding_period: 60, ..Default::default() };
 	let collateral_0 = as_balance(100);
 
 	with_trading_context(config.clone(), collateral_0, |market_id| {
@@ -145,7 +140,7 @@ fn should_realize_long_position_funding() {
 
 #[test]
 fn should_realize_short_position_gains() {
-	let config = MarketConfig { taker_fee: 0, ..Default::default() };
+	let config = MarketConfig::default();
 	let collateral_0 = as_balance(100);
 
 	with_trading_context(config, collateral_0, |market_id| {
@@ -172,7 +167,7 @@ fn should_realize_short_position_gains() {
 
 #[test]
 fn should_realize_short_position_losses() {
-	let config = MarketConfig { taker_fee: 0, ..Default::default() };
+	let config = MarketConfig::default();
 	let collateral_0 = as_balance(100);
 
 	with_trading_context(config, collateral_0, |market_id| {
@@ -199,12 +194,7 @@ fn should_realize_short_position_losses() {
 
 #[test]
 fn should_realize_short_position_funding() {
-	let config = MarketConfig {
-		funding_frequency: 60,
-		funding_period: 60,
-		taker_fee: 0,
-		..Default::default()
-	};
+	let config = MarketConfig { funding_frequency: 60, funding_period: 60, ..Default::default() };
 	let collateral_0 = as_balance(100);
 
 	with_trading_context(config.clone(), collateral_0, |market_id| {
@@ -238,7 +228,7 @@ fn should_realize_short_position_funding() {
 
 #[test]
 fn should_fail_if_pushes_index_mark_divergence_above_threshold() {
-	let config = MarketConfig { taker_fee: 0, ..Default::default() };
+	let config = MarketConfig::default();
 
 	with_trading_context(config, as_balance(1_000_000), |market_id| {
 		// Set maximum divergence to 10%
@@ -271,7 +261,7 @@ fn should_fail_if_pushes_index_mark_divergence_above_threshold() {
 
 #[test]
 fn should_not_fail_if_index_mark_divergence_was_already_above_threshold() {
-	let config = MarketConfig { taker_fee: 0, ..Default::default() };
+	let config = MarketConfig::default();
 
 	with_trading_context(config, as_balance(1_000_000), |market_id| {
 		// Set maximum divergence to 10%
@@ -303,7 +293,7 @@ fn should_not_fail_if_index_mark_divergence_was_already_above_threshold() {
 
 #[test]
 fn should_only_update_collateral_with_available_gains() {
-	let config = MarketConfig { taker_fee: 0, ..Default::default() };
+	let config = MarketConfig::default();
 	let collateral = as_balance(100);
 	let margins = vec![(ALICE, collateral), (BOB, collateral / 2)];
 
@@ -456,7 +446,6 @@ proptest! {
 		let config = MarketConfig {
 			funding_frequency: 60,
 			funding_period: 60,
-			taker_fee: 0,
 			..Default::default()
 		};
 		let size = as_balance(100);
@@ -480,6 +469,40 @@ proptest! {
 			assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
 			// Last funding update should be at time 60
 			assert_eq!(get_market(&market_id).funding_rate_ts, config.funding_frequency);
+		});
+	}
+
+	#[test]
+	fn should_not_update_market_funding_if_too_early(
+		direction in any_direction(),
+		offset in 1..=60_u64
+	) {
+		let config = MarketConfig {
+			funding_frequency: 60,
+			funding_period: 60,
+			..Default::default()
+		};
+		let size = as_balance(100);
+
+		with_trading_context(config, size, |market_id| {
+			// Ensure last funding update is at time 0
+			assert_eq!(get_market(&market_id).funding_rate_ts, 0);
+
+			VammPallet::set_price(Some(10.into()));
+
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				direction,
+				size,
+				size / 10,
+			));
+
+			// Not enough time passes for a funding update to be possible
+			run_for_seconds(60 - offset);
+			assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
+			// Last funding update should be at time 0
+			assert_eq!(get_market(&market_id).funding_rate_ts, 0);
 		});
 	}
 }

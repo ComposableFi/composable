@@ -123,6 +123,9 @@ fn can_withdraw_realized_profits() {
 	});
 }
 
+// TODO(0xangelo): the Insurance Fund should cover losses incurred by traders with realized bad debt
+// when a trader in profit withdraws.
+
 #[test]
 fn can_withdraw_unrealized_funding_payments_by_settling_them() {
 	let config = MarketConfig::default();
@@ -273,6 +276,23 @@ proptest! {
 				TestPallet::withdraw_collateral(Origin::signed(ALICE), balance),
 				Error::<Runtime>::InsufficientCollateral
 			);
+		});
+	}
+
+	#[test]
+	fn should_not_panic_when_computing_withdrawal_amounts(
+		collateral_balance in any_balance(),
+		insurance_balance in any_balance(),
+		amount in any_balance(),
+	) {
+		ExtBuilder::default().build().execute_with(|| {
+			let collateral_account = TestPallet::get_collateral_account();
+			let insurance_account = TestPallet::get_insurance_account();
+
+			AssetsPallet::set_balance(USDC, &collateral_account, collateral_balance);
+			AssetsPallet::set_balance(USDC, &insurance_account, insurance_balance);
+
+			TestPallet::get_withdrawal_amounts(USDC, &collateral_account, &insurance_account, amount);
 		});
 	}
 }
