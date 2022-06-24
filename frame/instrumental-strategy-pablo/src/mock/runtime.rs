@@ -266,6 +266,7 @@ impl instrumental_strategy::Config for MockRuntime {
 	type Balance = Balance;
 	type VaultId = VaultId;
 	type Vault = Vault;
+	type PoolId = PoolId;
 	type PabloStrategy = PabloStrategy;
 	type MaxAssociatedVaults = MaxAssociatedVaults;
 	type PalletId = InstrumentalStrategyPalletId;
