@@ -4,8 +4,7 @@ use sp_runtime::traits::{IdentifyAccount, Verify};
 
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
-// TODO(saruman9): will be used in the future
-pub static _ADMIN: Public =
+pub static ADMIN: Public =
 	Public(hex!("0000000000000000000000000000000000000000000000000000000000000000"));
 pub static ALICE: Public =
 	Public(hex!("0000000000000000000000000000000000000000000000000000000000000001"));

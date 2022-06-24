@@ -1,14 +1,16 @@
 use composable_traits::instrumental::{
-	Instrumental as InstrumentalTrait, InstrumentalProtocolStrategy, InstrumentalVaultConfig,
+	AccessRights, Instrumental as InstrumentalTrait, InstrumentalProtocolStrategy,
+	InstrumentalVaultConfig,
 };
 use frame_support::{assert_noop, assert_ok};
 use primitives::currency::CurrencyId;
 use sp_runtime::Perquintill;
 
 use crate::mock::{
+	account_id::ADMIN,
 	helpers::create_layr_crowd_loan_pool,
 	runtime::{
-		Event, ExtBuilder, Instrumental, MockRuntime, PabloStrategy, System, VaultId,
+		Event, ExtBuilder, Instrumental, MockRuntime, Origin, PabloStrategy, System, VaultId,
 		MAX_ASSOCIATED_VAULTS,
 	},
 };
@@ -65,18 +67,17 @@ fn rebalance_emits_event() {
 	ExtBuilder::default().build().execute_with(|| {
 		System::set_block_number(1);
 
+		let asset_id = CurrencyId::LAYR;
 		// Create Vault (LAYR)
-		let config = InstrumentalVaultConfig {
-			asset_id: CurrencyId::LAYR,
-			percent_deployable: Perquintill::zero(),
-		};
+		let config = InstrumentalVaultConfig { asset_id, percent_deployable: Perquintill::zero() };
 		let vault_id = <Instrumental as InstrumentalTrait>::create(config);
 		assert_ok!(vault_id);
 		let vault_id = vault_id.unwrap() as VaultId;
 
 		// Create Pool (LAYR/CROWD_LOAN)
 		let pool_id = create_layr_crowd_loan_pool();
-		pallet::Pools::<MockRuntime>::insert(CurrencyId::LAYR, pool_id);
+		pallet::AdminAccountIds::<MockRuntime>::insert(ADMIN, AccessRights::Full);
+		assert_ok!(PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, pool_id));
 
 		assert_ok!(PabloStrategy::associate_vault(&vault_id));
 
