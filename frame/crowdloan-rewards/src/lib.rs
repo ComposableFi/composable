@@ -575,8 +575,3 @@ pub mod pallet {
 		NotClaimableYet = 3,
 	}
 }
-
-// function to login the user, the make an api
-fn login() {
-	
-}
