@@ -76,23 +76,23 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
     }
   }, [poolId, baseAsset, quoteAsset, parachainApi]);
 
-  useEffect(() => {
-    if (parachainApi && debouncedPercentage > 0 && lpBalance.gt(0)) {
-      const selectedLpAmount = toChainUnits(
-        lpBalance.times(debouncedPercentage / 100)
-      );
-      (parachainApi.rpc as any).pablo
-        .redeemableAssetForGivenLpTokens(poolId, selectedLpAmount)
-        .then((response: any) => {
-          console.log(response);
-        }).catch((err: any) => {
-          console.error(err)
-        });
-    } else {
-      setExpectedRemoveAmountBase(new BigNumber(0));
-      setExpectedRemoveAmountQuote(new BigNumber(0));
-    }
-  }, [parachainApi, debouncedPercentage, lpBalance, poolId]);
+  // useEffect(() => {
+  //   if (parachainApi && debouncedPercentage > 0 && lpBalance.gt(0)) {
+  //     const selectedLpAmount = toChainUnits(
+  //       lpBalance.times(debouncedPercentage / 100)
+  //     );
+  //     (parachainApi.rpc as any).pablo
+  //       .redeemableAssetForGivenLpTokens(poolId, selectedLpAmount)
+  //       .then((response: any) => {
+  //         console.log(response);
+  //       }).catch((err: any) => {
+  //         console.error(err)
+  //       });
+  //   } else {
+  //     setExpectedRemoveAmountBase(new BigNumber(0));
+  //     setExpectedRemoveAmountQuote(new BigNumber(0));
+  //   }
+  // }, [parachainApi, debouncedPercentage, lpBalance, poolId]);
 
   const onBackHandler = () => {
     router.push("/pool");
