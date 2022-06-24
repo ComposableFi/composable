@@ -1,6 +1,6 @@
 use crate::time::{DurationSeconds, Timestamp};
 use codec::{Decode, Encode};
-use frame_support::{pallet_prelude::*, dispatch::DispatchResult};
+use frame_support::{dispatch::DispatchResult, pallet_prelude::*};
 
 use core::fmt::Debug;
 

@@ -189,7 +189,6 @@ parameter_types! {
 	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
 }
 
-
 #[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, MaxEncodedLen, TypeInfo, core::fmt::Debug)]
 pub struct MaxStakingDurationPresets;
 impl Get<u32> for MaxStakingDurationPresets {

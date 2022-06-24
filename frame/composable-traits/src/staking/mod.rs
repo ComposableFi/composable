@@ -2,8 +2,7 @@ use crate::staking::lock::{Lock, LockConfig};
 use codec::{Decode, Encode};
 
 use crate::time::DurationSeconds;
-use frame_support::{pallet_prelude::*,
-					dispatch::DispatchResult, BoundedBTreeMap};
+use frame_support::{dispatch::DispatchResult, pallet_prelude::*, BoundedBTreeMap};
 use scale_info::TypeInfo;
 use sp_arithmetic::traits::Zero;
 use sp_runtime::{DispatchError, Perbill, Permill};
@@ -40,9 +39,7 @@ pub struct Reward<AssetId, Balance> {
 }
 
 impl<AssetId, Balance: Zero> Reward<AssetId, Balance> {
-	pub fn from(
-		reward_config: RewardConfig<AssetId, Balance>,
-	) -> Reward<AssetId, Balance> {
+	pub fn from(reward_config: RewardConfig<AssetId, Balance>) -> Reward<AssetId, Balance> {
 		Reward {
 			asset_id: reward_config.asset_id,
 			total_rewards: Zero::zero(),
@@ -57,7 +54,14 @@ impl<AssetId, Balance: Zero> Reward<AssetId, Balance> {
 /// particular purpose. Eg: a pool of rewards for incentivizing adding liquidity to a pablo swap
 /// pool. TODO refer to the relevant section in the design doc.
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-pub struct RewardPool<AccountId, AssetId, Balance, BlockNumber, DurationPresets, RewardsLength: Get<u32>> {
+pub struct RewardPool<
+	AccountId,
+	AssetId,
+	Balance,
+	BlockNumber,
+	DurationPresets,
+	RewardsLength: Get<u32>,
+> {
 	pub owner: AccountId,
 
 	/// The staked asset id of the reward pool.
@@ -94,13 +98,7 @@ pub struct RewardConfig<AssetId, Balance> {
 /// initial configuration parameters.
 /// TODO refer to the relevant section in the design doc.
 #[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
-pub enum RewardPoolConfiguration<
-	AccountId,
-	AssetId,
-	Balance,
-	BlockNumber,
-	DurationPresets,
-> {
+pub enum RewardPoolConfiguration<AccountId, AssetId, Balance, BlockNumber, DurationPresets> {
 	/// A pool with an adjustable reward rate to be used as incentive.
 	RewardRateBasedIncentive {
 		/// Protocol or the user account that owns this pool

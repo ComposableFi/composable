@@ -42,26 +42,29 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use std::fmt::Debug;
-	use composable_support::abstractions::{
-		counter::Counter,
-		utils::{
-			decrement::SafeDecrement,
-			increment::{Increment, SafeIncrement},
-			start_at::ZeroInit,
+	use composable_support::{
+		abstractions::{
+			counter::Counter,
+			utils::{
+				decrement::SafeDecrement,
+				increment::{Increment, SafeIncrement},
+				start_at::ZeroInit,
+			},
 		},
+		math::safe::SafeArithmetic,
 	};
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory},
 		staking::RewardPoolConfiguration::RewardRateBasedIncentive,
 	};
+	use frame_support::{
+		pallet_prelude::*, traits::UnixTime, transactional, BoundedBTreeMap, PalletId,
+	};
 	use frame_system::pallet_prelude::*;
-	use sp_std::collections::btree_map::BTreeMap;
-	use frame_support::{pallet_prelude::*, traits::{UnixTime}, transactional, PalletId, BoundedBTreeMap};
-	use sp_arithmetic::Permill;
-	use sp_arithmetic::traits::One;
+	use sp_arithmetic::{traits::One, Permill};
 	use sp_runtime::traits::BlockNumberProvider;
-	use composable_support::math::safe::SafeArithmetic;
+	use sp_std::collections::btree_map::BTreeMap;
+	use std::fmt::Debug;
 
 	use crate::{prelude::*, weights::WeightInfo};
 
@@ -99,17 +102,17 @@ pub mod pallet {
 		/// The reward pool ID type.
 		/// Type representing the unique ID of a pool.
 		type PoolId: FullCodec
-		+ MaxEncodedLen
-		+ Default
-		+ Debug
-		+ TypeInfo
-		+ Eq
-		+ PartialEq
-		+ Ord
-		+ Copy
-		+ Zero
-		+ One
-		+ SafeArithmetic;
+			+ MaxEncodedLen
+			+ Default
+			+ Debug
+			+ TypeInfo
+			+ Eq
+			+ PartialEq
+			+ Ord
+			+ Copy
+			+ Zero
+			+ One
+			+ SafeArithmetic;
 
 		/// The position id type.
 		type PositionId: Parameter + Member + Clone + FullCodec + Zero;
@@ -179,7 +182,6 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-
 		/// Create a new reward pool based on the config.
 		///
 		/// Emits `RewardPoolCreated` event when successful.
@@ -195,8 +197,8 @@ pub mod pallet {
 					owner,
 					asset_id,
 					initial_reward_config,
-					end_block ,
-					lock
+					end_block,
+					lock,
 				} => {
 					ensure!(
 						end_block > frame_system::Pallet::<T>::current_block_number(),
@@ -204,7 +206,10 @@ pub mod pallet {
 					);
 					let pool_id = RewardPoolCount::<T>::increment()?;
 					let mut rewards = BTreeMap::new();
-					rewards.insert(initial_reward_config.asset_id, Reward::from(initial_reward_config));
+					rewards.insert(
+						initial_reward_config.asset_id,
+						Reward::from(initial_reward_config),
+					);
 					RewardPools::<T>::insert(
 						pool_id.clone(),
 						RewardPool {
@@ -213,11 +218,12 @@ pub mod pallet {
 							rewards: BoundedBTreeMap::<
 								T::MayBeAssetId,
 								Reward<T::MayBeAssetId, T::Balance>,
-								T::MaxRewardConfigsPerPool
-							>::try_from(rewards).map_err(|_| Error::<T>::RewardConfigError)?,
+								T::MaxRewardConfigsPerPool,
+							>::try_from(rewards)
+							.map_err(|_| Error::<T>::RewardConfigError)?,
 							total_shares: T::Balance::zero(),
 							end_block: end_block.clone(),
-							lock
+							lock,
 						},
 					);
 					(owner, pool_id, end_block)
