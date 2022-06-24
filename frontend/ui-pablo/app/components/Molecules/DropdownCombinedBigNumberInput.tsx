@@ -5,7 +5,6 @@ import {
 import { DropdownCombinedInput, DropdownCombinedInputProps } from '.';
 import { useValidation } from '@/hooks/bignumber';
 import BigNumber from 'bignumber.js';
-import { debounce } from 'lodash';
 
 export type DropdownCombinedBigNumberInputProps = {
   maxDecimals?: number,
@@ -43,6 +42,7 @@ export const DropdownCombinedBigNumberInput: React.FC<DropdownCombinedBigNumberI
 
   React.useEffect(() => {
     setter && setter(bignrValue);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bignrValue]);
 
   React.useEffect(() => {

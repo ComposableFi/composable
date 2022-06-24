@@ -1,8 +1,6 @@
-import React, { useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import { ModalProps, Modal } from "@/components/Molecules";
 import { Label, BaseAsset } from "@/components/Atoms";
-import { getToken } from "@/defi/Tokens";
-import { TokenId } from "@/defi/types";
 import {
   alpha,
   Box,
@@ -15,132 +13,54 @@ import CloseIcon from "@mui/icons-material/Close";
 
 import { useDispatch } from "react-redux";
 import {
-  closeConfirmingModal,
   closeSwapPreviewModal,
   openConfirmingModal,
 } from "@/stores/ui/uiSlice";
-import {
-  useParachainApi,
-  useExtrinsics,
-  useSelectedAccount,
-  useExecutor,
-  getSigner,
-} from "substrate-react";
 import { SwapSummary } from "./SwapSummary";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
-import { APP_NAME } from "@/defi/polkadot/constants";
-import { useSnackbar } from "notistack";
 import { useAppSelector } from "@/hooks/store";
 import { MockedAsset } from "@/store/assets/assets.types";
-import { DEFAULT_NETWORK_ID, toChainUnits } from "@/defi/utils";
+import { usePabloSwap } from "@/defi/hooks/swaps/usePabloSwap";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 export type PreviewModalProps = {
   setConfirmed?: (confirmed: boolean) => any;
   baseAsset: MockedAsset | undefined;
   quoteAsset: MockedAsset | undefined;
-  quoteAssetAmount: BigNumber;
   baseAssetAmount: BigNumber;
+  quoteAmount: BigNumber;
+  feeCharged: BigNumber;
   minimumReceived: BigNumber;
+  spotPrice: BigNumber;
 } & ModalProps;
 
 export const PreviewModal: React.FC<PreviewModalProps> = ({
   setConfirmed,
   baseAsset,
   quoteAsset,
-  quoteAssetAmount,
+  quoteAmount,
   baseAssetAmount,
   minimumReceived,
+  feeCharged,
+  spotPrice,
   ...modalProps
 }) => {
   const theme = useTheme();
-  const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
 
-  const { parachainApi } = useParachainApi("picasso");
-  const { swaps } = useStore();
-  const connectedAccount = useSelectedAccount("picasso");
-  const executor = useExecutor();
-
-  const priceImpact = 0;
-
-  const spotPrice = useMemo(() => {
-    return new BigNumber(swaps.poolVariables.spotPrice);
-  }, [swaps.poolVariables]);
-
-  const onConfirmSwap = async () => {
-    if (
-      parachainApi &&
-      connectedAccount &&
-      executor &&
-      baseAsset && quoteAsset
-    ) {
-      try {
-
-        const qtAmont = toChainUnits(baseAssetAmount);
-        const minRec = toChainUnits(minimumReceived);
-
-        const signer = await getSigner(APP_NAME, connectedAccount.address);
-
-        let pair = {
-          base: +baseAsset.network[DEFAULT_NETWORK_ID],
-          quote: +quoteAsset.network[DEFAULT_NETWORK_ID],
-        };
-
-        executor.execute(
-          parachainApi.tx.dexRouter.exchange(
-            pair,
-            parachainApi.createType("u128", qtAmont.toFixed(0)),
-            parachainApi.createType("u128", minRec.toFixed(0))
-          ),
-          connectedAccount.address,
-          parachainApi,
-          signer,
-          (txHash: string) => {
-            console.log("TX Started: ", txHash);
-          },
-          (txHash: string, events) => {
-            console.log("TX Finalized: ", txHash);
-            enqueueSnackbar('Transaction Finalized');
-            setConfirmed && setConfirmed(true);
-            dispatch(closeConfirmingModal());
-          },
-          (txError: string) => {
-            enqueueSnackbar('Transaction Failed', {
-              description: txError,
-              isClosable: true,
-              url: '',
-            });
-            console.error(txError);
-            dispatch(closeConfirmingModal());
-          }
-        ).catch(err => {
-          enqueueSnackbar('Transaction Failed', {
-            description: err.message,
-            isClosable: true,
-            url: '',
-          });
-          dispatch(closeConfirmingModal());
-          console.log(err);
-        });
-      } catch (err: any) {
-        enqueueSnackbar('Transaction Failed', {
-          description: err.message,
-          isClosable: true,
-          url: '',
-        });
-        dispatch(closeConfirmingModal());
-        console.log(err);
-      }
-    }
-  };
+  const pabloSwap = usePabloSwap({
+    baseAssetId: baseAsset ? baseAsset.network[DEFAULT_NETWORK_ID] : "none",
+    quoteAssetId: quoteAsset ? quoteAsset.network[DEFAULT_NETWORK_ID] : "none",
+    quoteAmount,
+    minimumReceived
+  })
 
   const confirmSwap = () => {
     dispatch(closeSwapPreviewModal());
     dispatch(openConfirmingModal());
-
-    onConfirmSwap();
+    pabloSwap();
   };
 
   const slippage = useAppSelector(
@@ -183,7 +103,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
         >
           <BaseAsset
             icon={quoteAsset?.icon}
-            label={quoteAssetAmount.toFixed()}
+            label={quoteAmount.toFixed()}
             LabelProps={{ variant: "body1" }}
           />
         </Label>
@@ -234,18 +154,13 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
 
         <SwapSummary
           mt={4}
-          quoteAssetAmount={quoteAssetAmount}
-          poolType={swaps.poolConstants.poolType}
+          quoteAssetAmount={quoteAmount}
           baseAsset={baseAsset}
           quoteAsset={quoteAsset}
           minimumReceived={minimumReceived}
-          priceImpact={priceImpact}
-          PriceImpactProps={{
-            color: "success.main",
-          }}
           baseAssetAmount={baseAssetAmount}
-          fee={new BigNumber(swaps.poolConstants.fee).div(100)}
-          price={spotPrice}
+          feeCharged={feeCharged}
+          spotPrice={spotPrice}
         />
 
         <Box mt={4}>

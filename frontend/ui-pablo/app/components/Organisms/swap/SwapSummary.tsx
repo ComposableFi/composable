@@ -5,47 +5,36 @@ import {
 } from "@mui/material";
 import BigNumber from "bignumber.js";
 import { Label } from "@/components";
-import { useMemo } from "react";
-import { LiquidityPoolType } from "@/store/pools/pools.types";
 import { MockedAsset } from "@/store/assets/assets.types";
 
 
 export type SwapSummaryProps = {
   quoteAsset: MockedAsset | undefined,
   baseAsset: MockedAsset | undefined,
-  poolType: LiquidityPoolType | "none",
   
   minimumReceived: BigNumber,
-  priceImpact: number,
-  PriceImpactProps?: TypographyProps,
+  // priceImpact: number,
+  // PriceImpactProps?: TypographyProps,
   baseAssetAmount: BigNumber,
   quoteAssetAmount: BigNumber,
   feeCharged: BigNumber,
-  price?: BigNumber,
+  spotPrice: BigNumber,
 } & BoxProps;
 
 export const SwapSummary: React.FC<SwapSummaryProps> = ({
   quoteAsset,
   baseAsset,
-  poolType,
   minimumReceived,
   baseAssetAmount,
   quoteAssetAmount,
-  priceImpact,
-  PriceImpactProps,
+  // priceImpact,
+  // PriceImpactProps,
   feeCharged,
-  price,
+  spotPrice,
   ...boxProps
 }) => {
 
   const validTokens = !!baseAsset && !!quoteAsset;
-
-  const fee = useMemo(() => {
-    if (feeCharged) {
-      return feeCharged
-    }
-    return new BigNumber(0)
-  }, [feeCharged])
 
   if (!validTokens) {
     return <></>;
@@ -53,15 +42,14 @@ export const SwapSummary: React.FC<SwapSummaryProps> = ({
 
   return (
     <Box {...boxProps}>
-      {price && (
-        <Label
-          label="Price"
-          BalanceProps={{
-            balance: `1 ${baseAsset?.symbol} = ${price.toFixed()} ${quoteAsset?.symbol}`
-          }}
-          mb={2}
-        />
-      )}
+      <Label
+        label="Price"
+        BalanceProps={{
+          balance: `1 ${baseAsset?.symbol} = ${spotPrice.toFixed()} ${quoteAsset?.symbol}`
+        }}
+        mb={2}
+      />
+
       <Label
         label="Minimum recieved"
         TooltipProps={{
@@ -92,9 +80,7 @@ export const SwapSummary: React.FC<SwapSummaryProps> = ({
           title: "Liquidity provider fee"
         }}
         BalanceProps={{
-          balance: `${fee.toFixed(4)} ${
-            poolType !== "none" && poolType !== "StableSwap" ? quoteAsset.symbol : baseAsset.symbol
-          }`
+          balance: `${feeCharged.toFixed(4)} ${quoteAsset?.symbol}`
         }}
         mb={0}
       />
