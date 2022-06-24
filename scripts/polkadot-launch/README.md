@@ -62,9 +62,9 @@ Need to do to run 5 Relay Chain nodes, 2 Composable collators and 2 Basilisk col
 
 	```bash
 	mkdir -p ../../../Basilisk-node/target/release
-	curl https://github.com/galacticcouncil/Basilisk-node/releases/download/v7.0.1/basilisk -Lo ../../../Basilisk-node/target/release/basilisk
-	chmod +x ../../../Basilisk-node/target/release/basilisk
-	../../../Basilisk-node/target/release/basilisk --version
+	curl https://github.com/galacticcouncil/Basilisk-node/releases/download/v8.0.0/basilisk -Lo ../../../basilisk-node/target/release/basilisk
+	chmod +x ../../../basilisk-node/target/release/basilisk
+	../../../basilisk-node/target/release/basilisk --version
 	```
 
 4. build this project

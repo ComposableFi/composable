@@ -30,6 +30,12 @@ WORKDIR /polkadot-binary
 RUN wget "https://github.com/paritytech/polkadot/releases/download/v0.9.22/polkadot" && \
     chmod +x polkadot
 
+
+# # Add basilisk node
+WORKDIR /basilisk-node
+RUN wget "https://github.com/galacticcouncil/Basilisk-node/releases/download/v8.0.0/basilisk" && \
+    chmod +x basilisk
+
 # Add mdbook
 WORKDIR /mdbook-binary
 RUN wget "https://github.com/rust-lang/mdBook/releases/download/v0.4.18/mdbook-v0.4.18-x86_64-unknown-linux-gnu.tar.gz" && \ 

@@ -79,7 +79,7 @@
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 	"onCreateCommand": "cd /workspaces/composable/scripts/polkadot-launch && yarn && cd /workspaces/composable/integration-tests/runtime-tests && npm install",
-	"postCreateCommand": "mkdir -p /workspaces/polkadot/target/release && cp /polkadot-binary/polkadot /workspaces/polkadot/target/release/polkadot",
+  	"postCreateCommand": "mkdir -p /workspaces/polkadot/target/release && cp /polkadot-binary/polkadot /workspaces/polkadot/target/release/polkadot && mkdir -p /workspaces/basilisk-node/target/release && cp /basilisk-node/basilisk /workspaces/basilisk-node/target/release/basilisk",
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
 	"features": {
