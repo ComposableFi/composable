@@ -17,7 +17,7 @@
 
 node_modules
 
-# dont add vim swap files
+# don't add vim swap files
 .*.swp
 
 .idea
