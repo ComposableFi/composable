@@ -963,9 +963,9 @@ where
 						};
 						sp_io::storage::start_transaction();
 						let sub_message_result = match msg {
-							CosmosMsg::Custom(ComposableMsg::XCVM { funds, program }) => {
+							CosmosMsg::Custom(ComposableMsg::XCVM { salt, funds, program }) => {
 								log::debug!(target: "runtime::contracts", "CustomMsg::XCVM");
-								T::XCVM::execute(&contract_address, (funds, program)).map_err(
+								T::XCVM::execute(&contract_address, (salt, funds, program)).map_err(
 									|error| {
 										log::debug!(target: "runtime::contracts", "ComposableMsg::XCVM: {:?}", error);
 										ExecError { error, origin: ErrorOrigin::Callee }

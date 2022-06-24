@@ -353,6 +353,7 @@ pub mod pallet {
 		type XCVM: XCVM<
 			AccountId = AccountIdOf<Self>,
 			Input = (
+        Vec<u8>,
 				XCVMTransfer,
 				XCVMProgram<VecDeque<XCVMInstruction<XCVMNetwork, Vec<u8>, Vec<u8>, XCVMTransfer>>>,
 			),

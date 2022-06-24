@@ -68,44 +68,54 @@ impl<Assets, Options> XCVMProtocol<XCVMNetwork> for Stableswap<Assets, Options> 
 mod tests {
 	use super::*;
 	use alloc::collections::VecDeque;
-	use xcvm_core::{XCVMInstruction, XCVMProgramBuilder};
+	use xcvm_core::{XCVMInstruction, XCVMProgram, XCVMProgramBuilder};
 
 	#[test]
 	fn test() {
 		let program = || -> Result<_, StableswapError> {
-			XCVMProgramBuilder::<XCVMNetwork, XCVMInstruction<XCVMNetwork, _, (), ()>>::from(
+			Ok(XCVMProgramBuilder::<XCVMNetwork, XCVMInstruction<XCVMNetwork, _, (), ()>>::from(
+				None,
 				XCVMNetwork::PICASSO,
 			)
 			.call(Stableswap::<(), ()>::new((), (), ()))?
-			.spawn::<_, StableswapError>(XCVMNetwork::ETHEREUM, (), |child| {
+			.spawn::<_, StableswapError>(None, XCVMNetwork::ETHEREUM, Vec::new(), (), |child| {
 				Ok(child.call(Stableswap::<(), ()>::new((), (), ()))?.transfer((), ()))
-			})
+			})?
+			.build())
 		}()
 		.expect("valid program");
 
 		assert_eq!(
-			program.instructions,
-			VecDeque::from([
-				XCVMInstruction::Call { encoded: vec![] },
-				XCVMInstruction::Spawn {
-					network: XCVMNetwork::ETHEREUM,
-					assets: (),
-					program: VecDeque::from([
-						XCVMInstruction::Call {
-							encoded: vec![
-								0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 74, 17, 213, 238, 170, 194,
-								142, 195, 246, 29, 16, 13, 175, 77, 64, 71, 31, 24, 82, 0, 0, 0, 0,
-								0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-								0, 0, 0, 0, 0, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-								0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 129, 25, 192, 101,
-								0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-								0, 0, 0, 0, 0, 0
-							]
-						},
-						XCVMInstruction::Transfer { to: (), assets: () }
-					])
-				},
-			])
+			program,
+			XCVMProgram {
+				tag: None,
+				instructions: VecDeque::from([
+					XCVMInstruction::Call { encoded: vec![] },
+					XCVMInstruction::Spawn {
+						network: XCVMNetwork::ETHEREUM,
+						salt: Vec::new(),
+						assets: (),
+						program: XCVMProgram {
+							tag: None,
+							instructions: VecDeque::from([
+								XCVMInstruction::Call {
+									encoded: vec![
+										0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 13, 74, 17, 213, 238,
+										170, 194, 142, 195, 246, 29, 16, 13, 175, 77, 64, 71, 31,
+										24, 82, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+										0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 0,
+										0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+										0, 0, 0, 0, 0, 0, 0, 4, 129, 25, 192, 101, 0, 0, 0, 0, 0,
+										0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+										0, 0, 0
+									]
+								},
+								XCVMInstruction::Transfer { to: (), assets: () }
+							])
+						}
+					},
+				])
+			}
 		);
 	}
 }

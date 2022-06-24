@@ -9,5 +9,4 @@ use serde::{Deserialize, Serialize};
 pub struct XCVMProgram<Instructions> {
 	pub tag: Option<Vec<u8>>,
 	pub instructions: Instructions,
-	pub nonce: u32,
 }

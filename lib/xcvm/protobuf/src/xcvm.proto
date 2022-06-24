@@ -4,8 +4,7 @@ package xcvm;
 
 message Program {
   Instructions instructions = 1;
-  uint32 nonce = 2;
-  bytes tag = 3;
+  bytes tag = 2;
 }
 
 message Instructions {
@@ -22,7 +21,7 @@ message Instruction {
 
 message Transfer {
   Account destination = 1;
-  map<uint32, U128> assets = 2;
+  map<uint32, Amount> assets = 2;
 }
 
 message Call {
@@ -31,8 +30,9 @@ message Call {
 
 message Spawn {
   uint32 network = 1;
-  map<uint32, U128> assets = 2;
-  Program program = 3;
+  bytes salt = 2;
+  map<uint32, Amount> assets = 3;
+  Program program = 4;
 }
 
 message Account {
@@ -43,6 +43,17 @@ message U128 {
   bytes encoded = 1;
 }
 
-message U256 {
-  bytes encoded = 1;
+message Amount {
+  oneof amount {
+    Fixed fixed = 1;
+    Ratio ratio = 2;
+  }
+}
+
+message Fixed {
+  U128 amount = 1;
+}
+
+message Ratio {
+  uint32 value = 1;
 }

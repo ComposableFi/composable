@@ -72,12 +72,14 @@ pub mod pallet {
 			satellite: SatelliteOf<T>,
 		},
 		Executed {
+			salt: Vec<u8>,
 			program: Program,
 		},
 		Spawn {
 			network: XCVMNetwork,
 			network_txs: Vec<BridgeTxIdOf<T>>,
 			who: AccountIdOf<T>,
+			salt: Vec<u8>,
 			program: Vec<u8>,
 		},
 	}
@@ -148,6 +150,8 @@ pub mod pallet {
 		pub fn execute(
 			origin: OriginFor<T>,
 			real_origin: Option<AccountIdOf<T>>,
+			salt: Vec<u8>,
+			funds: XCVMTransfer,
 			program: Program,
 		) -> DispatchResultWithPostInfo {
 			let who = match real_origin {
@@ -157,7 +161,7 @@ pub mod pallet {
 					real_origin
 				},
 			};
-			Self::do_execute(&who, program)
+			Self::do_execute(&who, salt, funds, program)
 		}
 
 		#[pallet::weight(10_000)]
@@ -165,6 +169,8 @@ pub mod pallet {
 		pub fn execute_json(
 			origin: OriginFor<T>,
 			real_origin: Option<AccountIdOf<T>>,
+			salt: Vec<u8>,
+			funds: XCVMTransfer,
 			program: BoundedVec<u8, T::MaxProgramSize>,
 		) -> DispatchResultWithPostInfo {
 			let who = match real_origin {
@@ -176,7 +182,7 @@ pub mod pallet {
 			};
 			let program = xcvm_core::deserialize_json(&program.into_inner())
 				.map_err(|_| Error::<T>::InvalidProgramEncoding)?;
-			Self::do_execute(&who, program)
+			Self::do_execute(&who, salt, funds, program)
 		}
 
 		#[pallet::weight(10_000)]
@@ -184,6 +190,8 @@ pub mod pallet {
 		pub fn execute_protobuf(
 			origin: OriginFor<T>,
 			real_origin: Option<AccountIdOf<T>>,
+			salt: Vec<u8>,
+			funds: XCVMTransfer,
 			program: BoundedVec<u8, T::MaxProgramSize>,
 		) -> DispatchResultWithPostInfo {
 			let who = match real_origin {
@@ -200,13 +208,23 @@ pub mod pallet {
 				XCVMTransfer,
 			>(program.as_ref())
 			.map_err(|_| Error::<T>::InvalidProgramEncoding)?;
-			Self::do_execute(&who, program)
+			Self::do_execute(&who, salt, funds, program)
 		}
 	}
 
 	impl<T: Config> Pallet<T> {
-		pub(crate) fn program_account(nonce: u32, who: AccountIdOf<T>) -> AccountIdOf<T> {
-			T::PalletId::get().into_sub_account((nonce, who))
+		pub(crate) fn program_account(mut salt: Vec<u8>, who: &AccountIdOf<T>) -> AccountIdOf<T> {
+			salt.extend(who.encode());
+			let address = sp_io::hashing::keccak_256(&salt);
+			T::PalletId::get().into_sub_account(address)
+		}
+		pub(crate) fn actual_amount(
+			asset: AssetIdOf<T>,
+			amount: xcvm_core::Amount,
+			who: &AccountIdOf<T>,
+		) -> BalanceOf<T> {
+			let balance = T::Assets::reducible_balance(asset, who, false);
+			amount.apply(balance.saturated_into()).saturated_into()
 		}
 	}
 
@@ -215,25 +233,10 @@ pub mod pallet {
 		AccountIdOf<T>: for<'a> TryFrom<&'a [u8]> + AsRef<[u8]>,
 	{
 		type AccountId = AccountIdOf<T>;
-		type Input = (XCVMTransfer, Program);
+		type Input = (Vec<u8>, XCVMTransfer, Program);
 		type Output = DispatchResult;
-		fn execute(
-			who: &Self::AccountId,
-			(XCVMTransfer(funds), program): Self::Input,
-		) -> Self::Output {
-			let program_account = Self::program_account(program.nonce, who.clone());
-			for (asset, Displayed(amount)) in funds {
-				let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
-					.map_err(|_| Error::<T>::UnknownAsset)?;
-				T::Assets::transfer(
-					concrete_asset,
-					&who,
-					&program_account,
-					amount.saturated_into(),
-					false,
-				)?;
-			}
-			Self::do_execute(&who, program).map(|_| ()).map_err(|e| e.error)
+		fn execute(who: &Self::AccountId, (salt, funds, program): Self::Input) -> Self::Output {
+			Self::do_execute(&who, salt, funds, program).map(|_| ()).map_err(|e| e.error)
 		}
 	}
 
@@ -241,8 +244,19 @@ pub mod pallet {
 	where
 		AccountIdOf<T>: for<'a> TryFrom<&'a [u8]> + AsRef<[u8]>,
 	{
-		fn do_execute(who: &AccountIdOf<T>, mut program: Program) -> DispatchResultWithPostInfo {
-			let program_account = Self::program_account(program.nonce, who.clone());
+		fn do_execute(
+			who: &AccountIdOf<T>,
+			salt: Vec<u8>,
+			XCVMTransfer(funds): XCVMTransfer,
+			mut program: Program,
+		) -> DispatchResultWithPostInfo {
+			let program_account = Self::program_account(salt.clone(), who);
+			for (asset, amount) in funds {
+				let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
+					.map_err(|_| Error::<T>::UnknownAsset)?;
+				let actual_amount = Self::actual_amount(concrete_asset, amount, who);
+				T::Assets::transfer(concrete_asset, &who, &program_account, actual_amount, false)?;
+			}
 			frame_support::log::debug!(target: "runtime::xcvm", "Program account {:?}", program_account.as_ref());
 			let program_copy = program.clone();
 			while let Some(instruction) = program.instructions.pop_front() {
@@ -250,14 +264,15 @@ pub mod pallet {
 					XCVMInstruction::Transfer { to, assets: XCVMTransfer(assets) } => {
 						let to = AccountIdOf::<T>::try_from(&to[..])
 							.map_err(|_| Error::<T>::MalformedAccount)?;
-						for (asset, Displayed(amount)) in assets {
+						for (asset, amount) in assets {
 							let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
 								.map_err(|_| Error::<T>::UnknownAsset)?;
+							let actual_amount = Self::actual_amount(concrete_asset, amount, who);
 							T::Assets::transfer(
 								concrete_asset,
 								&program_account,
 								&to,
-								amount.saturated_into(),
+								actual_amount,
 								false,
 							)?;
 						}
@@ -272,6 +287,7 @@ pub mod pallet {
 					// If we want to spawn something from the same network, assume it's synchronous
 					XCVMInstruction::Spawn {
 						network: XCVMNetwork::PICASSO,
+						salt: _,
 						// we don't need to move the assets as we are just continuing
 						assets: _,
 						program: mut child_program,
@@ -282,6 +298,7 @@ pub mod pallet {
 					},
 					XCVMInstruction::Spawn {
 						network,
+						salt,
 						assets: XCVMTransfer(assets),
 						program: child_program,
 					} => {
@@ -290,15 +307,17 @@ pub mod pallet {
 						let now = frame_system::Pallet::<T>::block_number();
 						let network_txs = assets
 							.into_iter()
-							.map(|(asset, Displayed(amount))| {
+							.map(|(asset, amount)| {
 								let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
 									.map_err(|_| Error::<T>::UnknownAsset)?;
+								let actual_amount =
+									Self::actual_amount(concrete_asset, amount, who);
 								BridgeOf::<T>::transfer_to(
 									program_account.clone(),
 									bridge_network_id.clone(),
 									network_satellite.clone(),
 									concrete_asset,
-									amount.saturated_into(),
+									actual_amount,
 									false,
 									now,
 								)
@@ -308,13 +327,14 @@ pub mod pallet {
 							network,
 							network_txs,
 							who: program_account.clone(),
+							salt,
 							program: xcvm_core::serialize_json(&child_program)
 								.map_err(|_| Error::<T>::InvalidProgramEncoding)?,
 						});
 					},
 				}
 			}
-			Self::deposit_event(Event::<T>::Executed { program: program_copy });
+			Self::deposit_event(Event::<T>::Executed { salt, program: program_copy });
 			Ok(().into())
 		}
 	}

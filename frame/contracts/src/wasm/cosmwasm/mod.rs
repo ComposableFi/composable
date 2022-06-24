@@ -9,6 +9,7 @@ pub mod types;
 #[serde(rename_all = "snake_case")]
 pub enum ComposableMsg {
 	XCVM {
+    salt: Vec<u8>,
 		funds: XCVMTransfer,
 		program:
 			XCVMProgram<VecDeque<XCVMInstruction<XCVMNetwork, Vec<u8>, Vec<u8>, XCVMTransfer>>>,

@@ -1,5 +1,6 @@
 use alloc::{collections::BTreeMap, string::ToString};
 use codec::{Decode, Encode};
+use fixed::{types::extra::U16, FixedU128};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
@@ -79,8 +80,38 @@ impl<T> From<T> for Displayed<T> {
 #[derive(
 	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
 )]
+pub enum Amount {
+	Fixed(Displayed<u128>),
+	Ratio(u32),
+}
+
+impl From<u128> for Amount {
+	fn from(x: u128) -> Self {
+		Amount::Fixed(Displayed(x))
+	}
+}
+
+impl Amount {
+	pub fn apply(&self, value: u128) -> u128 {
+		match self {
+			Amount::Fixed(Displayed(x)) => *x,
+			Amount::Ratio(x) => FixedU128::<U16>::from_num(value)
+				.saturating_mul(FixedU128::<U16>::from_num(*x as u128).saturating_div(FixedU128::<
+					U16,
+				>::from_num(
+					u32::MAX as u128,
+				)))
+				.to_num(),
+		}
+	}
+}
+
+#[cfg_attr(feature = "std", derive(schemars::JsonSchema))]
+#[derive(
+	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
+)]
 #[repr(transparent)]
-pub struct XCVMTransfer(pub BTreeMap<XCVMAsset, Displayed<u128>>);
+pub struct XCVMTransfer(pub BTreeMap<XCVMAsset, Amount>);
 
 impl XCVMTransfer {
 	pub fn empty() -> Self {
@@ -91,7 +122,7 @@ impl XCVMTransfer {
 impl<U, V> From<BTreeMap<U, V>> for XCVMTransfer
 where
 	U: Into<XCVMAsset>,
-	V: Into<Displayed<u128>>,
+	V: Into<Amount>,
 {
 	fn from(assets: BTreeMap<U, V>) -> Self {
 		XCVMTransfer(
@@ -106,21 +137,15 @@ where
 impl<U, V, const K: usize> From<[(U, V); K]> for XCVMTransfer
 where
 	U: Into<XCVMAsset>,
-	V: Into<Displayed<u128>>,
+	V: Into<Amount>,
 {
 	fn from(x: [(U, V); K]) -> Self {
 		XCVMTransfer(x.into_iter().map(|(asset, amount)| (asset.into(), amount.into())).collect())
 	}
 }
 
-impl From<XCVMTransfer> for BTreeMap<u32, u128> {
+impl From<XCVMTransfer> for BTreeMap<u32, Amount> {
 	fn from(XCVMTransfer(assets): XCVMTransfer) -> Self {
-		assets.into_iter().map(|(XCVMAsset(asset), amount)| (asset, amount.0)).collect()
-	}
-}
-
-impl From<XCVMTransfer> for BTreeMap<XCVMAsset, u128> {
-	fn from(XCVMTransfer(assets): XCVMTransfer) -> Self {
-		assets.into_iter().map(|(asset, amount)| (asset, amount.0)).collect()
+		assets.into_iter().map(|(XCVMAsset(asset), amount)| (asset, amount)).collect()
 	}
 }
