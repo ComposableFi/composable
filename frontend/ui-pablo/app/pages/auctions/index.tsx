@@ -14,7 +14,7 @@ import { PageTitle } from "@/components";
 import { AllAuctionsTable } from "@/components/Organisms/AllAuctionsTable";
 import { useEffect, useState } from "react";
 import { useDotSamaContext, useParachainApi } from "substrate-react";
-import { fetchSpotPrice } from "@/updaters/swaps/utils";
+import { fetchSpotPrice } from "@/defi/utils";
 import useStore from "@/store/useStore";
 
 const standardPageSize = {

@@ -57,7 +57,7 @@ benchmarks! {
 
 	create_lbp {
 		let unit = 1_000_000_000_000u128;
-		let project_token: T::AssetId = 0.into();
+		let project_token: T::AssetId = 9999.into();
 		let usdt: T::AssetId = 1.into();
 		let pair = CurrencyPair::new(project_token, usdt);
 		let owner: T::AccountId = whitelisted_caller();
@@ -95,7 +95,7 @@ benchmarks! {
 
 	add_liquidity_lbp {
 		let unit = 1_000_000_000_000u128;
-		let project_token: T::AssetId = 0.into();
+		let project_token: T::AssetId = 9999.into();
 		let usdt: T::AssetId = 1.into();
 		let pair = CurrencyPair::new(project_token, usdt);
 		let owner: T::AccountId = whitelisted_caller();
@@ -153,7 +153,7 @@ benchmarks! {
 
 	remove_liquidity_lbp {
 		let unit = 1_000_000_000_000u128;
-		let project_token: T::AssetId = 0.into();
+		let project_token: T::AssetId = 9999.into();
 		let usdt: T::AssetId = 1.into();
 		let pair = CurrencyPair::new(project_token, usdt);
 		let owner: T::AccountId = whitelisted_caller();

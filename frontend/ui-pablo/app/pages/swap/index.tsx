@@ -28,7 +28,6 @@ const Swap: NextPage = () => {
           <Box textAlign="center">
             <PageTitle
               title="Swap"
-              subtitle="Swap your tokens instantly and securely on Pablo."
             />
           </Box>
           <Grid mt={4} container spacing={4}>

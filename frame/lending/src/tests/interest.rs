@@ -15,22 +15,6 @@ fn current_interest_rate_test() {
 			crate::current_interest_rate::<Runtime>(market_id.0).unwrap(),
 			FixedU128::saturating_from_rational(2_u128, 100_u128)
 		);
-		// Update the market
-		let market = crate::Markets::<Runtime>::get(market_id).unwrap();
-		let update_input = UpdateInput {
-			collateral_factor: market.collateral_factor,
-			max_price_age: market.max_price_age,
-			under_collateralized_warn_percent: market.under_collateralized_warn_percent,
-			liquidators: market.liquidators,
-			interest_rate_model: InterestRateModel::Curve(
-				CurveModel::new(CurveModel::MAX_BASE_RATE).unwrap(),
-			),
-		};
-		assert_ok!(Lending::update_market(Origin::signed(manager), market_id, update_input));
-		assert_eq!(
-			crate::current_interest_rate::<Runtime>(market_id.0).unwrap(),
-			FixedU128::saturating_from_rational(1, 10)
-		);
 	})
 }
 

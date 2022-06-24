@@ -7,11 +7,10 @@ import {
 } from "@/store/pools/pools.types";
 import { nFormatter } from "@/utils/number";
 import BigNumber from "bignumber.js";
-import { getAssetById, getAssetByOnChainId } from "@/defi/polkadot/Assets";
+import { getAssetById } from "@/defi/polkadot/Assets";
 import { useMemo } from "react";
 import { useAuctionSpotPrice } from "@/store/auctions/hooks";
-import { useAssetPrice } from "@/store/assets/hooks";
-import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
+import { useUSDAssetPrice } from "@/store/assets/hooks";
 
 export type AuctionInformationProps = {
   auction: LiquidityBootstrappingPool;
@@ -42,20 +41,16 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
 
   const getTime = () => {
     if (isActive) {
-      return getFullHumanizedDateDiff(Date.now(), auction.sale.end)
+      return getFullHumanizedDateDiff(Date.now(), auction.sale.end);
     } else if (isEnded) {
-      return "-"
+      return "-";
     } else {
       return "Not started";
     }
   };
 
   const spotPrice = useAuctionSpotPrice(auction.poolId);
-  const quoteAsset = getAssetByOnChainId(
-    DEFAULT_NETWORK_ID,
-    auction.pair.quote
-  );
-  const quoteAssetPrice = useAssetPrice(quoteAsset.assetId);
+  const quoteAssetPrice = useUSDAssetPrice(auction.pair.quote);
 
   let tokenRaised = useMemo(() => {
     return new BigNumber(stats.currentBalances.quote).minus(
@@ -119,7 +114,8 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
           </Typography>
           <Box display="flex" alignItems="center" gap={1.75}>
             <Typography variant="h6">
-              ${new BigNumber(stats.liquidity).times(quoteAssetPrice).toFixed(2)}
+              $
+              {new BigNumber(stats.liquidity).times(quoteAssetPrice).toFixed(2)}
             </Typography>
           </Box>
         </Grid>
@@ -128,7 +124,9 @@ export const AuctionInformation: React.FC<AuctionInformationProps> = ({
             Price
           </Typography>
           <Box display="flex" alignItems="center" gap={1.75}>
-            <Typography variant="h6">${spotPrice}</Typography>
+            <Typography variant="h6">
+              ${new BigNumber(quoteAssetPrice).times(spotPrice).toFixed(2)}
+            </Typography>
           </Box>
         </Grid>
         <Grid item {...standardPageSize}>

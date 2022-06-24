@@ -20,12 +20,13 @@ import { AuctionDetails } from "@/components/Organisms/auction/AuctionDetails";
 import { BuyForm } from "@/components/Organisms/auction/BuyForm";
 import { AuctionHistoriesTable } from "@/components/Organisms/auction/AuctionHistoriesTable";
 import { AuctionPriceChart } from "@/components/Organisms/auction/AuctionPriceChart";
-import moment from "moment-timezone";
-import useLiquidityBootstrappingPoolStore from "@/store/useStore";
 import { useEffect, useState } from "react";
 import { getAssetById } from "@/defi/polkadot/Assets";
-import { fetchSpotPrice } from "@/updaters/swaps/utils";
+import { fetchSpotPrice } from "@/defi/utils";
 import { useParachainApi } from "substrate-react";
+import { useAuctionsChart } from "@/store/hooks/useAuctionsChart";
+import moment from "moment-timezone";
+import useLiquidityBootstrappingPoolStore from "@/store/useStore";
 
 const Auction: NextPage = () => {
   const theme = useTheme();
@@ -34,7 +35,7 @@ const Auction: NextPage = () => {
       setLiquidityBootstrappingPoolSpotPrice,
     },
     resetActiveLBP,
-    auctions: { activeLBP, activeLBPStats, activeChart },
+    auctions: { activeLBP, activeLBPStats },
   } = useLiquidityBootstrappingPoolStore();
   const { parachainApi } = useParachainApi("picasso");
 
@@ -74,6 +75,11 @@ const Auction: NextPage = () => {
       label: "Auction History",
     },
   ];
+
+  const {
+    currentPriceSeries,
+    predictedPriceSeries
+  } = useAuctionsChart(activeLBP)
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTab(newValue);
@@ -153,7 +159,8 @@ const Auction: NextPage = () => {
                 <AuctionPriceChart
                   baseAsset={baseAsset}
                   quoteAsset={quoteAsset}
-                  data={activeChart.price}
+                  priceSeries={currentPriceSeries}
+                  predictedPriceSeries={predictedPriceSeries}
                   height="100%"
                   dateFormat={(timestamp: number | string) => {
                     return moment(timestamp).utc().format("MMM D, h:mm:ss A");

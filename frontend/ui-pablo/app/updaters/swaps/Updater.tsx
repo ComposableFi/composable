@@ -4,22 +4,20 @@ import { useParachainApi } from "substrate-react";
 import { AssetId } from "@/defi/polkadot/types";
 import { Assets } from "@/defi/polkadot/Assets";
 import BigNumber from "bignumber.js";
-import {
-  fetchSpotPrice,
-} from "./utils";
-import { isValidAssetPair } from "../utils";
+import { DEFAULT_NETWORK_ID, isValidAssetPair } from "@/defi/utils";
 import {
   ConstantProductPool,
   LiquidityBootstrappingPool,
   LiquidityPoolType,
   StableSwapPool,
 } from "@/store/pools/pools.types";
-import { fetchBalanceByAssetId } from "../balances/utils";
-import { createPoolAccountId } from "@/utils/substrate";
+import { fetchBalanceByAssetId } from "@/defi/utils";
+import { createPabloPoolAccountId } from "@/defi/utils";
+import { fetchSpotPrice } from "@/defi/utils/pablo/spotPrice";
 
 const Updater = () => {
   const {
-    assetBalances,
+    balances,
     swaps,
     setDexRouteSwaps,
     setPoolConstantsSwaps,
@@ -31,7 +29,7 @@ const Updater = () => {
       stableSwapPools,
     },
   } = useStore();
-  const { parachainApi } = useParachainApi("picasso");
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   /**
    * Triggered when user changes first
    * token from token list dropdown on
@@ -43,10 +41,11 @@ const Updater = () => {
     if (ui.quoteAssetSelected === "none") {
       setUserAccountBalanceSwaps("quote", "0");
     } else {
-      const balance = assetBalances[ui.quoteAssetSelected as AssetId].picasso;
+      const balance = balances[ui.quoteAssetSelected as AssetId].picasso;
       setUserAccountBalanceSwaps("quote", balance);
     }
-  }, [swaps, assetBalances, setUserAccountBalanceSwaps]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [swaps.ui, balances]);
   /**
    * Triggered when user changes second
    * token from token list dropdown on
@@ -58,10 +57,11 @@ const Updater = () => {
     if (ui.baseAssetSelected === "none") {
       setUserAccountBalanceSwaps("base", "0");
     } else {
-      const balance = assetBalances[ui.baseAssetSelected as AssetId].picasso;
+      const balance = balances[ui.baseAssetSelected as AssetId].picasso;
       setUserAccountBalanceSwaps("base", balance);
     }
-  }, [swaps, assetBalances, setUserAccountBalanceSwaps]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [swaps.ui, balances]);
   /**
    * This hook is triggered when all
    * pools are fetched from the pablo pallet
@@ -154,7 +154,7 @@ const Updater = () => {
               }
 
               if (pool) {
-                let poolAccountId = createPoolAccountId(
+                let poolAccountId = createPabloPoolAccountId(
                   parachainApi,
                   Number(poolId)
                 );
@@ -236,13 +236,11 @@ const Updater = () => {
           let promises = [
             fetchBalanceByAssetId(
               parachainApi,
-              "picasso",
               poolAccountId,
               _baseAssetId.toString()
             ),
             fetchBalanceByAssetId(
               parachainApi,
-              "picasso",
               poolAccountId,
               _quoteAssetId.toString()
             ),
@@ -275,7 +273,7 @@ const Updater = () => {
         quoteAssetReserve: "0",
       });
     }
-  }, [swaps.poolConstants, parachainApi, setPoolVariablesSwaps, swaps.ui]);
+  }, [swaps.ui, swaps.poolConstants, parachainApi, setPoolVariablesSwaps]);
 
   return null;
 };

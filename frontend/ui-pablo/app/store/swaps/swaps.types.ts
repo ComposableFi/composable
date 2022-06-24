@@ -45,6 +45,7 @@ export interface SwapsSlice {
     side: "base" | "quote",
     assetId: AssetId | "none"
   ) => void;
+  invertAssetSelectionSwaps: () => void;
   setPoolConstantsSwaps: (
     poolConstants: {
       poolAccountId: string;

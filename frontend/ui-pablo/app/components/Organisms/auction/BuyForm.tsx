@@ -27,17 +27,19 @@ import { getAssetById } from "@/defi/polkadot/Assets";
 import { getSigner } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import useStore from "@/store/useStore";
-import { onSwapAmountChange } from "@/updaters/swaps/utils";
 import { debounce } from "lodash";
 import { ConfirmingModal } from "../swap/ConfirmingModal";
 import { useSnackbar } from "notistack";
+import { toChainUnits } from "@/defi/utils";
+import { calculateSwap } from "@/defi/utils/pablo/swaps";
+import { fetchAuctions, fetchTrades } from "@/defi/utils/pablo/auctions";
 
 export type BuyFormProps = {
   auction: LiquidityBootstrappingPool;
 } & BoxProps;
 
 export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
-  const { assetBalances } = useStore();
+  const { balances, auctions: { activeLBP }, putHistoryActiveLBP, putStatsActiveLBP } = useStore();
   const { extensionStatus } = useDotSamaContext();
   const { parachainApi } = useParachainApi("picasso");
   const selectedAccount = useSelectedAccount("picasso");
@@ -46,6 +48,17 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
   const isMobile = useMobile();
   const executor = useExecutor();
   const currentTimestamp = Date.now();
+
+
+  const updateState = useCallback(async () => {
+    const { poolId } = activeLBP;
+    if (parachainApi && poolId !== -1) {
+      const stats = await fetchAuctions(parachainApi, activeLBP);
+      const trades = await fetchTrades(activeLBP);
+      putStatsActiveLBP(stats);
+      putHistoryActiveLBP(trades);
+    }
+  }, [activeLBP, putHistoryActiveLBP, putStatsActiveLBP, parachainApi])
 
   const isActive: boolean =
     auction.sale.start <= currentTimestamp &&
@@ -69,21 +82,21 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
   useEffect(() => {
     const asset = getAssetById("picasso", auction.pair.quote);
     if (asset) {
-      setBalanceQuote(new BigNumber(assetBalances[asset.assetId].picasso));
+      setBalanceQuote(new BigNumber(balances[asset.assetId].picasso));
     } else {
       setBalanceQuote(new BigNumber(0));
     }
-  }, [assetBalances, quoteAsset, auction.pair.quote]);
+  }, [balances, auction.pair.quote]);
 
   const [balanceBase, setBalanceBase] = useState(new BigNumber(0));
   useEffect(() => {
     const asset = getAssetById("picasso", auction.pair.base);
     if (asset) {
-      setBalanceBase(new BigNumber(assetBalances[asset.assetId].picasso));
+      setBalanceBase(new BigNumber(balances[asset.assetId].picasso));
     } else {
       setBalanceBase(new BigNumber(0));
     }
-  }, [assetBalances, baseAsset, auction.pair.base]);
+  }, [balances, auction.pair.base]);
 
   const [valid1, setValid1] = useState<boolean>(false);
   const [valid2, setValid2] = useState<boolean>(false);
@@ -121,7 +134,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
         slippage: 0.1,
       };
 
-      onSwapAmountChange(parachainApi, exchangeParams, {
+      calculateSwap(parachainApi, exchangeParams, {
         poolAccountId: "",
         poolIndex: auction.poolId,
         fee: auction.feeConfig.feeRate.toString(),
@@ -140,17 +153,15 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
   const handler = debounce(onSwapAmountInput, 1000);
 
   const handleBuy = useCallback(async () => {
-    const asset = getAssetById("picasso", auction.pair.base);
-    if (parachainApi && selectedAccount && executor && asset) {
-      const baseDecimals = new BigNumber(10).pow(asset.decimals);
+    if (parachainApi && selectedAccount && executor) {
 
       const minRec = parachainApi.createType(
         "u128",
-        minReceive.times(baseDecimals).toFixed(0)
+        toChainUnits(minReceive).toString()
       );
       const amountParam = parachainApi.createType(
         "u128",
-        baseAssetAmount.times(baseDecimals).toFixed(0)
+        toChainUnits(baseAssetAmount).toString()
       );
 
       try {
@@ -170,7 +181,8 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
               enqueueSnackbar("Initiating Transaction");
             },
             (txHash: string, events) => {
-              enqueueSnackbar("Transaction Finalized");
+              enqueueSnackbar('Transaction Finalized');
+              updateState();
             }
           )
           .catch((err) => {
@@ -185,9 +197,10 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     executor,
     selectedAccount,
     baseAssetAmount,
-    minReceive,
+    updateState,
     enqueueSnackbar,
-    auction.pair,
+    minReceive,
+    auction.pair
   ]);
 
   return (

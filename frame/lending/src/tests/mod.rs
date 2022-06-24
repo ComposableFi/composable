@@ -1,4 +1,4 @@
-use crate::{currency::*, mocks::general::*, setup::assert_last_event, MarketIndex};
+use crate::{currency::*, mocks::general::*, MarketIndex};
 use composable_support::validation::TryIntoValidated;
 use composable_traits::{
 	defi::{CurrencyPair, DeFiComposableConfig, MoreThanOneFixedU128, Rate},
@@ -54,9 +54,9 @@ fn default_create_input<AssetId, BlockNumber: sp_runtime::traits::Bounded>(
 			collateral_factor: default_collateral_factor(),
 			under_collateralized_warn_percent: default_under_collateralized_warn_percent(),
 			liquidators: vec![],
-			interest_rate_model: InterestRateModel::default(),
 			max_price_age: BlockNumber::max_value(),
 		},
+		interest_rate_model: InterestRateModel::default(),
 		reserved_factor: DEFAULT_MARKET_VAULT_RESERVE,
 		currency_pair,
 	}
@@ -150,9 +150,9 @@ where
 			collateral_factor,
 			under_collateralized_warn_percent: default_under_collateralized_warn_percent(),
 			liquidators: vec![],
-			interest_rate_model: InterestRateModel::default(),
 			max_price_age: DEFAULT_MAX_PRICE_AGE,
 		},
+		interest_rate_model: InterestRateModel::default(),
 		reserved_factor,
 		currency_pair: CurrencyPair::new(collateral_asset.id(), borrow_asset.id()),
 	};
@@ -280,8 +280,7 @@ pub fn mint_and_deposit_collateral<T>(
 		amount: balance,
 		sender: account,
 	};
-	let system_event: <T as crate::Config>::Event = event.into();
-	assert_last_event::<T>(system_event);
+	frame_system::Pallet::<T>::assert_last_event(event.into());
 }
 
 /// Borrows amount of tokens from the market for particular account.
@@ -315,7 +314,7 @@ pub fn assert_extrinsic_event<T: crate::Config>(
 	event: <T as crate::Config>::Event,
 ) {
 	assert_ok!(result);
-	assert_last_event::<T>(event);
+	frame_system::Pallet::<T>::assert_last_event(event.into());
 }
 
 /// Asserts the event wasn't dispatched.

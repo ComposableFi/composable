@@ -1,4 +1,3 @@
-import { Auction, TokenId } from "@/defi/types";
 import {
   Box,
   BoxProps,

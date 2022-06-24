@@ -1,31 +1,25 @@
 import { useEffect } from "react";
+import { useParachainApi } from "substrate-react";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
+import { useAllLpTokenRewardingPools } from "../../store/hooks/useAllLpTokenRewardingPools";
+import { fetchPoolStats, calculatePoolStats, PabloPoolQueryResponse } from "@/defi/utils/pablo/pools/stats";
 import BigNumber from "bignumber.js";
 import useStore from "@/store/useStore";
-import { useParachainApi } from "substrate-react";
-import _ from "lodash";
-import { DEFAULT_NETWORK_ID } from "../constants";
-import { useAllLpTokenRewardingPools } from "../../store/hooks/useAllLpTokenRewardingPools";
-import { getAssetByOnChainId } from "@/defi/polkadot/Assets";
-import {
-  calculatePoolStats,
-  fetchPoolStats,
-  PabloPoolStatsSquidResponse,
-} from "./utils";
 
 /**
  * Updates zustand store with all pools from pablo pallet
  * @returns null
  */
 const Updater = () => {
-  const { putPoolStats, assets, poolStats, putPoolStatsValue } = useStore();
-  const { parachainApi } = useParachainApi("picasso");
+  const { apollo, putPoolStats, poolStats, putPoolStatsValue } = useStore();
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
 
   const allLpRewardingPools = useAllLpTokenRewardingPools();
 
   useEffect(() => {
     console.log(`[PoolStatsUpdater] Update Stats Effect (1)`);
     if (parachainApi && allLpRewardingPools.length) {
-      let promises: Promise<PabloPoolStatsSquidResponse[]>[] = [];
+      let promises: Promise<PabloPoolQueryResponse[]>[] = [];
 
       allLpRewardingPools.forEach((pool) => {
         promises.push(fetchPoolStats(pool as any));
@@ -54,31 +48,30 @@ const Updater = () => {
         });
       });
     }
-  }, [parachainApi, allLpRewardingPools]);
+  }, [parachainApi, allLpRewardingPools, putPoolStats]);
 
   useEffect(() => {
     console.log(`[PoolStatsUpdater] Update Value Effect (2)`);
 
     if (allLpRewardingPools.length) {
       allLpRewardingPools.forEach((i) => {
-        const quoteAsset = getAssetByOnChainId(
-          DEFAULT_NETWORK_ID,
-          i.pair.quote
-        );
-        if (quoteAsset && poolStats[i.poolId]) {
-          if (assets[quoteAsset.assetId]) {
+
+        if (poolStats[i.poolId]) {
+          let quoteId = i.pair.quote.toString();
+
+          if (apollo[quoteId]) {
             const totalVolumeValue = new BigNumber(
               poolStats[i.poolId].totalVolume
             )
-              .times(assets[quoteAsset.assetId].price)
+              .times(apollo[quoteId])
               .toFixed(2);
             const _24HrFeeValue = new BigNumber(poolStats[i.poolId]._24HrFee)
-              .times(assets[quoteAsset.assetId].price)
+              .times(apollo[quoteId])
               .toFixed(2);
             const _24HrVolumeValue = new BigNumber(
               poolStats[i.poolId]._24HrVolume
             )
-              .times(assets[quoteAsset.assetId].price)
+              .times(apollo[quoteId])
               .toFixed(2);
 
             putPoolStatsValue(i.poolId, {
@@ -90,7 +83,7 @@ const Updater = () => {
         }
       });
     }
-  }, [assets, allLpRewardingPools.length, poolStats]);
+  }, [apollo, allLpRewardingPools, poolStats, putPoolStatsValue]);
 
   return null;
 };

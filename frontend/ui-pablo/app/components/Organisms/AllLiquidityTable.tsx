@@ -13,9 +13,6 @@ import {
 import Image from "next/image";
 import { PairAsset } from "../Atoms";
 import { useAppDispatch } from "@/hooks/store";
-import {
-  addNextDataLiquidityPools,
-} from "@/stores/defi/polkadot";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { InfoOutlined, KeyboardArrowDown } from "@mui/icons-material";
@@ -77,16 +74,8 @@ export const AllLiquidityTable: React.FC<AllLiquidityTableProps> = ({
   };
 
   const handleSeeMore = () => {
-    dispatch(addNextDataLiquidityPools({ startIndex: startIndex + 4 }));
     setStartIndex(startIndex + 4);
   };
-
-  useEffect(() => {
-    dispatch(addNextDataLiquidityPools({ startIndex }));
-    // only called once
-    // on page load
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     if (!userPools.length) {
