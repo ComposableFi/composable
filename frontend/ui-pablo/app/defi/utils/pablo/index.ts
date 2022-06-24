@@ -1,5 +1,6 @@
 export * from "./createPool";
 export * from "./liquidity";
+export * from "./math";
 export * from "./misc";
 export * from "./swaps";
 export * from "./pools";
