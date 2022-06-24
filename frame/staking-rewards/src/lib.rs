@@ -86,7 +86,7 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		/// Error when creating reward configs.
-		RewardConfigError,
+		RewardConfigProblem,
 		/// Invalid end block number provided for creating a pool.
 		InvalidEndBlock,
 	}
@@ -226,7 +226,7 @@ pub mod pallet {
 								Reward<T::AssetId, T::Balance>,
 								T::MaxRewardConfigsPerPool,
 							>::try_from(rewards)
-							.map_err(|_| Error::<T>::RewardConfigError)?,
+							.map_err(|_| Error::<T>::RewardConfigProblem)?,
 							total_shares: T::Balance::zero(),
 							end_block: end_block.clone(),
 							lock,
