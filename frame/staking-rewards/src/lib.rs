@@ -33,8 +33,6 @@
 	unused_extern_crates
 )]
 
-#[cfg(any(feature = "runtime-benchmarks", test))]
-mod benchmarking;
 mod prelude;
 #[cfg(any(feature = "runtime-benchmarks", test))]
 mod test;
@@ -44,16 +42,50 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-
-	use composable_traits::currency::{BalanceLike, CurrencyFactory};
-	use frame_support::{traits::UnixTime, PalletId};
+	use std::fmt::Debug;
+	use composable_support::abstractions::{
+		counter::Counter,
+		utils::{
+			decrement::SafeDecrement,
+			increment::{Increment, SafeIncrement},
+			start_at::ZeroInit,
+		},
+	};
+	use composable_traits::{
+		currency::{BalanceLike, CurrencyFactory},
+		staking::RewardPoolConfiguration::RewardRateBasedIncentive,
+	};
+	use frame_system::pallet_prelude::*;
+	use sp_std::collections::btree_map::BTreeMap;
+	use frame_support::{pallet_prelude::*, traits::{UnixTime}, transactional, PalletId, BoundedBTreeMap};
+	use sp_arithmetic::Permill;
+	use sp_arithmetic::traits::One;
+	use sp_runtime::traits::BlockNumberProvider;
+	use composable_support::math::safe::SafeArithmetic;
 
 	use crate::{prelude::*, weights::WeightInfo};
+
 	#[pallet::event]
 	#[pallet::generate_deposit(pub fn deposit_event)]
-	pub enum Event<T: Config> {}
+	pub enum Event<T: Config> {
+		/// Pool with specified id `T::PoolId` was created successfully by `T::AccountId`.
+		RewardPoolCreated {
+			/// Id of newly created pool.
+			pool_id: T::PoolId,
+			/// Owner of the pool.
+			owner: T::AccountId,
+			/// End block
+			end_block: T::BlockNumber,
+		},
+	}
+
 	#[pallet::error]
-	pub enum Error<T> {}
+	pub enum Error<T> {
+		/// Error when creating reward configs.
+		RewardConfigError,
+		/// Invalid end block number provided for creating a pool.
+		InvalidEndBlock,
+	}
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -65,10 +97,22 @@ pub mod pallet {
 		type Balance: Parameter + Member + BalanceLike + FixedPointOperand;
 
 		/// The reward pool ID type.
-		type PoolId: Parameter + Member + Clone + FullCodec;
+		/// Type representing the unique ID of a pool.
+		type PoolId: FullCodec
+		+ MaxEncodedLen
+		+ Default
+		+ Debug
+		+ TypeInfo
+		+ Eq
+		+ PartialEq
+		+ Ord
+		+ Copy
+		+ Zero
+		+ One
+		+ SafeArithmetic;
 
 		/// The position id type.
-		type PositionId: Parameter + Member + Clone + FullCodec;
+		type PositionId: Parameter + Member + Clone + FullCodec + Zero;
 
 		type MayBeAssetId: Parameter + Member + AssetIdLike + MaybeSerializeDeserialize + Ord;
 
@@ -85,11 +129,147 @@ pub mod pallet {
 		#[pallet::constant]
 		type PalletId: Get<PalletId>;
 
+		/// Maximum number of staking duration presets allowed.
+		#[pallet::constant]
+		type MaxStakingDurationPresets: Get<u32>;
+
+		/// Maximum number of reward configurations per pool.
+		#[pallet::constant]
+		type MaxRewardConfigsPerPool: Get<u32> + TypeInfo;
+
+		/// Required origin for reward pool creation.
+		type RewardPoolCreationOrigin: EnsureOrigin<Self::Origin>;
+
 		type WeightInfo: WeightInfo;
 	}
 
+	/// Abstraction over RewardPoolConfiguration type
+	type RewardPoolConfigurationOf<T> = RewardPoolConfiguration<
+		<T as frame_system::Config>::AccountId,
+		<T as Config>::MayBeAssetId,
+		<T as Config>::Balance,
+		<T as frame_system::Config>::BlockNumber,
+		StakingDurationToRewardsMultiplierConfig<<T as Config>::MaxStakingDurationPresets>,
+	>;
+
+	/// Abstraction over RewardPool type
+	type RewardPoolOf<T> = RewardPool<
+		<T as frame_system::Config>::AccountId,
+		<T as Config>::MayBeAssetId,
+		<T as Config>::Balance,
+		<T as frame_system::Config>::BlockNumber,
+		StakingDurationToRewardsMultiplierConfig<<T as Config>::MaxStakingDurationPresets>,
+		<T as Config>::MaxRewardConfigsPerPool,
+	>;
+
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::generate_store(pub (super) trait Store)]
 	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
+
+	#[pallet::storage]
+	#[pallet::getter(fn pool_count)]
+	#[allow(clippy::disallowed_types)]
+	pub type RewardPoolCount<T: Config> =
+		StorageValue<_, T::PoolId, ValueQuery, Counter<ZeroInit, SafeIncrement, SafeDecrement>>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn pools)]
+	pub type RewardPools<T: Config> = StorageMap<_, Blake2_128Concat, T::PoolId, RewardPoolOf<T>>;
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+
+		/// Create a new reward pool based on the config.
+		///
+		/// Emits `RewardPoolCreated` event when successful.
+		#[pallet::weight(T::WeightInfo::create_reward_pool())]
+		#[transactional]
+		pub fn create_reward_pool(
+			origin: OriginFor<T>,
+			pool_config: RewardPoolConfigurationOf<T>,
+		) -> DispatchResult {
+			T::RewardPoolCreationOrigin::ensure_origin(origin)?;
+			let (owner, pool_id, end_block) = match pool_config {
+				RewardRateBasedIncentive {
+					owner,
+					asset_id,
+					initial_reward_config,
+					end_block ,
+					lock
+				} => {
+					ensure!(
+						end_block > frame_system::Pallet::<T>::current_block_number(),
+						Error::<T>::InvalidEndBlock
+					);
+					let pool_id = RewardPoolCount::<T>::increment()?;
+					let mut rewards = BTreeMap::new();
+					rewards.insert(initial_reward_config.asset_id, Reward::from(initial_reward_config));
+					RewardPools::<T>::insert(
+						pool_id.clone(),
+						RewardPool {
+							owner: owner.clone(),
+							asset_id,
+							rewards: BoundedBTreeMap::<
+								T::MayBeAssetId,
+								Reward<T::MayBeAssetId, T::Balance>,
+								T::MaxRewardConfigsPerPool
+							>::try_from(rewards).map_err(|_| Error::<T>::RewardConfigError)?,
+							total_shares: T::Balance::zero(),
+							end_block: end_block.clone(),
+							lock
+						},
+					);
+					(owner, pool_id, end_block)
+				},
+			};
+			Self::deposit_event(Event::<T>::RewardPoolCreated { pool_id, owner, end_block });
+			Ok(())
+		}
+	}
+
+	impl<T: Config> Staking for Pallet<T> {
+		type AccountId = T::AccountId;
+		type PoolId = T::PoolId;
+		type Balance = T::Balance;
+		type PositionId = T::PositionId;
+
+		#[transactional]
+		fn stake(
+			who: &Self::AccountId,
+			pool_id: &Self::PoolId,
+			amount: Self::Balance,
+			keep_alive: bool,
+		) -> Result<Self::PositionId, DispatchError> {
+			Err("Not implemented".into())
+		}
+
+		#[transactional]
+		fn extend(
+			who: &Self::AccountId,
+			position: Self::PositionId,
+			amount: Self::Balance,
+			keep_alive: bool,
+		) -> Result<Self::PositionId, DispatchError> {
+			Err("Not implemented".into())
+		}
+
+		#[transactional]
+		fn unstake(
+			who: &Self::AccountId,
+			position: &Self::PositionId,
+			remove_amount: Self::Balance,
+		) -> DispatchResult {
+			Err("Not implemented".into())
+		}
+
+		#[transactional]
+		fn split(
+			who: &Self::AccountId,
+			position: &Self::PositionId,
+			ratio: Permill,
+		) -> Result<[Self::PositionId; 2], DispatchError> {
+			Err("Not implemented".into())
+		}
+	}
 }

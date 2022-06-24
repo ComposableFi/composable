@@ -1,6 +1,6 @@
 use crate::time::{DurationSeconds, Timestamp};
 use codec::{Decode, Encode};
-use frame_support::dispatch::DispatchResult;
+use frame_support::{pallet_prelude::*, dispatch::DispatchResult};
 
 use core::fmt::Debug;
 
@@ -8,7 +8,7 @@ use scale_info::TypeInfo;
 use sp_runtime::Perbill;
 
 /// defines staking duration, rewards and early unstake penalty
-#[derive(Debug, PartialEq, Eq, Copy, Clone, Encode, Decode, TypeInfo)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone, MaxEncodedLen, Encode, Decode, TypeInfo)]
 pub struct LockConfig<DurationPresets> {
 	/// The possible locking duration.
 	pub duration_presets: DurationPresets,
