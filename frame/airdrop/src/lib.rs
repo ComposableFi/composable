@@ -108,7 +108,7 @@ pub mod pallet {
 		AirdropAlreadyStarted,
 		AirdropDoesNotExist,
 		AirdropIsNotEnabled,
-        ArithmiticError,
+		ArithmiticError,
 		BackToTheFuture,
 		NotAirdropCreator,
 		NothingToClaim,
@@ -191,7 +191,7 @@ pub mod pallet {
 	/// The counter used to identify Airdrops.
 	#[pallet::storage]
 	#[pallet::getter(fn airdrop_count)]
-	#[allow(clippy::disallowed_types)] // Allow `frame_support::pallet_prelude::ValueQuery`
+	#[allow(clippy::disallowed_types)] // Allow `frame_support::pallet_prelude::ValueQuery` because default of 0 is correct
 	pub type AirdropCount<T: Config> =
 		StorageValue<_, T::AirdropId, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 
@@ -216,7 +216,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn total_airdrop_recipients)]
-	#[allow(clippy::disallowed_types)] // Allow `frame_support::pallet_prelude::ValueQuery`
+	#[allow(clippy::disallowed_types)] // Allow `frame_support::pallet_prelude::ValueQuery` because default of 0 is correct
 	pub type TotalAirdropRecipients<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AirdropId, u32, ValueQuery>;
 
@@ -386,6 +386,7 @@ pub mod pallet {
 		/// # Errors
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
 		/// * `AirdropIsNotEnabled` - The Airdrop has not been enabled
+		/// * `ArithmiticError` - Overflow while totaling claimed funds
 		/// * `InvalidProof`
 		/// * `RecipientNotFound` - No recipient associated with the `identity` could be found.
 		#[pallet::weight(<T as Config>::WeightInfo::claim(TotalAirdropRecipients::<T>::get(airdrop_id)))]
@@ -891,6 +892,7 @@ pub mod pallet {
 		/// # Errors
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
 		/// * `AirdropIsNotEnabled` - The Airdrop has not been enabled
+		/// * `ArithmiticError` - Overflow while totaling claimed funds
 		/// * `RecipientNotFound` - No recipient associated with the `identity` could be found.
 		fn claim(
 			airdrop_id: Self::AirdropId,
@@ -928,8 +930,10 @@ pub mod pallet {
 
 			Airdrops::<T>::try_mutate(airdrop_id, |airdrop| match airdrop.as_mut() {
 				Some(airdrop) => {
-					airdrop.claimed_funds =
-						airdrop.claimed_funds.safe_add(&available_to_claim).map_err(|_| Error::<T>::ArithmiticError)?;
+					airdrop.claimed_funds = airdrop
+						.claimed_funds
+						.safe_add(&available_to_claim)
+						.map_err(|_| Error::<T>::ArithmiticError)?;
 					Ok(())
 				},
 				None => Err(Error::<T>::AirdropDoesNotExist),
