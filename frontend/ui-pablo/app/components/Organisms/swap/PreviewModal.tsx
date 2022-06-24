@@ -13,6 +13,7 @@ import CloseIcon from "@mui/icons-material/Close";
 
 import { useDispatch } from "react-redux";
 import {
+  closeConfirmingModal,
   closeSwapPreviewModal,
   openConfirmingModal,
 } from "@/stores/ui/uiSlice";
@@ -59,7 +60,9 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
   const confirmSwap = () => {
     dispatch(closeSwapPreviewModal());
     dispatch(openConfirmingModal());
-    pabloSwap();
+    pabloSwap().catch(err => {
+      dispatch(closeConfirmingModal())
+    });
   };
 
   const slippage = useAppSelector(

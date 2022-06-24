@@ -18,18 +18,26 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
   const {selectedInterval, chartSeries, seriesIntervals, _24hourOldPrice, setSelectedInterval} = useSwapsChart();
 
   const baseAsset = useMemo(() => {
-    return supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === swaps.ui.baseAssetSelected)
-  }, [swaps.ui, supportedAssets])
+    if (swaps.selectedAssets.base !== "none") {
+      return supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === swaps.selectedAssets.base)
+    } else {
+      return undefined
+    }
+  }, [swaps.selectedAssets, supportedAssets])
 
   const quoteAsset = useMemo(() => {
-    return supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === swaps.ui.quoteAssetSelected)
-  }, [swaps.ui, supportedAssets])
+    if (swaps.selectedAssets.quote !== "none") {
+    return supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === swaps.selectedAssets.quote)
+    } else {
+      return undefined
+    }
+  }, [swaps.selectedAssets, supportedAssets])
 
   const changePercent = useMemo(() => {
-    if (swaps.poolVariables.spotPrice === "0") return 0 
+    if (swaps.spotPrice.eq(0)) return 0 
     if (_24hourOldPrice.eq(0)) return 100
-    return new BigNumber(_24hourOldPrice).div(swaps.poolVariables.spotPrice).toNumber()
-  }, [swaps.poolVariables.spotPrice, _24hourOldPrice]);
+    return new BigNumber(_24hourOldPrice).div(swaps.spotPrice).toNumber()
+  }, [swaps.spotPrice, _24hourOldPrice]);
 
   const intervals = DEFI_CONFIG.swapChartIntervals;
 
@@ -84,7 +92,7 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
             </Box>
           </Box>
         }
-        totalText={`${swaps.poolVariables.spotPrice} ${baseAsset ? baseAsset.symbol : ""}`}
+        totalText={`${swaps.spotPrice} ${baseAsset ? baseAsset.symbol : ""}`}
         changeTextColor={
           changePercent > 0
             ? theme.palette.featured.main

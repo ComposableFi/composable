@@ -9,7 +9,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { BoxProps } from "@mui/system";
 import { useAppSelector } from "@/hooks/store";
 import { useDispatch } from "react-redux";
@@ -17,6 +17,7 @@ import { InfoOutlined, Settings, SwapVertRounded } from "@mui/icons-material";
 import {
   closeConfirmingModal,
   openPolkadotModal,
+  openSwapPreviewModal,
   openTransactionSettingsModal,
   setMessage,
 } from "@/stores/ui/uiSlice";
@@ -27,19 +28,20 @@ import { PreviewModal } from "./PreviewModal";
 import { ConfirmingModal } from "./ConfirmingModal";
 import { useDotSamaContext } from "substrate-react";
 import { useSwaps } from "@/defi/hooks/swaps/useSwaps";
+import BigNumber from "bignumber.js";
+import _ from "lodash";
 
 const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
   const theme = useTheme();
   const dispatch = useDispatch();
-  
+
   const { extensionStatus } = useDotSamaContext();
 
   const {
     balance1,
     balance2,
-    setSelectedAssetOne,
-    setSelectedAssetTwo,
+    changeAsset,
     selectedAssetOneId,
     selectedAssetTwoId,
     selectedAssetOne,
@@ -59,7 +61,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     setAssetOneInputValid,
     setAssetTwoInputValid,
     assetOneInputValid,
-    assetTwoInputValid
+    assetTwoInputValid,
   } = useSwaps();
 
   const percentageToSwap = useAppSelector(
@@ -77,7 +79,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     if (extensionStatus !== "connected") {
       dispatch(openPolkadotModal());
     } else {
-
+      dispatch(openSwapPreviewModal());
     }
   };
 
@@ -100,16 +102,26 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
       setIsConfirmed(false);
       dispatch(closeConfirmingModal());
     }
-  // dispatch is a setter, we can skip adding it to
-  // dependancies list
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // dispatch is a setter, we can skip adding it to
+    // dependancies list
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConfirmed]);
 
   const [isProcessing, setIsProcessing] = useState(false);
-  
+
   const onSettingHandler = () => {
     dispatch(openTransactionSettingsModal());
   };
+
+  const handleDebounceFn = async (side: "base" | "quote", value: BigNumber) => {
+    setIsProcessing(true);
+    await onChangeTokenAmount(side, value);
+    setTimeout(() => {
+      setIsProcessing(false);
+    }, 500);
+  };
+
+  const debouncedTokenAmountUpdate = _.debounce(handleDebounceFn, 1000);
 
   return (
     <Box
@@ -158,14 +170,15 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
           onMouseDown={(evt) => setIsProcessing(false)}
           setValue={(val) => {
             if (isProcessing) return;
-            onChangeTokenAmount("quote", val)
-            updateSpotPrice();
+            debouncedTokenAmountUpdate("quote", val);
           }}
           InputProps={{
-            disabled: !assetOneInputValid,
+            disabled: isProcessing,
           }}
           buttonLabel={assetOneInputValid ? "Max" : undefined}
-          referenceText={assetOneInputValid ? `${percentageToSwap}%` : undefined}
+          referenceText={
+            assetOneInputValid ? `${percentageToSwap}%` : undefined
+          }
           ReferenceTextProps={{
             onClick: () => {},
             sx: {
@@ -176,13 +189,17 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             },
           }}
           ButtonProps={{
-            onClick: () => {
-
-            },
+            onClick: () => {},
           }}
           CombinedSelectProps={{
             value: selectedAssetOneId,
-            setValue: setSelectedAssetOne,
+            setValue: (val) => {
+              setIsProcessing(true);
+              changeAsset("quote", val);
+              setTimeout(() => {
+                setIsProcessing(false);
+              }, 500);
+            },
             dropdownModal: true,
             dropdownForceWidth: 320,
             forceHiddenLabel: isMobile ? true : false,
@@ -250,20 +267,23 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
           onMouseDown={(evt) => setIsProcessing(false)}
           setValue={(val) => {
             if (isProcessing) return;
-            onChangeTokenAmount("base", val)
-            updateSpotPrice();
+            debouncedTokenAmountUpdate("base", val);
           }}
           InputProps={{
-            disabled: !assetTwoInputValid,
+            disabled: isProcessing,
           }}
           ButtonProps={{
-            onClick: () => {
-
-            },
+            onClick: () => {},
           }}
           CombinedSelectProps={{
             value: selectedAssetTwoId,
-            setValue: setSelectedAssetTwo,
+            setValue: (val) => {
+              setIsProcessing(true);
+              changeAsset("base", val);
+              setTimeout(() => {
+                setIsProcessing(false);
+              }, 500);
+            },
             dropdownModal: true,
             dropdownForceWidth: 320,
             forceHiddenLabel: isMobile ? true : false,
@@ -315,9 +335,9 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
               {selectedAssetTwo.symbol}
             </Typography>
             <Tooltip
-              title={`1 ${
-                selectedAssetOne?.symbol
-              } = ${spotPrice.toFixed()} ${selectedAssetTwo.symbol}`}
+              title={`1 ${selectedAssetOne?.symbol} = ${spotPrice.toFixed()} ${
+                selectedAssetTwo.symbol
+              }`}
               placement="top"
             >
               <InfoOutlined sx={{ color: theme.palette.primary.main }} />

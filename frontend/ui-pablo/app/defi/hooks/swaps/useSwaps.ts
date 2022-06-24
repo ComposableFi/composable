@@ -8,7 +8,6 @@ import { MockedAsset } from "@/store/assets/assets.types";
 import { useAssetBalance, useUSDPriceByAssetId } from "@/store/assets/hooks";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js"
-import { debounce } from "lodash";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParachainApi } from "substrate-react";
 
@@ -17,8 +16,7 @@ type MockedAssetOption = MockedAsset & Option
 export function useSwaps(): {
     balance1: BigNumber;
     balance2: BigNumber;
-    setSelectedAssetOne: (asset: string | "none") => void;
-    setSelectedAssetTwo: (asset: string | "none") => void;
+    changeAsset: (side: "base" | "quote", asset: string | "none") => void;
     selectedAssetOneId: string | "none";
     selectedAssetTwoId: string | "none";
     selectedAssetOne: MockedAsset | undefined;
@@ -47,8 +45,8 @@ export function useSwaps(): {
         (state) => state.settings.transactionSettings.tolerance
     );
 
-    const [assetOneInputValid, setAssetOneInputValid] = useState(false);
-    const [assetTwoInputValid, setAssetTwoInputValid] = useState(false);
+    const [assetOneInputValid, setAssetOneInputValid] = useState(true);
+    const [assetTwoInputValid, setAssetTwoInputValid] = useState(true);
     const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
 
     const { swaps, supportedAssets, pools: { constantProductPools, stableSwapPools } } = useStore();
@@ -58,8 +56,16 @@ export function useSwaps(): {
         selectedPool,
         setSpotPrice,
         setSelectedAsset,
-        setSelectedPool
+        setSelectedPool,
+        resetSwaps
     } = swaps;
+
+    useEffect(() => {
+        return () => {
+            resetSwaps();
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
 
     const {
         selectedAssetOneId,
@@ -118,7 +124,7 @@ export function useSwaps(): {
             if (!!straightRoute) dexRoute = straightRoute;
             if (!!inverseRoute) dexRoute = inverseRoute;
 
-            if (dexRoute.direct) {
+            if (dexRoute && dexRoute.direct) {
                 return new BigNumber(dexRoute.direct[0]);
             } else {
                 return dexRoute;
@@ -154,12 +160,20 @@ export function useSwaps(): {
             let pair = { base: base.toString(), quote: quote.toString() };
             const spotPrice = await fetchSpotPrice(parachainApi, pair, selectedPool.poolId);
             if (isInverse) {
-                setSpotPrice(new BigNumber(1).div(spotPrice))
+                setSpotPrice(new BigNumber(1).div(spotPrice).dp(0))
             } else {
-                setSpotPrice(spotPrice)
+                setSpotPrice(spotPrice.dp(0))
             }
+        } else {
+            setSpotPrice(new BigNumber(0))
         }
     }, [parachainApi, selectedPool, selectedAssetOneId, setSpotPrice]);
+
+    useEffect(() => {
+        if (selectedPool) {
+            updateSpotPrice();
+        }
+    }, [selectedPool, updateSpotPrice]);
 
     const [tokenAmounts, setTokenAmounts] = useState({
         assetOneAmount: new BigNumber(0),
@@ -170,7 +184,16 @@ export function useSwaps(): {
     const [slippageAmount, setSlippageAmount] = useState(new BigNumber(0));
     const [feeCharged, setFeeCharged] = useState(new BigNumber(0));
 
-    const updateTokenAmount = useCallback(async (changedSide: "base" | "quote", amount: BigNumber) => {
+    const resetTokenAmounts = () => {
+        setTokenAmounts(amounts => {
+            return {
+                assetOneAmount: new BigNumber(0),
+                assetTwoAmount: new BigNumber(0),
+            }
+        });
+    }
+
+    const updateTokenAmount = async (changedSide: "base" | "quote", amount: BigNumber) => {
         if (parachainApi && selectedPool && isValidAssetPair(selectedAssetOneId, selectedAssetTwoId)) {
             const { base, quote } = selectedPool.pair;
             const { feeRate } = selectedPool.feeConfig;
@@ -195,10 +218,18 @@ export function useSwaps(): {
             setMinimumReceived(minReceive);
             setFeeCharged(feeChargedAmount);
             setSlippageAmount(slippageAmount);
+        } else {
+            resetTokenAmounts();
+            console.error(`Registered Pool not found`)
         }
-    }, [selectedAssetOneId, selectedAssetTwoId, selectedPool, parachainApi, slippage])
+    }
 
-    const onChangeTokenAmount = debounce(updateTokenAmount, 1000)
+    const onChangeTokenAmount = updateTokenAmount
+
+    const changeAsset = (changedSide: "quote" | "base", tokenId: string | "none") => {
+        changedSide === "quote" ? setSelectedAssetOne(tokenId) : setSelectedAssetTwo(tokenId)
+        resetTokenAmounts();
+    }
 
     const {
         assetOneAmount, assetTwoAmount
@@ -209,14 +240,13 @@ export function useSwaps(): {
     return {
         balance1,
         balance2,
+        changeAsset,
         selectedAssetOneId,
         selectedAssetTwoId,
         selectedAssetOne,
         selectedAssetTwo,
         assetListOne,
         assetListTwo,
-        setSelectedAssetOne,
-        setSelectedAssetTwo,
         onChangeTokenAmount,
         updateSpotPrice,
         assetOneAmount,
