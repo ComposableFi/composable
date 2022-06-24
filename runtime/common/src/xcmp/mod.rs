@@ -228,7 +228,7 @@ impl<
 				X2(Parachain(ThisParaId::get().into()), GeneralKey(id.encode())),
 			)),
 			CurrencyId::RELAY_NATIVE => Some(MultiLocation::parent()),
-			_ =>
+			_ => {
 				if let Some(location) =
 					AssetRegistry::asset_to_remote(id).map(|x| x.location.into())
 				{
@@ -241,7 +241,8 @@ impl<
 						ThisParaId::get()
 					);
 					None
-				},
+				}
+			},
 		}
 	}
 }
