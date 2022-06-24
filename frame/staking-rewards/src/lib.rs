@@ -56,6 +56,7 @@ pub mod pallet {
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory},
 		staking::RewardPoolConfiguration::RewardRateBasedIncentive,
+		time::DurationSeconds,
 	};
 	use frame_support::{
 		pallet_prelude::*, traits::UnixTime, transactional, BoundedBTreeMap, PalletId,
@@ -176,7 +177,8 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
-	pub type RewardPools<T: Config> = StorageMap<_, Blake2_128Concat, T::RewardPoolId, RewardPoolOf<T>>;
+	pub type RewardPools<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::RewardPoolId, RewardPoolOf<T>>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -243,7 +245,7 @@ pub mod pallet {
 			who: &Self::AccountId,
 			pool_id: &Self::RewardPoolId,
 			amount: Self::Balance,
-			duration: StakingDurationPresets,
+			duration_preset: DurationSeconds,
 			keep_alive: bool,
 		) -> Result<Self::PositionId, DispatchError> {
 			Err("Not implemented".into())

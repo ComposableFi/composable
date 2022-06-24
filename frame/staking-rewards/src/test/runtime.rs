@@ -14,7 +14,6 @@ use frame_support::{
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use hex_literal::hex;
-use once_cell::sync::Lazy;
 use orml_traits::{parameter_type_with_key, GetByKey};
 use sp_arithmetic::traits::Zero;
 use sp_runtime::{

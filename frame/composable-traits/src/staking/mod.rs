@@ -1,7 +1,7 @@
 use crate::staking::lock::{Lock, LockConfig};
 use codec::{Decode, Encode};
 
-use crate::time::{DurationSeconds, ONE_HOUR, ONE_MINUTE};
+use crate::time::DurationSeconds;
 use frame_support::{dispatch::DispatchResult, pallet_prelude::*, BoundedBTreeMap};
 use scale_info::TypeInfo;
 use sp_arithmetic::traits::Zero;
@@ -10,19 +10,6 @@ use sp_runtime::{DispatchError, Perbill, Permill};
 pub mod lock;
 pub mod math;
 pub mod nft;
-
-/// Enum for fixing the possible staking duration for the interface
-pub enum StakingDurationPresets {
-	Week,
-}
-
-impl StakingDurationPresets {
-	pub fn get_duration_seconds(&self) -> DurationSeconds {
-		match self {
-			StakingDurationPresets::Week => ONE_HOUR * 24 * 7,
-		}
-	}
-}
 
 pub type StakingDurationToRewardsMultiplierConfig<Limit> =
 	BoundedBTreeMap<DurationSeconds, Perbill, Limit>;
@@ -138,11 +125,11 @@ pub struct Stake<RewardPoolId, AssetId, Balance, RewardsLength: Get<u32>> {
 	/// The original stake this NFT was minted for or updated NFT with increased stake amount.
 	pub stake: Balance,
 
-	/// Pool share received for this NFT
+	/// Pool share received for this position
 	pub share: Balance,
 
 	/// Reduced rewards by asset for the position (d_n)
-	pub reductions: BoundedBTreeMap<AssetId, Balance, RewardsLength>,
+	reductions: BoundedBTreeMap<AssetId, Balance, RewardsLength>,
 
 	/// The lock period for the stake.
 	pub lock: Lock,
@@ -197,7 +184,7 @@ pub trait Staking {
 		who: &Self::AccountId,
 		pool_id: &Self::RewardPoolId,
 		amount: Self::Balance,
-		duration: StakingDurationPresets,
+		duration_preset: DurationSeconds,
 		keep_alive: bool,
 	) -> Result<Self::PositionId, DispatchError>;
 

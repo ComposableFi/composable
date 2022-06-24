@@ -13,7 +13,7 @@ use composable_traits::{
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
-use frame_support::{assert_err, assert_noop, assert_ok, BoundedBTreeMap};
+use frame_support::{assert_err, assert_ok, BoundedBTreeMap};
 use frame_system::EventRecord;
 use sp_arithmetic::Perbill;
 use sp_std::collections::btree_map::BTreeMap;
