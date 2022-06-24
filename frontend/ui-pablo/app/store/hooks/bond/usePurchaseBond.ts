@@ -8,23 +8,24 @@ import {
   useSelectedAccount,
 } from "substrate-react";
 import { APP_NAME } from "@/defi/polkadot/constants";
+import BigNumber from "bignumber.js";
 
-export function usePurchaseBond() {
+export function usePurchaseBond(offerId: BigNumber, amount: BigNumber) {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const { enqueueSnackbar } = useSnackbar();
 
   const executor = useExecutor();
 
-  const bond = useCallback(
-    async (offerId: number, nbOfBonds: number) => {
+  const purchaseBond = useCallback(
+    async () => {
       if (!parachainApi || !selectedAccount || !executor) return null;
       const signer = await getSigner(APP_NAME, selectedAccount.address);
 
       try {
         await executor
           .execute(
-            parachainApi.tx.bondedFinance.bond(offerId, nbOfBonds, true),
+            parachainApi.tx.bondedFinance.bond(offerId.toNumber(), amount.toString(), true),
             selectedAccount.address,
             parachainApi,
             signer,
@@ -45,8 +46,8 @@ export function usePurchaseBond() {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [parachainApi]
+    [parachainApi, offerId, amount]
   );
 
-  return bond;
+  return purchaseBond;
 }
