@@ -6,6 +6,6 @@ pub trait WeightInfo {
 
 impl WeightInfo for () {
 	fn create_reward_pool() -> Weight {
-		todo!()
+		10_000
 	}
 }

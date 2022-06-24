@@ -96,7 +96,12 @@ pub mod pallet {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
 
 		/// The reward balance type.
-		type Balance: Parameter + Member + BalanceLike + FixedPointOperand;
+		type Balance: Parameter
+		+ Member
+		+ BalanceLike
+		+ FixedPointOperand
+		+ From<u128>
+		+ Into<u128>;
 
 		/// The reward pool ID type.
 		/// Type representing the unique ID of a pool.
@@ -116,10 +121,16 @@ pub mod pallet {
 		/// The position id type.
 		type PositionId: Parameter + Member + Clone + FullCodec + Zero;
 
-		type MayBeAssetId: Parameter + Member + AssetIdLike + MaybeSerializeDeserialize + Ord;
+		type AssetId: Parameter
+			+ Member
+			+ AssetIdLike
+			+ MaybeSerializeDeserialize
+			+ Ord
+			+ From<u128>
+			+ Into<u128>;
 
 		/// Is used to create staked asset per `Self::RewardPoolId`
-		type CurrencyFactory: CurrencyFactory<Self::MayBeAssetId, Self::Balance>;
+		type CurrencyFactory: CurrencyFactory<Self::AssetId, Self::Balance>;
 
 		/// is used for rate based rewarding and position lock timing
 		type UnixTime: UnixTime;
@@ -148,7 +159,7 @@ pub mod pallet {
 	/// Abstraction over RewardPoolConfiguration type
 	type RewardPoolConfigurationOf<T> = RewardPoolConfiguration<
 		<T as frame_system::Config>::AccountId,
-		<T as Config>::MayBeAssetId,
+		<T as Config>::AssetId,
 		<T as Config>::Balance,
 		<T as frame_system::Config>::BlockNumber,
 		StakingDurationToRewardsMultiplierConfig<<T as Config>::MaxStakingDurationPresets>,
@@ -157,7 +168,7 @@ pub mod pallet {
 	/// Abstraction over RewardPool type
 	type RewardPoolOf<T> = RewardPool<
 		<T as frame_system::Config>::AccountId,
-		<T as Config>::MayBeAssetId,
+		<T as Config>::AssetId,
 		<T as Config>::Balance,
 		<T as frame_system::Config>::BlockNumber,
 		StakingDurationToRewardsMultiplierConfig<<T as Config>::MaxStakingDurationPresets>,
@@ -216,8 +227,8 @@ pub mod pallet {
 							owner: owner.clone(),
 							asset_id,
 							rewards: BoundedBTreeMap::<
-								T::MayBeAssetId,
-								Reward<T::MayBeAssetId, T::Balance>,
+								T::AssetId,
+								Reward<T::AssetId, T::Balance>,
 								T::MaxRewardConfigsPerPool,
 							>::try_from(rewards)
 							.map_err(|_| Error::<T>::RewardConfigError)?,

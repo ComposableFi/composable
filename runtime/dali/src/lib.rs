@@ -867,20 +867,31 @@ impl crowdloan_rewards::Config for Runtime {
 
 parameter_types! {
 	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
+	pub const MaxStakingDurationPresets : u32 = 10;
+}
+
+#[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, MaxEncodedLen, TypeInfo, RuntimeDebug)]
+pub struct MaxRewardConfigsPerPool;
+impl Get<u32> for MaxRewardConfigsPerPool {
+	fn get() -> u32 {
+		10
+	}
 }
 
 impl pallet_staking_rewards::Config for Runtime {
 	type Event = Event;
-	type Share = Balance;
 	type Balance = Balance;
-	type PoolId = u16;
+	type RewardPoolId = u16;
 	type PositionId = u128;
-	type MayBeAssetId = CurrencyId;
+	type AssetId = CurrencyId;
 	type CurrencyFactory = CurrencyFactory;
 	type UnixTime = Timestamp;
 	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
 	type PalletId = StakingRewardsPalletId;
-	type WeightInfo = ();
+	type WeightInfo = weights::staking_rewards::WeightInfo<Runtime>;
+	type MaxStakingDurationPresets = MaxStakingDurationPresets;
+	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
+	type RewardPoolCreationOrigin = EnsureRootOrHalfCouncil;
 }
 
 /// The calls we permit to be executed by extrinsics

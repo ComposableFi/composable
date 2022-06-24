@@ -189,7 +189,7 @@ parameter_types! {
 	pub const MaxStakingDurationPresets : u32 = 10;
 }
 
-#[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, MaxEncodedLen, TypeInfo, core::fmt::Debug)]
+#[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, MaxEncodedLen, TypeInfo, RuntimeDebug)]
 pub struct MaxRewardConfigsPerPool;
 impl Get<u32> for MaxRewardConfigsPerPool {
 	fn get() -> u32 {
@@ -202,7 +202,7 @@ impl pallet_staking_rewards::Config for Test {
 	type Balance = Balance;
 	type RewardPoolId = u16;
 	type PositionId = u128;
-	type MayBeAssetId = CurrencyId;
+	type AssetId = CurrencyId;
 	type CurrencyFactory = CurrencyFactory;
 	type UnixTime = Timestamp;
 	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;

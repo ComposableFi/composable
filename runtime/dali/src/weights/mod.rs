@@ -29,3 +29,4 @@ pub mod treasury;
 pub mod utility;
 pub mod vault;
 pub mod vesting;
+pub mod staking_rewards;
