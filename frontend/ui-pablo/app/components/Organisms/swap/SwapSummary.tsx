@@ -20,7 +20,7 @@ export type SwapSummaryProps = {
   PriceImpactProps?: TypographyProps,
   baseAssetAmount: BigNumber,
   quoteAssetAmount: BigNumber,
-  fee: BigNumber,
+  feeCharged: BigNumber,
   price?: BigNumber,
 } & BoxProps;
 
@@ -33,19 +33,19 @@ export const SwapSummary: React.FC<SwapSummaryProps> = ({
   quoteAssetAmount,
   priceImpact,
   PriceImpactProps,
-  fee,
+  feeCharged,
   price,
   ...boxProps
 }) => {
 
   const validTokens = !!baseAsset && !!quoteAsset;
-  const feeCharged = useMemo(() => {
-    if (validTokens) {
-      return new BigNumber(quoteAssetAmount).times(fee)
-    } else {
-      return new BigNumber(0);
+
+  const fee = useMemo(() => {
+    if (feeCharged) {
+      return feeCharged
     }
-  }, [quoteAssetAmount, validTokens, fee]);
+    return new BigNumber(0)
+  }, [feeCharged])
 
   if (!validTokens) {
     return <></>;
@@ -92,7 +92,7 @@ export const SwapSummary: React.FC<SwapSummaryProps> = ({
           title: "Liquidity provider fee"
         }}
         BalanceProps={{
-          balance: `${feeCharged.toFixed(4)} ${
+          balance: `${fee.toFixed(4)} ${
             poolType !== "none" && poolType !== "StableSwap" ? quoteAsset.symbol : baseAsset.symbol
           }`
         }}

@@ -1,4 +1,4 @@
-import { LiquidityBootstrappingPool, ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
+import { LiquidityBootstrappingPool, ConstantProductPool, StableSwapPool } from "@/defi/types";
 import { percentageToNumber } from "@/utils/number";
 import BigNumber from "bignumber.js";
 import { AVERAGE_BLOCK_TIME, DAYS, DEFAULT_NETWORK_ID, DUMMY_LAUNCH_DESCRIPTION } from "../../constants";

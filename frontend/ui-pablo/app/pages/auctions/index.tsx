@@ -59,7 +59,7 @@ const Auctions: NextPage = () => {
 
       return () => clearInterval(interval);
     }
-  }, [parachainApi, liquidityBootstrappingPools.verified.length]);
+  }, [parachainApi, liquidityBootstrappingPools, setLiquidityBootstrappingPoolSpotPrice]);
 
   return (
     <Default>

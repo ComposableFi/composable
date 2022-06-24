@@ -5,15 +5,18 @@ import { createPabloPoolAccountId } from "@/defi/utils";
 import { fetchSpotPrice } from "@/defi/utils/pablo/spotPrice";
 import {
   ConstantProductPool,
-  LiquidityPoolType,
   StableSwapPool,
-} from "@/store/pools/pools.types";
+} from "@/defi/types";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
+import { LiquidityPoolType } from "@/store/pools/pools.types";
 
 const Updater = () => {
   const {
-    swaps,
+    swaps: {
+      ui,
+      poolConstants
+    },
     setDexRouteSwaps,
     setPoolConstantsSwaps,
     setPoolVariablesSwaps,
@@ -21,6 +24,7 @@ const Updater = () => {
       constantProductPools,
       stableSwapPools,
     },
+    resetSwaps
   } = useStore();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   /**
@@ -34,7 +38,6 @@ const Updater = () => {
    *    fetched from the chain
    */
   useEffect(() => {
-    const { ui } = swaps;
     if (isValidAssetPair(ui.baseAssetSelected, ui.quoteAssetSelected)) {
       if (
         parachainApi &&
@@ -66,15 +69,7 @@ const Updater = () => {
                * Clear Data here as no
                * permissioned route was found
                */
-              setDexRouteSwaps([]);
-              setPoolConstantsSwaps({
-                poolAccountId: "",
-                poolIndex: -1,
-                lbpConstants: undefined,
-                poolType: "none",
-                fee: "0",
-                pair: { quote: -1, base: -1 },
-              });
+              resetSwaps();
             } else if (dexRoute.direct) {
               /**
                * found a route, involves a single
@@ -117,7 +112,6 @@ const Updater = () => {
                 );
 
                 let lbp = undefined;
-                let fee = new BigNumber(pool.feeConfig.feeRate);
                 pair = pool.pair;
 
                 // if ((pool as LiquidityBootstrappingPool).sale) {
@@ -137,7 +131,7 @@ const Updater = () => {
                 let poolConstants = {
                   poolAccountId: poolAccountId,
                   poolIndex: Number(poolId),
-                  fee: fee.toString(),
+                  feeConfig: pool.feeConfig,
                   lbpConstants: lbp,
                   poolType,
                   pair,
@@ -146,15 +140,7 @@ const Updater = () => {
                 setDexRouteSwaps([Number(poolId)]);
                 setPoolConstantsSwaps(poolConstants);
               } else {
-                setDexRouteSwaps([]);
-                setPoolConstantsSwaps({
-                  poolAccountId: "",
-                  poolIndex: -1,
-                  lbpConstants: undefined,
-                  poolType: "none",
-                  fee: "0",
-                  pair: { quote: -1, base: -1 },
-                });
+                resetSwaps();
               }
             } else {
               // Some future logic
@@ -169,21 +155,19 @@ const Updater = () => {
      * to be added to dependancy list
      * 'setDexRouteSwaps', 'setPoolConstantsSwaps' are setters and theyll remain
      * the same throught the renders
-     * 'swaps' is entire swaps state and this hook
-     * only needs access to some part of the state
      */
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    swaps.ui,
+    ui,
     parachainApi,
     constantProductPools.verified,
     stableSwapPools.verified,
   ]);
 
   useEffect(() => {
-    if (swaps.poolConstants.poolIndex !== -1) {
-      const { pair } = swaps.poolConstants;
-      const { baseAssetSelected, quoteAssetSelected } = swaps.ui;
+    if (poolConstants.poolIndex !== -1) {
+      const { pair } = poolConstants;
+      const { baseAssetSelected, quoteAssetSelected } = ui;
       if (
         isValidAssetPair(baseAssetSelected, quoteAssetSelected) &&
         parachainApi
@@ -192,8 +176,8 @@ const Updater = () => {
         if (baseAssetSelected && quoteAssetSelected) {
           fetchSpotPrice(
             parachainApi,
-            { base: swaps.poolConstants.pair.base.toString(), quote: swaps.poolConstants.pair.quote.toString() },
-            swaps.poolConstants.poolIndex
+            { base: poolConstants.pair.base.toString(), quote: poolConstants.pair.quote.toString() },
+            poolConstants.poolIndex
           ).then(
             (spotPrice) => {
               if (isReversedTrade) {
@@ -211,7 +195,7 @@ const Updater = () => {
         spotPrice: "0",
       });
     }
-  }, [swaps.ui, swaps.poolConstants, parachainApi, setPoolVariablesSwaps]);
+  }, [ui, poolConstants, parachainApi, setPoolVariablesSwaps]);
 
   return null;
 };

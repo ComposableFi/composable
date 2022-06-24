@@ -1,3 +1,4 @@
+import { PoolFeeConfig } from "@/defi/types";
 import { LiquidityPoolType } from "../pools/pools.types";
 
 export type SwapsChartRange = "24h" | "1w" | "1m";
@@ -10,7 +11,7 @@ export interface SwapsSlice {
     poolConstants: {
       poolAccountId: string;
       poolIndex: number;
-      fee: string;
+      feeConfig: PoolFeeConfig;
       poolType: LiquidityPoolType | "none";
       pair: {
         base: number;
@@ -43,7 +44,7 @@ export interface SwapsSlice {
     poolConstants: {
       poolAccountId: string;
       poolIndex: number;
-      fee: string;
+      feeConfig: PoolFeeConfig;
       poolType: LiquidityPoolType | "none";
       pair: { base: number; quote: number; }
       lbpConstants:
@@ -59,4 +60,5 @@ export interface SwapsSlice {
   setPoolVariablesSwaps: (key: {
     spotPrice: string;
   }) => void;
+  resetSwaps: () => void;
 }

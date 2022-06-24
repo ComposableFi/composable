@@ -6,7 +6,8 @@ export function uniswapCalculator(
     tokenAmount: BigNumber,
     oneBaseInQuote: BigNumber,
     slippage: number, // in %
-    feeRate: number // in %
+    feeRate: number, // in %
+    formatDecimals: number = 4
 ): {
     tokenOutAmount: BigNumber,
     feeChargedAmount: BigNumber,
@@ -42,9 +43,9 @@ export function uniswapCalculator(
     }
 
     return {
-        feeChargedAmount,
-        slippageAmount,
-        tokenOutAmount,
-        minReceive
+        feeChargedAmount: feeChargedAmount.dp(formatDecimals),
+        slippageAmount: slippageAmount.dp(formatDecimals),
+        tokenOutAmount: tokenOutAmount.dp(formatDecimals),
+        minReceive: minReceive.dp(formatDecimals)
     }
 }

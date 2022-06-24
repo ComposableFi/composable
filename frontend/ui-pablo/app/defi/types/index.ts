@@ -2,7 +2,9 @@ import BigNumber from "bignumber.js";
 import { DEFI_CONFIG } from "../config";
 
 export * from "./bonds";
+export * from "./pablo";
 export * from "./vesting";
+
 export type TokenId = typeof DEFI_CONFIG.tokenIds[number];
 export type Token = {
   id: TokenId;

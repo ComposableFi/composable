@@ -1,4 +1,3 @@
-import { AssetId } from "@/defi/polkadot/types";
 import { StoreSlice } from "../types";
 import { SwapsSlice } from "./swaps.types";
 import {
@@ -7,6 +6,7 @@ import {
   putUiAssetSelection,
   putPoolVariables,
   invertAssetSelection,
+  resetSwaps,
 } from "./swaps.utils";
 
 const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
@@ -20,7 +20,11 @@ const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
     poolConstants: {
       poolAccountId: "",
       poolIndex: -1,
-      fee: "0",
+      feeConfig: {
+        feeRate: "0",
+        ownerFeeRate: "0",
+        protocolFeeRate: "0"
+      },
       lbpConstants: undefined,
       poolType: "none",
       pair: {
@@ -58,6 +62,7 @@ const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
     set((prev: SwapsSlice) => ({
       swaps: invertAssetSelection(prev.swaps),
     })),
+  resetSwaps: () => set((prev: SwapsSlice) => ({ swaps: resetSwaps(prev.swaps) }))
 });
 
 export default createSwapsSlice;

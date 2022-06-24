@@ -30,7 +30,7 @@ import { ConfirmingModal } from "./ConfirmingModal";
 import { useDotSamaContext, useParachainApi } from "substrate-react";
 import { debounce } from "lodash";
 import { calculateSwap } from "@/defi/utils/pablo/swaps";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { DEFAULT_NETWORK_ID, fetchSpotPrice, isValidAssetPair, uniswapCalculator } from "@/defi/utils";
 import { useAssetBalance, useUSDPriceByAssetId } from "@/store/assets/hooks";
 import useStore from "@/store/useStore";
 
@@ -179,18 +179,17 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   }, [isConfirmed]);
 
   const [isProcessing, setIsProcessing] = useState(false);
+  const [feeCharged, setFeeCharged] = useState(new BigNumber(0))
 
   const onSwapAmountInput = (swapAmount: {
     value: BigNumber;
     side: "quote" | "base";
   }) => {
-    setIsProcessing(true);
-    const { ui, dexRouter } = swaps;
+    const { ui, dexRouter, poolConstants } = swaps;
     
     if (
       parachainApi &&
-      ui.baseAssetSelected !== "none" &&
-      ui.quoteAssetSelected !== "none" &&
+      isValidAssetPair(ui.baseAssetSelected, ui.quoteAssetSelected) &&
       dexRouter.dexRoute.length
     ) {
       const { value, side } = swapAmount;
@@ -200,31 +199,21 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         setQuoteAssetAmount(swapAmount.value);
       }
 
-      const { baseAssetSelected, quoteAssetSelected } = ui;
-
-      const exchangeParams = {
-        quoteAmount: value,
-        baseAssetId: baseAssetSelected,
-        quoteAssetId: quoteAssetSelected,
-        side: side,
-        slippage,
-      };
-
-      calculateSwap(
-        parachainApi,
-        exchangeParams,
-        swaps.poolConstants
-      ).then((impact) => {
-        swapAmount.side === "base"
-          ? setQuoteAssetAmount(new BigNumber(impact.tokenOutAmount))
-          : setBaseAssetAmount(new BigNumber(impact.tokenOutAmount));
-        setMinimumReceived(new BigNumber(impact.minimumRecieved));
-        setPriceImpact(new BigNumber(impact.priceImpact));
-
-        setTimeout(() => {
-          setIsProcessing(false);
-        }, 500);
-      });
+      setIsProcessing(true);
+      const isInverse = ui.quoteAssetSelected === poolConstants.pair.base.toString();
+      const { base, quote } = poolConstants.pair;
+      const feeRate = new BigNumber(poolConstants.feeConfig.feeRate);
+      fetchSpotPrice(parachainApi, { base: base.toString(), quote: quote.toString() } , poolConstants.poolIndex).then(oneBaseInQuote => {
+        const {
+          minReceive,
+          tokenOutAmount,
+          feeChargedAmount,
+          // slippageAmount
+        } = uniswapCalculator(side, isInverse, value, oneBaseInQuote, slippage, feeRate.toNumber());
+        side === "base" ? setQuoteAssetAmount(tokenOutAmount) : setBaseAssetAmount(tokenOutAmount);
+        setMinimumReceived(minReceive);
+        setFeeCharged(feeChargedAmount);
+      })
     }
   };
 
@@ -480,7 +469,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
           quoteAssetAmount={quoteAssetAmount}
           minimumReceived={minimumReceived}
           priceImpact={priceImpact.toNumber()}
-          fee={new BigNumber(swaps.poolConstants.fee).div(100)}
+          feeCharged={feeCharged}
         />
       )}
 

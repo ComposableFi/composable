@@ -44,8 +44,7 @@ export function useCancelOffer() {
         return null;
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [parachainApi]
+    [parachainApi, executor, selectedAccount, enqueueSnackbar]
   );
 
   return cancel;

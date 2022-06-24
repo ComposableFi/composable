@@ -58,3 +58,26 @@ export const invertAssetSelection = (
     }
   });
 }
+
+export const resetSwaps = (
+  swapState: SwapsSlice["swaps"],
+) => {
+  return produce(swapState, (draft) => {
+    draft.poolConstants = {
+      poolAccountId: "",
+      poolIndex: -1,
+      feeConfig: {
+        feeRate: "0",
+        ownerFeeRate: "0",
+        protocolFeeRate: "0"
+      },
+      poolType: "none",
+      pair: {
+        base: -1,
+        quote: -1,
+      },
+      lbpConstants: undefined
+    }
+    draft.dexRouter.dexRoute = [];
+  });
+}

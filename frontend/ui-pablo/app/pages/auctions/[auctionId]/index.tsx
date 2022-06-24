@@ -116,6 +116,8 @@ const Auction: NextPage = () => {
     return () => {
       resetActiveLBP();
     };
+  // resetActiveLBP, remains same with all renders
+  // this needs to be called only on page cleanup
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

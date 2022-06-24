@@ -11,7 +11,7 @@ import {
 } from "@mui/icons-material";
 import { useTheme, Box, Typography, alpha, Button } from "@mui/material";
 import Image from "next/image";
-import React, { useState } from "react";
+import React from "react";
 
 const AccountSettings: React.FC<{}> = () => {
   const theme = useTheme();
