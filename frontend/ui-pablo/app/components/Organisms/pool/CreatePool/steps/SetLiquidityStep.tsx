@@ -128,7 +128,7 @@ const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
       }
     }
     return new BigNumber(0);
-  }, [createPool.baseAsset, apollo, balance1]);
+  }, [createPool.baseAsset, apollo]);
 
   const tokenToUSD2 = useMemo(() => {
     if (createPool.quoteAsset !== "none") {

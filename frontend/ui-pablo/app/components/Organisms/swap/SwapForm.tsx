@@ -110,7 +110,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
 
   const revertSwap = useCallback(() => {
       invertAssetSelectionSwaps();
-  }, [swaps.ui, invertAssetSelectionSwaps])
+  }, [invertAssetSelectionSwaps])
 
   useEffect(() => {
     setIsProcessing(true);
