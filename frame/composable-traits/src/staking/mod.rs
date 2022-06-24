@@ -89,7 +89,7 @@ pub struct RewardConfig<AssetId, Balance> {
 	/// Upper bound on the `total_rewards - total_dilution_adjustment`.
 	pub max_rewards: Balance,
 
-	/// The rewarding rate that increases the pool `total_reward` (and `actual_total_reward`)
+	/// The rewarding rate that increases the pool `total_reward`
 	/// at a given time.
 	pub reward_rate: Perbill,
 }
