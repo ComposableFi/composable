@@ -21,7 +21,7 @@ RUN groupadd -g 1000 service && useradd -m -s /bin/sh -g 1000 -G service service
 	curl -fsSL https://deb.nodesource.com/setup_17.x | bash - && \
 	apt-get update && apt-get install -y --no-install-recommends nodejs && \
 	npm install --global npm yarn && \
-	curl https://github.com/galacticcouncil/Basilisk-node/releases/download/v7.0.1/basilisk -Lo /apps/basilisk-node/target/release/basilisk && \
+	curl https://github.com/galacticcouncil/Basilisk-node/releases/download/v8.0.0/basilisk -Lo /apps/basilisk-node/target/release/basilisk && \
 	chmod +x /apps/basilisk-node/target/release/basilisk && \
 	apt-get clean && \
 	find /var/lib/apt/lists/ -type f -not -name lock -delete;
