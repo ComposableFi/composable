@@ -25,6 +25,16 @@ env:
   DOCKER_USER_OPTION: '$UID:$GID'
 
 jobs:
+  mosaic-check:
+    name: Check Mosaic V2
+    runs-on: ubuntu-latest
+    working-directory: mosaic/v2
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          npm install
+          yarn test
+
   substrate-check:
     name: Check Benchmarks
     runs-on:
