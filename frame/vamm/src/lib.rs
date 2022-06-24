@@ -147,7 +147,7 @@ pub mod pallet {
 		},
 		ArithmeticError, FixedPointNumber,
 	};
-	use std::cmp::{self, Ordering};
+	use std::cmp::Ordering;
 
 	#[cfg(feature = "std")]
 	use serde::{Deserialize, Serialize};
@@ -1220,11 +1220,9 @@ pub mod pallet {
 			old_price: DecimalOf<T>,
 		) -> Result<DecimalOf<T>, DispatchError> {
 			let now = Self::now(now);
-			let weight_now: MomentOf<T> =
-				cmp::max(1_u64.into(), now.saturating_sub(last_twap_timestamp));
-
+			let weight_now: MomentOf<T> = now.saturating_sub(last_twap_timestamp).max(1_u64.into());
 			let weight_last_twap: MomentOf<T> =
-				cmp::max(1_u64.into(), twap_period.saturating_sub(weight_now));
+				twap_period.saturating_sub(weight_now).max(1_u64.into());
 
 			Self::calculate_exponential_moving_average(
 				new_price,
