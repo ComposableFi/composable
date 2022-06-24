@@ -7,7 +7,7 @@ use sp_runtime::Perquintill;
 
 use crate::{
 	mock::{
-		helpers::create_usdt_usdc_pool,
+		helpers::create_layr_crowd_loan_pool,
 		runtime::{
 			Event, ExtBuilder, Instrumental, MockRuntime, PabloStrategy, System, VaultId,
 			MAX_ASSOCIATED_VAULTS,
@@ -68,19 +68,19 @@ fn rebalance_emits_event() {
 	ExtBuilder::default().build().execute_with(|| {
 		System::set_block_number(1);
 
-		// Create Vault (USDC)
+		// Create Vault (LAYR)
 		let config = InstrumentalVaultConfig {
-			asset_id: CurrencyId::USDC,
+			asset_id: CurrencyId::LAYR,
 			percent_deployable: Perquintill::zero(),
 		};
 		let vault_id = <Instrumental as InstrumentalTrait>::create(config);
 		assert_ok!(vault_id);
 		let vault_id = vault_id.unwrap() as VaultId;
 
-		// Create Pool (USDT/USDC)
-		let pool_id = create_usdt_usdc_pool();
+		// Create Pool (LAYR/CROWD_LOAN)
+		let pool_id = create_layr_crowd_loan_pool();
 		pallet::Pools::<MockRuntime>::insert(
-			CurrencyId::USDC,
+			CurrencyId::LAYR,
 			PoolState { pool_id, state: State::Normal },
 		);
 
