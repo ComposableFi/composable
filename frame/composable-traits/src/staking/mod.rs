@@ -1,7 +1,7 @@
 use crate::staking::lock::{Lock, LockConfig};
 use codec::{Decode, Encode};
 
-use crate::time::DurationSeconds;
+use crate::time::{DurationSeconds, ONE_HOUR, ONE_MINUTE};
 use frame_support::{dispatch::DispatchResult, pallet_prelude::*, BoundedBTreeMap};
 use scale_info::TypeInfo;
 use sp_arithmetic::traits::Zero;
@@ -10,6 +10,19 @@ use sp_runtime::{DispatchError, Perbill, Permill};
 pub mod lock;
 pub mod math;
 pub mod nft;
+
+/// Enum for fixing the possible staking duration for the interface
+pub enum StakingDurationPresets {
+	Week,
+}
+
+impl StakingDurationPresets {
+	pub fn get_duration_seconds(&self) -> DurationSeconds {
+		match self {
+			StakingDurationPresets::Week => ONE_HOUR * 24 * 7,
+		}
+	}
+}
 
 pub type StakingDurationToRewardsMultiplierConfig<Limit> =
 	BoundedBTreeMap<DurationSeconds, Perbill, Limit>;
@@ -33,7 +46,7 @@ pub struct Reward<AssetId, Balance> {
 	/// Upper bound on the `total_rewards - total_dilution_adjustment`.
 	pub max_rewards: Balance,
 
-	/// The rewarding rate that increases the pool `total_reward` (and `actual_total_reward`)
+	/// The rewarding rate that increases the pool `total_reward`
 	/// at a given time.
 	pub reward_rate: Perbill,
 }
@@ -184,6 +197,7 @@ pub trait Staking {
 		who: &Self::AccountId,
 		pool_id: &Self::RewardPoolId,
 		amount: Self::Balance,
+		duration: StakingDurationPresets,
 		keep_alive: bool,
 	) -> Result<Self::PositionId, DispatchError>;
 

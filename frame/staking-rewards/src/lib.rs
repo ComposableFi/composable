@@ -44,7 +44,7 @@ pub use pallet::*;
 pub mod pallet {
 	use composable_support::{
 		abstractions::{
-			counter::Counter,
+			nonce::Nonce,
 			utils::{
 				decrement::SafeDecrement,
 				increment::{Increment, SafeIncrement},
@@ -93,8 +93,6 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
-		/// The share type of pool. Is bigger than `Self::Balance`
-		type Share: Parameter + Member + BalanceLike + FixedPointOperand;
 
 		/// The reward balance type.
 		type Balance: Parameter + Member + BalanceLike + FixedPointOperand;
@@ -174,7 +172,7 @@ pub mod pallet {
 	#[pallet::getter(fn pool_count)]
 	#[allow(clippy::disallowed_types)]
 	pub type RewardPoolCount<T: Config> =
-		StorageValue<_, T::RewardPoolId, ValueQuery, Counter<ZeroInit, SafeIncrement, SafeDecrement>>;
+		StorageValue<_, T::RewardPoolId, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
 
 	#[pallet::storage]
 	#[pallet::getter(fn pools)]
@@ -245,6 +243,7 @@ pub mod pallet {
 			who: &Self::AccountId,
 			pool_id: &Self::RewardPoolId,
 			amount: Self::Balance,
+			duration: StakingDurationPresets,
 			keep_alive: bool,
 		) -> Result<Self::PositionId, DispatchError> {
 			Err("Not implemented".into())

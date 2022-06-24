@@ -200,7 +200,6 @@ impl Get<u32> for MaxRewardConfigsPerPool {
 
 impl pallet_staking_rewards::Config for Test {
 	type Event = Event;
-	type Share = Balance;
 	type Balance = Balance;
 	type RewardPoolId = u16;
 	type PositionId = u128;
