@@ -5,6 +5,7 @@ on:
   push:
     branches: 
       - enable-multi-platform-build
+      - xcvm-main
     tags: 
       - '*'
       
