@@ -3,10 +3,13 @@ use crate::{
 	AssetInfo, Error, PrePrice, Withdraw, *,
 };
 use codec::Decode;
-use composable_traits::{defi::CurrencyPair, oracle::Price};
+use composable_traits::{
+	defi::CurrencyPair,
+	oracle::{self, Price},
+};
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::{Currency, Hooks},
+	traits::{Currency as _, Hooks},
 	BoundedVec,
 };
 use pallet_balances::Error as BalancesError;
@@ -22,7 +25,10 @@ use std::sync::Arc;
 
 use crate::validation::ValidBlockInterval;
 use composable_support::validation::Validated;
-use composable_tests_helpers::{prop_assert_noop, prop_assert_ok};
+use composable_tests_helpers::{
+	prop_assert_noop, prop_assert_ok,
+	test::currency::{BTC, NORMALIZED, PICA},
+};
 use proptest::prelude::*;
 
 use sp_core::H256;
@@ -1158,7 +1164,7 @@ fn halborn_test_bypass_slashing() {
 
 		System::set_block_number(7);
 		Oracle::on_initialize(7);
-		let res = <Oracle as composable_traits::oracle::Oracle>::get_price(0, 1).unwrap();
+		let res = <Oracle as oracle::Oracle>::get_price(0, 1).unwrap();
 		println!("AFTER 1st SUBMIT PRICE - PRICE: {:?} | BLOCK: {:?}", res.price, res.block);
 		let balance1 = Balances::free_balance(account_1);
 		let balance2 = Balances::free_balance(account_2);
@@ -1298,14 +1304,13 @@ fn historic_pricing() {
 #[test]
 fn price_of_amount() {
 	new_test_ext().execute_with(|| {
-		let value = 100500;
-		let id = 42;
-		let amount = 10000;
+		// Yes I know this is broken currently
+		let value = NORMALIZED::units(100500);
+		let amount = BTC::units(1425);
 
-		let price = Price { price: value, block: System::block_number() };
-		Prices::<Test>::insert(id, price);
-		let total_price =
-			<Oracle as composable_traits::oracle::Oracle>::get_price(id, amount).unwrap();
+		Prices::<Test>::insert(BTC::ID, Price { price: value, block: System::block_number() });
+
+		let total_price = <Oracle as oracle::Oracle>::get_price(BTC::ID, amount).unwrap();
 
 		assert_eq!(total_price.price, value * amount)
 	});
@@ -1320,10 +1325,10 @@ fn ratio_human_case() {
 		Prices::<Test>::insert(42, price);
 		let mut pair = CurrencyPair::new(13, 42);
 
-		let ratio = <Oracle as composable_traits::oracle::Oracle>::get_ratio(pair).unwrap();
+		let ratio = <Oracle as oracle::Oracle>::get_ratio(pair).unwrap();
 		assert_eq!(ratio, FixedU128::saturating_from_integer(100));
 		pair.reverse();
-		let ratio = <Oracle as composable_traits::oracle::Oracle>::get_ratio(pair).unwrap();
+		let ratio = <Oracle as oracle::Oracle>::get_ratio(pair).unwrap();
 
 		assert_eq!(ratio, FixedU128::saturating_from_rational(1_u32, 100_u32));
 	})
@@ -1332,17 +1337,21 @@ fn ratio_human_case() {
 #[test]
 fn inverses() {
 	new_test_ext().execute_with(|| {
-		let price = Price { price: 1, block: System::block_number() };
-		Prices::<Test>::insert(13, price);
+		Prices::<Test>::insert(
+			BTC::ID,
+			Price { price: NORMALIZED::units(1), block: System::block_number() },
+		);
 		let inverse =
-			<Oracle as composable_traits::oracle::Oracle>::get_price_inverse(13, 1).unwrap();
-		assert_eq!(inverse, 1);
+			<Oracle as oracle::Oracle>::get_price_inverse(BTC::ID, NORMALIZED::units(1)).unwrap();
+		assert_eq!(inverse, BTC::units(1));
 
-		let price = Price { price: 1, block: System::block_number() };
-		Prices::<Test>::insert(13, price);
+		Prices::<Test>::insert(
+			BTC::ID,
+			Price { price: NORMALIZED::units(1), block: System::block_number() },
+		);
 		let inverse =
-			<Oracle as composable_traits::oracle::Oracle>::get_price_inverse(13, 2).unwrap();
-		assert_eq!(inverse, 2);
+			<Oracle as oracle::Oracle>::get_price_inverse(BTC::ID, NORMALIZED::units(2)).unwrap();
+		assert_eq!(inverse, BTC::units(2));
 	})
 }
 
@@ -1350,12 +1359,12 @@ fn inverses() {
 fn ratio_base_is_way_less_smaller() {
 	new_test_ext().execute_with(|| {
 		let price = Price { price: 1, block: System::block_number() };
-		Prices::<Test>::insert(13, price);
-		let price = Price { price: 10_u128.pow(12), block: System::block_number() };
-		Prices::<Test>::insert(42, price);
-		let pair = CurrencyPair::new(13, 42);
+		Prices::<Test>::insert(BTC::ID, price);
+		let price = Price { price: NORMALIZED::units(1), block: System::block_number() };
+		Prices::<Test>::insert(PICA::ID, price);
+		let pair = CurrencyPair::new(BTC::ID, PICA::ID);
 
-		let ratio = <Oracle as composable_traits::oracle::Oracle>::get_ratio(pair).unwrap();
+		let ratio = <Oracle as oracle::Oracle>::get_ratio(pair).unwrap();
 
 		assert_eq!(ratio, FixedU128::saturating_from_rational(1, 1000000000000_u64));
 	})
@@ -1404,7 +1413,7 @@ fn get_twap_for_amount() {
 		let account_2 = get_root_account();
 		assert_ok!(Oracle::add_asset_and_info(
 			Origin::signed(account_2),
-			0,
+			BTC::ID,
 			Validated::new(Percent::from_percent(80)).unwrap(),
 			Validated::new(3).unwrap(),
 			Validated::new(5).unwrap(),
@@ -1412,26 +1421,24 @@ fn get_twap_for_amount() {
 			5,
 			5
 		));
-
-		let asset_id = 0;
 		let block = 26;
 		let account_1 = get_account_1();
 
 		for _ in 0..3 {
-			add_price_storage(120, asset_id, account_1, block);
+			add_price_storage(NORMALIZED::units(120), BTC::ID, account_1, block);
 		}
 
 		System::set_block_number(block);
 		Oracle::on_initialize(block);
 
-		let price_1 = Price { price: 100, block: 21 };
-		let price_2 = Price { price: 100, block: 22 };
-		let price_3 = Price { price: 100, block: 25 };
+		let price_1 = Price { price: NORMALIZED::units(100), block: 21 };
+		let price_2 = Price { price: NORMALIZED::units(100), block: 22 };
+		let price_3 = Price { price: NORMALIZED::units(100), block: 25 };
 		let historic_prices = [price_1, price_2, price_3].to_vec();
-		set_historic_prices(asset_id, historic_prices);
+		set_historic_prices(BTC::ID, historic_prices);
 
 		let amount = 10_000;
-		let twap = Oracle::get_twap_for_amount(0, amount);
+		let twap = Oracle::get_twap_for_amount(BTC::ID, amount);
 		// twap should be ((1 * 100) + (3 * 100) + (1 * 120)) / (1 + 3 + 1) * 10_000
 		assert_eq!(twap, Ok(104 * amount));
 	});
