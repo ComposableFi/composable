@@ -1,7 +1,10 @@
 use codec::FullCodec;
 use frame_support::pallet_prelude::*;
 use scale_info::TypeInfo;
-use sp_runtime::traits::{AtLeast32BitUnsigned, Zero};
+use sp_runtime::{
+	traits::{AtLeast32BitUnsigned, Zero},
+	ArithmeticError,
+};
 use sp_std::fmt::Debug;
 
 use composable_support::math::safe::{SafeAdd, SafeDiv, SafeMul, SafeSub};
@@ -52,14 +55,14 @@ pub trait LocalAssets<MayBeAssetId> {
 	/// Amount resonably higher than minimal tradeable amount or minial trading step on DEX.
 	fn unit<T: From<u64>>(currency_id: MayBeAssetId) -> Result<T, DispatchError> {
 		let exponent = Self::decimals(currency_id)?;
-		Ok(10_u64.pow(exponent).into())
+		Ok(10_u64.checked_pow(exponent).ok_or(ArithmeticError::Overflow)?.into())
 	}
 }
 
 /// when we store assets in native form to chain in smallest units or for mock in tests
 impl<MayBeAssetId> LocalAssets<MayBeAssetId> for () {
 	fn decimals(_currency_id: MayBeAssetId) -> Result<Exponent, DispatchError> {
-		Ok(0)
+		Ok(12)
 	}
 }
 
