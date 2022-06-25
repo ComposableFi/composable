@@ -183,8 +183,11 @@ pub mod pallet {
 
 	#[derive(Encode, Decode, MaxEncodedLen, Clone, Copy, Default, Debug, PartialEq, TypeInfo)]
 	pub struct PrePrice<PriceValue, BlockNumber, AccountId> {
+		/// The price of an asset, normalized to 12 decimals.
 		pub price: PriceValue,
+		/// The block the price was submitted at.
 		pub block: BlockNumber,
+		/// The account that submitted the price.
 		pub who: AccountId,
 	}
 
@@ -401,7 +404,9 @@ pub mod pallet {
 		) -> Result<Price<Self::Balance, Self::Timestamp>, DispatchError> {
 			let Price { price, block } =
 				Prices::<T>::try_get(asset_id).map_err(|_| Error::<T>::PriceNotFound)?;
+			dbg!(&price);
 			let price = Self::quote(asset_id, price, amount)?;
+			dbg!(&price);
 			Ok(Price { price, block })
 		}
 
@@ -424,13 +429,9 @@ pub mod pallet {
 			pair: composable_traits::defi::CurrencyPair<Self::AssetId>,
 		) -> Result<sp_runtime::FixedU128, DispatchError> {
 			let base: u128 =
-				Self::get_price(pair.base, (10 ^ T::LocalAssets::decimals(pair.base)?).into())?
-					.price
-					.into();
+				Self::get_price(pair.base, T::LocalAssets::unit(pair.base)?)?.price.into();
 			let quote: u128 =
-				Self::get_price(pair.quote, (10 ^ T::LocalAssets::decimals(pair.base)?).into())?
-					.price
-					.into();
+				Self::get_price(pair.quote, T::LocalAssets::unit(pair.base)?)?.price.into();
 
 			let base = FixedU128::saturating_from_integer(base);
 			let quote = FixedU128::saturating_from_integer(quote);
@@ -441,19 +442,25 @@ pub mod pallet {
 			asset_id: Self::AssetId,
 			amount: Self::Balance,
 		) -> Result<Self::Balance, DispatchError> {
-			// imagine 10^3 == 1_000 costs 4
-			// so 1 costs 0,
-			// and amount of normalized desired is 10
-			// 10 * 1_000 / 4 = 2_500
-			// so we need 2_500 asset amount to pay for 10 normalized
-			let unit = 10 ^ (T::LocalAssets::decimals(asset_id))?;
-			let price_asset_for_unit: u128 = Self::get_price(asset_id, unit.into())?.price.into();
+			// assume the following parameters:
+			//
+			// asset A has 3 decimal places
+			// 1 unit of asset ACOIN costs 4 units of normalized asset (4_000_000_000_000)
+			// the price for 1/1_000th of asset ACOIN (the smallest unit possible, we'll call it
+			// ACENT) is then: 4_000_000_000_000/1_000 == 4_000_000_000; or 4/1000ths (1/250th) of 1
+			// unit of normalized asset.
+			//
+			// if we want 10 units of normalized asset:
+			// 10_000_000_000_000 * (1_000 / 4_000_000_000_000) = 2_500
+			// 10^12 * (10^3 / 4^12) = 2_500
+			//
+			// 2_500 ACENTS are needed to pay for 10 normalized asset.
+			let unit = T::LocalAssets::unit(asset_id)?;
+			let price_asset_for_unit: u128 = Self::get_price(asset_id, unit)?.price.into();
 
 			let amount: u128 = amount.into();
-			let result = multiply_by_rational(amount, unit as u128, price_asset_for_unit)?;
-			let result: u64 = result
-				.try_into()
-				.map_err(|_| Into::<DispatchError>::into(ArithmeticError::Overflow))?;
+			let result = multiply_by_rational(amount, unit.into(), price_asset_for_unit)?;
+			let result: u64 = result.try_into().map_err(|_| ArithmeticError::Overflow)?;
 
 			Ok(result.into())
 		}
@@ -599,12 +606,13 @@ pub mod pallet {
 			Self::deposit_event(Event::StakeReclaimed(signer, withdrawal.stake));
 			Ok(().into())
 		}
-		/// Call to submit a price, gas is returned if all logic gates passed
-		/// Should be called from offchain worker but can be called manually too
-		/// Operational transaction
+		/// Call to submit a price, gas is returned if extrinsic is successfull.
+		/// Should be called from offchain worker but can be called manually too.
 		///
-		/// - `price`: price to submit
-		/// - `asset_id`: Id for the asset
+		/// This is an operational transaction.
+		///
+		/// - `price`: price to submit, normalized to 12 decimals
+		/// - `asset_id`: id for the asset
 		///
 		/// Emits `PriceSubmitted` event when successful.
 		#[pallet::weight((T::WeightInfo::submit_price(T::MaxAnswerBound::get()), Operational))]
@@ -627,9 +635,8 @@ pub mod pallet {
 			ensure!(author_stake >= asset_info.slash, Error::<T>::NotEnoughStake);
 
 			PrePrices::<T>::try_mutate(asset_id, |current_prices| -> Result<(), DispatchError> {
-				// There can convert current_prices.len() to u32 safely
-				// because current_prices.len() limited by u32
-				// (type of AssetsInfo::<T>::get(asset_id).max_answers).
+				// current_prices.len() can be casted to u32 safely because current_prices.len() is
+				// limited to u32::MAX (see AssetsInfo::<T>::get(asset_id).max_answers).
 				if current_prices.len() as u32 >= asset_info.max_answers {
 					return Err(Error::<T>::MaxPrices.into())
 				}
@@ -1013,6 +1020,8 @@ pub mod pallet {
 			amount: T::PriceValue,
 		) -> Result<T::PriceValue, DispatchError> {
 			let unit = <Self as Oracle>::LocalAssets::unit(asset_id)?;
+			dbg!(&unit);
+			dbg!(&amount);
 			let price = multiply_by_rational(price.into(), amount.into(), unit)?;
 			Ok(price.into())
 		}
