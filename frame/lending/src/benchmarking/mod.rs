@@ -1,6 +1,8 @@
 //! Benchmarks and sanity tests for lending. Only test that action do not error, not that produce
 //! positive side effects
 #![warn(unused_imports)]
+use self::currency::NORMALIZED;
+
 use super::*;
 use crate::{self as pallet_lending, Pallet as Lending};
 use composable_traits::{
@@ -22,8 +24,6 @@ mod setup;
 
 /// Create a market with the given origin and input.
 ///
-/// `input` is [validated][Validated], and panics on error.
-///
 /// NOTE: ***ONLY CALL THIS ONCE PER BENCHMARK!!!*** The [`MarketIndex`] returned is always `1`.
 ///
 /// TODO: Get market index from events, to allow for calling twice in one benchmark.
@@ -44,7 +44,7 @@ fn create_market_from_raw_origin<T: Config>(
 fn lending_benchmarking_setup<T: Config + pallet_oracle::Config>() -> LendingBenchmarkingSetup<T> {
 	let caller: <T as frame_system::Config>::AccountId = whitelisted_caller::<T::AccountId>();
 	let origin: RawOrigin<<T as frame_system::Config>::AccountId> = whitelisted_origin::<T>();
-	let bank: BalanceOf<T> = 10_000_000_000_000_u64.into();
+	let bank: BalanceOf<T> = NORMALIZED::units(10).into();
 	let max_price_age = 10_000_u32.try_into().unwrap_or_default();
 
 	let pair = setup_currency_pair::<T>(&caller, bank);
