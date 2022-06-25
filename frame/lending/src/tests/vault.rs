@@ -156,7 +156,7 @@ proptest! {
 			));
 			test::block::process_and_progress_blocks::<Lending, Runtime>(1);
 			//Now vault is unbalanced and should restore equilibrium state.
-			 while Lending::can_borrow_from_vault(&vault_id, &market_account).is_err() {
+			 while Lending::ensure_can_borrow_from_vault(&vault_id, &market_account).is_err() {
 				for borrower in &borrowers {
 					<Lending as LendingTrait>::repay_borrow(
 						&market_id,
@@ -170,7 +170,7 @@ proptest! {
 				}
 			}
 			// Vault should be balanced.
-			prop_assert!(Lending::can_borrow_from_vault(&vault_id, &market_account).is_ok());
+			prop_assert!(Lending::ensure_can_borrow_from_vault(&vault_id, &market_account).is_ok());
 			// Lender decided withdraw money from the vault again.
 			prop_assert_ok!(Vault::withdraw(
 						Origin::signed(lender),
@@ -178,7 +178,7 @@ proptest! {
 						Assets::balance(USDT::ID, &vault_account)
 					));
 			// Vault is unbalanced
-			assert!(Lending::can_borrow_from_vault(&vault_id, &market_account).is_err());
+			assert!(Lending::ensure_can_borrow_from_vault(&vault_id, &market_account).is_err());
 			// Refresh assets prices
 			set_price(USDT::ID, NORMALIZED::ONE);
 			set_price(BTC::ID, NORMALIZED::units(50_000));
@@ -193,7 +193,7 @@ proptest! {
 			prop_assert_ok!(Vault::deposit(Origin::signed(lender), vault_id, USDT::units(total_amount)));
 			test::block::process_and_progress_blocks::<Lending, Runtime>(1);
 			// Vault is balanced.
-			assert!(Lending::can_borrow_from_vault(&vault_id, &market_account).is_ok());
+			assert!(Lending::ensure_can_borrow_from_vault(&vault_id, &market_account).is_ok());
 			Ok(())
 		})?;
 	}

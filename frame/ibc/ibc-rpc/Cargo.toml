@@ -15,12 +15,12 @@ targets = ["x86_64-unknown-linux-gnu"]
 codec = { package = "parity-scale-codec", version = "3.0.0", features = [
   "derive",
 ] }
+hex-literal = { version = "0.3.3" }
 ibc-primitives = { path = "../ibc-primitives" }
-pallet-ibc = {path = "../"}
 jsonrpsee = { version = "0.13.0", features = ["server", "macros"] }
+pallet-ibc = { path = "../" }
 serde = { version = "1.0.136", features = ["derive"] }
 serde_json = "1.0.45"
-hex-literal = { version = "0.3.3" }
 
 ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "b3ab319018b1bb8917bca3aad977455aa2c9b179", default-features = false, features = ["ics11_beefy"] }
 ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "b3ab319018b1bb8917bca3aad977455aa2c9b179", default-features = false}

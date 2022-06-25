@@ -11,12 +11,12 @@ sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
 ibc-primitives = { path = "../ibc-primitives", default-features = false }
 pallet-ibc = { path = "../", default-features = false }
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
-  "derive",
-] }
 
 [features]
 default = ['std']
-std = ['sp-api/std', 'sp-std/std', 'ibc-primitives/std', 'pallet-ibc/std', 'frame-support/std', 'sp-runtime/std', 'codec/std']
+std = [
+  'sp-api/std',
+  'sp-std/std',
+  'ibc-primitives/std',
+  'pallet-ibc/std'
+]
