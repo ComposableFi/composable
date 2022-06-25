@@ -84,7 +84,7 @@
 	"remoteUser": "vscode",
 	"features": {
 		"docker-in-docker": "latest",
-		"git-lfs": "latest",
+		// "git-lfs": "latest",
 		"node": "16"
 	}
 }
