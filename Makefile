@@ -72,7 +72,7 @@ version:
 containerize-release: version containerize
 
 containerize:
-	@docker build \
+	@docker build buildx build --platform=linux/arm64,linux/amd64,darwin --output "type=image,push=true" \
 	--build-arg SERVICE_DIR=${INSTALL_DIR} --build-arg VERSION=${RELEASE_VERSION} \
 		-f ${INSTALL_DIR}/Dockerfile \
 		-t ${IMAGE_WITH_COMMIT} \

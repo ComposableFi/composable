@@ -3,6 +3,9 @@ name: "Docker Release"
 on:
   workflow_dispatch:
   push:
+    branches: 
+      - enable-multi-platform-build
+      - xcvm-main
     tags: 
       - '*'
       
