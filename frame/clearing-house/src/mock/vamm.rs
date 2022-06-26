@@ -71,12 +71,13 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub vamm_id: Option<T::VammId>,
+		pub price: Option<T::Decimal>,
 		pub twap: Option<T::Decimal>,
 	}
 
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
-			Self { vamm_id: None, twap: Some(T::Decimal::zero()) }
+			Self { vamm_id: None, price: Some(T::Decimal::one()), twap: Some(T::Decimal::one()) }
 		}
 	}
 
@@ -84,6 +85,7 @@ pub mod pallet {
 	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
 		fn build(&self) {
 			NextVammId::<T>::set(self.vamm_id);
+			Price::<T>::set(self.price);
 			Twap::<T>::set(self.twap);
 		}
 	}

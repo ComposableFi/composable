@@ -9,8 +9,9 @@ use crate::{
 	},
 	tests::{
 		any_balance, any_price, get_market, get_market_fee_pool, run_for_seconds, run_to_time,
-		set_fee_pool_depth, set_oracle_price, set_oracle_twap, traders_in_one_market_context,
-		with_market_context, with_trading_context, Balance, Market, MarketConfig, Position,
+		set_fee_pool_depth, set_maximum_oracle_mark_divergence, set_maximum_twap_divergence,
+		set_oracle_price, set_oracle_twap, traders_in_one_market_context, with_market_context,
+		with_trading_context, Balance, Market, MarketConfig, Position,
 	},
 	Direction, Error, Event,
 };
@@ -22,6 +23,8 @@ use composable_traits::{
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 use sp_runtime::{FixedI128, FixedU128};
+
+use super::as_balance;
 
 // -------------------------------------------------------------------------------------------------
 //                                             Helpers
@@ -174,6 +177,75 @@ fn late_update_may_not_interfere_with_next_update_time() {
 		// Successfully update at next usual frequency time
 		run_to_time(ONE_HOUR * 2);
 		assert_ok!(TestPallet::update_funding(Origin::signed(ALICE), market_id));
+	});
+}
+
+#[test]
+fn should_block_update_if_mark_index_too_divergent() {
+	let config = MarketConfig {
+		funding_frequency: ONE_HOUR,
+		funding_period: ONE_HOUR * 24,
+		..Default::default()
+	};
+
+	with_market_context(ExtBuilder::default(), config, |market_id| {
+		// Set max divergence to 10%
+		set_maximum_oracle_mark_divergence((1, 10).into());
+
+		// Set mark-index price divergence
+		set_oracle_twap(&market_id, 100.into());
+		VammPallet::set_twap(Some(111.into()));
+
+		// HACK: set fee pool depth so as not to worry about capped funding rates
+		set_fee_pool_depth(&market_id, Balance::MAX);
+
+		// Set mark more than 10% away from oracle
+		VammPallet::set_price(Some(111.into()));
+
+		// Update after normal interval
+		run_for_seconds(ONE_HOUR);
+		assert_noop!(
+			TestPallet::update_funding(Origin::signed(ALICE), market_id),
+			Error::<Runtime>::OracleMarkTooDivergent
+		);
+	});
+}
+
+#[test]
+fn should_clip_twap_divergence_for_update() {
+	let config = MarketConfig {
+		funding_frequency: ONE_HOUR,
+		funding_period: ONE_HOUR,
+		..Default::default()
+	};
+	let net_position = as_balance(100);
+
+	with_trading_context(config.clone(), net_position, |market_id| {
+		// Set maximum TWAP divergence for update at 3%
+		set_maximum_twap_divergence((3, 100).into());
+
+		VammPallet::set_price(Some(1.into()));
+
+		// Alice opens a position representing the net one of all traders
+		// 1st TWAP updates here
+		let _ = <TestPallet as ClearingHouse>::open_position(
+			&ALICE,
+			&market_id,
+			Direction::Long,
+			net_position,
+			net_position,
+		);
+
+		run_for_seconds(config.funding_frequency);
+		set_oracle_twap(&market_id, 1.into());
+		VammPallet::set_twap(Some(2.into()));
+		// 2nd TWAP updates here
+		assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
+
+		// TWAP_diff is clipped from 100% to 3%
+		// funding rate is 3% ( TWAP_diff * freq / period )
+		// payment = rate * net_position
+		assert_eq!(get_market_fee_pool(&market_id), (net_position * 3) / 100);
 	});
 }
 

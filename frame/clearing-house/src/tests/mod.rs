@@ -14,7 +14,7 @@ use crate::{
 		vamm::VammConfig,
 	},
 	Direction, Market as MarketGeneric, MarketConfig as MarketConfigGeneric, Markets,
-	MaxPriceDivergence,
+	MaxPriceDivergence, MaxTwapDivergence,
 };
 use composable_traits::{
 	clearing_house::{ClearingHouse, Instruments},
@@ -65,6 +65,7 @@ impl Default for ExtBuilder {
 			oracle_asset_support: Some(true),
 			oracle_price: Some(10_000),
 			oracle_twap: Some(10_000),
+			max_price_divergence: FixedI128::from_inner(i128::MAX),
 		}
 	}
 }
@@ -153,6 +154,10 @@ fn set_fee_pool_depth(market_id: &MarketId, depth: Balance) {
 
 fn set_maximum_oracle_mark_divergence(fraction: FixedI128) {
 	MaxPriceDivergence::<Runtime>::set(fraction);
+}
+
+fn set_maximum_twap_divergence(fraction: FixedI128) {
+	MaxTwapDivergence::<Runtime>::set(Some(fraction));
 }
 
 fn set_oracle_price(_market_id: &MarketId, price: FixedU128) {
