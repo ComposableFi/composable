@@ -200,7 +200,7 @@ fn cant_liquidate_if_above_partial_margin_ratio_by_funding() {
 		set_oracle_twap(&market_id, (143, 100).into());
 		assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
 		// Alice should now owe 0.43 * 100 = 43 in funding, bringing her account's
-		// margin ratio to exactly the MMR
+		// margin ratio to exactly the PMR
 		// - margin requirement = 7
 		// - margin = 50 - 43 = 7
 
