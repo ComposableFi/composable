@@ -55,10 +55,10 @@ dev:
 
 # run as `make open=y run-book` to open as well
 run-book:
-	bash -c "(trap 'kill 0' SIGINT; cargo run -p extrinsics-docs-scraper --release -- --config-file-path=scraper.toml -vvv --watch & mdbook serve --hostname 0.0.0.0 book/ $(if $(filter y,${open}),'--open'))"
+	bash -c "(trap 'kill 0' SIGINT; cargo run --manifest-path utils/extrinsics-docs-scraper/Cargo.toml --release -- --config-file-path=scraper.toml -vvv --watch & mdbook serve --hostname 0.0.0.0 book/ $(if $(filter y,${open}),'--open'))"
 
 build-book:
-	cargo run -p extrinsics-docs-scraper --release -- --config-file-path=scraper.toml
+	cargo run --manifest-path utils/extrinsics-docs-scraper/Cargo.toml --release -- --config-file-path=scraper.toml
 	mdbook build book/
 
 .PHONY: version
