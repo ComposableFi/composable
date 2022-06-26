@@ -1,4 +1,5 @@
 import { ConstantProductPool, StableSwapPool } from "@/defi/types";
+import { uniswapCalculator } from "@/defi/utils";
 import BigNumber from "bignumber.js";
 import produce from "immer";
 import { SwapSide, SwapsSlice } from "./swaps.types";
@@ -45,6 +46,8 @@ export const resetSwapsSlice = (
       quote: "4"
     }
     draft.selectedPool = undefined;
+    draft.tokenAmounts.assetOneAmount = new BigNumber(0);
+    draft.tokenAmounts.assetTwoAmount = new BigNumber(0);
   });
 }
 
@@ -56,6 +59,24 @@ export const flipAssetSelection = (
       base: swapState.selectedAssets.quote,
       quote: swapState.selectedAssets.base
     }
-    draft.selectedPool = undefined;
+    draft.tokenAmounts.assetOneAmount = new BigNumber(0);
+    draft.tokenAmounts.assetTwoAmount = new BigNumber(0);
+  });
+}
+
+export const putTokenAmounts = (
+  swapState: SwapsSlice["swaps"],
+  amounts: {
+    assetOneAmount: BigNumber | undefined,
+    assetTwoAmount: BigNumber | undefined
+  }
+) => {
+  return produce(swapState, (draft) => {
+    if (amounts.assetOneAmount) {
+      draft.tokenAmounts.assetOneAmount = amounts.assetOneAmount
+    }
+    if (amounts.assetTwoAmount) {
+      draft.tokenAmounts.assetTwoAmount = amounts.assetTwoAmount
+    }
   });
 }

@@ -254,7 +254,10 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             },
           }}
         >
-          <SwapVertRounded onClick={flipAssetSelection} />
+          <SwapVertRounded onClick={() => {
+            setIsProcessing(true);
+            flipAssetSelection();
+          }} />
         </Box>
       </Box>
 

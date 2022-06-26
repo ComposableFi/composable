@@ -12,7 +12,7 @@ type PabloSwapProps = {
     quoteAmount: BigNumber;
 }
 
-export function usePabloSwap({ baseAssetId, quoteAmount, quoteAssetId, minimumReceived }: PabloSwapProps) {
+export function usePabloSwap({ quoteAssetId, baseAssetId, quoteAmount, minimumReceived }: PabloSwapProps) {
     const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
     const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
     const { enqueueSnackbar } = useSnackbar();
