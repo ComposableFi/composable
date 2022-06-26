@@ -16,7 +16,7 @@ RUN rustup update stable && \
     rustup component add clippy && \
     rustup component add rustfmt && \
     rustup component add rust-src && \
-    rustup component add rustfmt --toolchain nightly-2022-04-18-x86_64-unknown-linux-gnu
+    rustup component add rustfmt --toolchain nightly-2022-04-18
 
 # Install rust-analyzer
 ARG RUST_ANALYZER_VERSION=2022-04-25
