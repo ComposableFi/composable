@@ -12,9 +12,8 @@ import {
 
 export const useSwapsChart = () => {
   const { swaps } = useStore();
-  const { quoteAssetSelected } = swaps.ui;
-  const { poolIndex } = swaps.poolConstants;
-
+  const { selectedAssets, selectedPool } = swaps;
+  const { quote } = selectedAssets;
   const [seriesIntervals, setSeriesIntervals] = useState<string[]>([]);
   const [chartSeries, setChartSeries] = useState<[number, number][]>([]);
   const [selectedInterval, setSelectedInterval] = useState(
@@ -23,9 +22,8 @@ export const useSwapsChart = () => {
   const [_24hourOldPrice, set24HourOldPrice] = useState(new BigNumber(0));
 
   useEffect(() => {
-    if (poolIndex !== -1 && quoteAssetSelected !== "none") {
-
-      queryPoolTransactionsByType(poolIndex, "SWAP", 250).then((response) => {
+    if (selectedPool && selectedPool.poolId !== -1 && quote !== "none") {
+      queryPoolTransactionsByType(selectedPool.poolId, "SWAP", 250).then((response) => {
         if (
           response.data &&
           response.data.pabloTransactions &&
@@ -39,7 +37,7 @@ export const useSwapsChart = () => {
               spotPrice: string;
             }) => {
               let spotPrice = new BigNumber(tx.spotPrice);
-              if (tx.quoteAssetId !== quoteAssetSelected) {
+              if (tx.quoteAssetId !== quote) {
                 spotPrice = new BigNumber(1).div(tx.spotPrice);
               }
 
@@ -58,13 +56,13 @@ export const useSwapsChart = () => {
         }
       });
     }
-  }, [poolIndex, quoteAssetSelected, selectedInterval]);
+  }, [selectedPool, quote, selectedInterval]);
 
   useEffect(() => {
-    if (poolIndex !== -1 && quoteAssetSelected !== "none") {
+    if (selectedPool && selectedPool.poolId !== -1 && quote !== "none") {
       query24hOldTransactionByPoolQuoteAsset(
-        swaps.poolConstants.poolIndex,
-        +quoteAssetSelected,
+        selectedPool.poolId,
+        +quote,
         "SWAP",
         1
       ).then((response) => {
@@ -82,7 +80,7 @@ export const useSwapsChart = () => {
         }
       });
     }
-  }, [poolIndex, quoteAssetSelected]);
+  }, [selectedPool, quote]);
 
   return {
     selectedInterval,

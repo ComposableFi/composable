@@ -1,63 +1,41 @@
-import { AssetId } from "@/defi/polkadot/types";
+import BigNumber from "bignumber.js";
 import { StoreSlice } from "../types";
 import { SwapsSlice } from "./swaps.types";
 import {
-  putDexRoute,
-  putPoolConstants,
-  putUiAssetSelection,
-  putPoolVariables,
-  invertAssetSelection,
+  putAssetId, putSelectedPool, putSpotPrice, resetSwapsSlice, flipAssetSelection, putTokenAmounts
 } from "./swaps.utils";
 
 const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
   swaps: {
-    dexRouter: {
-      dexRoute: [],
+    tokenAmounts: {
+      assetOneAmount: new BigNumber(0),
+      assetTwoAmount: new BigNumber(0)
     },
-    poolVariables: {
-      spotPrice: "0",
+    spotPrice: new BigNumber(0),
+    selectedAssets: {
+      base: "1",
+      quote: "4",
     },
-    poolConstants: {
-      poolAccountId: "",
-      poolIndex: -1,
-      fee: "0",
-      lbpConstants: undefined,
-      poolType: "none",
-      pair: {
-        quote: -1,
-        base: -1,
-      },
-    },
-    ui: {
-      quoteAssetSelected: "none",
-      baseAssetSelected: "none",
-    },
-  },
-  setDexRouteSwaps: (dexRoute: number[]) =>
-    set((prev: SwapsSlice) => ({
-      swaps: putDexRoute(prev.swaps, dexRoute),
+    selectedPool: undefined,
+    setSelectedAsset: (id, side) => set((prev: SwapsSlice) => ({
+      swaps: putAssetId(prev.swaps, id, side)
     })),
-  setUiAssetSelectionSwaps: (
-    side: "base" | "quote",
-    assetId: string | "none"
-  ) =>
-    set((prev: SwapsSlice) => ({
-      swaps: putUiAssetSelection(prev.swaps, side, assetId),
+    setSelectedPool: (pool) => set((prev: SwapsSlice) => ({
+      swaps: putSelectedPool(prev.swaps, pool)
     })),
-  setPoolConstantsSwaps: (poolConstants) =>
-    set((prev: SwapsSlice) => ({
-      swaps: putPoolConstants(prev.swaps, poolConstants),
+    setSpotPrice: (price) => set((prev: SwapsSlice) => ({
+      swaps: putSpotPrice(prev.swaps, price)
     })),
-  setPoolVariablesSwaps: (key: {
-    spotPrice: string;
-  }) =>
-    set((prev: SwapsSlice) => ({
-      swaps: putPoolVariables(prev.swaps, key),
+    resetSwaps: () => set((prev: SwapsSlice) => ({
+      swaps: resetSwapsSlice(prev.swaps)
     })),
-  invertAssetSelectionSwaps: () =>
-    set((prev: SwapsSlice) => ({
-      swaps: invertAssetSelection(prev.swaps),
+    flipAssetSelection: () => set((prev: SwapsSlice) => ({
+      swaps: flipAssetSelection(prev.swaps)
     })),
+    setTokenAmounts: (amounts) => set((prev: SwapsSlice) => ({
+      swaps: putTokenAmounts(prev.swaps, amounts)
+    })),
+  }
 });
 
 export default createSwapsSlice;

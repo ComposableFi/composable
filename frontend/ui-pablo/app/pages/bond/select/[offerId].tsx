@@ -33,9 +33,6 @@ const SelectBond: NextPage = () => {
   const offerId = router.query.offerId || "";
   const bondOfferSelected = useBondOffer(offerId as string);
 
-  const supplySummary = "no-summary";
-  const depositSummary = "no-summary";
-
   const claimable = false;
   const message = useAppSelector((state) => state.ui.message);
 
@@ -45,9 +42,7 @@ const SelectBond: NextPage = () => {
         router.push("/bond");
       }
     },
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [extensionStatus]
+    [extensionStatus, router]
   );
 
   useEffect(() => {

@@ -1,38 +1,4 @@
-import { AssetId } from "@/defi/polkadot/types";
-import { ParachainId } from "substrate-react/dist/dotsama/types";
-import { CreatePoolSlice } from "../createPool/createPool.types";
-
-export interface ConstantProductPool {
-    poolId: number;
-    owner: string;
-    pair: {
-      base: number;
-      quote: number;
-    }
-    lpToken: string;
-    feeConfig: {
-        feeRate: string;
-        ownerFeeRate: string;
-        protocolFeeRate: string;
-    }
-    baseWeight: string;
-}
-
-export interface StableSwapPool {
-    poolId: number;
-    owner: string;
-    pair: {
-      base: number;
-      quote: number;
-    }
-    lpToken: string;
-    amplificationCoefficient: string;
-    feeConfig: {
-        feeRate: string;
-        ownerFeeRate: string;
-        protocolFeeRate: string;
-    }
-}
+import { ConstantProductPool, LiquidityBootstrappingPool, StableSwapPool } from "@/defi/types";
 
 export interface LiquidityBootstrappingPoolStats {
     startBalances: {
@@ -49,32 +15,6 @@ export interface LiquidityBootstrappingPoolStats {
     liquidity: string;
 }
 
-export interface LiquidityBootstrappingPool {
-    id: string;
-    poolId: number;
-    owner: string,
-    pair: {
-        base: number;
-        quote: number;
-    },
-    sale: {
-        startBlock: string;
-        endBlock: string;
-        start: number;
-        end: number;
-        duration: number;
-        initialWeight: number; // Percentages
-        finalWeight: number; // Percentages
-    }
-    feeConfig: {
-        feeRate: string;
-        ownerFeeRate: string;
-        protocolFeeRate: string;
-    }
-    spotPrice: string;
-    networkId: ParachainId;
-    auctionDescription: string[];
-}
 
 export type LiquidityPoolType =
   | "StableSwap"

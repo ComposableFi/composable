@@ -138,22 +138,18 @@ export const AreaChart: React.FC<AreaChartProps> = ({
   );
 
   useEffect(() => {
-    setOptions(
-      chartOptions(color || theme.palette.primary.main, labelFormat, min, max)
-    );
-  }, []);
-
-  useEffect(() => {
-    setOptions({
-      ...options,
-      ...chartOptions(
-        color || theme.palette.primary.main,
-        labelFormat,
-        min,
-        max
-      ),
+    setOptions(options => {
+      return {
+        ...options,
+        ...chartOptions(
+          color || theme.palette.primary.main,
+          labelFormat,
+          min,
+          max
+        ),
+      }
     });
-  }, [data, color]);
+  }, [color, labelFormat, min, max, theme]);
 
   return (
     <Box mt={marginTop} height={height} overflow="hidden">

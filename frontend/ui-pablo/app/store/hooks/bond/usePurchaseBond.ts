@@ -45,8 +45,14 @@ export function usePurchaseBond(offerId: BigNumber, amount: BigNumber) {
         return null;
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [parachainApi, offerId, amount]
+    [
+      enqueueSnackbar,
+      selectedAccount,
+      executor,
+      parachainApi,
+      offerId,
+      amount
+    ]
   );
 
   return purchaseBond;

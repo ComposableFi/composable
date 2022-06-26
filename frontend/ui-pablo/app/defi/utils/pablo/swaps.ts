@@ -1,5 +1,4 @@
 import { LiquidityPoolType } from "@/store/pools/pools.types";
-import { SwapsSlice } from "@/store/swaps/swaps.types";
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
 import { fetchSpotPrice } from "./spotPrice";
@@ -14,7 +13,7 @@ function takeFeeOnInputToken(poolType: LiquidityPoolType | "none"): boolean {
 export const calculateSwap = async (
   api: ApiPromise,
   exchange: PabloExchangeParams,
-  poolConstants: SwapsSlice["swaps"]["poolConstants"]
+  poolConstants: any
 ): Promise<{
   priceImpact: string;
   minimumRecieved: string;

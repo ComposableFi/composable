@@ -1,60 +1,82 @@
+import { ConstantProductPool, StableSwapPool } from "@/defi/types";
+import { uniswapCalculator } from "@/defi/utils";
+import BigNumber from "bignumber.js";
 import produce from "immer";
-import { SwapsSlice } from "./swaps.types";
+import { SwapSide, SwapsSlice } from "./swaps.types";
 
-export const putDexRoute = (
+export const putAssetId = (
   swapState: SwapsSlice["swaps"],
-  dexRoute: number[]
+  id: string | "none",
+  side: SwapSide
 ) => {
   return produce(swapState, (draft) => {
-    draft.dexRouter.dexRoute = dexRoute;
-  });
-};
-
-export const putUiAssetSelection = (
-  swapState: SwapsSlice["swaps"],
-  side: "quote" | "base",
-  assetId: string | "none"
-) => {
-  return produce(swapState, (draft) => {
-    if (side === "quote") {
-      draft.ui.quoteAssetSelected = assetId;
+    if (side === "base") {
+      draft.selectedAssets.base = id
     } else {
-      draft.ui.baseAssetSelected = assetId;
+      draft.selectedAssets.quote = id
     }
   });
 };
 
-export const putPoolConstants = (
+export const putSelectedPool = (
   swapState: SwapsSlice["swaps"],
-  constants: SwapsSlice["swaps"]["poolConstants"]
+  pool: ConstantProductPool | StableSwapPool | undefined
 ) => {
   return produce(swapState, (draft) => {
-    draft.poolConstants = {
-      ... constants
-    }
+    draft.selectedPool = pool
+  });
+};
+
+export const putSpotPrice = (
+  swapState: SwapsSlice["swaps"],
+  spotPrice: BigNumber
+) => {
+  return produce(swapState, (draft) => {
+    draft.spotPrice = spotPrice
   });
 }
 
-export const putPoolVariables = (
+export const resetSwapsSlice = (
+  swapState: SwapsSlice["swaps"]
+) => {
+  return produce(swapState, (draft) => {
+    draft.spotPrice = new BigNumber(0);
+    draft.selectedAssets = {
+      base: "1",
+      quote: "4"
+    }
+    draft.selectedPool = undefined;
+    draft.tokenAmounts.assetOneAmount = new BigNumber(0);
+    draft.tokenAmounts.assetTwoAmount = new BigNumber(0);
+  });
+}
+
+export const flipAssetSelection = (
+  swapState: SwapsSlice["swaps"]
+) => {
+  return produce(swapState, (draft) => {
+    draft.selectedAssets = {
+      base: swapState.selectedAssets.quote,
+      quote: swapState.selectedAssets.base
+    }
+    draft.tokenAmounts.assetOneAmount = new BigNumber(0);
+    draft.tokenAmounts.assetTwoAmount = new BigNumber(0);
+  });
+}
+
+export const putTokenAmounts = (
   swapState: SwapsSlice["swaps"],
-  key: {
-    spotPrice: string;
+  amounts: {
+    assetOneAmount: BigNumber | undefined,
+    assetTwoAmount: BigNumber | undefined
   }
 ) => {
   return produce(swapState, (draft) => {
-    if (key.spotPrice) {
-      draft.poolVariables.spotPrice = key.spotPrice;
+    if (amounts.assetOneAmount) {
+      draft.tokenAmounts.assetOneAmount = amounts.assetOneAmount
     }
-  });
-}
-
-export const invertAssetSelection = (
-  swapState: SwapsSlice["swaps"],
-) => {
-  return produce(swapState, (draft) => {
-    if (swapState.ui.baseAssetSelected !== "none" && swapState.ui.quoteAssetSelected !== "none") {
-      draft.ui.quoteAssetSelected = swapState.ui.baseAssetSelected;
-      draft.ui.baseAssetSelected = swapState.ui.quoteAssetSelected;
+    if (amounts.assetTwoAmount) {
+      draft.tokenAmounts.assetTwoAmount = amounts.assetTwoAmount
     }
   });
 }
