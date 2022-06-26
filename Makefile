@@ -91,7 +91,7 @@ push-release:
 	@docker push ${IMAGE_WITH_RELEASE_VERSION}
 
 containerize-composable-sandbox:
-	@docker buildx build  --platform=linux/arm64,linux/amd64 --output "type=image,push=true" -f docker/composable-sandbox.dockerfile \
+	@docker build -f docker/composable-sandbox.dockerfile \
 		-t ${REPO}/composable-sandbox:${COMMIT_SHA} \
 		-t ${REPO}/composable-sandbox:latest  \
 		.

@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - composable-sandbox
+      - xcvm-main
 
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
