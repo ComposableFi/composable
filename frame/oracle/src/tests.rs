@@ -1304,14 +1304,17 @@ fn historic_pricing() {
 #[test]
 fn price_of_amount() {
 	new_test_ext().execute_with(|| {
-		// Yes I know this is broken currently
-		let value = NORMALIZED::units(100500);
-		let amount = BTC::units(1425);
+		let value = NORMALIZED::units(50_000);
+		let amount = BTC::units(5);
 
 		Prices::<Test>::insert(BTC::ID, Price { price: value, block: System::block_number() });
 
 		let total_price = <Oracle as oracle::Oracle>::get_price(BTC::ID, amount).unwrap();
 
+		// This panics with:
+		// thread 'tests::price_of_amount' panicked at 'assertion failed: `(left == right)`
+		//   left: `250000000000000000`,
+		//  right: `250000000000000000000000000000`', frame/oracle/src/tests.rs:1315:9
 		assert_eq!(total_price.price, value * amount)
 	});
 }
