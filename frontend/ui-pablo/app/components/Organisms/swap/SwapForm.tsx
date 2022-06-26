@@ -16,6 +16,7 @@ import { useDispatch } from "react-redux";
 import { InfoOutlined, Settings, SwapVertRounded } from "@mui/icons-material";
 import {
   closeConfirmingModal,
+  openConfirmingModal,
   openPolkadotModal,
   openSwapPreviewModal,
   openTransactionSettingsModal,
@@ -30,6 +31,8 @@ import { useDotSamaContext } from "substrate-react";
 import { useSwaps } from "@/defi/hooks/swaps/useSwaps";
 import BigNumber from "bignumber.js";
 import _ from "lodash";
+import { usePabloSwap } from "@/defi/hooks/swaps/usePabloSwap";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
@@ -62,8 +65,26 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     setAssetTwoInputValid,
     assetOneInputValid,
     assetTwoInputValid,
-    flipAssetSelection
+    flipAssetSelection,
   } = useSwaps();
+
+  const initiateSwapTx = usePabloSwap({
+    baseAssetId: selectedAssetTwoId,
+    quoteAssetId: selectedAssetOneId,
+    quoteAmount: assetOneAmount,
+    minimumReceived,
+  });
+
+  const onConfirmSwap = async () => {
+    initiateSwapTx()
+      .then(() => {
+        dispatch(closeConfirmingModal());
+      })
+      .catch((err) => {
+        console.error(err)
+        dispatch(closeConfirmingModal());
+      });
+  };
 
   const percentageToSwap = useAppSelector(
     (state) => state.swap.percentageToSwap
@@ -254,10 +275,12 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             },
           }}
         >
-          <SwapVertRounded onClick={() => {
-            setIsProcessing(true);
-            flipAssetSelection();
-          }} />
+          <SwapVertRounded
+            onClick={() => {
+              setIsProcessing(true);
+              flipAssetSelection();
+            }}
+          />
         </Box>
       </Box>
 
@@ -382,6 +405,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             baseAsset={selectedAssetTwo}
           />
           <PreviewModal
+            onConfirmSwap={onConfirmSwap}
             minimumReceived={minimumReceived}
             baseAssetAmount={assetTwoAmount}
             quoteAmount={assetOneAmount}

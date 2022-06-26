@@ -34,6 +34,7 @@ export type PreviewModalProps = {
   feeCharged: BigNumber;
   minimumReceived: BigNumber;
   spotPrice: BigNumber;
+  onConfirmSwap: () => void;
 } & ModalProps;
 
 export const PreviewModal: React.FC<PreviewModalProps> = ({
@@ -45,24 +46,16 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
   minimumReceived,
   feeCharged,
   spotPrice,
+  onConfirmSwap,
   ...modalProps
 }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
 
-  const pabloSwap = usePabloSwap({
-    baseAssetId: baseAsset ? baseAsset.network[DEFAULT_NETWORK_ID] : "none",
-    quoteAssetId: quoteAsset ? quoteAsset.network[DEFAULT_NETWORK_ID] : "none",
-    quoteAmount,
-    minimumReceived
-  })
-
   const confirmSwap = () => {
     dispatch(closeSwapPreviewModal());
     dispatch(openConfirmingModal());
-    pabloSwap().catch(err => {
-      dispatch(closeConfirmingModal())
-    });
+    onConfirmSwap();
   };
 
   const slippage = useAppSelector(

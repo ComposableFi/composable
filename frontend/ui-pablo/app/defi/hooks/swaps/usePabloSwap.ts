@@ -22,6 +22,8 @@ export function usePabloSwap({ quoteAssetId, baseAssetId, quoteAmount, minimumRe
         return new Promise(async (res, rej) => {
             if (parachainApi && executor && isValidAssetPair(baseAssetId, quoteAssetId) && selectedAccount) {
                 try {
+                    console.log(`minimumReceived: ${minimumReceived.toString()} quoteAmount: ${quoteAmount.toString()}`)
+
                     const base = new BigNumber(10).pow(12);
                     const signer = await getSigner(APP_NAME, selectedAccount.address);
 
@@ -59,7 +61,6 @@ export function usePabloSwap({ quoteAssetId, baseAssetId, quoteAmount, minimumRe
                     return rej(err);
                 }
             }
-            rej('Err')
         })
     }, [
         baseAssetId,
