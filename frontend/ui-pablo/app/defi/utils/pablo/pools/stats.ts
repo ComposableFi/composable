@@ -1,8 +1,8 @@
-import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
 import { queryPabloPoolById } from "@/updaters/pools/subsquid";
 import { DAYS } from "../../constants";
 import BigNumber from "bignumber.js";
 import { fromChainUnits } from "../../units";
+import { StableSwapPool, ConstantProductPool } from "@/defi/types";
 
 export interface PabloPoolQueryResponse {
     totalLiquidity: BigNumber;
@@ -25,8 +25,8 @@ export async function fetchPoolStats(pool: ConstantProductPool | StableSwapPool)
 
         pabloPools = pabloPools.map((poolState: any) => {
             return {
-                totalLiquidity: fromChainUnits(poolState.totalFees),
-                totalVolume: fromChainUnits(poolState.totalFees),
+                totalLiquidity: fromChainUnits(poolState.totalLiquidity),
+                totalVolume: fromChainUnits(poolState.totalVolume),
                 totalFees: fromChainUnits(poolState.totalFees),
                 calculatedTimestamp: Number(poolState.calculatedTimestamp),
                 transactionCount: Number(poolState.transactionCount),
