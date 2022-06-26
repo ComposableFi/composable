@@ -404,9 +404,9 @@ pub mod pallet {
 		) -> Result<Price<Self::Balance, Self::Timestamp>, DispatchError> {
 			let Price { price, block } =
 				Prices::<T>::try_get(asset_id).map_err(|_| Error::<T>::PriceNotFound)?;
-			dbg!(&price);
+			// dbg!(&price);
 			let price = Self::quote(asset_id, price, amount)?;
-			dbg!(&price);
+			// dbg!(&price);
 			Ok(Price { price, block })
 		}
 
@@ -1020,8 +1020,8 @@ pub mod pallet {
 			amount: T::PriceValue,
 		) -> Result<T::PriceValue, DispatchError> {
 			let unit = <Self as Oracle>::LocalAssets::unit(asset_id)?;
-			dbg!(&unit);
-			dbg!(&amount);
+			// dbg!(&unit);
+			// dbg!(&amount);
 			let price = multiply_by_rational(price.into(), amount.into(), unit)?;
 			Ok(price.into())
 		}
