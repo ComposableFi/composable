@@ -6,6 +6,7 @@ on:
     branches:
       - composable-sandbox
       - xcvm-main
+      - dz/xcvm-main/build
 
 env:
   DOCKER_USER_OPTION: '$UID:$GID'
