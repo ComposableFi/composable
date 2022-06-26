@@ -11,8 +11,8 @@
 		}
 	},
 	"hostRequirements": {
-		"memory": "32gb",
-		"cpus": 16
+		"memory": "20gb",
+		"cpus": 8
 	},
 	"runArgs": [
 		"--cap-add=SYS_PTRACE",
@@ -78,12 +78,12 @@
 	],
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
-	"onCreateCommand": "cd /workspaces/composable/scripts/polkadot-launch && yarn && cd /workspaces/composable/integration-tests/runtime-tests && npm install",
+	// "onCreateCommand": "cd /workspaces/composable/scripts/polkadot-launch && yarn && cd /workspaces/composable/integration-tests/runtime-tests && npm install",
 	"postCreateCommand": "mkdir -p /workspaces/polkadot/target/release && cp /polkadot-binary/polkadot /workspaces/polkadot/target/release/polkadot",
 	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
 	"remoteUser": "vscode",
 	"features": {
-		"docker-in-docker": "latest",
+		"docker-in-docker": "20.10",
 		// "git-lfs": "latest",
 		"node": "16"
 	}
