@@ -151,7 +151,7 @@ fn can_partially_liquidate_if_below_partial_margin_ratio_by_funding() {
 		// Time passes and funding rates are updated
 		VammPallet::set_twap(Some(1.into()));
 		// Index price moves against Alice's position
-		set_oracle_twap(&market_id, (145, 100).into());
+		set_oracle_twap(&market_id, (144, 100).into());
 		assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_id));
 		// Alice should now owe 0.44 * 100 = 44 in funding, bringing her account's
 		// margin ratio to slightly below the PMR
