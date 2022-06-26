@@ -1371,6 +1371,338 @@ pub mod pallet {
 	//                                    Helper Functions
 	// ---------------------------------------------------------------------------------------------
 
+	// Helper functions - core functionality
+	impl<T: Config> Pallet<T> {
+		fn try_update_funding(
+			market_id: &T::MarketId,
+			market: &mut Market<T>,
+		) -> Result<(), DispatchError> {
+			let now = T::UnixTime::now().as_secs();
+			if Self::is_funding_update_time(market, now)? {
+				Self::do_update_funding(market_id, market, now)?;
+			}
+			Ok(())
+		}
+
+		fn do_update_funding(
+			market_id: &T::MarketId,
+			market: &mut Market<T>,
+			now: DurationSeconds,
+		) -> Result<(), DispatchError> {
+			// Pay funding
+			// net position sign | funding rate sign | transfer
+			// --------------------------------------------------------------
+			//                -1 |                -1 | Collateral -> Fee Pool
+			//                -1 |                 1 | Fee Pool -> Collateral
+			//                 1 |                -1 | Fee Pool -> Collateral
+			//                 1 |                 1 | Collateral -> Fee Pool
+			//                 - |                 0 | n/a
+			//                 0 |                 - | n/a
+			let net_base_asset_amount =
+				market.base_asset_amount_long.try_add(&market.base_asset_amount_short)?;
+			let funding_rate = <Self as Instruments>::funding_rate(market)?;
+			let mut funding_rate_long = funding_rate;
+			let mut funding_rate_short = funding_rate;
+
+			if !(funding_rate.is_zero() | net_base_asset_amount.is_zero()) {
+				let uncapped_funding = funding_rate.try_mul(&net_base_asset_amount)?;
+				let collateral_account = Self::get_collateral_account();
+				let fee_pool_account = Self::get_fee_pool_account(market_id.clone());
+				let collateral_asset_id = Self::get_collateral_asset_id()?;
+
+				if uncapped_funding.is_positive() {
+					// Fee Pool receives funding
+					T::Assets::transfer(
+						collateral_asset_id,
+						&collateral_account,
+						&fee_pool_account,
+						uncapped_funding.into_balance()?,
+						false,
+					)?;
+				} else {
+					// Fee Pool pays funding
+					// TODO(0xangelo): set limits for
+					// - total Fee Pool usage (reserve some funds for other operations)
+					// - Fee Pool usage for funding payments per call to `update_funding`
+					let usable_fees: T::Decimal =
+						-T::Assets::balance(collateral_asset_id, &fee_pool_account)
+							.into_decimal()?;
+					let mut capped_funding = sp_std::cmp::max(uncapped_funding, usable_fees);
+
+					// Since we're dealing with negatives, we check if the uncapped funding is
+					// *smaller* (greater in absolute terms) than the capped one
+					if capped_funding > uncapped_funding {
+						// Total funding paid to one side is the sum of the funding paid by the
+						// opposite side plus the complement from the Fee Pool
+						let excess;
+						if net_base_asset_amount.is_positive() {
+							let counterparty_funding = usable_fees
+								.try_sub(&funding_rate.try_mul(&market.base_asset_amount_short)?)?;
+							(funding_rate_long, excess) =
+								counterparty_funding.try_div_rem(&market.base_asset_amount_long)?;
+						} else {
+							let counterparty_funding = funding_rate
+								.try_mul(&market.base_asset_amount_long)?
+								.try_sub(&usable_fees)?;
+							(funding_rate_short, excess) = counterparty_funding
+								.try_div_rem(&market.base_asset_amount_short)?;
+						}
+						capped_funding.try_sub_mut(&excess)?;
+					}
+
+					T::Assets::transfer(
+						collateral_asset_id,
+						&fee_pool_account,
+						&collateral_account,
+						capped_funding.into_balance()?,
+						false,
+					)?;
+				};
+			}
+
+			// Update market state
+			market.cum_funding_rate_long.try_add_mut(&funding_rate_long)?;
+			market.cum_funding_rate_short.try_add_mut(&funding_rate_short)?;
+			market.funding_rate_ts = now;
+
+			Self::deposit_event(Event::FundingUpdated { market: market_id.clone(), time: now });
+			Ok(())
+		}
+
+		fn summarize_account_state(
+			account_id: &T::AccountId,
+			positions: BoundedVec<Position<T>, T::MaxPositions>,
+		) -> Result<AccountSummary<T>, DispatchError> {
+			let collateral = Self::get_collateral(account_id).unwrap_or_else(Zero::zero);
+
+			let mut summary = AccountSummary::<T>::new(collateral)?;
+			for position in positions {
+				let market = Self::try_get_market(&position.market_id)?;
+				if let Some(direction) = position.direction() {
+					// should always succeed
+					let (base_asset_value, unrealized_pnl) =
+						Self::abs_position_notional_and_pnl(&market, &position, direction)?;
+
+					let info = PositionInfo::<T> {
+						direction,
+						margin_requirement_maintenance: base_asset_value
+							.try_mul(&market.margin_ratio_maintenance)?,
+						margin_requirement_partial: base_asset_value
+							.try_mul(&market.margin_ratio_partial)?,
+						base_asset_value,
+						unrealized_pnl,
+						unrealized_funding: <Self as Instruments>::unrealized_funding(
+							&market, &position,
+						)?,
+					};
+
+					summary.update(market, position, info)?;
+				}
+			}
+
+			Ok(summary)
+		}
+
+		/// Fully liquidates the user's positions until its account is brought above the MMR.
+		///
+		/// This function does **not** check if the account is below the MMR beforehand.
+		///
+		/// ## Storage modifications
+		///
+		/// - Updates the [`markets`](Markets) of closed positions (according to changes in
+		///   [`Self::close_position_in_market`])
+		/// - Removes closed [`positions`](Positions)
+		/// - Updates the user's account [`collateral`](Collateral)
+		///
+		/// ## Returns
+		///
+		/// The fees for the liquidator and insurance fund
+		fn fully_liquidate_account(
+			user_id: &T::AccountId,
+			summary: AccountSummary<T>,
+		) -> Result<(T::Balance, T::Balance), DispatchError> {
+			let AccountSummary::<T> {
+				mut collateral,
+				mut margin,
+				margin_requirement_maintenance: mut margin_requirement,
+				base_asset_value,
+				mut positions_summary,
+				..
+			} = summary;
+
+			let mut positions = BoundedVec::<Position<T>, T::MaxPositions>::default();
+			let maximum_fee = Self::full_liquidation_penalty().try_mul(&margin)?;
+			let mut fees = T::Balance::zero();
+			// Sort positions from greatest to lowest margin requirement
+			positions_summary.sort_by_key(|(_, _, info)| info.margin_requirement_maintenance.neg());
+			for (mut market, position, info) in positions_summary {
+				if margin < margin_requirement {
+					Self::close_position_in_market(
+						&position,
+						info.direction,
+						&mut market,
+						info.base_asset_value.into_balance()?,
+					)?;
+					Markets::<T>::insert(&position.market_id, market);
+
+					let base_asset_value_share =
+						info.base_asset_value.try_div(&base_asset_value)?;
+					let fee_decimal = base_asset_value_share.try_mul(&maximum_fee)?;
+					margin.try_sub_mut(&fee_decimal)?;
+					margin_requirement.try_sub_mut(&info.margin_requirement_maintenance)?;
+					fees.try_add_mut(&fee_decimal.into_balance()?)?;
+					collateral = Self::updated_balance(
+						&collateral,
+						&info
+							.unrealized_pnl
+							.try_add(&info.unrealized_funding)?
+							.try_sub(&fee_decimal)?,
+					)?;
+				} else {
+					// AccountSummary::positions_summary isn't constrained to be shorter than the
+					// maximum number of positions, so we keep the error checking here.
+					positions.try_push(position).map_err(|_| Error::<T>::MaxPositionsExceeded)?;
+				}
+			}
+
+			// Charge fees
+			let liquidator_fee =
+				Self::full_liquidation_penalty_liquidator_share().saturating_mul_int(fees);
+			let insurance_fee = fees.try_sub(&liquidator_fee)?;
+
+			Positions::<T>::insert(user_id, positions);
+			Collateral::<T>::insert(user_id, collateral);
+
+			Ok((liquidator_fee, insurance_fee))
+		}
+
+		/// Partially liquidates the user's positions until its account is brought above the PMR.
+		///
+		/// This function does **not** check if the account is below the PMR beforehand.
+		///
+		/// ## Storage modifications
+		///
+		/// - Updates the [`markets`](Markets) of decreased positions (according to changes made by
+		///   [`Self::decrease_position`])
+		/// - Updates reduced [`positions`](Positions) (according to changes made by
+		///   [`Self::decrease_position`])
+		/// - Updates the user's account [`collateral`](Collateral)
+		///
+		/// ## Returns
+		///
+		/// The fees for the liquidator and insurance fund
+		fn partially_liquidate_account(
+			user_id: &T::AccountId,
+			summary: AccountSummary<T>,
+		) -> Result<(T::Balance, T::Balance), DispatchError> {
+			let AccountSummary::<T> {
+				mut collateral,
+				mut margin,
+				margin_requirement_partial: mut margin_requirement,
+				base_asset_value,
+				mut positions_summary,
+				..
+			} = summary;
+
+			let mut positions = BoundedVec::<Position<T>, T::MaxPositions>::default();
+			let mut fees = T::Balance::zero();
+			let maximum_fee = Self::partial_liquidation_penalty().try_mul(&margin)?;
+			let close_ratio = Self::partial_liquidation_close_ratio();
+			let maximum_close_value = close_ratio.try_mul(&base_asset_value)?;
+			// Sort positions from greatest to lowest margin requirement
+			positions_summary.sort_by_key(|(_, _, info)| info.margin_requirement_partial.neg());
+			for (mut market, mut position, info) in positions_summary {
+				if margin < margin_requirement {
+					Self::settle_funding(&mut position, &market, &mut collateral)?;
+
+					let base_value_to_close = close_ratio.try_mul(&info.base_asset_value)?;
+					let (_, entry_value, exit_value) = Self::decrease_position(
+						&mut position,
+						&mut market,
+						info.direction.opposite(),
+						&base_value_to_close,
+						Zero::zero(), /* No slippage control is necessary since it was already
+						               * taken into account when computing `base_asset_value` */
+					)?;
+					Markets::<T>::insert(&position.market_id, market);
+
+					let closed_share = base_value_to_close.try_div(&maximum_close_value)?;
+					let fee_decimal = closed_share.try_mul(&maximum_fee)?;
+					let requirement_freed =
+						closed_share.try_mul(&info.margin_requirement_partial)?;
+					let realized_pnl = exit_value.try_sub(&entry_value)?;
+
+					fees.try_add_mut(&fee_decimal.into_balance()?)?;
+					collateral =
+						Self::updated_balance(&collateral, &realized_pnl.try_sub(&fee_decimal)?)?;
+					margin.try_sub_mut(&fee_decimal)?;
+					margin_requirement.try_sub_mut(&requirement_freed)?;
+				}
+
+				// No positions are fully closed, so we push all.
+				// AccountSummary::positions_summary isn't constrained to be shorter than the
+				// maximum number of positions, so we keep the error checking here.
+				positions.try_push(position).map_err(|_| Error::<T>::MaxPositionsExceeded)?;
+			}
+
+			// Charge fees
+			let liquidator_fee =
+				Self::partial_liquidation_penalty_liquidator_share().saturating_mul_int(fees);
+			let insurance_fee = fees.try_sub(&liquidator_fee)?;
+
+			Positions::<T>::insert(user_id, positions);
+			Collateral::<T>::insert(user_id, collateral);
+
+			Ok((liquidator_fee, insurance_fee))
+		}
+
+		fn settle_funding(
+			position: &mut Position<T>,
+			market: &Market<T>,
+			margin: &mut T::Balance,
+		) -> Result<(), DispatchError> {
+			if let Some(direction) = position.direction() {
+				let payment = <Self as Instruments>::unrealized_funding(market, position)?;
+				*margin = Self::updated_balance(margin, &payment)?;
+				position.last_cum_funding = market.cum_funding_rate(direction);
+			}
+			Ok(())
+		}
+
+		fn settle_funding_and_outstanding_profits(
+			account_id: &T::AccountId,
+			position: &mut Position<T>,
+			collateral: &mut T::Balance,
+		) -> Result<(), DispatchError> {
+			let mut market = Self::try_get_market(&position.market_id)?;
+
+			if let Some(direction) = position.direction() {
+				let payment = <Self as Instruments>::unrealized_funding(&market, position)?;
+				*collateral = Self::updated_balance(collateral, &payment)?;
+				position.last_cum_funding = market.cum_funding_rate(direction);
+			}
+
+			if !market.available_profits.is_zero() {
+				let mut outstanding_profits =
+					Self::outstanding_profits(account_id, &position.market_id)
+						.unwrap_or_else(Zero::zero);
+				let realizable_profits = cmp::min(outstanding_profits, market.available_profits);
+				collateral.try_add_mut(&realizable_profits)?;
+				outstanding_profits.try_sub_mut(&realizable_profits)?;
+				market.available_profits.try_sub_mut(&realizable_profits)?;
+				OutstandingProfits::<T>::insert(
+					account_id,
+					&position.market_id,
+					outstanding_profits,
+				);
+			}
+
+			Markets::<T>::insert(&position.market_id, market);
+
+			Ok(())
+		}
+	}
+
 	// Helper functions - validity checks
 	impl<T: Config> Pallet<T> {
 		fn check_oracle_guard_rails(
@@ -1947,343 +2279,6 @@ pub mod pallet {
 				.into_balance()?
 				.try_mul(&market.taker_fee)?
 				.try_div(&BASIS_POINT_DENOMINATOR.into())
-		}
-	}
-
-	// Funding helpers
-	impl<T: Config> Pallet<T> {
-		fn try_update_funding(
-			market_id: &T::MarketId,
-			market: &mut Market<T>,
-		) -> Result<(), DispatchError> {
-			let now = T::UnixTime::now().as_secs();
-			let is_mark_index_too_divergent = Self::is_mark_index_too_divergent(market)?;
-
-			if Self::is_funding_update_time(market, now)? && !is_mark_index_too_divergent {
-				Self::do_update_funding(market_id, market, now)?;
-			}
-			Ok(())
-		}
-
-		fn do_update_funding(
-			market_id: &T::MarketId,
-			market: &mut Market<T>,
-			now: DurationSeconds,
-		) -> Result<(), DispatchError> {
-			// Pay funding
-			// net position sign | funding rate sign | transfer
-			// --------------------------------------------------------------
-			//                -1 |                -1 | Collateral -> Fee Pool
-			//                -1 |                 1 | Fee Pool -> Collateral
-			//                 1 |                -1 | Fee Pool -> Collateral
-			//                 1 |                 1 | Collateral -> Fee Pool
-			//                 - |                 0 | n/a
-			//                 0 |                 - | n/a
-			let net_base_asset_amount =
-				market.base_asset_amount_long.try_add(&market.base_asset_amount_short)?;
-			let funding_rate = <Self as Instruments>::funding_rate(market)?;
-			let mut funding_rate_long = funding_rate;
-			let mut funding_rate_short = funding_rate;
-
-			if !(funding_rate.is_zero() | net_base_asset_amount.is_zero()) {
-				let uncapped_funding = funding_rate.try_mul(&net_base_asset_amount)?;
-				let collateral_account = Self::get_collateral_account();
-				let fee_pool_account = Self::get_fee_pool_account(market_id.clone());
-				let collateral_asset_id = Self::get_collateral_asset_id()?;
-
-				if uncapped_funding.is_positive() {
-					// Fee Pool receives funding
-					T::Assets::transfer(
-						collateral_asset_id,
-						&collateral_account,
-						&fee_pool_account,
-						uncapped_funding.into_balance()?,
-						false,
-					)?;
-				} else {
-					// Fee Pool pays funding
-					// TODO(0xangelo): set limits for
-					// - total Fee Pool usage (reserve some funds for other operations)
-					// - Fee Pool usage for funding payments per call to `update_funding`
-					let usable_fees: T::Decimal =
-						-T::Assets::balance(collateral_asset_id, &fee_pool_account)
-							.into_decimal()?;
-					let mut capped_funding = sp_std::cmp::max(uncapped_funding, usable_fees);
-
-					// Since we're dealing with negatives, we check if the uncapped funding is
-					// *smaller* (greater in absolute terms) than the capped one
-					if capped_funding > uncapped_funding {
-						// Total funding paid to one side is the sum of the funding paid by the
-						// opposite side plus the complement from the Fee Pool
-						let excess;
-						if net_base_asset_amount.is_positive() {
-							let counterparty_funding = usable_fees
-								.try_sub(&funding_rate.try_mul(&market.base_asset_amount_short)?)?;
-							(funding_rate_long, excess) =
-								counterparty_funding.try_div_rem(&market.base_asset_amount_long)?;
-						} else {
-							let counterparty_funding = funding_rate
-								.try_mul(&market.base_asset_amount_long)?
-								.try_sub(&usable_fees)?;
-							(funding_rate_short, excess) = counterparty_funding
-								.try_div_rem(&market.base_asset_amount_short)?;
-						}
-						capped_funding.try_sub_mut(&excess)?;
-					}
-
-					T::Assets::transfer(
-						collateral_asset_id,
-						&fee_pool_account,
-						&collateral_account,
-						capped_funding.into_balance()?,
-						false,
-					)?;
-				};
-			}
-
-			// Update market state
-			market.cum_funding_rate_long.try_add_mut(&funding_rate_long)?;
-			market.cum_funding_rate_short.try_add_mut(&funding_rate_short)?;
-			market.funding_rate_ts = now;
-
-			Self::deposit_event(Event::FundingUpdated { market: market_id.clone(), time: now });
-			Ok(())
-		}
-
-		fn settle_funding(
-			position: &mut Position<T>,
-			market: &Market<T>,
-			margin: &mut T::Balance,
-		) -> Result<(), DispatchError> {
-			if let Some(direction) = position.direction() {
-				let payment = <Self as Instruments>::unrealized_funding(market, position)?;
-				*margin = Self::updated_balance(margin, &payment)?;
-				position.last_cum_funding = market.cum_funding_rate(direction);
-			}
-			Ok(())
-		}
-
-		fn settle_funding_and_outstanding_profits(
-			account_id: &T::AccountId,
-			position: &mut Position<T>,
-			collateral: &mut T::Balance,
-		) -> Result<(), DispatchError> {
-			let mut market = Self::try_get_market(&position.market_id)?;
-
-			if let Some(direction) = position.direction() {
-				let payment = <Self as Instruments>::unrealized_funding(&market, position)?;
-				*collateral = Self::updated_balance(collateral, &payment)?;
-				position.last_cum_funding = market.cum_funding_rate(direction);
-			}
-
-			if !market.available_profits.is_zero() {
-				let mut outstanding_profits =
-					Self::outstanding_profits(account_id, &position.market_id)
-						.unwrap_or_else(Zero::zero);
-				let realizable_profits = cmp::min(outstanding_profits, market.available_profits);
-				collateral.try_add_mut(&realizable_profits)?;
-				outstanding_profits.try_sub_mut(&realizable_profits)?;
-				market.available_profits.try_sub_mut(&realizable_profits)?;
-				OutstandingProfits::<T>::insert(
-					account_id,
-					&position.market_id,
-					outstanding_profits,
-				);
-			}
-
-			Markets::<T>::insert(&position.market_id, market);
-
-			Ok(())
-		}
-	}
-
-	// Liquidation helpers
-	impl<T: Config> Pallet<T> {
-		fn summarize_account_state(
-			account_id: &T::AccountId,
-			positions: BoundedVec<Position<T>, T::MaxPositions>,
-		) -> Result<AccountSummary<T>, DispatchError> {
-			let collateral = Self::get_collateral(account_id).unwrap_or_else(Zero::zero);
-
-			let mut summary = AccountSummary::<T>::new(collateral)?;
-			for position in positions {
-				let market = Self::try_get_market(&position.market_id)?;
-				if let Some(direction) = position.direction() {
-					// should always succeed
-					let (base_asset_value, unrealized_pnl) =
-						Self::abs_position_notional_and_pnl(&market, &position, direction)?;
-
-					let info = PositionInfo::<T> {
-						direction,
-						margin_requirement_maintenance: base_asset_value
-							.try_mul(&market.margin_ratio_maintenance)?,
-						margin_requirement_partial: base_asset_value
-							.try_mul(&market.margin_ratio_partial)?,
-						base_asset_value,
-						unrealized_pnl,
-						unrealized_funding: <Self as Instruments>::unrealized_funding(
-							&market, &position,
-						)?,
-					};
-
-					summary.update(market, position, info)?;
-				}
-			}
-
-			Ok(summary)
-		}
-
-		/// Fully liquidates the user's positions until its account is brought above the MMR.
-		///
-		/// This function does **not** check if the account is below the MMR beforehand.
-		///
-		/// ## Storage modifications
-		///
-		/// - Updates the [`markets`](Markets) of closed positions (according to changes in
-		///   [`Self::close_position_in_market`])
-		/// - Removes closed [`positions`](Positions)
-		/// - Updates the user's account [`collateral`](Collateral)
-		///
-		/// ## Returns
-		///
-		/// The fees for the liquidator and insurance fund
-		fn fully_liquidate_account(
-			user_id: &T::AccountId,
-			summary: AccountSummary<T>,
-		) -> Result<(T::Balance, T::Balance), DispatchError> {
-			let AccountSummary::<T> {
-				mut collateral,
-				mut margin,
-				margin_requirement_maintenance: mut margin_requirement,
-				base_asset_value,
-				mut positions_summary,
-				..
-			} = summary;
-
-			let mut positions = BoundedVec::<Position<T>, T::MaxPositions>::default();
-			let maximum_fee = Self::full_liquidation_penalty().try_mul(&margin)?;
-			let mut fees = T::Balance::zero();
-			// Sort positions from greatest to lowest margin requirement
-			positions_summary.sort_by_key(|(_, _, info)| info.margin_requirement_maintenance.neg());
-			for (mut market, position, info) in positions_summary {
-				if margin < margin_requirement {
-					Self::close_position_in_market(
-						&position,
-						info.direction,
-						&mut market,
-						info.base_asset_value.into_balance()?,
-					)?;
-					Markets::<T>::insert(&position.market_id, market);
-
-					let base_asset_value_share =
-						info.base_asset_value.try_div(&base_asset_value)?;
-					let fee_decimal = base_asset_value_share.try_mul(&maximum_fee)?;
-					margin.try_sub_mut(&fee_decimal)?;
-					margin_requirement.try_sub_mut(&info.margin_requirement_maintenance)?;
-					fees.try_add_mut(&fee_decimal.into_balance()?)?;
-					collateral = Self::updated_balance(
-						&collateral,
-						&info
-							.unrealized_pnl
-							.try_add(&info.unrealized_funding)?
-							.try_sub(&fee_decimal)?,
-					)?;
-				} else {
-					// AccountSummary::positions_summary isn't constrained to be shorter than the
-					// maximum number of positions, so we keep the error checking here.
-					positions.try_push(position).map_err(|_| Error::<T>::MaxPositionsExceeded)?;
-				}
-			}
-
-			// Charge fees
-			let liquidator_fee =
-				Self::full_liquidation_penalty_liquidator_share().saturating_mul_int(fees);
-			let insurance_fee = fees.try_sub(&liquidator_fee)?;
-
-			Positions::<T>::insert(user_id, positions);
-			Collateral::<T>::insert(user_id, collateral);
-
-			Ok((liquidator_fee, insurance_fee))
-		}
-
-		/// Partially liquidates the user's positions until its account is brought above the PMR.
-		///
-		/// This function does **not** check if the account is below the PMR beforehand.
-		///
-		/// ## Storage modifications
-		///
-		/// - Updates the [`markets`](Markets) of decreased positions (according to changes made by
-		///   [`Self::decrease_position`])
-		/// - Updates reduced [`positions`](Positions) (according to changes made by
-		///   [`Self::decrease_position`])
-		/// - Updates the user's account [`collateral`](Collateral)
-		///
-		/// ## Returns
-		///
-		/// The fees for the liquidator and insurance fund
-		fn partially_liquidate_account(
-			user_id: &T::AccountId,
-			summary: AccountSummary<T>,
-		) -> Result<(T::Balance, T::Balance), DispatchError> {
-			let AccountSummary::<T> {
-				mut collateral,
-				mut margin,
-				margin_requirement_partial: mut margin_requirement,
-				base_asset_value,
-				mut positions_summary,
-				..
-			} = summary;
-
-			let mut positions = BoundedVec::<Position<T>, T::MaxPositions>::default();
-			let mut fees = T::Balance::zero();
-			let maximum_fee = Self::partial_liquidation_penalty().try_mul(&margin)?;
-			let close_ratio = Self::partial_liquidation_close_ratio();
-			let maximum_close_value = close_ratio.try_mul(&base_asset_value)?;
-			// Sort positions from greatest to lowest margin requirement
-			positions_summary.sort_by_key(|(_, _, info)| info.margin_requirement_partial.neg());
-			for (mut market, mut position, info) in positions_summary {
-				if margin < margin_requirement {
-					Self::settle_funding(&mut position, &market, &mut collateral)?;
-
-					let base_value_to_close = close_ratio.try_mul(&info.base_asset_value)?;
-					let (_, entry_value, exit_value) = Self::decrease_position(
-						&mut position,
-						&mut market,
-						info.direction.opposite(),
-						&base_value_to_close,
-						Zero::zero(), /* No slippage control is necessary since it was already
-						               * taken into account when computing `base_asset_value` */
-					)?;
-					Markets::<T>::insert(&position.market_id, market);
-
-					let closed_share = base_value_to_close.try_div(&maximum_close_value)?;
-					let fee_decimal = closed_share.try_mul(&maximum_fee)?;
-					let requirement_freed =
-						closed_share.try_mul(&info.margin_requirement_partial)?;
-					let realized_pnl = exit_value.try_sub(&entry_value)?;
-
-					fees.try_add_mut(&fee_decimal.into_balance()?)?;
-					collateral =
-						Self::updated_balance(&collateral, &realized_pnl.try_sub(&fee_decimal)?)?;
-					margin.try_sub_mut(&fee_decimal)?;
-					margin_requirement.try_sub_mut(&requirement_freed)?;
-				}
-
-				// No positions are fully closed, so we push all.
-				// AccountSummary::positions_summary isn't constrained to be shorter than the
-				// maximum number of positions, so we keep the error checking here.
-				positions.try_push(position).map_err(|_| Error::<T>::MaxPositionsExceeded)?;
-			}
-
-			// Charge fees
-			let liquidator_fee =
-				Self::partial_liquidation_penalty_liquidator_share().saturating_mul_int(fees);
-			let insurance_fee = fees.try_sub(&liquidator_fee)?;
-
-			Positions::<T>::insert(user_id, positions);
-			Collateral::<T>::insert(user_id, collateral);
-
-			Ok((liquidator_fee, insurance_fee))
 		}
 	}
 
