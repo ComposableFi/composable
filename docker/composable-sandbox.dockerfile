@@ -1,3 +1,4 @@
+# this image runs composable and relay on same docker
 FROM composablefi/ci-linux:2022-04-18 as builder
 
 COPY . /build
@@ -7,7 +8,7 @@ RUN cargo build --release
 
 # ===== SECOND STAGE ======
 
-FROM composablefi/mmr-polkadot:latest as mmr-polkadot
+## FROM composablefi/mmr-polkadot:latest as mmr-polkadot
 
 FROM ubuntu:21.10
 LABEL description="Docker image with Composable"
@@ -21,13 +22,15 @@ RUN groupadd -g 1000 service && useradd -m -s /bin/sh -g 1000 -G service service
 	curl -fsSL https://deb.nodesource.com/setup_17.x | bash - && \
 	apt-get update && apt-get install -y --no-install-recommends nodejs && \
 	npm install --global npm yarn && \
+	curl https://github.com/paritytech/polkadot/releases/download/v0.9.18/polkadot -Lo  /apps/polkadot/target/release/polkadot && \
 	curl https://github.com/galacticcouncil/Basilisk-node/releases/download/v7.0.1/basilisk -Lo /apps/Basilisk-node/target/release/basilisk && \
 	chmod +x /apps/Basilisk-node/target/release/basilisk && \
 	apt-get clean && \
-	find /var/lib/apt/lists/ -type f -not -name lock -delete;
+	find /var/lib/apt/lists/ -type f -not -name lock -delete && \
+	echo "run"
 
 COPY --from=builder /build/target/release/composable /apps/composable/target/release/
-COPY --from=mmr-polkadot /polkadot /apps/polkadot/target/release/
+#COPY --from=mmr-polkadot /polkadot /apps/polkadot/target/release/
 COPY ./scripts/polkadot-launch /apps/composable/scripts/polkadot-launch
 
 WORKDIR /apps/composable/scripts/polkadot-launch
