@@ -476,7 +476,7 @@ mod ethereum_recover {
 			&eth_proof,
 		);
 
-		assert_eq!(Some(eth_address), recovered_address);
+		assert_eq!(Ok(eth_address), recovered_address);
 	}
 }
 
@@ -504,6 +504,6 @@ mod cosmos_recover {
 			&CosmosEcdsaSignature(sig),
 		);
 
-		assert_eq!(verified, Some(CosmosPublicKey::Secp256r1(pub_key)));
+		assert_eq!(verified, Ok(CosmosPublicKey::Secp256r1(pub_key)));
 	}
 }

@@ -1,17 +1,42 @@
 //! Functions for supporting signature verification for various chains.
 //!
-//! Signed messages/proofs are expected to be in the format of `{perfix}-{msg}` before they
+//! Signed messages/proofs are expected to be in the format of `{prefix}-{msg}` before they
 //! are modified to fit their chains signature specifications.
 use crate::types::{CosmosEcdsaSignature, CosmosPublicKey, EcdsaSignature, EthereumAddress};
-use frame_support::pallet_prelude::Encode;
+use codec::{Decode, Encode};
 use p256::ecdsa::{signature::Verifier, Signature, VerifyingKey};
+use scale_info::TypeInfo;
 use sp_io::hashing::{keccak_256, sha2_256};
 use sp_runtime::{traits::Verify, AccountId32, MultiSignature};
 use sp_std::vec::Vec;
 
+/// Error type for all signature verification.
+#[derive(Clone, Debug, PartialEq, Eq, TypeInfo, Encode, Decode)]
+pub enum SignatureVerificationError {
+	/// Unable to process signature for verification.
+	InvalidSignature,
+	/// Unable to process public key for verification.
+	InvalidPublicKey,
+	/// Signature failed the verification process.
+	FailedVerification,
+}
+
+/// Result type for signature verification.
+pub type Result<T> = core::result::Result<T, SignatureVerificationError>;
+
+impl From<sp_io::EcdsaVerifyError> for SignatureVerificationError {
+	fn from(error: sp_io::EcdsaVerifyError) -> Self {
+		match error {
+			sp_io::EcdsaVerifyError::BadRS => Self::FailedVerification,
+			sp_io::EcdsaVerifyError::BadV => Self::FailedVerification,
+			sp_io::EcdsaVerifyError::BadSignature => Self::InvalidSignature,
+		}
+	}
+}
+
 /// Verify the proof is valid for a given relay account.
 ///
-/// Returns `false` if the verifycation process fails, returns `true` otherwise
+/// Returns `false` if the verification process fails, returns `true` otherwise
 ///
 /// # Associated Types
 /// * `AccountId` - The `AccountId` being used by frame system
@@ -45,15 +70,15 @@ pub fn ethereum_recover(
 	prefix: &[u8],
 	msg: &[u8],
 	EcdsaSignature(sig): &EcdsaSignature,
-) -> Option<EthereumAddress> {
+) -> Result<EthereumAddress> {
 	let msg = keccak_256(&ethereum_signable_message(prefix, msg));
 	let mut address = EthereumAddress::default();
 
 	address.0.copy_from_slice(
-		&keccak_256(&sp_io::crypto::secp256k1_ecdsa_recover(sig, &msg).ok()?[..])[12..],
+		&keccak_256(&sp_io::crypto::secp256k1_ecdsa_recover(sig, &msg)?[..])[12..],
 	);
 
-	Some(address)
+	Ok(address)
 }
 
 /// Genrates a message that is compatitible with the Ethereum signing process.
@@ -87,7 +112,7 @@ pub fn cosmos_recover(
 	msg: &[u8],
 	cosmos_address: CosmosPublicKey,
 	CosmosEcdsaSignature(sig): &CosmosEcdsaSignature,
-) -> Option<CosmosPublicKey> {
+) -> Result<CosmosPublicKey> {
 	let msg = sha2_256(&[prefix, msg].concat());
 
 	match cosmos_address {
@@ -96,11 +121,11 @@ pub fn cosmos_recover(
 			// signature here
 			let sig: EcdsaSignature = CosmosEcdsaSignature(*sig).into();
 
-			if pub_key == sp_io::crypto::secp256k1_ecdsa_recover_compressed(&sig.0, &msg).ok()? {
-				return Some(CosmosPublicKey::Secp256k1(pub_key))
+			if pub_key == sp_io::crypto::secp256k1_ecdsa_recover_compressed(&sig.0, &msg)? {
+				return Ok(CosmosPublicKey::Secp256k1(pub_key))
 			}
 
-			None
+			Err(SignatureVerificationError::FailedVerification)
 		},
 		CosmosPublicKey::Secp256r1(pub_key) => {
 			// Deconstruct `sig` into `r` and `s` values so we can construct a p256
@@ -110,10 +135,14 @@ pub fn cosmos_recover(
 			r.copy_from_slice(&sig[..32]);
 			s.copy_from_slice(&sig[32..64]);
 
-			let sig = Signature::from_scalars(r, s).ok()?;
-			let verify_key = VerifyingKey::from_sec1_bytes(&pub_key).ok()?;
-			let _ = verify_key.verify(&msg, &sig).ok()?;
-			Some(CosmosPublicKey::Secp256r1(pub_key))
+			let sig = Signature::from_scalars(r, s)
+				.map_err(|_| SignatureVerificationError::InvalidSignature)?;
+			let verify_key = VerifyingKey::from_sec1_bytes(&pub_key)
+				.map_err(|_| SignatureVerificationError::InvalidPublicKey)?;
+			let _ = verify_key
+				.verify(&msg, &sig)
+				.map_err(|_| SignatureVerificationError::FailedVerification)?;
+			Ok(CosmosPublicKey::Secp256r1(pub_key))
 		},
 	}
 }

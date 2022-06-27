@@ -109,6 +109,7 @@ pub mod pallet {
 		AirdropDoesNotExist,
 		AirdropIsNotEnabled,
 		ArithmiticError,
+		AssociatedWithAnohterAccount,
 		BackToTheFuture,
 		NotAirdropCreator,
 		NothingToClaim,
@@ -386,6 +387,7 @@ pub mod pallet {
 		/// # Errors
 		/// * `AirdropDoesNotExist` - No Airdrop exist that is associated 'airdrop_id'
 		/// * `AirdropIsNotEnabled` - The Airdrop has not been enabled
+		/// * `AssociatedWithAnohterAccount` - Associated with a different account
 		/// * `ArithmiticError` - Overflow while totaling claimed funds
 		/// * `InvalidProof`
 		/// * `RecipientNotFound` - No recipient associated with the `identity` could be found.
@@ -403,7 +405,10 @@ pub mod pallet {
 			match Associations::<T>::get(airdrop_id, reward_account.clone()) {
 				// Confirm association matches
 				Some(associated_account) => {
-					ensure!(associated_account == identity, Error::<T>::InvalidProof);
+					ensure!(
+						associated_account == identity,
+						Error::<T>::AssociatedWithAnohterAccount
+					);
 				},
 				// If no association exists, create a new one
 				None => {
@@ -490,7 +495,7 @@ pub mod pallet {
 						&reward_account_encoded,
 						&eth_proof,
 					)
-					.ok_or(Error::<T>::InvalidProof)?;
+					.map_err(|_| Error::<T>::InvalidProof)?;
 					Result::<_, DispatchError>::Ok(Identity::Ethereum(eth_address))
 				},
 				Proof::RelayChain(relay_account, relay_proof) => {
@@ -514,7 +519,7 @@ pub mod pallet {
 						cosmos_address,
 						&cosmos_proof,
 					)
-					.ok_or(Error::<T>::InvalidProof)?;
+					.map_err(|_| Error::<T>::InvalidProof)?;
 					Result::<_, DispatchError>::Ok(Identity::Cosmos(cosmos_address))
 				},
 			}?;
