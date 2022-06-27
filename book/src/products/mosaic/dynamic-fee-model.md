@@ -12,4 +12,4 @@ Mosaic’s dynamic fee is based on the available liquidity on the source and des
 * An annual percentage yield (APY) of 10.7% for wETH for LPs.
 * An average fee of only 0.32% per transfer for users accessing fast transfers across EVM layers.
 
-Composable will utilize the data obtained throughout Phase 2 of Mosaic to further refine the dynamic fee model to strike a balance between lowering fees and enabling LPs to earn the highest possible yield.
+Composable will utilize the data obtained throughout Phase 1 of Mosaic to further refine the dynamic fee model to strike a balance between lowering fees and enabling LPs to earn the highest possible yield.
