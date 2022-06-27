@@ -1,6 +1,6 @@
 import { NamedSet } from "zustand/middleware";
 
-import { AllSlices, StoreSlice } from "../types";
+import { StoreSlice } from "../types";
 
 interface UIState {
   isMetamaskModalOpen: boolean;
@@ -47,58 +47,69 @@ export const createUISlice: StoreSlice<UISlice> = (set: NamedSet<UISlice>) => ({
     ...initialState,
 
     openMetamaskModal: () => {
-      set(function fetchClaimTotals(state: AllSlices) {
+      set(function fetchClaimTotals(state) {
         state.ui.isMetamaskModalOpen = true;
+        return state;
       });
     },
     closeMetamaskModal: () => {
-      set(function fetchClaimTotals(state: AllSlices) {
+      set(function fetchClaimTotals(state) {
         state.ui.isMetamaskModalOpen = false;
+        return state;
       });
     },
     openPolkadotModal: () => {
-      set(function fetchClaimTotals(state: AllSlices) {
+      set(function fetchClaimTotals(state) {
         state.ui.isPolkadotModalOpen = true;
+        return state;
       });
     },
     closePolkadotModal: () => {
-      set(function fetchClaimTotals(state: AllSlices) {
+      set(function fetchClaimTotals(state) {
         state.ui.isPolkadotModalOpen = false;
+        return state;
       });
     },
     openKSMClaimModal: () => {
-      set(function fetchClaimTotals(state: AllSlices) {
+      set(function fetchClaimTotals(state) {
         state.ui.isClaimingKSM = true;
+        return state;
       });
     },
     closeKSMClaimModal: () => {
-      set(function fetchClaimTotals(state: AllSlices) {
+      set(function fetchClaimTotals(state) {
         state.ui.isClaimingKSM = false;
+        return state;
       });
     },
     openStablecoinClaimModal: () => {
-      set(function fetchClaimTotals(state: AllSlices) {
+      set(function fetchClaimTotals(state) {
         state.ui.isConfirmingStablecoin = true;
+        return state;
       });
     },
     closeStablecoinClaimModal: () => {
-      set(function fetchClaimTotals(state: AllSlices) {
+      set(function fetchClaimTotals(state) {
         state.ui.isConfirmingStablecoin = false;
+        return state;
       });
     },
     setHasTriedEagerConnect: () => {
-      set(function fetchClaimTotals(state: AllSlices) {
+      set(function fetchClaimTotals(state) {
         state.ui.hasTriedEagerConnect = true;
+        return state;
       });
     },
     setIsClaimedKSM: (isClaimedKSM) => {
-      set(function fetchClaimTotals(state: AllSlices) {
+      set(function fetchClaimTotals(state) {
         state.ui.isClaimedKSM = isClaimedKSM;
+        return state;
       });
     },
     setIsClaimedStablecoin: (isClaimedStablecoin) => {
-      set(function fetchClaimTotals(state: AllSlices) {
+      set(function fetchClaimTotals(state) {
         state.ui.isClaimedStablecoin = isClaimedStablecoin;
+        return state;
       });
     },
   },

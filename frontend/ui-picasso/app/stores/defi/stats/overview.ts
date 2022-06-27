@@ -1,5 +1,5 @@
 import { NamedSet } from "zustand/middleware";
-import { AllSlices, StoreSlice } from "../../types";
+import { StoreSlice } from "../../types";
 import StatsDummyData from "./dummyData";
 
 const CHART_INTERVAL = ["1h", "24h", "1w", "1m", "1y"];
@@ -80,45 +80,61 @@ export const createStatsOverviewSlice: StoreSlice<StatsOverviewSlice> = (
   statsOverview: {
     ...initialState,
     setTVL: (data: OverviewData["data"][0]) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.statsOverview.overviewData.data[0] = data;
+
+        return state;
       });
     },
     setAccountHolders: (data: OverviewData["data"][1]) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.statsOverview.overviewData.data[1] = data;
+
+        return state;
       });
     },
     setTotalTx: (data: OverviewData["data"][2]) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.statsOverview.overviewData.data[2] = data;
+
+        return state;
       });
     },
     setRewardDistribution: (data: OverviewData["data"][3]) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.statsOverview.overviewData.data[3] = data;
+
+        return state;
       });
     },
     setTotalFees: (data: OverviewData["data"][4]) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.statsOverview.overviewData.data[4] = data;
+
+        return state;
       });
     },
     setEarnedStakingTvl: (data: OverviewData["data"][5]) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.statsOverview.overviewData.data[5] = data;
+
+        return state;
       });
     },
     setTvlInterval: (data: number) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.statsOverview.overviewChartData.data[0].data.pickedInterval =
           data;
+
+        return state;
       });
     },
     setDailyActiveUsersInterval: (data: number) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.statsOverview.overviewChartData.data[1].data.pickedInterval =
           data;
+
+        return state;
       });
     },
   },

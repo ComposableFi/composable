@@ -95,7 +95,7 @@ const initialState: {
 };
 
 export interface PolkadotSlice {
-  polkadot: PolkadotState & {};
+  polkadot: typeof initialState & {};
 }
 
 export const createPolkadotSlice: StoreSlice<PolkadotSlice> = (

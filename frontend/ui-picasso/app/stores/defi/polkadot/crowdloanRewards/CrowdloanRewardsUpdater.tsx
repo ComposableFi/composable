@@ -21,7 +21,7 @@ const CrowdloanRewardsUpdater = () => {
     setEvmAlreadyAssociated,
     setInitialPayment,
     setUserAssociatedWith,
-    setUserClaimEigibility,
+    setUserClaimEligibility,
     setUserClaimablePICA,
     setUserNetVestedPICA,
     setUserContribution,
@@ -94,12 +94,12 @@ const CrowdloanRewardsUpdater = () => {
         .then((association: any) => {
           if (association === null) {
             setUserAssociatedWith(null);
-            setUserClaimEigibility(true);
+            setUserClaimEligibility(true);
           } else {
             setUserAssociatedWith(
               !!association.Ethereum ? "ethereum" : "relayChain"
             );
-            setUserClaimEigibility(true);
+            setUserClaimEligibility(true);
           }
         })
         .catch((err: any) => {
@@ -113,7 +113,7 @@ const CrowdloanRewardsUpdater = () => {
     crowdloanRewards,
     picassoProvider,
     setUserAssociatedWith,
-    setUserClaimEigibility,
+    setUserClaimEligibility,
   ]);
 
   useEffect(() => {

@@ -4,7 +4,7 @@ import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { TokenId, TOKENS } from "@/defi/Tokens";
 
 import { NamedSet } from "zustand/middleware";
-import { AllSlices, StoreSlice } from "../../../types";
+import { StoreSlice } from "../../../types";
 
 export interface SubstrateAsset {
   balance: string;
@@ -18,7 +18,7 @@ export interface SubstrateAsset {
 }
 
 const initialState: { [chainId in SubstrateNetworkId]: SubstrateAsset } =
-  DEFI_CONFIG.networkIds.reduce((prev, curr, ind) => {
+  DEFI_CONFIG.networkIds.reduce((prev, curr, _ind) => {
     return {
       ...prev,
       [curr]: {
@@ -53,16 +53,20 @@ export const createSubstrateBalancesSlice: StoreSlice<SubstrateBalancesSlice> =
         substrateNetworkId: SubstrateNetworkId;
         balance: string;
       }) => {
-        set((state: AllSlices) => {
+        set((state) => {
           const { substrateNetworkId, balance } = data;
           state.substrateBalances[substrateNetworkId].balance = balance;
+
+          return state;
         });
       },
       clearBalance: () => {
-        set((state: AllSlices) => {
+        set((state) => {
           DEFI_CONFIG.networkIds.forEach((network) => {
             state.substrateBalances[network].balance = "0";
           });
+
+          return state;
         });
       },
     },

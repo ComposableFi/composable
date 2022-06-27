@@ -1,5 +1,5 @@
 import { NamedSet } from "zustand/middleware";
-import { AllSlices, StoreSlice } from "../../../types";
+import { StoreSlice } from "../../../types";
 
 interface CrowdloanRewards {
   netVestedPICA: string;
@@ -55,7 +55,7 @@ const initialState: {
 export interface CrowdloanRewardsSlice {
   crowdloanRewards: CrowdloanRewardsState & {
     setUseAssociationMode: (useAssociationMode: AssociationMode) => void;
-    setUserClaimEigibility: (isEligible: boolean) => void;
+    setUserClaimEligibility: (isEligible: boolean) => void;
     setUserCrowdloanData: (
       netVestedPICA: string,
       claimablePICA: string,
@@ -79,13 +79,17 @@ export const createCrowdloanRewardsSlice: StoreSlice<CrowdloanRewardsSlice> = (
   crowdloanRewards: {
     ...initialState,
     setUseAssociationMode: (useAssociationMode: AssociationMode) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.crowdloanRewards.ui.useAssociationMode = useAssociationMode;
+
+        return state;
       });
     },
-    setUserClaimEigibility: (isEligible: boolean) => {
-      set((state: AllSlices) => {
+    setUserClaimEligibility: (isEligible: boolean) => {
+      set((state) => {
         state.crowdloanRewards.ui.isEligible = isEligible;
+
+        return state;
       });
     },
     setUserCrowdloanData: (
@@ -93,47 +97,63 @@ export const createCrowdloanRewardsSlice: StoreSlice<CrowdloanRewardsSlice> = (
       claimablePICA: string,
       claimedPICA: string
     ) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.crowdloanRewards.user.claimablePICA = claimablePICA;
         state.crowdloanRewards.user.netVestedPICA = netVestedPICA;
         state.crowdloanRewards.user.claimedPICA = claimedPICA;
+
+        return state;
       });
     },
     setUserClaimablePICA: (claimablePICA: string) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.crowdloanRewards.user.claimablePICA = claimablePICA;
+
+        return state;
       });
     },
     setUserClaimedPICA: (claimedPICA: string) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.crowdloanRewards.user.claimedPICA = claimedPICA;
+
+        return state;
       });
     },
     setUserNetVestedPICA: (netVestedPICA: string) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.crowdloanRewards.user.netVestedPICA = netVestedPICA;
+
+        return state;
       });
     },
     setUserAssociatedWith: (
       associatedWith: "relayChain" | "ethereum" | null
     ) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.crowdloanRewards.associatedWith = associatedWith;
+
+        return state;
       });
     },
     setInitialPayment: (initialPayment: string) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.crowdloanRewards.constants.initialPayment = initialPayment;
+
+        return state;
       });
     },
     setUserContribution: (contribution: string) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.crowdloanRewards.user.contribution = contribution;
+
+        return state;
       });
     },
     setEvmAlreadyAssociated: (evmAlreadyAssociated: boolean) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.crowdloanRewards.evmAlreadyAssociated = evmAlreadyAssociated;
+
+        return state;
       });
     },
   },

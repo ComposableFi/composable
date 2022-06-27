@@ -1,5 +1,5 @@
 import { NamedSet } from "zustand/middleware";
-import { AllSlices, StoreSlice } from "../types";
+import { StoreSlice } from "../types";
 import BigNumber from "bignumber.js";
 
 import { TOKEN_IDS, TokenId } from "@/defi/Tokens";
@@ -84,7 +84,7 @@ const initialState: TransfersState = {
 
 export interface TransfersSlice {
   transfers: TransfersState & {
-    updateNetworks: (dadta: Omit<Networks, "options">) => void;
+    updateNetworks: (data: Omit<Networks, "options">) => void;
     updateAmount: (data: Omit<Amount, "balance" | "options">) => void;
     updateRecipient: (selected: string) => void;
     flipKeepAlive: () => void;
@@ -98,23 +98,31 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (
     ...initialState,
 
     updateNetworks: (data: Omit<Networks, "options">) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.transfers.networks = { ...state.transfers.networks, ...data };
+
+        return state;
       });
     },
     updateAmount: (data: Omit<Amount, "balance" | "options">) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.transfers.amount = { ...state.transfers.amount, ...data };
+
+        return state;
       });
     },
     updateRecipient: (data: string) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.transfers.recipients.selected = data;
+
+        return state;
       });
     },
     flipKeepAlive: () => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.transfers.keepAlive = !state.transfers.keepAlive;
+
+        return state;
       });
     },
   },

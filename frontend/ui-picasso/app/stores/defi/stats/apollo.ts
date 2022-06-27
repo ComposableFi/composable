@@ -1,5 +1,5 @@
 import { NamedSet } from "zustand/middleware";
-import { AllSlices, StoreSlice } from "../../types";
+import { StoreSlice } from "../../types";
 import StatsDummyData from "./dummyData";
 
 interface ApolloTableData {
@@ -31,8 +31,10 @@ export const createStatsApolloSlice: StoreSlice<StatsApolloSlice> = (
   statsApollo: {
     ...initialState,
     setApolloAssets: (data: ApolloTableData) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.statsApollo.assets = { ...state.statsApollo.assets, ...data };
+
+        return state;
       });
     },
   },

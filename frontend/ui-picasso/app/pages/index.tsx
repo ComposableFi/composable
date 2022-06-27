@@ -18,11 +18,12 @@ import { useContext, useState } from "react";
 import { MyStakingsTable } from "@/components/Molecules/MyStakingsTable";
 import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { useStore } from "@/stores/root";
+import { SubstrateAsset } from "@/stores/defi/polkadot/balances/slice";
 
 const Overview: NextPage = () => {
   const { extensionStatus } = useContext(ParachainContext);
   const assets = useStore((state) => Object.values(state.substrateBalances));
-  const myStakings = useStore((state) => state.polkadot.myStakingAssets);
+  const myStakes = useStore((state) => state.polkadot.myStakingAssets);
   const tabs: TabItem[] = [
     { label: "My assets" },
     { label: "My stakings", disabled: false },
@@ -35,6 +36,8 @@ const Overview: NextPage = () => {
   const standardPageSize = {
     xs: 12,
   };
+  // @ts-ignore
+  // @ts-ignore
   return (
     <Default>
       <Grid
@@ -94,7 +97,7 @@ const Overview: NextPage = () => {
 
             {/* My Assets Tab Pannels */}
             <TabPanel value={tabValue} index={0}>
-              <MyAssetsTable assets={assets} />
+              <MyAssetsTable assets={assets as SubstrateAsset[]} />
             </TabPanel>
 
             {/* My Staking Tab Pannels */}
@@ -102,7 +105,7 @@ const Overview: NextPage = () => {
               <Box px={2}>
                 <PageTitle title="Picasso" textAlign="left" fontSize={40} />
               </Box>
-              <MyAssetsTable assets={assets} />
+              <MyAssetsTable assets={assets as SubstrateAsset[]} />
             </TabPanel>
 
             <TabPanel value={tabValue} index={1}>
@@ -114,15 +117,14 @@ const Overview: NextPage = () => {
                   alt="Pablo logo"
                 />
               </Box>
-              <MyStakingsTable assets={myStakings.pablo} />
+              <MyStakingsTable assets={myStakes.pablo} />
             </TabPanel>
 
-            {/* My Bondings Tab Pannels */}
+            {/* My Bondings Tab Panels */}
             <TabPanel value={tabValue} index={2}>
               <Box px={2}>
                 <PageTitle title="Picasso" textAlign="left" fontSize={40} />
               </Box>
-              {/*<MyBondingsTable assets={[]} />*/}
             </TabPanel>
             <TabPanel value={tabValue} index={2}>
               <Box marginBottom={4} padding={2}>
@@ -133,7 +135,6 @@ const Overview: NextPage = () => {
                   alt="Pablo logo"
                 />
               </Box>
-              {/*<MyBondingsTable assets={myBondings.pablo} />*/}
             </TabPanel>
           </Grid>
         )}

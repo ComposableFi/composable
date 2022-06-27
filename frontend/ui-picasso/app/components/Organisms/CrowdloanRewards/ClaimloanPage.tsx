@@ -65,7 +65,7 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
     setEvmAlreadyAssociated,
     setUseAssociationMode,
     setUserAssociatedWith,
-    setUserClaimEigibility,
+    setUserClaimEligibility,
     setUserCrowdloanData,
   } = useStore(({ crowdloanRewards }) => crowdloanRewards);
   const { updateBalance } = useStore(
@@ -112,7 +112,7 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
 
     setUserAssociatedWith(associationMode);
 
-    setUserClaimEigibility(true);
+    setUserClaimEligibility(true);
 
     closeKSMClaimModal();
 
@@ -129,7 +129,7 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
       err.message === "1010: Invalid Transaction: Custom error: 1" ||
       err.message === "1010: Invalid Transaction: Custom error: 3"
     ) {
-      setUserClaimEigibility(false);
+      setUserClaimEligibility(false);
       setIneligibleText((s) => {
         s.title = ERROR_MESSAGES.WRONG_ADDRESS.title;
         s.textBelow = ERROR_MESSAGES.WRONG_ADDRESS.message;

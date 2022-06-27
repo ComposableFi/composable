@@ -1,5 +1,5 @@
 import { NamedSet } from "zustand/middleware";
-import { AllSlices, StoreSlice } from "../types";
+import { StoreSlice } from "../types";
 import { formatNumber } from "@/utils/formatters";
 import BigNumber from "bignumber.js";
 
@@ -109,13 +109,17 @@ export const createStakingSlice: StoreSlice<StakingSlice> = (
     ...initialState,
 
     setStakingHighlights: (data: StakingHighlightsType) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.staking.highlights = data;
+
+        return state;
       });
     },
     setClaimableRewards: (data: ClaimableRewards) => {
-      set((state: AllSlices) => {
+      set((state) => {
         state.staking.claimableRewards = data;
+
+        return state;
       });
     },
   },

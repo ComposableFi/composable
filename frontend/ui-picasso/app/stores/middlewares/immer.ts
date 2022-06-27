@@ -13,6 +13,7 @@ const immer =
         const nextState = isFunction
           ? produce(partial as (state: Draft<T>) => T)
           : (partial as T);
+        // @ts-ignore
         return set(nextState, replace, name || functionName || "anonymous");
       },
       get,
