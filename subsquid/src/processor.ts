@@ -27,7 +27,7 @@ const chain = (): string => {
     case 'dali':
       return 'wss://dali.devnets.composablefinance.ninja/parachain/alice'
     case 'dali-stage':
-      return 'wss://staging.composablefinance.ninja'
+      return 'wss://dali-cluster-fe.composablefinance.ninja'
     default:
       return 'ws://localhost:9997'
   }
