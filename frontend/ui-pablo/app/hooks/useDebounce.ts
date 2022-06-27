@@ -1,7 +1,6 @@
-import BigNumber from 'bignumber.js';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 
-export default function useDebounce(value: string | number | BigNumber, delay: number) {
+export default function useDebounce(value: any, delay: number) {
   // State and setters for debounced value
   const [debouncedValue, setDebouncedValue] = useState(value);
 

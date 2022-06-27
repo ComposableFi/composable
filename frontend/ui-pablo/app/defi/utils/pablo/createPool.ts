@@ -1,6 +1,6 @@
 import { ApiPromise } from "@polkadot/api";
 
-export const createConstantProductPool = (
+export function createConstantProductPool(
   api: ApiPromise,
   pair: {
     base: number;
@@ -9,7 +9,7 @@ export const createConstantProductPool = (
   feeRate: number,
   walletAddress: string,
   baseWeight: number = 50 * 10000
-) => {
+) {
   let pool = api.createType("PalletPabloPoolInitConfiguration", {
     ConstantProduct: {
       owner: api.createType("AccountId32", walletAddress),
@@ -18,14 +18,14 @@ export const createConstantProductPool = (
         quote: api.createType("u128", pair.quote),
       }),
       fee: api.createType("Permill", feeRate),
-      baseWeight: api.createType("Permill", baseWeight)
+      baseWeight: api.createType("Permill", baseWeight),
     },
   });
 
   return api.tx.pablo.create(pool as any);
-};
+}
 
-export const createStableSwapPool = (
+export function createStableSwapPool(
   api: ApiPromise,
   pair: {
     base: number;
@@ -34,7 +34,7 @@ export const createStableSwapPool = (
   feeRate: number,
   walletAddress: string,
   amplificationCoefficient: number = 10000 // default as 1
-) => {
+) {
   let pool = api.createType("PalletPabloPoolInitConfiguration", {
     StableSwap: {
       owner: api.createType("AccountId32", walletAddress),
@@ -43,9 +43,9 @@ export const createStableSwapPool = (
         quote: api.createType("u128", pair.quote),
       }),
       amplificationCoefficient: api.createType("u16", amplificationCoefficient),
-      fee: api.createType("Permill", feeRate)
+      fee: api.createType("Permill", feeRate),
     },
   });
 
   return api.tx.pablo.create(pool as any);
-};
+}

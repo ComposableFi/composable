@@ -4,11 +4,11 @@ import {
   StableSwapPool,
 } from "@/store/pools/pools.types";
 import useStore from "@/store/useStore";
-import { fetchAndUpdatePoolLiquidity } from "@/updaters/liquidity/utils";
+import { fetchAndUpdatePoolLiquidity } from "@/defi/utils";
 import BigNumber from "bignumber.js";
 import { useState, useEffect } from "react";
 import { useParachainApi } from "substrate-react";
-import { DEFAULT_NETWORK_ID } from "../../updaters/constants";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 
 export const useLiquidityByPool = (
   pool:

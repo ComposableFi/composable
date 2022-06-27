@@ -1,4 +1,4 @@
-import { ChartRange, processSubsquidChartData, generateRandomSubsquidTvlData } from "@/store/hooks/usePoolTvlChart/helpers";
+import { ChartRange, processSubsquidChartData, generateRandomSubsquidTvlData } from "@/defi/utils/charts";
 import _ from "lodash";
 import moment from "moment";
 

@@ -7,28 +7,16 @@ import {
   useSelectedAccount,
 } from "substrate-react";
 import useStore from "@/store/useStore";
-import { fetchBalanceByAssetId } from "./utils";
-import { DEFAULT_NETWORK_ID } from "../constants";
+import { fetchBalanceByAssetId } from "@/defi/utils";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import _ from "lodash";
 
 const processedTransactions: string[] = [];
 const Updater = () => {
-  const { updateAssetBalance, updateAssetPrice } = useStore();
+  const { updateAssetBalance } = useStore();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const extrinsicCalls = useExtrinsics();
-
-  // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     updateAssetPrice("pica", _.random(0.85, 0.99))
-  //     updateAssetPrice("ksm", _.random(0.85, 0.99))
-  //     updateAssetPrice("kusd", _.random(0.85, 0.99))
-  //   }, 20000);
-
-  //   return () => {
-  //     clearInterval(interval)
-  //   }
-  // }, [])
 
   useEffect(() => {
     if (parachainApi && selectedAccount) {
@@ -39,7 +27,6 @@ const Updater = () => {
           assetID = assetID.toString();
           fetchBalanceByAssetId(
             parachainApi,
-            DEFAULT_NETWORK_ID,
             selectedAccount.address,
             assetID
           ).then((balance) => {
@@ -48,7 +35,7 @@ const Updater = () => {
         }
       });
     }
-  }, [parachainApi, selectedAccount]);
+  }, [parachainApi, selectedAccount, updateAssetBalance]);
 
   useEffect(() => {
     if (
@@ -79,7 +66,6 @@ const Updater = () => {
               assetID = assetID.toString();
               fetchBalanceByAssetId(
                 parachainApi,
-                DEFAULT_NETWORK_ID,
                 selectedAccount.address,
                 assetID
               ).then((balance) => {
@@ -97,7 +83,7 @@ const Updater = () => {
         });
       }
     }
-  }, [extrinsicCalls, parachainApi, selectedAccount]);
+  }, [extrinsicCalls, parachainApi, selectedAccount, updateAssetBalance]);
 
   return null;
 };

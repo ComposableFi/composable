@@ -4,7 +4,7 @@ export const queryPoolTransactionsByType = (
   poolId: number,
   transactionType: "SWAP" | "ADD_LIQUIDITY" | "CREATE_POOL" | "REMOVE_LIQUIDITY",
   limit: number = 50
-) => subsquidClient.query(`query queryPoolTransactionsByType {
+) => makeClient().query(`query queryPoolTransactionsByType {
   pabloTransactions(limit: ${limit}, orderBy: receivedTimestamp_DESC, where: {
     transactionType_eq: ${transactionType},
     pool: {poolId_eq: ${poolId.toString()}}

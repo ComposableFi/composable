@@ -8,8 +8,7 @@ import {
   Box,
   Typography,
   useTheme,
-  TableContainerProps,
-  TableCellProps
+  TableContainerProps
 } from "@mui/material";
 import React, { useState } from "react";
 import { KeyboardArrowDown } from "@mui/icons-material";

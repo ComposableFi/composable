@@ -4,11 +4,13 @@ import moment from "moment";
 export const DEFAULT_DECIMALS = new BigNumber(10).pow(12);
 export const AVERAGE_BLOCK_TIME = 20 * 1000;
 export const DEFAULT_NETWORK_ID = "picasso";
-
+export const PALLET_TYPE_ID = "modl";
 export const SECONDS = 1 * 1000;
 export const MINUTES = 60 * SECONDS;
 export const HOURS = 60 * MINUTES;
 export const DAYS = 24 * HOURS;
+
+export const APOLLO_UPDATE_BLOCKS = 6;
 
 export const DUMMY_LAUNCH_DESCRIPTION = (
   name: string = "Picasso",

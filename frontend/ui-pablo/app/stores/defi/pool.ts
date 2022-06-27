@@ -1,13 +1,12 @@
-import { Liquidity, PoolDetails, PoolInfo, PoolLiquidityChartData, Supply, TokenId } from '@/defi/types';
+import { Liquidity, PoolDetails, PoolLiquidityChartData, Supply, TokenId } from '@/defi/types';
 import { createSlice } from '@reduxjs/toolkit';
 import BigNumber from 'bignumber.js';
-import { initPoolData, initSupplyData, selectedPoolData } from '../dummy/pool';
+import { initSupplyData, selectedPoolData } from '../dummy/pool';
 
 interface Pool {
   currentSupply: Supply;
   currentLiquidity: Liquidity;
   currentStep: number;
-  currentPool: PoolInfo;
   selectedPool: PoolDetails;
   selectedPoolLiquidityChartData: PoolLiquidityChartData,
 }
@@ -25,7 +24,6 @@ const initialState: Pool = {
     amount: new BigNumber(1200),
   },
   currentStep: 1,
-  currentPool: initPoolData,
   selectedPool: selectedPoolData,
   selectedPoolLiquidityChartData: {
     series: [80, 20],
@@ -43,16 +41,13 @@ export const poolSlice = createSlice({
     setCurrentLiquidity: (state, action) => {
       state.currentLiquidity = {...action.payload};
     },
-    setCurrentPool: (state, action) => {
-      state.currentPool = {...state.currentPool, ...action.payload};
-    },
   },
 });
 
 export const {
   setCurrentSupply,
   setCurrentLiquidity,
-  setCurrentPool,
+
 } = poolSlice.actions;
 
 export default poolSlice.reducer;

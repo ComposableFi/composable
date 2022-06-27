@@ -40,7 +40,7 @@ const SelectBond: NextPage = () => {
     if (extensionStatus !== "connected") {
       router.push("/bond");
     }
-  }, [extensionStatus]);
+  }, [extensionStatus, router]);
 
   useEffect(() => {
     if (message.text) {

@@ -1,4 +1,3 @@
-import { Auction, TokenId } from "@/defi/types";
 import {
   Box,
   BoxProps,
@@ -47,7 +46,7 @@ export const SwapSummary: React.FC<SwapSummaryProps> = ({
     } else {
       return new BigNumber(0);
     }
-  }, [quoteAssetAmount, validTokens]);
+  }, [quoteAssetAmount, validTokens, fee]);
 
   if (!validTokens) {
     return <></>;

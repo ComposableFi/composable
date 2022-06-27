@@ -25,11 +25,10 @@ import { useRouter } from "next/router";
 import useStore from "@/store/useStore";
 import {
   getAsset,
-  getAssetById,
   getAssetOnChainId,
 } from "@/defi/polkadot/Assets";
 import { AMMs } from "@/defi/AMMs";
-import { useAssetPrice } from "@/store/assets/hooks";
+import { useUSDAssetPrice } from "@/store/assets/hooks";
 import { AssetId } from "@/defi/polkadot/types";
 import {
   getSigner,
@@ -37,14 +36,10 @@ import {
   useParachainApi,
   useSelectedAccount,
 } from "substrate-react";
-import {
-  createConstantProductPool,
-  createStableSwapPool,
-} from "@/updaters/createPool/utils";
-import { DEFAULT_NETWORK_ID } from "@/updaters/constants";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { EventRecord } from "@polkadot/types/interfaces/system/types";
-import { addLiquidityToPoolViaPablo } from "@/updaters/addLiquidity/utils";
+import { addLiquidityToPoolViaPablo, createConstantProductPool, createStableSwapPool } from "@/defi/utils";
 import { closeConfirmingModal, openConfirmingModal } from "@/stores/ui/uiSlice";
 
 const labelProps = (
@@ -100,10 +95,13 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
     return new BigNumber(liquidity.quoteAmount);
   }, [liquidity.quoteAmount]);
 
-  const { createdAt } = useAppSelector((state) => state.pool.currentPool);
+  const [createdAt, setCreatedAt] = useState(-1)
 
-  const baseTokenUSDPrice = useAssetPrice(baseAsset as AssetId);
-  const quoteTokenUSDPrice = useAssetPrice(quoteAsset as AssetId);
+  let baseAssetOnChainId = baseAsset === "none" ? -1 : getAssetOnChainId(DEFAULT_NETWORK_ID, baseAsset)
+  let quoteAssetOnChainId = quoteAsset === "none" ? -1 : getAssetOnChainId(DEFAULT_NETWORK_ID, quoteAsset)
+
+  const baseTokenUSDPrice = useUSDAssetPrice(baseAssetOnChainId ? baseAssetOnChainId : 0);
+  const quoteTokenUSDPrice = useUSDAssetPrice(quoteAssetOnChainId ? quoteAssetOnChainId : 0);
 
   const [isFunding, setIsFunding] = useState<boolean>(false);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
@@ -178,6 +176,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
 
   const onCreateFinalized = (txHash: string, events: EventRecord[]) => {
     console.log("Pool Creation Finalized", txHash);
+    setCreatedAt(Date.now())
 
     if (parachainApi) {
       const poolCreatedEvent = events.find((ev) =>
