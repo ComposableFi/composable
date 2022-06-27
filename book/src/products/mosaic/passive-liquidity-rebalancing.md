@@ -12,8 +12,6 @@ When a liquidity shortfall is detected, Mosaic selects the best route to redirec
 
 Mosaic is integrating several leading bridges, including the following, with more to be announced soon:
 
-
-
 * **[Hop](https://hop.exchange/)**: a protocol enabling asset transfers across EVM-compatible scaling solutions (rollups, sidechains, etc.).
 * **[Connext](https://connext.network/)**: a cross-chain liquidity protocol enabling non-custodial asset swaps across EVM-compatible chains and L2 networks.
 * **[Multichain](https://multichain.org/)**: a cross chain router protocol that allows users to swap with no slippage between any two chains seamlessly.

@@ -56,8 +56,6 @@ This graph shows the fee charged versus the transfer amounts as a percent of ava
 
 The following parameters were set:
 
-
-
 * The liquidity % at which the maximum fee kicks in: 40%
 * The maximum fee % to charge: 4%
 * The minimum fee % to charge: 0.25%
@@ -68,8 +66,6 @@ At the beginning of the PoC, vaults were in the order of $100–200k. The outlin
 ### Optimizing Mosaic’s Fee Model
 
 Composable compared Mosaic’s fee model with the fee landscape of the general cross-ledger community to optimize it. The following parameters were set:
-
-
 
 * The liquidity % at which the maximum fee kicks in: 30%
 * The maximum fee % to charge: 4%

@@ -8,8 +8,6 @@ Composable has taken different fee models into consideration in order to adopt b
 
 Mosaic’s dynamic fee is based on the available liquidity on the source and destination layer. The dynamic fee model has a maximum fee of 4% and a minimum fee of 0.25%. The fee is based on a linear curve until the trade size is greater than 30% of the available liquidity on the destination layer. At this point it became a flat fee of 4%. Considering the above conditions, [Mosaic’s dynamic fee model](https://medium.com/composable-finance/the-dynamic-fee-model-powering-mosaics-transfer-availability-layer-f91011309592) could offer:
 
-
-
 * An annual percentage yield (APY) of 10.0% for USDC for LPs.
 * An annual percentage yield (APY) of 10.7% for wETH for LPs.
 * An average fee of only 0.32% per transfer for users accessing fast transfers across EVM layers.
