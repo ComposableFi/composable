@@ -16,6 +16,7 @@ use composable_traits::vamm::{
 };
 use frame_support::{assert_ok, pallet_prelude::Hooks};
 use proptest::prelude::*;
+use sp_runtime::FixedPointNumber;
 
 pub mod compute_invariant;
 pub mod create_vamm;
@@ -82,7 +83,10 @@ fn run_for_seconds(seconds: u64) {
 	}
 	SystemPallet::set_block_number(SystemPallet::block_number() + 1);
 	// Time is set in milliseconds, so we multiply the seconds by 1_000
-	let _ = TimestampPallet::set(Origin::none(), TimestampPallet::now() + 1_000 * seconds);
+	let _ = TimestampPallet::set(
+		Origin::none(),
+		TimestampPallet::now().saturating_add(seconds.saturating_mul(1_000)),
+	);
 	SystemPallet::on_initialize(SystemPallet::block_number());
 	TimestampPallet::on_initialize(SystemPallet::block_number());
 }
@@ -94,6 +98,10 @@ fn default_vamm_config() -> VammConfig<Balance, Moment> {
 		peg_multiplier: 1,
 		twap_period: 3600,
 	}
+}
+
+fn as_decimal<T: Into<u128>>(x: T) -> Decimal {
+	Decimal::from_inner(x.into().saturating_mul(Decimal::DIV))
 }
 
 fn default_swap_config(asset: AssetType, direction: Direction) -> SwapConfig<VammId, Balance> {
@@ -108,6 +116,14 @@ fn default_swap_config(asset: AssetType, direction: Direction) -> SwapConfig<Vam
 
 fn create_vamm(vamm_config: &VammConfig<Balance, Moment>) {
 	assert_ok!(TestPallet::create(vamm_config));
+}
+
+fn twap_update_delay(vamm_id: VammId) -> Moment {
+	let vamm_state = TestPallet::get_vamm(vamm_id).unwrap();
+	vamm_state
+		.twap_period
+		.saturating_add(vamm_state.twap_timestamp)
+		.saturating_add(1)
 }
 
 // ----------------------------------------------------------------------------------------------------
@@ -262,7 +278,7 @@ fn any_vamm_id() -> RangeInclusive<VammId> {
 }
 
 fn any_time() -> RangeInclusive<Timestamp> {
-	Timestamp::MIN..=Timestamp::MAX
+	Timestamp::MIN..=Timestamp::MAX.saturating_div(10000)
 }
 
 prop_compose! {

@@ -4,7 +4,6 @@ use super::{
 	MarketConfig, Position,
 };
 use crate::{
-	math::{FixedPointMath, FromBalance, FromUnsigned, IntoDecimal},
 	mock::{
 		accounts::{AccountId, ALICE, BOB},
 		runtime::{
@@ -15,6 +14,7 @@ use crate::{
 	tests::{get_market_fee_pool, set_oracle_twap},
 	Direction, Error, Event,
 };
+use composable_maths::labs::numbers::{FixedPointMath, FromBalance, FromUnsigned, IntoDecimal};
 use composable_traits::{
 	clearing_house::{ClearingHouse, Instruments},
 	time::{DurationSeconds, ONE_HOUR},

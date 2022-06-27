@@ -129,6 +129,8 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	use codec::{Codec, FullCodec};
+	use composable_maths::labs::numbers::{FixedPointMath, IntoDecimal, UnsignedMath};
+	use composable_tests_helpers::test::helper::default_acceptable_computation_error;
 	use composable_traits::vamm::{
 		AssetType, Direction, MovePriceConfig, SwapConfig, SwapOutput, SwapSimulationConfig, Vamm,
 		VammConfig, MINIMUM_TWAP_PERIOD,
@@ -195,6 +197,8 @@ pub mod pallet {
 			+ Codec
 			+ Copy
 			+ From<u64>
+			+ From<u128>
+			+ Into<u128>
 			+ MaxEncodedLen
 			+ MaybeSerializeDeserialize
 			+ Ord
@@ -205,6 +209,8 @@ pub mod pallet {
 		/// Signed decimal fixed point number.
 		type Decimal: Default
 			+ FixedPointNumber<Inner = Self::Balance>
+			+ One
+			+ Zero
 			+ FullCodec
 			+ MaxEncodedLen
 			+ MaybeSerializeDeserialize
@@ -399,6 +405,9 @@ pub mod pallet {
 		/// Tried to update twap for an asset, but the desired new twap value is
 		/// zero.
 		NewTwapValueIsZero,
+		/// Tried to update twaps with values that are not reciprocal of one
+		/// another.
+		TwapsMustBeReciprocals,
 		/// Tried to create a vamm with a
 		/// [`twap_period`](VammState::twap_period) smaller than the
 		/// minimum allowed one specified by
@@ -524,7 +533,7 @@ pub mod pallet {
 				..Default::default()
 			};
 			let base_twap = Self::do_get_price(&tmp_vamm_state, AssetType::Base)?;
-			let quote_twap = Self::do_get_price(&tmp_vamm_state, AssetType::Quote)?;
+			let quote_twap = Self::reciprocal_twap(&base_twap)?;
 
 			VammCounter::<T>::try_mutate(|next_id| {
 				let id = *next_id;
@@ -590,6 +599,7 @@ pub mod pallet {
 		///
 		/// # Runtime
 		/// `O(1)`
+		#[transactional]
 		fn get_price(
 			vamm_id: VammIdOf<T>,
 			asset_type: AssetType,
@@ -728,6 +738,7 @@ pub mod pallet {
 		///
 		/// # Runtime
 		/// `O(1)`
+		#[transactional]
 		fn update_twap(
 			vamm_id: VammIdOf<T>,
 			base_twap: Option<DecimalOf<T>>,
@@ -737,14 +748,21 @@ pub mod pallet {
 			// Vamm must exist.
 			let mut vamm_state = Self::get_vamm_state(&vamm_id)?;
 
-			// Delegate update twap to internal functions.
+			// Other sanity checks must pass.
+			Self::update_twap_sanity_check(&vamm_state, base_twap, quote_twap, &None)?;
+
+			// Handle optional values.
 			let (base_twap, quote_twap) = match (base_twap, quote_twap) {
-				(Some(base_twap), Some(quote_twap)) =>
-					Self::do_update_twap(vamm_id, &mut vamm_state, base_twap, quote_twap, &None)?,
-				_ => Self::update_vamm_twap(vamm_id, &mut vamm_state, &None)?,
+				(Some(base_twap), Some(quote_twap)) => (base_twap, quote_twap),
+				(Some(base_twap), None) => (base_twap, Self::reciprocal_twap(&base_twap)?),
+				(None, Some(quote_twap)) => (Self::reciprocal_twap(&quote_twap)?, quote_twap),
+				(None, None) => Self::compute_new_twaps(&vamm_state, &None)?,
 			};
 
-			// Deposit updated twap event into blockchain
+			// Delegate update twap to internal functions.
+			Self::do_update_twap(vamm_id, &mut vamm_state, base_twap, quote_twap, &None)?;
+
+			// Deposit updated twap event into blockchain.
 			Self::deposit_event(Event::<T>::UpdatedTwap { vamm_id, base_twap, quote_twap });
 
 			Ok((base_twap, quote_twap))
@@ -806,8 +824,7 @@ pub mod pallet {
 			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
 
 			// Perform twap update before swapping assets.
-			// Ignore errors from this function while doing swaps.
-			let _ = Self::update_vamm_twap(config.vamm_id, &mut vamm_state, &None);
+			Self::update_twap(config.vamm_id, None, None).ok();
 
 			// Perform required sanity checks.
 			Self::swap_sanity_check(config, &vamm_state)?;
@@ -918,6 +935,7 @@ pub mod pallet {
 		fn move_price(config: &Self::MovePriceConfig) -> Result<U256, DispatchError> {
 			// Get Vamm state.
 			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
+
 			// TODO(Cardosaum): Try to move from using function
 			// Self::is_vamm_closed to Vamm.is_closed method
 			ensure!(!Self::is_vamm_closed(&vamm_state, &None), Error::<T>::VammIsClosed);
@@ -949,10 +967,99 @@ pub mod pallet {
 	//                              Helper Functions
 	// ----------------------------------------------------------------------------------------------------
 
-	// Helper types - core functionality
+	// Helper types - Swap functionality
 	struct CalculateSwapAsset<T: Config> {
 		output_amount: BalanceOf<T>,
 		input_amount: BalanceOf<T>,
+	}
+
+	// Helper functions - Update twap functionality
+	impl<T: Config> Pallet<T> {
+		fn do_update_twap(
+			vamm_id: VammIdOf<T>,
+			vamm_state: &mut VammStateOf<T>,
+			base_twap: DecimalOf<T>,
+			quote_twap: DecimalOf<T>,
+			now: &Option<MomentOf<T>>,
+		) -> Result<(DecimalOf<T>, DecimalOf<T>), DispatchError> {
+			// Sanity checks
+			Self::update_twap_sanity_check(vamm_state, Some(base_twap), Some(quote_twap), now)?;
+
+			let now = Self::now(now);
+			vamm_state.base_asset_twap = base_twap;
+			vamm_state.quote_asset_twap = quote_twap;
+			vamm_state.twap_timestamp = now;
+
+			// Update runtime storage
+			VammMap::<T>::insert(&vamm_id, vamm_state);
+
+			// Return new asset twap
+			Ok((base_twap, quote_twap))
+		}
+
+		fn compute_new_twaps(
+			vamm_state: &VammStateOf<T>,
+			now: &Option<MomentOf<T>>,
+		) -> Result<(DecimalOf<T>, DecimalOf<T>), DispatchError> {
+			// Compute base twap.
+			let base_twap = Self::calculate_twap(
+				now,
+				vamm_state.twap_timestamp,
+				vamm_state.twap_period,
+				Self::do_get_price(vamm_state, AssetType::Base)?,
+				vamm_state.base_asset_twap,
+			)?;
+
+			// Quote twap must always be the reciprocal of base twap.
+			let quote_twap = Self::reciprocal_twap(&base_twap)?;
+
+			Ok((base_twap, quote_twap))
+		}
+
+		pub fn reciprocal_twap(asset_twap: &DecimalOf<T>) -> Result<DecimalOf<T>, DispatchError> {
+			Ok(DecimalOf::<T>::one().try_div(asset_twap)?)
+		}
+
+		fn calculate_twap(
+			now: &Option<MomentOf<T>>,
+			last_twap_timestamp: MomentOf<T>,
+			twap_period: MomentOf<T>,
+			new_price: DecimalOf<T>,
+			old_price: DecimalOf<T>,
+		) -> Result<DecimalOf<T>, DispatchError> {
+			let now = Self::now(now);
+			let weight_now: MomentOf<T> = now.saturating_sub(last_twap_timestamp).max(1_u64.into());
+			let weight_last_twap: MomentOf<T> =
+				twap_period.saturating_sub(weight_now).max(1_u64.into());
+
+			Self::calculate_exponential_moving_average(
+				new_price,
+				weight_now,
+				old_price,
+				weight_last_twap,
+			)
+		}
+
+		fn twaps_are_reciprocal(
+			base_twap: DecimalOf<T>,
+			quote_twap: DecimalOf<T>,
+		) -> Result<bool, DispatchError> {
+			let base_reciprocal = Self::reciprocal_twap(&base_twap)?;
+			let quote_reciprocal = Self::reciprocal_twap(&quote_twap)?;
+
+			let is_base_error_acceptable = default_acceptable_computation_error(
+				quote_reciprocal.into_inner().into(),
+				base_twap.into_inner().into(),
+			)
+			.is_ok();
+			let is_quote_error_acceptable = default_acceptable_computation_error(
+				base_reciprocal.into_inner().into(),
+				quote_twap.into_inner().into(),
+			)
+			.is_ok();
+
+			Ok(is_base_error_acceptable && is_quote_error_acceptable)
+		}
 	}
 
 	// Helper functions - core functionality
@@ -984,39 +1091,15 @@ pub mod pallet {
 
 			let price = Self::u256_to_balance(price_u256)?;
 
-			Ok(DecimalOf::<T>::from_inner(price))
-		}
-
-		fn do_update_twap(
-			vamm_id: VammIdOf<T>,
-			vamm_state: &mut VammStateOf<T>,
-			base_twap: DecimalOf<T>,
-			quote_twap: DecimalOf<T>,
-			now: &Option<MomentOf<T>>,
-		) -> Result<(DecimalOf<T>, DecimalOf<T>), DispatchError> {
-			// Sanity checks
-			Self::update_twap_sanity_check(vamm_state, Some(base_twap), Some(quote_twap), now)?;
-
-			let now = Self::now(now);
-			vamm_state.base_asset_twap = base_twap;
-			vamm_state.quote_asset_twap = quote_twap;
-			vamm_state.twap_timestamp = now;
-
-			// Update runtime storage
-			VammMap::<T>::insert(&vamm_id, vamm_state);
-
-			// Return new asset twap
-			Ok((base_twap, quote_twap))
+			Ok(price.into_decimal()?)
 		}
 
 		fn swap_quote_asset(
 			config: &SwapConfigOf<T>,
 			vamm_state: &mut VammStateOf<T>,
 		) -> Result<SwapOutputOf<T>, DispatchError> {
-			let quote_asset_reserve_amount = config
-				.input_amount
-				.checked_div(&vamm_state.peg_multiplier)
-				.ok_or(ArithmeticError::DivisionByZero)?;
+			let quote_asset_reserve_amount =
+				config.input_amount.try_div(&vamm_state.peg_multiplier)?;
 
 			let initial_base_asset_reserve = vamm_state.base_asset_reserves;
 			let swap_amount = Self::calculate_swap_asset(
@@ -1031,16 +1114,11 @@ pub mod pallet {
 
 			match initial_base_asset_reserve.cmp(&swap_amount.output_amount) {
 				Ordering::Less => Ok(SwapOutput {
-					output: swap_amount
-						.output_amount
-						.checked_sub(&initial_base_asset_reserve)
-						.ok_or(ArithmeticError::Underflow)?,
+					output: swap_amount.output_amount.try_sub(&initial_base_asset_reserve)?,
 					negative: true,
 				}),
 				_ => Ok(SwapOutput {
-					output: initial_base_asset_reserve
-						.checked_sub(&swap_amount.output_amount)
-						.ok_or(ArithmeticError::Underflow)?,
+					output: initial_base_asset_reserve.try_sub(&swap_amount.output_amount)?,
 					negative: false,
 				}),
 			}
@@ -1079,11 +1157,8 @@ pub mod pallet {
 			vamm_state: &VammStateOf<T>,
 		) -> Result<CalculateSwapAsset<T>, DispatchError> {
 			let new_input_amount = match direction {
-				Direction::Add =>
-					input_asset_amount.checked_add(swap_amount).ok_or(ArithmeticError::Overflow)?,
-
-				Direction::Remove =>
-					input_asset_amount.checked_sub(swap_amount).ok_or(ArithmeticError::Underflow)?,
+				Direction::Add => input_asset_amount.try_add(swap_amount)?,
+				Direction::Remove => input_asset_amount.try_sub(swap_amount)?,
 			};
 			let new_input_amount_u256 = Self::balance_to_u256(new_input_amount)?;
 
@@ -1110,17 +1185,13 @@ pub mod pallet {
 			vamm_state: &VammStateOf<T>,
 		) -> Result<BalanceOf<T>, DispatchError> {
 			let quote_asset_reserve_change = match direction {
-				Direction::Add => quote_asset_reserve_before
-					.checked_sub(quote_asset_reserve_after)
-					.ok_or(ArithmeticError::Underflow)?,
-				Direction::Remove => quote_asset_reserve_after
-					.checked_sub(quote_asset_reserve_before)
-					.ok_or(ArithmeticError::Underflow)?,
+				Direction::Add => quote_asset_reserve_before.try_sub(quote_asset_reserve_after)?,
+				Direction::Remove =>
+					quote_asset_reserve_after.try_sub(quote_asset_reserve_before)?,
 			};
 
-			let quote_asset_amount = quote_asset_reserve_change
-				.checked_mul(&vamm_state.peg_multiplier)
-				.ok_or(ArithmeticError::Overflow)?;
+			let quote_asset_amount =
+				quote_asset_reserve_change.try_mul(&vamm_state.peg_multiplier)?;
 
 			Ok(quote_asset_amount)
 		}
@@ -1143,15 +1214,29 @@ pub mod pallet {
 				ensure!(!quote_twap.is_zero(), Error::<T>::NewTwapValueIsZero);
 			}
 
-			// 2) Vamm must be open.
+			// 2) Twaps must be reciprocal.
+			if let (Some(base_twap), Some(quote_twap)) = (base_twap, quote_twap) {
+				ensure!(
+					Self::twaps_are_reciprocal(base_twap, quote_twap)?,
+					Error::<T>::TwapsMustBeReciprocals
+				);
+			};
+
+			// 3) Vamm must be open.
 			ensure!(!Self::is_vamm_closed(vamm_state, now), Error::<T>::VammIsClosed);
 
-			// 3) Only update asset's twap if time has passed since last update.
+			// 4) Only update asset's twap if time has passed since last update
+			// and if the delay is greater than the required time between
+			// updates.
 			let now = Self::now(now);
-			ensure!(now > vamm_state.twap_timestamp, Error::<T>::AssetTwapTimestampIsMoreRecent);
+			ensure!(
+				now > vamm_state.twap_timestamp.try_add(&vamm_state.twap_period)?,
+				Error::<T>::AssetTwapTimestampIsMoreRecent
+			);
 
 			Ok(())
 		}
+
 		fn swap_sanity_check(
 			config: &SwapConfigOf<T>,
 			vamm_state: &VammStateOf<T>,
@@ -1193,62 +1278,6 @@ pub mod pallet {
 
 	// Helper functions - low-level functionality
 	impl<T: Config> Pallet<T> {
-		fn update_vamm_twap(
-			vamm_id: VammIdOf<T>,
-			vamm_state: &mut VammStateOf<T>,
-			now: &Option<MomentOf<T>>,
-		) -> Result<(DecimalOf<T>, DecimalOf<T>), DispatchError> {
-			// Sanity checks
-			Self::update_twap_sanity_check(vamm_state, None, None, now)?;
-
-			let base_twap = Self::calculate_twap(
-				now,
-				vamm_state.twap_timestamp,
-				vamm_state.twap_period,
-				Self::do_get_price(vamm_state, AssetType::Base)?,
-				vamm_state.base_asset_twap,
-			)?;
-
-			let quote_twap = Self::calculate_twap(
-				now,
-				vamm_state.twap_timestamp,
-				vamm_state.twap_period,
-				Self::do_get_price(vamm_state, AssetType::Quote)?,
-				vamm_state.quote_asset_twap,
-			)?;
-
-			Self::do_update_twap(vamm_id, vamm_state, base_twap, quote_twap, now)?;
-
-			Ok((base_twap, quote_twap))
-		}
-
-		fn calculate_twap(
-			now: &Option<MomentOf<T>>,
-			last_twap_timestamp: MomentOf<T>,
-			twap_period: MomentOf<T>,
-			new_price: DecimalOf<T>,
-			old_price: DecimalOf<T>,
-		) -> Result<DecimalOf<T>, DispatchError> {
-			let now = Self::now(now);
-			let weight_now: MomentOf<T> =
-				std::cmp::max(1_u64.into(), now.saturating_sub(last_twap_timestamp));
-
-			// TODO(Cardosaum): Won't this subtraction cause a failure everytime
-			// if we don't update twap for a long period of time?  for example,
-			// if `twap_period = 1 hour`, and we pass 2 or more hours without
-			// updating the twap, doesn't it mean we will throw an error each
-			// time we try to subtract `twap_period -  weight_now`?
-			let weight_last_twap: MomentOf<T> =
-				std::cmp::max(1_u64.into(), twap_period.saturating_sub(weight_now));
-
-			Self::calculate_exponential_moving_average(
-				new_price,
-				weight_now,
-				old_price,
-				weight_last_twap,
-			)
-		}
-
 		fn calculate_exponential_moving_average(
 			x1: DecimalOf<T>,
 			w1: MomentOf<T>,

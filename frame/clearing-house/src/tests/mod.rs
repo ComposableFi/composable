@@ -36,7 +36,6 @@ pub mod create_market;
 pub mod deposit_collateral;
 pub mod instruments;
 pub mod liquidate;
-pub mod math;
 pub mod open_position;
 pub mod update_funding;
 pub mod withdraw_collateral;

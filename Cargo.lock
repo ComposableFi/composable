@@ -1549,10 +1549,13 @@ dependencies = [
  "composable-traits",
  "frame-support",
  "frame-system",
+ "num-integer",
+ "num-traits",
  "parity-scale-codec",
  "rust_decimal",
  "scale-info",
  "sp-arithmetic",
+ "sp-core",
  "sp-runtime",
  "sp-std 4.0.0",
 ]
@@ -7419,6 +7422,7 @@ dependencies = [
 name = "pallet-clearing-house"
 version = "0.1.0"
 dependencies = [
+ "composable-maths",
  "composable-traits",
  "frame-benchmarking",
  "frame-support",
@@ -8550,6 +8554,7 @@ dependencies = [
 name = "pallet-vamm"
 version = "0.1.0"
 dependencies = [
+ "composable-maths",
  "composable-tests-helpers",
  "composable-traits",
  "frame-benchmarking",
