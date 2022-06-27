@@ -42,31 +42,30 @@ Mosaic V2 is constructed to be modular. It allows any system to be created or in
 
 For example, in Aave, we could create a strategy for A and whitelist aUSDC for Mosaic enabling users to stake their aUSDC within the strategy and providing liquidity into Mosaic. Users can now earn from both Aave and Mosaic.
 
- \
-People can benefit from the passive and active liquidity provisioning capabilities (more info about these 2 options &lt;link_here>), lend their assets and earn rewards from all the layers Mosaic integrates with.  \
-Also, you are not limited by the layer you are lending your liquidity into, as Mosaic allows you to withdraw on any other layer connected to the system.  \
- \
-Protocols can leverage our Active Liquidity Bots SDK to leverage capabilities that can provide you higher rewards. Being an active provider means you’re part of JIT (just in time) liquidity and you work for balancing the system’s liquidity across layers.  \
- \
+People can benefit from the [passive liquidity rebalancing](./passive-liquidity-rebalancing.md) and [active liquidity management](./active-liquidity-management.md) modules, lend their assets and earn rewards from all the layers Mosaic integrates with.
+Also, you are not limited by the layer you are lending your liquidity into, as Mosaic allows you to withdraw on any other layer connected to the system.
+
+Protocols can leverage our Active Liquidity Bots SDK to leverage capabilities that can provide you higher rewards. Being an active provider means you’re part of JIT (just in time) liquidity and you work for balancing the system’s liquidity across layers.
+ 
 
 
 **_How To:_**
 ---
-On a technical level, to be a liquidity participant in the system, there are 2 options: \
+On a technical level, to be a liquidity participant in the system, there are 2 options:
 
 
-``providePassiveLiquidity(uint256 _amount, address _tokenAddress`` which makes you a passive liquidity provider.  \
- or \
-``provideActiveLiquidity(uint256 _amount,address _tokenAddress,uint256 _blocksForActiveLiquidity)`` which makes entitled to earn more rewards than the passive providers. \
- \
+``providePassiveLiquidity(uint256 _amount, address _tokenAddress`` which makes you a passive liquidity provider.
+ or
+``provideActiveLiquidity(uint256 _amount,address _tokenAddress,uint256 _blocksForActiveLiquidity)`` which makes entitled to earn more rewards than the passive providers.
+
 As you can see, the `active liquidity` option has a parameter called **blocksForActiveLiquidity, **as the active liquidity will be considered active up to initial block.timestamp + blocksForActiveLiquidity. After this time range, it will act as a passive liquidity if not withdrawn.
 
-Liquidity can be withdrawn by making a request to the same MosaicVault contract  \
+Liquidity can be withdrawn by making a request to the same MosaicVault contract 
 ``withdrawLiquidityRequest(address _receiptToken,uint256 _amountIn,address _tokenOut,address _destinationAddress,uint256 _ammID,bytes calldata _data,uint256 _destinationNetworkId,WithdrawRequestData calldata _withdrawRequestData`
 
-`)`` \
+`)``
 
 
-A relayer will pick up your operation and your `_destinationAddress` will receive funds on `_destinationNetworkId` (your initial liquidity + accumulated rewards - transaction cost) \
- \
+A relayer will pick up your operation and your `_destinationAddress` will receive funds on `_destinationNetworkId` (your initial liquidity + accumulated rewards - transaction cost)
+
 Also, if you are an active liquidity provider, besides withdrawing on any other layer, you can also withdraw in any token supported by that layer. For example, assuming you provided USDC on Ethereum mainnet, you can withdraw on Avalanche in USDT.e
