@@ -1,0 +1,10 @@
+version: "3"
+
+services:
+    composable-sandbox:
+        # image: composablefi/composable-sandbox:latest
+        image: composablefi/composable-sandbox:ea5ac501d
+        network_mode: host
+        restart: always
+        volumes:
+            - ./volumes/polkadot-launch:/tmp/polkadot-launch

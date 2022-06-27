@@ -48,3 +48,14 @@ This playbook does next:
     ```bash
     ansible-playbook -i inventory prod-dali-subsquid.yml -e "domain=dali-subsquid.composable.finance"
     ```
+
+# dali-stage.yml
+
+## Description
+    This playbook deploys Dali stage cluster.
+
+## Usage
+
+    ```bash
+    ansible-playbook -i inventory dali-stage.yml -e "domain=dali-cluster-fe.composablefinance.ninja" -e "letsencrypt_contact_email=your-email@composable.finance"
+    ```

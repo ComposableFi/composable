@@ -1,0 +1,65 @@
+---
+- hosts: all
+  
+  tasks:
+  - name: TLS temination for HTTP endpoints
+    block:
+    - name: Install nginx and certbot
+      apt:
+        pkg:
+        - certbot
+        - nginx
+        - python3-certbot-nginx
+      become: yes
+
+    - name: Remove old nginx configs
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: absent 
+      loop:
+      - path: /etc/nginx/sites-enabled/dali-stage-acme-challenge.conf
+      - path: /etc/nginx/sites-enabled/dali-stage.conf
+      become: yes
+
+    - name: Add nginx config for ACME challenge
+      template:
+        src: nginx/dali-stage-acme-challenge.conf.j2
+        dest: /etc/nginx/sites-enabled/dali-stage-acme-challenge.conf
+        mode: "0600"
+      become: yes
+
+    - name: Enable service nginx and ensure it is not masked
+      ansible.builtin.systemd:
+        name: nginx
+        state: started
+        enabled: yes
+        masked: no
+      become: yes
+
+    - name: Reload nginx with new config
+      shell: nginx -s reload
+      become: yes
+
+    - name: Request initial letsencrypt certificate
+      command: certbot certonly --nginx --agree-tos --non-interactive -d '{{ domain }}' -m '{{ letsencrypt_contact_email }}'
+      args:
+        creates: "/etc/letsencrypt/live/{{ domain }}/privkey.pem"
+      become: yes
+
+    - name: Add a nginx config for dali-stage
+      template:
+        src: nginx/dali-stage.conf.j2
+        dest: /etc/nginx/sites-enabled/dali-stage.conf
+        mode: "0600"
+      become: yes
+
+    - name: Reload nginx with the new config
+      shell: nginx -s reload
+      become: yes
+
+    - name: Certbot renewal cronjob
+      cron: special_time=daily
+        name=certbot-renew-dali-stage
+        user=root
+        job="certbot certonly --nginx --non-interactive -d '{{ domain }}' --deploy-hook 'nginx -s reload'"
+      become: yes
