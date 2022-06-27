@@ -1,10 +1,9 @@
 # Integrating with Mosaic using the Composable SDK
 
-Mosaic SDK allows developers to embed the Mosaic infrastructure in the dApps they are building. This enables new functions, such as:
+Composable SDK allows developers to embed the Mosaic infrastructure in the dApps they are building. This enables new functions, such as:
 
 * Providing unused capital to Mosaic’s vaults for additional yield. For example, the integration of Mosaic with Crocswap will provide Crocswap additional access to liquidity transfer across various L2s. By virtue of Mosaic’s design, its collaboration with Crocswap will enable access to greater TVL for single-sided liquidity provision. Hence users who provide liquidity in single-sided vaults, especially stablecoins and wETH, can earn attractive yields.
 * Building cross-chain borrowing/staking protocols using Mosaic’s cross-chain function calls.
-* Mosaic Integrations - how we can add people like Crocswap to mosaic so they can lease their liquidity out to mosaic. 
 
 Mosaic V2 comes with the following extra features: 
 
@@ -45,7 +44,7 @@ For example, in Aave, we could create a strategy for A and whitelist aUSDC for M
 People can benefit from the [passive liquidity rebalancing](./passive-liquidity-rebalancing.md) and [active liquidity management](./active-liquidity-management.md) modules, lend their assets and earn rewards from all the layers Mosaic integrates with.
 Also, you are not limited by the layer you are lending your liquidity into, as Mosaic allows you to withdraw on any other layer connected to the system.
 
-Protocols can leverage our Active Liquidity Bots SDK to leverage capabilities that can provide you higher rewards. Being an active provider means you’re part of JIT (just in time) liquidity and you work for balancing the system’s liquidity across layers.
+Protocols can leverage our Active Liquidity Bots SDK to leverage capabilities that can provide higher rewards. Being an active provider means you’re part of JIT (just in time) liquidity and working for balancing the system’s liquidity across layers.
  
 
 
