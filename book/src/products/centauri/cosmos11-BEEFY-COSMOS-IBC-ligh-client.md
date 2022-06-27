@@ -14,7 +14,7 @@ A preliminary [specification](https://github.com/paritytech/grandpa-bridge-gadge
 This proof is shown below:
 
 
-```
+```markdown
 pub struct BEEFYNextAuthoritySet {
 	/// Id of the next set.
 	///
@@ -34,14 +34,17 @@ pub struct BEEFYNextAuthoritySet {
 	/// validator set. Light Clients using interactive protocol, might verify only subset of
 	/// signatures, hence don't require the full list here (will receive inclusion proofs).
 	pub root: H256, // 32 bytes
-}
+	}
+```
 
-// Data that light clients need to follow relay chain consensus
-pub struct BEEFYLightClient {
-   pub latest_BEEFY_height: u32, // 4bytes
-   pub mmr_root_hash: H256, // 32bytes
-   pub current_authorities: BEEFYNextAuthoritySet<H256>, // 44bytes
-   pub next_authorities: BEEFYNextAuthoritySet<H256>, // 44bytes
+```markdown
+/// Data that light clients need to follow relay chain consensus
+pub struct BEEFYLightClient{
+	pub latest_BEEFY_height: u32, // 4bytes
+	pub mmr_root_hash: H256, // 32bytes
+	pub current_authorities: BEEFYNextAuthoritySet<H256>, // 44bytes
+	pub next_authorities: BEEFYNextAuthoritySet<H256>, // 44bytes
+	}	
 ```
 
 

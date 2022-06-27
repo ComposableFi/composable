@@ -78,7 +78,7 @@ This could be attempted using Merkle trees, where a light client simply tracks t
 
 Thus, 2,097,151 nodes would need to be recalculated for every new block for blockchain that already has a million blocks:
 
-
+```markdown
     Tree height = log₂(1,000,000) // a million blocks
 
 
@@ -89,5 +89,6 @@ Thus, 2,097,151 nodes would need to be recalculated for every new block for bloc
 
 
     Nodes in the tree = 2,097,151
+```
 
 To prevent this staggering amount of work, Composable needs a tree structure that preserves the log2(n) proof sizes of a Merkle tree but also re-uses in some way the previous hash computations on older nodes in the tree whenever new data is added to the tree. 
