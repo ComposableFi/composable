@@ -67,3 +67,8 @@ type PabloPoolAsset @entity {
   "Unix timestamp in ms"
   calculatedTimestamp: BigInt!
 }
+
+type BondedFinanceTotalPurchased @entity {
+  "Total amount of purchased bonds"
+  purchased: BigInt!
+}

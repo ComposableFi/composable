@@ -9,7 +9,7 @@ import * as ss58 from "@subsquid/ss58";
 import {get, getLatestPoolByPoolId, getOrCreate} from "./dbHelper";
 import {Account, PabloPool, PabloPoolAsset, PabloTransaction, PabloTransactionType} from "./model";
 import Big from "big.js";
-import {CurrencyPair, Fee} from "./types/v2100";
+import {CurrencyPair, Fee} from "./types/v2300";
 
 function createTransaction(
     ctx: EventHandlerContext,
@@ -59,8 +59,8 @@ interface PoolCreatedEvent {
 }
 
 function getPoolCreatedEvent(event: PabloPoolCreatedEvent): PoolCreatedEvent {
-    if (event.isV2100) {
-        const {owner, poolId, assets} = event.asV2100;
+    if (event.isV2300) {
+        const {owner, poolId, assets} = event.asV2300;
         return {owner, poolId, assets};
     } else {
         const {owner, poolId, assets} = event.asLatest;
@@ -138,8 +138,8 @@ interface LiquidityAddedEvent {
 }
 
 function getLiquidityAddedEvent(event: PabloLiquidityAddedEvent): LiquidityAddedEvent {
-    if (event.isV2100) {
-        const {who, poolId, baseAmount, quoteAmount, mintedLp} = event.asV2100;
+    if (event.isV2300) {
+        const {who, poolId, baseAmount, quoteAmount, mintedLp} = event.asV2300;
         return {who, poolId, baseAmount, quoteAmount, mintedLp};
     } else {
         const {who, poolId, baseAmount, quoteAmount, mintedLp} = event.asLatest;
@@ -219,8 +219,8 @@ interface LiquidityRemovedEvent {
 }
 
 function getLiquidityRemovedEvent(event: PabloLiquidityRemovedEvent): LiquidityRemovedEvent {
-    if (event.isV2100) {
-        const {who, poolId, baseAmount, quoteAmount, totalIssuance} = event.asV2100;
+    if (event.isV2300) {
+        const {who, poolId, baseAmount, quoteAmount, totalIssuance} = event.asV2300;
         return {who, poolId, baseAmount, quoteAmount, totalIssuance};
     } else {
         const {who, poolId, baseAmount, quoteAmount, totalIssuance} = event.asLatest;
@@ -302,8 +302,8 @@ interface SwappedEvent {
 }
 
 function getSwappedEvent(event: PabloSwappedEvent): SwappedEvent {
-    if (event.isV2100) {
-        const {poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee} = event.asV2100;
+    if (event.isV2300) {
+        const {poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee} = event.asV2300;
         return {poolId, who, baseAsset, quoteAsset, baseAmount, quoteAmount, fee};
     } else {
         const {poolId, who, baseAsset, quoteAsset,  baseAmount, quoteAmount, fee} = event.asLatest;
@@ -412,8 +412,8 @@ interface PoolDeletedEvent {
 }
 
 function getPoolDeletedEvent(event: PabloPoolDeletedEvent): PoolDeletedEvent {
-    if (event.isV2100) {
-        const {poolId, baseAmount, quoteAmount} = event.asV2100;
+    if (event.isV2300) {
+        const {poolId, baseAmount, quoteAmount} = event.asV2300;
         return {poolId, baseAmount, quoteAmount};
     } else {
         const {poolId, baseAmount, quoteAmount} = event.asLatest;
