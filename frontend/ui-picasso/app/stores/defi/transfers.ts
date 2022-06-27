@@ -1,8 +1,8 @@
 import { NamedSet } from "zustand/middleware";
-import { AppState, StoreSlice } from "../types";
+import { AllSlices, StoreSlice } from "../types";
 import BigNumber from "bignumber.js";
 
-import { TokenId, TOKEN_IDS } from "@/defi/Tokens";
+import { TOKEN_IDS, TokenId } from "@/defi/Tokens";
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 
@@ -98,22 +98,22 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (
     ...initialState,
 
     updateNetworks: (data: Omit<Networks, "options">) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.transfers.networks = { ...state.transfers.networks, ...data };
       });
     },
     updateAmount: (data: Omit<Amount, "balance" | "options">) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.transfers.amount = { ...state.transfers.amount, ...data };
       });
     },
     updateRecipient: (data: string) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.transfers.recipients.selected = data;
       });
     },
     flipKeepAlive: () => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.transfers.keepAlive = !state.transfers.keepAlive;
       });
     },

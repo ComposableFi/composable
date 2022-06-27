@@ -1,34 +1,25 @@
 import BigNumber from "bignumber.js";
 import { currencyIdToAssetMap } from "@/stores/defi/polkadot/bonds/constants";
-import { createSlice } from "@reduxjs/toolkit";
+import { NamedSet } from "zustand/middleware";
+import { StoreSlice } from "@/stores/types";
 
 type OraclePrice = {
   price: BigNumber;
   block: BigNumber;
 };
 
-type OracleState = {
-  prices: Record<keyof typeof currencyIdToAssetMap, OraclePrice>;
+type Price = Record<keyof typeof currencyIdToAssetMap, OraclePrice>;
+export type OracleSlice = {
+  oracle: {
+    prices: Price;
+  };
 };
 
-const initialState: OracleState = {
-  prices: getInitialPrices(),
-};
-
-const oracleSlice = createSlice({
-  name: "Oracle",
-  initialState,
-  reducers: {
-    updatePrice: (state, action) => {
-      state.prices = {
-        ...state.prices,
-        ...action.payload,
-      };
-    },
+const initialState: OracleSlice = {
+  oracle: {
+    prices: getInitialPrices(),
   },
-});
-
-export const { updatePrice } = oracleSlice.actions;
+};
 
 function getInitialPrices(): Record<string, OraclePrice> {
   return Object.fromEntries(
@@ -44,4 +35,16 @@ function getInitialPrices(): Record<string, OraclePrice> {
   );
 }
 
-export default oracleSlice.reducer;
+export const createOracleSlice: StoreSlice<OracleSlice> = (
+  set: NamedSet<OracleSlice>
+) => ({
+  ...initialState,
+  updatePrice: (prices: Price) =>
+    set((state) => ({
+      ...state,
+      oracle: {
+        ...state.oracle,
+        prices,
+      },
+    })),
+});

@@ -12,20 +12,17 @@ import {
   TabPanel,
   Tabs,
 } from "@/components";
-import { useAppSelector } from "@/hooks/store";
 import Image from "next/image";
 import { CrowdloanRewardsFeaturedBox } from "@/components/Organisms/CrowdloanRewards/CrowdloanRewardsFeaturedBox";
 import { useContext, useState } from "react";
 import { MyStakingsTable } from "@/components/Molecules/MyStakingsTable";
 import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
+import { useStore } from "@/stores/root";
 
 const Overview: NextPage = () => {
   const { extensionStatus } = useContext(ParachainContext);
-  const assets = useAppSelector((state) =>
-    Object.values(state.substrateBalances)
-  );
-  const myStakings = useAppSelector((state) => state.polkadot.myStakingAssets);
-  const myBondings: any = [];
+  const assets = useStore((state) => Object.values(state.substrateBalances));
+  const myStakings = useStore((state) => state.polkadot.myStakingAssets);
   const tabs: TabItem[] = [
     { label: "My assets" },
     { label: "My stakings", disabled: false },

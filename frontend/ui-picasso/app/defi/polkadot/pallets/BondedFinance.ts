@@ -241,7 +241,7 @@ export async function purchaseBond({
             setOpen(false);
             setOpen2nd(false);
           },
-          (txHash: string, events) => {
+          (txHash: string) => {
             enqueueSnackbar("Bond transaction successful", {
               variant: "success",
               isClosable: true,

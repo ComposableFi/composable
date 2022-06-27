@@ -1,6 +1,6 @@
 import { NamedSet } from "zustand/middleware";
 
-import { AppState, StoreSlice } from "../types";
+import { AllSlices, StoreSlice } from "../types";
 
 interface UIState {
   isMetamaskModalOpen: boolean;
@@ -47,57 +47,57 @@ export const createUISlice: StoreSlice<UISlice> = (set: NamedSet<UISlice>) => ({
     ...initialState,
 
     openMetamaskModal: () => {
-      set(function fetchClaimTotals(state: AppState) {
+      set(function fetchClaimTotals(state: AllSlices) {
         state.ui.isMetamaskModalOpen = true;
       });
     },
     closeMetamaskModal: () => {
-      set(function fetchClaimTotals(state: AppState) {
+      set(function fetchClaimTotals(state: AllSlices) {
         state.ui.isMetamaskModalOpen = false;
       });
     },
     openPolkadotModal: () => {
-      set(function fetchClaimTotals(state: AppState) {
+      set(function fetchClaimTotals(state: AllSlices) {
         state.ui.isPolkadotModalOpen = true;
       });
     },
     closePolkadotModal: () => {
-      set(function fetchClaimTotals(state: AppState) {
+      set(function fetchClaimTotals(state: AllSlices) {
         state.ui.isPolkadotModalOpen = false;
       });
     },
     openKSMClaimModal: () => {
-      set(function fetchClaimTotals(state: AppState) {
+      set(function fetchClaimTotals(state: AllSlices) {
         state.ui.isClaimingKSM = true;
       });
     },
     closeKSMClaimModal: () => {
-      set(function fetchClaimTotals(state: AppState) {
+      set(function fetchClaimTotals(state: AllSlices) {
         state.ui.isClaimingKSM = false;
       });
     },
     openStablecoinClaimModal: () => {
-      set(function fetchClaimTotals(state: AppState) {
+      set(function fetchClaimTotals(state: AllSlices) {
         state.ui.isConfirmingStablecoin = true;
       });
     },
     closeStablecoinClaimModal: () => {
-      set(function fetchClaimTotals(state: AppState) {
+      set(function fetchClaimTotals(state: AllSlices) {
         state.ui.isConfirmingStablecoin = false;
       });
     },
     setHasTriedEagerConnect: () => {
-      set(function fetchClaimTotals(state: AppState) {
+      set(function fetchClaimTotals(state: AllSlices) {
         state.ui.hasTriedEagerConnect = true;
       });
     },
     setIsClaimedKSM: (isClaimedKSM) => {
-      set(function fetchClaimTotals(state: AppState) {
+      set(function fetchClaimTotals(state: AllSlices) {
         state.ui.isClaimedKSM = isClaimedKSM;
       });
     },
     setIsClaimedStablecoin: (isClaimedStablecoin) => {
-      set(function fetchClaimTotals(state: AppState) {
+      set(function fetchClaimTotals(state: AllSlices) {
         state.ui.isClaimedStablecoin = isClaimedStablecoin;
       });
     },

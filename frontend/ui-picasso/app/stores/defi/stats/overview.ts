@@ -1,5 +1,5 @@
 import { NamedSet } from "zustand/middleware";
-import { AppState, StoreSlice } from "../../types";
+import { AllSlices, StoreSlice } from "../../types";
 import StatsDummyData from "./dummyData";
 
 const CHART_INTERVAL = ["1h", "24h", "1w", "1m", "1y"];
@@ -80,43 +80,43 @@ export const createStatsOverviewSlice: StoreSlice<StatsOverviewSlice> = (
   statsOverview: {
     ...initialState,
     setTVL: (data: OverviewData["data"][0]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsOverview.overviewData.data[0] = data;
       });
     },
     setAccountHolders: (data: OverviewData["data"][1]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsOverview.overviewData.data[1] = data;
       });
     },
     setTotalTx: (data: OverviewData["data"][2]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsOverview.overviewData.data[2] = data;
       });
     },
     setRewardDistribution: (data: OverviewData["data"][3]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsOverview.overviewData.data[3] = data;
       });
     },
     setTotalFees: (data: OverviewData["data"][4]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsOverview.overviewData.data[4] = data;
       });
     },
     setEarnedStakingTvl: (data: OverviewData["data"][5]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsOverview.overviewData.data[5] = data;
       });
     },
     setTvlInterval: (data: number) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsOverview.overviewChartData.data[0].data.pickedInterval =
           data;
       });
     },
     setDailyActiveUsersInterval: (data: number) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsOverview.overviewChartData.data[1].data.pickedInterval =
           data;
       });

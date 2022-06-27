@@ -27,3 +27,9 @@ export type { SubstrateBalancesSlice } from "./polkadot/balances/slice";
 
 export { createCrowdloanRewardsSlice } from "./polkadot/crowdloanRewards/slice";
 export type { CrowdloanRewardsSlice } from "./polkadot/crowdloanRewards/slice";
+
+export { createBondsSlice } from "./polkadot/bonds/slice";
+export type { BondsSlice } from "./polkadot/bonds/slice";
+
+export { createOracleSlice } from "./polkadot/oracle/slice";
+export type { OracleSlice } from "./polkadot/oracle/slice";

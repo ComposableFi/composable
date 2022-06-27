@@ -7,7 +7,6 @@ import {
   MyBondingsTable,
   PageTitle,
 } from "@/components";
-import { useAppSelector } from "@/hooks/store";
 import { ConnectToStakeCover } from "@/components/Molecules/ConnectToStakeCover";
 import { AllBondsTable } from "@/components/Molecules/AllBondsTable";
 import { useContext } from "react";
@@ -15,6 +14,7 @@ import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { Updater } from "@/stores/defi/polkadot/bonds/PolkadotBondsUpdater";
 import { useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useOpenPositions } from "@/defi/polkadot/hooks/useOpenPositions";
+import { useStore } from "@/stores/root";
 
 const standardPageSize = {
   xs: 12,
@@ -23,10 +23,13 @@ const standardPageSize = {
 const Bonds: NextPage = () => {
   const theme = useTheme();
   const { extensionStatus } = useContext(ParachainContext);
-  const bonds = useAppSelector((state) => state.bonding.bonds);
+  const bonds = useStore((state) => state.bonds.bonds);
   const account = useSelectedAccount();
   useOpenPositions(account);
-  const openPositions = useAppSelector((state) => state.bonding.openPositions);
+  const openPositions = useStore((state) => {
+    console.log(state.bonds);
+    return state.bonds.openPositions;
+  });
   const router = useRouter();
 
   const handleActiveBondsClick = (offerId: string) => {

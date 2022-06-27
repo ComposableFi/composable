@@ -1,9 +1,10 @@
 import { NamedSet } from "zustand/middleware";
-import { AppState, StoreSlice } from "../types";
+import { AllSlices, StoreSlice } from "../types";
 
 export type Account = {
   address: string;
 };
+
 interface MetamaskState {
   connected: boolean;
   connecting: boolean;
@@ -37,22 +38,22 @@ export const createMetamaskSlice: StoreSlice<MetamaskSlice> = (
   metamask: {
     ...initialState,
     connectMetamaskWallet: () => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.metamask.connected = true;
       });
     },
     waitOnMetamaskWallet: () => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.metamask.connecting = true;
       });
     },
     disconnectMetamaskWallet: () => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.metamask.connected = false;
       });
     },
     setAvailableToClaim: (availableToClaim: number) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.metamask.availableToClaim = availableToClaim;
       });
     },

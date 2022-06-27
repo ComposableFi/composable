@@ -1,9 +1,11 @@
-import create, { GetState, State } from "zustand";
-import { devtools, NamedSet } from "zustand/middleware";
+import create from "zustand";
+import { devtools } from "zustand/middleware";
 import { createUISlice } from "./ui/ui";
 import {
+  createBondsSlice,
   createCrowdloanRewardsSlice,
   createMetamaskSlice,
+  createOracleSlice,
   createPolkadotSlice,
   createStakingSlice,
   createStatsApolloSlice,
@@ -15,26 +17,24 @@ import {
 } from "./defi";
 
 import immer from "./middlewares/immer";
-import { AppState, CustomStateCreator } from "./types";
+import { AllSlices } from "./types";
 
-export const createStore = <TState extends State>(
-  storeCreator: CustomStateCreator<TState>
-) => {
-  return create(devtools(immer(storeCreator)));
-};
-
-export const useStore = createStore<AppState>(
-  (set: NamedSet<any>, get: GetState<any>) => ({
-    ...createUISlice(set, get),
-    ...createTransfersSlice(set, get),
-    ...createPolkadotSlice(set, get),
-    ...createMetamaskSlice(set, get),
-    ...createStakingSlice(set, get),
-    ...createStatsApolloSlice(set, get),
-    ...createStatsOverviewSlice(set, get),
-    ...createStatsTelemetrySlice(set, get),
-    ...createStatsTreasurySlice(set, get),
-    ...createSubstrateBalancesSlice(set, get),
-    ...createCrowdloanRewardsSlice(set, get),
-  })
+export const useStore = create<AllSlices>()(
+  devtools(
+    immer((set, get) => ({
+      ...createUISlice(set, get),
+      ...createTransfersSlice(set, get),
+      ...createPolkadotSlice(set, get),
+      ...createMetamaskSlice(set, get),
+      ...createStakingSlice(set, get),
+      ...createStatsApolloSlice(set, get),
+      ...createStatsOverviewSlice(set, get),
+      ...createStatsTelemetrySlice(set, get),
+      ...createStatsTreasurySlice(set, get),
+      ...createSubstrateBalancesSlice(set, get),
+      ...createCrowdloanRewardsSlice(set, get),
+      ...createBondsSlice(set, get),
+      ...createOracleSlice(set, get),
+    }))
+  )
 );

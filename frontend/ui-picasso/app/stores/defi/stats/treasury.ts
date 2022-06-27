@@ -1,5 +1,5 @@
 import { NamedSet } from "zustand/middleware";
-import { AppState, StoreSlice } from "../../types";
+import { AllSlices, StoreSlice } from "../../types";
 import StatsDummyData from "./dummyData";
 
 export type TreasuryDataProps = {
@@ -74,82 +74,82 @@ export const createStatsTreasurySlice: StoreSlice<StatsTreasurySlice> = (
   statsTreasury: {
     ...initialState,
     setFeaturedMarketCap: (data: TreasuryData["data"][0]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsTreasury.treasuryData.data[0] = data;
       });
     },
     setFeaturedChaosPriceAndDiscount: (data: TreasuryData["data"][1]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsTreasury.treasuryData.data[1] = data;
       });
     },
     setFeaturedCirculatingSupply: (data: TreasuryData["data"][2]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsTreasury.treasuryData.data[2] = data;
       });
     },
     setFeaturedTreasuryBalance: (data: TreasuryData["data"][3]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsTreasury.treasuryData.data[3] = data;
       });
     },
     setFeaturedChaosApyAndRunway: (data: TreasuryData["data"][4]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsTreasury.treasuryData.data[4] = data;
       });
     },
     setFeaturedSchaos: (data: TreasuryData["data"][5]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsTreasury.treasuryData.data[5] = data;
       });
     },
     setChartMarketCap: (data: TreasuryChartData["data"][0]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsTreasury.treasuryChartData.data[0] = data;
       });
     },
     setChartTreasuryAssetValue: (data: TreasuryChartData["data"][1]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsTreasury.treasuryChartData.data[1] = data;
       });
     },
     setChaosStaked: (data: TreasuryChartData["data"][2]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsTreasury.treasuryChartData.data[2] = data;
       });
     },
     setTreasuryProportions: (data: TreasuryChartData["data"][3]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsTreasury.treasuryChartData.data[3] = data;
       });
     },
     setChartChaosApy: (data: TreasuryChartData["data"][4]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsTreasury.treasuryChartData.data[4] = data;
       });
     },
     setChartRevenue: (data: TreasuryChartData["data"][5]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsTreasury.treasuryChartData.data[5] = data;
       });
     },
     setChartBondProcess: (data: TreasuryChartData["data"][6]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsTreasury.treasuryChartData.data[6] = data;
       });
     },
     setChartTotalLiquidityOwned: (data: TreasuryChartData["data"][7]) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsTreasury.treasuryChartData.data[7] = data;
       });
     },
     setTreasuryData: (data: TreasuryData) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsTreasury.treasuryData = data;
       });
     },
     setTreasuryChartData: (data: TreasuryChartData) => {
-      set((state: AppState) => {
+      set((state: AllSlices) => {
         state.statsTreasury.treasuryChartData = data;
       });
     },

@@ -1,6 +1,6 @@
 import { Token, TOKENS } from "@/defi/Tokens";
 import { NamedSet } from "zustand/middleware";
-import { AppState, StoreSlice } from "../types";
+import { StoreSlice } from "../types";
 
 // TODO: [defi] edit values accordingly to your needs
 export type Account = {

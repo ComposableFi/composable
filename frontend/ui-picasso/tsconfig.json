@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -23,11 +27,22 @@
       "@ui-picasso/*": [
         "../*"
       ],
-      "@polkadot/api/augment": ["defi/polkadot/interfaces/augment-api.ts"],
-      "@polkadot/types/augment": ["defi/polkadot/interfaces/augment-types.ts"]
-    },
+      "@polkadot/api/augment": [
+        "defi/polkadot/interfaces/augment-api.ts"
+      ],
+      "@polkadot/types/augment": [
+        "defi/polkadot/interfaces/augment-types.ts"
+      ]
+    }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".storybook/mui-decorator.tsx"],
-  "exclude": ["node_modules"],
-
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".storybook/mui-decorator.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "app/defi/polkadot/interfaces"
+  ]
 }

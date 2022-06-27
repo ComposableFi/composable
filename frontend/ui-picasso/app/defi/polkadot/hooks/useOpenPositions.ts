@@ -1,10 +1,9 @@
-import { useAppDispatch, useAppSelector } from "@/hooks/store";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { useEffect } from "react";
 import { usePicassoProvider } from "@/defi/polkadot/hooks/index";
 import { ApiPromise } from "@polkadot/api";
-import { updateOpenPositions } from "@/stores/defi/polkadot/bonds/slice";
 import { unwrapNumberOrHex } from "@/utils/hexStrings";
+import { useStore } from "@/stores/root";
 
 type VestingAccount = { name: string; address: string };
 
@@ -16,7 +15,8 @@ const bondedVestingSchedule =
         bond.reward.assetId
       );
 
-      return vestingScheduleResponse
+      console.log(vestingScheduleResponse);
+      return !vestingScheduleResponse.isEmpty
         ? vestingScheduleResponse.flatMap((vs) => {
             const jsonVestingSchedule: any = vs?.toJSON() ?? null;
             if (jsonVestingSchedule) {
@@ -51,9 +51,11 @@ const bondedVestingSchedule =
   };
 
 export function useOpenPositions(account: VestingAccount | undefined) {
-  const bonds = useAppSelector<BondOffer[]>((state) => state.bonding.bonds);
+  const bonds = useStore<BondOffer[]>((state) => state.bonds.bonds);
+  const updateOpenPositions = useStore(
+    (state) => state.bonds.updateOpenPositions
+  );
   const { parachainApi } = usePicassoProvider();
-  const dispatch = useAppDispatch();
 
   // traverse to all bonds
   // get all reward assets
@@ -69,7 +71,7 @@ export function useOpenPositions(account: VestingAccount | undefined) {
 
   async function fetchAndStore(factoryFn: () => Promise<unknown>) {
     const result: any = await factoryFn();
-    dispatch(updateOpenPositions(result.filter(Boolean).flat()));
+    updateOpenPositions(result.filter(Boolean).flat());
   }
 
   useEffect(() => {

@@ -1,11 +1,11 @@
 import {
+  AlertBox,
   DefaultLayout,
   KSMClaimForm,
   Link,
   NoEligibleWalletFeaturedBox,
   PageTitle,
   SS8WalletHelper,
-  AlertBox,
   StablecoinClaimForm,
 } from "@/components";
 import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
@@ -25,9 +25,10 @@ import { updateBalances } from "@/stores/defi/polkadot/balances/PolkadotBalances
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { OpenInNewRounded } from "@mui/icons-material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import { usePendingExtrinsic, useExecutor } from "substrate-react";
+import { useExecutor, usePendingExtrinsic } from "substrate-react";
 import { useSnackbar } from "notistack";
 import BigNumber from "bignumber.js";
+
 const DEFAULT_EVM_ID = 1;
 const PICA_CHAIN_ID = "kusama-2019";
 const APP_NAME = "Picasso UI";
@@ -437,11 +438,11 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
           <Grid item {...standardPageSize} mt={theme.spacing(9)}>
             {isStable ? (
               <StablecoinClaimForm
-                disabled={
+                disabled={Boolean(
                   (userAssociation !== null && claimablePICA.lte(0)) ||
-                  isPendingClaim ||
-                  isPendingAssociate
-                }
+                    isPendingClaim ||
+                    isPendingAssociate
+                )}
                 claimedPICA={claimedPICA}
                 crowdLoanContribution={contributedAmount}
                 readonlyCrowdLoanContribution={true}
@@ -458,11 +459,11 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
               />
             ) : (
               <KSMClaimForm
-                disabled={
+                disabled={Boolean(
                   (userAssociation !== null && claimablePICA.lte(0)) ||
-                  isPendingClaim ||
-                  isPendingAssociate
-                }
+                    isPendingClaim ||
+                    isPendingAssociate
+                )}
                 claimedPICA={claimedPICA}
                 crowdLoanContribution={contributedAmount}
                 readonlyCrowdLoanContribution={true}
