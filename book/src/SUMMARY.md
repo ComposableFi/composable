@@ -50,8 +50,6 @@
 - [The Picasso (PICA) Network Token](./governance-and-tokenomics/the-picasso-pica-network-token.md)
 - [LAYR Tokens](./governance-and-tokenomics/layr-tokens.md)
 
-# 🗺️  ROADMAP
-
 
 # 🌎 ECOSYSTEM
 - [Build on Composable: Ecosystem Development](./ecosystem/build-on-composable-ecosystem-development.md)
