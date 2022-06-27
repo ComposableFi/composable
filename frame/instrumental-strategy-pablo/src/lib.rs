@@ -291,11 +291,8 @@ pub mod pallet {
 		#[transactional]
 		fn set_pool_id_for_asset(asset_id: T::AssetId, pool_id: T::PoolId) -> DispatchResult {
 			match Pools::<T>::try_get(asset_id) {
-				Ok(pool_id_and_state) => {
-					ensure!(
-						pool_id_and_state.state == State::Normal,
-						Error::<T>::TransferringInProgress
-					);
+				Ok(pool) => {
+					ensure!(pool.state == State::Normal, Error::<T>::TransferringInProgress);
 					Pools::<T>::mutate(asset_id, |_| PoolState { pool_id, state: State::Normal });
 				},
 				Err(_) => Pools::<T>::insert(asset_id, PoolState { pool_id, state: State::Normal }),
