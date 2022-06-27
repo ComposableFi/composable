@@ -96,8 +96,8 @@ mod create_airdrop {
 			Balances::make_free_balance_be(&CREATOR, STAKE);
 
 			assert_ok!(Airdrop::create_airdrop(creator, start, vesting_schedule));
-			assert_eq!(Airdrop::airdrop_count(), 1);
-			assert_eq!(Balances::balance(&Airdrop::get_airdrop_account_id(1)), STAKE);
+			assert_eq!(1, Airdrop::airdrop_count());
+			assert_eq!(STAKE, Balances::balance(&Airdrop::get_airdrop_account_id(1)));
 		})
 	}
 
@@ -112,9 +112,9 @@ mod create_airdrop {
 			Balances::make_free_balance_be(&CREATOR, STAKE);
 
 			assert_ok!(Airdrop::create_airdrop(creator, start, vesting_schedule));
-			assert_eq!(Airdrop::airdrop_count(), 1);
-			assert_eq!(Balances::balance(&Airdrop::get_airdrop_account_id(1)), STAKE);
-			assert_eq!(Airdrop::airdrops(1).unwrap().start, start);
+			assert_eq!(1, Airdrop::airdrop_count());
+			assert_eq!(STAKE, Balances::balance(&Airdrop::get_airdrop_account_id(1)));
+			assert_eq!(start, Airdrop::airdrops(1).unwrap().start);
 		})
 	}
 
@@ -132,7 +132,7 @@ mod create_airdrop {
 				Airdrop::create_airdrop(creator, start, vesting_schedule),
 				Error::<MockRuntime>::BackToTheFuture
 			);
-			assert_eq!(Airdrop::airdrop_count(), 0);
+			assert_eq!(0, Airdrop::airdrop_count());
 		})
 	}
 }
@@ -231,14 +231,14 @@ mod add_recipient {
 	#[allow(clippy::disallowed_methods)] // Allow unwrap
 	fn should_add_recipients_successfully() {
 		with_default_recipients(|_, accounts| {
-			assert_eq!(Airdrop::total_airdrop_recipients(1), DEFAULT_NB_OF_CONTRIBUTORS as u32);
+			assert_eq!(DEFAULT_NB_OF_CONTRIBUTORS as u32, Airdrop::total_airdrop_recipients(1));
 
 			for (_, remote_account) in accounts {
 				let recipient_fund =
 					Airdrop::recipient_funds(1, remote_account.as_remote_public()).unwrap();
 
-				assert_eq!(recipient_fund.total, DEFAULT_REWARD);
-				assert_eq!(recipient_fund.funded_claim, DEFAULT_FUNDED_CLAIM);
+				assert_eq!(DEFAULT_REWARD, recipient_fund.total);
+				assert_eq!(DEFAULT_FUNDED_CLAIM, recipient_fund.funded_claim);
 			}
 		});
 	}
@@ -352,7 +352,7 @@ mod enable_airdrop {
 		with_default_recipients(|set_moment, _| {
 			set_moment(DEFAULT_VESTING_PERIOD * 2);
 
-			assert_eq!(Airdrop::get_airdrop_state(1).unwrap(), AirdropState::Enabled);
+			assert_eq!(AirdropState::Enabled, Airdrop::get_airdrop_state(1).unwrap());
 		})
 	}
 }
@@ -381,7 +381,7 @@ mod disable_airdrop {
 		with_default_recipients(|set_moment, _| {
 			set_moment(DEFAULT_VESTING_PERIOD * 2);
 
-			assert_eq!(Airdrop::get_airdrop_state(1).unwrap(), AirdropState::Enabled);
+			assert_eq!(AirdropState::Enabled, Airdrop::get_airdrop_state(1).unwrap());
 			assert_ok!(Airdrop::disable_airdrop(creator, 1));
 			assert!(Airdrop::airdrops(1).is_none());
 		})
@@ -399,7 +399,7 @@ mod claim {
 
 			for (local_account, remote_account) in accounts {
 				assert_ok!(remote_account.claim(1, local_account.clone()));
-				assert_eq!(Balances::balance(&local_account), DEFAULT_REWARD);
+				assert_eq!(DEFAULT_REWARD, Balances::balance(&local_account));
 			}
 		})
 	}
@@ -443,7 +443,7 @@ mod claim {
 
 				for (local_account, remote_account) in accounts {
 					prop_assert_ok!(remote_account.claim(1, local_account.clone()));
-					prop_assert_eq!(Balances::balance(&local_account), should_have_claimed );
+					prop_assert_eq!(should_have_claimed, Balances::balance(&local_account));
 				}
 				Ok(())
 			})?;
@@ -504,6 +504,6 @@ mod cosmos_recover {
 			&CosmosEcdsaSignature(sig),
 		);
 
-		assert_eq!(verified, Ok(CosmosPublicKey::Secp256r1(pub_key)));
+		assert_eq!(Ok(CosmosPublicKey::Secp256r1(pub_key)), verified);
 	}
 }
