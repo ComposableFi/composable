@@ -52,16 +52,15 @@ jobs:
       #   if: ${{ github.ref != 'refs/heads/main' }}
       #   run: make push-composable-sandbox-without-latest-tag
 
-      # - name: Prepare a test environment
-      #   run: |
-      #     cd integration-tests/runtime-tests
-      #     curl -L "https://github.com/docker/compose/releases/download/v2.6.0/docker-compose-$(uname -s)-$(uname -m)" -o ./docker-compose
-      #     chmod +x ./docker-compose
-      #     tag=$(git rev-parse --short=9 HEAD)
-
       - name: Prepare a test environment
         run: |
+          cd integration-tests/runtime-tests
+          curl -L "https://github.com/docker/compose/releases/download/v2.6.0/docker-compose-$(uname -s)-$(uname -m)" -o ./docker-compose
+          chmod +x ./docker-compose
+
+#          tag=$(git rev-parse --short=9 HEAD)
           tag="835c0e231"
+
           sed -ri "s/\\$\\{TAG\\}/$tag/" docker-compose-ci.yml
           echo "composablefi/composable-sandbox:$tag will be used"
           ./docker-compose -f docker-compose-ci.yml up -d
