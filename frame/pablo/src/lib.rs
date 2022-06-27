@@ -710,16 +710,12 @@ pub mod pallet {
 				let updated_twap = TWAPState::<T>::try_mutate(
 					pool_id,
 					|prev_twap_state| -> Result<Option<TWAPStateOf<T>>, DispatchError> {
-						let res = update_twap_state::<T>(
+						update_twap_state::<T>(
 							base_price_cumulative,
 							quote_price_cumulative,
 							prev_twap_state,
-						);
-						if res.is_ok() {
-							Ok(prev_twap_state.clone())
-						} else {
-							Ok(None)
-						}
+						)
+						.map_or_else(|_| Ok(None), |_| Ok(prev_twap_state.clone()))
 					},
 				)?;
 				if let Some(updated_twap) = updated_twap {
