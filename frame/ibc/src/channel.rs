@@ -19,7 +19,6 @@ use ibc::{
 	timestamp::Timestamp,
 	Height,
 };
-
 use tendermint_proto::Protobuf;
 
 impl<T: Config + Sync + Send> ChannelReader for Context<T>
@@ -215,12 +214,7 @@ where
 		client_id: &ClientId,
 		height: Height,
 	) -> Result<Timestamp, ICS04Error> {
-		let height = height.encode_vec().map_err(|e| {
-			ICS04Error::implementation_specific(format!(
-				"[client_update_time]: error encoding height: {}",
-				e
-			))
-		})?;
+		let height = height.encode_vec();
 		let client_id = client_id.as_bytes().to_vec();
 		let timestamp = ClientUpdateTime::<T>::get(&client_id, &height);
 
@@ -237,12 +231,7 @@ where
 		client_id: &ClientId,
 		height: Height,
 	) -> Result<Height, ICS04Error> {
-		let height = height.encode_vec().map_err(|e| {
-			ICS04Error::implementation_specific(format!(
-				"[client_update_height]: error encoding height: {}",
-				e
-			))
-		})?;
+		let height = height.encode_vec();
 		let client_id = client_id.as_bytes().to_vec();
 		let host_height = ClientUpdateHeight::<T>::get(&client_id, &height);
 
@@ -408,12 +397,7 @@ where
 		port_channel_id: (PortId, ChannelId),
 		channel_end: &ChannelEnd,
 	) -> Result<(), ICS04Error> {
-		let channel_end = channel_end.encode_vec().map_err(|e| {
-			ICS04Error::implementation_specific(format!(
-				"[store_channel]: error encoding channel end: {}",
-				e
-			))
-		})?;
+		let channel_end = channel_end.encode_vec();
 
 		// store channels key-value
 		<Channels<T>>::insert(

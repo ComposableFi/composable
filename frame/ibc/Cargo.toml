@@ -16,83 +16,90 @@ log = { version = "0.4.0", default-features = false }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",
 ] }
+serde_json = { version = "1.0.45", default-features = false }
 
 balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
 frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false, optional = true }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false, optional = true }
+simple-iavl = { git = "https://github.com/ComposableFi/simple-avl", rev = "a725ecd9386b017a3470bb0b5f1f821fbad3de9b", default-features = false, optional = true }
+prost = { version = "0.10", default-features = false, optional = true }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false, optional = true }
 parachain-info = { git = "https://github.com/paritytech/cumulus", default-features = false, branch = "polkadot-v0.9.22" }
-prost = { version = "0.10", default-features = false, optional = true }
-simple-iavl = { git = "https://github.com/ComposableFi/simple-avl", rev = "7f68d854e82b3e422565df7100dedd79e8ffa346", default-features = false, optional = true }
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
 sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
 sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
 sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
+xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.22" }
 
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "b3ab319018b1bb8917bca3aad977455aa2c9b179", default-features = false, features = ["ics11_beefy"] }
+ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "b3ab319018b1bb8917bca3aad977455aa2c9b179", default-features = false }
+tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8", default-features = false }
+tendermint = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8", optional = true, default-features = false }
 hex-literal = { version = "0.3.4", optional = true }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "c7c73ab423445f501ceae3d1d5d74815b502744a", default-features = false }
-ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "c7c73ab423445f501ceae3d1d5d74815b502744a", default-features = false }
-ics23 = { git = "https://github.com/composablefi/ics23", branch = "seun-v0.8.0-alpha", default-features = false, optional = true }
-tendermint = { git = "https://github.com/composableFi/tendermint-rs", branch = "seun-0.23.7", default-features = false, optional = true }
-tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", branch = "seun-0.23.7", default-features = false }
+ics23 = { git = "https://github.com/composablefi/ics23", rev = "86e970a4f22973946a0faf472b56951691d40874", default-features = false, optional = true }
 
 # local deps
 ibc-primitives = { path = "ibc-primitives", default-features = false }
-ibc-trait = { path = "ibc-trait", default-features = false }
 pallet-ibc-ping = { path = "../ibc-ping", default-features = false }
+transfer = { package = "ibc-transfer", path = "../ibc-transfer", default-features = false }
+ibc-trait = { path = "ibc-trait", default-features = false }
+composable-traits = { default-features = false, path = "../composable-traits" }
+assets = { package = "pallet-assets", path = "../assets", default-features = false }
+primitives = {path = "../../runtime/primitives", default-features = false }
 
-# To be removed in refactor here https://github.com/ComposableFi/composable/pull/1122
-ripemd = { version = "0.1.1", default-features = false }
 sha2 = { version = "0.10.2", default-features = false }
-sha3 = { version = "0.10.1", default-features = false }
 
 [dev-dependencies]
 chrono = "0.4.19"
-hex = '0.4.0'
-hex-literal = { version = "0.3.4" }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "c7c73ab423445f501ceae3d1d5d74815b502744a", features = [
-  "mocks",
-] }
-ics23 = { git = "https://github.com/composablefi/ics23", branch = "seun-v0.8.0-alpha" }
+serde = { version = "1.0" }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "b3ab319018b1bb8917bca3aad977455aa2c9b179", features = ["mocks"] }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 prost = { version = "0.10" }
-serde = { version = "1.0" }
-simple-iavl = { git = "https://github.com/ComposableFi/simple-avl", rev = "7f68d854e82b3e422565df7100dedd79e8ffa346" }
-sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
-tendermint = { git = "https://github.com/composableFi/tendermint-rs", branch = "seun-0.23.7" }
+tendermint = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }
+simple-iavl = { git = "https://github.com/ComposableFi/simple-avl", rev = "a725ecd9386b017a3470bb0b5f1f821fbad3de9b" }
+hex-literal = { version = "0.3.4" }
+governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b" }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b" }
+currency-factory = { package = "pallet-currency-factory", path = "../currency-factory" }
+assets-registry = { package = "pallet-assets-registry", path = "../assets-registry" }
 
 [features]
 default = ['std']
 std = [
-  'codec/std',
-  'log/std',
-  "scale-info/std",
-  "frame-benchmarking/std",
-  'frame-support/std',
-  'frame-system/std',
-  'sp-runtime/std',
-  'sp-core/std',
-  'sp-std/std',
-  'sp-io/std',
-  'ibc/std',
-  'ibc-proto/std',
-  'ibc-primitives/std',
-  'balances/std',
-  "pallet-ibc-ping/std",
-  "ibc-trait/std",
-  "parachain-info/std",
-  "sp-runtime-interface/std",
-  "sha3/std",
-  "sha2/std",
-  "ripemd/std",
+	'codec/std',
+	'log/std',
+	"scale-info/std",
+	"frame-benchmarking/std",
+	'frame-support/std',
+	'frame-system/std',
+	'sp-runtime/std',
+	'sp-core/std',
+	'sp-std/std',
+	'sp-io/std',
+	'ibc/std',
+	'ibc-proto/std',
+	'ibc-primitives/std',
+	'balances/std',
+	"pallet-ibc-ping/std",
+	"transfer/std",
+	"ibc-trait/std",
+	"parachain-info/std",
+	"sha2/std",
+	"xcm/std",
+	"assets/std",
+	"primitives/std",
+	"serde_json/std"
 ]
 
 runtime-benchmarks = [
   "frame-benchmarking",
   "frame-system/runtime-benchmarks",
+  "ibc-trait/runtime-benchmarks",
   "tendermint",
   "hex-literal",
   "pallet-timestamp",

@@ -22,7 +22,7 @@ composable-runtime = { path = "../runtime/composable", optional = true }
 dali-runtime = { path = "../runtime/dali", optional = true }
 ibc-rpc = { path = "../frame/ibc/ibc-rpc" }
 ibc-runtime-api = { path = "../frame/ibc/ibc-runtime-api" }
-pallet-ibc = { path = "../frame/ibc" }
+ibc-primitives = { path = "../frame/ibc/ibc-primitives" }
 picasso-runtime = { path = "../runtime/picasso" }
 primitives = { path = "../runtime/primitives" }
 

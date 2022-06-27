@@ -139,7 +139,7 @@ pub enum IbcEvent {
 	Empty,
 	/// Chain Error
 	ChainError,
-	/// Module event
+	/// App module
 	AppModule,
 }
 

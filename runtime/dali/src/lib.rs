@@ -127,7 +127,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
 	spec_version: 2300,
-	impl_version: 2,
+	impl_version: 3,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 	state_version: 0,
@@ -1084,6 +1084,61 @@ parameter_types! {
 	pub const ExpectedBlockTime: u64 = SLOT_DURATION;
 }
 
+#[derive(Clone)]
+pub struct IbcAccount(AccountId);
+
+impl sp_runtime::traits::IdentifyAccount for IbcAccount {
+	type AccountId = AccountId;
+	fn into_account(self) -> Self::AccountId {
+		self.0
+	}
+}
+
+impl TryFrom<pallet_ibc::Signer> for IbcAccount
+where
+	AccountId: From<[u8; 32]>,
+{
+	type Error = &'static str;
+
+	/// Convert a signer to an IBC account.
+	/// Only valid hex strings are supported for now.
+	fn try_from(signer: pallet_ibc::Signer) -> Result<Self, Self::Error> {
+		let acc_str = signer.as_ref();
+		if acc_str.starts_with("0x") {
+			match acc_str.strip_prefix("0x") {
+				Some(hex_string) => TryInto::<[u8; 32]>::try_into(
+					hex::decode(hex_string).map_err(|_| "Error decoding invalid hex string")?,
+				)
+				.map_err(|_| "Invalid account id hex string")
+				.map(|acc| Self(acc.into())),
+				_ => Err("Signer does not hold a valid hex string"),
+			}
+		}
+		// Do SS58 decoding instead
+		else {
+			let bytes = ibc_primitives::runtime_interface::ibc::ss58_to_account_id_32(acc_str)
+				.map_err(|_| "Invalid SS58 address")?;
+			Ok(Self(bytes.into()))
+		}
+	}
+}
+
+parameter_types! {
+	pub TransferPalletID: PalletId = PalletId(*b"transfer");
+}
+
+impl ibc_transfer::Config for Runtime {
+	type Event = Event;
+	type MultiCurrency = Assets;
+	type IbcHandler = Ibc;
+	type AccountIdConversion = IbcAccount;
+	type AssetRegistry = AssetsRegistry;
+	type CurrencyFactory = CurrencyFactory;
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type PalletId = TransferPalletID;
+	type WeightInfo = crate::weights::ibc_transfer::WeightInfo<Self>;
+}
+
 impl pallet_ibc::Config for Runtime {
 	type TimeProvider = Timestamp;
 	type Event = Event;
@@ -1167,7 +1222,8 @@ construct_runtime!(
 
 		// IBC Support, pallet-ibc should be the last in the list of pallets that use the ibc protocol
 		IbcPing: pallet_ibc_ping::{Pallet, Call, Storage, Event<t>} = 101,
-		Ibc: pallet_ibc::{Pallet, Call, Storage, Event<T>} = 102
+		Transfer: ibc_transfer::{Pallet, Call, Storage, Event<t>} = 102,
+		Ibc: pallet_ibc::{Pallet, Call, Storage, Event<T>} = 103
 	}
 );
 
@@ -1241,6 +1297,7 @@ mod benches {
 		[pablo, Pablo]
 		[dex_router, DexRouter]
 		[pallet_ibc, Ibc]
+		[ibc_transfer, Transfer]
 	);
 }
 

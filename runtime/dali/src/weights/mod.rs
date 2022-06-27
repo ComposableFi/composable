@@ -17,6 +17,7 @@ pub mod multisig;
 pub mod oracle;
 // pub mod scheduler;
 pub mod dex_router;
+pub mod ibc_transfer;
 pub mod lending;
 pub mod liquidations;
 pub mod pablo;

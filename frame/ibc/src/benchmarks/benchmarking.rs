@@ -84,7 +84,7 @@ benchmarks! {
 		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
 		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
 
-		let value = create_client_update().encode_vec().unwrap();
+		let value = create_client_update().encode_vec();
 
 		let msg = Any { type_url: UPDATE_CLIENT_TYPE_URL.to_string().as_bytes().to_vec(), value };
 		let caller: T::AccountId = whitelisted_caller();
@@ -117,7 +117,7 @@ benchmarks! {
 			version: None,
 			delay_period,
 			signer: Signer::from_str(MODULE_ID).unwrap()
-		}.encode_vec().unwrap();
+		}.encode_vec();
 
 		let msg = Any { type_url: conn_open_init::TYPE_URL.as_bytes().to_vec(), value };
 		let caller: T::AccountId = whitelisted_caller();
@@ -156,7 +156,7 @@ benchmarks! {
 
 		// We update the light client state so it can have the required client and consensus states required to process
 		// the proofs that will be submitted
-		let value = create_client_update().encode_vec().unwrap();
+		let value = create_client_update().encode_vec();
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
 
@@ -164,7 +164,7 @@ benchmarks! {
 		// Update consensus state with the new root that we'll enable proofs to be correctly verified
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
 		let caller: T::AccountId = whitelisted_caller();
-		let msg = Any { type_url: CONN_TRY_OPEN_TYPE_URL.as_bytes().to_vec(), value: value.encode_vec().unwrap() };
+		let msg = Any { type_url: CONN_TRY_OPEN_TYPE_URL.as_bytes().to_vec(), value: value.encode_vec() };
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
 	verify {
 		let connection_end = ConnectionReader::connection_end(&ctx, &ConnectionId::new(0)).unwrap();
@@ -196,14 +196,14 @@ benchmarks! {
 		ctx.store_connection(connection_id.clone(), &connection_end).unwrap();
 		ctx.store_connection_to_client(connection_id, &client_id).unwrap();
 
-		let value = create_client_update().encode_vec().unwrap();
+		let value = create_client_update().encode_vec();
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
 
 		let (cs_state, value) = create_conn_open_ack::<T>();
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
 		let caller: T::AccountId = whitelisted_caller();
-		let msg = Any { type_url: CONN_OPEN_ACK_TYPE_URL.as_bytes().to_vec(), value: value.encode_vec().unwrap() };
+		let msg = Any { type_url: CONN_OPEN_ACK_TYPE_URL.as_bytes().to_vec(), value: value.encode_vec() };
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
 	verify {
 		let connection_end = ConnectionReader::connection_end(&ctx, &ConnectionId::new(0)).unwrap();
@@ -238,7 +238,7 @@ benchmarks! {
 
 		// We update the light client state so it can have the required client and consensus states required to process
 		// the proofs that will be submitted
-		let value = create_client_update().encode_vec().unwrap();
+		let value = create_client_update().encode_vec();
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
 
@@ -246,7 +246,7 @@ benchmarks! {
 		// Update consensus state with the new root that we'll enable proofs to be correctly verified
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
 		let caller: T::AccountId = whitelisted_caller();
-		let msg = Any { type_url: CONN_OPEN_CONFIRM_TYPE_URL.as_bytes().to_vec(), value: value.encode_vec().unwrap() };
+		let msg = Any { type_url: CONN_OPEN_CONFIRM_TYPE_URL.as_bytes().to_vec(), value: value.encode_vec() };
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
 	verify {
 		let connection_end = ConnectionReader::connection_end(&ctx, &ConnectionId::new(0)).unwrap();
@@ -288,7 +288,7 @@ benchmarks! {
 			port_id: port_id.clone(),
 			channel: channel_end,
 			signer: Signer::from_str(MODULE_ID).unwrap()
-		}.encode_vec().unwrap();
+		}.encode_vec();
 
 		let caller: T::AccountId = whitelisted_caller();
 		let msg = Any { type_url: CHAN_OPEN_TYPE_URL.as_bytes().to_vec(), value };
@@ -321,7 +321,7 @@ benchmarks! {
 		ctx.store_connection_to_client(connection_id, &client_id).unwrap();
 		// We update the light client state so it can have the required client and consensus states required to process
 		// the proofs that will be submitted
-		let value = create_client_update().encode_vec().unwrap();
+		let value = create_client_update().encode_vec();
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
 		ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg).unwrap();
@@ -342,7 +342,7 @@ benchmarks! {
 			port_id,
 			channel: channel_end,
 			signer: Signer::from_str(MODULE_ID).unwrap()
-		}.encode_vec().unwrap();
+		}.encode_vec();
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: CHAN_OPEN_TYPE_URL.to_string(), value };
 
@@ -353,7 +353,7 @@ benchmarks! {
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
 		let msg = Any {
 			type_url: CHAN_OPEN_TRY_TYPE_URL.as_bytes().to_vec(),
-			value: value.encode_vec().unwrap()
+			value: value.encode_vec()
 		};
 		let caller: T::AccountId = whitelisted_caller();
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
@@ -384,7 +384,7 @@ benchmarks! {
 
 		ctx.store_connection(connection_id.clone(), &connection_end).unwrap();
 		ctx.store_connection_to_client(connection_id, &client_id).unwrap();
-		let value = create_client_update().encode_vec().unwrap();
+		let value = create_client_update().encode_vec();
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
@@ -405,7 +405,7 @@ benchmarks! {
 			port_id,
 			channel: channel_end,
 			signer: Signer::from_str(MODULE_ID).unwrap()
-		}.encode_vec().unwrap();
+		}.encode_vec();
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: CHAN_OPEN_TYPE_URL.to_string(), value };
 
@@ -415,7 +415,7 @@ benchmarks! {
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
 		let msg = Any {
 			type_url: CHAN_OPEN_ACK_TYPE_URL.as_bytes().to_vec(),
-			value: value.encode_vec().unwrap()
+			value: value.encode_vec()
 		};
 		let caller: T::AccountId = whitelisted_caller();
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
@@ -446,7 +446,7 @@ benchmarks! {
 
 		ctx.store_connection(connection_id.clone(), &connection_end).unwrap();
 		ctx.store_connection_to_client(connection_id, &client_id).unwrap();
-		let value = create_client_update().encode_vec().unwrap();
+		let value = create_client_update().encode_vec();
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
@@ -470,7 +470,7 @@ benchmarks! {
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
 		let msg = Any {
 			type_url: CHAN_OPEN_CONFIRM_TYPE_URL.as_bytes().to_vec(),
-			value: value.encode_vec().unwrap()
+			value: value.encode_vec()
 		};
 		let caller: T::AccountId = whitelisted_caller();
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
@@ -501,7 +501,7 @@ benchmarks! {
 
 		ctx.store_connection(connection_id.clone(), &connection_end).unwrap();
 		ctx.store_connection_to_client(connection_id, &client_id).unwrap();
-		let value = create_client_update().encode_vec().unwrap();
+		let value = create_client_update().encode_vec();
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
@@ -524,7 +524,7 @@ benchmarks! {
 		let value = create_chan_close_init();
 		let msg = Any {
 			type_url: CHAN_CLOSE_INIT_TYPE_URL.as_bytes().to_vec(),
-			value: value.encode_vec().unwrap()
+			value: value.encode_vec()
 		};
 		let caller: T::AccountId = whitelisted_caller();
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
@@ -555,7 +555,7 @@ benchmarks! {
 
 		ctx.store_connection(connection_id.clone(), &connection_end).unwrap();
 		ctx.store_connection_to_client(connection_id, &client_id).unwrap();
-		let value = create_client_update().encode_vec().unwrap();
+		let value = create_client_update().encode_vec();
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
@@ -579,7 +579,7 @@ benchmarks! {
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
 		let msg = Any {
 			type_url: CHAN_CLOSE_CONFIRM_TYPE_URL.as_bytes().to_vec(),
-			value: value.encode_vec().unwrap()
+			value: value.encode_vec()
 		};
 		let caller: T::AccountId = whitelisted_caller();
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
@@ -614,7 +614,7 @@ benchmarks! {
 
 		ctx.store_connection(connection_id.clone(), &connection_end).unwrap();
 		ctx.store_connection_to_client(connection_id, &client_id).unwrap();
-		let value = create_client_update().encode_vec().unwrap();
+		let value = create_client_update().encode_vec();
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
@@ -637,7 +637,7 @@ benchmarks! {
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
 		let msg = Any {
 			type_url: RECV_PACKET_TYPE_URL.as_bytes().to_vec(),
-			value: value.encode_vec().unwrap()
+			value: value.encode_vec()
 		};
 		let caller: T::AccountId = whitelisted_caller();
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
@@ -676,7 +676,7 @@ benchmarks! {
 
 		ctx.store_connection(connection_id.clone(), &connection_end).unwrap();
 		ctx.store_connection_to_client(connection_id, &client_id).unwrap();
-		let value = create_client_update().encode_vec().unwrap();
+		let value = create_client_update().encode_vec();
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
@@ -700,7 +700,7 @@ benchmarks! {
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
 		let msg = Any {
 			type_url: ACK_PACKET_TYPE_URL.as_bytes().to_vec(),
-			value: value.encode_vec().unwrap()
+			value: value.encode_vec()
 		};
 		let caller: T::AccountId = whitelisted_caller();
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
@@ -736,7 +736,7 @@ benchmarks! {
 
 		ctx.store_connection(connection_id.clone(), &connection_end).unwrap();
 		ctx.store_connection_to_client(connection_id, &client_id).unwrap();
-		let value = create_client_update().encode_vec().unwrap();
+		let value = create_client_update().encode_vec();
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: UPDATE_CLIENT_TYPE_URL.to_string(), value };
 
@@ -761,7 +761,7 @@ benchmarks! {
 		ctx.store_consensus_state(client_id, Height::new(0, 2), AnyConsensusState::Tendermint(cs_state)).unwrap();
 		let msg = Any {
 			type_url: TIMEOUT_TYPE_URL.as_bytes().to_vec(),
-			value: value.encode_vec().unwrap()
+			value: value.encode_vec()
 		};
 		let caller: T::AccountId = whitelisted_caller();
 	}: deliver(RawOrigin::Signed(caller), vec![msg])
@@ -891,8 +891,7 @@ benchmarks! {
 			Signer::from_str(MODULE_ID).unwrap(),
 		)
 		.unwrap()
-		.encode_vec()
-		.unwrap();
+		.encode_vec();
 
 		let msg = Any { type_url: TYPE_URL.to_string().as_bytes().to_vec(), value: msg };
 	}: _(RawOrigin::Root, msg)
