@@ -284,14 +284,14 @@ pub mod pallet {
 		/// effect at the time `timestamp`.
 		pub closed: Option<Moment>,
 
-		/// The time weighted average price of
-		/// [`base`](composable_traits::vamm::AssetType::Base) asset w.r.t.
+		/// The time weighted average price of the
+		/// [`base`](composable_traits::vamm::AssetType::Base) asset w.r.t. the
 		/// [`quote`](composable_traits::vamm::AssetType::Quote) asset.
 		pub base_asset_twap: Decimal,
 
-		/// The time weighted average price of
+		/// The time weighted average price of the
 		/// [`quote`](composable_traits::vamm::AssetType::Quote) asset w.r.t.
-		/// [`base`](composable_traits::vamm::AssetType::Base) asset.
+		/// the [`base`](composable_traits::vamm::AssetType::Base) asset.
 		pub quote_asset_twap: Decimal,
 
 		/// The timestamp for the last update of both
@@ -299,7 +299,7 @@ pub mod pallet {
 		/// [`quote_asset_twap`](VammState::quote_asset_twap).
 		pub twap_timestamp: Moment,
 
-		/// The frequency with which the vamm must have it's funding rebalance.
+		/// The frequency with which the vamm must have its funding rebalanced.
 		/// (Used only for twap calculations.)
 		pub twap_period: Moment,
 	}
@@ -673,9 +673,10 @@ pub mod pallet {
 		///
 		/// # Overview
 		/// In order for the caller to update the time weighted average price of
-		/// the assets, it has to request it to the Vamm Pallet. The pallet will
-		/// perform the needed sanity checks and update the runtime storage with
-		/// the desired twap values, returning both it in case of success.
+		/// the assets, it has to send the request to the Vamm Pallet. The
+		/// pallet will perform the needed sanity checks and update the runtime
+		/// storage with the desired twap values, returning both in the case of
+		/// success.
 		///
 		/// This function can also compute the new twap value using an
 		/// Exponential Moving Average algorithm rather than blindly seting it
