@@ -7,7 +7,7 @@ use primitives::currency::CurrencyId;
 use sp_runtime::Perquintill;
 
 use crate::mock::{
-	account_id::ADMIN,
+	account_id::{ADMIN, ALICE},
 	helpers::create_layr_crowd_loan_pool,
 	runtime::{
 		Event, ExtBuilder, Instrumental, MockRuntime, Origin, PabloStrategy, System, VaultId,
@@ -89,4 +89,48 @@ fn rebalance_emits_event() {
 			vault_id,
 		}));
 	});
+}
+
+// -------------------------------------------------------------------------------------------------
+//                                             Set pool_id for asset
+// -------------------------------------------------------------------------------------------------
+
+#[test]
+fn test_caller_is_persmissoned() {
+	ExtBuilder::default().build().execute_with(|| {
+		System::set_block_number(1);
+
+		let asset_id = CurrencyId::LAYR;
+		// Create Pool (LAYR/CROWD_LOAN)
+		let pool_id = create_layr_crowd_loan_pool();
+
+		pallet::AdminAccountIds::<MockRuntime>::insert(ADMIN, AccessRights::Rebalance);
+		assert_noop!(
+			PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, pool_id),
+			Error::<MockRuntime>::NotEnoughAccessRights
+		);
+
+		pallet::AdminAccountIds::<MockRuntime>::insert(ADMIN, AccessRights::Full);
+		assert_ok!(PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, pool_id));
+
+		assert_noop!(
+			PabloStrategy::set_pool_id_for_asset(Origin::signed(ALICE), asset_id, pool_id),
+			Error::<MockRuntime>::NotAdminAccount
+		);
+	})
+}
+
+#[test]
+fn test_pool_id_must_be_valid() {
+	ExtBuilder::default().build().execute_with(|| {
+		System::set_block_number(1);
+
+		let asset_id = CurrencyId::LAYR;
+		// Create Pool (LAYR/CROWD_LOAN)
+		let not_valid_pool_id = 1;
+		pallet::AdminAccountIds::<MockRuntime>::insert(ADMIN, AccessRights::Full);
+		
+		assert_noop!(PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, not_valid_pool_id),
+		Error::<MockRuntime>::PoolIsNotValidated);
+	})
 }

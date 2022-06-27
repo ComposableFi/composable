@@ -222,6 +222,8 @@ pub mod pallet {
 		NotAdminAccount,
 		// Occurs when an admin account doesn't have enough access rights to initialize a function
 		NotEnoughAccessRights,
+		// Occurs when pool_id not contained in Pablo pools storage
+		PoolIsNotValidated,
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -252,8 +254,11 @@ pub mod pallet {
 				access_right == AccessRights::Full || access_right == AccessRights::SetPoolId,
 				Error::<T>::NotEnoughAccessRights
 			);
+			ensure!(T::Pablo::pool_exists(pool_id),
+			Error::<T>::PoolIsNotValidated	
+			);
 			<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
-			Self::deposit_event(Event::AssociatedPoolWithAsset { asset_id, pool_id });
+			Self::deposit_event(Event::AssociatedPoolWithAsset { asset_id, pool_id: pool_id });
 			Ok(().into())
 		}
 		/// Occur rebalance of liquidity of each vault.
