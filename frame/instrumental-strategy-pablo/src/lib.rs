@@ -202,6 +202,10 @@ pub mod pallet {
 		UnableToRebalanceVault { vault_id: T::VaultId },
 
 		AssociatedPoolWithAsset { asset_id: T::AssetId, pool_id: T::PoolId },
+
+		TransfferedFundsCorrespondedToVault { vault_id: T::VaultId, pool_id: T::PoolId },
+
+		UnableTransfferedFundsCorrespondedToVault { vault_id: T::VaultId, pool_id: T::PoolId },
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -297,11 +301,51 @@ pub mod pallet {
 						pool_id_and_state.state == State::Normal,
 						Error::<T>::TransferringInProgress
 					);
-					Pools::<T>::mutate(asset_id, |_| PoolState { pool_id, state: State::Normal });
+					Pools::<T>::mutate(asset_id, |_| PoolState {
+						pool_id,
+						state: State::Transferring,
+					});
+					Self::transferring_funds_from_old_pool_to_new(
+						asset_id,
+						pool_id_and_state.pool_id,
+						pool_id,
+					)?;
 				},
 				Err(_) => Pools::<T>::insert(asset_id, PoolState { pool_id, state: State::Normal }),
 			}
 			Ok(())
+		}
+
+		#[transactional]
+		fn transferring_funds_from_old_pool_to_new(
+			asset_id: T::AssetId,
+			old_pool_id: T::PoolId,
+			new_pool_id: T::PoolId,
+		) -> DispatchResult {
+			AssociatedVaults::<T>::try_mutate(|vaults| {
+				vaults.iter().for_each(|vault_id| {
+					if asset_id == T::Vault::asset_id(vault_id).unwrap() {
+						if Self::do_transferring_funds_from_old_pool_to_new(vault_id, old_pool_id)
+							.is_ok()
+						{
+							Self::deposit_event(Event::TransfferedFundsCorrespondedToVault {
+								vault_id: *vault_id,
+								pool_id: new_pool_id,
+							});
+						} else {
+							Self::deposit_event(Event::UnableTransfferedFundsCorrespondedToVault {
+								vault_id: *vault_id,
+								pool_id: new_pool_id,
+							});
+						}
+					}
+				});
+				Pools::<T>::mutate(asset_id, |_| PoolState {
+					pool_id: new_pool_id,
+					state: State::Normal,
+				});
+				Ok(())
+			})
 		}
 
 		#[transactional]
@@ -416,6 +460,17 @@ pub mod pallet {
 				T::Balance::zero(),
 				T::Balance::zero(),
 			)
+		}
+
+		#[transactional]
+		fn do_transferring_funds_from_old_pool_to_new(
+			vault_id: &T::VaultId,
+			old_pool_id: T::PoolId,
+		) -> DispatchResult {
+			let vault_account = T::Vault::account_id(vault_id);
+			Self::liquidate(vault_account, old_pool_id)?;
+			Self::do_rebalance(vault_id)?;
+			Ok(())
 		}
 	}
 }

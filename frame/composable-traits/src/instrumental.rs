@@ -84,4 +84,10 @@ pub trait InstrumentalProtocolStrategy {
 		asset_id: Self::AssetId,
 		pool_id: Self::PoolId,
 	) -> Result<(), DispatchError>;
+
+	fn transferring_funds_from_old_pool_to_new(
+		asset_id: Self::AssetId,
+		old_pool_id: Self::PoolId,
+		new_pool_id: Self::PoolId,
+	) -> DispatchResult;
 }

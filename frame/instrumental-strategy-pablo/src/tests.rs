@@ -77,7 +77,7 @@ fn rebalance_emits_event() {
 		// Create Pool (LAYR/CROWD_LOAN)
 		let pool_id = create_layr_crowd_loan_pool();
 
-		pallet::AdminAccountIds::<MockRuntime>::insert(ADMIN, AccessRights::Full);
+		set_admin_account_with_full_access().ok();
 		assert_ok!(PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, pool_id));
 
 		assert_ok!(PabloStrategy::associate_vault(&vault_id));
@@ -109,7 +109,7 @@ fn test_caller_is_persmissoned() {
 			Error::<MockRuntime>::NotEnoughAccessRights
 		);
 
-		set_admin_account_with_full_access();
+		set_admin_account_with_full_access().ok();
 		assert_ok!(PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, pool_id));
 
 		assert_noop!(
@@ -127,7 +127,7 @@ fn test_pool_id_must_be_valid() {
 		let asset_id = CurrencyId::LAYR;
 		// Create Pool (LAYR/CROWD_LOAN)
 		let not_valid_pool_id = 1;
-		set_admin_account_with_full_access();
+		set_admin_account_with_full_access().ok();
 
 		assert_noop!(
 			PabloStrategy::set_pool_id_for_asset(
@@ -148,7 +148,7 @@ fn test_setting_pool_id_for_the_first_time_succeeds() {
 		let asset_id = CurrencyId::LAYR;
 		// Create Pool (LAYR/CROWD_LOAN)
 		let pool_id = create_layr_crowd_loan_pool();
-		set_admin_account_with_full_access();
+		set_admin_account_with_full_access().ok();
 		assert_ok!(PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, pool_id));
 		PabloStrategy::pools(asset_id);
 		assert_eq!(
@@ -159,5 +159,12 @@ fn test_setting_pool_id_for_the_first_time_succeeds() {
 			asset_id,
 			pool_id,
 		}));
+	})
+}
+
+#[test]
+fn test_setting_pool_id_for_the_second_time_initiates_transfer() {
+	ExtBuilder::default().build().execute_with(|| {
+		todo!();
 	})
 }

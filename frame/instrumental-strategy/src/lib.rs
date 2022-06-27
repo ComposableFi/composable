@@ -238,6 +238,17 @@ pub mod pallet {
 		}
 
 		#[transactional]
+		fn transferring_funds_from_old_pool_to_new(
+			asset_id: T::AssetId,
+			old_pool_id: T::PoolId,
+			new_pool_id: T::PoolId,
+		) -> DispatchResult {
+			// TODO: (belousm)
+			// The same functionality like in `instrumental-strategy-pablo`
+			Ok(())
+		}
+
+		#[transactional]
 		fn associate_vault(vault_id: &Self::VaultId) -> DispatchResult {
 			// TODO: (Nevin)
 			//  - cycle through all whitelisted strategies and associate the vault with the strategy
