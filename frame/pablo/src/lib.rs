@@ -1000,6 +1000,7 @@ pub mod pallet {
 							min_quote_amount,
 						)?;
 					Self::update_twap(pool_id)?;
+					Pools::<T>::remove(pool_id);
 					Self::deposit_event(Event::PoolDeleted { pool_id, base_amount, quote_amount });
 				},
 			}
