@@ -99,6 +99,7 @@ pub type RewardConfigs<AssetId, Balance, Limit> =
 /// initial configuration parameters.
 /// TODO refer to the relevant section in the design doc.
 #[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
+#[non_exhaustive]
 pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs, DurationPresets> {
 	/// A pool with an adjustable reward rate to be used as incentive.
 	RewardRateBasedIncentive {
