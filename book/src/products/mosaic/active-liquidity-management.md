@@ -8,7 +8,7 @@
 
 **Passive liquidity** involves providing liquidity in the Mosaic Vaults. Capital is provided up-front, before any particular transfers are identified that need this liquidity. 
 
-In contrast, **active liquidity** can be thought of as JIT liquidity, where a particular immediate need of liquidity is identified and then actively met by a liquidity provider .
+In contrast, **active liquidity** can be thought of as JIT liquidity, where a particular immediate need for liquidity is identified and then actively met by a liquidity provider.
 
 
 ### Active Liquidity
