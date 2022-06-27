@@ -203,9 +203,13 @@ pub mod pallet {
 
 		AssociatedPoolWithAsset { asset_id: T::AssetId, pool_id: T::PoolId },
 
+		OccuredFundsTransferring { old_pool_id: T::PoolId, new_pool_id: T::PoolId },
+
 		TransfferedFundsCorrespondedToVault { vault_id: T::VaultId, pool_id: T::PoolId },
 
-		UnableTransfferedFundsCorrespondedToVault { vault_id: T::VaultId, pool_id: T::PoolId },
+		UnableToTransfferFundsCorrespondedToVault { vault_id: T::VaultId, pool_id: T::PoolId },
+
+		Check { asset_id: T::AssetId },
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -305,6 +309,10 @@ pub mod pallet {
 						pool_id,
 						state: State::Transferring,
 					});
+					Self::deposit_event(Event::OccuredFundsTransferring {
+						old_pool_id: pool_id_and_state.pool_id,
+						new_pool_id: pool_id,
+					});
 					Self::transferring_funds_from_old_pool_to_new(
 						asset_id,
 						pool_id_and_state.pool_id,
@@ -333,7 +341,7 @@ pub mod pallet {
 								pool_id: new_pool_id,
 							});
 						} else {
-							Self::deposit_event(Event::UnableTransfferedFundsCorrespondedToVault {
+							Self::deposit_event(Event::UnableToTransfferFundsCorrespondedToVault {
 								vault_id: *vault_id,
 								pool_id: new_pool_id,
 							});

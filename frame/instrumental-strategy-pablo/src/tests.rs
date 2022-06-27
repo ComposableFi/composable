@@ -1,11 +1,3 @@
-use composable_traits::instrumental::{
-	AccessRights, Instrumental as InstrumentalTrait, InstrumentalProtocolStrategy,
-	InstrumentalVaultConfig, State,
-};
-use frame_support::{assert_noop, assert_ok};
-use primitives::currency::CurrencyId;
-use sp_runtime::Perquintill;
-
 use crate::mock::{
 	account_id::{ADMIN, ALICE},
 	helpers::{create_layr_crowd_loan_pool, set_admin_account_with_full_access},
@@ -16,6 +8,13 @@ use crate::mock::{
 };
 #[allow(unused_imports)]
 use crate::{pallet, pallet::Error};
+use composable_traits::instrumental::{
+	AccessRights, Instrumental as InstrumentalTrait, InstrumentalProtocolStrategy,
+	InstrumentalVaultConfig, State,
+};
+use frame_support::{assert_noop, assert_ok};
+use primitives::currency::CurrencyId;
+use sp_runtime::Perquintill;
 
 // -------------------------------------------------------------------------------------------------
 //                                          Associate Vault
@@ -150,7 +149,6 @@ fn test_setting_pool_id_for_the_first_time_succeeds() {
 		let pool_id = create_layr_crowd_loan_pool();
 		set_admin_account_with_full_access().ok();
 		assert_ok!(PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, pool_id));
-		PabloStrategy::pools(asset_id);
 		assert_eq!(
 			PabloStrategy::pools(asset_id).unwrap(),
 			pallet::PoolState { pool_id, state: State::Normal }
@@ -165,6 +163,52 @@ fn test_setting_pool_id_for_the_first_time_succeeds() {
 #[test]
 fn test_setting_pool_id_for_the_second_time_initiates_transfer() {
 	ExtBuilder::default().build().execute_with(|| {
-		todo!();
+		System::set_block_number(1);
+
+		let asset_id = CurrencyId::LAYR;
+		// Create Pool (LAYR/CROWD_LOAN)
+		let pool_id = create_layr_crowd_loan_pool();
+		set_admin_account_with_full_access().ok();
+		// Create Vault (LAYR)
+		let config = InstrumentalVaultConfig { asset_id, percent_deployable: Perquintill::zero() };
+		let vault_id = <Instrumental as InstrumentalTrait>::create(config);
+		assert_ok!(vault_id);
+		let vault_id = vault_id.unwrap() as VaultId;
+		// Add Vault to AssociatedVaults
+
+		// Set first pool_id corresponding to CurrencyId::LAYR
+		assert_ok!(PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, pool_id));
+		let new_pool_id = create_layr_crowd_loan_pool();
+		// Set new pool_id corresponding to CurrencyId::LAYR
+		assert_ok!(PabloStrategy::set_pool_id_for_asset(
+			Origin::signed(ADMIN),
+			asset_id,
+			new_pool_id
+		));
+		System::assert_last_event(Event::PabloStrategy(pallet::Event::AssociatedPoolWithAsset {
+			asset_id,
+			pool_id: new_pool_id,
+		}));
+		let mut occured_funds_transferring_flag = false;
+		// let mut transffered_funds_corresponded_to_vault_flag = false;
+		let system_events = frame_system::Pallet::<MockRuntime>::events();
+		system_events.iter().for_each(|event_record| {
+			if event_record.event ==
+				Event::PabloStrategy(pallet::Event::OccuredFundsTransferring {
+					old_pool_id: pool_id,
+					new_pool_id,
+				}) {
+				occured_funds_transferring_flag = true;
+			}
+			// if event_record.event ==
+			// 	Event::PabloStrategy(pallet::Event::TransfferedFundsCorrespondedToVault {
+			// 		vault_id,
+			// 		pool_id: new_pool_id,
+			// 	}) {
+			// 	transffered_funds_corresponded_to_vault_flag = true;
+			// }
+		});
+		assert!(occured_funds_transferring_flag);
+		// assert!(transffered_funds_corresponded_to_vault_flag);
 	})
 }

@@ -1,13 +1,12 @@
+use crate::mock::{
+	account_id::{AccountId, ADMIN, ALICE, BOB},
+	runtime::{Balance, BlockNumber, MockRuntime, Pablo, PoolId, Tokens},
+};
 use composable_traits::{defi::CurrencyPair, dex::Amm, instrumental::AccessRights};
 use frame_support::{assert_ok, traits::fungibles::Mutate};
 use pallet_pablo::PoolInitConfiguration;
 use primitives::currency::CurrencyId;
 use sp_runtime::Permill;
-
-use crate::mock::{
-	account_id::{AccountId, ADMIN, ALICE, BOB},
-	runtime::{Balance, BlockNumber, MockRuntime, Pablo, PoolId, Tokens},
-};
 
 use crate::pallet;
 

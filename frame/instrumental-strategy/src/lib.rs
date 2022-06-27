@@ -239,9 +239,9 @@ pub mod pallet {
 
 		#[transactional]
 		fn transferring_funds_from_old_pool_to_new(
-			asset_id: T::AssetId,
-			old_pool_id: T::PoolId,
-			new_pool_id: T::PoolId,
+			_asset_id: T::AssetId,
+			_old_pool_id: T::PoolId,
+			_new_pool_id: T::PoolId,
 		) -> DispatchResult {
 			// TODO: (belousm)
 			// The same functionality like in `instrumental-strategy-pablo`
