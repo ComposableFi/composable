@@ -12,6 +12,7 @@ import {
 import Default from "@/components/Templates/Default";
 import { PageTitle } from "@/components";
 import { AllAuctionsTable } from "@/components/Organisms/AllAuctionsTable";
+import { ConnectWalletFeaturedBox } from "@/components/Organisms/ConnectWalletFeaturedBox";
 import { useEffect, useState } from "react";
 import { useDotSamaContext, useParachainApi } from "substrate-react";
 import { fetchSpotPrice } from "@/updaters/swaps/utils";
@@ -26,6 +27,7 @@ const Auctions: NextPage = () => {
   const theme = useTheme();
   const [enabledCreate] = useState<boolean>(false);
   const { extensionStatus } = useDotSamaContext();
+  const connected = extensionStatus === "connected";
   const { parachainApi } = useParachainApi("picasso");
   const {
     pools: {
@@ -69,65 +71,67 @@ const Auctions: NextPage = () => {
               subtitle="Liquidity Bootstrapping Pools for Pablo"
             />
           </Box>
-          <Grid container mt={4}>
-            <Grid item {...standardPageSize}>
-              <Box
-                padding={4}
-                sx={{
-                  background: theme.palette.gradient.secondary,
-                  borderRadius: 1,
-                }}
-                border={`1px solid ${alpha(
-                  theme.palette.common.white,
-                  theme.custom.opacity.light
-                )}`}
-              >
+          {!connected ? <ConnectWalletFeaturedBox /> : (
+            <Grid container mt={4}>
+              <Grid item {...standardPageSize}>
                 <Box
-                  display="flex"
-                  mb={4}
-                  justifyContent="space-between"
-                  alignItems="center"
+                  padding={4}
+                  sx={{
+                    background: theme.palette.gradient.secondary,
+                    borderRadius: 1,
+                  }}
+                  border={`1px solid ${alpha(
+                    theme.palette.common.white,
+                    theme.custom.opacity.light
+                  )}`}
                 >
-                  <Typography variant="h6">All liquidity</Typography>
-                  <Box>
-                    <Tooltip
-                      title={
-                        extensionStatus !== "connected" ? "Comming soon" : ""
-                      }
-                      arrow
-                    >
-                      {enabledCreate ? (
-                        <Button
-                          onClick={() => {}}
-                          variant="contained"
-                          size="small"
-                          disabled
-                        >
-                          Create auction
-                        </Button>
-                      ) : (
-                        <Box
-                          sx={{
-                            padding: theme.spacing(1.5, 3),
-                            background: alpha(
-                              theme.palette.primary.main,
-                              theme.custom.opacity.main
-                            ),
-                            borderRadius: 9999,
-                          }}
-                        >
-                          <Typography variant="button" color="text.secondary">
+                  <Box
+                    display="flex"
+                    mb={4}
+                    justifyContent="space-between"
+                    alignItems="center"
+                  >
+                    <Typography variant="h6">All liquidity</Typography>
+                    <Box>
+                      <Tooltip
+                        title={
+                          extensionStatus !== "connected" ? "Comming soon" : ""
+                        }
+                        arrow
+                      >
+                        {enabledCreate ? (
+                          <Button
+                            onClick={() => { }}
+                            variant="contained"
+                            size="small"
+                            disabled
+                          >
                             Create auction
-                          </Typography>
-                        </Box>
-                      )}
-                    </Tooltip>
+                          </Button>
+                        ) : (
+                          <Box
+                            sx={{
+                              padding: theme.spacing(1.5, 3),
+                              background: alpha(
+                                theme.palette.primary.main,
+                                theme.custom.opacity.main
+                              ),
+                              borderRadius: 9999,
+                            }}
+                          >
+                            <Typography variant="button" color="text.secondary">
+                              Create auction
+                            </Typography>
+                          </Box>
+                        )}
+                      </Tooltip>
+                    </Box>
                   </Box>
+                  <AllAuctionsTable />
                 </Box>
-                <AllAuctionsTable />
-              </Box>
+              </Grid>
             </Grid>
-          </Grid>
+          )}
         </Box>
       </Container>
     </Default>

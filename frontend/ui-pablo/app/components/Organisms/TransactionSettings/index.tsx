@@ -135,6 +135,7 @@ export const TransactionSettings: React.FC<TransactionSettingsProps> = ({
                       label={`${value.toFixed(1)} %`}
                       sx={{
                         color: toleranceSelected(value) ? theme.palette.primary.main : undefined,
+                        "&:hover": { color: theme.palette.common.white },
                       }}
                     />
                   ))}

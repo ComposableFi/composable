@@ -59,6 +59,7 @@ const gridItem4ColumnProps = {
 const ChooseTokensStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
+  const placeholder = "Select a token";
 
   const {
     createPool
@@ -94,6 +95,18 @@ const ChooseTokensStep: React.FC<BoxProps> = ({ ...boxProps }) => {
       }));
   }, [baseAsset]);
 
+  const getAssetOptions = (assetList: any[]) => ([
+    ...[{
+      value: "none",
+      label: placeholder,
+      shortLabel: undefined,
+      icon: undefined,
+      disabled: true,
+      hidden: true
+    }],
+    ...assetList.map(asset => asset),
+  ]);
+
   const isUnverifiedPoolWarningOpen = useAppSelector(
     (state) => state.ui.isConfirmingModalOpen
   );
@@ -106,9 +119,9 @@ const ChooseTokensStep: React.FC<BoxProps> = ({ ...boxProps }) => {
 
   const _setSelectable =
     (item: "baseAsset" | "quoteAsset" | "ammId" | "swapFee") =>
-    (v: AssetId | LiquidityPoolType | BigNumber) => {
-      setSelectable({ [item]: v });
-  };
+      (v: AssetId | LiquidityPoolType | BigNumber) => {
+        setSelectable({ [item]: v });
+      };
 
   const [initialFunds] = useState<BigNumber>(new BigNumber(20000));
   const [currentFunds] = useState<BigNumber>(new BigNumber(340));
@@ -147,13 +160,21 @@ const ChooseTokensStep: React.FC<BoxProps> = ({ ...boxProps }) => {
     ammId === "balancer"
       ? gridItem8ColumnProps
       : {
-          item: true,
-          xs: 12,
-          pl: 0,
-        };
+        item: true,
+        xs: 12,
+        pl: 0,
+      };
 
   const onSettingHandler = () => {
     dispatch(openTransactionSettingsModal());
+  };
+
+  const SelectProps = {
+    sx: {
+      "& .MuiSelect-select": {
+        pl: 3,
+      },
+    },
   };
 
   return (
@@ -170,13 +191,7 @@ const ChooseTokensStep: React.FC<BoxProps> = ({ ...boxProps }) => {
           setValue={_setSelectable("ammId")}
           options={getAMMOptions("Select")}
           LabelProps={{ label: "AMM" }}
-          SelectProps={{
-            sx: {
-              "& .MuiSelect-select": {
-                pl: 3,
-              },
-            },
-          }}
+          SelectProps={SelectProps}
         />
       </Box>
 
@@ -186,8 +201,9 @@ const ChooseTokensStep: React.FC<BoxProps> = ({ ...boxProps }) => {
             <Select
               value={baseAsset}
               setValue={_setSelectable("baseAsset")}
-              options={baseAssetList}
+              options={getAssetOptions(baseAssetList)}
               {...selectProps("Token 1", !validAMM)}
+              SelectProps={SelectProps}
             />
           </Grid>
           {ammId === "balancer" ? (
@@ -209,8 +225,9 @@ const ChooseTokensStep: React.FC<BoxProps> = ({ ...boxProps }) => {
             <Select
               value={quoteAsset}
               setValue={_setSelectable("quoteAsset")}
-              options={quoteAssetList}
+              options={getAssetOptions(quoteAssetList)}
               {...selectProps("Token 2", !validAMM)}
+              SelectProps={SelectProps}
             />
           </Grid>
           {ammId === "balancer" ? (
@@ -232,7 +249,7 @@ const ChooseTokensStep: React.FC<BoxProps> = ({ ...boxProps }) => {
         <NotificationBox
           mt={4}
           type="warning"
-          icon={<InfoOutlinedIcon color="primary" fontSize="small" />}
+          icon={<InfoOutlinedIcon color="warning" fontSize="small" />}
           mainText={`It’s recommended to provide new pools with at least $${initialFunds.toFormat()} in initial funds`}
           subText={`Based on your wallet balances for these tokens, the maximum amount you can fund this pool with is ~$${currentFunds.toFormat(
             2

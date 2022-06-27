@@ -7,6 +7,8 @@ import {
   useTheme,
   BoxProps,
 } from "@mui/material";
+import { styled } from '@mui/material/styles';
+
 import { BaseAsset } from "@/components/Atoms";
 import { TOKENS } from "@/defi/Tokens";
 import { XPablo } from "@/defi/types";
@@ -36,10 +38,18 @@ const containerProps = (theme: Theme, selected?: boolean) => ({
 } as const);
 
 export type CheckableXPabloItemBoxProps = {
- xPablo: XPablo,
- selectedXPabloId?: number,
- setSelectedXPabloId?: (id?: number) => void,
+  xPablo: XPablo,
+  selectedXPabloId?: number,
+  setSelectedXPabloId?: (id?: number) => void,
 } & BoxProps;
+
+const CheckBoxIcon = styled('span')(() => ({
+  borderRadius: 3,
+  border: "1px solid #9f9da5",
+  width: 18,
+  height: 18,
+  margin: 3,
+}));
 
 export const CheckableXPabloItemBox: React.FC<CheckableXPabloItemBoxProps> = ({
   xPablo,
@@ -59,6 +69,7 @@ export const CheckableXPabloItemBox: React.FC<CheckableXPabloItemBoxProps> = ({
     <Box {...containerProps(theme, selected)} {...boxProps}>
       <Box {...defaultFlexBoxProps}>
         <Checkbox
+          icon={<CheckBoxIcon />}
           value={xPablo.id}
           checked={selected}
           onChange={handleChange}
