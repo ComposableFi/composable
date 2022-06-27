@@ -1,10 +1,8 @@
 use crate::{
-	test::{
-		prelude::H256,
-		runtime::*,
-	},
+	test::{prelude::H256, runtime::*},
 	Config,
 };
+use composable_tests_helpers::test::currency::{PICA, USDT};
 use composable_traits::{
 	staking::{
 		lock::LockConfig, RewardConfig, RewardPoolConfiguration,
@@ -17,7 +15,6 @@ use frame_system::EventRecord;
 use sp_arithmetic::Perbill;
 use sp_core::sr25519::Public;
 use sp_std::collections::btree_map::BTreeMap;
-use composable_tests_helpers::test::currency::{PICA, USDT};
 
 mod prelude;
 mod runtime;

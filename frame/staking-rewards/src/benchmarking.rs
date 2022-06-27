@@ -1,7 +1,5 @@
 //! Benchmarks
-use crate::{
-	*,
-};
+use crate::*;
 use composable_traits::{
 	staking::{
 		lock::LockConfig, RewardConfig, RewardPoolConfiguration,
@@ -13,7 +11,7 @@ use frame_benchmarking::{account, benchmarks};
 use frame_support::BoundedBTreeMap;
 use frame_system::RawOrigin;
 use sp_arithmetic::{traits::SaturatedConversion, Perbill};
-use std::collections::BTreeMap;
+use sp_std::collections::btree_map::BTreeMap;
 
 fn get_reward_pool<T: Config>(
 	owner: T::AccountId,

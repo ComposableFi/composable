@@ -33,11 +33,11 @@
 	unused_extern_crates
 )]
 
+#[cfg(any(feature = "runtime-benchmarks", test))]
+mod benchmarking;
 mod prelude;
 #[cfg(test)]
 mod test;
-#[cfg(any(feature = "runtime-benchmarks", test))]
-mod benchmarking;
 pub mod weights;
 
 pub use pallet::*;
@@ -65,8 +65,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use sp_arithmetic::{traits::One, Permill};
 	use sp_runtime::traits::BlockNumberProvider;
-	use sp_std::collections::btree_map::BTreeMap;
-	use std::fmt::Debug;
+	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug};
 
 	use crate::{prelude::*, weights::WeightInfo};
 
@@ -221,7 +220,7 @@ pub mod pallet {
 					);
 					let pool_id = RewardPoolCount::<T>::increment()?;
 					let mut rewards = BTreeMap::new();
-					for (i, reward_config) in initial_reward_config.into_iter().enumerate() {
+					for (_, reward_config) in initial_reward_config.into_iter().enumerate() {
 						rewards.insert(reward_config.0, Reward::from(reward_config.1));
 					}
 					RewardPools::<T>::insert(
