@@ -1,13 +1,15 @@
-use composable_traits::{defi::CurrencyPair, dex::Amm};
+use composable_traits::{defi::CurrencyPair, dex::Amm, instrumental::AccessRights};
 use frame_support::{assert_ok, traits::fungibles::Mutate};
 use pallet_pablo::PoolInitConfiguration;
 use primitives::currency::CurrencyId;
 use sp_runtime::Permill;
 
 use crate::mock::{
-	account_id::{AccountId, ALICE, BOB},
-	runtime::{Balance, BlockNumber, Pablo, PoolId, Tokens},
+	account_id::{AccountId, ADMIN, ALICE, BOB},
+	runtime::{Balance, BlockNumber, MockRuntime, Pablo, PoolId, Tokens},
 };
+
+use crate::pallet;
 
 // TODO(saruman9): will be used in the future
 #[allow(dead_code)]
@@ -64,4 +66,9 @@ fn create_pool(
 	));
 	assert_ok!(<Pablo as Amm>::add_liquidity(&BOB, pool_id, amounts[0], amounts[1], 0_u128, true));
 	pool_id
+}
+
+pub fn set_admin_account_with_full_access() -> Result<(), ()> {
+	pallet::AdminAccountIds::<MockRuntime>::insert(ADMIN, AccessRights::Full);
+	Ok(())
 }

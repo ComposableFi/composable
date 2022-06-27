@@ -1,6 +1,6 @@
 use composable_traits::instrumental::{
 	AccessRights, Instrumental as InstrumentalTrait, InstrumentalProtocolStrategy,
-	InstrumentalVaultConfig,
+	InstrumentalVaultConfig, State,
 };
 use frame_support::{assert_noop, assert_ok};
 use primitives::currency::CurrencyId;
@@ -8,7 +8,7 @@ use sp_runtime::Perquintill;
 
 use crate::mock::{
 	account_id::{ADMIN, ALICE},
-	helpers::create_layr_crowd_loan_pool,
+	helpers::{create_layr_crowd_loan_pool, set_admin_account_with_full_access},
 	runtime::{
 		Event, ExtBuilder, Instrumental, MockRuntime, Origin, PabloStrategy, System, VaultId,
 		MAX_ASSOCIATED_VAULTS,
@@ -109,7 +109,7 @@ fn test_caller_is_persmissoned() {
 			Error::<MockRuntime>::NotEnoughAccessRights
 		);
 
-		pallet::AdminAccountIds::<MockRuntime>::insert(ADMIN, AccessRights::Full);
+		set_admin_account_with_full_access();
 		assert_ok!(PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, pool_id));
 
 		assert_noop!(
@@ -127,7 +127,7 @@ fn test_pool_id_must_be_valid() {
 		let asset_id = CurrencyId::LAYR;
 		// Create Pool (LAYR/CROWD_LOAN)
 		let not_valid_pool_id = 1;
-		pallet::AdminAccountIds::<MockRuntime>::insert(ADMIN, AccessRights::Full);
+		set_admin_account_with_full_access();
 
 		assert_noop!(
 			PabloStrategy::set_pool_id_for_asset(
@@ -137,5 +137,27 @@ fn test_pool_id_must_be_valid() {
 			),
 			Error::<MockRuntime>::PoolIsNotValidated
 		);
+	})
+}
+
+#[test]
+fn test_setting_pool_id_for_the_first_time_succeeds() {
+	ExtBuilder::default().build().execute_with(|| {
+		System::set_block_number(1);
+
+		let asset_id = CurrencyId::LAYR;
+		// Create Pool (LAYR/CROWD_LOAN)
+		let pool_id = create_layr_crowd_loan_pool();
+		set_admin_account_with_full_access();
+		assert_ok!(PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, pool_id));
+		PabloStrategy::pools(asset_id);
+		assert_eq!(
+			PabloStrategy::pools(asset_id).unwrap(),
+			pallet::PoolState { pool_id, state: State::Normal }
+		);
+		System::assert_last_event(Event::PabloStrategy(pallet::Event::AssociatedPoolWithAsset {
+			asset_id,
+			pool_id,
+		}));
 	})
 }
