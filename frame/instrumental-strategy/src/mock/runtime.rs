@@ -269,6 +269,7 @@ impl pallet_instrumental_strategy::Config for MockRuntime {
 	type PabloStrategy = PabloStrategy;
 	type MaxAssociatedVaults = MaxAssociatedVaults;
 	type PalletId = InstrumentalStrategyPalletId;
+	type PoolId = PoolId;
 }
 
 // -------------------------------------------------------------------------------------------------

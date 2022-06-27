@@ -30,6 +30,7 @@ pub mod pallet {
 	//                                     Imports and Dependencies
 	// ---------------------------------------------------------------------------------------------
 
+	use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
 		instrumental::{InstrumentalDynamicStrategy, InstrumentalProtocolStrategy},
@@ -42,8 +43,6 @@ pub mod pallet {
 		AccountIdConversion, AtLeast32BitUnsigned, CheckedAdd, CheckedMul, CheckedSub, Zero,
 	};
 	use sp_std::fmt::Debug;
-
-	use crate::weights::WeightInfo;
 
 	// ---------------------------------------------------------------------------------------------
 	//                                  Declaration Of The Pallet Type
@@ -108,6 +107,17 @@ pub mod pallet {
 			AccountId = Self::AccountId,
 			VaultId = Self::VaultId,
 		>;
+
+		/// Type representing the unique ID of a pool.
+		type PoolId: FullCodec
+			+ MaxEncodedLen
+			+ Default
+			+ Debug
+			+ TypeInfo
+			+ Eq
+			+ PartialEq
+			+ Ord
+			+ Copy;
 
 		// TODO: (Nevin)
 		//  - try to make the connection to substrategies a vec of InstrumentalProtocolStrategy
@@ -221,6 +231,7 @@ pub mod pallet {
 		type AccountId = T::AccountId;
 		type AssetId = T::AssetId;
 		type VaultId = T::VaultId;
+		type PoolId = T::PoolId;
 
 		fn account_id() -> Self::AccountId {
 			T::PalletId::get().into_account()
@@ -255,6 +266,12 @@ pub mod pallet {
 		}
 
 		fn rebalance() -> DispatchResult {
+			Ok(())
+		}
+
+		fn set_pool_id_for_asset(_asset_id: T::AssetId, _pool_id: T::PoolId) -> DispatchResult {
+			// TODO: (belousm)
+			// The same functionality like in `instrumental-strategy-pablo`
 			Ok(())
 		}
 
