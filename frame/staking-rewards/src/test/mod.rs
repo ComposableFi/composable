@@ -38,7 +38,7 @@ fn test_create_reward_pool() {
 				Origin::root(),
 				get_reward_pool_config_invalid_end_block()
 			),
-			crate::Error::<Test>::InvalidEndBlock
+			crate::Error::<Test>::EndBlockMustBeInTheFuture
 		);
 	});
 }

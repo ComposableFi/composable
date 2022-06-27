@@ -88,7 +88,9 @@ pub mod pallet {
 		/// Error when creating reward configs.
 		RewardConfigProblem,
 		/// Invalid end block number provided for creating a pool.
-		InvalidEndBlock,
+		EndBlockMustBeInTheFuture,
+		/// Unimplemented reward pool type.
+		UnimplementedRewardPoolConfiguration,
 	}
 
 	#[pallet::config]
@@ -216,7 +218,7 @@ pub mod pallet {
 				} => {
 					ensure!(
 						end_block > frame_system::Pallet::<T>::current_block_number(),
-						Error::<T>::InvalidEndBlock
+						Error::<T>::EndBlockMustBeInTheFuture
 					);
 					let pool_id = RewardPoolCount::<T>::increment()?;
 					let mut rewards = BTreeMap::new();
@@ -241,6 +243,7 @@ pub mod pallet {
 					);
 					(owner, pool_id, end_block)
 				},
+				_ => Err(Error::<T>::UnimplementedRewardPoolConfiguration)?,
 			};
 			Self::deposit_event(Event::<T>::RewardPoolCreated { pool_id, owner, end_block });
 			Ok(())
