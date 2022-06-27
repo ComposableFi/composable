@@ -4,8 +4,9 @@ use crate::{
 	mock::{Event, ExtBuilder, MockRuntime, System, TestPallet},
 	pallet::{self, Error, VammMap, VammState},
 	tests::{
-		any_sane_asset_amount, loop_times, valid_twap_period, Balance, Decimal, Timestamp,
-		RUN_CASES,
+		helpers::any_sane_asset_amount,
+		helpers_propcompose::{loop_times, valid_twap_period},
+		Balance, Decimal, Timestamp, RUN_CASES,
 	},
 };
 use composable_traits::vamm::{AssetType, Vamm as VammTrait, VammConfig, MINIMUM_TWAP_PERIOD};

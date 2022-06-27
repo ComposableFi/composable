@@ -2,9 +2,12 @@ use crate::{
 	mock::{Balance, Event, ExtBuilder, MockRuntime, System, TestPallet},
 	pallet::{self, Error},
 	tests::{
-		any_sane_asset_amount, any_vamm_state, as_decimal, balance_range, create_vamm,
-		default_vamm_config, run_for_seconds, run_to_block, twap_update_delay, Decimal, Timestamp,
-		RUN_CASES,
+		helpers::{
+			any_sane_asset_amount, as_decimal, create_vamm, default_vamm_config, run_for_seconds,
+			run_to_block, twap_update_delay,
+		},
+		helpers_propcompose::{any_vamm_state, balance_range},
+		Decimal, Timestamp, RUN_CASES,
 	},
 	VammState,
 };

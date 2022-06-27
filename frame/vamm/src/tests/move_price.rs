@@ -1,7 +1,11 @@
 use crate::{
 	mock::{ExtBuilder, MockRuntime, System, TestPallet},
 	pallet::{Error, Event, VammMap},
-	tests::{any_move_price_config, any_vamm_state, run_for_seconds, Timestamp, RUN_CASES},
+	tests::{
+		helpers::run_for_seconds,
+		helpers_propcompose::{any_move_price_config, any_vamm_state},
+		Timestamp, RUN_CASES,
+	},
 };
 use composable_traits::vamm::Vamm as VammTrait;
 use frame_support::{assert_noop, assert_ok};
