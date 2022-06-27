@@ -91,12 +91,12 @@ vault = { package = "pallet-vault", path = "../../frame/vault", default-features
 vesting = { package = "pallet-vesting", path = "../../frame/vesting", default-features = false }
 
 # ibc support
+hex = { version = "0.4.0", default-features = false }
 ibc-primitives = { path = "../../frame/ibc/ibc-primitives", default-features = false }
 ibc-runtime-api = { path = "../../frame/ibc/ibc-runtime-api", default-features = false }
+ibc-transfer = { path = "../../frame/ibc-transfer", default-features = false }
 pallet-ibc = { path = "../../frame/ibc", default-features = false }
 pallet-ibc-ping = { path = "../../frame/ibc-ping", default-features = false }
-ibc-transfer = { path = "../../frame/ibc-transfer", default-features = false }
-hex = { version = "0.4.0", default-features = false }
 
 # Used for the node template's RPCs
 system-rpc-runtime-api = { package = "frame-system-rpc-runtime-api", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22" }
@@ -194,7 +194,7 @@ runtime-benchmarks = [
   "pallet-ibc/runtime-benchmarks",
   "pallet-proxy/runtime-benchmarks",
   "ibc-transfer/runtime-benchmarks",
-  "pallet-staking-rewards/runtime-benchmarks"
+  "pallet-staking-rewards/runtime-benchmarks",
 ]
 std = [
   "codec/std",
@@ -281,6 +281,6 @@ std = [
   "pallet-proxy/std",
   "ibc-transfer/std",
   "hex/std",
-  "pallet-staking-rewards/std"
+  "pallet-staking-rewards/std",
 ]
 wasm-builder = []

@@ -602,7 +602,17 @@ declare module "@polkadot/api-base/types/events" {
        **/
       TransferOut: AugmentedEvent<
         ApiType,
-        [H256, ComposableSupportEthereumAddress, u128, u32, CommonMosaicRemoteAssetId, u128]
+        [
+          H256,
+          ComposableSupportEthereumAddress,
+          u128,
+          u32,
+          CommonMosaicRemoteAssetId,
+          u128,
+          bool,
+          AccountId32,
+          Option<PalletMosaicAmmSwapInfo>
+        ]
       >;
       /**
        * Generic event
@@ -935,6 +945,12 @@ declare module "@polkadot/api-base/types/events" {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
+    stakingRewards: {
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     sudo: {
       /**
        * The \[sudoer\] just switched identity; the old key is supplied if one existed.
@@ -1041,6 +1057,21 @@ declare module "@polkadot/api-base/types/events" {
        * Some balances were withdrawn (e.g. pay for transaction fee)
        **/
       Withdrawn: AugmentedEvent<ApiType, [u128, AccountId32, u128]>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    transfer: {
+      /**
+       * A channel has been opened
+       **/
+      ChannelOpened: AugmentedEvent<ApiType, [Bytes, Bytes]>;
+      /**
+       * Pallet params updated
+       **/
+      PalletParamsUpdated: AugmentedEvent<ApiType, [bool, bool]>;
+      TokenTransferInitiated: AugmentedEvent<ApiType, [AccountId32, Bytes, u128]>;
       /**
        * Generic event
        **/
