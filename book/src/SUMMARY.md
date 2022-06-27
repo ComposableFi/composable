@@ -37,14 +37,6 @@
         - [Apollo: The Oracle Pallet](./products/the-picasso-parachain/the-picasso-tech-stack/apollo.md)
         - [Cubic: The Vaults Pallet](./products/the-picasso-parachain/the-picasso-tech-stack/cubic.md)
         - [Angular Finance: The Isolated Lending Pair Pallet](./products/the-picasso-parachain/the-picasso-tech-stack/angular.md)
-    - [The Picasso Crowdloan](./products/the-picasso-parachain/the-picasso-crowdloan.md)
-        - [Crowdloan How-To Guide for KSM](./products/the-picasso-parachain/the-picasso-crowdloan/crowdloan-how-to-ksm.md)
-        - [Crowdloan How-To Guide for Stablecoins](./products/the-picasso-parachain/the-picasso-crowdloan/crowdloan-how-to-stablecoins.md)
-        - [KSM Purchase Log](./products/the-picasso-parachain/the-picasso-crowdloan/ksm-purchase-log.md)
-- [Composable Overview](./products/composable-overview.md)
-    - [The Composable Crowdloan](./products/the-composable-parachain/the-composable-crowdloan.md)
-        - [Crowdloan How-To Guide for DOT](./products/the-composable-parachain/the-composable-crowdloan/crowdloan-how-to-guide-for-dot.md)
-        - [Crowdloan How-To Guide for Stablecoins](./products/the-composable-parachain/the-composable-crowdloan/crowdloan-how-to-guide-for-stablecoin.md)
         
 # 🪙  GOVERNANCE AND TOKENOMICS
 - [The Picasso (PICA) Network Token](./governance-and-tokenomics/the-picasso-pica-network-token.md)
