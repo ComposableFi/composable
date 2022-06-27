@@ -16,20 +16,19 @@ pub fn acceptable_computation_error(
 	precision: u128,
 	epsilon: u128,
 ) -> Result<(), FixedU128> {
-	let delta = i128::abs(x as i128 - y as i128);
-	if delta > 1 {
-		let lower =
-			FixedU128::saturating_from_rational(precision, precision.saturating_add(epsilon));
-		let upper =
-			FixedU128::saturating_from_rational(precision, precision.saturating_sub(epsilon));
-		let q = FixedU128::checked_from_rational(x, y).expect("values too big; qed;");
-		if lower <= q && q <= upper {
-			Ok(())
-		} else {
-			Err(q)
-		}
-	} else {
-		Ok(())
+	if i128::abs(x as i128 - y as i128) <= 1 {
+		return Ok(())
+	}
+	let lower = FixedU128::saturating_from_rational(precision, precision.saturating_add(epsilon));
+	let upper = FixedU128::saturating_from_rational(precision, precision.saturating_sub(epsilon));
+	match FixedU128::checked_from_rational(x, y) {
+		Some(q) =>
+			if lower <= q && q <= upper {
+				Ok(())
+			} else {
+				Err(q)
+			},
+		None => Err(FixedU128::default()),
 	}
 }
 
