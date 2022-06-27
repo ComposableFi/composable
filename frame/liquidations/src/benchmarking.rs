@@ -6,10 +6,10 @@ use composable_traits::{
 	time::{LinearDecrease, TimeReleaseFunction},
 };
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
-use frame_support::traits::{fungible::Inspect, fungibles::Mutate, Currency, Get};
+use frame_support::traits::{fungibles::Mutate, Currency, Get};
 use frame_system::RawOrigin;
 use sp_runtime::{
-	traits::{AccountIdConversion, Saturating},
+	traits::Saturating,
 	FixedPointNumber,
 };
 use sp_std::prelude::*;
@@ -43,6 +43,7 @@ benchmarks! {
 		}: _(origin, config)
 
    sell {
+		let x in 1..<T as Config>::MaxLiquidationStrategiesAmount::get() - 1;
 		let pair = assets::<T>();
 		let one: <T as DeFiComposableConfig>::Balance = 1u32.into();
 		let order = Sell::new(pair.base, pair.quote, one, Ratio::saturating_from_integer(one));
@@ -57,7 +58,7 @@ benchmarks! {
 		<<T as pallet_dutch_auction::Config>::NativeCurrency as Currency<T::AccountId>>::make_free_balance_be(&caller, native_token_amount);
 		orml_tokens::Pallet::<T>::mint_into(order.pair.base.into(), &caller, 1_000_000u32.into()).unwrap();
 		let begin = 1000;
-		let end = begin + <T as Config>::MaxLiquidationStrategiesAmount::get() - 1;
+		let end = begin + x;
 		let mut configurations:Vec<T::LiquidationStrategyId> = (begin..end).map(|x| x.into()).collect();
 		configurations.push(1.into());
 		   }: _(origin, order, configurations)

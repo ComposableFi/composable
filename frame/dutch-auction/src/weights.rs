@@ -13,13 +13,13 @@ pub trait WeightInfo {
 /// Weight functions for `dutch_auction`.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
-	// Storage: DutchAuction OrdersIndex (r:1 w:1)
+// Storage: DutchAuction OrdersIndex (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: DutchAuction SellOrders (r:0 w:1)
 	fn ask() -> Weight {
-		(19_571_000 as Weight)
+		(36_861_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
@@ -28,7 +28,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: DutchAuction Takes (r:1 w:1)
 	fn take() -> Weight {
-		(14_079_000 as Weight)
+		(21_573_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -36,7 +36,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn liquidate() -> Weight {
-		(18_310_000 as Weight)
+		(32_851_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(3 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -46,7 +46,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Tokens Accounts (r:2 w:2)
 	// Storage: DutchAuction LocalOrderIdToRemote (r:1 w:1)
 	fn known_overhead_for_on_finalize() -> Weight {
-		(24_104_000 as Weight)
+		(37_495_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(7 as Weight))
 			.saturating_add(T::DbWeight::get().writes(6 as Weight))
 	}

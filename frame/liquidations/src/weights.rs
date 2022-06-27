@@ -8,7 +8,7 @@ use sp_std::marker::PhantomData;
 
 pub trait WeightInfo {
 	fn add_liquidation_strategy() -> Weight;
-	fn sell() -> Weight;
+	fn sell(vector_length: u32) -> Weight;
 }
 
 /// Weight functions for `liquidations`.
@@ -17,19 +17,22 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Liquidations StrategyIndex (r:1 w:1)
 	// Storage: Liquidations Strategies (r:0 w:1)
 	fn add_liquidation_strategy() -> Weight {
-		(1_493_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1))
+		(3_127_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
-	// Storage: Liquidations Strategies (r:10 w:0)
+	// Storage: Liquidations Strategies (r:2 w:0)
 	// Storage: DutchAuction OrdersIndex (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: DutchAuction SellOrders (r:0 w:1)
-	fn sell() -> Weight {
-		(33_349_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(14 as Weight))
+	fn sell(x: u32, ) -> Weight {
+		(43_980_000 as Weight)
+			// Standard Error: 27_000
+			.saturating_add((1_758_000 as Weight).saturating_mul(x as Weight))
+			.saturating_add(T::DbWeight::get().reads(5 as Weight))
+			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(x as Weight)))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 }
