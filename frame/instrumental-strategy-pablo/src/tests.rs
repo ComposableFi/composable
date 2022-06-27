@@ -67,7 +67,6 @@ fn rebalance_emits_event() {
 	ExtBuilder::default().build().execute_with(|| {
 		System::set_block_number(1);
 
-
 		let asset_id = CurrencyId::LAYR;
 		// Create Vault (LAYR)
 		let config = InstrumentalVaultConfig { asset_id, percent_deployable: Perquintill::zero() };
@@ -129,8 +128,14 @@ fn test_pool_id_must_be_valid() {
 		// Create Pool (LAYR/CROWD_LOAN)
 		let not_valid_pool_id = 1;
 		pallet::AdminAccountIds::<MockRuntime>::insert(ADMIN, AccessRights::Full);
-		
-		assert_noop!(PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, not_valid_pool_id),
-		Error::<MockRuntime>::PoolIsNotValidated);
+
+		assert_noop!(
+			PabloStrategy::set_pool_id_for_asset(
+				Origin::signed(ADMIN),
+				asset_id,
+				not_valid_pool_id
+			),
+			Error::<MockRuntime>::PoolIsNotValidated
+		);
 	})
 }
