@@ -425,7 +425,7 @@ mod tests {
 			Fee {
 				fee: 3000 * UNIT,
 				lp_fee: 2400 * UNIT,
-				owner_fee: 0 * UNIT,
+				owner_fee: 0,
 				protocol_fee: 600 * UNIT,
 				asset_id: 1
 			}

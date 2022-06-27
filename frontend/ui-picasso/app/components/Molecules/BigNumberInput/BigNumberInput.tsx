@@ -32,7 +32,7 @@ export const BigNumberInput: FC<BigNumberInputProps> = ({
     });
 
   React.useEffect(() => {
-    isValid && isValid(!hasError);
+    isValid?.(!hasError);
   }, [hasError, isValid]);
 
   React.useEffect(() => {

@@ -7,8 +7,10 @@
 
 # 💿 PRODUCTS
 - [Technical Stack Overview](./products/technical-stack-overview.md)
-- [Cross-Chain Virtual Machine](./products/cross-chain-virtual-machine.md)
-    - [Innovation Availability Layer](./products/cross-chain-virtual-machine/innovation-availability-layer.md)
+- [Composable's Cross-Chain Virtual Machine](./products/cross-chain-virtual-machine.md)
+    - [Writing Smart Contracts with CosmWasm](./products/cross-chain-virtual-machine/writing-smart-contracts-with-cosmwasm.md)
+    - [How the XCVM works](./products/cross-chain-virtual-machine/how-the-xcvm-works.md)
+    - [Routing Layer Libraries](./products/cross-chain-virtual-machine/routing-layer-libraries.md)
 - [Routing Layer](./products/routing-layer.md)
 - [Mosaic](./products/mosaic.md)
     - [Fragmentation in DeFi's Layer 2](./products/mosaic/fragmentation-in-layer-2.md)
@@ -71,6 +73,7 @@
 
 # 🌎 ECOSYSTEM
 - [Build on Composable: Ecosystem Development](./ecosystem/build-on-composable-ecosystem-development.md)
+  - [Composable Grants](./ecosystem/build-on-composable-ecosystem-development/composable-grants.md)
 - [Business Line Development](./ecosystem/business-line-development.md)
 - [Press Kit](./ecosystem/press-kit.md)
 - [The Composable Team](./ecosystem/the-composable-team.md)

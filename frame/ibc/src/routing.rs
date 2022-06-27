@@ -1,9 +1,6 @@
 use super::*;
 use core::borrow::Borrow;
-use ibc::{
-	applications::ics20_fungible_token_transfer::context::Ics20Context,
-	core::ics26_routing::context::{Ics26Context, LightClientContext, Module, ModuleId, Router},
-};
+use ibc::core::ics26_routing::context::{Ics26Context, Module, ModuleId, ReaderContext, Router};
 use scale_info::prelude::string::ToString;
 
 #[derive(Clone)]
@@ -66,12 +63,7 @@ where
 	}
 }
 
-impl<T: Config + Send + Sync> Ics20Context for Context<T> where
-	u32: From<<T as frame_system::Config>::BlockNumber>
-{
-}
-
-impl<T: Config + Send + Sync> LightClientContext for Context<T> where
+impl<T: Config + Send + Sync> ReaderContext for Context<T> where
 	u32: From<<T as frame_system::Config>::BlockNumber>
 {
 }

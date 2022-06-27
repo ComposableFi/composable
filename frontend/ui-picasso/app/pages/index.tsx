@@ -1,20 +1,19 @@
 import type { NextPage } from "next";
 import Default from "@/components/Templates/Default";
-import { DEFI_CONFIG } from "@/defi/polkadot/config";
-import { useTheme, Grid, Typography, Box } from "@mui/material";
+import { Box, Grid, Typography, useTheme } from "@mui/material";
 import {
+  Chart,
+  ConnectWalletFeaturedBox,
+  FeaturedBox,
+  Link,
   MyAssetsTable,
   PageTitle,
-  Tabs,
   TabItem,
   TabPanel,
-  Link,
-  Chart,
-  MyBondingsTable,
+  Tabs,
 } from "@/components";
-import { useStore } from "@/stores/root";
+import { useAppSelector } from "@/hooks/store";
 import Image from "next/image";
-import { FeaturedBox, ConnectWalletFeaturedBox } from "@/components";
 import { CrowdloanRewardsFeaturedBox } from "@/components/Organisms/CrowdloanRewards/CrowdloanRewardsFeaturedBox";
 import { useContext, useState } from "react";
 import { MyStakingsTable } from "@/components/Molecules/MyStakingsTable";
@@ -22,15 +21,11 @@ import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 
 const Overview: NextPage = () => {
   const { extensionStatus } = useContext(ParachainContext);
-
-  const assets = useStore(({ substrateBalances }) =>
-    DEFI_CONFIG.networkIds.map((networkId) => substrateBalances[networkId])
+  const assets = useAppSelector((state) =>
+    Object.values(state.substrateBalances)
   );
-
-  const { myStakingAssets, myBondingAssets } = useStore(
-    ({ polkadot }) => polkadot
-  );
-
+  const myStakings = useAppSelector((state) => state.polkadot.myStakingAssets);
+  const myBondings: any = [];
   const tabs: TabItem[] = [
     { label: "My assets" },
     { label: "My stakings", disabled: false },
@@ -122,7 +117,7 @@ const Overview: NextPage = () => {
                   alt="Pablo logo"
                 />
               </Box>
-              <MyStakingsTable assets={myStakingAssets.pablo} />
+              <MyStakingsTable assets={myStakings.pablo} />
             </TabPanel>
 
             {/* My Bondings Tab Pannels */}
@@ -130,7 +125,7 @@ const Overview: NextPage = () => {
               <Box px={2}>
                 <PageTitle title="Picasso" textAlign="left" fontSize={40} />
               </Box>
-              <MyBondingsTable assets={myBondingAssets.picasso} />
+              {/*<MyBondingsTable assets={[]} />*/}
             </TabPanel>
             <TabPanel value={tabValue} index={2}>
               <Box marginBottom={4} padding={2}>
@@ -141,7 +136,7 @@ const Overview: NextPage = () => {
                   alt="Pablo logo"
                 />
               </Box>
-              <MyBondingsTable assets={myBondingAssets.pablo} />
+              {/*<MyBondingsTable assets={myBondings.pablo} />*/}
             </TabPanel>
           </Grid>
         )}

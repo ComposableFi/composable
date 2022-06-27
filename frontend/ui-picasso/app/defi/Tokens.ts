@@ -20,6 +20,7 @@ const tokenIds = [
   "ksm",
   "pablo",
   "angl",
+  "chaos",
 ]; // important
 
 export const TOKEN_IDS = tokenIds;

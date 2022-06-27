@@ -52,6 +52,7 @@ use jsonrpsee::{
 	proc_macros::rpc,
 	types::{error::CallError, ErrorObject},
 };
+use pallet_ibc::events::IbcEvent;
 use sc_chain_spec::Properties;
 use serde::{Deserialize, Serialize};
 use sp_api::ProvideRuntimeApi;
@@ -105,7 +106,7 @@ pub fn generate_raw_proof(inputs: Vec<(Vec<u8>, Vec<u8>)>, keys: Vec<Vec<u8>>) -
 
 /// IBC RPC methods.
 #[rpc(client, server)]
-pub trait IbcApi<BlockNumber> {
+pub trait IbcApi<BlockNumber, Hash> {
 	/// Query packet data
 	#[method(name = "ibc_queryPackets")]
 	fn query_packets(
@@ -308,6 +309,10 @@ pub trait IbcApi<BlockNumber> {
 		limit: u64,
 		height: u32,
 	) -> Result<QueryDenomTracesResponse>;
+
+	/// Query newly created clients in block
+	#[method(name = "ibc_queryNewlyCreatedClients")]
+	fn query_newly_created_clients(&self, block_hash: Hash) -> Result<Vec<IdentifiedClientState>>;
 }
 
 /// Converts a runtime trap into an RPC error.
@@ -334,7 +339,7 @@ impl<C, B> IbcRpcHandler<C, B> {
 	}
 }
 
-impl<C, Block> IbcApiServer<<<Block as BlockT>::Header as HeaderT>::Number>
+impl<C, Block> IbcApiServer<<<Block as BlockT>::Header as HeaderT>::Number, Block::Hash>
 	for IbcRpcHandler<C, Block>
 where
 	Block: BlockT,
@@ -1233,5 +1238,42 @@ where
 		_height: u32,
 	) -> Result<QueryDenomTracesResponse> {
 		Err(runtime_error_into_rpc_error("Unimplemented"))
+	}
+
+	fn query_newly_created_clients(
+		&self,
+		block_hash: Block::Hash,
+	) -> Result<Vec<IdentifiedClientState>> {
+		let api = self.client.runtime_api();
+		let at = BlockId::Hash(block_hash);
+		let events = api
+			.block_events(&at)
+			.map_err(|_| runtime_error_into_rpc_error("[ibc_rpc]: failed to read block events"))?;
+
+		let mut identified_clients = vec![];
+		for e in events {
+			match e {
+				IbcEvent::CreateClient { client_id, .. } => {
+					let result: ibc_primitives::QueryClientStateResponse = api
+						.client_state(&at, client_id.clone())
+						.ok()
+						.flatten()
+						.ok_or_else(|| runtime_error_into_rpc_error("client state to exist"))?;
+
+					let client_state = AnyClientState::decode_vec(&result.client_state)
+						.map_err(|_| runtime_error_into_rpc_error("client state to be valid"))?;
+					let client_state = IdentifiedClientState {
+						client_id: String::from_utf8(client_id).map_err(|_| {
+							runtime_error_into_rpc_error("client id should be valid utf8")
+						})?,
+						client_state: Some(client_state.into()),
+					};
+					identified_clients.push(client_state)
+				},
+				_ => continue,
+			}
+		}
+
+		Ok(identified_clients)
 	}
 }

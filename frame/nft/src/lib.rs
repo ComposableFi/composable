@@ -41,10 +41,8 @@ pub use pallet::*;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use composable_support::{collections::vec::bounded::BiBoundedVec, math::safe::SafeAdd};
-	use composable_traits::financial_nft::{
-		AttributeKey, AttributeValue, FinancialNftProvider, NftClass,
-	};
+	use composable_support::math::safe::SafeAdd;
+	use composable_traits::nft::{Key, NftClass, ReferenceNft, Value};
 	use frame_support::{
 		pallet_prelude::*,
 		traits::{
@@ -82,6 +80,7 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		#[allow(missing_docs)]
 		type Event: From<Event<Self>> + IsType<<Self as frame_system::Config>::Event>;
+		type MaxProperties: Get<u32>;
 	}
 
 	#[pallet::pallet]
@@ -138,6 +137,7 @@ pub mod pallet {
 	>;
 
 	impl<T: Config> Pallet<T> {
+		#[allow(dead_code)] // TODO: remove it when it will be used
 		pub(crate) fn get_next_nft_id(
 			class: &<Self as Inspect<AccountIdOf<T>>>::ClassId,
 		) -> Result<u128, DispatchError> {
@@ -316,33 +316,30 @@ pub mod pallet {
 		}
 	}
 
-	impl<T: Config> FinancialNftProvider<AccountIdOf<T>> for Pallet<T> {
-		/// actually burns sNFT and creates new NFTs.
-		/// uses bases shared metadata and override as described by `overrides`
-		/// count `overrides` is equal to count of splits
-		fn split(
+	impl<T: Config> ReferenceNft<T::AccountId> for Pallet<T> {
+		type MaxProperties = T::MaxProperties;
+
+		fn reference_mint_into<NFTProvider, NFT>(
+			_class: &Self::ClassId,
 			_instance: &Self::InstanceId,
-			_overrides: BiBoundedVec<BTreeMap<AttributeKey, AttributeValue>, 1, 16>,
-		) -> Result<BiBoundedVec<Self::InstanceId, 1, 16>, DispatchError> {
+			_who: &T::AccountId,
+			_reference: composable_traits::nft::Reference,
+		) -> DispatchResult {
 			Err(DispatchError::Other("no implemented"))
 		}
 
-		fn mint_nft<K: Encode, V: Encode>(
-			class: &Self::ClassId,
-			who: &AccountIdOf<T>,
-			key: &K,
-			value: &V,
+		fn mint_new_into(
+			_class: &Self::ClassId,
+			_who: &T::AccountId,
+			_properties: frame_support::BoundedBTreeMap<Key, Value, Self::MaxProperties>,
 		) -> Result<Self::InstanceId, DispatchError> {
-			let instance = Self::get_next_nft_id(&NftClass::STAKING)?;
-			Self::mint_into(class, &instance, who)?;
-			Self::set_typed_attribute(class, &instance, key, value)?;
-			Ok(instance)
+			Err(DispatchError::Other("no implemented"))
 		}
 	}
 
 	/// Returns a closure that inserts the given value into the contained set, initializing the set
 	/// if the `Option` is `None`.
-	fn insert_or_init_and_insert<T: Ord>(t: T) -> impl FnOnce(&'_ mut Option<BTreeSet<T>>) -> () {
+	fn insert_or_init_and_insert<T: Ord>(t: T) -> impl FnOnce(&'_ mut Option<BTreeSet<T>>) {
 		move |x: &mut Option<BTreeSet<T>>| match x {
 			Some(instances) => {
 				instances.insert(t);

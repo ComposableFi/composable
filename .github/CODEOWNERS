@@ -4,8 +4,8 @@
 * @ComposableFi/core
 
 # CI and deployment related files
-.github/ @ComposableFi/sre 
-.github/CODEOWNERS @ComposableFi/core 
+.github/ @ComposableFi/sre
+.github/CODEOWNERS @ComposableFi/core
 docker/ @ComposableFi/sre
 Makefile @ComposableFi/sre
 
@@ -15,6 +15,7 @@ node/ @ComposableFi/parachain-leads
 frame/ @ComposableFi/parachain
 integration-tests/ @ComposableFi/parachain
 
+frame/composable-traits/ @ComposableFi/parachain-finance
 frame/*/rpc/ @ComposableFi/parachain-rpc
 frame/*/runtime-api @ComposableFi/parachain-rpc
 
@@ -26,3 +27,6 @@ frontend/ @ComposableFi/ui @ComposableFi/blockchain-integrations
 
 # Runtime Integration Tests
 integration-tests/runtime-tests/ @ComposableFi/testers
+
+# Oracle Setup Script
+scripts/oracle-setup @ComposableFi/parachain

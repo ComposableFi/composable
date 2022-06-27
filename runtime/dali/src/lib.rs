@@ -865,6 +865,24 @@ impl crowdloan_rewards::Config for Runtime {
 	type Time = Timestamp;
 }
 
+parameter_types! {
+	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
+}
+
+impl pallet_staking_rewards::Config for Runtime {
+	type Event = Event;
+	type Share = Balance;
+	type Balance = Balance;
+	type PoolId = u16;
+	type PositionId = u128;
+	type MayBeAssetId = CurrencyId;
+	type CurrencyFactory = CurrencyFactory;
+	type UnixTime = Timestamp;
+	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
+	type PalletId = StakingRewardsPalletId;
+	type WeightInfo = ();
+}
+
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -1074,6 +1092,7 @@ impl pallet_ibc::Config for Runtime {
 	const CONNECTION_PREFIX: &'static [u8] = b"ibc";
 	type ExpectedBlockTime = ExpectedBlockTime;
 	type WeightInfo = crate::weights::pallet_ibc::WeightInfo<Self>;
+	type AdminOrigin = EnsureRoot<AccountId>;
 }
 
 impl pallet_ibc_ping::Config for Runtime {
@@ -1142,6 +1161,8 @@ construct_runtime!(
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
+		StakingRewards: pallet_staking_rewards = 67,
+
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 
 		// IBC Support, pallet-ibc should be the last in the list of pallets that use the ibc protocol
@@ -1215,7 +1236,6 @@ mod benches {
 		[mosaic, Mosaic]
 		[liquidations, Liquidations]
 		[bonded_finance, BondedFinance]
-		//FIXME: broken with dali [lending, Lending]
 		[lending, Lending]
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
@@ -1565,6 +1585,23 @@ impl_runtime_apis! {
 
 		fn denom_traces(_offset: Vec<u8>, _limit: u64, _height: u32) -> Option<ibc_primitives::QueryDenomTracesResponse> {
 			None
+		}
+
+		fn block_events() -> Vec<pallet_ibc::events::IbcEvent> {
+			let events = frame_system::Pallet::<Self>::read_events_no_consensus().into_iter().filter_map(|e| {
+				let frame_system::EventRecord{ event, ..} = *e;
+				match event {
+					Event::Ibc(pallet_ibc::Event::IbcEvents{ events }) => {
+						Some(events)
+					},
+					_ => None
+				}
+			});
+
+			events.fold(vec![], |mut events, ev| {
+				events.extend_from_slice(&ev);
+				events
+			})
 		}
 	}
 	#[cfg(feature = "runtime-benchmarks")]

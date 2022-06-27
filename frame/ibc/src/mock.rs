@@ -89,6 +89,7 @@ impl pallet_ibc::Config for Test {
 	const CONNECTION_PREFIX: &'static [u8] = b"ibc";
 	type ExpectedBlockTime = ExpectedBlockTime;
 	type WeightInfo = ();
+	type AdminOrigin = frame_system::EnsureRoot<u64>;
 }
 
 impl pallet_timestamp::Config for Test {

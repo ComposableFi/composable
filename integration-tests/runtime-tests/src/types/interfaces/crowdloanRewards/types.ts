@@ -1,13 +1,13 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type { ComposableTraitsDefiCurrencyPairCurrencyId, CurrencyId } from '@composable/types/interfaces/common';
-import type { Enum, Null, Struct, bool, u128, u32 } from '@polkadot/types-codec';
-import type { ITuple } from '@polkadot/types-codec/types';
-import type { EthereumAccountId } from '@polkadot/types/interfaces/eth';
-import type { EcdsaSignature, MultiSignature } from '@polkadot/types/interfaces/extrinsics';
-import type { ParachainInherentData, PersistedValidationData } from '@polkadot/types/interfaces/parachains';
-import type { AccountId32, Balance, Permill } from '@polkadot/types/interfaces/runtime';
+import type { ComposableTraitsDefiCurrencyPairCurrencyId, CurrencyId } from "@composable/types/interfaces/common";
+import type { Enum, Null, Struct, bool, u128, u32 } from "@polkadot/types-codec";
+import type { ITuple } from "@polkadot/types-codec/types";
+import type { EthereumAccountId } from "@polkadot/types/interfaces/eth";
+import type { EcdsaSignature, MultiSignature } from "@polkadot/types/interfaces/extrinsics";
+import type { ParachainInherentData, PersistedValidationData } from "@polkadot/types/interfaces/parachains";
+import type { AccountId32, Balance, Permill } from "@polkadot/types/interfaces/runtime";
 
 /** @name CommonMosaicRemoteAssetId */
 export interface CommonMosaicRemoteAssetId extends Null {}
@@ -85,7 +85,7 @@ export interface ComposableTraitsGovernanceSignedRawOrigin extends Enum {
   readonly asIsSigned: bool;
   readonly isAsSigned: boolean;
   readonly asAsSigned: AccountId32;
-  readonly type: 'Root' | 'Signed' | 'IsSigned' | 'AsSigned';
+  readonly type: "Root" | "Signed" | "IsSigned" | "AsSigned";
 }
 
 /** @name ComposableTraitsLendingCreateInput */
@@ -171,6 +171,9 @@ export interface FrameSystemAccountInfo extends Struct {
   } & Struct;
 }
 
+/** @name IbcTraitOpenChannelParams */
+export interface IbcTraitOpenChannelParams extends Null {}
+
 /** @name OrmlTokensAccountData */
 export interface OrmlTokensAccountData extends Struct {
   readonly free: u128;
@@ -202,7 +205,7 @@ export interface PalletCrowdloanRewardsModelsProof extends Enum {
   readonly asRelayChain: ITuple<[AccountId32, MultiSignature]>;
   readonly isEthereum: boolean;
   readonly asEthereum: PalletCrowdloanRewardsModelsEcdsaSignature;
-  readonly type: 'RelayChain' | 'Ethereum';
+  readonly type: "RelayChain" | "Ethereum";
 }
 
 /** @name PalletCrowdloanRewardsModelsRemoteAccount */
@@ -211,7 +214,7 @@ export interface PalletCrowdloanRewardsModelsRemoteAccount extends Enum {
   readonly asRelayChain: AccountId32;
   readonly isEthereum: boolean;
   readonly asEthereum: EthereumAccountId;
-  readonly type: 'RelayChain' | 'Ethereum';
+  readonly type: "RelayChain" | "Ethereum";
 }
 
 /** @name PalletCrowdloanRewardsModelsReward */
@@ -253,6 +256,24 @@ export interface PalletDutchAuctionSellOrder extends Null {}
 /** @name PalletDutchAuctionTakeOrder */
 export interface PalletDutchAuctionTakeOrder extends Null {}
 
+/** @name PalletIbcAny */
+export interface PalletIbcAny extends Null {}
+
+/** @name PalletIbcConnectionParams */
+export interface PalletIbcConnectionParams extends Null {}
+
+/** @name PalletIbcErrorsIbcError */
+export interface PalletIbcErrorsIbcError extends Null {}
+
+/** @name PalletIbcEventsIbcEvent */
+export interface PalletIbcEventsIbcEvent extends Null {}
+
+/** @name PalletIbcIbcConsensusState */
+export interface PalletIbcIbcConsensusState extends Null {}
+
+/** @name PalletIbcPingSendPingParams */
+export interface PalletIbcPingSendPingParams extends Null {}
+
 /** @name PalletIdentityBitFlags */
 export interface PalletIdentityBitFlags extends Null {}
 
@@ -291,9 +312,9 @@ export interface PalletMosaicRelayerStaleRelayer extends Struct {
   readonly relayer: {
     readonly current: AccountId32;
     readonly next: {
-    readonly ttl: u32;
-    readonly account: AccountId32;
-  } & Struct;
+      readonly ttl: u32;
+      readonly account: AccountId32;
+    } & Struct;
   } & Struct;
 }
 
@@ -360,4 +381,4 @@ export interface SpTrieStorageProof extends Null {}
 /** @name XcmVersionedMultiAsset */
 export interface XcmVersionedMultiAsset extends Null {}
 
-export type PHANTOM_CROWDLOANREWARDS = 'crowdloanRewards';
+export type PHANTOM_CROWDLOANREWARDS = "crowdloanRewards";

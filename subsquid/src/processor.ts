@@ -22,12 +22,25 @@ import {
 
 const processor = new SubstrateProcessor("composable_dali_dev");
 
+const chain = (): string => {
+  switch(process.env.ENV) {
+    case 'dali':
+      return 'wss://dali.devnets.composablefinance.ninja/parachain/alice'
+    default:
+      return 'ws://localhost:9997'
+  }
+};
+
+const chain_connection_string = chain();
+const archive_connection_string = 'http://localhost:8080/v1/graphql';
+
+console.log(`Chain ${chain_connection_string}`);
+console.log(`Archive ${archive_connection_string}`);
+
 processor.setBatchSize(500);
 processor.setDataSource({
-  archive: `http://localhost:8080/v1/graphql`,
-  // archive: `http://localhost:4010/v1/graphql`,
-  chain: "ws://localhost:9997",
-  // chain: "wss://dali.devnets.composablefinance.ninja/parachain/alice",
+  archive: archive_connection_string,
+  chain: chain_connection_string,
 });
 
 processor.addEventHandler('pablo.PoolCreated', async (ctx) => {

@@ -66,26 +66,6 @@ benchmarks! {
 		where u32: From<<T as frame_system::Config>::BlockNumber>,
 				T: Send + Sync + pallet_timestamp::Config<Moment = u64> + parachain_info::Config,
 	}
-	// create_client
-	create_tendermint_client {
-		let (mock_client_state, mock_cs_state) = create_mock_state();
-		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
-		let msg = MsgCreateAnyClient::new(
-			AnyClientState::Tendermint(mock_client_state),
-			Some(AnyConsensusState::Tendermint(mock_cs_state)),
-			Signer::new("relayer"),
-		)
-		.unwrap()
-		.encode_vec()
-		.unwrap();
-
-		let msg = Any { type_url: TYPE_URL.to_string().as_bytes().to_vec(), value: msg };
-		let caller: T::AccountId = whitelisted_caller();
-
-	}: deliver(RawOrigin::Signed(caller), vec![msg])
-	verify {
-		assert_eq!(Clients::<T>::count(), 1)
-	}
 
 	// update_client
 	update_tendermint_client {
@@ -136,7 +116,7 @@ benchmarks! {
 			counterparty,
 			version: None,
 			delay_period,
-			signer: Signer::new("relayer")
+			signer: Signer::from_str(MODULE_ID).unwrap()
 		}.encode_vec().unwrap();
 
 		let msg = Any { type_url: conn_open_init::TYPE_URL.as_bytes().to_vec(), value };
@@ -307,7 +287,7 @@ benchmarks! {
 		let value = MsgChannelOpenInit {
 			port_id: port_id.clone(),
 			channel: channel_end,
-			signer: Signer::new("relayer")
+			signer: Signer::from_str(MODULE_ID).unwrap()
 		}.encode_vec().unwrap();
 
 		let caller: T::AccountId = whitelisted_caller();
@@ -361,7 +341,7 @@ benchmarks! {
 		let value = MsgChannelOpenInit {
 			port_id,
 			channel: channel_end,
-			signer: Signer::new("relayer")
+			signer: Signer::from_str(MODULE_ID).unwrap()
 		}.encode_vec().unwrap();
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: CHAN_OPEN_TYPE_URL.to_string(), value };
@@ -424,7 +404,7 @@ benchmarks! {
 		let value = MsgChannelOpenInit {
 			port_id,
 			channel: channel_end,
-			signer: Signer::new("relayer")
+			signer: Signer::from_str(MODULE_ID).unwrap()
 		}.encode_vec().unwrap();
 
 		let msg = ibc_proto::google::protobuf::Any  { type_url: CHAN_OPEN_TYPE_URL.to_string(), value };
@@ -867,5 +847,56 @@ benchmarks! {
 	verify {
 		let commitment_roots = HostConsensusStates::<T>::get();
 		assert_eq!(commitment_roots.len(), 1);
+	}
+
+	initiate_connection {
+		let mut ctx = routing::Context::<T>::new();
+		let now: <T as pallet_timestamp::Config>::Moment = TIMESTAMP.saturating_mul(1000);
+		pallet_timestamp::Pallet::<T>::set_timestamp(now);
+		let (mock_client_state, mock_cs_state) = create_mock_state();
+		let mock_client_state = AnyClientState::Tendermint(mock_client_state);
+		let mock_cs_state = AnyConsensusState::Tendermint(mock_cs_state);
+		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
+		let counterparty_client_id = ClientId::new(ClientType::Beefy, 1).unwrap();
+		ctx.store_client_type(client_id.clone(), mock_client_state.client_type()).unwrap();
+		ctx.store_client_state(client_id.clone(), mock_client_state).unwrap();
+		ctx.store_consensus_state(client_id.clone(), Height::new(0, 1), mock_cs_state).unwrap();
+
+		let params = ConnectionParams {
+			version: (
+				"1".as_bytes().to_vec(),
+				vec![
+					ibc::core::ics04_channel::channel::Order::Ordered.as_str().as_bytes().to_vec(),
+					ibc::core::ics04_channel::channel::Order::Unordered.as_str().as_bytes().to_vec(),
+				],
+			),
+			client_id: client_id.as_bytes().to_vec(),
+			counterparty_client_id: counterparty_client_id.as_bytes().to_vec(),
+			commitment_prefix: "ibc".as_bytes().to_vec(),
+			delay_period: 1000,
+		};
+
+	}: _(RawOrigin::Root, params)
+	verify {
+		let connection_end = ConnectionReader::connection_end(&ctx, &ConnectionId::new(0)).unwrap();
+		assert_eq!(connection_end.state, State::Init);
+	}
+
+	create_client {
+		let (mock_client_state, mock_cs_state) = create_mock_state();
+		let client_id = ClientId::new(mock_client_state.client_type(), 0).unwrap();
+		let msg = MsgCreateAnyClient::new(
+			AnyClientState::Tendermint(mock_client_state),
+			Some(AnyConsensusState::Tendermint(mock_cs_state)),
+			Signer::from_str(MODULE_ID).unwrap(),
+		)
+		.unwrap()
+		.encode_vec()
+		.unwrap();
+
+		let msg = Any { type_url: TYPE_URL.to_string().as_bytes().to_vec(), value: msg };
+	}: _(RawOrigin::Root, msg)
+	verify {
+		assert_eq!(Clients::<T>::count(), 1)
 	}
 }

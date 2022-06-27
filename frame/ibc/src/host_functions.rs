@@ -9,7 +9,7 @@ use ibc::{
 use sp_core::{storage::StateVersion, H256};
 use sp_std::prelude::*;
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct HostFunctions;
 
 impl HostFunctionsProvider for HostFunctions {
@@ -21,10 +21,6 @@ impl HostFunctionsProvider for HostFunctions {
 		sp_io::crypto::secp256k1_ecdsa_recover_compressed(signature, msg)
 			.ok()
 			.map(|pub_key| pub_key.to_vec())
-	}
-
-	fn ed25519_recover(_signature: &[u8; 64], _value: &[u8; 32]) -> Option<Vec<u8>> {
-		unimplemented!()
 	}
 
 	fn verify_membership_trie_proof(
@@ -54,5 +50,61 @@ impl HostFunctionsProvider for HostFunctions {
 
 	fn sha256_digest(data: &[u8]) -> [u8; 32] {
 		sp_io::hashing::sha2_256(data)
+	}
+
+	// These are temporary implementations to fix build errors, will be replaced with
+	// host functions in https://github.com/ComposableFi/composable/pull/1122
+	fn ripemd160(message: &[u8]) -> [u8; 20] {
+		use ripemd::Digest;
+		let mut hasher = ripemd::Ripemd160::new();
+		hasher.update(message);
+		let hash = hasher.finalize();
+		let mut res = [0u8; 20];
+		res.copy_from_slice(&hash);
+		res
+	}
+
+	fn ed25519_verify(signature: &[u8; 64], msg: &[u8], pubkey: &[u8]) -> bool {
+		let signature = sp_core::ed25519::Signature::from_raw(*signature);
+		let public_key = if let Ok(pub_key) = sp_core::ed25519::Public::try_from(pubkey) {
+			pub_key
+		} else {
+			return false
+		};
+		sp_io::crypto::ed25519_verify(&signature, msg, &public_key)
+	}
+
+	fn sha2_256(message: &[u8]) -> [u8; 32] {
+		sp_io::hashing::sha2_256(message)
+	}
+
+	fn sha2_512(message: &[u8]) -> [u8; 64] {
+		use sha2::Digest;
+		let mut hasher = sha2::Sha512::new();
+		hasher.update(message);
+		let hash = hasher.finalize();
+		let mut res = [0u8; 64];
+		res.copy_from_slice(&hash);
+		res
+	}
+
+	fn sha2_512_truncated(message: &[u8]) -> [u8; 32] {
+		use sha2::Digest;
+		let mut hasher = sha2::Sha512::new();
+		hasher.update(message);
+		let hash = hasher.finalize();
+		let mut res = [0u8; 32];
+		res.copy_from_slice(&hash[..32]);
+		res
+	}
+
+	fn sha3_512(message: &[u8]) -> [u8; 64] {
+		use sha3::Digest;
+		let mut hasher = sha3::Sha3_512::new();
+		hasher.update(message);
+		let hash = hasher.finalize();
+		let mut res = [0u8; 64];
+		res.copy_from_slice(&hash);
+		res
 	}
 }

@@ -57,7 +57,7 @@ sp_api::decl_runtime_apis! {
     {
         fn rpc_function_name(/* ...parameters... */) -> ReturnType;
 
-        // as many rpcs as are needed for the pallet can all be defined here in the same trait
+        // as many RPCs as are needed for the pallet can all be defined here in the same trait
     }
 }
 ```
@@ -126,7 +126,7 @@ where
     GENERIC_PARAMETER: Codec, 
 {
     // the name of the rpc must be moduleName_functionName, where both module
-    // and function are camelCase and are seperated by an underscore.
+    // and function are camelCase and are separated by an underscore.
     #[rpc(name = "palletName_rpcFunctionName")]
     fn rpc_function_name(
         &self,
@@ -279,7 +279,7 @@ export default {
     rpcFunctionName: {
       description: "Provide a short description of the RPC here.",
       params: [
-        // define the paramaters in the same order as defined in the rust RPC
+        // define the parameters in the same order as defined in the rust RPC
         {
           name: "parameter_name",
           type: "ParameterType"
@@ -347,7 +347,7 @@ import { expect } from 'chai';
 
 describe('query.palletName.account Tests', function() {
   // Set timeout to 1 minute.
-  this.timeout(60*1000); // <- increaase this if tests are timing out
+  this.timeout(60*1000); // <- increase this if tests are timing out
 
   // repeat this block as needed for every test case defined in the class below.
   it('rpc.palletName.functionName Tests', async function() {
