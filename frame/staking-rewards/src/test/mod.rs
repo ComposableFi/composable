@@ -9,13 +9,14 @@ use composable_tests_helpers::test::currency::{CurrencyId, PICA, USDT};
 use composable_traits::{
 	staking::{
 		lock::LockConfig, RewardConfig, RewardPoolConfiguration,
-		RewardPoolConfiguration::RewardRateBasedIncentive,
+		RewardPoolConfiguration::RewardRateBasedIncentive, Rewards,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
 use frame_support::{assert_err, assert_ok, BoundedBTreeMap};
 use frame_system::EventRecord;
 use sp_arithmetic::Perbill;
+use sp_core::sr25519::Public;
 use sp_std::collections::btree_map::BTreeMap;
 
 #[cfg(any(feature = "runtime-benchmarks", test))]
@@ -41,7 +42,7 @@ fn test_create_reward_pool() {
 		assert_err!(
 			StakingRewards::create_reward_pool(
 				Origin::root(),
-				get_reward_pool_config_invalida_end_block()
+				get_reward_pool_config_invalid_end_block()
 			),
 			crate::Error::<Test>::InvalidEndBlock
 		);
@@ -49,34 +50,34 @@ fn test_create_reward_pool() {
 }
 
 fn get_default_reward_pool() -> RewardPoolConfiguration<
-	AccountId,
-	CurrencyId,
-	Balance,
+	Public,
+	u128,
 	BlockNumber,
-	BoundedBTreeMap<u64, Perbill, MaxStakingDurationPresets>,
+	BoundedBTreeMap<u128, RewardConfig<u128, u128>, MaxRewardConfigsPerPool>,
+	BoundedBTreeMap<DurationSeconds, Perbill, MaxStakingDurationPresets>,
 > {
 	let pool_init_config = RewardRateBasedIncentive {
 		owner: ALICE,
 		asset_id: PICA::ID,
 		end_block: 5,
-		reward_config: default_reward_config(),
+		reward_configs: default_reward_config(),
 		lock: default_lock_config(),
 	};
 	pool_init_config
 }
 
-fn get_reward_pool_config_invalida_end_block() -> RewardPoolConfiguration<
-	AccountId,
-	CurrencyId,
-	Balance,
+fn get_reward_pool_config_invalid_end_block() -> RewardPoolConfiguration<
+	Public,
+	u128,
 	BlockNumber,
-	BoundedBTreeMap<u64, Perbill, MaxStakingDurationPresets>,
+	BoundedBTreeMap<u128, RewardConfig<u128, u128>, MaxRewardConfigsPerPool>,
+	BoundedBTreeMap<DurationSeconds, Perbill, MaxStakingDurationPresets>,
 > {
 	let pool_init_config = RewardRateBasedIncentive {
 		owner: ALICE,
 		asset_id: PICA::ID,
 		end_block: 0,
-		reward_config: default_reward_config(),
+		reward_configs: default_reward_config(),
 		lock: default_lock_config(),
 	};
 	pool_init_config
@@ -93,12 +94,16 @@ fn default_lock_config(
 	}
 }
 
-fn default_reward_config() -> RewardConfig<u128, u128> {
-	RewardConfig {
+fn default_reward_config(
+) -> BoundedBTreeMap<u128, RewardConfig<u128, u128>, MaxRewardConfigsPerPool> {
+	let config = RewardConfig {
 		asset_id: USDT::ID,
 		max_rewards: 100_u128,
 		reward_rate: Perbill::from_percent(10),
-	}
+	};
+	let mut rewards = BTreeMap::new();
+	rewards.insert(USDT::ID, config);
+	BoundedBTreeMap::try_from(rewards).unwrap()
 }
 
 pub fn assert_has_event<T, F>(matcher: F)

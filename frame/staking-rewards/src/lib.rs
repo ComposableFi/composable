@@ -46,7 +46,6 @@ pub mod pallet {
 		abstractions::{
 			nonce::Nonce,
 			utils::{
-				decrement::SafeDecrement,
 				increment::{Increment, SafeIncrement},
 				start_at::ZeroInit,
 			},
@@ -143,7 +142,7 @@ pub mod pallet {
 
 		/// Maximum number of reward configurations per pool.
 		#[pallet::constant]
-		type MaxRewardConfigsPerPool: Get<u32> + TypeInfo;
+		type MaxRewardConfigsPerPool: Get<u32>;
 
 		/// Required origin for reward pool creation.
 		type RewardPoolCreationOrigin: EnsureOrigin<Self::Origin>;
@@ -155,8 +154,12 @@ pub mod pallet {
 	type RewardPoolConfigurationOf<T> = RewardPoolConfiguration<
 		<T as frame_system::Config>::AccountId,
 		<T as Config>::AssetId,
-		<T as Config>::Balance,
 		<T as frame_system::Config>::BlockNumber,
+		RewardConfigs<
+			<T as Config>::AssetId,
+			<T as Config>::Balance,
+			<T as Config>::MaxRewardConfigsPerPool,
+		>,
 		StakingDurationToRewardsMultiplierConfig<<T as Config>::MaxStakingDurationPresets>,
 	>;
 
@@ -167,7 +170,11 @@ pub mod pallet {
 		<T as Config>::Balance,
 		<T as frame_system::Config>::BlockNumber,
 		StakingDurationToRewardsMultiplierConfig<<T as Config>::MaxStakingDurationPresets>,
-		<T as Config>::MaxRewardConfigsPerPool,
+		Rewards<
+			<T as Config>::AssetId,
+			<T as Config>::Balance,
+			<T as Config>::MaxRewardConfigsPerPool,
+		>,
 	>;
 
 	#[pallet::pallet]
@@ -202,7 +209,7 @@ pub mod pallet {
 				RewardRateBasedIncentive {
 					owner,
 					asset_id,
-					reward_config: initial_reward_config,
+					reward_configs: initial_reward_config,
 					end_block,
 					lock,
 				} => {
@@ -212,10 +219,9 @@ pub mod pallet {
 					);
 					let pool_id = RewardPoolCount::<T>::increment()?;
 					let mut rewards = BTreeMap::new();
-					rewards.insert(
-						initial_reward_config.asset_id,
-						Reward::from(initial_reward_config),
-					);
+					for (i, reward_config) in initial_reward_config.into_iter().enumerate() {
+						rewards.insert(reward_config.0, Reward::from(reward_config.1));
+					}
 					RewardPools::<T>::insert(
 						pool_id.clone(),
 						RewardPool {

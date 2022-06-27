@@ -11,6 +11,7 @@ pub mod lock;
 pub mod math;
 pub mod nft;
 
+/// Abstraction over the map of possible lock durations and corresponding reward multipliers.
 pub type StakingDurationToRewardsMultiplierConfig<Limit> =
 	BoundedBTreeMap<DurationSeconds, Perbill, Limit>;
 
@@ -38,6 +39,10 @@ pub struct Reward<AssetId, Balance> {
 	pub reward_rate: Perbill,
 }
 
+/// Abstraction over the asset to rewards map stored for staking.
+pub type Rewards<AssetId, Balance, Limit> =
+	BoundedBTreeMap<AssetId, Reward<AssetId, Balance>, Limit>;
+
 impl<AssetId, Balance: Zero> Reward<AssetId, Balance> {
 	pub fn from(reward_config: RewardConfig<AssetId, Balance>) -> Reward<AssetId, Balance> {
 		Reward {
@@ -54,21 +59,14 @@ impl<AssetId, Balance: Zero> Reward<AssetId, Balance> {
 /// particular purpose. Eg: a pool of rewards for incentivizing adding liquidity to a pablo swap
 /// pool. TODO refer to the relevant section in the design doc.
 #[derive(RuntimeDebug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-pub struct RewardPool<
-	AccountId,
-	AssetId,
-	Balance,
-	BlockNumber,
-	DurationPresets,
-	RewardsLength: Get<u32>,
-> {
+pub struct RewardPool<AccountId, AssetId, Balance, BlockNumber, DurationPresets, Rewards> {
 	pub owner: AccountId,
 
 	/// The staked asset id of the reward pool.
 	pub asset_id: AssetId,
 
 	/// rewards accumulated
-	pub rewards: BoundedBTreeMap<AssetId, Reward<AssetId, Balance>, RewardsLength>,
+	pub rewards: Rewards,
 
 	/// Total shares distributed among stakers
 	pub total_shares: Balance,
@@ -94,11 +92,14 @@ pub struct RewardConfig<AssetId, Balance> {
 	pub reward_rate: Perbill,
 }
 
+pub type RewardConfigs<AssetId, Balance, Limit> =
+	BoundedBTreeMap<AssetId, RewardConfig<AssetId, Balance>, Limit>;
+
 /// Categorize the reward pool by it's incentive characteristics and expose
 /// initial configuration parameters.
 /// TODO refer to the relevant section in the design doc.
 #[derive(RuntimeDebug, Encode, Decode, MaxEncodedLen, Clone, PartialEq, Eq, TypeInfo)]
-pub enum RewardPoolConfiguration<AccountId, AssetId, Balance, BlockNumber, DurationPresets> {
+pub enum RewardPoolConfiguration<AccountId, AssetId, BlockNumber, RewardConfigs, DurationPresets> {
 	/// A pool with an adjustable reward rate to be used as incentive.
 	RewardRateBasedIncentive {
 		/// Protocol or the user account that owns this pool
@@ -108,7 +109,7 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, Balance, BlockNumber, Durat
 		/// Pool would stop adding rewards to pool at this block number.
 		end_block: BlockNumber,
 		/// initial reward configuration for this pool
-		reward_config: RewardConfig<AssetId, Balance>,
+		reward_configs: RewardConfigs,
 		// possible lock config for this reward
 		lock: LockConfig<DurationPresets>,
 	},
@@ -118,7 +119,7 @@ pub enum RewardPoolConfiguration<AccountId, AssetId, Balance, BlockNumber, Durat
 /// should exist for each position when stored in the runtime storage.
 /// TODO refer to the relevant section in the design doc.
 #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-pub struct Stake<RewardPoolId, AssetId, Balance, RewardsLength: Get<u32>> {
+pub struct Stake<RewardPoolId, Balance, Rewards> {
 	/// Reward Pool ID from which pool to allocate rewards for this
 	pub reward_pool_id: RewardPoolId,
 
@@ -129,7 +130,7 @@ pub struct Stake<RewardPoolId, AssetId, Balance, RewardsLength: Get<u32>> {
 	pub share: Balance,
 
 	/// Reduced rewards by asset for the position (d_n)
-	reductions: BoundedBTreeMap<AssetId, Balance, RewardsLength>,
+	reductions: Rewards,
 
 	/// The lock period for the stake.
 	pub lock: Lock,

@@ -187,14 +187,7 @@ impl pallet_assets::Config for Test {
 parameter_types! {
 	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
 	pub const MaxStakingDurationPresets : u32 = 10;
-}
-
-#[derive(PartialEq, Eq, Copy, Clone, Encode, Decode, MaxEncodedLen, TypeInfo, RuntimeDebug)]
-pub struct MaxRewardConfigsPerPool;
-impl Get<u32> for MaxRewardConfigsPerPool {
-	fn get() -> u32 {
-		10
-	}
+	pub const MaxRewardConfigsPerPool : u32 = 10;
 }
 
 impl pallet_staking_rewards::Config for Test {

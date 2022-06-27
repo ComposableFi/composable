@@ -22,15 +22,15 @@ fn get_reward_pool<T: Config>(
 ) -> RewardPoolConfiguration<
 	T::AccountId,
 	T::AssetId,
-	T::Balance,
 	T::BlockNumber,
+	BoundedBTreeMap<T::AssetId, RewardConfig<T::AssetId, T::Balance>, T::MaxRewardConfigsPerPool>,
 	BoundedBTreeMap<DurationSeconds, Perbill, T::MaxStakingDurationPresets>,
 > {
 	let pool_init_config = RewardRateBasedIncentive {
 		owner,
 		asset_id: PICA::ID.into(),
 		end_block: 5_u128.saturated_into(),
-		reward_config: reward_config::<T>(),
+		reward_configs: reward_config::<T>(),
 		lock: lock_config::<T>(),
 	};
 	pool_init_config
@@ -47,12 +47,16 @@ fn lock_config<T: Config>(
 	}
 }
 
-fn reward_config<T: Config>() -> RewardConfig<T::AssetId, T::Balance> {
-	RewardConfig {
+fn reward_config<T: Config>(
+) -> BoundedBTreeMap<T::AssetId, RewardConfig<T::AssetId, T::Balance>, T::MaxRewardConfigsPerPool> {
+	let config = RewardConfig {
 		asset_id: USDT::ID.into(),
 		max_rewards: 100_u128.into(),
 		reward_rate: Perbill::from_percent(10),
-	}
+	};
+	let mut rewards = BTreeMap::new();
+	rewards.insert(USDT::ID.into(), config);
+	BoundedBTreeMap::try_from(rewards).unwrap()
 }
 
 benchmarks! {
