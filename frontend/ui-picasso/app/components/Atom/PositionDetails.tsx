@@ -11,7 +11,6 @@ const PositionDetails: FC<PositionDetailsProps> = ({ children }) => {
 
   return (
     <Box
-      padding={theme.spacing(6)}
       borderRadius={theme.spacing(1)}
       bgcolor={alpha(theme.palette.common.white, 0.02)}
     >
@@ -19,7 +18,9 @@ const PositionDetails: FC<PositionDetailsProps> = ({ children }) => {
         Details
       </Typography>
 
-      <Stack mt="2.125rem">{children}</Stack>
+      <Stack mt="2.125rem" direction="column">
+        {children}
+      </Stack>
     </Box>
   );
 };

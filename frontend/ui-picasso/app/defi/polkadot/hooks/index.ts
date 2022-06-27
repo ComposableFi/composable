@@ -12,7 +12,7 @@ export const useKusamaProvider = (): ParachainApi => {
   return api;
 };
 
-export const useSelectedAccount = ():
+export const useSelectedAccount: () => ({ name: string; address: string } | undefined) = ():
   | { name: string; address: string }
   | undefined => {
   const { selectedAccount } = useContext(ParachainContext);
@@ -26,3 +26,4 @@ export const useKusamaAccounts = (): { name: string; address: string }[] => {
   const { accounts } = useParachainProvider("kusama", 0);
   return accounts;
 };
+export * from "./useBlockInterval";
