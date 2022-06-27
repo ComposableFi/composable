@@ -40,7 +40,7 @@ A **Debian** based Linux system is required, we recommend Debian, Ubuntu or Linu
 Run the following command:
 
 
-```
+```bash
 sudo apt update && sudo apt install -y git clang curl libssl-dev llvm libudev-dev pkg-config wget
 ```
 
@@ -49,7 +49,7 @@ sudo apt update && sudo apt install -y git clang curl libssl-dev llvm libudev-de
 Run the following commands:
 
 
-```
+```bash
 RUST_C="nightly-2021-11-07"
 curl https://sh.rustup.rs -sSf | sh -s -- -y && \
 export PATH="$PATH:$HOME/.cargo/bin" && \
@@ -66,7 +66,7 @@ And wait for the installation process to finish.
 
 Run the following commands:
 
-```
+```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
 export NVM_DIR="$HOME/.nvm" && \
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
@@ -81,17 +81,17 @@ Run the following commands:
 
 Getting binaries
 
-```
+```bash
 cd ~/ && git clone --depth 1 --branch v2.2.1 https://github.com/ComposableFi/composable.git && \
 cd composable
 ```
 
-```
+```bash
 wget -P ./target/release https://github.com/ComposableFi/composable/releases/download/v2.2.1/composable && \
 chmod u+x ./target/release/composable
 ```
 
-```
+```bash
 cd ~/
 wget -P ./polkadot/target/release https://github.com/paritytech/polkadot/releases/download/v0.9.18/polkadot && \
 chmod u+x ./polkadot/target/release/polkadot
@@ -99,7 +99,7 @@ chmod u+x ./polkadot/target/release/polkadot
 
 Installing dependencies
 
-```
+```bash
 # install project
 cd ~/composable/scripts/polkadot-launch
 yarn install 
@@ -107,14 +107,14 @@ yarn install
 
 To start your local composable chain
 
-```
+```bash
 yarn composable
 ```
 
 Once it’s done you would see something like this in the terminal
 
 
-```
+```markdown
 ubuntu@oracle-test:~/composable/scripts/polkadot-launch$ yarn composable
 yarn run v1.22.18
 $ rm -rf /tmp/polkadot-launch && polkadot-launch composable.json
@@ -130,12 +130,11 @@ $ rm -rf /tmp/polkadot-launch && polkadot-launch composable.json
   👤  Added Genesis Authority charlie
   👤  Added Genesis Authority dave
   👤  Added Genesis Authority ferdie
-
 ```
 
 Followed by: 
 
-```
+```markdown
 Starting a Collator for parachain 2000: 5Ec4AhPUwPeyTFyuhGuBbD224mY85LKLMSqSSo33JYWCazU4, Collator port : 31300 wsPort : 9996 rpcPort : undefined
 Added --charlie
 Added --force-authoring
@@ -149,7 +148,7 @@ This means your node has started.
 
 Nodes are writing logs here: 
 
-```
+```markdown
 ubuntu@oracle-test:~/composable/scripts/polkadot-launch$ ls
 9988.log  9997.log   alice.log  charlie.log      composable_and_basilisk.json  ferdie.log      node_modules  rococo-local-raw.json  yarn.lock
 9996.log  README.md  bob.log    composable.json  dave.log  
@@ -202,7 +201,7 @@ In this step, we will set up a rust compiler, a toolchain and build a node.  \
 
 Run the following command:
 
-```
+```bash
 sudo apt update && sudo apt install -y git clang curl libssl-dev llvm libudev-dev pkg-config
 ```
 
@@ -210,7 +209,7 @@ sudo apt update && sudo apt install -y git clang curl libssl-dev llvm libudev-de
 
 Run the following commands:
 
-```
+```bash
 git clone --depth 1 --branch v2.2.1 https://github.com/ComposableFi/composable.git composable-oracle && \
 cd composable-oracle && \
 cargo build --release --package price-feed
@@ -220,7 +219,7 @@ cargo build --release --package price-feed
 
 You can try running the server with  \
 
-```
+```bash
 RUST_LOG=debug ./target/release/price-feed
 ```
 
@@ -240,7 +239,7 @@ Currently only the price for KSM is supported, which can be accessed using the f
 
 price-feed output should look like this.
 
-```
+```markdown
 [2022-06-09T19:08:25Z DEBUG price_feed::backend] notification received: Started { feed: Binance }
 [2022-06-09T19:08:25Z INFO  price_feed::backend] Binance started successfully
 [2022-06-09T19:08:25Z DEBUG price_feed::backend] notification received: AssetOpened { feed: Binance, asset: KSM }
@@ -255,7 +254,7 @@ price-feed output should look like this.
 
 The default URL is:
 
-```
+```markdown
 localhost:3001/price/${ ASSET_ID }/
 ```
 
@@ -263,14 +262,14 @@ localhost:3001/price/${ ASSET_ID }/
 
 Run the following command: 
 
-```
+```bash
 ./target/release/price-feed --help
 ```
 
 For a list of CLI options.
 
 
-```
+```markdown
 ubuntu@oracle-test:~/price_feed/target/release$ ./price-feed --help
 price-feed 1.0
 Composable
@@ -311,7 +310,7 @@ These are the wallet details for the Alice developer wallet.
 
 It’s required for registering the offchain worker.
 
-```
+```markdown
 name: "Alice"
 Address (public key): "5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL"
 Mnemonic(seed): "bottom drive obey lake curtain smoke basket hold race lonely fit walk//Alice"
@@ -327,13 +326,13 @@ Please scroll down to part 2. For manual setup instructions.
 
 Installing application dependencies:
 
-```
+```bash
 sudo apt update && sudo apt install -y git curl
 ```
 
 Installing NodeJS:
 
-```
+```bash
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
 export NVM_DIR="$HOME/.nvm" && \
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
@@ -346,20 +345,20 @@ npm install --global yarn
 
 Getting the oracle price feed initializer:
 
-```
+```bash
 git clone --depth 1 https://github.com/ComposableFi/composable.git composable-oracle-initializer && \
 cd composable-oracle-initializer/scripts/oracle-setup
 ```
 
 Setup oracle price feed initializer:
 
-```
+```bash
 yarn
 ```
 
 Starting oracle price feed initializer:
 
-```
+```bash
 yarn start
 ```
 
@@ -375,7 +374,7 @@ _Developer menu -> RPC calls -> author -> InsertKey_
 
 And enter the details, as seen in the screenshot below and press: “Submit RPC call”.
 
-```
+```markdown
 keyType: orac
 suri: bottom drive obey lake curtain smoke basket hold race lonely fit walk//Alice
 publicKey: 5yNZjX24n2eg7W6EVamaTXNQbWCwchhThEaSWB7V3GRjtHeL
@@ -405,8 +404,8 @@ Register your price-feed url in the local storage,` kind` must be **PERSISTENT**
 
 JavaScript:
 
-```
-api.rpc.offchain.localStorageSet('PERSISTENT', stringToHex('ocw-url'), stringToHex('http://localhost:3001/price/');
+```JavaScript
+api.rpc.offchain.localStorageSet("PERSISTENT", stringToHex("ocw-url"), stringToHex("http://localhost:3001/price/"));
 ```
 
 To do this go to:
@@ -435,7 +434,7 @@ Bond the controller account by submitting a set_signer transaction (tie the Sign
 
 JavaScript:
 
-```
+```JavaScript
 api.tx.oracle.setSigner(address);
 ```
 
