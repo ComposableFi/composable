@@ -2,8 +2,8 @@ use crate::{
 	mock::{ExtBuilder, MockRuntime, TestPallet},
 	pallet::{Error, VammState},
 	tests::{
-		helpers::{any_sane_asset_amount, as_decimal, run_for_seconds},
-		Decimal, Timestamp, RUN_CASES,
+		helpers::{any_sane_asset_amount, as_decimal, as_decimal_from_fraction, run_for_seconds},
+		Timestamp, RUN_CASES,
 	},
 };
 use composable_traits::vamm::{AssetType, Vamm as VammTrait};
@@ -32,8 +32,8 @@ fn should_fail_if_vamm_does_not_exist() {
 #[test]
 fn should_fail_if_vamm_is_closed() {
 	let vamm_state = VammState {
-		base_asset_reserves: as_decimal(4_u128).into_inner(),
-		quote_asset_reserves: as_decimal(8_u128).into_inner(),
+		base_asset_reserves: as_decimal(4).into_inner(),
+		quote_asset_reserves: as_decimal(8).into_inner(),
 		peg_multiplier: 1,
 		closed: Some(Timestamp::MIN),
 		..Default::default()
@@ -57,8 +57,8 @@ fn should_fail_if_vamm_is_closed() {
 #[test]
 fn should_succeed_returning_correct_price() {
 	let vamm_state = VammState {
-		base_asset_reserves: (10_u128.pow(18) * 4), // 4 units in decimal
-		quote_asset_reserves: (10_u128.pow(18) * 8), // 8 units in decimal
+		base_asset_reserves: as_decimal(4).into_inner(),
+		quote_asset_reserves: as_decimal(8).into_inner(),
 		peg_multiplier: 1,
 		..Default::default()
 	};
@@ -66,14 +66,8 @@ fn should_succeed_returning_correct_price() {
 	ExtBuilder { vamm_count: 1, vamms: vec![(0, vamm_state)] }
 		.build()
 		.execute_with(|| {
-			assert_ok!(
-				TestPallet::get_price(0, AssetType::Base),
-				Decimal::from_inner(2000000000000000000) // 2 units in decimal
-			);
-			assert_ok!(
-				TestPallet::get_price(0, AssetType::Quote),
-				Decimal::from_inner(500000000000000000) // 0.5 unit in decimal
-			);
+			assert_ok!(TestPallet::get_price(0, AssetType::Base), as_decimal(2));
+			assert_ok!(TestPallet::get_price(0, AssetType::Quote), as_decimal_from_fraction(5, 10));
 		})
 }
 

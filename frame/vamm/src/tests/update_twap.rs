@@ -3,8 +3,8 @@ use crate::{
 	pallet::{self, Error},
 	tests::{
 		helpers::{
-			any_sane_asset_amount, as_decimal, create_vamm, default_vamm_config, run_for_seconds,
-			run_to_block, twap_update_delay,
+			any_sane_asset_amount, as_decimal, as_decimal_from_fraction, create_vamm,
+			default_vamm_config, run_for_seconds, run_to_block, twap_update_delay,
 		},
 		helpers_propcompose::{any_vamm_state, balance_range},
 		Decimal, Timestamp, RUN_CASES,
@@ -38,21 +38,15 @@ prop_compose! {
 
 #[test]
 fn should_succeed_computing_correct_reciprocal_twap() {
-	assert_ok!(
-		TestPallet::reciprocal_twap(&Decimal::from_inner(10_u128.pow(18) * 2)),
-		Decimal::from_inner(500000000000000000)
-	);
-	assert_ok!(
-		TestPallet::reciprocal_twap(&Decimal::from_inner(10_u128.pow(18) * 50)),
-		Decimal::from_inner(20000000000000000)
-	);
+	assert_ok!(TestPallet::reciprocal_twap(&as_decimal(2)), as_decimal_from_fraction(50, 100));
+	assert_ok!(TestPallet::reciprocal_twap(&as_decimal(50)), as_decimal_from_fraction(2, 100));
 }
 
 #[test]
 fn update_twap_fails_if_vamm_does_not_exist() {
 	let vamm_state = VammState::default();
-	let base_twap = Some(Decimal::from_inner(10));
-	let quote_twap = Some(Decimal::from_inner(10));
+	let base_twap = Some(as_decimal(10));
+	let quote_twap = Some(as_decimal(50));
 	ExtBuilder { vamm_count: 1, vamms: vec![(0, vamm_state)] }
 		.build()
 		.execute_with(|| {
@@ -71,8 +65,8 @@ fn update_twap_fails_if_vamm_does_not_exist() {
 #[test]
 fn update_twap_fails_if_vamm_is_closed() {
 	let vamm_state = VammState { closed: Some(Timestamp::MIN), ..Default::default() };
-	let base_twap = Some(Decimal::from_inner(10));
-	let quote_twap = Some(Decimal::from_inner(10));
+	let base_twap = Some(as_decimal(10));
+	let quote_twap = Some(as_decimal(10));
 	let base_reciprocal = TestPallet::reciprocal_twap(&base_twap.unwrap()).ok();
 	ExtBuilder { vamm_count: 1, vamms: vec![(0, vamm_state)] }
 		.build()
@@ -105,10 +99,10 @@ fn update_twap_fails_if_vamm_is_closed() {
 #[test]
 fn update_twap_fails_if_new_twap_is_zero() {
 	let vamm_state = VammState::default();
-	let base_twap = Some(Decimal::from_inner(0));
-	let base_twap_plus = Some(Decimal::from_inner(1));
-	let quote_twap = Some(Decimal::from_inner(0));
-	let quote_twap_plus = Some(Decimal::from_inner(1));
+	let base_twap = Some(as_decimal(0));
+	let base_twap_plus = Some(as_decimal(1));
+	let quote_twap = Some(as_decimal(0));
+	let quote_twap_plus = Some(as_decimal(1));
 	ExtBuilder { vamm_count: 1, vamms: vec![(0, vamm_state)] }
 		.build()
 		.execute_with(|| {
@@ -130,7 +124,7 @@ fn should_fail_if_twaps_are_not_reciprocal() {
 		let vamm_config = default_vamm_config();
 		create_vamm(&vamm_config);
 		run_to_block(1);
-		let twap = Some(as_decimal(10_u128));
+		let twap = Some(as_decimal(10));
 		assert_noop!(
 			TestPallet::update_twap(0, twap, twap),
 			Error::<MockRuntime>::TwapsMustBeReciprocals
@@ -143,7 +137,7 @@ fn update_twap_fails_if_twap_timestamp_is_more_recent() {
 	let timestamp = Timestamp::MIN;
 	let timestamp_greater = Timestamp::MIN + 1;
 	let vamm_state = VammState { twap_timestamp: timestamp_greater, ..Default::default() };
-	let new_twap = Some(Decimal::from_inner(10));
+	let new_twap = Some(as_decimal(10));
 	let new_twap_reciprocal = Some(TestPallet::reciprocal_twap(&new_twap.unwrap()).unwrap());
 	ExtBuilder { vamm_count: 1, vamms: vec![(0, vamm_state)] }
 		.build()
@@ -175,8 +169,8 @@ fn update_twap_fails_if_twap_timestamp_is_more_recent() {
 #[test]
 fn update_twap_succeeds() {
 	let timestamp = Timestamp::MIN;
-	let twap = 10_u128.pow(18);
-	let new_twap = Some(Decimal::from_inner(10_u128.pow(18) * 5));
+	let twap = as_decimal(1).into_inner();
+	let new_twap = Some(as_decimal(5));
 	let vamm_state = VammState::<Balance, Timestamp, Decimal> {
 		twap_timestamp: timestamp,
 		base_asset_twap: twap.into(),
@@ -212,8 +206,8 @@ fn update_twap_succeeds() {
 fn should_update_twap_correctly() {
 	ExtBuilder::default().build().execute_with(|| {
 		let vamm_creation = TestPallet::create(&VammConfig {
-			base_asset_reserves: 10_u128.pow(18) * 2,
-			quote_asset_reserves: 10_u128.pow(18) * 50,
+			base_asset_reserves: as_decimal(2).into_inner(),
+			quote_asset_reserves: as_decimal(50).into_inner(),
 			peg_multiplier: 1,
 			twap_period: 3600,
 		});
@@ -224,8 +218,8 @@ fn should_update_twap_correctly() {
 
 		// For event emission & twap update
 		run_for_seconds(twap_update_delay(vamm_id));
-		let new_base_twap = Some(Decimal::from_inner(10_u128.pow(18) * 100));
-		let new_quote_twap = Some(Decimal::from_inner(10_u128.pow(14) * 100));
+		let new_base_twap = Some(as_decimal(100));
+		let new_quote_twap = Some(as_decimal_from_fraction(1, 100));
 		assert_ok!(TestPallet::update_twap(vamm_id, new_base_twap, new_quote_twap));
 		let vamm_state = TestPallet::get_vamm(vamm_id).unwrap();
 		assert_eq!(vamm_state.base_asset_twap, new_base_twap.unwrap());
