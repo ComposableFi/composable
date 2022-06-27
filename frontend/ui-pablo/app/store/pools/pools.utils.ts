@@ -1,10 +1,10 @@
 import {
   ConstantProductPool,
   LiquidityBootstrappingPool,
-  PoolsSlice,
   StableSwapPool,
-} from "./pools.types";
+} from "@/defi/types";
 import produce from "immer";
+import { PoolsSlice } from "./pools.types";
 
 export const putPoolsList = (
   liquidityPoolsSlice: PoolsSlice["pools"],

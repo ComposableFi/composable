@@ -1,5 +1,5 @@
 import create from "zustand";
-import { ConstantProductPool, StableSwapPool } from "../pools/pools.types";
+import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 
 export interface AddLiquiditySlice {
   pool: StableSwapPool | ConstantProductPool | undefined;

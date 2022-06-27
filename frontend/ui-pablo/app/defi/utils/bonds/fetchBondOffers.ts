@@ -15,7 +15,7 @@ export async function fetchBondOffers(parachainApi: ApiPromise): Promise<BondOff
     }
 
     const bonds = await Promise.all(offerPromises);
-    return bonds.map((offer, index) => decodeBondOffer(offer.toHuman(), index))
+    return bonds.map((offer, index) => decodeBondOffer(offer.toHuman(), index + 1))
   } catch (ex) {
     console.error(ex);
     return [];

@@ -11,7 +11,7 @@ import { queryPoolTransactionsByType } from "@/updaters/pools/subsquid";
 import BigNumber from "bignumber.js";
 import { useEffect, useState } from "react";
 import { useParachainApi } from "substrate-react";
-import { LiquidityBootstrappingPool } from "../pools/pools.types";
+import { LiquidityBootstrappingPool } from "@/defi/types";
 
 export function useAuctionsChart(
   pool: LiquidityBootstrappingPool | undefined

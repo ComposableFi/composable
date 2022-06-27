@@ -2,7 +2,6 @@ import { Box, BoxProps, Typography, useTheme, Grid } from "@mui/material";
 import AccessTimeRoundedIcon from "@mui/icons-material/AccessTimeRounded";
 import { getFullHumanizedDateDiff } from "@/utils/date";
 import {
-  LiquidityBootstrappingPool,
   LiquidityBootstrappingPoolStats,
 } from "@/store/pools/pools.types";
 import { nFormatter } from "@/utils/number";
@@ -11,6 +10,7 @@ import { useMemo } from "react";
 import { useUSDPriceByAssetId } from "@/store/assets/hooks";
 import { useAuctionSpotPrice } from "@/defi/hooks/auctions";
 import { MockedAsset } from "@/store/assets/assets.types";
+import { LiquidityBootstrappingPool } from "@/defi/types";
 
 export type AuctionInformationProps = {
   auction: LiquidityBootstrappingPool;

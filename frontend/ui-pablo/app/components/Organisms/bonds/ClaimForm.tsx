@@ -64,7 +64,7 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
       ? (principalAsset as any).baseAsset.symbol +
           "/" +
           (principalAsset as any).quoteAsset
-      : (principalAsset as MockedAsset).symbol
+      : principalAsset && (principalAsset as MockedAsset).symbol
       ? (principalAsset as MockedAsset).symbol
       : "";
   }, [principalAsset]);

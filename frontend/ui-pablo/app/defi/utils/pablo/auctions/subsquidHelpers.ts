@@ -1,7 +1,6 @@
-import { LiquidityPoolTransactionType } from "@/defi/types";
+import { LiquidityBootstrappingPool, LiquidityPoolTransactionType } from "@/defi/types";
 import { LiquidityBootstrappingPoolTrade } from "@/defi/types/auctions";
 import { PoolTradeHistory } from "@/store/auctions/auctions.types";
-import { LiquidityBootstrappingPool } from "@/store/pools/pools.types";
 import { queryAuctionStats } from "@/updaters/auctions/subsquid";
 import { queryPoolTransactionsByType } from "@/updaters/pools/subsquid";
 import { ApiPromise } from "@polkadot/api";

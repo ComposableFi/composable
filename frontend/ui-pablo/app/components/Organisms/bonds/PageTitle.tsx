@@ -1,5 +1,4 @@
 import { BaseAsset, PairAsset } from "@/components/Atoms";
-import { Token } from "@/defi/types";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import { Box, Typography, BoxProps } from "@mui/material";
 import { MockedAsset } from "@/store/assets/assets.types";

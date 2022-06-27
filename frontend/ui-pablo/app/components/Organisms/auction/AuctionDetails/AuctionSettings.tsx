@@ -5,8 +5,9 @@ import {
   Typography, 
   useTheme, 
 } from "@mui/material";
-import { LiquidityBootstrappingPool, LiquidityBootstrappingPoolStats } from "@/store/pools/pools.types";
+import { LiquidityBootstrappingPoolStats } from "@/store/pools/pools.types";
 import { MockedAsset } from "@/store/assets/assets.types";
+import { LiquidityBootstrappingPool } from "@/defi/types";
 
 export type AuctionSettingsProps = {
   auction: LiquidityBootstrappingPool,

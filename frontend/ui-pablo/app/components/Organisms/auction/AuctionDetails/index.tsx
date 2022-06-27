@@ -7,8 +7,9 @@ import { LaunchDescrition } from "./LauchDescription";
 import { LaunchDetails } from "./LaunchDetails";
 import { AuctionSettings } from "./AuctionSettings";
 import { AuctionStatistics } from "./AuctionStatistics";
-import { LiquidityBootstrappingPoolStats, LiquidityBootstrappingPool } from "@/store/pools/pools.types";
+import { LiquidityBootstrappingPoolStats } from "@/store/pools/pools.types";
 import { MockedAsset } from "@/store/assets/assets.types";
+import { LiquidityBootstrappingPool } from "@/defi/types";
 
 export type AuctionDetailsProps = {
   auction: LiquidityBootstrappingPool,

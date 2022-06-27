@@ -17,7 +17,7 @@ import { useAppSelector } from "@/hooks/store";
 import moment from "moment-timezone";
 import { Link } from "@/components/Molecules";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
-import { LiquidityBootstrappingPool } from "@/store/pools/pools.types";
+import { LiquidityBootstrappingPool } from "@/defi/types";
 import { getShortAddress } from "@/utils/string";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";

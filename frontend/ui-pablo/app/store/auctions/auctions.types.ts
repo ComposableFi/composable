@@ -1,4 +1,5 @@
-import { LiquidityBootstrappingPool, LiquidityBootstrappingPoolStats } from "@/store/pools/pools.types";
+import { LiquidityBootstrappingPool } from "@/defi/types";
+import { LiquidityBootstrappingPoolStats } from "@/store/pools/pools.types";
 export interface PoolTradeHistory {
     baseAssetAmount: string;
     baseAssetId: number;

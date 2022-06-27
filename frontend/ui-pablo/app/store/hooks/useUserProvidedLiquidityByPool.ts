@@ -1,4 +1,3 @@
-import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
 import { calcaulateProvidedLiquidity } from "@/defi/utils";
 import { liquidityTransactionsByAddressAndPool } from "@/updaters/pools/subsquid";
 import { useEffect, useMemo, useState } from "react";
@@ -7,6 +6,7 @@ import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
+import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 /**
  * Provides the amount of liquidity
  * added by the user, and its value in

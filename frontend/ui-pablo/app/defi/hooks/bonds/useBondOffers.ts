@@ -1,9 +1,9 @@
-import { OfferRow } from "@/defi/types";
+import { ConstantProductPool, OfferRow, StableSwapPool } from "@/defi/types";
 import { useEffect, useMemo } from "react";
 import useStore from "@/store/useStore";
 import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardingPools";
 import BigNumber from "bignumber.js";
-import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
+
 import { MockedAsset } from "@/store/assets/assets.types";
 import { DEFAULT_NETWORK_ID, fetchBondOffers } from "@/defi/utils";
 import { useParachainApi } from "substrate-react";

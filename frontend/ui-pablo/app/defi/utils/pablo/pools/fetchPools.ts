@@ -2,7 +2,7 @@ import {
   StableSwapPool,
   ConstantProductPool,
   LiquidityBootstrappingPool,
-} from "@/store/pools/pools.types";
+} from "@/defi/types";
 import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
 import { decodeLbp, decodeCpp, decodeSsp } from "../pools";

@@ -6,8 +6,9 @@ import {
   useTheme, 
 } from "@mui/material";
 import BigNumber from "bignumber.js";
-import { LiquidityBootstrappingPool, LiquidityBootstrappingPoolStats } from "@/store/pools/pools.types";
+import { LiquidityBootstrappingPoolStats } from "@/store/pools/pools.types";
 import { MockedAsset } from "@/store/assets/assets.types";
+import { LiquidityBootstrappingPool } from "@/defi/types";
 
 export type AuctionStatisticsProps = {
   auction: LiquidityBootstrappingPool,

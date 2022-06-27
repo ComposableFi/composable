@@ -10,9 +10,6 @@ import {
   alpha,
 } from "@mui/material";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
-import { ISupplySummary } from "../../../store/bonds/bonds.types";
-import { useState } from "react";
-import { useAsyncEffect } from "../../../hooks/useAsyncEffect";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { useUSDPriceByAssetId } from "@/store/assets/hooks";

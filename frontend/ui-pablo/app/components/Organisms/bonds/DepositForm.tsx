@@ -1,5 +1,4 @@
 import { BigNumberInput, Label } from "@/components/Atoms";
-import { getToken } from "@/defi/Tokens";
 import {
   Box,
   Button,
@@ -14,21 +13,19 @@ import { useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
 import { useAppSelector } from "@/hooks/store";
 import {
+  closeConfirmingModal,
   openConfirmingModal,
   openWrongAmountEnteredModal,
 } from "@/stores/ui/uiSlice";
 import { PreviewPurchaseModal } from "./PreviewPurchaseModal";
 import { useDispatch } from "react-redux";
 import { WrongAmountEnteredModal } from "./WrongAmountEnteredModal";
-import {
-  IDepositSummary,
-  ISupplySummary,
-} from "../../../store/bonds/bonds.types";
-import { useAsyncEffect } from "../../../hooks/useAsyncEffect";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
 import { useAssetBalance } from "@/store/assets/hooks";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { usePurchaseBond } from "@/store/hooks/bond/usePurchaseBond";
+import { ConfirmingModal } from "../swap/ConfirmingModal";
 
 const containerBoxProps = (theme: Theme) =>
   ({
@@ -127,6 +124,23 @@ export const DepositForm: React.FC<DepositFormProps> = ({
     }
   }, [principalBalance, bond]);
 
+  const purchaseBond = usePurchaseBond(bond.selectedBondOffer ? bond.selectedBondOffer.offerId : new BigNumber(-1), amount);
+
+  const [isTxProcessing, setIsTxProcessing] = useState(false);
+
+  const onPurchaseBond = async () => {
+    dispatch(closeConfirmingModal());
+    setIsTxProcessing(true);
+
+    purchaseBond().then(_ => {
+      setIsTxProcessing(false);
+      bond.updateBondInfo();
+    }).catch((err) => {
+      console.error(err)
+      setIsTxProcessing(false);
+    })
+  }
+
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>
       <Typography variant="h6">Bond</Typography>
@@ -209,6 +223,7 @@ export const DepositForm: React.FC<DepositFormProps> = ({
         />
       </Box>
       <PreviewPurchaseModal
+        onPurchaseBond={onPurchaseBond}
         bond={bond}
         rewardableTokens={bond.selectedBondOffer ? bond.selectedBondOffer.nbOfBonds.toString() : "0"}
         amount={amount}
@@ -216,6 +231,7 @@ export const DepositForm: React.FC<DepositFormProps> = ({
         open={isOpenPreviewPurchaseModal}
       />
       <WrongAmountEnteredModal open={isWrongAmountEnteredModalOpen} />
+      <ConfirmingModal open={isTxProcessing} />
     </Box>
   );
 };

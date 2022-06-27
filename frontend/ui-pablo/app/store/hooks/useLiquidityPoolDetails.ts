@@ -1,4 +1,4 @@
-import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
+import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 import BigNumber from "bignumber.js";
 import { useState, useEffect, useMemo } from "react";
 import useStore from "@/store/useStore";

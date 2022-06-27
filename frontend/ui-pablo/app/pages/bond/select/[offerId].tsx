@@ -12,8 +12,6 @@ import { Link } from "@/components";
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useSnackbar } from "notistack";
-import { useDepositSummary } from "@/store/hooks/bond/useDepositSummary";
-import { useSupplySummary } from "@/store/hooks/bond/useSupplySummary";
 import useBondOffer from "@/defi/hooks/bonds/useBondOffer";
 
 const standardPageSize = {

@@ -1,4 +1,4 @@
-import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
+import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 import {
   createPabloPoolAccountId,
   fetchBalanceByAssetId,

@@ -1,4 +1,5 @@
-import { LiquidityBootstrappingPool, LiquidityBootstrappingPoolStats } from "../pools/pools.types";
+import { LiquidityBootstrappingPool } from "@/defi/types";
+import { LiquidityBootstrappingPoolStats } from "../pools/pools.types";
 import { StoreSlice } from "../types";
 import { AuctionsSlice, PoolTradeHistory } from "./auctions.types";
 import {

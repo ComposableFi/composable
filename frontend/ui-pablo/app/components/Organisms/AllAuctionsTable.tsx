@@ -17,7 +17,7 @@ import React, { useState } from "react";
 import { KeyboardArrowDown } from "@mui/icons-material";
 import { KeyboardArrowUp } from "@mui/icons-material";
 import { AuctionStatusIndicator } from "./auction/AuctionStatusIndicator";
-import { LiquidityBootstrappingPool } from "@/store/pools/pools.types";
+import { LiquidityBootstrappingPool } from "@/defi/types";
 import { useLiquidityBootstrappingPools } from "@/defi/hooks/auctions";
 
 export const AllAuctionsTable: React.FC<TableContainerProps> = ({

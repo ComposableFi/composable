@@ -1,7 +1,7 @@
 import { BondOffer } from "@/defi/types";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardingPools";
-import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
+import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { decodeBondOffer, DEFAULT_NETWORK_ID, fetchVesitngPeriod } from "@/defi/utils";
 import { useParachainApi } from "substrate-react";

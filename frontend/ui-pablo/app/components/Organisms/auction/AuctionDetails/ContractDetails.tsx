@@ -3,8 +3,8 @@ import { BaseAsset, Link } from "@/components";
 import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
 import OpenInNewRoundedIcon from "@mui/icons-material/OpenInNewRounded";
 import { useCallback } from "react";
-import { LiquidityBootstrappingPool } from "@/store/pools/pools.types";
 import { MockedAsset } from "@/store/assets/assets.types";
+import { LiquidityBootstrappingPool } from "@/defi/types/pablo/LiquidityBootstrappingPool";
 
 export type ContractDetailsProps = {
   auction: LiquidityBootstrappingPool;
