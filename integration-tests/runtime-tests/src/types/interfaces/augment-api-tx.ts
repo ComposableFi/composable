@@ -393,11 +393,11 @@ declare module "@polkadot/api-base/types/submittable" {
           newUncles:
             | Vec<SpRuntimeHeader>
             | (
-              | SpRuntimeHeader
-              | { parentHash?: any; number?: any; stateRoot?: any; extrinsicsRoot?: any; digest?: any }
-              | string
-              | Uint8Array
-            )[]
+                | SpRuntimeHeader
+                | { parentHash?: any; number?: any; stateRoot?: any; extrinsicsRoot?: any; digest?: any }
+                | string
+                | Uint8Array
+              )[]
         ) => SubmittableExtrinsic<ApiType>,
         [Vec<SpRuntimeHeader>]
       >;
@@ -1050,16 +1050,16 @@ declare module "@polkadot/api-base/types/submittable" {
           rewards:
             | Vec<ITuple<[PalletCrowdloanRewardsModelsRemoteAccount, u128, u64]>>
             | [
-              (
-                | PalletCrowdloanRewardsModelsRemoteAccount
-                | { RelayChain: any }
-                | { Ethereum: any }
-                | string
-                | Uint8Array
-              ),
-              u128 | AnyNumber | Uint8Array,
-              u64 | AnyNumber | Uint8Array
-            ][]
+                (
+                  | PalletCrowdloanRewardsModelsRemoteAccount
+                  | { RelayChain: any }
+                  | { Ethereum: any }
+                  | string
+                  | Uint8Array
+                ),
+                u128 | AnyNumber | Uint8Array,
+                u64 | AnyNumber | Uint8Array
+              ][]
         ) => SubmittableExtrinsic<ApiType>,
         [Vec<ITuple<[PalletCrowdloanRewardsModelsRemoteAccount, u128, u64]>>]
       >;
@@ -1712,6 +1712,10 @@ declare module "@polkadot/api-base/types/submittable" {
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
     ibc: {
+      createClient: AugmentedSubmittable<
+        (msg: PalletIbcAny | { typeUrl?: any; value?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>,
+        [PalletIbcAny]
+      >;
       deliver: AugmentedSubmittable<
         (
           messages: Vec<PalletIbcAny> | (PalletIbcAny | { typeUrl?: any; value?: any } | string | Uint8Array)[]
@@ -1749,13 +1753,13 @@ declare module "@polkadot/api-base/types/submittable" {
           params:
             | PalletIbcPingSendPingParams
             | {
-              data?: any;
-              timeoutHeightOffset?: any;
-              timeoutTimestampOffset?: any;
-              channelId?: any;
-              destPortId?: any;
-              destChannelId?: any;
-            }
+                data?: any;
+                timeoutHeight?: any;
+                timeoutTimestamp?: any;
+                channelId?: any;
+                destPortId?: any;
+                destChannelId?: any;
+              }
             | string
             | Uint8Array
         ) => SubmittableExtrinsic<ApiType>,
@@ -2132,16 +2136,16 @@ declare module "@polkadot/api-base/types/submittable" {
           info:
             | PalletIdentityIdentityInfo
             | {
-              additional?: any;
-              display?: any;
-              legal?: any;
-              web?: any;
-              riot?: any;
-              email?: any;
-              pgpFingerprint?: any;
-              image?: any;
-              twitter?: any;
-            }
+                additional?: any;
+                display?: any;
+                legal?: any;
+                web?: any;
+                riot?: any;
+                email?: any;
+                pgpFingerprint?: any;
+                image?: any;
+                twitter?: any;
+              }
             | string
             | Uint8Array
         ) => SubmittableExtrinsic<ApiType>,
@@ -2175,19 +2179,19 @@ declare module "@polkadot/api-base/types/submittable" {
           subs:
             | Vec<ITuple<[AccountId32, Data]>>
             | [
-              AccountId32 | string | Uint8Array,
-              (
-                | Data
-                | { None: any }
-                | { Raw: any }
-                | { BlakeTwo256: any }
-                | { Sha256: any }
-                | { Keccak256: any }
-                | { ShaThree256: any }
-                | string
-                | Uint8Array
-              )
-            ][]
+                AccountId32 | string | Uint8Array,
+                (
+                  | Data
+                  | { None: any }
+                  | { Raw: any }
+                  | { BlakeTwo256: any }
+                  | { Sha256: any }
+                  | { Keccak256: any }
+                  | { ShaThree256: any }
+                  | string
+                  | Uint8Array
+                )
+              ][]
         ) => SubmittableExtrinsic<ApiType>,
         [Vec<ITuple<[AccountId32, Data]>>]
       >;
@@ -2498,6 +2502,16 @@ declare module "@polkadot/api-base/types/submittable" {
         [AccountId32, u32, CommonMosaicRemoteAssetId, u128]
       >;
       /**
+       * Adds a remote AMM for a specific Network
+       **/
+      addRemoteAmmId: AugmentedSubmittable<
+        (
+          networkId: u32 | AnyNumber | Uint8Array,
+          ammId: u128 | AnyNumber | Uint8Array
+        ) => SubmittableExtrinsic<ApiType>,
+        [u32, u128]
+      >;
+      /**
        * Claims user funds from the `OutgoingTransactions`, in case that the Relayer has not
        * picked them up.
        **/
@@ -2517,6 +2531,16 @@ declare module "@polkadot/api-base/types/submittable" {
           to: AccountId32 | string | Uint8Array
         ) => SubmittableExtrinsic<ApiType>,
         [u128, AccountId32]
+      >;
+      /**
+       * Removes a remote AMM for a specific Network
+       **/
+      removeRemoteAmmId: AugmentedSubmittable<
+        (
+          networkId: u32 | AnyNumber | Uint8Array,
+          ammId: u128 | AnyNumber | Uint8Array
+        ) => SubmittableExtrinsic<ApiType>,
+        [u32, u128]
       >;
       /**
        * Burns funds waiting in incoming_transactions that are still unclaimed.
@@ -2635,9 +2659,12 @@ declare module "@polkadot/api-base/types/submittable" {
           assetId: u128 | AnyNumber | Uint8Array,
           address: ComposableSupportEthereumAddress | string | Uint8Array,
           amount: u128 | AnyNumber | Uint8Array,
+          swapToNative: bool | boolean | Uint8Array,
+          sourceUserAccount: AccountId32 | string | Uint8Array,
+          ammSwapInfo: Option<PalletMosaicAmmSwapInfo> | null | object | string | Uint8Array,
           keepAlive: bool | boolean | Uint8Array
         ) => SubmittableExtrinsic<ApiType>,
-        [u32, u128, ComposableSupportEthereumAddress, u128, bool]
+        [u32, u128, ComposableSupportEthereumAddress, u128, bool, AccountId32, Option<PalletMosaicAmmSwapInfo>, bool]
       >;
       /**
        * Update a network asset mapping.
@@ -4050,6 +4077,40 @@ declare module "@polkadot/api-base/types/submittable" {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
+    transfer: {
+      openChannel: AugmentedSubmittable<
+        (
+          params:
+            | IbcTraitOpenChannelParams
+            | { order?: any; connectionId?: any; counterpartyPortId?: any; version?: any }
+            | string
+            | Uint8Array
+        ) => SubmittableExtrinsic<ApiType>,
+        [IbcTraitOpenChannelParams]
+      >;
+      setPalletParams: AugmentedSubmittable<
+        (
+          params: IbcTransferPalletParams | { sendEnabled?: any; receiveEnabled?: any } | string | Uint8Array
+        ) => SubmittableExtrinsic<ApiType>,
+        [IbcTransferPalletParams]
+      >;
+      transfer: AugmentedSubmittable<
+        (
+          params:
+            | IbcTransferTransferParams
+            | { to?: any; sourceChannel?: any; timeoutTimestamp?: any; timeoutHeight?: any; revisionNumber?: any }
+            | string
+            | Uint8Array,
+          assetId: u128 | AnyNumber | Uint8Array,
+          amount: u128 | AnyNumber | Uint8Array
+        ) => SubmittableExtrinsic<ApiType>,
+        [IbcTransferTransferParams, u128, u128]
+      >;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
     treasury: {
       /**
        * Approve a proposal. At a later time, the proposal will be allocated to the beneficiary
@@ -4421,11 +4482,11 @@ declare module "@polkadot/api-base/types/submittable" {
           vestingSchedules:
             | Vec<ComposableTraitsVestingVestingSchedule>
             | (
-              | ComposableTraitsVestingVestingSchedule
-              | { window?: any; periodCount?: any; perPeriod?: any }
-              | string
-              | Uint8Array
-            )[]
+                | ComposableTraitsVestingVestingSchedule
+                | { window?: any; periodCount?: any; perPeriod?: any }
+                | string
+                | Uint8Array
+              )[]
         ) => SubmittableExtrinsic<ApiType>,
         [MultiAddress, u128, Vec<ComposableTraitsVestingVestingSchedule>]
       >;

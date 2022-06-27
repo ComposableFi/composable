@@ -54,10 +54,7 @@ import type {
   FrameSupportScheduleLookupError,
   FrameSupportScheduleMaybeHashed,
   FrameSystemAccountInfo,
-<<<<<<< HEAD
   IbcTraitOpenChannelParams,
-=======
->>>>>>> 5d2f7281 (chore: make style)
   OrmlTokensAccountData,
   OrmlTokensBalanceLock,
   OrmlTokensReserveData,
@@ -80,15 +77,12 @@ import type {
   PalletDemocracyVoteVoting,
   PalletDutchAuctionSellOrder,
   PalletDutchAuctionTakeOrder,
-<<<<<<< HEAD
   PalletIbcAny,
   PalletIbcConnectionParams,
   PalletIbcErrorsIbcError,
   PalletIbcEventsIbcEvent,
   PalletIbcIbcConsensusState,
   PalletIbcPingSendPingParams,
-=======
->>>>>>> 5d2f7281 (chore: make style)
   PalletIdentityBitFlags,
   PalletIdentityIdentityInfo,
   PalletIdentityJudgement,
