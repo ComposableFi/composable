@@ -34,8 +34,10 @@
 )]
 
 mod prelude;
-#[cfg(any(feature = "runtime-benchmarks", test))]
+#[cfg(test)]
 mod test;
+#[cfg(any(feature = "runtime-benchmarks", test))]
+mod benchmarking;
 pub mod weights;
 
 pub use pallet::*;

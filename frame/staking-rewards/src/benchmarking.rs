@@ -1,9 +1,7 @@
 //! Benchmarks
 use crate::{
-	test::{get_default_reward_pool, runtime::ALICE},
 	*,
 };
-use composable_tests_helpers::test::currency::{PICA, USDT};
 use composable_traits::{
 	staking::{
 		lock::LockConfig, RewardConfig, RewardPoolConfiguration,
@@ -28,7 +26,7 @@ fn get_reward_pool<T: Config>(
 > {
 	let pool_init_config = RewardRateBasedIncentive {
 		owner,
-		asset_id: PICA::ID.into(),
+		asset_id: 100.into(),
 		end_block: 5_u128.saturated_into(),
 		reward_configs: reward_config::<T>(),
 		lock: lock_config::<T>(),
@@ -50,12 +48,12 @@ fn lock_config<T: Config>(
 fn reward_config<T: Config>(
 ) -> BoundedBTreeMap<T::AssetId, RewardConfig<T::AssetId, T::Balance>, T::MaxRewardConfigsPerPool> {
 	let config = RewardConfig {
-		asset_id: USDT::ID.into(),
+		asset_id: 101.into(),
 		max_rewards: 100_u128.into(),
 		reward_rate: Perbill::from_percent(10),
 	};
 	let mut rewards = BTreeMap::new();
-	rewards.insert(USDT::ID.into(), config);
+	rewards.insert(101.into(), config);
 	BoundedBTreeMap::try_from(rewards).unwrap()
 }
 

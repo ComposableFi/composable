@@ -1,9 +1,7 @@
 use crate::test::prelude::*;
 use composable_traits::{
-	currency::{Exponent, LocalAssets},
-	defi::DeFiComposableConfig,
+	currency::LocalAssets,
 	governance::{GovernanceRegistry, SignedRawOrigin},
-	oracle::Price,
 };
 
 use frame_support::{

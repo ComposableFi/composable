@@ -1,15 +1,14 @@
 use crate::{
 	test::{
-		prelude::{AccountId, H256},
+		prelude::H256,
 		runtime::*,
 	},
 	Config,
 };
-use composable_tests_helpers::test::currency::{CurrencyId, PICA, USDT};
 use composable_traits::{
 	staking::{
 		lock::LockConfig, RewardConfig, RewardPoolConfiguration,
-		RewardPoolConfiguration::RewardRateBasedIncentive, Rewards,
+		RewardPoolConfiguration::RewardRateBasedIncentive,
 	},
 	time::{DurationSeconds, ONE_HOUR, ONE_MINUTE},
 };
@@ -18,11 +17,9 @@ use frame_system::EventRecord;
 use sp_arithmetic::Perbill;
 use sp_core::sr25519::Public;
 use sp_std::collections::btree_map::BTreeMap;
+use composable_tests_helpers::test::currency::{PICA, USDT};
 
-#[cfg(any(feature = "runtime-benchmarks", test))]
-mod benchmarking;
 mod prelude;
-#[cfg(test)]
 mod runtime;
 
 #[test]
