@@ -58,7 +58,7 @@ jobs:
           curl -L "https://github.com/docker/compose/releases/download/v2.6.0/docker-compose-$(uname -s)-$(uname -m)" -o ./docker-compose
           chmod +x ./docker-compose
 
-#          tag=$(git rev-parse --short=9 HEAD)
+          # tag=$(git rev-parse --short=9 HEAD)
           tag="835c0e231"
 
           sed -ri "s/\\$\\{TAG\\}/$tag/" docker-compose-ci.yml
