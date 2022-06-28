@@ -29,6 +29,9 @@ pub enum AccessRights {
 	/// Account has access only to `add_vault_id` function
 	/// [`associate_vault`](InstrumentalProtocolStrategy::associate_vault()) function.
 	AssociateVaultId,
+	/// Account has access only to `set_access` function
+	/// [`associate_vault`](InstrumentalProtocolStrategy::associate_vault()) function.
+	SetAccess,
 }
 
 #[derive(Clone, Copy, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]
@@ -93,4 +96,6 @@ pub trait InstrumentalProtocolStrategy {
 		old_pool_id: Self::PoolId,
 		new_pool_id: Self::PoolId,
 	) -> DispatchResult;
+
+	fn set_access(account: &Self::AccountId, access: AccessRights) -> DispatchResult;
 }

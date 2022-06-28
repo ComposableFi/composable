@@ -33,7 +33,7 @@ pub mod pallet {
 	use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
-		instrumental::{InstrumentalDynamicStrategy, InstrumentalProtocolStrategy, AccessRights},
+		instrumental::{AccessRights, InstrumentalDynamicStrategy, InstrumentalProtocolStrategy},
 		vault::StrategicVault,
 	};
 	use frame_support::{
@@ -235,6 +235,13 @@ pub mod pallet {
 
 		fn account_id() -> Self::AccountId {
 			T::PalletId::get().into_account()
+		}
+
+		#[transactional]
+		fn set_access(_account_id: &T::AccountId, _access: AccessRights) -> DispatchResult {
+			// TODO: (belousm)
+			// The same functionality like in `instrumental-strategy-pablo`
+			Ok(())
 		}
 
 		#[transactional]
