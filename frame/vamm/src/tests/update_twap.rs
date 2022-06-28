@@ -2,8 +2,8 @@ use crate::{
 	mock::{Balance, Event, ExtBuilder, MockRuntime, System, TestPallet},
 	pallet::{self, Error},
 	tests::{
-		any_sane_asset_amount, any_vamm_state, as_decimal, balance_range, run_for_seconds,
-		twap_update_delay, Decimal, Timestamp, RUN_CASES,
+		any_sane_asset_amount, any_vamm_state, as_decimal, run_for_seconds, twap_update_delay,
+		Decimal, Timestamp, RUN_CASES,
 	},
 	VammState,
 };
@@ -30,18 +30,6 @@ prop_compose! {
 // -------------------------------------------------------------------------------------------------
 //                                           Unit Tests
 // -------------------------------------------------------------------------------------------------
-
-#[test]
-fn should_succeed_computing_correct_reciprocal_twap() {
-	assert_ok!(
-		TestPallet::reciprocal_twap(&Decimal::from_inner(10_u128.pow(18) * 2)),
-		Decimal::from_inner(500000000000000000)
-	);
-	assert_ok!(
-		TestPallet::reciprocal_twap(&Decimal::from_inner(10_u128.pow(18) * 50)),
-		Decimal::from_inner(20000000000000000)
-	);
-}
 
 #[test]
 fn update_twap_fails_if_vamm_does_not_exist() {
@@ -228,17 +216,5 @@ proptest! {
 					TestPallet::update_twap(0, None)
 				);
 			})
-	}
-
-	#[test]
-	fn should_succeed_computing_correct_reciprocal_twap_proptest(
-		twap in balance_range(),
-	) {
-		let twap = Decimal::from_inner(twap);
-		let twap_reciprocal = twap.reciprocal().unwrap();
-		assert_ok!(
-			TestPallet::reciprocal_twap(&twap),
-			twap_reciprocal
-		);
 	}
 }

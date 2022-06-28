@@ -129,7 +129,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	use codec::{Codec, FullCodec};
-	use composable_maths::labs::numbers::{IntoDecimal, UnsignedMath};
+	use composable_maths::labs::numbers::{IntoDecimal, TryReciprocal, UnsignedMath};
 	use composable_traits::vamm::{
 		AssetType, Direction, MovePriceConfig, SwapConfig, SwapOutput, SwapSimulationConfig, Vamm,
 		VammConfig, MINIMUM_TWAP_PERIOD,
@@ -208,12 +208,13 @@ pub mod pallet {
 		/// Signed decimal fixed point number.
 		type Decimal: Default
 			+ FixedPointNumber<Inner = Self::Balance>
-			+ One
-			+ Zero
 			+ FullCodec
 			+ MaxEncodedLen
 			+ MaybeSerializeDeserialize
-			+ TypeInfo;
+			+ One
+			+ TryReciprocal
+			+ TypeInfo
+			+ Zero;
 
 		/// The Integer type used by the pallet for computing swaps.
 		type Integer: Integer;
@@ -660,7 +661,7 @@ pub mod pallet {
 
 			match asset_type {
 				AssetType::Base => Ok(vamm_state.base_asset_twap),
-				AssetType::Quote => Ok(Self::reciprocal_twap(&vamm_state.base_asset_twap)?),
+				AssetType::Quote => Ok(vamm_state.base_asset_twap.try_reciprocal()?),
 			}
 		}
 
@@ -992,10 +993,6 @@ pub mod pallet {
 			)?;
 
 			Ok(base_twap)
-		}
-
-		pub fn reciprocal_twap(asset_twap: &DecimalOf<T>) -> Result<DecimalOf<T>, DispatchError> {
-			Ok(asset_twap.reciprocal().ok_or(ArithmeticError::DivisionByZero)?)
 		}
 
 		fn calculate_twap(

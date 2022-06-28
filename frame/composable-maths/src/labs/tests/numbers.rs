@@ -1,5 +1,6 @@
-use crate::{div_mod_with_acc, multiply_by_rational};
-use frame_support::assert_err;
+use crate::labs::numbers::{div_mod_with_acc, multiply_by_rational, TryReciprocal};
+use frame_support::{assert_err, assert_ok};
+use num_traits::Zero;
 use proptest::prelude::*;
 use sp_arithmetic::{FixedI128, FixedI64, FixedPointNumber, FixedU128};
 use sp_runtime::ArithmeticError;
@@ -86,6 +87,14 @@ proptest! {
 			check_reconstruction(a, b, acc, q, r);
 		}
 	}
+
+	#[test]
+	fn should_succeed_returning_reciprocal(
+		x in nonzero_quad()
+	) {
+		let x = FixedU128::from_inner(x);
+		assert_ok!(x.try_reciprocal());
+	}
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -101,4 +110,10 @@ fn div_mod_with_acc_branch_2_case1() {
 
 	let (q, r) = div_mod_with_acc(a, b, acc).unwrap();
 	check_reconstruction(a, b, acc, q, r);
+}
+
+#[test]
+fn should_fail_to_compute_reciprocal_returning_division_by_zero() {
+	let x = FixedU128::zero();
+	assert_err!(x.try_reciprocal(), ArithmeticError::DivisionByZero);
 }
