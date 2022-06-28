@@ -226,7 +226,7 @@ pub mod pallet {
 						rewards.insert(reward_config.0, Reward::from(reward_config.1));
 					}
 					RewardPools::<T>::insert(
-						pool_id.clone(),
+						pool_id,
 						RewardPool {
 							owner: owner.clone(),
 							asset_id,
