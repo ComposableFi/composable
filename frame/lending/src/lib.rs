@@ -99,7 +99,7 @@ pub mod pallet {
 		},
 		transactional,
 		weights::WeightToFeePolynomial,
-		PalletId,
+		PalletId, BoundedVec,
 	};
 	use frame_system::{
 		offchain::{AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer},

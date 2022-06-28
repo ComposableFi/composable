@@ -64,7 +64,7 @@ pub mod pallet {
 		dispatch::DispatchResultWithPostInfo,
 		pallet_prelude::{OptionQuery, StorageMap, StorageValue},
 		traits::{EnsureOrigin, Get, IsType, UnixTime},
-		PalletId, Parameter, Twox64Concat,
+		BoundedVec, PalletId, Parameter, Twox64Concat,
 	};
 	use frame_system::{ensure_signed, pallet_prelude::OriginFor};
 	use scale_info::TypeInfo;
@@ -111,6 +111,7 @@ pub mod pallet {
 		type XcmSender: xcm::latest::SendXcm;
 
 		type CanModifyStrategies: EnsureOrigin<Self::Origin>;
+        type MaxLiquidationStrategiesAmount: Get<u32>;
 	}
 
 	#[pallet::event]
@@ -122,6 +123,7 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		NoLiquidationEngineFound,
+        InvalidLiquidationStrategiesVector,
 	}
 
 	#[pallet::pallet]
@@ -243,10 +245,24 @@ pub mod pallet {
 			order: Sell<Self::MayBeAssetId, Self::Balance>,
 			configuration: Vec<Self::LiquidationStrategyId>,
 		) -> Result<T::OrderId, DispatchError> {
+			let configuration = BoundedVec::try_from(configuration)
+				.map_err(|()| Error::<T>::InvalidLiquidationStrategiesVector)?;
+			Self::do_liquidate(from_to, order, configuration)
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		fn do_liquidate(
+			from_to: &T::AccountId,
+			order: Sell<T::MayBeAssetId, T::Balance>,
+			configuration: BoundedVec<T::LiquidationStrategyId, T::MaxLiquidationStrategiesAmount>,
+		) -> Result<T::OrderId, DispatchError> {
 			let mut configuration = configuration;
 			if configuration.is_empty() {
-				configuration.push(DefaultStrategyIndex::<T>::get())
-			};
+				configuration
+					.try_push(DefaultStrategyIndex::<T>::get())
+					.map_err(|()| Error::<T>::InvalidLiquidationStrategiesVector)?;
+			};			
 			for id in configuration {
 				let configuration = Strategies::<T>::get(id);
 				if let Some(configuration) = configuration {
@@ -255,7 +271,7 @@ pub mod pallet {
 							T::DutchAuction::ask(from_to, order.clone(), configuration),
 						_ =>
 							return Err(DispatchError::Other(
-								"as for now, only auction liquidators implemented",
+								"As for now, only auction liquidation strategy is implemented",
 							)),
 					};
 					if let Ok(order_id) = result {
@@ -267,5 +283,4 @@ pub mod pallet {
 
 			Err(Error::<T>::NoLiquidationEngineFound.into())
 		}
-	}
-}
+	}}
