@@ -71,6 +71,7 @@
   - [Runtime Tests](./codespaces/runtime-tests.md)
 
 # 🎨 PALLETS AND INTEGRATION GUIDES
+- [Pallets & Integration](./pallets-integration-guides.md)
 - [crowdloan-rewards](./pallets/crowdloan-rewards.md)
     - [Extrinsics](./pallets/crowdloan-rewards/extrinsics.md)
     - [Integration Guide](./pallets/crowdloan-rewards/integration-guide.md)
