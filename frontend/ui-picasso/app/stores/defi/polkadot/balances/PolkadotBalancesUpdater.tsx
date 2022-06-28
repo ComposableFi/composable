@@ -7,16 +7,18 @@ import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 import { SubstrateNetwork, SubstrateNetworkId } from "@/defi/polkadot/types";
 import { toTokenUnitsBN } from "@/utils/BN";
 
-import { AnyAction, Dispatch } from "@reduxjs/toolkit";
 import { useContext, useEffect } from "react";
-import { useDispatch } from "react-redux";
-import { clearBalance, updateBalance } from "./slice";
+
+import { useStore } from "@/stores/root";
 
 export async function updateBalances(
   account: string,
   chainApi: ParachainApi,
   chainId: string,
-  appDispatch: Dispatch<AnyAction>
+  updateBalance: (data: {
+    substrateNetworkId: SubstrateNetworkId;
+    balance: string;
+  }) => void
 ) {
   const { parachainApi } = chainApi;
   if (!parachainApi) return;
@@ -33,12 +35,10 @@ export async function updateBalances(
   const { decimals } = SUBSTRATE_NETWORKS[chainId as SubstrateNetworkId];
   const bnBalance = toTokenUnitsBN(free, decimals);
 
-  appDispatch(
-    updateBalance({
-      substrateNetworkId: chainId as any,
-      balance: bnBalance.toString(),
-    })
-  );
+  updateBalance({
+    substrateNetworkId: chainId as any,
+    balance: bnBalance.toString(),
+  });
 }
 
 const PolkadotBalancesUpdater = ({
@@ -46,7 +46,9 @@ const PolkadotBalancesUpdater = ({
 }: {
   substrateChains: SubstrateNetwork[];
 }) => {
-  const appDispatch = useDispatch();
+  const { updateBalance, clearBalance } = useStore(
+    ({ substrateBalances }) => substrateBalances
+  );
   const { selectedAccount, parachainProviders } = useContext(ParachainContext);
   const picassoProvider = usePicassoProvider();
 
@@ -58,20 +60,23 @@ const PolkadotBalancesUpdater = ({
             picassoProvider.accounts[selectedAccount].address,
             chain,
             id,
-            appDispatch
+            updateBalance
           ).catch((err) => {
             console.error(err);
           });
         }
       });
     } else if (selectedAccount === -1) {
-      appDispatch(clearBalance());
+      clearBalance();
     }
   }, [
     selectedAccount,
     substrateChains,
-    Object.values(parachainProviders).length,
     picassoProvider.accounts.length,
+    picassoProvider.accounts,
+    parachainProviders,
+    updateBalance,
+    clearBalance,
   ]);
 
   return null;

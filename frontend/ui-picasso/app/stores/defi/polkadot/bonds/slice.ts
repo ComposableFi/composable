@@ -1,11 +1,18 @@
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
-import { createSlice } from "@reduxjs/toolkit";
 import BigNumber from "bignumber.js";
+import { NamedSet } from "zustand/middleware";
+import { StoreSlice } from "@/stores/types";
 
 export interface BondsSlice {
-  openPositions: Array<ActiveBond>;
-  bonds: Array<BondOffer>;
-  total: number;
+  bonds: {
+    openPositions: Array<ActiveBond>;
+    bonds: Array<BondOffer>;
+    bondOfferCount: number | BigNumber;
+    total: number;
+    setBonds: (bonds: BondOffer[]) => void;
+    setBondOfferCount: (bondOfferCount: number | BigNumber) => void;
+    updateOpenPositions: (openPositions: ActiveBond[]) => void;
+  };
 }
 
 export interface VestingSchedule {
@@ -31,28 +38,34 @@ export interface ActiveBond {
   };
 }
 
-const initialState = {
-  bonds: [],
-  bondOfferCount: 0,
-  openPositions: [],
-};
-
-export const bondsSlice = createSlice({
-  name: "Bonds",
-  initialState,
-  reducers: {
-    setBonds: (state, action) => {
-      state.bonds = action.payload;
-    },
-    setBondOfferCount: (state, action) => {
-      state.bondOfferCount = action.payload;
-    },
-    updateOpenPositions: (state, action) => {
-      state.openPositions = action.payload;
-    },
+export const createBondsSlice: StoreSlice<BondsSlice> = (
+  set: NamedSet<BondsSlice>
+) => ({
+  bonds: {
+    bonds: [],
+    bondOfferCount: 0,
+    openPositions: [],
+    total: 0,
+    setBonds: (bonds: BondOffer[]) =>
+      set((state) => ({
+        bonds: {
+          ...state.bonds,
+          bonds,
+        },
+      })),
+    setBondOfferCount: (bondOfferCount: number | BigNumber) =>
+      set((state) => ({
+        bonds: {
+          ...state.bonds,
+          bondOfferCount,
+        },
+      })),
+    updateOpenPositions: (openPositions: ActiveBond[]) =>
+      set((state) => ({
+        bonds: {
+          ...state.bonds,
+          openPositions,
+        },
+      })),
   },
 });
-
-export const { setBonds, setBondOfferCount, updateOpenPositions } = bondsSlice.actions;
-
-export default bondsSlice.reducer;
