@@ -238,7 +238,7 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		fn set_access(_account_id: &T::AccountId, _access: AccessRights) -> DispatchResult {
+		fn set_access(_account_id: T::AccountId, _access: AccessRights) -> DispatchResult {
 			// TODO: (belousm)
 			// The same functionality like in `instrumental-strategy-pablo`
 			Ok(())

@@ -262,7 +262,7 @@ pub mod pallet {
 					access_right == AccessRights::AssociateVaultId,
 				Error::<T>::NotEnoughAccessRights
 			);
-			// TODO(belousm): Ask Kevin do we need check thatd eposits_allowed.
+			// TODO(belousm): Ask Kevin do we need check that 'deposits_allowed'.
 			// ensure!(
 			// 	T::Vault::deposits_allowed(&vault_id).unwrap() == true,
 			// 	Error::<T>::VaultIsStopped
@@ -319,7 +319,7 @@ pub mod pallet {
 				access_right == AccessRights::Full || access_right == AccessRights::SetAccess,
 				Error::<T>::NotEnoughAccessRights
 			);
-			<Self as InstrumentalProtocolStrategy>::set_access(&account_id, access)?;
+			<Self as InstrumentalProtocolStrategy>::set_access(account_id.clone(), access)?;
 			Self::deposit_event(Event::AssociatedAccountId { account_id, access });
 			Ok(().into())
 		}
@@ -340,10 +340,12 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		fn set_access(account_id: &T::AccountId, access: AccessRights) -> DispatchResult {
-			match AdminAccountIds::<T>::try_get(account_id) {
+		fn set_access(account_id: T::AccountId, access: AccessRights) -> DispatchResult {
+			match AdminAccountIds::<T>::try_get(account_id.clone()) {
 				Ok(_) => {
-					AdminAccountIds::<T>::mutate(account_id, |_| access);
+					AdminAccountIds::<T>::mutate(account_id.clone(), |current_access| {
+						*current_access = Some(access);
+					});
 				},
 				Err(_) => AdminAccountIds::<T>::insert(account_id, access),
 			}
@@ -358,9 +360,8 @@ pub mod pallet {
 						pool_id_and_state.state == State::Normal,
 						Error::<T>::TransferringInProgress
 					);
-					Pools::<T>::mutate(asset_id, |_| PoolState {
-						pool_id,
-						state: State::Transferring,
+					Pools::<T>::mutate(asset_id, |pool| {
+						*pool = Some(PoolState { pool_id, state: State::Transferring });
 					});
 					Self::deposit_event(Event::OccuredFundsTransferring {
 						old_pool_id: pool_id_and_state.pool_id,

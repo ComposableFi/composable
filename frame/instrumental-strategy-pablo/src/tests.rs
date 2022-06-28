@@ -213,3 +213,49 @@ fn test_setting_pool_id_for_the_second_time_initiates_transfer() {
 		assert!(transffered_funds_corresponded_to_vault_flag);
 	})
 }
+
+// -------------------------------------------------------------------------------------------------
+//                                             Set access
+// -------------------------------------------------------------------------------------------------
+
+#[test]
+fn test_add_an_admin_account() {
+	ExtBuilder::default().build().execute_with(|| {
+		System::set_block_number(1);
+		set_admin_account_with_full_access().ok();
+		assert_ok!(PabloStrategy::set_access(Origin::signed(ADMIN), ALICE, AccessRights::Full));
+		assert!(
+			pallet::AdminAccountIds::<MockRuntime>::try_get(ALICE).unwrap() == AccessRights::Full
+		);
+		System::assert_last_event(Event::PabloStrategy(pallet::Event::AssociatedAccountId {
+			account_id: ALICE,
+			access: AccessRights::Full,
+		}));
+	})
+}
+
+#[test]
+fn test_change_access_existing_account() {
+	ExtBuilder::default().build().execute_with(|| {
+		System::set_block_number(1);
+		set_admin_account_with_full_access().ok();
+		assert_ok!(PabloStrategy::set_access(Origin::signed(ADMIN), ALICE, AccessRights::Full));
+		assert_ok!(PabloStrategy::set_access(
+			Origin::signed(ADMIN),
+			ALICE,
+			AccessRights::Rebalance
+		));
+		let access = pallet::AdminAccountIds::<MockRuntime>::try_get(ALICE).unwrap();
+		println!("{:?}", access);
+		let system_events = frame_system::Pallet::<MockRuntime>::events();
+		println!("{:?}", system_events);
+		assert!(
+			pallet::AdminAccountIds::<MockRuntime>::try_get(ALICE).unwrap() ==
+				AccessRights::Rebalance
+		);
+		System::assert_last_event(Event::PabloStrategy(pallet::Event::AssociatedAccountId {
+			account_id: ALICE,
+			access: AccessRights::Rebalance,
+		}));
+	})
+}
