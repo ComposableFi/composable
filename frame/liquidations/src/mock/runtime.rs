@@ -226,7 +226,7 @@ impl pallet_dutch_auction::Config for Runtime {
 
 parameter_types! {
 	pub const LiquidationPalletId : PalletId = PalletId(*b"liqudatn");
-    pub const MaxLiquidationStrategiesAmount: u32 = 10;
+	pub const MaxLiquidationStrategiesAmount: u32 = 10;
 }
 
 type LiquidationStrategyId = u32;
@@ -240,8 +240,7 @@ impl pallet_liquidations::Config for Runtime {
 	type PalletId = LiquidationPalletId;
 	type CanModifyStrategies = EnsureRoot<Self::AccountId>;
 	type XcmSender = XcmFake;
-    type MaxLiquidationStrategiesAmount = MaxLiquidationStrategiesAmount;
-
+	type MaxLiquidationStrategiesAmount = MaxLiquidationStrategiesAmount;
 }
 
 #[allow(dead_code)] // not really dead

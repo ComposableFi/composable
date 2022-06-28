@@ -1,6 +1,6 @@
 use crate::{
-	mock::{currency::*, runtime::*},
 	self as pallet_liquidations,
+	mock::{currency::*, runtime::*},
 };
 use codec::Encode;
 use composable_traits::{

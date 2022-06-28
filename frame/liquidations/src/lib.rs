@@ -111,7 +111,7 @@ pub mod pallet {
 		type XcmSender: xcm::latest::SendXcm;
 
 		type CanModifyStrategies: EnsureOrigin<Self::Origin>;
-        type MaxLiquidationStrategiesAmount: Get<u32>;
+		type MaxLiquidationStrategiesAmount: Get<u32>;
 	}
 
 	#[pallet::event]
@@ -123,7 +123,7 @@ pub mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		NoLiquidationEngineFound,
-        InvalidLiquidationStrategiesVector,
+		InvalidLiquidationStrategiesVector,
 	}
 
 	#[pallet::pallet]
@@ -262,7 +262,7 @@ pub mod pallet {
 				configuration
 					.try_push(DefaultStrategyIndex::<T>::get())
 					.map_err(|()| Error::<T>::InvalidLiquidationStrategiesVector)?;
-			};			
+			};
 			for id in configuration {
 				let configuration = Strategies::<T>::get(id);
 				if let Some(configuration) = configuration {
@@ -283,4 +283,5 @@ pub mod pallet {
 
 			Err(Error::<T>::NoLiquidationEngineFound.into())
 		}
-	}}
+	}
+}

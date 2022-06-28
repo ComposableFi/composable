@@ -1,4 +1,4 @@
-//! Lending pallet
+//! Lendmp/ing pallet
 #![cfg_attr(
 	not(any(test, feature = "runtime-benchmarks")),
 	deny(
@@ -79,9 +79,9 @@ pub mod pallet {
 		defi::*,
 		lending::{
 			math::{self, *},
-			BorrowAmountOf, CollateralLpAmountOf, CreateInput, CurrencyPairIsNotSame, Lending,
-			MarketConfig, MarketModelValid, RepayStrategy, TotalDebtWithInterest, UpdateInput,
-			UpdateInputValid,
+			BalanceGreaterThenZero, BorrowAmountOf, CollateralLpAmountOf, CreateInput,
+			CurrencyPairIsNotSame, Lending, MarketConfig, MarketModelValid, RepayStrategy,
+			TotalDebtWithInterest, UpdateInput, UpdateInputValid,
 		},
 		liquidation::Liquidation,
 		oracle::Oracle,
@@ -99,7 +99,7 @@ pub mod pallet {
 		},
 		transactional,
 		weights::WeightToFeePolynomial,
-		PalletId, BoundedVec,
+		PalletId,
 	};
 	use frame_system::{
 		offchain::{AppCrypto, CreateSignedTransaction, SendSignedTransaction, Signer},
@@ -130,7 +130,7 @@ pub mod pallet {
 	#[repr(transparent)]
 	pub struct MarketIndex(
 		#[cfg(test)] // to allow pattern matching in tests outside of this crate
-		pub MarketId,
+		pub  MarketId,
 		#[cfg(not(test))] pub(crate) MarketId,
 	);
 
@@ -680,6 +680,7 @@ pub mod pallet {
 		/// - `amount` : Amount of collateral to be deposited.
 		#[pallet::weight(<T as Config>::WeightInfo::deposit_collateral())]
 		#[transactional]
+
 		pub fn deposit_collateral(
 			origin: OriginFor<T>,
 			market_id: MarketIndex,
@@ -690,7 +691,6 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::CollateralDeposited { sender, market_id, amount });
 			Ok(().into())
 		}
-
 		/// Withdraw collateral from market.
 		/// - `origin` : Sender of this extrinsic.
 		/// - `market_id` : Market index from which collateral will be withdraw.
@@ -1129,6 +1129,108 @@ pub mod pallet {
 
 			Ok(())
 		}
+		fn do_withdraw_collateral(
+			market_id: &<Self as Lending>::MarketId,
+			account: &T::AccountId,
+			amount: Validated<CollateralLpAmountOf<Self>, BalanceGreaterThenZero>,
+		) -> Result<(), DispatchError> {
+			let amount = amount.value();
+			let market = Self::get_market(market_id)?;
+
+			let collateral_balance = AccountCollateral::<T>::try_get(market_id, account)
+				// REVIEW: Perhaps don't default to zero
+				// REVIEW: What is expected behaviour if there is no collateral?
+				.unwrap_or_else(|_| CollateralLpAmountOf::<Self>::zero());
+
+			ensure!(amount <= collateral_balance, Error::<T>::NotEnoughCollateralToWithdraw);
+
+			let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
+			let borrower_balance_with_interest =
+				Self::total_debt_with_interest(market_id, account)?.unwrap_or_zero();
+
+			let borrow_balance_value =
+				Self::get_price(borrow_asset, borrower_balance_with_interest)?;
+
+			let collateral_balance_after_withdrawal_value =
+				Self::get_price(market.collateral_asset, collateral_balance.safe_sub(&amount)?)?;
+
+			let borrower_after_withdrawal = BorrowerData::new(
+				collateral_balance_after_withdrawal_value,
+				borrow_balance_value,
+				market
+					.collateral_factor
+					.try_into_validated()
+					.map_err(|_| Error::<T>::Overflow)?, // TODO: Use a proper error mesage?
+				market.under_collateralized_warn_percent,
+			);
+
+			ensure!(
+				!borrower_after_withdrawal.should_liquidate()?,
+				Error::<T>::WouldGoUnderCollateralized
+			);
+
+			let market_account = Self::account_id(market_id);
+
+			ensure!(
+				<T as Config>::MultiCurrency::can_deposit(market.collateral_asset, account, amount) ==
+					DepositConsequence::Success,
+				Error::<T>::TransferFailed
+			);
+			ensure!(
+				<T as Config>::MultiCurrency::can_withdraw(
+					market.collateral_asset,
+					&market_account,
+					amount
+				)
+				.into_result()
+				.is_ok(),
+				Error::<T>::TransferFailed
+			);
+
+			AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
+				let new_collateral_balance =
+				// REVIEW: Should we default if there's no collateral? Or should an error (something like "NoCollateralToWithdraw") be returned instead?
+				collateral_balance.unwrap_or_default().safe_sub(&amount)?;
+
+				collateral_balance.replace(new_collateral_balance);
+
+				Result::<(), DispatchError>::Ok(())
+			})?;
+			<T as Config>::MultiCurrency::transfer(
+				market.collateral_asset,
+				&market_account,
+				account,
+				amount,
+				true,
+			)
+			.expect("impossible; qed;");
+			Ok(())
+		}
+		fn do_deposit_collateral(
+			market_id: &<Self as Lending>::MarketId,
+			account: &T::AccountId,
+			amount: Validated<CollateralLpAmountOf<Self>, BalanceGreaterThenZero>,
+		) -> Result<(), DispatchError> {
+			let amount = amount.value();
+			let market = Self::get_market(market_id)?;
+			let market_account = Self::account_id(market_id);
+
+			AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
+				let new_collateral_balance =
+					collateral_balance.unwrap_or_default().safe_add(&amount)?;
+				collateral_balance.replace(new_collateral_balance);
+				Result::<(), DispatchError>::Ok(())
+			})?;
+
+			<T as Config>::MultiCurrency::transfer(
+				market.collateral_asset,
+				account,
+				&market_account,
+				amount,
+				true,
+			)?;
+			Ok(())
+		}
 	}
 
 	impl<T: Config> DeFiEngine for Pallet<T> {
@@ -1249,102 +1351,14 @@ pub mod pallet {
 			account: &Self::AccountId,
 			amount: CollateralLpAmountOf<Self>,
 		) -> Result<(), DispatchError> {
-			ensure!(amount > Self::Balance::zero(), Error::<T>::CannotDepositZeroCollateral);
-			let market = Self::get_market(market_id)?;
-			let market_account = Self::account_id(market_id);
-
-			AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
-				let new_collateral_balance =
-					collateral_balance.unwrap_or_default().safe_add(&amount)?;
-				collateral_balance.replace(new_collateral_balance);
-				Result::<(), DispatchError>::Ok(())
-			})?;
-
-			<T as Config>::MultiCurrency::transfer(
-				market.collateral_asset,
-				account,
-				&market_account,
-				amount,
-				true,
-			)?;
-			Ok(())
+			Self::do_deposit_collateral(market_id, account, amount.try_into_validated()?)
 		}
-
 		fn withdraw_collateral(
 			market_id: &Self::MarketId,
 			account: &Self::AccountId,
 			amount: CollateralLpAmountOf<Self>,
 		) -> Result<(), DispatchError> {
-			let market = Self::get_market(market_id)?;
-
-			let collateral_balance = AccountCollateral::<T>::try_get(market_id, account)
-				// REVIEW: Perhaps don't default to zero
-				// REVIEW: What is expected behaviour if there is no collateral?
-				.unwrap_or_else(|_| CollateralLpAmountOf::<Self>::zero());
-
-			ensure!(amount <= collateral_balance, Error::<T>::NotEnoughCollateralToWithdraw);
-
-			let borrow_asset = T::Vault::asset_id(&market.borrow_asset_vault)?;
-			let borrower_balance_with_interest =
-				Self::total_debt_with_interest(market_id, account)?.unwrap_or_zero();
-
-			let borrow_balance_value =
-				Self::get_price(borrow_asset, borrower_balance_with_interest)?;
-
-			let collateral_balance_after_withdrawal_value =
-				Self::get_price(market.collateral_asset, collateral_balance.safe_sub(&amount)?)?;
-
-			let borrower_after_withdrawal = BorrowerData::new(
-				collateral_balance_after_withdrawal_value,
-				borrow_balance_value,
-				market
-					.collateral_factor
-					.try_into_validated()
-					.map_err(|_| Error::<T>::Overflow)?, // TODO: Use a proper error mesage?
-				market.under_collateralized_warn_percent,
-			);
-
-			ensure!(
-				!borrower_after_withdrawal.should_liquidate()?,
-				Error::<T>::WouldGoUnderCollateralized
-			);
-
-			let market_account = Self::account_id(market_id);
-
-			ensure!(
-				<T as Config>::MultiCurrency::can_deposit(market.collateral_asset, account, amount) ==
-					DepositConsequence::Success,
-				Error::<T>::TransferFailed
-			);
-			ensure!(
-				<T as Config>::MultiCurrency::can_withdraw(
-					market.collateral_asset,
-					&market_account,
-					amount
-				)
-				.into_result()
-				.is_ok(),
-				Error::<T>::TransferFailed
-			);
-
-			AccountCollateral::<T>::try_mutate(market_id, account, |collateral_balance| {
-				let new_collateral_balance =
-					// REVIEW: Should we default if there's no collateral? Or should an error (something like "NoCollateralToWithdraw") be returned instead?
-					collateral_balance.unwrap_or_default().safe_sub(&amount)?;
-
-				collateral_balance.replace(new_collateral_balance);
-
-				Result::<(), DispatchError>::Ok(())
-			})?;
-			<T as Config>::MultiCurrency::transfer(
-				market.collateral_asset,
-				&market_account,
-				account,
-				amount,
-				true,
-			)
-			.expect("impossible; qed;");
-			Ok(())
+			Self::do_withdraw_collateral(market_id, account, amount.try_into_validated()?)
 		}
 
 		fn get_markets_for_borrow(borrow: Self::VaultId) -> Vec<Self::MarketId> {

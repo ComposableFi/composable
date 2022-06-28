@@ -329,9 +329,9 @@ impl pallet_dutch_auction::Config for Runtime {
 	type AdminOrigin = EnsureRoot<Self::AccountId>;
 	type XcmSender = XcmFake;
 }
-    parameter_types! {
-	    pub const MaxLiquidationStrategiesAmount: u32 = 10;
-    }
+parameter_types! {
+	pub const MaxLiquidationStrategiesAmount: u32 = 10;
+}
 impl pallet_liquidations::Config for Runtime {
 	type Event = Event;
 	type UnixTime = Timestamp;
@@ -342,8 +342,7 @@ impl pallet_liquidations::Config for Runtime {
 	type WeightInfo = ();
 	type CanModifyStrategies = EnsureRoot<Self::AccountId>;
 	type XcmSender = XcmFake;
-    type MaxLiquidationStrategiesAmount = MaxLiquidationStrategiesAmount;
-
+	type MaxLiquidationStrategiesAmount = MaxLiquidationStrategiesAmount;
 }
 
 pub type Extrinsic = TestXt<Call, ()>;
