@@ -2,13 +2,13 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from "@/stores/root";
 import StatsDummyData from "./dummyData";
 
-interface ApolloTableData {
+export interface ApolloTableData {
   symbol: string;
-  binanceValue: number;
-  pabloValue: number;
-  aggregatedValue: number;
-  apolloValue: number;
-  changeValue: number;
+  binanceValue: number | undefined;
+  // pabloValue: number;
+  // aggregatedValue: number;
+  apolloValue: number | undefined;
+  changeValue: number | undefined;
 }
 
 interface ApolloState {
@@ -25,9 +25,9 @@ export const statsApolloSlice = createSlice({
   reducers: {
     setApolloAssets: (
       state: ApolloState,
-      action: PayloadAction<ApolloTableData>
+      action: PayloadAction<Array<ApolloTableData>>
     ) => {
-      state.assets = { ...state.assets, ...action.payload };
+      state.assets = action.payload;
     },
   },
 });
