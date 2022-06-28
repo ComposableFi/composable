@@ -1,3 +1,4 @@
 .storybook/
 public/workbox*.js
 public/sw.js
+defi/polkadot/interfaces/
