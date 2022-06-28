@@ -881,10 +881,10 @@ impl pallet_staking_rewards::Config for Runtime {
 	type UnixTime = Timestamp;
 	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
 	type PalletId = StakingRewardsPalletId;
-	type WeightInfo = weights::staking_rewards::WeightInfo<Runtime>;
 	type MaxStakingDurationPresets = MaxStakingDurationPresets;
 	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
 	type RewardPoolCreationOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = weights::pallet_staking_rewards::WeightInfo<Runtime>;
 }
 
 /// The calls we permit to be executed by extrinsics
