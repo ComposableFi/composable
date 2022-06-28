@@ -20,25 +20,26 @@ use crate::{
 //                                           prop_compose
 // -------------------------------------------------------------------------------------------------
 
-const TOTAL_NUM_OF_ASSETS: usize = 5;
 const MINIMUM_RESERVE: Balance = 1_000;
 const MAXIMUM_RESERVE: Balance = 1_000_000_000;
 
-const NUMBER_OF_PROPTEST_CASES: u32 = 3_u32 * TOTAL_NUM_OF_ASSETS as u32 * accounts().len() as u32;
+const NUMBER_OF_PROPTEST_CASES: u32 = 3_u32 * assets().len() as u32 * accounts().len() as u32;
 
-fn pick_assets() -> impl Strategy<Value = CurrencyId> {
-	prop_oneof!(
+const fn assets() -> [Just<CurrencyId>; 5] {
+	[
 		Just(CurrencyId::LAYR),
 		Just(CurrencyId::CROWD_LOAN),
 		Just(CurrencyId::USDC),
 		Just(CurrencyId::USDT),
 		Just(CurrencyId::kUSD),
-	)
+	]
 }
 
 prop_compose! {
 	fn generate_assets()(
-		assets in prop::collection::vec(pick_assets(), 1..=TOTAL_NUM_OF_ASSETS),
+		assets in prop::collection::vec(
+			(0..assets().len()).prop_flat_map(|i| assets()[i]),
+			1..=assets().len()),
 	) -> Vec<CurrencyId>{
 		assets
    }
@@ -46,7 +47,7 @@ prop_compose! {
 
 prop_compose! {
 	fn generate_balances()(
-		balances in prop::collection::vec(MINIMUM_RESERVE..MAXIMUM_RESERVE, 1..=TOTAL_NUM_OF_ASSETS),
+		balances in prop::collection::vec(MINIMUM_RESERVE..MAXIMUM_RESERVE, 1..=assets().len()),
 	) -> Vec<Balance>{
 		balances
    }
