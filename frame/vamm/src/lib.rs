@@ -1206,14 +1206,9 @@ pub mod pallet {
 			// 3) Vamm must be open.
 			ensure!(!Self::is_vamm_closed(vamm_state, now), Error::<T>::VammIsClosed);
 
-			// 4) Only update asset's twap if time has passed since last update
-			// and if the delay is greater than the required time between
-			// updates.
+			// 4) Only update asset's twap if time has passed since last update.
 			let now = Self::now(now);
-			ensure!(
-				now > vamm_state.twap_timestamp.try_add(&vamm_state.twap_period)?,
-				Error::<T>::AssetTwapTimestampIsMoreRecent
-			);
+			ensure!(now > vamm_state.twap_timestamp, Error::<T>::AssetTwapTimestampIsMoreRecent);
 
 			Ok(())
 		}
