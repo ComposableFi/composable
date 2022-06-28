@@ -27,7 +27,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: DutchAuction SellOrders (r:0 w:1)
-	fn sell(x: u32, ) -> Weight {
+	fn sell(x: u32) -> Weight {
 		(43_980_000 as Weight)
 			// Standard Error: 27_000
 			.saturating_add((1_758_000 as Weight).saturating_mul(x as Weight))

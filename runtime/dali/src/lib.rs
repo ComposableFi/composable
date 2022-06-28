@@ -949,7 +949,7 @@ impl liquidations::Config for Runtime {
 	type PalletId = LiquidationsPalletId;
 	type CanModifyStrategies = EnsureRootOrHalfCouncil;
 	type XcmSender = XcmRouter;
- 	type MaxLiquidationStrategiesAmount = MaxLiquidationStrategiesAmount;
+	type MaxLiquidationStrategiesAmount = MaxLiquidationStrategiesAmount;
 }
 
 parameter_types! {

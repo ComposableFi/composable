@@ -97,7 +97,7 @@ pub mod pallet {
 			+ WrappingNext
 			+ Parameter
 			+ Copy
-            + From<u32>;
+			+ From<u32>;
 
 		type OrderId: Default + FullCodec + MaxEncodedLen + sp_std::fmt::Debug;
 

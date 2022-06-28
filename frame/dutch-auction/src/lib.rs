@@ -91,7 +91,8 @@ pub mod pallet {
 			nonce::{Increment, Nonce},
 			utils::{increment::WrappingIncrement, start_at::ZeroInit},
 		},
-		math::wrapping_next::WrappingNext, validation::Validate,
+		math::wrapping_next::WrappingNext,
+		validation::Validate,
 	};
 	use composable_traits::{
 		defi::{DeFiComposableConfig, DeFiEngine, OrderIdLike, Sell, SellEngine, Take},
@@ -345,7 +346,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			// TODO: make events/logs from all failed liqudations
 
-            let request = XcmSellRequestValid::validate(request)?;
+			let request = XcmSellRequestValid::validate(request)?;
 
 			// incoming message is generic in representations, so need to map it back to local,
 			let parachain_id = ensure_sibling_para(<T as Config>::XcmOrigin::from(origin))?;

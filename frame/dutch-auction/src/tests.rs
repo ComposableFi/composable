@@ -4,7 +4,7 @@ use crate::mock::{currency::*, runtime::*};
 use composable_traits::{
 	defi::{LiftedFixedBalance, Sell, Take},
 	time::{LinearDecrease, TimeReleaseFunction},
-    xcm::XcmSellRequest,
+	xcm::XcmSellRequest,
 };
 use frame_support::{
 	assert_noop, assert_ok,

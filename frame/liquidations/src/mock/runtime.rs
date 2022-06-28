@@ -1,7 +1,7 @@
 use crate::{
 	self as pallet_liquidations,
 	mock::currency::{CurrencyId, NativeAssetId},
-    weights::SubstrateWeight,
+	weights::SubstrateWeight,
 };
 
 use composable_traits::defi::DeFiComposableConfig;
