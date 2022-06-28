@@ -6,7 +6,7 @@ use proptest::prelude::*;
 
 use crate::{
 	mock::{
-		account_id::{pick_account, AccountId, ADMIN},
+		account_id::{accounts, AccountId, ADMIN},
 		helpers::*,
 		runtime::{
 			Assets, Balance, Event, ExtBuilder, Instrumental, MockRuntime, Origin, System, Vault,
@@ -17,16 +17,14 @@ use crate::{
 };
 
 // -------------------------------------------------------------------------------------------------
-//                                           Prop_compose
+//                                           prop_compose
 // -------------------------------------------------------------------------------------------------
 
 const TOTAL_NUM_OF_ASSETS: usize = 5;
 const MINIMUM_RESERVE: Balance = 1_000;
 const MAXIMUM_RESERVE: Balance = 1_000_000_000;
-const TOTAL_NUM_OF_ACCOUNTS: usize = 5;
 
-const NUMBER_OF_PROPTEST_CASES: u32 =
-	3_u32 * TOTAL_NUM_OF_ASSETS as u32 * TOTAL_NUM_OF_ACCOUNTS as u32;
+const NUMBER_OF_PROPTEST_CASES: u32 = 3_u32 * TOTAL_NUM_OF_ASSETS as u32 * accounts().len() as u32;
 
 fn pick_assets() -> impl Strategy<Value = CurrencyId> {
 	prop_oneof!(
@@ -56,7 +54,9 @@ prop_compose! {
 
 prop_compose! {
 	fn generate_accounts()(
-		accounts in prop::collection::vec(pick_account(), 1..=TOTAL_NUM_OF_ACCOUNTS),
+		accounts in prop::collection::vec(
+			(0..accounts().len()).prop_flat_map(|i| accounts()[i]),
+			 1..=accounts().len()),
 	) -> Vec<AccountId>{
 		accounts
    }
