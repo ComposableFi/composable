@@ -5,7 +5,7 @@
 // Learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom/extend-expect'
 import { loadEnvConfig } from '@next/env'
-import * as globalConfig from '../../packages/pablo-storybook/.storybook/preview'
+import * as globalConfig from 'pablo-storybook/.storybook/main'
 import { setGlobalConfig } from '@storybook/testing-react';
 
 const loadEnvironments = () => loadEnvConfig(process.cwd())

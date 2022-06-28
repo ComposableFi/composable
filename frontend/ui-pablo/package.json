@@ -13,8 +13,8 @@
   "scripts": {
     "start": "yarn --cwd ../fe/apps/pablo dev",
     "build": "yarn --cwd ../fe/apps/pablo build",
-    "storybook": "yarn --cwd ../fe/packages/pablo-storybook storybook",
-    "storybook:build": "yarn --cwd ../fe/packages/pablo-storybook build-storybook",
+    "storybook": "yarn --cwd ../fe/apps/pablo-storybook storybook",
+    "storybook:build": "yarn --cwd ../fe/apps/pablo-storybook build-storybook",
     "test": "yarn --cwd ../fe/apps/pablo test",
     "test:watch": "yarn --cwd ../fe/apps/pablo test:watch",
     "lint": "yarn --cwd ../fe/apps/pablo lint",
