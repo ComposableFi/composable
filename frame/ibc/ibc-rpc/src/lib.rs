@@ -301,7 +301,7 @@ pub trait IbcApi<BlockNumber, Hash> {
 	/// Query the denom trace for an ibc denom from the asset Id
 	// In ibc-go this method accepts a string which is the hash of the ibc denom
 	// that is because ibc denoms are stored as hashes in ibc-go, but in our implementation here
-	// ibc denoms are mapped to a local currency id which a u128 under the hood,
+	// ibc denoms are mapped to a local currency id which  is a u128 under the hood,
 	// hence, why we require a u128 in this method
 	#[method(name = "ibc_queryDenomTrace")]
 	fn query_denom_trace(&self, asset_id: u128) -> Result<QueryDenomTraceResponse>;
