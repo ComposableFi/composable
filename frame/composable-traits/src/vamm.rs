@@ -141,5 +141,5 @@ pub struct SwapOutput<Balance> {
 	pub negative: bool,
 }
 
-/// The minimum allowed value for [`twap_period`](VammState::twap_period).
+/// The minimum allowed value for [`twap_period`](VammConfig::twap_period).
 pub const MINIMUM_TWAP_PERIOD: u32 = 10;
