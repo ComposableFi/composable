@@ -34,6 +34,10 @@ impl From<sp_io::EcdsaVerifyError> for SignatureVerificationError {
 	}
 }
 
+pub fn get_encoded_vec(data: &[u8]) -> Vec<u8> {
+	hex::encode(data).as_bytes().to_vec()
+}
+
 /// Verify the proof is valid for a given relay account.
 ///
 /// Returns `false` if the verification process fails, returns `true` otherwise
@@ -57,7 +61,7 @@ where
 	let mut msg = WRAPPED_PREFIX.to_vec();
 
 	msg.append(&mut prefix.to_vec());
-	msg.append(&mut reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec()));
+	msg.append(&mut reward_account.using_encoded(get_encoded_vec));
 	msg.append(&mut WRAPPED_POSTFIX.to_vec());
 
 	proof.verify(&msg[..], &relay_account)

@@ -489,7 +489,7 @@ pub mod pallet {
 			let identity = match proof {
 				Proof::Ethereum(eth_proof) => {
 					let reward_account_encoded =
-						reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec());
+						reward_account.using_encoded(signature_verification::get_encoded_vec);
 					let eth_address = signature_verification::ethereum_recover(
 						prefix,
 						&reward_account_encoded,
@@ -512,7 +512,7 @@ pub mod pallet {
 				},
 				Proof::Cosmos(cosmos_address, cosmos_proof) => {
 					let reward_account_encoded =
-						reward_account.using_encoded(|x| hex::encode(x).as_bytes().to_vec());
+						reward_account.using_encoded(signature_verification::get_encoded_vec);
 					let cosmos_address = signature_verification::cosmos_recover(
 						prefix,
 						&reward_account_encoded,
