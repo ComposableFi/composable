@@ -15,7 +15,6 @@ import { useRouter } from "next/router";
 import React from "react";
 import { InfoOutlined } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
-import useStore from "../../store/useStore";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -36,7 +35,6 @@ const tableHeaders: TableHeader[] = [
 ];
 
 export const YourBondTable: React.FC = () => {
-  // const { activeBonds } = useStore();
   const activeBonds: any[] = [];
   const router = useRouter();
 

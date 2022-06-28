@@ -86,7 +86,6 @@ export const DepositForm: React.FC<DepositFormProps> = ({
   };
 
   const handleButtonClick = () => {
-    // approved ? handleDeposit() : setApproved(true);
     handleDeposit();
   };
 
@@ -131,14 +130,14 @@ export const DepositForm: React.FC<DepositFormProps> = ({
   const onPurchaseBond = async () => {
     dispatch(closeConfirmingModal());
     setIsTxProcessing(true);
-
-    purchaseBond().then(_ => {
-      setIsTxProcessing(false);
+    try {
+      await purchaseBond();
       bond.updateBondInfo();
-    }).catch((err) => {
-      console.error(err)
+    } catch(e: any) {
+      console.error(e)
+    } finally {
       setIsTxProcessing(false);
-    })
+    }
   }
 
   return (
@@ -150,23 +149,6 @@ export const DepositForm: React.FC<DepositFormProps> = ({
           setValue={setAmount}
           maxValue={bond.selectedBondOffer ? bond.selectedBondOffer.nbOfBonds : new BigNumber(0)}
           setValid={setValid}
-          // EndAdornmentAssetProps={{
-          //   assets:
-          //   principalAsset && (principalAsset as any).baseAsset && (principalAsset as any).quoteAsset 
-          //       ? [
-          //         {
-          //           icon: (principalAsset as any).baseAsset.icon,
-          //           label: (principalAsset as any).baseAsset.symbol,
-          //         },
-          //         {
-          //           icon: (principalAsset as any).quoteAsset.icon,
-          //           label: (principalAsset as any).quoteAsset.symbol,
-          //         },
-          //       ]
-          //       : principalAsset && (principalAsset as MockedAsset).icon && (principalAsset as MockedAsset).symbol ? [{ icon: (principalAsset as MockedAsset).icon, label: (principalAsset as MockedAsset).symbol }] : [],
-          //   separator: "/",
-          //   LabelProps: { variant: "body1" },
-          // }}
           buttonLabel="Max"
           ButtonProps={{
             onClick: () => setAmount(new BigNumber(bond.selectedBondOffer ? bond.selectedBondOffer.nbOfBonds : 0)),

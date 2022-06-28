@@ -77,13 +77,6 @@ export const AllAuctionsTable: React.FC<TableContainerProps> = ({
                   />
                 )}
               </TableCell>
-              {/* <TableCell align="left">
-                  <BaseAsset
-                    icon={lbPool.icon}
-                    label={getParachainNetwork(lbPool.networkId).name}
-                    LabelProps={{ variant: "body1" }}
-                  />
-                </TableCell> */}
               <TableCell align="center">
                 <AuctionStatusIndicator
                   auction={lbPool}
