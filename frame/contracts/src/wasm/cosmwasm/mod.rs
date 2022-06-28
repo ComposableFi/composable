@@ -10,7 +10,7 @@ pub mod types;
 pub enum ComposableMsg {
 	XCVM {
     salt: Vec<u8>,
-		funds: XCVMTransfer,
+		funds: XCVMTransfer<Displayed<u128>>,
 		program:
 			XCVMProgram<VecDeque<XCVMInstruction<XCVMNetwork, Vec<u8>, Vec<u8>, XCVMTransfer>>>,
 	},

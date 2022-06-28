@@ -2,9 +2,18 @@
 /* eslint-disable */
 
 import type { CustomRpcBalance } from '@composable/types/interfaces/common';
-import type { Bytes, Enum, Option, Result, Struct, u64 } from '@polkadot/types-codec';
+import type { Bytes, Enum, Option, Result, Struct, u32, u64 } from '@polkadot/types-codec';
 import type { Hash } from '@polkadot/types/interfaces/runtime';
 import type { DispatchError } from '@polkadot/types/interfaces/system';
+
+/** @name Amount */
+export interface Amount extends Enum {
+  readonly isFixed: boolean;
+  readonly asFixed: CustomRpcBalance;
+  readonly isRatio: boolean;
+  readonly asRatio: u32;
+  readonly type: 'Fixed' | 'Ratio';
+}
 
 /** @name Code */
 export interface Code extends Enum {

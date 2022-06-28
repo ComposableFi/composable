@@ -136,11 +136,11 @@ const cw20 = async function(api: ApiPromise, devWalletAlice: KeyringPair) {
 }
 
 const xcvm = async (api: ApiPromise, devWalletAlice: KeyringPair, devWalletDave: KeyringPair) => {
-  const code_hash = "0xcf1a034b125e412e2b285eb497323921a807835ff455449ad1980c108fd03c9e";
+  const code_hash = "0x22d1cdfcfd73cfb80406eccd1193a80471d89d8140948de09fb76a6a0b545d52";
   const funds = api.createType("BTreeMap<u128, u128>", {
     1: 6_000_000_000_000
   });
-  const salt = api.createType("Bytes", "0x02");
+  const salt = api.createType("Bytes", randomInt(0xDEADC0DE));
   const gas = api.createType("u64", 300000000000);
 
   // Instantiate the contract
@@ -166,18 +166,14 @@ const xcvm = async (api: ApiPromise, devWalletAlice: KeyringPair, devWalletDave:
     data: [_a, event]
   } = await sendAndWaitForSuccess(
     api,
-    devWalletDave,
+    devWalletAlice,
     api.events.cosmwasm.ContractEmitted.is,
     api.tx.cosmwasm.call(
       contract_address,
       funds,
       gas,
       null,
-      encodeMsg(api, "ExecuteMsg", {
-        et_phone_home: {
-          nonce: 0
-        }
-      }))
+      encodeMsg(api, "ExecuteMsg", "et_phone_home"))
   );
 
   logEvent(event);
@@ -195,7 +191,7 @@ describe('COSMWASM', function() {
       devWalletDave
     } = getDevWallets(newKeyring);
 
-    await cw20(api, devWalletAlice);
-    // await xcvm(api, devWalletAlice, devWalletDave);
+    // await cw20(api, devWalletAlice);
+    await xcvm(api, devWalletAlice, devWalletDave);
   });
 });

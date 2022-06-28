@@ -354,7 +354,7 @@ pub mod pallet {
 			AccountId = AccountIdOf<Self>,
 			Input = (
         Vec<u8>,
-				XCVMTransfer,
+				XCVMTransfer<Displayed<u128>>,
 				XCVMProgram<VecDeque<XCVMInstruction<XCVMNetwork, Vec<u8>, Vec<u8>, XCVMTransfer>>>,
 			),
 			Output = DispatchResult,

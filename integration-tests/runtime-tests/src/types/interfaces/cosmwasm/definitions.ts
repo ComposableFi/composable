@@ -9,7 +9,7 @@ export default {
         },
         {
           name: "value",
-          type: "BTreeMap<CustomRpcCurrencyId, CustomRpcBalance>"
+          type: "BTreeMap<CustomRpcCurrencyId, Amount>"
         },
         {
           name: "gas_limit",
@@ -52,7 +52,7 @@ export default {
         },
         {
           name: "value",
-          type: "BTreeMap<CustomRpcCurrencyId, CustomRpcBalance>"
+          type: "BTreeMap<CustomRpcCurrencyId, Amount>"
         },
         {
           name: "gas_limit",
@@ -87,7 +87,7 @@ export default {
         },
         {
           name: "value",
-          type: "BTreeMap<CustomRpcCurrencyId, CustomRpcBalance>"
+          type: "BTreeMap<CustomRpcCurrencyId, Amount>"
         },
         {
           name: "gas_limit",
@@ -137,5 +137,11 @@ export default {
       debug_message: "Bytes",
       result: "Result<Option<Bytes>, DispatchError>"
     },
+    Amount: {
+      _enum: {
+        Fixed: "CustomRpcBalance",
+        Ratio: "u32"
+      }
+    }
   }
 };

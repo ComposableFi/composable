@@ -2698,9 +2698,10 @@ declare module '@polkadot/api-base/types/submittable' {
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
     xcvm: {
-      execute: AugmentedSubmittable<(realOrigin: Option<AccountId32> | null | object | string | Uint8Array, program: XcvmCoreProgramXcvmProgram | { instructions?: any; nonce?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Option<AccountId32>, XcvmCoreProgramXcvmProgram]>;
-      executeJson: AugmentedSubmittable<(realOrigin: Option<AccountId32> | null | object | string | Uint8Array, program: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Option<AccountId32>, Bytes]>;
-      executeProtobuf: AugmentedSubmittable<(realOrigin: Option<AccountId32> | null | object | string | Uint8Array, program: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Option<AccountId32>, Bytes]>;
+      execute: AugmentedSubmittable<(realOrigin: Option<AccountId32> | null | object | string | Uint8Array, salt: Bytes | string | Uint8Array, funds: XcvmCoreAssetXcvmTransferDisplayed, program: XcvmCoreProgramXcvmProgram | { tag?: any; instructions?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Option<AccountId32>, Bytes, XcvmCoreAssetXcvmTransferDisplayed, XcvmCoreProgramXcvmProgram]>;
+      executeJson: AugmentedSubmittable<(realOrigin: Option<AccountId32> | null | object | string | Uint8Array, salt: Bytes | string | Uint8Array, funds: XcvmCoreAssetXcvmTransferDisplayed, program: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Option<AccountId32>, Bytes, XcvmCoreAssetXcvmTransferDisplayed, Bytes]>;
+      executeJsonPrivileged: AugmentedSubmittable<(realOrigin: AccountId32 | string | Uint8Array, salt: Bytes | string | Uint8Array, funds: XcvmCoreAssetXcvmTransferDisplayed, program: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32, Bytes, XcvmCoreAssetXcvmTransferDisplayed, Bytes]>;
+      executeProtobuf: AugmentedSubmittable<(realOrigin: Option<AccountId32> | null | object | string | Uint8Array, salt: Bytes | string | Uint8Array, funds: XcvmCoreAssetXcvmTransferDisplayed, program: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [Option<AccountId32>, Bytes, XcvmCoreAssetXcvmTransferDisplayed, Bytes]>;
       setSatellite: AugmentedSubmittable<(network: u32 | AnyNumber | Uint8Array, satellite: ITuple<[u32, ComposableSupportEthereumAddress]> | [u32 | AnyNumber | Uint8Array, ComposableSupportEthereumAddress | string | Uint8Array]) => SubmittableExtrinsic<ApiType>, [u32, ITuple<[u32, ComposableSupportEthereumAddress]>]>;
       /**
        * Generic tx

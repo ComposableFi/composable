@@ -42,7 +42,10 @@ pub mod pallet {
 		pallet_prelude::*,
 		sp_runtime::{traits::Dispatchable, SaturatedConversion},
 		traits::{
-			fungibles::{Inspect as FungiblesInspect, Transfer as FungiblesTransfer},
+			fungibles::{
+				Inspect as FungiblesInspect, Mutate as FungiblesMutate,
+				Transfer as FungiblesTransfer,
+			},
 			tokens::{AssetId, Balance},
 		},
 		transactional, PalletId,
@@ -104,7 +107,8 @@ pub mod pallet {
 				AccountIdOf<Self>,
 				AssetId = AssetIdOf<Self>,
 				Balance = BalanceOf<Self>,
-			> + FungiblesTransfer<AccountIdOf<Self>>;
+			> + FungiblesTransfer<AccountIdOf<Self>>
+			+ FungiblesMutate<AccountIdOf<Self>>;
 		type Balance: Balance;
 		type Bridge: TransferTo<
 			AccountId = AccountIdOf<Self>,
@@ -151,7 +155,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			real_origin: Option<AccountIdOf<T>>,
 			salt: Vec<u8>,
-			funds: XCVMTransfer,
+			funds: XCVMTransfer<Displayed<u128>>,
 			program: Program,
 		) -> DispatchResultWithPostInfo {
 			let who = match real_origin {
@@ -166,11 +170,32 @@ pub mod pallet {
 
 		#[pallet::weight(10_000)]
 		#[transactional]
+		pub fn execute_json_privileged(
+			origin: OriginFor<T>,
+			real_origin: AccountIdOf<T>,
+			salt: Vec<u8>,
+			funds: XCVMTransfer<Displayed<u128>>,
+			program: Vec<u8>,
+		) -> DispatchResultWithPostInfo {
+			let _ = T::ControlOrigin::ensure_origin(origin)?;
+			let who = real_origin;
+			let program = xcvm_core::deserialize_json(&program)
+				.map_err(|_| Error::<T>::InvalidProgramEncoding)?;
+			for (asset, Displayed(amount)) in funds.clone().0 {
+				let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
+					.map_err(|_| Error::<T>::UnknownAsset)?;
+				T::Assets::mint_into(concrete_asset, &who, amount.saturated_into())?;
+			}
+			Self::do_execute(&who, salt, funds, program)
+		}
+
+		#[pallet::weight(10_000)]
+		#[transactional]
 		pub fn execute_json(
 			origin: OriginFor<T>,
 			real_origin: Option<AccountIdOf<T>>,
 			salt: Vec<u8>,
-			funds: XCVMTransfer,
+			funds: XCVMTransfer<Displayed<u128>>,
 			program: BoundedVec<u8, T::MaxProgramSize>,
 		) -> DispatchResultWithPostInfo {
 			let who = match real_origin {
@@ -191,7 +216,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			real_origin: Option<AccountIdOf<T>>,
 			salt: Vec<u8>,
-			funds: XCVMTransfer,
+			funds: XCVMTransfer<Displayed<u128>>,
 			program: BoundedVec<u8, T::MaxProgramSize>,
 		) -> DispatchResultWithPostInfo {
 			let who = match real_origin {
@@ -218,6 +243,7 @@ pub mod pallet {
 			let address = sp_io::hashing::keccak_256(&salt);
 			T::PalletId::get().into_sub_account(address)
 		}
+
 		pub(crate) fn actual_amount(
 			asset: AssetIdOf<T>,
 			amount: xcvm_core::Amount,
@@ -233,7 +259,7 @@ pub mod pallet {
 		AccountIdOf<T>: for<'a> TryFrom<&'a [u8]> + AsRef<[u8]>,
 	{
 		type AccountId = AccountIdOf<T>;
-		type Input = (Vec<u8>, XCVMTransfer, Program);
+		type Input = (Vec<u8>, XCVMTransfer<Displayed<u128>>, Program);
 		type Output = DispatchResult;
 		fn execute(who: &Self::AccountId, (salt, funds, program): Self::Input) -> Self::Output {
 			Self::do_execute(&who, salt, funds, program).map(|_| ()).map_err(|e| e.error)
@@ -247,15 +273,20 @@ pub mod pallet {
 		fn do_execute(
 			who: &AccountIdOf<T>,
 			salt: Vec<u8>,
-			XCVMTransfer(funds): XCVMTransfer,
+			XCVMTransfer(funds): XCVMTransfer<Displayed<u128>>,
 			mut program: Program,
 		) -> DispatchResultWithPostInfo {
 			let program_account = Self::program_account(salt.clone(), who);
-			for (asset, amount) in funds {
+			for (asset, Displayed(amount)) in funds {
 				let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
 					.map_err(|_| Error::<T>::UnknownAsset)?;
-				let actual_amount = Self::actual_amount(concrete_asset, amount, who);
-				T::Assets::transfer(concrete_asset, &who, &program_account, actual_amount, false)?;
+				T::Assets::transfer(
+					concrete_asset,
+					&who,
+					&program_account,
+					amount.saturated_into(),
+					false,
+				)?;
 			}
 			frame_support::log::debug!(target: "runtime::xcvm", "Program account {:?}", program_account.as_ref());
 			let program_copy = program.clone();
@@ -267,7 +298,7 @@ pub mod pallet {
 						for (asset, amount) in assets {
 							let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
 								.map_err(|_| Error::<T>::UnknownAsset)?;
-							let actual_amount = Self::actual_amount(concrete_asset, amount, who);
+							let actual_amount = Self::actual_amount(concrete_asset, amount, &program_account);
 							T::Assets::transfer(
 								concrete_asset,
 								&program_account,
@@ -311,7 +342,7 @@ pub mod pallet {
 								let concrete_asset = TryInto::<AssetIdOf<T>>::try_into(asset)
 									.map_err(|_| Error::<T>::UnknownAsset)?;
 								let actual_amount =
-									Self::actual_amount(concrete_asset, amount, who);
+									Self::actual_amount(concrete_asset, amount, &program_account);
 								BridgeOf::<T>::transfer_to(
 									program_account.clone(),
 									bridge_network_id.clone(),
@@ -326,7 +357,7 @@ pub mod pallet {
 						Self::deposit_event(Event::<T>::Spawn {
 							network,
 							network_txs,
-							who: program_account.clone(),
+							who: who.clone(),
 							salt,
 							program: xcvm_core::serialize_json(&child_program)
 								.map_err(|_| Error::<T>::InvalidProgramEncoding)?,

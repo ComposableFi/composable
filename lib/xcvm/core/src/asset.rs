@@ -27,7 +27,6 @@ impl XCVMAsset {
 	pub const ETH: XCVMAsset = XCVMAsset(2);
 	pub const USDT: XCVMAsset = XCVMAsset(3);
 	pub const USDC: XCVMAsset = XCVMAsset(4);
-
 	pub const UST: XCVMAsset = XCVMAsset(0xDEADC0DE);
 }
 
@@ -80,6 +79,7 @@ impl<T> From<T> for Displayed<T> {
 #[derive(
 	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
 )]
+#[serde(rename_all = "snake_case")]
 pub enum Amount {
 	Fixed(Displayed<u128>),
 	Ratio(u32),
@@ -111,7 +111,7 @@ impl Amount {
 	Clone, PartialEq, Eq, PartialOrd, Ord, Debug, Encode, Decode, TypeInfo, Serialize, Deserialize,
 )]
 #[repr(transparent)]
-pub struct XCVMTransfer(pub BTreeMap<XCVMAsset, Amount>);
+pub struct XCVMTransfer<T = Amount>(pub BTreeMap<XCVMAsset, T>);
 
 impl XCVMTransfer {
 	pub fn empty() -> Self {

@@ -11,9 +11,6 @@ import {
 import {
   expect
 } from "chai";
-import {
-  stringToU8a
-} from "@polkadot/util/string";
 
 describe('XCVM', function() {
   it('Works', async function() {
@@ -26,10 +23,9 @@ describe('XCVM', function() {
       devWalletAlice,
     } = getDevWallets(newKeyring);
 
-    // Setup mosaic
     const sudoKey = devWalletAlice;
     const relayer = devWalletAlice;
-    const mosaicEthereumNetworkId = api.createType("u128", 7603700);
+    const mosaicEthereumNetworkId = api.createType("u128", 2);
     const maxTransferSize = 1000000000000000;
     const decayer = api.createType("PalletMosaicDecayBudgetPenaltyDecayer", {
       Linear: api.createType("PalletMosaicDecayLinearDecay", {
@@ -38,7 +34,7 @@ describe('XCVM', function() {
     });
     const localAssetId = api.createType("u128", 1);
     const remoteAssetId = api.createType("CommonMosaicRemoteAssetId", {
-      EthereumTokenAddress: api.createType("[u8;20]", "0x")
+      EthereumTokenAddress: api.createType("[u8; 20]", "0x0000000000000000000000000000000000000001")
     });
     const budget = maxTransferSize;
     const networkInfo = api.createType("PalletMosaicNetworkInfo", {
@@ -80,66 +76,75 @@ describe('XCVM', function() {
       )
     );
 
-    const concatU8a = (a: Uint8Array, b: Uint8Array): Uint8Array => {
-      let r = new Uint8Array(a.length + b.length);
-      r.set(a);
-      r.set(b, a.length);
-      return r;
-    };
-
-    // Send program
-    const palletTypeId = stringToU8a("modl");
-    const xcvmPalletId = api.consts.xcvm.palletId;
-
-    const programNonce = 0;
-
-    const index =
-      api.createType(
-        "(u32, AccountId)", [
-          api.createType("u32", programNonce),
-          api.createType("AccountId", devWalletAlice.addressRaw)
-        ]
-      ).toU8a();
-
-    const xcvmProgramAccount =
-      api.createType(
-        "AccountId",
-        concatU8a(concatU8a(palletTypeId, xcvmPalletId), index).slice(0, 32)
-      );
-    console.log(xcvmProgramAccount.toHuman());
-
-    const amount = 1_000_000_000_000;
-    await sendAndWaitForSuccess(
-      api,
-      devWalletAlice,
-      api.events.balances.Endowed.is,
-      api.tx.assets.transfer(
-        1,
-        xcvmProgramAccount,
-        amount,
-        false
-      )
-    );
-
     await sendAndWaitForSuccess(
       api,
       devWalletAlice,
       api.events.xcvm.Executed.is,
-      api.tx.xcvm.execute({
-        "instructions": [{
-          "spawn": {
-            "network": 2,
-            "assets": {
-              "1": amount
-            },
-            "program": {
-              "instructions": [],
-              "nonce": programNonce + 1
+      api.tx.xcvm.executeJson(
+        null,
+        api.createType("Bytes", 0xCAFEBABE), {
+          "1": "10000000000000"
+      },
+        JSON.stringify({
+          "tag": [],
+          "instructions": [{
+            "spawn": {
+              "salt": [],
+              "network": 2,
+              "assets": {
+                "1": {
+                  "fixed": "10000000000000"
+                }
+              },
+              "program": {
+                "tag": [],
+                "instructions": [{
+                    "spawn": {
+                      "salt": [],
+                      "network": 1,
+                      "assets": {
+                        "1": {
+                          "ratio": 100
+                        }
+                      },
+                    "program": {
+                      "tag": [],
+                      "instructions": [{
+                        "spawn": {
+                          "salt": [],
+                          "network": 2,
+                          "assets": {
+                            "1": {
+                              "fixed": "10000000000000"
+                            }
+                          },
+                          "program": {
+                            "tag": [],
+                            "instructions": [{
+                              "spawn": {
+                                "salt": [],
+                                "network": 1,
+                                "assets": {
+                                  "1": {
+                                    "ratio": 100
+                                  }
+                                },
+                                "program": {
+                                  "tag": [],
+                                  "instructions": [],
+                                }
+                              }
+                            }],
+                          }
+                        }
+                      }],
+                    }
+                  }
+                }],
+              }
             }
-          }
-        }],
-        "nonce": programNonce
-      })
+          }],
+        }))
     );
     expect(true).to.be.true
   })
