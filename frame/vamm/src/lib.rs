@@ -130,7 +130,6 @@ pub mod pallet {
 
 	use codec::{Codec, FullCodec};
 	use composable_maths::labs::numbers::{IntoDecimal, UnsignedMath};
-	use composable_tests_helpers::test::helper::default_acceptable_computation_error;
 	use composable_traits::vamm::{
 		AssetType, Direction, MovePriceConfig, SwapConfig, SwapOutput, SwapSimulationConfig, Vamm,
 		VammConfig, MINIMUM_TWAP_PERIOD,
