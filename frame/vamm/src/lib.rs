@@ -1004,7 +1004,7 @@ pub mod pallet {
 		}
 
 		pub fn reciprocal_twap(asset_twap: &DecimalOf<T>) -> Result<DecimalOf<T>, DispatchError> {
-			Ok(DecimalOf::<T>::one().try_div(asset_twap)?)
+			Ok(asset_twap.reciprocal().ok_or(ArithmeticError::DivisionByZero)?)
 		}
 
 		fn calculate_twap(
