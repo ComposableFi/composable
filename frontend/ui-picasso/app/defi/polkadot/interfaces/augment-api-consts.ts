@@ -1,22 +1,14 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes } from "@polkadot/api-base/types";
-import type { Bytes, Option, Vec, bool, u128, u16, u32, u64, u8 } from "@polkadot/types-codec";
-import type { Codec } from "@polkadot/types-codec/types";
-import type { AccountId32, Perbill, Permill } from "@polkadot/types/interfaces/runtime";
-import type {
-  FrameSupportPalletId,
-  FrameSupportWeightsRuntimeDbWeight,
-  FrameSupportWeightsWeightToFeeCoefficient,
-  FrameSystemLimitsBlockLength,
-  FrameSystemLimitsBlockWeights,
-  SpVersionRuntimeVersion,
-  XcmV1MultiLocation
-} from "@polkadot/types/lookup";
+import type { ApiTypes, AugmentedConst, QueryableModuleConsts } from '@polkadot/api/types';
+import type { Bytes, Option, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types';
+import type { AccountId32, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
+import type { FrameSupportPalletId, FrameSupportWeightsRuntimeDbWeight, FrameSupportWeightsWeightToFeeCoefficient, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, XcmV1MultiLocation } from '@polkadot/types/lookup';
+import type { Codec } from '@polkadot/types/types';
 
-declare module "@polkadot/api-base/types/consts" {
-  export interface AugmentedConsts<ApiType extends ApiTypes> {
+declare module '@polkadot/api/types/consts' {
+  export interface AugmentedConsts<ApiType> {
     assets: {
       nativeAssetId: u128 & AugmentedConst<ApiType>;
       /**
@@ -58,7 +50,7 @@ declare module "@polkadot/api-base/types/consts" {
     bondedFinance: {
       /**
        * The minimum reward for an offer.
-       *
+       * 
        * Must be > T::Vesting::MinVestedTransfer.
        **/
       minReward: u128 & AugmentedConst<ApiType>;
@@ -77,6 +69,13 @@ declare module "@polkadot/api-base/types/consts" {
     };
     callFilter: {
       maxStringSize: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    constantProductDex: {
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -115,7 +114,7 @@ declare module "@polkadot/api-base/types/consts" {
       cooloffPeriod: u32 & AugmentedConst<ApiType>;
       /**
        * The period between a proposal being approved and enacted.
-       *
+       * 
        * It should generally be a little more than the unstake period to ensure that
        * voting stakers have an opportunity to remove themselves from the system in the case
        * where they are on the losing side of a vote.
@@ -141,7 +140,7 @@ declare module "@polkadot/api-base/types/consts" {
       maxProposals: u32 & AugmentedConst<ApiType>;
       /**
        * The maximum number of votes for an account.
-       *
+       * 
        * Also used to compute weight, an overly big value can
        * lead to extrinsic with very big weight: see `delegate` for instance.
        **/
@@ -156,7 +155,7 @@ declare module "@polkadot/api-base/types/consts" {
       preimageByteDeposit: u128 & AugmentedConst<ApiType>;
       /**
        * The minimum period of vote locking.
-       *
+       * 
        * It should be no shorter than enactment period to ensure that in the case of an approval,
        * those successful voters are locked into the consequences that their votes entail.
        **/
@@ -243,23 +242,23 @@ declare module "@polkadot/api-base/types/consts" {
        * Creators puts that amount and it is staked under Vault account.
        * So he does not owns it anymore.
        * So borrow is both stake and tool to create market.
-       *
+       * 
        * # Why not pure borrow amount minimum?
-       *
+       * 
        * Borrow may have very small price. Will imbalance some markets on creation.
-       *
+       * 
        * # Why not native parachain token?
-       *
+       * 
        * Possible option. But I doubt closing market as easy as transferring back rent.  So it is
        * not exactly platform rent only.
-       *
+       * 
        * # Why borrow amount priced by Oracle?
-       *
+       * 
        * We depend on Oracle to price in Lending. So we know price anyway.
        * We normalized price over all markets and protect from spam all possible pairs equally.
-       * Locking borrow amount ensures manager can create market with borrow assets, and we force
+       * Locking borrow amount ensures manager can create market wit borrow assets, and we force
        * him to really create it.
-       *
+       * 
        * This solution forces to have amount before creating market.
        * Vault can take that amount if reconfigured so, but that may be changed during runtime
        * upgrades.
@@ -278,6 +277,29 @@ declare module "@polkadot/api-base/types/consts" {
        **/
       [key: string]: Codec;
     };
+    liquidityBootstrapping: {
+      /**
+       * Maximum initial weight.
+       **/
+      maxInitialWeight: Permill & AugmentedConst<ApiType>;
+      /**
+       * Maximum duration for a sale.
+       **/
+      maxSaleDuration: u32 & AugmentedConst<ApiType>;
+      /**
+       * Minimum final weight.
+       **/
+      minFinalWeight: Permill & AugmentedConst<ApiType>;
+      /**
+       * Minimum duration for a sale.
+       **/
+      minSaleDuration: u32 & AugmentedConst<ApiType>;
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     mosaic: {
       /**
        * The minimum period for which we lock outgoing/incoming funds.
@@ -286,7 +308,7 @@ declare module "@polkadot/api-base/types/consts" {
       /**
        * The minimum time to live before a relayer account rotation.
        **/
-      minimumTTL: u32 & AugmentedConst<ApiType>;
+      minimumTtl: u32 & AugmentedConst<ApiType>;
       timelockPeriod: u32 & AugmentedConst<ApiType>;
       /**
        * Generic const
@@ -297,7 +319,7 @@ declare module "@polkadot/api-base/types/consts" {
       /**
        * The base amount of currency needed to reserve for creating a multisig execution or to
        * store a dispatch call for later.
-       *
+       * 
        * This is held for an additional storage item whose value size is
        * `4 + sizeof((BlockNumber, Balance, AccountId))` bytes and whose key size is
        * `32 + sizeof(AccountId)` bytes.
@@ -305,7 +327,7 @@ declare module "@polkadot/api-base/types/consts" {
       depositBase: u128 & AugmentedConst<ApiType>;
       /**
        * The amount of currency needed per unit threshold when creating a multisig execution.
-       *
+       * 
        * This is held for adding 32 bytes more into a pre-existing storage value.
        **/
       depositFactor: u128 & AugmentedConst<ApiType>;
@@ -369,6 +391,13 @@ declare module "@polkadot/api-base/types/consts" {
        **/
       [key: string]: Codec;
     };
+    stableSwapDex: {
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     system: {
       /**
        * Maximum number of block number to block hash mappings to keep (oldest pruned first).
@@ -388,7 +417,7 @@ declare module "@polkadot/api-base/types/consts" {
       dbWeight: FrameSupportWeightsRuntimeDbWeight & AugmentedConst<ApiType>;
       /**
        * The designated SS85 prefix of this chain.
-       *
+       * 
        * This replaces the "ss58Format" property declared in the chain spec. Reason is
        * that the runtime should know about the prefix in order to make use of it as
        * an identifier of the chain.
@@ -427,21 +456,21 @@ declare module "@polkadot/api-base/types/consts" {
       /**
        * A fee mulitplier for `Operational` extrinsics to compute "virtual tip" to boost their
        * `priority`
-       *
+       * 
        * This value is multipled by the `final_fee` to obtain a "virtual tip" that is later
        * added to a tip component in regular `priority` calculations.
        * It means that a `Normal` transaction can front-run a similarly-sized `Operational`
        * extrinsic (with no tip), by including a tip value greater than the virtual tip.
-       *
+       * 
        * ```rust,ignore
        * // For `Normal`
        * let priority = priority_calc(tip);
-       *
+       * 
        * // For `Operational`
        * let virtual_tip = (inclusion_fee + tip) * OperationalFeeMultiplier;
        * let priority = priority_calc(tip + virtual_tip);
        * ```
-       *
+       * 
        * Note that since we use `final_fee` the multiplier applies also to the regular `tip`
        * sent with the transaction. So, not only does the transaction get a priority bump based
        * on the `inclusion_fee`, but we also amplify the impact of tips applied to `Operational`
@@ -468,7 +497,7 @@ declare module "@polkadot/api-base/types/consts" {
       burn: Permill & AugmentedConst<ApiType>;
       /**
        * The maximum number of approvals that can wait in the spending queue.
-       *
+       * 
        * NOTE: This parameter is also used within the Bounties Pallet extension if enabled.
        **/
       maxApprovals: u32 & AugmentedConst<ApiType>;
@@ -558,7 +587,7 @@ declare module "@polkadot/api-base/types/consts" {
     xTokens: {
       /**
        * Base XCM weight.
-       *
+       * 
        * The actually weight for an XCM message is `T::BaseXcmWeight +
        * T::Weigher::weight(&msg)`.
        **/
@@ -572,5 +601,9 @@ declare module "@polkadot/api-base/types/consts" {
        **/
       [key: string]: Codec;
     };
-  } // AugmentedConsts
-} // declare module
+  }
+
+  export interface QueryableConsts<ApiType extends ApiTypes> extends AugmentedConsts<ApiType> {
+    [key: string]: QueryableModuleConsts;
+  }
+}
