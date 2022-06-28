@@ -190,7 +190,6 @@ benchmarks! {
 	}
 
 	create_airdrop_benchmark {
-		let x in 100..1000;
 		let creator: AccountIdOf<T> = account("creator", 0, 0xCAFEBABE);
 	}: create_airdrop(RawOrigin::Signed(creator), None, VESTING_STEP.into())
 
