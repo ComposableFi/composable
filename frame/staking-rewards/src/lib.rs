@@ -237,7 +237,7 @@ pub mod pallet {
 							>::try_from(rewards)
 							.map_err(|_| Error::<T>::RewardConfigProblem)?,
 							total_shares: T::Balance::zero(),
-							end_block: end_block.clone(),
+							end_block,
 							lock,
 						},
 					);
@@ -258,39 +258,39 @@ pub mod pallet {
 
 		#[transactional]
 		fn stake(
-			who: &Self::AccountId,
-			pool_id: &Self::RewardPoolId,
-			amount: Self::Balance,
-			duration_preset: DurationSeconds,
-			keep_alive: bool,
+			_who: &Self::AccountId,
+			_pool_id: &Self::RewardPoolId,
+			_amount: Self::Balance,
+			_duration_preset: DurationSeconds,
+			_keep_alive: bool,
 		) -> Result<Self::PositionId, DispatchError> {
 			Err("Not implemented".into())
 		}
 
 		#[transactional]
 		fn extend(
-			who: &Self::AccountId,
-			position: Self::PositionId,
-			amount: Self::Balance,
-			keep_alive: bool,
+			_who: &Self::AccountId,
+			_position: Self::PositionId,
+			_amount: Self::Balance,
+			_keep_alive: bool,
 		) -> Result<Self::PositionId, DispatchError> {
 			Err("Not implemented".into())
 		}
 
 		#[transactional]
 		fn unstake(
-			who: &Self::AccountId,
-			position: &Self::PositionId,
-			remove_amount: Self::Balance,
+			_who: &Self::AccountId,
+			_position: &Self::PositionId,
+			_remove_amount: Self::Balance,
 		) -> DispatchResult {
 			Err("Not implemented".into())
 		}
 
 		#[transactional]
 		fn split(
-			who: &Self::AccountId,
-			position: &Self::PositionId,
-			ratio: Permill,
+			_who: &Self::AccountId,
+			_position: &Self::PositionId,
+			_ratio: Permill,
 		) -> Result<[Self::PositionId; 2], DispatchError> {
 			Err("Not implemented".into())
 		}
