@@ -1,6 +1,7 @@
 use crate::{
 	self as pallet_liquidations,
 	mock::currency::{CurrencyId, NativeAssetId},
+    weights::SubstrateWeight,
 };
 
 use composable_traits::defi::DeFiComposableConfig;
@@ -234,7 +235,7 @@ impl pallet_liquidations::Config for Runtime {
 	type Event = Event;
 	type UnixTime = Timestamp;
 	type OrderId = OrderId;
-	type WeightInfo = ();
+	type WeightInfo = SubstrateWeight<Self>;
 	type DutchAuction = DutchAuction;
 	type LiquidationStrategyId = LiquidationStrategyId;
 	type PalletId = LiquidationPalletId;

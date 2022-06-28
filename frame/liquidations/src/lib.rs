@@ -38,7 +38,7 @@ mod mock;
 
 #[cfg(test)]
 mod tests;
-mod weights;
+pub mod weights;
 
 pub use crate::weights::WeightInfo;
 
@@ -96,7 +96,8 @@ pub mod pallet {
 			+ MaxEncodedLen
 			+ WrappingNext
 			+ Parameter
-			+ Copy;
+			+ Copy
+            + From<u32>;
 
 		type OrderId: Default + FullCodec + MaxEncodedLen + sp_std::fmt::Debug;
 
@@ -146,7 +147,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::WeightInfo::sell())]
+		#[pallet::weight(T::WeightInfo::sell(configuration.len() as u32))]
 		pub fn sell(
 			origin: OriginFor<T>,
 			order: Sell<T::MayBeAssetId, T::Balance>,

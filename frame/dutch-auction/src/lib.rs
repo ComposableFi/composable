@@ -336,7 +336,7 @@ pub mod pallet {
 
 		// TODO: make API for call this as liquidation engine
 		// TODO: so make pallet trait for having this call
-		#[pallet::weight(<T as Config>::WeightInfo::xcm_sell())]
+		#[pallet::weight(10000)]
 		#[transactional]
 		pub fn xcm_sell(
 			origin: OriginFor<T>,
