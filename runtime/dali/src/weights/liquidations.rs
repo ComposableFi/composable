@@ -33,7 +33,7 @@ impl<T: frame_system::Config> liquidations::WeightInfo for WeightInfo<T> {
 	// Storage: Liquidations DefaultStrategyIndex (r:1 w:0)
 	// Storage: Liquidations Strategies (r:1 w:0)
 	fn add_liquidation_strategy() -> Weight {
-		(7_721_000 as Weight)
+		(8_026_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 	}
 }

@@ -31,27 +31,27 @@ use sp_std::marker::PhantomData;
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> utility::WeightInfo for WeightInfo<T> {
 	fn batch(c: u32, ) -> Weight {
-		(15_081_000 as Weight)
+		(26_342_000 as Weight)
 			// Standard Error: 4_000
-			.saturating_add((6_956_000 as Weight).saturating_mul(c as Weight))
+			.saturating_add((7_770_000 as Weight).saturating_mul(c as Weight))
 	}
 	fn as_derivative() -> Weight {
-		(4_063_000 as Weight)
+		(4_065_000 as Weight)
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	fn batch_all(c: u32, ) -> Weight {
-		(27_964_000 as Weight)
+		(32_926_000 as Weight)
 			// Standard Error: 4_000
-			.saturating_add((7_537_000 as Weight).saturating_mul(c as Weight))
+			.saturating_add((8_392_000 as Weight).saturating_mul(c as Weight))
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	fn dispatch_as() -> Weight {
-		(18_667_000 as Weight)
+		(19_659_000 as Weight)
 	}
 	fn force_batch(c: u32, ) -> Weight {
-		(23_753_000 as Weight)
-			// Standard Error: 2_000
-			.saturating_add((6_947_000 as Weight).saturating_mul(c as Weight))
+		(26_886_000 as Weight)
+			// Standard Error: 4_000
+			.saturating_add((7_838_000 as Weight).saturating_mul(c as Weight))
 	}
 }

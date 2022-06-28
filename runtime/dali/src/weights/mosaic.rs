@@ -30,28 +30,32 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `mosaic`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Mosaic Relayer (r:0 w:1)
 	fn set_relayer() -> Weight {
-		(20_799_000 as Weight)
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		(28_974_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Mosaic Relayer (r:1 w:1)
 	fn rotate_relayer() -> Weight {
-		(27_215_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		(35_391_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(2 as Weight))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Mosaic Relayer (r:1 w:0)
 	// Storage: Mosaic NetworkInfos (r:0 w:1)
 	fn set_network() -> Weight {
-		(28_284_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(1 as Weight))
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		(36_689_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(2 as Weight))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Mosaic AssetsInfo (r:1 w:1)
 	fn set_budget() -> Weight {
-		(33_340_000 as Weight)
+		(34_148_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -64,7 +68,7 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 	// Storage: Mosaic OutgoingTransactions (r:1 w:1)
 	// Storage: Mosaic Nonce (r:1 w:1)
 	fn transfer_to() -> Weight {
-		(127_274_000 as Weight)
+		(136_416_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(9 as Weight))
 			.saturating_add(T::DbWeight::get().writes(5 as Weight))
 	}
@@ -74,7 +78,7 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 	// Storage: Mosaic OutgoingTransactions (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn accept_transfer() -> Weight {
-		(88_840_000 as Weight)
+		(94_765_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
@@ -82,24 +86,27 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 	// Storage: Mosaic OutgoingTransactions (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn claim_stale_to() -> Weight {
-		(99_993_000 as Weight)
+		(106_841_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Mosaic Relayer (r:1 w:0)
 	// Storage: Mosaic RemoteToLocalAsset (r:1 w:0)
 	// Storage: Mosaic AssetsInfo (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Mosaic IncomingTransactions (r:1 w:1)
 	fn timelocked_mint() -> Weight {
-		(92_878_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(5 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		(110_494_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(6 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Mosaic TimeLockPeriod (r:0 w:1)
 	fn set_timelock_duration() -> Weight {
-		(3_073_000 as Weight)
-			.saturating_add(T::DbWeight::get().writes(1 as Weight))
+		(9_206_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Mosaic Relayer (r:1 w:0)
@@ -107,31 +114,39 @@ impl<T: frame_system::Config> mosaic::WeightInfo for WeightInfo<T> {
 	// Storage: Mosaic IncomingTransactions (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	fn rescind_timelocked_mint() -> Weight {
-		(87_014_000 as Weight)
+		(92_411_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Mosaic IncomingTransactions (r:1 w:1)
 	// Storage: System Account (r:2 w:2)
 	fn claim_to() -> Weight {
-		(90_159_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(3 as Weight))
-			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+		(105_711_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(4 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
 	// Storage: Mosaic NetworkInfos (r:1 w:0)
 	// Storage: Mosaic LocalToRemoteAsset (r:1 w:1)
 	// Storage: Mosaic RemoteToLocalAsset (r:0 w:1)
 	fn update_asset_mapping() -> Weight {
-		(37_145_000 as Weight)
+		(45_938_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(3 as Weight))
+			.saturating_add(T::DbWeight::get().writes(3 as Weight))
+	}
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
+	// Storage: Mosaic RemoteAmmWhitelist (r:1 w:1)
+	fn add_remote_amm_id() -> Weight {
+		(15_646_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(2 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
-
-        fn add_remote_amm_id() -> Weight {
-		(1 as Weight)
-	}
-
+	// Storage: unknown [0x3a7472616e73616374696f6e5f6c6576656c3a] (r:1 w:1)
+	// Storage: Mosaic RemoteAmmWhitelist (r:1 w:1)
 	fn remove_remote_amm_id() -> Weight {
-		(1 as Weight)
+		(16_957_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(2 as Weight))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
 }

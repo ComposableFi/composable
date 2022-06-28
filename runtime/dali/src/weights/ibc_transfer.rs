@@ -47,7 +47,7 @@ impl<T: frame_system::Config> ibc_transfer::WeightInfo for WeightInfo<T> {
 	// Storage: Ibc PacketCommitment (r:1 w:1)
 	// Storage: Ibc CounterForPacketCommitment (r:1 w:1)
 	fn transfer() -> Weight {
-		(362_276_000 as Weight)
+		(364_105_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(19 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
@@ -61,42 +61,42 @@ impl<T: frame_system::Config> ibc_transfer::WeightInfo for WeightInfo<T> {
 	// Storage: Ibc Channels (r:0 w:1)
 	// Storage: Ibc NextSequenceRecv (r:0 w:1)
 	fn open_channel() -> Weight {
-		(132_343_000 as Weight)
+		(134_274_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().writes(7 as Weight))
 	}
 	// Storage: Transfer Params (r:0 w:1)
 	fn set_pallet_params() -> Weight {
-		(20_541_000 as Weight)
+		(21_661_000 as Weight)
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	fn on_chan_open_init() -> Weight {
-		(677_000 as Weight)
+		(670_000 as Weight)
 	}
 	fn on_chan_open_try() -> Weight {
-		(931_000 as Weight)
+		(913_000 as Weight)
 	}
 	// Storage: Transfer ChannelIds (r:1 w:1)
 	fn on_chan_open_ack() -> Weight {
-		(7_299_000 as Weight)
+		(7_521_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Transfer ChannelIds (r:1 w:1)
 	fn on_chan_open_confirm() -> Weight {
-		(7_179_000 as Weight)
+		(7_582_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Transfer ChannelIds (r:1 w:1)
 	fn on_chan_close_init() -> Weight {
-		(8_568_000 as Weight)
+		(9_400_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: Transfer ChannelIds (r:1 w:1)
 	fn on_chan_close_confirm() -> Weight {
-		(8_641_000 as Weight)
+		(9_264_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
@@ -105,19 +105,19 @@ impl<T: frame_system::Config> ibc_transfer::WeightInfo for WeightInfo<T> {
 	// Storage: Ibc Acknowledgements (r:1 w:1)
 	// Storage: Ibc CounterForAcknowledgements (r:1 w:1)
 	fn on_recv_packet() -> Weight {
-		(115_894_000 as Weight)
+		(121_745_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(4 as Weight))
 			.saturating_add(T::DbWeight::get().writes(3 as Weight))
 	}
 	// Storage: System Account (r:1 w:1)
 	fn on_acknowledgement_packet() -> Weight {
-		(91_764_000 as Weight)
+		(92_795_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
 	// Storage: System Account (r:1 w:1)
 	fn on_timeout_packet() -> Weight {
-		(90_031_000 as Weight)
+		(92_127_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(1 as Weight))
 	}
