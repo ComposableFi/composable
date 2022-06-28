@@ -3,9 +3,9 @@
 #![allow(dead_code)]
 
 pub mod binance;
-pub mod pyth;
 pub mod composable;
 pub mod composable_api;
+pub mod pyth;
 
 use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
@@ -61,6 +61,7 @@ pub enum FeedNotification<F, A, P> {
 pub enum FeedIdentifier {
 	Pyth,
 	Binance,
+	Composable,
 }
 
 /// The possible errors hapenning while feeds are running.
