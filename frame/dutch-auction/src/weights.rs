@@ -13,7 +13,7 @@ pub trait WeightInfo {
 /// Weight functions for `dutch_auction`.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
-// Storage: DutchAuction OrdersIndex (r:1 w:1)
+	// Storage: DutchAuction OrdersIndex (r:1 w:1)
 	// Storage: System Account (r:1 w:1)
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: Tokens Accounts (r:1 w:1)

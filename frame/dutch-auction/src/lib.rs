@@ -114,7 +114,7 @@ pub mod pallet {
 	};
 	use orml_traits::{MultiCurrency, MultiReservableCurrency};
 	use sp_runtime::{traits::AccountIdConversion, DispatchError};
-	use sp_std::convert::TryInto;
+	use sp_std::{convert::TryInto, vec};
 
 	pub type OrderIdOf<T> = <T as Config>::OrderId;
 	pub type SellOf<T> = SellOrder<
