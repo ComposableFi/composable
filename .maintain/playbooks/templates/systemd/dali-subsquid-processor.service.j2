@@ -6,7 +6,7 @@ After=network.target
 [Service]
 ExecStart=node -r dotenv/config lib/processor.js
 
-Environment="ENV=dali"
+Environment="ENV=dali-stage"
 WorkingDirectory={{ work_dir }}/subsquid
 StandardOutput=syslog
 StandardError=syslog

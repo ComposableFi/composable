@@ -1047,6 +1047,17 @@ declare module "@polkadot/api-base/types/storage" {
         QueryableStorageEntry<ApiType, [AccountId32, u128]>;
       relayer: AugmentedQuery<ApiType, () => Observable<Option<PalletMosaicRelayerStaleRelayer>>, []> &
         QueryableStorageEntry<ApiType, []>;
+      /**
+       * Remote AMM IDs that exist (NetworkId, AmmId).
+       * Note that this is actually a set that does bookkeeping of valid AmmIds.
+       * Therefore, the value type is (), because it is irrelevant for our use case.
+       **/
+      remoteAmmWhitelist: AugmentedQuery<
+        ApiType,
+        (arg1: u32 | AnyNumber | Uint8Array, arg2: u128 | AnyNumber | Uint8Array) => Observable<Option<Null>>,
+        [u32, u128]
+      > &
+        QueryableStorageEntry<ApiType, [u32, u128]>;
       remoteToLocalAsset: AugmentedQuery<
         ApiType,
         (
@@ -1707,6 +1718,27 @@ declare module "@polkadot/api-base/types/storage" {
     transactionPayment: {
       nextFeeMultiplier: AugmentedQuery<ApiType, () => Observable<u128>, []> & QueryableStorageEntry<ApiType, []>;
       storageVersion: AugmentedQuery<ApiType, () => Observable<PalletTransactionPaymentReleases>, []> &
+        QueryableStorageEntry<ApiType, []>;
+      /**
+       * Generic query
+       **/
+      [key: string]: QueryableStorageEntry<ApiType>;
+    };
+    transfer: {
+      /**
+       * ChannelIds open from this module
+       **/
+      channelIds: AugmentedQuery<ApiType, () => Observable<Vec<Bytes>>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Map of asset id to ibc denom pairs (T::AssetId, Vec<u8>)
+       * ibc denoms represented as utf8 string bytes
+       **/
+      ibcAssetIds: AugmentedQuery<ApiType, (arg: u128 | AnyNumber | Uint8Array) => Observable<Option<Bytes>>, [u128]> &
+        QueryableStorageEntry<ApiType, [u128]>;
+      /**
+       * Pallet Params used to disable sending or receipt of ibc tokens
+       **/
+      params: AugmentedQuery<ApiType, () => Observable<IbcTransferPalletParams>, []> &
         QueryableStorageEntry<ApiType, []>;
       /**
        * Generic query

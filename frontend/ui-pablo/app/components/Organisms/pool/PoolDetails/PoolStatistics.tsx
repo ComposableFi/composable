@@ -69,7 +69,7 @@ export const PoolStatistics: React.FC<PoolDetailsProps> = ({
           <Item label="Pool value" value={`$${
             tokensLocked.value.baseValue.plus(
               tokensLocked.value.quoteValue
-            )
+            ).toFixed(2)
           }`} />
         </Grid>
         <Grid item {...twoColumnPageSize}>

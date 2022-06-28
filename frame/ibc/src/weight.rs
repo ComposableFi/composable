@@ -115,6 +115,8 @@ impl<T: Config> WeightRouter<T> {
 		match port_id {
 			pallet_ibc_ping::PORT_ID =>
 				Some(Box::new(pallet_ibc_ping::WeightHandler::<T>::default())),
+			ibc::applications::transfer::PORT_ID_STR =>
+				Some(Box::new(transfer::WeightHandler::<T>::default())),
 			_ => None,
 		}
 	}

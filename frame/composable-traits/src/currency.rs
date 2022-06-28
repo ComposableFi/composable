@@ -27,6 +27,7 @@ impl RangeId {
 	pub const LP_TOKENS: RangeId = RangeId(0);
 	pub const TOKENS: RangeId = RangeId(1);
 	pub const FOREIGN_ASSETS: RangeId = RangeId(2);
+	pub const IBC_ASSETS: RangeId = RangeId(3);
 
 	pub fn inner(&self) -> u32 {
 		self.0

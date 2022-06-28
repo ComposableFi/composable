@@ -109,6 +109,8 @@ export const PolkadotConnect: React.FC<{}> = () => {
         // wait 2P secs
       }, 1000);
     }
+    // Only to be called on page load therefore we can omit dependencies.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

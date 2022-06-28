@@ -166,6 +166,8 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
     } else {
       setUseAssociationMode("ethereum");
     }
+    // Only to be called on page load therefore we can omit dependencies.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

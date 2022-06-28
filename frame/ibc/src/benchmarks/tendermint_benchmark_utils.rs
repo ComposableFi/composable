@@ -193,13 +193,9 @@ pub fn create_conn_open_try<T: Config>() -> (ConsensusState, MsgConnectionOpenTr
 
 	let client_path = format!("{}", ClientStatePath(counterparty_client_id)).as_bytes().to_vec();
 	let path = format!("{}", ConnectionsPath(ConnectionId::new(1))).as_bytes().to_vec();
-	avl_tree.insert(path.clone(), connection_end.encode_vec().unwrap());
-	avl_tree
-		.insert(consensus_path.clone(), AnyConsensusState::Beefy(cs_state).encode_vec().unwrap());
-	avl_tree.insert(
-		client_path.clone(),
-		AnyClientState::Beefy(client_state.clone()).encode_vec().unwrap(),
-	);
+	avl_tree.insert(path.clone(), connection_end.encode_vec());
+	avl_tree.insert(consensus_path.clone(), AnyConsensusState::Beefy(cs_state).encode_vec());
+	avl_tree.insert(client_path.clone(), AnyClientState::Beefy(client_state.clone()).encode_vec());
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
@@ -298,13 +294,9 @@ pub fn create_conn_open_ack<T: Config>() -> (ConsensusState, MsgConnectionOpenAc
 
 	let client_path = format!("{}", ClientStatePath(counterparty_client_id)).as_bytes().to_vec();
 	let path = format!("{}", ConnectionsPath(ConnectionId::new(1))).as_bytes().to_vec();
-	avl_tree.insert(path.clone(), connection_end.encode_vec().unwrap());
-	avl_tree
-		.insert(consensus_path.clone(), AnyConsensusState::Beefy(cs_state).encode_vec().unwrap());
-	avl_tree.insert(
-		client_path.clone(),
-		AnyClientState::Beefy(client_state.clone()).encode_vec().unwrap(),
-	);
+	avl_tree.insert(path.clone(), connection_end.encode_vec());
+	avl_tree.insert(consensus_path.clone(), AnyConsensusState::Beefy(cs_state).encode_vec());
+	avl_tree.insert(client_path.clone(), AnyClientState::Beefy(client_state.clone()).encode_vec());
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
@@ -400,9 +392,8 @@ pub fn create_conn_open_confirm<T: Config>() -> (ConsensusState, MsgConnectionOp
 	.to_vec();
 
 	let path = format!("{}", ConnectionsPath(ConnectionId::new(1))).as_bytes().to_vec();
-	avl_tree.insert(path.clone(), connection_end.encode_vec().unwrap());
-	avl_tree
-		.insert(consensus_path.clone(), AnyConsensusState::Beefy(cs_state).encode_vec().unwrap());
+	avl_tree.insert(path.clone(), connection_end.encode_vec());
+	avl_tree.insert(consensus_path.clone(), AnyConsensusState::Beefy(cs_state).encode_vec());
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
@@ -473,7 +464,7 @@ pub fn create_chan_open_try() -> (ConsensusState, MsgChannelOpenTry) {
 	let path = format!("{}", ChannelEndsPath(port_id.clone(), ChannelId::new(0)))
 		.as_bytes()
 		.to_vec();
-	avl_tree.insert(path.clone(), channel_end.encode_vec().unwrap());
+	avl_tree.insert(path.clone(), channel_end.encode_vec());
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
@@ -536,7 +527,7 @@ pub fn create_chan_open_ack() -> (ConsensusState, MsgChannelOpenAck) {
 	let path = format!("{}", ChannelEndsPath(port_id.clone(), ChannelId::new(0)))
 		.as_bytes()
 		.to_vec();
-	avl_tree.insert(path.clone(), channel_end.encode_vec().unwrap());
+	avl_tree.insert(path.clone(), channel_end.encode_vec());
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
@@ -592,7 +583,7 @@ pub fn create_chan_open_confirm() -> (ConsensusState, MsgChannelOpenConfirm) {
 	let path = format!("{}", ChannelEndsPath(port_id.clone(), ChannelId::new(0)))
 		.as_bytes()
 		.to_vec();
-	avl_tree.insert(path.clone(), channel_end.encode_vec().unwrap());
+	avl_tree.insert(path.clone(), channel_end.encode_vec());
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
@@ -655,7 +646,7 @@ pub fn create_chan_close_confirm() -> (ConsensusState, MsgChannelCloseConfirm) {
 	let path = format!("{}", ChannelEndsPath(port_id.clone(), ChannelId::new(0)))
 		.as_bytes()
 		.to_vec();
-	avl_tree.insert(path.clone(), channel_end.encode_vec().unwrap());
+	avl_tree.insert(path.clone(), channel_end.encode_vec());
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
