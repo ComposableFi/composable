@@ -120,10 +120,7 @@ fn create_vamm(vamm_config: &VammConfig<Balance, Moment>) {
 
 fn twap_update_delay(vamm_id: VammId) -> Moment {
 	let vamm_state = TestPallet::get_vamm(vamm_id).unwrap();
-	vamm_state
-		.twap_period
-		.saturating_add(vamm_state.twap_timestamp)
-		.saturating_add(1)
+	vamm_state.twap_period.saturating_add(1)
 }
 
 // ----------------------------------------------------------------------------------------------------
