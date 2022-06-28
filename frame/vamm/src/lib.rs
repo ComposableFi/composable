@@ -675,7 +675,7 @@ pub mod pallet {
 		/// In order for the caller to update the time weighted average price of
 		/// the assets, it has to request it to the Vamm Pallet. The pallet will
 		/// perform the needed sanity checks and update the runtime storage with
-		/// the desired twap values, returning both it in case of success.
+		/// the desired twap value, returning both it in case of success.
 		///
 		/// This function can also compute the new twap value using an
 		/// Exponential Moving Average algorithm rather than blindly seting it
@@ -703,10 +703,6 @@ pub mod pallet {
 		///  value for the base asset's twap.  If the value is `None`, than the
 		///  Vamm will update the twap using an exponential moving average
 		///  algorithm.
-		///  - [`quote_twap`](VammState::quote_asset_twap): The optional desired
-		///  value for the base asset's twap.  If the value is `None`, than the
-		///  Vamm will update the twap using an exponential moving average
-		///  algorithm.
 		///
 		/// ## Returns
 		/// A tuple with the new twap value for both base and quote asset.
@@ -715,7 +711,6 @@ pub mod pallet {
 		/// * The requested [`VammId`](Config::VammId) must exists.
 		/// * The requested Vamm must be open.
 		/// * The `base_twap` value can't be zero.
-		/// * The `quote_twap` value can't be zero.
 		///
 		/// For more information about how to know if a Vamm is open or not,
 		/// please have a look in the variable [`closed`](VammState::closed).
@@ -742,21 +737,13 @@ pub mod pallet {
 		fn update_twap(
 			vamm_id: VammIdOf<T>,
 			base_twap: Option<DecimalOf<T>>,
-			quote_twap: Option<DecimalOf<T>>,
 		) -> Result<(DecimalOf<T>, DecimalOf<T>), DispatchError> {
-			// Sanity Checks
-			// Vamm must exist.
 			let mut vamm_state = Self::get_vamm_state(&vamm_id)?;
 
-			// Other sanity checks must pass.
-			Self::update_twap_sanity_check(&vamm_state, base_twap, quote_twap, &None)?;
-
-			// Handle optional values.
-			let (base_twap, quote_twap) = match (base_twap, quote_twap) {
-				(Some(base_twap), Some(quote_twap)) => (base_twap, quote_twap),
-				(Some(base_twap), None) => (base_twap, Self::reciprocal_twap(&base_twap)?),
-				(None, Some(quote_twap)) => (Self::reciprocal_twap(&quote_twap)?, quote_twap),
-				(None, None) => Self::compute_new_twaps(&vamm_state, &None)?,
+			// Handle optional value.
+			let (base_twap, quote_twap) = match base_twap {
+				Some(base_twap) => (base_twap, Self::reciprocal_twap(&base_twap)?),
+				None => Self::compute_new_twaps(&vamm_state, &None)?,
 			};
 
 			// Delegate update twap to internal functions.
