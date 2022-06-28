@@ -8,10 +8,11 @@ use crate::{
 		},
 	},
 	tests::{
-		any_balance, any_price, get_market, get_market_fee_pool, run_for_seconds, run_to_time,
-		set_fee_pool_depth, set_maximum_oracle_mark_divergence, set_maximum_twap_divergence,
-		set_oracle_price, set_oracle_twap, traders_in_one_market_context, with_market_context,
-		with_trading_context, Balance, Market, MarketConfig, Position,
+		any_balance, any_price, as_balance, get_market, get_market_fee_pool, run_for_seconds,
+		run_to_time, set_fee_pool_depth, set_maximum_oracle_mark_divergence,
+		set_maximum_twap_divergence, set_oracle_price, set_oracle_twap,
+		traders_in_one_market_context, with_market_context, with_trading_context, Balance, Market,
+		MarketConfig, Position,
 	},
 	Direction, Error, Event,
 };
@@ -23,8 +24,6 @@ use composable_traits::{
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 use sp_runtime::{FixedI128, FixedU128};
-
-use super::as_balance;
 
 // -------------------------------------------------------------------------------------------------
 //                                             Helpers
