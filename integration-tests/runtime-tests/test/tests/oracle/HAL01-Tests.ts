@@ -336,7 +336,7 @@ describe("HAL01 [Oracle] Tests", function () {
         expect(oracleStakeWallet1BeforeTransaction).to.be.bignumber.equal(oracleStakeWallet1AfterTransaction);
         expect(oracleStakeWallet2BeforeTransaction).to.be.bignumber.equal(oracleStakeWallet2AfterTransaction);
         expect(oracleStakeWallet3BeforeTransaction).to.be.bignumber.equal(oracleStakeWallet3AfterTransaction);
-        expect(oracleStakeWallet4BeforeTransaction).to.be.bignumber.equal(oracleStakeWallet4AfterTransaction);
+        expect(oracleStakeWallet4BeforeTransaction).to.be.bignumber.lessThan(oracleStakeWallet4AfterTransaction);
       });
     });
   });
