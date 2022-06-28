@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "next lint && eslint -c ../.eslintrc.js .",
     "test": "jest",
     "test:watch": "jest --watch",
     "post-update": "echo \"codesandbox preview only, need an update\" && yarn upgrade --latest",

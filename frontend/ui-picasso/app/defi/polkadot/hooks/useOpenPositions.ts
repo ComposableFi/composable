@@ -76,5 +76,5 @@ export function useOpenPositions(account: VestingAccount | undefined) {
     }
 
     return () => unsub();
-  }, [parachainApi, bonds, account]);
+  }, [parachainApi, bonds, account]); // eslint-disable-line react-hooks/exhaustive-deps
 }

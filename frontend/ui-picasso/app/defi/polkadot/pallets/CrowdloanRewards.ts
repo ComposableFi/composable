@@ -84,9 +84,9 @@ export class CrowdloanRewards {
   }
 
   public async queryAvailableToClaim(account: string) {
-    let rpcRes = await (this.api.rpc as any).crowdloanRewards.amountAvailableToClaimFor(
-      account
-    );
+    let rpcRes = await (
+      this.api.rpc as any
+    ).crowdloanRewards.amountAvailableToClaimFor(account);
 
     let availableToClaim = rpcRes.toString();
     return availableToClaim;
