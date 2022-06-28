@@ -13,7 +13,7 @@ pub type Exponent = u32;
 /// The implementor should ensure that a new `CurrencyId` is created and collisions are avoided.
 /// Is about Local assets representations. These may differ remotely.
 pub trait CurrencyFactory<AssetId, Balance> {
-	/// permissionsless creation of new transferable asset id
+	/// permissionless creation of new transferable asset id
 	fn create(id: RangeId, ed: Balance) -> Result<AssetId, DispatchError>;
 	fn reserve_lp_token_id(ed: Balance) -> Result<AssetId, DispatchError> {
 		Self::create(RangeId::LP_TOKENS, ed)
@@ -27,6 +27,7 @@ impl RangeId {
 	pub const LP_TOKENS: RangeId = RangeId(0);
 	pub const TOKENS: RangeId = RangeId(1);
 	pub const FOREIGN_ASSETS: RangeId = RangeId(2);
+	pub const IBC_ASSETS: RangeId = RangeId(3);
 
 	pub fn inner(&self) -> u32 {
 		self.0

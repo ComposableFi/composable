@@ -127,7 +127,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	// This value is set to 100 to notify Polkadot-JS App (https://polkadot.js.org/apps) to use
 	//   the compatible custom types.
 	spec_version: 2300,
-	impl_version: 2,
+	impl_version: 3,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 1,
 	state_version: 0,
@@ -865,6 +865,24 @@ impl crowdloan_rewards::Config for Runtime {
 	type Time = Timestamp;
 }
 
+parameter_types! {
+	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
+}
+
+impl pallet_staking_rewards::Config for Runtime {
+	type Event = Event;
+	type Share = Balance;
+	type Balance = Balance;
+	type PoolId = u16;
+	type PositionId = u128;
+	type MayBeAssetId = CurrencyId;
+	type CurrencyFactory = CurrencyFactory;
+	type UnixTime = Timestamp;
+	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
+	type PalletId = StakingRewardsPalletId;
+	type WeightInfo = ();
+}
+
 /// The calls we permit to be executed by extrinsics
 pub struct BaseCallFilter;
 
@@ -966,6 +984,7 @@ impl mosaic::Config for Runtime {
 	type RemoteAssetId = MosaicRemoteAssetId;
 	type ControlOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::mosaic::WeightInfo<Runtime>;
+	type RemoteAmmId = u128; // TODO: Swap to U256?
 }
 
 pub type LiquidationStrategyId = u32;
@@ -1066,6 +1085,61 @@ parameter_types! {
 	pub const ExpectedBlockTime: u64 = SLOT_DURATION;
 }
 
+#[derive(Clone)]
+pub struct IbcAccount(AccountId);
+
+impl sp_runtime::traits::IdentifyAccount for IbcAccount {
+	type AccountId = AccountId;
+	fn into_account(self) -> Self::AccountId {
+		self.0
+	}
+}
+
+impl TryFrom<pallet_ibc::Signer> for IbcAccount
+where
+	AccountId: From<[u8; 32]>,
+{
+	type Error = &'static str;
+
+	/// Convert a signer to an IBC account.
+	/// Only valid hex strings are supported for now.
+	fn try_from(signer: pallet_ibc::Signer) -> Result<Self, Self::Error> {
+		let acc_str = signer.as_ref();
+		if acc_str.starts_with("0x") {
+			match acc_str.strip_prefix("0x") {
+				Some(hex_string) => TryInto::<[u8; 32]>::try_into(
+					hex::decode(hex_string).map_err(|_| "Error decoding invalid hex string")?,
+				)
+				.map_err(|_| "Invalid account id hex string")
+				.map(|acc| Self(acc.into())),
+				_ => Err("Signer does not hold a valid hex string"),
+			}
+		}
+		// Do SS58 decoding instead
+		else {
+			let bytes = ibc_primitives::runtime_interface::ibc::ss58_to_account_id_32(acc_str)
+				.map_err(|_| "Invalid SS58 address")?;
+			Ok(Self(bytes.into()))
+		}
+	}
+}
+
+parameter_types! {
+	pub TransferPalletID: PalletId = PalletId(*b"transfer");
+}
+
+impl ibc_transfer::Config for Runtime {
+	type Event = Event;
+	type MultiCurrency = Assets;
+	type IbcHandler = Ibc;
+	type AccountIdConversion = IbcAccount;
+	type AssetRegistry = AssetsRegistry;
+	type CurrencyFactory = CurrencyFactory;
+	type AdminOrigin = EnsureRoot<AccountId>;
+	type PalletId = TransferPalletID;
+	type WeightInfo = crate::weights::ibc_transfer::WeightInfo<Self>;
+}
+
 impl pallet_ibc::Config for Runtime {
 	type TimeProvider = Timestamp;
 	type Event = Event;
@@ -1074,6 +1148,7 @@ impl pallet_ibc::Config for Runtime {
 	const CONNECTION_PREFIX: &'static [u8] = b"ibc";
 	type ExpectedBlockTime = ExpectedBlockTime;
 	type WeightInfo = crate::weights::pallet_ibc::WeightInfo<Self>;
+	type AdminOrigin = EnsureRoot<AccountId>;
 }
 
 impl pallet_ibc_ping::Config for Runtime {
@@ -1142,11 +1217,14 @@ construct_runtime!(
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
+		StakingRewards: pallet_staking_rewards = 67,
+
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 
 		// IBC Support, pallet-ibc should be the last in the list of pallets that use the ibc protocol
 		IbcPing: pallet_ibc_ping::{Pallet, Call, Storage, Event<t>} = 101,
-		Ibc: pallet_ibc::{Pallet, Call, Storage, Event<T>} = 102
+		Transfer: ibc_transfer::{Pallet, Call, Storage, Event<t>} = 102,
+		Ibc: pallet_ibc::{Pallet, Call, Storage, Event<T>} = 103
 	}
 );
 
@@ -1220,6 +1298,7 @@ mod benches {
 		[pablo, Pablo]
 		[dex_router, DexRouter]
 		[pallet_ibc, Ibc]
+		[ibc_transfer, Transfer]
 	);
 }
 
@@ -1564,6 +1643,23 @@ impl_runtime_apis! {
 
 		fn denom_traces(_offset: Vec<u8>, _limit: u64, _height: u32) -> Option<ibc_primitives::QueryDenomTracesResponse> {
 			None
+		}
+
+		fn block_events() -> Vec<pallet_ibc::events::IbcEvent> {
+			let events = frame_system::Pallet::<Self>::read_events_no_consensus().into_iter().filter_map(|e| {
+				let frame_system::EventRecord{ event, ..} = *e;
+				match event {
+					Event::Ibc(pallet_ibc::Event::IbcEvents{ events }) => {
+						Some(events)
+					},
+					_ => None
+				}
+			});
+
+			events.fold(vec![], |mut events, ev| {
+				events.extend_from_slice(&ev);
+				events
+			})
 		}
 	}
 	#[cfg(feature = "runtime-benchmarks")]

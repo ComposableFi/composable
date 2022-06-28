@@ -17,7 +17,9 @@
     "test": "yarn --cwd app test",
     "test:watch": "yarn --cwd app test:watch",
     "lint": "yarn --cwd app lint",
-    "lint:report": "yarn --cwd app lint:report"
+    "lint:report": "yarn --cwd app lint:report",
+    "generate:defs": "ts-node --skip-project node_modules/.bin/polkadot-types-from-defs --package @/defi/polkadot/interfaces --input ./app/defi/polkadot/interfaces --endpoint ws://127.0.0.1:9988",
+    "generate:meta": "ts-node --skip-project node_modules/.bin/polkadot-types-from-chain --package @/defi/polkadot/interfaces --endpoint ws://127.0.0.1:9988 --output ./app/defi/polkadot/interfaces"
   },
   "devDependencies": {
     "husky": ">=6",
@@ -34,6 +36,7 @@
     "@types/react": "17.0.2",
     "@types/react-dom": "17.0.2",
     "react": "17.0.2",
-    "react-dom": "17.0.2"
+    "react-dom": "17.0.2",
+    "@storybook/react": "6.4.22"
   }
 }

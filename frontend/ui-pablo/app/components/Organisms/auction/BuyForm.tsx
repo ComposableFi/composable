@@ -160,7 +160,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
             parachainApi,
             signer,
             (txHash: string) => {
-              enqueueSnackbar('Initiating Transaction');
+              enqueueSnackbar("Initiating Transaction");
             },
             (txHash: string, events) => {
               enqueueSnackbar('Transaction Finalized');

@@ -22,7 +22,7 @@ Ensure have at least 100 KAR on Karura and 20 KSM or Kusama and root on Picasso.
 
 This call `0x3c00d0070000e803000000900100` can be decoded by https://polkadot.js.org/apps/?rpc=wss%3A%2F%2Fkusama-rpc.polkadot.io#/extrinsics/decode  ,
 
-Initate this calls from Picasso as `0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee383c00d0070000e803000000900100` . 
+Initiate this calls from Picasso as `0x2900010100020c0004000000000700e876481713000100000700e876481700060102286bee383c00d0070000e803000000900100` . 
 
 ## Accept open channel
 

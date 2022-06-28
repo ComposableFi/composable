@@ -1,12 +1,12 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-import type { u128 } from '@polkadot/types-codec';
+import type { Bytes, Struct, u64 } from "@polkadot/types-codec";
 
-/** @name AssetsBalance */
-export interface AssetsBalance extends u128 {}
+/** @name Asset */
+export interface Asset extends Struct {
+  readonly name: Bytes;
+  readonly id: u64;
+}
 
-/** @name CurrencyId */
-export interface CurrencyId extends u128 {}
-
-export type PHANTOM_ASSETS = 'assets';
+export type PHANTOM_ASSETS = "assets";

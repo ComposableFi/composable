@@ -171,6 +171,9 @@ export interface FrameSystemAccountInfo extends Struct {
   } & Struct;
 }
 
+/** @name IbcTraitOpenChannelParams */
+export interface IbcTraitOpenChannelParams extends Null {}
+
 /** @name OrmlTokensAccountData */
 export interface OrmlTokensAccountData extends Struct {
   readonly free: u128;
@@ -252,6 +255,24 @@ export interface PalletDutchAuctionSellOrder extends Null {}
 
 /** @name PalletDutchAuctionTakeOrder */
 export interface PalletDutchAuctionTakeOrder extends Null {}
+
+/** @name PalletIbcAny */
+export interface PalletIbcAny extends Null {}
+
+/** @name PalletIbcConnectionParams */
+export interface PalletIbcConnectionParams extends Null {}
+
+/** @name PalletIbcErrorsIbcError */
+export interface PalletIbcErrorsIbcError extends Null {}
+
+/** @name PalletIbcEventsIbcEvent */
+export interface PalletIbcEventsIbcEvent extends Null {}
+
+/** @name PalletIbcIbcConsensusState */
+export interface PalletIbcIbcConsensusState extends Null {}
+
+/** @name PalletIbcPingSendPingParams */
+export interface PalletIbcPingSendPingParams extends Null {}
 
 /** @name PalletIdentityBitFlags */
 export interface PalletIdentityBitFlags extends Null {}

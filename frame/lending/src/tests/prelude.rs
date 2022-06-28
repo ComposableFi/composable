@@ -12,7 +12,7 @@ pub use crate::{
 pub use crate as pallet_lending;
 pub use composable_support::validation::{TryIntoValidated, Validated};
 pub use composable_tests_helpers::{
-	prop_assert_acceptable_computation_error, prop_assert_ok, test,
+	prop_assert_acceptable_computation_error, prop_assert_noop, prop_assert_ok, test,
 };
 pub use composable_traits::{
 	defi::{MoreThanOneFixedU128, ZeroToOneFixedU128},

@@ -1,13 +1,13 @@
 import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 import BigNumber from "bignumber.js";
 import { useState, useEffect, useMemo } from "react";
-import useStore from "@/store/useStore";
 import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
 import { useLiquidityByPool } from "./useLiquidityByPool";
 import { DailyRewards } from "../poolStats/poolStats.types";
 import { calculatePoolStats, fetchPoolStats } from "@/defi/utils/pablo";
 import { MockedAsset } from "../assets/assets.types";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import useStore from "../useStore";
 
 export const useLiquidityPoolDetails = (poolId: number) => {
   const { poolStats, poolStatsValue, userLpBalances, putPoolStats, supportedAssets } = useStore();

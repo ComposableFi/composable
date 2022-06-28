@@ -377,7 +377,14 @@ pub mod pallet {
 		MaxLiquidationBatchSizeExceeded,
 
 		PriceTooOld,
+
+		// Open market collateral factor increase would allow market manager to liquidate all
+		// positions in any time.
 		CannotIncreaseCollateralFactorOfOpenMarket,
+
+		// If Vault is unbalanced we can not borrow from it, since
+		// we do not know how many asset it needs to balance.
+		CannotBorrowFromMarketWithUnbalancedVault,
 	}
 
 	#[pallet::event]

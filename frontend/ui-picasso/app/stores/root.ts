@@ -10,6 +10,8 @@ import statsOverviewReducer from "./defi/stats/overview";
 import statsTelemetryReducer from "./defi/stats/telemetry";
 import statsTreasuryReducer from "./defi/stats/treasury";
 import statsApolloReducer from "./defi/stats/apollo";
+import bondsReducer from "./defi/polkadot/bonds/slice";
+import oracleReducer from "./defi/polkadot/oracle/slice";
 
 export const store = configureStore({
   reducer: {
@@ -20,10 +22,12 @@ export const store = configureStore({
     transfers: transfersReducer,
     polkadot: polkadotReducer,
     staking: stakingReducer,
+    bonding: bondsReducer,
     statsOverview: statsOverviewReducer,
     statsTelemetry: statsTelemetryReducer,
     statsTreasury: statsTreasuryReducer,
     statsApollo: statsApolloReducer,
+    oracle: oracleReducer,
   },
 });
 

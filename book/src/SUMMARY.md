@@ -3,6 +3,7 @@
 - [👋 Introduction](introduction.md)
 - [💻 Developer Guides](./developer-guides.md)
     - [Composable SDK](./developer-guides/composable-sdk.md)
+    - [Oracle Set-Up Guide](./developer-guides/oracle-set-up-guide/oracle-set-up-guide.md)
     - [Collator Set-Up Guide](./developer-guides/collator-set-up-guide.md)
 
 # 💿 PRODUCTS
@@ -10,8 +11,8 @@
 - [Composable's Cross-Chain Virtual Machine](./products/cross-chain-virtual-machine.md)
     - [Writing Smart Contracts with CosmWasm](./products/cross-chain-virtual-machine/writing-smart-contracts-with-cosmwasm.md)
     - [How the XCVM works](./products/cross-chain-virtual-machine/how-the-xcvm-works.md)
+    - [Routing Layer](./products/routing-layer.md)
     - [Routing Layer Libraries](./products/cross-chain-virtual-machine/routing-layer-libraries.md)
-- [Routing Layer](./products/routing-layer.md)
 - [Mosaic](./products/mosaic.md)
     - [Fragmentation in DeFi's Layer 2](./products/mosaic/fragmentation-in-layer-2.md)
     - [Proof of Concept: A Cross-Layer Transferal System](./products/mosaic/proof-of-concept-polygon-arbitrum-cross-layer-transferral-system.md)
@@ -24,23 +25,6 @@
         - [NFT Contract Details](./products/mosaic/mural-nft-transfers-on-mosaic-via-the-summoner-vault/nft-contract-details.md)
         - [Moonbeans Integration](./products/mosaic/mural-nft-transfers-on-mosaic-via-the-summoner-vault/moonbeans-integration.md)
     - [The Composable SDK](./products/mosaic/the-composable-sdk.md)
-- [Angular](./products/angular/product-brief.md)
-    - [Technical Specification](./products/angular/technical-specification.md)
-        - [Pools](./products/angular/technical-specification/pools.md)
-        - [Models](./products/angular/technical-specification/models.md)
-        - [Liquidations](./products/angular/technical-specification/liquidations.md)
-            - [Liquidation Interface](./products/angular/technical-specification/liquidations/liquidation-interface.md)
-                - [XCM](./products/angular/technical-specification/liquidations/liquidation-interface/xcm.md)
-                - [IBC](./products/angular/technical-specification/liquidations/liquidation-interface/ibc.md)
-            - [Implementation](./products/angular/technical-specification/liquidations/implementation.md)
-        - [Oracle](./products/angular/technical-specification/oracle.md)
-        - [Collateral](./products/angular/technical-specification/collateral.md)
-            - [NFTs](./products/angular/technical-specification/collateral/nfts.md)
-        - [Undercollateralized Loans/Leverage](./products/angular/technical-specification/undercollateralized-loans-leverage.md)
-        - [References](./products/angular/technical-specification/references.md)
-    - [Angular Token](./products/angular/angular-token.md)
-    - [Socials](./products/angular/socials.md)
-    - [Foreign Assets](./products/angular/foreign-assets.md)
 - [Cubic](./products/cubic/cubic.md)
   - [Additional Details](./products/cubic/addtional-details.md)
 - [Parachain Vault Strategy](./products/parachain-vault-strategy.md)
@@ -54,25 +38,15 @@
         - [Apollo: The Oracle Pallet](./products/the-picasso-parachain/the-picasso-tech-stack/apollo.md)
         - [Cubic: The Vaults Pallet](./products/the-picasso-parachain/the-picasso-tech-stack/cubic.md)
         - [Angular Finance: The Isolated Lending Pair Pallet](./products/the-picasso-parachain/the-picasso-tech-stack/angular.md)
-    - [The Picasso Crowdloan](./products/the-picasso-parachain/the-picasso-crowdloan.md)
-        - [Crowdloan How-To Guide for KSM](./products/the-picasso-parachain/the-picasso-crowdloan/crowdloan-how-to-ksm.md)
-        - [Crowdloan How-To Guide for Stablecoins](./products/the-picasso-parachain/the-picasso-crowdloan/crowdloan-how-to-stablecoins.md)
-        - [KSM Purchase Log](./products/the-picasso-parachain/the-picasso-crowdloan/ksm-purchase-log.md)
-- [Composable Overview](./products/composable-overview.md)
-    - [The Composable Crowdloan](./products/the-composable-parachain/the-composable-crowdloan.md)
-        - [Crowdloan How-To Guide for DOT](./products/the-composable-parachain/the-composable-crowdloan/crowdloan-how-to-guide-for-dot.md)
-        - [Crowdloan How-To Guide for Stablecoins](./products/the-composable-parachain/the-composable-crowdloan/crowdloan-how-to-guide-for-stablecoin.md)
         
 # 🪙  GOVERNANCE AND TOKENOMICS
 - [The Picasso (PICA) Network Token](./governance-and-tokenomics/the-picasso-pica-network-token.md)
 - [LAYR Tokens](./governance-and-tokenomics/layr-tokens.md)
 
-# 🗺️  ROADMAP
-- [Timeline](./roadmap/timeline.md)
-
 
 # 🌎 ECOSYSTEM
 - [Build on Composable: Ecosystem Development](./ecosystem/build-on-composable-ecosystem-development.md)
+  - [Composable Grants](./ecosystem/build-on-composable-ecosystem-development/composable-grants.md)
 - [Business Line Development](./ecosystem/business-line-development.md)
 - [Press Kit](./ecosystem/press-kit.md)
 - [The Composable Team](./ecosystem/the-composable-team.md)
