@@ -1,20 +1,42 @@
 use crate::{
-	abstractions::utils::increment::sealed::Sealed,
+	abstractions::utils::{increment::sealed::Sealed, start_at::StartAtValue},
 	math::{safe::SafeAdd, wrapping_next::WrappingNext},
 };
+
+use codec::FullCodec;
 use frame_support::pallet_prelude::Get;
 use sp_runtime::{traits::One, ArithmeticError};
 use sp_std::{fmt::Debug, marker::PhantomData, ops::Add};
 
-/// A trait defining something that has a potential "next" value..
+/// An extension trait for [`StorageValue`]s that are used as a [nonce](nonce).
+///
+/// [nonce]: <https://www.investopedia.com/terms/n/nonce.asp>
+pub trait Increment<T, I>: Sealed + 'static
+where
+	T: FullCodec + Clone + Copy + 'static,
+	I: Incrementor<T>,
+{
+	/// See [`Incrementor::Output`].
+	type Output;
+
+	/// Increment the inner value.
+	fn increment() -> Self::Output;
+}
+
+/// Something that can increment a value.
 pub trait Incrementor<T: 'static>: Sealed + 'static {
+	/// The result of incrementing the provided value `T`.
+	///
+	/// Since incrementing a value is potentially a fallible operation, the return type of
+	/// [`Self::increment`] is *not* just `T`; allowing for returning a Result, Option, or even a
+	/// completely new type.
 	type Output;
 
 	fn increment(value: T) -> Self::Output;
 }
 
-/// [Increment] with [`WrappingNext`].
-pub struct WrappingIncrement {}
+/// An [`Incrementor`] that uses [`WrappingNext`] to produce the next value.
+pub struct WrappingIncrement;
 
 impl<T> Incrementor<T> for WrappingIncrement
 where
@@ -27,8 +49,8 @@ where
 	}
 }
 
-/// [Increment] with [`SafeAdd`].
-pub struct SafeIncrement {}
+/// An [`Incrementor`] that uses [`SafeAdd`] to produce the next value.
+pub struct SafeIncrement;
 
 impl<T> Incrementor<T> for SafeIncrement
 where
@@ -41,10 +63,10 @@ where
 	}
 }
 
-/// [Increment] up to a maximum value.
-pub struct IncrementToMax<M: 'static, E: 'static, PE: 'static> {
+/// An [`Incrementor`] that increments up to a maximum value.
+pub struct IncrementToMax<Max: 'static, MaxError: 'static, PalletError: 'static> {
 	#[doc(hidden)]
-	_marker: PhantomData<(M, E, PE)>,
+	_marker: PhantomData<(Max, MaxError, PalletError)>,
 }
 
 impl<T, Max, MaxError, PalletError> Incrementor<T> for IncrementToMax<Max, MaxError, PalletError>
@@ -54,53 +76,55 @@ where
 	MaxError: Debug + Default + Into<PalletError> + 'static,
 	PalletError: 'static,
 {
-	type Output = Result<T, MaxError>;
+	type Output = Result<T, PalletError>;
 
 	/// [`Add`] is used safely here since `M::get()` must be `<=` the upper limit for `T`.
 	fn increment(value: T) -> Self::Output {
-		let new_value = value.add(T::one());
-		if new_value <= Max::get() {
+		if value < Max::get() {
+			let new_value = value.add(T::one());
 			Ok(new_value)
 		} else {
-			Err(MaxError::default())
+			Err(MaxError::default().into())
 		}
 	}
 }
 
-/// Helper macro to create a type that can be used in [`IncrementToMax`].
-///
-/// # Usage
-///
-/// ```rust,ignore
-/// error_to_pallet_error!(
-///     SomeErrorType -> PalletErrorVariant;
-/// );
-/// ```
-///
-/// Note that this assumes that the pallet's `Error` and `Config` types are in scope and not
-/// renamed.
-#[macro_export]
-macro_rules! error_to_pallet_error {
-	($($name:ident -> $to:ident;)+) => {
-		$(
-			#[derive(core::fmt::Debug, core::default::Default, core::cmp::PartialEq)]
-			pub struct $name;
-
-			impl<T: Config> From<$name> for Error<T> {
-				fn from(_: $name) -> Error<T> {
-					Error::<T>::$to
-				}
-			}
-		)+
-	};
-}
-
 mod sealed {
+	use frame_support::{pallet_prelude::StorageValue, traits::StorageInstance};
+
+	use crate::abstractions::{
+		counter::{Counter, CounterHelperTrait},
+		nonce::{Nonce, NonceHelperTrait},
+		utils::{decrement::Decrementor, ValueQuery},
+	};
+
 	use super::*;
 
-	/// Sealing trait for [`Increment`][super::Increment]. If you want to add a new implementor, be
-	/// sure to add it here and ensure it's tested.
+	/// Sealing trait for [`Increment`][super::Increment] and [`Incrementor`][super::Incrementor].
+	/// If you want to add a new implementor, be sure to add it here and ensure it's tested.
 	pub trait Sealed {}
+
+	impl<P, T, S, I> Sealed for StorageValue<P, T, ValueQuery, Nonce<S, I>>
+	where
+		P: StorageInstance + 'static,
+		T: FullCodec + Clone + Copy + 'static,
+		S: StartAtValue<T>,
+		I: Incrementor<T>,
+		(StorageValue<P, T, ValueQuery, Nonce<S, I>>, I::Output, S): NonceHelperTrait<T, S, I>,
+	{
+	}
+
+	impl<P, T, S, I, D> Sealed for StorageValue<P, T, ValueQuery, Counter<S, I, D>>
+	where
+		P: StorageInstance + 'static,
+		T: FullCodec + Clone + Copy + 'static,
+		S: StartAtValue<T>,
+		I: Incrementor<T>,
+		D: Decrementor<T>,
+		(StorageValue<P, T, ValueQuery, Counter<S, I, D>>, I::Output, D::Output, S):
+			CounterHelperTrait<T, I, D>,
+	{
+	}
 
 	impl Sealed for SafeIncrement {}
 	impl Sealed for WrappingIncrement {}

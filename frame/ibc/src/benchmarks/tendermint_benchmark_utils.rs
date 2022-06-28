@@ -1,4 +1,4 @@
-use crate::{routing::Context, Config};
+use crate::{routing::Context, Config, MODULE_ID};
 use core::{str::FromStr, time::Duration};
 use frame_support::traits::Get;
 use ibc::{
@@ -146,7 +146,7 @@ pub fn create_client_update() -> MsgUpdateAnyClient {
 	MsgUpdateAnyClient {
 		client_id: ClientId::new(ClientType::Tendermint, 0).unwrap(),
 		header: AnyHeader::Tendermint(create_tendermint_header()),
-		signer: Signer::new("relayer"),
+		signer: Signer::from_str(MODULE_ID).unwrap(),
 	}
 }
 // Proof generation process for all tendermint benchmarks
@@ -193,13 +193,9 @@ pub fn create_conn_open_try<T: Config>() -> (ConsensusState, MsgConnectionOpenTr
 
 	let client_path = format!("{}", ClientStatePath(counterparty_client_id)).as_bytes().to_vec();
 	let path = format!("{}", ConnectionsPath(ConnectionId::new(1))).as_bytes().to_vec();
-	avl_tree.insert(path.clone(), connection_end.encode_vec().unwrap());
-	avl_tree
-		.insert(consensus_path.clone(), AnyConsensusState::Beefy(cs_state).encode_vec().unwrap());
-	avl_tree.insert(
-		client_path.clone(),
-		AnyClientState::Beefy(client_state.clone()).encode_vec().unwrap(),
-	);
+	avl_tree.insert(path.clone(), connection_end.encode_vec());
+	avl_tree.insert(consensus_path.clone(), AnyConsensusState::Beefy(cs_state).encode_vec());
+	avl_tree.insert(client_path.clone(), AnyClientState::Beefy(client_state.clone()).encode_vec());
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
@@ -263,7 +259,7 @@ pub fn create_conn_open_try<T: Config>() -> (ConsensusState, MsgConnectionOpenTr
 			)
 			.unwrap(),
 			delay_period,
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str(MODULE_ID).unwrap(),
 		},
 	)
 }
@@ -298,13 +294,9 @@ pub fn create_conn_open_ack<T: Config>() -> (ConsensusState, MsgConnectionOpenAc
 
 	let client_path = format!("{}", ClientStatePath(counterparty_client_id)).as_bytes().to_vec();
 	let path = format!("{}", ConnectionsPath(ConnectionId::new(1))).as_bytes().to_vec();
-	avl_tree.insert(path.clone(), connection_end.encode_vec().unwrap());
-	avl_tree
-		.insert(consensus_path.clone(), AnyConsensusState::Beefy(cs_state).encode_vec().unwrap());
-	avl_tree.insert(
-		client_path.clone(),
-		AnyClientState::Beefy(client_state.clone()).encode_vec().unwrap(),
-	);
+	avl_tree.insert(path.clone(), connection_end.encode_vec());
+	avl_tree.insert(consensus_path.clone(), AnyConsensusState::Beefy(cs_state).encode_vec());
+	avl_tree.insert(client_path.clone(), AnyClientState::Beefy(client_state.clone()).encode_vec());
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
@@ -366,7 +358,7 @@ pub fn create_conn_open_ack<T: Config>() -> (ConsensusState, MsgConnectionOpenAc
 			)
 			.unwrap(),
 			version: ConnVersion::default(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str(MODULE_ID).unwrap(),
 		},
 	)
 }
@@ -400,9 +392,8 @@ pub fn create_conn_open_confirm<T: Config>() -> (ConsensusState, MsgConnectionOp
 	.to_vec();
 
 	let path = format!("{}", ConnectionsPath(ConnectionId::new(1))).as_bytes().to_vec();
-	avl_tree.insert(path.clone(), connection_end.encode_vec().unwrap());
-	avl_tree
-		.insert(consensus_path.clone(), AnyConsensusState::Beefy(cs_state).encode_vec().unwrap());
+	avl_tree.insert(path.clone(), connection_end.encode_vec());
+	avl_tree.insert(consensus_path.clone(), AnyConsensusState::Beefy(cs_state).encode_vec());
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
@@ -454,7 +445,7 @@ pub fn create_conn_open_confirm<T: Config>() -> (ConsensusState, MsgConnectionOp
 				Height::new(0, 2),
 			)
 			.unwrap(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str(MODULE_ID).unwrap(),
 		},
 	)
 }
@@ -473,7 +464,7 @@ pub fn create_chan_open_try() -> (ConsensusState, MsgChannelOpenTry) {
 	let path = format!("{}", ChannelEndsPath(port_id.clone(), ChannelId::new(0)))
 		.as_bytes()
 		.to_vec();
-	avl_tree.insert(path.clone(), channel_end.encode_vec().unwrap());
+	avl_tree.insert(path.clone(), channel_end.encode_vec());
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
@@ -517,7 +508,7 @@ pub fn create_chan_open_try() -> (ConsensusState, MsgChannelOpenTry) {
 			counterparty_version: ChannelVersion::default(),
 			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))
 				.unwrap(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str(MODULE_ID).unwrap(),
 		},
 	)
 }
@@ -536,7 +527,7 @@ pub fn create_chan_open_ack() -> (ConsensusState, MsgChannelOpenAck) {
 	let path = format!("{}", ChannelEndsPath(port_id.clone(), ChannelId::new(0)))
 		.as_bytes()
 		.to_vec();
-	avl_tree.insert(path.clone(), channel_end.encode_vec().unwrap());
+	avl_tree.insert(path.clone(), channel_end.encode_vec());
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
@@ -573,7 +564,7 @@ pub fn create_chan_open_ack() -> (ConsensusState, MsgChannelOpenAck) {
 			counterparty_version: ChannelVersion::default(),
 			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))
 				.unwrap(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str(MODULE_ID).unwrap(),
 		},
 	)
 }
@@ -592,7 +583,7 @@ pub fn create_chan_open_confirm() -> (ConsensusState, MsgChannelOpenConfirm) {
 	let path = format!("{}", ChannelEndsPath(port_id.clone(), ChannelId::new(0)))
 		.as_bytes()
 		.to_vec();
-	avl_tree.insert(path.clone(), channel_end.encode_vec().unwrap());
+	avl_tree.insert(path.clone(), channel_end.encode_vec());
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
@@ -627,14 +618,18 @@ pub fn create_chan_open_confirm() -> (ConsensusState, MsgChannelOpenConfirm) {
 			channel_id: ChannelId::new(0),
 			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))
 				.unwrap(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str(MODULE_ID).unwrap(),
 		},
 	)
 }
 
 pub fn create_chan_close_init() -> MsgChannelCloseInit {
 	let port_id = PortId::from_str(pallet_ibc_ping::PORT_ID).unwrap();
-	MsgChannelCloseInit { port_id, channel_id: ChannelId::new(0), signer: Signer::new("relayer") }
+	MsgChannelCloseInit {
+		port_id,
+		channel_id: ChannelId::new(0),
+		signer: Signer::from_str(MODULE_ID).unwrap(),
+	}
 }
 
 pub fn create_chan_close_confirm() -> (ConsensusState, MsgChannelCloseConfirm) {
@@ -651,7 +646,7 @@ pub fn create_chan_close_confirm() -> (ConsensusState, MsgChannelCloseConfirm) {
 	let path = format!("{}", ChannelEndsPath(port_id.clone(), ChannelId::new(0)))
 		.as_bytes()
 		.to_vec();
-	avl_tree.insert(path.clone(), channel_end.encode_vec().unwrap());
+	avl_tree.insert(path.clone(), channel_end.encode_vec());
 	let root = match avl_tree.root_hash().unwrap().clone() {
 		Hash::Sha256(root) => root.to_vec(),
 		Hash::None => panic!("Failed to generate root hash"),
@@ -686,7 +681,7 @@ pub fn create_chan_close_confirm() -> (ConsensusState, MsgChannelCloseConfirm) {
 			channel_id: Default::default(),
 			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))
 				.unwrap(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str(MODULE_ID).unwrap(),
 		},
 	)
 }
@@ -751,7 +746,7 @@ where
 			packet,
 			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))
 				.unwrap(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str(MODULE_ID).unwrap(),
 		},
 	)
 }
@@ -821,7 +816,7 @@ where
 			acknowledgement: ack.into(),
 			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))
 				.unwrap(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str(MODULE_ID).unwrap(),
 		},
 	)
 }
@@ -886,7 +881,7 @@ where
 			next_sequence_recv: Default::default(),
 			proofs: Proofs::new(buf.try_into().unwrap(), None, None, None, Height::new(0, 2))
 				.unwrap(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str(MODULE_ID).unwrap(),
 		},
 	)
 }

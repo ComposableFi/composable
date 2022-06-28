@@ -1,7 +1,8 @@
 use super::*;
 use core::{str::FromStr, time::Duration};
 use frame_support::traits::Get;
-use scale_info::prelude::string::ToString;
+use ibc_primitives::OffchainPacketType;
+use scale_info::prelude::{collections::BTreeMap, string::ToString};
 
 use crate::routing::Context;
 use ibc::{
@@ -213,12 +214,7 @@ where
 		client_id: &ClientId,
 		height: Height,
 	) -> Result<Timestamp, ICS04Error> {
-		let height = height.encode_vec().map_err(|e| {
-			ICS04Error::implementation_specific(format!(
-				"[client_update_time]: error encoding height: {}",
-				e
-			))
-		})?;
+		let height = height.encode_vec();
 		let client_id = client_id.as_bytes().to_vec();
 		let timestamp = ClientUpdateTime::<T>::get(&client_id, &height);
 
@@ -235,12 +231,7 @@ where
 		client_id: &ClientId,
 		height: Height,
 	) -> Result<Height, ICS04Error> {
-		let height = height.encode_vec().map_err(|e| {
-			ICS04Error::implementation_specific(format!(
-				"[client_update_height]: error encoding height: {}",
-				e
-			))
-		})?;
+		let height = height.encode_vec();
 		let client_id = client_id.as_bytes().to_vec();
 		let host_height = ClientUpdateHeight::<T>::get(&client_id, &height);
 
@@ -282,6 +273,26 @@ where
 			commitment.into_vec(),
 		);
 
+		Ok(())
+	}
+
+	fn store_packet(
+		&mut self,
+		key: (PortId, ChannelId, Sequence),
+		packet: ibc::core::ics04_channel::packet::Packet,
+	) -> Result<(), ICS04Error> {
+		// store packet offchain
+		let channel_id = key.1.to_string().as_bytes().to_vec();
+		let port_id = key.0.as_bytes().to_vec();
+		let seq = u64::from(key.2);
+		let key = Pallet::<T>::offchain_key(channel_id, port_id);
+		let mut offchain_packets: BTreeMap<u64, OffchainPacketType> =
+			sp_io::offchain::local_storage_get(sp_core::offchain::StorageKind::PERSISTENT, &key)
+				.and_then(|v| codec::Decode::decode(&mut &*v).ok())
+				.unwrap_or_default();
+		let offchain_packet: OffchainPacketType = packet.into();
+		offchain_packets.insert(seq, offchain_packet);
+		sp_io::offchain_index::set(&key, offchain_packets.encode().as_slice());
 		Ok(())
 	}
 
@@ -386,12 +397,7 @@ where
 		port_channel_id: (PortId, ChannelId),
 		channel_end: &ChannelEnd,
 	) -> Result<(), ICS04Error> {
-		let channel_end = channel_end.encode_vec().map_err(|e| {
-			ICS04Error::implementation_specific(format!(
-				"[store_channel]: error encoding channel end: {}",
-				e
-			))
-		})?;
+		let channel_end = channel_end.encode_vec();
 
 		// store channels key-value
 		<Channels<T>>::insert(

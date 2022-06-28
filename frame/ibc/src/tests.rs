@@ -1,4 +1,4 @@
-use crate::{mock::*, Any, ConnectionParams};
+use crate::{mock::*, Any, ConnectionParams, MODULE_ID};
 use frame_support::{assert_ok, traits::Get};
 use ibc::{
 	core::{
@@ -21,6 +21,7 @@ use ibc::{
 };
 use ibc_trait::OpenChannelParams;
 use pallet_ibc_ping::SendPingParams;
+use sp_runtime::AccountId32;
 use std::str::FromStr;
 use tendermint_proto::Protobuf;
 
@@ -35,15 +36,14 @@ fn initialize_connection() {
 		let msg = MsgCreateAnyClient::new(
 			AnyClientState::Mock(mock_client_state),
 			Some(AnyConsensusState::Mock(mock_cs_state)),
-			Signer::new("relayer"),
+			Signer::from_str(MODULE_ID).unwrap(),
 		)
 		.unwrap()
-		.encode_vec()
-		.unwrap();
+		.encode_vec();
 
 		let msg = Any { type_url: TYPE_URL.to_string().as_bytes().to_vec(), value: msg };
 
-		assert_ok!(Ibc::deliver(Origin::signed(1u64).into(), vec![msg]));
+		assert_ok!(Ibc::create_client(Origin::root(), msg));
 
 		let params = ConnectionParams {
 			version: (
@@ -73,15 +73,14 @@ fn should_open_a_channel() {
 		let msg = MsgCreateAnyClient::new(
 			AnyClientState::Mock(mock_client_state),
 			Some(AnyConsensusState::Mock(mock_cs_state)),
-			Signer::new("relayer"),
+			Signer::from_str(MODULE_ID).unwrap(),
 		)
 		.unwrap()
-		.encode_vec()
-		.unwrap();
+		.encode_vec();
 
 		let msg = Any { type_url: TYPE_URL.to_string().as_bytes().to_vec(), value: msg };
 
-		assert_ok!(Ibc::deliver(Origin::signed(1u64).into(), vec![msg]));
+		assert_ok!(Ibc::create_client(Origin::root(), msg));
 
 		let params = ConnectionParams {
 			version: (
@@ -123,15 +122,13 @@ fn should_send_ping_packet() {
 		let msg = MsgCreateAnyClient::new(
 			AnyClientState::Mock(mock_client_state),
 			Some(AnyConsensusState::Mock(mock_cs_state)),
-			Signer::new("relayer"),
+			Signer::from_str(MODULE_ID).unwrap(),
 		)
 		.unwrap()
-		.encode_vec()
-		.unwrap();
+		.encode_vec();
 
 		let msg = Any { type_url: TYPE_URL.to_string().as_bytes().to_vec(), value: msg };
-
-		assert_ok!(Ibc::deliver(Origin::signed(1u64).into(), vec![msg]));
+		assert_ok!(Ibc::create_client(Origin::root(), msg));
 
 		let params = ConnectionParams {
 			version: (
@@ -170,14 +167,13 @@ fn should_send_ping_packet() {
 			)
 			.unwrap(),
 			version: ConnVersion::default(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str(MODULE_ID).unwrap(),
 		}
-		.encode_vec()
-		.unwrap();
+		.encode_vec();
 
 		let msg = Any { type_url: conn_open_ack::TYPE_URL.as_bytes().to_vec(), value };
 
-		assert_ok!(Ibc::deliver(Origin::signed(1u64).into(), vec![msg]));
+		assert_ok!(Ibc::deliver(Origin::signed(AccountId32::new([0; 32])).into(), vec![msg]));
 
 		let params = OpenChannelParams {
 			order: 1,
@@ -208,19 +204,18 @@ fn should_send_ping_packet() {
 				Height::new(0, 1),
 			)
 			.unwrap(),
-			signer: Signer::new("relayer"),
+			signer: Signer::from_str(MODULE_ID).unwrap(),
 		}
-		.encode_vec()
-		.unwrap();
+		.encode_vec();
 
 		let msg = Any { type_url: chan_open_ack::TYPE_URL.as_bytes().to_vec(), value };
 
-		assert_ok!(Ibc::deliver(Origin::signed(1u64).into(), vec![msg]));
+		assert_ok!(Ibc::deliver(Origin::signed(AccountId32::new([0; 32])).into(), vec![msg]));
 
 		let params = SendPingParams {
 			data: "ping".as_bytes().to_vec(),
-			timeout_height_offset: 10,
-			timeout_timestamp_offset: 1000,
+			timeout_height: 10,
+			timeout_timestamp: ibc::timestamp::Timestamp::now().nanoseconds() + 10000u64,
 			channel_id: "channel-0".as_bytes().to_vec(),
 			dest_port_id: "ping".as_bytes().to_vec(),
 			dest_channel_id: "channel-1".as_bytes().to_vec(),

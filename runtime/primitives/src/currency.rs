@@ -63,22 +63,60 @@ impl WellKnownCurrency for CurrencyId {
 	const RELAY_NATIVE: CurrencyId = CurrencyId::KSM;
 }
 
+macro_rules! list_assets {
+	(
+		$(
+			$(#[$attr:meta])*
+			pub const $NAME:ident: CurrencyId = CurrencyId($id:literal);
+		)*
+	) => {
+		$(
+			$(#[$attr])*
+			pub const $NAME: CurrencyId = CurrencyId($id);
+		)*
+
+		pub fn native_asset_name(id: u128) -> Result<&'static str, &'static str> {
+			match id {
+				$($id => Ok(stringify!($NAME)),)*
+				_ => Err("Invalid native asset")
+			}
+		}
+
+		pub fn to_native_id(name: &str) -> Result<CurrencyId, &'static str> {
+			match name {
+				$(stringify!($NAME) => Ok(CurrencyId::$NAME),)*
+				_ => Err("Invalid native asset")
+			}
+		}
+
+		pub fn list_assets() -> Vec<Asset> {
+			[
+				$(Asset { id: CurrencyId::$NAME.0 as u64, name: stringify!($NAME).as_bytes().to_vec() },)*
+			]
+			.to_vec()
+		}
+	}
+}
+
 impl CurrencyId {
 	pub const INVALID: CurrencyId = CurrencyId(0);
-	/// Runtime native token Kusama
-	pub const PICA: CurrencyId = CurrencyId(1);
-	/// Runtime native token Polkadot
-	pub const LAYR: CurrencyId = CurrencyId(2);
-	pub const CROWD_LOAN: CurrencyId = CurrencyId(3);
 
-	/// Kusama native token
-	pub const KSM: CurrencyId = CurrencyId(4);
+	list_assets! {
+		/// Runtime native token Kusama
+		pub const PICA: CurrencyId = CurrencyId(1);
+		/// Runtime native token Polkadot
+		pub const LAYR: CurrencyId = CurrencyId(2);
+		pub const CROWD_LOAN: CurrencyId = CurrencyId(3);
 
-	/// Karura stable coin(Karura Dollar), not native.
-	#[allow(non_upper_case_globals)]
-	pub const kUSD: CurrencyId = CurrencyId(129);
-	pub const USDT: CurrencyId = CurrencyId(130);
-	pub const USDC: CurrencyId = CurrencyId(131);
+		/// Kusama native token
+		pub const KSM: CurrencyId = CurrencyId(4);
+
+		/// Karura stable coin(Karura Dollar), not native.
+		#[allow(non_upper_case_globals)]
+		pub const kUSD: CurrencyId = CurrencyId(129);
+		pub const USDT: CurrencyId = CurrencyId(130);
+		pub const USDC: CurrencyId = CurrencyId(131);
+	}
 
 	#[inline(always)]
 	pub const fn decimals() -> Exponent {
@@ -91,19 +129,6 @@ impl CurrencyId {
 
 	pub fn milli<T: From<u64> + Div<Output = T>>() -> T {
 		Self::unit::<T>() / T::from(1000_u64)
-	}
-
-	pub fn list_assets() -> Vec<Asset> {
-		[
-			Asset { id: CurrencyId::PICA.0 as u64, name: b"PICA".to_vec() },
-			Asset { id: CurrencyId::LAYR.0 as u64, name: b"LAYR".to_vec() },
-			Asset { id: CurrencyId::CROWD_LOAN.0 as u64, name: b"CROWD_LOAN".to_vec() },
-			Asset { id: CurrencyId::KSM.0 as u64, name: b"KSM".to_vec() },
-			Asset { id: CurrencyId::kUSD.0 as u64, name: b"kUSD".to_vec() },
-			Asset { id: CurrencyId::USDT.0 as u64, name: b"USDT".to_vec() },
-			Asset { id: CurrencyId::USDC.0 as u64, name: b"USDC".to_vec() },
-		]
-		.to_vec()
 	}
 }
 

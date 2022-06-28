@@ -16,7 +16,7 @@ Options:
 EOF
 }
 
-# Global configuration variiables, read by all the formatting functions
+# Global configuration variables, read by all the formatting functions
 check=""
 verbose=""
 

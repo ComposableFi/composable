@@ -22,6 +22,7 @@ pub type Balance = u128;
 pub type Amount = i128;
 pub type AssetId = u128;
 pub type RemoteAssetId = [u8; 20];
+pub type RemoteAmmId = u128;
 
 type Block = frame_system::mocking::MockBlock<Test>;
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -113,6 +114,7 @@ impl pallet_mosaic::Config for Test {
 	type RemoteAssetId = RemoteAssetId;
 	type ControlOrigin = EnsureRoot<Self::AccountId>;
 	type WeightInfo = ();
+	type RemoteAmmId = RemoteAmmId;
 }
 
 // Build genesis storage according to the mock runtime.

@@ -70,3 +70,14 @@ export const putPoolVariables = (
     }
   });
 }
+
+export const invertAssetSelection = (
+  swapState: SwapsSlice["swaps"],
+) => {
+  return produce(swapState, (draft) => {
+    if (swapState.ui.baseAssetSelected !== "none" && swapState.ui.quoteAssetSelected !== "none") {
+      draft.ui.quoteAssetSelected = swapState.ui.baseAssetSelected;
+      draft.ui.baseAssetSelected = swapState.ui.quoteAssetSelected;
+    }
+  });
+}
