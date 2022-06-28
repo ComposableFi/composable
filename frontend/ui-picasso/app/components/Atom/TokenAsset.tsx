@@ -16,11 +16,13 @@ export const TokenAsset: React.FC<TokenAssetProps> = ({
 }) => {
   const token = getToken(tokenId);
   return (
-    <BaseAsset
-      icon={icon || token.icon}
-      label={iconOnly ? "" : label || token.symbol}
-      {...rest}
-    />
+    <>
+      <BaseAsset
+        icon={icon || token.icon}
+        label={iconOnly ? "" : label || token.symbol}
+        {...rest}
+      />
+    </>
   );
 };
 

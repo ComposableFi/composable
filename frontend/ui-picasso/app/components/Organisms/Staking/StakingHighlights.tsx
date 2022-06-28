@@ -1,7 +1,7 @@
 import { Grid } from "@mui/material";
 import { HighlightBox } from "@/components/Organisms/Staking/HighlightBox";
 import { FC } from "react";
-import { useAppSelector } from "@/hooks/store";
+import { useStore } from "@/stores/root";
 
 export const StakingHighlights: FC = () => {
   const {
@@ -10,7 +10,8 @@ export const StakingHighlights: FC = () => {
     totalChaosMinted,
     averageLockMultiplier,
     averageLockTime,
-  } = useAppSelector((state) => state.staking.highlights);
+  } = useStore(({ staking }) => staking.highlights);
+
   return (
     <Grid container spacing={4} mt={9}>
       <Grid item xs={6} sm={4}>

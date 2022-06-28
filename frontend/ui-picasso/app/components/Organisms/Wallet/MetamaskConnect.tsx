@@ -2,9 +2,8 @@ import Image from "next/image";
 import { AccountIndicator } from "../../Molecules/AccountIndicator";
 import { ConnectButton } from "./ConnectButton";
 import { Modal } from "../../Molecules/Modal";
-import { closeMetamaskModal, openMetamaskModal } from "@/stores/ui/uiSlice";
-import { connectMetamaskWallet } from "@/stores/defi/metamask";
-import { useAppDispatch, useAppSelector } from "@/hooks/store";
+
+import { useStore } from "@/stores/root";
 import { useTheme, Box, Button, Typography } from "@mui/material";
 import { useBlockchainProvider, useConnector } from "@integrations-lib/core";
 
@@ -13,7 +12,7 @@ import { FC } from "react";
 const DEFAULT_EVM_ID = 1;
 
 const Status = () => {
-  const dispatch = useAppDispatch();
+  const { openMetamaskModal } = useStore(({ ui }) => ui);
   const { isActive } = useConnector("metamask");
   const { account } = useBlockchainProvider(DEFAULT_EVM_ID);
   const address = account
@@ -33,7 +32,7 @@ const Status = () => {
       >
         <AccountIndicator
           onClick={() => {
-            dispatch(openMetamaskModal());
+            openMetamaskModal();
           }}
           network="metamask"
           label={address}
@@ -45,7 +44,7 @@ const Status = () => {
   return (
     <ConnectButton
       onClick={() => {
-        dispatch(openMetamaskModal());
+        openMetamaskModal();
       }}
       imageSrc="/networks/mainnet_not_connected.svg"
       imageAlt="Ethereum Mainnet"
@@ -56,19 +55,19 @@ const Status = () => {
 };
 
 export const MetamaskConnect: FC<{}> = () => {
+  const { closeMetamaskModal, connectMetamaskWallet, isMetamaskModalOpen } =
+    useStore(({ metamask, ui }) => ({ ...metamask, ...ui }));
   const { isActive, activate, deactivate } = useConnector("metamask");
-  const isModalOpen = useAppSelector((state) => state.ui.isMetamaskModalOpen);
   const { account } = useBlockchainProvider(DEFAULT_EVM_ID);
   const address = account
     ? account.slice(0, 6) + "..." + account.slice(-4)
     : "-";
-  const dispatch = useAppDispatch();
 
   const handleConnectMetamask = async () => {
     if (!isActive) {
       await activate();
-      dispatch(connectMetamaskWallet());
-      dispatch(closeMetamaskModal());
+      connectMetamaskWallet();
+      closeMetamaskModal();
     }
   };
 
@@ -81,8 +80,8 @@ export const MetamaskConnect: FC<{}> = () => {
     <>
       <Status />
       <Modal
-        onClose={() => dispatch(closeMetamaskModal())}
-        open={isModalOpen}
+        onClose={() => closeMetamaskModal()}
+        open={isMetamaskModalOpen}
         maxWidth="sm"
         dismissible
       >

@@ -1,7 +1,8 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { NamedSet } from "zustand/middleware";
+import { StoreSlice } from "../types";
 import BigNumber from "bignumber.js";
 
-import { TokenId, TOKEN_IDS } from "@/defi/Tokens";
+import { TOKEN_IDS, TokenId } from "@/defi/Tokens";
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 
@@ -81,32 +82,48 @@ const initialState: TransfersState = {
   keepAlive: true,
 };
 
-export const transfersSlice = createSlice({
-  name: "Transfers",
-  initialState,
-  reducers: {
-    updateNetworks: (
-      state,
-      action: PayloadAction<Omit<Networks, "options">>
-    ) => {
-      state.networks = { ...state.networks, ...action.payload };
+export interface TransfersSlice {
+  transfers: TransfersState & {
+    updateNetworks: (data: Omit<Networks, "options">) => void;
+    updateAmount: (data: Omit<Amount, "balance" | "options">) => void;
+    updateRecipient: (selected: string) => void;
+    flipKeepAlive: () => void;
+  };
+}
+
+export const createTransfersSlice: StoreSlice<TransfersSlice> = (
+  set: NamedSet<TransfersSlice>
+) => ({
+  transfers: {
+    ...initialState,
+
+    updateNetworks: (data: Omit<Networks, "options">) => {
+      set((state) => {
+        state.transfers.networks = { ...state.transfers.networks, ...data };
+
+        return state;
+      });
     },
-    updateAmount: (
-      state,
-      action: PayloadAction<Omit<Amount, "balance" | "options">>
-    ) => {
-      state.amount = { ...state.amount, ...action.payload };
+    updateAmount: (data: Omit<Amount, "balance" | "options">) => {
+      set((state) => {
+        state.transfers.amount = { ...state.transfers.amount, ...data };
+
+        return state;
+      });
     },
-    updateRecipient: (state, action: PayloadAction<string>) => {
-      state.recipients.selected = action.payload;
+    updateRecipient: (data: string) => {
+      set((state) => {
+        state.transfers.recipients.selected = data;
+
+        return state;
+      });
     },
-    flipKeepAlive: (state) => {
-      state.keepAlive = !state.keepAlive;
+    flipKeepAlive: () => {
+      set((state) => {
+        state.transfers.keepAlive = !state.transfers.keepAlive;
+
+        return state;
+      });
     },
   },
 });
-
-export const { updateNetworks, updateAmount, updateRecipient, flipKeepAlive } =
-  transfersSlice.actions;
-
-export default transfersSlice.reducer;

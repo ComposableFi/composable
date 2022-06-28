@@ -12,9 +12,9 @@ export const useKusamaProvider = (): ParachainApi => {
   return api;
 };
 
-export const useSelectedAccount: () => ({ name: string; address: string } | undefined) = ():
+export const useSelectedAccount: () =>
   | { name: string; address: string }
-  | undefined => {
+  | undefined = (): { name: string; address: string } | undefined => {
   const { selectedAccount } = useContext(ParachainContext);
   const { accounts } = usePicassoProvider();
   return accounts.length && selectedAccount !== -1

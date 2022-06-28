@@ -1,8 +1,10 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { NamedSet } from "zustand/middleware";
+import { StoreSlice } from "../types";
 
 export type Account = {
   address: string;
 };
+
 interface MetamaskState {
   connected: boolean;
   connecting: boolean;
@@ -11,40 +13,59 @@ interface MetamaskState {
   availableToClaim: number;
 }
 
-const initialState: MetamaskState = {
-  connected: false,
-  connecting: false,
-  account: {
-    address: "0x729e86ed5614348d66996f0E23f28012eaCb0D17",
-  },
-  eligible: true,
-  availableToClaim: 122,
-};
+export interface MetamaskSlice {
+  metamask: MetamaskState & {
+    connectMetamaskWallet: () => void;
+    waitOnMetamaskWallet: () => void;
+    disconnectMetamaskWallet: () => void;
+    setAvailableToClaim: (availableToClaim: number) => void;
+  };
+}
 
-export const metamaskSlice = createSlice({
-  name: "Metamask",
-  initialState,
-  reducers: {
-    connectMetamaskWallet: (state) => {
-      state.connected = true;
+export const createMetamaskSlice: StoreSlice<MetamaskSlice> = (
+  set: NamedSet<MetamaskSlice>
+) => ({
+  metamask: {
+    connected: false,
+    connecting: false,
+    account: {
+      address: "0x729e86ed5614348d66996f0E23f28012eaCb0D17",
     },
-    waitOnMetamaskWallet: (state) => {
-      state.connecting = true;
-    },
-    disconnectMetamaskWallet: (state) => {
-      state.connected = false;
-    },
-    setAvailableToClaim: (state, action) => {
-      state.availableToClaim = action.payload;
-    },
+    eligible: true,
+    availableToClaim: 122,
+    // connectMetamaskWallet: () => {
+    //   set((state: AllSlices) => {
+    //     state.metamask.connected = true;
+    //   });
+    // },
+    connectMetamaskWallet: () =>
+      set((state) => ({
+        metamask: {
+          ...state.metamask,
+          connected: true,
+        },
+      })),
+    waitOnMetamaskWallet: () =>
+      set((state) => ({
+        metamask: {
+          ...state.metamask,
+          connecting: true,
+        },
+      })),
+
+    disconnectMetamaskWallet: () =>
+      set((state) => ({
+        metamask: {
+          ...state.metamask,
+          connected: false,
+        },
+      })),
+    setAvailableToClaim: (availableToClaim: number) =>
+      set((state) => ({
+        metamask: {
+          ...state.metamask,
+          availableToClaim,
+        },
+      })),
   },
 });
-
-export const {
-  connectMetamaskWallet,
-  disconnectMetamaskWallet,
-  waitOnMetamaskWallet,
-  setAvailableToClaim,
-} = metamaskSlice.actions;
-
-export default metamaskSlice.reducer;

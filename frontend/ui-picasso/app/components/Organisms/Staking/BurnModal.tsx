@@ -2,7 +2,7 @@ import { Modal, TokenAsset } from "@/components";
 import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
 import { FC } from "react";
-import { useAppDispatch, useAppSelector } from "@/hooks/store";
+import { useStore } from "@/stores/root";
 import { formatNumber } from "@/utils/formatters";
 import { burnUnstake } from "@/stores/defi/staking";
 
@@ -10,15 +10,13 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
   open,
   onClose,
 }) => {
-  const { withdrawablePica, initialPicaDeposit } = useAppSelector(
-    (state) => state.staking
+  const { withdrawablePica, initialPicaDeposit } = useStore(
+    ({ staking }) => staking
   );
-
-  const dispatch = useAppDispatch();
 
   const handleBurnUnstake = () => {
     onClose();
-    dispatch(burnUnstake());
+    burnUnstake();
   };
 
   return (
