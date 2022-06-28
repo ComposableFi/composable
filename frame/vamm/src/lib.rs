@@ -1188,26 +1188,20 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		fn update_twap_sanity_check(
 			vamm_state: &VammStateOf<T>,
-			base_twap: Option<DecimalOf<T>>,
-			quote_twap: Option<DecimalOf<T>>,
+			base_twap: DecimalOf<T>,
+			quote_twap: DecimalOf<T>,
 			now: &Option<MomentOf<T>>,
 		) -> Result<(), DispatchError> {
 			// Sanity Checks
 			// 1) New desired twap value can't be zero.
-			if let Some(base_twap) = base_twap {
-				ensure!(!base_twap.is_zero(), Error::<T>::NewTwapValueIsZero);
-			}
-			if let Some(quote_twap) = quote_twap {
-				ensure!(!quote_twap.is_zero(), Error::<T>::NewTwapValueIsZero);
-			}
+			ensure!(!base_twap.is_zero(), Error::<T>::NewTwapValueIsZero);
+			ensure!(!quote_twap.is_zero(), Error::<T>::NewTwapValueIsZero);
 
 			// 2) Twaps must be reciprocal.
-			if let (Some(base_twap), Some(quote_twap)) = (base_twap, quote_twap) {
-				ensure!(
-					Self::twaps_are_reciprocal(base_twap, quote_twap)?,
-					Error::<T>::TwapsMustBeReciprocals
-				);
-			};
+			ensure!(
+				Self::twaps_are_reciprocal(base_twap, quote_twap)?,
+				Error::<T>::TwapsMustBeReciprocals
+			);
 
 			// 3) Vamm must be open.
 			ensure!(!Self::is_vamm_closed(vamm_state, now), Error::<T>::VammIsClosed);
