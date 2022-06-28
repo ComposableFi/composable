@@ -28,13 +28,13 @@ impl Default for TimeReleaseFunction {
 	}
 }
 
-#[derive(Default, Decode, Encode, MaxEncodedLen, Clone, Debug, PartialEq, TypeInfo)]
+#[derive(Default, Decode, Encode, MaxEncodedLen, Clone, Debug, PartialEq, Eq, TypeInfo)]
 pub struct LinearDecrease {
 	/// Seconds after start when the amount reaches zero
 	pub total: DurationSeconds,
 }
 
-#[derive(Default, Decode, Encode, MaxEncodedLen, Clone, Debug, PartialEq, TypeInfo)]
+#[derive(Default, Decode, Encode, MaxEncodedLen, Clone, Debug, PartialEq, Eq, TypeInfo)]
 pub struct StairstepExponentialDecrease {
 	// Length of time between drops
 	pub step: DurationSeconds,

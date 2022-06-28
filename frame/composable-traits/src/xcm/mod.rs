@@ -30,7 +30,7 @@ pub struct XcmTransactConfiguration {
 	pub method_id: CumulusMethodId,
 }
 
-#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct CumulusMethodId {
 	pub pallet_instance: PalletInstance,
 	pub method_id: u8,
@@ -98,7 +98,7 @@ pub struct XcmSellRequest {
 }
 
 /// Optional response if engine did not sold all on first requests
-#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct XcmSellInitialResponseTransact {
 	/// Amount of `base` token which was taken by engine to be sold.
 	/// Amount remaining was transfered with `xcm::latest::Instruction::TransferReserveAsset` in
@@ -111,7 +111,7 @@ pub struct XcmSellInitialResponseTransact {
 
 /// Response from enigne, either be first and final, or can be after
 /// `XcmSellInitialResponseTransact`
-#[derive(Clone, Debug, PartialEq, Encode, Decode, MaxEncodedLen, TypeInfo)]
+#[derive(Clone, Debug, PartialEq, Eq, Encode, Decode, MaxEncodedLen, TypeInfo)]
 pub struct XcmSellFinalResponseTransact {
 	/// may be less than `XcmSellInitialResponseTransact::total_amount_taken`.
 	/// Would be `Balance::zero()` if cannot sell anything. So sender can switch to other engine.
