@@ -5,7 +5,7 @@ import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
 import { DURATION_OPTION_ITEMS } from "@/components/Organisms/Staking/constants";
 import { RadioButtonGroup } from "@/components/Molecules/RadioButtonGroup";
 import { FutureDatePaper } from "@/components/Atom/FutureDatePaper";
-import { useAppDispatch, useAppSelector } from "@/hooks/store";
+import { useStore } from "@/stores/root";
 import { formatNumber } from "@/utils/formatters";
 import { DurationOption, renewPeriod } from "@/stores/defi/staking";
 
@@ -17,14 +17,13 @@ export const RenewModal: FC<{ open: boolean; onClose: () => void }> = ({
     useState<DurationOption | undefined>(undefined);
   const match = (someValue?: DurationOption) => someValue === extendPeriod;
   const theme = useTheme();
-  const initialPicaDeposit = useAppSelector(
-    (state) => state.staking.initialPicaDeposit
+  const initialPicaDeposit = useStore(
+    ({ staking }) => staking.initialPicaDeposit
   );
-  const dispatch = useAppDispatch();
 
   const handleRenew = () => {
     onClose();
-    dispatch(renewPeriod(extendPeriod!));
+    renewPeriod(extendPeriod!);
   };
 
   return (

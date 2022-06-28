@@ -1,35 +1,21 @@
-import { useEffect, VoidFunctionComponent } from "react";
+import { useCallback, useEffect, VoidFunctionComponent } from "react";
 import { usePicassoProvider } from "@/defi/polkadot/hooks";
-import BigNumber from "bignumber.js";
-import { AccountId32 } from "@polkadot/types/interfaces/runtime";
-import { Token, TokenId, TOKENS } from "@/defi/Tokens";
-import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
-import { currencyIdToAssetMap } from "@/stores/defi/polkadot/bonds/constants";
-import {
-  createArrayOfLength,
-  fetchBonds,
-  stringToBigNumber,
-} from "@/defi/polkadot/pallets/BondedFinance";
-import { useAppDispatch } from "@/hooks/store";
-import {
-  setBondOfferCount,
-  setBonds,
-} from "@/stores/defi/polkadot/bonds/slice";
+import { fetchBonds } from "@/defi/polkadot/pallets/BondedFinance";
+import { useStore } from "@/stores/root";
 
 export const Updater: VoidFunctionComponent = () => {
   const { parachainApi: api, accounts } = usePicassoProvider();
-  const dispatch = useAppDispatch();
+  const { setBonds, setBondOfferCount } = useStore((state) => state.bonds);
 
-  const updateBonds = async () => {
+  const updateBonds = useCallback(async () => {
     if (!api) return;
     const { bonds, bondOfferCount } = await fetchBonds(api);
-    dispatch(setBonds(bonds));
-    dispatch(setBondOfferCount(bondOfferCount));
-  };
-
+    setBonds(bonds);
+    setBondOfferCount(bondOfferCount);
+  }, [setBonds, setBondOfferCount, api]);
   useEffect(() => {
     updateBonds();
-  }, [accounts]);
+  }, [accounts, updateBonds]);
 
   return null;
 };

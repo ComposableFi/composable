@@ -2,33 +2,31 @@ import { PalletsContext } from "@/defi/polkadot/context/PalletsContext";
 import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { useKusamaAccounts, usePicassoProvider } from "@/defi/polkadot/hooks";
 import { useContext, useEffect } from "react";
-import { useDispatch } from "react-redux";
-import {
-  setUserAssociatedWith,
-  setUserClaimEigibility,
-  setUserClaimablePICA,
-  setUserNetVestedPICA,
-  setInitialPayment,
-  selectCrowdloanRewardsUIHelper,
-  setUserContribution,
-  setUserClaimedPICA,
-  setEvmAlreadyAssociated,
-} from "./slice";
+
+import { useStore } from "@/stores/root";
 import rewards from "@/defi/polkadot/constants/pica-rewards.json";
 import contributions from "@/defi/polkadot/constants/contributions.json";
 import devRewards from "@/defi/polkadot/constants/pica-rewards-dev.json";
-import { useAppSelector } from "@/hooks/store";
 import { useBlockchainProvider } from "@integrations-lib/core";
 
 const DEFAULT_EVM_ID = 1;
 
 const CrowdloanRewardsUpdater = () => {
-  const appDispatch = useDispatch();
   const { account } = useBlockchainProvider(DEFAULT_EVM_ID);
   const kusamaAccounts = useKusamaAccounts();
   const { selectedAccount } = useContext(ParachainContext);
   const picassoProvider = usePicassoProvider();
-  const crUiState = useAppSelector(selectCrowdloanRewardsUIHelper);
+  const {
+    ui,
+    setEvmAlreadyAssociated,
+    setInitialPayment,
+    setUserAssociatedWith,
+    setUserClaimEligibility,
+    setUserClaimablePICA,
+    setUserNetVestedPICA,
+    setUserContribution,
+    setUserClaimedPICA,
+  } = useStore(({ crowdloanRewards }) => crowdloanRewards);
   const { crowdloanRewards } = useContext(PalletsContext);
 
   useEffect(() => {
@@ -60,23 +58,26 @@ const CrowdloanRewardsUpdater = () => {
           evmAlreadyAssociated = false;
         }
 
-        appDispatch(
-          setEvmAlreadyAssociated({
-            evmAlreadyAssociated,
-          })
-        );
+        setEvmAlreadyAssociated(evmAlreadyAssociated);
       });
     }
-  }, [account, kusamaAccounts.length, crowdloanRewards, selectedAccount]);
+  }, [
+    account,
+    kusamaAccounts.length,
+    crowdloanRewards,
+    selectedAccount,
+    kusamaAccounts,
+    setEvmAlreadyAssociated,
+  ]);
 
   useEffect(() => {
     if (crowdloanRewards) {
       crowdloanRewards.queryInitialPayment().then((ip) => {
         console.log("initial payment", ip);
-        appDispatch(setInitialPayment({ initialPayment: ip }));
+        setInitialPayment(ip);
       });
     }
-  }, [crowdloanRewards]);
+  }, [crowdloanRewards, setInitialPayment]);
 
   useEffect(() => {
     const { accounts, apiStatus, parachainApi } = picassoProvider;
@@ -92,17 +93,13 @@ const CrowdloanRewardsUpdater = () => {
         .association(accounts[selectedAccount].address)
         .then((association: any) => {
           if (association === null) {
-            appDispatch(setUserAssociatedWith({ associatedWith: null }));
-            appDispatch(setUserClaimEigibility({ isEligible: true }));
+            setUserAssociatedWith(null);
+            setUserClaimEligibility(true);
           } else {
-            appDispatch(
-              setUserAssociatedWith({
-                associatedWith: !!association.Ethereum
-                  ? "ethereum"
-                  : "relayChain",
-              })
+            setUserAssociatedWith(
+              !!association.Ethereum ? "ethereum" : "relayChain"
             );
-            appDispatch(setUserClaimEigibility({ isEligible: true }));
+            setUserClaimEligibility(true);
           }
         })
         .catch((err: any) => {
@@ -114,6 +111,9 @@ const CrowdloanRewardsUpdater = () => {
     picassoProvider.apiStatus,
     picassoProvider.accounts.length,
     crowdloanRewards,
+    picassoProvider,
+    setUserAssociatedWith,
+    setUserClaimEligibility,
   ]);
 
   useEffect(() => {
@@ -128,11 +128,7 @@ const CrowdloanRewardsUpdater = () => {
       crowdloanRewards
         .queryAvailableToClaim(accounts[selectedAccount].address)
         .then((availableClaim) => {
-          appDispatch(
-            setUserClaimablePICA({
-              claimablePICA: availableClaim,
-            })
-          );
+          setUserClaimablePICA(availableClaim);
         });
     }
   }, [
@@ -140,12 +136,14 @@ const CrowdloanRewardsUpdater = () => {
     picassoProvider.apiStatus,
     picassoProvider.accounts.length,
     crowdloanRewards,
+    picassoProvider,
+    setUserClaimablePICA,
   ]);
 
   useEffect(() => {
     let netVestedPICA = "0";
     let contribution = "0";
-    if (account && crUiState.useAssociationMode === "ethereum") {
+    if (account && ui.useAssociationMode === "ethereum") {
       const addr = account.toLowerCase();
       if (addr && (rewards as any)[addr]) {
         netVestedPICA = (rewards as any)[addr];
@@ -163,7 +161,7 @@ const CrowdloanRewardsUpdater = () => {
     } else if (
       selectedAccount !== -1 &&
       kusamaAccounts.length &&
-      crUiState.useAssociationMode === "relayChain"
+      ui.useAssociationMode === "relayChain"
     ) {
       const addr = kusamaAccounts[selectedAccount].address;
 
@@ -183,35 +181,28 @@ const CrowdloanRewardsUpdater = () => {
         ];
       }
     }
-    appDispatch(
-      setUserNetVestedPICA({
-        netVestedPICA,
-      })
-    );
-    appDispatch(
-      setUserContribution({
-        contribution,
-      })
-    );
+
+    setUserNetVestedPICA(netVestedPICA);
+
+    setUserContribution(contribution);
   }, [
     selectedAccount,
     kusamaAccounts.length,
-    crUiState.useAssociationMode,
+    ui.useAssociationMode,
     account,
+    kusamaAccounts,
+    setUserNetVestedPICA,
+    setUserContribution,
   ]);
 
   useEffect(() => {
     if (crowdloanRewards) {
       const setClaimedZero = () => {
-        appDispatch(
-          setUserClaimedPICA({
-            claimedPICA: "0",
-          })
-        );
+        setUserClaimedPICA("0");
       };
 
       let addrToQuery = "";
-      let isRelayChain = crUiState.useAssociationMode === "relayChain";
+      let isRelayChain = ui.useAssociationMode === "relayChain";
 
       if (isRelayChain) {
         if (selectedAccount !== -1 && kusamaAccounts.length) {
@@ -232,11 +223,8 @@ const CrowdloanRewardsUpdater = () => {
             if (rewards) {
               let { claimed } = rewards;
               claimed = claimed.replaceAll(",", "");
-              appDispatch(
-                setUserClaimedPICA({
-                  claimedPICA: claimed,
-                })
-              );
+
+              setUserClaimedPICA(claimed);
             } else {
               // set zero
               setClaimedZero();
@@ -247,9 +235,11 @@ const CrowdloanRewardsUpdater = () => {
   }, [
     selectedAccount,
     kusamaAccounts.length,
-    crUiState.useAssociationMode,
+    ui.useAssociationMode,
     account,
     crowdloanRewards,
+    setUserClaimedPICA,
+    kusamaAccounts,
   ]);
 
   return null;
