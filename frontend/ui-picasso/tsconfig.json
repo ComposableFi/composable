@@ -42,7 +42,6 @@
     ".storybook/mui-decorator.tsx"
   ],
   "exclude": [
-    "node_modules",
-    "app/defi/polkadot/interfaces"
+    "node_modules"
   ]
 }
