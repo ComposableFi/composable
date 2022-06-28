@@ -30,10 +30,22 @@ use sp_std::marker::PhantomData;
 /// Weight functions for `liquidations`.
 pub struct WeightInfo<T>(PhantomData<T>);
 impl<T: frame_system::Config> liquidations::WeightInfo for WeightInfo<T> {
-	// Storage: Liquidations DefaultStrategyIndex (r:1 w:0)
-	// Storage: Liquidations Strategies (r:1 w:0)
+	// Storage: Liquidations StrategyIndex (r:1 w:1)
+	// Storage: Liquidations Strategies (r:0 w:1)
 	fn add_liquidation_strategy() -> Weight {
-		(7_727_000 as Weight)
-			.saturating_add(T::DbWeight::get().reads(2 as Weight))
+		(1_493_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(1 as Weight))
+			.saturating_add(T::DbWeight::get().writes(2 as Weight))
+	}
+	// Storage: Liquidations Strategies (r:10 w:0)
+	// Storage: DutchAuction OrdersIndex (r:1 w:1)
+	// Storage: System Account (r:1 w:1)
+	// Storage: Timestamp Now (r:1 w:0)
+	// Storage: Tokens Accounts (r:1 w:1)
+	// Storage: DutchAuction SellOrders (r:0 w:1)
+	fn sell() -> Weight {
+		(33_349_000 as Weight)
+			.saturating_add(T::DbWeight::get().reads(14 as Weight))
+			.saturating_add(T::DbWeight::get().writes(4 as Weight))
 	}
 }
