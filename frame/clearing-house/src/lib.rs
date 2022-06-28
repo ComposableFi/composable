@@ -505,7 +505,7 @@ pub mod pallet {
 		/// Attempted to create a new market but either the initial margin ratio is outside (0, 1]
 		/// or the maintenance margin ratio is outside (0, 1).
 		InvalidMarginRatioRequirement,
-		/// Raised when the price returned by the Oracle is zero.
+		/// Raised when the price returned by the Oracle is nonpositive.
 		InvalidOracleReading,
 		/// Raised when querying a market with an invalid or nonexistent market Id.
 		MarketIdNotFound,
