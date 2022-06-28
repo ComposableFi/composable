@@ -296,7 +296,6 @@ prop_compose! {
 			).unwrap(),
 			twap_timestamp,
 			base_asset_twap: Decimal::from_inner(base_asset_reserves),
-			quote_asset_twap: Decimal::from_inner(quote_asset_reserves),
 			closed,
 			twap_period,
 		}
@@ -322,7 +321,6 @@ prop_compose! {
 		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in any_sane_base_quote_peg(),
 		closed in prop_oneof![timestamp().prop_map(Some), Just(None)],
 		base_asset_twap in balance_range(),
-		quote_asset_twap in balance_range(),
 		twap_timestamp in timestamp(),
 	) -> VammState<Balance, Timestamp, Decimal> {
 		let invariant = match (
@@ -334,7 +332,6 @@ prop_compose! {
 		}.unwrap();
 
 		let base_asset_twap = Decimal::from_inner(base_asset_twap);
-		let quote_asset_twap = Decimal::from_inner(quote_asset_twap);
 
 		VammState {
 			base_asset_reserves: config
@@ -351,7 +348,6 @@ prop_compose! {
 				.closed
 				.unwrap_or(closed),
 			base_asset_twap,
-			quote_asset_twap,
 			twap_timestamp,
 			..Default::default()
 		}

@@ -69,11 +69,11 @@ pub trait Vamm {
 		asset_type: AssetType,
 	) -> Result<Self::Decimal, DispatchError>;
 
-	/// Updates the twap for the desired asset, returning it if successful.
+	/// Updates the twap for the base asset, returning it if successful.
 	fn update_twap(
 		vamm_id: Self::VammId,
 		base_twap: Option<Self::Decimal>,
-	) -> Result<(Self::Decimal, Self::Decimal), DispatchError>;
+	) -> Result<Self::Decimal, DispatchError>;
 }
 
 /// Specify a common encapsulation layer for the [`create`](Vamm::create) function.

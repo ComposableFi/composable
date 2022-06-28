@@ -67,7 +67,6 @@ fn update_twap_fails_if_vamm_is_closed() {
 		base_asset_reserves: base_twap.into_inner(),
 		quote_asset_reserves: quote_twap.into_inner(),
 		base_asset_twap: base_twap,
-		quote_asset_twap: quote_twap,
 		closed: Some(0),
 		..Default::default()
 	};
@@ -108,7 +107,6 @@ fn update_twap_fails_if_twap_timestamp_is_more_recent() {
 		base_asset_reserves: base_twap.into_inner(),
 		quote_asset_reserves: quote_twap.into_inner(),
 		base_asset_twap: base_twap,
-		quote_asset_twap: quote_twap,
 		twap_timestamp: timestamp_greater,
 		..Default::default()
 	};
@@ -136,19 +134,17 @@ fn update_twap_succeeds() {
 	let vamm_state = VammState::<Balance, Timestamp, Decimal> {
 		twap_timestamp: timestamp,
 		base_asset_twap: twap.into(),
-		quote_asset_twap: twap.into(),
 		base_asset_reserves: twap,
 		quote_asset_reserves: twap,
 		twap_period: 3600,
 		peg_multiplier: 1,
 		..Default::default()
 	};
-	let quote_twap = TestPallet::reciprocal_twap(&base_twap).unwrap();
 	ExtBuilder { vamm_count: 1, vamms: vec![(0, vamm_state)] }
 		.build()
 		.execute_with(|| {
 			run_for_seconds(twap_update_delay(0));
-			assert_ok!(TestPallet::update_twap(0, Some(base_twap)), (base_twap, quote_twap));
+			assert_ok!(TestPallet::update_twap(0, Some(base_twap)), base_twap);
 
 			run_for_seconds(twap_update_delay(0));
 			assert_ok!(TestPallet::update_twap(0, None));
@@ -166,24 +162,17 @@ fn should_update_twap_correctly() {
 		});
 		let vamm_id = vamm_creation.unwrap();
 		let original_base_twap = TestPallet::get_vamm(vamm_id).unwrap().base_asset_twap;
-		let original_quote_twap = TestPallet::get_vamm(vamm_id).unwrap().quote_asset_twap;
 		assert_ok!(vamm_creation);
 
 		// For event emission & twap update
 		run_for_seconds(twap_update_delay(vamm_id));
 		let new_base_twap = Some(Decimal::from_inner(10_u128.pow(18) * 100));
-		let new_quote_twap = Some(Decimal::from_inner(10_u128.pow(14) * 100));
-		assert_ok!(
-			TestPallet::update_twap(vamm_id, new_base_twap),
-			(new_base_twap.unwrap(), new_quote_twap.unwrap())
-		);
+		assert_ok!(TestPallet::update_twap(vamm_id, new_base_twap), new_base_twap.unwrap());
 		let vamm_state = TestPallet::get_vamm(vamm_id).unwrap();
 		assert_eq!(vamm_state.base_asset_twap, new_base_twap.unwrap());
-		assert_eq!(vamm_state.quote_asset_twap, new_quote_twap.unwrap());
 		System::assert_last_event(Event::TestPallet(pallet::Event::UpdatedTwap {
 			vamm_id,
 			base_twap: new_base_twap.unwrap(),
-			quote_twap: new_quote_twap.unwrap(),
 		}));
 
 		// Run for long enough in order to approximate to the original twap value.
@@ -194,14 +183,9 @@ fn should_update_twap_correctly() {
 			vamm_state.base_asset_twap.into_inner(),
 			original_base_twap.into_inner(),
 		));
-		assert_ok!(default_acceptable_computation_error(
-			vamm_state.quote_asset_twap.into_inner(),
-			original_quote_twap.into_inner(),
-		));
 		System::assert_last_event(Event::TestPallet(pallet::Event::UpdatedTwap {
 			vamm_id,
 			base_twap: vamm_state.base_asset_twap,
-			quote_twap: vamm_state.quote_asset_twap,
 		}));
 	})
 }
@@ -215,7 +199,7 @@ proptest! {
 	#[test]
 	fn update_twap_proptest_succeeds(
 		vamm_state in any_vamm_state(),
-		twap in any_new_twap()
+		base_twap in any_new_twap()
 	) {
 		let now = vamm_state.twap_timestamp
 							.min(Timestamp::MAX/1000)
@@ -230,16 +214,13 @@ proptest! {
 			..vamm_state
 		};
 
-		let twap_reciprocal = TestPallet::reciprocal_twap(&twap);
-		assert_ok!(twap_reciprocal);
-
 		ExtBuilder { vamm_count: 1, vamms: vec![(0, vamm_state)] }
 			.build()
 			.execute_with(|| {
 				run_for_seconds(twap_update_delay(0));
 				assert_ok!(
-					TestPallet::update_twap(0, Some(twap)),
-					(twap, twap_reciprocal.unwrap())
+					TestPallet::update_twap(0, Some(base_twap)),
+					base_twap
 				);
 
 				run_for_seconds(twap_update_delay(0));

@@ -106,7 +106,6 @@ proptest! {
 			};
 
 			let base_asset_twap = TestPallet::do_get_price(&tmp_vamm_expected, AssetType::Base).unwrap();
-			let quote_asset_twap = TestPallet::reciprocal_twap(&base_asset_twap).unwrap();
 
 			let vamm_expected = VammState::<Balance, Timestamp, Decimal> {
 				base_asset_reserves: vamm_config.base_asset_reserves,
@@ -114,7 +113,6 @@ proptest! {
 				peg_multiplier: vamm_config.peg_multiplier,
 				twap_period: vamm_config.twap_period,
 				base_asset_twap,
-				quote_asset_twap,
 				invariant,
 				..Default::default()
 			};
