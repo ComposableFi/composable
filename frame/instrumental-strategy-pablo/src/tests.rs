@@ -24,8 +24,8 @@ use sp_runtime::Perquintill;
 fn add_an_associated_vault() {
 	ExtBuilder::default().build().execute_with(|| {
 		let vault_id: VaultId = 1;
-
-		assert_ok!(PabloStrategy::associate_vault(&vault_id));
+		set_admin_account_with_full_access().ok();
+		assert_ok!(PabloStrategy::associate_vault(Origin::signed(ADMIN), vault_id));
 	});
 }
 
@@ -33,10 +33,10 @@ fn add_an_associated_vault() {
 fn adding_an_associated_vault_twice_throws_an_error() {
 	ExtBuilder::default().build().execute_with(|| {
 		let vault_id: VaultId = 1;
-
-		assert_ok!(PabloStrategy::associate_vault(&vault_id));
+		set_admin_account_with_full_access().ok();
+		assert_ok!(PabloStrategy::associate_vault(Origin::signed(ADMIN), vault_id));
 		assert_noop!(
-			PabloStrategy::associate_vault(&vault_id),
+			PabloStrategy::associate_vault(Origin::signed(ADMIN), vault_id),
 			Error::<MockRuntime>::VaultAlreadyAssociated
 		);
 	});
@@ -45,13 +45,14 @@ fn adding_an_associated_vault_twice_throws_an_error() {
 #[test]
 fn associating_too_many_vaults_throws_an_error() {
 	ExtBuilder::default().build().execute_with(|| {
+		set_admin_account_with_full_access().ok();
 		for vault_id in 0..MAX_ASSOCIATED_VAULTS {
-			assert_ok!(PabloStrategy::associate_vault(&(vault_id as VaultId)));
+			assert_ok!(PabloStrategy::associate_vault(Origin::signed(ADMIN), vault_id as VaultId));
 		}
 
 		let vault_id = MAX_ASSOCIATED_VAULTS as VaultId;
 		assert_noop!(
-			PabloStrategy::associate_vault(&vault_id),
+			PabloStrategy::associate_vault(Origin::signed(ADMIN), vault_id),
 			Error::<MockRuntime>::TooManyAssociatedStrategies
 		);
 	});
@@ -79,7 +80,7 @@ fn rebalance_emits_event() {
 		set_admin_account_with_full_access().ok();
 		assert_ok!(PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, pool_id));
 
-		assert_ok!(PabloStrategy::associate_vault(&vault_id));
+		assert_ok!(PabloStrategy::associate_vault(Origin::signed(ADMIN), vault_id));
 
 		assert_ok!(PabloStrategy::rebalance());
 
@@ -175,7 +176,7 @@ fn test_setting_pool_id_for_the_second_time_initiates_transfer() {
 		assert_ok!(vault_id);
 		let vault_id = vault_id.unwrap() as VaultId;
 		// Add Vault to AssociatedVaults
-
+		assert_ok!(PabloStrategy::associate_vault(Origin::signed(ADMIN), vault_id));
 		// Set first pool_id corresponding to CurrencyId::LAYR
 		assert_ok!(PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, pool_id));
 		let new_pool_id = create_layr_crowd_loan_pool();
@@ -190,7 +191,7 @@ fn test_setting_pool_id_for_the_second_time_initiates_transfer() {
 			pool_id: new_pool_id,
 		}));
 		let mut occured_funds_transferring_flag = false;
-		// let mut transffered_funds_corresponded_to_vault_flag = false;
+		let mut transffered_funds_corresponded_to_vault_flag = false;
 		let system_events = frame_system::Pallet::<MockRuntime>::events();
 		system_events.iter().for_each(|event_record| {
 			if event_record.event ==
@@ -200,15 +201,15 @@ fn test_setting_pool_id_for_the_second_time_initiates_transfer() {
 				}) {
 				occured_funds_transferring_flag = true;
 			}
-			// if event_record.event ==
-			// 	Event::PabloStrategy(pallet::Event::TransfferedFundsCorrespondedToVault {
-			// 		vault_id,
-			// 		pool_id: new_pool_id,
-			// 	}) {
-			// 	transffered_funds_corresponded_to_vault_flag = true;
-			// }
+			if event_record.event ==
+				Event::PabloStrategy(pallet::Event::TransfferedFundsCorrespondedToVault {
+					vault_id,
+					pool_id: new_pool_id,
+				}) {
+				transffered_funds_corresponded_to_vault_flag = true;
+			}
 		});
 		assert!(occured_funds_transferring_flag);
-		// assert!(transffered_funds_corresponded_to_vault_flag);
+		assert!(transffered_funds_corresponded_to_vault_flag);
 	})
 }

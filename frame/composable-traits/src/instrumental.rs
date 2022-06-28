@@ -26,6 +26,9 @@ pub enum AccessRights {
 	/// Account has access only to `set_pool_id_for_asset` function
 	/// [`set_pool_id_for_asset`](InstrumentalProtocolStrategy::set_pool_id_for_asset()) function.
 	SetPoolId,
+	/// Account has access only to `add_vault_id` function
+	/// [`associate_vault`](InstrumentalProtocolStrategy::associate_vault()) function.
+	AssociateVaultId,
 }
 
 #[derive(Clone, Copy, Encode, Decode, Default, Debug, PartialEq, TypeInfo)]

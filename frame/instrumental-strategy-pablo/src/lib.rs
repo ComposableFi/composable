@@ -35,7 +35,7 @@ pub mod pallet {
 	use composable_traits::{
 		dex::Amm,
 		instrumental::{AccessRights, InstrumentalProtocolStrategy, State},
-		vault::{FundsAvailability, StrategicVault, Vault},
+		vault::{CapabilityVault, FundsAvailability, StrategicVault, Vault},
 	};
 	use frame_support::{
 		dispatch::{DispatchError, DispatchResult},
@@ -112,11 +112,16 @@ pub mod pallet {
 			+ Into<u128>;
 
 		type Vault: StrategicVault<
-			AssetId = Self::AssetId,
-			Balance = Self::Balance,
-			AccountId = Self::AccountId,
-			VaultId = Self::VaultId,
-		>;
+				AssetId = Self::AssetId,
+				Balance = Self::Balance,
+				AccountId = Self::AccountId,
+				VaultId = Self::VaultId,
+			> + CapabilityVault<
+				AssetId = Self::AssetId,
+				Balance = Self::Balance,
+				AccountId = Self::AccountId,
+				VaultId = Self::VaultId,
+			>;
 
 		/// The [`Currency`](Config::Currency).
 		///
@@ -208,8 +213,6 @@ pub mod pallet {
 		TransfferedFundsCorrespondedToVault { vault_id: T::VaultId, pool_id: T::PoolId },
 
 		UnableToTransfferFundsCorrespondedToVault { vault_id: T::VaultId, pool_id: T::PoolId },
-
-		Check { asset_id: T::AssetId },
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -232,6 +235,8 @@ pub mod pallet {
 		NotEnoughAccessRights,
 		// Occurs when pool_id not contained in Pablo pools storage
 		PoolIsNotValidated,
+
+		VaultIsStopped,
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -247,6 +252,26 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		#[pallet::weight(T::WeightInfo::associate_vault())]
+		pub fn associate_vault(
+			origin: OriginFor<T>,
+			vault_id: T::VaultId,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			let access_right = Self::admin_accounts(who).ok_or(Error::<T>::NotAdminAccount)?;
+			ensure!(
+				access_right == AccessRights::Full ||
+					access_right == AccessRights::AssociateVaultId,
+				Error::<T>::NotEnoughAccessRights
+			);
+			// TODO(belousm): Ask Kevin do we need check thatd eposits_allowed.
+			// ensure!(
+			// 	T::Vault::deposits_allowed(&vault_id).unwrap() == true,
+			// 	Error::<T>::VaultIsStopped
+			// );
+			<Self as InstrumentalProtocolStrategy>::associate_vault(&vault_id)?;
+			Ok(().into())
+		}
 		/// Store a mapping of asset_id -> pool_id in the pools runtime storage object.
 		///
 		/// Emits [`AssociatedPoolWithAsset`](Event::AssociatedPoolWithAsset) event when successful.
@@ -360,7 +385,6 @@ pub mod pallet {
 		fn associate_vault(vault_id: &Self::VaultId) -> DispatchResult {
 			AssociatedVaults::<T>::try_mutate(|vaults| -> DispatchResult {
 				ensure!(!vaults.contains(vault_id), Error::<T>::VaultAlreadyAssociated);
-
 				vaults
 					.try_insert(*vault_id)
 					.map_err(|_| Error::<T>::TooManyAssociatedStrategies)?;

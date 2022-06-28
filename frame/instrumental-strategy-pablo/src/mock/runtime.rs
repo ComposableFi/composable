@@ -1,5 +1,6 @@
 use frame_support::{parameter_types, traits::Everything, PalletId};
 use frame_system::{EnsureRoot, EnsureSigned};
+
 use orml_traits::parameter_type_with_key;
 use primitives::currency::CurrencyId;
 use sp_core::H256;
