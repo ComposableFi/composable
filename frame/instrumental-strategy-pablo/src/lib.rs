@@ -112,16 +112,11 @@ pub mod pallet {
 			+ Into<u128>;
 
 		type Vault: StrategicVault<
-				AssetId = Self::AssetId,
-				Balance = Self::Balance,
-				AccountId = Self::AccountId,
-				VaultId = Self::VaultId,
-			> + CapabilityVault<
-				AssetId = Self::AssetId,
-				Balance = Self::Balance,
-				AccountId = Self::AccountId,
-				VaultId = Self::VaultId,
-			>;
+			AssetId = Self::AssetId,
+			Balance = Self::Balance,
+			AccountId = Self::AccountId,
+			VaultId = Self::VaultId,
+		>;
 
 		/// The [`Currency`](Config::Currency).
 		///
@@ -235,8 +230,6 @@ pub mod pallet {
 		NotEnoughAccessRights,
 		// Occurs when pool_id not contained in Pablo pools storage
 		PoolIsNotValidated,
-
-		VaultIsStopped,
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -252,6 +245,9 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		/// Add vault_id to AssociatedVaults storage.
+		///
+		/// Emits [`AssociatedVault`](Event::AssociatedVault) event when successful.
 		#[pallet::weight(T::WeightInfo::associate_vault())]
 		pub fn associate_vault(
 			origin: OriginFor<T>,
@@ -348,7 +344,9 @@ pub mod pallet {
 			}
 			Ok(())
 		}
-
+		/// Called when an existing asset_id-pool_id pair is replaced by new pool_id.
+		/// Occurs a withdrawal of all funds from the old pool to the Vault, and then from the Vault
+		/// to the new pool.
 		#[transactional]
 		fn transferring_funds_from_old_pool_to_new(
 			asset_id: T::AssetId,
