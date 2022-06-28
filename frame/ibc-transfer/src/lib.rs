@@ -389,7 +389,7 @@ pub mod pallet {
 
 		pub fn get_denom_traces(
 			key: Option<u128>,
-			offset: Option<u64>,
+			offset: Option<u32>,
 			mut limit: u64,
 			count_total: bool,
 		) -> ibc_primitives::QueryDenomTracesResponse {
@@ -404,7 +404,7 @@ pub mod pallet {
 			};
 
 			let mut denoms = vec![];
-			while let Some((_, denom)) = iterator.next() {
+			for (_, denom) in iterator.by_ref() {
 				denoms.push(denom);
 				limit -= 1;
 				if limit == 0 {

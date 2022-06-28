@@ -27,7 +27,7 @@ use ibc::core::{
 use std::{str::FromStr, sync::Arc};
 
 use ibc_proto::{
-	cosmos::base::v1beta1::Coin,
+	cosmos::base::{query::v1beta1::PageResponse, v1beta1::Coin},
 	ibc::{
 		applications::transfer::v1::{QueryDenomTraceResponse, QueryDenomTracesResponse},
 		core::{
@@ -299,6 +299,10 @@ pub trait IbcApi<BlockNumber, Hash> {
 	) -> Result<QueryPacketReceiptResponse>;
 
 	/// Query the denom trace for an ibc denom from the asset Id
+	// In ibc-go this method accepts a string which is the hash of the ibc denom
+	// that is because ibc denoms are stored as hashes in ibc-go, but in our implementation here
+	// ibc denoms are mapped to a local currency id which a u128 under the hood,
+	// hence, why we require a u128 in this method
 	#[method(name = "ibc_queryDenomTrace")]
 	fn query_denom_trace(&self, asset_id: u128) -> Result<QueryDenomTraceResponse>;
 
@@ -311,7 +315,7 @@ pub trait IbcApi<BlockNumber, Hash> {
 	fn query_denom_traces(
 		&self,
 		key: Option<u128>,
-		offset: Option<u64>,
+		offset: Option<u32>,
 		limit: Option<u64>,
 		count_total: bool,
 	) -> Result<QueryDenomTracesResponse>;
@@ -1269,11 +1273,55 @@ where
 	fn query_denom_traces(
 		&self,
 		key: Option<u128>,
-		offset: Option<u64>,
+		offset: Option<u32>,
 		limit: Option<u64>,
 		count_total: bool,
 	) -> Result<QueryDenomTracesResponse> {
-		Err(runtime_error_into_rpc_error("Unimplemented"))
+		let api = self.client.runtime_api();
+		let block_hash = self.client.info().best_hash;
+
+		let at = BlockId::Hash(block_hash);
+		// Set default limit to 20 items
+		let limit = limit.unwrap_or(20);
+		let result =
+			api.denom_traces(&at, key, offset, limit, count_total).ok().ok_or_else(|| {
+				runtime_error_into_rpc_error(
+					"[ibc_rpc]: Could not find a denom trace for asset id provided",
+				)
+			})?;
+
+		let denom_traces = result
+			.denoms
+			.into_iter()
+			.map(|denom| {
+				let denom_str = String::from_utf8(denom).map_err(|_| {
+					runtime_error_into_rpc_error(
+						"[ibc_rpc]: Could not decode ibc denom into a valid string",
+					)
+				})?;
+				let denom_trace = ibc::applications::transfer::PrefixedDenom::from_str(&denom_str)
+					.map_err(|_| {
+						runtime_error_into_rpc_error(
+							"[ibc_rpc]: Could not derive a valid ibc denom from string",
+						)
+					})?;
+				let denom_trace: ibc_proto::ibc::applications::transfer::v1::DenomTrace =
+					denom_trace.try_into().map_err(|_| {
+						runtime_error_into_rpc_error(
+							"[ibc_rpc]: Could not derive a valid ibc denom from string",
+						)
+					})?;
+				Ok(denom_trace)
+			})
+			.collect::<Result<Vec<_>>>()?;
+
+		Ok(QueryDenomTracesResponse {
+			denom_traces,
+			pagination: result.next_key.map(|key| PageResponse {
+				next_key: key.encode(),
+				total: result.total.unwrap_or_default(),
+			}),
+		})
 	}
 
 	fn query_newly_created_clients(
