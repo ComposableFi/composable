@@ -20,6 +20,7 @@ import { AllLiquidityTable } from "@/components/Organisms/AllLiquidityTable";
 import { Link } from "@/components";
 import {useDotSamaContext} from "substrate-react";
 import { resetAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
+import useStore from "@/store/useStore";
 
 
 const standardPageSize = {
@@ -34,6 +35,7 @@ const twoColumnPageSize = {
 const Pool: NextPage = () => {
   const {extensionStatus} = useDotSamaContext();
 
+  const {createPool} = useStore();
   const theme = useTheme();
   const router = useRouter();
   const [messageBoxOpen, setMessageBoxOpen] = useState(true);
@@ -44,6 +46,7 @@ const Pool: NextPage = () => {
   };
 
   const handleCreatePair = () => {
+    createPool.resetSlice();
     router.push("/pool/create-pool");
   };
 

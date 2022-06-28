@@ -9,6 +9,7 @@ export const NoAssetsCover: React.FC = () => {
         Assets
       </Typography>
       <Image
+        alt="lemonade"
         src="/static/lemonade.png"
         css={{ mixBlendMode: "luminosity" }}
         width="96"

@@ -159,17 +159,30 @@ const ParachainContextProvider = ({
       const wsProvider = new WsProvider(wsUrl);
       let parachainApi;
       if (chainId === "kusama-2019") {
-        const rpc = Object.keys(definitions).reduce(
-          (accumulator, key) => ({
-            ...accumulator,
-            [key]: (definitions as any)[key].rpc,
-          }),
-          {}
-        );
-        const types = Object.values(definitions).reduce(
-          (accumulator, { types }) => ({ ...accumulator, ...types }),
-          {}
-        );
+        const rpc = Object.keys(definitions)
+          .filter((k) => {
+            if (!(definitions as any)[k].rpc) {
+              return false;
+            } else {
+              return Object.keys((definitions as any)[k].rpc).length > 0;
+            }
+          })
+          .reduce(
+            (accumulator, key) => ({
+              ...accumulator,
+              [key]: (definitions as any)[key].rpc,
+            }),
+            {}
+          );
+        const types = Object.keys(definitions)
+          .filter((key) => Object.keys((definitions as any)[key].types).length > 0)
+          .reduce(
+            (accumulator, key) => ({
+              ...accumulator,
+              ...(definitions as any)[key].types,
+            }),
+            {}
+          );
         parachainApi = new ApiPromise({ provider: wsProvider, types, rpc });
       } else {
         parachainApi = new ApiPromise({ provider: wsProvider });

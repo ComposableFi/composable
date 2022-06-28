@@ -53,7 +53,6 @@ export const Input: React.FC<InputProps> = ({
         fullWidth
         onChange={handleChange}
         InputProps={{
-          ...InputProps,
           startAdornment: tokenId ? (
             <InputAdornment position="start">
               <TokenAsset tokenId={tokenId} iconOnly={!tokenDescription} />
@@ -78,6 +77,7 @@ export const Input: React.FC<InputProps> = ({
               </Typography>
             )
           ),
+          ...InputProps,
         }}
         sx={{
           "& .MuiOutlinedInput-root": {

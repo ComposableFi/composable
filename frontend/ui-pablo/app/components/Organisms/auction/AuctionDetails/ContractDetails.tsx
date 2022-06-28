@@ -29,8 +29,8 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({
   }
 
   const copyTokenAddress = useCallback(() => {
-    navigator.clipboard.writeText("");
-  }, [auction.poolId]);
+    navigator.clipboard.writeText(auction.owner);
+  }, [auction]);
 
   return (
     <Box {...rest}>

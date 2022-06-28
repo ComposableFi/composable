@@ -105,7 +105,7 @@ export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
           </Grid>
           <Grid item {...twoColumnPageSize}>
             <Button
-              disabled={totalValueProvided.eq(0)}
+              disabled={poolDetails.lpBalance.eq(0)}
               variant="outlined"
               size="large"
               fullWidth

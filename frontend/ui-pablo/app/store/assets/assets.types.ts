@@ -13,18 +13,21 @@ export interface AssetsSlice {
     assets: {
         [assetId in AssetId]: AssetStore
     },
-    assetBalances: {
+    balances: {
         [id in AssetId]: {
             [id in AnyChain]: string
         }
     },
-    updateAssetPrice: (
-        assetId: AssetId,
-        price: number
-    ) => void,
+    apollo: {
+        [id: string]: string;
+    }
+    updateApolloPrice: (
+        assetId: string,
+        price: string
+    ) => void;
     updateAssetBalance: (
         assetId: AssetId,
         parachainId: ParachainId,
         balance: string
-    ) => void
+    ) => void;
 }

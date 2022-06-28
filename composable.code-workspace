@@ -11,6 +11,9 @@
         },
         {
             "path": "frontend/ui-picasso"
+        },
+        {
+            "path": "scripts/oracle-setup"
         }
     ],
     "settings": {

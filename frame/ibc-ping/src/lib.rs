@@ -39,8 +39,8 @@ pub const PORT_ID: &str = "ping";
 )]
 pub struct SendPingParams {
 	pub data: Vec<u8>,
-	pub timeout_height_offset: u64,
-	pub timeout_timestamp_offset: u64,
+	pub timeout_height: u64,
+	pub timeout_timestamp: u64,
 	pub channel_id: Vec<u8>,
 	pub dest_port_id: Vec<u8>,
 	pub dest_channel_id: Vec<u8>,
@@ -115,12 +115,11 @@ pub mod pallet {
 			ensure_root(origin)?;
 			let send_packet = SendPacketData {
 				data: params.data,
-				timeout_height_offset: params.timeout_height_offset,
-				timeout_timestamp_offset: params.timeout_timestamp_offset,
+				revision_number: None,
+				timeout_height: params.timeout_height,
+				timeout_timestamp: params.timeout_timestamp,
 				port_id: PORT_ID.as_bytes().to_vec(),
 				channel_id: params.channel_id,
-				dest_port_id: params.dest_port_id,
-				dest_channel_id: params.dest_channel_id,
 			};
 			T::IbcHandler::send_packet(send_packet).map_err(|_| Error::<T>::PacketSendError)?;
 			Self::deposit_event(Event::<T>::PacketSent);

@@ -12,15 +12,23 @@ use sp_std::str::FromStr;
 #[cfg(not(feature = "std"))]
 use sp_std::vec::Vec;
 
+pub mod runtime_interface;
+
 pub struct SendPacketData {
+	/// packet data
 	pub data: Vec<u8>,
-	pub timeout_height_offset: u64,
-	/// This value should represent nano seconds
-	pub timeout_timestamp_offset: u64,
+	/// Needed only when packet is been sent to a parachain, this should be the parachain id in
+	/// that case.
+	pub revision_number: Option<u64>,
+	/// Block height on the counterparty chain when this packet should be invalidated.
+	pub timeout_height: u64,
+	/// Timestamp on counterparty chain when this packet should be invalidated
+	/// This value should be in nano seconds
+	pub timeout_timestamp: u64,
+	/// port id as utf8 string bytes
 	pub port_id: Vec<u8>,
+	/// channel id as utf8 string bytes
 	pub channel_id: Vec<u8>,
-	pub dest_port_id: Vec<u8>,
-	pub dest_channel_id: Vec<u8>,
 }
 #[derive(codec::Encode, codec::Decode, Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub struct OffchainPacketType {

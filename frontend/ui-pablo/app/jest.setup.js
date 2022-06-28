@@ -77,7 +77,7 @@ jest.mock("@/store/hooks/useUserProvidedLiquidityByPool.ts", () => {
   }))}
 })
 
-jest.mock("@/store/hooks/usePoolTvlChart/usePoolTvlChart", () => ({
+jest.mock("@/store/hooks/usePoolTvlChart", () => ({
     usePoolTvlChart: jest.fn().mockImplementation(() => ({
       seriesIntervals: [],
       chartSeries: [],
@@ -85,6 +85,14 @@ jest.mock("@/store/hooks/usePoolTvlChart/usePoolTvlChart", () => ({
       setSelectedInterval: jest.fn()
     }))
 }))
+
+jest.mock("@/defi/utils/pablo/auctions/subsquidHelpers", () => {
+  return { fetchTrades: jest.fn().mockImplementation(() => (Promise.resolve([])))}
+})
+
+jest.mock("@/defi/utils/pablo/pools/stats", () => {
+  return { fetchPoolStats: jest.fn().mockImplementation(() => (Promise.resolve([]))), calculatePoolStats: jest.fn().mockImplementation(() => (undefined))}
+})
 
 jest.isolateModules(() => {
   const preloadAll = require('jest-next-dynamic');

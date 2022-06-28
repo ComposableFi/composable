@@ -47,8 +47,9 @@ mod channel;
 mod client;
 mod connection;
 mod errors;
-mod events;
+pub mod events;
 mod host_functions;
+pub mod ics20;
 mod port;
 pub mod routing;
 
@@ -107,7 +108,6 @@ mod mock;
 mod tests;
 
 mod impls;
-pub mod runtime_interface;
 pub mod weight;
 pub use weight::WeightInfo;
 
@@ -121,19 +121,18 @@ pub mod pallet {
 		traits::{Currency, UnixTime},
 	};
 	use frame_system::pallet_prelude::*;
-	use ibc::{
-		core::{
-			ics03_connection::{
-				connection::Counterparty, msgs::conn_open_init::MsgConnectionOpenInit,
-				version::Version,
-			},
-			ics23_commitment::commitment::CommitmentPrefix,
-			ics26_routing::handler::MsgReceipt,
+	use ibc::core::{
+		ics02_client::msgs::create_client::TYPE_URL as CREATE_CLIENT_TYPE_URL,
+		ics03_connection::{
+			connection::Counterparty, msgs::conn_open_init::MsgConnectionOpenInit, version::Version,
 		},
-		signer::Signer,
+		ics23_commitment::commitment::CommitmentPrefix,
+		ics26_routing::handler::MsgReceipt,
 	};
 
 	use crate::host_functions::HostFunctions;
+	use composable_traits::defi::DeFiComposableConfig;
+	pub use ibc::signer::Signer;
 	use ibc_trait::client_id_from_bytes;
 	use sp_runtime::{generic::DigestItem, SaturatedConversion};
 	use tendermint_proto::Protobuf;
@@ -141,7 +140,13 @@ pub mod pallet {
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config + balances::Config + pallet_ibc_ping::Config + parachain_info::Config
+		frame_system::Config
+		+ balances::Config
+		+ pallet_ibc_ping::Config
+		+ parachain_info::Config
+		+ transfer::Config
+		+ DeFiComposableConfig
+		+ assets::Config
 	{
 		type TimeProvider: UnixTime;
 		/// The overarching event type.
@@ -155,6 +160,8 @@ pub mod pallet {
 		#[pallet::constant]
 		type ExpectedBlockTime: Get<u64>;
 		type WeightInfo: WeightInfo;
+		/// Origin allowed to create light clients and initiate connections
+		type AdminOrigin: EnsureOrigin<Self::Origin>;
 	}
 
 	#[pallet::pallet]
@@ -317,6 +324,8 @@ pub mod pallet {
 		Other,
 		/// Invalid route
 		InvalidRoute,
+		/// Invalid message for extirnsic
+		InvalidMessageType,
 	}
 
 	#[pallet::hooks]
@@ -388,10 +397,12 @@ pub mod pallet {
 			let mut ctx = routing::Context::<T>::new();
 			let messages = messages
 				.into_iter()
-				.map(|message| {
-					let type_url = String::from_utf8(message.type_url.clone())
-						.map_err(|_| Error::DecodingError)?;
-					Ok(ibc_proto::google::protobuf::Any { type_url, value: message.value })
+				.filter_map(|message| {
+					let type_url = String::from_utf8(message.type_url.clone()).ok()?;
+					if type_url.as_str() == CREATE_CLIENT_TYPE_URL {
+						return None
+					}
+					Some(Ok(ibc_proto::google::protobuf::Any { type_url, value: message.value }))
 				})
 				.collect::<Result<Vec<ibc_proto::google::protobuf::Any>, Error<T>>>()?;
 
@@ -416,13 +427,35 @@ pub mod pallet {
 			Self::deposit_event(errors.into());
 			Ok(())
 		}
-		#[pallet::weight(0)]
+
+		#[pallet::weight(<T as Config>::WeightInfo::create_client())]
+		#[frame_support::transactional]
+		pub fn create_client(origin: OriginFor<T>, msg: Any) -> DispatchResult {
+			<T as Config>::AdminOrigin::ensure_origin(origin)?;
+			let mut ctx = routing::Context::<T>::new();
+			let type_url =
+				String::from_utf8(msg.type_url.clone()).map_err(|_| Error::<T>::DecodingError)?;
+			if type_url.as_str() != CREATE_CLIENT_TYPE_URL {
+				return Err(Error::<T>::InvalidMessageType.into())
+			}
+			let msg = ibc_proto::google::protobuf::Any { type_url, value: msg.value };
+
+			let MsgReceipt { events, log } =
+				ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg)
+					.map_err(|_| Error::<T>::ProcessingError)?;
+
+			log::trace!("[pallet_ibc_deliver]: logs: {:?}", log);
+			Self::deposit_event(events.into());
+			Ok(())
+		}
+
+		#[pallet::weight(<T as Config>::WeightInfo::initiate_connection())]
 		#[frame_support::transactional]
 		pub fn initiate_connection(
 			origin: OriginFor<T>,
 			params: ConnectionParams,
 		) -> DispatchResult {
-			ensure_root(origin)?;
+			<T as Config>::AdminOrigin::ensure_origin(origin)?;
 			if !ClientStates::<T>::contains_key(params.client_id.clone()) {
 				return Err(Error::<T>::ClientStateNotFound.into())
 			}
@@ -454,8 +487,7 @@ pub mod pallet {
 				delay_period,
 				signer: Signer::from_str(MODULE_ID).map_err(|_| Error::<T>::DecodingError)?,
 			}
-			.encode_vec()
-			.map_err(|_| Error::<T>::ProcessingError)?;
+			.encode_vec();
 			let msg = ibc_proto::google::protobuf::Any {
 				type_url: CONNECTION_OPEN_INIT_TYPE_URL.to_string(),
 				value,

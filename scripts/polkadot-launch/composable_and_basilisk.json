@@ -64,7 +64,7 @@
       ]
     },
     {
-      "bin": "../../../Basilisk-node/target/release/basilisk",
+      "bin": "../../../basilisk-node/target/release/basilisk",
       "chain":"local",
       "balance": "1000000000000000000000",
       "nodes": [

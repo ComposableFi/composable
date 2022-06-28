@@ -81,7 +81,7 @@ This leads to some permissions requires to create assets and define prices.
 
 ## Proposal
 
-Each permissionsless storage item of very large potential combinatorial number of items must be accompanied with deposit of native token.
+Each permissionless storage item of very large potential combinatorial number of items must be accompanied with deposit of native token.
 
 ### Considerations
 

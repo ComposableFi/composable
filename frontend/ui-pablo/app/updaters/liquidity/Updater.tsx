@@ -1,21 +1,18 @@
-import { getAssetByOnChainId } from "@/defi/polkadot/Assets";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
-import _ from "lodash";
 import { useEffect, useMemo } from "react";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
-import { DEFAULT_NETWORK_ID } from "../constants";
-import {
-  fetchAndUpdatePoolLiquidity,
-} from "./utils";
-import { fetchBalanceByAssetId } from "../balances/utils";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
+import { fetchAndUpdatePoolLiquidity } from "@/defi/utils";
+import { fetchBalanceByAssetId } from "@/defi/utils";
+import _ from "lodash";
 
 const PICK = ["poolId", "pair", "lpToken"];
 const Updater = () => {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const {
-    assets,
+    apollo,
     pools,
     setTokenAmountInLiquidityPool,
     setTokenValueInLiquidityPool,
@@ -28,9 +25,9 @@ const Updater = () => {
    */
   const allPools = useMemo(() => {
     return [
-      ...pools.constantProductPools.unVerified.map((p) => _.pick(p, PICK)),
+      // ...pools.constantProductPools.unVerified.map((p) => _.pick(p, PICK)),
       ...pools.constantProductPools.verified.map((p) => _.pick(p, PICK)),
-      ...pools.stableSwapPools.unVerified.map((p) => _.pick(p, PICK)),
+      // ...pools.stableSwapPools.unVerified.map((p) => _.pick(p, PICK)),
       ...pools.stableSwapPools.verified.map((p) => _.pick(p, PICK)),
     ];
   }, [pools]);
@@ -52,7 +49,7 @@ const Updater = () => {
         }
       });
     }
-  }, [allPools.length, parachainApi]);
+  }, [allPools, parachainApi, setTokenAmountInLiquidityPool]);
   /**
    * Fetch and update LP Balances within
    * zustand store
@@ -63,7 +60,6 @@ const Updater = () => {
         if (pool.poolId && pool.pair && pool.lpToken) {
           fetchBalanceByAssetId(
             parachainApi,
-            DEFAULT_NETWORK_ID,
             selectedAccount.address,
             pool.lpToken
           ).then((lpBalance) => {
@@ -72,7 +68,7 @@ const Updater = () => {
         }
       });
     }
-  }, [parachainApi, allPools.length, selectedAccount]);
+  }, [parachainApi, allPools, selectedAccount, setUserLpBalance]);
   /**
    * For each pool, update zustand
    * store with value of tokens
@@ -82,30 +78,24 @@ const Updater = () => {
     if (allPools.length) {
       allPools.forEach((pool) => {
         if (pool.poolId && pool.pair) {
-          const baseAssetMeta = getAssetByOnChainId(
-            DEFAULT_NETWORK_ID,
-            pool.pair.base
-          );
-          const quoteAssetMeta = getAssetByOnChainId(
-            DEFAULT_NETWORK_ID,
-            pool.pair.quote
-          );
+          let baseId = pool.pair.base.toString();
+          let quoteId = pool.pair.quote.toString();
 
-          if (assets[baseAssetMeta.assetId] && poolLiquidity[pool.poolId]) {
+          if (apollo[baseId] && poolLiquidity[pool.poolId]) {
             const baseValue = new BigNumber(
               poolLiquidity[pool.poolId].tokenAmounts.baseAmount
             )
-              .times(assets[baseAssetMeta.assetId].price)
+              .times(apollo[baseId])
               .toString();
             setTokenValueInLiquidityPool(pool.poolId, {
               baseValue,
             });
           }
-          if (assets[quoteAssetMeta.assetId] && poolLiquidity[pool.poolId]) {
+          if (apollo[quoteId] && poolLiquidity[pool.poolId]) {
             const quoteValue = new BigNumber(
               poolLiquidity[pool.poolId].tokenAmounts.quoteAmount
             )
-              .times(assets[quoteAssetMeta.assetId].price)
+              .times(apollo[quoteId])
               .toString();
             setTokenValueInLiquidityPool(pool.poolId, {
               quoteValue,
@@ -114,7 +104,7 @@ const Updater = () => {
         }
       });
     }
-  }, [allPools.length, assets]);
+  }, [allPools, apollo, poolLiquidity, setTokenValueInLiquidityPool]);
 
   return null;
 };

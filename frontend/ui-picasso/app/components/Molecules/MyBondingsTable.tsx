@@ -1,31 +1,82 @@
 import * as React from "react";
+import { FC } from "react";
 import {
   Table,
   TableBody,
   TableCell,
   TableContainer,
+  TableContainerProps,
   TableHead,
   TableRow,
   Typography,
-  TableContainerProps,
 } from "@mui/material";
-import { BaseAsset } from "../Atom";
-import BigNumber from "bignumber.js";
+import { BaseAsset, TokenAsset, TokenPairAsset } from "../Atom";
 import { NoAssetsCover } from "./NoAssetsCover";
-import { TokenPairAsset } from "../Atom/TokenPairAsset";
-import { BondingAsset } from "@/stores/defi/polkadot";
+import { getTokenString } from "@/components/Organisms/Bond/utils";
+import { humanBalance } from "@/utils/formatters";
+import { useClaim } from "@/stores/defi/polkadot/bonds/useClaim";
+import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
+import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
 
 export type MyBondingsTableProps = TableContainerProps & {
-  assets?: BondingAsset[];
-  onRowClick?: (asset: BondingAsset) => void;
+  onRowClick?: (offerId: string) => void;
+  openPositions: ActiveBond[];
+};
+
+export const BondTableRow: FC<{
+  bond: BondOffer;
+  onRowClick: (value: string) => void;
+}> = ({ bond, onRowClick }) => {
+  const { claimable, pending, vestingTime } = useClaim(bond.bondOfferId);
+  return (
+    <TableRow
+      sx={{
+        "&:hover": {
+          cursor: "pointer",
+        },
+      }}
+      key={getTokenString(bond.reward.asset)}
+      onClick={() => onRowClick(bond.bondOfferId)}
+    >
+      <TableCell align="left">
+        {Array.isArray(bond.asset) && (
+          <TokenPairAsset tokenIds={bond.asset.map(({ id }) => id)} />
+        )}
+        {!Array.isArray(bond.asset) && <TokenAsset tokenId={bond.asset.id} />}
+      </TableCell>
+      <TableCell align="left">
+        <BaseAsset
+          icon="/tokens/chaos.svg"
+          label={`${humanBalance(claimable)} ${
+            Array.isArray(bond.reward.asset)
+              ? bond.reward.asset[0].id
+              : bond.reward.asset.id
+          }`}
+        />
+      </TableCell>
+      <TableCell align="left">
+        <BaseAsset
+          icon="/tokens/chaos.svg"
+          label={`${humanBalance(pending)} ${
+            Array.isArray(bond.reward.asset)
+              ? bond.reward.asset[0].id
+              : bond.reward.asset.id
+          }`}
+        />
+      </TableCell>
+      <TableCell align="left">
+        <Typography variant="body2">{vestingTime}</Typography>
+      </TableCell>
+    </TableRow>
+  );
 };
 
 export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
-  assets,
+  openPositions,
   onRowClick = () => {},
   ...rest
 }) => {
-  if (assets && assets.length > 0) {
+  if (openPositions.length > 0) {
     return (
       <TableContainer {...rest}>
         <Table sx={{ minWidth: 420 }} aria-label="simple table">
@@ -38,46 +89,9 @@ export const MyBondingsTable: React.FC<MyBondingsTableProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {assets.map(
-              ({ token, toToken, claimable, pending, vesting_time }) => (
-                <TableRow
-                  sx={{
-                    "&:hover": {
-                      cursor: "pointer",
-                    },
-                  }}
-                  key={token.symbol}
-                  onClick={() =>
-                    onRowClick({
-                      token,
-                      toToken,
-                      claimable,
-                      pending,
-                      vesting_time,
-                    })
-                  }
-                >
-                  <TableCell align="left">
-                    <TokenPairAsset tokenIds={[token.id, toToken.id]} />
-                  </TableCell>
-                  <TableCell align="left">
-                    <BaseAsset
-                      icon="/tokens/chaos.svg"
-                      label={`${new BigNumber(claimable).toFormat()} Chaos`}
-                    />
-                  </TableCell>
-                  <TableCell align="left">
-                    <BaseAsset
-                      icon="/tokens/chaos.svg"
-                      label={`${new BigNumber(pending).toFormat()} Chaos`}
-                    />
-                  </TableCell>
-                  <TableCell align="left">
-                    <Typography variant="body2">{vesting_time}</Typography>
-                  </TableCell>
-                </TableRow>
-              )
-            )}
+            {openPositions.map(({ bond }: { bond: BondOffer }, index) => (
+              <BondTableRow key={index} bond={bond} onRowClick={onRowClick} />
+            ))}
           </TableBody>
         </Table>
       </TableContainer>

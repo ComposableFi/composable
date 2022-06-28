@@ -1,5 +1,4 @@
-import { Auction } from "@/defi/types";
-import { 
+import {
   Box, 
   BoxProps, 
   Typography, 

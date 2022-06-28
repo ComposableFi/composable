@@ -470,6 +470,10 @@ declare module "@polkadot/api-base/types/errors" {
        **/
       EncodingError: AugmentedError<ApiType>;
       /**
+       * Invalid message for extirnsic
+       **/
+      InvalidMessageType: AugmentedError<ApiType>;
+      /**
        * Invalid route
        **/
       InvalidRoute: AugmentedError<ApiType>;
@@ -623,6 +627,7 @@ declare module "@polkadot/api-base/types/errors" {
       BorrowIndexDoesNotExist: AugmentedError<ApiType>;
       BorrowRateDoesNotExist: AugmentedError<ApiType>;
       BorrowRentDoesNotExist: AugmentedError<ApiType>;
+      CannotBorrowFromMarketWithUnbalancedVault: AugmentedError<ApiType>;
       /**
        * Can't allow amount 0 as collateral.
        **/
@@ -709,6 +714,7 @@ declare module "@polkadot/api-base/types/errors" {
       BadTimelockPeriod: AugmentedError<ApiType>;
       BadTTL: AugmentedError<ApiType>;
       BelowMinTransferSize: AugmentedError<ApiType>;
+      DestinationAmmIdNotWhitelisted: AugmentedError<ApiType>;
       ExceedsMaxTransferSize: AugmentedError<ApiType>;
       InsufficientBudget: AugmentedError<ApiType>;
       NetworkDisabled: AugmentedError<ApiType>;
@@ -717,6 +723,8 @@ declare module "@polkadot/api-base/types/errors" {
       NoStaleTransactions: AugmentedError<ApiType>;
       Overflow: AugmentedError<ApiType>;
       RelayerNotSet: AugmentedError<ApiType>;
+      RemoteAmmIdAlreadyExists: AugmentedError<ApiType>;
+      RemoteAmmIdNotFound: AugmentedError<ApiType>;
       TxStillLocked: AugmentedError<ApiType>;
       UnsupportedAsset: AugmentedError<ApiType>;
       UnsupportedNetwork: AugmentedError<ApiType>;
@@ -844,10 +852,6 @@ declare module "@polkadot/api-base/types/errors" {
        * Max prices already reached
        **/
       MaxPrices: AugmentedError<ApiType>;
-      /**
-       * Price weight must sum to 100
-       **/
-      MustSumTo100: AugmentedError<ApiType>;
       /**
        * No Permission
        **/
@@ -1139,6 +1143,12 @@ declare module "@polkadot/api-base/types/errors" {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    stakingRewards: {
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     sudo: {
       /**
        * Sender must be the Sudo account
@@ -1213,6 +1223,48 @@ declare module "@polkadot/api-base/types/errors" {
        **/
       MaxLocksExceeded: AugmentedError<ApiType>;
       TooManyReserves: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    transfer: {
+      /**
+       * Error opening channel
+       **/
+      ChannelInitError: AugmentedError<ApiType>;
+      /**
+       * Unable to get client revision number
+       **/
+      FailedToGetRevisionNumber: AugmentedError<ApiType>;
+      /**
+       * Invalid amount
+       **/
+      InvalidAmount: AugmentedError<ApiType>;
+      /**
+       * Invalid asset id
+       **/
+      InvalidAssetId: AugmentedError<ApiType>;
+      /**
+       * Invalid Ibc denom
+       **/
+      InvalidIbcDenom: AugmentedError<ApiType>;
+      /**
+       * Invalid params passed
+       **/
+      InvalidParams: AugmentedError<ApiType>;
+      /**
+       * Invalid timestamp
+       **/
+      InvalidTimestamp: AugmentedError<ApiType>;
+      /**
+       * The interchain token transfer was not successfully initiated
+       **/
+      TransferFailed: AugmentedError<ApiType>;
+      /**
+       * Error Decoding utf8 bytes
+       **/
+      Utf8Error: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
