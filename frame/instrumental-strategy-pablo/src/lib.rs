@@ -35,7 +35,7 @@ pub mod pallet {
 	use composable_traits::{
 		dex::Amm,
 		instrumental::{AccessRights, InstrumentalProtocolStrategy, State},
-		vault::{CapabilityVault, FundsAvailability, StrategicVault, Vault},
+		vault::{FundsAvailability, StrategicVault, Vault},
 	};
 	use frame_support::{
 		dispatch::{DispatchError, DispatchResult},
@@ -208,6 +208,8 @@ pub mod pallet {
 		TransfferedFundsCorrespondedToVault { vault_id: T::VaultId, pool_id: T::PoolId },
 
 		UnableToTransfferFundsCorrespondedToVault { vault_id: T::VaultId, pool_id: T::PoolId },
+
+		AssociatedAccountId { account_id: T::AccountId, access: AccessRights },
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -302,6 +304,25 @@ pub mod pallet {
 			<Self as InstrumentalProtocolStrategy>::rebalance()?;
 			Ok(().into())
 		}
+		/// Occur set access to Account and add it to AdminAccountIds storage.
+		///
+		/// Emits [`AssociatedAccountId`](Event::AssociatedAccountId) event when successful.
+		#[pallet::weight(T::WeightInfo::liquidity_rebalance())]
+		pub fn set_access(
+			origin: OriginFor<T>,
+			account_id: T::AccountId,
+			access: AccessRights,
+		) -> DispatchResultWithPostInfo {
+			let who = ensure_signed(origin)?;
+			let access_right = Self::admin_accounts(who).ok_or(Error::<T>::NotAdminAccount)?;
+			ensure!(
+				access_right == AccessRights::Full || access_right == AccessRights::SetAccess,
+				Error::<T>::NotEnoughAccessRights
+			);
+			<Self as InstrumentalProtocolStrategy>::set_access(&account_id, access)?;
+			Self::deposit_event(Event::AssociatedAccountId { account_id, access });
+			Ok(().into())
+		}
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -316,6 +337,17 @@ pub mod pallet {
 
 		fn account_id() -> Self::AccountId {
 			T::PalletId::get().into_account()
+		}
+
+		#[transactional]
+		fn set_access(account_id: &T::AccountId, access: AccessRights) -> DispatchResult {
+			match AdminAccountIds::<T>::try_get(account_id) {
+				Ok(_) => {
+					AdminAccountIds::<T>::mutate(account_id, |_| access);
+				},
+				Err(_) => AdminAccountIds::<T>::insert(account_id, access),
+			}
+			Ok(())
 		}
 
 		#[transactional]
