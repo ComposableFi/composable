@@ -33,7 +33,7 @@ pub mod pallet {
 	use crate::weights::WeightInfo;
 	use codec::{Codec, FullCodec};
 	use composable_traits::{
-		instrumental::{InstrumentalDynamicStrategy, InstrumentalProtocolStrategy},
+		instrumental::{InstrumentalDynamicStrategy, InstrumentalProtocolStrategy, AccessRights},
 		vault::StrategicVault,
 	};
 	use frame_support::{
