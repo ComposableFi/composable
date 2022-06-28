@@ -46,4 +46,4 @@ Additionally, this is a system that is easy for users to utilize as they can par
 
 Community members can use the Composable SDK to integrate cross-chain transfer functionality in their dApp, or use it to build novel applications, such as cross-chain asset management, cross-chain lending, etc. 
 
-Once Mosaic Phase 3 is complete, we will be integrating Mosaic with Composable’s cross-chain virtual machine to enable cross-chain function calling with chains that do not support light clients. Mosaic will become the messaging infrastructure sending instructions to satellite contracts on other chains. 
+Once Mosaic Phase 3 is complete, we will further decentralize validation and executor architecture.
