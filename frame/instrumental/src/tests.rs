@@ -23,7 +23,7 @@ use crate::{
 const MINIMUM_RESERVE: Balance = 1_000;
 const MAXIMUM_RESERVE: Balance = 1_000_000_000;
 
-const NUMBER_OF_PROPTEST_CASES: u32 = 3_u32 * assets().len() as u32 * accounts().len() as u32;
+const NUMBER_OF_PROPTEST_CASES: u32 = (3 * assets().len() * accounts().len()) as u32;
 
 const fn assets() -> [Just<CurrencyId>; 5] {
 	[
@@ -39,7 +39,7 @@ prop_compose! {
 	fn generate_assets()(
 		assets in prop::collection::vec(
 			(0..assets().len()).prop_flat_map(|i| assets()[i]),
-			1..=assets().len()),
+			assets().len()),
 	) -> Vec<CurrencyId>{
 		assets
    }
@@ -47,7 +47,7 @@ prop_compose! {
 
 prop_compose! {
 	fn generate_balances()(
-		balances in prop::collection::vec(MINIMUM_RESERVE..MAXIMUM_RESERVE, 1..=assets().len()),
+		balances in prop::collection::vec(MINIMUM_RESERVE..MAXIMUM_RESERVE, assets().len()),
 	) -> Vec<Balance>{
 		balances
    }
@@ -57,7 +57,7 @@ prop_compose! {
 	fn generate_accounts()(
 		accounts in prop::collection::vec(
 			(0..accounts().len()).prop_flat_map(|i| accounts()[i]),
-			 1..=accounts().len()),
+			 accounts().len()),
 	) -> Vec<AccountId>{
 		accounts
    }
