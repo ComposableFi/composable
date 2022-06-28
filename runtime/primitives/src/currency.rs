@@ -121,6 +121,12 @@ impl From<u128> for CurrencyId {
 	}
 }
 
+impl From<CurrencyId> for String {
+    fn from(CurrencyId(x): CurrencyId) -> Self {
+        format!("{}", x)
+    }
+}
+
 impl TryFrom<XCVMAsset> for CurrencyId {
 	type Error = ();
 	fn try_from(value: XCVMAsset) -> Result<Self, Self::Error> {

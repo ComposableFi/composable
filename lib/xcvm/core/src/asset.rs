@@ -99,7 +99,7 @@ impl Amount {
 				.saturating_mul(FixedU128::<U16>::from_num(*x as u128).saturating_div(FixedU128::<
 					U16,
 				>::from_num(
-					u32::MAX as u128,
+					100
 				)))
 				.to_num(),
 		}
