@@ -129,7 +129,7 @@ pub mod pallet {
 	// ----------------------------------------------------------------------------------------------------
 
 	use codec::{Codec, FullCodec};
-	use composable_maths::labs::numbers::{FixedPointMath, IntoDecimal, UnsignedMath};
+	use composable_maths::labs::numbers::{IntoDecimal, UnsignedMath};
 	use composable_tests_helpers::test::helper::default_acceptable_computation_error;
 	use composable_traits::vamm::{
 		AssetType, Direction, MovePriceConfig, SwapConfig, SwapOutput, SwapSimulationConfig, Vamm,
@@ -811,7 +811,7 @@ pub mod pallet {
 			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
 
 			// Perform twap update before swapping assets.
-			Self::update_twap(config.vamm_id, None, None).ok();
+			Self::update_twap(config.vamm_id, None).ok();
 
 			// Perform required sanity checks.
 			Self::swap_sanity_check(config, &vamm_state)?;
@@ -969,18 +969,18 @@ pub mod pallet {
 			quote_twap: DecimalOf<T>,
 			now: &Option<MomentOf<T>>,
 		) -> Result<(DecimalOf<T>, DecimalOf<T>), DispatchError> {
-			// Sanity checks
-			Self::update_twap_sanity_check(vamm_state, Some(base_twap), Some(quote_twap), now)?;
+			// Sanity checks must pass before updating runtime storage.
+			Self::update_twap_sanity_check(vamm_state, base_twap, quote_twap, now)?;
 
 			let now = Self::now(now);
 			vamm_state.base_asset_twap = base_twap;
 			vamm_state.quote_asset_twap = quote_twap;
 			vamm_state.twap_timestamp = now;
 
-			// Update runtime storage
+			// Update runtime storage.
 			VammMap::<T>::insert(&vamm_id, vamm_state);
 
-			// Return new asset twap
+			// Return new asset twap.
 			Ok((base_twap, quote_twap))
 		}
 
