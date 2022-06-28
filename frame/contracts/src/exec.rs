@@ -962,7 +962,7 @@ where
 							}
 						};
 						sp_io::storage::start_transaction();
-						let sub_message_result = match msg {
+						let sub_message_result = (|| match msg {
 							CosmosMsg::Custom(ComposableMsg::XCVM { salt, funds, program }) => {
 								log::debug!(target: "runtime::contracts", "CustomMsg::XCVM");
 								T::XCVM::execute(&contract_address, (salt, funds, program)).map_err(
@@ -1065,7 +1065,7 @@ where
 									})?;
 								Ok(None)
 							},
-						};
+						})();
 						let sub_call_cont = match (sub_message_result, reply_on.clone()) {
 							// Commit without reply, continue to next submessage
 							(Ok(v), ReplyOn::Never | ReplyOn::Error) => {
