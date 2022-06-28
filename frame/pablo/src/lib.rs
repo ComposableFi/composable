@@ -219,7 +219,7 @@ pub mod pallet {
 			fee: Fee<T::AssetId, T::Balance>,
 		},
 		/// TWAP updated.
-		TWAPUpdated {
+		TwapUpdated {
 			/// Pool id on which exchange done.
 			pool_id: T::PoolId,
 			/// TWAP Timestamp
@@ -602,7 +602,7 @@ pub mod pallet {
 					weight += 1;
 					if let Some(updated_twap) = TWAPState::<T>::get(pool_id) {
 						if let Ok(currency_pair) = Self::currency_pair(pool_id) {
-							Self::deposit_event(Event::<T>::TWAPUpdated {
+							Self::deposit_event(Event::<T>::TwapUpdated {
 								pool_id,
 								timestamp: updated_twap.timestamp,
 								twaps: BTreeMap::from([
@@ -719,7 +719,7 @@ pub mod pallet {
 					},
 				)?;
 				if let Some(updated_twap) = updated_twap {
-					Self::deposit_event(Event::<T>::TWAPUpdated {
+					Self::deposit_event(Event::<T>::TwapUpdated {
 						pool_id,
 						timestamp: updated_twap.timestamp,
 						twaps: BTreeMap::from([

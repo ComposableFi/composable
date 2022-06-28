@@ -848,7 +848,7 @@ mod twap {
 			run_to_block_and_swap(TWAP_INTERVAL + 1);
 			assert_has_event::<Test, _>(|e| {
 				matches!(e.event,
-				mock::Event::Pablo(crate::Event::TWAPUpdated { pool_id, ..})
+				mock::Event::Pablo(crate::Event::TwapUpdated { pool_id, ..})
 				if pool_id == pool_identifier
 				)
 			});
