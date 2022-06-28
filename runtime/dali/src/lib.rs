@@ -1221,7 +1221,7 @@ construct_runtime!(
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
-		StakingRewards: pallet_staking_rewards = 67,
+		StakingRewards: pallet_staking_rewards::{Pallet, Call, Storage, Event<T>} = 67,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 
@@ -1300,6 +1300,7 @@ mod benches {
 		[lending, Lending]
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
+		[pallet_staking_rewards, StakingRewards]
 		[dex_router, DexRouter]
 		[pallet_ibc, Ibc]
 		[ibc_transfer, Transfer]
