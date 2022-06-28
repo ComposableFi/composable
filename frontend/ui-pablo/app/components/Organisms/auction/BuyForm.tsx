@@ -96,6 +96,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
           maxValue={balanceQuote}
           setValid={setIsValidQuoteInput}
           noBorder
+          disabled={isProcessing}
           value={quoteAmount}
           setValue={(value) => {
             if (isProcessing) return;
@@ -166,6 +167,7 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
       </Box>
       <Box mt={4} visibility={isActive ? undefined : "hidden"}>
         <BigNumberInput
+          disabled={isProcessing}
           onMouseDown={(evt) => setIsProcessing(false)}
           value={baseAmount}
           setValue={(value) => {
@@ -197,22 +199,12 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
           <Button
             variant="contained"
             fullWidth
-            disabled={isPendingBuy || isBuyButtonDisabled}
+            disabled={isPendingBuy || isBuyButtonDisabled || isProcessing}
             onClick={() => handleBuy()}
           >
             Buy {baseAsset ? baseAsset.symbol : ""}
           </Button>
         )}
-
-        {/* {extensionStatus === "connected" && !approved && (
-          <Button
-            variant="contained"
-            fullWidth
-            onClick={() => setApproved(true)}
-          >
-            {!isActive ? `Buy ${getToken(tokenId2).symbol}` : `Approve ${getToken(tokenId1).symbol} usage`}
-          </Button>
-        )} */}
 
         {extensionStatus !== "connected" && (
           <Button

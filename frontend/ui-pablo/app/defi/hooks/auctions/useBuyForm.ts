@@ -100,8 +100,8 @@ export const useBuyForm = (): {
         );
 
       setTokenAmounts({
-        quoteAmount: changedSide === "base" ? amount : tokenOutAmount,
-        baseAmount: changedSide === "quote" ? amount : tokenOutAmount,
+        quoteAmount: changedSide === "base" ? tokenOutAmount : amount,
+        baseAmount: changedSide === "quote" ? tokenOutAmount : amount,
       });
       setMinimumReceived(minReceive);
       setFeeCharged(feeChargedAmount);
