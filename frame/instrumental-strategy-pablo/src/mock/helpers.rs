@@ -14,26 +14,34 @@ use crate::mock::{
 	runtime::{Balance, BlockNumber, Pablo, PoolId, Tokens},
 };
 
-pub fn create_pool_with(assets: CurrencyPair<CurrencyId>, amounts: Vec<Balance>) -> PoolId {
-	create_pool(assets, amounts, Permill::zero(), Permill::from_percent(50))
-}
+pub fn create_pool<A, B, P>(
+	base_asset: A,
+	base_amount: B,
+	quote_asset: A,
+	quote_amount: B,
+	fee: P,
+	base_weight: P,
+) -> PoolId
+where
+	A: Into<Option<CurrencyId>>,
+	B: Into<Option<Balance>>,
+	P: Into<Option<Permill>>,
+{
+	let base_asset = base_asset.into().unwrap_or(CurrencyId::LAYR);
+	let base_amount = base_amount.into().unwrap_or(1_000_000_000);
+	let quote_asset = quote_asset.into().unwrap_or(CurrencyId::CROWD_LOAN);
+	let quote_amount = quote_amount.into().unwrap_or(1_000_000_000);
+	let fee = fee.into().unwrap_or_else(|| Permill::zero());
+	let base_weight = base_weight.into().unwrap_or_else(|| Permill::from_percent(50));
 
-fn create_pool(
-	assets: CurrencyPair<CurrencyId>,
-	amounts: Vec<Balance>,
-	fee: Permill,
-	base_weight: Permill,
-) -> PoolId {
-	let base = assets.base;
-	let quote = assets.quote;
-	assert_ok!(Tokens::mint_into(base, &ALICE, amounts[0]));
-	assert_ok!(Tokens::mint_into(quote, &ALICE, amounts[1]));
-	assert_ok!(Tokens::mint_into(base, &BOB, amounts[0]));
-	assert_ok!(Tokens::mint_into(quote, &BOB, amounts[1]));
+	assert_ok!(Tokens::mint_into(base_asset, &ALICE, base_amount));
+	assert_ok!(Tokens::mint_into(quote_asset, &ALICE, quote_amount));
+	assert_ok!(Tokens::mint_into(base_asset, &BOB, base_amount));
+	assert_ok!(Tokens::mint_into(quote_asset, &BOB, quote_amount));
 
 	let config = PoolInitConfiguration::<AccountId, CurrencyId, BlockNumber>::ConstantProduct {
 		owner: ALICE,
-		pair: assets,
+		pair: CurrencyPair { base: base_asset, quote: quote_asset },
 		fee,
 		base_weight,
 	};
@@ -41,9 +49,21 @@ fn create_pool(
 	assert_ok!(pool_id);
 	let pool_id = pool_id.unwrap();
 	assert_ok!(<Pablo as Amm>::add_liquidity(
-		&ALICE, pool_id, amounts[0], amounts[1], 0_u128, true
+		&ALICE,
+		pool_id,
+		base_amount,
+		quote_amount,
+		0_u128,
+		true
 	));
-	assert_ok!(<Pablo as Amm>::add_liquidity(&BOB, pool_id, amounts[0], amounts[1], 0_u128, true));
+	assert_ok!(<Pablo as Amm>::add_liquidity(
+		&BOB,
+		pool_id,
+		base_amount,
+		quote_amount,
+		0_u128,
+		true
+	));
 	pool_id
 }
 
