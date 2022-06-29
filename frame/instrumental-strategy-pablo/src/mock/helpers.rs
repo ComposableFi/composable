@@ -72,8 +72,8 @@ where
 	A: Into<Option<CurrencyId>>,
 	P: Into<Option<Perquintill>>,
 {
-	let asset_id = asset_id.into().unwrap_or_default();
-	let percent_deployable = percent_deployable.into().unwrap_or_default();
+	let asset_id = asset_id.into().unwrap_or(CurrencyId::LAYR);
+	let percent_deployable = percent_deployable.into().unwrap_or(Perquintill::zero());
 	let config = InstrumentalVaultConfig { asset_id, percent_deployable };
 	let vault_id = <Instrumental as InstrumentalTrait>::create(config);
 	assert_ok!(vault_id);
