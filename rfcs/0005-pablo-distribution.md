@@ -308,7 +308,7 @@ But if required this effect can be negated by increasing the trading fee
 by a <img src="0005-pablo-distribution-assets/images/stem-e64be84a4eef601683d61de156018075.png" width="24" height="10" alt="stem e64be84a4eef601683d61de156018075" /></span>
 while at the same time subtracting it from the total fees paid out
 already to liquidity providers. Refer [Trading Fee Inflation to Avoid
-Dilution of LPs](#_trading_fee_inflation_to_avoid_dilution_of_lps).
+Dilution of LPs](#appendix-a-trading-fee-inflation-to-avoid-dilution-of-lps).
 
 #### 5.2.3. PBLO Staker Trading Fee Distribution
 
@@ -568,15 +568,15 @@ Following algorithm should be part of the block hook in the pallet.
 
 ### 6.1. Pallet Pablo: LP Fee + Staking Changes
 
--   ❏ Implement [FeeConfig](#_feeconfig) on pallet-pablo across all 3
+-   ❏ Implement [FeeConfig](#521-feeconfig) on pallet-pablo across all 3
     types of pools.
 
 -   ❏ Implement [PBLO Staker Trading Fee
-    Distribution](#_pblo_staker_trading_fee_distribution).
+    Distribution](#523-pblo-staker-trading-fee-distribution).
 
 ### 6.2. Pallet Staking Rewards: PICA/PBLO Staking Related Changes
 
--   ❏ Implement [RewardAccumulationHook](#_rewardaccumulationhook).
+-   ❏ Implement [RewardAccumulationHook](#538-rewardaccumulationhook).
 
 ## Appendix A: Trading Fee Inflation to Avoid Dilution of LPs
 
