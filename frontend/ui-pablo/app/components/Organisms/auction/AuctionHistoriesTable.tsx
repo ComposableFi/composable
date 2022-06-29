@@ -55,7 +55,7 @@ export const AuctionHistoriesTable: React.FC<AuctionHistoriesTableProps> = ({
   const getHistoryLink = (address: string) => {
     return `${address}`;
   };
-  console.log('history', activeLBPHistory)
+
   return (
     <TableContainer {...rest}>
       <Table sx={{ minWidth: 420 }} aria-label="autions table">

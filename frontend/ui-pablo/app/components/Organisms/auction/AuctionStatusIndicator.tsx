@@ -9,7 +9,6 @@ import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import { getHumanizedDateDiff } from "@/utils/date";
 import { LiquidityBootstrappingPool } from "@/defi/types";
 
-
 export type AuctionStatusIndicatorProps = {
   auction: LiquidityBootstrappingPool,
   label?: string,

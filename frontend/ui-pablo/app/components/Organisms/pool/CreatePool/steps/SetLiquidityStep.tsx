@@ -22,6 +22,7 @@ import useStore from "@/store/useStore";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { useAssetBalance, useUSDPriceByAssetId } from "@/store/assets/hooks";
 import { MockedAsset } from "@/store/assets/assets.types";
+import { useAsset } from "@/defi/hooks/assets/useAsset";
 
 const selectLabelProps = (valid: boolean, label: string, balance: string) =>
   ({
@@ -107,17 +108,9 @@ const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const tokenToUSD1 = useUSDPriceByAssetId(createPool.baseAsset);
   const tokenToUSD2 = useUSDPriceByAssetId(createPool.quoteAsset);
 
-  const _baseAsset = useMemo(() => {
-    return supportedAssets.find(i => {
-      return i.network[DEFAULT_NETWORK_ID] === createPool.baseAsset
-    })
-  }, [createPool.baseAsset, supportedAssets])
+  const _baseAsset = useAsset(createPool.baseAsset);
+  const _quoteAsset = useAsset(createPool.quoteAsset);
 
-  const _quoteAsset = useMemo(() => {
-    return supportedAssets.find(i => {
-      return i.network[DEFAULT_NETWORK_ID] === createPool.quoteAsset
-    })
-  }, [createPool.quoteAsset, supportedAssets])
 
   const validToken1 = createPool.baseAsset !== "none";
   const validToken2 = createPool.quoteAsset !== "none";

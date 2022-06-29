@@ -8,11 +8,10 @@ import { useParachainApi } from "substrate-react";
 import { useLiquidityByPool } from "./useLiquidityByPool";
 import { useAssetBalance } from "../assets/hooks";
 import { fromChainUnits, toChainUnits } from "@/defi/utils";
+import { useAsset } from "@/defi/hooks/assets/useAsset";
+import { useFilteredAssetListDropdownOptions } from "@/defi/hooks/assets/useFilteredAssetListDropdownOptions";
 
 export const useAddLiquidity = () => {
-  const {
-    supportedAssets
-  } = useStore();
   const [valid, setValid] = useState<boolean>(false);
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
 
@@ -22,13 +21,8 @@ export const useAddLiquidity = () => {
     findPoolManually
   } = useAddLiquiditySlice();
 
-  const _assetOne = useMemo(() => {
-    return supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === assetOne)
-  }, [supportedAssets, assetOne]);
-
-  const _assetTwo = useMemo(() => {
-    return supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === assetTwo)
-  }, [supportedAssets, assetTwo]);
+  const _assetOne = useAsset(assetOne);
+  const _assetTwo = useAsset(assetTwo);
 
   const {
     tokenAmounts: {
@@ -46,35 +40,8 @@ export const useAddLiquidity = () => {
     [assetTwoAmount]
   );
 
-  const assetList1 = useMemo(() => {
-    return supportedAssets
-      .filter((i) => {
-        if (assetTwo === "none") return true;
-        if (assetTwo === i.network[DEFAULT_NETWORK_ID]) return false;
-        return true;
-      })
-      .map((asset) => ({
-        value: asset.network[DEFAULT_NETWORK_ID],
-        label: asset.name,
-        shortLabel: asset.symbol,
-        icon: asset.icon,
-      }));
-  }, [assetTwo, supportedAssets]);
-
-  const assetList2 = useMemo(() => {
-    return supportedAssets
-      .filter((i) => {
-        if (assetOne === "none") return true;
-        if (assetOne === i.network[DEFAULT_NETWORK_ID]) return false;
-        return true;
-      })
-      .map((asset) => ({
-        value: asset.network[DEFAULT_NETWORK_ID],
-        label: asset.name,
-        shortLabel: asset.symbol,
-        icon: asset.icon,
-      }));
-  }, [assetOne, supportedAssets]);
+  const assetList1 = useFilteredAssetListDropdownOptions(assetTwo);
+  const assetList2 = useFilteredAssetListDropdownOptions(assetOne);
 
   const balanceOne = useAssetBalance(DEFAULT_NETWORK_ID, assetOne);
   const balanceTwo = useAssetBalance(DEFAULT_NETWORK_ID, assetTwo);

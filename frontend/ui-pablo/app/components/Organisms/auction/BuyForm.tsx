@@ -33,6 +33,7 @@ import { DEFAULT_NETWORK_ID, toChainUnits } from "@/defi/utils";
 import { calculateSwap } from "@/defi/utils/pablo/swaps";
 import { fetchAuctions, fetchTrades } from "@/defi/utils/pablo/auctions";
 import { useAssetBalance } from "@/store/assets/hooks";
+import { useAsset } from "@/defi/hooks/assets/useAsset";
 
 export type BuyFormProps = {
   auction: LiquidityBootstrappingPool;
@@ -70,12 +71,8 @@ export const BuyForm: React.FC<BuyFormProps> = ({ auction, ...rest }) => {
     selectedAccount ? selectedAccount.address : ""
   );
 
-  const { baseAsset, quoteAsset } = useMemo(() => {
-    let baseAsset, quoteAsset;
-    baseAsset = supportedAssets.find(a => a.network[DEFAULT_NETWORK_ID] === auction.pair.base.toString())
-    quoteAsset = supportedAssets.find(a => a.network[DEFAULT_NETWORK_ID] === auction.pair.quote.toString())
-    return { baseAsset, quoteAsset }
-  }, [auction, supportedAssets]);
+  const baseAsset = useAsset(auction.pair.base.toString());
+  const quoteAsset = useAsset(auction.pair.quote.toString());
 
   const balanceBase = useAssetBalance(DEFAULT_NETWORK_ID, auction.pair.base.toString())
   const balanceQuote = useAssetBalance(DEFAULT_NETWORK_ID, auction.pair.quote.toString())

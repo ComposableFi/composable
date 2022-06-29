@@ -18,8 +18,7 @@ import { TransactionSettings } from "@/components/Organisms/TransactionSettings"
 import useStore from "@/store/useStore";
 import { AssetId } from "@/defi/polkadot/types";
 import { LiquidityPoolType } from "@/store/pools/pools.types";
-import { Assets } from "@/defi/polkadot/Assets";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { useFilteredAssetListDropdownOptions } from "@/defi/hooks/assets/useFilteredAssetListDropdownOptions";
 
 const labelProps = (label: string, disabled: boolean = false) => ({
   label: label,
@@ -62,41 +61,13 @@ const ChooseTokensStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const dispatch = useDispatch();
 
   const {
-    createPool,
-    supportedAssets
+    createPool
   } = useStore();
 
   const { baseAsset, quoteAsset, ammId, setSelectable, currentStep } = createPool;
 
-  const baseAssetList = useMemo(() => {
-    return supportedAssets
-      .filter((i) => {
-        if (quoteAsset === "none") {return true;}
-        if (i.network[DEFAULT_NETWORK_ID] === quoteAsset) {return false;}
-        return true;
-      })
-      .map((asset) => ({
-        value: asset.network[DEFAULT_NETWORK_ID],
-        label: asset.name,
-        shortLabel: asset.symbol,
-        icon: asset.icon,
-      }));
-  }, [quoteAsset, supportedAssets]);
-
-  const quoteAssetList = useMemo(() => {
-    return supportedAssets
-      .filter((i) => {
-        if (baseAsset === "none") {return true;}
-        if (i.network[DEFAULT_NETWORK_ID] === baseAsset) {return false;}
-        return true;
-      })
-      .map((asset) => ({
-        value: asset.network[DEFAULT_NETWORK_ID],
-        label: asset.name,
-        shortLabel: asset.symbol,
-        icon: asset.icon,
-      }));
-  }, [supportedAssets, baseAsset]);
+  const baseAssetList = useFilteredAssetListDropdownOptions(quoteAsset);
+  const quoteAssetList = useFilteredAssetListDropdownOptions(baseAsset);
 
   const isUnverifiedPoolWarningOpen = useAppSelector(
     (state) => state.ui.isConfirmingModalOpen

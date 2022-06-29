@@ -21,7 +21,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import { ConfirmingPoolModal } from "./ConfirmingPoolModal";
 import { AccessTimeRounded, OpenInNewRounded } from "@mui/icons-material";
 import moment from "moment-timezone";
-import { useRouter } from "next/router";
 import useStore from "@/store/useStore";
 import { AMMs } from "@/defi/AMMs";
 import { useUSDPriceByAssetId } from "@/store/assets/hooks";
@@ -36,6 +35,7 @@ import { APP_NAME } from "@/defi/polkadot/constants";
 import { EventRecord } from "@polkadot/types/interfaces/system/types";
 import { addLiquidityToPoolViaPablo, createConstantProductPool, createStableSwapPool, toChainUnits } from "@/defi/utils";
 import { closeConfirmingModal, openConfirmingModal } from "@/stores/ui/uiSlice";
+import { useAsset } from "@/defi/hooks/assets/useAsset";
 
 const labelProps = (
   label: string | undefined,
@@ -61,7 +61,6 @@ const labelProps = (
 const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const theme = useTheme();
   const dispatch = useDispatch();
-  const router = useRouter();
 
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
@@ -81,17 +80,8 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
     supportedAssets
   } = useStore();
 
-  const _baseAsset = useMemo(() => {
-    return supportedAssets.find(i => {
-      return i.network[DEFAULT_NETWORK_ID] === baseAsset
-    })
-  }, [baseAsset, supportedAssets])
-
-  const _quoteAsset = useMemo(() => {
-    return supportedAssets.find(i => {
-      return i.network[DEFAULT_NETWORK_ID] === quoteAsset
-    })
-  }, [quoteAsset, supportedAssets])
+  const _baseAsset = useAsset(baseAsset);
+  const _quoteAsset = useAsset(quoteAsset)
 
   const executor = useExecutor();
 
