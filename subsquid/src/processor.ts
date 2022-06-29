@@ -12,6 +12,7 @@ import {
   PabloPoolDeletedEvent,
   PabloSwappedEvent,
   BondedFinanceNewBondEvent,
+  BondedFinanceNewOfferEvent,
 } from "./types/events";
 import { getOrCreate } from "./dbHelper";
 import {
@@ -21,7 +22,10 @@ import {
   processPoolDeletedEvent,
   processSwappedEvent,
 } from "./pabloProcessor";
-import { processNewBondEvent } from "./bondedFinanceProcessor";
+import {
+  processNewBondEvent,
+  processNewOfferEvent,
+} from "./bondedFinanceProcessor";
 
 const processor = new SubstrateProcessor("composable_dali_dev");
 
@@ -107,6 +111,14 @@ processor.addEventHandler("balances.Transfer", async (ctx) => {
       date: new Date(ctx.block.timestamp),
     })
   );
+});
+
+processor.addEventHandler("bondedFinance.NewOffer", async (ctx) => {
+  const event = new BondedFinanceNewOfferEvent(ctx);
+
+  console.log(ctx.event.extrinsic?.args);
+
+  await processNewOfferEvent(ctx, event);
 });
 
 processor.addEventHandler("bondedFinance.NewBond", async (ctx) => {

@@ -68,7 +68,9 @@ type PabloPoolAsset @entity {
   calculatedTimestamp: BigInt!
 }
 
-type BondedFinanceTotalPurchased @entity {
+type BondedFinanceBondOffer @entity {
   "Total amount of purchased bonds"
   purchased: BigInt!
+  "Beneficiary account for the bond offer"
+  beneficiary: String!
 }

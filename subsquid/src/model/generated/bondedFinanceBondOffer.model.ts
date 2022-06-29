@@ -2,8 +2,8 @@ import {Entity as Entity_, Column as Column_, PrimaryColumn as PrimaryColumn_} f
 import * as marshal from "./marshal"
 
 @Entity_()
-export class BondedFinanceTotalPurchased {
-  constructor(props?: Partial<BondedFinanceTotalPurchased>) {
+export class BondedFinanceBondOffer {
+  constructor(props?: Partial<BondedFinanceBondOffer>) {
     Object.assign(this, props)
   }
 
@@ -15,4 +15,10 @@ export class BondedFinanceTotalPurchased {
    */
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
   purchased!: bigint
+
+  /**
+   * Beneficiary account for the bond offer
+   */
+  @Column_("text", {nullable: false})
+  beneficiary!: string
 }
