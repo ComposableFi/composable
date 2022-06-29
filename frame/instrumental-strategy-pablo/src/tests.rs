@@ -1,20 +1,16 @@
 use composable_traits::{
 	defi::CurrencyPair,
-	instrumental::{
-		AccessRights, Instrumental as InstrumentalTrait, InstrumentalProtocolStrategy,
-		InstrumentalVaultConfig,
-	},
+	instrumental::{AccessRights, InstrumentalProtocolStrategy},
 };
 use frame_support::{assert_noop, assert_ok};
 use primitives::currency::CurrencyId;
-use sp_runtime::Perquintill;
 
 use crate::mock::{
 	account_id::ADMIN,
-	helpers::create_pool_with,
+	helpers::{create_pool_with, create_vault},
 	runtime::{
-		Balance, Event, ExtBuilder, Instrumental, MockRuntime, Origin, PabloStrategy, System,
-		VaultId, MAX_ASSOCIATED_VAULTS,
+		Balance, Event, ExtBuilder, MockRuntime, Origin, PabloStrategy, System, VaultId,
+		MAX_ASSOCIATED_VAULTS,
 	},
 };
 #[allow(unused_imports)]
@@ -76,13 +72,7 @@ fn rebalance_emits_event() {
 		let amounts = vec![amount; 2];
 
 		// Create Vault (LAYR)
-		let config = InstrumentalVaultConfig {
-			asset_id: base_asset,
-			percent_deployable: Perquintill::zero(),
-		};
-		let vault_id = <Instrumental as InstrumentalTrait>::create(config);
-		assert_ok!(vault_id);
-		let vault_id = vault_id.unwrap() as VaultId;
+		let vault_id = create_vault(base_asset, None);
 
 		// Create Pool (LAYR/CROWD_LOAN)
 		let pool_id = create_pool_with(CurrencyPair::new(base_asset, quote_asset), amounts);
