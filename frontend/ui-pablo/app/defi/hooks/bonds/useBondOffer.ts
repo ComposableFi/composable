@@ -3,11 +3,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardingPools";
 import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 import { MockedAsset } from "@/store/assets/assets.types";
-import { decodeBondOffer, DEFAULT_NETWORK_ID, fetchVesitngPeriod } from "@/defi/utils";
+import {
+  decodeBondOffer,
+  DEFAULT_NETWORK_ID,
+  fetchVesitngPeriod,
+} from "@/defi/utils";
 import { useParachainApi } from "substrate-react";
 import { useBlockInterval } from "../useBlockInterval";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
+import { BondPrincipalAsset } from "./useBondOffers";
 
 export default function useBondOffer(offerId: string) {
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
@@ -24,14 +29,14 @@ export default function useBondOffer(offerId: string) {
     }
   }, [bondOffers, offerId]);
 
-  const principalAsset = useMemo<
-    | {
-        baseAsset: MockedAsset | undefined;
-        quoteAsset: MockedAsset | undefined;
-      }
-    | MockedAsset
-    | undefined
-  >(() => {
+  const principalAsset: BondPrincipalAsset = useMemo<BondPrincipalAsset>(() => {
+    let principalAsset: BondPrincipalAsset = {
+      lpPrincipalAsset: {
+        baseAsset: undefined,
+        quoteAsset: undefined,
+      },
+      simplePrincipalAsset: undefined,
+    };
     if (
       supportedAssets.length &&
       lpRewardingPools.length &&
@@ -42,13 +47,7 @@ export default function useBondOffer(offerId: string) {
           (pool: ConstantProductPool | StableSwapPool) =>
             pool.lpToken === selectedBondOffer.asset
         );
-      let principalAsset:
-        | {
-            baseAsset: MockedAsset | undefined;
-            quoteAsset: MockedAsset | undefined;
-          }
-        | MockedAsset
-        | undefined = undefined;
+
       if (isLpBasedBond) {
         const baseAsset = supportedAssets.find(
           (a) =>
@@ -61,76 +60,74 @@ export default function useBondOffer(offerId: string) {
         );
 
         if (baseAsset || quoteAsset) {
-          principalAsset = { baseAsset: undefined, quoteAsset: undefined };
-
-          if (baseAsset) {
-            principalAsset.baseAsset = baseAsset;
-          }
-          if (quoteAsset) {
-            principalAsset.quoteAsset = quoteAsset;
-          }
+          principalAsset.lpPrincipalAsset = { baseAsset, quoteAsset };
         }
       } else {
-        principalAsset = supportedAssets.find(
+        principalAsset.simplePrincipalAsset = supportedAssets.find(
           (a) => a.network[DEFAULT_NETWORK_ID] === selectedBondOffer.asset
         );
       }
-      return principalAsset;
     }
-    return undefined;
+    return principalAsset;
   }, [supportedAssets, lpRewardingPools, selectedBondOffer]);
 
   const rewardAsset = useMemo<MockedAsset | undefined>(() => {
-  if (
-    supportedAssets.length &&
-    selectedBondOffer
-  ) {
-    return supportedAssets.find(a => selectedBondOffer.reward.asset === a.network[DEFAULT_NETWORK_ID])
-  }
+    if (supportedAssets.length && selectedBondOffer) {
+      return supportedAssets.find(
+        (a) => selectedBondOffer.reward.asset === a.network[DEFAULT_NETWORK_ID]
+      );
+    }
   }, [supportedAssets, selectedBondOffer]);
 
   const averageBlockTime = useBlockInterval();
 
   const vestingPeriod = useMemo(() => {
     if (selectedBondOffer && averageBlockTime) {
-        return fetchVesitngPeriod({
-            interval: averageBlockTime.toString(),
-            bondMaturity: selectedBondOffer.maturity
-        })
+      return fetchVesitngPeriod({
+        interval: averageBlockTime.toString(),
+        bondMaturity: selectedBondOffer.maturity,
+      });
     }
-  }, [selectedBondOffer, averageBlockTime])
+  }, [selectedBondOffer, averageBlockTime]);
 
   const rewardAssetPerBond = useMemo(() => {
     if (selectedBondOffer) {
-      return selectedBondOffer.reward.amount.div(
-        selectedBondOffer.nbOfBonds
-      );
+      return selectedBondOffer.reward.amount.div(selectedBondOffer.nbOfBonds);
     }
-    return new BigNumber(0)
-  }, [selectedBondOffer])
+    return new BigNumber(0);
+  }, [selectedBondOffer]);
 
   const principalAssetPerBond = useMemo(() => {
     if (selectedBondOffer) {
       return selectedBondOffer.bondPrice;
     }
-    return new BigNumber(0)
+    return new BigNumber(0);
   }, [selectedBondOffer]);
 
-  const updateBondInfo = useCallback(async() => {
+  const updateBondInfo = useCallback(async () => {
     if (parachainApi && selectedBondOffer) {
       try {
-        const bondOffer = await parachainApi.query.bondedFinance.bondOffers(selectedBondOffer.offerId.toString());
-        const decodedOffer = decodeBondOffer(bondOffer.toHuman(), selectedBondOffer.offerId.toNumber());
+        const bondOffer = await parachainApi.query.bondedFinance.bondOffers(
+          selectedBondOffer.offerId.toString()
+        );
+        const decodedOffer = decodeBondOffer(
+          bondOffer.toHuman(),
+          selectedBondOffer.offerId.toNumber()
+        );
         putBondOffer(decodedOffer);
       } catch (err) {
-        console.error(err)
+        console.error(err);
       }
     }
-  }, [selectedBondOffer, parachainApi, putBondOffer])
+  }, [selectedBondOffer, parachainApi, putBondOffer]);
 
   const roi = useMemo(() => {
     if (principalAssetPerBond.gt(0) && rewardAssetPerBond.gt(0)) {
-      if (selectedBondOffer && apollo[selectedBondOffer.asset] && apollo[selectedBondOffer.reward.asset]) {
+      if (
+        selectedBondOffer &&
+        apollo[selectedBondOffer.asset] &&
+        apollo[selectedBondOffer.reward.asset]
+      ) {
         let rewardPrice = new BigNumber(apollo[selectedBondOffer.reward.asset]);
         let principalPrice = new BigNumber(apollo[selectedBondOffer.asset]);
         if (rewardPrice.gt(0) && principalPrice.gt(0)) {
@@ -140,8 +137,8 @@ export default function useBondOffer(offerId: string) {
         }
       }
     }
-    return new BigNumber(0)
-  }, [principalAssetPerBond, rewardAssetPerBond, apollo, selectedBondOffer])
+    return new BigNumber(0);
+  }, [principalAssetPerBond, rewardAssetPerBond, apollo, selectedBondOffer]);
 
   return {
     selectedBondOffer,
@@ -151,8 +148,8 @@ export default function useBondOffer(offerId: string) {
     updateBondInfo,
     principalAssetPerBond,
     rewardAssetPerBond,
-    roi
+    roi,
   };
 }
 
-export type SelectedBondOffer = ReturnType<typeof useBondOffer>
+export type SelectedBondOffer = ReturnType<typeof useBondOffer>;

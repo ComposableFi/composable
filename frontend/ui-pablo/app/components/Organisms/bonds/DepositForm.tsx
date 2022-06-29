@@ -20,12 +20,12 @@ import {
 import { PreviewPurchaseModal } from "./PreviewPurchaseModal";
 import { useDispatch } from "react-redux";
 import { WrongAmountEnteredModal } from "./WrongAmountEnteredModal";
-import { MockedAsset } from "@/store/assets/assets.types";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
 import { useAssetBalance } from "@/store/assets/hooks";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { usePurchaseBond } from "@/store/hooks/bond/usePurchaseBond";
 import { ConfirmingModal } from "../swap/ConfirmingModal";
+import { usePrincipalAssetSymbol } from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
 
 const containerBoxProps = (theme: Theme) =>
   ({
@@ -93,17 +93,7 @@ export const DepositForm: React.FC<DepositFormProps> = ({
   const buttonText = soldout ? "Sold out" : "Deposit";
   const disabled = !valid || soldout;
 
-  let principalSymbol = useMemo(() => {
-    return principalAsset &&
-      (principalAsset as any).baseAsset &&
-      (principalAsset as any).quoteAsset
-      ? (principalAsset as any).baseAsset.symbol +
-          "/" +
-          (principalAsset as any).quoteAsset
-      : principalAsset && (principalAsset as MockedAsset).symbol
-      ? (principalAsset as MockedAsset).symbol
-      : "";
-  }, [principalAsset]);
+  const principalSymbol = usePrincipalAssetSymbol(bond.principalAsset);
 
   const youWillGet = useMemo(() => {
     if (bond.selectedBondOffer) {

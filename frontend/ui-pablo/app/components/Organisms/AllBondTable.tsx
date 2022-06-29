@@ -15,7 +15,6 @@ import React, { useState } from "react";
 import { InfoOutlined, KeyboardArrowDown } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
 import { useRouter } from "next/router";
-import useStore from "../../store/useStore";
 import useBondOffers from "@/defi/hooks/bonds/useBondOffers";
 
 const tableHeaders: TableHeader[] = [
@@ -79,22 +78,22 @@ export const AllBondTable: React.FC = () => {
               sx={{ cursor: "pointer" }}
             >
               <TableCell align="left">
-                {bond.principalAsset && (bond.principalAsset as any).baseAsset && (bond.principalAsset as any).quoteAsset ? (
+                {bond.principalAsset.lpPrincipalAsset && bond.principalAsset.lpPrincipalAsset.baseAsset && bond.principalAsset.lpPrincipalAsset.quoteAsset ? (
                   <PairAsset
                     assets={[
                       {
-                        icon: (bond.principalAsset as any).baseAsset.icon,
-                        label: (bond.principalAsset as any).baseAsset.symbol,
+                        icon: bond.principalAsset.lpPrincipalAsset.baseAsset.icon,
+                        label: bond.principalAsset.lpPrincipalAsset.baseAsset.symbol,
                       },
                       {
-                        icon: (bond.principalAsset as any).quoteAsset.icon,
-                        label: (bond.principalAsset as any).quoteAsset.symbol,
+                        icon: bond.principalAsset.lpPrincipalAsset.quoteAsset.icon,
+                        label: bond.principalAsset.lpPrincipalAsset.quoteAsset.symbol,
                       },
                     ]}
                     separator="/"
                   />
-                ) : ((bond.principalAsset as any).symbol && (bond.principalAsset as any).icon) ? (
-                    <BaseAsset label={(bond.principalAsset as any).symbol} icon={(bond.principalAsset as any).icon} />
+                ) : bond.principalAsset.simplePrincipalAsset ? (
+                    <BaseAsset label={bond.principalAsset.simplePrincipalAsset.symbol} icon={bond.principalAsset.simplePrincipalAsset.icon} />
                 ) : null}
               </TableCell>
               <TableCell align="left">

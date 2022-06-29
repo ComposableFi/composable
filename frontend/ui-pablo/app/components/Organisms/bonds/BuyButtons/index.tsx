@@ -46,35 +46,38 @@ export const BuyButtons: React.FC<BuyButtonsProps> = ({
       router.push("/swap");
     }
   };
-
+  
+  const {baseAsset, quoteAsset} = bond.principalAsset.lpPrincipalAsset 
   const isLpBond =
-    bond.principalAsset &&
-    (bond.principalAsset as any).baseAsset &&
-    (bond.principalAsset as any).quoteAsset;
+    baseAsset &&
+    quoteAsset;
   if (!isLpBond) return null;
+
 
   return (
     <Grid container columnSpacing={3} {...gridProps}>
       <Grid item {...threeColumnPageSize}>
         <Button {...buttonProps(onBuyHandler("token1"))}>
-          <BaseAsset
-            icon={(bond.principalAsset as any).baseAsset.icon}
-            {...restAssetProps(
-              (bond.principalAsset as any).baseAsset.symbol,
-              iconSize
-            )}
-          />
+          {baseAsset &&
+            <BaseAsset
+              icon={baseAsset.icon}
+              {...restAssetProps(
+                baseAsset.symbol,
+                iconSize
+              )}
+            />
+          }
         </Button>
       </Grid>
       <Grid item {...threeColumnPageSize}>
         <Button {...buttonProps(onBuyHandler("token2"))}>
-          <BaseAsset
-            icon={(bond.principalAsset as any).quoteAsset.icon}
+          {quoteAsset &&           <BaseAsset
+            icon={quoteAsset.icon}
             {...restAssetProps(
-              (bond.principalAsset as any).quoteAsset.symbol,
+              quoteAsset.symbol,
               iconSize
             )}
-          />
+          />}
         </Button>
       </Grid>
       <Grid item {...threeColumnPageSize}>
@@ -82,12 +85,12 @@ export const BuyButtons: React.FC<BuyButtonsProps> = ({
           <PairAsset
             assets={[
               {
-                icon: (bond.principalAsset as any).baseAsset.icon,
-                label: (bond.principalAsset as any).baseAsset.symbol,
+                icon: baseAsset.icon,
+                label: baseAsset.symbol,
               },
               {
-                icon: (bond.principalAsset as any).quoteAsset.icon,
-                label: (bond.principalAsset as any).quoteAsset.symbol,
+                icon: quoteAsset.icon,
+                label: quoteAsset.symbol,
               },
             ]}
             {...restAssetProps("Create LP", iconSize)}

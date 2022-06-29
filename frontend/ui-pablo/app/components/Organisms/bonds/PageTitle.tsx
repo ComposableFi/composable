@@ -2,15 +2,10 @@ import { BaseAsset, PairAsset } from "@/components/Atoms";
 import ArrowRightAltIcon from "@mui/icons-material/ArrowRightAlt";
 import { Box, Typography, BoxProps } from "@mui/material";
 import { MockedAsset } from "@/store/assets/assets.types";
+import { BondPrincipalAsset } from "@/defi/hooks/bonds/useBondOffers";
 
 export type PageTitleProps = {
-  principalAsset:
-    | {
-        baseAsset: MockedAsset | undefined;
-        quoteAsset: MockedAsset | undefined;
-      }
-    | MockedAsset
-    | undefined;
+  principalAsset: BondPrincipalAsset;
   rewardAsset: MockedAsset | undefined;
   iconSize?: number;
 } & BoxProps;
@@ -20,34 +15,34 @@ export const PageTitle: React.FC<PageTitleProps> = ({
   iconSize = 67,
   ...boxProps
 }) => {
+
+  const { lpPrincipalAsset, simplePrincipalAsset } = principalAsset
+  const { baseAsset, quoteAsset } = lpPrincipalAsset;
+
   return (
     <Box width="100%" {...boxProps}>
       <Box display="flex" justifyContent="center" alignItems="center" gap={3.5}>
-        {principalAsset &&
-        (principalAsset as any).baseAsset &&
-        (principalAsset as any).quoteAsset ? (
+        {baseAsset &&
+        quoteAsset ? (
           <PairAsset
             assets={[
               {
-                icon: (principalAsset as any).baseAsset.icon,
-                label: (principalAsset as any).baseAsset.symbol,
+                icon: baseAsset.icon,
+                label: baseAsset.symbol,
               },
               {
-                icon: (principalAsset as any).quoteAsset.icon,
-                label: (principalAsset as any).quoteAsset.symbol,
+                icon: quoteAsset.icon,
+                label: quoteAsset.symbol,
               },
             ]}
-            label={`LP ${(principalAsset as any).baseAsset.symbol}-${
-              (principalAsset as any).quoteAsset.symbol
-            }`}
+            label={`LP ${baseAsset.symbol}-${quoteAsset.symbol}`}
             LabelProps={{ variant: "h4" }}
             iconSize={iconSize}
           />
-        ) : principalAsset && (principalAsset as MockedAsset).icon &&
-          (principalAsset as MockedAsset).symbol ? (
+        ) : simplePrincipalAsset ? (
           <BaseAsset
-            label={(principalAsset as MockedAsset).symbol}
-            icon={(principalAsset as MockedAsset).icon}
+            label={simplePrincipalAsset.symbol}
+            icon={simplePrincipalAsset.icon}
             LabelProps={{ variant: "h4" }}
             iconSize={iconSize}
           />

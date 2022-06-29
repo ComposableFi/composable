@@ -53,7 +53,12 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
 }) => {
   const theme = useTheme();
   const { principalAsset, rewardAsset } = bond;
-  const rewardPriceInUSD = useUSDPriceByAssetId(rewardAsset ? rewardAsset.network[DEFAULT_NETWORK_ID] : "-")
+  const rewardPriceInUSD = useUSDPriceByAssetId(
+    rewardAsset ? rewardAsset.network[DEFAULT_NETWORK_ID] : "-"
+  );
+
+  const { lpPrincipalAsset, simplePrincipalAsset } = principalAsset;
+  const { baseAsset, quoteAsset } = lpPrincipalAsset;
 
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>
@@ -65,44 +70,48 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
       >
         <Box {...itemBoxProps}>
           <Typography {...itemTitleProps}>Supply</Typography>
-          {principalAsset && (principalAsset as any).baseAsset && (principalAsset as any).quoteAsset ? (
+          {baseAsset && quoteAsset ? (
             <PairAsset
               assets={[
                 {
-                  icon: (principalAsset as any).baseAsset.icon,
-                  label: (principalAsset as any).baseAsset.symbol,
+                  icon: baseAsset.icon,
+                  label: baseAsset.symbol,
                 },
                 {
-                  icon: (principalAsset as any).quoteAsset.icon,
-                  label: (principalAsset as any).quoteAsset.symbol,
+                  icon: quoteAsset.icon,
+                  label: quoteAsset.symbol,
                 },
               ]}
               iconOnly
               iconSize={36}
             />
-          ) : principalAsset && (principalAsset as MockedAsset).icon && (principalAsset as MockedAsset).symbol ? (
+          ) : simplePrincipalAsset ? (
             <BaseAsset
-            label={(principalAsset as MockedAsset).symbol}
-            icon={(principalAsset as MockedAsset).icon}
-            LabelProps={{ variant: "h4" }}
-            iconSize={36}
-          />
+              label={simplePrincipalAsset.symbol}
+              icon={simplePrincipalAsset.icon}
+              LabelProps={{ variant: "h4" }}
+              iconSize={36}
+            />
           ) : null}
           <Typography variant="body1">
-            {principalAsset && (principalAsset as any).baseAsset && (principalAsset as any).quoteAsset ?
-              `LP ${(principalAsset as any).baseAsset.symbol}-${(principalAsset as any).quoteAsset.symbol}`
-              : principalAsset && (principalAsset as MockedAsset).symbol ? `${(principalAsset as MockedAsset).symbol}` : ""}
+            {baseAsset && quoteAsset
+              ? `LP ${baseAsset.symbol}-${quoteAsset.symbol}`
+              : simplePrincipalAsset
+              ? `${simplePrincipalAsset.symbol}`
+              : "-"}
           </Typography>
         </Box>
         <ArrowRightAlt sx={{ color: "text.secondary" }} />
         <Box {...itemBoxProps}>
           <Typography {...itemTitleProps}>Receive</Typography>
-          {rewardAsset && <BaseAsset
-            label={(rewardAsset as MockedAsset).symbol}
-            icon={(rewardAsset as MockedAsset).icon}
-            LabelProps={{ variant: "h4" }}
-            iconSize={36}
-          />}
+          {rewardAsset && (
+            <BaseAsset
+              label={(rewardAsset as MockedAsset).symbol}
+              icon={(rewardAsset as MockedAsset).icon}
+              LabelProps={{ variant: "h4" }}
+              iconSize={36}
+            />
+          )}
           <Typography variant="body1">
             {rewardAsset && `${rewardAsset.symbol}`}
             <Typography variant="body1" fontWeight="600" component="span">

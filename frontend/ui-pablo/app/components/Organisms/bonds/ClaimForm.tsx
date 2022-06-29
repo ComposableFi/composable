@@ -15,6 +15,7 @@ import { useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
 import { MockedAsset } from "@/store/assets/assets.types";
+import { usePrincipalAssetSymbol } from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
 
 const containerBoxProps = (theme: Theme) => ({
   p: 4,
@@ -57,17 +58,7 @@ export const ClaimForm: React.FC<ClaimFormProps> = ({ bond, ...boxProps }) => {
     //TODO: handle deposit here
   };
 
-  let principalSymbol = useMemo(() => {
-    return principalAsset &&
-      (principalAsset as any).baseAsset &&
-      (principalAsset as any).quoteAsset
-      ? (principalAsset as any).baseAsset.symbol +
-          "/" +
-          (principalAsset as any).quoteAsset
-      : principalAsset && (principalAsset as MockedAsset).symbol
-      ? (principalAsset as MockedAsset).symbol
-      : "";
-  }, [principalAsset]);
+  const principalSymbol = usePrincipalAssetSymbol(bond.principalAsset);
 
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>

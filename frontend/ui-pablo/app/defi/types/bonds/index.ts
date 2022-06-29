@@ -1,3 +1,4 @@
+import { BondPrincipalAsset } from "@/defi/hooks/bonds/useBondOffers";
 import { MockedAsset } from "@/store/assets/assets.types";
 import BigNumber from "bignumber.js";
 
@@ -17,10 +18,7 @@ export interface BondOffer {
 
 export interface OfferRow {
   offerId: BigNumber;
-  principalAsset: {
-    baseAsset: MockedAsset | undefined;
-    quoteAsset: MockedAsset | undefined;
-  } | MockedAsset | undefined;
+  principalAsset: BondPrincipalAsset;
   bondPrice: BigNumber;
   roi: BigNumber;
   totalPurchased: BigNumber;

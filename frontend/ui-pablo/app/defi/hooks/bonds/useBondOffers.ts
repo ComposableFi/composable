@@ -8,6 +8,15 @@ import { MockedAsset } from "@/store/assets/assets.types";
 import { DEFAULT_NETWORK_ID, fetchBondOffers } from "@/defi/utils";
 import { useParachainApi } from "substrate-react";
 
+export type BondPrincipalAsset = {
+  lpPrincipalAsset:
+    | {
+        baseAsset: MockedAsset | undefined;
+        quoteAsset: MockedAsset | undefined;
+      };
+  simplePrincipalAsset: MockedAsset | undefined;
+};
+
 export default function useBondOffers(): OfferRow[] {
   const { bondOffers, supportedAssets, apollo } = useStore();
   const lpRewardingPools = useAllLpTokenRewardingPools();
@@ -32,12 +41,13 @@ export default function useBondOffers(): OfferRow[] {
             pool.lpToken === bondOffer.asset
         );
       let principalAsset:
-        | {
-            baseAsset: MockedAsset | undefined;
-            quoteAsset: MockedAsset | undefined;
-          }
-        | MockedAsset
-        | undefined = undefined;
+      BondPrincipalAsset = {
+        lpPrincipalAsset: {
+          baseAsset: undefined,
+          quoteAsset: undefined
+        },
+        simplePrincipalAsset: undefined
+      };
       if (isLpBasedBond) {
         const baseAsset = supportedAssets.find(
           (a) =>
@@ -49,9 +59,9 @@ export default function useBondOffers(): OfferRow[] {
             isLpBasedBond.pair.quote.toString()
         );
 
-        principalAsset = { baseAsset, quoteAsset };
+        principalAsset.lpPrincipalAsset = { baseAsset, quoteAsset };
       } else {
-        principalAsset = supportedAssets.find(
+        principalAsset.simplePrincipalAsset = supportedAssets.find(
           (a) => a.network[DEFAULT_NETWORK_ID] === bondOffer.asset
         );
       }
