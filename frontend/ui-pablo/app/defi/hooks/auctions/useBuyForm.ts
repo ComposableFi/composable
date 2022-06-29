@@ -63,10 +63,10 @@ export const useBuyForm = (): {
     quoteAmount: new BigNumber(0),
   })
 
-  const resetTokenAmounts = () => setTokenAmounts(amounts => ({
+  const resetTokenAmounts = () => setTokenAmounts({
     baseAmount: new BigNumber(0),
     quoteAmount: new BigNumber(0)
-  }))
+  })
 
   const onChangeTokenAmount = async (
     changedSide: "base" | "quote",
