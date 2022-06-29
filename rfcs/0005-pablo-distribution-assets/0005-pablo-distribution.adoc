@@ -1,0 +1,560 @@
+= Design Proposal: Pablo Fees & Staking Rewards Distribution
+:math:
+:stem:
+:imagesoutdir: images
+:imagesdir: images
+:toc:
+:toclevels: 4
+:sectnums:
+:sectnumlevels: 4
+
+== Abstract
+
+This document proposes the Pablo distribution(token and pool trading fees) mechanism while considering various options and capturing the discussions about the subject.
+
+`TODO summarise the mechanism`
+
+== Background
+
+=== PBLO Token Initial Distribution
+
+According to the tokenomics design the Pablo is supposed to be distributed as follows,
+
+* Ecosystem fund - x
+* Farming rewards - y
+* LBP Auction - z
+* ...
+
+TODO fill above with details from the original sheet.
+
+The farming rewards are incentives for liquidity provider(LP)s who stake their LP tokens for Pablo pools. How much reward is allocated as incentive for each pool is to be decided by governance.
+
+=== Pool Fees
+
+Composable intends to distribute some percentage of the swap(transaction) fees captured by the pools in Pablo dex pallet as rewards to users who stake their `PBLO` tokens using the staking-rewards pallet interface. The idea is to incentivize the continuous owning of the staked `PICA` and `PBLO` to earn these yields which increases the value of the ecosystem overall by increasing the desirability of the staked assets.
+
+At the time of writing Pablo has the following fee parameters other than for liquidity bootstrapping pools(LBP) which do not charge fees,
+
+. LP Fee - A percentage of the trading fee that is distributed to liquidity providers based on the number of liquidity provider(LP) tokens they minted at the time of providing the liquidity.
+. Pool Owner Fee - A percentage of the trading fee that is distributed to the pool owner.
+
+==== LP Fee Distribution
+
+This is yet to be implemented in Pablo, hence the idea is that it can be addressed in the context of this proposal.
+
+== Use Cases
+
+Following is a summary of use cases omitting the UI specific use cases for brevity.
+
+[plantuml,images/pablo-distribution-users,png]
+----
+skinparam usecase {
+BackgroundColor<< Staking >> YellowGreen
+BorderColor<< Staking >> YellowGreen
+
+ArrowColor Olive
+}
+left to right direction
+actor LP as lp
+actor Governance as g
+actor PicaStaker as s
+actor PabloStaker as p
+
+package Picasso {
+    package Pablo {
+        usecase "Stake PBLO" as UC2 <<Staking>>
+        usecase "Earn PBLO Reward" as UC4 <<Staking>>
+        usecase "Stake LP Token" as UC5 <<Staking>>
+        usecase "Earn Pablo LP\nTrading Fees" as UC6
+        usecase "Earn Pablo Protocol\nTrading Fees" as UC13 <<Staking>>
+        usecase "Set Pool Protocol\nFee Percentage" as UC7
+        usecase "Set PBLO Reward Rate" as UC9
+        usecase "Set PBLO Reward\nAllocation Percentage" as UC12
+    }
+    usecase "Stake PICA" as UC1 <<Staking>>
+    usecase "Earn PICA Reward" as UC3 <<Staking>>
+    usecase "Earn Other\nToken(s) Reward" as UC10 <<Staking>>
+    usecase "Set PICA Reward Rate" as UC8
+    usecase "Set PICA Reward\nAllocation Percentage" as UC11
+}
+
+p -up-> UC2
+p -up-> UC4
+p -up-> UC13
+s --> UC1
+s --> UC3
+s --> UC10
+lp --> UC4
+lp --> UC5
+lp --> UC6
+g -up-> UC7
+g -up-> UC8
+g -up-> UC9
+g -up-> UC11
+g -up-> UC12
+----
+
+== Requirements
+
+=== Pablo Liquidity Providers
+
+. LPs MUST be able to stake their LP tokens to earn rewards allocated for a particular pool.
+.. Rewards can be in terms of PBLO, PICA or any other tokens.
+.. Same pool can receive multiple types of tokens as rewards.
+. The system MUST support accumulating the LP share of Pablo trading fees.
+. Pablo trading fees(LP fee part) MUST be disbursed according to LP token share of each LP. Fees are accumulated towards increasing liquidity in a pool while allowing LPs to redeem the fee share with their LP tokens at a preferred time.
+
+=== PBLO Stakers
+
+. System MUST allow staking of PBLO. This must be implemented through the fNFT mechanism with multiple time period unlocks being possible for users.
+. The system MUST accumulate the rewards share for PBLO holders who stake PBLO token, out of the PBLO supply allocated for them.
+. The system MUST support accumulating the (stakers) reward part of the Pablo trading fees.
+. The system must support rewards being distributed on granular basis - e.g every 6 or 12 hours.
+. The users MUST be able to claim the rewards once distributed.
+. The system SHOULD support rewards in the form of fNFTs.
+
+=== PICA Stakers
+
+. System MUST allow staking of PICA. This must be implemented through the fNFT mechanism with multiple time period unlocks being possible for users.
+. The system MUST accumulate the rewards share for PICA holders who stake PICA token, out of the PICA supply allocated for them.
+. The system MUST support accumulating any token rewards other than PICA for PICA stakers.
+. The system must support rewards being distributed on granular basis - e.g every 6 or 12 hours.
+. The users MUST be able to claim the rewards once distributed.
+. The system SHOULD support rewards in the form of fNFTs.
+
+=== Pablo Governance
+. Governance MUST be able to set the PBLO token reward allocation.
+. Governance MUST be able to set the Pablo LP reward proportion for each Pablo LP token(i.e Pool) out of PBLO or other token reward allocation. This is to incentivize providing liquidity to required pools as decided by governance.
+. Governance MUST be able to adjust the PBLO reward rate(eg: daily) based on the incentivization strategy.
+. Pablo pool protocol fees(for rewarding protocol stakers) SHOULD be configurable as a percentage of the pool owner fee.
+
+=== PICA Governance
+. Governance MUST be able to set the PICA token reward allocation.
+. Governance MUST be able to adjust the PICA reward rate based on the incentivization strategy.
+
+=== Technical Requirements
+. The system MUST allow accumulation and mapping of rewards shares of multiple assets types(Eg: PBLO, KSM) to staked position(fNFT) type defined by another asset type(eg: PICA).
+. The system MUST support transfer of rewards using staking-rewards pallet to necessary fNFT types.
+. The system SHOULD support converting a reward accumulated in one asset type to another based on a preferred reward asset type configuration. Eg: Given a reward accumulated is in Acala it should be able to convert that to one of PBLO or PICA using the Pablo DEX pools.
+** This is to handle cases where a Pablo pool fees are in a different asset type than what is preferred.
+
+== Method
+
+=== System Overview
+
+[plantuml,images/pablo-distribution-verview,png]
+----
+skinparam component {
+  backgroundColor<<exists>> LightGreen
+  backgroundColor<<remove>> Red
+}
+
+node "Pallet-Staking-Rewards\n(Pallet-Rewards?)" {
+    StakingReward - [Reward Logic]
+    Staking - [Position Storage/Logic]
+    Node "BatchProcess" {
+        [RewardDisbursementHook]
+        [RewardsConfig] --> [RewardAccumulationHook]
+    }
+}
+
+[fNFT Storage/Logic] <<exists>>
+[RewardDisbursementHook] <<remove>>
+
+node "Pallet-Pablo" {
+    [Pool] --> StakingReward : transfer\ntrading fees\nfor PBLO stakers
+    [Pool] --> Staking : stake LP tokens
+    [Pool] --> [Pool] : accumulate LP\ntrading fees
+    [FeeConfig] --> [Pool]
+}
+
+[Pool] <<exists>>
+
+
+node "Governance" {
+    [Configuration] --> [FeeConfig]
+    [Treasury]--> StakingReward: Transfer LP, PBLO\nor other token rewards
+}
+----
+
+TODO: What to do for part of protocol fees that should be transferred to treasury eventually as treasury does not stake it's PBLO?
+
+=== Pallet-Pablo
+
+In order to 1. support LP staking 2. LP trading fee distribution and 3. PBLO staking reward using trading fees, following changes are proposed for https://github.com/ComposableFi/composable/tree/main/frame/pablo[Pallet-Pablo].
+
+[#_feeconfig]
+==== FeeConfig
+
+Each pool in Pablo defines a fee percentage to be charged for each trade.Except for LBPs other pools also define an owner fee that is a percentage out of the main trading fee. The `FeeConfig` is a new abstraction over all fees that could be charged on a pool to allow for extension. At this time a 100% of the owner fee should be defined as a new field `protocol_fee`.
+
+[source,rust]
+----
+include::../../frame/composable-traits/src/dex.rs[lines=152..163]
+----
+
+*Existing code must be modified to use this data structure*.
+
+Given this,
+----
+fee = // calculation depends on the pool type: based on the fee_rate
+owner_fee = fee * owner_fee_rate * (1 - protocol_fee_rate);
+protocol_fee = owner_fee * protocol_fee_rate;
+----
+For all pools launched at the Picasso launch following values would be set for these configs
+----
+owner_fee_rate = 20%
+protocol_fee_rate = 100% // all owner fees goes to composable to be distributed as rewards
+----
+
+==== LP Trading Fee Distribution
+
+LPs trading fees are calculated and kept as part of the pool liquidity in Pablo. When LPs remove liquidity from the pool the trading fees are automatically redeemed according their pool LP ratio, check https://hackmd.io/@HaydenAdams/HJ9jLsfTz#Fee-Structure[reference]. This results in trading fee share being diluted overtime for smaller pools as follows.
+
+After stem:[n] trades and stem:[m] liquidity additions,
+
+trading fees stem:[= sum a_n]
+
+total liquidity stem:[= sum l_m]
+
+fees and liquidity returned for an LP amount stem:[l = l / (sum l_m) * (sum l_m + sum a_n)]
+
+stem:[= l + l / (sum l_m) * sum a_n]
+
+trading fees received stem:[= x = l / (sum l_m) * sum a_n]
+
+When pool size stem:[sum l_m] increases the amount of trading fees received stem:[x] reduces for a particular LP position.
+
+For large pool sizes of stem:[sum l_m] (steady state) this effect is negligible, hence it's a good enough strategy to distribute fees.
+
+But if required this effect can be negated by increasing the trading fee by a stem:[delta a_n] while at the same time subtracting it from the total fees paid out already to liquidity providers. Refer <<_trading_fee_inflation_to_avoid_dilution_of_lps>>.
+
+[#_pblo_staker_trading_fee_distribution]
+==== PBLO Staker Trading Fee Distribution
+
+This is the reward a `PBLO` staker receives from the trading fees of Pablo pools. It is equal to the protocol fee charged on Pablo pools. This can be accomplished by calling the already existing `StakingReward.transfer_reward` interface as follows. According to product there is also a need to convert whatever the fee asset in to PBLO to create a demand/additional value for PBLO.
+
+[plantuml,images/pablo-fNFT-pblo-staking-fee-distro,png]
+----
+start
+->after Pablo swap,
+fee=x,
+fee token=QUOTE,
+from = transaction_origin;
+:swap x of QUOTE to y of PBLO;
+note left: how to avoid fee\nswap recursion? \n I wonder if we really need this?
+:StakingReward::transfer_reward(
+asset=PBLO,
+reward_asset: PBLO
+from=transaction_origin,
+amount=y,
+keep_alive=false
+);
+stop
+----
+
+Will it need a change in https://github.com/ComposableFi/composable/blob/main/frame/composable-traits/src/staking_rewards.rs#L96[this] ?
+
+=== Pallet Staking Rewards - LP/PICA/PBLO/Other Token Staking Reward Pools
+
+This section covers how the staking rewards are distributed using the https://github.com/ComposableFi/composable/tree/main/frame/staking-rewards[staking rewards pallet].
+
+==== Analysis of Reward Calculations
+
+In order to create the necessary reward pool as well as the rewarding rate for stakers the following model can be used. It tries to address the following constraints,
+
+. Allow [#rate]#specification of the reward rate for a pool# (even setting a dynamically changing rate)
+. Allow addition of new stakers at anytime to a pool, start earning immediate rewards
+. Allow more realtime calculation of rewards on-demand for a given pool for a given user.
+. Allow shorter reward pool calculation epoch with the use of the reward rate.
+. Allow expansion of rewards pools realtime.
+. Allow extending of staked position in time and amount.
+. Allow splitting of staked position into smaller positions.
+. [Postponed] Allow compounding of staked position when the rewarded asset is the same as staked. Not handled at the moment. Though it is possible for users to just re-stake their earned assets.
+
+To analyze the requirement fully, let's define the following terms for a given staking reward pool,
+
+Pre-defined reward rate (say per second) stem:[= r]
+
+Pre-defined reward calculation epoch in seconds stem:[= t]
+
+Reward per calculation epoch stem:[= r.t]
+
+Previous total reward pool before the current epoch stem:[= P]
+
+Assuming there is a per epoch calculation which adds to the pool,
+the total reward pool for the current epoc,
+
+stem:[P_(current) = P + rt]
+
+Reward pool shares for stem:[n] stakers,
+
+stem:[= sum (s_n)]
+
+Where stem:[n_(th)] staker share is stem:[s_n]
+
+Existing stem:[n_(th)] staker reward,
+
+stem:[x _n = P_(current) . s_n / (sum s_n)]
+
+===== When adding a new staker stem:[n+1], existing stakers(stem:[n]) reward would be,
+
+stem:[x_n = P_(current) . s_n / (sum s_(n+1))]
+
+As this is less than what is expected above, an adjustment stem:[delta P] to total reward pool can be made to allow realtime reward calculations,
+
+stem:[delta P = P_(current) . s_(n+1) / (sum s_n)]
+
+stem:[x_n = (P_(current) + delta P) . s_n / (sum s_(n+1))]
+
+stem:[x_n = P_(current) . (1 + s_(n+1) / (sum s_n)) . s_n / (sum s_(n+1))]
+
+stem:[x _n = P_(current) . s_n / (sum s_n)]
+
+**Therefore, the existing staker receives the same reward as before **
+
+To compensate for this new adjustment, a reduction stem:[d_n] (equal to stem:[delta P]) of reward for each staker needs to be tracked,
+
+stem:[x_n = P_(current) . s_n / (sum s_n) - d_n] <- (1)
+
+In general,
+
+stem:[d_n = "Any reduction in reward"]
+
+===== When removing a staker from the pool the above addition step has to be reverted
+
+This can be done by subtracting the stem:[d_n] of the staker from the total pool and reducing the pool shares accordingly.
+
+===== When adding a new reward to the pool the calculations remain the same other than increasing the reward pool as follows,
+
+stem:[P_(current) = P + rt + P_(added)]
+
+Since already claimed rewards(stem:[d_n]) are tracked for each staker, they can always claim the new reward share from stem:[P_(added)] later.
+
+===== When extending an existing position
+
+Extension of an existing staker position can be treated in the same way as adding a new staker as the following relationship holds with the new stake stem:[delta s_n] and the corresponding inflation stem:[delta d_n],
+
+new staker to add stem:[ = x_n^(add) = P_(current) . (delta s_n) / (sum s_n) - delta d_n] <- (2)
+
+Now with (1) + (2),
+
+stem:[x_n + x_n^(add) = P_(current) . (s_n + delta s_n) / (sum s_n) - d_n - delta d_n]
+
+Therefore, same computation as before with stem:[delta s_n] number of shares added to the staker position works as expected.
+
+===== When splitting an existing position
+
+As the total reward pool is not affected the splitting is just creating a new position using some ratio. If the ratio is stem:[1:k] From (1)
+
+First position stem:[x_n^1 = P_(current) . s_n / (k . sum s_n) - d_n / k]
+
+Second position stem:[x_n^2 = P_(current) . (k - 1) . s_n / (k. sum s_n) - (k - 1) . d_n / k]
+
+Summing these positions would give the original position(equation 1) as the ratio terms cancel out.
+
+As this method uses a reward pooling based approach to calculate the rewards for each staker out of it on-demand, rest of the document refers to this as the "reward pooling(*RP*) based approach".
+
+==== Data Structures
+
+Staking rewards pallet already uses the following data structure representing a staking position,
+
+[source,rust]
+----
+include::../../frame/composable-traits/src/staking/mod.rs[lines=122..138]
+----
+
+Which is referred to in the algorithms in the followin sections.
+
+Now in order to allow redeeming the above staking position, following data structures is to be tracked in the staking rewards pallet,
+
+[source,rust]
+----
+include::../../frame/composable-traits/src/staking/mod.rs[lines=20..40]
+----
+
+[source,rust]
+----
+include::../../frame/composable-traits/src/staking/mod.rs[lines=61..79]
+----
+
+Following sections describe the algorithms for various operations on the rewards pool based on these data structures.
+
+==== Staking
+
+[plantuml,images/staking,png]
+----
+start
+->assetId,\namount(in LP/PBLO/PICA);
+:rewards_pool = readStorage(assetId);
+:boosted_amount = reward_multiplier * amount;
+note right: Handle boosting as per reward_multiplier
+:new_pool_shares = boosted_amount;
+:new_position = Stake {
+asset: assetId,
+share: boosted_amount,
+stake: amount,
+// ....
+};
+while (reward = rewards_pool.rewards.has_next) is (yes)
+    :inflation = reward.total_rewards * new_pool_shares /\nrewards_pool.total_shares;
+    :reward.total_rewards += inflation;
+    :reward.total_inflation += inflation;
+    :new_position.reductions[reward.asset_id] += inflation;
+endwhile (no)
+:rewards_pool.total_shares += boosted_amount;
+:save(new_position);
+:save(rewards_pool);
+stop
+----
+
+==== Extend Position
+
+[plantuml,images/extend-position,png]
+----
+start
+->positionId,assetId,\namount(in LP/PBLO/PICA)\ntime;
+:rewards_pool = readStorage(assetId);
+:new_pool_shares = amount;
+:new_position = StakingNFT{
+asset: assetId,
+share: amount,
+stake: amount,
+// ....
+};
+while (reward = rewards_pool.rewards.has_next) is (yes)
+    :inflation = reward.total_rewards * new_pool_shares /\nrewards_pool.total_shares;
+    :reward.total_rewards += inflation;
+    :reward.total_inflation += inflation;
+    :new_position.reductions[reward.asset_id] += inflation;
+endwhile (no)
+:rewards_pool.total_shares += amount;
+:existing_position = readStorage(positionId);
+:merged_position = existing_position + new_position;
+note right: as per section 5.3.1.4
+:save(merged_position);
+:save(rewards_pool);
+stop
+----
+
+==== Split Position
+
+[plantuml,images/split-position,png]
+----
+start
+->assetId\npositionId\nratio;
+:position = readStorage(positionId);
+:splits = split(position, ratio);
+note right: as per section 5.3.1.5
+:save(...splits);
+stop
+----
+
+==== Claim/Unstake
+
+[plantuml,images/claim,png]
+----
+start
+->assetId\npositionId;
+:rewards_pool = readStorage(assetId);
+:position = readStorage(positionId);
+while (reward = rewards_pool.rewards.has_next) is (yes)
+    :claim = reward.total_rewards * position.shares /\nrewards_pool.total_shares - position.reductions[reward.asset_id];
+    :reward.total_rewards -= position.reductions[reward.asset_id];
+    :reward.total_inflation -= position.reductions[reward.asset_id];
+    :transfer(claim);
+endwhile (no)
+:rewards_pool.total_shares -= position.shares;
+:remove(position);
+:save(rewards_pool);
+stop
+----
+
+==== Update Reward Pool
+
+[plantuml,images/update-reward-pool,png]
+----
+start
+->assetId\nreward_update\nlast_update_timestamp;
+:elapsed_time = current_time - last_update_timestamp;
+:rewards_pool = readStorage(assetId);
+while (reward = reward_update.rewards.has_next) is (yes)
+    :assert max_reward not exceeded;
+    :reward.total_rewards += reward_update[reward.asset_id].amount;
+    :reward.total_rewards += elapsed_time * reward.reward_rate;
+    :reward.reward_rate = reward_update[reward.asset_id].rate;
+endwhile (no)
+:last_update_timestamp = current_time;
+:save(rewards_pool);
+stop
+----
+
+[#_rewardaccumulationhook]
+==== RewardAccumulationHook
+
+Following algorithm should be part of the block hook in the pallet.
+
+[plantuml,images/staking-rewards-reward-accumulation-hook,png]
+----
+start
+->last_update_timestamp;
+:elapsed_time = current_time - last_update_timestamp;
+while (assetId = stake_pools.has_next) is (yes)
+    :rewards_pool = readStorage(assetId);
+    while (reward = rewards_pool.rewards.has_next) is (yes)
+        :assert max_reward not exceeded;
+        :reward.total_rewards += elapsed_time * reward.reward_rate;
+    endwhile (no)
+    :save(rewards_pool);
+endwhile (no)
+:last_update_timestamp = current_time;
+stop
+----
+
+== Implementation
+
+=== Pallet Pablo: LP Fee + Staking Changes
+
+- [ ] Implement <<_feeconfig>> on pallet-pablo across all 3 types of pools.
+- [ ] Implement <<_pblo_staker_trading_fee_distribution>>.
+
+=== Pallet Staking Rewards: PICA/PBLO Staking Related Changes
+
+- [ ] Implement <<_rewardaccumulationhook>>.
+
+[#_trading_fee_inflation_to_avoid_dilution_of_lps]
+[appendix]
+== Trading Fee Inflation to Avoid Dilution of LPs
+
+New trading fee stem:[= x_(adjusted) = l / (sum l_m) * (sum a_n + delta a_n)]
+
+For stem:[r_(th)] liquidity provider,
+
+stem:[delta a = (sum_(r+1) l_m) / (sum l_r) * sum a_n]
+
+stem:[= x_(adjusted) = l_(r) / (sum_(r+1) l_m + sum l_r) * (sum a_n + (sum_(r+1) l_m) / (sum l_r) * sum a_n )]
+
+stem:[= l_r / (sum l_r) * sum a_n]
+
+With this adjusted value all later additions to LP shares have been negated when receiving fees for earlier LPs.
+
+[appendix]
+== Fee Distribution Q&A
+
+Based on the current setup following questions arise when deciding on the distribution of these fees to relevant liquidity providers, owners and stakers.
+
+. A Protocol Fee for all pools in Pablo (or even protocol pallets other than Pablo)?
++
+Does it make sense to define a protocol fee percentage on top of the pool owner fees of the pools so that the protocol fee can be used as the pot out of which the stakers are rewarded? Initially the Protocol Fee = Pool Owner Fee as the pools are owned by Composable. Assumption here is that the stakers would indeed still get a reward out of third party created pool fees.
++
+*Comment:* While having a protocol funding mechanism is valuable, initially the protocol fees should zero or minimal.
+. How does the system reward PICA stakers? Wouldn't the Pablo protocol needs some parameter to define how much of its swap fee or protocol fee as referred to above would go to PICA holders? Or do we assume that PICA stakers do not get a reward out of the Pablo pool fees?
+.. If Pablo does reward PICA stakers, the system might need a common interface that directs those funds out of Pablo.
+.. If Pablo does reward PICA stakers, the system might need to have a treasury parameter that defines the percentage that goes out to PICA holders that can be adjusted overtime.
++
+*Comment:* PICA stakers would not be rewarded from the Pablo fees. PICA stakers are rewarded in newly minted PICA(or PBLO later), Mechanism to transfer the PICA tokens for stakers does not exist, need to be built.
+. Does it make sense to define a Pool Owner Fee(Protocol Fee as referred to above) for LBPs that goes out to Pablo holders reward pool?
+
+*Comment:* Pool fees could be swapped to PBLO token before distributing to fNFT holders unless those fees are in some pre-defined set of currencies(eg: KSM, DOT), which creates a demand for PBLO since the system is buying back PBLO. But for this there should be a market for PBLO/the other token that is being earned as fees.
+
+*Comment:* LP fees can be distributed based on the fNFT. Minting the fNFT at the time of LP event might make sense. i.e fNFT represents the LP position on the pool as well as the rewards position for PBLO tokens for LPs.

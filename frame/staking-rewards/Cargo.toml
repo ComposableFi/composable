@@ -12,6 +12,7 @@ targets = ["x86_64-unknown-linux-gnu"]
 [dependencies]
 composable-support = { default-features = false, path = "../../frame/composable-support" }
 composable-traits = { default-features = false, path = "../../frame/composable-traits" }
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 orml-rewards = { default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b" }
