@@ -8,8 +8,6 @@ import { CacheProvider, EmotionCache } from "@emotion/react";
 import createEmotionCache from "@/styles/createEmotionCache";
 import { getDesignTokens } from "@/styles/theme";
 import { ColorModeContext } from "@/contexts/ColorMode";
-import { Provider } from "react-redux";
-import { store } from "@/stores/root";
 import ParachainContextProvider from "@/defi/polkadot/context/ParachainContext";
 import SubstrateBalancesUpdater from "@/stores/defi/polkadot/balances/PolkadotBalancesUpdater";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
@@ -79,44 +77,42 @@ export default function MyApp(props: MyAppProps) {
           };
         })}
       >
-        <Provider store={store}>
-          <ColorModeContext.Provider value={colorMode}>
-            <ThemeProvider theme={theme}>
-              {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
-              <CssBaseline />
-              <ParachainContextProvider
-                appName="Picasso UI"
-                supportedChains={Object.values(SUBSTRATE_NETWORKS)}
-              >
-                <PalletsContextProvider>
-                  <SubstrateBalancesUpdater
-                    substrateChains={Object.values(SUBSTRATE_NETWORKS)}
-                  />
-                  <CrowdloanRewardsUpdater />
-                  <SnackbarProvider
-                    Components={{
-                      info: ThemeResponsiveSnackbar,
-                      success: ThemeResponsiveSnackbar,
-                      error: ThemeResponsiveSnackbar,
-                      warning: ThemeResponsiveSnackbar,
-                    }}
-                    autoHideDuration={null}
-                    maxSnack={4}
-                    disableWindowBlurListener={true}
-                    anchorOrigin={{
-                      vertical: "bottom",
-                      horizontal: "center",
-                    }}
-                  >
-                    <ExecutorProvider>
-                      <Component {...pageProps} />
-                    </ExecutorProvider>
-                  </SnackbarProvider>
-                </PalletsContextProvider>
-              </ParachainContextProvider>
-            </ThemeProvider>
-          </ColorModeContext.Provider>
-        </Provider>
+        <ColorModeContext.Provider value={colorMode}>
+          <ThemeProvider theme={theme}>
+            {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
+            <CssBaseline />
+            <ParachainContextProvider
+              appName="Picasso UI"
+              supportedChains={Object.values(SUBSTRATE_NETWORKS)}
+            >
+              <PalletsContextProvider>
+                <SubstrateBalancesUpdater
+                  substrateChains={Object.values(SUBSTRATE_NETWORKS)}
+                />
+                <CrowdloanRewardsUpdater />
+                <SnackbarProvider
+                  Components={{
+                    info: ThemeResponsiveSnackbar,
+                    success: ThemeResponsiveSnackbar,
+                    error: ThemeResponsiveSnackbar,
+                    warning: ThemeResponsiveSnackbar,
+                  }}
+                  autoHideDuration={null}
+                  maxSnack={4}
+                  disableWindowBlurListener={true}
+                  anchorOrigin={{
+                    vertical: "bottom",
+                    horizontal: "center",
+                  }}
+                >
+                  <ExecutorProvider>
+                    <Component {...pageProps} />
+                  </ExecutorProvider>
+                </SnackbarProvider>
+              </PalletsContextProvider>
+            </ParachainContextProvider>
+          </ThemeProvider>
+        </ColorModeContext.Provider>
       </BlockchainProvider>
     </CacheProvider>
   );

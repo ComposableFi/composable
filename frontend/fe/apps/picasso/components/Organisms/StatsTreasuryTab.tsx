@@ -1,6 +1,6 @@
 import { Box, useTheme } from "@mui/material";
 import { FeaturedBox, Chart } from "@/components/Organisms/StatsTreasuryTab";
-import { useAppSelector } from "@/hooks/store";
+import { useStore } from "@/stores/root";
 import { formatNumberWithSymbol, formatNumber } from "@/utils/formatters";
 import { TreasuryDataProps } from "@/stores/defi/stats/treasury";
 
@@ -32,8 +32,8 @@ function formatTreasuryTitleValue(index: number, info: TreasuryDataProps) {
 
 export const StatsTreasuryTab: React.FC<{}> = ({}) => {
   const theme = useTheme();
-  const { treasuryData, treasuryChartData } = useAppSelector(
-    (state) => state.statsTreasury
+  const { treasuryData, treasuryChartData } = useStore(
+    ({ statsTreasury }) => statsTreasury
   );
 
   return (

@@ -4,16 +4,17 @@ import { Box, Grid, Link, Typography, useTheme } from "@mui/material";
 import { useRouter } from "next/router";
 import Image from "next/image";
 import { useContext, useEffect } from "react";
+import { useStore } from "@/stores/root";
 import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { PageTitle, FeaturedBox, SS8WalletHelper } from "@/components";
 import { useConnector } from "@integrations-lib/core";
-import { selectCrowdloanRewardsUserAssociation } from "@/stores/defi/polkadot/crowdloanRewards/slice";
-import { useSelector } from "react-redux";
 
 const CrowdloanRewards: NextPage = () => {
   const theme = useTheme();
   const router = useRouter();
-  const userAssociation = useSelector(selectCrowdloanRewardsUserAssociation);
+  const userAssociation = useStore(
+    ({ crowdloanRewards }) => crowdloanRewards.associatedWith
+  );
 
   const breadcrumbs = [
     <Link key="Overview" underline="none" color="primary" href="/frontend/fe/apps/picasso/pages">
