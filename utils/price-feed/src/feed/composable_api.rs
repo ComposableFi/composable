@@ -1,7 +1,7 @@
 #[allow(dead_code, unused_imports, non_camel_case_types)]
 pub mod api {
 	use super::api as root_mod;
-	pub static PALLETS: [&str; 49usize] = [
+	pub static PALLETS: [&str; 51usize] = [
 		"System",
 		"Timestamp",
 		"Sudo",
@@ -48,8 +48,10 @@ pub mod api {
 		"Lending",
 		"Pablo",
 		"DexRouter",
+		"StakingRewards",
 		"CallFilter",
 		"IbcPing",
+		"Transfer",
 		"Ibc",
 	];
 	#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
@@ -130,11 +132,15 @@ pub mod api {
 		Pablo(pablo::Event),
 		#[codec(index = 66)]
 		DexRouter(dex_router::Event),
+		#[codec(index = 67)]
+		StakingRewards(staking_rewards::Event),
 		#[codec(index = 100)]
 		CallFilter(call_filter::Event),
 		#[codec(index = 101)]
 		IbcPing(ibc_ping::Event),
 		#[codec(index = 102)]
+		Transfer(transfer::Event),
+		#[codec(index = 103)]
 		Ibc(ibc::Event),
 	}
 	pub mod system {
@@ -1225,10 +1231,10 @@ pub mod api {
 						};
 						if runtime_storage_hash ==
 							[
-								84u8, 43u8, 204u8, 200u8, 237u8, 212u8, 95u8, 190u8, 134u8, 70u8,
-								94u8, 102u8, 161u8, 41u8, 32u8, 37u8, 77u8, 84u8, 187u8, 191u8,
-								156u8, 85u8, 125u8, 118u8, 61u8, 129u8, 178u8, 3u8, 253u8, 2u8,
-								69u8, 88u8,
+								253u8, 133u8, 129u8, 12u8, 68u8, 52u8, 173u8, 72u8, 30u8, 208u8,
+								221u8, 67u8, 136u8, 97u8, 50u8, 214u8, 225u8, 149u8, 128u8, 255u8,
+								91u8, 160u8, 40u8, 244u8, 230u8, 186u8, 140u8, 224u8, 27u8, 138u8,
+								190u8, 230u8,
 							] {
 							let entry = Events;
 							client.storage().fetch_or_default(&entry, block_hash).await
@@ -1597,10 +1603,9 @@ pub mod api {
 					let metadata = locked_metadata.read();
 					if metadata.constant_hash("System", "Version")? ==
 						[
-							64u8, 57u8, 174u8, 188u8, 180u8, 19u8, 180u8, 239u8, 228u8, 188u8,
-							113u8, 48u8, 51u8, 224u8, 145u8, 134u8, 120u8, 64u8, 141u8, 210u8,
-							133u8, 138u8, 159u8, 180u8, 103u8, 13u8, 194u8, 13u8, 43u8, 110u8,
-							114u8, 216u8,
+							8u8, 62u8, 173u8, 35u8, 237u8, 219u8, 58u8, 98u8, 113u8, 251u8, 114u8,
+							213u8, 71u8, 205u8, 241u8, 164u8, 210u8, 48u8, 254u8, 58u8, 72u8, 86u8,
+							241u8, 58u8, 173u8, 55u8, 217u8, 49u8, 32u8, 169u8, 198u8, 160u8,
 						] {
 						let pallet = metadata.pallet("System")?;
 						let constant = pallet.constant("Version")?;
@@ -1916,9 +1921,9 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							117u8, 160u8, 201u8, 230u8, 195u8, 141u8, 234u8, 197u8, 207u8, 121u8,
-							237u8, 215u8, 77u8, 95u8, 212u8, 161u8, 63u8, 96u8, 2u8, 93u8, 175u8,
-							30u8, 29u8, 37u8, 117u8, 213u8, 95u8, 168u8, 84u8, 46u8, 231u8, 200u8,
+							86u8, 173u8, 154u8, 46u8, 115u8, 226u8, 66u8, 251u8, 22u8, 141u8, 36u8,
+							10u8, 148u8, 181u8, 224u8, 250u8, 121u8, 58u8, 231u8, 234u8, 130u8,
+							200u8, 44u8, 99u8, 26u8, 26u8, 14u8, 206u8, 35u8, 215u8, 112u8, 6u8,
 						] {
 						let call = Sudo { call: ::std::boxed::Box::new(call) };
 						Ok(::subxt::SubmittableExtrinsic::new(self.client, call))
@@ -1958,9 +1963,10 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							175u8, 5u8, 189u8, 209u8, 102u8, 84u8, 154u8, 147u8, 52u8, 135u8, 57u8,
-							48u8, 75u8, 118u8, 128u8, 3u8, 183u8, 27u8, 122u8, 240u8, 141u8, 9u8,
-							195u8, 177u8, 34u8, 214u8, 213u8, 58u8, 149u8, 231u8, 230u8, 172u8,
+							111u8, 227u8, 145u8, 116u8, 161u8, 59u8, 59u8, 113u8, 136u8, 124u8,
+							179u8, 216u8, 82u8, 188u8, 255u8, 216u8, 93u8, 182u8, 152u8, 47u8,
+							30u8, 209u8, 147u8, 58u8, 32u8, 205u8, 224u8, 12u8, 23u8, 51u8, 213u8,
+							225u8,
 						] {
 						let call =
 							SudoUncheckedWeight { call: ::std::boxed::Box::new(call), weight };
@@ -2036,9 +2042,10 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							125u8, 124u8, 21u8, 172u8, 32u8, 153u8, 31u8, 144u8, 147u8, 64u8,
-							133u8, 147u8, 74u8, 42u8, 220u8, 235u8, 100u8, 93u8, 2u8, 237u8, 101u8,
-							48u8, 151u8, 118u8, 24u8, 23u8, 124u8, 249u8, 22u8, 32u8, 83u8, 11u8,
+							32u8, 121u8, 94u8, 151u8, 181u8, 180u8, 201u8, 250u8, 62u8, 189u8,
+							162u8, 183u8, 245u8, 161u8, 80u8, 159u8, 194u8, 24u8, 140u8, 7u8,
+							229u8, 158u8, 214u8, 218u8, 78u8, 82u8, 217u8, 210u8, 241u8, 158u8,
+							32u8, 114u8,
 						] {
 						let call = SudoAs { who, call: ::std::boxed::Box::new(call) };
 						Ok(::subxt::SubmittableExtrinsic::new(self.client, call))
@@ -5439,9 +5446,10 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							39u8, 64u8, 48u8, 229u8, 0u8, 223u8, 204u8, 191u8, 218u8, 228u8, 253u8,
-							166u8, 222u8, 201u8, 123u8, 130u8, 5u8, 189u8, 64u8, 176u8, 54u8, 40u8,
-							46u8, 48u8, 144u8, 234u8, 174u8, 45u8, 66u8, 89u8, 185u8, 155u8,
+							82u8, 229u8, 222u8, 206u8, 20u8, 177u8, 83u8, 251u8, 74u8, 42u8, 252u8,
+							145u8, 234u8, 44u8, 130u8, 216u8, 84u8, 201u8, 189u8, 35u8, 36u8,
+							107u8, 117u8, 217u8, 211u8, 159u8, 138u8, 11u8, 164u8, 218u8, 92u8,
+							82u8,
 						] {
 						let call = AsMultiThreshold1 {
 							other_signatories,
@@ -5525,9 +5533,9 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							217u8, 76u8, 168u8, 29u8, 178u8, 27u8, 113u8, 55u8, 210u8, 123u8, 64u8,
-							63u8, 52u8, 240u8, 144u8, 5u8, 171u8, 64u8, 68u8, 31u8, 171u8, 8u8,
-							186u8, 200u8, 153u8, 161u8, 0u8, 208u8, 111u8, 98u8, 205u8, 50u8,
+							190u8, 56u8, 128u8, 78u8, 80u8, 238u8, 227u8, 83u8, 229u8, 151u8,
+							151u8, 129u8, 91u8, 168u8, 100u8, 192u8, 53u8, 97u8, 210u8, 20u8, 10u8,
+							85u8, 249u8, 181u8, 21u8, 191u8, 221u8, 214u8, 192u8, 79u8, 1u8, 165u8,
 						] {
 						let call = AsMulti {
 							threshold,
@@ -5884,10 +5892,10 @@ pub mod api {
 						};
 						if runtime_storage_hash ==
 							[
-								72u8, 222u8, 250u8, 33u8, 248u8, 161u8, 253u8, 68u8, 53u8, 141u8,
-								74u8, 187u8, 96u8, 143u8, 31u8, 167u8, 254u8, 20u8, 54u8, 163u8,
-								42u8, 221u8, 38u8, 142u8, 248u8, 61u8, 220u8, 24u8, 112u8, 207u8,
-								0u8, 66u8,
+								94u8, 32u8, 157u8, 37u8, 161u8, 139u8, 89u8, 252u8, 161u8, 207u8,
+								188u8, 253u8, 72u8, 41u8, 205u8, 136u8, 91u8, 236u8, 203u8, 234u8,
+								153u8, 47u8, 202u8, 227u8, 151u8, 140u8, 32u8, 149u8, 122u8, 100u8,
+								210u8, 88u8,
 							] {
 							let entry = Calls(_0);
 							client.storage().fetch(&entry, block_hash).await
@@ -5917,10 +5925,10 @@ pub mod api {
 						};
 						if runtime_storage_hash ==
 							[
-								72u8, 222u8, 250u8, 33u8, 248u8, 161u8, 253u8, 68u8, 53u8, 141u8,
-								74u8, 187u8, 96u8, 143u8, 31u8, 167u8, 254u8, 20u8, 54u8, 163u8,
-								42u8, 221u8, 38u8, 142u8, 248u8, 61u8, 220u8, 24u8, 112u8, 207u8,
-								0u8, 66u8,
+								94u8, 32u8, 157u8, 37u8, 161u8, 139u8, 89u8, 252u8, 161u8, 207u8,
+								188u8, 253u8, 72u8, 41u8, 205u8, 136u8, 91u8, 236u8, 203u8, 234u8,
+								153u8, 47u8, 202u8, 227u8, 151u8, 140u8, 32u8, 149u8, 122u8, 100u8,
+								210u8, 88u8,
 							] {
 							client.storage().iter(block_hash).await
 						} else {
@@ -8890,10 +8898,10 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							217u8, 29u8, 80u8, 98u8, 177u8, 4u8, 78u8, 249u8, 59u8, 246u8, 101u8,
-							246u8, 236u8, 138u8, 29u8, 113u8, 108u8, 193u8, 80u8, 79u8, 116u8,
-							178u8, 186u8, 89u8, 18u8, 126u8, 126u8, 38u8, 173u8, 192u8, 210u8,
-							38u8,
+							229u8, 50u8, 160u8, 188u8, 101u8, 164u8, 224u8, 250u8, 20u8, 242u8,
+							0u8, 197u8, 209u8, 47u8, 217u8, 184u8, 101u8, 216u8, 118u8, 30u8,
+							243u8, 91u8, 135u8, 146u8, 3u8, 104u8, 205u8, 255u8, 248u8, 82u8,
+							107u8, 220u8,
 						] {
 						let call =
 							Execute { proposal: ::std::boxed::Box::new(proposal), length_bound };
@@ -8952,10 +8960,9 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							195u8, 200u8, 53u8, 49u8, 241u8, 207u8, 228u8, 138u8, 93u8, 25u8,
-							176u8, 90u8, 222u8, 129u8, 165u8, 110u8, 173u8, 105u8, 186u8, 145u8,
-							53u8, 38u8, 47u8, 255u8, 238u8, 79u8, 8u8, 135u8, 83u8, 98u8, 39u8,
-							196u8,
+							90u8, 138u8, 89u8, 112u8, 159u8, 48u8, 145u8, 91u8, 44u8, 155u8, 64u8,
+							170u8, 252u8, 1u8, 242u8, 169u8, 17u8, 56u8, 147u8, 166u8, 31u8, 184u8,
+							188u8, 41u8, 18u8, 39u8, 27u8, 253u8, 226u8, 149u8, 175u8, 61u8,
 						] {
 						let call = Propose {
 							threshold,
@@ -9331,10 +9338,10 @@ pub mod api {
 						};
 						if runtime_storage_hash ==
 							[
-								194u8, 89u8, 32u8, 118u8, 52u8, 169u8, 238u8, 194u8, 58u8, 191u8,
-								78u8, 63u8, 118u8, 140u8, 152u8, 202u8, 152u8, 100u8, 208u8, 75u8,
-								28u8, 87u8, 93u8, 102u8, 15u8, 63u8, 84u8, 50u8, 86u8, 166u8,
-								240u8, 187u8,
+								80u8, 54u8, 21u8, 139u8, 231u8, 150u8, 190u8, 157u8, 29u8, 176u8,
+								140u8, 44u8, 200u8, 101u8, 43u8, 249u8, 244u8, 169u8, 234u8, 3u8,
+								226u8, 52u8, 79u8, 250u8, 246u8, 245u8, 21u8, 94u8, 92u8, 127u8,
+								82u8, 238u8,
 							] {
 							let entry = ProposalOf(_0);
 							client.storage().fetch(&entry, block_hash).await
@@ -9365,10 +9372,10 @@ pub mod api {
 						};
 						if runtime_storage_hash ==
 							[
-								194u8, 89u8, 32u8, 118u8, 52u8, 169u8, 238u8, 194u8, 58u8, 191u8,
-								78u8, 63u8, 118u8, 140u8, 152u8, 202u8, 152u8, 100u8, 208u8, 75u8,
-								28u8, 87u8, 93u8, 102u8, 15u8, 63u8, 84u8, 50u8, 86u8, 166u8,
-								240u8, 187u8,
+								80u8, 54u8, 21u8, 139u8, 231u8, 150u8, 190u8, 157u8, 29u8, 176u8,
+								140u8, 44u8, 200u8, 101u8, 43u8, 249u8, 244u8, 169u8, 234u8, 3u8,
+								226u8, 52u8, 79u8, 250u8, 246u8, 245u8, 21u8, 94u8, 92u8, 127u8,
+								82u8, 238u8,
 							] {
 							client.storage().iter(block_hash).await
 						} else {
@@ -13442,10 +13449,9 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							79u8, 74u8, 35u8, 201u8, 123u8, 193u8, 213u8, 182u8, 215u8, 156u8,
-							91u8, 201u8, 232u8, 141u8, 13u8, 120u8, 122u8, 4u8, 153u8, 10u8, 149u8,
-							3u8, 114u8, 203u8, 224u8, 126u8, 128u8, 179u8, 65u8, 210u8, 60u8,
-							171u8,
+							154u8, 52u8, 4u8, 94u8, 116u8, 65u8, 209u8, 139u8, 156u8, 236u8, 183u8,
+							208u8, 108u8, 116u8, 166u8, 59u8, 1u8, 51u8, 252u8, 129u8, 31u8, 159u8,
+							192u8, 17u8, 73u8, 142u8, 30u8, 126u8, 208u8, 108u8, 207u8, 46u8,
 						] {
 						let call = Schedule {
 							when,
@@ -13516,9 +13522,10 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							78u8, 27u8, 138u8, 85u8, 134u8, 183u8, 70u8, 227u8, 70u8, 57u8, 27u8,
-							227u8, 54u8, 226u8, 199u8, 47u8, 30u8, 241u8, 253u8, 199u8, 90u8, 66u8,
-							73u8, 147u8, 4u8, 234u8, 160u8, 108u8, 139u8, 214u8, 124u8, 16u8,
+							230u8, 165u8, 135u8, 100u8, 12u8, 183u8, 137u8, 92u8, 212u8, 130u8,
+							47u8, 150u8, 31u8, 231u8, 43u8, 63u8, 227u8, 200u8, 127u8, 118u8, 28u8,
+							108u8, 142u8, 241u8, 122u8, 161u8, 150u8, 54u8, 193u8, 130u8, 189u8,
+							123u8,
 						] {
 						let call = ScheduleNamed {
 							id,
@@ -13599,9 +13606,9 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							203u8, 78u8, 189u8, 222u8, 47u8, 48u8, 248u8, 37u8, 198u8, 233u8, 99u8,
-							52u8, 247u8, 79u8, 7u8, 19u8, 103u8, 60u8, 149u8, 189u8, 18u8, 141u8,
-							132u8, 237u8, 118u8, 86u8, 232u8, 4u8, 103u8, 141u8, 71u8, 156u8,
+							214u8, 59u8, 210u8, 169u8, 50u8, 115u8, 23u8, 65u8, 25u8, 8u8, 67u8,
+							44u8, 121u8, 194u8, 62u8, 75u8, 205u8, 186u8, 208u8, 50u8, 237u8,
+							170u8, 106u8, 16u8, 190u8, 13u8, 248u8, 188u8, 227u8, 12u8, 11u8, 29u8,
 						] {
 						let call = ScheduleAfter {
 							after,
@@ -13650,9 +13657,9 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							49u8, 84u8, 152u8, 229u8, 12u8, 135u8, 223u8, 22u8, 125u8, 75u8, 131u8,
-							157u8, 250u8, 63u8, 147u8, 62u8, 128u8, 9u8, 137u8, 86u8, 43u8, 176u8,
-							134u8, 49u8, 170u8, 12u8, 38u8, 202u8, 30u8, 99u8, 149u8, 171u8,
+							52u8, 206u8, 88u8, 246u8, 103u8, 56u8, 237u8, 67u8, 145u8, 203u8, 4u8,
+							230u8, 107u8, 241u8, 110u8, 108u8, 209u8, 51u8, 129u8, 40u8, 255u8,
+							12u8, 82u8, 89u8, 92u8, 94u8, 116u8, 185u8, 228u8, 253u8, 213u8, 143u8,
 						] {
 						let call = ScheduleNamedAfter {
 							id,
@@ -13795,10 +13802,10 @@ pub mod api {
 						};
 						if runtime_storage_hash ==
 							[
-								233u8, 106u8, 147u8, 204u8, 153u8, 90u8, 142u8, 212u8, 39u8, 174u8,
-								24u8, 171u8, 9u8, 148u8, 36u8, 10u8, 183u8, 152u8, 57u8, 109u8,
-								94u8, 38u8, 185u8, 16u8, 195u8, 53u8, 115u8, 202u8, 0u8, 106u8,
-								162u8, 159u8,
+								119u8, 187u8, 238u8, 140u8, 156u8, 19u8, 58u8, 141u8, 235u8, 232u8,
+								120u8, 140u8, 24u8, 190u8, 20u8, 31u8, 228u8, 107u8, 56u8, 14u8,
+								65u8, 225u8, 181u8, 212u8, 169u8, 48u8, 97u8, 75u8, 216u8, 140u8,
+								41u8, 168u8,
 							] {
 							let entry = Agenda(_0);
 							client.storage().fetch_or_default(&entry, block_hash).await
@@ -13829,10 +13836,10 @@ pub mod api {
 						};
 						if runtime_storage_hash ==
 							[
-								233u8, 106u8, 147u8, 204u8, 153u8, 90u8, 142u8, 212u8, 39u8, 174u8,
-								24u8, 171u8, 9u8, 148u8, 36u8, 10u8, 183u8, 152u8, 57u8, 109u8,
-								94u8, 38u8, 185u8, 16u8, 195u8, 53u8, 115u8, 202u8, 0u8, 106u8,
-								162u8, 159u8,
+								119u8, 187u8, 238u8, 140u8, 156u8, 19u8, 58u8, 141u8, 235u8, 232u8,
+								120u8, 140u8, 24u8, 190u8, 20u8, 31u8, 228u8, 107u8, 56u8, 14u8,
+								65u8, 225u8, 181u8, 212u8, 169u8, 48u8, 97u8, 75u8, 216u8, 140u8,
+								41u8, 168u8,
 							] {
 							client.storage().iter(block_hash).await
 						} else {
@@ -14059,10 +14066,10 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							111u8, 87u8, 12u8, 52u8, 184u8, 221u8, 179u8, 216u8, 49u8, 215u8,
-							153u8, 139u8, 7u8, 191u8, 119u8, 139u8, 22u8, 161u8, 240u8, 201u8,
-							253u8, 122u8, 110u8, 93u8, 23u8, 244u8, 6u8, 45u8, 96u8, 237u8, 105u8,
-							38u8,
+							201u8, 133u8, 141u8, 43u8, 91u8, 75u8, 191u8, 161u8, 12u8, 176u8,
+							174u8, 134u8, 104u8, 234u8, 156u8, 254u8, 179u8, 144u8, 119u8, 85u8,
+							121u8, 49u8, 137u8, 171u8, 205u8, 223u8, 52u8, 228u8, 225u8, 148u8,
+							232u8, 244u8,
 						] {
 						let call = Batch { calls };
 						Ok(::subxt::SubmittableExtrinsic::new(self.client, call))
@@ -14105,10 +14112,9 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							153u8, 109u8, 132u8, 40u8, 239u8, 201u8, 54u8, 134u8, 38u8, 222u8,
-							118u8, 165u8, 21u8, 192u8, 5u8, 108u8, 72u8, 109u8, 21u8, 111u8, 145u8,
-							83u8, 188u8, 151u8, 87u8, 10u8, 238u8, 107u8, 242u8, 122u8, 119u8,
-							248u8,
+							90u8, 217u8, 18u8, 46u8, 165u8, 118u8, 244u8, 179u8, 122u8, 143u8,
+							30u8, 64u8, 192u8, 163u8, 28u8, 75u8, 129u8, 27u8, 9u8, 64u8, 170u8,
+							9u8, 225u8, 103u8, 185u8, 61u8, 217u8, 53u8, 194u8, 10u8, 102u8, 238u8,
 						] {
 						let call = AsDerivative { index, call: ::std::boxed::Box::new(call) };
 						Ok(::subxt::SubmittableExtrinsic::new(self.client, call))
@@ -14151,10 +14157,10 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							77u8, 230u8, 113u8, 48u8, 203u8, 26u8, 123u8, 225u8, 66u8, 109u8,
-							107u8, 206u8, 244u8, 90u8, 229u8, 236u8, 68u8, 48u8, 135u8, 240u8,
-							101u8, 51u8, 255u8, 214u8, 40u8, 206u8, 239u8, 72u8, 121u8, 127u8,
-							89u8, 7u8,
+							190u8, 80u8, 88u8, 127u8, 165u8, 67u8, 53u8, 135u8, 80u8, 120u8, 113u8,
+							1u8, 184u8, 142u8, 21u8, 124u8, 100u8, 175u8, 181u8, 11u8, 112u8,
+							115u8, 108u8, 90u8, 190u8, 23u8, 218u8, 199u8, 81u8, 206u8, 179u8,
+							38u8,
 						] {
 						let call = BatchAll { calls };
 						Ok(::subxt::SubmittableExtrinsic::new(self.client, call))
@@ -14194,9 +14200,9 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							159u8, 1u8, 63u8, 56u8, 85u8, 96u8, 69u8, 88u8, 84u8, 136u8, 81u8,
-							215u8, 32u8, 249u8, 126u8, 183u8, 224u8, 171u8, 103u8, 233u8, 190u8,
-							235u8, 207u8, 239u8, 211u8, 93u8, 4u8, 170u8, 191u8, 8u8, 252u8, 12u8,
+							192u8, 147u8, 27u8, 240u8, 114u8, 193u8, 179u8, 142u8, 215u8, 0u8,
+							38u8, 201u8, 70u8, 61u8, 40u8, 111u8, 50u8, 192u8, 155u8, 52u8, 167u8,
+							75u8, 25u8, 190u8, 143u8, 169u8, 48u8, 121u8, 9u8, 132u8, 61u8, 235u8,
 						] {
 						let call = DispatchAs {
 							as_origin: ::std::boxed::Box::new(as_origin),
@@ -14242,9 +14248,9 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							44u8, 38u8, 49u8, 119u8, 255u8, 206u8, 22u8, 107u8, 180u8, 28u8, 93u8,
-							144u8, 254u8, 49u8, 26u8, 119u8, 127u8, 163u8, 137u8, 81u8, 34u8,
-							226u8, 24u8, 245u8, 157u8, 92u8, 71u8, 49u8, 249u8, 89u8, 62u8, 140u8,
+							161u8, 188u8, 219u8, 213u8, 229u8, 64u8, 209u8, 88u8, 22u8, 19u8,
+							186u8, 245u8, 94u8, 15u8, 43u8, 161u8, 189u8, 66u8, 177u8, 42u8, 229u8,
+							145u8, 62u8, 92u8, 30u8, 152u8, 188u8, 21u8, 155u8, 199u8, 230u8, 41u8,
 						] {
 						let call = ForceBatch { calls };
 						Ok(::subxt::SubmittableExtrinsic::new(self.client, call))
@@ -14897,9 +14903,9 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							54u8, 221u8, 85u8, 54u8, 218u8, 19u8, 61u8, 209u8, 224u8, 32u8, 5u8,
-							33u8, 161u8, 202u8, 210u8, 182u8, 215u8, 105u8, 115u8, 29u8, 39u8,
-							19u8, 213u8, 87u8, 171u8, 106u8, 176u8, 49u8, 6u8, 38u8, 126u8, 2u8,
+							112u8, 174u8, 218u8, 159u8, 51u8, 72u8, 238u8, 142u8, 177u8, 117u8,
+							81u8, 58u8, 5u8, 81u8, 183u8, 241u8, 132u8, 99u8, 150u8, 229u8, 164u8,
+							239u8, 106u8, 26u8, 4u8, 124u8, 9u8, 23u8, 196u8, 21u8, 82u8, 223u8,
 						] {
 						let call =
 							Proxy { real, force_proxy_type, call: ::std::boxed::Box::new(call) };
@@ -15342,9 +15348,9 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							47u8, 48u8, 13u8, 198u8, 56u8, 187u8, 88u8, 157u8, 253u8, 40u8, 242u8,
-							44u8, 171u8, 83u8, 178u8, 208u8, 49u8, 38u8, 96u8, 95u8, 121u8, 157u8,
-							47u8, 23u8, 208u8, 210u8, 50u8, 122u8, 43u8, 31u8, 197u8, 183u8,
+							133u8, 100u8, 141u8, 225u8, 224u8, 111u8, 9u8, 31u8, 248u8, 184u8,
+							49u8, 248u8, 93u8, 65u8, 0u8, 113u8, 226u8, 206u8, 216u8, 221u8, 72u8,
+							77u8, 79u8, 234u8, 182u8, 46u8, 23u8, 237u8, 252u8, 13u8, 184u8, 184u8,
 						] {
 						let call = ProxyAnnounced {
 							delegate,
@@ -21185,10 +21191,10 @@ pub mod api {
 						};
 						if runtime_storage_hash ==
 							[
-								99u8, 64u8, 21u8, 238u8, 5u8, 116u8, 135u8, 20u8, 245u8, 18u8,
-								14u8, 134u8, 115u8, 125u8, 197u8, 45u8, 2u8, 53u8, 49u8, 1u8,
-								248u8, 190u8, 53u8, 36u8, 4u8, 226u8, 103u8, 10u8, 35u8, 213u8,
-								28u8, 198u8,
+								92u8, 62u8, 111u8, 78u8, 92u8, 255u8, 129u8, 9u8, 223u8, 170u8,
+								162u8, 137u8, 90u8, 189u8, 162u8, 146u8, 111u8, 235u8, 96u8, 46u8,
+								222u8, 161u8, 72u8, 148u8, 173u8, 119u8, 2u8, 9u8, 152u8, 90u8,
+								88u8, 83u8,
 							] {
 							let entry = AssetIdRanges;
 							client.storage().fetch_or_default(&entry, block_hash).await
@@ -26390,6 +26396,14 @@ pub mod api {
 				pub asset_id: runtime_types::primitives::currency::CurrencyId,
 				pub address: runtime_types::composable_support::types::EthereumAddress,
 				pub amount: ::core::primitive::u128,
+				pub swap_to_native: ::core::primitive::bool,
+				pub source_user_account: ::subxt::sp_core::crypto::AccountId32,
+				pub amm_swap_info: ::core::option::Option<
+					runtime_types::pallet_mosaic::pallet::AmmSwapInfo<
+						::core::primitive::u32,
+						::core::primitive::u128,
+					>,
+				>,
 				pub keep_alive: ::core::primitive::bool,
 			}
 			impl ::subxt::Call for TransferTo {
@@ -26472,6 +26486,24 @@ pub mod api {
 			impl ::subxt::Call for UpdateAssetMapping {
 				const PALLET: &'static str = "Mosaic";
 				const FUNCTION: &'static str = "update_asset_mapping";
+			}
+			#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
+			pub struct AddRemoteAmmId {
+				pub network_id: ::core::primitive::u32,
+				pub amm_id: ::core::primitive::u128,
+			}
+			impl ::subxt::Call for AddRemoteAmmId {
+				const PALLET: &'static str = "Mosaic";
+				const FUNCTION: &'static str = "add_remote_amm_id";
+			}
+			#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
+			pub struct RemoveRemoteAmmId {
+				pub network_id: ::core::primitive::u32,
+				pub amm_id: ::core::primitive::u128,
+			}
+			impl ::subxt::Call for RemoveRemoteAmmId {
+				const PALLET: &'static str = "Mosaic";
+				const FUNCTION: &'static str = "remove_remote_amm_id";
 			}
 			pub struct TransactionApi<'a, T: ::subxt::Config, X> {
 				client: &'a ::subxt::Client<T>,
@@ -26657,6 +26689,14 @@ pub mod api {
 					asset_id: runtime_types::primitives::currency::CurrencyId,
 					address: runtime_types::composable_support::types::EthereumAddress,
 					amount: ::core::primitive::u128,
+					swap_to_native: ::core::primitive::bool,
+					source_user_account: ::subxt::sp_core::crypto::AccountId32,
+					amm_swap_info: ::core::option::Option<
+						runtime_types::pallet_mosaic::pallet::AmmSwapInfo<
+							::core::primitive::u32,
+							::core::primitive::u128,
+						>,
+					>,
 					keep_alive: ::core::primitive::bool,
 				) -> Result<
 					::subxt::SubmittableExtrinsic<
@@ -26676,11 +26716,21 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							14u8, 77u8, 57u8, 56u8, 37u8, 142u8, 201u8, 250u8, 86u8, 253u8, 144u8,
-							136u8, 170u8, 234u8, 86u8, 35u8, 181u8, 77u8, 74u8, 87u8, 93u8, 178u8,
-							177u8, 251u8, 87u8, 132u8, 6u8, 150u8, 41u8, 144u8, 90u8, 52u8,
+							161u8, 202u8, 213u8, 184u8, 239u8, 215u8, 108u8, 110u8, 78u8, 131u8,
+							235u8, 48u8, 171u8, 93u8, 189u8, 166u8, 146u8, 69u8, 167u8, 163u8,
+							247u8, 142u8, 146u8, 158u8, 164u8, 153u8, 219u8, 31u8, 183u8, 162u8,
+							12u8, 19u8,
 						] {
-						let call = TransferTo { network_id, asset_id, address, amount, keep_alive };
+						let call = TransferTo {
+							network_id,
+							asset_id,
+							address,
+							amount,
+							swap_to_native,
+							source_user_account,
+							amm_swap_info,
+							keep_alive,
+						};
 						Ok(::subxt::SubmittableExtrinsic::new(self.client, call))
 					} else {
 						Err(::subxt::MetadataError::IncompatibleMetadata.into())
@@ -26973,6 +27023,74 @@ pub mod api {
 						Err(::subxt::MetadataError::IncompatibleMetadata.into())
 					}
 				}
+				#[doc = "Adds a remote AMM for a specific Network"]
+				pub fn add_remote_amm_id(
+					&self,
+					network_id: ::core::primitive::u32,
+					amm_id: ::core::primitive::u128,
+				) -> Result<
+					::subxt::SubmittableExtrinsic<
+						'a,
+						T,
+						X,
+						AddRemoteAmmId,
+						DispatchError,
+						root_mod::Event,
+					>,
+					::subxt::BasicError,
+				> {
+					let runtime_call_hash = {
+						let locked_metadata = self.client.metadata();
+						let metadata = locked_metadata.read();
+						metadata.call_hash::<AddRemoteAmmId>()?
+					};
+					if runtime_call_hash ==
+						[
+							86u8, 233u8, 50u8, 215u8, 162u8, 237u8, 119u8, 62u8, 49u8, 54u8, 149u8,
+							162u8, 13u8, 157u8, 16u8, 247u8, 50u8, 183u8, 36u8, 229u8, 202u8,
+							145u8, 227u8, 176u8, 74u8, 224u8, 186u8, 168u8, 95u8, 209u8, 71u8,
+							162u8,
+						] {
+						let call = AddRemoteAmmId { network_id, amm_id };
+						Ok(::subxt::SubmittableExtrinsic::new(self.client, call))
+					} else {
+						Err(::subxt::MetadataError::IncompatibleMetadata.into())
+					}
+				}
+				#[doc = "Removes a remote AMM for a specific Network"]
+				pub fn remove_remote_amm_id(
+					&self,
+					network_id: ::core::primitive::u32,
+					amm_id: ::core::primitive::u128,
+				) -> Result<
+					::subxt::SubmittableExtrinsic<
+						'a,
+						T,
+						X,
+						RemoveRemoteAmmId,
+						DispatchError,
+						root_mod::Event,
+					>,
+					::subxt::BasicError,
+				> {
+					let runtime_call_hash = {
+						let locked_metadata = self.client.metadata();
+						let metadata = locked_metadata.read();
+						metadata.call_hash::<RemoveRemoteAmmId>()?
+					};
+					if runtime_call_hash ==
+						[
+							28u8, 191u8, 49u8, 107u8, 104u8, 103u8, 198u8, 22u8, 212u8, 164u8,
+							134u8, 172u8, 136u8, 216u8, 252u8, 99u8, 107u8, 228u8, 102u8, 185u8,
+							166u8, 102u8, 57u8, 79u8, 247u8, 183u8, 52u8, 25u8, 247u8, 42u8, 209u8,
+							242u8,
+						] {
+						let call = RemoveRemoteAmmId { network_id, amm_id };
+						Ok(::subxt::SubmittableExtrinsic::new(self.client, call))
+					} else {
+						Err(::subxt::MetadataError::IncompatibleMetadata.into())
+					}
+				}
 			}
 		}
 		#[doc = "\n\t\t\tThe [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted\n\t\t\tby this pallet.\n\t\t\t"]
@@ -27031,6 +27149,14 @@ pub mod api {
 				pub network_id: ::core::primitive::u32,
 				pub remote_asset_id: runtime_types::common::types::MosaicRemoteAssetId,
 				pub amount: ::core::primitive::u128,
+				pub swap_to_native: ::core::primitive::bool,
+				pub source_user_account: ::subxt::sp_core::crypto::AccountId32,
+				pub amm_swap_info: ::core::option::Option<
+					runtime_types::pallet_mosaic::pallet::AmmSwapInfo<
+						::core::primitive::u32,
+						::core::primitive::u128,
+					>,
+				>,
 			}
 			impl ::subxt::Event for TransferOut {
 				const PALLET: &'static str = "Mosaic";
@@ -27208,6 +27334,27 @@ pub mod api {
 				type Value = ::core::primitive::u128;
 				fn key(&self) -> ::subxt::StorageEntryKey {
 					::subxt::StorageEntryKey::Plain
+				}
+			}
+			pub struct RemoteAmmWhitelist<'a>(
+				pub &'a ::core::primitive::u32,
+				pub &'a ::core::primitive::u128,
+			);
+			impl ::subxt::StorageEntry for RemoteAmmWhitelist<'_> {
+				const PALLET: &'static str = "Mosaic";
+				const STORAGE: &'static str = "RemoteAmmWhitelist";
+				type Value = ();
+				fn key(&self) -> ::subxt::StorageEntryKey {
+					::subxt::StorageEntryKey::Map(vec![
+						::subxt::StorageMapKey::new(
+							&self.0,
+							::subxt::StorageHasher::Blake2_128Concat,
+						),
+						::subxt::StorageMapKey::new(
+							&self.1,
+							::subxt::StorageHasher::Blake2_128Concat,
+						),
+					])
 				}
 			}
 			pub struct OutgoingTransactions<'a>(
@@ -27539,6 +27686,79 @@ pub mod api {
 							] {
 							let entry = Nonce;
 							client.storage().fetch_or_default(&entry, block_hash).await
+						} else {
+							Err(::subxt::MetadataError::IncompatibleMetadata.into())
+						}
+					}
+				}
+				#[doc = " Remote AMM IDs that exist (NetworkId, AmmId)."]
+				#[doc = " Note that this is actually a set that does bookkeeping of valid AmmIds."]
+				#[doc = " Therefore, the value type is (), because it is irrelevant for our use case."]
+				pub fn remote_amm_whitelist(
+					&self,
+					_0: &'a ::core::primitive::u32,
+					_1: &'a ::core::primitive::u128,
+					block_hash: ::core::option::Option<T::Hash>,
+				) -> impl ::core::future::Future<
+					Output = ::core::result::Result<
+						::core::option::Option<()>,
+						::subxt::BasicError,
+					>,
+				> + 'a {
+					let client = self.client;
+					async move {
+						let runtime_storage_hash = {
+							let locked_metadata = client.metadata();
+							let metadata = locked_metadata.read();
+							match metadata.storage_hash::<RemoteAmmWhitelist>() {
+								Ok(hash) => hash,
+								Err(e) => return Err(e.into()),
+							}
+						};
+						if runtime_storage_hash ==
+							[
+								141u8, 249u8, 50u8, 17u8, 142u8, 111u8, 4u8, 128u8, 175u8, 52u8,
+								74u8, 186u8, 230u8, 148u8, 50u8, 102u8, 19u8, 164u8, 27u8, 119u8,
+								33u8, 38u8, 201u8, 244u8, 66u8, 253u8, 38u8, 5u8, 97u8, 14u8,
+								202u8, 10u8,
+							] {
+							let entry = RemoteAmmWhitelist(_0, _1);
+							client.storage().fetch(&entry, block_hash).await
+						} else {
+							Err(::subxt::MetadataError::IncompatibleMetadata.into())
+						}
+					}
+				}
+				#[doc = " Remote AMM IDs that exist (NetworkId, AmmId)."]
+				#[doc = " Note that this is actually a set that does bookkeeping of valid AmmIds."]
+				#[doc = " Therefore, the value type is (), because it is irrelevant for our use case."]
+				pub fn remote_amm_whitelist_iter(
+					&self,
+					block_hash: ::core::option::Option<T::Hash>,
+				) -> impl ::core::future::Future<
+					Output = ::core::result::Result<
+						::subxt::KeyIter<'a, T, RemoteAmmWhitelist<'a>>,
+						::subxt::BasicError,
+					>,
+				> + 'a {
+					let client = self.client;
+					async move {
+						let runtime_storage_hash = {
+							let locked_metadata = client.metadata();
+							let metadata = locked_metadata.read();
+							match metadata.storage_hash::<RemoteAmmWhitelist>() {
+								Ok(hash) => hash,
+								Err(e) => return Err(e.into()),
+							}
+						};
+						if runtime_storage_hash ==
+							[
+								141u8, 249u8, 50u8, 17u8, 142u8, 111u8, 4u8, 128u8, 175u8, 52u8,
+								74u8, 186u8, 230u8, 148u8, 50u8, 102u8, 19u8, 164u8, 27u8, 119u8,
+								33u8, 38u8, 201u8, 244u8, 66u8, 253u8, 38u8, 5u8, 97u8, 14u8,
+								202u8, 10u8,
+							] {
+							client.storage().iter(block_hash).await
 						} else {
 							Err(::subxt::MetadataError::IncompatibleMetadata.into())
 						}
@@ -29888,6 +30108,20 @@ pub mod api {
 				const PALLET: &'static str = "Pablo";
 				const EVENT: &'static str = "Swapped";
 			}
+			#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
+			#[doc = "TWAP updated."]
+			pub struct TwapUpdated {
+				pub pool_id: ::core::primitive::u128,
+				pub timestamp: ::core::primitive::u64,
+				pub twaps: ::subxt::KeyedVec<
+					runtime_types::primitives::currency::CurrencyId,
+					runtime_types::sp_arithmetic::fixed_point::FixedU128,
+				>,
+			}
+			impl ::subxt::Event for TwapUpdated {
+				const PALLET: &'static str = "Pablo";
+				const EVENT: &'static str = "TwapUpdated";
+			}
 		}
 		pub mod storage {
 			use super::runtime_types;
@@ -30867,6 +31101,69 @@ pub mod api {
 			}
 		}
 	}
+	pub mod staking_rewards {
+		use super::{root_mod, runtime_types};
+		#[doc = "\n\t\t\tThe [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted\n\t\t\tby this pallet.\n\t\t\t"]
+		pub type Event = runtime_types::pallet_staking_rewards::pallet::Event;
+		pub mod events {
+			use super::runtime_types;
+		}
+		pub mod constants {
+			use super::runtime_types;
+			pub struct ConstantsApi<'a, T: ::subxt::Config> {
+				client: &'a ::subxt::Client<T>,
+			}
+			impl<'a, T: ::subxt::Config> ConstantsApi<'a, T> {
+				pub fn new(client: &'a ::subxt::Client<T>) -> Self {
+					Self { client }
+				}
+				#[doc = " the size of batch to take each time trying to release rewards"]
+				pub fn release_rewards_pools_batch_size(
+					&self,
+				) -> ::core::result::Result<::core::primitive::u8, ::subxt::BasicError> {
+					let locked_metadata = self.client.metadata();
+					let metadata = locked_metadata.read();
+					if metadata.constant_hash("StakingRewards", "ReleaseRewardsPoolsBatchSize")? ==
+						[
+							108u8, 225u8, 180u8, 4u8, 27u8, 182u8, 110u8, 47u8, 207u8, 202u8,
+							233u8, 80u8, 125u8, 135u8, 169u8, 234u8, 38u8, 200u8, 6u8, 121u8,
+							205u8, 176u8, 248u8, 177u8, 0u8, 138u8, 213u8, 227u8, 129u8, 145u8,
+							64u8, 48u8,
+						] {
+						let pallet = metadata.pallet("StakingRewards")?;
+						let constant = pallet.constant("ReleaseRewardsPoolsBatchSize")?;
+						let value = ::subxt::codec::Decode::decode(&mut &constant.value[..])?;
+						Ok(value)
+					} else {
+						Err(::subxt::MetadataError::IncompatibleMetadata.into())
+					}
+				}
+				pub fn pallet_id(
+					&self,
+				) -> ::core::result::Result<
+					runtime_types::frame_support::PalletId,
+					::subxt::BasicError,
+				> {
+					let locked_metadata = self.client.metadata();
+					let metadata = locked_metadata.read();
+					if metadata.constant_hash("StakingRewards", "PalletId")? ==
+						[
+							189u8, 101u8, 193u8, 125u8, 53u8, 26u8, 17u8, 138u8, 154u8, 22u8,
+							154u8, 115u8, 60u8, 48u8, 151u8, 226u8, 249u8, 88u8, 22u8, 46u8, 16u8,
+							246u8, 28u8, 176u8, 148u8, 125u8, 173u8, 45u8, 20u8, 181u8, 24u8,
+							231u8,
+						] {
+						let pallet = metadata.pallet("StakingRewards")?;
+						let constant = pallet.constant("PalletId")?;
+						let value = ::subxt::codec::Decode::decode(&mut &constant.value[..])?;
+						Ok(value)
+					} else {
+						Err(::subxt::MetadataError::IncompatibleMetadata.into())
+					}
+				}
+			}
+		}
+	}
 	pub mod call_filter {
 		use super::{root_mod, runtime_types};
 		#[doc = "Contains one variant per dispatchable that can be called by an extrinsic."]
@@ -31220,9 +31517,9 @@ pub mod api {
 					};
 					if runtime_call_hash ==
 						[
-							69u8, 145u8, 173u8, 55u8, 6u8, 103u8, 104u8, 54u8, 235u8, 252u8, 73u8,
-							185u8, 40u8, 192u8, 99u8, 130u8, 246u8, 42u8, 232u8, 171u8, 101u8,
-							48u8, 94u8, 13u8, 57u8, 158u8, 107u8, 57u8, 116u8, 156u8, 140u8, 130u8,
+							180u8, 164u8, 150u8, 222u8, 115u8, 49u8, 134u8, 23u8, 43u8, 57u8, 43u8,
+							146u8, 226u8, 72u8, 13u8, 129u8, 136u8, 34u8, 26u8, 34u8, 177u8, 17u8,
+							234u8, 155u8, 102u8, 119u8, 218u8, 244u8, 111u8, 39u8, 165u8, 80u8,
 						] {
 						let call = SendPing { params };
 						Ok(::subxt::SubmittableExtrinsic::new(self.client, call))
@@ -31266,6 +31563,396 @@ pub mod api {
 			}
 		}
 	}
+	pub mod transfer {
+		use super::{root_mod, runtime_types};
+		#[doc = "Contains one variant per dispatchable that can be called by an extrinsic."]
+		pub mod calls {
+			use super::{root_mod, runtime_types};
+			type DispatchError = runtime_types::sp_runtime::DispatchError;
+			#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
+			pub struct Transfer {
+				pub params: runtime_types::ibc_transfer::pallet::TransferParams,
+				pub asset_id: runtime_types::primitives::currency::CurrencyId,
+				pub amount: ::core::primitive::u128,
+			}
+			impl ::subxt::Call for Transfer {
+				const PALLET: &'static str = "Transfer";
+				const FUNCTION: &'static str = "transfer";
+			}
+			#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
+			pub struct OpenChannel {
+				pub params: runtime_types::ibc_trait::OpenChannelParams,
+			}
+			impl ::subxt::Call for OpenChannel {
+				const PALLET: &'static str = "Transfer";
+				const FUNCTION: &'static str = "open_channel";
+			}
+			#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
+			pub struct SetPalletParams {
+				pub params: runtime_types::ibc_transfer::pallet::PalletParams,
+			}
+			impl ::subxt::Call for SetPalletParams {
+				const PALLET: &'static str = "Transfer";
+				const FUNCTION: &'static str = "set_pallet_params";
+			}
+			pub struct TransactionApi<'a, T: ::subxt::Config, X> {
+				client: &'a ::subxt::Client<T>,
+				marker: ::core::marker::PhantomData<X>,
+			}
+			impl<'a, T, X> TransactionApi<'a, T, X>
+			where
+				T: ::subxt::Config,
+				X: ::subxt::extrinsic::ExtrinsicParams<T>,
+			{
+				pub fn new(client: &'a ::subxt::Client<T>) -> Self {
+					Self { client, marker: ::core::marker::PhantomData }
+				}
+				pub fn transfer(
+					&self,
+					params: runtime_types::ibc_transfer::pallet::TransferParams,
+					asset_id: runtime_types::primitives::currency::CurrencyId,
+					amount: ::core::primitive::u128,
+				) -> Result<
+					::subxt::SubmittableExtrinsic<
+						'a,
+						T,
+						X,
+						Transfer,
+						DispatchError,
+						root_mod::Event,
+					>,
+					::subxt::BasicError,
+				> {
+					let runtime_call_hash = {
+						let locked_metadata = self.client.metadata();
+						let metadata = locked_metadata.read();
+						metadata.call_hash::<Transfer>()?
+					};
+					if runtime_call_hash ==
+						[
+							120u8, 208u8, 28u8, 92u8, 69u8, 249u8, 252u8, 105u8, 64u8, 232u8, 84u8,
+							66u8, 235u8, 30u8, 25u8, 12u8, 51u8, 12u8, 183u8, 52u8, 130u8, 131u8,
+							183u8, 0u8, 95u8, 180u8, 247u8, 89u8, 197u8, 101u8, 42u8, 218u8,
+						] {
+						let call = Transfer { params, asset_id, amount };
+						Ok(::subxt::SubmittableExtrinsic::new(self.client, call))
+					} else {
+						Err(::subxt::MetadataError::IncompatibleMetadata.into())
+					}
+				}
+				pub fn open_channel(
+					&self,
+					params: runtime_types::ibc_trait::OpenChannelParams,
+				) -> Result<
+					::subxt::SubmittableExtrinsic<
+						'a,
+						T,
+						X,
+						OpenChannel,
+						DispatchError,
+						root_mod::Event,
+					>,
+					::subxt::BasicError,
+				> {
+					let runtime_call_hash = {
+						let locked_metadata = self.client.metadata();
+						let metadata = locked_metadata.read();
+						metadata.call_hash::<OpenChannel>()?
+					};
+					if runtime_call_hash ==
+						[
+							109u8, 41u8, 32u8, 59u8, 130u8, 39u8, 143u8, 113u8, 63u8, 39u8, 12u8,
+							47u8, 241u8, 121u8, 131u8, 242u8, 76u8, 147u8, 153u8, 169u8, 131u8,
+							58u8, 24u8, 88u8, 248u8, 131u8, 58u8, 129u8, 186u8, 224u8, 99u8, 183u8,
+						] {
+						let call = OpenChannel { params };
+						Ok(::subxt::SubmittableExtrinsic::new(self.client, call))
+					} else {
+						Err(::subxt::MetadataError::IncompatibleMetadata.into())
+					}
+				}
+				pub fn set_pallet_params(
+					&self,
+					params: runtime_types::ibc_transfer::pallet::PalletParams,
+				) -> Result<
+					::subxt::SubmittableExtrinsic<
+						'a,
+						T,
+						X,
+						SetPalletParams,
+						DispatchError,
+						root_mod::Event,
+					>,
+					::subxt::BasicError,
+				> {
+					let runtime_call_hash = {
+						let locked_metadata = self.client.metadata();
+						let metadata = locked_metadata.read();
+						metadata.call_hash::<SetPalletParams>()?
+					};
+					if runtime_call_hash ==
+						[
+							59u8, 92u8, 123u8, 215u8, 247u8, 196u8, 178u8, 224u8, 105u8, 238u8,
+							83u8, 200u8, 32u8, 91u8, 229u8, 62u8, 175u8, 63u8, 145u8, 154u8, 55u8,
+							194u8, 176u8, 206u8, 12u8, 200u8, 106u8, 194u8, 231u8, 81u8, 194u8,
+							173u8,
+						] {
+						let call = SetPalletParams { params };
+						Ok(::subxt::SubmittableExtrinsic::new(self.client, call))
+					} else {
+						Err(::subxt::MetadataError::IncompatibleMetadata.into())
+					}
+				}
+			}
+		}
+		#[doc = "\n\t\t\tThe [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted\n\t\t\tby this pallet.\n\t\t\t"]
+		pub type Event = runtime_types::ibc_transfer::pallet::Event;
+		pub mod events {
+			use super::runtime_types;
+			#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
+			pub struct TokenTransferInitiated {
+				pub from: ::subxt::sp_core::crypto::AccountId32,
+				pub to: ::std::vec::Vec<::core::primitive::u8>,
+				pub amount: ::core::primitive::u128,
+			}
+			impl ::subxt::Event for TokenTransferInitiated {
+				const PALLET: &'static str = "Transfer";
+				const EVENT: &'static str = "TokenTransferInitiated";
+			}
+			#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
+			#[doc = "A channel has been opened"]
+			pub struct ChannelOpened {
+				pub channel_id: ::std::vec::Vec<::core::primitive::u8>,
+				pub port_id: ::std::vec::Vec<::core::primitive::u8>,
+			}
+			impl ::subxt::Event for ChannelOpened {
+				const PALLET: &'static str = "Transfer";
+				const EVENT: &'static str = "ChannelOpened";
+			}
+			#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
+			#[doc = "Pallet params updated"]
+			pub struct PalletParamsUpdated {
+				pub send_enabled: ::core::primitive::bool,
+				pub receive_enabled: ::core::primitive::bool,
+			}
+			impl ::subxt::Event for PalletParamsUpdated {
+				const PALLET: &'static str = "Transfer";
+				const EVENT: &'static str = "PalletParamsUpdated";
+			}
+		}
+		pub mod storage {
+			use super::runtime_types;
+			pub struct Params;
+			impl ::subxt::StorageEntry for Params {
+				const PALLET: &'static str = "Transfer";
+				const STORAGE: &'static str = "Params";
+				type Value = runtime_types::ibc_transfer::pallet::PalletParams;
+				fn key(&self) -> ::subxt::StorageEntryKey {
+					::subxt::StorageEntryKey::Plain
+				}
+			}
+			pub struct IbcAssetIds<'a>(pub &'a runtime_types::primitives::currency::CurrencyId);
+			impl ::subxt::StorageEntry for IbcAssetIds<'_> {
+				const PALLET: &'static str = "Transfer";
+				const STORAGE: &'static str = "IbcAssetIds";
+				type Value = ::std::vec::Vec<::core::primitive::u8>;
+				fn key(&self) -> ::subxt::StorageEntryKey {
+					::subxt::StorageEntryKey::Map(vec![::subxt::StorageMapKey::new(
+						&self.0,
+						::subxt::StorageHasher::Twox64Concat,
+					)])
+				}
+			}
+			pub struct ChannelIds;
+			impl ::subxt::StorageEntry for ChannelIds {
+				const PALLET: &'static str = "Transfer";
+				const STORAGE: &'static str = "ChannelIds";
+				type Value = ::std::vec::Vec<::std::vec::Vec<::core::primitive::u8>>;
+				fn key(&self) -> ::subxt::StorageEntryKey {
+					::subxt::StorageEntryKey::Plain
+				}
+			}
+			pub struct StorageApi<'a, T: ::subxt::Config> {
+				client: &'a ::subxt::Client<T>,
+			}
+			impl<'a, T: ::subxt::Config> StorageApi<'a, T> {
+				pub fn new(client: &'a ::subxt::Client<T>) -> Self {
+					Self { client }
+				}
+				#[doc = " Pallet Params used to disable sending or receipt of ibc tokens"]
+				pub fn params(
+					&self,
+					block_hash: ::core::option::Option<T::Hash>,
+				) -> impl ::core::future::Future<
+					Output = ::core::result::Result<
+						runtime_types::ibc_transfer::pallet::PalletParams,
+						::subxt::BasicError,
+					>,
+				> + 'a {
+					let client = self.client;
+					async move {
+						let runtime_storage_hash = {
+							let locked_metadata = client.metadata();
+							let metadata = locked_metadata.read();
+							match metadata.storage_hash::<Params>() {
+								Ok(hash) => hash,
+								Err(e) => return Err(e.into()),
+							}
+						};
+						if runtime_storage_hash ==
+							[
+								3u8, 55u8, 60u8, 27u8, 102u8, 66u8, 127u8, 111u8, 252u8, 82u8,
+								178u8, 63u8, 66u8, 169u8, 82u8, 3u8, 4u8, 98u8, 227u8, 34u8, 90u8,
+								230u8, 176u8, 152u8, 57u8, 109u8, 189u8, 6u8, 97u8, 160u8, 129u8,
+								4u8,
+							] {
+							let entry = Params;
+							client.storage().fetch_or_default(&entry, block_hash).await
+						} else {
+							Err(::subxt::MetadataError::IncompatibleMetadata.into())
+						}
+					}
+				}
+				#[doc = " Map of asset id to ibc denom pairs (T::AssetId, Vec<u8>)"]
+				#[doc = " ibc denoms represented as utf8 string bytes"]
+				pub fn ibc_asset_ids(
+					&self,
+					_0: &'a runtime_types::primitives::currency::CurrencyId,
+					block_hash: ::core::option::Option<T::Hash>,
+				) -> impl ::core::future::Future<
+					Output = ::core::result::Result<
+						::core::option::Option<::std::vec::Vec<::core::primitive::u8>>,
+						::subxt::BasicError,
+					>,
+				> + 'a {
+					let client = self.client;
+					async move {
+						let runtime_storage_hash = {
+							let locked_metadata = client.metadata();
+							let metadata = locked_metadata.read();
+							match metadata.storage_hash::<IbcAssetIds>() {
+								Ok(hash) => hash,
+								Err(e) => return Err(e.into()),
+							}
+						};
+						if runtime_storage_hash ==
+							[
+								101u8, 147u8, 209u8, 89u8, 150u8, 173u8, 2u8, 130u8, 228u8, 188u8,
+								219u8, 120u8, 134u8, 151u8, 22u8, 15u8, 119u8, 221u8, 3u8, 152u8,
+								255u8, 224u8, 199u8, 215u8, 158u8, 129u8, 78u8, 92u8, 233u8, 227u8,
+								72u8, 213u8,
+							] {
+							let entry = IbcAssetIds(_0);
+							client.storage().fetch(&entry, block_hash).await
+						} else {
+							Err(::subxt::MetadataError::IncompatibleMetadata.into())
+						}
+					}
+				}
+				#[doc = " Map of asset id to ibc denom pairs (T::AssetId, Vec<u8>)"]
+				#[doc = " ibc denoms represented as utf8 string bytes"]
+				pub fn ibc_asset_ids_iter(
+					&self,
+					block_hash: ::core::option::Option<T::Hash>,
+				) -> impl ::core::future::Future<
+					Output = ::core::result::Result<
+						::subxt::KeyIter<'a, T, IbcAssetIds<'a>>,
+						::subxt::BasicError,
+					>,
+				> + 'a {
+					let client = self.client;
+					async move {
+						let runtime_storage_hash = {
+							let locked_metadata = client.metadata();
+							let metadata = locked_metadata.read();
+							match metadata.storage_hash::<IbcAssetIds>() {
+								Ok(hash) => hash,
+								Err(e) => return Err(e.into()),
+							}
+						};
+						if runtime_storage_hash ==
+							[
+								101u8, 147u8, 209u8, 89u8, 150u8, 173u8, 2u8, 130u8, 228u8, 188u8,
+								219u8, 120u8, 134u8, 151u8, 22u8, 15u8, 119u8, 221u8, 3u8, 152u8,
+								255u8, 224u8, 199u8, 215u8, 158u8, 129u8, 78u8, 92u8, 233u8, 227u8,
+								72u8, 213u8,
+							] {
+							client.storage().iter(block_hash).await
+						} else {
+							Err(::subxt::MetadataError::IncompatibleMetadata.into())
+						}
+					}
+				}
+				#[doc = " ChannelIds open from this module"]
+				pub fn channel_ids(
+					&self,
+					block_hash: ::core::option::Option<T::Hash>,
+				) -> impl ::core::future::Future<
+					Output = ::core::result::Result<
+						::std::vec::Vec<::std::vec::Vec<::core::primitive::u8>>,
+						::subxt::BasicError,
+					>,
+				> + 'a {
+					let client = self.client;
+					async move {
+						let runtime_storage_hash = {
+							let locked_metadata = client.metadata();
+							let metadata = locked_metadata.read();
+							match metadata.storage_hash::<ChannelIds>() {
+								Ok(hash) => hash,
+								Err(e) => return Err(e.into()),
+							}
+						};
+						if runtime_storage_hash ==
+							[
+								21u8, 104u8, 164u8, 90u8, 17u8, 181u8, 235u8, 0u8, 67u8, 67u8,
+								164u8, 217u8, 126u8, 131u8, 214u8, 38u8, 143u8, 134u8, 215u8,
+								173u8, 53u8, 154u8, 118u8, 215u8, 175u8, 207u8, 14u8, 134u8, 241u8,
+								215u8, 188u8, 69u8,
+							] {
+							let entry = ChannelIds;
+							client.storage().fetch_or_default(&entry, block_hash).await
+						} else {
+							Err(::subxt::MetadataError::IncompatibleMetadata.into())
+						}
+					}
+				}
+			}
+		}
+		pub mod constants {
+			use super::runtime_types;
+			pub struct ConstantsApi<'a, T: ::subxt::Config> {
+				client: &'a ::subxt::Client<T>,
+			}
+			impl<'a, T: ::subxt::Config> ConstantsApi<'a, T> {
+				pub fn new(client: &'a ::subxt::Client<T>) -> Self {
+					Self { client }
+				}
+				pub fn pallet_id(
+					&self,
+				) -> ::core::result::Result<
+					runtime_types::frame_support::PalletId,
+					::subxt::BasicError,
+				> {
+					let locked_metadata = self.client.metadata();
+					let metadata = locked_metadata.read();
+					if metadata.constant_hash("Transfer", "PalletId")? ==
+						[
+							47u8, 196u8, 12u8, 56u8, 70u8, 61u8, 100u8, 138u8, 108u8, 108u8, 90u8,
+							23u8, 248u8, 66u8, 133u8, 219u8, 203u8, 67u8, 110u8, 148u8, 237u8,
+							25u8, 151u8, 59u8, 72u8, 78u8, 118u8, 83u8, 186u8, 237u8, 12u8, 235u8,
+						] {
+						let pallet = metadata.pallet("Transfer")?;
+						let constant = pallet.constant("PalletId")?;
+						let value = ::subxt::codec::Decode::decode(&mut &constant.value[..])?;
+						Ok(value)
+					} else {
+						Err(::subxt::MetadataError::IncompatibleMetadata.into())
+					}
+				}
+			}
+		}
+	}
 	pub mod ibc {
 		use super::{root_mod, runtime_types};
 		#[doc = "Contains one variant per dispatchable that can be called by an extrinsic."]
@@ -31279,6 +31966,14 @@ pub mod api {
 			impl ::subxt::Call for Deliver {
 				const PALLET: &'static str = "Ibc";
 				const FUNCTION: &'static str = "deliver";
+			}
+			#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
+			pub struct CreateClient {
+				pub msg: runtime_types::pallet_ibc::Any,
+			}
+			impl ::subxt::Call for CreateClient {
+				const PALLET: &'static str = "Ibc";
+				const FUNCTION: &'static str = "create_client";
 			}
 			#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
 			pub struct InitiateConnection {
@@ -31327,6 +32022,37 @@ pub mod api {
 							220u8,
 						] {
 						let call = Deliver { messages };
+						Ok(::subxt::SubmittableExtrinsic::new(self.client, call))
+					} else {
+						Err(::subxt::MetadataError::IncompatibleMetadata.into())
+					}
+				}
+				pub fn create_client(
+					&self,
+					msg: runtime_types::pallet_ibc::Any,
+				) -> Result<
+					::subxt::SubmittableExtrinsic<
+						'a,
+						T,
+						X,
+						CreateClient,
+						DispatchError,
+						root_mod::Event,
+					>,
+					::subxt::BasicError,
+				> {
+					let runtime_call_hash = {
+						let locked_metadata = self.client.metadata();
+						let metadata = locked_metadata.read();
+						metadata.call_hash::<CreateClient>()?
+					};
+					if runtime_call_hash ==
+						[
+							211u8, 110u8, 33u8, 54u8, 39u8, 113u8, 31u8, 140u8, 240u8, 205u8, 36u8,
+							118u8, 86u8, 54u8, 52u8, 175u8, 253u8, 184u8, 100u8, 108u8, 141u8,
+							174u8, 219u8, 15u8, 18u8, 180u8, 242u8, 55u8, 6u8, 150u8, 245u8, 203u8,
+						] {
+						let call = CreateClient { msg };
 						Ok(::subxt::SubmittableExtrinsic::new(self.client, call))
 					} else {
 						Err(::subxt::MetadataError::IncompatibleMetadata.into())
@@ -33895,6 +34621,8 @@ pub mod api {
 				#[codec(index = 101)]
 				IbcPing(runtime_types::pallet_ibc_ping::pallet::Call),
 				#[codec(index = 102)]
+				Transfer(runtime_types::ibc_transfer::pallet::Call),
+				#[codec(index = 103)]
 				Ibc(runtime_types::pallet_ibc::pallet::Call),
 			}
 			#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
@@ -33975,11 +34703,15 @@ pub mod api {
 				Pablo(runtime_types::pallet_pablo::pallet::Event),
 				#[codec(index = 66)]
 				DexRouter(runtime_types::pallet_dex_router::pallet::Event),
+				#[codec(index = 67)]
+				StakingRewards(runtime_types::pallet_staking_rewards::pallet::Event),
 				#[codec(index = 100)]
 				CallFilter(runtime_types::pallet_call_filter::pallet::Event),
 				#[codec(index = 101)]
 				IbcPing(runtime_types::pallet_ibc_ping::pallet::Event),
 				#[codec(index = 102)]
+				Transfer(runtime_types::ibc_transfer::pallet::Event),
+				#[codec(index = 103)]
 				Ibc(runtime_types::pallet_ibc::pallet::Event),
 			}
 			#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
@@ -34357,6 +35089,92 @@ pub mod api {
 				pub connection_id: ::std::vec::Vec<::core::primitive::u8>,
 				pub counterparty_port_id: ::std::vec::Vec<::core::primitive::u8>,
 				pub version: ::std::vec::Vec<::core::primitive::u8>,
+			}
+		}
+		pub mod ibc_transfer {
+			use super::runtime_types;
+			pub mod pallet {
+				use super::runtime_types;
+				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
+				#[doc = "Contains one variant per dispatchable that can be called by an extrinsic."]
+				pub enum Call {
+					#[codec(index = 0)]
+					transfer {
+						params: runtime_types::ibc_transfer::pallet::TransferParams,
+						asset_id: runtime_types::primitives::currency::CurrencyId,
+						amount: ::core::primitive::u128,
+					},
+					#[codec(index = 1)]
+					open_channel { params: runtime_types::ibc_trait::OpenChannelParams },
+					#[codec(index = 2)]
+					set_pallet_params { params: runtime_types::ibc_transfer::pallet::PalletParams },
+				}
+				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
+				#[doc = "Errors inform users that something went wrong."]
+				pub enum Error {
+					#[codec(index = 0)]
+					#[doc = "The interchain token transfer was not successfully initiated"]
+					TransferFailed,
+					#[codec(index = 1)]
+					#[doc = "Error Decoding utf8 bytes"]
+					Utf8Error,
+					#[codec(index = 2)]
+					#[doc = "Invalid asset id"]
+					InvalidAssetId,
+					#[codec(index = 3)]
+					#[doc = "Invalid Ibc denom"]
+					InvalidIbcDenom,
+					#[codec(index = 4)]
+					#[doc = "Invalid amount"]
+					InvalidAmount,
+					#[codec(index = 5)]
+					#[doc = "Invalid timestamp"]
+					InvalidTimestamp,
+					#[codec(index = 6)]
+					#[doc = "Unable to get client revision number"]
+					FailedToGetRevisionNumber,
+					#[codec(index = 7)]
+					#[doc = "Invalid params passed"]
+					InvalidParams,
+					#[codec(index = 8)]
+					#[doc = "Error opening channel"]
+					ChannelInitError,
+				}
+				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
+				#[doc = "\n\t\t\tThe [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted\n\t\t\tby this pallet.\n\t\t\t"]
+				pub enum Event {
+					#[codec(index = 0)]
+					TokenTransferInitiated {
+						from: ::subxt::sp_core::crypto::AccountId32,
+						to: ::std::vec::Vec<::core::primitive::u8>,
+						amount: ::core::primitive::u128,
+					},
+					#[codec(index = 1)]
+					#[doc = "A channel has been opened"]
+					ChannelOpened {
+						channel_id: ::std::vec::Vec<::core::primitive::u8>,
+						port_id: ::std::vec::Vec<::core::primitive::u8>,
+					},
+					#[codec(index = 2)]
+					#[doc = "Pallet params updated"]
+					PalletParamsUpdated {
+						send_enabled: ::core::primitive::bool,
+						receive_enabled: ::core::primitive::bool,
+					},
+				}
+				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
+				pub struct PalletParams {
+					pub send_enabled: ::core::primitive::bool,
+					pub receive_enabled: ::core::primitive::bool,
+				}
+				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
+				pub struct TransferParams {
+					pub to: ::std::vec::Vec<::core::primitive::u8>,
+					pub source_channel: ::std::vec::Vec<::core::primitive::u8>,
+					pub timeout_timestamp: ::core::primitive::u64,
+					pub timeout_height: ::core::primitive::u64,
+					pub revision_number: ::core::option::Option<::core::primitive::u64>,
+				}
 			}
 		}
 		pub mod orml_tokens {
@@ -37286,6 +38104,8 @@ pub mod api {
 					#[codec(index = 0)]
 					deliver { messages: ::std::vec::Vec<runtime_types::pallet_ibc::Any> },
 					#[codec(index = 1)]
+					create_client { msg: runtime_types::pallet_ibc::Any },
+					#[codec(index = 2)]
 					initiate_connection { params: runtime_types::pallet_ibc::ConnectionParams },
 				}
 				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
@@ -37318,6 +38138,9 @@ pub mod api {
 					#[codec(index = 8)]
 					#[doc = "Invalid route"]
 					InvalidRoute,
+					#[codec(index = 9)]
+					#[doc = "Invalid message for extirnsic"]
+					InvalidMessageType,
 				}
 				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
 				#[doc = "\n\t\t\tThe [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted\n\t\t\tby this pallet.\n\t\t\t"]
@@ -37404,8 +38227,8 @@ pub mod api {
 			#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
 			pub struct SendPingParams {
 				pub data: ::std::vec::Vec<::core::primitive::u8>,
-				pub timeout_height_offset: ::core::primitive::u64,
-				pub timeout_timestamp_offset: ::core::primitive::u64,
+				pub timeout_height: ::core::primitive::u64,
+				pub timeout_timestamp: ::core::primitive::u64,
 				pub channel_id: ::std::vec::Vec<::core::primitive::u8>,
 				pub dest_port_id: ::std::vec::Vec<::core::primitive::u8>,
 				pub dest_channel_id: ::std::vec::Vec<::core::primitive::u8>,
@@ -38350,6 +39173,8 @@ pub mod api {
 					PriceTooOld,
 					#[codec(index = 38)]
 					CannotIncreaseCollateralFactorOfOpenMarket,
+					#[codec(index = 39)]
+					CannotBorrowFromMarketWithUnbalancedVault,
 				}
 				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
 				#[doc = "\n\t\t\tThe [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted\n\t\t\tby this pallet.\n\t\t\t"]
@@ -38563,6 +39388,12 @@ pub mod api {
 			pub mod pallet {
 				use super::runtime_types;
 				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
+				pub struct AmmSwapInfo<_0, _1> {
+					pub destination_token_out_address:
+						runtime_types::composable_support::types::EthereumAddress,
+					pub destination_amm: runtime_types::pallet_mosaic::pallet::RemoteAmm<_0, _1>,
+				}
+				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
 				pub struct AssetInfo<_0, _1, _2> {
 					pub last_mint_block: _0,
 					pub budget: _1,
@@ -38632,6 +39463,14 @@ pub mod api {
 						asset_id: runtime_types::primitives::currency::CurrencyId,
 						address: runtime_types::composable_support::types::EthereumAddress,
 						amount: ::core::primitive::u128,
+						swap_to_native: ::core::primitive::bool,
+						source_user_account: ::subxt::sp_core::crypto::AccountId32,
+						amm_swap_info: ::core::option::Option<
+							runtime_types::pallet_mosaic::pallet::AmmSwapInfo<
+								::core::primitive::u32,
+								::core::primitive::u128,
+							>,
+						>,
 						keep_alive: ::core::primitive::bool,
 					},
 					#[codec(index = 5)]
@@ -38714,6 +39553,18 @@ pub mod api {
 							runtime_types::common::types::MosaicRemoteAssetId,
 						>,
 					},
+					#[codec(index = 12)]
+					#[doc = "Adds a remote AMM for a specific Network"]
+					add_remote_amm_id {
+						network_id: ::core::primitive::u32,
+						amm_id: ::core::primitive::u128,
+					},
+					#[codec(index = 13)]
+					#[doc = "Removes a remote AMM for a specific Network"]
+					remove_remote_amm_id {
+						network_id: ::core::primitive::u32,
+						amm_id: ::core::primitive::u128,
+					},
 				}
 				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
 				#[doc = "\n\t\t\tCustom [dispatch errors](https://docs.substrate.io/v3/runtime/events-and-errors)\n\t\t\tof this pallet.\n\t\t\t"]
@@ -38750,6 +39601,12 @@ pub mod api {
 					AmountMismatch,
 					#[codec(index = 15)]
 					AssetNotMapped,
+					#[codec(index = 16)]
+					RemoteAmmIdNotFound,
+					#[codec(index = 17)]
+					RemoteAmmIdAlreadyExists,
+					#[codec(index = 18)]
+					DestinationAmmIdNotWhitelisted,
 				}
 				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
 				#[doc = "\n\t\t\tThe [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted\n\t\t\tby this pallet.\n\t\t\t"]
@@ -38789,6 +39646,14 @@ pub mod api {
 						network_id: ::core::primitive::u32,
 						remote_asset_id: runtime_types::common::types::MosaicRemoteAssetId,
 						amount: ::core::primitive::u128,
+						swap_to_native: ::core::primitive::bool,
+						source_user_account: ::subxt::sp_core::crypto::AccountId32,
+						amm_swap_info: ::core::option::Option<
+							runtime_types::pallet_mosaic::pallet::AmmSwapInfo<
+								::core::primitive::u32,
+								::core::primitive::u128,
+							>,
+						>,
 					},
 					#[codec(index = 5)]
 					#[doc = "User claimed outgoing tx that was not (yet) picked up by the relayer"]
@@ -38869,6 +39734,11 @@ pub mod api {
 					pub enabled: ::core::primitive::bool,
 					pub min_transfer_size: _0,
 					pub max_transfer_size: _0,
+				}
+				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
+				pub struct RemoteAmm<_0, _1> {
+					pub network_id: _0,
+					pub amm_id: _1,
 				}
 			}
 			pub mod relayer {
@@ -39479,38 +40349,32 @@ pub mod api {
 					#[codec(index = 1)]
 					NotEnoughLiquidity,
 					#[codec(index = 2)]
-					NotEnoughLpToken,
-					#[codec(index = 3)]
 					PairMismatch,
-					#[codec(index = 4)]
+					#[codec(index = 3)]
 					MustBeOwner,
-					#[codec(index = 5)]
+					#[codec(index = 4)]
 					InvalidSaleState,
-					#[codec(index = 6)]
+					#[codec(index = 5)]
 					InvalidAmount,
-					#[codec(index = 7)]
+					#[codec(index = 6)]
 					InvalidAsset,
-					#[codec(index = 8)]
+					#[codec(index = 7)]
 					CannotRespectMinimumRequested,
-					#[codec(index = 9)]
+					#[codec(index = 8)]
 					AssetAmountMustBePositiveNumber,
-					#[codec(index = 10)]
+					#[codec(index = 9)]
 					InvalidPair,
-					#[codec(index = 11)]
+					#[codec(index = 10)]
 					InvalidFees,
-					#[codec(index = 12)]
+					#[codec(index = 11)]
 					AmpFactorMustBeGreaterThanZero,
-					#[codec(index = 13)]
+					#[codec(index = 12)]
 					MissingAmount,
-					#[codec(index = 14)]
-					MissingMinExpectedAmount,
-					#[codec(index = 15)]
-					MoreThanTwoAssetsNotYetSupported,
-					#[codec(index = 16)]
+					#[codec(index = 13)]
 					NoLpTokenForLbp,
-					#[codec(index = 17)]
+					#[codec(index = 14)]
 					WeightsMustBeNonZero,
-					#[codec(index = 18)]
+					#[codec(index = 15)]
 					WeightsMustSumToOne,
 				}
 				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
@@ -39562,6 +40426,16 @@ pub mod api {
 						fee: runtime_types::composable_traits::dex::Fee<
 							runtime_types::primitives::currency::CurrencyId,
 							::core::primitive::u128,
+						>,
+					},
+					#[codec(index = 5)]
+					#[doc = "TWAP updated."]
+					TwapUpdated {
+						pool_id: ::core::primitive::u128,
+						timestamp: ::core::primitive::u64,
+						twaps: ::subxt::KeyedVec<
+							runtime_types::primitives::currency::CurrencyId,
+							runtime_types::sp_arithmetic::fixed_point::FixedU128,
 						>,
 					},
 				}
@@ -40223,6 +41097,18 @@ pub mod api {
 					#[doc = "block number as the type might suggest."]
 					NewSession { session_index: ::core::primitive::u32 },
 				}
+			}
+		}
+		pub mod pallet_staking_rewards {
+			use super::runtime_types;
+			pub mod pallet {
+				use super::runtime_types;
+				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
+				#[doc = "\n\t\t\tCustom [dispatch errors](https://docs.substrate.io/v3/runtime/events-and-errors)\n\t\t\tof this pallet.\n\t\t\t"]
+				pub enum Error {}
+				#[derive(:: subxt :: codec :: Decode, :: subxt :: codec :: Encode, Debug)]
+				#[doc = "\n\t\t\tThe [event](https://docs.substrate.io/v3/runtime/events-and-errors) emitted\n\t\t\tby this pallet.\n\t\t\t"]
+				pub enum Event {}
 			}
 		}
 		pub mod pallet_sudo {
@@ -43231,9 +44117,9 @@ pub mod api {
 			};
 			if runtime_metadata_hash !=
 				[
-					95u8, 98u8, 35u8, 245u8, 72u8, 27u8, 2u8, 31u8, 107u8, 183u8, 106u8, 29u8,
-					135u8, 172u8, 90u8, 124u8, 31u8, 55u8, 212u8, 40u8, 229u8, 111u8, 118u8, 14u8,
-					7u8, 171u8, 55u8, 139u8, 253u8, 119u8, 168u8, 44u8,
+					112u8, 31u8, 169u8, 1u8, 125u8, 36u8, 115u8, 176u8, 56u8, 206u8, 68u8, 65u8,
+					124u8, 210u8, 154u8, 181u8, 204u8, 194u8, 171u8, 26u8, 72u8, 124u8, 109u8,
+					40u8, 176u8, 24u8, 201u8, 235u8, 51u8, 156u8, 171u8, 97u8,
 				] {
 				Err(::subxt::MetadataError::IncompatibleMetadata)
 			} else {
@@ -43370,8 +44256,14 @@ pub mod api {
 		pub fn dex_router(&self) -> dex_router::constants::ConstantsApi<'a, T> {
 			dex_router::constants::ConstantsApi::new(self.client)
 		}
+		pub fn staking_rewards(&self) -> staking_rewards::constants::ConstantsApi<'a, T> {
+			staking_rewards::constants::ConstantsApi::new(self.client)
+		}
 		pub fn call_filter(&self) -> call_filter::constants::ConstantsApi<'a, T> {
 			call_filter::constants::ConstantsApi::new(self.client)
+		}
+		pub fn transfer(&self) -> transfer::constants::ConstantsApi<'a, T> {
+			transfer::constants::ConstantsApi::new(self.client)
 		}
 		pub fn ibc(&self) -> ibc::constants::ConstantsApi<'a, T> {
 			ibc::constants::ConstantsApi::new(self.client)
@@ -43518,6 +44410,9 @@ pub mod api {
 		pub fn ibc_ping(&self) -> ibc_ping::storage::StorageApi<'a, T> {
 			ibc_ping::storage::StorageApi::new(self.client)
 		}
+		pub fn transfer(&self) -> transfer::storage::StorageApi<'a, T> {
+			transfer::storage::StorageApi::new(self.client)
+		}
 		pub fn ibc(&self) -> ibc::storage::StorageApi<'a, T> {
 			ibc::storage::StorageApi::new(self.client)
 		}
@@ -43653,6 +44548,9 @@ pub mod api {
 		}
 		pub fn ibc_ping(&self) -> ibc_ping::calls::TransactionApi<'a, T, X> {
 			ibc_ping::calls::TransactionApi::new(self.client)
+		}
+		pub fn transfer(&self) -> transfer::calls::TransactionApi<'a, T, X> {
+			transfer::calls::TransactionApi::new(self.client)
 		}
 		pub fn ibc(&self) -> ibc::calls::TransactionApi<'a, T, X> {
 			ibc::calls::TransactionApi::new(self.client)

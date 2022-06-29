@@ -26,3 +26,7 @@ tokio-stream = "0.1.8"
 url = "1.7.2"
 warp = "0.3.2"
 subxt = "0.22.0"
+scale-codec = { package = "parity-scale-codec", version = "3.0.0", features = [
+  "derive",
+] }
+sp-arithmetic = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }

@@ -6,6 +6,8 @@ use crate::{
 		TimeStampedPrice, CHANNEL_BUFFER_SIZE,
 	},
 };
+use futures::StreamExt;
+use sp_arithmetic::{FixedPointNumber, FixedU128};
 use std::collections::HashSet;
 use subxt::{ClientBuilder, DefaultConfig, PolkadotExtrinsicParams};
 use tokio::sync::mpsc;
@@ -22,21 +24,16 @@ impl ComposableFeed {
 		sink.send(FeedNotification::Started { feed: FeedIdentifier::Composable })
 			.await
 			.map_err(|_| FeedError::ChannelIsBroken)?;
-		let api =
-			ClientBuilder::new()
-				.build()
-				.await?
-				.to_runtime_api::<composable_api::api::RuntimeApi<
-					DefaultConfig,
-					PolkadotExtrinsicParams<DefaultConfig>,
-				>>();
-		let mut swapped_events = api
-			.events()
-			.subscribe()
-			.await?
-			.filter_events::<composable_api::api::pablo::events::Swapped>();
+		let api = ClientBuilder::new()
+			.build()
+			.await
+			.map_err(|_| FeedError::NetworkFailure)?
+			.to_runtime_api::<composable_api::api::RuntimeApi<
+			DefaultConfig,
+			PolkadotExtrinsicParams<DefaultConfig>,
+		>>();
 
-		for &(base, quote) in assets.iter() {
+		for &(base, _quote) in assets.iter() {
 			sink.send(FeedNotification::AssetOpened {
 				feed: FeedIdentifier::Composable,
 				asset: base,
@@ -47,23 +44,40 @@ impl ComposableFeed {
 		let sink = sink.clone();
 		let sink1 = sink.clone();
 		let assets = assets.clone();
+		let api_clone = api.clone();
 
 		let handle = tokio::spawn(async move {
-			// process all swapped event
-			while let Some(swapped_event) = swapped_events.next().await {
-				println!("Swapped Event : {swapped_event:?}");
-				if let Ok(swapped) = swapped_event {
-					let event: composable_api::api::pablo::events::Swapped = swapped.event;
-					let base_asset =
-						event.base_asset.try_into().map_err(|_| FeedError::NetworkFailure)?;
-					let quote_asset =
-						event.quote_asset.try_into().map_err(|_| FeedError::NetworkFailure)?;
+			let mut twap_updated_events = api_clone
+				.events()
+				.subscribe()
+				.await
+				.map_err(|_| FeedError::NetworkFailure)?
+				.filter_events::<(composable_api::api::pablo::events::TwapUpdated,)>();
+			// process all twap_updated event
+			while let Some(twap_updated) = twap_updated_events.next().await {
+				println!("TwapUpdated Event : {twap_updated:?}");
+				if let Ok(twap_updated) = twap_updated {
+					let event: composable_api::api::pablo::events::TwapUpdated = twap_updated.event;
+					let base = &event.twaps[0];
+					let quote = &event.twaps[1];
+					let base_asset = (primitives::currency::CurrencyId(base.0 .0))
+						.try_into()
+						.map_err(|_| FeedError::NetworkFailure)?;
+
+					let quote_asset = (primitives::currency::CurrencyId(quote.0 .0))
+						.try_into()
+						.map_err(|_| FeedError::NetworkFailure)?;
 					if assets.contains(&(base_asset, quote_asset)) {
 						let _ = sink1.blocking_send(FeedNotification::AssetPriceUpdated {
 							feed: FeedIdentifier::Composable,
 							asset: base_asset,
 							price: TimeStamped {
-								value: (Price(event.base_amount as u64), Exponent(0)),
+								value: (
+									Price(
+										FixedU128::from_inner(base.1 .0).saturating_mul_int(1_u64),
+									),
+									Exponent(0),
+								),
 								timestamp: TimeStamp::now(),
 							},
 						});
