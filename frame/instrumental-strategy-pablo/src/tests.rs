@@ -245,10 +245,6 @@ fn test_change_access_existing_account() {
 			ALICE,
 			AccessRights::Rebalance
 		));
-		let access = pallet::AdminAccountIds::<MockRuntime>::try_get(ALICE).unwrap();
-		println!("{:?}", access);
-		let system_events = frame_system::Pallet::<MockRuntime>::events();
-		println!("{:?}", system_events);
 		assert!(
 			pallet::AdminAccountIds::<MockRuntime>::try_get(ALICE).unwrap() ==
 				AccessRights::Rebalance
