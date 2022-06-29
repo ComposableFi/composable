@@ -81,7 +81,7 @@ pub fn any_vamm_id() -> RangeInclusive<VammId> {
 // ----------------------------------------------------------------------------------------------------
 
 fn min_sane_balance() -> u128 {
-	10_u128.pow(18)
+	10_u128.pow(14)
 }
 
 fn max_sane_balance() -> u128 {
@@ -89,7 +89,7 @@ fn max_sane_balance() -> u128 {
 }
 
 pub fn any_sane_asset_amount() -> RangeInclusive<u128> {
-	// From 1 to 1 trilion.
+	// From 0.0001 to 1 trilion.
 	min_sane_balance()..=max_sane_balance()
 }
 
