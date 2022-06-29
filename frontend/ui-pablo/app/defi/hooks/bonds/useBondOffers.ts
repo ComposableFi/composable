@@ -49,16 +49,7 @@ export default function useBondOffers(): OfferRow[] {
             isLpBasedBond.pair.quote.toString()
         );
 
-        if (baseAsset || quoteAsset) {
-          principalAsset = { baseAsset: undefined, quoteAsset: undefined };
-
-          if (baseAsset) {
-            principalAsset.baseAsset = baseAsset;
-          }
-          if (quoteAsset) {
-            principalAsset.quoteAsset = quoteAsset;
-          }
-        }
+        principalAsset = { baseAsset, quoteAsset };
       } else {
         principalAsset = supportedAssets.find(
           (a) => a.network[DEFAULT_NETWORK_ID] === bondOffer.asset
