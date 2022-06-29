@@ -293,10 +293,6 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T> {
-		/// Processed incoming ibc messages
-		ProcessedIBCMessages,
-		/// Initiated a new connection
-		ConnectionInitiated,
 		/// Raw Ibc events
 		IbcEvents { events: Vec<crate::events::IbcEvent> },
 		/// Ibc errors
