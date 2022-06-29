@@ -1,7 +1,52 @@
 ---
 - hosts: all
+
+  vars:
+    uid: "1000"
+    gid: "1000"
+    work_dir: /srv/composable
   
   tasks:
+  - name: Initialization
+    block:
+    - name: Stop old verions of services
+      systemd:
+        name: composable
+        enabled: yes
+        state: stopped
+      ignore_errors: yes # the first run can fail
+      become: yes
+
+    - name: Remove old installations
+      ansible.builtin.file:
+        path: "{{ work_dir }}"
+        state: absent
+      become: yes
+
+    - name: Create directories
+      ansible.builtin.file:
+        path: "{{ item.path }}"
+        state: directory
+        mode: "0755"
+        owner: "{{ uid }}"
+        group: "{{ gid }}"
+      loop:
+      - path: "{{ work_dir }}"
+      - path: "{{ work_dir }}/volumes/polkadot-launch"
+      become: yes
+
+    - name: Create new systemd services and docker-compose files
+      template:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        mode: "0644"
+      loop:
+      - src: systemd/dali-stage.service.j2
+        dest: /etc/systemd/system/composable.service
+      - src: docker-compose/dali-stage.docker-compose.yml.j2
+        dest: "{{ work_dir }}/docker-compose.yml"
+      become: yes
+
   - name: TLS temination for HTTP endpoints
     block:
     - name: Install nginx and certbot
@@ -23,7 +68,7 @@
 
     - name: Add nginx config for ACME challenge
       template:
-        src: nginx/dali-stage-acme-challenge.conf.j2
+        src: nginx/acme-challenge.conf.j2
         dest: /etc/nginx/sites-enabled/dali-stage-acme-challenge.conf
         mode: "0600"
       become: yes
@@ -63,3 +108,78 @@
         user=root
         job="certbot certonly --nginx --non-interactive -d '{{ domain }}' --deploy-hook 'nginx -s reload'"
       become: yes
+
+  - name: Install dependencies
+    block:
+    - name: Install Docker
+      block:
+      - name: Remove old versions
+        apt:
+          pkg:
+          - docker
+          - docker-compose
+          - docker-engine
+          - docker.io
+          - containerd
+          - runc
+          state: absent
+        become: yes
+ 
+      - name: Install Docker dependencies
+        apt:
+          pkg:
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          update_cache: yes
+          install_recommends: no
+        become: yes
+
+      - name: Create a directory for Docker GPG key
+        ansible.builtin.file:
+          path: /etc/apt/keyrings
+          state: directory
+          mode: "0755"
+        become: yes
+
+      - name: Download Docker GPG key
+        get_url:
+          url: https://download.docker.com/linux/ubuntu/gpg
+          dest: /tmp/docker.gpg
+          mode: "644"
+        become: yes
+
+      - name: Add Docker repository
+        ansible.builtin.shell: |
+          cat /tmp/docker.gpg | gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg
+          echo \
+            "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+            $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+        become: yes
+
+      - name: Install new versions
+        apt:
+          pkg:
+          - docker
+          - docker-compose
+          - docker.io
+          - containerd
+          - runc
+          update_cache: yes
+          install_recommends: no
+        become: yes
+
+  - name: Enable and start docker service
+    systemd:
+      name: docker
+      enabled: yes
+      state: started
+    become: yes
+
+  - name: Enable and restart subsquid-archiver and subsquid-indexer-db services
+    # Here will be a timeout if use the 'systemd' module
+    ansible.builtin.shell: |
+      systemctl restart composable
+      systemctl enable composable
+    become: yes

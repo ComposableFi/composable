@@ -40,7 +40,7 @@ This playbook does next:
 ### Dev environment
 
     ```bash
-    ansible-playbook -i inventory dev-dali-subsquid.yml -e "domain=your-domain.example.com" -e "letsencrypt_contact_email=your-email@example.com" 
+    ansible-playbook -i inventory dev-dali-subsquid.yml -e "domain=dali-subsquid.composablefinance.ninja" -e "letsencrypt_contact_email=your-email@composable.finance"
     ```
 
 ### Prod environment
@@ -57,5 +57,5 @@ This playbook does next:
 ## Usage
 
     ```bash
-    ansible-playbook -i inventory dali-stage.yml -e "domain=dali-cluster-fe.composablefinance.ninja" -e "letsencrypt_contact_email=your-email@composable.finance"
+    ansible-playbook -i inventory dali-stage.yml -e "domain=dali-cluster-fe.composablefinance.ninja" -e "letsencrypt_contact_email=your-email@composable.finance" -e "composable_sandbox_tag=docker_tag"
     ```

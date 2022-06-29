@@ -161,6 +161,7 @@
           pkg:
           - docker
           - docker-engine
+          - docker-compose
           - docker.io
           - containerd
           - runc
