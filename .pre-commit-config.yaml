@@ -21,7 +21,7 @@ repos:
         types: [rust]
       - id: clearing-house::cargo-test
         name: clearing-house::cargo-test
-        entry: cargo +nightly test --all-targets -p pallet-clearing-house
+        entry: cargo +nightly nextest run --fail-fast --all-features --tests -p pallet-clearing-house
         language: system
         pass_filenames: false
         files: ^frame/(clearing-house/|composable-traits/src/(clearing_house.rs|vamm.rs))
@@ -47,7 +47,7 @@ repos:
         stages: [push, manual]
       - id: vamm::cargo-test
         name: vamm::cargo-test
-        entry: cargo +nightly test --all-features --tests -p pallet-vamm
+        entry: cargo +nightly nextest run --fail-fast --all-features --tests -p pallet-vamm
         language: system
         pass_filenames: false
         files: ^frame/vamm/
@@ -55,7 +55,7 @@ repos:
         stages: [push, manual]
       - id: vamm::cargo-clippy
         name: vamm::cargo-clippy
-        entry: cargo +nightly clippy --all-targets --no-deps -p pallet-vamm -- -D warnings -D clippy::all
+        entry: cargo +nightly clippy --all-targets --no-deps -p pallet-vamm
         language: system
         pass_filenames: false
         files: ^frame/vamm/
@@ -67,6 +67,90 @@ repos:
         language: system
         pass_filenames: false
         files: ^frame/vamm/
+        types: [rust]
+        stages: [manual]
+
+        ########## Composable Traits ##########
+      - id: composable-traits::cargo-fmt
+        name: composable-traits::cargo-fmt
+        entry: cargo +nightly fmt --check -p composable-traits
+        language: system
+        pass_filenames: false
+        files: ^frame/composable-traits/
+        types: [rust]
+        stages: [push, manual]
+      - id: composable-traits::cargo-check
+        name: composable-traits::cargo-check
+        entry: cargo +nightly check --all-targets -p composable-traits
+        language: system
+        pass_filenames: false
+        files: ^frame/composable-traits/
+        types: [rust]
+        stages: [push, manual]
+      - id: composable-traits::cargo-test
+        name: composable-traits::cargo-test
+        entry: cargo +nightly test --all-features --tests -p composable-traits
+        language: system
+        pass_filenames: false
+        files: ^frame/composable-traits/
+        types: [rust]
+        stages: [push, manual]
+      - id: composable-traits::cargo-clippy
+        name: composable-traits::cargo-clippy
+        entry: cargo +nightly clippy --all-targets --no-deps -p composable-traits
+        language: system
+        pass_filenames: false
+        files: ^frame/composable-traits/
+        types: [rust]
+        stages: [manual]
+      - id: composable-traits::cargo-doc
+        name: composable-traits::cargo-doc
+        entry: cargo +nightly doc --no-deps -p composable-traits
+        language: system
+        pass_filenames: false
+        files: ^frame/composable-traits/
+        types: [rust]
+        stages: [manual]
+
+        ########## Composable Maths ##########
+      - id: composable-maths::cargo-fmt
+        name: composable-maths::cargo-fmt
+        entry: cargo +nightly fmt --check -p composable-maths
+        language: system
+        pass_filenames: false
+        files: ^frame/composable-maths/
+        types: [rust]
+        stages: [push, manual]
+      - id: composable-maths::cargo-check
+        name: composable-maths::cargo-check
+        entry: cargo +nightly check --all-targets -p composable-maths
+        language: system
+        pass_filenames: false
+        files: ^frame/composable-maths/
+        types: [rust]
+        stages: [push, manual]
+      - id: composable-maths::cargo-test
+        name: composable-maths::cargo-test
+        entry: cargo +nightly test --all-features --tests -p composable-maths
+        language: system
+        pass_filenames: false
+        files: ^frame/composable-maths/
+        types: [rust]
+        stages: [push, manual]
+      - id: composable-maths::cargo-clippy
+        name: composable-maths::cargo-clippy
+        entry: cargo +nightly clippy --all-targets --no-deps -p composable-maths
+        language: system
+        pass_filenames: false
+        files: ^frame/composable-maths/
+        types: [rust]
+        stages: [manual]
+      - id: composable-maths::cargo-doc
+        name: composable-maths::cargo-doc
+        entry: cargo +nightly doc --no-deps -p composable-maths
+        language: system
+        pass_filenames: false
+        files: ^frame/composable-maths/
         types: [rust]
         stages: [manual]
 
