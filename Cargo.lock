@@ -7289,12 +7289,12 @@ dependencies = [
  "rustc-hex",
  "scale-info",
  "serde",
- "sp-application-crypto",
- "sp-arithmetic",
+ "sp-application-crypto 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22)",
+ "sp-arithmetic 5.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22)",
  "sp-core 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22)",
- "sp-io",
- "sp-keystore",
- "sp-runtime",
+ "sp-io 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22)",
+ "sp-keystore 0.12.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22)",
+ "sp-runtime 6.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22)",
  "sp-std 4.0.0 (git+https://github.com/composableFi/substrate?branch=polkadot-v0.9.22)",
 ]
 
@@ -14440,7 +14440,7 @@ dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.1",
  "rand 0.7.3",
- "smallvec 1.8.0",
+ "smallvec 1.8.1",
  "sp-core 6.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-externalities 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "sp-panic-handler 4.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -17229,7 +17229,7 @@ name = "xcmp"
 version = "0.1.0"
 dependencies = [
  "base58",
- "clap 3.2.5",
+ "clap 3.2.7",
  "env_logger",
  "hex",
  "parity-scale-codec",
