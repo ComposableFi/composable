@@ -1,6 +1,7 @@
 use crate::{
 	self as pallet_liquidations,
 	mock::currency::{CurrencyId, NativeAssetId},
+	weights::SubstrateWeight,
 };
 
 use composable_traits::defi::DeFiComposableConfig;
@@ -34,7 +35,7 @@ pub type OrderId = u32;
 pub type Amount = i64;
 
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
-
+pub type SystemOriginOf<T> = <T as frame_system::Config>::Origin;
 frame_support::construct_runtime! {
 	pub enum Runtime where
 		Block = Block,
@@ -226,6 +227,7 @@ impl pallet_dutch_auction::Config for Runtime {
 
 parameter_types! {
 	pub const LiquidationPalletId : PalletId = PalletId(*b"liqudatn");
+	pub const MaxLiquidationStrategiesAmount: u32 = 10;
 }
 
 type LiquidationStrategyId = u32;
@@ -233,12 +235,13 @@ impl pallet_liquidations::Config for Runtime {
 	type Event = Event;
 	type UnixTime = Timestamp;
 	type OrderId = OrderId;
-	type WeightInfo = ();
+	type WeightInfo = SubstrateWeight<Self>;
 	type DutchAuction = DutchAuction;
 	type LiquidationStrategyId = LiquidationStrategyId;
 	type PalletId = LiquidationPalletId;
 	type CanModifyStrategies = EnsureRoot<Self::AccountId>;
 	type XcmSender = XcmFake;
+	type MaxLiquidationStrategiesAmount = MaxLiquidationStrategiesAmount;
 }
 
 #[allow(dead_code)] // not really dead

@@ -1268,21 +1268,22 @@ fn current_interest_rate_test() {
 }
 
 #[test]
-fn zero_amount_collateral_deposit() {
+fn zero_amount_collateral_deposit_or_withdraw() {
 	new_test_ext().execute_with(|| {
-		System::set_block_number(1);
-		let (market_id, _vault_id) = create_simple_market();
-		let expected = 50_000;
-		set_price(BTC::ID, expected);
-		set_price(USDT::ID, 1);
+		let (market, _vault) = create_simple_market();
 		let collateral_amount = 0;
+		let error_message = "Can not deposit or withdraw zero collateral";
 		assert_noop!(
-			<Lending as LendingTrait>::deposit_collateral(&market_id, &BOB, collateral_amount),
-			Error::<Runtime>::CannotDepositZeroCollateral
+			Lending::deposit_collateral(Origin::signed(*ALICE), market, collateral_amount),
+			error_message
+		);
+
+		assert_noop!(
+			Lending::withdraw_collateral(Origin::signed(*ALICE), market, collateral_amount,),
+			error_message
 		);
 	})
 }
-
 prop_compose! {
 	fn valid_amount_without_overflow()
 		(x in MINIMUM_BALANCE..u64::MAX as Balance) -> Balance {

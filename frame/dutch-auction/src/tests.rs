@@ -4,9 +4,10 @@ use crate::mock::{currency::*, runtime::*};
 use composable_traits::{
 	defi::{LiftedFixedBalance, Sell, Take},
 	time::{LinearDecrease, TimeReleaseFunction},
+	xcm::XcmSellRequest,
 };
 use frame_support::{
-	assert_ok,
+	assert_noop, assert_ok,
 	traits::{
 		fungible::{self, Mutate as NativeMutate},
 		fungibles::{Inspect, Mutate},
@@ -36,6 +37,33 @@ pub fn new_test_externalities() -> sp_io::TestExternalities {
 		Timestamp::set_timestamp(System::block_number() * MILLISECS_PER_BLOCK);
 	});
 	externatlities
+}
+
+#[test]
+fn xcm_sell_with_same_asset() {
+	new_test_externalities().execute_with(|| {
+		let seller = AccountId::from_raw(ALICE.0);
+		let sell = Sell::new(BTC, BTC, 1, fixed(1000));
+		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
+		let configuration_id = 1;
+		DutchAuction::add_configuration(
+			Origin::signed(seller),
+			configuration_id,
+			configuration.clone(),
+		)
+		.unwrap();
+		let order_id = crate::OrdersIndex::<Runtime>::get();
+		let request = XcmSellRequest {
+			order_id: order_id.into(),
+			order: sell,
+			from_to: ALICE.0,
+			configuration: configuration_id,
+		};
+		assert_noop!(
+			DutchAuction::xcm_sell(Origin::signed(seller), request),
+			sp_runtime::DispatchError::Other("Auction creation with the same asset."),
+		);
+	});
 }
 
 // ensure that we take extra for sell, at least amount to remove

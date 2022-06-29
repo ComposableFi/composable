@@ -115,6 +115,18 @@ impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
 	}
 }
 
+#[derive(RuntimeDebug, PartialEq, TypeInfo, Default, Copy, Clone)]
+pub struct BalanceGreaterThenZero;
+impl<B> Validate<B, BalanceGreaterThenZero> for BalanceGreaterThenZero
+where
+	B: Zero + PartialOrd,
+{
+	fn validate(balance: B) -> Result<B, &'static str> {
+		ensure!(balance > B::zero(), "Can not deposit or withdraw zero collateral");
+
+		Ok(balance)
+	}
+}
 impl<LiquidationStrategyId, AssetId: Copy, BlockNumber>
 	CreateInput<LiquidationStrategyId, AssetId, BlockNumber>
 {
