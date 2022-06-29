@@ -13,8 +13,8 @@ use crate::{
 	tests::{
 		any_direction, as_balance, get_collateral, get_market, get_market_fee_pool,
 		get_outstanding_gains, get_position, run_for_seconds, run_to_time,
-		set_maximum_oracle_mark_divergence, set_oracle_twap, traders_in_one_market_context,
-		with_trading_context, Market, MarketConfig,
+		set_maximum_oracle_mark_divergence, set_oracle_price, set_oracle_twap,
+		traders_in_one_market_context, with_trading_context, Market, MarketConfig,
 	},
 };
 
@@ -365,6 +365,8 @@ proptest! {
 		let collateral = as_balance(100);
 
 		with_trading_context(config.clone(), collateral, |market_id| {
+			set_oracle_twap(&market_id, 5.into());
+
 			// Alice opens a position
 			VammPallet::set_price(Some(5.into()));
 			assert_ok!(TestPallet::open_position(
@@ -377,9 +379,10 @@ proptest! {
 
 			let Market { last_oracle_price, last_oracle_twap, .. } = get_market(&market_id);
 
-			// Time passes and ALICE closes her position
+			// Time passes, the index price moves, and ALICE closes her position
 			let now = config.twap_period / 2;
 			run_to_time(now);
+			set_oracle_price(&market_id, 6.into());
 			assert_ok!(TestPallet::close_position(Origin::signed(ALICE), market_id));
 
 			let market = get_market(&market_id);
