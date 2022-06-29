@@ -1,10 +1,15 @@
 <<<<<<<< HEAD:subsquid/db/migrations/1656936691017-Init.js
+<<<<<<<< HEAD:subsquid/db/migrations/1656936691017-Init.js
 module.exports = class Init1656936691017 {
   name = 'Init1656936691017'
 ========
 module.exports = class Init1656335845809 {
   name = 'Init1656335845809'
 >>>>>>>> 3a44c904 (Integrate total bonded-finance total purchased bonds into subsquid):subsquid/db/migrations/1656335845809-Init.js
+========
+module.exports = class Init1656491833845 {
+  name = 'Init1656491833845'
+>>>>>>>> 149d6fc7 (add bond beneficiary to stored data):subsquid/db/migrations/1656491833845-Init.js
 
   async up(db) {
     await db.query(`CREATE TABLE "historical_balance" ("id" character varying NOT NULL, "balance" numeric NOT NULL, "date" TIMESTAMP WITH TIME ZONE NOT NULL, "account_id" character varying NOT NULL, CONSTRAINT "PK_74ac29ad0bdffb6d1281a1e17e8" PRIMARY KEY ("id"))`)
@@ -16,10 +21,14 @@ module.exports = class Init1656335845809 {
     await db.query(`CREATE TABLE "pablo_transaction" ("id" character varying NOT NULL, "event_id" text NOT NULL, "who" text NOT NULL, "transaction_type" character varying(16), "base_asset_id" numeric NOT NULL, "base_asset_amount" numeric NOT NULL, "quote_asset_id" numeric NOT NULL, "quote_asset_amount" numeric NOT NULL, "block_number" numeric NOT NULL, "spot_price" text NOT NULL, "fee" text NOT NULL, "received_timestamp" numeric NOT NULL, "pool_id" character varying NOT NULL, CONSTRAINT "PK_8b040ecc6da14a71ef547ae2ae6" PRIMARY KEY ("id"))`)
     await db.query(`CREATE INDEX "IDX_969a927080f5b6c81b79b40cd8" ON "pablo_transaction" ("pool_id") `)
 <<<<<<<< HEAD:subsquid/db/migrations/1656936691017-Init.js
+<<<<<<<< HEAD:subsquid/db/migrations/1656936691017-Init.js
     await db.query(`CREATE TABLE "bonded_finance_bond_offer" ("id" character varying NOT NULL, "total_purchased" numeric NOT NULL, "beneficiary" text NOT NULL, CONSTRAINT "PK_1a7a97e3d57a4ac842dc2ef48ba" PRIMARY KEY ("id"))`)
 ========
     await db.query(`CREATE TABLE "bonded_finance_total_purchased" ("id" character varying NOT NULL, "purchased" numeric NOT NULL, CONSTRAINT "PK_434a787d67470bbfdf41a5863f1" PRIMARY KEY ("id"))`)
 >>>>>>>> 3a44c904 (Integrate total bonded-finance total purchased bonds into subsquid):subsquid/db/migrations/1656335845809-Init.js
+========
+    await db.query(`CREATE TABLE "bonded_finance_bond_offer" ("id" character varying NOT NULL, "purchased" numeric NOT NULL, "beneficiary" text NOT NULL, CONSTRAINT "PK_1a7a97e3d57a4ac842dc2ef48ba" PRIMARY KEY ("id"))`)
+>>>>>>>> 149d6fc7 (add bond beneficiary to stored data):subsquid/db/migrations/1656491833845-Init.js
     await db.query(`ALTER TABLE "historical_balance" ADD CONSTRAINT "FK_383ff006e4b59db91d32cb891e9" FOREIGN KEY ("account_id") REFERENCES "account"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
     await db.query(`ALTER TABLE "pablo_pool_asset" ADD CONSTRAINT "FK_7fd4cdb45620476d1de745a2658" FOREIGN KEY ("pool_id") REFERENCES "pablo_pool"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
     await db.query(`ALTER TABLE "pablo_transaction" ADD CONSTRAINT "FK_969a927080f5b6c81b79b40cd86" FOREIGN KEY ("pool_id") REFERENCES "pablo_pool"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`)
@@ -35,10 +44,14 @@ module.exports = class Init1656335845809 {
     await db.query(`DROP TABLE "pablo_transaction"`)
     await db.query(`DROP INDEX "public"."IDX_969a927080f5b6c81b79b40cd8"`)
 <<<<<<<< HEAD:subsquid/db/migrations/1656936691017-Init.js
+<<<<<<<< HEAD:subsquid/db/migrations/1656936691017-Init.js
     await db.query(`DROP TABLE "bonded_finance_bond_offer"`)
 ========
     await db.query(`DROP TABLE "bonded_finance_total_purchased"`)
 >>>>>>>> 3a44c904 (Integrate total bonded-finance total purchased bonds into subsquid):subsquid/db/migrations/1656335845809-Init.js
+========
+    await db.query(`DROP TABLE "bonded_finance_bond_offer"`)
+>>>>>>>> 149d6fc7 (add bond beneficiary to stored data):subsquid/db/migrations/1656491833845-Init.js
     await db.query(`ALTER TABLE "historical_balance" DROP CONSTRAINT "FK_383ff006e4b59db91d32cb891e9"`)
     await db.query(`ALTER TABLE "pablo_pool_asset" DROP CONSTRAINT "FK_7fd4cdb45620476d1de745a2658"`)
     await db.query(`ALTER TABLE "pablo_transaction" DROP CONSTRAINT "FK_969a927080f5b6c81b79b40cd86"`)
