@@ -1,4 +1,3 @@
-import remove_liquidity_formStories from "@/../storybook/stories/organisms/remove_liquidity_form.stories";
 import { Option } from "@/components/types";
 import { ConstantProductPool, StableSwapPool } from "@/defi/types";
 import {
@@ -16,8 +15,8 @@ import BigNumber from "bignumber.js";
 import { useSnackbar } from "notistack";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParachainApi } from "substrate-react";
-
-type MockedAssetOption = MockedAsset & Option;
+import { useAsset } from "../assets/useAsset";
+import { useFilteredAssetListDropdownOptions } from "../assets/useFilteredAssetListDropdownOptions";
 
 export function useSwaps(): {
   balance1: BigNumber;
@@ -27,8 +26,8 @@ export function useSwaps(): {
   selectedAssetTwoId: string | "none";
   selectedAssetOne: MockedAsset | undefined;
   selectedAssetTwo: MockedAsset | undefined;
-  assetListOne: MockedAssetOption[];
-  assetListTwo: MockedAssetOption[];
+  assetListOne: Option[];
+  assetListTwo: Option[];
   assetOneAmount: BigNumber;
   assetTwoAmount: BigNumber;
   dexRoute: BigNumber | null;
@@ -62,7 +61,6 @@ export function useSwaps(): {
 
   const {
     swaps,
-    supportedAssets,
     pools: { constantProductPools, stableSwapPools },
   } = useStore();
   const {
@@ -103,41 +101,11 @@ export function useSwaps(): {
   const asset1PriceUsd = useUSDPriceByAssetId(selectedAssetOneId);
   const asset2PriceUsd = useUSDPriceByAssetId(selectedAssetTwoId);
 
-  const selectedAssetOne = useMemo(() => {
-    return supportedAssets.find(
-      (asset) => asset.network[DEFAULT_NETWORK_ID] === selectedAssetOneId
-    );
-  }, [supportedAssets, selectedAssetOneId]);
-  const selectedAssetTwo = useMemo(() => {
-    return supportedAssets.find(
-      (asset) => asset.network[DEFAULT_NETWORK_ID] === selectedAssetTwoId
-    );
-  }, [supportedAssets, selectedAssetTwoId]);
+  const selectedAssetOne = useAsset(selectedAssetOneId);
+  const selectedAssetTwo = useAsset(selectedAssetTwoId);
 
-  const assetListOne = useMemo(() => {
-    return supportedAssets
-      .filter((asset) => {
-        if (selectedAssetTwoId === "none") return true;
-        if (selectedAssetTwoId === asset.network[DEFAULT_NETWORK_ID])
-          return false;
-        return true;
-      })
-      .map((i) => {
-        return { ...i, value: i.network[DEFAULT_NETWORK_ID], label: i.symbol };
-      });
-  }, [selectedAssetTwoId, supportedAssets]);
-  const assetListTwo = useMemo(() => {
-    return supportedAssets
-      .filter((asset) => {
-        if (selectedAssetOneId === "none") return true;
-        if (selectedAssetOneId === asset.network[DEFAULT_NETWORK_ID])
-          return false;
-        return true;
-      })
-      .map((i) => {
-        return { ...i, value: i.network[DEFAULT_NETWORK_ID], label: i.symbol };
-      });
-  }, [selectedAssetOneId, supportedAssets]);
+  const assetListOne = useFilteredAssetListDropdownOptions(selectedAssetTwoId);
+  const assetListTwo = useFilteredAssetListDropdownOptions(selectedAssetOneId);
 
   const balance1 = useAssetBalance(DEFAULT_NETWORK_ID, selectedAssetOneId);
   const balance2 = useAssetBalance(DEFAULT_NETWORK_ID, selectedAssetTwoId);
