@@ -4,8 +4,8 @@ extern crate alloc;
 
 use alloc::{borrow::ToOwned, vec, vec::Vec};
 use core::str::FromStr;
-use ethabi::{encode, ethereum_types::H160, Function, StateMutability, Token};
-use xcvm_core::{XCVMNetwork, XCVMProtocol};
+use ethabi::{encode, ethereum_types::H160, Function, Param, ParamType, StateMutability, Token};
+use xcvm_core::{XCVMAsset, XCVMNetwork, XCVMProtocol};
 
 pub struct Ping;
 impl Ping {
@@ -38,26 +38,34 @@ impl XCVMProtocol<XCVMNetwork> for Ping {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub enum SlippageLimit {
-	Unlimited,
-	Limited {},
+pub struct Swap {
+	assetIn: XCVMAsset,
+	assetOut: XCVMAsset,
+	amountIn: u128,
+	amountOut: u128,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub struct Swap<Assets, Options> {
-	input: Assets,
-	output: Assets,
-	options: Options,
-}
-
-impl<Assets, Options> Swap<Assets, Options> {
-	pub fn new(input: Assets, output: Assets, options: Options) -> Self {
-		Swap { input, output, options }
+impl Swap {
+	pub fn new(assetIn: XCVMAsset, assetOut: XCVMAsset, amountIn: u128, amountOut: u128) -> Self {
+		Swap { assetIn, assetOut, amountIn, amountOut }
 	}
 	pub fn ethereum_prototype() -> Function {
 		Function {
 			name: "swap".to_owned(),
-			inputs: vec![],
+			inputs: vec![
+				Param {
+					name: "XcvmAssetIn".into(),
+					kind: ParamType::Uint(32),
+					internal_type: None,
+				},
+				Param {
+					name: "XcvmAssetOut".into(),
+					kind: ParamType::Uint(32),
+					internal_type: None,
+				},
+				Param { name: "AmountIn".into(), kind: ParamType::Uint(128), internal_type: None },
+				Param { name: "AmountOut".into(), kind: ParamType::Uint(128), internal_type: None },
+			],
 			outputs: vec![],
 			constant: None,
 			state_mutability: StateMutability::Payable,
@@ -66,29 +74,34 @@ impl<Assets, Options> Swap<Assets, Options> {
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
-pub enum StableswapError {
+pub enum SwapError {
 	UnsupportedNetwork,
 	EncodingFailed,
 }
 
-impl<Assets, Options> XCVMProtocol<XCVMNetwork> for Swap<Assets, Options> {
-	type Error = StableswapError;
+impl XCVMProtocol<XCVMNetwork> for Swap {
+	type Error = SwapError;
 	fn serialize(&self, network: XCVMNetwork) -> Result<Vec<u8>, Self::Error> {
 		match network {
 			XCVMNetwork::ETHEREUM => {
 				let uniswap_v3_contract_address =
-					H160::from_str("0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852")
+					H160::from_str("0x5FCDda3cAC613835AA8d4BB059f8ADff2842c3FC")
 						.expect("impossible");
 				let encoded_call = Self::ethereum_prototype()
-					.encode_input(&[])
-					.map_err(|_| StableswapError::EncodingFailed)?;
+					.encode_input(&[
+						Token::Uint(self.assetIn.0.into()),
+						Token::Uint(self.assetOut.0.into()),
+						Token::Uint(self.amountIn.into()),
+						Token::Uint(self.amountOut.into()),
+					])
+					.map_err(|_| SwapError::EncodingFailed)?;
 				Ok(encode(&[
 					Token::Address(uniswap_v3_contract_address),
 					Token::Bytes(encoded_call),
 				])
 				.into())
 			},
-			_ => Err(StableswapError::UnsupportedNetwork),
+			_ => Err(SwapError::UnsupportedNetwork),
 		}
 	}
 }
