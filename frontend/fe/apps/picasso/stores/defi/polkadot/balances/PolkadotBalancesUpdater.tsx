@@ -10,22 +10,22 @@ import { toTokenUnitsBN } from "@/utils/BN";
 import { useContext, useEffect } from "react";
 
 import { useStore } from "@/stores/root";
+import { ApiPromise } from "@polkadot/api";
 
 export async function updateBalances(
   account: string,
-  chainApi: ParachainApi,
+  api: ApiPromise | undefined,
   chainId: string,
   updateBalance: (data: {
     substrateNetworkId: SubstrateNetworkId;
     balance: string;
   }) => void
 ) {
-  const { parachainApi } = chainApi;
-  if (!parachainApi) return;
+  if (!api) return;
   // create AccountId32 type byte array
   // and retrieve balances
-  const accountId = parachainApi.createType("AccountId32", account);
-  const queryResult = await parachainApi.query.system.account(accountId);
+  const accountId = api.createType("AccountId32", account);
+  const queryResult = await api.query.system.account(accountId);
   const blObject: any = queryResult.toJSON();
 
   const {
@@ -58,7 +58,7 @@ const PolkadotBalancesUpdater = ({
         if (picassoProvider.accounts[selectedAccount] && chain.parachainApi) {
           updateBalances(
             picassoProvider.accounts[selectedAccount].address,
-            chain,
+            chain.parachainApi,
             id,
             updateBalance
           ).catch((err) => {

@@ -1,8 +1,8 @@
 import { Box, useTheme } from "@mui/material";
-import { FeaturedBox, Chart } from "@/components/Organisms/StatsTreasuryTab";
 import { useStore } from "@/stores/root";
 import { formatNumberWithSymbol, formatNumber } from "@/utils/formatters";
 import { TreasuryDataProps } from "@/stores/defi/stats/treasury";
+import { Chart, FeaturedBox } from "@/components/Molecules";
 
 function formatTreasuryTitleValue(index: number, info: TreasuryDataProps) {
   switch (index) {

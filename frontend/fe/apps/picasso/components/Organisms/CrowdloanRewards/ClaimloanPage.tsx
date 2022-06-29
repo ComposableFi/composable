@@ -86,7 +86,7 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
   );
   const { extensionStatus } = useContext(ParachainContext);
   const selectedAccount = useSelectedAccount();
-  const picassoParachainApi = usePicassoProvider();
+  const {parachainApi, accounts} = usePicassoProvider();
   const theme = useTheme();
   const [ineligibleText, setIneligibleText] = useState({
     title: ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.title,
@@ -118,7 +118,7 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
 
     updateBalances(
       account,
-      picassoParachainApi,
+      parachainApi,
       "kusama-2019" as SubstrateNetworkId,
       updateBalance
     );
@@ -141,7 +141,6 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
   };
 
   const onClaim = async () => {
-    const { parachainApi } = picassoParachainApi;
     if (parachainApi && selectedAccount) {
       if (crUiState.isEligible && userAssociation === null) {
         openKSMClaimModal();
@@ -182,7 +181,7 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
 
     if (
       extensionStatus !== "connected" ||
-      !picassoParachainApi.accounts.length
+      !accounts.length
     ) {
       setIneligibleText((s) => {
         s.textBelow = ERROR_MESSAGES.KSM_WALLET_NOT_CONNECTED.message;
@@ -190,7 +189,7 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
       });
     }
   }, [
-    picassoParachainApi.accounts,
+    accounts,
     crUiState.useAssociationMode,
     extensionStatus,
     isActive,
@@ -244,7 +243,6 @@ export const ClaimloanPage = ({ isStable = false }: Claimloan) => {
       await web3Enable(APP_NAME);
       const injector = await web3FromAddress(address);
 
-      const { parachainApi } = picassoParachainApi;
       if (executor && parachainApi && selectedAccount) {
         let toUpdateAmount = claimablePICA.plus(claimedPICA);
         await executor.execute(

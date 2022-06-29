@@ -3,13 +3,13 @@ import { createTheme } from "pablo/styles/theme";
 import { ThemeProvider as EmotionThemeProvider } from "@emotion/react";
 import { Box, CssBaseline, ThemeProvider } from "@mui/material";
 import { Provider } from "react-redux";
-import React from "react";
+import { useState, FC, useMemo } from "react";
 import { store } from "pablo/stores/root";
 
 
-export const MUIDecorator:React.FC = ({ children }) => {
-  const [mode, setMode] = React.useState<"light" | "dark">("dark");
-  const colorMode = React.useMemo(
+export const MUIDecorator: FC = ({ children }) => {
+  const [mode, setMode] = useState<"light" | "dark">("dark");
+  const colorMode = useMemo(
     () => ({
       toggleColorMode: () => {
         setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
@@ -28,7 +28,7 @@ export const MUIDecorator:React.FC = ({ children }) => {
           <EmotionThemeProvider theme={createTheme(mode)}>
             <ThemeProvider theme={createTheme(mode)}>
               {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
-              <CssBaseline />
+              <CssBaseline/>
               {children}
             </ThemeProvider>
           </EmotionThemeProvider>

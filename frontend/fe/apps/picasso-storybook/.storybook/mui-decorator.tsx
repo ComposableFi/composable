@@ -1,12 +1,12 @@
-import { ColorModeContext } from "@/contexts/ColorMode";
-import { getDesignTokens } from "@/styles/theme";
+import { ColorModeContext } from "picasso/contexts/ColorMode";
+import { getDesignTokens } from "picasso/styles/theme";
 import { ThemeProvider as EmotionThemeProvider } from "@emotion/react";
 import { Box, createTheme, CssBaseline, ThemeProvider } from "@mui/material";
-import React from "react";
+import { FC, useState, useMemo } from "react";
 
-export const MUIDecorator: React.FC = ({ children }) => {
-  const [mode, setMode] = React.useState<"light" | "dark">("dark");
-  const colorMode = React.useMemo(
+export const MUIDecorator: FC = ({ children }) => {
+  const [mode, setMode] = useState<"light" | "dark">("dark");
+  const colorMode = useMemo(
     () => ({
       toggleColorMode: () => {
         setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
@@ -24,7 +24,7 @@ export const MUIDecorator: React.FC = ({ children }) => {
         <EmotionThemeProvider theme={createTheme(getDesignTokens(mode))}>
           <ThemeProvider theme={createTheme(getDesignTokens(mode))}>
             {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
-            <CssBaseline />
+            <CssBaseline/>
             {children}
           </ThemeProvider>
         </EmotionThemeProvider>
