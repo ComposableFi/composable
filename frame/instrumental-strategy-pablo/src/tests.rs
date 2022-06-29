@@ -1,13 +1,10 @@
-use composable_traits::{
-	defi::CurrencyPair,
-	instrumental::{AccessRights, InstrumentalProtocolStrategy},
-};
+use composable_traits::instrumental::{AccessRights, InstrumentalProtocolStrategy};
 use frame_support::{assert_noop, assert_ok};
 use primitives::currency::CurrencyId;
 
 use crate::mock::{
 	account_id::ADMIN,
-	helpers::{create_pool_with, create_vault},
+	helpers::{create_pool, create_vault},
 	runtime::{
 		Balance, Event, ExtBuilder, MockRuntime, Origin, PabloStrategy, System, VaultId,
 		MAX_ASSOCIATED_VAULTS,
@@ -74,17 +71,15 @@ mod rebalance {
 	fn rebalance_emits_event() {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
-
 			let base_asset = CurrencyId::LAYR;
 			let quote_asset = CurrencyId::CROWD_LOAN;
 			let amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
-			let amounts = vec![amount; 2];
 
 			// Create Vault (LAYR)
 			let vault_id = create_vault(base_asset, None);
 
 			// Create Pool (LAYR/CROWD_LOAN)
-			let pool_id = create_pool_with(CurrencyPair::new(base_asset, quote_asset), amounts);
+			let pool_id = create_pool(base_asset, amount, quote_asset, amount, None, None);
 			pallet::AdminAccountIds::<MockRuntime>::insert(ADMIN, AccessRights::Full);
 			assert_ok!(PabloStrategy::set_pool_id_for_asset(
 				Origin::signed(ADMIN),
