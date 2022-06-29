@@ -75,8 +75,8 @@ discussions about the subject.
 
 ### 2.1. PBLO Token Initial Distribution
 
-According to the [tokenomics design](http://link) the Pablo is supposed
-to be distributed as follows,
+According to the tokenomics design the Pablo is supposed to be
+distributed as follows,
 
 -   Ecosystem fund - x
 
@@ -246,7 +246,18 @@ abstraction over all fees that could be charged on a pool to allow for
 extension. At this time a 100% of the owner fee should be defined as a
 new field `protocol_fee`.
 
-<img src="0005-pablo-distribution-assets/images/images/pablo-fee-config.png" width="224" height="116" alt="pablo fee config" />
+    /// Pool Fee Config
+    #[derive(
+        Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Default, PartialEq, Eq, Copy, RuntimeDebug,
+    )]
+    pub struct FeeConfig {
+        /// Amount of the fee pool charges for the exchange, this goes to liquidity provider.
+        pub fee_rate: Permill,
+        /// Amount of the fee that goes out to the owner of the pool
+        pub owner_fee_rate: Permill,
+        /// Amount of the protocol fees(for PBLO holders) out of owner_fees.
+        pub protocol_fee_rate: Permill,
+    }
 
 **Existing code must be modified to use this data structure**.
 
@@ -381,7 +392,7 @@ staker reward,
 
 <img src="0005-pablo-distribution-assets/images/stem-569c4bf984a23f18046277fd561e89a3.png" width="126" height="20" alt="stem 569c4bf984a23f18046277fd561e89a3" /></span>
 
-As this is less than what is expected above, an adjustment " delta P "
+As this is less than what is expected above, an adjustment <img src="0005-pablo-distribution-assets/images/stem-40ae34b20ee5f0d16c68d77473e0be24.png" width="19" height="9" alt="stem 40ae34b20ee5f0d16c68d77473e0be24" /></span>
 to total reward pool can be made to allow realtime reward calculations,
 
 <img src="0005-pablo-distribution-assets/images/stem-8e958a64c877dcda40b652878c6c6768.png" width="119" height="20" alt="stem 8e958a64c877dcda40b652878c6c6768" /></span>
@@ -395,6 +406,7 @@ to total reward pool can be made to allow realtime reward calculations,
 **Therefore, the existing staker receives the same reward as before**
 
 To compensate for this new adjustment, a reduction <img src="0005-pablo-distribution-assets/images/stem-7c4ec4f9c189cb8f3edb39740e43c33f.png" width="16" height="10" alt="stem 7c4ec4f9c189cb8f3edb39740e43c33f" /></span>
+(equal to <img src="0005-pablo-distribution-assets/images/stem-40ae34b20ee5f0d16c68d77473e0be24.png" width="19" height="9" alt="stem 40ae34b20ee5f0d16c68d77473e0be24" /></span>)
 of reward for each staker needs to be tracked,
 
 <img src="0005-pablo-distribution-assets/images/stem-828ec270409cb6ff5cfc583587d0eae9.png" width="142" height="18" alt="stem 828ec270409cb6ff5cfc583587d0eae9" /></span>
