@@ -415,12 +415,10 @@ stop
 start
 ->positionId,assetId,\namount(in LP/PBLO/PICA)\ntime;
 :rewards_pool = readStorage(assetId);
-:boosted_amount = reward_multiplier * amount;
-note right: Handle boosting as per reward_multiplier
-:new_pool_shares = boosted_amount;
+:new_pool_shares = amount;
 :new_position = StakingNFT{
 asset: assetId,
-share: boosted_amount,
+share: amount,
 stake: amount,
 // ....
 };
@@ -430,7 +428,7 @@ while (reward = rewards_pool.rewards.has_next) is (yes)
     :reward.total_inflation += inflation;
     :new_position.reductions[reward.asset_id] += inflation;
 endwhile (no)
-:rewards_pool.total_shares += boosted_amount;
+:rewards_pool.total_shares += amount;
 :existing_position = readStorage(positionId);
 :merged_position = existing_position + new_position;
 note right: as per section 5.3.1.4
