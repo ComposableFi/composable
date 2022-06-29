@@ -259,7 +259,7 @@ pub mod pallet {
 	}
 
 	/// Data relating to the state of a virtual market.
-	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug, Default)]
+	#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Eq, Debug, Default)]
 	#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 	pub struct VammState<Balance, Moment, Decimal> {
 		/// The total amount of base asset present in the vamm.

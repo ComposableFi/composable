@@ -228,7 +228,7 @@ impl<T: Config> Market<T> {
 }
 
 /// Specifications for market creation
-#[derive(Encode, Decode, PartialEq, Clone, Debug, TypeInfo)]
+#[derive(Encode, Decode, PartialEq, Eq, Clone, Debug, TypeInfo)]
 pub struct MarketConfig<AssetId, Balance, Decimal, VammConfig> {
 	/// Asset id of the underlying for the derivatives market.
 	pub asset: AssetId,

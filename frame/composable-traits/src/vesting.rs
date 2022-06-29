@@ -130,18 +130,18 @@ mod tests {
 	#[test]
 	fn test_is_zero_period() {
 		let mut vesting_schedule_time_based = VestingSchedule::<u32, u64, u64> {
-			window: MomentBased { start: 1u64, period: 10u64 },
+			window: MomentBased { start: 1_u64, period: 10_u64 },
 			period_count: 100,
-			per_period: 1u64,
+			per_period: 1_u64,
 		};
 		assert!(!vesting_schedule_time_based.is_zero_period());
 		vesting_schedule_time_based.window = MomentBased { start: 1, period: 0 };
 		assert!(vesting_schedule_time_based.is_zero_period());
 
 		let mut vesting_schedule_block_number_based = VestingSchedule::<u64, u32, u64> {
-			window: BlockNumberBased { start: 1u64, period: 10u64 },
+			window: BlockNumberBased { start: 1_u64, period: 10_u64 },
 			period_count: 100,
-			per_period: 1u64,
+			per_period: 1_u64,
 		};
 		assert!(!vesting_schedule_block_number_based.is_zero_period());
 		vesting_schedule_block_number_based.window = BlockNumberBased { start: 1, period: 0 };
@@ -151,9 +151,9 @@ mod tests {
 	#[test]
 	fn test_end() {
 		let vesting_schedule_time_based = VestingSchedule::<u32, u64, u64> {
-			window: MomentBased { start: 1u64, period: 10u64 },
+			window: MomentBased { start: 1_u64, period: 10_u64 },
 			period_count: 100,
-			per_period: 1u64,
+			per_period: 1_u64,
 		};
 		match vesting_schedule_time_based.end() {
 			None => {},
@@ -163,9 +163,9 @@ mod tests {
 			},
 		}
 		let vesting_schedule_block_number_based = VestingSchedule::<u64, u32, u64> {
-			window: BlockNumberBased { start: 1u64, period: 10u64 },
+			window: BlockNumberBased { start: 1_u64, period: 10_u64 },
 			period_count: 100,
-			per_period: 1u64,
+			per_period: 1_u64,
 		};
 		match vesting_schedule_block_number_based.end() {
 			None => {},
@@ -179,9 +179,9 @@ mod tests {
 	#[test]
 	fn test_total_amount() {
 		let vesting_schedule = VestingSchedule::<u64, u64, u64> {
-			window: BlockNumberBased { start: 1u64, period: 10u64 },
+			window: BlockNumberBased { start: 1_u64, period: 10_u64 },
 			period_count: 100,
-			per_period: 1u64,
+			per_period: 1_u64,
 		};
 		assert_eq!(vesting_schedule.total_amount().unwrap(), 100)
 	}
@@ -190,18 +190,18 @@ mod tests {
 	#[test]
 	fn test_locked_amount() {
 		let vesting_schedule_time_based = VestingSchedule::<u32, u64, u64> {
-			window: MomentBased { start: 1u64, period: 10u64 },
+			window: MomentBased { start: 1_u64, period: 10_u64 },
 			period_count: 100,
-			per_period: 1u64,
+			per_period: 1_u64,
 		};
 		assert_eq!(vesting_schedule_time_based.locked_amount(1, 1), 100);
 		assert_eq!(vesting_schedule_time_based.locked_amount(1, 11), 99);
 		assert_eq!(vesting_schedule_time_based.locked_amount(1, 1001), 0);
 
 		let vesting_schedule_block_number_based = VestingSchedule::<u64, u32, u64> {
-			window: BlockNumberBased { start: 1u64, period: 10u64 },
+			window: BlockNumberBased { start: 1_u64, period: 10_u64 },
 			period_count: 100,
-			per_period: 1u64,
+			per_period: 1_u64,
 		};
 		assert_eq!(vesting_schedule_block_number_based.locked_amount(1, 1), 100);
 		assert_eq!(vesting_schedule_block_number_based.locked_amount(11, 1), 99);

@@ -33,10 +33,10 @@ pub type CollateralLpAmountOf<T> = <T as DeFiEngine>::Balance;
 
 pub type BorrowAmountOf<T> = <T as DeFiEngine>::Balance;
 
-#[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
+#[derive(Clone, Copy, RuntimeDebug, PartialEq, Eq, TypeInfo, Default)]
 pub struct UpdateInputValid;
 
-#[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq)]
+#[derive(Encode, Decode, Default, TypeInfo, RuntimeDebug, Clone, PartialEq, Eq)]
 pub struct UpdateInput<LiquidationStrategyId, BlockNumber> {
 	/// Collateral factor of market
 	pub collateral_factor: MoreThanOneFixedU128,
@@ -83,9 +83,9 @@ pub struct CreateInput<LiquidationStrategyId, AssetId, BlockNumber> {
 	pub reserved_factor: Perquintill,
 }
 
-#[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
+#[derive(Clone, Copy, RuntimeDebug, PartialEq, Eq, TypeInfo, Default)]
 pub struct MarketModelValid;
-#[derive(Clone, Copy, RuntimeDebug, PartialEq, TypeInfo, Default)]
+#[derive(Clone, Copy, RuntimeDebug, PartialEq, Eq, TypeInfo, Default)]
 pub struct CurrencyPairIsNotSame;
 
 impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
@@ -115,7 +115,7 @@ impl<LiquidationStrategyId, Asset: Eq, BlockNumber>
 	}
 }
 
-#[derive(RuntimeDebug, PartialEq, TypeInfo, Default)]
+#[derive(RuntimeDebug, PartialEq, Eq, TypeInfo, Default)]
 pub struct AssetIsSupportedByOracle<Oracle: OracleTrait>(PhantomData<Oracle>);
 
 impl<Oracle: OracleTrait> Copy for AssetIsSupportedByOracle<Oracle> {}
@@ -161,7 +161,7 @@ impl<LiquidationStrategyId, AssetId: Copy, BlockNumber>
 	}
 }
 
-#[derive(RuntimeDebug, PartialEq, TypeInfo, Default, Copy, Clone)]
+#[derive(RuntimeDebug, PartialEq, Eq, TypeInfo, Default, Copy, Clone)]
 pub struct BalanceGreaterThenZero;
 impl<B> Validate<B, BalanceGreaterThenZero> for BalanceGreaterThenZero
 where
@@ -192,7 +192,7 @@ pub struct MarketConfig<VaultId, AssetId, AccountId, LiquidationStrategyId, Bloc
 /// Different ways that a market can be repaid.
 // REVIEW: Perhaps add an "interest only" strategy?
 // InterestOnly
-#[derive(Encode, Decode, TypeInfo, RuntimeDebug, Clone, PartialEq)]
+#[derive(Encode, Decode, TypeInfo, RuntimeDebug, Clone, PartialEq, Eq)]
 pub enum RepayStrategy<T> {
 	/// Attempt to repay the entirety of the remaining debt.
 	TotalDebt,
@@ -221,7 +221,7 @@ pub enum RepayStrategy<T> {
 }
 
 /// The total amount of debt for an account on a market, if any.
-#[derive(Encode, Decode, TypeInfo, RuntimeDebug, Clone, PartialEq)]
+#[derive(Encode, Decode, TypeInfo, RuntimeDebug, Clone, PartialEq, Eq)]
 pub enum TotalDebtWithInterest<T> {
 	/// The account has some amount of debt on the market. Guarranteed to be non-zero.
 	Amount(T),

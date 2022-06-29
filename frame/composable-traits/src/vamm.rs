@@ -111,7 +111,7 @@ pub struct SwapSimulationConfig<VammId, Balance> {
 }
 
 /// Distinguish between asset types present in the vamm.
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Eq, Debug)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum AssetType {
 	Base,
@@ -119,7 +119,7 @@ pub enum AssetType {
 }
 
 /// The two possible directions to go when opening/closing a position in the vamm.
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Eq, Debug)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum Direction {
 	Add,
@@ -135,7 +135,7 @@ pub struct MovePriceConfig<VammId, Balance> {
 }
 
 /// Specify the return type for [`Vamm::swap`].
-#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Debug)]
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, Clone, Copy, PartialEq, Eq, Debug)]
 #[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub struct SwapOutput<Balance> {
 	pub output: Balance,
