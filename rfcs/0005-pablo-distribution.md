@@ -3,65 +3,65 @@ Design Proposal: Pablo Fees & Staking Rewards Distribution
 
 Table of Contents
 
--   [1. Abstract](#_abstract)
--   [2. Background](#_background)
+-   [1. Abstract](#1-abstract)
+-   [2. Background](#2-background)
     -   [2.1. PBLO Token Initial
-        Distribution](#_pblo_token_initial_distribution)
-    -   [2.2. Pool Fees](#_pool_fees)
-        -   [2.2.1. LP Fee Distribution](#_lp_fee_distribution)
--   [3. Use Cases](#_use_cases)
--   [4. Requirements](#_requirements)
-    -   [4.1. Pablo Liquidity Providers](#_pablo_liquidity_providers)
-    -   [4.2. PBLO Stakers](#_pblo_stakers)
-    -   [4.3. PICA Stakers](#_pica_stakers)
-    -   [4.4. Pablo Governance](#_pablo_governance)
-    -   [4.5. PICA Governance](#_pica_governance)
-    -   [4.6. Technical Requirements](#_technical_requirements)
--   [5. Method](#_method)
-    -   [5.1. System Overview](#_system_overview)
-    -   [5.2. Pallet-Pablo](#_pallet_pablo)
-        -   [5.2.1. FeeConfig](#_feeconfig)
+        Distribution](#21-pblo-token-initial-distribution)
+    -   [2.2. Pool Fees](#22-pool-fees)
+        -   [2.2.1. LP Fee Distribution](#-lp-fee-distribution)
+-   [3. Use Cases](#3-use-cases)
+-   [4. Requirements](#4-requirements)
+    -   [4.1. Pablo Liquidity Providers](#41-pablo-liquidity-providers)
+    -   [4.2. PBLO Stakers](#42-pblo-stakers)
+    -   [4.3. PICA Stakers](#43-pica-stakers)
+    -   [4.4. Pablo Governance](#44-pablo-governance)
+    -   [4.5. PICA Governance](#45-pica-governance)
+    -   [4.6. Technical Requirements](#46-technical-requirements)
+-   [5. Method](#5-method)
+    -   [5.1. System Overview](#51-system-overview)
+    -   [5.2. Pallet-Pablo](#52-pallet-pablo)
+        -   [5.2.1. FeeConfig](#521-feeconfig)
         -   [5.2.2. LP Trading Fee
-            Distribution](#_lp_trading_fee_distribution)
+            Distribution](#522-lp-trading-fee-distribution)
         -   [5.2.3. PBLO Staker Trading Fee
-            Distribution](#_pblo_staker_trading_fee_distribution)
+            Distribution](#523-pblo-staker-trading-fee-distribution)
     -   [5.3. Pallet Staking Rewards - LP/PICA/PBLO/Other Token Staking
         Reward
-        Pools](#_pallet_staking_rewards_lppicapbloother_token_staking_reward_pools)
+        Pools](#53-pallet-staking-rewards-lppicapbloother-token-staking-reward-pools)
         -   [5.3.1. Analysis of Reward
-            Calculations](#_analysis_of_reward_calculations)
+            Calculations](#531-analysis-of-reward-calculations)
             -   [5.3.1.1. When adding a new staker <span
                 class="image"><img src="0005-pablo-distribution-assets/images/stem-0b46f732c83c0e66067b0e50c2156089.png" width="29" height="8" alt="stem 0b46f732c83c0e66067b0e50c2156089" /></span>,
                 existing stakers(<span
                 class="image"><img src="0005-pablo-distribution-assets/images/stem-55a049b8f161ae7cfeb0197d75aff967.png" width="9" height="6" alt="stem 55a049b8f161ae7cfeb0197d75aff967" /></span>)
                 reward would
-                be,](#_when_adding_a_new_staker_n1_existing_stakersn_reward_would_be)
+                be,](#5311-when-adding-a-new-staker-n1-existing-stakersn-reward-would-be)
             -   [5.3.1.2. When removing a staker from the pool the above
                 addition step has to be
-                reverted](#_when_removing_a_staker_from_the_pool_the_above_addition_step_has_to_be_reverted)
+                reverted](#5312-when-removing-a-staker-from-the-pool-the-above-addition-step-has-to-be-reverted)
             -   [5.3.1.3. When adding a new reward to the pool the
                 calculations remain the same other than increasing the
                 reward pool as
-                follows,](#_when_adding_a_new_reward_to_the_pool_the_calculations_remain_the_same_other_than_increasing_the_reward_pool_as_follows)
+                follows,](#5313-when-adding-a-new-reward-to-the-pool-the-calculations-remain-the-same-other-than-increasing-the-reward-pool-as-follows)
             -   [5.3.1.4. When extending an existing
-                position](#_when_extending_an_existing_position)
+                position](#5314-when-extending-an-existing-position)
             -   [5.3.1.5. When splitting an existing
-                position](#_when_splitting_an_existing_position)
-        -   [5.3.2. Data Structures](#_data_structures)
-        -   [5.3.3. Staking](#_staking)
-        -   [5.3.4. Extend Position](#_extend_position)
-        -   [5.3.5. Split Position](#_split_position)
-        -   [5.3.6. Claim/Unstake](#_claimunstake)
-        -   [5.3.7. Update Reward Pool](#_update_reward_pool)
-        -   [5.3.8. RewardAccumulationHook](#_rewardaccumulationhook)
--   [6. Implementation](#_implementation)
+                position](#5315-when-splitting-an-existing-position)
+        -   [5.3.2. Data Structures](#532-data-structures)
+        -   [5.3.3. Staking](#533-staking)
+        -   [5.3.4. Extend Position](#534-extend-position)
+        -   [5.3.5. Split Position](#535-split-position)
+        -   [5.3.6. Claim/Unstake](#536-claimunstake)
+        -   [5.3.7. Update Reward Pool](#537-update-reward-pool)
+        -   [5.3.8. RewardAccumulationHook](#538-rewardaccumulationhook)
+-   [6. Implementation](#6-implementation)
     -   [6.1. Pallet Pablo: LP Fee + Staking
-        Changes](#_pallet_pablo_lp_fee_staking_changes)
+        Changes](#61-pallet-pablo-lp-fee-staking-changes)
     -   [6.2. Pallet Staking Rewards: PICA/PBLO Staking Related
-        Changes](#_pallet_staking_rewards_picapblo_staking_related_changes)
+        Changes](#62-pallet-staking-rewards-picapblo-staking-related-changes)
 -   [Appendix A: Trading Fee Inflation to Avoid Dilution of
-    LPs](#_trading_fee_inflation_to_avoid_dilution_of_lps)
--   [Appendix B: Fee Distribution Q&A](#_fee_distribution_qa)
+    LPs](#appendix-a-trading-fee-inflation-to-avoid-dilution-of-lps)
+-   [Appendix B: Fee Distribution Q&A](#appendix-b-fee-distribution-qa)
 
 ## 1. Abstract
 
