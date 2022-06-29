@@ -80,6 +80,8 @@ pub trait InstrumentalProtocolStrategy {
 
 	fn account_id() -> Self::AccountId;
 
+	fn caller_has_rights(account_id: Self::AccountId, access: AccessRights) -> DispatchResult;
+
 	fn associate_vault(vault_id: &Self::VaultId) -> Result<(), DispatchError>;
 
 	fn rebalance() -> DispatchResult;

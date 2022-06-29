@@ -233,6 +233,12 @@ pub mod pallet {
 		type VaultId = T::VaultId;
 		type PoolId = T::PoolId;
 
+		fn caller_has_rights(_account_id: T::AccountId, _access: AccessRights) -> DispatchResult {
+			// TODO: (belousm)
+			// The same functionality like in `instrumental-strategy-pablo`
+			Ok(())
+		}
+
 		fn account_id() -> Self::AccountId {
 			T::PalletId::get().into_account()
 		}

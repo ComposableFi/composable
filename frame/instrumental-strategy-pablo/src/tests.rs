@@ -4,12 +4,9 @@
 #[cfg(test)]
 mod associate_vault {
 	use crate::mock::{
-		account_id::{ADMIN},
+		account_id::ADMIN,
 		helpers::set_admin_account_with_full_access,
-		runtime::{
-			ExtBuilder, MockRuntime, Origin, PabloStrategy, VaultId,
-			MAX_ASSOCIATED_VAULTS,
-		},
+		runtime::{ExtBuilder, MockRuntime, Origin, PabloStrategy, VaultId, MAX_ASSOCIATED_VAULTS},
 	};
 	#[allow(unused_imports)]
 	use crate::{pallet, pallet::Error};
@@ -41,7 +38,10 @@ mod associate_vault {
 		ExtBuilder::default().build().execute_with(|| {
 			set_admin_account_with_full_access().ok();
 			for vault_id in 0..MAX_ASSOCIATED_VAULTS {
-				assert_ok!(PabloStrategy::associate_vault(Origin::signed(ADMIN), vault_id as VaultId));
+				assert_ok!(PabloStrategy::associate_vault(
+					Origin::signed(ADMIN),
+					vault_id as VaultId
+				));
 			}
 
 			let vault_id = MAX_ASSOCIATED_VAULTS as VaultId;
@@ -57,16 +57,16 @@ mod associate_vault {
 // -------------------------------------------------------------------------------------------------
 #[cfg(test)]
 mod liquidity_rebalance {
-	use crate::mock::{
-		account_id::ADMIN,
-		helpers::{create_layr_crowd_loan_pool, set_admin_account_with_full_access},
-		runtime::{
-			Event, ExtBuilder, Instrumental, Origin, PabloStrategy, System, VaultId,
+	use crate::{
+		mock::{
+			account_id::ADMIN,
+			helpers::{create_layr_crowd_loan_pool, set_admin_account_with_full_access},
+			runtime::{Event, ExtBuilder, Instrumental, Origin, PabloStrategy, System, VaultId},
 		},
+		pallet,
 	};
-	use crate::pallet;
-	use composable_traits::instrumental::{Instrumental as InstrumentalTrait,
-		InstrumentalVaultConfig,
+	use composable_traits::instrumental::{
+		Instrumental as InstrumentalTrait, InstrumentalVaultConfig,
 	};
 	use frame_support::assert_ok;
 	use primitives::currency::CurrencyId;
@@ -79,7 +79,8 @@ mod liquidity_rebalance {
 
 			let asset_id = CurrencyId::LAYR;
 			// Create Vault (LAYR)
-			let config = InstrumentalVaultConfig { asset_id, percent_deployable: Perquintill::zero() };
+			let config =
+				InstrumentalVaultConfig { asset_id, percent_deployable: Perquintill::zero() };
 			let vault_id = <Instrumental as InstrumentalTrait>::create(config);
 			assert_ok!(vault_id);
 			let vault_id = vault_id.unwrap() as VaultId;
@@ -88,7 +89,11 @@ mod liquidity_rebalance {
 			let pool_id = create_layr_crowd_loan_pool();
 
 			set_admin_account_with_full_access().ok();
-			assert_ok!(PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, pool_id));
+			assert_ok!(PabloStrategy::set_pool_id_for_asset(
+				Origin::signed(ADMIN),
+				asset_id,
+				pool_id
+			));
 
 			assert_ok!(PabloStrategy::associate_vault(Origin::signed(ADMIN), vault_id));
 
@@ -99,28 +104,31 @@ mod liquidity_rebalance {
 			}));
 		});
 	}
-}	
+}
 
 // -------------------------------------------------------------------------------------------------
 //                                             Set pool_id for asset
 // -------------------------------------------------------------------------------------------------
 #[cfg(test)]
 mod set_pool_id_for_asset {
-	use crate::mock::{
-		account_id::{ADMIN, ALICE},
-		helpers::{create_layr_crowd_loan_pool, set_admin_account_with_full_access},
-		runtime::{
-			Event, ExtBuilder, Instrumental, MockRuntime, Origin, PabloStrategy, System, VaultId,
+	use crate::{
+		mock::{
+			account_id::{ADMIN, ALICE},
+			helpers::{create_layr_crowd_loan_pool, set_admin_account_with_full_access},
+			runtime::{
+				Event, ExtBuilder, Instrumental, MockRuntime, Origin, PabloStrategy, System,
+				VaultId,
+			},
 		},
+		pallet,
+		pallet::Error,
 	};
-	use crate::{pallet, pallet::Error};
 	use composable_traits::instrumental::{
-		AccessRights, Instrumental as InstrumentalTrait,
-		InstrumentalVaultConfig, State,
+		AccessRights, Instrumental as InstrumentalTrait, InstrumentalVaultConfig, State,
 	};
 	use frame_support::{assert_noop, assert_ok};
-	use sp_runtime::Perquintill;
 	use primitives::currency::CurrencyId;
+	use sp_runtime::Perquintill;
 
 	#[test]
 	fn test_caller_is_persmissoned() {
@@ -134,11 +142,15 @@ mod set_pool_id_for_asset {
 			pallet::AdminAccountIds::<MockRuntime>::insert(ADMIN, AccessRights::Rebalance);
 			assert_noop!(
 				PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, pool_id),
-				Error::<MockRuntime>::NotEnoughAccessRights
+				Error::<MockRuntime>::UserDoesNotHaveCorrectAccessRight
 			);
 
 			set_admin_account_with_full_access().ok();
-			assert_ok!(PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, pool_id));
+			assert_ok!(PabloStrategy::set_pool_id_for_asset(
+				Origin::signed(ADMIN),
+				asset_id,
+				pool_id
+			));
 
 			assert_noop!(
 				PabloStrategy::set_pool_id_for_asset(Origin::signed(ALICE), asset_id, pool_id),
@@ -163,7 +175,7 @@ mod set_pool_id_for_asset {
 					asset_id,
 					not_valid_pool_id
 				),
-				Error::<MockRuntime>::PoolIsNotValidated
+				Error::<MockRuntime>::PoolIdDoesNotExist
 			);
 		})
 	}
@@ -177,15 +189,18 @@ mod set_pool_id_for_asset {
 			// Create Pool (LAYR/CROWD_LOAN)
 			let pool_id = create_layr_crowd_loan_pool();
 			set_admin_account_with_full_access().ok();
-			assert_ok!(PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, pool_id));
+			assert_ok!(PabloStrategy::set_pool_id_for_asset(
+				Origin::signed(ADMIN),
+				asset_id,
+				pool_id
+			));
 			assert_eq!(
 				PabloStrategy::pools(asset_id).unwrap(),
 				pallet::PoolState { pool_id, state: State::Normal }
 			);
-			System::assert_last_event(Event::PabloStrategy(pallet::Event::AssociatedPoolWithAsset {
-				asset_id,
-				pool_id,
-			}));
+			System::assert_last_event(Event::PabloStrategy(
+				pallet::Event::AssociatedPoolWithAsset { asset_id, pool_id },
+			));
 		})
 	}
 
@@ -199,14 +214,19 @@ mod set_pool_id_for_asset {
 			let pool_id = create_layr_crowd_loan_pool();
 			set_admin_account_with_full_access().ok();
 			// Create Vault (LAYR)
-			let config = InstrumentalVaultConfig { asset_id, percent_deployable: Perquintill::zero() };
+			let config =
+				InstrumentalVaultConfig { asset_id, percent_deployable: Perquintill::zero() };
 			let vault_id = <Instrumental as InstrumentalTrait>::create(config);
 			assert_ok!(vault_id);
 			let vault_id = vault_id.unwrap() as VaultId;
 			// Add Vault to AssociatedVaults
 			assert_ok!(PabloStrategy::associate_vault(Origin::signed(ADMIN), vault_id));
 			// Set first pool_id corresponding to CurrencyId::LAYR
-			assert_ok!(PabloStrategy::set_pool_id_for_asset(Origin::signed(ADMIN), asset_id, pool_id));
+			assert_ok!(PabloStrategy::set_pool_id_for_asset(
+				Origin::signed(ADMIN),
+				asset_id,
+				pool_id
+			));
 			let new_pool_id = create_layr_crowd_loan_pool();
 			// Set new pool_id corresponding to CurrencyId::LAYR
 			assert_ok!(PabloStrategy::set_pool_id_for_asset(
@@ -214,10 +234,9 @@ mod set_pool_id_for_asset {
 				asset_id,
 				new_pool_id
 			));
-			System::assert_last_event(Event::PabloStrategy(pallet::Event::AssociatedPoolWithAsset {
-				asset_id,
-				pool_id: new_pool_id,
-			}));
+			System::assert_last_event(Event::PabloStrategy(
+				pallet::Event::AssociatedPoolWithAsset { asset_id, pool_id: new_pool_id },
+			));
 			let mut occured_funds_transferring_flag = false;
 			let mut transffered_funds_corresponded_to_vault_flag = false;
 			let system_events = frame_system::Pallet::<MockRuntime>::events();
@@ -247,17 +266,15 @@ mod set_pool_id_for_asset {
 // -------------------------------------------------------------------------------------------------
 #[cfg(test)]
 mod set_access {
-	use crate::mock::{
-		account_id::{ADMIN, ALICE},
-		helpers::set_admin_account_with_full_access,
-		runtime::{
-			Event, ExtBuilder, MockRuntime, Origin, PabloStrategy, System,
+	use crate::{
+		mock::{
+			account_id::{ADMIN, ALICE},
+			helpers::set_admin_account_with_full_access,
+			runtime::{Event, ExtBuilder, MockRuntime, Origin, PabloStrategy, System},
 		},
+		pallet,
 	};
-	use crate::pallet;
-	use composable_traits::instrumental::{
-		AccessRights,
-	};
+	use composable_traits::instrumental::AccessRights;
 	use frame_support::assert_ok;
 
 	#[test]
@@ -267,7 +284,8 @@ mod set_access {
 			set_admin_account_with_full_access().ok();
 			assert_ok!(PabloStrategy::set_access(Origin::signed(ADMIN), ALICE, AccessRights::Full));
 			assert!(
-				pallet::AdminAccountIds::<MockRuntime>::try_get(ALICE).unwrap() == AccessRights::Full
+				pallet::AdminAccountIds::<MockRuntime>::try_get(ALICE).unwrap() ==
+					AccessRights::Full
 			);
 			System::assert_last_event(Event::PabloStrategy(pallet::Event::AssociatedAccountId {
 				account_id: ALICE,

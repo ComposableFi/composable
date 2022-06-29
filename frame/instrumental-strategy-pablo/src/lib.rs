@@ -229,9 +229,9 @@ pub mod pallet {
 		// Occurs when an attempt is made to initialize a function not from an admin account
 		NotAdminAccount,
 		// Occurs when an admin account doesn't have enough access rights to initialize a function
-		NotEnoughAccessRights,
+		UserDoesNotHaveCorrectAccessRight,
 		// Occurs when pool_id not contained in Pablo pools storage
-		PoolIsNotValidated,
+		PoolIdDoesNotExist,
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -257,17 +257,10 @@ pub mod pallet {
 			vault_id: T::VaultId,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			let access_right = Self::admin_accounts(who).ok_or(Error::<T>::NotAdminAccount)?;
-			ensure!(
-				access_right == AccessRights::Full ||
-					access_right == AccessRights::AssociateVaultId,
-				Error::<T>::NotEnoughAccessRights
-			);
-			// TODO(belousm): Ask Kevin do we need check that 'deposits_allowed'.
-			// ensure!(
-			// 	T::Vault::deposits_allowed(&vault_id).unwrap() == true,
-			// 	Error::<T>::VaultIsStopped
-			// );
+			<Self as InstrumentalProtocolStrategy>::caller_has_rights(
+				who,
+				AccessRights::AssociateVaultId,
+			)?;
 			<Self as InstrumentalProtocolStrategy>::associate_vault(&vault_id)?;
 			Ok(().into())
 		}
@@ -282,12 +275,11 @@ pub mod pallet {
 			pool_id: T::PoolId,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			let access_right = Self::admin_accounts(who).ok_or(Error::<T>::NotAdminAccount)?;
-			ensure!(
-				access_right == AccessRights::Full || access_right == AccessRights::SetPoolId,
-				Error::<T>::NotEnoughAccessRights
-			);
-			ensure!(T::Pablo::pool_exists(pool_id), Error::<T>::PoolIsNotValidated);
+			<Self as InstrumentalProtocolStrategy>::caller_has_rights(
+				who,
+				AccessRights::SetPoolId,
+			)?;
+			ensure!(T::Pablo::pool_exists(pool_id), Error::<T>::PoolIdDoesNotExist);
 			<Self as InstrumentalProtocolStrategy>::set_pool_id_for_asset(asset_id, pool_id)?;
 			Self::deposit_event(Event::AssociatedPoolWithAsset { asset_id, pool_id });
 			Ok(().into())
@@ -299,11 +291,10 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::liquidity_rebalance())]
 		pub fn liquidity_rebalance(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			let access_right = Self::admin_accounts(who).ok_or(Error::<T>::NotAdminAccount)?;
-			ensure!(
-				access_right == AccessRights::Full || access_right == AccessRights::Rebalance,
-				Error::<T>::NotEnoughAccessRights
-			);
+			<Self as InstrumentalProtocolStrategy>::caller_has_rights(
+				who,
+				AccessRights::Rebalance,
+			)?;
 			<Self as InstrumentalProtocolStrategy>::rebalance()?;
 			Ok(().into())
 		}
@@ -318,11 +309,10 @@ pub mod pallet {
 			access: AccessRights,
 		) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
-			let access_right = Self::admin_accounts(who).ok_or(Error::<T>::NotAdminAccount)?;
-			ensure!(
-				access_right == AccessRights::Full || access_right == AccessRights::SetAccess,
-				Error::<T>::NotEnoughAccessRights
-			);
+			<Self as InstrumentalProtocolStrategy>::caller_has_rights(
+				who,
+				AccessRights::SetAccess,
+			)?;
 			<Self as InstrumentalProtocolStrategy>::set_access(account_id.clone(), access)?;
 			Self::deposit_event(Event::AssociatedAccountId { account_id, access });
 			Ok(().into())
@@ -353,6 +343,16 @@ pub mod pallet {
 				},
 				Err(_) => AdminAccountIds::<T>::insert(account_id, access),
 			}
+			Ok(())
+		}
+
+		fn caller_has_rights(account_id: T::AccountId, access: AccessRights) -> DispatchResult {
+			let access_right =
+				Self::admin_accounts(account_id).ok_or(Error::<T>::NotAdminAccount)?;
+			ensure!(
+				access_right == AccessRights::Full || access_right == access,
+				Error::<T>::UserDoesNotHaveCorrectAccessRight
+			);
 			Ok(())
 		}
 
