@@ -493,9 +493,10 @@ pub mod pallet {
 				value,
 			};
 			let mut ctx = routing::Context::<T>::new();
-			ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg)
-				.map_err(|_| Error::<T>::ProcessingError)?;
-			Self::deposit_event(Event::<T>::ConnectionInitiated);
+			let result =
+				ibc::core::ics26_routing::handler::deliver::<_, HostFunctions>(&mut ctx, msg)
+					.map_err(|_| Error::<T>::ProcessingError)?;
+			Self::deposit_event(result.events.into());
 			Ok(())
 		}
 	}

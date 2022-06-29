@@ -4,6 +4,7 @@ use ibc::events::IbcEvent as RawIbcEvent;
 #[derive(
 	Encode, Decode, Clone, PartialEq, Eq, frame_support::RuntimeDebug, scale_info::TypeInfo,
 )]
+#[cfg_attr(feature = "std", derive(serde::Serialize, serde::Deserialize))]
 /// IBC events
 // Using Vec<u8> instead of String because Encode and Decode are not implemented for Strings in
 // no-std environment.
@@ -140,7 +141,7 @@ pub enum IbcEvent {
 	/// Chain Error
 	ChainError,
 	/// App module
-	AppModule,
+	AppModule { kind: Vec<u8>, module_id: Vec<u8> },
 }
 
 impl From<RawIbcEvent> for IbcEvent {
@@ -287,7 +288,10 @@ impl From<RawIbcEvent> for IbcEvent {
 			},
 			RawIbcEvent::Empty(_) => IbcEvent::Empty,
 			RawIbcEvent::ChainError(_) => IbcEvent::ChainError,
-			RawIbcEvent::AppModule(_) => IbcEvent::AppModule,
+			RawIbcEvent::AppModule(ev) => IbcEvent::AppModule {
+				kind: ev.kind.as_bytes().to_vec(),
+				module_id: ev.module_name.to_string().as_bytes().to_vec(),
+			},
 		}
 	}
 }

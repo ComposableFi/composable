@@ -63,6 +63,8 @@ use sp_runtime::{
 };
 use sp_trie::TrieMut;
 use tendermint_proto::Protobuf;
+mod events;
+use events::{filter_map_pallet_event, IbcRelayerEvent};
 
 /// Connection handshake proof
 #[derive(Serialize, Deserialize)]
@@ -314,6 +316,10 @@ pub trait IbcApi<BlockNumber, Hash> {
 	/// Query newly created clients in block
 	#[method(name = "ibc_queryNewlyCreatedClients")]
 	fn query_newly_created_clients(&self, block_hash: Hash) -> Result<Vec<IdentifiedClientState>>;
+
+	/// Query Ibc Events that were deposited in a block
+	#[method(name = "ibc_queryIbcEvents")]
+	fn query_ibc_events(&self, block_hash: Hash) -> Result<Vec<IbcRelayerEvent>>;
 }
 
 /// Converts a runtime trap into an RPC error.
@@ -1276,5 +1282,13 @@ where
 		}
 
 		Ok(identified_clients)
+	}
+
+	fn query_ibc_events(&self, block_hash: Block::Hash) -> Result<Vec<IbcRelayerEvent>> {
+		let api = self.client.runtime_api();
+		let at = BlockId::Hash(block_hash);
+		api.block_events(&at)
+			.map(|events| events.into_iter().filter_map(filter_map_pallet_event).collect())
+			.map_err(|_| runtime_error_into_rpc_error("[ibc_rpc]: failed to read block events"))
 	}
 }
