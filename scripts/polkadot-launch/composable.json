@@ -20,35 +20,66 @@
         "wsPort": 9944,
         "basePath": "/tmp/polkadot-launch/relaychains/alice",
         "port": 30444,
-        "flags": ["--rpc-cors=all", "--beefy", "--enable-offchain-indexing=true"]
+        "flags": [
+          "--rpc-cors=all",
+          "--ws-external",
+          "--unsafe-rpc-external",
+          "--rpc-methods=unsafe",
+          "--beefy",
+          "--enable-offchain-indexing=true"
+        ]
       },
       {
         "name": "bob",
         "wsPort": 9955,
         "basePath": "/tmp/polkadot-launch/relaychains/bob",
         "port": 30555,
-        "flags": ["--beefy"]
+        "flags": [
+          "--rpc-cors=all",
+          "--ws-external",
+          "--unsafe-rpc-external",
+          "--rpc-methods=unsafe",
+          "--beefy"
+        ]
       },
       {
         "name": "charlie",
         "wsPort": 9966,
         "basePath": "/tmp/polkadot-launch/relaychains/charlie",
         "port": 30666,
-        "flags": ["--beefy"]
+        "flags": [
+          "--rpc-cors=all",
+          "--ws-external",
+          "--unsafe-rpc-external",
+          "--rpc-methods=unsafe",
+          "--beefy"
+        ]
       },
       {
         "name": "dave",
         "wsPort": 9977,
         "basePath": "/tmp/polkadot-launch/relaychains/dave",
         "port": 30777,
-        "flags": ["--beefy"]
+        "flags": [
+          "--rpc-cors=all",
+          "--ws-external",
+          "--unsafe-rpc-external",
+          "--rpc-methods=unsafe",
+          "--beefy"
+        ]
       },
       {
         "name": "ferdie",
         "wsPort": 9978,
         "basePath": "/tmp/polkadot-launch/relaychains/ferdie",
         "port": 30778,
-        "flags": ["--beefy"]
+        "flags": [
+          "--rpc-cors=all",
+          "--ws-external",
+          "--unsafe-rpc-external",
+          "--rpc-methods=unsafe",
+          "--beefy"
+        ]
       }
     ]
   },
@@ -62,21 +93,45 @@
           "wsPort": 9988,
           "basePath": "/tmp/polkadot-launch/parachains/alice",
           "port": 31100,
-          "flags": ["--log=runtime::contracts=debug", "--", "--execution=wasm"]
+          "flags": [
+            "--rpc-cors=all",
+            "--ws-external",
+            "--unsafe-rpc-external",
+            "--rpc-methods=unsafe",
+            "--log=runtime::contracts=debug",
+            "--",
+            "--execution=wasm"
+          ]
         },
         {
           "name": "bob",
           "wsPort": 9997,
           "basePath": "/tmp/polkadot-launch/parachains/bob",
           "port": 31200,
-            "flags": ["--log=runtime::contracts=debug", "--", "--execution=wasm"]
+          "flags": [
+            "--rpc-cors=all",
+            "--ws-external",
+            "--unsafe-rpc-external",
+            "--rpc-methods=unsafe",
+            "--log=runtime::contracts=debug",
+            "--",
+            "--execution=wasm"
+          ]
         },
         {
           "name": "charlie",
           "wsPort": 9996,
           "basePath": "/tmp/polkadot-launch/parachains/charlie",
           "port": 31300,
-            "flags": ["--log=runtime::contracts=debug", "--", "--execution=wasm"]
+          "flags": [
+            "--rpc-cors=all",
+            "--ws-external",
+            "--unsafe-rpc-external",
+            "--rpc-methods=unsafe",
+            "--log=runtime::contracts=debug",
+            "--",
+            "--execution=wasm"
+          ]
         }
       ]
     }

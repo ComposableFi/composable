@@ -94,12 +94,14 @@ containerize-composable-sandbox:
 	@docker build -f docker/composable-sandbox.dockerfile \
 		-t ${REPO}/composable-sandbox:${COMMIT_SHA} \
 		-t ${REPO}/composable-sandbox:latest  \
+		-t ${REPO}/composable-xcvm:${COMMIT_SHA} \
 		-t ${REPO}/composable-xcvm:latest  \
 		.
 
 push-composable-sandbox:
 	@docker push ${REPO}/composable-sandbox:${COMMIT_SHA}
 	@docker push ${REPO}/composable-sandbox:latest
+	@docker push ${REPO}/composable-xcvm:${COMMIT_SHA}
 	@docker push ${REPO}/composable-xcvm:latest
 
 containerize-mmr-polkadot:
