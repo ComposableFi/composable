@@ -2,15 +2,12 @@ use crate::{
 	mock::{Balance, ExtBuilder, MockRuntime, System, TestPallet, VammId},
 	pallet::{Error, Event, VammMap},
 	tests::{
-		helpers::{
-			create_vamm, default_swap_config, default_vamm_config, run_for_seconds, run_to_block,
-			swap_config,
-		},
+		helpers::{create_vamm, default_swap_config, run_for_seconds, run_to_block, swap_config},
 		helpers_propcompose::{
-			any_vamm_state, balance_range_lower_half, balance_range_upper_half, get_swap_config,
-			get_vamm_state, multiple_swaps, then_and_now,
+			any_swap_config, any_vamm_state, balance_range_lower_half, balance_range_upper_half,
+			multiple_swaps, then_and_now,
 		},
-		TestSwapConfig, RUN_CASES,
+		TestVammConfig, RUN_CASES,
 	},
 };
 use composable_traits::vamm::{AssetType, Direction, SwapOutput, Vamm as VammTrait};
@@ -175,8 +172,8 @@ proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
 	fn should_fail_if_vamm_does_not_exist(
-		swap_config in get_swap_config(Default::default()),
 		vamm_state in any_vamm_state(),
+		swap_config in any_swap_config(),
 	) {
 		prop_assume!(swap_config.vamm_id != 0);
 
@@ -193,8 +190,8 @@ proptest! {
 
 	#[test]
 	fn should_fail_if_vamm_is_closed(
-		mut swap_config in get_swap_config(Default::default()),
 		mut vamm_state in any_vamm_state(),
+		mut swap_config in any_swap_config(),
 		(close, now) in then_and_now()
 	) {
 		// Make the current time be greater than the time when the vamm is
@@ -219,7 +216,7 @@ proptest! {
 	#[test]
 	fn should_fail_if_output_is_less_than_minimum_limit(
 		mut vamm_state in any_vamm_state(),
-		mut swap_config in get_swap_config(Default::default()),
+		mut swap_config in any_swap_config(),
 		limit in balance_range_upper_half(),
 	) {
 		// Ensure vamm is open before start operation to swap assets.
@@ -278,22 +275,18 @@ proptest! {
 
 	#[test]
 	fn should_fail_if_insufficient_funds_base(
-		mut vamm_state in get_vamm_state(Default::default()),
-		mut swap_config in get_swap_config(
-			TestSwapConfig {
-				direction: Some(Direction::Remove),
-				vamm_id: Some(0),
-				asset: Some(AssetType::Base),
-				..Default::default()}),
+		mut vamm_state in any_vamm_state(),
+		mut swap_config in any_swap_config(),
 		input_amount in balance_range_upper_half(),
 		base_asset_reserves in balance_range_lower_half(),
 	) {
-		prop_assume!(input_amount > base_asset_reserves);
-		prop_assume!(swap_config.direction == Direction::Remove);
-
 		// Ensure vamm is open before starting operation to swap assets.
 		vamm_state.closed = None;
 
+		// Set correct values for test.
+		swap_config.direction = Direction::Remove;
+		swap_config.vamm_id = 0;
+		swap_config.asset = AssetType::Base;
 		swap_config.input_amount = input_amount;
 		vamm_state.base_asset_reserves = base_asset_reserves;
 
@@ -310,22 +303,18 @@ proptest! {
 
 	#[test]
 	fn should_fail_if_insufficient_funds_quote(
-		mut vamm_state in get_vamm_state(Default::default()),
-		mut swap_config in get_swap_config(
-			TestSwapConfig {
-				direction: Some(Direction::Remove),
-				vamm_id: Some(0),
-				asset: Some(AssetType::Quote),
-				..Default::default()}),
+		mut vamm_state in any_vamm_state(),
+		mut swap_config in any_swap_config(),
 		input_amount in balance_range_upper_half(),
 		quote_asset_reserves in balance_range_lower_half(),
 	) {
-		prop_assume!(input_amount > quote_asset_reserves);
-		prop_assume!(swap_config.direction == Direction::Remove);
-
 		// Ensure vamm is open before starting operation to swap assets.
 		vamm_state.closed = None;
 
+		// Set correct values for test.
+		swap_config.direction = Direction::Remove;
+		swap_config.vamm_id = 0;
+		swap_config.asset = AssetType::Quote;
 		swap_config.input_amount = input_amount;
 		vamm_state.quote_asset_reserves = quote_asset_reserves;
 
@@ -343,12 +332,7 @@ proptest! {
 	#[test]
 	fn should_succeed_removing_base(
 		mut vamm_state in any_vamm_state(),
-		mut swap_config in get_swap_config(
-			TestSwapConfig {
-				direction: Some(Direction::Remove),
-				vamm_id: Some(0),
-				asset: Some(AssetType::Base),
-				..Default::default()}),
+		mut swap_config in any_swap_config()
 	) {
 		// Ensure vamm is open before starting operation to swap assets.
 		vamm_state.closed = None;
@@ -359,6 +343,11 @@ proptest! {
 
 		// Disable output limit check
 		swap_config.output_amount_limit = 0;
+
+		// Set correct values for test.
+		swap_config.direction = Direction::Remove;
+		swap_config.vamm_id = 0;
+		swap_config.asset = AssetType::Base;
 
 		ExtBuilder {
 			vamm_count: 1,
@@ -371,12 +360,7 @@ proptest! {
 	#[test]
 	fn should_succeed_removing_quote(
 		mut vamm_state in any_vamm_state(),
-		mut swap_config in get_swap_config(
-			TestSwapConfig {
-				direction: Some(Direction::Remove),
-				vamm_id: Some(0),
-				asset: Some(AssetType::Quote),
-				..Default::default()}),
+		mut swap_config in any_swap_config()
 	) {
 		// Ensure vamm is open before starting operation to swap assets.
 		vamm_state.closed = None;
@@ -388,6 +372,11 @@ proptest! {
 		// Disable output limit check
 		swap_config.output_amount_limit = 0;
 
+		// Set correct values for test.
+		swap_config.direction = Direction::Remove;
+		swap_config.vamm_id = 0;
+		swap_config.asset = AssetType::Quote;
+
 		ExtBuilder {
 			vamm_count: 1,
 			vamms: vec![(0, vamm_state)]
@@ -398,21 +387,18 @@ proptest! {
 
 	#[test]
 	fn should_fail_if_trade_extrapolates_maximum_supported_amount_base(
-		mut vamm_state in get_vamm_state(Default::default()),
-		mut swap_config in get_swap_config(
-			TestSwapConfig {
-				direction: Some(Direction::Add),
-				vamm_id: Some(0),
-				asset: Some(AssetType::Base),
-				..Default::default()}),
+		mut vamm_state in any_vamm_state(),
+		mut swap_config in any_swap_config(),
 		input_amount in balance_range_upper_half(),
 		base_asset_reserves in balance_range_upper_half(),
 	) {
-		prop_assume!(swap_config.direction == Direction::Add);
-
 		// Ensure vamm is open before starting operation to swap assets.
 		vamm_state.closed = None;
 
+		// Set correct values for test.
+		swap_config.direction = Direction::Add;
+		swap_config.vamm_id = 0;
+		swap_config.asset = AssetType::Base;
 		swap_config.input_amount = input_amount;
 		vamm_state.base_asset_reserves = base_asset_reserves;
 
@@ -429,21 +415,18 @@ proptest! {
 
 	#[test]
 	fn should_fail_if_trade_extrapolates_maximum_supported_amount_quote(
-		mut vamm_state in get_vamm_state(Default::default()),
-		mut swap_config in get_swap_config(
-			TestSwapConfig {
-				direction: Some(Direction::Add),
-				vamm_id: Some(0),
-				asset: Some(AssetType::Quote),
-				..Default::default()}),
+		mut vamm_state in any_vamm_state(),
+		mut swap_config in any_swap_config(),
 		input_amount in balance_range_upper_half(),
 		quote_asset_reserves in balance_range_upper_half(),
 	) {
-		prop_assume!(swap_config.direction == Direction::Add);
-
 		// Ensure vamm is open before starting operation to swap assets.
 		vamm_state.closed = None;
 
+		// Set correct values for test.
+		swap_config.direction = Direction::Add;
+		swap_config.vamm_id = 0;
+		swap_config.asset = AssetType::Quote;
 		swap_config.input_amount = input_amount;
 		vamm_state.quote_asset_reserves = quote_asset_reserves;
 

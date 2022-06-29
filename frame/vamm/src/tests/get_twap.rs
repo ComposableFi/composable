@@ -3,7 +3,7 @@ use crate::{
 	pallet::Error,
 	tests::{
 		helpers::{as_decimal, run_for_seconds},
-		helpers_propcompose::get_vamm_state,
+		helpers_propcompose::any_vamm_state,
 		Timestamp, VammState, RUN_CASES,
 	},
 };
@@ -66,7 +66,7 @@ proptest! {
 	// ----------------------------------------------------------------------------------------------------
 	#[test]
 	fn should_succeed_not_modifying_storage_base(
-		vamm_state in get_vamm_state(Default::default())
+		vamm_state in any_vamm_state()
 	) {
 		ExtBuilder {
 			vamm_count: 1,
@@ -79,7 +79,7 @@ proptest! {
 
 	#[test]
 	fn should_fail_if_vamm_does_not_exist_base(
-		vamm_state in get_vamm_state(Default::default()),
+		vamm_state in any_vamm_state(),
 		vamm_id in 1..=VammId::MAX
 	) {
 		ExtBuilder {
@@ -95,7 +95,7 @@ proptest! {
 
 	#[test]
 	fn should_fail_if_vamm_is_closed_base(
-		mut vamm_state in get_vamm_state(Default::default()),
+		mut vamm_state in any_vamm_state(),
 		closed in (0..18446744073709551_u64).prop_map(Some),
 	) {
 		// Make sure the market will be closed.
@@ -123,7 +123,7 @@ proptest! {
 	// ----------------------------------------------------------------------------------------------------
 	#[test]
 	fn should_succeed_not_modifying_storage_quote(
-		vamm_state in get_vamm_state(Default::default())
+		vamm_state in any_vamm_state()
 	) {
 		ExtBuilder {
 			vamm_count: 1,
@@ -136,7 +136,7 @@ proptest! {
 
 	#[test]
 	fn should_fail_if_vamm_does_not_exist_quote(
-		vamm_state in get_vamm_state(Default::default()),
+		vamm_state in any_vamm_state(),
 		vamm_id in 1..=VammId::MAX
 	) {
 		ExtBuilder {
@@ -152,7 +152,7 @@ proptest! {
 
 	#[test]
 	fn should_fail_if_vamm_is_closed_quote(
-		mut vamm_state in get_vamm_state(Default::default()),
+		mut vamm_state in any_vamm_state(),
 		closed in (0..18446744073709551_u64).prop_map(Some),
 	) {
 		// Make sure the market will be closed.

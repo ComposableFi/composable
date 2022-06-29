@@ -5,8 +5,7 @@ use crate::{
 		helpers::{
 			any_sane_asset_amount, any_time, any_vamm_id, limited_peg, multiple_swap_configs,
 		},
-		Decimal, TestSwapConfig, TestVammState, Timestamp, VammId, MAXIMUM_RESERVE,
-		MINIMUM_RESERVE, ZERO_RESERVE,
+		Decimal, Timestamp, VammId, MAXIMUM_RESERVE, MINIMUM_RESERVE, ZERO_RESERVE,
 	},
 };
 use composable_traits::vamm::{
@@ -159,47 +158,6 @@ prop_compose! {
 // ----------------------------------------------------------------------------------------------------
 
 prop_compose! {
-	pub fn get_vamm_state(config: TestVammState<Balance, Timestamp>)(
-		(base_asset_reserves, quote_asset_reserves, peg_multiplier) in any_sane_base_quote_peg(),
-		closed in prop_oneof![timestamp().prop_map(Some), Just(None)],
-		base_asset_twap in balance_range(),
-		quote_asset_twap in balance_range(),
-		twap_timestamp in timestamp(),
-	) -> VammState<Balance, Timestamp, Decimal> {
-		let invariant = match (
-			config.base_asset_reserves,
-			config.quote_asset_reserves
-		) {
-			(Some(base), Some(quote)) => TestPallet::compute_invariant(base, quote),
-			_ => TestPallet::compute_invariant(base_asset_reserves, quote_asset_reserves)
-		}.unwrap();
-
-		let base_asset_twap = Decimal::from_inner(base_asset_twap);
-		let quote_asset_twap = Decimal::from_inner(quote_asset_twap);
-
-		VammState {
-			base_asset_reserves: config
-				.base_asset_reserves
-				.unwrap_or(base_asset_reserves),
-			quote_asset_reserves: config
-				.quote_asset_reserves
-				.unwrap_or(quote_asset_reserves),
-			peg_multiplier: config
-				.peg_multiplier
-				.unwrap_or(peg_multiplier),
-			invariant,
-			closed: config
-				.closed
-				.unwrap_or(closed),
-			base_asset_twap,
-			quote_asset_twap,
-			twap_timestamp,
-			..Default::default()
-		}
-	}
-}
-
-prop_compose! {
 	pub fn any_vamm_state()(
 		base_asset_reserves in any_sane_asset_amount(),
 		quote_asset_reserves in any_sane_asset_amount(),
@@ -239,7 +197,7 @@ prop_compose! {
 }
 
 prop_compose! {
-	pub fn get_swap_config(config: TestSwapConfig<VammId, Balance>)(
+	pub fn any_swap_config()(
 		vamm_id in balance_range(),
 		asset in prop_oneof![Just(AssetType::Base), Just(AssetType::Quote)],
 		input_amount in balance_range(),
@@ -247,21 +205,11 @@ prop_compose! {
 		output_amount_limit in balance_range(),
 	) -> SwapConfig<VammId, Balance> {
 		SwapConfig {
-			vamm_id: config
-				.vamm_id
-				.unwrap_or(vamm_id),
-			asset: config
-				.asset
-				.unwrap_or(asset),
-			input_amount: config
-				.input_amount
-				.unwrap_or(input_amount),
-			direction: config
-				.direction
-				.unwrap_or(direction),
-			output_amount_limit: config
-				.output_amount_limit
-				.unwrap_or(output_amount_limit),
+			vamm_id,
+			asset,
+			input_amount,
+			direction,
+			output_amount_limit,
 		}
 	}
 }

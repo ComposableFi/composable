@@ -20,29 +20,12 @@ pub mod swap_asset;
 pub mod update_twap;
 
 // ----------------------------------------------------------------------------------------------------
-//                                             Setup
+//                                          Types & Constants
 // ----------------------------------------------------------------------------------------------------
 
 pub type Decimal = <MockRuntime as pallet::Config>::Decimal;
 pub type Timestamp = <MockRuntime as pallet::Config>::Moment;
 pub type VammId = <MockRuntime as pallet::Config>::VammId;
-
-#[derive(Default)]
-pub struct TestVammState<Balance, Timestamp> {
-	base_asset_reserves: Option<Balance>,
-	quote_asset_reserves: Option<Balance>,
-	peg_multiplier: Option<Balance>,
-	closed: Option<Option<Timestamp>>,
-}
-
-#[derive(Default)]
-pub struct TestSwapConfig<VammId, Balance> {
-	vamm_id: Option<VammId>,
-	asset: Option<AssetType>,
-	input_amount: Option<Balance>,
-	direction: Option<Direction>,
-	output_amount_limit: Option<Balance>,
-}
 
 pub const ZERO_RESERVE: Balance = Balance::MIN;
 pub const MINIMUM_RESERVE: Balance = ZERO_RESERVE + 1;
