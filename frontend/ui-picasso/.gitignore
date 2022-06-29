@@ -26,10 +26,10 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
-app/.env.local
-app/.env.development.local
-app/.env.test.local
-app/.env.production.local
+../fe/apps/app/.env.local
+../fe/apps/app/.env.development.local
+../fe/apps/app/.env.test.local
+../fe/apps/app/.env.production.local
 
 # vercel
 .vercel
@@ -37,10 +37,10 @@ app/.env.production.local
 
 # sw map file
 app/public/*.map
-app/public/workbox-*.js
-app/public/fallback*.js
+../fe/apps/app/public/workbox-*.js
+../fe/apps/app/public/fallback*.js
 .DS_Store
-app/eslint_report.json
-app/public/sw.js
+../fe/apps/app/eslint_report.json
+../fe/apps/app/public/sw.js
 storybook-static/
 *.swp

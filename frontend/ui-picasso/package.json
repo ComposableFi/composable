@@ -10,16 +10,16 @@
   ],
   "private": true,
   "scripts": {
-    "start": "yarn --cwd app dev",
-    "build": "yarn --cwd app build",
-    "storybook": "yarn --cwd storybook storybook",
-    "storybook:build": "yarn --cwd storybook build-storybook",
-    "test": "yarn --cwd app test",
-    "test:watch": "yarn --cwd app test:watch",
-    "lint": "yarn --cwd app lint",
-    "lint:report": "yarn --cwd app lint:report",
-    "generate:defs": "ts-node --skip-project node_modules/.bin/polkadot-types-from-defs --package @/defi/polkadot/interfaces --input ./app/defi/polkadot/interfaces --endpoint ws://127.0.0.1:9988",
-    "generate:meta": "ts-node --skip-project node_modules/.bin/polkadot-types-from-chain --package @/defi/polkadot/interfaces --endpoint ws://127.0.0.1:9988 --output ./app/defi/polkadot/interfaces"
+    "start": "yarn --cwd ../fe/apps/picasso dev",
+    "build": "yarn --cwd ../fe/apps/picasso build",
+    "storybook": "yarn --cwd ../fe/apps/picasso-storybook storybook",
+    "storybook:build": "yarn --cwd ../fe/apps/picasso-storybook build-storybook",
+    "test": "yarn --cwd ../fe/apps/picasso test",
+    "test:watch": "yarn --cwd ../fe/apps/picasso test:watch",
+    "lint": "yarn --cwd ../fe/apps/picasso lint",
+    "lint:report": "yarn --cwd ../fe/apps/picasso lint:report",
+    "generate:defs": "ts-node --skip-project node_modules/.bin/polkadot-types-from-defs --package @/defi/polkadot/interfaces --input ../fe/apps/picasso/defi/polkadot/interfaces --endpoint ws://127.0.0.1:9988",
+    "generate:meta": "ts-node --skip-project node_modules/.bin/polkadot-types-from-chain --package @/defi/polkadot/interfaces --endpoint ws://127.0.0.1:9988 --output ../fe/apps/picasso/defi/polkadot/interfaces"
   },
   "devDependencies": {
     "husky": ">=6",

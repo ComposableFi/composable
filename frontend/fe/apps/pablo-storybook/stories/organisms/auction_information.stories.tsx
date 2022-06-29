@@ -4,7 +4,7 @@ import { AuctionInformation } from "pablo/components/Organisms/auction/AuctionIn
 import useStore from "pablo/store/useStore";
 
 const AuctionInformationStories = () => {
-  const {auctions} = useStore();
+  const {auctions}: any = useStore();
   return (
     <Box>
       <AuctionInformation stats={auctions.activeLBPStats} auction={auctions.activeLBP} />

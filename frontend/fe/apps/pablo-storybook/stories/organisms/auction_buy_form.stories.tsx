@@ -4,7 +4,7 @@ import { BuyForm } from "pablo/components/Organisms/auction/BuyForm";
 import useStore from "pablo/store/useStore";
 
 const BuyFormStories = () => {
-  const {auctions} = useStore();
+  const {auctions}: any = useStore();
   return (
     <Box>
       <BuyForm auction={auctions.activeLBP} />
