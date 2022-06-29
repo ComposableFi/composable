@@ -28,7 +28,7 @@ const Status = () => {
   const [selectedAsset, setSelectedAsset] = useState<string>("");
 
   useEffect(() => {
-    if (assetsWithBalance.length) {
+    if (assetsWithBalance.length > 0) {
       setSelectedAsset(assetsWithBalance[0].symbol)
     }
   }, [assetsWithBalance])
