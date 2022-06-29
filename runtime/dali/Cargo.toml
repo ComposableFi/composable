@@ -67,6 +67,7 @@ treasury = { package = "pallet-treasury", git = "https://github.com/paritytech/s
 utility = { package = "pallet-utility", git = "https://github.com/paritytech/substrate", default-features = false, branch = "polkadot-v0.9.22" }
 
 # local modules
+airdrop = { package = "pallet-airdrop", path = "../../frame/airdrop", default-features = false }
 assets = { package = "pallet-assets", path = '../../frame/assets', default-features = false }
 assets-registry = { package = "pallet-assets-registry", path = '../../frame/assets-registry', default-features = false }
 bonded-finance = { package = "pallet-bonded-finance", path = "../../frame/bonded-finance", default-features = false }
@@ -152,6 +153,7 @@ substrate-wasm-builder = { git = "https://github.com/paritytech/substrate", bran
 default = ["std", "wasm-builder"]
 local-integration-tests = []
 runtime-benchmarks = [
+  "airdrop/runtime-benchmarks",
   "assets/runtime-benchmarks",
   "balances/runtime-benchmarks",
   "frame-benchmarking",
