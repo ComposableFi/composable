@@ -61,7 +61,7 @@ Table of Contents
         Changes](#_pallet_staking_rewards_picapblo_staking_related_changes)
 -   [Appendix A: Trading Fee Inflation to Avoid Dilution of
     LPs](#_trading_fee_inflation_to_avoid_dilution_of_lps)
--   [7. Fee Distribution Q&A](#_fee_distribution_qa)
+-   [Appendix B: Fee Distribution Q&A](#_fee_distribution_qa)
 
 ## 1. Abstract
 
@@ -455,103 +455,72 @@ to this as the "reward pooling(**RP**) based approach".
 
 #### 5.3.2. Data Structures
 
-Staking rewards pallet already uses the following fNFT data structure,
+Staking rewards pallet already uses the following data structure
+representing a staking position,
 
-    /// staking typed fNFT, usually can be mapped to raw fNFT storage type
-    #[derive(Debug, PartialEq, Eq, Copy, Clone, Encode, Decode, TypeInfo)]
-    pub struct StakingNFT<AccountId, AssetId, Balance, Epoch, Rewards> {
-        /// The staked asset.
-        pub asset: AssetId,
-        /// The original stake this NFT was minted for.
-        pub stake: Balance,
-        /// The reward epoch at which this NFT will start yielding rewards.
-        pub reward_epoch_start: Epoch,
-        /// List of reward asset/pending rewards.
-        pub pending_rewards: Rewards,
-        /// The date at which this NFT was minted.
-        pub lock_date: Timestamp,
-        /// The duration for which this NFT stake was locked.
-        pub lock_duration: DurationSeconds,
-        /// The penalty applied if a staker unstake before the end date.
-        pub early_unstake_penalty: Penalty<AccountId>,
-        /// The reward multiplier.
-        pub reward_multiplier: Perbill,
-    }
-
-This data structure can be modified to support the RP approach by
-adding/adjusting/removing some fields.
-
-    /// This can possibly be renamed as `RewardPoolPosition`
-    pub struct StakingNFT<RewardPoolId, AccountId, AssetId, Balance> {
-        /// [Adding] Reward Pool ID from which pool to allocate rewards for this
+    #[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
+    pub struct Stake<RewardPoolId, Balance, Rewards> {
+        /// Reward Pool ID from which pool to allocate rewards for this
         pub reward_pool_id: RewardPoolId,
 
-        /// The staked asset.
-        pub asset: AssetId,
-        /// The original stake this NFT was minted for.
-        /// Used for calculating the pool share.
+        /// The original stake this NFT was minted for or updated NFT with increased stake amount.
         pub stake: Balance,
 
-        /// [Adding] Pool share received for this NFT
+        /// Pool share received for this position
         pub share: Balance,
 
-        /// [Adding] reduced rewards by asset for the fNFT (d_n)
-        pub reductions: BtreeMap<AssetId, Balance>,
+        /// Reduced rewards by asset for the position (d_n)
+        reductions: Rewards,
 
-        /// [Removing] The reward epoch at which this NFT will start yielding rewards. This is no longer needed.
-        /// pub reward_epoch_start: Epoch,
-
-        /// [Removing] List of reward asset/pending rewards. This is no longer needed as pending rewards are pooled
-        /// pub pending_rewards: Rewards,
-
-        /// The date at which this NFT was minted.
-        pub lock_date: Timestamp,
-
-        /// The duration for which this NFT stake was locked.
-        pub lock_duration: DurationSeconds,
-
-        /// The penalty applied if a staker unstake before the end date.
-        pub early_unstake_penalty: Penalty<AccountId>,
-
-        /// [Removing] The reward multiplier. Can remove this and calculate the extra shares a user gets based on the multiplier
-        /// pub reward_multiplier: Perbill,
+        /// The lock period for the stake.
+        pub lock: Lock,
     }
 
+Which is referred to in the algorithms in the followin sections.
+
 Now in order to allow redeeming the above fNFT, following data
-structures needs to be tracked in the staking rewards pallet,
+structures is to be tracked in the staking rewards pallet,
 
-    /// Total reward for a particular asset
-    pub struct Reward<AssetId, Balance, BlockNumber> {
-
+    #[derive(RuntimeDebug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
+    pub struct Reward<AssetId, Balance> {
+        /// asset id of the reward
         pub asset_id: AssetId,
 
-        /// Total rewards including inflation for adjusting for new stakers joining the pool. All stakers
-        /// in a pool are eligible to receive a part of this value based on their share of the pool.
+        /// Total rewards including inflation for adjusting for new stakers joining the pool. All
+        /// stakers in a pool are eligible to receive a part of this value based on their share of the
+        /// pool.
         pub total_rewards: Balance,
 
-        /// A book keeping field to track the actual total reward without the reward inflation caused
-        /// by new stakers joining the pool.
-        pub total_inflation: Balance,
+        /// A book keeping field to track the actual total reward without the
+        /// reward dilution adjustment caused by new stakers joining the pool.
+        pub total_dilution_adjustment: Balance,
 
-        /// Upper bound on the `actual_total_rewards`.
+        /// Upper bound on the `total_rewards - total_dilution_adjustment`.
         pub max_rewards: Balance,
 
-        /// The rewarding rate that increases the pool `total_reward` (and `actual_total_reward`)
+        /// The rewarding rate that increases the pool `total_reward`
         /// at a given time.
         pub reward_rate: Perbill,
     }
 
-    /// Track the total reward pool for a particular staker incentive scheme. eg: A Pablo Dex LP incentive
-    pub struct RewardsPool<AccountId, AssetId, Balance, BlockNumber> {
+    #[derive(RuntimeDebug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
+    pub struct RewardPool<AccountId, AssetId, Balance, BlockNumber, DurationPresets, Rewards> {
+        pub owner: AccountId,
 
-        /// Reward pool indexed by the accountId that holds the rewarded assets
-        pub reward_pool_id: AccountId,
+        /// The staked asset id of the reward pool.
+        pub asset_id: AssetId,
 
         /// rewards accumulated
-        pub rewards: BtreeSet<Reward<AssetId, Balance, BlockNumber>>,
+        pub rewards: Rewards,
 
         /// Total shares distributed among stakers
         pub total_shares: Balance,
+
+        /// Pool would stop adding rewards to pool at this block number.
+        pub end_block: BlockNumber,
+
+        // possible lock config for this pool
+        pub lock: LockConfig<DurationPresets>,
     }
 
 Following sections describe the algorithms for various operations on the
@@ -664,4 +633,4 @@ fNFT at the time of LP event might make sense. i.e fNFT represents the
 LP position on the pool as well as the rewards position for PBLO tokens
 for LPs.
 
-Last updated 2022-06-02 17:19:00 +0200
+Last updated 2022-06-29 11:48:18 +0200
