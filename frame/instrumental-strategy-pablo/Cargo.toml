@@ -53,6 +53,7 @@ std = [
     "log/std",
     "orml-tokens/std",
     "orml-traits/std",
+    "pallet-balances/std",
     "primitives/std",
     "scale-info/std",
     "serde/std",
