@@ -1,4 +1,8 @@
-use frame_support::{parameter_types, traits::Everything, PalletId};
+use frame_support::{
+	parameter_types,
+	traits::{Everything, GenesisBuild},
+	PalletId,
+};
 use frame_system::{EnsureRoot, EnsureSigned};
 use orml_traits::parameter_type_with_key;
 use primitives::currency::{CurrencyId, ValidateCurrencyId};
@@ -25,6 +29,7 @@ pub type VaultId = u64;
 pub const VAULT_PALLET_ID: PalletId = PalletId(*b"cubic___");
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
 pub const MAX_ASSOCIATED_VAULTS: u32 = 10;
+const NATIVE_ASSET: CurrencyId = CurrencyId::PICA;
 
 // -------------------------------------------------------------------------------------------------
 //                                              Config
@@ -170,7 +175,7 @@ impl pallet_governance_registry::Config for MockRuntime {
 // -------------------------------------------------------------------------------------------------
 
 parameter_types! {
-	pub const NativeAssetId: CurrencyId = CurrencyId::PICA;
+	pub const NativeAssetId: CurrencyId = NATIVE_ASSET;
 }
 
 impl pallet_assets::Config for MockRuntime {
@@ -373,12 +378,38 @@ frame_support::construct_runtime!(
 // -------------------------------------------------------------------------------------------------
 
 #[derive(Default)]
-pub struct ExtBuilder {}
+pub struct ExtBuilder {
+	native_balances: Vec<(AccountId, Balance)>,
+	balances: Vec<(AccountId, CurrencyId, Balance)>,
+}
 
 impl ExtBuilder {
 	pub fn build(self) -> sp_io::TestExternalities {
-		let t = frame_system::GenesisConfig::default().build_storage::<MockRuntime>().unwrap();
+		let mut storage =
+			frame_system::GenesisConfig::default().build_storage::<MockRuntime>().unwrap();
 
-		t.into()
+		pallet_balances::GenesisConfig::<MockRuntime> { balances: self.native_balances }
+			.assimilate_storage(&mut storage)
+			.unwrap();
+
+		orml_tokens::GenesisConfig::<MockRuntime> { balances: self.balances }
+			.assimilate_storage(&mut storage)
+			.unwrap();
+
+		storage.into()
+	}
+
+	pub fn initialize_balance(
+		mut self,
+		user: AccountId,
+		asset: CurrencyId,
+		balance: Balance,
+	) -> ExtBuilder {
+		if asset == NATIVE_ASSET {
+			self.native_balances.push((user, balance));
+		} else {
+			self.balances.push((user, asset, balance));
+		}
+		self
 	}
 }
