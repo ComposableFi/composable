@@ -391,8 +391,8 @@ pub mod pallet {
 			new_pool_id: T::PoolId,
 		) -> DispatchResult {
 			AssociatedVaults::<T>::try_mutate(|vaults| {
-				vaults.iter().for_each(|vault_id| {
-					if asset_id == T::Vault::asset_id(vault_id).expect("DispatchError") {
+				for vault_id in vaults.iter() {
+					if asset_id == T::Vault::asset_id(vault_id)? {
 						if Self::do_transferring_funds_from_old_pool_to_new(vault_id, old_pool_id)
 							.is_ok()
 						{
@@ -407,7 +407,7 @@ pub mod pallet {
 							});
 						}
 					}
-				});
+				};
 				Pools::<T>::mutate(asset_id, |_| PoolState {
 					pool_id: new_pool_id,
 					state: State::Normal,
