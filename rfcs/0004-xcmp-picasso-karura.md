@@ -18,7 +18,7 @@ This proposal does not covers `paper work` around tech stuff as it is described 
 
 **Picasso**
 
-Ensure have at least 100 KAR on Karura and 20 KSM or Kusama and can do democracy on Picasso.
+Ensure have at least 100 KAR on Karura and 20 KSM on Kusama and can do democracy on Picasso.
 
 **Rococo**
 
