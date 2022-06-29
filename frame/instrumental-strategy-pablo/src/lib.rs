@@ -392,7 +392,7 @@ pub mod pallet {
 		) -> DispatchResult {
 			AssociatedVaults::<T>::try_mutate(|vaults| {
 				vaults.iter().for_each(|vault_id| {
-					if asset_id == T::Vault::asset_id(vault_id).unwrap() {
+					if asset_id == T::Vault::asset_id(vault_id).expect("DispatchError") {
 						if Self::do_transferring_funds_from_old_pool_to_new(vault_id, old_pool_id)
 							.is_ok()
 						{
