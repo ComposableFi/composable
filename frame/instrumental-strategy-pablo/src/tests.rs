@@ -5,17 +5,18 @@
 mod associate_vault {
 	use crate::mock::{
 		account_id::ADMIN,
-		helpers::set_admin_account_with_full_access,
+		helpers::set_admin_account_access,
 		runtime::{ExtBuilder, MockRuntime, Origin, PabloStrategy, VaultId, MAX_ASSOCIATED_VAULTS},
 	};
 	#[allow(unused_imports)]
 	use crate::{pallet, pallet::Error};
+	use composable_traits::instrumental::AccessRights;
 	use frame_support::{assert_noop, assert_ok};
 	#[test]
 	fn add_an_associated_vault() {
 		ExtBuilder::default().build().execute_with(|| {
 			let vault_id: VaultId = 1;
-			set_admin_account_with_full_access().ok();
+			set_admin_account_access(ADMIN, AccessRights::Full).ok();
 			assert_ok!(PabloStrategy::associate_vault(Origin::signed(ADMIN), vault_id));
 		});
 	}
@@ -24,7 +25,7 @@ mod associate_vault {
 	fn adding_an_associated_vault_twice_throws_an_error() {
 		ExtBuilder::default().build().execute_with(|| {
 			let vault_id: VaultId = 1;
-			set_admin_account_with_full_access().ok();
+			set_admin_account_access(ADMIN, AccessRights::Full).ok();
 			assert_ok!(PabloStrategy::associate_vault(Origin::signed(ADMIN), vault_id));
 			assert_noop!(
 				PabloStrategy::associate_vault(Origin::signed(ADMIN), vault_id),
@@ -36,7 +37,7 @@ mod associate_vault {
 	#[test]
 	fn associating_too_many_vaults_throws_an_error() {
 		ExtBuilder::default().build().execute_with(|| {
-			set_admin_account_with_full_access().ok();
+			set_admin_account_access(ADMIN, AccessRights::Full).ok();
 			for vault_id in 0..MAX_ASSOCIATED_VAULTS {
 				assert_ok!(PabloStrategy::associate_vault(
 					Origin::signed(ADMIN),
@@ -60,19 +61,20 @@ mod liquidity_rebalance {
 	use crate::{
 		mock::{
 			account_id::ADMIN,
-			helpers::{create_layr_crowd_loan_pool, set_admin_account_with_full_access},
+			helpers::{create_layr_crowd_loan_pool, set_admin_account_access},
 			runtime::{Event, ExtBuilder, Instrumental, Origin, PabloStrategy, System, VaultId},
 		},
 		pallet,
 	};
 	use composable_traits::instrumental::{
-		Instrumental as InstrumentalTrait, InstrumentalVaultConfig,
+		AccessRights, Instrumental as InstrumentalTrait, InstrumentalVaultConfig,
 	};
 	use frame_support::assert_ok;
 	use primitives::currency::CurrencyId;
 	use sp_runtime::Perquintill;
 
 	#[test]
+	#[allow(clippy::disallowed_methods)]
 	fn rebalance_emits_event() {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
@@ -88,7 +90,7 @@ mod liquidity_rebalance {
 			// Create Pool (LAYR/CROWD_LOAN)
 			let pool_id = create_layr_crowd_loan_pool();
 
-			set_admin_account_with_full_access().ok();
+			set_admin_account_access(ADMIN, AccessRights::Full).ok();
 			assert_ok!(PabloStrategy::set_pool_id_for_asset(
 				Origin::signed(ADMIN),
 				asset_id,
@@ -114,7 +116,7 @@ mod set_pool_id_for_asset {
 	use crate::{
 		mock::{
 			account_id::{ADMIN, ALICE},
-			helpers::{create_layr_crowd_loan_pool, set_admin_account_with_full_access},
+			helpers::{create_layr_crowd_loan_pool, set_admin_account_access},
 			runtime::{
 				Event, ExtBuilder, Instrumental, MockRuntime, Origin, PabloStrategy, System,
 				VaultId,
@@ -131,7 +133,8 @@ mod set_pool_id_for_asset {
 	use sp_runtime::Perquintill;
 
 	#[test]
-	fn test_caller_is_persmissoned() {
+	#[allow(clippy::disallowed_methods)]
+	fn caller_is_persmissoned() {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
 
@@ -145,7 +148,7 @@ mod set_pool_id_for_asset {
 				Error::<MockRuntime>::UserDoesNotHaveCorrectAccessRight
 			);
 
-			set_admin_account_with_full_access().ok();
+			set_admin_account_access(ADMIN, AccessRights::Full).ok();
 			assert_ok!(PabloStrategy::set_pool_id_for_asset(
 				Origin::signed(ADMIN),
 				asset_id,
@@ -160,14 +163,14 @@ mod set_pool_id_for_asset {
 	}
 
 	#[test]
-	fn test_pool_id_must_be_valid() {
+	fn pool_id_must_be_valid() {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
 
 			let asset_id = CurrencyId::LAYR;
 			// Create Pool (LAYR/CROWD_LOAN)
 			let not_valid_pool_id = 1;
-			set_admin_account_with_full_access().ok();
+			set_admin_account_access(ADMIN, AccessRights::Full).ok();
 
 			assert_noop!(
 				PabloStrategy::set_pool_id_for_asset(
@@ -181,14 +184,15 @@ mod set_pool_id_for_asset {
 	}
 
 	#[test]
-	fn test_setting_pool_id_for_the_first_time_succeeds() {
+	#[allow(clippy::disallowed_methods)]
+	fn setting_pool_id_for_the_first_time_succeeds() {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
 
 			let asset_id = CurrencyId::LAYR;
 			// Create Pool (LAYR/CROWD_LOAN)
 			let pool_id = create_layr_crowd_loan_pool();
-			set_admin_account_with_full_access().ok();
+			set_admin_account_access(ADMIN, AccessRights::Full).ok();
 			assert_ok!(PabloStrategy::set_pool_id_for_asset(
 				Origin::signed(ADMIN),
 				asset_id,
@@ -205,14 +209,15 @@ mod set_pool_id_for_asset {
 	}
 
 	#[test]
-	fn test_setting_pool_id_for_the_second_time_initiates_transfer() {
+	#[allow(clippy::disallowed_methods)]
+	fn setting_pool_id_for_the_second_time_initiates_transfer() {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
 
 			let asset_id = CurrencyId::LAYR;
 			// Create Pool (LAYR/CROWD_LOAN)
 			let pool_id = create_layr_crowd_loan_pool();
-			set_admin_account_with_full_access().ok();
+			set_admin_account_access(ADMIN, AccessRights::Full).ok();
 			// Create Vault (LAYR)
 			let config =
 				InstrumentalVaultConfig { asset_id, percent_deployable: Perquintill::zero() };
@@ -269,7 +274,7 @@ mod set_access {
 	use crate::{
 		mock::{
 			account_id::{ADMIN, ALICE},
-			helpers::set_admin_account_with_full_access,
+			helpers::set_admin_account_access,
 			runtime::{Event, ExtBuilder, MockRuntime, Origin, PabloStrategy, System},
 		},
 		pallet,
@@ -278,10 +283,11 @@ mod set_access {
 	use frame_support::assert_ok;
 
 	#[test]
-	fn test_add_an_admin_account() {
+	#[allow(clippy::disallowed_methods)]
+	fn add_an_admin_account() {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
-			set_admin_account_with_full_access().ok();
+			set_admin_account_access(ADMIN, AccessRights::Full).ok();
 			assert_ok!(PabloStrategy::set_access(Origin::signed(ADMIN), ALICE, AccessRights::Full));
 			assert!(
 				pallet::AdminAccountIds::<MockRuntime>::try_get(ALICE).unwrap() ==
@@ -295,10 +301,11 @@ mod set_access {
 	}
 
 	#[test]
-	fn test_change_access_existing_account() {
+	#[allow(clippy::disallowed_methods)]
+	fn change_access_existing_account() {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
-			set_admin_account_with_full_access().ok();
+			set_admin_account_access(ADMIN, AccessRights::Full).ok();
 			assert_ok!(PabloStrategy::set_access(Origin::signed(ADMIN), ALICE, AccessRights::Full));
 			assert_ok!(PabloStrategy::set_access(
 				Origin::signed(ADMIN),

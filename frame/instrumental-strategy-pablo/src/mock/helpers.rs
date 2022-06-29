@@ -1,5 +1,5 @@
 use crate::mock::{
-	account_id::{AccountId, ADMIN, ALICE, BOB},
+	account_id::{AccountId, ALICE, BOB},
 	runtime::{Balance, BlockNumber, MockRuntime, Pablo, PoolId, Tokens},
 };
 use composable_traits::{defi::CurrencyPair, dex::Amm, instrumental::AccessRights};
@@ -67,7 +67,7 @@ fn create_pool(
 	pool_id
 }
 
-pub fn set_admin_account_with_full_access() -> Result<(), ()> {
-	pallet::AdminAccountIds::<MockRuntime>::insert(ADMIN, AccessRights::Full);
+pub fn set_admin_account_access(account_id: AccountId, access: AccessRights) -> Result<(), ()> {
+	pallet::AdminAccountIds::<MockRuntime>::insert(account_id, access);
 	Ok(())
 }
