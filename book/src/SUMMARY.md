@@ -6,6 +6,18 @@
     - [Oracle Set-Up Guide](./developer-guides/oracle-set-up-guide/oracle-set-up-guide.md)
     - [Collator Set-Up Guide](./developer-guides/collator-set-up-guide.md)
 
+# Parachains
+- [Picasso Parachain](./parachains/picasso-parachain-overview.md)
+    - [Governance](./parachains/picasso/picasso-governance.md)
+    - [Picasso Crowdloan](./parachains/picasso/picasso-crowdloan.md)
+    - [KSM Purchase Log](./parachains/picasso/KSM-purchase-log.md)
+    - [Tokenomics](./parachains/picasso/picasso-tokenomics.md)
+  
+- [Composable Parachain](./parachains/composable-parachain-overview.md)
+    - [Composable Crowdloan](./parachains/composable/composable-crowdloan.md)
+    - [DOT Purchase Log](./parachains/composable/DOT-purchase-log.md)
+    - [LAYR Tokenomics](./parachains/composable/LAYR-tokenomics.md)
+  
 # 💿 PRODUCTS
 - [Technical Stack Overview](./products/technical-stack-overview.md)
 - [Composable's Cross-Chain Virtual Machine](./products/cross-chain-virtual-machine.md)
