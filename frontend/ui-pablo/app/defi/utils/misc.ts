@@ -17,6 +17,3 @@ export function concatU8a (a: Uint8Array, b: Uint8Array): Uint8Array {
     c.set(b, a.length);
     return c;
   }
-
-export const stringToBigNumber = (value: string): BigNumber =>
-  new BigNumber(value.replaceAll(",", ""));
