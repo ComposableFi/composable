@@ -14,18 +14,21 @@ use crate::mock::{
 	runtime::{Balance, BlockNumber, Pablo, PoolId, Tokens},
 };
 
-pub fn create_pool<A, B, P>(
-	base_asset: A,
-	base_amount: B,
-	quote_asset: A,
-	quote_amount: B,
-	fee: P,
-	base_weight: P,
+pub fn create_pool<BAS, BAM, QAS, QAM, F, BW>(
+	base_asset: BAS,
+	base_amount: BAM,
+	quote_asset: QAS,
+	quote_amount: QAM,
+	fee: F,
+	base_weight: BW,
 ) -> PoolId
 where
-	A: Into<Option<CurrencyId>>,
-	B: Into<Option<Balance>>,
-	P: Into<Option<Permill>>,
+	BAS: Into<Option<CurrencyId>>,
+	QAS: Into<Option<CurrencyId>>,
+	BAM: Into<Option<Balance>>,
+	QAM: Into<Option<Balance>>,
+	F: Into<Option<Permill>>,
+	BW: Into<Option<Permill>>,
 {
 	let base_asset = base_asset.into().unwrap_or(CurrencyId::LAYR);
 	let base_amount = base_amount.into().unwrap_or(1_000_000_000);
