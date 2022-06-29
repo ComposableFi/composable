@@ -26,9 +26,9 @@ use sp_runtime::traits::Zero;
 #[test]
 fn should_succeed_returning_correct_values_and_emitting_events_add_base() {
 	ExtBuilder::default().build().execute_with(|| {
-		let vamm_config = default_vamm_config();
+		let vamm_config = TestVammConfig::default();
 		let swap_config = default_swap_config(AssetType::Base, Direction::Add);
-		create_vamm(&vamm_config);
+		create_vamm(&vamm_config.into());
 
 		// For event emission
 		run_to_block(1);
@@ -62,9 +62,9 @@ fn should_succeed_returning_correct_values_and_emitting_events_add_base() {
 #[test]
 fn should_succeed_returning_correct_values_and_emitting_events_add_quote() {
 	ExtBuilder::default().build().execute_with(|| {
-		let vamm_config = default_vamm_config();
+		let vamm_config = TestVammConfig::default();
 		let swap_config = default_swap_config(AssetType::Quote, Direction::Add);
-		create_vamm(&vamm_config);
+		create_vamm(&vamm_config.into());
 
 		// For event emission
 		run_to_block(1);
@@ -98,9 +98,9 @@ fn should_succeed_returning_correct_values_and_emitting_events_add_quote() {
 #[test]
 fn should_succeed_returning_correct_values_and_emitting_events_remove_base() {
 	ExtBuilder::default().build().execute_with(|| {
-		let vamm_config = default_vamm_config();
+		let vamm_config = TestVammConfig::default();
 		let swap_config = default_swap_config(AssetType::Base, Direction::Remove);
-		create_vamm(&vamm_config);
+		create_vamm(&vamm_config.into());
 
 		// For event emission
 		run_to_block(1);
@@ -134,9 +134,9 @@ fn should_succeed_returning_correct_values_and_emitting_events_remove_base() {
 #[test]
 fn should_succeed_returning_correct_values_and_emitting_events_remove_quote() {
 	ExtBuilder::default().build().execute_with(|| {
-		let vamm_config = default_vamm_config();
+		let vamm_config = TestVammConfig::default();
 		let swap_config = default_swap_config(AssetType::Quote, Direction::Remove);
-		create_vamm(&vamm_config);
+		create_vamm(&vamm_config.into());
 
 		// For event emission
 		run_to_block(1);
@@ -175,8 +175,8 @@ proptest! {
 	#![proptest_config(ProptestConfig::with_cases(RUN_CASES))]
 	#[test]
 	fn should_fail_if_vamm_does_not_exist(
-		vamm_state in get_vamm_state(Default::default()),
 		swap_config in get_swap_config(Default::default()),
+		vamm_state in any_vamm_state(),
 	) {
 		prop_assume!(swap_config.vamm_id != 0);
 
@@ -193,8 +193,8 @@ proptest! {
 
 	#[test]
 	fn should_fail_if_vamm_is_closed(
-		mut vamm_state in get_vamm_state(Default::default()),
 		mut swap_config in get_swap_config(Default::default()),
+		mut vamm_state in any_vamm_state(),
 		(close, now) in then_and_now()
 	) {
 		// Make the current time be greater than the time when the vamm is

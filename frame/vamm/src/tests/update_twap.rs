@@ -4,10 +4,10 @@ use crate::{
 	tests::{
 		helpers::{
 			any_sane_asset_amount, as_decimal, as_decimal_from_fraction, create_vamm,
-			default_vamm_config, run_for_seconds, run_to_block, twap_update_delay,
+			run_for_seconds, run_to_block, twap_update_delay,
 		},
 		helpers_propcompose::{any_vamm_state, balance_range},
-		Decimal, Timestamp, RUN_CASES,
+		Decimal, TestVammConfig, Timestamp, RUN_CASES,
 	},
 	VammState,
 };
@@ -121,8 +121,8 @@ fn update_twap_fails_if_new_twap_is_zero() {
 #[test]
 fn should_fail_if_twaps_are_not_reciprocal() {
 	ExtBuilder::default().build().execute_with(|| {
-		let vamm_config = default_vamm_config();
-		create_vamm(&vamm_config);
+		let vamm_config = TestVammConfig::default();
+		create_vamm(&vamm_config.into());
 		run_to_block(1);
 		let twap = Some(as_decimal(10));
 		assert_noop!(
