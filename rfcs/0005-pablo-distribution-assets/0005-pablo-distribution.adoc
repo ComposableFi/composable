@@ -261,7 +261,7 @@ This section covers how the staking rewards are distributed using the https://gi
 
 ==== Analysis of Reward Calculations
 
-In order to create the necessary reward pool as well as the rewarding rate for stakers the following model can be used. It tries to address the following constraints (TODO move to requirements)
+In order to create the necessary reward pool as well as the rewarding rate for stakers the following model can be used. It tries to address the following constraints,
 
 . Allow [#rate]#specification of the reward rate for a pool# (even setting a dynamically changing rate)
 . Allow addition of new stakers at anytime to a pool, start earning immediate rewards

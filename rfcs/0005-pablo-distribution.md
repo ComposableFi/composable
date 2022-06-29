@@ -335,7 +335,7 @@ pallet](https://github.com/ComposableFi/composable/tree/main/frame/staking-rewar
 
 In order to create the necessary reward pool as well as the rewarding
 rate for stakers the following model can be used. It tries to address
-the following constraints (TODO move to requirements)
+the following constraints,
 
 1.  Allow <span id="rate">specification of the reward rate for a
     pool</span> (even setting a dynamically changing rate)
