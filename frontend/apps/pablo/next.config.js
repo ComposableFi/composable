@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const withPWA = require('next-pwa')
 
+const withTM = require("next-transpile-modules")([
+  "substrate-react",
+]);
+
 const nextConfig = {
   reactStrictMode: true,
   env: {
@@ -23,4 +27,5 @@ const nextConfig = {
   }
 };
 
-module.exports = withPWA(nextConfig);
+
+module.exports = withPWA(withTM(nextConfig));
