@@ -9,6 +9,7 @@ import BigNumber from "bignumber.js"
 import { useSnackbar } from "notistack";
 import { useCallback, useMemo, useState } from "react";
 import { useDotSamaContext, useParachainApi, usePendingExtrinsic, useSelectedAccount } from "substrate-react";
+import { useAsset } from "../assets/useAsset";
 
 export const useBuyForm = (): {
   balanceBase: BigNumber;
@@ -39,16 +40,13 @@ export const useBuyForm = (): {
   const { extensionStatus } = useDotSamaContext();
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
-  const { supportedAssets, auctions: { activeLBP }, putStatsActiveLBP, putHistoryActiveLBP } = useStore();
+  const { auctions: { activeLBP }, putStatsActiveLBP, putHistoryActiveLBP } = useStore();
   const slippage = useAppSelector(
     (state) => state.settings.transactionSettings.tolerance
   );
-  const { baseAsset, quoteAsset } = useMemo(() => {
-    let baseAsset, quoteAsset;
-    baseAsset = supportedAssets.find(a => a.network[DEFAULT_NETWORK_ID] === activeLBP.pair.base.toString())
-    quoteAsset = supportedAssets.find(a => a.network[DEFAULT_NETWORK_ID] === activeLBP.pair.quote.toString())
-    return { baseAsset, quoteAsset }
-  }, [activeLBP, supportedAssets]);
+
+  const baseAsset = useAsset(activeLBP.pair.base.toString());
+  const quoteAsset = useAsset(activeLBP.pair.quote.toString());
 
   const balanceBase = useAssetBalance(DEFAULT_NETWORK_ID, baseAsset ? baseAsset.network[DEFAULT_NETWORK_ID] : "none")
   const balanceQuote = useAssetBalance(DEFAULT_NETWORK_ID, quoteAsset ? quoteAsset.network[DEFAULT_NETWORK_ID] : "none")
