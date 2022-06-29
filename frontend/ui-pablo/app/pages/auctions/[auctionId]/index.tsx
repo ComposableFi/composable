@@ -26,6 +26,7 @@ import { useParachainApi } from "substrate-react";
 import { useAuctionsChart } from "@/store/hooks/useAuctionsChart";
 import moment from "moment-timezone";
 import useLiquidityBootstrappingPoolStore from "@/store/useStore";
+import { useAsset } from "@/defi/hooks/assets/useAsset";
 
 const Auction: NextPage = () => {
   const theme = useTheme();
@@ -36,22 +37,16 @@ const Auction: NextPage = () => {
       setLiquidityBootstrappingPoolSpotPrice,
     },
     resetActiveLBP,
-    auctions: { activeLBP, activeLBPStats },
-    supportedAssets
+    auctions: { activeLBP, activeLBPStats }
   } = useLiquidityBootstrappingPoolStore();
 
-  const baseAsset = useMemo(() => {
-    return supportedAssets.find(a => a.network[DEFAULT_NETWORK_ID] === activeLBP.pair.base.toString())
-  }, [supportedAssets, activeLBP])
+  const baseAsset = useAsset(activeLBP.pair.base.toString())
+  const quoteAsset = useAsset(activeLBP.pair.quote.toString())
 
-  const quoteAsset = useMemo(() => {
-    return supportedAssets.find(a => a.network[DEFAULT_NETWORK_ID] === activeLBP.pair.quote.toString())
-  }, [supportedAssets, activeLBP])
 
   useEffect(() => {
     if (parachainApi && activeLBP.poolId !== -1) {
       const interval = setInterval(() => {
-        console.log("SP Interval");
         const pair = {
           base: activeLBP.pair.base.toString(),
           quote: activeLBP.pair.quote.toString()
@@ -116,10 +111,7 @@ const Auction: NextPage = () => {
     return () => {
       resetActiveLBP();
     };
-  // resetActiveLBP, remains same with all renders
-  // this needs to be called only on page cleanup
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [resetActiveLBP]);
 
   return (
     <Default breadcrumbs={breadcrumbs}>

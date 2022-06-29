@@ -138,6 +138,7 @@ export async function fetchPools(parachainApi: ApiPromise): Promise<{
     pools.liquidityBootstrapping.verified = lbpool.filter((p) =>
       allVerifiedPoolIds.includes(p.poolId)
     );
+    // these might be needed in future so not removing
     // pools.liquidityBootstrapping.unVerified = lbpool.filter(
     //   (p) => !allVerifiedPoolIds.includes(p.poolId)
     // );
@@ -145,6 +146,7 @@ export async function fetchPools(parachainApi: ApiPromise): Promise<{
     pools.constantProduct.verified = cpPool.filter((p) =>
       allVerifiedPoolIds.includes(p.poolId)
     );
+    // these might be needed in future so not removing
     // pools.constantProduct.unVerified = cpPool.filter(
     //   (p) => !allVerifiedPoolIds.includes(p.poolId)
     // );
@@ -152,6 +154,7 @@ export async function fetchPools(parachainApi: ApiPromise): Promise<{
     pools.stableSwap.verified = ssPool.filter((p) =>
       allVerifiedPoolIds.includes(p.poolId)
     );
+    // these might be needed in future so not removing    
     // pools.stableSwap.unVerified = ssPool.filter(
     //   (p) => !allVerifiedPoolIds.includes(p.poolId)
     // );

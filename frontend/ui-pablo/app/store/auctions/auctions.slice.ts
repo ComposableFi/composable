@@ -45,7 +45,6 @@ const PLACEHOLDER_POOL: LiquidityBootstrappingPool = {
     protocolFeeRate: "1",
     ownerFeeRate: "1"
   },
-  spotPrice: "0",
   networkId: "picasso",
   auctionDescription: [],
 };

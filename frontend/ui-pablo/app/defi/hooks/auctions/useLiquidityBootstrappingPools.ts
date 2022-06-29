@@ -3,8 +3,9 @@ import { MockedAsset } from "@/store/assets/assets.types";
 import { LiquidityBootstrappingPool } from "@/defi/types";
 import { useMemo } from "react";
 import useStore from "@/store/useStore";
+import BigNumber from "bignumber.js";
 
-type LBPWithAssets = LiquidityBootstrappingPool & { baseAsset: MockedAsset | undefined; quoteAsset: MockedAsset | undefined }
+type LBPWithAssets = LiquidityBootstrappingPool & { spotPrice: BigNumber; } & { baseAsset: MockedAsset | undefined; quoteAsset: MockedAsset | undefined }
 
 export const useLiquidityBootstrappingPools =
   (): {
@@ -23,12 +24,16 @@ export const useLiquidityBootstrappingPools =
       const pools: LBPWithAssets[] = [];
 
       verified.forEach((pool) => {
-        let p = { ...pool, baseAsset: undefined as MockedAsset | undefined, quoteAsset: undefined as MockedAsset | undefined };
+        let p: LBPWithAssets = { ...pool, baseAsset: undefined as MockedAsset | undefined, quoteAsset: undefined as MockedAsset | undefined, spotPrice: new BigNumber(0) };
         let baseAsset = supportedAssets.find(a => a.network[DEFAULT_NETWORK_ID] === p.pair.base.toString());
         let quoteAsset = supportedAssets.find(a => a.network[DEFAULT_NETWORK_ID] === p.pair.base.toString());
 
-        let price = spotPrices.find((p) => p[0] === pool.poolId);
-        p.spotPrice = price ? price[1] : "0";
+        p.spotPrice = spotPrices.reduce((acc, [auctionId, price]) => {
+          if (auctionId === pool.poolId) {
+            return new BigNumber(price)
+          } 
+          return acc;
+        }, new BigNumber(0))
         p.baseAsset = baseAsset;
         p.quoteAsset = quoteAsset;
 

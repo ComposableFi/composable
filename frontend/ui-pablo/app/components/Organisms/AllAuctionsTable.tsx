@@ -84,7 +84,7 @@ export const AllAuctionsTable: React.FC<TableContainerProps> = ({
                 />
               </TableCell>
               <TableCell align="right" sx={{ padding: theme.spacing(4) }}>
-                <Typography variant="body1">${lbPool.spotPrice}</Typography>
+                <Typography variant="body1">${lbPool.spotPrice.toFixed(2)}</Typography>
               </TableCell>
             </TableRow>
           ))}

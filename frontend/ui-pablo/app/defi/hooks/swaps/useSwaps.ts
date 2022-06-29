@@ -80,8 +80,7 @@ export function useSwaps(): {
     return () => {
       resetSwaps();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [resetSwaps]);
 
   const { selectedAssetOneId, selectedAssetTwoId } = useMemo(() => {
     return {
@@ -111,7 +110,6 @@ export function useSwaps(): {
   const balance2 = useAssetBalance(DEFAULT_NETWORK_ID, selectedAssetTwoId);
 
   const fetchDexRoute = useCallback(async (): Promise<BigNumber | null> => {
-    console.log('[useSwaps]', selectedAssetOneId, selectedAssetTwoId)
     if (
       parachainApi &&
       isValidAssetPair(selectedAssetOneId, selectedAssetTwoId)
@@ -146,11 +144,11 @@ export function useSwaps(): {
 
   const [dexRoute, setDexRoute] = useState<BigNumber | null>(null);
   useAsyncEffect(async () => {
-    console.log("[useSwaps] Update Dex Route Effect");
     const dexRoute = await fetchDexRoute();
     if (selectedPool && dexRoute) {
         if (selectedPool.poolId === dexRoute.toNumber()) {
-            return; // do not set
+           // no need to set the route again if it's the same
+            return;
         }
         setDexRoute(dexRoute);
     }
@@ -158,7 +156,6 @@ export function useSwaps(): {
   }, [fetchDexRoute, selectedPool]);
 
   useEffect(() => {
-    console.log("[useSwaps] Update Pool Effect");
     if (!dexRoute) { return setSelectedPool(undefined); }
 
     const verifiedConstantProductPools = constantProductPools.verified;
@@ -173,7 +170,6 @@ export function useSwaps(): {
         (i) => i.poolId === dexRoute.toNumber()
       );
 
-    console.log('[useSwaps]', lpToTrade)
     setSelectedPool(lpToTrade);
   }, [dexRoute, constantProductPools, stableSwapPools, setSelectedPool]);
 
@@ -198,7 +194,6 @@ export function useSwaps(): {
   }, [parachainApi, selectedPool, selectedAssetOneId, setSpotPrice]);
 
   useEffect(() => {
-    console.log("[useSwaps] Update Spot Price Effect");
     if (selectedPool) {
       updateSpotPrice();
     }

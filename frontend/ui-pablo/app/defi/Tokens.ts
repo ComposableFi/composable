@@ -83,15 +83,6 @@ export const TOKENS: { [key in TokenId]: Token } = {
   },
 };
 
-const currencyIdToTokenId: Record<number, TokenId> = {
-  1: "pica",
-  4: "ksm",
-  129: "usdc",
-};
-
-export const getTokenId = (currencyId: number) =>
-  currencyIdToTokenId[currencyId];
-
 export const getToken = (tokenId: TokenId): Token => TOKENS[tokenId];
 
 export const getTokenOptions = (noneTokenLabel?: string) => [

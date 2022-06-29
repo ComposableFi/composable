@@ -2,7 +2,6 @@ import { uniswapCalculator } from "@/defi/utils";
 import BigNumber from "bignumber.js";
 
 let oneBaseInQuote = new BigNumber(2);
-let oneQuoteInBase = new BigNumber(1).div(oneBaseInQuote);
 let slippage = new BigNumber(1);
 let fee = new BigNumber(1);
 
@@ -18,7 +17,7 @@ describe("SwapMath", () => {
    * Fee will be charged on USD
    * Fee: 10 * 0.01 = 0.1
    * Slippage: 10 * 0.02 = 0.2
-   * Min Receive =  10 - (0.2+0.1) = 9.7 * 0.5 = 4.85
+   * Min Receive =  10 - (0.02+0.01) = 9.7 * 0.5 = 4.85
    * Token Out = 5 * 2 = 10 USD
    */
    test("Change Base KSM to 5, USD should change to 10", () => {

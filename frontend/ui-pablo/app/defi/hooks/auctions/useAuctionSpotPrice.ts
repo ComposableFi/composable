@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import useStore from "@/store/useStore";
+import BigNumber from "bignumber.js";
 
-export const useAuctionSpotPrice = (auctionId: number): string => {
+export const useAuctionSpotPrice = (auctionId: number): BigNumber => {
   const {
     pools: {
       liquidityBootstrappingPools: { spotPrices },
@@ -9,8 +10,13 @@ export const useAuctionSpotPrice = (auctionId: number): string => {
   } = useStore();
 
   const spotPrice = useMemo(() => {
-    let e = spotPrices.find((s) => s[0] === auctionId);
-    return e ? e[1] : "0";
+    return spotPrices.reduce((acc, [lbpAuctionId, spotPrice]) => {
+      if (lbpAuctionId === auctionId) {
+        return new BigNumber(spotPrice)
+      }
+      return acc
+    }, new BigNumber(0))
+
   }, [spotPrices, auctionId]);
 
   return spotPrice;

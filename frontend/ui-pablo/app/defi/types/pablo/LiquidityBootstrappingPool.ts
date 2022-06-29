@@ -19,7 +19,6 @@ export interface LiquidityBootstrappingPool {
         finalWeight: number;
     }
     feeConfig: PoolFeeConfig;
-    spotPrice: string;
     networkId: ParachainId;
     auctionDescription: string[];
 }
