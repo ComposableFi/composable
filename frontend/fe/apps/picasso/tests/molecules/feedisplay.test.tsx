@@ -1,6 +1,6 @@
 import { render, screen } from "@/tests/utils/base";
 import { composeStories } from "@storybook/testing-react";
-import * as stories from "@ui-picasso/../../../../../ui-picasso/storybook/stories/molecules/feeDisplay.stories";
+import * as stories from "picasso-storybook/stories/molecules/feeDisplay.stories";
 
 const { FeeDisplayWithoutTooltip, FeeDisplayWithTooltip } =
   composeStories(stories);

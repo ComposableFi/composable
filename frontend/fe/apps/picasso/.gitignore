@@ -38,5 +38,6 @@ yarn-error.log*
 public/*.map
 public/workbox-*.js
 public/fallback*.js
+public/sw.js
 
 .npmrc

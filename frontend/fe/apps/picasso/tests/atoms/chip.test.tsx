@@ -1,6 +1,6 @@
 import { render } from "@/tests/utils/base";
 import { composeStories } from "@storybook/testing-react";
-import * as stories from "@ui-picasso/../../../../../ui-picasso/storybook/stories/atoms/chip.stories";
+import * as stories from "picasso-storybook/stories/atoms/chip.stories";
 
 const { ChipTemplate } = composeStories(stories);
 

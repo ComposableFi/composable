@@ -1,6 +1,6 @@
 import { render, screen } from "@/tests/utils/base";
 import { composeStories } from "@storybook/testing-react";
-import * as stories from "@ui-picasso/../../../../../ui-picasso/storybook/stories/templates/stats.stories";
+import * as stories from "picasso-storybook/stories/templates/stats.stories";
 import { useConnector } from "@integrations-lib/core";
 
 const { StatsPage } = composeStories(stories);

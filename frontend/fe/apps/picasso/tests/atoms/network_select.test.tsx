@@ -2,7 +2,7 @@ import { NETWORK_IDS } from "@/defi/Networks";
 import { SUBSTRATE_NETWORK_IDS } from "@/defi/polkadot/Networks";
 import { render } from "@/tests/utils/base";
 import { composeStories } from "@storybook/testing-react";
-import * as stories from "@ui-picasso/../../../../../ui-picasso/storybook/stories/atoms/network_select.stories"; // import all stories from the stories file
+import * as stories from "picasso-storybook/stories/atoms/network_select.stories"; // import all stories from the stories file
 
 const { NetworkSelects, SubstrateNetworkSelect } = composeStories(stories);
 

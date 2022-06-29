@@ -33,8 +33,6 @@
     "bignumber.js": "^9.0.2",
     "bn.js": "^5.2.0",
     "contentful": "^9.1.5",
-    "date-fns": "^2.28.0",
-    "imagemin-svgo": "^10.0.1",
     "next": "^12.1.0",
     "next-pwa": "^5.4.4",
     "next-transpile-modules": "^9.0.0",
@@ -44,14 +42,11 @@
     "react-dom": "17.0.2",
     "react-hotjar": "^4.0.0",
     "substrate-react": "^0.1.88",
-    "tiny-timer": "^1.6.0",
-    "uuid": "^8.3.2",
     "immer": "^9.0.14",
     "zustand": "^4.0.0-beta.2"
   },
   "devDependencies": {
     "@babel/core": "^7.16.7",
-    "@polkadot/dev": "^0.67.3",
     "@testing-library/dom": "^8.11.1",
     "@testing-library/jest-dom": "^5.16.1",
     "@testing-library/react": "^12.1.2",

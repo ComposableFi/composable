@@ -1,8 +1,9 @@
 import { Box, Typography, useTheme } from "@mui/material";
-import { FeaturedBox, Chart, VotingDetailsBox } from "@/components/Organisms/StatsGovernanceTab";
 import CheckIcon from "@mui/icons-material/Check";
+import type { FC } from "react";
+import { Chart, FeaturedBox, VotingDetailsBox } from "@/components/Molecules";
 
-export const StatsGovernanceTab: React.FC<{}> = ({}) => {
+export const StatsGovernanceTab: FC<{}> = ({}) => {
   const theme = useTheme();
   return (
     <>
