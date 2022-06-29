@@ -184,9 +184,9 @@ export function useSwaps(): {
         selectedPool.poolId
       );
       if (isInverse) {
-        setSpotPrice(new BigNumber(1).div(spotPrice).dp(0));
+        setSpotPrice(new BigNumber(1).div(spotPrice).dp(4));
       } else {
-        setSpotPrice(spotPrice.dp(0));
+        setSpotPrice(spotPrice.dp(4));
       }
     } else {
       setSpotPrice(new BigNumber(0));

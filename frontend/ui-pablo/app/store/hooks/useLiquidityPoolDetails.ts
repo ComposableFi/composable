@@ -6,7 +6,7 @@ import { useLiquidityByPool } from "./useLiquidityByPool";
 import { DailyRewards } from "../poolStats/poolStats.types";
 import { calculatePoolStats, fetchPoolStats } from "@/defi/utils/pablo";
 import { MockedAsset } from "../assets/assets.types";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { DEFAULT_NETWORK_ID, matchAssetByPicassoId } from "@/defi/utils";
 import useStore from "../useStore";
 
 export const useLiquidityPoolDetails = (poolId: number) => {
@@ -28,10 +28,10 @@ export const useLiquidityPoolDetails = (poolId: number) => {
       allLpRewardingPools.find((p) => p.poolId === poolId);
 
     if (matchingPool) {
-      let b = matchingPool.pair.base.toString();
-      let q = matchingPool.pair.quote.toString();
-      const baseAsset = supportedAssets.find(a => a.network[DEFAULT_NETWORK_ID] === b)
-      const quoteAsset = supportedAssets.find(a => a.network[DEFAULT_NETWORK_ID] === q)
+      let base = matchingPool.pair.base.toString();
+      let quote = matchingPool.pair.quote.toString();
+      const baseAsset = supportedAssets.find(asset => matchAssetByPicassoId(asset, base))
+      const quoteAsset = supportedAssets.find(asset => matchAssetByPicassoId(asset, quote))
       setPool(matchingPool);
       setBaseAsset(baseAsset);
       setQuoteAsset(quoteAsset);

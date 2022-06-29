@@ -6,6 +6,7 @@ import { useMemo } from "react";
 import { DailyRewards } from "../poolStats/poolStats.types";
 import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
 import { MockedAsset } from "../assets/assets.types";
+import { matchAssetByPicassoId } from "@/defi/utils";
 
 export interface LiquidityPoolRow {
   poolId: number;
@@ -26,8 +27,8 @@ export const useLiquidityPoolsList = (): LiquidityPoolRow[] => {
     return allLpRewardingPools.map((pool) => {
       const { poolId, pair } = pool;
 
-      const baseAsset = supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === pair.base.toString())
-      const quoteAsset = supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === pair.quote.toString())
+      const baseAsset = supportedAssets.find(asset => matchAssetByPicassoId(asset, pair.base.toString()))
+      const quoteAsset = supportedAssets.find(asset => matchAssetByPicassoId(asset, pair.quote.toString()))
 
       const lpTokenAssetId = pool.lpToken;
 

@@ -7,6 +7,7 @@ import {
   decodeBondOffer,
   DEFAULT_NETWORK_ID,
   fetchVesitngPeriod,
+  matchAssetByPicassoId,
 } from "@/defi/utils";
 import { useParachainApi } from "substrate-react";
 import { useBlockInterval } from "../useBlockInterval";
@@ -50,13 +51,10 @@ export default function useBondOffer(offerId: string) {
 
       if (isLpBasedBond) {
         const baseAsset = supportedAssets.find(
-          (a) =>
-            a.network[DEFAULT_NETWORK_ID] === isLpBasedBond.pair.base.toString()
+          (asset) => matchAssetByPicassoId(asset, isLpBasedBond.pair.base.toString())
         );
         const quoteAsset = supportedAssets.find(
-          (a) =>
-            a.network[DEFAULT_NETWORK_ID] ===
-            isLpBasedBond.pair.quote.toString()
+          (asset) => matchAssetByPicassoId(asset, isLpBasedBond.pair.quote.toString())
         );
 
         if (baseAsset || quoteAsset) {
@@ -64,7 +62,7 @@ export default function useBondOffer(offerId: string) {
         }
       } else {
         principalAsset.simplePrincipalAsset = supportedAssets.find(
-          (a) => a.network[DEFAULT_NETWORK_ID] === selectedBondOffer.asset
+          asset => matchAssetByPicassoId(asset, selectedBondOffer.asset)
         );
       }
     }
@@ -74,7 +72,7 @@ export default function useBondOffer(offerId: string) {
   const rewardAsset = useMemo<MockedAsset | undefined>(() => {
     if (supportedAssets.length && selectedBondOffer) {
       return supportedAssets.find(
-        (a) => selectedBondOffer.reward.asset === a.network[DEFAULT_NETWORK_ID]
+        (a) => matchAssetByPicassoId(a, selectedBondOffer.reward.asset)
       );
     }
   }, [supportedAssets, selectedBondOffer]);

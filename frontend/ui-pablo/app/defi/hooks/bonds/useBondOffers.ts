@@ -5,7 +5,7 @@ import { useAllLpTokenRewardingPools } from "@/store/hooks/useAllLpTokenRewardin
 import BigNumber from "bignumber.js";
 
 import { MockedAsset } from "@/store/assets/assets.types";
-import { DEFAULT_NETWORK_ID, fetchBondOffers } from "@/defi/utils";
+import { DEFAULT_NETWORK_ID, fetchBondOffers, matchAssetByPicassoId } from "@/defi/utils";
 import { useParachainApi } from "substrate-react";
 
 export type BondPrincipalAsset = {
@@ -50,19 +50,18 @@ export default function useBondOffers(): OfferRow[] {
       };
       if (isLpBasedBond) {
         const baseAsset = supportedAssets.find(
-          (a) =>
-            a.network[DEFAULT_NETWORK_ID] === isLpBasedBond.pair.base.toString()
+          (asset) =>
+            matchAssetByPicassoId(asset, isLpBasedBond.pair.base.toString())
         );
         const quoteAsset = supportedAssets.find(
-          (a) =>
-            a.network[DEFAULT_NETWORK_ID] ===
-            isLpBasedBond.pair.quote.toString()
+          (asset) =>
+            matchAssetByPicassoId(asset, isLpBasedBond.pair.quote.toString())
         );
 
         principalAsset.lpPrincipalAsset = { baseAsset, quoteAsset };
       } else {
         principalAsset.simplePrincipalAsset = supportedAssets.find(
-          (a) => a.network[DEFAULT_NETWORK_ID] === bondOffer.asset
+          (asset) => matchAssetByPicassoId(asset, bondOffer.asset)
         );
       }
 

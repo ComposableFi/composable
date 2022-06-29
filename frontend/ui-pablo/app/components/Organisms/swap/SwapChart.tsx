@@ -9,7 +9,8 @@ import { DEFI_CONFIG } from "@/defi/config";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 import { useSwapsChart } from "@/store/hooks/useSwapsChart";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { DEFAULT_NETWORK_ID, matchAssetByPicassoId } from "@/defi/utils";
+import { useAsset } from "@/defi/hooks/assets/useAsset";
 
 const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
   const theme = useTheme();
@@ -17,21 +18,8 @@ const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
   const { swaps, supportedAssets } = useStore();
   const {selectedInterval, chartSeries, seriesIntervals, _24hourOldPrice, setSelectedInterval} = useSwapsChart();
 
-  const baseAsset = useMemo(() => {
-    if (swaps.selectedAssets.base !== "none") {
-      return supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === swaps.selectedAssets.base)
-    } else {
-      return undefined
-    }
-  }, [swaps.selectedAssets, supportedAssets])
-
-  const quoteAsset = useMemo(() => {
-    if (swaps.selectedAssets.quote !== "none") {
-    return supportedAssets.find(i => i.network[DEFAULT_NETWORK_ID] === swaps.selectedAssets.quote)
-    } else {
-      return undefined
-    }
-  }, [swaps.selectedAssets, supportedAssets])
+  const baseAsset = useAsset(swaps.selectedAssets.base);
+  const quoteAsset = useAsset(swaps.selectedAssets.quote);
 
   const changePercent = useMemo(() => {
     if (swaps.spotPrice.eq(0)) return 0 

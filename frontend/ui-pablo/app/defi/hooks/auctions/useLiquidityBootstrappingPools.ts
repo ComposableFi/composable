@@ -1,4 +1,4 @@
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { DEFAULT_NETWORK_ID, matchAssetByPicassoId } from "@/defi/utils";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { LiquidityBootstrappingPool } from "@/defi/types";
 import { useMemo } from "react";
@@ -25,13 +25,13 @@ export const useLiquidityBootstrappingPools =
 
       verified.forEach((pool) => {
         let p: LBPWithAssets = { ...pool, baseAsset: undefined as MockedAsset | undefined, quoteAsset: undefined as MockedAsset | undefined, spotPrice: new BigNumber(0) };
-        let baseAsset = supportedAssets.find(a => a.network[DEFAULT_NETWORK_ID] === p.pair.base.toString());
-        let quoteAsset = supportedAssets.find(a => a.network[DEFAULT_NETWORK_ID] === p.pair.base.toString());
+        let baseAsset = supportedAssets.find(a => matchAssetByPicassoId(a, p.pair.base.toString()));
+        let quoteAsset = supportedAssets.find(a => matchAssetByPicassoId(a, p.pair.quote.toString()));
 
         p.spotPrice = spotPrices.reduce((acc, [auctionId, price]) => {
           if (auctionId === pool.poolId) {
             return new BigNumber(price)
-          } 
+          }
           return acc;
         }, new BigNumber(0))
         p.baseAsset = baseAsset;

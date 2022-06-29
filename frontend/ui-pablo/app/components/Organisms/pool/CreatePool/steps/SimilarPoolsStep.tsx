@@ -19,6 +19,7 @@ import { TransactionSettings } from "@/components/Organisms/TransactionSettings"
 import { openTransactionSettingsModal } from "@/stores/ui/uiSlice";
 import useStore from "@/store/useStore";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { useAsset } from "@/defi/hooks/assets/useAsset";
 
 const itemBoxProps = (theme: Theme) =>
   ({
@@ -79,17 +80,8 @@ const SimilarPoolsStep: React.FC<SimilarPoolsStepProps> = ({
     }
   };
 
-  const _baseAsset = useMemo(() => {
-    return supportedAssets.find(i => {
-      return i.network[DEFAULT_NETWORK_ID] === baseAsset
-    })
-  }, [baseAsset, supportedAssets])
-
-  const _quoteAsset = useMemo(() => {
-    return supportedAssets.find(i => {
-      return i.network[DEFAULT_NETWORK_ID] === quoteAsset
-    })
-  }, [quoteAsset, supportedAssets])
+  const _baseAsset = useAsset(baseAsset);
+  const _quoteAsset = useAsset(quoteAsset);
 
   return (
     <FormWrapper {...boxProps}>
