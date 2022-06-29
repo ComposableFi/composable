@@ -13,7 +13,7 @@ This is a guide on how to run things locally or in isolated environment with you
 ## Run Composable's parachain only
 
 ```bash
-yarn composable
+yarn && yarn composable
 ```
 
 URLs:
