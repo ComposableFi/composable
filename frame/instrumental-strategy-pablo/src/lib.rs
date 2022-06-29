@@ -250,6 +250,7 @@ pub mod pallet {
 		/// Add vault_id to AssociatedVaults storage.
 		///
 		/// Emits [`AssociatedVault`](Event::AssociatedVault) event when successful.
+		#[transactional]
 		#[pallet::weight(T::WeightInfo::associate_vault())]
 		pub fn associate_vault(
 			origin: OriginFor<T>,
@@ -273,6 +274,7 @@ pub mod pallet {
 		/// Store a mapping of asset_id -> pool_id in the pools runtime storage object.
 		///
 		/// Emits [`AssociatedPoolWithAsset`](Event::AssociatedPoolWithAsset) event when successful.
+		#[transactional]
 		#[pallet::weight(T::WeightInfo::set_pool_id_for_asset())]
 		pub fn set_pool_id_for_asset(
 			origin: OriginFor<T>,
@@ -293,6 +295,7 @@ pub mod pallet {
 		/// Occur rebalance of liquidity of each vault.
 		///
 		/// Emits [`RebalancedVault`](Event::RebalancedVault) event when successful.
+		#[transactional]
 		#[pallet::weight(T::WeightInfo::liquidity_rebalance())]
 		pub fn liquidity_rebalance(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let who = ensure_signed(origin)?;
@@ -307,7 +310,8 @@ pub mod pallet {
 		/// Occur set access to Account and add it to AdminAccountIds storage.
 		///
 		/// Emits [`AssociatedAccountId`](Event::AssociatedAccountId) event when successful.
-		#[pallet::weight(T::WeightInfo::liquidity_rebalance())]
+		#[transactional]
+		#[pallet::weight(T::WeightInfo::set_access())]
 		pub fn set_access(
 			origin: OriginFor<T>,
 			account_id: T::AccountId,

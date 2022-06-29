@@ -8,6 +8,7 @@ pub trait WeightInfo {
 	fn set_pool_id_for_asset() -> Weight;
 	fn liquidity_rebalance() -> Weight;
 	fn associate_vault() -> Weight;
+	fn set_access() -> Weight;
 }
 
 /// Weights for instrumental_strategy_pablo using the Substrate node and recommended hardware.
@@ -28,6 +29,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	fn associate_vault() -> Weight {
 		10_000 as Weight
 	}
+
+	fn set_access() -> Weight {
+		10_000 as Weight
+	}
 }
 
 // For backwards compatibility and tests
@@ -45,6 +50,10 @@ impl WeightInfo for () {
 	}
 
 	fn associate_vault() -> Weight {
+		10_000 as Weight
+	}
+
+	fn set_access() -> Weight {
 		10_000 as Weight
 	}
 }
