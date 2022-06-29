@@ -18,7 +18,7 @@ This document proposes the Pablo distribution(token and pool trading fees) mecha
 
 === PBLO Token Initial Distribution
 
-According to the http://link[tokenomics design] the Pablo is supposed to be distributed as follows,
+According to the tokenomics design the Pablo is supposed to be distributed as follows,
 
 * Ecosystem fund - x
 * Farming rewards - y
@@ -151,7 +151,7 @@ skinparam component {
 
 node "Pallet-Staking-Rewards\n(Pallet-Rewards?)" {
     StakingReward - [Reward Logic]
-    Staking - [fNFT Storage/Logic]
+    Staking - [Position Storage/Logic]
     Node "BatchProcess" {
         [RewardDisbursementHook]
         [RewardsConfig] --> [RewardAccumulationHook]
@@ -188,13 +188,9 @@ In order to 1. support LP staking 2. LP trading fee distribution and 3. PBLO sta
 
 Each pool in Pablo defines a fee percentage to be charged for each trade.Except for LBPs other pools also define an owner fee that is a percentage out of the main trading fee. The `FeeConfig` is a new abstraction over all fees that could be charged on a pool to allow for extension. At this time a 100% of the owner fee should be defined as a new field `protocol_fee`.
 
-[plantuml,images/pablo-fee-config,png]
+[source,rust]
 ----
-class FeeConfig {
-    +fee_rate: Permill
-    +owner_fee_rate: Permill,
-    +protocol_fee_rate: Permill,
-}
+include::../../frame/composable-traits/src/dex.rs[lines=152..163]
 ----
 
 *Existing code must be modified to use this data structure*.
@@ -227,7 +223,7 @@ stem:[= l + l / (sum l_m) * sum a_n]
 
 trading fees received stem:[= x = l / (sum l_m) * sum a_n]
 
-"When pool size stem:[sum l_m] increases the amount of trading fees received stem:[x] reduces for a particular LP position.
+When pool size stem:[sum l_m] increases the amount of trading fees received stem:[x] reduces for a particular LP position.
 
 For large pool sizes of stem:[sum l_m] (steady state) this effect is negligible, hence it's a good enough strategy to distribute fees.
 
@@ -305,7 +301,7 @@ stem:[x _n = P_(current) . s_n / (sum s_n)]
 
 stem:[x_n = P_(current) . s_n / (sum s_(n+1))]
 
-As this is less than what is expected above, an adjustment " delta P " to total reward pool can be made to allow realtime reward calculations,
+As this is less than what is expected above, an adjustment stem:[delta P] to total reward pool can be made to allow realtime reward calculations,
 
 stem:[delta P = P_(current) . s_(n+1) / (sum s_n)]
 
@@ -317,13 +313,13 @@ stem:[x _n = P_(current) . s_n / (sum s_n)]
 
 **Therefore, the existing staker receives the same reward as before **
 
-To compensate for this new adjustment, a reduction stem:[d_n] of reward for each staker needs to be tracked,
+To compensate for this new adjustment, a reduction stem:[d_n] (equal to stem:[delta P]) of reward for each staker needs to be tracked,
 
 stem:[x_n = P_(current) . s_n / (sum s_n) - d_n] <- (1)
 
 In general,
 
-stem:[d_n = "Any reduction in reward including already claimed"]
+stem:[d_n = "Any reduction in reward"]
 
 ===== When removing a staker from the pool the above addition step has to be reverted
 
@@ -370,7 +366,7 @@ include::../../frame/composable-traits/src/staking/mod.rs[lines=122..138]
 
 Which is referred to in the algorithms in the followin sections.
 
-Now in order to allow redeeming the above fNFT, following data structures is to be tracked in the staking rewards pallet,
+Now in order to allow redeeming the above staking position, following data structures is to be tracked in the staking rewards pallet,
 
 [source,rust]
 ----
