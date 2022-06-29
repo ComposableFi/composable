@@ -332,7 +332,7 @@ describe("HAL01 [Oracle] Tests", function () {
         const oracleStakeWallet3AfterTransaction = await getOracleStake(api, walletHAL01_3);
         const oracleStakeWallet4AfterTransaction = await getOracleStake(api, walletHAL01_4);
 
-        // Nobody should get slashed.
+        // The correct price should get slashed.
         expect(oracleStakeWallet1BeforeTransaction).to.be.bignumber.equal(oracleStakeWallet1AfterTransaction);
         expect(oracleStakeWallet2BeforeTransaction).to.be.bignumber.equal(oracleStakeWallet2AfterTransaction);
         expect(oracleStakeWallet3BeforeTransaction).to.be.bignumber.equal(oracleStakeWallet3AfterTransaction);
