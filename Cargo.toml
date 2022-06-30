@@ -47,6 +47,7 @@ members = [
   "simnode/simnode-node",
   "simnode/simnode-tests",
   "simnode/common",
+  "utils/xcmp",
 ]
 
 [profile.release]

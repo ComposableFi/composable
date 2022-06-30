@@ -1,0 +1,32 @@
+[package]
+description = "tool to help with xcmp"
+edition = "2021"
+name = "xcmp"
+version = "0.1.0"
+
+[dependencies]
+base58 = "0.2"
+clap = { version = "3.2.5", features = ["derive"] }
+env_logger = "0.9.0"
+hex = "0.4.3"
+scale-codec = { package = "parity-scale-codec", version = "3.0.0", features = [
+  "derive",
+] }
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", features = [
+  "std",
+  "full_crypto",
+] }
+sp-keyring = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+
+#polkadot-parachain = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.22" }
+
+# TODO: upgrade to latest as it has awesome improvements, but possivble on only on > 0.9.22
+subxt = { git = "https://github.com/paritytech/subxt", rev = "6d73172560b4c722aeac19695c96c618799d50a2" }
+
+sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+
+sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-runtime-interface = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
+tokio = { version = "1.8", features = ["rt-multi-thread", "macros", "time"] }
