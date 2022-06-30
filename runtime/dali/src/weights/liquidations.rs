@@ -12,11 +12,13 @@
 // --chain=dali-dev
 // --execution=wasm
 // --wasm-execution=compiled
-// --pallet=liquidations
+// --pallet=*
 // --extrinsic=*
 // --steps=50
 // --repeat=20
-// --output=wl.rs
+// --output=runtime/dali/src/weights
+// --log
+// error
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
@@ -31,7 +33,7 @@ impl<T: frame_system::Config> liquidations::WeightInfo for WeightInfo<T> {
 	// Storage: Liquidations StrategyIndex (r:1 w:1)
 	// Storage: Liquidations Strategies (r:0 w:1)
 	fn add_liquidation_strategy() -> Weight {
-		(3_241_000 as Weight)
+		(10_388_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(1 as Weight))
 			.saturating_add(T::DbWeight::get().writes(2 as Weight))
 	}
@@ -42,9 +44,9 @@ impl<T: frame_system::Config> liquidations::WeightInfo for WeightInfo<T> {
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: DutchAuction SellOrders (r:0 w:1)
 	fn sell(x: u32, ) -> Weight {
-		(44_198_000 as Weight)
-			// Standard Error: 23_000
-			.saturating_add((1_712_000 as Weight).saturating_mul(x as Weight))
+		(117_676_000 as Weight)
+			// Standard Error: 42_000
+			.saturating_add((4_246_000 as Weight).saturating_mul(x as Weight))
 			.saturating_add(T::DbWeight::get().reads(5 as Weight))
 			.saturating_add(T::DbWeight::get().reads((1 as Weight).saturating_mul(x as Weight)))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
