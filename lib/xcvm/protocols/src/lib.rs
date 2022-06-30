@@ -85,7 +85,7 @@ impl XCVMProtocol<XCVMNetwork> for Swap {
 		match network {
 			XCVMNetwork::ETHEREUM => {
 				let uniswap_v3_contract_address =
-					H160::from_str("0x5FCDda3cAC613835AA8d4BB059f8ADff2842c3FC")
+					H160::from_str("0x050Fa71cb1D5eD3858982475356A854e12C18C59")
 						.expect("impossible");
 				let encoded_call = Self::ethereum_prototype()
 					.encode_input(&[
