@@ -47,3 +47,5 @@ result
 
 # devnet nodes logs
 *.log
+
+**/.asciidoctor
