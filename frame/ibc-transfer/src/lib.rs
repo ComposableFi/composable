@@ -257,15 +257,15 @@ pub mod pallet {
 			amount: <T as DeFiComposableConfig>::Balance,
 		) -> DispatchResult {
 			let origin = ensure_signed(origin)?;
-			// Check if the asset id is one of the native assets or an ibc asset id
-			// If native, get the string representation of the asset
+			// Check if it's a local asset id, native asset or an ibc asset id
+			// If native or local asset, get the string representation of the asset
 			let denom = if let Some(denom) = IbcAssetIds::<T>::get(&asset_id) {
 				String::from_utf8(denom).map_err(|_| Error::<T>::Utf8Error)?
 			} else {
 				let asset_id: CurrencyId = asset_id.into();
 				CurrencyId::native_asset_name(asset_id.0)
-					.map_err(|_| Error::<T>::InvalidAssetId)?
-					.to_string()
+					.map(|val| val.to_string())
+					.unwrap_or_else(|_| asset_id.to_string())
 			};
 
 			let account_id_32: AccountId32 = origin.clone().into();
