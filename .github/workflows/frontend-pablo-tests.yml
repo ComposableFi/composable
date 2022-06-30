@@ -4,10 +4,10 @@ on:
     branches:
       - main
     paths:
-      - 'frontend/ui-pablo/*'
+      - 'frontend/apps/pablo/*'
   push:
     paths:
-      - 'frontend/ui-pablo/*'
+      - 'frontend/apps/pablo/*'
 
 jobs:
   tests:
@@ -17,8 +17,8 @@ jobs:
 
       - name: Install modules
         run: yarn install --no-scripts
-        working-directory: frontend/ui-pablo
+        working-directory: frontend
 
       - name: Run tests
-        run: yarn test
-        working-directory: frontend/ui-pablo
+        run: yarn --filter=pablo test
+        working-directory: frontend

@@ -4,10 +4,10 @@ on:
     branches:
       - main
     paths:
-      - 'frontend/ui-picasso/*'
+      - 'frontend/apps/picasso/*'
   push:
     paths:
-      - 'frontend/ui-picasso/*'
+      - 'frontend/apps/picasso/*'
 
 jobs:
   tests:
@@ -20,10 +20,10 @@ jobs:
           always-auth: true
           registry-url: 'https://registry.npmjs.org'
       - run: yarn install --ignore-scripts
-        working-directory: frontend/ui-picasso
+        working-directory: frontend
         env:
           CI: true
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Run tests
-        run: yarn test
-        working-directory: frontend/ui-picasso
+        run: yarn --filter=picasso  test
+        working-directory: frontend
