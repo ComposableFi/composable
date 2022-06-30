@@ -177,7 +177,7 @@
       state: started
     become: yes
 
-  - name: Enable and restart subsquid-archiver and subsquid-indexer-db services
+  - name: Enable and restart composable service
     # Here will be a timeout if use the 'systemd' module
     ansible.builtin.shell: |
       systemctl restart composable
