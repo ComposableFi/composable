@@ -18,7 +18,7 @@ use crate::{
 	cache::ThreadSafePriceCache,
 	feed::{
 		binance::BinanceFeed, Exponent, FeedHandle, FeedIdentifier, FeedNotification, FeedStream,
-		TimeStampedPrice,
+		TimeStampedPrice, composable::ComposableFeed,
 	},
 	frontend::Frontend,
 };
@@ -50,6 +50,12 @@ async fn main() {
 	.await
 	.expect("unable to start binance feed");
 
+    let composable = ComposableFeed::start(
+            opts.composable_node,
+            &[(Asset::KSM, Asset::USDC)].iter().copied().collect(),
+    ).await
+    .expect("unable to start composable feed");
+
 	let merge = |feeds: Vec<(FeedHandle, FeedStream<FeedIdentifier, Asset, TimeStampedPrice>)>| {
 		let (handles, sources) = feeds.into_iter().unzip::<_, _, Vec<_>, Vec<_>>();
 		(join_all(handles), futures::stream::select_all(sources))
@@ -63,7 +69,7 @@ async fn main() {
 
 		 ... merge(vec![..., new_feed])
 	*/
-	let (feeds_handle, feeds_source) = merge(vec![binance]);
+	let (feeds_handle, feeds_source) = merge(vec![binance, composable]);
 
 	let backend_shutdown_trigger: futures::stream::Fuse<signal_hook_tokio::SignalsInfo> =
 		Signals::new(&[SIGTERM, SIGINT, SIGQUIT])
