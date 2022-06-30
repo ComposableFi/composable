@@ -39,14 +39,6 @@ prop_compose! {
 	}
 }
 
-prop_compose! {
-	fn timestamp()(
-		t in Timestamp::MIN..=Timestamp::MAX
-	) -> Timestamp {
-		t
-	}
-}
-
 // ----------------------------------------------------------------------------------------------------
 //                                               Balance
 // ----------------------------------------------------------------------------------------------------
@@ -163,7 +155,7 @@ prop_compose! {
 		base_asset_reserves in any_sane_asset_amount(),
 		quote_asset_reserves in any_sane_asset_amount(),
 		peg_multiplier in 1..=100_000_u128,
-		closed in prop_oneof![timestamp().prop_map(Some), Just(None)],
+		closed in prop_oneof![any_time().prop_map(Some), Just(None)],
 		twap_timestamp in any_time(),
 		twap_period in any_time()
 	) -> VammState<Balance, Timestamp, Decimal> {
