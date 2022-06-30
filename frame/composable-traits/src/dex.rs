@@ -382,6 +382,7 @@ mod tests {
 	use std::ops::Mul;
 
 	#[test]
+	#[allow(clippy::erasing_op)]
 	fn calculate_fee() {
 		const UNIT: u128 = 1_000_000_000_000_u128;
 		let amount = 1_000_000_u128 * UNIT;

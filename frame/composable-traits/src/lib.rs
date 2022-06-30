@@ -4,12 +4,12 @@
 		clippy::disallowed_methods,
 		clippy::disallowed_types,
 		clippy::indexing_slicing,
+		clippy::panic,
 		clippy::todo,
 		clippy::unwrap_used,
-		clippy::panic
 	)
 )] // allow in tests
-#![deny(clippy::erasing_op, clippy::unseparated_literal_suffix)]
+#![deny(clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod assets;
