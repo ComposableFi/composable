@@ -193,6 +193,7 @@
         apt:
           pkg:
           - docker
+          - docker-compose
           - docker-engine
           - docker.io
           - containerd

@@ -205,6 +205,7 @@
         apt:
           pkg:
           - docker
+          - docker-compose
           - docker.io
           - containerd
           - runc
