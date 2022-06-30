@@ -25,11 +25,10 @@ import { useRouter } from "next/router";
 import useStore from "@/store/useStore";
 import {
   getAsset,
-  getAssetById,
   getAssetOnChainId,
 } from "@/defi/polkadot/Assets";
 import { AMMs } from "@/defi/AMMs";
-import { useAssetPrice } from "@/store/assets/hooks";
+import { useUSDAssetPrice } from "@/store/assets/hooks";
 import { AssetId } from "@/defi/polkadot/types";
 import {
   getSigner,
@@ -37,11 +36,10 @@ import {
   useParachainApi,
   useSelectedAccount,
 } from "substrate-react";
-import { createConstantProductPool } from "@/store/updaters/pools/createPool/utils";
-import { DEFAULT_NETWORK_ID } from "@/store/updaters/pools/constants";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { EventRecord } from "@polkadot/types/interfaces/system/types";
-import { addLiquidityToPoolViaPablo } from "@/store/updaters/pools/addLiquidity/utils";
+import { addLiquidityToPoolViaPablo, createConstantProductPool, createStableSwapPool } from "@/defi/utils";
 import { closeConfirmingModal, openConfirmingModal } from "@/stores/ui/uiSlice";
 
 const labelProps = (
@@ -74,17 +72,16 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
 
   const {
-    pools: {
-      createPool: {
-        baseAsset,
-        quoteAsset,
-        liquidity,
-        currentStep,
-        swapFee,
-        ammId,
-        setSelectable,
-        resetSlice
-      },
+    createPool: {
+      baseAsset,
+      quoteAsset,
+      liquidity,
+      currentStep,
+      swapFee,
+      ammId,
+      weights,
+      setSelectable,
+      resetSlice,
     },
   } = useStore();
 
@@ -98,12 +95,13 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
     return new BigNumber(liquidity.quoteAmount);
   }, [liquidity.quoteAmount]);
 
-  const { initialSwapFee, createdAt } = useAppSelector(
-    (state) => state.pool.currentPool
-  );
+  const [createdAt, setCreatedAt] = useState(-1)
 
-  const baseTokenUSDPrice = useAssetPrice(baseAsset as AssetId);
-  const quoteTokenUSDPrice = useAssetPrice(quoteAsset as AssetId);
+  let baseAssetOnChainId = baseAsset === "none" ? -1 : getAssetOnChainId(DEFAULT_NETWORK_ID, baseAsset)
+  let quoteAssetOnChainId = quoteAsset === "none" ? -1 : getAssetOnChainId(DEFAULT_NETWORK_ID, quoteAsset)
+
+  const baseTokenUSDPrice = useUSDAssetPrice(baseAssetOnChainId ? baseAssetOnChainId : 0);
+  const quoteTokenUSDPrice = useUSDAssetPrice(quoteAssetOnChainId ? quoteAssetOnChainId : 0);
 
   const [isFunding, setIsFunding] = useState<boolean>(false);
   const [isConfirmed, setIsConfirmed] = useState<boolean>(false);
@@ -178,6 +176,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
 
   const onCreateFinalized = (txHash: string, events: EventRecord[]) => {
     console.log("Pool Creation Finalized", txHash);
+    setCreatedAt(Date.now())
 
     if (parachainApi) {
       const poolCreatedEvent = events.find((ev) =>
@@ -201,39 +200,48 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
     if (executor && parachainApi && selectedAccount) {
       const { address } = selectedAccount;
       const signer = await getSigner(APP_NAME, address);
-      
+
       let pair = {
         base: getAssetOnChainId("picasso", baseAsset as AssetId) as number,
         quote: getAssetOnChainId("picasso", quoteAsset as AssetId) as number,
       };
-      
-      let fee = {
-        fee: new BigNumber(swapFee).times(new BigNumber(10).pow(4)).toNumber(),
-        ownerFee: new BigNumber(swapFee)
-          .times(new BigNumber(10).pow(4))
-          .toNumber(),
-      };
 
-      let call = createConstantProductPool(parachainApi, pair, fee, address);
+      let permillDecimals = new BigNumber(10).pow(4);
+      let fee = new BigNumber(swapFee).times(permillDecimals).toNumber();
 
-      executor.execute(
-        call,
-        selectedAccount.address,
-        parachainApi,
-        signer,
-        (txHash: string) => {
-          dispatch(openConfirmingModal());
-          console.log("Tx Ready Hash: ", txHash);
-        },
-        onCreateFinalized,
-        (errorMessage) => {
-          console.log("tx Error: ", errorMessage);
+      let baseWeight = new BigNumber(weights.baseWeight).times(permillDecimals);
+
+      let call =
+        ammId === "uniswap" || ammId === "balancer"
+          ? createConstantProductPool(
+              parachainApi,
+              pair,
+              fee,
+              address,
+              baseWeight.toNumber()
+            )
+          : createStableSwapPool(parachainApi, pair, fee, address);
+
+      executor
+        .execute(
+          call,
+          selectedAccount.address,
+          parachainApi,
+          signer,
+          (txHash: string) => {
+            dispatch(openConfirmingModal());
+            console.log("Tx Ready Hash: ", txHash);
+          },
+          onCreateFinalized,
+          (errorMessage) => {
+            console.log("tx Error: ", errorMessage);
+            dispatch(closeConfirmingModal());
+          }
+        )
+        .catch((err) => {
+          console.log("error", err);
           dispatch(closeConfirmingModal());
-        }
-      ).catch(err => {
-        console.log('error', err)
-        dispatch(closeConfirmingModal());
-      });
+        });
     }
   };
 
@@ -250,7 +258,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
           Tokens and initial seed liquidity
         </Typography>
 
-        <Label {...labelProps(undefined, `${baseAsset}`, 600)} mt={3}>
+        <Label {...labelProps(undefined, `${baseLiquidity}`, 600)} mt={3}>
           {baseAsset === "none" ? null : (
             <BaseAsset
               icon={getAsset(baseAsset).icon}
@@ -321,10 +329,7 @@ const ConfirmPoolStep: React.FC<BoxProps> = ({ ...boxProps }) => {
         />
 
         <Box display="flex" gap={1} alignItems="center" mt={1}>
-          <Label
-            {...labelProps("Swap fee", `${initialSwapFee.toFixed(2)}%`)}
-            width="100%"
-          />
+          <Label {...labelProps("Swap fee", `${swapFee}%`)} width="100%" />
           <IconButton onClick={goSetFeesStep}>
             <EditIcon color="primary" />
           </IconButton>

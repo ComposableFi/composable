@@ -20,7 +20,7 @@ import BigNumber from "bignumber.js";
 
 const Status = () => {
   const theme = useTheme();
-  const {assets} = useStore();
+  const { assets, balances } = useStore();
 
   const { openPolkadotModal } = useStore();
   const { extensionStatus, selectedAccount } = useDotSamaContext();
@@ -43,7 +43,7 @@ const Status = () => {
           value={selectedAsset}
           setValue={setSelectedAsset}
           options={Object.values(assets).map((asset) => {
-            let balance = new BigNumber(asset.balance.picasso);
+            let balance = new BigNumber(balances[asset.assetId].picasso);
 
             return {
               value: asset.assetId,

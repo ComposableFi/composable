@@ -19,6 +19,9 @@ import { AllLiquidityTable } from "@/components/Organisms/AllLiquidityTable";
 
 import { Link } from "@/components";
 import {useDotSamaContext} from "substrate-react";
+import { resetAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
+import useStore from "@/store/useStore";
+
 
 const standardPageSize = {
   xs: 12,
@@ -31,15 +34,19 @@ const twoColumnPageSize = {
 
 const Pool: NextPage = () => {
   const {extensionStatus} = useDotSamaContext();
+
+  const {createPool} = useStore();
   const theme = useTheme();
   const router = useRouter();
   const [messageBoxOpen, setMessageBoxOpen] = useState(true);
 
   const handleClick = () => {
+    resetAddLiquiditySlice();
     router.push("/pool/add-liquidity");
   };
 
   const handleCreatePair = () => {
+    createPool.resetSlice();
     router.push("/pool/create-pool");
   };
 
@@ -123,17 +130,13 @@ const Pool: NextPage = () => {
               changeText="Past 1 week"
               AreaChartProps={{
                 data: [
-                  [1644550600000, 20],
-                  [1644560620928, 45],
-                  [1644570600000, 40],
-                  [1644590600000, 100],
                 ],
                 height: 300,
                 shorthandLabel: "Change",
                 labelFormat: (n: number) => n.toFixed(),
                 color: theme.palette.common.white,
               }}
-              intervals={["1w", "1m", "1y", "All"]}
+              intervals={["1w", "1m", "1y"]}
               currentInterval="1w"
             />
           </Grid>
@@ -145,17 +148,13 @@ const Pool: NextPage = () => {
               changeIntroText="Feb 8, ‘22"
               AreaChartProps={{
                 data: [
-                  [1644550600000, 20],
-                  [1644560620928, 45],
-                  [1644570600000, 40],
-                  [1644590600000, 100],
                 ],
                 height: 300,
                 shorthandLabel: "Change",
                 labelFormat: (n: number) => n.toFixed(),
                 color: theme.palette.featured.main,
               }}
-              intervals={["1w", "1m", "1y", "All"]}
+              intervals={["1w", "1m", "1y"]}
               currentInterval="1w"
             />
           </Grid>

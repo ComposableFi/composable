@@ -1,7 +1,7 @@
 import { 
   ChartProps,
   Chart 
-} from "@/components";
+} from "@ui-pablo/app/components";
 import { 
   Box, 
   SxProps,

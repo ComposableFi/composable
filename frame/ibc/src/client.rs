@@ -68,12 +68,7 @@ where
 		);
 
 		let native_height = height;
-		let height = height.encode_vec().map_err(|e| {
-			ICS02Error::implementation_specific(format!(
-				"[consensus_state]: error encoding height to bytes {}",
-				e
-			))
-		})?;
+		let height = height.encode_vec();
 		let value = <ConsensusStates<T>>::get(client_id.as_bytes(), height);
 
 		let any_consensus_state = AnyConsensusState::decode_vec(&*value)
@@ -247,12 +242,7 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 			client_state
 		);
 
-		let data = client_state.encode_vec().map_err(|e| {
-			ICS02Error::implementation_specific(format!(
-				"[store_client_state]: error encoding client state {}",
-				e
-			))
-		})?;
+		let data = client_state.encode_vec();
 		// store client states key-value
 		<ClientStates<T>>::insert(client_id.as_bytes().to_vec(), data);
 
@@ -268,18 +258,8 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		log::trace!("in client : [store_consensus_state] >> client_id: {:?}, height = {:?}, consensus_state = {:?}",
 			client_id, height, consensus_state);
 
-		let height = height.encode_vec().map_err(|e| {
-			ICS02Error::implementation_specific(format!(
-				"[store_consensus_state]: error encoding height {}",
-				e
-			))
-		})?;
-		let data = consensus_state.encode_vec().map_err(|e| {
-			ICS02Error::implementation_specific(format!(
-				"[store_consensus_state]: error encoding consensus state {}",
-				e
-			))
-		})?;
+		let height = height.encode_vec();
+		let data = consensus_state.encode_vec();
 		ConsensusStates::<T>::insert(client_id.as_bytes().to_vec(), height, data);
 		Ok(())
 	}
@@ -290,12 +270,7 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		height: Height,
 		timestamp: Timestamp,
 	) -> Result<(), ICS02Error> {
-		let height = height.encode_vec().map_err(|e| {
-			ICS02Error::implementation_specific(format!(
-				"[store_update_time]: error encoding height {}",
-				e
-			))
-		})?;
+		let height = height.encode_vec();
 		let timestamp = timestamp.nanoseconds();
 		let client_id = client_id.as_bytes().to_vec();
 		ClientUpdateTime::<T>::insert(client_id, height, timestamp);
@@ -308,18 +283,8 @@ impl<T: Config + Send + Sync> ClientKeeper for Context<T> {
 		height: Height,
 		host_height: Height,
 	) -> Result<(), ICS02Error> {
-		let height = height.encode_vec().map_err(|e| {
-			ICS02Error::implementation_specific(format!(
-				"[store_update_height]: error encoding height {}",
-				e
-			))
-		})?;
-		let host_height = host_height.encode_vec().map_err(|e| {
-			ICS02Error::implementation_specific(format!(
-				"[store_update_height]: error encoding host height {}",
-				e
-			))
-		})?;
+		let height = height.encode_vec();
+		let host_height = host_height.encode_vec();
 		let client_id = client_id.as_bytes().to_vec();
 		ClientUpdateHeight::<T>::insert(client_id, height, host_height);
 		Ok(())

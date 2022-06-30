@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { ValueSelectorProps, ValueSelector } from "@ui-pablo/nextjs/components";
+import { ValueSelectorProps, ValueSelector } from "@ui-pablo/app/components";
 
 const ValueSelectorStories = (props: ValueSelectorProps) => {
   return (

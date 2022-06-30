@@ -29,13 +29,21 @@ pub enum IbcEvent {
 	/// Client misbehaviour
 	ClientMisbehaviour { client_id: Vec<u8>, revision_height: u64, revision_number: u64 },
 	/// Connection open init
-	OpenInitConnection { revision_height: u64, revision_number: u64, connection_id: Vec<u8> },
+	OpenInitConnection {
+		revision_height: u64,
+		revision_number: u64,
+		connection_id: Option<Vec<u8>>,
+	},
 	/// Connection open confirm
-	OpenConfirmConnection { revision_height: u64, revision_number: u64, connection_id: Vec<u8> },
+	OpenConfirmConnection {
+		revision_height: u64,
+		revision_number: u64,
+		connection_id: Option<Vec<u8>>,
+	},
 	/// Connection try open
-	OpenTryConnection { revision_height: u64, revision_number: u64, connection_id: Vec<u8> },
+	OpenTryConnection { revision_height: u64, revision_number: u64, connection_id: Option<Vec<u8>> },
 	/// Connection open acknowledge
-	OpenAckConnection { revision_height: u64, revision_number: u64, connection_id: Vec<u8> },
+	OpenAckConnection { revision_height: u64, revision_number: u64, connection_id: Option<Vec<u8>> },
 	/// Channel open init
 	OpenInitChannel {
 		revision_height: u64,
@@ -131,6 +139,8 @@ pub enum IbcEvent {
 	Empty,
 	/// Chain Error
 	ChainError,
+	/// App module
+	AppModule,
 }
 
 impl From<RawIbcEvent> for IbcEvent {
@@ -165,22 +175,22 @@ impl From<RawIbcEvent> for IbcEvent {
 			RawIbcEvent::OpenInitConnection(ev) => IbcEvent::OpenInitConnection {
 				revision_height: ev.height().revision_height,
 				revision_number: ev.height().revision_number,
-				connection_id: ev.connection_id().clone().unwrap_or_default().as_bytes().to_vec(),
+				connection_id: ev.connection_id().map(|val| val.as_bytes().to_vec()),
 			},
 			RawIbcEvent::OpenTryConnection(ev) => IbcEvent::OpenTryConnection {
 				revision_height: ev.height().revision_height,
 				revision_number: ev.height().revision_number,
-				connection_id: ev.connection_id().clone().unwrap_or_default().as_bytes().to_vec(),
+				connection_id: ev.connection_id().map(|val| val.as_bytes().to_vec()),
 			},
 			RawIbcEvent::OpenAckConnection(ev) => IbcEvent::OpenAckConnection {
 				revision_height: ev.height().revision_height,
 				revision_number: ev.height().revision_number,
-				connection_id: ev.connection_id().clone().unwrap_or_default().as_bytes().to_vec(),
+				connection_id: ev.connection_id().map(|val| val.as_bytes().to_vec()),
 			},
 			RawIbcEvent::OpenConfirmConnection(ev) => IbcEvent::OpenConfirmConnection {
 				revision_height: ev.height().revision_height,
 				revision_number: ev.height().revision_number,
-				connection_id: ev.connection_id().clone().unwrap_or_default().as_bytes().to_vec(),
+				connection_id: ev.connection_id().map(|val| val.as_bytes().to_vec()),
 			},
 			RawIbcEvent::OpenInitChannel(ev) => IbcEvent::OpenInitChannel {
 				revision_height: ev.height().revision_height,
@@ -277,6 +287,7 @@ impl From<RawIbcEvent> for IbcEvent {
 			},
 			RawIbcEvent::Empty(_) => IbcEvent::Empty,
 			RawIbcEvent::ChainError(_) => IbcEvent::ChainError,
+			RawIbcEvent::AppModule(_) => IbcEvent::AppModule,
 		}
 	}
 }

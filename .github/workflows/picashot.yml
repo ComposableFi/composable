@@ -20,7 +20,7 @@ jobs:
         
     - name: Run ansible playbook
       run: |
-        ansible-playbook -l _node_class_picasso_bootnode  /opt/ansible/inventory/picashot.yml -i /opt/ansible/inventory/picasso-gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
+        ansible-playbook -l _node_name_picasso_bootnode_1  /opt/ansible/inventory/picashot.yml -i /opt/ansible/inventory/picasso-gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
 
   dalishot:
     runs-on: 
@@ -38,7 +38,7 @@ jobs:
 
     - name: Run ansible playbook
       run: |
-        ansible-playbook -l _node_class_dali_bootnode  /opt/ansible/inventory/dalishot.yml -i  /opt/ansible/inventory/gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
+        ansible-playbook -l _node_name_dali_bootnode_1  /opt/ansible/inventory/dalishot.yml -i  /opt/ansible/inventory/gcp.yaml  --user runner -e 'ansible_python_interpreter=/usr/bin/python3'
 
 
   composable-snapshot:
@@ -57,4 +57,4 @@ jobs:
 
     - name: Run ansible playbook
       run: |
-        ansible-playbook -l _node_class_composable_bootnode  /opt/ansible/inventory/composable-shot.yml -i  /opt/ansible/inventory/composable-gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'
+        ansible-playbook -l _node_name_composable_bootnode_1  /opt/ansible/inventory/composable-shot.yml -i  /opt/ansible/inventory/composable-gcp.yaml  --user root -e 'ansible_python_interpreter=/usr/bin/python3'

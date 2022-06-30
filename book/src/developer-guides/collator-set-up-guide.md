@@ -1,4 +1,5 @@
-![picasso-bannar](./picasso-bannar.png)
+![picasso_banner](./picasso-banner.png)
+
 
 # COLLATOR SET UP GUIDE
 

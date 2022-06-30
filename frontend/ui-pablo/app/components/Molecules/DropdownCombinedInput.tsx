@@ -48,7 +48,7 @@ export const DropdownCombinedInput: React.FC<DropdownCombinedInputProps> = ({
 
   useEffect(() => {
     isAnchorable && setAnchorEl(dropdownRef.current);
-  }, []);
+  }, [isAnchorable]);
 
   return (
     <Box>

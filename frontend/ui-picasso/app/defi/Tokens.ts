@@ -19,6 +19,8 @@ const tokenIds = [
   "movr",
   "ksm",
   "pablo",
+  "angl",
+  "chaos",
 ]; // important
 
 export const TOKEN_IDS = tokenIds;
@@ -99,6 +101,12 @@ export const TOKENS: { [key in TokenId]: Token } = {
     id: "pablo",
     icon: "/tokens/pablo.svg",
     symbol: "PABLO",
+    decimalsToDisplay: 4,
+  },
+  angl: {
+    id: "angl",
+    icon: "/tokens/angular.svg",
+    symbol: "ANGL",
     decimalsToDisplay: 4,
   },
 };

@@ -1,5 +1,5 @@
 import { ComponentStory, Story } from "@storybook/react";
-import { AreaChart, AreaChartProps } from "@ui-pablo/nextjs/components";
+import { AreaChart, AreaChartProps } from "@ui-pablo/app/components";
 
 export default {
   title: "atoms/AreaChart",

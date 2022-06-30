@@ -3,7 +3,6 @@ use crate::{
 	defi::{CurrencyPair, Ratio},
 };
 use frame_support::{dispatch::DispatchError, pallet_prelude::*};
-use sp_std::vec::Vec;
 
 // block timestamped value
 #[derive(Encode, Decode, MaxEncodedLen, Default, Debug, PartialEq, TypeInfo, Clone)]
@@ -38,6 +37,8 @@ pub trait Oracle {
 	type Timestamp;
 	type LocalAssets: LocalAssets<Self::AssetId>;
 	type MaxAnswerBound: Get<u32>;
+	/// Number of prices from history for calculating TWAP and get weighted price.
+	type TwapWindow: Get<u16>;
 	// type BlockNumber: From<u64>;
 	// type StalePrice: Get<Self::BlockNumber>;
 
@@ -90,10 +91,10 @@ pub trait Oracle {
 		Self::get_price(asset, unit).map(|_| true)
 	}
 
-	/// Time Weighted Average Price
-	fn get_twap(
-		of: Self::AssetId,
-		weighting: Vec<Self::Balance>,
+	/// Get the time weighted price for the `amount` of `asset_id`.
+	fn get_twap_for_amount(
+		asset_id: Self::AssetId,
+		amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError>;
 
 	/// How much of `quote` for unit `base` Oracle suggests to take.

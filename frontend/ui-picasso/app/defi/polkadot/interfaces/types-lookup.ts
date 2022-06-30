@@ -5,7 +5,6 @@ import type { ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, Call, H256, MultiAddress, Perbill } from '@polkadot/types/interfaces/runtime';
 import type { Event } from '@polkadot/types/interfaces/system';
 
-export {}
 declare module '@polkadot/types/lookup' {
 
   /** @name FrameSystemAccountInfo (3) */

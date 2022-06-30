@@ -53,8 +53,11 @@ import type {
   DaliRuntimeOriginCaller,
   FrameSupportScheduleLookupError,
   FrameSupportScheduleMaybeHashed,
+  FrameSystemAccountInfo,
+  IbcTraitOpenChannelParams,
   OrmlTokensAccountData,
   OrmlTokensBalanceLock,
+  OrmlTokensReserveData,
   PalletAssetsRegistryCandidateStatus,
   PalletAssetsRegistryForeignMetadata,
   PalletCollatorSelectionCandidateInfo,
@@ -74,6 +77,12 @@ import type {
   PalletDemocracyVoteVoting,
   PalletDutchAuctionSellOrder,
   PalletDutchAuctionTakeOrder,
+  PalletIbcAny,
+  PalletIbcConnectionParams,
+  PalletIbcErrorsIbcError,
+  PalletIbcEventsIbcEvent,
+  PalletIbcIbcConsensusState,
+  PalletIbcPingSendPingParams,
   PalletIdentityBitFlags,
   PalletIdentityIdentityInfo,
   PalletIdentityJudgement,
@@ -99,6 +108,9 @@ import type {
   PolkadotParachainPrimitivesXcmpMessageFormat,
   PolkadotPrimitivesV1AbridgedHostConfiguration,
   PolkadotPrimitivesV1PersistedValidationData,
+  PolkadotPrimitivesV2AbridgedHostConfiguration,
+  PolkadotPrimitivesV2PersistedValidationData,
+  PolkadotPrimitivesV2UpgradeRestriction,
   SpConsensusAuraSr25519AppSr25519Public,
   SpTrieStorageProof,
   XcmVersionedMultiAsset
@@ -369,6 +381,7 @@ import type {
   VotingDirect,
   VotingDirectVote
 } from "@polkadot/types/interfaces/democracy";
+import type { BlockStats } from "@polkadot/types/interfaces/dev";
 import type {
   ApprovalFlag,
   DefunctVoter,
@@ -1014,6 +1027,7 @@ import type {
   BlockTraceEventData,
   BlockTraceSpan,
   KeyValueOption,
+  MigrationStatusResult,
   ReadProof,
   RuntimeVersion,
   RuntimeVersionApi,
@@ -1042,6 +1056,7 @@ import type {
   DispatchClass,
   DispatchError,
   DispatchErrorModule,
+  DispatchErrorModuleU8a,
   DispatchErrorTo198,
   DispatchInfo,
   DispatchInfoTo190,
@@ -1281,6 +1296,7 @@ declare module "@polkadot/types/types/registry" {
     BlockNumber: BlockNumber;
     BlockNumberFor: BlockNumberFor;
     BlockNumberOf: BlockNumberOf;
+    BlockStats: BlockStats;
     BlockTrace: BlockTrace;
     BlockTraceEvent: BlockTraceEvent;
     BlockTraceEventData: BlockTraceEventData;
@@ -1479,6 +1495,7 @@ declare module "@polkadot/types/types/registry" {
     DispatchClass: DispatchClass;
     DispatchError: DispatchError;
     DispatchErrorModule: DispatchErrorModule;
+    DispatchErrorModuleU8a: DispatchErrorModuleU8a;
     DispatchErrorTo198: DispatchErrorTo198;
     DispatchFeePayment: DispatchFeePayment;
     DispatchInfo: DispatchInfo;
@@ -1608,6 +1625,7 @@ declare module "@polkadot/types/types/registry" {
     ForkTreePendingChangeNode: ForkTreePendingChangeNode;
     FrameSupportScheduleLookupError: FrameSupportScheduleLookupError;
     FrameSupportScheduleMaybeHashed: FrameSupportScheduleMaybeHashed;
+    FrameSystemAccountInfo: FrameSystemAccountInfo;
     FullIdentification: FullIdentification;
     FunctionArgumentMetadataLatest: FunctionArgumentMetadataLatest;
     FunctionArgumentMetadataV10: FunctionArgumentMetadataV10;
@@ -1676,6 +1694,7 @@ declare module "@polkadot/types/types/registry" {
     I64: I64;
     i8: i8;
     I8: I8;
+    IbcTraitOpenChannelParams: IbcTraitOpenChannelParams;
     IdentificationTuple: IdentificationTuple;
     IdentityFields: IdentityFields;
     IdentityInfo: IdentityInfo;
@@ -1767,6 +1786,7 @@ declare module "@polkadot/types/types/registry" {
     MetadataV13: MetadataV13;
     MetadataV14: MetadataV14;
     MetadataV9: MetadataV9;
+    MigrationStatusResult: MigrationStatusResult;
     MmrLeafProof: MmrLeafProof;
     MmrRootHash: MmrRootHash;
     ModuleConstantMetadataV10: ModuleConstantMetadataV10;
@@ -1839,6 +1859,7 @@ declare module "@polkadot/types/types/registry" {
     OriginKindV2: OriginKindV2;
     OrmlTokensAccountData: OrmlTokensAccountData;
     OrmlTokensBalanceLock: OrmlTokensBalanceLock;
+    OrmlTokensReserveData: OrmlTokensReserveData;
     OutboundHrmpMessage: OutboundHrmpMessage;
     OutboundLaneData: OutboundLaneData;
     OutboundMessageFee: OutboundMessageFee;
@@ -1876,6 +1897,12 @@ declare module "@polkadot/types/types/registry" {
     PalletErrorMetadataV14: PalletErrorMetadataV14;
     PalletEventMetadataLatest: PalletEventMetadataLatest;
     PalletEventMetadataV14: PalletEventMetadataV14;
+    PalletIbcAny: PalletIbcAny;
+    PalletIbcConnectionParams: PalletIbcConnectionParams;
+    PalletIbcErrorsIbcError: PalletIbcErrorsIbcError;
+    PalletIbcEventsIbcEvent: PalletIbcEventsIbcEvent;
+    PalletIbcIbcConsensusState: PalletIbcIbcConsensusState;
+    PalletIbcPingSendPingParams: PalletIbcPingSendPingParams;
     PalletId: PalletId;
     PalletIdentityBitFlags: PalletIdentityBitFlags;
     PalletIdentityIdentityInfo: PalletIdentityIdentityInfo;
@@ -1956,6 +1983,9 @@ declare module "@polkadot/types/types/registry" {
     PolkadotParachainPrimitivesXcmpMessageFormat: PolkadotParachainPrimitivesXcmpMessageFormat;
     PolkadotPrimitivesV1AbridgedHostConfiguration: PolkadotPrimitivesV1AbridgedHostConfiguration;
     PolkadotPrimitivesV1PersistedValidationData: PolkadotPrimitivesV1PersistedValidationData;
+    PolkadotPrimitivesV2AbridgedHostConfiguration: PolkadotPrimitivesV2AbridgedHostConfiguration;
+    PolkadotPrimitivesV2PersistedValidationData: PolkadotPrimitivesV2PersistedValidationData;
+    PolkadotPrimitivesV2UpgradeRestriction: PolkadotPrimitivesV2UpgradeRestriction;
     PortableType: PortableType;
     PortableTypeV14: PortableTypeV14;
     Precommits: Precommits;

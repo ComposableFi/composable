@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { AuctionPriceChartProps, AuctionPriceChart } from "@ui-pablo/nextjs/components/Organisms/auction/AuctionPriceChart";
+import { AuctionPriceChartProps, AuctionPriceChart } from "@ui-pablo/app/components/Organisms/auction/AuctionPriceChart";
 
 import moment from "moment-timezone";
 
@@ -32,7 +32,8 @@ export const Default = Template.bind({});
 Default.args = {
   baseAsset: null,
   quoteAsset: null,
-  data: dummyAuctionPrices,
+  priceSeries: dummyAuctionPrices,
+  predictedPriceSeries: [],
   height: "100%",
   dateFormat: (
     (timestamp: number | string) => {

@@ -16,7 +16,6 @@ package = "parity-scale-codec"
 version = "3.0.0"
 
 [dependencies]
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 
@@ -55,7 +54,6 @@ std = [
 ]
 
 runtime-benchmarks = [
-  "frame-benchmarking/runtime-benchmarks",
   "frame-support/runtime-benchmarks",
   "frame-system/runtime-benchmarks",
 ]

@@ -9,7 +9,7 @@ import {
   Tooltip,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import BigNumber from "bignumber.js";
 import { BoxProps } from "@mui/system";
 import { useAppSelector } from "@/hooks/store";
@@ -28,23 +28,28 @@ import { SwapRoute } from "./SwapRoute";
 import { PreviewModal } from "./PreviewModal";
 import { ConfirmingModal } from "./ConfirmingModal";
 import { useDotSamaContext, useParachainApi } from "substrate-react";
-import { Assets, AssetsValidForNow } from "@/defi/polkadot/Assets";
+import { Assets, AssetsValidForNow, getAssetOnChainId } from "@/defi/polkadot/Assets";
 import useStore from "@/store/useStore";
 import { AssetId } from "@/defi/polkadot/types";
 import { debounce } from "lodash";
-import { onSwapAmountChange } from "@/store/updaters/swaps/utils";
+import { calculateSwap } from "@/defi/utils/pablo/swaps";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { useUSDPriceByAssetId } from "@/store/assets/hooks";
 
 const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
   const theme = useTheme();
   const dispatch = useDispatch();
   
-  const { parachainApi } = useParachainApi("picasso");
+  const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
   const { extensionStatus } = useDotSamaContext();
   
-  const { swaps, setUiAssetSelectionSwaps } = useStore();
+  const { swaps, setUiAssetSelectionSwaps, apollo, invertAssetSelectionSwaps } = useStore();
   const [valid1, setValid1] = useState<boolean>(false);
   const [valid2, setValid2] = useState<boolean>(false);
+
+  const token1PriceInUSD = useUSDPriceByAssetId(swaps.ui.baseAssetSelected);
+  const token2PriceInUSD = useUSDPriceByAssetId(swaps.ui.quoteAssetSelected);
 
   const balance1 = useMemo(() => {
     return new BigNumber(swaps.userAccount.quoteAssetBalance);
@@ -94,10 +99,6 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
     (state) => state.settings.transactionSettings.tolerance
   );
 
-  const { token1PriceInUSD, token2PriceInUSD } = useAppSelector(
-    (state) => state.swap.swap
-  );
-
   const spotPriceBn = useMemo(() => {
     return new BigNumber(swaps.poolVariables.spotPrice);
   }, [swaps.poolVariables]);
@@ -107,12 +108,16 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const [minimumReceived, setMinimumReceived] = useState(new BigNumber(0));
   const [priceImpact, setPriceImpact] = useState(new BigNumber(0));
 
+  const revertSwap = useCallback(() => {
+      invertAssetSelectionSwaps();
+  }, [invertAssetSelectionSwaps])
+
   useEffect(() => {
     setIsProcessing(true);
 
     if (swaps.dexRouter.dexRoute.length === 0) {
       setQuoteAssetAmount(new BigNumber(0));
-      setQuoteAssetAmount(new BigNumber(0));
+      setBaseAssetAmount(new BigNumber(0));
     }
   }, [swaps.dexRouter.dexRoute]);
 
@@ -174,6 +179,8 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
       setIsConfirmed(false);
       dispatch(closeConfirmingModal());
     }
+    // Dispatch doesn't need to be added to the dependency list. 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConfirmed]);
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -208,7 +215,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
         slippage,
       };
 
-      onSwapAmountChange(
+      calculateSwap(
         parachainApi,
         exchangeParams,
         swaps.poolConstants
@@ -227,8 +234,6 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   };
 
   const handler = debounce(onSwapAmountInput, 1000);
-
-  const onSwapClick = () => {};
 
   return (
     <Box
@@ -364,7 +369,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
             },
           }}
         >
-          <SwapVertRounded onClick={onSwapClick} />
+          <SwapVertRounded onClick={revertSwap} />
         </Box>
       </Box>
 

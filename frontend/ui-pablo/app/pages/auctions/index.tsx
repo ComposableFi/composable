@@ -14,8 +14,7 @@ import { PageTitle } from "@/components";
 import { AllAuctionsTable } from "@/components/Organisms/AllAuctionsTable";
 import { useEffect, useState } from "react";
 import { useDotSamaContext, useParachainApi } from "substrate-react";
-import { fetchSpotPrice } from "@/store/updaters/swaps/utils";
-import BigNumber from "bignumber.js";
+import { fetchSpotPrice } from "@/defi/utils";
 import useStore from "@/store/useStore";
 
 const standardPageSize = {
@@ -57,7 +56,8 @@ const Auctions: NextPage = () => {
 
       return () => clearInterval(interval);
     }
-  }, [parachainApi, liquidityBootstrappingPools.verified.length]);
+
+  }, [parachainApi, liquidityBootstrappingPools.verified, setLiquidityBootstrappingPoolSpotPrice]);
 
   return (
     <Default>

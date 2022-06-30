@@ -71,29 +71,13 @@ export const putPoolVariables = (
   });
 }
 
-export const putSwapsChartSeries = (
-  swapState: SwapsSlice["swapsChart"],
-  series: [number, number][]
+export const invertAssetSelection = (
+  swapState: SwapsSlice["swaps"],
 ) => {
   return produce(swapState, (draft) => {
-    draft.series = series;
+    if (swapState.ui.baseAssetSelected !== "none" && swapState.ui.quoteAssetSelected !== "none") {
+      draft.ui.quoteAssetSelected = swapState.ui.baseAssetSelected;
+      draft.ui.baseAssetSelected = swapState.ui.quoteAssetSelected;
+    }
   });
-}
-
-export const putSwapsChartSelectedRange = (
-  swapState: SwapsSlice["swapsChart"],
-  range: SwapsChartRange
-) => {
-  return produce(swapState, (draft) => {
-    draft.selectedRange = range;
-  }); 
-}
-
-export const put24HourOldPrice = (
-  swapState: SwapsSlice["swapsChart"],
-  price: string
-) => {
-  return produce(swapState, (draft) => {
-    draft._24hourOldPrice = price;
-  }); 
 }

@@ -14,11 +14,11 @@ import {
 } from "@mui/material";
 import { TokenAsset } from "@/components";
 import { dateFromNumber, formatDate } from "@/utils/formatters";
-import { useAppSelector } from "@/hooks/store";
+import { useStore } from "@/stores/root";
 
 export const StakingPortfolio: FC = () => {
   const theme = useTheme();
-  const openPositions = useAppSelector((state) => state.staking.openPositions);
+  const openPositions = useStore(({ staking }) => staking.openPositions);
   if (!openPositions) {
     return <h1>Portfolio empty</h1>;
   }

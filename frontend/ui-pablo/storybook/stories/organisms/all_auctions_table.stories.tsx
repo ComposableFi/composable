@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { AllAuctionsTable } from "@ui-pablo/nextjs/components/Organisms/AllAuctionsTable";
+import { AllAuctionsTable } from "@ui-pablo/app/components/Organisms/AllAuctionsTable";
 
 const AllAuctionsTableStories = ({}) => {
   return (

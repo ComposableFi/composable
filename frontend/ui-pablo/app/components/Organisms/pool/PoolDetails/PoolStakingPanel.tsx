@@ -4,6 +4,7 @@ import { BoxWrapper } from "../../BoxWrapper";
 import { useState } from "react";
 import { PoolStakeForm } from "./PoolStakeForm";
 import { PoolUnstakeForm } from "./PoolUnstakeForm";
+import { PoolDetailsProps } from ".";
 
 const tabItems: TabItem[] = [
   {
@@ -14,7 +15,8 @@ const tabItems: TabItem[] = [
   },
 ];
 
-export const PoolStakingPanel: React.FC<BoxProps> = ({
+export const PoolStakingPanel: React.FC<PoolDetailsProps> = ({
+  poolId,
   ...boxProps
 }) => {
 
@@ -27,10 +29,10 @@ export const PoolStakingPanel: React.FC<BoxProps> = ({
     <BoxWrapper {...boxProps}>
       <Tabs items={tabItems} value={tab} onChange={handleTabChange} />
       <TabPanel index={0} value={tab}>
-        <PoolStakeForm />
+        <PoolStakeForm poolId={poolId} />
       </TabPanel>
       <TabPanel index={1} value={tab}>
-        <PoolUnstakeForm />
+        <PoolUnstakeForm poolId={poolId} />
       </TabPanel>
     </BoxWrapper>
   );

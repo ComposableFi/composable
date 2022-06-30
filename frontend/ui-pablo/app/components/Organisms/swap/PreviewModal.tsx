@@ -34,6 +34,7 @@ import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 import { APP_NAME } from "@/defi/polkadot/constants";
 import { useSnackbar } from "notistack";
+import { useAppSelector } from "@/hooks/store";
 
 export type PreviewModalProps = {
   setConfirmed?: (confirmed: boolean) => any;
@@ -157,6 +158,9 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
     onConfirmSwap();
   };
 
+  const slippage = useAppSelector(
+    (state) => state.settings.transactionSettings.tolerance
+  );
 
   return (
     <Modal onClose={() => dispatch(closeSwapPreviewModal())} {...modalProps}>
@@ -231,7 +235,7 @@ export const PreviewModal: React.FC<PreviewModalProps> = ({
         </Label>
 
         <Typography variant="body2" mt={4} textAlign="center" paddingX={4.75}>
-          Output is estimated. If the price changes by more than 5% your
+          Output is estimated. If the price changes by more than {slippage}% your
           transaction will revert.
         </Typography>
 

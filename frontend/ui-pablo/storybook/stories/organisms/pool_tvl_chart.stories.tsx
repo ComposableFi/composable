@@ -1,11 +1,11 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { PoolTVLChart } from "@ui-pablo/nextjs/components/Organisms";
+import { PoolTVLChart } from "@ui-pablo/app/components/Organisms";
 
 const PoolTVLChartStories = ({}) => {
   return (
     <Box>
-      <PoolTVLChart />
+      <PoolTVLChart poolId={-1} />
     </Box>
   );
 };

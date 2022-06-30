@@ -1,5 +1,6 @@
+import { AssetId } from "@/defi/polkadot/types";
 import { ParachainId } from "substrate-react/dist/dotsama/types";
-import { CreatePoolSlice } from "./createPool/createPool.types";
+import { CreatePoolSlice } from "../createPool/createPool.types";
 
 export interface ConstantProductPool {
     poolId: number;
@@ -9,8 +10,12 @@ export interface ConstantProductPool {
       quote: number;
     }
     lpToken: string;
-    fee: number;
-    ownerFee: number;
+    feeConfig: {
+        feeRate: string;
+        ownerFeeRate: string;
+        protocolFeeRate: string;
+    }
+    baseWeight: string;
 }
 
 export interface StableSwapPool {
@@ -22,8 +27,11 @@ export interface StableSwapPool {
     }
     lpToken: string;
     amplificationCoefficient: string;
-    fee: string;
-    ownerFee: string;
+    feeConfig: {
+        feeRate: string;
+        ownerFeeRate: string;
+        protocolFeeRate: string;
+    }
 }
 
 export interface LiquidityBootstrappingPoolStats {
@@ -51,13 +59,19 @@ export interface LiquidityBootstrappingPool {
         quote: number;
     },
     sale: {
+        startBlock: string;
+        endBlock: string;
         start: number;
         end: number;
         duration: number;
         initialWeight: number; // Percentages
         finalWeight: number; // Percentages
     }
-    fee: string;
+    feeConfig: {
+        feeRate: string;
+        ownerFeeRate: string;
+        protocolFeeRate: string;
+    }
     spotPrice: string;
     networkId: ParachainId;
     auctionDescription: string[];
@@ -68,40 +82,21 @@ export type LiquidityPoolType =
   | "ConstantProduct"
   | "LiquidityBootstrapping";
 
-export interface StableSwapPool {
-    poolId: number;
-    owner: string;
-    pair: {
-      base: number;
-      quote: number;
-    }
-    lpToken: string;
-    amplificationCoefficient: string;
-    fee: string;
-    ownerFee: string;
-}
 
-export interface LiquidityPoolsSlice {
+export interface PoolsSlice {
     pools: {
         constantProductPools: {
             verified: ConstantProductPool[];
-            nonVerified: ConstantProductPool[];
+            unVerified: ConstantProductPool[];
         },
         liquidityBootstrappingPools: {
             verified: LiquidityBootstrappingPool[];
-            nonVerified: LiquidityBootstrappingPool[];
+            unVerified: LiquidityBootstrappingPool[];
             spotPrices: [number, string][]
         },
         stableSwapPools: {
             verified: StableSwapPool[];
-            nonVerified: StableSwapPool[];
-        },
-        createPool: CreatePoolSlice;
-        user: {
-            lpBalances: {
-                [poolId: number]: string;
-            }
-            setUserLpBalance: (poolId: number, balance: string) => void;
+            unVerified: StableSwapPool[];
         },
         setPoolsList: (
             pool: ConstantProductPool[] | LiquidityBootstrappingPool[] | StableSwapPool[],
@@ -114,3 +109,5 @@ export interface LiquidityPoolsSlice {
         ) => void;
     }
 }
+
+export type AnyPoolArray = ConstantProductPool[] | StableSwapPool[] | LiquidityBootstrappingPool[]

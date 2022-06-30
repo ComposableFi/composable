@@ -2,7 +2,6 @@ import BigNumber from "bignumber.js";
 import { DEFI_CONFIG } from "./config";
 
 export type TokenId = typeof DEFI_CONFIG.tokenIds[number];
-
 export type Token = {
   id: TokenId;
   icon: string;
@@ -30,55 +29,11 @@ export type AMM = {
   label: string
 }
 
-export type Auction = {
-  id: string;
-  tokenId: TokenId;
-  networkId: NetworkId;
-  duration: number; //in days
-  totalVolume: BigNumber;
-  liquidity: BigNumber;
-  price: BigNumber;
-  tokenSold: BigNumber;
-  fundsRaised: BigNumber;
-  contract: {
-    tokenAddress: string;
-    ownerAddress: string;
-    docLink: string;
-  };
-  statistics: {
-    startBalances: {
-      token: BigNumber;
-      base: BigNumber;
-    };
-    currentBalances: {
-      token: BigNumber;
-      base: BigNumber;
-    };
-    totalSold: BigNumber;
-    totalRaised: BigNumber;
-  };
-  start_at: number; //timestamp
-  end_at: number; //timestamp
-};
 
-export type AuctionHistory = {
-  type: "Buy" | "Sell";
-  input: {
-    tokenId: TokenId;
-    amount: BigNumber;
-  };
-  output: {
-    tokenId: TokenId;
-    amount: BigNumber;
-  };
-  price: BigNumber;
-  walletAddress: string;
-  created_at: number; //timestamp
-};
+export type ChartInterval = "24h" | "1m" | "1w";// | "1y";
+export enum LiquidityPoolTransactionType { "SWAP", "ADD_LIQUIDITY", "CREATE_POOL", "REMOVE_LIQUIDITY" };
 
-export type AuctionLaunchDescritpion = {
-  paragraphs: string[];
-};
+
 
 export type TableHeader = {
   header: string;

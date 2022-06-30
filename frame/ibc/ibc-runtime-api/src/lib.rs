@@ -72,5 +72,7 @@ sp_api::decl_runtime_apis! {
 		fn denom_trace(denom: Vec<u8>) -> Option<QueryDenomTraceResponse>;
 
 		fn denom_traces(offset: Vec<u8>, limit: u64, height: u32) -> Option<QueryDenomTracesResponse>;
+
+		fn block_events() -> Vec<pallet_ibc::events::IbcEvent>;
 	}
 }

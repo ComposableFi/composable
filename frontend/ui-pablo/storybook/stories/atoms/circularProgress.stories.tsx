@@ -1,7 +1,7 @@
 import { CircularProgressProps as MuiCircularProgressProps } from "@mui/material";
 import { Story } from "@storybook/react";
 import { SxProps, Box } from "@mui/material";
-import { CircularProgress } from "@/components";
+import { CircularProgress } from "@ui-pablo/app/components";
 
 const CircularProgressStories = (props: MuiCircularProgressProps) => {
   const boxStyle: Partial<SxProps> = {

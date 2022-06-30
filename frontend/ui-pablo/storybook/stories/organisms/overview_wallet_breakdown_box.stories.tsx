@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { WalletBreakdownBox } from "@ui-pablo/nextjs/components/Organisms/overview/WalletBreakdownBox";
+import { WalletBreakdownBox } from "@ui-pablo/app/components/Organisms/overview/WalletBreakdownBox";
 
 const WalletBreakdownBoxStories = ({}) => {
   return (

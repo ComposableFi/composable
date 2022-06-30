@@ -4,8 +4,7 @@ import { AuctionsSlice, PoolTradeHistory } from "./auctions.types";
 import {
   putAuctionStatsActiveLBP,
   setActivePool,
-  putAuctionHistoryLBP,
-  putChartSeries,
+  putAuctionHistoryLBP
 } from "./auctions.utils";
 
 const PLACEHOLDER_STATS: LiquidityBootstrappingPoolStats = {
@@ -19,8 +18,8 @@ const PLACEHOLDER_STATS: LiquidityBootstrappingPoolStats = {
     quote: "0",
     base: "0",
   },
-  totalSold: "",
-  totalRaised: "",
+  totalSold: "0",
+  totalRaised: "0",
 };
 
 const PLACEHOLDER_POOL: LiquidityBootstrappingPool = {
@@ -33,13 +32,19 @@ const PLACEHOLDER_POOL: LiquidityBootstrappingPool = {
     quote: 1,
   },
   sale: {
+    startBlock: "0",
+    endBlock: "0",
     start: Date.now() - 30 * 24 * 60 * 60 * 1000,
     end: Date.now() + 30 * 24 * 60 * 60 * 1000,
     duration: 60,
     initialWeight: 0,
     finalWeight: 0,
   },
-  fee: "1.00%",
+  feeConfig: {
+    feeRate: "1",
+    protocolFeeRate: "1",
+    ownerFeeRate: "1"
+  },
   spotPrice: "0",
   networkId: "picasso",
   auctionDescription: [],
@@ -50,10 +55,6 @@ const createAuctionsSlice: StoreSlice<AuctionsSlice> = (set) => ({
     activeLBP: PLACEHOLDER_POOL,
     activeLBPStats: PLACEHOLDER_STATS,
     activeLBPHistory: [],
-    activeChart: {
-      price: [],
-      predicted: [],
-    },
   },
   setActiveAuctionsPool: (lbPool: LiquidityBootstrappingPool) =>
     set((prev: AuctionsSlice) => ({
@@ -78,11 +79,7 @@ const createAuctionsSlice: StoreSlice<AuctionsSlice> = (set) => ({
           predicted: []
         }
       },
-    })),
-  putChartSeries: (series: "price" | "predicted", data: [number, number][]) =>
-    set((prev: AuctionsSlice) => ({
-      auctions: putChartSeries(prev.auctions, series, data),
-    })),
+    }))
 });
 
 export default createAuctionsSlice;

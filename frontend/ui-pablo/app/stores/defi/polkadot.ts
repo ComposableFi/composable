@@ -1,32 +1,8 @@
 import { TOKENS } from "@/defi/Tokens";
 import { Token, XPablo } from "@/defi/types";
 import { createSlice } from "@reduxjs/toolkit";
-import { liquidityPoolsData } from "../../utils/liquidityPoolsData";
 import { bondPoolsData } from "../../utils/bondPoolsData";
 import BigNumber from "bignumber.js";
-
-// TODO: [defi] edit values accordingly to your needs
-
-export type Asset = {
-  token: Token;
-  price: BigNumber;
-  balance: BigNumber;
-  value: BigNumber;
-  change24hr: BigNumber;
-};
-
-export type LiquidityPoolRow = {
-  token1: Token;
-  token2: Token;
-  tvl: BigNumber;
-  apr: BigNumber;
-  rewardsLeft: Array<{
-    value: BigNumber;
-    token: Token;
-  }>;
-  volume: BigNumber;
-  price?: BigNumber;
-};
 
 export type BondPoolRow = {
   token1: Token;
@@ -96,11 +72,8 @@ export type BondChartData = {
 };
 
 interface PolkadotState {
-  assets: Asset[];
   overview: Overview;
   stakingOverview: StakingOverview,
-  allLiquidityPools: LiquidityPoolRow[];
-  yourLiquidityPools: LiquidityPoolRow[];
   allBondPools: BondPoolRow[];
   yourBondPools: YourBondPoolRow[];
   userStakeInfo: UserStakeInfo;
@@ -110,22 +83,6 @@ interface PolkadotState {
 }
 
 const initialState: PolkadotState = {
-  assets: [
-    {
-      token: TOKENS["pica"],
-      price: new BigNumber(1.43),
-      balance: new BigNumber(4534),
-      value: new BigNumber(46187),
-      change24hr: new BigNumber(0.34),
-    },
-    {
-      token: TOKENS["ksm"],
-      price: new BigNumber(189),
-      balance: new BigNumber(42),
-      value: new BigNumber(984.98),
-      change24hr: new BigNumber(-0.12),
-    },
-  ],
   overview: {
     totalValueLocked: new BigNumber(66543234),
     tradingVolume24hrs: new BigNumber(12312654),
@@ -146,45 +103,6 @@ const initialState: PolkadotState = {
     pica: new BigNumber(55265),
     pablo: new BigNumber(48551),
   },
-  allLiquidityPools: [],
-  yourLiquidityPools: [
-    {
-      token1: TOKENS["pica"],
-      token2: TOKENS["ksm"],
-      tvl: new BigNumber(1500000),
-      apr: new BigNumber(5.75),
-      rewardsLeft: [
-        {
-          token: TOKENS["pica"],
-          value: new BigNumber(5000),
-        },
-        {
-          token: TOKENS["ksm"],
-          value: new BigNumber(5200),
-        },
-      ],
-      volume: new BigNumber(132500000),
-      price: new BigNumber(0.1),
-    },
-    {
-      token1: TOKENS["pablo"],
-      token2: TOKENS["ksm"],
-      tvl: new BigNumber(1500000),
-      apr: new BigNumber(5.75),
-      rewardsLeft: [
-        {
-          token: TOKENS["pica"],
-          value: new BigNumber(3340),
-        },
-        {
-          token: TOKENS["ksm"],
-          value: new BigNumber(3453.49),
-        },
-      ],
-      volume: new BigNumber(132500000),
-      price: new BigNumber(0.1),
-    },
-  ],
   allBondPools: [],
   yourBondPools: [
     {
@@ -270,15 +188,6 @@ export const polkadotSlice = createSlice({
   name: "PolkaDot",
   initialState,
   reducers: {
-    addNextDataLiquidityPools: (state, action) => {
-      state.allLiquidityPools = [
-        ...state.allLiquidityPools,
-        ...liquidityPoolsData.slice(
-          action.payload.startIndex,
-          action.payload.startIndex + 4
-        ),
-      ];
-    },
     addNextDataBondPools: (state, action) => {
       state.allBondPools = [
         ...state.allBondPools,
@@ -292,7 +201,6 @@ export const polkadotSlice = createSlice({
 });
 
 export const {
-  addNextDataLiquidityPools,
   addNextDataBondPools,
 } = polkadotSlice.actions;
 

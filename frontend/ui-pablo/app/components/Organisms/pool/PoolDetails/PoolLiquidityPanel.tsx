@@ -2,7 +2,6 @@ import {
   Box,
   useTheme,
   Typography,
-  BoxProps,
   Grid,
   alpha,
   Button,
@@ -10,10 +9,14 @@ import {
 } from "@mui/material";
 import { useAppSelector } from "@/hooks/store";
 import { BaseAsset } from "@/components/Atoms";
-import { TOKENS } from "@/defi/Tokens";
 import { BoxWrapper } from "../../BoxWrapper";
 import { useRouter } from "next/router";
 import { DonutChart } from "@/components/Atoms/DonutChart";
+import { useLiquidityPoolDetails } from "@/store/hooks/useLiquidityPoolDetails";
+import { PoolDetailsProps } from ".";
+import { useRemoveLiquidityState } from "@/store/removeLiquidity/hooks";
+import { setManualPoolSearch, setPool } from "@/store/addLiquidity/addLiquidity.slice";
+import { useUserProvidedLiquidityByPool } from "@/store/hooks/useUserProvidedLiquidityByPool";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -21,14 +24,10 @@ const twoColumnPageSize = {
 };
 
 type ItemProps = {
-  value: string,
+  value: string;
 } & GridProps;
 
-const Item: React.FC<ItemProps> = ({
-  value,
-  children,
-  ...gridProps
-}) => {
+const Item: React.FC<ItemProps> = ({ value, children, ...gridProps }) => {
   return (
     <Grid container {...gridProps}>
       <Grid item {...twoColumnPageSize}>
@@ -43,46 +42,54 @@ const Item: React.FC<ItemProps> = ({
   );
 };
 
-export const PoolLiquidityPanel: React.FC<BoxProps> = ({
+export const PoolLiquidityPanel: React.FC<PoolDetailsProps> = ({
+  poolId,
   ...boxProps
 }) => {
   const router = useRouter();
   const theme = useTheme();
-  const {
-    tokenId1,
-    tokenId2,
-    pooledAmount1,
-    pooledAmount2,
-    share,
-    amount,
-  } = useAppSelector(
-    (state) => state.pool.currentLiquidity
-  );
+  const { setRemoveLiquidity } = useRemoveLiquidityState();
+  const poolDetails = useLiquidityPoolDetails(poolId);
+  const liquidityProvided = useUserProvidedLiquidityByPool(poolId)
 
   const donutChartData = useAppSelector(
     (state) => state.pool.selectedPoolLiquidityChartData
   );
 
-  const validToken1 = tokenId1 !== "none";
-  const validToken2 = tokenId2 !== "none";
-
   const handleAddLiquidity = () => {
-    router.push("/pool/add-liquidity");
+    if (poolDetails.baseAsset && poolDetails.quoteAsset && poolDetails.pool) {
+      setManualPoolSearch(false);
+      setPool(poolDetails.pool);
+      router.push("/pool/add-liquidity");
+    }
   };
 
   const handleRemoveLiquidity = () => {
-    router.push("/pool/remove-liquidity");
+    if (poolDetails.baseAsset && poolDetails.quoteAsset) {
+      setRemoveLiquidity({
+        poolId
+      });
+      router.push("/pool/remove-liquidity");
+    }
   };
+
+  const totalValueProvided = liquidityProvided.value.baseValue.plus(
+    liquidityProvided.value.quoteValue
+  );
+
+  const totalValueLocked = poolDetails.tokensLocked.value.baseValue.plus(
+    poolDetails.tokensLocked.value.quoteValue
+  );
+
+  const remaining = totalValueLocked.minus(totalValueProvided);
 
   return (
     <BoxWrapper {...boxProps}>
       <Grid container>
         <Grid item {...twoColumnPageSize}>
-          <Typography variant="h5">
-            {`$${amount.toFormat()}`}
-          </Typography>
+          <Typography variant="h5">{`$${totalValueProvided.toFormat(2)}`}</Typography>
           <Typography variant="body1" color="text.secondary">
-            Liquidity
+            Liquidity Provided
           </Typography>
         </Grid>
         <Grid container item {...twoColumnPageSize} spacing={3}>
@@ -98,6 +105,7 @@ export const PoolLiquidityPanel: React.FC<BoxProps> = ({
           </Grid>
           <Grid item {...twoColumnPageSize}>
             <Button
+              disabled={poolDetails.lpBalance.eq(0)}
               variant="outlined"
               size="large"
               fullWidth
@@ -113,7 +121,7 @@ export const PoolLiquidityPanel: React.FC<BoxProps> = ({
         <Grid container spacing={4}>
           <Grid item {...twoColumnPageSize}>
             <DonutChart
-              data={donutChartData.series}
+              data={[totalValueProvided.toNumber(), remaining.toNumber()]}
               colors={[
                 alpha(theme.palette.common.white, theme.custom.opacity.main),
                 theme.palette.primary.main,
@@ -124,26 +132,31 @@ export const PoolLiquidityPanel: React.FC<BoxProps> = ({
           </Grid>
           <Grid item {...twoColumnPageSize}>
             <Box mt={8}>
-              {validToken1 && (
-                <Item value={pooledAmount1.toFormat()}>
+              {poolDetails.baseAsset && (
+                <Item
+                  value={liquidityProvided.tokenAmounts.baseAmount.toFormat(2)}
+                >
                   <BaseAsset
-                    label={`Pooled ${TOKENS[tokenId1].symbol}`}
-                    icon={TOKENS[tokenId1].icon}
+                    label={`Pooled ${poolDetails.baseAsset.symbol}`}
+                    icon={poolDetails.baseAsset.icon}
                   />
                 </Item>
               )}
-              {validToken2 && (
-                <Item value={pooledAmount2.toFormat()} mt={4}>
+              {poolDetails.quoteAsset && (
+                <Item
+                  value={liquidityProvided.tokenAmounts.quoteAmount.toFormat(2)}
+                  mt={4}
+                >
                   <BaseAsset
-                    label={`Pooled ${TOKENS[tokenId2].symbol}`}
-                    icon={TOKENS[tokenId2].icon}
+                    label={`Pooled ${poolDetails.quoteAsset.symbol}`}
+                    icon={poolDetails.quoteAsset.icon}
                   />
                 </Item>
               )}
-              <Item value={`${share.toFormat()}%`} mt={4}>
-                <Typography variant="body1">
-                  Pool share
-                </Typography>
+              <Item value={`${
+                totalValueProvided.eq(0) ? "0" : totalValueLocked.div(totalValueProvided).times(100).toFixed(2)
+              }%`} mt={4}>
+                <Typography variant="body1">Pool share</Typography>
               </Item>
             </Box>
           </Grid>
@@ -152,4 +165,3 @@ export const PoolLiquidityPanel: React.FC<BoxProps> = ({
     </BoxWrapper>
   );
 };
-

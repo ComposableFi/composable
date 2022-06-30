@@ -232,6 +232,7 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn vault_count)]
 	#[allow(clippy::disallowed_types)]
+	// TODO: This is a nonce, rename to VaultId
 	pub type VaultCount<T: Config> = StorageValue<_, T::VaultId, ValueQuery>;
 
 	/// Info for each specific vaults.
@@ -804,13 +805,9 @@ pub mod pallet {
 				// TODO(kaiserkarel): Get this reviewed, integer arithmetic is hard after all.
 				// reference:
 				// https://medium.com/coinmonks/programming-defi-uniswap-part-2-13a6428bf892
-				let deposit = <T::Convert as Convert<T::Balance, u128>>::convert(amount);
 				let outstanding = T::Currency::total_issuance(vault.lp_token_id);
-				let outstanding = <T::Convert as Convert<T::Balance, u128>>::convert(outstanding);
-				let aum = <T::Convert as Convert<T::Balance, u128>>::convert(vault_aum);
-				let lp = multiply_by_rational(deposit, outstanding, aum)
+				let lp = Self::convert_and_multiply_by_rational(amount, outstanding, vault_aum)
 					.map_err(|_| Error::<T>::NoFreeVaultAllocation)?;
-				let lp = <T::Convert as Convert<u128, T::Balance>>::convert(lp);
 
 				ensure!(lp > T::Balance::zero(), Error::<T>::InsufficientCreationDeposit);
 				Ok(lp)
@@ -822,15 +819,6 @@ pub mod pallet {
 			vault: &VaultInfo<T>,
 			lp_amount: T::Balance,
 		) -> Result<T::Balance, DispatchError> {
-			let vault_aum = Self::do_assets_under_management(vault_id, vault)?;
-			let vault_aum_value = <T::Convert as Convert<T::Balance, u128>>::convert(vault_aum);
-
-			let lp_total_issuance = T::Currency::total_issuance(vault.lp_token_id);
-			let lp_total_issuance_value =
-				<T::Convert as Convert<T::Balance, u128>>::convert(lp_total_issuance);
-
-			let lp_amount_value = <T::Convert as Convert<T::Balance, u128>>::convert(lp_amount);
-
 			/*
 			   a = total lp issued
 			   b = asset under management
@@ -839,14 +827,43 @@ pub mod pallet {
 								= lp / a * b
 								= lp * b / a
 			*/
-			let lp_shares_value =
-				multiply_by_rational(lp_amount_value, vault_aum_value, lp_total_issuance_value)
-					.map_err(|_| ArithmeticError::Overflow)?;
 
-			let lp_shares_value_amount =
-				<T::Convert as Convert<u128, T::Balance>>::convert(lp_shares_value);
+			let vault_aum = Self::do_assets_under_management(vault_id, vault)?;
+			let lp_total_issuance = T::Currency::total_issuance(vault.lp_token_id);
 
-			Ok(lp_shares_value_amount)
+			let shares_amount =
+				Self::convert_and_multiply_by_rational(lp_amount, vault_aum, lp_total_issuance)?;
+
+			Ok(shares_amount)
+		}
+
+		fn do_amount_of_lp_token_for_added_liquidity(
+			vault_id: &T::VaultId,
+			vault: &VaultInfo<T>,
+			asset_amount: T::Balance,
+		) -> Result<BalanceOf<T>, DispatchError> {
+			let total_lp_issuance = T::Currency::total_issuance(vault.lp_token_id);
+			let aum = Self::assets_under_management(vault_id)?;
+
+			let shares_amount =
+				Self::convert_and_multiply_by_rational(asset_amount, total_lp_issuance, aum)?;
+
+			Ok(shares_amount)
+		}
+
+		fn convert_and_multiply_by_rational(
+			a: T::Balance,
+			b: T::Balance,
+			c: T::Balance,
+		) -> Result<T::Balance, DispatchError> {
+			let a = <T::Convert as Convert<T::Balance, u128>>::convert(a);
+			let b = <T::Convert as Convert<T::Balance, u128>>::convert(b);
+			let c = <T::Convert as Convert<T::Balance, u128>>::convert(c);
+
+			let res = multiply_by_rational(a, b, c).map_err(|_| ArithmeticError::Overflow)?;
+
+			let res = <T::Convert as Convert<u128, T::Balance>>::convert(res);
+			Ok(res)
 		}
 
 		/// Computes the sum of all the assets that the vault currently controls.
@@ -962,6 +979,16 @@ pub mod pallet {
 			let vault = Self::vault_info(vault_id)?;
 			let amount = Self::do_lp_share_value(vault_id, &vault, lp_amount)?;
 			Ok(amount)
+		}
+
+		fn amount_of_lp_token_for_added_liquidity(
+			vault_id: &Self::VaultId,
+			asset_amount: Self::Balance,
+		) -> Result<Self::Balance, DispatchError> {
+			let vault = Self::vault_info(vault_id)?;
+			let lp =
+				Self::do_amount_of_lp_token_for_added_liquidity(vault_id, &vault, asset_amount)?;
+			Ok(lp)
 		}
 	}
 

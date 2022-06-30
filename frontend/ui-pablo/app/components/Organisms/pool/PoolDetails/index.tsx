@@ -8,12 +8,13 @@ import {
   TabPanel,
   Tabs,
 } from "@/components";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PoolTVLChart } from "./PoolTVLChart";
 import { PoolStatistics } from "./PoolStatistics";
 import { PoolLiquidityPanel } from "./PoolLiquidityPanel";
 import { PoolStakingPanel } from "./PoolStakingPanel";
 import { PoolRewardsPanel } from "./PoolRewardsPanel";
+import { useRouter } from "next/router";
 
 const twoColumnPageSize = {
   sm: 12,
@@ -32,9 +33,18 @@ const tabItems: TabItem[] = [
   },
 ];
 
+export type PoolDetailsProps = { poolId: number } & BoxProps
+
 export const PoolDetails: React.FC<BoxProps> = ({
   ...boxProps
 }) => {
+  const [poolId, setPoolId] = useState(-1);
+  const router = useRouter();
+
+  useEffect(() => {
+    const { poolId } = router.query;
+    setPoolId(Number(poolId));
+  }, [router.query]);
 
   const [tab, setTab] = useState<number>(0);
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
@@ -45,23 +55,23 @@ export const PoolDetails: React.FC<BoxProps> = ({
     <Box {...boxProps}>
       <Grid container spacing={4}>
         <Grid item {...twoColumnPageSize}>
-          <PoolTVLChart />
+          <PoolTVLChart poolId={poolId} />
         </Grid>
         <Grid item {...twoColumnPageSize}>
-          <PoolStatistics />
+          <PoolStatistics poolId={poolId} />
         </Grid>
       </Grid>
 
       <Box mt={6}>
         <Tabs items={tabItems} value={tab} onChange={handleTabChange} />
         <TabPanel index={0} value={tab}>
-          <PoolLiquidityPanel />
+          <PoolLiquidityPanel poolId={poolId} />
         </TabPanel>
         <TabPanel index={1} value={tab}>
-          <PoolStakingPanel />
+          <PoolStakingPanel poolId={poolId} />
         </TabPanel>
         <TabPanel index={2} value={tab}>
-          <PoolRewardsPanel />
+          <PoolRewardsPanel poolId={poolId} />
         </TabPanel>
       </Box>
 

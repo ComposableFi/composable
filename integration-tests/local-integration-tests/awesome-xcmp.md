@@ -38,6 +38,7 @@ https://docs.moonbeam.network/builders/xcm/overview/
 - https://research.web3.foundation/en/latest/polkadot/XCMP/Opening_closing%20XCMP%20Channel.html
 - https://www.youtube.com/watch?v=P_yLrFfmLrU 
 - https://blog.quarkslab.com/resources/2022-02-27-xcmv2-audit/21-12-908-REP.pdf
+- https://github.com/paritytech/polkadot/blob/master/roadmap/implementers-guide/src/messaging.md
 
 ## Generic context
 

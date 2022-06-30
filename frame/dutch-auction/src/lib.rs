@@ -87,8 +87,11 @@ pub mod pallet {
 	use crate::{math::*, support::DefiMultiReservableCurrency};
 	use composable_support::{
 		abstractions::{
-			nonce::{Increment, Nonce},
-			utils::{increment::WrappingIncrement, start_at::ZeroInit},
+			nonce::Nonce,
+			utils::{
+				increment::{Increment, WrappingIncrement},
+				start_at::ZeroInit,
+			},
 		},
 		math::wrapping_next::WrappingNext,
 	};

@@ -75,10 +75,10 @@ const RoutesConfig: ConfigType[] = [
   },
   {
     label: "Bonding",
-    path: "/bonding",
+    path: "/bonds",
     icon: dynamic(() => import("@mui/icons-material/PaymentsRounded")),
     status: "active",
-    matches: ["/bonding"],
+    matches: ["/bonds"],
   },
   {
     label: "Pablo Exchange",

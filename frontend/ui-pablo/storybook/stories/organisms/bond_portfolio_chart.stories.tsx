@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
-import { BondPortfolioChart } from "@ui-pablo/nextjs/components/Organisms/bonds/BondPortfolioChart";
+import { BondPortfolioChart } from "@ui-pablo/app/components/Organisms/bonds/BondPortfolioChart";
 
 const BondPortfolioChartStories = ({}) => {
   return (
