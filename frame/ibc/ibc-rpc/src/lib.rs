@@ -24,7 +24,7 @@ use ibc::core::{
 	ics24_host::identifier::{ChannelId, ConnectionId, PortId},
 };
 
-use std::{str::FromStr, sync::Arc};
+use std::{collections::HashMap, str::FromStr, sync::Arc};
 
 use ibc_proto::{
 	cosmos::base::v1beta1::Coin,
@@ -77,6 +77,15 @@ pub struct ConnHandshakeProof {
 	pub height: ibc_proto::ibc::core::client::v1::Height,
 }
 
+/// A type that could be a block number or a block hash
+#[derive(Clone, Hash, PartialEq, Eq, Copy, Serialize, Deserialize)]
+pub enum BlockNumberOrHash<Hash> {
+	/// Block hash
+	Hash(Hash),
+	/// Block number
+	Number(u32),
+}
+
 /// Proof for a set of keys
 #[derive(Serialize, Deserialize)]
 pub struct Proof {
@@ -108,7 +117,10 @@ pub fn generate_raw_proof(inputs: Vec<(Vec<u8>, Vec<u8>)>, keys: Vec<Vec<u8>>) -
 
 /// IBC RPC methods.
 #[rpc(client, server)]
-pub trait IbcApi<BlockNumber, Hash> {
+pub trait IbcApi<BlockNumber, Hash>
+where
+	Hash: PartialEq + Eq + std::hash::Hash,
+{
 	/// Query packet data
 	#[method(name = "ibc_queryPackets")]
 	fn query_packets(
@@ -317,9 +329,12 @@ pub trait IbcApi<BlockNumber, Hash> {
 	#[method(name = "ibc_queryNewlyCreatedClients")]
 	fn query_newly_created_clients(&self, block_hash: Hash) -> Result<Vec<IdentifiedClientState>>;
 
-	/// Query Ibc Events that were deposited in a block
+	/// Query Ibc Events that were deposited in a series of blocks
 	#[method(name = "ibc_queryIbcEvents")]
-	fn query_ibc_events(&self, block_hash: Hash) -> Result<Vec<IbcRelayerEvent>>;
+	fn query_ibc_events(
+		&self,
+		block_numbers: Vec<BlockNumberOrHash<Hash>>,
+	) -> Result<HashMap<BlockNumberOrHash<Hash>, Vec<IbcRelayerEvent>>>;
 }
 
 /// Converts a runtime trap into an RPC error.
@@ -1284,11 +1299,31 @@ where
 		Ok(identified_clients)
 	}
 
-	fn query_ibc_events(&self, block_hash: Block::Hash) -> Result<Vec<IbcRelayerEvent>> {
+	fn query_ibc_events(
+		&self,
+		block_numbers: Vec<BlockNumberOrHash<Block::Hash>>,
+	) -> Result<HashMap<BlockNumberOrHash<Block::Hash>, Vec<IbcRelayerEvent>>> {
 		let api = self.client.runtime_api();
-		let at = BlockId::Hash(block_hash);
-		api.block_events(&at)
-			.map(|events| events.into_iter().filter_map(filter_map_pallet_event).collect())
-			.map_err(|_| runtime_error_into_rpc_error("[ibc_rpc]: failed to read block events"))
+		let mut events = HashMap::new();
+		for block_number_or_hash in block_numbers {
+			let block_hash = match block_number_or_hash {
+				BlockNumberOrHash::Hash(block_hash) => block_hash,
+				BlockNumberOrHash::Number(block_number) =>
+					self.client.hash(block_number.into()).ok().flatten().ok_or_else(|| {
+						runtime_error_into_rpc_error("[ibc_rpc]: unknown block number provided")
+					})?,
+			};
+
+			let at = BlockId::Hash(block_hash);
+
+			let temp = api
+				.block_events(&at)
+				.map(|events| events.into_iter().filter_map(filter_map_pallet_event).collect())
+				.map_err(|_| {
+					runtime_error_into_rpc_error("[ibc_rpc]: failed to read block events")
+				})?;
+			events.insert(block_number_or_hash, temp);
+		}
+		Ok(events)
 	}
 }

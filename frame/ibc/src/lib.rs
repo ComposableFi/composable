@@ -409,8 +409,8 @@ pub mod pallet {
 						&mut ctx, msg,
 					) {
 						Ok(MsgReceipt { events: temp_events, log: temp_logs }) => {
-							events.extend_from_slice(&temp_events);
-							logs.extend_from_slice(&temp_logs);
+							events.extend(temp_events);
+							logs.extend(temp_logs);
 						},
 						Err(e) => errors.push(e),
 					}

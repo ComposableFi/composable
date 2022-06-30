@@ -94,7 +94,7 @@ pub enum IbcRelayerEvent {
 		channel_id: String,
 		sequence: u64,
 	},
-	/// WriteAcknowledgement packet
+	/// WriteAcknowledgement
 	WriteAcknowledgement {
 		revision_height: u64,
 		revision_number: u64,
