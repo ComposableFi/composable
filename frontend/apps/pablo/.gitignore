@@ -39,3 +39,6 @@ public/*.map
 public/workbox-*.js
 public/fallback*.js
 public/sw.js
+
+# eslint
+eslint_report.json
