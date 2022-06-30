@@ -6,6 +6,7 @@ import { CheckableXPabloItemBox } from "./CheckableXPabloItemBox";
 import { useState } from "react";
 import { UnstakeModal } from "./UnstakeModal";
 import { RenewModal } from "./RenewModal";
+import { XPablo } from "@/defi/types";
 
 export const UnstakeForm: React.FC<BoxProps> = ({
   ...boxProps
@@ -15,7 +16,7 @@ export const UnstakeForm: React.FC<BoxProps> = ({
   const [selectedXPabloId, setSelectedXPabloId] = useState<number | undefined>();
 
   const selectedXPablo = selectedXPabloId
-                          && xPablos.find(item => item.id == selectedXPabloId);
+                          && xPablos.find((item: { id: number; }) => item.id == selectedXPabloId);
 
   const expired = selectedXPablo && selectedXPablo.expiry < new Date().getTime();
 
@@ -34,7 +35,7 @@ export const UnstakeForm: React.FC<BoxProps> = ({
     <Box {...boxProps}>
 
       <Box display="flex" flexDirection="column" gap={3}>
-        {xPablos.map((xPablo) => (
+        {xPablos.map((xPablo: XPablo) => (
           <CheckableXPabloItemBox
             key={xPablo.id}
             xPablo={xPablo}
@@ -61,7 +62,7 @@ export const UnstakeForm: React.FC<BoxProps> = ({
               onClick={handleRenew}
               fullWidth
               variant="contained"
-              disabled={!!!selectedXPablo}
+              disabled={!selectedXPablo}
             >
               Renew
             </Button>
@@ -71,7 +72,7 @@ export const UnstakeForm: React.FC<BoxProps> = ({
               onClick={handleUntake}
               fullWidth
               variant="contained"
-              disabled={!!!selectedXPablo}
+              disabled={!selectedXPablo}
             >
               Burn and unstake
             </Button>

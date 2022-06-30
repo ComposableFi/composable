@@ -79,7 +79,7 @@ export const YourBondTable: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {pools.map((pool, index) => (
+            {pools.map((pool: any, index: number) => (
               <TableRow
                 onClick={handleRowClick}
                 key={index}

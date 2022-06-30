@@ -78,7 +78,7 @@ export const AllBondTable: React.FC = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {pools.map((pool, index) => (
+          {pools.map((pool: any, index: number) => (
             <TableRow
               key={index}
               onClick={handleBondClick}

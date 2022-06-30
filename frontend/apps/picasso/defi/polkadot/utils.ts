@@ -10,6 +10,7 @@ export function useCurrentBlockAndTime(api?: ApiPromise) {
     let unsubTime = Promise.resolve(() => {});
     let unsubBlock = Promise.resolve(() => {});
     if (api) {
+      // @ts-ignore
       unsubBlock = api.query.system.number((block) => {
         setBlock(new BigNumber(block.toString()));
       });

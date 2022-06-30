@@ -124,7 +124,7 @@ export const PoolRewardsPanel: React.FC<PoolDetailsProps> = ({
       <Item mt={4} mb={4} value={`$${rewardValue.toFormat()}`}>
         <Typography variant="h6">Your rewards</Typography>
       </Item>
-      {rewardsLeft.map(({ tokenId, value }) => (
+      {rewardsLeft.map(({ tokenId, value }: { tokenId: keyof typeof TOKENS, value: BigNumber}) => (
         <Item value={value.toFormat()} mt={2} key={tokenId}>
           <BaseAsset
             icon={TOKENS[tokenId].icon}

@@ -1,4 +1,4 @@
-import { configureStore } from "@reduxjs/toolkit";
+import { AnyAction, configureStore, EnhancedStore } from "@reduxjs/toolkit";
 import uiReducer from "./ui/uiSlice";
 import polkadotReducer from "./defi/polkadot";
 import poolReducer from "./defi/pool";
@@ -7,7 +7,7 @@ import auctionsReducer from "./defi/auctions";
 import bondsReducer from "./defi/bonds";
 import settingsReducer from "./defi/settings";
 
-export const store = configureStore({
+export const store: EnhancedStore<any, AnyAction, any[]> = configureStore({
   reducer: {
     ui: uiReducer,
     polkadot: polkadotReducer,

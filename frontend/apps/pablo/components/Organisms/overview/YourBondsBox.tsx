@@ -57,7 +57,7 @@ export const YourBondsBox: React.FC<BoxProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {bonds.map(({token1, token2, discount, volume, tvl, vesting_term, claimable}) => (
+            {bonds.map(({token1, token2, discount, volume, tvl, vesting_term, claimable}: any) => (
               <TableRow key={`${token1.id}-${token2.id}`}>
                 <TableCell align="left">
                   <PairAsset

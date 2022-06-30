@@ -11,7 +11,7 @@ import {
 import { BaseAsset } from "@/components/Atoms";
 import { useAppSelector } from "@/hooks/store";
 import React from "react";
-import { TableHeader } from "@/defi/types";
+import { TableHeader, XPablo } from "@/defi/types";
 import { BoxWrapper } from "./BoxWrapper";
 import { getToken } from "@/defi/Tokens";
 import moment from "moment-timezone";
@@ -64,7 +64,7 @@ export const XPablosBox: React.FC<XPablosBoxProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {xPablos.map(({tokenId, locked, expiry, multiplier, amount}) => (
+            {xPablos.map(({tokenId, locked, expiry, multiplier, amount}: XPablo) => (
               <TableRow key={tokenId}>
                 <TableCell align="left">
                   <BaseAsset
