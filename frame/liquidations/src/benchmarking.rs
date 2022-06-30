@@ -8,10 +8,7 @@ use composable_traits::{
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::traits::{fungibles::Mutate, Currency, Get};
 use frame_system::RawOrigin;
-use sp_runtime::{
-	traits::Saturating,
-	FixedPointNumber,
-};
+use sp_runtime::{traits::Saturating, FixedPointNumber};
 use sp_std::prelude::*;
 pub type AssetIdOf<T> = <T as DeFiComposableConfig>::MayBeAssetId;
 fn assets<T>() -> CurrencyPair<AssetIdOf<T>>

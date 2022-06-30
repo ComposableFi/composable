@@ -8,7 +8,10 @@ pub struct XcmSellRequestValid;
 
 impl Validate<XcmSellRequest, XcmSellRequestValid> for XcmSellRequestValid {
 	fn validate(request: XcmSellRequest) -> Result<XcmSellRequest, &'static str> {
-	    ensure!(request.order.pair.base != request.order.pair.quote, "Auction creation with the same asset.");
+		ensure!(
+			request.order.pair.base != request.order.pair.quote,
+			"Auction creation with the same asset."
+		);
 		Ok(request)
 	}
 }
