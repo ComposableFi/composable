@@ -69,7 +69,7 @@ export const ContractDetails: React.FC<ContractDetailsProps> = ({
             </Typography>
             <Box display="flex" alignItems="center" gap={1.5} mt={2}>
               <Typography variant="subtitle1">
-                {`${baseAsset?.symbol} on polkascan`}
+                {`${baseAsset?.symbol ?? ""} on polkascan`}
               </Typography>
               <Link href={getTokenLink()} target="_blank">
                 <OpenInNewRoundedIcon />
