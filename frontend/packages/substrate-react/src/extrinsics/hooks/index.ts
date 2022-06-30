@@ -43,7 +43,7 @@ export const usePendingExtrinsic = (
     }
 
     return false;
-  }, [extrinsics]);
+  }, [extrinsics]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return _isPendingExtrinsic;
 };
@@ -69,7 +69,7 @@ export const useExtrinsicCalls = (
     }
 
     return calls;
-  }, [extrinsics]);
+  }, [extrinsics]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return extrinsicCalls;
 };

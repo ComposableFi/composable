@@ -218,7 +218,7 @@ export const DotSamaContextProvider = ({
           });
         });
     }
-  }, []);
+  }, []); // eslint-disable-line  react-hooks/exhaustive-deps
 
   const [selectedAccount, setSelectedAccount] = useState<number | -1>(-1);
 

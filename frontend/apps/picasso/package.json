@@ -6,7 +6,7 @@
     "dev": "node_modules/.bin/next dev",
     "build": "node_modules/.bin/next build",
     "start": "node_modules/.bin/next start",
-    "lint": "node_modules/.bin/next lint && eslint -c ../.eslintrc.js .",
+    "lint": "node_modules/.bin/next lint",
     "test": "jest",
     "test:watch": "jest --watch",
     "post-update": "echo \"codesandbox preview only, need an update\" && yarn upgrade --latest",
