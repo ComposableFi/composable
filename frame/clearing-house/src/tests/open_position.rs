@@ -1,17 +1,23 @@
 use crate::{
+	math::{IntoBalance, IntoSigned},
 	mock::{
 		accounts::ALICE,
 		assets::USDC,
 		runtime::{
-			Balance, ExtBuilder, MarketId, Origin, Runtime, System as SystemPallet, TestPallet,
-			Vamm as VammPallet,
+			Balance, ExtBuilder, MarketId, Oracle as OraclePallet, Origin, Runtime,
+			System as SystemPallet, TestPallet, Vamm as VammPallet,
 		},
 	},
-	pallet::{Config, Direction, Error, Event},
+	pallet::{
+		Config,
+		Direction::{Long, Short},
+		Error, Event,
+	},
 	tests::{
-		any_direction, any_price, as_balance, get_market, get_market_fee_pool, get_position,
-		run_for_seconds, set_fee_pool_depth, set_oracle_twap, with_markets_context,
-		with_trading_context, MarketConfig,
+		any_direction, any_price, as_balance, get_collateral, get_market, get_market_fee_pool,
+		get_outstanding_gains, get_position, run_for_seconds, run_to_time, set_fee_pool_depth,
+		set_maximum_oracle_mark_divergence, set_oracle_twap, with_markets_context,
+		with_trading_context, Market, MarketConfig,
 	},
 };
 use composable_traits::{clearing_house::ClearingHouse, time::ONE_HOUR};
@@ -19,9 +25,9 @@ use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 use sp_runtime::{FixedI128, FixedPointNumber, FixedU128};
 
-// ----------------------------------------------------------------------------------------------------
-//                                        Execution Contexts
-// ----------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+//                                      Execution Contexts
+// -------------------------------------------------------------------------------------------------
 
 fn cross_margin_context<R>(
 	configs: Vec<MarketConfig>,
@@ -37,21 +43,18 @@ fn cross_margin_context<R>(
 	})
 }
 
-// ----------------------------------------------------------------------------------------------------
-//                                          Valid Inputs
-// ----------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+//                                         Prop Compose
+// -------------------------------------------------------------------------------------------------
 
-fn valid_quote_asset_amount() -> Balance {
-	as_balance(100)
+prop_compose! {
+	fn decimal_a_lt_decimal_b(b: FixedU128)(
+		a_inner in 0..b.into_inner(),
+		b in Just(b),
+	) -> (FixedI128, FixedI128) {
+		(FixedU128::from_inner(a_inner).into_signed().unwrap(), b.into_signed().unwrap())
+	}
 }
-
-fn valid_base_asset_amount_limit() -> Balance {
-	as_balance(10)
-}
-
-// ----------------------------------------------------------------------------------------------------
-//                                             Prop Compose
-// ----------------------------------------------------------------------------------------------------
 
 prop_compose! {
 	fn min_trade_size_and_eps(min_size: u128)(
@@ -76,8 +79,8 @@ prop_compose! {
 
 #[test]
 fn fails_to_open_position_if_market_id_invalid() {
-	let quote_amount = valid_quote_asset_amount();
-	let base_amount_limit = valid_base_asset_amount_limit();
+	let quote_amount = as_balance(100);
+	let base_amount_limit = as_balance(10);
 
 	with_trading_context(MarketConfig::default(), quote_amount, |market_id| {
 		// Current price = quote_amount / base_amount_limit
@@ -87,7 +90,7 @@ fn fails_to_open_position_if_market_id_invalid() {
 			TestPallet::open_position(
 				Origin::signed(ALICE),
 				market_id + 1,
-				Direction::Long,
+				Long,
 				quote_amount,
 				base_amount_limit
 			),
@@ -101,11 +104,11 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 	let max_positions = <Runtime as Config>::MaxPositions::get() as usize;
 	let orders = max_positions + 1;
 	let configs = vec![MarketConfig::default(); orders];
-	let margin = valid_quote_asset_amount();
+	let margin = as_balance(100);
 
 	cross_margin_context(configs, margin, |market_ids| {
 		let quote_amount: Balance = margin / (orders as u128);
-		let base_amount_limit: Balance = valid_base_asset_amount_limit() / (orders as u128);
+		let base_amount_limit: Balance = as_balance(10) / (orders as u128);
 
 		// Current price = quote_amount / base_amount_limit
 		VammPallet::set_price(Some((quote_amount, base_amount_limit).into()));
@@ -114,7 +117,7 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 			assert_ok!(TestPallet::open_position(
 				Origin::signed(ALICE),
 				*market_id,
-				Direction::Long,
+				Long,
 				quote_amount,
 				base_amount_limit,
 			));
@@ -124,11 +127,118 @@ fn fails_to_create_new_position_if_violates_maximum_positions_num() {
 			TestPallet::open_position(
 				Origin::signed(ALICE),
 				market_ids[max_positions],
-				Direction::Long,
+				Long,
 				quote_amount,
 				base_amount_limit,
 			),
 			Error::<Runtime>::MaxPositionsExceeded
+		);
+	});
+}
+
+#[test]
+fn should_block_risk_decreasing_trade_if_it_pushes_index_mark_divergence_above_threshold() {
+	let config = MarketConfig::default();
+
+	with_trading_context(config, as_balance(1_000_000), |market_id| {
+		// Set maximum divergence to 10%
+		set_maximum_oracle_mark_divergence((10, 100).into());
+
+		let vamm_id = &get_market(&market_id).vamm_id;
+		OraclePallet::set_price(Some(100)); // 1 in cents
+		VammPallet::set_price_of(vamm_id, Some(1.into()));
+
+		// Alice opens a position (no price impact)
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(ALICE),
+			market_id,
+			Long,
+			as_balance(1_000_000),
+			as_balance(1_000_000),
+		));
+
+		// Alice tries to close her position, but it fails because it pushes the mark price too
+		// below the index. Closing tanks the mark price to 89% of previous one.
+		// Relative index-mark spread:
+		// (mark - index) / index = (0.89 - 1.00) / 1.00 = -0.11
+		VammPallet::set_price_impact_of(vamm_id, Some((89, 100).into()));
+		assert_noop!(
+			TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				Short,
+				as_balance(1_000_000),
+				as_balance(0)
+			),
+			Error::<Runtime>::OracleMarkTooDivergent
+		);
+	});
+}
+
+#[test]
+fn should_not_block_risk_decreasing_trade_if_index_mark_divergence_was_already_above_threshold() {
+	let config = MarketConfig::default();
+
+	with_trading_context(config, as_balance(1_000_000), |market_id| {
+		// Set maximum divergence to 10%
+		set_maximum_oracle_mark_divergence((10, 100).into());
+
+		let vamm_id = &get_market(&market_id).vamm_id;
+		OraclePallet::set_price(Some(100)); // 1 in cents
+		VammPallet::set_price_of(vamm_id, Some(1.into()));
+
+		// Alice opens a position (no price impact)
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(ALICE),
+			market_id,
+			Long,
+			as_balance(1_000_000),
+			as_balance(1_000_000),
+		));
+
+		// Due to external market conditions, index-mark spread rises to >10%
+		// Relative index-mark spread:
+		// (mark - index) / index = (1.00 - 1.12) / 1.12 = -0.1071428571
+		OraclePallet::set_price(Some(112));
+
+		// Alice closes her position causing mark price to drop by 1%
+		VammPallet::set_price_impact_of(vamm_id, Some((99, 100).into()));
+		assert_ok!(TestPallet::open_position(
+			Origin::signed(ALICE),
+			market_id,
+			Short,
+			as_balance(1_000_000),
+			as_balance(0)
+		));
+	});
+}
+
+#[test]
+fn should_block_risk_increasing_trade_if_it_pushes_index_mark_divergence_above_threshold() {
+	let config = MarketConfig::default();
+
+	with_trading_context(config, as_balance(1_000_000), |market_id| {
+		// Set maximum divergence to 10%
+		set_maximum_oracle_mark_divergence((10, 100).into());
+
+		let vamm_id = &get_market(&market_id).vamm_id;
+		OraclePallet::set_price(Some(100)); // 1 in cents
+		VammPallet::set_price_of(vamm_id, Some(1.into()));
+
+		// Alice tries to open a new long, but it fails because it pushes the mark price too
+		// above the index. Opening pumps the mark price to 111% of previous one.
+		// Relative index-mark spread:
+		// (mark - index) / index = (1.11 - 1.00) / 1.00 = 0.11
+		VammPallet::set_price_impact_of(vamm_id, Some((111, 100).into()));
+		assert_noop!(
+			TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				Long,
+				as_balance(1_000_000),
+				as_balance(1_000_000),
+			),
+			Error::<Runtime>::OracleMarkTooDivergent
 		);
 	});
 }
@@ -141,14 +251,14 @@ proptest! {
 	#[test]
 	fn open_position_in_new_market_succeeds(direction in any_direction()) {
 		let config = MarketConfig { taker_fee: 10 /* 0.1% */, ..Default::default() };
-		let quote_amount = valid_quote_asset_amount();
+		let quote_amount = as_balance(100);
 		let fees = (quote_amount * config.taker_fee) / 10_000;
 
 		// Have enough margin to pay for fees
 		with_trading_context(config, quote_amount + fees, |market_id| {
 			let positions_before = TestPallet::get_positions(&ALICE).len();
 
-			let base_amount = valid_base_asset_amount_limit();
+			let base_amount = as_balance(10);
 			// Current price = quote_amount / base_amount
 			VammPallet::set_price(Some((quote_amount, base_amount).into()));
 			assert_ok!(TestPallet::open_position(
@@ -163,12 +273,12 @@ proptest! {
 			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before + 1);
 			let position = get_position(&ALICE, &market_id).unwrap();
 			assert!(match direction {
-				Direction::Long => position.base_asset_amount.is_positive(),
-				Direction::Short => position.base_asset_amount.is_negative()
+				Long => position.base_asset_amount.is_positive(),
+				Short => position.base_asset_amount.is_negative()
 			});
 			assert!(match direction {
-				Direction::Long => position.quote_asset_notional_amount.is_positive(),
-				Direction::Short => position.quote_asset_notional_amount.is_negative()
+				Long => position.quote_asset_notional_amount.is_positive(),
+				Short => position.quote_asset_notional_amount.is_negative()
 			});
 
 			// Ensure cumulative funding is initialized to market's current
@@ -210,8 +320,8 @@ proptest! {
 					Origin::signed(ALICE),
 					market_id,
 					match eps.is_positive() {
-						true => Direction::Long,
-						false => Direction::Short,
+						true => Long,
+						false => Short,
 					},
 					quote_amount,
 					quote_amount, // price = 1
@@ -227,12 +337,12 @@ proptest! {
 		(minimum_trade_size, eps) in min_trade_size_and_eps(as_balance((1, 100)))
 	) {
 		let config = MarketConfig { minimum_trade_size, ..Default::default() };
-		let quote_amount = valid_quote_asset_amount();
+		let quote_amount = as_balance(100);
 
 		with_trading_context(config, quote_amount, |market_id| {
 			let positions_before = TestPallet::get_positions(&ALICE).len();
 
-			let base_amount_limit = valid_base_asset_amount_limit();
+			let base_amount_limit = as_balance(10);
 			// price * base_amount_limit = quote_amount
 			VammPallet::set_price(Some((quote_amount, base_amount_limit).into()));
 			assert_ok!(TestPallet::open_position(
@@ -258,6 +368,36 @@ proptest! {
 			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
 
 			assert_eq!(get_market(&market_id).base_asset_amount(direction), 0.into());
+		});
+	}
+
+	#[test]
+	fn should_update_oracle_twap(direction in any_direction()) {
+		let config = MarketConfig { twap_period: 60, ..Default::default() };
+		let collateral = as_balance(100);
+
+		with_trading_context(config.clone(), collateral, |market_id| {
+			// Ensure last_oracle_ts is 0 (market creation timestamp)
+			let Market { last_oracle_ts, last_oracle_price, last_oracle_twap, .. } = get_market(&market_id);
+			assert_eq!(last_oracle_ts, 0);
+
+			// Time passes and ALICE opens a position
+			let now = config.twap_period / 2;
+			run_to_time(now);
+			VammPallet::set_price(Some(5.into()));
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				direction,
+				collateral,
+				collateral / 5,
+			));
+
+			let market = get_market(&market_id);
+			// The last oracle TWAP update timestamp equals the one of the position closing
+			assert_eq!(market.last_oracle_ts, now);
+			assert_ne!(market.last_oracle_price, last_oracle_price);
+			assert_ne!(market.last_oracle_twap, last_oracle_twap);
 		});
 	}
 
@@ -311,7 +451,7 @@ proptest! {
 				),
 				base_amount
 			);
-			let sign = match direction { Direction::Long => -1, _ => 1 };
+			let sign = match direction { Long => -1, _ => 1 };
 			let payment = sign * (rate * quote_amount as i128) / 10_000;
 			let margin = quote_amount as i128  + payment; // Initial margin minus fees + funding
 			assert_eq!(TestPallet::get_collateral(&ALICE), Some(margin as u128));
@@ -355,13 +495,16 @@ proptest! {
 			);
 
 			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
-			let sign = match direction { Direction::Long => 1, _ => -1 };
+			let sign = match direction { Long => 1, _ => -1 };
 			let margin = quote_amount as i128;
 			let pnl = sign * (new_base_value as i128) - sign * margin;
-			assert_eq!(
-				TestPallet::get_collateral(&ALICE).unwrap(),
-				(margin + pnl).max(0) as u128
-			);
+			// Profits are outstanding since no one realized losses in the market
+			if pnl >= 0 {
+				assert_eq!(get_collateral(ALICE), margin as u128);
+				assert_eq!(get_outstanding_gains(ALICE, &market_id), pnl as u128);
+			} else {
+				assert_eq!(get_collateral(ALICE), (margin + pnl).max(0) as u128);
+			}
 		});
 	}
 
@@ -369,7 +512,7 @@ proptest! {
 	fn reducing_position_partially_realizes_pnl(
 		direction in any_direction(),
 		new_price in any_price(),
-		percentf in percentage_fraction()
+		fraction in percentage_fraction()
 	) {
 		let market_config = MarketConfig { minimum_trade_size: 0.into(), ..Default::default() };
 		let quote_amount = as_balance(100);
@@ -392,7 +535,7 @@ proptest! {
 
 			VammPallet::set_price(Some(new_price));
 			// Reduce (close) position by desired percentage
-			let base_amount_to_close = percentf.saturating_mul_int(base_amount);
+			let base_amount_to_close = fraction.saturating_mul_int(base_amount);
 			let base_value_to_close = new_price.saturating_mul_int(base_amount_to_close);
 			assert_ok!(
 				<TestPallet as ClearingHouse>::open_position(
@@ -408,13 +551,15 @@ proptest! {
 			// Position remains open
 			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
 			// Fraction of the PnL is realized
-			let sign = match direction { Direction::Long => 1, _ => -1 };
-			let entry_value = percentf.saturating_mul_int(quote_amount);
+			let sign = match direction { Long => 1, _ => -1 };
+			let entry_value = fraction.saturating_mul_int(quote_amount);
 			let pnl = sign * (base_value_to_close as i128) - sign * (entry_value as i128);
-			assert_eq!(
-				TestPallet::get_collateral(&ALICE).unwrap(),
-				(quote_amount as i128 + pnl).max(0) as u128
-			);
+			if pnl >= 0 {
+				assert_eq!(get_collateral(ALICE), quote_amount);
+				assert_eq!(get_outstanding_gains(ALICE, &market_id), pnl as u128);
+			} else {
+				assert_eq!(get_collateral(ALICE), (quote_amount as i128 + pnl).max(0) as u128);
+			}
 
 			let position = get_position(&ALICE, &market_id).unwrap();
 			// Position base asset and quote asset notional are cut by percentage
@@ -477,14 +622,16 @@ proptest! {
 				base_delta
 			);
 
-			let sign = match direction { Direction::Long => 1, _ => -1 };
+			let sign = match direction { Long => 1, _ => -1 };
 			// Full PnL is realized
 			let margin = quote_amount as i128;
 			let pnl = sign * (new_base_value as i128) - sign * margin;
-			assert_eq!(
-				TestPallet::get_collateral(&ALICE).unwrap(),
-				(margin + pnl).max(0) as u128
-			);
+			if pnl >= 0 {
+				assert_eq!(get_collateral(ALICE), margin as u128);
+				assert_eq!(get_outstanding_gains(ALICE, &market_id), pnl as u128);
+			} else {
+				assert_eq!(get_collateral(ALICE), (margin + pnl).max(0) as u128);
+			}
 
 			// Position remains open
 			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
@@ -591,8 +738,8 @@ proptest! {
 			);
 
 			let new_price: FixedU128 = match direction {
-				Direction::Long => 8, // decrease price => negative PnL
-				Direction::Short => 12, // increase price => negative PnL
+				Long => 8, // decrease price => negative PnL
+				Short => 12, // increase price => negative PnL
 			}.into();
 			VammPallet::set_price(Some(new_price));
 			let new_base_value = new_price.saturating_mul_int(base_amount_limit);
@@ -653,7 +800,43 @@ proptest! {
 		});
 	}
 
-	// TODO(0xangelo): cannot reverse into dust position (< min_trade_size)
+	#[test]
+	fn cannot_reverse_into_dust_position(
+		direction in any_direction(),
+		(eps, minimum_trade_size) in decimal_a_lt_decimal_b((1, 100).into())
+	) {
+		let config = MarketConfig { minimum_trade_size, ..Default::default() };
+		let quote_amount = as_balance(100);
+
+		with_trading_context(config, quote_amount, |market_id| {
+			let positions_before = TestPallet::get_positions(&ALICE).len();
+
+			let base_amount_limit = as_balance(10);
+			// price * base_amount_limit = quote_amount
+			VammPallet::set_price(Some((quote_amount, base_amount_limit).into()));
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				direction,
+				quote_amount,
+				base_amount_limit,
+			));
+
+			// Try reversing while leaving a small resulting position in the opposite direction
+			let eps_balance: Balance = eps.into_balance().unwrap();
+			assert_ok!(TestPallet::open_position(
+				Origin::signed(ALICE),
+				market_id,
+				direction.opposite(),
+				quote_amount + eps_balance,
+				base_amount_limit,
+			));
+			// The position should be closed, rather than leaving a dust position behind
+			assert_eq!(TestPallet::get_positions(&ALICE).len(), positions_before);
+			assert_eq!(get_market(&market_id).base_asset_amount(direction), 0.into());
+		});
+	}
+
 
 	#[test]
 	fn margin_ratio_takes_unrealized_funding_into_account(direction in any_direction()) {
@@ -684,7 +867,7 @@ proptest! {
 			run_for_seconds(ONE_HOUR);
 			set_oracle_twap(&market_ids[0], (price_cents, 100).into());
 			VammPallet::set_twap(Some((
-				match direction { Direction::Long => price_cents + 1, _ => price_cents - 1 },
+				match direction { Long => price_cents + 1, _ => price_cents - 1 },
 				100
 			).into())); // funding rate = 1%
 			assert_ok!(<TestPallet as ClearingHouse>::update_funding(&market_ids[0]));

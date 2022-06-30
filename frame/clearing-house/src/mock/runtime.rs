@@ -266,6 +266,7 @@ pub struct ExtBuilder {
 	pub oracle_asset_support: Option<bool>,
 	pub oracle_price: Option<Balance>,
 	pub oracle_twap: Option<Balance>,
+	pub max_price_divergence: Decimal,
 }
 
 impl ExtBuilder {
@@ -282,13 +283,20 @@ impl ExtBuilder {
 			.assimilate_storage(&mut storage)
 			.unwrap();
 
-		clearing_house::GenesisConfig::<Runtime> { collateral_type: self.collateral_type }
-			.assimilate_storage(&mut storage)
-			.unwrap();
+		clearing_house::GenesisConfig::<Runtime> {
+			collateral_type: self.collateral_type,
+			max_price_divergence: self.max_price_divergence,
+		}
+		.assimilate_storage(&mut storage)
+		.unwrap();
 
-		mock_vamm::GenesisConfig::<Runtime> { vamm_id: self.vamm_id, twap: self.vamm_twap }
-			.assimilate_storage(&mut storage)
-			.unwrap();
+		mock_vamm::GenesisConfig::<Runtime> {
+			vamm_id: self.vamm_id,
+			twap: self.vamm_twap,
+			..Default::default()
+		}
+		.assimilate_storage(&mut storage)
+		.unwrap();
 
 		let oracle_genesis = mock_oracle::GenesisConfig {
 			price: self.oracle_price,
