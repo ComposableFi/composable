@@ -38,7 +38,7 @@
       - name: subsquid-indexer-db
       - name: subsquid-processor
       - name: subsquid-graphql-server
-      ignore_errors: yes
+      ignore_errors: yes # the first run can fail
       become: yes
 
     - name: Remove old installations
