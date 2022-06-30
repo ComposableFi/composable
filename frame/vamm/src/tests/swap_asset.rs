@@ -2,12 +2,12 @@ use crate::{
 	mock::{Balance, ExtBuilder, MockRuntime, System, TestPallet, VammId},
 	pallet::{Error, Event, VammMap},
 	tests::{
-		helpers::{create_vamm, default_swap_config, run_for_seconds, run_to_block, swap_config},
+		helpers::{create_vamm, run_for_seconds, run_to_block, swap_config},
 		helpers_propcompose::{
 			any_swap_config, any_vamm_state, balance_range_lower_half, balance_range_upper_half,
 			multiple_swaps, then_and_now,
 		},
-		TestVammConfig, RUN_CASES,
+		TestSwapConfig, TestVammConfig, RUN_CASES,
 	},
 };
 use composable_traits::vamm::{AssetType, Direction, SwapOutput, Vamm as VammTrait};
@@ -24,13 +24,13 @@ use sp_runtime::traits::Zero;
 fn should_succeed_returning_correct_values_and_emitting_events_add_base() {
 	ExtBuilder::default().build().execute_with(|| {
 		let vamm_config = TestVammConfig::default();
-		let swap_config = default_swap_config(AssetType::Base, Direction::Add);
+		let swap_config = TestSwapConfig::default();
 		create_vamm(&vamm_config.into());
 
 		// For event emission
 		run_to_block(1);
 
-		let swap = TestPallet::swap(&swap_config);
+		let swap = TestPallet::swap(&swap_config.into());
 		let vamm_after_swap = VammMap::<MockRuntime>::get(swap_config.vamm_id).unwrap();
 		assert_ok!(swap, SwapOutput { output: 16666666666666666667, negative: false });
 		assert_eq!(vamm_after_swap.base_asset_reserves, 3000000000000000000);
@@ -60,13 +60,17 @@ fn should_succeed_returning_correct_values_and_emitting_events_add_base() {
 fn should_succeed_returning_correct_values_and_emitting_events_add_quote() {
 	ExtBuilder::default().build().execute_with(|| {
 		let vamm_config = TestVammConfig::default();
-		let swap_config = default_swap_config(AssetType::Quote, Direction::Add);
+		let swap_config = TestSwapConfig {
+			asset: AssetType::Quote,
+			direction: Direction::Add,
+			..Default::default()
+		};
 		create_vamm(&vamm_config.into());
 
 		// For event emission
 		run_to_block(1);
 
-		let swap = TestPallet::swap(&swap_config);
+		let swap = TestPallet::swap(&swap_config.into());
 		let vamm_after_swap = VammMap::<MockRuntime>::get(swap_config.vamm_id).unwrap();
 		assert_ok!(swap, SwapOutput { output: 39215686274509804, negative: false });
 		assert_eq!(vamm_after_swap.base_asset_reserves, 1960784313725490196);
@@ -96,13 +100,17 @@ fn should_succeed_returning_correct_values_and_emitting_events_add_quote() {
 fn should_succeed_returning_correct_values_and_emitting_events_remove_base() {
 	ExtBuilder::default().build().execute_with(|| {
 		let vamm_config = TestVammConfig::default();
-		let swap_config = default_swap_config(AssetType::Base, Direction::Remove);
+		let swap_config = TestSwapConfig {
+			asset: AssetType::Base,
+			direction: Direction::Remove,
+			..Default::default()
+		};
 		create_vamm(&vamm_config.into());
 
 		// For event emission
 		run_to_block(1);
 
-		let swap = TestPallet::swap(&swap_config);
+		let swap = TestPallet::swap(&swap_config.into());
 		let vamm_after_swap = VammMap::<MockRuntime>::get(swap_config.vamm_id).unwrap();
 		assert_ok!(swap, SwapOutput { output: 50000000000000000000, negative: false });
 		assert_eq!(vamm_after_swap.base_asset_reserves, 1000000000000000000);
@@ -132,13 +140,17 @@ fn should_succeed_returning_correct_values_and_emitting_events_remove_base() {
 fn should_succeed_returning_correct_values_and_emitting_events_remove_quote() {
 	ExtBuilder::default().build().execute_with(|| {
 		let vamm_config = TestVammConfig::default();
-		let swap_config = default_swap_config(AssetType::Quote, Direction::Remove);
+		let swap_config = TestSwapConfig {
+			asset: AssetType::Quote,
+			direction: Direction::Remove,
+			..Default::default()
+		};
 		create_vamm(&vamm_config.into());
 
 		// For event emission
 		run_to_block(1);
 
-		let swap = TestPallet::swap(&swap_config);
+		let swap = TestPallet::swap(&swap_config.into());
 		let vamm_after_swap = VammMap::<MockRuntime>::get(swap_config.vamm_id).unwrap();
 		assert_ok!(swap, SwapOutput { output: 40816326530612244, negative: true });
 		assert_eq!(vamm_after_swap.base_asset_reserves, 2040816326530612244);
@@ -248,10 +260,23 @@ proptest! {
 		// Ensure vamm is open before start operation to swap assets.
 		vamm_state.closed = None;
 
-		// Disable output limit check
+		// Disable output limit check.
 		swap_config.output_amount_limit = Balance::zero();
 
+		// Ensure always the correct vamm.
 		swap_config.vamm_id = VammId::zero();
+
+		// Ensure funds will be enough.
+		if swap_config.direction == Direction::Remove {
+			match swap_config.asset {
+				AssetType::Base => {
+					swap_config.input_amount = swap_config.input_amount.min(vamm_state.base_asset_reserves) - 1;
+				}
+				AssetType::Quote => {
+					swap_config.input_amount = swap_config.input_amount.min(vamm_state.quote_asset_reserves) - 1;
+				}
+			};
+		};
 
 		ExtBuilder {
 			vamm_count: 1,
@@ -260,16 +285,17 @@ proptest! {
 			// For event emission
 			run_for_seconds(1);
 			let swap = TestPallet::swap(&swap_config);
-			assert_ok!(swap);
-			System::assert_last_event(
-				Event::Swapped {
-					vamm_id: swap_config.vamm_id,
-					input_amount: swap_config.input_amount,
-					output_amount: swap.unwrap(),
-					input_asset_type: swap_config.asset,
-					direction: swap_config.direction,
-				}.into()
-			);
+			if let Ok(swap) = swap {
+				System::assert_last_event(
+					Event::Swapped {
+						vamm_id: swap_config.vamm_id,
+						input_amount: swap_config.input_amount,
+						output_amount: swap,
+						input_asset_type: swap_config.asset,
+						direction: swap_config.direction,
+					}.into()
+				);
+			}
 		})
 	}
 
@@ -458,7 +484,7 @@ proptest! {
 		}.build().execute_with(|| {
 			let vamm_before_swap = VammMap::<MockRuntime>::get(0);
 			for x in swap_config.iter() {
-				assert_ok!(TestPallet::swap(x));
+				TestPallet::swap(x);
 			}
 			let vamm_after_swap = VammMap::<MockRuntime>::get(0);
 
@@ -496,7 +522,7 @@ proptest! {
 			for mut x in swap_config.iter_mut() {
 				// Make swaps only for base asset
 				x.asset = AssetType::Base;
-				assert_ok!(TestPallet::swap(x));
+				TestPallet::swap(x);
 			}
 			let vamm_after_swap = VammMap::<MockRuntime>::get(0);
 
@@ -535,7 +561,7 @@ proptest! {
 			for mut x in swap_config.iter_mut() {
 				// Make swaps only for quote asset
 				x.asset = AssetType::Quote;
-				assert_ok!(TestPallet::swap(x));
+				TestPallet::swap(x);
 			}
 			let vamm_after_swap = VammMap::<MockRuntime>::get(0);
 

@@ -109,21 +109,11 @@ pub fn any_time() -> RangeInclusive<Timestamp> {
 //                                                 Swap
 // ----------------------------------------------------------------------------------------------------
 
-pub fn default_swap_config(asset: AssetType, direction: Direction) -> SwapConfig<VammId, Balance> {
-	SwapConfig {
-		vamm_id: 0,
-		asset,
-		input_amount: as_decimal(1).into_inner(),
-		direction,
-		output_amount_limit: 0,
-	}
-}
-
 pub fn swap_config() -> BoxedStrategy<SwapConfig<VammId, Balance>> {
 	(
 		Just(0_u128),
 		prop_oneof![Just(AssetType::Base), Just(AssetType::Quote)],
-		1_000_000_000..=1_000_000_000_000_000_u128,
+		min_sane_balance()..=max_sane_balance(),
 		prop_oneof![Just(Direction::Add), Just(Direction::Remove)],
 		Just(0_u128),
 	)

@@ -5,13 +5,14 @@ use crate::{
 		helpers::{
 			any_sane_asset_amount, any_time, any_vamm_id, limited_peg, multiple_swap_configs,
 		},
-		Decimal, Timestamp, VammId, MAXIMUM_RESERVE, MINIMUM_RESERVE, ZERO_RESERVE,
+		Decimal, Timestamp, VammId, MAXIMUM_RESERVE, MINIMUM_RESERVE, RUN_CASES, ZERO_RESERVE,
 	},
 };
 use composable_traits::vamm::{
 	AssetType, Direction, MovePriceConfig, SwapConfig, MINIMUM_TWAP_PERIOD,
 };
 use proptest::prelude::*;
+use sp_runtime::traits::One;
 
 // ----------------------------------------------------------------------------------------------------
 //                                     General Helper Propcomposes
@@ -188,7 +189,7 @@ prop_compose! {
 
 prop_compose! {
 	pub fn multiple_swaps()(
-		swaps_count in 1_000..100_000_usize
+		swaps_count in One::one()..RUN_CASES.saturating_pow(2) as usize
 	) (
 		swaps in multiple_swap_configs(swaps_count)
 	) -> Vec<SwapConfig<VammId, Balance>> {
