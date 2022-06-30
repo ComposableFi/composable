@@ -22,16 +22,18 @@ import { AuctionHistoriesTable } from "@/components/Organisms/auction/AuctionHis
 import { AuctionPriceChart } from "@/components/Organisms/auction/AuctionPriceChart";
 import { useEffect, useMemo, useState } from "react";
 import { DEFAULT_NETWORK_ID, fetchSpotPrice } from "@/defi/utils";
-import { useParachainApi } from "substrate-react";
+import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { useAuctionsChart } from "@/store/hooks/useAuctionsChart";
 import moment from "moment-timezone";
 import useLiquidityBootstrappingPoolStore from "@/store/useStore";
 import { useAsset } from "@/defi/hooks/assets/useAsset";
+import { useRouter } from "next/router";
 
 const Auction: NextPage = () => {
   const theme = useTheme();
+  const router = useRouter();
+  const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const { parachainApi } = useParachainApi(DEFAULT_NETWORK_ID);
-
   const {
     pools: {
       setLiquidityBootstrappingPoolSpotPrice,
@@ -43,6 +45,11 @@ const Auction: NextPage = () => {
   const baseAsset = useAsset(activeLBP.pair.base.toString())
   const quoteAsset = useAsset(activeLBP.pair.quote.toString())
 
+  useEffect(() => {
+    if (!selectedAccount) {
+      router.push('/auctions');
+    }
+  }, [router, selectedAccount]);
 
   useEffect(() => {
     if (parachainApi && activeLBP.poolId !== -1) {
