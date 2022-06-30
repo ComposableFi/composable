@@ -3,16 +3,16 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "node_modules/.bin/next dev",
-    "build": "node_modules/.bin/next build",
-    "start": "node_modules/.bin/next start",
-    "lint": "node_modules/.bin/next lint",
-    "test": "node_modules/.bin/jest",
-    "test:watch": "node_modules/.bin/jest --watch",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "jest",
+    "test:watch": "jest --watch",
     "post-update": "echo \"codesandbox preview only, need an update\" && yarn upgrade --latest",
     "postinstall": "node .scripts/postinstall.js",
     "sync": "node .scripts/sync.js",
-    "lint:report": "node_modules/.bin/eslint --output-file eslint_report.json --format json ."
+    "lint:report": "eslint --output-file eslint_report.json --format json ."
   },
   "dependencies": {
     "@emotion/cache": "^11.7.1",

@@ -17,14 +17,14 @@ module.exports = {
 
     config.resolve.alias = {
       ...config.resolve.alias,
-      "@/pages": path.resolve(__dirname, "..", "..", "app", "pages"),
-      "@/components": path.resolve(__dirname, "..", "..", "app", "components"),
-      "@/styles": path.resolve(__dirname, "..", "..", "app", "styles"),
-      "@/utils": path.resolve(__dirname, "..", "..", "app", "utils"),
-      "@/contexts": path.resolve(__dirname, "..", "..", "app", "contexts"),
-      "@/hooks": path.resolve(__dirname, "..", "..", "app", "hooks"),
-      "@/defi": path.resolve(__dirname, "..", "..", "app", "defi"),
-      "@/stores": path.resolve(__dirname, "..", "..", "app", "stores")
+      "@/pages": path.resolve(__dirname, "..", "..", "picasso", "pages"),
+      "@/components": path.resolve(__dirname, "..", "..", "picasso", "components"),
+      "@/styles": path.resolve(__dirname, "..", "..", "picasso", "styles"),
+      "@/utils": path.resolve(__dirname, "..", "..", "picasso", "utils"),
+      "@/contexts": path.resolve(__dirname, "..", "..", "picasso", "contexts"),
+      "@/hooks": path.resolve(__dirname, "..", "..", "picasso", "hooks"),
+      "@/defi": path.resolve(__dirname, "..", "..", "picasso", "defi"),
+      "@/stores": path.resolve(__dirname, "..", "..", "picasso", "stores")
     };
 
     return config;
