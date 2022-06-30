@@ -24,7 +24,7 @@ jobs:
           CI: true
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Yarn lint - Lint
-        run: yarn --filter=pablo lint --max-warnings=0
+        run: yarn --filter=pablo lint
         working-directory: frontend
       - name: Save Code Linting Report JSON
         # npm script for ESLint

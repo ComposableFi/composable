@@ -25,5 +25,5 @@ jobs:
           CI: true
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Run tests
-        run: yarn --filter=picasso  test
+        run: yarn --filter=picasso test
         working-directory: frontend
