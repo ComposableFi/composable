@@ -24,7 +24,7 @@ use ibc::core::{
 	ics24_host::identifier::{ChannelId, ConnectionId, PortId},
 };
 
-use std::{collections::HashMap, str::FromStr, sync::Arc};
+use std::{collections::HashMap, fmt::Display, str::FromStr, sync::Arc};
 
 use ibc_proto::{
 	cosmos::base::v1beta1::Coin,
@@ -78,12 +78,21 @@ pub struct ConnHandshakeProof {
 }
 
 /// A type that could be a block number or a block hash
-#[derive(Clone, Hash, PartialEq, Eq, Copy, Serialize, Deserialize)]
+#[derive(Clone, Hash, Debug, PartialEq, Eq, Copy, Serialize, Deserialize)]
 pub enum BlockNumberOrHash<Hash> {
 	/// Block hash
 	Hash(Hash),
 	/// Block number
 	Number(u32),
+}
+
+impl<Hash: std::fmt::Debug> Display for BlockNumberOrHash<Hash> {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			BlockNumberOrHash::Hash(hash) => write!(f, "{:?}", hash),
+			BlockNumberOrHash::Number(block_num) => write!(f, "{}", block_num),
+		}
+	}
 }
 
 /// Proof for a set of keys
@@ -330,11 +339,12 @@ where
 	fn query_newly_created_clients(&self, block_hash: Hash) -> Result<Vec<IdentifiedClientState>>;
 
 	/// Query Ibc Events that were deposited in a series of blocks
+	/// Returning a string because HashMap fails to deserialize when key is not a String
 	#[method(name = "ibc_queryIbcEvents")]
 	fn query_ibc_events(
 		&self,
 		block_numbers: Vec<BlockNumberOrHash<Hash>>,
-	) -> Result<HashMap<BlockNumberOrHash<Hash>, Vec<IbcRelayerEvent>>>;
+	) -> Result<HashMap<String, Vec<IbcRelayerEvent>>>;
 }
 
 /// Converts a runtime trap into an RPC error.
@@ -1302,7 +1312,7 @@ where
 	fn query_ibc_events(
 		&self,
 		block_numbers: Vec<BlockNumberOrHash<Block::Hash>>,
-	) -> Result<HashMap<BlockNumberOrHash<Block::Hash>, Vec<IbcRelayerEvent>>> {
+	) -> Result<HashMap<String, Vec<IbcRelayerEvent>>> {
 		let api = self.client.runtime_api();
 		let mut events = HashMap::new();
 		for block_number_or_hash in block_numbers {
@@ -1317,7 +1327,7 @@ where
 				.map_err(|_| {
 					runtime_error_into_rpc_error("[ibc_rpc]: failed to read block events")
 				})?;
-			events.insert(block_number_or_hash, temp);
+			events.insert(block_number_or_hash.to_string(), temp);
 		}
 		Ok(events)
 	}
