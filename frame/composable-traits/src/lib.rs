@@ -9,7 +9,7 @@
 		clippy::panic
 	)
 )] // allow in tests
-#![deny(clippy::unseparated_literal_suffix)]
+#![deny(clippy::erasing_op, clippy::unseparated_literal_suffix)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 pub mod assets;
