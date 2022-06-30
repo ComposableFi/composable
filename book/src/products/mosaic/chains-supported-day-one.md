@@ -2,12 +2,12 @@
 
 The chains/layers supported by Mosaic Phase 2 are as follows, enabling for active liquidity provisioning across these platforms:
 
-* [Ethereum Mainnet](https://ethereum.org/en/):
-* [Avalanche](https://www.avax.network/):
-* [Fantom](https://fantom.foundation/):
-* [Polygon](https://polygon.technology/):
-* [Moonriver](https://moonbeam.network/networks/moonriver/):
-* [Arbitrum](https://offchainlabs.com/): 
+* [Ethereum Mainnet](https://ethereum.org/en/)
+* [Avalanche](https://www.avax.network/)
+* [Fantom](https://fantom.foundation/)
+* [Polygon](https://polygon.technology/)
+* [Moonriver](https://moonbeam.network/networks/moonriver/)
+* [Arbitrum](https://offchainlabs.com/)
 
 ## Compatible Assets
 
