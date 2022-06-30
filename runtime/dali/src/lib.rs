@@ -867,20 +867,24 @@ impl crowdloan_rewards::Config for Runtime {
 
 parameter_types! {
 	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
+	pub const MaxStakingDurationPresets : u32 = 10;
+	pub const MaxRewardConfigsPerPool : u32 = 10;
 }
 
 impl pallet_staking_rewards::Config for Runtime {
 	type Event = Event;
-	type Share = Balance;
 	type Balance = Balance;
-	type PoolId = u16;
+	type RewardPoolId = u16;
 	type PositionId = u128;
-	type MayBeAssetId = CurrencyId;
+	type AssetId = CurrencyId;
 	type CurrencyFactory = CurrencyFactory;
 	type UnixTime = Timestamp;
 	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
 	type PalletId = StakingRewardsPalletId;
-	type WeightInfo = ();
+	type MaxStakingDurationPresets = MaxStakingDurationPresets;
+	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
+	type RewardPoolCreationOrigin = EnsureRootOrHalfCouncil;
+	type WeightInfo = weights::pallet_staking_rewards::WeightInfo<Runtime>;
 }
 
 /// The calls we permit to be executed by extrinsics
@@ -984,6 +988,7 @@ impl mosaic::Config for Runtime {
 	type RemoteAssetId = MosaicRemoteAssetId;
 	type ControlOrigin = EnsureRootOrHalfCouncil;
 	type WeightInfo = weights::mosaic::WeightInfo<Runtime>;
+	type RemoteAmmId = u128; // TODO: Swap to U256?
 }
 
 pub type LiquidationStrategyId = u32;
@@ -1216,7 +1221,7 @@ construct_runtime!(
 		Lending: lending::{Pallet, Call, Storage, Event<T>} = 64,
 		Pablo: pablo::{Pallet, Call, Storage, Event<T>} = 65,
 		DexRouter: dex_router::{Pallet, Call, Storage, Event<T>} = 66,
-		StakingRewards: pallet_staking_rewards = 67,
+		StakingRewards: pallet_staking_rewards::{Pallet, Call, Storage, Event<T>} = 67,
 
 		CallFilter: call_filter::{Pallet, Call, Storage, Event<T>} = 100,
 
@@ -1295,6 +1300,7 @@ mod benches {
 		[lending, Lending]
 		[assets_registry, AssetsRegistry]
 		[pablo, Pablo]
+		[pallet_staking_rewards, StakingRewards]
 		[dex_router, DexRouter]
 		[pallet_ibc, Ibc]
 		[ibc_transfer, Transfer]

@@ -19,6 +19,8 @@ pub trait WeightInfo {
 	fn rescind_timelocked_mint() -> Weight;
 	fn claim_to() -> Weight;
   fn update_asset_mapping() -> Weight;
+  fn add_remote_amm_id() -> Weight;
+  fn remove_remote_amm_id() -> Weight;
 }
 
 // For backwards compatibility and tests
@@ -70,4 +72,12 @@ impl WeightInfo for () {
   fn update_asset_mapping() -> Weight {
     10_000 as Weight
   }
+
+  fn add_remote_amm_id() -> Weight {
+    10_000 as Weight
+  }
+  fn remove_remote_amm_id() -> Weight {
+    10_000 as Weight
+  }
 }
+

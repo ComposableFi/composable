@@ -1,6 +1,5 @@
 import { BigNumberInput, Input, Modal } from "@/components";
-import { useAppDispatch, useAppSelector } from "@/hooks/store";
-import { closeKSMClaimModal } from "@/stores/ui/uiSlice";
+import { useStore } from "@/stores/root";
 import {
   Box,
   Button,
@@ -47,10 +46,8 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
     needsApproval ? false : true
   );
   const theme = useTheme();
-  const isClaimingStablecoin = useAppSelector(
-    (state) => state.ui.isClaimingKSM
-  );
-  const dispatch = useAppDispatch();
+
+  const { isClaimingStablecoin, closeKSMClaimModal } = useStore(({ ui }) => ui);
   const atc =
     typeof availableToClaim === "number"
       ? new BigNumber(availableToClaim)
@@ -271,7 +268,7 @@ export const StablecoinClaimForm: React.FC<StablecoinClaimFormProps> = ({
         </Box>
       </Paper>
       <Modal
-        onClose={() => dispatch(closeKSMClaimModal())}
+        onClose={() => closeKSMClaimModal()}
         open={isClaimingStablecoin}
         maxWidth="md"
         dismissible

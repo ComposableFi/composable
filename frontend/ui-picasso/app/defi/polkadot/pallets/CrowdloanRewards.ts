@@ -1,15 +1,12 @@
 import { ApiPromise } from "@polkadot/api";
 import { Signer } from "@polkadot/api/types";
-import { AnyAction, Dispatch } from "@reduxjs/toolkit";
 import BigNumber from "bignumber.js";
 
 export class CrowdloanRewards {
   api: ApiPromise;
-  dispatch: Dispatch<AnyAction>;
 
-  constructor(api: ApiPromise, dispatch: Dispatch<AnyAction>) {
+  constructor(api: ApiPromise) {
     this.api = api;
-    this.dispatch = dispatch;
   }
   /**
    * Send association to picasso chain
@@ -87,9 +84,9 @@ export class CrowdloanRewards {
   }
 
   public async queryAvailableToClaim(account: string) {
-    let rpcRes = await this.api.rpc.crowdloanRewards.amountAvailableToClaimFor(
-      account
-    );
+    let rpcRes = await (
+      this.api.rpc as any
+    ).crowdloanRewards.amountAvailableToClaimFor(account);
 
     let availableToClaim = rpcRes.toString();
     return availableToClaim;

@@ -9,6 +9,7 @@ export const fetchBalanceByAssetId = async (
 ): Promise<BigNumber> => {
   try {
     const uAccount = api.createType("AccountId32", accountId);
+    // @ts-ignore
     const balance = await api.rpc.assets.balanceOf(assetId, uAccount);
 
     return fromChainIdUnit(new BigNumber(balance.toString()));

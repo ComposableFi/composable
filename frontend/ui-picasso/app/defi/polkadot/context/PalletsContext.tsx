@@ -1,4 +1,3 @@
-import { useAppDispatch } from "@/hooks/store";
 import React, { createContext, useEffect, useState } from "react";
 import { usePicassoProvider } from "../hooks";
 import { CrowdloanRewards } from "../pallets/CrowdloanRewards";
@@ -12,13 +11,12 @@ export const PalletsContextProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const appDispatch = useAppDispatch();
   const { parachainApi, apiStatus } = usePicassoProvider();
 
   useEffect(() => {
     if (parachainApi && apiStatus === "connected") {
       setPallets({
-        crowdloanRewards: new CrowdloanRewards(parachainApi, appDispatch),
+        crowdloanRewards: new CrowdloanRewards(parachainApi),
       });
     }
   }, [parachainApi, apiStatus]);

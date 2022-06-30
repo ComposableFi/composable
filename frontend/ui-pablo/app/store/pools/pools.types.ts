@@ -59,6 +59,8 @@ export interface LiquidityBootstrappingPool {
         quote: number;
     },
     sale: {
+        startBlock: string;
+        endBlock: string;
         start: number;
         end: number;
         duration: number;

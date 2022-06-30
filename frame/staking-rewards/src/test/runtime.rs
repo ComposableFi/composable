@@ -1,9 +1,7 @@
 use crate::test::prelude::*;
 use composable_traits::{
-	currency::{Exponent, LocalAssets},
-	defi::DeFiComposableConfig,
+	currency::LocalAssets,
 	governance::{GovernanceRegistry, SignedRawOrigin},
-	oracle::Price,
 };
 
 use frame_support::{
@@ -14,7 +12,6 @@ use frame_support::{
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use hex_literal::hex;
-use once_cell::sync::Lazy;
 use orml_traits::{parameter_type_with_key, GetByKey};
 use sp_arithmetic::traits::Zero;
 use sp_runtime::{
@@ -25,8 +22,8 @@ use sp_runtime::{
 	DispatchError, Perbill,
 };
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Runtime>;
-type Block = frame_system::mocking::MockBlock<Runtime>;
+type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
+type Block = frame_system::mocking::MockBlock<Test>;
 pub type Balance = u128;
 pub type Amount = i128;
 pub type BlockNumber = u64;
@@ -43,7 +40,7 @@ ord_parameter_types! {
 }
 
 frame_support::construct_runtime!(
-	pub enum Runtime where
+	pub enum Test where
 		Block = Block,
 		NodeBlock = Block,
 		UncheckedExtrinsic = UncheckedExtrinsic,
@@ -63,7 +60,7 @@ parameter_types! {
 	pub const SS58Prefix: u8 = 42;
 }
 
-impl frame_system::Config for Runtime {
+impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
 	type BlockWeights = ();
 	type BlockLength = ();
@@ -94,7 +91,7 @@ parameter_types! {
 	pub const ExistentialDeposit: u64 = 1000;
 }
 
-impl pallet_balances::Config for Runtime {
+impl pallet_balances::Config for Test {
 	type Balance = Balance;
 	type Event = Event;
 	type DustRemoval = ();
@@ -112,14 +109,14 @@ parameter_types! {
 	pub const MinimumPeriod: u64 = MILLISECS_PER_BLOCK / 2;
 }
 
-impl pallet_timestamp::Config for Runtime {
+impl pallet_timestamp::Config for Test {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	type MinimumPeriod = MinimumPeriod;
 	type WeightInfo = ();
 }
 
-impl pallet_currency_factory::Config for Runtime {
+impl pallet_currency_factory::Config for Test {
 	type Event = Event;
 	type AssetId = CurrencyId;
 	type AddOrigin = EnsureRoot<AccountId>;
@@ -134,7 +131,7 @@ parameter_type_with_key! {
 }
 
 type ReserveIdentifier = [u8; 8];
-impl orml_tokens::Config for Runtime {
+impl orml_tokens::Config for Test {
 	type Event = Event;
 	type Balance = Balance;
 	type Amount = Amount;
@@ -172,7 +169,7 @@ parameter_types! {
 	pub const NativeAssetId: CurrencyId = PICA::ID;
 }
 
-impl pallet_assets::Config for Runtime {
+impl pallet_assets::Config for Test {
 	type NativeAssetId = NativeAssetId;
 	type GenerateCurrencyId = CurrencyFactory;
 	type AssetId = CurrencyId;
@@ -187,18 +184,27 @@ impl pallet_assets::Config for Runtime {
 
 parameter_types! {
 	pub const StakingRewardsPalletId : PalletId = PalletId(*b"stk_rwrd");
+	pub const MaxStakingDurationPresets : u32 = 10;
+	pub const MaxRewardConfigsPerPool : u32 = 10;
 }
 
-impl pallet_staking_rewards::Config for Runtime {
+impl pallet_staking_rewards::Config for Test {
 	type Event = Event;
-	type Share = Balance;
 	type Balance = Balance;
-	type PoolId = u16;
+	type RewardPoolId = u16;
 	type PositionId = u128;
-	type MayBeAssetId = CurrencyId;
+	type AssetId = CurrencyId;
 	type CurrencyFactory = CurrencyFactory;
 	type UnixTime = Timestamp;
 	type ReleaseRewardsPoolsBatchSize = frame_support::traits::ConstU8<13>;
 	type PalletId = StakingRewardsPalletId;
+	type MaxStakingDurationPresets = MaxStakingDurationPresets;
+	type MaxRewardConfigsPerPool = MaxRewardConfigsPerPool;
+	type RewardPoolCreationOrigin = EnsureRoot<Self::AccountId>;
 	type WeightInfo = ();
+}
+
+// Build genesis storage according to the mock runtime.
+pub fn new_test_ext() -> sp_io::TestExternalities {
+	frame_system::GenesisConfig::default().build_storage::<Test>().unwrap().into()
 }

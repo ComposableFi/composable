@@ -24,6 +24,7 @@ export function stringToBigNumber(value: string): BigNumber {
 export async function fetchBondOfferCount(api: ApiPromise) {
   const countBondOffers = await api.query.bondedFinance.bondOfferCount();
 
+  // @ts-ignore
   return new BigNumber(countBondOffers.toHuman());
 }
 
@@ -31,7 +32,10 @@ export async function fetchBonds(api: ApiPromise) {
   // Count bonded offers
   const bondOfferCount = await fetchBondOfferCount(api);
 
-  const bonds = await Promise.all(
+  // @ts-ignore
+  const bonds: Option<
+    ITuple<[AccountId32, ComposableTraitsBondedFinanceBondOffer]>
+  >[] = await Promise.all(
     createArrayOfLength(bondOfferCount.toNumber()).map(
       (index) => api.query.bondedFinance.bondOffers(index + 1) // index + 1 is offerId
     )
@@ -241,7 +245,7 @@ export async function purchaseBond({
             setOpen(false);
             setOpen2nd(false);
           },
-          (txHash: string, events) => {
+          (txHash: string) => {
             enqueueSnackbar("Bond transaction successful", {
               variant: "success",
               isClosable: true,

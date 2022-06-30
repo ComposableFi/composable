@@ -7,16 +7,11 @@ version = "0.1.0"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
 ibc-primitives = { path = "../ibc-primitives", default-features = false }
 pallet-ibc = { path = "../", default-features = false }
+sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22", default-features = false }
 
 [features]
 default = ['std']
-std = [
-  'sp-api/std',
-  'sp-std/std',
-  'ibc-primitives/std',
-  'pallet-ibc/std'
-]
+std = ['sp-api/std', 'sp-std/std', 'ibc-primitives/std', 'pallet-ibc/std']

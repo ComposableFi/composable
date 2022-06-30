@@ -33,14 +33,3 @@ export const putAuctionHistoryLBP = (
     draft.activeLBPHistory = [...history];
   });
 }
-
-export const putChartSeries = (
-  lbpState: AuctionsSlice["auctions"],
-  series: "price" | "predicted",
-  data: [number, number][]
-) => {
-  return produce(lbpState, (draft) => {
-    if (series === "predicted") draft.activeChart.predicted = data;
-    if (series === "price") draft.activeChart.price = data;
-  });
-}

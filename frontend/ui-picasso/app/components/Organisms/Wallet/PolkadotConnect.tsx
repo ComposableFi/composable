@@ -1,12 +1,8 @@
+import { DEFI_CONFIG } from "@/defi/polkadot/config";
 import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { usePicassoProvider } from "@/defi/polkadot/hooks";
 import { TokenId } from "@/defi/Tokens";
-import { useAppDispatch, useAppSelector } from "@/hooks/store";
-import {
-  closePolkadotModal,
-  openPolkadotModal,
-  setHasTriedEagerConnect,
-} from "@/stores/ui/uiSlice";
+import { useStore } from "@/stores/root";
 import { ChevronLeft } from "@mui/icons-material";
 import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
 import Image from "next/image";
@@ -21,15 +17,14 @@ const Status = () => {
   const { extensionStatus, selectedAccount } = useContext(ParachainContext);
   const { accounts } = usePicassoProvider();
   const theme = useTheme();
-  const dispatch = useAppDispatch();
   let label =
     accounts.length && selectedAccount !== -1
       ? accounts[selectedAccount].name
       : "";
-
-  const assets = useAppSelector((state) =>
-    Object.values(state.substrateBalances)
+  const substrateBalances = useStore(
+    ({ substrateBalances }) => substrateBalances
   );
+  const { openPolkadotModal } = useStore(({ ui }) => ui);
   const [selectedAsset, setSelectedAsset] =
     useState<TokenId | undefined>("pica");
 
@@ -46,13 +41,15 @@ const Status = () => {
         <Select
           value={selectedAsset}
           setValue={setSelectedAsset}
-          options={assets.map((asset) => ({
-            value: asset.tokenId,
+          options={DEFI_CONFIG.networkIds.map((networkId) => ({
+            value: substrateBalances[networkId].tokenId,
             label:
-              Number(asset.balance) < 1000
-                ? asset.balance
-                : (Number(asset.balance) / 1000).toFixed(1) + "K",
-            icon: asset.icon,
+              Number(substrateBalances[networkId].balance) < 1000
+                ? substrateBalances[networkId].balance
+                : (Number(substrateBalances[networkId].balance) / 1000).toFixed(
+                    1
+                  ) + "K",
+            icon: substrateBalances[networkId].icon,
           }))}
           sx={{
             "& .MuiOutlinedInput-root": {
@@ -63,7 +60,7 @@ const Status = () => {
         />
         <AccountIndicator
           onClick={() => {
-            dispatch(openPolkadotModal());
+            openPolkadotModal();
           }}
           network="polkadot"
           label={label}
@@ -75,7 +72,7 @@ const Status = () => {
   return (
     <ConnectButton
       onClick={() => {
-        dispatch(openPolkadotModal());
+        openPolkadotModal();
       }}
       imageSrc="/networks/dotsama_polkadot_not_connected.svg"
       imageAlt="DotSama Polkadot"
@@ -89,11 +86,14 @@ export const PolkadotConnect: React.FC<{}> = () => {
   const { deactivate, extensionStatus, activate, setSelectedAccount } =
     useContext(ParachainContext);
   const theme = useTheme();
-  const dispatch = useAppDispatch();
-  const isModalOpen = useAppSelector((state) => state.ui.isPolkadotModalOpen);
-  const hasTriedEagerConnect = useAppSelector(
-    (state) => state.ui.hasTriedEagerConnect
-  );
+
+  const {
+    closePolkadotModal,
+    openPolkadotModal,
+    setHasTriedEagerConnect,
+    isPolkadotModalOpen,
+    hasTriedEagerConnect,
+  } = useStore(({ ui }) => ui);
 
   const handleConnectPolkadot = async () => {
     if (activate) {
@@ -104,19 +104,21 @@ export const PolkadotConnect: React.FC<{}> = () => {
   useEffect(() => {
     if (!hasTriedEagerConnect) {
       setTimeout(() => {
-        dispatch(openPolkadotModal());
-        dispatch(setHasTriedEagerConnect());
+        openPolkadotModal();
+        setHasTriedEagerConnect();
         // wait 2P secs
       }, 1000);
     }
+    // Only to be called on page load therefore we can omit dependencies.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <>
       <Status />
       <Modal
-        onClose={() => dispatch(closePolkadotModal())}
-        open={isModalOpen}
+        onClose={() => closePolkadotModal()}
+        open={isPolkadotModalOpen}
         maxWidth="sm"
         dismissible
       >
