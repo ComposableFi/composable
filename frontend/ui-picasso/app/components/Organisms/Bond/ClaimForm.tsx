@@ -3,7 +3,6 @@ import { Box, Button, InputAdornment, Stack, Typography } from "@mui/material";
 import { BigNumberInput, TokenAsset } from "@/components";
 import { usePicassoProvider, useSelectedAccount } from "@/defi/polkadot/hooks";
 import { useOpenPositions } from "@/defi/polkadot/hooks/useOpenPositions";
-import { useAppSelector } from "@/hooks/store";
 import PositionDetailsRow from "@/components/Atom/PositionDetailsRow";
 import { claim, getROI } from "@/defi/polkadot/pallets/BondedFinance";
 import BigNumber from "bignumber.js";
@@ -16,6 +15,7 @@ import { useClaim } from "@/stores/defi/polkadot/bonds/useClaim";
 import { findCurrentBond } from "@/stores/defi/polkadot/bonds/utils";
 import { useSnackbar } from "notistack";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
+import { useStore } from "@/stores/root";
 
 export const ClaimForm = () => {
   const theme = useTheme();
@@ -28,8 +28,8 @@ export const ClaimForm = () => {
     bond?.toString() ?? ""
   );
   const { enqueueSnackbar } = useSnackbar();
-  const openBonds = useAppSelector<ActiveBond[]>(
-    (state) => state.bonding.openPositions
+  const openBonds = useStore<ActiveBond[]>(
+    (state) => state.bonds.openPositions
   );
   const activeBond = openBonds.find((b: ActiveBond) =>
     findCurrentBond(b, bond?.toString() ?? "")

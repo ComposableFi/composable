@@ -1,9 +1,10 @@
 import { ApiPromise, WsProvider } from "@polkadot/api";
-import React, { useState, useEffect, createContext } from "react";
+import React, { createContext, useEffect, useState } from "react";
 import type { InjectedExtension } from "@polkadot/extension-inject/types";
 import { getChainId } from "./utils";
 
 import * as definitions from "../interfaces/definitions";
+
 export interface ParachainApi {
   chainId: string;
   parachainApi: ApiPromise | undefined;
@@ -175,7 +176,9 @@ const ParachainContextProvider = ({
             {}
           );
         const types = Object.keys(definitions)
-          .filter((key) => Object.keys((definitions as any)[key].types).length > 0)
+          .filter(
+            (key) => Object.keys((definitions as any)[key].types).length > 0
+          )
           .reduce(
             (accumulator, key) => ({
               ...accumulator,
@@ -220,7 +223,8 @@ const ParachainContextProvider = ({
           });
         });
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [parachainProviders, supportedChains]);
 
   const [selectedAccount, setSelectedAccount] = useState<number | -1>(-1);
 

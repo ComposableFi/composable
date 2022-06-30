@@ -3,6 +3,7 @@
 - [👋 Introduction](introduction.md)
 - [💻 Developer Guides](./developer-guides.md)
     - [Composable SDK](./developer-guides/composable-sdk.md)
+    - [Oracle Set-Up Guide](./developer-guides/oracle-set-up-guide/oracle-set-up-guide.md)
     - [Collator Set-Up Guide](./developer-guides/collator-set-up-guide.md)
 
 # 💿 PRODUCTS
@@ -70,6 +71,9 @@
   - [Runtime Tests](./codespaces/runtime-tests.md)
 
 # 🎨 PALLETS AND INTEGRATION GUIDES
+- [airdrop](./pallets/airdrop.md)
+    - [Extrinsics](./pallets/airdrop/extrinsics.md)
+    - [Integration Guide](./pallets/airdrop/integration-guide.md)
 - [crowdloan-rewards](./pallets/crowdloan-rewards.md)
     - [Extrinsics](./pallets/crowdloan-rewards/extrinsics.md)
     - [Integration Guide](./pallets/crowdloan-rewards/integration-guide.md)

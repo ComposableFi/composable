@@ -4,7 +4,6 @@ import { Box, Grid, useTheme } from "@mui/material";
 
 import Default from "@/components/Templates/Default";
 import { PageTitle } from "@/components/Molecules";
-import { useAppSelector } from "@/hooks/store";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { Updater } from "@/stores/defi/polkadot/bonds/PolkadotBondsUpdater";
 import { getROI } from "@/defi/polkadot/pallets/BondedFinance";
@@ -19,6 +18,7 @@ import {
 import { useOpenPositions } from "@/defi/polkadot/hooks/useOpenPositions";
 import { ClaimForm } from "@/components/Organisms/Bond/ClaimForm";
 import { useBalanceForOffer } from "@/stores/defi/polkadot/bonds/useBalanceForOffer";
+import { useStore } from "@/stores/root";
 
 const standardPageSize = {
   xs: 12,
@@ -28,15 +28,15 @@ const Bond: NextPage = () => {
   const theme = useTheme();
   const router = useRouter();
   const { bond } = router.query;
-  const bondOffer = useAppSelector<BondOffer>(
-    (state) => state.bonding.bonds[Number(bond) - 1]
+  const bondOffer = useStore<BondOffer>(
+    (state) => state.bonds.bonds[Number(bond) - 1]
   );
 
   const { isLoading: isLoadingBalances, balances } =
     useBalanceForOffer(bondOffer);
   const account = useSelectedAccount();
   useOpenPositions(account);
-  const openPositions = useAppSelector((state) => state.bonding.openPositions);
+  const openPositions = useStore((state) => state.bonds.openPositions);
   const maxPurchasableBond = getMaxPurchasableBonds(
     bondOffer,
     balances[bondOffer?.assetId]

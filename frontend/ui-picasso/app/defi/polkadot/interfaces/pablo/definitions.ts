@@ -22,11 +22,34 @@ export default {
         {
           name: "at",
           type: "Hash",
-          isOptional: true
+          isOptional: true,
         }
       ],
       type: "PalletPabloPriceAggregate"
-    }
+    },
+    expectedLpTokensGivenLiquidity: {
+      description: "Get expected amount of LP tokens when providing liquidity to a pool.",
+      params: [
+        {
+          name: "poolId",
+          type: "PalletPabloPoolId"
+        },
+        {
+          name: "baseAssetAmount",
+          type: "CustomRpcBalance"
+        },
+        {
+          name: "quoteAssetAmount",
+          type: "CustomRpcBalance"
+        },
+        {
+          name: "at",
+          type: "Hash",
+          isOptional: true,
+        }
+      ],
+      type: "CustomRpcBalance"
+    },
   },
   types: {
     PalletPabloPoolInitConfiguration: "PalletPabloPoolConfiguration",
@@ -36,13 +59,14 @@ export default {
           owner: "AccountId32",
           pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
           amplification_coefficient: "u16",
-          fee: "Permill"
+          fee: "Permill",
+          ownerFee: "Permill"
         },
         ConstantProduct: {
           owner: "AccountId32",
           pair: "ComposableTraitsDefiCurrencyPairCurrencyId",
           fee: "Permill",
-          baseWeight: "Permill"
+          ownerFee: "Permill"
         },
         LiquidityBootstrapping: {
           owner: "AccountId32",
@@ -53,11 +77,7 @@ export default {
             initial_weight: "Permill",
             final_weight: "Permill"
           },
-          feeConfig: {
-            feeRate: "Permill",
-            ownerFeeRate: "Permill",
-            protocolFeeRate: "Permill"
-          }
+          fee: "Permill",
         }
       }
     },
@@ -68,14 +88,7 @@ export default {
       poolId: "PalletPabloPoolId",
       baseAssetId: "CustomRpcCurrencyId",
       quoteAssetId: "CustomRpcCurrencyId",
-      spotPrice: "CustomRpcBalance"
+      spotPrice: "CustomRpcBalance",
     },
-    ComposableTraitsDexFee: {
-      fee: "u128",
-      lp_fee: "u128",
-      owner_fee: "u128",
-      protocol_fee: "u128",
-      asset_id: "u128"
-    }
-  }
+  },
 };
