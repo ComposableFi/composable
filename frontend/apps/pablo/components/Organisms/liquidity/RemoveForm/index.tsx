@@ -91,8 +91,8 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
           console.error(err)
         });
     } else {
-      setExpectedRemoveAmountBase(new BigNumber(0));
-      setExpectedRemoveAmountQuote(new BigNumber(0));
+      setExpectedRemoveAmountBase(prevState => prevState.eq(0) ? prevState : new BigNumber(0));
+      setExpectedRemoveAmountQuote(prevState => prevState.eq(0) ? prevState : new BigNumber(0));
     }
   }, [parachainApi, debouncedPercentage, lpBalance, poolId]);
 
@@ -121,7 +121,7 @@ export const RemoveLiquidityForm: React.FC<BoxProps> = ({ ...rest }) => {
 
   useEffect(() => {
     dispatch(setMessage({}));
-    // Dispatch doesn't need to be added to the dependency list. 
+    // Dispatch doesn't need to be added to the dependency list.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

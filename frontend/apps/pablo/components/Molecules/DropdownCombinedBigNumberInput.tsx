@@ -41,9 +41,9 @@ export const DropdownCombinedBigNumberInput: React.FC<DropdownCombinedBigNumberI
     setValid && setValid(!hasError);
   }, [hasError, setValid]);
 
-  React.useEffect(() => {
-    setter && setter(bignrValue);
-  }, [bignrValue, setter]);
+  // React.useEffect(() => {
+  //   setter?.(bignrValue);
+  // }, [bignrValue, setter]);
 
   React.useEffect(() => {
     if (value !== bignrValue) {
