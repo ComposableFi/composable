@@ -74,7 +74,6 @@ mod liquidity_rebalance {
 	use sp_runtime::Perquintill;
 
 	#[test]
-	#[allow(clippy::disallowed_methods)]
 	fn rebalance_emits_event() {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
@@ -133,7 +132,6 @@ mod set_pool_id_for_asset {
 	use sp_runtime::Perquintill;
 
 	#[test]
-	#[allow(clippy::disallowed_methods)]
 	fn caller_is_persmissoned() {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
@@ -184,7 +182,6 @@ mod set_pool_id_for_asset {
 	}
 
 	#[test]
-	#[allow(clippy::disallowed_methods)]
 	fn setting_pool_id_for_the_first_time_succeeds() {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
@@ -209,7 +206,6 @@ mod set_pool_id_for_asset {
 	}
 
 	#[test]
-	#[allow(clippy::disallowed_methods)]
 	fn setting_pool_id_for_the_second_time_initiates_transfer() {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
@@ -283,7 +279,6 @@ mod set_access {
 	use frame_support::assert_ok;
 
 	#[test]
-	#[allow(clippy::disallowed_methods)]
 	fn add_an_admin_account() {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
@@ -301,7 +296,6 @@ mod set_access {
 	}
 
 	#[test]
-	#[allow(clippy::disallowed_methods)]
 	fn change_access_existing_account() {
 		ExtBuilder::default().build().execute_with(|| {
 			System::set_block_number(1);
