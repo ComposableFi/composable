@@ -339,7 +339,7 @@ where
 	fn query_newly_created_clients(&self, block_hash: Hash) -> Result<Vec<IdentifiedClientState>>;
 
 	/// Query Ibc Events that were deposited in a series of blocks
-	/// Returning a string because HashMap fails to deserialize when key is not a String
+	/// Using String keys because HashMap fails to deserialize when key is not a String
 	#[method(name = "ibc_queryIbcEvents")]
 	fn query_ibc_events(
 		&self,
