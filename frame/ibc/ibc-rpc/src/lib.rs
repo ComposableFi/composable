@@ -1306,15 +1306,10 @@ where
 		let api = self.client.runtime_api();
 		let mut events = HashMap::new();
 		for block_number_or_hash in block_numbers {
-			let block_hash = match block_number_or_hash {
-				BlockNumberOrHash::Hash(block_hash) => block_hash,
-				BlockNumberOrHash::Number(block_number) =>
-					self.client.hash(block_number.into()).ok().flatten().ok_or_else(|| {
-						runtime_error_into_rpc_error("[ibc_rpc]: unknown block number provided")
-					})?,
+			let at = match block_number_or_hash {
+				BlockNumberOrHash::Hash(block_hash) => BlockId::Hash(block_hash),
+				BlockNumberOrHash::Number(block_number) => BlockId::Number(block_number.into()),
 			};
-
-			let at = BlockId::Hash(block_hash);
 
 			let temp = api
 				.block_events(&at)
