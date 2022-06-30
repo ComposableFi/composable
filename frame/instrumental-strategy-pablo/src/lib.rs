@@ -298,7 +298,7 @@ pub mod pallet {
 			<Self as InstrumentalProtocolStrategy>::rebalance()?;
 			Ok(().into())
 		}
-		/// Occur set access to Account and add it to AdminAccountIds storage.
+		/// Occur set access to Account and add it to [`AdminAccountIds`](AdminAccountIds) storage.
 		///
 		/// Emits [`AssociatedAccountId`](Event::AssociatedAccountId) event when successful.
 		#[transactional]
@@ -313,7 +313,7 @@ pub mod pallet {
 				who,
 				AccessRights::SetAccess,
 			)?;
-			<Self as InstrumentalProtocolStrategy>::set_access(account_id.clone(), access)?;
+			<Self as InstrumentalProtocolStrategy>::set_access(&account_id, access)?;
 			Self::deposit_event(Event::AssociatedAccountId { account_id, access });
 			Ok(().into())
 		}
@@ -334,14 +334,14 @@ pub mod pallet {
 		}
 
 		#[transactional]
-		fn set_access(account_id: T::AccountId, access: AccessRights) -> DispatchResult {
-			match AdminAccountIds::<T>::try_get(account_id.clone()) {
+		fn set_access(account_id: &T::AccountId, access: AccessRights) -> DispatchResult {
+			match AdminAccountIds::<T>::try_get(&account_id) {
 				Ok(_) => {
-					AdminAccountIds::<T>::mutate(account_id.clone(), |current_access| {
+					AdminAccountIds::<T>::mutate(&account_id, |current_access| {
 						*current_access = Some(access);
 					});
 				},
-				Err(_) => AdminAccountIds::<T>::insert(account_id, access),
+				Err(_) => AdminAccountIds::<T>::insert(&account_id, access),
 			}
 			Ok(())
 		}
@@ -407,7 +407,7 @@ pub mod pallet {
 							});
 						}
 					}
-				};
+				}
 				Pools::<T>::mutate(asset_id, |_| PoolState {
 					pool_id: new_pool_id,
 					state: State::Normal,

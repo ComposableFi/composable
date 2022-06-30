@@ -99,5 +99,5 @@ pub trait InstrumentalProtocolStrategy {
 		new_pool_id: Self::PoolId,
 	) -> DispatchResult;
 
-	fn set_access(account: Self::AccountId, access: AccessRights) -> DispatchResult;
+	fn set_access(account: &Self::AccountId, access: AccessRights) -> DispatchResult;
 }
