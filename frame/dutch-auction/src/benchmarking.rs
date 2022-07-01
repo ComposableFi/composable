@@ -2,19 +2,19 @@ use super::*;
 use crate::Pallet as DutchAuction;
 use codec::Decode;
 use composable_traits::{
-    time::{TimeReleaseFunction, LinearDecrease},
-    defi::{CurrencyPair, DeFiComposableConfig, Ratio, Sell, Take},
-    xcm::XcmSellRequest,
+	defi::{CurrencyPair, DeFiComposableConfig, Ratio, Sell, Take},
+	time::{LinearDecrease, TimeReleaseFunction},
+	xcm::XcmSellRequest,
 };
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::traits::{fungibles::Mutate, Currency, Get, Hooks};
 use frame_system::{pallet_prelude::BlockNumberFor, RawOrigin};
+use sp_core::{crypto::UncheckedFrom, H256};
 use sp_runtime::{
 	traits::{AccountIdConversion, Saturating},
 	FixedPointNumber,
 };
 use sp_std::prelude::*;
-use sp_core::{H256, crypto::UncheckedFrom};
 
 type TraitBalance<T> = <T as DeFiComposableConfig>::Balance;
 
@@ -76,7 +76,7 @@ benchmarks! {
 		let admin_account = T::AccountId::decode(&mut sp_runtime::traits::TrailingZeroInput::zeroes()).unwrap();
 		let origin = RawOrigin::Root;
 	}: _(origin, configuration_id, configuration)
-    ask {
+	ask {
 		let sell = sell_identity::<T>();
 		let account_id : T::AccountId = whitelisted_caller();
 		let caller = RawOrigin::Signed(account_id.clone());
@@ -137,7 +137,7 @@ benchmarks! {
 		};
 		let origin = cumulus_pallet_xcm::Origin::SiblingParachain(42u32.into());
 	}: _(origin, request)
-    known_overhead_for_on_finalize {
+	known_overhead_for_on_finalize {
 		let sell = sell_identity::<T>();
 		let account_id: T::AccountId = whitelisted_caller();
 		let caller = RawOrigin::Signed(account_id.clone());

@@ -5,7 +5,11 @@ use crate::{
 };
 
 use composable_traits::defi::DeFiComposableConfig;
-use frame_support::{ord_parameter_types, parameter_types, traits::{Everything, EnsureOneOf}, PalletId};
+use frame_support::{
+	ord_parameter_types, parameter_types,
+	traits::{EnsureOneOf, Everything},
+	PalletId,
+};
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use hex_literal::hex;
 use orml_traits::parameter_type_with_key;
@@ -188,7 +192,6 @@ impl cumulus_pallet_xcm::Config for Runtime {
 	type Event = Event;
 	type XcmExecutor = ();
 }
-
 
 pub struct XcmFake;
 impl Into<Result<cumulus_pallet_xcm::Origin, XcmFake>> for XcmFake {
