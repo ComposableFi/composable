@@ -63,9 +63,10 @@ pub mod pallet {
 		pallet_prelude::*, traits::UnixTime, transactional, BoundedBTreeMap, PalletId,
 	};
 	use frame_system::pallet_prelude::*;
-	use sp_arithmetic::{traits::One, Permill};
+	use sp_arithmetic::{traits::One, Perbill, Permill};
 	use sp_runtime::traits::BlockNumberProvider;
 	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug};
+
 
 	use crate::{prelude::*, weights::WeightInfo};
 
@@ -81,6 +82,18 @@ pub mod pallet {
 			/// End block
 			end_block: T::BlockNumber,
 		},
+		StakeCreated {
+			/// Id of newly created stake.
+			pool_id: T::RewardPoolId,
+			/// Owner of the stake.
+			owner: T::AccountId,
+			amount: T::Balance,
+			/// Duration of stake.
+			duration_preset: DurationSeconds,
+			/// Position Id of newly created stake.
+			position_id: T::PositionId,
+			keep_alive: bool,
+		}
 	}
 
 	#[pallet::error]
@@ -91,6 +104,10 @@ pub mod pallet {
 		EndBlockMustBeInTheFuture,
 		/// Unimplemented reward pool type.
 		UnimplementedRewardPoolConfiguration,
+		/// Rewards pool not found.
+		RewardsPoolNotFound,
+		/// Error when creating reduction configs.
+		ReductionConfigProblem,
 	}
 
 	#[pallet::config]
@@ -116,7 +133,7 @@ pub mod pallet {
 			+ SafeArithmetic;
 
 		/// The position id type.
-		type PositionId: Parameter + Member + Clone + FullCodec + Zero;
+		type PositionId: Parameter + Member + Clone + FullCodec + Copy + Zero + One + SafeArithmetic;
 
 		type AssetId: Parameter
 			+ Member
@@ -180,6 +197,16 @@ pub mod pallet {
 		>,
 	>;
 
+	type StakeOf<T> = Stake<
+		<T as Config>::RewardPoolId,
+		<T as Config>::Balance,
+		Rewards<
+			<T as Config>::AssetId,
+			<T as Config>::Balance,
+			<T as Config>::MaxRewardConfigsPerPool,
+		>,
+	>;
+
 	#[pallet::pallet]
 	#[pallet::generate_store(pub (super) trait Store)]
 	#[pallet::without_storage_info]
@@ -195,6 +222,17 @@ pub mod pallet {
 	#[pallet::getter(fn pools)]
 	pub type RewardPools<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::RewardPoolId, RewardPoolOf<T>>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn stake_count)]
+	#[allow(clippy::disallowed_types)]
+	pub type StakeCount<T: Config> =
+		StorageValue<_, T::PositionId, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn stakes)]
+	pub type Stakes<T: Config> =
+		StorageMap<_, Blake2_128Concat, T::PositionId, StakeOf<T>>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -258,13 +296,64 @@ pub mod pallet {
 
 		#[transactional]
 		fn stake(
-			_who: &Self::AccountId,
-			_pool_id: &Self::RewardPoolId,
-			_amount: Self::Balance,
-			_duration_preset: DurationSeconds,
-			_keep_alive: bool,
+			who: &Self::AccountId,
+			pool_id: &Self::RewardPoolId,
+			amount: Self::Balance,
+			duration_preset: DurationSeconds,
+			keep_alive: bool,
 		) -> Result<Self::PositionId, DispatchError> {
-			Err("Not implemented".into())
+			let mut rewards_pool = RewardPools::<T>::try_get(pool_id)
+				.map_err(|_| Error::<T>::RewardsPoolNotFound)?;
+
+			let (_duration, reward_multiplier) = Self::find_nearest_duration_preset(&rewards_pool.lock.duration_presets, duration_preset)
+				.ok_or(Error::<T>::RewardConfigProblem)?;
+			let boosted_amount = reward_multiplier * amount;
+			let new_pool_shares = boosted_amount;
+			let mut reductions: BoundedBTreeMap<T::AssetId, Reward<T::AssetId, T::Balance>, <T as Config>::MaxRewardConfigsPerPool> = BoundedBTreeMap::new();
+
+			let mut inner_rewards = rewards_pool.rewards.into_inner();
+
+			for (asset_id, reward) in inner_rewards.iter_mut() {
+				let inflation = reward.total_rewards * new_pool_shares / rewards_pool.total_shares;
+
+				reward.total_rewards += inflation;
+				reward.total_dilution_adjustment += inflation;
+
+				reductions.try_insert(asset_id.clone(), reward.clone()).map_err(|_| Error::<T>::ReductionConfigProblem)?;
+			}
+			let rewards = Rewards::try_from(inner_rewards).map_err(|_| Error::<T>::RewardConfigProblem)?;
+
+			let new_position = Stake {
+				reward_pool_id: pool_id.clone(),
+				stake: amount,
+				share: boosted_amount,
+				reductions,
+				lock: lock::Lock {
+					started_at: T::UnixTime::now().as_secs(),
+					duration: duration_preset,
+					unlock_penalty: rewards_pool.lock.unlock_penalty,
+				}
+			};
+
+			rewards_pool.total_shares += boosted_amount;
+			rewards_pool.rewards = rewards;
+
+			let position_id = StakeCount::<T>::get();
+
+			RewardPools::<T>::insert(pool_id, rewards_pool);
+			Stakes::<T>::insert(position_id, new_position);
+			StakeCount::<T>::increment()?;
+
+			Self::deposit_event(Event::<T>::StakeCreated {
+				pool_id: pool_id.clone(),
+				owner: who.clone(),
+				amount,
+				duration_preset,
+				position_id,
+				keep_alive,
+			});
+
+			Ok(position_id)
 		}
 
 		#[transactional]
@@ -293,6 +382,33 @@ pub mod pallet {
 			_ratio: Permill,
 		) -> Result<[Self::PositionId; 2], DispatchError> {
 			Err("Not implemented".into())
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		pub(crate) fn find_nearest_duration_preset(
+			duration_presets: &StakingDurationToRewardsMultiplierConfig<<T as Config>::MaxStakingDurationPresets>,
+			duration: DurationSeconds,
+		) -> Option<(DurationSeconds, Perbill)> {
+			if let Some(max_duration) = duration_presets.keys().rev().next() {
+				if max_duration < &duration {
+					return None
+				}
+			} else {
+				return None
+			}
+
+			duration_presets
+				.iter()
+				.rev()
+				.reduce(|acc, (dur, mul)| {
+					if duration <= *dur {
+						(dur, mul)
+					} else {
+						acc
+					}
+				})
+				.map(|(dur, mul)| (dur.clone(), *mul))
 		}
 	}
 }

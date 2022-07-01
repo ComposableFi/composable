@@ -43,6 +43,45 @@ fn test_create_reward_pool() {
 	});
 }
 
+#[test]
+fn find_nearest_duration_preset() {
+	new_test_ext().execute_with(|| {
+		let empty_duration_presets = BoundedBTreeMap::try_from(BTreeMap::new()).unwrap();
+		assert_eq!(
+			StakingRewards::find_nearest_duration_preset(&empty_duration_presets, 0),
+			None
+		);
+
+		let not_empty_duration_presets = BoundedBTreeMap::try_from({
+			let map = BTreeMap::from([
+				(2, Perbill::from_percent(20)),
+				(4, Perbill::from_percent(40)),
+			]);
+			map
+		}).unwrap();
+		assert_eq!(
+			StakingRewards::find_nearest_duration_preset(&not_empty_duration_presets, 1),
+			Some((2, Perbill::from_percent(20)))
+		);
+		assert_eq!(
+			StakingRewards::find_nearest_duration_preset(&not_empty_duration_presets, 2),
+			Some((2, Perbill::from_percent(20)))
+		);
+		assert_eq!(
+			StakingRewards::find_nearest_duration_preset(&not_empty_duration_presets, 3),
+			Some((4, Perbill::from_percent(40)))
+		);
+		assert_eq!(
+			StakingRewards::find_nearest_duration_preset(&not_empty_duration_presets, 4),
+			Some((4, Perbill::from_percent(40)))
+		);
+		assert_eq!(
+			StakingRewards::find_nearest_duration_preset(&not_empty_duration_presets, 5),
+			None
+		);
+	});
+}
+
 fn get_default_reward_pool() -> RewardPoolConfiguration<
 	Public,
 	u128,
