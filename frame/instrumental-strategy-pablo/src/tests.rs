@@ -1,17 +1,29 @@
+use crate::{
+	mock::{
+		account_id::{ADMIN, ALICE},
+		helpers::{create_layr_crowd_loan_pool, set_admin_account_access},
+		runtime::{
+			Event, ExtBuilder, Instrumental, MockRuntime, Origin, PabloStrategy, System, VaultId,
+			MAX_ASSOCIATED_VAULTS,
+		},
+	},
+	pallet,
+	pallet::Error,
+};
+use composable_traits::instrumental::{
+	AccessRights, Instrumental as InstrumentalTrait, InstrumentalVaultConfig, State,
+};
+use frame_support::{assert_noop, assert_ok};
+use primitives::currency::CurrencyId;
+use sp_runtime::Perquintill;
+
 // -------------------------------------------------------------------------------------------------
 //                                          Associate Vault
 // -------------------------------------------------------------------------------------------------
 #[cfg(test)]
 mod associate_vault {
-	use crate::mock::{
-		account_id::ADMIN,
-		helpers::set_admin_account_access,
-		runtime::{ExtBuilder, MockRuntime, Origin, PabloStrategy, VaultId, MAX_ASSOCIATED_VAULTS},
-	};
-	#[allow(unused_imports)]
-	use crate::{pallet, pallet::Error};
-	use composable_traits::instrumental::AccessRights;
-	use frame_support::{assert_noop, assert_ok};
+	use super::*;
+
 	#[test]
 	fn add_an_associated_vault() {
 		ExtBuilder::default().build().execute_with(|| {
@@ -58,20 +70,7 @@ mod associate_vault {
 // -------------------------------------------------------------------------------------------------
 #[cfg(test)]
 mod liquidity_rebalance {
-	use crate::{
-		mock::{
-			account_id::ADMIN,
-			helpers::{create_layr_crowd_loan_pool, set_admin_account_access},
-			runtime::{Event, ExtBuilder, Instrumental, Origin, PabloStrategy, System, VaultId},
-		},
-		pallet,
-	};
-	use composable_traits::instrumental::{
-		AccessRights, Instrumental as InstrumentalTrait, InstrumentalVaultConfig,
-	};
-	use frame_support::assert_ok;
-	use primitives::currency::CurrencyId;
-	use sp_runtime::Perquintill;
+	use super::*;
 
 	#[test]
 	fn rebalance_emits_event() {
@@ -112,24 +111,7 @@ mod liquidity_rebalance {
 // -------------------------------------------------------------------------------------------------
 #[cfg(test)]
 mod set_pool_id_for_asset {
-	use crate::{
-		mock::{
-			account_id::{ADMIN, ALICE},
-			helpers::{create_layr_crowd_loan_pool, set_admin_account_access},
-			runtime::{
-				Event, ExtBuilder, Instrumental, MockRuntime, Origin, PabloStrategy, System,
-				VaultId,
-			},
-		},
-		pallet,
-		pallet::Error,
-	};
-	use composable_traits::instrumental::{
-		AccessRights, Instrumental as InstrumentalTrait, InstrumentalVaultConfig, State,
-	};
-	use frame_support::{assert_noop, assert_ok};
-	use primitives::currency::CurrencyId;
-	use sp_runtime::Perquintill;
+	use super::*;
 
 	#[test]
 	fn caller_is_persmissoned() {
@@ -267,16 +249,7 @@ mod set_pool_id_for_asset {
 // -------------------------------------------------------------------------------------------------
 #[cfg(test)]
 mod set_access {
-	use crate::{
-		mock::{
-			account_id::{ADMIN, ALICE},
-			helpers::set_admin_account_access,
-			runtime::{Event, ExtBuilder, MockRuntime, Origin, PabloStrategy, System},
-		},
-		pallet,
-	};
-	use composable_traits::instrumental::AccessRights;
-	use frame_support::assert_ok;
+	use super::*;
 
 	#[test]
 	fn add_an_admin_account() {
