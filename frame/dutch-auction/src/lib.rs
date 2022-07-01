@@ -273,8 +273,8 @@ pub mod pallet {
 			configuration_id: ConfigurationId,
 			configuration: TimeReleaseFunction,
 		) -> DispatchResultWithPostInfo {
-          	let _ = T::AdminOrigin::ensure_origin(origin)?;
-           
+			let _ = T::AdminOrigin::ensure_origin(origin)?;
+
 			Configurations::<T>::insert(configuration_id, configuration.clone());
 			Self::deposit_event(Event::CofigurationAdded { configuration_id, configuration });
 			Ok(().into())

@@ -1,20 +1,19 @@
 use super::*;
 use crate::Pallet as DutchAuction;
 use codec::Decode;
-use composable_traits:: {
+use composable_traits::{
+	defi::{CurrencyPair, DeFiComposableConfig, Ratio, Sell, Take},
 	time::{LinearDecrease, TimeReleaseFunction},
-    defi::{CurrencyPair, DeFiComposableConfig, Ratio, Sell, Take},
-    xcm::XcmSellRequest,
+	xcm::XcmSellRequest,
 };
 use frame_benchmarking::{benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::traits::{fungibles::Mutate, Currency, Get, Hooks};
-use frame_system::{RawOrigin, pallet_prelude::BlockNumberFor};
+use frame_system::{pallet_prelude::BlockNumberFor, RawOrigin};
+use sp_core::{crypto::UncheckedFrom, H256};
 use sp_runtime::{
 	traits::{AccountIdConversion, Saturating},
 	FixedPointNumber,
 };
-use sp_core::crypto::UncheckedFrom;
-use sp_core::H256;
 use sp_std::prelude::*;
 
 type TraitBalance<T> = <T as DeFiComposableConfig>::Balance;
@@ -58,28 +57,28 @@ where
 		.saturating_mul(1_000_000_000u32.into());
 	<T as pallet::Config>::NativeCurrency::make_free_balance_be(&treasury, native_token_amount);
 	<T as pallet::Config>::NativeCurrency::make_free_balance_be(account_id, native_token_amount);
-  	}
+}
 
 benchmarks! {
 	where_clause {
 		where
-        T: Config + orml_tokens::Config,
+		T: Config + orml_tokens::Config,
 		<T as Config>::MultiCurrency:
 				Mutate<T::AccountId, Balance = TraitBalance<T>, AssetId = T::MayBeAssetId>,
 		<T as Config>::NativeCurrency: Currency<T::AccountId>,
-        T::AccountId: UncheckedFrom<H256>,
-        T::CurrencyId: From<u128>,
-        T::Origin: From<cumulus_pallet_xcm::Origin>,
+		T::AccountId: UncheckedFrom<H256>,
+		T::CurrencyId: From<u128>,
+		T::Origin: From<cumulus_pallet_xcm::Origin>,
 	}
-    
-    add_configuration {
-        let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
+
+	add_configuration {
+		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
 		let configuration_id = 100;
 		let admin_account = T::AccountId::decode(&mut sp_runtime::traits::TrailingZeroInput::zeroes()).unwrap();
-        let origin = RawOrigin::Root;
-    }: _(origin, configuration_id, configuration)
+		let origin = RawOrigin::Root;
+	}: _(origin, configuration_id, configuration)
 
-    ask {
+	ask {
 		let sell = sell_identity::<T>();
 		let account_id : T::AccountId = whitelisted_caller();
 		let caller = RawOrigin::Signed(account_id.clone());
@@ -121,15 +120,15 @@ benchmarks! {
 			caller,
 			order_id
 		)
-    xcm_sell { 
-	    let pair = CurrencyPair::new(crate::mock::currency::USDT, crate::mock::currency::BTC);
-        let sell = Sell::new(pair.base, pair.quote, 1, Ratio::saturating_from_integer(1u64));
+	xcm_sell {
+		let pair = CurrencyPair::new(crate::mock::currency::USDT, crate::mock::currency::BTC);
+		let sell = Sell::new(pair.base, pair.quote, 1, Ratio::saturating_from_integer(1u64));
 		let account_id: [u8;32] = whitelisted_caller();
-        // H256 is used since AccountId32 does not implement From<[u8;32]>
-        let account_id_ref = &T::AccountId::unchecked_from(H256::from(account_id)); 
-        mint_native_tokens::<T>(account_id_ref);
+		// H256 is used since AccountId32 does not implement From<[u8;32]>
+		let account_id_ref = &T::AccountId::unchecked_from(H256::from(account_id));
+		mint_native_tokens::<T>(account_id_ref);
 		orml_tokens::Pallet::<T>::mint_into(pair.base.into(), account_id_ref, 1_000_000u32.into()).unwrap();
-    	let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
+		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
 		let configuration_id = 100;
 		crate::Configurations::<T>::insert(configuration_id, configuration.clone());
 		let request = XcmSellRequest {
@@ -138,8 +137,8 @@ benchmarks! {
 			from_to:account_id ,
 			configuration: configuration_id,
 		};
-        let origin = cumulus_pallet_xcm::Origin::SiblingParachain(42u32.into()); 
-    }: _(origin, request)
+		let origin = cumulus_pallet_xcm::Origin::SiblingParachain(42u32.into());
+	}: _(origin, request)
 	known_overhead_for_on_finalize {
 		let sell = sell_identity::<T>();
 		let account_id : T::AccountId = whitelisted_caller();
