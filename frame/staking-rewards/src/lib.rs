@@ -67,7 +67,6 @@ pub mod pallet {
 	use sp_runtime::traits::BlockNumberProvider;
 	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug};
 
-
 	use crate::{prelude::*, weights::WeightInfo};
 
 	#[pallet::event]
@@ -93,7 +92,7 @@ pub mod pallet {
 			/// Position Id of newly created stake.
 			position_id: T::PositionId,
 			keep_alive: bool,
-		}
+		},
 	}
 
 	#[pallet::error]
@@ -231,8 +230,7 @@ pub mod pallet {
 
 	#[pallet::storage]
 	#[pallet::getter(fn stakes)]
-	pub type Stakes<T: Config> =
-		StorageMap<_, Blake2_128Concat, T::PositionId, StakeOf<T>>;
+	pub type Stakes<T: Config> = StorageMap<_, Blake2_128Concat, T::PositionId, StakeOf<T>>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -302,14 +300,21 @@ pub mod pallet {
 			duration_preset: DurationSeconds,
 			keep_alive: bool,
 		) -> Result<Self::PositionId, DispatchError> {
-			let mut rewards_pool = RewardPools::<T>::try_get(pool_id)
-				.map_err(|_| Error::<T>::RewardsPoolNotFound)?;
+			let mut rewards_pool =
+				RewardPools::<T>::try_get(pool_id).map_err(|_| Error::<T>::RewardsPoolNotFound)?;
 
-			let (_duration, reward_multiplier) = Self::find_nearest_duration_preset(&rewards_pool.lock.duration_presets, duration_preset)
-				.ok_or(Error::<T>::RewardConfigProblem)?;
+			let (_duration, reward_multiplier) = Self::find_nearest_duration_preset(
+				&rewards_pool.lock.duration_presets,
+				duration_preset,
+			)
+			.ok_or(Error::<T>::RewardConfigProblem)?;
 			let boosted_amount = reward_multiplier * amount;
 			let new_pool_shares = boosted_amount;
-			let mut reductions: BoundedBTreeMap<T::AssetId, Reward<T::AssetId, T::Balance>, <T as Config>::MaxRewardConfigsPerPool> = BoundedBTreeMap::new();
+			let mut reductions: BoundedBTreeMap<
+				T::AssetId,
+				Reward<T::AssetId, T::Balance>,
+				<T as Config>::MaxRewardConfigsPerPool,
+			> = BoundedBTreeMap::new();
 
 			let mut inner_rewards = rewards_pool.rewards.into_inner();
 
@@ -319,9 +324,12 @@ pub mod pallet {
 				reward.total_rewards += inflation;
 				reward.total_dilution_adjustment += inflation;
 
-				reductions.try_insert(asset_id.clone(), reward.clone()).map_err(|_| Error::<T>::ReductionConfigProblem)?;
+				reductions
+					.try_insert(asset_id.clone(), reward.clone())
+					.map_err(|_| Error::<T>::ReductionConfigProblem)?;
 			}
-			let rewards = Rewards::try_from(inner_rewards).map_err(|_| Error::<T>::RewardConfigProblem)?;
+			let rewards =
+				Rewards::try_from(inner_rewards).map_err(|_| Error::<T>::RewardConfigProblem)?;
 
 			let new_position = Stake {
 				reward_pool_id: pool_id.clone(),
@@ -332,7 +340,7 @@ pub mod pallet {
 					started_at: T::UnixTime::now().as_secs(),
 					duration: duration_preset,
 					unlock_penalty: rewards_pool.lock.unlock_penalty,
-				}
+				},
 			};
 
 			rewards_pool.total_shares += boosted_amount;
@@ -387,7 +395,9 @@ pub mod pallet {
 
 	impl<T: Config> Pallet<T> {
 		pub(crate) fn find_nearest_duration_preset(
-			duration_presets: &StakingDurationToRewardsMultiplierConfig<<T as Config>::MaxStakingDurationPresets>,
+			duration_presets: &StakingDurationToRewardsMultiplierConfig<
+				<T as Config>::MaxStakingDurationPresets,
+			>,
 			duration: DurationSeconds,
 		) -> Option<(DurationSeconds, Perbill)> {
 			if let Some(max_duration) = duration_presets.keys().rev().next() {
@@ -401,13 +411,7 @@ pub mod pallet {
 			duration_presets
 				.iter()
 				.rev()
-				.reduce(|acc, (dur, mul)| {
-					if duration <= *dur {
-						(dur, mul)
-					} else {
-						acc
-					}
-				})
+				.reduce(|acc, (dur, mul)| if duration <= *dur { (dur, mul) } else { acc })
 				.map(|(dur, mul)| (dur.clone(), *mul))
 		}
 	}

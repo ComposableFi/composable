@@ -47,18 +47,14 @@ fn test_create_reward_pool() {
 fn find_nearest_duration_preset() {
 	new_test_ext().execute_with(|| {
 		let empty_duration_presets = BoundedBTreeMap::try_from(BTreeMap::new()).unwrap();
-		assert_eq!(
-			StakingRewards::find_nearest_duration_preset(&empty_duration_presets, 0),
-			None
-		);
+		assert_eq!(StakingRewards::find_nearest_duration_preset(&empty_duration_presets, 0), None);
 
 		let not_empty_duration_presets = BoundedBTreeMap::try_from({
-			let map = BTreeMap::from([
-				(2, Perbill::from_percent(20)),
-				(4, Perbill::from_percent(40)),
-			]);
+			let map =
+				BTreeMap::from([(2, Perbill::from_percent(20)), (4, Perbill::from_percent(40))]);
 			map
-		}).unwrap();
+		})
+		.unwrap();
 		assert_eq!(
 			StakingRewards::find_nearest_duration_preset(&not_empty_duration_presets, 1),
 			Some((2, Perbill::from_percent(20)))
