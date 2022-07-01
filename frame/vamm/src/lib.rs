@@ -827,7 +827,19 @@ pub mod pallet {
 			let mut vamm_state = Self::get_vamm_state(&config.vamm_id)?;
 
 			// Perform twap update before swapping assets.
-			Self::update_twap(config.vamm_id, None, None).ok();
+			//
+			// HACK: Find a better way to extract and match this message value
+			// from `Result`.
+			match Self::update_twap(config.vamm_id, None, None) {
+				Ok(_) => Ok(()),
+				Err(e) => match e {
+					DispatchError::Module(m) => match m.message {
+						Some("AssetTwapTimestampIsMoreRecent") => Ok(()),
+						_ => Err(e),
+					},
+					_ => Err(e),
+				},
+			}?;
 
 			// Perform required sanity checks.
 			Self::swap_sanity_check(config, &vamm_state)?;
