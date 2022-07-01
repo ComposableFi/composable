@@ -115,7 +115,7 @@ fn update_twap_fails_if_twap_timestamp_is_more_recent() {
 }
 
 #[test]
-fn update_twap_succeeds() {
+fn should_succeed_updating_twap_correctly() {
 	let timestamp = Timestamp::MIN;
 	let twap = 10_u128.pow(18);
 	let base_twap = Decimal::from_inner(10_u128.pow(18) * 5);
@@ -133,9 +133,11 @@ fn update_twap_succeeds() {
 		.execute_with(|| {
 			run_for_seconds(twap_update_delay(0));
 			assert_ok!(TestPallet::update_twap(0, Some(base_twap)), base_twap);
+			assert_eq!(TestPallet::get_vamm(0).unwrap().base_asset_twap, base_twap);
 
 			run_for_seconds(twap_update_delay(0));
 			assert_ok!(TestPallet::update_twap(0, None));
+			assert_ne!(TestPallet::get_vamm(0).unwrap().base_asset_twap, base_twap);
 		})
 }
 

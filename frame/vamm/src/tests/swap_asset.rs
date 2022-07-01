@@ -7,7 +7,9 @@ use crate::{
 		run_for_seconds, run_to_block, swap_config, then_and_now, TestSwapConfig, RUN_CASES,
 	},
 };
-use composable_traits::vamm::{AssetType, Direction, SwapOutput, Vamm as VammTrait};
+use composable_traits::vamm::{
+	AssetType, Direction, SwapOutput, Vamm as VammTrait, MINIMUM_TWAP_PERIOD,
+};
 use frame_support::{assert_noop, assert_ok};
 use proptest::prelude::*;
 use sp_core::U256;
@@ -161,6 +163,110 @@ fn should_succeed_returning_correct_values_and_emitting_events_remove_quote() {
 	})
 }
 
+#[test]
+fn should_update_twap_when_adding_base_asset() {
+	ExtBuilder::default().build().execute_with(|| {
+		// For event emission
+		run_to_block(1);
+
+		// Create Vamm
+		let vamm_config = default_vamm_config();
+		let swap_config = default_swap_config(AssetType::Base, Direction::Add);
+		create_vamm(&vamm_config);
+
+		// Get Initial Vamm State
+		let vamm_state_initial = TestPallet::get_vamm(0).unwrap();
+
+		// Perform swap
+		run_for_seconds(vamm_state_initial.twap_period);
+		assert_ok!(TestPallet::swap(&swap_config));
+
+		// Ensure event for update twap was emitted
+		let vamm_state = TestPallet::get_vamm(0).unwrap();
+		System::assert_has_event(
+			Event::UpdatedTwap { vamm_id: 0, base_twap: vamm_state.base_asset_twap }.into(),
+		);
+	})
+}
+
+#[test]
+fn should_update_twap_when_removing_base_asset() {
+	ExtBuilder::default().build().execute_with(|| {
+		// For event emission
+		run_to_block(1);
+
+		// Create Vamm
+		let vamm_config = default_vamm_config();
+		let swap_config = default_swap_config(AssetType::Base, Direction::Remove);
+		create_vamm(&vamm_config);
+
+		// Get Initial Vamm State
+		let vamm_state_initial = TestPallet::get_vamm(0).unwrap();
+
+		// Perform swap
+		run_for_seconds(vamm_state_initial.twap_period);
+		assert_ok!(TestPallet::swap(&swap_config));
+
+		// Ensure event for update twap was emitted
+		let vamm_state = TestPallet::get_vamm(0).unwrap();
+		System::assert_has_event(
+			Event::UpdatedTwap { vamm_id: 0, base_twap: vamm_state.base_asset_twap }.into(),
+		);
+	})
+}
+
+#[test]
+fn should_update_twap_when_adding_quote_asset() {
+	ExtBuilder::default().build().execute_with(|| {
+		// For event emission
+		run_to_block(1);
+
+		// Create Vamm
+		let vamm_config = default_vamm_config();
+		let swap_config = default_swap_config(AssetType::Quote, Direction::Add);
+		create_vamm(&vamm_config);
+
+		// Get Initial Vamm State
+		let vamm_state_initial = TestPallet::get_vamm(0).unwrap();
+
+		// Perform swap
+		run_for_seconds(vamm_state_initial.twap_period);
+		assert_ok!(TestPallet::swap(&swap_config));
+
+		// Ensure event for update twap was emitted
+		let vamm_state = TestPallet::get_vamm(0).unwrap();
+		System::assert_has_event(
+			Event::UpdatedTwap { vamm_id: 0, base_twap: vamm_state.base_asset_twap }.into(),
+		);
+	})
+}
+
+#[test]
+fn should_update_twap_when_removing_quote_asset() {
+	ExtBuilder::default().build().execute_with(|| {
+		// For event emission
+		run_to_block(1);
+
+		// Create Vamm
+		let vamm_config = default_vamm_config();
+		let swap_config = default_swap_config(AssetType::Quote, Direction::Remove);
+		create_vamm(&vamm_config);
+
+		// Get Initial Vamm State
+		let vamm_state_initial = TestPallet::get_vamm(0).unwrap();
+
+		// Perform swap
+		run_for_seconds(vamm_state_initial.twap_period);
+		assert_ok!(TestPallet::swap(&swap_config));
+
+		// Ensure event for update twap was emitted
+		let vamm_state = TestPallet::get_vamm(0).unwrap();
+		System::assert_has_event(
+			Event::UpdatedTwap { vamm_id: 0, base_twap: vamm_state.base_asset_twap }.into(),
+		);
+	})
+}
+
 // -------------------------------------------------------------------------------------------------
 //                                             Proptests
 // -------------------------------------------------------------------------------------------------
@@ -238,7 +344,7 @@ proptest! {
 	}
 
 	#[test]
-	fn should_succeed_emitting_event(
+	fn should_succeed_emitting_swap_event(
 		mut vamm_state in any_vamm_state(),
 		mut swap_config in swap_config(),
 	) {
@@ -266,6 +372,40 @@ proptest! {
 					input_asset_type: swap_config.asset,
 					direction: swap_config.direction,
 				}.into()
+			);
+		})
+	}
+
+	#[test]
+	fn should_succeed_updating_twap_and_emitting_update_twap_event(
+		mut vamm_state in any_vamm_state(),
+		mut swap_config in swap_config(),
+	) {
+		// Ensure vamm is open before start operation to swap assets.
+		vamm_state.closed = None;
+
+		// Ensure twap timestamp is in the past and that twap period is valid
+		// for twap updates.
+		vamm_state.twap_timestamp = 0;
+		vamm_state.twap_period = MINIMUM_TWAP_PERIOD.into();
+
+		// Disable output limit check.
+		swap_config.output_amount_limit = Balance::zero();
+
+		swap_config.vamm_id = VammId::zero();
+
+		ExtBuilder {
+			vamm_count: 1,
+			vamms: vec![(0, vamm_state)]
+		}.build().execute_with(|| {
+			// For event emission.
+			run_for_seconds(vamm_state.twap_period);
+			assert_ok!(TestPallet::swap(&swap_config));
+
+			let new_vamm_state = TestPallet::get_vamm(0).unwrap();
+
+			System::assert_has_event(
+				Event::UpdatedTwap { vamm_id: 0, base_twap: new_vamm_state.base_asset_twap }.into(),
 			);
 		})
 	}
