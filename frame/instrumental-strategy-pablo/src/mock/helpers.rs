@@ -35,7 +35,7 @@ where
 	let base_amount = base_amount.into().unwrap_or(default_amount);
 	let quote_asset = quote_asset.into().unwrap_or(CurrencyId::CROWD_LOAN);
 	let quote_amount = quote_amount.into().unwrap_or(default_amount);
-	let fee = fee.into().unwrap_or_else(|| Permill::zero());
+	let fee = fee.into().unwrap_or_else(Permill::zero);
 	let base_weight = base_weight.into().unwrap_or_else(|| Permill::from_percent(50));
 
 	assert_ok!(Tokens::mint_into(base_asset, &ALICE, base_amount));
@@ -77,7 +77,7 @@ where
 	P: Into<Option<Perquintill>>,
 {
 	let asset_id = asset_id.into().unwrap_or(CurrencyId::LAYR);
-	let percent_deployable = percent_deployable.into().unwrap_or(Perquintill::zero());
+	let percent_deployable = percent_deployable.into().unwrap_or_else(Perquintill::zero);
 	let config = InstrumentalVaultConfig { asset_id, percent_deployable };
 	let vault_id = <Instrumental as InstrumentalTrait>::create(config);
 	assert_ok!(vault_id);
