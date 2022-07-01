@@ -14,7 +14,7 @@ use crate::{
 		vamm::VammConfig,
 	},
 	Direction, Market as MarketGeneric, MarketConfig as MarketConfigGeneric, Markets,
-	MaxPriceDivergence,
+	MaxPriceDivergence, MaxTwapDivergence,
 };
 use composable_traits::{
 	clearing_house::{ClearingHouse, Instruments},
@@ -64,6 +64,7 @@ impl Default for ExtBuilder {
 			oracle_asset_support: Some(true),
 			oracle_price: Some(10_000),
 			oracle_twap: Some(10_000),
+			max_price_divergence: FixedI128::from_inner(i128::MAX),
 		}
 	}
 }
@@ -135,7 +136,7 @@ fn get_position(account_id: &AccountId, market_id: &MarketId) -> Option<Position
 }
 
 fn get_outstanding_gains(account_id: AccountId, market_id: &MarketId) -> Balance {
-	TestPallet::outstanding_gains(&account_id, market_id).unwrap_or_else(Zero::zero)
+	TestPallet::outstanding_profits(&account_id, market_id).unwrap_or_else(Zero::zero)
 }
 
 fn get_market(market_id: &MarketId) -> Market {
@@ -154,9 +155,21 @@ fn set_maximum_oracle_mark_divergence(fraction: FixedI128) {
 	MaxPriceDivergence::<Runtime>::set(fraction);
 }
 
+fn set_maximum_twap_divergence(fraction: FixedI128) {
+	MaxTwapDivergence::<Runtime>::set(Some(fraction));
+}
+
+fn set_oracle_price(_market_id: &MarketId, price: FixedU128) {
+	// let market = get_market(market_id);
+	OraclePallet::set_price(Some(price.saturating_mul_int(100)));
+}
+
 fn set_oracle_twap(market_id: &MarketId, twap: FixedI128) {
+	// Prepare everything so that even if the TWAP is updated via an EMA, it stays the same
+	OraclePallet::set_price(Some(twap.saturating_mul_int(100)));
 	Markets::<Runtime>::try_mutate(market_id, |m| {
 		if let Some(m) = m {
+			m.last_oracle_price = twap;
 			m.last_oracle_twap = twap;
 			Ok(())
 		} else {
