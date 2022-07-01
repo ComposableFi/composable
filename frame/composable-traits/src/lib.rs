@@ -35,6 +35,7 @@
 	unused_extern_crates
 )]
 
+pub mod airdrop;
 pub mod assets;
 pub mod bonded_finance;
 pub mod bounded;

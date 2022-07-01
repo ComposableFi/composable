@@ -72,6 +72,9 @@
 
 # 🎨 PALLETS AND INTEGRATION GUIDES
 - [Pallets & Integration](./pallets-integration-guides.md)
+    - [airdrop](./pallets/airdrop.md)
+        - [Extrinsics](./pallets/airdrop/extrinsics.md)
+        - [Integration Guide](./pallets/airdrop/integration-guide.md)
     - [crowdloan-rewards](./pallets/crowdloan-rewards.md)
         - [Extrinsics](./pallets/crowdloan-rewards/extrinsics.md)
         - [Integration Guide](./pallets/crowdloan-rewards/integration-guide.md)
