@@ -1,0 +1,18 @@
+---
+dictionaries:
+- spellcheck
+dictionaryDefinitions:
+- name: spellcheck
+  path: ".config/spellcheck.dic"
+  addWords: true
+
+patterns:
+- name: rust-code-literal
+  pattern: '([`])(?:(?=(\\?))\2.)*?\1+'
+- name: quoted
+  pattern: '(["])(?:(?=(\\?))\2.)*?\1+'
+- name: rust-attributes
+  pattern: '#!\[[a-zA-Z()::_]*]'
+ignoreRegExpList:
+- rust-code-literal
+- quoted

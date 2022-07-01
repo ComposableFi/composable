@@ -7,6 +7,7 @@ import {
   putUiAssetSelection,
   putUserAccountBalance,
   putPoolVariables,
+  invertAssetSelection,
 } from "./swaps.utils";
 
 const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
@@ -65,6 +66,10 @@ const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
   }) =>
     set((prev: SwapsSlice) => ({
       swaps: putPoolVariables(prev.swaps, key),
+    })),
+  invertAssetSelectionSwaps: () =>
+    set((prev: SwapsSlice) => ({
+      swaps: invertAssetSelection(prev.swaps),
     })),
 });
 

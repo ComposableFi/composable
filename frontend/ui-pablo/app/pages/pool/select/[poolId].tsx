@@ -21,7 +21,7 @@ const PoolDetailsPage: NextPage = () => {
     let poolId = Number(router.query.poolId);
     if (!poolId || isNaN(poolId)) router.push('/pool')
     setPoolId(Number(poolId));
-  }, []);
+  }, [router]);
 
   const { extensionStatus } = useDotSamaContext();
   const connected = extensionStatus === "connected";

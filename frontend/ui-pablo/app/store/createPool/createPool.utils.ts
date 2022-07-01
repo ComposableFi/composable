@@ -1,6 +1,5 @@
 import BigNumber from "bignumber.js";
 import produce from "immer";
-import { PoolsSlice } from "../pools/pools.types";
 import { CreatePoolSlice } from "./createPool.types";
 
 export const putLiquidity = (

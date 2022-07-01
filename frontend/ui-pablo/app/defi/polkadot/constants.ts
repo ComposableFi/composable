@@ -1,1 +1,1 @@
-export const APP_NAME = "Picasso UI"
+export const APP_NAME = "Pablo UI"

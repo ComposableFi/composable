@@ -44,7 +44,7 @@ export const PoolDetails: React.FC<BoxProps> = ({
   useEffect(() => {
     const { poolId } = router.query;
     setPoolId(Number(poolId));
-  }, []);
+  }, [router.query]);
 
   const [tab, setTab] = useState<number>(0);
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {

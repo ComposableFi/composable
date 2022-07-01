@@ -36,7 +36,7 @@ User transfers staked assets into the staking pool and choose what position he w
 
 Protocol owner increases total rewards share as time goes.
 
-Anybody can mint and transfer rewarded assets into pool. This process can be automated.
+Anybody can get and transfer rewarded assets into the pool. This process can be automated.
 
 A `staker` may leave a position, claim rewards, stake more, etc.
 Or she can make [a position to be fNFT](../nft/README.md) and use it as an instrument in other protocols.
@@ -56,19 +56,17 @@ Each pool is governed through a protocol that created it.
 
 ### Configuration
 
-To allow the users to stake an asset, we first need to `configure` the pool. 
+To allow the users to stake an asset, we first need to `configure` the pool.
 
 Configuration of a pool defines:
 
-Can/must user time lock tokens to get, possibly increased, `share`. What is the penalty for early unlock if there is a lock
-  
-If share decays with time until lock ends and extending time starts from zero elapsed.
+Can/must user time lock tokens to get, possibly increased, `share`. What is the penalty for early unlock if there is a lock.
 
-Or if the share does not decay with time and extending time subsumes old-time already passed in a lock (user gets smaller remaining time with higher share).
+By default share does not decay with time and extending time subsumes old-time already passed in a lock. The lock gets smaller remaining time with a higher share.
 
 Owner account of the pool. Usually other protocol or its "owner".
 
-The inflation rate "grows" rewards as time goes. It can be dynamically updated later.
+The rewards rate "grows" rewards as time goes. Rate can be dynamically updated.
   
 **Example**,
 
@@ -241,6 +239,8 @@ So duration is increased, but less.
 
 Depending on pull configuration, time may be fully renewed.
 
+If a share is configured to decay as time goes time until a lock ends and extending time starts from zero elapsed.
+
 **Example**
 
 If a position was MONTH and passed two weeks. Can extend it to MONTH or longer.
@@ -267,7 +267,7 @@ There is a special function that allows anybody to detect expired positions and 
 
 ### Compounding
 
-If a position has staked asset to be the same as a rewarding asset, it is subject to compounding.
+If a position has staked asset to be the same as a rewarding asset and the pool is configured, that reward asset  is subject to compounding.
 
 The reward is staked too and increases users' share to earn more reward.
 

@@ -1,16 +1,17 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { CommonMosaicRemoteAssetId, ComposableTraitsAssetsXcmAssetLocation, ComposableTraitsBondedFinanceBondOffer, ComposableTraitsCallFilterCallFilterEntry, ComposableTraitsDefiCurrencyPair, ComposableTraitsDefiSell, ComposableTraitsDefiTake, ComposableTraitsLendingCreateInput, ComposableTraitsLendingUpdateInput, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsVaultVaultConfig, ComposableTraitsVestingVestingSchedule, CumulusPrimitivesParachainInherentParachainInherentData, DaliRuntimeOpaqueSessionKeys, DaliRuntimeOriginCaller, FrameSupportScheduleMaybeHashed, PalletAssetsRegistryForeignMetadata, PalletCrowdloanRewardsModelsProof, PalletCrowdloanRewardsModelsRemoteAccount, PalletDemocracyConviction, PalletDemocracyVoteAccountVote, PalletIdentityBitFlags, PalletIdentityIdentityInfo, PalletIdentityJudgement, PalletLiquidationsLiquidationStrategyConfiguration, PalletLiquidityBootstrappingPool, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo, XcmVersionedMultiAsset } from './crowdloanRewards';
-import type { ApiTypes } from '@polkadot/api-base/types';
-import type { Data } from '@polkadot/types';
-import type { Bytes, Compact, Option, U8aFixed, Vec, WrapperKeepOpaque, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
-import type { AnyNumber, ITuple } from '@polkadot/types-codec/types';
+import type { ApiTypes, AugmentedSubmittable, SubmittableExtrinsic, SubmittableExtrinsicFunction, SubmittableModuleExtrinsics } from '@polkadot/api/types';
+import type { Bytes, Compact, Data, Option, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types';
+import type { Extrinsic } from '@polkadot/types/interfaces/extrinsics';
 import type { AccountId32, Call, H256, MultiAddress, Perbill, Percent, Permill } from '@polkadot/types/interfaces/runtime';
 import type { PalletMultisigTimepoint, SpRuntimeHeader, XcmV1MultiLocation, XcmV2WeightLimit, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@polkadot/types/lookup';
+import type { AnyNumber, ITuple } from '@polkadot/types/types';
+import { ComposableTraitsDefiCurrencyPairCurrencyId, ComposableTraitsDefiSellCurrencyId, ComposableTraitsXcmXcmSellRequest } from './common';
+import { ComposableTraitsAssetsXcmAssetLocation, PalletAssetsRegistryForeignMetadata, ComposableTraitsBondedFinanceBondOffer, ComposableTraitsCallFilterCallFilterEntry, PalletCrowdloanRewardsModelsProof, PalletCrowdloanRewardsModelsRemoteAccount, PalletDemocracyConviction, PalletDemocracyVoteAccountVote, ComposableTraitsTimeTimeReleaseFunction, ComposableTraitsDefiTake, PalletIdentityJudgement, PalletIdentityBitFlags, PalletIdentityIdentityInfo, ComposableTraitsLendingCreateInput, ComposableTraitsLendingUpdateInput, PalletLiquidationsLiquidationStrategyConfiguration, PalletLiquidityBootstrappingPool, CommonMosaicRemoteAssetId, PalletMosaicDecayBudgetPenaltyDecayer, PalletMosaicNetworkInfo, ComposableSupportEthereumAddress, PalletPabloPoolInitConfiguration, CumulusPrimitivesParachainInherentParachainInherentData, FrameSupportScheduleMaybeHashed, DaliRuntimeOpaqueSessionKeys, DaliRuntimeOriginCaller, ComposableTraitsVaultVaultConfig, ComposableTraitsVestingVestingSchedule, XcmVersionedMultiAsset } from './types';
 
-declare module '@polkadot/api-base/types/submittable' {
-  export interface AugmentedSubmittables<ApiType extends ApiTypes> {
+declare module '@polkadot/api/types/submittable' {
+  export interface AugmentedSubmittables<ApiType> {
     assets: {
       /**
        * Mints `amount` of `asset_id` into the `dest` account.
@@ -206,14 +207,15 @@ declare module '@polkadot/api-base/types/submittable' {
     bondedFinance: {
       /**
        * Bond to an offer.
-       * And user should provide the number of contracts she is willing to buy.
-       * On offer completion (a.k.a. no more contract on the offer), the `stake` put by the
-       * creator is refunded.
+       * 
+       * The issuer should provide the number of contracts they are willing to buy.
+       * Once there are no more contracts available on the offer, the `stake` put by the
+       * offer creator is refunded.
        * 
        * The dispatch origin for this call must be _Signed_ and the sender must have the
-       * appropriate funds.
+       * appropriate funds to buy the desired number of contracts.
        * 
-       * Allow the bonder to ask for his account to be kept alive using the `keep_alive`
+       * Allows the issuer to ask for their account to be kept alive using the `keep_alive`
        * parameter.
        * 
        * Emits a `NewBond`.
@@ -221,19 +223,23 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       bond: AugmentedSubmittable<(offerId: u128 | AnyNumber | Uint8Array, nbOfBonds: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, bool]>;
       /**
-       * Cancel a running offer. Blocking further bond but not cancelling the
-       * currently vested rewards. The `stake` put by the creator is refunded.
+       * Cancel a running offer.
+       * 
+       * Blocking further bonds but not cancelling the currently vested rewards. The `stake` put
+       * by the offer creator is refunded.
+       * 
        * The dispatch origin for this call must be _Signed_ and the sender must be `AdminOrigin`
        * 
        * Emits a `OfferCancelled`.
        **/
       cancel: AugmentedSubmittable<(offerId: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128]>;
       /**
-       * Create a new offer. So later can `bond` it.
+       * Create a new bond offer. To be `bond` to later.
        * 
        * The dispatch origin for this call must be _Signed_ and the sender must have the
-       * appropriate funds.
-       * Allow the issuer to ask for his account to be kept alive using the `keep_alive`
+       * appropriate funds to stake the offer.
+       * 
+       * Allows the issuer to ask for their account to be kept alive using the `keep_alive`
        * parameter.
        * 
        * Emits a `NewOffer`.
@@ -324,7 +330,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * Emits `PoolCreated` even when successful.
        **/
-      create: AugmentedSubmittable<(pair: ComposableTraitsDefiCurrencyPair | { base?: any; quote?: any } | string | Uint8Array, fee: Permill | AnyNumber | Uint8Array, ownerFee: Permill | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [ComposableTraitsDefiCurrencyPair, Permill, Permill]>;
+      create: AugmentedSubmittable<(pair: ComposableTraitsDefiCurrencyPairCurrencyId | { base?: any; quote?: any } | string | Uint8Array, fee: Permill | AnyNumber | Uint8Array, ownerFee: Permill | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [ComposableTraitsDefiCurrencyPairCurrencyId, Permill, Permill]>;
       /**
        * Remove liquidity from constant_product pool.
        * 
@@ -349,7 +355,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * Emits `Swapped` event when successful.
        **/
-      swap: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, pair: ComposableTraitsDefiCurrencyPair | { base?: any; quote?: any } | string | Uint8Array, quoteAmount: u128 | AnyNumber | Uint8Array, minReceive: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, ComposableTraitsDefiCurrencyPair, u128, u128, bool]>;
+      swap: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, pair: ComposableTraitsDefiCurrencyPairCurrencyId | { base?: any; quote?: any } | string | Uint8Array, quoteAmount: u128 | AnyNumber | Uint8Array, minReceive: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, ComposableTraitsDefiCurrencyPairCurrencyId, u128, u128, bool]>;
       /**
        * Generic tx
        **/
@@ -943,6 +949,18 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
+    dexRouter: {
+      addLiquidity: AugmentedSubmittable<(assetPair: ComposableTraitsDefiCurrencyPairCurrencyId | { base?: any; quote?: any } | string | Uint8Array, baseAmount: u128 | AnyNumber | Uint8Array, quoteAmount: u128 | AnyNumber | Uint8Array, minMintAmount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [ComposableTraitsDefiCurrencyPairCurrencyId, u128, u128, u128, bool]>;
+      buy: AugmentedSubmittable<(assetPair: ComposableTraitsDefiCurrencyPairCurrencyId | { base?: any; quote?: any } | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array, minReceive: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [ComposableTraitsDefiCurrencyPairCurrencyId, u128, u128]>;
+      exchange: AugmentedSubmittable<(assetPair: ComposableTraitsDefiCurrencyPairCurrencyId | { base?: any; quote?: any } | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array, minReceive: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [ComposableTraitsDefiCurrencyPairCurrencyId, u128, u128]>;
+      removeLiquidity: AugmentedSubmittable<(assetPair: ComposableTraitsDefiCurrencyPairCurrencyId | { base?: any; quote?: any } | string | Uint8Array, lpAmount: u128 | AnyNumber | Uint8Array, minBaseAmount: u128 | AnyNumber | Uint8Array, minQuoteAmount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [ComposableTraitsDefiCurrencyPairCurrencyId, u128, u128, u128]>;
+      sell: AugmentedSubmittable<(assetPair: ComposableTraitsDefiCurrencyPairCurrencyId | { base?: any; quote?: any } | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array, minReceive: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [ComposableTraitsDefiCurrencyPairCurrencyId, u128, u128]>;
+      updateRoute: AugmentedSubmittable<(assetPair: ComposableTraitsDefiCurrencyPairCurrencyId | { base?: any; quote?: any } | string | Uint8Array, route: Option<Vec<u128>> | null | object | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [ComposableTraitsDefiCurrencyPairCurrencyId, Option<Vec<u128>>]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
     dmpQueue: {
       /**
        * Service a single overweight message.
@@ -966,10 +984,15 @@ declare module '@polkadot/api-base/types/submittable' {
     };
     dutchAuction: {
       /**
+       * Inserts or replaces auction configuration.
+       * Already running auctions are not updated.
+       **/
+      addConfiguration: AugmentedSubmittable<(configurationId: u128 | AnyNumber | Uint8Array, configuration: ComposableTraitsTimeTimeReleaseFunction | { LinearDecrease: any } | { StairstepExponentialDecrease: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, ComposableTraitsTimeTimeReleaseFunction]>;
+      /**
        * sell `order` in auction with `configuration`
        * some deposit is taken for storing sell order
        **/
-      ask: AugmentedSubmittable<(order: ComposableTraitsDefiSell | { pair?: any; take?: any } | string | Uint8Array, configuration: ComposableTraitsTimeTimeReleaseFunction | { LinearDecrease: any } | { StairstepExponentialDecrease: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [ComposableTraitsDefiSell, ComposableTraitsTimeTimeReleaseFunction]>;
+      ask: AugmentedSubmittable<(order: ComposableTraitsDefiSellCurrencyId | { pair?: any; take?: any } | string | Uint8Array, configuration: ComposableTraitsTimeTimeReleaseFunction | { LinearDecrease: any } | { StairstepExponentialDecrease: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [ComposableTraitsDefiSellCurrencyId, ComposableTraitsTimeTimeReleaseFunction]>;
       /**
        * allows to remove `order_id` from storage
        **/
@@ -978,6 +1001,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * adds take to list, does not execute take immediately
        **/
       take: AugmentedSubmittable<(orderId: u128 | AnyNumber | Uint8Array, take: ComposableTraitsDefiTake | { amount?: any; limit?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, ComposableTraitsDefiTake]>;
+      xcmSell: AugmentedSubmittable<(request: ComposableTraitsXcmXcmSellRequest | { orderId?: any; fromTo?: any; order?: any; configuration?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [ComposableTraitsXcmXcmSellRequest]>;
       /**
        * Generic tx
        **/
@@ -1442,7 +1466,8 @@ declare module '@polkadot/api-base/types/submittable' {
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
     liquidations: {
-      addLiquidationStrategy: AugmentedSubmittable<(configuraiton: PalletLiquidationsLiquidationStrategyConfiguration | { DutchAuction: any } | { UniswapV2: any } | { XcmDex: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletLiquidationsLiquidationStrategyConfiguration]>;
+      addLiquidationStrategy: AugmentedSubmittable<(configuraiton: PalletLiquidationsLiquidationStrategyConfiguration | { DutchAuction: any } | { Pablo: any } | { Xcm: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletLiquidationsLiquidationStrategyConfiguration]>;
+      sell: AugmentedSubmittable<(order: ComposableTraitsDefiSellCurrencyId | { pair?: any; take?: any } | string | Uint8Array, configuration: Vec<u32> | (u32 | AnyNumber | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [ComposableTraitsDefiSellCurrencyId, Vec<u32>]>;
       /**
        * Generic tx
        **/
@@ -1491,7 +1516,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * Emits `Swapped` event when successful.
        **/
-      swap: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, pair: ComposableTraitsDefiCurrencyPair | { base?: any; quote?: any } | string | Uint8Array, quoteAmount: u128 | AnyNumber | Uint8Array, minReceive: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, ComposableTraitsDefiCurrencyPair, u128, u128, bool]>;
+      swap: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, pair: ComposableTraitsDefiCurrencyPairCurrencyId | { base?: any; quote?: any } | string | Uint8Array, quoteAmount: u128 | AnyNumber | Uint8Array, minReceive: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, ComposableTraitsDefiCurrencyPairCurrencyId, u128, u128, bool]>;
       /**
        * Generic tx
        **/
@@ -1570,7 +1595,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Transfers near Balance::max may result in overflows, which are caught and returned as
        * an error.
        **/
-      transferTo: AugmentedSubmittable<(networkId: u32 | AnyNumber | Uint8Array, assetId: u128 | AnyNumber | Uint8Array, address: U8aFixed | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u128, U8aFixed, u128, bool]>;
+      transferTo: AugmentedSubmittable<(networkId: u32 | AnyNumber | Uint8Array, assetId: u128 | AnyNumber | Uint8Array, address: ComposableSupportEthereumAddress | string | Uint8Array, amount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u32, u128, ComposableSupportEthereumAddress, u128, bool]>;
       /**
        * Update a network asset mapping.
        * 
@@ -1673,7 +1698,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * - Plus Call Weight
        * # </weight>
        **/
-      asMulti: AugmentedSubmittable<(threshold: u16 | AnyNumber | Uint8Array, otherSignatories: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[], maybeTimepoint: Option<PalletMultisigTimepoint> | null | object | string | Uint8Array, call: WrapperKeepOpaque<Call> | object | string | Uint8Array, storeCall: bool | boolean | Uint8Array, maxWeight: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u16, Vec<AccountId32>, Option<PalletMultisigTimepoint>, WrapperKeepOpaque<Call>, bool, u64]>;
+      asMulti: AugmentedSubmittable<(threshold: u16 | AnyNumber | Uint8Array, otherSignatories: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[], maybeTimepoint: Option<PalletMultisigTimepoint> | null | object | string | Uint8Array, call: Bytes | string | Uint8Array, storeCall: bool | boolean | Uint8Array, maxWeight: u64 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u16, Vec<AccountId32>, Option<PalletMultisigTimepoint>, Bytes, bool, u64]>;
       /**
        * Immediately dispatch a multi-signature call using a single approval from the caller.
        * 
@@ -1781,6 +1806,51 @@ declare module '@polkadot/api-base/types/submittable' {
        * Emits `PriceSubmitted` event when successful.
        **/
       submitPrice: AugmentedSubmittable<(price: u128 | AnyNumber | Uint8Array, assetId: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
+    pablo: {
+      /**
+       * Add liquidity to the given pool.
+       * 
+       * Emits `LiquidityAdded` event when successful.
+       **/
+      addLiquidity: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, baseAmount: u128 | AnyNumber | Uint8Array, quoteAmount: u128 | AnyNumber | Uint8Array, minMintAmount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, u128, bool]>;
+      /**
+       * Execute a buy order on pool.
+       * 
+       * Emits `Swapped` event when successful.
+       **/
+      buy: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, assetId: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, bool]>;
+      /**
+       * Create a new pool.
+       * 
+       * Emits `PoolCreated` event when successful.
+       **/
+      create: AugmentedSubmittable<(pool: PalletPabloPoolInitConfiguration | { StableSwap: any } | { ConstantProduct: any } | { LiquidityBootstrapping: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletPabloPoolInitConfiguration]>;
+      enableTwap: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128]>;
+      /**
+       * Remove liquidity from the given pool.
+       * 
+       * Emits `LiquidityRemoved` event when successful.
+       **/
+      removeLiquidity: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, lpAmount: u128 | AnyNumber | Uint8Array, minBaseAmount: u128 | AnyNumber | Uint8Array, minQuoteAmount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, u128]>;
+      /**
+       * Execute a sell order on pool.
+       * 
+       * Emits `Swapped` event when successful.
+       **/
+      sell: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, assetId: u128 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, u128, u128, bool]>;
+      /**
+       * Execute a specific swap operation.
+       * 
+       * The `quote_amount` is always the quote asset amount (A/B => B), (B/A => A).
+       * 
+       * Emits `Swapped` event when successful.
+       **/
+      swap: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, pair: ComposableTraitsDefiCurrencyPairCurrencyId | { base?: any; quote?: any } | string | Uint8Array, quoteAmount: u128 | AnyNumber | Uint8Array, minReceive: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, ComposableTraitsDefiCurrencyPairCurrencyId, u128, u128, bool]>;
       /**
        * Generic tx
        **/
@@ -2061,7 +2131,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * Emits `PoolCreated` event when successful.
        **/
-      create: AugmentedSubmittable<(pair: ComposableTraitsDefiCurrencyPair | { base?: any; quote?: any } | string | Uint8Array, amplificationCoefficient: u16 | AnyNumber | Uint8Array, fee: Permill | AnyNumber | Uint8Array, ownerFee: Permill | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [ComposableTraitsDefiCurrencyPair, u16, Permill, Permill]>;
+      create: AugmentedSubmittable<(pair: ComposableTraitsDefiCurrencyPairCurrencyId | { base?: any; quote?: any } | string | Uint8Array, amplificationCoefficient: u16 | AnyNumber | Uint8Array, fee: Permill | AnyNumber | Uint8Array, ownerFee: Permill | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [ComposableTraitsDefiCurrencyPairCurrencyId, u16, Permill, Permill]>;
       /**
        * Remove liquidity from stable-swap pool.
        * 
@@ -2081,7 +2151,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * Emits `Swapped` event when successful.
        **/
-      swap: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, pair: ComposableTraitsDefiCurrencyPair | { base?: any; quote?: any } | string | Uint8Array, quoteAmount: u128 | AnyNumber | Uint8Array, minReceive: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, ComposableTraitsDefiCurrencyPair, u128, u128, bool]>;
+      swap: AugmentedSubmittable<(poolId: u128 | AnyNumber | Uint8Array, pair: ComposableTraitsDefiCurrencyPairCurrencyId | { base?: any; quote?: any } | string | Uint8Array, quoteAmount: u128 | AnyNumber | Uint8Array, minReceive: u128 | AnyNumber | Uint8Array, keepAlive: bool | boolean | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128, ComposableTraitsDefiCurrencyPairCurrencyId, u128, u128, bool]>;
       /**
        * Generic tx
        **/
@@ -2736,5 +2806,10 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
-  } // AugmentedSubmittables
-} // declare module
+  }
+
+  export interface SubmittableExtrinsics<ApiType extends ApiTypes> extends AugmentedSubmittables<ApiType> {
+    (extrinsic: Call | Extrinsic | Uint8Array | string): SubmittableExtrinsic<ApiType>;
+    [key: string]: SubmittableModuleExtrinsics<ApiType>;
+  }
+}

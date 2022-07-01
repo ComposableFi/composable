@@ -17,6 +17,7 @@ export const NoEligibleWalletFeaturedBox: React.FC<{
         textBelow={textBelow}
         image={
           <Image
+            alt="lemonade"
             css={{ mixBlendMode: "luminosity" }}
             src="/static/lemonade.png"
             width="96"
