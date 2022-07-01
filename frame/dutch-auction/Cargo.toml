@@ -26,6 +26,7 @@ frame-system = { default-features = false, git = "https://github.com/paritytech/
 log = { version = "0.4.14", default-features = false }
 num-traits = { version = "0.2.14", default-features = false }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b5d4ce1d08fb54c0007c2055653892d2c93a92e", default-features = false }
+orml-tokens = { default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "2b5d4ce1d08fb54c0007c2055653892d2c93a92e" }
 polkadot-parachain = { git = "https://github.com/paritytech/polkadot", default-features = false, branch = "release-v0.9.18" }
 scale-info = { version = "2.1.1", default-features = false, features = [
   "derive",

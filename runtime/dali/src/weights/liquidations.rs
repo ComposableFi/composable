@@ -43,7 +43,7 @@ impl<T: frame_system::Config> liquidations::WeightInfo for WeightInfo<T> {
 	// Storage: Timestamp Now (r:1 w:0)
 	// Storage: Tokens Accounts (r:1 w:1)
 	// Storage: DutchAuction SellOrders (r:0 w:1)
-	fn sell() -> Weight {
+	fn sell(_x:u32) -> Weight {
 		(33_349_000 as Weight)
 			.saturating_add(T::DbWeight::get().reads(14 as Weight))
 			.saturating_add(T::DbWeight::get().writes(4 as Weight))
