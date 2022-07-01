@@ -30,10 +30,11 @@ where
 	F: Into<Option<Permill>>,
 	BW: Into<Option<Permill>>,
 {
+	let default_amount = 1_000_000_000 * CurrencyId::unit::<Balance>();
 	let base_asset = base_asset.into().unwrap_or(CurrencyId::LAYR);
-	let base_amount = base_amount.into().unwrap_or(1_000_000_000);
+	let base_amount = base_amount.into().unwrap_or(default_amount);
 	let quote_asset = quote_asset.into().unwrap_or(CurrencyId::CROWD_LOAN);
-	let quote_amount = quote_amount.into().unwrap_or(1_000_000_000);
+	let quote_amount = quote_amount.into().unwrap_or(default_amount);
 	let fee = fee.into().unwrap_or_else(|| Permill::zero());
 	let base_weight = base_weight.into().unwrap_or_else(|| Permill::from_percent(50));
 
