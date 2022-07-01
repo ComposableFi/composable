@@ -1274,7 +1274,7 @@ pub mod pallet {
 			// TODO(0xangelo): move this to do_update_funding?
 			// Update TWAPs *before* funding rate calculations
 			Self::update_oracle_twap(&mut market)?;
-			T::Vamm::update_twap(market.vamm_id, None, None)?;
+			T::Vamm::update_twap(market.vamm_id, None)?;
 
 			Self::do_update_funding(market_id, &mut market, now)?;
 
