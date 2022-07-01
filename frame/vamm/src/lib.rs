@@ -839,7 +839,15 @@ pub mod pallet {
 			// amount_swapped negative or positive?
 
 			// Update runtime storage
-			VammMap::<T>::insert(&config.vamm_id, vamm_state);
+			// VammMap::<T>::insert(&config.vamm_id, vamm_state);
+			VammMap::<T>::try_mutate(&config.vamm_id, |old_vamm_state| match old_vamm_state {
+				Some(v) => {
+					v.base_asset_reserves = vamm_state.base_asset_reserves;
+					v.quote_asset_reserves = vamm_state.quote_asset_reserves;
+					Ok(())
+				},
+				None => Err(Error::<T>::FailToRetrieveVamm),
+			})?;
 
 			// Deposit swap event into blockchain
 			Self::deposit_event(Event::<T>::Swapped {
@@ -959,6 +967,7 @@ pub mod pallet {
 
 	// Helper functions - Update twap functionality
 	impl<T: Config> Pallet<T> {
+		#[transactional]
 		fn do_update_twap(
 			vamm_id: VammIdOf<T>,
 			vamm_state: &mut VammStateOf<T>,
