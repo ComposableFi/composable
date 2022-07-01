@@ -366,14 +366,14 @@ pub mod pallet {
 		) -> DispatchResult {
 			let lp_token_amount = T::Pablo::amount_of_lp_token_for_added_liquidity(
 				pool_id,
-				T::Balance::zero(),
 				balance,
+				T::Balance::zero(),
 			)?;
 			T::Pablo::add_liquidity(
 				&vault_account,
 				pool_id,
-				T::Balance::zero(),
 				balance,
+				T::Balance::zero(),
 				lp_token_amount,
 				true,
 			)
