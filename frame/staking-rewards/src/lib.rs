@@ -39,6 +39,7 @@ mod prelude;
 #[cfg(test)]
 mod test;
 pub mod weights;
+mod validation;
 
 pub use pallet::*;
 
@@ -54,6 +55,7 @@ pub mod pallet {
 			},
 		},
 		math::safe::SafeArithmetic,
+        validation::Validated,
 	};
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory},
@@ -68,7 +70,7 @@ pub mod pallet {
 	use sp_runtime::traits::BlockNumberProvider;
 	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug};
 
-	use crate::prelude::*;
+	use crate::{prelude::*, validation::ValidSplitRatio, validation::ValidSplitRatio};
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub fn deposit_event)]
@@ -249,6 +251,17 @@ pub mod pallet {
 			Self::deposit_event(Event::<T>::RewardPoolCreated { pool_id, owner, end_block });
 			Ok(())
 		}
+
+		#[pallet::weight(T::WeightInfo::create_reward_pool())]
+        pub fn split(
+            origin: OriginFor<T>,
+            position: T::PositionId,
+            ratio: Validated<Permill, ValidSplitRatio>,
+        ) -> DispatchResult {
+            let who = ensure_signed(origin)?;
+            <Self as Staking>::split(&who, &position, ratio.value())?;
+            Ok(())
+        }
 	}
 
 	impl<T: Config> Staking for Pallet<T> {
@@ -294,6 +307,19 @@ pub mod pallet {
 			_ratio: Permill,
 		) -> Result<[Self::PositionId; 2], DispatchError> {
 			Err("Not implemented".into())
+            /*
+             RewardPool-> rewards is P
+             RewardConfig-> reward_rate is r
+             Pcurrent = P + rt
+             Sigma(Sn) = RewardPool-> total_shares
+             d_n is reductions from Stake
+             */
+
+            // TODO: Split is possible or not
+            // verify position owner is same as who
+            // Take old position
+            // Generate new positions
+            // Insert them in storage
 		}
 	}
 }
