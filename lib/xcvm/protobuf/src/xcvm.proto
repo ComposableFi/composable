@@ -4,7 +4,9 @@ package xcvm;
 
 message Program {
   // as of now there is only linear interpreter with no fields dependencies
-  // so because of protocol specificaiton 2 can be in message because of 1
+  // so because of protocol specificaiton 2 can be in message because of 1.
+  // also specification does not guarantess field is represented only once,
+  // so it can repeat it - so please pick implementations which proven not doing it 
   Instructions instructions = 1;
   bytes tag = 2;
 }
