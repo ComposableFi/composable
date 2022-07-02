@@ -7,6 +7,7 @@ message Program {
   // so because of protocol specificaiton 2 can be in message because of 1.
   // also specification does not guarantess field is represented only once,
   // so it can repeat it - so please pick implementations which proven not doing it 
+  // generally, specification of protobuf is not hash fiendly
   Instructions instructions = 1;
   bytes tag = 2;
 }
