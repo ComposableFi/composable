@@ -3,11 +3,16 @@ syntax = "proto3";
 package xcvm;
 
 message Program {
+  // as of now there is only linear interpreter with no fields dependencies
+  // so because of protocol specificaiton 2 can be in message because of 1
   Instructions instructions = 1;
   bytes tag = 2;
 }
 
 message Instructions {
+  // do not add new fields into this message if there is desire to change message execution 
+  // because of possible reoreder and intermingling of repeated fields with other fields.
+  // also please pick only implementation which do not reorded repeated, as specificaion does not enforces to do that 
   repeated Instruction instructions = 1;
 }
 
