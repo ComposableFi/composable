@@ -50,6 +50,9 @@ message Account {
 }
 
 message U128 {
+  // minimums:
+  // bytes - 1 byte type + 1 byte length + 1 byte value, but not 7 bit encoded, so always 2+ bytes (more than 65535 tokens)
+  // low + high - 2 byte types + 2 bytes values
   uint64 low = 1;
   uint64 high = 2;
 }
