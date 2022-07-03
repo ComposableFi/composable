@@ -26,8 +26,8 @@ import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 export type AuctionHistoriesTableProps = {
   auction: LiquidityBootstrappingPool,
-  baseAsset: MockedAsset | undefined,
-  quoteAsset: MockedAsset | undefined,
+  baseAsset?: MockedAsset,
+  quoteAsset?: MockedAsset,
 } & TableContainerProps;
 
 export const AuctionHistoriesTable: React.FC<AuctionHistoriesTableProps> = ({

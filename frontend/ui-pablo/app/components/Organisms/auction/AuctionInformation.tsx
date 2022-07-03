@@ -14,8 +14,8 @@ import { LiquidityBootstrappingPool } from "@/defi/types";
 
 export type AuctionInformationProps = {
   auction: LiquidityBootstrappingPool;
-  baseAsset: MockedAsset | undefined;
-  quoteAsset: MockedAsset | undefined;
+  baseAsset?: MockedAsset;
+  quoteAsset?: MockedAsset;
   stats: LiquidityBootstrappingPoolStats;
 } & BoxProps;
 

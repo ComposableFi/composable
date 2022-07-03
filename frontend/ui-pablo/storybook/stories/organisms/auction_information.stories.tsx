@@ -7,7 +7,7 @@ const AuctionInformationStories = () => {
   const {auctions} = useStore();
   return (
     <Box>
-      <AuctionInformation stats={auctions.activeLBPStats} auction={auctions.activeLBP} baseAsset={undefined} quoteAsset={undefined} />
+      <AuctionInformation stats={auctions.activeLBPStats} auction={auctions.activeLBP} />
     </Box>
   );
 };
