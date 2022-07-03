@@ -2,20 +2,18 @@ syntax = "proto3";
 
 package xcvm;
 
+/// proto buf tells that
+/// - any repeated field can be intemingled with not not, e.g. `asset A, account, asset B`can happen
+/// - also can happend repeats, which are really not, exampeles `transfer, transfer` and `asset A, asset A`
+/// so proto are not enforce inter field order niether exact once by specfication,
+/// so that should be specified on XCVM compatible protocol to use proper protoc
+
 message Program {
-  // as of now there is only linear interpreter with no fields dependencies
-  // so because of protocol specificaiton 2 can be in message because of 1.
-  // also specification does not guarantess field is represented only once,
-  // so it can repeat it - so please pick implementations which proven not doing it 
-  // generally, specification of protobuf is not hash fiendly
   Instructions instructions = 1;
   bytes tag = 2;
 }
 
 message Instructions {
-  // do not add new fields into this message if there is desire to change message execution 
-  // because of possible reoreder and intermingling of repeated fields with other fields.
-  // also please pick only implementation which do not reorded repeated, as specificaion does not enforces to do that 
   repeated Instruction instructions = 1;
 }
 
@@ -48,7 +46,8 @@ message Account {
 }
 
 message U128 {
-  bytes encoded = 1;
+  uint64 low = 1;
+  uint64 high = 2;
 }
 
 message Amount {
@@ -62,6 +61,6 @@ message Fixed {
   U128 amount = 1;
 }
 
-message Ratio {
-  uint32 value = 1;
+message Ratio {  
+  uint32 numerator = 1;
 }
