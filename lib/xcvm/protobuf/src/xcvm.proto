@@ -27,7 +27,11 @@ message Instruction {
 
 message Transfer {
   Account destination = 1;
-  map<uint32, Amount> assets = 2;
+  Assets assets = 2;
+}
+
+message Assets {
+  map<uint32, Amount> assets = 1;
 }
 
 message Call {
@@ -37,7 +41,7 @@ message Call {
 message Spawn {
   uint32 network = 1;
   bytes salt = 2;
-  map<uint32, Amount> assets = 3;
+  Assets assets = 3;
   Program program = 4;
 }
 
