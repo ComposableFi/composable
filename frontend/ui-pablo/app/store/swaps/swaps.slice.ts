@@ -1,3 +1,4 @@
+import { DEFAULT_SWAP_BASE, DEFAULT_SWAP_QUOTE } from "@/defi/utils";
 import BigNumber from "bignumber.js";
 import { StoreSlice } from "../types";
 import { SwapsSlice } from "./swaps.types";
@@ -13,8 +14,8 @@ const createSwapsSlice: StoreSlice<SwapsSlice> = (set) => ({
     },
     spotPrice: new BigNumber(0),
     selectedAssets: {
-      base: "1",
-      quote: "4",
+      base: DEFAULT_SWAP_BASE,
+      quote: DEFAULT_SWAP_QUOTE,
     },
     selectedPool: undefined,
     setSelectedAsset: (id, side) => set((prev: SwapsSlice) => ({

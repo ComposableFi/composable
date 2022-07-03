@@ -32,7 +32,9 @@ const Updater = () => {
   }, [parachainApi, selectedAccount, supportedAssets, putAssetBalance])
 
   useEffect(() => {
-    updateAllBalances();
+    if (updateAllBalances && typeof updateAllBalances === "function") {
+      updateAllBalances();
+    }
   }, [updateAllBalances]);
 
   useEffect(() => {

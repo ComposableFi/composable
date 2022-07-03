@@ -1,5 +1,5 @@
 import { APP_NAME } from "@/defi/polkadot/constants";
-import { DEFAULT_NETWORK_ID, isValidAssetPair } from "@/defi/utils";
+import { DEFAULT_NETWORK_ID, isValidAssetPair, toChainUnits } from "@/defi/utils";
 import BigNumber from "bignumber.js";
 import { useSnackbar } from "notistack";
 import { useCallback } from "react";
@@ -22,7 +22,6 @@ export function usePabloSwap({ quoteAssetId, baseAssetId, quoteAmount, minimumRe
         return new Promise(async (res, rej) => {
             if (parachainApi && executor && isValidAssetPair(baseAssetId, quoteAssetId) && selectedAccount) {
                 try {
-                    const base = new BigNumber(10).pow(12);
                     const signer = await getSigner(APP_NAME, selectedAccount.address);
 
                     let pair = {
@@ -33,8 +32,8 @@ export function usePabloSwap({ quoteAssetId, baseAssetId, quoteAmount, minimumRe
                     await executor.execute(
                         parachainApi.tx.dexRouter.exchange(
                             pair,
-                            parachainApi.createType("u128", quoteAmount.times(base).toFixed(0)),
-                            parachainApi.createType("u128", minimumReceived.times(base).toFixed(0))
+                            parachainApi.createType("u128", toChainUnits(quoteAmount).toString()),
+                            parachainApi.createType("u128", toChainUnits(minimumReceived).toString())
                         ),
                         selectedAccount.address,
                         parachainApi,

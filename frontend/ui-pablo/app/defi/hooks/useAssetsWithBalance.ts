@@ -14,11 +14,10 @@ export function useAssetsWithBalance(networkId: string): AssetWithBalance[] {
     const assetsWithBalance = useMemo(() => {
         return supportedAssets.map(asset => {
             let balance = new BigNumber(0);
-            if (assetBalances[networkId]) {
-                if(assetBalances[networkId][asset.network[networkId]]) {
-                    balance = new BigNumber(assetBalances[networkId][asset.network[networkId]])
-                }
+            if(assetBalances[networkId]?.[asset.network[networkId]]) {
+                balance = new BigNumber(assetBalances[networkId][asset.network[networkId]])
             }
+
             return {
                 ...asset,
                 balance

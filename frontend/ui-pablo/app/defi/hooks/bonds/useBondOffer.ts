@@ -6,7 +6,7 @@ import { MockedAsset } from "@/store/assets/assets.types";
 import {
   decodeBondOffer,
   DEFAULT_NETWORK_ID,
-  fetchVesitngPeriod,
+  fetchVestingPeriod,
   matchAssetByPicassoId,
 } from "@/defi/utils";
 import { useParachainApi } from "substrate-react";
@@ -81,7 +81,7 @@ export default function useBondOffer(offerId: string) {
 
   const vestingPeriod = useMemo(() => {
     if (selectedBondOffer && averageBlockTime) {
-      return fetchVesitngPeriod({
+      return fetchVestingPeriod({
         interval: averageBlockTime.toString(),
         bondMaturity: selectedBondOffer.maturity,
       });

@@ -78,7 +78,7 @@ export const AllBondTable: React.FC = () => {
               sx={{ cursor: "pointer" }}
             >
               <TableCell align="left">
-                {bond.principalAsset.lpPrincipalAsset && bond.principalAsset.lpPrincipalAsset.baseAsset && bond.principalAsset.lpPrincipalAsset.quoteAsset ? (
+                {bond.principalAsset?.lpPrincipalAsset?.baseAsset && bond.principalAsset?.lpPrincipalAsset?.quoteAsset ? (
                   <PairAsset
                     assets={[
                       {

@@ -25,9 +25,7 @@ export const useSwapsChart = () => {
     if (selectedPool && selectedPool.poolId !== -1 && quote !== "none") {
       queryPoolTransactionsByType(selectedPool.poolId, "SWAP", 250).then((response) => {
         if (
-          response.data &&
-          response.data.pabloTransactions &&
-          response.data.pabloTransactions.length
+          response.data?.pabloTransactions?.length
         ) {
           let swapTransactions = response.data.pabloTransactions.map(
             (tx: {

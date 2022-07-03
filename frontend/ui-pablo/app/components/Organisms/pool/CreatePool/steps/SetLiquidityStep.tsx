@@ -64,14 +64,14 @@ const priceLabelProps = (label: string, balance?: string) =>
 
 const combinedSelectProps = (asset: MockedAsset | undefined, isMobile?: boolean) =>
   ({
-    value: asset ? asset.network[DEFAULT_NETWORK_ID] : "",
+    value: asset?.network?.[DEFAULT_NETWORK_ID] || "",
     dropdownModal: true,
     forceHiddenLabel: isMobile ? true : false,
     options:
       asset
         ? [
             {
-              value: asset.network[DEFAULT_NETWORK_ID],
+              value: asset.network?.[DEFAULT_NETWORK_ID],
               label: asset.name,
               shortLabel: asset.symbol,
               icon: asset.icon,
@@ -89,7 +89,7 @@ const SetLiquidityStep: React.FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();
   const dispatch = useDispatch();
 
-  const { createPool, supportedAssets } = useStore();
+  const { createPool } = useStore();
 
   const baseAmount = useMemo(() => {
     return new BigNumber(createPool.liquidity.baseAmount);

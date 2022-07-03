@@ -14,6 +14,8 @@ import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
 import { MockedAsset } from "@/store/assets/assets.types";
 import { useUSDPriceByAssetId } from "@/store/assets/hooks";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
+import { useCallback } from "react";
+import { usePrincipalAssetSymbol } from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
 
 const containerBoxProps = (theme: Theme) => ({
   display: "flex",
@@ -54,11 +56,44 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
   const theme = useTheme();
   const { principalAsset, rewardAsset } = bond;
   const rewardPriceInUSD = useUSDPriceByAssetId(
-    rewardAsset ? rewardAsset.network[DEFAULT_NETWORK_ID] : "-"
+    rewardAsset?.network?.[DEFAULT_NETWORK_ID] || "-"
   );
 
   const { lpPrincipalAsset, simplePrincipalAsset } = principalAsset;
   const { baseAsset, quoteAsset } = lpPrincipalAsset;
+
+  const renderIcons = useCallback(() => {
+    if (baseAsset && quoteAsset) {
+      return (
+        <PairAsset
+        assets={[
+          {
+            icon: baseAsset.icon,
+            label: baseAsset.symbol,
+          },
+          {
+            icon: quoteAsset.icon,
+            label: quoteAsset.symbol,
+          },
+        ]}
+        iconOnly
+        iconSize={36}
+      />
+      );
+    } else if (simplePrincipalAsset) {
+      return (
+        <BaseAsset
+        label={simplePrincipalAsset.symbol}
+        icon={simplePrincipalAsset.icon}
+        LabelProps={{ variant: "h4" }}
+        iconSize={36}
+      />
+      );
+    }
+    return null;
+  }, [simplePrincipalAsset, baseAsset, quoteAsset]);
+
+  const principalAssetSymbol = usePrincipalAssetSymbol(principalAsset);
 
   return (
     <Box {...containerBoxProps(theme)} {...boxProps}>
@@ -70,35 +105,9 @@ export const SupplySummary: React.FC<SupplySummaryProps> = ({
       >
         <Box {...itemBoxProps}>
           <Typography {...itemTitleProps}>Supply</Typography>
-          {baseAsset && quoteAsset ? (
-            <PairAsset
-              assets={[
-                {
-                  icon: baseAsset.icon,
-                  label: baseAsset.symbol,
-                },
-                {
-                  icon: quoteAsset.icon,
-                  label: quoteAsset.symbol,
-                },
-              ]}
-              iconOnly
-              iconSize={36}
-            />
-          ) : simplePrincipalAsset ? (
-            <BaseAsset
-              label={simplePrincipalAsset.symbol}
-              icon={simplePrincipalAsset.icon}
-              LabelProps={{ variant: "h4" }}
-              iconSize={36}
-            />
-          ) : null}
+          {renderIcons()}
           <Typography variant="body1">
-            {baseAsset && quoteAsset
-              ? `LP ${baseAsset.symbol}-${quoteAsset.symbol}`
-              : simplePrincipalAsset
-              ? `${simplePrincipalAsset.symbol}`
-              : "-"}
+            {principalAssetSymbol}
           </Typography>
         </Box>
         <ArrowRightAlt sx={{ color: "text.secondary" }} />

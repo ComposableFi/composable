@@ -16,7 +16,7 @@ export function fetchBlockBasedVestingTime({
     return "100%";
   }
 
-  if (currentBlock >= start) {
+  if (currentBlock >= lastBlock) {
     return "0%";
   }
 

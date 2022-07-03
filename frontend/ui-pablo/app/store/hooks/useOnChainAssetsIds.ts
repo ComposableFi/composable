@@ -12,7 +12,7 @@ export const useOnChainAssetIds = (): Set<string> => {
     useEffect(() => {
         let assetIds = supportedAssets.map(i => {
             return i.network[DEFAULT_NETWORK_ID]
-        });
+        }).filter(Boolean);
         setAssetIds(new Set(assetIds))
     }, [supportedAssets]);
 

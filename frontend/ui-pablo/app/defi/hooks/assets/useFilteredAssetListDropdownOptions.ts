@@ -2,7 +2,7 @@ import { DEFAULT_NETWORK_ID, matchAssetByPicassoId } from "@/defi/utils";
 import useStore from "@/store/useStore";
 import { useMemo } from "react";
 
-export function useFilteredAssetListDropdownOptions(assetId: string): { value: string; label: string; shortLabel: string, icon: string }[] {
+export function useFilteredAssetListDropdownOptions(assetId: string) {
     const { supportedAssets } = useStore();
 
     const assetOptions = useMemo(() => {

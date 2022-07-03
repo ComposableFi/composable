@@ -124,10 +124,7 @@ const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
       setIsConfirmed(false);
       dispatch(closeConfirmingModal());
     }
-    // dispatch is a setter, we can skip adding it to
-    // dependancies list
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isConfirmed]);
+  }, [isConfirmed, dispatch]);
 
   const [isProcessing, setIsProcessing] = useState(false);
 

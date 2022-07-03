@@ -1,9 +1,12 @@
 import BigNumber from "bignumber.js";
 import { DEFI_CONFIG } from "../config";
+import { useFilteredAssetListDropdownOptions } from "../hooks/assets/useFilteredAssetListDropdownOptions";
 
 export * from "./bonds";
 export * from "./pablo";
 export * from "./vesting";
+
+export type AssetDropdownOptions = ReturnType <typeof useFilteredAssetListDropdownOptions>;
 
 export type TokenId = typeof DEFI_CONFIG.tokenIds[number];
 export type Token = {

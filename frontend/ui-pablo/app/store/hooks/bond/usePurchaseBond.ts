@@ -16,10 +16,6 @@ export function usePurchaseBond(offerId: BigNumber, amount: BigNumber) {
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const executor = useExecutor();
 
-
-  console.log(offerId.toString())
-  console.log(amount.toString())
-
   const purchaseBond = useCallback(
     async () => {
       if (parachainApi && selectedAccount && executor) {

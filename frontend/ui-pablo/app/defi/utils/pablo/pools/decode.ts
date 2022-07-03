@@ -11,7 +11,7 @@ import {
   DAYS,
   DEFAULT_NETWORK_ID,
   DUMMY_LAUNCH_DESCRIPTION,
-} from "../../constants";
+} from "@/defi/utils/constants";
 
 export function decodeFeeConfig(poolItem: any): PoolFeeConfig {
   return {

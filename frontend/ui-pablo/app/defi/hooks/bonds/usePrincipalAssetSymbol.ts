@@ -8,11 +8,13 @@ export function usePrincipalAssetSymbol(
   const { baseAsset, quoteAsset } = lpPrincipalAsset;
 
   let principalSymbol = useMemo(() => {
-    return baseAsset && quoteAsset
-      ? baseAsset.symbol + "/" + quoteAsset.symbol
-      : simplePrincipalAsset
-      ? simplePrincipalAsset.symbol
-      : "-";
+    if (baseAsset && quoteAsset) {
+      return `${baseAsset.symbol}/${quoteAsset.symbol}`;
+    }
+    if (simplePrincipalAsset) {
+      return simplePrincipalAsset.symbol;
+    }
+    return "-";
   }, [simplePrincipalAsset, baseAsset, quoteAsset]);
 
   return principalSymbol;

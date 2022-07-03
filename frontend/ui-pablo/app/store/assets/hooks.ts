@@ -22,11 +22,7 @@ export function useAssetBalance(chainId: string, assetId: string): BigNumber {
     const { assetBalances } = useStore();
 
     const balance = useMemo(() => {
-        if (assetBalances[chainId] && assetBalances[chainId][assetId]) {
-            return new BigNumber(assetBalances[chainId][assetId])
-        }
-    
-        return new BigNumber(0);
+        return new BigNumber(assetBalances?.[chainId]?.[assetId] || 0);
     }, [assetBalances, chainId, assetId])
 
     return balance;
