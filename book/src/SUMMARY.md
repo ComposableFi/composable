@@ -9,13 +9,13 @@
 # Parachains
 - [Picasso](./parachains/picasso-parachain-overview.md)
     - [Picasso Crowdloan](./parachains/picasso/picasso-crowdloan.md)
+        - [KSM Purchase Log](./parachains/picasso/KSM-purchase-log.md)
     - [Governance](./parachains/picasso/picasso-governance.md)
-    - [KSM Purchase Log](./parachains/picasso/KSM-purchase-log.md)
     - [Tokenomics](./parachains/picasso/picasso-tokenomics.md)
   
 - [Composable](./parachains/composable-parachain-overview.md)
     - [Composable Crowdloan](./parachains/composable/composable-crowdloan.md)
-    - [DOT Purchase Log](./parachains/composable/DOT-purchase-log.md)
+        - [DOT Purchase Log](./parachains/composable/DOT-purchase-log.md)
     - [LAYR Tokenomics](./parachains/composable/LAYR-tokenomics.md)
   
 # 💿 PRODUCTS
