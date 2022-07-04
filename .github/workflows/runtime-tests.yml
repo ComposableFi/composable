@@ -41,18 +41,16 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
-      # This is disabled because polkadot-lauch doesn't work with the latest commits, see for details https://app.clickup.com/t/2arav8f
-      #
-      # - name: Build Docker image
-      #   run: make containerize-composable-sandbox
+      - name: Build Docker image
+        run: make containerize-composable-sandbox
 
-      # - name: Push Docker image
-      #   if: ${{ github.ref == 'refs/heads/main' }}
-      #   run: make push-composable-sandbox
+      - name: Push Docker image
+        if: ${{ github.ref == 'refs/heads/main' }}
+        run: make push-composable-sandbox
 
-      # - name: Push Docker image without latest tag
-      #   if: ${{ github.ref != 'refs/heads/main' }}
-      #   run: make push-composable-sandbox-without-latest-tag
+      - name: Push Docker image without latest tag
+        if: ${{ github.ref != 'refs/heads/main' }}
+        run: make push-composable-sandbox-without-latest-tag
 
       - name: Prepare a test environment
         run: |
