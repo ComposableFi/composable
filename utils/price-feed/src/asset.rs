@@ -9,6 +9,7 @@ custom_derive! {
 	#[derive(EnumFromStr, Copy, Clone, PartialEq, Eq, Hash, Debug)]
 	pub enum Asset {
 		KSM,
+        PICA,
 		USDT,
 		USDC,
 	}
@@ -26,6 +27,7 @@ lazy_static! {
 	*/
 	pub static ref INDEX_TO_ASSET: HashMap<CurrencyId, Asset> = [
 		(primitives::currency::CurrencyId::KSM, Asset::KSM),
+		(primitives::currency::CurrencyId::PICA, Asset::PICA),
 		(primitives::currency::CurrencyId::USDT, Asset::USDT),
 		(primitives::currency::CurrencyId::USDC, Asset::USDC),
 	]
