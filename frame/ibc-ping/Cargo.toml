@@ -27,7 +27,9 @@ ibc-trait = { path = "../ibc/ibc-trait", default-features = false }
 
 [dev-dependencies]
 balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", branch = "feat/revert-tracing-version/andor0", default-features = false, features = [ "mocks" ] }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", branch = "feat/revert-tracing-version/andor0", default-features = false, features = [
+  "mocks",
+] }
 pallet-ibc = { path = "../ibc" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8" }

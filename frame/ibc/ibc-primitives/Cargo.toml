@@ -10,7 +10,9 @@ targets = ["x86_64-unknown-linux-gnu"]
 codec = { package = "parity-scale-codec", version = "3.0.0", features = [
   "derive",
 ], default-features = false }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", branch = "feat/revert-tracing-version/andor0", default-features = false, features = [ "ics11_beefy" ] }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", branch = "feat/revert-tracing-version/andor0", default-features = false, features = [
+  "ics11_beefy",
+] }
 ripemd = { version = "0.1.1", default-features = false }
 scale-info = { version = '2.1.1', default-features = false }
 serde = { version = "1.0.136", features = ["derive"], optional = true }

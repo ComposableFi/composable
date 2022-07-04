@@ -35,7 +35,9 @@ sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.22" }
 
 hex-literal = { version = "0.3.4", optional = true }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", branch = "feat/revert-tracing-version/andor0", default-features = false, features = [ "ics11_beefy" ] }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", branch = "feat/revert-tracing-version/andor0", default-features = false, features = [
+  "ics11_beefy",
+] }
 ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", branch = "feat/revert-tracing-version/andor0", default-features = false }
 
 ics23 = { git = "https://github.com/composablefi/ics23", rev = "86e970a4f22973946a0faf472b56951691d40874", default-features = false, optional = true }
@@ -64,7 +66,9 @@ hex-literal = { version = "0.3.4" }
 #] }
 # ibc = { path = "../../../ibc-rs", default-features = false, features = [ "ics11_beefy" ] }
 
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", branch = "feat/revert-tracing-version/andor0" , default-features = false, features = [ "ics11_beefy" ] }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", branch = "feat/revert-tracing-version/andor0", default-features = false, features = [
+  "ics11_beefy",
+] }
 
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b" }
