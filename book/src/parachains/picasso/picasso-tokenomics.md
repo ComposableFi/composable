@@ -40,7 +40,7 @@ Users can provide liquidity for PICA-USDC, PICA-KSM pairs on the Pablo DEX for y
 
 ## Total supply and genesis token distribution
 
-The total supply of PICA is 10 billion tokens. Token distribution is as the following:
+The total supply of PICA is 10 billion tokens. PICA Token distribution is intended as follows:
 
 
 ![supply_distribution_diagram](/.supply-distribution-diagram.png)
@@ -50,10 +50,10 @@ The total supply of PICA is 10 billion tokens. Token distribution is as the foll
 
 **Ecosystem Incentives**: 10% of PICA’s total token supply will be released from the protocol as rewards and incentives for a number of actions involved in the protocol. These are programmatic incentives to bootstrap network growth such as running an oracle on Apollo. *
 
-**Treasury**: 30% of PICA’s supply is allocated to account for the long-term sustainability of the Picasso Network, the Picasso Network treasury is governed by the Picasso General Council, which will later be governed by PICA token holders. Decisions on grants, incentives, will be actioned through the treasury, and will be the location where transaction fees flow into. *
+**Treasury**: 30% of PICA’s supply is allocated to account for the long-term sustainability of the Picasso Network, the Picasso Network treasury is governed by the Picasso General Council, which will later be governed by PICA token holders. Decisions on grants and incentives will be actioned through the treasury and transaction fees will also flow into the treasury. 
 
 **Team**: The team will receive 15% of supply (1,500,000,000 tokens) with a 2-year linear vesting.
 
-**Liquidity mining**: 15% of the total token supply will be released from the protocol as rewards and incentives for users on Picasso. *
+**Liquidity mining**: 15% of the total token supply will be released from the protocol as rewards and incentives for users on Picasso. 
 
 *All terms related to token allocations are subject to change.

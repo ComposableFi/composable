@@ -1,6 +1,6 @@
 # DOT Purchase Log
 
-This page catalogues all the stablecoin conversions to DOT via 3AC and contributed to the crowdloan for the Composable Parachain.
+This page catalogues all the stablecoin conversions to DOT via TPS (the OTC desk of 3AC ) and contributed to the crowdloan for the Composable Parachain.
 
 | Date       | Stablecoins    | DOT purchase price |
 | ---------- | -------------- | ------------------ |
