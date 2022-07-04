@@ -52,7 +52,7 @@ pub mod pallet {
 				start_at::ZeroInit,
 			},
 		},
-		math::safe::SafeArithmetic,
+		math::safe::{SafeArithmetic, SafeDiv, SafeMul},
 	};
 	use composable_traits::{
 		currency::{BalanceLike, CurrencyFactory},
@@ -64,7 +64,7 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use sp_arithmetic::{traits::One, Perbill, Permill};
-	use sp_runtime::traits::BlockNumberProvider;
+	use sp_runtime::{traits::BlockNumberProvider, ArithmeticError};
 	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug};
 
 	use crate::{prelude::*, weights::WeightInfo};
@@ -319,10 +319,21 @@ pub mod pallet {
 			let mut inner_rewards = rewards_pool.rewards.into_inner();
 
 			for (asset_id, reward) in inner_rewards.iter_mut() {
-				let inflation = reward.total_rewards * new_pool_shares / rewards_pool.total_shares;
+				let inflation = reward
+					.total_rewards
+					.safe_mul(&new_pool_shares)
+					.map_err(|_| ArithmeticError::Overflow)?
+					.safe_div(&rewards_pool.total_shares)
+					.map_err(|_| ArithmeticError::Overflow)?;
 
-				reward.total_rewards += inflation;
-				reward.total_dilution_adjustment += inflation;
+				reward.total_rewards = reward
+					.total_rewards
+					.safe_add(&inflation)
+					.map_err(|_| ArithmeticError::Overflow)?;
+				reward.total_dilution_adjustment = reward
+					.total_dilution_adjustment
+					.safe_add(&inflation)
+					.map_err(|_| ArithmeticError::Overflow)?;
 
 				reductions
 					.try_insert(asset_id.clone(), reward.clone())
