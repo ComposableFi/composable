@@ -1,18 +1,19 @@
-# Turborepo starter
-
-This is an official Yarn v1 starter turborepo.
+# Frontend Monorepo
+This project includes all UI and blockchain integration for Picasso and Pablo.
 
 ## What's inside?
 
-This turborepo uses [Yarn](https://classic.yarnpkg.com/lang/en/) as a package manager. It includes the following packages/apps:
+This monorepo uses turborepo with [Yarn](https://classic.yarnpkg.com/lang/en/) as a package manager.
 
 ### Apps and Packages
 
-- `docs`: a [Next.js](https://nextjs.org) app
-- `web`: another [Next.js](https://nextjs.org) app
-- `ui`: a stub React component library shared by both `web` and `docs` applications
+- `pablo`: a [Next.js](https://nextjs.org) app
+- `picasso`: another [Next.js](https://nextjs.org) app
+- `shared`: a utility library that is used by both pablo and picasso applications
+- `defi-interfaces`: a collection of types extracted from polkadot chain and defs to use in packages/apps
 - `eslint-config-custom`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
 - `tsconfig`: `tsconfig.json`s used throughout the monorepo
+- `substrate-react`: a colllection of React utilities to be used across Pablo and Picasso
 
 Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
 
@@ -25,15 +26,11 @@ This turborepo has some additional tools already setup for you:
 - [Prettier](https://prettier.io) for code formatting
 
 ## Setup
-
-This repository is used in the `npx create-turbo` command, and selected when choosing which package manager you wish to use with your monorepo (Yarn).
-
+`yarn install` is going to be all you need. This project has been setup with yarn v1.
 ### Build
 
-To build all apps and packages, run the following command:
-
 ```
-cd my-turborepo
+cd frontend
 yarn run build
 ```
 
@@ -42,8 +39,14 @@ yarn run build
 To develop all apps and packages, run the following command:
 
 ```
-cd my-turborepo
+cd frontend
 yarn run dev
+```
+
+To develop individual packages, you can use turborepo's filter command:
+
+```bash
+yarn --filter=picasso dev
 ```
 
 ### Remote Caching
