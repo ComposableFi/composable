@@ -63,7 +63,7 @@ use sp_runtime::{
 };
 use sp_trie::TrieMut;
 use tendermint_proto::Protobuf;
-mod events;
+pub mod events;
 use events::{filter_map_pallet_event, IbcRelayerEvent};
 
 /// Connection handshake proof
