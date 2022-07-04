@@ -1,0 +1,7 @@
+{
+  "name": "shared",
+  "version": "1.0.0",
+  "devDependencies": {
+    "bignumber.js": "^9.0.2"
+  }
+}

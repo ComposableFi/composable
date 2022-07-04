@@ -4,7 +4,7 @@ import { BondBox } from "@/components";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import BigNumber from "bignumber.js";
 import { useBondVestingInDays } from "@/defi/polkadot/hooks/useBondVestingInDays";
-import { humanBalance, humanDate, LONG_HUMAN_DATE } from "@/utils/formatters";
+import { humanBalance, humanDate, LONG_HUMAN_DATE } from "shared";
 
 type BoxPosition = 0 | 1 | 2 | 3;
 
@@ -26,16 +26,16 @@ export const HighlightBoxes: FC<{
   const bondBoxes: BoxItem = {
     0: {
       title: "Bond price",
-      description: `$${humanBalance(bondOffer.price)}`,
+      description: `$${humanBalance(bondOffer.price)}`
     },
     1: {
       title: "Market price",
-      description: `$${humanBalance(bondOffer.rewardPrice)}`,
+      description: `$${humanBalance(bondOffer.rewardPrice)}`
     },
     2: {
       title: "Discount",
       description: `${humanBalance(roi)}%`,
-      discountColor: Number(roi.toFixed(3)),
+      discountColor: Number(roi.toFixed(3))
     },
     3: {
       title: "Vesting period",
@@ -43,8 +43,8 @@ export const HighlightBoxes: FC<{
         vesting === "Infinite"
           ? "Infinite"
           : humanDate(vesting, LONG_HUMAN_DATE)
-      }`,
-    },
+      }`
+    }
   };
   return (
     <Grid item container spacing={3}>

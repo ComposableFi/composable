@@ -4,6 +4,7 @@ const withTM = require("next-transpile-modules")([
   "@integrations-lib/core",
   "substrate-react",
   "@web3-react/core",
+  "shared"
 ]);
 
 const nextConfig = {

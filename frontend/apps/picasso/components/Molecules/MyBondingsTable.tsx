@@ -8,12 +8,12 @@ import {
   TableContainerProps,
   TableHead,
   TableRow,
-  Typography,
+  Typography
 } from "@mui/material";
 import { BaseAsset, TokenAsset, TokenPairAsset } from "../Atom";
 import { NoAssetsCover } from "./NoAssetsCover";
 import { getTokenString } from "@/components/Organisms/Bond/utils";
-import { humanBalance } from "@/utils/formatters";
+import { humanBalance } from "shared";
 import { useClaim } from "@/stores/defi/polkadot/bonds/useClaim";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { ActiveBond } from "@/stores/defi/polkadot/bonds/slice";
@@ -32,8 +32,8 @@ export const BondTableRow: FC<{
     <TableRow
       sx={{
         "&:hover": {
-          cursor: "pointer",
-        },
+          cursor: "pointer"
+        }
       }}
       key={getTokenString(bond.reward.asset)}
       onClick={() => onRowClick(bond.bondOfferId)}
