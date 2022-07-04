@@ -9,7 +9,7 @@ custom_derive! {
 	#[derive(EnumFromStr, Copy, Clone, PartialEq, Eq, Hash, Debug)]
 	pub enum Asset {
 		KSM,
-        PICA,
+		PICA,
 		USDT,
 		USDC,
 	}

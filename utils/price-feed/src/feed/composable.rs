@@ -17,7 +17,7 @@ pub struct ComposableFeed;
 
 impl ComposableFeed {
 	pub async fn start(
-        composable_node_url: String,
+		composable_node_url: String,
 		assets: &HashSet<(Asset, Asset)>,
 	) -> FeedResult<Feed<FeedIdentifier, Asset, TimeStampedPrice>> {
 		let (sink, source) = mpsc::channel(CHANNEL_BUFFER_SIZE);
@@ -25,15 +25,16 @@ impl ComposableFeed {
 		sink.send(FeedNotification::Started { feed: FeedIdentifier::Composable })
 			.await
 			.map_err(|_| FeedError::ChannelIsBroken)?;
-		let api = ClientBuilder::new()
-            .set_url(composable_node_url)
-			.build()
-			.await
-			.map_err(|_| FeedError::NetworkFailure)?
-			.to_runtime_api::<composable_api::api::RuntimeApi<
-			DefaultConfig,
-			PolkadotExtrinsicParams<DefaultConfig>,
-		>>();
+		let api =
+			ClientBuilder::new()
+				.set_url(composable_node_url)
+				.build()
+				.await
+				.map_err(|_| FeedError::NetworkFailure)?
+				.to_runtime_api::<composable_api::api::RuntimeApi<
+					DefaultConfig,
+					PolkadotExtrinsicParams<DefaultConfig>,
+				>>();
 
 		for &(base, _quote) in assets.iter() {
 			sink.send(FeedNotification::AssetOpened {
