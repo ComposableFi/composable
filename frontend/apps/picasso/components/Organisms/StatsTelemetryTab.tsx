@@ -1,7 +1,7 @@
 import { Box, useTheme } from "@mui/material";
 import { Chart, FeaturedBox } from "@/components/Molecules";
 import { useStore } from "@/stores/root";
-import { formatNumber, formatNumberCompact } from "@/utils/formatters";
+import { formatNumber, formatNumberCompact } from "shared";
 import { TelemetryDataProps } from "@/stores/defi/stats/telemetry";
 
 function formatTelemetryTitleValue(index: number, info: TelemetryDataProps) {
@@ -32,8 +32,8 @@ export const StatsTelemetryTab: React.FC<{}> = ({}) => {
         sx={{
           gridTemplateColumns: {
             xs: "1fr",
-            lg: "1fr 1fr 1fr",
-          },
+            lg: "1fr 1fr 1fr"
+          }
         }}
         mb={5}
         gap={4}
@@ -55,7 +55,7 @@ export const StatsTelemetryTab: React.FC<{}> = ({}) => {
             height: 90.7,
             shorthandLabel: "Change",
             labelFormat: (n: number) => n.toFixed(),
-            color: theme.palette.primary.main,
+            color: theme.palette.primary.main
           }}
           currentInterval={info.data.interval[info.data.pickedInterval]}
           onIntervalChange={dispatchMemPoolInterval}

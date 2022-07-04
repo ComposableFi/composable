@@ -1,13 +1,13 @@
 import { NamedSet } from "zustand/middleware";
 import { StoreSlice } from "../types";
-import { formatNumber } from "@/utils/formatters";
+import { formatNumber } from "shared";
 import BigNumber from "bignumber.js";
 
 export const DURATION_OPTIONS = {
   "2w": "2 weeks",
   "2m": "2 months",
   "1y": "1 year",
-  "2y": "2 years",
+  "2y": "2 years"
 };
 
 export type DurationOption = keyof typeof DURATION_OPTIONS;
@@ -60,12 +60,12 @@ export const initialState = {
     totalChaosAPY: "265%",
     totalChaosMinted: formatNumber(4265),
     averageLockMultiplier: formatNumber(0.8),
-    averageLockTime: "265 days",
+    averageLockTime: "265 days"
   },
   claimableRewards: {
     pica: new BigNumber(25.135),
     pablo: new BigNumber(65.265),
-    angl: new BigNumber(48.551),
+    angl: new BigNumber(48.551)
   },
   openPositions: [
     {
@@ -77,7 +77,7 @@ export const initialState = {
       multiplier: 1.0,
       yourChaos: new BigNumber(0),
       value: new BigNumber(23.309),
-      usdValue: new BigNumber(34567),
+      usdValue: new BigNumber(34567)
     },
     {
       id: "FNFT 234",
@@ -88,11 +88,11 @@ export const initialState = {
       multiplier: 1.0,
       yourChaos: new BigNumber(0),
       value: new BigNumber(23.309),
-      usdValue: new BigNumber(-34567),
-    },
+      usdValue: new BigNumber(-34567)
+    }
   ],
   initialPicaDeposit: new BigNumber(55655),
-  withdrawablePica: new BigNumber(25565),
+  withdrawablePica: new BigNumber(25565)
 };
 
 export interface StakingSlice {
@@ -109,18 +109,18 @@ export const createStakingSlice: StoreSlice<StakingSlice> = (
     ...initialState,
 
     setStakingHighlights: (data: StakingHighlightsType) => {
-      set((state) => {
+      set(state => {
         state.staking.highlights = data;
 
         return state;
       });
     },
     setClaimableRewards: (data: ClaimableRewards) => {
-      set((state) => {
+      set(state => {
         state.staking.claimableRewards = data;
 
         return state;
       });
-    },
-  },
+    }
+  }
 });

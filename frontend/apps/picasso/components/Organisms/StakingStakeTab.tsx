@@ -3,11 +3,11 @@ import {
   Button,
   CircularProgress,
   Typography,
-  useTheme,
+  useTheme
 } from "@mui/material";
 import React from "react";
 import { Input, Modal } from "@/components";
-import { TOKEN_IDS } from "@/defi/Tokens";
+import { TOKEN_IDS } from "tokens";
 
 export type StakingStakeTabProps = {
   flow: "stake" | "unstake";
@@ -47,8 +47,8 @@ export const StakingStakeTab: React.FC<StakingStakeTabProps> = ({ flow }) => {
             mainLabelProps: { label: "Amount" },
             balanceLabelProps: {
               label: flow === "stake" ? "Balance:" : "Staked Balance:",
-              balanceText: "200 CHAOS",
-            },
+              balanceText: "200 CHAOS"
+            }
           }}
         />
       </Box>
@@ -77,7 +77,7 @@ export const StakingStakeTab: React.FC<StakingStakeTabProps> = ({ flow }) => {
             alignItems: "center",
             justifyContent: "center",
             flexDirection: "column",
-            gap: theme.spacing(1),
+            gap: theme.spacing(1)
           }}
         >
           <CircularProgress size={76} sx={{ mb: theme.spacing(8) }} />

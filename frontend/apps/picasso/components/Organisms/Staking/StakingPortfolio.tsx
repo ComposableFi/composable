@@ -10,10 +10,10 @@ import {
   TableHead,
   TableRow,
   Typography,
-  useTheme,
+  useTheme
 } from "@mui/material";
 import { TokenAsset } from "@/components";
-import { dateFromNumber, formatDate } from "@/utils/formatters";
+import { dateFromNumber, formatDate } from "shared";
 import { useStore } from "@/stores/root";
 
 export const StakingPortfolio: FC = () => {

@@ -44,7 +44,8 @@
     "substrate-react": "*",
     "immer": "^9.0.14",
     "zustand": "^4.0.0-beta.2",
-    "shared": "*"
+    "shared": "*",
+    "tokens": "*"
   },
   "devDependencies": {
     "@babel/core": "^7.16.7",

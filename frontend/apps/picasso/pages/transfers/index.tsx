@@ -10,19 +10,19 @@ import {
   NetworkSelect,
   RecipientDropdown,
   TextSwitch,
-  TokenDropdownCombinedInput,
+  TokenDropdownCombinedInput
 } from "@/components";
 import { PageTitle } from "@/components";
-import { TokenId } from "@/defi/Tokens";
-import { formatToken } from "@/utils/formatters";
+import { TokenId } from "tokens";
+import { formatToken } from "shared";
 
 const gridContainerStyle = {
-  mx: "auto",
+  mx: "auto"
 };
 
 const gridItemStyle = (pt: string = "2rem") => ({
   xs: 12,
-  sx: { pt },
+  sx: { pt }
 });
 
 const networksStyle = (theme: Theme) =>
@@ -33,9 +33,9 @@ const networksStyle = (theme: Theme) =>
     [theme.breakpoints.down("sm")]: {
       flexDirection: "column",
       alignItems: "initial",
-      gap: "1.5rem",
+      gap: "1.5rem"
     },
-    "& > *": { flex: 1 },
+    "& > *": { flex: 1 }
   } as const);
 
 const swapButtonStyle = (theme: Theme) => ({
@@ -44,14 +44,14 @@ const swapButtonStyle = (theme: Theme) => ({
   [theme.breakpoints.down("sm")]: {
     maxWidth: "3.5rem",
     minWidth: "3.5rem",
-    alignSelf: "center",
-  },
+    alignSelf: "center"
+  }
 });
 
 const amountInputStyle = {
   "& .MuiOutlinedInput-input": {
-    textAlign: "center",
-  },
+    textAlign: "center"
+  }
 };
 
 const Transfers: NextPage = () => {
@@ -64,7 +64,7 @@ const Transfers: NextPage = () => {
     flipKeepAlive,
     updateAmount,
     updateNetworks,
-    updateRecipient,
+    updateRecipient
   } = useStore(({ transfers }) => transfers);
 
   const handleSwapClick = () =>
@@ -141,23 +141,23 @@ const Transfers: NextPage = () => {
             value={amount.value}
             LabelProps={{
               mainLabelProps: {
-                label: "Amount",
+                label: "Amount"
               },
               balanceLabelProps: {
                 label: "Balance:",
-                balanceText: formatToken(amount.balance, amount.tokenId),
-              },
+                balanceText: formatToken(amount.balance, amount.tokenId)
+              }
             }}
             ButtonProps={{
-              onClick: handleMaxClick,
+              onClick: handleMaxClick
             }}
             InputProps={{
-              sx: amountInputStyle,
+              sx: amountInputStyle
             }}
             CombinedSelectProps={{
               value: amount.tokenId,
               options: amount.options,
-              onChange: handleTokenChange,
+              onChange: handleTokenChange
             }}
             onChange={handleAmountChange}
           />
@@ -175,7 +175,7 @@ const Transfers: NextPage = () => {
             label="Fee"
             feeText={formatToken(fee, amount.tokenId)}
             TooltipProps={{
-              title: "Fee tooltip title",
+              title: "Fee tooltip title"
             }}
           />
         </Grid>
@@ -185,7 +185,7 @@ const Transfers: NextPage = () => {
             checked={keepAlive}
             TooltipProps={{
               title:
-                "This will prevent account of being removed due to low balance.",
+                "This will prevent account of being removed due to low balance."
             }}
             onChange={handleKeepAliveChange}
           />

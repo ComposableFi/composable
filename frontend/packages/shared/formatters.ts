@@ -1,6 +1,5 @@
-import { TokenId, TOKENS } from "@/defi/Tokens";
+import { TokenId, TOKENS } from "tokens";
 import BigNumber from "bignumber.js";
-import { secondsToDHMS } from "@/defi/polkadot/hooks/useBondVestingInDays";
 
 export const formatToken = (amount: BigNumber | number, tokenId: TokenId) => {
   return `${amount} ${TOKENS[tokenId].symbol}`;

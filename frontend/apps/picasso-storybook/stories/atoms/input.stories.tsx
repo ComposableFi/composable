@@ -1,5 +1,5 @@
 import { Input, InputProps } from "picasso/components";
-import { TOKEN_IDS } from "picasso/defi/Tokens";
+import { TOKEN_IDS } from "tokens";
 import { Box, SxProps } from "@mui/material";
 import { Story } from "@storybook/react";
 
@@ -10,7 +10,7 @@ const InputsStories = (props: InputProps) => {
     gap: 2,
     resize: "both",
     overflow: "auto",
-    padding: 2,
+    padding: 2
   };
 
   return (
@@ -25,10 +25,10 @@ const InputsStories = (props: InputProps) => {
 };
 export default {
   title: "atoms/Input",
-  component: Input,
+  component: Input
 };
 
-const Template: Story<typeof InputsStories> = (args) => (
+const Template: Story<typeof InputsStories> = args => (
   <InputsStories {...args} />
 );
 
@@ -36,30 +36,30 @@ const mainLabelProps = {
   label: "Label master here",
   TypographyProps: {},
   TooltipProps: {
-    title: "Tooltip master here",
-  },
+    title: "Tooltip master here"
+  }
 };
 
 const balanceLabelProps = {
   label: "Balance:",
   LabelTypographyProps: {},
   balanceText: "435 KSM",
-  BalanceTypographyProps: {},
+  BalanceTypographyProps: {}
 };
 
 export const TextOnly = Template.bind({});
 TextOnly.args = {
   LabelProps: {
-    mainLabelProps: mainLabelProps,
-  },
+    mainLabelProps: mainLabelProps
+  }
 };
 
 export const TextInsideButton = Template.bind({});
 TextInsideButton.args = {
   buttonLabel: "Max",
   LabelProps: {
-    mainLabelProps: mainLabelProps,
-  },
+    mainLabelProps: mainLabelProps
+  }
 };
 
 export const TokenInsideButton = Template.bind({});
@@ -67,22 +67,22 @@ TokenInsideButton.args = {
   tokenId: TOKEN_IDS[0],
   buttonLabel: "Max",
   LabelProps: {
-    mainLabelProps: mainLabelProps,
-  },
+    mainLabelProps: mainLabelProps
+  }
 };
 
 export const TextAndRefernece = Template.bind({});
 TextAndRefernece.args = {
   referenceText: "Reference Text",
   LabelProps: {
-    mainLabelProps: mainLabelProps,
-  },
+    mainLabelProps: mainLabelProps
+  }
 };
 
 export const LabeledInputsWithBalance = Template.bind({});
 LabeledInputsWithBalance.args = {
   LabelProps: {
     mainLabelProps: mainLabelProps,
-    balanceLabelProps: balanceLabelProps,
-  },
+    balanceLabelProps: balanceLabelProps
+  }
 };

@@ -3,12 +3,12 @@ import { Box, Button, Paper, Stack, Typography } from "@mui/material";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
 import { FC } from "react";
 import { useStore } from "@/stores/root";
-import { formatNumber } from "@/utils/formatters";
+import { formatNumber } from "shared";
 import { burnUnstake } from "@/stores/defi/staking";
 
 export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
   open,
-  onClose,
+  onClose
 }) => {
   const { withdrawablePica, initialPicaDeposit } = useStore(
     ({ staking }) => staking
@@ -29,8 +29,8 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
           sx={{
             flexDirection: {
               sm: "column",
-              md: "row",
-            },
+              md: "row"
+            }
           }}
           display="flex"
           width="100%"
@@ -41,7 +41,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
           <Stack gap={1.5} width="100%">
             <TextWithTooltip
               TypographyProps={{
-                variant: "inputLabel",
+                variant: "inputLabel"
               }}
               tooltip="Withdrawable PICA"
             >
@@ -53,7 +53,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
                   position: "absolute",
                   left: "1rem",
                   top: "50%",
-                  transform: "translateY(-50%)",
+                  transform: "translateY(-50%)"
                 }}
               >
                 <TokenAsset tokenId={"pica"} iconOnly />
@@ -66,7 +66,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
           <Stack gap={1.5} width="100%">
             <TextWithTooltip
               TypographyProps={{
-                variant: "inputLabel",
+                variant: "inputLabel"
               }}
               tooltip="Withdrawable PICA"
             >
@@ -78,7 +78,7 @@ export const BurnModal: FC<{ open: boolean; onClose: () => void }> = ({
                   position: "absolute",
                   left: "1rem",
                   top: "50%",
-                  transform: "translateY(-50%)",
+                  transform: "translateY(-50%)"
                 }}
               >
                 <TokenAsset tokenId={"pica"} iconOnly />

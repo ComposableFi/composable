@@ -1,13 +1,13 @@
 import { MyStakingsTable } from "picasso/components";
 import { ComponentStory, Story } from "@storybook/react";
-import { TOKENS } from "picasso/defi/Tokens";
+import { TOKENS } from "tokens";
 
 export default {
   title: "molecules/MyStakingsTable",
-  component: MyStakingsTable,
+  component: MyStakingsTable
 };
 
-const Template: ComponentStory<typeof MyStakingsTable> = (args) => (
+const Template: ComponentStory<typeof MyStakingsTable> = args => (
   <MyStakingsTable {...args} />
 );
 
@@ -20,7 +20,7 @@ MyStakingsTableStory.args = {
       price: 1.43,
       balance: 4534,
       value: 46187,
-      change_24hr: 0.34,
+      change_24hr: 0.34
     },
     {
       token: TOKENS["ksm"],
@@ -28,7 +28,7 @@ MyStakingsTableStory.args = {
       price: 189,
       balance: 42,
       value: 984.98,
-      change_24hr: -0.12,
-    },
-  ],
+      change_24hr: -0.12
+    }
+  ]
 };

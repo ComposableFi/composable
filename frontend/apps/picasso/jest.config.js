@@ -21,7 +21,7 @@ module.exports = {
     "^@/(.*)$": "<rootDir>/$1",
     "^assets(.*)$": "<rootDir>/assets$1",
     "^store(.*)$": "<rootDir>/store$1",
-    "^defi(.*)$": "<rootDir>/defi$1",
+    "^defi/(.*)$": "<rootDir>/defi/$1",
     "^utils(.*)$": "<rootDir>/utils$1",
     "^tests(.*)$": "<rootDir>/tests$1",
   },

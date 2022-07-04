@@ -2,7 +2,7 @@ import { NamedSet } from "zustand/middleware";
 import { StoreSlice } from "../types";
 import BigNumber from "bignumber.js";
 
-import { TOKEN_IDS, TokenId } from "@/defi/Tokens";
+import { TOKEN_IDS, TokenId } from "tokens";
 import { SubstrateNetworkId } from "@/defi/polkadot/types";
 import { SUBSTRATE_NETWORKS } from "@/defi/polkadot/Networks";
 
@@ -42,44 +42,44 @@ const recipients = [
   {
     value: "select1",
     label: "Select 1",
-    icon: "/tokens/eth-mainnet.svg",
+    icon: "/tokens/eth-mainnet.svg"
   },
   {
     value: "select2",
     label: "Select 2",
-    icon: "/tokens/eth-mainnet.svg",
+    icon: "/tokens/eth-mainnet.svg"
   },
   {
     value: "select3",
     label: "Select 3",
-    icon: "/tokens/eth-mainnet.svg",
-  },
+    icon: "/tokens/eth-mainnet.svg"
+  }
 ];
 
-const networks = Object.keys(SUBSTRATE_NETWORKS).map((networkId) => ({
-  networkId: networkId as SubstrateNetworkId,
+const networks = Object.keys(SUBSTRATE_NETWORKS).map(networkId => ({
+  networkId: networkId as SubstrateNetworkId
 }));
 
-const tokens = TOKEN_IDS.map((tokenId) => ({ tokenId }));
+const tokens = TOKEN_IDS.map(tokenId => ({ tokenId }));
 
 const initialState: TransfersState = {
   networks: {
     options: networks,
     from: networks[0].networkId,
-    to: networks[1].networkId,
+    to: networks[1].networkId
   },
   amount: {
     options: tokens,
     tokenId: TOKEN_IDS[1],
     value: 0,
-    balance: 350,
+    balance: 350
   },
   recipients: {
     options: recipients,
-    selected: "select1",
+    selected: "select1"
   },
   fee: 0.5,
-  keepAlive: true,
+  keepAlive: true
 };
 
 export interface TransfersSlice {
@@ -98,32 +98,32 @@ export const createTransfersSlice: StoreSlice<TransfersSlice> = (
     ...initialState,
 
     updateNetworks: (data: Omit<Networks, "options">) => {
-      set((state) => {
+      set(state => {
         state.transfers.networks = { ...state.transfers.networks, ...data };
 
         return state;
       });
     },
     updateAmount: (data: Omit<Amount, "balance" | "options">) => {
-      set((state) => {
+      set(state => {
         state.transfers.amount = { ...state.transfers.amount, ...data };
 
         return state;
       });
     },
     updateRecipient: (data: string) => {
-      set((state) => {
+      set(state => {
         state.transfers.recipients.selected = data;
 
         return state;
       });
     },
     flipKeepAlive: () => {
-      set((state) => {
+      set(state => {
         state.transfers.keepAlive = !state.transfers.keepAlive;
 
         return state;
       });
-    },
-  },
+    }
+  }
 });

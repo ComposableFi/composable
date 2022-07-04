@@ -1,5 +1,5 @@
 import React from "react";
-import { getToken, TokenId } from "@/defi/Tokens";
+import { getToken, TokenId } from "tokens";
 import { Select, SelectProps } from "./Select";
 
 type TokenOption = {
@@ -16,11 +16,11 @@ export const TokenSelect: React.FC<TokenSelectProps> = ({
   ...rest
 }) => {
   const selectOptions = options
-    ? options.map((option) => ({
+    ? options.map(option => ({
         value: option.tokenId,
         icon: getToken(option.tokenId).icon,
         label: getToken(option.tokenId).symbol,
-        disabled: option.disabled,
+        disabled: option.disabled
       }))
     : [];
 

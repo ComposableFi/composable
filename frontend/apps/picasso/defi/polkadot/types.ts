@@ -1,4 +1,4 @@
-import { TokenId } from "../Tokens";
+import { TokenId } from "tokens";
 import { DEFI_CONFIG } from "./config";
 export type AssetId = typeof DEFI_CONFIG.assetIds[number];
 export type SubstrateNetworkId = typeof DEFI_CONFIG.networkIds[number];

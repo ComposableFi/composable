@@ -1,6 +1,6 @@
 import BigNumber from "bignumber.js";
 import { Box, Button, Stack, Typography, useTheme } from "@mui/material";
-import { formatNumber } from "@/utils/formatters";
+import { formatNumber } from "shared";
 import { AlertBox, BigNumberInput } from "@/components";
 import { RadioButtonGroup } from "@/components/Molecules/RadioButtonGroup";
 import { TextWithTooltip } from "@/components/Molecules/TextWithTooltip";
@@ -13,8 +13,9 @@ import { DurationOption } from "@/stores/defi/staking";
 export const StakeTabContent: FC = () => {
   const theme = useTheme();
   const [lockablePICA, setLockablePICA] = useState<BigNumber>(new BigNumber(0));
-  const [lockPeriod, setLockPeriod] =
-    useState<DurationOption | undefined>(undefined);
+  const [lockPeriod, setLockPeriod] = useState<DurationOption | undefined>(
+    undefined
+  );
   const match = (someValue?: DurationOption) => someValue === lockPeriod;
   const setValidation = () => {};
   return (
@@ -53,9 +54,9 @@ export const StakeTabContent: FC = () => {
         options={DURATION_OPTION_ITEMS}
         value={lockPeriod}
         isMatch={match}
-        onChange={(v) => setLockPeriod(v)}
+        onChange={v => setLockPeriod(v)}
         sx={{
-          marginTop: theme.spacing(4),
+          marginTop: theme.spacing(4)
         }}
       />
       {/* Unlock date */}

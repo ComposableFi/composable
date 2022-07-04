@@ -1,7 +1,7 @@
 import { DEFI_CONFIG } from "@/defi/polkadot/config";
 import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { usePicassoProvider } from "@/defi/polkadot/hooks";
-import { TokenId } from "@/defi/Tokens";
+import { TokenId } from "tokens";
 import { useStore } from "@/stores/root";
 import { ChevronLeft } from "@mui/icons-material";
 import { Box, Button, IconButton, Typography, useTheme } from "@mui/material";
@@ -25,8 +25,9 @@ const Status = () => {
     ({ substrateBalances }) => substrateBalances
   );
   const { openPolkadotModal } = useStore(({ ui }) => ui);
-  const [selectedAsset, setSelectedAsset] =
-    useState<TokenId | undefined>("pica");
+  const [selectedAsset, setSelectedAsset] = useState<TokenId | undefined>(
+    "pica"
+  );
 
   if (extensionStatus === "connected") {
     return (
@@ -35,13 +36,13 @@ const Status = () => {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          gap: theme.spacing(1),
+          gap: theme.spacing(1)
         }}
       >
         <Select
           value={selectedAsset}
           setValue={setSelectedAsset}
-          options={DEFI_CONFIG.networkIds.map((networkId) => ({
+          options={DEFI_CONFIG.networkIds.map(networkId => ({
             value: substrateBalances[networkId].tokenId,
             label:
               Number(substrateBalances[networkId].balance) < 1000
@@ -49,13 +50,13 @@ const Status = () => {
                 : (Number(substrateBalances[networkId].balance) / 1000).toFixed(
                     1
                   ) + "K",
-            icon: substrateBalances[networkId].icon,
+            icon: substrateBalances[networkId].icon
           }))}
           sx={{
             "& .MuiOutlinedInput-root": {
               height: "56px",
-              minWidth: "170px",
-            },
+              minWidth: "170px"
+            }
           }}
         />
         <AccountIndicator
@@ -83,8 +84,12 @@ const Status = () => {
 };
 
 export const PolkadotConnect: React.FC<{}> = () => {
-  const { deactivate, extensionStatus, activate, setSelectedAccount } =
-    useContext(ParachainContext);
+  const {
+    deactivate,
+    extensionStatus,
+    activate,
+    setSelectedAccount
+  } = useContext(ParachainContext);
   const theme = useTheme();
 
   const {
@@ -92,7 +97,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
     openPolkadotModal,
     setHasTriedEagerConnect,
     isPolkadotModalOpen,
-    hasTriedEagerConnect,
+    hasTriedEagerConnect
   } = useStore(({ ui }) => ui);
 
   const handleConnectPolkadot = async () => {
@@ -128,7 +133,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            height: "100%",
+            height: "100%"
           }}
         >
           {extensionStatus !== "connecting" && extensionStatus !== "connected" && (
@@ -141,7 +146,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
               </Typography>
               <Button
                 sx={{
-                  mt: "4rem",
+                  mt: "4rem"
                 }}
                 variant="outlined"
                 color="primary"
@@ -168,7 +173,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
+                  justifyContent: "center"
                 }}
               >
                 <Typography variant="h5" gutterBottom>
@@ -176,7 +181,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
                 </Typography>
               </Box>
               <PolkadotAccountForm
-                onSelectChange={(account) => {
+                onSelectChange={account => {
                   if (setSelectedAccount) setSelectedAccount(account);
                   // dispatch(setSelectedAccount(account));
                 }}
@@ -189,7 +194,7 @@ export const PolkadotConnect: React.FC<{}> = () => {
                 sx={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
+                  justifyContent: "center"
                 }}
               >
                 <IconButton

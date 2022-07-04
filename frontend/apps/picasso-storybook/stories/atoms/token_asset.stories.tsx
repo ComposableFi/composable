@@ -1,12 +1,6 @@
-import { 
-  TokenAssetProps,
-  TokenAsset 
-} from "picasso/components";
-import { TOKEN_IDS } from "picasso/defi/Tokens";
-import { 
-  Box, 
-  SxProps, 
-} from "@mui/material";
+import { TokenAssetProps, TokenAsset } from "picasso/components";
+import { TOKEN_IDS } from "tokens";
+import { Box, SxProps } from "@mui/material";
 import { Story } from "@storybook/react";
 
 const TokenAssetsStories = (props: TokenAssetProps) => {
@@ -15,7 +9,7 @@ const TokenAssetsStories = (props: TokenAssetProps) => {
     flexDirection: "column",
     gap: 2,
     resize: "both",
-    overflow: "auto",
+    overflow: "auto"
   };
 
   return (
@@ -32,20 +26,20 @@ export default {
     tokenId: {
       options: TOKEN_IDS,
       control: {
-        type: "select",
-      },
-    },
+        type: "select"
+      }
+    }
   }
 };
 
 const defaultArgs = {
   tokenId: TOKEN_IDS[0],
-  iconSize: 24,
+  iconSize: 24
 };
 
-const Template: Story<typeof TokenAssetsStories> = (args) => (
+const Template: Story<typeof TokenAssetsStories> = args => (
   <TokenAssetsStories {...defaultArgs} {...args} />
 );
 
 export const TokenAssets = Template.bind({});
-TokenAssets.args = defaultArgs
+TokenAssets.args = defaultArgs;

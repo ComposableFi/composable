@@ -1,4 +1,4 @@
-import { secondsToDHMS } from "picasso/defi/polkadot/hooks/useBondVestingInDays";
+import { secondsToDHMS } from "shared";
 import BigNumber from "bignumber.js";
 
 export function humanBalance(balance: string | number | BigNumber) {

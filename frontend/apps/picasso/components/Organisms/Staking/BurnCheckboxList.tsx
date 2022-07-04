@@ -4,10 +4,10 @@ import {
   Checkbox,
   Stack,
   Typography,
-  useTheme,
+  useTheme
 } from "@mui/material";
 import { AlertBox, TokenAsset } from "@/components";
-import { formatNumberWithSymbol } from "@/utils/formatters";
+import { formatNumberWithSymbol } from "shared";
 import { WarningAmberRounded } from "@mui/icons-material";
 import { useStore } from "@/stores/root";
 import { FC } from "react";
@@ -21,13 +21,13 @@ export const BurnCheckboxList: FC<{
   openBurnModal,
   openRenewModal,
   onSelectUnstakeToken,
-  unstakeTokenId,
+  unstakeTokenId
 }) => {
   const openPositions = useStore(({ staking }) => staking.openPositions);
   const theme = useTheme();
   return (
     <Stack gap={4} marginTop={9}>
-      {openPositions.map((item) => (
+      {openPositions.map(item => (
         <>
           <Button
             variant="outlined"
@@ -37,7 +37,7 @@ export const BurnCheckboxList: FC<{
             }}
             sx={{
               padding: theme.spacing(1.5, 2),
-              height: "auto",
+              height: "auto"
             }}
           >
             <Box
@@ -72,8 +72,8 @@ export const BurnCheckboxList: FC<{
           display: "flex",
           direction: {
             sm: "column",
-            md: "row",
-          },
+            md: "row"
+          }
         }}
       >
         <Button

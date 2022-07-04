@@ -1,5 +1,5 @@
 import { TokenSelect, TokenSelectProps } from "picasso/components";
-import { TokenId, TOKEN_IDS } from "picasso/defi/Tokens";
+import { TokenId, TOKEN_IDS } from "tokens";
 
 import { Box, SxProps } from "@mui/material";
 import { Story } from "@storybook/react";
@@ -12,7 +12,7 @@ const TokenSelectsStories = (props: TokenSelectProps) => {
     gap: 2,
     resize: "both",
     overflow: "auto",
-    padding: 2,
+    padding: 2
   };
 
   const [value, setValue] = useState<TokenId>(TOKEN_IDS[0]);
@@ -26,10 +26,10 @@ const TokenSelectsStories = (props: TokenSelectProps) => {
 };
 export default {
   title: "atoms/TokenSelect",
-  component: TokenSelect,
+  component: TokenSelect
 };
 
-const Template: Story<typeof TokenSelectsStories> = (args) => (
+const Template: Story<typeof TokenSelectsStories> = args => (
   <TokenSelectsStories {...args} />
 );
 
@@ -37,23 +37,23 @@ const mainLabelProps = {
   label: "Label master here",
   TypographyProps: {},
   TooltipProps: {
-    title: "Tooltip master here",
-  },
+    title: "Tooltip master here"
+  }
 };
 
 export const TokenSelects = Template.bind({});
 TokenSelects.args = {
   LabelProps: {
-    mainLabelProps: mainLabelProps,
+    mainLabelProps: mainLabelProps
   },
-  options: TOKEN_IDS.map((tokenId) => ({ tokenId: tokenId })),
+  options: TOKEN_IDS.map(tokenId => ({ tokenId: tokenId }))
 };
 
 export const CenteredTokenSelects = Template.bind({});
 CenteredTokenSelects.args = {
   LabelProps: {
-    mainLabelProps: mainLabelProps,
+    mainLabelProps: mainLabelProps
   },
   centeredLabel: true,
-  options: TOKEN_IDS.map((tokenId) => ({ tokenId: tokenId })),
+  options: TOKEN_IDS.map(tokenId => ({ tokenId: tokenId }))
 };

@@ -1,4 +1,4 @@
-import { Token } from "@/defi/Tokens";
+import { Token } from "tokens";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import BigNumber from "bignumber.js";
 import { fromChainIdUnit } from "@/defi/polkadot/pallets/BondedFinance";

@@ -1,5 +1,5 @@
 import BigNumber from "bignumber.js";
-import { Token, TOKENS } from "@/defi/Tokens";
+import { Token, TOKENS } from "tokens";
 import { AccountId32 } from "@polkadot/types/interfaces/runtime";
 import { ApiPromise } from "@polkadot/api";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";

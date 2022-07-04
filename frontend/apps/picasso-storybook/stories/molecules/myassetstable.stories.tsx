@@ -1,13 +1,13 @@
 import { MyAssetsTable } from "picasso/components";
 import { ComponentStory, Story } from "@storybook/react";
-import { TOKENS } from "picasso/defi/Tokens";
+import { TOKENS } from "tokens";
 
 export default {
   title: "molecules/MyAssetsTable",
-  component: MyAssetsTable,
+  component: MyAssetsTable
 };
 
-const Template: ComponentStory<typeof MyAssetsTable> = (args) => (
+const Template: ComponentStory<typeof MyAssetsTable> = args => (
   <MyAssetsTable {...args} />
 );
 
@@ -33,6 +33,6 @@ MyAssetsTableStory.args = {
       change_24hr: -0.12,
       symbol: "KSM",
       decimalsToDisplay: 4
-    },
-  ],
+    }
+  ]
 };

@@ -4,8 +4,8 @@ import {
   formatNumberWithSymbol,
   formatNumberCompact,
   formatNumberCompactWithToken,
-  formatNumberCompactWithSymbol,
-} from "@/utils/formatters";
+  formatNumberCompactWithSymbol
+} from "./formatters";
 import BigNumber from "bignumber.js";
 
 describe("formatters", () => {

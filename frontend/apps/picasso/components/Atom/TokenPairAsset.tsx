@@ -1,5 +1,5 @@
 import React from "react";
-import { getToken, TokenId } from "@/defi/Tokens";
+import { getToken, TokenId } from "tokens";
 import { Box, BoxProps, Typography } from "@mui/material";
 import Image from "next/image";
 
@@ -55,12 +55,12 @@ export const TokenPairAsset: React.FC<TokenPairAssetProps> = ({
       )}
       <Typography variant="body2" color="text.primary">
         {label ||
-          `${tokenIds.map((tokenId) => getToken(tokenId).symbol).join("-")}`}
+          `${tokenIds.map(tokenId => getToken(tokenId).symbol).join("-")}`}
       </Typography>
     </Box>
   );
 };
 
 TokenPairAsset.defaultProps = {
-  iconSize: 24,
+  iconSize: 24
 };

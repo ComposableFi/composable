@@ -1,6 +1,6 @@
 import { Box, useTheme } from "@mui/material";
 import { useStore } from "@/stores/root";
-import { formatNumberWithSymbol, formatNumber } from "@/utils/formatters";
+import { formatNumberWithSymbol, formatNumber } from "shared";
 import { TreasuryDataProps } from "@/stores/defi/stats/treasury";
 import { Chart, FeaturedBox } from "@/components/Molecules";
 
@@ -43,8 +43,8 @@ export const StatsTreasuryTab: React.FC<{}> = ({}) => {
         sx={{
           gridTemplateColumns: {
             xs: "1fr",
-            lg: "1fr 1fr 1fr",
-          },
+            lg: "1fr 1fr 1fr"
+          }
         }}
         mb={5}
         gap={4}
@@ -63,8 +63,8 @@ export const StatsTreasuryTab: React.FC<{}> = ({}) => {
         sx={{
           gridTemplateColumns: {
             xs: "1fr",
-            lg: "1fr 1fr",
-          },
+            lg: "1fr 1fr"
+          }
         }}
         gap={4}
       >
@@ -84,7 +84,7 @@ export const StatsTreasuryTab: React.FC<{}> = ({}) => {
               height: 90.7,
               shorthandLabel: "Change",
               labelFormat: (n: number) => n.toFixed(),
-              color: theme.palette.primary.main,
+              color: theme.palette.primary.main
             }}
           />
         ))}

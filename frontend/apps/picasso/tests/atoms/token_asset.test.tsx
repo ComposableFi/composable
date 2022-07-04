@@ -1,4 +1,4 @@
-import { getToken, TOKEN_IDS } from "@/defi/Tokens";
+import { getToken, TOKEN_IDS } from "tokens";
 import { render, screen } from "@/tests/utils/base";
 import { composeStories } from "@storybook/testing-react";
 import * as stories from "picasso-storybook/stories/atoms/token_asset.stories"; // import all stories from the stories file

@@ -1,4 +1,4 @@
-import { Token } from "@/defi/Tokens";
+import { Token } from "tokens";
 import BigNumber from "bignumber.js";
 import { AccountId32 } from "@polkadot/types/interfaces/runtime";
 

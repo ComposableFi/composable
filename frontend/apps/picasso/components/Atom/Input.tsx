@@ -7,11 +7,11 @@ import {
   TextFieldProps,
   Typography,
   useTheme,
-  Box,
+  Box
 } from "@mui/material";
 import { TokenAsset } from "./TokenAsset";
 import { Label, LabelProps as MuiLabelprops } from "./Label";
-import { TokenId } from "@/defi/Tokens";
+import { TokenId } from "tokens";
 import { BaseAsset } from "./BaseAsset";
 
 export type InputProps = {
@@ -61,7 +61,9 @@ export const Input: React.FC<InputProps> = ({
             <InputAdornment position="start">
               <BaseAsset icon={icon} />
             </InputAdornment>
-          ) : undefined,
+          ) : (
+            undefined
+          ),
           endAdornment: buttonLabel ? (
             <Button size="small" disabled={rest.disabled} {...ButtonProps}>
               {buttonLabel}
@@ -77,16 +79,16 @@ export const Input: React.FC<InputProps> = ({
               </Typography>
             )
           ),
-          ...InputProps,
+          ...InputProps
         }}
         sx={{
           "& .MuiOutlinedInput-root": {
             color: alert ? theme.palette.warning.main : undefined,
             "& .MuiOutlinedInput-notchedOutline": {
               borderWidth: noBorder ? 0 : 1,
-              borderColor: alert ? `${theme.palette.warning.main}` : undefined,
-            },
-          },
+              borderColor: alert ? `${theme.palette.warning.main}` : undefined
+            }
+          }
         }}
         {...rest}
       >

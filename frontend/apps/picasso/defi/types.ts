@@ -1,5 +1,5 @@
 import { DEFI_CONFIG } from "./config";
-import { TokenId } from "./Tokens";
+import { TokenId } from "tokens";
 
 export type NetworkId = typeof DEFI_CONFIG.networkIds[number];
 export type Network = {

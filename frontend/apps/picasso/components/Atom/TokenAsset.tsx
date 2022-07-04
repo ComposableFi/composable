@@ -1,5 +1,5 @@
 import React from "react";
-import { getToken, TokenId } from "@/defi/Tokens";
+import { getToken, TokenId } from "tokens";
 import { BaseAsset, BaseAssetProps } from "./BaseAsset";
 
 export type TokenAssetProps = {
@@ -27,5 +27,5 @@ export const TokenAsset: React.FC<TokenAssetProps> = ({
 };
 
 TokenAsset.defaultProps = {
-  iconSize: 24,
+  iconSize: 24
 };

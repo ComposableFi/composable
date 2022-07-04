@@ -4,10 +4,10 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TableRow,
+  TableRow
 } from "@mui/material";
 import { TokenAsset } from "@/components/Atom";
-import { formatNumberWithSymbol, formatNumber } from "@/utils/formatters";
+import { formatNumberWithSymbol, formatNumber } from "shared";
 
 type ApolloTableProps = {
   assets: Array<AssetProps>;
@@ -28,7 +28,7 @@ const tableHeaderTitles = [
   "Pablo",
   "Aggregated",
   "Apollo",
-  "Change (24hr)",
+  "Change (24hr)"
 ];
 
 export const ApolloTable: React.FC<ApolloTableProps> = ({
@@ -40,7 +40,7 @@ export const ApolloTable: React.FC<ApolloTableProps> = ({
       <Table sx={{ minWidth: 420 }} aria-label="apollo table">
         <TableHead>
           <TableRow>
-            {tableHeaderTitles.map((title) => (
+            {tableHeaderTitles.map(title => (
               <TableCell key={title} align="left">
                 {title}
               </TableCell>
@@ -70,7 +70,7 @@ export const ApolloTable: React.FC<ApolloTableProps> = ({
                   align="left"
                   sx={{
                     color:
-                      asset.changeValue > 0 ? "featured.lemon" : "error.main",
+                      asset.changeValue > 0 ? "featured.lemon" : "error.main"
                   }}
                 >
                   {formatNumberWithSymbol(

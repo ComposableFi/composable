@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, BoxProps, Typography, TypographyProps } from "@mui/material";
 import Image from "next/image";
-import { Token } from "@/defi/Tokens";
+import { Token } from "tokens";
 
 export type PairAssetProps = {
   assets: Token[];
@@ -58,7 +58,7 @@ export const PairAsset: React.FC<PairAssetProps> = ({
       )}
       {!iconOnly && (
         <Typography variant="body2" color="text.primary" {...LabelProps}>
-          {label || `${assets.map((asset) => asset.symbol).join(separator)}`}
+          {label || `${assets.map(asset => asset.symbol).join(separator)}`}
         </Typography>
       )}
     </Box>
@@ -66,5 +66,5 @@ export const PairAsset: React.FC<PairAssetProps> = ({
 };
 
 PairAsset.defaultProps = {
-  iconSize: 24,
+  iconSize: 24
 };

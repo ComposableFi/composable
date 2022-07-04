@@ -6,8 +6,8 @@ import {
   formatNumberWithSymbol,
   formatNumberCompact,
   formatNumberCompactWithToken,
-  formatNumberCompactWithSymbol,
-} from "@/utils/formatters";
+  formatNumberCompactWithSymbol
+} from "shared";
 import { OverviewDataProps } from "@/stores/defi/stats/overview";
 
 function formatOverviewTitleValue(index: number, info: OverviewDataProps) {
@@ -35,7 +35,7 @@ export const StatsOverviewTab: React.FC<{}> = ({}) => {
     overviewData,
     overviewChartData,
     setTvlInterval,
-    setDailyActiveUsersInterval,
+    setDailyActiveUsersInterval
   } = useStore(({ statsOverview }) => statsOverview);
 
   function dispatchTVLInterval(selectedInterval: string) {
@@ -56,8 +56,8 @@ export const StatsOverviewTab: React.FC<{}> = ({}) => {
         sx={{
           gridTemplateColumns: {
             xs: "1fr 1fr",
-            lg: "1fr 1fr 1fr",
-          },
+            lg: "1fr 1fr 1fr"
+          }
         }}
         mb={5}
         gap={4}
@@ -89,7 +89,7 @@ export const StatsOverviewTab: React.FC<{}> = ({}) => {
               height: 90.7,
               shorthandLabel: "Change",
               labelFormat: (n: number) => n.toFixed(),
-              color: theme.palette.primary.main,
+              color: theme.palette.primary.main
             }}
             currentInterval={info.data.interval[info.data.pickedInterval]}
             onIntervalChange={
