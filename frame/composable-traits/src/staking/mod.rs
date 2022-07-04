@@ -131,7 +131,7 @@ pub struct Stake<RewardPoolId, Balance, Rewards> {
 	pub share: Balance,
 
 	/// Reduced rewards by asset for the position (d_n)
-	reductions: Rewards,
+	pub reductions: Rewards,
 
 	/// The lock period for the stake.
 	pub lock: Lock,

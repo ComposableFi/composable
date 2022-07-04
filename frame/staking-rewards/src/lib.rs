@@ -67,10 +67,10 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use sp_arithmetic::{traits::One, Permill};
-	use sp_runtime::traits::BlockNumberProvider;
+	use sp_runtime::{traits::BlockNumberProvider, PerThing};
 	use sp_std::{collections::btree_map::BTreeMap, fmt::Debug};
 
-	use crate::{prelude::*, validation::ValidSplitRatio, validation::ValidSplitRatio};
+	use crate::{prelude::*, validation::ValidSplitRatio};
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub fn deposit_event)]
@@ -94,6 +94,8 @@ pub mod pallet {
 		EndBlockMustBeInTheFuture,
 		/// Unimplemented reward pool type.
 		UnimplementedRewardPoolConfiguration,
+        /// No position found for given id.
+        NoPositionFound,
 	}
 
 	#[pallet::config]
@@ -119,7 +121,14 @@ pub mod pallet {
 			+ SafeArithmetic;
 
 		/// The position id type.
-		type PositionId: Parameter + Member + Clone + FullCodec + Zero;
+		type PositionId: Parameter
+            + Member
+            + Clone
+            + FullCodec
+            + Zero
+            + One
+			+ Copy
+            + SafeArithmetic;
 
 		type AssetId: Parameter
 			+ Member
@@ -183,6 +192,17 @@ pub mod pallet {
 		>,
 	>;
 
+    /// Abstraction over Stake type
+    type StakeOf<T> = Stake<
+        <T as Config>::RewardPoolId,
+        <T as Config>::Balance,
+        Rewards<
+            <T as Config>::AssetId,
+            <T as Config>::Balance,
+            <T as Config>::MaxRewardConfigsPerPool,
+            >,
+            >;
+
 	#[pallet::pallet]
 	#[pallet::generate_store(pub (super) trait Store)]
 	#[pallet::without_storage_info]
@@ -198,6 +218,17 @@ pub mod pallet {
 	#[pallet::getter(fn pools)]
 	pub type RewardPools<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::RewardPoolId, RewardPoolOf<T>>;
+
+	#[pallet::storage]
+	#[pallet::getter(fn stake_count)]
+	#[allow(clippy::disallowed_types)]
+	pub type StakeCount<T: Config> =
+		StorageValue<_, T::PositionId, ValueQuery, Nonce<ZeroInit, SafeIncrement>>;
+
+    #[pallet::storage]
+    #[pallet::getter(fn stakes)]
+    pub type Stakes<T: Config> =
+        StorageMap<_, Blake2_128Concat, T::PositionId, StakeOf<T>, OptionQuery>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -303,23 +334,29 @@ pub mod pallet {
 		#[transactional]
 		fn split(
 			_who: &Self::AccountId,
-			_position: &Self::PositionId,
-			_ratio: Permill,
+			position: &Self::PositionId,
+			ratio: Permill,
 		) -> Result<[Self::PositionId; 2], DispatchError> {
-			Err("Not implemented".into())
-            /*
-             RewardPool-> rewards is P
-             RewardConfig-> reward_rate is r
-             Pcurrent = P + rt
-             Sigma(Sn) = RewardPool-> total_shares
-             d_n is reductions from Stake
-             */
-
-            // TODO: Split is possible or not
-            // verify position owner is same as who
-            // Take old position
-            // Generate new positions
-            // Insert them in storage
-		}
+            let old_position = Stakes::<T>::try_mutate(position, |old_stake| {
+                match old_stake {
+                    Some(stake) => {
+                        let old_value = stake.clone();
+                        stake.stake = ratio.mul_floor(stake.stake);
+                        stake.share = ratio.mul_floor(stake.share);
+                        Ok(old_value)
+                    },
+                    None => {Err(Error::<T>::NoPositionFound)}
+                }
+            })?; 
+            let left_from_one_ratio = ratio.left_from_one();
+            let new_stake = StakeOf::<T> {
+                stake: left_from_one_ratio.mul_floor(old_position.stake),
+                share: left_from_one_ratio.mul_floor(old_position.share),
+                ..old_position
+            };
+            let new_position = StakeCount::<T>::increment()?;
+            Stakes::<T>::insert(new_position, new_stake);
+            Ok([*position, new_position])
 	}
+}
 }
