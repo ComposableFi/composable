@@ -4,6 +4,7 @@
 
 pub mod binance;
 pub mod composable;
+#[allow(clippy::all)]
 pub mod composable_api;
 pub mod pyth;
 

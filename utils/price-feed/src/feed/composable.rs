@@ -2,7 +2,8 @@ use super::{Feed, FeedError, FeedResult};
 use crate::{
 	asset::Asset,
 	feed::{
-		composable_api, Exponent, FeedIdentifier, FeedNotification, Price, TimeStamp, TimeStamped,
+		composable_api::{self, api::pablo::events::TwapUpdated},
+		Exponent, FeedIdentifier, FeedNotification, Price, TimeStamp, TimeStamped,
 		TimeStampedPrice, CHANNEL_BUFFER_SIZE,
 	},
 };
@@ -45,7 +46,6 @@ impl ComposableFeed {
 			.map_err(|_| FeedError::ChannelIsBroken)?;
 		}
 		let sink = sink.clone();
-		let sink1 = sink.clone();
 		let assets = assets.clone();
 		let api_clone = api.clone();
 
@@ -55,12 +55,12 @@ impl ComposableFeed {
 				.subscribe()
 				.await
 				.map_err(|_| FeedError::NetworkFailure)?
-				.filter_events::<(composable_api::api::pablo::events::TwapUpdated,)>();
+				.filter_events::<(TwapUpdated,)>();
 			// process all twap_updated event
 			while let Some(twap_updated) = twap_updated_events.next().await {
 				println!("TwapUpdated Event : {twap_updated:?}");
 				if let Ok(twap_updated) = twap_updated {
-					let event: composable_api::api::pablo::events::TwapUpdated = twap_updated.event;
+					let event: TwapUpdated = twap_updated.event;
 					let base = &event.twaps[0];
 					let quote = &event.twaps[1];
 					let base_asset = (primitives::currency::CurrencyId(base.0 .0))
@@ -71,19 +71,22 @@ impl ComposableFeed {
 						.try_into()
 						.map_err(|_| FeedError::NetworkFailure)?;
 					if assets.contains(&(base_asset, quote_asset)) {
-						let _ = sink1.blocking_send(FeedNotification::AssetPriceUpdated {
-							feed: FeedIdentifier::Composable,
-							asset: base_asset,
-							price: TimeStamped {
-								value: (
-									Price(
-										FixedU128::from_inner(base.1 .0).saturating_mul_int(1_u64),
+						let _ = sink
+							.send(FeedNotification::AssetPriceUpdated {
+								feed: FeedIdentifier::Composable,
+								asset: base_asset,
+								price: TimeStamped {
+									value: (
+										Price(
+											FixedU128::from_inner(base.1 .0)
+												.saturating_mul_int(1_u64),
+										),
+										Exponent(0),
 									),
-									Exponent(0),
-								),
-								timestamp: TimeStamp::now(),
-							},
-						});
+									timestamp: TimeStamp::now(),
+								},
+							})
+							.await;
 					}
 				}
 			}

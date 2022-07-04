@@ -26,13 +26,12 @@ lazy_static! {
 	  We must not swap two indexes.
 	*/
 	pub static ref INDEX_TO_ASSET: HashMap<CurrencyId, Asset> = [
-		(primitives::currency::CurrencyId::KSM, Asset::KSM),
-		(primitives::currency::CurrencyId::PICA, Asset::PICA),
-		(primitives::currency::CurrencyId::USDT, Asset::USDT),
-		(primitives::currency::CurrencyId::USDC, Asset::USDC),
+		(CurrencyId::KSM, Asset::KSM),
+		(CurrencyId::PICA, Asset::PICA),
+		(CurrencyId::USDT, Asset::USDT),
+		(CurrencyId::USDC, Asset::USDC),
 	]
-	.iter()
-	.map(|&(i, a)| (i, a))
+	.into_iter()
 	.collect();
 	pub static ref ASSET_TO_INDEX: HashMap<Asset, CurrencyId> =
 		INDEX_TO_ASSET.iter().map(|(&i, &a)| (a, i)).collect();
