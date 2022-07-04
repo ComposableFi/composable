@@ -45,6 +45,16 @@ jobs:
           incremental_files_only: false 
           config: 'cspell.yaml'
 
+  mosaic-check:
+    name: Check Mosaic V2
+    runs-on: ubuntu-latest
+    working-directory: mosaic/v2
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          npm install
+          yarn test
+
   substrate-check:
     name: Check Benchmarks
     runs-on:
