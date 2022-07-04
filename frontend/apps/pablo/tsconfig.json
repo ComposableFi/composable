@@ -22,14 +22,14 @@
         "*"
       ],
       "@polkadot/api/augment": [
-        "defi/polkadot/interfaces/augment-api.ts"
+        "defi-interfaces/augment-api.ts"
       ],
       "@polkadot/types/augment": [
-        "defi/polkadot/interfaces/augment-types.ts"
+        "defi-interfaces/augment-types.ts"
       ]
     }
   },
   "include": ["next-env.d.ts",
     "**/*.ts", "**/*.tsx", ".storybook/mui-decorator.tsx"],
-  "exclude": ["node_modules", "./defi/polkadot/interfaces"]
+  "exclude": ["node_modules", "./defi-interfaces"]
 }

@@ -22,13 +22,13 @@ import BalancesUpdater from "@/updaters/assets/balances/Updater";
 import ApolloUpdater from "@/updaters/assets/apollo/Updater";
 import AuctionsUpdater from "@/updaters/auctions/Updater";
 
-import * as definitions from "@/defi/polkadot/interfaces/definitions";
+import * as definitions from "defi-interfaces/definitions";
 import { SnackbarProvider } from "notistack";
 import { ThemeResponsiveSnackbar } from "@/components";
 import { SNACKBAR_TIMEOUT_DURATION } from "@/constants";
 
 const rpc = Object.keys(definitions)
-  .filter((k) => {
+  .filter(k => {
     if (!(definitions as any)[k].rpc) {
       return false;
     } else {
@@ -38,16 +38,16 @@ const rpc = Object.keys(definitions)
   .reduce(
     (accumulator, key) => ({
       ...accumulator,
-      [key]: (definitions as any)[key].rpc,
+      [key]: (definitions as any)[key].rpc
     }),
     {}
   );
 const types = Object.keys(definitions)
-  .filter((key) => Object.keys((definitions as any)[key].types).length > 0)
+  .filter(key => Object.keys((definitions as any)[key].types).length > 0)
   .reduce(
     (accumulator, key) => ({
       ...accumulator,
-      ...(definitions as any)[key].types,
+      ...(definitions as any)[key].types
     }),
     {}
   );
@@ -85,8 +85,8 @@ export default function MyApp(props: MyAppProps) {
   const colorMode = React.useMemo(
     () => ({
       toggleColorMode: () => {
-        setMode((prevMode) => (prevMode === "light" ? "dark" : "light"));
-      },
+        setMode(prevMode => (prevMode === "light" ? "dark" : "light"));
+      }
     }),
     []
   );
@@ -113,14 +113,14 @@ export default function MyApp(props: MyAppProps) {
                 info: ThemeResponsiveSnackbar,
                 success: ThemeResponsiveSnackbar,
                 error: ThemeResponsiveSnackbar,
-                warning: ThemeResponsiveSnackbar,
+                warning: ThemeResponsiveSnackbar
               }}
               autoHideDuration={SNACKBAR_TIMEOUT_DURATION}
               maxSnack={4}
               disableWindowBlurListener={true}
               anchorOrigin={{
                 vertical: "bottom",
-                horizontal: "center",
+                horizontal: "center"
               }}
             >
               <DotSamaContextProvider
@@ -130,8 +130,8 @@ export default function MyApp(props: MyAppProps) {
                     rpcUrl:
                       process.env.SUBSTRATE_PROVIDER_URL_KUSAMA_2019 || "",
                     rpc,
-                    types,
-                  },
+                    types
+                  }
                 ]}
                 appName={APP_NAME}
               >
