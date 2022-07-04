@@ -56,7 +56,7 @@ export function useAuctionsChart(
               const baseBal = await fetchBalanceByAssetId(
                 parachainApi,
                 poolAccount,
-                pool.pair.quote.toString()
+                pool.pair.base.toString()
               );
 
               const series = calculatePredictedChartSeries(

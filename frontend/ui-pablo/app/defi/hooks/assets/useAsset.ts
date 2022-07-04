@@ -1,4 +1,4 @@
-import { DEFAULT_NETWORK_ID, matchAssetByPicassoId } from "@/defi/utils";
+import { matchAssetByPicassoId } from "@/defi/utils";
 import { MockedAsset } from "@/store/assets/assets.types";
 import useStore from "@/store/useStore";
 import { useMemo } from "react";
