@@ -63,7 +63,7 @@ export async function processNewOfferEvent(
   await ctx.store.save(
     new BondedFinanceBondOffer({
       id: offerId.toString(),
-      purchased: BigInt(0),
+      totalPurchased: BigInt(0),
       beneficiary,
     })
   );
@@ -87,7 +87,7 @@ export async function processNewBondEvent(
 
   if (stored?.id) {
     // If offerId is already stored, add to total amount purchased
-    stored.purchased += nbOfBonds;
+    stored.totalPurchased += nbOfBonds;
     await ctx.store.save(stored);
   } else {
     // Otherwise, initialize new total amount purchased
@@ -95,7 +95,7 @@ export async function processNewBondEvent(
     await ctx.store.save(
       new BondedFinanceBondOffer({
         id: offerId.toString(),
-        purchased: nbOfBonds,
+        totalPurchased: nbOfBonds,
         beneficiary,
       })
     );

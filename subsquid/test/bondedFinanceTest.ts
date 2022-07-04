@@ -87,17 +87,17 @@ function createNewBondEvent(offerId: string, nbOfBonds: bigint) {
  * Check if bond offer has expected values
  * @param bondArg
  * @param id - Offer id
- * @param purchased - Amount of purchased bonds
+ * @param totalPurchased - Amount of purchased bonds
  * @param beneficiary - Bond beneficiary
  */
 function assertBondedFinanceBondOffer(
   bondArg: BondedFinanceBondOffer,
   id: string,
-  purchased: bigint,
+  totalPurchased: bigint,
   beneficiary: string
 ) {
   expect(bondArg.id).to.equal(id);
-  expect(bondArg.purchased).to.equal(purchased);
+  expect(bondArg.totalPurchased).to.equal(totalPurchased);
   expect(bondArg.beneficiary).to.equal(beneficiary);
 }
 
@@ -141,7 +141,7 @@ async function assertNewBondEvent(
   assertBondedFinanceBondOffer(
     arg as unknown as BondedFinanceBondOffer,
     offerId,
-    totalPurchased[offerId].purchased,
+    totalPurchased[offerId].totalPurchased,
     ALICE_ADDRESS
   );
 }
@@ -172,10 +172,10 @@ describe("Bonded finance events", () => {
 
     // Stub store.save() to update the total purchased bonds in the database
     when(storeMock.save<BondedFinanceBondOffer>(anything())).thenCall(
-      ({ id, purchased, beneficiary }) => {
+      ({ id, totalPurchased, beneficiary }) => {
         totalPurchasedStored[id] = new BondedFinanceBondOffer({
           id,
-          purchased,
+          totalPurchased,
           beneficiary,
         });
       }
@@ -195,12 +195,12 @@ describe("Bonded finance events", () => {
     totalPurchased = {
       [OFFER_ID_1]: new BondedFinanceBondOffer({
         id: OFFER_ID_1,
-        purchased: BigInt(0),
+        totalPurchased: BigInt(0),
         beneficiary: ALICE_ADDRESS,
       }),
       [OFFER_ID_2]: new BondedFinanceBondOffer({
         id: OFFER_ID_2,
-        purchased: BigInt(0),
+        totalPurchased: BigInt(0),
         beneficiary: ALICE_ADDRESS,
       }),
     };
@@ -213,7 +213,7 @@ describe("Bonded finance events", () => {
     const { event: event1 } = createNewBondEvent(OFFER_ID_1, NB_OF_BONDS_FIRST);
 
     // Update the total purchased bonds
-    totalPurchased[OFFER_ID_1].purchased += NB_OF_BONDS_FIRST;
+    totalPurchased[OFFER_ID_1].totalPurchased += NB_OF_BONDS_FIRST;
 
     await processNewBondEvent(ctx, event1);
 
@@ -235,7 +235,7 @@ describe("Bonded finance events", () => {
     );
 
     // Update the total purchased bonds
-    totalPurchased[OFFER_ID_1].purchased += NB_OF_BONDS_SECOND;
+    totalPurchased[OFFER_ID_1].totalPurchased += NB_OF_BONDS_SECOND;
 
     await processNewBondEvent(ctx, event2);
 
@@ -254,7 +254,7 @@ describe("Bonded finance events", () => {
     const { event: event3 } = createNewBondEvent(OFFER_ID_2, NB_OF_BONDS_THIRD);
 
     // Update the total purchased bonds
-    totalPurchased[OFFER_ID_2].purchased += NB_OF_BONDS_THIRD;
+    totalPurchased[OFFER_ID_2].totalPurchased += NB_OF_BONDS_THIRD;
 
     await processNewBondEvent(ctx, event3);
 

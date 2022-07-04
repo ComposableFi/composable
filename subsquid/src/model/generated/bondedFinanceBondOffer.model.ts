@@ -14,7 +14,7 @@ export class BondedFinanceBondOffer {
    * Total amount of purchased bonds
    */
   @Column_("numeric", {transformer: marshal.bigintTransformer, nullable: false})
-  purchased!: bigint
+  totalPurchased!: bigint
 
   /**
    * Beneficiary account for the bond offer

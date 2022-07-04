@@ -70,7 +70,7 @@ type PabloPoolAsset @entity {
 
 type BondedFinanceBondOffer @entity {
   "Total amount of purchased bonds"
-  purchased: BigInt!
+  totalPurchased: BigInt!
   "Beneficiary account for the bond offer"
   beneficiary: String!
 }
