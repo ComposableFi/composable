@@ -59,7 +59,7 @@ proptest! {
 					  prop_assert_ok!(offer_id);
 					  let offer_id = offer_id.expect("impossible; qed");
 
-					  System::assert_last_event(Event::BondedFinance(crate::Event::NewOffer{ offer_id }));
+					  System::assert_last_event(Event::BondedFinance(crate::Event::NewOffer{ offer_id, beneficiary: ALICE }));
 					  Ok(())
 			  })?;
 	  }

@@ -94,7 +94,7 @@ pub mod pallet {
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// A new offer has been created.
-		NewOffer { offer_id: T::BondOfferId },
+		NewOffer { offer_id: T::BondOfferId, beneficiary: AccountIdOf<T> },
 		/// A new bond has been registered.
 		NewBond { offer_id: T::BondOfferId, who: AccountIdOf<T>, nb_of_bonds: BalanceOf<T> },
 		/// An offer has been cancelled by the `AdminOrigin`.
@@ -310,7 +310,7 @@ pub mod pallet {
 				keep_alive,
 			)?;
 			BondOffers::<T>::insert(offer_id, (from.clone(), offer));
-			Self::deposit_event(Event::<T>::NewOffer { offer_id });
+			Self::deposit_event(Event::<T>::NewOffer { offer_id, beneficiary: from.clone() });
 			Ok(offer_id)
 		}
 
