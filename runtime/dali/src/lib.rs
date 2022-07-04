@@ -996,7 +996,6 @@ pub type OrderId = u128;
 
 parameter_types! {
 	pub const LiquidationsPalletId: PalletId = PalletId(*b"liqdatns");
-	pub const MaxLiquidationStrategiesAmount: u32 = 10;
 }
 
 impl liquidations::Config for Runtime {
@@ -1009,7 +1008,7 @@ impl liquidations::Config for Runtime {
 	type PalletId = LiquidationsPalletId;
 	type CanModifyStrategies = EnsureRootOrHalfCouncil;
 	type XcmSender = XcmRouter;
-	type MaxLiquidationStrategiesAmount = MaxLiquidationStrategiesAmount;
+	type MaxLiquidationStrategiesAmount = frame_support::traits::ConstU32<10>;
 }
 
 parameter_types! {

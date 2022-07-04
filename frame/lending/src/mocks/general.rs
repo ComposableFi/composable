@@ -10,7 +10,7 @@ use composable_traits::{
 
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{Everything, GenesisBuild},
+	traits::{ConstU32, Everything, GenesisBuild},
 	weights::{WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
 	PalletId,
 };
@@ -111,7 +111,7 @@ impl frame_system::Config for Runtime {
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
 
 parameter_types! {
@@ -203,7 +203,7 @@ impl orml_tokens::Config for Runtime {
 	type OnDust = ();
 	type MaxLocks = ();
 	type ReserveIdentifier = ReserveIdentifier;
-	type MaxReserves = frame_support::traits::ConstU32<2>;
+	type MaxReserves = ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
 }
 
@@ -337,10 +337,6 @@ impl pallet_dutch_auction::Config for Runtime {
 	type XcmSender = XcmFake;
 }
 
-parameter_types! {
-	pub const MaxLiquidationStrategiesAmount: u32 = 3;
-}
-
 impl pallet_liquidations::Config for Runtime {
 	type Event = Event;
 	type UnixTime = Timestamp;
@@ -351,7 +347,7 @@ impl pallet_liquidations::Config for Runtime {
 	type WeightInfo = pallet_liquidations::weights::SubstrateWeight<Self>;
 	type CanModifyStrategies = EnsureRoot<Self::AccountId>;
 	type XcmSender = XcmFake;
-	type MaxLiquidationStrategiesAmount = MaxLiquidationStrategiesAmount;
+	type MaxLiquidationStrategiesAmount = ConstU32<3>;
 }
 
 pub type Extrinsic = TestXt<Call, ()>;

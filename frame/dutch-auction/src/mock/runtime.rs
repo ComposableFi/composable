@@ -7,7 +7,7 @@ use crate::{
 use composable_traits::defi::DeFiComposableConfig;
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{EnsureOneOf, Everything},
+	traits::{ConstU32, EnsureOneOf, Everything},
 	PalletId,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
@@ -81,7 +81,7 @@ impl frame_system::Config for Runtime {
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
 
 parameter_types! {
@@ -130,7 +130,7 @@ impl orml_tokens::Config for Runtime {
 	type OnDust = ();
 	type MaxLocks = ();
 	type ReserveIdentifier = ReserveIdentifier;
-	type MaxReserves = frame_support::traits::ConstU32<2>;
+	type MaxReserves = ConstU32<2>;
 	type DustRemovalWhitelist = Everything;
 }
 

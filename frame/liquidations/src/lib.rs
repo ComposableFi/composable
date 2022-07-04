@@ -129,6 +129,7 @@ pub mod pallet {
 	pub enum Error<T> {
 		NoLiquidationEngineFound,
 		InvalidLiquidationStrategiesVector,
+		OnlyDutchAuctionStrategyIsImplemented,
 	}
 
 	#[pallet::pallet]
@@ -274,10 +275,7 @@ pub mod pallet {
 					let result = match configuration {
 						LiquidationStrategyConfiguration::DutchAuction(configuration) =>
 							T::DutchAuction::ask(from_to, order.clone(), configuration),
-						_ =>
-							return Err(DispatchError::Other(
-								"As for now, only auction liquidation strategy is implemented",
-							)),
+						_ => return Err(Error::<T>::OnlyDutchAuctionStrategyIsImplemented.into()),
 					};
 					if let Ok(order_id) = result {
 						Self::deposit_event(Event::<T>::PositionWasSentToLiquidation {});
