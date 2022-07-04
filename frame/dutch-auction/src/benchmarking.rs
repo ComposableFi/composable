@@ -16,7 +16,8 @@ use sp_runtime::{
 };
 use sp_std::prelude::*;
 
-type TraitBalance<T> = <T as DeFiComposableConfig>::Balance;
+type BalanceOf<T> = <T as DeFiComposableConfig>::Balance;
+
 // meaningless sell of 1 to 1
 pub fn sell_identity<T: Config>(
 ) -> Sell<<T as DeFiComposableConfig>::MayBeAssetId, <T as DeFiComposableConfig>::Balance> {
@@ -37,8 +38,8 @@ fn assets<T>() -> CurrencyPair<AssetIdOf<T>>
 where
 	T: Config,
 {
-	let a = 0_u128.to_be_bytes();
-	let b = 1_u128.to_be_bytes();
+	let a = 1_u128.to_be_bytes();
+	let b = 2_u128.to_be_bytes();
 	CurrencyPair::new(
 		AssetIdOf::<T>::decode(&mut &a[..]).unwrap(),
 		AssetIdOf::<T>::decode(&mut &b[..]).unwrap(),
@@ -49,8 +50,8 @@ fn mint_native_tokens<T>(account_id: &T::AccountId)
 where
 	T: Config,
 	<T as Config>::MultiCurrency:
-		Mutate<T::AccountId, Balance = T::Balance, AssetId = T::MayBeAssetId>,
-	<T as Config>::NativeCurrency: Currency<T::AccountId>,
+		Mutate<T::AccountId, Balance = BalanceOf<T>, AssetId = T::MayBeAssetId>,
+	<T as Config>::NativeCurrency: frame_support::traits::tokens::currency::Currency<T::AccountId>,
 {
 	let treasury = &T::PalletId::get().into_account();
 	let native_token_amount = <T as pallet::Config>::NativeCurrency::minimum_balance()
@@ -63,26 +64,23 @@ benchmarks! {
 	where_clause {
 		where
 		T: Config + orml_tokens::Config,
-		<T as Config>::MultiCurrency:
-				Mutate<T::AccountId, Balance = TraitBalance<T>, AssetId = T::MayBeAssetId>,
-		<T as Config>::NativeCurrency: Currency<T::AccountId>,
+		T::MultiCurrency: Mutate<T::AccountId, Balance = BalanceOf<T>, AssetId = T::MayBeAssetId>,
+		T::NativeCurrency: Currency<T::AccountId>,
 		T::AccountId: UncheckedFrom<H256>,
 		T::CurrencyId: From<u128>,
 		T::Origin: From<cumulus_pallet_xcm::Origin>,
 	}
-
 	add_configuration {
 		let configuration = TimeReleaseFunction::LinearDecrease(LinearDecrease { total: 42 });
 		let configuration_id = 100;
 		let admin_account = T::AccountId::decode(&mut sp_runtime::traits::TrailingZeroInput::zeroes()).unwrap();
 		let origin = RawOrigin::Root;
 	}: _(origin, configuration_id, configuration)
-
 	ask {
 		let sell = sell_identity::<T>();
 		let account_id : T::AccountId = whitelisted_caller();
 		let caller = RawOrigin::Signed(account_id.clone());
-		let amount: TraitBalance<T> = 1_000_000_000_000_u64.into();
+		let amount: BalanceOf<T> = 1_000_000_000_000_u64.into();
 		mint_native_tokens::<T>(&account_id);
 		<T as pallet::Config>::MultiCurrency::mint_into(sell.pair.base, &account_id, amount).unwrap();
 		}: _(
@@ -94,7 +92,7 @@ benchmarks! {
 		let sell = sell_identity::<T>();
 		let account_id : T::AccountId = whitelisted_caller();
 		let caller = RawOrigin::Signed(account_id.clone());
-		let amount: TraitBalance<T> = 1_000_000_000_000_u64.into();
+		let amount: BalanceOf<T> = 1_000_000_000_000_u64.into();
 		mint_native_tokens::<T>(&account_id);
 		<T as pallet::Config>::MultiCurrency::mint_into(sell.pair.base, &account_id, amount).unwrap();
 		<T as pallet::Config>::MultiCurrency::mint_into(sell.pair.quote, &account_id, amount).unwrap();
@@ -111,7 +109,7 @@ benchmarks! {
 		let sell = sell_identity::<T>();
 		let account_id : T::AccountId = whitelisted_caller();
 		let caller = RawOrigin::Signed(account_id.clone());
-		let amount: TraitBalance<T> = 1_000_000_000_000_u64.into();
+		let amount: BalanceOf<T> = 1_000_000_000_000_u64.into();
 		mint_native_tokens::<T>(&account_id);
 		<T as pallet::Config>::MultiCurrency::mint_into(sell.pair.base, &account_id, amount).unwrap();
 		DutchAuction::<T>::ask(caller.clone().into(), sell, <_>::default()).unwrap();
@@ -141,9 +139,9 @@ benchmarks! {
 	}: _(origin, request)
 	known_overhead_for_on_finalize {
 		let sell = sell_identity::<T>();
-		let account_id : T::AccountId = whitelisted_caller();
+		let account_id: T::AccountId = whitelisted_caller();
 		let caller = RawOrigin::Signed(account_id.clone());
-		let amount: TraitBalance<T> = 1_000_000_000_000_u64.into();
+		let amount: BalanceOf<T> = 1_000_000_000_000_u64.into();
 		mint_native_tokens::<T>(&account_id);
 		<T as pallet::Config>::MultiCurrency::mint_into(sell.pair.base, &account_id, amount).unwrap();
 		<T as pallet::Config>::MultiCurrency::mint_into(sell.pair.quote, &account_id, amount).unwrap();
