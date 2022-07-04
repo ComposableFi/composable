@@ -1,3 +1,4 @@
+//! Relayer events.
 use pallet_ibc::events::IbcEvent;
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -5,119 +6,232 @@ use pallet_ibc::events::IbcEvent;
 pub enum IbcRelayerEvent {
 	/// Client created
 	CreateClient {
+		/// light client id
 		client_id: String,
+		/// light client type
 		client_type: String,
+		/// light client revision height
 		revision_height: u64,
+		/// light client revision number
 		revision_number: u64,
 	},
 	/// Client updated
 	UpdateClient {
+		/// light client id
 		client_id: String,
+		/// light client type
 		client_type: String,
+		/// light client revision height
 		revision_height: u64,
+		/// light client revision number
 		revision_number: u64,
 	},
 	/// Client upgraded
-	UpgradeClient { client_id: String, revision_height: u64, revision_number: u64 },
+	UpgradeClient {
+		/// light client id
+		client_id: String,
+		/// light client revision height
+		revision_height: u64,
+		/// light client revision number
+		revision_number: u64,
+	},
 	/// Client misbehaviour
-	ClientMisbehaviour { client_id: String, revision_height: u64, revision_number: u64 },
+	ClientMisbehaviour {
+		/// light client id
+		client_id: String,
+		/// light client revision height
+		revision_height: u64,
+		/// light client revision number
+		revision_number: u64,
+	},
 	/// Connection open init
-	OpenInitConnection { revision_height: u64, revision_number: u64, connection_id: String },
+	OpenInitConnection {
+		/// light client revision height
+		revision_height: u64,
+		/// light client revision number
+		revision_number: u64,
+		/// Connection id
+		connection_id: String,
+	},
 	/// Connection open confirm
-	OpenConfirmConnection { revision_height: u64, revision_number: u64, connection_id: String },
+	OpenConfirmConnection {
+		/// light client revision height
+		revision_height: u64,
+		/// light client revision number
+		revision_number: u64,
+		/// Connection Id
+		connection_id: String,
+	},
 	/// Connection try open
-	OpenTryConnection { revision_height: u64, revision_number: u64, connection_id: String },
+	OpenTryConnection {
+		/// light client revision height
+		revision_height: u64,
+		/// light client revision number
+		revision_number: u64,
+		/// Connection Id
+		connection_id: String,
+	},
 	/// Connection open acknowledge
-	OpenAckConnection { revision_height: u64, revision_number: u64, connection_id: String },
+	OpenAckConnection {
+		/// light client revision height
+		revision_height: u64,
+		/// light client revision number
+		revision_number: u64,
+		/// Connection Id
+		connection_id: String,
+	},
 	/// Channel open init
 	OpenInitChannel {
+		/// light client revision height
 		revision_height: u64,
+		/// light client revision number
 		revision_number: u64,
+		/// Port Id
 		port_id: String,
+		/// Channel Id
 		channel_id: String,
 	},
 	/// Channel open confirm
 	OpenConfirmChannel {
+		/// light client revision height
 		revision_height: u64,
+		/// light client revision number
 		revision_number: u64,
+		/// Port Id
 		port_id: String,
+		/// Channel Id
 		channel_id: String,
 	},
 	/// Channel try open
 	OpenTryChannel {
+		/// light client revision height
 		revision_height: u64,
+		/// light client revision number
 		revision_number: u64,
+		/// Port Id
 		port_id: String,
+		/// Channel Id
 		channel_id: String,
 	},
 	/// Open ack channel
 	OpenAckChannel {
+		/// light client revision height
 		revision_height: u64,
+		/// light client revision number
 		revision_number: u64,
+		/// Port Id
 		port_id: String,
+		/// Channel Id
 		channel_id: String,
 	},
 	/// Channel close init
 	CloseInitChannel {
+		/// light client revision height
 		revision_height: u64,
+		/// light client revision number
 		revision_number: u64,
+		/// Port Id
 		port_id: String,
+		/// Channel Id
 		channel_id: String,
 	},
 	/// Channel close confirm
-	CloseConfirmChannel { revision_height: u64, revision_number: u64, channel_id: String },
+	CloseConfirmChannel {
+		/// light client revision height
+		revision_height: u64,
+		/// light client revision number
+		revision_number: u64,
+		/// Channel Id
+		channel_id: String,
+	},
 	/// Receive packet
 	ReceivePacket {
+		/// light client revision height
 		revision_height: u64,
+		/// light client revision number
 		revision_number: u64,
+		/// Source Port Id
 		port_id: String,
+		/// Source Channel Id
 		channel_id: String,
+		/// Destination Port
 		dest_port: String,
+		/// Destination Channel
 		dest_channel: String,
+		/// Packet Sequence
 		sequence: u64,
 	},
 	/// Send packet
 	SendPacket {
+		/// light client revision height
 		revision_height: u64,
+		/// light client revision number
 		revision_number: u64,
+		/// Source Port Id
 		port_id: String,
+		/// Source Channel Id
 		channel_id: String,
+		/// Destination Port
 		dest_port: String,
+		/// Destination Channel
 		dest_channel: String,
+		/// Packet sequence
 		sequence: u64,
 	},
 	/// Acknowledgement packet
 	AcknowledgePacket {
+		/// light client revision height
 		revision_height: u64,
+		/// light client revision number
 		revision_number: u64,
+		/// Source port
 		port_id: String,
+		/// Source Channel
 		channel_id: String,
+		/// Packet sequence
 		sequence: u64,
 	},
 	/// WriteAcknowledgement
 	WriteAcknowledgement {
+		/// light client revision height
 		revision_height: u64,
+		/// light client revision number
 		revision_number: u64,
+		/// Source port
 		port_id: String,
+		/// Source Channel
 		channel_id: String,
+		/// Destination port
 		dest_port: String,
+		/// Destination Channel
 		dest_channel: String,
+		/// Packet Sequence
 		sequence: u64,
 	},
 	/// Timeout packet
 	TimeoutPacket {
+		/// light client revision height
 		revision_height: u64,
+		/// light client revision number
 		revision_number: u64,
+		/// Source port
 		port_id: String,
+		/// Source Channel
 		channel_id: String,
+		/// Packet sequence
 		sequence: u64,
 	},
 	/// Timeoutonclose packet
 	TimeoutOnClosePacket {
+		/// light client revision height
 		revision_height: u64,
+		/// light client revision number
 		revision_number: u64,
+		/// Source port
 		port_id: String,
+		/// Source channel
 		channel_id: String,
+		/// Packet sequence
 		sequence: u64,
 	},
 }
