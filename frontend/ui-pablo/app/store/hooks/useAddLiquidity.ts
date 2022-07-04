@@ -1,6 +1,5 @@
 import { AssetId } from "@/defi/polkadot/types";
 import { setSelection, useAddLiquiditySlice } from "@/store/addLiquidity/addLiquidity.slice";
-import useStore from "@/store/useStore";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import BigNumber from "bignumber.js";
 import { useState, useMemo, useEffect } from "react";

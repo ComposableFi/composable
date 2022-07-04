@@ -1,6 +1,6 @@
 import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { useMemo } from "react";
-import { useAssetsWithBalance } from "@/defi/hooks/useAssetsWithBalance";
+import { useAssetsWithBalance } from "@/defi/hooks";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 

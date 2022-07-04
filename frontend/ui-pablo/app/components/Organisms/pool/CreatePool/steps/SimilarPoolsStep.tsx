@@ -10,16 +10,15 @@ import {
   Typography,
   Theme,
 } from "@mui/material";
-import { useMemo, useState } from "react";
-import BigNumber from "bignumber.js";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
-import FormWrapper from "../FormWrapper";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { TransactionSettings } from "@/components/Organisms/TransactionSettings";
 import { openTransactionSettingsModal } from "@/stores/ui/uiSlice";
-import useStore from "@/store/useStore";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 import { useAsset } from "@/defi/hooks/assets/useAsset";
+import BigNumber from "bignumber.js";
+import FormWrapper from "../FormWrapper";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import useStore from "@/store/useStore";
 
 const itemBoxProps = (theme: Theme) =>
   ({

@@ -2,8 +2,6 @@ import { Box } from "@mui/material";
 import { ComponentStory } from "@storybook/react";
 import { DepositForm } from "@ui-pablo/app/components/Organisms/bonds/DepositForm";
 import useBondOffer from "@ui-pablo/app/defi/hooks/bonds/useBondOffer";
-import { useDepositSummary } from "../../../app/store/hooks/bond/useDepositSummary";
-import { useSupplySummary } from "../../../app/store/hooks/bond/useSupplySummary";
 
 const DepositFormStories = () => {
   const bond = useBondOffer("0")

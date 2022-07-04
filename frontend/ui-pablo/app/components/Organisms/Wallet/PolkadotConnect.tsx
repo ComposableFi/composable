@@ -16,7 +16,7 @@ import { useEffect, useState } from "react";
 import useStore from "@/store/useStore";
 import { useDotSamaContext, useParachainApi } from "substrate-react";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
-import { useAssetsWithBalance } from "@/defi/hooks/useAssetsWithBalance";
+import { useAssetsWithBalance } from "@/defi/hooks";
 
 const Status = () => {
   const theme = useTheme();

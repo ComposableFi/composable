@@ -1,5 +1,4 @@
 import { BondPrincipalAsset } from "@/defi/hooks/bonds/useBondOffers";
-import { MockedAsset } from "@/store/assets/assets.types";
 import BigNumber from "bignumber.js";
 
 export interface BondOffer {

@@ -9,14 +9,13 @@ import {
   Tooltip,
 } from "@mui/material";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BoxProps } from "@mui/system";
 import { useAppSelector } from "@/hooks/store";
 import { useDispatch } from "react-redux";
 import { InfoOutlined, Settings, SwapVertRounded } from "@mui/icons-material";
 import {
   closeConfirmingModal,
-  openConfirmingModal,
   openPolkadotModal,
   openSwapPreviewModal,
   openTransactionSettingsModal,
@@ -32,7 +31,6 @@ import { useSwaps } from "@/defi/hooks/swaps/useSwaps";
 import BigNumber from "bignumber.js";
 import _ from "lodash";
 import { usePabloSwap } from "@/defi/hooks/swaps/usePabloSwap";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 const SwapForm: React.FC<BoxProps> = ({ ...boxProps }) => {
   const isMobile = useMobile();

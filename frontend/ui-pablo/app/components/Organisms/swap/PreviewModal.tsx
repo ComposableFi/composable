@@ -13,7 +13,6 @@ import CloseIcon from "@mui/icons-material/Close";
 
 import { useDispatch } from "react-redux";
 import {
-  closeConfirmingModal,
   closeSwapPreviewModal,
   openConfirmingModal,
 } from "@/stores/ui/uiSlice";
@@ -22,8 +21,6 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import BigNumber from "bignumber.js";
 import { useAppSelector } from "@/hooks/store";
 import { MockedAsset } from "@/store/assets/assets.types";
-import { usePabloSwap } from "@/defi/hooks/swaps/usePabloSwap";
-import { DEFAULT_NETWORK_ID } from "@/defi/utils";
 
 export type PreviewModalProps = {
   setConfirmed?: (confirmed: boolean) => any;

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { ModalProps, Modal } from "@/components/Molecules";
 import { Label } from "@/components/Atoms";
 import { Box, Typography, useTheme, Button } from "@mui/material";
@@ -6,7 +6,6 @@ import { useDispatch } from "react-redux";
 import { closeConfirmingModal } from "@/stores/ui/uiSlice";
 import BigNumber from "bignumber.js";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
-import { MockedAsset } from "@/store/assets/assets.types";
 import { useUSDPriceByAssetId } from "@/store/assets/hooks";
 import { usePrincipalAssetSymbol } from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
 

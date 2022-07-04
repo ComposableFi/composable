@@ -23,9 +23,9 @@ import { WrongAmountEnteredModal } from "./WrongAmountEnteredModal";
 import { SelectedBondOffer } from "@/defi/hooks/bonds/useBondOffer";
 import { useAssetBalance } from "@/store/assets/hooks";
 import { DEFAULT_NETWORK_ID } from "@/defi/utils";
-import { usePurchaseBond } from "@/store/hooks/bond/usePurchaseBond";
 import { ConfirmingModal } from "../swap/ConfirmingModal";
 import { usePrincipalAssetSymbol } from "@/defi/hooks/bonds/usePrincipalAssetSymbol";
+import { usePurchaseBond } from "@/defi/hooks/bonds";
 
 const containerBoxProps = (theme: Theme) =>
   ({
@@ -75,7 +75,7 @@ export const DepositForm: React.FC<DepositFormProps> = ({
   const [amount, setAmount] = useState<BigNumber>(new BigNumber(0));
   const [valid, setValid] = useState<boolean>(false);
 
-  const { principalAsset, rewardAsset } = bond;
+  const { rewardAsset } = bond;
   const soldout = bond.selectedBondOffer ? bond.selectedBondOffer.nbOfBonds.eq(0) : true;
   const isWrongAmount = bond.roi.lt(0);
 

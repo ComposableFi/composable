@@ -20,7 +20,7 @@ import { AuctionDetails } from "@/components/Organisms/auction/AuctionDetails";
 import { BuyForm } from "@/components/Organisms/auction/BuyForm";
 import { AuctionHistoriesTable } from "@/components/Organisms/auction/AuctionHistoriesTable";
 import { AuctionPriceChart } from "@/components/Organisms/auction/AuctionPriceChart";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { DEFAULT_NETWORK_ID, fetchSpotPrice } from "@/defi/utils";
 import { useParachainApi, useSelectedAccount } from "substrate-react";
 import { useAuctionsChart } from "@/store/hooks/useAuctionsChart";

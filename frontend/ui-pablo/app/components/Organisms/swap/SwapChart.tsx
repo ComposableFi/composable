@@ -9,13 +9,12 @@ import { DEFI_CONFIG } from "@/defi/config";
 import useStore from "@/store/useStore";
 import BigNumber from "bignumber.js";
 import { useSwapsChart } from "@/store/hooks/useSwapsChart";
-import { DEFAULT_NETWORK_ID, matchAssetByPicassoId } from "@/defi/utils";
 import { useAsset } from "@/defi/hooks/assets/useAsset";
 
 const SwapChart: React.FC<BoxProps> = ({ ...boxProps }) => {
   const theme = useTheme();
 
-  const { swaps, supportedAssets } = useStore();
+  const { swaps } = useStore();
   const {selectedInterval, chartSeries, seriesIntervals, _24hourOldPrice, setSelectedInterval} = useSwapsChart();
 
   const baseAsset = useAsset(swaps.selectedAssets.base);
