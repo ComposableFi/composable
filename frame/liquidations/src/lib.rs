@@ -147,7 +147,7 @@ pub mod pallet {
 			Ok(().into())
 		}
 
-		#[pallet::weight(T::WeightInfo::sell(if configuration.is_empty() { 1_u32 } else { configuration.len() as u32 }))]
+		#[pallet::weight(T::WeightInfo::sell(configuration.len().max(1) as u32))]
 		pub fn sell(
 			origin: OriginFor<T>,
 			order: Sell<T::MayBeAssetId, T::Balance>,
