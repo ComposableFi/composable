@@ -15,4 +15,4 @@ The key challenge in executing upon the goals of Centauri is to reach consensus 
 ![overview_centauri_progress](./overview-centauri-progress.png)
 
 
-To create the proof of concept (PoC) of Centauri, we are working with [Osmosis](https://osmosis.zone/), an automated market maker (AMM) in the Cosmos ecosystem. Then, we will hold a larger scale launch of the bridge, serving as a DotSama-IBC Substrate bridge to power enhanced interoperability in DeFi.
+To create the proof of concept (PoC) of Centauri, we are working with a variety of projects in the Cosmos ecosystem. Then, we will hold a larger scale launch of the bridge, serving as the first trustless DotSama-IBC Substrate bridge to power enhanced interoperability in DeFi.
