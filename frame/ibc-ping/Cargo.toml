@@ -27,7 +27,7 @@ ibc-trait = { path = "../ibc/ibc-trait", default-features = false }
 
 [dev-dependencies]
 balances = { package = "pallet-balances", git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", branch = "feat/revert-tracing-version/andor0", default-features = false, features = [
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", branch = "feat/revert-tracing-version/andor0", features = [
   "mocks",
 ] }
 pallet-ibc = { path = "../ibc" }

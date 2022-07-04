@@ -61,7 +61,7 @@ chrono = "0.4.19"
 currency-factory = { package = "pallet-currency-factory", path = "../currency-factory" }
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
 hex-literal = { version = "0.3.4" }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", branch = "feat/revert-tracing-version/andor0", default-features = false, features = [
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", branch = "feat/revert-tracing-version/andor0", features = [
   "ics11_beefy",
 ] }
 
