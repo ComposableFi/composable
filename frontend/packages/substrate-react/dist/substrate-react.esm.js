@@ -542,7 +542,8 @@ var usePendingExtrinsic = function usePendingExtrinsic(method, section, sender) 
     }
 
     return false;
-  }, [extrinsics]);
+  }, [extrinsics]); // eslint-disable-line react-hooks/exhaustive-deps
+
 
   return _isPendingExtrinsic;
 };
@@ -562,7 +563,8 @@ var useExtrinsicCalls = function useExtrinsicCalls(method, section, sender) {
     }
 
     return calls;
-  }, [extrinsics]);
+  }, [extrinsics]); // eslint-disable-line react-hooks/exhaustive-deps
+
   return extrinsicCalls;
 };
 
@@ -1243,7 +1245,7 @@ var DotSamaContextProvider = function DotSamaContextProvider(_ref3) {
     for (var i = 0; i < supportedParachains.length; i++) {
       _loop3(i);
     }
-  }, []);
+  }, []); // eslint-disable-line  react-hooks/exhaustive-deps
 
   var _useState4 = useState(-1),
       selectedAccount = _useState4[0],

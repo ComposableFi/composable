@@ -3,7 +3,7 @@ import { ApiPromise } from "@polkadot/api";
 import BigNumber from "bignumber.js";
 import { fromChainIdUnit } from "@/defi/polkadot/pallets/BondedFinance";
 import { useStore } from "@/stores/root";
-import { CurrencyId } from "@/defi/polkadot/interfaces";
+import { CurrencyId } from "defi-interfaces";
 
 export async function fetchAssetPrice(assetId: CurrencyId, api: ApiPromise) {
   try {
@@ -18,10 +18,10 @@ export async function fetchAssetPrice(assetId: CurrencyId, api: ApiPromise) {
         prices: {
           [+assetId.toString()]: {
             price,
-            block: new BigNumber(jsonPrices.block.toString()),
-          },
-        },
-      },
+            block: new BigNumber(jsonPrices.block.toString())
+          }
+        }
+      }
     });
 
     return price;

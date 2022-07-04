@@ -4,7 +4,7 @@ import { AccountId32 } from "@polkadot/types/interfaces/runtime";
 import { ApiPromise } from "@polkadot/api";
 import { BondOffer } from "@/stores/defi/polkadot/bonds/types";
 import { currencyIdToAssetMap } from "@/stores/defi/polkadot/bonds/constants";
-import { ComposableTraitsBondedFinanceBondOffer } from "@/defi/polkadot/interfaces";
+import { ComposableTraitsBondedFinanceBondOffer } from "defi-interfaces";
 import { Option } from "@polkadot/types-codec";
 import { ITuple } from "@polkadot/types-codec/types";
 import { fetchAssetPrice } from "./Oracle";
@@ -31,16 +31,14 @@ export async function fetchBondOfferCount(api: ApiPromise) {
 export async function fetchBonds(api: ApiPromise) {
   // Count bonded offers
   const bondOfferCount = await fetchBondOfferCount(api);
-
   // @ts-ignore
   const bonds: Option<
     ITuple<[AccountId32, ComposableTraitsBondedFinanceBondOffer]>
   >[] = await Promise.all(
     createArrayOfLength(bondOfferCount.toNumber()).map(
-      (index) => api.query.bondedFinance.bondOffers(index + 1) // index + 1 is offerId
+      index => api.query.bondedFinance.bondOffers(index + 1) // index + 1 is offerId
     )
   );
-
   const allBonds = await bonds.reduce(
     async (
       acc: Promise<BondOffer[]>,
@@ -60,7 +58,7 @@ export async function fetchBonds(api: ApiPromise) {
         ...bondOffer,
         price,
         rewardPrice,
-        offerId: index + 1,
+        offerId: index + 1
       };
 
       return [...prev, bondTransformer(beneficiary, newBondOffer)];
@@ -70,7 +68,7 @@ export async function fetchBonds(api: ApiPromise) {
 
   return {
     bonds: allBonds,
-    bondOfferCount,
+    bondOfferCount
   };
 }
 
@@ -83,7 +81,7 @@ async function fetchBondPrice(
 
   const [assetPriceResult, rewardAssetPriceResult] = await Promise.allSettled([
     fetchAssetPrice(asset, api),
-    fetchAssetPrice(reward_asset, api),
+    fetchAssetPrice(reward_asset, api)
   ]);
 
   const nbOfBonds = stringToBigNumber(bond.nbOfBonds.toString());
@@ -99,7 +97,7 @@ async function fetchBondPrice(
             stringToBigNumber(bond.reward.amount.toString())
           ).dividedBy(nbOfBonds)
         )
-      : new BigNumber(0),
+      : new BigNumber(0)
   ];
 }
 
@@ -111,7 +109,7 @@ function getAssets(asset: string): Token[] | Token {
     : mapped;
 
   return Array.isArray(tokens)
-    ? tokens.map((token) => TOKENS[token])
+    ? tokens.map(token => TOKENS[token])
     : TOKENS[tokens];
 }
 
@@ -147,10 +145,10 @@ function bondTransformer(beneficiary: AccountId32, bondOffer: any): BondOffer {
       amount: fromChainIdUnit(
         stringToBigNumber(bondOffer.reward.amount.toString())
       ),
-      maturity: new BigNumber(bondOffer.reward.maturity),
+      maturity: new BigNumber(bondOffer.reward.maturity)
     },
     price: bondOffer.price,
-    rewardPrice: bondOffer.rewardPrice,
+    rewardPrice: bondOffer.rewardPrice
   };
 }
 
@@ -220,7 +218,7 @@ export async function purchaseBond({
   enqueueSnackbar,
   setOpen,
   setOpen2nd,
-  handleFormReset,
+  handleFormReset
 }: PurchaseBond) {
   if (parachainApi && account && executor) {
     try {
@@ -240,7 +238,7 @@ export async function purchaseBond({
               variant: "info",
               isClosable: true,
               persist: true,
-              url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + txHash,
+              url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + txHash
             });
             setOpen(false);
             setOpen2nd(false);
@@ -250,17 +248,17 @@ export async function purchaseBond({
               variant: "success",
               isClosable: true,
               persist: true,
-              url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + txHash,
+              url: SUBSTRATE_NETWORKS["kusama-2019"].subscanUrl + txHash
             });
             handleFormReset();
           }
         )
-        .catch((err) => {
+        .catch(err => {
           enqueueSnackbar("Bond transaction failed", {
             variant: "error",
             isClosable: true,
             description: err.message,
-            persist: true,
+            persist: true
           });
         });
     } catch (e) {

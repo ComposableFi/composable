@@ -1,0 +1,7 @@
+{
+  "name": "defi-interfaces",
+  "version": "1.0.0",
+  "devDependencies": {
+    "@polkadot/types": "^7.15.1"
+  }
+}
