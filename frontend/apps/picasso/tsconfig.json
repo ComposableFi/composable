@@ -26,10 +26,10 @@
         "*"
       ],
       "@polkadot/api/augment": [
-        "defi-polkadot/interfaces/augment-api.ts"
+        "defi-interfaces/augment-api.ts"
       ],
       "@polkadot/types/augment": [
-        "defi-polkadot/interfaces/augment-types.ts"
+        "defi-interfaces/augment-types.ts"
       ]
     }
   },
