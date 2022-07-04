@@ -11,11 +11,13 @@ import {
   Tooltip,
 } from "@mui/material";
 import { BaseAsset, PairAsset } from "../Atoms";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { InfoOutlined, KeyboardArrowDown } from "@mui/icons-material";
 import { TableHeader } from "@/defi/types";
 import { useRouter } from "next/router";
-import useBondOffers from "@/defi/hooks/bonds/useBondOffers";
+import useBondOffers, {
+  BondPrincipalAsset,
+} from "@/defi/hooks/bonds/useBondOffers";
 
 const tableHeaders: TableHeader[] = [
   {
@@ -51,6 +53,40 @@ export const AllBondTable: React.FC = () => {
     router.push(`bond/select/${offerId}`);
   };
 
+  const renderIcon = (principalAsset: BondPrincipalAsset) => {
+    const { simplePrincipalAsset, lpPrincipalAsset } = principalAsset;
+    const { baseAsset, quoteAsset } = lpPrincipalAsset;
+
+    if (baseAsset && quoteAsset) {
+      return (
+        <PairAsset
+          assets={[
+            {
+              icon: baseAsset.icon,
+              label: baseAsset.symbol,
+            },
+            {
+              icon: quoteAsset.icon,
+              label: quoteAsset.symbol,
+            },
+          ]}
+          separator="/"
+        />
+      );
+    }
+
+    if (simplePrincipalAsset) {
+      return (
+        <BaseAsset
+          label={simplePrincipalAsset.symbol}
+          icon={simplePrincipalAsset.icon}
+        />
+      );
+    }
+
+    return null;
+  };
+
   return (
     <TableContainer>
       <Table>
@@ -78,23 +114,7 @@ export const AllBondTable: React.FC = () => {
               sx={{ cursor: "pointer" }}
             >
               <TableCell align="left">
-                {bond.principalAsset?.lpPrincipalAsset?.baseAsset && bond.principalAsset?.lpPrincipalAsset?.quoteAsset ? (
-                  <PairAsset
-                    assets={[
-                      {
-                        icon: bond.principalAsset.lpPrincipalAsset.baseAsset.icon,
-                        label: bond.principalAsset.lpPrincipalAsset.baseAsset.symbol,
-                      },
-                      {
-                        icon: bond.principalAsset.lpPrincipalAsset.quoteAsset.icon,
-                        label: bond.principalAsset.lpPrincipalAsset.quoteAsset.symbol,
-                      },
-                    ]}
-                    separator="/"
-                  />
-                ) : bond.principalAsset.simplePrincipalAsset ? (
-                    <BaseAsset label={bond.principalAsset.simplePrincipalAsset.symbol} icon={bond.principalAsset.simplePrincipalAsset.icon} />
-                ) : null}
+                {renderIcon(bond.principalAsset)}
               </TableCell>
               <TableCell align="left">
                 <Typography variant="body2">
