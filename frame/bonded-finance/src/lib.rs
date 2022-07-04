@@ -300,6 +300,7 @@ pub mod pallet {
 			keep_alive: bool,
 		) -> Result<T::BondOfferId, DispatchError> {
 			let offer_id = BondOfferCount::<T>::increment()?;
+			let beneficiary = offer.beneficiary.clone();
 			let offer_account = Self::account_id(offer_id);
 			T::NativeCurrency::transfer(from, &offer_account, T::Stake::get(), keep_alive)?;
 			T::Currency::transfer(
@@ -310,7 +311,7 @@ pub mod pallet {
 				keep_alive,
 			)?;
 			BondOffers::<T>::insert(offer_id, (from.clone(), offer));
-			Self::deposit_event(Event::<T>::NewOffer { offer_id, beneficiary: from.clone() });
+			Self::deposit_event(Event::<T>::NewOffer { offer_id, beneficiary });
 			Ok(offer_id)
 		}
 

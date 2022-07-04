@@ -52,14 +52,16 @@ proptest! {
 	  #[test]
 	  fn can_create_valid_offer(offer in simple_offer(1)) {
 			  ExtBuilder::build().execute_with(|| {
+					  let mut offer = offer.clone();
+					  offer.beneficiary = BOB;
 					  System::set_block_number(1);
-						prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
-						prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
-						let offer_id = BondedFinance::do_offer(&ALICE, offer, false);
+					  prop_assert_ok!(Tokens::mint_into(NATIVE_CURRENCY_ID, &ALICE, Stake::get()));
+					  prop_assert_ok!(Tokens::mint_into(offer.reward.asset, &ALICE, offer.reward.amount));
+					  let offer_id = BondedFinance::do_offer(&ALICE, offer, false);
 					  prop_assert_ok!(offer_id);
 					  let offer_id = offer_id.expect("impossible; qed");
 
-					  System::assert_last_event(Event::BondedFinance(crate::Event::NewOffer{ offer_id, beneficiary: ALICE }));
+					  System::assert_last_event(Event::BondedFinance(crate::Event::NewOffer{ offer_id, beneficiary: BOB }));
 					  Ok(())
 			  })?;
 	  }
