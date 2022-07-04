@@ -8,6 +8,7 @@ on:
     types: [labeled, synchronize, opened, reopened]
     branches:
       - main
+      - andor0/add-runtime-tests-in-ci # tmp
 
 
 jobs:
