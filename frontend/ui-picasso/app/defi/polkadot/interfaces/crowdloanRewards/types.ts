@@ -1,15 +1,20 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
+import type { ComposableTraitsDefiCurrencyPairCurrencyId } from '../common';
 import type { Enum, Null, Struct, bool, u128, u32 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
 import type { EthereumAccountId } from '@polkadot/types/interfaces/eth';
 import type { EcdsaSignature, MultiSignature } from '@polkadot/types/interfaces/extrinsics';
 import type { ParachainInherentData, PersistedValidationData } from '@polkadot/types/interfaces/parachains';
 import type { AccountId32, Balance, Permill } from '@polkadot/types/interfaces/runtime';
+import { CurrencyId } from '../types';
 
 /** @name CommonMosaicRemoteAssetId */
 export interface CommonMosaicRemoteAssetId extends Null {}
+
+/** @name ComposableSupportEthereumAddress */
+export interface ComposableSupportEthereumAddress extends Null {}
 
 /** @name ComposableTraitsAssetsXcmAssetLocation */
 export interface ComposableTraitsAssetsXcmAssetLocation extends Null {}
@@ -27,7 +32,7 @@ export interface ComposableTraitsBondedFinanceBondDuration extends Struct {
 /** @name ComposableTraitsBondedFinanceBondOffer */
 export interface ComposableTraitsBondedFinanceBondOffer extends Struct {
   readonly beneficiary: AccountId32;
-  readonly asset: u128;
+  readonly asset: CurrencyId;
   readonly bondPrice: u128;
   readonly nbOfBonds: u128;
   readonly maturity: ComposableTraitsBondedFinanceBondDuration;
@@ -37,19 +42,13 @@ export interface ComposableTraitsBondedFinanceBondOffer extends Struct {
 
 /** @name ComposableTraitsBondedFinanceBondOfferReward */
 export interface ComposableTraitsBondedFinanceBondOfferReward extends Struct {
-  readonly asset: u128;
+  readonly asset: CurrencyId;
   readonly amount: u128;
   readonly maturity: u32;
 }
 
 /** @name ComposableTraitsCallFilterCallFilterEntry */
 export interface ComposableTraitsCallFilterCallFilterEntry extends Null {}
-
-/** @name ComposableTraitsDefiCurrencyPair */
-export interface ComposableTraitsDefiCurrencyPair extends Struct {
-  readonly base: u128;
-  readonly quote: u128;
-}
 
 /** @name ComposableTraitsDefiSell */
 export interface ComposableTraitsDefiSell extends Null {}
@@ -63,10 +62,7 @@ export interface ComposableTraitsDexConsantProductPoolInfo extends Null {}
 /** @name ComposableTraitsDexConstantProductPoolInfo */
 export interface ComposableTraitsDexConstantProductPoolInfo extends Struct {
   readonly owner: AccountId32;
-  readonly pair: {
-    readonly base: u128;
-    readonly quote: u128;
-  } & Struct;
+  readonly pair: ComposableTraitsDefiCurrencyPairCurrencyId;
   readonly lpToken: u128;
   readonly fee: Permill;
   readonly ownerFee: Permill;

@@ -52,6 +52,7 @@ use jsonrpsee::{
 	proc_macros::rpc,
 	types::{error::CallError, ErrorObject},
 };
+use pallet_ibc::events::IbcEvent;
 use sc_chain_spec::Properties;
 use serde::{Deserialize, Serialize};
 use sp_api::ProvideRuntimeApi;
@@ -105,7 +106,7 @@ pub fn generate_raw_proof(inputs: Vec<(Vec<u8>, Vec<u8>)>, keys: Vec<Vec<u8>>) -
 
 /// IBC RPC methods.
 #[rpc(client, server)]
-pub trait IbcApi<BlockNumber> {
+pub trait IbcApi<BlockNumber, Hash> {
 	/// Query packet data
 	#[method(name = "ibc_queryPackets")]
 	fn query_packets(
@@ -122,9 +123,10 @@ pub trait IbcApi<BlockNumber> {
 	#[method(name = "ibc_queryLatestHeight")]
 	fn query_latest_height(&self) -> Result<BlockNumber>;
 
-	/// Query balance of an address on chain
+	/// Query balance of an address on chain, addr should be a valid hexadecimal or SS58 string,
+	/// representing the account id.
 	#[method(name = "ibc_queryBalanceWithAddress")]
-	fn query_balance_with_address(&self, addr: Vec<u8>) -> Result<Coin>;
+	fn query_balance_with_address(&self, addr: String) -> Result<Coin>;
 
 	/// Query a client state
 	#[method(name = "ibc_queryClientState")]
@@ -300,7 +302,7 @@ pub trait IbcApi<BlockNumber> {
 	#[method(name = "ibc_queryDenomTrace")]
 	fn query_denom_trace(&self, denom: String) -> Result<QueryDenomTraceResponse>;
 
-	/// Query the denom traces for an ibc denoms matching offset
+	/// Query the denom traces for ibc denoms matching offset
 	#[method(name = "ibc_queryDenomTraces")]
 	fn query_denom_traces(
 		&self,
@@ -308,6 +310,10 @@ pub trait IbcApi<BlockNumber> {
 		limit: u64,
 		height: u32,
 	) -> Result<QueryDenomTracesResponse>;
+
+	/// Query newly created clients in block
+	#[method(name = "ibc_queryNewlyCreatedClients")]
+	fn query_newly_created_clients(&self, block_hash: Hash) -> Result<Vec<IdentifiedClientState>>;
 }
 
 /// Converts a runtime trap into an RPC error.
@@ -334,7 +340,7 @@ impl<C, B> IbcRpcHandler<C, B> {
 	}
 }
 
-impl<C, Block> IbcApiServer<<<Block as BlockT>::Header as HeaderT>::Number>
+impl<C, Block> IbcApiServer<<<Block as BlockT>::Header as HeaderT>::Number, Block::Hash>
 	for IbcRpcHandler<C, Block>
 where
 	Block: BlockT,
@@ -417,12 +423,12 @@ where
 		}
 	}
 
-	fn query_balance_with_address(&self, addr: Vec<u8>) -> Result<Coin> {
+	fn query_balance_with_address(&self, addr: String) -> Result<Coin> {
 		let api = self.client.runtime_api();
 		let at = BlockId::Hash(self.client.info().best_hash);
 		let denom = format!("{}", self.chain_props.get("tokenSymbol").cloned().unwrap_or_default());
 
-		match api.query_balance_with_address(&at, addr).ok().flatten() {
+		match api.query_balance_with_address(&at, addr.as_bytes().to_vec()).ok().flatten() {
 			Some(amt) => Ok(Coin {
 				denom,
 				amount: serde_json::to_string(&sp_core::U256::from(amt)).unwrap_or_default(),
@@ -504,7 +510,7 @@ where
 		let api = self.client.runtime_api();
 		let at = BlockId::Hash(self.client.info().best_hash);
 		let client_height = ibc::Height::new(revision_number, revision_height);
-		let height = client_height.encode_vec().map_err(runtime_error_into_rpc_error)?;
+		let height = client_height.encode_vec();
 		let para_id = api
 			.para_id(&at)
 			.map_err(|_| runtime_error_into_rpc_error("Error getting para id"))?;
@@ -1233,5 +1239,42 @@ where
 		_height: u32,
 	) -> Result<QueryDenomTracesResponse> {
 		Err(runtime_error_into_rpc_error("Unimplemented"))
+	}
+
+	fn query_newly_created_clients(
+		&self,
+		block_hash: Block::Hash,
+	) -> Result<Vec<IdentifiedClientState>> {
+		let api = self.client.runtime_api();
+		let at = BlockId::Hash(block_hash);
+		let events = api
+			.block_events(&at)
+			.map_err(|_| runtime_error_into_rpc_error("[ibc_rpc]: failed to read block events"))?;
+
+		let mut identified_clients = vec![];
+		for e in events {
+			match e {
+				IbcEvent::CreateClient { client_id, .. } => {
+					let result: ibc_primitives::QueryClientStateResponse = api
+						.client_state(&at, client_id.clone())
+						.ok()
+						.flatten()
+						.ok_or_else(|| runtime_error_into_rpc_error("client state to exist"))?;
+
+					let client_state = AnyClientState::decode_vec(&result.client_state)
+						.map_err(|_| runtime_error_into_rpc_error("client state to be valid"))?;
+					let client_state = IdentifiedClientState {
+						client_id: String::from_utf8(client_id).map_err(|_| {
+							runtime_error_into_rpc_error("client id should be valid utf8")
+						})?,
+						client_state: Some(client_state.into()),
+					};
+					identified_clients.push(client_state)
+				},
+				_ => continue,
+			}
+		}
+
+		Ok(identified_clients)
 	}
 }

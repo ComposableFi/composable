@@ -1,16 +1,15 @@
 export default {
   rpc: {
     balanceOf: {
-      description:
-        "Balance available for the specified account for the specified asset.",
+      description: "Balance available for the specified account for the specified asset.",
       params: [
         {
           name: "asset",
-          type: "CurrencyId",
+          type: "CustomRpcCurrencyId"
         },
         {
           name: "account",
-          type: "AccountId32",
+          type: "AccountId32"
         },
         {
           name: "at",
@@ -18,11 +17,8 @@ export default {
           isOptional: true,
         },
       ],
-      type: "AssetsBalance",
+      type: "CustomRpcBalance"
     },
   },
-  types: {
-    CurrencyId: "u128",
-    AssetsBalance: "u128",
-  },
+  types: {}
 };

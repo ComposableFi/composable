@@ -1,6 +1,9 @@
 use super::*;
 use core::borrow::Borrow;
-use ibc::core::ics26_routing::context::{Ics26Context, Module, ModuleId, ReaderContext, Router};
+use ibc::{
+	applications::transfer::MODULE_ID_STR as IBC_TRANSFER_MODULE_ID,
+	core::ics26_routing::context::{Ics26Context, Module, ModuleId, ReaderContext, Router},
+};
 use scale_info::prelude::string::ToString;
 
 #[derive(Clone)]
@@ -24,11 +27,15 @@ impl<T: Config + Send + Sync> Context<T> {
 #[derive(Clone)]
 pub struct IbcRouter<T: Config> {
 	pallet_ibc_ping: pallet_ibc_ping::IbcHandler<T>,
+	ibc_transfer: transfer::IbcCallbackHandler<T>,
 }
 
 impl<T: Config> Default for IbcRouter<T> {
 	fn default() -> Self {
-		Self { pallet_ibc_ping: pallet_ibc_ping::IbcHandler::<T>::default() }
+		Self {
+			pallet_ibc_ping: pallet_ibc_ping::IbcHandler::<T>::default(),
+			ibc_transfer: transfer::IbcCallbackHandler::<T>::default(),
+		}
 	}
 }
 
@@ -36,15 +43,16 @@ impl<T: Config + Send + Sync> Router for IbcRouter<T> {
 	fn get_route_mut(&mut self, module_id: &impl Borrow<ModuleId>) -> Option<&mut dyn Module> {
 		match module_id.borrow().to_string().as_str() {
 			pallet_ibc_ping::MODULE_ID => Some(&mut self.pallet_ibc_ping),
+			IBC_TRANSFER_MODULE_ID => Some(&mut self.ibc_transfer),
 			&_ => None,
 		}
 	}
 
 	fn has_route(&self, module_id: &impl Borrow<ModuleId>) -> bool {
-		match module_id.borrow().to_string().as_str() {
-			pallet_ibc_ping::MODULE_ID => true,
-			&_ => false,
-		}
+		matches!(
+			module_id.borrow().to_string().as_str(),
+			pallet_ibc_ping::MODULE_ID | IBC_TRANSFER_MODULE_ID
+		)
 	}
 }
 

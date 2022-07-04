@@ -3,6 +3,7 @@ const withPWA = require("next-pwa");
 const withTM = require("next-transpile-modules")([
   "@integrations-lib/core",
   "substrate-react",
+  "@web3-react/core",
 ]);
 
 const nextConfig = {

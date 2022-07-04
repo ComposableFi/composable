@@ -1,4 +1,3 @@
-import { Auction, TokenId } from "@/defi/types";
 import {
   alpha,
   Box,
@@ -7,14 +6,12 @@ import {
   useTheme,
 } from "@mui/material";
 import { BaseAsset } from "@/components";
-import { getToken } from "@/defi/Tokens";
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { useState } from "react";
-import { getNetwork } from "@/defi/Networks";
 import { AssetId } from "@/defi/polkadot/types";
-import { Assets, getAssetById } from "@/defi/polkadot/Assets";
+import { Assets } from "@/defi/polkadot/Assets";
 
 export type SwapRouteProps = {
   quoteAssetId: AssetId | "none",

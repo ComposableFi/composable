@@ -1,10 +1,10 @@
 // Auto-generated via `yarn polkadot-types-from-chain`, do not edit
 /* eslint-disable */
 
-import type { ApiTypes } from '@polkadot/api-base/types';
+import type { ApiTypes, AugmentedError, ModuleErrors } from '@polkadot/api/types';
 
-declare module '@polkadot/api-base/types/errors' {
-  export interface AugmentedErrors<ApiType extends ApiTypes> {
+declare module '@polkadot/api/types/errors' {
+  export interface AugmentedErrors<ApiType> {
     assets: {
       CannotSetNewCurrencyToRegistry: AugmentedError<ApiType>;
       /**
@@ -393,6 +393,29 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    dexRouter: {
+      /**
+       * Can not respect minimum amount requested.
+       **/
+      CanNotRespectMinAmountRequested: AugmentedError<ApiType>;
+      MaxHopsExceeded: AugmentedError<ApiType>;
+      /**
+       * For given asset pair no route found.
+       **/
+      NoRouteFound: AugmentedError<ApiType>;
+      /**
+       * Unexpected node found while route validation.
+       **/
+      UnexpectedNodeFoundWhileValidation: AugmentedError<ApiType>;
+      /**
+       * Unsupported operation.
+       **/
+      UnsupportedOperation: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     dmpQueue: {
       /**
        * The amount of weight given is possibly not enough for executing the message.
@@ -408,12 +431,19 @@ declare module '@polkadot/api-base/types/errors' {
       [key: string]: AugmentedError<ApiType>;
     };
     dutchAuction: {
-      NotEnoughNativeCurrentyToPayForAuction: AugmentedError<ApiType>;
+      NotEnoughNativeCurrencyToPayForAuction: AugmentedError<ApiType>;
       OrderNotFound: AugmentedError<ApiType>;
       OrderParametersIsInvalid: AugmentedError<ApiType>;
       RequestedOrderDoesNotExists: AugmentedError<ApiType>;
-      TakeLimitDoesNotSatisfiesOrder: AugmentedError<ApiType>;
+      TakeLimitDoesNotSatisfyOrder: AugmentedError<ApiType>;
+      TakeOrderDidNotHappen: AugmentedError<ApiType>;
       TakeParametersIsInvalid: AugmentedError<ApiType>;
+      /**
+       * errors trying to decode and parse XCM input
+       **/
+      XcmCannotDecodeRemoteParametersToLocalRepresentations: AugmentedError<ApiType>;
+      XcmCannotFindLocalIdentifiersAsDecodedFromRemote: AugmentedError<ApiType>;
+      XcmNotFoundConfigurationById: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -583,6 +613,7 @@ declare module '@polkadot/api-base/types/errors' {
       CannotRespectMinimumRequested: AugmentedError<ApiType>;
       InvalidAmount: AugmentedError<ApiType>;
       InvalidSaleState: AugmentedError<ApiType>;
+      LpTokenNotRequiedForLbp: AugmentedError<ApiType>;
       MustBeOwner: AugmentedError<ApiType>;
       PairMismatch: AugmentedError<ApiType>;
       PoolNotFound: AugmentedError<ApiType>;
@@ -784,6 +815,25 @@ declare module '@polkadot/api-base/types/errors' {
        * Signer has not been set
        **/
       UnsetSigner: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    pablo: {
+      AmpFactorMustBeGreaterThanZero: AugmentedError<ApiType>;
+      AssetAmountMustBePositiveNumber: AugmentedError<ApiType>;
+      CannotRespectMinimumRequested: AugmentedError<ApiType>;
+      InvalidAmount: AugmentedError<ApiType>;
+      InvalidFees: AugmentedError<ApiType>;
+      InvalidPair: AugmentedError<ApiType>;
+      InvalidSaleState: AugmentedError<ApiType>;
+      MissingAmount: AugmentedError<ApiType>;
+      MustBeOwner: AugmentedError<ApiType>;
+      NoLpTokenForLbp: AugmentedError<ApiType>;
+      PairMismatch: AugmentedError<ApiType>;
+      PoolConfigurationNotSupported: AugmentedError<ApiType>;
+      PoolNotFound: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -1344,5 +1394,9 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-  } // AugmentedErrors
-} // declare module
+  }
+
+  export interface DecoratedErrors<ApiType extends ApiTypes> extends AugmentedErrors<ApiType> {
+    [key: string]: ModuleErrors<ApiType>;
+  }
+}

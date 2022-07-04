@@ -1,7 +1,6 @@
 import { ParachainContext } from "@/defi/polkadot/context/ParachainContext";
 import { usePicassoProvider } from "@/defi/polkadot/hooks";
-import { useAppDispatch } from "@/hooks/store";
-import { closePolkadotModal } from "@/stores/ui/uiSlice";
+import { useStore } from "@/stores/root";
 import { CheckRounded } from "@mui/icons-material";
 import { alpha, Box, Button, Typography, useTheme } from "@mui/material";
 import Image from "next/image";
@@ -14,11 +13,11 @@ export const PolkadotAccountForm: React.FC<{
     useContext(ParachainContext);
   const { accounts } = usePicassoProvider();
   const theme = useTheme();
-  const dispatch = useAppDispatch();
+  const { closePolkadotModal } = useStore(({ ui }) => ui);
 
   const handleConfirm = () => {
     // dispatch(setSelectedAccount(selected));
-    dispatch(closePolkadotModal());
+    closePolkadotModal();
   };
 
   const handleDisconnect = () => {

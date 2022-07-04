@@ -1,3 +1,4 @@
+//! OBSOLETE: use "composable-test-helpers" crate
 /// A const-generic currency. generic over the ID and EXPONENT.
 ///
 /// # Examples

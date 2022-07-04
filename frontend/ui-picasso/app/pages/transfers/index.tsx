@@ -3,7 +3,7 @@ import { NextPage } from "next";
 import { Box, Button, Grid, Theme, Typography } from "@mui/material";
 import { SwapHoriz } from "@mui/icons-material";
 
-import { useAppDispatch, useAppSelector } from "@/hooks/store";
+import { useStore } from "@/stores/root";
 import Default from "@/components/Templates/Default";
 import {
   FeeDisplay,
@@ -13,12 +13,6 @@ import {
   TokenDropdownCombinedInput,
 } from "@/components";
 import { PageTitle } from "@/components";
-import {
-  flipKeepAlive,
-  updateAmount,
-  updateNetworks,
-  updateRecipient,
-} from "@/stores/defi/transfers";
 import { TokenId } from "@/defi/Tokens";
 import { formatToken } from "@/utils/formatters";
 
@@ -61,38 +55,40 @@ const amountInputStyle = {
 };
 
 const Transfers: NextPage = () => {
-  const networks = useAppSelector(({ transfers }) => transfers.networks);
-  const amount = useAppSelector(({ transfers }) => transfers.amount);
-  const recipients = useAppSelector(({ transfers }) => transfers.recipients);
-  const fee = useAppSelector(({ transfers }) => transfers.fee);
-  const keepAlive = useAppSelector(({ transfers }) => transfers.keepAlive);
-  const dispatch = useAppDispatch();
+  const {
+    networks,
+    amount,
+    recipients,
+    keepAlive,
+    fee,
+    flipKeepAlive,
+    updateAmount,
+    updateNetworks,
+    updateRecipient,
+  } = useStore(({ transfers }) => transfers);
 
   const handleSwapClick = () =>
-    dispatch(updateNetworks({ from: networks.to, to: networks.from }));
+    updateNetworks({ from: networks.to, to: networks.from });
 
   const handleUpdateFromValue = (value: string) =>
-    dispatch(updateNetworks({ ...networks, from: value }));
+    updateNetworks({ ...networks, from: value });
 
   const handleUpdateToValue = (value: string) =>
-    dispatch(updateNetworks({ ...networks, to: value }));
+    updateNetworks({ ...networks, to: value });
 
   const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) =>
-    dispatch(updateAmount({ ...amount, value: +event.target.value }));
+    updateAmount({ ...amount, value: +event.target.value });
 
   const handleTokenChange = (event: React.ChangeEvent<HTMLInputElement>) =>
-    dispatch(
-      updateAmount({ ...amount, tokenId: event.target.value as TokenId })
-    );
+    updateAmount({ ...amount, tokenId: event.target.value as TokenId });
 
   const handleMaxClick = () =>
-    dispatch(updateAmount({ ...amount, value: amount.balance }));
+    updateAmount({ ...amount, value: amount.balance });
 
-  const handleRecipientChange = (value: string) =>
-    dispatch(updateRecipient(value));
+  const handleRecipientChange = (value: string) => updateRecipient(value);
 
   const handleKeepAliveChange = (_: React.ChangeEvent<HTMLInputElement>) =>
-    dispatch(flipKeepAlive());
+    flipKeepAlive();
 
   return (
     <Default>

@@ -328,6 +328,7 @@ declare module "@polkadot/api-base/types/consts" {
     oracle: {
       maxHistory: u32 & AugmentedConst<ApiType>;
       maxPrePrices: u32 & AugmentedConst<ApiType>;
+      twapWindow: u16 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -414,6 +415,17 @@ declare module "@polkadot/api-base/types/consts" {
        * Not strictly enforced, but used for weight estimation.
        **/
       maxScheduledPerBlock: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    stakingRewards: {
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
+      /**
+       * the size of batch to take each time trying to release rewards
+       **/
+      releaseRewardsPoolsBatchSize: u8 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -510,6 +522,13 @@ declare module "@polkadot/api-base/types/consts" {
        * The polynomial that is applied in order to derive fee from weight.
        **/
       weightToFee: Vec<FrameSupportWeightsWeightToFeeCoefficient> & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    transfer: {
+      palletId: FrameSupportPalletId & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

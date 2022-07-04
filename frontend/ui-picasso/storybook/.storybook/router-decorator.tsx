@@ -50,5 +50,5 @@ const getRouter = () => {
 };
 
 export const StorybookRouterProvider = ({ children }: { children: ReactNode }) => (
-    <RouterContext.Provider value={getRouter()}>{children}</RouterContext.Provider>
+  <RouterContext.Provider value={getRouter()}>{children}</RouterContext.Provider>
 );

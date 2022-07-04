@@ -15,7 +15,8 @@ RUN rustup update stable && \
     rustup default stable && \
     rustup component add clippy && \
     rustup component add rustfmt && \
-    rustup component add rust-src
+    rustup component add rust-src && \
+    rustup component add rustfmt --toolchain nightly-2022-04-18
 
 # Install rust-analyzer
 ARG RUST_ANALYZER_VERSION=2022-04-25
@@ -29,6 +30,12 @@ RUN wget -qO- "https://github.com/rust-analyzer/rust-analyzer/releases/download/
 WORKDIR /polkadot-binary
 RUN wget "https://github.com/paritytech/polkadot/releases/download/v0.9.22/polkadot" && \
     chmod +x polkadot
+
+
+# # Add basilisk node
+WORKDIR /basilisk-node
+RUN wget "https://github.com/galacticcouncil/Basilisk-node/releases/download/v8.0.0/basilisk" && \
+    chmod +x basilisk
 
 # Add mdbook
 WORKDIR /mdbook-binary

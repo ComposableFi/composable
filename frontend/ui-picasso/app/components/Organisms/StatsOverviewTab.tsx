@@ -1,6 +1,6 @@
 import { Box, useTheme } from "@mui/material";
 import { Chart, FeaturedBox } from "@/components/Molecules";
-import { useAppSelector, useAppDispatch } from "@/hooks/store";
+import { useStore } from "@/stores/root";
 import {
   formatNumber,
   formatNumberWithSymbol,
@@ -8,11 +8,7 @@ import {
   formatNumberCompactWithToken,
   formatNumberCompactWithSymbol,
 } from "@/utils/formatters";
-import {
-  setDailyActiveUsersInterval,
-  setTvlInterval,
-  OverviewDataProps,
-} from "@/stores/defi/stats/overview";
+import { OverviewDataProps } from "@/stores/defi/stats/overview";
 
 function formatOverviewTitleValue(index: number, info: OverviewDataProps) {
   switch (index) {
@@ -35,23 +31,21 @@ function formatOverviewTitleValue(index: number, info: OverviewDataProps) {
 
 export const StatsOverviewTab: React.FC<{}> = ({}) => {
   const theme = useTheme();
-  const dispatch = useAppDispatch();
-  const { overviewData, overviewChartData } = useAppSelector(
-    (state) => state.statsOverview
-  );
+  const {
+    overviewData,
+    overviewChartData,
+    setTvlInterval,
+    setDailyActiveUsersInterval,
+  } = useStore(({ statsOverview }) => statsOverview);
 
   function dispatchTVLInterval(selectedInterval: string) {
-    dispatch(
-      setTvlInterval(
-        overviewChartData.data[0].data.interval.indexOf(selectedInterval)
-      )
+    setTvlInterval(
+      overviewChartData.data[0].data.interval.indexOf(selectedInterval)
     );
   }
   function dispatchDailyUsersInterval(selectedInterval: string) {
-    dispatch(
-      setDailyActiveUsersInterval(
-        overviewChartData.data[1].data.interval.indexOf(selectedInterval)
-      )
+    setDailyActiveUsersInterval(
+      overviewChartData.data[1].data.interval.indexOf(selectedInterval)
     );
   }
 

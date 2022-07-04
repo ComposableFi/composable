@@ -1,12 +1,12 @@
 import { AssetMetadata, getAssetByOnChainId } from "@/defi/polkadot/Assets";
 import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
-import BigNumber from "bignumber.js";
 import { useState, useEffect, useMemo } from "react";
-import useStore from "@/store/useStore";
 import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
 import { useLiquidityByPool } from "./useLiquidityByPool";
 import { DailyRewards } from "../poolStats/poolStats.types";
-import { calculatePoolStats, fetchPoolStats } from "@/updaters/poolStats/utils";
+import { calculatePoolStats, fetchPoolStats } from "@/defi/utils/pablo";
+import BigNumber from "bignumber.js";
+import useStore from "@/store/useStore";
 
 export const useLiquidityPoolDetails = (poolId: number) => {
   const { poolStats, poolStatsValue, userLpBalances, putPoolStats } = useStore();
@@ -42,7 +42,7 @@ export const useLiquidityPoolDetails = (poolId: number) => {
       setBaseAsset(undefined);
       setQuoteAsset(undefined);
     }
-  }, [poolId]);
+  }, [poolId, allLpRewardingPools]);
 
   useEffect(() => {
     if (pool) {
@@ -53,7 +53,7 @@ export const useLiquidityPoolDetails = (poolId: number) => {
         }
       })
     }
-  }, [pool]);
+  }, [pool, putPoolStats]);
 
   const _poolStats = useMemo(() => {
     let _poolValue = {

@@ -1,13 +1,12 @@
-import { getAssetByOnChainId } from "@/defi/polkadot/Assets";
 import { ConstantProductPool, StableSwapPool } from "@/store/pools/pools.types";
-import useStore from "@/store/useStore";
-import { calcaulateProvidedLiquidity } from "@/updaters/liquidity/utils";
+import { calcaulateProvidedLiquidity } from "@/defi/utils";
 import { liquidityTransactionsByAddressAndPool } from "@/updaters/pools/subsquid";
-import BigNumber from "bignumber.js";
 import { useEffect, useMemo, useState } from "react";
 import { useSelectedAccount } from "substrate-react";
-import { DEFAULT_NETWORK_ID } from "../../updaters/constants";
+import { DEFAULT_NETWORK_ID } from "@/defi/utils/constants";
 import { useAllLpTokenRewardingPools } from "./useAllLpTokenRewardingPools";
+import useStore from "@/store/useStore";
+import BigNumber from "bignumber.js";
 /**
  * Provides the amount of liquidity
  * added by the user, and its value in
@@ -29,6 +28,7 @@ export const useUserProvidedLiquidityByPool = (
    */
   const selectedAccount = useSelectedAccount(DEFAULT_NETWORK_ID);
   const {
+    apollo,
     /**
      * prices of assets within the
      * pool
@@ -73,7 +73,7 @@ export const useUserProvidedLiquidityByPool = (
    * from subsquid
    */
   useEffect(() => {
-    console.log('Query subsquid for user liquidity');
+    console.log("Query subsquid for user liquidity");
     if (pool && selectedAccount) {
       liquidityTransactionsByAddressAndPool(
         selectedAccount.address,
@@ -118,48 +118,34 @@ export const useUserProvidedLiquidityByPool = (
    * value (in USD) in zustand store
    */
   useEffect(() => {
-    if (pool) {
-      const baseAssetMeta = getAssetByOnChainId(
-        DEFAULT_NETWORK_ID,
-        pool.pair.base
-      );
-
-      if (baseAssetMeta && assets[baseAssetMeta.assetId]) {
-        setValue((v) => {
-          return {
-            ...v,
-            baseValue: new BigNumber(
-              liquidityProvided.tokenAmounts.baseAmount
-            ).times(assets[baseAssetMeta.assetId].price),
-          };
-        });
-      }
+    if (pool && apollo[pool.pair.base.toString()]) {
+      setValue((v) => {
+        return {
+          ...v,
+          baseValue: new BigNumber(
+            liquidityProvided.tokenAmounts.baseAmount
+          ).times(apollo[pool.pair.base.toString()]),
+        };
+      });
     }
-  }, [pool, assets, liquidityProvided.tokenAmounts.baseAmount]);
+  }, [pool, apollo, liquidityProvided.tokenAmounts.baseAmount]);
   /**
    * Update user quote asset
    * provided liquidity
    * value (in USD) in zustand store
    */
   useEffect(() => {
-    if (pool) {
-      const quoteAssetMeta = getAssetByOnChainId(
-        DEFAULT_NETWORK_ID,
-        pool.pair.quote
-      );
-
-      if (quoteAssetMeta && assets[quoteAssetMeta.assetId]) {
-        setValue((v) => {
-          return {
-            ...v,
-            quoteValue: new BigNumber(
-              liquidityProvided.tokenAmounts.quoteAmount
-            ).times(assets[quoteAssetMeta.assetId].price),
-          };
-        });
-      }
+    if (pool && apollo[pool.pair.quote.toString()]) {
+      setValue((v) => {
+        return {
+          ...v,
+          quoteValue: new BigNumber(
+            liquidityProvided.tokenAmounts.quoteAmount
+          ).times(apollo[pool.pair.quote.toString()]),
+        };
+      });
     }
-  }, [pool, assets, liquidityProvided.tokenAmounts.quoteAmount]);
+  }, [pool, apollo, liquidityProvided.tokenAmounts.quoteAmount]);
 
   return { tokenAmounts: liquidityProvided.tokenAmounts, value };
 };

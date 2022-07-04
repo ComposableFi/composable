@@ -58,7 +58,7 @@ const nodes = [
 
 // Inserts Keys
 const insertKeys = async (api, seed, publicKey) => {
-  const insert = await api.rpc.author.insertKey("orac", seed, publicKey);
+  const insert = await api.rpc.author.insertKey("oracle", seed, publicKey);
   console.log(
     chalk.bgBlack(chalk.red("  Insert Keys  ")) +
       chalk.red(` ${publicKey}`) +

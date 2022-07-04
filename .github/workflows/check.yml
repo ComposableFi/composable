@@ -25,6 +25,16 @@ env:
   DOCKER_USER_OPTION: '$UID:$GID'
 
 jobs:
+  spellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: streetsidesoftware/cspell-action@v2
+        with:
+          # When the spellcheck.dic is altered, we'd want to recheck existing files too.
+          incremental_files_only: false 
+          config: 'cspell.yaml'
+
   substrate-check:
     name: Check Benchmarks
     runs-on:
