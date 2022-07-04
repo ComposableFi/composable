@@ -34,5 +34,8 @@ frontend/ @ComposableFi/blockchain-integrations
 # Runtime Integration Tests
 integration-tests/runtime-tests/ @ComposableFi/testers
 
+# Codespaces
+.devcontainer/ @ComposableFi/codespacers
+
 # Oracle Setup Script
 scripts/oracle-setup @ComposableFi/parachain
