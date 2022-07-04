@@ -53,7 +53,7 @@ export const AllBondTable: React.FC = () => {
     router.push(`bond/select/${offerId}`);
   };
 
-  const renderIcon = (principalAsset: BondPrincipalAsset) => {
+  const renderIcon = useCallback((principalAsset: BondPrincipalAsset) => {
     const { simplePrincipalAsset, lpPrincipalAsset } = principalAsset;
     const { baseAsset, quoteAsset } = lpPrincipalAsset;
 
@@ -85,7 +85,7 @@ export const AllBondTable: React.FC = () => {
     }
 
     return null;
-  };
+  }, []);
 
   return (
     <TableContainer>
