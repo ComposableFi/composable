@@ -35,10 +35,9 @@ sp-trie = { git = "https://github.com/paritytech/substrate", branch = "polkadot-
 xcm = { default-features = false, git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.22" }
 
 hex-literal = { version = "0.3.4", optional = true }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "b3ab319018b1bb8917bca3aad977455aa2c9b179", default-features = false, features = [
-  "ics11_beefy",
-] }
-ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", rev = "b3ab319018b1bb8917bca3aad977455aa2c9b179", default-features = false }
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", branch = "feat/revert-tracing-version/andor0", default-features = false, features = [ "ics11_beefy" ] }
+ibc-proto = { git = "https://github.com/ComposableFi/ibc-rs", branch = "feat/revert-tracing-version/andor0", default-features = false }
+
 ics23 = { git = "https://github.com/composablefi/ics23", rev = "86e970a4f22973946a0faf472b56951691d40874", default-features = false, optional = true }
 tendermint = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8", optional = true, default-features = false }
 tendermint-proto = { git = "https://github.com/composableFi/tendermint-rs", rev = "5a74e0f8da4d3dab83cc04b5f1363b018cf3d9e8", default-features = false }
@@ -60,9 +59,13 @@ chrono = "0.4.19"
 currency-factory = { package = "pallet-currency-factory", path = "../currency-factory" }
 governance-registry = { package = "pallet-governance-registry", path = "../governance-registry" }
 hex-literal = { version = "0.3.4" }
-ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "b3ab319018b1bb8917bca3aad977455aa2c9b179", features = [
-  "mocks",
-] }
+#ibc = { git = "https://github.com/ComposableFi/ibc-rs", rev = "b3ab319018b1bb8917bca3aad977455aa2c9b179", features = [
+#  "mocks",
+#] }
+# ibc = { path = "../../../ibc-rs", default-features = false, features = [ "ics11_beefy" ] }
+
+ibc = { git = "https://github.com/ComposableFi/ibc-rs", branch = "feat/revert-tracing-version/andor0" , default-features = false, features = [ "ics11_beefy" ] }
+
 orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b" }
 orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", rev = "f709ed62262435b3ad80482d309e3575625d1e5b" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.22" }
