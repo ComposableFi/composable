@@ -2285,31 +2285,30 @@ pub mod pallet {
 	// Oracle update helpers
 	impl<T: Config> Pallet<T> {
 		fn update_oracle_twap(market: &mut Market<T>) -> Result<(), DispatchError> {
-			let mut oracle = Self::oracle_price(market.asset_id)?;
-			ensure!(oracle.is_positive(), Error::<T>::InvalidOracleReading);
+			let mut oracle_price = Self::oracle_price(market.asset_id)?;
+			ensure!(oracle_price.is_positive(), Error::<T>::InvalidOracleReading);
 
 			// Use the current oracle price as TWAP if it is the first time querying it for this
 			// market
 			let last_oracle_twap = if market.last_oracle_twap.is_positive() {
 				market.last_oracle_twap
 			} else {
-				oracle
+				oracle_price
 			};
 
-			oracle = Self::clip_around_twap(&oracle, &last_oracle_twap)?;
+			oracle_price = Self::clip_around_twap(&oracle_price, &last_oracle_twap)?;
 
-			if oracle.is_positive() {
+			if oracle_price.is_positive() {
 				// Clip the current price to within 10bps of the last oracle price
 				// Use the current oracle price if first time querying it for this market
 				let last_oracle = if market.last_oracle_price.is_positive() {
 					market.last_oracle_price
 				} else {
-					oracle
+					oracle_price
 				};
 				let last_oracle_10bp =
 					last_oracle.try_div(&T::Decimal::saturating_from_integer(1000))?;
-				oracle = math::clip(
-					oracle,
+				oracle_price = oracle_price.clamp(
 					last_oracle.try_sub(&last_oracle_10bp)?,
 					last_oracle.try_add(&last_oracle_10bp)?,
 				);
@@ -2324,13 +2323,13 @@ pub mod pallet {
 				let from_start = cmp::max(1, market.twap_period.saturating_sub(since_last));
 
 				let new_twap = math::weighted_average(
-					&oracle,
+					&oracle_price,
 					&last_oracle_twap,
 					&T::Decimal::saturating_from_integer(since_last),
 					&T::Decimal::saturating_from_integer(from_start),
 				)?;
 
-				market.last_oracle_price = oracle;
+				market.last_oracle_price = oracle_price;
 				market.last_oracle_twap = new_twap;
 				market.last_oracle_ts = now;
 			}
