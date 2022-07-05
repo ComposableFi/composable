@@ -30,14 +30,13 @@ use cumulus_primitives_core::ParaId;
 use frame_benchmarking_cli::BenchmarkCmd;
 use log::info;
 use picasso_runtime::Block;
-use polkadot_parachain::primitives::AccountIdConversion;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
 };
 use sc_service::config::{BasePath, PrometheusConfig};
 use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::traits::Block as BlockT;
+use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
 use std::{io::Write, net::SocketAddr};
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
@@ -272,11 +271,12 @@ pub fn run() -> Result<()> {
 			let runner = cli.create_runner(cmd)?;
 
 			match cmd {
-				BenchmarkCmd::Pallet(cmd) =>
+				BenchmarkCmd::Pallet(cmd) => {
 					if cfg!(feature = "runtime-benchmarks") {
 						runner.sync_run(|config| match config.chain_spec.id() {
-							id if id.contains("picasso") =>
-								cmd.run::<Block, PicassoExecutor>(config),
+							id if id.contains("picasso") => {
+								cmd.run::<Block, PicassoExecutor>(config)
+							},
 							#[cfg(feature = "dali")]
 							id if id.contains("dali") => cmd.run::<Block, DaliExecutor>(config),
 							#[cfg(feature = "composable")]
@@ -287,8 +287,9 @@ pub fn run() -> Result<()> {
 						Err("Benchmarking wasn't enabled when building the node. \
 						     You can enable it with `--features runtime-benchmarks`."
 							.into())
-					},
-				BenchmarkCmd::Block(cmd) =>
+					}
+				},
+				BenchmarkCmd::Block(cmd) => {
 					runner.sync_run(|config| match config.chain_spec.id() {
 						id if id.contains("picasso") => {
 							let partials = new_partial::<
@@ -312,8 +313,9 @@ pub fn run() -> Result<()> {
 							cmd.run(partials.client)
 						},
 						id => panic!("Unknown Chain: {}", id),
-					}),
-				BenchmarkCmd::Storage(cmd) =>
+					})
+				},
+				BenchmarkCmd::Storage(cmd) => {
 					runner.sync_run(|config| match config.chain_spec.id() {
 						id if id.contains("picasso") => {
 							let partials = new_partial::<
@@ -343,9 +345,11 @@ pub fn run() -> Result<()> {
 							cmd.run(config, partials.client, db, storage)
 						},
 						id => panic!("Unknown Chain: {}", id),
-					}),
-				BenchmarkCmd::Overhead(_) | BenchmarkCmd::Machine(_) =>
-					Err("Unsupported benchmarking command".into()),
+					})
+				},
+				BenchmarkCmd::Overhead(_) | BenchmarkCmd::Machine(_) => {
+					Err("Unsupported benchmarking command".into())
+				},
 			}
 		},
 		None => {
@@ -366,7 +370,7 @@ pub fn run() -> Result<()> {
 				let id = ParaId::from(para_id);
 
 				let parachain_account =
-					AccountIdConversion::<polkadot_primitives::v2::AccountId>::.into_account_truncating(&id);
+					AccountIdConversion::<polkadot_primitives::v2::AccountId>::into_account_truncating(&id);
 
 				let state_version = Cli::native_runtime_version(&config.chain_spec).state_version();
 				let block: Block = generate_genesis_block(&config.chain_spec, state_version)

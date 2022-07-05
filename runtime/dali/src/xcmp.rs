@@ -132,12 +132,14 @@ pub mod parachains {
 impl XcmpAssets for StaticAssetsMap {
 	fn remote_to_local(location: MultiLocation) -> Option<CurrencyId> {
 		match location {
-			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } =>
+			MultiLocation { parents: 1, interior: X2(Parachain(para_id), GeneralKey(key)) } => {
 				match (para_id, &key[..]) {
-					(parachains::karura::ID, parachains::karura::KUSD_KEY) =>
-						Some(CurrencyId::kUSD),
+					(parachains::karura::ID, parachains::karura::KUSD_KEY) => {
+						Some(CurrencyId::kUSD)
+					},
 					_ => None,
-				},
+				}
+			},
 			_ => None,
 		}
 	}
@@ -159,8 +161,8 @@ impl FilterAssetLocation for RelayReserveFromParachain {
 	fn filter_asset_location(asset: &MultiAsset, origin: &MultiLocation) -> bool {
 		// NOTE: In Acala there is not such thing
 		// if asset is KSM and send from some parachain then allow for  that
-		AbsoluteReserveProvider::reserve(asset) == Some(MultiLocation::parent()) &&
-			matches!(origin, MultiLocation { parents: 1, interior: X1(Parachain(_)) })
+		AbsoluteReserveProvider::reserve(asset) == Some(MultiLocation::parent())
+			&& matches!(origin, MultiLocation { parents: 1, interior: X1(Parachain(_)) })
 	}
 }
 
@@ -251,21 +253,21 @@ parameter_types! {
 }
 
 parameter_type_with_key! {
-	pub ParachainMinFee: |location: MultiLocation| -> Balance {
+	pub ParachainMinFee: |location: MultiLocation| -> Option<Balance> {
 		#[allow(clippy::match_ref_pats)] // false positive
 		#[allow(clippy::match_single_binding)]
 		match (location.parents, location.first_interior()) {
 			// relay KSM
-			(1, None) => 400_000_000_000,
+			(1, None) => Some(400_000_000_000),
 
 			// if amount is not enough, it should be trapped by target chain or discarded as spam, so bear the risk
 			// we use Acala's team XTokens which are opinionated - PANIC in case of zero
 			(1, Some(Parachain(id)))  =>  {
 				let location = XcmAssetLocation::new(location.clone());
-				AssetsRegistry::min_xcm_fee(ParaId::from(*id), location).unwrap_or(u128::MAX)
+				AssetsRegistry::min_xcm_fee(ParaId::from(*id), location).or(Some(u128::MAX))
 			},
-			_ => u128::MAX,
-			}
+			_ => Some(u128::MAX),
+		}
 	};
 }
 
